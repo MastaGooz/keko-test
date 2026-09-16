@@ -78,7 +78,9 @@ qui correspond à une GitHub Page de projet.
 
 **Settings > Pages > Build and deployment > Source : `GitHub Actions`.**
 
-Sans ça, le job `deploy` échoue. Une fois activé, le site sera en ligne sur :
+Tant que ce n'est pas fait, le workflow échoue à l'étape `configure-pages`
+avec `Get Pages site failed ... Not Found` (c'est le cas du premier run).
+Une fois la source activée, relance le workflow : le site sera en ligne sur :
 
 <https://mastagooz.github.io/keko-test/>
 
