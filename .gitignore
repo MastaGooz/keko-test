@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Raccourci Windows local, pas du code
+Claude code.lnk
