@@ -119,6 +119,16 @@ cas('les transitions ne modifient pas l\'état reçu', () => {
   egal(JSON.stringify(etat), temoin, 'état d\'origine')
 })
 
+cas('une carte à vitesse 0 résout sans faire avancer le temps', () => {
+  const etat = combat(cartes(10, { nom: 'Pichenette', vitesse: 0, degats: 5 }), ennemi({ pv: 100, degats: 5, periode: 3 }))
+  const apres = jouerCarte(etat, 0, rng())
+
+  egal(apres.ennemi.pv, 95, 'dégâts appliqués')
+  egal(apres.temps, 0, 'temps figé')
+  egal(apres.ennemi.compteur, etat.ennemi.compteur, 'compteur ennemi intact')
+  egal(apres.defausse.length, 1, 'carte défaussée')
+})
+
 cas('la prévision annonce le déroulé à venir', () => {
   const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 5, periode: 3 }))
   const prevues = prevoir(etat, 10, etat.main[0]).map((p) => `${p.dans}:${p.type}`)

@@ -28,13 +28,21 @@ export function carteTresor(id: string, nom: string): Carte {
 }
 
 /**
- * Trois rythmes bien distincts, pour sentir ce que change la période.
- * `compteur` est l'ouverture : le Roquet frappe presque tout de suite, sinon
- * il meurt avant d'avoir existé et son rythme ne se sent jamais.
+ * Calibrés par simulation (400+ combats par point) pour que la cupidité se
+ * paie : avec le deck pur on gagne ~88 %, à 4 trésors on tombe à ~45 %.
+ * Avant ce réglage les trois se gagnaient à 100 % quoi qu'on joue — aucune
+ * décision ne comptait, donc rien n'était lisible.
+ *
+ * `compteur` est l'ouverture, distincte de la période : sans elle le Roquet
+ * meurt avant d'avoir frappé et son rythme ne se sent jamais.
+ *
+ * Attention en bougeant ces chiffres : la marge est un rasoir. Le Garde passe
+ * de 89 % à 43 % de victoires entre 51 et 53 PV. Un combat est une course, et
+ * une course n'a pas de pente douce.
  */
-export const ROQUET: Ennemi = { nom: 'Roquet', pv: 18, pvMax: 18, degats: 4, periode: 3, compteur: 1 }
-export const GARDE: Ennemi = { nom: 'Garde', pv: 28, pvMax: 28, degats: 8, periode: 5, compteur: 3 }
-export const BRUTE: Ennemi = { nom: 'Brute', pv: 40, pvMax: 40, degats: 14, periode: 8, compteur: 6 }
+export const ROQUET: Ennemi = { nom: 'Roquet', pv: 36, pvMax: 36, degats: 5, periode: 2, compteur: 1 }
+export const GARDE: Ennemi = { nom: 'Garde', pv: 51, pvMax: 51, degats: 9, periode: 4, compteur: 2 }
+export const BRUTE: Ennemi = { nom: 'Brute', pv: 54, pvMax: 54, degats: 12, periode: 7, compteur: 4 }
 
 export const ENNEMIS: Ennemi[] = [ROQUET, GARDE, BRUTE]
 

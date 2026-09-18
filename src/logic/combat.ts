@@ -182,6 +182,13 @@ export function mainMorte(etat: EtatCombat): boolean {
  * permet de tuer pile à temps.
  */
 function ecouler(etat: EtatCombat, temps: number, rng: Rng, carte: Carte | null): void {
+  // Vitesse 0 : la carte résout sans que rien n'avance. Aucun compteur ne bouge,
+  // donc rien d'autre ne peut tomber — on sort avant la boucle.
+  if (temps === 0) {
+    if (carte !== null) resoudreCarte(etat, carte)
+    return
+  }
+
   for (let tic = 1; tic <= temps; tic += 1) {
     etat.temps += 1
     etat.ennemi.compteur -= 1
