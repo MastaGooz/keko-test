@@ -163,6 +163,65 @@ export function prevoir(etat: EtatCombat, horizon: number, carte: Carte | null):
   return prevues.sort((a, b) => a.dans - b.dans || rang[a.type] - rang[b.type])
 }
 
+
+/**
+ * Ce que coûte une carte jouée maintenant, simulé sans jouer le coup.
+ *
+ * C'est la question que le joueur pose à chaque carte de sa main. La poser
+ * cinq fois de suite à la main est exactement la corvée qu'on veut lui
+ * épargner : l'interface l'affiche sur chaque carte.
+ */
+export type Consequence = {
+  /** Instant de résolution, en temps relatif. */
+  dans: number
+  /** Frappes réellement encaissées avant que la carte ne tombe. */
+  frappes: number
+  /** Dégâts correspondants. */
+  degats: number
+  /** La carte achève l'ennemi — et le joueur est vivant pour le voir. */
+  tue: boolean
+  /** Le joueur tombe avant que la carte ne résolve. */
+  mortel: boolean
+  /** La main tient jusqu'à la résolution ; sinon le reste part à la défausse. */
+  tientDansLaMain: boolean
+}
+
+export function consequence(etat: EtatCombat, carte: Carte): Consequence {
+  const acheve = carte.degats >= etat.ennemi.pv
+  const frappesPrevues = prevoir(etat, carte.vitesse, null).filter((p) => p.type === 'frappe')
+
+  let pv = etat.pv
+  let frappes = 0
+  let mortel = false
+
+  for (const frappe of frappesPrevues) {
+    // À égalité la carte résout d'abord : si elle achève, la frappe n'a pas lieu.
+    if (frappe.dans === carte.vitesse && acheve) break
+
+    pv -= etat.ennemi.degats
+    frappes += 1
+    if (pv <= 0) {
+      mortel = true
+      break
+    }
+  }
+
+  return {
+    dans: carte.vitesse,
+    frappes,
+    degats: frappes * etat.ennemi.degats,
+    tue: acheve && !mortel,
+    mortel,
+    tientDansLaMain: carte.vitesse <= etat.compteurPioche,
+  }
+}
+
+/** Ce que coûte un passage : on encaisse tout jusqu'au renouvellement de main. */
+export function coutDuPassage(etat: EtatCombat): { frappes: number; degats: number } {
+  const frappes = prevoir(etat, etat.compteurPioche, null).filter((p) => p.type === 'frappe').length
+  return { frappes, degats: frappes * etat.ennemi.degats }
+}
+
 /** Nombre de trésors qui encombrent la main. */
 export function tresorsEnMain(etat: EtatCombat): number {
   return etat.main.filter((carte) => carte.type === 'tresor').length

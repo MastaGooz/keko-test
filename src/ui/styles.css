@@ -1,13 +1,17 @@
-/* Prototype jetable : lisible au doigt, rien de plus. Pas de déco à débattre.
-   Seule la frise a droit à de vrais soins — c'est elle qui rend le système
-   compréhensible. */
+/* Prototype jetable. Le style ne sert qu'à une chose : rendre le système
+   lisible au doigt. Chaque couleur porte une information, aucune n'est là
+   pour décorer. */
 :root {
   --bg: #16161a;
   --fg: #f2f2f5;
   --muted: #9a9aa6;
   --trait: #3a3a44;
+  --carte-fond: #22222a;
   --joueur: #5cc8ff;
   --ennemi: #ff6b6b;
+  --sur: #6ee7a0;
+  --cher: #ffc65c;
+  --letal: #ff5252;
   color-scheme: dark light;
 }
 
@@ -35,29 +39,68 @@ body {
   gap: 0.75rem;
 }
 
-.build,
-.discret {
+.build {
   margin: 0;
   color: var(--muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
-.ligne {
-  margin: 0;
+/* --- les deux combattants ------------------------------------------------ */
+
+.combattant {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.tete {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.nom {
   font-size: 1.0625rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
-.ligne.ennemi {
-  color: var(--ennemi);
+.pv {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+/* La jauge se lit d'un coup d'oeil : c'est la course, en une barre. */
+.jauge {
+  height: 8px;
+  border-radius: 4px;
+  background: #2a2a33;
+  overflow: hidden;
+}
+
+.remplissage {
+  height: 100%;
+  background: var(--joueur);
+  transition: width 0.15s ease-out;
+}
+
+.combattant.adverse .remplissage {
+  background: var(--ennemi);
+}
+
+.rythme {
+  font-size: 0.8125rem;
+  color: var(--muted);
 }
 
 /* --- la frise ------------------------------------------------------------ */
 
 .frise {
   display: grid;
-  grid-template-columns: repeat(14, 1fr);
+  grid-template-columns: repeat(12, 1fr);
   gap: 1px;
+  margin-top: 0.25rem;
 }
 
 .unite {
@@ -71,8 +114,14 @@ body {
   visibility: hidden;
 }
 
+/* La main en cours : le temps qu'il reste à dépenser avant que tout tombe. */
+.unite.fenetre {
+  background: #1f1f27;
+  border-radius: 3px;
+}
+
 .voie {
-  min-height: 22px;
+  min-height: 24px;
   display: flex;
   flex-direction: column-reverse;
   align-items: center;
@@ -86,8 +135,9 @@ body {
   border-top: 1px solid var(--trait);
   text-align: center;
   font-size: 0.5625rem;
-  line-height: 1;
+  line-height: 1.4;
   color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .unite.maintenant .axe {
@@ -97,8 +147,8 @@ body {
 
 .bulle {
   display: flex;
-  width: 20px;
-  height: 20px;
+  width: 21px;
+  height: 21px;
   border: 1px solid transparent;
   border-radius: 50%;
   align-items: center;
@@ -108,34 +158,57 @@ body {
 }
 
 /* Ce qui a eu lieu : plein. Ce qui est prévu : contour. */
-.joue {
+.bulle.joue {
   background: var(--joueur);
   color: #101014;
 }
 
-.adverse {
+.bulle.adverse {
   background: var(--ennemi);
   color: #101014;
 }
 
-.attendu {
+.bulle.attendu {
   background: transparent;
   border-color: var(--joueur);
   color: var(--joueur);
 }
 
-.attendu.adverse {
+.bulle.attendu.adverse {
   background: transparent;
   border-color: var(--ennemi);
   color: var(--ennemi);
 }
 
 /* La carte visée, pas encore engagée. */
-.projet {
+.bulle.projet {
   background: transparent;
   border-style: dashed;
   border-color: var(--fg);
   color: var(--fg);
+}
+
+.legende {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.legende strong {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.bande {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  border-radius: 3px;
+  background: #1f1f27;
+  border: 1px solid var(--trait);
 }
 
 /* --- la main -------------------------------------------------------------- */
@@ -146,37 +219,143 @@ body {
   gap: 0.5rem;
 }
 
-.bouton {
+.bouton,
+.carte {
   /* >= 48px : cible tactile confortable */
   min-height: 56px;
   width: 100%;
-  padding: 0 1rem;
+  padding: 0.5rem 0.875rem;
   border: 1px solid var(--trait);
+  border-left: 3px solid var(--trait);
   border-radius: 8px;
-  background: #22222a;
+  background: var(--carte-fond);
   color: var(--fg);
   font: inherit;
   text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.1875rem;
 }
 
-.bouton:active {
+.bouton:active,
+.carte:active {
   transform: scale(0.99);
 }
 
-.bouton[disabled] {
+.bouton[disabled],
+.carte[disabled] {
   opacity: 0.4;
   cursor: default;
 }
 
-.carte.visee {
-  border-color: var(--joueur);
-  color: var(--joueur);
+.titre {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
 }
 
-.tresor {
+.stats {
+  font-weight: 400;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* La ligne qui porte la décision. */
+.verdict {
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+
+.verdict.muet {
+  color: var(--muted);
+}
+
+/* Le liseré gauche dit le coût avant qu'on ait lu quoi que ce soit. */
+.carte.propre {
+  border-left-color: var(--sur);
+}
+
+.carte.propre .verdict {
+  color: var(--sur);
+}
+
+.carte.couteux {
+  border-left-color: var(--cher);
+}
+
+.carte.couteux .verdict {
+  color: var(--cher);
+}
+
+.carte.letal {
+  border-left-color: var(--letal);
+}
+
+.carte.letal .verdict {
+  color: var(--letal);
+  font-weight: 600;
+}
+
+.carte.acheve {
+  border-left-color: var(--fg);
+  background: #2b2b34;
+}
+
+.carte.acheve .verdict {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.carte.visee {
+  outline: 2px solid var(--joueur);
+  outline-offset: 1px;
+}
+
+.carte.tresor {
   border-style: dashed;
+  border-left-style: dashed;
+  background: transparent;
+  cursor: default;
+  opacity: 0.55;
+}
+
+.carte.tresor .titre {
+  font-weight: 400;
+}
+
+.encombrement {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.encombrement strong {
+  color: var(--fg);
+}
+
+.passer {
+  border-left-color: var(--trait);
+}
+
+.passer .verdict {
+  color: var(--muted);
+}
+
+/* --- fin de combat -------------------------------------------------------- */
+
+.issue {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .reprise {
@@ -185,25 +364,21 @@ body {
 }
 
 .secondaire {
-  background: transparent;
-  color: var(--muted);
-  text-align: center;
+  min-height: 48px;
   font-size: 0.875rem;
+  color: var(--muted);
+  border-left-width: 1px;
+  align-items: center;
 }
 
 .journal {
-  margin-top: auto;
+  margin-top: 0.25rem;
   padding-top: 0.5rem;
   border-top: 1px solid var(--trait);
   color: var(--muted);
-  font-size: 0.875rem;
-  line-height: 1.4;
+  font-size: 0.75rem;
 }
 
 .journal p {
-  margin: 0.125rem 0;
-}
-
-.journal p:last-child {
-  color: var(--fg);
+  margin: 0 0 0.125rem;
 }

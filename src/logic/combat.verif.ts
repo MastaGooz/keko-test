@@ -9,7 +9,7 @@
  */
 import { createRng } from './rng.ts'
 import type { Carte, ConfigCombat, Ennemi, EtatCombat } from './combat.ts'
-import { creerCombat, jouerCarte, mainMorte, passer, prevoir } from './combat.ts'
+import { consequence, creerCombat, jouerCarte, mainMorte, passer, prevoir } from './combat.ts'
 
 const CONFIG: ConfigCombat = { pvMax: 30, tailleMain: 5, periodePioche: 5 }
 
@@ -147,6 +147,42 @@ cas('la prévision place la carte avant la frappe à égalité', () => {
   egal(prevues.join(' '), 'carte frappe', 'ordre à égalité')
 })
 
+cas('la conséquence compte ce qu\'on encaisse avant la résolution', () => {
+  // Frappe dans 2 puis tous les 3 ; le moulinet tombe à 4 : une seule frappe.
+  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 6, periode: 3, compteur: 2 }))
+  const c = consequence(etat, etat.main[0])
+
+  egal(c.frappes, 1, 'frappes encaissées')
+  egal(c.degats, 6, 'dégâts encaissés')
+  egal(c.tue, false, 'ennemi debout')
+  egal(c.mortel, false, 'joueur debout')
+})
+
+cas('la conséquence annonce le coup qui achève sans riposte', () => {
+  // L'ennemi frappe pile quand la carte tombe : la carte passe avant et le tue.
+  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 16, degats: 6, periode: 4, compteur: 4 }))
+  const c = consequence(etat, etat.main[0])
+
+  egal(c.tue, true, 'achevé')
+  egal(c.frappes, 0, 'aucune riposte')
+})
+
+cas('la conséquence prévient quand la carte tue le joueur avant de tomber', () => {
+  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 20, periode: 2, compteur: 2 }))
+  const c = consequence(etat, etat.main[0])
+
+  egal(c.mortel, true, 'le joueur tombe')
+  egal(c.tue, false, 'la carte ne résout jamais')
+})
+
+cas('la conséquence signale la carte qui déborde de la main', () => {
+  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 1, periode: 9 }))
+  const rapide = consequence(etat, { id: 'x', nom: 'Dague', type: 'combat', vitesse: 1, degats: 3 })
+
+  egal(rapide.tientDansLaMain, true, 'la dague tient dans les 5')
+  egal(consequence(etat, etat.main[0]).tientDansLaMain, true, 'le moulinet tient à 4')
+})
+
 // --- petite tuyauterie -------------------------------------------------------
 
 function cas(nom: string, corps: () => void): void {
@@ -179,14 +215,14 @@ function combat(deck: Carte[], adversaire: Ennemi): EtatCombat {
   return creerCombat(deck, adversaire, rng(), CONFIG)
 }
 
-function ennemi(traits: { pv: number; degats: number; periode: number }): Ennemi {
+function ennemi(traits: { pv: number; degats: number; periode: number; compteur?: number }): Ennemi {
   return {
     nom: 'Mannequin',
     pv: traits.pv,
     pvMax: traits.pv,
     degats: traits.degats,
     periode: traits.periode,
-    compteur: traits.periode,
+    compteur: traits.compteur ?? traits.periode,
   }
 }
 
