@@ -48,8 +48,9 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
 - Garde-fous contre la spirale de la mort : **deck de base gratuit**,
   **méta-progression** pour racheter des cartes perdues.
 - Le hub vend du **levier et de la variété, jamais de la sécurité**.
-- Le **système de combat** est tranché : horloge partagée à résolution
-  immédiate, voir la section dédiée ci-dessous.
+- Le **système de combat** est tranché : tour par tour à énergie, voir la
+  section dédiée ci-dessous. L'horloge partagée a été essayée puis abandonnée,
+  mesures à l'appui — ne pas la ressortir sans en reparler à Keko.
 - **Plusieurs ennemis par combat**, cible choisie à la tape. Un mort ne
   frappe plus, donc achever vaut mieux que cogner au rendement — à condition
   que les cartes soient en mesure d'achever. Ne pas aligner de gros sacs de PV.
@@ -57,60 +58,56 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   en cours, la pioche comme action, le marchand au troc. Ne pas les
   implémenter.
 
-### Système de combat — horloge partagée, résolution immédiate
+### Système de combat — tour par tour
 
-**Le temps.** Une seule timeline continue. Chaque combattant porte un compteur :
-l'ennemi *frappe dans 3*, le joueur *pioche dans 5*. **Le temps ne s'écoule que
-quand le joueur le dépense** — hors de ses actions, rien ne bouge.
+**Le tour du joueur.** Une réserve d'**énergie** (5) se recharge à chaque tour.
+Chaque carte a un **coût** ; on la joue sur **une cible**, elle résout
+immédiatement. On joue autant de cartes que l'énergie le permet.
 
-**Jouer une carte.** Chaque carte a un **coût en temps** (0 à 4). Elle **résout
-immédiatement**, puis le temps avance d'autant et tous les compteurs
-décrémentent ensemble. Tout compteur qui atteint 0 en chemin résout à cet
-instant : l'ennemi frappe, puis son compteur se recharge.
+**La fin du tour.** Les ennemis dont le compteur est échu frappent, puis
+**toute la main est défaussée**, on repioche 5 et l'énergie se recharge.
+L'énergie non dépensée est **perdue**. Pioche vide → on remélange la défausse.
 
-La seule question posée au joueur est donc : **combien de temps j'achète, et
-qui frappe pendant ce temps-là ?** Il n'a jamais de coup « en vol » à simuler.
+**Le tempo.** Le compteur d'un ennemi se compte en **tours** : `periode: 1`
+frappe chaque tour, `periode: 2` un tour sur deux en frappant plus fort. C'est
+ce qui reste du tempo après l'abandon de l'horloge partagée.
 
-- **Tuer est préemptif.** Un mort ne frappe plus du tout pendant le temps
-  dépensé. Un gros coup qui abat une cible peut coûter moins cher qu'un petit
-  coup qui la laisse debout : c'est l'arbitrage central.
-- **Le coup qui gagne ne coûte rien.** Abattre le dernier ennemi arrête le
-  combat avant que son temps ne s'écoule.
-- **Pas d'interruption** : rien n'annule une carte, elle a déjà eu lieu.
+**Plusieurs ennemis.** Une carte vise une cible, choisie à la tape. **Un mort
+ne frappe plus** : abattre une cible avant la fin du tour annule sa frappe.
+C'est l'arbitrage central du multi-cibles — et il n'existe que si les cartes
+peuvent effectivement achever un corps. Mesuré : quand les ennemis se
+ressemblent, « taper le plus faible » égale le meilleur bot.
 
-*Historique : la carte résolvait autrefois à la FIN de son temps, avec une
-règle d'égalité au profit du joueur. Abandonné — mesuré à 11-16 % des décisions
-seulement, pour une charge mentale payée sur 100 % d'entre elles. La
-résolution immédiate conserve 100 % de l'arbitrage rendement / sécurité
-(mesuré : 45-48 % des décisions dans les deux cas). Ne pas y revenir sans
-redemander à Keko.*
+**Les trésors.** Injouables, aucun effet en combat — leurs effets de richesse
+se calculent à l'extraction. En combat ils ne font qu'une chose : **occuper une
+place de main**. Main de 5 et énergie de 5 sont conservées telles quelles
+depuis l'horloge : **les maths de la cupidité n'ont pas bougé**.
 
-**Plusieurs ennemis.** Une carte vise **une cible**, choisie à la tape. Le temps
-qu'elle coûte fait avancer tout le monde. Attention : le choix de cible ne
-produit de la décision que si les cartes peuvent **achever** un corps — mesuré,
-« taper le plus faible » égale le meilleur bot quand les ennemis se
-ressemblent.
+**Deux actions, pas une de plus :** jouer une carte sur une cible, finir le
+tour.
 
-**La main.** Main de **5**. Quand le compteur du joueur atteint 0 : **toute la
-main est défaussée**, on pioche 5, le compteur se recharge. Pioche vide → on
-remélange la défausse.
+#### Pourquoi pas l'horloge partagée
 
-**Les trésors.** Injouables, aucun effet en combat — leurs effets de richesse se
-calculent à l'extraction. En combat ils ne font qu'une chose : **occuper une
-place de main**. Le coût de la cupidité est donc **statistique et permanent**.
+*Le prototype a d'abord tourné sur une horloge partagée : une timeline
+continue, des cartes qui coûtaient du temps, des compteurs par combattant.
+Abandonné après mesure. Ne pas y revenir sans redemander à Keko.*
 
-**Deux actions, pas une de plus :**
-
-- **Jouer une carte** sur une cible.
-- **Passer** : avance le temps jusqu'à la prochaine pioche du joueur, résout
-  tout ce qui tombe à 0 en chemin, **en une seule tape**. Jamais avantageux (on
-  encaisse sans riposter), mais indispensable : sans lui, une main morte
-  figerait la partie.
-
-**Le sac n'est pas une action de combat.** Il se remplit **au ramassage**, entre
-deux combats : prendre dans le deck / prendre dans le sac / refuser. En combat,
-il transformerait la main morte en opportunité et anesthésierait la punition
-qu'on veut mesurer.
+- **À difficulté égalisée, les deux systèmes ont la même profondeur de
+  décision.** Ce que coûte de jouer au hasard : −37 (horloge) contre −39
+  (tours) ; −16 contre −18 avec un barème de cartes à rendement plat. Ma
+  première comparaison disait le contraire — le modèle à tours était
+  sous-réglé et gagnait à 98 % quoi qu'on fasse, ce qui écrasait sa
+  profondeur. Toujours égaliser la difficulté avant de comparer deux systèmes.
+- **Le coût était concret, le bénéfice théorique.** L'horloge imposait une
+  frise chronologique : cinq voies, soixante cases, la moitié de l'écran. Ce
+  qu'elle promettait en échange — le tempo comme axe de design, les cartes qui
+  manipulent le temps — restait à construire.
+- **Ce qu'on a perdu**, et qu'il faudra retrouver autrement si le combat
+  manque de relief : un ennemi *frappe tous les 2* contre *tous les 10* comme
+  identité, et les cartes qui décalent les compteurs.
+- Attention à la mesure employée : « ce que coûte de jouer au hasard » dit si
+  les choix *comptent*, pas s'ils sont *intéressants*. Un jeu où une seule
+  carte est toujours correcte score très haut sur ce critère.
 
 ### Hypothèse critique à tester en premier
 
@@ -125,12 +122,11 @@ Le prototype jetable de combat est **jouable au doigt** et déployé. Il ne sert
 qu'à tester l'hypothèse critique ci-dessus ; ni hub, ni marché, ni carte de
 donjon. Ce qui tourne :
 
-- moteur à horloge partagée, **plusieurs ennemis**, cible choisie au doigt ;
-- interface qui **affiche la conséquence de chaque carte** (ce qu'on encaisse
-  pendant son vol) et de chaque cible (ce que le coup lui fait) ;
-- frise chronologique, une voie par combattant ;
+- moteur au tour par tour à énergie, **plusieurs ennemis**, cible au doigt ;
+- interface compressée : une ligne par ennemi, une ligne par carte, le
+  détail uniquement sur ce qui est visé (~62 éléments à l'écran) ;
 - trois groupes d'ennemis calibrés par simulation ;
-- `npm run verif` : 22 vérifications des règles, sans navigateur.
+- `npm run verif` : 19 vérifications des règles, sans navigateur.
 
 **Les chiffres sont calibrés par simulation, pas au jugé.** Les scripts vivent
 dans le scratchpad, pas dans le dépôt : ils se réécrivent en quelques minutes

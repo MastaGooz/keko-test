@@ -4,107 +4,110 @@
  *
  * Ce n'est pas une suite de tests à maintenir, c'est la preuve que les règles
  * tranchées avec Keko font bien ce qu'elles disent — en particulier celles qui
- * se discutent mal sur le papier : la résolution immédiate suivie du temps
- * acheté, et ce qu'un mort cesse de faire.
+ * portent la punition de la cupidité : la main entière défaussée chaque tour,
+ * et l'énergie qui ne se reporte pas.
  */
 import { createRng } from './rng.ts'
 import type { Carte, ConfigCombat, Ennemi, EtatCombat } from './combat.ts'
 import {
   consequence,
-  coutDuVol,
   creerCombat,
+  finDuTour,
   jouerCarte,
   mainMorte,
-  passer,
-  prevoir,
+  menaceDuTour,
   vivants,
 } from './combat.ts'
 
-const CONFIG: ConfigCombat = { pvMax: 30, tailleMain: 5, periodePioche: 5 }
+const CONFIG: ConfigCombat = { pvMax: 30, tailleMain: 5, energieMax: 5 }
 
-const MOULINET = { nom: 'Moulinet', vitesse: 4, degats: 16 }
+const MOULINET = { nom: 'Moulinet', cout: 4, degats: 16 }
+const DAGUE = { nom: 'Dague', cout: 1, degats: 3 }
 
 let echecs = 0
 
 console.log('Règles de combat :')
 
-// --- le temps ----------------------------------------------------------------
+// --- le tour -----------------------------------------------------------------
 
-cas('la carte résout AVANT que le temps ne s\'écoule', () => {
-  // Moulinet (4 temps) contre un ennemi qui frappe tous les 2 : le coup porte
-  // d'abord, puis on encaisse les deux frappes du temps acheté.
-  const etat = combat(cartes(6, MOULINET), ennemi({ pv: 100, degats: 5, periode: 2 }))
-  const apres = jouerCarte(etat, 0, 0, rng())
+cas('la carte résout tout de suite et consomme son énergie', () => {
+  const etat = combat(cartes(6, MOULINET), ennemi({ pv: 100, degats: 5 }))
+  const apres = jouerCarte(etat, 0, 0)
 
-  egal(apres.ennemis[0].pv, 84, 'dégâts appliqués tout de suite')
-  egal(apres.pv, 20, 'deux frappes encaissées pendant les 4 temps')
-  egal(apres.temps, 4, 'temps dépensé')
+  egal(apres.ennemis[0].pv, 84, 'dégâts appliqués')
+  egal(apres.energie, 1, 'énergie restante')
+  egal(apres.pv, 30, 'l\'ennemi n\'a pas encore riposté')
+  egal(apres.tour, 1, 'toujours le même tour')
 })
 
-cas('un ennemi qui survit frappe pendant le temps acheté', () => {
-  const etat = combat(cartes(6, MOULINET), ennemi({ pv: 30, degats: 5, periode: 4 }))
-  const apres = jouerCarte(etat, 0, 0, rng())
+cas('une carte trop chère ne se joue pas', () => {
+  const etat = combat(cartes(6, MOULINET), ennemi({ pv: 100, degats: 5 }))
+  const apres = jouerCarte(etat, 0, 0)
+  const refus = jouerCarte(apres, 0, 0)
 
-  egal(apres.issue, null, 'issue')
-  egal(apres.ennemis[0].pv, 14, 'PV de l\'ennemi')
-  egal(apres.pv, 25, 'PV du joueur')
-  egal(apres.ennemis[0].compteur, 4, 'compteur ennemi rechargé')
+  egal(apres.energie, 1, 'il reste 1 énergie')
+  verifie(refus === apres, 'l\'état devrait être inchangé, à l\'identique')
 })
 
-cas('achever une cible annule TOUTES ses frappes du temps acheté', () => {
-  // Le premier frappait aux tics 2 et 4 ; abattu d'entrée, il ne frappe pas du
-  // tout. Le second, lui, frappe au tic 4.
-  const etat = groupe(cartes(10, MOULINET), [
-    ennemi({ pv: 16, degats: 5, periode: 2 }),
-    ennemi({ pv: 99, degats: 3, periode: 4, nom: 'Second' }),
+cas('les ennemis frappent à la fin du tour, pas avant', () => {
+  const etat = groupe(cartes(6, DAGUE), [
+    ennemi({ pv: 100, degats: 5 }),
+    ennemi({ pv: 100, degats: 3, nom: 'Second' }),
   ])
-  const apres = jouerCarte(etat, 0, 0, rng())
+  egal(menaceDuTour(etat), 8, 'menace annoncée')
 
-  egal(apres.ennemis[0].pv, 0, 'cible abattue')
-  egal(apres.pv, 27, 'seule la frappe du survivant est encaissée')
-  egal(apres.issue, null, 'le combat continue')
+  const apres = finDuTour(etat, rng())
+  egal(apres.pv, 22, 'les deux ont frappé')
+  egal(apres.tour, 2, 'tour suivant')
+  egal(apres.energie, 5, 'énergie rechargée')
 })
 
-cas('le coup qui gagne ne coûte aucun temps', () => {
-  const etat = combat(cartes(6, MOULINET), ennemi({ pv: 16, degats: 5, periode: 2 }))
-  const c = consequence(etat, etat.main[0], 0)
-  const apres = jouerCarte(etat, 0, 0, rng())
+cas('un ennemi à période 2 ne frappe qu\'un tour sur deux', () => {
+  const etat = combat(cartes(6, DAGUE), ennemi({ pv: 100, degats: 9, periode: 2, compteur: 2 }))
+  egal(menaceDuTour(etat), 0, 'il ne frappe pas ce tour-ci')
 
-  egal(c.gagne, true, 'le coup gagne')
-  egal(c.cout, 0, 'aucun temps annoncé')
-  egal(apres.issue, 'victoire', 'issue')
-  egal(apres.temps, 0, 'le temps ne s\'est pas écoulé')
-  egal(apres.pv, 30, 'aucune riposte')
+  const t2 = finDuTour(etat, rng())
+  egal(t2.pv, 30, 'aucun dégât au premier tour')
+  egal(menaceDuTour(t2), 9, 'il frappe au tour 2')
+
+  const t3 = finDuTour(t2, rng())
+  egal(t3.pv, 21, 'il a frappé')
+  egal(menaceDuTour(t3), 0, 'compteur rechargé, rien au tour 3')
 })
 
-cas('une carte à vitesse 0 résout sans faire avancer le temps', () => {
-  const etat = combat(
-    cartes(10, { nom: 'Pichenette', vitesse: 0, degats: 5 }),
-    ennemi({ pv: 100, degats: 5, periode: 3 }),
-  )
-  const apres = jouerCarte(etat, 0, 0, rng())
+cas('abattre une cible avant la fin du tour annule sa frappe', () => {
+  const etat = groupe(cartes(6, MOULINET), [
+    ennemi({ pv: 16, degats: 5 }),
+    ennemi({ pv: 100, degats: 3, nom: 'Second' }),
+  ])
+  egal(menaceDuTour(etat), 8, 'menace avant le coup')
 
-  egal(apres.ennemis[0].pv, 95, 'dégâts appliqués')
-  egal(apres.temps, 0, 'temps figé')
-  egal(apres.ennemis[0].compteur, etat.ennemis[0].compteur, 'compteur ennemi intact')
-  egal(apres.defausse.length, 1, 'carte défaussée')
+  const apres = jouerCarte(etat, 0, 0)
+  egal(menaceDuTour(apres), 3, 'le mort ne frappe plus')
+  egal(finDuTour(apres, rng()).pv, 27, 'seul le survivant a frappé')
+})
+
+cas('la victoire demande que tous soient à terre', () => {
+  const etat = groupe(cartes(6, MOULINET), [
+    ennemi({ pv: 16, degats: 1 }),
+    ennemi({ pv: 16, degats: 1, nom: 'Second' }),
+  ])
+  const un = jouerCarte(etat, 0, 0)
+  egal(un.issue, null, 'un mort ne suffit pas')
+  egal(un.energie, 1, 'énergie dépensée')
+
+  // Le second moulinet coûte 4 : il faut passer un tour pour le payer.
+  const t2 = finDuTour(un, rng())
+  const deux = jouerCarte(t2, t2.main.findIndex((c) => c.type === 'combat'), 1)
+  egal(deux.issue, 'victoire', 'les deux à terre')
 })
 
 // --- la main -----------------------------------------------------------------
 
-cas('passer avance jusqu\'à la pioche et fait frapper l\'ennemi en chemin', () => {
-  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 5, periode: 2 }))
-  const apres = passer(etat, rng())
-
-  egal(apres.pv, 20, 'PV du joueur (frappes aux tics 2 et 4)')
-  egal(apres.main.length, 5, 'main repiochée')
-  egal(apres.compteurPioche, 5, 'compteur de pioche rechargé')
-})
-
-cas('la pioche renouvelle TOUTE la main', () => {
-  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 5, periode: 10 }))
+cas('la fin du tour renouvelle TOUTE la main', () => {
+  const etat = combat(cartes(10, DAGUE), ennemi({ pv: 100, degats: 1 }))
   const avant = etat.main.map((carte) => carte.id)
-  const apres = passer(etat, rng())
+  const apres = finDuTour(etat, rng())
   const communes = apres.main.filter((carte) => avant.includes(carte.id))
 
   egal(apres.main.length, 5, 'taille de la main')
@@ -112,9 +115,16 @@ cas('la pioche renouvelle TOUTE la main', () => {
   egal(apres.defausse.length, 5, 'ancienne main envoyée à la défausse')
 })
 
+cas('l\'énergie non dépensée est perdue', () => {
+  const etat = combat(cartes(10, DAGUE), ennemi({ pv: 100, degats: 1 }))
+  const apres = finDuTour(jouerCarte(etat, 0, 0), rng())
+
+  egal(apres.energie, 5, 'rechargée à plein, pas cumulée')
+})
+
 cas('un trésor ne se joue pas', () => {
-  const etat = combat(tresors(10), ennemi({ pv: 100, degats: 5, periode: 10 }))
-  const apres = jouerCarte(etat, 0, 0, rng())
+  const etat = combat(tresors(10), ennemi({ pv: 100, degats: 1 }))
+  const apres = jouerCarte(etat, 0, 0)
 
   verifie(mainMorte(etat), 'la main devrait être morte')
   verifie(apres === etat, 'l\'état devrait être inchangé, à l\'identique')
@@ -122,145 +132,113 @@ cas('un trésor ne se joue pas', () => {
 
 cas('une main morte ne bloque jamais la partie', () => {
   const alea = rng()
-  let etat = combat(tresors(10), ennemi({ pv: 100, degats: 4, periode: 3 }))
-  for (let i = 0; i < 3; i += 1) etat = passer(etat, alea)
+  let etat = combat(tresors(10), ennemi({ pv: 100, degats: 4 }))
+  for (let i = 0; i < 3; i += 1) etat = finDuTour(etat, alea)
 
   verifie(etat.pv < CONFIG.pvMax, 'le joueur devrait avoir encaissé')
   egal(etat.issue, null, 'issue')
   egal(etat.main.length, 5, 'main repiochée')
-  egal(etat.compteurPioche, 5, 'compteur de pioche rechargé')
+  egal(etat.tour, 4, 'trois tours passés')
+})
+
+cas('une main sans carte abordable est morte, même avec des cartes de combat', () => {
+  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 1 }))
+  verifie(!mainMorte(etat), 'à 5 énergie le moulinet passe')
+
+  const apres = jouerCarte(etat, 0, 0)
+  verifie(mainMorte(apres), 'à 1 énergie plus rien ne passe')
 })
 
 cas('la défausse est remélangée quand la pioche est vide', () => {
-  const etat = combat(cartes(7, MOULINET), ennemi({ pv: 100, degats: 5, periode: 10 }))
+  const etat = combat(cartes(7, DAGUE), ennemi({ pv: 100, degats: 1 }))
   egal(etat.pioche.length, 2, 'pioche restante après la main de départ')
 
-  const apres = passer(etat, rng())
+  const apres = finDuTour(etat, rng())
   egal(apres.main.length, 5, 'main complétée malgré la pioche trop courte')
   egal(apres.pioche.length, 2, 'reliquat après remélange de la défausse')
   egal(apres.defausse.length, 0, 'défausse vidée dans la pioche')
 })
 
-cas('la mort interrompt l\'écoulement du temps', () => {
-  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 10, periode: 1 }))
-  const apres = passer(etat, rng())
+cas('la mort interrompt la fin du tour', () => {
+  const etat = groupe(cartes(10, DAGUE), [
+    ennemi({ pv: 100, degats: 30 }),
+    ennemi({ pv: 100, degats: 5, nom: 'Second' }),
+  ])
+  const apres = finDuTour(etat, rng())
 
   egal(apres.issue, 'defaite', 'issue')
   egal(apres.pv, 0, 'PV du joueur')
-  egal(apres.compteurPioche, 2, 'temps arrêté au 3e tic')
-  egal(apres.defausse.length, 0, 'aucune pioche après la mort')
+  egal(apres.tour, 1, 'le tour ne s\'est pas terminé')
+  egal(apres.main.length, 5, 'aucune pioche après la mort')
 })
 
 cas('les transitions ne modifient pas l\'état reçu', () => {
-  const etat = combat(cartes(6, MOULINET), ennemi({ pv: 100, degats: 5, periode: 2 }))
+  const etat = combat(cartes(6, DAGUE), ennemi({ pv: 100, degats: 5 }))
   const temoin = JSON.stringify(etat)
-  jouerCarte(etat, 0, 0, rng())
-  passer(etat, rng())
+  jouerCarte(etat, 0, 0)
+  finDuTour(etat, rng())
 
   egal(JSON.stringify(etat), temoin, 'état d\'origine')
 })
 
-// --- la prévision et la conséquence ------------------------------------------
+// --- la conséquence ----------------------------------------------------------
 
-cas('la prévision décrit le coût du temps, pas la carte', () => {
-  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 5, periode: 3 }))
-  const prevues = prevoir(etat, 10).map((p) => `${p.dans}:${p.type}`)
-
-  egal(
-    prevues.join(' '),
-    '3:frappe 5:pioche 6:frappe 9:frappe 10:pioche',
-    'déroulé prévu sur 10 tics',
-  )
-})
-
-cas('la conséquence compte ce qu\'on encaisse pendant le temps acheté', () => {
-  // Frappe dans 2 puis tous les 3 : sur les 4 temps du moulinet, une seule.
-  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 6, periode: 3, compteur: 2 }))
-  const c = consequence(etat, etat.main[0], 0)
-
-  egal(c.cout, 4, 'temps acheté')
-  egal(c.frappes, 1, 'frappes encaissées')
-  egal(c.degats, 6, 'dégâts encaissés')
-  egal(c.tue, false, 'ennemi debout')
-  egal(c.mortel, false, 'joueur debout')
-})
-
-cas('la conséquence sait qu\'un mort ne riposte plus', () => {
-  const etat = groupe(cartes(10, MOULINET), [
-    ennemi({ pv: 16, degats: 6, periode: 2 }),
-    ennemi({ pv: 99, degats: 1, periode: 9, nom: 'Second' }),
+cas('la conséquence annonce ce qu\'un coup évite', () => {
+  const etat = groupe(cartes(6, MOULINET), [
+    ennemi({ pv: 16, degats: 5 }),
+    ennemi({ pv: 100, degats: 3, nom: 'Second' }),
   ])
   const c = consequence(etat, etat.main[0], 0)
 
   egal(c.tue, true, 'la cible est achevée')
   egal(c.gagne, false, 'il en reste un debout')
-  egal(c.frappes, 0, 'la cible ne frappe plus, l\'autre pas encore')
+  egal(c.evite, 5, 'sa frappe est évitée')
+  egal(c.menaceApres, 3, 'il reste la frappe du survivant')
 })
 
-cas('la conséquence prévient quand le joueur tombe pendant le temps', () => {
-  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 20, periode: 2, compteur: 2 }))
+cas('la conséquence n\'évite rien sur une cible qui ne frappait pas ce tour', () => {
+  const etat = groupe(cartes(6, MOULINET), [
+    ennemi({ pv: 16, degats: 5, periode: 3, compteur: 3 }),
+    ennemi({ pv: 100, degats: 3, nom: 'Second' }),
+  ])
   const c = consequence(etat, etat.main[0], 0)
 
-  egal(c.mortel, true, 'le joueur tombe')
-  egal(c.tue, false, 'la cible survit')
+  egal(c.tue, true, 'la cible est achevée')
+  egal(c.evite, 0, 'elle ne frappait pas ce tour-ci')
+  egal(c.menaceApres, 3, 'menace inchangée')
 })
 
-cas('la conséquence signale la carte qui déborde de la main', () => {
-  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 1, periode: 9 }))
-  const lente = { id: 'x', nom: 'Masse', type: 'combat' as const, vitesse: 6, degats: 3 }
+cas('la conséquence sait ce qu\'on ne peut pas payer', () => {
+  const etat = combat(cartes(6, MOULINET), ennemi({ pv: 100, degats: 5 }))
+  const apres = jouerCarte(etat, 0, 0)
 
-  egal(consequence(etat, etat.main[0], 0).tientDansLaMain, true, 'le moulinet tient à 4')
-  egal(consequence(etat, lente, 0).tientDansLaMain, false, 'la masse déborde des 5')
+  egal(consequence(etat, etat.main[0], 0).abordable, true, 'à 5 énergie')
+  egal(consequence(apres, apres.main[0], 0).abordable, false, 'à 1 énergie')
 })
 
 // --- plusieurs ennemis -------------------------------------------------------
 
 cas('un coup ne touche que sa cible', () => {
-  const etat = groupe(cartes(10, MOULINET), [
-    ennemi({ pv: 40, degats: 5, periode: 9 }),
-    ennemi({ pv: 40, degats: 5, periode: 9, nom: 'Second' }),
+  const etat = groupe(cartes(6, MOULINET), [
+    ennemi({ pv: 40, degats: 5 }),
+    ennemi({ pv: 40, degats: 5, nom: 'Second' }),
   ])
-  const apres = jouerCarte(etat, 0, 1, rng())
+  const apres = jouerCarte(etat, 0, 1)
 
   egal(apres.ennemis[0].pv, 40, 'le premier est intact')
   egal(apres.ennemis[1].pv, 24, 'seul le visé encaisse')
 })
 
-cas('tous les ennemis frappent pendant le temps acheté', () => {
-  // Sur 4 temps : le premier aux tics 2 et 4, le second au tic 3.
-  const etat = groupe(cartes(10, MOULINET), [
-    ennemi({ pv: 99, degats: 5, periode: 2 }),
-    ennemi({ pv: 99, degats: 3, periode: 3, nom: 'Second' }),
+cas('un mort ne frappe plus et quitte la liste des vivants', () => {
+  const etat = groupe(cartes(6, MOULINET), [
+    ennemi({ pv: 16, degats: 5 }),
+    ennemi({ pv: 100, degats: 5, nom: 'Second' }),
   ])
-  const vol = coutDuVol(etat, 4)
-
-  egal(vol.frappes, 3, 'frappes des deux corps')
-  egal(vol.degats, 13, 'dégâts cumulés (5 + 3 + 5)')
-  egal(jouerCarte(etat, 0, 0, rng()).pv, 17, 'PV réels après le coup')
-})
-
-cas('la victoire demande que tous soient à terre', () => {
-  const etat = groupe(cartes(10, MOULINET), [
-    ennemi({ pv: 16, degats: 1, periode: 9 }),
-    ennemi({ pv: 16, degats: 1, periode: 9, nom: 'Second' }),
-  ])
-  const un = jouerCarte(etat, 0, 0, rng())
-  egal(un.issue, null, 'un mort ne suffit pas')
-
-  const deux = jouerCarte(un, 0, 1, rng())
-  egal(deux.issue, 'victoire', 'les deux à terre')
-})
-
-cas('un mort ne frappe plus et quitte la prévision', () => {
-  const etat = groupe(cartes(10, MOULINET), [
-    ennemi({ pv: 16, degats: 5, periode: 3 }),
-    ennemi({ pv: 99, degats: 5, periode: 3, nom: 'Second' }),
-  ])
-  const apres = jouerCarte(etat, 0, 0, rng())
-  const frappes = prevoir(apres, 6).filter((p) => p.type === 'frappe')
+  const apres = jouerCarte(etat, 0, 0)
 
   egal(vivants(apres).length, 1, 'un seul debout')
-  verifie(frappes.every((f) => f.ennemi === 1), 'seul le survivant apparaît encore')
+  egal(vivants(apres)[0].index, 1, 'les index de cible ne bougent pas')
+  egal(menaceDuTour(apres), 5, 'seule la frappe du survivant reste')
 })
 
 // --- petite tuyauterie -------------------------------------------------------
@@ -302,26 +280,27 @@ function groupe(deck: Carte[], adversaires: Ennemi[]): EtatCombat {
 function ennemi(traits: {
   pv: number
   degats: number
-  periode: number
+  periode?: number
   compteur?: number
   nom?: string
 }): Ennemi {
+  const periode = traits.periode ?? 1
   return {
     nom: traits.nom ?? 'Mannequin',
     pv: traits.pv,
     pvMax: traits.pv,
     degats: traits.degats,
-    periode: traits.periode,
-    compteur: traits.compteur ?? traits.periode,
+    periode,
+    compteur: traits.compteur ?? periode,
   }
 }
 
-function cartes(nombre: number, modele: { nom: string; vitesse: number; degats: number }): Carte[] {
+function cartes(nombre: number, modele: { nom: string; cout: number; degats: number }): Carte[] {
   return Array.from({ length: nombre }, (_, i) => ({
     id: `${modele.nom}-${i + 1}`,
     nom: modele.nom,
     type: 'combat' as const,
-    vitesse: modele.vitesse,
+    cout: modele.cout,
     degats: modele.degats,
   }))
 }
@@ -331,7 +310,7 @@ function tresors(nombre: number): Carte[] {
     id: `tresor-${i + 1}`,
     nom: 'Idole',
     type: 'tresor' as const,
-    vitesse: 0,
+    cout: 0,
     degats: 0,
   }))
 }

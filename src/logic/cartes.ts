@@ -7,12 +7,12 @@ import type { Carte, Ennemi } from './combat.ts'
 type Modele = Omit<Carte, 'id'>
 
 /**
- * Rendement croissant avec la lenteur : 3,0 / 3,5 / 4,0 dégâts par temps.
- * Le gros coup paie mieux, mais il laisse frapper avant de tomber.
+ * Rendement croissant avec le coût : 3,0 / 3,5 / 4,0 dégâts par énergie.
+ * Le gros coup paie mieux, mais il mange presque tout le tour.
  */
-const DAGUE: Modele = { nom: 'Dague', type: 'combat', vitesse: 1, degats: 3 }
-const TAILLADE: Modele = { nom: 'Taillade', type: 'combat', vitesse: 2, degats: 7 }
-const MOULINET: Modele = { nom: 'Moulinet', type: 'combat', vitesse: 4, degats: 16 }
+const DAGUE: Modele = { nom: 'Dague', type: 'combat', cout: 1, degats: 3 }
+const TAILLADE: Modele = { nom: 'Taillade', type: 'combat', cout: 2, degats: 7 }
+const MOULINET: Modele = { nom: 'Moulinet', type: 'combat', cout: 4, degats: 16 }
 
 export function deckDeDepart(): Carte[] {
   return [
@@ -24,7 +24,7 @@ export function deckDeDepart(): Carte[] {
 
 /** Un trésor en tant que carte : inerte en combat, il n'occupe qu'une place. */
 export function carteTresor(id: string, nom: string): Carte {
-  return { id, nom, type: 'tresor', vitesse: 0, degats: 0 }
+  return { id, nom, type: 'tresor', cout: 0, degats: 0 }
 }
 
 /**
@@ -35,6 +35,9 @@ export function carteTresor(id: string, nom: string): Carte {
  * 2. Les PV d'un corps restent à portée des cartes. Un groupe de gros sacs
  *    de PV ramène au rendement pur : sans achèvement possible, le Moulinet
  *    redevient le seul choix et le multi-cibles ne décide plus rien.
+ *
+ * `periode` se compte en TOURS : 1 = frappe chaque tour, 2 = un tour sur deux
+ * en frappant plus fort. `compteur` est l'ouverture.
  */
 export type Groupe = { nom: string; ennemis: Ennemi[] }
 
@@ -45,18 +48,18 @@ function ennemi(nom: string, pv: number, degats: number, periode: number, compte
 export const GROUPES: Groupe[] = [
   {
     nom: 'Le Garde',
-    ennemis: [ennemi('Garde', 51, 9, 4, 2)],
+    ennemis: [ennemi('Garde', 70, 9, 1, 1)],
   },
   {
     nom: 'Deux roquets',
-    ennemis: [ennemi('Roquet', 32, 5, 4, 2), ennemi('Cabot', 30, 5, 4, 4)],
+    ennemis: [ennemi('Roquet', 36, 5, 1, 1), ennemi('Cabot', 34, 5, 1, 1)],
   },
   {
     nom: 'La meute',
     ennemis: [
-      ennemi('Meneur', 21, 4, 4, 2),
-      ennemi('Suiveur', 19, 4, 4, 4),
-      ennemi('Traînard', 19, 4, 4, 6),
+      ennemi('Meneur', 25, 4, 1, 1),
+      ennemi('Suiveur', 23, 4, 1, 1),
+      ennemi('Traînard', 23, 7, 2, 2),
     ],
   },
 ]

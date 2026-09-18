@@ -5,7 +5,7 @@ export type Action =
   | { type: 'viser'; index: number }
   | { type: 'annuler' }
   | { type: 'cibler'; cible: number }
-  | { type: 'passer' }
+  | { type: 'finTour' }
   | { type: 'rejouer' }
   | { type: 'nouveau' }
 
@@ -29,8 +29,8 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
       case 'cibler':
         dispatch({ type: 'cibler', cible: Number(noeud.dataset.cible) })
         break
-      case 'passer':
-        dispatch({ type: 'passer' })
+      case 'finTour':
+        dispatch({ type: 'finTour' })
         break
       case 'rejouer':
         dispatch({ type: 'rejouer' })

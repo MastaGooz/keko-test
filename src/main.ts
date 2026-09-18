@@ -1,7 +1,7 @@
 /**
  * Point d'entrée : câble logic/ et ui/.
  *
- * Prototype jetable — étape 5 : résolution immédiate, groupe d'ennemis,
+ * Prototype jetable — étape 6 : tour par tour, énergie, groupe d'ennemis,
  * cible au doigt.
  * Pas de sauvegarde ici : une partie se relance d'un bouton.
  */
@@ -9,7 +9,7 @@ import './ui/styles.css'
 import type { Rng } from './logic/rng.ts'
 import type { EtatCombat } from './logic/combat.ts'
 import { createRng, randomInt } from './logic/rng.ts'
-import { creerCombat, jouerCarte, passer } from './logic/combat.ts'
+import { creerCombat, finDuTour, jouerCarte } from './logic/combat.ts'
 import { GROUPES, deckDeDepart } from './logic/cartes.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
@@ -42,11 +42,11 @@ bindInput(view, (action) => {
       selection = null
       break
     case 'cibler':
-      if (selection !== null) etat = jouerCarte(etat, selection, action.cible, rng)
+      if (selection !== null) etat = jouerCarte(etat, selection, action.cible)
       selection = null
       break
-    case 'passer':
-      etat = passer(etat, rng)
+    case 'finTour':
+      etat = finDuTour(etat, rng)
       selection = null
       break
     case 'rejouer':
