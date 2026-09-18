@@ -50,6 +50,9 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
 - Le hub vend du **levier et de la variété, jamais de la sécurité**.
 - Le **système de combat** est tranché : horloge partagée, voir la section
   dédiée ci-dessous.
+- **Plusieurs ennemis par combat**, cible choisie à la tape. Un mort ne
+  frappe plus, donc achever vaut mieux que cogner au rendement — à condition
+  que les cartes soient en mesure d'achever. Ne pas aligner de gros sacs de PV.
 - **Mis de côté** pour l'instant : la fuite en combat, l'interruption des cartes
   en cours, la pioche comme action, le marchand au troc. Ne pas les
   implémenter.
@@ -106,11 +109,33 @@ qu'à ça : interface brute, aucun style.
 
 ## État actuel
 
-La tuyauterie est en place et validée de bout en bout ; **le jeu lui-même n'est
-pas commencé**. La page n'est qu'un placeholder (titre, date de build, bouton de
-tap + compteur persisté) servant à vérifier tactile, sauvegarde et rechargement.
-Le système de combat est choisi (horloge partagée). Prochaine étape : le
-prototype jetable qui teste l'hypothèse critique ci-dessus.
+Le prototype jetable de combat est **jouable au doigt** et déployé. Il ne sert
+qu'à tester l'hypothèse critique ci-dessus ; ni hub, ni marché, ni carte de
+donjon. Ce qui tourne :
+
+- moteur à horloge partagée, **plusieurs ennemis**, cible choisie au doigt ;
+- interface qui **affiche la conséquence de chaque carte** (ce qu'on encaisse
+  pendant son vol) et de chaque cible (ce que le coup lui fait) ;
+- frise chronologique, une voie par combattant ;
+- trois groupes d'ennemis calibrés par simulation ;
+- `npm run verif` : 22 vérifications des règles, sans navigateur.
+
+**Les chiffres sont calibrés par simulation, pas au jugé.** Les scripts vivent
+dans le scratchpad, pas dans le dépôt : ils se réécrivent en quelques minutes
+contre `src/logic/`, qui est pur exprès. Deux résultats à ne pas réapprendre :
+
+- **Le réglage d'un combat est un rasoir.** Le Garde passe de 89 % à 43 % de
+  victoires entre 51 et 53 PV. Un combat est une course ; une course n'a pas de
+  pente douce. Toujours revérifier par simulation après avoir bougé un chiffre.
+- **Plusieurs ennemis ne créent de la décision que si les cartes peuvent en
+  achever un.** Un mort ne frappe plus : c'est ce qui rend l'achèvement plus
+  payant que le rendement brut (+46 points de victoire à 3 corps). Des gros
+  sacs de PV en nombre ramènent au rendement pur, et le gros coup redevient le
+  seul choix.
+
+Prochaine étape : faire jouer Keko et répondre à l'hypothèse critique — la main
+polluée de trésors est-elle tendue ou pénible ? Les trésors ne sont pas encore
+ramassés en jeu ; on les injecte dans le deck pour mesurer.
 
 ## Architecture — la règle à ne pas casser
 

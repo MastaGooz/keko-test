@@ -7,6 +7,7 @@
   --muted: #9a9aa6;
   --trait: #3a3a44;
   --carte-fond: #22222a;
+  --fenetre: #1f1f27;
   --joueur: #5cc8ff;
   --ennemi: #ff6b6b;
   --sur: #6ee7a0;
@@ -45,24 +46,43 @@ body {
   font-size: 0.75rem;
 }
 
-/* --- les deux combattants ------------------------------------------------ */
+/* --- les combattants ----------------------------------------------------- */
+
+.ennemis {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
 
 .combattant {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  /* Aussi rendu en <button> quand il devient une cible : on neutralise. */
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  padding: 0;
 }
 
 .tete {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  gap: 0.5rem;
 }
 
 .nom {
   font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+}
+
+.ordinal {
+  color: var(--ennemi);
 }
 
 .pv {
@@ -94,53 +114,84 @@ body {
   color: var(--muted);
 }
 
+/* Une carte est visée : les ennemis deviennent des cibles touchables. */
+.combattant.cible {
+  /* >= 48px : cible tactile confortable */
+  min-height: 72px;
+  padding: 0.5rem 0.75rem;
+  border: 1px dashed var(--trait);
+  border-radius: 8px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.combattant.cible:active {
+  transform: scale(0.99);
+}
+
+.combattant.cible.achevable {
+  border-style: solid;
+  border-color: var(--fg);
+  background: #2b2b34;
+}
+
+.effet {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
+.combattant.cible.achevable .effet {
+  color: var(--fg);
+  font-weight: 600;
+}
+
 /* --- la frise ------------------------------------------------------------ */
 
 .frise {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 1px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin-top: 0.25rem;
 }
 
-.unite {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-/* Avant le début du combat : la colonne existe mais reste vide. */
-.unite.hors {
-  visibility: hidden;
-}
-
-/* La main en cours : le temps qu'il reste à dépenser avant que tout tombe. */
-.unite.fenetre {
-  background: #1f1f27;
-  border-radius: 3px;
-}
-
+/* Une voie par combattant : la tienne, l'axe, puis un ennemi par ligne. */
 .voie {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 1px;
+}
+
+.case {
   min-height: 24px;
   display: flex;
-  flex-direction: column-reverse;
   align-items: center;
   justify-content: center;
   gap: 1px;
 }
 
-.axe {
-  width: 100%;
+/* Avant le début du combat : la colonne existe mais reste vide. */
+.case.hors {
+  visibility: hidden;
+}
+
+/* La main en cours : le temps qu'il reste à dépenser avant que tout tombe. */
+.case.fenetre {
+  background: var(--fenetre);
+  border-radius: 3px;
+}
+
+.voie.axe .case {
+  min-height: 0;
   padding-top: 2px;
   border-top: 1px solid var(--trait);
-  text-align: center;
+  border-radius: 0;
   font-size: 0.5625rem;
   line-height: 1.4;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
 
-.unite.maintenant .axe {
+.voie.axe .case.maintenant {
   border-top-color: var(--fg);
   color: var(--fg);
 }
@@ -204,10 +255,11 @@ body {
 
 .bande {
   display: inline-block;
+  flex: none;
   width: 14px;
   height: 10px;
   border-radius: 3px;
-  background: #1f1f27;
+  background: var(--fenetre);
   border: 1px solid var(--trait);
 }
 
@@ -278,6 +330,18 @@ body {
   color: var(--muted);
 }
 
+/* Signale l'occasion d'achever — c'est elle qui rend le multi-cibles tendu. */
+.marque {
+  margin-left: 0.5rem;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 999px;
+  background: var(--fg);
+  color: #101014;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 /* Le liseré gauche dit le coût avant qu'on ait lu quoi que ce soit. */
 .carte.propre {
   border-left-color: var(--sur);
@@ -307,11 +371,6 @@ body {
 .carte.acheve {
   border-left-color: var(--fg);
   background: #2b2b34;
-}
-
-.carte.acheve .verdict {
-  color: var(--fg);
-  font-weight: 600;
 }
 
 .carte.visee {

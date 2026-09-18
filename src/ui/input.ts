@@ -3,7 +3,8 @@ import type { View } from './render.ts'
 
 export type Action =
   | { type: 'viser'; index: number }
-  | { type: 'jouer'; index: number }
+  | { type: 'annuler' }
+  | { type: 'cibler'; cible: number }
   | { type: 'passer' }
   | { type: 'rejouer' }
   | { type: 'nouveau' }
@@ -15,16 +16,18 @@ export type Action =
 export function bindInput(view: View, dispatch: (action: Action) => void): void {
   // 'click' couvre tactile et souris, sans double déclenchement.
   view.root.addEventListener('click', (evenement) => {
-    const cible = (evenement.target as HTMLElement).closest<HTMLElement>('[data-action]')
-    if (cible === null) return
+    const noeud = (evenement.target as HTMLElement).closest<HTMLElement>('[data-action]')
+    if (noeud === null) return
 
-    const index = Number(cible.dataset.index)
-    switch (cible.dataset.action) {
+    switch (noeud.dataset.action) {
       case 'viser':
-        dispatch({ type: 'viser', index })
+        dispatch({ type: 'viser', index: Number(noeud.dataset.index) })
         break
-      case 'jouer':
-        dispatch({ type: 'jouer', index })
+      case 'annuler':
+        dispatch({ type: 'annuler' })
+        break
+      case 'cibler':
+        dispatch({ type: 'cibler', cible: Number(noeud.dataset.cible) })
         break
       case 'passer':
         dispatch({ type: 'passer' })

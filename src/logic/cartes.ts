@@ -1,6 +1,6 @@
 /**
- * Contenu du prototype : deck de départ et ennemis. Données pures.
- * Les chiffres sont là pour être bousculés après le premier playtest.
+ * Contenu du prototype : deck de départ et groupes d'ennemis. Données pures.
+ * Les chiffres sont là pour être bousculés après le playtest.
  */
 import type { Carte, Ennemi } from './combat.ts'
 
@@ -28,23 +28,38 @@ export function carteTresor(id: string, nom: string): Carte {
 }
 
 /**
- * Calibrés par simulation (400+ combats par point) pour que la cupidité se
- * paie : avec le deck pur on gagne ~88 %, à 4 trésors on tombe à ~45 %.
- * Avant ce réglage les trois se gagnaient à 100 % quoi qu'on joue — aucune
- * décision ne comptait, donc rien n'était lisible.
+ * Groupes calibrés par simulation. Deux règles tenues :
  *
- * `compteur` est l'ouverture, distincte de la période : sans elle le Roquet
- * meurt avant d'avoir frappé et son rythme ne se sent jamais.
- *
- * Attention en bougeant ces chiffres : la marge est un rasoir. Le Garde passe
- * de 89 % à 43 % de victoires entre 51 et 53 PV. Un combat est une course, et
- * une course n'a pas de pente douce.
+ * 1. La pression totale reste comparable d'un groupe à l'autre — c'est le
+ *    nombre de corps qu'on fait varier, pas la difficulté brute.
+ * 2. Les PV d'un corps restent à portée des cartes. Un groupe de gros sacs
+ *    de PV ramène au rendement pur : sans achèvement possible, le Moulinet
+ *    redevient le seul choix et le multi-cibles ne décide plus rien.
  */
-export const ROQUET: Ennemi = { nom: 'Roquet', pv: 36, pvMax: 36, degats: 5, periode: 2, compteur: 1 }
-export const GARDE: Ennemi = { nom: 'Garde', pv: 51, pvMax: 51, degats: 9, periode: 4, compteur: 2 }
-export const BRUTE: Ennemi = { nom: 'Brute', pv: 54, pvMax: 54, degats: 12, periode: 7, compteur: 4 }
+export type Groupe = { nom: string; ennemis: Ennemi[] }
 
-export const ENNEMIS: Ennemi[] = [ROQUET, GARDE, BRUTE]
+function ennemi(nom: string, pv: number, degats: number, periode: number, compteur: number): Ennemi {
+  return { nom, pv, pvMax: pv, degats, periode, compteur }
+}
+
+export const GROUPES: Groupe[] = [
+  {
+    nom: 'Le Garde',
+    ennemis: [ennemi('Garde', 51, 9, 4, 2)],
+  },
+  {
+    nom: 'Deux roquets',
+    ennemis: [ennemi('Roquet', 25, 5, 4, 2), ennemi('Cabot', 23, 5, 4, 4)],
+  },
+  {
+    nom: 'La meute',
+    ennemis: [
+      ennemi('Meneur', 19, 4, 4, 2),
+      ennemi('Suiveur', 17, 4, 4, 4),
+      ennemi('Traînard', 17, 4, 4, 6),
+    ],
+  },
+]
 
 function exemplaires(nombre: number, modele: Modele, prefixe: string): Carte[] {
   return Array.from({ length: nombre }, (_, i) => ({ ...modele, id: `${prefixe}-${i + 1}` }))

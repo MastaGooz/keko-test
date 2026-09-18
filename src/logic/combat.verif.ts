@@ -9,7 +9,7 @@
  */
 import { createRng } from './rng.ts'
 import type { Carte, ConfigCombat, Ennemi, EtatCombat } from './combat.ts'
-import { consequence, creerCombat, jouerCarte, mainMorte, passer, prevoir } from './combat.ts'
+import { consequence, coutDuVol, creerCombat, jouerCarte, mainMorte, passer, prevoir, vivants } from './combat.ts'
 
 const CONFIG: ConfigCombat = { pvMax: 30, tailleMain: 5, periodePioche: 5 }
 
@@ -26,7 +26,7 @@ cas('la carte résout à la FIN de son temps, pas à l\'engagement', () => {
   // le coup tombe après. Si la carte résolvait tout de suite, l'ennemi mourrait
   // avant d'avoir frappé et on serait encore à 30 PV.
   const etat = combat(cartes(6, MOULINET), ennemi({ pv: 16, degats: 5, periode: 2 }))
-  const apres = jouerCarte(etat, 0, rng())
+  const apres = jouerCarte(etat, 0, 0, rng())
 
   egal(apres.issue, 'victoire', 'issue')
   egal(apres.pv, 25, 'PV du joueur (une frappe encaissée au tic 2)')
@@ -35,7 +35,7 @@ cas('la carte résout à la FIN de son temps, pas à l\'engagement', () => {
 cas('à égalité, la carte du joueur passe avant la frappe ennemie', () => {
   // Moulinet (4) contre un compteur à 4 : tuer pile à temps doit marcher.
   const etat = combat(cartes(6, MOULINET), ennemi({ pv: 16, degats: 5, periode: 4 }))
-  const apres = jouerCarte(etat, 0, rng())
+  const apres = jouerCarte(etat, 0, 0, rng())
 
   egal(apres.issue, 'victoire', 'issue')
   egal(apres.pv, 30, 'PV du joueur (aucune frappe : l\'ennemi meurt avant)')
@@ -43,12 +43,12 @@ cas('à égalité, la carte du joueur passe avant la frappe ennemie', () => {
 
 cas('à égalité, si l\'ennemi survit il frappe quand même', () => {
   const etat = combat(cartes(6, MOULINET), ennemi({ pv: 30, degats: 5, periode: 4 }))
-  const apres = jouerCarte(etat, 0, rng())
+  const apres = jouerCarte(etat, 0, 0, rng())
 
   egal(apres.issue, null, 'issue')
-  egal(apres.ennemi.pv, 14, 'PV de l\'ennemi')
+  egal(apres.ennemis[0].pv, 14, 'PV de l\'ennemi')
   egal(apres.pv, 25, 'PV du joueur')
-  egal(apres.ennemi.compteur, 4, 'compteur ennemi rechargé')
+  egal(apres.ennemis[0].compteur, 4, 'compteur ennemi rechargé')
 })
 
 cas('passer avance jusqu\'à la pioche et fait frapper l\'ennemi en chemin', () => {
@@ -73,7 +73,7 @@ cas('la pioche renouvelle TOUTE la main', () => {
 
 cas('un trésor ne se joue pas', () => {
   const etat = combat(tresors(10), ennemi({ pv: 100, degats: 5, periode: 10 }))
-  const apres = jouerCarte(etat, 0, rng())
+  const apres = jouerCarte(etat, 0, 0, rng())
 
   verifie(mainMorte(etat), 'la main devrait être morte')
   verifie(apres === etat, 'l\'état devrait être inchangé, à l\'identique')
@@ -113,7 +113,7 @@ cas('la mort interrompt l\'écoulement du temps', () => {
 cas('les transitions ne modifient pas l\'état reçu', () => {
   const etat = combat(cartes(6, MOULINET), ennemi({ pv: 100, degats: 5, periode: 2 }))
   const temoin = JSON.stringify(etat)
-  jouerCarte(etat, 0, rng())
+  jouerCarte(etat, 0, 0, rng())
   passer(etat, rng())
 
   egal(JSON.stringify(etat), temoin, 'état d\'origine')
@@ -121,11 +121,11 @@ cas('les transitions ne modifient pas l\'état reçu', () => {
 
 cas('une carte à vitesse 0 résout sans faire avancer le temps', () => {
   const etat = combat(cartes(10, { nom: 'Pichenette', vitesse: 0, degats: 5 }), ennemi({ pv: 100, degats: 5, periode: 3 }))
-  const apres = jouerCarte(etat, 0, rng())
+  const apres = jouerCarte(etat, 0, 0, rng())
 
-  egal(apres.ennemi.pv, 95, 'dégâts appliqués')
+  egal(apres.ennemis[0].pv, 95, 'dégâts appliqués')
   egal(apres.temps, 0, 'temps figé')
-  egal(apres.ennemi.compteur, etat.ennemi.compteur, 'compteur ennemi intact')
+  egal(apres.ennemis[0].compteur, etat.ennemis[0].compteur, 'compteur ennemi intact')
   egal(apres.defausse.length, 1, 'carte défaussée')
 })
 
@@ -150,7 +150,7 @@ cas('la prévision place la carte avant la frappe à égalité', () => {
 cas('la conséquence compte ce qu\'on encaisse avant la résolution', () => {
   // Frappe dans 2 puis tous les 3 ; le moulinet tombe à 4 : une seule frappe.
   const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 6, periode: 3, compteur: 2 }))
-  const c = consequence(etat, etat.main[0])
+  const c = consequence(etat, etat.main[0], 0)
 
   egal(c.frappes, 1, 'frappes encaissées')
   egal(c.degats, 6, 'dégâts encaissés')
@@ -161,7 +161,7 @@ cas('la conséquence compte ce qu\'on encaisse avant la résolution', () => {
 cas('la conséquence annonce le coup qui achève sans riposte', () => {
   // L'ennemi frappe pile quand la carte tombe : la carte passe avant et le tue.
   const etat = combat(cartes(10, MOULINET), ennemi({ pv: 16, degats: 6, periode: 4, compteur: 4 }))
-  const c = consequence(etat, etat.main[0])
+  const c = consequence(etat, etat.main[0], 0)
 
   egal(c.tue, true, 'achevé')
   egal(c.frappes, 0, 'aucune riposte')
@@ -169,7 +169,7 @@ cas('la conséquence annonce le coup qui achève sans riposte', () => {
 
 cas('la conséquence prévient quand la carte tue le joueur avant de tomber', () => {
   const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 20, periode: 2, compteur: 2 }))
-  const c = consequence(etat, etat.main[0])
+  const c = consequence(etat, etat.main[0], 0)
 
   egal(c.mortel, true, 'le joueur tombe')
   egal(c.tue, false, 'la carte ne résout jamais')
@@ -177,10 +177,75 @@ cas('la conséquence prévient quand la carte tue le joueur avant de tomber', ()
 
 cas('la conséquence signale la carte qui déborde de la main', () => {
   const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 1, periode: 9 }))
-  const rapide = consequence(etat, { id: 'x', nom: 'Dague', type: 'combat', vitesse: 1, degats: 3 })
+  const rapide = consequence(etat, { id: 'x', nom: 'Dague', type: 'combat', vitesse: 1, degats: 3 }, 0)
 
   egal(rapide.tientDansLaMain, true, 'la dague tient dans les 5')
-  egal(consequence(etat, etat.main[0]).tientDansLaMain, true, 'le moulinet tient à 4')
+  egal(consequence(etat, etat.main[0], 0).tientDansLaMain, true, 'le moulinet tient à 4')
+})
+
+cas('un coup ne touche que sa cible', () => {
+  const etat = groupe(cartes(10, MOULINET), [
+    ennemi({ pv: 40, degats: 5, periode: 9 }),
+    ennemi({ pv: 40, degats: 5, periode: 9, nom: 'Second' }),
+  ])
+  const apres = jouerCarte(etat, 0, 1, rng())
+
+  egal(apres.ennemis[0].pv, 40, 'le premier est intact')
+  egal(apres.ennemis[1].pv, 24, 'seul le visé encaisse')
+})
+
+cas('tous les ennemis avancent pendant qu\'une carte est en vol', () => {
+  // Moulinet (4) : le premier frappe aux tics 2 et 4, le second au tic 3.
+  const etat = groupe(cartes(10, MOULINET), [
+    ennemi({ pv: 99, degats: 5, periode: 2 }),
+    ennemi({ pv: 99, degats: 3, periode: 3, nom: 'Second' }),
+  ])
+  const vol = coutDuVol(etat, 4)
+
+  egal(vol.frappes, 3, 'frappes des deux corps')
+  egal(vol.degats, 13, 'dégâts cumulés (5 + 3 + 5)')
+  egal(jouerCarte(etat, 0, 0, rng()).pv, 17, 'PV après le vol de la carte')
+})
+
+cas('achever une cible fait taire ses frappes, pas celles des autres', () => {
+  // Les deux frappent au tic 4, quand le moulinet tombe. Il achève le premier :
+  // celui-là ne frappe pas, l'autre si.
+  const etat = groupe(cartes(10, MOULINET), [
+    ennemi({ pv: 16, degats: 5, periode: 4 }),
+    ennemi({ pv: 99, degats: 3, periode: 4, nom: 'Second' }),
+  ])
+  const c = consequence(etat, etat.main[0], 0)
+  const apres = jouerCarte(etat, 0, 0, rng())
+
+  egal(c.tue, true, 'la cible est achevée')
+  egal(c.gagne, false, 'il en reste un debout')
+  egal(c.degats, 3, 'seule la frappe du survivant est encaissée')
+  egal(apres.pv, 27, 'PV réels après le coup')
+  egal(apres.issue, null, 'le combat continue')
+})
+
+cas('la victoire demande que tous soient à terre', () => {
+  const etat = groupe(cartes(10, MOULINET), [
+    ennemi({ pv: 16, degats: 1, periode: 9 }),
+    ennemi({ pv: 16, degats: 1, periode: 9, nom: 'Second' }),
+  ])
+  const un = jouerCarte(etat, 0, 0, rng())
+  egal(un.issue, null, 'un mort ne suffit pas')
+
+  const deux = jouerCarte(un, 0, 1, rng())
+  egal(deux.issue, 'victoire', 'les deux à terre')
+})
+
+cas('un mort ne frappe plus et quitte la prévision', () => {
+  const etat = groupe(cartes(10, MOULINET), [
+    ennemi({ pv: 16, degats: 5, periode: 3 }),
+    ennemi({ pv: 99, degats: 5, periode: 3, nom: 'Second' }),
+  ])
+  const apres = jouerCarte(etat, 0, 0, rng())
+  const frappes = prevoir(apres, 6, null).filter((p) => p.type === 'frappe')
+
+  egal(vivants(apres).length, 1, 'un seul debout')
+  verifie(frappes.every((f) => f.ennemi === 1), 'seul le survivant apparaît encore')
 })
 
 // --- petite tuyauterie -------------------------------------------------------
@@ -212,12 +277,16 @@ function rng() {
 }
 
 function combat(deck: Carte[], adversaire: Ennemi): EtatCombat {
-  return creerCombat(deck, adversaire, rng(), CONFIG)
+  return creerCombat(deck, [adversaire], rng(), CONFIG)
 }
 
-function ennemi(traits: { pv: number; degats: number; periode: number; compteur?: number }): Ennemi {
+function groupe(deck: Carte[], adversaires: Ennemi[]): EtatCombat {
+  return creerCombat(deck, adversaires, rng(), CONFIG)
+}
+
+function ennemi(traits: { pv: number; degats: number; periode: number; compteur?: number; nom?: string }): Ennemi {
   return {
-    nom: 'Mannequin',
+    nom: traits.nom ?? 'Mannequin',
     pv: traits.pv,
     pvMax: traits.pv,
     degats: traits.degats,

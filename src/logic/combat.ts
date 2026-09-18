@@ -4,7 +4,11 @@
  * Le temps ne s'écoule que quand le joueur le dépense. Chaque combattant porte
  * un compteur ; le joueur est une unité comme les autres, son compteur à lui
  * déclenche sa pioche. Une carte engagée résout à la FIN de son temps, et à
- * égalité elle passe avant la frappe ennemie du même tic.
+ * égalité elle passe avant les frappes ennemies du même tic.
+ *
+ * Plusieurs ennemis partagent la même horloge. Un coup ne porte que sur sa
+ * cible, mais le temps qu'il coûte les fait tous avancer : c'est ce qui rend
+ * l'achèvement précieux — un mort ne frappe plus.
  *
  * Les transitions exportées ne modifient jamais l'état reçu : elles en font une
  * copie, mutent la copie, et la renvoient.
@@ -38,8 +42,9 @@ export type Issue = 'victoire' | 'defaite'
 
 /** Ce qui s'est passé, horodaté : sert au récit ET à la frise chronologique. */
 export type Evenement =
-  | { t: number; type: 'debut'; ennemi: string }
-  | { t: number; type: 'carte'; nom: string; degats: number; pvEnnemi: number }
+  | { t: number; type: 'debut'; ennemis: string[] }
+  | { t: number; type: 'carte'; nom: string; cible: string; degats: number; pvCible: number }
+  | { t: number; type: 'mort'; nom: string }
   | { t: number; type: 'frappe'; nom: string; degats: number; pvJoueur: number }
   | { t: number; type: 'pioche'; cartes: number; tresors: number }
   | { t: number; type: 'issue'; issue: Issue }
@@ -50,12 +55,15 @@ export type Prevision = {
   dans: number
   type: 'carte' | 'frappe' | 'pioche'
   nom: string
+  /** Index de l'ennemi concerné — seulement pour une frappe. */
+  ennemi?: number
 }
 
 export type EtatCombat = {
   pv: number
   pvMax: number
-  ennemi: Ennemi
+  /** Les morts restent dans le tableau (pv à 0) : les index de cible ne bougent pas. */
+  ennemis: Ennemi[]
   pioche: Carte[]
   main: Carte[]
   defausse: Carte[]
@@ -84,14 +92,14 @@ export const CONFIG_DEFAUT: ConfigCombat = {
 
 export function creerCombat(
   deck: Carte[],
-  ennemi: Ennemi,
+  ennemis: Ennemi[],
   rng: Rng,
   config: ConfigCombat = CONFIG_DEFAUT,
 ): EtatCombat {
   const etat: EtatCombat = {
     pv: config.pvMax,
     pvMax: config.pvMax,
-    ennemi: { ...ennemi },
+    ennemis: ennemis.map((ennemi) => ({ ...ennemi })),
     pioche: melanger(deck, rng),
     main: [],
     defausse: [],
@@ -99,7 +107,7 @@ export function creerCombat(
     periodePioche: config.periodePioche,
     tailleMain: config.tailleMain,
     temps: 0,
-    evenements: [{ t: 0, type: 'debut', ennemi: ennemi.nom }],
+    evenements: [{ t: 0, type: 'debut', ennemis: ennemis.map((e) => e.nom) }],
     issue: null,
   }
 
@@ -108,19 +116,21 @@ export function creerCombat(
 }
 
 /**
- * Engage la carte de la main à `index`. Elle quitte la main tout de suite,
- * le temps s'écoule de sa vitesse, et elle résout à la fin.
- * Renvoie l'état inchangé si le coup est impossible (combat fini, trésor...).
+ * Engage la carte de la main à `index` contre l'ennemi `cible`. Elle quitte la
+ * main tout de suite, le temps s'écoule de sa vitesse, et elle résout à la fin.
+ * Renvoie l'état inchangé si le coup est impossible (combat fini, trésor,
+ * cible déjà morte...).
  */
-export function jouerCarte(etat: EtatCombat, index: number, rng: Rng): EtatCombat {
+export function jouerCarte(etat: EtatCombat, index: number, cible: number, rng: Rng): EtatCombat {
   if (etat.issue !== null) return etat
 
   const carte = etat.main[index]
   if (carte === undefined || carte.type !== 'combat') return etat
+  if (!estVivant(etat, cible)) return etat
 
   const suivant = copier(etat)
   suivant.main.splice(index, 1)
-  ecouler(suivant, carte.vitesse, rng, carte)
+  ecouler(suivant, carte.vitesse, rng, carte, cible)
   return suivant
 }
 
@@ -133,7 +143,7 @@ export function passer(etat: EtatCombat, rng: Rng): EtatCombat {
   if (etat.issue !== null) return etat
 
   const suivant = copier(etat)
-  ecouler(suivant, etat.compteurPioche, rng, null)
+  ecouler(suivant, etat.compteurPioche, rng, null, -1)
   return suivant
 }
 
@@ -148,9 +158,12 @@ export function prevoir(etat: EtatCombat, horizon: number, carte: Carte | null):
 
   const prevues: Prevision[] = []
 
-  for (let dans = etat.ennemi.compteur; dans <= horizon; dans += etat.ennemi.periode) {
-    prevues.push({ dans, type: 'frappe', nom: etat.ennemi.nom })
-  }
+  etat.ennemis.forEach((ennemi, index) => {
+    if (ennemi.pv === 0) return
+    for (let dans = ennemi.compteur; dans <= horizon; dans += ennemi.periode) {
+      prevues.push({ dans, type: 'frappe', nom: ennemi.nom, ennemi: index })
+    }
+  })
   for (let dans = etat.compteurPioche; dans <= horizon; dans += etat.periodePioche) {
     prevues.push({ dans, type: 'pioche', nom: 'Pioche' })
   }
@@ -163,13 +176,43 @@ export function prevoir(etat: EtatCombat, horizon: number, carte: Carte | null):
   return prevues.sort((a, b) => a.dans - b.dans || rang[a.type] - rang[b.type])
 }
 
+/**
+ * Ce qu'on encaisse en dépensant `temps`, sans rien y changer.
+ *
+ * Indépendant de la cible visée : pendant qu'une carte est en vol, TOUS les
+ * ennemis avancent. C'est pour ça que cette part s'affiche sur la carte, et
+ * que la part qui dépend de la cible s'affiche sur l'ennemi.
+ */
+export function coutDuVol(
+  etat: EtatCombat,
+  temps: number,
+): { frappes: number; degats: number; mortel: boolean } {
+  let pv = etat.pv
+  let frappes = 0
+  let degats = 0
+
+  for (const prevision of prevoir(etat, temps, null)) {
+    if (prevision.type !== 'frappe') continue
+    const ennemi = etat.ennemis[prevision.ennemi!]!
+    pv -= ennemi.degats
+    degats += ennemi.degats
+    frappes += 1
+    if (pv <= 0) return { frappes, degats, mortel: true }
+  }
+
+  return { frappes, degats, mortel: false }
+}
+
+/** Ce que coûte un passage : on encaisse tout jusqu'au renouvellement de main. */
+export function coutDuPassage(etat: EtatCombat): { frappes: number; degats: number } {
+  const { frappes, degats } = coutDuVol(etat, etat.compteurPioche)
+  return { frappes, degats }
+}
 
 /**
- * Ce que coûte une carte jouée maintenant, simulé sans jouer le coup.
- *
- * C'est la question que le joueur pose à chaque carte de sa main. La poser
- * cinq fois de suite à la main est exactement la corvée qu'on veut lui
- * épargner : l'interface l'affiche sur chaque carte.
+ * Ce que coûte une carte jouée maintenant sur `cible`, simulé sans jouer le
+ * coup. C'est la question que le joueur pose à chaque carte de sa main : la
+ * poser cinq fois à la main est exactement la corvée qu'on lui épargne.
  */
 export type Consequence = {
   /** Instant de résolution, en temps relatif. */
@@ -178,27 +221,34 @@ export type Consequence = {
   frappes: number
   /** Dégâts correspondants. */
   degats: number
-  /** La carte achève l'ennemi — et le joueur est vivant pour le voir. */
+  /** La carte achève la cible — et le joueur est vivant pour le voir. */
   tue: boolean
+  /** La carte achève le dernier ennemi debout : elle gagne le combat. */
+  gagne: boolean
   /** Le joueur tombe avant que la carte ne résolve. */
   mortel: boolean
   /** La main tient jusqu'à la résolution ; sinon le reste part à la défausse. */
   tientDansLaMain: boolean
 }
 
-export function consequence(etat: EtatCombat, carte: Carte): Consequence {
-  const acheve = carte.degats >= etat.ennemi.pv
-  const frappesPrevues = prevoir(etat, carte.vitesse, null).filter((p) => p.type === 'frappe')
+export function consequence(etat: EtatCombat, carte: Carte, cible: number): Consequence {
+  const vise = etat.ennemis[cible]
+  const acheve = vise !== undefined && vise.pv > 0 && carte.degats >= vise.pv
 
   let pv = etat.pv
   let frappes = 0
+  let degats = 0
   let mortel = false
 
-  for (const frappe of frappesPrevues) {
-    // À égalité la carte résout d'abord : si elle achève, la frappe n'a pas lieu.
-    if (frappe.dans === carte.vitesse && acheve) break
+  for (const prevision of prevoir(etat, carte.vitesse, null)) {
+    if (prevision.type !== 'frappe') continue
+    // À égalité la carte résout d'abord : la cible achevée ne frappe plus.
+    // Les autres ennemis, eux, frappent quand même.
+    if (prevision.dans === carte.vitesse && acheve && prevision.ennemi === cible) continue
 
-    pv -= etat.ennemi.degats
+    const ennemi = etat.ennemis[prevision.ennemi!]!
+    pv -= ennemi.degats
+    degats += ennemi.degats
     frappes += 1
     if (pv <= 0) {
       mortel = true
@@ -206,20 +256,29 @@ export function consequence(etat: EtatCombat, carte: Carte): Consequence {
     }
   }
 
+  const debout = etat.ennemis.filter((ennemi) => ennemi.pv > 0).length
+
   return {
     dans: carte.vitesse,
     frappes,
-    degats: frappes * etat.ennemi.degats,
+    degats,
     tue: acheve && !mortel,
+    gagne: acheve && !mortel && debout === 1,
     mortel,
     tientDansLaMain: carte.vitesse <= etat.compteurPioche,
   }
 }
 
-/** Ce que coûte un passage : on encaisse tout jusqu'au renouvellement de main. */
-export function coutDuPassage(etat: EtatCombat): { frappes: number; degats: number } {
-  const frappes = prevoir(etat, etat.compteurPioche, null).filter((p) => p.type === 'frappe').length
-  return { frappes, degats: frappes * etat.ennemi.degats }
+/** Les ennemis encore debout, avec leur index de cible. */
+export function vivants(etat: EtatCombat): { ennemi: Ennemi; index: number }[] {
+  return etat.ennemis
+    .map((ennemi, index) => ({ ennemi, index }))
+    .filter((x) => x.ennemi.pv > 0)
+}
+
+function estVivant(etat: EtatCombat, index: number): boolean {
+  const ennemi = etat.ennemis[index]
+  return ennemi !== undefined && ennemi.pv > 0
 }
 
 /** Nombre de trésors qui encombrent la main. */
@@ -237,27 +296,38 @@ export function mainMorte(etat: EtatCombat): boolean {
 /**
  * Écoule `temps` tics. À chaque tic, les compteurs descendent d'un cran et ce
  * qui atteint 0 se résout aussitôt. La carte engagée résout au dernier tic,
- * avant la frappe ennemie de ce tic : c'est la règle d'égalité, celle qui
+ * avant les frappes ennemies de ce tic : c'est la règle d'égalité, celle qui
  * permet de tuer pile à temps.
  */
-function ecouler(etat: EtatCombat, temps: number, rng: Rng, carte: Carte | null): void {
+function ecouler(
+  etat: EtatCombat,
+  temps: number,
+  rng: Rng,
+  carte: Carte | null,
+  cible: number,
+): void {
   // Vitesse 0 : la carte résout sans que rien n'avance. Aucun compteur ne bouge,
   // donc rien d'autre ne peut tomber — on sort avant la boucle.
   if (temps === 0) {
-    if (carte !== null) resoudreCarte(etat, carte)
+    if (carte !== null) resoudreCarte(etat, carte, cible)
     return
   }
 
   for (let tic = 1; tic <= temps; tic += 1) {
     etat.temps += 1
-    etat.ennemi.compteur -= 1
+    for (const ennemi of etat.ennemis) {
+      if (ennemi.pv > 0) ennemi.compteur -= 1
+    }
     etat.compteurPioche -= 1
 
-    if (carte !== null && tic === temps) resoudreCarte(etat, carte)
+    if (carte !== null && tic === temps) resoudreCarte(etat, carte, cible)
     if (etat.issue !== null) return
 
-    if (etat.ennemi.compteur <= 0) frapper(etat)
-    if (etat.issue !== null) return
+    // Un ennemi achevé à ce tic ne frappe pas : il est déjà tombé à 0 PV.
+    for (const ennemi of etat.ennemis) {
+      if (ennemi.pv > 0 && ennemi.compteur <= 0) frapper(etat, ennemi)
+      if (etat.issue !== null) return
+    }
 
     if (etat.compteurPioche <= 0) {
       etat.compteurPioche = etat.periodePioche
@@ -266,28 +336,36 @@ function ecouler(etat: EtatCombat, temps: number, rng: Rng, carte: Carte | null)
   }
 }
 
-function resoudreCarte(etat: EtatCombat, carte: Carte): void {
-  etat.ennemi.pv = Math.max(0, etat.ennemi.pv - carte.degats)
+function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number): void {
   etat.defausse.push(carte)
+
+  const ennemi = etat.ennemis[cible]
+  if (ennemi === undefined || ennemi.pv === 0) return
+
+  ennemi.pv = Math.max(0, ennemi.pv - carte.degats)
   etat.evenements.push({
     t: etat.temps,
     type: 'carte',
     nom: carte.nom,
+    cible: ennemi.nom,
     degats: carte.degats,
-    pvEnnemi: etat.ennemi.pv,
+    pvCible: ennemi.pv,
   })
 
-  if (etat.ennemi.pv === 0) terminer(etat, 'victoire')
+  if (ennemi.pv === 0) {
+    etat.evenements.push({ t: etat.temps, type: 'mort', nom: ennemi.nom })
+    if (etat.ennemis.every((autre) => autre.pv === 0)) terminer(etat, 'victoire')
+  }
 }
 
-function frapper(etat: EtatCombat): void {
-  etat.pv = Math.max(0, etat.pv - etat.ennemi.degats)
-  etat.ennemi.compteur = etat.ennemi.periode
+function frapper(etat: EtatCombat, ennemi: Ennemi): void {
+  etat.pv = Math.max(0, etat.pv - ennemi.degats)
+  ennemi.compteur = ennemi.periode
   etat.evenements.push({
     t: etat.temps,
     type: 'frappe',
-    nom: etat.ennemi.nom,
-    degats: etat.ennemi.degats,
+    nom: ennemi.nom,
+    degats: ennemi.degats,
     pvJoueur: etat.pv,
   })
 
@@ -335,7 +413,7 @@ function melanger(cartes: Carte[], rng: Rng): Carte[] {
 function copier(etat: EtatCombat): EtatCombat {
   return {
     ...etat,
-    ennemi: { ...etat.ennemi },
+    ennemis: etat.ennemis.map((ennemi) => ({ ...ennemi })),
     pioche: [...etat.pioche],
     main: [...etat.main],
     defausse: [...etat.defausse],
