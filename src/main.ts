@@ -10,7 +10,7 @@ import type { Rng } from './logic/rng.ts'
 import type { EtatCombat } from './logic/combat.ts'
 import { createRng, randomInt } from './logic/rng.ts'
 import { creerCombat, finDuTour, jouerCarte } from './logic/combat.ts'
-import { GROUPES, deckDeDepart } from './logic/cartes.ts'
+import { GROUPES, deckAvecTresors } from './logic/cartes.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
 
@@ -22,15 +22,20 @@ let rng: Rng
 let etat: EtatCombat
 /** Carte visée mais pas encore engagée : il lui manque une cible. */
 let selection: number | null = null
+/**
+ * Le curseur de l'expérience : combien de trésors le joueur a ramassés avant
+ * ce combat. C'est LA variable que ce prototype existe pour faire sentir.
+ */
+let tresors = 0
 
 /** Tout le hasard du combat découle de la seed : la rejouer rejoue le combat. */
 function demarrer(nouvelleSeed: number): void {
   seed = nouvelleSeed
   rng = createRng(seed)
   const groupe = GROUPES[randomInt(rng, 0, GROUPES.length - 1)]!
-  etat = creerCombat(deckDeDepart(), groupe.ennemis, rng)
+  etat = creerCombat(deckAvecTresors(tresors, rng), groupe.ennemis, rng)
   selection = null
-  render(view, etat, seed, selection)
+  render(view, etat, seed, selection, tresors)
 }
 
 bindInput(view, (action) => {
@@ -51,11 +56,14 @@ bindInput(view, (action) => {
       break
     case 'rejouer':
       return demarrer(seed)
+    case 'cupidite':
+      tresors = action.tresors
+      return demarrer(Date.now() % 100000)
     case 'nouveau':
       // Seed courte : lisible à l'écran, suffisante pour rejouer un combat.
       return demarrer(Date.now() % 100000)
   }
-  render(view, etat, seed, selection)
+  render(view, etat, seed, selection, tresors)
 })
 
 demarrer(Date.now() % 100000)

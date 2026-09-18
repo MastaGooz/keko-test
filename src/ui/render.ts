@@ -26,6 +26,7 @@ export type View = {
   encombrement: HTMLElement
   finTour: HTMLButtonElement
   issue: HTMLElement
+  cupidite: HTMLElement
   journal: HTMLElement
 }
 
@@ -44,6 +45,7 @@ export function mount(root: HTMLElement, buildTime: string): View {
       <p id="encombrement" class="encombrement"></p>
 
       <p id="issue" class="issue"></p>
+      <div id="cupidite" class="cupidite"></div>
       <div class="reprise">
         <button class="bouton secondaire" type="button" data-action="rejouer">Rejouer cette seed</button>
         <button class="bouton secondaire" type="button" data-action="nouveau">Nouveau combat</button>
@@ -63,12 +65,19 @@ export function mount(root: HTMLElement, buildTime: string): View {
     encombrement: root.querySelector<HTMLElement>('#encombrement')!,
     finTour: root.querySelector<HTMLButtonElement>('#finTour')!,
     issue: root.querySelector<HTMLElement>('#issue')!,
+    cupidite: root.querySelector<HTMLElement>('#cupidite')!,
     journal: root.querySelector<HTMLElement>('#journal')!,
   }
 }
 
 /** Reflète l'état dans le DOM. Appelé après chaque action. */
-export function render(view: View, etat: EtatCombat, seed: number, selection: number | null): void {
+export function render(
+  view: View,
+  etat: EtatCombat,
+  seed: number,
+  selection: number | null,
+  tresors: number,
+): void {
   const fini = etat.issue !== null
   const carte = selection === null ? null : (etat.main[selection] ?? null)
   const visee = carte !== null && carte.type === 'combat' ? carte : null
@@ -91,6 +100,8 @@ export function render(view: View, etat: EtatCombat, seed: number, selection: nu
 
   view.issue.textContent =
     etat.issue === 'victoire' ? 'VICTOIRE.' : etat.issue === 'defaite' ? 'MORT. Tout est perdu.' : ''
+
+  view.cupidite.innerHTML = reglageCupidite(tresors)
 
   view.journal.innerHTML = etat.evenements
     .slice(-3)
@@ -232,6 +243,28 @@ function etiquetteFinTour(etat: EtatCombat): string {
     `<span class="cout">${menace === 0 ? '—' : `−${menace}`}</span>`
   )
 }
+
+/**
+ * Le curseur de l'expérience. Ce n'est pas une mécanique de jeu : c'est le
+ * réglage qui permet de répondre à la seule question que ce prototype existe
+ * pour poser — une main polluée de trésors, tendue ou pénible ?
+ */
+function reglageCupidite(tresors: number): string {
+  const choix = [0, 2, 4, 6, 8]
+    .map(
+      (n) =>
+        `<button class="pastille${n === tresors ? ' active' : ''}" type="button" ` +
+        `data-action="cupidite" data-tresors="${n}">${n}</button>`,
+    )
+    .join('')
+
+  const part = Math.round((tresors / (10 + tresors)) * 100)
+  return (
+    `<span class="etiquette">Trésors</span>${choix}` +
+    `<span class="etiquette">${part} % du deck</span>`
+  )
+}
+
 
 function phrase(evenement: Evenement): string {
   switch (evenement.type) {

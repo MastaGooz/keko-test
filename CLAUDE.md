@@ -141,9 +141,13 @@ contre `src/logic/`, qui est pur exprès. Deux résultats à ne pas réapprendre
   sacs de PV en nombre ramènent au rendement pur, et le gros coup redevient le
   seul choix.
 
-Prochaine étape : faire jouer Keko et répondre à l'hypothèse critique — la main
-polluée de trésors est-elle tendue ou pénible ? Les trésors ne sont pas encore
-ramassés en jeu ; on les injecte dans le deck pour mesurer.
+Les trésors ne sont pas encore ramassés en jeu : un **curseur de cupidité**
+(0 / 2 / 4 / 6 / 8) les injecte directement dans le deck emporté. Ce n'est pas
+une mécanique, c'est le réglage qui rend l'hypothèse testable au doigt.
+
+Prochaine étape : **faire jouer Keko à chaque cran** et répondre à l'hypothèse
+critique — la main polluée de trésors est-elle tendue ou pénible ? Tout le
+reste (hub, marché, carte du donjon) attend cette réponse.
 
 ## Architecture — la règle à ne pas casser
 

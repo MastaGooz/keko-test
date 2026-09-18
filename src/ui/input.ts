@@ -8,6 +8,7 @@ export type Action =
   | { type: 'finTour' }
   | { type: 'rejouer' }
   | { type: 'nouveau' }
+  | { type: 'cupidite'; tresors: number }
 
 /**
  * Écoute déléguée à la racine : les boutons de main sont reconstruits à chaque
@@ -37,6 +38,9 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         break
       case 'nouveau':
         dispatch({ type: 'nouveau' })
+        break
+      case 'cupidite':
+        dispatch({ type: 'cupidite', tresors: Number(noeud.dataset.tresors) })
         break
     }
   })

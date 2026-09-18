@@ -3,6 +3,8 @@
  * Les chiffres sont là pour être bousculés après le playtest.
  */
 import type { Carte, Ennemi } from './combat.ts'
+import type { Rng } from './rng.ts'
+import { randomInt } from './rng.ts'
 
 type Modele = Omit<Carte, 'id'>
 
@@ -25,6 +27,32 @@ export function deckDeDepart(): Carte[] {
 /** Un trésor en tant que carte : inerte en combat, il n'occupe qu'une place. */
 export function carteTresor(id: string, nom: string): Carte {
   return { id, nom, type: 'tresor', cout: 0, degats: 0 }
+}
+
+/**
+ * Des noms plutôt que « Trésor 1 » : une main pleine de babioles doit se lire
+ * comme du butin encombrant, pas comme du remplissage. C'est la sensation
+ * qu'on teste, autant qu'elle ait une chance d'exister.
+ */
+const BUTIN = [
+  'Couronne', 'Calice', 'Idole', 'Reliquaire', 'Diadème', 'Sceptre',
+  'Torque', 'Camée', 'Ostensoir', 'Cassette', 'Médaillon', 'Aiguière',
+]
+
+/** `nombre` trésors tirés dans le butin, sans doublon tant qu'il y en a. */
+export function tresorsEmportes(nombre: number, rng: Rng): Carte[] {
+  const restants = [...BUTIN]
+  return Array.from({ length: nombre }, (_, i) => {
+    const nom = restants.length > 0
+      ? restants.splice(randomInt(rng, 0, restants.length - 1), 1)[0]!
+      : BUTIN[i % BUTIN.length]!
+    return carteTresor(`tresor-${i + 1}`, nom)
+  })
+}
+
+/** Le deck emporté dans le donjon : les cartes de combat plus le butin ramassé. */
+export function deckAvecTresors(nombre: number, rng: Rng): Carte[] {
+  return [...deckDeDepart(), ...tresorsEmportes(nombre, rng)]
 }
 
 /**
