@@ -27,10 +27,14 @@ export function carteTresor(id: string, nom: string): Carte {
   return { id, nom, type: 'tresor', vitesse: 0, degats: 0 }
 }
 
-/** Trois rythmes bien distincts, pour sentir ce que change la période. */
-export const ROQUET: Ennemi = { nom: 'Roquet', pv: 18, pvMax: 18, degats: 4, periode: 3, compteur: 3 }
-export const GARDE: Ennemi = { nom: 'Garde', pv: 28, pvMax: 28, degats: 8, periode: 5, compteur: 5 }
-export const BRUTE: Ennemi = { nom: 'Brute', pv: 40, pvMax: 40, degats: 14, periode: 8, compteur: 8 }
+/**
+ * Trois rythmes bien distincts, pour sentir ce que change la période.
+ * `compteur` est l'ouverture : le Roquet frappe presque tout de suite, sinon
+ * il meurt avant d'avoir existé et son rythme ne se sent jamais.
+ */
+export const ROQUET: Ennemi = { nom: 'Roquet', pv: 18, pvMax: 18, degats: 4, periode: 3, compteur: 1 }
+export const GARDE: Ennemi = { nom: 'Garde', pv: 28, pvMax: 28, degats: 8, periode: 5, compteur: 3 }
+export const BRUTE: Ennemi = { nom: 'Brute', pv: 40, pvMax: 40, degats: 14, periode: 8, compteur: 6 }
 
 export const ENNEMIS: Ennemi[] = [ROQUET, GARDE, BRUTE]
 

@@ -9,7 +9,7 @@
  */
 import { createRng } from './rng.ts'
 import type { Carte, ConfigCombat, Ennemi, EtatCombat } from './combat.ts'
-import { creerCombat, jouerCarte, mainMorte, passer } from './combat.ts'
+import { creerCombat, jouerCarte, mainMorte, passer, prevoir } from './combat.ts'
 
 const CONFIG: ConfigCombat = { pvMax: 30, tailleMain: 5, periodePioche: 5 }
 
@@ -117,6 +117,24 @@ cas('les transitions ne modifient pas l\'état reçu', () => {
   passer(etat, rng())
 
   egal(JSON.stringify(etat), temoin, 'état d\'origine')
+})
+
+cas('la prévision annonce le déroulé à venir', () => {
+  const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 5, periode: 3 }))
+  const prevues = prevoir(etat, 10, etat.main[0]).map((p) => `${p.dans}:${p.type}`)
+
+  egal(
+    prevues.join(' '),
+    '3:frappe 4:carte 5:pioche 6:frappe 9:frappe 10:pioche',
+    'déroulé prévu sur 10 tics',
+  )
+})
+
+cas('la prévision place la carte avant la frappe à égalité', () => {
+  const etat = combat(cartes(10, { nom: 'Taillade', vitesse: 3, degats: 7 }), ennemi({ pv: 100, degats: 5, periode: 3 }))
+  const prevues = prevoir(etat, 3, etat.main[0]).map((p) => p.type)
+
+  egal(prevues.join(' '), 'carte frappe', 'ordre à égalité')
 })
 
 // --- petite tuyauterie -------------------------------------------------------

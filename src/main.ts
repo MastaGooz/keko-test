@@ -19,22 +19,30 @@ const view = mount(root, __BUILD_TIME__)
 let seed: number
 let rng: Rng
 let etat: EtatCombat
+/** Carte visée mais pas encore engagée : elle s'affiche sur la frise. */
+let selection: number | null = null
 
 /** Tout le hasard du combat découle de la seed : la rejouer rejoue le combat. */
 function demarrer(nouvelleSeed: number): void {
   seed = nouvelleSeed
   rng = createRng(seed)
   etat = creerCombat(deckDeDepart(), ENNEMIS[randomInt(rng, 0, ENNEMIS.length - 1)], rng)
-  render(view, etat, seed)
+  selection = null
+  render(view, etat, seed, selection)
 }
 
 bindInput(view, (action) => {
   switch (action.type) {
+    case 'viser':
+      selection = action.index
+      break
     case 'jouer':
       etat = jouerCarte(etat, action.index, rng)
+      selection = null
       break
     case 'passer':
       etat = passer(etat, rng)
+      selection = null
       break
     case 'rejouer':
       return demarrer(seed)
@@ -42,7 +50,7 @@ bindInput(view, (action) => {
       // Seed courte : lisible à l'écran, suffisante pour rejouer un combat.
       return demarrer(Date.now() % 100000)
   }
-  render(view, etat, seed)
+  render(view, etat, seed, selection)
 })
 
 demarrer(Date.now() % 100000)

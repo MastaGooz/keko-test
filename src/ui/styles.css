@@ -1,9 +1,13 @@
-/* Prototype jetable : lisible au doigt, rien de plus. Pas de déco à débattre. */
+/* Prototype jetable : lisible au doigt, rien de plus. Pas de déco à débattre.
+   Seule la frise a droit à de vrais soins — c'est elle qui rend le système
+   compréhensible. */
 :root {
   --bg: #16161a;
   --fg: #f2f2f5;
   --muted: #9a9aa6;
   --trait: #3a3a44;
+  --joueur: #5cc8ff;
+  --ennemi: #ff6b6b;
   color-scheme: dark light;
 }
 
@@ -44,6 +48,98 @@ body {
   font-weight: 600;
 }
 
+.ligne.ennemi {
+  color: var(--ennemi);
+}
+
+/* --- la frise ------------------------------------------------------------ */
+
+.frise {
+  display: grid;
+  grid-template-columns: repeat(14, 1fr);
+  gap: 1px;
+}
+
+.unite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Avant le début du combat : la colonne existe mais reste vide. */
+.unite.hors {
+  visibility: hidden;
+}
+
+.voie {
+  min-height: 22px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+}
+
+.axe {
+  width: 100%;
+  padding-top: 2px;
+  border-top: 1px solid var(--trait);
+  text-align: center;
+  font-size: 0.5625rem;
+  line-height: 1;
+  color: var(--muted);
+}
+
+.unite.maintenant .axe {
+  border-top-color: var(--fg);
+  color: var(--fg);
+}
+
+.bulle {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+/* Ce qui a eu lieu : plein. Ce qui est prévu : contour. */
+.joue {
+  background: var(--joueur);
+  color: #101014;
+}
+
+.adverse {
+  background: var(--ennemi);
+  color: #101014;
+}
+
+.attendu {
+  background: transparent;
+  border-color: var(--joueur);
+  color: var(--joueur);
+}
+
+.attendu.adverse {
+  background: transparent;
+  border-color: var(--ennemi);
+  color: var(--ennemi);
+}
+
+/* La carte visée, pas encore engagée. */
+.projet {
+  background: transparent;
+  border-style: dashed;
+  border-color: var(--fg);
+  color: var(--fg);
+}
+
+/* --- la main -------------------------------------------------------------- */
+
 .cartes {
   display: flex;
   flex-direction: column;
@@ -72,6 +168,11 @@ body {
 .bouton[disabled] {
   opacity: 0.4;
   cursor: default;
+}
+
+.carte.visee {
+  border-color: var(--joueur);
+  color: var(--joueur);
 }
 
 .tresor {

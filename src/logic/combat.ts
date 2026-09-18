@@ -29,11 +29,28 @@ export type Ennemi = {
   degats: number
   /** Valeur à laquelle le compteur se recharge après une frappe. */
   periode: number
-  /** L'ennemi frappe quand ce compteur atteint 0. */
+  /** L'ennemi frappe quand ce compteur atteint 0. Sa valeur de départ est
+   *  l'ouverture de l'ennemi : elle peut différer de la période. */
   compteur: number
 }
 
 export type Issue = 'victoire' | 'defaite'
+
+/** Ce qui s'est passé, horodaté : sert au récit ET à la frise chronologique. */
+export type Evenement =
+  | { t: number; type: 'debut'; ennemi: string }
+  | { t: number; type: 'carte'; nom: string; degats: number; pvEnnemi: number }
+  | { t: number; type: 'frappe'; nom: string; degats: number; pvJoueur: number }
+  | { t: number; type: 'pioche'; cartes: number; tresors: number }
+  | { t: number; type: 'issue'; issue: Issue }
+
+/** Ce qui va se passer si rien ne change, en temps relatif à maintenant. */
+export type Prevision = {
+  /** Dans combien de temps. */
+  dans: number
+  type: 'carte' | 'frappe' | 'pioche'
+  nom: string
+}
 
 export type EtatCombat = {
   pv: number
@@ -46,8 +63,10 @@ export type EtatCombat = {
   compteurPioche: number
   periodePioche: number
   tailleMain: number
-  /** Récit des évènements, du plus ancien au plus récent. */
-  journal: string[]
+  /** Temps total écoulé depuis le début du combat. */
+  temps: number
+  /** Du plus ancien au plus récent. */
+  evenements: Evenement[]
   issue: Issue | null
 }
 
@@ -72,14 +91,15 @@ export function creerCombat(
   const etat: EtatCombat = {
     pv: config.pvMax,
     pvMax: config.pvMax,
-    ennemi: { ...ennemi, compteur: ennemi.periode },
+    ennemi: { ...ennemi },
     pioche: melanger(deck, rng),
     main: [],
     defausse: [],
     compteurPioche: config.periodePioche,
     periodePioche: config.periodePioche,
     tailleMain: config.tailleMain,
-    journal: [`${ennemi.nom} apparaît.`],
+    temps: 0,
+    evenements: [{ t: 0, type: 'debut', ennemi: ennemi.nom }],
     issue: null,
   }
 
@@ -100,7 +120,6 @@ export function jouerCarte(etat: EtatCombat, index: number, rng: Rng): EtatComba
 
   const suivant = copier(etat)
   suivant.main.splice(index, 1)
-  suivant.journal.push(`Tu engages ${carte.nom} (vitesse ${carte.vitesse}).`)
   ecouler(suivant, carte.vitesse, rng, carte)
   return suivant
 }
@@ -114,9 +133,34 @@ export function passer(etat: EtatCombat, rng: Rng): EtatCombat {
   if (etat.issue !== null) return etat
 
   const suivant = copier(etat)
-  suivant.journal.push(`Tu passes : ${etat.compteurPioche} de temps s'écoulent.`)
   ecouler(suivant, etat.compteurPioche, rng, null)
   return suivant
+}
+
+/**
+ * Ce qui tombera dans les `horizon` prochaines unités de temps si le joueur
+ * n'agit plus. Si une carte est passée, on y ajoute le moment où elle
+ * résoudrait : c'est la question que le joueur se pose avant de la jouer —
+ * « est-ce que je me fais frapper avant qu'elle tombe ? »
+ */
+export function prevoir(etat: EtatCombat, horizon: number, carte: Carte | null): Prevision[] {
+  if (etat.issue !== null) return []
+
+  const prevues: Prevision[] = []
+
+  for (let dans = etat.ennemi.compteur; dans <= horizon; dans += etat.ennemi.periode) {
+    prevues.push({ dans, type: 'frappe', nom: etat.ennemi.nom })
+  }
+  for (let dans = etat.compteurPioche; dans <= horizon; dans += etat.periodePioche) {
+    prevues.push({ dans, type: 'pioche', nom: 'Pioche' })
+  }
+  if (carte !== null && carte.type === 'combat') {
+    prevues.push({ dans: carte.vitesse, type: 'carte', nom: carte.nom })
+  }
+
+  // À égalité la carte du joueur passe avant : on l'affiche donc en premier.
+  const rang = { carte: 0, frappe: 1, pioche: 2 }
+  return prevues.sort((a, b) => a.dans - b.dans || rang[a.type] - rang[b.type])
 }
 
 /** Nombre de trésors qui encombrent la main. */
@@ -139,6 +183,7 @@ export function mainMorte(etat: EtatCombat): boolean {
  */
 function ecouler(etat: EtatCombat, temps: number, rng: Rng, carte: Carte | null): void {
   for (let tic = 1; tic <= temps; tic += 1) {
+    etat.temps += 1
     etat.ennemi.compteur -= 1
     etat.compteurPioche -= 1
 
@@ -158,27 +203,34 @@ function ecouler(etat: EtatCombat, temps: number, rng: Rng, carte: Carte | null)
 function resoudreCarte(etat: EtatCombat, carte: Carte): void {
   etat.ennemi.pv = Math.max(0, etat.ennemi.pv - carte.degats)
   etat.defausse.push(carte)
-  etat.journal.push(
-    `${carte.nom} inflige ${carte.degats} — ${etat.ennemi.nom} : ${etat.ennemi.pv}/${etat.ennemi.pvMax} PV.`,
-  )
+  etat.evenements.push({
+    t: etat.temps,
+    type: 'carte',
+    nom: carte.nom,
+    degats: carte.degats,
+    pvEnnemi: etat.ennemi.pv,
+  })
 
-  if (etat.ennemi.pv === 0) {
-    etat.issue = 'victoire'
-    etat.journal.push(`${etat.ennemi.nom} s'effondre.`)
-  }
+  if (etat.ennemi.pv === 0) terminer(etat, 'victoire')
 }
 
 function frapper(etat: EtatCombat): void {
   etat.pv = Math.max(0, etat.pv - etat.ennemi.degats)
   etat.ennemi.compteur = etat.ennemi.periode
-  etat.journal.push(
-    `${etat.ennemi.nom} frappe : ${etat.ennemi.degats} dégâts — tu es à ${etat.pv}/${etat.pvMax} PV.`,
-  )
+  etat.evenements.push({
+    t: etat.temps,
+    type: 'frappe',
+    nom: etat.ennemi.nom,
+    degats: etat.ennemi.degats,
+    pvJoueur: etat.pv,
+  })
 
-  if (etat.pv === 0) {
-    etat.issue = 'defaite'
-    etat.journal.push('Tu tombes. Tout est perdu.')
-  }
+  if (etat.pv === 0) terminer(etat, 'defaite')
+}
+
+function terminer(etat: EtatCombat, issue: Issue): void {
+  etat.issue = issue
+  etat.evenements.push({ t: etat.temps, type: 'issue', issue })
 }
 
 /** Défausse toute la main puis complète à `tailleMain`, en remélangeant au besoin. */
@@ -195,12 +247,12 @@ function piocher(etat: EtatCombat, rng: Rng): void {
     etat.main.push(etat.pioche.pop()!)
   }
 
-  const tresors = etat.main.filter((carte) => carte.type === 'tresor').length
-  etat.journal.push(
-    tresors === 0
-      ? `Tu pioches ${etat.main.length} cartes.`
-      : `Tu pioches ${etat.main.length} cartes, dont ${tresors} trésor(s).`,
-  )
+  etat.evenements.push({
+    t: etat.temps,
+    type: 'pioche',
+    cartes: etat.main.length,
+    tresors: etat.main.filter((carte) => carte.type === 'tresor').length,
+  })
 }
 
 /** Fisher-Yates seedé. Renvoie un nouveau tableau. */
@@ -221,6 +273,6 @@ function copier(etat: EtatCombat): EtatCombat {
     pioche: [...etat.pioche],
     main: [...etat.main],
     defausse: [...etat.defausse],
-    journal: [...etat.journal],
+    evenements: [...etat.evenements],
   }
 }

@@ -2,6 +2,7 @@
 import type { View } from './render.ts'
 
 export type Action =
+  | { type: 'viser'; index: number }
   | { type: 'jouer'; index: number }
   | { type: 'passer' }
   | { type: 'rejouer' }
@@ -17,9 +18,13 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
     const cible = (evenement.target as HTMLElement).closest<HTMLElement>('[data-action]')
     if (cible === null) return
 
+    const index = Number(cible.dataset.index)
     switch (cible.dataset.action) {
+      case 'viser':
+        dispatch({ type: 'viser', index })
+        break
       case 'jouer':
-        dispatch({ type: 'jouer', index: Number(cible.dataset.index) })
+        dispatch({ type: 'jouer', index })
         break
       case 'passer':
         dispatch({ type: 'passer' })
