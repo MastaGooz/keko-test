@@ -7,6 +7,7 @@
     "dev": "vite",
     "dev:mobile": "vite --host",
     "build": "tsc && vite build",
+    "verif": "node src/logic/combat.verif.ts",
     "preview": "vite preview"
   },
   "devDependencies": {
