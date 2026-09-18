@@ -1,8 +1,9 @@
+/* Prototype jetable : lisible au doigt, rien de plus. Pas de déco à débattre. */
 :root {
   --bg: #16161a;
   --fg: #f2f2f5;
   --muted: #9a9aa6;
-  --accent: #7c5cff;
+  --trait: #3a3a44;
   color-scheme: dark light;
 }
 
@@ -22,47 +23,86 @@ body {
 
 .app {
   min-height: 100dvh;
-  padding: max(1.5rem, env(safe-area-inset-top)) 1.5rem
-    max(1.5rem, env(safe-area-inset-bottom));
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1.25rem;
-  text-align: center;
+  gap: 0.75rem;
 }
 
-.title {
-  margin: 0;
-  font-size: 2rem;
-}
-
-.build {
+.build,
+.discret {
   margin: 0;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
-.tap {
-  min-height: 64px; /* >= 48px : cible tactile confortable */
-  min-width: 12rem;
-  padding: 0 2rem;
-  border: 0;
-  border-radius: 12px;
-  background: var(--accent);
-  color: #fff;
-  font: inherit;
-  font-size: 1.25rem;
+.ligne {
+  margin: 0;
+  font-size: 1.0625rem;
   font-weight: 600;
+}
+
+.cartes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bouton {
+  /* >= 48px : cible tactile confortable */
+  min-height: 56px;
+  width: 100%;
+  padding: 0 1rem;
+  border: 1px solid var(--trait);
+  border-radius: 8px;
+  background: #22222a;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.tap:active {
-  transform: scale(0.97);
+.bouton:active {
+  transform: scale(0.99);
 }
 
-.count {
-  margin: 0;
-  font-size: 1.125rem;
+.bouton[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.tresor {
+  border-style: dashed;
+}
+
+.reprise {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.secondaire {
+  background: transparent;
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.journal {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--trait);
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.journal p {
+  margin: 0.125rem 0;
+}
+
+.journal p:last-child {
+  color: var(--fg);
 }

@@ -1,20 +1,48 @@
-/** Point d'entrée : câble logic/ et ui/. */
+/**
+ * Point d'entrée : câble logic/ et ui/.
+ *
+ * Prototype jetable — étape 2 : un combat, un ennemi, pas encore de trésors.
+ * Pas de sauvegarde ici : une partie se relance d'un bouton.
+ */
 import './ui/styles.css'
-import { tap } from './logic/state.ts'
-import { load, save } from './logic/storage.ts'
+import type { Rng } from './logic/rng.ts'
+import type { EtatCombat } from './logic/combat.ts'
+import { createRng, randomInt } from './logic/rng.ts'
+import { creerCombat, jouerCarte, passer } from './logic/combat.ts'
+import { ENNEMIS, deckDeDepart } from './logic/cartes.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
-import { localStoragePort } from './ui/storage.ts'
 
 const root = document.querySelector<HTMLDivElement>('#app')!
 const view = mount(root, __BUILD_TIME__)
 
-// Pas de sauvegarde ? on crée un état neuf avec une seed tirée maintenant.
-let state = load(localStoragePort, Date.now())
-render(view, state)
+let seed: number
+let rng: Rng
+let etat: EtatCombat
 
-bindInput(view, () => {
-  state = tap(state)
-  save(localStoragePort, state)
-  render(view, state)
+/** Tout le hasard du combat découle de la seed : la rejouer rejoue le combat. */
+function demarrer(nouvelleSeed: number): void {
+  seed = nouvelleSeed
+  rng = createRng(seed)
+  etat = creerCombat(deckDeDepart(), ENNEMIS[randomInt(rng, 0, ENNEMIS.length - 1)], rng)
+  render(view, etat, seed)
+}
+
+bindInput(view, (action) => {
+  switch (action.type) {
+    case 'jouer':
+      etat = jouerCarte(etat, action.index, rng)
+      break
+    case 'passer':
+      etat = passer(etat, rng)
+      break
+    case 'rejouer':
+      return demarrer(seed)
+    case 'nouveau':
+      // Seed courte : lisible à l'écran, suffisante pour rejouer un combat.
+      return demarrer(Date.now() % 100000)
+  }
+  render(view, etat, seed)
 })
+
+demarrer(Date.now() % 100000)
