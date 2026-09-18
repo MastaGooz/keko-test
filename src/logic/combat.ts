@@ -3,12 +3,15 @@
  *
  * Le temps ne s'écoule que quand le joueur le dépense. Chaque combattant porte
  * un compteur ; le joueur est une unité comme les autres, son compteur à lui
- * déclenche sa pioche. Une carte engagée résout à la FIN de son temps, et à
- * égalité elle passe avant les frappes ennemies du même tic.
+ * déclenche sa pioche.
+ *
+ * Une carte **résout immédiatement**, puis son temps s'écoule. Le joueur n'a
+ * donc jamais de coup « en vol » à simuler : il choisit combien de temps il
+ * achète, et voit qui frappe pendant ce temps-là.
  *
  * Plusieurs ennemis partagent la même horloge. Un coup ne porte que sur sa
  * cible, mais le temps qu'il coûte les fait tous avancer : c'est ce qui rend
- * l'achèvement précieux — un mort ne frappe plus.
+ * l'achèvement précieux — un mort ne frappe plus du tout pendant ce temps.
  *
  * Les transitions exportées ne modifient jamais l'état reçu : elles en font une
  * copie, mutent la copie, et la renvoient.
@@ -53,7 +56,7 @@ export type Evenement =
 export type Prevision = {
   /** Dans combien de temps. */
   dans: number
-  type: 'carte' | 'frappe' | 'pioche'
+  type: 'frappe' | 'pioche'
   nom: string
   /** Index de l'ennemi concerné — seulement pour une frappe. */
   ennemi?: number
@@ -116,8 +119,8 @@ export function creerCombat(
 }
 
 /**
- * Engage la carte de la main à `index` contre l'ennemi `cible`. Elle quitte la
- * main tout de suite, le temps s'écoule de sa vitesse, et elle résout à la fin.
+ * Joue la carte de la main à `index` contre l'ennemi `cible` : elle résout
+ * aussitôt, puis le temps s'écoule de sa vitesse.
  * Renvoie l'état inchangé si le coup est impossible (combat fini, trésor,
  * cible déjà morte...).
  */
@@ -149,11 +152,10 @@ export function passer(etat: EtatCombat, rng: Rng): EtatCombat {
 
 /**
  * Ce qui tombera dans les `horizon` prochaines unités de temps si le joueur
- * n'agit plus. Si une carte est passée, on y ajoute le moment où elle
- * résoudrait : c'est la question que le joueur se pose avant de la jouer —
- * « est-ce que je me fais frapper avant qu'elle tombe ? »
+ * dépense ce temps. La carte n'y figure plus : elle résout avant que le temps
+ * ne s'écoule. Ceci décrit donc uniquement ce que le temps coûte.
  */
-export function prevoir(etat: EtatCombat, horizon: number, carte: Carte | null): Prevision[] {
+export function prevoir(etat: EtatCombat, horizon: number): Prevision[] {
   if (etat.issue !== null) return []
 
   const prevues: Prevision[] = []
@@ -167,12 +169,8 @@ export function prevoir(etat: EtatCombat, horizon: number, carte: Carte | null):
   for (let dans = etat.compteurPioche; dans <= horizon; dans += etat.periodePioche) {
     prevues.push({ dans, type: 'pioche', nom: 'Pioche' })
   }
-  if (carte !== null && carte.type === 'combat') {
-    prevues.push({ dans: carte.vitesse, type: 'carte', nom: carte.nom })
-  }
 
-  // À égalité la carte du joueur passe avant : on l'affiche donc en premier.
-  const rang = { carte: 0, frappe: 1, pioche: 2 }
+  const rang = { frappe: 0, pioche: 1 }
   return prevues.sort((a, b) => a.dans - b.dans || rang[a.type] - rang[b.type])
 }
 
@@ -191,7 +189,7 @@ export function coutDuVol(
   let frappes = 0
   let degats = 0
 
-  for (const prevision of prevoir(etat, temps, null)) {
+  for (const prevision of prevoir(etat, temps)) {
     if (prevision.type !== 'frappe') continue
     const ennemi = etat.ennemis[prevision.ennemi!]!
     pv -= ennemi.degats
@@ -211,61 +209,66 @@ export function coutDuPassage(etat: EtatCombat): { frappes: number; degats: numb
 
 /**
  * Ce que coûte une carte jouée maintenant sur `cible`, simulé sans jouer le
- * coup. C'est la question que le joueur pose à chaque carte de sa main : la
- * poser cinq fois à la main est exactement la corvée qu'on lui épargne.
+ * coup. Le coup porte d'abord, le temps se dépense ensuite : la cible achevée
+ * ne frappe donc plus du tout pendant ce temps-là.
+ *
+ * C'est la question que le joueur pose à chaque carte de sa main. La poser
+ * cinq fois à la main est exactement la corvée qu'on lui épargne.
  */
 export type Consequence = {
-  /** Instant de résolution, en temps relatif. */
-  dans: number
-  /** Frappes réellement encaissées avant que la carte ne tombe. */
+  /** Temps dépensé après le coup. */
+  cout: number
+  /** Frappes encaissées pendant ce temps. */
   frappes: number
   /** Dégâts correspondants. */
   degats: number
-  /** La carte achève la cible — et le joueur est vivant pour le voir. */
+  /** La carte achève la cible. */
   tue: boolean
-  /** La carte achève le dernier ennemi debout : elle gagne le combat. */
+  /** La carte achève le dernier ennemi debout : le combat s'arrête net. */
   gagne: boolean
-  /** Le joueur tombe avant que la carte ne résolve. */
+  /** Le joueur tombe pendant le temps dépensé. */
   mortel: boolean
-  /** La main tient jusqu'à la résolution ; sinon le reste part à la défausse. */
+  /** La main tient jusqu'au bout ; sinon le reste part à la défausse. */
   tientDansLaMain: boolean
 }
 
 export function consequence(etat: EtatCombat, carte: Carte, cible: number): Consequence {
   const vise = etat.ennemis[cible]
-  const acheve = vise !== undefined && vise.pv > 0 && carte.degats >= vise.pv
+  const tue = vise !== undefined && vise.pv > 0 && carte.degats >= vise.pv
+  const debout = etat.ennemis.filter((ennemi) => ennemi.pv > 0).length
+  const gagne = tue && debout === 1
 
   let pv = etat.pv
   let frappes = 0
   let degats = 0
   let mortel = false
 
-  for (const prevision of prevoir(etat, carte.vitesse, null)) {
-    if (prevision.type !== 'frappe') continue
-    // À égalité la carte résout d'abord : la cible achevée ne frappe plus.
-    // Les autres ennemis, eux, frappent quand même.
-    if (prevision.dans === carte.vitesse && acheve && prevision.ennemi === cible) continue
+  // Le dernier mort arrête le combat : le temps de la carte ne se dépense pas.
+  if (!gagne) {
+    for (const prevision of prevoir(etat, carte.vitesse)) {
+      if (prevision.type !== 'frappe') continue
+      // La cible est déjà tombée quand le temps commence à s'écouler.
+      if (tue && prevision.ennemi === cible) continue
 
-    const ennemi = etat.ennemis[prevision.ennemi!]!
-    pv -= ennemi.degats
-    degats += ennemi.degats
-    frappes += 1
-    if (pv <= 0) {
-      mortel = true
-      break
+      const ennemi = etat.ennemis[prevision.ennemi!]!
+      pv -= ennemi.degats
+      degats += ennemi.degats
+      frappes += 1
+      if (pv <= 0) {
+        mortel = true
+        break
+      }
     }
   }
 
-  const debout = etat.ennemis.filter((ennemi) => ennemi.pv > 0).length
-
   return {
-    dans: carte.vitesse,
+    cout: gagne ? 0 : carte.vitesse,
     frappes,
     degats,
-    tue: acheve && !mortel,
-    gagne: acheve && !mortel && debout === 1,
+    tue,
+    gagne,
     mortel,
-    tientDansLaMain: carte.vitesse <= etat.compteurPioche,
+    tientDansLaMain: gagne || carte.vitesse <= etat.compteurPioche,
   }
 }
 
@@ -294,10 +297,12 @@ export function mainMorte(etat: EtatCombat): boolean {
 // --- interne : tout ce qui suit mute l'état reçu, déjà copié par l'appelant ---
 
 /**
- * Écoule `temps` tics. À chaque tic, les compteurs descendent d'un cran et ce
- * qui atteint 0 se résout aussitôt. La carte engagée résout au dernier tic,
- * avant les frappes ennemies de ce tic : c'est la règle d'égalité, celle qui
- * permet de tuer pile à temps.
+ * La carte résout d'abord, PUIS le temps s'écoule de sa vitesse.
+ *
+ * C'est le point qui allège tout le système : le joueur n'a jamais à simuler
+ * un coup « en vol ». Il pose une question simple — combien de temps j'achète,
+ * et qui frappe pendant ce temps-là. Tuer reste préemptif, et plus nettement
+ * qu'avant : un mort ne frappe plus du tout pendant le temps qu'on dépense.
  */
 function ecouler(
   etat: EtatCombat,
@@ -306,12 +311,8 @@ function ecouler(
   carte: Carte | null,
   cible: number,
 ): void {
-  // Vitesse 0 : la carte résout sans que rien n'avance. Aucun compteur ne bouge,
-  // donc rien d'autre ne peut tomber — on sort avant la boucle.
-  if (temps === 0) {
-    if (carte !== null) resoudreCarte(etat, carte, cible)
-    return
-  }
+  if (carte !== null) resoudreCarte(etat, carte, cible)
+  if (etat.issue !== null) return
 
   for (let tic = 1; tic <= temps; tic += 1) {
     etat.temps += 1
@@ -320,10 +321,6 @@ function ecouler(
     }
     etat.compteurPioche -= 1
 
-    if (carte !== null && tic === temps) resoudreCarte(etat, carte, cible)
-    if (etat.issue !== null) return
-
-    // Un ennemi achevé à ce tic ne frappe pas : il est déjà tombé à 0 PV.
     for (const ennemi of etat.ennemis) {
       if (ennemi.pv > 0 && ennemi.compteur <= 0) frapper(etat, ennemi)
       if (etat.issue !== null) return

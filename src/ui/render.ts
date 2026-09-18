@@ -5,6 +5,9 @@
  * déjà. L'information se pose sur l'objet qu'on touche — ce qu'une carte coûte
  * en temps est sur la carte, ce qu'elle fait à une cible est sur la cible.
  *
+ * Depuis la résolution immédiate, la frise ne montre plus de coup « en vol » :
+ * elle montre le temps qu'on s'apprête à acheter, et qui frappe pendant.
+ *
  * Seul endroit qui connaît la structure de la page.
  */
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
@@ -137,12 +140,11 @@ function blocEnnemi(
   }
 
   const c = consequence(etat, visee, index)
-  const reste = Math.max(0, ennemi.pv - visee.degats)
   const effet = c.gagne
     ? `★ ce coup gagne le combat`
     : c.tue
-      ? `★ ce coup l'achève — il ne frappera plus`
-      : `le laisse à ${reste} PV`
+      ? `★ l'achève — il ne frappera plus (tu encaisses ${c.degats} PV)`
+      : `le laisse à ${Math.max(0, ennemi.pv - visee.degats)} PV — tu encaisses ${c.degats} PV`
 
   return (
     `<button class="combattant adverse cible${c.tue ? ' achevable' : ''}" type="button" ` +
@@ -164,22 +166,26 @@ function combattant(nom: string, pv: number, pvMax: number, detail: string): str
 /**
  * La frise : une colonne par unité de temps, le passé à gauche, le futur à
  * droite. Une voie par combattant — la tienne en haut, puis un ennemi par
- * ligne, dans l'ordre des blocs ci-dessus. La bande plus claire est la main en
- * cours : au-delà, les cartes non jouées sont défaussées.
+ * ligne, dans l'ordre des blocs ci-dessus.
+ *
+ * Bande sombre : la main en cours. Bande marquée : le temps que la carte visée
+ * va coûter — tout ce qui s'y trouve, tu vas le prendre.
  */
 function frise(etat: EtatCombat, visee: Carte | null): string {
-  const previsions = prevoir(etat, FUTUR, visee)
+  const previsions = prevoir(etat, FUTUR)
   const instants = Array.from({ length: COLONNES }, (_, i) => i - PASSE)
+  const depense = visee === null ? 0 : visee.vitesse
 
   const cellule = (decalage: number, contenu: string): string => {
     const classes = ['case']
     if (etat.temps + decalage < 0) classes.push('hors')
     if (decalage === 0) classes.push('maintenant')
     if (decalage >= 1 && decalage <= etat.compteurPioche) classes.push('fenetre')
+    if (decalage >= 1 && decalage <= depense) classes.push('depense')
     return `<div class="${classes.join(' ')}">${contenu}</div>`
   }
 
-  // Voie du joueur : ce qu'il a joué, ses renouvellements de main, sa visée.
+  // Voie du joueur : ce qu'il a joué et ses renouvellements de main.
   const voieJoueur = instants
     .map((decalage) => {
       const bulles: string[] = []
@@ -191,9 +197,7 @@ function frise(etat: EtatCombat, visee: Carte | null): string {
         }
       } else {
         for (const p of previsions) {
-          if (p.dans !== decalage) continue
-          if (p.type === 'carte') bulles.push(bulle(GLYPHE.carte, 'projet'))
-          if (p.type === 'pioche') bulles.push(bulle(GLYPHE.pioche, 'attendu'))
+          if (p.dans === decalage && p.type === 'pioche') bulles.push(bulle(GLYPHE.pioche, 'attendu'))
         }
       }
       return cellule(decalage, bulles.join(''))
@@ -220,7 +224,8 @@ function frise(etat: EtatCombat, visee: Carte | null): string {
           } else {
             for (const p of previsions) {
               if (p.dans !== decalage || p.type !== 'frappe' || p.ennemi !== index) continue
-              bulles.push(bulle(ORDINAL[rang] ?? GLYPHE.frappe, 'attendu adverse'))
+              const imminent = decalage <= depense ? ' imminent' : ''
+              bulles.push(bulle(ORDINAL[rang] ?? GLYPHE.frappe, 'attendu adverse' + imminent))
             }
           }
           return cellule(decalage, bulles.join(''))
@@ -241,9 +246,10 @@ function frise(etat: EtatCombat, visee: Carte | null): string {
 function legende(etat: EtatCombat, visee: Carte | null): string {
   if (visee !== null) {
     const seule = vivants(etat).length === 1
-    return seule
-      ? `<strong>${visee.nom} visée</strong> — retouche la carte ou touche la cible pour l'engager.`
-      : `<strong>${visee.nom} visée</strong> — touche une cible pour l'engager.`
+    return (
+      `<strong>${visee.nom}</strong> — elle frappe tout de suite, puis tu achètes ` +
+      `<strong>${visee.vitesse} de temps</strong>. ${seule ? 'Retouche-la pour l\'engager.' : 'Touche une cible.'}`
+    )
   }
 
   const jouables = etat.main.filter(
@@ -257,9 +263,9 @@ function legende(etat: EtatCombat, visee: Carte | null): string {
 }
 
 /**
- * Une carte de la main. Son coût en PV ne dépend pas de la cible — pendant
- * qu'elle est en vol, tous les ennemis avancent. C'est donc ici qu'il
- * s'affiche ; ce qu'elle fait à un ennemi s'affiche sur l'ennemi.
+ * Une carte de la main. Le coup part tout de suite ; ce qui se décide, c'est
+ * le temps qu'on achète derrière. Ce coût ne dépend pas de la cible tant
+ * qu'on ne tue personne — ce cas-là s'affiche sur l'ennemi.
  */
 function boutonCarte(
   etat: EtatCombat,
@@ -283,8 +289,8 @@ function boutonCarte(
   const vise = index === selection
 
   const classes = ['carte']
-  if (vol.mortel) classes.push('letal')
-  else if (acheve) classes.push('acheve')
+  if (acheve) classes.push('acheve')
+  else if (vol.mortel) classes.push('letal')
   else classes.push(vol.degats === 0 ? 'propre' : 'couteux')
   if (vise) classes.push('visee')
 
@@ -292,20 +298,20 @@ function boutonCarte(
   const action = vise && debout.length === 1 ? 'cibler' : vise ? 'annuler' : 'viser'
   const donnee = action === 'cibler' ? `data-cible="${debout[0]!.index}"` : `data-index="${index}"`
 
-  const deborde = vol.mortel || carte.vitesse <= etat.compteurPioche ? '' : ' · défausse le reste de ta main'
+  const deborde = carte.vitesse <= etat.compteurPioche ? '' : ' · défausse le reste de ta main'
   const texte = vol.mortel
-    ? `☠ tu tombes avant qu'elle ne résolve`
+    ? `☠ tu tombes pendant ce temps${deborde}`
     : vol.degats === 0
-      ? `✓ résout dans ${carte.vitesse}, rien d'encaissé${deborde}`
-      : `− ${vol.degats} PV d'ici là (${vol.frappes} frappe${vol.frappes > 1 ? 's' : ''})${deborde}`
+      ? `coûte ${carte.vitesse} temps — personne ne frappe${deborde}`
+      : `coûte ${carte.vitesse} temps — ${vol.degats} PV encaissés${deborde}`
 
-  const note = acheve && !vol.mortel ? `<span class="marque">achève une cible</span>` : ''
+  const note = acheve ? `<span class="marque">achève une cible</span>` : ''
 
   return (
     `<button class="${classes.join(' ')}" type="button" ` +
     `data-action="${action}" ${donnee}${fini ? ' disabled' : ''}>` +
     `<span class="titre">${vise ? '▶ ' : ''}${carte.nom}` +
-    `<span class="stats">${carte.vitesse} temps · ${carte.degats} dégâts</span></span>` +
+    `<span class="stats">${carte.degats} dégâts · ${carte.vitesse} temps</span></span>` +
     `<span class="verdict">${texte}${note}</span>` +
     `</button>`
   )

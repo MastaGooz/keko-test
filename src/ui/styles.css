@@ -180,6 +180,18 @@ body {
   border-radius: 3px;
 }
 
+/* Le temps que la carte visee va couter : tout ce qui s y trouve, tu le prends. */
+.case.depense {
+  background: #2e2a1c;
+  border-radius: 3px;
+  box-shadow: inset 0 -2px 0 var(--cher);
+}
+
+.voie.axe .case.depense {
+  color: var(--cher);
+  box-shadow: none;
+}
+
 .voie.axe .case {
   min-height: 0;
   padding-top: 2px;
@@ -229,6 +241,12 @@ body {
   background: transparent;
   border-color: var(--ennemi);
   color: var(--ennemi);
+}
+
+/* Une frappe qui tombe dans le temps qu on s apprete a acheter. */
+.bulle.imminent {
+  background: var(--ennemi);
+  color: #101014;
 }
 
 /* La carte visée, pas encore engagée. */

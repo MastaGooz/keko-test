@@ -49,14 +49,14 @@ export const GROUPES: Groupe[] = [
   },
   {
     nom: 'Deux roquets',
-    ennemis: [ennemi('Roquet', 25, 5, 4, 2), ennemi('Cabot', 23, 5, 4, 4)],
+    ennemis: [ennemi('Roquet', 32, 5, 4, 2), ennemi('Cabot', 30, 5, 4, 4)],
   },
   {
     nom: 'La meute',
     ennemis: [
-      ennemi('Meneur', 19, 4, 4, 2),
-      ennemi('Suiveur', 17, 4, 4, 4),
-      ennemi('Traînard', 17, 4, 4, 6),
+      ennemi('Meneur', 21, 4, 4, 2),
+      ennemi('Suiveur', 19, 4, 4, 4),
+      ennemi('Traînard', 19, 4, 4, 6),
     ],
   },
 ]

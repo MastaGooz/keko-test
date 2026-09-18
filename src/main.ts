@@ -1,7 +1,8 @@
 /**
  * Point d'entrée : câble logic/ et ui/.
  *
- * Prototype jetable — étape 4 : un groupe d'ennemis, cible au doigt.
+ * Prototype jetable — étape 5 : résolution immédiate, groupe d'ennemis,
+ * cible au doigt.
  * Pas de sauvegarde ici : une partie se relance d'un bouton.
  */
 import './ui/styles.css'
