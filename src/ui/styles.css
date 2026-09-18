@@ -1,6 +1,6 @@
-/* Prototype jetable. Le style ne sert qu'à une chose : rendre le système
-   lisible au doigt. Chaque couleur porte une information, aucune n'est là
-   pour décorer. */
+/* Prototype jetable. Le style ne sert qu'à deux choses : rendre le système
+   lisible au doigt, et tenir l'écran court. Chaque couleur porte une
+   information, aucune n'est là pour décorer. */
 :root {
   --bg: #16161a;
   --fg: #f2f2f5;
@@ -8,6 +8,7 @@
   --trait: #3a3a44;
   --carte-fond: #22222a;
   --fenetre: #1f1f27;
+  --depense: #2e2a1c;
   --joueur: #5cc8ff;
   --ennemi: #ff6b6b;
   --sur: #6ee7a0;
@@ -34,113 +35,134 @@ body {
   min-height: 100dvh;
   max-width: 34rem;
   margin: 0 auto;
-  padding: max(1rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.625rem;
 }
 
 .build {
   margin: 0;
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
 }
 
-/* --- les combattants ----------------------------------------------------- */
+/* --- une ligne par combattant, une ligne par carte ----------------------- */
 
-.ennemis {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.combattant {
+.rangs {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  /* Aussi rendu en <button> quand il devient une cible : on neutralise. */
+}
+
+/* Le gabarit commun : tout tient sur une ligne, la jauge absorbe le reste. */
+.rang {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   width: 100%;
+  min-height: 34px;
+  padding: 0 0.5rem;
   border: 0;
+  border-left: 3px solid transparent;
+  border-radius: 6px;
   background: transparent;
   color: inherit;
   font: inherit;
   text-align: left;
-  padding: 0;
-}
-
-.tete {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.nom {
-  font-size: 1.0625rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
 }
 
 .ordinal {
+  flex: none;
+  width: 1em;
   color: var(--ennemi);
+  font-size: 0.875rem;
 }
 
-.pv {
-  font-variant-numeric: tabular-nums;
+.rangs:last-of-type .ordinal {
+  color: var(--joueur);
+}
+
+.nom {
+  flex: none;
   font-size: 0.9375rem;
-  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
-/* La jauge se lit d'un coup d'oeil : c'est la course, en une barre. */
+/* La jauge mange l'espace libre : la course se lit sans lire un chiffre. */
 .jauge {
-  height: 8px;
-  border-radius: 4px;
+  flex: 1 1 auto;
+  min-width: 2rem;
+  height: 6px;
+  border-radius: 3px;
   background: #2a2a33;
   overflow: hidden;
 }
 
 .remplissage {
+  display: block;
   height: 100%;
   background: var(--joueur);
   transition: width 0.15s ease-out;
 }
 
-.combattant.adverse .remplissage {
+.adverse .remplissage {
   background: var(--ennemi);
 }
 
-.rythme {
+.pv {
+  flex: none;
+  min-width: 1.75rem;
+  text-align: right;
   font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
   color: var(--muted);
 }
 
-/* Une carte est visée : les ennemis deviennent des cibles touchables. */
-.combattant.cible {
-  /* >= 48px : cible tactile confortable */
-  min-height: 72px;
-  padding: 0.5rem 0.75rem;
+.coup {
+  flex: none;
+  min-width: 1.75rem;
+  text-align: right;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ennemi);
+}
+
+.coup.vide {
+  color: transparent;
+}
+
+/* Une carte est visée : les ennemis deviennent touchables. */
+.rang.cible {
+  /* >= 44px : cible tactile confortable */
+  min-height: 44px;
   border: 1px dashed var(--trait);
-  border-radius: 8px;
+  border-left-width: 3px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
-.combattant.cible:active {
-  transform: scale(0.99);
+.rang.cible:active {
+  transform: scale(0.995);
 }
 
-.combattant.cible.achevable {
+.rang.cible.achevable {
   border-style: solid;
   border-color: var(--fg);
   background: #2b2b34;
 }
 
 .effet {
-  font-size: 0.8125rem;
+  flex: none;
+  min-width: 3.25rem;
+  text-align: right;
+  font-size: 0.75rem;
   color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 
-.combattant.cible.achevable .effet {
+.effet.gagne {
   color: var(--fg);
   font-weight: 600;
 }
@@ -151,10 +173,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  margin-top: 0.25rem;
 }
 
-/* Une voie par combattant : la tienne, l'axe, puis un ennemi par ligne. */
 .voie {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
@@ -162,34 +182,27 @@ body {
 }
 
 .case {
-  min-height: 24px;
+  min-height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 1px;
 }
 
-/* Avant le début du combat : la colonne existe mais reste vide. */
 .case.hors {
   visibility: hidden;
 }
 
-/* La main en cours : le temps qu'il reste à dépenser avant que tout tombe. */
+/* La main en cours : le temps qu'il reste avant que tout soit défaussé. */
 .case.fenetre {
   background: var(--fenetre);
   border-radius: 3px;
 }
 
-/* Le temps que la carte visee va couter : tout ce qui s y trouve, tu le prends. */
+/* Le temps que la carte visée va coûter : tout ce qui s'y trouve, tu le prends. */
 .case.depense {
-  background: #2e2a1c;
+  background: var(--depense);
   border-radius: 3px;
   box-shadow: inset 0 -2px 0 var(--cher);
-}
-
-.voie.axe .case.depense {
-  color: var(--cher);
-  box-shadow: none;
 }
 
 .voie.axe .case {
@@ -197,6 +210,7 @@ body {
   padding-top: 2px;
   border-top: 1px solid var(--trait);
   border-radius: 0;
+  box-shadow: none;
   font-size: 0.5625rem;
   line-height: 1.4;
   color: var(--muted);
@@ -208,10 +222,14 @@ body {
   color: var(--fg);
 }
 
+.voie.axe .case.depense {
+  color: var(--cher);
+}
+
 .bulle {
   display: flex;
-  width: 21px;
-  height: 21px;
+  width: 20px;
+  height: 20px;
   border: 1px solid transparent;
   border-radius: 50%;
   align-items: center;
@@ -243,18 +261,10 @@ body {
   color: var(--ennemi);
 }
 
-/* Une frappe qui tombe dans le temps qu on s apprete a acheter. */
+/* Une frappe qui tombe dans le temps qu'on s'apprête à acheter. */
 .bulle.imminent {
   background: var(--ennemi);
   color: #101014;
-}
-
-/* La carte visée, pas encore engagée. */
-.bulle.projet {
-  background: transparent;
-  border-style: dashed;
-  border-color: var(--fg);
-  color: var(--fg);
 }
 
 .legende {
@@ -275,7 +285,7 @@ body {
   display: inline-block;
   flex: none;
   width: 14px;
-  height: 10px;
+  height: 9px;
   border-radius: 3px;
   background: var(--fenetre);
   border: 1px solid var(--trait);
@@ -286,86 +296,59 @@ body {
 .cartes {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.25rem;
 }
 
-.bouton,
-.carte {
-  /* >= 48px : cible tactile confortable */
-  min-height: 56px;
-  width: 100%;
-  padding: 0.5rem 0.875rem;
+.carte,
+.bouton {
+  /* >= 44px : cible tactile confortable */
+  min-height: 46px;
+  padding: 0 0.625rem;
   border: 1px solid var(--trait);
-  border-left: 3px solid var(--trait);
-  border-radius: 8px;
+  border-left-width: 3px;
+  border-radius: 6px;
   background: var(--carte-fond);
-  color: var(--fg);
-  font: inherit;
-  text-align: left;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 0.1875rem;
 }
 
-.bouton:active,
-.carte:active {
-  transform: scale(0.99);
+.carte:active,
+.bouton:active {
+  transform: scale(0.995);
 }
 
-.bouton[disabled],
-.carte[disabled] {
+.carte[disabled],
+.bouton[disabled] {
   opacity: 0.4;
   cursor: default;
 }
 
-.titre {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 0.5rem;
-  font-weight: 600;
-  font-size: 1rem;
+.remplir {
+  flex: 1 1 auto;
 }
 
 .stats {
-  font-weight: 400;
-  font-size: 0.8125rem;
+  flex: none;
+  font-size: 0.75rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
 }
 
-/* La ligne qui porte la décision. */
-.verdict {
-  font-size: 0.8125rem;
-  line-height: 1.25;
-}
-
-.verdict.muet {
-  color: var(--muted);
-}
-
-/* Signale l'occasion d'achever — c'est elle qui rend le multi-cibles tendu. */
-.marque {
-  margin-left: 0.5rem;
-  padding: 0.0625rem 0.375rem;
-  border-radius: 999px;
-  background: var(--fg);
-  color: #101014;
-  font-size: 0.6875rem;
+/* Ce que la carte te coûte en PV. Le liseré gauche dit la même chose en couleur. */
+.cout {
+  flex: none;
+  min-width: 2.25rem;
+  text-align: right;
+  font-size: 0.9375rem;
   font-weight: 600;
-  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Le liseré gauche dit le coût avant qu'on ait lu quoi que ce soit. */
 .carte.propre {
   border-left-color: var(--sur);
 }
 
-.carte.propre .verdict {
+.carte.propre .cout {
   color: var(--sur);
 }
 
@@ -373,7 +356,7 @@ body {
   border-left-color: var(--cher);
 }
 
-.carte.couteux .verdict {
+.carte.couteux .cout {
   color: var(--cher);
 }
 
@@ -381,9 +364,8 @@ body {
   border-left-color: var(--letal);
 }
 
-.carte.letal .verdict {
+.carte.letal .cout {
   color: var(--letal);
-  font-weight: 600;
 }
 
 .carte.acheve {
@@ -396,34 +378,40 @@ body {
   outline-offset: 1px;
 }
 
+/* Déborde de la main en cours : le reste sera défaussé. */
+.carte.deborde .stats::after {
+  content: " ⤓";
+  color: var(--cher);
+}
+
 .carte.tresor {
   border-style: dashed;
-  border-left-style: dashed;
+  border-left-color: var(--trait);
   background: transparent;
   cursor: default;
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
-.carte.tresor .titre {
+.carte.tresor .nom {
   font-weight: 400;
-}
-
-.encombrement {
-  margin: 0;
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-.encombrement strong {
-  color: var(--fg);
 }
 
 .passer {
   border-left-color: var(--trait);
 }
 
-.passer .verdict {
+.passer .cout {
   color: var(--muted);
+}
+
+.encombrement {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.encombrement strong {
+  color: var(--fg);
 }
 
 /* --- fin de combat -------------------------------------------------------- */
@@ -441,11 +429,15 @@ body {
 }
 
 .secondaire {
-  min-height: 48px;
-  font-size: 0.875rem;
-  color: var(--muted);
-  border-left-width: 1px;
+  min-height: 44px;
+  display: flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
+  border-left-width: 1px;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.8125rem;
 }
 
 .journal {
@@ -453,7 +445,7 @@ body {
   padding-top: 0.5rem;
   border-top: 1px solid var(--trait);
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
 }
 
 .journal p {

@@ -1,12 +1,13 @@
 /**
  * Rendu du prototype de combat.
  *
- * Principe : le joueur ne doit jamais avoir à calculer ce que le moteur sait
- * déjà. L'information se pose sur l'objet qu'on touche — ce qu'une carte coûte
- * en temps est sur la carte, ce qu'elle fait à une cible est sur la cible.
+ * Deux principes, dans cet ordre :
  *
- * Depuis la résolution immédiate, la frise ne montre plus de coup « en vol » :
- * elle montre le temps qu'on s'apprête à acheter, et qui frappe pendant.
+ * 1. Le joueur ne calcule jamais ce que le moteur sait déjà.
+ * 2. Mais il ne doit pas non plus avoir à LIRE beaucoup pour le savoir. Une
+ *    ligne par carte, une ligne par ennemi ; le détail n'apparaît que sur ce
+ *    qui est visé. Le rythme des combattants n'est écrit nulle part : il est
+ *    dans la frise, c'est son travail.
  *
  * Seul endroit qui connaît la structure de la page.
  */
@@ -18,7 +19,7 @@ const PASSE = 2
 const FUTUR = 9
 const COLONNES = PASSE + FUTUR + 1
 
-const GLYPHE = { carte: '⚔', frappe: '✖', pioche: '↺' }
+const GLYPHE = { carte: '⚔', frappe: '✖', pioche: '↺', tresor: '▨' }
 const ORDINAL = ['①', '②', '③', '④', '⑤']
 
 export type View = {
@@ -41,15 +42,15 @@ export function mount(root: HTMLElement, buildTime: string): View {
     <main class="app">
       <p class="build">Build : <time>${buildTime}</time> — seed <span id="seed"></span></p>
 
-      <div id="ennemis" class="ennemis"></div>
-      <div id="joueur" class="combattant"></div>
+      <div id="ennemis" class="rangs"></div>
+      <div id="joueur" class="rangs"></div>
 
       <div id="frise" class="frise"></div>
       <p id="legende" class="legende"></p>
 
       <div id="cartes" class="cartes"></div>
+      <button id="passer" class="rang bouton passer" type="button" data-action="passer"></button>
       <p id="encombrement" class="encombrement"></p>
-      <button id="passer" class="bouton passer" type="button" data-action="passer"></button>
 
       <p id="issue" class="issue"></p>
       <div class="reprise">
@@ -84,21 +85,16 @@ export function render(view: View, etat: EtatCombat, seed: number, selection: nu
 
   view.seed.textContent = String(seed)
   view.ennemis.innerHTML = vivants(etat)
-    .map(({ ennemi, index }, rang) => blocEnnemi(etat, ennemi, index, rang, visee, fini))
+    .map(({ ennemi, index }, rang) => ligneEnnemi(etat, ennemi, index, rang, visee, fini))
     .join('')
-  view.joueur.innerHTML = combattant(
-    'TOI',
-    etat.pv,
-    etat.pvMax,
-    fini ? '' : `main renouvelée dans ${etat.compteurPioche}`,
-  )
+  view.joueur.innerHTML = ligneJoueur(etat)
 
   view.frise.innerHTML = fini ? '' : frise(etat, visee)
   view.legende.innerHTML = fini ? '' : legende(etat, visee)
 
   // Les boutons de main sont reconstruits : l'écoute est déléguée à la racine.
   view.cartes.innerHTML = etat.main
-    .map((c, index) => boutonCarte(etat, c, index, selection, fini))
+    .map((c, index) => ligneCarte(etat, c, index, selection, fini))
     .join('')
   view.encombrement.innerHTML = fini ? '' : encombrement(etat)
 
@@ -108,68 +104,71 @@ export function render(view: View, etat: EtatCombat, seed: number, selection: nu
   view.issue.textContent =
     etat.issue === 'victoire' ? 'VICTOIRE.' : etat.issue === 'defaite' ? 'MORT. Tout est perdu.' : ''
 
-  // Les derniers évènements suffisent : le journal complet noierait l'écran.
   view.journal.innerHTML = etat.evenements
-    .slice(-4)
+    .slice(-3)
     .map((evenement) => `<p>${phrase(evenement)}</p>`)
     .join('')
 }
 
 /**
- * Un ennemi. Devient une cible touchable dès qu'une carte est visée : c'est la
- * seconde tape, celle qui remplace l'ancienne confirmation.
+ * Un ennemi sur une ligne : ordinal, nom, jauge, PV, et ✖N — la force de sa
+ * frappe, avec le glyphe de sa voie de frise. Le « −N » reste réservé à ce que
+ * le joueur perd, sur les cartes : deux signes, deux sens, jamais mélangés.
+ *
+ * Son rythme n'est écrit nulle part : la frise le montre. Quand une carte est
+ * visée, la ligne devient touchable et porte ce que le coup lui ferait.
  */
-function blocEnnemi(
+function ligneEnnemi(
   etat: EtatCombat,
-  ennemi: { nom: string; pv: number; pvMax: number; degats: number; periode: number; compteur: number },
+  ennemi: { nom: string; pv: number; pvMax: number; degats: number },
   index: number,
   rang: number,
   visee: Carte | null,
   fini: boolean,
 ): string {
   const corps =
-    `<div class="tete">` +
-    `<span class="nom"><span class="ordinal">${ORDINAL[rang] ?? '•'}</span> ${ennemi.nom.toUpperCase()}</span>` +
-    `<span class="pv">${ennemi.pv}/${ennemi.pvMax}</span>` +
-    `</div>` +
-    `<div class="jauge"><div class="remplissage" style="width:${Math.max(0, Math.round((ennemi.pv / ennemi.pvMax) * 100))}%"></div></div>` +
-    `<div class="rythme">frappe dans ${ennemi.compteur} — ${ennemi.degats} dégâts toutes les ${ennemi.periode}</div>`
+    `<span class="ordinal">${ORDINAL[rang] ?? '•'}</span>` +
+    `<span class="nom">${ennemi.nom}</span>` +
+    jauge(ennemi.pv, ennemi.pvMax) +
+    `<span class="pv">${ennemi.pv}</span>` +
+    `<span class="coup">${GLYPHE.frappe}${ennemi.degats}</span>`
 
-  if (visee === null || fini) {
-    return `<div class="combattant adverse">${corps}</div>`
-  }
+  if (visee === null || fini) return `<div class="rang adverse">${corps}</div>`
 
   const c = consequence(etat, visee, index)
   const effet = c.gagne
-    ? `★ ce coup gagne le combat`
+    ? `<span class="effet gagne">★ gagne</span>`
     : c.tue
-      ? `★ l'achève — il ne frappera plus (tu encaisses ${c.degats} PV)`
-      : `le laisse à ${Math.max(0, ennemi.pv - visee.degats)} PV — tu encaisses ${c.degats} PV`
+      ? `<span class="effet gagne">★ achève</span>`
+      : `<span class="effet">→ ${Math.max(0, ennemi.pv - visee.degats)}</span>`
 
   return (
-    `<button class="combattant adverse cible${c.tue ? ' achevable' : ''}" type="button" ` +
-    `data-action="cibler" data-cible="${index}">${corps}` +
-    `<div class="effet">${effet}</div></button>`
+    `<button class="rang adverse cible${c.tue ? ' achevable' : ''}" type="button" ` +
+    `data-action="cibler" data-cible="${index}">${corps}${effet}</button>`
   )
 }
 
-/** Nom, jauge de PV et ligne de rythme. La jauge se lit sans lire les chiffres. */
-function combattant(nom: string, pv: number, pvMax: number, detail: string): string {
-  const part = Math.max(0, Math.round((pv / pvMax) * 100))
+function ligneJoueur(etat: EtatCombat): string {
   return (
-    `<div class="tete"><span class="nom">${nom}</span><span class="pv">${pv}/${pvMax}</span></div>` +
-    `<div class="jauge"><div class="remplissage" style="width:${part}%"></div></div>` +
-    (detail === '' ? '' : `<div class="rythme">${detail}</div>`)
+    `<div class="rang">` +
+    `<span class="ordinal">▲</span>` +
+    `<span class="nom">TOI</span>` +
+    jauge(etat.pv, etat.pvMax) +
+    `<span class="pv">${etat.pv}</span>` +
+    `<span class="coup vide"></span>` +
+    `</div>`
   )
+}
+
+function jauge(pv: number, pvMax: number): string {
+  const part = Math.max(0, Math.round((pv / pvMax) * 100))
+  return `<span class="jauge"><span class="remplissage" style="width:${part}%"></span></span>`
 }
 
 /**
- * La frise : une colonne par unité de temps, le passé à gauche, le futur à
- * droite. Une voie par combattant — la tienne en haut, puis un ennemi par
- * ligne, dans l'ordre des blocs ci-dessus.
- *
- * Bande sombre : la main en cours. Bande marquée : le temps que la carte visée
- * va coûter — tout ce qui s'y trouve, tu vas le prendre.
+ * La frise porte tout le rythme : une voie par combattant, le passé à gauche,
+ * le futur à droite. Bande sombre = la main en cours. Bande marquée = le temps
+ * que la carte visée va coûter ; tout ce qui s'y trouve, tu vas le prendre.
  */
 function frise(etat: EtatCombat, visee: Carte | null): string {
   const previsions = prevoir(etat, FUTUR)
@@ -185,7 +184,6 @@ function frise(etat: EtatCombat, visee: Carte | null): string {
     return `<div class="${classes.join(' ')}">${contenu}</div>`
   }
 
-  // Voie du joueur : ce qu'il a joué et ses renouvellements de main.
   const voieJoueur = instants
     .map((decalage) => {
       const bulles: string[] = []
@@ -210,7 +208,6 @@ function frise(etat: EtatCombat, visee: Carte | null): string {
     )
     .join('')
 
-  // Une voie par ennemi debout, dans l'ordre d'affichage.
   const voiesEnnemis = vivants(etat)
     .map(({ ennemi, index }, rang) => {
       const cases = instants
@@ -235,39 +232,25 @@ function frise(etat: EtatCombat, visee: Carte | null): string {
     })
     .join('')
 
-  return (
-    `<div class="voie">${voieJoueur}</div>` +
-    `<div class="voie axe">${axe}</div>` +
-    voiesEnnemis
-  )
+  return `<div class="voie">${voieJoueur}</div><div class="voie axe">${axe}</div>${voiesEnnemis}`
 }
 
-/** Rappelle ce que vaut la bande claire : le temps qu'il reste à dépenser. */
+/** La seule phrase de l'écran. Elle n'apparaît que quand une carte est visée. */
 function legende(etat: EtatCombat, visee: Carte | null): string {
-  if (visee !== null) {
-    const seule = vivants(etat).length === 1
-    return (
-      `<strong>${visee.nom}</strong> — elle frappe tout de suite, puis tu achètes ` +
-      `<strong>${visee.vitesse} de temps</strong>. ${seule ? 'Retouche-la pour l\'engager.' : 'Touche une cible.'}`
-    )
-  }
+  if (visee === null) return `<span class="bande"></span> main : ${etat.compteurPioche} temps`
 
-  const jouables = etat.main.filter(
-    (carte) => carte.type === 'combat' && carte.vitesse <= etat.compteurPioche,
-  ).length
-
+  const seule = vivants(etat).length === 1
   return (
-    `<span class="bande"></span> cette main : <strong>${etat.compteurPioche} de temps</strong>, ` +
-    `${jouables} carte${jouables > 1 ? 's' : ''} qui y tiennent`
+    `<strong>${visee.nom}</strong> frappe, puis tu paies ` +
+    `<strong>${visee.vitesse} temps</strong> — ${seule ? 'retouche' : 'touche une cible'}`
   )
 }
 
 /**
- * Une carte de la main. Le coup part tout de suite ; ce qui se décide, c'est
- * le temps qu'on achète derrière. Ce coût ne dépend pas de la cible tant
- * qu'on ne tue personne — ce cas-là s'affiche sur l'ennemi.
+ * Une carte sur une ligne : nom, dégâts, temps, et ce que ça coûte en PV.
+ * Rien d'autre — le « coûte N temps » d'avant répétait la stat déjà affichée.
  */
-function boutonCarte(
+function ligneCarte(
   etat: EtatCombat,
   carte: Carte,
   index: number,
@@ -276,9 +259,10 @@ function boutonCarte(
 ): string {
   if (carte.type === 'tresor') {
     return (
-      `<div class="carte tresor">` +
-      `<span class="titre">${carte.nom}</span>` +
-      `<span class="verdict muet">occupe une place — injouable</span>` +
+      `<div class="rang carte tresor">` +
+      `<span class="nom">${carte.nom}</span>` +
+      `<span class="remplir"></span>` +
+      `<span class="cout">${GLYPHE.tresor}</span>` +
       `</div>`
     )
   }
@@ -288,59 +272,49 @@ function boutonCarte(
   const acheve = debout.some(({ ennemi }) => carte.degats >= ennemi.pv)
   const vise = index === selection
 
-  const classes = ['carte']
+  const classes = ['rang', 'carte']
   if (acheve) classes.push('acheve')
   else if (vol.mortel) classes.push('letal')
   else classes.push(vol.degats === 0 ? 'propre' : 'couteux')
   if (vise) classes.push('visee')
+  if (carte.vitesse > etat.compteurPioche) classes.push('deborde')
 
   // Visée avec une seule cible debout : la retape engage directement.
   const action = vise && debout.length === 1 ? 'cibler' : vise ? 'annuler' : 'viser'
   const donnee = action === 'cibler' ? `data-cible="${debout[0]!.index}"` : `data-index="${index}"`
 
-  const deborde = carte.vitesse <= etat.compteurPioche ? '' : ' · défausse le reste de ta main'
-  const texte = vol.mortel
-    ? `☠ tu tombes pendant ce temps${deborde}`
-    : vol.degats === 0
-      ? `coûte ${carte.vitesse} temps — personne ne frappe${deborde}`
-      : `coûte ${carte.vitesse} temps — ${vol.degats} PV encaissés${deborde}`
-
-  const note = acheve ? `<span class="marque">achève une cible</span>` : ''
+  const cout = vol.mortel ? '☠' : vol.degats === 0 ? '—' : `−${vol.degats}`
 
   return (
     `<button class="${classes.join(' ')}" type="button" ` +
     `data-action="${action}" ${donnee}${fini ? ' disabled' : ''}>` +
-    `<span class="titre">${vise ? '▶ ' : ''}${carte.nom}` +
-    `<span class="stats">${carte.degats} dégâts · ${carte.vitesse} temps</span></span>` +
-    `<span class="verdict">${texte}${note}</span>` +
+    `<span class="nom">${acheve ? '★ ' : ''}${carte.nom}</span>` +
+    `<span class="stats">${carte.degats} · ${carte.vitesse}t</span>` +
+    `<span class="remplir"></span>` +
+    `<span class="cout">${cout}</span>` +
     `</button>`
   )
 }
 
 /** Décision de design : le taux d'encombrement est toujours visible. */
 function encombrement(etat: EtatCombat): string {
-  const enMain = tresorsEnMain(etat)
   const total = etat.pioche.length + etat.main.length + etat.defausse.length
   const tresors =
     [...etat.pioche, ...etat.main, ...etat.defausse].filter((c) => c.type === 'tresor').length
-  const taux = total === 0 ? 0 : Math.round((tresors / total) * 100)
 
   return (
-    `Encombrement — <strong>${enMain}/${etat.main.length}</strong> en main · ` +
-    `deck ${tresors}/${total} (${taux} %)`
+    `${GLYPHE.tresor} <strong>${tresorsEnMain(etat)}/${etat.main.length}</strong> en main · ` +
+    `${tresors}/${total} au deck`
   )
 }
 
 function etiquettePasser(etat: EtatCombat): string {
-  const { frappes, degats } = coutDuPassage(etat)
-  const cout =
-    frappes === 0
-      ? 'aucune frappe en chemin'
-      : `${frappes} frappe${frappes > 1 ? 's' : ''} encaissée${frappes > 1 ? 's' : ''}, ${degats} PV`
-
+  const { degats } = coutDuPassage(etat)
   return (
-    `<span class="titre">Passer<span class="stats">${etat.compteurPioche} temps</span></span>` +
-    `<span class="verdict">− ${cout}</span>`
+    `<span class="nom">Passer</span>` +
+    `<span class="stats">0 · ${etat.compteurPioche}t</span>` +
+    `<span class="remplir"></span>` +
+    `<span class="cout">${degats === 0 ? '—' : `−${degats}`}</span>`
   )
 }
 
@@ -351,15 +325,15 @@ function bulle(glyphe: string, classes: string): string {
 function phrase(evenement: Evenement): string {
   switch (evenement.type) {
     case 'debut':
-      return `${evenement.ennemis.join(', ')} — ${evenement.ennemis.length > 1 ? 'ils bloquent' : 'il bloque'} le passage.`
+      return evenement.ennemis.join(', ')
     case 'carte':
-      return `t${evenement.t} — ${evenement.nom} inflige ${evenement.degats} à ${evenement.cible} (${evenement.pvCible} PV).`
+      return `t${evenement.t} — ${evenement.nom} → ${evenement.cible} (${evenement.pvCible} PV)`
     case 'mort':
-      return `t${evenement.t} — ${evenement.nom} s'effondre.`
+      return `t${evenement.t} — ${evenement.nom} tombe`
     case 'frappe':
-      return `t${evenement.t} — ${evenement.nom} frappe pour ${evenement.degats} (toi : ${evenement.pvJoueur} PV).`
+      return `t${evenement.t} — ${evenement.nom} frappe (toi : ${evenement.pvJoueur} PV)`
     case 'pioche':
-      return `t${evenement.t} — main renouvelée : ${evenement.cartes} cartes, ${evenement.tresors} trésor(s).`
+      return `t${evenement.t} — main : ${evenement.cartes} cartes, ${evenement.tresors} trésor(s)`
     case 'issue':
       return evenement.issue === 'victoire' ? 'Plus rien ne bouge.' : 'Tu tombes.'
   }
