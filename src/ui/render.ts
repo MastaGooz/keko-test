@@ -11,7 +11,7 @@
  * Seul endroit qui connaît la structure de la page.
  */
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
-import { consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
+import { butin, consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
 const ORDINAL = ['①', '②', '③', '④', '⑤']
@@ -98,8 +98,7 @@ export function render(
   view.finTour.innerHTML = etiquetteFinTour(etat)
   view.finTour.disabled = fini
 
-  view.issue.textContent =
-    etat.issue === 'victoire' ? 'VICTOIRE.' : etat.issue === 'defaite' ? 'MORT. Tout est perdu.' : ''
+  view.issue.innerHTML = issue(etat)
 
   view.cupidite.innerHTML = reglageCupidite(tresors)
 
@@ -192,7 +191,7 @@ function ligneCarte(
       `<div class="rang carte tresor">` +
       `<span class="nom">${carte.nom}</span>` +
       `<span class="remplir"></span>` +
-      `<span class="cout">${GLYPHE.tresor}</span>` +
+      `<span class="or">${carte.valeur ?? 0} or</span>` +
       `</div>`
     )
   }
@@ -223,6 +222,26 @@ function ligneCarte(
   )
 }
 
+/**
+ * La fin de combat est le seul endroit où la cupidité se paie ou se récolte.
+ * Sans ce chiffre, porter du poids n'a aucune contrepartie visible et le
+ * joueur ne teste qu'une punition.
+ */
+function issue(etat: EtatCombat): string {
+  const or = butin(etat)
+  if (etat.issue === 'victoire') {
+    return or === 0
+      ? 'VICTOIRE.'
+      : `VICTOIRE — tu ressors avec <span class="or">${or} or</span>.`
+  }
+  if (etat.issue === 'defaite') {
+    return or === 0
+      ? 'MORT.'
+      : `MORT — <span class="perdu">${or} or</span> restent dans le donjon.`
+  }
+  return ''
+}
+
 /** Décision de design : le taux d'encombrement est toujours visible. */
 function encombrement(etat: EtatCombat): string {
   const total = etat.pioche.length + etat.main.length + etat.defausse.length
@@ -231,7 +250,8 @@ function encombrement(etat: EtatCombat): string {
 
   return (
     `${GLYPHE.tresor} <strong>${tresorsEnMain(etat)}/${etat.main.length}</strong> en main · ` +
-    `${tresors}/${total} au deck`
+    `${tresors}/${total} au deck · ` +
+    `<strong class="or">${butin(etat)} or</strong> en jeu`
   )
 }
 

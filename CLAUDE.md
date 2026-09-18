@@ -149,6 +149,39 @@ Prochaine étape : **faire jouer Keko à chaque cran** et répondre à l'hypoth�
 critique — la main polluée de trésors est-elle tendue ou pénible ? Tout le
 reste (hub, marché, carte du donjon) attend cette réponse.
 
+
+### Première réponse à l'hypothèse critique
+
+Keko a joué : **« clairement 2 ou 3 babioles c'est chiant »**. Mesure faite
+dans la foulée pour savoir de quelle maladie il s'agit — par tour de jeu, en
+montant la cupidité de 0 à 8 trésors :
+
+| trésors | options / tour | tours **sans aucun choix** | cartes jouées | énergie gâchée |
+|---|---|---|---|---|
+| 0 | 4,23 | 0 % | 2,15 | 0,26 |
+| 4 | 3,72 | 8 % | 2,30 | 0,49 |
+| 8 | 3,32 | 23 % | 2,10 | 0,99 |
+
+**Le nombre de cartes jouées ne bouge pas** (2,15 → 2,10). Les trésors ne
+coûtent pas des coups, ils coûtent **le choix du coup** : à 8 trésors, près
+d'un tour sur quatre n'a plus aucune décision.
+
+*La cupidité ne rend pas les tours plus durs, elle les vide.* C'est pour ça
+que c'est chiant et pas tendu — et aucun réglage de difficulté n'y changera
+quoi que ce soit.
+
+Premier correctif appliqué : **les trésors valent de l'or** (45 à 240, très
+inégal) et l'écran l'affiche en permanence. Le test était amputé — Keko
+portait le poids sans jamais voir l'appât, donc « chiant » était le seul
+verdict possible. Ça restaure l'enjeu, mais ça ne répare pas la mécanique du
+tour vide : à retester.
+
+Si ça reste chiant, le levier suivant est **déjà dans les décisions de
+design** : les soupapes viennent des cartes, pas des règles — des cartes
+d'action qui manipulent les trésors, draftées à la place de cartes de combat.
+Ne rouvrir « un trésor = une carte, poids uniforme » qu'après ça, et seulement
+avec Keko.
+
 ## Architecture — la règle à ne pas casser
 
 ```

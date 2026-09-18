@@ -25,8 +25,8 @@ export function deckDeDepart(): Carte[] {
 }
 
 /** Un trésor en tant que carte : inerte en combat, il n'occupe qu'une place. */
-export function carteTresor(id: string, nom: string): Carte {
-  return { id, nom, type: 'tresor', cout: 0, degats: 0 }
+export function carteTresor(id: string, nom: string, valeur: number): Carte {
+  return { id, nom, type: 'tresor', cout: 0, degats: 0, valeur }
 }
 
 /**
@@ -34,19 +34,25 @@ export function carteTresor(id: string, nom: string): Carte {
  * comme du butin encombrant, pas comme du remplissage. C'est la sensation
  * qu'on teste, autant qu'elle ait une chance d'exister.
  */
-const BUTIN = [
-  'Couronne', 'Calice', 'Idole', 'Reliquaire', 'Diadème', 'Sceptre',
-  'Torque', 'Camée', 'Ostensoir', 'Cassette', 'Médaillon', 'Aiguière',
+/**
+ * Valeurs très inégales, et volontairement : à poids identique, le joueur
+ * doit préférer peu de gros trésors à beaucoup de petits. Un Camée occupe
+ * exactement la même place qu'une Couronne pour cinq fois moins d'or.
+ */
+const BUTIN: [string, number][] = [
+  ['Couronne', 240], ['Diadème', 210], ['Sceptre', 185], ['Reliquaire', 160],
+  ['Ostensoir', 140], ['Calice', 120], ['Cassette', 105], ['Idole', 90],
+  ['Médaillon', 75], ['Torque', 65], ['Aiguière', 55], ['Camée', 45],
 ]
 
 /** `nombre` trésors tirés dans le butin, sans doublon tant qu'il y en a. */
 export function tresorsEmportes(nombre: number, rng: Rng): Carte[] {
   const restants = [...BUTIN]
   return Array.from({ length: nombre }, (_, i) => {
-    const nom = restants.length > 0
+    const [nom, valeur] = restants.length > 0
       ? restants.splice(randomInt(rng, 0, restants.length - 1), 1)[0]!
       : BUTIN[i % BUTIN.length]!
-    return carteTresor(`tresor-${i + 1}`, nom)
+    return carteTresor(`tresor-${i + 1}`, nom, valeur)
   })
 }
 

@@ -24,6 +24,12 @@ export type Carte = {
   /** Énergie consommée. Sans objet pour un trésor. */
   cout: number
   degats: number
+  /**
+   * Ce que vaut un trésor à l'extraction, en or. Inerte en combat : le
+   * moteur ne s'en sert jamais, il ne fait que la transporter jusqu'à la
+   * sortie. C'est l'appât qui rend le poids discutable.
+   */
+  valeur?: number
 }
 
 export type Ennemi = {
@@ -200,6 +206,14 @@ export function vivants(etat: EtatCombat): { ennemi: Ennemi; index: number }[] {
 function estVivant(etat: EtatCombat, index: number): boolean {
   const ennemi = etat.ennemis[index]
   return ennemi !== undefined && ennemi.pv > 0
+}
+
+/** Or que le joueur ressortirait s'il survivait : tout le butin du deck. */
+export function butin(etat: EtatCombat): number {
+  return [...etat.pioche, ...etat.main, ...etat.defausse].reduce(
+    (total, carte) => total + (carte.valeur ?? 0),
+    0,
+  )
 }
 
 /** Nombre de trésors qui encombrent la main. */

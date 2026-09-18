@@ -385,3 +385,19 @@ body {
   color: var(--energie);
   font-weight: 600;
 }
+
+/* L'or : l'appât, et ce qu'on perd en mourant. */
+.or {
+  color: var(--energie);
+  font-variant-numeric: tabular-nums;
+}
+
+.carte.tresor .or {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.perdu {
+  color: var(--ennemi);
+  font-variant-numeric: tabular-nums;
+}
