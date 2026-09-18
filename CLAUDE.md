@@ -48,9 +48,54 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
 - Garde-fous contre la spirale de la mort : **deck de base gratuit**,
   **méta-progression** pour racheter des cartes perdues.
 - Le hub vend du **levier et de la variété, jamais de la sécurité**.
-- Le **système de combat** (ressources, coût des cartes) n'est **PAS encore
-  décidé**. Pas d'énergie à la StS par défaut ; ne pas trancher seul.
-- **Mis de côté** pour l'instant : la fuite en combat. Ne pas l'implémenter.
+- Le **système de combat** est tranché : horloge partagée, voir la section
+  dédiée ci-dessous.
+- **Mis de côté** pour l'instant : la fuite en combat, l'interruption des cartes
+  en cours, la pioche comme action, le marchand au troc. Ne pas les
+  implémenter.
+
+### Système de combat — horloge partagée
+
+**Le temps.** Une seule timeline continue. Chaque combattant porte un compteur :
+l'ennemi *frappe dans 3*, le joueur *pioche dans 5*. **Le temps ne s'écoule que
+quand le joueur le dépense** — hors de ses actions, rien ne bouge.
+
+**Jouer une carte.** Chaque carte a une **vitesse** (1 à 3). L'engager fait
+avancer le temps d'autant ; tous les compteurs décrémentent ensemble.
+
+- Tout compteur qui atteint 0 en chemin **résout à cet instant** : l'ennemi
+  frappe, puis son compteur se recharge.
+- **La carte résout à la fin de son temps**, pas au moment où on la joue. Un
+  moulinet à 4 contre un ennemi qui frappe dans 2 : le joueur encaisse d'abord,
+  son coup tombe ensuite. Pour couper une frappe imminente, il faut une carte
+  **rapide**.
+- **Égalité : la carte du joueur passe en premier.** Tuer pile à temps doit être
+  possible — c'est ce qui récompense le comptage.
+- **Pas d'interruption** : un coup encaissé n'annule jamais la carte en cours.
+
+**La main.** Main de **5**. Quand le compteur du joueur atteint 0 : **toute la
+main est défaussée**, on pioche 5, le compteur se recharge. Pioche vide → on
+remélange la défausse. La pioche peut tomber pendant qu'une carte est en vol ;
+l'engagement, lui, est pris.
+
+**Les trésors.** Injouables, aucun effet en combat — leurs effets de richesse se
+calculent à l'extraction. En combat ils ne font qu'une chose : **occuper une
+place de main**. Le coût de la cupidité est donc **statistique et permanent** :
+un deck à 40 % de trésors, c'est 2 cartes mortes par main de 5, tous les cycles,
+avec la variance qui va avec — et parfois la main à 5 trésors.
+
+**Deux actions, pas une de plus :**
+
+- **Jouer une carte.**
+- **Passer** : avance le temps jusqu'à la prochaine pioche du joueur, résout tout
+  ce qui tombe à 0 en chemin, **en une seule tape**. Jamais avantageux (on
+  encaisse sans riposter), mais indispensable : sans lui, une main morte figerait
+  la partie. Et il évite la corvée — pas de « attendre 1 » à taper cinq fois.
+
+**Le sac n'est pas une action de combat.** Il se remplit **au ramassage**, entre
+deux combats : prendre dans le deck / prendre dans le sac / refuser. En combat,
+il transformerait la main morte en opportunité et anesthésierait la punition
+qu'on veut mesurer.
 
 ### Hypothèse critique à tester en premier
 
@@ -64,8 +109,8 @@ qu'à ça : interface brute, aucun style.
 La tuyauterie est en place et validée de bout en bout ; **le jeu lui-même n'est
 pas commencé**. La page n'est qu'un placeholder (titre, date de build, bouton de
 tap + compteur persisté) servant à vérifier tactile, sauvegarde et rechargement.
-Prochaine étape : choisir le système de combat, puis le prototype jetable qui
-teste l'hypothèse critique ci-dessus.
+Le système de combat est choisi (horloge partagée). Prochaine étape : le
+prototype jetable qui teste l'hypothèse critique ci-dessus.
 
 ## Architecture — la règle à ne pas casser
 
