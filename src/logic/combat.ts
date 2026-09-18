@@ -25,9 +25,9 @@ export type Carte = {
   cout: number
   degats: number
   /**
-   * Ce que vaut un trésor à l'extraction, en or. Inerte en combat : le
-   * moteur ne s'en sert jamais, il ne fait que la transporter jusqu'à la
-   * sortie. C'est l'appât qui rend le poids discutable.
+   * Prix qu'en donnerait le marché noir, une fois la run terminée. Un trésor
+   * ne rapporte RIEN en combat ni en fin de combat : il ne devient de l'or
+   * qu'au hub, s'il en ressort. Le moteur ne fait que le transporter.
    */
   valeur?: number
 }
@@ -208,7 +208,7 @@ function estVivant(etat: EtatCombat, index: number): boolean {
   return ennemi !== undefined && ennemi.pv > 0
 }
 
-/** Or que le joueur ressortirait s'il survivait : tout le butin du deck. */
+/** Ce que vaudrait tout le butin transporté, s'il ressortait du donjon. */
 export function butin(etat: EtatCombat): number {
   return [...etat.pioche, ...etat.main, ...etat.defausse].reduce(
     (total, carte) => total + (carte.valeur ?? 0),

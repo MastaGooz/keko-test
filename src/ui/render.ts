@@ -191,7 +191,7 @@ function ligneCarte(
       `<div class="rang carte tresor">` +
       `<span class="nom">${carte.nom}</span>` +
       `<span class="remplir"></span>` +
-      `<span class="or">${carte.valeur ?? 0} or</span>` +
+      `<span class="or">vaut ${carte.valeur ?? 0}</span>` +
       `</div>`
     )
   }
@@ -223,21 +223,22 @@ function ligneCarte(
 }
 
 /**
- * La fin de combat est le seul endroit où la cupidité se paie ou se récolte.
+ * Un trésor ne devient de l'or qu'au marché noir, après la run : on n'annonce
+ * donc jamais un gain ici, seulement ce que le butin VAUDRA s'il ressort.
  * Sans ce chiffre, porter du poids n'a aucune contrepartie visible et le
  * joueur ne teste qu'une punition.
  */
 function issue(etat: EtatCombat): string {
-  const or = butin(etat)
+  const valeur = butin(etat)
   if (etat.issue === 'victoire') {
-    return or === 0
+    return valeur === 0
       ? 'VICTOIRE.'
-      : `VICTOIRE — tu ressors avec <span class="or">${or} or</span>.`
+      : `VICTOIRE — butin intact, <span class="or">${valeur}</span> à revendre au hub.`
   }
   if (etat.issue === 'defaite') {
-    return or === 0
-      ? 'MORT.'
-      : `MORT — <span class="perdu">${or} or</span> restent dans le donjon.`
+    return valeur === 0
+      ? 'MORT. Tout est perdu.'
+      : `MORT — butin perdu, <span class="perdu">${valeur}</span> envolés.`
   }
   return ''
 }
@@ -251,7 +252,7 @@ function encombrement(etat: EtatCombat): string {
   return (
     `${GLYPHE.tresor} <strong>${tresorsEnMain(etat)}/${etat.main.length}</strong> en main · ` +
     `${tresors}/${total} au deck · ` +
-    `<strong class="or">${butin(etat)} or</strong> en jeu`
+    `butin : <strong class="or">${butin(etat)}</strong> à revendre`
   )
 }
 

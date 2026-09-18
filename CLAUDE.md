@@ -170,8 +170,11 @@ d'un tour sur quatre n'a plus aucune décision.
 que c'est chiant et pas tendu — et aucun réglage de difficulté n'y changera
 quoi que ce soit.
 
-Premier correctif appliqué : **les trésors valent de l'or** (45 à 240, très
-inégal) et l'écran l'affiche en permanence. Le test était amputé — Keko
+Premier correctif appliqué : **chaque trésor affiche son prix de revente**
+(45 à 240, très inégal). Attention au vocabulaire : un trésor ne rapporte
+rien en combat ni en fin de combat — il ne devient de l'or **qu'au marché
+noir, après la run**. L'écran n'annonce donc jamais un gain, seulement ce que
+le butin vaudra s'il ressort. Le test était amputé — Keko
 portait le poids sans jamais voir l'appât, donc « chiant » était le seul
 verdict possible. Ça restaure l'enjeu, mais ça ne répare pas la mécanique du
 tour vide : à retester.
