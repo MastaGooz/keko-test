@@ -13,6 +13,7 @@ import { creerCombat, finDuTour, jouerCarte } from './logic/combat.ts'
 import { GROUPES, deckAvecTresors } from './logic/cartes.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
+import { verifierVersion } from './ui/version.ts'
 
 const root = document.querySelector<HTMLDivElement>('#app')!
 const view = mount(root, __BUILD_TIME__)
@@ -67,3 +68,7 @@ bindInput(view, (action) => {
 })
 
 demarrer(Date.now() % 100000)
+
+// Le cache de GitHub Pages peut servir un vieux HTML : on vérifie la date du
+// build à la source et on se recharge au besoin, une fois la partie affichée.
+void verifierVersion(__BUILD_TIME__)
