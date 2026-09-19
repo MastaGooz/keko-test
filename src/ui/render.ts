@@ -338,9 +338,16 @@ function ligneCarte(
  */
 function eventail(index: number, total: number): string {
   const ecart = index - (total - 1) / 2
-  const rotation = (ecart * 2.4).toFixed(2)
+  const rotation = (ecart * 2.2).toFixed(2)
   // L'arc : les cartes des bords descendent, celle du milieu culmine.
-  const descente = (ecart * ecart * 2.6).toFixed(2)
+  //
+  // Coefficients abaissés (2,6 -> 1,6 et 2,4 -> 2,2) quand les cartes ont
+  // grandi. L'arc est en PIXELS FIXES, donc il ne suit pas la carte — et la
+  // rotation, elle, fait d'autant plus plonger le coin bas-gauche que la carte
+  // est haute. Or c'est là que vit le chiffre de dégâts, et la carte plonge
+  // déjà sous le bord de l'écran : il ne lui restait plus que 4 px de garde.
+  // L'arc reste lisible, il est juste moins creusé.
+  const descente = (ecart * ecart * 1.6).toFixed(2)
   // `--n` sert au calcul du recouvrement : les cartes sont grandes et se
   // partagent la colonne en se chevauchant, quelle que soit la taille de
   // l'écran. Une largeur fixe sortait de l'écran sur un petit téléphone.

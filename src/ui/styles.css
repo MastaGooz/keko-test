@@ -12,6 +12,11 @@
    est la premiere chose a faire si la page grandit encore. */
 html {
   font-size: clamp(16px, min(0.6vw + 13.4px, 2vh), 24px);
+  /* Le rognage est porte ici ET sur `body`. Il ne rattrapait au depart que les
+     quelques pixels de l'arc de l'eventail ; depuis que les cartes plongent
+     sous le bord bas, il retient jusqu'a 89 px. Trop pour se fier a la seule
+     propagation de `overflow` du body vers la fenetre. */
+  overflow: hidden;
 }
 
 :root {
@@ -551,10 +556,13 @@ body {
 .carte {
   /* Trois bornes : la taille voulue, la part de colonne, et la hauteur
      disponible. En paysage c'est la HAUTEUR qui manque, jamais la largeur :
-     sans la troisieme borne, la main deborderait sous l'ecran. */
-  /* 26 % : avec un pas de 68 %, cinq cartes occupent 3,72 fois leur largeur.
-     Au-dela, la main deborderait de sa colonne. */
-  --large: min(9rem, 26%, 19vh);
+     sans la troisieme borne, la main deborderait sous l'ecran.
+     26 % : avec un pas de 68 %, cinq cartes occupent 3,72 fois leur largeur.
+
+     La borne de hauteur est DESORMAIS CELLE DE LA PARTIE VISIBLE, pas celle de
+     la carte entiere -- voir `--enfoui` plus bas. C'est ce qui permet a la
+     carte d'etre bien plus grande sans manger la scene. */
+  --large: min(11rem, 26%, 29vh);
   position: relative;
   flex: 0 0 auto;
   width: var(--large);
@@ -621,6 +629,44 @@ body {
   background-size: 260% 100%;
   background-position: 120% 0;
   pointer-events: none;
+}
+
+/* La carte plonge sous le bord bas de l'ecran : au repos, on ne voit que sa
+   partie haute -- la gemme, la fenetre d'art, le chiffre de degats. La plaque
+   du nom est sous la ligne de flottaison, et remonte avec la carte visee.
+
+   Pourquoi : a taille contrainte par la HAUTEUR d'ecran, la carte entiere ne
+   pouvait pas depasser ~66 px de large sur un telephone -- et une gemme de
+   28 px sur une carte de 66 ecrase le dessin qu'elle est censee annoter. En
+   n'affichant que 76 % de la carte, on gagne un tiers de taille a encombrement
+   vertical presque egal : le meme chrome ne pese plus que la moitie.
+
+   24 % : c'est exactement la plaque du nom (26 % de haut). Ce qui disparait
+   est ce qu'on lit le moins, et le chiffre de degats passe juste au-dessus de
+   la ligne. */
+#cartes .carte {
+  /* La MEME plongee, ecrite deux fois -- et ce n'est pas une redondance.
+
+     PIEGE : un `%` range dans une variable ne veut pas dire la meme chose
+     selon la propriete qui la consomme. Une variable personnalisee se
+     substitue en JETONS BRUTS, donc le `26%` de `--large` est relu par chaque
+     propriete avec SA reference. Dans `width` il vaut 26 % du conteneur ;
+     dans `translateY` il vaut 26 % de la HAUTEUR de la carte. La carte visee
+     ne remontait que de 45 px sur les 80 qu'elle avait d'enfouis, et ca
+     passait inapercu parce que ca restait dans le bon sens.
+
+     D'ou les deux formes, chacune dans le systeme de reference ou elle est
+     juste :
+     - `--enfoui`, une LONGUEUR, pour `margin-bottom` (dont les % se
+       rapporteraient a la LARGEUR du conteneur, ce qui n'a aucun sens ici) ;
+     - `--plonge`, un POURCENTAGE, pour les `translateY` (dont les % se
+       rapportent justement a la hauteur de la carte).
+     Les deux sortent donc du MEME facteur, `--part-enfouie` : c'est le seul
+     chiffre a regler, et les deux formes ne peuvent pas se desaccorder. */
+  --part-enfouie: 0.14;
+  --enfoui: calc(var(--large) * 1.4 * var(--part-enfouie));
+  --plonge: calc(100% * var(--part-enfouie));
+  margin-bottom: calc(var(--enfoui) * -1);
 }
 
 /* Le recouvrement est une FRACTION DE LA CARTE, pas un partage de la colonne.
@@ -738,7 +784,12 @@ body {
 .badge {
   position: absolute;
   left: 0.3125rem;
-  bottom: calc(26% + 0.3125rem);
+  /* 33 % et non 26 % : la ligne de flottaison est a 24 %, et les cartes des
+     bords, que l'arc de l'eventail fait descendre et pivoter, n'avaient plus
+     que 4 px de garde -- un badge colle au bord bas se lit comme un badge
+     coupe. Mesure : c'est toujours la carte la PLUS A GAUCHE la plus juste,
+     parce que sa rotation fait plonger le coin bas-gauche, celui du badge. */
+  bottom: calc(33% + 0.25rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -796,9 +847,26 @@ body {
   cursor: default;
 }
 
-/* Le gris dit "tu ne peux rien en faire" ; le bandeau MORTE dit pourquoi. */
+/* Le gris dit "tu ne peux rien en faire" ; le bandeau MORTE dit pourquoi.
+
+   DANS LA MAIN, il passe en haut de la carte. Un tresor est injouable, donc il
+   ne se vise jamais, donc il ne se leve jamais : tout ce qui vit sous la ligne
+   de flottaison lui est perdu POUR TOUJOURS, la ou une carte de combat le
+   retrouve en se levant. Le bandeau etait en pied de carte, il aurait
+   simplement disparu du jeu. Le nom, lui, reste enfoui -- les cartes de combat
+   le perdent aussi au repos, et le cadre dit deja la richesse.
+
+   Cale a gauche et derriere le sceau : la bande gauche est la seule que le
+   recouvrement de l'eventail laisse voir. Centre, il se serait fait couper en
+   "MOR" par la carte voisine. */
 #cartes .carte.tresor .bandeau {
+  inset: 0 0 auto 0;
+  padding: 0.125rem 0 0.125rem 2.125rem;
+  border-radius: 12px 12px 0 0;
   color: #cfcfd8;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-align: left;
 }
 
 /* Le survol, seulement la ou il existe : sur un telephone, un :hover reste
@@ -806,14 +874,18 @@ body {
 @media (hover: hover) and (pointer: fine) {
   .carte.jouable:hover,
   .carte.acheve:hover {
-    transform: rotate(calc(var(--rot, 0deg) * 0.4)) translateY(calc(var(--dy, 0px) - 0.875rem)) scale(1.05);
+    transform: rotate(calc(var(--rot, 0deg) * 0.4))
+      translateY(calc(var(--dy, 0px) - var(--plonge, 0px) * 0.5)) scale(1.04);
     z-index: 15;
   }
 }
 
-/* Visee : la carte quitte l'eventail, se redresse et se devoile entierement. */
+/* Visee : la carte quitte l'eventail, se redresse et se devoile entierement --
+   elle remonte d'exactement ce qu'elle avait d'enfoui, plus un cheveu. Le
+   grandissement reste modeste (1,06) : la carte est deja grande, et chaque
+   pourcent de plus mord sur la scene au-dessus. */
 .carte.visee {
-  transform: rotate(0deg) translateY(-1.625rem) scale(1.1);
+  transform: rotate(0deg) translateY(calc(-1 * var(--plonge, 0px) - 0.125rem)) scale(1.06);
   border-color: var(--joueur);
   z-index: 20;
   box-shadow:
@@ -825,11 +897,12 @@ body {
 
 .carte.jouable:active,
 .carte.acheve:active {
-  transform: rotate(calc(var(--rot, 0deg) * 0.4)) translateY(calc(var(--dy, 0px) - 0.5rem)) scale(1.03);
+  transform: rotate(calc(var(--rot, 0deg) * 0.4))
+    translateY(calc(var(--dy, 0px) - var(--plonge, 0px) * 0.4)) scale(1.02);
 }
 
 .carte.visee:active {
-  transform: rotate(0deg) translateY(-1.375rem) scale(1.07);
+  transform: rotate(0deg) translateY(calc(-1 * var(--plonge, 0px) - 0.375rem)) scale(1.03);
 }
 
 /* La carte levee s'anime : le reflet la traverse une fois. */
@@ -1360,8 +1433,15 @@ body {
   color: #55555f;
 }
 
+/* La main se reserve de quoi lever une carte sans couvrir les creatures.
+
+   Ce remplissage ne deplace PAS les cartes -- elles restent collees au bas de
+   l'ecran. Il repousse le haut de la boite, donc il retrecit la scene, donc
+   les corps REMONTENT. C'est ce qui degage la carte levee, pas un deplacement
+   de la main. La scene avait 90 px d'air pour 114 px de contenu : elle peut
+   les ceder. */
 .cartes {
-  padding-top: 1rem;
+  padding-top: 2.25rem;
 }
 
 .journal {
@@ -2151,7 +2231,16 @@ body {
   }
 
   .carte {
-    --large: min(9rem, 26%, 17vh);
+    --large: min(11rem, 26%, 26vh);
+  }
+
+  /* On enfouit bien plus qu'en grand ecran, et c'est tout l'interet : ici la
+     hauteur est la ressource rare, donc chaque point enfoui est un point de
+     taille de carte gagne. Sur un ecran haut la carte plafonne a 11rem de
+     toute facon -- l'enfouir n'achete plus rien et ne ferait que reculer la
+     scene quand on leve une carte. */
+  #cartes .carte {
+    --part-enfouie: 0.24;
   }
 
   .chair {
@@ -2159,7 +2248,7 @@ body {
   }
 
   .cartes {
-    padding-top: 0.75rem;
+    padding-top: 2.75rem;
   }
 
   /* Le compte suffit : le nom du tas est du luxe a cette hauteur. */
@@ -2195,7 +2284,11 @@ body {
   }
 
   .carte {
-    --large: min(9rem, 26%, 15.5vh);
+    --large: min(11rem, 26%, 24vh);
+  }
+
+  #cartes .carte {
+    --part-enfouie: 0.24;
   }
 
   .chair {
@@ -2203,7 +2296,7 @@ body {
   }
 
   .cartes {
-    padding-top: 0.5rem;
+    padding-top: 2rem;
   }
 }
 

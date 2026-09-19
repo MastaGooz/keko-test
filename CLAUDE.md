@@ -274,9 +274,10 @@ donjon. Ce qui tourne :
 - `npm run verif` : 19 vérifications du combat + 29 de la descente ;
 
 - moteur au tour par tour à énergie, **plusieurs ennemis**, cible au doigt ;
-- la **main en éventail, cartes de taille jeu de cartes** (128x179 px sur un
-  téléphone de 390) : gemme de coût, **illustration SVG**, badge de valeur,
-  plaque de nom. Viser redresse la carte, la lève et la dévoile entièrement ;
+- la **main en éventail, cartes de taille jeu de cartes** (101x142 px sur un
+  téléphone de 390, 238x333 sur un écran de 1080) : gemme de coût,
+  **illustration SVG**, badge de valeur, plaque de nom. Viser redresse la
+  carte, la lève et la dévoile entièrement ;
   le survol ne s'active que là où il existe (`hover: hover`), sinon il reste
   collé après la tape sur mobile ;
 - les **trésors en cartes dorées et pleines**, illustrées elles aussi, marquées
@@ -417,19 +418,57 @@ donjon. Ce qui tourne :
   Web Audio. La force du coup suit le coût de la carte — on entend le poids de
   ce qu'on joue. Coupables depuis le panneau, le choix est retenu ;
 
-**Deux règles de la main, à ne pas casser en y retouchant :**
+**Quatre règles de la main, à ne pas casser en y retouchant :**
 
-1. **Tout ce qui sert à décider vit sur la bande gauche.** Cinq cartes de cette
-   taille ne tiennent sur un écran qu'en se recouvrant largement — il ne reste
-   qu'environ 62 px visibles par carte. Coût, dégâts/valeur et nom y sont
-   calés ; le dessin se dévoile à la sélection. Un élément placé à droite est
-   un élément invisible.
-2. **La largeur des cartes est fluide et le recouvrement se calcule** à partir
-   de `--n` : les n cartes remplissent exactement la colonne. Une largeur fixe
-   tenait à 390 px et sortait de l'écran à 320. Les cartes des bords, pivotées,
+1. **La carte plonge sous le bord bas de l'écran.** Au repos on n'en voit que
+   le haut ; la partie enfouie remonte quand on la vise. C'est ce qui a permis
+   de la faire passer de 66 à 101 px de large sur un téléphone — 2,3 fois la
+   surface — pour 15 px de hauteur de main en plus.
+
+   *Pourquoi il le fallait* : la carte était bornée par la HAUTEUR d'écran,
+   donc plafonnée à 66 px de large, et une gemme de 28 px sur une carte de 66
+   écrase le dessin qu'elle est censée annoter. Keko : « les valeurs des cartes
+   écrasent l'illustration ». La réponse n'est pas de rapetisser le chrome — il
+   est déjà à la limite du tactile — mais d'agrandir la carte sous lui.
+
+   Ce qui est enfoui est **ce qu'on lit le moins** : la plaque du nom. La
+   fenêtre d'art, la gemme et le chiffre restent au-dessus de la ligne de
+   flottaison — vérifié sur les huit formats.
+
+2. **La part enfouie se règle par palier de hauteur, et un seul chiffre la
+   porte.** `--part-enfouie` vaut 0,24 sur un téléphone couché et 0,14 au-delà
+   de 430 px de haut. La raison : l'enfouissement ACHÈTE de la taille de carte,
+   et sur un écran haut la carte plafonne de toute façon à `11rem` — l'enfouir
+   n'achèterait plus rien et ne ferait que reculer la scène quand on lève une
+   carte. La main se réserve d'ailleurs de quoi lever une carte sans couvrir
+   les créatures : ce remplissage ne déplace pas les cartes (elles sont ancrées
+   au bas de l'écran), il rétrécit la scène, donc les corps remontent.
+
+3. **Tout ce qui sert à décider vit sur la bande HAUT-GAUCHE.** Le recouvrement
+   de l'éventail mange la droite, la ligne de flottaison mange le bas. Coût,
+   dégâts/valeur et le bandeau MORTE des trésors y sont calés.
+
+   **Un trésor ne se lève jamais** — il est injouable, donc invisable : ce qui
+   passe sous la ligne de flottaison lui est perdu *pour toujours*, là où une
+   carte de combat le retrouve en se levant. D'où le bandeau MORTE remonté en
+   haut de la carte, dans la main seulement. Toute information propre aux
+   trésors doit suivre cette règle.
+
+4. **La largeur des cartes est fluide, le recouvrement est une fraction de la
+   carte** (32 %), pas un partage de la colonne. Une largeur fixe tenait à
+   390 px et sortait de l'écran à 320. Les cartes des bords, pivotées,
    débordent d'une dizaine de pixels — d'où les 4 px de marge sur `.cartes`,
-   qui les gardent dans la gouttière de la page. Toujours revérifier après
-   avoir touché à la taille ou à la rotation.
+   qui les gardent dans la gouttière de la page.
+
+   **L'arc de l'éventail est en pixels fixes, donc il ne suit pas la carte.**
+   Ses coefficients ont dû baisser (2,6 → 1,6 de creux, 2,4 → 2,2 degrés) quand
+   les cartes ont grandi : la rotation fait d'autant plus plonger le coin
+   bas-gauche que la carte est haute, et c'est là que vit le chiffre de
+   dégâts — il ne lui restait plus que 4 px de garde. **C'est toujours la carte
+   la plus à GAUCHE qui est la plus juste** : sa rotation descend le coin du
+   badge, celle de droite le remonte.
+
+   Toujours revérifier après avoir touché à la taille ou à la rotation.
 - trois groupes d'ennemis calibrés par simulation ;
 - `npm run verif` : 19 vérifications des règles, sans navigateur.
 
@@ -667,6 +706,22 @@ la largeur passeraient sous le bord de l'écran. Vérifié à 390x844, 1366x768,
 dans les quatre cas. **Revérifier ces quatre formats après toute modification
 de taille**, et se souvenir qu'une seule dimension ne suffit jamais à conclure.
 
+### Un `%` rangé dans une variable change de sens selon qui le lit
+
+**Piège coûteux, rencontré sur la main.** Une variable personnalisée se
+substitue en **jetons bruts** : le `26%` de `--large` est relu par chaque
+propriété avec SA propre référence. Dans `width` il vaut 26 % du conteneur ;
+dans `translateY` il vaut 26 % de la **hauteur de l'élément** ; dans `margin-*`
+et `padding-*` il vaut un pourcentage de la **largeur** du bloc conteneur. La
+carte visée ne remontait que de 45 px sur les 80 qu'elle avait d'enfouis — et
+ça passait inaperçu parce que ça restait dans le bon sens.
+
+Règle : **ne jamais faire transiter un pourcentage par une variable que
+plusieurs familles de propriétés vont lire.** Partir d'un facteur sans unité
+(`--part-enfouie`) et en dériver une forme par système de référence — une
+longueur pour les marges, un pourcentage pour les transformations. C'est ce que
+fait `.carte` aujourd'hui, et le commentaire sur place dit pourquoi.
+
 **Le format serré, c'est le 1366x768**, et c'est lui qui a fixé le coefficient
 `2vh`. L'arrivée de la scène des créatures a coûté ~120 px de hauteur et l'a
 fait déborder à `2.4vh`. Si la page grandit encore, c'est ce coefficient qu'il
@@ -684,10 +739,21 @@ les *viewports* qui comptent, un téléphone mange souvent 190 px de chrome.
 
 **Pour mesurer un format sans redimensionner la fenêtre**, charger la page dans
 une `iframe` de la taille visée : les `vh` et les media queries s'y appliquent
-pour de vrai. Attention — **dans un onglet en arrière-plan le navigateur gèle
-les transitions et bride les minuteurs**, donc une valeur calculée peut rester
-bloquée à mi-course et faire croire à un bug. Neutraliser la transition avant
-de mesurer, ou piloter l'animation à la main via l'API Web Animations.
+pour de vrai. Quatre pièges, tous rencontrés :
+
+- **dans un onglet en arrière-plan le navigateur gèle les transitions et bride
+  les minuteurs**, donc une valeur calculée peut rester bloquée à mi-course et
+  faire croire à un bug. Neutraliser la transition avant de mesurer, ou piloter
+  l'animation à la main via l'API Web Animations ;
+- **ajouter un `?cb=<aléa>` à l'URL de la sonde** : sans ça la CSS d'une sonde
+  précédente est resservie et les mesures se contredisent d'un format à
+  l'autre ;
+- **`offsetWidth` et `getBoundingClientRect()` ne mesurent pas la même chose**
+  sur une carte de l'éventail : la seconde inclut la rotation, donc elle est
+  plus large. 66 contre 74 px pour la même carte — de quoi croire à un bug qui
+  n'existe pas ;
+- **pas plus de trois sondes par appel** : le moteur de rendu se fige et
+  l'exécution part en dépassement de délai.
 
 ### Récupérer la barre du navigateur
 
