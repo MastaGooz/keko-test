@@ -391,9 +391,20 @@ donjon. Ce qui tourne :
   d'arrêt. *La moitié de la durée est désormais du temps d'arrêt, pas de
   l'animation* — si ça devient long, c'est ce palier-là qu'on raccourcit.
 
-  **Rien ne bougeant, c'est la LUMIÈRE qui désigne l'attaquant** : il porte un
-  liseré vif, sa cible reste mate. C'est le seul signe disponible, il doit
-  rester franc.
+  **L'attaquant charge, d'un coup sec puis sur son élan.** Il couvre **61 % de
+  sa course en 8 % du temps** — sept fois et demie plus vite — puis dérive
+  lentement jusqu'au bout. Même principe que l'ancien bond des monstres, mesuré
+  à l'époque : *tout le poids vient du contraste de vitesse*, un lissage
+  uniforme rend le geste mou. La course vaut 36 % d'un corps (17 px sur un petit
+  téléphone couché, 78 px sur un écran de 1080) et chacun charge vers l'autre.
+
+  **Elle passe par `translate`, pas par `transform`.** `transform` porte déjà
+  l'arrivée des figures (translateY + scale) : une animation sur la même
+  propriété l'écraserait. Les deux propriétés se composent d'elles-mêmes.
+
+  **Et la LUMIÈRE désigne l'attaquant** : il porte un liseré vif, sa cible
+  reste mate. La charge le dit aussi maintenant, mais le liseré reste ce qui se
+  lit avant tout mouvement.
 
   **Le calque vit dans `.app`, en `absolute`, pas à côté en `fixed`** — voir
   plus bas la note sur la secousse : posé à côté, il passait par-dessus toute

@@ -1203,7 +1203,8 @@ body {
     transition: none;
   }
 
-  .duel-corps.abattu .tete-de-mort {
+  .duel-corps.abattu .tete-de-mort,
+  .duel-corps.attaque {
     animation: none;
   }
 
@@ -2474,6 +2475,46 @@ body {
 .duel-chair .silhouette {
   width: auto;
   height: 100%;
+}
+
+/* LA CHARGE. L'attaquant part d'un coup sec vers sa cible, puis continue sur
+   son elan beaucoup plus lentement -- il couvre 61 % de sa course en 8 % du
+   temps, soit sept fois et demie plus vite. C'est le meme principe que le bond
+   des monstres, mesure a l'epoque : tout le poids vient du CONTRASTE de
+   vitesse, et un lissage uniforme rend le geste mou.
+
+   La course passe par `translate`, PAS par `transform` : `transform` porte
+   deja l'arrivee des figures (translateY + scale), et une animation sur la
+   meme propriete l'ecraserait. Les deux proprietes se composent d'elles-memes,
+   `translate` d'abord. */
+.duel-corps.attaque {
+  --elan: calc(var(--corps) * 0.22 * var(--sens, 1));
+  animation: charge 0.64s linear forwards;
+}
+
+/* Chacun charge vers l'autre : le joueur est a gauche, l'ennemi a droite. */
+.duel-corps.joueur.attaque {
+  --sens: 1;
+}
+
+.duel-corps.ennemi.attaque {
+  --sens: -1;
+}
+
+@keyframes charge {
+  0% {
+    translate: 0 0;
+    /* Le coup de reins : tres rapide, puis il freine. */
+    animation-timing-function: cubic-bezier(0.08, 0.92, 0.2, 1);
+  }
+  8% {
+    translate: var(--elan) 0;
+    animation-timing-function: linear;
+  }
+  100% {
+    /* L'elan : il continue, mais on ne le voit presque plus avancer. */
+    translate: calc(var(--elan) * 1.64) 0;
+  }
 }
 
 /* L'attaquant passe devant : il se detache du fond plus que sa cible. */
