@@ -260,15 +260,14 @@ function ligneCarte(
     `<button class="${classes.join(' ')}" type="button" data-cout="${carte.cout}" ` +
     `${place} data-action="${action}" ${donnee}` +
     `${fini || !abordable ? ' disabled' : ''}>` +
-    `<span class="chrome">` +
-    `<span class="gemme">${carte.cout}</span>` +
-    `<span class="marque">${acheve ? '★' : ''}</span>` +
-    `</span>` +
     `<span class="vitre">${dessin(carte.nom)}</span>` +
-    `<span class="plaque">` +
-    `<span class="nom">${carte.nom}</span>` +
-    `<span class="degats">${carte.degats}</span>` +
-    `</span>` +
+    `<span class="plaque"><span class="nom">${carte.nom}</span></span>` +
+    // Gemme et badge vivent sur la BANDE GAUCHE : c'est la seule partie d'une
+    // carte qui reste visible quand l'éventail se recouvre. Tout ce qui sert
+    // à décider doit tenir là.
+    `<span class="gemme">${carte.cout}</span>` +
+    `<span class="badge degats">${carte.degats}</span>` +
+    `<span class="marque">${acheve ? '★' : ''}</span>` +
     `</button>`
   )
 }
@@ -282,10 +281,10 @@ function eventail(index: number, total: number): string {
   const ecart = index - (total - 1) / 2
   const rotation = (ecart * 2.4).toFixed(2)
   // L'arc : les cartes des bords descendent, celle du milieu culmine.
-  const descente = (ecart * ecart * 2.1).toFixed(2)
-  // `--n` sert à la largeur : la main se partage la colonne quelle que soit
-  // la taille de l'écran. Sans ça, une carte de largeur fixe sort de l'écran
-  // sur un petit téléphone.
+  const descente = (ecart * ecart * 2.6).toFixed(2)
+  // `--n` sert au calcul du recouvrement : les cartes sont grandes et se
+  // partagent la colonne en se chevauchant, quelle que soit la taille de
+  // l'écran. Une largeur fixe sortait de l'écran sur un petit téléphone.
   return `style="--rot:${rotation}deg;--dy:${descente}px;--i:${index};--n:${total}"`
 }
 
@@ -295,20 +294,28 @@ function eventail(index: number, total: number): string {
  * or c'est exactement ce qu'on ne veut pas faire oublier.
  */
 function carteTresor(carte: Carte, place: string): string {
+  const valeur = carte.valeur ?? 0
   return (
-    `<div class="carte tresor" ${place}>` +
-    `<span class="chrome">` +
-    `<span class="gemme sceau">${GLYPHE.tresor}</span>` +
-    `<span class="marque"></span>` +
-    `</span>` +
+    `<div class="carte tresor ${richesse(valeur)}" ${place}>` +
     `<span class="vitre">${dessin(carte.nom)}</span>` +
-    `<span class="plaque">` +
-    `<span class="nom">${carte.nom}</span>` +
-    `<span class="valeur">${carte.valeur ?? 0}</span>` +
-    `</span>` +
+    `<span class="plaque"><span class="nom">${carte.nom}</span></span>` +
     `<span class="bandeau">MORTE</span>` +
+    `<span class="gemme sceau">${GLYPHE.tresor}</span>` +
+    `<span class="badge valeur">${valeur}</span>` +
     `</div>`
   )
+}
+
+/**
+ * Trois rangs de richesse, lisibles à la couleur du cadre. Ce n'est pas que
+ * de la parure : la décision de design dit que le joueur doit préférer peu de
+ * gros trésors à beaucoup de petits. Encore faut-il qu'il voie, sans lire un
+ * chiffre, que la carte morte qu'il traîne est une babiole et pas une couronne.
+ */
+function richesse(valeur: number): string {
+  if (valeur >= 160) return 'fastueux'
+  if (valeur >= 90) return 'cossu'
+  return 'modeste'
 }
 
 /**

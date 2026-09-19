@@ -170,16 +170,18 @@ Le prototype jetable de combat est **jouable au doigt** et déployé. Ni hub, ni
 marché, ni carte de donjon. Ce qui tourne :
 
 - moteur au tour par tour à énergie, **plusieurs ennemis**, cible au doigt ;
-- la **main en éventail** : cartes pivotées, légèrement superposées, avec
-  gemme de coût, **illustration SVG**, plaque de nom et valeur. Viser redresse
-  la carte, la lève et la fait passer devant ; le survol ne s'active que là où
-  il existe (`hover: hover`), sinon il reste collé après la tape sur mobile.
-  La largeur est fluide — `--n` donne la part de colonne de chaque carte, une
-  largeur fixe sortait de l'écran sur un petit téléphone ;
+- la **main en éventail, cartes de taille jeu de cartes** (128x179 px sur un
+  téléphone de 390) : gemme de coût, **illustration SVG**, badge de valeur,
+  plaque de nom. Viser redresse la carte, la lève et la dévoile entièrement ;
+  le survol ne s'active que là où il existe (`hover: hover`), sinon il reste
+  collé après la tape sur mobile ;
 - les **trésors en cartes dorées et pleines**, illustrées elles aussi, marquées
   MORTE — jamais grisées : l'appât et le poids sont le même objet, et une carte
   fantôme se laisserait oublier. Ils passent la moitié de la partie dans la
-  main, ils ont droit au même soin que les cartes de combat ;
+  main, ils ont droit au même soin que les cartes de combat. Trois **rangs de
+  richesse** au cadre (modeste / cossu / fastueux) : la décision de design veut
+  qu'on préfère peu de gros trésors, encore faut-il voir sans lire un chiffre
+  ce qu'on traîne ;
 - les combattants en tuiles : un **sigil géométrique** par corps, et une
   **pastille d'intention** qui dit ce qu'il frappe et dans combien de tours —
   allumée s'il frappe à la fin de ce tour-ci ;
@@ -187,6 +189,20 @@ marché, ni carte de donjon. Ce qui tourne :
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
 - le détail chiffré uniquement sur ce qui est visé ;
+
+**Deux règles de la main, à ne pas casser en y retouchant :**
+
+1. **Tout ce qui sert à décider vit sur la bande gauche.** Cinq cartes de cette
+   taille ne tiennent sur un écran qu'en se recouvrant largement — il ne reste
+   qu'environ 62 px visibles par carte. Coût, dégâts/valeur et nom y sont
+   calés ; le dessin se dévoile à la sélection. Un élément placé à droite est
+   un élément invisible.
+2. **La largeur des cartes est fluide et le recouvrement se calcule** à partir
+   de `--n` : les n cartes remplissent exactement la colonne. Une largeur fixe
+   tenait à 390 px et sortait de l'écran à 320. Les cartes des bords, pivotées,
+   débordent d'une dizaine de pixels — d'où les 4 px de marge sur `.cartes`,
+   qui les gardent dans la gouttière de la page. Toujours revérifier de 320 à
+   544 px après avoir touché à la taille ou à la rotation.
 - trois groupes d'ennemis calibrés par simulation ;
 - `npm run verif` : 19 vérifications des règles, sans navigateur.
 
