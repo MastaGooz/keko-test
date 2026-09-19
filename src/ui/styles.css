@@ -61,8 +61,10 @@ body {
 
      0,17 : cinq cartes au pas de 68 % occupent 3,72 fois leur largeur, et il
      faut en plus une gouttiere d'une carte de chaque cote pour les tas des
-     coins -- 3,72 + 2 = 5,72, dont 1/5,72 = 0,175. */
-  --large: min(11rem, 29vh, calc(0.17 * (min(100vw, 90rem) - 2rem)));
+     coins -- 3,72 + 2 = 5,72, dont 1/5,72 = 0,175. Les 8,5rem retranches sont
+     les 2x3,25rem de gouttiere fixe (l'orbe, posee a cote de la pioche) plus
+     les 2rem de remplissage de `.app`. */
+  --large: min(11rem, 29vh, calc(0.17 * (min(100vw, 90rem) - 8.5rem)));
   --part-enfouie: 0.14;
   --haut: calc(var(--large) * 1.4);
   --enfoui: calc(var(--haut) * var(--part-enfouie));
@@ -73,7 +75,7 @@ body {
      aucun `%`. Le plafond etait a 4,5rem, cale sur le telephone -- sur un
      ecran de PC les betes restaient des vignettes sous des cartes deux fois
      plus grandes qu'elles. */
-  --corps: min(13rem, 24vh);
+  --corps: min(11rem, 20vh);
 
   min-height: 100dvh;
   /* Toute la largeur : le plafond datait du portrait, et en paysage il
@@ -668,14 +670,25 @@ body {
   margin-bottom: calc(var(--enfoui) * -1);
 }
 
-/* Le recouvrement est une FRACTION DE LA CARTE, pas un partage de la colonne.
-   L'ancien calcul repartissait les cartes sur toute la largeur disponible ; il
-   tenait quand leur taille venait de cette largeur. Depuis qu'elles sont
-   bornees par la HAUTEUR d'ecran, elles sont bien plus etroites que leur part
-   de place -- le pas atteignait 138 px pour des cartes de 66, et la main
-   n'etait plus une main tenue mais une rangee de cartes espacees. */
+/* Le recouvrement vaut 32 % de la carte -- SAUF s'il faut serrer davantage
+   pour tenir dans la colonne.
+
+   Les deux formules ont existe seules, et chacune avait son defaut. Le partage
+   de la colonne (`(100% - large) / (n - 1)`) repartissait les cartes sur toute
+   la largeur disponible : juste tant que leur taille venait de cette largeur,
+   faux depuis qu'elles sont bornees par la HAUTEUR d'ecran -- le pas atteignait
+   138 px pour des cartes de 66, et la main devenait une rangee de cartes
+   espacees. La fraction fixe, elle, ne garantissait plus rien : a `--n` assez
+   grand la main sortait de sa colonne et allait recouvrir l'orbe.
+
+   Le `min()` prend le plus serre des deux : la main garde son allure a cinq
+   cartes, et se tasse d'elle-meme s'il y en a plus. Le `100%` d'une marge se
+   rapporte toujours a la LARGEUR du bloc conteneur, donc ici a la colonne --
+   c'est bien ce qu'on veut, et ca ne depend pas de la propriete qui le lit. */
 .carte + .carte {
-  margin-left: calc(var(--large) * -0.32);
+  margin-left: calc(
+    min(var(--large) * 0.68, (100% - var(--large)) / (var(--n, 5) - 1)) - var(--large)
+  );
 }
 
 /* La vitre : le dessin, dans la moitie haute. */
@@ -873,8 +886,11 @@ body {
 @media (hover: hover) and (pointer: fine) {
   .carte.jouable:hover,
   .carte.acheve:hover {
+    /* Le survol DEVOILE la carte en entier, il ne la souleve pas a moitie : a
+       la souris on lit la carte avant de la choisir, et une plaque de nom
+       coupee n'est pas une lecture. */
     transform: rotate(calc(var(--rot, 0deg) * 0.4))
-      translateY(calc(var(--dy, 0px) - var(--enfoui, 0px) * 0.5)) scale(1.04);
+      translateY(calc(-1 * var(--enfoui, 0px) - 0.125rem)) scale(1.04);
     z-index: 15;
   }
 }
@@ -884,7 +900,7 @@ body {
    grandissement reste modeste (1,06) : la carte est deja grande, et chaque
    pourcent de plus mord sur la scene au-dessus. */
 .carte.visee {
-  transform: rotate(0deg) translateY(calc(-1 * var(--enfoui, 0px) - 0.125rem)) scale(1.06);
+  transform: rotate(0deg) translateY(calc(-1 * var(--enfoui, 0px) - 1rem)) scale(1.08);
   border-color: var(--joueur);
   z-index: 20;
   box-shadow:
@@ -897,11 +913,11 @@ body {
 .carte.jouable:active,
 .carte.acheve:active {
   transform: rotate(calc(var(--rot, 0deg) * 0.4))
-    translateY(calc(var(--dy, 0px) - var(--enfoui, 0px) * 0.4)) scale(1.02);
+    translateY(calc(-1 * var(--enfoui, 0px) + 0.25rem)) scale(1.02);
 }
 
 .carte.visee:active {
-  transform: rotate(0deg) translateY(calc(-1 * var(--enfoui, 0px) - 0.375rem)) scale(1.03);
+  transform: rotate(0deg) translateY(calc(-1 * var(--enfoui, 0px) - 0.75rem)) scale(1.05);
 }
 
 /* La carte levee s'anime : le reflet la traverse une fois. */
@@ -2248,7 +2264,7 @@ body {
      toute facon -- l'enfouir n'achete plus rien et ne ferait que reculer la
      scene quand on leve une carte. */
   .app {
-    --large: min(11rem, 26vh, calc(0.17 * (min(100vw, 90rem) - 2rem)));
+    --large: min(11rem, 26vh, calc(0.17 * (min(100vw, 90rem) - 8.5rem)));
     --part-enfouie: 0.24;
   }
 
@@ -2288,7 +2304,7 @@ body {
   }
 
   .app {
-    --large: min(11rem, 24vh, calc(0.17 * (min(100vw, 90rem) - 2rem)));
+    --large: min(11rem, 24vh, calc(0.17 * (min(100vw, 90rem) - 8.5rem)));
     --part-enfouie: 0.24;
   }
 
@@ -2352,12 +2368,12 @@ body {
      contenu, et comme la largeur des cartes se calcule depuis ce conteneur,
      le calcul devient circulaire et les cartes s'effondrent a 4 px.
 
-     La gouttiere vaut UNE CARTE, parce que c'est ce que mesurent desormais les
-     tas des coins. A 6rem fixes, le tas de droite mordait sur la main des que
-     la fenetre devenait etroite (mesure a 800x600). C'est ce que la borne de
-     colonne de `--large` prend en compte : 3,72 cartes de main + 2 de
-     gouttiere. */
-  padding-inline: calc(var(--large) + 0.25rem);
+     La gouttiere vaut UNE CARTE -- ce que mesurent les tas des coins -- PLUS
+     3,25rem pour l'orbe, qui se pose a droite de la pioche. A 6rem fixes, le
+     tas de droite mordait sur la main des que la fenetre devenait etroite
+     (mesure a 800x600). C'est ce que la borne de colonne de `--large` prend en
+     compte : 3,72 cartes de main + 2 de gouttiere. */
+  padding-inline: calc(var(--large) + 3.25rem);
 }
 
 /* Les tas dans les coins bas, le bouton au bord droit a mi-hauteur. Hors du
@@ -2387,18 +2403,20 @@ body {
   right: 0;
 }
 
-/* L'orbe juste au-dessus de la pioche, comme dans les jeux du genre. Sa hauteur
-   suit celle du tas : a 3,5rem fixes elle lui tombait dessus des que les dos de
-   carte ont pris la taille de la main.
+/* L'orbe A COTE de la pioche, a mi-hauteur de sa bande emergee. Elle etait
+   au-dessus ; les dos de carte ayant pris la taille de la main, "au-dessus"
+   voulait dire tout en haut de l'ecran, loin de tout.
+
+   Elle a sa propre gouttiere dans `.cartes` (3,25rem) ET la borne de colonne
+   de `--large` la compte : la main ne peut donc jamais l'atteindre, quel que
+   soit le nombre de cartes -- au pire elles se resserrent entre elles.
 
    `z-index` PLUS HAUT que les tas, et pas seulement plus haut en position :
-   l'orbe et les tas partageaient le meme niveau, donc c'est l'ordre du DOM qui
-   tranchait -- et les tas y viennent apres. L'orbe passait dessous des qu'ils
-   se frolaient. Le degagement passe aussi de 0,375 a 0,75rem : a 2 px pres,
-   "juste au-dessus" se lit "coince derriere". */
+   ils partageaient le meme niveau, donc c'est l'ordre du DOM qui tranchait --
+   et les tas y viennent apres. */
 .orbe {
-  left: 0.125rem;
-  bottom: calc(var(--emerge) + 0.75rem);
+  left: calc(var(--large) + 0.375rem);
+  bottom: calc(var(--emerge) * 0.5 - 1.375rem);
   z-index: 26;
 }
 

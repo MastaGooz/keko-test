@@ -305,10 +305,13 @@ donjon. Ce qui tourne :
   chiffre. Keko : « on voit le chiffre c'est suffisant ». *Ce qui est parti
   avec elles*, et qu'il faudra rendre autrement si ça manque : l'aperçu de ce
   qu'il **resterait** après avoir joué la carte levée. Le coût, lui, est sur la
-  gemme de la carte. Elle est ancrée **au-dessus du tas de pioche, et avec un
-  `z-index` plus haut que lui** : les deux partageaient leur niveau, donc
-  l'ordre du DOM tranchait — et les tas y viennent après. *Une position « juste
-  au-dessus » à 2 px près se lit « coincé derrière ».*
+  gemme de la carte. Elle est ancrée **à droite du tas de pioche**, à
+  mi-hauteur de sa bande émergée, et avec un **`z-index` plus haut que lui** :
+  les deux partageaient leur niveau, donc l'ordre du DOM tranchait — et les tas
+  y viennent après. Elle a d'abord été posée *au-dessus* du tas ; les dos de
+  carte ayant pris la taille de la main, « au-dessus » voulait dire tout en
+  haut de l'écran, loin de tout. *Et une position « juste au-dessus » à 2 px
+  près se lit « coincé derrière ».*
 - **la scène centre ses corps au-dessus de 430 px de haut, et les pose en bas
   en dessous.** Elle mange tout ce qui reste entre l'info et la main ; sur un
   écran de PC ça fait le double du contenu qu'elle porte, et tout le vide
@@ -423,10 +426,17 @@ donjon. Ce qui tourne :
   serait pire qu'un creux.
 
   **Conséquence à ne pas défaire : la gouttière que la main réserve aux coins
-  vaut désormais UNE CARTE**, et la borne de colonne de `--large` la compte
-  (3,72 cartes de main + 2 de gouttière = 5,72, d'où le facteur 0,17). À 6rem
-  fixes, le tas de droite mordait sur la main dès que la fenêtre devenait
-  étroite — mesuré à 800x600.
+  vaut UNE CARTE plus 3,25rem** — la carte pour le tas, les 3,25rem pour
+  l'orbe posée à sa droite. La borne de colonne de `--large` compte les deux
+  (3,72 cartes de main + 2 de gouttière = 5,72, d'où le facteur 0,17 ; les
+  8,5rem retranchés sont les deux gouttières fixes plus le remplissage de
+  `.app`). À 6rem fixes, le tas de droite mordait sur la main dès que la
+  fenêtre devenait étroite — mesuré à 800x600.
+
+  **Entre la borne de colonne et le recouvrement adaptatif, la main ne peut
+  atteindre ni l'orbe ni les tas, quel que soit le nombre de cartes.** C'est
+  une double garantie et c'est voulu : la borne suffit à cinq cartes, le
+  recouvrement reprend au-delà.
 - **Le jeu a des temps.** Tant qu'une animation se déroule, l'entrée de combat
   est verrouillée et **le combat ne se résout pas** : l'écran de récompense
   attend que le dernier corps soit tombé. Le bouton de fin de tour porte le
@@ -483,6 +493,11 @@ donjon. Ce qui tourne :
    fenêtre d'art, la gemme et le chiffre restent au-dessus de la ligne de
    flottaison — vérifié sur les huit formats.
 
+   **Le survol dévoile la carte en entier**, il ne la soulève pas à moitié : à
+   la souris on lit la carte avant de la choisir, et une plaque de nom coupée
+   n'est pas une lecture. La carte visée monte plus haut encore et grandit
+   davantage — sinon cliquer ne changerait plus rien à ce qu'on voit.
+
 2. **La part enfouie se règle par palier de hauteur, et un seul chiffre la
    porte.** `--part-enfouie` vaut 0,24 sur un téléphone couché et 0,14 au-delà
    de 430 px de haut. La raison : l'enfouissement ACHÈTE de la taille de carte,
@@ -502,11 +517,21 @@ donjon. Ce qui tourne :
    haut de la carte, dans la main seulement. Toute information propre aux
    trésors doit suivre cette règle.
 
-4. **La largeur des cartes est fluide, le recouvrement est une fraction de la
-   carte** (32 %), pas un partage de la colonne. Une largeur fixe tenait à
-   390 px et sortait de l'écran à 320. Les cartes des bords, pivotées,
-   débordent d'une dizaine de pixels — d'où les 4 px de marge sur `.cartes`,
-   qui les gardent dans la gouttière de la page.
+4. **Le recouvrement vaut 32 % de la carte — sauf s'il faut serrer davantage
+   pour tenir dans la colonne.** Les deux formules ont existé seules, et
+   chacune avait son défaut. Le partage de la colonne répartissait les cartes
+   sur toute la largeur : juste tant que leur taille venait de cette largeur,
+   faux dès qu'elles ont été bornées par la hauteur — le pas atteignait 138 px
+   pour des cartes de 66, et la main devenait une rangée de cartes espacées. La
+   fraction fixe, elle, ne garantissait plus rien : à `--n` assez grand la main
+   sortait de sa colonne et allait recouvrir l'orbe. Le `min()` des deux garde
+   l'allure à cinq cartes **et** se tasse tout seul s'il y en a plus — mesuré
+   jusqu'à 14 cartes sans débordement ni collision.
+
+   La largeur des cartes reste fluide : une largeur fixe tenait à 390 px et
+   sortait de l'écran à 320. Les cartes des bords, pivotées, débordent d'une
+   dizaine de pixels — d'où les 4 px de marge sur `.cartes`, qui les gardent
+   dans la gouttière de la page.
 
    **L'arc de l'éventail est en pixels fixes, donc il ne suit pas la carte.**
    Ses coefficients ont dû baisser (2,6 → 1,6 de creux, 2,4 → 2,2 degrés) quand
@@ -737,12 +762,12 @@ une carte le jeu de variables porté par `.app` — **un seul endroit, lu par la
 main ET par les tas** :
 
 ```css
---large: min(11rem, 29vh, calc(0.17 * (min(100vw, 90rem) - 2rem)));
+--large: min(11rem, 29vh, calc(0.17 * (min(100vw, 90rem) - 8.5rem)));
 --part-enfouie: 0.14;          /* 0,24 sous 430 px de haut */
 --haut:   calc(var(--large) * 1.4);
 --enfoui: calc(var(--haut) * var(--part-enfouie));
 --emerge: calc(var(--haut) - var(--enfoui));   /* la bande qu'on lit */
---corps:  min(13rem, 24vh);    /* min(4.5rem, 16vh) sous 430 px */
+--corps:  min(11rem, 20vh);    /* min(4.5rem, 16vh) sous 430 px */
 ```
 
 **Aucun pourcentage là-dedans, et c'est délibéré** (voir la section sur ce
