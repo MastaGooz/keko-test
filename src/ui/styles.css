@@ -51,15 +51,17 @@ body {
   gap: 0.25rem;
 }
 
-/* Le gabarit commun : tout tient sur une ligne, la jauge absorbe le reste. */
+/* Le gabarit commun : tout tient sur une ligne, la jauge absorbe le reste.
+   La bordure et la hauteur sont réservées en permanence — sans ça, viser une
+   carte fait grandir les lignes et tout l'écran saute sous le doigt. */
 .rang {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   width: 100%;
-  min-height: 34px;
+  min-height: 44px;
   padding: 0 0.5rem;
-  border: 0;
+  border: 1px solid transparent;
   border-left: 3px solid transparent;
   border-radius: 6px;
   background: transparent;
@@ -68,15 +70,25 @@ body {
   text-align: left;
 }
 
+/* Un jeton carré plutôt qu'un chiffre nu : le combattant a un corps à l'écran,
+   et la tape a de quoi se poser. */
 .ordinal {
   flex: none;
-  width: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--trait);
+  border-radius: 6px;
+  background: #1e1e26;
   color: var(--ennemi);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .rangs:last-of-type .ordinal {
   color: var(--joueur);
+  border-color: #2f4657;
 }
 
 .nom {
@@ -134,10 +146,10 @@ body {
 
 /* Une carte est visée : les ennemis deviennent touchables. */
 .rang.cible {
-  /* >= 44px : cible tactile confortable */
-  min-height: 44px;
-  border: 1px dashed var(--trait);
-  border-left-width: 3px;
+  border-color: var(--trait);
+  border-style: dashed;
+  border-left-color: var(--ennemi);
+  border-left-style: solid;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
@@ -202,15 +214,41 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* --- la main -------------------------------------------------------------- */
+/* --- la main : cinq cartes côte à côte ------------------------------------ */
 
+/* Les cinq cases se partagent la largeur. La rangée réserve la hauteur d'une
+   carte levée, sinon viser fait sauter tout ce qui est en dessous. */
 .cartes {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.3125rem;
+  min-height: 132px;
+  padding-top: 10px;
 }
 
-.carte,
+.carte {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 5.5rem;
+  height: 122px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.125rem;
+  padding: 0.375rem 0.25rem 0;
+  overflow: hidden;
+  border: 1px solid var(--trait);
+  border-radius: 9px;
+  background: linear-gradient(170deg, #2a2a34, var(--carte-fond));
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease-out;
+}
+
 .bouton {
   /* >= 44px : cible tactile confortable */
   min-height: 46px;
@@ -223,7 +261,6 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.carte:active,
 .bouton:active {
   transform: scale(0.995);
 }
@@ -237,61 +274,124 @@ body {
   flex: 1 1 auto;
 }
 
-/* Les dégâts de la carte. */
-.stats {
-  flex: none;
-  margin-left: 0.5rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
+/* Bandeau du haut : le coût à gauche, l'étoile d'achèvement à droite. */
+.entete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 0.125rem;
+  min-height: 1rem;
 }
 
 /* Le coût en énergie. */
 .cout {
   flex: none;
-  min-width: 2.25rem;
-  text-align: right;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--energie);
 }
 
+.marque {
+  flex: none;
+  font-size: 0.75rem;
+  color: var(--fg);
+}
+
+/* Les dégâts : le seul gros chiffre de la carte. */
+.degats {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.carte .nom {
+  width: 100%;
+  padding-bottom: 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .carte.jouable {
-  border-left-color: var(--joueur);
+  border-color: #3f5d72;
 }
 
 /* Peut achever quelqu'un : c'est la décision que le multi-cibles rend tendue. */
 .carte.acheve {
-  border-left-color: var(--fg);
-  background: #2b2b34;
+  border-color: var(--fg);
+  background: linear-gradient(170deg, #3a3a46, #2b2b34);
 }
 
 /* Pas assez d'énergie ce tour-ci. */
 .carte.hors-prix {
-  opacity: 0.35;
-  border-left-color: var(--trait);
+  opacity: 0.3;
+  filter: grayscale(1);
 }
 
+/* Visée : la carte se lève hors de la main. Aucun autre élément ne bouge. */
 .carte.visee {
-  outline: 2px solid var(--joueur);
-  outline-offset: 1px;
+  transform: translateY(-10px);
+  border-color: var(--joueur);
+  box-shadow: 0 6px 14px #0009;
 }
 
+.carte.jouable:active,
+.carte.acheve:active {
+  transform: translateY(-4px);
+}
+
+/* Le trésor est plein et doré, jamais grisé : l'appât et le poids sont le
+   même objet. Une carte fantôme se laisserait oublier — c'est justement ce
+   qu'on ne veut pas faire oublier. */
 .carte.tresor {
-  border-style: dashed;
-  border-left-color: var(--trait);
-  background: transparent;
+  border-color: #6b5524;
+  background: linear-gradient(170deg, #4a3c1c, #2e2716);
   cursor: default;
-  opacity: 0.5;
+}
+
+.sceau {
+  font-size: 0.8125rem;
+  color: var(--energie);
+  opacity: 0.8;
+}
+
+.valeur {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--energie);
+  font-variant-numeric: tabular-nums;
 }
 
 .carte.tresor .nom {
-  font-weight: 400;
+  padding-bottom: 0.1875rem;
+  font-weight: 500;
+  color: #e6d5a8;
 }
 
-.carte.tresor .cout {
-  color: var(--muted);
+/* Le bandeau qui dit ce que la case coûte : une place, pour rien. */
+.bandeau {
+  flex: none;
+  width: 100%;
+  padding: 0.1875rem 0;
+  background: #00000055;
+  color: #b09a63;
+  font-size: 0.5625rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-align: center;
 }
 
 .finTour {
@@ -390,11 +490,6 @@ body {
 .or {
   color: var(--energie);
   font-variant-numeric: tabular-nums;
-}
-
-.carte.tresor .or {
-  font-size: 0.8125rem;
-  font-weight: 600;
 }
 
 .perdu {

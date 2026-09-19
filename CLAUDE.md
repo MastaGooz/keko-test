@@ -144,8 +144,10 @@ donjon :
 > **Déborder du sac, est-ce un pari tendu ou une corvée ?** Et combien de
 > trésors de trop un joueur accepte-t-il d'avaler ?
 
-Le premier prototype est **jetable** et ne sert qu'à ça : interface brute, aucun
-style.
+Le premier prototype est **jetable**. Son interface reste minimale partout,
+**sauf la main** : elle est dessinée en vraies cartes. Ce n'est pas de la
+décoration, c'est la condition du test — une babiole affichée en ligne de texte
+ne se ressent pas, une carte en travers de la main, si.
 
 ## État actuel
 
@@ -153,8 +155,14 @@ Le prototype jetable de combat est **jouable au doigt** et déployé. Ni hub, ni
 marché, ni carte de donjon. Ce qui tourne :
 
 - moteur au tour par tour à énergie, **plusieurs ennemis**, cible au doigt ;
-- interface compressée : une ligne par ennemi, une ligne par carte, le
-  détail uniquement sur ce qui est visé (~62 éléments à l'écran) ;
+- la **main en vraies cartes**, cinq côte à côte : coût, dégâts, nom, et
+  l'étoile d'achèvement. Viser lève la carte hors de la main, rien d'autre ne
+  bouge ;
+- les **trésors en cartes dorées et pleines**, marquées MORTE — jamais grisées :
+  l'appât et le poids sont le même objet, et une carte fantôme se laisserait
+  oublier ;
+- les combattants en lignes compressées, le détail uniquement sur ce qui est
+  visé ;
 - trois groupes d'ennemis calibrés par simulation ;
 - `npm run verif` : 19 vérifications des règles, sans navigateur.
 

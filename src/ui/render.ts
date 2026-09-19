@@ -178,7 +178,12 @@ function energie(etat: EtatCombat, visee: Carte | null): string {
   return `${pastilles} <span class="chiffre">${etat.energie}/${etat.energieMax}</span>`
 }
 
-/** Une carte sur une ligne : nom, dégâts, coût. Rien d'autre. */
+/**
+ * Une vraie carte, pas une ligne. La main est le seul endroit du prototype qui
+ * mérite de la place : c'est là que se joue l'hypothèse. Un trésor doit
+ * occuper VISIBLEMENT une des cinq cases — une ligne de texte de plus ne se
+ * ressent pas, une carte en travers de la main, si.
+ */
 function ligneCarte(
   etat: EtatCombat,
   carte: Carte,
@@ -186,22 +191,14 @@ function ligneCarte(
   selection: number | null,
   fini: boolean,
 ): string {
-  if (carte.type === 'tresor') {
-    return (
-      `<div class="rang carte tresor">` +
-      `<span class="nom">${carte.nom}</span>` +
-      `<span class="remplir"></span>` +
-      `<span class="or">vaut ${carte.valeur ?? 0}</span>` +
-      `</div>`
-    )
-  }
+  if (carte.type === 'tresor') return carteTresor(carte)
 
   const debout = vivants(etat)
   const abordable = carte.cout <= etat.energie
   const acheve = abordable && debout.some(({ ennemi }) => carte.degats >= ennemi.pv)
   const vise = index === selection
 
-  const classes = ['rang', 'carte']
+  const classes = ['carte', 'combat']
   if (!abordable) classes.push('hors-prix')
   else if (acheve) classes.push('acheve')
   else classes.push('jouable')
@@ -214,11 +211,29 @@ function ligneCarte(
   return (
     `<button class="${classes.join(' ')}" type="button" ` +
     `data-action="${action}" ${donnee}${fini || !abordable ? ' disabled' : ''}>` +
-    `<span class="nom">${acheve ? '★ ' : ''}${carte.nom}</span>` +
-    `<span class="stats">${carte.degats}</span>` +
-    `<span class="remplir"></span>` +
+    `<span class="entete">` +
     `<span class="cout">${carte.cout}${GLYPHE.energie}</span>` +
+    `<span class="marque">${acheve ? '★' : ''}</span>` +
+    `</span>` +
+    `<span class="degats">${carte.degats}</span>` +
+    `<span class="nom">${carte.nom}</span>` +
     `</button>`
+  )
+}
+
+/**
+ * Le trésor est plein, doré et lisible — pas grisé. C'est délibéré : l'appât
+ * et le poids sont le même objet. Une carte fantôme se laisserait oublier,
+ * or c'est exactement ce qu'on ne veut pas faire oublier.
+ */
+function carteTresor(carte: Carte): string {
+  return (
+    `<div class="carte tresor">` +
+    `<span class="entete"><span class="sceau">${GLYPHE.tresor}</span></span>` +
+    `<span class="valeur">${carte.valeur ?? 0}</span>` +
+    `<span class="nom">${carte.nom}</span>` +
+    `<span class="bandeau">MORTE</span>` +
+    `</div>`
   )
 }
 
