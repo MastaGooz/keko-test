@@ -16,6 +16,7 @@ import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
 import { encaisse, tombe } from './ui/effets.ts'
 import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
+import { tracerVisees } from './ui/visees.ts'
 import {
   basculerSon,
   sonAcheve,
@@ -59,6 +60,7 @@ function demarrer(nouvelleSeed: number): void {
   issuePrecedente = null
   view.root.classList.remove('panneau-ouvert')
   render(view, etat, seed, selection, poche)
+  tracerVisees(view)
 }
 
 bindInput(view, (action) => {
@@ -123,6 +125,7 @@ bindInput(view, (action) => {
   // Combat fini : les commandes de relance remontent d'elles-mêmes, c'est la
   // seule chose qu'on veut faire à ce moment-là.
   view.root.classList.toggle('panneau-ouvert', etat.issue !== null)
+  tracerVisees(view)
   if (etat.issue !== null && issuePrecedente === null) sonIssue(etat.issue === 'victoire')
   issuePrecedente = etat.issue
   for (const marque of marques) marque()
@@ -141,6 +144,10 @@ function etiquetterSon(ouvert = sonActif()): void {
 etiquetterPleinEcran()
 etiquetterSon()
 document.addEventListener('fullscreenchange', () => etiquetterPleinEcran())
+// Les arches sont posées en coordonnées d'écran : tout ce qui déplace la mise
+// en page les périme.
+window.addEventListener('resize', () => tracerVisees(view))
+window.addEventListener('orientationchange', () => tracerVisees(view))
 
 demarrer(Date.now() % 100000)
 

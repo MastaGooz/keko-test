@@ -58,6 +58,7 @@ export type View = {
   journal: HTMLElement
   pleinEcran: HTMLButtonElement
   son: HTMLButtonElement
+  visees: SVGSVGElement
 }
 
 /** Construit le squelette une seule fois et renvoie les noeuds à mettre à jour. */
@@ -68,6 +69,8 @@ export function mount(root: HTMLElement, buildTime: string): View {
         <p class="build">Build : <time>${buildTime}</time> — seed <span id="seed"></span></p>
         <button class="reglages" type="button" data-action="panneau">Réglages</button>
       </header>
+
+      <svg id="visees" class="visees" aria-hidden="true"></svg>
 
       <div id="ennemis" class="rangs"></div>
       <div id="joueur" class="rangs"></div>
@@ -113,6 +116,7 @@ export function mount(root: HTMLElement, buildTime: string): View {
     journal: root.querySelector<HTMLElement>('#journal')!,
     pleinEcran: root.querySelector<HTMLButtonElement>('#pleinEcran')!,
     son: root.querySelector<HTMLButtonElement>('#son')!,
+    visees: root.querySelector<SVGSVGElement>('#visees')!,
   }
 }
 

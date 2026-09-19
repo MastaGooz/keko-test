@@ -1264,3 +1264,62 @@ body {
     padding-top: 0.5rem;
   }
 }
+
+/* --- les arches de visee --------------------------------------------------- */
+
+/* Une nappe posee par-dessus tout le jeu, en coordonnees d'ecran. Sans
+   viewBox, une unite SVG vaut un pixel : on peut y jeter directement les
+   `getBoundingClientRect` des elements. */
+.visees {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 30;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.arche {
+  fill: none;
+  stroke: var(--joueur);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 5 7;
+  opacity: 0.75;
+  filter: drop-shadow(0 0 4px #5cc8ff66);
+  animation: filante 0.75s linear infinite;
+}
+
+.arche.depart,
+.arche.pointe {
+  fill: var(--joueur);
+  stroke: none;
+  animation: none;
+}
+
+/* La carte acheve ce corps : le trait devient blanc et plein. C'est
+   l'arbitrage central du multi-cibles, il merite de se voir de loin. */
+.arche.achevable {
+  stroke: #fff;
+  stroke-dasharray: 9 5;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 6px #ffffff8c);
+}
+
+.arche.achevable.depart,
+.arche.achevable.pointe {
+  fill: #fff;
+}
+
+@keyframes filante {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arche {
+    animation: none;
+  }
+}

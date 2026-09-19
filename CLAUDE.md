@@ -192,6 +192,11 @@ marché, ni carte de donjon. Ce qui tourne :
 - le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
+- des **arches de visée** (`ui/visees.ts`) : carte levée, un trait pointillé en
+  cloche part vers **chaque** corps visable. Vers tous, et pas vers un seul,
+  parce qu'on joue en deux tapes — entre les deux il n'y a pas encore de cible,
+  ni de doigt à suivre. L'arche ne confirme pas un choix, elle montre qu'il y
+  en a un à faire. Blanche et pleine sur un corps que la carte **achève** ;
 - le détail chiffré uniquement sur ce qui est visé ;
 - les **commandes de test** (curseur de butin, relance, plein écran, son,
   journal) dans un **panneau hors du flux**, fermé par défaut, qui remonte en
@@ -421,6 +426,18 @@ zéro**. Les enveloppes partent et reviennent à 0,0001, jamais au silence exact
 
 Sur iPhone, l'interrupteur silence coupe aussi le Web Audio — si Keko n'entend
 rien, vérifier ça avant de chercher un bug.
+
+### Les arches de visée
+
+Posées en **coordonnées d'écran** dans un SVG fixe sans `viewBox` (une unité
+= un pixel), donc à retracer après chaque rendu **et** à chaque changement de
+mise en page — `resize`, `orientationchange`. Ancrées sur `.chair` et non sur
+`.silhouette` : la silhouette respire, l'arche tremblerait avec elle.
+
+Piège : une courbe quadratique reste toujours **entre ses trois points de
+contrôle**, donc borner celui du haut suffit à garantir qu'elle ne sort pas
+par le plafond. Sans cette borne, en paysage, les longs trajets envoyaient le
+sommet à −125 px.
 
 **Le socle navigateur.** `vite.config.ts` fixe `cssTarget` : sans lui, le
 minifieur réécrit `max-height: 620px` en syntaxe d'intervalle (`height <=
