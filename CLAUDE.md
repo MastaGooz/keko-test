@@ -374,6 +374,28 @@ Deux pièges rencontrés là :
 Formats vérifiés, tous sans le moindre scroll : **360x540, 390x660, 414x715**
 en portrait, **667x320, 780x340, 844x390, 932x430** en paysage.
 
+### Récupérer la barre du navigateur
+
+**Une page web dans un onglet ne peut pas masquer la chrome du navigateur.**
+Deux sorties, complémentaires, toutes deux en place :
+
+1. **Installer sur l'écran d'accueil.** `public/manifest.webmanifest` déclare
+   `display: fullscreen` ; lancée depuis l'icône, la page s'ouvre sans aucune
+   barre. C'est la vraie réponse — dire à Keko « Ajouter à l'écran d'accueil »
+   avant de conclure qu'il manque de la place.
+2. **Le bouton « Plein écran »** du panneau de réglages, pour rester dans le
+   navigateur. Il se cache tout seul là où l'API n'existe pas : **l'iPhone ne
+   supporte pas `requestFullscreen`** (l'iPad si).
+
+L'icône est du SVG écrit à la main (`public/icone.svg`), conformément à la
+borne « pas de fichiers image ». Limite connue : **iOS ignore le SVG pour
+`apple-touch-icon`** et posera une capture de la page comme icône. Sans
+valeur pour un prototype ; il faudra un PNG le jour où ça compte.
+
+Le `theme-color` ne gagne pas de place mais teinte la barre aux couleurs du
+jeu tant qu'on reste dans un onglet — elle cesse au moins d'être un bandeau
+noir.
+
 **Le socle navigateur.** `vite.config.ts` fixe `cssTarget` : sans lui, le
 minifieur réécrit `max-height: 620px` en syntaxe d'intervalle (`height <=
 620px`), qui demande Chrome 104+ — sur un téléphone plus ancien la règle serait

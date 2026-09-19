@@ -15,6 +15,7 @@ import type { Poche } from './ui/render.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
 import { encaisse, tombe } from './ui/effets.ts'
+import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
 import { verifierVersion } from './ui/version.ts'
 
 const root = document.querySelector<HTMLDivElement>('#app')!
@@ -91,6 +92,9 @@ bindInput(view, (action) => {
       // Simple bascule d'affichage : rien à recalculer.
       view.root.classList.toggle('panneau-ouvert')
       return
+    case 'pleinEcran':
+      void basculerPleinEcran().then(etiquetterPleinEcran)
+      return
   }
   render(view, etat, seed, selection, poche)
   // Combat fini : les commandes de relance remontent d'elles-mêmes, c'est la
@@ -98,6 +102,15 @@ bindInput(view, (action) => {
   view.root.classList.toggle('panneau-ouvert', etat.issue !== null)
   for (const marque of marques) marque()
 })
+
+/** Le bouton ne s'affiche que là où l'API existe : l'iPhone ne l'a pas. */
+function etiquetterPleinEcran(actif = document.fullscreenElement !== null): void {
+  view.pleinEcran.hidden = !pleinEcranPossible()
+  view.pleinEcran.textContent = actif ? 'Quitter le plein écran' : 'Plein écran'
+}
+
+etiquetterPleinEcran()
+document.addEventListener('fullscreenchange', () => etiquetterPleinEcran())
 
 demarrer(Date.now() % 100000)
 
