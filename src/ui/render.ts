@@ -393,7 +393,7 @@ function palier(descente: Descente): string {
     case 'recompense':
       return recompense(descente, descente.phase.cartes)
     case 'butin':
-      return butin(descente, descente.phase.enMain)
+      return butin(descente, descente.phase.loot)
     case 'sortie':
       return sortie(descente)
     case 'fin':
@@ -437,56 +437,80 @@ function recompense(descente: Descente, cartes: Carte[]): string {
  * 2. **Chaque destination est aussi un bouton.** Le glisser est du confort ;
  *    sur un téléphone c'est la tape qui porte la fonctionnalité.
  */
-function butin(descente: Descente, enMain: Carte | null): string {
-  const emplacements = Array.from({ length: SLOTS }, (_, i) => {
-    const dedans = descente.sac[i] ?? null
-    const contenu =
-      dedans === null
-        ? `<span class="vide">libre</span>`
-        : `<span class="piece" data-glissable data-source="sac" data-emplacement="${i}">` +
-          `${vitrine(dedans, false)}</span>`
-    return (
-      `<button class="emplacement${dedans === null ? '' : ' occupe'}" type="button" ` +
-      `data-action="deplacer" data-ou="sac" data-emplacement="${i}" data-depot>${contenu}</button>`
-    )
-  }).join('')
+function butin(descente: Descente, loot: Carte | null): string {
+  const emplacements = Array.from({ length: SLOTS }, (_, i) =>
+    caseTresor(descente.sac[i] ?? null, { ou: 'sac', emplacement: i }, 'libre'),
+  ).join('')
 
-  // Le deck est une destination comme les autres, pas une commande à part :
-  // c'est bien un endroit où le trésor se range, il y pèse simplement.
-  const portes = tresorsAuDeck(descente)
-  const deck =
-    `<button class="emplacement deck" type="button" data-action="deplacer" ` +
-    `data-ou="deck" data-depot>` +
-    `<span class="etiquette-slot">Deck</span>` +
-    `<span class="poids">${portes === 0 ? 'il pèsera' : `${portes} porté${portes > 1 ? 's' : ''}`}</span>` +
-    `</button>`
-
-  const tenu =
-    enMain === null
-      ? `<p class="bilan">Sac rangé.</p>`
-      : `<div class="butin-piece" data-glissable data-source="main">${vitrine(enMain, false)}</div>`
+  const portes = descente.deck.filter((c) => c.type === 'tresor')
+  const pile = portes
+    .map((c) => piece(c, { ou: 'deck', id: c.id }))
+    .join('')
 
   return (
     `<div class="voile">` +
     `<div class="feuille large">` +
     `<p class="titre">Palier ${descente.profondeur} — ton butin</p>` +
-    tenu +
+
+    `<div class="rangee-loot">` +
+    caseTresor(loot, { ou: 'loot' }, 'vide', 'loot') +
+    `</div>` +
+
     `<p class="note">` +
-    (enMain === null
-      ? 'Tu peux encore réarranger ton sac.'
-      : 'Glisse-le vers une destination, ou tape-la. ' +
-        'Sur un emplacement occupé, les deux échangent.') +
+    (loot === null
+      ? 'Range ton sac comme tu veux, puis termine.'
+      : 'Glisse-le où tu veux. Sur une case occupée, les deux échangent.') +
     `</p>` +
-    `<div class="destinations">${emplacements}${deck}</div>` +
-    (enMain === null
+
+    `<div class="destinations">${emplacements}</div>` +
+
+    `<div class="pile-deck ${portes.length === 0 ? 'creuse' : ''}" data-depot data-ou="deck" ` +
+    `data-action="deplacer">` +
+    `<span class="etiquette-slot">Deck` +
+    `<span class="poids">${portes.length === 0 ? 'rien porté' : `${portes.length} porté${portes.length > 1 ? 's' : ''} — ils pèsent`}</span>` +
+    `</span>` +
+    `<span class="tas">${pile}</span>` +
+    `</div>` +
+
+    (loot === null
       ? ''
       : `<button class="bouton secondaire abandon" type="button" data-action="deplacer" ` +
         `data-ou="laisser" data-depot>Laisser au fond — perdu pour de bon</button>`) +
     `<button class="bouton secondaire terminer" type="button" data-action="terminerButin"` +
-    `${enMain === null ? '' : ' disabled'}>` +
-    (enMain === null ? 'Terminer' : 'Range ton trésor') +
+    `${loot === null ? '' : ' disabled'}>` +
+    (loot === null ? 'Terminer' : 'Range ton trésor') +
     `</button>` +
     `</div></div>`
+  )
+}
+
+/** Une case : zone de dépôt, bouton de tape, et source de glisser si occupée. */
+function caseTresor(
+  carte: Carte | null,
+  lieu: { ou: string; emplacement?: number; id?: string },
+  motVide: string,
+  classe = '',
+): string {
+  const attrs =
+    `data-ou="${lieu.ou}"` +
+    (lieu.emplacement === undefined ? '' : ` data-emplacement="${lieu.emplacement}"`)
+  const contenu =
+    carte === null ? `<span class="vide">${motVide}</span>` : piece(carte, lieu)
+  return (
+    `<button class="emplacement ${classe}${carte === null ? '' : ' occupe'}" type="button" ` +
+    `data-action="deplacer" ${attrs} data-depot>${contenu}</button>`
+  )
+}
+
+/**
+ * Un trésor déplaçable. Son lieu voyage avec lui en JSON : le glisser le pose
+ * sur la destination avant de la cliquer, donc un seul chemin sert la tape et
+ * le glisser, quel que soit le contenant.
+ */
+function piece(carte: Carte, lieu: object): string {
+  const ou = JSON.stringify(lieu).replace(/"/g, '&quot;')
+  return (
+    `<span class="piece" data-glissable data-lieu="${ou}">${vitrine(carte, false)}</span>`
   )
 }
 

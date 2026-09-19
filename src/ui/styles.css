@@ -1722,3 +1722,80 @@ body {
     width: 6rem;
   }
 }
+
+/* --- les trois contenants du rangement ------------------------------------ */
+
+/* L'emplacement de loot est une case comme les autres, simplement plus grande :
+   ce qu'on vient de trouver doit dominer ce qui le recoit. */
+.rangee-loot {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.emplacement.loot {
+  flex: 0 0 auto;
+  width: 8.5rem;
+  min-height: 9rem;
+  border-color: #4d6d84;
+}
+
+.emplacement.loot .vide {
+  font-size: 0.75rem;
+}
+
+/* La pile du deck : on la consulte, on y pose, on en reprend. */
+.pile-deck {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px solid #6b4030;
+  border-radius: 10px;
+  background: linear-gradient(#32211e, #221816);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pile-deck .etiquette-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  flex: none;
+}
+
+.pile-deck .poids {
+  text-align: left;
+  font-family: system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Les tresors portes, en pile : ils se chevauchent, on les voit tous, et
+   chacun se reprend au doigt. */
+.tas {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-left: 0.5rem;
+}
+
+.tas .piece {
+  flex: 0 0 auto;
+  width: 3.25rem;
+  touch-action: none;
+  cursor: grab;
+}
+
+.tas .piece + .piece {
+  margin-left: -1.25rem;
+}
+
+.pile-deck.creuse .tas {
+  display: none;
+}

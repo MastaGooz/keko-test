@@ -40,7 +40,7 @@ export function brancherGlisser(racine: HTMLElement): void {
     const cible = (e.target as HTMLElement).closest<HTMLElement>('[data-glissable]')
     if (cible === null) return
     piece = cible
-    origine = cible.dataset.source === 'sac' ? (cible.dataset.emplacement ?? null) : 'main'
+    origine = cible.dataset.lieu ?? null
     depart = { x: e.clientX, y: e.clientY }
     bouge = false
     // La capture garde les evenements meme si le doigt sort de la piece.
@@ -86,7 +86,7 @@ export function brancherGlisser(racine: HTMLElement): void {
     // On pose la provenance sur la cible avant de la cliquer : le glisser ne
     // fait ainsi que declencher la meme tape, avec une origine en plus. Aucune
     // logique n'est dupliquee. Le lecteur la retire en la lisant.
-    if (origine !== null) cible.dataset.source = origine
+    if (origine !== null) cible.dataset.lieuSource = origine
     cible.click()
   }
 

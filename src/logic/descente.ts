@@ -95,22 +95,21 @@ export const REGLAGE_DEFAUT: Reglage = {
 export const CHOIX_PAR_PALIER = 3
 
 /**
- * D'où part un trésor qu'on déplace. `main` est celui qu'on tient — le
- * nouveau, ou celui qu'un échange vient de faire sortir du sac.
- */
-export type Source = { ou: 'main' } | { ou: 'sac'; emplacement: number }
-
-/**
- * Où il va.
+ * Un endroit où un trésor peut se trouver pendant le rangement du butin.
  *
- * Sur un emplacement occupé, c'est un **échange** : les deux trésors changent
- * de place. Venant de la main, celui qui sort devient celui qu'on tient — on
- * peut donc enchaîner les échanges jusqu'à être satisfait. `deck` et `laisser`
- * ne concernent que la main, et referment le sort de ce trésor.
+ * Trois contenants, tous reliés dans les deux sens : l'**emplacement de loot**
+ * (une case comme une autre, pas « ce qu'on tient »), les **cases du sac**, et
+ * la **pile du deck** — les trésors qu'on porte et qui pèsent à chaque main.
+ * `laisser` n'est pas un contenant : c'est le fond du donjon.
+ *
+ * Modéliser un lieu plutôt qu'une liste de gestes évite d'empiler les cas
+ * particuliers : tout déplacement est « prendre ici, poser là », et l'échange
+ * tombe tout seul.
  */
-export type Depot =
+export type Lieu =
+  | { ou: 'loot' }
   | { ou: 'sac'; emplacement: number }
-  | { ou: 'deck' }
+  | { ou: 'deck'; id?: string }
   | { ou: 'laisser' }
 
 export type Phase =
@@ -118,10 +117,10 @@ export type Phase =
   /** Une amélioration à choisir parmi plusieurs. */
   | { type: 'recompense'; cartes: Carte[] }
   /**
-   * Puis le rangement du butin. `enMain` est le trésor qu'on tient encore ;
-   * tant qu'il n'est pas `null`, on ne peut pas terminer.
+   * Puis le rangement du butin. `loot` est l'emplacement d'arrivée : tant
+   * qu'il n'est pas vide, on ne peut pas terminer.
    */
-  | { type: 'butin'; enMain: Carte | null }
+  | { type: 'butin'; loot: Carte | null }
   | { type: 'sortie' }
   | { type: 'fin'; issue: 'extrait' | 'mort' }
 
@@ -235,66 +234,80 @@ export function choisirCarte(descente: Descente, index: number, rng: Rng): Desce
   return {
     ...descente,
     deck: [...descente.deck, carte],
-    phase: { type: 'butin', enMain: tresorRecompense(descente.profondeur, rng, cle) },
+    phase: { type: 'butin', loot: tresorRecompense(descente.profondeur, rng, cle) },
   }
+}
+
+/** L'étal du rangement : les trois contenants, le temps d'un déplacement. */
+type Etal = { deck: Carte[]; sac: (Carte | null)[]; loot: Carte | null }
+
+/** Retire le trésor qui se trouve à ce lieu, et laisse la place vide. */
+function prendre(etal: Etal, lieu: Lieu): { carte: Carte | null; etal: Etal } {
+  if (lieu.ou === 'loot') return { carte: etal.loot, etal: { ...etal, loot: null } }
+
+  if (lieu.ou === 'sac') {
+    if (lieu.emplacement < 0 || lieu.emplacement >= CAPACITE_SAC) return { carte: null, etal }
+    const sac = [...etal.sac]
+    const carte = sac[lieu.emplacement] ?? null
+    sac[lieu.emplacement] = null
+    return { carte, etal: { ...etal, sac } }
+  }
+
+  if (lieu.ou === 'deck') {
+    const i = etal.deck.findIndex((c) => c.type === 'tresor' && c.id === lieu.id)
+    if (i < 0) return { carte: null, etal }
+    const deck = [...etal.deck]
+    const [carte] = deck.splice(i, 1)
+    return { carte: carte ?? null, etal: { ...etal, deck } }
+  }
+
+  return { carte: null, etal }
+}
+
+/** Pose le trésor à ce lieu, et renvoie celui qu'il en délogeait. */
+function poser(etal: Etal, lieu: Lieu, carte: Carte): { sortant: Carte | null; etal: Etal } {
+  if (lieu.ou === 'loot') return { sortant: etal.loot, etal: { ...etal, loot: carte } }
+
+  if (lieu.ou === 'sac') {
+    if (lieu.emplacement < 0 || lieu.emplacement >= CAPACITE_SAC) return { sortant: carte, etal }
+    const sac = [...etal.sac]
+    const sortant = sac[lieu.emplacement] ?? null
+    sac[lieu.emplacement] = carte
+    return { sortant, etal: { ...etal, sac } }
+  }
+
+  // La pile du deck n'a pas de places : on pose dessus.
+  if (lieu.ou === 'deck') return { sortant: null, etal: { ...etal, deck: [...etal.deck, carte] } }
+
+  // Laissé au fond : la carte disparaît, rien ne la remplace.
+  return { sortant: null, etal }
 }
 
 /**
- * Déplace un trésor pendant le rangement. Rien n'est validé ici : le palier ne
- * se referme qu'avec `terminerButin`, pour qu'on puisse réarranger son sac
- * autant qu'on veut avant de s'engager.
+ * Déplace un trésor d'un lieu à un autre. Rien n'est validé ici : le palier ne
+ * se referme qu'avec `terminerButin`, pour qu'on puisse réarranger autant
+ * qu'on veut avant de s'engager.
  *
- * - **main → emplacement libre** : il y entre, on n'a plus rien en main.
- * - **main → emplacement occupé** : ils échangent, et l'ancien passe en main.
- *   On peut donc enchaîner jusqu'à être satisfait.
- * - **emplacement → emplacement** : simple réarrangement du sac.
- * - **main → deck** : on le porte, il pèsera à chaque main.
- * - **main → laisser** : perdu pour de bon, mais rien ne s'alourdit.
- *
- * Seule la main peut aller au deck ou être laissée : vider son sac par là
- * n'aurait aucun sens, et l'échange permet déjà d'en sortir ce qu'on veut.
+ * L'échange n'est pas un cas particulier : ce que la destination délogeait
+ * repart simplement à la place qu'on vient de libérer.
  */
-export function deplacerTresor(descente: Descente, source: Source, depot: Depot): Descente {
+export function deplacerTresor(descente: Descente, source: Lieu, cible: Lieu): Descente {
   if (descente.phase.type !== 'butin') return descente
-  const enMain = descente.phase.enMain
+  if (source.ou === 'laisser') return descente
 
-  if (source.ou === 'main') {
-    if (enMain === null) return descente
-    if (depot.ou === 'laisser') return { ...descente, phase: { type: 'butin', enMain: null } }
-    if (depot.ou === 'deck') {
-      return {
-        ...descente,
-        deck: [...descente.deck, enMain],
-        phase: { type: 'butin', enMain: null },
-      }
-    }
-    if (depot.emplacement < 0 || depot.emplacement >= CAPACITE_SAC) return descente
-    const sac = [...descente.sac]
-    const sortant = sac[depot.emplacement] ?? null
-    sac[depot.emplacement] = enMain
-    return { ...descente, sac, phase: { type: 'butin', enMain: sortant } }
-  }
+  const depart: Etal = { deck: descente.deck, sac: descente.sac, loot: descente.phase.loot }
+  const { carte, etal: vide } = prendre(depart, source)
+  if (carte === null) return descente
 
-  // Réarrangement interne : seuls deux emplacements du sac s'échangent.
-  if (depot.ou !== 'sac') return descente
-  const a = source.emplacement
-  const b = depot.emplacement
-  if (a === b) return descente
-  if (a < 0 || a >= CAPACITE_SAC || b < 0 || b >= CAPACITE_SAC) return descente
-  const sac = [...descente.sac]
-  const gauche = sac[a] ?? null
-  if (gauche === null) return descente
-  // Échange franc, y compris avec une case vide : la case libérée RESTE
-  // ouverte, on peut y remettre le trésor. C'est tout l'intérêt d'un sac
-  // positionnel.
-  sac[a] = sac[b] ?? null
-  sac[b] = gauche
-  return { ...descente, sac }
+  const { sortant, etal: pose } = poser(vide, cible, carte)
+  const final = sortant === null ? pose : poser(pose, source, sortant).etal
+
+  return { ...descente, deck: final.deck, sac: final.sac, phase: { type: 'butin', loot: final.loot } }
 }
 
-/** Referme le palier. Impossible tant qu'on tient encore un trésor. */
+/** Referme le palier. Impossible tant que l'emplacement de loot est occupé. */
 export function terminerButin(descente: Descente): Descente {
-  if (descente.phase.type !== 'butin' || descente.phase.enMain !== null) return descente
+  if (descente.phase.type !== 'butin' || descente.phase.loot !== null) return descente
   return { ...descente, phase: apresChoix(descente) }
 }
 

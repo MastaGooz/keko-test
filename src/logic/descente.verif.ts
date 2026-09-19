@@ -8,7 +8,7 @@
  * le sac qui déborde dans le deck, la mort qui fait tout perdre.
  */
 import { createRng } from './rng.ts'
-import type { Depot, Descente, Reglage } from './descente.ts'
+import type { Descente, Lieu, Reglage } from './descente.ts'
 import {
   butinTransporte,
   commencerDescente,
@@ -52,8 +52,8 @@ function jusquAuButin(descente: Descente, rng = createRng(1), pv = 40): Descente
 }
 
 /** Palier complet : amélioration prise, trésor rangé, palier refermé. */
-function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): Descente {
-  const range = deplacerTresor(jusquAuButin(descente, rng, pv), { ou: 'main' }, depot)
+function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): Descente {
+  const range = deplacerTresor(jusquAuButin(descente, rng, pv), { ou: 'loot' }, cible)
   return terminerButin(range)
 }
 
@@ -91,7 +91,7 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
 {
   const rng = createRng(3)
   const apres = jusquAuChoix(commencerDescente(rng, REGLAGE), rng, 40)
-  const range = deplacerTresor(choisirCarte(apres, 0, rng), { ou: 'main' }, { ou: 'laisser' })
+  const range = deplacerTresor(choisirCarte(apres, 0, rng), { ou: 'loot' }, { ou: 'laisser' })
   const descendue = descendre(terminerButin(range), rng)
   verifier(
     'on descend avec les PV qu\'il reste, pas avec la barre pleine',
@@ -116,13 +116,13 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
   verifier('et chaque palier a aussi donné son amélioration', d.deck.length === 10 + CAPACITE_SAC)
 
   const avant = d.sac[1]!
-  const enCours = deplacerTresor(jusquAuButin(d, rng), { ou: 'main' }, { ou: 'sac', emplacement: 1 })
+  const enCours = deplacerTresor(jusquAuButin(d, rng), { ou: 'loot' }, { ou: 'sac', emplacement: 1 })
   verifier('déposer sur un emplacement occupé échange', enCours.sac[1] !== avant)
   verifier("et l'ancien passe en main, il n'est pas perdu tout de suite",
-    enCours.phase.type === 'butin' && enCours.phase.enMain === avant)
+    enCours.phase.type === 'butin' && enCours.phase.loot === avant)
   verifier('on ne peut pas terminer en tenant encore un trésor', terminerButin(enCours) === enCours)
 
-  const refermé = terminerButin(deplacerTresor(enCours, { ou: 'main' }, { ou: 'laisser' }))
+  const refermé = terminerButin(deplacerTresor(enCours, { ou: 'loot' }, { ou: 'laisser' }))
   verifier('une fois la main vide, le palier se referme', refermé.phase.type !== 'butin')
   verifier("et l'échangé n'est pas tombé dans le deck", tresorsAuDeck(refermé) === 0)
 
@@ -130,14 +130,14 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
   verifier('deux emplacements du sac peuvent échanger leur place',
     range.sac[0] === d.sac[2] && range.sac[2] === d.sac[0])
   verifier('réarranger ne touche pas au trésor tenu en main',
-    range.phase.type === 'butin' && range.phase.enMain !== null)
+    range.phase.type === 'butin' && range.phase.loot !== null)
 
   const porte = palier(d, { ou: 'deck' }, rng)
   verifier('le trésor peut être porté dans le deck', tresorsAuDeck(porte) === 1 && tresorsAuSac(porte) === CAPACITE_SAC)
 
   // Le sac positionnel : sortir un trésor laisse SA case ouverte.
-  const sorti = deplacerTresor(jusquAuButin(d, rng), { ou: 'main' }, { ou: 'sac', emplacement: 1 })
-  const vide = deplacerTresor(sorti, { ou: 'main' }, { ou: 'laisser' })
+  const sorti = deplacerTresor(jusquAuButin(d, rng), { ou: 'loot' }, { ou: 'sac', emplacement: 1 })
+  const vide = deplacerTresor(sorti, { ou: 'loot' }, { ou: 'laisser' })
   const remis = deplacerTresor(
     deplacerTresor(vide, { ou: 'sac', emplacement: 0 }, { ou: 'sac', emplacement: 1 }),
     { ou: 'sac', emplacement: 1 },
@@ -147,6 +147,42 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
     vide.sac.length === CAPACITE_SAC)
   verifier("et l'aller-retour remet exactement le sac comme il était",
     remis.sac[0] === vide.sac[0] && remis.sac[1] === vide.sac[1] && remis.sac[2] === vide.sac[2])
+}
+
+// --- les trois contenants communiquent dans les deux sens ------------------
+
+{
+  const rng = createRng(29)
+  let d = commencerDescente(rng, REGLAGE)
+  d = jusquAuButin(d, rng)
+  const loot = d.phase.type === 'butin' ? d.phase.loot : null
+
+  const auDeck = deplacerTresor(d, { ou: 'loot' }, { ou: 'deck' })
+  verifier('on peut poser le trésor sur la pile du deck',
+    tresorsAuDeck(auDeck) === 1 && auDeck.phase.type === 'butin' && auDeck.phase.loot === null)
+
+  const repris = deplacerTresor(auDeck, { ou: 'deck', id: loot!.id }, { ou: 'loot' })
+  verifier("et le reprendre de la pile vers l'emplacement de loot",
+    tresorsAuDeck(repris) === 0 && repris.phase.type === 'butin' && repris.phase.loot === loot)
+
+  const versSac = deplacerTresor(auDeck, { ou: 'deck', id: loot!.id }, { ou: 'sac', emplacement: 2 })
+  verifier('et le sortir de la pile directement vers le sac',
+    tresorsAuDeck(versSac) === 0 && versSac.sac[2] === loot)
+
+  const rangeAilleurs = deplacerTresor(
+    deplacerTresor(d, { ou: 'loot' }, { ou: 'sac', emplacement: 0 }),
+    { ou: 'sac', emplacement: 0 },
+    { ou: 'loot' },
+  )
+  verifier("un trésor du sac peut revenir dans l'emplacement de loot",
+    tresorsAuSac(rangeAilleurs) === 0 &&
+      rangeAilleurs.phase.type === 'butin' &&
+      rangeAilleurs.phase.loot === loot)
+
+  verifier("on ne déplace rien depuis le fond du donjon",
+    deplacerTresor(d, { ou: 'laisser' }, { ou: 'loot' }) === d)
+  verifier('une case vide ne donne rien à déplacer',
+    deplacerTresor(d, { ou: 'sac', emplacement: 2 }, { ou: 'loot' }) === d)
 }
 
 {
@@ -198,7 +234,7 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
   const rng = createRng(23)
   const enCombat = commencerDescente(rng, REGLAGE)
   verifier("on ne choisit pas d'amélioration pendant un combat", choisirCarte(enCombat, 0, rng) === enCombat)
-  verifier('on ne range pas de trésor pendant un combat', deplacerTresor(enCombat, { ou: 'main' }, { ou: 'deck' }) === enCombat)
+  verifier('on ne range pas de trésor pendant un combat', deplacerTresor(enCombat, { ou: 'loot' }, { ou: 'deck' }) === enCombat)
   verifier('on ne descend pas pendant un combat', descendre(enCombat, rng) === enCombat)
   verifier('on n\'extrait pas pendant un combat', extraire(enCombat) === enCombat)
   verifier('un combat non terminé ne se résout pas', resoudreCombat(enCombat, rng) === enCombat)

@@ -231,13 +231,19 @@ donjon. Ce qui tourne :
 - **le palier en deux écrans** : d'abord **une amélioration à choisir parmi
   trois** (valable pour cette descente seulement), puis **le rangement du
   butin** ;
-- **le sac est un vrai inventaire** : ses trésors sont des cartes, on les
-  réarrange, et déposer sur un emplacement occupé **échange** — le déplacé
-  passe *en main*, il n'est pas perdu. Le sac est **positionnel** (toujours
-  `CAPACITE_SAC` cases, `null` pour une case libre) : sortir un trésor laisse
-  SA case ouverte, on peut l'y remettre. Une liste compactée remonterait les
-  vides à la fin et ferait glisser les voisins — le joueur perdrait son
-  rangement en le manipulant. On peut donc enchaîner les échanges,
+- **le rangement du butin est un inventaire à trois contenants**, tous reliés
+  dans les deux sens : l'**emplacement de loot**, les **cases du sac**, et la
+  **pile du deck** — les trésors qu'on porte et qui pèsent à chaque main. On
+  consulte la pile, on en reprend n'importe quel élément, on repose ailleurs.
+  Déposer sur une case occupée **échange**.
+- **Le modèle est un `Lieu`, pas une liste de gestes.** Tout déplacement est
+  « prendre ici, poser là », et l'échange n'est pas un cas particulier : ce que
+  la destination délogeait repart à la place qu'on vient de libérer. Sans ça,
+  chaque nouveau contenant multipliait les cas.
+- **Le sac est positionnel** : toujours `CAPACITE_SAC` cases, `null` pour une
+  case libre. Sortir un trésor laisse SA case ouverte, on peut l'y remettre.
+  Une liste compactée remonterait les vides à la fin et ferait glisser les
+  voisins — le joueur perdrait son rangement en le manipulant. On peut donc enchaîner les échanges,
   puis décider du dernier. **Rien n'est validé avant « Terminer »** : un
   rangement qui s'engage au premier geste punit l'exploration, alors que c'est
   là qu'on veut réfléchir ;

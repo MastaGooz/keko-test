@@ -111,7 +111,7 @@ bindInput(view, (action) => {
       descente = choisirCarte(descente, action.index, rng)
       break
     case 'deplacer':
-      descente = deplacerTresor(descente, action.source, action.depot)
+      descente = deplacerTresor(descente, action.source, action.cible)
       break
     case 'terminerButin':
       descente = terminerButin(descente)

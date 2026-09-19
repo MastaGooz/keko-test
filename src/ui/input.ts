@@ -1,6 +1,6 @@
 /** Gestion des entrées : traduit les événements navigateur en actions. */
 import type { View } from './render.ts'
-import type { Depot, Source } from '../logic/descente.ts'
+import type { Lieu } from '../logic/descente.ts'
 
 export type Action =
   | { type: 'viser'; index: number }
@@ -10,7 +10,7 @@ export type Action =
   | { type: 'rejouer' }
   | { type: 'nouveau' }
   | { type: 'choisirCarte'; index: number }
-  | { type: 'deplacer'; source: Source; depot: Depot }
+  | { type: 'deplacer'; source: Lieu; cible: Lieu }
   | { type: 'terminerButin' }
   | { type: 'descendre' }
   | { type: 'extraire' }
@@ -20,21 +20,26 @@ export type Action =
 
 /**
  * D'où vient le trésor déplacé. Une tape n'a pas de source : elle déplace
- * toujours ce qu'on tient en main. Un glisser, lui, pose la sienne sur la
- * cible juste avant de la cliquer.
+ * toujours ce qui est dans l'emplacement de loot. Un glisser, lui, pose le
+ * lieu de sa pièce sur la cible juste avant de la cliquer.
  */
-function lireSource(noeud: HTMLElement): Source {
-  const source = noeud.dataset.source
-  delete noeud.dataset.source
-  if (source === undefined || source === 'main') return { ou: 'main' }
-  return { ou: 'sac', emplacement: Number(source) }
+function lireSource(noeud: HTMLElement): Lieu {
+  const brut = noeud.dataset.lieuSource
+  delete noeud.dataset.lieuSource
+  if (brut === undefined) return { ou: 'loot' }
+  try {
+    return JSON.parse(brut) as Lieu
+  } catch {
+    return { ou: 'loot' }
+  }
 }
 
-/** Traduit les attributs d'une zone de dépôt en destination de trésor. */
-function lireDepot(noeud: HTMLElement): Depot {
+/** La destination, lue sur la zone de dépôt. */
+function lireCible(noeud: HTMLElement): Lieu {
   const ou = noeud.dataset.ou
   if (ou === 'sac') return { ou: 'sac', emplacement: Number(noeud.dataset.emplacement) }
   if (ou === 'deck') return { ou: 'deck' }
+  if (ou === 'loot') return { ou: 'loot' }
   return { ou: 'laisser' }
 }
 
@@ -71,7 +76,7 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         dispatch({ type: 'choisirCarte', index: Number(noeud.dataset.carte) })
         break
       case 'deplacer':
-        dispatch({ type: 'deplacer', source: lireSource(noeud), depot: lireDepot(noeud) })
+        dispatch({ type: 'deplacer', source: lireSource(noeud), cible: lireCible(noeud) })
         break
       case 'terminerButin':
         dispatch({ type: 'terminerButin' })
