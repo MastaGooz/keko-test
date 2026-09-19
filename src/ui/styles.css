@@ -2592,8 +2592,14 @@ body {
    deja l'arrivee des figures (translateY + scale), et une animation sur la
    meme propriete l'ecraserait. Les deux proprietes se composent d'elles-memes,
    `translate` d'abord. */
-.duel-corps.attaque {
+/* La course de reference, portee par les DEUX corps : l'attaquant s'en sert
+   pour charger, la cible pour reculer d'autant. Chacun la porte dans le sens
+   de son cote. */
+.duel-corps {
   --elan: calc(var(--corps) * 0.26 * var(--sens, 1));
+}
+
+.duel-corps.attaque {
   animation: charge 0.57s linear 0.07s forwards;
 }
 
@@ -2646,18 +2652,24 @@ body {
   }
 }
 
-/* LE RECUL. La cible est repoussee, doucement et longtemps : le coup la
-   deplace, elle ne l'encaisse pas plantee sur ses pattes. Il part a l'instant
-   de l'impact -- avant, il annoncerait le coup ; apres, il ne s'y rattacherait
-   plus.
+/* LE RECUL : la DERIVE DE L'ATTAQUANT, EN MIROIR. Meme instant de depart, meme
+   duree, meme distance, meme `linear` -- donc exactement la meme vitesse. Les
+   deux corps s'ecartent ensemble, comme si la poussee du coup se prolongeait
+   dans les deux sens.
 
-   Le deplacement est a l'OPPOSE de celui qui frappe, d'ou le `-1` : la cible
-   porte le sens de SON cote, et se fait pousser dans l'autre. Petit (8 % d'un
-   corps) parce qu'un recul qui deplace vraiment la bete casserait la
-   composition du duel -- c'est un ebranlement, pas une projection. */
+   Premiere version : un amorti parti a l'impact, qui faisait 70 % de son
+   chemin en 150 ms. Sur le papier c'etait « un recul » ; a l'ecran c'etait un
+   a-coup invisible, noye dans la frappe qui le precedait de 30 ms. Keko : « je
+   ne vois pas la cible reculer ». Un mouvement lent se voit PARCE QU'IL DURE ;
+   lui donner une courbe le tasse au debut et le rend invisible.
+
+   0,45 x l'elan : c'est exactement ce que couvre la derive de l'attaquant
+   (1,8 - 1,35). Le `-1` met la cible a l'oppose -- elle porte le sens de SON
+   cote et se fait pousser dans l'autre. Les deux valeurs sont liees : bouger
+   la derive sans bouger le recul les desaccorde. */
 .duel-corps:not(.attaque) {
-  --recul: calc(var(--corps) * 0.08 * var(--sens, 1) * -1);
-  animation: recul 0.45s cubic-bezier(0.22, 0.65, 0.4, 1) 0.15s forwards;
+  --recul: calc(var(--elan) * -0.45);
+  animation: recul 0.456s linear 0.184s forwards;
 }
 
 @keyframes recul {

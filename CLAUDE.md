@@ -426,12 +426,21 @@ donjon. Ce qui tourne :
   pas la seule vitesse* : allonger la course sans toucher à sa durée est le
   levier direct sur la nervosité. Chacun charge vers l'autre.
 
-  **Et la cible est repoussée**, doucement et longtemps (450 ms pour 8 % d'un
-  corps) : le coup la déplace, elle ne l'encaisse pas plantée sur ses pattes.
-  Le recul part **à l'instant de l'impact** — avant, il annoncerait le coup ;
-  après, il ne s'y rattacherait plus. Il reste petit : un recul qui déplace
-  vraiment la bête casserait la composition du duel, c'est un ébranlement et
-  pas une projection.
+  **Et la cible est repoussée : c'est la dérive de l'attaquant, en miroir.**
+  Même instant de départ, même durée, même distance, même `linear` — donc
+  exactement la même vitesse. Les deux corps partent ensemble, comme si la
+  poussée du coup se prolongeait.
+
+  *Première version, à jeter mentalement* : un amorti parti à l'impact, qui
+  faisait 70 % de son chemin en 150 ms. Sur le papier c'était « un recul » ; à
+  l'écran, un à-coup invisible, noyé dans la frappe qui le précédait de 30 ms.
+  Keko : « je ne vois pas la cible reculer ». **Un mouvement lent se voit parce
+  qu'il DURE** — lui donner une courbe le tasse au début et le rend invisible.
+  C'est l'exact symétrique du piège de la frappe, où c'est la brièveté qui
+  effaçait le geste.
+
+  Les deux valeurs sont liées (`0,45 × l'élan`, soit `1,8 − 1,35`) : bouger la
+  dérive sans bouger le recul les désaccorde.
 
   **`--sens` appartient au CÔTÉ, pas à l'attaquant** — la cible en a besoin
   elle aussi, pour être repoussée dans la bonne direction, et elle se fait
