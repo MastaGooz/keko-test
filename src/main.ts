@@ -21,16 +21,18 @@ import {
   resoudreCombat,
   terminerButin,
 } from './logic/descente.ts'
+import type { Agonie } from './ui/render.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
 import {
   assaut,
+  DUREE_CHUTE,
+  DUREE_COUP,
   encaisse,
   INSTANT_IMPACT,
   PAS_ENTRE_FRAPPES,
   secouerEcran,
-  tombe,
 } from './ui/effets.ts'
 import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
 import { tracerVisees } from './ui/visees.ts'
@@ -56,6 +58,8 @@ let descente: Descente
 let selection: number | null = null
 /** Pour ne sonner la fin qu'au moment où elle tombe, pas à chaque rendu. */
 let finSonnee = false
+/** Les corps qui achèvent de mourir. Ils restent au rang le temps de tomber. */
+let agonie: Agonie[] = []
 
 /** Tout le hasard de la descente découle de la seed : la rejouer la rejoue. */
 function demarrer(nouvelleSeed: number): void {
@@ -64,13 +68,32 @@ function demarrer(nouvelleSeed: number): void {
   descente = commencerDescente(rng)
   selection = null
   finSonnee = false
+  agonie = []
   view.root.classList.remove('panneau-ouvert')
   dessiner()
 }
 
 function dessiner(): void {
-  render(view, descente, seed, selection)
+  render(view, descente, seed, selection, agonie)
   tracerVisees(view)
+}
+
+/**
+ * L'agonie d'un corps, en deux temps : il encaisse d'abord le coup comme
+ * n'importe quel autre — sinon il disparaîtrait avant que ses dégâts ne
+ * s'affichent — puis il s'effondre et quitte le rang.
+ */
+function faireMourir(index: number): void {
+  agonie = [...agonie, { index, phase: 'coup' }]
+  window.setTimeout(() => {
+    agonie = agonie.map((a) => (a.index === index ? { index, phase: 'chute' as const } : a))
+    sonAcheve()
+    dessiner()
+  }, DUREE_COUP)
+  window.setTimeout(() => {
+    agonie = agonie.filter((a) => a.index !== index)
+    dessiner()
+  }, DUREE_COUP + DUREE_CHUTE)
 }
 
 bindInput(view, (action) => {
@@ -96,10 +119,11 @@ bindInput(view, (action) => {
         const reste = apres.ennemis[action.cible]?.pv ?? 0
         const inflige = debout - reste
         if (inflige > 0) marques.push(() => encaisse(view, action.cible, inflige))
-        if (debout > 0 && reste <= 0) marques.push(() => tombe(view))
         // La force du son suit le coût de la carte : on entend son poids.
         if (carte !== undefined) sonFrappe((carte.cout - 1) / 3)
-        if (debout > 0 && reste <= 0) sonAcheve()
+        // Le corps reste au rang pour encaisser, puis tombe. Le son de la mort
+        // accompagne la chute, pas le coup.
+        if (debout > 0 && reste <= 0) faireMourir(action.cible)
       }
       selection = null
       break

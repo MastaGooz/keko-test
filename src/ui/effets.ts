@@ -108,10 +108,8 @@ export function secouerEcran(view: View): void {
   enCours.set(app, window.setTimeout(() => app.classList.remove('secoue'), 260))
 }
 
-/** Le corps tombe : une marque sur toute la rangée, le temps de le voir partir. */
-export function tombe(view: View): void {
-  view.ennemis.classList.remove('un-de-moins')
-  void view.ennemis.offsetWidth
-  view.ennemis.classList.add('un-de-moins')
-  window.setTimeout(() => view.ennemis.classList.remove('un-de-moins'), DUREE)
-}
+/** Ce que dure l'encaissement du coup, avant que l'agonie ne commence. */
+export const DUREE_COUP = DUREE
+
+/** Ce que dure la chute, avant que le corps ne quitte l'écran. */
+export const DUREE_CHUTE = 520

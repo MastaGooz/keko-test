@@ -121,11 +121,22 @@ export function mount(root: HTMLElement, buildTime: string): View {
 }
 
 /** Reflète l'état dans le DOM. Appelé après chaque action. */
+/**
+ * Un corps en train de mourir. Il reste à l'écran le temps d'encaisser le coup
+ * qui l'a tué — sinon il disparaît avant que ses dégâts ne s'affichent — puis
+ * il s'effondre.
+ *
+ * La phase vient de l'état et non d'une classe posée à la main : un nouveau
+ * rendu au milieu de l'agonie effacerait la classe, et le corps resterait figé.
+ */
+export type Agonie = { index: number; phase: 'coup' | 'chute' }
+
 export function render(
   view: View,
   descente: Descente,
   seed: number,
   selection: number | null,
+  agonie: Agonie[] = [],
 ): void {
   const etat = descente.combat
   const fini = etat.issue !== null
@@ -133,8 +144,12 @@ export function render(
   const visee = carte !== null && carte.type === 'combat' ? carte : null
 
   view.seed.textContent = String(seed)
-  view.ennemis.innerHTML = vivants(etat)
-    .map(({ ennemi, index }) => corpsEnnemi(etat, ennemi, index, visee, fini))
+  // Les mourants gardent leur place dans le rang : on parcourt tous les corps
+  // plutôt que les seuls vivants, pour qu'aucun ne glisse pendant l'agonie.
+  view.ennemis.innerHTML = etat.ennemis
+    .map((ennemi, index) => ({ ennemi, index, agonie: agonie.find((a) => a.index === index) }))
+    .filter(({ ennemi, agonie: a }) => ennemi.pv > 0 || a !== undefined)
+    .map(({ ennemi, index, agonie: a }) => corpsEnnemi(etat, ennemi, index, visee, fini, a))
     .join('')
   view.joueur.innerHTML = ligneJoueur(etat, visee, fini)
   view.energie.innerHTML = fini ? '' : energie(etat, visee)
@@ -170,12 +185,14 @@ function corpsEnnemi(
   index: number,
   visee: Carte | null,
   fini: boolean,
+  agonie?: Agonie,
 ): string {
   const imminent = ennemi.compteur <= 1
   const espece = ESPECES[ennemi.nom] ?? { espece: 'roquet', teinte: '#9a7a62' }
   const attente = imminent ? '' : `<span class="delai">${ennemi.compteur}t</span>`
 
-  const c = visee === null || fini ? null : consequence(etat, visee, index)
+  // Un mourant ne se vise plus, et son intention ne veut plus rien dire.
+  const c = visee === null || fini || agonie !== undefined ? null : consequence(etat, visee, index)
   const sort =
     c === null
       ? ''
@@ -196,7 +213,8 @@ function corpsEnnemi(
     sort
 
   if (c === null) {
-    return `<div class="creature" data-corps="${index}">${corps}</div>`
+    const etat_ = agonie === undefined ? '' : ` mort${agonie.phase === 'chute' ? ' meurt' : ''}`
+    return `<div class="creature${etat_}" data-corps="${index}">${corps}</div>`
   }
 
   return (

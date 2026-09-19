@@ -325,6 +325,16 @@ donjon. Ce qui tourne :
   version lissée uniformément était molle, une deuxième penchait ; chaque étape
   porte donc sa propre accélération, l'animation est `linear` en global, et il
   n'y a pas une once de `rotate`.
+- **Un corps tué reste au rang le temps d'encaisser**, comme n'importe quel
+  autre coup, puis s'effondre : un éclair blanc, et il bascule sur le flanc en
+  s'effaçant. Avant ça il disparaissait à l'instant de sa mort, **donc on ne
+  voyait jamais les dégâts qui l'avaient achevé** — le rendu ne montrait que
+  les vivants. Il garde sa place dans le rang pendant l'agonie, pour qu'aucun
+  voisin ne glisse, et il n'est plus visable.
+
+  **La phase d'agonie vient de l'état, pas d'une classe posée à la main.** Un
+  nouveau rendu au milieu de la chute effacerait la classe et figerait le
+  corps ; or le joueur peut tout à fait jouer une autre carte pendant ce temps.
 - **Une secousse d'écran à chaque impact.** Elle est portée par `.app`, qui
   contient des enfants en `position: fixed` (le panneau, le voile, les arches) :
   un `transform` en ferait leur bloc conteneur et les décalerait. D'où le

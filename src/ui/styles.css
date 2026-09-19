@@ -1100,14 +1100,73 @@ body {
   100% { transform: translateY(-22px); opacity: 0; }
 }
 
-/* Un corps vient de tomber : la rangee entiere accuse le coup. */
-.un-de-moins {
-  animation: eclat 0.42s ease-out;
+/* --- l'agonie --------------------------------------------------------------- */
+
+/* Un corps tue reste au rang le temps d'encaisser, comme n'importe quel autre
+   coup : sinon il disparait avant que ses degats ne s'affichent, et on ne voit
+   jamais le coup qui l'a achevee. Il ne se vise plus pour autant. */
+.creature.mort {
+  cursor: default;
 }
 
-@keyframes eclat {
-  0% { filter: brightness(2.1); }
-  100% { filter: brightness(1); }
+.creature.mort .intention,
+.creature.mort .effet {
+  opacity: 0.3;
+}
+
+/* Puis il s'effondre : un eclair blanc, et il bascule sur le flanc. */
+.creature.meurt {
+  animation: effacement 0.52s ease-in forwards;
+}
+
+@keyframes effacement {
+  0%,
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.creature.meurt .silhouette {
+  animation: trepas 0.52s ease-in forwards;
+}
+
+@keyframes trepas {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    filter: brightness(1) saturate(1);
+  }
+  16% {
+    /* L'eclair : le corps blanchit avant de ceder. */
+    transform: translateY(-4px) rotate(0deg) scale(1.06);
+    filter: brightness(5) saturate(0.15);
+  }
+  100% {
+    transform: translateY(15px) rotate(80deg) scale(0.88);
+    filter: brightness(0.45) saturate(0.35);
+  }
+}
+
+/* La jauge se vide et s'eteint avec lui. */
+.creature.meurt .jauge {
+  animation: jauge-eteinte 0.52s ease-in forwards;
+}
+
+@keyframes jauge-eteinte {
+  to {
+    opacity: 0;
+    transform: scaleX(0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creature.meurt,
+  .creature.meurt .silhouette,
+  .creature.meurt .jauge {
+    animation-duration: 0.01ms;
+  }
 }
 
 /* Respecte le reglage systeme : pas de mouvement si l'utilisateur n'en veut pas. */
