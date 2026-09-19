@@ -131,13 +131,21 @@ export function mount(root: HTMLElement, buildTime: string): View {
  */
 export type Agonie = { index: number; phase: 'coup' | 'chute' }
 
+/**
+ * Ce qui occupe l'écran. `libre` = c'est au joueur de jouer ; sinon une
+ * animation se déroule et l'entrée est verrouillée.
+ */
+export type Occupation = 'libre' | 'coup' | 'ennemis'
+
 export function render(
   view: View,
   descente: Descente,
   seed: number,
   selection: number | null,
   agonie: Agonie[] = [],
+  occupation: Occupation = 'libre',
 ): void {
+  view.root.classList.toggle('occupe', occupation !== 'libre')
   const etat = descente.combat
   const fini = etat.issue !== null
   const carte = selection === null ? null : (etat.main[selection] ?? null)
@@ -160,8 +168,8 @@ export function render(
     .join('')
   view.encombrement.innerHTML = encombrement(descente)
 
-  view.finTour.innerHTML = etiquetteFinTour(etat)
-  view.finTour.disabled = fini
+  view.finTour.innerHTML = etiquetteFinTour(etat, occupation)
+  view.finTour.disabled = fini || occupation !== 'libre'
 
   view.palier.innerHTML = palier(descente)
 
@@ -369,7 +377,14 @@ function encombrement(descente: Descente): string {
   )
 }
 
-function etiquetteFinTour(etat: EtatCombat): string {
+/**
+ * Le bouton porte aussi le tour de qui c'est. Sans ça, une salve ennemie d'une
+ * seconde et demie ressemble à un jeu qui ne répond plus.
+ */
+function etiquetteFinTour(etat: EtatCombat, occupation: Occupation): string {
+  if (occupation === 'ennemis') {
+    return `<span class="nom">Les ennemis frappent…</span>`
+  }
   const menace = menaceDuTour(etat)
   return (
     `<span class="nom">Fin du tour ${etat.tour}</span>` +

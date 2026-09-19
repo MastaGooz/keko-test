@@ -21,7 +21,7 @@ import {
   resoudreCombat,
   terminerButin,
 } from './logic/descente.ts'
-import type { Agonie } from './ui/render.ts'
+import type { Agonie, Occupation } from './ui/render.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
@@ -60,6 +60,13 @@ let selection: number | null = null
 let finSonnee = false
 /** Les corps qui achèvent de mourir. Ils restent au rang le temps de tomber. */
 let agonie: Agonie[] = []
+/**
+ * Ce qui occupe l'écran. Le jeu a des **temps** : tant qu'une animation se
+ * déroule, l'entrée est verrouillée et le combat ne se résout pas. Sans ça
+ * tout se chevauchait — on pouvait jouer pendant la salve ennemie, et l'écran
+ * de récompense s'ouvrait par-dessus un corps en train de tomber.
+ */
+let occupation: Occupation = 'libre'
 
 /** Tout le hasard de la descente découle de la seed : la rejouer la rejoue. */
 function demarrer(nouvelleSeed: number): void {
@@ -74,8 +81,41 @@ function demarrer(nouvelleSeed: number): void {
 }
 
 function dessiner(): void {
-  render(view, descente, seed, selection, agonie)
+  render(view, descente, seed, selection, agonie, occupation)
   tracerVisees(view)
+}
+
+/**
+ * Occupe l'écran le temps d'une animation, puis rend la main. `apres` referme
+ * le temps écoulé : c'est là, et pas avant, que le combat se résout.
+ */
+function occuper(duree: number, pendant: Occupation, apres: () => void): void {
+  if (duree <= 0) {
+    apres()
+    dessiner()
+    return
+  }
+  occupation = pendant
+  dessiner()
+  window.setTimeout(() => {
+    occupation = 'libre'
+    apres()
+    dessiner()
+  }, duree)
+}
+
+/**
+ * Referme le temps de jeu : si le combat s'est terminé pendant l'animation,
+ * la descente reprend la main — récompense, point de sortie, ou fin de run.
+ */
+function conclure(): void {
+  if (descente.phase.type === 'combat' && descente.combat.issue !== null) {
+    descente = resoudreCombat(descente, rng)
+  }
+  if (descente.phase.type === 'fin' && !finSonnee) {
+    sonIssue(descente.phase.issue === 'extrait')
+    finSonnee = true
+  }
 }
 
 /**
@@ -96,10 +136,31 @@ function faireMourir(index: number): void {
   }, DUREE_COUP + DUREE_CHUTE)
 }
 
+/** Ce qui doit attendre son tour. Les réglages, eux, répondent toujours. */
+const ACTIONS_DE_JEU = new Set([
+  'viser',
+  'annuler',
+  'cibler',
+  'finTour',
+  'choisirCarte',
+  'deplacer',
+  'terminerButin',
+  'descendre',
+  'extraire',
+])
+
 bindInput(view, (action) => {
+  // Une animation en cours verrouille le jeu. Sans ça on pouvait jouer pendant
+  // la salve ennemie, et l'écran de récompense s'ouvrait par-dessus un corps
+  // en train de tomber.
+  if (occupation !== 'libre' && ACTIONS_DE_JEU.has(action.type)) return
+
   // Les marques visuelles se posent APRÈS le rendu : le DOM qu'elles visent
   // n'existe pas avant. Elles ne changent jamais l'état, juste l'affichage.
   const marques: (() => void)[] = []
+  /** Combien de temps l'écran reste occupé après cette action. */
+  let attente = 0
+  let pendant: Occupation = 'coup'
 
   switch (action.type) {
     case 'viser':
@@ -118,12 +179,18 @@ bindInput(view, (action) => {
         descente = { ...descente, combat: apres }
         const reste = apres.ennemis[action.cible]?.pv ?? 0
         const inflige = debout - reste
-        if (inflige > 0) marques.push(() => encaisse(view, action.cible, inflige))
+        if (inflige > 0) {
+          marques.push(() => encaisse(view, action.cible, inflige))
+          attente = DUREE_COUP
+        }
         // La force du son suit le coût de la carte : on entend son poids.
         if (carte !== undefined) sonFrappe((carte.cout - 1) / 3)
         // Le corps reste au rang pour encaisser, puis tombe. Le son de la mort
         // accompagne la chute, pas le coup.
-        if (debout > 0 && reste <= 0) faireMourir(action.cible)
+        if (debout > 0 && reste <= 0) {
+          faireMourir(action.cible)
+          attente = DUREE_COUP + DUREE_CHUTE
+        }
       }
       selection = null
       break
@@ -155,6 +222,13 @@ bindInput(view, (action) => {
           Math.max(0, (frappes.length - 1) * PAS_ENTRE_FRAPPES + INSTANT_IMPACT + 120),
         )
       })
+
+      // La main revient au joueur quand la dernière frappe a fini de résonner.
+      pendant = 'ennemis'
+      attente =
+        frappes.length === 0
+          ? 0
+          : (frappes.length - 1) * PAS_ENTRE_FRAPPES + INSTANT_IMPACT + DUREE_COUP
 
       selection = null
       break
@@ -191,19 +265,12 @@ bindInput(view, (action) => {
       return
   }
 
-  // Le combat vient de se refermer : la descente reprend la main et décide de
-  // la suite — récompense, point de sortie, ou fin de la run.
-  if (descente.phase.type === 'combat' && descente.combat.issue !== null) {
-    descente = resoudreCombat(descente, rng)
-  }
-
   dessiner()
-
-  if (descente.phase.type === 'fin' && !finSonnee) {
-    sonIssue(descente.phase.issue === 'extrait')
-    finSonnee = true
-  }
   for (const marque of marques) marque()
+
+  // Le combat ne se résout qu'une fois les animations finies : l'écran de
+  // récompense attend que le dernier corps soit tombé.
+  occuper(attente, pendant, conclure)
 })
 
 /** Le bouton ne s'affiche que là où l'API existe : l'iPhone ne l'a pas. */

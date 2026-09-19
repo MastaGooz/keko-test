@@ -1991,3 +1991,23 @@ body {
 .pile-fond.creuse .tas {
   display: none;
 }
+
+/* --- les temps du jeu ------------------------------------------------------ */
+
+/* Une animation se deroule : le jeu ne repond plus aux gestes de combat. Les
+   reglages, eux, restent accessibles -- on ne piege jamais le joueur. */
+.occupe #cartes,
+.occupe #ennemis {
+  pointer-events: none;
+}
+
+.occupe #cartes {
+  filter: saturate(0.75) brightness(0.88);
+  transition: filter 0.15s ease-out;
+}
+
+/* Le bouton porte le tour de qui c'est : une salve d'une seconde et demie sans
+   rien dire ressemble a un jeu qui a plante. */
+.finTour[disabled] {
+  opacity: 0.75;
+}

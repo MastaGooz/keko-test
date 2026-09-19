@@ -335,6 +335,12 @@ donjon. Ce qui tourne :
   **La phase d'agonie vient de l'état, pas d'une classe posée à la main.** Un
   nouveau rendu au milieu de la chute effacerait la classe et figerait le
   corps ; or le joueur peut tout à fait jouer une autre carte pendant ce temps.
+- **Le jeu a des temps.** Tant qu'une animation se déroule, l'entrée de combat
+  est verrouillée et **le combat ne se résout pas** : l'écran de récompense
+  attend que le dernier corps soit tombé. Le bouton de fin de tour porte le
+  tour de qui c'est — « Les ennemis frappent… » pendant la salve, sans quoi une
+  seconde et demie sans réponse ressemble à un jeu qui a planté. Les réglages
+  restent accessibles pendant le verrou : **on ne piège jamais le joueur**.
 - **Une secousse d'écran à chaque impact.** Elle est portée par `.app`, qui
   contient des enfants en `position: fixed` (le panneau, le voile, les arches) :
   un `transform` en ferait leur bloc conteneur et les décalerait. D'où le
