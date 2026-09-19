@@ -295,12 +295,21 @@ donjon. Ce qui tourne :
 - le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
-- **l'ennemi qui frappe bondit** : il monte en se ramassant, puis tombe d'un
-  coup sous sa position de repos avant de remonter. **Tout le poids vient du
-  contraste de vitesse** — mesuré : 16 px de montée en 140 ms, puis 36 px de
-  chute en 70 ms, cinq fois plus rapide. Une première version lissée
-  uniformément était molle ; chaque étape porte donc sa propre accélération, et
-  l'animation est déclarée `linear` en global. Seuls ceux dont le compteur est échu bougent, lus dans les événements
+- **les ennemis frappent chacun leur tour**, à 340 ms d'intervalle, et chacun
+  inflige **sa** part de dégâts. Une salve simultanée ne se lit pas : on voit
+  tout bouger sans savoir qui a pris quoi.
+- **Le bond est un franc haut-bas, sans aucune rotation** : il monte en se
+  ramassant, puis tombe sous sa position de repos avant de remonter. **Tout le
+  poids vient du contraste de vitesse** — mesuré : 20 px de montée en 197 ms,
+  puis 46 px de chute en 70 ms, six fois et demie plus rapide. Une première
+  version lissée uniformément était molle, une deuxième penchait ; chaque étape
+  porte donc sa propre accélération, l'animation est `linear` en global, et il
+  n'y a pas une once de `rotate`.
+- **Une secousse d'écran à chaque impact.** Elle est portée par `.app`, qui
+  contient des enfants en `position: fixed` (le panneau, le voile, les arches) :
+  un `transform` en ferait leur bloc conteneur et les décalerait. D'où le
+  garde-fou dans `ui/effets.ts` — **la secousse refuse de jouer si un calque est
+  ouvert**. Ne pas la déplacer sur `body` sans refaire ce raisonnement. Seuls ceux dont le compteur est échu bougent, lus dans les événements
   du tour, donc un ennemi à `periode: 2` reste immobile les tours où il attend.
   Et **la réaction du joueur est décalée de 170 ms** : sans ça le bond et
   l'encaissement se superposent, et on ne lit plus la cause de l'effet ;

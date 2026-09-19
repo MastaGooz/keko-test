@@ -144,31 +144,67 @@ body {
 .silhouette.assaut {
   /* `linear` en global : c'est CHAQUE etape qui porte son acceleration.
      Un lissage uniforme donnerait un mouvement mou -- tout le poids vient du
-     contraste entre une montee qui prend son temps et une chute brutale. */
-  animation: assaut 0.46s linear;
+     contraste entre une montee qui prend son temps et une chute brutale.
+     Aucune rotation : le geste est un franc haut-bas, rien d'oblique. */
+  animation: assaut 0.58s linear;
 }
 
 @keyframes assaut {
   0% {
-    transform: translateY(0) scale(1) rotate(0deg);
+    transform: translateY(0) scale(1);
     animation-timing-function: ease-out;
   }
-  30% {
+  34% {
     /* Le recul : elle monte, se ramasse, et marque le temps. */
-    transform: translateY(-16px) scale(0.92) rotate(-5deg);
+    transform: translateY(-20px) scale(0.9);
     animation-timing-function: ease-in;
   }
-  44% {
+  46% {
     /* La chute : elle accelere jusqu'a l'impact, sous sa position de repos. */
-    transform: translateY(23px) scale(1.15) rotate(4deg);
+    transform: translateY(26px) scale(1.16);
     animation-timing-function: ease-out;
   }
-  58% {
-    transform: translateY(11px) scale(1.05) rotate(1deg);
+  60% {
+    transform: translateY(12px) scale(1.05);
     animation-timing-function: ease-out;
   }
   100% {
-    transform: translateY(0) scale(1) rotate(0deg);
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* --- la secousse d'ecran -------------------------------------------------- */
+
+/* Posee sur `.app`, donc sur un element qui contient des enfants en position
+   fixe (le panneau, le voile, les arches). Un transform en ferait leur bloc
+   conteneur et les decalerait : la secousse ne doit donc jouer QUE pendant un
+   combat, jamais avec un calque ouvert. Le garde-fou est dans `ui/effets.ts`. */
+.app.secoue {
+  animation: secousse-ecran 0.24s ease-out;
+}
+
+@keyframes secousse-ecran {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  18% {
+    transform: translate(-6px, 4px);
+  }
+  36% {
+    transform: translate(6px, -3px);
+  }
+  55% {
+    transform: translate(-4px, -3px);
+  }
+  76% {
+    transform: translate(3px, 2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app.secoue {
+    animation: none;
   }
 }
 

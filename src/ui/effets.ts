@@ -63,7 +63,29 @@ export function assaut(view: View, noms: string[]): void {
 }
 
 /** Durée de l'assaut, en ms. Doit suivre la règle CSS `.silhouette.assaut`. */
-const DUREE_ASSAUT = 460
+const DUREE_ASSAUT = 580
+
+/** Le temps entre deux ennemis d'une même salve. Ils frappent l'un après
+ *  l'autre : une salve simultanée ne se lit pas, on voit juste tout bouger. */
+export const PAS_ENTRE_FRAPPES = 340
+
+/** Quand l'impact tombe dans l'assaut (46 % de l'animation). */
+export const INSTANT_IMPACT = 265
+
+/**
+ * La secousse d'écran, sur l'impact. Refusée s'il y a un calque ouvert : elle
+ * est portée par `.app`, qui contient des enfants en position fixe, et un
+ * transform en ferait leur bloc conteneur.
+ */
+export function secouerEcran(view: View): void {
+  if (view.root.querySelector('.voile') !== null) return
+  const app = view.root.querySelector('.app')
+  if (app === null) return
+  app.classList.remove('secoue')
+  void app.getBoundingClientRect()
+  app.classList.add('secoue')
+  window.setTimeout(() => app.classList.remove('secoue'), 260)
+}
 
 /** Le corps tombe : une marque sur toute la rangée, le temps de le voir partir. */
 export function tombe(view: View): void {

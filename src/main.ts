@@ -24,7 +24,14 @@ import {
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
-import { assaut, encaisse, tombe } from './ui/effets.ts'
+import {
+  assaut,
+  encaisse,
+  INSTANT_IMPACT,
+  PAS_ENTRE_FRAPPES,
+  secouerEcran,
+  tombe,
+} from './ui/effets.ts'
 import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
 import { tracerVisees } from './ui/visees.ts'
 import {
@@ -98,21 +105,33 @@ bindInput(view, (action) => {
       break
     }
     case 'finTour': {
-      const avant = descente.combat.pv
       const dejaVus = descente.combat.evenements.length
       descente = { ...descente, combat: finDuTour(descente.combat, rng) }
-      const subi = avant - descente.combat.pv
-      // Qui a frappé : on lit les événements que ce tour vient d'ajouter.
-      const frappeurs = descente.combat.evenements
+
+      // Les ennemis frappent CHACUN SON TOUR, avec sa propre part de dégâts.
+      // Une salve simultanée ne se lit pas : on voit tout bouger sans savoir
+      // qui a pris quoi. D'où la séquence, et un total qui s'égrène.
+      const frappes = descente.combat.evenements
         .slice(dejaVus)
         .filter((e) => e.type === 'frappe')
-        .map((e) => e.nom)
-      if (frappeurs.length > 0) marques.push(() => assaut(view, frappeurs))
-      // La réaction du joueur attend le bond : sinon les deux se superposent
-      // et on ne lit plus la cause de l'effet.
-      if (subi > 0) marques.push(() => window.setTimeout(() => encaisse(view, 'joueur', subi), 170))
-      if (subi > 0) sonEncaisse()
-      sonPioche()
+
+      marques.push(() => {
+        frappes.forEach((frappe, rang) => {
+          const depart = rang * PAS_ENTRE_FRAPPES
+          window.setTimeout(() => assaut(view, [frappe.nom]), depart)
+          window.setTimeout(() => {
+            encaisse(view, 'joueur', frappe.degats)
+            secouerEcran(view)
+            sonEncaisse()
+          }, depart + INSTANT_IMPACT)
+        })
+        // La repioche se fait entendre une fois la salve passée.
+        window.setTimeout(
+          () => sonPioche(),
+          Math.max(0, (frappes.length - 1) * PAS_ENTRE_FRAPPES + INSTANT_IMPACT + 120),
+        )
+      })
+
       selection = null
       break
     }
