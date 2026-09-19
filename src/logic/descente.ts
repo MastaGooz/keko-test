@@ -134,8 +134,14 @@ export type Descente = {
   combat: EtatCombat
   /** Le deck emporté au prochain combat : cartes de combat + trésors en trop. */
   deck: Carte[]
-  /** Les trésors hors du deck. À l'abri du deck, pas de la mort. */
-  sac: Carte[]
+  /**
+   * Les trésors hors du deck — à l'abri du deck, pas de la mort.
+   *
+   * **Positionnel** : toujours `CAPACITE_SAC` cases, `null` pour une case
+   * libre. Une liste compactée remonterait les vides à la fin, et sortir un
+   * trésor ferait disparaître sa case au lieu de la laisser ouverte.
+   */
+  sac: (Carte | null)[]
 }
 
 /** Le deck tel qu'il est à la fin d'un combat, pioche et défausse réunies. */
@@ -176,7 +182,7 @@ export function commencerDescente(
     phase: { type: 'combat' },
     combat: engager(1, deck, reglage.pvMax, rng, reglage),
     deck,
-    sac: [],
+    sac: Array.from({ length: CAPACITE_SAC }, () => null),
   }
 }
 
@@ -266,11 +272,7 @@ export function deplacerTresor(descente: Descente, source: Source, depot: Depot)
     const sac = [...descente.sac]
     const sortant = sac[depot.emplacement] ?? null
     sac[depot.emplacement] = enMain
-    return {
-      ...descente,
-      sac: sac.filter((c): c is Carte => c !== undefined),
-      phase: { type: 'butin', enMain: sortant },
-    }
+    return { ...descente, sac, phase: { type: 'butin', enMain: sortant } }
   }
 
   // Réarrangement interne : seuls deux emplacements du sac s'échangent.
@@ -280,17 +282,14 @@ export function deplacerTresor(descente: Descente, source: Source, depot: Depot)
   if (a === b) return descente
   if (a < 0 || a >= CAPACITE_SAC || b < 0 || b >= CAPACITE_SAC) return descente
   const sac = [...descente.sac]
-  const gauche = sac[a]
-  const droite = sac[b]
-  if (gauche === undefined) return descente
-  if (droite === undefined) {
-    sac[b] = gauche
-    sac.splice(a, 1)
-  } else {
-    sac[a] = droite
-    sac[b] = gauche
-  }
-  return { ...descente, sac: sac.filter((c): c is Carte => c !== undefined) }
+  const gauche = sac[a] ?? null
+  if (gauche === null) return descente
+  // Échange franc, y compris avec une case vide : la case libérée RESTE
+  // ouverte, on peut y remettre le trésor. C'est tout l'intérêt d'un sac
+  // positionnel.
+  sac[a] = sac[b] ?? null
+  sac[b] = gauche
+  return { ...descente, sac }
 }
 
 /** Referme le palier. Impossible tant qu'on tient encore un trésor. */
@@ -332,7 +331,12 @@ export function tresorsAuDeck(descente: Descente): number {
   return descente.deck.filter((carte) => carte.type === 'tresor').length
 }
 
+/** Combien de trésors le sac porte réellement. */
+export function tresorsAuSac(descente: Descente): number {
+  return descente.sac.filter((c): c is Carte => c !== null).length
+}
+
 /** Ce qu'il reste de place dans le sac. Zéro = le prochain trésor pollue. */
 export function placeDuSac(descente: Descente): number {
-  return Math.max(0, CAPACITE_SAC - descente.sac.length)
+  return descente.sac.filter((c) => c === null).length
 }

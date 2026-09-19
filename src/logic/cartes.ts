@@ -39,8 +39,8 @@ const BUTIN: [string, number][] = [
 export const CAPACITE_SAC = 3
 
 /** Ce que vaut le contenu du sac — perdu aussi si le joueur meurt. */
-export function valeurSac(sac: Carte[]): number {
-  return sac.reduce((total, carte) => total + (carte.valeur ?? 0), 0)
+export function valeurSac(sac: (Carte | null)[]): number {
+  return sac.reduce((total, carte) => total + (carte?.valeur ?? 0), 0)
 }
 
 /* ---------------------------------------------------------------------- *

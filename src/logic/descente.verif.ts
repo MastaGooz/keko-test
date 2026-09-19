@@ -20,6 +20,7 @@ import {
   placeDuSac,
   resoudreCombat,
   tresorsAuDeck,
+  tresorsAuSac,
 } from './descente.ts'
 import { CHOIX_PAR_PALIER } from './descente.ts'
 import { CAPACITE_SAC } from './cartes.ts'
@@ -61,7 +62,8 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
 {
   const d = commencerDescente(createRng(7), REGLAGE)
   verifier('une descente commence au premier palier, en combat', d.profondeur === 1 && d.phase.type === 'combat')
-  verifier('on part avec le deck de base et le sac vide', d.deck.length === 10 && d.sac.length === 0)
+  verifier('on part avec le deck de base et le sac vide', d.deck.length === 10 && tresorsAuSac(d) === 0)
+  verifier('le sac a ses emplacements dès le départ, tous libres', d.sac.length === CAPACITE_SAC)
   verifier('on part à pleins PV', d.combat.pv === REGLAGE.pvMax)
 }
 
@@ -110,7 +112,7 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
     d = palier(d, { ou: 'sac', emplacement: i }, rng)
     if (d.phase.type === 'sortie') d = descendre(d, rng)
   }
-  verifier('le sac se remplit emplacement par emplacement', d.sac.length === CAPACITE_SAC && tresorsAuDeck(d) === 0)
+  verifier('le sac se remplit emplacement par emplacement', tresorsAuSac(d) === CAPACITE_SAC && tresorsAuDeck(d) === 0)
   verifier('et chaque palier a aussi donné son amélioration', d.deck.length === 10 + CAPACITE_SAC)
 
   const avant = d.sac[1]!
@@ -131,17 +133,30 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
     range.phase.type === 'butin' && range.phase.enMain !== null)
 
   const porte = palier(d, { ou: 'deck' }, rng)
-  verifier('le trésor peut être porté dans le deck', tresorsAuDeck(porte) === 1 && porte.sac.length === CAPACITE_SAC)
+  verifier('le trésor peut être porté dans le deck', tresorsAuDeck(porte) === 1 && tresorsAuSac(porte) === CAPACITE_SAC)
+
+  // Le sac positionnel : sortir un trésor laisse SA case ouverte.
+  const sorti = deplacerTresor(jusquAuButin(d, rng), { ou: 'main' }, { ou: 'sac', emplacement: 1 })
+  const vide = deplacerTresor(sorti, { ou: 'main' }, { ou: 'laisser' })
+  const remis = deplacerTresor(
+    deplacerTresor(vide, { ou: 'sac', emplacement: 0 }, { ou: 'sac', emplacement: 1 }),
+    { ou: 'sac', emplacement: 1 },
+    { ou: 'sac', emplacement: 0 },
+  )
+  verifier('déplacer vers une case vide laisse la case de départ ouverte',
+    vide.sac.length === CAPACITE_SAC)
+  verifier("et l'aller-retour remet exactement le sac comme il était",
+    remis.sac[0] === vide.sac[0] && remis.sac[1] === vide.sac[1] && remis.sac[2] === vide.sac[2])
 }
 
 {
   const rng = createRng(13)
   const dedans = palier(commencerDescente(rng, REGLAGE), { ou: 'sac', emplacement: 0 }, rng)
-  verifier('un palier donne une amélioration ET un trésor', dedans.deck.length === 11 && dedans.sac.length === 1)
+  verifier('un palier donne une amélioration ET un trésor', dedans.deck.length === 11 && tresorsAuSac(dedans) === 1)
   verifier('le trésor rangé compte dans le butin', butinTransporte(dedans) > 0)
 
   const laisse = palier(commencerDescente(rng, REGLAGE), { ou: 'laisser' }, rng)
-  verifier("laisser le trésor garde quand même l'amélioration", laisse.deck.length === 11 && laisse.sac.length === 0)
+  verifier("laisser le trésor garde quand même l'amélioration", laisse.deck.length === 11 && tresorsAuSac(laisse) === 0)
   verifier('un trésor laissé est perdu, pas reporté', butinTransporte(laisse) === 0)
   verifier('et on va quand même au point de sortie', laisse.phase.type === 'sortie')
 }

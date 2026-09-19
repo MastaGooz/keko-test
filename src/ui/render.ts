@@ -14,7 +14,7 @@ import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
 import { consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
 import { CAPACITE_SAC } from '../logic/cartes.ts'
 import type { Descente } from '../logic/descente.ts'
-import { butinTransporte, tresorsAuDeck } from '../logic/descente.ts'
+import { butinTransporte, tresorsAuDeck, tresorsAuSac } from '../logic/descente.ts'
 import { CAPACITE_SAC as SLOTS } from '../logic/cartes.ts'
 import { creature, dessin, sceau } from './illustrations.ts'
 
@@ -344,7 +344,7 @@ function encombrement(descente: Descente): string {
   const etat = descente.combat
   return (
     `Palier <strong>${descente.profondeur}/${descente.reglage.profondeurMax}</strong> · ` +
-    `Sac ${GLYPHE.tresor} <strong>${descente.sac.length}/${CAPACITE_SAC}</strong> · ` +
+    `Sac ${GLYPHE.tresor} <strong>${tresorsAuSac(descente)}/${CAPACITE_SAC}</strong> · ` +
     `<strong>${tresorsAuDeck(descente)}</strong> en trop dans le deck · ` +
     `${GLYPHE.tresor} <strong>${tresorsEnMain(etat)}/${etat.main.length}</strong> en main · ` +
     `butin : <strong class="or">${butinTransporte(descente)}</strong> en jeu`
@@ -439,14 +439,14 @@ function recompense(descente: Descente, cartes: Carte[]): string {
  */
 function butin(descente: Descente, enMain: Carte | null): string {
   const emplacements = Array.from({ length: SLOTS }, (_, i) => {
-    const dedans = descente.sac[i]
+    const dedans = descente.sac[i] ?? null
     const contenu =
-      dedans === undefined
+      dedans === null
         ? `<span class="vide">libre</span>`
         : `<span class="piece" data-glissable data-source="sac" data-emplacement="${i}">` +
           `${vitrine(dedans, false)}</span>`
     return (
-      `<button class="emplacement${dedans === undefined ? '' : ' occupe'}" type="button" ` +
+      `<button class="emplacement${dedans === null ? '' : ' occupe'}" type="button" ` +
       `data-action="deplacer" data-ou="sac" data-emplacement="${i}" data-depot>${contenu}</button>`
     )
   }).join('')

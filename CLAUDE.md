@@ -233,7 +233,11 @@ donjon. Ce qui tourne :
   butin** ;
 - **le sac est un vrai inventaire** : ses trésors sont des cartes, on les
   réarrange, et déposer sur un emplacement occupé **échange** — le déplacé
-  passe *en main*, il n'est pas perdu. On peut donc enchaîner les échanges,
+  passe *en main*, il n'est pas perdu. Le sac est **positionnel** (toujours
+  `CAPACITE_SAC` cases, `null` pour une case libre) : sortir un trésor laisse
+  SA case ouverte, on peut l'y remettre. Une liste compactée remonterait les
+  vides à la fin et ferait glisser les voisins — le joueur perdrait son
+  rangement en le manipulant. On peut donc enchaîner les échanges,
   puis décider du dernier. **Rien n'est validé avant « Terminer »** : un
   rangement qui s'engage au premier geste punit l'exploration, alors que c'est
   là qu'on veut réfléchir ;
