@@ -6,6 +6,14 @@
  * jamais par-dessus la main ni les tas** : ce qu'on tient reste lisible pendant
  * qu'on regarde le coup partir — d'où l'empilement, `.duel` sous `#cartes`.
  *
+ * **Le calque vit DANS `.app`, et c'est structurel.** Posé à côté, il était
+ * bien sous la main tant que rien ne bougeait — puis la secousse posait un
+ * `transform` sur `.app`, ce qui en fait un contexte d'empilement : tout son
+ * contenu retombait alors au niveau de `.app` elle-même, c'est-à-dire SOUS le
+ * voile. La main, les tas, l'orbe et le bouton disparaissaient le temps de la
+ * secousse et revenaient après. Dans `.app`, le calque et les cartes sont
+ * frères dans le même contexte : leur ordre ne dépend plus d'un transform.
+ *
  * La séquence est **l'arrivée elle-même** : les deux corps surgissent, l'écran
  * est secoué au même instant, puis **plus rien ne bouge** le temps qu'on les
  * regarde. Il y a eu une version où l'attaquant bondissait dans le gros plan ;
@@ -78,6 +86,10 @@ export function duel(
 ): void {
   fermerDuel(view)
 
+  // Dans `.app` et pas à côté : voir l'en-tête du fichier.
+  const scene = view.root.querySelector('.app')
+  if (scene === null) return
+
   const calque = document.createElement('div')
   calque.className = 'duel'
   calque.innerHTML =
@@ -86,21 +98,17 @@ export function duel(
     `<div class="duel-entre"></div>` +
     figureHtml(ennemi, 'ennemi', attaquant === 'ennemi') +
     `</div>`
-  view.root.appendChild(calque)
+  scene.appendChild(calque)
 
   // Un rendu d'écart avant d'ouvrir : poser la classe dans la même image que
   // l'insertion ne déclencherait aucune transition.
   requestAnimationFrame(() => calque.classList.add('ouvert'))
 
+  // La secousse n'est plus posée ici : le calque étant dans `.app`, celle de
+  // `.app` l'emporte avec elle. Une seule secousse, tout tremble ensemble.
   planifier(IMPACT_DUEL, () => {
     const touche = calque.querySelector<HTMLElement>('.duel-corps:not(.attaque)')
     if (touche !== null) chiffre(view, touche, degats)
-    // La secousse est portée par le calque LUI-MÊME en plus de `.app` : il vit
-    // hors de `.app`, donc le transform de la secousse ne l'atteindrait pas et
-    // le gros plan resterait de marbre pendant que le reste tremble.
-    calque.classList.remove('secoue')
-    void calque.getBoundingClientRect()
-    calque.classList.add('secoue')
   })
 
   planifier(SORTIE, () => calque.classList.remove('ouvert'))

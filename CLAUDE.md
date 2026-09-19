@@ -334,6 +334,12 @@ donjon. Ce qui tourne :
   aux bords : ils encadrent la main sans lui prendre un pixel de large ni un
   étage de haut.
 
+  **La boîte de la main est en `pointer-events: none`, ses cartes en `auto`.**
+  Son remplissage lui fait couvrir toute la largeur, tas et orbe compris, et
+  elle est au-dessus d'eux : sans ça elle les rendrait insensibles au doigt.
+  Invisible aujourd'hui puisqu'ils ne sont pas cliquables, et un piège le jour
+  où ils le deviendront.
+
   **La main se réserve ses bords par du remplissage**, jamais par `max-width` +
   `margin-inline: auto` : des marges automatiques sur un élément flex étiré le
   font se rétracter à son contenu, et comme la largeur des cartes se calcule
@@ -388,6 +394,12 @@ donjon. Ce qui tourne :
   **Rien ne bougeant, c'est la LUMIÈRE qui désigne l'attaquant** : il porte un
   liseré vif, sa cible reste mate. C'est le seul signe disponible, il doit
   rester franc.
+
+  **Le calque vit dans `.app`, en `absolute`, pas à côté en `fixed`** — voir
+  plus bas la note sur la secousse : posé à côté, il passait par-dessus toute
+  l'interface du bas dès que `.app` prenait un transform. Sa largeur est prise
+  sur la fenêtre et non sur `.app`, qui est plafonnée à 90rem : sur un écran
+  plus large, le voile s'arrêterait avant les bords.
 
   **Les deux corps montrés quittent l'arrière-plan** — ils sont passés devant.
   `visibility: hidden` et non `display: none` : leur place doit rester tenue,
@@ -516,7 +528,16 @@ donjon. Ce qui tourne :
   contient des enfants en `position: fixed` (le panneau, le voile, les arches) :
   un `transform` en ferait leur bloc conteneur et les décalerait. D'où le
   garde-fou dans `ui/effets.ts` — **la secousse refuse de jouer si un calque est
-  ouvert**. Ne pas la déplacer sur `body` sans refaire ce raisonnement. Seuls ceux dont le compteur est échu bougent, lus dans les événements
+  ouvert**. Ne pas la déplacer sur `body` sans refaire ce raisonnement.
+
+  **Un `transform` sur `.app` fait DEUX choses, pas une**, et la seconde a coûté
+  un bug : il crée aussi un **contexte d'empilement**. Tout le contenu de `.app`
+  retombe alors au niveau de `.app` elle-même (z-index auto), ce qui le fait
+  passer sous n'importe quel frère mieux classé. Le gros plan était posé à côté
+  de `.app`, à 24 : la main, les tas, l'orbe et le bouton disparaissaient
+  pendant les 360 ms de la secousse et revenaient après. **Un calque qui doit
+  cohabiter par z-index avec le contenu de `.app` doit vivre DANS `.app`** —
+  sinon son ordre dépend d'un transform, c'est-à-dire d'une animation. Seuls ceux dont le compteur est échu bougent, lus dans les événements
   du tour, donc un ennemi à `periode: 2` reste immobile les tours où il attend.
   Et **la réaction du joueur est décalée de 170 ms** : sans ça le bond et
   l'encaissement se superposent, et on ne lit plus la cause de l'effet ;

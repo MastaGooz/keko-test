@@ -548,8 +548,9 @@ body {
 }
 
 .carte {
-  /* `--large` vient de `.app` : la main et les tas partagent la mesure. */
+  /* `--large` vient de `:root` : la main et les tas partagent la mesure. */
   position: relative;
+  pointer-events: auto;
   flex: 0 0 auto;
   width: var(--large);
   aspect-ratio: 5 / 7;
@@ -1272,7 +1273,6 @@ body {
     transition: none;
   }
 
-  .duel.secoue,
   .app.secoue.fort {
     animation: none;
   }
@@ -2357,6 +2357,11 @@ body {
      (mesure a 800x600). C'est ce que la borne de colonne de `--large` prend en
      compte : 3,72 cartes de main + 2 de gouttiere. */
   padding-inline: calc(var(--large) + 3.25rem);
+  /* La boite de la main couvre toute la largeur (son remplissage reserve les
+     coins) et elle est AU-DESSUS des tas et de l'orbe. Sans ca elle les rendrait
+     insensibles au doigt -- invisible aujourd'hui puisqu'ils ne sont pas
+     cliquables, et un piege le jour ou ils le deviendront. */
+  pointer-events: none;
 }
 
 /* Les tas dans les coins bas, le bouton au bord droit a mi-hauteur. Hors du
@@ -2453,8 +2458,18 @@ body {
    coup partir. D'ou l'empilement -- `.duel` a 24, `#cartes` a 28, les tas a 25
    et l'orbe a 26. */
 .duel {
-  position: fixed;
-  inset: 0;
+  /* `absolute` dans `.app`, et non `fixed` a cote : c'est ce qui garde la main
+     au-dessus du voile quand la secousse pose un transform sur `.app`. Voir
+     l'en-tete de `ui/duel.ts`.
+
+     La largeur est prise sur la FENETRE et non sur `.app`, qui est plafonnee a
+     90rem : sur un ecran plus large, le voile s'arreterait avant les bords. */
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 100vw;
+  margin-left: -50vw;
   z-index: 24;
   display: flex;
   align-items: center;
@@ -2557,9 +2572,8 @@ body {
 
 /* La secousse du gros plan est FRANCHEMENT plus forte que celle du combat :
    c'est le seul mouvement de toute la sequence, donc c'est lui qui porte la
-   violence du coup. Elle est posee sur le calque ET sur `.app` -- le calque vit
-   hors de `.app`, il ne suivrait pas son transform. */
-.duel.secoue,
+   violence du coup. Une seule, portee par `.app` -- le calque est dedans, il
+   part avec. */
 .app.secoue.fort {
   animation: secousse-forte 0.34s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
