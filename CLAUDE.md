@@ -305,7 +305,18 @@ donjon. Ce qui tourne :
   chiffre. Keko : « on voit le chiffre c'est suffisant ». *Ce qui est parti
   avec elles*, et qu'il faudra rendre autrement si ça manque : l'aperçu de ce
   qu'il **resterait** après avoir joué la carte levée. Le coût, lui, est sur la
-  gemme de la carte.
+  gemme de la carte. Elle est ancrée **au-dessus du tas de pioche, et avec un
+  `z-index` plus haut que lui** : les deux partageaient leur niveau, donc
+  l'ordre du DOM tranchait — et les tas y viennent après. *Une position « juste
+  au-dessus » à 2 px près se lit « coincé derrière ».*
+- **la scène centre ses corps au-dessus de 430 px de haut, et les pose en bas
+  en dessous.** Elle mange tout ce qui reste entre l'info et la main ; sur un
+  écran de PC ça fait le double du contenu qu'elle porte, et tout le vide
+  s'accumulait au-dessus — les bêtes finissaient collées aux cartes. Keko :
+  « il y a un énorme vide dans la partie supérieure ». Le palier téléphone est
+  **explicitement exclu** (`min-height: 431px`, le complément exact du palier
+  de resserrement) : là, la scène n'a presque pas de jeu, et coller les corps à
+  la main est ce qui marche — vérifié par Keko.
 - **la disposition du genre** : l'info de run en haut (elle se consulte, elle
   ne se joue pas), la scène au milieu, **la main tout en bas avec rien
   dessous**, la pioche et la défausse dans les coins bas, le bouton de fin de
@@ -326,8 +337,18 @@ donjon. Ce qui tourne :
 - les ennemis **sans cadre** : des **créatures dessinées** (SVG,
   `ui/illustrations.ts`) posées à même la page. Un panneau autour d'elles les
   enfermait dans une vignette au lieu de les poser dans un lieu — c'est l'ombre
-  sous leurs pattes qui fait le sol, pas une boîte. Elles se tiennent côte à
-  côte, avec
+  sous leurs pattes qui fait le sol, pas une boîte.
+
+  **Leur taille est un jeton de `.app` comme celle des cartes** (`--corps`), et
+  son plafond avait été calé sur le téléphone : sur un écran de PC les bêtes
+  restaient des vignettes sous des cartes deux fois plus grandes qu'elles. Un
+  corps fait 46 px sur un petit téléphone couché, 259 px sur un écran de 1080.
+  La largeur d'une créature suit son corps, avec un **plancher de 8,5rem** —
+  qui ne tient pas à la silhouette mais au **nom dessous** : « Traînard 23 » a
+  besoin de sa place, et sur un téléphone le corps est trop petit pour la
+  donner.
+
+  Elles se tiennent côte à côte, avec
   leur **intention au-dessus de la tête** — ce qu'elles frappent et dans
   combien de tours, allumée si c'est pour la fin de ce tour-ci. Tout le corps
   est la cible tactile. **Elles respirent**, décalées les unes des autres : une
@@ -721,6 +742,7 @@ main ET par les tas** :
 --haut:   calc(var(--large) * 1.4);
 --enfoui: calc(var(--haut) * var(--part-enfouie));
 --emerge: calc(var(--haut) - var(--enfoui));   /* la bande qu'on lit */
+--corps:  min(13rem, 24vh);    /* min(4.5rem, 16vh) sous 430 px */
 ```
 
 **Aucun pourcentage là-dedans, et c'est délibéré** (voir la section sur ce
