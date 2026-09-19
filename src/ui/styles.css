@@ -71,6 +71,11 @@ body {
   /* Ce qui depasse de l'ecran : la bande qu'on lit vraiment. */
   --emerge: calc(var(--haut) - var(--enfoui));
 
+  /* Ce que la main se reserve au-dessus d'elle pour lever une carte sans
+     couvrir les creatures. Un jeton parce que `padding-top` et `min-height`
+     doivent bouger ENSEMBLE : voir `.cartes`. */
+  --degagement: 2.25rem;
+
   /* La taille d'un corps. Meme logique que la carte : un seul endroit, et
      aucun `%`. Le plafond etait a 4,5rem, cale sur le telephone -- sur un
      ecran de PC les betes restaient des vignettes sous des cartes deux fois
@@ -1423,9 +1428,11 @@ body {
 }
 
 /* Le joueur ouvre la scene, un ecart le separe de ceux d'en face : ils se
-   font face, ils ne sont pas alignes dans la meme file. */
+   FONT FACE, ils ne sont pas alignes dans la meme file. L'ecart suit la taille
+   des corps : a 1,25rem fixes il valait un cinquieme d'un corps sur un ecran
+   de PC, et les deux camps se touchaient presque. */
 .creature.moi {
-  margin-right: 1.25rem;
+  margin-right: max(1.25rem, calc(var(--corps) * 0.55));
 }
 
 .creature.moi .jauge .remplissage {
@@ -1445,9 +1452,16 @@ body {
    l'ecran. Il repousse le haut de la boite, donc il retrecit la scene, donc
    les corps REMONTENT. C'est ce qui degage la carte levee, pas un deplacement
    de la main. La scene avait 90 px d'air pour 114 px de contenu : elle peut
-   les ceder. */
+   les ceder.
+
+   La `min-height` est ce qui FIXE la scene. Sans elle, une main vide fait
+   retomber la boite a son seul remplissage, la scene recupere la difference et
+   les corps -- qui s'y centrent -- descendent d'un coup. La place de la main
+   est reservee qu'il y ait des cartes dedans ou non : c'est un pupitre, pas un
+   contenu qui pousse. */
 .cartes {
-  padding-top: 2.25rem;
+  padding-top: var(--degagement);
+  min-height: calc(var(--emerge) + var(--degagement));
 }
 
 .journal {
@@ -2272,8 +2286,8 @@ body {
     --corps: min(4.5rem, 16vh);
   }
 
-  .cartes {
-    padding-top: 2.75rem;
+  .app {
+    --degagement: 2.75rem;
   }
 
   .build {
@@ -2312,8 +2326,8 @@ body {
     --corps: min(4.5rem, 14.5vh);
   }
 
-  .cartes {
-    padding-top: 2rem;
+  .app {
+    --degagement: 2rem;
   }
 }
 

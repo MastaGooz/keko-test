@@ -312,6 +312,13 @@ donjon. Ce qui tourne :
   carte ayant pris la taille de la main, « au-dessus » voulait dire tout en
   haut de l'écran, loin de tout. *Et une position « juste au-dessus » à 2 px
   près se lit « coincé derrière ».*
+- **la main garde sa hauteur même vide** (`min-height` = la bande émergée plus
+  le dégagement). Sans ça, une main vide fait retomber sa boîte à son seul
+  remplissage, la scène récupère la différence, et les corps — qui s'y
+  centrent — descendent d'un coup. *La place de la main est réservée qu'il y
+  ait des cartes dedans ou non : c'est un pupitre, pas un contenu qui pousse.*
+  `padding-top` et `min-height` sortent du même jeton `--degagement`, pour
+  qu'on ne puisse pas bouger l'un sans l'autre.
 - **la scène centre ses corps au-dessus de 430 px de haut, et les pose en bas
   en dessous.** Elle mange tout ce qui reste entre l'info et la main ; sur un
   écran de PC ça fait le double du contenu qu'elle porte, et tout le vide
@@ -353,7 +360,11 @@ donjon. Ce qui tourne :
 
   Elles se tiennent côte à côte, avec
   leur **intention au-dessus de la tête** — ce qu'elles frappent et dans
-  combien de tours, allumée si c'est pour la fin de ce tour-ci. Tout le corps
+  combien de tours, allumée si c'est pour la fin de ce tour-ci. **Le joueur est
+  écarté du groupe d'un demi-corps** : ils se font face, ils ne sont pas alignés
+  dans la même file. Cet écart suit la taille des corps — à 1,25rem fixes il ne
+  valait plus qu'un cinquième d'un corps sur un écran de PC, et les deux camps
+  se touchaient presque. Tout le corps
   est la cible tactile. **Elles respirent**, décalées les unes des autres : une
   meute qui souffle à l'unisson fait machine, pas vivant. Le joueur, lui, reste
   une barre — il n'est pas un corps de plus à l'écran ;
@@ -768,6 +779,7 @@ main ET par les tas** :
 --enfoui: calc(var(--haut) * var(--part-enfouie));
 --emerge: calc(var(--haut) - var(--enfoui));   /* la bande qu'on lit */
 --corps:  min(11rem, 20vh);    /* min(4.5rem, 16vh) sous 430 px */
+--degagement: 2.25rem;         /* 2,75rem sous 430 px, 2rem sous 360 */
 ```
 
 **Aucun pourcentage là-dedans, et c'est délibéré** (voir la section sur ce
