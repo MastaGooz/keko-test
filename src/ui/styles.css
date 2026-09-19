@@ -1296,7 +1296,8 @@ body {
   }
 
   .duel-corps.abattu .tete-de-mort,
-  .duel-corps.attaque {
+  .duel-corps.attaque,
+  .duel-corps:not(.attaque) {
     animation: none;
   }
 
@@ -2596,12 +2597,15 @@ body {
   animation: charge 0.57s linear 0.07s forwards;
 }
 
-/* Chacun charge vers l'autre : le joueur est a gauche, l'ennemi a droite. */
-.duel-corps.joueur.attaque {
+/* Le sens appartient au COTE et non a l'attaquant : la cible en a besoin elle
+   aussi, pour etre repoussee dans la bonne direction. Le joueur est a gauche,
+   l'ennemi a droite ; chacun charge donc vers l'autre, et chacun recule a
+   l'oppose de celui qui le frappe. */
+.duel-corps.joueur {
   --sens: 1;
 }
 
-.duel-corps.ennemi.attaque {
+.duel-corps.ennemi {
   --sens: -1;
 }
 
@@ -2624,20 +2628,44 @@ body {
     animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
   }
   14% {
-    /* LA FRAPPE, a pleine extension. Elle porte LOIN : 1,73 fois la course
-       vive en 45 ms, parce que c'est la distance couverte d'un coup qui fait
-       la violence, pas la seule vitesse. C'est ici que la secousse tombe. */
-    translate: calc(var(--elan) * 1.45) 0;
+    /* LA FRAPPE, a pleine extension. Elle porte LOIN : 2,18 fois la course
+       vive en 45 ms -- meme duree, plus de chemin, donc plus vite. C'est la
+       distance couverte d'un coup qui fait la violence, pas la seule vitesse.
+       C'est ici que la secousse tombe (`IMPACT_DUEL`). */
+    translate: calc(var(--elan) * 1.9) 0;
     animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1);
   }
   20% {
     /* Le contrecoup : il revient, comme un bras qui a porte trop loin. */
-    translate: calc(var(--elan) * 1.2) 0;
+    translate: calc(var(--elan) * 1.35) 0;
     animation-timing-function: linear;
   }
   100% {
     /* L'elan : il continue, mais on ne le voit presque plus avancer. */
     translate: calc(var(--elan) * 1.8) 0;
+  }
+}
+
+/* LE RECUL. La cible est repoussee, doucement et longtemps : le coup la
+   deplace, elle ne l'encaisse pas plantee sur ses pattes. Il part a l'instant
+   de l'impact -- avant, il annoncerait le coup ; apres, il ne s'y rattacherait
+   plus.
+
+   Le deplacement est a l'OPPOSE de celui qui frappe, d'ou le `-1` : la cible
+   porte le sens de SON cote, et se fait pousser dans l'autre. Petit (8 % d'un
+   corps) parce qu'un recul qui deplace vraiment la bete casserait la
+   composition du duel -- c'est un ebranlement, pas une projection. */
+.duel-corps:not(.attaque) {
+  --recul: calc(var(--corps) * 0.08 * var(--sens, 1) * -1);
+  animation: recul 0.45s cubic-bezier(0.22, 0.65, 0.4, 1) 0.15s forwards;
+}
+
+@keyframes recul {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: var(--recul) 0;
   }
 }
 
