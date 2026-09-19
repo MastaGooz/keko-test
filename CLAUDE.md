@@ -759,6 +759,15 @@ Cycle : `npm run build` -> commit -> push -> attendre la fin du workflow ->
 dire à Keko d'aller tester. Lui rappeler de vérifier la **date de build affichée
 sur la page** pour être sûr qu'il ne voit pas une version en cache.
 
+**Terminer chaque réponse par le lien de la page** :
+<https://mastagooz.github.io/keko-test/>. Keko teste depuis son téléphone et un
+PC distant — le lien doit être sous son pouce, pas à retrouver dans l'historique.
+
+**Attendre le bon run, pas le dernier.** Comparer le `headSha` du run au `HEAD`
+local avant de conclure : juste après un push, `gh run list --limit 1` renvoie
+encore le run **précédent**, déjà terminé, et on annonce un déploiement qui n'a
+pas eu lieu. C'est arrivé.
+
 ## Méthode de travail
 
 On avance **étape par étape**. À chaque étape : dire à Keko ce qui a été fait, et
