@@ -323,13 +323,7 @@ body {
   text-align: center;
 }
 
-/* Le chiffre vole au-dessus du corps touche, pas sur son cote. */
-.creature .degats-voles {
-  right: auto;
-  left: 50%;
-  top: 1.5rem;
-  margin-left: -0.75rem;
-}
+
 
 /* Le gabarit commun : tout tient sur une ligne, la jauge absorbe le reste.
    La bordure et la hauteur sont réservées en permanence — sans ça, viser une
@@ -1072,10 +1066,13 @@ body {
   100% { transform: translateX(0); }
 }
 
-/* Le chiffre saute au-dessus du corps touche puis s'efface. */
+/* Le chiffre saute au-dessus du corps touche puis s'efface. Il est FIXE sur
+   la page et non pose dans le corps : la chute declenche un nouveau rendu, qui
+   l'effacerait en plein vol. */
 .degats-voles {
-  position: absolute;
-  right: 3.25rem;
+  position: fixed;
+  z-index: 35;
+  transform: translateX(-50%);
   pointer-events: none;
   font-size: 1.125rem;
   font-weight: 700;
@@ -1090,9 +1087,17 @@ body {
 }
 
 @keyframes envol {
-  0% { transform: translateY(0); opacity: 0; }
-  20% { opacity: 1; }
-  100% { transform: translateY(-22px); opacity: 0; }
+  0% {
+    transform: translate(-50%, 0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -26px);
+    opacity: 0;
+  }
 }
 
 /* --- l'agonie --------------------------------------------------------------- */

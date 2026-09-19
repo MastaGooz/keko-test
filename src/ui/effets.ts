@@ -15,6 +15,17 @@ import type { View } from './render.ts'
 const DUREE = 420
 
 /**
+ * Le délai entre le coup et le début de l'agonie.
+ *
+ * Il est calé sur **la secousse**, pas sur la durée de vie du chiffre de
+ * dégâts : l'impact se lit dès que le corps accuse le coup, et attendre que
+ * le chiffre ait fini de monter mettait une latence molle avant la chute.
+ * Le chiffre, lui, continue sa course par-dessus — il est posé sur la page et
+ * non sur le corps, donc il survit au rendu qui déclenche la chute.
+ */
+export const DUREE_COUP = 230
+
+/**
  * Souligne le corps qui vient d'encaisser et fait sauter les dégâts au-dessus.
  * `corps` est l'index de l'ennemi, ou 'joueur'.
  */
@@ -29,17 +40,22 @@ export function encaisse(view: View, corps: number | 'joueur', montant: number):
   // arrivait pendant le second et lui coupait son animation, et les deux
   // chiffres se superposaient au même endroit, illisibles.
   window.clearTimeout(enCours.get(cible))
-  cible.querySelectorAll('.degats-voles').forEach((v) => v.remove())
+  view.root.querySelectorAll('.degats-voles').forEach((v) => v.remove())
 
   cible.classList.remove('encaisse')
   // Force un reflow : sans ça, deux coups d'affilée ne rejouent pas l'animation.
   void cible.offsetWidth
   cible.classList.add('encaisse')
 
+  // Le chiffre est posé sur la PAGE, pas sur le corps : un nouveau rendu — et
+  // la chute en déclenche un — effacerait un enfant du corps en plein vol.
+  const boite = cible.getBoundingClientRect()
   const chiffre = document.createElement('span')
   chiffre.className = 'degats-voles'
   chiffre.textContent = `−${montant}`
-  cible.appendChild(chiffre)
+  chiffre.style.left = `${boite.left + boite.width / 2}px`
+  chiffre.style.top = `${boite.top + boite.height * 0.28}px`
+  view.root.appendChild(chiffre)
 
   enCours.set(
     cible,
@@ -107,9 +123,6 @@ export function secouerEcran(view: View): void {
   app.classList.add('secoue')
   enCours.set(app, window.setTimeout(() => app.classList.remove('secoue'), 260))
 }
-
-/** Ce que dure l'encaissement du coup, avant que l'agonie ne commence. */
-export const DUREE_COUP = DUREE
 
 /** Ce que dure la chute, avant que le corps ne quitte l'écran. */
 export const DUREE_CHUTE = 520

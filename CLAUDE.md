@@ -335,6 +335,15 @@ donjon. Ce qui tourne :
   les vivants. Il garde sa place dans le rang pendant l'agonie, pour qu'aucun
   voisin ne glisse, et il n'est plus visable.
 
+  **Le délai avant la chute est calé sur la secousse, pas sur la durée de vie
+  du chiffre de dégâts** (230 ms, pas 420). L'impact se lit dès que le corps
+  accuse le coup ; attendre que le chiffre ait fini de monter mettait une
+  latence molle entre le coup et la mort. Le chiffre continue sa course
+  par-dessus la chute, et pour ça il est **posé sur la racine de la page, pas
+  dans le corps** — `render()` n'écrit que dans les nœuds qu'il a en cache,
+  donc un enfant direct de la racine survit à tous les rendus, alors qu'un
+  enfant du corps serait effacé en plein vol par celui qui déclenche la chute.
+
   **La phase d'agonie vient de l'état, pas d'une classe posée à la main.** Un
   nouveau rendu au milieu de la chute effacerait la classe et figerait le
   corps ; or le joueur peut tout à fait jouer une autre carte pendant ce temps.
