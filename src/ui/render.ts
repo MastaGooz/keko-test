@@ -14,7 +14,7 @@ import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
 import { consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
 import { CAPACITE_SAC } from '../logic/cartes.ts'
 import type { Descente } from '../logic/descente.ts'
-import { butinTransporte, placeDuSac, tresorsAuDeck } from '../logic/descente.ts'
+import { butinTransporte, tresorsAuDeck } from '../logic/descente.ts'
 import { CAPACITE_SAC as SLOTS } from '../logic/cartes.ts'
 import { creature, dessin, sceau } from './illustrations.ts'
 
@@ -393,7 +393,7 @@ function palier(descente: Descente): string {
     case 'recompense':
       return recompense(descente, descente.phase.cartes)
     case 'butin':
-      return butin(descente, descente.phase.tresor)
+      return butin(descente, descente.phase.enMain)
     case 'sortie':
       return sortie(descente)
     case 'fin':
@@ -426,47 +426,67 @@ function recompense(descente: Descente, cartes: Carte[]): string {
 }
 
 /**
- * Le second écran : ranger le trésor. Le sac est montré comme un inventaire,
- * et chaque destination est **à la fois une zone de dépôt et un bouton** — sur
- * un téléphone, le glisser seul est fragile, la tape doit toujours marcher.
+ * Le second écran : ranger le butin. Le sac est un vrai inventaire — ses
+ * trésors sont des cartes, et on peut les réarranger.
  *
- * Déposer sur un emplacement occupé est un **échange** : l'ancien reste au
- * fond. C'est ce qui donne du sens aux valeurs très inégales du butin.
+ * Deux principes tenus :
+ *
+ * 1. **Rien n'est validé avant « Terminer ».** On peut échanger, reprendre,
+ *    changer d'avis. Un rangement qui s'engage au premier geste punit
+ *    l'exploration, alors que c'est justement là qu'on veut réfléchir.
+ * 2. **Chaque destination est aussi un bouton.** Le glisser est du confort ;
+ *    sur un téléphone c'est la tape qui porte la fonctionnalité.
  */
-function butin(descente: Descente, tresor: Carte): string {
+function butin(descente: Descente, enMain: Carte | null): string {
   const emplacements = Array.from({ length: SLOTS }, (_, i) => {
     const dedans = descente.sac[i]
     const contenu =
       dedans === undefined
         ? `<span class="vide">libre</span>`
-        : `<span class="dedans"><span class="nom">${dedans.nom}</span>` +
-          `<span class="valeur">${dedans.valeur ?? 0}</span></span>`
-    const echange = dedans === undefined ? '' : ' occupe'
+        : `<span class="piece" data-glissable data-source="sac" data-emplacement="${i}">` +
+          `${vitrine(dedans, false)}</span>`
     return (
-      `<button class="emplacement${echange}" type="button" data-action="placer" ` +
-      `data-ou="sac" data-emplacement="${i}" data-depot>` +
-      `${contenu}${dedans === undefined ? '' : `<span class="sort mauvais">échanger</span>`}</button>`
+      `<button class="emplacement${dedans === undefined ? '' : ' occupe'}" type="button" ` +
+      `data-action="deplacer" data-ou="sac" data-emplacement="${i}" data-depot>${contenu}</button>`
     )
   }).join('')
 
-  const plein = placeDuSac(descente) === 0
+  const tenu =
+    enMain === null
+      ? `<p class="bilan">Sac rangé.</p>`
+      : `<div class="butin-piece" data-glissable data-source="main">${vitrine(enMain, false)}</div>`
+
+  const destinations =
+    enMain === null
+      ? ''
+      : `<div class="offres">` +
+        `<button class="issue-choix continuer" type="button" data-action="deplacer" ` +
+        `data-ou="deck" data-depot>` +
+        `<span class="quoi">Dans le deck</span>` +
+        `<span class="pourquoi">Il pèsera à chaque main</span></button>` +
+        `<button class="issue-choix" type="button" data-action="deplacer" ` +
+        `data-ou="laisser" data-depot>` +
+        `<span class="quoi">Laisser</span>` +
+        `<span class="pourquoi">Perdu pour de bon</span></button>` +
+        `</div>`
 
   return (
     `<div class="voile">` +
     `<div class="feuille large">` +
     `<p class="titre">Palier ${descente.profondeur} — ton butin</p>` +
-    `<div class="butin-piece" data-glissable>${vitrine(tresor, false)}</div>` +
-    `<p class="note">Glisse-le dans un emplacement, ou tape la destination.</p>` +
+    tenu +
+    `<p class="note">` +
+    (enMain === null
+      ? 'Tu peux encore réarranger ton sac.'
+      : 'Glisse-le dans un emplacement, ou tape la destination. ' +
+        'Sur un emplacement occupé, les deux échangent.') +
+    `</p>` +
     `<div class="sac">${emplacements}</div>` +
-    `<div class="offres">` +
-    `<button class="issue-choix ${plein ? 'continuer' : ''}" type="button" ` +
-    `data-action="placer" data-ou="deck" data-depot>` +
-    `<span class="quoi">Dans le deck</span>` +
-    `<span class="pourquoi">Il pèsera à chaque main</span></button>` +
-    `<button class="issue-choix" type="button" data-action="placer" data-ou="laisser" data-depot>` +
-    `<span class="quoi">Laisser</span>` +
-    `<span class="pourquoi">Perdu pour de bon</span></button>` +
-    `</div>` +
+    destinations +
+    `<button class="bouton secondaire terminer" type="button" data-action="terminerButin"` +
+    `${enMain === null ? '' : ' disabled'}>` +
+    (enMain === null ? 'Terminer' : 'Range ton trésor') +
+    `</button>` +
     `</div></div>`
   )
 }

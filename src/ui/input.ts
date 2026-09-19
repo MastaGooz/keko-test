@@ -1,6 +1,6 @@
 /** Gestion des entrées : traduit les événements navigateur en actions. */
 import type { View } from './render.ts'
-import type { Depot } from '../logic/descente.ts'
+import type { Depot, Source } from '../logic/descente.ts'
 
 export type Action =
   | { type: 'viser'; index: number }
@@ -10,12 +10,25 @@ export type Action =
   | { type: 'rejouer' }
   | { type: 'nouveau' }
   | { type: 'choisirCarte'; index: number }
-  | { type: 'placer'; depot: Depot }
+  | { type: 'deplacer'; source: Source; depot: Depot }
+  | { type: 'terminerButin' }
   | { type: 'descendre' }
   | { type: 'extraire' }
   | { type: 'panneau' }
   | { type: 'pleinEcran' }
   | { type: 'son' }
+
+/**
+ * D'où vient le trésor déplacé. Une tape n'a pas de source : elle déplace
+ * toujours ce qu'on tient en main. Un glisser, lui, pose la sienne sur la
+ * cible juste avant de la cliquer.
+ */
+function lireSource(noeud: HTMLElement): Source {
+  const source = noeud.dataset.source
+  delete noeud.dataset.source
+  if (source === undefined || source === 'main') return { ou: 'main' }
+  return { ou: 'sac', emplacement: Number(source) }
+}
 
 /** Traduit les attributs d'une zone de dépôt en destination de trésor. */
 function lireDepot(noeud: HTMLElement): Depot {
@@ -57,8 +70,11 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
       case 'choisirCarte':
         dispatch({ type: 'choisirCarte', index: Number(noeud.dataset.carte) })
         break
-      case 'placer':
-        dispatch({ type: 'placer', depot: lireDepot(noeud) })
+      case 'deplacer':
+        dispatch({ type: 'deplacer', source: lireSource(noeud), depot: lireDepot(noeud) })
+        break
+      case 'terminerButin':
+        dispatch({ type: 'terminerButin' })
         break
       case 'descendre':
         dispatch({ type: 'descendre' })

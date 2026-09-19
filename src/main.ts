@@ -17,8 +17,9 @@ import {
   commencerDescente,
   descendre,
   extraire,
-  placerTresor,
+  deplacerTresor,
   resoudreCombat,
+  terminerButin,
 } from './logic/descente.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
@@ -109,8 +110,11 @@ bindInput(view, (action) => {
     case 'choisirCarte':
       descente = choisirCarte(descente, action.index, rng)
       break
-    case 'placer':
-      descente = placerTresor(descente, action.depot)
+    case 'deplacer':
+      descente = deplacerTresor(descente, action.source, action.depot)
+      break
+    case 'terminerButin':
+      descente = terminerButin(descente)
       break
     case 'descendre':
       descente = descendre(descente, rng)

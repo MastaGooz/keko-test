@@ -229,11 +229,14 @@ donjon. Ce qui tourne :
   d'un combat à l'autre, un soin partiel après chaque victoire, et la mort
   fait tout perdre ;
 - **le palier en deux écrans** : d'abord **une amélioration à choisir parmi
-  trois** (valable pour cette descente seulement), puis **le trésor à ranger**.
-  Le sac est montré comme un inventaire de trois emplacements ; on y glisse le
-  trésor, on le met dans le deck où il pèsera, ou on le laisse — perdu pour de
-  bon. **Déposer sur un emplacement occupé échange**, et l'ancien reste au
-  fond ;
+  trois** (valable pour cette descente seulement), puis **le rangement du
+  butin** ;
+- **le sac est un vrai inventaire** : ses trésors sont des cartes, on les
+  réarrange, et déposer sur un emplacement occupé **échange** — le déplacé
+  passe *en main*, il n'est pas perdu. On peut donc enchaîner les échanges,
+  puis décider du dernier : dans le sac, dans le deck où il pèsera, ou laissé.
+  **Rien n'est validé avant « Terminer »** : un rangement qui s'engage au
+  premier geste punit l'exploration, alors que c'est là qu'on veut réfléchir ;
 - **glisser-déposer au doigt** (`ui/glisser.ts`, `pointer*`), avec une règle :
   **chaque destination est aussi un bouton**. Sur téléphone le glisser seul est
   fragile, la tape doit toujours marcher — c'est elle qui porte la
@@ -414,18 +417,16 @@ plus faible que l'ancien deck de base, et ça a fait tomber la survie au fond de
 des ennemis. Toute retouche d'une seule carte oblige à refaire le balayage
 complet — jamais au jugé.
 
-**L'échange a tué l'encombrement — à trancher.** Depuis que déposer sur un
-emplacement occupé échange, le sac contient toujours les trois meilleurs
-trésors, donc **ce qui déborde est par définition le rebut**. Le porter dans
-le deck rapporte quelques pièces et coûte une carte morte : ce n'est jamais
-rentable. Mesuré : cupide et prudent finissent à 51 % de survie et 390 contre
-389 d'or. La pollution du deck — la mécanique validée au tout début du projet —
-**ne se produit quasiment plus**.
+**L'échange avait tué l'encombrement, le rangement ouvert l'a ramené.** Quand
+l'échange faisait disparaître l'ancien trésor, le sac contenait toujours les
+trois meilleurs et ce qui débordait était par définition du rebut : le porter
+ne valait jamais la carte morte. Mesuré à ce moment-là : cupide et prudent
+finissaient tous deux à 51 % de survie et 390 contre 389 d'or.
 
-Trois façons de la faire revenir, à arbitrer avec Keko : **plus d'un trésor par
-palier** (le sac déborde pour de vrai), **un sac à 2 emplacements** (décision
-acquise à rouvrir), ou accepter que « dans le deck » soit une option rare
-réservée aux gros trésors qu'on refuse de perdre.
+Depuis que le déplacé revient **en main**, on peut garder les trois meilleurs
+au sac *et* porter le reste dans le deck. Le chemin vers l'encombrement est
+rouvert, et c'est le joueur cupide qui l'emprunte. **À remesurer** : la
+simulation n'a pas été refaite depuis ce changement.
 
 **Ce qui avait créé la tension avant ça : SUPPRIMER le choix.** Tant que carte et
 trésor s'opposaient, prendre un trésor voulait dire ne pas prendre une carte —

@@ -14,8 +14,9 @@ import {
   commencerDescente,
   descendre,
   choisirCarte,
+  deplacerTresor,
   extraire,
-  placerTresor,
+  terminerButin,
   placeDuSac,
   resoudreCombat,
   tresorsAuDeck,
@@ -49,9 +50,10 @@ function jusquAuButin(descente: Descente, rng = createRng(1), pv = 40): Descente
   return choisirCarte(jusquAuChoix(descente, rng, pv), 0, rng)
 }
 
-/** Palier complet : amélioration prise, trésor rangé où on le demande. */
+/** Palier complet : amélioration prise, trésor rangé, palier refermé. */
 function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): Descente {
-  return placerTresor(jusquAuButin(descente, rng, pv), depot)
+  const range = deplacerTresor(jusquAuButin(descente, rng, pv), { ou: 'main' }, depot)
+  return terminerButin(range)
 }
 
 // --- la structure de la run ------------------------------------------------
@@ -87,7 +89,8 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
 {
   const rng = createRng(3)
   const apres = jusquAuChoix(commencerDescente(rng, REGLAGE), rng, 40)
-  const descendue = descendre(placerTresor(choisirCarte(apres, 0, rng), { ou: 'laisser' }), rng)
+  const range = deplacerTresor(choisirCarte(apres, 0, rng), { ou: 'main' }, { ou: 'laisser' })
+  const descendue = descendre(terminerButin(range), rng)
   verifier(
     'on descend avec les PV qu\'il reste, pas avec la barre pleine',
     descendue.combat.pv === 40 + REGLAGE.soin && descendue.combat.pv < REGLAGE.pvMax,
@@ -111,9 +114,21 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
   verifier('et chaque palier a aussi donné son amélioration', d.deck.length === 10 + CAPACITE_SAC)
 
   const avant = d.sac[1]!
-  const echange = palier(d, { ou: 'sac', emplacement: 1 }, rng)
-  verifier('déposer sur un emplacement occupé échange', echange.sac.length === CAPACITE_SAC && echange.sac[1] !== avant)
-  verifier("et l'ancien reste au fond, il ne tombe pas dans le deck", tresorsAuDeck(echange) === 0)
+  const enCours = deplacerTresor(jusquAuButin(d, rng), { ou: 'main' }, { ou: 'sac', emplacement: 1 })
+  verifier('déposer sur un emplacement occupé échange', enCours.sac[1] !== avant)
+  verifier("et l'ancien passe en main, il n'est pas perdu tout de suite",
+    enCours.phase.type === 'butin' && enCours.phase.enMain === avant)
+  verifier('on ne peut pas terminer en tenant encore un trésor', terminerButin(enCours) === enCours)
+
+  const refermé = terminerButin(deplacerTresor(enCours, { ou: 'main' }, { ou: 'laisser' }))
+  verifier('une fois la main vide, le palier se referme', refermé.phase.type !== 'butin')
+  verifier("et l'échangé n'est pas tombé dans le deck", tresorsAuDeck(refermé) === 0)
+
+  const range = deplacerTresor(jusquAuButin(d, rng), { ou: 'sac', emplacement: 0 }, { ou: 'sac', emplacement: 2 })
+  verifier('deux emplacements du sac peuvent échanger leur place',
+    range.sac[0] === d.sac[2] && range.sac[2] === d.sac[0])
+  verifier('réarranger ne touche pas au trésor tenu en main',
+    range.phase.type === 'butin' && range.phase.enMain !== null)
 
   const porte = palier(d, { ou: 'deck' }, rng)
   verifier('le trésor peut être porté dans le deck', tresorsAuDeck(porte) === 1 && porte.sac.length === CAPACITE_SAC)
@@ -168,7 +183,7 @@ function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): 
   const rng = createRng(23)
   const enCombat = commencerDescente(rng, REGLAGE)
   verifier("on ne choisit pas d'amélioration pendant un combat", choisirCarte(enCombat, 0, rng) === enCombat)
-  verifier('on ne range pas de trésor pendant un combat', placerTresor(enCombat, { ou: 'deck' }) === enCombat)
+  verifier('on ne range pas de trésor pendant un combat', deplacerTresor(enCombat, { ou: 'main' }, { ou: 'deck' }) === enCombat)
   verifier('on ne descend pas pendant un combat', descendre(enCombat, rng) === enCombat)
   verifier('on n\'extrait pas pendant un combat', extraire(enCombat) === enCombat)
   verifier('un combat non terminé ne se résout pas', resoudreCombat(enCombat, rng) === enCombat)

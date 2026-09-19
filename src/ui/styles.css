@@ -1610,3 +1610,56 @@ body {
   background: #5cc8ff24;
   box-shadow: 0 0 0 1px var(--joueur), 0 0 1rem #5cc8ff3d;
 }
+
+/* --- le sac vu comme un inventaire de cartes ------------------------------- */
+
+/* Les tresors du sac sont des cartes, et on peut les reprendre pour les
+   reordonner : un sac n'est pas une liste, c'est un rangement. */
+.emplacement {
+  min-height: 0;
+  padding: 0.375rem;
+}
+
+.emplacement .piece {
+  display: block;
+  width: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+
+.emplacement .carte,
+.butin-piece .carte {
+  width: 100%;
+  max-width: none;
+  transform: none;
+  margin: 0;
+  cursor: inherit;
+}
+
+.butin-piece {
+  width: 6.5rem;
+}
+
+.emplacement .piece.saisie {
+  opacity: 0.3;
+}
+
+.sac {
+  align-items: stretch;
+}
+
+.terminer {
+  max-width: 14rem;
+}
+
+.terminer[disabled] {
+  opacity: 0.4;
+}
+
+/* Au doigt sur un petit ecran, quatre cartes de front ne tiennent pas : on
+   laisse la feuille defiler plutot que de rogner les cartes jusqu'a l'illisible. */
+@media (max-height: 700px) {
+  .butin-piece {
+    width: 5rem;
+  }
+}

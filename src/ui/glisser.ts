@@ -22,6 +22,7 @@ export function brancherGlisser(racine: HTMLElement): void {
   let survole: Element | null = null
   let depart = { x: 0, y: 0 }
   let bouge = false
+  let origine: string | null = null
 
   function depots(x: number, y: number): Element | null {
     // Le fantome ne capte pas le pointeur, on peut interroger sous le doigt.
@@ -39,6 +40,7 @@ export function brancherGlisser(racine: HTMLElement): void {
     const cible = (e.target as HTMLElement).closest<HTMLElement>('[data-glissable]')
     if (cible === null) return
     piece = cible
+    origine = cible.dataset.source === 'sac' ? (cible.dataset.emplacement ?? null) : 'main'
     depart = { x: e.clientX, y: e.clientY }
     bouge = false
     // La capture garde les evenements meme si le doigt sort de la piece.
@@ -80,8 +82,12 @@ export function brancherGlisser(racine: HTMLElement): void {
     fantome = null
     piece = null
     bouge = false
-    // Le glisser ne fait que tomber sur un bouton : la tape fait le reste.
-    if (cible instanceof HTMLElement) cible.click()
+    if (!(cible instanceof HTMLElement)) return
+    // On pose la provenance sur la cible avant de la cliquer : le glisser ne
+    // fait ainsi que declencher la meme tape, avec une origine en plus. Aucune
+    // logique n'est dupliquee. Le lecteur la retire en la lisant.
+    if (origine !== null) cible.dataset.source = origine
+    cible.click()
   }
 
   racine.addEventListener('pointerup', relacher)
