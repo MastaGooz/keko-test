@@ -1169,3 +1169,98 @@ body {
     line-height: 1.25;
   }
 }
+
+/* --- le telephone couche : deux colonnes ---------------------------------- */
+
+/* En paysage la hauteur tombe a 340-390 px. Aucun resserrement vertical ne
+   sauve une colonne unique : il faut se servir de la largeur, qui elle est
+   abondante. La scene prend la gauche, tout ce qui se joue prend la droite,
+   sous le pouce. Le garde-fou `max-height` evite d'attraper un ecran de PC,
+   qui est aussi en paysage mais n'a aucun probleme de place. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .app {
+    display: grid;
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    align-content: start;
+    column-gap: 0.75rem;
+    row-gap: 0.3125rem;
+    max-width: none;
+    padding: max(0.375rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
+      max(0.5rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .entete {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  /* La scene occupe toute la colonne gauche, sur la hauteur du reste.
+     Le compte de `span` doit suivre le nombre d'elements de la colonne
+     droite : joueur, energie, cartes, fin de tour, encombrement, issue.
+     Piege a ne pas repeter -- `grid-row: 2 / -1` ne marche PAS ici : sans
+     grille explicite, `-1` designe la derniere ligne EXPLICITE, c'est-a-dire
+     la ligne 1. La scene atterrissait en rangee 1 et chassait l'en-tete. */
+  #ennemis {
+    grid-column: 1;
+    grid-row: 2 / span 6;
+    align-self: stretch;
+    min-height: 0;
+    padding: 0.25rem 0 0.75rem;
+    /* Etiree sur toute la colonne, la scene devenait une grande boite vide
+       avec les betes tassees en bas. Le degrade la retourne en salle : noir
+       au plafond, sol eclaire sous leurs pattes. */
+    background:
+      radial-gradient(58% 30% at 50% 97%, #7d7d9a3d, transparent 74%),
+      linear-gradient(180deg, #0a0a10 0%, #13131c 54%, #1e1e29 100%);
+    box-shadow: inset 0 0 0 1px #ffffff0a;
+  }
+
+  #joueur,
+  #energie,
+  #cartes,
+  #finTour,
+  #encombrement,
+  #issue {
+    grid-column: 2;
+  }
+
+  .chair {
+    height: 4.5rem;
+  }
+
+  .carte {
+    --large: min(5.5rem, 38%);
+  }
+
+  .cartes {
+    padding-top: 0.625rem;
+  }
+
+  .journal {
+    display: none;
+  }
+}
+
+/* Petit telephone couche (SE et assimiles) : ~320 px de haut. On rogne encore
+   sur la carte, jamais sur les cibles tactiles. */
+@media (orientation: landscape) and (max-height: 370px) {
+  .app {
+    row-gap: 0.1875rem;
+  }
+
+  .build {
+    font-size: 0.625rem;
+  }
+
+  .chair {
+    height: 3.75rem;
+  }
+
+  .carte {
+    --large: min(4.75rem, 34%);
+  }
+
+  .cartes {
+    padding-top: 0.5rem;
+  }
+}

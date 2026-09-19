@@ -350,9 +350,29 @@ fausse pour deux raisons, toutes deux à retenir :
 2. **La moitié de la hauteur servait aux commandes de test**, qui poussaient le
    combat hors de l'écran. Elles sont maintenant en panneau fixe, hors du flux.
 
-Deux paliers de resserrement : `max-height: 760px` réduit les espacements et
-masque le journal, `max-height: 620px` rogne le décor et la taille des cartes.
+Paliers de resserrement : `max-height: 760px` réduit les espacements et masque
+le journal, `max-height: 620px` rogne le décor et la taille des cartes.
 **On rogne sur le décor avant les cibles tactiles**, jamais l'inverse.
+
+**En paysage, une colonne unique est perdue d'avance** : la hauteur tombe à
+320-430 px et aucun resserrement vertical ne suffit. La mise en page bascule en
+**deux colonnes** (`orientation: landscape` + garde-fou `max-height: 540px`
+pour ne pas attraper un écran de PC) : la scène prend toute la colonne gauche,
+et tout ce qui se joue — barre du joueur, énergie, main, fin de tour — la
+colonne droite, sous le pouce.
+
+Deux pièges rencontrés là :
+
+- **`grid-row: 2 / -1` ne marche pas** sans grille explicite : `-1` désigne la
+  dernière ligne **explicite**, donc la ligne 1. La scène atterrissait en
+  rangée 1 et chassait l'en-tête. D'où `grid-row: 2 / span 6` — et le compte
+  doit suivre le nombre d'éléments de la colonne droite.
+- Étirée sur toute la colonne, la scène devenait **une grande boîte vide** avec
+  les bêtes tassées en bas. Son dégradé la retourne en salle : noir au plafond,
+  sol éclairé sous leurs pattes.
+
+Formats vérifiés, tous sans le moindre scroll : **360x540, 390x660, 414x715**
+en portrait, **667x320, 780x340, 844x390, 932x430** en paysage.
 
 **Le socle navigateur.** `vite.config.ts` fixe `cssTarget` : sans lui, le
 minifieur réécrit `max-height: 620px` en syntaxe d'intervalle (`height <=
