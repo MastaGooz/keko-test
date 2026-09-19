@@ -12,6 +12,10 @@
  */
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
 import { butin, consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
+import { CAPACITE_SAC, valeurSac } from '../logic/cartes.ts'
+
+/** Le butin transporté : ce que le sac a pris, et combien a été ramassé. */
+export type Poche = { ramasse: number; sac: Carte[] }
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
 const ORDINAL = ['①', '②', '③', '④', '⑤']
@@ -76,7 +80,7 @@ export function render(
   etat: EtatCombat,
   seed: number,
   selection: number | null,
-  tresors: number,
+  poche: Poche,
 ): void {
   const fini = etat.issue !== null
   const carte = selection === null ? null : (etat.main[selection] ?? null)
@@ -93,14 +97,14 @@ export function render(
   view.cartes.innerHTML = etat.main
     .map((c, index) => ligneCarte(etat, c, index, selection, fini))
     .join('')
-  view.encombrement.innerHTML = fini ? '' : encombrement(etat)
+  view.encombrement.innerHTML = fini ? '' : encombrement(etat, poche)
 
   view.finTour.innerHTML = etiquetteFinTour(etat)
   view.finTour.disabled = fini
 
-  view.issue.innerHTML = issue(etat)
+  view.issue.innerHTML = issue(etat, poche)
 
-  view.cupidite.innerHTML = reglageCupidite(tresors)
+  view.cupidite.innerHTML = reglageCupidite(poche)
 
   view.journal.innerHTML = etat.evenements
     .slice(-3)
@@ -243,8 +247,9 @@ function carteTresor(carte: Carte): string {
  * Sans ce chiffre, porter du poids n'a aucune contrepartie visible et le
  * joueur ne teste qu'une punition.
  */
-function issue(etat: EtatCombat): string {
-  const valeur = butin(etat)
+function issue(etat: EtatCombat, poche: Poche): string {
+  // Le sac tombe avec le joueur : il met le butin à l'abri du DECK, pas de la mort.
+  const valeur = butin(etat) + valeurSac(poche.sac)
   if (etat.issue === 'victoire') {
     return valeur === 0
       ? 'VICTOIRE.'
@@ -258,16 +263,21 @@ function issue(etat: EtatCombat): string {
   return ''
 }
 
-/** Décision de design : le taux d'encombrement est toujours visible. */
-function encombrement(etat: EtatCombat): string {
-  const total = etat.pioche.length + etat.main.length + etat.defausse.length
-  const tresors =
+/**
+ * Décision de design : le taux d'encombrement est toujours visible. On montre
+ * d'abord le sac, parce que c'est lui qui explique le reste — ce qui est
+ * dedans ne coûte rien, ce qui déborde coûte une place de main à chaque tour.
+ */
+function encombrement(etat: EtatCombat, poche: Poche): string {
+  const enTrop =
     [...etat.pioche, ...etat.main, ...etat.defausse].filter((c) => c.type === 'tresor').length
+  const valeur = butin(etat) + valeurSac(poche.sac)
 
   return (
+    `Sac ${GLYPHE.tresor} <strong>${poche.sac.length}/${CAPACITE_SAC}</strong> · ` +
+    `<strong>${enTrop}</strong> en trop dans le deck · ` +
     `${GLYPHE.tresor} <strong>${tresorsEnMain(etat)}/${etat.main.length}</strong> en main · ` +
-    `${tresors}/${total} au deck · ` +
-    `butin : <strong class="or">${butin(etat)}</strong> à revendre`
+    `butin : <strong class="or">${valeur}</strong> à revendre`
   )
 }
 
@@ -283,21 +293,31 @@ function etiquetteFinTour(etat: EtatCombat): string {
 /**
  * Le curseur de l'expérience. Ce n'est pas une mécanique de jeu : c'est le
  * réglage qui permet de répondre à la seule question que ce prototype existe
- * pour poser — une main polluée de trésors, tendue ou pénible ?
+ * pour poser — déborder du sac, pari tendu ou corvée ?
+ *
+ * Il compte le butin RAMASSÉ, sac compris. Le premier cran remplit le sac
+ * pile : c'est la run propre, zéro carte morte. Les suivants débordent de
+ * 2, 4, 6, 8 — les mêmes valeurs que les mesures déjà faites, pour que la
+ * courbe reste comparable.
  */
-function reglageCupidite(tresors: number): string {
-  const choix = [0, 2, 4, 6, 8]
+function reglageCupidite(poche: Poche): string {
+  const choix = [3, 5, 7, 9, 11]
     .map(
       (n) =>
-        `<button class="pastille${n === tresors ? ' active' : ''}" type="button" ` +
-        `data-action="cupidite" data-tresors="${n}">${n}</button>`,
+        `<button class="pastille${n === poche.ramasse ? ' active' : ''}" type="button" ` +
+        `data-action="cupidite" data-ramasse="${n}">${n}</button>`,
     )
     .join('')
 
-  const part = Math.round((tresors / (10 + tresors)) * 100)
+  const enTrop = Math.max(0, poche.ramasse - CAPACITE_SAC)
+  const consequence =
+    enTrop === 0
+      ? 'le sac absorbe tout'
+      : `${enTrop} carte${enTrop > 1 ? 's' : ''} morte${enTrop > 1 ? 's' : ''}`
+
   return (
-    `<span class="etiquette">Trésors</span>${choix}` +
-    `<span class="etiquette">${part} % du deck</span>`
+    `<span class="etiquette">Butin ramassé</span>${choix}` +
+    `<span class="etiquette">${consequence}</span>`
   )
 }
 

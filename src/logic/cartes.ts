@@ -56,9 +56,38 @@ export function tresorsEmportes(nombre: number, rng: Rng): Carte[] {
   })
 }
 
-/** Le deck emporté dans le donjon : les cartes de combat plus le butin ramassé. */
-export function deckAvecTresors(nombre: number, rng: Rng): Carte[] {
-  return [...deckDeDepart(), ...tresorsEmportes(nombre, rng)]
+/**
+ * La capacité du sac. Petite et quasi figée : c'est la contrainte permanente
+ * du jeu, pas un axe de progression — le hub vend du levier, jamais de la
+ * sécurité.
+ */
+export const CAPACITE_SAC = 3
+
+/** Le butin ramassé, une fois réparti entre le sac et ce qui déborde. */
+export type Butin = { sac: Carte[]; deck: Carte[] }
+
+/**
+ * Le tri se fait tout seul : les plus gros trésors prennent les places du sac,
+ * le reste déborde et devient carte morte dans le deck. N'importe quel joueur
+ * ferait exactement ce tri, autant que le prototype le fasse pour lui.
+ *
+ * Conséquence à ne pas perdre de vue : le trésor qui déborde est TOUJOURS le
+ * moins précieux du lot. La cupidité a donc un rendement décroissant intégré —
+ * on encaisse des cartes mortes pour des babioles, jamais pour la couronne.
+ */
+export function butinRamasse(nombre: number, rng: Rng): Butin {
+  const tous = tresorsEmportes(nombre, rng).sort((a, b) => (b.valeur ?? 0) - (a.valeur ?? 0))
+  return { sac: tous.slice(0, CAPACITE_SAC), deck: tous.slice(CAPACITE_SAC) }
+}
+
+/** Le deck emporté dans le donjon : les cartes de combat plus ce qui déborde. */
+export function deckAvecTresors(debordement: Carte[]): Carte[] {
+  return [...deckDeDepart(), ...debordement]
+}
+
+/** Ce que vaut le contenu du sac — perdu aussi si le joueur meurt. */
+export function valeurSac(sac: Carte[]): number {
+  return sac.reduce((total, carte) => total + (carte.valeur ?? 0), 0)
 }
 
 /**

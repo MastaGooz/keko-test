@@ -179,9 +179,22 @@ contre `src/logic/`, qui est pur exprès. Deux résultats à ne pas réapprendre
   sacs de PV en nombre ramènent au rendement pur, et le gros coup redevient le
   seul choix.
 
-Les trésors ne sont pas encore ramassés en jeu : un **curseur de cupidité**
-(0 / 2 / 4 / 6 / 8) les injecte directement dans le deck emporté. Ce n'est pas
-une mécanique, c'est le réglage qui rend l'hypothèse testable au doigt.
+Les trésors ne sont pas encore ramassés en jeu : un **curseur** fixe le butin
+déjà ramassé, **sac compris** — 3 / 5 / 7 / 9 / 11. Le sac (capacité 3) prend
+les plus gros, le reste déborde en cartes mortes : 0 / 2 / 4 / 6 / 8, les mêmes
+valeurs que les mesures ci-dessous, pour que la courbe reste comparable. Le
+premier cran est la run propre : le sac absorbe tout, zéro carte morte, et il y
+a quand même déjà du butin en jeu.
+
+Le tri est fait pour le joueur — les gros trésors vont au sac, puisque c'est ce
+que n'importe qui ferait. **Conséquence à surveiller : le trésor qui déborde
+est toujours le moins précieux du lot.** La cupidité a donc un rendement
+décroissant intégré (bien), mais ça veut dire qu'on encaisse des cartes mortes
+pour des babioles à 45, jamais pour la couronne à 240 — si le débordement reste
+pénible, c'est une piste à regarder avant de toucher aux règles.
+
+Le sac ne met le butin à l'abri que du **deck**, pas de la mort : ce qu'il
+contient tombe avec le joueur.
 
 ### Ce qu'on sait déjà de la pollution
 
@@ -213,9 +226,9 @@ au hub, quelle que soit sa forme finale. Attention au vocabulaire dans tous les
 cas : un trésor ne rapporte rien en combat ni en fin de combat, l'écran annonce
 seulement ce que le butin vaudra **s'il ressort**.
 
-**Prochaine étape :** faire simuler un **sac** par le curseur (capacité ~3, le
-curseur ne comptant que les trésors *en débordement*), pousser, et faire
-retester Keko. Tout le reste attend cette réponse.
+**Prochaine étape : faire jouer Keko à chaque cran** et répondre à la question.
+Le prototype est maintenant dans le bon cadrage — sac, débordement, butin
+visible, main en vraies cartes. Tout le reste attend cette réponse.
 
 ## Architecture — la règle à ne pas casser
 

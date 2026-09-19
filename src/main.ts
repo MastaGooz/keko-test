@@ -10,7 +10,8 @@ import type { Rng } from './logic/rng.ts'
 import type { EtatCombat } from './logic/combat.ts'
 import { createRng, randomInt } from './logic/rng.ts'
 import { creerCombat, finDuTour, jouerCarte } from './logic/combat.ts'
-import { GROUPES, deckAvecTresors } from './logic/cartes.ts'
+import { GROUPES, butinRamasse, deckAvecTresors } from './logic/cartes.ts'
+import type { Poche } from './ui/render.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
 import { verifierVersion } from './ui/version.ts'
@@ -25,18 +26,23 @@ let etat: EtatCombat
 let selection: number | null = null
 /**
  * Le curseur de l'expérience : combien de trésors le joueur a ramassés avant
- * ce combat. C'est LA variable que ce prototype existe pour faire sentir.
+ * ce combat — sac compris. Ce que le sac ne peut pas prendre déborde dans le
+ * deck, et c'est ce débordement que ce prototype existe pour faire sentir.
  */
-let tresors = 0
+let ramasse = 3
+/** Ce que le sac a pris : hors du deck, mais perdu aussi si le joueur meurt. */
+let poche: Poche = { ramasse, sac: [] }
 
 /** Tout le hasard du combat découle de la seed : la rejouer rejoue le combat. */
 function demarrer(nouvelleSeed: number): void {
   seed = nouvelleSeed
   rng = createRng(seed)
   const groupe = GROUPES[randomInt(rng, 0, GROUPES.length - 1)]!
-  etat = creerCombat(deckAvecTresors(tresors, rng), groupe.ennemis, rng)
+  const butin = butinRamasse(ramasse, rng)
+  poche = { ramasse, sac: butin.sac }
+  etat = creerCombat(deckAvecTresors(butin.deck), groupe.ennemis, rng)
   selection = null
-  render(view, etat, seed, selection, tresors)
+  render(view, etat, seed, selection, poche)
 }
 
 bindInput(view, (action) => {
@@ -58,13 +64,13 @@ bindInput(view, (action) => {
     case 'rejouer':
       return demarrer(seed)
     case 'cupidite':
-      tresors = action.tresors
+      ramasse = action.ramasse
       return demarrer(Date.now() % 100000)
     case 'nouveau':
       // Seed courte : lisible à l'écran, suffisante pour rejouer un combat.
       return demarrer(Date.now() % 100000)
   }
-  render(view, etat, seed, selection, tresors)
+  render(view, etat, seed, selection, poche)
 })
 
 demarrer(Date.now() % 100000)
