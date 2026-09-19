@@ -273,12 +273,18 @@ donjon. Ce qui tourne :
   le survol ne s'active que là où il existe (`hover: hover`), sinon il reste
   collé après la tape sur mobile ;
 - les **trésors en cartes dorées et pleines**, illustrées elles aussi, marquées
-  MORTE — jamais grisées : l'appât et le poids sont le même objet, et une carte
-  fantôme se laisserait oublier. Ils passent la moitié de la partie dans la
-  main, ils ont droit au même soin que les cartes de combat. Trois **rangs de
-  richesse** au cadre (modeste / cossu / fastueux) : la décision de design veut
-  qu'on préfère peu de gros trésors, encore faut-il voir sans lire un chiffre
-  ce qu'on traîne ;
+  MORTE, avec trois **rangs de richesse** au cadre (modeste / cossu /
+  fastueux) : la décision de design veut qu'on préfère peu de gros trésors,
+  encore faut-il voir sans lire un chiffre ce qu'on traîne ;
+- **dans la main, tout ce qui est injouable est grisé** — trésors compris, au
+  même titre qu'une carte trop chère. On a d'abord refusé de griser les
+  trésors, pour que l'appât reste visible ; **la raison a changé**, pas
+  l'objectif : l'appât vit désormais dans l'écran de butin, où le trésor est
+  doré et détaillé. En combat il ne fait plus qu'occuper une place, et le dire
+  franchement rend la main lisible d'un coup d'oeil.
+- **Grisé, jamais transparent.** Les cartes de la main se recouvrent en
+  éventail : une carte translucide laisse voir sa voisine au travers et devient
+  illisible au doigt. `grayscale` + `brightness`, jamais `opacity` ;
 - les ennemis sur une **scène** : des **créatures dessinées** (SVG,
   `ui/illustrations.ts`) qui se tiennent côte à côte sur un sol éclairé, avec
   leur **intention au-dessus de la tête** — ce qu'elles frappent et dans

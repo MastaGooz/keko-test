@@ -685,10 +685,19 @@ body {
 }
 
 /* Pas assez d'energie ce tour-ci. */
-.carte.hors-prix {
-  opacity: 0.34;
-  filter: grayscale(1);
+/* Injouable ce tour-ci -- trop chere, ou tresor inerte.
+   Grise et assombri, mais JAMAIS transparent : dans une main en eventail les
+   cartes se recouvrent, et une carte translucide laisse voir sa voisine au
+   travers. Au doigt sur un telephone, ca devient illisible. */
+.carte.hors-prix,
+#cartes .carte.tresor {
+  filter: grayscale(1) brightness(0.5);
   cursor: default;
+}
+
+/* Le gris dit "tu ne peux rien en faire" ; le bandeau MORTE dit pourquoi. */
+#cartes .carte.tresor .bandeau {
+  color: #cfcfd8;
 }
 
 /* Le survol, seulement la ou il existe : sur un telephone, un :hover reste
