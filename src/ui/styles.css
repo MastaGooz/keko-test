@@ -2509,16 +2509,31 @@ body {
 }
 
 @keyframes charge {
+  /* La phase vive n'est pas une rampe, c'est un COUP -- et un coup a une forme,
+     pas seulement une vitesse. Trois temps, et ce sont les CHANGEMENTS DE
+     DIRECTION qui le font lire : l'oeil attrape un rebroussement la ou il
+     laisse passer une acceleration. C'est aussi ce qui permet a la frappe de
+     ne durer que 45 ms sans redevenir invisible -- elle est encadree.
+
+     Une rampe amortie de 83 ms occupait le meme temps et restait un
+     deplacement. */
   0% {
     translate: 0 0;
-    /* Le coup de reins : tres rapide, puis il freine -- mais l'amorti ne doit
-       pas etre si brutal que tout se joue dans les deux premieres images. Une
-       courbe trop en avant tassait 96 % du trajet dans 40 ms : ca ne se lit
-       plus comme un mouvement, ca se lit comme un saut. Celle-ci etale la
-       course sur les cinq images de la phase vive. */
-    animation-timing-function: cubic-bezier(0.2, 0.55, 0.35, 1);
+    animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
   }
-  16% {
+  6.7% {
+    /* L'appel : il se ramasse en arriere. Court, mais c'est lui qui arme. */
+    translate: calc(var(--elan) * -0.28) 0;
+    animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
+  }
+  15.4% {
+    /* LA FRAPPE, a pleine extension : 45 ms pour 1,48 fois la course vive.
+       C'est ici que la secousse tombe. */
+    translate: calc(var(--elan) * 1.2) 0;
+    animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1);
+  }
+  22% {
+    /* Le contrecoup : il revient, comme un bras qui a porte trop loin. */
     translate: var(--elan) 0;
     animation-timing-function: linear;
   }

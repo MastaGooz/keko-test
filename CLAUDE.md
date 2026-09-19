@@ -391,12 +391,24 @@ donjon. Ce qui tourne :
   d'arrêt. *La moitié de la durée est désormais du temps d'arrêt, pas de
   l'animation* — si ça devient long, c'est ce palier-là qu'on raccourcit.
 
-  **L'attaquant charge, d'un coup sec puis sur son élan.** Il couvre **61 % de
-  sa course en 16 % du temps** — huit fois plus vite — puis dérive lentement
-  jusqu'au bout. Même principe que l'ancien bond des monstres, mesuré à
-  l'époque : *tout le poids vient du contraste de vitesse*, un lissage uniforme
-  rend le geste mou. La course vaut 36 % d'un corps (17 px sur un petit
-  téléphone couché, 78 px sur un écran de 1080) et chacun charge vers l'autre.
+  **L'attaquant porte un coup, puis dérive sur son élan.** Et un coup a une
+  **forme**, pas seulement une vitesse — trois temps, dans cet ordre :
+
+  | temps | ce qu'il fait | durée |
+  |---|---|---|
+  | l'appel | il se ramasse en arrière (−28 % de la course vive) | 35 ms |
+  | la frappe | il part à pleine extension (+120 %) | 45 ms |
+  | le contrecoup | il revient (+100 %), comme un bras qui a porté trop loin | 34 ms |
+
+  puis la dérive, **21 fois plus lente**, jusqu'au bout du gros plan. La course
+  vaut 36 % d'un corps (17 px sur un petit téléphone couché, 78 px sur un écran
+  de 1080) et chacun charge vers l'autre.
+
+  **Ce sont les CHANGEMENTS DE DIRECTION qui font lire le coup**, pas la
+  vitesse : l'oeil attrape un rebroussement là où il laisse passer une
+  accélération. C'est aussi ce qui permet à la frappe de ne durer que 45 ms —
+  moins de trois images — sans redevenir invisible : *elle est encadrée*. Une
+  rampe amortie de 83 ms occupait le même temps et restait un déplacement.
 
   **Elle part 120 ms après le reste, et ce n'est pas un réglage : c'est la
   condition pour qu'on la voie.** Les figures mettent ~110 ms à arriver ; lancée
