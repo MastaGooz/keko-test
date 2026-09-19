@@ -397,12 +397,13 @@ donjon. Ce qui tourne :
   | temps | ce qu'il fait | durée |
   |---|---|---|
   | l'appel | il se ramasse en arrière (−28 % de la course vive) | 35 ms |
-  | la frappe | il part à pleine extension (+120 %) | 45 ms |
-  | le contrecoup | il revient (+100 %), comme un bras qui a porté trop loin | 34 ms |
+  | la frappe | il part à pleine extension (+145 %) | 45 ms |
+  | le contrecoup | il revient (+120 %), comme un bras qui a porté trop loin | 34 ms |
 
-  puis la dérive, **21 fois plus lente**, jusqu'au bout du gros plan. La course
-  vaut 36 % d'un corps (17 px sur un petit téléphone couché, 78 px sur un écran
-  de 1080) et chacun charge vers l'autre.
+  puis la dérive, **30 fois plus lente**, jusqu'au bout du gros plan. La frappe
+  porte loin — 17 px sur un petit téléphone couché, 81 px sur un écran de 1080 —
+  parce que *c'est la distance couverte d'un coup qui fait la violence, pas la
+  seule vitesse*. Chacun charge vers l'autre.
 
   **Ce sont les CHANGEMENTS DE DIRECTION qui font lire le coup**, pas la
   vitesse : l'oeil attrape un rebroussement là où il laisse passer une
@@ -513,6 +514,14 @@ donjon. Ce qui tourne :
 
   Le tampon tombe **90 ms après l'impact** : le coup d'abord, ce qu'il a fait
   ensuite. L'ordre inverse ferait lire la mort comme la cause.
+
+  **Un gros plan qui tue dure 300 ms de plus** (1100 au lieu de 800). Au rythme
+  ordinaire il ne restait qu'un tiers de seconde entre le tampon et le fondu,
+  pour la seule image de la séquence qu'on ait envie de regarder. Ça ne coûte
+  rien sur la durée d'un combat — on ne tue qu'une fois par corps. **Le verrou
+  d'entrée doit suivre**, sinon l'écran de récompense s'ouvrirait sur la tête
+  de mort encore posée ; côté salve ennemie, seule la DERNIÈRE frappe peut être
+  fatale, puisque le moteur l'arrête dès que le joueur tombe.
 
   **Il n'y a plus d'agonie sur la scène** — ni chute, ni bascule, ni éclair, ni
   état `Agonie` dans le rendu. Le corps abattu ne revient simplement pas quand

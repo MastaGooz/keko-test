@@ -56,6 +56,14 @@ export const TAMPON_DUEL = IMPACT_DUEL + 90
 const SORTIE = 640
 
 /**
+ * Et quand il y a MORT, 300 ms de plus. Le tampon tombe à 290 ms : au rythme
+ * ordinaire il ne lui restait qu'un tiers de seconde à l'écran avant le fondu,
+ * pour la seule image de la séquence qu'on a envie de regarder. Ce supplément
+ * ne coûte rien sur la durée d'un combat — on ne tue qu'une fois par corps.
+ */
+const SORTIE_MORT = 940
+
+/**
  * Ce que dure un gros plan, de bout en bout.
  *
  * C'est le prix du procédé, et il est réel : une salve de trois ennemis coûte
@@ -64,6 +72,9 @@ const SORTIE = 640
  * persos ». Si ça devient long, c'est ce palier-là qu'on raccourcit.
  */
 export const DUREE_DUEL = 800
+
+/** Idem, quand le coup tue : la tête de mort et le corps noir restent posés. */
+export const DUREE_DUEL_MORT = 1100
 
 /** Le repos entre deux gros plans d'une même salve. */
 export const PAS_ENTRE_DUELS = DUREE_DUEL + 60
@@ -94,6 +105,8 @@ export function duel(
   mort = false,
 ): void {
   fermerDuel(view)
+  const sortie = mort ? SORTIE_MORT : SORTIE
+  const duree = mort ? DUREE_DUEL_MORT : DUREE_DUEL
 
   // Dans `.app` et pas à côté : voir l'en-tête du fichier.
   const scene = view.root.querySelector('.app')
@@ -117,7 +130,7 @@ export function duel(
   // `.app` l'emporte avec elle. Une seule secousse, tout tremble ensemble.
   planifier(IMPACT_DUEL, () => {
     const touche = calque.querySelector<HTMLElement>('.duel-corps:not(.attaque)')
-    if (touche !== null) chiffre(view, touche, degats)
+    if (touche !== null) chiffre(view, touche, degats, duree)
   })
 
   // La mort se joue ICI, dans le cadre, et nulle part ailleurs : le corps
@@ -130,15 +143,22 @@ export function duel(
     })
   }
 
-  planifier(SORTIE, () => calque.classList.remove('ouvert'))
-  planifier(DUREE_DUEL, () => calque.remove())
+  planifier(sortie, () => calque.classList.remove('ouvert'))
+  planifier(duree, () => calque.remove())
 }
 
-/** Referme un gros plan encore ouvert et annule ce qu'il avait programmé. */
+/**
+ * Referme un gros plan encore ouvert et annule ce qu'il avait programmé.
+ *
+ * Le chiffre des dégâts part avec, et c'est ici sa place : il vit hors du
+ * calque (voir `chiffre`), donc retirer le calque ne l'emporte pas, et le
+ * minuteur qui devait l'effacer vient justement d'être annulé. Nettoyé au coup
+ * suivant, il restait posé 200 ms sur le gros plan d'après.
+ */
 export function fermerDuel(view: View): void {
   enCours.forEach((t) => window.clearTimeout(t))
   enCours = []
-  view.root.querySelectorAll('.duel').forEach((d) => d.remove())
+  view.root.querySelectorAll('.duel, .degats-voles').forEach((d) => d.remove())
 }
 
 function figureHtml(figure: Figure, cote: string, attaque: boolean): string {
@@ -157,8 +177,7 @@ function figureHtml(figure: Figure, cote: string, attaque: boolean): string {
  * referme et emporterait son contenu, alors que le chiffre doit survivre à la
  * fermeture — c'est lui qui fait le lien avec la scène qui réapparaît.
  */
-function chiffre(view: View, sur: HTMLElement, montant: number): void {
-  view.root.querySelectorAll('.degats-voles').forEach((v) => v.remove())
+function chiffre(view: View, sur: HTMLElement, montant: number, duree: number): void {
   const boite = sur.getBoundingClientRect()
   const span = document.createElement('span')
   span.className = 'degats-voles grand'
@@ -166,5 +185,5 @@ function chiffre(view: View, sur: HTMLElement, montant: number): void {
   span.style.left = `${boite.left + boite.width / 2}px`
   span.style.top = `${boite.top + boite.height * 0.3}px`
   view.root.appendChild(span)
-  planifier(DUREE_DUEL, () => span.remove())
+  planifier(duree, () => span.remove())
 }

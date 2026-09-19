@@ -25,6 +25,7 @@ import type { Occupation } from './ui/render.ts'
 import { figure, FIGURE_JOUEUR, mount, render } from './ui/render.ts'
 import {
   DUREE_DUEL,
+  DUREE_DUEL_MORT,
   duel,
   fermerDuel,
   IMPACT_DUEL,
@@ -84,7 +85,7 @@ function grosPlan(
   window.setTimeout(() => {
     auFront = null
     dessiner()
-  }, DUREE_DUEL)
+  }, mort ? DUREE_DUEL_MORT : DUREE_DUEL)
 }
 
 /**
@@ -203,7 +204,9 @@ bindInput(view, (action) => {
               secouerEcran(view, 'forte')
             }, IMPACT_DUEL)
           })
-          attente = DUREE_DUEL
+          // Le gros plan s'attarde quand il tue : le verrou doit suivre, sinon
+          // l'écran de récompense s'ouvrirait sur la tête de mort encore posée.
+          attente = reste <= 0 ? DUREE_DUEL_MORT : DUREE_DUEL
         }
         // Plus rien après : la mort se joue DANS le gros plan, et le corps ne
         // revient simplement pas sur la scène.
@@ -246,9 +249,16 @@ bindInput(view, (action) => {
       })
 
       // La main revient au joueur quand le dernier gros plan s'est refermé.
+      // Seule la DERNIÈRE frappe peut être fatale : le moteur arrête la salve
+      // dès que le joueur tombe. C'est donc elle, et elle seule, qui peut
+      // allonger l'attente.
+      const derniere = frappes[frappes.length - 1]
+      const fatale = derniere !== undefined && derniere.pvJoueur === 0
       pendant = 'ennemis'
       attente =
-        frappes.length === 0 ? 0 : (frappes.length - 1) * PAS_ENTRE_DUELS + DUREE_DUEL
+        frappes.length === 0
+          ? 0
+          : (frappes.length - 1) * PAS_ENTRE_DUELS + (fatale ? DUREE_DUEL_MORT : DUREE_DUEL)
 
       selection = null
       break
