@@ -368,6 +368,16 @@ son.** Tout est du CSS et du SVG écrits à la main (`ui/illustrations.ts`), et
 seulement sur ce qui est soumis au jugement. C'est peu risqué tant que `logic/`
 reste pur : tout l'habillage vit dans `ui/` et se jette sans rien casser.
 
+**Le vocabulaire visuel de la carte**, pour que les prochaines s'y conforment :
+lumière venue du haut (filet clair en haut du jonc intérieur, sombre en bas),
+fenêtre d'art **en arche** et non en rectangle, trait des dessins **lumineux**
+plutôt que filaire (`drop-shadow` de sa propre couleur), gemme et badge
+**sertis** avec un point de lumière en haut à gauche, nom en **serif système**
+(Georgia et sa chaîne de repli — aucune police téléchargée), et un lustre
+oblique qui balaie la carte au moment où on la lève. L'accent de la carte
+teinte le corps, le liseré de la fenêtre et la plaque : une Dague est froide
+jusque dans son carton, un Moulinet est chaud.
+
 ## Langue
 
 Keko écrit en français ; lui répondre en français. Commentaires de code et
