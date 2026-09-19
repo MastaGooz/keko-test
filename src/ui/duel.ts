@@ -35,14 +35,16 @@ import { creature, teteDeMort } from './illustrations.ts'
 export type Figure = { nom: string; espece: string; teinte: string }
 
 /**
- * Quand l'écran encaisse : presque tout de suite.
+ * Quand l'écran encaisse : **à la fin de la charge de l'attaquant**, pas à son
+ * arrivée.
  *
- * Les corps mettent 90 ms à se poser ; la secousse part à 60, donc elle
- * COUVRE la fin de leur arrivée au lieu de la suivre. C'est ce décalage
- * négatif qui fait lire l'apparition comme un impact et non comme une
- * transition suivie d'un coup.
+ * La secousse a d'abord été calée sur l'apparition elle-même (60 ms), quand
+ * rien ne bougeait dans le cadre. Depuis que l'attaquant charge, elle doit
+ * tomber sur le bout de son élan rapide — sinon le coup précède le geste qui
+ * le porte, et on lit deux évènements sans rapport. Charge : 120 ms de retard
+ * plus 83 ms d'élan vif, donc 200.
  */
-export const IMPACT_DUEL = 60
+export const IMPACT_DUEL = 200
 
 /**
  * Quand le tampon de mort s'abat. Juste après l'impact : le coup d'abord, ce

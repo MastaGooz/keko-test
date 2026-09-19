@@ -392,11 +392,26 @@ donjon. Ce qui tourne :
   l'animation* — si ça devient long, c'est ce palier-là qu'on raccourcit.
 
   **L'attaquant charge, d'un coup sec puis sur son élan.** Il couvre **61 % de
-  sa course en 8 % du temps** — sept fois et demie plus vite — puis dérive
-  lentement jusqu'au bout. Même principe que l'ancien bond des monstres, mesuré
-  à l'époque : *tout le poids vient du contraste de vitesse*, un lissage
-  uniforme rend le geste mou. La course vaut 36 % d'un corps (17 px sur un petit
+  sa course en 16 % du temps** — huit fois plus vite — puis dérive lentement
+  jusqu'au bout. Même principe que l'ancien bond des monstres, mesuré à
+  l'époque : *tout le poids vient du contraste de vitesse*, un lissage uniforme
+  rend le geste mou. La course vaut 36 % d'un corps (17 px sur un petit
   téléphone couché, 78 px sur un écran de 1080) et chacun charge vers l'autre.
+
+  **Elle part 120 ms après le reste, et ce n'est pas un réglage : c'est la
+  condition pour qu'on la voie.** Les figures mettent ~110 ms à arriver ; lancée
+  à l'instant zéro, la phase vive était finie avant qu'on les distingue et il ne
+  restait à l'écran que la dérive lente. Keko : « il a déjà avancé quand on le
+  voit ». Deux corrections, pas une — **le retard, et la durée de la phase
+  vive** : 51 ms, c'est trois images, et une courbe trop mordante y tassait 96 %
+  du trajet en 40 ms. Un mouvement qui tient en deux images se lit comme un
+  saut. À 83 ms et avec un amorti plus doux, la course s'étale sur cinq images
+  (31 %, 17 %, 9 %, 4 %, 1 % du trajet) — **le contraste de vitesse ne sert à
+  rien si la phase rapide passe sous le seuil de perception.**
+
+  **La secousse tombe au bout de la charge**, plus à l'apparition. Elle y était
+  calée du temps où rien ne bougeait dans le cadre ; depuis qu'il y a un geste,
+  le coup doit le suivre — sinon on lit deux évènements sans rapport.
 
   **Elle passe par `translate`, pas par `transform`.** `transform` porte déjà
   l'arrivée des figures (translateY + scale) : une animation sur la même

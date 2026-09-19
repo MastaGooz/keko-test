@@ -2478,10 +2478,17 @@ body {
 }
 
 /* LA CHARGE. L'attaquant part d'un coup sec vers sa cible, puis continue sur
-   son elan beaucoup plus lentement -- il couvre 61 % de sa course en 8 % du
-   temps, soit sept fois et demie plus vite. C'est le meme principe que le bond
-   des monstres, mesure a l'epoque : tout le poids vient du CONTRASTE de
-   vitesse, et un lissage uniforme rend le geste mou.
+   son elan beaucoup plus lentement -- il couvre 61 % de sa course en 16 % du
+   temps, soit huit fois plus vite. C'est le meme principe que le bond des
+   monstres, mesure a l'epoque : tout le poids vient du CONTRASTE de vitesse,
+   et un lissage uniforme rend le geste mou.
+
+   LE RETARD DE 0,12 s N'EST PAS UN REGLAGE, C'EST LA CONDITION POUR QU'ON LA
+   VOIE. Sans lui, la charge partait a l'instant zero -- or les figures mettent
+   ~110 ms a arriver (fondu + montee). La phase rapide etait finie avant meme
+   qu'on les distingue, et il ne restait a l'ecran que la derive lente. Keko :
+   « il a deja avance quand on le voit ». Elle dure aussi 83 ms au lieu de 51 :
+   trois images, ca ne se percoit pas comme un geste.
 
    La course passe par `translate`, PAS par `transform` : `transform` porte
    deja l'arrivee des figures (translateY + scale), et une animation sur la
@@ -2489,7 +2496,7 @@ body {
    `translate` d'abord. */
 .duel-corps.attaque {
   --elan: calc(var(--corps) * 0.22 * var(--sens, 1));
-  animation: charge 0.64s linear forwards;
+  animation: charge 0.52s linear 0.12s forwards;
 }
 
 /* Chacun charge vers l'autre : le joueur est a gauche, l'ennemi a droite. */
@@ -2504,10 +2511,14 @@ body {
 @keyframes charge {
   0% {
     translate: 0 0;
-    /* Le coup de reins : tres rapide, puis il freine. */
-    animation-timing-function: cubic-bezier(0.08, 0.92, 0.2, 1);
+    /* Le coup de reins : tres rapide, puis il freine -- mais l'amorti ne doit
+       pas etre si brutal que tout se joue dans les deux premieres images. Une
+       courbe trop en avant tassait 96 % du trajet dans 40 ms : ca ne se lit
+       plus comme un mouvement, ca se lit comme un saut. Celle-ci etale la
+       course sur les cinq images de la phase vive. */
+    animation-timing-function: cubic-bezier(0.2, 0.55, 0.35, 1);
   }
-  8% {
+  16% {
     translate: var(--elan) 0;
     animation-timing-function: linear;
   }
