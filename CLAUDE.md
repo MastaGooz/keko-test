@@ -5,49 +5,84 @@ téléphone** avant tout.
 
 ## Concept du jeu
 
-Un **deckbuilder d'extraction**. Deux plaisirs branchés l'un sur l'autre :
+Un **deckbuilder d'extraction**. Le personnage est générique : **c'est
+l'équipement qui fait le deck**.
 
-- **Composer son deck avant la run.** Dans un roguelike de cartes classique
-  (Slay the Spire), on part toujours du même paquet de base et la puissance se
-  construit pendant la run. Ici, non : on **emporte son gros matos**. « Pour
-  cette run, je prends cette carte-là » est le premier plaisir du jeu, et c'est
-  l'extraction qui lui donne son poids — puisqu'on peut la perdre.
-- **Ressortir vivant.** Push your luck, points de sortie, cupidité, butin. Ce
-  qu'on rapporte, on le garde. **Si on meurt, on perd tout** : les trésors comme
-  les cartes emportées.
+### La règle qui tient tout : ton deck est ton chargement
 
-Deux butins, deux rôles distincts :
+Chaque pièce d'équipement apporte **son set de cartes**. Une arme en donne une
+dizaine, et plus elle est rare, plus son set est fort. L'armure et les objets en
+ajoutent d'autres. Le deck emporté est la somme de ce qu'on porte.
 
-- **Les cartes** gagnées en run sont la **puissance**. Ramenées vivantes, elles
-  entrent dans la collection du hub et pourront être emportées aux runs
-  suivantes.
-- **Les trésors** sont la **progression globale**. Ramenés au hub, ils
-  débloquent le craft, les marchands, la suite. Ils n'ont **aucun effet en
-  run**.
+**Conséquence, et ce n'est pas un effet de bord, c'est le cœur : équiper plus
+n'est pas mieux.** Chaque carte ajoutée fait tirer les bonnes moins souvent.
+Partir léger donne un deck court et tranchant ; partir couvert donne plus
+d'outils mais plus dilués. *La taille du deck est une ressource.*
 
-### Le sac — la tension centrale
+Et le butin obéit à la même règle : un trésor qui déborde du sac est une carte
+de plus dans le deck. **L'encombrement n'est pas une mécanique à part — c'est
+la même règle appliquée à ce qu'on ramasse.**
 
-Le joueur a un **sac de petite capacité**. Les trésors ramassés y vont.
-**Au-delà du sac, un trésor devient une carte morte dans le deck** : injouable,
-elle occupe une place de main et rien d'autre.
+### Les deux temps du jeu
 
-Tout le jeu est dans cette phrase : *tu peux en ramener X ; au-delà, ça te
-pourrit le deck.* Chaque trésor de trop est un pari — de la progression au hub
-contre des combats plus pauvres, donc plus de risque de tout perdre.
+- **Avant la descente : s'équiper.** Deux slots d'armes, ou un slot à deux
+  mains. C'est là qu'on oriente son build, et ça prend trente secondes — pas
+  deux heures. C'est délibéré : *le coût de la perte doit être proportionnel au
+  travail investi*. On peut prendre un kit à un joueur ; on ne peut pas lui
+  prendre deux heures de création sans que ce soit une amputation. C'est la
+  raison pour laquelle on ne compose PAS un deck carte par carte avant de
+  partir.
+- **Pendant la descente : se renforcer, mais pour cette run seulement.** On
+  gagne des cartes, on monte sa **maîtrise** des cartes de son arme. Tout ça
+  s'évapore à la fin de la run. C'est la couche roguelike, et elle est
+  temporaire exprès.
+
+### Ce qu'on rapporte, et ce qu'on perd
+
+Deux butins, deux rôles :
+
+- **Les cartes gagnées en run ne rentrent jamais à la maison.** Elles ne durent
+  que la descente.
+- **Les trésors et composants** vont au sac, et eux se rapportent : ils servent
+  à crafter, acheter, améliorer l'équipement. C'est la seule progression qui
+  persiste.
+
+D'où l'asymétrie qui porte tout le jeu, à chaque palier : **la carte est
+temporaire, le trésor est permanent.** Survivre maintenant, ou progresser plus
+tard.
+
+**Et l'équipement meurt avec le joueur.** C'est ce qui fait exister la question
+avant même de descendre : *est-ce que j'emporte ma bonne arme ?* Garde-fou :
+une **arme commune gratuite** est toujours disponible, on ne peut pas se
+retrouver bloqué.
 
 Boucle :
 
 ```
-hub (composer le deck emporté)
-  -> donjon (combats, cartes à gagner, trésors à ramasser, points de sortie)
-  -> extraction vivant : on garde tout
-  -> hub (les cartes rejoignent la collection, les trésors la progression) ...
+hub (s'équiper : armes, armure, objets -> le deck emporté)
+  -> donjon (combats ; à chaque palier, une carte TEMPORAIRE ou un trésor
+             PERMANENT ; points de sortie)
+  -> extraction vivant : on garde le sac et son équipement
+  -> hub (craft, achat, amélioration avec le butin) ...
+     mort : on perd le sac ET l'équipement emporté
 ```
 
 ## Décisions de design
 
 Acquises. **Ne pas les remettre en question sans demander à Keko.**
 
+- **L'équipement fait le deck**, le personnage est générique. Une arme = un set
+  de cartes, la rareté fait la force du set. Armure et objets ajoutent leurs
+  propres cartes.
+- **Équiper plus dilue.** La taille du deck est une ressource ; c'est ce qui
+  rend le chargement intéressant au lieu d'être « tout prendre ».
+- **L'équipement se perd à la mort**, comme le sac. Une **arme commune
+  gratuite** empêche la spirale.
+- **Les gains de run ne persistent pas** : cartes gagnées et maîtrise
+  s'évaporent à l'extraction. Seuls le sac et l'équipement rentrent.
+- On ne compose **pas** un deck carte par carte avant de partir. Raison :
+  *le coût de la perte doit être proportionnel au travail investi*. Trente
+  secondes de chargement, oui ; deux heures de deckbuilding, non.
 - Le **sac est peu améliorable**. C'est la contrainte permanente du jeu, pas un
   axe de progression. Le hub vend du **levier et de la variété, jamais de la
   sécurité**.
@@ -56,7 +91,9 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
 - **Les trésors n'ont aucun effet en run** : ni en combat, ni en fin de combat.
   L'idée d'un second moteur « greed » — des trésors aux effets de richesse,
   formant un archétype de build — n'est **pas enterrée, elle est garée**. On
-  commence en carte morte ; on rouvrira plus tard, avec Keko.
+  commence en carte morte ; on rouvrira plus tard, avec Keko. Elle a désormais
+  un logement naturel : les cartes qui manipulent les trésors seraient le set
+  d'un **objet équipable**, et la cupidité deviendrait un choix de chargement.
 - **L'économie des trésors n'est pas tranchée.** Il y en aura de fongibles (un
   prix, de l'or) et/ou qui servent de **matériaux de craft**. À décider plus
   tard : ne rien construire dessus pour l'instant.
@@ -314,25 +351,51 @@ au hub, quelle que soit sa forme finale. Attention au vocabulaire dans tous les
 cas : un trésor ne rapporte rien en combat ni en fin de combat, l'écran annonce
 seulement ce que le butin vaudra **s'il ressort**.
 
-### La prochaine question à trancher
+### Ce que le premier test de la descente a donné
 
-La cupidité existe enfin comme **choix** et non plus comme curseur. Reste à
-savoir si ce choix est vivant :
+Keko a joué et **il continuait sans hésiter**. Diagnostic, et il était prévu :
+mourir ne coûtait rien. L'or ne servait à rien puisqu'il n'y a pas de hub, et
+le deck repartait identique à chaque descente. La simulation disait d'ailleurs
+que continuer est mathématiquement correct — 281 d'or espérés au fond contre
+197 en sortant tôt. Un joueur rationnel *doit* continuer quand perdre est
+gratuit.
 
-> **Est-ce que je suis tenté de continuer alors que je devrais rentrer ?**
+C'est ce test qui a fait remonter la faute de conception corrigée ci-dessus :
+le choix « carte de combat ou trésor » était brouillon parce que **les deux
+abîmaient le deck préparé**. La correction n'était pas de protéger le deck,
+c'était de ne plus le préparer carte par carte.
 
-Si Keko sort systématiquement à la première porte, la descente n'a pas de
-tension et il faudra donner une meilleure raison de descendre. S'il va
-systématiquement au bout, mourir ne fait pas assez mal.
+### La prochaine étape
 
-**Un risque connu à garder en tête avant de conclure :** la mort fait tout
-perdre, donc le jeu rationnel est de sortir tôt. Le contrepoids normal, c'est
-que rentrer tôt ne rapporte pas assez pour progresser — sauf que la
-progression n'existe pas encore. Il se peut que la réponse complète attende le
-hub.
+**Brancher l'équipement sur le deck**, en commençant petit : *une* arme, son
+set de cartes, et l'écran de chargement avant la descente. Armure et objets
+viendront après.
 
-Le squelette est volontairement nu : pas de hub, pas de marché, pas de
-méta-progression, chaque descente repart du deck de base gratuit.
+Tout le reste de la descente survit tel quel — points de sortie, sac,
+débordement, écran de récompense, mort qui prend tout.
+
+**Le gros du travail sera la recalibration.** Un deck issu d'une arme ne se
+comporte pas comme le deck de base actuel, et rien de tout ça ne se devine :
+voir les trois corrections que la simulation a imposées la dernière fois. Deux
+chiffres à surveiller en particulier :
+
+- **La taille du deck.** Un deck court rend chaque trésor en trop beaucoup plus
+  mordant — avec 10 cartes et une main de 5, une carte morte se voit un tour
+  sur deux. C'est probablement souhaitable, mais c'est un rasoir.
+- **La force du set de base.** La simulation a déjà montré qu'un deck de départ
+  trop solide rend les gains de run insignifiants. Si construire en descente
+  doit compter, il faut partir plus pauvre.
+
+### Question ouverte
+
+**La maîtrise persiste-t-elle entre les runs ?** Le mot appelle la
+persistance, mais une arme qui progresse sur dix runs recrée exactement le
+problème de proportionnalité qu'on vient de corriger : la perdre redeviendrait
+une amputation. Le parti pris actuel est donc **maîtrise valable pour la run
+seulement**. À confirmer avec Keko.
+
+Le squelette reste volontairement nu : pas de hub, pas de marché, pas de
+méta-progression.
 
 ## Architecture — la règle à ne pas casser
 
