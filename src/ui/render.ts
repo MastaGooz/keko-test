@@ -53,6 +53,8 @@ export type View = {
   cartes: HTMLElement
   encombrement: HTMLElement
   finTour: HTMLButtonElement
+  pioche: HTMLElement
+  defausse: HTMLElement
   palier: HTMLElement
   journal: HTMLElement
   pleinEcran: HTMLButtonElement
@@ -76,7 +78,14 @@ export function mount(root: HTMLElement, buildTime: string): View {
       <p id="energie" class="energie"></p>
 
       <div id="cartes" class="cartes"></div>
-      <button id="finTour" class="rang bouton finTour" type="button" data-action="finTour"></button>
+
+      <!-- Pioche et défausse flanquent le bouton plutôt que la main : les
+           mettre autour de la main rétrécirait les cartes d'un cinquième. -->
+      <div class="rangee-tour">
+        <div id="pioche" class="tas-jeu"></div>
+        <button id="finTour" class="rang bouton finTour" type="button" data-action="finTour"></button>
+        <div id="defausse" class="tas-jeu"></div>
+      </div>
       <p id="encombrement" class="encombrement"></p>
 
       <!-- Récompense, point de sortie, fin de descente : tout ce qui n'est pas
@@ -112,6 +121,8 @@ export function mount(root: HTMLElement, buildTime: string): View {
     cartes: root.querySelector<HTMLElement>('#cartes')!,
     encombrement: root.querySelector<HTMLElement>('#encombrement')!,
     finTour: root.querySelector<HTMLButtonElement>('#finTour')!,
+    pioche: root.querySelector<HTMLElement>('#pioche')!,
+    defausse: root.querySelector<HTMLElement>('#defausse')!,
     palier: root.querySelector<HTMLElement>('#palier')!,
     journal: root.querySelector<HTMLElement>('#journal')!,
     pleinEcran: root.querySelector<HTMLButtonElement>('#pleinEcran')!,
@@ -167,6 +178,9 @@ export function render(
     .map((c, index) => ligneCarte(etat, c, index, selection, fini, etat.main.length))
     .join('')
   view.encombrement.innerHTML = encombrement(descente)
+
+  view.pioche.innerHTML = tasDeJeu('Pioche', etat.pioche.length)
+  view.defausse.innerHTML = tasDeJeu('Défausse', etat.defausse.length)
 
   view.finTour.innerHTML = etiquetteFinTour(etat, occupation)
   view.finTour.disabled = fini || occupation !== 'libre'
@@ -369,6 +383,25 @@ function encombrement(descente: Descente): string {
     `<strong>${tresorsAuDeck(descente)}</strong> en trop dans le deck · ` +
     `${GLYPHE.tresor} <strong>${tresorsEnMain(etat)}/${etat.main.length}</strong> en main · ` +
     `butin : <strong class="or">${butinTransporte(descente)}</strong> en jeu`
+  )
+}
+
+/**
+ * Un tas, en pile. L'épaisseur suit le nombre de cartes — jusqu'à trois
+ * feuillets — pour qu'on lise d'un coup d'oeil s'il reste de quoi piocher,
+ * sans avoir à lire le compte.
+ */
+function tasDeJeu(nom: string, combien: number): string {
+  const feuillets = Math.min(3, combien)
+  const pile = Array.from(
+    { length: feuillets },
+    (_, i) => `<span class="feuillet" style="--f:${feuillets - 1 - i}"></span>`,
+  ).join('')
+
+  return (
+    `<span class="pile-cartes${combien === 0 ? ' vide' : ''}">${pile}` +
+    `<span class="compte">${combien}</span></span>` +
+    `<span class="nom-tas">${nom}</span>`
   )
 }
 

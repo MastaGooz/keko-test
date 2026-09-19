@@ -347,6 +347,12 @@ donjon. Ce qui tourne :
   **La phase d'agonie vient de l'état, pas d'une classe posée à la main.** Un
   nouveau rendu au milieu de la chute effacerait la classe et figerait le
   corps ; or le joueur peut tout à fait jouer une autre carte pendant ce temps.
+- **la pioche et la défausse en piles**, de part et d'autre du bouton de fin de
+  tour — pas autour de la main : les y mettre rétrécissait les cartes d'un
+  cinquième. L'épaisseur de la pile suit le nombre de cartes, jusqu'à trois
+  feuillets, pour qu'on lise s'il reste de quoi piocher sans lire le compte. Un
+  tas vide garde sa place en pointillés ; un trou dans la rangée serait pire
+  qu'un creux.
 - **Le jeu a des temps.** Tant qu'une animation se déroule, l'entrée de combat
   est verrouillée et **le combat ne se résout pas** : l'écran de récompense
   attend que le dernier corps soit tombé. Le bouton de fin de tour porte le

@@ -2006,3 +2006,91 @@ body {
 .finTour[disabled] {
   opacity: 0.75;
 }
+
+/* --- la pioche et la defausse --------------------------------------------- */
+
+.rangee-tour {
+  display: flex;
+  align-items: stretch;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.rangee-tour .finTour {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Un tas : la pile, puis son nom. Etroit, pour ne rien prendre au bouton. */
+.tas-jeu {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  flex: 0 0 auto;
+  width: 3.25rem;
+}
+
+/* L'epaisseur de la pile dit s'il reste de quoi piocher, sans lire le compte. */
+.pile-cartes {
+  position: relative;
+  width: 1.75rem;
+  height: 2.375rem;
+}
+
+.feuillet {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--trait);
+  border-radius: 4px;
+  background: linear-gradient(168deg, #2f2f3b, #1b1b23);
+  box-shadow: 0 1px 3px #0008;
+  /* Chaque feuillet se decale : on voit l'epaisseur du tas. */
+  transform: translate(calc(var(--f) * -2px), calc(var(--f) * -2px));
+}
+
+.pile-cartes.vide .feuillet {
+  display: none;
+}
+
+/* Le tas vide garde sa place : un trou dans la rangee serait pire qu'un creux. */
+.pile-cartes.vide::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 1px dashed var(--trait);
+  border-radius: 4px;
+  opacity: 0.5;
+}
+
+.compte {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg);
+  text-shadow: 0 1px 3px #000;
+}
+
+.pile-cartes.vide .compte {
+  color: var(--muted);
+}
+
+.nom-tas {
+  font-size: 0.5625rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Ecran court : le nom disparait, le compte suffit. */
+@media (max-height: 620px) {
+  .nom-tas {
+    display: none;
+  }
+}
