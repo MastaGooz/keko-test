@@ -1187,78 +1187,8 @@ body {
   }
 }
 
-/* --- l'agonie --------------------------------------------------------------- */
-
-/* Un corps tue reste au rang le temps d'encaisser, comme n'importe quel autre
-   coup : sinon il disparait avant que ses degats ne s'affichent, et on ne voit
-   jamais le coup qui l'a achevee. Il ne se vise plus pour autant. */
-.creature.mort {
-  cursor: default;
-}
-
-.creature.mort .intention,
-.creature.mort .effet {
-  opacity: 0.3;
-}
-
-/* Puis il s'effondre : un eclair blanc, et il bascule sur le flanc. */
-.creature.meurt {
-  animation: effacement 0.52s ease-in forwards;
-}
-
-@keyframes effacement {
-  0%,
-  40% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-.creature.meurt .silhouette {
-  animation: trepas 0.52s ease-in forwards;
-}
-
-@keyframes trepas {
-  0% {
-    transform: translateY(0) rotate(0deg) scale(1);
-    filter: brightness(1) saturate(1);
-  }
-  16% {
-    /* L'eclair : le corps blanchit avant de ceder. */
-    transform: translateY(-4px) rotate(0deg) scale(1.06);
-    filter: brightness(5) saturate(0.15);
-  }
-  100% {
-    transform: translateY(15px) rotate(80deg) scale(0.88);
-    filter: brightness(0.45) saturate(0.35);
-  }
-}
-
-/* La jauge se vide et s'eteint avec lui. */
-.creature.meurt .jauge {
-  animation: jauge-eteinte 0.52s ease-in forwards;
-}
-
-@keyframes jauge-eteinte {
-  to {
-    opacity: 0;
-    transform: scaleX(0.4);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .creature.meurt,
-  .creature.meurt .silhouette,
-  .creature.meurt .jauge {
-    animation-duration: 0.01ms;
-  }
-}
-
 /* Respecte le reglage systeme : pas de mouvement si l'utilisateur n'en veut pas. */
 @media (prefers-reduced-motion: reduce) {
-  .un-de-moins,
   .degats-voles,
   .carte.visee::after {
     animation-duration: 0.01ms;
@@ -1271,6 +1201,10 @@ body {
   .duel,
   .duel-corps {
     transition: none;
+  }
+
+  .duel-corps.abattu .tete-de-mort {
+    animation: none;
   }
 
   .app.secoue.fort {
@@ -2603,4 +2537,77 @@ body {
 #cartes {
   position: relative;
   z-index: 28;
+}
+
+/* --- la mort, dans le cadre ------------------------------------------------ */
+
+/* Le corps abattu s'eteint en silhouette NOIRE. Pas de chute, pas de bascule :
+   la mort n'est plus un mouvement, c'est un etat qui tombe d'un coup. Ce qui
+   la rend violente, c'est le tampon qui suit -- et un tampon a besoin d'un
+   fond mat pour se lire. */
+.duel-corps.abattu .silhouette {
+  filter: brightness(0) drop-shadow(0 0 1.25rem #ff2d2d3d);
+  /* Elle respire encore une fraction de seconde apres le coup : on coupe. */
+  animation: none;
+  transition: filter 0.1s linear;
+}
+
+.duel-corps.abattu .duel-nom {
+  color: #c4444a;
+}
+
+/* La tete de mort : posee au centre du corps, invisible tant qu'il vit. */
+.tete-de-mort {
+  position: absolute;
+  /* Deux pieges evites ici, et ils se ressemblent.
+
+     1. Pas de `top/left: 50%` + marges negatives : les `%` d'une MARGE se
+        rapportent toujours a la LARGEUR du bloc conteneur, jamais a sa
+        hauteur. Le crane se posait 6 px trop bas sur un corps plus large que
+        haut.
+     2. Pas de `inset: 24%` non plus : un `<svg>` a viewBox est un element
+        REMPLACE, avec un rapport intrinseque. Les quatre decalages poses, son
+        rapport l'emporte et le `bottom` est ignore -- il prenait sa hauteur de
+        sa largeur et redescendait de 5 px.
+
+     Donc : la hauteur commande (c'est elle qu'on veut caler sur le corps), la
+     largeur suit le rapport, et les marges automatiques centrent. */
+  top: 24%;
+  height: 52%;
+  width: auto;
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  fill: #e8232d;
+  filter: drop-shadow(0 0 1rem #ff2d2daa) drop-shadow(0 0.25rem 0.4rem #000c);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* LE TAMPON. Elle arrive enorme et translucide, fond sur le corps et depasse
+   sa taille de repos avant d'y revenir. C'est le depassement qui fait le coup
+   de tampon : sans lui, un zoom inverse se lit comme un fondu qui retrecit.
+   Rapide (0,26 s) et brutale -- tout le reste de la sequence est immobile,
+   c'est le seul mouvement, il doit frapper. */
+.duel-corps.abattu .tete-de-mort {
+  animation: tampon 0.26s cubic-bezier(0.25, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes tampon {
+  0% {
+    opacity: 0;
+    transform: scale(4.2) rotate(-14deg);
+  }
+  35% {
+    opacity: 0.85;
+  }
+  72% {
+    /* Le depassement : elle s'ecrase un peu trop fort avant de se poser. */
+    opacity: 1;
+    transform: scale(0.88) rotate(2deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
 }

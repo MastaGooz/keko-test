@@ -136,16 +136,6 @@ export function mount(root: HTMLElement, buildTime: string): View {
 
 /** Reflète l'état dans le DOM. Appelé après chaque action. */
 /**
- * Un corps en train de mourir. Il reste à l'écran le temps d'encaisser le coup
- * qui l'a tué — sinon il disparaît avant que ses dégâts ne s'affichent — puis
- * il s'effondre.
- *
- * La phase vient de l'état et non d'une classe posée à la main : un nouveau
- * rendu au milieu de l'agonie effacerait la classe, et le corps resterait figé.
- */
-export type Agonie = { index: number; phase: 'coup' | 'chute' }
-
-/**
  * Ce qui occupe l'écran. `libre` = c'est au joueur de jouer ; sinon une
  * animation se déroule et l'entrée est verrouillée.
  */
@@ -156,7 +146,6 @@ export function render(
   descente: Descente,
   seed: number,
   selection: number | null,
-  agonie: Agonie[] = [],
   occupation: Occupation = 'libre',
   auFront: number | null = null,
 ): void {
@@ -167,17 +156,15 @@ export function render(
   const visee = carte !== null && carte.type === 'combat' ? carte : null
 
   view.seed.textContent = String(seed)
-  // Les mourants gardent leur place dans le rang : on parcourt tous les corps
-  // plutôt que les seuls vivants, pour qu'aucun ne glisse pendant l'agonie.
+  // Un corps abattu ne revient pas : sa mort s'est jouée dans le gros plan,
+  // il n'y a plus rien à montrer de lui sur la scène.
   view.ennemis.innerHTML =
     corpsJoueur(etat, visee, fini, auFront !== null) +
     etat.ennemis
-    .map((ennemi, index) => ({ ennemi, index, agonie: agonie.find((a) => a.index === index) }))
-    .filter(({ ennemi, agonie: a }) => ennemi.pv > 0 || a !== undefined)
-    .map(({ ennemi, index, agonie: a }) =>
-      corpsEnnemi(etat, ennemi, index, visee, fini, a, index === auFront),
-    )
-    .join('')
+      .map((ennemi, index) => ({ ennemi, index }))
+      .filter(({ ennemi }) => ennemi.pv > 0)
+      .map(({ ennemi, index }) => corpsEnnemi(etat, ennemi, index, visee, fini, index === auFront))
+      .join('')
   view.energie.innerHTML = fini ? '' : energie(etat, visee)
 
   // Les boutons de main sont reconstruits : l'écoute est déléguée à la racine.
@@ -214,15 +201,13 @@ function corpsEnnemi(
   index: number,
   visee: Carte | null,
   fini: boolean,
-  agonie?: Agonie,
   auFront = false,
 ): string {
   const imminent = ennemi.compteur <= 1
   const espece = ESPECES[ennemi.nom] ?? { espece: 'roquet', teinte: '#9a7a62' }
   const attente = imminent ? '' : `<span class="delai">${ennemi.compteur}t</span>`
 
-  // Un mourant ne se vise plus, et son intention ne veut plus rien dire.
-  const c = visee === null || fini || agonie !== undefined ? null : consequence(etat, visee, index)
+  const c = visee === null || fini ? null : consequence(etat, visee, index)
   // Aucun aperçu de PV restants sous le corps : il ajoutait une ligne, donc
   // faisait sauter la hauteur du rang au moment même où l'on vise. Et il
   // n'apprenait rien — la carte affiche ses dégâts, et le corps qu'elle peut
@@ -243,8 +228,7 @@ function corpsEnnemi(
   const front = auFront ? ' au-front' : ''
 
   if (c === null) {
-    const etat_ = agonie === undefined ? '' : ` mort${agonie.phase === 'chute' ? ' meurt' : ''}`
-    return `<div class="creature${etat_}${front}" data-corps="${index}">${corps}</div>`
+    return `<div class="creature${front}" data-corps="${index}">${corps}</div>`
   }
 
   return (

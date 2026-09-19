@@ -21,12 +21,19 @@ import {
   resoudreCombat,
   terminerButin,
 } from './logic/descente.ts'
-import type { Agonie, Occupation } from './ui/render.ts'
+import type { Occupation } from './ui/render.ts'
 import { figure, FIGURE_JOUEUR, mount, render } from './ui/render.ts'
-import { DUREE_DUEL, duel, fermerDuel, IMPACT_DUEL, PAS_ENTRE_DUELS } from './ui/duel.ts'
+import {
+  DUREE_DUEL,
+  duel,
+  fermerDuel,
+  IMPACT_DUEL,
+  PAS_ENTRE_DUELS,
+  TAMPON_DUEL,
+} from './ui/duel.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
-import { DUREE_CHUTE, DUREE_COUP, secouerEcran } from './ui/effets.ts'
+import { secouerEcran } from './ui/effets.ts'
 import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
 import { tracerVisees } from './ui/visees.ts'
 import {
@@ -63,17 +70,23 @@ let auFront: number | null = null
  * Ouvre un gros plan et retire de la scène les deux corps qu'il montre. Tout
  * ce qui suit — son, secousse, chute éventuelle — se règle sur sa durée.
  */
-function grosPlan(cible: number, nomCible: string, attaquant: 'joueur' | 'ennemi', degats: number): void {
+function grosPlan(
+  cible: number,
+  nomCible: string,
+  attaquant: 'joueur' | 'ennemi',
+  degats: number,
+  mort = false,
+): void {
   auFront = cible
   dessiner()
-  duel(view, FIGURE_JOUEUR, figure(nomCible), attaquant, degats)
+  duel(view, FIGURE_JOUEUR, figure(nomCible), attaquant, degats, mort)
+  if (mort) window.setTimeout(() => sonAcheve(), TAMPON_DUEL)
   window.setTimeout(() => {
     auFront = null
     dessiner()
   }, DUREE_DUEL)
 }
-/** Les corps qui achèvent de mourir. Ils restent au rang le temps de tomber. */
-let agonie: Agonie[] = []
+
 /**
  * Ce qui occupe l'écran. Le jeu a des **temps** : tant qu'une animation se
  * déroule, l'entrée est verrouillée et le combat ne se résout pas. Sans ça
@@ -92,13 +105,12 @@ function demarrer(nouvelleSeed: number): void {
   auFront = null
   selection = null
   finSonnee = false
-  agonie = []
   view.root.classList.remove('panneau-ouvert')
   dessiner()
 }
 
 function dessiner(): void {
-  render(view, descente, seed, selection, agonie, occupation, auFront)
+  render(view, descente, seed, selection, occupation, auFront)
   tracerVisees(view)
 }
 
@@ -133,28 +145,6 @@ function conclure(): void {
     sonIssue(descente.phase.issue === 'extrait')
     finSonnee = true
   }
-}
-
-/**
- * L'agonie d'un corps, en deux temps : il encaisse d'abord le coup comme
- * n'importe quel autre — sinon il disparaîtrait avant que ses dégâts ne
- * s'affichent — puis il s'effondre et quitte le rang.
- */
-function faireMourir(index: number, debutChute = DUREE_COUP): void {
-  // Le corps entre en agonie TOUT DE SUITE, même si sa chute est retardée :
-  // c'est ce qui le garde au rang. Sans ça il disparaîtrait du rendu à
-  // l'instant où ses PV tombent à zéro — derrière le voile du gros plan — et
-  // il n'y aurait plus personne à faire tomber quand le voile se lève.
-  agonie = [...agonie, { index, phase: 'coup' }]
-  window.setTimeout(() => {
-    agonie = agonie.map((a) => (a.index === index ? { index, phase: 'chute' as const } : a))
-    sonAcheve()
-    dessiner()
-  }, debutChute)
-  window.setTimeout(() => {
-    agonie = agonie.filter((a) => a.index !== index)
-    dessiner()
-  }, debutChute + DUREE_CHUTE)
 }
 
 /** Ce qui doit attendre son tour. Les réglages, eux, répondent toujours. */
@@ -203,7 +193,7 @@ bindInput(view, (action) => {
         const cible = combat.ennemis[action.cible]
         if (inflige > 0 && cible !== undefined) {
           marques.push(() => {
-            grosPlan(action.cible, cible.nom, 'joueur', inflige)
+            grosPlan(action.cible, cible.nom, 'joueur', inflige, reste <= 0)
             // Le son et la secousse tombent SUR L'IMPACT du gros plan, pas au
             // moment de la tape : le coup est désormais un geste qui se
             // déroule, plus un chiffre qui change.
@@ -215,12 +205,8 @@ bindInput(view, (action) => {
           })
           attente = DUREE_DUEL
         }
-        // Le corps tombe quand le voile se lève : le gros plan a déjà montré
-        // le coup, la scène montre ce qu'il en reste.
-        if (debout > 0 && reste <= 0) {
-          faireMourir(action.cible, DUREE_DUEL)
-          attente = DUREE_DUEL + DUREE_CHUTE
-        }
+        // Plus rien après : la mort se joue DANS le gros plan, et le corps ne
+        // revient simplement pas sur la scène.
       }
       selection = null
       break
@@ -240,8 +226,11 @@ bindInput(view, (action) => {
         frappes.forEach((frappe, rang) => {
           const depart = rang * PAS_ENTRE_DUELS
           const index = descente.combat.ennemis.findIndex((e) => e.nom === frappe.nom)
+          // `pvJoueur` est ce qu'il RESTE après la frappe : à zéro, c'est
+          // celle-ci qui a tué, et c'est elle qui porte la tête de mort.
+          const fatale = frappe.pvJoueur === 0
           window.setTimeout(
-            () => grosPlan(index, frappe.nom, 'ennemi', frappe.degats),
+            () => grosPlan(index, frappe.nom, 'ennemi', frappe.degats, fatale),
             depart,
           )
           window.setTimeout(() => {

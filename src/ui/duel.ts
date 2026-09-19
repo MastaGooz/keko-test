@@ -29,7 +29,7 @@
  * gros plan est le même que le coup vienne du joueur ou d'en face.
  */
 import type { View } from './render.ts'
-import { creature } from './illustrations.ts'
+import { creature, teteDeMort } from './illustrations.ts'
 
 /** Un combattant, tel que le gros plan a besoin de le connaître. */
 export type Figure = { nom: string; espece: string; teinte: string }
@@ -43,6 +43,12 @@ export type Figure = { nom: string; espece: string; teinte: string }
  * transition suivie d'un coup.
  */
 export const IMPACT_DUEL = 60
+
+/**
+ * Quand le tampon de mort s'abat. Juste après l'impact : le coup d'abord, ce
+ * qu'il a fait ensuite — l'ordre inverse ferait lire la mort comme la cause.
+ */
+export const TAMPON_DUEL = IMPACT_DUEL + 90
 
 /** Quand le voile commence à se lever. Entre les deux : rien ne bouge. */
 const SORTIE = 640
@@ -83,6 +89,7 @@ export function duel(
   ennemi: Figure,
   attaquant: 'joueur' | 'ennemi',
   degats: number,
+  mort = false,
 ): void {
   fermerDuel(view)
 
@@ -111,6 +118,16 @@ export function duel(
     if (touche !== null) chiffre(view, touche, degats)
   })
 
+  // La mort se joue ICI, dans le cadre, et nulle part ailleurs : le corps
+  // s'éteint en silhouette noire et la tête de mort s'y abat. Il n'y a plus
+  // d'agonie sur la scène — le corps abattu ne revient simplement pas.
+  if (mort) {
+    planifier(TAMPON_DUEL, () => {
+      const touche = calque.querySelector<HTMLElement>('.duel-corps:not(.attaque)')
+      touche?.classList.add('abattu')
+    })
+  }
+
   planifier(SORTIE, () => calque.classList.remove('ouvert'))
   planifier(DUREE_DUEL, () => calque.remove())
 }
@@ -127,7 +144,7 @@ function figureHtml(figure: Figure, cote: string, attaque: boolean): string {
     `<div class="duel-corps ${cote}${attaque ? ' attaque' : ''}" ` +
     `style="--teinte:${figure.teinte}">` +
     `<span class="duel-chair">${creature(figure.espece, `duel-${cote}`)}` +
-    `<span class="socle"></span></span>` +
+    `<span class="socle"></span>${teteDeMort()}</span>` +
     `<span class="duel-nom">${figure.nom}</span>` +
     `</div>`
   )

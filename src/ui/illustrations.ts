@@ -79,6 +79,28 @@ const DEFAUT = '<path d="M16 4.5l11 6.5v11l-11 6.5-11-6.5v-11z"/><path d="M16 12
  * Le sceau des tresors, a la place de la gemme de cout. Un glyphe hachure
  * passait pour un caractere manquant des que la carte grandissait.
  */
+/**
+ * La tête de mort qui se plaque sur un corps abattu, dans le gros plan.
+ *
+ * Pleine et non filaire, comme les créatures : à la taille où elle se pose —
+ * la moitié d'un corps de 490 px — un contour se lirait comme un pictogramme
+ * d'interface, pas comme une marque frappée dans la chair.
+ */
+export function teteDeMort(): string {
+  return (
+    '<svg class="tete-de-mort" viewBox="0 0 48 48" aria-hidden="true">' +
+    // Le crane : une calotte large qui se resserre sur les pommettes.
+    '<path d="M24 3C13.5 3 6 10.8 6 21.2c0 6.2 2.6 10.6 6.6 13.2l1 5.4c.3 1.6 1.7 2.8 3.4 2.8h14c1.7 0 3.1-1.2 3.4-2.8l1-5.4c4-2.6 6.6-7 6.6-13.2C42 10.8 34.5 3 24 3z"/>' +
+    // Les orbites, creusees dans le crane.
+    '<ellipse cx="16.4" cy="21" rx="5.3" ry="6.1" fill="#120305"/>' +
+    '<ellipse cx="31.6" cy="21" rx="5.3" ry="6.1" fill="#120305"/>' +
+    // Le nez, puis les dents : deux fentes qui font la machoire.
+    '<path d="M24 26.6l-3.1 6.2h6.2z" fill="#120305"/>' +
+    '<path d="M15.6 37.4h16.8v2.2H15.6zM19.4 34.6h1.9v5h-1.9zM26.7 34.6h1.9v5h-1.9z" fill="#120305"/>' +
+    '</svg>'
+  )
+}
+
 export function sceau(): string {
   return (
     '<svg class="dessin-sceau" viewBox="0 0 24 24" aria-hidden="true" fill="none" ' +

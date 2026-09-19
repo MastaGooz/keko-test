@@ -465,31 +465,28 @@ donjon. Ce qui tourne :
   version lissée uniformément était molle, une deuxième penchait ; chaque étape
   porte donc sa propre accélération, l'animation est `linear` en global, et il
   n'y a pas une once de `rotate`.
-- **Un corps tué reste au rang le temps d'encaisser**, comme n'importe quel
-  autre coup, puis s'effondre : un éclair blanc, et il bascule sur le flanc en
-  s'effaçant. Avant ça il disparaissait à l'instant de sa mort, **donc on ne
-  voyait jamais les dégâts qui l'avaient achevé** — le rendu ne montrait que
-  les vivants. Il garde sa place dans le rang pendant l'agonie, pour qu'aucun
-  voisin ne glisse, et il n'est plus visable.
+- **La mort se joue DANS le gros plan, et nulle part ailleurs.** Le corps
+  abattu — l'ennemi, ou le joueur — s'éteint en **silhouette noire**, et une
+  **tête de mort rouge s'abat dessus comme un tampon** : elle arrive énorme et
+  translucide, fond sur le corps, **dépasse sa taille de repos** avant d'y
+  revenir. C'est le dépassement qui fait le coup de tampon ; sans lui, un zoom
+  inversé se lit comme un fondu qui rétrécit. 260 ms, brutales — tout le reste
+  de la séquence est immobile, c'est le seul mouvement, il doit frapper.
 
-  **Le délai avant la chute est calé sur la secousse, pas sur la durée de vie
-  du chiffre de dégâts** (230 ms, pas 420). L'impact se lit dès que le corps
-  accuse le coup ; attendre que le chiffre ait fini de monter mettait une
-  latence molle entre le coup et la mort. Le chiffre continue sa course
-  par-dessus la chute, et pour ça il est **posé sur la racine de la page, pas
-  dans le corps** — `render()` n'écrit que dans les nœuds qu'il a en cache,
-  donc un enfant direct de la racine survit à tous les rendus, alors qu'un
-  enfant du corps serait effacé en plein vol par celui qui déclenche la chute.
+  Le tampon tombe **90 ms après l'impact** : le coup d'abord, ce qu'il a fait
+  ensuite. L'ordre inverse ferait lire la mort comme la cause.
 
-  **La phase d'agonie vient de l'état, pas d'une classe posée à la main.** Un
-  nouveau rendu au milieu de la chute effacerait la classe et figerait le
-  corps ; or le joueur peut tout à fait jouer une autre carte pendant ce temps.
+  **Il n'y a plus d'agonie sur la scène** — ni chute, ni bascule, ni éclair, ni
+  état `Agonie` dans le rendu. Le corps abattu ne revient simplement pas quand
+  le voile se lève. C'était toute une mécanique (garder le mort au rang pour
+  qu'on voie les dégâts qui l'ont achevé, décaler la chute, une phase portée
+  par l'état) et le cadre l'a rendue sans objet : les dégâts et la mort s'y
+  montrent au même endroit, en grand.
 
-  **Depuis le gros plan, la chute attend que le voile se lève** — mais l'entrée
-  en agonie, elle, reste immédiate. C'est elle qui garde le corps au rang :
-  sans ça il disparaîtrait du rendu à l'instant où ses PV tombent à zéro,
-  derrière le voile, et il n'y aurait plus personne à faire tomber quand le
-  voile se lève.
+  **Le corps mort doit être MAT pour que le tampon se lise.** D'où la
+  silhouette en `brightness(0)` plutôt qu'une teinte sombre — et sa respiration
+  coupée net, sinon il continue de souffler une fraction de seconde après sa
+  mort.
 - **la pioche et la défausse en piles de vrais dos de carte**, dans les coins
   bas, à **la taille exacte des cartes de la main** et enfouies comme elles :
   on n'en voit que le haut, sur la même ligne de flottaison. Un tas doit être
@@ -868,6 +865,20 @@ fenêtre, donc la racine est leur place naturelle — et surtout le calque du gr
 plan doit les lire alors qu'il vit **hors de `.app`**, puisqu'un transform sur
 `.app` (la secousse) en ferait le bloc conteneur de ses enfants en position
 fixe.
+
+**Deux pièges de positionnement, rencontrés sur la tête de mort**, et ils se
+ressemblent :
+
+- les `%` d'une **marge** se rapportent toujours à la **largeur** du bloc
+  conteneur, jamais à sa hauteur — un `top/left: 50%` + marges négatives posait
+  le crâne 6 px trop bas sur un corps plus large que haut ;
+- un `<svg>` à viewBox est un élément **remplacé**, donc porteur d'un rapport
+  intrinsèque. Les quatre décalages posés (`inset`), **son rapport l'emporte et
+  le `bottom` est ignoré** : il prenait sa hauteur de sa largeur et redescendait
+  de 5 px.
+
+La forme juste : la dimension qu'on veut contrôler est explicite, l'autre suit
+le rapport, et des marges automatiques centrent.
 
 **Aucun pourcentage là-dedans, et c'est délibéré** (voir la section sur ce
 piège) : la borne de colonne s'écrivait `26%` et changeait de sens selon la
