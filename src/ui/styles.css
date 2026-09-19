@@ -119,7 +119,16 @@ body {
   width: auto;
   height: 100%;
   transform-origin: 50% 100%;
-  animation: souffle 3.4s ease-in-out infinite;
+  /* Le decalage de la respiration passe par des VARIABLES, jamais par une
+     surcharge de `animation-duration` / `animation-delay`. Sinon les regles
+     `:nth-child` qui le portent sont plus specifiques que `.silhouette.assaut`
+     et imposent leur tempo a l'assaut : le deuxieme monstre bondissait sur
+     3,9 s au lieu de 0,58 et demarrait a 29 % de sa course. */
+  animation-name: souffle;
+  animation-duration: var(--souffle-duree, 3.4s);
+  animation-delay: var(--souffle-delai, 0s);
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
   /* Un liseré clair sur le bord superieur : la lumiere vient d'en haut, comme
      sur les cartes. Puis l'ombre portee, qui pose la bete sur le sol. */
   filter:
@@ -210,13 +219,13 @@ body {
 
 /* Decalees : une meute qui respire a l'unisson fait machine, pas vivant. */
 #ennemis .creature:nth-child(2) .silhouette {
-  animation-delay: -1.15s;
-  animation-duration: 3.9s;
+  --souffle-delai: -1.15s;
+  --souffle-duree: 3.9s;
 }
 
 #ennemis .creature:nth-child(3) .silhouette {
-  animation-delay: -2.4s;
-  animation-duration: 3.1s;
+  --souffle-delai: -2.4s;
+  --souffle-duree: 3.1s;
 }
 
 /* L'oeil : le seul point lumineux. C'est lui qui fait la difference entre une

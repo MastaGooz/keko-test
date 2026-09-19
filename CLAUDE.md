@@ -299,7 +299,17 @@ donjon. Ce qui tourne :
   dégâts. Une salve simultanée ne se lit pas : on voit tout bouger sans savoir
   qui a pris quoi.
 
-  **L'intervalle doit dépasser un assaut complet, secousse comprise** (620 ms
+  **Le décalage de la respiration passe par des variables CSS, jamais par une
+  surcharge de `animation-duration` / `animation-delay`.** Les règles
+  `:nth-child` qui le portent ont une spécificité de (1,3,0), contre (0,2,0)
+  pour `.silhouette.assaut` : elles imposaient donc leur tempo à l'assaut. Le
+  deuxième monstre bondissait sur 3,9 s au lieu de 0,58 et démarrait à 29 % de
+  sa course, pendant que la secousse restait calée sur 265 ms — tout paraissait
+  décoordonné, alors qu'un monstre seul était impeccable. **Un symptôme qui
+  n'apparaît qu'à partir du deuxième élément d'une liste doit faire chercher
+  une règle indexée.**
+
+  **L'intervalle doit aussi dépasser un assaut complet, secousse comprise** (620 ms
   pour un assaut de 580 et une secousse de 260). Un intervalle plus court était
   impeccable sur un monstre seul et cassé dès le deuxième : son élan démarrait
   pendant la secousse déclenchée par le précédent, et comme la secousse est
