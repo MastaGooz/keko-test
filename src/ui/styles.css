@@ -552,7 +552,9 @@ body {
   /* Trois bornes : la taille voulue, la part de colonne, et la hauteur
      disponible. En paysage c'est la HAUTEUR qui manque, jamais la largeur :
      sans la troisieme borne, la main deborderait sous l'ecran. */
-  --large: min(9rem, 42%, 19vh);
+  /* 26 % : avec un pas de 68 %, cinq cartes occupent 3,72 fois leur largeur.
+     Au-dela, la main deborderait de sa colonne. */
+  --large: min(9rem, 26%, 19vh);
   position: relative;
   flex: 0 0 auto;
   width: var(--large);
@@ -621,10 +623,14 @@ body {
   pointer-events: none;
 }
 
-/* Le recouvrement se calcule : les n cartes remplissent exactement la colonne.
-   Ce qui reste visible de chacune, c'est (largeur colonne - largeur carte)/(n-1). */
+/* Le recouvrement est une FRACTION DE LA CARTE, pas un partage de la colonne.
+   L'ancien calcul repartissait les cartes sur toute la largeur disponible ; il
+   tenait quand leur taille venait de cette largeur. Depuis qu'elles sont
+   bornees par la HAUTEUR d'ecran, elles sont bien plus etroites que leur part
+   de place -- le pas atteignait 138 px pour des cartes de 66, et la main
+   n'etait plus une main tenue mais une rangee de cartes espacees. */
 .carte + .carte {
-  margin-left: calc((100% - var(--large)) / (var(--n, 5) - 1) - var(--large));
+  margin-left: calc(var(--large) * -0.32);
 }
 
 /* La vitre : le dessin, dans la moitie haute. */
@@ -2145,7 +2151,7 @@ body {
   }
 
   .carte {
-    --large: min(9rem, 42%, 17vh);
+    --large: min(9rem, 26%, 17vh);
   }
 
   .chair {
@@ -2189,7 +2195,7 @@ body {
   }
 
   .carte {
-    --large: min(9rem, 42%, 15.5vh);
+    --large: min(9rem, 26%, 15.5vh);
   }
 
   .chair {
