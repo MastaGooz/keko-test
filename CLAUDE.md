@@ -201,8 +201,8 @@ marché, ni carte de donjon. Ce qui tourne :
    de `--n` : les n cartes remplissent exactement la colonne. Une largeur fixe
    tenait à 390 px et sortait de l'écran à 320. Les cartes des bords, pivotées,
    débordent d'une dizaine de pixels — d'où les 4 px de marge sur `.cartes`,
-   qui les gardent dans la gouttière de la page. Toujours revérifier de 320 à
-   544 px après avoir touché à la taille ou à la rotation.
+   qui les gardent dans la gouttière de la page. Toujours revérifier après
+   avoir touché à la taille ou à la rotation.
 - trois groupes d'ennemis calibrés par simulation ;
 - `npm run verif` : 19 vérifications des règles, sans navigateur.
 
@@ -303,10 +303,28 @@ Les sauvegardes portent un `version` (`STATE_VERSION`) ; `deserialize` renvoie
 `null` si la version ne correspond pas. En faisant évoluer `GameState`,
 incrémenter la version (ou écrire une migration).
 
-## Contraintes mobile
+## Contraintes mobile — et l'échelle
 
 - Cibles tactiles **≥ 48 px** de haut (le bouton actuel fait 64).
 - Tester au doigt, pas seulement à la souris.
+
+**Toute l'interface est dimensionnée en `rem`, jamais en pixels figés** (sauf
+bordures, rayons et ombres). La racine grandit avec l'écran :
+
+```css
+html { font-size: clamp(16px, min(0.6vw + 13.4px, 2.4vh), 24px); }
+```
+
+16 px au doigt sur un téléphone, jusqu'à 24 px sur un grand écran — la carte
+passe de 144x202 à 216x302. Sans ça, le jeu restait une colonne minuscule
+perdue au milieu d'un écran de PC, et Keko teste aussi depuis un PC distant.
+
+**L'échelle suit la plus contraignante des deux dimensions.** La largeur seule
+ne suffit pas : sur un portable large mais peu haut, des cartes calibrées sur
+la largeur passeraient sous le bord de l'écran. Vérifié à 390x844, 1366x768,
+1920x1080 et 2560x1440 — le bouton de fin de tour reste visible sans scroller
+dans les quatre cas. **Revérifier ces quatre formats après toute modification
+de taille**, et se souvenir qu'une seule dimension ne suffit jamais à conclure.
 
 ## Commandes
 

@@ -13,7 +13,7 @@
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
 import { butin, consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
 import { CAPACITE_SAC, valeurSac } from '../logic/cartes.ts'
-import { dessin } from './illustrations.ts'
+import { dessin, sceau } from './illustrations.ts'
 
 /** Le butin transporté : ce que le sac a pris, et combien a été ramassé. */
 export type Poche = { ramasse: number; sac: Carte[] }
@@ -300,7 +300,7 @@ function carteTresor(carte: Carte, place: string): string {
     `<span class="vitre">${dessin(carte.nom)}</span>` +
     `<span class="plaque"><span class="nom">${carte.nom}</span></span>` +
     `<span class="bandeau">MORTE</span>` +
-    `<span class="gemme sceau">${GLYPHE.tresor}</span>` +
+    `<span class="gemme sceau">${sceau()}</span>` +
     `<span class="badge valeur">${valeur}</span>` +
     `</div>`
   )

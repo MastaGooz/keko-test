@@ -70,6 +70,18 @@ const TRACES: Record<string, string> = {
 /** Le signe neutre, pour tout ce qui n'a pas encore de dessin. */
 const DEFAUT = '<path d="M16 4.5l11 6.5v11l-11 6.5-11-6.5v-11z"/><path d="M16 12v8"/>'
 
+/**
+ * Le sceau des tresors, a la place de la gemme de cout. Un glyphe hachure
+ * passait pour un caractere manquant des que la carte grandissait.
+ */
+export function sceau(): string {
+  return (
+    '<svg class="dessin-sceau" viewBox="0 0 24 24" aria-hidden="true" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.8">' +
+    '<circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="3.4"/></svg>'
+  )
+}
+
 export function dessin(nom: string): string {
   return (
     `<svg class="dessin" viewBox="0 0 32 32" aria-hidden="true" fill="none" ` +
