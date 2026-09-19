@@ -170,12 +170,16 @@ Le prototype jetable de combat est **jouable au doigt** et déployé. Ni hub, ni
 marché, ni carte de donjon. Ce qui tourne :
 
 - moteur au tour par tour à énergie, **plusieurs ennemis**, cible au doigt ;
-- la **main en vraies cartes**, cinq côte à côte : coût, dégâts, nom, et
-  l'étoile d'achèvement. Viser lève la carte hors de la main, rien d'autre ne
-  bouge ;
-- les **trésors en cartes dorées et pleines**, marquées MORTE — jamais grisées :
-  l'appât et le poids sont le même objet, et une carte fantôme se laisserait
-  oublier ;
+- la **main en éventail** : cartes pivotées, légèrement superposées, avec
+  gemme de coût, **illustration SVG**, plaque de nom et valeur. Viser redresse
+  la carte, la lève et la fait passer devant ; le survol ne s'active que là où
+  il existe (`hover: hover`), sinon il reste collé après la tape sur mobile.
+  La largeur est fluide — `--n` donne la part de colonne de chaque carte, une
+  largeur fixe sortait de l'écran sur un petit téléphone ;
+- les **trésors en cartes dorées et pleines**, illustrées elles aussi, marquées
+  MORTE — jamais grisées : l'appât et le poids sont le même objet, et une carte
+  fantôme se laisserait oublier. Ils passent la moitié de la partie dans la
+  main, ils ont droit au même soin que les cartes de combat ;
 - les combattants en tuiles : un **sigil géométrique** par corps, et une
   **pastille d'intention** qui dit ce qu'il frappe et dans combien de tours —
   allumée s'il frappe à la fin de ce tour-ci ;
@@ -324,10 +328,11 @@ beaucoup »*. Le mécanisme des trésors a reçu deux « chiant » sur une inter
 en lignes de texte, puis « ça va » une fois la main dessinée en cartes — pour un
 mécanisme identique. Une sensation ne se teste pas sur un tableur.
 
-Ça ne veut pas dire polir : pas d'illustrations, pas d'assets, pas de son, pas
-de fine tuning. Du CSS et du SVG écrits à la main, et seulement sur ce qui est
-soumis au jugement. C'est peu risqué tant que `logic/` reste pur : tout
-l'habillage vit dans `ui/` et se jette sans rien casser.
+La borne n'est pas « pas de dessins » — Keko l'a levée lui-même pour la main.
+Elle est : **pas d'assets, pas de fichiers image, pas de dépendance, pas de
+son.** Tout est du CSS et du SVG écrits à la main (`ui/illustrations.ts`), et
+seulement sur ce qui est soumis au jugement. C'est peu risqué tant que `logic/`
+reste pur : tout l'habillage vit dans `ui/` et se jette sans rien casser.
 
 ## Langue
 

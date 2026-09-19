@@ -13,6 +13,7 @@
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
 import { butin, consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
 import { CAPACITE_SAC, valeurSac } from '../logic/cartes.ts'
+import { dessin } from './illustrations.ts'
 
 /** Le butin transporté : ce que le sac a pris, et combien a été ramassé. */
 export type Poche = { ramasse: number; sac: Carte[] }
@@ -127,7 +128,7 @@ export function render(
 
   // Les boutons de main sont reconstruits : l'écoute est déléguée à la racine.
   view.cartes.innerHTML = etat.main
-    .map((c, index) => ligneCarte(etat, c, index, selection, fini))
+    .map((c, index) => ligneCarte(etat, c, index, selection, fini, etat.main.length))
     .join('')
   view.encombrement.innerHTML = fini ? '' : encombrement(etat, poche)
 
@@ -233,8 +234,10 @@ function ligneCarte(
   index: number,
   selection: number | null,
   fini: boolean,
+  total: number,
 ): string {
-  if (carte.type === 'tresor') return carteTresor(carte)
+  const place = eventail(index, total)
+  if (carte.type === 'tresor') return carteTresor(carte, place)
 
   const debout = vivants(etat)
   const abordable = carte.cout <= etat.energie
@@ -255,15 +258,35 @@ function ligneCarte(
   // lit le poids d'une carte avant d'avoir lu son chiffre.
   return (
     `<button class="${classes.join(' ')}" type="button" data-cout="${carte.cout}" ` +
-    `data-action="${action}" ${donnee}${fini || !abordable ? ' disabled' : ''}>` +
-    `<span class="entete">` +
-    `<span class="cout">${carte.cout}${GLYPHE.energie}</span>` +
+    `${place} data-action="${action}" ${donnee}` +
+    `${fini || !abordable ? ' disabled' : ''}>` +
+    `<span class="chrome">` +
+    `<span class="gemme">${carte.cout}</span>` +
     `<span class="marque">${acheve ? '★' : ''}</span>` +
     `</span>` +
-    `<span class="degats">${carte.degats}</span>` +
+    `<span class="vitre">${dessin(carte.nom)}</span>` +
+    `<span class="plaque">` +
     `<span class="nom">${carte.nom}</span>` +
+    `<span class="degats">${carte.degats}</span>` +
+    `</span>` +
     `</button>`
   )
+}
+
+/**
+ * La place d'une carte dans l'éventail. Calculé ici plutôt qu'en CSS : élever
+ * un écart au carré pour obtenir l'arc ne se fait pas proprement en feuille de
+ * style, et le rendu reste la seule chose qui connaît le nombre de cartes.
+ */
+function eventail(index: number, total: number): string {
+  const ecart = index - (total - 1) / 2
+  const rotation = (ecart * 2.4).toFixed(2)
+  // L'arc : les cartes des bords descendent, celle du milieu culmine.
+  const descente = (ecart * ecart * 2.1).toFixed(2)
+  // `--n` sert à la largeur : la main se partage la colonne quelle que soit
+  // la taille de l'écran. Sans ça, une carte de largeur fixe sort de l'écran
+  // sur un petit téléphone.
+  return `style="--rot:${rotation}deg;--dy:${descente}px;--i:${index};--n:${total}"`
 }
 
 /**
@@ -271,12 +294,18 @@ function ligneCarte(
  * et le poids sont le même objet. Une carte fantôme se laisserait oublier,
  * or c'est exactement ce qu'on ne veut pas faire oublier.
  */
-function carteTresor(carte: Carte): string {
+function carteTresor(carte: Carte, place: string): string {
   return (
-    `<div class="carte tresor">` +
-    `<span class="entete"><span class="sceau">${GLYPHE.tresor}</span></span>` +
-    `<span class="valeur">${carte.valeur ?? 0}</span>` +
+    `<div class="carte tresor" ${place}>` +
+    `<span class="chrome">` +
+    `<span class="gemme sceau">${GLYPHE.tresor}</span>` +
+    `<span class="marque"></span>` +
+    `</span>` +
+    `<span class="vitre">${dessin(carte.nom)}</span>` +
+    `<span class="plaque">` +
     `<span class="nom">${carte.nom}</span>` +
+    `<span class="valeur">${carte.valeur ?? 0}</span>` +
+    `</span>` +
     `<span class="bandeau">MORTE</span>` +
     `</div>`
   )

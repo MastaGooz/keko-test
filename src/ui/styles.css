@@ -235,39 +235,235 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* --- la main : cinq cartes côte à côte ------------------------------------ */
+/* --- la main : un eventail de cartes ------------------------------------- */
 
-/* Les cinq cases se partagent la largeur. La rangée réserve la hauteur d'une
-   carte levée, sinon viser fait sauter tout ce qui est en dessous. */
+/* Les cartes se chevauchent legerement et pivotent autour d'un point bas :
+   c'est ce qui fait lire "une main tenue" plutot qu'une rangee de boutons.
+   Le chevauchement reste faible (8 px) pour qu'aucune valeur ne soit cachee. */
 .cartes {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 0.3125rem;
-  min-height: 132px;
-  padding-top: 10px;
+  gap: 0;
+  min-height: 152px;
+  padding-top: 24px;
 }
 
 .carte {
-  flex: 1 1 0;
+  position: relative;
+  flex: 0 0 auto;
+  /* La main se partage la colonne : chaque carte vaut (largeur + recouvrements)
+     divisee par leur nombre. Plafonnee, sinon elles s'etalent sur grand ecran. */
+  width: min(86px, calc((100% + (var(--n, 5) - 1) * 8px) / var(--n, 5)));
   min-width: 0;
-  max-width: 5.5rem;
-  height: 122px;
+  aspect-ratio: 78 / 112;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.125rem;
-  padding: 0.375rem 0.25rem 0;
+  align-items: stretch;
+  padding: 0;
   overflow: hidden;
   border: 1px solid var(--trait);
-  border-radius: 9px;
-  background: linear-gradient(170deg, #2a2a34, var(--carte-fond));
+  border-radius: 10px;
+  background: linear-gradient(168deg, #2d2d38, #1e1e26);
+  box-shadow:
+    0 2px 5px #0008,
+    inset 0 1px 0 #ffffff12;
   color: inherit;
   font: inherit;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: transform 0.12s ease-out;
+  transform-origin: 50% 135%;
+  transform: rotate(var(--rot, 0deg)) translateY(var(--dy, 0px));
+  transition:
+    transform 0.14s ease-out,
+    box-shadow 0.14s ease-out,
+    border-color 0.14s ease-out;
+  z-index: var(--i, 0);
+}
+
+.carte + .carte {
+  margin-left: -8px;
+}
+
+/* Le chassis du haut : la gemme de cout, et l'etoile d'achevement. */
+.chrome {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 17px;
+  padding: 0 4px;
+}
+
+.gemme {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border: 1px solid var(--energie);
+  border-radius: 50%;
+  background: #3a2f16;
+  color: var(--energie);
+  font-size: 0.625rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.marque {
+  font-size: 0.625rem;
+  line-height: 1;
+  color: var(--fg);
+}
+
+/* La vitre : le dessin, au centre, sur un fond un peu creuse. */
+.vitre {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 4px;
+  border-radius: 6px;
+  background: radial-gradient(70% 70% at 50% 40%, #ffffff0e, transparent 70%), #00000030;
+  color: var(--accent, var(--muted));
+}
+
+.dessin {
+  width: 40px;
+  height: 40px;
+  opacity: 0.92;
+}
+
+/* La plaque du bas : le nom, et la valeur qui compte. */
+.plaque {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  height: 22px;
+  margin-top: 3px;
+  padding: 0 5px;
+  border-top: 2px solid var(--accent, var(--trait));
+  background: #00000040;
+}
+
+.carte .nom {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.degats {
+  flex: none;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent, var(--fg));
+}
+
+.carte.jouable {
+  border-color: #46647a;
+}
+
+/* Peut achever quelqu'un : c'est la decision que le multi-cibles rend tendue. */
+.carte.acheve {
+  border-color: #e8e8f0;
+  box-shadow:
+    0 0 0 1px #ffffff40,
+    0 2px 10px #ffffff2e,
+    inset 0 1px 0 #ffffff1a;
+}
+
+/* Pas assez d'energie ce tour-ci. */
+.carte.hors-prix {
+  opacity: 0.32;
+  filter: grayscale(1);
+  cursor: default;
+}
+
+/* Le survol, seulement la ou il existe : sur un telephone, un :hover reste
+   colle apres la tape et ment sur l'etat de la carte. */
+@media (hover: hover) and (pointer: fine) {
+  .carte.jouable:hover,
+  .carte.acheve:hover {
+    transform: rotate(var(--rot, 0deg)) translateY(calc(var(--dy, 0px) - 8px)) scale(1.04);
+    z-index: 15;
+  }
+}
+
+/* Visee : la carte quitte l'eventail, se redresse et passe devant. */
+.carte.visee {
+  transform: rotate(0deg) translateY(-20px) scale(1.12);
+  border-color: var(--joueur);
+  box-shadow:
+    0 0 0 1px var(--joueur),
+    0 10px 20px #000a;
+  z-index: 20;
+}
+
+.carte.jouable:active,
+.carte.acheve:active {
+  transform: rotate(var(--rot, 0deg)) translateY(calc(var(--dy, 0px) - 4px)) scale(1.02);
+}
+
+.carte.visee:active {
+  transform: rotate(0deg) translateY(-18px) scale(1.1);
+}
+
+/* Le tresor est plein et dore, jamais grise : l'appat et le poids sont le
+   meme objet. Une carte fantome se laisserait oublier -- c'est justement ce
+   qu'on ne veut pas faire oublier. */
+.carte.tresor {
+  --accent: #d8b262;
+  border-color: #6b5524;
+  background: linear-gradient(168deg, #55441f, #2b2416);
+  cursor: default;
+}
+
+.carte.tresor .gemme {
+  border-color: #8a6f33;
+  background: #3d3018;
+}
+
+.carte.tresor .vitre {
+  background: radial-gradient(70% 70% at 50% 40%, #ffd88a1f, transparent 70%), #00000028;
+}
+
+.carte.tresor .plaque {
+  background: #00000050;
+}
+
+.carte.tresor .nom {
+  color: #ecdcb4;
+}
+
+.valeur {
+  flex: none;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--energie);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Le bandeau qui dit ce que la case coute : une place, pour rien. */
+.bandeau {
+  flex: none;
+  padding: 2px 0;
+  background: #00000066;
+  color: #b09a63;
+  font-size: 0.5rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-align: center;
 }
 
 .bouton {
@@ -293,126 +489,6 @@ body {
 
 .remplir {
   flex: 1 1 auto;
-}
-
-/* Bandeau du haut : le coût à gauche, l'étoile d'achèvement à droite. */
-.entete {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0 0.125rem;
-  min-height: 1rem;
-}
-
-/* Le coût en énergie. */
-.cout {
-  flex: none;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--energie);
-}
-
-.marque {
-  flex: none;
-  font-size: 0.75rem;
-  color: var(--fg);
-}
-
-/* Les dégâts : le seul gros chiffre de la carte. */
-.degats {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  font-size: 1.75rem;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.carte .nom {
-  width: 100%;
-  padding-bottom: 0.375rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.carte.jouable {
-  border-color: #3f5d72;
-}
-
-/* Peut achever quelqu'un : c'est la décision que le multi-cibles rend tendue. */
-.carte.acheve {
-  border-color: var(--fg);
-  background: linear-gradient(170deg, #3a3a46, #2b2b34);
-}
-
-/* Pas assez d'énergie ce tour-ci. */
-.carte.hors-prix {
-  opacity: 0.3;
-  filter: grayscale(1);
-}
-
-/* Visée : la carte se lève hors de la main. Aucun autre élément ne bouge. */
-.carte.visee {
-  transform: translateY(-10px);
-  border-color: var(--joueur);
-  box-shadow: 0 6px 14px #0009;
-}
-
-.carte.jouable:active,
-.carte.acheve:active {
-  transform: translateY(-4px);
-}
-
-/* Le trésor est plein et doré, jamais grisé : l'appât et le poids sont le
-   même objet. Une carte fantôme se laisserait oublier — c'est justement ce
-   qu'on ne veut pas faire oublier. */
-.carte.tresor {
-  border-color: #6b5524;
-  background: linear-gradient(170deg, #4a3c1c, #2e2716);
-  cursor: default;
-}
-
-.sceau {
-  font-size: 0.8125rem;
-  color: var(--energie);
-  opacity: 0.8;
-}
-
-.valeur {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: center;
-  font-size: 1.375rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--energie);
-  font-variant-numeric: tabular-nums;
-}
-
-.carte.tresor .nom {
-  padding-bottom: 0.1875rem;
-  font-weight: 500;
-  color: #e6d5a8;
-}
-
-/* Le bandeau qui dit ce que la case coûte : une place, pour rien. */
-.bandeau {
-  flex: none;
-  width: 100%;
-  padding: 0.1875rem 0;
-  background: #00000055;
-  color: #b09a63;
-  font-size: 0.5625rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-align: center;
 }
 
 .finTour {
@@ -521,9 +597,10 @@ body {
 /* --- l'identite des cartes par cout --------------------------------------- */
 
 /* Le petit coup est froid, le gros est chaud : on lit le poids d'une carte
-   avant d'avoir lu son chiffre. */
+   avant d'avoir lu son chiffre. L'accent teinte le dessin, le liseré de la
+   plaque et le chiffre de degats. */
 .carte.combat[data-cout="1"] {
-  --accent: #6fb2d8;
+  --accent: #7cc0e4;
 }
 
 .carte.combat[data-cout="2"] {
@@ -533,24 +610,7 @@ body {
 .carte.combat[data-cout="3"],
 .carte.combat[data-cout="4"],
 .carte.combat[data-cout="5"] {
-  --accent: #e8a05c;
-}
-
-.carte.combat .degats {
-  color: var(--accent, var(--fg));
-}
-
-.carte.combat::before {
-  content: "";
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 3px;
-  background: var(--accent, var(--trait));
-  opacity: 0.55;
-}
-
-.carte {
-  position: relative;
+  --accent: #efa863;
 }
 
 /* --- le coup se voit ------------------------------------------------------ */
