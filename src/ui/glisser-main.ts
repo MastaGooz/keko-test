@@ -139,6 +139,9 @@ export function brancherMain(view: View, gestes: GestesMain): void {
     }
     const sortie = e.clientY < plafond()
     view.root.classList.toggle('main-sortie', sortie)
+    // Hors de la main, le fantôme s'allume et vibre : c'est le seul endroit où
+    // lâcher déclenche quelque chose, il doit le dire de lui-même.
+    fantome?.classList.toggle('prete', sortie)
     ouvrirLaFente(sortie ? null : fenteSousLeDoigt(e.clientX))
   })
 

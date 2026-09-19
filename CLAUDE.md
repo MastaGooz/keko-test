@@ -705,6 +705,20 @@ donjon. Ce qui tourne :
   que ça n'ait aucun effet sur les règles : le rendu se reconstruit à chaque
   action, donc un ordre vivant dans le DOM serait balayé au premier coup joué.
 
+  **La carte saisie QUITTE la main** : les autres se referment sur sa place et
+  on range les quatre qui restent comme si elle n'avait jamais été là. La
+  laisser en place, même effacée, c'était montrer une position qui n'a plus de
+  sens — celle d'où elle vient, alors que tout le geste parle de là où elle va.
+  `position: absolute` et non `display: none` : elle sort du flux mais **reste
+  rendue**, parce que c'est elle qui porte la capture du pointeur et qu'une
+  capture posée sur un élément retiré du rendu est du terrain glissant selon
+  les navigateurs.
+
+  **Hors de la main, le fantôme s'allume et frémit.** C'est la seule zone où
+  lâcher déclenche quelque chose, et elle n'a pas de bord à surligner — elle
+  est tout l'écran au-dessus de la main. Le repère doit donc voyager avec le
+  doigt.
+
   **Une vraie FENTE s'ouvre là où la carte va tomber** : les voisines d'avant
   s'écartent à gauche, celles d'après à droite. Un repère posé sur une voisine
   ne suffisait pas — dans un éventail qui se recouvre aux trois quarts, une

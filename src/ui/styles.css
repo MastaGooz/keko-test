@@ -2842,12 +2842,19 @@ body {
 
 /* --- les gestes de la main ------------------------------------------------ */
 
-/* La carte saisie reste en place, effacee : c'est le fantome qui voyage. La
-   laisser disparaitre ferait se refermer l'eventail sous le doigt, et la place
-   qu'on vise n'aurait plus de sens. */
+/* La carte saisie QUITTE LA MAIN : les autres se referment sur sa place, et on
+   range les quatre qui restent comme si elle n'avait jamais ete la. La laisser
+   en place, meme effacee, c'etait montrer une position qui n'a plus de sens --
+   celle d'ou elle vient, alors que tout le geste parle de la ou elle va.
+
+   `position: absolute` et non `display: none` : elle sort du flux, donc les
+   voisines se referment, MAIS elle reste rendue. C'est elle qui porte la
+   capture du pointeur, et une capture posee sur un element retire du rendu est
+   du terrain glissant selon les navigateurs. */
 .carte.saisie {
-  opacity: 0.22;
-  filter: grayscale(0.6);
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
 }
 
 /* Le fantome suit le doigt. Il est CENTRE sur lui et legerement penche : sans
@@ -2862,6 +2869,35 @@ body {
   transition: none;
   pointer-events: none;
   box-shadow: 0 1.25rem 2.5rem #000c;
+}
+
+/* PRETE A PARTIR. Hors de la main, lacher declenche le coup -- le fantome doit
+   le dire tout seul, parce qu'il n'y a pas d'autre repere : la zone de jeu est
+   tout l'ecran au-dessus de la main, elle n'a pas de bord a surligner.
+
+   Le tremblement passe par `translate` : `transform` porte deja le centrage sur
+   le doigt et l'inclinaison, et l'animer voudrait dire les restituer a chaque
+   image. */
+.fantome-carte.prete {
+  animation: fremir 0.1s linear infinite;
+  box-shadow:
+    0 0 0 2px #ffffffd9,
+    0 0 1.5rem #ffffff73,
+    0 1.25rem 2.5rem #000c;
+}
+
+@keyframes fremir {
+  0% { translate: -1px 0; }
+  25% { translate: 1px -1px; }
+  50% { translate: 1px 1px; }
+  75% { translate: -1px 1px; }
+  100% { translate: -1px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fantome-carte.prete {
+    animation: none;
+  }
 }
 
 /* LA FENTE. Les cartes d'avant s'ecartent a gauche, celles d'apres a droite :
