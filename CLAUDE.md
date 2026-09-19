@@ -417,14 +417,21 @@ donjon. Ce qui tourne :
   | temps | ce qu'il fait | durée |
   |---|---|---|
   | l'appel | il se ramasse en arrière (−28 % de la course vive) | 35 ms |
-  | la frappe | il part à pleine extension (+190 %) | 45 ms |
-  | le contrecoup | il revient (+135 %), comme un bras qui a porté trop loin | 34 ms |
+  | la frappe | il part à pleine extension (+245 %) | 45 ms |
+  | le contrecoup | il revient (+175 %), comme un bras qui a porté trop loin | 34 ms |
 
-  puis la dérive, **40 fois plus lente**, jusqu'au bout du gros plan. La frappe
-  porte loin — 23 px sur un petit téléphone couché, 107 px sur un écran de
+  puis la dérive, **60 fois plus lente**, jusqu'au bout du gros plan. La frappe
+  porte loin — 30 px sur un petit téléphone couché, 138 px sur un écran de
   1080 — parce que *c'est la distance couverte d'un coup qui fait la violence,
   pas la seule vitesse* : allonger la course sans toucher à sa durée est le
   levier direct sur la nervosité. Chacun charge vers l'autre.
+
+  **Ce qui doit rester constant en l'allongeant, c'est l'ÉCART entre le
+  contrecoup et le terme** (0,45 de l'élan) : c'est lui la dérive, et le recul
+  de la cible est calé dessus. Monter la frappe seule désaccorderait les deux
+  corps. **Marge restante avant que les figures se touchent** : elles sont à
+  87 px l'une de l'autre au repos sur un téléphone de 390, et à 48 au pic —
+  la frappe peut encore presque doubler, pas davantage.
 
   **Et la cible est repoussée : c'est la dérive de l'attaquant, en miroir.**
   Même instant de départ, même durée, même distance, même `linear` — donc

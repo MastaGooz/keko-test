@@ -2634,21 +2634,26 @@ body {
     animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
   }
   14% {
-    /* LA FRAPPE, a pleine extension. Elle porte LOIN : 2,18 fois la course
+    /* LA FRAPPE, a pleine extension. Elle porte LOIN : 2,73 fois la course
        vive en 45 ms -- meme duree, plus de chemin, donc plus vite. C'est la
        distance couverte d'un coup qui fait la violence, pas la seule vitesse.
        C'est ici que la secousse tombe (`IMPACT_DUEL`). */
-    translate: calc(var(--elan) * 1.9) 0;
+    translate: calc(var(--elan) * 2.45) 0;
     animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1);
   }
   20% {
-    /* Le contrecoup : il revient, comme un bras qui a porte trop loin. */
-    translate: calc(var(--elan) * 1.35) 0;
+    /* Le contrecoup : il revient, comme un bras qui a porte trop loin.
+
+       Il monte AVEC la frappe, et le terme final aussi : ce qui doit rester
+       constant, c'est leur ECART (0,45), parce que c'est lui la derive -- et
+       le recul de la cible est cale dessus. Allonger la frappe seule
+       desaccorderait les deux corps. */
+    translate: calc(var(--elan) * 1.75) 0;
     animation-timing-function: linear;
   }
   100% {
     /* L'elan : il continue, mais on ne le voit presque plus avancer. */
-    translate: calc(var(--elan) * 1.8) 0;
+    translate: calc(var(--elan) * 2.2) 0;
   }
 }
 
