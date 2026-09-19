@@ -325,12 +325,20 @@ donjon. Ce qui tourne :
   faire l'aller-retour entre les deux pour lire un seul fait. Dans la barre,
   **la longueur et le chiffre disent la même chose au même endroit**.
 
-  La barre suit la taille du corps mais avec un **plancher** : ce qui commande
-  sa hauteur n'est pas l'esthétique, c'est la lisibilité du chiffre dedans, et
-  sous ce plancher il ne tient plus. Le chiffre est en `absolute` par-dessus,
-  jamais dans le flux du remplissage — sinon il pousserait la barre, ou serait
-  coupé par elle quand elle se vide. Son contour sombre lui permet de se lire
-  aussi bien sur le rouge vif que sur le fond noir de la partie vide.
+  **La jauge reste un trait fin, et le chiffre la DÉBORDE** — de 4 px en haut
+  comme en bas sur un téléphone, pour une barre de 8. Elle a d'abord été
+  épaissie pour le contenir ; c'était prendre le problème à l'envers, parce que
+  la hauteur d'une jauge dit quelque chose — une barre épaisse pèse autant
+  qu'une silhouette. *Le chiffre n'a pas besoin d'être contenu, il a besoin
+  d'être lu.*
+
+  Ce que ça impose : la jauge ne peut plus rogner ce qu'elle contient, donc
+  c'est le **remplissage** qui porte son propre arrondi. Le chiffre est en
+  `absolute` par-dessus, jamais dans le flux — sinon il pousserait la barre. Il
+  lui faut un **cerne franc** (trois ombres) parce qu'il passe sur trois fonds :
+  le rouge de la jauge, le noir de sa partie vide, et le corps de la créature
+  qu'il déborde. Et la plaquette du nom se réserve la place du débordement,
+  sinon le chiffre vient s'asseoir dessus.
 - **la scène centre ses corps au-dessus de 430 px de haut, et les pose en bas
   en dessous.** Elle mange tout ce qui reste entre l'info et la main ; sur un
   écran de PC ça fait le double du contenu qu'elle porte, et tout le vide

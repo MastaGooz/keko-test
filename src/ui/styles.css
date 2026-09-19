@@ -294,14 +294,18 @@ body {
 .creature .jauge {
   flex: none;
   width: 100%;
-  /* Assez epaisse pour LOGER son chiffre : c'est elle qui le porte desormais,
-     plus la plaquette du nom. Elle suit le corps, avec un PLANCHER -- ce qui
-     commande sa hauteur n'est pas l'esthetique mais la lisibilite du chiffre
-     dedans, et sous ce plancher il ne tient plus. */
-  height: max(1.0625rem, calc(var(--corps) * 0.11));
+  /* FINE, et le chiffre DEBORDE en haut et en bas. Elle a d'abord ete epaissie
+     pour contenir son chiffre ; c'etait prendre le probleme a l'envers, parce
+     que la hauteur d'une jauge dit quelque chose -- une barre epaisse pese
+     autant qu'une silhouette. Le chiffre n'a pas besoin d'etre CONTENU, il a
+     besoin d'etre LU : il deborde, et la jauge redevient un trait. */
+  height: max(0.5rem, calc(var(--corps) * 0.05));
   border-radius: 999px;
   background: #0a0a10;
   box-shadow: inset 0 1px 2px #000, 0 0 0 1px #ffffff0f;
+  /* Le chiffre depasse d'elle : elle ne peut plus rogner ce qu'elle contient.
+     C'est le REMPLISSAGE qui porte son propre arrondi, plus la jauge. */
+  overflow: visible;
 }
 
 .creature .remplissage {
@@ -310,6 +314,9 @@ body {
 }
 
 .plaquette {
+  /* Le chiffre de la jauge deborde vers le bas de 4 a 5 px : on lui laisse
+     passer, sinon il vient s'asseoir sur le nom. */
+  margin-top: 0.3125rem;
   display: flex;
   align-items: baseline;
   gap: 0.3125rem;
@@ -410,30 +417,36 @@ body {
   position: relative;
   flex: 1 1 auto;
   min-width: 2rem;
-  height: 1.0625rem;
+  height: 0.5rem;
   border-radius: 999px;
   background: #2a2a33;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Le chiffre se pose PAR-DESSUS le remplissage, en position absolue : il ne
-   doit ni pousser la barre ni etre coupe par elle quand elle se vide. */
+   doit ni pousser la barre ni etre coupe par elle quand elle se vide. Et il est
+   plus HAUT qu'elle -- c'est voulu, il deborde de part et d'autre. */
 .chiffre-pv {
   position: absolute;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.6875rem;
+  line-height: 1;
+  font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
   color: var(--fg);
   /* Le contour sombre : le chiffre passe sur du rouge vif comme sur du fond
      noir, il doit se lire sur les deux. */
+  /* Trois ombres et non deux : le chiffre deborde desormais sur le corps de la
+     creature et sur le fond, en plus du rouge de la jauge. Il lui faut un
+     cerne franc pour tenir sur les trois. */
   text-shadow:
     0 0 2px #000,
-    0 1px 2px #000c;
+    0 0 4px #000,
+    0 1px 2px #000;
   pointer-events: none;
 }
 
@@ -445,6 +458,9 @@ body {
 .remplissage {
   display: block;
   height: 100%;
+  /* Son propre arrondi : la jauge ne le rogne plus, elle laisse passer le
+     chiffre qui la deborde. */
+  border-radius: 999px;
   background: var(--joueur);
   transition: width 0.15s ease-out;
 }
