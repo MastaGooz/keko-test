@@ -57,6 +57,7 @@ export type View = {
   pioche: HTMLElement
   defausse: HTMLElement
   palier: HTMLElement
+  zoom: HTMLElement
   journal: HTMLElement
   pleinEcran: HTMLButtonElement
   son: HTMLButtonElement
@@ -96,6 +97,9 @@ export function mount(root: HTMLElement, buildTime: string): View {
            le combat se pose par-dessus lui, sans refaire la mise en page. -->
       <div id="palier" class="palier"></div>
 
+      <!-- La carte qu'on regarde de près. Vide la plupart du temps. -->
+      <div id="zoom" class="zoom"></div>
+
       <!-- Les commandes de test sortent du flux : elles poussaient le combat
            sous le bord de l'ecran en portrait. Elles remontent a la demande,
            et toutes seules quand le combat est fini. -->
@@ -127,6 +131,7 @@ export function mount(root: HTMLElement, buildTime: string): View {
     pioche: root.querySelector<HTMLElement>('#pioche')!,
     defausse: root.querySelector<HTMLElement>('#defausse')!,
     palier: root.querySelector<HTMLElement>('#palier')!,
+    zoom: root.querySelector<HTMLElement>('#zoom')!,
     journal: root.querySelector<HTMLElement>('#journal')!,
     pleinEcran: root.querySelector<HTMLButtonElement>('#pleinEcran')!,
     son: root.querySelector<HTMLButtonElement>('#son')!,
@@ -148,6 +153,7 @@ export function render(
   selection: number | null,
   occupation: Occupation = 'libre',
   auFront: number | null = null,
+  zoom: number | null = null,
 ): void {
   view.root.classList.toggle('occupe', occupation !== 'libre')
   const etat = descente.combat
@@ -175,6 +181,16 @@ export function render(
 
   view.pioche.innerHTML = tasDeJeu('Pioche', etat.pioche.length)
   view.defausse.innerHTML = tasDeJeu('Défausse', etat.defausse.length)
+
+  // La carte regardee de pres. Elle vient de l'ETAT et non d'une classe posee
+  // a la main : le premier rendu venu la balaierait.
+  const regardee = zoom === null ? null : (etat.main[zoom] ?? null)
+  view.zoom.innerHTML =
+    regardee === null
+      ? ''
+      : `<button class="zoom-fond" type="button" data-action="fermerZoom" aria-label="Fermer">` +
+        `</button><div class="zoom-carte">${vitrine(regardee, regardee.type === 'tresor')}</div>`
+  view.root.classList.toggle('zoom-ouvert', regardee !== null)
 
   view.finTour.innerHTML = etiquetteFinTour(etat, occupation)
   view.finTour.disabled = fini || occupation !== 'libre'
@@ -311,7 +327,10 @@ function ligneCarte(
   fini: boolean,
   total: number,
 ): string {
-  const place = eventail(index, total)
+  // Chaque carte de la main est saisissable et zoomable, tresor compris : on
+  // range sa main comme on veut, et on regarde ce qu'on traine.
+  const prise = `data-action="zoomer" data-index="${index}" data-main="${index}"`
+  const place = eventail(index, total) + ' ' + prise
   if (carte.type === 'tresor') return carteTresor(carte, place)
 
   const debout = vivants(etat)
@@ -325,20 +344,13 @@ function ligneCarte(
   else classes.push('jouable')
   if (vise) classes.push('visee')
 
-  // Retaper une carte visée la REPOSE, toujours — même s'il ne reste qu'un
-  // seul corps debout. Le raccourci « une seule cible, la retape engage »
-  // existait ; il transformait le même geste en deux verbes opposés selon le
-  // nombre d'ennemis, et on ne pouvait plus reposer une carte à la fin d'un
-  // combat. Frapper demande de désigner une cible, sans exception.
-  const action = !abordable ? '' : vise ? 'annuler' : 'viser'
-  const donnee = `data-index="${index}"`
-
-  // Le coût porte la couleur : le petit coup est froid, le gros est chaud. On
-  // lit le poids d'une carte avant d'avoir lu son chiffre.
+  // `disabled` UNIQUEMENT quand le combat est fini. Une carte trop chere reste
+  // saisissable et zoomable : on veut pouvoir la ranger et la regarder, et
+  // c'est le depot qui refusera de la jouer. `disabled` couperait aussi le
+  // `pointerdown`, donc le glisser.
   return (
     `<button class="${classes.join(' ')}" type="button" data-cout="${carte.cout}" ` +
-    `${place} data-action="${action}" ${donnee}` +
-    `${fini || !abordable ? ' disabled' : ''}>` +
+    `${place}${fini ? ' disabled' : ''}>` +
     `<span class="vitre">${dessin(carte.nom)}</span>` +
     `<span class="plaque"><span class="nom">${carte.nom}</span></span>` +
     // Gemme et badge vivent sur la BANDE GAUCHE : c'est la seule partie d'une

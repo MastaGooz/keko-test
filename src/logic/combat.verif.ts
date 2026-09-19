@@ -16,6 +16,7 @@ import {
   jouerCarte,
   mainMorte,
   menaceDuTour,
+  reordonnerMain,
   vivants,
 } from './combat.ts'
 
@@ -27,6 +28,44 @@ const DAGUE = { nom: 'Dague', cout: 1, degats: 3 }
 let echecs = 0
 
 console.log('Règles de combat :')
+
+// --- ranger sa main ----------------------------------------------------------
+
+cas('ranger sa main deplace la carte sans toucher au reste', () => {
+  const etat = combat([...cartes(2, MOULINET), ...cartes(3, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  const noms = etat.main.map((c) => c.id)
+  const apres = reordonnerMain(etat, 0, 3)
+
+  egal(apres.main.map((c) => c.id).join(), [noms[1], noms[2], noms[3], noms[0], noms[4]].join(),
+    'la carte a pris sa nouvelle place, les autres ont glisse')
+  egal(apres.main.length, etat.main.length, 'aucune carte perdue')
+  egal(apres.energie, etat.energie, 'aucune energie depensee')
+  egal(apres.ennemis[0].pv, etat.ennemis[0].pv, 'aucun degat')
+  egal(apres.tour, etat.tour, 'toujours le meme tour')
+})
+
+cas('ranger sa main vers la gauche marche aussi', () => {
+  const etat = combat([...cartes(2, MOULINET), ...cartes(3, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  const noms = etat.main.map((c) => c.id)
+  const apres = reordonnerMain(etat, 4, 1)
+
+  egal(apres.main.map((c) => c.id).join(), [noms[0], noms[4], noms[1], noms[2], noms[3]].join(),
+    'la carte est remontee a sa place')
+})
+
+cas('un rangement qui ne veut rien dire ne change rien', () => {
+  const etat = combat(cartes(5, DAGUE), ennemi({ pv: 100, degats: 5 }))
+  egal(reordonnerMain(etat, 2, 2), etat, 'meme place : etat inchange')
+  egal(reordonnerMain(etat, -1, 2), etat, 'index negatif : etat inchange')
+  egal(reordonnerMain(etat, 0, 99), etat, 'index hors main : etat inchange')
+})
+
+cas('on ne range plus sa main une fois le combat fini', () => {
+  const etat = combat(cartes(5, MOULINET), ennemi({ pv: 10, degats: 5 }))
+  const gagne = jouerCarte(etat, 0, 0)
+  egal(gagne.issue, 'victoire', 'le combat est bien fini')
+  egal(reordonnerMain(gagne, 0, 2), gagne, 'etat inchange')
+})
 
 // --- le tour -----------------------------------------------------------------
 

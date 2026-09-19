@@ -165,7 +165,8 @@ conservées telles quelles depuis l'horloge : **les maths de l'encombrement
 n'ont pas bougé**.
 
 **Deux actions, pas une de plus :** jouer une carte sur une cible, finir le
-tour.
+tour. *Le reste n'est pas du jeu* : ranger sa main et regarder une carte de
+près ne changent rien à l'état du combat.
 
 #### Pourquoi pas l'horloge partagée
 
@@ -270,7 +271,11 @@ donjon. Ce qui tourne :
   **chaque destination est aussi un bouton**. Sur téléphone le glisser seul est
   fragile, la tape doit toujours marcher — c'est elle qui porte la
   fonctionnalité. Le glisser se contente de *cliquer* la cible survolée, donc
-  aucune logique n'est dupliquée ;
+  aucune logique n'est dupliquée.
+
+  **La main de combat est l'exception, et elle est assumée** (`ui/glisser-main.ts`) :
+  là, le glisser est le seul moyen de jouer, parce que la tape a été donnée au
+  zoom. C'est une dette d'ergonomie à éprouver au doigt avant de l'étendre ;
 - `npm run verif` : 19 vérifications du combat + 29 de la descente ;
 
 - moteur au tour par tour à énergie, **plusieurs ennemis**, cible au doigt ;
@@ -666,14 +671,39 @@ donjon. Ce qui tourne :
   du tour, donc un ennemi à `periode: 2` reste immobile les tours où il attend.
   Et **la réaction du joueur est décalée de 170 ms** : sans ça le bond et
   l'encaissement se superposent, et on ne lit plus la cause de l'effet ;
-- **On joue toujours en deux tapes, sans exception : lever une carte, désigner
-  une cible.** Retaper la carte levée la repose ; taper à côté aussi. Un
-  raccourci existait — « s'il ne reste qu'un seul corps debout, la retape
-  engage » — et il était faux : le même geste devenait deux verbes opposés
-  selon le nombre d'ennemis, et on ne pouvait plus reposer une carte à la fin
-  d'un combat. Une carte levée par erreur est d'autant plus piégeuse qu'elle a
-  **changé de place en se levant** : on retape là où elle était, donc à côté.
-  D'où la reposée sur tape à côté, et pas seulement sur la carte.
+- **On joue une carte en la SORTANT de la main, à la Hearthstone.** La tape,
+  elle, ne joue plus : elle **ouvre la carte en grand**. Et glisser une carte à
+  côté de ses voisines **range la main**.
+
+  *Pourquoi ça vaut le changement* : le geste de jouer devient physique — on
+  sort la carte — et la tape, libérée, sert enfin à LIRE une carte. C'est ce
+  qui manquait depuis que la main est en éventail : le recouvrement mange les
+  trois quarts de chaque carte et rien ne permettait d'en voir une en entier.
+
+  **Le seuil de 8 px sépare les trois gestes, et il est le seul juge.** En
+  dessous, on n'a pas glissé, on a tapé. Au-delà, c'est la hauteur du doigt à
+  la levée qui tranche : au-dessus de la main on joue, dedans on range. Aucun
+  mode, aucun état à retenir — le geste se lit à son terme.
+
+  **Sortir la carte engage ; s'il n'y a qu'un corps debout, ça frappe
+  directement.** C'est l'inverse de l'ancienne règle des deux tapes, qui
+  interdisait le ciblage automatique — et ce n'est pas une contradiction : la
+  tape était ambiguë (elle pouvait vouloir dire « repose »), le glisser ne
+  l'est pas. *Un geste qui engage n'a plus rien à confirmer.*
+
+  **Ce que ça coûte, et qu'il faut surveiller au doigt** : le glisser devient
+  le SEUL moyen de jouer, alors que ce dépôt dit ailleurs que sur un téléphone
+  le glisser est fragile et que la tape doit toujours porter la
+  fonctionnalité — voir l'écran de butin. La règle tient toujours là-bas ; ici
+  elle est explicitement levée, et c'est le premier point à éprouver.
+
+  Une carte trop chère reste **saisissable et zoomable** : on veut pouvoir la
+  ranger et la regarder. C'est le dépôt qui refuse de la jouer, pas le
+  `disabled` — qui couperait aussi le `pointerdown`, donc le glisser.
+
+  **Ranger sa main passe par l'ÉTAT** (`reordonnerMain`, dans `logic/`), bien
+  que ça n'ait aucun effet sur les règles : le rendu se reconstruit à chaque
+  action, donc un ordre vivant dans le DOM serait balayé au premier coup joué.
 - des **arches de visée** (`ui/visees.ts`) : carte levée, un trait pointillé en
   cloche part vers **chaque** corps visable. Vers tous, et pas vers un seul,
   parce qu'on joue en deux tapes — entre les deux il n'y a pas encore de cible,
@@ -957,8 +987,10 @@ src/
     storage.ts   # (dé)sérialisation + interface StoragePort
   ui/      # TOUT ce qui touche au navigateur
     render.ts    # mount() construit le DOM une fois, render() le met à jour
-    effets.ts    # marques décoratives posées après un rendu (coup, agonie, secousse)
+    effets.ts    # marques décoratives posées après un rendu (coup, secousse)
     duel.ts      # le gros plan d'attaque — décoratif lui aussi, supprimable
+    glisser.ts      # le glisser-déposer du butin (la tape reste souveraine)
+    glisser-main.ts # les gestes de la main : sortir = jouer, taper = regarder
     input.ts     # événements -> actions
     storage.ts   # implémentation localStorage du StoragePort
     styles.css

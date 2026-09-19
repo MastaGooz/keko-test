@@ -2838,3 +2838,111 @@ body {
     transform: scale(1) rotate(0deg);
   }
 }
+
+/* --- les gestes de la main ------------------------------------------------ */
+
+/* La carte saisie reste en place, effacee : c'est le fantome qui voyage. La
+   laisser disparaitre ferait se refermer l'eventail sous le doigt, et la place
+   qu'on vise n'aurait plus de sens. */
+.carte.saisie {
+  opacity: 0.22;
+  filter: grayscale(0.6);
+}
+
+/* Le fantome suit le doigt. Il est CENTRE sur lui et legerement penche : sans
+   inclinaison il se lit comme une image collee au curseur, avec, comme une
+   carte tenue. */
+.fantome-carte {
+  position: fixed;
+  z-index: 70;
+  margin: 0;
+  transform: translate(-50%, -52%) rotate(-3deg) scale(1.06);
+  transform-origin: 50% 50%;
+  transition: none;
+  pointer-events: none;
+  box-shadow: 0 1.25rem 2.5rem #000c;
+}
+
+/* La place ou la carte va se reposer : la voisine s'ecarte. */
+.carte.place-visee {
+  box-shadow: -0.5rem 0 0 -0.25rem var(--joueur), -5px 3px 14px #000b;
+}
+
+/* Le doigt est sorti de la main : le terrain s'allume, la main s'efface un
+   peu. C'est le seul retour qui dit « lache maintenant et ca part ». */
+.main-sortie #ennemis {
+  filter: brightness(1.12) saturate(1.1);
+  transition: filter 0.12s ease-out;
+}
+
+.main-sortie #cartes {
+  filter: brightness(0.8);
+  transition: filter 0.12s ease-out;
+}
+
+/* --- la carte qu'on regarde de pres --------------------------------------- */
+
+/* Une tape ne joue plus, elle MONTRE. C'est ce que la main en eventail avait
+   rendu impossible : le recouvrement mange les trois quarts de chaque carte,
+   et rien ne permettait d'en lire une en entier. */
+.zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.zoom-ouvert .zoom {
+  display: flex;
+}
+
+/* Le fond est un BOUTON plein ecran : taper n'importe ou referme. Il n'y a
+   rien d'autre a faire ici, donc il n'y a rien d'autre a viser. */
+.zoom-fond {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: #000000cc;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.zoom-carte {
+  position: relative;
+  pointer-events: none;
+  animation: zoom-entree 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+/* Bornee par la HAUTEUR : c'est elle qui manque en paysage, et une carte zoomee
+   doit tenir en entier -- c'est tout son objet. */
+.zoom-carte .carte {
+  --large: min(16rem, 52vh);
+  width: var(--large);
+  margin: 0;
+  transform: none;
+  box-shadow: 0 1.5rem 3rem #000e, 0 0 0 1px #ffffff1f;
+}
+
+.zoom-carte .carte .nom {
+  font-size: 1rem;
+}
+
+@keyframes zoom-entree {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zoom-carte {
+    animation: none;
+  }
+}

@@ -129,6 +129,30 @@ export function jouerCarte(etat: EtatCombat, index: number, cible: number): Etat
 }
 
 /**
+ * Déplace une carte dans la main. Le joueur range sa main comme il veut.
+ *
+ * Ça n'a **aucun effet sur les règles** — la main est un ensemble, pas une
+ * file — mais ça doit quand même passer par l'état : le rendu se reconstruit à
+ * chaque action, donc un ordre vivant dans le DOM serait balayé au premier
+ * coup joué.
+ *
+ * Renvoie l'état inchangé si les index ne veulent rien dire, comme toutes les
+ * transitions d'ici.
+ */
+export function reordonnerMain(etat: EtatCombat, de: number, vers: number): EtatCombat {
+  if (etat.issue !== null) return etat
+  if (de === vers) return etat
+  if (de < 0 || de >= etat.main.length) return etat
+  if (vers < 0 || vers >= etat.main.length) return etat
+
+  const suivant = copier(etat)
+  const [carte] = suivant.main.splice(de, 1)
+  if (carte === undefined) return etat
+  suivant.main.splice(vers, 0, carte)
+  return suivant
+}
+
+/**
  * Finit le tour : les ennemis à compteur échu frappent, la main entière part à
  * la défausse, on repioche et l'énergie se recharge.
  */

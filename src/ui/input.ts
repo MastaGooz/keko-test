@@ -4,6 +4,10 @@ import type { Lieu } from '../logic/descente.ts'
 
 export type Action =
   | { type: 'viser'; index: number }
+  | { type: 'zoomer'; index: number }
+  | { type: 'fermerZoom' }
+  | { type: 'jouerDepuisLaMain'; index: number }
+  | { type: 'reordonner'; de: number; vers: number }
   | { type: 'annuler' }
   | { type: 'cibler'; cible: number }
   | { type: 'finTour' }
@@ -62,6 +66,12 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
     switch (noeud.dataset.action) {
       case 'viser':
         dispatch({ type: 'viser', index: Number(noeud.dataset.index) })
+        break
+      case 'zoomer':
+        dispatch({ type: 'zoomer', index: Number(noeud.dataset.index) })
+        break
+      case 'fermerZoom':
+        dispatch({ type: 'fermerZoom' })
         break
       case 'annuler':
         dispatch({ type: 'annuler' })

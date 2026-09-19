@@ -11,7 +11,7 @@ import './ui/styles.css'
 import type { Rng } from './logic/rng.ts'
 import type { Descente } from './logic/descente.ts'
 import { createRng } from './logic/rng.ts'
-import { finDuTour, jouerCarte } from './logic/combat.ts'
+import { finDuTour, jouerCarte, reordonnerMain, vivants } from './logic/combat.ts'
 import {
   choisirCarte,
   commencerDescente,
@@ -32,8 +32,10 @@ import {
   PAS_ENTRE_DUELS,
   TAMPON_DUEL,
 } from './ui/duel.ts'
+import type { Action } from './ui/input.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
+import { brancherMain } from './ui/glisser-main.ts'
 import { secouerEcran } from './ui/effets.ts'
 import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
 import { tracerVisees } from './ui/visees.ts'
@@ -66,6 +68,8 @@ let finSonnee = false
  * milieu du gros plan effacerait la classe et ferait réapparaître le corps.
  */
 let auFront: number | null = null
+/** La carte qu'on regarde de près, s'il y en a une. */
+let zoom: number | null = null
 
 /**
  * Ouvre un gros plan et retire de la scène les deux corps qu'il montre. Tout
@@ -104,6 +108,7 @@ function demarrer(nouvelleSeed: number): void {
   // Une nouvelle descente ne doit pas hériter d'un voile resté ouvert.
   fermerDuel(view)
   auFront = null
+  zoom = null
   selection = null
   finSonnee = false
   view.root.classList.remove('panneau-ouvert')
@@ -111,7 +116,7 @@ function demarrer(nouvelleSeed: number): void {
 }
 
 function dessiner(): void {
-  render(view, descente, seed, selection, occupation, auFront)
+  render(view, descente, seed, selection, occupation, auFront, zoom)
   tracerVisees(view)
 }
 
@@ -168,7 +173,13 @@ const ACTIONS_DE_JEU = new Set([
   'extraire',
 ])
 
-bindInput(view, (action) => {
+/**
+ * Le seul point d'entrée des actions. Nommé, et non anonyme dans `bindInput` :
+ * les gestes de la main y entrent aussi, et une action peut en enchaîner une
+ * autre — sortir une carte de la main avec un seul ennemi debout engage ET
+ * frappe.
+ */
+function dispatch(action: Action): void {
   // Une animation en cours verrouille le jeu. Sans ça on pouvait jouer pendant
   // la salve ennemie, et l'écran de récompense s'ouvrait par-dessus un corps
   // en train de tomber.
@@ -189,6 +200,36 @@ bindInput(view, (action) => {
     case 'annuler':
       selection = null
       break
+    case 'zoomer':
+      // Regarder une carte n'engage rien : ça ne repose pas celle qu'on tient.
+      zoom = action.index
+      break
+    case 'fermerZoom':
+      zoom = null
+      break
+    case 'reordonner':
+      descente = { ...descente, combat: reordonnerMain(descente.combat, action.de, action.vers) }
+      // La carte tenue a peut-être changé d'index sous nos pieds : on repose.
+      selection = null
+      break
+    case 'jouerDepuisLaMain': {
+      const debout = vivants(descente.combat)
+      const carte = descente.combat.main[action.index]
+      if (carte === undefined || carte.type !== 'combat') break
+      if (carte.cout > descente.combat.energie) break
+      // Une seule cible possible : sortir la carte de la main SUFFIT à
+      // engager. C'est le contraire de la tape, où retaper repose toujours —
+      // mais le geste n'est pas le même : le glisser est déjà un engagement,
+      // il n'y a plus rien à confirmer.
+      if (debout.length === 1) {
+        selection = action.index
+        sonViser()
+        return dispatch({ type: 'cibler', cible: debout[0]!.index })
+      }
+      selection = action.index
+      sonViser()
+      break
+    }
     case 'cibler': {
       if (selection !== null) {
         const combat = descente.combat
@@ -319,6 +360,21 @@ bindInput(view, (action) => {
   // Le combat ne se résout qu'une fois les animations finies : l'écran de
   // récompense attend que le dernier corps soit tombé.
   occuper(attente, pendant, conclure)
+}
+
+bindInput(view, dispatch)
+
+/**
+ * Les gestes de la main. `disponible` est le même verrou que celui du dispatch :
+ * il faut le poser ici AUSSI, sinon le glisser démarrerait pendant une
+ * animation et la carte suivrait le doigt pour rien.
+ */
+brancherMain(view, {
+  jouer: (index) => dispatch({ type: 'jouerDepuisLaMain', index }),
+  reordonner: (de, vers) => dispatch({ type: 'reordonner', de, vers }),
+  regarder: (index) => dispatch({ type: 'zoomer', index }),
+  disponible: () =>
+    occupation === 'libre' && descente.phase.type === 'combat' && descente.combat.issue === null,
 })
 
 /** Le bouton ne s'affiche que là où l'API existe : l'iPhone ne l'a pas. */
