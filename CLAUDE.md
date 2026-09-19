@@ -5,49 +5,73 @@ téléphone** avant tout.
 
 ## Concept du jeu
 
-Un **deckbuilder roguelike d'extraction**. Le joueur descend dans un donjon avec
-un deck de cartes de combat qu'il a **misé**. Sur les ennemis, il ramasse des
-trésors, et **chaque trésor est une carte qui entre dans son deck**. Plus il est
-cupide, plus son deck se dilue, plus les combats deviennent durs. Des **points de
-sortie** jalonnent la descente : à chacun, il choisit de rentrer avec ce qu'il a
-ou de continuer. **S'il meurt, il perd tout** : trésors et cartes emportées.
+Un **deckbuilder d'extraction**. Deux plaisirs branchés l'un sur l'autre :
 
-La question du jeu : *jusqu'où je m'alourdis avant de rentrer ?*
+- **Composer son deck avant la run.** Dans un roguelike de cartes classique
+  (Slay the Spire), on part toujours du même paquet de base et la puissance se
+  construit pendant la run. Ici, non : on **emporte son gros matos**. « Pour
+  cette run, je prends cette carte-là » est le premier plaisir du jeu, et c'est
+  l'extraction qui lui donne son poids — puisqu'on peut la perdre.
+- **Ressortir vivant.** Push your luck, points de sortie, cupidité, butin. Ce
+  qu'on rapporte, on le garde. **Si on meurt, on perd tout** : les trésors comme
+  les cartes emportées.
+
+Deux butins, deux rôles distincts :
+
+- **Les cartes** gagnées en run sont la **puissance**. Ramenées vivantes, elles
+  entrent dans la collection du hub et pourront être emportées aux runs
+  suivantes.
+- **Les trésors** sont la **progression globale**. Ramenés au hub, ils
+  débloquent le craft, les marchands, la suite. Ils n'ont **aucun effet en
+  run**.
+
+### Le sac — la tension centrale
+
+Le joueur a un **sac de petite capacité**. Les trésors ramassés y vont.
+**Au-delà du sac, un trésor devient une carte morte dans le deck** : injouable,
+elle occupe une place de main et rien d'autre.
+
+Tout le jeu est dans cette phrase : *tu peux en ramener X ; au-delà, ça te
+pourrit le deck.* Chaque trésor de trop est un pari — de la progression au hub
+contre des combats plus pauvres, donc plus de risque de tout perdre.
 
 Boucle :
 
 ```
-hub (composer le deck misé)
-  -> donjon (combats, choix de trésors, points de sortie)
-  -> marché noir (vendre les trésors contre de l'or, acheter des cartes
-                  et de la progression permanente)
-  -> hub ...
+hub (composer le deck emporté)
+  -> donjon (combats, cartes à gagner, trésors à ramasser, points de sortie)
+  -> extraction vivant : on garde tout
+  -> hub (les cartes rejoignent la collection, les trésors la progression) ...
 ```
 
 ## Décisions de design
 
 Acquises. **Ne pas les remettre en question sans demander à Keko.**
 
-- Un trésor = une carte dans le deck, **poids uniforme**. Le joueur doit préférer
-  peu de gros trésors à beaucoup de petits.
-- Les trésors ont des effets tournés vers la **richesse** (valoriser d'autres
-  trésors, générer de l'or), **jamais vers le combat direct**. Ils forment un
-  second moteur, un archétype de build "greed".
-- Le joueur voit **toujours son taux d'encombrement** (ratio cartes combat /
-  trésors).
-- La main pleine de trésors est **la punition voulue**. On ne la corrige pas par
-  les règles. Les soupapes existent **uniquement dans le deck** : des cartes
+- Le **sac est peu améliorable**. C'est la contrainte permanente du jeu, pas un
+  axe de progression. Le hub vend du **levier et de la variété, jamais de la
+  sécurité**.
+- Un trésor au-delà du sac = **une carte morte, poids uniforme**. Le joueur doit
+  préférer peu de gros trésors à beaucoup de petits.
+- **Les trésors n'ont aucun effet en run** : ni en combat, ni en fin de combat.
+  L'idée d'un second moteur « greed » — des trésors aux effets de richesse,
+  formant un archétype de build — n'est **pas enterrée, elle est garée**. On
+  commence en carte morte ; on rouvrira plus tard, avec Keko.
+- **L'économie des trésors n'est pas tranchée.** Il y en aura de fongibles (un
+  prix, de l'or) et/ou qui servent de **matériaux de craft**. À décider plus
+  tard : ne rien construire dessus pour l'instant.
+- Le joueur voit **toujours son taux d'encombrement** (ratio cartes jouables /
+  cartes mortes).
+- La main polluée est **la punition voulue**. On ne la corrige pas par les
+  règles. Les soupapes existent **uniquement dans le deck** : des cartes
   d'action qui manipulent les trésors, draftées **à la place** de cartes de
   combat.
-- Un **sac à petite capacité (3-4)** garde quelques trésors hors du deck. Il
-  s'améliore rarement.
-- Un **marchand au troc** en run échange plusieurs trésors contre un plus gros.
-  Rare ou cher.
 - Un trésor **refusé est perdu définitivement**.
 - **La mort fait tout perdre** (trésors + cartes emportées). Non négociable.
-- Garde-fous contre la spirale de la mort : **deck de base gratuit**,
-  **méta-progression** pour racheter des cartes perdues.
-- Le hub vend du **levier et de la variété, jamais de la sécurité**.
+- Garde-fous contre la peur du stuff et la spirale de la mort : **deck de base
+  gratuit**, **cartes possédées en plusieurs exemplaires** au hub — on n'en
+  emporte qu'un, donc perdre fait mal sans amputer — et **méta-progression**
+  pour racheter ce qui est perdu.
 - Le **système de combat** est tranché : tour par tour à énergie, voir la
   section dédiée ci-dessous. L'horloge partagée a été essayée puis abandonnée,
   mesures à l'appui — ne pas la ressortir sans en reparler à Keko.
@@ -55,8 +79,9 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   frappe plus, donc achever vaut mieux que cogner au rendement — à condition
   que les cartes soient en mesure d'achever. Ne pas aligner de gros sacs de PV.
 - **Mis de côté** pour l'instant : la fuite en combat, l'interruption des cartes
-  en cours, la pioche comme action, le marchand au troc. Ne pas les
-  implémenter.
+  en cours, la pioche comme action, et le **marchand au troc** en run (échanger
+  plusieurs trésors contre un plus gros — il soulage le sac, c'est pour ça qu'il
+  devra être rare ou cher). Ne pas les implémenter.
 
 ### Système de combat — tour par tour
 
@@ -78,10 +103,10 @@ C'est l'arbitrage central du multi-cibles — et il n'existe que si les cartes
 peuvent effectivement achever un corps. Mesuré : quand les ennemis se
 ressemblent, « taper le plus faible » égale le meilleur bot.
 
-**Les trésors.** Injouables, aucun effet en combat — leurs effets de richesse
-se calculent à l'extraction. En combat ils ne font qu'une chose : **occuper une
-place de main**. Main de 5 et énergie de 5 sont conservées telles quelles
-depuis l'horloge : **les maths de la cupidité n'ont pas bougé**.
+**Les trésors.** Injouables, aucun effet, aucune valeur en combat. Ils ne font
+qu'une chose : **occuper une place de main**. Main de 5 et énergie de 5 sont
+conservées telles quelles depuis l'horloge : **les maths de l'encombrement
+n'ont pas bougé**.
 
 **Deux actions, pas une de plus :** jouer une carte sur une cible, finir le
 tour.
@@ -111,16 +136,21 @@ Abandonné après mesure. Ne pas y revenir sans redemander à Keko.*
 
 ### Hypothèse critique à tester en premier
 
-Tout le jeu repose sur une question : **une main polluée de trésors est-elle
-tendue ou pénible ?** C'est la seule chose à valider avant de construire le hub,
-le marché ou la carte du donjon. Le premier prototype est **jetable** et ne sert
-qu'à ça : interface brute, aucun style.
+Le sac garantit qu'une run normale se joue **sans une seule carte morte**. La
+pollution n'arrive qu'au débordement, et le joueur la choisit. D'où la question,
+seule chose à valider avant de construire le hub, le marché ou la carte du
+donjon :
+
+> **Déborder du sac, est-ce un pari tendu ou une corvée ?** Et combien de
+> trésors de trop un joueur accepte-t-il d'avaler ?
+
+Le premier prototype est **jetable** et ne sert qu'à ça : interface brute, aucun
+style.
 
 ## État actuel
 
-Le prototype jetable de combat est **jouable au doigt** et déployé. Il ne sert
-qu'à tester l'hypothèse critique ci-dessus ; ni hub, ni marché, ni carte de
-donjon. Ce qui tourne :
+Le prototype jetable de combat est **jouable au doigt** et déployé. Ni hub, ni
+marché, ni carte de donjon. Ce qui tourne :
 
 - moteur au tour par tour à énergie, **plusieurs ennemis**, cible au doigt ;
 - interface compressée : une ligne par ennemi, une ligne par carte, le
@@ -145,16 +175,10 @@ Les trésors ne sont pas encore ramassés en jeu : un **curseur de cupidité**
 (0 / 2 / 4 / 6 / 8) les injecte directement dans le deck emporté. Ce n'est pas
 une mécanique, c'est le réglage qui rend l'hypothèse testable au doigt.
 
-Prochaine étape : **faire jouer Keko à chaque cran** et répondre à l'hypothèse
-critique — la main polluée de trésors est-elle tendue ou pénible ? Tout le
-reste (hub, marché, carte du donjon) attend cette réponse.
+### Ce qu'on sait déjà de la pollution
 
-
-### Première réponse à l'hypothèse critique
-
-Keko a joué : **« clairement 2 ou 3 babioles c'est chiant »**. Mesure faite
-dans la foulée pour savoir de quelle maladie il s'agit — par tour de jeu, en
-montant la cupidité de 0 à 8 trésors :
+Keko a joué une première fois : **« clairement 2 ou 3 babioles c'est chiant »**.
+Mesure faite dans la foulée, par tour de jeu, en montant la cupidité de 0 à 8 :
 
 | trésors | options / tour | tours **sans aucun choix** | cartes jouées | énergie gâchée |
 |---|---|---|---|---|
@@ -164,26 +188,26 @@ montant la cupidité de 0 à 8 trésors :
 
 **Le nombre de cartes jouées ne bouge pas** (2,15 → 2,10). Les trésors ne
 coûtent pas des coups, ils coûtent **le choix du coup** : à 8 trésors, près
-d'un tour sur quatre n'a plus aucune décision.
+d'un tour sur quatre n'a plus aucune décision. *La cupidité ne rend pas les
+tours plus durs, elle les vide.*
 
-*La cupidité ne rend pas les tours plus durs, elle les vide.* C'est pour ça
-que c'est chiant et pas tendu — et aucun réglage de difficulté n'y changera
-quoi que ce soit.
+**Ce chiffre garde toute sa valeur — c'est sa lecture qui a changé.** Le test se
+jouait sans sac : le premier trésor ramassé polluait déjà, donc Keko portait le
+poids sans avoir rien choisi. Avec le sac, la même courbe devient le **prix d'un
+cran de débordement**, et c'est exactement le pari qu'on veut lui faire prendre.
+À retester dans ce cadrage avant toute conclusion.
 
-Premier correctif appliqué : **chaque trésor affiche son prix de revente**
-(45 à 240, très inégal). Attention au vocabulaire : un trésor ne rapporte
-rien en combat ni en fin de combat — il ne devient de l'or **qu'au marché
-noir, après la run**. L'écran n'annonce donc jamais un gain, seulement ce que
-le butin vaudra s'il ressort. Le test était amputé — Keko
-portait le poids sans jamais voir l'appât, donc « chiant » était le seul
-verdict possible. Ça restaure l'enjeu, mais ça ne répare pas la mécanique du
-tour vide : à retester.
+Un correctif déjà appliqué, à relire à la lumière du nouveau concept : chaque
+trésor affiche un **prix de revente** (45 à 240, très inégal), pour que l'appât
+soit visible en même temps que le poids. L'économie n'étant plus tranchée, cet
+affichage est **provisoire** : ce qu'il faut montrer, c'est la valeur du butin
+au hub, quelle que soit sa forme finale. Attention au vocabulaire dans tous les
+cas : un trésor ne rapporte rien en combat ni en fin de combat, l'écran annonce
+seulement ce que le butin vaudra **s'il ressort**.
 
-Si ça reste chiant, le levier suivant est **déjà dans les décisions de
-design** : les soupapes viennent des cartes, pas des règles — des cartes
-d'action qui manipulent les trésors, draftées à la place de cartes de combat.
-Ne rouvrir « un trésor = une carte, poids uniforme » qu'après ça, et seulement
-avec Keko.
+**Prochaine étape :** faire simuler un **sac** par le curseur (capacité ~3, le
+curseur ne comptant que les trésors *en débordement*), pousser, et faire
+retester Keko. Tout le reste attend cette réponse.
 
 ## Architecture — la règle à ne pas casser
 
@@ -205,7 +229,7 @@ src/
 extérieur (persistance, horloge, seed) lui est **injecté** depuis `ui/` ou
 `main.ts` — d'où le `StoragePort`. Ne pas importer `ui/` depuis `logic/`.
 
-Toute la logique de jeu (combat, deck, trésors, encombrement) va dans
+Toute la logique de jeu (combat, deck, sac, trésors, encombrement) va dans
 `src/logic/` et doit être jouable sans DOM. Tout tirage aléatoire passe par le
 RNG seedé.
 
@@ -224,6 +248,7 @@ incrémenter la version (ou écrire une migration).
 npm run dev          # dev local
 npm run dev:mobile   # vite --host -> tester sur le téléphone via l'adresse Network
 npm run build        # tsc (types) puis vite build ; doit passer sans erreur
+npm run verif        # vérifications des règles, sans navigateur
 ```
 
 ## Déploiement — workflow attendu par Keko
@@ -245,7 +270,7 @@ sur la page** pour être sûr qu'il ne voit pas une version en cache.
 
 On avance **étape par étape**. À chaque étape : dire à Keko ce qui a été fait, et
 **commiter quand ça marche**. Ne pas écrire de code tant qu'une décision de
-design en attente (ex. le système de combat) n'est pas tranchée par Keko.
+design en attente n'est pas tranchée par Keko.
 
 ## Langue
 
