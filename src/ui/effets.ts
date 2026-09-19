@@ -38,6 +38,33 @@ export function encaisse(view: View, corps: number | 'joueur', montant: number):
   }, DUREE)
 }
 
+/**
+ * L'assaut : l'ennemi se ramasse, puis bondit. C'est ce qui manquait pour lire
+ * un tour — on voyait sa barre de vie baisser sans voir QUI avait frappé.
+ *
+ * L'animation remplace le souffle le temps de se jouer, plutôt que de s'y
+ * ajouter : deux animations sur la même propriété se marchent dessus. La
+ * respiration reprend d'elle-même à la fin.
+ */
+export function assaut(view: View, noms: string[]): void {
+  for (const nom of noms) {
+    const creature = [...view.ennemis.querySelectorAll('.creature')].find(
+      (c) => c.querySelector('.nom')?.textContent === nom,
+    )
+    const corps = creature?.querySelector('.silhouette')
+    if (corps === null || corps === undefined) continue
+
+    corps.classList.remove('assaut')
+    // Force un reflow : sans ça, deux assauts d'affilée ne rejouent pas.
+    void (corps as HTMLElement & { offsetWidth: number }).getBoundingClientRect()
+    corps.classList.add('assaut')
+    window.setTimeout(() => corps.classList.remove('assaut'), DUREE_ASSAUT)
+  }
+}
+
+/** Durée de l'assaut, en ms. Doit suivre la règle CSS `.silhouette.assaut`. */
+const DUREE_ASSAUT = 420
+
 /** Le corps tombe : une marque sur toute la rangée, le temps de le voir partir. */
 export function tombe(view: View): void {
   view.ennemis.classList.remove('un-de-moins')

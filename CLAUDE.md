@@ -295,6 +295,11 @@ donjon. Ce qui tourne :
 - le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
+- **l'ennemi qui frappe bondit** : il se ramasse d'abord — l'anticipation — puis
+  frappe. Seuls ceux dont le compteur est échu bougent, lus dans les événements
+  du tour, donc un ennemi à `periode: 2` reste immobile les tours où il attend.
+  Et **la réaction du joueur est décalée de 170 ms** : sans ça le bond et
+  l'encaissement se superposent, et on ne lit plus la cause de l'effet ;
 - des **arches de visée** (`ui/visees.ts`) : carte levée, un trait pointillé en
   cloche part vers **chaque** corps visable. Vers tous, et pas vers un seul,
   parce qu'on joue en deux tapes — entre les deux il n'y a pas encore de cible,

@@ -24,7 +24,7 @@ import {
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
-import { encaisse, tombe } from './ui/effets.ts'
+import { assaut, encaisse, tombe } from './ui/effets.ts'
 import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
 import { tracerVisees } from './ui/visees.ts'
 import {
@@ -99,9 +99,18 @@ bindInput(view, (action) => {
     }
     case 'finTour': {
       const avant = descente.combat.pv
+      const dejaVus = descente.combat.evenements.length
       descente = { ...descente, combat: finDuTour(descente.combat, rng) }
       const subi = avant - descente.combat.pv
-      if (subi > 0) marques.push(() => encaisse(view, 'joueur', subi))
+      // Qui a frappé : on lit les événements que ce tour vient d'ajouter.
+      const frappeurs = descente.combat.evenements
+        .slice(dejaVus)
+        .filter((e) => e.type === 'frappe')
+        .map((e) => e.nom)
+      if (frappeurs.length > 0) marques.push(() => assaut(view, frappeurs))
+      // La réaction du joueur attend le bond : sinon les deux se superposent
+      // et on ne lit plus la cause de l'effet.
+      if (subi > 0) marques.push(() => window.setTimeout(() => encaisse(view, 'joueur', subi), 170))
       if (subi > 0) sonEncaisse()
       sonPioche()
       selection = null

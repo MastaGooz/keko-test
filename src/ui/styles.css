@@ -137,6 +137,33 @@ body {
   }
 }
 
+/* L'assaut : elle se ramasse, puis bondit. La regle est plus specifique que
+   celle du souffle, donc elle la REMPLACE le temps de se jouer -- deux
+   animations sur la meme propriete se marchent dessus. La respiration reprend
+   toute seule a la fin. */
+.silhouette.assaut {
+  animation: assaut 0.42s ease-out;
+}
+
+@keyframes assaut {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  24% {
+    /* Anticipation : elle recule avant de frapper. */
+    transform: translateY(-7px) scale(0.96);
+  }
+  48% {
+    transform: translateY(11px) scale(1.08);
+  }
+  72% {
+    transform: translateY(2px) scale(1.01);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* Decalees : une meute qui respire a l'unisson fait machine, pas vivant. */
 #ennemis .creature:nth-child(2) .silhouette {
   animation-delay: -1.15s;
@@ -1039,7 +1066,8 @@ body {
     animation-duration: 0.01ms;
   }
 
-  .silhouette {
+  .silhouette,
+  .silhouette.assaut {
     animation: none;
   }
 
