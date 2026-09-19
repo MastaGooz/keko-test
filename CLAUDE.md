@@ -357,8 +357,16 @@ donjon. Ce qui tourne :
   **La boîte de la main est en `pointer-events: none`, ses cartes en `auto`.**
   Son remplissage lui fait couvrir toute la largeur, tas et orbe compris, et
   elle est au-dessus d'eux : sans ça elle les rendrait insensibles au doigt.
-  Invisible aujourd'hui puisqu'ils ne sont pas cliquables, et un piège le jour
-  où ils le deviendront.
+
+  **Et ce `auto` a un prix qu'il faut connaître : un descendant qui redemande
+  `auto` RESSUSCITE TOUT SON SOUS-ARBRE.** La coupure d'un parent ne l'atteint
+  plus. Le verrou d'animation coupait `pointer-events` sur `#cartes` et
+  croyait la main neutralisée ; elle ne l'était plus. Les cartes restaient
+  survolables et pressables pendant tout un gros plan — le coup partait bien à
+  la poubelle, le verrou de `main.ts` rejette l'action, mais la carte se levait
+  sous le doigt avec un curseur de main : *elle avait l'air jouable, ce qui est
+  pire qu'un refus franc*. Toute coupure d'interaction qui vise la main doit
+  donc nommer `.carte` explicitement.
 
   **La main se réserve ses bords par du remplissage**, jamais par `max-width` +
   `margin-inline: auto` : des marges automatiques sur un élément flex étiré le

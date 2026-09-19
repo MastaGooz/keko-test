@@ -1987,10 +1987,27 @@ body {
 /* --- les temps du jeu ------------------------------------------------------ */
 
 /* Une animation se deroule : le jeu ne repond plus aux gestes de combat. Les
-   reglages, eux, restent accessibles -- on ne piege jamais le joueur. */
+   reglages, eux, restent accessibles -- on ne piege jamais le joueur.
+
+   LA CARTE DOIT ETRE NEUTRALISEE EXPLICITEMENT. Couper `pointer-events` sur
+   `#cartes` ne suffit plus depuis que `.carte` le remet a `auto` -- il le faut
+   pour que la boite de la main, qui couvre toute la largeur, laisse passer les
+   tas et l'orbe. Un descendant qui redemande `auto` ressuscite tout le
+   sous-arbre : la coupure du parent ne l'atteint pas.
+
+   Sans cette regle, les cartes restaient survolables et pressables pendant tout
+   le gros plan. Le coup partait quand meme a la poubelle -- le verrou de
+   `main.ts` rejette l'action -- mais la carte se levait sous le doigt et
+   affichait un curseur de main : elle avait l'air jouable, ce qui est pire
+   qu'un refus franc. */
 .occupe #cartes,
 .occupe #ennemis {
   pointer-events: none;
+}
+
+.occupe #cartes .carte {
+  pointer-events: none;
+  cursor: default;
 }
 
 .occupe #cartes {
