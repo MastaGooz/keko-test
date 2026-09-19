@@ -564,7 +564,17 @@ donjon. Ce qui tourne :
   recouvrement reprend au-delà.
 - **Le jeu a des temps.** Tant qu'une animation se déroule, l'entrée de combat
   est verrouillée et **le combat ne se résout pas** : l'écran de récompense
-  attend que le dernier corps soit tombé. Le bouton de fin de tour porte le
+  attend que le dernier corps soit tombé.
+
+  **Et quand le combat vient de se terminer, on RE-DONNE LA SCÈNE au joueur
+  avant de lui poser un calque dessus** — une demi-seconde, assez pour que
+  l'oeil enregistre le rang vide, trop court pour qu'on attende. Sans elle, le
+  gros plan de la frappe fatale se refermait et le palier s'ouvrait dans la
+  même image : on ne voyait jamais le champ de bataille qu'on venait de vider,
+  ni son propre corps une fois le coup encaissé. La pause vit juste avant
+  `conclure`, qui est ce qui fait basculer la descente dans la phase suivante —
+  c'est le seul endroit qui sache que le combat s'achève, et elle couvre donc
+  la victoire comme la mort. Le bouton de fin de tour porte le
   tour de qui c'est — « Les ennemis frappent… » pendant la salve, sans quoi une
   seconde et demie sans réponse ressemble à un jeu qui a planté. Les réglages
   restent accessibles pendant le verrou : **on ne piège jamais le joueur**.

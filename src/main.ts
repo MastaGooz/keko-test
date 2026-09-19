@@ -148,6 +148,13 @@ function conclure(): void {
   }
 }
 
+/**
+ * Le temps qu'on laisse au joueur de REVOIR la scène quand le combat vient de
+ * se terminer, avant que le palier ne se pose par-dessus. Une demi-seconde :
+ * assez pour que l'oeil enregistre le rang vide, trop court pour qu'on attende.
+ */
+const RESPIRATION_APRES_COMBAT = 520
+
 /** Ce qui doit attendre son tour. Les réglages, eux, répondent toujours. */
 const ACTIONS_DE_JEU = new Set([
   'viser',
@@ -297,6 +304,17 @@ bindInput(view, (action) => {
 
   dessiner()
   for (const marque of marques) marque()
+
+  // Quand le combat vient de se terminer, on rend la SCÈNE au joueur avant de
+  // lui poser un calque dessus. Sans cette respiration, le gros plan de la
+  // frappe fatale se refermait et l'écran de récompense — ou la fin de run —
+  // s'ouvrait dans la même image : on ne voyait jamais le champ de bataille
+  // qu'on venait de vider, ni son propre corps une fois le coup encaissé.
+  // C'est le seul endroit qui le sache : `conclure` fait passer la descente à
+  // la phase suivante, donc c'est juste avant lui que la pause a sa place.
+  if (descente.phase.type === 'combat' && descente.combat.issue !== null) {
+    attente += RESPIRATION_APRES_COMBAT
+  }
 
   // Le combat ne se résout qu'une fois les animations finies : l'écran de
   // récompense attend que le dernier corps soit tombé.
