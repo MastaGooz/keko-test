@@ -309,9 +309,13 @@ function ligneCarte(
   else classes.push('jouable')
   if (vise) classes.push('visee')
 
-  // Visée avec une seule cible debout : la retape engage directement.
-  const action = !abordable ? '' : vise && debout.length === 1 ? 'cibler' : vise ? 'annuler' : 'viser'
-  const donnee = action === 'cibler' ? `data-cible="${debout[0]!.index}"` : `data-index="${index}"`
+  // Retaper une carte visée la REPOSE, toujours — même s'il ne reste qu'un
+  // seul corps debout. Le raccourci « une seule cible, la retape engage »
+  // existait ; il transformait le même geste en deux verbes opposés selon le
+  // nombre d'ennemis, et on ne pouvait plus reposer une carte à la fin d'un
+  // combat. Frapper demande de désigner une cible, sans exception.
+  const action = !abordable ? '' : vise ? 'annuler' : 'viser'
+  const donnee = `data-index="${index}"`
 
   // Le coût porte la couleur : le petit coup est froid, le gros est chaud. On
   // lit le poids d'une carte avant d'avoir lu son chiffre.

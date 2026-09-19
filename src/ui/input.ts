@@ -51,7 +51,13 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
   // 'click' couvre tactile et souris, sans double déclenchement.
   view.root.addEventListener('click', (evenement) => {
     const noeud = (evenement.target as HTMLElement).closest<HTMLElement>('[data-action]')
-    if (noeud === null) return
+    // Taper à côté repose la carte visée. Sans ça, une carte levée par erreur
+    // ne se reposait qu'en retapant précisément sur elle — or elle a changé de
+    // place en se levant, donc on tapait à côté et il ne se passait rien.
+    if (noeud === null) {
+      dispatch({ type: 'annuler' })
+      return
+    }
 
     switch (noeud.dataset.action) {
       case 'viser':

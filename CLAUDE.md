@@ -401,6 +401,14 @@ donjon. Ce qui tourne :
   du tour, donc un ennemi à `periode: 2` reste immobile les tours où il attend.
   Et **la réaction du joueur est décalée de 170 ms** : sans ça le bond et
   l'encaissement se superposent, et on ne lit plus la cause de l'effet ;
+- **On joue toujours en deux tapes, sans exception : lever une carte, désigner
+  une cible.** Retaper la carte levée la repose ; taper à côté aussi. Un
+  raccourci existait — « s'il ne reste qu'un seul corps debout, la retape
+  engage » — et il était faux : le même geste devenait deux verbes opposés
+  selon le nombre d'ennemis, et on ne pouvait plus reposer une carte à la fin
+  d'un combat. Une carte levée par erreur est d'autant plus piégeuse qu'elle a
+  **changé de place en se levant** : on retape là où elle était, donc à côté.
+  D'où la reposée sur tape à côté, et pas seulement sur la carte.
 - des **arches de visée** (`ui/visees.ts`) : carte levée, un trait pointillé en
   cloche part vers **chaque** corps visable. Vers tous, et pas vers un seul,
   parce qu'on joue en deux tapes — entre les deux il n'y a pas encore de cible,
