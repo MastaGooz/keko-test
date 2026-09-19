@@ -18,9 +18,18 @@ const DUREE = 420
  * Souligne le corps qui vient d'encaisser et fait sauter les dégâts au-dessus.
  * `corps` est l'index de l'ennemi, ou 'joueur'.
  */
+/** Les nettoyages en cours, pour qu'un ancien coup n'efface pas le suivant. */
+const enCours = new WeakMap<Element, number>()
+
 export function encaisse(view: View, corps: number | 'joueur', montant: number): void {
   const cible = view.root.querySelector<HTMLElement>(`[data-corps="${corps}"]`)
   if (cible === null) return
+
+  // Deux coups rapprochés se marchaient dessus : le nettoyage du premier
+  // arrivait pendant le second et lui coupait son animation, et les deux
+  // chiffres se superposaient au même endroit, illisibles.
+  window.clearTimeout(enCours.get(cible))
+  cible.querySelectorAll('.degats-voles').forEach((v) => v.remove())
 
   cible.classList.remove('encaisse')
   // Force un reflow : sans ça, deux coups d'affilée ne rejouent pas l'animation.
@@ -32,10 +41,13 @@ export function encaisse(view: View, corps: number | 'joueur', montant: number):
   chiffre.textContent = `−${montant}`
   cible.appendChild(chiffre)
 
-  window.setTimeout(() => {
-    chiffre.remove()
-    cible.classList.remove('encaisse')
-  }, DUREE)
+  enCours.set(
+    cible,
+    window.setTimeout(() => {
+      chiffre.remove()
+      cible.classList.remove('encaisse')
+    }, DUREE),
+  )
 }
 
 /**
@@ -65,9 +77,17 @@ export function assaut(view: View, noms: string[]): void {
 /** Durée de l'assaut, en ms. Doit suivre la règle CSS `.silhouette.assaut`. */
 const DUREE_ASSAUT = 580
 
-/** Le temps entre deux ennemis d'une même salve. Ils frappent l'un après
- *  l'autre : une salve simultanée ne se lit pas, on voit juste tout bouger. */
-export const PAS_ENTRE_FRAPPES = 340
+/**
+ * Le temps entre deux ennemis d'une même salve.
+ *
+ * **Il doit dépasser la durée d'un assaut complet, secousse comprise.** Sinon
+ * l'élan du suivant démarre pendant la secousse déclenchée par le précédent —
+ * et comme la secousse est portée par un parent des créatures, sa montée lente
+ * et posée se fait secouer. L'anticipation, qui est tout l'intérêt du geste,
+ * est alors détruite : Keko l'a vu tout de suite sur le deuxième et le
+ * troisième monstre, alors qu'un monstre seul était impeccable.
+ */
+export const PAS_ENTRE_FRAPPES = 620
 
 /** Quand l'impact tombe dans l'assaut (46 % de l'animation). */
 export const INSTANT_IMPACT = 265
@@ -81,10 +101,11 @@ export function secouerEcran(view: View): void {
   if (view.root.querySelector('.voile') !== null) return
   const app = view.root.querySelector('.app')
   if (app === null) return
+  window.clearTimeout(enCours.get(app))
   app.classList.remove('secoue')
   void app.getBoundingClientRect()
   app.classList.add('secoue')
-  window.setTimeout(() => app.classList.remove('secoue'), 260)
+  enCours.set(app, window.setTimeout(() => app.classList.remove('secoue'), 260))
 }
 
 /** Le corps tombe : une marque sur toute la rangée, le temps de le voir partir. */

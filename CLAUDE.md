@@ -295,9 +295,19 @@ donjon. Ce qui tourne :
 - le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
-- **les ennemis frappent chacun leur tour**, à 340 ms d'intervalle, et chacun
-  inflige **sa** part de dégâts. Une salve simultanée ne se lit pas : on voit
-  tout bouger sans savoir qui a pris quoi.
+- **les ennemis frappent chacun leur tour**, et chacun inflige **sa** part de
+  dégâts. Une salve simultanée ne se lit pas : on voit tout bouger sans savoir
+  qui a pris quoi.
+
+  **L'intervalle doit dépasser un assaut complet, secousse comprise** (620 ms
+  pour un assaut de 580 et une secousse de 260). Un intervalle plus court était
+  impeccable sur un monstre seul et cassé dès le deuxième : son élan démarrait
+  pendant la secousse déclenchée par le précédent, et comme la secousse est
+  portée par un **parent** des créatures, sa montée lente se faisait secouer —
+  l'anticipation, qui est tout l'intérêt du geste, disparaissait. S'y ajoutaient
+  deux collisions : les chiffres de dégâts se superposaient au même endroit, et
+  le nettoyage du premier coupait l'animation du second. Les effets annulent
+  donc désormais leur propre nettoyage en cours.
 - **Le bond est un franc haut-bas, sans aucune rotation** : il monte en se
   ramassant, puis tombe sous sa position de repos avant de remonter. **Tout le
   poids vient du contraste de vitesse** — mesuré : 20 px de montée en 197 ms,
