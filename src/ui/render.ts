@@ -219,8 +219,7 @@ function corpsEnnemi(
     `<span class="chair" style="--teinte:${espece.teinte}">` +
     `${creature(espece.espece, String(index))}<span class="socle"></span></span>` +
     jauge(ennemi.pv, ennemi.pvMax) +
-    `<span class="plaquette"><span class="nom">${ennemi.nom}</span>` +
-    `<span class="pv">${ennemi.pv}</span></span>`
+    `<span class="plaquette"><span class="nom">${ennemi.nom}</span></span>`
 
   // `au-front` : ce corps est en ce moment dans le gros plan, il a quitté
   // l'arrière-plan. La classe vient de l'ÉTAT et pas d'une pose à la main,
@@ -263,16 +262,26 @@ function corpsJoueur(
     `<span class="chair" style="--teinte:#7fb6d9">` +
     `${creature('joueur', 'moi')}<span class="socle"></span></span>` +
     jauge(etat.pv, etat.pvMax) +
-    `<span class="plaquette"><span class="nom">TOI</span>` +
-    `<span class="pv">${etat.pv}</span></span>` +
+    `<span class="plaquette"><span class="nom">TOI</span></span>` +
     (visee === null || fini ? '' : '') +
     `</div>`
   )
 }
 
+/**
+ * La jauge PORTE son chiffre, au format `courant/max`.
+ *
+ * Il vivait à côté du nom, et il y disait deux fois moins : sans le maximum on
+ * ne sait pas si 23 est beaucoup, et à côté d'une barre il faut faire l'aller-
+ * retour entre les deux pour lire un seul fait. Dans la barre, la longueur et
+ * le chiffre disent la même chose au même endroit.
+ */
 function jauge(pv: number, pvMax: number): string {
   const part = Math.max(0, Math.round((pv / pvMax) * 100))
-  return `<span class="jauge"><span class="remplissage" style="width:${part}%"></span></span>`
+  return (
+    `<span class="jauge"><span class="remplissage" style="width:${part}%"></span>` +
+    `<span class="chiffre-pv">${pv}<span class="sur-pv">/${pvMax}</span></span></span>`
+  )
 }
 
 /**

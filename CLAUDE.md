@@ -319,6 +319,18 @@ donjon. Ce qui tourne :
   ait des cartes dedans ou non : c'est un pupitre, pas un contenu qui pousse.*
   `padding-top` et `min-height` sortent du même jeton `--degagement`, pour
   qu'on ne puisse pas bouger l'un sans l'autre.
+- **la jauge porte son chiffre**, au format `courant/max`, posé par-dessus le
+  remplissage. Il vivait à côté du nom, et il y disait deux fois moins : sans
+  le maximum on ne sait pas si 23 est beaucoup, et à côté d'une barre il faut
+  faire l'aller-retour entre les deux pour lire un seul fait. Dans la barre,
+  **la longueur et le chiffre disent la même chose au même endroit**.
+
+  La barre suit la taille du corps mais avec un **plancher** : ce qui commande
+  sa hauteur n'est pas l'esthétique, c'est la lisibilité du chiffre dedans, et
+  sous ce plancher il ne tient plus. Le chiffre est en `absolute` par-dessus,
+  jamais dans le flux du remplissage — sinon il pousserait la barre, ou serait
+  coupé par elle quand elle se vide. Son contour sombre lui permet de se lire
+  aussi bien sur le rouge vif que sur le fond noir de la partie vide.
 - **la scène centre ses corps au-dessus de 430 px de haut, et les pose en bas
   en dessous.** Elle mange tout ce qui reste entre l'info et la main ; sur un
   écran de PC ça fait le double du contenu qu'elle porte, et tout le vide
