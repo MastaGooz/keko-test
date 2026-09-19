@@ -519,9 +519,12 @@ donjon. Ce qui tourne :
   dessinées pour se faire face dans cet ordre. C'est l'assaut qui désigne
   l'attaquant, pas la place.
 
-  **Le prix est réel et il faut le savoir** : un gros plan dure 800 ms, et une
-  salve de trois ennemis en coûte trois (2,5 s). Un tour complet passe d'environ
-  0,5–2,2 s d'animation à 2,5–4,3 s.
+  **Le prix est réel et il faut le savoir** : un gros plan dure 800 ms, 1500
+  s'il tue, et une salve de trois ennemis en coûte trois (2,5 s). Un tour
+  complet passe d'environ 0,5–2,2 s d'animation à 2,5–4,3 s, et **la mort du
+  dernier corps d'un combat coûte 2 s** (1500 + la respiration de 520 qui rend
+  la scène avant le palier). *C'est le poste qui a le plus grossi au fil des
+  réglages ; si un combat entier paraît long, c'est là qu'il faut regarder.*
 
   **Le gros plan a remplacé tout le retour visuel du combat, et ce qu'il a
   remplacé a été supprimé** — le chiffre de dégâts posé sur la scène, le bond
@@ -573,13 +576,15 @@ donjon. Ce qui tourne :
   Le tampon tombe **90 ms après l'impact** : le coup d'abord, ce qu'il a fait
   ensuite. L'ordre inverse ferait lire la mort comme la cause.
 
-  **Un gros plan qui tue dure 300 ms de plus** (1100 au lieu de 800). Au rythme
-  ordinaire il ne restait qu'un tiers de seconde entre le tampon et le fondu,
-  pour la seule image de la séquence qu'on ait envie de regarder. Ça ne coûte
-  rien sur la durée d'un combat — on ne tue qu'une fois par corps. **Le verrou
-  d'entrée doit suivre**, sinon l'écran de récompense s'ouvrirait sur la tête
-  de mort encore posée ; côté salve ennemie, seule la DERNIÈRE frappe peut être
-  fatale, puisque le moteur l'arrête dès que le joueur tombe.
+  **Un gros plan qui tue dure presque le double** (1500 ms au lieu de 800) : le
+  tampon tombe à 240 ms, et il reste ensuite **1,1 seconde** de corps noir et de
+  tête de mort avant le fondu. C'est de loin la plus longue pause du jeu, et
+  c'est assumé — ça ne coûte rien sur la durée d'un combat, on ne tue qu'une
+  fois par corps, et c'est la seule image de toute la séquence qu'on ait envie
+  de regarder. **Le verrou d'entrée doit suivre**, sinon l'écran de récompense
+  s'ouvrirait sur la tête de mort encore posée ; côté salve ennemie, seule la
+  DERNIÈRE frappe peut être fatale, puisque le moteur l'arrête dès que le
+  joueur tombe.
 
   **Il n'y a plus d'agonie sur la scène** — ni chute, ni bascule, ni éclair, ni
   état `Agonie` dans le rendu. Le corps abattu ne revient simplement pas quand

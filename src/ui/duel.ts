@@ -56,12 +56,14 @@ export const TAMPON_DUEL = IMPACT_DUEL + 90
 const SORTIE = 640
 
 /**
- * Et quand il y a MORT, 300 ms de plus. Le tampon tombe à 290 ms : au rythme
- * ordinaire il ne lui restait qu'un tiers de seconde à l'écran avant le fondu,
- * pour la seule image de la séquence qu'on a envie de regarder. Ce supplément
- * ne coûte rien sur la durée d'un combat — on ne tue qu'une fois par corps.
+ * Et quand il y a MORT, on s'attarde : le tampon tombe à 240 ms, et il reste
+ * ensuite **1,1 seconde** de corps noir et de tête de mort avant le fondu.
+ *
+ * C'est de loin la plus longue pause du jeu, et c'est assumé. Elle ne coûte
+ * rien sur la durée d'un combat — on ne tue qu'une fois par corps — et c'est
+ * la seule image de toute la séquence qu'on ait envie de regarder.
  */
-const SORTIE_MORT = 940
+const SORTIE_MORT = 1340
 
 /**
  * Ce que dure un gros plan, de bout en bout.
@@ -74,7 +76,7 @@ const SORTIE_MORT = 940
 export const DUREE_DUEL = 800
 
 /** Idem, quand le coup tue : la tête de mort et le corps noir restent posés. */
-export const DUREE_DUEL_MORT = 1100
+export const DUREE_DUEL_MORT = 1500
 
 /** Le repos entre deux gros plans d'une même salve. */
 export const PAS_ENTRE_DUELS = DUREE_DUEL + 60
