@@ -193,9 +193,12 @@ marché, ni carte de donjon. Ce qui tourne :
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
 - le détail chiffré uniquement sur ce qui est visé ;
-- les **commandes de test** (curseur de butin, relance, journal) dans un
-  **panneau hors du flux**, fermé par défaut, qui remonte en feuille par le
-  bouton « Réglages » — et tout seul quand le combat est fini ;
+- les **commandes de test** (curseur de butin, relance, plein écran, son,
+  journal) dans un **panneau hors du flux**, fermé par défaut, qui remonte en
+  feuille par le bouton « Réglages » — et tout seul quand le combat est fini ;
+- des **sons synthétisés** (`ui/sons.ts`) : aucun fichier, tout est fabriqué au
+  Web Audio. La force du coup suit le coût de la carte — on entend le poids de
+  ce qu'on joue. Coupables depuis le panneau, le choix est retenu ;
 
 **Deux règles de la main, à ne pas casser en y retouchant :**
 
@@ -396,6 +399,28 @@ valeur pour un prototype ; il faudra un PNG le jour où ça compte.
 Le `theme-color` ne gagne pas de place mais teinte la barre aux couleurs du
 jeu tant qu'on reste dans un onglet — elle cesse au moins d'être un bandeau
 noir.
+
+### Le son
+
+Synthétisé au Web Audio, **aucun fichier** : même borne que les dessins. Deux
+règles tenues dans `ui/sons.ts` :
+
+1. **Le contexte audio ne naît que sur un geste** — les navigateurs refusent
+   de démarrer le son autrement. Tous les sons partent d'une tape, donc le
+   premier appel suffit à l'ouvrir.
+2. **Aucun son ne peut casser le jeu** : sans Web Audio, ça joue en silence.
+
+**Pour vérifier un son sans l'entendre** : compter les nœuds créés en
+instrumentant `AudioContext.prototype`, puis rejouer la même recette dans un
+`OfflineAudioContext` et mesurer l'amplitude — ça prouve que ce n'est pas du
+silence. Relevé au moment de l'écriture : Dague 0,14 de crête contre Moulinet
+0,21, la visée à 0,03. Aucune saturation.
+
+Piège à ne pas réapprendre : `exponentialRampToValueAtTime` **n'accepte pas
+zéro**. Les enveloppes partent et reviennent à 0,0001, jamais au silence exact.
+
+Sur iPhone, l'interrupteur silence coupe aussi le Web Audio — si Keko n'entend
+rien, vérifier ça avant de chercher un bug.
 
 **Le socle navigateur.** `vite.config.ts` fixe `cssTarget` : sans lui, le
 minifieur réécrit `max-height: 620px` en syntaxe d'intervalle (`height <=

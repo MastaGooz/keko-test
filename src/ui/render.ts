@@ -57,6 +57,7 @@ export type View = {
   cupidite: HTMLElement
   journal: HTMLElement
   pleinEcran: HTMLButtonElement
+  son: HTMLButtonElement
 }
 
 /** Construit le squelette une seule fois et renvoie les noeuds à mettre à jour. */
@@ -82,9 +83,12 @@ export function mount(root: HTMLElement, buildTime: string): View {
            et toutes seules quand le combat est fini. -->
       <div class="panneau">
         <button class="fermer" type="button" data-action="panneau" aria-label="Fermer">×</button>
-        <button id="pleinEcran" class="bouton secondaire" type="button" data-action="pleinEcran">
-          Plein écran
-        </button>
+        <div class="reprise">
+          <button id="pleinEcran" class="bouton secondaire" type="button" data-action="pleinEcran">
+            Plein écran
+          </button>
+          <button id="son" class="bouton secondaire" type="button" data-action="son">Son</button>
+        </div>
         <div id="cupidite" class="cupidite"></div>
         <div class="reprise">
           <button class="bouton secondaire" type="button" data-action="rejouer">Rejouer cette seed</button>
@@ -108,6 +112,7 @@ export function mount(root: HTMLElement, buildTime: string): View {
     cupidite: root.querySelector<HTMLElement>('#cupidite')!,
     journal: root.querySelector<HTMLElement>('#journal')!,
     pleinEcran: root.querySelector<HTMLButtonElement>('#pleinEcran')!,
+    son: root.querySelector<HTMLButtonElement>('#son')!,
   }
 }
 

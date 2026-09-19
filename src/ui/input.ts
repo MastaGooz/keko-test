@@ -11,6 +11,7 @@ export type Action =
   | { type: 'cupidite'; ramasse: number }
   | { type: 'panneau' }
   | { type: 'pleinEcran' }
+  | { type: 'son' }
 
 /**
  * Écoute déléguée à la racine : les boutons de main sont reconstruits à chaque
@@ -49,6 +50,9 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         break
       case 'pleinEcran':
         dispatch({ type: 'pleinEcran' })
+        break
+      case 'son':
+        dispatch({ type: 'son' })
         break
     }
   })
