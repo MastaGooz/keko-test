@@ -2,17 +2,23 @@
  * Le gros plan d'attaque, à la Darkest Dungeon.
  *
  * À chaque coup porté, un voile tombe sur la scène et les deux combattants
- * apparaissent en grand, face à face. L'attaquant bondit, la cible encaisse,
- * le voile se lève. **Le voile passe par-dessus les corps, jamais par-dessus
- * la main ni les tas** : ce qu'on tient reste lisible pendant qu'on regarde le
- * coup partir — d'où l'empilement, `.duel` sous `#cartes`.
+ * apparaissent en grand, face à face. **Le voile passe par-dessus les corps,
+ * jamais par-dessus la main ni les tas** : ce qu'on tient reste lisible pendant
+ * qu'on regarde le coup partir — d'où l'empilement, `.duel` sous `#cartes`.
+ *
+ * La séquence est **l'arrivée elle-même** : les deux corps surgissent, l'écran
+ * est secoué au même instant, puis **plus rien ne bouge** le temps qu'on les
+ * regarde. Il y a eu une version où l'attaquant bondissait dans le gros plan ;
+ * elle rejouait dans le cadre un geste que le cadre racontait déjà, et elle
+ * coûtait ses 580 ms. Ici l'impact n'est pas une animation, c'est une
+ * apparition — et le temps qu'on gagne, on le rend en temps d'arrêt.
  *
  * Comme `effets.ts`, ce fichier est purement décoratif : il ne touche jamais à
  * l'état, et le jeu reste jouable si on le supprime. Il ne fait que poser des
  * marques sur le DOM après un rendu, et les retirer tout seul.
  *
- * Le joueur reçoit **le même assaut que les ennemis** : il n'y a pas deux
- * grammaires de frappe, il y a une frappe et deux camps qui l'empruntent.
+ * Il n'y a **qu'une grammaire de frappe, et deux camps qui l'empruntent** : le
+ * gros plan est le même que le coup vienne du joueur ou d'en face.
  */
 import type { View } from './render.ts'
 import { creature } from './illustrations.ts'
@@ -21,26 +27,27 @@ import { creature } from './illustrations.ts'
 export type Figure = { nom: string; espece: string; teinte: string }
 
 /**
- * Quand l'assaut démarre. Le voile met 120 ms à tomber ; l'élan part avant
- * qu'il ait fini, sinon on attend devant un écran noir.
+ * Quand l'écran encaisse : presque tout de suite.
+ *
+ * Les corps mettent 90 ms à se poser ; la secousse part à 60, donc elle
+ * COUVRE la fin de leur arrivée au lieu de la suivre. C'est ce décalage
+ * négatif qui fait lire l'apparition comme un impact et non comme une
+ * transition suivie d'un coup.
  */
-const ENTREE = 60
+export const IMPACT_DUEL = 60
 
-/** Quand le coup porte. `INSTANT_IMPACT` d'`effets.ts` vaut 46 % de l'assaut. */
-export const IMPACT_DUEL = ENTREE + 265
-
-/** Quand le voile commence à se lever : l'assaut vient de se reposer. */
-const SORTIE = 620
+/** Quand le voile commence à se lever. Entre les deux : rien ne bouge. */
+const SORTIE = 640
 
 /**
  * Ce que dure un gros plan, de bout en bout.
  *
  * C'est le prix du procédé, et il est réel : une salve de trois ennemis coûte
- * trois gros plans. Réglé au plus court sans casser la lecture du geste —
- * l'assaut lui-même fait déjà 580 ms, et il n'est pas compressible sans perdre
- * le contraste de vitesse qui lui donne son poids.
+ * trois gros plans. La moitié de ce temps est désormais du TEMPS D'ARRÊT, pas
+ * de l'animation — c'est ce que Keko a demandé, « le temps de bien voir les
+ * persos ». Si ça devient long, c'est ce palier-là qu'on raccourcit.
  */
-export const DUREE_DUEL = 780
+export const DUREE_DUEL = 800
 
 /** Le repos entre deux gros plans d'une même salve. */
 export const PAS_ENTRE_DUELS = DUREE_DUEL + 60
@@ -58,8 +65,9 @@ function planifier(quand: number, quoi: () => void): void {
  * `joueur` et `ennemi` gardent toujours le même côté — le joueur à gauche,
  * l'ennemi à droite, comme sur la scène. Retourner le décor selon l'attaquant
  * casserait le sens de lecture ET les silhouettes, qui sont dessinées pour se
- * faire face dans cet ordre. C'est l'ASSAUT qui désigne l'attaquant, pas la
- * place.
+ * faire face dans cet ordre. **C'est la LUMIÈRE qui désigne l'attaquant** : il
+ * porte un liseré vif, sa cible reste mate. Rien ne bouge, donc c'est le seul
+ * signe disponible — il doit rester franc.
  */
 export function duel(
   view: View,
@@ -84,15 +92,9 @@ export function duel(
   // l'insertion ne déclencherait aucune transition.
   requestAnimationFrame(() => calque.classList.add('ouvert'))
 
-  const frappeur = calque.querySelector<HTMLElement>(`.duel-corps.attaque .silhouette`)
-  planifier(ENTREE, () => frappeur?.classList.add('assaut'))
-
   planifier(IMPACT_DUEL, () => {
     const touche = calque.querySelector<HTMLElement>('.duel-corps:not(.attaque)')
-    if (touche !== null) {
-      touche.classList.add('encaisse')
-      chiffre(view, touche, degats)
-    }
+    if (touche !== null) chiffre(view, touche, degats)
     // La secousse est portée par le calque LUI-MÊME en plus de `.app` : il vit
     // hors de `.app`, donc le transform de la secousse ne l'atteindrait pas et
     // le gros plan resterait de marbre pendant que le reste tremble.

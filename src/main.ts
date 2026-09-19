@@ -51,6 +51,27 @@ let descente: Descente
 let selection: number | null = null
 /** Pour ne sonner la fin qu'au moment où elle tombe, pas à chaque rendu. */
 let finSonnee = false
+/**
+ * Le corps actuellement dans le gros plan, s'il y en a un. Il quitte
+ * l'arrière-plan le temps du duel — le joueur avec lui, puisqu'il est de tous
+ * les duels. C'est de l'ÉTAT et pas une classe posée à la main : un rendu au
+ * milieu du gros plan effacerait la classe et ferait réapparaître le corps.
+ */
+let auFront: number | null = null
+
+/**
+ * Ouvre un gros plan et retire de la scène les deux corps qu'il montre. Tout
+ * ce qui suit — son, secousse, chute éventuelle — se règle sur sa durée.
+ */
+function grosPlan(cible: number, nomCible: string, attaquant: 'joueur' | 'ennemi', degats: number): void {
+  auFront = cible
+  dessiner()
+  duel(view, FIGURE_JOUEUR, figure(nomCible), attaquant, degats)
+  window.setTimeout(() => {
+    auFront = null
+    dessiner()
+  }, DUREE_DUEL)
+}
 /** Les corps qui achèvent de mourir. Ils restent au rang le temps de tomber. */
 let agonie: Agonie[] = []
 /**
@@ -66,8 +87,9 @@ function demarrer(nouvelleSeed: number): void {
   seed = nouvelleSeed
   rng = createRng(seed)
   descente = commencerDescente(rng)
-  // Une nouvelle descente ne doit pas hériter d'un voile reste ouvert.
+  // Une nouvelle descente ne doit pas hériter d'un voile resté ouvert.
   fermerDuel(view)
+  auFront = null
   selection = null
   finSonnee = false
   agonie = []
@@ -76,7 +98,7 @@ function demarrer(nouvelleSeed: number): void {
 }
 
 function dessiner(): void {
-  render(view, descente, seed, selection, agonie, occupation)
+  render(view, descente, seed, selection, agonie, occupation, auFront)
   tracerVisees(view)
 }
 
@@ -181,14 +203,14 @@ bindInput(view, (action) => {
         const cible = combat.ennemis[action.cible]
         if (inflige > 0 && cible !== undefined) {
           marques.push(() => {
-            duel(view, FIGURE_JOUEUR, figure(cible.nom), 'joueur', inflige)
+            grosPlan(action.cible, cible.nom, 'joueur', inflige)
             // Le son et la secousse tombent SUR L'IMPACT du gros plan, pas au
             // moment de la tape : le coup est désormais un geste qui se
             // déroule, plus un chiffre qui change.
             window.setTimeout(() => {
               // La force du son suit le coût de la carte : on entend son poids.
               if (carte !== undefined) sonFrappe((carte.cout - 1) / 3)
-              secouerEcran(view)
+              secouerEcran(view, 'forte')
             }, IMPACT_DUEL)
           })
           attente = DUREE_DUEL
@@ -217,12 +239,13 @@ bindInput(view, (action) => {
       marques.push(() => {
         frappes.forEach((frappe, rang) => {
           const depart = rang * PAS_ENTRE_DUELS
+          const index = descente.combat.ennemis.findIndex((e) => e.nom === frappe.nom)
           window.setTimeout(
-            () => duel(view, FIGURE_JOUEUR, figure(frappe.nom), 'ennemi', frappe.degats),
+            () => grosPlan(index, frappe.nom, 'ennemi', frappe.degats),
             depart,
           )
           window.setTimeout(() => {
-            secouerEcran(view)
+            secouerEcran(view, 'forte')
             sonEncaisse()
           }, depart + IMPACT_DUEL)
         })

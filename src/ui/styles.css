@@ -179,9 +179,10 @@ body {
   transform-origin: 50% 100%;
   /* Le decalage de la respiration passe par des VARIABLES, jamais par une
      surcharge de `animation-duration` / `animation-delay`. Sinon les regles
-     `:nth-child` qui le portent sont plus specifiques que `.silhouette.assaut`
-     et imposent leur tempo a l'assaut : le deuxieme monstre bondissait sur
-     3,9 s au lieu de 0,58 et demarrait a 29 % de sa course. */
+     `:nth-child` qui le portent sont plus specifiques qu'une regle de classe
+     simple, et imposaient leur tempo a l'assaut des monstres : le deuxieme
+     bondissait sur 3,9 s au lieu de 0,58. L'assaut a disparu avec le gros
+     plan, le piege reste. */
   animation-name: souffle;
   animation-duration: var(--souffle-duree, 3.4s);
   animation-delay: var(--souffle-delai, 0s);
@@ -201,42 +202,6 @@ body {
   }
   50% {
     transform: translateY(-2px) scale(1.028, 1.035);
-  }
-}
-
-/* L'assaut : elle se ramasse, puis bondit. La regle est plus specifique que
-   celle du souffle, donc elle la REMPLACE le temps de se jouer -- deux
-   animations sur la meme propriete se marchent dessus. La respiration reprend
-   toute seule a la fin. */
-.silhouette.assaut {
-  /* `linear` en global : c'est CHAQUE etape qui porte son acceleration.
-     Un lissage uniforme donnerait un mouvement mou -- tout le poids vient du
-     contraste entre une montee qui prend son temps et une chute brutale.
-     Aucune rotation : le geste est un franc haut-bas, rien d'oblique. */
-  animation: assaut 0.58s linear;
-}
-
-@keyframes assaut {
-  0% {
-    transform: translateY(0) scale(1);
-    animation-timing-function: ease-out;
-  }
-  34% {
-    /* Le recul : elle monte, se ramasse, et marque le temps. */
-    transform: translateY(-20px) scale(0.9);
-    animation-timing-function: ease-in;
-  }
-  46% {
-    /* La chute : elle accelere jusqu'a l'impact, sous sa position de repos. */
-    transform: translateY(26px) scale(1.16);
-    animation-timing-function: ease-out;
-  }
-  60% {
-    transform: translateY(12px) scale(1.05);
-    animation-timing-function: ease-out;
-  }
-  100% {
-    transform: translateY(0) scale(1);
   }
 }
 
@@ -1187,24 +1152,6 @@ body {
 
 /* --- le coup se voit ------------------------------------------------------ */
 
-/* Sans retour visuel, jouer une carte ne fait que changer un chiffre : le
-   joueur n'a pas frappe, il a edite un tableur. */
-.encaisse {
-  animation: secousse 0.28s ease-out;
-}
-
-.adverse.encaisse {
-  background: #3a1d1d;
-}
-
-@keyframes secousse {
-  0% { transform: translateX(0); }
-  25% { transform: translateX(5px); }
-  55% { transform: translateX(-4px); }
-  80% { transform: translateX(2px); }
-  100% { transform: translateX(0); }
-}
-
 /* Le chiffre saute au-dessus du corps touche puis s'efface. Il est FIXE sur
    la page et non pose dans le corps : la chute declenche un nouveau rendu, qui
    l'effacerait en plein vol. */
@@ -1310,15 +1257,23 @@ body {
 
 /* Respecte le reglage systeme : pas de mouvement si l'utilisateur n'en veut pas. */
 @media (prefers-reduced-motion: reduce) {
-  .encaisse,
   .un-de-moins,
   .degats-voles,
   .carte.visee::after {
     animation-duration: 0.01ms;
   }
 
-  .silhouette,
-  .silhouette.assaut {
+  .silhouette {
+    animation: none;
+  }
+
+  .duel,
+  .duel-corps {
+    transition: none;
+  }
+
+  .duel.secoue,
+  .app.secoue.fort {
     animation: none;
   }
 
@@ -2510,7 +2465,9 @@ body {
     radial-gradient(70% 60% at 50% 42%, #0000006b, #000000d6 78%),
     #000000c4;
   opacity: 0;
-  transition: opacity 0.12s ease-out;
+  /* Vif : l'apparition EST l'impact, elle ne doit pas se lire comme un fondu.
+     Ce qu'on gagne ici se rend en temps d'arret une fois les corps poses. */
+  transition: opacity 0.09s ease-out;
   pointer-events: none;
 }
 
@@ -2538,13 +2495,15 @@ body {
   gap: 0.5rem;
   flex: 0 0 auto;
   color: var(--teinte, #9a7a62);
-  /* Les figures entrent en meme temps que le voile, mais de plus bas : elles
-     montent vers le devant de la scene au lieu d'apparaitre posees. */
-  transform: translateY(1.25rem) scale(0.94);
+  /* Les figures ARRIVENT : elles viennent de plus bas et de plus petit, vite.
+     C'est cette arrivee qui porte le coup -- la secousse part a 60 ms, donc
+     avant meme que les corps aient fini de se poser. Passe ce moment, plus
+     rien ne bouge : on les regarde. */
+  transform: translateY(1.75rem) scale(0.9);
   opacity: 0;
   transition:
-    transform 0.16s ease-out,
-    opacity 0.16s ease-out;
+    transform 0.11s cubic-bezier(0.2, 0.9, 0.3, 1.2),
+    opacity 0.09s ease-out;
 }
 
 .duel.ouvert .duel-corps {
@@ -2596,8 +2555,32 @@ body {
   font-size: 2.25rem;
 }
 
-.duel.secoue {
-  animation: secousse-ecran 0.24s ease-out;
+/* La secousse du gros plan est FRANCHEMENT plus forte que celle du combat :
+   c'est le seul mouvement de toute la sequence, donc c'est lui qui porte la
+   violence du coup. Elle est posee sur le calque ET sur `.app` -- le calque vit
+   hors de `.app`, il ne suivrait pas son transform. */
+.duel.secoue,
+.app.secoue.fort {
+  animation: secousse-forte 0.34s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+@keyframes secousse-forte {
+  0% { transform: translate(0, 0); }
+  10% { transform: translate(-15px, 9px); }
+  24% { transform: translate(14px, -8px); }
+  40% { transform: translate(-11px, -6px); }
+  56% { transform: translate(8px, 5px); }
+  72% { transform: translate(-5px, 3px); }
+  86% { transform: translate(3px, -2px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Les corps montres en gros plan quittent l'arriere-plan : ils sont passes
+   devant. `visibility` et non `display` -- leur place doit rester tenue, sinon
+   le rang se resserre pendant le gros plan et se rouvre apres, et toute la
+   scene tressaute au retour. */
+.creature.au-front {
+  visibility: hidden;
 }
 
 /* La main et les bords passent AU-DESSUS du voile. `#cartes` devient un

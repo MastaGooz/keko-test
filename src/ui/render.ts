@@ -158,6 +158,7 @@ export function render(
   selection: number | null,
   agonie: Agonie[] = [],
   occupation: Occupation = 'libre',
+  auFront: number | null = null,
 ): void {
   view.root.classList.toggle('occupe', occupation !== 'libre')
   const etat = descente.combat
@@ -169,11 +170,13 @@ export function render(
   // Les mourants gardent leur place dans le rang : on parcourt tous les corps
   // plutôt que les seuls vivants, pour qu'aucun ne glisse pendant l'agonie.
   view.ennemis.innerHTML =
-    corpsJoueur(etat, visee, fini) +
+    corpsJoueur(etat, visee, fini, auFront !== null) +
     etat.ennemis
     .map((ennemi, index) => ({ ennemi, index, agonie: agonie.find((a) => a.index === index) }))
     .filter(({ ennemi, agonie: a }) => ennemi.pv > 0 || a !== undefined)
-    .map(({ ennemi, index, agonie: a }) => corpsEnnemi(etat, ennemi, index, visee, fini, a))
+    .map(({ ennemi, index, agonie: a }) =>
+      corpsEnnemi(etat, ennemi, index, visee, fini, a, index === auFront),
+    )
     .join('')
   view.energie.innerHTML = fini ? '' : energie(etat, visee)
 
@@ -212,6 +215,7 @@ function corpsEnnemi(
   visee: Carte | null,
   fini: boolean,
   agonie?: Agonie,
+  auFront = false,
 ): string {
   const imminent = ennemi.compteur <= 1
   const espece = ESPECES[ennemi.nom] ?? { espece: 'roquet', teinte: '#9a7a62' }
@@ -233,13 +237,18 @@ function corpsEnnemi(
     `<span class="plaquette"><span class="nom">${ennemi.nom}</span>` +
     `<span class="pv">${ennemi.pv}</span></span>`
 
+  // `au-front` : ce corps est en ce moment dans le gros plan, il a quitté
+  // l'arrière-plan. La classe vient de l'ÉTAT et pas d'une pose à la main,
+  // sinon le premier rendu venu la balaierait en plein gros plan.
+  const front = auFront ? ' au-front' : ''
+
   if (c === null) {
     const etat_ = agonie === undefined ? '' : ` mort${agonie.phase === 'chute' ? ' meurt' : ''}`
-    return `<div class="creature${etat_}" data-corps="${index}">${corps}</div>`
+    return `<div class="creature${etat_}${front}" data-corps="${index}">${corps}</div>`
   }
 
   return (
-    `<button class="creature cible${c.tue ? ' achevable' : ''}" type="button" ` +
+    `<button class="creature cible${c.tue ? ' achevable' : ''}${front}" type="button" ` +
     `data-action="cibler" data-cible="${index}" data-corps="${index}">${corps}</button>`
   )
 }
@@ -252,7 +261,12 @@ function corpsEnnemi(
  * C'était une barre posée au-dessus de la main. Une barre ne raconte pas un
  * affrontement ; un corps qui fait face, si.
  */
-function corpsJoueur(etat: EtatCombat, visee: Carte | null, fini: boolean): string {
+function corpsJoueur(
+  etat: EtatCombat,
+  visee: Carte | null,
+  fini: boolean,
+  auFront = false,
+): string {
   const menace = menaceDuTour(etat)
   const marque =
     fini || menace === 0
@@ -260,7 +274,7 @@ function corpsJoueur(etat: EtatCombat, visee: Carte | null, fini: boolean): stri
       : `<span class="intention encaisse-a-venir">−${menace}</span>`
 
   return (
-    `<div class="creature moi" data-corps="joueur">` +
+    `<div class="creature moi${auFront ? ' au-front' : ''}" data-corps="joueur">` +
     marque +
     `<span class="chair" style="--teinte:#7fb6d9">` +
     `${creature('joueur', 'moi')}<span class="socle"></span></span>` +

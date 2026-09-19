@@ -369,11 +369,32 @@ donjon. Ce qui tourne :
   meute qui souffle à l'unisson fait machine, pas vivant. Le joueur, lui, reste
   une barre — il n'est pas un corps de plus à l'écran ;
 - **le gros plan d'attaque, à la Darkest Dungeon** (`ui/duel.ts`, purement
-  décoratif comme `ui/effets.ts`, supprimable sans rien casser). À chaque coup
-  porté, un voile tombe sur la scène et les deux combattants apparaissent en
-  grand, face à face — de 146 px de haut sur un petit téléphone couché à 487 px
-  sur un écran de 1080. L'attaquant bondit, la cible encaisse, le voile se
-  lève.
+  décoratif, supprimable sans rien casser). À chaque coup porté, un voile tombe
+  sur la scène et les deux combattants apparaissent en grand, face à face — de
+  146 px de haut sur un petit téléphone couché à 487 px sur un écran de 1080.
+
+  **La séquence est l'arrivée elle-même.** Les corps surgissent, l'écran est
+  violemment secoué *au même instant*, puis **plus rien ne bouge** le temps
+  qu'on les regarde. La secousse part à 60 ms alors que les corps mettent 90 ms
+  à se poser : ce décalage négatif est ce qui fait lire l'apparition comme un
+  impact, et non comme une transition suivie d'un coup.
+
+  Il y a eu une version où l'attaquant **bondissait** dans le cadre. Elle
+  rejouait à l'intérieur du cadre un geste que le cadre racontait déjà, et elle
+  coûtait ses 580 ms. Keko a tranché : apparition + secousse forte + temps
+  d'arrêt. *La moitié de la durée est désormais du temps d'arrêt, pas de
+  l'animation* — si ça devient long, c'est ce palier-là qu'on raccourcit.
+
+  **Rien ne bougeant, c'est la LUMIÈRE qui désigne l'attaquant** : il porte un
+  liseré vif, sa cible reste mate. C'est le seul signe disponible, il doit
+  rester franc.
+
+  **Les deux corps montrés quittent l'arrière-plan** — ils sont passés devant.
+  `visibility: hidden` et non `display: none` : leur place doit rester tenue,
+  sinon le rang se resserre pendant le gros plan et se rouvre après, et toute
+  la scène tressaute au retour. Et comme l'agonie, **ça vient de l'état**
+  (`auFront`), pas d'une classe posée à la main : le premier rendu venu la
+  balaierait en plein gros plan.
 
   **Le voile passe par-dessus les corps, jamais par-dessus la main ni les
   tas** : ce qu'on tient reste lisible pendant qu'on regarde le coup partir.
@@ -389,11 +410,16 @@ donjon. Ce qui tourne :
   dessinées pour se faire face dans cet ordre. C'est l'assaut qui désigne
   l'attaquant, pas la place.
 
-  **Le prix est réel et il faut le savoir** : un gros plan dure 780 ms, et une
+  **Le prix est réel et il faut le savoir** : un gros plan dure 800 ms, et une
   salve de trois ennemis en coûte trois (2,5 s). Un tour complet passe d'environ
-  0,5–2,2 s d'animation à 2,5–4,2 s. L'assaut lui-même fait 580 ms et n'est pas
-  compressible sans perdre le contraste de vitesse qui lui donne son poids ; ce
-  qui reste réglable, c'est l'entrée, la sortie et le pas entre deux gros plans.
+  0,5–2,2 s d'animation à 2,5–4,3 s.
+
+  **Le gros plan a remplacé tout le retour visuel du combat, et ce qu'il a
+  remplacé a été supprimé** — le chiffre de dégâts posé sur la scène, le bond
+  des silhouettes, le tressaillement du corps touché. Il n'y a plus de coup
+  porté sur la scène : tous passent par le cadre. Gardé « au cas où », ce code
+  aurait menti sur ce que fait le jeu, et ce dépôt documente chaque chiffre —
+  il ne peut pas se permettre d'en garder de faux. `git log` sait les rendre.
 - le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
