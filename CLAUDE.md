@@ -193,6 +193,9 @@ marché, ni carte de donjon. Ce qui tourne :
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
 - le détail chiffré uniquement sur ce qui est visé ;
+- les **commandes de test** (curseur de butin, relance, journal) dans un
+  **panneau hors du flux**, fermé par défaut, qui remonte en feuille par le
+  bouton « Réglages » — et tout seul quand le combat est fini ;
 
 **Deux règles de la main, à ne pas casser en y retouchant :**
 
@@ -334,6 +337,28 @@ de taille**, et se souvenir qu'une seule dimension ne suffit jamais à conclure.
 `2vh`. L'arrivée de la scène des créatures a coûté ~120 px de hauteur et l'a
 fait déborder à `2.4vh`. Si la page grandit encore, c'est ce coefficient qu'il
 faut baisser en premier — pas la taille des cartes.
+
+### Le portrait ne doit jamais scroller
+
+**Un combat qui oblige à scroller est un combat qu'on ne peut pas juger.** Keko
+l'a signalé en portrait sur son téléphone, et ma vérification précédente était
+fausse pour deux raisons, toutes deux à retenir :
+
+1. **Je comptais 140 px de chrome navigateur ; un téléphone en prend souvent
+   190.** Les formats à viser sont les **viewports** — 360x540, 360x600,
+   390x660, 414x715 — pas les tailles d'écran annoncées.
+2. **La moitié de la hauteur servait aux commandes de test**, qui poussaient le
+   combat hors de l'écran. Elles sont maintenant en panneau fixe, hors du flux.
+
+Deux paliers de resserrement : `max-height: 760px` réduit les espacements et
+masque le journal, `max-height: 620px` rogne le décor et la taille des cartes.
+**On rogne sur le décor avant les cibles tactiles**, jamais l'inverse.
+
+**Pour mesurer un format sans redimensionner la fenêtre**, charger la page dans
+une `iframe` de la taille visée : les `vh` et les media queries s'y appliquent
+pour de vrai. Attention — **dans un onglet en arrière-plan le navigateur gèle
+les transitions CSS**, donc une valeur calculée peut rester bloquée à mi-course
+et faire croire à un bug. Neutraliser la transition avant de mesurer.
 
 ## Commandes
 

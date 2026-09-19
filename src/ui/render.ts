@@ -62,7 +62,10 @@ export type View = {
 export function mount(root: HTMLElement, buildTime: string): View {
   root.innerHTML = `
     <main class="app">
-      <p class="build">Build : <time>${buildTime}</time> — seed <span id="seed"></span></p>
+      <header class="entete">
+        <p class="build">Build : <time>${buildTime}</time> — seed <span id="seed"></span></p>
+        <button class="reglages" type="button" data-action="panneau">Réglages</button>
+      </header>
 
       <div id="ennemis" class="rangs"></div>
       <div id="joueur" class="rangs"></div>
@@ -71,15 +74,20 @@ export function mount(root: HTMLElement, buildTime: string): View {
       <div id="cartes" class="cartes"></div>
       <button id="finTour" class="rang bouton finTour" type="button" data-action="finTour"></button>
       <p id="encombrement" class="encombrement"></p>
-
       <p id="issue" class="issue"></p>
-      <div id="cupidite" class="cupidite"></div>
-      <div class="reprise">
-        <button class="bouton secondaire" type="button" data-action="rejouer">Rejouer cette seed</button>
-        <button class="bouton secondaire" type="button" data-action="nouveau">Nouveau combat</button>
-      </div>
 
-      <div id="journal" class="journal"></div>
+      <!-- Les commandes de test sortent du flux : elles poussaient le combat
+           sous le bord de l'ecran en portrait. Elles remontent a la demande,
+           et toutes seules quand le combat est fini. -->
+      <div class="panneau">
+        <button class="fermer" type="button" data-action="panneau" aria-label="Fermer">×</button>
+        <div id="cupidite" class="cupidite"></div>
+        <div class="reprise">
+          <button class="bouton secondaire" type="button" data-action="rejouer">Rejouer cette seed</button>
+          <button class="bouton secondaire" type="button" data-action="nouveau">Nouveau combat</button>
+        </div>
+        <div id="journal" class="journal"></div>
+      </div>
     </main>
   `
 

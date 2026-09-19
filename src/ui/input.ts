@@ -9,6 +9,7 @@ export type Action =
   | { type: 'rejouer' }
   | { type: 'nouveau' }
   | { type: 'cupidite'; ramasse: number }
+  | { type: 'panneau' }
 
 /**
  * Écoute déléguée à la racine : les boutons de main sont reconstruits à chaque
@@ -41,6 +42,9 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         break
       case 'cupidite':
         dispatch({ type: 'cupidite', ramasse: Number(noeud.dataset.ramasse) })
+        break
+      case 'panneau':
+        dispatch({ type: 'panneau' })
         break
     }
   })

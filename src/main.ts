@@ -43,6 +43,7 @@ function demarrer(nouvelleSeed: number): void {
   poche = { ramasse, sac: butin.sac }
   etat = creerCombat(deckAvecTresors(butin.deck), groupe.ennemis, rng)
   selection = null
+  view.root.classList.remove('panneau-ouvert')
   render(view, etat, seed, selection, poche)
 }
 
@@ -86,8 +87,15 @@ bindInput(view, (action) => {
     case 'nouveau':
       // Seed courte : lisible à l'écran, suffisante pour rejouer un combat.
       return demarrer(Date.now() % 100000)
+    case 'panneau':
+      // Simple bascule d'affichage : rien à recalculer.
+      view.root.classList.toggle('panneau-ouvert')
+      return
   }
   render(view, etat, seed, selection, poche)
+  // Combat fini : les commandes de relance remontent d'elles-mêmes, c'est la
+  // seule chose qu'on veut faire à ce moment-là.
+  view.root.classList.toggle('panneau-ouvert', etat.issue !== null)
   for (const marque of marques) marque()
 })
 
