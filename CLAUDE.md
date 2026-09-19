@@ -393,7 +393,29 @@ au hub, quelle que soit sa forme finale. Attention au vocabulaire dans tous les
 cas : un trésor ne rapporte rien en combat ni en fin de combat, l'écran annonce
 seulement ce que le butin vaudra **s'il ressort**.
 
-### Ce que le premier test de la descente a donné
+### Verdict : la boucle tient
+
+Keko a joué la descente complète, avec l'équipement, les deux écrans de palier
+et l'inventaire : **« je meurs par le greed quand je pousse exprès, la
+lisibilité du loot est cool »**.
+
+**C'est le résultat que le projet cherchait depuis le début.** Pas seulement que
+la cupidité coûte — ça, la simulation le disait — mais qu'elle coûte de façon
+**attribuable** : le joueur relie sa mort à sa propre décision. C'est ce qui
+sépare un push-your-luck d'un jeu qui punit au hasard, et aucune mesure ne
+pouvait le prouver à notre place.
+
+Ne pas défaire ce qui l'a produit, et rien de tout ça n'était évident :
+
+- la carte ET le trésor à chaque rencontre, jamais l'un contre l'autre — c'est
+  *supprimer* ce choix qui a rendu le poids lisible ;
+- les PV qui ne se rechargent pas d'un palier à l'autre ;
+- le butin montré en cartes, avec le sort de chaque trésor annoncé avant le
+  geste ;
+- l'équipement qui fait le deck, donc une perte proportionnelle au temps
+  investi.
+
+### Ce que le premier test de la descente avait donné
 
 Keko a joué et **il continuait sans hésiter**. Diagnostic, et il était prévu :
 mourir ne coûtait rien. L'or ne servait à rien puisqu'il n'y a pas de hub, et
