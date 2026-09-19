@@ -13,7 +13,7 @@
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
 import { consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
 import { CAPACITE_SAC } from '../logic/cartes.ts'
-import type { Descente, Offre } from '../logic/descente.ts'
+import type { Descente, Recompense } from '../logic/descente.ts'
 import { butinTransporte, placeDuSac, tresorsAuDeck } from '../logic/descente.ts'
 import { creature, dessin, sceau } from './illustrations.ts'
 
@@ -390,7 +390,7 @@ function palier(descente: Descente): string {
     case 'combat':
       return ''
     case 'recompense':
-      return recompense(descente, descente.phase.offres)
+      return recompense(descente, descente.phase.gain)
     case 'sortie':
       return sortie(descente)
     case 'fin':
@@ -399,42 +399,44 @@ function palier(descente: Descente): string {
 }
 
 /**
- * Le choix du palier : une carte contre un trésor. C'est le jeu entier en une
- * décision — la carte te fait descendre plus loin, le trésor vaut de l'or mais
- * te coûte une place. Le sort du trésor est annoncé AVANT le choix : personne
- * ne doit découvrir après coup qu'il vient de s'encombrer.
+ * La récompense du palier : **les deux**, pas l'une ou l'autre. Le choix entre
+ * carte et trésor était un faux choix — la simulation n'a jamais réussi à lui
+ * faire coûter de la survie. La cupidité se décide désormais au point de
+ * sortie.
+ *
+ * Reste une décision, et une seule : quand le sac est plein, le trésor ira
+ * peser dans le deck. Là seulement on propose de le laisser. Refuser une
+ * place de sac libre n'aurait aucun sens, donc le bouton n'existe pas.
  */
-function recompense(descente: Descente, offres: Offre[]): string {
+function recompense(descente: Descente, gain: Recompense): string {
   const place = placeDuSac(descente)
-  const sort =
-    place > 0
-      ? `<span class="sort bon">→ sac (${place} place${place > 1 ? 's' : ''})</span>`
-      : `<span class="sort mauvais">→ carte morte dans le deck</span>`
+  const pese = place === 0
 
-  const choix = offres
-    .map((offre, index) => {
-      const etiquette =
-        offre.genre === 'carte'
-          ? `<span class="sort bon">→ ton deck</span>`
-          : sort
-      // Un trésor qui part au sac n'encombre rien : lui coller le bandeau
-      // MORTE mentirait sur ce qu'on est en train de choisir.
-      const morte = offre.genre === 'tresor' && place === 0
-      return (
-        `<button class="offre" type="button" data-action="prendre" data-offre="${index}">` +
-        `${vitrine(offre.carte, morte)}${etiquette}</button>`
-      )
-    })
-    .join('')
+  const sort = pese
+    ? `<span class="sort mauvais">→ carte morte dans le deck</span>`
+    : `<span class="sort bon">→ sac (${place} place${place > 1 ? 's' : ''})</span>`
+
+  const boutons = pese
+    ? `<div class="offres">` +
+      `<button class="issue-choix continuer" type="button" data-action="encaisser">` +
+      `<span class="quoi">Tout prendre</span>` +
+      `<span class="pourquoi">Le trésor pèsera</span></button>` +
+      `<button class="issue-choix rentrer" type="button" data-action="encaisser" data-tresor="non">` +
+      `<span class="quoi">Laisser le trésor</span>` +
+      `<span class="pourquoi">Perdu pour de bon</span></button>` +
+      `</div>`
+    : `<button class="bouton secondaire" type="button" data-action="encaisser">Empocher</button>`
 
   return (
     `<div class="voile">` +
     `<div class="feuille">` +
-    `<p class="titre">Palier ${descente.profondeur} — ce que tu emportes</p>` +
-    `<div class="offres">${choix}</div>` +
-    `<button class="bouton secondaire" type="button" data-action="laisser">` +
-    `Ne rien prendre</button>` +
-    `<p class="note">Ce qu'on laisse est perdu pour de bon.</p>` +
+    `<p class="titre">Palier ${descente.profondeur} — ta prise</p>` +
+    `<div class="offres">` +
+    `<div class="offre montre">${vitrine(gain.carte)}` +
+    `<span class="sort bon">→ ton deck</span></div>` +
+    `<div class="offre montre">${vitrine(gain.tresor, pese)}${sort}</div>` +
+    `</div>` +
+    boutons +
     `</div></div>`
   )
 }

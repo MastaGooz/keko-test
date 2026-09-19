@@ -13,10 +13,9 @@ import {
   butinTransporte,
   commencerDescente,
   descendre,
+  encaisser,
   extraire,
-  laisser,
   placeDuSac,
-  prendre,
   resoudreCombat,
   tresorsAuDeck,
 } from './descente.ts'
@@ -54,13 +53,12 @@ function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente
 
 {
   const d = jusquAuChoix(commencerDescente(createRng(7), REGLAGE))
-  verifier('une victoire ouvre un choix', d.phase.type === 'recompense')
+  verifier('une victoire donne une récompense', d.phase.type === 'recompense')
   verifier(
-    'le choix oppose une carte et un trésor',
+    'la récompense contient une carte ET un trésor',
     d.phase.type === 'recompense' &&
-      d.phase.offres.length === 2 &&
-      d.phase.offres[0]!.genre === 'carte' &&
-      d.phase.offres[1]!.genre === 'tresor',
+      d.phase.gain.carte.type === 'combat' &&
+      d.phase.gain.tresor.type === 'tresor',
   )
 }
 
@@ -74,7 +72,7 @@ function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente
 {
   const rng = createRng(3)
   const apres = jusquAuChoix(commencerDescente(rng, REGLAGE), rng, 40)
-  const descendue = descendre(prendre(apres, 0), rng)
+  const descendue = descendre(encaisser(apres), rng)
   verifier(
     'on descend avec les PV qu\'il reste, pas avec la barre pleine',
     descendue.combat.pv === 40 + REGLAGE.soin && descendue.combat.pv < REGLAGE.pvMax,
@@ -91,36 +89,37 @@ function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente
 
   // On remplit le sac, puis un trésor de plus.
   for (let i = 0; i < CAPACITE_SAC; i += 1) {
-    d = prendre(jusquAuChoix(d, rng), 1)
+    d = encaisser(jusquAuChoix(d, rng))
     if (d.phase.type === 'sortie') d = descendre(d, rng)
   }
   verifier('le sac se remplit avant le deck', d.sac.length === CAPACITE_SAC && tresorsAuDeck(d) === 0)
+  verifier('et chaque rencontre a aussi donné sa carte', d.deck.length === 10 + CAPACITE_SAC)
 
-  const sature = prendre(jusquAuChoix(d, rng), 1)
+  const sature = encaisser(jusquAuChoix(d, rng))
   verifier(
     'sac plein, le trésor suivant tombe dans le deck',
     sature.sac.length === CAPACITE_SAC && tresorsAuDeck(sature) === 1,
   )
-  verifier('un trésor du deck est bien une carte du deck', sature.deck.length === 11)
 }
 
 {
   const rng = createRng(13)
   const choix = jusquAuChoix(commencerDescente(rng, REGLAGE), rng)
-  const avecCarte = prendre(choix, 0)
-  verifier('prendre la carte épaissit le deck sans toucher au sac', avecCarte.deck.length === 11 && avecCarte.sac.length === 0)
-  verifier('une carte gagnée est jouable', avecCarte.deck[10]!.type === 'combat')
+  const gain = encaisser(choix)
+  verifier('une rencontre donne les deux : la carte ET le trésor', gain.deck.length === 11 && gain.sac.length === 1)
+  verifier('la carte gagnée est jouable', gain.deck[10]!.type === 'combat')
 
-  const rien = laisser(choix)
-  verifier('refuser ne prend rien du tout', rien.deck.length === 10 && rien.sac.length === 0)
-  verifier('refuser mène quand même au point de sortie', rien.phase.type === 'sortie')
+  const sansTresor = encaisser(choix, false)
+  verifier('refuser le trésor garde quand même la carte', sansTresor.deck.length === 11 && sansTresor.sac.length === 0)
+  verifier('un trésor laissé est perdu, pas reporté', butinTransporte(sansTresor) === 0)
+  verifier('et on va quand même au point de sortie', sansTresor.phase.type === 'sortie')
 }
 
 // --- le butin, et ce qu'on en fait -----------------------------------------
 
 {
   const rng = createRng(17)
-  const avecTresor = prendre(jusquAuChoix(commencerDescente(rng, REGLAGE), rng), 1)
+  const avecTresor = encaisser(jusquAuChoix(commencerDescente(rng, REGLAGE), rng))
   verifier('un trésor pris compte dans le butin transporté', butinTransporte(avecTresor) > 0)
   verifier('le butin de départ est nul', butinTransporte(commencerDescente(rng, REGLAGE)) === 0)
 
@@ -135,14 +134,14 @@ function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente
   const rng = createRng(19)
   let d = commencerDescente(rng, REGLAGE)
   for (let i = 1; i < REGLAGE.profondeurMax; i += 1) {
-    d = descendre(prendre(jusquAuChoix(d, rng), 0), rng)
+    d = descendre(encaisser(jusquAuChoix(d, rng), false), rng)
   }
   verifier('on atteint le dernier palier', d.profondeur === REGLAGE.profondeurMax)
 
   const fond = jusquAuChoix(d, rng)
   verifier('le dernier palier donne sa récompense comme les autres', fond.phase.type === 'recompense')
 
-  const fini = prendre(fond, 1)
+  const fini = encaisser(fond)
   verifier('après quoi la descente se termine sur une extraction', fini.phase.type === 'fin' && fini.phase.issue === 'extrait')
   verifier('et le trésor du fond est bien compté', butinTransporte(fini) > 0)
 }
@@ -152,13 +151,13 @@ function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente
 {
   const rng = createRng(23)
   const enCombat = commencerDescente(rng, REGLAGE)
-  verifier('on ne prend pas de récompense pendant un combat', prendre(enCombat, 0) === enCombat)
+  verifier("on n'encaisse pas de récompense pendant un combat", encaisser(enCombat) === enCombat)
   verifier('on ne descend pas pendant un combat', descendre(enCombat, rng) === enCombat)
   verifier('on n\'extrait pas pendant un combat', extraire(enCombat) === enCombat)
   verifier('un combat non terminé ne se résout pas', resoudreCombat(enCombat, rng) === enCombat)
 
   const choix = jusquAuChoix(enCombat, rng)
-  verifier('une offre inexistante ne change rien', prendre(choix, 9) === choix)
+  verifier('on ne descend pas depuis une récompense', descendre(choix, rng) === choix)
 }
 
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)

@@ -63,24 +63,21 @@ export type Reglage = {
 }
 
 /**
- * Calibré par simulation contre le set du Glaive (300 descentes par
- * politique), pas au jugé. Ce que ces chiffres produisent :
+ * Calibré par simulation contre le set du Glaive (300 descentes par politique).
+ * Chaque rencontre donne une carte ET un trésor, donc la seule cupidité qui
+ * reste est de prendre les trésors qui débordent du sac :
  *
- * | politique      | sortir au palier 3 | aller au fond (6) |
- * |----------------|--------------------|-------------------|
- * | tout en cartes | 100 %, 0 d'or      | 51 %, 0 d'or      |
- * | en alternance  | 100 %, 66 d'or     | 57 %, 337 d'or    |
- * | tout en trésor | 100 %, 196 d'or    | 51 %, 586 d'or    |
+ * | politique              | sortir au palier 3 | aller au fond (6) |
+ * |------------------------|--------------------|-------------------|
+ * | tout prendre           | 100 %              | 39 %, 589 d'or    |
+ * | refuser les débordants | 100 %              | 51 %, 197 d'or    |
  *
- * **Sortir ou continuer fonctionne** : 196 d'or garantis contre 297 espérés
- * avec un risque sur deux de tout perdre. C'est un pari.
- *
- * **Carte ou trésor ne fonctionne PAS encore** : entre 0 et 6 points de
- * survie d'écart, soit le bruit de l'échantillon. Ce n'est pas un problème de
- * réglage, c'est structurel — le sac absorbe les trois premiers trésors, donc
- * sur six paliers la cupidité ne mord presque jamais. Trois leviers, et le
- * deuxième est une décision acquise à rouvrir avec Keko : allonger la
- * descente, rétrécir le sac, ou donner plus d'un trésor par palier.
+ * **La cupidité coûte 12 points de survie.** C'est la première fois qu'elle
+ * coûte quelque chose de mesurable — et ce qui l'a créé, c'est d'avoir SUPPRIMÉ
+ * le choix carte-ou-trésor. Tant qu'ils s'opposaient, prendre un trésor voulait
+ * dire ne pas prendre une carte : on perdait de la puissance sans en gagner,
+ * et les deux effets se masquaient. La carte étant désormais acquise dans tous
+ * les cas, le trésor est du poids pur et le signal est net.
  *
  * **Attention, double rasoir.** La puissance du deck est un levier PLUS
  * tranchant que celle des ennemis : le set du Glaive est 10 % plus faible que
@@ -94,12 +91,17 @@ export const REGLAGE_DEFAUT: Reglage = {
   profondeurMax: 6,
 }
 
-/** Ce qu'on peut prendre à un palier. Refuser les deux est toujours permis. */
-export type Offre = { genre: 'carte' | 'tresor'; carte: Carte }
+/**
+ * Ce qu'une rencontre rapporte. **Les deux, pas l'un ou l'autre** : le choix
+ * entre carte et trésor était un faux choix — la simulation n'a jamais réussi
+ * à lui faire coûter de la survie. La cupidité se décide maintenant au point
+ * de sortie : descendre plus bas, c'est plus d'or ET plus de poids.
+ */
+export type Recompense = { carte: Carte; tresor: Carte }
 
 export type Phase =
   | { type: 'combat' }
-  | { type: 'recompense'; offres: Offre[] }
+  | { type: 'recompense'; gain: Recompense }
   | { type: 'sortie' }
   | { type: 'fin'; issue: 'extrait' | 'mort' }
 
@@ -183,10 +185,10 @@ export function resoudreCombat(descente: Descente, rng: Rng): Descente {
     ...apres,
     phase: {
       type: 'recompense',
-      offres: [
-        { genre: 'carte', carte: carteRecompense(descente.profondeur, rng, cle) },
-        { genre: 'tresor', carte: tresorRecompense(descente.profondeur, rng, cle) },
-      ],
+      gain: {
+        carte: carteRecompense(descente.profondeur, rng, cle),
+        tresor: tresorRecompense(descente.profondeur, rng, cle),
+      },
     },
   }
 }
@@ -202,30 +204,26 @@ function apresChoix(descente: Descente): Phase {
 }
 
 /**
- * Prend une des offres. Un trésor va au sac tant qu'il reste de la place ;
- * au-delà il tombe dans le deck et devient une carte morte. C'est tout le
- * jeu, et le joueur doit le voir venir avant de choisir : voir `placeDuSac`.
+ * Encaisse la récompense. La carte rejoint toujours le deck ; le trésor va au
+ * sac tant qu'il reste de la place, et au-delà il tombe dans le deck où il
+ * devient une carte morte.
+ *
+ * `prendreTresor` ne vaut `false` que si le joueur a refusé — et refuser n'a
+ * de sens que quand le sac est plein, puisque sinon le trésor ne coûte rien.
+ * Un trésor laissé est perdu définitivement.
  */
-export function prendre(descente: Descente, index: number): Descente {
+export function encaisser(descente: Descente, prendreTresor = true): Descente {
   if (descente.phase.type !== 'recompense') return descente
-  const offre = descente.phase.offres[index]
-  if (offre === undefined) return descente
+  const { carte, tresor } = descente.phase.gain
   const phase = apresChoix(descente)
+  const deck = [...descente.deck, carte]
 
-  if (offre.genre === 'carte') {
-    return { ...descente, deck: [...descente.deck, offre.carte], phase }
-  }
+  if (!prendreTresor) return { ...descente, deck, phase }
 
   if (descente.sac.length < CAPACITE_SAC) {
-    return { ...descente, sac: [...descente.sac, offre.carte], phase }
+    return { ...descente, deck, sac: [...descente.sac, tresor], phase }
   }
-  return { ...descente, deck: [...descente.deck, offre.carte], phase }
-}
-
-/** Ne rien prendre. Les deux offres sont perdues définitivement. */
-export function laisser(descente: Descente): Descente {
-  if (descente.phase.type !== 'recompense') return descente
-  return { ...descente, phase: apresChoix(descente) }
+  return { ...descente, deck: [...deck, tresor], phase }
 }
 
 /** Descendre d'un palier. C'est le pari : plus bas, mais avec ces PV-là. */

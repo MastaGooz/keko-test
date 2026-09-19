@@ -15,9 +15,8 @@ import { finDuTour, jouerCarte } from './logic/combat.ts'
 import {
   commencerDescente,
   descendre,
+  encaisser,
   extraire,
-  laisser,
-  prendre,
   resoudreCombat,
 } from './logic/descente.ts'
 import { mount, render } from './ui/render.ts'
@@ -105,11 +104,8 @@ bindInput(view, (action) => {
       selection = null
       break
     }
-    case 'prendre':
-      descente = prendre(descente, action.offre)
-      break
-    case 'laisser':
-      descente = laisser(descente)
+    case 'encaisser':
+      descente = encaisser(descente, action.tresor)
       break
     case 'descendre':
       descente = descendre(descente, rng)

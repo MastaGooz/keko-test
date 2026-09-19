@@ -95,6 +95,11 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   sécurité**.
 - Un trésor au-delà du sac = **une carte morte, poids uniforme**. Le joueur doit
   préférer peu de gros trésors à beaucoup de petits.
+- **Une rencontre donne les deux**, carte et trésor. On n'arbitre PAS entre
+  eux : tant qu'ils s'opposaient, prendre un trésor voulait dire ne pas prendre
+  une carte, et les deux effets se masquaient — la simulation n'a jamais réussi
+  à faire coûter quoi que ce soit à ce choix. La cupidité se décide au point de
+  sortie et au débordement du sac, nulle part ailleurs.
 - **Les trésors n'ont aucun effet en run** : ni en combat, ni en fin de combat.
   L'idée d'un second moteur « greed » — des trésors aux effets de richesse,
   formant un archétype de build — n'est **pas enterrée, elle est garée**. On
@@ -223,10 +228,12 @@ donjon. Ce qui tourne :
   récompense → point de sortie → palier suivant. Les PV ne se rechargent pas
   d'un combat à l'autre, un soin partiel après chaque victoire, et la mort
   fait tout perdre ;
-- **le choix du palier** : une carte de combat contre un trésor. Le sort du
-  trésor est annoncé avant le choix — « → sac (2 places) » ou « → carte morte
-  dans le deck ». Refuser les deux est toujours permis, et ce qu'on laisse est
-  perdu pour de bon ;
+- **la prise du palier** : chaque rencontre donne **une carte ET un trésor**,
+  pas l'un ou l'autre. Le sort du trésor est annoncé — « → sac (2 places) » ou
+  « → carte morte dans le deck ». Tant que le sac a de la place il n'y a rien à
+  décider : un seul bouton, « Empocher ». **Le choix n'apparaît que sac plein**,
+  quand le trésor irait peser dans le deck : tout prendre, ou le laisser — et
+  ce qu'on laisse est perdu pour de bon ;
 - `npm run verif` : 19 vérifications du combat + 29 de la descente ;
 
 - moteur au tour par tour à énergie, **plusieurs ennemis**, cible au doigt ;
@@ -402,13 +409,19 @@ plus faible que l'ancien deck de base, et ça a fait tomber la survie au fond de
 des ennemis. Toute retouche d'une seule carte oblige à refaire le balayage
 complet — jamais au jugé.
 
-**Et une chose que la calibration n'a toujours pas réussi à créer :** le choix
-carte-ou-trésor ne coûte pas de survie (entre 0 et 6 points, soit le bruit de
-l'échantillon). Ce n'est pas un problème de réglage, c'est structurel — le sac
-absorbe les trois premiers trésors, donc sur six paliers la cupidité ne mord
-presque jamais. Trois leviers, dont un est une décision acquise à rouvrir avec
-Keko : allonger la descente, **rétrécir le sac**, ou donner plus d'un trésor
-par palier.
+**Ce qui a fini par créer la tension : SUPPRIMER le choix.** Tant que carte et
+trésor s'opposaient, prendre un trésor voulait dire ne pas prendre une carte —
+on perdait de la puissance sans en gagner, et les deux effets se masquaient.
+Mesuré : entre 0 et 6 points d'écart, soit le bruit. Depuis que la carte est
+acquise dans tous les cas, le trésor est du poids **pur** :
+
+| politique | sortir au palier 3 | aller au fond (6) |
+|---|---|---|
+| tout prendre | 100 % | 39 %, 589 d'or |
+| refuser les débordants | 100 % | 51 %, 197 d'or |
+
+**La cupidité coûte 12 points de survie.** Contre-intuitif et à retenir : on a
+rendu une décision intéressante en en retirant une.
 
 Le squelette reste volontairement nu : pas de hub, pas de marché, pas de
 méta-progression.

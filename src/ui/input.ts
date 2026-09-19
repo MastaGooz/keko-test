@@ -8,8 +8,7 @@ export type Action =
   | { type: 'finTour' }
   | { type: 'rejouer' }
   | { type: 'nouveau' }
-  | { type: 'prendre'; offre: number }
-  | { type: 'laisser' }
+  | { type: 'encaisser'; tresor: boolean }
   | { type: 'descendre' }
   | { type: 'extraire' }
   | { type: 'panneau' }
@@ -45,11 +44,8 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
       case 'nouveau':
         dispatch({ type: 'nouveau' })
         break
-      case 'prendre':
-        dispatch({ type: 'prendre', offre: Number(noeud.dataset.offre) })
-        break
-      case 'laisser':
-        dispatch({ type: 'laisser' })
+      case 'encaisser':
+        dispatch({ type: 'encaisser', tresor: noeud.dataset.tresor !== 'non' })
         break
       case 'descendre':
         dispatch({ type: 'descendre' })
