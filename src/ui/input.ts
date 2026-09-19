@@ -1,5 +1,6 @@
 /** Gestion des entrées : traduit les événements navigateur en actions. */
 import type { View } from './render.ts'
+import type { Depot } from '../logic/descente.ts'
 
 export type Action =
   | { type: 'viser'; index: number }
@@ -8,12 +9,21 @@ export type Action =
   | { type: 'finTour' }
   | { type: 'rejouer' }
   | { type: 'nouveau' }
-  | { type: 'encaisser'; tresor: boolean }
+  | { type: 'choisirCarte'; index: number }
+  | { type: 'placer'; depot: Depot }
   | { type: 'descendre' }
   | { type: 'extraire' }
   | { type: 'panneau' }
   | { type: 'pleinEcran' }
   | { type: 'son' }
+
+/** Traduit les attributs d'une zone de dépôt en destination de trésor. */
+function lireDepot(noeud: HTMLElement): Depot {
+  const ou = noeud.dataset.ou
+  if (ou === 'sac') return { ou: 'sac', emplacement: Number(noeud.dataset.emplacement) }
+  if (ou === 'deck') return { ou: 'deck' }
+  return { ou: 'laisser' }
+}
 
 /**
  * Écoute déléguée à la racine : les boutons de main sont reconstruits à chaque
@@ -44,8 +54,11 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
       case 'nouveau':
         dispatch({ type: 'nouveau' })
         break
-      case 'encaisser':
-        dispatch({ type: 'encaisser', tresor: noeud.dataset.tresor !== 'non' })
+      case 'choisirCarte':
+        dispatch({ type: 'choisirCarte', index: Number(noeud.dataset.carte) })
+        break
+      case 'placer':
+        dispatch({ type: 'placer', depot: lireDepot(noeud) })
         break
       case 'descendre':
         dispatch({ type: 'descendre' })

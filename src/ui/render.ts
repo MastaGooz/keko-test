@@ -13,8 +13,9 @@
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
 import { consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
 import { CAPACITE_SAC } from '../logic/cartes.ts'
-import type { Descente, Recompense } from '../logic/descente.ts'
+import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, placeDuSac, tresorsAuDeck } from '../logic/descente.ts'
+import { CAPACITE_SAC as SLOTS } from '../logic/cartes.ts'
 import { creature, dessin, sceau } from './illustrations.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
@@ -390,7 +391,9 @@ function palier(descente: Descente): string {
     case 'combat':
       return ''
     case 'recompense':
-      return recompense(descente, descente.phase.gain)
+      return recompense(descente, descente.phase.cartes)
+    case 'butin':
+      return butin(descente, descente.phase.tresor)
     case 'sortie':
       return sortie(descente)
     case 'fin':
@@ -399,44 +402,71 @@ function palier(descente: Descente): string {
 }
 
 /**
- * La récompense du palier : **les deux**, pas l'une ou l'autre. Le choix entre
- * carte et trésor était un faux choix — la simulation n'a jamais réussi à lui
- * faire coûter de la survie. La cupidité se décide désormais au point de
- * sortie.
- *
- * Reste une décision, et une seule : quand le sac est plein, le trésor ira
- * peser dans le deck. Là seulement on propose de le laisser. Refuser une
- * place de sac libre n'aurait aucun sens, donc le bouton n'existe pas.
+ * Le premier écran du palier : l'amélioration, à choisir parmi plusieurs. Elle
+ * ne vaut que pour cette descente — c'est la couche roguelike, et c'est là que
+ * le joueur oriente son build en cours de route.
  */
-function recompense(descente: Descente, gain: Recompense): string {
-  const place = placeDuSac(descente)
-  const pese = place === 0
-
-  const sort = pese
-    ? `<span class="sort mauvais">→ carte morte dans le deck</span>`
-    : `<span class="sort bon">→ sac (${place} place${place > 1 ? 's' : ''})</span>`
-
-  const boutons = pese
-    ? `<div class="offres">` +
-      `<button class="issue-choix continuer" type="button" data-action="encaisser">` +
-      `<span class="quoi">Tout prendre</span>` +
-      `<span class="pourquoi">Le trésor pèsera</span></button>` +
-      `<button class="issue-choix rentrer" type="button" data-action="encaisser" data-tresor="non">` +
-      `<span class="quoi">Laisser le trésor</span>` +
-      `<span class="pourquoi">Perdu pour de bon</span></button>` +
-      `</div>`
-    : `<button class="bouton secondaire" type="button" data-action="encaisser">Empocher</button>`
+function recompense(descente: Descente, cartes: Carte[]): string {
+  const choix = cartes
+    .map(
+      (carte, index) =>
+        `<button class="offre" type="button" data-action="choisirCarte" data-carte="${index}">` +
+        `${vitrine(carte)}</button>`,
+    )
+    .join('')
 
   return (
     `<div class="voile">` +
     `<div class="feuille">` +
-    `<p class="titre">Palier ${descente.profondeur} — ta prise</p>` +
+    `<p class="titre">Palier ${descente.profondeur} — ton amélioration</p>` +
+    `<div class="offres">${choix}</div>` +
+    `<p class="note">Valable pour cette descente seulement.</p>` +
+    `</div></div>`
+  )
+}
+
+/**
+ * Le second écran : ranger le trésor. Le sac est montré comme un inventaire,
+ * et chaque destination est **à la fois une zone de dépôt et un bouton** — sur
+ * un téléphone, le glisser seul est fragile, la tape doit toujours marcher.
+ *
+ * Déposer sur un emplacement occupé est un **échange** : l'ancien reste au
+ * fond. C'est ce qui donne du sens aux valeurs très inégales du butin.
+ */
+function butin(descente: Descente, tresor: Carte): string {
+  const emplacements = Array.from({ length: SLOTS }, (_, i) => {
+    const dedans = descente.sac[i]
+    const contenu =
+      dedans === undefined
+        ? `<span class="vide">libre</span>`
+        : `<span class="dedans"><span class="nom">${dedans.nom}</span>` +
+          `<span class="valeur">${dedans.valeur ?? 0}</span></span>`
+    const echange = dedans === undefined ? '' : ' occupe'
+    return (
+      `<button class="emplacement${echange}" type="button" data-action="placer" ` +
+      `data-ou="sac" data-emplacement="${i}" data-depot>` +
+      `${contenu}${dedans === undefined ? '' : `<span class="sort mauvais">échanger</span>`}</button>`
+    )
+  }).join('')
+
+  const plein = placeDuSac(descente) === 0
+
+  return (
+    `<div class="voile">` +
+    `<div class="feuille large">` +
+    `<p class="titre">Palier ${descente.profondeur} — ton butin</p>` +
+    `<div class="butin-piece" data-glissable>${vitrine(tresor, false)}</div>` +
+    `<p class="note">Glisse-le dans un emplacement, ou tape la destination.</p>` +
+    `<div class="sac">${emplacements}</div>` +
     `<div class="offres">` +
-    `<div class="offre montre">${vitrine(gain.carte)}` +
-    `<span class="sort bon">→ ton deck</span></div>` +
-    `<div class="offre montre">${vitrine(gain.tresor, pese)}${sort}</div>` +
+    `<button class="issue-choix ${plein ? 'continuer' : ''}" type="button" ` +
+    `data-action="placer" data-ou="deck" data-depot>` +
+    `<span class="quoi">Dans le deck</span>` +
+    `<span class="pourquoi">Il pèsera à chaque main</span></button>` +
+    `<button class="issue-choix" type="button" data-action="placer" data-ou="laisser" data-depot>` +
+    `<span class="quoi">Laisser</span>` +
+    `<span class="pourquoi">Perdu pour de bon</span></button>` +
     `</div>` +
-    boutons +
     `</div></div>`
   )
 }

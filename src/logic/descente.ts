@@ -91,17 +91,28 @@ export const REGLAGE_DEFAUT: Reglage = {
   profondeurMax: 6,
 }
 
+/** Combien d'améliorations sont proposées après un combat. */
+export const CHOIX_PAR_PALIER = 3
+
 /**
- * Ce qu'une rencontre rapporte. **Les deux, pas l'un ou l'autre** : le choix
- * entre carte et trésor était un faux choix — la simulation n'a jamais réussi
- * à lui faire coûter de la survie. La cupidité se décide maintenant au point
- * de sortie : descendre plus bas, c'est plus d'or ET plus de poids.
+ * Où le joueur envoie le trésor qu'on vient de lui proposer.
+ *
+ * `sac` avec un emplacement déjà occupé = un **échange** : le trésor entre, et
+ * celui qu'il remplace reste au fond. C'est ce qui donne enfin du sens aux
+ * valeurs très inégales du butin — porter une Couronne peut valoir la peine
+ * d'abandonner deux babioles.
  */
-export type Recompense = { carte: Carte; tresor: Carte }
+export type Depot =
+  | { ou: 'sac'; emplacement: number }
+  | { ou: 'deck' }
+  | { ou: 'laisser' }
 
 export type Phase =
   | { type: 'combat' }
-  | { type: 'recompense'; gain: Recompense }
+  /** Une amélioration à choisir parmi plusieurs. */
+  | { type: 'recompense'; cartes: Carte[] }
+  /** Puis le trésor à ranger — ou à laisser. */
+  | { type: 'butin'; tresor: Carte }
   | { type: 'sortie' }
   | { type: 'fin'; issue: 'extrait' | 'mort' }
 
@@ -180,17 +191,10 @@ export function resoudreCombat(descente: Descente, rng: Rng): Descente {
   // le fond ne rapportait rien de plus que s'arrêter juste avant : la
   // simulation donnait exactement le même butin en sortant au palier 4 ou au
   // palier 6. Le pari n'avait aucune contrepartie.
-  const cle = `${descente.profondeur}-${rng.getState()}`
-  return {
-    ...apres,
-    phase: {
-      type: 'recompense',
-      gain: {
-        carte: carteRecompense(descente.profondeur, rng, cle),
-        tresor: tresorRecompense(descente.profondeur, rng, cle),
-      },
-    },
-  }
+  const cartes = Array.from({ length: CHOIX_PAR_PALIER }, (_, i) =>
+    carteRecompense(descente.profondeur, rng, `${descente.profondeur}-${rng.getState()}-${i}`),
+  )
+  return { ...apres, phase: { type: 'recompense', cartes } }
 }
 
 /**
@@ -204,26 +208,43 @@ function apresChoix(descente: Descente): Phase {
 }
 
 /**
- * Encaisse la récompense. La carte rejoint toujours le deck ; le trésor va au
- * sac tant qu'il reste de la place, et au-delà il tombe dans le deck où il
- * devient une carte morte.
- *
- * `prendreTresor` ne vaut `false` que si le joueur a refusé — et refuser n'a
- * de sens que quand le sac est plein, puisque sinon le trésor ne coûte rien.
- * Un trésor laissé est perdu définitivement.
+ * Choisit une amélioration. Elle rejoint le deck pour cette run seulement, puis
+ * le trésor du palier se présente.
  */
-export function encaisser(descente: Descente, prendreTresor = true): Descente {
+export function choisirCarte(descente: Descente, index: number, rng: Rng): Descente {
   if (descente.phase.type !== 'recompense') return descente
-  const { carte, tresor } = descente.phase.gain
-  const phase = apresChoix(descente)
-  const deck = [...descente.deck, carte]
+  const carte = descente.phase.cartes[index]
+  if (carte === undefined) return descente
 
-  if (!prendreTresor) return { ...descente, deck, phase }
-
-  if (descente.sac.length < CAPACITE_SAC) {
-    return { ...descente, deck, sac: [...descente.sac, tresor], phase }
+  const cle = `${descente.profondeur}-${rng.getState()}`
+  return {
+    ...descente,
+    deck: [...descente.deck, carte],
+    phase: { type: 'butin', tresor: tresorRecompense(descente.profondeur, rng, cle) },
   }
-  return { ...descente, deck: [...deck, tresor], phase }
+}
+
+/**
+ * Range le trésor. Trois destinations, et chacune dit quelque chose :
+ *
+ * - **le sac** : à l'abri du deck. Sur un emplacement occupé, c'est un échange
+ *   et l'ancien reste au fond — définitivement ;
+ * - **le deck** : on le porte quand même, et il pèse à chaque main ;
+ * - **laisser** : perdu pour de bon, mais rien ne s'alourdit.
+ */
+export function placerTresor(descente: Descente, depot: Depot): Descente {
+  if (descente.phase.type !== 'butin') return descente
+  const { tresor } = descente.phase
+  const phase = apresChoix(descente)
+
+  if (depot.ou === 'laisser') return { ...descente, phase }
+  if (depot.ou === 'deck') return { ...descente, deck: [...descente.deck, tresor], phase }
+
+  if (depot.emplacement < 0 || depot.emplacement >= CAPACITE_SAC) return descente
+  const sac = [...descente.sac]
+  sac[depot.emplacement] = tresor
+  // Un emplacement au-delà du contenu actuel crée des trous : on recompacte.
+  return { ...descente, sac: sac.filter((c) => c !== undefined), phase }
 }
 
 /** Descendre d'un palier. C'est le pari : plus bas, mais avec ces PV-là. */

@@ -8,17 +8,19 @@
  * le sac qui déborde dans le deck, la mort qui fait tout perdre.
  */
 import { createRng } from './rng.ts'
-import type { Descente, Reglage } from './descente.ts'
+import type { Depot, Descente, Reglage } from './descente.ts'
 import {
   butinTransporte,
   commencerDescente,
   descendre,
-  encaisser,
+  choisirCarte,
   extraire,
+  placerTresor,
   placeDuSac,
   resoudreCombat,
   tresorsAuDeck,
 } from './descente.ts'
+import { CHOIX_PAR_PALIER } from './descente.ts'
 import { CAPACITE_SAC } from './cartes.ts'
 
 const REGLAGE: Reglage = { pvMax: 100, soin: 20, menaceDepart: 0.45, profondeurMax: 4 }
@@ -37,9 +39,19 @@ function conclure(descente: Descente, issue: 'victoire' | 'defaite', pv = 40): D
   return { ...descente, combat: { ...descente.combat, issue, pv } }
 }
 
-/** Amène la descente au choix de récompense du palier courant. */
+/** Amène la descente au choix d'amélioration du palier courant. */
 function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente {
   return resoudreCombat(conclure(descente, 'victoire', pv), rng)
+}
+
+/** Choisit la première amélioration, et amène au rangement du trésor. */
+function jusquAuButin(descente: Descente, rng = createRng(1), pv = 40): Descente {
+  return choisirCarte(jusquAuChoix(descente, rng, pv), 0, rng)
+}
+
+/** Palier complet : amélioration prise, trésor rangé où on le demande. */
+function palier(descente: Descente, depot: Depot, rng = createRng(1), pv = 40): Descente {
+  return placerTresor(jusquAuButin(descente, rng, pv), depot)
 }
 
 // --- la structure de la run ------------------------------------------------
@@ -53,13 +65,16 @@ function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente
 
 {
   const d = jusquAuChoix(commencerDescente(createRng(7), REGLAGE))
-  verifier('une victoire donne une récompense', d.phase.type === 'recompense')
+  verifier("une victoire ouvre le choix d'amélioration", d.phase.type === 'recompense')
   verifier(
-    'la récompense contient une carte ET un trésor',
+    'plusieurs améliorations sont proposées, toutes jouables',
     d.phase.type === 'recompense' &&
-      d.phase.gain.carte.type === 'combat' &&
-      d.phase.gain.tresor.type === 'tresor',
+      d.phase.cartes.length === CHOIX_PAR_PALIER &&
+      d.phase.cartes.every((c) => c.type === 'combat'),
   )
+  const apresCarte = choisirCarte(d, 0, createRng(2))
+  verifier('choisir une amélioration présente ensuite le trésor', apresCarte.phase.type === 'butin')
+  verifier('et elle est entrée dans le deck', apresCarte.deck.length === 11)
 }
 
 {
@@ -72,7 +87,7 @@ function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente
 {
   const rng = createRng(3)
   const apres = jusquAuChoix(commencerDescente(rng, REGLAGE), rng, 40)
-  const descendue = descendre(encaisser(apres), rng)
+  const descendue = descendre(placerTresor(choisirCarte(apres, 0, rng), { ou: 'laisser' }), rng)
   verifier(
     'on descend avec les PV qu\'il reste, pas avec la barre pleine',
     descendue.combat.pv === 40 + REGLAGE.soin && descendue.combat.pv < REGLAGE.pvMax,
@@ -89,37 +104,38 @@ function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente
 
   // On remplit le sac, puis un trésor de plus.
   for (let i = 0; i < CAPACITE_SAC; i += 1) {
-    d = encaisser(jusquAuChoix(d, rng))
+    d = palier(d, { ou: 'sac', emplacement: i }, rng)
     if (d.phase.type === 'sortie') d = descendre(d, rng)
   }
-  verifier('le sac se remplit avant le deck', d.sac.length === CAPACITE_SAC && tresorsAuDeck(d) === 0)
-  verifier('et chaque rencontre a aussi donné sa carte', d.deck.length === 10 + CAPACITE_SAC)
+  verifier('le sac se remplit emplacement par emplacement', d.sac.length === CAPACITE_SAC && tresorsAuDeck(d) === 0)
+  verifier('et chaque palier a aussi donné son amélioration', d.deck.length === 10 + CAPACITE_SAC)
 
-  const sature = encaisser(jusquAuChoix(d, rng))
-  verifier(
-    'sac plein, le trésor suivant tombe dans le deck',
-    sature.sac.length === CAPACITE_SAC && tresorsAuDeck(sature) === 1,
-  )
+  const avant = d.sac[1]!
+  const echange = palier(d, { ou: 'sac', emplacement: 1 }, rng)
+  verifier('déposer sur un emplacement occupé échange', echange.sac.length === CAPACITE_SAC && echange.sac[1] !== avant)
+  verifier("et l'ancien reste au fond, il ne tombe pas dans le deck", tresorsAuDeck(echange) === 0)
+
+  const porte = palier(d, { ou: 'deck' }, rng)
+  verifier('le trésor peut être porté dans le deck', tresorsAuDeck(porte) === 1 && porte.sac.length === CAPACITE_SAC)
 }
 
 {
   const rng = createRng(13)
-  const choix = jusquAuChoix(commencerDescente(rng, REGLAGE), rng)
-  const gain = encaisser(choix)
-  verifier('une rencontre donne les deux : la carte ET le trésor', gain.deck.length === 11 && gain.sac.length === 1)
-  verifier('la carte gagnée est jouable', gain.deck[10]!.type === 'combat')
+  const dedans = palier(commencerDescente(rng, REGLAGE), { ou: 'sac', emplacement: 0 }, rng)
+  verifier('un palier donne une amélioration ET un trésor', dedans.deck.length === 11 && dedans.sac.length === 1)
+  verifier('le trésor rangé compte dans le butin', butinTransporte(dedans) > 0)
 
-  const sansTresor = encaisser(choix, false)
-  verifier('refuser le trésor garde quand même la carte', sansTresor.deck.length === 11 && sansTresor.sac.length === 0)
-  verifier('un trésor laissé est perdu, pas reporté', butinTransporte(sansTresor) === 0)
-  verifier('et on va quand même au point de sortie', sansTresor.phase.type === 'sortie')
+  const laisse = palier(commencerDescente(rng, REGLAGE), { ou: 'laisser' }, rng)
+  verifier("laisser le trésor garde quand même l'amélioration", laisse.deck.length === 11 && laisse.sac.length === 0)
+  verifier('un trésor laissé est perdu, pas reporté', butinTransporte(laisse) === 0)
+  verifier('et on va quand même au point de sortie', laisse.phase.type === 'sortie')
 }
 
 // --- le butin, et ce qu'on en fait -----------------------------------------
 
 {
   const rng = createRng(17)
-  const avecTresor = encaisser(jusquAuChoix(commencerDescente(rng, REGLAGE), rng))
+  const avecTresor = palier(commencerDescente(rng, REGLAGE), { ou: 'sac', emplacement: 0 }, rng)
   verifier('un trésor pris compte dans le butin transporté', butinTransporte(avecTresor) > 0)
   verifier('le butin de départ est nul', butinTransporte(commencerDescente(rng, REGLAGE)) === 0)
 
@@ -134,14 +150,14 @@ function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente
   const rng = createRng(19)
   let d = commencerDescente(rng, REGLAGE)
   for (let i = 1; i < REGLAGE.profondeurMax; i += 1) {
-    d = descendre(encaisser(jusquAuChoix(d, rng), false), rng)
+    d = descendre(palier(d, { ou: 'laisser' }, rng), rng)
   }
   verifier('on atteint le dernier palier', d.profondeur === REGLAGE.profondeurMax)
 
   const fond = jusquAuChoix(d, rng)
   verifier('le dernier palier donne sa récompense comme les autres', fond.phase.type === 'recompense')
 
-  const fini = encaisser(fond)
+  const fini = palier(d, { ou: 'sac', emplacement: 0 }, rng)
   verifier('après quoi la descente se termine sur une extraction', fini.phase.type === 'fin' && fini.phase.issue === 'extrait')
   verifier('et le trésor du fond est bien compté', butinTransporte(fini) > 0)
 }
@@ -151,7 +167,8 @@ function jusquAuChoix(descente: Descente, rng = createRng(1), pv = 40): Descente
 {
   const rng = createRng(23)
   const enCombat = commencerDescente(rng, REGLAGE)
-  verifier("on n'encaisse pas de récompense pendant un combat", encaisser(enCombat) === enCombat)
+  verifier("on ne choisit pas d'amélioration pendant un combat", choisirCarte(enCombat, 0, rng) === enCombat)
+  verifier('on ne range pas de trésor pendant un combat', placerTresor(enCombat, { ou: 'deck' }) === enCombat)
   verifier('on ne descend pas pendant un combat', descendre(enCombat, rng) === enCombat)
   verifier('on n\'extrait pas pendant un combat', extraire(enCombat) === enCombat)
   verifier('un combat non terminé ne se résout pas', resoudreCombat(enCombat, rng) === enCombat)

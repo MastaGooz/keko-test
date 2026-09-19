@@ -13,14 +13,16 @@ import type { Descente } from './logic/descente.ts'
 import { createRng } from './logic/rng.ts'
 import { finDuTour, jouerCarte } from './logic/combat.ts'
 import {
+  choisirCarte,
   commencerDescente,
   descendre,
-  encaisser,
   extraire,
+  placerTresor,
   resoudreCombat,
 } from './logic/descente.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
+import { brancherGlisser } from './ui/glisser.ts'
 import { encaisse, tombe } from './ui/effets.ts'
 import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
 import { tracerVisees } from './ui/visees.ts'
@@ -104,8 +106,11 @@ bindInput(view, (action) => {
       selection = null
       break
     }
-    case 'encaisser':
-      descente = encaisser(descente, action.tresor)
+    case 'choisirCarte':
+      descente = choisirCarte(descente, action.index, rng)
+      break
+    case 'placer':
+      descente = placerTresor(descente, action.depot)
       break
     case 'descendre':
       descente = descendre(descente, rng)
@@ -155,6 +160,7 @@ function etiquetterSon(ouvert = sonActif()): void {
   view.son.textContent = ouvert ? 'Son : oui' : 'Son : coupé'
 }
 
+brancherGlisser(view.root)
 etiquetterPleinEcran()
 etiquetterSon()
 document.addEventListener('fullscreenchange', () => etiquetterPleinEcran())
