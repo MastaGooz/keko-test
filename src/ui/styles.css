@@ -674,6 +674,7 @@ body {
   transform: rotate(var(--rot, 0deg)) translateY(var(--dy, 0px));
   transition:
     transform 0.15s ease-out,
+    translate 0.13s ease-out,
     box-shadow 0.15s ease-out,
     border-color 0.15s ease-out;
   z-index: var(--i, 0);
@@ -2863,9 +2864,20 @@ body {
   box-shadow: 0 1.25rem 2.5rem #000c;
 }
 
-/* La place ou la carte va se reposer : la voisine s'ecarte. */
-.carte.place-visee {
-  box-shadow: -0.5rem 0 0 -0.25rem var(--joueur), -5px 3px 14px #000b;
+/* LA FENTE. Les cartes d'avant s'ecartent a gauche, celles d'apres a droite :
+   une vraie place s'ouvre la ou la carte va tomber. Un repere pose sur une
+   voisine ne suffisait pas -- dans un eventail qui se recouvre aux trois
+   quarts, une arete ne dit pas de quel COTE de la carte on va tomber.
+
+   Par `translate` et non `transform` : `transform` porte l'eventail (rotation
+   et arc), et l'ecraser remettrait toutes les cartes a plat. Ni par la marge,
+   qui rejouerait la mise en page a chaque pixel de deplacement du doigt. */
+.carte.ecarte-gauche {
+  translate: calc(var(--large) * -0.22) 0;
+}
+
+.carte.ecarte-droite {
+  translate: calc(var(--large) * 0.22) 0;
 }
 
 /* Le doigt est sorti de la main : le terrain s'allume, la main s'efface un

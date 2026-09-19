@@ -47,31 +47,51 @@ export function brancherMain(view: View, gestes: GestesMain): void {
   }
 
   /**
-   * À quelle place le doigt repose la carte. On compare au MILIEU de chaque
-   * carte plutôt qu'à ses bords : avec un éventail qui se recouvre à 68 %, les
-   * bords se chevauchent et deux voisines revendiqueraient la même bande.
+   * À quelle place le doigt repose la carte : le nombre de cartes dont le
+   * MILIEU est à sa gauche, **la carte tenue exclue**.
+   *
+   * Les deux points comptent. Le milieu plutôt que les bords, parce qu'avec un
+   * éventail qui se recouvre à 68 % les bords se chevauchent et deux voisines
+   * revendiqueraient la même bande. Et la carte tenue exclue, parce que c'est
+   * précisément l'index d'insertion dans la main UNE FOIS RETIRÉE — ce que
+   * `reordonnerMain` attend. La compter décalait d'un cran tous les
+   * déplacements vers la gauche.
    */
-  function placeSousLeDoigt(x: number): number {
-    const cartes = [...view.cartes.querySelectorAll<HTMLElement>('.carte')]
-    let place = 0
-    for (const [i, c] of cartes.entries()) {
+  function fenteSousLeDoigt(x: number): number {
+    let fente = 0
+    for (const [i, c] of cartes().entries()) {
+      if (i === index) continue
       const boite = c.getBoundingClientRect()
-      if (x > boite.left + boite.width / 2) place = i
+      if (x > boite.left + boite.width / 2) fente += 1
     }
-    return place
+    return fente
   }
 
-  function marquerLaPlace(place: number | null): void {
-    view.cartes.querySelectorAll('.place-visee').forEach((c) => c.classList.remove('place-visee'))
-    if (place === null) return
-    view.cartes.querySelectorAll<HTMLElement>('.carte')[place]?.classList.add('place-visee')
+  function cartes(): HTMLElement[] {
+    return [...view.cartes.querySelectorAll<HTMLElement>('.carte')]
+  }
+
+  /**
+   * Ouvre la fente : les cartes d'avant s'écartent à gauche, celles d'après à
+   * droite. C'est une VRAIE place qui s'ouvre, pas un repère posé sur une
+   * voisine — dans un éventail qui se recouvre aux trois quarts, une arête ne
+   * dit pas de quel côté de la carte on va tomber.
+   */
+  function ouvrirLaFente(fente: number | null): void {
+    let rang = 0
+    for (const [i, c] of cartes().entries()) {
+      c.classList.remove('ecarte-gauche', 'ecarte-droite')
+      if (i === index) continue
+      if (fente !== null) c.classList.add(rang < fente ? 'ecarte-gauche' : 'ecarte-droite')
+      rang += 1
+    }
   }
 
   function nettoyer(): void {
     carte?.classList.remove('saisie')
     fantome?.remove()
     fantome = null
-    marquerLaPlace(null)
+    ouvrirLaFente(null)
     view.root.classList.remove('main-sortie')
     carte = null
     glisse = false
@@ -103,7 +123,7 @@ export function brancherMain(view: View, gestes: GestesMain): void {
       // Un fantôme plutôt que la carte elle-même : elle porte la rotation et le
       // décalage de l'éventail, et la déplacer voudrait dire les défaire.
       fantome = carte.cloneNode(true) as HTMLElement
-      fantome.classList.remove('saisie', 'place-visee')
+      fantome.classList.remove('saisie', 'ecarte-gauche', 'ecarte-droite')
       fantome.classList.add('fantome-carte')
       fantome.style.width = `${carte.offsetWidth}px`
       fantome.style.height = `${carte.offsetHeight}px`
@@ -119,14 +139,14 @@ export function brancherMain(view: View, gestes: GestesMain): void {
     }
     const sortie = e.clientY < plafond()
     view.root.classList.toggle('main-sortie', sortie)
-    marquerLaPlace(sortie ? null : placeSousLeDoigt(e.clientX))
+    ouvrirLaFente(sortie ? null : fenteSousLeDoigt(e.clientX))
   })
 
   function relacher(e: PointerEvent): void {
     if (carte === null) return
     const aGlisse = glisse
     const sortie = e.clientY < plafond()
-    const place = placeSousLeDoigt(e.clientX)
+    const place = fenteSousLeDoigt(e.clientX)
     nettoyer()
     gestes.survol(null)
     if (!gestes.disponible()) return

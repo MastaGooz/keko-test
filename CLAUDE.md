@@ -704,6 +704,20 @@ donjon. Ce qui tourne :
   **Ranger sa main passe par l'ÉTAT** (`reordonnerMain`, dans `logic/`), bien
   que ça n'ait aucun effet sur les règles : le rendu se reconstruit à chaque
   action, donc un ordre vivant dans le DOM serait balayé au premier coup joué.
+
+  **Une vraie FENTE s'ouvre là où la carte va tomber** : les voisines d'avant
+  s'écartent à gauche, celles d'après à droite. Un repère posé sur une voisine
+  ne suffisait pas — dans un éventail qui se recouvre aux trois quarts, une
+  arête ne dit pas de quel *côté* de la carte on va tomber. L'écart passe par
+  `translate` et non par `transform` (qui porte l'éventail : rotation et arc)
+  ni par la marge (qui rejouerait la mise en page à chaque pixel).
+
+  **La place est le nombre de cartes dont le milieu est à gauche du doigt, LA
+  CARTE TENUE EXCLUE.** Les deux points comptent : le milieu plutôt que les
+  bords, parce qu'ils se chevauchent ; et la carte tenue exclue, parce que
+  c'est exactement l'index d'insertion dans la main *une fois retirée*, ce que
+  `reordonnerMain` attend. La compter décalait d'un cran tous les déplacements
+  vers la gauche — un bug qui ne se voyait que dans ce sens-là.
 - des **arches de visée** (`ui/visees.ts`) : carte levée, un trait pointillé en
   cloche part vers **chaque** corps visable. Vers tous, et pas vers un seul,
   parce qu'on joue en deux tapes — entre les deux il n'y a pas encore de cible,
