@@ -411,11 +411,16 @@ donjon. Ce qui tourne :
   moins de trois images — sans redevenir invisible : *elle est encadrée*. Une
   rampe amortie de 83 ms occupait le même temps et restait un déplacement.
 
-  **Elle part 120 ms après le reste, et ce n'est pas un réglage : c'est la
-  condition pour qu'on la voie.** Les figures mettent ~110 ms à arriver ; lancée
-  à l'instant zéro, la phase vive était finie avant qu'on les distingue et il ne
-  restait à l'écran que la dérive lente. Keko : « il a déjà avancé quand on le
-  voit ». Deux corrections, pas une — **le retard, et la durée de la phase
+  **Elle part 70 ms après le reste, et ce n'est pas un réglage : c'est la
+  condition pour qu'on la voie — mais il doit être le plus court possible.**
+  Lancée à l'instant zéro, la phase vive était finie avant qu'on distingue les
+  figures : « il a déjà avancé quand on le voit ». À 120 ms, le temps mort
+  d'avant le geste devenait sensible à son tour : « la phase immobile avant
+  l'avancée est trop longue ». Le retard vaut donc **exactement la durée
+  d'apparition des corps**, et c'est en accélérant celle-ci (0,09 → 0,055 s)
+  qu'on l'a raccourci, pas en pariant sur un départ à l'aveugle. *Les deux
+  valeurs sont liées : toucher l'une sans l'autre ramène l'un des deux
+  défauts.* Deux corrections, pas une — **le retard, et la durée de la phase
   vive** : 51 ms, c'est trois images, et une courbe trop mordante y tassait 96 %
   du trajet en 40 ms. Un mouvement qui tient en deux images se lit comme un
   saut. À 83 ms et avec un amorti plus doux, la course s'étale sur cinq images

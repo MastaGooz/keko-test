@@ -2416,8 +2416,10 @@ body {
     #000000c4;
   opacity: 0;
   /* Vif : l'apparition EST l'impact, elle ne doit pas se lire comme un fondu.
-     Ce qu'on gagne ici se rend en temps d'arret une fois les corps poses. */
-  transition: opacity 0.09s ease-out;
+     Ce qu'on gagne ici se rend en temps d'arret une fois les corps poses. Et
+     elle commande le depart de la charge, qui ne peut pas partir avant que les
+     corps soient la : la raccourcir, c'est raccourcir le temps mort. */
+  transition: opacity 0.055s ease-out;
   pointer-events: none;
 }
 
@@ -2452,8 +2454,8 @@ body {
   transform: translateY(1.75rem) scale(0.9);
   opacity: 0;
   transition:
-    transform 0.11s cubic-bezier(0.2, 0.9, 0.3, 1.2),
-    opacity 0.09s ease-out;
+    transform 0.075s cubic-bezier(0.2, 0.9, 0.3, 1.2),
+    opacity 0.055s ease-out;
 }
 
 .duel.ouvert .duel-corps {
@@ -2483,12 +2485,15 @@ body {
    monstres, mesure a l'epoque : tout le poids vient du CONTRASTE de vitesse,
    et un lissage uniforme rend le geste mou.
 
-   LE RETARD DE 0,12 s N'EST PAS UN REGLAGE, C'EST LA CONDITION POUR QU'ON LA
-   VOIE. Sans lui, la charge partait a l'instant zero -- or les figures mettent
-   ~110 ms a arriver (fondu + montee). La phase rapide etait finie avant meme
-   qu'on les distingue, et il ne restait a l'ecran que la derive lente. Keko :
-   « il a deja avance quand on le voit ». Elle dure aussi 83 ms au lieu de 51 :
-   trois images, ca ne se percoit pas comme un geste.
+   LE RETARD N'EST PAS UN REGLAGE, C'EST LA CONDITION POUR QU'ON LA VOIE --
+   mais il doit etre LE PLUS COURT POSSIBLE. Sans lui, la charge partait a
+   l'instant zero et se terminait avant qu'on distingue les figures : « il a
+   deja avance quand on le voit ». A 0,12 s, le temps mort d'avant le geste
+   devenait sensible a son tour : « la phase immobile avant l'avancee est trop
+   longue ». Il vaut donc exactement la duree d'apparition des corps, 0,07 s --
+   et c'est en accelerant l'apparition (0,09 -> 0,055 s) qu'on l'a raccourci,
+   pas en pariant sur un depart a l'aveugle. Les deux valeurs sont liees :
+   toucher l'une sans l'autre ramene l'un des deux defauts.
 
    La course passe par `translate`, PAS par `transform` : `transform` porte
    deja l'arrivee des figures (translateY + scale), et une animation sur la
@@ -2496,7 +2501,7 @@ body {
    `translate` d'abord. */
 .duel-corps.attaque {
   --elan: calc(var(--corps) * 0.26 * var(--sens, 1));
-  animation: charge 0.52s linear 0.12s forwards;
+  animation: charge 0.57s linear 0.07s forwards;
 }
 
 /* Chacun charge vers l'autre : le joueur est a gauche, l'ennemi a droite. */
@@ -2521,19 +2526,19 @@ body {
     translate: 0 0;
     animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
   }
-  6.7% {
+  6.1% {
     /* L'appel : il se ramasse en arriere. Court, mais c'est lui qui arme. */
     translate: calc(var(--elan) * -0.28) 0;
     animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
   }
-  15.4% {
+  14% {
     /* LA FRAPPE, a pleine extension. Elle porte LOIN : 1,73 fois la course
        vive en 45 ms, parce que c'est la distance couverte d'un coup qui fait
        la violence, pas la seule vitesse. C'est ici que la secousse tombe. */
     translate: calc(var(--elan) * 1.45) 0;
     animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1);
   }
-  22% {
+  20% {
     /* Le contrecoup : il revient, comme un bras qui a porte trop loin. */
     translate: calc(var(--elan) * 1.2) 0;
     animation-timing-function: linear;

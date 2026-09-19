@@ -40,11 +40,11 @@ export type Figure = { nom: string; espece: string; teinte: string }
  *
  * La secousse a d'abord été calée sur l'apparition elle-même (60 ms), quand
  * rien ne bougeait dans le cadre. Depuis que l'attaquant charge, elle doit
- * tomber sur le bout de son élan rapide — sinon le coup précède le geste qui
- * le porte, et on lit deux évènements sans rapport. Charge : 120 ms de retard
- * plus 83 ms d'élan vif, donc 200.
+ * tomber sur sa pleine extension — sinon le coup précède le geste qui le
+ * porte, et on lit deux évènements sans rapport. Charge : 70 ms de retard, 35
+ * d'appel, 45 de frappe, donc 150.
  */
-export const IMPACT_DUEL = 200
+export const IMPACT_DUEL = 150
 
 /**
  * Quand le tampon de mort s'abat. Juste après l'impact : le coup d'abord, ce
