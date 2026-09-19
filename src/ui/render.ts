@@ -294,8 +294,13 @@ function corpsJoueur(
  */
 function jauge(pv: number, pvMax: number): string {
   const part = Math.max(0, Math.round((pv / pvMax) * 100))
+  // Les PV sont poses sur la jauge : l'apercu des degats les relit de la pour
+  // se calculer, plutot que de recevoir l'etat. Ce qu'il annote, c'est ce qui
+  // est a l'ecran -- meme source, donc jamais un demi-rendu de decalage.
   return (
-    `<span class="jauge"><span class="remplissage" style="width:${part}%"></span>` +
+    `<span class="jauge" data-pv="${pv}" data-pvmax="${pvMax}">` +
+    `<span class="remplissage" style="width:${part}%"></span>` +
+    `<span class="apercu"></span>` +
     `<span class="chiffre-pv">${pv}<span class="sur-pv">/${pvMax}</span></span></span>`
   )
 }

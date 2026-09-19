@@ -28,6 +28,8 @@ export type GestesMain = {
   reordonner: (de: number, vers: number) => void
   /** Simple tape : on la regarde de près. */
   regarder: (index: number) => void
+  /** La carte sous le doigt, ou tenue : de quoi montrer ce qu'elle emporterait. */
+  survol: (index: number | null) => void
   /** Le jeu accepte-t-il un geste en ce moment ? */
   disponible: () => boolean
 }
@@ -106,6 +108,10 @@ export function brancherMain(view: View, gestes: GestesMain): void {
       fantome.style.width = `${carte.offsetWidth}px`
       fantome.style.height = `${carte.offsetHeight}px`
       document.body.appendChild(fantome)
+      // Pendant le glisser AUSSI : au doigt il n'y a pas de survol, et c'est
+      // justement le moment ou l'apercu sert -- on choisit sa cible en le
+      // regardant.
+      gestes.survol(index)
     }
     if (fantome !== null) {
       fantome.style.left = `${e.clientX}px`
@@ -122,6 +128,7 @@ export function brancherMain(view: View, gestes: GestesMain): void {
     const sortie = e.clientY < plafond()
     const place = placeSousLeDoigt(e.clientX)
     nettoyer()
+    gestes.survol(null)
     if (!gestes.disponible()) return
     // Une tape n'est pas un glisser raté : c'est l'autre geste.
     if (!aGlisse) gestes.regarder(index)
@@ -130,5 +137,23 @@ export function brancherMain(view: View, gestes: GestesMain): void {
   }
 
   view.cartes.addEventListener('pointerup', relacher)
-  view.cartes.addEventListener('pointercancel', () => nettoyer())
+  view.cartes.addEventListener('pointercancel', () => {
+    nettoyer()
+    gestes.survol(null)
+  })
+
+  // Le survol a la souris. `pointerover`/`pointerout` et non `enter`/`leave` :
+  // ils remontent, donc une seule paire d'ecouteurs sur la main suffit alors
+  // que les cartes sont reconstruites a chaque rendu.
+  view.cartes.addEventListener('pointerover', (e) => {
+    if (carte !== null) return
+    const sous = (e.target as HTMLElement).closest<HTMLElement>('[data-main]')
+    gestes.survol(sous === null ? null : Number(sous.dataset.main))
+  })
+
+  view.cartes.addEventListener('pointerout', (e) => {
+    if (carte !== null) return
+    const vers = (e.relatedTarget as HTMLElement | null)?.closest<HTMLElement>('[data-main]')
+    gestes.survol(vers === undefined || vers === null ? null : Number(vers.dataset.main))
+  })
 }

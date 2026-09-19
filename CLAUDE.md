@@ -709,6 +709,24 @@ donjon. Ce qui tourne :
   parce qu'on joue en deux tapes — entre les deux il n'y a pas encore de cible,
   ni de doigt à suivre. L'arche ne confirme pas un choix, elle montre qu'il y
   en a un à faire. Blanche et pleine sur un corps que la carte **achève** ;
+- **l'aperçu des dégâts sur les jauges** (`ui/apercu.ts`, décoratif lui aussi) :
+  une bande **jaune** montre la part de PV que la carte du moment emporterait.
+  Elle occupe la **droite** du remplissage — c'est par là que la jauge se vide,
+  donc c'est là qu'on cherche ce qu'on va prendre ; posée à gauche elle se
+  lirait comme ce qui reste.
+
+  Trois choses à ne pas défaire : la bande est **plafonnée aux PV restants**
+  (au-delà elle sortirait de la jauge et l'excès n'apprendrait rien de plus que
+  « c'est mort ») ; **le joueur en est exclu** (`:not(.moi)`), sinon l'aperçu
+  annonce qu'on va se frapper soi-même ; et **quand le coup achève, c'est la
+  jauge entière qui se cercle**, parce qu'une bande couvrant tout le
+  remplissage est vraie aussi d'un corps déjà très bas.
+
+  Elle suit **le survol ET le glisser**. Le glisser n'est pas un extra : au
+  doigt il n'y a pas de survol, et c'est justement pendant qu'on tient la carte
+  qu'on choisit sa cible. Le module relit les PV **sur le DOM** (`data-pv`,
+  posé par le rendu) plutôt que de recevoir l'état : ce qu'il annote est ce qui
+  est à l'écran, donc jamais un demi-rendu de décalage.
 - **aucun cadre de ciblage.** Un rectangle autour d'une bête la remet dans la
   vignette dont on l'avait sortie — même raison qui a fait tomber le panneau de
   la scène. Ce qui dit « visable », c'est l'arche ; le corps, lui, **ne s'allume

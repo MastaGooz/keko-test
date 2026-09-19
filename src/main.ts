@@ -36,6 +36,7 @@ import type { Action } from './ui/input.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
 import { brancherMain } from './ui/glisser-main.ts'
+import { apercuDegats } from './ui/apercu.ts'
 import { secouerEcran } from './ui/effets.ts'
 import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
 import { tracerVisees } from './ui/visees.ts'
@@ -70,6 +71,22 @@ let finSonnee = false
 let auFront: number | null = null
 /** La carte qu'on regarde de près, s'il y en a une. */
 let zoom: number | null = null
+/** La carte survolée ou tenue : elle montre ce qu'elle emporterait. */
+let survolee: number | null = null
+
+/**
+ * Peint sur chaque jauge la part de PV que la carte du moment emporterait.
+ *
+ * La carte du moment, c'est **celle sous le doigt s'il y en a une, sinon celle
+ * qu'on tient**. Les deux ne peuvent pas se contredire — on ne survole pas en
+ * glissant — et faire tomber l'aperçu quand la souris quitte une carte engagée
+ * effacerait l'information au moment précis où on va choisir sa cible.
+ */
+function rafraichirApercu(): void {
+  const index = survolee ?? selection
+  const carte = index === null ? null : descente.combat.main[index]
+  apercuDegats(view, carte !== undefined && carte !== null && carte.type === 'combat' ? carte.degats : null)
+}
 
 /**
  * Ouvre un gros plan et retire de la scène les deux corps qu'il montre. Tout
@@ -109,6 +126,7 @@ function demarrer(nouvelleSeed: number): void {
   fermerDuel(view)
   auFront = null
   zoom = null
+  survolee = null
   selection = null
   finSonnee = false
   view.root.classList.remove('panneau-ouvert')
@@ -117,6 +135,9 @@ function demarrer(nouvelleSeed: number): void {
 
 function dessiner(): void {
   render(view, descente, seed, selection, occupation, auFront, zoom)
+  // Après le rendu : les jauges viennent d'être reconstruites, leur aperçu
+  // avec. Une marque posée avant serait balayée.
+  rafraichirApercu()
   tracerVisees(view)
 }
 
@@ -373,6 +394,10 @@ brancherMain(view, {
   jouer: (index) => dispatch({ type: 'jouerDepuisLaMain', index }),
   reordonner: (de, vers) => dispatch({ type: 'reordonner', de, vers }),
   regarder: (index) => dispatch({ type: 'zoomer', index }),
+  survol: (index) => {
+    survolee = index
+    rafraichirApercu()
+  },
   disponible: () =>
     occupation === 'libre' && descente.phase.type === 'combat' && descente.combat.issue === null,
 })
