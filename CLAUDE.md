@@ -298,9 +298,26 @@ donjon. Ce qui tourne :
   face, si. Son badge dit ce qu'il va **encaisser** (`−6`), pas ce qu'il
   inflige : même place que les intentions d'en face, mais jamais la croix de
   frappe, sinon on lit l'inverse.
-- **l'énergie en orbe**, au coin de la main avec la pioche et la défausse. Une
-  ligne de pastilles prenait un étage entier de hauteur, et la hauteur est ce
-  qui manque.
+- **l'énergie en orbe**, au coin bas-gauche au-dessus de la pioche. Une ligne
+  de pastilles prenait un étage entier de hauteur, et la hauteur est ce qui
+  manque.
+- **la disposition du genre** : l'info de run en haut (elle se consulte, elle
+  ne se joue pas), la scène au milieu, **la main tout en bas avec rien
+  dessous**, la pioche et la défausse dans les coins bas, le bouton de fin de
+  tour au bord droit à mi-hauteur. Ces quatre-là sont **hors du flux**, ancrés
+  aux bords : ils encadrent la main sans lui prendre un pixel de large ni un
+  étage de haut.
+
+  **La main se réserve ses bords par du remplissage**, jamais par `max-width` +
+  `margin-inline: auto` : des marges automatiques sur un élément flex étiré le
+  font se rétracter à son contenu, et comme la largeur des cartes se calcule
+  *depuis* ce conteneur, le calcul devient circulaire — les cartes s'effondrent
+  à 4 px.
+
+  **Le défilement est interdit** (`overflow: hidden` sur `body`). Les cartes des
+  bords, poussées par l'arc de l'éventail, dépassent de quelques pixels : assez
+  pour rendre la page défilable et faire sauter la main sous le doigt. On
+  vérifie que tout tient, on n'offre pas de rattrapage.
 - les ennemis **sans cadre** : des **créatures dessinées** (SVG,
   `ui/illustrations.ts`) posées à même la page. Un panneau autour d'elles les
   enfermait dans une vignette au lieu de les poser dans un lieu — c'est l'ombre

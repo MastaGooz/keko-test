@@ -32,6 +32,11 @@ html {
 
 body {
   margin: 0;
+  /* Le jeu tient dans un ecran, toujours : aucun defilement possible. Les
+     cartes des bords, poussees par l'arc de l'eventail, depassent de quelques
+     pixels -- assez pour rendre la page scrollable et faire sauter la main
+     sous le doigt. On verifie que tout tient, on n'offre pas de rattrapage. */
+  overflow: hidden;
   background: var(--bg);
   color: var(--fg);
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -42,7 +47,10 @@ body {
 
 .app {
   min-height: 100dvh;
-  max-width: 42rem;
+  /* Toute la largeur : le plafond datait du portrait, et en paysage il
+     rejetait les "coins" de l'ecran a 130 px du bord. Une limite haute reste,
+     pour qu'un ecran ultra-large ne disperse pas le jeu. */
+  max-width: 90rem;
   margin: 0 auto;
   padding: max(0.75rem, env(safe-area-inset-top)) 1rem max(1rem, env(safe-area-inset-bottom));
   display: flex;
@@ -1288,7 +1296,7 @@ body {
    compaction n'est plus une exception, c'est la regle. */
 .app {
   gap: 0.25rem;
-  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
 }
 
 /* L'entete est de la plomberie : elle ne doit pas manger l'ecran de jeu. */
@@ -1303,11 +1311,6 @@ body {
 .reglages {
   min-height: 1.5rem;
   font-size: 0.5625rem;
-}
-
-/* La rangee du bas s'aligne sur la plus haute de ses pieces, pas plus. */
-.rangee-tour {
-  align-items: center;
 }
 
 .tas-jeu {
@@ -1900,18 +1903,6 @@ body {
 
 /* --- la pioche et la defausse --------------------------------------------- */
 
-.rangee-tour {
-  display: flex;
-  align-items: stretch;
-  gap: 0.5rem;
-  width: 100%;
-}
-
-.rangee-tour .finTour {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
 /* Un tas : la pile, puis son nom. Etroit, pour ne rien prendre au bouton. */
 .tas-jeu {
   display: flex;
@@ -2218,4 +2209,100 @@ body {
   background: #3a1d1d;
   color: var(--ennemi);
   font-weight: 700;
+}
+
+/* --- la disposition du genre : la main en bas, le reste aux bords ---------- */
+
+/* `relative` et non `transform` : un transform ferait de `.app` le bloc
+   conteneur de ses enfants en position fixe (panneau, voile, arches). */
+.app {
+  position: relative;
+}
+
+/* La scene mange tout ce qui reste entre l'info et la main. Les corps se
+   posent en bas de cet espace, juste au-dessus des cartes. */
+#ennemis {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* La main touche le bas : rien dessous. C'est la regle de lecture du genre --
+   ce qu'on joue est au plus pres du pouce. */
+.cartes {
+  margin-top: auto;
+  /* On reserve les bords aux tas et au bouton : sinon, sur un ecran large, la
+     main s'etale jusqu'aux coins et passe par-dessus eux.
+     Par du REMPLISSAGE, pas par `max-width` + `margin-inline: auto` : des
+     marges automatiques sur un element flex etire le font se retracter a son
+     contenu, et comme la largeur des cartes se calcule depuis ce conteneur,
+     le calcul devient circulaire et les cartes s'effondrent a 4 px. */
+  padding-inline: 6rem;
+}
+
+/* Les tas dans les coins bas, le bouton au bord droit a mi-hauteur. Hors du
+   flux : ils encadrent la main sans lui prendre un pixel de large. */
+.tas-jeu.coin-gauche,
+.tas-jeu.coin-droit,
+.orbe,
+.finTour {
+  position: absolute;
+  z-index: 25;
+}
+
+.tas-jeu.coin-gauche {
+  left: 0;
+  bottom: 0;
+}
+
+.tas-jeu.coin-droit {
+  right: 0;
+  bottom: 0;
+}
+
+/* L'orbe au-dessus de la pioche, comme dans les jeux du genre. */
+.orbe {
+  left: 0.125rem;
+  bottom: 3.5rem;
+}
+
+/* Au bord droit, a mi-hauteur : la ou le pouce droit tombe naturellement
+   quand on tient l'appareil a deux mains. */
+.finTour {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.0625rem;
+  width: 5.25rem;
+  min-height: 3.25rem;
+  padding: 0.5rem 0.375rem;
+  border-left-width: 1px;
+  border-radius: 10px;
+  text-align: center;
+  line-height: 1.15;
+}
+
+.finTour .nom {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.finTour .tour {
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.finTour:active {
+  transform: translateY(-50%) scale(0.98);
+}
+
+/* L'info de run passe en haut : elle se consulte, elle ne se joue pas. */
+.encombrement {
+  order: -1;
+  text-align: center;
 }

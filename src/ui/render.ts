@@ -62,20 +62,23 @@ export function mount(root: HTMLElement, buildTime: string): View {
 
       <svg id="visees" class="visees" aria-hidden="true"></svg>
 
-      <!-- La scène : le joueur et les ennemis, face à face, sur le même sol. -->
+      <!-- L'info de run reste en haut : elle se consulte, elle ne se joue pas. -->
+      <p id="encombrement" class="encombrement"></p>
+
+      <!-- La scène : le joueur et les ennemis, face à face, sur le même sol.
+           Elle prend toute la place qui reste entre l'info et la main. -->
       <div id="ennemis" class="rangs scene"></div>
 
+      <!-- La main touche le bas de l'écran. Rien dessous : c'est la règle de
+           lecture du genre, ce qu'on joue est le plus près du pouce. -->
       <div id="cartes" class="cartes"></div>
 
-      <!-- Pioche et défausse flanquent le bouton plutôt que la main : les
-           mettre autour de la main rétrécirait les cartes d'un cinquième. -->
-      <div class="rangee-tour">
-        <div id="energie" class="orbe energie"></div>
-        <div id="pioche" class="tas-jeu"></div>
-        <button id="finTour" class="rang bouton finTour" type="button" data-action="finTour"></button>
-        <div id="defausse" class="tas-jeu"></div>
-      </div>
-      <p id="encombrement" class="encombrement"></p>
+      <!-- Ancrés aux bords, hors du flux : ils encadrent la main sans lui
+           prendre un pixel de large ni un étage de haut. -->
+      <div id="energie" class="orbe energie"></div>
+      <div id="pioche" class="tas-jeu coin-gauche"></div>
+      <div id="defausse" class="tas-jeu coin-droit"></div>
+      <button id="finTour" class="bouton finTour" type="button" data-action="finTour"></button>
 
       <!-- Récompense, point de sortie, fin de descente : tout ce qui n'est pas
            le combat se pose par-dessus lui, sans refaire la mise en page. -->
@@ -415,14 +418,11 @@ function tasDeJeu(nom: string, combien: number): string {
  */
 function etiquetteFinTour(etat: EtatCombat, occupation: Occupation): string {
   if (occupation === 'ennemis') {
-    return `<span class="nom">Les ennemis frappent…</span>`
+    return `<span class="nom">Ils frappent…</span>`
   }
-  const menace = menaceDuTour(etat)
-  return (
-    `<span class="nom">Fin du tour ${etat.tour}</span>` +
-    `<span class="remplir"></span>` +
-    `<span class="cout">${menace === 0 ? '—' : `−${menace}`}</span>`
-  )
+  // Plus de rappel des dégâts à venir : le joueur les porte désormais
+  // au-dessus de la tête, comme les ennemis portent leur intention.
+  return `<span class="nom">Fin du tour</span><span class="tour">${etat.tour}</span>`
 }
 
 function phrase(evenement: Evenement): string {
