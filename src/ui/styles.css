@@ -192,7 +192,12 @@ body {
      sur les cartes. Puis l'ombre portee, qui pose la bete sur le sol. */
   filter:
     drop-shadow(0 -1.5px 0 color-mix(in srgb, var(--teinte, #999) 55%, #fff))
-    drop-shadow(0 0.35rem 0.4rem #000000a8);
+    drop-shadow(0 0.35rem 0.4rem #000000a8)
+    /* Le halo de ciblage. Il vit DANS la chaine de base, pilote par deux
+       variables : `filter` est une propriete unique, donc le moindre etat qui
+       veut y ajouter une ombre devrait restituer toute la chaine -- et la
+       premiere retouche du liseré ou de l'ombre portee en oublierait une. */
+    drop-shadow(0 0 var(--halo, 0px) var(--halo-teinte, #0000));
 }
 
 @keyframes souffle {
@@ -332,24 +337,78 @@ body {
   text-overflow: ellipsis;
 }
 
-/* Une carte est visee : les corps deviennent touchables. */
+/* Une carte est visee : les corps deviennent touchables.
+
+   AUCUN CADRE. Un rectangle autour d'une bete la remet dans la vignette dont
+   on l'avait sortie -- meme raison qui a fait tomber le panneau de la scene.
+   Ce qui dit « visable », c'est l'arche qui part de la carte vers chaque corps
+   (`ui/visees.ts`) ; le corps, lui, ne s'allume que quand on le DESIGNE. */
 .creature.cible {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  border-color: #ffffff1f;
-  border-style: dashed;
-  background: #ffffff08;
 }
 
-.creature.cible.achevable {
-  border-style: solid;
-  border-color: #eef0f6;
-  background: #ffffff14;
-  box-shadow: 0 0 1rem #ffffff26;
-}
-
+/* Le corps designe s'allume : sa silhouette, sa jauge et son nom prennent un
+   contour de lumiere. Les trois ensemble, parce qu'ils forment la creature --
+   n'en allumer qu'un en designerait une partie. */
 .creature.cible:active {
+  --halo: 0.55rem;
+  --halo-teinte: #ffffffe0;
   transform: scale(0.98);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .creature.cible:hover {
+    --halo: 0.55rem;
+    --halo-teinte: #ffffffe0;
+  }
+}
+
+/* La jauge du corps designe : un jonc clair, plus un halo. */
+.creature.cible:active .jauge {
+  box-shadow:
+    inset 0 1px 2px #000,
+    0 0 0 1px #ffffffcc,
+    0 0 0.5rem #ffffff59;
+}
+
+.creature.cible:active .nom,
+.creature.cible:active .chiffre-pv {
+  color: #fff;
+  text-shadow:
+    0 0 2px #000,
+    0 0 0.5rem #ffffffb3;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .creature.cible:hover .jauge {
+    box-shadow:
+      inset 0 1px 2px #000,
+      0 0 0 1px #ffffffcc,
+      0 0 0.5rem #ffffff59;
+  }
+
+  .creature.cible:hover .nom,
+  .creature.cible:hover .chiffre-pv {
+    color: #fff;
+    text-shadow:
+      0 0 2px #000,
+      0 0 0.5rem #ffffffb3;
+  }
+}
+
+/* Celui que la carte ACHEVE reste marque en permanence, mais d'une lueur et
+   non d'un cadre : c'est l'arbitrage central du multi-cibles, il ne peut pas
+   dependre d'un survol qui n'existe pas au doigt. Plus discret que la
+   designation, pour qu'on distingue « je peux le tuer » de « c'est lui que je
+   vise ». */
+.creature.cible.achevable {
+  --halo: 0.35rem;
+  --halo-teinte: #ffffff8c;
+}
+
+.creature.cible.achevable .nom {
+  color: var(--fg);
 }
 
 .creature .effet {

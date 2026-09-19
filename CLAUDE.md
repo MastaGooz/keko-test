@@ -633,6 +633,22 @@ donjon. Ce qui tourne :
   parce qu'on joue en deux tapes — entre les deux il n'y a pas encore de cible,
   ni de doigt à suivre. L'arche ne confirme pas un choix, elle montre qu'il y
   en a un à faire. Blanche et pleine sur un corps que la carte **achève** ;
+- **aucun cadre de ciblage.** Un rectangle autour d'une bête la remet dans la
+  vignette dont on l'avait sortie — même raison qui a fait tomber le panneau de
+  la scène. Ce qui dit « visable », c'est l'arche ; le corps, lui, **ne s'allume
+  que quand on le DÉSIGNE**, et alors sa silhouette, sa jauge et son nom
+  prennent ensemble un contour de lumière. Les trois, parce qu'ils forment la
+  créature — n'en allumer qu'un en désignerait une partie.
+
+  **Trois niveaux, et ils doivent rester distincts** : mat, lueur douce sur
+  celui que la carte *achève*, contour franc sur celui qu'on désigne. Le
+  deuxième est permanent et ne peut pas dépendre d'un survol, *puisqu'il n'y en
+  a pas au doigt* — c'est l'arbitrage central du multi-cibles.
+
+  **Le halo passe par deux variables lues dans la chaîne de `filter` de la
+  silhouette.** `filter` est une propriété unique : le moindre état qui veut y
+  ajouter une ombre devrait restituer toute la chaîne, et la première retouche
+  du liseré ou de l'ombre portée en oublierait une.
 - **aucun aperçu de PV restants** sous un corps visé : il ajoutait une ligne,
   donc faisait sauter la hauteur du rang à l'instant même où l'on vise — au
   doigt, la cible bouge sous le pouce. Et il n'apprenait rien : la carte
