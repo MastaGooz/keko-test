@@ -265,20 +265,17 @@ function jauge(pv: number, pvMax: number): string {
   return `<span class="jauge"><span class="remplissage" style="width:${part}%"></span></span>`
 }
 
-/** L'énergie en pastilles : ce qui reste, et ce que la carte visée prendrait. */
-function energie(etat: EtatCombat, visee: Carte | null): string {
-  const reserve = visee === null ? 0 : Math.min(visee.cout, etat.energie)
-  const pastilles = Array.from({ length: etat.energieMax }, (_, i) => {
-    if (i >= etat.energie) return `<span class="pile vide"></span>`
-    if (i >= etat.energie - reserve) return `<span class="pile reservee"></span>`
-    return `<span class="pile"></span>`
-  }).join('')
-
-  // L'orbe porte le chiffre ; les pastilles font son liseré.
-  return (
-    `<span class="reserve">${pastilles}</span>` +
-    `<span class="chiffre">${etat.energie}<span class="sur">/${etat.energieMax}</span></span>`
-  )
+/**
+ * L'énergie : le chiffre, et rien d'autre.
+ *
+ * Il y avait un liseré de pastilles autour, qui doublait le chiffre et
+ * marquait en creux ce que la carte visée allait coûter. Keko : « on voit le
+ * chiffre c'est suffisant ». Ce qui disparaît avec elles, et qu'il faudra
+ * rendre autrement si ça manque : l'aperçu de ce qu'il RESTERAIT après avoir
+ * joué la carte levée. Le coût, lui, est sur la gemme de la carte.
+ */
+function energie(etat: EtatCombat, _visee: Carte | null): string {
+  return `<span class="chiffre">${etat.energie}<span class="sur">/${etat.energieMax}</span></span>`
 }
 
 /**
@@ -405,9 +402,14 @@ function encombrement(descente: Descente): string {
 }
 
 /**
- * Un tas, en pile. L'épaisseur suit le nombre de cartes — jusqu'à trois
- * feuillets — pour qu'on lise d'un coup d'oeil s'il reste de quoi piocher,
- * sans avoir à lire le compte.
+ * Un tas, en pile de DOS DE CARTE à la taille de la main — et enfoui comme
+ * elle, donc on n'en voit que le haut. Un tas doit être fait des mêmes cartes
+ * que la main, sinon c'est l'icône d'un tas et pas un tas.
+ *
+ * L'épaisseur suit le nombre de cartes — jusqu'à trois feuillets — pour qu'on
+ * lise d'un coup d'oeil s'il reste de quoi piocher, sans lire le compte. Nom et
+ * compte vivent dans la bande émergée : sous la ligne de flottaison ils
+ * seraient hors de l'écran.
  */
 function tasDeJeu(nom: string, combien: number): string {
   const feuillets = Math.min(3, combien)
@@ -418,8 +420,10 @@ function tasDeJeu(nom: string, combien: number): string {
 
   return (
     `<span class="pile-cartes${combien === 0 ? ' vide' : ''}">${pile}` +
-    `<span class="compte">${combien}</span></span>` +
-    `<span class="nom-tas">${nom}</span>`
+    `<span class="etiquette-tas">` +
+    `<span class="nom-tas">${nom}</span>` +
+    `<span class="compte">${combien}</span>` +
+    `</span></span>`
   )
 }
 

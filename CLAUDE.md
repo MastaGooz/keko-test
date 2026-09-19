@@ -299,9 +299,13 @@ donjon. Ce qui tourne :
   face, si. Son badge dit ce qu'il va **encaisser** (`−6`), pas ce qu'il
   inflige : même place que les intentions d'en face, mais jamais la croix de
   frappe, sinon on lit l'inverse.
-- **l'énergie en orbe**, au coin bas-gauche au-dessus de la pioche. Une ligne
-  de pastilles prenait un étage entier de hauteur, et la hauteur est ce qui
-  manque.
+- **l'énergie en orbe**, au coin bas-gauche au-dessus de la pioche, **réduite
+  au chiffre**. Une ligne de pastilles prenait un étage entier de hauteur ; un
+  liseré de pastilles autour du chiffre a suivi, et il doublait simplement le
+  chiffre. Keko : « on voit le chiffre c'est suffisant ». *Ce qui est parti
+  avec elles*, et qu'il faudra rendre autrement si ça manque : l'aperçu de ce
+  qu'il **resterait** après avoir joué la carte levée. Le coût, lui, est sur la
+  gemme de la carte.
 - **la disposition du genre** : l'info de run en haut (elle se consulte, elle
   ne se joue pas), la scène au milieu, **la main tout en bas avec rien
   dessous**, la pioche et la défausse dans les coins bas, le bouton de fin de
@@ -381,12 +385,27 @@ donjon. Ce qui tourne :
   **La phase d'agonie vient de l'état, pas d'une classe posée à la main.** Un
   nouveau rendu au milieu de la chute effacerait la classe et figerait le
   corps ; or le joueur peut tout à fait jouer une autre carte pendant ce temps.
-- **la pioche et la défausse en piles**, de part et d'autre du bouton de fin de
-  tour — pas autour de la main : les y mettre rétrécissait les cartes d'un
-  cinquième. L'épaisseur de la pile suit le nombre de cartes, jusqu'à trois
-  feuillets, pour qu'on lise s'il reste de quoi piocher sans lire le compte. Un
-  tas vide garde sa place en pointillés ; un trou dans la rangée serait pire
-  qu'un creux.
+- **la pioche et la défausse en piles de vrais dos de carte**, dans les coins
+  bas, à **la taille exacte des cartes de la main** et enfouies comme elles :
+  on n'en voit que le haut, sur la même ligne de flottaison. Un tas doit être
+  fait des mêmes cartes que la main, sinon c'est l'icône d'un tas et pas un
+  tas. Le dos porte un tissage croisé à la place de la fenêtre d'art — il n'a
+  rien à montrer, seulement une matière.
+
+  L'épaisseur de la pile suit le nombre de cartes, jusqu'à trois feuillets,
+  pour qu'on lise s'il reste de quoi piocher sans lire le compte ; le décalage
+  des feuillets est **une fraction de la carte** et **vertical seulement** (en
+  pixels fixes il disparaissait sur grand écran, et latéral il sortait du coin
+  de l'écran). Nom et compte vivent dans la bande émergée — sous la ligne de
+  flottaison ils seraient hors de l'écran, même règle que le bandeau MORTE des
+  trésors. Un tas vide garde sa place en pointillés ; un trou dans la rangée
+  serait pire qu'un creux.
+
+  **Conséquence à ne pas défaire : la gouttière que la main réserve aux coins
+  vaut désormais UNE CARTE**, et la borne de colonne de `--large` la compte
+  (3,72 cartes de main + 2 de gouttière = 5,72, d'où le facteur 0,17). À 6rem
+  fixes, le tas de droite mordait sur la main dès que la fenêtre devenait
+  étroite — mesuré à 800x600.
 - **Le jeu a des temps.** Tant qu'une animation se déroule, l'entrée de combat
   est verrouillée et **le combat ne se résout pas** : l'écran de récompense
   attend que le dernier corps soit tombé. Le bouton de fin de tour porte le
@@ -692,9 +711,24 @@ le laissent actif en permanence restent bloqués sans comprendre. L'application
 installée, elle, impose le paysage par son manifeste.
 
 **C'est la hauteur qui manque, jamais la largeur.** La scène et les cartes se
-calent donc en `vh`, pas en `rem` : `--large: min(9rem, 42%, 19vh)` pour une
-carte, `min(4.5rem, 18vh)` pour un corps. Deux paliers de resserrement
-supplémentaires, à 430 px et 360 px de haut.
+calent donc en `vh`, pas en `rem` : `min(4.5rem, 18vh)` pour un corps, et pour
+une carte le jeu de variables porté par `.app` — **un seul endroit, lu par la
+main ET par les tas** :
+
+```css
+--large: min(11rem, 29vh, calc(0.17 * (min(100vw, 90rem) - 2rem)));
+--part-enfouie: 0.14;          /* 0,24 sous 430 px de haut */
+--haut:   calc(var(--large) * 1.4);
+--enfoui: calc(var(--haut) * var(--part-enfouie));
+--emerge: calc(var(--haut) - var(--enfoui));   /* la bande qu'on lit */
+```
+
+**Aucun pourcentage là-dedans, et c'est délibéré** (voir la section sur ce
+piège) : la borne de colonne s'écrivait `26%` et changeait de sens selon la
+propriété qui la lisait. En `vw` elle veut dire la même chose pour tout le
+monde — c'est ce qui permet aux tas des coins de partager la mesure de la main
+et de plonger exactement comme elle. Deux paliers de resserrement
+supplémentaires, à 430 px et 360 px de haut, qui portent sur `.app`.
 
 **Toute l'interface est dimensionnée en `rem`, jamais en pixels figés** (sauf
 bordures, rayons et ombres). La racine grandit avec l'écran :
@@ -725,10 +759,17 @@ carte visée ne remontait que de 45 px sur les 80 qu'elle avait d'enfouis — et
 ça passait inaperçu parce que ça restait dans le bon sens.
 
 Règle : **ne jamais faire transiter un pourcentage par une variable que
-plusieurs familles de propriétés vont lire.** Partir d'un facteur sans unité
-(`--part-enfouie`) et en dériver une forme par système de référence — une
-longueur pour les marges, un pourcentage pour les transformations. C'est ce que
-fait `.carte` aujourd'hui, et le commentaire sur place dit pourquoi.
+plusieurs familles de propriétés vont lire.** Le `26%` a fini par être
+supprimé à la source, réécrit en `vw` — `0,26 x (conteneur - 14rem)` devenait
+`0,26 x (min(100vw, 90rem) - 14rem)`, exactement la même valeur, mais
+indépendante de qui la lit. `--enfoui` est depuis une longueur pure, et veut
+dire la même chose dans une marge, dans un `bottom` et dans un `translateY` —
+c'est ce qui a permis aux tas de plonger comme la main.
+
+**Corollaire, même famille de bug :** une largeur sur un `span` inline ne fait
+rien, en silence. `.pile-cartes` ne tenait sa taille que parce que son parent
+était un conteneur flex qui le blocifiait ; le parent a changé, le tas est
+passé à 0x0 sans une erreur.
 
 **Le format serré, c'est le 1366x768**, et c'est lui qui a fixé le coefficient
 `2vh`. L'arrivée de la scène des créatures a coûté ~120 px de hauteur et l'a
