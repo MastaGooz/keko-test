@@ -125,7 +125,20 @@ const GARDE =
   '<path d="M34 11q-10 0-10 10v4q0 5 10 5t10-5v-4q0-10-10-10z"/>' +
   '<path d="M5 26l11-5 11 5v12q0 9-11 14Q5 47 5 38z"/>'
 
+/**
+ * Le joueur : une silhouette encapuchonnee, debout, tournee vers la droite --
+ * face aux ennemis, qui regardent vers la gauche. Sur une scene, tout le monde
+ * se fait face ; c'est ce qui raconte un affrontement plutot qu'une liste.
+ */
+const HEROS =
+  '<path d="M27 20q-9 0-11 9l-2 27h26l-2-27q-2-9-11-9z"/>' +
+  '<path d="M27 4q-9 0-9 10 0 7 4 10h10q4-3 4-10 0-10-9-10z"/>' +
+  '<path d="M18 14q4 4 9 4t9-4"/>' +
+  '<path d="M38 26l8 3-2 24h-6z"/>' +
+  '<path d="M45 8h3l-1 46h-3z"/><path d="M44 3h5l-1 6h-3z"/>'
+
 const CREATURES: Record<string, { trace: string; oeil: [number, number] }> = {
+  joueur: { trace: HEROS, oeil: [31, 13] },
   garde: { trace: GARDE, oeil: [31, 22] },
   roquet: { trace: CHIEN, oeil: [17, 29] },
   meneur: { trace: MENEUR, oeil: [17, 29] },

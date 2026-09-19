@@ -1,7 +1,14 @@
 # keko-test
 
 Jeu web (Vite + TypeScript vanilla, sans framework), joué **au doigt sur
-téléphone** avant tout.
+téléphone, en paysage uniquement**.
+
+*Le portrait a été abandonné le 19/09.* On s'est battu contre la hauteur toute
+une journée — trois paliers de resserrement, une mise en page à deux colonnes,
+des cartes plafonnées, un aperçu de PV retiré parce qu'il ajoutait une ligne.
+Un affrontement avec quatre corps, cinq cartes et deux piles veut de la
+largeur : aucun jeu du genre n'existe en portrait. Le prix assumé : **le jeu ne
+se joue plus à une main.**
 
 ## Concept du jeu
 
@@ -285,6 +292,15 @@ donjon. Ce qui tourne :
 - **Grisé, jamais transparent.** Les cartes de la main se recouvrent en
   éventail : une carte translucide laisse voir sa voisine au travers et devient
   illisible au doigt. `grayscale` + `brightness`, jamais `opacity` ;
+- **le joueur et les ennemis sur la même scène**, face à face : il ouvre le
+  rang, un écart le sépare de ceux d'en face. C'était une barre posée au-dessus
+  de la main — une barre ne raconte pas un affrontement, un corps qui fait
+  face, si. Son badge dit ce qu'il va **encaisser** (`−6`), pas ce qu'il
+  inflige : même place que les intentions d'en face, mais jamais la croix de
+  frappe, sinon on lit l'inverse.
+- **l'énergie en orbe**, au coin de la main avec la pioche et la défausse. Une
+  ligne de pastilles prenait un étage entier de hauteur, et la hauteur est ce
+  qui manque.
 - les ennemis **sans cadre** : des **créatures dessinées** (SVG,
   `ui/illustrations.ts`) posées à même la page. Un panneau autour d'elles les
   enfermait dans une vignette au lieu de les poser dans un lieu — c'est l'ombre
@@ -603,6 +619,18 @@ incrémenter la version (ou écrire une migration).
 
 - Cibles tactiles **≥ 48 px** de haut (le bouton actuel fait 64).
 - Tester au doigt, pas seulement à la souris.
+- **Paysage uniquement.** En portrait, un écran demande de tourner l'appareil.
+
+**On ne peut pas forcer l'orientation depuis une page web** : le verrouillage
+exige le plein écran et n'existe pas sur iPhone. D'où l'écran de rotation — et
+il doit **dire de désactiver le verrouillage de rotation**, sinon les gens qui
+le laissent actif en permanence restent bloqués sans comprendre. L'application
+installée, elle, impose le paysage par son manifeste.
+
+**C'est la hauteur qui manque, jamais la largeur.** La scène et les cartes se
+calent donc en `vh`, pas en `rem` : `--large: min(9rem, 42%, 19vh)` pour une
+carte, `min(4.5rem, 18vh)` pour un corps. Deux paliers de resserrement
+supplémentaires, à 430 px et 360 px de haut.
 
 **Toute l'interface est dimensionnée en `rem`, jamais en pixels figés** (sauf
 bordures, rayons et ombres). La racine grandit avec l'écran :
@@ -627,42 +655,22 @@ de taille**, et se souvenir qu'une seule dimension ne suffit jamais à conclure.
 fait déborder à `2.4vh`. Si la page grandit encore, c'est ce coefficient qu'il
 faut baisser en premier — pas la taille des cartes.
 
-### Le portrait ne doit jamais scroller
+### Le jeu ne doit jamais scroller
 
-**Un combat qui oblige à scroller est un combat qu'on ne peut pas juger.** Keko
-l'a signalé en portrait sur son téléphone, et ma vérification précédente était
-fausse pour deux raisons, toutes deux à retenir :
+**Un combat qui oblige à scroller est un combat qu'on ne peut pas juger.**
 
-1. **Je comptais 140 px de chrome navigateur ; un téléphone en prend souvent
-   190.** Les formats à viser sont les **viewports** — 360x540, 360x600,
-   390x660, 414x715 — pas les tailles d'écran annoncées.
-2. **La moitié de la hauteur servait aux commandes de test**, qui poussaient le
-   combat hors de l'écran. Elles sont maintenant en panneau fixe, hors du flux.
+Formats vérifiés, tous à zéro débordement : **667x320** (SE couché), **780x340**,
+**844x390**, **932x430**, **1366x700**, **1920x1080**. La carte va de 50 px sur
+le plus petit à 194 px sur grand écran. **Refaire ce balayage après toute
+modification de taille** — et se méfier des tailles d'écran annoncées : ce sont
+les *viewports* qui comptent, un téléphone mange souvent 190 px de chrome.
 
-Paliers de resserrement : `max-height: 760px` réduit les espacements et masque
-le journal, `max-height: 620px` rogne le décor et la taille des cartes.
-**On rogne sur le décor avant les cibles tactiles**, jamais l'inverse.
-
-**En paysage, une colonne unique est perdue d'avance** : la hauteur tombe à
-320-430 px et aucun resserrement vertical ne suffit. La mise en page bascule en
-**deux colonnes** (`orientation: landscape` + garde-fou `max-height: 540px`
-pour ne pas attraper un écran de PC) : **la main à gauche**, avec tout ce qui
-se joue — barre du joueur, énergie, cartes, fin de tour — et **la scène à
-droite**, sur toute la hauteur. Choix de Keko : on regarde ses cartes plus
-souvent que ses ennemis.
-
-Deux pièges rencontrés là :
-
-- **`grid-row: 2 / -1` ne marche pas** sans grille explicite : `-1` désigne la
-  dernière ligne **explicite**, donc la ligne 1. La scène atterrissait en
-  rangée 1 et chassait l'en-tête. D'où `grid-row: 2 / span 6` — et le compte
-  doit suivre le nombre d'éléments de l'autre colonne.
-- Étirée sur toute la colonne, la scène devenait **une grande boîte vide** avec
-  les bêtes tassées en bas. Son dégradé la retourne en salle : noir au plafond,
-  sol éclairé sous leurs pattes.
-
-Formats vérifiés, tous sans le moindre scroll : **360x540, 390x660, 414x715**
-en portrait, **667x320, 780x340, 844x390, 932x430** en paysage.
+**Pour mesurer un format sans redimensionner la fenêtre**, charger la page dans
+une `iframe` de la taille visée : les `vh` et les media queries s'y appliquent
+pour de vrai. Attention — **dans un onglet en arrière-plan le navigateur gèle
+les transitions et bride les minuteurs**, donc une valeur calculée peut rester
+bloquée à mi-course et faire croire à un bug. Neutraliser la transition avant
+de mesurer, ou piloter l'animation à la main via l'API Web Animations.
 
 ### Récupérer la barre du navigateur
 

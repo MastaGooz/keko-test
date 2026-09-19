@@ -104,7 +104,8 @@ body {
   align-items: flex-end;
   justify-content: center;
   width: 100%;
-  height: 5.5rem;
+  /* Calee sur la hauteur d'ecran : en paysage c'est elle qui manque. */
+  height: min(4.5rem, 18vh);
   color: var(--teinte, #9a7a62);
 }
 
@@ -475,11 +476,25 @@ body {
 
 /* --- l'énergie ----------------------------------------------------------- */
 
+/* Une orbe posee au coin de la main, comme dans les jeux du genre : un seul
+   objet qui dit tout, au lieu d'une ligne de pastilles qui prenait un etage
+   entier -- et la hauteur est ce qui manque en paysage. */
+.orbe {
+  flex: 0 0 auto;
+}
+
 .energie {
+  position: relative;
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--energie);
+  border-radius: 50%;
+  background: radial-gradient(60% 60% at 35% 28%, #6d5520, #2a2210 70%);
+  box-shadow: inset 0 -3px 8px #00000090, 0 0 0.75rem #ffc65c33;
 }
 
 .pile {
@@ -526,7 +541,10 @@ body {
 }
 
 .carte {
-  --large: min(9rem, 42%);
+  /* Trois bornes : la taille voulue, la part de colonne, et la hauteur
+     disponible. En paysage c'est la HAUTEUR qui manque, jamais la largeur :
+     sans la troisieme borne, la main deborderait sous l'ecran. */
+  --large: min(9rem, 42%, 19vh);
   position: relative;
   flex: 0 0 auto;
   width: var(--large);
@@ -1264,208 +1282,81 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* --- ecrans courts : on resserre avant de rogner sur le jeu --------------- */
+/* --- la hauteur est toujours courte en paysage ---------------------------- */
 
-@media (max-height: 760px) {
-  .app {
-    gap: 0.375rem;
-  }
-
-  #ennemis {
-    padding-bottom: 0.5rem;
-  }
-
-  .cartes {
-    padding-top: 1.125rem;
-  }
-
-  .journal {
-    display: none;
-  }
+/* Plus de paliers portrait/paysage : le jeu n'existe qu'en paysage, donc la
+   compaction n'est plus une exception, c'est la regle. */
+.app {
+  gap: 0.25rem;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 
-/* Tres petit ecran (vieux telephone, ou navigateur qui mange 200 px de
-   chrome). On rogne sur le decor et la taille des cartes, jamais sur les
-   cibles tactiles : mieux vaut une carte plus petite qu'un combat qui oblige
-   a scroller pour jouer. */
-@media (max-height: 620px) {
-  .app {
-    gap: 0.25rem;
-  }
-
-  .entete {
-    margin-bottom: -0.125rem;
-  }
-
-  #ennemis {
-    min-height: 0;
-    padding: 0 0 0.25rem;
-  }
-
-  .chair {
-    height: 4.25rem;
-  }
-
-  .carte {
-    --large: min(7.25rem, 42%);
-  }
-
-  .cartes {
-    padding-top: 0.75rem;
-  }
-
-  .encombrement {
-    line-height: 1.25;
-  }
+/* L'entete est de la plomberie : elle ne doit pas manger l'ecran de jeu. */
+.entete {
+  margin-bottom: -0.125rem;
 }
 
-/* --- le telephone couche : deux colonnes ---------------------------------- */
-
-/* En paysage la hauteur tombe a 340-390 px. Aucun resserrement vertical ne
-   sauve une colonne unique : il faut se servir de la largeur, qui elle est
-   abondante. La main prend la GAUCHE, la scene la droite. Le garde-fou
-   `max-height` evite d'attraper un ecran de PC, qui est aussi en paysage mais
-   n'a aucun probleme de place. */
-@media (orientation: landscape) and (max-height: 540px) {
-  .app {
-    display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-    align-content: start;
-    column-gap: 0.75rem;
-    row-gap: 0.3125rem;
-    max-width: none;
-    padding: max(0.375rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right))
-      max(0.5rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
-  }
-
-  .entete {
-    grid-column: 1 / -1;
-    grid-row: 1;
-  }
-
-  /* La scene occupe toute la colonne gauche, sur la hauteur du reste.
-     Le compte de `span` doit suivre le nombre d'elements de la colonne
-     droite : joueur, energie, cartes, fin de tour, encombrement, issue.
-     Piege a ne pas repeter -- `grid-row: 2 / -1` ne marche PAS ici : sans
-     grille explicite, `-1` designe la derniere ligne EXPLICITE, c'est-a-dire
-     la ligne 1. La scene atterrissait en rangee 1 et chassait l'en-tete. */
-  #ennemis {
-    grid-column: 2;
-    grid-row: 2 / span 6;
-    align-self: stretch;
-    min-height: 0;
-    padding: 0.25rem 0 0.75rem;
-    /* Pas de cadre ici non plus : les betes occupent la colonne, elles n'y
-       sont pas enfermees. */
-  }
-
-  #joueur,
-  #energie,
-  #cartes,
-  #finTour,
-  #encombrement,
-  #issue {
-    grid-column: 1;
-  }
-
-  .chair {
-    height: 4.5rem;
-  }
-
-  .carte {
-    --large: min(5.5rem, 38%);
-  }
-
-  .cartes {
-    padding-top: 0.625rem;
-  }
-
-  .journal {
-    display: none;
-  }
+.build {
+  font-size: 0.5625rem;
 }
 
-/* Petit telephone couche (SE et assimiles) : ~320 px de haut. On rogne encore
-   sur la carte, jamais sur les cibles tactiles. */
-@media (orientation: landscape) and (max-height: 370px) {
-  .app {
-    row-gap: 0.1875rem;
-  }
-
-  .build {
-    font-size: 0.625rem;
-  }
-
-  .chair {
-    height: 3.75rem;
-  }
-
-  .carte {
-    --large: min(4.75rem, 34%);
-  }
-
-  .cartes {
-    padding-top: 0.5rem;
-  }
+.reglages {
+  min-height: 1.5rem;
+  font-size: 0.5625rem;
 }
 
-/* --- les arches de visee --------------------------------------------------- */
-
-/* Une nappe posee par-dessus tout le jeu, en coordonnees d'ecran. Sans
-   viewBox, une unite SVG vaut un pixel : on peut y jeter directement les
-   `getBoundingClientRect` des elements. */
-.visees {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 30;
-  pointer-events: none;
-  overflow: visible;
+/* La rangee du bas s'aligne sur la plus haute de ses pieces, pas plus. */
+.rangee-tour {
+  align-items: center;
 }
 
-.arche {
-  fill: none;
-  stroke: var(--joueur);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-dasharray: 5 7;
-  opacity: 0.75;
-  filter: drop-shadow(0 0 4px #5cc8ff66);
-  animation: filante 0.75s linear infinite;
+.tas-jeu {
+  width: 2.75rem;
 }
 
-.arche.depart,
-.arche.pointe {
-  fill: var(--joueur);
-  stroke: none;
-  animation: none;
+.pile-cartes {
+  width: 1.5rem;
+  height: 2rem;
 }
 
-/* La carte acheve ce corps : le trait devient blanc et plein. C'est
-   l'arbitrage central du multi-cibles, il merite de se voir de loin. */
-.arche.achevable {
-  stroke: #fff;
-  stroke-dasharray: 9 5;
-  opacity: 0.95;
-  filter: drop-shadow(0 0 6px #ffffff8c);
+.energie {
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
-.arche.achevable.depart,
-.arche.achevable.pointe {
-  fill: #fff;
+.energie .chiffre {
+  font-size: 0.9375rem;
 }
 
-@keyframes filante {
-  to {
-    stroke-dashoffset: -12;
-  }
+#ennemis {
+  min-height: 0;
+  padding: 0.125rem 0 0.5rem;
+  gap: 0.375rem;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .arche {
-    animation: none;
-  }
+/* Le joueur ouvre la scene, un ecart le separe de ceux d'en face : ils se
+   font face, ils ne sont pas alignes dans la meme file. */
+.creature.moi {
+  margin-right: 1.25rem;
+}
+
+.creature.moi .jauge .remplissage {
+  background: linear-gradient(180deg, #9fd8ff, #3f86b8);
+}
+
+/* Rien ne le menace ce tour-ci : l'intention s'eteint sans disparaitre, pour
+   que la place ne bouge pas. */
+.intention.calme {
+  border-color: #33333f;
+  color: #55555f;
+}
+
+.cartes {
+  padding-top: 1rem;
+}
+
+.journal {
+  display: none;
 }
 
 /* --- les paliers : recompense, sortie, fin --------------------------------- */
@@ -2093,4 +1984,238 @@ body {
   .nom-tas {
     display: none;
   }
+}
+
+/* --- les arches de visee --------------------------------------------------- */
+
+/* Une nappe posee par-dessus tout le jeu, en coordonnees d'ecran. Sans
+   viewBox, une unite SVG vaut un pixel : on peut y jeter directement les
+   `getBoundingClientRect` des elements. */
+.visees {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 30;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.arche {
+  fill: none;
+  stroke: var(--joueur);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 5 7;
+  opacity: 0.75;
+  filter: drop-shadow(0 0 4px #5cc8ff66);
+  animation: filante 0.75s linear infinite;
+}
+
+.arche.depart,
+.arche.pointe {
+  fill: var(--joueur);
+  stroke: none;
+  animation: none;
+}
+
+/* La carte acheve ce corps : le trait devient blanc et plein. C'est
+   l'arbitrage central du multi-cibles, il merite de se voir de loin. */
+.arche.achevable {
+  stroke: #fff;
+  stroke-dasharray: 9 5;
+  opacity: 0.95;
+  filter: drop-shadow(0 0 6px #ffffff8c);
+}
+
+.arche.achevable.depart,
+.arche.achevable.pointe {
+  fill: #fff;
+}
+
+@keyframes filante {
+  to {
+    stroke-dashoffset: -12;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arche {
+    animation: none;
+  }
+}
+
+/* --- le jeu n'existe qu'en paysage ---------------------------------------- */
+
+/* On ne peut pas forcer l'orientation depuis une page web : le verrouillage
+   exige le plein ecran et n'existe pas sur iPhone. On demande donc, en disant
+   quoi faire si rien ne tourne -- beaucoup de gens gardent le verrouillage de
+   rotation active en permanence, et sans cette phrase ils restent bloques. */
+.tourne {
+  display: none;
+}
+
+@media (orientation: portrait) {
+  #app {
+    display: none;
+  }
+
+  .tourne {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 2rem 1.5rem;
+    text-align: center;
+  }
+
+  .tourne-icone {
+    width: 5rem;
+    height: 5rem;
+    color: var(--joueur);
+    animation: bascule 2.4s ease-in-out infinite;
+  }
+
+  .tourne-titre {
+    margin: 0;
+    font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+
+  .tourne-note {
+    margin: 0;
+    max-width: 22rem;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+}
+
+@keyframes bascule {
+  0%,
+  55%,
+  100% {
+    transform: rotate(0deg);
+  }
+  75%,
+  92% {
+    transform: rotate(-90deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tourne-icone {
+    animation: none;
+  }
+}
+
+/* L'orbe : les pastilles deviennent un liseré autour du chiffre. */
+.energie .reserve {
+  position: absolute;
+  inset: 0.1875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.0625rem;
+  flex-wrap: wrap;
+  opacity: 0.55;
+}
+
+.energie .pile {
+  width: 0.3125rem;
+  height: 0.3125rem;
+}
+
+.energie .chiffre {
+  position: relative;
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: var(--energie);
+  text-shadow: 0 1px 3px #000;
+}
+
+.energie .sur {
+  font-size: 0.625rem;
+  opacity: 0.7;
+}
+
+/* --- telephone couche : la hauteur la plus serree -------------------------- */
+
+/* Entre 320 et 430 px de haut selon l'appareil. Tout se resserre d'un cran,
+   et on rogne sur le decor avant les cibles tactiles -- regle constante. */
+@media (max-height: 430px) {
+  .app {
+    gap: 0.1875rem;
+  }
+
+  .carte {
+    --large: min(9rem, 42%, 17vh);
+  }
+
+  .chair {
+    height: min(4.5rem, 16vh);
+  }
+
+  .cartes {
+    padding-top: 0.75rem;
+  }
+
+  /* Le compte suffit : le nom du tas est du luxe a cette hauteur. */
+  .nom-tas {
+    display: none;
+  }
+
+  .build {
+    font-size: 0.5rem;
+  }
+
+  .encombrement {
+    font-size: 0.5625rem;
+    line-height: 1.2;
+  }
+
+  .intention {
+    padding: 0 0.3125rem;
+    font-size: 0.6875rem;
+  }
+
+  .creature .nom {
+    font-size: 0.6875rem;
+  }
+}
+
+/* Les plus petits telephones couches (SE et assimiles, ~320 px de haut). */
+@media (max-height: 360px) {
+  .app {
+    gap: 0.125rem;
+    padding-top: 0.25rem;
+    padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+  }
+
+  .carte {
+    --large: min(9rem, 42%, 15.5vh);
+  }
+
+  .chair {
+    height: min(4.5rem, 14.5vh);
+  }
+
+  .cartes {
+    padding-top: 0.5rem;
+  }
+}
+
+/* Le badge du joueur dit ce qu'il va ENCAISSER, pas ce qu'il va infliger :
+   meme place que les intentions d'en face, mais un signe moins et pas la
+   croix de frappe, sinon on lit "il va taper 6". */
+.intention.encaisse-a-venir {
+  border-color: var(--ennemi);
+  background: #3a1d1d;
+  color: var(--ennemi);
+  font-weight: 700;
 }

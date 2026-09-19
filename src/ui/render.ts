@@ -20,16 +20,6 @@ import { creature, dessin, sceau } from './illustrations.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
 
-/** Le joueur garde un sigil : il n'est pas sur la scène, il est la barre. */
-function sigilJoueur(): string {
-  return (
-    `<svg class="sigil" viewBox="0 0 24 24" aria-hidden="true">` +
-    `<path d="M12 3.5l8 4v5c0 4.2-3.3 7.8-8 9.5-4.7-1.7-8-5.3-8-9.5v-5z" ` +
-    `fill="none" stroke="currentColor" stroke-width="1.6" ` +
-    `stroke-linejoin="round" stroke-linecap="round"/></svg>`
-  )
-}
-
 /**
  * Quelle silhouette, et quelle teinte, pour chaque nom d'ennemi. Trois espèces
  * suffisent : ce qu'on veut, c'est distinguer les corps d'un coup d'oeil, pas
@@ -48,7 +38,6 @@ export type View = {
   root: HTMLElement
   seed: HTMLElement
   ennemis: HTMLElement
-  joueur: HTMLElement
   energie: HTMLElement
   cartes: HTMLElement
   encombrement: HTMLElement
@@ -73,15 +62,15 @@ export function mount(root: HTMLElement, buildTime: string): View {
 
       <svg id="visees" class="visees" aria-hidden="true"></svg>
 
-      <div id="ennemis" class="rangs"></div>
-      <div id="joueur" class="rangs"></div>
-      <p id="energie" class="energie"></p>
+      <!-- La scène : le joueur et les ennemis, face à face, sur le même sol. -->
+      <div id="ennemis" class="rangs scene"></div>
 
       <div id="cartes" class="cartes"></div>
 
       <!-- Pioche et défausse flanquent le bouton plutôt que la main : les
            mettre autour de la main rétrécirait les cartes d'un cinquième. -->
       <div class="rangee-tour">
+        <div id="energie" class="orbe energie"></div>
         <div id="pioche" class="tas-jeu"></div>
         <button id="finTour" class="rang bouton finTour" type="button" data-action="finTour"></button>
         <div id="defausse" class="tas-jeu"></div>
@@ -116,7 +105,6 @@ export function mount(root: HTMLElement, buildTime: string): View {
     root,
     seed: root.querySelector<HTMLElement>('#seed')!,
     ennemis: root.querySelector<HTMLElement>('#ennemis')!,
-    joueur: root.querySelector<HTMLElement>('#joueur')!,
     energie: root.querySelector<HTMLElement>('#energie')!,
     cartes: root.querySelector<HTMLElement>('#cartes')!,
     encombrement: root.querySelector<HTMLElement>('#encombrement')!,
@@ -165,12 +153,13 @@ export function render(
   view.seed.textContent = String(seed)
   // Les mourants gardent leur place dans le rang : on parcourt tous les corps
   // plutôt que les seuls vivants, pour qu'aucun ne glisse pendant l'agonie.
-  view.ennemis.innerHTML = etat.ennemis
+  view.ennemis.innerHTML =
+    corpsJoueur(etat, visee, fini) +
+    etat.ennemis
     .map((ennemi, index) => ({ ennemi, index, agonie: agonie.find((a) => a.index === index) }))
     .filter(({ ennemi, agonie: a }) => ennemi.pv > 0 || a !== undefined)
     .map(({ ennemi, index, agonie: a }) => corpsEnnemi(etat, ennemi, index, visee, fini, a))
     .join('')
-  view.joueur.innerHTML = ligneJoueur(etat, visee, fini)
   view.energie.innerHTML = fini ? '' : energie(etat, visee)
 
   // Les boutons de main sont reconstruits : l'écoute est déléguée à la racine.
@@ -240,19 +229,30 @@ function corpsEnnemi(
   )
 }
 
-/** Le joueur, avec ce qu'il encaissera à la fin du tour s'il en reste là. */
-function ligneJoueur(etat: EtatCombat, visee: Carte | null, fini: boolean): string {
+/**
+ * Le joueur sur la scène, comme un combattant parmi les autres : son corps,
+ * sa jauge, et au-dessus de sa tête ce qu'il encaissera à la fin du tour —
+ * exactement où les ennemis affichent leur intention.
+ *
+ * C'était une barre posée au-dessus de la main. Une barre ne raconte pas un
+ * affrontement ; un corps qui fait face, si.
+ */
+function corpsJoueur(etat: EtatCombat, visee: Carte | null, fini: boolean): string {
   const menace = menaceDuTour(etat)
-  const marque = fini || menace === 0 ? '' : `−${menace}`
+  const marque =
+    fini || menace === 0
+      ? '<span class="intention calme">—</span>'
+      : `<span class="intention encaisse-a-venir">−${menace}</span>`
 
   return (
-    `<div class="rang" data-corps="joueur">` +
-    `<span class="ordinal">${sigilJoueur()}</span>` +
-    `<span class="nom">TOI</span>` +
+    `<div class="creature moi" data-corps="joueur">` +
+    marque +
+    `<span class="chair" style="--teinte:#7fb6d9">` +
+    `${creature('joueur', 'moi')}<span class="socle"></span></span>` +
     jauge(etat.pv, etat.pvMax) +
-    `<span class="pv">${etat.pv}</span>` +
-    `<span class="coup imminent">${marque}</span>` +
-    (visee === null || fini ? '' : `<span class="effet">fin de tour</span>`) +
+    `<span class="plaquette"><span class="nom">TOI</span>` +
+    `<span class="pv">${etat.pv}</span></span>` +
+    (visee === null || fini ? '' : '') +
     `</div>`
   )
 }
@@ -271,7 +271,11 @@ function energie(etat: EtatCombat, visee: Carte | null): string {
     return `<span class="pile"></span>`
   }).join('')
 
-  return `${pastilles} <span class="chiffre">${etat.energie}/${etat.energieMax}</span>`
+  // L'orbe porte le chiffre ; les pastilles font son liseré.
+  return (
+    `<span class="reserve">${pastilles}</span>` +
+    `<span class="chiffre">${etat.energie}<span class="sur">/${etat.energieMax}</span></span>`
+  )
 }
 
 /**
