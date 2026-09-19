@@ -7,9 +7,11 @@
 
    L'echelle suit la plus contraignante des deux dimensions. La largeur seule
    ne suffit pas : sur un portable large mais peu haut, des cartes calibrees
-   sur la largeur passeraient sous le bord de l'ecran. */
+   sur la largeur passeraient sous le bord de l'ecran. Le coefficient de
+   hauteur est cale sur le 1366x768, le format le plus serre -- le rebaisser
+   est la premiere chose a faire si la page grandit encore. */
 html {
-  font-size: clamp(16px, min(0.6vw + 13.4px, 2.4vh), 24px);
+  font-size: clamp(16px, min(0.6vw + 13.4px, 2vh), 24px);
 }
 
 :root {
@@ -60,6 +62,198 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+/* --- la scene : les ennemis se tiennent la -------------------------------- */
+
+/* Cote a cote plutot qu'empiles : trois corps prennent moins de hauteur en
+   rang qu'en pile, et on lit enfin un groupe au lieu d'une liste. */
+#ennemis {
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 9.5rem;
+  padding: 0.25rem 0 0.75rem;
+  /* Le sol : une lueur au fond de la salle, et une ligne d'horizon. */
+  /* Une salle : la lueur au fond, le sol qui remonte, et un filet de lumiere
+     sur la ligne d'horizon pour que les betes se detachent dessus. */
+  background:
+    radial-gradient(52% 40% at 50% 96%, #6b6b8033, transparent 72%),
+    linear-gradient(180deg, transparent 54%, #ffffff0a 62%, #00000055 100%),
+    linear-gradient(180deg, #0f0f16 0%, #14141c 100%);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 1px #ffffff0a, inset 0 2px 14px #00000080;
+}
+
+.creature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1875rem;
+  position: relative;
+  flex: 0 1 8.5rem;
+  min-width: 0;
+  padding: 0.25rem 0.25rem 0.375rem;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+
+/* La chair : la silhouette et l'ombre au sol. */
+.chair {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  height: 5.5rem;
+  color: var(--teinte, #9a7a62);
+}
+
+/* Elles respirent. C'est le detail qui separe une bete d'une vignette : sans
+   lui, la scene est une illustration ; avec, quelque chose t'attend. */
+.silhouette {
+  width: auto;
+  height: 100%;
+  transform-origin: 50% 100%;
+  animation: souffle 3.4s ease-in-out infinite;
+  /* Un liseré clair sur le bord superieur : la lumiere vient d'en haut, comme
+     sur les cartes. Puis l'ombre portee, qui pose la bete sur le sol. */
+  filter:
+    drop-shadow(0 -1.5px 0 color-mix(in srgb, var(--teinte, #999) 55%, #fff))
+    drop-shadow(0 0.35rem 0.4rem #000000a8);
+}
+
+@keyframes souffle {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.028, 1.035);
+  }
+}
+
+/* Decalees : une meute qui respire a l'unisson fait machine, pas vivant. */
+#ennemis .creature:nth-child(2) .silhouette {
+  animation-delay: -1.15s;
+  animation-duration: 3.9s;
+}
+
+#ennemis .creature:nth-child(3) .silhouette {
+  animation-delay: -2.4s;
+  animation-duration: 3.1s;
+}
+
+/* L'oeil : le seul point lumineux. C'est lui qui fait la difference entre une
+   masse sombre et une bete qui te regarde. */
+.oeil {
+  fill: #ffd479;
+  filter: drop-shadow(0 0 3px #ffb347);
+}
+
+.socle {
+  position: absolute;
+  bottom: -0.125rem;
+  left: 50%;
+  width: 72%;
+  height: 0.5rem;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #000000a0, transparent);
+}
+
+/* L'intention, au-dessus de la tete. */
+.intention {
+  display: flex;
+  align-items: baseline;
+  gap: 0.125rem;
+  padding: 0.0625rem 0.4375rem;
+  border: 1px solid #4a2b2b;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: #8a5454;
+}
+
+/* Il frappe a la fin de CE tour : l'intention s'allume. */
+.intention.imminent {
+  border-color: var(--ennemi);
+  background: #3a1d1d;
+  color: var(--ennemi);
+  font-weight: 700;
+  box-shadow: 0 0 0.5rem #ff6b6b40;
+}
+
+.creature .jauge {
+  flex: none;
+  width: 100%;
+  height: 0.375rem;
+  border-radius: 999px;
+  background: #0a0a10;
+  box-shadow: inset 0 1px 2px #000, 0 0 0 1px #ffffff0f;
+}
+
+.creature .remplissage {
+  background: linear-gradient(180deg, #ff9090, #c4353f);
+  box-shadow: inset 0 1px 0 #ffffff40;
+}
+
+.plaquette {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3125rem;
+  max-width: 100%;
+}
+
+.creature .nom {
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.creature .pv {
+  min-width: 0;
+  font-size: 0.6875rem;
+}
+
+/* Une carte est visee : les corps deviennent touchables. */
+.creature.cible {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  border-color: #ffffff1f;
+  border-style: dashed;
+  background: #ffffff08;
+}
+
+.creature.cible.achevable {
+  border-style: solid;
+  border-color: #eef0f6;
+  background: #ffffff14;
+  box-shadow: 0 0 1rem #ffffff26;
+}
+
+.creature.cible:active {
+  transform: scale(0.98);
+}
+
+.creature .effet {
+  min-width: 0;
+  text-align: center;
+}
+
+/* Le chiffre vole au-dessus du corps touche, pas sur son cote. */
+.creature .degats-voles {
+  right: auto;
+  left: 50%;
+  top: 1.5rem;
+  margin-left: -0.75rem;
 }
 
 /* Le gabarit commun : tout tient sur une ligne, la jauge absorbe le reste.
@@ -834,6 +1028,10 @@ body {
   .degats-voles,
   .carte.visee::after {
     animation-duration: 0.01ms;
+  }
+
+  .silhouette {
+    animation: none;
   }
 
   .carte {

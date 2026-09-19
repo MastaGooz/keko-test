@@ -182,9 +182,13 @@ marché, ni carte de donjon. Ce qui tourne :
   richesse** au cadre (modeste / cossu / fastueux) : la décision de design veut
   qu'on préfère peu de gros trésors, encore faut-il voir sans lire un chiffre
   ce qu'on traîne ;
-- les combattants en tuiles : un **sigil géométrique** par corps, et une
-  **pastille d'intention** qui dit ce qu'il frappe et dans combien de tours —
-  allumée s'il frappe à la fin de ce tour-ci ;
+- les ennemis sur une **scène** : des **créatures dessinées** (SVG,
+  `ui/illustrations.ts`) qui se tiennent côte à côte sur un sol éclairé, avec
+  leur **intention au-dessus de la tête** — ce qu'elles frappent et dans
+  combien de tours, allumée si c'est pour la fin de ce tour-ci. Tout le corps
+  est la cible tactile. **Elles respirent**, décalées les unes des autres : une
+  meute qui souffle à l'unisson fait machine, pas vivant. Le joueur, lui, reste
+  une barre — il n'est pas un corps de plus à l'écran ;
 - le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
@@ -326,6 +330,11 @@ la largeur passeraient sous le bord de l'écran. Vérifié à 390x844, 1366x768,
 dans les quatre cas. **Revérifier ces quatre formats après toute modification
 de taille**, et se souvenir qu'une seule dimension ne suffit jamais à conclure.
 
+**Le format serré, c'est le 1366x768**, et c'est lui qui a fixé le coefficient
+`2vh`. L'arrivée de la scène des créatures a coûté ~120 px de hauteur et l'a
+fait déborder à `2.4vh`. Si la page grandit encore, c'est ce coefficient qu'il
+faut baisser en premier — pas la taille des cartes.
+
 ## Commandes
 
 ```bash
@@ -377,6 +386,14 @@ plutôt que filaire (`drop-shadow` de sa propre couleur), gemme et badge
 oblique qui balaie la carte au moment où on la lève. L'accent de la carte
 teinte le corps, le liseré de la fenêtre et la plaque : une Dague est froide
 jusque dans son carton, un Moulinet est chaud.
+
+**Les créatures** suivent le même vocabulaire : silhouettes **pleines**, jamais
+filaires — une masse sombre avec un œil qui brille se lit comme un corps, un
+contour se lit comme un schéma. Lumière du haut (liseré clair en filtre CSS),
+dégradé de volume du dos vers le ventre, ombre portée au sol. **Chaque
+silhouette a besoin d'un identifiant de dégradé unique** : deux SVG qui
+partagent un `id` font que le second emprunte la couleur du premier, et toute
+la meute vire à la même teinte.
 
 ## Langue
 

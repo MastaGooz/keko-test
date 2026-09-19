@@ -13,44 +13,35 @@
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
 import { butin, consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
 import { CAPACITE_SAC, valeurSac } from '../logic/cartes.ts'
-import { dessin, sceau } from './illustrations.ts'
+import { creature, dessin, sceau } from './illustrations.ts'
 
 /** Le butin transporté : ce que le sac a pris, et combien a été ramassé. */
 export type Poche = { ramasse: number; sac: Carte[] }
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
 
-/**
- * Des sigils géométriques, pas de la figuration. Sans illustrateur, un dessin
- * raté coûte plus cher en crédibilité qu'un signe assumé — et un signe suffit
- * à distinguer trois corps à l'écran, ce qu'un chiffre cerclé ne faisait pas.
- */
-const SIGILS: Record<string, string> = {
-  bouclier: 'M12 3.5 5 6.2v5.3c0 4 2.9 7 7 8.9 4.1-1.9 7-4.9 7-8.9V6.2z',
-  croc: 'M6 5h12l-2.6 9.2L12 20l-3.4-5.8z',
-  couronne: 'M4 8.5l3.6 3L12 5l4.4 6.5 3.6-3V18H4z',
-  chevron: 'M5 8.5l7 5 7-5M5 14l7 5 7-5',
-  joueur: 'M12 3.5l8 4v5c0 4.2-3.3 7.8-8 9.5-4.7-1.7-8-5.3-8-9.5v-5z',
-}
-
-/** Qui porte quel sigil. Inconnu -> chevron, le signe neutre. */
-const CORPS: Record<string, string> = {
-  Garde: 'bouclier',
-  Roquet: 'croc',
-  Cabot: 'croc',
-  Meneur: 'couronne',
-  Suiveur: 'chevron',
-  Traînard: 'chevron',
-  joueur: 'joueur',
-}
-
-function sigil(nom: string): string {
-  const trace = SIGILS[CORPS[nom] ?? 'chevron'] ?? SIGILS.chevron
+/** Le joueur garde un sigil : il n'est pas sur la scène, il est la barre. */
+function sigilJoueur(): string {
   return (
     `<svg class="sigil" viewBox="0 0 24 24" aria-hidden="true">` +
-    `<path d="${trace}" fill="none" stroke="currentColor" stroke-width="1.6" ` +
+    `<path d="M12 3.5l8 4v5c0 4.2-3.3 7.8-8 9.5-4.7-1.7-8-5.3-8-9.5v-5z" ` +
+    `fill="none" stroke="currentColor" stroke-width="1.6" ` +
     `stroke-linejoin="round" stroke-linecap="round"/></svg>`
   )
+}
+
+/**
+ * Quelle silhouette, et quelle teinte, pour chaque nom d'ennemi. Trois espèces
+ * suffisent : ce qu'on veut, c'est distinguer les corps d'un coup d'oeil, pas
+ * peupler un bestiaire.
+ */
+const ESPECES: Record<string, { espece: string; teinte: string }> = {
+  Garde: { espece: 'garde', teinte: '#8f9bb3' },
+  Roquet: { espece: 'roquet', teinte: '#b5765a' },
+  Cabot: { espece: 'roquet', teinte: '#a08055' },
+  Meneur: { espece: 'meneur', teinte: '#c2705f' },
+  Suiveur: { espece: 'roquet', teinte: '#9a7a62' },
+  'Traînard': { espece: 'roquet', teinte: '#7f8a6e' },
 }
 
 export type View = {
@@ -121,7 +112,7 @@ export function render(
 
   view.seed.textContent = String(seed)
   view.ennemis.innerHTML = vivants(etat)
-    .map(({ ennemi, index }, rang) => ligneEnnemi(etat, ennemi, index, rang, visee, fini))
+    .map(({ ennemi, index }) => corpsEnnemi(etat, ennemi, index, visee, fini))
     .join('')
   view.joueur.innerHTML = ligneJoueur(etat, visee, fini)
   view.energie.innerHTML = fini ? '' : energie(etat, visee)
@@ -146,45 +137,51 @@ export function render(
 }
 
 /**
- * Un ennemi sur une ligne : ordinal, nom, jauge, PV, et ✖N — ce qu'il frappe.
- * Vif s'il frappe à la fin de CE tour, éteint sinon : la couleur porte le
- * tempo, aucun mot n'est nécessaire.
+ * Un ennemi sur la scène : son corps, son intention au-dessus de la tête, sa
+ * jauge et son nom en dessous. Toute la créature est la cible tactile.
+ *
+ * L'intention est le seul chiffre qui compte avant de choisir : ce qu'il
+ * frappe, et dans combien de tours. Elle est vive s'il frappe à la fin de CE
+ * tour, en attente sinon — la couleur porte le tempo, aucun mot n'est requis.
  */
-function ligneEnnemi(
+function corpsEnnemi(
   etat: EtatCombat,
   ennemi: { nom: string; pv: number; pvMax: number; degats: number; compteur: number },
   index: number,
-  rang: number,
   visee: Carte | null,
   fini: boolean,
 ): string {
   const imminent = ennemi.compteur <= 1
-  // L'intention se lit en un coup d'oeil : ce qu'il frappe, et dans combien de
-  // tours. Vif s'il frappe à la fin de CE tour, en attente sinon.
+  const espece = ESPECES[ennemi.nom] ?? { espece: 'roquet', teinte: '#9a7a62' }
   const attente = imminent ? '' : `<span class="delai">${ennemi.compteur}t</span>`
-  const corps =
-    `<span class="ordinal">${sigil(ennemi.nom)}</span>` +
-    `<span class="nom">${ennemi.nom}</span>` +
-    jauge(ennemi.pv, ennemi.pvMax) +
-    `<span class="pv">${ennemi.pv}</span>` +
-    `<span class="coup${imminent ? ' imminent' : ''}">` +
-    `${GLYPHE.frappe}${ennemi.degats}${attente}</span>`
 
-  if (visee === null || fini) {
-    return `<div class="rang adverse" data-corps="${index}" data-rang="${rang}">${corps}</div>`
+  const c = visee === null || fini ? null : consequence(etat, visee, index)
+  const sort =
+    c === null
+      ? ''
+      : c.gagne
+        ? `<span class="effet gagne">★ gagne</span>`
+        : c.tue
+          ? `<span class="effet gagne">★ achève${c.evite > 0 ? ` −${c.evite}` : ''}</span>`
+          : `<span class="effet">→ ${Math.max(0, ennemi.pv - visee!.degats)}</span>`
+
+  const corps =
+    `<span class="intention${imminent ? ' imminent' : ''}">` +
+    `${GLYPHE.frappe}${ennemi.degats}${attente}</span>` +
+    `<span class="chair" style="--teinte:${espece.teinte}">` +
+    `${creature(espece.espece, String(index))}<span class="socle"></span></span>` +
+    jauge(ennemi.pv, ennemi.pvMax) +
+    `<span class="plaquette"><span class="nom">${ennemi.nom}</span>` +
+    `<span class="pv">${ennemi.pv}</span></span>` +
+    sort
+
+  if (c === null) {
+    return `<div class="creature" data-corps="${index}">${corps}</div>`
   }
 
-  const c = consequence(etat, visee, index)
-  const effet = c.gagne
-    ? `<span class="effet gagne">★ gagne</span>`
-    : c.tue
-      ? `<span class="effet gagne">★ achève${c.evite > 0 ? ` −${c.evite}` : ''}</span>`
-      : `<span class="effet">→ ${Math.max(0, ennemi.pv - visee.degats)}</span>`
-
   return (
-    `<button class="rang adverse cible${c.tue ? ' achevable' : ''}" type="button" ` +
-    `data-action="cibler" data-cible="${index}" data-corps="${index}" ` +
-    `data-rang="${rang}">${corps}${effet}</button>`
+    `<button class="creature cible${c.tue ? ' achevable' : ''}" type="button" ` +
+    `data-action="cibler" data-cible="${index}" data-corps="${index}">${corps}</button>`
   )
 }
 
@@ -195,7 +192,7 @@ function ligneJoueur(etat: EtatCombat, visee: Carte | null, fini: boolean): stri
 
   return (
     `<div class="rang" data-corps="joueur">` +
-    `<span class="ordinal">${sigil('joueur')}</span>` +
+    `<span class="ordinal">${sigilJoueur()}</span>` +
     `<span class="nom">TOI</span>` +
     jauge(etat.pv, etat.pvMax) +
     `<span class="pv">${etat.pv}</span>` +
