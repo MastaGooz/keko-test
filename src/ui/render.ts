@@ -18,7 +18,39 @@ import { CAPACITE_SAC, valeurSac } from '../logic/cartes.ts'
 export type Poche = { ramasse: number; sac: Carte[] }
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
-const ORDINAL = ['①', '②', '③', '④', '⑤']
+
+/**
+ * Des sigils géométriques, pas de la figuration. Sans illustrateur, un dessin
+ * raté coûte plus cher en crédibilité qu'un signe assumé — et un signe suffit
+ * à distinguer trois corps à l'écran, ce qu'un chiffre cerclé ne faisait pas.
+ */
+const SIGILS: Record<string, string> = {
+  bouclier: 'M12 3.5 5 6.2v5.3c0 4 2.9 7 7 8.9 4.1-1.9 7-4.9 7-8.9V6.2z',
+  croc: 'M6 5h12l-2.6 9.2L12 20l-3.4-5.8z',
+  couronne: 'M4 8.5l3.6 3L12 5l4.4 6.5 3.6-3V18H4z',
+  chevron: 'M5 8.5l7 5 7-5M5 14l7 5 7-5',
+  joueur: 'M12 3.5l8 4v5c0 4.2-3.3 7.8-8 9.5-4.7-1.7-8-5.3-8-9.5v-5z',
+}
+
+/** Qui porte quel sigil. Inconnu -> chevron, le signe neutre. */
+const CORPS: Record<string, string> = {
+  Garde: 'bouclier',
+  Roquet: 'croc',
+  Cabot: 'croc',
+  Meneur: 'couronne',
+  Suiveur: 'chevron',
+  Traînard: 'chevron',
+  joueur: 'joueur',
+}
+
+function sigil(nom: string): string {
+  const trace = SIGILS[CORPS[nom] ?? 'chevron'] ?? SIGILS.chevron
+  return (
+    `<svg class="sigil" viewBox="0 0 24 24" aria-hidden="true">` +
+    `<path d="${trace}" fill="none" stroke="currentColor" stroke-width="1.6" ` +
+    `stroke-linejoin="round" stroke-linecap="round"/></svg>`
+  )
+}
 
 export type View = {
   root: HTMLElement
@@ -126,14 +158,20 @@ function ligneEnnemi(
   fini: boolean,
 ): string {
   const imminent = ennemi.compteur <= 1
+  // L'intention se lit en un coup d'oeil : ce qu'il frappe, et dans combien de
+  // tours. Vif s'il frappe à la fin de CE tour, en attente sinon.
+  const attente = imminent ? '' : `<span class="delai">${ennemi.compteur}t</span>`
   const corps =
-    `<span class="ordinal">${ORDINAL[rang] ?? '•'}</span>` +
+    `<span class="ordinal">${sigil(ennemi.nom)}</span>` +
     `<span class="nom">${ennemi.nom}</span>` +
     jauge(ennemi.pv, ennemi.pvMax) +
     `<span class="pv">${ennemi.pv}</span>` +
-    `<span class="coup${imminent ? ' imminent' : ''}">${GLYPHE.frappe}${ennemi.degats}</span>`
+    `<span class="coup${imminent ? ' imminent' : ''}">` +
+    `${GLYPHE.frappe}${ennemi.degats}${attente}</span>`
 
-  if (visee === null || fini) return `<div class="rang adverse">${corps}</div>`
+  if (visee === null || fini) {
+    return `<div class="rang adverse" data-corps="${index}" data-rang="${rang}">${corps}</div>`
+  }
 
   const c = consequence(etat, visee, index)
   const effet = c.gagne
@@ -144,7 +182,8 @@ function ligneEnnemi(
 
   return (
     `<button class="rang adverse cible${c.tue ? ' achevable' : ''}" type="button" ` +
-    `data-action="cibler" data-cible="${index}">${corps}${effet}</button>`
+    `data-action="cibler" data-cible="${index}" data-corps="${index}" ` +
+    `data-rang="${rang}">${corps}${effet}</button>`
   )
 }
 
@@ -154,8 +193,8 @@ function ligneJoueur(etat: EtatCombat, visee: Carte | null, fini: boolean): stri
   const marque = fini || menace === 0 ? '' : `−${menace}`
 
   return (
-    `<div class="rang">` +
-    `<span class="ordinal">▲</span>` +
+    `<div class="rang" data-corps="joueur">` +
+    `<span class="ordinal">${sigil('joueur')}</span>` +
     `<span class="nom">TOI</span>` +
     jauge(etat.pv, etat.pvMax) +
     `<span class="pv">${etat.pv}</span>` +
@@ -212,8 +251,10 @@ function ligneCarte(
   const action = !abordable ? '' : vise && debout.length === 1 ? 'cibler' : vise ? 'annuler' : 'viser'
   const donnee = action === 'cibler' ? `data-cible="${debout[0]!.index}"` : `data-index="${index}"`
 
+  // Le coût porte la couleur : le petit coup est froid, le gros est chaud. On
+  // lit le poids d'une carte avant d'avoir lu son chiffre.
   return (
-    `<button class="${classes.join(' ')}" type="button" ` +
+    `<button class="${classes.join(' ')}" type="button" data-cout="${carte.cout}" ` +
     `data-action="${action}" ${donnee}${fini || !abordable ? ' disabled' : ''}>` +
     `<span class="entete">` +
     `<span class="cout">${carte.cout}${GLYPHE.energie}</span>` +

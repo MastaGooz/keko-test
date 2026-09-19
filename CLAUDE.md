@@ -176,8 +176,13 @@ marché, ni carte de donjon. Ce qui tourne :
 - les **trésors en cartes dorées et pleines**, marquées MORTE — jamais grisées :
   l'appât et le poids sont le même objet, et une carte fantôme se laisserait
   oublier ;
-- les combattants en lignes compressées, le détail uniquement sur ce qui est
-  visé ;
+- les combattants en tuiles : un **sigil géométrique** par corps, et une
+  **pastille d'intention** qui dit ce qu'il frappe et dans combien de tours —
+  allumée s'il frappe à la fin de ce tour-ci ;
+- le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
+  d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
+  décoratif, supprimable sans rien casser) ;
+- le détail chiffré uniquement sur ce qui est visé ;
 - trois groupes d'ennemis calibrés par simulation ;
 - `npm run verif` : 19 vérifications des règles, sans navigateur.
 
@@ -312,6 +317,17 @@ sur la page** pour être sûr qu'il ne voit pas une version en cache.
 On avance **étape par étape**. À chaque étape : dire à Keko ce qui a été fait, et
 **commiter quand ça marche**. Ne pas écrire de code tant qu'une décision de
 design en attente n'est pas tranchée par Keko.
+
+**Ce que Keko doit juger doit être présentable.** Sa règle, et elle est vérifiée
+dans ce dépôt : *« tester avec un truc un minimum visuellement agréable aide
+beaucoup »*. Le mécanisme des trésors a reçu deux « chiant » sur une interface
+en lignes de texte, puis « ça va » une fois la main dessinée en cartes — pour un
+mécanisme identique. Une sensation ne se teste pas sur un tableur.
+
+Ça ne veut pas dire polir : pas d'illustrations, pas d'assets, pas de son, pas
+de fine tuning. Du CSS et du SVG écrits à la main, et seulement sur ce qui est
+soumis au jugement. C'est peu risqué tant que `logic/` reste pur : tout
+l'habillage vit dans `ui/` et se jette sans rien casser.
 
 ## Langue
 

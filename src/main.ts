@@ -14,6 +14,7 @@ import { GROUPES, butinRamasse, deckAvecTresors } from './logic/cartes.ts'
 import type { Poche } from './ui/render.ts'
 import { mount, render } from './ui/render.ts'
 import { bindInput } from './ui/input.ts'
+import { encaisse, tombe } from './ui/effets.ts'
 import { verifierVersion } from './ui/version.ts'
 
 const root = document.querySelector<HTMLDivElement>('#app')!
@@ -46,6 +47,10 @@ function demarrer(nouvelleSeed: number): void {
 }
 
 bindInput(view, (action) => {
+  // Les marques visuelles se posent APRÈS le rendu : le DOM qu'elles visent
+  // n'existe pas avant. Elles ne changent jamais l'état, juste l'affichage.
+  const marques: (() => void)[] = []
+
   switch (action.type) {
     case 'viser':
       selection = action.index
@@ -53,14 +58,26 @@ bindInput(view, (action) => {
     case 'annuler':
       selection = null
       break
-    case 'cibler':
-      if (selection !== null) etat = jouerCarte(etat, selection, action.cible)
+    case 'cibler': {
+      if (selection !== null) {
+        const debout = etat.ennemis[action.cible]?.pv ?? 0
+        etat = jouerCarte(etat, selection, action.cible)
+        const reste = etat.ennemis[action.cible]?.pv ?? 0
+        const inflige = debout - reste
+        if (inflige > 0) marques.push(() => encaisse(view, action.cible, inflige))
+        if (debout > 0 && reste <= 0) marques.push(() => tombe(view))
+      }
       selection = null
       break
-    case 'finTour':
+    }
+    case 'finTour': {
+      const avant = etat.pv
       etat = finDuTour(etat, rng)
+      const encaisse_ = avant - etat.pv
+      if (encaisse_ > 0) marques.push(() => encaisse(view, 'joueur', encaisse_))
       selection = null
       break
+    }
     case 'rejouer':
       return demarrer(seed)
     case 'cupidite':
@@ -71,6 +88,7 @@ bindInput(view, (action) => {
       return demarrer(Date.now() % 100000)
   }
   render(view, etat, seed, selection, poche)
+  for (const marque of marques) marque()
 })
 
 demarrer(Date.now() % 100000)
