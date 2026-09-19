@@ -1799,3 +1799,46 @@ body {
 .pile-deck.creuse .tas {
   display: none;
 }
+
+/* Le fond du donjon : un contenant, pas un bouton qui detruit. Ce qu'on y
+   jette reste visible et se repeche -- c'est perdu seulement en terminant. */
+.pile-fond {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  min-height: 4.5rem;
+  padding: 0.5rem 0.625rem;
+  border: 1px dashed var(--trait);
+  border-radius: 10px;
+  background: #00000055;
+  color: var(--muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pile-fond .etiquette-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  flex: none;
+  color: var(--muted);
+}
+
+.pile-fond .poids {
+  text-align: left;
+  font-family: system-ui, sans-serif;
+  font-weight: 400;
+}
+
+/* Abandonne mais pas encore perdu : eteint, sans etre invisible. */
+.pile-fond .tas .piece {
+  opacity: 0.55;
+  filter: grayscale(0.4);
+}
+
+.pile-fond.creuse .tas {
+  display: none;
+}

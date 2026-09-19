@@ -231,11 +231,18 @@ donjon. Ce qui tourne :
 - **le palier en deux écrans** : d'abord **une amélioration à choisir parmi
   trois** (valable pour cette descente seulement), puis **le rangement du
   butin** ;
-- **le rangement du butin est un inventaire à trois contenants**, tous reliés
-  dans les deux sens : l'**emplacement de loot**, les **cases du sac**, et la
-  **pile du deck** — les trésors qu'on porte et qui pèsent à chaque main. On
-  consulte la pile, on en reprend n'importe quel élément, on repose ailleurs.
-  Déposer sur une case occupée **échange**.
+- **le rangement du butin est un inventaire à quatre contenants**, tous reliés
+  dans les deux sens : l'**emplacement de loot**, les **cases du sac**, la
+  **pile du deck** (ce qu'on porte et qui pèse à chaque main) et **le fond du
+  donjon** (ce qu'on abandonne). On consulte chaque pile, on en reprend
+  n'importe quel élément, on repose ailleurs. Déposer sur une case occupée
+  **échange**.
+- **Une seule chose s'engage dans cet écran : le bouton Terminer.** Le fond est
+  un contenant et pas un bouton qui détruit — ce qu'on y jette y reste visible
+  et se repêche. Keko a signalé l'incohérence : l'abandon était la seule action
+  irréversible d'un écran qui promet l'inverse, une tape suffisait à effacer une
+  Couronne sans confirmation ni retour. **Si on ajoute une action à cet écran,
+  elle doit être réversible jusqu'à Terminer.**
 - **Le modèle est un `Lieu`, pas une liste de gestes.** Tout déplacement est
   « prendre ici, poser là », et l'échange n'est pas un cas particulier : ce que
   la destination délogeait repart à la place qu'on vient de libérer. Sans ça,

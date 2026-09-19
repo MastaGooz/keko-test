@@ -100,7 +100,10 @@ export const CHOIX_PAR_PALIER = 3
  * Trois contenants, tous reliés dans les deux sens : l'**emplacement de loot**
  * (une case comme une autre, pas « ce qu'on tient »), les **cases du sac**, et
  * la **pile du deck** — les trésors qu'on porte et qui pèsent à chaque main.
- * `laisser` n'est pas un contenant : c'est le fond du donjon.
+ * Le **fond du donjon** en est un aussi, et c'est délibéré : ce qu'on y jette
+ * y reste visible et récupérable **jusqu'à `terminerButin`**. Une seule chose
+ * s'engage dans cet écran, et c'est le bouton Terminer — un abandon qui
+ * détruirait sur-le-champ serait la seule exception, donc un piège.
  *
  * Modéliser un lieu plutôt qu'une liste de gestes évite d'empiler les cas
  * particuliers : tout déplacement est « prendre ici, poser là », et l'échange
@@ -110,7 +113,7 @@ export type Lieu =
   | { ou: 'loot' }
   | { ou: 'sac'; emplacement: number }
   | { ou: 'deck'; id?: string }
-  | { ou: 'laisser' }
+  | { ou: 'fond'; id?: string }
 
 export type Phase =
   | { type: 'combat' }
@@ -120,7 +123,7 @@ export type Phase =
    * Puis le rangement du butin. `loot` est l'emplacement d'arrivée : tant
    * qu'il n'est pas vide, on ne peut pas terminer.
    */
-  | { type: 'butin'; loot: Carte | null }
+  | { type: 'butin'; loot: Carte | null; fond: Carte[] }
   | { type: 'sortie' }
   | { type: 'fin'; issue: 'extrait' | 'mort' }
 
@@ -234,12 +237,12 @@ export function choisirCarte(descente: Descente, index: number, rng: Rng): Desce
   return {
     ...descente,
     deck: [...descente.deck, carte],
-    phase: { type: 'butin', loot: tresorRecompense(descente.profondeur, rng, cle) },
+    phase: { type: 'butin', loot: tresorRecompense(descente.profondeur, rng, cle), fond: [] },
   }
 }
 
 /** L'étal du rangement : les trois contenants, le temps d'un déplacement. */
-type Etal = { deck: Carte[]; sac: (Carte | null)[]; loot: Carte | null }
+type Etal = { deck: Carte[]; sac: (Carte | null)[]; loot: Carte | null; fond: Carte[] }
 
 /** Retire le trésor qui se trouve à ce lieu, et laisse la place vide. */
 function prendre(etal: Etal, lieu: Lieu): { carte: Carte | null; etal: Etal } {
@@ -261,7 +264,11 @@ function prendre(etal: Etal, lieu: Lieu): { carte: Carte | null; etal: Etal } {
     return { carte: carte ?? null, etal: { ...etal, deck } }
   }
 
-  return { carte: null, etal }
+  const i = etal.fond.findIndex((c) => c.id === lieu.id)
+  if (i < 0) return { carte: null, etal }
+  const fond = [...etal.fond]
+  const [carte] = fond.splice(i, 1)
+  return { carte: carte ?? null, etal: { ...etal, fond } }
 }
 
 /** Pose le trésor à ce lieu, et renvoie celui qu'il en délogeait. */
@@ -279,8 +286,8 @@ function poser(etal: Etal, lieu: Lieu, carte: Carte): { sortant: Carte | null; e
   // La pile du deck n'a pas de places : on pose dessus.
   if (lieu.ou === 'deck') return { sortant: null, etal: { ...etal, deck: [...etal.deck, carte] } }
 
-  // Laissé au fond : la carte disparaît, rien ne la remplace.
-  return { sortant: null, etal }
+  // Jeté au fond : encore récupérable, jusqu'à ce qu'on termine.
+  return { sortant: null, etal: { ...etal, fond: [...etal.fond, carte] } }
 }
 
 /**
@@ -293,19 +300,31 @@ function poser(etal: Etal, lieu: Lieu, carte: Carte): { sortant: Carte | null; e
  */
 export function deplacerTresor(descente: Descente, source: Lieu, cible: Lieu): Descente {
   if (descente.phase.type !== 'butin') return descente
-  if (source.ou === 'laisser') return descente
 
-  const depart: Etal = { deck: descente.deck, sac: descente.sac, loot: descente.phase.loot }
+  const depart: Etal = {
+    deck: descente.deck,
+    sac: descente.sac,
+    loot: descente.phase.loot,
+    fond: descente.phase.fond,
+  }
   const { carte, etal: vide } = prendre(depart, source)
   if (carte === null) return descente
 
   const { sortant, etal: pose } = poser(vide, cible, carte)
   const final = sortant === null ? pose : poser(pose, source, sortant).etal
 
-  return { ...descente, deck: final.deck, sac: final.sac, phase: { type: 'butin', loot: final.loot } }
+  return {
+    ...descente,
+    deck: final.deck,
+    sac: final.sac,
+    phase: { type: 'butin', loot: final.loot, fond: final.fond },
+  }
 }
 
-/** Referme le palier. Impossible tant que l'emplacement de loot est occupé. */
+/**
+ * Referme le palier. Impossible tant que l'emplacement de loot est occupé —
+ * et c'est ici, et seulement ici, que ce qui traîne au fond est perdu.
+ */
 export function terminerButin(descente: Descente): Descente {
   if (descente.phase.type !== 'butin' || descente.phase.loot !== null) return descente
   return { ...descente, phase: apresChoix(descente) }

@@ -91,7 +91,7 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
 {
   const rng = createRng(3)
   const apres = jusquAuChoix(commencerDescente(rng, REGLAGE), rng, 40)
-  const range = deplacerTresor(choisirCarte(apres, 0, rng), { ou: 'loot' }, { ou: 'laisser' })
+  const range = deplacerTresor(choisirCarte(apres, 0, rng), { ou: 'loot' }, { ou: 'fond' })
   const descendue = descendre(terminerButin(range), rng)
   verifier(
     'on descend avec les PV qu\'il reste, pas avec la barre pleine',
@@ -122,7 +122,7 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
     enCours.phase.type === 'butin' && enCours.phase.loot === avant)
   verifier('on ne peut pas terminer en tenant encore un trésor', terminerButin(enCours) === enCours)
 
-  const refermé = terminerButin(deplacerTresor(enCours, { ou: 'loot' }, { ou: 'laisser' }))
+  const refermé = terminerButin(deplacerTresor(enCours, { ou: 'loot' }, { ou: 'fond' }))
   verifier('une fois la main vide, le palier se referme', refermé.phase.type !== 'butin')
   verifier("et l'échangé n'est pas tombé dans le deck", tresorsAuDeck(refermé) === 0)
 
@@ -137,7 +137,7 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
 
   // Le sac positionnel : sortir un trésor laisse SA case ouverte.
   const sorti = deplacerTresor(jusquAuButin(d, rng), { ou: 'loot' }, { ou: 'sac', emplacement: 1 })
-  const vide = deplacerTresor(sorti, { ou: 'loot' }, { ou: 'laisser' })
+  const vide = deplacerTresor(sorti, { ou: 'loot' }, { ou: 'fond' })
   const remis = deplacerTresor(
     deplacerTresor(vide, { ou: 'sac', emplacement: 0 }, { ou: 'sac', emplacement: 1 }),
     { ou: 'sac', emplacement: 1 },
@@ -179,8 +179,20 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
       rangeAilleurs.phase.type === 'butin' &&
       rangeAilleurs.phase.loot === loot)
 
-  verifier("on ne déplace rien depuis le fond du donjon",
-    deplacerTresor(d, { ou: 'laisser' }, { ou: 'loot' }) === d)
+  // Le fond est un contenant : ce qu'on y jette se reprend jusqu'à Terminer.
+  const jete = deplacerTresor(d, { ou: 'loot' }, { ou: 'fond' })
+  verifier("jeter au fond vide l'emplacement de loot",
+    jete.phase.type === 'butin' && jete.phase.loot === null && jete.phase.fond.length === 1)
+  verifier('mais le trésor y reste visible, pas encore perdu',
+    jete.phase.type === 'butin' && jete.phase.fond[0] === loot)
+
+  const repeche = deplacerTresor(jete, { ou: 'fond', id: loot!.id }, { ou: 'sac', emplacement: 0 })
+  verifier('on peut le repêcher du fond vers le sac',
+    repeche.sac[0] === loot && repeche.phase.type === 'butin' && repeche.phase.fond.length === 0)
+
+  const perdu = terminerButin(jete)
+  verifier("c'est en terminant qu'il est perdu, et seulement là",
+    perdu.phase.type !== 'butin' && butinTransporte(perdu) === 0)
   verifier('une case vide ne donne rien à déplacer',
     deplacerTresor(d, { ou: 'sac', emplacement: 2 }, { ou: 'loot' }) === d)
 }
@@ -191,7 +203,7 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   verifier('un palier donne une amélioration ET un trésor', dedans.deck.length === 11 && tresorsAuSac(dedans) === 1)
   verifier('le trésor rangé compte dans le butin', butinTransporte(dedans) > 0)
 
-  const laisse = palier(commencerDescente(rng, REGLAGE), { ou: 'laisser' }, rng)
+  const laisse = palier(commencerDescente(rng, REGLAGE), { ou: 'fond' }, rng)
   verifier("laisser le trésor garde quand même l'amélioration", laisse.deck.length === 11 && tresorsAuSac(laisse) === 0)
   verifier('un trésor laissé est perdu, pas reporté', butinTransporte(laisse) === 0)
   verifier('et on va quand même au point de sortie', laisse.phase.type === 'sortie')
@@ -216,7 +228,7 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   const rng = createRng(19)
   let d = commencerDescente(rng, REGLAGE)
   for (let i = 1; i < REGLAGE.profondeurMax; i += 1) {
-    d = descendre(palier(d, { ou: 'laisser' }, rng), rng)
+    d = descendre(palier(d, { ou: 'fond' }, rng), rng)
   }
   verifier('on atteint le dernier palier', d.profondeur === REGLAGE.profondeurMax)
 

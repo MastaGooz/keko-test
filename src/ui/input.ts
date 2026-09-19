@@ -40,7 +40,7 @@ function lireCible(noeud: HTMLElement): Lieu {
   if (ou === 'sac') return { ou: 'sac', emplacement: Number(noeud.dataset.emplacement) }
   if (ou === 'deck') return { ou: 'deck' }
   if (ou === 'loot') return { ou: 'loot' }
-  return { ou: 'laisser' }
+  return { ou: 'fond' }
 }
 
 /**

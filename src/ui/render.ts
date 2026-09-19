@@ -393,7 +393,7 @@ function palier(descente: Descente): string {
     case 'recompense':
       return recompense(descente, descente.phase.cartes)
     case 'butin':
-      return butin(descente, descente.phase.loot)
+      return butin(descente, descente.phase.loot, descente.phase.fond)
     case 'sortie':
       return sortie(descente)
     case 'fin':
@@ -437,7 +437,7 @@ function recompense(descente: Descente, cartes: Carte[]): string {
  * 2. **Chaque destination est aussi un bouton.** Le glisser est du confort ;
  *    sur un téléphone c'est la tape qui porte la fonctionnalité.
  */
-function butin(descente: Descente, loot: Carte | null): string {
+function butin(descente: Descente, loot: Carte | null, fond: Carte[]): string {
   const emplacements = Array.from({ length: SLOTS }, (_, i) =>
     caseTresor(descente.sac[i] ?? null, { ou: 'sac', emplacement: i }, 'libre'),
   ).join('')
@@ -458,7 +458,7 @@ function butin(descente: Descente, loot: Carte | null): string {
 
     `<p class="note">` +
     (loot === null
-      ? 'Range ton sac comme tu veux, puis termine.'
+      ? "Range comme tu veux : rien n'est perdu tant que tu n'as pas terminé."
       : 'Glisse-le où tu veux. Sur une case occupée, les deux échangent.') +
     `</p>` +
 
@@ -472,10 +472,19 @@ function butin(descente: Descente, loot: Carte | null): string {
     `<span class="tas">${pile}</span>` +
     `</div>` +
 
-    (loot === null
-      ? ''
-      : `<button class="bouton secondaire abandon" type="button" data-action="deplacer" ` +
-        `data-ou="laisser" data-depot>Laisser au fond — perdu pour de bon</button>`) +
+    // Le fond est un contenant, pas un bouton qui détruit : on y jette, on
+    // peut en reprendre, et ce n'est perdu qu'au moment de terminer. Sinon ce
+    // serait la seule action irréversible d'un écran qui promet l'inverse.
+    `<div class="pile-fond ${fond.length === 0 ? 'creuse' : ''}" data-depot data-ou="fond" ` +
+    `data-action="deplacer">` +
+    `<span class="etiquette-slot">Le fond` +
+    `<span class="poids">${
+      fond.length === 0
+        ? 'ce que tu abandonnes'
+        : `${fond.length} abandonné${fond.length > 1 ? 's' : ''} — perdu${fond.length > 1 ? 's' : ''} en terminant`
+    }</span></span>` +
+    `<span class="tas">${fond.map((c) => piece(c, { ou: 'fond', id: c.id })).join('')}</span>` +
+    `</div>` +
     `<button class="bouton secondaire terminer" type="button" data-action="terminerButin"` +
     `${loot === null ? '' : ' disabled'}>` +
     (loot === null ? 'Terminer' : 'Range ton trésor') +
