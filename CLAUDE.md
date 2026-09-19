@@ -134,20 +134,35 @@ Abandonné après mesure. Ne pas y revenir sans redemander à Keko.*
   les choix *comptent*, pas s'ils sont *intéressants*. Un jeu où une seule
   carte est toujours correcte score très haut sur ce critère.
 
-### Hypothèse critique à tester en premier
+### Hypothèse critique — RÉPONDUE, le mécanisme tient
 
-Le sac garantit qu'une run normale se joue **sans une seule carte morte**. La
-pollution n'arrive qu'au débordement, et le joueur la choisit. D'où la question,
-seule chose à valider avant de construire le hub, le marché ou la carte du
-donjon :
+La question qui bloquait tout le projet était : *un trésor qui devient une
+carte morte, est-ce une difficulté ressentie ou juste pénible ?*
 
-> **Déborder du sac, est-ce un pari tendu ou une corvée ?** Et combien de
-> trésors de trop un joueur accepte-t-il d'avaler ?
+Keko a joué chaque cran, avec le sac et la main en cartes. Verdict :
 
-Le premier prototype est **jetable**. Son interface reste minimale partout,
-**sauf la main** : elle est dessinée en vraies cartes. Ce n'est pas de la
-décoration, c'est la condition du test — une babiole affichée en ligne de texte
-ne se ressent pas, une carte en travers de la main, si.
+> « c'est au-delà de 5 que ça commence à être tendu, mais on s'en fout des
+> chiffres là (les cartes, ennemis seront très différents de ça). Ce qui
+> compte : est-ce que le mécanisme des trésors (cartes mortes) est bien une
+> difficulté ressentie mais pas trop frustrante — et honnêtement ça va. »
+
+**Le mécanisme est validé. Les chiffres ne le sont pas, et n'avaient pas à
+l'être** : le contenu final n'aura rien à voir. C'est la forme qui est
+acquise, pas le réglage. Ne pas re-tester ça, ne pas reproposer de corriger
+la main polluée par les règles.
+
+Ce qui a fallu pour obtenir cette réponse, et qui explique pourquoi les deux
+premiers verdicts étaient « chiant » :
+
+1. **Le sac.** Sans lui, le premier trésor ramassé polluait déjà. Le joueur
+   subissait la cupidité au lieu de la choisir.
+2. **Le butin visible.** Sans prix affiché, on portait le poids sans jamais
+   voir l'appât : « chiant » était le seul verdict possible.
+3. **La main en vraies cartes.** Une babiole en ligne de texte ne se ressent
+   pas ; une carte en travers de la main, si.
+
+*Une hypothèse de sensation ne se teste que sur un montage complet. Amputé
+d'un de ces trois éléments, le test répondait non — et il avait tort.*
 
 ## État actuel
 
@@ -226,9 +241,14 @@ au hub, quelle que soit sa forme finale. Attention au vocabulaire dans tous les
 cas : un trésor ne rapporte rien en combat ni en fin de combat, l'écran annonce
 seulement ce que le butin vaudra **s'il ressort**.
 
-**Prochaine étape : faire jouer Keko à chaque cran** et répondre à la question.
-Le prototype est maintenant dans le bon cadrage — sac, débordement, butin
-visible, main en vraies cartes. Tout le reste attend cette réponse.
+**Le prototype a fini son travail.** Il a répondu à l'hypothèse critique ; il
+n'a pas vocation à devenir le jeu.
+
+**Ce qui n'existe toujours pas, et qui est maintenant le sujet :** la cupidité
+est validée comme *coût*, mais elle n'existe pas encore comme *choix*. Le
+curseur est un faux — le joueur n'a jamais décidé de ramasser quoi que ce soit.
+Tant qu'il n'y a pas de descente (combats enchaînés, trésors proposés, points
+de sortie), il n'y a ni push your luck, ni arbitrage, ni extraction.
 
 ## Architecture — la règle à ne pas casser
 
