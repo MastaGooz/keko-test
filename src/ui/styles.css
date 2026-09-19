@@ -1174,13 +1174,13 @@ body {
 
 /* En paysage la hauteur tombe a 340-390 px. Aucun resserrement vertical ne
    sauve une colonne unique : il faut se servir de la largeur, qui elle est
-   abondante. La scene prend la gauche, tout ce qui se joue prend la droite,
-   sous le pouce. Le garde-fou `max-height` evite d'attraper un ecran de PC,
-   qui est aussi en paysage mais n'a aucun probleme de place. */
+   abondante. La main prend la GAUCHE, la scene la droite. Le garde-fou
+   `max-height` evite d'attraper un ecran de PC, qui est aussi en paysage mais
+   n'a aucun probleme de place. */
 @media (orientation: landscape) and (max-height: 540px) {
   .app {
     display: grid;
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     align-content: start;
     column-gap: 0.75rem;
     row-gap: 0.3125rem;
@@ -1201,7 +1201,7 @@ body {
      grille explicite, `-1` designe la derniere ligne EXPLICITE, c'est-a-dire
      la ligne 1. La scene atterrissait en rangee 1 et chassait l'en-tete. */
   #ennemis {
-    grid-column: 1;
+    grid-column: 2;
     grid-row: 2 / span 6;
     align-self: stretch;
     min-height: 0;
@@ -1221,7 +1221,7 @@ body {
   #finTour,
   #encombrement,
   #issue {
-    grid-column: 2;
+    grid-column: 1;
   }
 
   .chair {

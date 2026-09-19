@@ -357,16 +357,17 @@ le journal, `max-height: 620px` rogne le décor et la taille des cartes.
 **En paysage, une colonne unique est perdue d'avance** : la hauteur tombe à
 320-430 px et aucun resserrement vertical ne suffit. La mise en page bascule en
 **deux colonnes** (`orientation: landscape` + garde-fou `max-height: 540px`
-pour ne pas attraper un écran de PC) : la scène prend toute la colonne gauche,
-et tout ce qui se joue — barre du joueur, énergie, main, fin de tour — la
-colonne droite, sous le pouce.
+pour ne pas attraper un écran de PC) : **la main à gauche**, avec tout ce qui
+se joue — barre du joueur, énergie, cartes, fin de tour — et **la scène à
+droite**, sur toute la hauteur. Choix de Keko : on regarde ses cartes plus
+souvent que ses ennemis.
 
 Deux pièges rencontrés là :
 
 - **`grid-row: 2 / -1` ne marche pas** sans grille explicite : `-1` désigne la
   dernière ligne **explicite**, donc la ligne 1. La scène atterrissait en
   rangée 1 et chassait l'en-tête. D'où `grid-row: 2 / span 6` — et le compte
-  doit suivre le nombre d'éléments de la colonne droite.
+  doit suivre le nombre d'éléments de l'autre colonne.
 - Étirée sur toute la colonne, la scène devenait **une grande boîte vide** avec
   les bêtes tassées en bas. Son dégradé la retourne en salle : noir au plafond,
   sol éclairé sous leurs pattes.
