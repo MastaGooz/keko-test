@@ -33,9 +33,14 @@ la même règle appliquée à ce qu'on ramasse.**
   raison pour laquelle on ne compose PAS un deck carte par carte avant de
   partir.
 - **Pendant la descente : se renforcer, mais pour cette run seulement.** On
-  gagne des cartes, on monte sa **maîtrise** des cartes de son arme. Tout ça
-  s'évapore à la fin de la run. C'est la couche roguelike, et elle est
+  gagne des cartes, on pose des **enchantements** sur celles de son arme. Tout
+  ça s'évapore à la fin de la run. C'est la couche roguelike, et elle est
   temporaire exprès.
+
+  *Le mot compte* : on a d'abord dit « maîtrise », et une maîtrise s'accumule —
+  le mot appelait une persistance qui aurait recréé le problème de
+  proportionnalité. Un enchantement se dissipe. Le vocabulaire doit dire la
+  règle.
 
 ### Ce qu'on rapporte, et ce qu'on perd
 
@@ -78,8 +83,10 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   rend le chargement intéressant au lieu d'être « tout prendre ».
 - **L'équipement se perd à la mort**, comme le sac. Une **arme commune
   gratuite** empêche la spirale.
-- **Les gains de run ne persistent pas** : cartes gagnées et maîtrise
-  s'évaporent à l'extraction. Seuls le sac et l'équipement rentrent.
+- **Les gains de run ne persistent pas** : cartes gagnées et **enchantements**
+  s'évaporent à l'extraction. Seuls le sac et l'équipement rentrent. Tranché :
+  une progression d'arme qui durerait d'une run à l'autre redeviendrait une
+  amputation à la mort.
 - On ne compose **pas** un deck carte par carte avant de partir. Raison :
   *le coût de la perte doit être proportionnel au travail investi*. Trente
   secondes de chargement, oui ; deux heures de deckbuilding, non.
@@ -207,6 +214,11 @@ La **descente** est jouable au doigt et déployée : une run de 6 paliers, du
 premier combat à l'extraction ou à la mort. Ni hub, ni marché, ni carte de
 donjon. Ce qui tourne :
 
+- **le deck vient de l'équipement** (`logic/armes.ts`) : le **Glaive**, arme
+  commune et gratuite, donne 5 Estoc (1⚡/3), 3 Taillade (2⚡/6), 2 Moulinet
+  (4⚡/14). Délibérément compétente et sans relief — c'est la référence à
+  laquelle les autres armes se compareront, et une arme de départ excitante
+  rendrait les suivantes fades ;
 - **la boucle de run** (`logic/descente.ts`, pur) : combat → choix d'une
   récompense → point de sortie → palier suivant. Les PV ne se rechargent pas
   d'un combat à l'autre, un soin partiel après chaque victoire, et la mort
@@ -367,32 +379,36 @@ c'était de ne plus le préparer carte par carte.
 
 ### La prochaine étape
 
-**Brancher l'équipement sur le deck**, en commençant petit : *une* arme, son
-set de cartes, et l'écran de chargement avant la descente. Armure et objets
-viendront après.
+Le Glaive est branché : le deck vient de l'équipement. Pas encore d'écran de
+chargement — avec une seule arme il n'y a rien à choisir, et un sélecteur à une
+option serait un mensonge.
+
+**La suite, dans l'ordre :** une deuxième arme (qui demandera un verbe neuf,
+voir ci-dessous), puis les enchantements, puis armure et objets.
+
+**Limite du moteur à connaître dès maintenant :** une carte n'a qu'un *coût* et
+des *dégâts*. Deux armes ne peuvent donc différer que par leur courbe
+coût/dégâts, ce qui suffit pour le Glaive mais pas pour la suivante. **La
+deuxième arme demandera un verbe neuf** — frapper plusieurs cibles, rejouer,
+encaisser, décaler un compteur ennemi. C'est là qu'est le vrai budget de
+contenu.
 
 Tout le reste de la descente survit tel quel — points de sortie, sac,
 débordement, écran de récompense, mort qui prend tout.
 
-**Le gros du travail sera la recalibration.** Un deck issu d'une arme ne se
-comporte pas comme le deck de base actuel, et rien de tout ça ne se devine :
-voir les trois corrections que la simulation a imposées la dernière fois. Deux
-chiffres à surveiller en particulier :
+**Le rasoir le plus tranchant du projet, mesuré :** le set du Glaive est 10 %
+plus faible que l'ancien deck de base, et ça a fait tomber la survie au fond de
+**50 % à 4 %**. La puissance du deck est un levier bien plus violent que celle
+des ennemis. Toute retouche d'une seule carte oblige à refaire le balayage
+complet — jamais au jugé.
 
-- **La taille du deck.** Un deck court rend chaque trésor en trop beaucoup plus
-  mordant — avec 10 cartes et une main de 5, une carte morte se voit un tour
-  sur deux. C'est probablement souhaitable, mais c'est un rasoir.
-- **La force du set de base.** La simulation a déjà montré qu'un deck de départ
-  trop solide rend les gains de run insignifiants. Si construire en descente
-  doit compter, il faut partir plus pauvre.
-
-### Question ouverte
-
-**La maîtrise persiste-t-elle entre les runs ?** Le mot appelle la
-persistance, mais une arme qui progresse sur dix runs recrée exactement le
-problème de proportionnalité qu'on vient de corriger : la perdre redeviendrait
-une amputation. Le parti pris actuel est donc **maîtrise valable pour la run
-seulement**. À confirmer avec Keko.
+**Et une chose que la calibration n'a toujours pas réussi à créer :** le choix
+carte-ou-trésor ne coûte pas de survie (entre 0 et 6 points, soit le bruit de
+l'échantillon). Ce n'est pas un problème de réglage, c'est structurel — le sac
+absorbe les trois premiers trésors, donc sur six paliers la cupidité ne mord
+presque jamais. Trois leviers, dont un est une décision acquise à rouvrir avec
+Keko : allonger la descente, **rétrécir le sac**, ou donner plus d'un trésor
+par palier.
 
 Le squelette reste volontairement nu : pas de hub, pas de marché, pas de
 méta-progression.

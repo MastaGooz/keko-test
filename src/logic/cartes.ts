@@ -1,28 +1,14 @@
 /**
- * Contenu du prototype : deck de départ et groupes d'ennemis. Données pures.
- * Les chiffres sont là pour être bousculés après le playtest.
+ * Le butin, les récompenses de palier et les groupes d'ennemis. Données pures.
+ *
+ * Le deck, lui, ne vient plus d'ici : il vient de l'équipement (`armes.ts`).
  */
 import type { Carte, Ennemi } from './combat.ts'
 import type { Rng } from './rng.ts'
 import { randomInt } from './rng.ts'
 
-type Modele = Omit<Carte, 'id'>
-
-/**
- * Rendement croissant avec le coût : 3,0 / 3,5 / 4,0 dégâts par énergie.
- * Le gros coup paie mieux, mais il mange presque tout le tour.
- */
-const DAGUE: Modele = { nom: 'Dague', type: 'combat', cout: 1, degats: 3 }
-const TAILLADE: Modele = { nom: 'Taillade', type: 'combat', cout: 2, degats: 7 }
-const MOULINET: Modele = { nom: 'Moulinet', type: 'combat', cout: 4, degats: 16 }
-
-export function deckDeDepart(): Carte[] {
-  return [
-    ...exemplaires(5, DAGUE, 'dague'),
-    ...exemplaires(3, TAILLADE, 'taillade'),
-    ...exemplaires(2, MOULINET, 'moulinet'),
-  ]
-}
+import type { Modele } from './armes.ts'
+import { GLAIVE } from './armes.ts'
 
 /** Un trésor en tant que carte : inerte en combat, il n'occupe qu'une place. */
 export function carteTresor(id: string, nom: string, valeur: number): Carte {
@@ -45,45 +31,12 @@ const BUTIN: [string, number][] = [
   ['Médaillon', 75], ['Torque', 65], ['Aiguière', 55], ['Camée', 45],
 ]
 
-/** `nombre` trésors tirés dans le butin, sans doublon tant qu'il y en a. */
-export function tresorsEmportes(nombre: number, rng: Rng): Carte[] {
-  const restants = [...BUTIN]
-  return Array.from({ length: nombre }, (_, i) => {
-    const [nom, valeur] = restants.length > 0
-      ? restants.splice(randomInt(rng, 0, restants.length - 1), 1)[0]!
-      : BUTIN[i % BUTIN.length]!
-    return carteTresor(`tresor-${i + 1}`, nom, valeur)
-  })
-}
-
 /**
  * La capacité du sac. Petite et quasi figée : c'est la contrainte permanente
  * du jeu, pas un axe de progression — le hub vend du levier, jamais de la
- * sécurité.
+ * sécurité. Au-delà, le butin tombe dans le deck et pèse.
  */
 export const CAPACITE_SAC = 3
-
-/** Le butin ramassé, une fois réparti entre le sac et ce qui déborde. */
-export type Butin = { sac: Carte[]; deck: Carte[] }
-
-/**
- * Le tri se fait tout seul : les plus gros trésors prennent les places du sac,
- * le reste déborde et devient carte morte dans le deck. N'importe quel joueur
- * ferait exactement ce tri, autant que le prototype le fasse pour lui.
- *
- * Conséquence à ne pas perdre de vue : le trésor qui déborde est TOUJOURS le
- * moins précieux du lot. La cupidité a donc un rendement décroissant intégré —
- * on encaisse des cartes mortes pour des babioles, jamais pour la couronne.
- */
-export function butinRamasse(nombre: number, rng: Rng): Butin {
-  const tous = tresorsEmportes(nombre, rng).sort((a, b) => (b.valeur ?? 0) - (a.valeur ?? 0))
-  return { sac: tous.slice(0, CAPACITE_SAC), deck: tous.slice(CAPACITE_SAC) }
-}
-
-/** Le deck emporté dans le donjon : les cartes de combat plus ce qui déborde. */
-export function deckAvecTresors(debordement: Carte[]): Carte[] {
-  return [...deckDeDepart(), ...debordement]
-}
 
 /** Ce que vaut le contenu du sac — perdu aussi si le joueur meurt. */
 export function valeurSac(sac: Carte[]): number {
@@ -93,6 +46,12 @@ export function valeurSac(sac: Carte[]): number {
 /* ---------------------------------------------------------------------- *
  * Les récompenses de la descente.
  * ---------------------------------------------------------------------- */
+
+/**
+ * Les modèles piochables en récompense. Ils viennent du set de l'arme de base :
+ * une récompense doit parler le même langage que le deck qu'on porte.
+ */
+const [, TAILLADE_M, MOULINET_M] = GLAIVE.set.map((e) => e.modele) as [Modele, Modele, Modele]
 
 /**
  * La carte proposée après un combat.
@@ -107,10 +66,10 @@ export function valeurSac(sac: Carte[]): number {
 export function carteRecompense(profondeur: number, rng: Rng, cle: string): Carte {
   const table: Modele[] =
     profondeur <= 2
-      ? [TAILLADE, TAILLADE, MOULINET]
+      ? [TAILLADE_M, TAILLADE_M, MOULINET_M]
       : profondeur <= 4
-        ? [TAILLADE, MOULINET, MOULINET]
-        : [MOULINET]
+        ? [TAILLADE_M, MOULINET_M, MOULINET_M]
+        : [MOULINET_M]
   const modele = table[randomInt(rng, 0, table.length - 1)]!
   return { ...modele, id: `gagnee-${cle}` }
 }
@@ -207,7 +166,3 @@ export const GROUPES: Groupe[] = [
     ],
   },
 ]
-
-function exemplaires(nombre: number, modele: Modele, prefixe: string): Carte[] {
-  return Array.from({ length: nombre }, (_, i) => ({ ...modele, id: `${prefixe}-${i + 1}` }))
-}

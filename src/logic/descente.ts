@@ -1,6 +1,11 @@
 /**
  * La descente : une run, du premier combat à l'extraction ou à la mort.
  *
+ * Le deck emporté n'existe pas en soi : **c'est la somme des sets de
+ * l'équipement**. On ne compose pas un deck carte par carte avant de partir —
+ * le coût de la perte doit rester proportionnel au travail investi, et
+ * l'équipement meurt avec le joueur.
+ *
  * Pur, comme tout `logic/` : aucun DOM, aucun hasard non seedé. Les
  * transitions ne modifient jamais l'état reçu.
  *
@@ -17,6 +22,10 @@
  * 2. **La mort fait tout perdre** — sac compris. Non négociable, décision
  *    acquise.
  * 3. **Un trésor refusé est perdu définitivement.** Pas de retour en arrière.
+ *
+ * Ce qui se gagne en descente — cartes, et plus tard enchantements — ne
+ * persiste PAS : ça s'évapore à l'extraction. Seuls le sac et l'équipement
+ * rentrent à la maison.
  */
 import type { Carte, EtatCombat } from './combat.ts'
 import { CONFIG_DEFAUT, creerCombat } from './combat.ts'
@@ -24,11 +33,12 @@ import type { Rng } from './rng.ts'
 import {
   CAPACITE_SAC,
   carteRecompense,
-  deckDeDepart,
   ennemisPourProfondeur,
   tresorRecompense,
   valeurSac,
 } from './cartes.ts'
+import type { Arme } from './armes.ts'
+import { ARME_GRATUITE, deckDeLEquipement } from './armes.ts'
 
 /**
  * Les chiffres de la run, rassemblés et injectables — c'est ce qui permet de
@@ -53,27 +63,34 @@ export type Reglage = {
 }
 
 /**
- * Calibré par simulation (300 descentes par politique), pas au jugé. Ce que
- * ces chiffres produisent, et qu'il faut retrouver si on y touche :
+ * Calibré par simulation contre le set du Glaive (300 descentes par
+ * politique), pas au jugé. Ce que ces chiffres produisent :
  *
  * | politique      | sortir au palier 3 | aller au fond (6) |
  * |----------------|--------------------|-------------------|
- * | tout en cartes | 100 %, 0 d'or      | 58 %, 0 d'or      |
- * | en alternance  | 100 %, 66 d'or     | 59 %, 338 d'or    |
- * | tout en trésor | 100 %, 197 d'or    | 47 %, 594 d'or    |
+ * | tout en cartes | 100 %, 0 d'or      | 51 %, 0 d'or      |
+ * | en alternance  | 100 %, 66 d'or     | 57 %, 337 d'or    |
+ * | tout en trésor | 100 %, 196 d'or    | 51 %, 586 d'or    |
  *
- * Les deux décisions du jeu y sont, et c'est le seul critère qui compte :
+ * **Sortir ou continuer fonctionne** : 196 d'or garantis contre 297 espérés
+ * avec un risque sur deux de tout perdre. C'est un pari.
  *
- * - **Sortir ou continuer** : 197 d'or garantis contre 281 espérés mais un
- *   risque sur deux de tout perdre. Assez serré pour hésiter.
- * - **Carte ou trésor** : la cupidité coûte 11 points de survie. Elle n'est
- *   plus gratuite — elle l'était avant qu'on interdise la Dague en
- *   récompense.
+ * **Carte ou trésor ne fonctionne PAS encore** : entre 0 et 6 points de
+ * survie d'écart, soit le bruit de l'échantillon. Ce n'est pas un problème de
+ * réglage, c'est structurel — le sac absorbe les trois premiers trésors, donc
+ * sur six paliers la cupidité ne mord presque jamais. Trois leviers, et le
+ * deuxième est une décision acquise à rouvrir avec Keko : allonger la
+ * descente, rétrécir le sac, ou donner plus d'un trésor par palier.
+ *
+ * **Attention, double rasoir.** La puissance du deck est un levier PLUS
+ * tranchant que celle des ennemis : le set du Glaive est 10 % plus faible que
+ * l'ancien deck de base, et ça a fait tomber la survie au fond de 50 % à 4 %.
+ * Toute retouche d'une carte oblige à refaire ce balayage.
  */
 export const REGLAGE_DEFAUT: Reglage = {
   pvMax: 90,
-  soin: 12,
-  menaceDepart: 0.65,
+  soin: 14,
+  menaceDepart: 0.62,
   profondeurMax: 6,
 }
 
@@ -88,6 +105,8 @@ export type Phase =
 
 export type Descente = {
   reglage: Reglage
+  /** Ce qui a été emporté. Perdu à la mort, rapporté à l'extraction. */
+  equipement: Arme[]
   profondeur: number
   phase: Phase
   combat: EtatCombat
@@ -121,10 +140,16 @@ function engager(
   return { ...combat, pv }
 }
 
-export function commencerDescente(rng: Rng, reglage: Reglage = REGLAGE_DEFAUT): Descente {
-  const deck = deckDeDepart()
+export function commencerDescente(
+  rng: Rng,
+  reglage: Reglage = REGLAGE_DEFAUT,
+  equipement: Arme[] = [ARME_GRATUITE],
+): Descente {
+  // Le deck n'existe pas en soi : c'est la somme des sets de l'équipement.
+  const deck = deckDeLEquipement(equipement)
   return {
     reglage,
+    equipement,
     profondeur: 1,
     phase: { type: 'combat' },
     combat: engager(1, deck, reglage.pvMax, rng, reglage),

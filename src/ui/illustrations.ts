@@ -13,6 +13,11 @@
 /** viewBox commune : 32x32, trait à 1.6, tout en currentColor. */
 const TRACES: Record<string, string> = {
   // --- les cartes de combat ---
+  // Une lame longue et fine : l'estoc pique, il ne taille pas.
+  Estoc:
+    '<path d="M16 2l2.3 7.4v12.4h-4.6V9.4z"/><path d="M9.5 22h13"/>' +
+    '<path d="M14.6 24h2.8v4.6h-2.8z"/><circle cx="16" cy="29.8" r="1.5"/>' +
+    '<path d="M11.5 15.5l-2.5-3M20.5 15.5l2.5-3"/>',
   Dague:
     '<path d="M16 3l3.2 8.6v9.4h-6.4v-9.4z"/><path d="M9.5 21.2h13"/>' +
     '<path d="M14.5 23.2h3v4.2h-3z"/><circle cx="16" cy="28.8" r="1.6"/>',
