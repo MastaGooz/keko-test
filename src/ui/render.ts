@@ -11,12 +11,11 @@
  * Seul endroit qui connaît la structure de la page.
  */
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
-import { butin, consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
-import { CAPACITE_SAC, valeurSac } from '../logic/cartes.ts'
+import { consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
+import { CAPACITE_SAC } from '../logic/cartes.ts'
+import type { Descente, Offre } from '../logic/descente.ts'
+import { butinTransporte, placeDuSac, tresorsAuDeck } from '../logic/descente.ts'
 import { creature, dessin, sceau } from './illustrations.ts'
-
-/** Le butin transporté : ce que le sac a pris, et combien a été ramassé. */
-export type Poche = { ramasse: number; sac: Carte[] }
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
 
@@ -53,8 +52,7 @@ export type View = {
   cartes: HTMLElement
   encombrement: HTMLElement
   finTour: HTMLButtonElement
-  issue: HTMLElement
-  cupidite: HTMLElement
+  palier: HTMLElement
   journal: HTMLElement
   pleinEcran: HTMLButtonElement
   son: HTMLButtonElement
@@ -79,7 +77,10 @@ export function mount(root: HTMLElement, buildTime: string): View {
       <div id="cartes" class="cartes"></div>
       <button id="finTour" class="rang bouton finTour" type="button" data-action="finTour"></button>
       <p id="encombrement" class="encombrement"></p>
-      <p id="issue" class="issue"></p>
+
+      <!-- Récompense, point de sortie, fin de descente : tout ce qui n'est pas
+           le combat se pose par-dessus lui, sans refaire la mise en page. -->
+      <div id="palier" class="palier"></div>
 
       <!-- Les commandes de test sortent du flux : elles poussaient le combat
            sous le bord de l'ecran en portrait. Elles remontent a la demande,
@@ -92,10 +93,9 @@ export function mount(root: HTMLElement, buildTime: string): View {
           </button>
           <button id="son" class="bouton secondaire" type="button" data-action="son">Son</button>
         </div>
-        <div id="cupidite" class="cupidite"></div>
         <div class="reprise">
           <button class="bouton secondaire" type="button" data-action="rejouer">Rejouer cette seed</button>
-          <button class="bouton secondaire" type="button" data-action="nouveau">Nouveau combat</button>
+          <button class="bouton secondaire" type="button" data-action="nouveau">Nouvelle descente</button>
         </div>
         <div id="journal" class="journal"></div>
       </div>
@@ -111,8 +111,7 @@ export function mount(root: HTMLElement, buildTime: string): View {
     cartes: root.querySelector<HTMLElement>('#cartes')!,
     encombrement: root.querySelector<HTMLElement>('#encombrement')!,
     finTour: root.querySelector<HTMLButtonElement>('#finTour')!,
-    issue: root.querySelector<HTMLElement>('#issue')!,
-    cupidite: root.querySelector<HTMLElement>('#cupidite')!,
+    palier: root.querySelector<HTMLElement>('#palier')!,
     journal: root.querySelector<HTMLElement>('#journal')!,
     pleinEcran: root.querySelector<HTMLButtonElement>('#pleinEcran')!,
     son: root.querySelector<HTMLButtonElement>('#son')!,
@@ -123,11 +122,11 @@ export function mount(root: HTMLElement, buildTime: string): View {
 /** Reflète l'état dans le DOM. Appelé après chaque action. */
 export function render(
   view: View,
-  etat: EtatCombat,
+  descente: Descente,
   seed: number,
   selection: number | null,
-  poche: Poche,
 ): void {
+  const etat = descente.combat
   const fini = etat.issue !== null
   const carte = selection === null ? null : (etat.main[selection] ?? null)
   const visee = carte !== null && carte.type === 'combat' ? carte : null
@@ -143,14 +142,12 @@ export function render(
   view.cartes.innerHTML = etat.main
     .map((c, index) => ligneCarte(etat, c, index, selection, fini, etat.main.length))
     .join('')
-  view.encombrement.innerHTML = fini ? '' : encombrement(etat, poche)
+  view.encombrement.innerHTML = encombrement(descente)
 
   view.finTour.innerHTML = etiquetteFinTour(etat)
   view.finTour.disabled = fini
 
-  view.issue.innerHTML = issue(etat, poche)
-
-  view.cupidite.innerHTML = reglageCupidite(poche)
+  view.palier.innerHTML = palier(descente)
 
   view.journal.innerHTML = etat.evenements
     .slice(-3)
@@ -312,13 +309,13 @@ function eventail(index: number, total: number): string {
  * et le poids sont le même objet. Une carte fantôme se laisserait oublier,
  * or c'est exactement ce qu'on ne veut pas faire oublier.
  */
-function carteTresor(carte: Carte, place: string): string {
+function carteTresor(carte: Carte, place: string, morte = true): string {
   const valeur = carte.valeur ?? 0
   return (
     `<div class="carte tresor ${richesse(valeur)}" ${place}>` +
     `<span class="vitre">${dessin(carte.nom)}</span>` +
-    `<span class="plaque"><span class="nom">${carte.nom}</span></span>` +
-    `<span class="bandeau">MORTE</span>` +
+    `<span class="plaque${morte ? '' : ' seule'}"><span class="nom">${carte.nom}</span></span>` +
+    (morte ? `<span class="bandeau">MORTE</span>` : '') +
     `<span class="gemme sceau">${sceau()}</span>` +
     `<span class="badge valeur">${valeur}</span>` +
     `</div>`
@@ -338,42 +335,18 @@ function richesse(valeur: number): string {
 }
 
 /**
- * Un trésor ne devient de l'or qu'au marché noir, après la run : on n'annonce
- * donc jamais un gain ici, seulement ce que le butin VAUDRA s'il ressort.
- * Sans ce chiffre, porter du poids n'a aucune contrepartie visible et le
- * joueur ne teste qu'une punition.
- */
-function issue(etat: EtatCombat, poche: Poche): string {
-  // Le sac tombe avec le joueur : il met le butin à l'abri du DECK, pas de la mort.
-  const valeur = butin(etat) + valeurSac(poche.sac)
-  if (etat.issue === 'victoire') {
-    return valeur === 0
-      ? 'VICTOIRE.'
-      : `VICTOIRE — butin intact, <span class="or">${valeur}</span> à revendre au hub.`
-  }
-  if (etat.issue === 'defaite') {
-    return valeur === 0
-      ? 'MORT. Tout est perdu.'
-      : `MORT — butin perdu, <span class="perdu">${valeur}</span> envolés.`
-  }
-  return ''
-}
-
-/**
  * Décision de design : le taux d'encombrement est toujours visible. On montre
  * d'abord le sac, parce que c'est lui qui explique le reste — ce qui est
  * dedans ne coûte rien, ce qui déborde coûte une place de main à chaque tour.
  */
-function encombrement(etat: EtatCombat, poche: Poche): string {
-  const enTrop =
-    [...etat.pioche, ...etat.main, ...etat.defausse].filter((c) => c.type === 'tresor').length
-  const valeur = butin(etat) + valeurSac(poche.sac)
-
+function encombrement(descente: Descente): string {
+  const etat = descente.combat
   return (
-    `Sac ${GLYPHE.tresor} <strong>${poche.sac.length}/${CAPACITE_SAC}</strong> · ` +
-    `<strong>${enTrop}</strong> en trop dans le deck · ` +
+    `Palier <strong>${descente.profondeur}/${descente.reglage.profondeurMax}</strong> · ` +
+    `Sac ${GLYPHE.tresor} <strong>${descente.sac.length}/${CAPACITE_SAC}</strong> · ` +
+    `<strong>${tresorsAuDeck(descente)}</strong> en trop dans le deck · ` +
     `${GLYPHE.tresor} <strong>${tresorsEnMain(etat)}/${etat.main.length}</strong> en main · ` +
-    `butin : <strong class="or">${valeur}</strong> à revendre`
+    `butin : <strong class="or">${butinTransporte(descente)}</strong> en jeu`
   )
 }
 
@@ -385,38 +358,6 @@ function etiquetteFinTour(etat: EtatCombat): string {
     `<span class="cout">${menace === 0 ? '—' : `−${menace}`}</span>`
   )
 }
-
-/**
- * Le curseur de l'expérience. Ce n'est pas une mécanique de jeu : c'est le
- * réglage qui permet de répondre à la seule question que ce prototype existe
- * pour poser — déborder du sac, pari tendu ou corvée ?
- *
- * Il compte le butin RAMASSÉ, sac compris. Le premier cran remplit le sac
- * pile : c'est la run propre, zéro carte morte. Les suivants débordent de
- * 2, 4, 6, 8 — les mêmes valeurs que les mesures déjà faites, pour que la
- * courbe reste comparable.
- */
-function reglageCupidite(poche: Poche): string {
-  const choix = [3, 5, 7, 9, 11]
-    .map(
-      (n) =>
-        `<button class="pastille${n === poche.ramasse ? ' active' : ''}" type="button" ` +
-        `data-action="cupidite" data-ramasse="${n}">${n}</button>`,
-    )
-    .join('')
-
-  const enTrop = Math.max(0, poche.ramasse - CAPACITE_SAC)
-  const consequence =
-    enTrop === 0
-      ? 'le sac absorbe tout'
-      : `${enTrop} carte${enTrop > 1 ? 's' : ''} morte${enTrop > 1 ? 's' : ''}`
-
-  return (
-    `<span class="etiquette">Butin ramassé</span>${choix}` +
-    `<span class="etiquette">${consequence}</span>`
-  )
-}
-
 
 function phrase(evenement: Evenement): string {
   switch (evenement.type) {
@@ -433,4 +374,127 @@ function phrase(evenement: Evenement): string {
     case 'issue':
       return evenement.issue === 'victoire' ? 'Plus rien ne bouge.' : 'Tu tombes.'
   }
+}
+
+/* ------------------------------------------------------------------------ *
+ * Les paliers : tout ce qui n'est pas le combat.
+ * ------------------------------------------------------------------------ */
+
+/**
+ * Le calque de palier. Il se pose PAR-DESSUS le combat plutôt que de le
+ * remplacer : le joueur garde sous les yeux le deck et les PV avec lesquels il
+ * décide. C'est exactement l'information dont il a besoin pour choisir.
+ */
+function palier(descente: Descente): string {
+  switch (descente.phase.type) {
+    case 'combat':
+      return ''
+    case 'recompense':
+      return recompense(descente, descente.phase.offres)
+    case 'sortie':
+      return sortie(descente)
+    case 'fin':
+      return fin(descente, descente.phase.issue)
+  }
+}
+
+/**
+ * Le choix du palier : une carte contre un trésor. C'est le jeu entier en une
+ * décision — la carte te fait descendre plus loin, le trésor vaut de l'or mais
+ * te coûte une place. Le sort du trésor est annoncé AVANT le choix : personne
+ * ne doit découvrir après coup qu'il vient de s'encombrer.
+ */
+function recompense(descente: Descente, offres: Offre[]): string {
+  const place = placeDuSac(descente)
+  const sort =
+    place > 0
+      ? `<span class="sort bon">→ sac (${place} place${place > 1 ? 's' : ''})</span>`
+      : `<span class="sort mauvais">→ carte morte dans le deck</span>`
+
+  const choix = offres
+    .map((offre, index) => {
+      const etiquette =
+        offre.genre === 'carte'
+          ? `<span class="sort bon">→ ton deck</span>`
+          : sort
+      // Un trésor qui part au sac n'encombre rien : lui coller le bandeau
+      // MORTE mentirait sur ce qu'on est en train de choisir.
+      const morte = offre.genre === 'tresor' && place === 0
+      return (
+        `<button class="offre" type="button" data-action="prendre" data-offre="${index}">` +
+        `${vitrine(offre.carte, morte)}${etiquette}</button>`
+      )
+    })
+    .join('')
+
+  return (
+    `<div class="voile">` +
+    `<div class="feuille">` +
+    `<p class="titre">Palier ${descente.profondeur} — ce que tu emportes</p>` +
+    `<div class="offres">${choix}</div>` +
+    `<button class="bouton secondaire" type="button" data-action="laisser">` +
+    `Ne rien prendre</button>` +
+    `<p class="note">Ce qu'on laisse est perdu pour de bon.</p>` +
+    `</div></div>`
+  )
+}
+
+/** Le point de sortie. La seule question du jeu, posée en deux boutons. */
+function sortie(descente: Descente): string {
+  const suivant = descente.profondeur + 1
+  const pv = descente.combat.pv
+  const part = Math.round((pv / descente.combat.pvMax) * 100)
+
+  return (
+    `<div class="voile">` +
+    `<div class="feuille">` +
+    `<p class="titre">Point de sortie</p>` +
+    `<p class="bilan">Tu portes <strong class="or">${butinTransporte(descente)}</strong> ` +
+    `et il te reste <strong class="${part < 40 ? 'perdu' : ''}">${pv}</strong> PV.</p>` +
+    `<div class="offres">` +
+    `<button class="issue-choix rentrer" type="button" data-action="extraire">` +
+    `<span class="quoi">Rentrer</span>` +
+    `<span class="pourquoi">Tu gardes tout</span></button>` +
+    `<button class="issue-choix continuer" type="button" data-action="descendre">` +
+    `<span class="quoi">Palier ${suivant}</span>` +
+    `<span class="pourquoi">Plus dur, plus riche</span></button>` +
+    `</div>` +
+    `<p class="note">Tes PV ne remontent pas. Mourir fait tout perdre.</p>` +
+    `</div></div>`
+  )
+}
+
+/** La fin de la descente : ce qu'on ramène, ou ce qu'on vient de laisser. */
+function fin(descente: Descente, issue: 'extrait' | 'mort'): string {
+  const valeur = butinTransporte(descente)
+  const extrait = issue === 'extrait'
+
+  return (
+    `<div class="voile">` +
+    `<div class="feuille ${extrait ? 'extrait' : 'mort'}">` +
+    `<p class="titre">${extrait ? 'EXTRAIT' : 'MORT'}</p>` +
+    `<p class="bilan">` +
+    (extrait
+      ? `Tu ressors du palier ${descente.profondeur} avec ` +
+        `<strong class="or">${valeur}</strong> de butin.`
+      : `Palier ${descente.profondeur}. <strong class="perdu">${valeur}</strong> ` +
+        `de butin restent au fond, avec toi.`) +
+    `</p>` +
+    `<button class="bouton secondaire" type="button" data-action="nouveau">` +
+    `Nouvelle descente</button>` +
+    `</div></div>`
+  )
+}
+
+/** Une carte montrée, sans état de jeu : ni coût payable, ni cible. */
+function vitrine(carte: Carte, morte = true): string {
+  if (carte.type === 'tresor') return carteTresor(carte, 'style="--n:1"', morte)
+  return (
+    `<div class="carte combat" data-cout="${carte.cout}" style="--n:1">` +
+    `<span class="vitre">${dessin(carte.nom)}</span>` +
+    `<span class="plaque"><span class="nom">${carte.nom}</span></span>` +
+    `<span class="gemme">${carte.cout}</span>` +
+    `<span class="badge degats">${carte.degats}</span>` +
+    `</div>`
+  )
 }

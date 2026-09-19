@@ -8,7 +8,10 @@ export type Action =
   | { type: 'finTour' }
   | { type: 'rejouer' }
   | { type: 'nouveau' }
-  | { type: 'cupidite'; ramasse: number }
+  | { type: 'prendre'; offre: number }
+  | { type: 'laisser' }
+  | { type: 'descendre' }
+  | { type: 'extraire' }
   | { type: 'panneau' }
   | { type: 'pleinEcran' }
   | { type: 'son' }
@@ -42,8 +45,17 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
       case 'nouveau':
         dispatch({ type: 'nouveau' })
         break
-      case 'cupidite':
-        dispatch({ type: 'cupidite', ramasse: Number(noeud.dataset.ramasse) })
+      case 'prendre':
+        dispatch({ type: 'prendre', offre: Number(noeud.dataset.offre) })
+        break
+      case 'laisser':
+        dispatch({ type: 'laisser' })
+        break
+      case 'descendre':
+        dispatch({ type: 'descendre' })
+        break
+      case 'extraire':
+        dispatch({ type: 'extraire' })
         break
       case 'panneau':
         dispatch({ type: 'panneau' })

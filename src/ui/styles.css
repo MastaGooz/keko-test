@@ -1323,3 +1323,185 @@ body {
     animation: none;
   }
 }
+
+/* --- les paliers : recompense, sortie, fin --------------------------------- */
+
+/* Le calque se pose par-dessus le combat au lieu de le remplacer : le joueur
+   garde sous les yeux le deck et les PV avec lesquels il decide. */
+.voile {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: #0a0a10cc;
+  backdrop-filter: blur(3px);
+}
+
+.feuille {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 30rem;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 1.125rem 1rem;
+  border: 1px solid var(--trait);
+  border-radius: 14px;
+  background:
+    radial-gradient(90% 60% at 50% 0%, #ffffff0f, transparent 70%),
+    linear-gradient(168deg, #23232e, #16161d);
+  box-shadow: 0 18px 50px #000c;
+  text-align: center;
+}
+
+.feuille .titre {
+  margin: 0;
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.feuille .bilan {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.feuille .note {
+  margin: 0;
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.offres {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+/* Une offre : la carte, et ce qu'elle devient si on la prend. */
+.offre {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.625rem 0.375rem;
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  background: #ffffff08;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s ease-out, border-color 0.12s ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .offre:hover {
+    transform: translateY(-3px);
+    border-color: var(--joueur);
+  }
+}
+
+.offre:active {
+  transform: translateY(-1px);
+}
+
+/* Dans une vitrine la carte ne fait pas partie d'un eventail : ni rotation,
+   ni recouvrement, et une largeur qui suit la colonne. */
+.offre .carte {
+  --large: 100%;
+  width: 100%;
+  max-width: 8rem;
+  margin: 0;
+  transform: none;
+  cursor: inherit;
+}
+
+/* Le sort de la carte est annonce AVANT le choix : personne ne doit decouvrir
+   apres coup qu'il vient de s'encombrer. */
+.sort {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.sort.bon {
+  color: #8fd8a8;
+}
+
+.sort.mauvais {
+  color: #e8a05c;
+}
+
+/* Les deux boutons du point de sortie : la seule question du jeu. */
+.issue-choix {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1875rem;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 3.75rem;
+  padding: 0.75rem 0.5rem;
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  background: #ffffff08;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.issue-choix .quoi {
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.issue-choix .pourquoi {
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.issue-choix.rentrer {
+  border-color: #3f6b52;
+  background: linear-gradient(#1e3226, #16221b);
+}
+
+.issue-choix.continuer {
+  border-color: #6b4030;
+  background: linear-gradient(#32211e, #221816);
+}
+
+.issue-choix:active {
+  transform: scale(0.99);
+}
+
+.feuille.extrait .titre {
+  color: #8fd8a8;
+}
+
+.feuille.mort .titre {
+  color: var(--ennemi);
+}
+
+.feuille .secondaire {
+  max-width: 14rem;
+}
+
+/* Un tresor qui part au sac n'a pas de bandeau : sa plaque reprend le bas. */
+.carte.tresor .plaque.seule {
+  bottom: 0;
+  height: 26%;
+}

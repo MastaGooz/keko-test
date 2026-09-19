@@ -90,6 +90,87 @@ export function valeurSac(sac: Carte[]): number {
   return sac.reduce((total, carte) => total + (carte.valeur ?? 0), 0)
 }
 
+/* ---------------------------------------------------------------------- *
+ * Les récompenses de la descente.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * La carte proposée après un combat.
+ *
+ * **Jamais de Dague** : le deck de départ en contient déjà cinq sur dix, donc
+ * en proposer une n'épaissit pas le deck, elle le dilue. La simulation était
+ * formelle — avec des Dagues en récompense, prendre la carte ne faisait gagner
+ * que 3 points de survie sur le trésor, et le dilemme central du jeu n'existait
+ * pas. Une récompense doit valoir mieux que la moyenne de ce qu'on a déjà,
+ * sinon ce n'est pas une récompense.
+ */
+export function carteRecompense(profondeur: number, rng: Rng, cle: string): Carte {
+  const table: Modele[] =
+    profondeur <= 2
+      ? [TAILLADE, TAILLADE, MOULINET]
+      : profondeur <= 4
+        ? [TAILLADE, MOULINET, MOULINET]
+        : [MOULINET]
+  const modele = table[randomInt(rng, 0, table.length - 1)]!
+  return { ...modele, id: `gagnee-${cle}` }
+}
+
+/**
+ * Le trésor proposé après un combat. Plus on descend, plus il est gros : c'est
+ * toute la raison de continuer au lieu de rentrer. Le butin est trié par
+ * valeur décroissante, on pioche dans une fenêtre qui glisse vers le haut.
+ */
+export function tresorRecompense(profondeur: number, rng: Rng, cle: string): Carte {
+  const trie = [...BUTIN].sort((a, b) => a[1] - b[1])
+  const part = Math.min(1, (profondeur - 1) / (PROFONDEUR_ETALON - 1))
+  const centre = part * (trie.length - 1)
+  const bas = Math.max(0, Math.round(centre - 2))
+  const haut = Math.min(trie.length - 1, Math.round(centre + 2))
+  const [nom, valeur] = trie[randomInt(rng, bas, haut)]!
+  return carteTresor(`butin-${cle}`, nom, valeur)
+}
+
+/** La profondeur à laquelle le butin atteint le haut de la table. */
+const PROFONDEUR_ETALON = 8
+
+/**
+ * Le groupe rencontré à cette profondeur.
+ *
+ * Deux corrections que la simulation a imposées, et qu'il ne faut pas défaire :
+ *
+ * 1. **Seuls les dégâts bougent, jamais les PV.** Faire monter les deux
+ *    allonge les combats ET les rend plus violents : les dégâts subis montent
+ *    au carré, et il apparaissait un mur infranchissable au palier 5 qu'aucune
+ *    quantité de PV ne déplaçait. C'est aussi ce que dit la décision de design
+ *    — « ne pas aligner de gros sacs de PV », sinon l'achèvement devient
+ *    impossible et le multi-cibles ne décide plus rien.
+ *
+ * 2. **Le dernier palier vaut le combat d'origine, les autres sont adoucis.**
+ *    Les groupes ont été calibrés comme des duels au couteau : un seul coûte
+ *    presque toute une barre de PV, on ne peut pas en enchaîner six. Plutôt
+ *    que de les affaiblir, on en fait le FOND de la descente : `MENACE_DEPART`
+ *    est la fraction de leur morsure au premier palier, et elle remonte à 1
+ *    au dernier. La difficulté validée par Keko devient la ligne d'arrivée.
+ *
+ * ATTENTION : chiffre de combat, donc rasoir. À revérifier par simulation.
+ */
+export const MENACE_DEPART = 0.45
+
+export function ennemisPourProfondeur(
+  profondeur: number,
+  profondeurMax: number,
+  rng: Rng,
+  menaceDepart: number = MENACE_DEPART,
+): Ennemi[] {
+  const groupe = GROUPES[randomInt(rng, 0, GROUPES.length - 1)]!
+  const part = profondeurMax > 1 ? (profondeur - 1) / (profondeurMax - 1) : 1
+  const facteur = menaceDepart + (1 - menaceDepart) * part
+  return groupe.ennemis.map((ennemi) => ({
+    ...ennemi,
+    degats: Math.round(ennemi.degats * facteur),
+  }))
+}
+
 /**
  * Groupes calibrés par simulation. Deux règles tenues :
  *

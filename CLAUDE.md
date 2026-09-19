@@ -166,8 +166,19 @@ d'un de ces trois éléments, le test répondait non — et il avait tort.*
 
 ## État actuel
 
-Le prototype jetable de combat est **jouable au doigt** et déployé. Ni hub, ni
-marché, ni carte de donjon. Ce qui tourne :
+La **descente** est jouable au doigt et déployée : une run de 6 paliers, du
+premier combat à l'extraction ou à la mort. Ni hub, ni marché, ni carte de
+donjon. Ce qui tourne :
+
+- **la boucle de run** (`logic/descente.ts`, pur) : combat → choix d'une
+  récompense → point de sortie → palier suivant. Les PV ne se rechargent pas
+  d'un combat à l'autre, un soin partiel après chaque victoire, et la mort
+  fait tout perdre ;
+- **le choix du palier** : une carte de combat contre un trésor. Le sort du
+  trésor est annoncé avant le choix — « → sac (2 places) » ou « → carte morte
+  dans le deck ». Refuser les deux est toujours permis, et ce qu'on laisse est
+  perdu pour de bon ;
+- `npm run verif` : 19 vérifications du combat + 29 de la descente ;
 
 - moteur au tour par tour à énergie, **plusieurs ennemis**, cible au doigt ;
 - la **main en éventail, cartes de taille jeu de cartes** (128x179 px sur un
@@ -234,22 +245,44 @@ contre `src/logic/`, qui est pur exprès. Deux résultats à ne pas réapprendre
   sacs de PV en nombre ramènent au rendement pur, et le gros coup redevient le
   seul choix.
 
-Les trésors ne sont pas encore ramassés en jeu : un **curseur** fixe le butin
-déjà ramassé, **sac compris** — 3 / 5 / 7 / 9 / 11. Le sac (capacité 3) prend
-les plus gros, le reste déborde en cartes mortes : 0 / 2 / 4 / 6 / 8, les mêmes
-valeurs que les mesures ci-dessous, pour que la courbe reste comparable. Le
-premier cran est la run propre : le sac absorbe tout, zéro carte morte, et il y
-a quand même déjà du butin en jeu.
+### Ce que la calibration de la descente a appris
 
-Le tri est fait pour le joueur — les gros trésors vont au sac, puisque c'est ce
-que n'importe qui ferait. **Conséquence à surveiller : le trésor qui déborde
-est toujours le moins précieux du lot.** La cupidité a donc un rendement
-décroissant intégré (bien), mais ça veut dire qu'on encaisse des cartes mortes
-pour des babioles à 45, jamais pour la couronne à 240 — si le débordement reste
-pénible, c'est une piste à regarder avant de toucher aux règles.
+Trois corrections que la simulation a imposées. **Aucune ne se devinait**, et
+les défaire referait le bug.
 
-Le sac ne met le butin à l'abri que du **deck**, pas de la mort : ce qu'il
-contient tombe avec le joueur.
+**1. Ne faire monter que les dégâts, jamais les PV.** Faire monter les deux
+allonge les combats *et* les rend plus violents : les dégâts subis montent au
+carré. Il y avait un mur infranchissable au palier 5 qu'aucune quantité de PV
+ne déplaçait. Ça rejoint la décision de design « ne pas aligner de gros sacs de
+PV » — sans quoi l'achèvement devient impossible et le multi-cibles ne décide
+plus rien.
+
+**2. Le combat validé par Keko est la LIGNE D'ARRIVÉE, pas le point de
+départ.** Les groupes ont été calibrés comme des duels au couteau : un seul
+coûte presque toute une barre de PV, on ne peut pas en enchaîner six. Plutôt
+que de les affaiblir, `menaceDepart` les adoucit au premier palier (65 % de
+leur morsure) et les rend à pleine puissance au dernier.
+
+**3. Une récompense doit valoir mieux que la moyenne du deck.** Ma table
+proposait des Dagues, alors que le deck de départ en contient cinq sur dix :
+prendre la carte *diluait* le deck. Mesure avant correction — prendre les
+trésors coûtait **zéro** point de survie, donc le dilemme central du jeu
+n'existait pas. Après : il en coûte 11.
+
+Ce que produisent les réglages actuels, et qu'il faut retrouver si on y
+touche :
+
+| politique | sortir au palier 3 | aller au fond (6) |
+|---|---|---|
+| tout en cartes | 100 %, 0 d'or | 58 %, 0 d'or |
+| en alternance | 100 %, 66 d'or | 59 %, 338 d'or |
+| tout en trésor | 100 %, 197 d'or | 47 %, 594 d'or |
+
+**Tension encore faible, et c'est le point à surveiller :** le sac absorbe les
+trois premiers trésors, donc sur une run de 6 paliers la cupidité ne mord que
+sur les deux derniers. Trois leviers si ça ne suffit pas — allonger la run,
+rétrécir le sac (décision acquise, à rouvrir avec Keko), ou donner plus d'un
+trésor par palier.
 
 ### Ce qu'on sait déjà de la pollution
 
@@ -281,14 +314,25 @@ au hub, quelle que soit sa forme finale. Attention au vocabulaire dans tous les
 cas : un trésor ne rapporte rien en combat ni en fin de combat, l'écran annonce
 seulement ce que le butin vaudra **s'il ressort**.
 
-**Le prototype a fini son travail.** Il a répondu à l'hypothèse critique ; il
-n'a pas vocation à devenir le jeu.
+### La prochaine question à trancher
 
-**Ce qui n'existe toujours pas, et qui est maintenant le sujet :** la cupidité
-est validée comme *coût*, mais elle n'existe pas encore comme *choix*. Le
-curseur est un faux — le joueur n'a jamais décidé de ramasser quoi que ce soit.
-Tant qu'il n'y a pas de descente (combats enchaînés, trésors proposés, points
-de sortie), il n'y a ni push your luck, ni arbitrage, ni extraction.
+La cupidité existe enfin comme **choix** et non plus comme curseur. Reste à
+savoir si ce choix est vivant :
+
+> **Est-ce que je suis tenté de continuer alors que je devrais rentrer ?**
+
+Si Keko sort systématiquement à la première porte, la descente n'a pas de
+tension et il faudra donner une meilleure raison de descendre. S'il va
+systématiquement au bout, mourir ne fait pas assez mal.
+
+**Un risque connu à garder en tête avant de conclure :** la mort fait tout
+perdre, donc le jeu rationnel est de sortir tôt. Le contrepoids normal, c'est
+que rentrer tôt ne rapporte pas assez pour progresser — sauf que la
+progression n'existe pas encore. Il se peut que la réponse complète attende le
+hub.
+
+Le squelette est volontairement nu : pas de hub, pas de marché, pas de
+méta-progression, chaque descente repart du deck de base gratuit.
 
 ## Architecture — la règle à ne pas casser
 
