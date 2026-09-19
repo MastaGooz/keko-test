@@ -63,7 +63,7 @@ export function assaut(view: View, noms: string[]): void {
 }
 
 /** Durée de l'assaut, en ms. Doit suivre la règle CSS `.silhouette.assaut`. */
-const DUREE_ASSAUT = 420
+const DUREE_ASSAUT = 460
 
 /** Le corps tombe : une marque sur toute la rangée, le temps de le voir partir. */
 export function tombe(view: View): void {

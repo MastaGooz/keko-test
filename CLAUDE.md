@@ -295,8 +295,12 @@ donjon. Ce qui tourne :
 - le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
-- **l'ennemi qui frappe bondit** : il se ramasse d'abord — l'anticipation — puis
-  frappe. Seuls ceux dont le compteur est échu bougent, lus dans les événements
+- **l'ennemi qui frappe bondit** : il monte en se ramassant, puis tombe d'un
+  coup sous sa position de repos avant de remonter. **Tout le poids vient du
+  contraste de vitesse** — mesuré : 16 px de montée en 140 ms, puis 36 px de
+  chute en 70 ms, cinq fois plus rapide. Une première version lissée
+  uniformément était molle ; chaque étape porte donc sa propre accélération, et
+  l'animation est déclarée `linear` en global. Seuls ceux dont le compteur est échu bougent, lus dans les événements
   du tour, donc un ennemi à `periode: 2` reste immobile les tours où il attend.
   Et **la réaction du joueur est décalée de 170 ms** : sans ça le bond et
   l'encaissement se superposent, et on ne lit plus la cause de l'effet ;

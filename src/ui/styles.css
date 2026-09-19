@@ -142,25 +142,33 @@ body {
    animations sur la meme propriete se marchent dessus. La respiration reprend
    toute seule a la fin. */
 .silhouette.assaut {
-  animation: assaut 0.42s ease-out;
+  /* `linear` en global : c'est CHAQUE etape qui porte son acceleration.
+     Un lissage uniforme donnerait un mouvement mou -- tout le poids vient du
+     contraste entre une montee qui prend son temps et une chute brutale. */
+  animation: assaut 0.46s linear;
 }
 
 @keyframes assaut {
   0% {
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1) rotate(0deg);
+    animation-timing-function: ease-out;
   }
-  24% {
-    /* Anticipation : elle recule avant de frapper. */
-    transform: translateY(-7px) scale(0.96);
+  30% {
+    /* Le recul : elle monte, se ramasse, et marque le temps. */
+    transform: translateY(-16px) scale(0.92) rotate(-5deg);
+    animation-timing-function: ease-in;
   }
-  48% {
-    transform: translateY(11px) scale(1.08);
+  44% {
+    /* La chute : elle accelere jusqu'a l'impact, sous sa position de repos. */
+    transform: translateY(23px) scale(1.15) rotate(4deg);
+    animation-timing-function: ease-out;
   }
-  72% {
-    transform: translateY(2px) scale(1.01);
+  58% {
+    transform: translateY(11px) scale(1.05) rotate(1deg);
+    animation-timing-function: ease-out;
   }
   100% {
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1) rotate(0deg);
   }
 }
 
