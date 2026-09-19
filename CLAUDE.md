@@ -354,6 +354,15 @@ Deux paliers de resserrement : `max-height: 760px` réduit les espacements et
 masque le journal, `max-height: 620px` rogne le décor et la taille des cartes.
 **On rogne sur le décor avant les cibles tactiles**, jamais l'inverse.
 
+**Le socle navigateur.** `vite.config.ts` fixe `cssTarget` : sans lui, le
+minifieur réécrit `max-height: 620px` en syntaxe d'intervalle (`height <=
+620px`), qui demande Chrome 104+ — sur un téléphone plus ancien la règle serait
+ignorée **sans erreur**, et le combat redéborderait sans que rien ne le dise.
+Il reste un plancher qu'on ne peut pas abaisser : `color-mix()` avec des
+`var()` ne se compile pas, donc la page demande **Chrome 111 / Safari 16.2**
+(2023). En dessous, les accents de couleur tombent et le rendu s'aplatit — ça
+reste jouable, mais silencieusement plus laid.
+
 **Pour mesurer un format sans redimensionner la fenêtre**, charger la page dans
 une `iframe` de la taille visée : les `vh` et les media queries s'y appliquent
 pour de vrai. Attention — **dans un onglet en arrière-plan le navigateur gèle

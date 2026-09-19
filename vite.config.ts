@@ -32,5 +32,12 @@ export default defineConfig(({ command }) => ({
   define: {
     __BUILD_TIME__: JSON.stringify(buildTime),
   },
+  build: {
+    // Sans cible explicite, le minifieur réécrit `max-height: 620px` en
+    // syntaxe d'intervalle (`height <= 620px`), qui demande Chrome 104+ ou
+    // Safari 16.4+. Sur un téléphone plus ancien la règle serait ignorée
+    // SANS ERREUR : le combat redéborderait de l'écran et rien ne le dirait.
+    cssTarget: ['chrome90', 'safari14', 'firefox90'],
+  },
   plugins: [datePubliee()],
 }))
