@@ -50,7 +50,19 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-.app {
+/* Les jetons de taille vivent sur `:root`, pas sur `.app`.
+
+   Ils ne dependent que de la fenetre (vh / vw), donc la racine est leur place
+   naturelle -- et surtout le calque de duel doit les lire alors qu'il vit HORS
+   de `.app` : un transform sur `.app` (la secousse) en ferait le bloc conteneur
+   de ses enfants en position fixe. */
+/* Les jetons de taille vivent sur `:root`, pas sur `.app`.
+
+   Ils ne dependent que de la fenetre (vh / vw), donc la racine est leur place
+   naturelle -- et surtout le calque de duel doit les lire alors qu'il vit HORS
+   de `.app` : un transform sur `.app` (la secousse) en ferait le bloc conteneur
+   de ses enfants en position fixe. */
+:root {
   /* La taille d'une carte, en un seul endroit : la main ET les tas la lisent.
 
      Aucun `%` ici, et c'est deliberé. La borne de colonne s'ecrivait `26%` et
@@ -81,7 +93,9 @@ body {
      ecran de PC les betes restaient des vignettes sous des cartes deux fois
      plus grandes qu'elles. */
   --corps: min(11rem, 20vh);
+}
 
+.app {
   min-height: 100dvh;
   /* Toute la largeur : le plafond datait du portrait, et en paysage il
      rejetait les "coins" de l'ecran a 130 px du bord. Une limite haute reste,
@@ -2277,16 +2291,16 @@ body {
      taille de carte gagne. Sur un ecran haut la carte plafonne a 11rem de
      toute facon -- l'enfouir n'achete plus rien et ne ferait que reculer la
      scene quand on leve une carte. */
-  .app {
+  :root {
     --large: min(11rem, 26vh, calc(0.17 * (min(100vw, 90rem) - 8.5rem)));
     --part-enfouie: 0.24;
   }
 
-  .app {
+  :root {
     --corps: min(4.5rem, 16vh);
   }
 
-  .app {
+  :root {
     --degagement: 2.75rem;
   }
 
@@ -2317,16 +2331,16 @@ body {
     padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
   }
 
-  .app {
+  :root {
     --large: min(11rem, 24vh, calc(0.17 * (min(100vw, 90rem) - 8.5rem)));
     --part-enfouie: 0.24;
   }
 
-  .app {
+  :root {
     --corps: min(4.5rem, 14.5vh);
   }
 
-  .app {
+  :root {
     --degagement: 2rem;
   }
 }
@@ -2474,4 +2488,122 @@ body {
 .encombrement {
   order: -1;
   text-align: center;
+}
+
+/* --- le gros plan d'attaque, a la Darkest Dungeon ------------------------- */
+
+/* Un voile tombe sur la scene et les deux combattants apparaissent en grand,
+   face a face. Le voile passe PAR-DESSUS LES CORPS, jamais par-dessus la main
+   ni les tas : ce qu'on tient doit rester lisible pendant qu'on regarde le
+   coup partir. D'ou l'empilement -- `.duel` a 24, `#cartes` a 28, les tas a 25
+   et l'orbe a 26. */
+.duel {
+  position: fixed;
+  inset: 0;
+  z-index: 24;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* La main garde sa place : les figures se centrent dans ce qui reste. */
+  padding-bottom: calc(var(--emerge) + var(--degagement));
+  background:
+    radial-gradient(70% 60% at 50% 42%, #0000006b, #000000d6 78%),
+    #000000c4;
+  opacity: 0;
+  transition: opacity 0.12s ease-out;
+  pointer-events: none;
+}
+
+.duel.ouvert {
+  opacity: 1;
+}
+
+.duel-plateau {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+}
+
+/* L'ecart entre les deux : c'est la distance qui fait le duel. */
+.duel-entre {
+  flex: 0 1 calc(var(--corps) * 1.4);
+}
+
+.duel-corps {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  color: var(--teinte, #9a7a62);
+  /* Les figures entrent en meme temps que le voile, mais de plus bas : elles
+     montent vers le devant de la scene au lieu d'apparaitre posees. */
+  transform: translateY(1.25rem) scale(0.94);
+  opacity: 0;
+  transition:
+    transform 0.16s ease-out,
+    opacity 0.16s ease-out;
+}
+
+.duel.ouvert .duel-corps {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+/* 2,6x le corps de la scene : c'est un GROS plan, il doit se lire comme une
+   rupture d'echelle et pas comme un zoom timide. Le plafond en vh garde les
+   deux figures au-dessus de la main sur un ecran court. */
+.duel-chair {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: min(calc(var(--corps) * 2.6), 42vh);
+}
+
+.duel-chair .silhouette {
+  width: auto;
+  height: 100%;
+}
+
+/* L'attaquant passe devant : il se detache du fond plus que sa cible. */
+.duel-corps.attaque .silhouette {
+  filter:
+    drop-shadow(0 -2px 0 color-mix(in srgb, var(--teinte, #999) 70%, #fff))
+    drop-shadow(0 0.5rem 0.7rem #000000c0)
+    drop-shadow(0 0 1.5rem color-mix(in srgb, var(--teinte, #999) 45%, transparent));
+}
+
+.duel-nom {
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--fg);
+  text-shadow: 0 2px 6px #000;
+}
+
+/* La cible reste en retrait tant qu'elle n'a pas pris le coup. */
+.duel-corps:not(.attaque) .duel-nom {
+  color: var(--muted);
+}
+
+/* Le chiffre du gros plan est plus gros que celui de la scene : a cette
+   echelle, le chiffre de la scene se perdait sur un corps de 450 px. */
+.degats-voles.grand {
+  font-size: 2.25rem;
+}
+
+.duel.secoue {
+  animation: secousse-ecran 0.24s ease-out;
+}
+
+/* La main et les bords passent AU-DESSUS du voile. `#cartes` devient un
+   contexte d'empilement a lui seul : les z-index internes des cartes (0 a 20)
+   restent relatifs entre eux, et tout le paquet monte d'un bloc. */
+#cartes {
+  position: relative;
+  z-index: 28;
 }

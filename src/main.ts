@@ -22,18 +22,11 @@ import {
   terminerButin,
 } from './logic/descente.ts'
 import type { Agonie, Occupation } from './ui/render.ts'
-import { mount, render } from './ui/render.ts'
+import { figure, FIGURE_JOUEUR, mount, render } from './ui/render.ts'
+import { DUREE_DUEL, duel, fermerDuel, IMPACT_DUEL, PAS_ENTRE_DUELS } from './ui/duel.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
-import {
-  assaut,
-  DUREE_CHUTE,
-  DUREE_COUP,
-  encaisse,
-  INSTANT_IMPACT,
-  PAS_ENTRE_FRAPPES,
-  secouerEcran,
-} from './ui/effets.ts'
+import { DUREE_CHUTE, DUREE_COUP, secouerEcran } from './ui/effets.ts'
 import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
 import { tracerVisees } from './ui/visees.ts'
 import {
@@ -73,6 +66,8 @@ function demarrer(nouvelleSeed: number): void {
   seed = nouvelleSeed
   rng = createRng(seed)
   descente = commencerDescente(rng)
+  // Une nouvelle descente ne doit pas hériter d'un voile reste ouvert.
+  fermerDuel(view)
   selection = null
   finSonnee = false
   agonie = []
@@ -123,17 +118,21 @@ function conclure(): void {
  * n'importe quel autre — sinon il disparaîtrait avant que ses dégâts ne
  * s'affichent — puis il s'effondre et quitte le rang.
  */
-function faireMourir(index: number): void {
+function faireMourir(index: number, debutChute = DUREE_COUP): void {
+  // Le corps entre en agonie TOUT DE SUITE, même si sa chute est retardée :
+  // c'est ce qui le garde au rang. Sans ça il disparaîtrait du rendu à
+  // l'instant où ses PV tombent à zéro — derrière le voile du gros plan — et
+  // il n'y aurait plus personne à faire tomber quand le voile se lève.
   agonie = [...agonie, { index, phase: 'coup' }]
   window.setTimeout(() => {
     agonie = agonie.map((a) => (a.index === index ? { index, phase: 'chute' as const } : a))
     sonAcheve()
     dessiner()
-  }, DUREE_COUP)
+  }, debutChute)
   window.setTimeout(() => {
     agonie = agonie.filter((a) => a.index !== index)
     dessiner()
-  }, DUREE_COUP + DUREE_CHUTE)
+  }, debutChute + DUREE_CHUTE)
 }
 
 /** Ce qui doit attendre son tour. Les réglages, eux, répondent toujours. */
@@ -179,17 +178,26 @@ bindInput(view, (action) => {
         descente = { ...descente, combat: apres }
         const reste = apres.ennemis[action.cible]?.pv ?? 0
         const inflige = debout - reste
-        if (inflige > 0) {
-          marques.push(() => encaisse(view, action.cible, inflige))
-          attente = DUREE_COUP
+        const cible = combat.ennemis[action.cible]
+        if (inflige > 0 && cible !== undefined) {
+          marques.push(() => {
+            duel(view, FIGURE_JOUEUR, figure(cible.nom), 'joueur', inflige)
+            // Le son et la secousse tombent SUR L'IMPACT du gros plan, pas au
+            // moment de la tape : le coup est désormais un geste qui se
+            // déroule, plus un chiffre qui change.
+            window.setTimeout(() => {
+              // La force du son suit le coût de la carte : on entend son poids.
+              if (carte !== undefined) sonFrappe((carte.cout - 1) / 3)
+              secouerEcran(view)
+            }, IMPACT_DUEL)
+          })
+          attente = DUREE_DUEL
         }
-        // La force du son suit le coût de la carte : on entend son poids.
-        if (carte !== undefined) sonFrappe((carte.cout - 1) / 3)
-        // Le corps reste au rang pour encaisser, puis tombe. Le son de la mort
-        // accompagne la chute, pas le coup.
+        // Le corps tombe quand le voile se lève : le gros plan a déjà montré
+        // le coup, la scène montre ce qu'il en reste.
         if (debout > 0 && reste <= 0) {
-          faireMourir(action.cible)
-          attente = DUREE_COUP + DUREE_CHUTE
+          faireMourir(action.cible, DUREE_DUEL)
+          attente = DUREE_DUEL + DUREE_CHUTE
         }
       }
       selection = null
@@ -208,27 +216,27 @@ bindInput(view, (action) => {
 
       marques.push(() => {
         frappes.forEach((frappe, rang) => {
-          const depart = rang * PAS_ENTRE_FRAPPES
-          window.setTimeout(() => assaut(view, [frappe.nom]), depart)
+          const depart = rang * PAS_ENTRE_DUELS
+          window.setTimeout(
+            () => duel(view, FIGURE_JOUEUR, figure(frappe.nom), 'ennemi', frappe.degats),
+            depart,
+          )
           window.setTimeout(() => {
-            encaisse(view, 'joueur', frappe.degats)
             secouerEcran(view)
             sonEncaisse()
-          }, depart + INSTANT_IMPACT)
+          }, depart + IMPACT_DUEL)
         })
         // La repioche se fait entendre une fois la salve passée.
         window.setTimeout(
           () => sonPioche(),
-          Math.max(0, (frappes.length - 1) * PAS_ENTRE_FRAPPES + INSTANT_IMPACT + 120),
+          Math.max(0, (frappes.length - 1) * PAS_ENTRE_DUELS + DUREE_DUEL),
         )
       })
 
-      // La main revient au joueur quand la dernière frappe a fini de résonner.
+      // La main revient au joueur quand le dernier gros plan s'est refermé.
       pendant = 'ennemis'
       attente =
-        frappes.length === 0
-          ? 0
-          : (frappes.length - 1) * PAS_ENTRE_FRAPPES + INSTANT_IMPACT + DUREE_COUP
+        frappes.length === 0 ? 0 : (frappes.length - 1) * PAS_ENTRE_DUELS + DUREE_DUEL
 
       selection = null
       break

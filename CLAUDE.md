@@ -368,6 +368,32 @@ donjon. Ce qui tourne :
   est la cible tactile. **Elles respirent**, décalées les unes des autres : une
   meute qui souffle à l'unisson fait machine, pas vivant. Le joueur, lui, reste
   une barre — il n'est pas un corps de plus à l'écran ;
+- **le gros plan d'attaque, à la Darkest Dungeon** (`ui/duel.ts`, purement
+  décoratif comme `ui/effets.ts`, supprimable sans rien casser). À chaque coup
+  porté, un voile tombe sur la scène et les deux combattants apparaissent en
+  grand, face à face — de 146 px de haut sur un petit téléphone couché à 487 px
+  sur un écran de 1080. L'attaquant bondit, la cible encaisse, le voile se
+  lève.
+
+  **Le voile passe par-dessus les corps, jamais par-dessus la main ni les
+  tas** : ce qu'on tient reste lisible pendant qu'on regarde le coup partir.
+  C'est un contrat d'empilement, à ne pas casser — `.duel` à 24, les tas à 25,
+  l'orbe à 26, `#cartes` à 28 (qui devient un contexte d'empilement à lui seul,
+  pour que les z-index internes des cartes montent d'un bloc).
+
+  **Le joueur reçoit le même assaut que les ennemis.** Il n'y a pas deux
+  grammaires de frappe, il y a une frappe et deux camps qui l'empruntent.
+
+  **Le joueur reste à gauche et l'ennemi à droite, quel que soit l'attaquant.**
+  Retourner le décor casserait le sens de lecture ET les silhouettes, qui sont
+  dessinées pour se faire face dans cet ordre. C'est l'assaut qui désigne
+  l'attaquant, pas la place.
+
+  **Le prix est réel et il faut le savoir** : un gros plan dure 780 ms, et une
+  salve de trois ennemis en coûte trois (2,5 s). Un tour complet passe d'environ
+  0,5–2,2 s d'animation à 2,5–4,2 s. L'assaut lui-même fait 580 ms et n'est pas
+  compressible sans perdre le contraste de vitesse qui lui donne son poids ; ce
+  qui reste réglable, c'est l'entrée, la sortie et le pas entre deux gros plans.
 - le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;
@@ -420,6 +446,12 @@ donjon. Ce qui tourne :
   **La phase d'agonie vient de l'état, pas d'une classe posée à la main.** Un
   nouveau rendu au milieu de la chute effacerait la classe et figerait le
   corps ; or le joueur peut tout à fait jouer une autre carte pendant ce temps.
+
+  **Depuis le gros plan, la chute attend que le voile se lève** — mais l'entrée
+  en agonie, elle, reste immédiate. C'est elle qui garde le corps au rang :
+  sans ça il disparaîtrait du rendu à l'instant où ses PV tombent à zéro,
+  derrière le voile, et il n'y aurait plus personne à faire tomber quand le
+  voile se lève.
 - **la pioche et la défausse en piles de vrais dos de carte**, dans les coins
   bas, à **la taille exacte des cartes de la main** et enfouies comme elles :
   on n'en voit que le haut, sur la même ligne de flottaison. Un tas doit être
@@ -737,6 +769,8 @@ src/
     storage.ts   # (dé)sérialisation + interface StoragePort
   ui/      # TOUT ce qui touche au navigateur
     render.ts    # mount() construit le DOM une fois, render() le met à jour
+    effets.ts    # marques décoratives posées après un rendu (coup, agonie, secousse)
+    duel.ts      # le gros plan d'attaque — décoratif lui aussi, supprimable
     input.ts     # événements -> actions
     storage.ts   # implémentation localStorage du StoragePort
     styles.css
@@ -781,6 +815,12 @@ main ET par les tas** :
 --corps:  min(11rem, 20vh);    /* min(4.5rem, 16vh) sous 430 px */
 --degagement: 2.25rem;         /* 2,75rem sous 430 px, 2rem sous 360 */
 ```
+
+Ils vivent sur **`:root`, pas sur `.app`** : ils ne dépendent que de la
+fenêtre, donc la racine est leur place naturelle — et surtout le calque du gros
+plan doit les lire alors qu'il vit **hors de `.app`**, puisqu'un transform sur
+`.app` (la secousse) en ferait le bloc conteneur de ses enfants en position
+fixe.
 
 **Aucun pourcentage là-dedans, et c'est délibéré** (voir la section sur ce
 piège) : la borne de colonne s'écrivait `26%` et changeait de sens selon la

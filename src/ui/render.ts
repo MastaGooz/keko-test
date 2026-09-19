@@ -34,6 +34,18 @@ const ESPECES: Record<string, { espece: string; teinte: string }> = {
   'Traînard': { espece: 'roquet', teinte: '#7f8a6e' },
 }
 
+/**
+ * Le joueur et les ennemis, tels que le gros plan d'attaque a besoin de les
+ * connaître. C'est ici que vit la table des espèces, donc c'est ici qu'on la
+ * lit — `duel.ts` n'a pas à savoir quel monstre porte quelle silhouette.
+ */
+export const FIGURE_JOUEUR = { nom: 'TOI', espece: 'joueur', teinte: '#7fb6d9' }
+
+export function figure(nom: string): { nom: string; espece: string; teinte: string } {
+  const e = ESPECES[nom] ?? { espece: 'roquet', teinte: '#9a7a62' }
+  return { nom, espece: e.espece, teinte: e.teinte }
+}
+
 export type View = {
   root: HTMLElement
   seed: HTMLElement
