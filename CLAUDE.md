@@ -285,8 +285,11 @@ donjon. Ce qui tourne :
 - **Grisé, jamais transparent.** Les cartes de la main se recouvrent en
   éventail : une carte translucide laisse voir sa voisine au travers et devient
   illisible au doigt. `grayscale` + `brightness`, jamais `opacity` ;
-- les ennemis sur une **scène** : des **créatures dessinées** (SVG,
-  `ui/illustrations.ts`) qui se tiennent côte à côte sur un sol éclairé, avec
+- les ennemis **sans cadre** : des **créatures dessinées** (SVG,
+  `ui/illustrations.ts`) posées à même la page. Un panneau autour d'elles les
+  enfermait dans une vignette au lieu de les poser dans un lieu — c'est l'ombre
+  sous leurs pattes qui fait le sol, pas une boîte. Elles se tiennent côte à
+  côte, avec
   leur **intention au-dessus de la tête** — ce qu'elles frappent et dans
   combien de tours, allumée si c'est pour la fin de ce tour-ci. Tout le corps
   est la cible tactile. **Elles respirent**, décalées les unes des autres : une
@@ -354,7 +357,11 @@ donjon. Ce qui tourne :
   parce qu'on joue en deux tapes — entre les deux il n'y a pas encore de cible,
   ni de doigt à suivre. L'arche ne confirme pas un choix, elle montre qu'il y
   en a un à faire. Blanche et pleine sur un corps que la carte **achève** ;
-- le détail chiffré uniquement sur ce qui est visé ;
+- **aucun aperçu de PV restants** sous un corps visé : il ajoutait une ligne,
+  donc faisait sauter la hauteur du rang à l'instant même où l'on vise — au
+  doigt, la cible bouge sous le pouce. Et il n'apprenait rien : la carte
+  affiche ses dégâts, et le corps qu'elle peut achever se signale par son
+  cadre blanc et par l'arche pleine qui le relie à la carte ;
 - les **commandes de test** (curseur de butin, relance, plein écran, son,
   journal) dans un **panneau hors du flux**, fermé par défaut, qui remonte en
   feuille par le bouton « Réglages » — et tout seul quand le combat est fini ;

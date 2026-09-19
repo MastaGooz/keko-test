@@ -201,14 +201,10 @@ function corpsEnnemi(
 
   // Un mourant ne se vise plus, et son intention ne veut plus rien dire.
   const c = visee === null || fini || agonie !== undefined ? null : consequence(etat, visee, index)
-  const sort =
-    c === null
-      ? ''
-      : c.gagne
-        ? `<span class="effet gagne">★ gagne</span>`
-        : c.tue
-          ? `<span class="effet gagne">★ achève${c.evite > 0 ? ` −${c.evite}` : ''}</span>`
-          : `<span class="effet">→ ${Math.max(0, ennemi.pv - visee!.degats)}</span>`
+  // Aucun aperçu de PV restants sous le corps : il ajoutait une ligne, donc
+  // faisait sauter la hauteur du rang au moment même où l'on vise. Et il
+  // n'apprenait rien — la carte affiche ses dégâts, et le corps qu'elle peut
+  // achever se signale déjà par son cadre blanc.
 
   const corps =
     `<span class="intention${imminent ? ' imminent' : ''}">` +
@@ -217,8 +213,7 @@ function corpsEnnemi(
     `${creature(espece.espece, String(index))}<span class="socle"></span></span>` +
     jauge(ennemi.pv, ennemi.pvMax) +
     `<span class="plaquette"><span class="nom">${ennemi.nom}</span>` +
-    `<span class="pv">${ennemi.pv}</span></span>` +
-    sort
+    `<span class="pv">${ennemi.pv}</span></span>`
 
   if (c === null) {
     const etat_ = agonie === undefined ? '' : ` mort${agonie.phase === 'chute' ? ' meurt' : ''}`
