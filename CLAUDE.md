@@ -234,9 +234,14 @@ donjon. Ce qui tourne :
 - **le sac est un vrai inventaire** : ses trésors sont des cartes, on les
   réarrange, et déposer sur un emplacement occupé **échange** — le déplacé
   passe *en main*, il n'est pas perdu. On peut donc enchaîner les échanges,
-  puis décider du dernier : dans le sac, dans le deck où il pèsera, ou laissé.
-  **Rien n'est validé avant « Terminer »** : un rangement qui s'engage au
-  premier geste punit l'exploration, alors que c'est là qu'on veut réfléchir ;
+  puis décider du dernier. **Rien n'est validé avant « Terminer »** : un
+  rangement qui s'engage au premier geste punit l'exploration, alors que c'est
+  là qu'on veut réfléchir ;
+- **le deck est un emplacement, pas un bouton** : le trésor s'y range vraiment,
+  il y pèse simplement — d'où sa teinte chaude et son compteur de portés. Et
+  **ce qu'on tient est plus grand que ce qui le reçoit** : les emplacements
+  sont plafonnés, sinon ils s'étalent sur grand écran jusqu'à égaler la pièce
+  en main et la lecture s'inverse ;
 - **glisser-déposer au doigt** (`ui/glisser.ts`, `pointer*`), avec une règle :
   **chaque destination est aussi un bouton**. Sur téléphone le glisser seul est
   fragile, la tape doit toujours marcher — c'est elle qui porte la

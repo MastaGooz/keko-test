@@ -1663,3 +1663,62 @@ body {
     width: 5rem;
   }
 }
+
+/* --- ce qu'on tient domine ce qui le recoit ------------------------------- */
+
+/* La piece en main est la piece qui compte : elle doit etre plus grande que
+   les emplacements, pas l'inverse. */
+.butin-piece {
+  width: 8rem;
+}
+
+.destinations {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.375rem;
+  width: 100%;
+}
+
+/* Les emplacements sont plafonnes : sans ca ils s'etalent sur grand ecran et
+   deviennent aussi gros que la piece qu'on tient, ce qui inverse la lecture.
+   Ce qu'on tient doit dominer ce qui le recoit. */
+.destinations .emplacement {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 5.5rem;
+  padding: 0.3125rem;
+}
+
+/* Le deck est un emplacement, pas un bouton a part : le tresor s'y range
+   vraiment, il y pese simplement. D'ou la teinte chaude. */
+.emplacement.deck {
+  flex-direction: column;
+  gap: 0.25rem;
+  border-color: #6b4030;
+  border-style: solid;
+  background: linear-gradient(#32211e, #221816);
+}
+
+.etiquette-slot {
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.poids {
+  font-size: 0.625rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+.abandon {
+  max-width: 18rem;
+  font-size: 0.75rem;
+}
+
+@media (max-height: 700px) {
+  .butin-piece {
+    width: 6rem;
+  }
+}

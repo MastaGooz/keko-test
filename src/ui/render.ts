@@ -451,24 +451,20 @@ function butin(descente: Descente, enMain: Carte | null): string {
     )
   }).join('')
 
+  // Le deck est une destination comme les autres, pas une commande à part :
+  // c'est bien un endroit où le trésor se range, il y pèse simplement.
+  const portes = tresorsAuDeck(descente)
+  const deck =
+    `<button class="emplacement deck" type="button" data-action="deplacer" ` +
+    `data-ou="deck" data-depot>` +
+    `<span class="etiquette-slot">Deck</span>` +
+    `<span class="poids">${portes === 0 ? 'il pèsera' : `${portes} porté${portes > 1 ? 's' : ''}`}</span>` +
+    `</button>`
+
   const tenu =
     enMain === null
       ? `<p class="bilan">Sac rangé.</p>`
       : `<div class="butin-piece" data-glissable data-source="main">${vitrine(enMain, false)}</div>`
-
-  const destinations =
-    enMain === null
-      ? ''
-      : `<div class="offres">` +
-        `<button class="issue-choix continuer" type="button" data-action="deplacer" ` +
-        `data-ou="deck" data-depot>` +
-        `<span class="quoi">Dans le deck</span>` +
-        `<span class="pourquoi">Il pèsera à chaque main</span></button>` +
-        `<button class="issue-choix" type="button" data-action="deplacer" ` +
-        `data-ou="laisser" data-depot>` +
-        `<span class="quoi">Laisser</span>` +
-        `<span class="pourquoi">Perdu pour de bon</span></button>` +
-        `</div>`
 
   return (
     `<div class="voile">` +
@@ -478,11 +474,14 @@ function butin(descente: Descente, enMain: Carte | null): string {
     `<p class="note">` +
     (enMain === null
       ? 'Tu peux encore réarranger ton sac.'
-      : 'Glisse-le dans un emplacement, ou tape la destination. ' +
+      : 'Glisse-le vers une destination, ou tape-la. ' +
         'Sur un emplacement occupé, les deux échangent.') +
     `</p>` +
-    `<div class="sac">${emplacements}</div>` +
-    destinations +
+    `<div class="destinations">${emplacements}${deck}</div>` +
+    (enMain === null
+      ? ''
+      : `<button class="bouton secondaire abandon" type="button" data-action="deplacer" ` +
+        `data-ou="laisser" data-depot>Laisser au fond — perdu pour de bon</button>`) +
     `<button class="bouton secondaire terminer" type="button" data-action="terminerButin"` +
     `${enMain === null ? '' : ' disabled'}>` +
     (enMain === null ? 'Terminer' : 'Range ton trésor') +
