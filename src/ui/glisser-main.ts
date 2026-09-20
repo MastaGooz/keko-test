@@ -8,18 +8,35 @@
  * depuis que la main est en éventail et que le recouvrement mange les trois
  * quarts de chaque carte.
  *
- * **Le seuil sépare les trois gestes, et il est le seul juge.** Sous 8 px, on
- * n'a pas glissé, on a tapé. Au-delà, c'est la hauteur du doigt à la levée qui
- * tranche : au-dessus de la main, on joue ; dedans, on range. Aucun mode, aucun
- * état à retenir — le geste se lit à son terme.
+ * **Ce qui déclenche la prise n'est pas le même au doigt et à la souris.** À la
+ * souris, un déplacement suffit : elle ne dérive pas. Au doigt, si — toujours
+ * de quelques pixels — donc un seuil court faisait passer les tapes pour des
+ * glissers reposés sur place, et le zoom ne s'ouvrait jamais. Keko : « quand je
+ * clique sur une carte sur le tel elle ne zoome pas, je dois laisser enfoncer
+ * pour ça ». Au doigt, **c'est donc le MAINTIEN qui prend la carte** : on
+ * appuie, elle monte. Le déplacement reste une seconde porte, mais avec un
+ * seuil deux fois plus large.
+ *
+ * Une fois la carte prise, c'est la hauteur du doigt à la levée qui tranche :
+ * au-dessus de la main, on joue ; dedans, on range. Et une levée sans prise,
+ * c'est une tape : on regarde la carte.
  *
  * Évènements `pointer*` et non `touch*`/`mouse*` : un seul code pour le doigt,
  * la souris et le stylet.
  */
 import type { View } from './render.ts'
 
-/** Sous ce déplacement, c'est une tape et pas un glisser. */
-const SEUIL = 8
+/** Sous ce déplacement, la souris n'a pas glissé : elle a cliqué. */
+const SEUIL_SOURIS = 8
+
+/**
+ * Au doigt il en faut le double : une tape dérive, et la prendre pour un
+ * glisser coûte le zoom.
+ */
+const SEUIL_DOIGT = 16
+
+/** Au doigt, rester appuyé prend la carte, même sans bouger d'un pixel. */
+const DELAI_PRISE = 160
 
 export type GestesMain = {
   /** La carte a été sortie de la main : on la joue. */
@@ -40,6 +57,8 @@ export function brancherMain(view: View, gestes: GestesMain): void {
   let depart = { x: 0, y: 0 }
   let glisse = false
   let fantome: HTMLElement | null = null
+  let tactile = false
+  let minuteur = 0
 
   /** Le haut de la main : au-dessus, on est sorti. */
   function plafond(): number {
@@ -87,7 +106,29 @@ export function brancherMain(view: View, gestes: GestesMain): void {
     }
   }
 
+  /** Prend la carte : elle quitte la main et un fantôme suit le doigt. */
+  function prendre(x: number, y: number): void {
+    if (carte === null || glisse) return
+    glisse = true
+    carte.classList.add('saisie')
+    // Un fantôme plutôt que la carte elle-même : elle porte la rotation et le
+    // décalage de l'éventail, et la déplacer voudrait dire les défaire.
+    fantome = carte.cloneNode(true) as HTMLElement
+    fantome.classList.remove('saisie', 'ecarte-gauche', 'ecarte-droite')
+    fantome.classList.add('fantome-carte')
+    fantome.style.width = `${carte.offsetWidth}px`
+    fantome.style.height = `${carte.offsetHeight}px`
+    fantome.style.left = `${x}px`
+    fantome.style.top = `${y}px`
+    document.body.appendChild(fantome)
+    // Pendant le glisser AUSSI : au doigt il n'y a pas de survol, et c'est
+    // justement le moment ou l'apercu sert -- on choisit sa cible en le
+    // regardant.
+    gestes.survol(index)
+  }
+
   function nettoyer(): void {
+    window.clearTimeout(minuteur)
     carte?.classList.remove('saisie')
     fantome?.remove()
     fantome = null
@@ -105,6 +146,11 @@ export function brancherMain(view: View, gestes: GestesMain): void {
     index = Number(cible.dataset.main)
     depart = { x: e.clientX, y: e.clientY }
     glisse = false
+    tactile = e.pointerType !== 'mouse'
+    // Au doigt, le maintien prend la carte sans qu'on ait besoin de bouger.
+    // À la souris, non : un clic qui s'attarde reste un clic.
+    window.clearTimeout(minuteur)
+    if (tactile) minuteur = window.setTimeout(() => prendre(depart.x, depart.y), DELAI_PRISE)
     // La capture garde les évènements même si le doigt sort de la carte — et
     // il en sort forcément, puisque sortir de la main EST le geste.
     try {
@@ -122,21 +168,10 @@ export function brancherMain(view: View, gestes: GestesMain): void {
   window.addEventListener('pointermove', (e) => {
     if (carte === null) return
     if (!glisse) {
-      if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < SEUIL) return
-      glisse = true
-      carte.classList.add('saisie')
-      // Un fantôme plutôt que la carte elle-même : elle porte la rotation et le
-      // décalage de l'éventail, et la déplacer voudrait dire les défaire.
-      fantome = carte.cloneNode(true) as HTMLElement
-      fantome.classList.remove('saisie', 'ecarte-gauche', 'ecarte-droite')
-      fantome.classList.add('fantome-carte')
-      fantome.style.width = `${carte.offsetWidth}px`
-      fantome.style.height = `${carte.offsetHeight}px`
-      document.body.appendChild(fantome)
-      // Pendant le glisser AUSSI : au doigt il n'y a pas de survol, et c'est
-      // justement le moment ou l'apercu sert -- on choisit sa cible en le
-      // regardant.
-      gestes.survol(index)
+      const seuil = tactile ? SEUIL_DOIGT : SEUIL_SOURIS
+      if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < seuil) return
+      window.clearTimeout(minuteur)
+      prendre(e.clientX, e.clientY)
     }
     if (fantome !== null) {
       fantome.style.left = `${e.clientX}px`

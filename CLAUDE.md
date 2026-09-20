@@ -680,10 +680,22 @@ donjon. Ce qui tourne :
   qui manquait depuis que la main est en éventail : le recouvrement mange les
   trois quarts de chaque carte et rien ne permettait d'en voir une en entier.
 
-  **Le seuil de 8 px sépare les trois gestes, et il est le seul juge.** En
-  dessous, on n'a pas glissé, on a tapé. Au-delà, c'est la hauteur du doigt à
-  la levée qui tranche : au-dessus de la main on joue, dedans on range. Aucun
-  mode, aucun état à retenir — le geste se lit à son terme.
+  **Ce qui PREND la carte n'est pas le même au doigt et à la souris.** À la
+  souris, un déplacement de 8 px suffit : elle ne dérive pas. Au doigt, si —
+  toujours de quelques pixels — donc un seuil court faisait passer les tapes
+  pour des glissers reposés sur place, et *le zoom ne s'ouvrait jamais*. Keko :
+  « quand je clique sur une carte sur le tel elle ne zoome pas, je dois laisser
+  enfoncer pour ça ». Au doigt, **c'est donc le MAINTIEN qui prend la carte**
+  (160 ms) : on appuie, elle monte. Le déplacement reste une seconde porte,
+  mais à 16 px.
+
+  *La leçon vaut au-delà de ce cas* : un seuil de distance ne distingue pas une
+  tape d'un glisser sur un écran tactile, il ne fait que déplacer l'ambiguïté.
+  C'est le temps qui les sépare.
+
+  Une fois la carte prise, c'est la hauteur du doigt à la levée qui tranche :
+  au-dessus de la main on joue, dedans on range. Et une levée sans prise, c'est
+  une tape : on regarde la carte.
 
   **Sortir la carte engage ; s'il n'y a qu'un corps debout, ça frappe
   directement.** C'est l'inverse de l'ancienne règle des deux tapes, qui
