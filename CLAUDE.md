@@ -694,8 +694,20 @@ donjon. Ce qui tourne :
   C'est le temps qui les sépare.
 
   Une fois la carte prise, c'est la hauteur du doigt à la levée qui tranche :
-  au-dessus de la main on joue, dedans on range. Et une levée sans prise, c'est
-  une tape : on regarde la carte.
+  au-dessus de la main on joue, dedans on range.
+
+  **Et ce qui décide de la tape, c'est le DÉPLACEMENT, jamais la durée.** Une
+  carte prise par le maintien puis relâchée sans avoir bougé se regarde, elle
+  ne se range pas — la reposer là d'où elle vient ne voulait rien dire de toute
+  façon. *Conséquence : il n'existe aucune façon de rater le zoom.* Un appui
+  bref l'ouvre, un appui long aussi, et entre les deux la carte se soulève pour
+  dire qu'on la tient.
+
+  C'est la deuxième correction du même défaut, et elle va plus loin que la
+  première : tant que la **durée** entrait dans la décision, un geste trop lent
+  ou trop rapide tombait dans le mauvais cas. Keko l'a signalé deux fois, de
+  deux façons opposées. Le temps sert à *prendre* la carte ; il ne sert pas à
+  *interpréter* le geste.
 
   **Sortir la carte engage ; s'il n'y a qu'un corps debout, ça frappe
   directement.** C'est l'inverse de l'ancienne règle des deux tapes, qui
@@ -716,13 +728,10 @@ donjon. Ce qui tourne :
   suffire, mais elle peut échouer ; avec la fenêtre, le glisser n'en dépend
   plus.
 
-  **Et le zoom porte un bouton « Jouer », qui est un FILET.** Le chemin normal
-  reste de sortir la carte de la main. Mais le glisser peut déraper sur un
-  téléphone, et ce dépôt a pour règle qu'une tape doit toujours pouvoir tout
-  faire : il garantit qu'on n'est jamais bloqué faute de pouvoir glisser. Il
-  est frère de la carte zoomée et non son enfant — `.zoom-carte` porte une
-  animation, donc un `transform`, qui en ferait le bloc conteneur de ce qu'il
-  contient.
+  Un bouton « Jouer » a vécu dans le zoom, comme filet contre un glisser qui
+  déraperait. Retiré à la demande de Keko une fois le geste fiabilisé : il n'a
+  plus d'objet, et un chemin de secours qu'on n'emprunte pas est un chemin qui
+  ment sur la façon dont le jeu se joue.
 
   Une carte trop chère reste **saisissable et zoomable** : on veut pouvoir la
   ranger et la regarder. C'est le dépôt qui refuse de la jouer, pas le

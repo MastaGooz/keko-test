@@ -185,24 +185,11 @@ export function render(
   // La carte regardee de pres. Elle vient de l'ETAT et non d'une classe posee
   // a la main : le premier rendu venu la balaierait.
   const regardee = zoom === null ? null : (etat.main[zoom] ?? null)
-  // Le bouton « Jouer » du zoom est un FILET, pas le chemin normal : on joue en
-  // sortant la carte de la main. Mais le glisser peut échouer sur un téléphone,
-  // et ce dépôt a pour règle qu'une tape doit toujours pouvoir tout faire — il
-  // garantit qu'on n'est jamais bloqué faute de pouvoir glisser.
-  const jouable = regardee !== null && regardee.type === 'combat' && !fini && regardee.cout <= etat.energie
   view.zoom.innerHTML =
     regardee === null
       ? ''
       : `<button class="zoom-fond" type="button" data-action="fermerZoom" aria-label="Fermer">` +
-        `</button><div class="zoom-carte">${vitrine(regardee, regardee.type === 'tresor')}</div>` +
-        // Le bouton est frère de la carte, pas son enfant : `.zoom-carte` porte
-        // une animation d'entrée, donc un `transform` — il deviendrait le bloc
-        // conteneur de ce qu'il contient, et le bouton ne pourrait plus
-        // s'ancrer à l'écran.
-        (jouable
-          ? `<button class="bouton zoom-jouer" type="button" data-action="jouerDepuisLeZoom" ` +
-            `data-index="${zoom}">Jouer</button>`
-          : '')
+        `</button><div class="zoom-carte">${vitrine(regardee, regardee.type === 'tresor')}</div>`
   view.root.classList.toggle('zoom-ouvert', regardee !== null)
 
   view.finTour.innerHTML = etiquetteFinTour(etat, occupation)

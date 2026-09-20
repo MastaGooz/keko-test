@@ -18,8 +18,15 @@
  * seuil deux fois plus large.
  *
  * Une fois la carte prise, c'est la hauteur du doigt à la levée qui tranche :
- * au-dessus de la main, on joue ; dedans, on range. Et une levée sans prise,
- * c'est une tape : on regarde la carte.
+ * au-dessus de la main, on joue ; dedans, on range.
+ *
+ * **Et ce qui décide de la tape, c'est le DÉPLACEMENT, jamais la durée.** Une
+ * carte prise par le maintien puis relâchée sans avoir bougé se regarde, elle
+ * ne se range pas — la reposer là d'où elle vient ne voulait rien dire de toute
+ * façon. Conséquence : *il n'existe aucune façon de rater le zoom*. Un appui
+ * bref l'ouvre, un appui long aussi, et entre les deux la carte se soulève pour
+ * dire qu'on la tient. C'est ce qui manquait : tant que la durée entrait dans
+ * la décision, un geste trop lent ou trop rapide tombait dans le mauvais cas.
  *
  * Évènements `pointer*` et non `touch*`/`mouse*` : un seul code pour le doigt,
  * la souris et le stylet.
@@ -56,6 +63,8 @@ export function brancherMain(view: View, gestes: GestesMain): void {
   let index = 0
   let depart = { x: 0, y: 0 }
   let glisse = false
+  /** Le doigt a franchi le seuil : ce n'est plus une tape, quoi qu'il arrive. */
+  let aBouge = false
   let fantome: HTMLElement | null = null
   let tactile = false
   let minuteur = 0
@@ -146,6 +155,7 @@ export function brancherMain(view: View, gestes: GestesMain): void {
     index = Number(cible.dataset.main)
     depart = { x: e.clientX, y: e.clientY }
     glisse = false
+    aBouge = false
     tactile = e.pointerType !== 'mouse'
     // Au doigt, le maintien prend la carte sans qu'on ait besoin de bouger.
     // À la souris, non : un clic qui s'attarde reste un clic.
@@ -167,9 +177,10 @@ export function brancherMain(view: View, gestes: GestesMain): void {
   // la fenetre, le glisser ne depend plus de la capture.
   window.addEventListener('pointermove', (e) => {
     if (carte === null) return
+    const seuil = tactile ? SEUIL_DOIGT : SEUIL_SOURIS
+    if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) >= seuil) aBouge = true
     if (!glisse) {
-      const seuil = tactile ? SEUIL_DOIGT : SEUIL_SOURIS
-      if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < seuil) return
+      if (!aBouge) return
       window.clearTimeout(minuteur)
       prendre(e.clientX, e.clientY)
     }
@@ -187,14 +198,16 @@ export function brancherMain(view: View, gestes: GestesMain): void {
 
   function relacher(e: PointerEvent): void {
     if (carte === null) return
-    const aGlisse = glisse
+    const deplacee = aBouge
     const sortie = e.clientY < plafond()
     const place = fenteSousLeDoigt(e.clientX)
     nettoyer()
     gestes.survol(null)
     if (!gestes.disponible()) return
-    // Une tape n'est pas un glisser raté : c'est l'autre geste.
-    if (!aGlisse) gestes.regarder(index)
+    // Le DÉPLACEMENT décide, jamais la durée. Une carte soulevée puis reposée
+    // sans avoir bougé se regarde : c'est le geste le plus courant, il ne peut
+    // pas dépendre de la vitesse du doigt.
+    if (!deplacee) gestes.regarder(index)
     else if (sortie) gestes.jouer(index)
     else gestes.reordonner(index, place)
   }
