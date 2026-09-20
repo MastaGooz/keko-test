@@ -2590,8 +2590,21 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* La main garde sa place : les figures se centrent dans ce qui reste. */
-  padding-bottom: calc(var(--emerge) + var(--degagement));
+  /* La main garde sa place : les figures se centrent dans ce qui reste.
+
+     ON NE RESERVE QUE LA BANDE EMERGEE, PAS LE DEGAGEMENT. Ce degagement est
+     le vide que la main se garde au-dessus d'elle pour lever une carte -- or
+     pendant un gros plan aucune carte n'est levee, donc il ne protege rien et
+     il poussait les figures vers le haut. Keko : « sur telephone je trouve
+     l'animation d'attaque un peu haute sur l'ecran ».
+
+     C'est la SEULE place recuperable, et il faut le savoir avant d'en chercher
+     d'autres : le cadre etait deja centre dans ce qui lui restait (25 px
+     au-dessus de la figure, 18 en dessous, sur un telephone couche). Ce qui le
+     fait paraitre haut, c'est que la main occupe 41 % de la hauteur en paysage.
+     Descendre davantage voudrait dire passer SOUS les cartes, ce que
+     l'empilement interdit -- et le bas d'une figure, c'est son nom. */
+  padding-bottom: var(--emerge);
   background:
     radial-gradient(70% 60% at 50% 42%, #0000006b, #000000d6 78%),
     #000000c4;
@@ -2606,6 +2619,32 @@ body {
 
 .duel.ouvert {
   opacity: 1;
+}
+
+/* LE GROS PLAN SE POSE EN BAS SUR UN ECRAN COURT, il ne se centre plus --
+   exactement comme la scene qu'il remplace, qui a ce palier colle ses corps a
+   la main au lieu de les centrer.
+
+   Centre, il restait haut meme apres avoir recupere le degagement : le centre
+   de la figure tombait a 141 px sur un ecran de 390, contre 195 pour le centre
+   de l'ecran. Ce n'etait PAS un defaut de centrage -- il etait juste, a 47 px
+   de marge en haut contre 40 en bas -- mais la zone elle-meme est haute, parce
+   que la main occupe 41 % de l'ecran en paysage. *Un cadre correctement centre
+   dans une zone decalee reste un cadre decale.*
+
+   Pose en bas, la figure descend a 181, soit le centre de l'ecran a 14 px pres.
+   Au-dessus de 430 px de haut rien ne change : la scene y centre ses corps, le
+   gros plan aussi, et Keko n'a rien signale sur PC.
+
+   ELLE EST ICI, ET PAS DANS LE BLOC `max-height: 430px` PLUS HAUT DANS LE
+   FICHIER : a specificite egale c'est la derniere regle qui gagne, donc la
+   surcharge y etait ecrasee par le `align-items: center` de `.duel` -- sans
+   erreur, et sans rien changer a l'ecran. Une media query ne l'emporte pas sur
+   une regle ordinaire, elle ne fait que filtrer. */
+@media (max-height: 430px) {
+  .duel {
+    align-items: flex-end;
+  }
 }
 
 .duel-plateau {

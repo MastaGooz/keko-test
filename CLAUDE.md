@@ -535,6 +535,32 @@ donjon. Ce qui tourne :
   reste mate. La charge le dit aussi maintenant, mais le liseré reste ce qui se
   lit avant tout mouvement.
 
+  **Sur un écran court, le cadre SE POSE EN BAS au lieu de se centrer** — comme
+  la scène qu'il remplace, qui sous 431 px colle ses corps à la main. Et il ne
+  réserve que la bande émergée de la main, pas son dégagement : ce dégagement
+  est le vide qu'elle se garde pour lever une carte, or aucune carte n'est levée
+  pendant un gros plan.
+
+  Keko : « sur téléphone je trouve l'animation d'attaque un peu haute sur
+  l'écran ». **Le cadre était pourtant correctement centré** — 25 px de marge
+  au-dessus de la figure, 18 en dessous. C'est la ZONE qui était haute, parce
+  que la main occupe 41 % de la hauteur en paysage. *Un cadre correctement
+  centré dans une zone décalée reste un cadre décalé, et c'est le genre de
+  défaut qu'une mesure de centrage déclare bon.* Posé en bas, le centre de la
+  figure tombe à 6 px du centre de l'écran (189 contre 195 sur un téléphone de
+  390), et son nom s'arrête pile sur la ligne de flottaison des cartes.
+
+  Mesuré à 667x320, 780x340, 844x390 et 932x430 : de −6 à +7 px du centre. Le
+  même décalage existe sur PC (397 contre 540 sur un 1080), **il n'a pas été
+  touché** : Keko n'a rien signalé là-bas, et au-dessus de 430 px la scène
+  centre aussi ses corps.
+
+  *Piège de placement à ne pas refaire* : la surcharge doit être écrite APRÈS
+  `.duel` dans le fichier, pas dans le bloc `max-height: 430px` qui est plus
+  haut. À spécificité égale la dernière règle gagne, donc elle y était écrasée
+  sans erreur et sans rien changer à l'écran — **une media query ne l'emporte
+  pas sur une règle ordinaire, elle ne fait que filtrer.**
+
   **Le calque vit dans `.app`, en `absolute`, pas à côté en `fixed`** — voir
   plus bas la note sur la secousse : posé à côté, il passait par-dessus toute
   l'interface du bas dès que `.app` prenait un transform. Sa largeur est prise
