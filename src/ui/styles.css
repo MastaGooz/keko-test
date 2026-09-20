@@ -62,18 +62,8 @@ body {
   -webkit-touch-callout: none;
 }
 
-/* Les jetons de taille vivent sur `:root`, pas sur `.app`.
-
-   Ils ne dependent que de la fenetre (vh / vw), donc la racine est leur place
-   naturelle -- et surtout le calque de duel doit les lire alors qu'il vit HORS
-   de `.app` : un transform sur `.app` (la secousse) en ferait le bloc conteneur
-   de ses enfants en position fixe. */
-/* Les jetons de taille vivent sur `:root`, pas sur `.app`.
-
-   Ils ne dependent que de la fenetre (vh / vw), donc la racine est leur place
-   naturelle -- et surtout le calque de duel doit les lire alors qu'il vit HORS
-   de `.app` : un transform sur `.app` (la secousse) en ferait le bloc conteneur
-   de ses enfants en position fixe. */
+/* Les jetons de taille vivent sur `:root`, pas sur `.app` : ils ne dependent
+   que de la fenetre (vh / vw), donc la racine est leur place naturelle. */
 :root {
   /* La taille d'une carte, en un seul endroit : la main ET les tas la lisent.
 
@@ -115,18 +105,6 @@ body {
 
      Plancher a 5 px : en dessous, une secousse ne se percoit plus. */
   --secousse: max(5px, calc(var(--corps) * 0.085));
-
-  /* L'ecart entre le joueur et le groupe d'en face. Un jeton parce que la carte
-     engagee vient s'y centrer : les deux doivent bouger ensemble. */
-  --ecart-camps: max(1.25rem, calc(var(--corps) * 0.55));
-
-  /* La taille d'un corps DANS LE GROS PLAN. Elle a son propre plafond (42vh),
-     different de celui du corps de scene (11rem) -- donc le rapport entre les
-     deux change avec l'ecran. Tout ce qui se mesure a l'interieur du cadre doit
-     partir d'ICI et non de `--corps`, sinon le geste n'occupe pas la meme part
-     de la figure selon l'appareil : mesure a 25 % de la figure sur un telephone
-     contre 30 % sur un ecran de 1080. */
-  --corps-duel: min(calc(var(--corps) * 2.6), 42vh);
 }
 
 .app {
@@ -205,28 +183,6 @@ body {
   color: var(--teinte, #9a7a62);
 }
 
-/* LE PORTRAIT DU JOUEUR : une vraie image a la place d'un SVG.
-   Premiere entorse a la borne « pas de fichiers image », levee par Keko pour
-   l'essayer -- voir `ui/portrait.ts`, qui la contient a un seul corps.
-
-   Il porte la MEME classe `silhouette` que le SVG, donc il herite de tout ce
-   qui est accroche a cette classe : la respiration, le liseré de lumiere,
-   l'extinction en noir a la mort, la taille calee sur `--corps`. Ce qu'il faut
-   ajouter tient en deux lignes.
-
-   `object-fit: contain` : le SVG a un viewBox, donc il se contente d'une
-   hauteur et deduit sa largeur. Une image, non -- sans lui, une image dont les
-   proportions ne tombent pas juste serait etiree, et c'est le genre de defaut
-   qu'on met sur le compte du dessin plutot que sur celui du CSS. */
-.silhouette.portrait {
-  object-fit: contain;
-  /* Les navigateurs lissent a l'agrandissement. Sur une image de personnage
-     agrandie jusqu'au gros plan, c'est ce qu'on veut -- mais si Keko essaie du
-     pixel art, il faudra passer a `pixelated` : le lissage en ferait une
-     bouillie. */
-  image-rendering: auto;
-}
-
 /* Elles respirent. C'est le detail qui separe une bete d'une vignette : sans
    lui, la scene est une illustration ; avec, quelque chose t'attend. */
 .silhouette {
@@ -266,6 +222,67 @@ body {
   }
 }
 
+/* L'ASSAUT : elle se ramasse, puis bondit. La regle est plus specifique que
+   celle du souffle, donc elle la REMPLACE le temps de se jouer -- deux
+   animations sur la meme propriete se marchent dessus. La respiration reprend
+   toute seule a la fin.
+
+   Ce geste a ete supprime quand un gros plan d'attaque l'a remplace, puis rendu
+   par `git log` quand ce gros plan a ete abandonne : il demandait des images de
+   personnages a dessiner, le bond ne demande rien -- il travaille sur les
+   silhouettes qui existent deja. */
+.silhouette.assaut {
+  /* `linear` en global : c'est CHAQUE etape qui porte son acceleration.
+     Un lissage uniforme donnerait un mouvement mou -- tout le poids vient du
+     contraste entre une montee qui prend son temps et une chute brutale.
+     Aucune rotation : le geste est un franc haut-bas, rien d'oblique. */
+  animation: assaut 0.58s linear;
+}
+
+@keyframes assaut {
+  0% {
+    transform: translateY(0) scale(1);
+    animation-timing-function: ease-out;
+  }
+  34% {
+    /* Le recul : elle monte, se ramasse, et marque le temps. */
+    transform: translateY(-20px) scale(0.9);
+    animation-timing-function: ease-in;
+  }
+  46% {
+    /* La chute : elle accelere jusqu'a l'impact, sous sa position de repos. */
+    transform: translateY(26px) scale(1.16);
+    animation-timing-function: ease-out;
+  }
+  60% {
+    transform: translateY(12px) scale(1.05);
+    animation-timing-function: ease-out;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Le corps qui vient d'encaisser tressaille. Porte par la creature et non par
+   la silhouette, qui a deja le souffle et l'assaut sur `transform`. */
+.creature.encaisse,
+.moi.encaisse {
+  animation: tressaille 0.26s ease-out;
+}
+
+@keyframes tressaille {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  25% {
+    translate: calc(var(--secousse) * -0.55) 0;
+  }
+  60% {
+    translate: calc(var(--secousse) * 0.4) 0;
+  }
+}
+
 /* --- la secousse d'ecran -------------------------------------------------- */
 
 /* Posee sur `.app`, donc sur un element qui contient des enfants en position
@@ -276,27 +293,38 @@ body {
   animation: secousse-ecran 0.24s ease-out;
 }
 
+/* La salve ennemie cogne plus fort : c'est le joueur qui prend. */
+.app.secoue-fort {
+  animation: secousse-ecran 0.32s ease-out;
+  --ampleur: 1.6;
+}
+
+/* SA FORCE SUIT LA TAILLE DES CORPS, elle n'est pas en pixels figes. Mesuree
+   a 51 % de la frappe sur un petit telephone contre 11 % sur un ecran de 1080
+   du temps ou elle etait fixe : la meme animation racontait deux choses
+   differentes selon l'appareil. */
 @keyframes secousse-ecran {
   0%,
   100% {
     transform: translate(0, 0);
   }
   18% {
-    transform: translate(-6px, 4px);
+    transform: translate(calc(var(--secousse) * -1 * var(--ampleur, 1)), calc(var(--secousse) * 0.66 * var(--ampleur, 1)));
   }
   36% {
-    transform: translate(6px, -3px);
+    transform: translate(calc(var(--secousse) * var(--ampleur, 1)), calc(var(--secousse) * -0.5 * var(--ampleur, 1)));
   }
   55% {
-    transform: translate(-4px, -3px);
+    transform: translate(calc(var(--secousse) * -0.66 * var(--ampleur, 1)), calc(var(--secousse) * -0.5 * var(--ampleur, 1)));
   }
   76% {
-    transform: translate(3px, 2px);
+    transform: translate(calc(var(--secousse) * 0.5 * var(--ampleur, 1)), calc(var(--secousse) * 0.33 * var(--ampleur, 1)));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app.secoue {
+  .app.secoue,
+  .app.secoue-fort {
     animation: none;
   }
 }
@@ -1358,18 +1386,13 @@ body {
     animation: none;
   }
 
-  .duel,
-  .duel-corps {
-    transition: none;
-  }
-
-  .duel-corps.abattu .tete-de-mort,
-  .duel-corps.attaque,
-  .duel-corps:not(.attaque) {
+  .creature.agonie .tete-de-mort,
+  .silhouette.assaut {
     animation: none;
   }
 
-  .app.secoue.fort {
+  .app.secoue,
+  .app.secoue-fort {
     animation: none;
   }
 
@@ -1492,15 +1515,40 @@ body {
   gap: 0.375rem;
 }
 
-/* Le joueur ouvre la scene, un ecart le separe de ceux d'en face : ils se
-   FONT FACE, ils ne sont pas alignes dans la meme file. L'ecart suit la taille
-   des corps : a 1,25rem fixes il valait un cinquieme d'un corps sur un ecran
-   de PC, et les deux camps se touchaient presque. */
-.creature.moi {
-  margin-right: var(--ecart-camps);
+/* LE JOUEUR N'EST PAS UN CORPS SUR LA SCENE : il est une barre, juste au-dessus
+   de sa main, face aux ennemis.
+
+   Il a ete une barre, puis un corps -- « une barre ne raconte pas un
+   affrontement, un corps qui fait face, si » -- et il redevient une barre. Ce
+   n'est pas un retour en arriere, c'est un CHANGEMENT DE POINT DE VUE :
+   l'affrontement se raconte depuis sa place a lui. Il ne se voit pas lui-meme,
+   il voit ce qu'il a en face, et il est du cote de ses cartes.
+
+   Ce qui l'a decide n'est pas esthetique : un corps de joueur demandait un
+   dessin, et un dessin par pose. Keko : « je vais me faire trop chier avec les
+   images a crafter ». Une mise en scene qui reclame des assets qu'on n'a pas
+   est une mise en scene qui ne se finira pas.
+
+   `position: relative` parce que la carte engagee s'y ancre en absolu. */
+.moi {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex: 0 0 auto;
+  /* Sa largeur est celle d'une creature : la barre du joueur et celles d'en
+     face se lisent alors a la meme echelle. */
+  width: min(100%, 14rem);
+  margin: 0 auto;
+  padding-bottom: 0.25rem;
 }
 
-.creature.moi .jauge .remplissage {
+.moi .jauge {
+  flex: 1 1 auto;
+}
+
+.moi .jauge .remplissage {
   background: linear-gradient(180deg, #9fd8ff, #3f86b8);
 }
 
@@ -2390,7 +2438,7 @@ body {
   }
 
   :root {
-    --corps: min(7rem, 22vh);
+    --corps: min(7rem, 20vh);
   }
 
   :root {
@@ -2430,7 +2478,7 @@ body {
   }
 
   :root {
-    --corps: min(7rem, 19vh);
+    --corps: min(7rem, 17.5vh);
   }
 
   :root {
@@ -2588,362 +2636,16 @@ body {
   text-align: center;
 }
 
-/* --- le gros plan d'attaque, a la Darkest Dungeon ------------------------- */
-
-/* Un voile tombe sur la scene et les deux combattants apparaissent en grand,
-   face a face. Le voile passe PAR-DESSUS LES CORPS, jamais par-dessus la main
-   ni les tas : ce qu'on tient doit rester lisible pendant qu'on regarde le
-   coup partir. D'ou l'empilement -- `.duel` a 24, `#cartes` a 28, les tas a 25
-   et l'orbe a 26. */
-.duel {
-  /* `absolute` dans `.app`, et non `fixed` a cote : c'est ce qui garde la main
-     au-dessus du voile quand la secousse pose un transform sur `.app`. Voir
-     l'en-tete de `ui/duel.ts`.
-
-     La largeur est prise sur la FENETRE et non sur `.app`, qui est plafonnee a
-     90rem : sur un ecran plus large, le voile s'arreterait avant les bords. */
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 100vw;
-  margin-left: -50vw;
-  z-index: 24;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* La main garde sa place : les figures se centrent dans ce qui reste.
-
-     ON NE RESERVE QUE LA BANDE EMERGEE, PAS LE DEGAGEMENT. Ce degagement est
-     le vide que la main se garde au-dessus d'elle pour lever une carte -- or
-     pendant un gros plan aucune carte n'est levee, donc il ne protege rien et
-     il poussait les figures vers le haut. Keko : « sur telephone je trouve
-     l'animation d'attaque un peu haute sur l'ecran ».
-
-     C'est la SEULE place recuperable, et il faut le savoir avant d'en chercher
-     d'autres : le cadre etait deja centre dans ce qui lui restait (25 px
-     au-dessus de la figure, 18 en dessous, sur un telephone couche). Ce qui le
-     fait paraitre haut, c'est que la main occupe 41 % de la hauteur en paysage.
-     Descendre davantage voudrait dire passer SOUS les cartes, ce que
-     l'empilement interdit -- et le bas d'une figure, c'est son nom. */
-  padding-bottom: var(--emerge);
-  background:
-    radial-gradient(70% 60% at 50% 42%, #0000006b, #000000d6 78%),
-    #000000c4;
-  opacity: 0;
-  /* Vif : l'apparition EST l'impact, elle ne doit pas se lire comme un fondu.
-     Ce qu'on gagne ici se rend en temps d'arret une fois les corps poses. Et
-     elle commande le depart de la charge, qui ne peut pas partir avant que les
-     corps soient la : la raccourcir, c'est raccourcir le temps mort. */
-  transition: opacity 0.055s ease-out;
-  pointer-events: none;
-}
-
-.duel.ouvert {
-  opacity: 1;
-}
-
-/* LE GROS PLAN SE POSE EN BAS SUR UN ECRAN COURT, il ne se centre plus --
-   exactement comme la scene qu'il remplace, qui a ce palier colle ses corps a
-   la main au lieu de les centrer.
-
-   Centre, il restait haut meme apres avoir recupere le degagement : le centre
-   de la figure tombait a 141 px sur un ecran de 390, contre 195 pour le centre
-   de l'ecran. Ce n'etait PAS un defaut de centrage -- il etait juste, a 47 px
-   de marge en haut contre 40 en bas -- mais la zone elle-meme est haute, parce
-   que la main occupe 41 % de l'ecran en paysage. *Un cadre correctement centre
-   dans une zone decalee reste un cadre decale.*
-
-   Pose en bas, la figure descend a 181, soit le centre de l'ecran a 14 px pres.
-   Au-dessus de 430 px de haut rien ne change : la scene y centre ses corps, le
-   gros plan aussi, et Keko n'a rien signale sur PC.
-
-   ELLE EST ICI, ET PAS DANS LE BLOC `max-height: 430px` PLUS HAUT DANS LE
-   FICHIER : a specificite egale c'est la derniere regle qui gagne, donc la
-   surcharge y etait ecrasee par le `align-items: center` de `.duel` -- sans
-   erreur, et sans rien changer a l'ecran. Une media query ne l'emporte pas sur
-   une regle ordinaire, elle ne fait que filtrer. */
-@media (max-height: 430px) {
-  .duel {
-    align-items: flex-end;
-    /* ...MAIS PAS COLLE AU BAS. Pose a ras, le cadre tombait 6 px SOUS le centre
-       de l'ecran, et il a encore descendu quand les noms ont disparu sous les
-       figures -- Keko : « l'animation de combat est un peu basse sur le tel ».
-       Ce decalage est une fraction de la figure et non un nombre de pixels :
-       c'est elle qu'on remonte, donc c'est elle qui donne la mesure. */
-    padding-bottom: calc(var(--emerge) + var(--corps-duel) * 0.12);
-  }
-}
-
-.duel-plateau {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  width: 100%;
-}
-
-/* L'ecart entre les deux : c'est la distance qui fait le duel.
-
-   Mesure sur `--corps-duel` comme tout le reste du cadre. Sur `--corps`, il ne
-   suivait pas la figure : il restait a 29 px du corps adverse au pic de la
-   frappe sur un petit telephone, contre 167 sur un grand ecran. La charge
-   traversait donc une part tres differente de l'espace disponible. */
-.duel-entre {
-  flex: 0 1 calc(var(--corps-duel) * 0.665);
-}
-
-.duel-corps {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-  flex: 0 0 auto;
-  color: var(--teinte, #9a7a62);
-  /* Les figures ARRIVENT : elles viennent de plus bas et de plus petit, vite.
-     C'est cette arrivee qui porte le coup -- la secousse part a 60 ms, donc
-     avant meme que les corps aient fini de se poser. Passe ce moment, plus
-     rien ne bouge : on les regarde. */
-  transform: translateY(1.75rem) scale(0.9);
-  opacity: 0;
-  transition:
-    transform 0.075s cubic-bezier(0.2, 0.9, 0.3, 1.2),
-    opacity 0.055s ease-out;
-}
-
-.duel.ouvert .duel-corps {
-  transform: translateY(0) scale(1);
-  opacity: 1;
-}
-
-/* 2,6x le corps de la scene : c'est un GROS plan, il doit se lire comme une
-   rupture d'echelle et pas comme un zoom timide. Le plafond en vh garde les
-   deux figures au-dessus de la main sur un ecran court. */
-.duel-chair {
-  position: relative;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  height: var(--corps-duel);
-}
-
-.duel-chair .silhouette {
-  width: auto;
-  height: 100%;
-}
-
-/* LA CHARGE. L'attaquant part d'un coup sec vers sa cible, puis continue sur
-   son elan beaucoup plus lentement -- il couvre 61 % de sa course en 16 % du
-   temps, soit huit fois plus vite. C'est le meme principe que le bond des
-   monstres, mesure a l'epoque : tout le poids vient du CONTRASTE de vitesse,
-   et un lissage uniforme rend le geste mou.
-
-   LE RETARD N'EST PAS UN REGLAGE, C'EST LA CONDITION POUR QU'ON LA VOIE --
-   mais il doit etre LE PLUS COURT POSSIBLE. Sans lui, la charge partait a
-   l'instant zero et se terminait avant qu'on distingue les figures : « il a
-   deja avance quand on le voit ». A 0,12 s, le temps mort d'avant le geste
-   devenait sensible a son tour : « la phase immobile avant l'avancee est trop
-   longue ». Il vaut donc exactement la duree d'apparition des corps, 0,07 s --
-   et c'est en accelerant l'apparition (0,09 -> 0,055 s) qu'on l'a raccourci,
-   pas en pariant sur un depart a l'aveugle. Les deux valeurs sont liees :
-   toucher l'une sans l'autre ramene l'un des deux defauts.
-
-   La course passe par `translate`, PAS par `transform` : `transform` porte
-   deja l'arrivee des figures (translateY + scale), et une animation sur la
-   meme propriete l'ecraserait. Les deux proprietes se composent d'elles-memes,
-   `translate` d'abord. */
-/* La course de reference, portee par les DEUX corps : l'attaquant s'en sert
-   pour charger, la cible pour reculer d'autant. Chacun la porte dans le sens
-   de son cote. */
-.duel-corps {
-  /* La course part de la figure DU CADRE et non du corps de scene : les deux
-     n'ont pas le meme plafond, donc s'appuyer sur le second faisait varier la
-     part de la figure que le geste traverse selon l'ecran.
-
-     LA FRAPPE VA JUSQU'A LA CIBLE, ET C'EST CA QUI FIXE LE CHIFFRE. Elle valait
-     0,122 -- une valeur reglee a l'oeil -- et l'attaquant s'arretait a 59 px de
-     sa cible sur un telephone de 390, alors que l'ecart au repos en vaut 108 :
-     il faisait la moitie du chemin et frappait dans le vide. Keko : « on peut
-     avancer l'attaquant plus pres de la cible ».
-
-     0,247 est DEDUIT, pas essaye : la frappe vaut 2,45 fois la course, et on
-     veut qu'elle couvre l'ecart au repos moins une dizaine de pixels de garde,
-     soit (108 - 10) / 2,45 / 162. Les 10 px evitent que les deux corps se
-     touchent franchement au pic -- le chien et le portrait n'ont presque pas de
-     marge transparente de ce cote-la (0,9 % pour `attaque.png`).
-
-     CE QUI EMPECHE D'ALLER PLUS LOIN N'EST PAS LE PIC, C'EST LE TERME. Apres le
-     contrecoup, l'attaquant reste a 1,75 fois la course : l'ecart de fin vaut
-     donc `repos - 1,75 x course`, et la derive n'y change rien puisque la cible
-     recule d'autant. A 0,247 il reste 38 px -- au-dela, les deux corps finissent
-     le gros plan l'un dans l'autre. */
-  --elan-brut: calc(var(--corps-duel) * 0.247);
-  --elan: calc(var(--elan-brut) * var(--sens, 1));
-
-  /* LA DERIVE A UN PLANCHER EN PIXELS, et c'est la seule grandeur du cadre qui
-     echappe a la proportion. Tout le reste doit s'echelonner ; elle, non.
-
-     Elle occupe les 456 ms qui suivent la frappe -- c'est elle qui fait DURER
-     le gros plan. Proportionnelle, elle valait 8,9 px sur un telephone contre
-     24,9 sur un ecran de 1080, soit 0,3 px par image contre 0,9 : sous le seuil
-     de perception. Passe la frappe, l'image etait figee sur petit ecran, et une
-     image figee se lit comme terminee. Keko, trois fois : « c'est plus court
-     sur tel » -- alors que la duree etait identique, mesuree a 802 ms sur son
-     appareil.
-
-     La perception du mouvement a un plancher ABSOLU, pas relatif : un petit
-     ecran a moins de pixels pour la meme part de figure. 24 px, soit environ
-     0,9 px par image partout. */
-  --derive: calc(max(calc(var(--elan-brut) * 0.45), 24px) * var(--sens, 1));
-}
-
-.duel-corps.attaque {
-  animation: charge 0.57s linear 0.07s forwards;
-}
-
-/* Le sens appartient au COTE et non a l'attaquant : la cible en a besoin elle
-   aussi, pour etre repoussee dans la bonne direction. Le joueur est a gauche,
-   l'ennemi a droite ; chacun charge donc vers l'autre, et chacun recule a
-   l'oppose de celui qui le frappe. */
-.duel-corps.joueur {
-  --sens: 1;
-}
-
-.duel-corps.ennemi {
-  --sens: -1;
-}
-
-@keyframes charge {
-  /* La phase vive n'est pas une rampe, c'est un COUP -- et un coup a une forme,
-     pas seulement une vitesse. Trois temps, et ce sont les CHANGEMENTS DE
-     DIRECTION qui le font lire : l'oeil attrape un rebroussement la ou il
-     laisse passer une acceleration. C'est aussi ce qui permet a la frappe de
-     ne durer que 45 ms sans redevenir invisible -- elle est encadree.
-
-     Une rampe amortie de 83 ms occupait le meme temps et restait un
-     deplacement. */
-  0% {
-    translate: 0 0;
-    animation-timing-function: cubic-bezier(0.3, 0, 0.7, 1);
-  }
-  6.1% {
-    /* L'appel : il se ramasse en arriere. Court, mais c'est lui qui arme. */
-    translate: calc(var(--elan) * -0.28) 0;
-    animation-timing-function: cubic-bezier(0.2, 0.7, 0.3, 1);
-  }
-  14% {
-    /* LA FRAPPE, a pleine extension. Elle porte LOIN : 2,73 fois la course
-       vive en 45 ms -- meme duree, plus de chemin, donc plus vite. C'est la
-       distance couverte d'un coup qui fait la violence, pas la seule vitesse.
-       C'est ici que la secousse tombe (`IMPACT_DUEL`). */
-    translate: calc(var(--elan) * 2.45) 0;
-    animation-timing-function: cubic-bezier(0.3, 0, 0.4, 1);
-  }
-  20% {
-    /* Le contrecoup : il revient, comme un bras qui a porte trop loin.
-
-       Il monte AVEC la frappe, et le terme final aussi : ce qui doit rester
-       constant, c'est leur ECART (0,45), parce que c'est lui la derive -- et
-       le recul de la cible est cale dessus. Allonger la frappe seule
-       desaccorderait les deux corps. */
-    translate: calc(var(--elan) * 1.75) 0;
-    animation-timing-function: linear;
-  }
-  100% {
-    /* L'elan : il continue, mais on ne le voit presque plus avancer. Le terme
-       est le contrecoup PLUS la derive, qui a son propre plancher. */
-    translate: calc(var(--elan) * 1.75 + var(--derive)) 0;
-  }
-}
-
-/* LE RECUL : la DERIVE DE L'ATTAQUANT, EN MIROIR. Meme instant de depart, meme
-   duree, meme distance, meme `linear` -- donc exactement la meme vitesse. Les
-   deux corps s'ecartent ensemble, comme si la poussee du coup se prolongeait
-   dans les deux sens.
-
-   Premiere version : un amorti parti a l'impact, qui faisait 70 % de son
-   chemin en 150 ms. Sur le papier c'etait « un recul » ; a l'ecran c'etait un
-   a-coup invisible, noye dans la frappe qui le precedait de 30 ms. Keko : « je
-   ne vois pas la cible reculer ». Un mouvement lent se voit PARCE QU'IL DURE ;
-   lui donner une courbe le tasse au debut et le rend invisible.
-
-   0,45 x l'elan : c'est exactement ce que couvre la derive de l'attaquant
-   (1,8 - 1,35). Le `-1` met la cible a l'oppose -- elle porte le sens de SON
-   cote et se fait pousser dans l'autre. Les deux valeurs sont liees : bouger
-   la derive sans bouger le recul les desaccorde. */
-.duel-corps:not(.attaque) {
-  --recul: calc(var(--derive) * -1);
-  animation: recul 0.456s linear 0.184s forwards;
-}
-
-@keyframes recul {
-  from {
-    translate: 0 0;
-  }
-  to {
-    translate: var(--recul) 0;
-  }
-}
-
-/* L'attaquant passe devant : il se detache du fond plus que sa cible. */
-.duel-corps.attaque .silhouette {
-  filter:
-    drop-shadow(0 -2px 0 color-mix(in srgb, var(--teinte, #999) 70%, #fff))
-    drop-shadow(0 0.5rem 0.7rem #000000c0)
-    drop-shadow(0 0 1.5rem color-mix(in srgb, var(--teinte, #999) 45%, transparent));
-}
-
-
-/* Le chiffre du gros plan est plus gros que celui de la scene : a cette
-   echelle, le chiffre de la scene se perdait sur un corps de 450 px. */
-.degats-voles.grand {
-  font-size: 2.25rem;
-}
-
-/* La secousse du gros plan est FRANCHEMENT plus forte que celle du combat :
-   c'est le seul mouvement de toute la sequence, donc c'est lui qui porte la
-   violence du coup. Une seule, portee par `.app` -- le calque est dedans, il
-   part avec. */
-.app.secoue.fort {
-  animation: secousse-forte 0.34s cubic-bezier(0.2, 0.7, 0.3, 1);
-}
-
-/* Les etapes sont des FRACTIONS de `--secousse`, pas des pixels : c'est ce qui
-   garde le meme geste d'un ecran a l'autre. */
-@keyframes secousse-forte {
-  0% { transform: translate(0, 0); }
-  10% { transform: translate(calc(var(--secousse) * -1), calc(var(--secousse) * 0.6)); }
-  24% { transform: translate(calc(var(--secousse) * 0.93), calc(var(--secousse) * -0.53)); }
-  40% { transform: translate(calc(var(--secousse) * -0.73), calc(var(--secousse) * -0.4)); }
-  56% { transform: translate(calc(var(--secousse) * 0.53), calc(var(--secousse) * 0.33)); }
-  72% { transform: translate(calc(var(--secousse) * -0.33), calc(var(--secousse) * 0.2)); }
-  86% { transform: translate(calc(var(--secousse) * 0.2), calc(var(--secousse) * -0.13)); }
-  100% { transform: translate(0, 0); }
-}
-
-/* Les corps montres en gros plan quittent l'arriere-plan : ils sont passes
-   devant. `visibility` et non `display` -- leur place doit rester tenue, sinon
-   le rang se resserre pendant le gros plan et se rouvre apres, et toute la
-   scene tressaute au retour. */
-.creature.au-front {
-  visibility: hidden;
-}
-
-/* La main et les bords passent AU-DESSUS du voile. `#cartes` devient un
-   contexte d'empilement a lui seul : les z-index internes des cartes (0 a 20)
-   restent relatifs entre eux, et tout le paquet monte d'un bloc. */
-#cartes {
-  position: relative;
-  z-index: 28;
-}
-
 /* --- la mort, sur la scene -------------------------------------------------- */
 
-/* LE CORPS REVIENT A SA PLACE POUR S'Y ETEINDRE. Sa mort s'est declaree dans le
-   gros plan ; elle s'acheve ici, en fondu, quand le voile se leve. Il
-   disparaissait auparavant pendant le cadre, donc on ne voyait jamais le rang
-   se vider -- Keko : « quand un monstre est tue, on ne le fait pas disparaitre
-   durant l'animation d'attaque, on le fait fade au retour ».
+/* LE CORPS RESTE AU RANG LE TEMPS D'ENCAISSER, PUIS S'ETEINT. Il s'eteint en
+   silhouette NOIRE et la tete de mort s'y abat comme un tampon, puis le tout
+   s'efface.
+
+   La mort s'est jouee un temps dans un gros plan separe ; elle est revenue ici
+   avec l'abandon des images de personnages. Ce qu'on en garde : le corps mat,
+   le tampon rouge, et le fait que le corps ne disparaisse PAS a l'instant du
+   coup -- sinon on ne verrait jamais les degats qui l'ont acheve.
 
    Il garde sa PLACE dans le rang pendant tout le fondu : sans ca les voisins
    glisseraient sous le doigt au moment ou l'on choisit sa cible suivante. Il
@@ -2959,13 +2661,6 @@ body {
   filter: brightness(0) drop-shadow(0 0 1rem #ff2d2d33);
   /* Elle respire encore une fraction de seconde apres sa mort : on coupe. */
   animation: none;
-}
-
-/* La tete de mort est DEJA POSEE en arrivant : le tampon s'est joue dans le
-   cadre, le rejouer ici en ferait un second coup. Elle ne fait que s'effacer
-   avec le corps. */
-.creature.agonie .tete-de-mort {
-  opacity: 1;
 }
 
 @keyframes extinction {
@@ -2990,18 +2685,7 @@ body {
   }
 }
 
-/* --- la mort, dans le cadre ------------------------------------------------ */
-
-/* Le corps abattu s'eteint en silhouette NOIRE. Pas de chute, pas de bascule :
-   la mort n'est plus un mouvement, c'est un etat qui tombe d'un coup. Ce qui
-   la rend violente, c'est le tampon qui suit -- et un tampon a besoin d'un
-   fond mat pour se lire. */
-.duel-corps.abattu .silhouette {
-  filter: brightness(0) drop-shadow(0 0 1.25rem #ff2d2d3d);
-  /* Elle respire encore une fraction de seconde apres le coup : on coupe. */
-  animation: none;
-  transition: filter 0.1s linear;
-}
+/* --- la tete de mort ------------------------------------------------------- */
 
 
 /* La tete de mort : posee au centre du corps, invisible tant qu'il vit. */
@@ -3037,7 +2721,7 @@ body {
    de tampon : sans lui, un zoom inverse se lit comme un fondu qui retrecit.
    Rapide (0,26 s) et brutale -- tout le reste de la sequence est immobile,
    c'est le seul mouvement, il doit frapper. */
-.duel-corps.abattu .tete-de-mort {
+.creature.agonie .tete-de-mort {
   animation: tampon 0.26s cubic-bezier(0.25, 0.8, 0.3, 1) forwards;
 }
 
@@ -3266,11 +2950,11 @@ body {
    venaient d'un endroit d'ou plus rien ne part. */
 .carte-engagee {
   position: absolute;
-  /* ENTRE LES DEUX CAMPS, et un peu en hauteur. Posee sur le joueur, elle le
-     recouvrait et ne disait pas de quel cote le coup part ; dans l'ecart, elle
-     est sur la trajectoire -- entre celui qui frappe et ceux qu'il vise. */
-  left: calc(100% + var(--ecart-camps) / 2);
-  bottom: 45%;
+  /* AU-DESSUS DE LA BARRE DU JOUEUR, d'ou partent les arches. Elle est en
+     ABSOLU et non dans le flux : sinon elle pousserait la scene vers le haut a
+     l'instant meme ou l'on vise, et les cibles bougeraient sous le pouce. */
+  left: 50%;
+  bottom: calc(100% + 0.25rem);
   z-index: 3;
   translate: -50% 0;
   rotate: -5deg;
@@ -3283,7 +2967,7 @@ body {
    chemin ; ce n'etait pas le probleme, et a pleine taille elle ecrasait la
    scene. */
 .carte-engagee .carte {
-  --large: min(var(--corps), 7rem);
+  --large: min(var(--corps), 6rem);
   width: var(--large);
   margin: 0;
   transform: none;

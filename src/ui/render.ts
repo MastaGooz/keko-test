@@ -17,7 +17,6 @@ import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, tresorsAuDeck, tresorsAuSac } from '../logic/descente.ts'
 import { CAPACITE_SAC as SLOTS } from '../logic/cartes.ts'
 import { creature, dessin, sceau, teteDeMort } from './illustrations.ts'
-import { portraitTrouve, silhouetteJoueur } from './portrait.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
 
@@ -35,22 +34,11 @@ const ESPECES: Record<string, { espece: string; teinte: string }> = {
   'Traînard': { espece: 'roquet', teinte: '#7f8a6e' },
 }
 
-/**
- * Le joueur et les ennemis, tels que le gros plan d'attaque a besoin de les
- * connaître. C'est ici que vit la table des espèces, donc c'est ici qu'on la
- * lit — `duel.ts` n'a pas à savoir quel monstre porte quelle silhouette.
- */
-export const FIGURE_JOUEUR = { nom: 'TOI', espece: 'joueur', teinte: '#7fb6d9' }
-
-export function figure(nom: string): { nom: string; espece: string; teinte: string } {
-  const e = ESPECES[nom] ?? { espece: 'roquet', teinte: '#9a7a62' }
-  return { nom, espece: e.espece, teinte: e.teinte }
-}
-
 export type View = {
   root: HTMLElement
   seed: HTMLElement
   ennemis: HTMLElement
+  moi: HTMLElement
   energie: HTMLElement
   cartes: HTMLElement
   encombrement: HTMLElement
@@ -60,7 +48,6 @@ export type View = {
   palier: HTMLElement
   zoom: HTMLElement
   journal: HTMLElement
-  diagnostic: HTMLElement
   pleinEcran: HTMLButtonElement
   son: HTMLButtonElement
   visees: SVGSVGElement
@@ -80,9 +67,15 @@ export function mount(root: HTMLElement, buildTime: string): View {
       <!-- L'info de run reste en haut : elle se consulte, elle ne se joue pas. -->
       <p id="encombrement" class="encombrement"></p>
 
-      <!-- La scène : le joueur et les ennemis, face à face, sur le même sol.
-           Elle prend toute la place qui reste entre l'info et la main. -->
+      <!-- La scène : les ennemis seuls, sur leur sol. Elle prend toute la
+           place qui reste entre l'info et le joueur. -->
       <div id="ennemis" class="rangs scene"></div>
+
+      <!-- LE JOUEUR N'EST PAS UN CORPS SUR LA SCENE : il est ici, juste
+           au-dessus de sa main, face aux ennemis. Il n'a donc que ce qu'on a
+           besoin de lire de lui — ses PV et ce qu'il va encaisser — et c'est de
+           là que part la carte qu'il engage. -->
+      <div id="moi" class="moi" data-corps="joueur"></div>
 
       <!-- La main touche le bas de l'écran. Rien dessous : c'est la règle de
            lecture du genre, ce qu'on joue est le plus près du pouce. -->
@@ -117,7 +110,6 @@ export function mount(root: HTMLElement, buildTime: string): View {
           <button class="bouton secondaire" type="button" data-action="rejouer">Rejouer cette seed</button>
           <button class="bouton secondaire" type="button" data-action="nouveau">Nouvelle descente</button>
         </div>
-        <p id="diagnostic" class="diagnostic"></p>
         <div id="journal" class="journal"></div>
       </div>
     </main>
@@ -127,6 +119,7 @@ export function mount(root: HTMLElement, buildTime: string): View {
     root,
     seed: root.querySelector<HTMLElement>('#seed')!,
     ennemis: root.querySelector<HTMLElement>('#ennemis')!,
+    moi: root.querySelector<HTMLElement>('#moi')!,
     energie: root.querySelector<HTMLElement>('#energie')!,
     cartes: root.querySelector<HTMLElement>('#cartes')!,
     encombrement: root.querySelector<HTMLElement>('#encombrement')!,
@@ -136,7 +129,6 @@ export function mount(root: HTMLElement, buildTime: string): View {
     palier: root.querySelector<HTMLElement>('#palier')!,
     zoom: root.querySelector<HTMLElement>('#zoom')!,
     journal: root.querySelector<HTMLElement>('#journal')!,
-    diagnostic: root.querySelector<HTMLElement>('#diagnostic')!,
     pleinEcran: root.querySelector<HTMLButtonElement>('#pleinEcran')!,
     son: root.querySelector<HTMLButtonElement>('#son')!,
     visees: root.querySelector<SVGSVGElement>('#visees')!,
@@ -156,7 +148,6 @@ export function render(
   seed: number,
   selection: number | null,
   occupation: Occupation = 'libre',
-  auFront: number | null = null,
   zoom: number | null = null,
   agonie: readonly number[] = [],
 ): void {
@@ -178,14 +169,14 @@ export function render(
   // jouer une autre carte pendant ce temps, et le rendu qui s'ensuit balaierait
   // la classe en plein fondu.
   view.ennemis.innerHTML =
-    corpsJoueur(etat, visee, fini, auFront !== null) +
     etat.ennemis
       .map((ennemi, index) => ({ ennemi, index }))
       .filter(({ ennemi, index }) => ennemi.pv > 0 || agonie.includes(index))
       .map(({ ennemi, index }) =>
-        corpsEnnemi(etat, ennemi, index, visee, fini, index === auFront, agonie.includes(index)),
+        corpsEnnemi(etat, ennemi, index, visee, fini, agonie.includes(index)),
       )
       .join('')
+  view.moi.innerHTML = bandeauJoueur(etat, visee, fini)
   view.energie.innerHTML = fini ? '' : energie(etat, visee)
 
   // Les boutons de main sont reconstruits : l'écoute est déléguée à la racine.
@@ -232,7 +223,6 @@ function corpsEnnemi(
   index: number,
   visee: Carte | null,
   fini: boolean,
-  auFront = false,
   agonise = false,
 ): string {
   const imminent = ennemi.compteur <= 1
@@ -267,42 +257,42 @@ function corpsEnnemi(
       jauge(ennemi.pv, ennemi.pvMax) +
       `<span class="plaquette"><span class="nom">${ennemi.nom}</span></span>`
 
-  // `au-front` : ce corps est en ce moment dans le gros plan, il a quitté
-  // l'arrière-plan. La classe vient de l'ÉTAT et pas d'une pose à la main,
-  // sinon le premier rendu venu la balaierait en plein gros plan.
-  const front = auFront ? ' au-front' : ''
-
   // Il garde sa PLACE dans le rang pendant qu'il s'efface — sans quoi les
   // voisins glisseraient sous le doigt au moment où l'on choisit sa cible
   // suivante — mais il n'est plus visable : jamais de bouton ici.
   if (agonise) {
-    return `<div class="creature agonie${front}" data-corps="${index}">${corps}</div>`
+    return `<div class="creature agonie" data-corps="${index}">${corps}</div>`
   }
 
   if (c === null) {
-    return `<div class="creature${front}" data-corps="${index}">${corps}</div>`
+    return `<div class="creature" data-corps="${index}">${corps}</div>`
   }
 
   return (
-    `<button class="creature cible${c.tue ? ' achevable' : ''}${front}" type="button" ` +
+    `<button class="creature cible${c.tue ? ' achevable' : ''}" type="button" ` +
     `data-action="cibler" data-cible="${index}" data-corps="${index}">${corps}</button>`
   )
 }
 
 /**
- * Le joueur sur la scène, comme un combattant parmi les autres : son corps,
- * sa jauge, et au-dessus de sa tête ce qu'il encaissera à la fin du tour —
- * exactement où les ennemis affichent leur intention.
+ * Le joueur, juste au-dessus de sa main : **une barre, pas un corps**.
  *
- * C'était une barre posée au-dessus de la main. Une barre ne raconte pas un
- * affrontement ; un corps qui fait face, si.
+ * Il a été une barre, puis un corps sur la scène — « une barre ne raconte pas
+ * un affrontement, un corps qui fait face, si » — et il redevient une barre.
+ * *Ce n'est pas un retour en arrière, c'est un changement de point de vue* :
+ * l'affrontement se raconte maintenant depuis sa place à lui. Il ne se voit pas
+ * lui-même, il voit ce qu'il a en face, et il est du côté de ses cartes.
+ *
+ * Ce qui l'a décidé : un corps de joueur demandait un dessin, et un dessin par
+ * pose. Keko : « je vais me faire trop chier avec les images à crafter ». *Une
+ * mise en scène qui réclame des assets qu'on n'a pas est une mise en scène qui
+ * ne se finira pas.*
+ *
+ * On n'y met donc que ce qui sert à décider : ses PV, et ce qu'il encaissera à
+ * la fin du tour — au même endroit que les intentions d'en face, mais jamais la
+ * croix de frappe, sinon on lit l'inverse.
  */
-function corpsJoueur(
-  etat: EtatCombat,
-  visee: Carte | null,
-  fini: boolean,
-  auFront = false,
-): string {
+function bandeauJoueur(etat: EtatCombat, visee: Carte | null, fini: boolean): string {
   const menace = menaceDuTour(etat)
   const marque =
     fini || menace === 0
@@ -312,23 +302,14 @@ function corpsJoueur(
   // La carte engagée se tient SUR LE JOUEUR, pas dans la main. Une fois qu'on
   // l'a sortie, elle n'y est plus : la remettre en bas pendant qu'on choisit sa
   // cible défaisait le geste, et les arches partaient d'un endroit d'où plus
-  // rien ne part. Sur le joueur, elles partent de celui qui frappe.
+  // rien ne part. Ici, elles partent de celui qui frappe.
+  //
+  // Elle est posée EN ABSOLU au-dessus de la barre : dans le flux, elle
+  // pousserait la scène vers le haut à l'instant même où l'on vise.
   const engagee =
-    visee === null || fini
-      ? ''
-      : `<span class="carte-engagee">${vitrine(visee)}</span>`
+    visee === null || fini ? '' : `<span class="carte-engagee">${vitrine(visee)}</span>`
 
-  return (
-    `<div class="creature moi${auFront ? ' au-front' : ''}" data-corps="joueur">` +
-    marque +
-    `<span class="chair" style="--teinte:#7fb6d9">` +
-    // Le portrait s'il a ete depose, la silhouette d'origine sinon.
-    `${portraitTrouve() ? silhouetteJoueur() : creature('joueur', 'moi')}` +
-    `<span class="socle"></span>${engagee}</span>` +
-    jauge(etat.pv, etat.pvMax) +
-    `<span class="plaquette"><span class="nom">TOI</span></span>` +
-    `</div>`
-  )
+  return `${engagee}${marque}${jauge(etat.pv, etat.pvMax)}`
 }
 
 /**

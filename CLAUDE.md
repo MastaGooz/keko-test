@@ -429,310 +429,37 @@ donjon. Ce qui tourne :
   est la cible tactile. **Elles respirent**, décalées les unes des autres : une
   meute qui souffle à l'unisson fait machine, pas vivant. Le joueur, lui, reste
   une barre — il n'est pas un corps de plus à l'écran ;
-- **le gros plan d'attaque, à la Darkest Dungeon** (`ui/duel.ts`, purement
-  décoratif, supprimable sans rien casser). À chaque coup porté, un voile tombe
-  sur la scène et les deux combattants apparaissent en grand, face à face — de
-  146 px de haut sur un petit téléphone couché à 487 px sur un écran de 1080.
+- **le joueur n'est PAS un corps sur la scène** : il est une **barre juste
+  au-dessus de sa main**, face aux ennemis. Il a été une barre, puis un corps —
+  « une barre ne raconte pas un affrontement, un corps qui fait face, si » — et
+  il redevient une barre. *Ce n'est pas un retour en arrière, c'est un
+  changement de point de vue* : l'affrontement se raconte depuis sa place à lui.
+  Il ne se voit pas lui-même, il voit ce qu'il a en face, et il est du côté de
+  ses cartes. Il ne porte que ce qui sert à décider : ses PV, et ce qu'il
+  encaissera à la fin du tour.
 
-  **La séquence est l'arrivée elle-même.** Les corps surgissent, l'écran est
-  violemment secoué *au même instant*, puis **plus rien ne bouge** le temps
-  qu'on les regarde. La secousse part à 60 ms alors que les corps mettent 90 ms
-  à se poser : ce décalage négatif est ce qui fait lire l'apparition comme un
-  impact, et non comme une transition suivie d'un coup.
+- **LE GROS PLAN D'ATTAQUE A ÉTÉ ABANDONNÉ, et il faut savoir pourquoi pour ne
+  pas le reproposer.** Il a existé : un voile sur la scène, les deux combattants
+  en grand face à face, une charge en trois temps, un tampon de mort. C'était le
+  plus abouti du jeu, et Keko l'a arrêté pour une raison qui n'a rien à voir avec
+  le rendu — **il réclamait des images de personnages à dessiner**, une par pose
+  et par camp. « Je vais me faire trop chier avec les images à crafter. »
 
-  Il y a eu une version où l'attaquant **bondissait** dans le cadre. Elle
-  rejouait à l'intérieur du cadre un geste que le cadre racontait déjà, et elle
-  coûtait ses 580 ms. Keko a tranché : apparition + secousse forte + temps
-  d'arrêt. *La moitié de la durée est désormais du temps d'arrêt, pas de
-  l'animation* — si ça devient long, c'est ce palier-là qu'on raccourcit.
+  *Une mise en scène qui réclame des assets qu'on n'a pas est une mise en scène
+  qui ne se finira pas* — et ça ne se voit pas au moment où on la construit,
+  parce qu'on la construit avec une seule image de test.
 
-  **L'attaquant porte un coup, puis dérive sur son élan.** Et un coup a une
-  **forme**, pas seulement une vitesse — trois temps, dans cet ordre :
+  **Ce qu'il a coûté en le défaisant**, et qui a été rendu par `git log` : le
+  bond des silhouettes, le tressaillement du corps touché, le chiffre de dégâts
+  posé sur la scène. Tout ça travaille sur les silhouettes SVG qui existent
+  déjà, donc ne demande rien à personne. Ce qui a été gardé du gros plan : la
+  mort en silhouette noire avec son tampon rouge, qui se joue désormais **sur la
+  scène**.
 
-  | temps | ce qu'il fait | durée |
-  |---|---|---|
-  | l'appel | il se ramasse en arrière (−28 % de la course vive) | 35 ms |
-  | la frappe | il part à pleine extension (+245 %) | 45 ms |
-  | le contrecoup | il revient (+175 %), comme un bras qui a porté trop loin | 34 ms |
+  Reste dans `git log` si le sujet revient : la charge en trois temps (appel,
+  frappe, contrecoup), son réglage mesuré, l'asymétrie doigt/souris des durées,
+  et le fait qu'un `transform` sur `.app` crée un contexte d'empilement.
 
-  puis la dérive, **60 fois plus lente**, jusqu'au bout du gros plan. La frappe
-  porte loin — 30 px sur un petit téléphone couché, 138 px sur un écran de
-  1080 — parce que *c'est la distance couverte d'un coup qui fait la violence,
-  pas la seule vitesse* : allonger la course sans toucher à sa durée est le
-  levier direct sur la nervosité. Chacun charge vers l'autre.
-
-  **Ce qui doit rester constant en l'allongeant, c'est l'ÉCART entre le
-  contrecoup et le terme** (0,45 de l'élan) : c'est lui la dérive, et le recul
-  de la cible est calé dessus. Monter la frappe seule désaccorderait les deux
-  corps.
-
-  **LA FRAPPE VA JUSQU'À LA CIBLE, ET C'EST ÇA QUI FIXE SON CHIFFRE** (0,247 de
-  la figure, pour une frappe à 2,45 fois la course). Elle valait 0,122 — réglée
-  à l'oeil — et l'attaquant s'arrêtait à 59 px de sa cible pour un écart au repos
-  de 108 : *il faisait la moitié du chemin et frappait dans le vide.* Keko : « on
-  peut avancer l'attaquant plus près de la cible ».
-
-  Le chiffre est **déduit, pas essayé** : `(écart au repos − 10 px de garde) /
-  2,45`. Les 10 px évitent que les corps se touchent franchement au pic, car
-  ni le chien ni le portrait n'ont de marge transparente de ce côté-là (0,9 %
-  pour `attaque.png`, mesuré).
-
-  **Ce qui empêche d'aller plus loin n'est pas le pic, c'est le TERME.** Après le
-  contrecoup l'attaquant reste à 1,75 fois la course, donc l'écart de fin vaut
-  `repos − 1,75 × course` — et la dérive n'y change rien, puisque la cible recule
-  d'autant. Vérifié sur quatre formats :
-
-  | format | écart au repos | au pic | à la fin |
-  |---|---|---|---|
-  | 667x320 | 80 | 6 | 27 |
-  | 844x390 | 108 | 10 | 38 |
-  | 1366x700 | 196 | 17 | 68 |
-  | 1920x1080 | 302 | 28 | 106 |
-
-  *Pour mesurer ça*, il faut forcer `.ouvert` ET neutraliser `setTimeout` dans
-  l'iframe : une mesure prise pendant l'animation d'entrée rend les figures à
-  `scale(0.9)`, ce qui fausse l'écart de 10 %, et les minuteurs bridés en
-  arrière-plan referment le cadre entre deux relevés.
-
-  **Et la cible est repoussée : c'est la dérive de l'attaquant, en miroir.**
-  Même instant de départ, même durée, même distance, même `linear` — donc
-  exactement la même vitesse. Les deux corps partent ensemble, comme si la
-  poussée du coup se prolongeait.
-
-  *Première version, à jeter mentalement* : un amorti parti à l'impact, qui
-  faisait 70 % de son chemin en 150 ms. Sur le papier c'était « un recul » ; à
-  l'écran, un à-coup invisible, noyé dans la frappe qui le précédait de 30 ms.
-  Keko : « je ne vois pas la cible reculer ». **Un mouvement lent se voit parce
-  qu'il DURE** — lui donner une courbe le tasse au début et le rend invisible.
-  C'est l'exact symétrique du piège de la frappe, où c'est la brièveté qui
-  effaçait le geste.
-
-  Les deux valeurs sont liées (`0,45 × l'élan`, soit `1,8 − 1,35`) : bouger la
-  dérive sans bouger le recul les désaccorde.
-
-  **`--sens` appartient au CÔTÉ, pas à l'attaquant** — la cible en a besoin
-  elle aussi, pour être repoussée dans la bonne direction, et elle se fait
-  pousser à l'opposé du sien.
-
-  **La secousse tombe sur la pleine extension**, c'est-à-dire au bout du
-  mouvement rapide : `IMPACT_DUEL` vaut exactement `retard + appel + frappe`.
-  Toute retouche des durées de la charge doit le suivre — c'est vérifiable en
-  échantillonnant l'animation, le pic doit tomber pile sur cette valeur.
-
-  **LA DÉRIVE A UN PLANCHER EN PIXELS, et c'est la seule grandeur du cadre qui
-  échappe à la proportion.** Tout le reste doit s'échelonner ; elle, non. Elle
-  occupe les 456 ms qui suivent la frappe — c'est elle qui fait *durer* le gros
-  plan. Proportionnelle, elle valait 8,9 px sur un téléphone contre 24,9 sur un
-  écran de 1080, soit **0,3 px par image contre 0,9** : sous le seuil de
-  perception. Passé la frappe, l'image était figée sur petit écran, et *une
-  image figée se lit comme terminée*.
-
-  Keko l'a signalé trois fois — « c'est plus court sur tél » — alors que la
-  durée était rigoureusement identique, **mesurée à 802 ms sur son appareil**.
-  C'est le diagnostic du panneau qui a écarté la piste des durées et laissé
-  celle-là comme seule explication possible. *La perception du mouvement a un
-  plancher absolu, pas relatif : un petit écran a moins de pixels pour la même
-  part de figure.*
-
-  **Ce sont les CHANGEMENTS DE DIRECTION qui font lire le coup**, pas la
-  vitesse : l'oeil attrape un rebroussement là où il laisse passer une
-  accélération. C'est aussi ce qui permet à la frappe de ne durer que 45 ms —
-  moins de trois images — sans redevenir invisible : *elle est encadrée*. Une
-  rampe amortie de 83 ms occupait le même temps et restait un déplacement.
-
-  **Elle part 70 ms après le reste, et ce n'est pas un réglage : c'est la
-  condition pour qu'on la voie — mais il doit être le plus court possible.**
-  Lancée à l'instant zéro, la phase vive était finie avant qu'on distingue les
-  figures : « il a déjà avancé quand on le voit ». À 120 ms, le temps mort
-  d'avant le geste devenait sensible à son tour : « la phase immobile avant
-  l'avancée est trop longue ». Le retard vaut donc **exactement la durée
-  d'apparition des corps**, et c'est en accélérant celle-ci (0,09 → 0,055 s)
-  qu'on l'a raccourci, pas en pariant sur un départ à l'aveugle. *Les deux
-  valeurs sont liées : toucher l'une sans l'autre ramène l'un des deux
-  défauts.* Deux corrections, pas une — **le retard, et la durée de la phase
-  vive** : 51 ms, c'est trois images, et une courbe trop mordante y tassait 96 %
-  du trajet en 40 ms. Un mouvement qui tient en deux images se lit comme un
-  saut. À 83 ms et avec un amorti plus doux, la course s'étale sur cinq images
-  (31 %, 17 %, 9 %, 4 %, 1 % du trajet) — **le contraste de vitesse ne sert à
-  rien si la phase rapide passe sous le seuil de perception.**
-
-  **La secousse tombe au bout de la charge**, plus à l'apparition. Elle y était
-  calée du temps où rien ne bougeait dans le cadre ; depuis qu'il y a un geste,
-  le coup doit le suivre — sinon on lit deux évènements sans rapport.
-
-  **Elle passe par `translate`, pas par `transform`.** `transform` porte déjà
-  l'arrivée des figures (translateY + scale) : une animation sur la même
-  propriété l'écraserait. Les deux propriétés se composent d'elles-mêmes.
-
-  **Et la LUMIÈRE désigne l'attaquant** : il porte un liseré vif, sa cible
-  reste mate. La charge le dit aussi maintenant, mais le liseré reste ce qui se
-  lit avant tout mouvement.
-
-  **Sur un écran court, le cadre SE POSE EN BAS au lieu de se centrer** — comme
-  la scène qu'il remplace, qui sous 431 px colle ses corps à la main. Et il ne
-  réserve que la bande émergée de la main, pas son dégagement : ce dégagement
-  est le vide qu'elle se garde pour lever une carte, or aucune carte n'est levée
-  pendant un gros plan.
-
-  Keko : « sur téléphone je trouve l'animation d'attaque un peu haute sur
-  l'écran ». **Le cadre était pourtant correctement centré** — 25 px de marge
-  au-dessus de la figure, 18 en dessous. C'est la ZONE qui était haute, parce
-  que la main occupe 41 % de la hauteur en paysage. *Un cadre correctement
-  centré dans une zone décalée reste un cadre décalé, et c'est le genre de
-  défaut qu'une mesure de centrage déclare bon.* Posé en bas, le centre de la
-  figure tombe à 6 px du centre de l'écran (189 contre 195 sur un téléphone de
-  390), et son nom s'arrête pile sur la ligne de flottaison des cartes.
-
-  **Posé à RAS du bas il redevenait trop bas**, et le retrait des noms sous les
-  figures l'a encore descendu — Keko : « l'animation de combat est un peu basse
-  sur le tel ». Il garde donc un jeu de `0,12 × la figure` au-dessus de la ligne
-  de flottaison : le décalage est une fraction de la figure et non un nombre de
-  pixels, puisque c'est elle qu'on remonte. Mesuré ensuite à 5, 14 et 16 px
-  au-dessus du centre de l'écran sur 667x320, 844x390 et 932x430, et le bas de la
-  figure reste 10 à 15 px au-dessus des cartes.
-
-  Le même décalage existe sur PC (397 contre 540 sur un 1080), **il n'a pas été
-  touché** : Keko n'a rien signalé là-bas, et au-dessus de 430 px la scène
-  centre aussi ses corps.
-
-  *Piège de placement à ne pas refaire* : la surcharge doit être écrite APRÈS
-  `.duel` dans le fichier, pas dans le bloc `max-height: 430px` qui est plus
-  haut. À spécificité égale la dernière règle gagne, donc elle y était écrasée
-  sans erreur et sans rien changer à l'écran — **une media query ne l'emporte
-  pas sur une règle ordinaire, elle ne fait que filtrer.**
-
-  **Le calque vit dans `.app`, en `absolute`, pas à côté en `fixed`** — voir
-  plus bas la note sur la secousse : posé à côté, il passait par-dessus toute
-  l'interface du bas dès que `.app` prenait un transform. Sa largeur est prise
-  sur la fenêtre et non sur `.app`, qui est plafonnée à 90rem : sur un écran
-  plus large, le voile s'arrêterait avant les bords.
-
-  **Ils reviennent quand le voile COMMENCE à se lever, pas quand il a fini.**
-  Rendus à la fin, on voyait leur place vide pendant les 160 ms du fondu, puis
-  ils réapparaissaient d'un coup — Keko : « le personnage réapparaît après un
-  délai, c'est moche ». Les deux images se croisent désormais, *ce qu'un fondu
-  est précisément censé faire*. C'est pour ça que la durée du fondu est exportée
-  par `ui/duel.ts` : elle sert des deux côtés.
-
-  **Les deux corps montrés quittent l'arrière-plan** — ils sont passés devant.
-  `visibility: hidden` et non `display: none` : leur place doit rester tenue,
-  sinon le rang se resserre pendant le gros plan et se rouvre après, et toute
-  la scène tressaute au retour. Et comme l'agonie, **ça vient de l'état**
-  (`auFront`), pas d'une classe posée à la main : le premier rendu venu la
-  balaierait en plein gros plan.
-
-  **Le voile passe par-dessus les corps, jamais par-dessus la main ni les
-  tas** : ce qu'on tient reste lisible pendant qu'on regarde le coup partir.
-  C'est un contrat d'empilement, à ne pas casser — `.duel` à 24, les tas à 25,
-  l'orbe à 26, `#cartes` à 28 (qui devient un contexte d'empilement à lui seul,
-  pour que les z-index internes des cartes montent d'un bloc).
-
-  **Le joueur reçoit le même assaut que les ennemis.** Il n'y a pas deux
-  grammaires de frappe, il y a une frappe et deux camps qui l'empruntent.
-
-  **Pas de nom sous les figures.** Il y en a eu un ; dans un cadre qui ne montre
-  que deux corps il n'apprenait rien — on vient de choisir sa cible, et la
-  silhouette la dit. Il ne faisait que rallonger la figure vers le bas, donc
-  pousser tout le cadre vers le haut sur un écran court : le retirer a descendu
-  le centre de la figure de 189 à 201 px sur un téléphone de 390, pour un centre
-  d'écran à 195.
-
-  **Le joueur reste à gauche et l'ennemi à droite, quel que soit l'attaquant.**
-  Retourner le décor casserait le sens de lecture ET les silhouettes, qui sont
-  dessinées pour se faire face dans cet ordre. C'est l'assaut qui désigne
-  l'attaquant, pas la place.
-
-  **L'IMPACT SE PROGRAMME DEPUIS L'INSTANT OÙ LE CADRE S'OUVRE VRAIMENT**,
-  jamais depuis un instant calculé d'avance. La salve ennemie posait deux
-  minuteurs indépendants — l'un pour ouvrir le cadre, l'autre pour la secousse —
-  tous deux comptés depuis le début de la salve. Or ouvrir le cadre coûte un
-  **rendu complet de la scène**, d'autant plus lourd qu'il y a de créatures : le
-  premier prenait du retard, le second non, et la secousse tombait *avant* le
-  bout de la frappe. Le coup se décollait du geste, et d'autant plus que les
-  ennemis étaient nombreux — Keko : « c'est pire quand les ennemis sont
-  nombreux ». *Deux minuteurs pour les deux moitiés d'un même évènement, c'est
-  une désynchronisation qui n'attend que la première machine lente.*
-
-  **UN GROS PLAN ENNEMI DURE PLUS LONGTEMPS AU DOIGT QU'À LA SOURIS** (1350
-  contre 1150 ms), et c'est **la seule grandeur de temps du jeu qui dépend de
-  l'appareil**. Le repos entre deux gros plans d'une salve la suit (240 contre
-  140 ms) : une salve de trois coûte 4780 ms au doigt et 3980 sur PC.
-
-  Elle a mis trois essais à trouver sa forme, et les deux premiers valent d'être
-  retenus. À durée d'horloge égale — vérifiée à **800/150 ms sur l'appareil de
-  Keko** — le gros plan ennemi lui paraissait systématiquement plus court sur
-  téléphone que sur PC. J'ai attribué l'écart à une asymétrie d'ATTENTION (le
-  temps qu'on attend paraît plus long que le temps qui vous tombe dessus) et
-  allongé les gros plans ennemis **partout**. Verdict : « le temps d'attaque des
-  ennemis sur PC est trop long ». *L'écart était donc bien lié à l'appareil, pas
-  au camp qui frappe* — et une correction globale ne pouvait que casser le côté
-  qui allait bien.
-
-  Pourquoi l'appareil, et c'est la même famille de raison que le plancher de
-  dérive : sur un petit écran la scène traverse moins de pixels, l'oeil a moins
-  à parcourir, il a fini de lire l'image avant que le temps ne soit écoulé.
-
-  **Leçon de méthode : quand un écart est rapporté comme une différence entre
-  DEUX APPAREILS, la correction doit porter sur l'appareil.** Chercher une
-  explication universelle à un symptôme local revient à déplacer le défaut sur
-  la machine qui n'avait rien demandé. Il a fallu que Keko le redise pour que je
-  revienne sur mon explication.
-
-  Le test est `(pointer: coarse)` et non une largeur de fenêtre : ce qu'on
-  distingue, c'est le doigt de la souris — une petite fenêtre sur un PC reste un
-  PC. Il est relu à chaque gros plan, donc brancher une souris ne demande pas de
-  recharger.
-
-  **Le diagnostic du panneau RECALCULE son attendu au lieu de le recopier** :
-  une ligne qui annoncerait « eux 950 » en dur mentirait précisément sur la
-  machine qu'on est en train de mesurer.
-
-  La salve s'ouvre aussi sur **250 ms de battement** : elle suivait la tape sur
-  « Fin du tour » sans un temps, et le premier gros plan s'ouvrait alors qu'on
-  regardait encore le bouton. *Un coup qu'on n'a pas vu commencer paraît plus
-  court que les autres.*
-
-  **Entre deux gros plans d'une même salve, il faut un vrai temps** (240 ms).
-  À 60 ms, la sortie de l'un et l'entrée du suivant se touchaient : la salve se
-  lisait comme un bloc précipité plutôt que comme des coups distincts, et la
-  scène ne redevenait jamais visible entre deux. *Un coup n'a pas besoin de
-  durer plus longtemps pour peser, il a besoin de retomber avant le suivant.*
-
-  **LE TEMPS D'ARRÊT EST LE SEUL LEVIER QU'ON BOUGE QUAND KEKO DEMANDE PLUS DE
-  TEMPS**, et il l'a demandé deux fois — la seconde en ces termes : « c'est
-  dommage, on n'a pas le temps de bien voir ». La charge dure 520 ms quoi qu'il
-  arrive ; au-delà, plus rien ne bouge et on regarde. Les deux tiers d'un gros
-  plan sont désormais de l'arrêt.
-
-  *Allonger un gros plan n'est donc PAS ralentir le geste* — c'est le contraire :
-  le coup garde la même vivacité et on lui laisse le temps de retomber. **Toucher
-  à la charge obligerait à recalculer les pourcentages de ses trois temps ET la
-  vitesse de la dérive**, qui a un plancher de perception : la même distance
-  étalée sur plus longtemps repasse sous le seuil, et l'image se lit à nouveau
-  comme figée.
-
-  | | avant | après |
-  |---|---|---|
-  | gros plan du joueur | 800 | **1150** |
-  | gros plan ennemi, PC | 800 | **1150** |
-  | gros plan ennemi, téléphone | 950 | **1350** |
-  | gros plan de mort | 1500 | **2100** |
-  | extinction du corps sur la scène | 600 | **850** |
-  | salve de trois, PC | 2930 | **3980** |
-  | salve de trois, téléphone | 3580 | **4780** |
-  | mort du dernier corps | 2400 | **3250** |
-
-  **Le prix est réel et il faut le savoir** : une salve de trois ennemis coûte
-  près de cinq secondes au doigt. *C'est de loin le poste le plus lourd du jeu ;
-  si un combat entier paraît long, c'est là qu'il faut regarder* — et le
-  raccourcir ne demande de toucher qu'à ces chiffres-là.
-
-  **Le gros plan a remplacé tout le retour visuel du combat, et ce qu'il a
-  remplacé a été supprimé** — le chiffre de dégâts posé sur la scène, le bond
-  des silhouettes, le tressaillement du corps touché. Il n'y a plus de coup
-  porté sur la scène : tous passent par le cadre. Gardé « au cas où », ce code
-  aurait menti sur ce que fait le jeu, et ce dépôt documente chaque chiffre —
-  il ne peut pas se permettre d'en garder de faux. `git log` sait les rendre.
 - le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;

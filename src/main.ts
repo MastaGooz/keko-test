@@ -22,24 +22,20 @@ import {
   terminerButin,
 } from './logic/descente.ts'
 import type { Occupation } from './ui/render.ts'
-import { figure, FIGURE_JOUEUR, mount, render } from './ui/render.ts'
-import {
-  dureeDuDuel,
-  duel,
-  FONDU_DUEL,
-  OUVERTURE_SALVE,
-  fermerDuel,
-  IMPACT_DUEL,
-  pasEntreDuels,
-  TAMPON_DUEL,
-} from './ui/duel.ts'
-import { chercherPortraits } from './ui/portrait.ts'
+import { mount, render } from './ui/render.ts'
 import type { Action } from './ui/input.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
 import { brancherMain } from './ui/glisser-main.ts'
 import { apercuDegats } from './ui/apercu.ts'
-import { secouerEcran } from './ui/effets.ts'
+import {
+  assaut,
+  DUREE_COUP,
+  encaisse,
+  INSTANT_IMPACT,
+  PAS_ENTRE_FRAPPES,
+  secouerEcran,
+} from './ui/effets.ts'
 import { basculerPleinEcran, pleinEcranPossible } from './ui/plein-ecran.ts'
 import { tracerVisees } from './ui/visees.ts'
 import {
@@ -64,45 +60,11 @@ let descente: Descente
 let selection: number | null = null
 /** Pour ne sonner la fin qu'au moment où elle tombe, pas à chaque rendu. */
 let finSonnee = false
-/**
- * Le corps actuellement dans le gros plan, s'il y en a un. Il quitte
- * l'arrière-plan le temps du duel — le joueur avec lui, puisqu'il est de tous
- * les duels. C'est de l'ÉTAT et pas une classe posée à la main : un rendu au
- * milieu du gros plan effacerait la classe et ferait réapparaître le corps.
- */
-let auFront: number | null = null
 /** La carte qu'on regarde de près, s'il y en a une. */
 let zoom: number | null = null
 /** La carte survolée ou tenue : elle montre ce qu'elle emporterait. */
 let survolee: number | null = null
 
-/**
- * Ce que les derniers gros plans ont réellement duré, à l'horloge.
- *
- * Une impression de vitesse ne se discute pas, elle se mesure — et je ne peux
- * pas mesurer sur l'appareil de Keko. On en garde PLUSIEURS et on note qui
- * frappait : une salve ennemie en enchaîne autant qu'il y a de frappeurs, et
- * c'est là qu'il trouve les gros plans trop courts. Un écart qui n'apparaît que
- * dans l'enchaînement ne se voit pas sur une mesure isolée.
- */
-type Mesure = { qui: string; ms: number; impact: number }
-let mesures: Mesure[] = []
-
-function ecrireDiagnostic(): void {
-  const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const liste =
-    mesures.length === 0
-      ? '—'
-      : mesures.map((m) => `${m.qui} ${Math.round(m.ms)}/${Math.round(m.impact)}`).join(' · ')
-  view.diagnostic.textContent =
-    `Animations réduites : ${reduit ? 'OUI' : 'non'} — ` +
-    `gros plans, durée/impact (ms) : ${liste} · ` +
-    // L'attendu est RECALCULÉ, jamais recopié : la durée d'un gros plan ennemi
-    // dépend de l'appareil, et un diagnostic qui annonce une constante ment
-    // précisément sur la machine qu'on est en train de mesurer.
-    `attendu moi ${dureeDuDuel('joueur', false)}, eux ${dureeDuDuel('ennemi', false)}, ` +
-    `mort ${dureeDuDuel('joueur', true)} — impact ${IMPACT_DUEL}`
-}
 
 /**
  * Peint sur chaque jauge la part de PV que la carte du moment emporterait.
@@ -118,70 +80,6 @@ function rafraichirApercu(): void {
   apercuDegats(view, carte !== undefined && carte !== null && carte.type === 'combat' ? carte.degats : null)
 }
 
-/**
- * Ouvre un gros plan et retire de la scène les deux corps qu'il montre. Tout
- * ce qui suit — son, secousse, chute éventuelle — se règle sur sa durée.
- */
-function grosPlan(
-  cible: number,
-  nomCible: string,
-  attaquant: 'joueur' | 'ennemi',
-  degats: number,
-  mort = false,
-  impact: () => void = () => {},
-): void {
-  auFront = cible
-  dessiner()
-  const ouvert = performance.now()
-  duel(view, FIGURE_JOUEUR, figure(nomCible), attaquant, degats, mort)
-  // L'IMPACT SE PROGRAMME D'ICI, depuis l'instant où le gros plan s'ouvre
-  // VRAIMENT — jamais depuis un instant calculé d'avance.
-  //
-  // La salve ennemie posait deux minuteurs indépendants, l'un pour ouvrir le
-  // cadre, l'autre pour la secousse, tous deux comptés depuis le début de la
-  // salve. Or ouvrir le cadre coûte un rendu complet de la scène, d'autant plus
-  // lourd qu'il y a de créatures : le premier prenait du retard, le second non,
-  // et la secousse tombait AVANT le bout de la frappe. Le coup se décollait du
-  // geste, et d'autant plus que les ennemis étaient nombreux — ce que Keko a
-  // décrit sans le savoir.
-  let retardImpact = 0
-  window.setTimeout(() => {
-    retardImpact = performance.now() - ouvert
-    impact()
-  }, IMPACT_DUEL)
-  if (mort) window.setTimeout(() => sonAcheve(), TAMPON_DUEL)
-
-  const duree = dureeDuDuel(attaquant, mort)
-
-  // Les corps reviennent quand le voile COMMENCE à se lever, pas quand il a
-  // fini. Rendus à la fin, on voyait leur place vide pendant les 160 ms du
-  // fondu, puis ils réapparaissaient d'un coup — Keko : « le personnage
-  // réapparaît après un délai, c'est moche ». Les deux images se croisent
-  // désormais, ce qui est exactement ce qu'un fondu est censé faire.
-  window.setTimeout(() => {
-    auFront = null
-    // Un ennemi abattu revient avec les autres, mais pour s'éteindre. Le joueur
-    // mort, lui, n'a pas de scène où revenir : l'écran de fin suit.
-    if (mort && attaquant === 'joueur') {
-      agonie = [...agonie, cible]
-      window.setTimeout(() => {
-        agonie = agonie.filter((i) => i !== cible)
-        dessiner()
-      }, DUREE_AGONIE)
-    }
-    dessiner()
-  }, duree - FONDU_DUEL)
-
-  window.setTimeout(() => {
-    mesures = [
-      ...mesures,
-      { qui: attaquant === 'joueur' ? 'moi' : 'eux', ms: performance.now() - ouvert, impact: retardImpact },
-    ]
-    // Cinq suffisent : au-delà la ligne ne se lit plus sur un téléphone.
-    if (mesures.length > 5) mesures = mesures.slice(-5)
-    ecrireDiagnostic()
-  }, duree)
-}
 
 /**
  * Ce qui occupe l'écran. Le jeu a des **temps** : tant qu'une animation se
@@ -219,9 +117,6 @@ function demarrer(nouvelleSeed: number): void {
   seed = nouvelleSeed
   rng = createRng(seed)
   descente = commencerDescente(rng)
-  // Une nouvelle descente ne doit pas hériter d'un voile resté ouvert.
-  fermerDuel(view)
-  auFront = null
   agonie = []
   zoom = null
   survolee = null
@@ -232,7 +127,7 @@ function demarrer(nouvelleSeed: number): void {
 }
 
 function dessiner(): void {
-  render(view, descente, seed, selection, occupation, auFront, zoom, agonie)
+  render(view, descente, seed, selection, occupation, zoom, agonie)
   // Après le rendu : les jauges viennent d'être reconstruites, leur aperçu
   // avec. Une marque posée avant serait balayée.
   rafraichirApercu()
@@ -367,21 +262,29 @@ function dispatch(action: Action): void {
         const cible = combat.ennemis[action.cible]
         if (inflige > 0 && cible !== undefined) {
           marques.push(() => {
-            // Le son et la secousse tombent SUR L'IMPACT du gros plan, pas au
-            // moment de la tape : le coup est un geste qui se déroule, plus un
-            // chiffre qui change.
-            grosPlan(action.cible, cible.nom, 'joueur', inflige, reste <= 0, () => {
-              // La force du son suit le coût de la carte : on entend son poids.
-              if (carte !== undefined) sonFrappe((carte.cout - 1) / 3)
-              secouerEcran(view, 'forte')
-            })
+            encaisse(view, action.cible, inflige)
+            // La force du son suit le coût de la carte : on entend son poids.
+            if (carte !== undefined) sonFrappe((carte.cout - 1) / 3)
+            secouerEcran(view)
           })
-          // Le gros plan s'attarde quand il tue : le verrou doit suivre, sinon
-          // l'écran de récompense s'ouvrirait sur la tête de mort encore posée.
-          attente = dureeDuDuel('joueur', reste <= 0)
+          attente = DUREE_COUP
         }
-        // Plus rien après : la mort se joue DANS le gros plan, et le corps ne
-        // revient simplement pas sur la scène.
+        // Le corps abattu reste au rang le temps d'encaisser, puis s'éteint —
+        // sans quoi on ne verrait jamais les dégâts qui l'ont achevé.
+        if (reste <= 0 && inflige > 0) {
+          marques.push(() => {
+            window.setTimeout(() => {
+              agonie = [...agonie, action.cible]
+              sonAcheve()
+              dessiner()
+              window.setTimeout(() => {
+                agonie = agonie.filter((i) => i !== action.cible)
+                dessiner()
+              }, DUREE_AGONIE)
+            }, DUREE_COUP)
+          })
+          attente = DUREE_COUP + DUREE_AGONIE
+        }
       }
       selection = null
       break
@@ -399,47 +302,27 @@ function dispatch(action: Action): void {
 
       marques.push(() => {
         frappes.forEach((frappe, rang) => {
-          // Un battement avant la premiere : le gros plan s'ouvrait alors
-          // qu'on regardait encore le bouton « Fin du tour ».
-          const depart = OUVERTURE_SALVE + rang * pasEntreDuels()
-          const index = descente.combat.ennemis.findIndex((e) => e.nom === frappe.nom)
-          // `pvJoueur` est ce qu'il RESTE après la frappe : à zéro, c'est
-          // celle-ci qui a tué, et c'est elle qui porte la tête de mort.
-          const fatale = frappe.pvJoueur === 0
-          window.setTimeout(
-            () =>
-              grosPlan(index, frappe.nom, 'ennemi', frappe.degats, fatale, () => {
-                secouerEcran(view, 'forte')
-                sonEncaisse()
-              }),
-            depart,
-          )
+          const depart = rang * PAS_ENTRE_FRAPPES
+          window.setTimeout(() => assaut(view, [frappe.nom]), depart)
+          window.setTimeout(() => {
+            encaisse(view, 'joueur', frappe.degats)
+            secouerEcran(view, 'forte')
+            sonEncaisse()
+          }, depart + INSTANT_IMPACT)
         })
         // La repioche se fait entendre une fois la salve passée.
         window.setTimeout(
           () => sonPioche(),
-          Math.max(
-            0,
-            OUVERTURE_SALVE +
-              (frappes.length - 1) * pasEntreDuels() +
-              dureeDuDuel('ennemi', false),
-          ),
+          Math.max(0, (frappes.length - 1) * PAS_ENTRE_FRAPPES + INSTANT_IMPACT + 120),
         )
       })
 
-      // La main revient au joueur quand le dernier gros plan s'est refermé.
-      // Seule la DERNIÈRE frappe peut être fatale : le moteur arrête la salve
-      // dès que le joueur tombe. C'est donc elle, et elle seule, qui peut
-      // allonger l'attente.
-      const derniere = frappes[frappes.length - 1]
-      const fatale = derniere !== undefined && derniere.pvJoueur === 0
+      // La main revient au joueur quand la dernière frappe a fini de résonner.
       pendant = 'ennemis'
       attente =
         frappes.length === 0
           ? 0
-          : OUVERTURE_SALVE +
-            (frappes.length - 1) * pasEntreDuels() +
-            dureeDuDuel('ennemi', fatale)
+          : (frappes.length - 1) * PAS_ENTRE_FRAPPES + INSTANT_IMPACT + DUREE_COUP
 
       selection = null
       break
@@ -476,9 +359,6 @@ function dispatch(action: Action): void {
       return
   }
 
-  dessiner()
-  for (const marque of marques) marque()
-
   // Quand le combat vient de se terminer, on rend la SCÈNE au joueur avant de
   // lui poser un calque dessus. Sans cette respiration, le gros plan de la
   // frappe fatale se refermait et l'écran de récompense — ou la fin de run —
@@ -493,10 +373,17 @@ function dispatch(action: Action): void {
   // Le combat ne se résout qu'une fois les animations finies : l'écran de
   // récompense attend que le dernier corps soit tombé.
   occuper(attente, pendant, conclure)
+
+  // LES MARQUES SE POSENT APRES LE DERNIER RENDU, donc après `occuper` et pas
+  // avant : `occuper` redessine pour afficher « Les ennemis frappent… » sur le
+  // bouton, et ce rendu balayait la classe que la marque venait de poser sur le
+  // corps touché. Le chiffre de dégâts, lui, survivait — il est posé sur la
+  // racine — ce qui rendait le défaut trompeur : on voyait bien le coup, mais
+  // le corps ne tressaillait jamais.
+  for (const marque of marques) marque()
 }
 
 bindInput(view, dispatch)
-ecrireDiagnostic()
 
 /**
  * Les gestes de la main. `disponible` est le même verrou que celui du dispatch :
@@ -536,16 +423,6 @@ window.addEventListener('orientationchange', () => tracerVisees(view))
 
 demarrer(Date.now() % 100000)
 
-// Les portraits du joueur, s'ils ont ete deposes dans `public/`. La detection
-// est asynchrone, donc le premier rendu part forcement sans eux : on redessine
-// quand elle aboutit, et on ne fait rien du tout s'ils n'existent pas.
-//
-// Elle PRECHARGE au passage, et ca compte : la pose d'attaque ne s'affiche qu'au
-// premier coup porte et pese pres d'un megaoctet -- chargee a ce moment-la, elle
-// arriverait apres le gros plan qu'elle devait remplir.
-void chercherPortraits().then((trouve) => {
-  if (trouve) dessiner()
-})
 
 // Le cache de GitHub Pages peut servir un vieux HTML : on vérifie la date du
 // build à la source et on se recharge au besoin, une fois la partie affichée.
