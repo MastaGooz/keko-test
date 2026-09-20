@@ -23,10 +23,26 @@
 /** Ce que le joueur est en train de faire, du point de vue du dessin. */
 export type Pose = 'repos' | 'attaque'
 
+/**
+ * **La date du build sert de numéro de version aux images**, et ce n'est pas
+ * une précaution : sans elle, remplacer un PNG ne change rien à l'écran.
+ *
+ * Les fichiers de `public/` sont copiés tels quels, sans empreinte de contenu
+ * dans leur nom — contrairement à tout le reste du build, qui sort en
+ * `index-A1b2C3.js`. Leur URL ne bouge donc jamais, et le navigateur ressert
+ * celle qu'il a en cache. Keko : « j'ai changé l'image d'attaque mais elle n'a
+ * pas changé quand je lance » — alors que le serveur envoyait bien la nouvelle,
+ * vérifié à l'octet près.
+ *
+ * *C'est un piège qui se retend à chaque image modifiée*, et qui ne se voit pas
+ * depuis la machine de dev, où le serveur de développement invalide tout seul.
+ */
+const VERSION = encodeURIComponent(__BUILD_TIME__)
+
 /** Là où les fichiers sont attendus. Un seul endroit les connaît. */
 const FICHIERS: Record<Pose, string> = {
-  repos: `${import.meta.env.BASE_URL}joueur.png`,
-  attaque: `${import.meta.env.BASE_URL}attaque.png`,
+  repos: `${import.meta.env.BASE_URL}joueur.png?v=${VERSION}`,
+  attaque: `${import.meta.env.BASE_URL}attaque.png?v=${VERSION}`,
 }
 
 const trouvees: Record<Pose, boolean> = { repos: false, attaque: false }

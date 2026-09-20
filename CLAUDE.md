@@ -1611,6 +1611,19 @@ abandonné laisserait une image cassée sur la scène ET dans le gros plan, et u
 joueur qui disparaît au moment où il frappe serait pire que de frapper l'épée
 basse.
 
+**LEUR URL PORTE LA DATE DU BUILD** (`?v=...`), et ce n'est pas une précaution :
+sans elle, remplacer un PNG ne change rien à l'écran. Les fichiers de `public/`
+sont copiés tels quels, **sans empreinte de contenu dans leur nom** —
+contrairement à tout le reste du build, qui sort en `index-A1b2C3.js`. Leur URL
+ne bouge donc jamais et le navigateur ressert celle qu'il a en cache. Keko :
+« j'ai changé l'image d'attaque mais elle n'a pas changé quand je lance » —
+alors que le serveur envoyait bien la nouvelle, vérifié à l'octet près.
+
+*Le piège se retend à chaque image modifiée, et il est invisible depuis la
+machine de dev*, où le serveur de développement invalide tout seul. Toute
+ressource ajoutée dans `public/` et destinée à changer doit passer par la même
+version.
+
 **Les deux images sont préchargées au démarrage, et ça compte** : la pose
 d'attaque ne s'affiche qu'au premier coup porté et pèse près d'un mégaoctet —
 chargée à ce moment-là, elle arriverait *après* le gros plan qu'elle devait
