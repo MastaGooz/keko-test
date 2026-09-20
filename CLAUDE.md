@@ -718,6 +718,19 @@ donjon. Ce qui tourne :
   produit pas toujours ce clic*, donc c'était le seul cas qui survivait. Les
   deux corrections de seuil qui ont précédé traitaient un symptôme.
 
+  **Rien ne se sélectionne dans ce jeu** (`user-select: none` et
+  `-webkit-touch-callout: none` sur `body`). Un appui long sur une carte
+  déclenchait la loupe et la sélection d'iOS, qui *interrompent le geste* : la
+  carte retombait dans la main au lieu de s'ouvrir.
+
+  La règle est posée sur `body` et non sur `.carte`, alors que c'est la carte
+  qu'on tient — **au moment où le maintien la prend, elle passe en
+  `position: absolute` et ce n'est plus elle qui est sous le doigt.** La
+  sélection démarre sur ce qui se trouve dessous : conteneur de la main, scène,
+  page. Il faut donc que *personne* ne soit sélectionnable. Prix assumé : on ne
+  peut plus copier la seed affichée, mais le bouton « Rejouer cette seed »
+  existe.
+
   **Règle à retenir : dès qu'un geste `pointer*` ouvre un calque sous le doigt,
   il faut avaler le clic de compatibilité qui suit.** On ne l'avale que là où
   le geste a eu lieu (la main, le fond du zoom) et pendant 400 ms : ailleurs,

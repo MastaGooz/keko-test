@@ -48,6 +48,18 @@ body {
   /* Pas de zoom/double-tap parasite au tap. */
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
+  /* AUCUN texte de ce jeu ne se selectionne. Un appui long sur une carte
+     declenchait la loupe et la selection d'iOS, qui interrompent le geste : la
+     carte retombait dans la main au lieu de s'ouvrir.
+
+     Pose sur `body` et non sur `.carte`, alors que c'est la carte qu'on tient :
+     au moment ou le maintien la prend, elle passe en `position: absolute` et ce
+     n'est plus elle qui est sous le doigt. La selection demarre sur ce qui se
+     trouve dessous -- conteneur de la main, scene, page. Il faut donc que
+     PERSONNE ne soit selectionnable, pas seulement la carte. */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* Les jetons de taille vivent sur `:root`, pas sur `.app`.
@@ -652,10 +664,9 @@ body {
      `manipulation` (l'heritage du `body`) ne suffit PAS : il ne desactive que
      le double-tap, pas le defilement ni le pincement. */
   touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  /* Pas de menu contextuel sur appui long : il coupe le glisser. */
-  -webkit-touch-callout: none;
+  /* Pas de glisser natif : le navigateur en propose un sur le SVG du dessin,
+     qui entre en concurrence avec le notre. */
+  -webkit-user-drag: none;
   flex: 0 0 auto;
   width: var(--large);
   aspect-ratio: 5 / 7;
