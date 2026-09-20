@@ -228,6 +228,11 @@ function dispatch(action: Action): void {
     case 'fermerZoom':
       zoom = null
       break
+    case 'jouerDepuisLeZoom':
+      // On referme AVANT de jouer : s'il y a plusieurs cibles, la carte reste
+      // engagée et il faut voir la scène pour en désigner une.
+      zoom = null
+      return dispatch({ type: 'jouerDepuisLaMain', index: action.index })
     case 'reordonner':
       descente = { ...descente, combat: reordonnerMain(descente.combat, action.de, action.vers) }
       // La carte tenue a peut-être changé d'index sous nos pieds : on repose.

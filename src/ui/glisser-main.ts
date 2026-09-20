@@ -114,7 +114,12 @@ export function brancherMain(view: View, gestes: GestesMain): void {
     }
   })
 
-  view.cartes.addEventListener('pointermove', (e) => {
+  // Le suivi du geste est pose sur la FENETRE et non sur la main : le doigt en
+  // sort forcement -- sortir EST le geste. La capture du pointeur devrait y
+  // suffire, mais elle peut echouer (elle est dans un `try`), et alors les
+  // evenements partent a l'element sous le doigt, qui n'est plus la main. Avec
+  // la fenetre, le glisser ne depend plus de la capture.
+  window.addEventListener('pointermove', (e) => {
     if (carte === null) return
     if (!glisse) {
       if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < SEUIL) return
@@ -159,8 +164,8 @@ export function brancherMain(view: View, gestes: GestesMain): void {
     else gestes.reordonner(index, place)
   }
 
-  view.cartes.addEventListener('pointerup', relacher)
-  view.cartes.addEventListener('pointercancel', () => {
+  window.addEventListener('pointerup', relacher)
+  window.addEventListener('pointercancel', () => {
     nettoyer()
     gestes.survol(null)
   })

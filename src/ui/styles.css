@@ -643,6 +643,19 @@ body {
   /* `--large` vient de `:root` : la main et les tas partagent la mesure. */
   position: relative;
   pointer-events: auto;
+  /* LA CARTE SE GLISSE, donc le navigateur ne doit pas interpreter le geste
+     comme un defilement -- sinon il s'approprie le mouvement et envoie un
+     `pointercancel` des les premiers pixels. C'est exactement la regle que
+     portent deja les pieces de l'ecran de butin ; je l'avais oubliee ici, et
+     le glisser ne marchait qu'a la souris.
+
+     `manipulation` (l'heritage du `body`) ne suffit PAS : il ne desactive que
+     le double-tap, pas le defilement ni le pincement. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  /* Pas de menu contextuel sur appui long : il coupe le glisser. */
+  -webkit-touch-callout: none;
   flex: 0 0 auto;
   width: var(--large);
   aspect-ratio: 5 / 7;
@@ -2940,6 +2953,9 @@ body {
   display: none;
   align-items: center;
   justify-content: center;
+  /* La bande du bouton « Jouer » est reservee, sinon la carte s'assoit dessus
+     sur un ecran court : elle se centre dans ce qui RESTE. */
+  padding-bottom: 4.75rem;
 }
 
 .zoom-ouvert .zoom {
@@ -2965,9 +2981,10 @@ body {
 }
 
 /* Bornee par la HAUTEUR : c'est elle qui manque en paysage, et une carte zoomee
-   doit tenir en entier -- c'est tout son objet. */
+   doit tenir en entier -- c'est tout son objet. 46vh et non 52 : le bouton
+   « Jouer » prend sa bande en bas, la carte se partage le reste. */
 .zoom-carte .carte {
-  --large: min(16rem, 52vh);
+  --large: min(16rem, 46vh);
   width: var(--large);
   margin: 0;
   transform: none;
@@ -3030,4 +3047,25 @@ body {
   .apercu {
     transition: none;
   }
+}
+
+/* Le filet : jouer depuis le zoom. Le chemin normal reste de sortir la carte de
+   la main -- ce bouton existe pour qu'un glisser qui derape ne bloque jamais. */
+.zoom-jouer {
+  /* Ancre EN BAS DE L'ECRAN et non sous la carte : suspendu a elle, il sortait
+     par le bas des que la carte prenait toute la hauteur disponible. */
+  position: absolute;
+  left: 50%;
+  bottom: 1.25rem;
+  /* >= 48 px, la regle tactile du projet. Le `.bouton` de base tombait a 40 px
+     ici -- c'est justement le bouton qu'on presse quand le glisser a rate, il
+     ne peut pas etre le plus petit de l'ecran. */
+  min-height: 3rem;
+  padding-inline: 1.5rem;
+  font-size: 0.9375rem;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  border-color: var(--joueur);
+  border-left-width: 3px;
+  white-space: nowrap;
 }

@@ -7,6 +7,7 @@ export type Action =
   | { type: 'zoomer'; index: number }
   | { type: 'fermerZoom' }
   | { type: 'jouerDepuisLaMain'; index: number }
+  | { type: 'jouerDepuisLeZoom'; index: number }
   | { type: 'reordonner'; de: number; vers: number }
   | { type: 'annuler' }
   | { type: 'cibler'; cible: number }
@@ -72,6 +73,9 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         break
       case 'fermerZoom':
         dispatch({ type: 'fermerZoom' })
+        break
+      case 'jouerDepuisLeZoom':
+        dispatch({ type: 'jouerDepuisLeZoom', index: Number(noeud.dataset.index) })
         break
       case 'annuler':
         dispatch({ type: 'annuler' })

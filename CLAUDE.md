@@ -691,11 +691,26 @@ donjon. Ce qui tourne :
   tape était ambiguë (elle pouvait vouloir dire « repose »), le glisser ne
   l'est pas. *Un geste qui engage n'a plus rien à confirmer.*
 
-  **Ce que ça coûte, et qu'il faut surveiller au doigt** : le glisser devient
-  le SEUL moyen de jouer, alors que ce dépôt dit ailleurs que sur un téléphone
-  le glisser est fragile et que la tape doit toujours porter la
-  fonctionnalité — voir l'écran de butin. La règle tient toujours là-bas ; ici
-  elle est explicitement levée, et c'est le premier point à éprouver.
+  **Une carte qui se glisse DOIT porter `touch-action: none`.** Sans lui, le
+  navigateur interprète le mouvement comme un défilement, s'approprie le geste
+  et envoie un `pointercancel` dès les premiers pixels : ça marche à la souris
+  et pas au doigt. `manipulation`, hérité du `body`, ne suffit pas — il ne
+  désactive que le double-tap. La règle était déjà écrite sur les pièces de
+  l'écran de butin ; je l'ai oubliée sur la main, et le glisser n'y a jamais
+  marché sur téléphone.
+
+  **Le suivi du geste est posé sur la FENÊTRE, pas sur la main.** Le doigt en
+  sort forcément — sortir *est* le geste. La capture du pointeur devrait y
+  suffire, mais elle peut échouer ; avec la fenêtre, le glisser n'en dépend
+  plus.
+
+  **Et le zoom porte un bouton « Jouer », qui est un FILET.** Le chemin normal
+  reste de sortir la carte de la main. Mais le glisser peut déraper sur un
+  téléphone, et ce dépôt a pour règle qu'une tape doit toujours pouvoir tout
+  faire : il garantit qu'on n'est jamais bloqué faute de pouvoir glisser. Il
+  est frère de la carte zoomée et non son enfant — `.zoom-carte` porte une
+  animation, donc un `transform`, qui en ferait le bloc conteneur de ce qu'il
+  contient.
 
   Une carte trop chère reste **saisissable et zoomable** : on veut pouvoir la
   ranger et la regarder. C'est le dépôt qui refuse de la jouer, pas le
