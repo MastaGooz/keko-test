@@ -703,11 +703,27 @@ donjon. Ce qui tourne :
   bref l'ouvre, un appui long aussi, et entre les deux la carte se soulève pour
   dire qu'on la tient.
 
-  C'est la deuxième correction du même défaut, et elle va plus loin que la
-  première : tant que la **durée** entrait dans la décision, un geste trop lent
-  ou trop rapide tombait dans le mauvais cas. Keko l'a signalé deux fois, de
-  deux façons opposées. Le temps sert à *prendre* la carte ; il ne sert pas à
-  *interpréter* le geste.
+  Le temps sert à *prendre* la carte ; il ne sert pas à *interpréter* le geste.
+
+  **LE VRAI COUPABLE ÉTAIT AILLEURS, et il a coûté trois allers-retours : le
+  `click` de compatibilité.** Après un `pointerup` tactile, le navigateur
+  synthétise un clic à la même position, pour les pages qui ne connaissent que
+  la souris. Le geste avait déjà tout fait — et ce clic retombait sur ce qui se
+  trouvait désormais sous le doigt, c'est-à-dire **le fond plein écran du zoom
+  qui venait de s'ouvrir**. Il le refermait dans la foulée : le zoom
+  s'ouvrait et disparaissait dans la même image.
+
+  C'est ce qui expliquait les trois symptômes d'un coup, y compris le plus
+  trompeur — « il faut laisser enfoncé pour que ça zoome ». *Un appui long ne
+  produit pas toujours ce clic*, donc c'était le seul cas qui survivait. Les
+  deux corrections de seuil qui ont précédé traitaient un symptôme.
+
+  **Règle à retenir : dès qu'un geste `pointer*` ouvre un calque sous le doigt,
+  il faut avaler le clic de compatibilité qui suit.** On ne l'avale que là où
+  le geste a eu lieu (la main, le fond du zoom) et pendant 400 ms : ailleurs,
+  un clic est un vrai clic. C'est vérifiable sans téléphone — on rejoue le clic
+  à la main sur `elementFromPoint`, ce que les évènements synthétiques ne
+  produisent pas tout seuls.
 
   **Sortir la carte engage ; s'il n'y a qu'un corps debout, ça frappe
   directement.** C'est l'inverse de l'ancienne règle des deux tapes, qui

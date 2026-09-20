@@ -45,6 +45,45 @@ const SEUIL_DOIGT = 16
 /** Au doigt, rester appuyé prend la carte, même sans bouger d'un pixel. */
 const DELAI_PRISE = 160
 
+/** Le temps qu'on laisse au clic de compatibilité pour se manifester. */
+const FENETRE_CLIC = 400
+
+/**
+ * Avale le `click` que le navigateur émet APRÈS un geste tactile.
+ *
+ * C'est un vestige de compatibilité : après un `pointerup` tactile, le
+ * navigateur synthétise un clic à la même position, pour les pages qui ne
+ * connaissent que la souris. Ici le geste a déjà tout fait — et ce clic
+ * retombe sur ce qui se trouve désormais sous le doigt, c'est-à-dire **le fond
+ * du zoom qui vient de s'ouvrir**. Il le refermait dans la foulée : le zoom
+ * s'ouvrait et disparaissait dans la même image.
+ *
+ * C'est ce qui expliquait les trois symptômes rapportés par Keko, y compris le
+ * plus trompeur — « il faut laisser enfoncé pour que ça zoome ». Un appui long
+ * ne produit pas toujours ce clic, donc c'était le seul cas qui survivait.
+ *
+ * On ne l'avale que sur la main et le fond du zoom : ailleurs, un clic est un
+ * vrai clic et doit passer.
+ */
+function avalerLeClicDeCompatibilite(): void {
+  let minuteur = 0
+  const avaler = (e: Event): void => {
+    const cible = e.target as HTMLElement | null
+    if (cible === null) return
+    if (cible.closest('#cartes') === null && cible.closest('.zoom-fond') === null) return
+    e.stopPropagation()
+    e.preventDefault()
+    arreter()
+  }
+  const arreter = (): void => {
+    window.clearTimeout(minuteur)
+    window.removeEventListener('click', avaler, true)
+  }
+  // En capture : il faut l'intercepter AVANT l'écoute déléguée de `input.ts`.
+  window.addEventListener('click', avaler, true)
+  minuteur = window.setTimeout(arreter, FENETRE_CLIC)
+}
+
 export type GestesMain = {
   /** La carte a été sortie de la main : on la joue. */
   jouer: (index: number) => void
@@ -203,6 +242,7 @@ export function brancherMain(view: View, gestes: GestesMain): void {
     const place = fenteSousLeDoigt(e.clientX)
     nettoyer()
     gestes.survol(null)
+    if (e.pointerType !== 'mouse') avalerLeClicDeCompatibilite()
     if (!gestes.disponible()) return
     // Le DÉPLACEMENT décide, jamais la durée. Une carte soulevée puis reposée
     // sans avoir bougé se regarde : c'est le geste le plus courant, il ne peut
