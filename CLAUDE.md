@@ -363,6 +363,21 @@ donjon. Ce qui tourne :
   Son remplissage lui fait couvrir toute la largeur, tas et orbe compris, et
   elle est au-dessus d'eux : sans ça elle les rendrait insensibles au doigt.
 
+  **Ce `auto` se porte sur `#cartes .carte`, jamais sur `.carte` tout court.**
+  Posé sur la classe, il a cassé le glisser du BUTIN à l'autre bout du jeu : le
+  fantôme qui suit le doigt est en `pointer-events: none`, mais la carte qu'il
+  contient ressuscitait tout son sous-arbre, donc `elementFromPoint` renvoyait
+  le fantôme et jamais la case visée. On pouvait prendre un trésor et plus
+  jamais le déposer — Keko : « je ne peux plus drop les trésors dans les
+  différents slots ». *La tape continuait de marcher*, ce qui rendait la panne
+  d'autant plus déroutante : le seul chemin cassé était celui qui interroge le
+  DOM sous le doigt. Les deux fantômes coupent donc aussi leur contenu
+  (`.fantome *`), parce qu'un fantôme qui capte le pointeur n'a de sens nulle
+  part.
+
+  *Règle générale : un `pointer-events: auto` se porte sur le sous-arbre qui en
+  a besoin, jamais sur une classe qui vit ailleurs aussi.*
+
   **Et ce `auto` a un prix qu'il faut connaître : un descendant qui redemande
   `auto` RESSUSCITE TOUT SON SOUS-ARBRE.** La coupure d'un parent ne l'atteint
   plus. Le verrou d'animation coupait `pointer-events` sur `#cartes` et

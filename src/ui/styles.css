@@ -676,7 +676,6 @@ body {
 .carte {
   /* `--large` vient de `:root` : la main et les tas partagent la mesure. */
   position: relative;
-  pointer-events: auto;
   /* LA CARTE SE GLISSE, donc le navigateur ne doit pas interpreter le geste
      comme un defilement -- sinon il s'approprie le mouvement et envoie un
      `pointercancel` des les premiers pixels. C'est exactement la regle que
@@ -1717,10 +1716,18 @@ body {
 }
 
 /* Le fantome qui suit le doigt pendant le glisser. */
+/* Le fantome qui suit le doigt ne capte JAMAIS le pointeur, lui ni rien de ce
+   qu'il contient : c'est sous lui qu'on cherche la case visee. Le `*` n'est pas
+   une precaution de style -- sans lui, la carte clonee redemande `auto` et le
+   depot devient introuvable. */
+.fantome,
+.fantome * {
+  pointer-events: none;
+}
+
 .fantome {
   position: fixed;
   z-index: 60;
-  pointer-events: none;
   opacity: 0.92;
   transform: translate(-50%, -50%) rotate(-4deg) scale(1.05);
   filter: drop-shadow(0 12px 24px #000c);
@@ -2047,6 +2054,23 @@ body {
    `main.ts` rejette l'action -- mais la carte se levait sous le doigt et
    affichait un curseur de main : elle avait l'air jouable, ce qui est pire
    qu'un refus franc. */
+/* LE `auto` NE VAUT QUE DANS LA MAIN, et c'est la sa raison d'etre : la boite
+   `#cartes` est en `none` pour laisser passer les tas et l'orbe qu'elle
+   recouvre, donc les cartes doivent y redemander le pointeur.
+
+   Il a d'abord ete pose sur `.carte` tout court, et ca a casse le glisser du
+   BUTIN a l'autre bout du jeu : le fantome qui suit le doigt est en
+   `pointer-events: none`, mais la carte qu'il contient ressuscitait tout son
+   sous-arbre. `elementFromPoint` renvoyait alors le fantome et jamais la case
+   visee -- on pouvait prendre un tresor, plus jamais le deposer. La tape, elle,
+   marchait toujours, ce qui rendait la panne d'autant plus deroutante.
+
+   Regle : un `pointer-events: auto` se porte sur le sous-arbre qui en a besoin,
+   jamais sur une classe qui vit ailleurs aussi. */
+#cartes .carte {
+  pointer-events: auto;
+}
+
 .occupe #cartes,
 .occupe #ennemis {
   pointer-events: none;
@@ -2936,6 +2960,11 @@ body {
 /* Le fantome suit le doigt. Il est CENTRE sur lui et legerement penche : sans
    inclinaison il se lit comme une image collee au curseur, avec, comme une
    carte tenue. */
+.fantome-carte,
+.fantome-carte * {
+  pointer-events: none;
+}
+
 .fantome-carte {
   position: fixed;
   z-index: 70;
