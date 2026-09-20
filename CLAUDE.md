@@ -471,6 +471,21 @@ donjon. Ce qui tourne :
   Toute retouche des durées de la charge doit le suivre — c'est vérifiable en
   échantillonnant l'animation, le pic doit tomber pile sur cette valeur.
 
+  **LA DÉRIVE A UN PLANCHER EN PIXELS, et c'est la seule grandeur du cadre qui
+  échappe à la proportion.** Tout le reste doit s'échelonner ; elle, non. Elle
+  occupe les 456 ms qui suivent la frappe — c'est elle qui fait *durer* le gros
+  plan. Proportionnelle, elle valait 8,9 px sur un téléphone contre 24,9 sur un
+  écran de 1080, soit **0,3 px par image contre 0,9** : sous le seuil de
+  perception. Passé la frappe, l'image était figée sur petit écran, et *une
+  image figée se lit comme terminée*.
+
+  Keko l'a signalé trois fois — « c'est plus court sur tél » — alors que la
+  durée était rigoureusement identique, **mesurée à 802 ms sur son appareil**.
+  C'est le diagnostic du panneau qui a écarté la piste des durées et laissé
+  celle-là comme seule explication possible. *La perception du mouvement a un
+  plancher absolu, pas relatif : un petit écran a moins de pixels pour la même
+  part de figure.*
+
   **Ce sont les CHANGEMENTS DE DIRECTION qui font lire le coup**, pas la
   vitesse : l'oeil attrape un rebroussement là où il laisse passer une
   accélération. C'est aussi ce qui permet à la frappe de ne durer que 45 ms —

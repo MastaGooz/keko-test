@@ -2670,7 +2670,24 @@ body {
      part de la figure que le geste traverse selon l'ecran. 0,122 : la frappe
      vaut 2,45 fois la course, soit 30 % de la figure -- la valeur reglee a
      l'oeil sur grand ecran. */
-  --elan: calc(var(--corps-duel) * 0.122 * var(--sens, 1));
+  --elan-brut: calc(var(--corps-duel) * 0.122);
+  --elan: calc(var(--elan-brut) * var(--sens, 1));
+
+  /* LA DERIVE A UN PLANCHER EN PIXELS, et c'est la seule grandeur du cadre qui
+     echappe a la proportion. Tout le reste doit s'echelonner ; elle, non.
+
+     Elle occupe les 456 ms qui suivent la frappe -- c'est elle qui fait DURER
+     le gros plan. Proportionnelle, elle valait 8,9 px sur un telephone contre
+     24,9 sur un ecran de 1080, soit 0,3 px par image contre 0,9 : sous le seuil
+     de perception. Passe la frappe, l'image etait figee sur petit ecran, et une
+     image figee se lit comme terminee. Keko, trois fois : « c'est plus court
+     sur tel » -- alors que la duree etait identique, mesuree a 802 ms sur son
+     appareil.
+
+     La perception du mouvement a un plancher ABSOLU, pas relatif : un petit
+     ecran a moins de pixels pour la meme part de figure. 24 px, soit environ
+     0,9 px par image partout. */
+  --derive: calc(max(calc(var(--elan-brut) * 0.45), 24px) * var(--sens, 1));
 }
 
 .duel-corps.attaque {
@@ -2726,8 +2743,9 @@ body {
     animation-timing-function: linear;
   }
   100% {
-    /* L'elan : il continue, mais on ne le voit presque plus avancer. */
-    translate: calc(var(--elan) * 2.2) 0;
+    /* L'elan : il continue, mais on ne le voit presque plus avancer. Le terme
+       est le contrecoup PLUS la derive, qui a son propre plancher. */
+    translate: calc(var(--elan) * 1.75 + var(--derive)) 0;
   }
 }
 
@@ -2747,7 +2765,7 @@ body {
    cote et se fait pousser dans l'autre. Les deux valeurs sont liees : bouger
    la derive sans bouger le recul les desaccorde. */
 .duel-corps:not(.attaque) {
-  --recul: calc(var(--elan) * -0.45);
+  --recul: calc(var(--derive) * -1);
   animation: recul 0.456s linear 0.184s forwards;
 }
 
