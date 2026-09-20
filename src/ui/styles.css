@@ -116,6 +116,10 @@ body {
      Plancher a 5 px : en dessous, une secousse ne se percoit plus. */
   --secousse: max(5px, calc(var(--corps) * 0.085));
 
+  /* L'ecart entre le joueur et le groupe d'en face. Un jeton parce que la carte
+     engagee vient s'y centrer : les deux doivent bouger ensemble. */
+  --ecart-camps: max(1.25rem, calc(var(--corps) * 0.55));
+
   /* La taille d'un corps DANS LE GROS PLAN. Elle a son propre plafond (42vh),
      different de celui du corps de scene (11rem) -- donc le rapport entre les
      deux change avec l'ecran. Tout ce qui se mesure a l'interieur du cadre doit
@@ -1472,7 +1476,7 @@ body {
    des corps : a 1,25rem fixes il valait un cinquieme d'un corps sur un ecran
    de PC, et les deux camps se touchaient presque. */
 .creature.moi {
-  margin-right: max(1.25rem, calc(var(--corps) * 0.55));
+  margin-right: var(--ecart-camps);
 }
 
 .creature.moi .jauge .remplissage {
@@ -3095,13 +3099,11 @@ body {
    venaient d'un endroit d'ou plus rien ne part. */
 .carte-engagee {
   position: absolute;
-  left: 50%;
-  /* Elle se tient DANS la chair, pas en dessous : a cheval sur le bas du corps
-     elle recouvrait la jauge du joueur et son chiffre de PV -- l'information
-     qu'on consulte justement en choisissant sa cible. */
-  /* Un plancher en `rem` en plus du %, parce que la rotation de 5 deg rallonge
-     la boite vers le bas -- sur un petit corps, 8 % n'y suffisaient plus. */
-  bottom: max(0.5rem, 10%);
+  /* ENTRE LES DEUX CAMPS, et un peu en hauteur. Posee sur le joueur, elle le
+     recouvrait et ne disait pas de quel cote le coup part ; dans l'ecart, elle
+     est sur la trajectoire -- entre celui qui frappe et ceux qu'il vise. */
+  left: calc(100% + var(--ecart-camps) / 2);
+  bottom: 45%;
   z-index: 3;
   translate: -50% 0;
   rotate: -5deg;
@@ -3109,12 +3111,13 @@ body {
   animation: carte-engagee-entree 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.15);
 }
 
-/* ELLE GARDE SA TAILLE DE MAIN. La reduire a celle d'un corps de scene la
-   faisait retrecir de 40 % a l'instant ou on la lache : c'est la meme carte,
-   elle vient d'etre sortie de la main, et rien dans le geste ne justifie
-   qu'elle change de taille en chemin. Elle est grande par rapport au joueur --
-   c'est la carte qu'on s'apprete a jouer, elle a le droit de peser. */
+/* Bornee par le CORPS : elle est un element de la scene, pas de la main. On a
+   essaye de lui garder sa taille de main pour eviter qu'elle retrecisse en
+   chemin ; ce n'etait pas le probleme, et a pleine taille elle ecrasait la
+   scene. */
 .carte-engagee .carte {
+  --large: min(var(--corps), 7rem);
+  width: var(--large);
   margin: 0;
   transform: none;
   box-shadow:
@@ -3134,20 +3137,6 @@ body {
     translate: -50% 0;
     scale: 1;
   }
-}
-
-/* La carte est plus haute que le corps : elle recouvre la place du badge
-   d'intention du joueur. On a essaye de faire passer le badge DEVANT -- a
-   pleine taille de carte, il atterrit en plein milieu du dessin et se lit comme
-   une valeur de la carte. Il s'efface donc le temps du ciblage.
-
-   `visibility` et non `display` : sa ligne reste tenue, sinon toute la colonne
-   du joueur remonte au moment ou on engage et la scene tressaute.
-
-   Ce qu'il disait n'est pas perdu : chaque ennemi porte son intention au-dessus
-   de sa tete, et la bande jaune montre deja ce qu'on va lui retirer. */
-.creature.moi.engage .intention {
-  visibility: hidden;
 }
 
 /* Sa place dans la main reste vide : les voisines se referment, exactement

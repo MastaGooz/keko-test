@@ -820,28 +820,22 @@ donjon. Ce qui tourne :
   c'est exactement l'index d'insertion dans la main *une fois retirée*, ce que
   `reordonnerMain` attend. La compter décalait d'un cran tous les déplacements
   vers la gauche — un bug qui ne se voyait que dans ce sens-là.
-- **la carte engagée se tient SUR LE JOUEUR**, pas dans la main. Une fois qu'on
-  l'a sortie, elle n'y est plus : l'y remettre pendant qu'on choisit sa cible
-  défaisait le geste, et les arches partaient d'un endroit d'où plus rien ne
-  part. Sur le joueur, elles partent de celui qui frappe. Sa place dans la main
-  reste vide et les voisines se referment, exactement comme quand on la tient
-  au doigt.
+- **la carte engagée se tient ENTRE LES DEUX CAMPS**, un peu en hauteur — pas
+  dans la main. Une fois qu'on l'a sortie, elle n'y est plus : l'y remettre
+  pendant qu'on choisit sa cible défaisait le geste, et les arches partaient
+  d'un endroit d'où plus rien ne part. Dans l'écart, elle est *sur la
+  trajectoire* — entre celui qui frappe et ceux qu'il vise. Sa place dans la
+  main reste vide et les voisines se referment, exactement comme quand on la
+  tient au doigt.
 
-  **Elle garde EXACTEMENT sa taille de main.** Elle a d'abord été réduite à la
-  taille d'un corps de scène, pour s'accorder à ce qui l'entoure — elle
-  rétrécissait alors de 40 % à l'instant où on la lâche. Keko : « le fait
-  qu'elle change de taille, c'est peut-être ça ». *C'est la même carte, elle
-  vient d'être sortie de la main, et rien dans le geste ne justifie qu'elle
-  change de taille en chemin.* Elle est grande par rapport au joueur : c'est la
-  carte qu'on s'apprête à jouer, elle a le droit de peser.
+  Elle est bornée par le **corps** et non par la main : c'est un élément de la
+  scène. *Deux essais écartés avant d'arriver là*, et ils valent d'être
+  retenus : posée SUR le joueur, elle le recouvre et ne dit pas de quel côté le
+  coup part ; à sa taille de main, elle écrase la scène — et ce n'était pas le
+  changement de taille qui gênait, contrairement à ce qu'on a d'abord cru.
 
-  Conséquence : elle est plus haute que le corps et recouvre la place du badge
-  d'intention du joueur. On a essayé de faire passer le badge devant — à pleine
-  taille, il atterrit **en plein milieu du dessin** et se lit comme une valeur
-  de la carte. Il s'efface donc le temps du ciblage, en `visibility` et non en
-  `display` pour que sa ligne reste tenue et que la scène ne tressaute pas. Ce
-  qu'il disait n'est pas perdu : chaque ennemi porte son intention au-dessus de
-  sa tête, et la bande jaune montre déjà ce qu'on va lui retirer.
+  L'écart entre les camps est un jeton (`--ecart-camps`) parce que la carte
+  vient s'y centrer : les deux doivent bouger ensemble.
 - des **arches de visée** (`ui/visees.ts`) : carte engagée, un trait pointillé
   en cloche part vers **chaque** corps visable. Vers tous, et pas vers un seul,
   parce qu'on joue en deux tapes — entre les deux il n'y a pas encore de cible,
