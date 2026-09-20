@@ -526,6 +526,13 @@ donjon. Ce qui tourne :
   sur la fenêtre et non sur `.app`, qui est plafonnée à 90rem : sur un écran
   plus large, le voile s'arrêterait avant les bords.
 
+  **Ils reviennent quand le voile COMMENCE à se lever, pas quand il a fini.**
+  Rendus à la fin, on voyait leur place vide pendant les 160 ms du fondu, puis
+  ils réapparaissaient d'un coup — Keko : « le personnage réapparaît après un
+  délai, c'est moche ». Les deux images se croisent désormais, *ce qu'un fondu
+  est précisément censé faire*. C'est pour ça que la durée du fondu est exportée
+  par `ui/duel.ts` : elle sert des deux côtés.
+
   **Les deux corps montrés quittent l'arrière-plan** — ils sont passés devant.
   `visibility: hidden` et non `display: none` : leur place doit rester tenue,
   sinon le rang se resserre pendant le gros plan et se rouvre après, et toute

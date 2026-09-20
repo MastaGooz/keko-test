@@ -27,6 +27,7 @@ import {
   DUREE_DUEL,
   dureeDuDuel,
   duel,
+  FONDU_DUEL,
   OUVERTURE_SALVE,
   fermerDuel,
   IMPACT_DUEL,
@@ -145,8 +146,20 @@ function grosPlan(
     impact()
   }, IMPACT_DUEL)
   if (mort) window.setTimeout(() => sonAcheve(), TAMPON_DUEL)
+
+  const duree = dureeDuDuel(attaquant, mort)
+
+  // Les corps reviennent quand le voile COMMENCE à se lever, pas quand il a
+  // fini. Rendus à la fin, on voyait leur place vide pendant les 160 ms du
+  // fondu, puis ils réapparaissaient d'un coup — Keko : « le personnage
+  // réapparaît après un délai, c'est moche ». Les deux images se croisent
+  // désormais, ce qui est exactement ce qu'un fondu est censé faire.
   window.setTimeout(() => {
     auFront = null
+    dessiner()
+  }, duree - FONDU_DUEL)
+
+  window.setTimeout(() => {
     mesures = [
       ...mesures,
       { qui: attaquant === 'joueur' ? 'moi' : 'eux', ms: performance.now() - ouvert, impact: retardImpact },
@@ -154,8 +167,7 @@ function grosPlan(
     // Cinq suffisent : au-delà la ligne ne se lit plus sur un téléphone.
     if (mesures.length > 5) mesures = mesures.slice(-5)
     ecrireDiagnostic()
-    dessiner()
-  }, dureeDuDuel(attaquant, mort))
+  }, duree)
 }
 
 /**

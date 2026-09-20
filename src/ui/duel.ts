@@ -52,8 +52,14 @@ export const IMPACT_DUEL = 150
  */
 export const TAMPON_DUEL = IMPACT_DUEL + 90
 
-/** Ce que dure le fondu de sortie, retranché de la durée totale. */
-const FONDU = 160
+/**
+ * Ce que dure le fondu de sortie, retranché de la durée totale.
+ *
+ * Exporté parce que `main.ts` en a besoin : c'est au DÉBUT du fondu que les
+ * corps doivent revenir sur la scène, pas à sa fin. Les rendre après, c'est
+ * laisser voir leur place vide pendant que le voile se lève.
+ */
+export const FONDU_DUEL = 160
 
 /**
  * Un gros plan ENNEMI dure plus longtemps qu'un gros plan du joueur, et c'est
@@ -146,7 +152,7 @@ export function duel(
 ): void {
   fermerDuel(view)
   const duree = dureeDuDuel(attaquant, mort)
-  const sortie = duree - FONDU
+  const sortie = duree - FONDU_DUEL
 
   // Dans `.app` et pas à côté : voir l'en-tête du fichier.
   const scene = view.root.querySelector('.app')
