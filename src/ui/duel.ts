@@ -235,15 +235,28 @@ export function fermerDuel(view: View): void {
  * la teinte côté `main.ts`.
  */
 function figureHtml(figure: Figure, cote: string, attaque: boolean): string {
+  // Le joueur montre son portrait ici AUSSI : c'est le cadre qui le donne à
+  // voir en grand, ne le mettre que sur la scène n'aurait testé qu'une
+  // vignette. Et il a DEUX poses — lame tendue quand il frappe, épée basse
+  // quand il encaisse : le cadre est le seul endroit du jeu où la différence
+  // se voit.
+  const portrait = cote === 'joueur' && portraitTrouve()
+  const chair = portrait
+    ? silhouetteJoueur(attaque ? 'attaque' : 'repos')
+    : creature(figure.espece, `duel-${cote}`)
+
+  // PAS DE SOCLE SOUS UN PORTRAIT. C'est l'ombre au sol, dessinée pour une
+  // silhouette SVG qui touche le bas de sa boîte ; une image a ses propres
+  // marges transparentes, donc l'ombre se détache d'elle et se lit comme un
+  // trait noir posé dessous — d'autant qu'ici elle fait 409 px de large. Keko :
+  // « je vois comme un trait noir sous le joueur durant l'anim ». Même défaut
+  // que sur le corps en agonie, même cause.
+  const socle = portrait ? '' : '<span class="socle"></span>'
+
   return (
     `<div class="duel-corps ${cote}${attaque ? ' attaque' : ''}" ` +
     `style="--teinte:${figure.teinte}">` +
-    // Le joueur montre son portrait ici AUSSI : c'est le cadre qui le donne a
-    // voir en grand, ne le mettre que sur la scene n'aurait teste qu'une
-    // vignette.
-    `<span class="duel-chair">` +
-    `${cote === 'joueur' && portraitTrouve() ? silhouetteJoueur() : creature(figure.espece, `duel-${cote}`)}` +
-    `<span class="socle"></span>${teteDeMort()}</span>` +
+    `<span class="duel-chair">${chair}${socle}${teteDeMort()}</span>` +
     `</div>`
   )
 }

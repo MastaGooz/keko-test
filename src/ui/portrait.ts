@@ -1,52 +1,71 @@
 /**
- * Le portrait du joueur : une VRAIE IMAGE, si elle est là.
+ * Le portrait du joueur : de VRAIES IMAGES, si elles sont là.
  *
  * C'est la première entorse à la borne « pas d'assets, pas de fichiers image »
  * du projet, et c'est Keko qui l'a levée — comme il l'avait fait pour les
  * dessins de la main : *ce qu'il doit juger doit être présentable*. Elle reste
  * une entorse, donc elle est contenue à un seul fichier et à un seul corps.
  *
- * **Le portrait est OPTIONNEL, et c'est ce qui rend l'essai sans risque.** Tant
- * que `public/joueur.png` n'existe pas, le jeu rend la silhouette SVG comme
- * avant — on ne peut pas casser le rendu en oubliant de déposer le fichier, ni
- * en le retirant. Le repli n'est pas une précaution de style : sans lui, un
- * essai abandonné laisserait une image cassée sur la scène ET dans le gros
- * plan.
+ * **Deux poses**, parce que le joueur est montré dans deux situations qui n'ont
+ * rien à voir : au repos sur la scène et quand il encaisse, l'épée basse ; et
+ * lame tendue quand c'est lui qui frappe, dans le gros plan.
  *
- * Le chemin passe par `BASE_URL` : en build, le jeu est servi sous
+ * **Chaque pose est OPTIONNELLE, séparément**, et c'est ce qui rend l'essai
+ * sans risque : sans `joueur.png` le jeu rend la silhouette SVG comme avant,
+ * et sans `attaque.png` il frappe avec la pose de repos. *Le repli n'est pas
+ * une précaution de style* — sans lui, un essai abandonné laisserait une image
+ * cassée sur la scène ET dans le gros plan.
+ *
+ * Les chemins passent par `BASE_URL` : en build, le jeu est servi sous
  * `/keko-test/`, et un `/joueur.png` absolu pointerait à la racine du domaine.
  */
 
-/** Là où le fichier est attendu. Un seul endroit le sait. */
-const CHEMIN = `${import.meta.env.BASE_URL}joueur.png`
+/** Ce que le joueur est en train de faire, du point de vue du dessin. */
+export type Pose = 'repos' | 'attaque'
 
-let disponible = false
+/** Là où les fichiers sont attendus. Un seul endroit les connaît. */
+const FICHIERS: Record<Pose, string> = {
+  repos: `${import.meta.env.BASE_URL}joueur.png`,
+  attaque: `${import.meta.env.BASE_URL}attaque.png`,
+}
+
+const trouvees: Record<Pose, boolean> = { repos: false, attaque: false }
 
 /**
- * Cherche l'image, une fois. Résout toujours — un échec veut simplement dire
- * « pas de portrait », ce qui est un état normal et pas une erreur.
+ * Cherche les images, une fois, et les garde en cache du navigateur au passage.
  *
- * `main.ts` redessine quand ça résout : la détection est asynchrone, donc le
- * premier rendu part forcément sans elle.
+ * **Le préchargement compte ici**, il n'est pas décoratif : la pose d'attaque ne
+ * s'affiche qu'au premier coup porté, et elle pèse près d'un mégaoctet. Chargée
+ * à ce moment-là, elle arriverait *après* le gros plan qu'elle devait remplir.
+ *
+ * Résout toujours — une image absente est un état normal, pas une erreur.
  */
-export function chercherPortrait(): Promise<boolean> {
-  return new Promise((resoudre) => {
-    const image = new Image()
-    image.onload = () => {
-      disponible = true
-      resoudre(true)
-    }
-    image.onerror = () => resoudre(false)
-    image.src = CHEMIN
-  })
+export function chercherPortraits(): Promise<boolean> {
+  const une = (pose: Pose) =>
+    new Promise<void>((resoudre) => {
+      const image = new Image()
+      image.onload = () => {
+        trouvees[pose] = true
+        resoudre()
+      }
+      image.onerror = () => resoudre()
+      image.src = FICHIERS[pose]
+    })
+
+  return Promise.all([une('repos'), une('attaque')]).then(() => trouvees.repos)
 }
 
+/** Vrai si le joueur a un portrait, donc si on abandonne la silhouette SVG. */
 export function portraitTrouve(): boolean {
-  return disponible
+  return trouvees.repos
 }
 
 /**
- * Le corps du joueur : son portrait s'il existe, sinon la silhouette d'origine.
+ * Le corps du joueur dans la pose demandée.
+ *
+ * **La pose d'attaque retombe sur celle de repos si elle manque**, plutôt que
+ * de ne rien rendre : un joueur qui disparaît au moment où il frappe serait un
+ * défaut bien pire que de frapper l'épée basse.
  *
  * L'image porte la MÊME classe `silhouette` que le SVG, et ce n'est pas un
  * raccourci : toute la mise en scène est accrochée à cette classe — la
@@ -54,7 +73,8 @@ export function portraitTrouve(): boolean {
  * calée sur `--corps`. Lui donner une classe à elle aurait voulu dire porter
  * chacune de ces règles en double, et en oublier une au premier changement.
  */
-export function silhouetteJoueur(): string {
-  if (!disponible) return ''
-  return `<img class="silhouette portrait" src="${CHEMIN}" alt="" aria-hidden="true">`
+export function silhouetteJoueur(pose: Pose = 'repos'): string {
+  if (!trouvees.repos) return ''
+  const choisie: Pose = pose === 'attaque' && trouvees.attaque ? 'attaque' : 'repos'
+  return `<img class="silhouette portrait" src="${FICHIERS[choisie]}" alt="" aria-hidden="true">`
 }

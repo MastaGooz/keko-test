@@ -33,7 +33,7 @@ import {
   pasEntreDuels,
   TAMPON_DUEL,
 } from './ui/duel.ts'
-import { chercherPortrait } from './ui/portrait.ts'
+import { chercherPortraits } from './ui/portrait.ts'
 import type { Action } from './ui/input.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
@@ -536,10 +536,14 @@ window.addEventListener('orientationchange', () => tracerVisees(view))
 
 demarrer(Date.now() % 100000)
 
-// Le portrait du joueur, s'il a ete depose dans `public/`. La detection est
-// asynchrone, donc le premier rendu part forcement sans elle : on redessine
-// quand elle aboutit, et on ne fait rien du tout si l'image n'existe pas.
-void chercherPortrait().then((trouve) => {
+// Les portraits du joueur, s'ils ont ete deposes dans `public/`. La detection
+// est asynchrone, donc le premier rendu part forcement sans eux : on redessine
+// quand elle aboutit, et on ne fait rien du tout s'ils n'existent pas.
+//
+// Elle PRECHARGE au passage, et ca compte : la pose d'attaque ne s'affiche qu'au
+// premier coup porte et pese pres d'un megaoctet -- chargee a ce moment-la, elle
+// arriverait apres le gros plan qu'elle devait remplir.
+void chercherPortraits().then((trouve) => {
   if (trouve) dessiner()
 })
 

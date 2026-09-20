@@ -1568,13 +1568,35 @@ La borne n'est pas « pas de dessins » — Keko l'a levée lui-même pour la ma
 Elle est : **pas d'assets, pas de fichiers image, pas de dépendance, pas de
 son.**
 
-**Une exception, ouverte par Keko : le portrait du joueur** (`ui/portrait.ts`).
-Il voulait essayer une image qu'il a faite. Elle est contenue à un seul fichier
-et à un seul corps, et surtout elle est **optionnelle** : tant que
-`public/joueur.png` n'existe pas, le jeu rend la silhouette SVG comme avant.
-*Le repli n'est pas une précaution de style* — sans lui, un essai abandonné
-laisserait une image cassée sur la scène ET dans le gros plan, et le fichier
-deviendrait obligatoire sans que rien ne le dise.
+**Une exception, ouverte par Keko : les portraits du joueur**
+(`ui/portrait.ts`). Il voulait essayer des images qu'il a faites — un croisé à
+la Darkest Dungeon, tourné vers la droite, donc vers les ennemis. Elles sont
+contenues à un seul fichier et à un seul corps.
+
+**Deux poses**, parce que le joueur est montré dans deux situations qui n'ont
+rien à voir : `public/joueur.png` au repos sur la scène et quand il encaisse,
+`public/attaque.png` lame tendue quand c'est lui qui frappe. *Le gros plan est
+le seul endroit du jeu où la différence se voit.*
+
+**Chaque pose est optionnelle, séparément** : sans `joueur.png` le jeu rend la
+silhouette SVG comme avant, et sans `attaque.png` il frappe avec la pose de
+repos. *Le repli n'est pas une précaution de style* — sans lui, un essai
+abandonné laisserait une image cassée sur la scène ET dans le gros plan, et un
+joueur qui disparaît au moment où il frappe serait pire que de frapper l'épée
+basse.
+
+**Les deux images sont préchargées au démarrage, et ça compte** : la pose
+d'attaque ne s'affiche qu'au premier coup porté et pèse près d'un mégaoctet —
+chargée à ce moment-là, elle arriverait *après* le gros plan qu'elle devait
+remplir.
+
+**PAS DE SOCLE SOUS UN PORTRAIT dans le cadre.** Le socle est l'ombre au sol,
+dessinée pour une silhouette SVG qui touche le bas de sa boîte ; une image a ses
+propres marges transparentes, donc l'ombre s'en détache et se lit comme un trait
+noir posé dessous — d'autant qu'à cette échelle elle fait 409 px de large. Keko :
+« je vois comme un trait noir sous le joueur durant l'anim ». **Même défaut que
+sur le corps en agonie, même cause** : deux fois de suite, ce qui reste visible
+quand le dessin change, c'est l'ombre qu'on avait faite pour l'ancien.
 
 Ce qu'il faut savoir pour la suite : l'image porte la **même classe
 `silhouette`** que le SVG, donc elle hérite de la respiration, du liseré de
