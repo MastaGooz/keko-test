@@ -272,14 +272,22 @@ function corpsJoueur(
       ? '<span class="intention calme">—</span>'
       : `<span class="intention encaisse-a-venir">−${menace}</span>`
 
+  // La carte engagée se tient SUR LE JOUEUR, pas dans la main. Une fois qu'on
+  // l'a sortie, elle n'y est plus : la remettre en bas pendant qu'on choisit sa
+  // cible défaisait le geste, et les arches partaient d'un endroit d'où plus
+  // rien ne part. Sur le joueur, elles partent de celui qui frappe.
+  const engagee =
+    visee === null || fini
+      ? ''
+      : `<span class="carte-engagee">${vitrine(visee)}</span>`
+
   return (
     `<div class="creature moi${auFront ? ' au-front' : ''}" data-corps="joueur">` +
     marque +
     `<span class="chair" style="--teinte:#7fb6d9">` +
-    `${creature('joueur', 'moi')}<span class="socle"></span></span>` +
+    `${creature('joueur', 'moi')}<span class="socle"></span>${engagee}</span>` +
     jauge(etat.pv, etat.pvMax) +
     `<span class="plaquette"><span class="nom">TOI</span></span>` +
-    (visee === null || fini ? '' : '') +
     `</div>`
   )
 }
@@ -347,7 +355,8 @@ function ligneCarte(
   if (!abordable) classes.push('hors-prix')
   else if (acheve) classes.push('acheve')
   else classes.push('jouable')
-  if (vise) classes.push('visee')
+  // Elle est sur le joueur : elle quitte la main, comme celle qu'on tient.
+  if (vise) classes.push('engagee')
 
   // `disabled` UNIQUEMENT quand le combat est fini. Une carte trop chere reste
   // saisissable et zoomable : on veut pouvoir la ranger et la regarder, et

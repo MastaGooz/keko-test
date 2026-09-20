@@ -59,7 +59,9 @@ function arche(depart: Point, arrivee: Point, acheve: boolean): string {
  * les positions bougent — redimensionnement, bascule d'orientation.
  */
 export function tracerVisees(view: View): void {
-  const carte = view.cartes.querySelector('.carte.visee')
+  // La carte engagée vit SUR LE JOUEUR et non dans la main : on la cherche dans
+  // toute la page, pas dans `view.cartes`.
+  const carte = view.root.querySelector('.carte-engagee .carte')
   const cibles = [...view.ennemis.querySelectorAll('.creature.cible')]
 
   if (carte === null || cibles.length === 0) {
@@ -67,7 +69,8 @@ export function tracerVisees(view: View): void {
     return
   }
 
-  // Le haut de la carte levée : le trait part de la carte, pas de son ombre.
+  // Le haut de la carte tenue par le joueur : le trait part de la carte, pas
+  // de son ombre.
   const depart = centre(carte, 0.06)
   view.visees.innerHTML = cibles
     .map((cible) => {

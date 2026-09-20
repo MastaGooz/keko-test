@@ -3086,3 +3086,74 @@ body {
   }
 }
 
+
+/* --- la carte engagee, sur le joueur --------------------------------------- */
+
+/* Une fois sortie de la main, la carte ne redescend pas : elle se tient devant
+   le joueur pendant qu'on choisit sa cible, et c'est de la que partent les
+   arches. Les faire partir du bas de l'ecran defaisait le geste -- elles
+   venaient d'un endroit d'ou plus rien ne part. */
+.carte-engagee {
+  position: absolute;
+  left: 50%;
+  /* Elle se tient DANS la chair, pas en dessous : a cheval sur le bas du corps
+     elle recouvrait la jauge du joueur et son chiffre de PV -- l'information
+     qu'on consulte justement en choisissant sa cible. */
+  /* Un plancher en `rem` en plus du %, parce que la rotation de 5 deg rallonge
+     la boite vers le bas -- sur un petit corps, 8 % n'y suffisaient plus. */
+  bottom: max(0.5rem, 10%);
+  z-index: 3;
+  translate: -50% 0;
+  rotate: -5deg;
+  pointer-events: none;
+  animation: carte-engagee-entree 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+}
+
+/* Bornee par le CORPS et non par la main : elle est desormais un element de la
+   scene, elle doit s'accorder a ce qui l'entoure. */
+.carte-engagee .carte {
+  --large: min(var(--corps), 7rem);
+  width: var(--large);
+  margin: 0;
+  transform: none;
+  box-shadow:
+    0 0 0 1px var(--joueur),
+    0 0 1rem #5cc8ff5c,
+    0 0.75rem 1.5rem #000c;
+}
+
+@keyframes carte-engagee-entree {
+  from {
+    opacity: 0;
+    translate: -50% 1.25rem;
+    scale: 0.9;
+  }
+  to {
+    opacity: 1;
+    translate: -50% 0;
+    scale: 1;
+  }
+}
+
+/* La carte fait 1,4 fois la hauteur d'un corps : elle depasse forcement par le
+   haut, la ou vit le badge d'intention du joueur. Plutot que de la rapetisser
+   jusqu'a l'illisible, on fait passer le badge DEVANT -- c'est justement en
+   choisissant sa cible qu'on veut savoir ce qu'on va encaisser. */
+.creature.moi .intention {
+  position: relative;
+  z-index: 4;
+}
+
+/* Sa place dans la main reste vide : les voisines se referment, exactement
+   comme quand on la tient au doigt. */
+#cartes .carte.engagee {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carte-engagee {
+    animation: none;
+  }
+}

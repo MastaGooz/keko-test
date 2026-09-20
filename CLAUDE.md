@@ -820,8 +820,20 @@ donjon. Ce qui tourne :
   c'est exactement l'index d'insertion dans la main *une fois retirée*, ce que
   `reordonnerMain` attend. La compter décalait d'un cran tous les déplacements
   vers la gauche — un bug qui ne se voyait que dans ce sens-là.
-- des **arches de visée** (`ui/visees.ts`) : carte levée, un trait pointillé en
-  cloche part vers **chaque** corps visable. Vers tous, et pas vers un seul,
+- **la carte engagée se tient SUR LE JOUEUR**, pas dans la main. Une fois qu'on
+  l'a sortie, elle n'y est plus : l'y remettre pendant qu'on choisit sa cible
+  défaisait le geste, et les arches partaient d'un endroit d'où plus rien ne
+  part. Sur le joueur, elles partent de celui qui frappe. Sa place dans la main
+  reste vide et les voisines se referment, exactement comme quand on la tient
+  au doigt.
+
+  Elle fait 1,4 fois la hauteur d'un corps — elle dépasse donc forcément par le
+  haut, là où vit le badge d'intention du joueur. **Plutôt que de la rapetisser
+  jusqu'à l'illisible, on fait passer le badge DEVANT** : c'est justement en
+  choisissant sa cible qu'on veut savoir ce qu'on va encaisser. Vers le bas,
+  elle s'arrête au-dessus de la jauge, qui porte les PV.
+- des **arches de visée** (`ui/visees.ts`) : carte engagée, un trait pointillé
+  en cloche part vers **chaque** corps visable. Vers tous, et pas vers un seul,
   parce qu'on joue en deux tapes — entre les deux il n'y a pas encore de cible,
   ni de doigt à suivre. L'arche ne confirme pas un choix, elle montre qu'il y
   en a un à faire. Blanche et pleine sur un corps que la carte **achève** ;
