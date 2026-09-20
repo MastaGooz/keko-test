@@ -406,7 +406,14 @@ donjon. Ce qui tourne :
   **Leur taille est un jeton de `.app` comme celle des cartes** (`--corps`), et
   son plafond avait été calé sur le téléphone : sur un écran de PC les bêtes
   restaient des vignettes sous des cartes deux fois plus grandes qu'elles. Un
-  corps fait 46 px sur un petit téléphone couché, 259 px sur un écran de 1080.
+  corps fait 62 px sur un petit téléphone couché, 298 px sur un écran de 1080.
+  **Ils ont été agrandis de ~40 % après coup** — Keko : « les images des
+  personnages sont un peu petites hors animation de combat ». La mesure disait
+  qu'il y avait la place : sous 431 px la scène colle ses corps à la main, donc
+  tout le jeu restant s'accumulait en vide au-dessus d'eux. Vérifié sans
+  débordement sur les six formats, **et jusqu'à cinq ennemis sur le plus petit**,
+  parce que la largeur d'une créature ne dépend pas de `--corps` : elle est tenue
+  par son plancher de 8,5rem, dicté par le nom dessous.
   La largeur d'une créature suit son corps, avec un **plancher de 8,5rem** —
   qui ne tient pas à la silhouette mais au **nom dessous** : « Traînard 23 » a
   besoin de sa place, et sur un téléphone le corps est trop petit pour la
@@ -576,8 +583,15 @@ donjon. Ce qui tourne :
   figure tombe à 6 px du centre de l'écran (189 contre 195 sur un téléphone de
   390), et son nom s'arrête pile sur la ligne de flottaison des cartes.
 
-  Mesuré à 667x320, 780x340, 844x390 et 932x430 : de −6 à +7 px du centre. Le
-  même décalage existe sur PC (397 contre 540 sur un 1080), **il n'a pas été
+  **Posé à RAS du bas il redevenait trop bas**, et le retrait des noms sous les
+  figures l'a encore descendu — Keko : « l'animation de combat est un peu basse
+  sur le tel ». Il garde donc un jeu de `0,12 × la figure` au-dessus de la ligne
+  de flottaison : le décalage est une fraction de la figure et non un nombre de
+  pixels, puisque c'est elle qu'on remonte. Mesuré ensuite à 5, 14 et 16 px
+  au-dessus du centre de l'écran sur 667x320, 844x390 et 932x430, et le bas de la
+  figure reste 10 à 15 px au-dessus des cartes.
+
+  Le même décalage existe sur PC (397 contre 540 sur un 1080), **il n'a pas été
   touché** : Keko n'a rien signalé là-bas, et au-dessus de 430 px la scène
   centre aussi ses corps.
 
@@ -1381,7 +1395,7 @@ le laissent actif en permanence restent bloqués sans comprendre. L'application
 installée, elle, impose le paysage par son manifeste.
 
 **C'est la hauteur qui manque, jamais la largeur.** La scène et les cartes se
-calent donc en `vh`, pas en `rem` : `min(4.5rem, 18vh)` pour un corps, et pour
+calent donc en `vh`, pas en `rem` : `min(7rem, 22vh)` pour un corps, et pour
 une carte le jeu de variables porté par `.app` — **un seul endroit, lu par la
 main ET par les tas** :
 
@@ -1391,7 +1405,7 @@ main ET par les tas** :
 --haut:   calc(var(--large) * 1.4);
 --enfoui: calc(var(--haut) * var(--part-enfouie));
 --emerge: calc(var(--haut) - var(--enfoui));   /* la bande qu'on lit */
---corps:  min(11rem, 20vh);    /* min(4.5rem, 16vh) sous 430 px */
+--corps:  min(15rem, 27vh);    /* min(7rem, 22vh) sous 430 px, 19vh sous 360 */
 --degagement: 2.25rem;         /* 2,75rem sous 430 px, 2rem sous 360 */
 ```
 

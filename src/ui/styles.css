@@ -104,7 +104,7 @@ body {
      aucun `%`. Le plafond etait a 4,5rem, cale sur le telephone -- sur un
      ecran de PC les betes restaient des vignettes sous des cartes deux fois
      plus grandes qu'elles. */
-  --corps: min(11rem, 20vh);
+  --corps: min(15rem, 27vh);
 
   /* L'amplitude de la secousse d'ecran. Elle SUIT LE CORPS, comme la charge :
      en pixels fixes, elle valait la moitie de la frappe sur un telephone et un
@@ -2390,7 +2390,7 @@ body {
   }
 
   :root {
-    --corps: min(4.5rem, 16vh);
+    --corps: min(7rem, 22vh);
   }
 
   :root {
@@ -2430,7 +2430,7 @@ body {
   }
 
   :root {
-    --corps: min(4.5rem, 14.5vh);
+    --corps: min(7rem, 19vh);
   }
 
   :root {
@@ -2666,6 +2666,12 @@ body {
 @media (max-height: 430px) {
   .duel {
     align-items: flex-end;
+    /* ...MAIS PAS COLLE AU BAS. Pose a ras, le cadre tombait 6 px SOUS le centre
+       de l'ecran, et il a encore descendu quand les noms ont disparu sous les
+       figures -- Keko : « l'animation de combat est un peu basse sur le tel ».
+       Ce decalage est une fraction de la figure et non un nombre de pixels :
+       c'est elle qu'on remonte, donc c'est elle qui donne la mesure. */
+    padding-bottom: calc(var(--emerge) + var(--corps-duel) * 0.12);
   }
 }
 
