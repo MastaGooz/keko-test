@@ -547,6 +547,17 @@ donjon. Ce qui tourne :
   dessinées pour se faire face dans cet ordre. C'est l'assaut qui désigne
   l'attaquant, pas la place.
 
+  **L'IMPACT SE PROGRAMME DEPUIS L'INSTANT OÙ LE CADRE S'OUVRE VRAIMENT**,
+  jamais depuis un instant calculé d'avance. La salve ennemie posait deux
+  minuteurs indépendants — l'un pour ouvrir le cadre, l'autre pour la secousse —
+  tous deux comptés depuis le début de la salve. Or ouvrir le cadre coûte un
+  **rendu complet de la scène**, d'autant plus lourd qu'il y a de créatures : le
+  premier prenait du retard, le second non, et la secousse tombait *avant* le
+  bout de la frappe. Le coup se décollait du geste, et d'autant plus que les
+  ennemis étaient nombreux — Keko : « c'est pire quand les ennemis sont
+  nombreux ». *Deux minuteurs pour les deux moitiés d'un même évènement, c'est
+  une désynchronisation qui n'attend que la première machine lente.*
+
   **Entre deux gros plans d'une même salve, il faut un vrai temps** (240 ms).
   À 60 ms, la sortie de l'un et l'entrée du suivant se touchaient : la salve se
   lisait comme un bloc précipité plutôt que comme des coups distincts, et la

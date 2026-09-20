@@ -83,16 +83,18 @@ let survolee: number | null = null
  * c'est là qu'il trouve les gros plans trop courts. Un écart qui n'apparaît que
  * dans l'enchaînement ne se voit pas sur une mesure isolée.
  */
-type Mesure = { qui: string; ms: number }
+type Mesure = { qui: string; ms: number; impact: number }
 let mesures: Mesure[] = []
 
 function ecrireDiagnostic(): void {
   const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const liste =
-    mesures.length === 0 ? '—' : mesures.map((m) => `${m.qui} ${Math.round(m.ms)}`).join(' · ')
+    mesures.length === 0
+      ? '—'
+      : mesures.map((m) => `${m.qui} ${Math.round(m.ms)}/${Math.round(m.impact)}`).join(' · ')
   view.diagnostic.textContent =
     `Animations réduites : ${reduit ? 'OUI' : 'non'} — ` +
-    `gros plans (ms) : ${liste} · attendu 800, ou 1500 s'il tue`
+    `gros plans, durée/impact (ms) : ${liste} · attendu 800/150, ou 1500/150 s'il tue`
 }
 
 /**
@@ -119,15 +121,34 @@ function grosPlan(
   attaquant: 'joueur' | 'ennemi',
   degats: number,
   mort = false,
+  impact: () => void = () => {},
 ): void {
   auFront = cible
   dessiner()
   const ouvert = performance.now()
   duel(view, FIGURE_JOUEUR, figure(nomCible), attaquant, degats, mort)
+  // L'IMPACT SE PROGRAMME D'ICI, depuis l'instant où le gros plan s'ouvre
+  // VRAIMENT — jamais depuis un instant calculé d'avance.
+  //
+  // La salve ennemie posait deux minuteurs indépendants, l'un pour ouvrir le
+  // cadre, l'autre pour la secousse, tous deux comptés depuis le début de la
+  // salve. Or ouvrir le cadre coûte un rendu complet de la scène, d'autant plus
+  // lourd qu'il y a de créatures : le premier prenait du retard, le second non,
+  // et la secousse tombait AVANT le bout de la frappe. Le coup se décollait du
+  // geste, et d'autant plus que les ennemis étaient nombreux — ce que Keko a
+  // décrit sans le savoir.
+  let retardImpact = 0
+  window.setTimeout(() => {
+    retardImpact = performance.now() - ouvert
+    impact()
+  }, IMPACT_DUEL)
   if (mort) window.setTimeout(() => sonAcheve(), TAMPON_DUEL)
   window.setTimeout(() => {
     auFront = null
-    mesures = [...mesures, { qui: attaquant === 'joueur' ? 'moi' : 'eux', ms: performance.now() - ouvert }]
+    mesures = [
+      ...mesures,
+      { qui: attaquant === 'joueur' ? 'moi' : 'eux', ms: performance.now() - ouvert, impact: retardImpact },
+    ]
     // Cinq suffisent : au-delà la ligne ne se lit plus sur un téléphone.
     if (mesures.length > 5) mesures = mesures.slice(-5)
     ecrireDiagnostic()
@@ -289,15 +310,14 @@ function dispatch(action: Action): void {
         const cible = combat.ennemis[action.cible]
         if (inflige > 0 && cible !== undefined) {
           marques.push(() => {
-            grosPlan(action.cible, cible.nom, 'joueur', inflige, reste <= 0)
             // Le son et la secousse tombent SUR L'IMPACT du gros plan, pas au
-            // moment de la tape : le coup est désormais un geste qui se
-            // déroule, plus un chiffre qui change.
-            window.setTimeout(() => {
+            // moment de la tape : le coup est un geste qui se déroule, plus un
+            // chiffre qui change.
+            grosPlan(action.cible, cible.nom, 'joueur', inflige, reste <= 0, () => {
               // La force du son suit le coût de la carte : on entend son poids.
               if (carte !== undefined) sonFrappe((carte.cout - 1) / 3)
               secouerEcran(view, 'forte')
-            }, IMPACT_DUEL)
+            })
           })
           // Le gros plan s'attarde quand il tue : le verrou doit suivre, sinon
           // l'écran de récompense s'ouvrirait sur la tête de mort encore posée.
@@ -328,13 +348,13 @@ function dispatch(action: Action): void {
           // celle-ci qui a tué, et c'est elle qui porte la tête de mort.
           const fatale = frappe.pvJoueur === 0
           window.setTimeout(
-            () => grosPlan(index, frappe.nom, 'ennemi', frappe.degats, fatale),
+            () =>
+              grosPlan(index, frappe.nom, 'ennemi', frappe.degats, fatale, () => {
+                secouerEcran(view, 'forte')
+                sonEncaisse()
+              }),
             depart,
           )
-          window.setTimeout(() => {
-            secouerEcran(view, 'forte')
-            sonEncaisse()
-          }, depart + IMPACT_DUEL)
         })
         // La repioche se fait entendre une fois la salve passée.
         window.setTimeout(
