@@ -282,7 +282,8 @@ function corpsJoueur(
       : `<span class="carte-engagee">${vitrine(visee)}</span>`
 
   return (
-    `<div class="creature moi${auFront ? ' au-front' : ''}" data-corps="joueur">` +
+    `<div class="creature moi${auFront ? ' au-front' : ''}${engagee === '' ? '' : ' engage'}" ` +
+    `data-corps="joueur">` +
     marque +
     `<span class="chair" style="--teinte:#7fb6d9">` +
     `${creature('joueur', 'moi')}<span class="socle"></span>${engagee}</span>` +

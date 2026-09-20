@@ -3109,11 +3109,12 @@ body {
   animation: carte-engagee-entree 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.15);
 }
 
-/* Bornee par le CORPS et non par la main : elle est desormais un element de la
-   scene, elle doit s'accorder a ce qui l'entoure. */
+/* ELLE GARDE SA TAILLE DE MAIN. La reduire a celle d'un corps de scene la
+   faisait retrecir de 40 % a l'instant ou on la lache : c'est la meme carte,
+   elle vient d'etre sortie de la main, et rien dans le geste ne justifie
+   qu'elle change de taille en chemin. Elle est grande par rapport au joueur --
+   c'est la carte qu'on s'apprete a jouer, elle a le droit de peser. */
 .carte-engagee .carte {
-  --large: min(var(--corps), 7rem);
-  width: var(--large);
   margin: 0;
   transform: none;
   box-shadow:
@@ -3135,13 +3136,18 @@ body {
   }
 }
 
-/* La carte fait 1,4 fois la hauteur d'un corps : elle depasse forcement par le
-   haut, la ou vit le badge d'intention du joueur. Plutot que de la rapetisser
-   jusqu'a l'illisible, on fait passer le badge DEVANT -- c'est justement en
-   choisissant sa cible qu'on veut savoir ce qu'on va encaisser. */
-.creature.moi .intention {
-  position: relative;
-  z-index: 4;
+/* La carte est plus haute que le corps : elle recouvre la place du badge
+   d'intention du joueur. On a essaye de faire passer le badge DEVANT -- a
+   pleine taille de carte, il atterrit en plein milieu du dessin et se lit comme
+   une valeur de la carte. Il s'efface donc le temps du ciblage.
+
+   `visibility` et non `display` : sa ligne reste tenue, sinon toute la colonne
+   du joueur remonte au moment ou on engage et la scene tressaute.
+
+   Ce qu'il disait n'est pas perdu : chaque ennemi porte son intention au-dessus
+   de sa tete, et la bande jaune montre deja ce qu'on va lui retirer. */
+.creature.moi.engage .intention {
+  visibility: hidden;
 }
 
 /* Sa place dans la main reste vide : les voisines se referment, exactement
