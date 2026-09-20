@@ -25,8 +25,9 @@ import type { Occupation } from './ui/render.ts'
 import { figure, FIGURE_JOUEUR, mount, render } from './ui/render.ts'
 import {
   DUREE_DUEL,
-  DUREE_DUEL_MORT,
+  dureeDuDuel,
   duel,
+  OUVERTURE_SALVE,
   fermerDuel,
   IMPACT_DUEL,
   PAS_ENTRE_DUELS,
@@ -94,7 +95,8 @@ function ecrireDiagnostic(): void {
       : mesures.map((m) => `${m.qui} ${Math.round(m.ms)}/${Math.round(m.impact)}`).join(' · ')
   view.diagnostic.textContent =
     `Animations réduites : ${reduit ? 'OUI' : 'non'} — ` +
-    `gros plans, durée/impact (ms) : ${liste} · attendu 800/150, ou 1500/150 s'il tue`
+    `gros plans, durée/impact (ms) : ${liste} · ` +
+    `attendu moi 800, eux 950, mort 1500 — impact 150`
 }
 
 /**
@@ -153,7 +155,7 @@ function grosPlan(
     if (mesures.length > 5) mesures = mesures.slice(-5)
     ecrireDiagnostic()
     dessiner()
-  }, mort ? DUREE_DUEL_MORT : DUREE_DUEL)
+  }, dureeDuDuel(attaquant, mort))
 }
 
 /**
@@ -321,7 +323,7 @@ function dispatch(action: Action): void {
           })
           // Le gros plan s'attarde quand il tue : le verrou doit suivre, sinon
           // l'écran de récompense s'ouvrirait sur la tête de mort encore posée.
-          attente = reste <= 0 ? DUREE_DUEL_MORT : DUREE_DUEL
+          attente = dureeDuDuel('joueur', reste <= 0)
         }
         // Plus rien après : la mort se joue DANS le gros plan, et le corps ne
         // revient simplement pas sur la scène.
@@ -342,7 +344,9 @@ function dispatch(action: Action): void {
 
       marques.push(() => {
         frappes.forEach((frappe, rang) => {
-          const depart = rang * PAS_ENTRE_DUELS
+          // Un battement avant la premiere : le gros plan s'ouvrait alors
+          // qu'on regardait encore le bouton « Fin du tour ».
+          const depart = OUVERTURE_SALVE + rang * PAS_ENTRE_DUELS
           const index = descente.combat.ennemis.findIndex((e) => e.nom === frappe.nom)
           // `pvJoueur` est ce qu'il RESTE après la frappe : à zéro, c'est
           // celle-ci qui a tué, et c'est elle qui porte la tête de mort.
@@ -359,7 +363,7 @@ function dispatch(action: Action): void {
         // La repioche se fait entendre une fois la salve passée.
         window.setTimeout(
           () => sonPioche(),
-          Math.max(0, (frappes.length - 1) * PAS_ENTRE_DUELS + DUREE_DUEL),
+          Math.max(0, OUVERTURE_SALVE + (frappes.length - 1) * PAS_ENTRE_DUELS + DUREE_DUEL),
         )
       })
 
@@ -373,7 +377,9 @@ function dispatch(action: Action): void {
       attente =
         frappes.length === 0
           ? 0
-          : (frappes.length - 1) * PAS_ENTRE_DUELS + (fatale ? DUREE_DUEL_MORT : DUREE_DUEL)
+          : OUVERTURE_SALVE +
+            (frappes.length - 1) * PAS_ENTRE_DUELS +
+            dureeDuDuel('ennemi', fatale)
 
       selection = null
       break

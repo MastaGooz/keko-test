@@ -52,18 +52,25 @@ export const IMPACT_DUEL = 150
  */
 export const TAMPON_DUEL = IMPACT_DUEL + 90
 
-/** Quand le voile commence à se lever. Entre les deux : rien ne bouge. */
-const SORTIE = 640
+/** Ce que dure le fondu de sortie, retranché de la durée totale. */
+const FONDU = 160
 
 /**
- * Et quand il y a MORT, on s'attarde : le tampon tombe à 240 ms, et il reste
- * ensuite **1,1 seconde** de corps noir et de tête de mort avant le fondu.
+ * Un gros plan ENNEMI dure plus longtemps qu'un gros plan du joueur, et c'est
+ * délibéré.
  *
- * C'est de loin la plus longue pause du jeu, et c'est assumé. Elle ne coûte
- * rien sur la durée d'un combat — on ne tue qu'une fois par corps — et c'est
- * la seule image de toute la séquence qu'on ait envie de regarder.
+ * À durée d'horloge égale — vérifiée à 800/150 ms sur l'appareil de Keko — il
+ * lui paraissait systématiquement plus court. Ce n'est pas un défaut de mesure,
+ * c'est une asymétrie d'attention : **le temps qu'on attend paraît plus long
+ * que le temps qui vous tombe dessus**. Le joueur déclenche son coup et en
+ * regarde le résultat, il est prêt ; la salve arrive sans qu'il l'ait demandée,
+ * et elle se répète.
+ *
+ * *Ce qu'on égalise ici, c'est la durée PERÇUE, pas la durée mesurée.* C'est la
+ * seule asymétrie volontaire entre les deux camps — tout le reste est commun,
+ * et une mort s'attarde autant des deux côtés.
  */
-const SORTIE_MORT = 1340
+const DUREE_ENNEMI = 950
 
 /**
  * Ce que dure un gros plan, de bout en bout.
@@ -79,6 +86,25 @@ export const DUREE_DUEL = 800
 export const DUREE_DUEL_MORT = 1500
 
 /**
+ * Ce que dure un gros plan, selon qui frappe et s'il tue. **Le seul endroit qui
+ * en décide** : `main.ts` s'en sert pour le verrou d'entrée et pour rendre la
+ * scène, et les trois doivent tomber ensemble.
+ */
+export function dureeDuDuel(attaquant: 'joueur' | 'ennemi', mort: boolean): number {
+  if (mort) return DUREE_DUEL_MORT
+  return attaquant === 'ennemi' ? DUREE_ENNEMI : DUREE_DUEL
+}
+
+/**
+ * Le temps qu'on laisse à l'oeil pour arriver avant la première frappe.
+ *
+ * La salve suivait la tape sur « Fin du tour » sans un battement : le premier
+ * gros plan s'ouvrait alors qu'on regardait encore le bouton. *Un coup qu'on
+ * n'a pas vu commencer paraît plus court que les autres.*
+ */
+export const OUVERTURE_SALVE = 250
+
+/**
  * Le repos entre deux gros plans d'une même salve.
  *
  * Il valait 60 ms : la sortie de l'un et l'entrée du suivant se touchaient, et
@@ -91,7 +117,7 @@ export const DUREE_DUEL_MORT = 1500
  * Une salve de trois frappeurs coûte 540 ms de plus — sur un tour qui en compte
  * déjà quelques milliers, et seulement quand plusieurs corps frappent.
  */
-export const PAS_ENTRE_DUELS = DUREE_DUEL + 240
+export const PAS_ENTRE_DUELS = DUREE_ENNEMI + 240
 
 /** Les minuteurs du gros plan en cours, pour qu'un nouveau annule l'ancien. */
 let enCours: number[] = []
@@ -119,8 +145,8 @@ export function duel(
   mort = false,
 ): void {
   fermerDuel(view)
-  const sortie = mort ? SORTIE_MORT : SORTIE
-  const duree = mort ? DUREE_DUEL_MORT : DUREE_DUEL
+  const duree = dureeDuDuel(attaquant, mort)
+  const sortie = duree - FONDU
 
   // Dans `.app` et pas à côté : voir l'en-tête du fichier.
   const scene = view.root.querySelector('.app')
