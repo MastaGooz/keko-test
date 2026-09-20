@@ -115,6 +115,14 @@ body {
 
      Plancher a 5 px : en dessous, une secousse ne se percoit plus. */
   --secousse: max(5px, calc(var(--corps) * 0.085));
+
+  /* La taille d'un corps DANS LE GROS PLAN. Elle a son propre plafond (42vh),
+     different de celui du corps de scene (11rem) -- donc le rapport entre les
+     deux change avec l'ecran. Tout ce qui se mesure a l'interieur du cadre doit
+     partir d'ICI et non de `--corps`, sinon le geste n'occupe pas la meme part
+     de la figure selon l'appareil : mesure a 25 % de la figure sur un telephone
+     contre 30 % sur un ecran de 1080. */
+  --corps-duel: min(calc(var(--corps) * 2.6), 42vh);
 }
 
 .app {
@@ -2579,9 +2587,14 @@ body {
   width: 100%;
 }
 
-/* L'ecart entre les deux : c'est la distance qui fait le duel. */
+/* L'ecart entre les deux : c'est la distance qui fait le duel.
+
+   Mesure sur `--corps-duel` comme tout le reste du cadre. Sur `--corps`, il ne
+   suivait pas la figure : il restait a 29 px du corps adverse au pic de la
+   frappe sur un petit telephone, contre 167 sur un grand ecran. La charge
+   traversait donc une part tres differente de l'espace disponible. */
 .duel-entre {
-  flex: 0 1 calc(var(--corps) * 1.4);
+  flex: 0 1 calc(var(--corps-duel) * 0.665);
 }
 
 .duel-corps {
@@ -2616,7 +2629,7 @@ body {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  height: min(calc(var(--corps) * 2.6), 42vh);
+  height: var(--corps-duel);
 }
 
 .duel-chair .silhouette {
@@ -2648,7 +2661,12 @@ body {
    pour charger, la cible pour reculer d'autant. Chacun la porte dans le sens
    de son cote. */
 .duel-corps {
-  --elan: calc(var(--corps) * 0.26 * var(--sens, 1));
+  /* La course part de la figure DU CADRE et non du corps de scene : les deux
+     n'ont pas le meme plafond, donc s'appuyer sur le second faisait varier la
+     part de la figure que le geste traverse selon l'ecran. 0,122 : la frappe
+     vaut 2,45 fois la course, soit 30 % de la figure -- la valeur reglee a
+     l'oeil sur grand ecran. */
+  --elan: calc(var(--corps-duel) * 0.122 * var(--sens, 1));
 }
 
 .duel-corps.attaque {

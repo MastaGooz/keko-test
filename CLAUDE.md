@@ -662,10 +662,21 @@ donjon. Ce qui tourne :
   l'impression que sur tél l'animation d'attaque est différente ». Elle vaut
   désormais `max(5px, corps × 0,085)`, soit 13 % de la frappe partout.
 
-  *Reste un écart plus discret, à juger à l'oeil avant d'y toucher* : la frappe
-  vaut 27 % de la figure du gros plan sur un téléphone et 34 % sur un grand
-  écran, parce que `--corps` plafonne à `11rem` quand la figure plafonne, elle,
-  à `42vh`.
+  **Et tout ce qui se mesure DANS le cadre part de `--corps-duel`, pas de
+  `--corps`.** Les deux ont des plafonds différents (`42vh` contre `11rem`),
+  donc leur rapport change avec l'écran : s'appuyer sur le corps de scène
+  faisait varier la part de la figure que le geste traverse. Une fois les trois
+  grandeurs raccrochées à la figure du cadre — course, écart entre les
+  combattants, secousse — les proportions sont identiques partout :
+
+  | | avant | après |
+  |---|---|---|
+  | frappe / figure | 25 % à 30 % | **30 % partout** |
+  | secousse / frappe | 11 % à 51 % | **11 % à 14 %** |
+  | écart au pic / au repos | 45 % à 55 % | **55 % partout** |
+
+  Les valeurs sur grand écran n'ont pas bougé : c'est là que le geste a été
+  réglé à l'oeil, ce sont les petits écrans qui le rejoignent.
 - **Une secousse d'écran à chaque impact.** Elle est portée par `.app`, qui
   contient des enfants en `position: fixed` (le panneau, le voile, les arches) :
   un `transform` en ferait leur bloc conteneur et les décalerait. D'où le
