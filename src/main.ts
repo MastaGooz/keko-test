@@ -212,7 +212,7 @@ let agonie: number[] = []
  * faire revenir — sans que le rang reste encombré de cadavres pendant qu'on
  * choisit sa cible suivante.
  */
-const DUREE_AGONIE = 600
+const DUREE_AGONIE = 850
 
 /** Tout le hasard de la descente découle de la seed : la rejouer la rejoue. */
 function demarrer(nouvelleSeed: number): void {

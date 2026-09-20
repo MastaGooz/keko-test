@@ -96,13 +96,31 @@ function auDoigt(): boolean {
   }
 }
 
-const DUREE_ENNEMI_DOIGT = 950
-const DUREE_ENNEMI_SOURIS = 800
+const DUREE_ENNEMI_DOIGT = 1350
+const DUREE_ENNEMI_SOURIS = 1150
 
-export const DUREE_DUEL = 800
+/**
+ * Ce que dure un gros plan du joueur, de bout en bout.
+ *
+ * **Les deux tiers sont du TEMPS D'ARRÊT, pas de l'animation**, et c'est le seul
+ * levier qu'on bouge quand Keko demande plus de temps — deux fois maintenant, la
+ * seconde en ces termes : « c'est dommage, on n'a pas le temps de bien voir ».
+ * La charge dure 520 ms quoi qu'il arrive ; au-delà, plus rien ne bouge et on
+ * regarde.
+ *
+ * *Allonger le gros plan n'est donc PAS ralentir le geste* — c'est le contraire :
+ * le coup garde exactement la même vivacité et on lui laisse le temps de
+ * retomber. Si ça devient long, c'est ce palier-là qu'on raccourcit, et lui
+ * seul : toucher à la charge obligerait à recalculer les pourcentages de ses
+ * trois temps ET la vitesse de la dérive, qui a un plancher de perception.
+ *
+ * Le prix est réel et il faut le connaître : une salve de trois ennemis coûte
+ * trois gros plans.
+ */
+export const DUREE_DUEL = 1150
 
 /** Idem, quand le coup tue : la tête de mort et le corps noir restent posés. */
-export const DUREE_DUEL_MORT = 1500
+export const DUREE_DUEL_MORT = 2100
 
 /**
  * Ce que dure un gros plan, selon qui frappe et s'il tue. **Le seul endroit qui

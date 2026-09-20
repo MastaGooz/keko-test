@@ -639,10 +639,10 @@ donjon. Ce qui tourne :
   nombreux ». *Deux minuteurs pour les deux moitiés d'un même évènement, c'est
   une désynchronisation qui n'attend que la première machine lente.*
 
-  **UN GROS PLAN ENNEMI DURE PLUS LONGTEMPS AU DOIGT QU'À LA SOURIS** (950
-  contre 800 ms), et c'est **la seule grandeur de temps du jeu qui dépend de
+  **UN GROS PLAN ENNEMI DURE PLUS LONGTEMPS AU DOIGT QU'À LA SOURIS** (1350
+  contre 1150 ms), et c'est **la seule grandeur de temps du jeu qui dépend de
   l'appareil**. Le repos entre deux gros plans d'une salve la suit (240 contre
-  140 ms) : une salve de trois coûte 3580 ms au doigt et 2930 sur PC.
+  140 ms) : une salve de trois coûte 4780 ms au doigt et 3980 sur PC.
 
   Elle a mis trois essais à trouver sa forme, et les deux premiers valent d'être
   retenus. À durée d'horloge égale — vérifiée à **800/150 ms sur l'appareil de
@@ -684,12 +684,34 @@ donjon. Ce qui tourne :
   scène ne redevenait jamais visible entre deux. *Un coup n'a pas besoin de
   durer plus longtemps pour peser, il a besoin de retomber avant le suivant.*
 
-  **Le prix est réel et il faut le savoir** : un gros plan dure 800 ms, 1500
-  s'il tue, et une salve de trois ennemis en coûte trois (3 s). Un tour
-  complet passe d'environ 0,5–2,2 s d'animation à 2,5–4,3 s, et **la mort du
-  dernier corps d'un combat coûte 2 s** (1500 + la respiration de 520 qui rend
-  la scène avant le palier). *C'est le poste qui a le plus grossi au fil des
-  réglages ; si un combat entier paraît long, c'est là qu'il faut regarder.*
+  **LE TEMPS D'ARRÊT EST LE SEUL LEVIER QU'ON BOUGE QUAND KEKO DEMANDE PLUS DE
+  TEMPS**, et il l'a demandé deux fois — la seconde en ces termes : « c'est
+  dommage, on n'a pas le temps de bien voir ». La charge dure 520 ms quoi qu'il
+  arrive ; au-delà, plus rien ne bouge et on regarde. Les deux tiers d'un gros
+  plan sont désormais de l'arrêt.
+
+  *Allonger un gros plan n'est donc PAS ralentir le geste* — c'est le contraire :
+  le coup garde la même vivacité et on lui laisse le temps de retomber. **Toucher
+  à la charge obligerait à recalculer les pourcentages de ses trois temps ET la
+  vitesse de la dérive**, qui a un plancher de perception : la même distance
+  étalée sur plus longtemps repasse sous le seuil, et l'image se lit à nouveau
+  comme figée.
+
+  | | avant | après |
+  |---|---|---|
+  | gros plan du joueur | 800 | **1150** |
+  | gros plan ennemi, PC | 800 | **1150** |
+  | gros plan ennemi, téléphone | 950 | **1350** |
+  | gros plan de mort | 1500 | **2100** |
+  | extinction du corps sur la scène | 600 | **850** |
+  | salve de trois, PC | 2930 | **3980** |
+  | salve de trois, téléphone | 3580 | **4780** |
+  | mort du dernier corps | 2400 | **3250** |
+
+  **Le prix est réel et il faut le savoir** : une salve de trois ennemis coûte
+  près de cinq secondes au doigt. *C'est de loin le poste le plus lourd du jeu ;
+  si un combat entier paraît long, c'est là qu'il faut regarder* — et le
+  raccourcir ne demande de toucher qu'à ces chiffres-là.
 
   **Le gros plan a remplacé tout le retour visuel du combat, et ce qu'il a
   remplacé a été supprimé** — le chiffre de dégâts posé sur la scène, le bond

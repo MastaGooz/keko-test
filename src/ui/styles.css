@@ -2944,7 +2944,7 @@ body {
    n'est plus visable -- le rendu n'en fait pas un bouton. */
 .creature.agonie {
   pointer-events: none;
-  animation: extinction 0.6s ease-in forwards;
+  animation: extinction 0.85s ease-in forwards;
 }
 
 /* Noire et mate, comme dans le cadre : c'est la meme image qui se prolonge, et
@@ -2979,7 +2979,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .creature.agonie {
-    animation-duration: 0.6s;
+    animation-duration: 0.85s;
     animation-timing-function: linear;
   }
 }
