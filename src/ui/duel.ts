@@ -194,9 +194,10 @@ export function duel(
     if (touche !== null) chiffre(view, touche, degats, duree)
   })
 
-  // La mort se joue ICI, dans le cadre, et nulle part ailleurs : le corps
-  // s'éteint en silhouette noire et la tête de mort s'y abat. Il n'y a plus
-  // d'agonie sur la scène — le corps abattu ne revient simplement pas.
+  // La mort s'ANNONCE ici : le corps s'éteint en silhouette noire et la tête de
+  // mort s'y abat. Mais elle ne s'y achève plus — le corps revient sur la scène
+  // avec le voile qui se lève, toujours noir et toujours marqué, et c'est là
+  // qu'il s'efface. Voir `agonie` dans `main.ts`.
   if (mort) {
     planifier(TAMPON_DUEL, () => {
       const touche = calque.querySelector<HTMLElement>('.duel-corps:not(.attaque)')
@@ -222,13 +223,22 @@ export function fermerDuel(view: View): void {
   view.root.querySelectorAll('.duel, .degats-voles').forEach((d) => d.remove())
 }
 
+/**
+ * **Pas de nom sous les figures.** Il y en a eu un ; Keko l'a fait retirer, et
+ * il avait raison : dans un cadre qui ne montre que deux corps, le nom
+ * n'apprend rien — on vient de choisir sa cible, et la silhouette la dit. Il ne
+ * faisait que rallonger la figure vers le bas, ce qui poussait tout le cadre
+ * vers le haut sur un écran court.
+ *
+ * `figure.nom` reste dans le type : c'est ce qui sert à retrouver l'espèce et
+ * la teinte côté `main.ts`.
+ */
 function figureHtml(figure: Figure, cote: string, attaque: boolean): string {
   return (
     `<div class="duel-corps ${cote}${attaque ? ' attaque' : ''}" ` +
     `style="--teinte:${figure.teinte}">` +
     `<span class="duel-chair">${creature(figure.espece, `duel-${cote}`)}` +
     `<span class="socle"></span>${teteDeMort()}</span>` +
-    `<span class="duel-nom">${figure.nom}</span>` +
     `</div>`
   )
 }

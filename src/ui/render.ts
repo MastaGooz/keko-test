@@ -16,7 +16,7 @@ import { CAPACITE_SAC } from '../logic/cartes.ts'
 import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, tresorsAuDeck, tresorsAuSac } from '../logic/descente.ts'
 import { CAPACITE_SAC as SLOTS } from '../logic/cartes.ts'
-import { creature, dessin, sceau } from './illustrations.ts'
+import { creature, dessin, sceau, teteDeMort } from './illustrations.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
 
@@ -157,6 +157,7 @@ export function render(
   occupation: Occupation = 'libre',
   auFront: number | null = null,
   zoom: number | null = null,
+  agonie: readonly number[] = [],
 ): void {
   view.root.classList.toggle('occupe', occupation !== 'libre')
   const etat = descente.combat
@@ -165,14 +166,24 @@ export function render(
   const visee = carte !== null && carte.type === 'combat' ? carte : null
 
   view.seed.textContent = String(seed)
-  // Un corps abattu ne revient pas : sa mort s'est jouée dans le gros plan,
-  // il n'y a plus rien à montrer de lui sur la scène.
+  // UN CORPS ABATTU REVIENT À SA PLACE POUR S'Y ÉTEINDRE. Sa mort se déclare
+  // dans le gros plan — silhouette noire, tête de mort — et s'achève ici, en
+  // fondu, quand le voile se lève. Il disparaissait auparavant pendant le
+  // cadre : on ne voyait jamais le rang se vider, le corps était simplement
+  // absent au retour.
+  //
+  // `agonie` porte les index de ceux qui s'effacent. Comme `auFront`, ça vient
+  // de l'ÉTAT et pas d'une classe posée à la main : le joueur peut très bien
+  // jouer une autre carte pendant ce temps, et le rendu qui s'ensuit balaierait
+  // la classe en plein fondu.
   view.ennemis.innerHTML =
     corpsJoueur(etat, visee, fini, auFront !== null) +
     etat.ennemis
       .map((ennemi, index) => ({ ennemi, index }))
-      .filter(({ ennemi }) => ennemi.pv > 0)
-      .map(({ ennemi, index }) => corpsEnnemi(etat, ennemi, index, visee, fini, index === auFront))
+      .filter(({ ennemi, index }) => ennemi.pv > 0 || agonie.includes(index))
+      .map(({ ennemi, index }) =>
+        corpsEnnemi(etat, ennemi, index, visee, fini, index === auFront, agonie.includes(index)),
+      )
       .join('')
   view.energie.innerHTML = fini ? '' : energie(etat, visee)
 
@@ -221,6 +232,7 @@ function corpsEnnemi(
   visee: Carte | null,
   fini: boolean,
   auFront = false,
+  agonise = false,
 ): string {
   const imminent = ennemi.compteur <= 1
   const espece = ESPECES[ennemi.nom] ?? { espece: 'roquet', teinte: '#9a7a62' }
@@ -232,18 +244,32 @@ function corpsEnnemi(
   // n'apprenait rien — la carte affiche ses dégâts, et le corps qu'elle peut
   // achever se signale déjà par son cadre blanc.
 
-  const corps =
-    `<span class="intention${imminent ? ' imminent' : ''}">` +
-    `${GLYPHE.frappe}${ennemi.degats}${attente}</span>` +
-    `<span class="chair" style="--teinte:${espece.teinte}">` +
-    `${creature(espece.espece, String(index))}<span class="socle"></span></span>` +
-    jauge(ennemi.pv, ennemi.pvMax) +
-    `<span class="plaquette"><span class="nom">${ennemi.nom}</span></span>`
+  // Un corps qui s'éteint ne porte plus ni intention ni jauge : il n'annonce
+  // plus rien et il n'a plus de PV à montrer. Il garde la tête de mort du gros
+  // plan, DÉJÀ POSÉE — le tampon s'y est joué, le rejouer ici en ferait un
+  // second coup.
+  const corps = agonise
+    ? `<span class="chair" style="--teinte:${espece.teinte}">` +
+      `${creature(espece.espece, String(index))}<span class="socle"></span>` +
+      `${teteDeMort()}</span>`
+    : `<span class="intention${imminent ? ' imminent' : ''}">` +
+      `${GLYPHE.frappe}${ennemi.degats}${attente}</span>` +
+      `<span class="chair" style="--teinte:${espece.teinte}">` +
+      `${creature(espece.espece, String(index))}<span class="socle"></span></span>` +
+      jauge(ennemi.pv, ennemi.pvMax) +
+      `<span class="plaquette"><span class="nom">${ennemi.nom}</span></span>`
 
   // `au-front` : ce corps est en ce moment dans le gros plan, il a quitté
   // l'arrière-plan. La classe vient de l'ÉTAT et pas d'une pose à la main,
   // sinon le premier rendu venu la balaierait en plein gros plan.
   const front = auFront ? ' au-front' : ''
+
+  // Il garde sa PLACE dans le rang pendant qu'il s'efface — sans quoi les
+  // voisins glisseraient sous le doigt au moment où l'on choisit sa cible
+  // suivante — mais il n'est plus visable : jamais de bouton ici.
+  if (agonise) {
+    return `<div class="creature agonie${front}" data-corps="${index}">${corps}</div>`
+  }
 
   if (c === null) {
     return `<div class="creature${front}" data-corps="${index}">${corps}</div>`

@@ -590,6 +590,13 @@ donjon. Ce qui tourne :
   **Le joueur reçoit le même assaut que les ennemis.** Il n'y a pas deux
   grammaires de frappe, il y a une frappe et deux camps qui l'empruntent.
 
+  **Pas de nom sous les figures.** Il y en a eu un ; dans un cadre qui ne montre
+  que deux corps il n'apprenait rien — on vient de choisir sa cible, et la
+  silhouette la dit. Il ne faisait que rallonger la figure vers le bas, donc
+  pousser tout le cadre vers le haut sur un écran court : le retirer a descendu
+  le centre de la figure de 189 à 201 px sur un téléphone de 390, pour un centre
+  d'écran à 195.
+
   **Le joueur reste à gauche et l'ennemi à droite, quel que soit l'attaquant.**
   Retourner le décor casserait le sens de lecture ET les silhouettes, qui sont
   dessinées pour se faire face dans cet ordre. C'est l'assaut qui désigne
@@ -718,12 +725,33 @@ donjon. Ce qui tourne :
   DERNIÈRE frappe peut être fatale, puisque le moteur l'arrête dès que le
   joueur tombe.
 
-  **Il n'y a plus d'agonie sur la scène** — ni chute, ni bascule, ni éclair, ni
-  état `Agonie` dans le rendu. Le corps abattu ne revient simplement pas quand
-  le voile se lève. C'était toute une mécanique (garder le mort au rang pour
-  qu'on voie les dégâts qui l'ont achevé, décaler la chute, une phase portée
-  par l'état) et le cadre l'a rendue sans objet : les dégâts et la mort s'y
-  montrent au même endroit, en grand.
+  **LA MORT SE DÉCLARE DANS LE CADRE ET S'ACHÈVE SUR LA SCÈNE.** Le corps
+  revient à sa place quand le voile se lève — toujours noir, la tête de mort
+  toujours posée — et c'est **là** qu'il s'efface, en 600 ms. Keko : « quand un
+  monstre est tué, on ne le fait pas disparaître durant l'animation d'attaque,
+  on le fait fade au retour ».
+
+  Il a d'abord disparu *pendant* le cadre : simple, mais on ne voyait jamais le
+  rang se vider — le corps était juste absent au retour, et la mort n'avait pas
+  de conséquence visible à l'endroit où le combat se joue.
+
+  Trois choses à ne pas défaire :
+
+  - **il garde sa PLACE dans le rang** tout le temps du fondu, sinon les voisins
+    glissent sous le doigt au moment où l'on choisit sa cible suivante ;
+  - **il n'est plus visable** — le rendu n'en fait pas un bouton — et il perd sa
+    jauge et son intention : il n'annonce plus rien et n'a plus de PV à montrer ;
+  - **la tête de mort arrive DÉJÀ POSÉE**, à pleine opacité. Le tampon s'est
+    joué dans le cadre ; le rejouer ici en ferait un second coup.
+
+  Comme `auFront`, **ça vient de l'état** (`agonie`, une liste d'index) et pas
+  d'une classe posée sur le DOM : le joueur peut parfaitement jouer une autre
+  carte pendant le fondu, et le rendu qui s'ensuit effacerait la classe en plein
+  vol.
+
+  **La respiration d'après-combat est calée dessus** (600 + 300 ms au lieu de
+  520) : ouvrir le palier avant la fin du fondu, ce serait couper précisément le
+  corps qu'on voulait montrer.
 
   **Le corps mort doit être MAT pour que le tampon se lise.** D'où la
   silhouette en `brightness(0)` plutôt qu'une teinte sombre — et sa respiration

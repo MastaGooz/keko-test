@@ -159,6 +159,15 @@ function grosPlan(
   // désormais, ce qui est exactement ce qu'un fondu est censé faire.
   window.setTimeout(() => {
     auFront = null
+    // Un ennemi abattu revient avec les autres, mais pour s'éteindre. Le joueur
+    // mort, lui, n'a pas de scène où revenir : l'écran de fin suit.
+    if (mort && attaquant === 'joueur') {
+      agonie = [...agonie, cible]
+      window.setTimeout(() => {
+        agonie = agonie.filter((i) => i !== cible)
+        dessiner()
+      }, DUREE_AGONIE)
+    }
     dessiner()
   }, duree - FONDU_DUEL)
 
@@ -181,6 +190,29 @@ function grosPlan(
  */
 let occupation: Occupation = 'libre'
 
+/**
+ * Les corps qui s'éteignent sur la scène, par index.
+ *
+ * La mort se **déclare** dans le gros plan — silhouette noire, tête de mort —
+ * et s'**achève** ici : le corps revient à sa place avec le voile qui se lève,
+ * toujours noir et toujours marqué, et s'efface. Avant, il ne revenait
+ * simplement pas, donc on ne voyait jamais le rang se vider.
+ *
+ * C'est un état et pas une classe posée sur le DOM, pour la même raison que
+ * `auFront` : le joueur peut jouer une autre carte pendant le fondu, et le
+ * rendu qui s'ensuit effacerait la classe en plein vol.
+ */
+let agonie: number[] = []
+
+/**
+ * Ce que dure l'extinction d'un corps sur la scène.
+ *
+ * Il faut qu'on ait le temps de voir QUI s'efface — c'est tout l'intérêt de le
+ * faire revenir — sans que le rang reste encombré de cadavres pendant qu'on
+ * choisit sa cible suivante.
+ */
+const DUREE_AGONIE = 600
+
 /** Tout le hasard de la descente découle de la seed : la rejouer la rejoue. */
 function demarrer(nouvelleSeed: number): void {
   seed = nouvelleSeed
@@ -189,6 +221,7 @@ function demarrer(nouvelleSeed: number): void {
   // Une nouvelle descente ne doit pas hériter d'un voile resté ouvert.
   fermerDuel(view)
   auFront = null
+  agonie = []
   zoom = null
   survolee = null
   selection = null
@@ -198,7 +231,7 @@ function demarrer(nouvelleSeed: number): void {
 }
 
 function dessiner(): void {
-  render(view, descente, seed, selection, occupation, auFront, zoom)
+  render(view, descente, seed, selection, occupation, auFront, zoom, agonie)
   // Après le rendu : les jauges viennent d'être reconstruites, leur aperçu
   // avec. Une marque posée avant serait balayée.
   rafraichirApercu()
@@ -240,10 +273,16 @@ function conclure(): void {
 
 /**
  * Le temps qu'on laisse au joueur de REVOIR la scène quand le combat vient de
- * se terminer, avant que le palier ne se pose par-dessus. Une demi-seconde :
- * assez pour que l'oeil enregistre le rang vide, trop court pour qu'on attende.
+ * se terminer, avant que le palier ne se pose par-dessus.
+ *
+ * **Elle est calée sur l'agonie, plus une pause.** Le dernier corps s'éteint
+ * pendant cette respiration : ouvrir le palier avant la fin du fondu, ce serait
+ * poser un calque sur une image en train de se terminer — et le seul corps
+ * qu'on voulait montrer serait justement celui qu'on couperait. La pause qui
+ * suit est ce qui laisse enregistrer le rang VIDE, qui était tout l'objet de
+ * cette respiration au départ.
  */
-const RESPIRATION_APRES_COMBAT = 520
+const RESPIRATION_APRES_COMBAT = DUREE_AGONIE + 300
 
 /** Ce qui doit attendre son tour. Les réglages, eux, répondent toujours. */
 const ACTIONS_DE_JEU = new Set([

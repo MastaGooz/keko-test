@@ -2849,19 +2849,6 @@ body {
     drop-shadow(0 0 1.5rem color-mix(in srgb, var(--teinte, #999) 45%, transparent));
 }
 
-.duel-nom {
-  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--fg);
-  text-shadow: 0 2px 6px #000;
-}
-
-/* La cible reste en retrait tant qu'elle n'a pas pris le coup. */
-.duel-corps:not(.attaque) .duel-nom {
-  color: var(--muted);
-}
 
 /* Le chiffre du gros plan est plus gros que celui de la scene : a cette
    echelle, le chiffre de la scene se perdait sur un corps de 450 px. */
@@ -2906,6 +2893,59 @@ body {
   z-index: 28;
 }
 
+/* --- la mort, sur la scene -------------------------------------------------- */
+
+/* LE CORPS REVIENT A SA PLACE POUR S'Y ETEINDRE. Sa mort s'est declaree dans le
+   gros plan ; elle s'acheve ici, en fondu, quand le voile se leve. Il
+   disparaissait auparavant pendant le cadre, donc on ne voyait jamais le rang
+   se vider -- Keko : « quand un monstre est tue, on ne le fait pas disparaitre
+   durant l'animation d'attaque, on le fait fade au retour ».
+
+   Il garde sa PLACE dans le rang pendant tout le fondu : sans ca les voisins
+   glisseraient sous le doigt au moment ou l'on choisit sa cible suivante. Il
+   n'est plus visable -- le rendu n'en fait pas un bouton. */
+.creature.agonie {
+  pointer-events: none;
+  animation: extinction 0.6s ease-in forwards;
+}
+
+/* Noire et mate, comme dans le cadre : c'est la meme image qui se prolonge, et
+   le rouge du crane a besoin d'un fond mat pour se lire. */
+.creature.agonie .silhouette {
+  filter: brightness(0) drop-shadow(0 0 1rem #ff2d2d33);
+  /* Elle respire encore une fraction de seconde apres sa mort : on coupe. */
+  animation: none;
+}
+
+/* La tete de mort est DEJA POSEE en arrivant : le tampon s'est joue dans le
+   cadre, le rejouer ici en ferait un second coup. Elle ne fait que s'effacer
+   avec le corps. */
+.creature.agonie .tete-de-mort {
+  opacity: 1;
+}
+
+@keyframes extinction {
+  0% {
+    opacity: 1;
+  }
+  /* Elle tient d'abord, puis s'en va : un fondu lineaire sur 600 ms se lit
+     comme une image qui s'attarde, pas comme un corps qui s'eteint. */
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0.375rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creature.agonie {
+    animation-duration: 0.6s;
+    animation-timing-function: linear;
+  }
+}
+
 /* --- la mort, dans le cadre ------------------------------------------------ */
 
 /* Le corps abattu s'eteint en silhouette NOIRE. Pas de chute, pas de bascule :
@@ -2919,9 +2959,6 @@ body {
   transition: filter 0.1s linear;
 }
 
-.duel-corps.abattu .duel-nom {
-  color: #c4444a;
-}
 
 /* La tete de mort : posee au centre du corps, invisible tant qu'il vit. */
 .tete-de-mort {
