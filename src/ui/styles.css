@@ -105,6 +105,16 @@ body {
      ecran de PC les betes restaient des vignettes sous des cartes deux fois
      plus grandes qu'elles. */
   --corps: min(11rem, 20vh);
+
+  /* L'amplitude de la secousse d'ecran. Elle SUIT LE CORPS, comme la charge :
+     en pixels fixes, elle valait la moitie de la frappe sur un telephone et un
+     neuvieme sur un ecran de PC -- mesure a 51 % contre 11 %. La meme animation
+     racontait donc deux choses differentes selon l'ecran, la secousse ecrasant
+     le geste sur le petit. Keko : « j'ai l'impression que sur tel l'animation
+     d'attaque est differente ».
+
+     Plancher a 5 px : en dessous, une secousse ne se percoit plus. */
+  --secousse: max(5px, calc(var(--corps) * 0.085));
 }
 
 .app {
@@ -2764,14 +2774,16 @@ body {
   animation: secousse-forte 0.34s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
 
+/* Les etapes sont des FRACTIONS de `--secousse`, pas des pixels : c'est ce qui
+   garde le meme geste d'un ecran a l'autre. */
 @keyframes secousse-forte {
   0% { transform: translate(0, 0); }
-  10% { transform: translate(-15px, 9px); }
-  24% { transform: translate(14px, -8px); }
-  40% { transform: translate(-11px, -6px); }
-  56% { transform: translate(8px, 5px); }
-  72% { transform: translate(-5px, 3px); }
-  86% { transform: translate(3px, -2px); }
+  10% { transform: translate(calc(var(--secousse) * -1), calc(var(--secousse) * 0.6)); }
+  24% { transform: translate(calc(var(--secousse) * 0.93), calc(var(--secousse) * -0.53)); }
+  40% { transform: translate(calc(var(--secousse) * -0.73), calc(var(--secousse) * -0.4)); }
+  56% { transform: translate(calc(var(--secousse) * 0.53), calc(var(--secousse) * 0.33)); }
+  72% { transform: translate(calc(var(--secousse) * -0.33), calc(var(--secousse) * 0.2)); }
+  86% { transform: translate(calc(var(--secousse) * 0.2), calc(var(--secousse) * -0.13)); }
   100% { transform: translate(0, 0); }
 }
 
