@@ -62,30 +62,42 @@ export const TAMPON_DUEL = IMPACT_DUEL + 90
 export const FONDU_DUEL = 160
 
 /**
- * Un gros plan ENNEMI dure plus longtemps qu'un gros plan du joueur, et c'est
- * délibéré.
+ * **Au DOIGT, un gros plan ennemi dure plus longtemps qu'à la souris.** C'est
+ * la seule grandeur de temps du jeu qui dépend de l'appareil, et elle a mis
+ * trois essais à trouver sa forme.
  *
- * À durée d'horloge égale — vérifiée à 800/150 ms sur l'appareil de Keko — il
- * lui paraissait systématiquement plus court. Ce n'est pas un défaut de mesure,
- * c'est une asymétrie d'attention : **le temps qu'on attend paraît plus long
- * que le temps qui vous tombe dessus**. Le joueur déclenche son coup et en
- * regarde le résultat, il est prêt ; la salve arrive sans qu'il l'ait demandée,
- * et elle se répète.
+ * À durée d'horloge égale — vérifiée à 800/150 ms sur l'appareil de Keko — un
+ * gros plan ennemi lui paraissait systématiquement plus court sur téléphone que
+ * sur PC. J'ai d'abord attribué l'écart à une asymétrie d'ATTENTION (le temps
+ * qu'on attend paraît plus long que le temps qui vous tombe dessus) et allongé
+ * les gros plans ennemis **partout**. Verdict de Keko : « le temps d'attaque
+ * des ennemis sur PC est trop long ». *L'écart était donc bien lié à
+ * l'appareil, pas au camp qui frappe* — et une correction globale ne pouvait
+ * que casser le côté qui allait bien.
  *
- * *Ce qu'on égalise ici, c'est la durée PERÇUE, pas la durée mesurée.* C'est la
- * seule asymétrie volontaire entre les deux camps — tout le reste est commun,
- * et une mort s'attarde autant des deux côtés.
+ * Pourquoi l'appareil : c'est la même famille de raison que le plancher de
+ * dérive. Sur un petit écran, la scène traverse moins de pixels et l'oeil a
+ * moins à parcourir, donc il a fini de lire l'image avant que le temps ne soit
+ * écoulé. **Le PC garde exactement le réglage qui lui convenait.**
+ *
+ * `(pointer: coarse)` et non une largeur de fenêtre : ce qu'on distingue, c'est
+ * le doigt de la souris, pas un nombre de pixels — une petite fenêtre sur un PC
+ * reste un PC. Et c'est relu à chaque gros plan : brancher une souris ne doit
+ * pas demander de recharger la page.
  */
-const DUREE_ENNEMI = 950
+function auDoigt(): boolean {
+  try {
+    return window.matchMedia('(pointer: coarse)').matches
+  } catch {
+    // Sans `matchMedia`, on prend le réglage PC : c'est le plus court, donc le
+    // pire qu'on risque est une salve un peu vive.
+    return false
+  }
+}
 
-/**
- * Ce que dure un gros plan, de bout en bout.
- *
- * C'est le prix du procédé, et il est réel : une salve de trois ennemis coûte
- * trois gros plans. La moitié de ce temps est désormais du TEMPS D'ARRÊT, pas
- * de l'animation — c'est ce que Keko a demandé, « le temps de bien voir les
- * persos ». Si ça devient long, c'est ce palier-là qu'on raccourcit.
- */
+const DUREE_ENNEMI_DOIGT = 950
+const DUREE_ENNEMI_SOURIS = 800
+
 export const DUREE_DUEL = 800
 
 /** Idem, quand le coup tue : la tête de mort et le corps noir restent posés. */
@@ -98,7 +110,8 @@ export const DUREE_DUEL_MORT = 1500
  */
 export function dureeDuDuel(attaquant: 'joueur' | 'ennemi', mort: boolean): number {
   if (mort) return DUREE_DUEL_MORT
-  return attaquant === 'ennemi' ? DUREE_ENNEMI : DUREE_DUEL
+  if (attaquant !== 'ennemi') return DUREE_DUEL
+  return auDoigt() ? DUREE_ENNEMI_DOIGT : DUREE_ENNEMI_SOURIS
 }
 
 /**
@@ -115,15 +128,17 @@ export const OUVERTURE_SALVE = 250
  *
  * Il valait 60 ms : la sortie de l'un et l'entrée du suivant se touchaient, et
  * une salve de deux ou trois frappeurs se lisait comme un bloc précipité plutôt
- * que comme des coups distincts. Keko : « celles des ennemis sont toujours trop
- * rapides ». *Un coup n'a pas besoin de durer plus longtemps pour peser, il a
- * besoin de retomber avant le suivant.*
+ * que comme des coups distincts. *Un coup n'a pas besoin de durer plus
+ * longtemps pour peser, il a besoin de retomber avant le suivant.*
  *
- * 240 ms : la scène redevient visible entre deux, ce qui n'arrivait jamais.
- * Une salve de trois frappeurs coûte 540 ms de plus — sur un tour qui en compte
- * déjà quelques milliers, et seulement quand plusieurs corps frappent.
+ * **Il suit l'appareil comme la durée du gros plan**, et pour la même raison :
+ * porté à 240 ms partout, il ajoutait presque une demi-seconde à une salve de
+ * trois sur PC, où rien ne demandait d'allonger. 140 ms y suffisent à rendre la
+ * scène visible entre deux coups — c'était tout l'objet de la correction.
  */
-export const PAS_ENTRE_DUELS = DUREE_ENNEMI + 240
+export function pasEntreDuels(): number {
+  return dureeDuDuel('ennemi', false) + (auDoigt() ? 240 : 140)
+}
 
 /** Les minuteurs du gros plan en cours, pour qu'un nouveau annule l'ancien. */
 let enCours: number[] = []

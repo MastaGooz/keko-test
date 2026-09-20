@@ -24,14 +24,13 @@ import {
 import type { Occupation } from './ui/render.ts'
 import { figure, FIGURE_JOUEUR, mount, render } from './ui/render.ts'
 import {
-  DUREE_DUEL,
   dureeDuDuel,
   duel,
   FONDU_DUEL,
   OUVERTURE_SALVE,
   fermerDuel,
   IMPACT_DUEL,
-  PAS_ENTRE_DUELS,
+  pasEntreDuels,
   TAMPON_DUEL,
 } from './ui/duel.ts'
 import type { Action } from './ui/input.ts'
@@ -97,7 +96,11 @@ function ecrireDiagnostic(): void {
   view.diagnostic.textContent =
     `Animations réduites : ${reduit ? 'OUI' : 'non'} — ` +
     `gros plans, durée/impact (ms) : ${liste} · ` +
-    `attendu moi 800, eux 950, mort 1500 — impact 150`
+    // L'attendu est RECALCULÉ, jamais recopié : la durée d'un gros plan ennemi
+    // dépend de l'appareil, et un diagnostic qui annonce une constante ment
+    // précisément sur la machine qu'on est en train de mesurer.
+    `attendu moi ${dureeDuDuel('joueur', false)}, eux ${dureeDuDuel('ennemi', false)}, ` +
+    `mort ${dureeDuDuel('joueur', true)} — impact ${IMPACT_DUEL}`
 }
 
 /**
@@ -358,7 +361,7 @@ function dispatch(action: Action): void {
         frappes.forEach((frappe, rang) => {
           // Un battement avant la premiere : le gros plan s'ouvrait alors
           // qu'on regardait encore le bouton « Fin du tour ».
-          const depart = OUVERTURE_SALVE + rang * PAS_ENTRE_DUELS
+          const depart = OUVERTURE_SALVE + rang * pasEntreDuels()
           const index = descente.combat.ennemis.findIndex((e) => e.nom === frappe.nom)
           // `pvJoueur` est ce qu'il RESTE après la frappe : à zéro, c'est
           // celle-ci qui a tué, et c'est elle qui porte la tête de mort.
@@ -375,7 +378,12 @@ function dispatch(action: Action): void {
         // La repioche se fait entendre une fois la salve passée.
         window.setTimeout(
           () => sonPioche(),
-          Math.max(0, OUVERTURE_SALVE + (frappes.length - 1) * PAS_ENTRE_DUELS + DUREE_DUEL),
+          Math.max(
+            0,
+            OUVERTURE_SALVE +
+              (frappes.length - 1) * pasEntreDuels() +
+              dureeDuDuel('ennemi', false),
+          ),
         )
       })
 
@@ -390,7 +398,7 @@ function dispatch(action: Action): void {
         frappes.length === 0
           ? 0
           : OUVERTURE_SALVE +
-            (frappes.length - 1) * PAS_ENTRE_DUELS +
+            (frappes.length - 1) * pasEntreDuels() +
             dureeDuDuel('ennemi', fatale)
 
       selection = null

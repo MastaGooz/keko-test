@@ -580,15 +580,39 @@ donjon. Ce qui tourne :
   nombreux ». *Deux minuteurs pour les deux moitiés d'un même évènement, c'est
   une désynchronisation qui n'attend que la première machine lente.*
 
-  **UN GROS PLAN ENNEMI DURE PLUS LONGTEMPS QUE CELUI DU JOUEUR** (950 contre
-  800 ms), et c'est la seule asymétrie volontaire entre les deux camps. À durée
-  d'horloge égale — vérifiée à **800/150 ms sur l'appareil de Keko** — il lui
-  paraissait systématiquement plus court. Ce n'était pas un défaut de mesure :
-  *le temps qu'on attend paraît plus long que le temps qui vous tombe dessus*.
-  Le joueur déclenche son coup et en regarde le résultat, il est prêt ; la salve
-  arrive sans qu'il l'ait demandée, et elle se répète. **Ce qu'on égalise, c'est
-  la durée PERÇUE, pas la durée mesurée** — et il n'y a pas d'autre façon d'y
-  arriver que de rompre l'égalité des chiffres.
+  **UN GROS PLAN ENNEMI DURE PLUS LONGTEMPS AU DOIGT QU'À LA SOURIS** (950
+  contre 800 ms), et c'est **la seule grandeur de temps du jeu qui dépend de
+  l'appareil**. Le repos entre deux gros plans d'une salve la suit (240 contre
+  140 ms) : une salve de trois coûte 3580 ms au doigt et 2930 sur PC.
+
+  Elle a mis trois essais à trouver sa forme, et les deux premiers valent d'être
+  retenus. À durée d'horloge égale — vérifiée à **800/150 ms sur l'appareil de
+  Keko** — le gros plan ennemi lui paraissait systématiquement plus court sur
+  téléphone que sur PC. J'ai attribué l'écart à une asymétrie d'ATTENTION (le
+  temps qu'on attend paraît plus long que le temps qui vous tombe dessus) et
+  allongé les gros plans ennemis **partout**. Verdict : « le temps d'attaque des
+  ennemis sur PC est trop long ». *L'écart était donc bien lié à l'appareil, pas
+  au camp qui frappe* — et une correction globale ne pouvait que casser le côté
+  qui allait bien.
+
+  Pourquoi l'appareil, et c'est la même famille de raison que le plancher de
+  dérive : sur un petit écran la scène traverse moins de pixels, l'oeil a moins
+  à parcourir, il a fini de lire l'image avant que le temps ne soit écoulé.
+
+  **Leçon de méthode : quand un écart est rapporté comme une différence entre
+  DEUX APPAREILS, la correction doit porter sur l'appareil.** Chercher une
+  explication universelle à un symptôme local revient à déplacer le défaut sur
+  la machine qui n'avait rien demandé. Il a fallu que Keko le redise pour que je
+  revienne sur mon explication.
+
+  Le test est `(pointer: coarse)` et non une largeur de fenêtre : ce qu'on
+  distingue, c'est le doigt de la souris — une petite fenêtre sur un PC reste un
+  PC. Il est relu à chaque gros plan, donc brancher une souris ne demande pas de
+  recharger.
+
+  **Le diagnostic du panneau RECALCULE son attendu au lieu de le recopier** :
+  une ligne qui annoncerait « eux 950 » en dur mentirait précisément sur la
+  machine qu'on est en train de mesurer.
 
   La salve s'ouvre aussi sur **250 ms de battement** : elle suivait la tape sur
   « Fin du tour » sans un temps, et le premier gros plan s'ouvrait alors qu'on
