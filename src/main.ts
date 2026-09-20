@@ -33,6 +33,7 @@ import {
   pasEntreDuels,
   TAMPON_DUEL,
 } from './ui/duel.ts'
+import { chercherPortrait } from './ui/portrait.ts'
 import type { Action } from './ui/input.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
@@ -534,6 +535,13 @@ window.addEventListener('resize', () => tracerVisees(view))
 window.addEventListener('orientationchange', () => tracerVisees(view))
 
 demarrer(Date.now() % 100000)
+
+// Le portrait du joueur, s'il a ete depose dans `public/`. La detection est
+// asynchrone, donc le premier rendu part forcement sans elle : on redessine
+// quand elle aboutit, et on ne fait rien du tout si l'image n'existe pas.
+void chercherPortrait().then((trouve) => {
+  if (trouve) dessiner()
+})
 
 // Le cache de GitHub Pages peut servir un vieux HTML : on vérifie la date du
 // build à la source et on se recharge au besoin, une fois la partie affichée.

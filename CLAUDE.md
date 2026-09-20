@@ -1566,7 +1566,25 @@ mécanisme identique. Une sensation ne se teste pas sur un tableur.
 
 La borne n'est pas « pas de dessins » — Keko l'a levée lui-même pour la main.
 Elle est : **pas d'assets, pas de fichiers image, pas de dépendance, pas de
-son.** Tout est du CSS et du SVG écrits à la main (`ui/illustrations.ts`), et
+son.**
+
+**Une exception, ouverte par Keko : le portrait du joueur** (`ui/portrait.ts`).
+Il voulait essayer une image qu'il a faite. Elle est contenue à un seul fichier
+et à un seul corps, et surtout elle est **optionnelle** : tant que
+`public/joueur.png` n'existe pas, le jeu rend la silhouette SVG comme avant.
+*Le repli n'est pas une précaution de style* — sans lui, un essai abandonné
+laisserait une image cassée sur la scène ET dans le gros plan, et le fichier
+deviendrait obligatoire sans que rien ne le dise.
+
+Ce qu'il faut savoir pour la suite : l'image porte la **même classe
+`silhouette`** que le SVG, donc elle hérite de la respiration, du liseré de
+lumière, de l'extinction en noir à la mort et de la taille calée sur `--corps`.
+Lui donner une classe à elle aurait voulu dire porter chacune de ces règles en
+double. Il ne reste qu'`object-fit: contain` à ajouter : un SVG à viewBox se
+contente d'une hauteur et déduit sa largeur, une image non — sans ça elle serait
+étirée, et c'est le genre de défaut qu'on met sur le compte du dessin plutôt que
+sur celui du CSS. Le chemin passe par `BASE_URL`, sans quoi un `/joueur.png`
+absolu pointerait à la racine du domaine au lieu de `/keko-test/`. Tout est du CSS et du SVG écrits à la main (`ui/illustrations.ts`), et
 seulement sur ce qui est soumis au jugement. C'est peu risqué tant que `logic/`
 reste pur : tout l'habillage vit dans `ui/` et se jette sans rien casser.
 

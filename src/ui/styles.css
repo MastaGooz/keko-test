@@ -205,6 +205,28 @@ body {
   color: var(--teinte, #9a7a62);
 }
 
+/* LE PORTRAIT DU JOUEUR : une vraie image a la place d'un SVG.
+   Premiere entorse a la borne « pas de fichiers image », levee par Keko pour
+   l'essayer -- voir `ui/portrait.ts`, qui la contient a un seul corps.
+
+   Il porte la MEME classe `silhouette` que le SVG, donc il herite de tout ce
+   qui est accroche a cette classe : la respiration, le liseré de lumiere,
+   l'extinction en noir a la mort, la taille calee sur `--corps`. Ce qu'il faut
+   ajouter tient en deux lignes.
+
+   `object-fit: contain` : le SVG a un viewBox, donc il se contente d'une
+   hauteur et deduit sa largeur. Une image, non -- sans lui, une image dont les
+   proportions ne tombent pas juste serait etiree, et c'est le genre de defaut
+   qu'on met sur le compte du dessin plutot que sur celui du CSS. */
+.silhouette.portrait {
+  object-fit: contain;
+  /* Les navigateurs lissent a l'agrandissement. Sur une image de personnage
+     agrandie jusqu'au gros plan, c'est ce qu'on veut -- mais si Keko essaie du
+     pixel art, il faudra passer a `pixelated` : le lissage en ferait une
+     bouillie. */
+  image-rendering: auto;
+}
+
 /* Elles respirent. C'est le detail qui separe une bete d'une vignette : sans
    lui, la scene est une illustration ; avec, quelque chose t'attend. */
 .silhouette {

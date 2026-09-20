@@ -17,6 +17,7 @@ import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, tresorsAuDeck, tresorsAuSac } from '../logic/descente.ts'
 import { CAPACITE_SAC as SLOTS } from '../logic/cartes.ts'
 import { creature, dessin, sceau, teteDeMort } from './illustrations.ts'
+import { portraitTrouve, silhouetteJoueur } from './portrait.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
 
@@ -321,7 +322,9 @@ function corpsJoueur(
     `<div class="creature moi${auFront ? ' au-front' : ''}" data-corps="joueur">` +
     marque +
     `<span class="chair" style="--teinte:#7fb6d9">` +
-    `${creature('joueur', 'moi')}<span class="socle"></span>${engagee}</span>` +
+    // Le portrait s'il a ete depose, la silhouette d'origine sinon.
+    `${portraitTrouve() ? silhouetteJoueur() : creature('joueur', 'moi')}` +
+    `<span class="socle"></span>${engagee}</span>` +
     jauge(etat.pv, etat.pvMax) +
     `<span class="plaquette"><span class="nom">TOI</span></span>` +
     `</div>`

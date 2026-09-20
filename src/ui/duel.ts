@@ -30,6 +30,7 @@
  */
 import type { View } from './render.ts'
 import { creature, teteDeMort } from './illustrations.ts'
+import { portraitTrouve, silhouetteJoueur } from './portrait.ts'
 
 /** Un combattant, tel que le gros plan a besoin de le connaître. */
 export type Figure = { nom: string; espece: string; teinte: string }
@@ -237,7 +238,11 @@ function figureHtml(figure: Figure, cote: string, attaque: boolean): string {
   return (
     `<div class="duel-corps ${cote}${attaque ? ' attaque' : ''}" ` +
     `style="--teinte:${figure.teinte}">` +
-    `<span class="duel-chair">${creature(figure.espece, `duel-${cote}`)}` +
+    // Le joueur montre son portrait ici AUSSI : c'est le cadre qui le donne a
+    // voir en grand, ne le mettre que sur la scene n'aurait teste qu'une
+    // vignette.
+    `<span class="duel-chair">` +
+    `${cote === 'joueur' && portraitTrouve() ? silhouetteJoueur() : creature(figure.espece, `duel-${cote}`)}` +
     `<span class="socle"></span>${teteDeMort()}</span>` +
     `</div>`
   )
