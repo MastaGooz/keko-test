@@ -3152,3 +3152,14 @@ body {
     animation: none;
   }
 }
+
+/* Une ligne de diagnostic dans le panneau de reglages. Elle existe parce qu'une
+   impression de vitesse ne se discute pas, elle se mesure -- et je ne peux pas
+   mesurer sur l'appareil de Keko. */
+.diagnostic {
+  margin: 0;
+  font-size: 0.625rem;
+  line-height: 1.4;
+  color: var(--muted);
+  text-align: center;
+}

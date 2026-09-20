@@ -880,8 +880,13 @@ donjon. Ce qui tourne :
   doigt, la cible bouge sous le pouce. Et il n'apprenait rien : la carte
   affiche ses dégâts, et le corps qu'elle peut achever se signale par son
   cadre blanc et par l'arche pleine qui le relie à la carte ;
-- les **commandes de test** (curseur de butin, relance, plein écran, son,
-  journal) dans un **panneau hors du flux**, fermé par défaut, qui remonte en
+- **une ligne de diagnostic dans le panneau** : état de
+  `prefers-reduced-motion`, et **durée réelle du dernier gros plan**, mesurée à
+  l'horloge. Elle existe parce qu'une impression de vitesse ne se discute pas,
+  elle se mesure — et je ne peux pas mesurer sur l'appareil de Keko. *Quand un
+  écart ne se reproduit pas ici, la bonne réponse n'est pas de deviner, c'est
+  de faire dire le chiffre à l'appareil qui le voit.*
+- les **commandes de test**, fermé par défaut, qui remonte en
   feuille par le bouton « Réglages » — et tout seul quand le combat est fini ;
 - des **sons synthétisés** (`ui/sons.ts`) : aucun fichier, tout est fabriqué au
   Web Audio. La force du coup suit le coût de la carte — on entend le poids de

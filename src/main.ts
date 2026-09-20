@@ -75,6 +75,24 @@ let zoom: number | null = null
 let survolee: number | null = null
 
 /**
+ * Ce que le dernier gros plan a réellement duré, à l'horloge.
+ *
+ * Une impression de vitesse ne se discute pas, elle se mesure — et je ne peux
+ * pas mesurer sur l'appareil de Keko. Le panneau affiche donc le chiffre, avec
+ * l'état de `prefers-reduced-motion` qui est la seule chose au monde capable
+ * de raccourcir ces animations sans qu'on l'ait demandé.
+ */
+let dureeMesuree: number | null = null
+
+function ecrireDiagnostic(): void {
+  const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  view.diagnostic.textContent =
+    `Animations réduites : ${reduit ? 'OUI' : 'non'} · ` +
+    `dernier gros plan : ${dureeMesuree === null ? '—' : `${Math.round(dureeMesuree)} ms`} ` +
+    `(attendu 800, ou 1500 s'il tue)`
+}
+
+/**
  * Peint sur chaque jauge la part de PV que la carte du moment emporterait.
  *
  * La carte du moment, c'est **celle sous le doigt s'il y en a une, sinon celle
@@ -101,10 +119,13 @@ function grosPlan(
 ): void {
   auFront = cible
   dessiner()
+  const ouvert = performance.now()
   duel(view, FIGURE_JOUEUR, figure(nomCible), attaquant, degats, mort)
   if (mort) window.setTimeout(() => sonAcheve(), TAMPON_DUEL)
   window.setTimeout(() => {
     auFront = null
+    dureeMesuree = performance.now() - ouvert
+    ecrireDiagnostic()
     dessiner()
   }, mort ? DUREE_DUEL_MORT : DUREE_DUEL)
 }
@@ -384,6 +405,7 @@ function dispatch(action: Action): void {
 }
 
 bindInput(view, dispatch)
+ecrireDiagnostic()
 
 /**
  * Les gestes de la main. `disponible` est le même verrou que celui du dispatch :

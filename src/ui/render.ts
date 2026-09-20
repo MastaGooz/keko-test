@@ -59,6 +59,7 @@ export type View = {
   palier: HTMLElement
   zoom: HTMLElement
   journal: HTMLElement
+  diagnostic: HTMLElement
   pleinEcran: HTMLButtonElement
   son: HTMLButtonElement
   visees: SVGSVGElement
@@ -115,6 +116,7 @@ export function mount(root: HTMLElement, buildTime: string): View {
           <button class="bouton secondaire" type="button" data-action="rejouer">Rejouer cette seed</button>
           <button class="bouton secondaire" type="button" data-action="nouveau">Nouvelle descente</button>
         </div>
+        <p id="diagnostic" class="diagnostic"></p>
         <div id="journal" class="journal"></div>
       </div>
     </main>
@@ -133,6 +135,7 @@ export function mount(root: HTMLElement, buildTime: string): View {
     palier: root.querySelector<HTMLElement>('#palier')!,
     zoom: root.querySelector<HTMLElement>('#zoom')!,
     journal: root.querySelector<HTMLElement>('#journal')!,
+    diagnostic: root.querySelector<HTMLElement>('#diagnostic')!,
     pleinEcran: root.querySelector<HTMLButtonElement>('#pleinEcran')!,
     son: root.querySelector<HTMLButtonElement>('#son')!,
     visees: root.querySelector<SVGSVGElement>('#visees')!,
