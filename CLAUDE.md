@@ -740,7 +740,13 @@ donjon. Ce qui tourne :
   - **il garde sa PLACE dans le rang** tout le temps du fondu, sinon les voisins
     glissent sous le doigt au moment où l'on choisit sa cible suivante ;
   - **il n'est plus visable** — le rendu n'en fait pas un bouton — et il perd sa
-    jauge et son intention : il n'annonce plus rien et n'a plus de PV à montrer ;
+    jauge, son intention **et son socle**. Les deux premiers parce qu'il
+    n'annonce plus rien et n'a plus de PV à montrer ; le socle parce que sur un
+    corps devenu noir c'est la seule forme qui reste nette, et qu'aplati sur
+    237 x 12 px il se lit comme **une barre** posée sous la silhouette. Keko :
+    « on voit la silhouette de la barre sur le fade ». *Il ne se remarque pas
+    sous un corps vivant, qui a du volume et le recouvre* — et un corps qui s'en
+    va ne pose plus d'ombre, de toute façon ;
   - **la tête de mort arrive DÉJÀ POSÉE**, à pleine opacité. Le tampon s'est
     joué dans le cadre ; le rejouer ici en ferait un second coup.
 

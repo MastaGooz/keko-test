@@ -248,9 +248,16 @@ function corpsEnnemi(
   // plus rien et il n'a plus de PV à montrer. Il garde la tête de mort du gros
   // plan, DÉJÀ POSÉE — le tampon s'y est joué, le rejouer ici en ferait un
   // second coup.
+  // PAS DE SOCLE NON PLUS. C'est l'ombre au sol, et sur un corps devenu noir
+  // elle est la seule forme qui reste nette : aplatie sur 237 x 12 px, elle se
+  // lit comme une barre posée sous la silhouette -- Keko : « on voit la
+  // silhouette de la barre sur le fade ». Elle ne se remarquait pas sous un
+  // corps vivant, qui a du volume et la recouvre.
+  //
+  // Et ça se tient : un corps qui s'en va ne pose plus d'ombre.
   const corps = agonise
     ? `<span class="chair" style="--teinte:${espece.teinte}">` +
-      `${creature(espece.espece, String(index))}<span class="socle"></span>` +
+      `${creature(espece.espece, String(index))}` +
       `${teteDeMort()}</span>`
     : `<span class="intention${imminent ? ' imminent' : ''}">` +
       `${GLYPHE.frappe}${ennemi.degats}${attente}</span>` +
