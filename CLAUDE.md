@@ -654,6 +654,18 @@ donjon. Ce qui tourne :
   tour de qui c'est — « Les ennemis frappent… » pendant la salve, sans quoi une
   seconde et demie sans réponse ressemble à un jeu qui a planté. Les réglages
   restent accessibles pendant le verrou : **on ne piège jamais le joueur**.
+- **Tout ce qui bouge dans le gros plan doit suivre la taille des corps.** La
+  secousse d'écran était en pixels fixes alors que la charge est une fraction
+  du corps : mesurée à **51 % de la frappe sur un petit téléphone contre 11 %
+  sur un écran de 1080**, elle écrasait le geste sur le petit écran. La même
+  animation racontait deux choses différentes selon l'appareil — Keko : « j'ai
+  l'impression que sur tél l'animation d'attaque est différente ». Elle vaut
+  désormais `max(5px, corps × 0,085)`, soit 13 % de la frappe partout.
+
+  *Reste un écart plus discret, à juger à l'oeil avant d'y toucher* : la frappe
+  vaut 27 % de la figure du gros plan sur un téléphone et 34 % sur un grand
+  écran, parce que `--corps` plafonne à `11rem` quand la figure plafonne, elle,
+  à `42vh`.
 - **Une secousse d'écran à chaque impact.** Elle est portée par `.app`, qui
   contient des enfants en `position: fixed` (le panneau, le voile, les arches) :
   un `transform` en ferait leur bloc conteneur et les décalerait. D'où le
