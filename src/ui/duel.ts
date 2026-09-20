@@ -78,8 +78,20 @@ export const DUREE_DUEL = 800
 /** Idem, quand le coup tue : la tête de mort et le corps noir restent posés. */
 export const DUREE_DUEL_MORT = 1500
 
-/** Le repos entre deux gros plans d'une même salve. */
-export const PAS_ENTRE_DUELS = DUREE_DUEL + 60
+/**
+ * Le repos entre deux gros plans d'une même salve.
+ *
+ * Il valait 60 ms : la sortie de l'un et l'entrée du suivant se touchaient, et
+ * une salve de deux ou trois frappeurs se lisait comme un bloc précipité plutôt
+ * que comme des coups distincts. Keko : « celles des ennemis sont toujours trop
+ * rapides ». *Un coup n'a pas besoin de durer plus longtemps pour peser, il a
+ * besoin de retomber avant le suivant.*
+ *
+ * 240 ms : la scène redevient visible entre deux, ce qui n'arrivait jamais.
+ * Une salve de trois frappeurs coûte 540 ms de plus — sur un tour qui en compte
+ * déjà quelques milliers, et seulement quand plusieurs corps frappent.
+ */
+export const PAS_ENTRE_DUELS = DUREE_DUEL + 240
 
 /** Les minuteurs du gros plan en cours, pour qu'un nouveau annule l'ancien. */
 let enCours: number[] = []

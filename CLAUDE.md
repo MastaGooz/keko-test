@@ -532,8 +532,14 @@ donjon. Ce qui tourne :
   dessinées pour se faire face dans cet ordre. C'est l'assaut qui désigne
   l'attaquant, pas la place.
 
+  **Entre deux gros plans d'une même salve, il faut un vrai temps** (240 ms).
+  À 60 ms, la sortie de l'un et l'entrée du suivant se touchaient : la salve se
+  lisait comme un bloc précipité plutôt que comme des coups distincts, et la
+  scène ne redevenait jamais visible entre deux. *Un coup n'a pas besoin de
+  durer plus longtemps pour peser, il a besoin de retomber avant le suivant.*
+
   **Le prix est réel et il faut le savoir** : un gros plan dure 800 ms, 1500
-  s'il tue, et une salve de trois ennemis en coûte trois (2,5 s). Un tour
+  s'il tue, et une salve de trois ennemis en coûte trois (3 s). Un tour
   complet passe d'environ 0,5–2,2 s d'animation à 2,5–4,3 s, et **la mort du
   dernier corps d'un combat coûte 2 s** (1500 + la respiration de 520 qui rend
   la scène avant le palier). *C'est le poste qui a le plus grossi au fil des
@@ -881,8 +887,11 @@ donjon. Ce qui tourne :
   affiche ses dégâts, et le corps qu'elle peut achever se signale par son
   cadre blanc et par l'arche pleine qui le relie à la carte ;
 - **une ligne de diagnostic dans le panneau** : état de
-  `prefers-reduced-motion`, et **durée réelle du dernier gros plan**, mesurée à
-  l'horloge. Elle existe parce qu'une impression de vitesse ne se discute pas,
+  `prefers-reduced-motion`, et **durée réelle des cinq derniers gros plans**,
+  mesurée à l'horloge, chacune étiquetée par le camp qui frappait. Plusieurs et
+  non une seule, parce qu'une salve ennemie en enchaîne autant qu'il y a de
+  frappeurs : *un écart qui n'apparaît que dans l'enchaînement ne se voit pas
+  sur une mesure isolée*. Elle existe parce qu'une impression de vitesse ne se discute pas,
   elle se mesure — et je ne peux pas mesurer sur l'appareil de Keko. *Quand un
   écart ne se reproduit pas ici, la bonne réponse n'est pas de deviner, c'est
   de faire dire le chiffre à l'appareil qui le voit.*

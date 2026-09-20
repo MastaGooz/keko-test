@@ -75,21 +75,24 @@ let zoom: number | null = null
 let survolee: number | null = null
 
 /**
- * Ce que le dernier gros plan a réellement duré, à l'horloge.
+ * Ce que les derniers gros plans ont réellement duré, à l'horloge.
  *
  * Une impression de vitesse ne se discute pas, elle se mesure — et je ne peux
- * pas mesurer sur l'appareil de Keko. Le panneau affiche donc le chiffre, avec
- * l'état de `prefers-reduced-motion` qui est la seule chose au monde capable
- * de raccourcir ces animations sans qu'on l'ait demandé.
+ * pas mesurer sur l'appareil de Keko. On en garde PLUSIEURS et on note qui
+ * frappait : une salve ennemie en enchaîne autant qu'il y a de frappeurs, et
+ * c'est là qu'il trouve les gros plans trop courts. Un écart qui n'apparaît que
+ * dans l'enchaînement ne se voit pas sur une mesure isolée.
  */
-let dureeMesuree: number | null = null
+type Mesure = { qui: string; ms: number }
+let mesures: Mesure[] = []
 
 function ecrireDiagnostic(): void {
   const reduit = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const liste =
+    mesures.length === 0 ? '—' : mesures.map((m) => `${m.qui} ${Math.round(m.ms)}`).join(' · ')
   view.diagnostic.textContent =
-    `Animations réduites : ${reduit ? 'OUI' : 'non'} · ` +
-    `dernier gros plan : ${dureeMesuree === null ? '—' : `${Math.round(dureeMesuree)} ms`} ` +
-    `(attendu 800, ou 1500 s'il tue)`
+    `Animations réduites : ${reduit ? 'OUI' : 'non'} — ` +
+    `gros plans (ms) : ${liste} · attendu 800, ou 1500 s'il tue`
 }
 
 /**
@@ -124,7 +127,9 @@ function grosPlan(
   if (mort) window.setTimeout(() => sonAcheve(), TAMPON_DUEL)
   window.setTimeout(() => {
     auFront = null
-    dureeMesuree = performance.now() - ouvert
+    mesures = [...mesures, { qui: attaquant === 'joueur' ? 'moi' : 'eux', ms: performance.now() - ouvert }]
+    // Cinq suffisent : au-delà la ligne ne se lit plus sur un téléphone.
+    if (mesures.length > 5) mesures = mesures.slice(-5)
     ecrireDiagnostic()
     dessiner()
   }, mort ? DUREE_DUEL_MORT : DUREE_DUEL)
