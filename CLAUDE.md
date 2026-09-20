@@ -457,9 +457,35 @@ donjon. Ce qui tourne :
   **Ce qui doit rester constant en l'allongeant, c'est l'ÉCART entre le
   contrecoup et le terme** (0,45 de l'élan) : c'est lui la dérive, et le recul
   de la cible est calé dessus. Monter la frappe seule désaccorderait les deux
-  corps. **Marge restante avant que les figures se touchent** : elles sont à
-  87 px l'une de l'autre au repos sur un téléphone de 390, et à 48 au pic —
-  la frappe peut encore presque doubler, pas davantage.
+  corps.
+
+  **LA FRAPPE VA JUSQU'À LA CIBLE, ET C'EST ÇA QUI FIXE SON CHIFFRE** (0,247 de
+  la figure, pour une frappe à 2,45 fois la course). Elle valait 0,122 — réglée
+  à l'oeil — et l'attaquant s'arrêtait à 59 px de sa cible pour un écart au repos
+  de 108 : *il faisait la moitié du chemin et frappait dans le vide.* Keko : « on
+  peut avancer l'attaquant plus près de la cible ».
+
+  Le chiffre est **déduit, pas essayé** : `(écart au repos − 10 px de garde) /
+  2,45`. Les 10 px évitent que les corps se touchent franchement au pic, car
+  ni le chien ni le portrait n'ont de marge transparente de ce côté-là (0,9 %
+  pour `attaque.png`, mesuré).
+
+  **Ce qui empêche d'aller plus loin n'est pas le pic, c'est le TERME.** Après le
+  contrecoup l'attaquant reste à 1,75 fois la course, donc l'écart de fin vaut
+  `repos − 1,75 × course` — et la dérive n'y change rien, puisque la cible recule
+  d'autant. Vérifié sur quatre formats :
+
+  | format | écart au repos | au pic | à la fin |
+  |---|---|---|---|
+  | 667x320 | 80 | 6 | 27 |
+  | 844x390 | 108 | 10 | 38 |
+  | 1366x700 | 196 | 17 | 68 |
+  | 1920x1080 | 302 | 28 | 106 |
+
+  *Pour mesurer ça*, il faut forcer `.ouvert` ET neutraliser `setTimeout` dans
+  l'iframe : une mesure prise pendant l'animation d'entrée rend les figures à
+  `scale(0.9)`, ce qui fausse l'écart de 10 %, et les minuteurs bridés en
+  arrière-plan referment le cadre entre deux relevés.
 
   **Et la cible est repoussée : c'est la dérive de l'attaquant, en miroir.**
   Même instant de départ, même durée, même distance, même `linear` — donc

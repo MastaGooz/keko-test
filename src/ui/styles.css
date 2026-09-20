@@ -2752,10 +2752,26 @@ body {
 .duel-corps {
   /* La course part de la figure DU CADRE et non du corps de scene : les deux
      n'ont pas le meme plafond, donc s'appuyer sur le second faisait varier la
-     part de la figure que le geste traverse selon l'ecran. 0,122 : la frappe
-     vaut 2,45 fois la course, soit 30 % de la figure -- la valeur reglee a
-     l'oeil sur grand ecran. */
-  --elan-brut: calc(var(--corps-duel) * 0.122);
+     part de la figure que le geste traverse selon l'ecran.
+
+     LA FRAPPE VA JUSQU'A LA CIBLE, ET C'EST CA QUI FIXE LE CHIFFRE. Elle valait
+     0,122 -- une valeur reglee a l'oeil -- et l'attaquant s'arretait a 59 px de
+     sa cible sur un telephone de 390, alors que l'ecart au repos en vaut 108 :
+     il faisait la moitie du chemin et frappait dans le vide. Keko : « on peut
+     avancer l'attaquant plus pres de la cible ».
+
+     0,247 est DEDUIT, pas essaye : la frappe vaut 2,45 fois la course, et on
+     veut qu'elle couvre l'ecart au repos moins une dizaine de pixels de garde,
+     soit (108 - 10) / 2,45 / 162. Les 10 px evitent que les deux corps se
+     touchent franchement au pic -- le chien et le portrait n'ont presque pas de
+     marge transparente de ce cote-la (0,9 % pour `attaque.png`).
+
+     CE QUI EMPECHE D'ALLER PLUS LOIN N'EST PAS LE PIC, C'EST LE TERME. Apres le
+     contrecoup, l'attaquant reste a 1,75 fois la course : l'ecart de fin vaut
+     donc `repos - 1,75 x course`, et la derive n'y change rien puisque la cible
+     recule d'autant. A 0,247 il reste 38 px -- au-dela, les deux corps finissent
+     le gros plan l'un dans l'autre. */
+  --elan-brut: calc(var(--corps-duel) * 0.247);
   --elan: calc(var(--elan-brut) * var(--sens, 1));
 
   /* LA DERIVE A UN PLANCHER EN PIXELS, et c'est la seule grandeur du cadre qui
