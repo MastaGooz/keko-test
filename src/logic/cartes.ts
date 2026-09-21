@@ -10,10 +10,91 @@ import { randomInt } from './rng.ts'
 import type { Modele } from './armes.ts'
 import { GLAIVE } from './armes.ts'
 
-/** Un trésor en tant que carte : inerte en combat, il n'occupe qu'une place. */
+/**
+ * Un trésor en tant que carte : du poids qu'on transporte, **et une issue de
+ * secours qu'on paie très cher**.
+ *
+ * Le pari est celui-ci : le but du jeu est de faire RESSORTIR les trésors, donc
+ * en brûler un, c'est renoncer à son or — la carte est détruite, elle ne compte
+ * plus dans le butin. Un joueur ne le fait pas de gaieté de coeur, il le fait
+ * quand la run est en train de basculer. Et comme mourir fait TOUT perdre,
+ * brûler reste meilleur que mourir avec ses trésors en main.
+ *
+ * **La puissance suit le prix**, et c'est ce qui rend le choix gradué plutôt
+ * que binaire : on brûle une Aiguière sans trop y penser, une Couronne jamais
+ * sans savoir ce qu'on jette. Un gradient, pas un interrupteur.
+ *
+ * *Conséquence heureuse* : les petits trésors cessent d'être du rebut. Ils
+ * valent peu d'or mais ils sont une assurance bon marché, donc le bas de la
+ * table redevient intéressant — alors qu'avant il ne valait jamais la place
+ * qu'il prenait.
+ *
+ * **ET IL FAUT L'AVOIR EN MAIN.** C'est ce qui empêche le trésor de devenir une
+ * réserve dans laquelle on puise : ce n'est pas une ressource, c'est une
+ * occasion. La pioche décide si elle se présente.
+ *
+ * Le coût reste BAS, à dessein. Un coût prohibitif rendrait l'issue de secours
+ * injouable au moment précis où elle sert — la barrière doit rester
+ * économique, jamais mécanique.
+ */
 export function carteTresor(id: string, nom: string, valeur: number): Carte {
-  return { id, nom, type: 'tresor', cout: 0, degats: 0, valeur }
+  return {
+    id,
+    nom,
+    type: 'tresor',
+    cout: COUT_TRESOR,
+    degats: 0,
+    valeur,
+    effets: [{ type: 'soin', montant: soinDuTresor(valeur) }],
+    exil: true,
+  }
 }
+
+/**
+ * Ce que coûte de brûler un trésor, en énergie.
+ *
+ * Bas exprès : ce qui doit retenir le joueur, c'est l'or qu'il détruit, pas
+ * l'énergie qu'il dépense. Une issue de secours qu'on ne peut pas se payer au
+ * moment où elle sert n'est pas une issue de secours.
+ */
+const COUT_TRESOR = 1
+
+/**
+ * Le soin qu'un trésor rend quand on le brûle, proportionnel à son prix.
+ *
+ * PROVISOIRE, et c'est un chiffre de combat donc un rasoir : à revoir par
+ * simulation, et avec Keko pour la nature même de l'effet — soigner n'est
+ * qu'une façon d'« éviter le pire », il y en aura d'autres.
+ */
+function soinDuTresor(valeur: number): number {
+  return Math.round(valeur / DIVISEUR_SOIN)
+}
+
+/**
+ * Le rapport prix → PV rendus. **Calibré par simulation, pas au jugé**, et
+ * c'est le chiffre qui décide si le mécanisme existe. Balayage sur 400
+ * descentes, politique « tout prendre », en comparant celui qui brûle dès qu'il
+ * passe sous 30 PV à celui qui ne brûle jamais :
+ *
+ * | diviseur | ne brûle jamais | brûle sous 30 PV |
+ * |---|---|---|
+ * | 6 | 71 %, 418 d'or | 100 %, **397** d'or |
+ * | **12** | 71 %, 418 d'or | 100 %, **282** d'or |
+ * | 20 | 71 %, 418 d'or | 99 %, **228** d'or |
+ *
+ * À 6, brûler ne coûtait presque rien (−21 d'or) pour +29 points de survie :
+ * **la cupidité devenait gratuite ET optimale**, l'exact contraire de ce qu'on
+ * veut. À 20, brûler coûte si cher que l'option se referme et le trésor
+ * redevient une carte morte avec du code en plus.
+ *
+ * À 12, l'arbitrage est réel et il n'a pas de bonne réponse : ne jamais brûler
+ * rapporte plus en espérance (418 contre 282) mais tue une run sur trois.
+ * *C'est au joueur de décider ce qu'il vaut mieux, et c'est tout ce qu'on
+ * demande à un push-your-luck.*
+ *
+ * Exporté pour pouvoir le rebalayer. À refaire après toute retouche.
+ */
+export const DIVISEUR_SOIN = 12
 
 /**
  * Des noms plutôt que « Trésor 1 » : une main pleine de babioles doit se lire

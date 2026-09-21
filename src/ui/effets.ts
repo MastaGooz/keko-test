@@ -65,6 +65,27 @@ export function encaisse(view: View, corps: number | 'joueur', montant: number):
   )
 }
 
+/**
+ * Le soin : le chiffre monte au-dessus du joueur, en vert.
+ *
+ * Même mécanique que `encaisse`, signe et couleur en moins — et c'est voulu
+ * qu'ils se ressemblent : brûler un trésor doit se lire comme un coup, parce
+ * que c'en est un. Il est juste porté dans l'autre sens.
+ */
+export function soigne(view: View, montant: number): void {
+  const cible = view.root.querySelector<HTMLElement>('[data-corps="joueur"]')
+  if (cible === null) return
+  view.root.querySelectorAll('.degats-voles').forEach((v) => v.remove())
+  const boite = cible.getBoundingClientRect()
+  const chiffre = document.createElement('span')
+  chiffre.className = 'degats-voles rendu'
+  chiffre.textContent = `+${montant}`
+  chiffre.style.left = `${boite.left + boite.width / 2}px`
+  chiffre.style.top = `${boite.top}px`
+  view.root.appendChild(chiffre)
+  window.setTimeout(() => chiffre.remove(), DUREE)
+}
+
 /** Durée de l'assaut, en ms. Doit suivre la règle CSS `.silhouette.assaut`. */
 const DUREE_ASSAUT = 580
 

@@ -31,11 +31,9 @@ import type { Carte, EtatCombat } from './combat.ts'
 import { CONFIG_DEFAUT, creerCombat } from './combat.ts'
 import type { Rng } from './rng.ts'
 import {
-  CAPACITE_SAC,
   carteRecompense,
   ennemisPourProfondeur,
   tresorRecompense,
-  valeurSac,
 } from './cartes.ts'
 import type { Arme } from './armes.ts'
 import { ARME_GRATUITE, deckDeLEquipement } from './armes.ts'
@@ -97,23 +95,24 @@ export const CHOIX_PAR_PALIER = 3
 /**
  * Un endroit où un trésor peut se trouver pendant le rangement du butin.
  *
- * Trois contenants, tous reliés dans les deux sens : l'**emplacement de loot**
- * (une case comme une autre, pas « ce qu'on tient »), les **cases du sac**, et
- * la **pile du deck** — les trésors qu'on porte et qui pèsent à chaque main.
- * Le **fond du donjon** en est un aussi, et c'est délibéré : ce qu'on y jette
- * y reste visible et récupérable **jusqu'à `terminerButin`**. Une seule chose
- * s'engage dans cet écran, et c'est le bouton Terminer — un abandon qui
- * détruirait sur-le-champ serait la seule exception, donc un piège.
+ * **LE SAC A DISPARU**, et c'est le changement qui porte tout le reste. Il
+ * existait pour que la cupidité soit CHOISIE et non subie : sans lui, le
+ * premier trésor ramassé polluait déjà la main. Le choix revient désormais par
+ * une autre porte — prendre ou refuser, et jeter d'anciens trésors pour en
+ * loger un meilleur — et il est même plus riche qu'avant, puisqu'il porte à
+ * chaque trouvaille sur TOUT ce qu'on transporte.
+ *
+ * Ce qui reste : l'**emplacement de loot** (une case comme une autre, pas « ce
+ * qu'on tient »), la **pile du deck** — les trésors qu'on porte et qui pèsent à
+ * chaque main — et le **fond du donjon**, qui est un contenant lui aussi : ce
+ * qu'on y jette y reste visible et récupérable **jusqu'à `terminerButin`**. Une
+ * seule chose s'engage dans cet écran, et c'est le bouton Terminer.
  *
  * Modéliser un lieu plutôt qu'une liste de gestes évite d'empiler les cas
  * particuliers : tout déplacement est « prendre ici, poser là », et l'échange
  * tombe tout seul.
  */
-export type Lieu =
-  | { ou: 'loot' }
-  | { ou: 'sac'; emplacement: number }
-  | { ou: 'deck'; id?: string }
-  | { ou: 'fond'; id?: string }
+export type Lieu = { ou: 'loot' } | { ou: 'deck'; id?: string } | { ou: 'fond'; id?: string }
 
 export type Phase =
   | { type: 'combat' }
@@ -136,14 +135,6 @@ export type Descente = {
   combat: EtatCombat
   /** Le deck emporté au prochain combat : cartes de combat + trésors en trop. */
   deck: Carte[]
-  /**
-   * Les trésors hors du deck — à l'abri du deck, pas de la mort.
-   *
-   * **Positionnel** : toujours `CAPACITE_SAC` cases, `null` pour une case
-   * libre. Une liste compactée remonterait les vides à la fin, et sortir un
-   * trésor ferait disparaître sa case au lieu de la laisser ouverte.
-   */
-  sac: (Carte | null)[]
 }
 
 /** Le deck tel qu'il est à la fin d'un combat, pioche et défausse réunies. */
@@ -184,7 +175,6 @@ export function commencerDescente(
     phase: { type: 'combat' },
     combat: engager(1, deck, reglage.pvMax, rng, reglage),
     deck,
-    sac: Array.from({ length: CAPACITE_SAC }, () => null),
   }
 }
 
@@ -242,19 +232,12 @@ export function choisirCarte(descente: Descente, index: number, rng: Rng): Desce
 }
 
 /** L'étal du rangement : les trois contenants, le temps d'un déplacement. */
-type Etal = { deck: Carte[]; sac: (Carte | null)[]; loot: Carte | null; fond: Carte[] }
+type Etal = { deck: Carte[]; loot: Carte | null; fond: Carte[] }
 
 /** Retire le trésor qui se trouve à ce lieu, et laisse la place vide. */
 function prendre(etal: Etal, lieu: Lieu): { carte: Carte | null; etal: Etal } {
   if (lieu.ou === 'loot') return { carte: etal.loot, etal: { ...etal, loot: null } }
 
-  if (lieu.ou === 'sac') {
-    if (lieu.emplacement < 0 || lieu.emplacement >= CAPACITE_SAC) return { carte: null, etal }
-    const sac = [...etal.sac]
-    const carte = sac[lieu.emplacement] ?? null
-    sac[lieu.emplacement] = null
-    return { carte, etal: { ...etal, sac } }
-  }
 
   if (lieu.ou === 'deck') {
     const i = etal.deck.findIndex((c) => c.type === 'tresor' && c.id === lieu.id)
@@ -275,13 +258,6 @@ function prendre(etal: Etal, lieu: Lieu): { carte: Carte | null; etal: Etal } {
 function poser(etal: Etal, lieu: Lieu, carte: Carte): { sortant: Carte | null; etal: Etal } {
   if (lieu.ou === 'loot') return { sortant: etal.loot, etal: { ...etal, loot: carte } }
 
-  if (lieu.ou === 'sac') {
-    if (lieu.emplacement < 0 || lieu.emplacement >= CAPACITE_SAC) return { sortant: carte, etal }
-    const sac = [...etal.sac]
-    const sortant = sac[lieu.emplacement] ?? null
-    sac[lieu.emplacement] = carte
-    return { sortant, etal: { ...etal, sac } }
-  }
 
   // La pile du deck n'a pas de places : on pose dessus.
   if (lieu.ou === 'deck') return { sortant: null, etal: { ...etal, deck: [...etal.deck, carte] } }
@@ -303,7 +279,6 @@ export function deplacerTresor(descente: Descente, source: Lieu, cible: Lieu): D
 
   const depart: Etal = {
     deck: descente.deck,
-    sac: descente.sac,
     loot: descente.phase.loot,
     fond: descente.phase.fond,
   }
@@ -316,7 +291,6 @@ export function deplacerTresor(descente: Descente, source: Lieu, cible: Lieu): D
   return {
     ...descente,
     deck: final.deck,
-    sac: final.sac,
     phase: { type: 'butin', loot: final.loot, fond: final.fond },
   }
 }
@@ -349,26 +323,19 @@ export function extraire(descente: Descente): Descente {
 }
 
 /**
- * Ce que vaut le butin transporté : le sac plus les trésors qui ont débordé
- * dans le deck. Sauvé à l'extraction, perdu à la mort — le même chiffre dans
- * les deux cas, c'est ce qui rend la mort lisible.
+ * Ce que vaut le butin transporté. Sauvé à l'extraction, perdu à la mort — le
+ * même chiffre dans les deux cas, c'est ce qui rend la mort lisible.
+ *
+ * **Tout le butin est dans le deck**, il n'y a plus de sac : un trésor pris est
+ * une carte de plus, tout de suite. Et un trésor BRÛLÉ ne compte plus, puisque
+ * la carte est détruite au lieu d'être défaussée — c'est ce qui donne son prix
+ * au pouvoir qu'on en tire.
  */
 export function butinTransporte(descente: Descente): number {
-  const dansLeDeck = descente.deck.reduce((total, carte) => total + (carte.valeur ?? 0), 0)
-  return valeurSac(descente.sac) + dansLeDeck
+  return descente.deck.reduce((total, carte) => total + (carte.valeur ?? 0), 0)
 }
 
 /** Combien de trésors encombrent le deck, et donc la main. */
 export function tresorsAuDeck(descente: Descente): number {
   return descente.deck.filter((carte) => carte.type === 'tresor').length
-}
-
-/** Combien de trésors le sac porte réellement. */
-export function tresorsAuSac(descente: Descente): number {
-  return descente.sac.filter((c): c is Carte => c !== null).length
-}
-
-/** Ce qu'il reste de place dans le sac. Zéro = le prochain trésor pollue. */
-export function placeDuSac(descente: Descente): number {
-  return descente.sac.filter((c) => c === null).length
 }

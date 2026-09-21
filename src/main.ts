@@ -11,7 +11,14 @@ import './ui/styles.css'
 import type { Rng } from './logic/rng.ts'
 import type { Descente } from './logic/descente.ts'
 import { createRng } from './logic/rng.ts'
-import { finDuTour, jouerCarte, reordonnerMain, vivants } from './logic/combat.ts'
+import {
+  finDuTour,
+  jouable,
+  jouerCarte,
+  reordonnerMain,
+  viseUneCible,
+  vivants,
+} from './logic/combat.ts'
 import {
   choisirCarte,
   commencerDescente,
@@ -32,6 +39,7 @@ import {
   assaut,
   DUREE_COUP,
   encaisse,
+  soigne,
   INSTANT_IMPACT,
   PAS_ENTRE_FRAPPES,
   secouerEcran,
@@ -235,8 +243,15 @@ function dispatch(action: Action): void {
     case 'jouerDepuisLaMain': {
       const debout = vivants(descente.combat)
       const carte = descente.combat.main[action.index]
-      if (carte === undefined || carte.type !== 'combat') break
+      if (carte === undefined || !jouable(carte)) break
       if (carte.cout > descente.combat.energie) break
+      // Ce qui ne vise personne se joue TOUT DE SUITE : brûler un trésor pour
+      // se soigner n'a pas de cible, et demander d'en désigner une serait un
+      // geste vide — deux tapes pour un choix qui n'en est pas un.
+      if (!viseUneCible(carte)) {
+        selection = action.index
+        return dispatch({ type: 'cibler', cible: -1 })
+      }
       // Une seule cible possible : sortir la carte de la main SUFFIT à
       // engager. C'est le contraire de la tape, où retaper repose toujours —
       // mais le geste n'est pas le même : le glisser est déjà un engagement,
@@ -257,6 +272,18 @@ function dispatch(action: Action): void {
         const carte = combat.main[selection]
         const apres = jouerCarte(combat, selection, action.cible)
         descente = { ...descente, combat: apres }
+
+        // BRÛLER UN TRÉSOR : le soin se voit sur le joueur, et la carte est
+        // détruite — c'est son or qui part avec, donc le geste doit se lire.
+        const rendu = apres.pv - combat.pv
+        if (rendu > 0 && carte !== undefined) {
+          marques.push(() => {
+            soigne(view, rendu)
+            sonViser()
+          })
+          attente = Math.max(attente, DUREE_COUP)
+        }
+
         const reste = apres.ennemis[action.cible]?.pv ?? 0
         const inflige = debout - reste
         const cible = combat.ennemis[action.cible]

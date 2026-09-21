@@ -12,10 +12,8 @@
  */
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
 import { consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
-import { CAPACITE_SAC } from '../logic/cartes.ts'
 import type { Descente } from '../logic/descente.ts'
-import { butinTransporte, tresorsAuDeck, tresorsAuSac } from '../logic/descente.ts'
-import { CAPACITE_SAC as SLOTS } from '../logic/cartes.ts'
+import { butinTransporte, tresorsAuDeck } from '../logic/descente.ts'
 import { creature, dessin, sceau, teteDeMort } from './illustrations.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
@@ -364,7 +362,9 @@ function ligneCarte(
   // range sa main comme on veut, et on regarde ce qu'on traine.
   const prise = `data-action="zoomer" data-index="${index}" data-main="${index}"`
   const place = eventail(index, total) + ' ' + prise
-  if (carte.type === 'tresor') return carteTresor(carte, place)
+  if (carte.type === 'tresor') {
+    return carteTresor(carte, place, true, !fini && carte.cout <= etat.energie)
+  }
 
   const debout = vivants(etat)
   const abordable = carte.cout <= etat.energie
@@ -425,14 +425,27 @@ function eventail(index: number, total: number): string {
  * et le poids sont le même objet. Une carte fantôme se laisserait oublier,
  * or c'est exactement ce qu'on ne veut pas faire oublier.
  */
-function carteTresor(carte: Carte, place: string, morte = true): string {
+function carteTresor(carte: Carte, place: string, enMain = true, abordable = true): string {
   const valeur = carte.valeur ?? 0
+  const soin = carte.effets?.find((e) => e.type === 'soin')?.montant ?? 0
+
+  // DANS LA MAIN, UN TRESOR SE JOUE — et le jouer le DETRUIT. Le bandeau ne dit
+  // donc plus « MORTE » mais ce qu'on gagne et ce qu'on perd : c'est tout le
+  // pari du butin, et il doit se lire sans quitter la carte des yeux.
+  //
+  // Il reste sur la bande haut-gauche : ce qui passe à droite est recouvert par
+  // l'éventail, et un trésor ne se lève pas comme une carte de combat.
+  const bandeau = enMain ? `<span class="bandeau brule">+${soin} PV · PERDU</span>` : ''
+
+  const classes = ['carte', 'tresor', richesse(valeur)]
+  if (enMain) classes.push(abordable ? 'jouable' : 'hors-prix')
+
   return (
-    `<div class="carte tresor ${richesse(valeur)}" ${place}>` +
+    `<div class="${classes.join(' ')}" ${place}>` +
     `<span class="vitre">${dessin(carte.nom)}</span>` +
-    `<span class="plaque${morte ? '' : ' seule'}"><span class="nom">${carte.nom}</span></span>` +
-    (morte ? `<span class="bandeau">MORTE</span>` : '') +
-    `<span class="gemme sceau">${sceau()}</span>` +
+    `<span class="plaque${enMain ? '' : ' seule'}"><span class="nom">${carte.nom}</span></span>` +
+    bandeau +
+    `<span class="gemme${enMain ? '' : ' sceau'}">${enMain ? carte.cout : sceau()}</span>` +
     `<span class="badge valeur">${valeur}</span>` +
     `</div>`
   )
@@ -451,16 +464,17 @@ function richesse(valeur: number): string {
 }
 
 /**
- * Décision de design : le taux d'encombrement est toujours visible. On montre
- * d'abord le sac, parce que c'est lui qui explique le reste — ce qui est
- * dedans ne coûte rien, ce qui déborde coûte une place de main à chaque tour.
+ * Décision de design : le taux d'encombrement est toujours visible.
+ *
+ * Il n'y a plus de sac à montrer — **tout ce qu'on porte pèse**, donc la ligne
+ * dit simplement combien de trésors sont dans le deck, combien encombrent la
+ * main en ce moment, et ce que le tout vaudra s'il ressort.
  */
 function encombrement(descente: Descente): string {
   const etat = descente.combat
   return (
     `Palier <strong>${descente.profondeur}/${descente.reglage.profondeurMax}</strong> · ` +
-    `Sac ${GLYPHE.tresor} <strong>${tresorsAuSac(descente)}/${CAPACITE_SAC}</strong> · ` +
-    `<strong>${tresorsAuDeck(descente)}</strong> en trop dans le deck · ` +
+    `${GLYPHE.tresor} <strong>${tresorsAuDeck(descente)}</strong> portés · ` +
     `${GLYPHE.tresor} <strong>${tresorsEnMain(etat)}/${etat.main.length}</strong> en main · ` +
     `butin : <strong class="or">${butinTransporte(descente)}</strong> en jeu`
   )
@@ -571,8 +585,12 @@ function recompense(descente: Descente, cartes: Carte[]): string {
 }
 
 /**
- * Le second écran : ranger le butin. Le sac est un vrai inventaire — ses
- * trésors sont des cartes, et on peut les réarranger.
+ * Le second écran : ranger le butin.
+ *
+ * **Il n'y a plus de sac**, donc plus rien qui absorbe le butin : ce qu'on
+ * emporte va dans le DECK et pèse dans chaque main, dès le premier trésor. Le
+ * choix n'est plus « est-ce que ça déborde ? » mais « est-ce que je prends ce
+ * poids, et lequel je lâche pour lui ».
  *
  * Deux principes tenus :
  *
@@ -583,10 +601,6 @@ function recompense(descente: Descente, cartes: Carte[]): string {
  *    sur un téléphone c'est la tape qui porte la fonctionnalité.
  */
 function butin(descente: Descente, loot: Carte | null, fond: Carte[]): string {
-  const emplacements = Array.from({ length: SLOTS }, (_, i) =>
-    caseTresor(descente.sac[i] ?? null, { ou: 'sac', emplacement: i }, 'libre'),
-  ).join('')
-
   const portes = descente.deck.filter((c) => c.type === 'tresor')
   const pile = portes
     .map((c) => piece(c, { ou: 'deck', id: c.id }))
@@ -603,16 +617,18 @@ function butin(descente: Descente, loot: Carte | null, fond: Carte[]): string {
 
     `<p class="note">` +
     (loot === null
-      ? "Range comme tu veux : rien n'est perdu tant que tu n'as pas terminé."
-      : 'Glisse-le où tu veux. Sur une case occupée, les deux échangent.') +
+      ? "Tout ce que tu portes pèse dans chaque main. Rien n'est perdu tant que tu n'as pas terminé."
+      : 'Emporte-le, ou laisse-le au fond. Tu peux aussi abandonner ceux que tu portes déjà.') +
     `</p>` +
-
-    `<div class="destinations">${emplacements}</div>` +
 
     `<div class="pile-deck ${portes.length === 0 ? 'creuse' : ''}" data-depot data-ou="deck" ` +
     `data-action="deplacer">` +
     `<span class="etiquette-slot">Deck` +
-    `<span class="poids">${portes.length === 0 ? 'rien porté' : `${portes.length} porté${portes.length > 1 ? 's' : ''} — ils pèsent`}</span>` +
+    `<span class="poids">${
+      portes.length === 0
+        ? 'rien porté'
+        : `${portes.length} porté${portes.length > 1 ? 's' : ''} — ils pèsent dans chaque main`
+    }</span>` +
     `</span>` +
     `<span class="tas">${pile}</span>` +
     `</div>` +
@@ -716,8 +732,8 @@ function fin(descente: Descente, issue: 'extrait' | 'mort'): string {
 }
 
 /** Une carte montrée, sans état de jeu : ni coût payable, ni cible. */
-function vitrine(carte: Carte, morte = true): string {
-  if (carte.type === 'tresor') return carteTresor(carte, 'style="--n:1"', morte)
+function vitrine(carte: Carte, enMain = false): string {
+  if (carte.type === 'tresor') return carteTresor(carte, 'style="--n:1"', enMain)
   return (
     `<div class="carte combat" data-cout="${carte.cout}" style="--n:1">` +
     `<span class="vitre">${dessin(carte.nom)}</span>` +

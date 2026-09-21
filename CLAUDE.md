@@ -55,9 +55,9 @@ Deux butins, deux rôles :
 
 - **Les cartes gagnées en run ne rentrent jamais à la maison.** Elles ne durent
   que la descente.
-- **Les trésors et composants** vont au sac, et eux se rapportent : ils servent
-  à crafter, acheter, améliorer l'équipement. C'est la seule progression qui
-  persiste.
+- **Les trésors et composants** se rapportent : ils servent à crafter, acheter,
+  améliorer l'équipement. C'est la seule progression qui persiste — et **ils s'y
+  consomment**, ils ne repartent jamais en run.
 
 D'où l'asymétrie qui porte tout le jeu, à chaque palier : **la carte est
 temporaire, le trésor est permanent.** Survivre maintenant, ou progresser plus
@@ -97,22 +97,39 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
 - On ne compose **pas** un deck carte par carte avant de partir. Raison :
   *le coût de la perte doit être proportionnel au travail investi*. Trente
   secondes de chargement, oui ; deux heures de deckbuilding, non.
-- Le **sac est peu améliorable**. C'est la contrainte permanente du jeu, pas un
-  axe de progression. Le hub vend du **levier et de la variété, jamais de la
-  sécurité**.
-- Un trésor au-delà du sac = **une carte morte, poids uniforme**. Le joueur doit
-  préférer peu de gros trésors à beaucoup de petits.
+- **IL N'Y A PLUS DE SAC.** Tout trésor pris tombe dans le deck et pèse dès la
+  main suivante. Le sac existait pour que la cupidité soit *choisie* et non
+  subie ; le choix revient par une autre porte — prendre ou refuser, et lâcher
+  d'anciens trésors pour en loger un meilleur — et il est plus riche qu'avant,
+  puisqu'il porte à chaque trouvaille sur **tout** ce qu'on transporte.
 - **Une rencontre donne les deux**, carte et trésor. On n'arbitre PAS entre
   eux : tant qu'ils s'opposaient, prendre un trésor voulait dire ne pas prendre
   une carte, et les deux effets se masquaient — la simulation n'a jamais réussi
   à faire coûter quoi que ce soit à ce choix. La cupidité se décide au point de
   sortie et au débordement du sac, nulle part ailleurs.
-- **Les trésors n'ont aucun effet en run** : ni en combat, ni en fin de combat.
-  L'idée d'un second moteur « greed » — des trésors aux effets de richesse,
-  formant un archétype de build — n'est **pas enterrée, elle est garée**. On
-  commence en carte morte ; on rouvrira plus tard, avec Keko. Elle a désormais
-  un logement naturel : les cartes qui manipulent les trésors seraient le set
-  d'un **objet équipable**, et la cupidité deviendrait un choix de chargement.
+- **UN TRÉSOR SE BRÛLE : effet puissant, et il est DÉTRUIT.** Le but du jeu
+  est de faire ressortir les trésors, donc en brûler un c'est renoncer à son or
+  — la carte est exilée, elle ne compte plus dans le butin. Le joueur ne le fait
+  pas de gaieté de coeur, il le fait quand la run bascule ; et comme mourir fait
+  tout perdre, brûler reste meilleur que mourir avec ses trésors en main.
+
+  **La puissance suit le prix**, et c'est ce qui rend le choix gradué plutôt que
+  binaire : on brûle une Aiguière sans trop y penser, une Couronne jamais sans
+  savoir ce qu'on jette.
+
+  **Et il faut l'avoir EN MAIN** — c'est ce qui l'empêche d'être une réserve
+  dans laquelle on puise. Ce n'est pas une ressource, c'est une occasion, et la
+  pioche décide si elle se présente. *C'est l'argument qui a levé mon objection :
+  je raisonnais comme si l'option était toujours disponible.*
+
+  **Conséquence heureuse, et elle n'était pas visée** : les petits trésors
+  cessent d'être du rebut. Ils valent peu d'or mais sont une assurance bon
+  marché, donc le bas de la table redevient intéressant — alors qu'avant il ne
+  valait jamais la place qu'il prenait.
+
+  Le coût en énergie reste **bas** (1) à dessein : ce qui doit retenir le
+  joueur, c'est l'or qu'il détruit, pas l'énergie qu'il dépense. Une issue de
+  secours qu'on ne peut pas se payer au moment où elle sert n'en est pas une.
 - **L'économie des trésors n'est pas tranchée.** Il y en aura de fongibles (un
   prix, de l'or) et/ou qui servent de **matériaux de craft**. À décider plus
   tard : ne rien construire dessus pour l'instant.
@@ -122,8 +139,13 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   règles. Les soupapes existent **uniquement dans le deck** : des cartes
   d'action qui manipulent les trésors, draftées **à la place** de cartes de
   combat.
-- Un trésor **refusé est perdu définitivement**.
+- Un trésor **refusé est perdu définitivement**. On peut aussi abandonner un
+  trésor **déjà porté** pour faire de la place à un meilleur.
 - **La mort fait tout perdre** (trésors + cartes emportées). Non négociable.
+- **Un trésor rentré au hub n'en ressort plus.** Il s'y consomme — vente,
+  craft, amélioration. C'est le garde-fou qui rend tout le reste sûr : sans lui,
+  les trésors deviendraient une collection à optimiser avant de partir, donc du
+  deckbuilding, donc le retour du problème de proportionnalité.
 - Garde-fous contre la peur du stuff et la spirale de la mort : **deck de base
   gratuit**, **cartes possédées en plusieurs exemplaires** au hub — on n'en
   emporte qu'un, donc perdre fait mal sans amputer — et **méta-progression**
@@ -974,11 +996,14 @@ coûtent pas des coups, ils coûtent **le choix du coup** : à 8 trésors, près
 d'un tour sur quatre n'a plus aucune décision. *La cupidité ne rend pas les
 tours plus durs, elle les vide.*
 
-**Ce chiffre garde toute sa valeur — c'est sa lecture qui a changé.** Le test se
-jouait sans sac : le premier trésor ramassé polluait déjà, donc Keko portait le
-poids sans avoir rien choisi. Avec le sac, la même courbe devient le **prix d'un
-cran de débordement**, et c'est exactement le pari qu'on veut lui faire prendre.
-À retester dans ce cadrage avant toute conclusion.
+**Ce chiffre a été relu deux fois, et il faut suivre.** Il a d'abord été mesuré
+sans sac — le premier trésor ramassé polluait déjà, donc Keko portait le poids
+sans avoir rien choisi. Le sac en a fait le *prix d'un cran de débordement*.
+**Le sac ayant disparu, on revient au cadrage d'origine** : tout trésor pris
+pèse tout de suite. Ce qui a changé entre-temps, et qui est décisif, c'est que
+le joueur CHOISIT de le prendre, et qu'une carte de trésor n'est plus vide —
+elle peut lui sauver la vie. *Une carte morte qui pourrait te sauver est moins
+pénible qu'une carte morte tout court.* À remesurer entièrement.
 
 Un correctif déjà appliqué, à relire à la lumière du nouveau concept : chaque
 trésor affiche un **prix de revente** (45 à 240, très inégal), pour que l'appât
@@ -1066,13 +1091,23 @@ on perdait de la puissance sans en gagner, et les deux effets se masquaient.
 Mesuré : entre 0 et 6 points d'écart, soit le bruit. Depuis que la carte est
 acquise dans tous les cas, le trésor est du poids **pur** :
 
-| politique | sortir au palier 3 | aller au fond (6) |
-|---|---|---|
-| tout prendre | 100 % | 39 %, 589 d'or |
-| refuser les débordants | 100 % | 51 %, 197 d'or |
+**MESURE REFAITE APRÈS LA SUPPRESSION DU SAC** (400 descentes au fond, deck du
+Glaive, soin à `valeur / 12`) :
 
-**La cupidité coûte 12 points de survie.** Contre-intuitif et à retenir : on a
-rendu une décision intéressante en en retirant une.
+| politique | survie | or espéré |
+|---|---|---|
+| tout prendre, ne jamais brûler | 71 % | **418** |
+| tout prendre, brûler sous 30 PV | 100 % | **282** |
+| tout refuser | 75 % | 0 |
+
+**Le dilemme central existe et il n'a pas de bonne réponse** : ne jamais brûler
+rapporte plus en espérance mais tue une run sur trois. C'est au joueur de
+décider ce qu'il préfère, et c'est tout ce qu'on demande à un push-your-luck.
+
+**LE POINT À SURVEILLER : porter ne coûte que 4 points de survie** (71 % contre
+75 %). C'est faible — la cupidité en coûtait 12 avec le sac. Le poids ne mord
+pas encore assez, et les leviers connus restent les mêmes : allonger la run, ou
+donner plus d'un trésor par palier.
 
 Le squelette reste volontairement nu : pas de hub, pas de marché, pas de
 méta-progression.

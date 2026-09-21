@@ -1026,8 +1026,14 @@ body {
    Grise et assombri, mais JAMAIS transparent : dans une main en eventail les
    cartes se recouvrent, et une carte translucide laisse voir sa voisine au
    travers. Au doigt sur un telephone, ca devient illisible. */
-.carte.hors-prix,
-#cartes .carte.tresor {
+/* UN TRESOR EN MAIN N'EST PLUS GRISE D'OFFICE. Il l'a ete tant qu'il etait
+   injouable : le dire franchement rendait la main lisible d'un coup d'oeil.
+   Maintenant il SE JOUE -- le bruler rend des PV et detruit son or -- donc il
+   suit la regle commune : gris seulement s'il est trop cher.
+
+   Grise, JAMAIS transparent : les cartes se recouvrent en eventail, et une
+   carte translucide laisse voir sa voisine au travers. */
+.carte.hors-prix {
   filter: grayscale(1) brightness(0.5);
   cursor: default;
 }
@@ -1044,6 +1050,16 @@ body {
    Cale a gauche et derriere le sceau : la bande gauche est la seule que le
    recouvrement de l'eventail laisse voir. Centre, il se serait fait couper en
    "MOR" par la carte voisine. */
+/* CE QU'ON GAGNE ET CE QU'ON PERD, sur la meme ligne. Le bandeau disait
+   « MORTE » du temps ou un tresor ne faisait rien ; il dit maintenant le pari :
+   des PV tout de suite contre l'or qu'on ne ramenera pas. */
+.carte.tresor .bandeau.brule {
+  color: #f0d9a0;
+  background: linear-gradient(90deg, #6b3f1acc, #3a2410cc);
+  font-size: 0.5625rem;
+  letter-spacing: 0.02em;
+}
+
 #cartes .carte.tresor .bandeau {
   inset: 0 0 auto 0;
   padding: 0.125rem 0 0.125rem 2.125rem;
@@ -1344,6 +1360,12 @@ body {
 /* Le chiffre saute au-dessus du corps touche puis s'efface. Il est FIXE sur
    la page et non pose dans le corps : la chute declenche un nouveau rendu, qui
    l'effacerait en plein vol. */
+/* Le soin, dans l'autre sens : meme geste, meme place, couleur opposee. */
+.degats-voles.rendu {
+  color: #8ee4a1;
+  text-shadow: 0 2px 6px #000, 0 0 0.75rem #3ddc7a66;
+}
+
 .degats-voles {
   position: fixed;
   z-index: 35;

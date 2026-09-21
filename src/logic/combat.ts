@@ -15,15 +15,47 @@
  */
 import type { Rng } from './rng.ts'
 
+/**
+ * Ce qu'une carte fait, au-delà de frapper une cible.
+ *
+ * **Le moteur ne connaissait qu'un coût et des dégâts**, ce qui suffisait au
+ * Glaive mais interdisait tout le reste : deux armes ne pouvaient différer que
+ * par leur courbe coût/dégâts, et un trésor ne pouvait rien faire du tout. Les
+ * effets sont ce qui ouvre le budget de contenu — le « verbe neuf » que la
+ * deuxième arme réclamait, et le pouvoir que les trésors réclament.
+ *
+ * Ils s'ajoutent aux dégâts de la carte, ils ne les remplacent pas : une carte
+ * d'arme reste un `degats` et rien d'autre, ce qui laisse intact tout ce qui
+ * est calé dessus (l'aperçu sur les jauges, `consequence`, les simulations).
+ */
+export type Effet =
+  /** Frappe tous les corps debout, en plus de la cible. */
+  | { type: 'degatsTous'; montant: number }
+  /** Rend des PV au joueur, sans dépasser son maximum. */
+  | { type: 'soin'; montant: number }
+  /** Recharge de l'énergie tout de suite, dans la limite du maximum. */
+  | { type: 'energie'; montant: number }
+
 export type Carte = {
   /** Identifiant d'exemplaire, unique dans le deck. */
   id: string
   nom: string
-  /** Un trésor ne se joue pas : il n'occupe qu'une place de main. */
+  /**
+   * Un trésor ne se joue que s'il porte des `effets` — et le jouer le DÉTRUIT.
+   * C'est tout le pari du butin : il vaut de l'or s'il ressort, et il peut
+   * sauver la run s'il est brûlé, jamais les deux.
+   */
   type: 'combat' | 'tresor'
-  /** Énergie consommée. Sans objet pour un trésor. */
+  /** Énergie consommée. */
   cout: number
   degats: number
+  /** Ce que la carte fait en plus de ses dégâts. */
+  effets?: Effet[]
+  /**
+   * La carte est DÉTRUITE à l'usage, au lieu de partir à la défausse : elle ne
+   * reviendra pas dans la pioche, et elle ne compte plus dans le butin.
+   */
+  exil?: boolean
   /**
    * Prix qu'en donnerait le marché noir, une fois la run terminée. Un trésor
    * ne rapporte RIEN en combat ni en fin de combat : il ne devient de l'or
@@ -117,9 +149,11 @@ export function jouerCarte(etat: EtatCombat, index: number, cible: number): Etat
   if (etat.issue !== null) return etat
 
   const carte = etat.main[index]
-  if (carte === undefined || carte.type !== 'combat') return etat
+  if (carte === undefined || !jouable(carte)) return etat
   if (carte.cout > etat.energie) return etat
-  if (!estVivant(etat, cible)) return etat
+  // Une carte qui ne vise personne se joue sans cible valide : un trésor qui
+  // soigne reste jouable quand le dernier corps vient de tomber.
+  if (viseUneCible(carte) && !estVivant(etat, cible)) return etat
 
   const suivant = copier(etat)
   suivant.main.splice(index, 1)
@@ -227,6 +261,25 @@ export function vivants(etat: EtatCombat): { ennemi: Ennemi; index: number }[] {
     .filter((x) => x.ennemi.pv > 0)
 }
 
+/**
+ * Une carte se joue si elle fait quelque chose : frapper, ou porter un effet.
+ * Un trésor sans effet reste ce qu'il a toujours été — du poids.
+ */
+export function jouable(carte: Carte): boolean {
+  return carte.type === 'combat' || (carte.effets?.length ?? 0) > 0
+}
+
+/**
+ * La carte a-t-elle besoin qu'on lui désigne un corps ?
+ *
+ * Ce qui frappe tout le monde, soigne ou rend de l'énergie n'a rien à viser —
+ * et **demander une cible pour ça serait un geste vide** : deux tapes au lieu
+ * d'une, sur un choix qui n'en est pas un.
+ */
+export function viseUneCible(carte: Carte): boolean {
+  return carte.degats > 0
+}
+
 function estVivant(etat: EtatCombat, index: number): boolean {
   const ennemi = etat.ennemis[index]
   return ennemi !== undefined && ennemi.pv > 0
@@ -247,13 +300,17 @@ export function tresorsEnMain(etat: EtatCombat): number {
 
 /** Vrai si plus aucune carte de la main n'est jouable avec l'énergie restante. */
 export function mainMorte(etat: EtatCombat): boolean {
-  return etat.main.every((carte) => carte.type !== 'combat' || carte.cout > etat.energie)
+  return etat.main.every((carte) => !jouable(carte) || carte.cout > etat.energie)
 }
 
 // --- interne : tout ce qui suit mute l'état reçu, déjà copié par l'appelant ---
 
 function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number): void {
-  etat.defausse.push(carte)
+  // EXILÉE PLUTÔT QUE DÉFAUSSÉE : elle ne reviendra pas dans la pioche, et
+  // `butin()` ne la compte plus — brûler un trésor, c'est perdre son or.
+  if (carte.exil !== true) etat.defausse.push(carte)
+
+  for (const effet of carte.effets ?? []) appliquerEffet(etat, effet)
 
   const ennemi = etat.ennemis[cible]
   if (ennemi === undefined || ennemi.pv === 0) return
@@ -271,6 +328,33 @@ function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number): void {
   if (ennemi.pv === 0) {
     etat.evenements.push({ tour: etat.tour, type: 'mort', nom: ennemi.nom })
     if (etat.ennemis.every((autre) => autre.pv === 0)) terminer(etat, 'victoire')
+  }
+}
+
+function appliquerEffet(etat: EtatCombat, effet: Effet): void {
+  switch (effet.type) {
+    case 'soin':
+      etat.pv = Math.min(etat.pvMax, etat.pv + effet.montant)
+      break
+    case 'energie':
+      etat.energie = Math.min(etat.energieMax, etat.energie + effet.montant)
+      break
+    case 'degatsTous':
+      for (const ennemi of etat.ennemis) {
+        if (ennemi.pv === 0) continue
+        ennemi.pv = Math.max(0, ennemi.pv - effet.montant)
+        etat.evenements.push({
+          tour: etat.tour,
+          type: 'carte',
+          nom: 'onde',
+          cible: ennemi.nom,
+          degats: effet.montant,
+          pvCible: ennemi.pv,
+        })
+        if (ennemi.pv === 0) etat.evenements.push({ tour: etat.tour, type: 'mort', nom: ennemi.nom })
+      }
+      if (etat.ennemis.every((autre) => autre.pv === 0)) terminer(etat, 'victoire')
+      break
   }
 }
 

@@ -41,7 +41,6 @@ function lireSource(noeud: HTMLElement): Lieu {
 /** La destination, lue sur la zone de dépôt. */
 function lireCible(noeud: HTMLElement): Lieu {
   const ou = noeud.dataset.ou
-  if (ou === 'sac') return { ou: 'sac', emplacement: Number(noeud.dataset.emplacement) }
   if (ou === 'deck') return { ou: 'deck' }
   if (ou === 'loot') return { ou: 'loot' }
   return { ou: 'fond' }
