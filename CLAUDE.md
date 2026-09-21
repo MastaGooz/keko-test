@@ -268,7 +268,16 @@ donjon. Ce qui tourne :
 
   **L'ÉCRAN DE BUTIN EST L'ÉCRAN DE JEU.** Ce qu'on emporte est *littéralement*
   la main : même éventail, même taille de carte, même enfouissement sous le bord,
-  en bas de l'écran. Ce sont exactement les cartes qu'on retrouvera en combat, et
+  en bas de l'écran — **et les mêmes gestes** : on tape une carte pour la
+  regarder de près, on la glisse pour la ranger ailleurs ou la **réorganiser**.
+
+  Ranger ses trésors n'a aucun effet sur les règles — le deck est mélangé au
+  combat suivant — mais ça passe quand même par l'état, pour la raison qui vaut
+  déjà pour la main de combat : *le rendu se reconstruit à chaque geste, donc un
+  ordre qui ne vivrait que dans le DOM serait balayé au premier déplacement.*
+
+  Le zoom porte désormais **la carte** et non un index de main : il était un
+  index dans `combat.main`, ce qui interdisait de zoomer ailleurs. Ce sont exactement les cartes qu'on retrouvera en combat, et
   les voir telles quelles est ce qui rend le poids lisible. Les deux slots — ce
   qui arrive, et **Jeter** — sont côte à côte au-dessus, *à la taille d'une
   carte* : ils reçoivent une carte, ils en ont donc la forme.
@@ -880,20 +889,19 @@ donjon. Ce qui tourne :
   main reste vide et les voisines se referment, exactement comme quand on la
   tient au doigt.
 
-  **À GAUCHE, et plus sous eux.** Sous le rang, elle ne disait pas d'où part le
-  coup et les arches semblaient naître du sol ; à gauche, elle fait face au
-  groupe — c'est la place du joueur, la même que sa barre de PV.
+  **DANS LE COIN GAUCHE, sur l'axe de la pioche, et À SA TAILLE DE MAIN.** Elle
+  a été sous les ennemis, puis accrochée au bord gauche du rang ; dans les deux
+  cas elle vivait DANS la scène, donc elle en décalait le contenu à l'instant
+  même où l'on vise — *les cibles bougeaient sous le pouce*. Ancrée hors du flux
+  comme les tas et la barre de PV, elle ne touche plus à rien.
 
-  Elle s'accroche à une **ancre de largeur nulle**, premier élément du rang,
-  et cette ancre doit **annuler le `gap`** qu'elle ajoute : une largeur nulle ne
-  décale rien, mais le `gap` qui la suit, si — et le groupe glissait d'un
-  demi-rem à l'instant même où l'on vise, donc les cibles bougeaient sous le
-  pouce. D'où le jeton `--gap-rang`, lu par le `gap` du rang et par la marge
-  négative de l'ancre : *une seule source, sinon les deux divergent au premier
-  palier de resserrement.*
+  Et elle garde la taille qu'elle avait dans la main : c'est la même carte qu'on
+  vient d'en sortir, elle n'a pas de raison de rapetisser en chemin. Elle a été
+  bornée par le corps des créatures du temps où elle vivait dans la scène et
+  l'écrasait à pleine taille ; dans le coin, elle n'écrase plus rien.
 
-  Elle est bornée par le **corps** et non par la main : c'est un élément de la
-  scène. *Deux essais écartés avant d'arriver là*, et ils valent d'être
+  *Tout ce qui est au joueur tient désormais la bande gauche* : sa pioche, son
+  énergie, ses PV, et la carte qu'il tient. *Deux essais écartés avant d'arriver là*, et ils valent d'être
   retenus : posée SUR le joueur, elle le recouvre et ne dit pas de quel côté le
   coup part ; à sa taille de main, elle écrase la scène — et ce n'était pas le
   changement de taille qui gênait, contrairement à ce qu'on a d'abord cru.

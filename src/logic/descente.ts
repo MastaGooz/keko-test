@@ -325,6 +325,33 @@ export function terminerButin(descente: Descente): Descente {
 }
 
 /**
+ * Range un trésor à une autre place parmi ceux qu'on porte.
+ *
+ * **Ça n'a aucun effet sur les règles** — le deck est mélangé au combat suivant
+ * — mais ça passe quand même par l'état, pour la même raison que la main de
+ * combat : le rendu se reconstruit à chaque geste, donc un ordre qui ne vivrait
+ * que dans le DOM serait balayé au premier déplacement.
+ *
+ * `vers` est le rang VOULU parmi les trésors, la carte déplacée étant retirée.
+ */
+export function reordonnerTresors(descente: Descente, id: string, vers: number): Descente {
+  if (descente.phase.type !== 'butin') return descente
+
+  const tresors = descente.deck.filter((c) => c.type === 'tresor')
+  const carte = tresors.find((c) => c.id === id)
+  if (carte === undefined) return descente
+
+  const restants = tresors.filter((c) => c !== carte)
+  const place = Math.max(0, Math.min(restants.length, vers))
+  restants.splice(place, 0, carte)
+
+  // Les cartes de combat gardent leur place : on ne réordonne que le butin.
+  let i = 0
+  const deck = descente.deck.map((c) => (c.type === 'tresor' ? restants[i++]! : c))
+  return { ...descente, deck }
+}
+
+/**
  * Confirme le rebut : la carte du slot rejoint le tas des jetés, et le slot se
  * libère pour la suivante.
  *

@@ -3149,39 +3149,33 @@ body {
    le joueur pendant qu'on choisit sa cible, et c'est de la que partent les
    arches. Les faire partir du bas de l'ecran defaisait le geste -- elles
    venaient d'un endroit d'ou plus rien ne part. */
-/* L'ancre : LARGEUR NULLE, premiere du rang. La carte s'y accroche en absolu,
-   donc elle ne decale pas le groupe -- dans le flux, les cibles bougeraient
-   sous le pouce a l'instant meme ou l'on vise. */
-.ancre-engagee {
-  position: relative;
-  align-self: center;
-  width: 0;
-  /* Annule le `gap` qu'elle ajoute : sans ca le groupe se decale a l'instant
-     meme ou l'on vise, et les cibles bougent sous le pouce. */
-  margin-right: calc(var(--gap-rang) * -1);
-  overflow: visible;
+/* LA CARTE ENGAGEE, hors du flux et ALIGNEE SUR LA PIOCHE.
+
+   Elle a ete sous les ennemis, puis accrochee au bord gauche du rang ; dans les
+   deux cas elle vivait DANS la scene, donc elle en decalait le contenu a
+   l'instant meme ou l'on vise -- les cibles bougeaient sous le pouce. Ancree
+   comme les tas et la barre de PV, elle ne touche plus a rien.
+
+   Meme axe que la pioche, au-dessus de la barre de PV : tout ce qui est au
+   joueur tient la bande gauche, et la carte qu'il tient y a sa place. */
+.engagee {
+  position: absolute;
+  left: 0;
+  /* Au-dessus de la barre de PV, qui est elle-meme a `emerge + 0,5rem` et fait
+     un peu moins de 2rem : il faut donc degager les deux, pas seulement le tas. */
+  bottom: calc(max(0.25rem, env(safe-area-inset-bottom)) + var(--emerge) + 3.25rem);
+  z-index: 27;
+  width: var(--large);
+  pointer-events: none;
 }
 
 .carte-engagee {
-  position: absolute;
-  /* A GAUCHE DES ENNEMIS. Elle etait sous eux, en travers du rang : de la, elle
-     ne disait pas d'ou part le coup, et les arches semblaient naitre du sol.
-     A gauche, elle fait face au groupe -- c'est la place du joueur. */
-  right: 0.5rem;
-  top: 50%;
-  z-index: 3;
-  translate: 0 -50%;
+  display: block;
   rotate: -5deg;
-  pointer-events: none;
   animation: carte-engagee-entree 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.15);
 }
 
-/* Bornee par le CORPS : elle est un element de la scene, pas de la main. On a
-   essaye de lui garder sa taille de main pour eviter qu'elle retrecisse en
-   chemin ; ce n'etait pas le probleme, et a pleine taille elle ecrasait la
-   scene. */
 .carte-engagee .carte {
-  --large: min(var(--corps), 6rem);
   width: var(--large);
   margin: 0;
   transform: none;
@@ -3194,12 +3188,12 @@ body {
 @keyframes carte-engagee-entree {
   from {
     opacity: 0;
-    translate: 1.25rem -50%;
+    translate: 0 1.25rem;
     scale: 0.9;
   }
   to {
     opacity: 1;
-    translate: 0 -50%;
+    translate: 0 0;
     scale: 1;
   }
 }

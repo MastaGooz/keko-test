@@ -11,6 +11,7 @@ import './ui/styles.css'
 import type { Rng } from './logic/rng.ts'
 import type { Descente } from './logic/descente.ts'
 import { createRng } from './logic/rng.ts'
+import type { Carte } from './logic/combat.ts'
 import {
   finDuTour,
   jouable,
@@ -26,6 +27,7 @@ import {
   extraire,
   deplacerTresor,
   resoudreCombat,
+  reordonnerTresors,
   terminerButin,
   validerJet,
 } from './logic/descente.ts'
@@ -72,7 +74,14 @@ let selection: number | null = null
 /** Pour ne sonner la fin qu'au moment où elle tombe, pas à chaque rendu. */
 let finSonnee = false
 /** La carte qu'on regarde de près, s'il y en a une. */
-let zoom: number | null = null
+/**
+ * La carte qu'on regarde de près — LA CARTE, pas son index.
+ *
+ * Elle était un index dans la main de combat, ce qui interdisait de zoomer
+ * ailleurs : l'écran de butin montre lui aussi des cartes, et on doit pouvoir
+ * les consulter avant de décider laquelle on jette.
+ */
+let zoom: Carte | null = null
 /** La carte survolée ou tenue : elle montre ce qu'elle emporterait. */
 let survolee: number | null = null
 
@@ -199,6 +208,7 @@ const ACTIONS_DE_JEU = new Set([
   'finTour',
   'choisirCarte',
   'deplacer',
+  'reordonnerTresors',
   'validerJet',
   'terminerButin',
   'descendre',
@@ -232,10 +242,17 @@ function dispatch(action: Action): void {
     case 'annuler':
       selection = null
       break
-    case 'zoomer':
+    case 'zoomer': {
       // Regarder une carte n'engage rien : ça ne repose pas celle qu'on tient.
-      zoom = action.index
+      // On la cherche dans la main ET dans ce qu'on porte : c'est le même geste
+      // en combat et sur l'écran de butin.
+      const vue =
+        descente.combat.main.find((c) => c.id === action.id) ??
+        descente.deck.find((c) => c.id === action.id) ??
+        null
+      zoom = vue
       break
+    }
     case 'fermerZoom':
       zoom = null
       break
@@ -373,6 +390,9 @@ function dispatch(action: Action): void {
     case 'validerJet':
       descente = validerJet(descente)
       break
+    case 'reordonnerTresors':
+      descente = reordonnerTresors(descente, action.id, action.vers)
+      break
     case 'terminerButin':
       descente = terminerButin(descente)
       break
@@ -433,7 +453,10 @@ bindInput(view, dispatch)
 brancherMain(view, {
   jouer: (index) => dispatch({ type: 'jouerDepuisLaMain', index }),
   reordonner: (de, vers) => dispatch({ type: 'reordonner', de, vers }),
-  regarder: (index) => dispatch({ type: 'zoomer', index }),
+  regarder: (index) => {
+    const c = descente.combat.main[index]
+    if (c !== undefined) dispatch({ type: 'zoomer', id: c.id })
+  },
   survol: (index) => {
     survolee = index
     rafraichirApercu()

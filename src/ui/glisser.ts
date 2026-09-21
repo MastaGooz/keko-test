@@ -29,6 +29,26 @@ export function brancherGlisser(racine: HTMLElement): void {
     return document.elementFromPoint(x, y)?.closest('[data-depot]') ?? null
   }
 
+  /**
+   * Le rang ou l'on repose une carte DANS la main du butin : le nombre de
+   * cartes dont le MILIEU est a gauche du doigt, la carte tenue exclue.
+   *
+   * Les deux points comptent, et c'est la meme regle que la main de combat :
+   * le milieu plutot que les bords, parce qu'un eventail qui se recouvre fait
+   * que deux voisines revendiqueraient la meme bande ; et la carte tenue
+   * exclue, parce que c'est l'index d'insertion UNE FOIS RETIREE.
+   */
+  function fenteSousLeDoigt(x: number): number {
+    if (piece === null) return 0
+    let fente = 0
+    for (const c of racine.querySelectorAll<HTMLElement>('.cartes.portes .carte')) {
+      if (c === piece) continue
+      const boite = c.getBoundingClientRect()
+      if (x > boite.left + boite.width / 2) fente += 1
+    }
+    return fente
+  }
+
   function surligner(cible: Element | null): void {
     if (cible === survole) return
     survole?.classList.remove('survole')
@@ -76,6 +96,14 @@ export function brancherGlisser(racine: HTMLElement): void {
   function relacher(e: PointerEvent): void {
     if (piece === null) return
     const cible = bouge ? depots(e.clientX, e.clientY) : null
+
+    // LA FENTE SE CALCULE AVANT LE NETTOYAGE : elle a besoin de savoir quelle
+    // carte est tenue, pour l'exclure du compte. Apres, `piece` est deja nulle
+    // et le rang retombe a zero -- la carte repartait alors toujours en tete.
+    const versLaMain = cible instanceof HTMLElement && cible.dataset.ou === 'deck'
+    const duDeck = origine !== null && origine.includes('"deck"')
+    const fente = versLaMain && duDeck ? fenteSousLeDoigt(e.clientX) : null
+
     piece.classList.remove('saisie')
     fantome?.remove()
     surligner(null)
@@ -87,6 +115,11 @@ export function brancherGlisser(racine: HTMLElement): void {
     // fait ainsi que declencher la meme tape, avec une origine en plus. Aucune
     // logique n'est dupliquee. Le lecteur la retire en la lisant.
     if (origine !== null) cible.dataset.lieuSource = origine
+    // REPOSER UNE CARTE DU BUTIN DANS LA MAIN DU BUTIN, c'est la REORDONNER --
+    // pas la deplacer. `input.ts` en fait une action distincte ; sans ca elle
+    // repartait au bout de la main a chaque fois, ce qui est un rangement qu'on
+    // subit plutot qu'un rangement qu'on fait.
+    if (fente !== null) cible.dataset.fente = String(fente)
     cible.click()
   }
 

@@ -8,6 +8,7 @@
  * le sac qui déborde dans le deck, la mort qui fait tout perdre.
  */
 import { createRng } from './rng.ts'
+import { carteTresor } from './cartes.ts'
 import type { Descente, Lieu, Reglage } from './descente.ts'
 import {
   butinTransporte,
@@ -16,6 +17,7 @@ import {
   choisirCarte,
   deplacerTresor,
   extraire,
+  reordonnerTresors,
   terminerButin,
   validerJet,
   resoudreCombat,
@@ -214,6 +216,35 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
     laisse.deck.length === 11 && tresorsAuDeck(laisse) === 0)
   verifier('un trésor laissé est perdu, pas reporté', butinTransporte(laisse) === 0)
   verifier('et on va quand même au point de sortie', laisse.phase.type === 'sortie')
+}
+
+// --- ranger ses tresors ----------------------------------------------------
+
+// Aucun effet sur les regles -- le deck est melange au combat suivant -- mais
+// l'ordre doit passer par l'ETAT, sinon le rendu le balaie au premier
+// deplacement. Meme raison que la main de combat.
+{
+  const rng = createRng(23)
+  const base = jusquAuButin(commencerDescente(rng, REGLAGE), rng)
+  const a = carteTresor('t-a', 'Couronne', 240)
+  const b = carteTresor('t-b', 'Calice', 120)
+  const c = carteTresor('t-c', 'Camée', 45)
+  const combat = base.deck.filter((x) => x.type === 'combat')
+  const d = { ...base, deck: [...combat, a, b, c] }
+
+  const enTete = reordonnerTresors(d, c.id, 0).deck.filter((x) => x.type === 'tresor')
+  verifier('un trésor porté se range à une autre place', enTete[0] === c && enTete.length === 3)
+
+  const enQueue = reordonnerTresors(d, a.id, 2).deck.filter((x) => x.type === 'tresor')
+  verifier('et dans les deux sens', enQueue[2] === a && enQueue[0] === b)
+
+  verifier('les cartes de combat ne bougent pas',
+    reordonnerTresors(d, a.id, 2).deck.filter((x) => x.type === 'combat').length === combat.length)
+  verifier('un identifiant inconnu ne range rien', reordonnerTresors(d, 'aucun', 0) === d)
+  verifier('un rang hors bornes se ramene au bord',
+    reordonnerTresors(d, a.id, 99).deck.filter((x) => x.type === 'tresor')[2] === a)
+  verifier('on ne range pas de trésor hors de la phase de butin',
+    reordonnerTresors({ ...d, phase: { type: 'combat' } }, a.id, 0).deck === d.deck)
 }
 
 // --- le butin, et ce qu'on en fait -----------------------------------------

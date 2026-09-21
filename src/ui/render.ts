@@ -37,6 +37,7 @@ export type View = {
   seed: HTMLElement
   ennemis: HTMLElement
   moi: HTMLElement
+  engagee: HTMLElement
   energie: HTMLElement
   cartes: HTMLElement
   encombrement: HTMLElement
@@ -81,6 +82,10 @@ export function mount(root: HTMLElement, buildTime: string): View {
 
       <!-- Ancrés aux bords, hors du flux : ils encadrent la main sans lui
            prendre un pixel de large ni un étage de haut. -->
+      <!-- La carte qu'on a sortie de la main pendant qu'on choisit sa cible.
+           Hors du flux, alignée sur la pioche : c'est la place du joueur. -->
+      <div id="engagee" class="engagee"></div>
+
       <div id="energie" class="orbe energie"></div>
       <div id="pioche" class="tas-jeu coin-gauche"></div>
       <div id="defausse" class="tas-jeu coin-droit"></div>
@@ -118,6 +123,7 @@ export function mount(root: HTMLElement, buildTime: string): View {
     seed: root.querySelector<HTMLElement>('#seed')!,
     ennemis: root.querySelector<HTMLElement>('#ennemis')!,
     moi: root.querySelector<HTMLElement>('#moi')!,
+    engagee: root.querySelector<HTMLElement>('#engagee')!,
     energie: root.querySelector<HTMLElement>('#energie')!,
     cartes: root.querySelector<HTMLElement>('#cartes')!,
     encombrement: root.querySelector<HTMLElement>('#encombrement')!,
@@ -146,7 +152,7 @@ export function render(
   seed: number,
   selection: number | null,
   occupation: Occupation = 'libre',
-  zoom: number | null = null,
+  zoom: Carte | null = null,
   agonie: readonly number[] = [],
 ): void {
   view.root.classList.toggle('occupe', occupation !== 'libre')
@@ -166,16 +172,15 @@ export function render(
   // de l'ÉTAT et pas d'une classe posée à la main : le joueur peut très bien
   // jouer une autre carte pendant ce temps, et le rendu qui s'ensuit balaierait
   // la classe en plein fondu.
-  // LA CARTE ENGAGEE FLOTTE A GAUCHE DES ENNEMIS, et pas sous eux : c'est de
-  // là que partent les arches, donc de face. Elle est posée en ABSOLU dans une
-  // ancre de largeur nulle, premier élément du rang — dans le flux, elle
-  // décalerait tout le groupe à l'instant même où l'on vise, et les cibles
-  // bougeraient sous le pouce.
-  const engagee =
-    visee === null || fini ? '' : `<span class="ancre-engagee"><span class="carte-engagee">${vitrine(visee)}</span></span>`
+  // LA CARTE ENGAGEE SE TIENT A GAUCHE, alignée sur la pioche et à SA TAILLE DE
+  // MAIN : c'est la même carte qu'on vient de sortir, elle n'a pas de raison de
+  // rapetisser en chemin. Hors du flux, donc elle ne décale rien — sous le rang
+  // ou dedans, le groupe glissait à l'instant même où l'on vise et les cibles
+  // bougeaient sous le pouce.
+  view.engagee.innerHTML =
+    visee === null || fini ? '' : `<span class="carte-engagee">${vitrine(visee)}</span>`
 
   view.ennemis.innerHTML =
-    engagee +
     etat.ennemis
       .map((ennemi, index) => ({ ennemi, index }))
       .filter(({ ennemi, index }) => ennemi.pv > 0 || agonie.includes(index))
@@ -197,7 +202,7 @@ export function render(
 
   // La carte regardee de pres. Elle vient de l'ETAT et non d'une classe posee
   // a la main : le premier rendu venu la balaierait.
-  const regardee = zoom === null ? null : (etat.main[zoom] ?? null)
+  const regardee = zoom
   view.zoom.innerHTML =
     regardee === null
       ? ''
@@ -359,7 +364,7 @@ function ligneCarte(
 ): string {
   // Chaque carte de la main est saisissable et zoomable, tresor compris : on
   // range sa main comme on veut, et on regarde ce qu'on traine.
-  const prise = `data-action="zoomer" data-index="${index}" data-main="${index}"`
+  const prise = `data-action="zoomer" data-carte-id="${carte.id}" data-main="${index}"`
   const place = eventail(index, total) + ' ' + prise
   if (carte.type === 'tresor') {
     return carteTresor(carte, place, true, !fini && carte.cout <= etat.energie)
@@ -667,7 +672,16 @@ function butin(
     // retrouvera, et les voir telles quelles est ce qui rend le poids lisible.
     `<div class="cartes portes" data-depot data-ou="deck" data-action="deplacer">` +
     portes
-      .map((c, i) => carteTresor(c, `${eventail(i, portes.length)} ${lieu({ ou: 'deck', id: c.id })}`))
+      .map((c, i) =>
+        // LA MEME MAIN QU'EN COMBAT, gestes compris : on la tape pour regarder
+        // la carte de près, on la glisse pour la ranger ailleurs ou la
+        // réorganiser. `data-main` porte le rang, comme dans la main de combat.
+        carteTresor(
+          c,
+          `${eventail(i, portes.length)} ${lieu({ ou: 'deck', id: c.id })} ` +
+            `data-action="zoomer" data-carte-id="${c.id}" data-main="${i}"`,
+        ),
+      )
       .join('') +
     `</div>` +
     `</div>`

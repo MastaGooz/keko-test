@@ -4,7 +4,7 @@ import type { Lieu } from '../logic/descente.ts'
 
 export type Action =
   | { type: 'viser'; index: number }
-  | { type: 'zoomer'; index: number }
+  | { type: 'zoomer'; id: string }
   | { type: 'fermerZoom' }
   | { type: 'jouerDepuisLaMain'; index: number }
   | { type: 'reordonner'; de: number; vers: number }
@@ -15,6 +15,7 @@ export type Action =
   | { type: 'nouveau' }
   | { type: 'choisirCarte'; index: number }
   | { type: 'deplacer'; source: Lieu; cible: Lieu }
+  | { type: 'reordonnerTresors'; id: string; vers: number }
   | { type: 'validerJet' }
   | { type: 'terminerButin' }
   | { type: 'descendre' }
@@ -68,7 +69,7 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         dispatch({ type: 'viser', index: Number(noeud.dataset.index) })
         break
       case 'zoomer':
-        dispatch({ type: 'zoomer', index: Number(noeud.dataset.index) })
+        dispatch({ type: 'zoomer', id: noeud.dataset.carteId ?? '' })
         break
       case 'fermerZoom':
         dispatch({ type: 'fermerZoom' })
@@ -91,9 +92,19 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
       case 'choisirCarte':
         dispatch({ type: 'choisirCarte', index: Number(noeud.dataset.carte) })
         break
-      case 'deplacer':
-        dispatch({ type: 'deplacer', source: lireSource(noeud), cible: lireCible(noeud) })
+      case 'deplacer': {
+        const source = lireSource(noeud)
+        // Le glisser pose un rang quand on repose une carte du butin DANS la
+        // main du butin : c'est un rangement, pas un deplacement.
+        const fente = noeud.dataset.fente
+        delete noeud.dataset.fente
+        if (fente !== undefined && source.ou === 'deck' && source.id !== undefined) {
+          dispatch({ type: 'reordonnerTresors', id: source.id, vers: Number(fente) })
+          break
+        }
+        dispatch({ type: 'deplacer', source, cible: lireCible(noeud) })
         break
+      }
       case 'validerJet':
         dispatch({ type: 'validerJet' })
         break
