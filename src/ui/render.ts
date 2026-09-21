@@ -398,27 +398,28 @@ function energie(etat: EtatCombat, _visee: Carte | null): string {
  * - le **titre** en tête : le nom, en petites capitales, centré. La **gemme**
  *   de coût est sertie dans son coin gauche et mord sur la fenêtre ;
  * - la **fenêtre d'art**, en arche, presque la moitié de la carte ;
- * - l'**écusson**, à cheval sur le bas de la fenêtre, à gauche : LE chiffre
- *   de la carte — dégâts, bloc, soin ou or. C'est lui qu'on compare d'un coup
- *   d'oeil, donc il vit sur la bande gauche que l'éventail laisse voir, et
- *   au-dessus de la ligne de flottaison ;
- * - le **cartouche** : ce que fait la carte, en toutes lettres, centré ;
- * - le **pied** : sa nature, en petites capitales discrètes. Enfoui au repos,
- *   et c'est ce qu'on lit le moins.
+ * - le **cartouche** : ce que fait la carte, en toutes lettres, centré. C'est
+ *   LUI qui porte le chiffre, en accent et plus gros que le texte. Il y a eu un
+ *   écusson à part pour le chiffre ; Keko : « déjà indiqué dans la description,
+ *   donc inutile — en plus on ne sait pas si c'est attaque ou défense ». Le
+ *   verbe et le chiffre ensemble disent les deux ;
+ * - le **pied** : sa nature, en capitales discrètes. Enfoui au repos, et c'est
+ *   ce qu'on lit le moins ;
+ * - des **ornements** de coin, un seul SVG écrit à la main qui suit exactement
+ *   le rapport 5/7 de la carte.
  */
 function corpsCarte(
   nom: string,
   gemme: string,
-  ecusson: string,
   lignes: readonly string[],
   nature: string,
   marque = '',
 ): string {
   return (
+    ORNEMENTS +
     `<span class="fronton"><span class="nom">${nom}</span></span>` +
     `<span class="vitre">${dessin(nom)}</span>` +
     gemme +
-    ecusson +
     `<span class="cartouche">${lignes.map((l) => `<span>${l}</span>`).join('')}</span>` +
     `<span class="pied">${nature}</span>` +
     marque
@@ -426,23 +427,29 @@ function corpsCarte(
 }
 
 /**
- * LE chiffre d'une carte : celui qu'on compare d'un coup d'oeil. Une carte qui
- * ne frappe pas montre ce qu'elle donne — un écusson à zéro sur une garde se
- * lirait comme une carte inutile. Un trésor montre son or : c'est ce qu'il est.
+ * Les ornements de coin : quatre volutes, un seul tracé répété par symétrie.
+ * Le viewBox a le rapport exact de la carte (5/7), donc `preserveAspectRatio`
+ * peut être `none` sans rien déformer, et une unité vaut 1cqw.
  */
-function ecusson(carte: Carte): string {
-  if (carte.type === 'tresor') return `<span class="ecusson valeur">${carte.valeur ?? 0}</span>`
-  if (carte.degats > 0) return `<span class="ecusson degats">${carte.degats}</span>`
-  const bloc = carte.effets?.find((e) => e.type === 'bloc')?.montant ?? 0
-  if (bloc > 0) return `<span class="ecusson bloc">${bloc}</span>`
-  const soin = carte.effets?.find((e) => e.type === 'soin')?.montant ?? 0
-  if (soin > 0) return `<span class="ecusson soin">+${soin}</span>`
-  return `<span class="ecusson degats">0</span>`
-}
+const VOLUTE =
+  '<path d="M5.5 15 V9 Q5.5 5.5 9 5.5 H15" /><path d="M8 13 Q8 8 13 8" /><circle cx="9.3" cy="9.3" r="1" fill="currentColor" stroke="none" />'
+const ORNEMENTS =
+  '<svg class="ornements" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true" ' +
+  'fill="none" stroke="currentColor" stroke-width="0.7" stroke-linecap="round">' +
+  `<g>${VOLUTE}</g>` +
+  `<g transform="translate(100 0) scale(-1 1)">${VOLUTE}</g>` +
+  `<g transform="translate(0 140) scale(1 -1)">${VOLUTE}</g>` +
+  `<g transform="translate(100 140) scale(-1 -1)">${VOLUTE}</g>` +
+  '</svg>'
 
-/** Ce que fait la carte, en toutes lettres : une ligne par effet. */
+/**
+ * Ce que fait la carte, en toutes lettres : une ligne par effet. Le chiffre
+ * est dedans, en gras et en accent — c'est le seul endroit où il vit.
+ */
 function lignes(carte: Carte): string[] {
   const l: string[] = []
+  // L'or d'abord : c'est ce qu'un trésor EST, le reste est ce qu'il peut faire.
+  if (carte.type === 'tresor') l.push(`Vaut <b>${carte.valeur ?? 0}</b> or s'il ressort`)
   if (carte.degats > 0) l.push(`Inflige <b>${carte.degats}</b> dégâts`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
@@ -507,7 +514,6 @@ function ligneCarte(
     corpsCarte(
       carte.nom,
       `<span class="gemme">${carte.cout}</span>`,
-      ecusson(carte),
       lignes(carte),
       nature(carte),
       `<span class="marque">${acheve ? '★' : ''}</span>`,
@@ -555,7 +561,7 @@ function carteTresor(carte: Carte, place: string, enMain = true, abordable = tru
 
   return (
     `<div class="${classes.join(' ')}" ${place}>` +
-    corpsCarte(carte.nom, gemme, ecusson(carte), lignes(carte), nature(carte)) +
+    corpsCarte(carte.nom, gemme, lignes(carte), nature(carte)) +
     `</div>`
   )
 }
@@ -959,19 +965,12 @@ function armurerie(hub: Hub): string {
  */
 function cartePiece(piece: Piece): string {
   const nb = piece.set.reduce((t, { nombre }) => t + nombre, 0)
-  const force = Math.max(
-    ...piece.set.map(({ modele }) => {
-      const bloc = modele.effets?.find((e) => e.type === 'bloc')?.montant ?? 0
-      return bloc > 0 ? bloc : modele.degats
-    }),
-  )
   const bloque = piece.set.some(({ modele }) => modele.effets?.some((e) => e.type === 'bloc'))
   return (
     `<div class="carte piece-carte ${piece.rarete}${bloque ? ' armure' : ' arme'}" style="--n:1">` +
     corpsCarte(
       piece.nom,
       `<span class="gemme cartes-donnees" title="${nb} cartes">${nb}</span>`,
-      `<span class="ecusson ${bloque ? 'bloc' : 'degats'}">${force}</span>`,
       // Sa composition, une ligne par modele : c'est ce qu'elle donne, donc
       // c'est son cartouche.
       piece.set.map(({ modele, nombre }) => {
@@ -1038,7 +1037,6 @@ export function vitrine(carte: Carte, enMain = false): string {
     corpsCarte(
       carte.nom,
       `<span class="gemme">${carte.cout}</span>`,
-      ecusson(carte),
       lignes(carte),
       nature(carte),
     ) +

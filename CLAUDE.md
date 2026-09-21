@@ -272,8 +272,8 @@ donjon. Ce qui tourne :
   faire baisser ce qu'on va prendre, sous les yeux du joueur, sinon il ne sait
   pas ce qu'elle lui a acheté.
 
-  Une carte qui ne frappe pas **montre son bloc là où les autres montrent leurs
-  dégâts** : un écusson à zéro se lirait comme une carte inutile.
+  Une carte qui ne frappe pas **dit ce qu'elle bloque là où les autres disent
+  ce qu'elles infligent** : un chiffre à zéro se lirait comme une carte inutile.
 
 - **le deck vient de l'équipement** (`logic/armes.ts`) : le **Glaive**, arme
   commune et gratuite, donne 5 Estoc (1⚡/3), 3 Taillade (2⚡/6), 2 Moulinet
@@ -1063,8 +1063,9 @@ donjon. Ce qui tourne :
    est déjà à la limite du tactile — mais d'agrandir la carte sous lui.
 
    Ce qui est enfoui est **ce qu'on lit le moins** : le pied et la fin du
-   cartouche. Le nom, la gemme, la fenêtre d'art et l'écusson restent au-dessus
-   de la ligne de flottaison — vérifié sur les huit formats.
+   cartouche. Le nom, la gemme, la fenêtre d'art et la première ligne du
+   cartouche restent au-dessus de la ligne de flottaison — vérifié sur les
+   huit formats.
 
    **Le survol dévoile la carte en entier**, il ne la soulève pas à moitié : à
    la souris on lit la carte avant de la choisir, et une plaque de nom coupée
@@ -1082,13 +1083,13 @@ donjon. Ce qui tourne :
 
 3. **Tout ce qui sert à décider vit sur la bande HAUT-GAUCHE.** Le recouvrement
    de l'éventail mange la droite, la ligne de flottaison mange le bas. La gemme
-   de coût, le nom et l'écusson y sont calés.
+   de coût, le nom et le début du cartouche y sont calés.
 
    **Un trésor ne se lève jamais** — il ne se vise pas : ce qui passe sous la
    ligne de flottaison lui est perdu *pour toujours*, là où une carte de combat
-   le retrouve en se levant. Son écusson porte donc son or, et la ligne qui dit
-   ce que rapporte de le brûler est la première du cartouche, juste au-dessus
-   de la ligne. Toute information propre aux trésors doit suivre cette règle.
+   le retrouve en se levant. Son or est donc la première ligne du cartouche,
+   juste au-dessus de la ligne de flottaison. Toute information propre aux
+   trésors doit suivre cette règle.
 
 4. **Le recouvrement vaut 32 % de la carte — sauf s'il faut serrer davantage
    pour tenir dans la colonne.** Les deux formules ont existé seules, et
@@ -1264,8 +1265,7 @@ prend en main. Même vocabulaire que les cartes de combat et le butin, et ça
 compte : *ce qu'on emporte donne des cartes, donc ça se montre comme une carte.*
 **La gemme dit combien de cartes la pièce ajoute au deck** — c'est son poids,
 et c'est la seule information qui rende « équiper plus dilue » lisible sur la
-pièce elle-même : 10 pour le Glaive, 4 pour le Plastron. **L'écusson dit sa
-force**, un seul chiffre : les plus gros dégâts ou le plus gros bloc. La
+pièce elle-même : 10 pour le Glaive, 4 pour le Plastron. Sa
 composition exacte vit dans le cartouche de la carte, une ligne par modèle —
 on la consulte en zoomant, on ne décide pas dessus. Un slot vide a la forme
 de la carte qu'il attend.
@@ -1280,7 +1280,7 @@ Cinq règles qui portent l'écran :
   qui déplace est celui qui s'y engage.* Dans `input.ts`, c'est l'absence de
   `lieuSource` (posé par le glisser seul) qui distingue les deux. Corollaire :
   le cartouche d'une pièce est un cran plus petit que celui d'une carte
-  (`6.6cqw`), parce que trois lignes de composition ne tiennent pas à la taille
+  (`7.4cqw`), parce que trois lignes de composition ne tiennent pas à la taille
   d'une ligne d'effet.
 
 - **On arrive avec l'équipement gratuit DÉJÀ équipé.** Un joueur qui débarque
@@ -1715,30 +1715,42 @@ trésor, pièce, vitrine — et c'est ainsi que les proportions ont dérivé. Ke
 éléments, ça ne va pas du tout ». Elle se lit désormais de haut en bas, comme
 une carte à jouer :
 
-- le **fronton** : le nom en petites capitales serif, calé à GAUCHE juste après
-  la **gemme** de coût, qui est sertie dans le coin et mord sur la fenêtre. Pas
+- le **fronton** : le nom en Cinzel, calé à GAUCHE juste après la **gemme**
+  de coût — un petit disque sombre serti dans le coin, le chiffre en ivoire.
+  Elle a été un gros joyau jaune ; Keko : « trop grossier et trop gros ». Pas
   centré : centré, la gemme mangeait les premières lettres d'un nom long, et
   dans l'éventail c'est la bande gauche qu'on voit — un nom calé à gauche se
   lit au repos, un nom centré se fait couper par la voisine ;
-- la **fenêtre d'art**, en arche, presque la moitié de la carte ;
-- l'**écusson** : un médaillon rond à cheval sur le bas de la fenêtre, à
-  gauche, qui porte LE chiffre — dégâts, bloc, soin ou or. Sa teinte dit sa
-  nature (l'accent de la carte, l'acier, le vert, l'or). Une carte qui ne
-  frappe pas montre ce qu'elle donne : un écusson à zéro sur une garde se
-  lirait comme une carte inutile ;
-- le **cartouche** : ce que fait la carte, en toutes lettres, centré, en
-  serif ; le chiffre y reprend l'accent. Une condition (« ce tour seulement »,
-  « et son or est perdu ») va sur une seconde ligne en retrait — à la suite,
-  elle coupait au milieu. Une pièce y met sa composition, une ligne par
-  modèle, une pointe plus petit ;
-- le **pied** : sa nature entre deux filets (« Attaque », « Défense »,
-  « Trésor · cossu », « Arme · commune »). Enfoui au repos, et c'est voulu.
+- la **fenêtre d'art**, en arche cerclée d'or, presque la moitié de la carte ;
+- le **cartouche** : ce que fait la carte, en EB Garamond, centré — et c'est
+  LUI qui porte le chiffre, en accent et plus gros que le texte. Il y a eu un
+  écusson à part pour le chiffre, à cheval sur la fenêtre ; Keko : « déjà
+  indiqué dans la description, donc inutile — en plus on ne sait pas si c'est
+  attaque ou défense ». Le verbe et le chiffre ensemble disent les deux. Une
+  condition (« ce tour seulement », « et son or est perdu ») va sur une seconde
+  ligne en italique. Un trésor dit d'abord ce qu'il vaut, puis ce que rapporte
+  de le brûler ; une pièce y met sa composition, une ligne par modèle ;
+- le **pied** : sa nature gravée entre deux filets (« Attaque », « Défense »,
+  « Trésor · cossu », « Arme · commune »). Enfoui au repos, et c'est voulu ;
+- des **volutes** aux quatre coins : un seul SVG écrit à la main, dont le
+  viewBox a le rapport exact de la carte (100 × 140), donc `preserveAspectRatio:
+  none` ne déforme rien et une unité vaut 1cqw.
+
+**La matière** : du cuir, pas du carton — vignettage, deux grains croisés en
+`repeating-linear-gradient`, le corps teinté par l'accent, et un **filet doré**
+à 3cqw du bord (`--filet`, plus franc sur un trésor). Keko : « texture de la
+carte trop basique ».
 
 **Tout est en `cqw`** — la carte fait 100cqw de large et 140 de haut — donc les
 proportions sont identiques à 77 px et à 262. Ce qui doit rester au-dessus de
 la ligne de flottaison ET sur la bande gauche que l'éventail laisse voir : la
-gemme et l'écusson. Mesuré : l'écusson le plus bas finit à 382 px sur 390 à
-844x390, à 315 sur 320 à 667x320, sans défilement.
+gemme, le nom et la première ligne du cartouche.
+
+**Deux polices Google Fonts, Cinzel et EB Garamond — la seule ressource
+chargée depuis l'extérieur.** La borne était « aucune police téléchargée » ;
+Keko l'a levée lui-même (« police trop simple »), et un serif système n'existe
+pas sur Android — Georgia n'y est pas, on tombait sur un sans. Une ligne dans
+`index.html`, Georgia en repli sans réseau.
 
 **Les classes de la carte ont des noms à elles** (`fronton`, `cartouche`,
 `ecusson`, `pied`) parce que les évidents étaient pris ailleurs : `.titre` est
@@ -1755,9 +1767,9 @@ refaire dans le scratchpad, pas à commiter.
 **Le vocabulaire visuel de la carte**, pour que les prochaines s'y conforment :
 lumière venue du haut (filet clair en haut du jonc intérieur, sombre en bas),
 fenêtre d'art **en arche** et non en rectangle, trait des dessins **lumineux**
-plutôt que filaire (`drop-shadow` de sa propre couleur), gemme et écusson
-**sertis** avec un point de lumière en haut à gauche, nom en **serif système en
-petites capitales** (Georgia et sa chaîne de repli — aucune police téléchargée), et un lustre
+plutôt que filaire (`drop-shadow` de sa propre couleur), gemme **sertie**
+dans le coin, nom en **Cinzel** et texte en **EB Garamond** (Google Fonts, repli
+Georgia), et un lustre
 oblique qui balaie la carte au moment où on la lève. L'accent de la carte
 teinte le corps, le liseré de la fenêtre et la plaque : une Dague est froide
 jusque dans son carton, un Moulinet est chaud.

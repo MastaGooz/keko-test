@@ -759,24 +759,28 @@ body {
   container-type: inline-size;
   padding: 0;
   overflow: hidden;
-  border: 1px solid var(--trait);
-  border-radius: 12px;
-  /* Trois couches : une lumiere rasante venue du haut, un degrade de corps,
-     et de fines rayures qui donnent du grain au carton. */
+  border: 1px solid #08080c;
+  border-radius: 10px;
+  /* DU CUIR, PAS DU CARTON. Cinq couches : une lumiere rasante venue du haut,
+     un vignettage qui assombrit les bords, deux grains croises qui font la
+     matiere, et le corps teinte par l'accent. Keko : « texture de la carte
+     trop basique ». */
   background:
-    radial-gradient(90% 50% at 50% 0%, #ffffff16, transparent 72%),
-    repeating-linear-gradient(112deg, #ffffff05 0 1px, transparent 1px 4px),
+    radial-gradient(120% 70% at 50% 0%, #ffffff0e, transparent 60%),
+    radial-gradient(100% 100% at 50% 50%, transparent 45%, #00000080 100%),
+    repeating-linear-gradient(33deg, #ffffff05 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-33deg, #00000024 0 1px, transparent 1px 3px),
     linear-gradient(
-      168deg,
-      color-mix(in srgb, var(--accent, #8a8a9a) 16%, #3a3a47) 0%,
-      color-mix(in srgb, var(--accent, #8a8a9a) 8%, #262630) 46%,
-      #191921 100%
+      170deg,
+      color-mix(in srgb, var(--accent, #8a8a9a) 16%, #3a3540) 0%,
+      color-mix(in srgb, var(--accent, #8a8a9a) 6%, #201d26) 55%,
+      #131118 100%
     );
   box-shadow:
     -5px 3px 14px #000b,
-    inset 0 1px 0 #ffffff22,
-    inset 0 -2px 6px #00000070,
-    inset 0 0 0 1px #00000060;
+    inset 0 1px 0 #ffffff1a,
+    inset 0 0 0 1px #000000aa,
+    inset 0 0 14px #00000080;
   color: inherit;
   font: inherit;
   cursor: pointer;
@@ -791,15 +795,16 @@ body {
   z-index: var(--i, 0);
 }
 
-/* Le jonc interieur : un filet clair en haut, sombre en bas -- c'est ce qui
-   donne l'epaisseur, la lumiere venant d'en haut. */
+/* Le filet dore : un cadre fin a 3cqw du bord, double d'un trait sombre --
+   c'est lui qui fait l'objet precieux, et les volutes de coin s'y accrochent. */
 .carte::before {
   content: "";
   position: absolute;
-  inset: 4px;
-  border-radius: 8px;
-  border: 1px solid #ffffff14;
-  border-bottom-color: #00000055;
+  inset: 3cqw;
+  z-index: 1;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, var(--filet, #d8b96a) 45%, transparent);
+  box-shadow: inset 0 0 0 1px #00000066;
   pointer-events: none;
 }
 
@@ -883,19 +888,41 @@ body {
 
 /* --- L'ANATOMIE DE LA CARTE ----------------------------------------------
 
-   Une carte se lit de haut en bas, comme une carte a jouer : le FRONTON,
-   la FENETRE d'art en arche, l'ECUSSON a cheval sur le bas de la fenetre, le
-   CARTOUCHE qui dit ce qu'elle fait, le PIED qui dit ce qu'elle est. Le nom
-   vivait en bas sur une plaque et le chiffre au milieu dans un rectangle --
-   Keko : « le nom en bas, l'echelle des differents elements, ca ne va pas du
-   tout ».
+   Une carte se lit de haut en bas, comme une carte a jouer : le FRONTON en
+   tete (le nom, la gemme de cout sertie dans le coin), la FENETRE d'art en
+   arche, le CARTOUCHE qui dit ce qu'elle fait -- et qui porte le chiffre --,
+   le PIED qui dit ce qu'elle est, et des VOLUTES aux quatre coins.
+
+   Il y a eu un ecusson a part pour le chiffre, a cheval sur la fenetre. Keko :
+   « deja indique dans la description, donc inutile -- en plus on ne sait pas
+   si c'est attaque ou defense ». Le cartouche dit les deux : le verbe ET le
+   chiffre.
 
    Tout est en cqw : la carte fait 100cqw de large et 140cqw de haut, donc les
-   proportions sont les memes a 77 px et a 262. Ce qui doit rester au-dessus
-   de la ligne de flottaison (76 % de la hauteur sur un telephone, soit 106cqw)
-   ET sur la bande gauche que l'eventail laisse voir : la gemme et l'ecusson.
-   Le titre est centre, ses premieres lettres se voient ; le pied est enfoui,
-   c'est ce qu'on lit le moins. */
+   proportions sont les memes a 77 px et a 262. Au repos dans l'eventail, on
+   voit 76 % de la hauteur (106cqw) et la bande gauche : la gemme, le nom et
+   la premiere ligne du cartouche y sont. Le pied est enfoui, c'est ce qu'on
+   lit le moins.
+
+   Deux polices, les seules ressources externes du projet : Cinzel pour ce qui
+   est grave (nom, pied, gemme), EB Garamond pour ce qui se lit (cartouche).
+   Georgia prend le relais sans reseau. */
+
+.carte {
+  --filet: #d8b96a;
+  --police-titre: "Cinzel", Georgia, "Palatino Linotype", serif;
+  --police-texte: "EB Garamond", Georgia, "Palatino Linotype", serif;
+}
+
+.ornements {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  color: color-mix(in srgb, var(--filet) 70%, transparent);
+  pointer-events: none;
+}
 
 .fronton {
   position: absolute;
@@ -904,45 +931,41 @@ body {
   display: flex;
   align-items: center;
   /* Le nom part de la gemme, il n'est pas centre : centre, la gemme mangeait
-     ses premieres lettres des qu'il etait long (« Moulinet »). Et dans
-     l'eventail c'est la bande GAUCHE qu'on voit -- un nom cale a gauche se lit
-     au repos, un nom centre se fait couper par la voisine. */
+     ses premieres lettres des qu'il etait long, et dans l'eventail c'est la
+     bande GAUCHE qu'on voit -- un nom cale a gauche se lit au repos. */
   justify-content: flex-start;
-  padding: 0 4cqw 0 26cqw;
-  border-bottom: 1px solid color-mix(in srgb, var(--accent, #888) 45%, transparent);
-  background: linear-gradient(180deg, #ffffff14, #ffffff03);
-  box-shadow: inset 0 1px 0 #ffffff14;
+  padding: 0 5cqw 0 21cqw;
+  border-bottom: 1px solid color-mix(in srgb, var(--filet) 40%, transparent);
+  background: linear-gradient(180deg, #ffffff08, #00000024);
 }
 
 .carte .nom {
   min-width: 0;
-  /* Un serif systeme en petites capitales : aucune dependance, et la carte
-     cesse d'avoir la typo d'un formulaire. */
-  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
-  font-variant: small-caps;
-  font-size: 10cqw;
+  font-family: var(--police-titre);
+  font-size: 9cqw;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   line-height: 1;
-  color: #efe8d6;
-  text-shadow: 0 1px 2px #000d;
+  color: #e8dab2;
+  text-shadow:
+    0 1px 0 #000,
+    0 0 6cqw color-mix(in srgb, var(--filet) 30%, transparent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* La fenetre d'art : une arche, presque la moitie de la carte. Elle demarre
-   sous le titre et la gemme mord sur son coin -- c'est ce qui la sertit. */
+/* La fenetre d'art : une arche cerclee d'or, presque la moitie de la carte. */
 .vitre {
   position: absolute;
-  top: 18cqw;
+  top: 19cqw;
   left: 7cqw;
   right: 7cqw;
-  height: 66cqw;
+  height: 60cqw;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50% 50% 6cqw 6cqw / 32% 32% 6cqw 6cqw;
+  border-radius: 50% 50% 5cqw 5cqw / 32% 32% 5cqw 5cqw;
   background:
     radial-gradient(60% 55% at 50% 45%, color-mix(in srgb, var(--accent, #888) 32%, transparent), transparent 74%),
     linear-gradient(180deg, #ffffff0c 0%, transparent 42%),
@@ -950,162 +973,112 @@ body {
   box-shadow:
     inset 0 0 0 1px #00000088,
     inset 0 2px 10px #000000aa,
-    0 0 0 1px color-mix(in srgb, var(--accent, #888) 35%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--filet) 45%, transparent);
   color: var(--accent, var(--muted));
   overflow: hidden;
 }
 
 .dessin {
-  width: 64%;
-  height: 64%;
-  /* Un peu remonte : l'ecusson vient mordre le bas de la fenetre. */
-  translate: 0 -4%;
+  width: 66%;
+  height: 66%;
   /* Le trait rayonne : l'objet est eclaire, pas dessine au crayon. */
   filter:
     drop-shadow(0 0 4cqw color-mix(in srgb, currentColor 60%, transparent))
     drop-shadow(0 1.5cqw 3cqw #000c);
 }
 
-/* La gemme de cout, sertie dans le coin du titre. Son lisere sombre la detache
-   de ce qu'elle recouvre. */
+/* La gemme de cout : un petit disque sombre serti dans le coin du fronton,
+   le chiffre en ivoire. Elle a ete un gros joyau jaune ; Keko : « trop
+   grossier et trop gros ». Le cout se lit, il ne crie pas. */
 .gemme {
   position: absolute;
-  top: 3cqw;
+  top: 1.5cqw;
   left: 3cqw;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 21cqw;
-  height: 21cqw;
-  border: 1px solid #f0d488;
+  width: 15cqw;
+  height: 15cqw;
+  border: 1px solid #c9a95a;
   border-radius: 50%;
-  background: radial-gradient(68% 68% at 34% 26%, #ffe9ae, #b8862c 42%, #46330f 100%);
+  background: radial-gradient(circle at 35% 30%, #5b4a24, #221b0e 72%);
   box-shadow:
-    0 0 0 1.5cqw #15151c,
-    0 2px 5px #000c,
-    inset 0 -2px 4px #00000070,
-    0 0 0.5rem #ffc65c3d;
-  color: #2a1d06;
-  font-size: 12cqw;
-  font-weight: 800;
+    0 0 0 1.5cqw #15131a,
+    0 1px 3px #000c,
+    inset 0 1px 0 #ffffff1f;
+  color: #f2e4bd;
+  font-family: var(--police-titre);
+  font-size: 8.5cqw;
+  font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 1px 0 #ffffff5c;
-}
-
-/* L'eclat du joyau : le point de lumiere, en haut a gauche. */
-.gemme::after {
-  content: "";
-  position: absolute;
-  top: 14%;
-  left: 20%;
-  width: 34%;
-  height: 26%;
-  border-radius: 50%;
-  background: linear-gradient(#ffffffcc, #ffffff22);
-  pointer-events: none;
 }
 
 /* Quand la gemme ne porte pas un cout mais le sceau (le loot qui arrive). */
 .gemme .dessin-sceau {
-  width: 62%;
-  height: 62%;
-}
-
-/* L'ECUSSON : le chiffre de la carte, dans un medaillon a cheval sur le bas de
-   la fenetre. Sa teinte dit sa nature -- l'accent de la carte pour des degats,
-   l'acier pour du bloc, le vert pour du soin, l'or pour un tresor. */
-.ecusson {
-  position: absolute;
-  top: 71cqw;
-  left: 5cqw;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 26cqw;
-  height: 26cqw;
-  border: 1px solid color-mix(in srgb, var(--teinte, var(--accent, #888)) 85%, transparent);
-  border-radius: 50%;
-  background: radial-gradient(circle at 40% 30%, #2a2a36, #0c0c12 72%);
-  box-shadow:
-    0 0 0 2cqw #17171e,
-    0 0 0 2.5cqw color-mix(in srgb, var(--teinte, var(--accent, #888)) 45%, transparent),
-    0 2px 6px #000d,
-    0 0 4cqw color-mix(in srgb, var(--teinte, var(--accent, #888)) 35%, transparent),
-    inset 0 1px 0 #ffffff1f;
-  color: var(--teinte, var(--accent, var(--fg)));
-  font-size: 14cqw;
-  font-weight: 800;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 6cqw color-mix(in srgb, var(--teinte, var(--accent, #888)) 60%, transparent);
-}
-
-.ecusson.bloc {
-  --teinte: #c9d8ea;
-}
-
-.ecusson.soin {
-  --teinte: #8ee4a1;
-}
-
-.ecusson.valeur {
-  --teinte: #ffd98a;
-  background: radial-gradient(circle at 40% 30%, #46381a, #1a140a 72%);
+  width: 60%;
+  height: 60%;
 }
 
 /* LE CARTOUCHE : ce que fait la carte, en toutes lettres, centre sous la
-   fenetre. C'est ce qu'on lit une fois la carte levee ou zoomee -- pas ce sur
-   quoi on decide, l'ecusson s'en charge. Le chiffre y reprend l'accent. */
+   fenetre -- et c'est LUI qui porte le chiffre, en accent et plus gros. */
 .cartouche {
   position: absolute;
-  top: 96cqw;
+  top: 82cqw;
   left: 7cqw;
   right: 7cqw;
-  height: 30cqw;
+  height: 44cqw;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 1.5cqw;
-  padding: 1cqw 3cqw 0;
+  /* Cale en HAUT, pas centre dans sa boite : c'est la premiere ligne qui
+     porte le chiffre, et centree elle finissait a 324 px sur un ecran de 320
+     pour les cartes du bord (l'arc de l'eventail les fait descendre). Calee
+     en haut, elle reste bien au-dessus de la ligne de flottaison. */
+  justify-content: flex-start;
+  gap: 1cqw;
+  padding: 4cqw 2cqw 0;
   overflow: hidden;
-  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
-  font-size: 7.6cqw;
-  line-height: 1.22;
+  font-family: var(--police-texte);
+  font-size: 9cqw;
+  line-height: 1.2;
   text-align: center;
-  color: #d8d1bf;
+  color: #e3d8c0;
   text-shadow: 0 1px 2px #000c;
 }
 
 .cartouche b {
   color: var(--accent, var(--fg));
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 120%;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 5cqw color-mix(in srgb, var(--accent, #888) 45%, transparent);
 }
 
 .cartouche small {
-  font-size: 85%;
-  color: #a9a396;
+  font-size: 82%;
+  font-style: italic;
+  color: #a8a08f;
 }
 
-/* LE PIED : la nature de la carte, en petites capitales entre deux filets.
-   Enfoui au repos, et c'est voulu : c'est ce qu'on lit le moins. */
+/* LE PIED : la nature de la carte, gravee entre deux filets. Enfoui au repos,
+   et c'est voulu : c'est ce qu'on lit le moins. */
 .pied {
   position: absolute;
-  inset: auto 7cqw 3.5cqw 7cqw;
+  inset: auto 8cqw 4cqw 8cqw;
   display: flex;
   align-items: center;
   gap: 3cqw;
-  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
-  font-variant: small-caps;
-  font-size: 6.6cqw;
-  letter-spacing: 0.1em;
+  font-family: var(--police-titre);
+  font-size: 5.4cqw;
+  font-weight: 500;
+  letter-spacing: 0.16em;
   line-height: 1;
   white-space: nowrap;
-  color: color-mix(in srgb, var(--accent, #888) 55%, #8f8f9c);
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--filet) 55%, #8a8478);
 }
 
 .pied::before,
@@ -1113,7 +1086,7 @@ body {
   content: "";
   flex: 1 1 0;
   height: 1px;
-  background: color-mix(in srgb, var(--accent, #888) 35%, transparent);
+  background: color-mix(in srgb, var(--filet) 35%, transparent);
 }
 
 .marque {
@@ -1215,16 +1188,18 @@ body {
    faire oublier. */
 .carte.tresor {
   cursor: default;
+  --filet: #f0cf7a;
   border-color: var(--cadre, #6b5524);
   background:
-    radial-gradient(90% 50% at 50% 0%, #ffe6a826, transparent 72%),
-    repeating-linear-gradient(112deg, #ffe0a008 0 1px, transparent 1px 4px),
-    linear-gradient(168deg, var(--velours, #5a4820) 0%, #382d14 52%, #221c0c 100%);
+    radial-gradient(120% 70% at 50% 0%, #ffe6a818, transparent 60%),
+    radial-gradient(100% 100% at 50% 50%, transparent 45%, #00000080 100%),
+    repeating-linear-gradient(33deg, #ffe0a008 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-33deg, #00000024 0 1px, transparent 1px 3px),
+    linear-gradient(170deg, var(--velours, #5a4820) 0%, #2e2410 55%, #191308 100%);
 }
 
 .carte.tresor::before {
-  border-color: #ffe0a026;
-  border-bottom-color: #00000066;
+  border-color: color-mix(in srgb, var(--filet) 60%, transparent);
 }
 
 /* Trois rangs de richesse. Pas de la parure : le joueur doit voir sans lire un
@@ -1254,8 +1229,7 @@ body {
 /* Le tresor reprend l'anatomie commune, en dore : meme titre, meme gemme,
    meme cartouche -- c'est une carte du deck, il faut qu'elle en ait l'air. */
 .carte.tresor .fronton {
-  border-bottom-color: color-mix(in srgb, var(--accent, #dcb464) 60%, transparent);
-  background: linear-gradient(180deg, #ffe6a81c, #ffe6a804);
+  background: linear-gradient(180deg, #ffe6a810, #00000024);
 }
 
 .carte.tresor .nom {
@@ -1263,8 +1237,8 @@ body {
 }
 
 .carte.tresor .gemme {
-  border-color: #f4dc9e;
-  background: radial-gradient(68% 68% at 34% 26%, #fff0c4, #c99a38 44%, #4e3a12 100%);
+  border-color: #f0cf7a;
+  background: radial-gradient(circle at 35% 30%, #7a6230, #2c2210 72%);
 }
 
 .carte.tresor .cartouche {
@@ -3212,8 +3186,9 @@ body {
    Meme sertissage que le cout d'une carte, autre teinte -- ce n'est pas de
    l'energie. */
 .piece-carte .gemme.cartes-donnees {
-  background: radial-gradient(circle at 35% 30%, #d9d9e6, #6b6b7a 70%);
-  color: #14141a;
+  border-color: #9aa4b8;
+  background: radial-gradient(circle at 35% 30%, #4a505c, #1a1c22 72%);
+  color: #e6eaf0;
 }
 
 /* Une arme est froide, une armure est de fer : la teinte de la carte le dit
@@ -3227,10 +3202,9 @@ body {
 }
 
 /* La composition d'une piece fait trois lignes la ou un effet en fait une :
-   une pointe plus petit, et un peu d'air en haut pour passer sous l'ecusson. */
+   une pointe plus petit. */
 .piece-carte .cartouche {
-  padding-top: 3cqw;
-  font-size: 6.6cqw;
+  font-size: 7.4cqw;
 }
 
 /* La rarete au lisere, comme la richesse d'un tresor au cadre. */
