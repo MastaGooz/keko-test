@@ -607,63 +607,55 @@ function butin(descente: Descente, loot: Carte | null, fond: Carte[]): string {
   // reste quelque chose à décider ; vide, il ne dirait plus qu'une chose — que
   // c'est fini — et une case vide au milieu d'un écran se lit comme un endroit
   // où poser, donc comme une tâche en attente.
-  const arrivage =
-    loot === null
-      ? ''
-      : `<div class="rangee-loot">${caseTresor(loot, { ou: 'loot' }, 'vide', 'loot')}</div>`
+  const arrivage = loot === null ? '' : caseTresor(loot, { ou: 'loot' }, 'vide', 'loot')
+
+  // JETER est un SLOT DE LA TAILLE D'UNE CARTE, pas une boîte pleine largeur :
+  // il reçoit une carte, il en a donc la forme. Et il reste un CONTENANT — ce
+  // qu'on y met y reste visible et se repêche jusqu'à Terminer, sinon ce serait
+  // la seule action irréversible d'un écran qui promet l'inverse.
+  const jete =
+    `<button class="emplacement jeter${fond.length === 0 ? '' : ' occupe'}" type="button" ` +
+    `data-action="deplacer" data-ou="fond" data-depot>` +
+    (fond.length === 0
+      ? `<span class="vide">jeter</span>`
+      : piece(fond[fond.length - 1]!, { ou: 'fond', id: fond[fond.length - 1]!.id }) +
+        (fond.length > 1 ? `<span class="compte-jete">${fond.length}</span>` : '')) +
+    `</button>`
 
   return (
-    `<div class="voile">` +
-    `<div class="feuille large">` +
+    `<div class="voile butin">` +
     `<p class="titre">Palier ${descente.profondeur} — ton butin</p>` +
-    arrivage +
+
+    `<div class="slots-butin">${arrivage}${jete}</div>` +
 
     `<p class="note">` +
     (loot === null
-      ? "Tout ce que tu portes pèse dans chaque main. Rien n'est perdu tant que tu n'as pas terminé."
-      : 'Emporte-le, ou jette-le. Tu peux aussi lâcher ceux que tu portes déjà.') +
+      ? `Tout ce que tu portes pèse dans chaque main${
+          portes.length === 0 ? '' : ` — ${portes.length} trésor${portes.length > 1 ? 's' : ''}`
+        }.`
+      : 'Emporte-le dans ta main, ou jette-le.') +
     `</p>` +
-
-    // CE QU'ON PORTE EST UNE MAIN, PAS UN TAS. Les trésors s'y lisent un par
-    // un — on les consulte, on en reprend n'importe lequel — alors qu'un tas
-    // ne montrait que le premier. C'est le même objet que la main de combat,
-    // et c'est voulu : ce sont exactement les cartes qu'on y retrouvera.
-    `<div class="main-butin ${portes.length === 0 ? 'creuse' : ''}" data-depot data-ou="deck" ` +
-    `data-action="deplacer" style="--n:${Math.max(1, portes.length)}">` +
-    `<span class="etiquette-slot">Ce que tu emportes` +
-    `<span class="poids">${
-      portes.length === 0
-        ? 'rien porté'
-        : `${portes.length} — ils pèsent dans chaque main`
-    }</span>` +
-    `</span>` +
-    `<span class="rangee-cartes">` +
-    portes.map((c) => piece(c, { ou: 'deck', id: c.id })).join('') +
-    `</span>` +
-    `</div>` +
-
-    // JETER est un CONTENANT, pas un bouton qui détruit : ce qu'on y met y
-    // reste visible et se repêche, et ce n'est perdu qu'en terminant. Sinon ce
-    // serait la seule action irréversible d'un écran qui promet l'inverse.
-    `<div class="jeter ${fond.length === 0 ? 'creuse' : ''}" data-depot data-ou="fond" ` +
-    `data-action="deplacer">` +
-    `<span class="etiquette-slot">Jeter` +
-    `<span class="poids">${
-      fond.length === 0
-        ? 'perdu en terminant'
-        : `${fond.length} jeté${fond.length > 1 ? 's' : ''} — perdu${fond.length > 1 ? 's' : ''} en terminant`
-    }</span></span>` +
-    `<span class="rangee-cartes">` +
-    fond.map((c) => piece(c, { ou: 'fond', id: c.id })).join('') +
-    `</span>` +
-    `</div>` +
 
     `<button class="bouton secondaire terminer" type="button" data-action="terminerButin"` +
     `${loot === null ? '' : ' disabled'}>` +
     (loot === null ? 'Terminer' : 'Range ton trésor') +
     `</button>` +
-    `</div></div>`
+
+    // CE QU'ON PORTE EST LA MAIN, littéralement : même éventail, même taille,
+    // même enfouissement qu'en combat. Ce sont exactement les cartes qu'on y
+    // retrouvera, et les voir telles quelles est ce qui rend le poids lisible.
+    `<div class="cartes portes" data-depot data-ou="deck" data-action="deplacer">` +
+    portes
+      .map((c, i) => carteTresor(c, `${eventail(i, portes.length)} ${lieu({ ou: 'deck', id: c.id })}`))
+      .join('') +
+    `</div>` +
+    `</div>`
   )
+}
+
+/** Les attributs qui font d'une carte une pièce qu'on peut glisser. */
+function lieu(ou: object): string {
+  return `data-glissable data-lieu="${JSON.stringify(ou).replace(/"/g, '&quot;')}"`
 }
 
 /** Une case : zone de dépôt, bouton de tape, et source de glisser si occupée. */

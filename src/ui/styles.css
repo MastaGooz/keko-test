@@ -1060,7 +1060,11 @@ body {
   letter-spacing: 0.02em;
 }
 
-#cartes .carte.tresor .bandeau {
+/* `.cartes` et non `#cartes` : la main du butin est une main elle aussi, et
+   c'est la meme carte qu'on y voit. Une regle attachee a l'id de la main de
+   combat laissait le bandeau en bas sur l'ecran de butin -- donc coupe par le
+   bord, puisque la carte y plonge pareil. */
+.cartes .carte.tresor .bandeau {
   inset: 0 0 auto 0;
   padding: 0.125rem 0 0.125rem 2.125rem;
   border-radius: 12px 12px 0 0;
@@ -1919,7 +1923,6 @@ body {
    -- et elle deborde de la boite qui est censee la porter. Toute nouvelle zone
    qui accueille des cartes doit etre ajoutee ici. */
 .emplacement .carte,
-.rangee-cartes .carte,
 .butin-piece .carte {
   width: 100%;
   max-width: none;
@@ -2036,214 +2039,139 @@ body {
   font-size: 0.75rem;
 }
 
-/* CE QU'ON PORTE EST UNE MAIN, PAS UN TAS. Les tresors s'y lisent un par un --
-   on les consulte, on en reprend n'importe lequel -- alors qu'un tas ne
-   montrait que le premier. C'est le meme objet que la main de combat, et c'est
-   voulu : ce sont exactement les cartes qu'on y retrouvera.
+/* L'ECRAN DE BUTIN EST L'ECRAN DE JEU. Meme main en bas, meme eventail, meme
+   taille de carte, meme enfouissement -- ce sont exactement les cartes qu'on
+   retrouvera en combat, et les voir telles quelles est ce qui rend le poids
+   lisible. Keko : « je voyais plutot une organisation comme la main de carte en
+   jeu pour les tresors possedes, en bas ».
 
-   L'etiquette passe AU-DESSUS et non a cote : a cote, elle prenait la largeur
-   dont les cartes ont besoin, et au-dela de trois tresors elles se tassaient
-   jusqu'a l'illisible. */
-.main-butin,
-.jeter {
-  display: flex;
+   Le voile passe donc en COLONNE PLEIN ECRAN au lieu de centrer une feuille :
+   la main doit toucher le bas, comme en combat, sinon ce n'est plus la meme
+   main. */
+.voile.butin {
   flex-direction: column;
-  gap: 0.25rem;
-  width: 100%;
-  padding: 0.5rem 0.625rem;
-  border-radius: 10px;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem 0;
+  /* LA MAIN PLONGE SOUS LE BORD, c'est tout l'interet de l'eventail -- et ce
+     qui deborde d'un element `fixed` agrandit quand meme la zone de defilement
+     du document. `body` s'en charge en combat ; ici c'est au voile de le faire,
+     sinon la page redevient defilable et la main saute sous le doigt. */
+  overflow: hidden;
 }
 
-.main-butin {
-  min-height: 7.25rem;
-  border: 1px solid #6b4030;
-  background: linear-gradient(#32211e, #221816);
+.voile.butin .titre {
+  margin: 0;
 }
 
-/* JETER est un CONTENANT, pas un bouton qui detruit : ce qu'on y met reste
-   visible et se repeche, c'est perdu seulement en terminant. */
-.jeter {
-  min-height: 5.5rem;
-  border: 1px dashed var(--trait);
+.voile.butin .note {
+  margin: 0;
+  max-width: 28rem;
+  text-align: center;
+}
+
+/* Les deux slots, cote a cote et A LA TAILLE D'UNE CARTE : ce qui arrive et ce
+   qu'on jette recoivent une carte, ils en ont donc la forme. */
+.slots-butin {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.slots-butin .emplacement {
+  flex: 0 0 auto;
+  width: min(8.5rem, var(--large));
+  min-height: 0;
+}
+
+.emplacement.jeter {
+  position: relative;
+  border-style: dashed;
+  border-color: var(--trait);
   background: #00000055;
   color: var(--muted);
 }
 
-.main-butin .etiquette-slot,
-.jeter .etiquette-slot {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  flex: none;
+/* Jete mais pas encore perdu : eteint, sans etre invisible -- c'est perdu
+   seulement en terminant, et d'ici la on peut le repecher. */
+.emplacement.jeter .piece {
+  opacity: 0.6;
+  filter: grayscale(0.4);
 }
 
-.jeter .etiquette-slot {
+/* Ce qui est dessous n'est pas perdu non plus : on le dit par le compte. */
+.compte-jete {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.4rem;
+  min-width: 1.25rem;
+  padding: 0.0625rem 0.3125rem;
+  border: 1px solid var(--trait);
+  border-radius: 999px;
+  background: #1b1b23;
   color: var(--muted);
+  font-size: 0.6875rem;
+  text-align: center;
 }
 
-.main-butin .poids,
-.jeter .poids {
-  text-align: left;
-  font-family: system-ui, sans-serif;
-  font-weight: 400;
+/* LA MAIN DES TRESORS PORTES. Elle reprend `.cartes` telle quelle -- l'eventail
+   et le recouvrement se calculent depuis `--n`, pose par `eventail()` sur
+   chaque carte.
+
+   `margin-top: auto` plutot qu'une position absolue : elle reste dans le flux,
+   donc elle ne peut pas recouvrir les slots quand il y a beaucoup de tresors. */
+.voile.butin .cartes.portes {
+  margin-top: auto;
+  width: 100%;
 }
 
-/* La rangee de cartes. Elles se recouvrent SEULEMENT s'il le faut : le pas
-   vaut une carte pleine tant que ca tient, et se resserre au-dela -- meme
-   principe que la main de combat, ou une fraction fixe donnait une rangee
-   espacee a trois cartes et un debordement a huit. */
-.rangee-cartes {
-  display: flex;
-  align-items: flex-end;
-  flex: 1 1 auto;
-  min-width: 0;
-  padding-left: 0.125rem;
+/* ELLE REPREND AUSSI `pointer-events: none` DE `.cartes`, et c'est un piege :
+   cette coupure existe pour que la boite de la main de combat, qui couvre toute
+   la largeur, laisse passer les tas et l'orbe qu'elle recouvre. Ici il n'y a
+   rien dessous, et le `auto` qui la compense est scope a `#cartes` -- donc les
+   cartes du butin etaient insensibles au doigt, et la zone de depot avec elles.
+
+   A RETENIR, parce que ca a failli passer : un evenement `pointer*` DISPATCHE A
+   LA MAIN ignore `pointer-events`. Le test synthetique reussissait la ou le
+   doigt n'aurait rien fait. Une sonde qui dispatche doit aussi verifier ce que
+   `elementFromPoint` renvoie. */
+.voile.butin .cartes.portes,
+.cartes.portes .carte {
+  pointer-events: auto;
 }
 
-.rangee-cartes .piece {
-  flex: 0 0 auto;
-  width: 4.25rem;
+/* Une carte du butin se glisse : le navigateur ne doit pas prendre le geste
+   pour un defilement. Meme regle que sur les pieces de l'ancien inventaire. */
+.cartes.portes .carte {
   touch-action: none;
   cursor: grab;
 }
 
-.rangee-cartes .piece + .piece {
-  margin-left: min(0rem, calc((100% - 4.25rem * var(--n, 1)) / max(1, var(--n, 1) - 1)));
-}
-
-/* Jete mais pas encore perdu : eteint, sans etre invisible. */
-.jeter .rangee-cartes .piece {
-  opacity: 0.55;
-  filter: grayscale(0.4);
-}
-
-/* L'ECRAN DE BUTIN SE COMPACTE SUR UN ECRAN COURT, comme tout le reste.
-
-   La feuille a son propre defilement (`overflow: auto`), donc rien ne casse si
-   elle deborde -- et c'est justement le piege : le defaut ne se signale pas, le
-   bouton « Terminer » sort simplement du champ. Mesure a 844x390 avant
-   correction : 565 px de contenu pour 358 de hauteur utile, et le slot de loot
-   prenait a lui seul 185 px, presque la moitie de l'ecran.
-
-   Le jeu ne doit jamais scroller. Verifie a 667x320 et 844x390 avec huit
-   tresors portes et deux jetes, c'est-a-dire le pire cas d'une run de six
-   paliers. */
+/* SUR UN ECRAN COURT, les slots se resserrent : la main prend deja toute la
+   hauteur du bas, et c'est elle qu'il ne faut pas rogner. */
 @media (max-height: 430px) {
-  /* LE LOOT PASSE A COTE, PAS AU-DESSUS. En paysage on a de la largeur et pas
-     de hauteur : empile, cet ecran demandait 408 px de contenu pour 286
-     disponibles, et le bouton « Terminer » sortait simplement du champ.
-
-     `:has()` plutot qu'une classe posee par le rendu : la colonne du loot ne
-     doit exister que s'il y a un loot, sinon la main se retrouve decalee contre
-     une colonne vide. Le socle du projet (Chrome 111) le supporte. */
-  .feuille.large {
-    display: grid;
-    align-items: start;
-    align-content: start;
+  .voile.butin {
+    gap: 0.25rem;
   }
 
-  .feuille.large:has(.rangee-loot) {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .feuille.large > .titre {
-    order: 1;
-    grid-column: 1 / -1;
-  }
-
-  .feuille.large > .rangee-loot {
-    order: 2;
-    grid-row: span 2;
-  }
-
-  .feuille.large > .main-butin {
-    order: 3;
-  }
-
-  .feuille.large > .jeter {
-    order: 4;
-  }
-
-  /* La note descend sous les contenants : en haut, elle separait le loot de ce
-     qui le recoit, ce qui est exactement le trajet que fait le doigt. */
-  .feuille.large > .note {
-    order: 5;
-    grid-column: 1 / -1;
-  }
-
-  .feuille.large > .terminer {
-    order: 6;
-    grid-column: 1 / -1;
-  }
-
-  .emplacement.loot {
-    width: 5rem;
-    min-height: 0;
-  }
-
-  .rangee-cartes .piece {
-    width: 3.25rem;
-  }
-
-  .rangee-cartes .piece + .piece {
-    margin-left: min(0rem, calc((100% - 3.25rem * var(--n, 1)) / max(1, var(--n, 1) - 1)));
-  }
-
-  .main-butin {
-    min-height: 5.25rem;
-  }
-
-  .jeter {
-    min-height: 4rem;
-  }
-
-  .feuille.large {
-    gap: 0.375rem;
-  }
-
-  .feuille.large .titre {
+  .voile.butin .titre {
     font-size: 0.9375rem;
   }
 
-  .feuille.large .note {
+  .voile.butin .note {
     font-size: 0.6875rem;
   }
-}
 
-/* Le palier extreme (un SE couche, 667x320). Meme cause qu'ailleurs : ce sont
-   les CARTES qui commandent la hauteur des contenants, pas leur `min-height`
-   -- une piece de 3,25rem de large fait 4,55rem de haut, et deux contenants
-   empiles coutaient 220 px a eux seuls. */
-@media (max-height: 360px) {
-  .rangee-cartes .piece {
-    width: 2.5rem;
+  .slots-butin {
+    gap: 0.625rem;
   }
 
-  .rangee-cartes .piece + .piece {
-    margin-left: min(0rem, calc((100% - 2.5rem * var(--n, 1)) / max(1, var(--n, 1) - 1)));
-  }
-
-  .emplacement.loot {
-    width: 4rem;
-  }
-
-  .feuille.large {
-    gap: 0.25rem;
-    padding: 0.625rem;
-  }
-
-  /* La note explique le geste, mais ici elle coute une ligne qu'on n'a pas --
-     et le geste, lui, est le meme depuis le debut : prendre ici, poser la. */
-  .feuille.large > .note {
-    display: none;
+  .slots-butin .emplacement {
+    width: min(6rem, var(--large));
   }
 }
-
 
 /* --- les temps du jeu ------------------------------------------------------ */
 

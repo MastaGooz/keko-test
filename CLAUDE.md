@@ -266,10 +266,17 @@ donjon. Ce qui tourne :
   trésors du deck, qui pèsent à chaque main) et **Jeter** (ce qu'on abandonne).
   On en reprend n'importe quel élément, on repose ailleurs.
 
-  **Ce qu'on emporte est une MAIN, pas un tas** : les trésors s'y lisent un par
-  un — on les consulte, on en reprend n'importe lequel — alors qu'un tas ne
-  montrait que le premier. C'est le même objet que la main de combat, et c'est
-  voulu : ce sont exactement les cartes qu'on y retrouvera.
+  **L'ÉCRAN DE BUTIN EST L'ÉCRAN DE JEU.** Ce qu'on emporte est *littéralement*
+  la main : même éventail, même taille de carte, même enfouissement sous le bord,
+  en bas de l'écran. Ce sont exactement les cartes qu'on retrouvera en combat, et
+  les voir telles quelles est ce qui rend le poids lisible. Les deux slots — ce
+  qui arrive, et **Jeter** — sont côte à côte au-dessus, *à la taille d'une
+  carte* : ils reçoivent une carte, ils en ont donc la forme.
+
+  Il y a eu un état intermédiaire, à jeter mentalement : les trésors portés en
+  rangée de vignettes dans une feuille centrée. Ça se lisait, mais ce n'était
+  plus la main — *et c'est la main qu'on veut montrer, puisque c'est elle qu'on
+  alourdit.*
 
   **Le slot de loot disparaît une fois vide.** Tant qu'il est là, il dit qu'il
   reste quelque chose à décider ; vide, il ne dirait plus qu'une chose — que
@@ -283,11 +290,24 @@ donjon. Ce qui tourne :
   sortait simplement du champ. **Vérifier une feuille, c'est vérifier qu'elle ne
   défile pas, pas qu'elle tient dans l'écran.**
 
-  Deux pièges de mesure à retenir : ce sont **les cartes qui commandent la
-  hauteur** d'un contenant, pas son `min-height` — une pièce de 3,25rem de large
-  fait 4,55rem de haut ; et une carte posée dans un contenant doit se voir
-  imposer `width: 100%`, sinon elle garde `--large`, la mesure de la main de
-  combat, et déborde de la boîte censée la porter.
+  **Trois pièges rencontrés en le construisant**, et aucun ne se voyait sans
+  sonde :
+
+  1. **Ce qui déborde d'un élément `fixed` agrandit quand même la zone de
+     défilement du document.** La main plonge sous le bord — c'est tout
+     l'intérêt de l'éventail — et `body` s'en charge en combat ; sur cet écran
+     c'est au voile de porter `overflow: hidden`, sinon la page redevient
+     défilable et la main saute sous le doigt.
+  2. **Un événement `pointer*` dispatché à la main ignore `pointer-events`.**
+     `.cartes` est en `pointer-events: none` (pour laisser passer les tas que la
+     main recouvre) et le `auto` qui compense est scopé à `#cartes` : les cartes
+     du butin étaient donc insensibles au doigt. *Mon test synthétique
+     réussissait là où le doigt n'aurait rien fait.* Une sonde qui dispatche doit
+     aussi vérifier ce que `elementFromPoint` renvoie.
+  3. **Une règle attachée à `#cartes` ne suit pas une deuxième main.** Le bandeau
+     des trésors est remonté en haut de la carte parce que le bas plonge sous
+     l'écran ; scopé à l'id, il restait en bas sur l'écran de butin, donc coupé.
+     Ce qui vaut pour *une carte dans une main* se scope à `.cartes`.
 - **Une seule chose s'engage dans cet écran : le bouton Terminer.** Le fond est
   un contenant et pas un bouton qui détruit — ce qu'on y jette y reste visible
   et se repêche. Keko a signalé l'incohérence : l'abandon était la seule action
