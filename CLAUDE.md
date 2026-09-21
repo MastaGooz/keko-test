@@ -505,8 +505,8 @@ donjon. Ce qui tourne :
   est la cible tactile. **Elles respirent**, décalées les unes des autres : une
   meute qui souffle à l'unisson fait machine, pas vivant. Le joueur, lui, reste
   une barre — il n'est pas un corps de plus à l'écran ;
-- **le joueur n'est PAS un corps sur la scène** : il est une **barre juste
-  au-dessus de sa main**, face aux ennemis. Il a été une barre, puis un corps —
+- **le joueur n'est PAS un corps sur la scène** : il est une **barre dans le
+  coin bas-gauche, au-dessus de la pioche**. Il a été une barre, puis un corps —
   « une barre ne raconte pas un affrontement, un corps qui fait face, si » — et
   il redevient une barre. *Ce n'est pas un retour en arrière, c'est un
   changement de point de vue* : l'affrontement se raconte depuis sa place à lui.
@@ -859,13 +859,25 @@ donjon. Ce qui tourne :
   c'est exactement l'index d'insertion dans la main *une fois retirée*, ce que
   `reordonnerMain` attend. La compter décalait d'un cran tous les déplacements
   vers la gauche — un bug qui ne se voyait que dans ce sens-là.
-- **la carte engagée se tient ENTRE LES DEUX CAMPS**, un peu en hauteur — pas
-  dans la main. Une fois qu'on l'a sortie, elle n'y est plus : l'y remettre
+- **la carte engagée flotte À GAUCHE DES ENNEMIS** — pas dans la main, et pas
+  sous eux. Une fois qu'on l'a sortie, elle n'y est plus : l'y remettre
   pendant qu'on choisit sa cible défaisait le geste, et les arches partaient
   d'un endroit d'où plus rien ne part. Dans l'écart, elle est *sur la
   trajectoire* — entre celui qui frappe et ceux qu'il vise. Sa place dans la
   main reste vide et les voisines se referment, exactement comme quand on la
   tient au doigt.
+
+  **À GAUCHE, et plus sous eux.** Sous le rang, elle ne disait pas d'où part le
+  coup et les arches semblaient naître du sol ; à gauche, elle fait face au
+  groupe — c'est la place du joueur, la même que sa barre de PV.
+
+  Elle s'accroche à une **ancre de largeur nulle**, premier élément du rang,
+  et cette ancre doit **annuler le `gap`** qu'elle ajoute : une largeur nulle ne
+  décale rien, mais le `gap` qui la suit, si — et le groupe glissait d'un
+  demi-rem à l'instant même où l'on vise, donc les cibles bougeaient sous le
+  pouce. D'où le jeton `--gap-rang`, lu par le `gap` du rang et par la marge
+  négative de l'ancre : *une seule source, sinon les deux divergent au premier
+  palier de resserrement.*
 
   Elle est bornée par le **corps** et non par la main : c'est un élément de la
   scène. *Deux essais écartés avant d'arriver là*, et ils valent d'être

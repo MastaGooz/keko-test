@@ -166,7 +166,16 @@ export function render(
   // de l'ÉTAT et pas d'une classe posée à la main : le joueur peut très bien
   // jouer une autre carte pendant ce temps, et le rendu qui s'ensuit balaierait
   // la classe en plein fondu.
+  // LA CARTE ENGAGEE FLOTTE A GAUCHE DES ENNEMIS, et pas sous eux : c'est de
+  // là que partent les arches, donc de face. Elle est posée en ABSOLU dans une
+  // ancre de largeur nulle, premier élément du rang — dans le flux, elle
+  // décalerait tout le groupe à l'instant même où l'on vise, et les cibles
+  // bougeraient sous le pouce.
+  const engagee =
+    visee === null || fini ? '' : `<span class="ancre-engagee"><span class="carte-engagee">${vitrine(visee)}</span></span>`
+
   view.ennemis.innerHTML =
+    engagee +
     etat.ennemis
       .map((ennemi, index) => ({ ennemi, index }))
       .filter(({ ennemi, index }) => ennemi.pv > 0 || agonie.includes(index))
@@ -174,7 +183,7 @@ export function render(
         corpsEnnemi(etat, ennemi, index, visee, fini, agonie.includes(index)),
       )
       .join('')
-  view.moi.innerHTML = bandeauJoueur(etat, visee, fini)
+  view.moi.innerHTML = bandeauJoueur(etat, fini)
   view.energie.innerHTML = fini ? '' : energie(etat, visee)
 
   // Les boutons de main sont reconstruits : l'écoute est déléguée à la racine.
@@ -290,24 +299,14 @@ function corpsEnnemi(
  * la fin du tour — au même endroit que les intentions d'en face, mais jamais la
  * croix de frappe, sinon on lit l'inverse.
  */
-function bandeauJoueur(etat: EtatCombat, visee: Carte | null, fini: boolean): string {
+function bandeauJoueur(etat: EtatCombat, fini: boolean): string {
   const menace = menaceDuTour(etat)
   const marque =
     fini || menace === 0
       ? '<span class="intention calme">—</span>'
       : `<span class="intention encaisse-a-venir">−${menace}</span>`
 
-  // La carte engagée se tient SUR LE JOUEUR, pas dans la main. Une fois qu'on
-  // l'a sortie, elle n'y est plus : la remettre en bas pendant qu'on choisit sa
-  // cible défaisait le geste, et les arches partaient d'un endroit d'où plus
-  // rien ne part. Ici, elles partent de celui qui frappe.
-  //
-  // Elle est posée EN ABSOLU au-dessus de la barre : dans le flux, elle
-  // pousserait la scène vers le haut à l'instant même où l'on vise.
-  const engagee =
-    visee === null || fini ? '' : `<span class="carte-engagee">${vitrine(visee)}</span>`
-
-  return `${engagee}${marque}${jauge(etat.pv, etat.pvMax)}`
+  return `${marque}${jauge(etat.pv, etat.pvMax)}`
 }
 
 /**
