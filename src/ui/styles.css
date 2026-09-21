@@ -2038,12 +2038,43 @@ body {
   color: var(--energie);
 }
 
-/* La destination survolee pendant un glisser. */
+/* La destination survolee pendant un glisser : bleu si elle prend ce qu'on
+   tient, ROUGE si elle le refuse (une armure sur un slot d'arme). Le refus se
+   lit avant de lacher. */
 .survole {
   border-style: solid;
   border-color: var(--joueur);
   background: #5cc8ff24;
   box-shadow: 0 0 0 1px var(--joueur), 0 0 1rem #5cc8ff3d;
+}
+
+.survole-refus {
+  border-style: solid;
+  border-color: #ff5a4a;
+  background: #ff3b2a1f;
+  box-shadow: 0 0 0 1px #ff5a4a, 0 0 1rem #ff3b2a55;
+}
+
+/* Le slot vide allume aussi sa carte fantome, sinon seul le bouton (invisible)
+   change et rien ne se voit. */
+.slot-equip.survole .carte-fantome {
+  border-color: var(--joueur);
+  background: #5cc8ff24;
+}
+
+.slot-equip.survole-refus .carte-fantome {
+  border-color: #ff5a4a;
+  background: #ff3b2a1f;
+}
+
+/* CE QU'ON TIENT N'EST PLUS A SA PLACE. Dans l'armurerie, la piece saisie
+   disparait de sa case le temps du glisser -- elle est dans la main, pas dans
+   le ratelier. `visibility` et non `display` : la case garde sa taille, la
+   grille ne bouge pas sous le doigt. Keko : « il ne faut pas que l'item drag
+   reste a son emplacement original ». */
+.piece-equip.saisie .carte,
+.slot-equip.saisie .carte {
+  visibility: hidden;
 }
 
 /* --- le sac vu comme un inventaire de cartes ------------------------------- */

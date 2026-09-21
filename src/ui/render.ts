@@ -933,6 +933,11 @@ function zoomPiece(piece: Piece): string {
   return cartePiece(piece) + `<span class="set-piece">${set}</span>`
 }
 
+/** Ce qu'une pièce est : une arme a des mains, une armure n'en a pas. */
+function genre(piece: Piece): 'arme' | 'armure' {
+  return 'mains' in piece ? 'arme' : 'armure'
+}
+
 /** Les cases du râtelier qu'on montre même vides. */
 const CASES_RATELIER = 12
 
@@ -1033,8 +1038,10 @@ function cartePiece(piece: Piece): string {
 function pieceEquipement(piece: Piece, slot: object): string {
   const ou = JSON.stringify(slot).replace(/"/g, '&quot;')
   return (
+    // `data-genre` : ce que la pièce EST, pour que le glisser puisse dire
+    // avant le dépôt si le slot survolé la prend.
     `<button class="piece-equip" type="button" ` +
-    `data-glissable data-lieu="${ou}" data-piece="${piece.id}" ` +
+    `data-glissable data-lieu="${ou}" data-piece="${piece.id}" data-genre="${genre(piece)}" ` +
     `data-action="equiper" data-slot="auto">` +
     cartePiece(piece) +
     `</button>`
@@ -1056,9 +1063,11 @@ function slotEquipement(
     ? `<span class="vide">tenu à deux mains</span>`
     : `<span class="vide">${attendu}</span>`
   return (
+    // `data-attend` : ce que le slot PREND. Un slot condamné ne prend rien.
     `<button class="slot-equip ${bloque ? 'condamne' : ''}${piece === null ? '' : ' occupe'}" ` +
-    `type="button" data-depot data-slot="${ou}" data-action="equiper"` +
-    `${piece === null ? '' : ` data-glissable data-lieu="${ou}" data-piece="${piece.id}"`}>` +
+    `type="button" data-depot data-slot="${ou}" data-action="equiper" ` +
+    `data-attend="${bloque ? 'rien' : attendu}"` +
+    `${piece === null ? '' : ` data-glissable data-lieu="${ou}" data-piece="${piece.id}" data-genre="${genre(piece)}"`}>` +
     (piece === null
       ? `<span class="carte-fantome">${vide}</span>`
       : cartePiece(piece)) +

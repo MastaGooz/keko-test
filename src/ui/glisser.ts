@@ -51,10 +51,22 @@ export function brancherGlisser(racine: HTMLElement): void {
     return fente
   }
 
+  /**
+   * La destination sous le doigt s'allume -- en bleu si elle prend ce qu'on
+   * tient, EN ROUGE sinon. Le refus se lit avant de lacher, pas apres : un
+   * slot qui s'allume en bleu puis ne fait rien a l'air casse. Ce que le slot
+   * prend (`data-attend`) et ce que la piece est (`data-genre`) viennent du
+   * rendu ; sans l'un des deux (le butin, le ratelier), c'est un accord.
+   */
   function surligner(cible: Element | null): void {
     if (cible === survole) return
-    survole?.classList.remove('survole')
-    cible?.classList.add('survole')
+    survole?.classList.remove('survole', 'survole-refus')
+    if (cible !== null) {
+      const attend = (cible as HTMLElement).dataset.attend
+      const genre = piece?.dataset.genre
+      const refus = attend !== undefined && genre !== undefined && attend !== genre
+      cible.classList.add(refus ? 'survole-refus' : 'survole')
+    }
     survole = cible
   }
 
