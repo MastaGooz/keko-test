@@ -273,7 +273,7 @@ donjon. Ce qui tourne :
   pas ce qu'elle lui a acheté.
 
   Une carte qui ne frappe pas **montre son bloc là où les autres montrent leurs
-  dégâts** : un badge à zéro se lirait comme une carte inutile.
+  dégâts** : un écusson à zéro se lirait comme une carte inutile.
 
 - **le deck vient de l'équipement** (`logic/armes.ts`) : le **Glaive**, arme
   commune et gratuite, donne 5 Estoc (1⚡/3), 3 Taillade (2⚡/6), 2 Moulinet
@@ -1045,9 +1045,9 @@ donjon. Ce qui tourne :
    écrasent l'illustration ». La réponse n'est pas de rapetisser le chrome — il
    est déjà à la limite du tactile — mais d'agrandir la carte sous lui.
 
-   Ce qui est enfoui est **ce qu'on lit le moins** : la plaque du nom. La
-   fenêtre d'art, la gemme et le chiffre restent au-dessus de la ligne de
-   flottaison — vérifié sur les huit formats.
+   Ce qui est enfoui est **ce qu'on lit le moins** : le pied et la fin du
+   cartouche. Le nom, la gemme, la fenêtre d'art et l'écusson restent au-dessus
+   de la ligne de flottaison — vérifié sur les huit formats.
 
    **Le survol dévoile la carte en entier**, il ne la soulève pas à moitié : à
    la souris on lit la carte avant de la choisir, et une plaque de nom coupée
@@ -1064,14 +1064,14 @@ donjon. Ce qui tourne :
    au bas de l'écran), il rétrécit la scène, donc les corps remontent.
 
 3. **Tout ce qui sert à décider vit sur la bande HAUT-GAUCHE.** Le recouvrement
-   de l'éventail mange la droite, la ligne de flottaison mange le bas. Coût,
-   dégâts/valeur et le bandeau MORTE des trésors y sont calés.
+   de l'éventail mange la droite, la ligne de flottaison mange le bas. La gemme
+   de coût, le nom et l'écusson y sont calés.
 
-   **Un trésor ne se lève jamais** — il est injouable, donc invisable : ce qui
-   passe sous la ligne de flottaison lui est perdu *pour toujours*, là où une
-   carte de combat le retrouve en se levant. D'où le bandeau MORTE remonté en
-   haut de la carte, dans la main seulement. Toute information propre aux
-   trésors doit suivre cette règle.
+   **Un trésor ne se lève jamais** — il ne se vise pas : ce qui passe sous la
+   ligne de flottaison lui est perdu *pour toujours*, là où une carte de combat
+   le retrouve en se levant. Son écusson porte donc son or, et la ligne qui dit
+   ce que rapporte de le brûler est la première du cartouche, juste au-dessus
+   de la ligne. Toute information propre aux trésors doit suivre cette règle.
 
 4. **Le recouvrement vaut 32 % de la carte — sauf s'il faut serrer davantage
    pour tenir dans la colonne.** Les deux formules ont existé seules, et
@@ -1247,10 +1247,10 @@ prend en main. Même vocabulaire que les cartes de combat et le butin, et ça
 compte : *ce qu'on emporte donne des cartes, donc ça se montre comme une carte.*
 **La gemme dit combien de cartes la pièce ajoute au deck** — c'est son poids,
 et c'est la seule information qui rende « équiper plus dilue » lisible sur la
-pièce elle-même : 10 pour le Glaive, 4 pour le Plastron. **Le badge dit sa
+pièce elle-même : 10 pour le Glaive, 4 pour le Plastron. **L'écusson dit sa
 force**, un seul chiffre : les plus gros dégâts ou le plus gros bloc. La
-composition exacte vit dans la bande d'effet de la carte, une ligne par modèle
-— on la consulte en zoomant, on ne décide pas dessus. Un slot vide a la forme
+composition exacte vit dans le cartouche de la carte, une ligne par modèle —
+on la consulte en zoomant, on ne décide pas dessus. Un slot vide a la forme
 de la carte qu'il attend.
 
 Cinq règles qui portent l'écran :
@@ -1262,9 +1262,9 @@ Cinq règles qui portent l'écran :
   la composition d'une pièce ne se lit pas à la taille du râtelier. *Le geste
   qui déplace est celui qui s'y engage.* Dans `input.ts`, c'est l'absence de
   `lieuSource` (posé par le glisser seul) qui distingue les deux. Corollaire :
-  la bande d'effet d'une pièce est un cran plus petite que celle d'une carte
-  (`6.2cqw`), parce que « 2× Moulinet 4⚡ 14 » débordait de 17 % et finissait
-  en points de suspension dans le zoom, là où on vient justement la lire.
+  le cartouche d'une pièce est un cran plus petit que celui d'une carte
+  (`6.6cqw`), parce que trois lignes de composition ne tiennent pas à la taille
+  d'une ligne d'effet.
 
 - **On arrive avec l'équipement gratuit DÉJÀ équipé.** Un joueur qui débarque
   doit pouvoir descendre sans rien comprendre à l'écran ; l'armurerie se
@@ -1691,31 +1691,56 @@ absolu pointerait à la racine du domaine au lieu de `/keko-test/`. Tout est du 
 seulement sur ce qui est soumis au jugement. C'est peu risqué tant que `logic/`
 reste pur : tout l'habillage vit dans `ui/` et se jette sans rien casser.
 
-**LA CARTE EST UN CONTENEUR DE TAILLE, ET TOUTE SON ANATOMIE EN DÉPEND.**
-Gemme, badge, nom, texte d'effet : tout se mesure en `cqw` — une fraction de SA
-largeur — plus jamais en `rem`. Avant, une gemme de 1,75rem faisait 28 px sur
-une carte de 101 comme sur une carte de 262 : le chrome ne changeait pas
-d'échelle avec la carte, et le zoom montrait une grande carte avec de petits
-chiffres. Keko : « les chiffres ne changent pas d'échelle avec la carte ». Les
-proportions sont calées sur la carte de téléphone, là où elles ont été réglées à
-l'oeil : une gemme fait 28 % de la largeur, un nom 13 %, partout — mesuré à
-22 px sur une carte de 77 et 30 sur une carte de 101.
+**L'ANATOMIE DE LA CARTE, en un seul endroit** (`corpsCarte`, dans
+`render.ts`). Quatre fonctions la dessinaient chacune à leur façon — combat,
+trésor, pièce, vitrine — et c'est ainsi que les proportions ont dérivé. Keko :
+« les cartes c'est une catastrophe, le nom en bas, l'échelle des différents
+éléments, ça ne va pas du tout ». Elle se lit désormais de haut en bas, comme
+une carte à jouer :
 
-**Le badge dit le chiffre, l'effet dit le verbe.** Une carte qui ne frappe pas
-montre ce qu'elle donne — un badge à zéro sur une garde se lisait comme une
-carte inutile, et c'est exactement ce que le zoom affichait. Le texte d'effet
-(« Bloque 5 ce tour », « Rend 20 PV », « Vaut 240 or s'il ressort ») vit **à
-droite du badge, sous la fenêtre d'art** : la place que l'éventail recouvre,
-donc celle qu'on lit une fois la carte levée ou zoomée — pas celle où l'on
-décide. La fenêtre d'art s'arrête à 44 % du bas et non 30 pour la lui laisser.
-Une pièce d'équipement y met sa composition, une ligne par modèle.
+- le **fronton** : le nom en petites capitales serif, calé à GAUCHE juste après
+  la **gemme** de coût, qui est sertie dans le coin et mord sur la fenêtre. Pas
+  centré : centré, la gemme mangeait les premières lettres d'un nom long, et
+  dans l'éventail c'est la bande gauche qu'on voit — un nom calé à gauche se
+  lit au repos, un nom centré se fait couper par la voisine ;
+- la **fenêtre d'art**, en arche, presque la moitié de la carte ;
+- l'**écusson** : un médaillon rond à cheval sur le bas de la fenêtre, à
+  gauche, qui porte LE chiffre — dégâts, bloc, soin ou or. Sa teinte dit sa
+  nature (l'accent de la carte, l'acier, le vert, l'or). Une carte qui ne
+  frappe pas montre ce qu'elle donne : un écusson à zéro sur une garde se
+  lirait comme une carte inutile ;
+- le **cartouche** : ce que fait la carte, en toutes lettres, centré, en
+  serif ; le chiffre y reprend l'accent. Une condition (« ce tour seulement »,
+  « et son or est perdu ») va sur une seconde ligne en retrait — à la suite,
+  elle coupait au milieu. Une pièce y met sa composition, une ligne par
+  modèle, une pointe plus petit ;
+- le **pied** : sa nature entre deux filets (« Attaque », « Défense »,
+  « Trésor · cossu », « Arme · commune »). Enfoui au repos, et c'est voulu.
+
+**Tout est en `cqw`** — la carte fait 100cqw de large et 140 de haut — donc les
+proportions sont identiques à 77 px et à 262. Ce qui doit rester au-dessus de
+la ligne de flottaison ET sur la bande gauche que l'éventail laisse voir : la
+gemme et l'écusson. Mesuré : l'écusson le plus bas finit à 382 px sur 390 à
+844x390, à 315 sur 320 à 667x320, sans défilement.
+
+**Les classes de la carte ont des noms à elles** (`fronton`, `cartouche`,
+`ecusson`, `pied`) parce que les évidents étaient pris ailleurs : `.titre` est
+le titre des feuilles, `.entete` l'en-tête de page, et `.effet` existait déjà
+pour les offres — la règle de la carte l'écrasait en `position: absolute`
+sans que rien ne le dise.
+
+**Pour juger une famille de cartes, une planche.** Une page servie par Vite
+qui importe `vitrine` et aligne toutes les variantes côte à côte à taille de
+zoom — c'est ce qui a permis de voir les huit cartes d'un coup, là où le jeu
+n'en montre qu'une à la fois et jamais un trésor sans gagner un combat. À
+refaire dans le scratchpad, pas à commiter.
 
 **Le vocabulaire visuel de la carte**, pour que les prochaines s'y conforment :
 lumière venue du haut (filet clair en haut du jonc intérieur, sombre en bas),
 fenêtre d'art **en arche** et non en rectangle, trait des dessins **lumineux**
-plutôt que filaire (`drop-shadow` de sa propre couleur), gemme et badge
-**sertis** avec un point de lumière en haut à gauche, nom en **serif système**
-(Georgia et sa chaîne de repli — aucune police téléchargée), et un lustre
+plutôt que filaire (`drop-shadow` de sa propre couleur), gemme et écusson
+**sertis** avec un point de lumière en haut à gauche, nom en **serif système en
+petites capitales** (Georgia et sa chaîne de repli — aucune police téléchargée), et un lustre
 oblique qui balaie la carte au moment où on la lève. L'accent de la carte
 teinte le corps, le liseré de la fenêtre et la plaque : une Dague est froide
 jusque dans son carton, un Moulinet est chaud.

@@ -389,42 +389,83 @@ function energie(etat: EtatCombat, _visee: Carte | null): string {
  * ressent pas, une carte en travers de la main, si.
  */
 /**
- * LE CHIFFRE EN TÊTE d'une carte : celui qu'on compare d'un coup d'oeil, sur la
- * bande gauche. Une carte qui ne frappe pas montre ce qu'elle donne — un badge
- * de dégâts à zéro sur une garde se lisait comme une carte inutile, et c'est
- * exactement ce que le zoom affichait.
+ * L'ANATOMIE D'UNE CARTE, EN UN SEUL ENDROIT. Quatre fonctions la dessinaient
+ * chacune à leur façon — carte de combat, trésor, pièce, vitrine — et c'est
+ * ainsi que les proportions ont dérivé. Keko : « le nom en bas, l'échelle des
+ * différents éléments, ça ne va pas du tout ».
+ *
+ * De haut en bas, dans l'ordre où une carte à jouer se lit :
+ * - le **titre** en tête : le nom, en petites capitales, centré. La **gemme**
+ *   de coût est sertie dans son coin gauche et mord sur la fenêtre ;
+ * - la **fenêtre d'art**, en arche, presque la moitié de la carte ;
+ * - l'**écusson**, à cheval sur le bas de la fenêtre, à gauche : LE chiffre
+ *   de la carte — dégâts, bloc, soin ou or. C'est lui qu'on compare d'un coup
+ *   d'oeil, donc il vit sur la bande gauche que l'éventail laisse voir, et
+ *   au-dessus de la ligne de flottaison ;
+ * - le **cartouche** : ce que fait la carte, en toutes lettres, centré ;
+ * - le **pied** : sa nature, en petites capitales discrètes. Enfoui au repos,
+ *   et c'est ce qu'on lit le moins.
  */
-function badge(carte: Carte): string {
-  if (carte.degats > 0) return `<span class="badge degats">${carte.degats}</span>`
-  const bloc = carte.effets?.find((e) => e.type === 'bloc')?.montant ?? 0
-  if (bloc > 0) return `<span class="badge bloc">${GLYPHE.bloc}${bloc}</span>`
-  const soin = carte.effets?.find((e) => e.type === 'soin')?.montant ?? 0
-  if (soin > 0) return `<span class="badge soin">+${soin}</span>`
-  if (carte.type === 'tresor') return `<span class="badge valeur">${carte.valeur ?? 0}</span>`
-  return `<span class="badge degats">0</span>`
+function corpsCarte(
+  nom: string,
+  gemme: string,
+  ecusson: string,
+  lignes: readonly string[],
+  nature: string,
+  marque = '',
+): string {
+  return (
+    `<span class="fronton"><span class="nom">${nom}</span></span>` +
+    `<span class="vitre">${dessin(nom)}</span>` +
+    gemme +
+    ecusson +
+    `<span class="cartouche">${lignes.map((l) => `<span>${l}</span>`).join('')}</span>` +
+    `<span class="pied">${nature}</span>` +
+    marque
+  )
 }
 
 /**
- * CE QUE FAIT LA CARTE, en toutes lettres. À droite du badge, sous la fenêtre
- * d'art : la place que l'éventail recouvre, donc celle qu'on lit une fois la
- * carte levée ou zoomée — pas celle où l'on décide.
- *
- * Une ligne par effet. Le badge dit le chiffre, l'effet dit le verbe.
+ * LE chiffre d'une carte : celui qu'on compare d'un coup d'oeil. Une carte qui
+ * ne frappe pas montre ce qu'elle donne — un écusson à zéro sur une garde se
+ * lirait comme une carte inutile. Un trésor montre son or : c'est ce qu'il est.
  */
-function effet(carte: Carte): string {
-  const lignes: string[] = []
-  if (carte.degats > 0) lignes.push(`Inflige <b>${carte.degats}</b>`)
+function ecusson(carte: Carte): string {
+  if (carte.type === 'tresor') return `<span class="ecusson valeur">${carte.valeur ?? 0}</span>`
+  if (carte.degats > 0) return `<span class="ecusson degats">${carte.degats}</span>`
+  const bloc = carte.effets?.find((e) => e.type === 'bloc')?.montant ?? 0
+  if (bloc > 0) return `<span class="ecusson bloc">${bloc}</span>`
+  const soin = carte.effets?.find((e) => e.type === 'soin')?.montant ?? 0
+  if (soin > 0) return `<span class="ecusson soin">+${soin}</span>`
+  return `<span class="ecusson degats">0</span>`
+}
+
+/** Ce que fait la carte, en toutes lettres : une ligne par effet. */
+function lignes(carte: Carte): string[] {
+  const l: string[] = []
+  if (carte.degats > 0) l.push(`Inflige <b>${carte.degats}</b> dégâts`)
   for (const e of carte.effets ?? []) {
-    if (e.type === 'bloc') lignes.push(`Bloque <b>${e.montant}</b> ce tour`)
-    if (e.type === 'soin') lignes.push(`Rend <b>${e.montant}</b> PV`)
-    if (e.type === 'energie') lignes.push(`<b>+${e.montant}</b> énergie`)
-    if (e.type === 'degatsTous') lignes.push(`<b>${e.montant}</b> à tous`)
+    // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
+    // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
+    if (e.type === 'bloc') l.push(`Bloque <b>${e.montant}</b> dégâts`, `<small>ce tour seulement</small>`)
+    if (e.type === 'soin') {
+      // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
+      // le gain et le prix, sinon elle ment sur ce qu'on joue.
+      if (carte.type === 'tresor') l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>et son or est perdu</small>`)
+      else l.push(`Rend <b>${e.montant}</b> PV`)
+    }
+    if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> énergie`)
+    if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
   }
-  if (carte.type === 'tresor') {
-    lignes.push(`Vaut <b>${carte.valeur ?? 0}</b> or s'il ressort`)
-    if (carte.exil === true) lignes.push(`Brûlé : <b>perdu</b>`)
-  }
-  return `<span class="effet">${lignes.map((l) => `<span>${l}</span>`).join('')}</span>`
+  return l
+}
+
+/** Ce qu'est la carte, pour le pied. */
+function nature(carte: Carte): string {
+  if (carte.type === 'tresor') return `Trésor · ${richesse(carte.valeur ?? 0)}`
+  if (carte.degats > 0) return 'Attaque'
+  if (carte.effets?.some((e) => e.type === 'bloc')) return 'Défense'
+  return 'Action'
 }
 
 function ligneCarte(
@@ -463,15 +504,14 @@ function ligneCarte(
   return (
     `<button class="${classes.join(' ')}" type="button" data-cout="${carte.cout}" ` +
     `${place}${fini ? ' disabled' : ''}>` +
-    `<span class="vitre">${dessin(carte.nom)}</span>` +
-    `<span class="plaque"><span class="nom">${carte.nom}</span></span>` +
-    // Gemme et badge vivent sur la BANDE GAUCHE : c'est la seule partie d'une
-    // carte qui reste visible quand l'éventail se recouvre. Tout ce qui sert
-    // à décider doit tenir là.
-    `<span class="gemme">${carte.cout}</span>` +
-    badge(carte) +
-    effet(carte) +
-    `<span class="marque">${acheve ? '★' : ''}</span>` +
+    corpsCarte(
+      carte.nom,
+      `<span class="gemme">${carte.cout}</span>`,
+      ecusson(carte),
+      lignes(carte),
+      nature(carte),
+      `<span class="marque">${acheve ? '★' : ''}</span>`,
+    ) +
     `</button>`
   )
 }
@@ -506,27 +546,16 @@ function eventail(index: number, total: number): string {
  */
 function carteTresor(carte: Carte, place: string, enMain = true, abordable = true): string {
   const valeur = carte.valeur ?? 0
-  const soin = carte.effets?.find((e) => e.type === 'soin')?.montant ?? 0
-
-  // DANS LA MAIN, UN TRESOR SE JOUE — et le jouer le DETRUIT. Le bandeau ne dit
-  // donc plus « MORTE » mais ce qu'on gagne et ce qu'on perd : c'est tout le
-  // pari du butin, et il doit se lire sans quitter la carte des yeux.
-  //
-  // Il reste sur la bande haut-gauche : ce qui passe à droite est recouvert par
-  // l'éventail, et un trésor ne se lève pas comme une carte de combat.
-  const bandeau = enMain ? `<span class="bandeau brule">+${soin} PV · PERDU</span>` : ''
-
   const classes = ['carte', 'tresor', richesse(valeur)]
   if (enMain) classes.push(abordable ? 'jouable' : 'hors-prix')
 
+  // Hors de la main -- le loot qui arrive, le rebut -- la gemme ne porte pas un
+  // cout mais le sceau : la carte ne se joue pas la, elle se range.
+  const gemme = `<span class="gemme${enMain ? '' : ' sceau'}">${enMain ? carte.cout : sceau()}</span>`
+
   return (
     `<div class="${classes.join(' ')}" ${place}>` +
-    `<span class="vitre">${dessin(carte.nom)}</span>` +
-    `<span class="plaque${enMain ? '' : ' seule'}"><span class="nom">${carte.nom}</span></span>` +
-    bandeau +
-    `<span class="gemme${enMain ? '' : ' sceau'}">${enMain ? carte.cout : sceau()}</span>` +
-    `<span class="badge valeur">${valeur}</span>` +
-    effet(carte) +
+    corpsCarte(carte.nom, gemme, ecusson(carte), lignes(carte), nature(carte)) +
     `</div>`
   )
 }
@@ -935,20 +964,19 @@ function cartePiece(piece: Piece): string {
   const bloque = piece.set.some(({ modele }) => modele.effets?.some((e) => e.type === 'bloc'))
   return (
     `<div class="carte piece-carte ${piece.rarete}${bloque ? ' armure' : ' arme'}" style="--n:1">` +
-    `<span class="vitre">${dessin(piece.nom)}</span>` +
-    `<span class="plaque"><span class="nom">${piece.nom}</span></span>` +
-    `<span class="gemme cartes-donnees" title="${nb} cartes">${nb}</span>` +
-    `<span class="badge ${bloque ? 'bloc' : 'degats'}">${bloque ? GLYPHE.bloc : ''}${force}</span>` +
-    // Sa composition, une ligne par modele, DANS la carte : c'est ce qu'elle
-    // donne, donc c'est son effet.
-    `<span class="effet">` +
-    piece.set
-      .map(({ modele, nombre }) => {
+    corpsCarte(
+      piece.nom,
+      `<span class="gemme cartes-donnees" title="${nb} cartes">${nb}</span>`,
+      `<span class="ecusson ${bloque ? 'bloc' : 'degats'}">${force}</span>`,
+      // Sa composition, une ligne par modele : c'est ce qu'elle donne, donc
+      // c'est son cartouche.
+      piece.set.map(({ modele, nombre }) => {
         const bloc = modele.effets?.find((e) => e.type === 'bloc')?.montant ?? 0
-        return `<span><b>${nombre}×</b> ${modele.nom} ${modele.cout}${GLYPHE.energie} ${bloc > 0 ? GLYPHE.bloc + bloc : modele.degats}</span>`
-      })
-      .join('') +
-    `</span>` +
+        const valeur = bloc > 0 ? GLYPHE.bloc + bloc : modele.degats
+        return `<b>${nombre}×</b> ${modele.nom} <small>${modele.cout}${GLYPHE.energie} ${valeur}</small>`
+      }),
+      `${bloque ? 'Armure' : 'Arme'} · ${piece.rarete}`,
+    ) +
     `</div>`
   )
 }
@@ -1003,11 +1031,13 @@ export function vitrine(carte: Carte, enMain = false): string {
   if (carte.type === 'tresor') return carteTresor(carte, 'style="--n:1"', enMain)
   return (
     `<div class="carte combat" data-cout="${carte.cout}" style="--n:1">` +
-    `<span class="vitre">${dessin(carte.nom)}</span>` +
-    `<span class="plaque"><span class="nom">${carte.nom}</span></span>` +
-    `<span class="gemme">${carte.cout}</span>` +
-    badge(carte) +
-    effet(carte) +
+    corpsCarte(
+      carte.nom,
+      `<span class="gemme">${carte.cout}</span>`,
+      ecusson(carte),
+      lignes(carte),
+      nature(carte),
+    ) +
     `</div>`
   )
 }

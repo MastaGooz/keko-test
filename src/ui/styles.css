@@ -823,8 +823,9 @@ body {
 }
 
 /* La carte plonge sous le bord bas de l'ecran : au repos, on ne voit que sa
-   partie haute -- la gemme, la fenetre d'art, le chiffre de degats. La plaque
-   du nom est sous la ligne de flottaison, et remonte avec la carte visee.
+   partie haute -- le nom, la gemme, la fenetre d'art, l'ecusson. Le pied et
+   la fin du cartouche sont sous la ligne de flottaison, et remontent avec la
+   carte visee.
 
    Pourquoi : a taille contrainte par la HAUTEUR d'ecran, la carte entiere ne
    pouvait pas depasser ~66 px de large sur un telephone -- et une gemme de
@@ -832,9 +833,9 @@ body {
    n'affichant que 76 % de la carte, on gagne un tiers de taille a encombrement
    vertical presque egal : le meme chrome ne pese plus que la moitie.
 
-   24 % : c'est exactement la plaque du nom (26 % de haut). Ce qui disparait
-   est ce qu'on lit le moins, et le chiffre de degats passe juste au-dessus de
-   la ligne. */
+   24 % : le pied et la moitie du cartouche. Ce qui disparait est ce qu'on
+   lit le moins, et l'ecusson passe juste au-dessus de la ligne (mesure :
+   382 px de bas sur 390 a 844x390, 315 sur 320 a 667x320). */
 #cartes .carte {
   /* La MEME plongee, ecrite deux fois -- et ce n'est pas une redondance.
 
@@ -880,133 +881,115 @@ body {
   );
 }
 
-/* La vitre : le dessin, dans la moitie haute. Elle s'arrete a 44 % du bas et
-   non 30 : la bande qu'elle libere porte le TEXTE D'EFFET, qu'il n'y avait
-   nulle part ou loger. */
+/* --- L'ANATOMIE DE LA CARTE ----------------------------------------------
+
+   Une carte se lit de haut en bas, comme une carte a jouer : le FRONTON,
+   la FENETRE d'art en arche, l'ECUSSON a cheval sur le bas de la fenetre, le
+   CARTOUCHE qui dit ce qu'elle fait, le PIED qui dit ce qu'elle est. Le nom
+   vivait en bas sur une plaque et le chiffre au milieu dans un rectangle --
+   Keko : « le nom en bas, l'echelle des differents elements, ca ne va pas du
+   tout ».
+
+   Tout est en cqw : la carte fait 100cqw de large et 140cqw de haut, donc les
+   proportions sont les memes a 77 px et a 262. Ce qui doit rester au-dessus
+   de la ligne de flottaison (76 % de la hauteur sur un telephone, soit 106cqw)
+   ET sur la bande gauche que l'eventail laisse voir : la gemme et l'ecusson.
+   Le titre est centre, ses premieres lettres se voient ; le pied est enfoui,
+   c'est ce qu'on lit le moins. */
+
+.fronton {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 18cqw;
+  display: flex;
+  align-items: center;
+  /* Le nom part de la gemme, il n'est pas centre : centre, la gemme mangeait
+     ses premieres lettres des qu'il etait long (« Moulinet »). Et dans
+     l'eventail c'est la bande GAUCHE qu'on voit -- un nom cale a gauche se lit
+     au repos, un nom centre se fait couper par la voisine. */
+  justify-content: flex-start;
+  padding: 0 4cqw 0 26cqw;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent, #888) 45%, transparent);
+  background: linear-gradient(180deg, #ffffff14, #ffffff03);
+  box-shadow: inset 0 1px 0 #ffffff14;
+}
+
+.carte .nom {
+  min-width: 0;
+  /* Un serif systeme en petites capitales : aucune dependance, et la carte
+     cesse d'avoir la typo d'un formulaire. */
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+  font-variant: small-caps;
+  font-size: 10cqw;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  color: #efe8d6;
+  text-shadow: 0 1px 2px #000d;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* La fenetre d'art : une arche, presque la moitie de la carte. Elle demarre
+   sous le titre et la gemme mord sur son coin -- c'est ce qui la sertit. */
 .vitre {
   position: absolute;
-  inset: 7% 8% 44% 8%;
+  top: 18cqw;
+  left: 7cqw;
+  right: 7cqw;
+  height: 66cqw;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Une arche plutot qu'un rectangle : la fenetre devient un vitrail. */
-  border-radius: 46% 46% 10px 10px / 30% 30% 10px 10px;
+  border-radius: 50% 50% 6cqw 6cqw / 32% 32% 6cqw 6cqw;
   background:
-    radial-gradient(58% 52% at 50% 44%, color-mix(in srgb, var(--accent, #888) 30%, transparent), transparent 74%),
+    radial-gradient(60% 55% at 50% 45%, color-mix(in srgb, var(--accent, #888) 32%, transparent), transparent 74%),
     linear-gradient(180deg, #ffffff0c 0%, transparent 42%),
     linear-gradient(180deg, #0e0e14 0%, #05050a 100%);
   box-shadow:
     inset 0 0 0 1px #00000088,
     inset 0 2px 10px #000000aa,
-    0 0 0 1px color-mix(in srgb, var(--accent, #888) 30%, transparent);
+    0 0 0 1px color-mix(in srgb, var(--accent, #888) 35%, transparent);
   color: var(--accent, var(--muted));
   overflow: hidden;
 }
 
 .dessin {
-  width: 74%;
-  height: 74%;
+  width: 64%;
+  height: 64%;
+  /* Un peu remonte : l'ecusson vient mordre le bas de la fenetre. */
+  translate: 0 -4%;
   /* Le trait rayonne : l'objet est eclaire, pas dessine au crayon. */
   filter:
     drop-shadow(0 0 4cqw color-mix(in srgb, currentColor 60%, transparent))
     drop-shadow(0 1.5cqw 3cqw #000c);
 }
 
-/* La plaque du nom : sous la vitre, degagee a gauche pour le badge. */
-.plaque {
-  position: absolute;
-  inset: auto 0 0 0;
-  display: flex;
-  align-items: center;
-  height: 24%;
-  padding: 0 6cqw;
-  border-top: 1px solid color-mix(in srgb, var(--accent, #888) 70%, transparent);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--accent, #888) 12%, transparent), transparent 55%),
-    linear-gradient(#00000044, #00000088);
-  box-shadow: inset 0 1px 0 #ffffff12;
-}
-
-.carte .nom {
-  min-width: 0;
-  /* Un serif systeme : aucune dependance, et la carte cesse d'avoir la typo
-     d'un formulaire. */
-  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
-  font-size: 13cqw;
-  font-weight: 600;
-  letter-spacing: 0.015em;
-  text-shadow: 0 1px 2px #000c;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* CE QUE FAIT LA CARTE, en toutes lettres. A DROITE du badge, sous la fenetre
-   d'art : la place que l'eventail recouvre, donc celle qu'on lit une fois la
-   carte levee ou zoomee -- pas celle ou l'on decide. Le badge dit le chiffre,
-   l'effet dit le verbe. Une ligne par effet ; une piece d'equipement y met sa
-   composition. */
-.effet {
-  position: absolute;
-  left: 37cqw;
-  right: 5cqw;
-  bottom: 25%;
-  height: 21%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 1cqw;
-  overflow: hidden;
-  color: color-mix(in srgb, var(--fg) 78%, transparent);
-  font-family: system-ui, sans-serif;
-  font-size: 7.5cqw;
-  line-height: 1.2;
-  text-align: left;
-  text-shadow: 0 1px 2px #000c;
-}
-
-.effet > span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.effet b {
-  color: var(--fg);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Le soin, en vert : c'est ce qu'un tresor brule rapporte, et il se lit comme
-   le chiffre qui monte au-dessus du joueur. */
-.badge.soin {
-  border-color: #3ddc7a99;
-  color: #8ee4a1;
-  text-shadow: 0 0 8cqw #3ddc7a66;
-}
-
-/* --- la bande gauche : ce qui survit au recouvrement ---------------------- */
-
+/* La gemme de cout, sertie dans le coin du titre. Son lisere sombre la detache
+   de ce qu'elle recouvre. */
 .gemme {
   position: absolute;
-  top: 5cqw;
-  left: 5cqw;
+  top: 3cqw;
+  left: 3cqw;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28cqw;
-  height: 28cqw;
+  width: 21cqw;
+  height: 21cqw;
   border: 1px solid #f0d488;
   border-radius: 50%;
   background: radial-gradient(68% 68% at 34% 26%, #ffe9ae, #b8862c 42%, #46330f 100%);
   box-shadow:
+    0 0 0 1.5cqw #15151c,
     0 2px 5px #000c,
     inset 0 -2px 4px #00000070,
     0 0 0.5rem #ffc65c3d;
   color: #2a1d06;
-  font-size: 15cqw;
+  font-size: 12cqw;
   font-weight: 800;
+  line-height: 1;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 0 #ffffff5c;
 }
@@ -1024,45 +1007,121 @@ body {
   pointer-events: none;
 }
 
-.gemme {
-  position: absolute;
+/* Quand la gemme ne porte pas un cout mais le sceau (le loot qui arrive). */
+.gemme .dessin-sceau {
+  width: 62%;
+  height: 62%;
 }
 
-.badge {
+/* L'ECUSSON : le chiffre de la carte, dans un medaillon a cheval sur le bas de
+   la fenetre. Sa teinte dit sa nature -- l'accent de la carte pour des degats,
+   l'acier pour du bloc, le vert pour du soin, l'or pour un tresor. */
+.ecusson {
   position: absolute;
+  top: 71cqw;
   left: 5cqw;
-  /* 33 % et non 26 % : la ligne de flottaison est a 24 %, et les cartes des
-     bords, que l'arc de l'eventail fait descendre et pivoter, n'avaient plus
-     que 4 px de garde -- un badge colle au bord bas se lit comme un badge
-     coupe. Mesure : c'est toujours la carte la PLUS A GAUCHE la plus juste,
-     parce que sa rotation fait plonger le coin bas-gauche, celui du badge. */
-  bottom: calc(33% + 4cqw);
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 30cqw;
+  width: 26cqw;
   height: 26cqw;
-  padding: 0 5cqw;
-  border: 1px solid color-mix(in srgb, var(--accent, #888) 75%, transparent);
-  border-radius: 7px;
-  background: linear-gradient(#20202c, #0d0d14);
+  border: 1px solid color-mix(in srgb, var(--teinte, var(--accent, #888)) 85%, transparent);
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 30%, #2a2a36, #0c0c12 72%);
   box-shadow:
-    0 2px 5px #000c,
-    inset 0 1px 0 #ffffff1f,
-    0 0 0.55rem color-mix(in srgb, var(--accent, #888) 26%, transparent);
-  text-shadow: 0 0 8cqw color-mix(in srgb, var(--accent, #888) 60%, transparent);
-  font-size: 16cqw;
-  font-weight: 700;
+    0 0 0 2cqw #17171e,
+    0 0 0 2.5cqw color-mix(in srgb, var(--teinte, var(--accent, #888)) 45%, transparent),
+    0 2px 6px #000d,
+    0 0 4cqw color-mix(in srgb, var(--teinte, var(--accent, #888)) 35%, transparent),
+    inset 0 1px 0 #ffffff1f;
+  color: var(--teinte, var(--accent, var(--fg)));
+  font-size: 14cqw;
+  font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 6cqw color-mix(in srgb, var(--teinte, var(--accent, #888)) 60%, transparent);
+}
+
+.ecusson.bloc {
+  --teinte: #c9d8ea;
+}
+
+.ecusson.soin {
+  --teinte: #8ee4a1;
+}
+
+.ecusson.valeur {
+  --teinte: #ffd98a;
+  background: radial-gradient(circle at 40% 30%, #46381a, #1a140a 72%);
+}
+
+/* LE CARTOUCHE : ce que fait la carte, en toutes lettres, centre sous la
+   fenetre. C'est ce qu'on lit une fois la carte levee ou zoomee -- pas ce sur
+   quoi on decide, l'ecusson s'en charge. Le chiffre y reprend l'accent. */
+.cartouche {
+  position: absolute;
+  top: 96cqw;
+  left: 7cqw;
+  right: 7cqw;
+  height: 30cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5cqw;
+  padding: 1cqw 3cqw 0;
+  overflow: hidden;
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 7.6cqw;
+  line-height: 1.22;
+  text-align: center;
+  color: #d8d1bf;
+  text-shadow: 0 1px 2px #000c;
+}
+
+.cartouche b {
   color: var(--accent, var(--fg));
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.cartouche small {
+  font-size: 85%;
+  color: #a9a396;
+}
+
+/* LE PIED : la nature de la carte, en petites capitales entre deux filets.
+   Enfoui au repos, et c'est voulu : c'est ce qu'on lit le moins. */
+.pied {
+  position: absolute;
+  inset: auto 7cqw 3.5cqw 7cqw;
+  display: flex;
+  align-items: center;
+  gap: 3cqw;
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+  font-variant: small-caps;
+  font-size: 6.6cqw;
+  letter-spacing: 0.1em;
+  line-height: 1;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--accent, #888) 55%, #8f8f9c);
+}
+
+.pied::before,
+.pied::after {
+  content: "";
+  flex: 1 1 0;
+  height: 1px;
+  background: color-mix(in srgb, var(--accent, #888) 35%, transparent);
 }
 
 .marque {
   position: absolute;
-  top: 5cqw;
-  right: 6cqw;
-  font-size: 13cqw;
+  top: 4.5cqw;
+  right: 5cqw;
+  z-index: 2;
+  font-size: 9cqw;
   line-height: 1;
   color: var(--fg);
   text-shadow: 0 0 6px #fff8;
@@ -1098,42 +1157,6 @@ body {
 .carte.hors-prix {
   filter: grayscale(1) brightness(0.5);
   cursor: default;
-}
-
-/* Le gris dit "tu ne peux rien en faire" ; le bandeau MORTE dit pourquoi.
-
-   DANS LA MAIN, il passe en haut de la carte. Un tresor est injouable, donc il
-   ne se vise jamais, donc il ne se leve jamais : tout ce qui vit sous la ligne
-   de flottaison lui est perdu POUR TOUJOURS, la ou une carte de combat le
-   retrouve en se levant. Le bandeau etait en pied de carte, il aurait
-   simplement disparu du jeu. Le nom, lui, reste enfoui -- les cartes de combat
-   le perdent aussi au repos, et le cadre dit deja la richesse.
-
-   Cale a gauche et derriere le sceau : la bande gauche est la seule que le
-   recouvrement de l'eventail laisse voir. Centre, il se serait fait couper en
-   "MOR" par la carte voisine. */
-/* CE QU'ON GAGNE ET CE QU'ON PERD, sur la meme ligne. Le bandeau disait
-   « MORTE » du temps ou un tresor ne faisait rien ; il dit maintenant le pari :
-   des PV tout de suite contre l'or qu'on ne ramenera pas. */
-.carte.tresor .bandeau.brule {
-  color: #f0d9a0;
-  background: linear-gradient(90deg, #6b3f1acc, #3a2410cc);
-  font-size: 8cqw;
-  letter-spacing: 0.02em;
-}
-
-/* `.cartes` et non `#cartes` : la main du butin est une main elle aussi, et
-   c'est la meme carte qu'on y voit. Une regle attachee a l'id de la main de
-   combat laissait le bandeau en bas sur l'ecran de butin -- donc coupe par le
-   bord, puisque la carte y plonge pareil. */
-.cartes .carte.tresor .bandeau {
-  inset: 0 0 auto 0;
-  padding: 2cqw 0 2cqw 34cqw;
-  border-radius: 12px 12px 0 0;
-  color: #cfcfd8;
-  font-size: 0.5rem;
-  letter-spacing: 0.1em;
-  text-align: left;
 }
 
 /* Le survol, seulement la ou il existe : sur un telephone, un :hover reste
@@ -1228,50 +1251,24 @@ body {
     inset 0 1px 0 #ffe9b81f;
 }
 
-.dessin-sceau {
-  width: 72%;
-  height: 72%;
-}
-
-.carte.tresor .gemme {
-  width: 1.625rem;
-  height: 1.625rem;
-  border-color: #f4dc9e;
-  background: radial-gradient(68% 68% at 34% 26%, #fff0c4, #c99a38 44%, #4e3a12 100%);
-  color: #2a1d06;
-  font-size: 0.6875rem;
-}
-
-.carte.tresor .badge {
-  bottom: calc(22% + 1.25rem);
-  background: #17130a;
-  font-size: 0.875rem;
+/* Le tresor reprend l'anatomie commune, en dore : meme titre, meme gemme,
+   meme cartouche -- c'est une carte du deck, il faut qu'elle en ait l'air. */
+.carte.tresor .fronton {
+  border-bottom-color: color-mix(in srgb, var(--accent, #dcb464) 60%, transparent);
+  background: linear-gradient(180deg, #ffe6a81c, #ffe6a804);
 }
 
 .carte.tresor .nom {
-  color: #f0e2c0;
+  color: #f7e9c4;
 }
 
-.carte.tresor .plaque {
-  height: 22%;
-  background: linear-gradient(#00000030, #00000080);
+.carte.tresor .gemme {
+  border-color: #f4dc9e;
+  background: radial-gradient(68% 68% at 34% 26%, #fff0c4, #c99a38 44%, #4e3a12 100%);
 }
 
-/* Le bandeau qui dit ce que la case coute : une place, pour rien. */
-.bandeau {
-  position: absolute;
-  inset: auto 0 0 0;
-  padding: 2cqw 0;
-  background: #000000a0;
-  color: var(--accent, #b09a63);
-  font-size: 8.5cqw;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-align: center;
-}
-
-.carte.tresor .plaque {
-  bottom: 14cqw;
+.carte.tresor .cartouche {
+  color: #e6d9b8;
 }
 
 .bouton {
@@ -1737,14 +1734,6 @@ body {
   white-space: nowrap;
 }
 
-/* Le badge d'une carte qui ne frappe pas : meme place que les degats, autre
-   couleur. C'est la que le joueur lit la puissance d'une carte. */
-.badge.bloc {
-  border-color: #6f7f93;
-  background: linear-gradient(#2b3541, #1a212a);
-  color: #d6e2f0;
-}
-
 /* Le maximum en retrait : on lit d'abord ce qu'il RESTE. */
 .pv-max {
   color: #6f8ea6;
@@ -1968,12 +1957,6 @@ body {
 
 .feuille .secondaire {
   max-width: 14rem;
-}
-
-/* Un tresor qui part au sac n'a pas de bandeau : sa plaque reprend le bas. */
-.carte.tresor .plaque.seule {
-  bottom: 0;
-  height: 26%;
 }
 
 /* --- le sac comme inventaire ---------------------------------------------- */
@@ -3231,13 +3214,11 @@ body {
   --accent: #9aa4b8;
 }
 
-/* La composition d'une piece est plus longue qu'un effet de carte -- « 2×
-   Moulinet 4⚡ 14 » debordait de 17 % de la bande et finissait en points de
-   suspension dans le zoom, la ou on vient justement la lire. Une pointe plus
-   petit ; sur la petite carte elle ne se lisait pas de toute facon, c'est le
-   zoom qui lit. */
-.piece-carte .effet {
-  font-size: 6.2cqw;
+/* La composition d'une piece fait trois lignes la ou un effet en fait une :
+   une pointe plus petit, et un peu d'air en haut pour passer sous l'ecusson. */
+.piece-carte .cartouche {
+  padding-top: 3cqw;
+  font-size: 6.6cqw;
 }
 
 /* La rarete au lisere, comme la richesse d'un tresor au cadre. */
