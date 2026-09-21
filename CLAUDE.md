@@ -1679,6 +1679,25 @@ absolu pointerait à la racine du domaine au lieu de `/keko-test/`. Tout est du 
 seulement sur ce qui est soumis au jugement. C'est peu risqué tant que `logic/`
 reste pur : tout l'habillage vit dans `ui/` et se jette sans rien casser.
 
+**LA CARTE EST UN CONTENEUR DE TAILLE, ET TOUTE SON ANATOMIE EN DÉPEND.**
+Gemme, badge, nom, texte d'effet : tout se mesure en `cqw` — une fraction de SA
+largeur — plus jamais en `rem`. Avant, une gemme de 1,75rem faisait 28 px sur
+une carte de 101 comme sur une carte de 262 : le chrome ne changeait pas
+d'échelle avec la carte, et le zoom montrait une grande carte avec de petits
+chiffres. Keko : « les chiffres ne changent pas d'échelle avec la carte ». Les
+proportions sont calées sur la carte de téléphone, là où elles ont été réglées à
+l'oeil : une gemme fait 28 % de la largeur, un nom 13 %, partout — mesuré à
+22 px sur une carte de 77 et 30 sur une carte de 101.
+
+**Le badge dit le chiffre, l'effet dit le verbe.** Une carte qui ne frappe pas
+montre ce qu'elle donne — un badge à zéro sur une garde se lisait comme une
+carte inutile, et c'est exactement ce que le zoom affichait. Le texte d'effet
+(« Bloque 5 ce tour », « Rend 20 PV », « Vaut 240 or s'il ressort ») vit **à
+droite du badge, sous la fenêtre d'art** : la place que l'éventail recouvre,
+donc celle qu'on lit une fois la carte levée ou zoomée — pas celle où l'on
+décide. La fenêtre d'art s'arrête à 44 % du bas et non 30 pour la lui laisser.
+Une pièce d'équipement y met sa composition, une ligne par modèle.
+
 **Le vocabulaire visuel de la carte**, pour que les prochaines s'y conforment :
 lumière venue du haut (filet clair en haut du jonc intérieur, sombre en bas),
 fenêtre d'art **en arche** et non en rectangle, trait des dessins **lumineux**

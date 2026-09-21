@@ -745,6 +745,18 @@ body {
   flex: 0 0 auto;
   width: var(--large);
   aspect-ratio: 5 / 7;
+  /* LA CARTE EST UN CONTENEUR DE TAILLE, ET C'EST TOUTE SON ANATOMIE QUI EN
+     DEPEND. Gemme, badge, nom, texte d'effet : tout se mesure en `cqw`, une
+     fraction de SA largeur -- plus jamais en rem. Avant, une gemme de 1,75rem
+     faisait 28 px sur une carte de 101 comme sur une carte de 262 : le chrome
+     ne changeait pas d'echelle avec la carte, et le zoom montrait une grande
+     carte avec de petits chiffres. Keko : « les chiffres ne changent pas
+     d'echelle avec la carte ».
+
+     Les proportions sont calees sur la carte de telephone (101 px de large),
+     la ou elles ont ete reglees a l'oeil : une gemme fait 28 % de la largeur,
+     un nom 13 %, partout. */
+  container-type: inline-size;
   padding: 0;
   overflow: hidden;
   border: 1px solid var(--trait);
@@ -868,10 +880,12 @@ body {
   );
 }
 
-/* La vitre : le dessin, dans la moitie haute. */
+/* La vitre : le dessin, dans la moitie haute. Elle s'arrete a 44 % du bas et
+   non 30 : la bande qu'elle libere porte le TEXTE D'EFFET, qu'il n'y avait
+   nulle part ou loger. */
 .vitre {
   position: absolute;
-  inset: 7% 8% 30% 8%;
+  inset: 7% 8% 44% 8%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -894,8 +908,8 @@ body {
   height: 74%;
   /* Le trait rayonne : l'objet est eclaire, pas dessine au crayon. */
   filter:
-    drop-shadow(0 0 0.4rem color-mix(in srgb, currentColor 60%, transparent))
-    drop-shadow(0 0.15rem 0.3rem #000c);
+    drop-shadow(0 0 4cqw color-mix(in srgb, currentColor 60%, transparent))
+    drop-shadow(0 1.5cqw 3cqw #000c);
 }
 
 /* La plaque du nom : sous la vitre, degagee a gauche pour le badge. */
@@ -904,8 +918,8 @@ body {
   inset: auto 0 0 0;
   display: flex;
   align-items: center;
-  height: 26%;
-  padding: 0 0.375rem;
+  height: 24%;
+  padding: 0 6cqw;
   border-top: 1px solid color-mix(in srgb, var(--accent, #888) 70%, transparent);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--accent, #888) 12%, transparent), transparent 55%),
@@ -918,7 +932,7 @@ body {
   /* Un serif systeme : aucune dependance, et la carte cesse d'avoir la typo
      d'un formulaire. */
   font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
-  font-size: 0.8125rem;
+  font-size: 13cqw;
   font-weight: 600;
   letter-spacing: 0.015em;
   text-shadow: 0 1px 2px #000c;
@@ -928,17 +942,61 @@ body {
   text-overflow: ellipsis;
 }
 
+/* CE QUE FAIT LA CARTE, en toutes lettres. A DROITE du badge, sous la fenetre
+   d'art : la place que l'eventail recouvre, donc celle qu'on lit une fois la
+   carte levee ou zoomee -- pas celle ou l'on decide. Le badge dit le chiffre,
+   l'effet dit le verbe. Une ligne par effet ; une piece d'equipement y met sa
+   composition. */
+.effet {
+  position: absolute;
+  left: 37cqw;
+  right: 5cqw;
+  bottom: 25%;
+  height: 21%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1cqw;
+  overflow: hidden;
+  color: color-mix(in srgb, var(--fg) 78%, transparent);
+  font-family: system-ui, sans-serif;
+  font-size: 7.5cqw;
+  line-height: 1.2;
+  text-align: left;
+  text-shadow: 0 1px 2px #000c;
+}
+
+.effet > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.effet b {
+  color: var(--fg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Le soin, en vert : c'est ce qu'un tresor brule rapporte, et il se lit comme
+   le chiffre qui monte au-dessus du joueur. */
+.badge.soin {
+  border-color: #3ddc7a99;
+  color: #8ee4a1;
+  text-shadow: 0 0 8cqw #3ddc7a66;
+}
+
 /* --- la bande gauche : ce qui survit au recouvrement ---------------------- */
 
 .gemme {
   position: absolute;
-  top: 0.3125rem;
-  left: 0.3125rem;
+  top: 5cqw;
+  left: 5cqw;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 28cqw;
+  height: 28cqw;
   border: 1px solid #f0d488;
   border-radius: 50%;
   background: radial-gradient(68% 68% at 34% 26%, #ffe9ae, #b8862c 42%, #46330f 100%);
@@ -947,7 +1005,7 @@ body {
     inset 0 -2px 4px #00000070,
     0 0 0.5rem #ffc65c3d;
   color: #2a1d06;
-  font-size: 0.9375rem;
+  font-size: 15cqw;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 0 #ffffff5c;
@@ -972,19 +1030,19 @@ body {
 
 .badge {
   position: absolute;
-  left: 0.3125rem;
+  left: 5cqw;
   /* 33 % et non 26 % : la ligne de flottaison est a 24 %, et les cartes des
      bords, que l'arc de l'eventail fait descendre et pivoter, n'avaient plus
      que 4 px de garde -- un badge colle au bord bas se lit comme un badge
      coupe. Mesure : c'est toujours la carte la PLUS A GAUCHE la plus juste,
      parce que sa rotation fait plonger le coin bas-gauche, celui du badge. */
-  bottom: calc(33% + 0.25rem);
+  bottom: calc(33% + 4cqw);
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.875rem;
-  height: 1.625rem;
-  padding: 0 0.3125rem;
+  min-width: 30cqw;
+  height: 26cqw;
+  padding: 0 5cqw;
   border: 1px solid color-mix(in srgb, var(--accent, #888) 75%, transparent);
   border-radius: 7px;
   background: linear-gradient(#20202c, #0d0d14);
@@ -992,8 +1050,8 @@ body {
     0 2px 5px #000c,
     inset 0 1px 0 #ffffff1f,
     0 0 0.55rem color-mix(in srgb, var(--accent, #888) 26%, transparent);
-  text-shadow: 0 0 0.5rem color-mix(in srgb, var(--accent, #888) 60%, transparent);
-  font-size: 1rem;
+  text-shadow: 0 0 8cqw color-mix(in srgb, var(--accent, #888) 60%, transparent);
+  font-size: 16cqw;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -1002,9 +1060,9 @@ body {
 
 .marque {
   position: absolute;
-  top: 0.3125rem;
-  right: 0.375rem;
-  font-size: 0.8125rem;
+  top: 5cqw;
+  right: 6cqw;
+  font-size: 13cqw;
   line-height: 1;
   color: var(--fg);
   text-shadow: 0 0 6px #fff8;
@@ -1060,7 +1118,7 @@ body {
 .carte.tresor .bandeau.brule {
   color: #f0d9a0;
   background: linear-gradient(90deg, #6b3f1acc, #3a2410cc);
-  font-size: 0.5625rem;
+  font-size: 8cqw;
   letter-spacing: 0.02em;
 }
 
@@ -1070,7 +1128,7 @@ body {
    bord, puisque la carte y plonge pareil. */
 .cartes .carte.tresor .bandeau {
   inset: 0 0 auto 0;
-  padding: 0.125rem 0 0.125rem 2.125rem;
+  padding: 2cqw 0 2cqw 34cqw;
   border-radius: 12px 12px 0 0;
   color: #cfcfd8;
   font-size: 0.5rem;
@@ -1203,17 +1261,17 @@ body {
 .bandeau {
   position: absolute;
   inset: auto 0 0 0;
-  padding: 0.125rem 0;
+  padding: 2cqw 0;
   background: #000000a0;
   color: var(--accent, #b09a63);
-  font-size: 0.5625rem;
+  font-size: 8.5cqw;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-align: center;
 }
 
 .carte.tresor .plaque {
-  bottom: 0.9375rem;
+  bottom: 14cqw;
 }
 
 .bouton {
@@ -3364,9 +3422,6 @@ body {
   box-shadow: 0 1.5rem 3rem #000e, 0 0 0 1px #ffffff1f;
 }
 
-.zoom-carte .carte .nom {
-  font-size: 1rem;
-}
 
 @keyframes zoom-entree {
   from {
