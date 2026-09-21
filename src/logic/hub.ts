@@ -163,7 +163,16 @@ export function rentrer(hub: Hub, butin: number): Hub {
  * c'est exactement la spirale que la décision de design veut éviter.
  */
 export function perdreLEquipement(hub: Hub): Hub {
-  return { ...hub, chargement: { mains: [ARME_GRATUITE, null], armure: ARMURE_GRATUITE } }
+  // LES PIÈCES GRATUITES SONT UNIQUES. Si on est descendu sans le Plastron, il
+  // est resté au râtelier : le remettre au chargement sans l'en retirer le
+  // dédoublait. Keko : « si je pars sans plastron, quand je meurs le plastron
+  // est dédoublé ». Ce qu'on rééquipe sort donc de la réserve s'il y était.
+  const gratuites = new Set([ARME_GRATUITE.id, ARMURE_GRATUITE.id])
+  return {
+    ...hub,
+    reserve: hub.reserve.filter((p) => !gratuites.has(p.id)),
+    chargement: { mains: [ARME_GRATUITE, null], armure: ARMURE_GRATUITE },
+  }
 }
 
 /** Le chargement est-il seulement descendable ? Il faut au moins de quoi frapper. */

@@ -130,6 +130,21 @@ const COTTE: Armure = {
   verifier('une arme ET une armure, les deux gratuites',
     apresMort.chargement.mains[0] === ARME_GRATUITE &&
       apresMort.chargement.armure === ARMURE_GRATUITE)
+
+  // Parti SANS le Plastron (laissé au râtelier), mort : il ne doit exister
+  // qu'une fois, au chargement, pas une au râtelier et une au chargement.
+  const sansPlastron = {
+    ...h,
+    reserve: [...h.reserve, ARMURE_GRATUITE],
+    chargement: { mains: [ARME_GRATUITE, null] as [Arme, null], armure: null },
+  }
+  const revenu = perdreLEquipement(sansPlastron)
+  const exemplaires =
+    revenu.reserve.filter((p) => p.id === ARMURE_GRATUITE.id).length +
+    (revenu.chargement.armure?.id === ARMURE_GRATUITE.id ? 1 : 0)
+  verifier('mort sans le Plastron : il n’est pas dédoublé', exemplaires === 1)
+  verifier('...et il est au chargement, pas au râtelier',
+    revenu.chargement.armure === ARMURE_GRATUITE && !revenu.reserve.includes(ARMURE_GRATUITE))
 }
 
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)

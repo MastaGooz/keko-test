@@ -1381,7 +1381,10 @@ Cinq règles qui portent l'écran :
   sur ce qu'on emporte* — et l'arme lourde n'aurait l'air de rien coûter.
 - **Mourir ne peut pas bloquer le jeu** : on perd l'équipement emporté, et le
   râtelier rend une arme et une armure gratuites. C'est le seul endroit où vit
-  ce garde-fou.
+  ce garde-fou. **Les pièces gratuites sont uniques** : ce que la mort rééquipe
+  sort de la réserve s'il y était. Parti sans le Plastron, il restait au
+  râtelier et la mort en posait un second au chargement — Keko : « le plastron
+  est dédoublé ». Deux vérifications le tiennent dans `hub.verif.ts`.
 
 **La suite, dans l'ordre :** les effets uniques des trésors (le soin actuel est
 un placeholder, et il inverse le dilemme — voir plus bas), puis une deuxième
