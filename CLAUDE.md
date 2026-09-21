@@ -1318,7 +1318,9 @@ Cinq règles qui portent l'écran :
   case reste** : le bouton n'a ni bord ni fond, donc cacher sa carte faisait
   disparaître le slot entier — « les slots disparaissent durant le drag, seule
   la carte devrait ». La case saisie prend l'habit d'une case vide, en
-  pointillé.
+  pointillé — et elle dit ce qu'elle attend (« arme », « armure »), par un
+  `::after` qui lit `data-attend` : sans lui c'était un pointillé muet (Keko :
+  « le nom du slot d'où j'ai drag n'apparaît plus »).
 
   **Le slot survolé s'allume en bleu s'il prend ce qu'on tient, EN ROUGE
   sinon** — une armure sur un slot d'arme, ou un slot condamné par une arme à

@@ -2112,9 +2112,27 @@ body {
    case vide : le pointille a la forme de la carte partie. */
 .piece-equip.saisie,
 .slot-equip.saisie {
+  position: relative;
   border: 1px dashed var(--trait);
   border-radius: 12px;
   background: #00000040;
+}
+
+/* ...ET ELLE DIT CE QU'ELLE ATTEND, comme une case vide : le nom du slot
+   (« arme », « armure ») vient de `data-attend`, pose par le rendu. Sans lui,
+   la case saisie etait un pointille muet -- Keko : « le nom du slot d'ou j'ai
+   drag n'apparait plus ». */
+.slot-equip.saisie::after {
+  content: attr(data-attend);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  pointer-events: none;
 }
 
 /* --- le sac vu comme un inventaire de cartes ------------------------------- */
