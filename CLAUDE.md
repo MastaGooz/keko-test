@@ -321,12 +321,25 @@ donjon. Ce qui tourne :
      des trésors est remonté en haut de la carte parce que le bas plonge sous
      l'écran ; scopé à l'id, il restait en bas sur l'écran de butin, donc coupé.
      Ce qui vaut pour *une carte dans une main* se scope à `.cartes`.
-- **Une seule chose s'engage dans cet écran : le bouton Terminer.** Le fond est
-  un contenant et pas un bouton qui détruit — ce qu'on y jette y reste visible
-  et se repêche. Keko a signalé l'incohérence : l'abandon était la seule action
-  irréversible d'un écran qui promet l'inverse, une tape suffisait à effacer une
-  Couronne sans confirmation ni retour. **Si on ajoute une action à cet écran,
-  elle doit être réversible jusqu'à Terminer.**
+- **JETER DEMANDE DEUX GESTES.** On pose la carte dans le slot de rebut, on voit
+  ce qu'on s'apprête à perdre — *« Tu vas perdre Idole — 90 d'or »* — puis on
+  valide. Tant que ce n'est pas validé, la carte se ressort du slot : c'est un
+  lieu comme les autres. Et on ne peut pas terminer sur une carte en attente.
+
+  **Le bouton n'apparaît qu'une fois la carte posée.** Avant, il n'y aurait rien
+  à valider, et *un bouton toujours là se presse par habitude* — ce qui est
+  exactement la fausse manip qu'on veut empêcher.
+
+  **Le slot n'en tient qu'une, et c'est la validation qui permet d'en jeter
+  plusieurs** : sans elle, la première carte le bloquait. Poser sur un slot
+  occupé **fait ressortir l'ancien**, jamais ne l'écrase.
+
+  *Ce qui a changé, et il faut le savoir* : la règle était « rien n'est
+  irréversible avant Terminer », et le fond se repêchait. **Un rebut validé ne
+  revient plus** — la confirmation a remplacé la réversibilité. C'est le choix de
+  Keko, et il tient : deux gestes explicites protègent mieux qu'un retour en
+  arrière qu'il faut penser à faire. Le reste de l'écran, lui, n'engage
+  toujours rien avant Terminer.
 - **Le modèle est un `Lieu`, pas une liste de gestes.** Tout déplacement est
   « prendre ici, poser là », et l'échange n'est pas un cas particulier : ce que
   la destination délogeait repart à la place qu'on vient de libérer. Sans ça,

@@ -17,6 +17,7 @@ import {
   deplacerTresor,
   extraire,
   terminerButin,
+  validerJet,
   resoudreCombat,
   tresorsAuDeck,
 } from './descente.ts'
@@ -51,7 +52,9 @@ function jusquAuButin(descente: Descente, rng = createRng(1), pv = 40): Descente
 /** Palier complet : amélioration prise, trésor rangé, palier refermé. */
 function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): Descente {
   const range = deplacerTresor(jusquAuButin(descente, rng, pv), { ou: 'loot' }, cible)
-  return terminerButin(range)
+  // Jeter demande deux gestes : sans la validation, l'ecran refuse de se
+  // refermer sur une decision qui n'est pas prise.
+  return terminerButin(cible.ou === 'jeter' ? validerJet(range) : range)
 }
 
 // --- la structure de la run ------------------------------------------------
@@ -87,7 +90,7 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
 {
   const rng = createRng(3)
   const apres = jusquAuChoix(commencerDescente(rng, REGLAGE), rng, 40)
-  const range = deplacerTresor(choisirCarte(apres, 0, rng), { ou: 'loot' }, { ou: 'fond' })
+  const range = validerJet(deplacerTresor(choisirCarte(apres, 0, rng), { ou: 'loot' }, { ou: 'jeter' }))
   const descendue = descendre(terminerButin(range), rng)
   verifier(
     'on descend avec les PV qu\'il reste, pas avec la barre pleine',
@@ -112,20 +115,45 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   // Le fond reste un contenant : ce qu'on y jette se repêche jusqu'à Terminer.
   const auButin = jusquAuButin(d, rng)
   const neuf = auButin.phase.type === 'butin' ? auButin.phase.loot! : null!
-  const enCours = deplacerTresor(auButin, { ou: 'loot' }, { ou: 'fond' })
-  verifier('jeter au fond vide la main', enCours.phase.type === 'butin' && enCours.phase.loot === null)
-  verifier('on peut terminer une fois la main vide', terminerButin(enCours) !== enCours)
+  const enCours = deplacerTresor(auButin, { ou: 'loot' }, { ou: 'jeter' })
+  verifier('poser dans le slot de rebut vide la main',
+    enCours.phase.type === 'butin' && enCours.phase.loot === null && enCours.phase.aJeter === neuf)
 
-  const repeche = deplacerTresor(enCours, { ou: 'fond', id: neuf.id }, { ou: 'loot' })
-  verifier("et on peut le repêcher tant qu'on n'a pas terminé",
-    repeche.phase.type === 'butin' && repeche.phase.loot === neuf)
+  // JETER DEMANDE DEUX GESTES : tant que ce n'est pas valide, rien n'est acquis
+  // et on ne peut pas refermer l'ecran sur une decision qui n'est pas prise.
+  verifier('on ne peut pas terminer avec une carte en attente', terminerButin(enCours) === enCours)
+
+  const repeche = deplacerTresor(enCours, { ou: 'jeter' }, { ou: 'loot' })
+  verifier("on peut la ressortir du slot tant qu'on n'a pas valide",
+    repeche.phase.type === 'butin' && repeche.phase.loot === neuf && repeche.phase.aJeter === null)
+
+  const valide = validerJet(enCours)
+  verifier('valider libere le slot et range la carte au fond',
+    valide.phase.type === 'butin' && valide.phase.aJeter === null && valide.phase.fond.length === 1)
+  verifier('et on peut alors terminer', terminerButin(valide) !== terminerButin(enCours))
+  verifier('valider a vide ne fait rien', validerJet(valide) === valide)
+
+  // Le slot n'en tient qu'une, mais on en jette autant qu'on veut EN VALIDANT.
+  const deuxieme = validerJet(deplacerTresor(valide, { ou: 'deck', id: valide.deck.find((c) => c.type === 'tresor')!.id }, { ou: 'jeter' }))
+  verifier('on peut en jeter plusieurs a la suite',
+    deuxieme.phase.type === 'butin' && deuxieme.phase.fond.length === 2)
+
+  // Poser sur un slot occupe ECHANGE : la carte qui s'y trouvait ressort, elle
+  // n'est pas ecrasee -- ce serait la fausse manip que ce slot existe pour
+  // empecher.
+  const aPorte = enCours.deck.find((c) => c.type === 'tresor')!
+  const occupe = deplacerTresor(enCours, { ou: 'deck', id: aPorte.id }, { ou: 'jeter' })
+  verifier("poser sur un slot occupe fait ressortir l'ancien, il n'est pas ecrase",
+    occupe.phase.type === 'butin' &&
+      occupe.phase.aJeter === aPorte &&
+      occupe.deck.includes(neuf))
 
   // On peut aussi LACHER UN TRESOR DEJA PORTE pour faire de la place au neuf :
   // c'est ce qui remplace le sac, et c'est un choix plus large qu'avant
   // puisqu'il porte sur tout ce qu'on transporte.
   const ancien = auButin.deck.find((c) => c.type === 'tresor')!
   const avant = tresorsAuDeck(auButin)
-  const allege = deplacerTresor(auButin, { ou: 'deck', id: ancien.id }, { ou: 'fond' })
+  const allege = validerJet(deplacerTresor(auButin, { ou: 'deck', id: ancien.id }, { ou: 'jeter' }))
   verifier('un trésor déjà porté peut être abandonné', tresorsAuDeck(allege) === avant - 1)
 
   const refermé = terminerButin(deplacerTresor(allege, { ou: 'loot' }, { ou: 'deck' }))
@@ -151,20 +179,21 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   verifier("et le reprendre de la pile vers l'emplacement de loot",
     tresorsAuDeck(repris) === 0 && repris.phase.type === 'butin' && repris.phase.loot === loot)
 
-  const versFond = deplacerTresor(auDeck, { ou: 'deck', id: loot!.id }, { ou: 'fond' })
-  verifier('et le sortir de la pile directement vers le fond',
+  const versFond = validerJet(deplacerTresor(auDeck, { ou: 'deck', id: loot!.id }, { ou: 'jeter' }))
+  verifier('et le sortir de la pile directement vers le rebut',
     tresorsAuDeck(versFond) === 0 && versFond.phase.type === 'butin' && versFond.phase.fond[0] === loot)
 
   // Le fond est un contenant : ce qu'on y jette se reprend jusqu'à Terminer.
-  const jete = deplacerTresor(d, { ou: 'loot' }, { ou: 'fond' })
-  verifier("jeter au fond vide l'emplacement de loot",
+  const jete = validerJet(deplacerTresor(d, { ou: 'loot' }, { ou: 'jeter' }))
+  verifier("jeter vide l'emplacement de loot",
     jete.phase.type === 'butin' && jete.phase.loot === null && jete.phase.fond.length === 1)
-  verifier('mais le trésor y reste visible, pas encore perdu',
+  verifier('mais le trésor reste au rebut, pas encore perdu',
     jete.phase.type === 'butin' && jete.phase.fond[0] === loot)
 
-  const repeche = deplacerTresor(jete, { ou: 'fond', id: loot!.id }, { ou: 'deck' })
-  verifier('on peut le repêcher du fond vers le deck',
-    tresorsAuDeck(repeche) === 1 && repeche.phase.type === 'butin' && repeche.phase.fond.length === 0)
+  // UN REBUT VALIDE NE REVIENT PLUS. C'est le prix du bouton : la confirmation
+  // remplace la reversibilite, et c'est elle qui protege des fausses manips.
+  const repeche = deplacerTresor(jete, { ou: 'jeter' }, { ou: 'deck' })
+  verifier('un rebut valide ne se repeche pas : le slot est vide', repeche === jete)
 
   const perdu = terminerButin(jete)
   verifier("c'est en terminant qu'il est perdu, et seulement là",
@@ -180,7 +209,7 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
     dedans.deck.length === 12 && tresorsAuDeck(dedans) === 1)
   verifier('le trésor rangé compte dans le butin', butinTransporte(dedans) > 0)
 
-  const laisse = palier(commencerDescente(rng, REGLAGE), { ou: 'fond' }, rng)
+  const laisse = palier(commencerDescente(rng, REGLAGE), { ou: 'jeter' }, rng)
   verifier("laisser le trésor garde quand même l'amélioration",
     laisse.deck.length === 11 && tresorsAuDeck(laisse) === 0)
   verifier('un trésor laissé est perdu, pas reporté', butinTransporte(laisse) === 0)
@@ -206,7 +235,7 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   const rng = createRng(19)
   let d = commencerDescente(rng, REGLAGE)
   for (let i = 1; i < REGLAGE.profondeurMax; i += 1) {
-    d = descendre(palier(d, { ou: 'fond' }, rng), rng)
+    d = descendre(palier(d, { ou: 'jeter' }, rng), rng)
   }
   verifier('on atteint le dernier palier', d.profondeur === REGLAGE.profondeurMax)
 

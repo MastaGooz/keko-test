@@ -112,17 +112,29 @@ export const CHOIX_PAR_PALIER = 3
  * particuliers : tout déplacement est « prendre ici, poser là », et l'échange
  * tombe tout seul.
  */
-export type Lieu = { ou: 'loot' } | { ou: 'deck'; id?: string } | { ou: 'fond'; id?: string }
+export type Lieu =
+  | { ou: 'loot' }
+  | { ou: 'deck'; id?: string }
+  /** Le slot d'attente : ce qu'on s'apprête à jeter, tant que ce n'est pas validé. */
+  | { ou: 'jeter' }
 
 export type Phase =
   | { type: 'combat' }
   /** Une amélioration à choisir parmi plusieurs. */
   | { type: 'recompense'; cartes: Carte[] }
   /**
-   * Puis le rangement du butin. `loot` est l'emplacement d'arrivée : tant
-   * qu'il n'est pas vide, on ne peut pas terminer.
+   * Puis le rangement du butin.
+   *
+   * `loot` est l'emplacement d'arrivée et `aJeter` le slot de rebut : tant que
+   * l'un des deux n'est pas vide, on ne peut pas terminer. `fond` garde ce qui
+   * a été jeté ET validé — c'est perdu en terminant, pas avant.
+   *
+   * **JETER DEMANDE DEUX GESTES**, et c'est voulu : on pose la carte dans le
+   * slot, on voit ce qu'on s'apprête à perdre, puis on valide. Sans ça une
+   * fausse manip suffisait à condamner une Couronne. Tant qu'elle n'est pas
+   * validée, on peut la ressortir du slot — c'est un lieu comme les autres.
    */
-  | { type: 'butin'; loot: Carte | null; fond: Carte[] }
+  | { type: 'butin'; loot: Carte | null; aJeter: Carte | null; fond: Carte[] }
   | { type: 'sortie' }
   | { type: 'fin'; issue: 'extrait' | 'mort' }
 
@@ -227,12 +239,17 @@ export function choisirCarte(descente: Descente, index: number, rng: Rng): Desce
   return {
     ...descente,
     deck: [...descente.deck, carte],
-    phase: { type: 'butin', loot: tresorRecompense(descente.profondeur, rng, cle), fond: [] },
+    phase: {
+      type: 'butin',
+      loot: tresorRecompense(descente.profondeur, rng, cle),
+      aJeter: null,
+      fond: [],
+    },
   }
 }
 
 /** L'étal du rangement : les trois contenants, le temps d'un déplacement. */
-type Etal = { deck: Carte[]; loot: Carte | null; fond: Carte[] }
+type Etal = { deck: Carte[]; loot: Carte | null; aJeter: Carte | null; fond: Carte[] }
 
 /** Retire le trésor qui se trouve à ce lieu, et laisse la place vide. */
 function prendre(etal: Etal, lieu: Lieu): { carte: Carte | null; etal: Etal } {
@@ -247,11 +264,8 @@ function prendre(etal: Etal, lieu: Lieu): { carte: Carte | null; etal: Etal } {
     return { carte: carte ?? null, etal: { ...etal, deck } }
   }
 
-  const i = etal.fond.findIndex((c) => c.id === lieu.id)
-  if (i < 0) return { carte: null, etal }
-  const fond = [...etal.fond]
-  const [carte] = fond.splice(i, 1)
-  return { carte: carte ?? null, etal: { ...etal, fond } }
+  // Le slot de rebut : on peut en ressortir la carte tant qu'on n'a pas validé.
+  return { carte: etal.aJeter, etal: { ...etal, aJeter: null } }
 }
 
 /** Pose le trésor à ce lieu, et renvoie celui qu'il en délogeait. */
@@ -262,8 +276,10 @@ function poser(etal: Etal, lieu: Lieu, carte: Carte): { sortant: Carte | null; e
   // La pile du deck n'a pas de places : on pose dessus.
   if (lieu.ou === 'deck') return { sortant: null, etal: { ...etal, deck: [...etal.deck, carte] } }
 
-  // Jeté au fond : encore récupérable, jusqu'à ce qu'on termine.
-  return { sortant: null, etal: { ...etal, fond: [...etal.fond, carte] } }
+  // Le slot de rebut n'en tient qu'une : ce qui s'y trouvait déjà ressort, il
+  // n'est pas écrasé. Une carte qui disparaît en en posant une autre serait
+  // exactement la fausse manip que ce slot existe pour empêcher.
+  return { sortant: etal.aJeter, etal: { ...etal, aJeter: carte } }
 }
 
 /**
@@ -280,6 +296,7 @@ export function deplacerTresor(descente: Descente, source: Lieu, cible: Lieu): D
   const depart: Etal = {
     deck: descente.deck,
     loot: descente.phase.loot,
+    aJeter: descente.phase.aJeter,
     fond: descente.phase.fond,
   }
   const { carte, etal: vide } = prendre(depart, source)
@@ -291,7 +308,7 @@ export function deplacerTresor(descente: Descente, source: Lieu, cible: Lieu): D
   return {
     ...descente,
     deck: final.deck,
-    phase: { type: 'butin', loot: final.loot, fond: final.fond },
+    phase: { type: 'butin', loot: final.loot, aJeter: final.aJeter, fond: final.fond },
   }
 }
 
@@ -300,8 +317,31 @@ export function deplacerTresor(descente: Descente, source: Lieu, cible: Lieu): D
  * et c'est ici, et seulement ici, que ce qui traîne au fond est perdu.
  */
 export function terminerButin(descente: Descente): Descente {
-  if (descente.phase.type !== 'butin' || descente.phase.loot !== null) return descente
+  if (descente.phase.type !== 'butin') return descente
+  // Ni trésor en attente d'arrivée, ni carte en attente d'être jetée : on ne
+  // referme pas l'écran sur une décision qui n'est pas prise.
+  if (descente.phase.loot !== null || descente.phase.aJeter !== null) return descente
   return { ...descente, phase: apresChoix(descente) }
+}
+
+/**
+ * Confirme le rebut : la carte du slot rejoint le tas des jetés, et le slot se
+ * libère pour la suivante.
+ *
+ * **C'est ce qui permet d'en jeter plusieurs d'affilée** — le slot n'en tient
+ * qu'une, et sans validation il restait bloqué par la première. Le tas, lui,
+ * n'est perdu qu'en terminant : valider n'est pas détruire, c'est ranger.
+ */
+export function validerJet(descente: Descente): Descente {
+  if (descente.phase.type !== 'butin' || descente.phase.aJeter === null) return descente
+  return {
+    ...descente,
+    phase: {
+      ...descente.phase,
+      aJeter: null,
+      fond: [...descente.phase.fond, descente.phase.aJeter],
+    },
+  }
 }
 
 /** Descendre d'un palier. C'est le pari : plus bas, mais avec ces PV-là. */

@@ -15,6 +15,7 @@ export type Action =
   | { type: 'nouveau' }
   | { type: 'choisirCarte'; index: number }
   | { type: 'deplacer'; source: Lieu; cible: Lieu }
+  | { type: 'validerJet' }
   | { type: 'terminerButin' }
   | { type: 'descendre' }
   | { type: 'extraire' }
@@ -43,7 +44,7 @@ function lireCible(noeud: HTMLElement): Lieu {
   const ou = noeud.dataset.ou
   if (ou === 'deck') return { ou: 'deck' }
   if (ou === 'loot') return { ou: 'loot' }
-  return { ou: 'fond' }
+  return { ou: 'jeter' }
 }
 
 /**
@@ -92,6 +93,9 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         break
       case 'deplacer':
         dispatch({ type: 'deplacer', source: lireSource(noeud), cible: lireCible(noeud) })
+        break
+      case 'validerJet':
+        dispatch({ type: 'validerJet' })
         break
       case 'terminerButin':
         dispatch({ type: 'terminerButin' })

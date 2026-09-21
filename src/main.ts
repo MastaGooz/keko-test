@@ -27,6 +27,7 @@ import {
   deplacerTresor,
   resoudreCombat,
   terminerButin,
+  validerJet,
 } from './logic/descente.ts'
 import type { Occupation } from './ui/render.ts'
 import { mount, render, vitrine } from './ui/render.ts'
@@ -198,6 +199,7 @@ const ACTIONS_DE_JEU = new Set([
   'finTour',
   'choisirCarte',
   'deplacer',
+  'validerJet',
   'terminerButin',
   'descendre',
   'extraire',
@@ -367,6 +369,9 @@ function dispatch(action: Action): void {
       break
     case 'deplacer':
       descente = deplacerTresor(descente, action.source, action.cible)
+      break
+    case 'validerJet':
+      descente = validerJet(descente)
       break
     case 'terminerButin':
       descente = terminerButin(descente)

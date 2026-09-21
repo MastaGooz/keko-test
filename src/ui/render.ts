@@ -551,7 +551,7 @@ function palier(descente: Descente): string {
     case 'recompense':
       return recompense(descente, descente.phase.cartes)
     case 'butin':
-      return butin(descente, descente.phase.loot, descente.phase.fond)
+      return butin(descente, descente.phase.loot, descente.phase.aJeter, descente.phase.fond)
     case 'sortie':
       return sortie(descente)
     case 'fin':
@@ -599,7 +599,12 @@ function recompense(descente: Descente, cartes: Carte[]): string {
  * 2. **Chaque destination est aussi un bouton.** Le glisser est du confort ;
  *    sur un téléphone c'est la tape qui porte la fonctionnalité.
  */
-function butin(descente: Descente, loot: Carte | null, fond: Carte[]): string {
+function butin(
+  descente: Descente,
+  loot: Carte | null,
+  aJeter: Carte | null,
+  fond: Carte[],
+): string {
   const portes = descente.deck.filter((c) => c.type === 'tresor')
 
   // LE SLOT DE LOOT DISPARAIT UNE FOIS VIDE. Tant qu'il est là, il dit qu'il
@@ -608,31 +613,40 @@ function butin(descente: Descente, loot: Carte | null, fond: Carte[]): string {
   // où poser, donc comme une tâche en attente.
   const arrivage = loot === null ? '' : caseTresor(loot, { ou: 'loot' }, 'vide', 'loot')
 
-  // JETER est un SLOT DE LA TAILLE D'UNE CARTE, pas une boîte pleine largeur :
-  // il reçoit une carte, il en a donc la forme. Et il reste un CONTENANT — ce
-  // qu'on y met y reste visible et se repêche jusqu'à Terminer, sinon ce serait
-  // la seule action irréversible d'un écran qui promet l'inverse.
+  // JETER DEMANDE DEUX GESTES : on pose la carte dans le slot, on voit ce qu'on
+  // s'apprête à perdre, puis on VALIDE. Sans ça une fausse manip suffisait à
+  // condamner une Couronne — et le slot restait bloqué par la première carte,
+  // alors qu'on doit pouvoir en jeter plusieurs d'affilée.
+  //
+  // Tant qu'elle n'est pas validée, on peut la ressortir : c'est un lieu comme
+  // les autres, et rien n'est perdu avant Terminer.
   const jete =
-    `<button class="emplacement jeter${fond.length === 0 ? '' : ' occupe'}" type="button" ` +
-    `data-action="deplacer" data-ou="fond" data-depot>` +
-    (fond.length === 0
+    `<button class="emplacement jeter${aJeter === null ? '' : ' occupe'}" type="button" ` +
+    `data-action="deplacer" data-ou="jeter" data-depot>` +
+    (aJeter === null
       ? `<span class="vide">jeter</span>`
-      : piece(fond[fond.length - 1]!, { ou: 'fond', id: fond[fond.length - 1]!.id }) +
-        (fond.length > 1 ? `<span class="compte-jete">${fond.length}</span>` : '')) +
-    `</button>`
+      : piece(aJeter, { ou: 'jeter' })) +
+    (fond.length === 0 ? '' : `<span class="compte-jete">${fond.length}</span>`) +
+    `</button>` +
+    (aJeter === null
+      ? ''
+      : `<button class="valider-jet" type="button" data-action="validerJet">Jeter</button>`)
 
   return (
     `<div class="voile butin">` +
     `<p class="titre">Palier ${descente.profondeur} — ton butin</p>` +
 
-    `<div class="slots-butin">${arrivage}${jete}</div>` +
+    `<div class="slots-butin">${arrivage}` +
+    `<span class="pile-jeter">${jete}</span></div>` +
 
     `<p class="note">` +
-    (loot === null
-      ? `Tout ce que tu portes pèse dans chaque main${
-          portes.length === 0 ? '' : ` — ${portes.length} trésor${portes.length > 1 ? 's' : ''}`
-        }.`
-      : 'Emporte-le dans ta main, ou jette-le.') +
+    (aJeter !== null
+      ? `Tu vas perdre ${aJeter.nom}${aJeter.valeur === undefined ? '' : ` — ${aJeter.valeur} d'or`}.`
+      : loot === null
+        ? `Tout ce que tu portes pèse dans chaque main${
+            portes.length === 0 ? '' : ` — ${portes.length} trésor${portes.length > 1 ? 's' : ''}`
+          }.`
+        : 'Emporte-le dans ta main, ou jette-le.') +
     `</p>` +
 
     // UN BOUTON QUI AGIT, pas un bouton qui attend. Il disait « Range ton
@@ -642,11 +656,11 @@ function butin(descente: Descente, loot: Carte | null, fond: Carte[]): string {
     // Aucune action nouvelle n'est nécessaire : c'est un déplacement vers le
     // deck, et faute de provenance `input.ts` prend celle du loot — exactement
     // ce que fait déjà une tape sur un contenant.
-    (loot === null
+    (loot !== null
       ? `<button class="bouton secondaire terminer" type="button" ` +
-        `data-action="terminerButin">Terminer</button>`
+        `data-action="deplacer" data-ou="deck">Prendre</button>`
       : `<button class="bouton secondaire terminer" type="button" ` +
-        `data-action="deplacer" data-ou="deck">Prendre</button>`) +
+        `data-action="terminerButin"${aJeter === null ? '' : ' disabled'}>Terminer</button>`) +
 
     // CE QU'ON PORTE EST LA MAIN, littéralement : même éventail, même taille,
     // même enfouissement qu'en combat. Ce sont exactement les cartes qu'on y
