@@ -1277,6 +1277,13 @@ composition exacte vit dans le cartouche de la carte, une ligne par modèle —
 on la consulte en zoomant, on ne décide pas dessus. Un slot vide a la forme
 de la carte qu'il attend.
 
+**L'armurerie est un LIEU, pas un calque.** Son voile est opaque — pierre
+sombre, la matière des cartes sans l'accent. Il laissait voir le combat en
+transparence : des bêtes qui respirent derrière un râtelier, alors qu'au hub il
+n'y a pas de combat. Keko : « on voit le combat derrière en arrière-plan, c'est
+bizarre non ? ». Les écrans de palier, eux, restent des calques : on est
+encore dans le donjon.
+
 Cinq règles qui portent l'écran :
 
 - **La tape REGARDE, le glisser DÉPLACE.** Taper une pièce — au râtelier ou

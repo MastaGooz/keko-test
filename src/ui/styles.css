@@ -3176,6 +3176,18 @@ body {
   gap: 0.75rem;
   padding: max(0.75rem, env(safe-area-inset-top)) 1rem;
   overflow: hidden;
+  /* L'ARMURERIE EST UN LIEU, PAS UN CALQUE. Le voile laissait voir le combat
+     en transparence -- des bêtes qui respirent derrière un râtelier, alors
+     qu'au hub il n'y a pas de combat. Keko : « on voit le combat derrière en
+     arrière-plan, c'est bizarre non ? ». Fond OPAQUE, en pierre sombre : la
+     même matière que les cartes (grain croisé, vignettage), sans l'accent. */
+  background:
+    radial-gradient(120% 70% at 50% 0%, #ffffff0a, transparent 60%),
+    radial-gradient(100% 100% at 50% 50%, transparent 40%, #00000099 100%),
+    repeating-linear-gradient(33deg, #ffffff04 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-33deg, #00000030 0 1px, transparent 1px 3px),
+    linear-gradient(170deg, #211e27 0%, #15131a 55%, #0e0d12 100%);
+  backdrop-filter: none;
 }
 
 .voile.armurerie .titre {
