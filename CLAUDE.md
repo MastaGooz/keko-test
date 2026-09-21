@@ -1241,6 +1241,17 @@ frappent toutes ; avec le Plastron, quatorze dont quatre qui ne frappent pas.
 de descendre : sans lui, une pièce de plus serait un gain sans contrepartie
 visible.
 
+**Une pièce d'équipement est une CARTE**, comme tout ce qu'on manipule dans ce
+jeu — une ligne de texte se lisait comme une entrée d'inventaire, une carte se
+prend en main. Même vocabulaire que les cartes de combat et le butin, et ça
+compte : *ce qu'on emporte donne des cartes, donc ça se montre comme une carte.*
+**La gemme dit combien de cartes la pièce ajoute au deck** — c'est son poids,
+et c'est la seule information qui rende « équiper plus dilue » lisible sur la
+pièce elle-même : 10 pour le Glaive, 4 pour le Plastron. **Le badge dit sa
+force**, un seul chiffre : les plus gros dégâts ou le plus gros bloc. La
+composition exacte tient sous la carte, en légende — on la consulte, on ne
+décide pas dessus. Un slot vide a la forme de la carte qu'il attend.
+
 Quatre règles qui portent l'écran :
 
 - **On arrive avec l'équipement gratuit DÉJÀ équipé.** Un joueur qui débarque

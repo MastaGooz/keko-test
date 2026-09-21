@@ -865,20 +865,58 @@ function armurerie(hub: Hub): string {
   )
 }
 
+/**
+ * UNE PIÈCE D'ÉQUIPEMENT EST UNE CARTE, comme tout ce qu'on manipule dans ce
+ * jeu. Une ligne de texte se lisait comme une entrée d'inventaire ; une carte
+ * se prend en main. C'est le même vocabulaire que les cartes de combat et le
+ * butin — gemme, fenêtre d'art en arche, badge, plaque — et ça compte : *ce
+ * qu'on emporte donne des cartes, donc ça se montre comme une carte.*
+ *
+ * Ce que porte chaque emplacement, et pourquoi :
+ * - **la gemme dit combien de cartes la pièce ajoute au deck.** C'est son POIDS,
+ *   et c'est la seule information qui rende « équiper plus dilue » lisible sur
+ *   la pièce elle-même — une gemme à 10 contre une gemme à 4 ;
+ * - **le badge dit sa force** : les plus gros dégâts qu'elle donne, ou le plus
+ *   gros bloc. Un seul chiffre, celui qu'on compare d'un coup d'oeil ;
+ * - la composition exacte tient sous la carte, en légende : on la consulte, on
+ *   ne décide pas dessus.
+ */
+function cartePiece(piece: Piece): string {
+  const nb = piece.set.reduce((t, { nombre }) => t + nombre, 0)
+  const force = Math.max(
+    ...piece.set.map(({ modele }) => {
+      const bloc = modele.effets?.find((e) => e.type === 'bloc')?.montant ?? 0
+      return bloc > 0 ? bloc : modele.degats
+    }),
+  )
+  const bloque = piece.set.some(({ modele }) => modele.effets?.some((e) => e.type === 'bloc'))
+  return (
+    `<div class="carte piece-carte ${piece.rarete}${bloque ? ' armure' : ' arme'}" style="--n:1">` +
+    `<span class="vitre">${dessin(piece.nom)}</span>` +
+    `<span class="plaque"><span class="nom">${piece.nom}</span></span>` +
+    `<span class="gemme cartes-donnees" title="${nb} cartes">${nb}</span>` +
+    `<span class="badge ${bloque ? 'bloc' : 'degats'}">${bloque ? GLYPHE.bloc : ''}${force}</span>` +
+    `</div>`
+  )
+}
+
 /** Une pièce au râtelier : elle se glisse, et une tape l'équipe. */
 function pieceEquipement(piece: Piece, slot: object): string {
   const ou = JSON.stringify(slot).replace(/"/g, '&quot;')
   return (
-    `<button class="piece-equip ${piece.rarete}" type="button" ` +
+    `<button class="piece-equip" type="button" ` +
     `data-glissable data-lieu="${ou}" data-piece="${piece.id}" ` +
     `data-action="equiper" data-slot="auto">` +
-    `<span class="piece-nom">${piece.nom}</span>` +
+    cartePiece(piece) +
     `<span class="piece-detail">${detailPiece(piece)}</span>` +
     `</button>`
   )
 }
 
-/** Un slot du chargement : vide, occupé, ou condamné par une arme à deux mains. */
+/**
+ * Un slot du chargement : vide, occupé, ou condamné par une arme à deux mains.
+ * Vide, il a la forme de la carte qu'il attend — c'est une place, pas un objet.
+ */
 function slotEquipement(
   piece: Piece | null,
   slot: object,
@@ -894,9 +932,8 @@ function slotEquipement(
     `type="button" data-depot data-slot="${ou}" data-action="equiper"` +
     `${piece === null ? '' : ` data-glissable data-lieu="${ou}" data-piece="${piece.id}"`}>` +
     (piece === null
-      ? vide
-      : `<span class="piece-nom">${piece.nom}</span>` +
-        `<span class="piece-detail">${detailPiece(piece)}</span>`) +
+      ? `<span class="carte-fantome">${vide}</span>`
+      : cartePiece(piece) + `<span class="piece-detail">${detailPiece(piece)}</span>`) +
     `</button>`
   )
 }

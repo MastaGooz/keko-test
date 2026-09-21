@@ -30,6 +30,30 @@ const TRACES: Record<string, string> = {
     '<path d="M16.9 2.4l4.4 3.7-4.6 3.5z"/>' +
     '<path d="M12 20.5l8-9 3.5 3-8 9z"/>',
 
+  // --- l'armure : ce qui encaisse ---
+  // Un ecu : la pointe en bas, la bosse au centre. C'est ce qu'on met entre
+  // soi et le coup.
+  Garde:
+    '<path d="M16 3l10 3.5v9c0 6.5-4.3 11-10 13.5C10.3 26.5 6 22 6 15.5v-9z"/>' +
+    '<circle cx="16" cy="14.5" r="2.4"/>',
+  // Un pavois, plus large et plus lourd : il couvre, il ne pare pas.
+  Rempart:
+    '<path d="M6 4h20v12c0 7-4.5 11.5-10 13.5C10.5 27.5 6 23 6 16z"/>' +
+    '<path d="M6 12h20M16 4v25.5"/>',
+
+  // --- les pieces d'equipement : ce qu'on emporte, pas ce qu'on joue ---
+  // Le Glaive : une lame droite, large, avec sa garde. Vue de face, plantee.
+  Glaive:
+    '<path d="M16 2.5l3 5.5v13h-6V8z"/><path d="M8 21h16"/>' +
+    '<path d="M14 23h4v5h-4z"/><circle cx="16" cy="29.5" r="1.6"/>' +
+    '<path d="M16 8v12"/>',
+  // Le Plastron : un torse d'acier, epaules et col. Ce qu'on porte, pas ce
+  // qu'on tient.
+  Plastron:
+    '<path d="M9 5.5l7-2.5 7 2.5 4 4.5-2.5 3v13.5H7.5V13L5 10z"/>' +
+    '<path d="M12.5 5.5c1 2.5 6 2.5 7 0"/><path d="M16 9v17"/>' +
+    '<path d="M10.5 14.5l5.5 2 5.5-2"/>',
+
   // --- le butin ---
   Couronne:
     '<path d="M4.5 22.5l-1.5-12 6.5 5 6.5-9 6.5 9 6.5-5-1.5 12z"/>' +
