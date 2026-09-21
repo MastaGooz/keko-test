@@ -278,6 +278,19 @@ donjon. Ce qui tourne :
   plus la main — *et c'est la main qu'on veut montrer, puisque c'est elle qu'on
   alourdit.*
 
+  **Le bouton AGIT, il n'attend pas.** Il disait « Range ton trésor » et restait
+  désactivé tant qu'on n'avait pas glissé : il ne faisait qu'énoncer ce qui
+  manquait. Il dit « Prendre » tant qu'il y a un trésor à décider, « Terminer »
+  ensuite. *Aucune action nouvelle n'a été nécessaire* — c'est un déplacement
+  vers le deck, et faute de provenance la source vaut le loot, exactement comme
+  une tape sur un contenant.
+
+  **Un slot a la forme d'une carte, et il la GARDE** (`aspect-ratio: 1 / 1.4`).
+  Il s'étirait sur la hauteur de son voisin, donc « Jeter » changeait de taille
+  selon qu'il y avait un loot à côté ou non, et selon qu'il contenait déjà
+  quelque chose. *Un emplacement qui bouge au moment où l'on y dépose est un
+  emplacement qu'on rate au doigt.*
+
   **Le slot de loot disparaît une fois vide.** Tant qu'il est là, il dit qu'il
   reste quelque chose à décider ; vide, il ne dirait plus qu'une chose — que
   c'est fini — et *une case vide au milieu d'un écran se lit comme un endroit où

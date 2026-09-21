@@ -2075,15 +2075,24 @@ body {
    qu'on jette recoivent une carte, ils en ont donc la forme. */
 .slots-butin {
   display: flex;
-  align-items: stretch;
+  align-items: flex-start;
   justify-content: center;
   gap: 1rem;
 }
 
+/* UN SLOT A LA FORME D'UNE CARTE, ET IL LA GARDE. Il s'etirait sur la hauteur
+   de son voisin (`align-items: stretch`), donc « Jeter » changeait de taille
+   selon qu'il y avait un loot a cote ou non, et selon qu'il contenait deja
+   quelque chose. Un emplacement qui bouge quand on y depose est un emplacement
+   qu'on rate au doigt.
+
+   `aspect-ratio` plutot qu'une hauteur calculee : c'est la meme proportion que
+   la carte qu'il recoit (1,4), et elle suit la largeur toute seule. */
 .slots-butin .emplacement {
   flex: 0 0 auto;
   width: min(8.5rem, var(--large));
   min-height: 0;
+  aspect-ratio: 1 / 1.4;
 }
 
 .emplacement.jeter {

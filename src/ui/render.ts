@@ -636,10 +636,18 @@ function butin(descente: Descente, loot: Carte | null, fond: Carte[]): string {
       : 'Emporte-le dans ta main, ou jette-le.') +
     `</p>` +
 
-    `<button class="bouton secondaire terminer" type="button" data-action="terminerButin"` +
-    `${loot === null ? '' : ' disabled'}>` +
-    (loot === null ? 'Terminer' : 'Range ton trésor') +
-    `</button>` +
+    // UN BOUTON QUI AGIT, pas un bouton qui attend. Il disait « Range ton
+    // trésor » et restait désactivé tant qu'on n'avait pas glissé : il ne
+    // faisait qu'énoncer ce qui manquait. « Prendre » fait le geste.
+    //
+    // Aucune action nouvelle n'est nécessaire : c'est un déplacement vers le
+    // deck, et faute de provenance `input.ts` prend celle du loot — exactement
+    // ce que fait déjà une tape sur un contenant.
+    (loot === null
+      ? `<button class="bouton secondaire terminer" type="button" ` +
+        `data-action="terminerButin">Terminer</button>`
+      : `<button class="bouton secondaire terminer" type="button" ` +
+        `data-action="deplacer" data-ou="deck">Prendre</button>`) +
 
     // CE QU'ON PORTE EST LA MAIN, littéralement : même éventail, même taille,
     // même enfouissement qu'en combat. Ce sont exactement les cartes qu'on y
