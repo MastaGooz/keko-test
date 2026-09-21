@@ -305,8 +305,9 @@ donjon. Ce qui tourne :
   Le zoom porte désormais **la carte** et non un index de main : il était un
   index dans `combat.main`, ce qui interdisait de zoomer ailleurs. Ce sont exactement les cartes qu'on retrouvera en combat, et
   les voir telles quelles est ce qui rend le poids lisible. Les deux slots — ce
-  qui arrive, et **Jeter** — sont côte à côte au-dessus, *à la taille d'une
-  carte* : ils reçoivent une carte, ils en ont donc la forme.
+  qui arrive, et **Jeter** — sont côte à côte au-dessus, *à la taille de la
+  main* (`--large`, plus aucun plafond en rem) : ils reçoivent la carte qu'on
+  va porter, elle doit s'y lire comme dans la main.
 
   Il y a eu un état intermédiaire, à jeter mentalement : les trésors portés en
   rangée de vignettes dans une feuille centrée. Ça se lisait, mais ce n'était
@@ -1289,6 +1290,15 @@ Cinq règles qui portent l'écran :
   (`7.4cqw`), parce que trois lignes de composition ne tiennent pas à la taille
   d'une ligne d'effet.
 
+- **Le râtelier est une GRILLE de cartes réduites, le chargement est à la
+  TAILLE DE LA MAIN** — deux armes sur une ligne, l'armure sur la ligne
+  dessous. On cherche dans le râtelier, on lit ce qu'on emporte tel qu'on le
+  portera. Keko : « le stash plutôt un grid avec des formes de cartes réduites,
+  l'équipement de taille normale ». Sur un téléphone couché, deux lignes de
+  cartes de main ne tiennent pas dans 390 px : `--piece-equip` est plafonné par
+  la hauteur (`(100vh − 11rem) / 2.8`, soit 76 px à 844x390) — vérifié sans
+  débordement. **La rareté ne s'écrit pas sur la carte**, elle se lit au cadre
+  (code couleur classique, `.piece-carte.rare` / `.epique`).
 - **On arrive avec l'équipement gratuit DÉJÀ équipé.** Un joueur qui débarque
   doit pouvoir descendre sans rien comprendre à l'écran ; l'armurerie se
   découvre en y revenant, pas en y étant bloqué.
