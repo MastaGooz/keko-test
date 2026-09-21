@@ -909,15 +909,21 @@ function fin(descente: Descente, issue: 'extrait' | 'mort'): string {
  * une zone de dépôt et un bouton**, parce que sur un téléphone le glisser seul
  * est fragile — la tape doit toujours marcher.
  */
+/** Les cases du râtelier qu'on montre même vides. */
+const CASES_RATELIER = 12
+
 function armurerie(hub: Hub): string {
   const bloque = deuxMains(hub.chargement)
   const deck = deckDeLEquipement(equipement(hub.chargement))
   const combat = deck.filter((c) => c.degats > 0).length
 
+  // LE RÂTELIER MONTRE SES CASES VIDES : une grille de places, pas une liste
+  // de pièces. Douze cases au moins — au-delà, elle grandit avec ce qu'on
+  // rapporte. Keko : « afficher les slots vides du râtelier qu'on voit le grid ».
+  const cases = Math.max(CASES_RATELIER, hub.reserve.length)
   const enReserve =
-    hub.reserve.length === 0
-      ? `<p class="reserve-vide">Rien d'autre au râtelier.<br>Ce que tu rapportes viendra ici.</p>`
-      : hub.reserve.map((p) => pieceEquipement(p, { ou: 'reserve' })).join('')
+    hub.reserve.map((p) => pieceEquipement(p, { ou: 'reserve' })).join('') +
+    `<span class="case-ratelier"></span>`.repeat(cases - hub.reserve.length)
 
   return (
     `<div class="voile armurerie">` +

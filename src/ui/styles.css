@@ -3092,7 +3092,9 @@ body {
   justify-content: center;
   gap: 0.75rem;
   width: 100%;
-  max-width: 52rem;
+  /* 64rem et non 52 : le chargement a pris la taille de la main, et la grille
+     du ratelier a besoin de ce qui reste pour montrer ses douze cases. */
+  max-width: 64rem;
   min-height: 0;
 }
 
@@ -3271,15 +3273,15 @@ body {
   opacity: 0.75;
 }
 
-.reserve-vide {
-  /* Dans la grille du ratelier, le message prend toute la largeur : sinon il
-     se tasse dans une cellule de la taille d'une piece. */
-  grid-column: 1 / -1;
-  margin: auto 0;
-  color: var(--muted);
-  font-family: system-ui, sans-serif;
-  font-size: 0.75rem;
-  text-align: center;
+/* Une case vide du ratelier : la forme d'une carte, en pointille, comme un
+   slot qui attend. C'est ce qui fait voir la grille quand elle est vide. */
+.case-ratelier {
+  display: block;
+  width: var(--piece);
+  aspect-ratio: 5 / 7;
+  border: 1px dashed color-mix(in srgb, var(--trait) 80%, transparent);
+  border-radius: 10px;
+  background: #00000040;
 }
 
 .bouton.descendre {

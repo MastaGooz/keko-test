@@ -1299,6 +1299,16 @@ Cinq règles qui portent l'écran :
   la hauteur (`(100vh − 11rem) / 2.8`, soit 76 px à 844x390) — vérifié sans
   débordement. **La rareté ne s'écrit pas sur la carte**, elle se lit au cadre
   (code couleur classique, `.piece-carte.rare` / `.epique`).
+
+  **Le râtelier montre ses cases vides** (douze au moins, en pointillé à la
+  forme d'une carte) : une grille de places, pas une liste de pièces. Et **ce
+  qu'on tient est à la taille de la main, d'où que ça vienne** : le fantôme du
+  glisser prend `var(--large)` en style en ligne, donc une pièce réduite du
+  râtelier redevient la carte qu'on va porter dès qu'on la prend. Keko : « il
+  faut qu'il devienne taille normale durant le drag ». Pour vérifier sans
+  souris : dispatcher `pointerdown` puis `pointermove` SUR LA PIÈCE (les
+  écouteurs sont sur la racine, un évènement lancé sur `window` n'y descend
+  pas), puis mesurer `.fantome`.
 - **On arrive avec l'équipement gratuit DÉJÀ équipé.** Un joueur qui débarque
   doit pouvoir descendre sans rien comprendre à l'écran ; l'armurerie se
   découvre en y revenant, pas en y étant bloqué.
