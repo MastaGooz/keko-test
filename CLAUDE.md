@@ -365,6 +365,12 @@ donjon. Ce qui tourne :
   à valider, et *un bouton toujours là se presse par habitude* — ce qui est
   exactement la fausse manip qu'on veut empêcher.
 
+  **À côté de Jeter, REPRENDRE en vert.** Les deux issues d'une carte posée
+  dans le rebut, côte à côte, rouge et vert : la reprendre la range dans la
+  main. Demandé par Keko — un glisser qu'il faut deviner ne vaut pas un bouton
+  qui dit l'autre choix. Ce n'est qu'un dépôt ordinaire de `jeter` vers
+  `deck`, porté par `data-lieu-source` sur le bouton : aucun cas nouveau.
+
   **Le slot n'en tient qu'une, et c'est la validation qui permet d'en jeter
   plusieurs** : sans elle, la première carte le bloquait. Poser sur un slot
   occupé **fait ressortir l'ancien**, jamais ne l'écrase.

@@ -745,9 +745,17 @@ function butin(
       : piece(aJeter, { ou: 'jeter' })) +
     (fond.length === 0 ? '' : `<span class="compte-jete">${fond.length}</span>`) +
     `</button>` +
+    // Les deux issues côte à côte, Jeter en rouge et REPRENDRE en vert : la
+    // carte posée dans le rebut peut encore être gardée, et un bouton le dit
+    // mieux qu'un glisser qu'il faut deviner. Reprendre la range dans la main
+    // — c'est un dépôt ordinaire de `jeter` vers `deck`, aucun cas nouveau.
     (aJeter === null
       ? ''
-      : `<button class="valider-jet" type="button" data-action="validerJet">Jeter</button>`)
+      : `<span class="choix-jet">` +
+        `<button class="valider-jet" type="button" data-action="validerJet">Jeter</button>` +
+        `<button class="reprendre-jet" type="button" data-action="deplacer" ` +
+        `data-ou="deck" data-lieu-source="{&quot;ou&quot;:&quot;jeter&quot;}">Reprendre</button>` +
+        `</span>`)
 
   return (
     `<div class="voile butin">` +

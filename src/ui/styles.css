@@ -2279,7 +2279,14 @@ body {
 /* LE DEUXIEME GESTE. Il n'apparait qu'une fois la carte posee : avant, il n'y
    aurait rien a valider, et un bouton toujours la se presse par habitude --
    c'est exactement la fausse manip qu'on veut empecher. */
-.valider-jet {
+.choix-jet {
+  display: flex;
+  gap: 0.375rem;
+  animation: valider-jet-entree 0.14s ease-out;
+}
+
+.valider-jet,
+.reprendre-jet {
   padding: 0.3125rem 0.875rem;
   border: 1px solid #7a3a3a;
   border-radius: 999px;
@@ -2289,7 +2296,13 @@ body {
   font-size: 0.8125rem;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  animation: valider-jet-entree 0.14s ease-out;
+}
+
+/* Reprendre, en vert : l'autre issue, a cote de la rouge. */
+.reprendre-jet {
+  border-color: #2f6b45;
+  background: #12261a;
+  color: #a9e6bd;
 }
 
 @keyframes valider-jet-entree {
@@ -2300,6 +2313,10 @@ body {
 }
 
 @media (hover: hover) and (pointer: fine) {
+  .reprendre-jet:hover {
+    border-color: #4a9a66;
+  }
+
   .valider-jet:hover {
     border-color: #a84f4f;
     background: #3a1a1a;
