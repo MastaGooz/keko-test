@@ -1015,13 +1015,11 @@ function cartePiece(piece: Piece): string {
     corpsCarte(
       piece.nom,
       `<span class="gemme cartes-donnees" title="${nb} cartes">${nb}</span>`,
-      // Sa composition, une ligne par modele : c'est ce qu'elle donne, donc
-      // c'est son cartouche.
-      piece.set.map(({ modele, nombre }) => {
-        const bloc = modele.effets?.find((e) => e.type === 'bloc')?.montant ?? 0
-        const valeur = bloc > 0 ? GLYPHE.bloc + bloc : modele.degats
-        return `<b>${nombre}×</b> ${modele.nom} <small>${modele.cout}${GLYPHE.energie} ${valeur}</small>`
-      }),
+      // Sa composition, en UN texte qui coule : « 5× Estoc · 3× Taillade ·
+      // 2× Moulinet ». Une ligne par modèle plafonnait à cinq ; une arme en
+      // apportera jusqu'à huit. Le détail de chaque modèle — coût, dégâts —
+      // n'est plus ici : le zoom le montre en vraies cartes.
+      [piece.set.map(({ modele, nombre }) => `<b>${nombre}×</b>&nbsp;${modele.nom}`).join(' · ')],
       // La rareté ne s'écrit pas : elle se lit au cadre, code couleur classique
       // (`.piece-carte.rare`, `.epique`). Keko : « inutile d'afficher le niveau
       // de rareté, on le fera via un code couleur ».

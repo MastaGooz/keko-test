@@ -1315,9 +1315,21 @@ Cinq règles qui portent l'écran :
   et à sa droite les modèles qu'elle apporte, dessinés comme les vraies cartes
   qu'on retrouvera en main (`vitrine`), chacun avec son nombre en pastille d'or
   sur le coin. En ligne et non en éventail : ce sont des modèles, pas une main
-  — on les compare, on ne les tient pas. Bornés par la hauteur comme la pièce
-  (`min(9.5rem, 32vh)`), pour que la rangée tienne en paysage : 512 px sur un
-  667x320. Pour vérifier un glisser sans
+  — on les compare, on ne les tient pas.
+
+  **PRÉVU POUR HUIT MODÈLES, PAS TROIS.** Keko : « on vise entre 3 et 8 cartes
+  différentes, le système d'affichage doit déjà être compatible avec une arme
+  qui fournit 8 cartes ». La rangée replie à QUATRE par ligne — deux lignes au
+  plus — et la taille d'une carte du set (`--set`) est bornée trois fois : par
+  le rem, par la hauteur pour que deux lignes tiennent, par la largeur pour
+  que quatre tiennent à côté de la pièce. Mesuré avec une arme de test à huit
+  modèles : le zoom tient dans l'écran à 844x390 (44 → 346 px) et à 667x320
+  (58 → 262 px). Corollaire sur la carte de la pièce elle-même : la
+  composition n'est plus une ligne par modèle (ça plafonnait à cinq) mais UN
+  texte qui coule — « 5× Estoc · 3× Taillade · 2× Moulinet » — sans coût ni
+  dégâts, puisque le zoom les montre en vraies cartes. Pour tester une arme
+  qui n'existe pas encore : exposer `hub` et `dessiner()` sur `window` et
+  pousser une pièce fabriquée dans `reserve`. Pour vérifier un glisser sans
   souris : dispatcher `pointerdown` puis `pointermove` SUR LA PIÈCE (les
   écouteurs sont sur la racine, un évènement lancé sur `window` n'y descend
   pas), puis mesurer `.fantome`.

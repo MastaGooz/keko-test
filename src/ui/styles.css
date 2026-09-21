@@ -3247,10 +3247,15 @@ body {
   --accent: #9aa4b8;
 }
 
-/* La composition d'une piece fait trois lignes la ou un effet en fait une :
-   une pointe plus petit. */
+/* La composition d'une piece est un texte qui coule, jusqu'a huit modeles :
+   une pointe plus petit, et il peut prendre toute la hauteur du cartouche. */
 .piece-carte .cartouche {
-  font-size: 7.4cqw;
+  font-size: 7cqw;
+  line-height: 1.25;
+}
+
+.piece-carte .cartouche > span {
+  overflow-wrap: anywhere;
 }
 
 /* La rarete au lisere, comme la richesse d'un tresor au cadre. */
@@ -3450,7 +3455,13 @@ body {
 /* UNE PIECE ZOOMEE MONTRE SON SET : la piece a gauche, et a sa droite les
    cartes qu'elle apporte, plus petites, chacune avec son nombre. Bornees par
    la hauteur comme la piece, pour que la rangee tienne en paysage. */
+/* PREVU POUR HUIT MODELES, PAS TROIS. Une arme en apportera entre trois et
+   huit : la rangee replie a QUATRE par ligne, donc deux lignes au plus, et la
+   taille d'une carte du set est bornee pour que deux lignes tiennent dans la
+   hauteur ET que quatre tiennent dans la largeur a cote de la piece.
+   Mesure : 8 modeles tiennent a 667x320. */
 .zoom-carte.zoom-piece {
+  --set: min(9.5rem, calc((100vh - 3.5rem) / 2.8), calc((100vw - 16rem - 6rem) / 4));
   display: flex;
   align-items: center;
   gap: 1.25rem;
@@ -3463,7 +3474,8 @@ body {
   gap: 0.625rem;
   flex-wrap: wrap;
   justify-content: center;
-  max-width: 60vw;
+  /* Quatre cartes et trois intervalles : le point de repli. */
+  max-width: calc(4 * var(--set) + 3 * 0.625rem);
 }
 
 .modele {
@@ -3472,7 +3484,7 @@ body {
 }
 
 .zoom-carte .set-piece .carte {
-  --large: min(9.5rem, 32vh);
+  --large: var(--set);
   width: var(--large);
   box-shadow: 0 0.75rem 1.5rem #000c, 0 0 0 1px #ffffff1a;
 }
