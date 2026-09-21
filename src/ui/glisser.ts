@@ -52,6 +52,23 @@ export function brancherGlisser(racine: HTMLElement): void {
   }
 
   /**
+   * DES QU'ON TIENT UNE PIECE, LES SLOTS QUI LA PRENNENT S'ALLUMENT -- tous,
+   * pas seulement celui sous le doigt. C'est ce qui dit ou l'on peut aller
+   * avant d'y aller. Dans l'armurerie seulement : sur l'ecran de butin, la
+   * main entiere est un depot, et une main qui clignote ne dit rien. La case
+   * d'ou vient la piece n'est pas une destination.
+   */
+  function accueillir(tenue: HTMLElement): void {
+    if (tenue.closest('.voile.armurerie') === null) return
+    const genre = tenue.dataset.genre
+    for (const d of racine.querySelectorAll<HTMLElement>('.voile.armurerie [data-depot]')) {
+      if (d === tenue) continue
+      const attend = d.dataset.attend
+      if (attend === undefined || genre === undefined || attend === genre) d.classList.add('accueille')
+    }
+  }
+
+  /**
    * La destination sous le doigt s'allume -- en bleu si elle prend ce qu'on
    * tient, EN ROUGE sinon. Le refus se lit avant de lacher, pas apres : un
    * slot qui s'allume en bleu puis ne fait rien a l'air casse. Ce que le slot
@@ -95,6 +112,7 @@ export function brancherGlisser(racine: HTMLElement): void {
       if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < SEUIL) return
       bouge = true
       piece.classList.add('saisie')
+      accueillir(piece)
       fantome = piece.cloneNode(true) as HTMLElement
       fantome.classList.remove('saisie')
       fantome.classList.add('fantome')
@@ -129,6 +147,7 @@ export function brancherGlisser(racine: HTMLElement): void {
     const fente = versLaMain && duDeck ? fenteSousLeDoigt(e.clientX) : null
 
     piece.classList.remove('saisie')
+    for (const d of racine.querySelectorAll('.accueille')) d.classList.remove('accueille')
     fantome?.remove()
     surligner(null)
     fantome = null

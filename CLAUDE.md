@@ -1328,6 +1328,14 @@ Cinq règles qui portent l'écran :
   `data-attend` sur le slot ; `glisser.ts` les compare sans rien savoir des
   règles. Sans l'un des deux (le butin, le râtelier), c'est un accord.
 
+  **Et dès qu'on tient une pièce, TOUS les slots qui la prennent respirent en
+  bleu** (`accueille`, une pulsation discrète) — pas seulement celui sous le
+  doigt : c'est ce qui dit où l'on peut aller avant d'y aller. Keko : « un
+  petit effet sur les slots compatibles quand on drag, pas seulement
+  au-dessus ». Dans l'armurerie seulement — sur l'écran de butin la main
+  entière est un dépôt, et une main qui clignote ne dit rien — et jamais la
+  case d'où vient la pièce. Le survol reste le signal fort.
+
   **Une pièce zoomée montre son set EN CARTES** : la pièce en grand à gauche,
   et à sa droite les modèles qu'elle apporte, dessinés comme les vraies cartes
   qu'on retrouvera en main (`vitrine`), chacun avec son nombre en pastille d'or
