@@ -282,9 +282,12 @@ function dispatch(action: Action): void {
       // On la cherche dans la main ET dans ce qu'on porte : c'est le même geste
       // en combat et sur l'écran de butin.
       // ...et dans l'armurerie : ce qu'on porte et ce qui reste au râtelier.
+      // ...et dans les deux slots de l'écran de butin, le loot et le rebut.
+      const butin = descente.phase.type === 'butin' ? [descente.phase.loot, descente.phase.aJeter] : []
       const vue: Carte | Piece | null =
         descente.combat.main.find((c) => c.id === action.id) ??
         descente.deck.find((c) => c.id === action.id) ??
+        butin.find((c) => c !== null && c.id === action.id) ??
         hub.reserve.find((p) => p.id === action.id) ??
         equipement(hub.chargement).find((p) => p.id === action.id) ??
         null

@@ -112,6 +112,17 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         dispatch({ type: 'choisirCarte', index: Number(noeud.dataset.carte) })
         break
       case 'deplacer': {
+        // LA TAPE SUR UN SLOT OCCUPÉ REGARDE, LE GLISSER DÉPOSE — même règle que
+        // l'armurerie. Sans `lieuSource` (que seul le glisser pose), une tape sur
+        // le loot ou sur la carte à jeter ouvre la carte en grand ; un slot vide
+        // reste un bouton qui reçoit. Keko : « quand une carte est dans
+        // l'emplacement de loot ou jeter, il faut pouvoir cliquer dessus pour la
+        // zoomer ».
+        const regardee = noeud.dataset.carteId
+        if (noeud.dataset.lieuSource === undefined && regardee !== undefined) {
+          dispatch({ type: 'zoomer', id: regardee })
+          break
+        }
         const source = lireSource(noeud)
         // Le glisser pose un rang quand on repose une carte du butin DANS la
         // main du butin : c'est un rangement, pas un deplacement.

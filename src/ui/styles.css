@@ -2273,11 +2273,23 @@ body {
   color: var(--muted);
 }
 
-/* Jete mais pas encore perdu : eteint, sans etre invisible -- c'est perdu
-   seulement en terminant, et d'ici la on peut le repecher. */
-.emplacement.jeter .piece {
-  opacity: 0.6;
-  filter: grayscale(0.4);
+/* Jete mais pas encore perdu : la carte reste ENTIERE et lisible -- on doit
+   pouvoir la regarder avant de valider -- mais une lueur rouge l'entoure, et
+   le pointille du slot rougit avec elle. Elle etait assombrie et desaturee ;
+   Keko : « au lieu de la foncer, on devrait mettre une lueur rouge autour ».
+   Une carte eteinte se lit comme deja perdue, alors qu'elle ne l'est pas. */
+.emplacement.jeter.occupe {
+  border-color: #ff5a4a99;
+  background: #2a0c0a66;
+}
+
+.emplacement.jeter .piece .carte {
+  border-color: #ff6a5a;
+  box-shadow:
+    0 0 0 1px #ff5a4a,
+    0 0 0.75rem #ff3b2acc,
+    0 0 2rem #ff3b2a66,
+    0 0.5rem 1rem #000c;
 }
 
 /* Le slot et son bouton forment un bloc : le bouton se pose SOUS le slot, pas

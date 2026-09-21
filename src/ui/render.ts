@@ -732,7 +732,8 @@ function butin(
   // les autres, et rien n'est perdu avant Terminer.
   const jete =
     `<button class="emplacement jeter${aJeter === null ? '' : ' occupe'}" type="button" ` +
-    `data-action="deplacer" data-ou="jeter" data-depot>` +
+    `data-action="deplacer" data-ou="jeter" data-depot` +
+    (aJeter === null ? '' : ` data-carte-id="${aJeter.id}"`) + `>` +
     (aJeter === null
       ? `<span class="vide">jeter</span>`
       : piece(aJeter, { ou: 'jeter' })) +
@@ -811,8 +812,11 @@ function caseTresor(
   const contenu =
     carte === null ? `<span class="vide">${motVide}</span>` : piece(carte, lieu)
   return (
+    // Le slot occupé porte l'identifiant de ce qu'il contient : une tape dessus
+    // regarde la carte, et c'est `input.ts` qui fait la différence avec un dépôt.
     `<button class="emplacement ${classe}${carte === null ? '' : ' occupe'}" type="button" ` +
-    `data-action="deplacer" ${attrs} data-depot>${contenu}</button>`
+    `data-action="deplacer" ${attrs} data-depot` +
+    (carte === null ? '' : ` data-carte-id="${carte.id}"`) + `>${contenu}</button>`
   )
 }
 

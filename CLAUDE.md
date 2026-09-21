@@ -369,6 +369,23 @@ donjon. Ce qui tourne :
   plusieurs** : sans elle, la première carte le bloquait. Poser sur un slot
   occupé **fait ressortir l'ancien**, jamais ne l'écrase.
 
+  **Une tape sur un slot OCCUPÉ regarde la carte, le glisser dépose** — même
+  règle que l'armurerie. Le slot occupé porte `data-carte-id`, et c'est
+  l'absence de `lieuSource` (posé par le glisser seul) qui fait la différence
+  dans `input.ts`. Un slot vide reste un bouton qui reçoit : taper « jeter »
+  vide y envoie le loot, comme avant.
+
+  **La carte à jeter reste ENTIÈRE, avec une lueur rouge autour.** Elle était
+  assombrie et désaturée ; Keko : « au lieu de la foncer, on devrait mettre une
+  lueur rouge autour ». Une carte éteinte se lit comme déjà perdue, alors
+  qu'elle ne l'est pas — et on doit pouvoir la lire avant de valider. Le
+  pointillé du slot rougit avec elle.
+
+  **Pour voir cet écran sans gagner un combat** : exposer temporairement
+  `descente` et `dessiner()` sur `window` depuis `main.ts`, puis forcer une
+  phase `butin` avec `carteTresor(...)` depuis la console. À retirer avant le
+  commit.
+
   *Ce qui a changé, et il faut le savoir* : la règle était « rien n'est
   irréversible avant Terminer », et le fond se repêchait. **Un rebut validé ne
   revient plus** — la confirmation a remplacé la réversibilité. C'est le choix de
