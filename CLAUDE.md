@@ -536,6 +536,27 @@ donjon. Ce qui tourne :
   frappe, contrecoup), son réglage mesuré, l'asymétrie doigt/souris des durées,
   et le fait qu'un `transform` sur `.app` crée un contexte d'empilement.
 
+- **la carte jouée S'ABAT SUR SA CIBLE.** Elle quitte la main au lâcher — ça,
+  c'était déjà le geste — puis se remontre au-dessus du corps visé et tombe
+  dessus. *Le coup avait un départ et une conséquence, il lui manquait un
+  trajet* : on voyait la carte partir et l'ennemi encaisser, sans que rien ne
+  relie les deux.
+
+  Trois temps, et tout le poids vient du **contraste de vitesse**, comme le bond
+  des créatures : elle arrive haut et grande, **marque un temps d'arrêt** —
+  sans lui la chute se lit comme une simple apparition — puis tombe d'un coup
+  sec et s'écrase un peu avant de s'effacer. L'impact tombe à 220 ms, et c'est
+  là que se déclenchent la secousse, le son et le tressaillement : *pas au
+  moment de la tape*.
+
+  Elle est posée sur la **racine**, comme le chiffre de dégâts : un rendu la
+  balaierait en plein vol, et le coup en déclenche un. Et elle se dessine avec
+  la même fonction que la carte de la main — la refaire à la main ailleurs,
+  c'est garantir qu'un jour les deux divergent.
+
+  **Prix à connaître** : le verrou d'entrée passe de 230 à 450 ms par coup
+  porté, donc environ 0,7 s de plus sur un tour où l'on joue trois cartes.
+
 - le **coup se voit** : la cible est secouée, les dégâts sautent au-dessus
   d'elle, la rangée éclate quand un corps tombe (`ui/effets.ts`, purement
   décoratif, supprimable sans rien casser) ;

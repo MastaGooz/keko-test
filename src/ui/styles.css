@@ -1364,6 +1364,76 @@ body {
 /* Le chiffre saute au-dessus du corps touche puis s'efface. Il est FIXE sur
    la page et non pose dans le corps : la chute declenche un nouveau rendu, qui
    l'effacerait en plein vol. */
+/* LA CARTE JOUEE S'ABAT SUR SA CIBLE. Elle quitte la main au lacher, puis se
+   remontre la ou elle agit : le coup avait un depart et une consequence, il lui
+   manquait un trajet.
+
+   Posee sur la RACINE, comme le chiffre de degats : un rendu la balaierait en
+   plein vol, et le coup en declenche un. */
+.carte-abattue {
+  position: fixed;
+  z-index: 34;
+  translate: -50% -50%;
+  pointer-events: none;
+  animation: abattue 0.43s linear forwards;
+}
+
+/* Bornee par le CORPS et non par la main : c'est un element de la scene. Elle
+   doit se lire d'un coup d'oeil, pas se detailler -- on vient de la choisir. */
+.carte-abattue .carte {
+  width: min(var(--corps), 5.5rem);
+  margin: 0;
+  transform: none;
+  box-shadow:
+    0 0 0 1px #ffffff2e,
+    0 0 1.5rem #000000a8,
+    0 1rem 2rem #000c;
+}
+
+/* Trois temps, et tout le poids vient du CONTRASTE DE VITESSE -- meme principe
+   que le bond des creatures. Elle arrive haut et grande, marque un temps
+   d'arret, puis tombe d'un coup sec et depasse legerement avant de s'effacer.
+   Sans le temps d'arret, la chute se lit comme une simple apparition. */
+@keyframes abattue {
+  0% {
+    opacity: 0;
+    translate: -50% -50%;
+    transform: translateY(-2.75rem) scale(1.25) rotate(-9deg);
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.35, 1);
+  }
+  21% {
+    /* Elle est arrivee : elle domine sa cible, suspendue. */
+    opacity: 1;
+    transform: translateY(-2.25rem) scale(1.1) rotate(-7deg);
+    animation-timing-function: linear;
+  }
+  33% {
+    opacity: 1;
+    transform: translateY(-2.1rem) scale(1.08) rotate(-6deg);
+    animation-timing-function: cubic-bezier(0.7, 0, 0.9, 0.4);
+  }
+  51% {
+    /* L'IMPACT. Elle tombe sur le corps et s'y ecrase un peu. */
+    opacity: 1;
+    transform: translateY(0.25rem) scale(0.94) rotate(2deg);
+    animation-timing-function: ease-out;
+  }
+  68% {
+    opacity: 0.85;
+    transform: translateY(0) scale(1) rotate(1deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(0.75rem) scale(0.96) rotate(1deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carte-abattue {
+    animation-duration: 0.01ms;
+  }
+}
+
 /* Le soin, dans l'autre sens : meme geste, meme place, couleur opposee. */
 .degats-voles.rendu {
   color: #8ee4a1;

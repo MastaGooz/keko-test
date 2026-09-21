@@ -743,8 +743,15 @@ function fin(descente: Descente, issue: 'extrait' | 'mort'): string {
   )
 }
 
-/** Une carte montrée, sans état de jeu : ni coût payable, ni cible. */
-function vitrine(carte: Carte, enMain = false): string {
+/**
+ * Une carte montrée, sans état de jeu : ni coût payable, ni cible.
+ *
+ * Exportée parce que `effets.ts` en a besoin : la carte qui s'abat sur sa cible
+ * est la MÊME carte que celle qu'on vient de lâcher, et elle doit se dessiner
+ * pareil. La refaire à la main ailleurs, c'est garantir qu'un jour les deux
+ * divergent.
+ */
+export function vitrine(carte: Carte, enMain = false): string {
   if (carte.type === 'tresor') return carteTresor(carte, 'style="--n:1"', enMain)
   return (
     `<div class="carte combat" data-cout="${carte.cout}" style="--n:1">` +

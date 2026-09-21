@@ -86,6 +86,58 @@ export function soigne(view: View, montant: number): void {
   window.setTimeout(() => chiffre.remove(), DUREE)
 }
 
+/**
+ * Quand la carte abattue touche sa cible. Doit suivre la règle CSS
+ * `.carte-abattue` : apparition (90 ms) + suspension (50) + chute (80).
+ */
+export const INSTANT_ABATTUE = 220
+
+/** Ce que dure toute la séquence, effacement compris. */
+const DUREE_ABATTUE = 430
+
+/**
+ * LA CARTE JOUÉE RÉAPPARAÎT AU-DESSUS DE SA CIBLE ET S'ABAT SUR ELLE.
+ *
+ * Elle quitte la main au lâcher — ça, c'était déjà le geste — puis se remontre
+ * là où elle agit. *Le coup avait un départ et une conséquence, il lui manquait
+ * un trajet* : on voyait la carte partir et l'ennemi encaisser, sans que rien ne
+ * relie les deux.
+ *
+ * Elle est posée sur la RACINE et non sur le corps visé : un rendu la balaierait
+ * en plein vol, et le coup en déclenche un. Même raison que le chiffre de
+ * dégâts.
+ *
+ * `auContact` est appelé à l'impact — c'est là que tombent la secousse, le son
+ * et le tressaillement, pas au moment de la tape.
+ */
+export function abattreCarte(
+  view: View,
+  corps: number | 'joueur',
+  html: string,
+  auContact: () => void,
+): void {
+  const cible = view.root.querySelector<HTMLElement>(`[data-corps="${corps}"]`)
+  if (cible === null) {
+    auContact()
+    return
+  }
+
+  view.root.querySelectorAll('.carte-abattue').forEach((c) => c.remove())
+
+  const boite = cible.getBoundingClientRect()
+  const lame = document.createElement('div')
+  lame.className = 'carte-abattue'
+  lame.innerHTML = html
+  // Centrée sur la cible, et calée sur le HAUT de son corps : c'est là que le
+  // coup porte, et c'est là que l'oeil est déjà — il vient de choisir la cible.
+  lame.style.left = `${boite.left + boite.width / 2}px`
+  lame.style.top = `${boite.top + boite.height * 0.3}px`
+  view.root.appendChild(lame)
+
+  window.setTimeout(auContact, INSTANT_ABATTUE)
+  window.setTimeout(() => lame.remove(), DUREE_ABATTUE)
+}
+
 /** Durée de l'assaut, en ms. Doit suivre la règle CSS `.silhouette.assaut`. */
 const DUREE_ASSAUT = 580
 

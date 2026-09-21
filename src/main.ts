@@ -29,16 +29,18 @@ import {
   terminerButin,
 } from './logic/descente.ts'
 import type { Occupation } from './ui/render.ts'
-import { mount, render } from './ui/render.ts'
+import { mount, render, vitrine } from './ui/render.ts'
 import type { Action } from './ui/input.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
 import { brancherMain } from './ui/glisser-main.ts'
 import { apercuDegats } from './ui/apercu.ts'
 import {
+  abattreCarte,
   assaut,
   DUREE_COUP,
   encaisse,
+  INSTANT_ABATTUE,
   soigne,
   INSTANT_IMPACT,
   PAS_ENTRE_FRAPPES,
@@ -288,13 +290,19 @@ function dispatch(action: Action): void {
         const inflige = debout - reste
         const cible = combat.ennemis[action.cible]
         if (inflige > 0 && cible !== undefined) {
+          // LA CARTE S'ABAT SUR SA CIBLE. Elle a quitté la main au lâcher, elle
+          // se remontre là où elle agit — le coup avait un départ et une
+          // conséquence, il lui manquait un trajet. Tout ce qui marque l'impact
+          // tombe AU CONTACT, pas au moment de la tape.
           marques.push(() => {
-            encaisse(view, action.cible, inflige)
-            // La force du son suit le coût de la carte : on entend son poids.
-            if (carte !== undefined) sonFrappe((carte.cout - 1) / 3)
-            secouerEcran(view)
+            abattreCarte(view, action.cible, carte === undefined ? '' : vitrine(carte), () => {
+              encaisse(view, action.cible, inflige)
+              // La force du son suit le coût de la carte : on entend son poids.
+              if (carte !== undefined) sonFrappe((carte.cout - 1) / 3)
+              secouerEcran(view)
+            })
           })
-          attente = DUREE_COUP
+          attente = INSTANT_ABATTUE + DUREE_COUP
         }
         // Le corps abattu reste au rang le temps d'encaisser, puis s'éteint —
         // sans quoi on ne verrait jamais les dégâts qui l'ont achevé.
@@ -308,9 +316,9 @@ function dispatch(action: Action): void {
                 agonie = agonie.filter((i) => i !== action.cible)
                 dessiner()
               }, DUREE_AGONIE)
-            }, DUREE_COUP)
+            }, INSTANT_ABATTUE + DUREE_COUP)
           })
-          attente = DUREE_COUP + DUREE_AGONIE
+          attente = INSTANT_ABATTUE + DUREE_COUP + DUREE_AGONIE
         }
       }
       selection = null
