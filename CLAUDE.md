@@ -1301,11 +1301,12 @@ Cinq règles qui portent l'écran :
   (code couleur classique, `.piece-carte.rare` / `.epique`).
 
   **Le râtelier montre ses cases vides** (douze au moins, en pointillé à la
-  forme d'une carte) : une grille de places, pas une liste de pièces. Et **ce
-  qu'on tient est à la taille de la main, d'où que ça vienne** : le fantôme du
-  glisser prend `var(--large)` en style en ligne, donc une pièce réduite du
-  râtelier redevient la carte qu'on va porter dès qu'on la prend. Keko : « il
-  faut qu'il devienne taille normale durant le drag ». Pour vérifier sans
+  forme d'une carte) : une grille de places, pas une liste de pièces. Et **le
+  fantôme du glisser garde la taille de ce qu'on a pris** : une pièce réduite
+  du râtelier reste réduite sous le doigt. Elle a grandi à la taille de la main
+  le temps d'un essai, puis Keko a tranché : « il vaut mieux laisser la carte
+  en mode réduit pour le drag and drop dans l'armurerie » — une grosse carte
+  sous le doigt cache les slots qu'on vise. Pour vérifier un glisser sans
   souris : dispatcher `pointerdown` puis `pointermove` SUR LA PIÈCE (les
   écouteurs sont sur la racine, un évènement lancé sur `window` n'y descend
   pas), puis mesurer `.fantome`.

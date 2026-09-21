@@ -86,12 +86,11 @@ export function brancherGlisser(racine: HTMLElement): void {
       fantome = piece.cloneNode(true) as HTMLElement
       fantome.classList.remove('saisie')
       fantome.classList.add('fantome')
-      // CE QU'ON TIENT EST A LA TAILLE DE LA MAIN, d'ou qu'il vienne. Une piece
-      // du ratelier est reduite dans sa grille ; une fois prise, elle redevient
-      // la carte qu'on va porter. Keko : « il faut qu'il devienne taille
-      // normale durant le drag ». `var(--large)` en style en ligne : c'est la
-      // mesure de la main, et elle suit l'ecran.
-      fantome.style.width = 'var(--large)'
+      // Le fantome garde LA TAILLE DE CE QU'ON A PRIS : une piece reduite du
+      // ratelier reste reduite sous le doigt. Elle a grandi a la taille de la
+      // main le temps d'un essai ; Keko a tranche pour la taille reduite dans
+      // l'armurerie -- une grosse carte sous le doigt cache les slots qu'on vise.
+      fantome.style.width = `${piece.offsetWidth}px`
       document.body.appendChild(fantome)
     }
     if (fantome !== null) {
