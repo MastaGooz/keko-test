@@ -2895,15 +2895,39 @@ body {
    Il garde sa PLACE dans le rang pendant tout le fondu : sans ca les voisins
    glisseraient sous le doigt au moment ou l'on choisit sa cible suivante. Il
    n'est plus visable -- le rendu n'en fait pas un bouton. */
+/* L'AGONIE COMMENCE A L'INSTANT DU COUP, ET ATTEND L'IMPACT POUR SE VOIR.
+
+   L'etat se pose tout de suite -- sinon le corps disparait entre le coup qui le
+   tue et l'agonie posee plus tard, puis revient pour mourir. C'est donc le CSS
+   qui attend : 450 ms, le temps que la carte s'abatte (220) et que le corps
+   accuse le coup (230).
+
+   Pendant ce delai le corps reste tel qu'il etait, jauge comprise : on le voit
+   ENCAISSER avant de s'eteindre. */
 .creature.agonie {
   pointer-events: none;
-  animation: extinction 0.85s ease-in forwards;
+  animation: extinction 0.85s ease-in 450ms forwards;
+}
+
+/* Ce qu'un mort n'annonce plus, efface au meme instant que le reste. */
+.creature.agonie .intention,
+.creature.agonie .jauge,
+.creature.agonie .plaquette {
+  animation: effacer 0.12s linear 450ms forwards;
+}
+
+@keyframes effacer {
+  to {
+    opacity: 0;
+  }
 }
 
 /* Noire et mate, comme dans le cadre : c'est la meme image qui se prolonge, et
    le rouge du crane a besoin d'un fond mat pour se lire. */
 .creature.agonie .silhouette {
   filter: brightness(0) drop-shadow(0 0 1rem #ff2d2d33);
+  /* Le noir tombe a l'impact, pas au moment ou la carte part. */
+  transition: filter 0.1s linear 450ms;
   /* Elle respire encore une fraction de seconde apres sa mort : on coupe. */
   animation: none;
 }
@@ -2967,7 +2991,7 @@ body {
    Rapide (0,26 s) et brutale -- tout le reste de la sequence est immobile,
    c'est le seul mouvement, il doit frapper. */
 .creature.agonie .tete-de-mort {
-  animation: tampon 0.26s cubic-bezier(0.25, 0.8, 0.3, 1) forwards;
+  animation: tampon 0.26s cubic-bezier(0.25, 0.8, 0.3, 1) 540ms forwards;
 }
 
 @keyframes tampon {
@@ -3400,7 +3424,7 @@ body {
   position: absolute;
   /* Decalee du bord : collee a gauche elle avait l'air posee CONTRE l'ecran
      plutot que tenue. */
-  left: 0.75rem;
+  left: 2rem;
   top: 0;
   bottom: calc(
     max(0.25rem, env(safe-area-inset-bottom)) + var(--emerge) + var(--degagement)
@@ -3420,10 +3444,15 @@ body {
   pointer-events: none;
 }
 
+/* ELLE FREMIT, comme le fantome juste avant qu'on le lache : c'est la meme
+   carte, dans le meme etat -- engagee, en attente de sa cible. Lui donner deux
+   apparences pour un seul moment du geste serait mentir sur ce qui se passe. */
 .carte-engagee {
   display: block;
   rotate: -5deg;
-  animation: carte-engagee-entree 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.15);
+  animation:
+    carte-engagee-entree 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.15),
+    fremir 0.1s linear 0.16s infinite;
 }
 
 .carte-engagee .carte {
@@ -3431,9 +3460,9 @@ body {
   margin: 0;
   transform: none;
   box-shadow:
-    0 0 0 1px var(--joueur),
-    0 0 1rem #5cc8ff5c,
-    0 0.75rem 1.5rem #000c;
+    0 0 0 2px #ffffffd9,
+    0 0 1.5rem #ffffff73,
+    0 1.25rem 2.5rem #000c;
 }
 
 @keyframes carte-engagee-entree {

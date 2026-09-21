@@ -265,10 +265,20 @@ function corpsEnnemi(
   // corps vivant, qui a du volume et la recouvre.
   //
   // Et ça se tient : un corps qui s'en va ne pose plus d'ombre.
+  // UN CORPS EN AGONIE GARDE SA JAUGE ET SON INTENTION, et c'est voulu :
+  // l'agonie commence à l'instant du coup, pas à l'impact, donc il faut le
+  // temps de VOIR sa jauge tomber à zéro. C'est le CSS qui les efface, avec le
+  // même délai que le reste de l'extinction.
+  //
+  // Les retirer du DOM faisait sauter la mise en page à l'instant précis du
+  // coup, et le rang entier avec.
   const corps = agonise
-    ? `<span class="chair" style="--teinte:${espece.teinte}">` +
+    ? `<span class="intention calme">—</span>` +
+      `<span class="chair" style="--teinte:${espece.teinte}">` +
       `${creature(espece.espece, String(index))}` +
-      `${teteDeMort()}</span>`
+      `${teteDeMort()}</span>` +
+      jauge(ennemi.pv, ennemi.pvMax) +
+      `<span class="plaquette"><span class="nom">${ennemi.nom}</span></span>`
     : `<span class="intention${imminent ? ' imminent' : ''}">` +
       `${GLYPHE.frappe}${ennemi.degats}${attente}</span>` +
       `<span class="chair" style="--teinte:${espece.teinte}">` +

@@ -360,16 +360,23 @@ function dispatch(action: Action): void {
         // Le corps abattu reste au rang le temps d'encaisser, puis s'éteint —
         // sans quoi on ne verrait jamais les dégâts qui l'ont achevé.
         if (reste <= 0 && inflige > 0) {
+          // LE CORPS ENTRE EN AGONIE TOUT DE SUITE, pas à l'impact.
+          //
+          // Le rendu ne montre que les corps debout OU en agonie : entre le
+          // coup qui le tue et l'agonie posée plus tard, l'ennemi n'était NI
+          // l'un NI l'autre — il disparaissait puis revenait pour mourir. Keko :
+          // « il disparaît et réapparaît avant l'animation de mort ».
+          //
+          // *C'est le CSS qui attend l'impact*, pas l'état : l'agonie porte un
+          // délai, et pendant ce temps le corps reste tel qu'il était, jauge
+          // comprise — on le voit encaisser avant de s'éteindre.
+          agonie = [...agonie, action.cible]
           marques.push(() => {
+            window.setTimeout(() => sonAcheve(), INSTANT_ABATTUE + DUREE_COUP)
             window.setTimeout(() => {
-              agonie = [...agonie, action.cible]
-              sonAcheve()
+              agonie = agonie.filter((i) => i !== action.cible)
               dessiner()
-              window.setTimeout(() => {
-                agonie = agonie.filter((i) => i !== action.cible)
-                dessiner()
-              }, DUREE_AGONIE)
-            }, INSTANT_ABATTUE + DUREE_COUP)
+            }, INSTANT_ABATTUE + DUREE_COUP + DUREE_AGONIE)
           })
           attente = INSTANT_ABATTUE + DUREE_COUP + DUREE_AGONIE
         }
@@ -444,9 +451,15 @@ function dispatch(action: Action): void {
       // Une TAPE n'a pas de destination : on met la pièce là où elle va. C'est
       // le geste le plus court, et il n'y a rien à choisir — un slot de main
       // n'accueille pas une armure.
-      const cible = action.cible ?? slotNaturel(action.id)
+      // TAPER UNE PIECE EQUIPEE LA RETIRE. Sans ça, la tape ne marchait que dans
+      // un sens : le slot porte sa propre adresse en source ET en cible, donc
+      // le geste revenait à la reposer où elle était.
+      const source = action.source ?? { ou: 'reserve' as const }
+      const memeEndroit =
+        action.cible !== null && JSON.stringify(action.cible) === JSON.stringify(source)
+      const cible = memeEndroit ? { ou: 'reserve' as const } : (action.cible ?? slotNaturel(action.id))
       if (cible === null) break
-      hub = deplacerPiece(hub, action.source ?? { ou: 'reserve' }, cible, action.id)
+      hub = deplacerPiece(hub, source, cible, action.id)
       break
     }
     case 'partir':

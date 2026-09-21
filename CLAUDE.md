@@ -953,6 +953,11 @@ donjon. Ce qui tourne :
   bornée par le corps des créatures du temps où elle vivait dans la scène et
   l'écrasait à pleine taille ; dans le coin, elle n'écrase plus rien.
 
+  **ELLE FRÉMIT, et elle porte le même halo que le fantôme** juste avant qu'on
+  le lâche : c'est la même carte, dans le même état — engagée, en attente de sa
+  cible. *Lui donner deux apparences pour un seul moment du geste serait mentir
+  sur ce qui se passe.*
+
   *Tout ce qui est au joueur tient désormais la bande gauche* : sa pioche, son
   énergie, ses PV, et la carte qu'il tient. *Deux essais écartés avant d'arriver là*, et ils valent d'être
   retenus : posée SUR le joueur, elle le recouvre et ne dit pas de quel côté le
