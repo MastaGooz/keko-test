@@ -602,50 +602,62 @@ function recompense(descente: Descente, cartes: Carte[]): string {
  */
 function butin(descente: Descente, loot: Carte | null, fond: Carte[]): string {
   const portes = descente.deck.filter((c) => c.type === 'tresor')
-  const pile = portes
-    .map((c) => piece(c, { ou: 'deck', id: c.id }))
-    .join('')
+
+  // LE SLOT DE LOOT DISPARAIT UNE FOIS VIDE. Tant qu'il est là, il dit qu'il
+  // reste quelque chose à décider ; vide, il ne dirait plus qu'une chose — que
+  // c'est fini — et une case vide au milieu d'un écran se lit comme un endroit
+  // où poser, donc comme une tâche en attente.
+  const arrivage =
+    loot === null
+      ? ''
+      : `<div class="rangee-loot">${caseTresor(loot, { ou: 'loot' }, 'vide', 'loot')}</div>`
 
   return (
     `<div class="voile">` +
     `<div class="feuille large">` +
     `<p class="titre">Palier ${descente.profondeur} — ton butin</p>` +
-
-    `<div class="rangee-loot">` +
-    caseTresor(loot, { ou: 'loot' }, 'vide', 'loot') +
-    `</div>` +
+    arrivage +
 
     `<p class="note">` +
     (loot === null
       ? "Tout ce que tu portes pèse dans chaque main. Rien n'est perdu tant que tu n'as pas terminé."
-      : 'Emporte-le, ou laisse-le au fond. Tu peux aussi abandonner ceux que tu portes déjà.') +
+      : 'Emporte-le, ou jette-le. Tu peux aussi lâcher ceux que tu portes déjà.') +
     `</p>` +
 
-    `<div class="pile-deck ${portes.length === 0 ? 'creuse' : ''}" data-depot data-ou="deck" ` +
-    `data-action="deplacer">` +
-    `<span class="etiquette-slot">Deck` +
+    // CE QU'ON PORTE EST UNE MAIN, PAS UN TAS. Les trésors s'y lisent un par
+    // un — on les consulte, on en reprend n'importe lequel — alors qu'un tas
+    // ne montrait que le premier. C'est le même objet que la main de combat,
+    // et c'est voulu : ce sont exactement les cartes qu'on y retrouvera.
+    `<div class="main-butin ${portes.length === 0 ? 'creuse' : ''}" data-depot data-ou="deck" ` +
+    `data-action="deplacer" style="--n:${Math.max(1, portes.length)}">` +
+    `<span class="etiquette-slot">Ce que tu emportes` +
     `<span class="poids">${
       portes.length === 0
         ? 'rien porté'
-        : `${portes.length} porté${portes.length > 1 ? 's' : ''} — ils pèsent dans chaque main`
+        : `${portes.length} — ils pèsent dans chaque main`
     }</span>` +
     `</span>` +
-    `<span class="tas">${pile}</span>` +
+    `<span class="rangee-cartes">` +
+    portes.map((c) => piece(c, { ou: 'deck', id: c.id })).join('') +
+    `</span>` +
     `</div>` +
 
-    // Le fond est un contenant, pas un bouton qui détruit : on y jette, on
-    // peut en reprendre, et ce n'est perdu qu'au moment de terminer. Sinon ce
+    // JETER est un CONTENANT, pas un bouton qui détruit : ce qu'on y met y
+    // reste visible et se repêche, et ce n'est perdu qu'en terminant. Sinon ce
     // serait la seule action irréversible d'un écran qui promet l'inverse.
-    `<div class="pile-fond ${fond.length === 0 ? 'creuse' : ''}" data-depot data-ou="fond" ` +
+    `<div class="jeter ${fond.length === 0 ? 'creuse' : ''}" data-depot data-ou="fond" ` +
     `data-action="deplacer">` +
-    `<span class="etiquette-slot">Le fond` +
+    `<span class="etiquette-slot">Jeter` +
     `<span class="poids">${
       fond.length === 0
-        ? 'ce que tu abandonnes'
-        : `${fond.length} abandonné${fond.length > 1 ? 's' : ''} — perdu${fond.length > 1 ? 's' : ''} en terminant`
+        ? 'perdu en terminant'
+        : `${fond.length} jeté${fond.length > 1 ? 's' : ''} — perdu${fond.length > 1 ? 's' : ''} en terminant`
     }</span></span>` +
-    `<span class="tas">${fond.map((c) => piece(c, { ou: 'fond', id: c.id })).join('')}</span>` +
+    `<span class="rangee-cartes">` +
+    fond.map((c) => piece(c, { ou: 'fond', id: c.id })).join('') +
+    `</span>` +
     `</div>` +
+
     `<button class="bouton secondaire terminer" type="button" data-action="terminerButin"` +
     `${loot === null ? '' : ' disabled'}>` +
     (loot === null ? 'Terminer' : 'Range ton trésor') +

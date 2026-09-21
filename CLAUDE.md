@@ -261,12 +261,33 @@ donjon. Ce qui tourne :
 - **le palier en deux écrans** : d'abord **une amélioration à choisir parmi
   trois** (valable pour cette descente seulement), puis **le rangement du
   butin** ;
-- **le rangement du butin est un inventaire à quatre contenants**, tous reliés
-  dans les deux sens : l'**emplacement de loot**, les **cases du sac**, la
-  **pile du deck** (ce qu'on porte et qui pèse à chaque main) et **le fond du
-  donjon** (ce qu'on abandonne). On consulte chaque pile, on en reprend
-  n'importe quel élément, on repose ailleurs. Déposer sur une case occupée
-  **échange**.
+- **le rangement du butin est un inventaire à trois contenants**, tous reliés
+  dans les deux sens : l'**emplacement de loot**, **ce qu'on emporte** (les
+  trésors du deck, qui pèsent à chaque main) et **Jeter** (ce qu'on abandonne).
+  On en reprend n'importe quel élément, on repose ailleurs.
+
+  **Ce qu'on emporte est une MAIN, pas un tas** : les trésors s'y lisent un par
+  un — on les consulte, on en reprend n'importe lequel — alors qu'un tas ne
+  montrait que le premier. C'est le même objet que la main de combat, et c'est
+  voulu : ce sont exactement les cartes qu'on y retrouvera.
+
+  **Le slot de loot disparaît une fois vide.** Tant qu'il est là, il dit qu'il
+  reste quelque chose à décider ; vide, il ne dirait plus qu'une chose — que
+  c'est fini — et *une case vide au milieu d'un écran se lit comme un endroit où
+  poser*, donc comme une tâche en attente.
+
+  **Sur un écran court, le loot passe À CÔTÉ et non au-dessus.** En paysage on a
+  de la largeur et pas de hauteur : empilé, cet écran demandait 408 px de
+  contenu pour 286 disponibles. *Le défaut ne se signalait pas* — la feuille a
+  son propre `overflow: auto`, donc rien ne cassait, le bouton « Terminer »
+  sortait simplement du champ. **Vérifier une feuille, c'est vérifier qu'elle ne
+  défile pas, pas qu'elle tient dans l'écran.**
+
+  Deux pièges de mesure à retenir : ce sont **les cartes qui commandent la
+  hauteur** d'un contenant, pas son `min-height` — une pièce de 3,25rem de large
+  fait 4,55rem de haut ; et une carte posée dans un contenant doit se voir
+  imposer `width: 100%`, sinon elle garde `--large`, la mesure de la main de
+  combat, et déborde de la boîte censée la porter.
 - **Une seule chose s'engage dans cet écran : le bouton Terminer.** Le fond est
   un contenant et pas un bouton qui détruit — ce qu'on y jette y reste visible
   et se repêche. Keko a signalé l'incohérence : l'abandon était la seule action
