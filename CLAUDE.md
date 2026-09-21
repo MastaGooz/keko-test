@@ -1311,6 +1311,19 @@ Cinq règles qui portent l'écran :
   `--piece` vit sur le voile et le fantôme est posé sur `body`. Ailleurs (le
   butin), il garde la taille de ce qu'on a pris.
 
+  **Ce qu'on tient n'est plus à sa place** : dans l'armurerie, la pièce saisie
+  disparaît de sa case le temps du glisser — `visibility: hidden`, pas
+  `display: none`, pour que la grille ne bouge pas sous le doigt. Keko : « il
+  ne faut pas que l'item drag reste à son emplacement original ».
+
+  **Le slot survolé s'allume en bleu s'il prend ce qu'on tient, EN ROUGE
+  sinon** — une armure sur un slot d'arme, ou un slot condamné par une arme à
+  deux mains. Le refus se lit avant de lâcher : un slot qui s'allume en bleu
+  puis ne fait rien a l'air cassé. Ça passe par deux attributs posés au rendu,
+  `data-genre` sur la pièce (arme / armure, décidé par `'mains' in piece`) et
+  `data-attend` sur le slot ; `glisser.ts` les compare sans rien savoir des
+  règles. Sans l'un des deux (le butin, le râtelier), c'est un accord.
+
   **Une pièce zoomée montre son set EN CARTES** : la pièce en grand à gauche,
   et à sa droite les modèles qu'elle apporte, dessinés comme les vraies cartes
   qu'on retrouvera en main (`vitrine`), chacun avec son nombre en pastille d'or
