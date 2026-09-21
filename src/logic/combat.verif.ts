@@ -334,6 +334,51 @@ function ennemi(traits: {
   }
 }
 
+// --- le bloc, a la Slay the Spire -------------------------------------------
+
+{
+  const garde: Carte = {
+    id: 'garde-1',
+    nom: 'Garde',
+    type: 'combat',
+    cout: 1,
+    degats: 0,
+    effets: [{ type: 'bloc', montant: 5 }],
+  }
+  const rng = createRng(31)
+  const brut = creerCombat(cartes(9, { nom: 'Estoc', cout: 1, degats: 3 }), [
+    { nom: 'Cogneur', pv: 40, pvMax: 40, degats: 8, periode: 1, compteur: 1 },
+  ], rng)
+  // La Garde est POSEE en main, pas confiee au melange : un test qui depend de
+  // la pioche s'accommode du cas ou la carte n'est pas la, donc il ne verifie
+  // plus rien.
+  const base = { ...brut, main: [garde, ...brut.main.slice(1)] }
+
+  egal(jouerCarte(base, 0, 0).bloc, 5, 'une carte de garde donne du bloc')
+  egal(jouerCarte(base, 0, 0).energie, base.energie - 1, 'et elle coute son energie')
+  egal(jouerCarte(base, 0, 0).ennemis[0]!.pv, 40, 'une garde ne frappe personne')
+
+  // LA MENACE ANNONCEE TIENT COMPTE DU BLOC : c'est ce chiffre qui rend la
+  // garde lisible -- la poser doit faire baisser ce qu'on va prendre, sous les
+  // yeux du joueur.
+  const avecBloc = { ...base, bloc: 5 }
+  egal(menaceDuTour(base), 8, 'menace sans bloc')
+  egal(menaceDuTour(avecBloc), 3, 'menace annoncee, bloc deduit')
+  egal(menaceDuTour({ ...base, bloc: 99 }), 0, 'un bloc plus gros que la salve annonce zero')
+
+  // LE BLOC ENCAISSE EN PREMIER, et il TOMBE une fois la salve passee.
+  const apres = finDuTour(avecBloc, rng)
+  egal(apres.pv, base.pvMax - 3, 'le bloc absorbe, seul le surplus passe aux PV')
+  egal(apres.bloc, 0, 'et le bloc tombe une fois la salve passee')
+
+  const encaisse = apres.evenements.filter((e) => e.type === 'frappe')
+  egal(encaisse.length === 1 && encaisse[0]!.type === 'frappe' ? encaisse[0]!.degats : -1, 3,
+    "l'evenement dit ce qu'on a VRAIMENT pris, pas ce qui etait destine")
+
+  const gros = finDuTour({ ...base, bloc: 20 }, rng)
+  egal(gros.pv, base.pvMax, 'un bloc suffisant annule la frappe')
+}
+
 function cartes(nombre: number, modele: { nom: string; cout: number; degats: number }): Carte[] {
   return Array.from({ length: nombre }, (_, i) => ({
     id: `${modele.nom}-${i + 1}`,

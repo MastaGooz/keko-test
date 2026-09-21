@@ -1664,6 +1664,29 @@ body {
   white-space: nowrap;
 }
 
+/* LE BLOC, a cote des PV et dans la meme forme : c'est une reserve lui aussi.
+   Il n'a PAS de place reservee -- il ne dure qu'un tour, et une case vide en
+   permanence dirait qu'il manque quelque chose. */
+.bloc-chiffre {
+  padding: 0.125rem 0.4375rem;
+  border: 1px solid #6f7f93;
+  border-radius: 999px;
+  background: #171d26;
+  color: #d6e2f0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+/* Le badge d'une carte qui ne frappe pas : meme place que les degats, autre
+   couleur. C'est la que le joueur lit la puissance d'une carte. */
+.badge.bloc {
+  border-color: #6f7f93;
+  background: linear-gradient(#2b3541, #1a212a);
+  color: #d6e2f0;
+}
+
 /* Le maximum en retrait : on lit d'abord ce qu'il RESTE. */
 .pv-max {
   color: #6f8ea6;

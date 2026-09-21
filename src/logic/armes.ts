@@ -9,10 +9,9 @@
  * l'équipement : **équiper plus n'est pas mieux**. Chaque carte ajoutée fait
  * tirer les bonnes moins souvent. La taille du deck est une ressource.
  *
- * Limite du moteur, à lever avant la deuxième arme : une carte n'a qu'un coût
- * et des dégâts. Deux armes ne peuvent donc différer que par leur courbe
- * coût/dégâts — suffisant pour une arme de référence, trop pauvre pour créer
- * une identité.
+ * **Le moteur sait désormais faire autre chose que des dégâts** : une carte
+ * peut porter des EFFETS. C'est ce qui permet à l'armure d'exister — elle ne
+ * frappe pas, elle donne du bloc — et c'est là qu'est le budget de contenu.
  */
 import type { Carte } from './combat.ts'
 
@@ -21,15 +20,27 @@ export type Rarete = 'commune' | 'rare' | 'epique'
 /** Un modèle de carte : tout sauf l'identifiant d'exemplaire. */
 export type Modele = Omit<Carte, 'id'>
 
-export type Arme = {
+/**
+ * Une pièce d'équipement : elle a un nom, une rareté, et surtout **un set**.
+ *
+ * Armes et armures partagent la même forme, parce qu'elles jouent le même rôle
+ * — apporter des cartes. Ce qui les sépare est ce qu'elles apportent, pas leur
+ * structure : une arme frappe, une armure encaisse.
+ */
+export type Piece = {
   id: string
   nom: string
   rarete: Rarete
-  /** Nombre de mains occupées. Une arme à deux mains prend les deux slots. */
-  mains: 1 | 2
   /** Son set : le deck qu'elle apporte, modèle par modèle. */
   set: { modele: Modele; nombre: number }[]
 }
+
+export type Arme = Piece & {
+  /** Nombre de mains occupées. Une arme à deux mains prend les deux slots. */
+  mains: 1 | 2
+}
+
+export type Armure = Piece
 
 const ESTOC: Modele = { nom: 'Estoc', type: 'combat', cout: 1, degats: 3 }
 const TAILLADE: Modele = { nom: 'Taillade', type: 'combat', cout: 2, degats: 6 }
@@ -62,17 +73,67 @@ export const GLAIVE: Arme = {
 /** L'arme qu'on ne peut pas perdre : il y en a toujours une au râtelier. */
 export const ARME_GRATUITE = GLAIVE
 
+/* ---------------------------------------------------------------------- *
+ * Les armures. Elles ne frappent pas : elles donnent du BLOC.
+ * ---------------------------------------------------------------------- */
+
+const GARDE: Modele = {
+  nom: 'Garde',
+  type: 'combat',
+  cout: 1,
+  degats: 0,
+  effets: [{ type: 'bloc', montant: 5 }],
+}
+
+const REMPART: Modele = {
+  nom: 'Rempart',
+  type: 'combat',
+  cout: 2,
+  degats: 0,
+  effets: [{ type: 'bloc', montant: 11 }],
+}
+
+/**
+ * Le Plastron : l'armure commune et gratuite, pendant du Glaive.
+ *
+ * **Le bloc est à la Slay the Spire** : il absorbe la salve de fin de tour,
+ * puis il tombe. Ce n'est pas de la vie en réserve, c'est une décision qui ne
+ * vaut que pour ce tour-ci — et c'est ce qui en fait un vrai arbitrage contre
+ * frapper, à chaque main.
+ *
+ * Rendement : 5 et 5,5 de bloc par énergie, contre 3 à 3,5 de dégâts pour le
+ * Glaive. **Bloquer rapporte plus que frapper, à énergie égale**, et c'est
+ * délibéré : un point de bloc ne vaut un point de vie que si la salve arrive,
+ * il est perdu sinon. On paie le gâchis par l'avantage.
+ *
+ * *Et c'est la première pièce qui montre ce que « équiper plus dilue » veut
+ * dire* : quatre cartes de garde, ce sont quatre cartes qui ne frappent pas.
+ * Le deck passe de 10 à 14, donc le Moulinet sort moins souvent.
+ */
+export const PLASTRON: Armure = {
+  id: 'plastron',
+  nom: 'Plastron',
+  rarete: 'commune',
+  set: [
+    { modele: GARDE, nombre: 3 },
+    { modele: REMPART, nombre: 1 },
+  ],
+}
+
+/** L'armure qu'on ne peut pas perdre, comme le Glaive. */
+export const ARMURE_GRATUITE = PLASTRON
+
 /**
  * Le deck emporté, somme des sets de tout ce qui est équipé. Les identifiants
  * portent l'arme d'origine : deux armes peuvent donner la même carte sans que
  * leurs exemplaires se confondent.
  */
-export function deckDeLEquipement(equipement: Arme[]): Carte[] {
-  return equipement.flatMap((arme) =>
-    arme.set.flatMap(({ modele, nombre }) =>
+export function deckDeLEquipement(equipement: Piece[]): Carte[] {
+  return equipement.flatMap((piece) =>
+    piece.set.flatMap(({ modele, nombre }) =>
       Array.from({ length: nombre }, (_, i) => ({
         ...modele,
-        id: `${arme.id}-${modele.nom.toLowerCase()}-${i + 1}`,
+        id: `${piece.id}-${modele.nom.toLowerCase()}-${i + 1}`,
       })),
     ),
   )

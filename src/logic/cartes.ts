@@ -196,6 +196,34 @@ const PROFONDEUR_ETALON = 8
  */
 export const MENACE_DEPART = 0.45
 
+/**
+ * De combien les ennemis mordent plus fort **depuis que le joueur a une
+ * armure**.
+ *
+ * Le Plastron n'ajoute pas un peu de confort : il change le jeu. Mesuré à
+ * réglage inchangé, avec un bot qui garde dès que la salve annonce 8 ou plus :
+ * **100 % de survie au fond en portant tous les trésors**, contre 58 % avant.
+ * Le bloc absorbait simplement la salve, tour après tour.
+ *
+ * *C'est le rasoir du projet, encore une fois* : la puissance du deck est un
+ * levier bien plus violent que celle des ennemis, et une pièce d'équipement en
+ * plus vaut bien davantage qu'un chiffre poussé. Balayage de la morsure :
+ *
+ * | mordant | tout prendre | tout refuser | sans jamais garder |
+ * |---|---|---|---|
+ * | x1 | 100 % | 100 % | 98 % |
+ * | x1,35 | 100 % | 97 % | 1 % |
+ * | **x1,45** | **92 %** | **68 %** | **0 %** |
+ * | x1,5 | 71 % | 36 % | 0 % |
+ *
+ * Le pas entre 1,45 et 1,5 coûte 21 points : *une course n'a pas de pente
+ * douce*. À revérifier par simulation dès qu'une pièce d'équipement change.
+ *
+ * **Et il faut savoir ce que ça n'a PAS corrigé** : « sans jamais garder » tombe
+ * à zéro, donc bloquer n'est plus un choix mais une obligation.
+ */
+const MORDANT = 1.45
+
 export function ennemisPourProfondeur(
   profondeur: number,
   profondeurMax: number,
@@ -204,7 +232,7 @@ export function ennemisPourProfondeur(
 ): Ennemi[] {
   const groupe = GROUPES[randomInt(rng, 0, GROUPES.length - 1)]!
   const part = profondeurMax > 1 ? (profondeur - 1) / (profondeurMax - 1) : 1
-  const facteur = menaceDepart + (1 - menaceDepart) * part
+  const facteur = (menaceDepart + (1 - menaceDepart) * part) * MORDANT
   return groupe.ennemis.map((ennemi) => ({
     ...ennemi,
     degats: Math.round(ennemi.degats * facteur),

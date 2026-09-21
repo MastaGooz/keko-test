@@ -31,6 +31,13 @@ import type { Rng } from './rng.ts'
 export type Effet =
   /** Frappe tous les corps debout, en plus de la cible. */
   | { type: 'degatsTous'; montant: number }
+  /**
+   * Du **bloc**, à la Slay the Spire : il absorbe les dégâts de la salve de fin
+   * de tour, puis **il tombe**. Ce n'est pas de la vie en réserve — c'est une
+   * décision qui ne vaut que pour ce tour-ci, et qu'il faut reprendre au
+   * suivant. *Sans la remise à zéro, bloquer deviendrait épargner.*
+   */
+  | { type: 'bloc'; montant: number }
   /** Rend des PV au joueur, sans dépasser son maximum. */
   | { type: 'soin'; montant: number }
   /** Recharge de l'énergie tout de suite, dans la limite du maximum. */
@@ -96,6 +103,8 @@ export type EtatCombat = {
   defausse: Carte[]
   energie: number
   energieMax: number
+  /** Ce qui absorbera la prochaine salve. Retombe à zéro une fois qu'elle est passée. */
+  bloc: number
   tailleMain: number
   tour: number
   evenements: Evenement[]
@@ -129,6 +138,7 @@ export function creerCombat(
     defausse: [],
     energie: config.energieMax,
     energieMax: config.energieMax,
+    bloc: 0,
     tailleMain: config.tailleMain,
     tour: 1,
     evenements: [{ tour: 1, type: 'debut', ennemis: ennemis.map((e) => e.nom) }],
@@ -203,6 +213,10 @@ export function finDuTour(etat: EtatCombat, rng: Rng): EtatCombat {
     if (suivant.issue !== null) return suivant
   }
 
+  // LE BLOC TOMBE une fois la salve passée : il ne protège que le tour où on
+  // l'a posé. Sans ça, bloquer deviendrait épargner, et la décision du tour
+  // deviendrait un investissement.
+  suivant.bloc = 0
   suivant.tour += 1
   suivant.energie = suivant.energieMax
   piocher(suivant, rng)
@@ -211,9 +225,13 @@ export function finDuTour(etat: EtatCombat, rng: Rng): EtatCombat {
 
 /** Dégâts encaissés à la fin de ce tour si rien ne change. */
 export function menaceDuTour(etat: EtatCombat): number {
-  return etat.ennemis
+  const brute = etat.ennemis
     .filter((ennemi) => ennemi.pv > 0 && ennemi.compteur <= 1)
     .reduce((total, ennemi) => total + ennemi.degats, 0)
+  // CE QU'ON VA VRAIMENT PRENDRE, bloc déduit. C'est ce chiffre qui rend le
+  // bloc lisible : poser une carte de garde doit faire baisser la menace sous
+  // les yeux du joueur, sinon il ne sait pas ce qu'elle lui a acheté.
+  return Math.max(0, brute - etat.bloc)
 }
 
 /**
@@ -339,6 +357,9 @@ function appliquerEffet(etat: EtatCombat, effet: Effet): void {
     case 'energie':
       etat.energie = Math.min(etat.energieMax, etat.energie + effet.montant)
       break
+    case 'bloc':
+      etat.bloc += effet.montant
+      break
     case 'degatsTous':
       for (const ennemi of etat.ennemis) {
         if (ennemi.pv === 0) continue
@@ -359,13 +380,18 @@ function appliquerEffet(etat: EtatCombat, effet: Effet): void {
 }
 
 function frapper(etat: EtatCombat, ennemi: Ennemi): void {
-  etat.pv = Math.max(0, etat.pv - ennemi.degats)
+  // LE BLOC ENCAISSE EN PREMIER, et ce qui dépasse seulement passe aux PV.
+  const absorbe = Math.min(etat.bloc, ennemi.degats)
+  etat.bloc -= absorbe
+  etat.pv = Math.max(0, etat.pv - (ennemi.degats - absorbe))
   ennemi.compteur = ennemi.periode
   etat.evenements.push({
     tour: etat.tour,
     type: 'frappe',
     nom: ennemi.nom,
-    degats: ennemi.degats,
+    // Ce que le joueur ENCAISSE VRAIMENT : le récit et les marques visuelles
+    // doivent dire ce qui lui est arrivé, pas ce qui lui était destiné.
+    degats: ennemi.degats - absorbe,
     pvJoueur: etat.pv,
   })
 

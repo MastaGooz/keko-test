@@ -35,8 +35,8 @@ import {
   ennemisPourProfondeur,
   tresorRecompense,
 } from './cartes.ts'
-import type { Arme } from './armes.ts'
-import { ARME_GRATUITE, deckDeLEquipement } from './armes.ts'
+import type { Piece } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, deckDeLEquipement } from './armes.ts'
 
 /**
  * Les chiffres de la run, rassemblés et injectables — c'est ce qui permet de
@@ -141,7 +141,7 @@ export type Phase =
 export type Descente = {
   reglage: Reglage
   /** Ce qui a été emporté. Perdu à la mort, rapporté à l'extraction. */
-  equipement: Arme[]
+  equipement: Piece[]
   profondeur: number
   phase: Phase
   combat: EtatCombat
@@ -176,7 +176,11 @@ function engager(
 export function commencerDescente(
   rng: Rng,
   reglage: Reglage = REGLAGE_DEFAUT,
-  equipement: Arme[] = [ARME_GRATUITE],
+  // Une arme ET une armure, toutes deux gratuites : c'est le chargement de
+  // depart, et c'est deja un deck compose de DEUX pieces -- ce que le concept
+  // demande, et ce qui montre tout de suite ce que « equiper plus dilue » veut
+  // dire (10 cartes deviennent 14, donc le Moulinet sort moins souvent).
+  equipement: Piece[] = [ARME_GRATUITE, ARMURE_GRATUITE],
 ): Descente {
   // Le deck n'existe pas en soi : c'est la somme des sets de l'équipement.
   const deck = deckDeLEquipement(equipement)

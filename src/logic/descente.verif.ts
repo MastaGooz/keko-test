@@ -9,6 +9,7 @@
  */
 import { createRng } from './rng.ts'
 import { carteTresor } from './cartes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, deckDeLEquipement } from './armes.ts'
 import type { Descente, Lieu, Reglage } from './descente.ts'
 import {
   butinTransporte,
@@ -24,6 +25,10 @@ import {
   tresorsAuDeck,
 } from './descente.ts'
 import { CHOIX_PAR_PALIER } from './descente.ts'
+
+// La taille du deck de depart ne s'ecrit plus en dur : elle vient de
+// l'equipement, et une piece ajoutee la ferait mentir sans rien casser.
+const BASE = deckDeLEquipement([ARME_GRATUITE, ARMURE_GRATUITE]).length
 
 const REGLAGE: Reglage = { pvMax: 100, soin: 20, menaceDepart: 0.45, profondeurMax: 4 }
 
@@ -64,7 +69,10 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
 {
   const d = commencerDescente(createRng(7), REGLAGE)
   verifier('une descente commence au premier palier, en combat', d.profondeur === 1 && d.phase.type === 'combat')
-  verifier('on part avec le deck de base et rien de porté', d.deck.length === 10 && tresorsAuDeck(d) === 0)
+  verifier('on part avec le deck de base et rien de porté',
+    d.deck.length === BASE && tresorsAuDeck(d) === 0)
+  verifier("le deck de depart vient bien de DEUX pieces d'equipement",
+    d.equipement.length === 2 && d.deck.some((c) => c.nom === 'Garde'))
   verifier('on part à pleins PV', d.combat.pv === REGLAGE.pvMax)
 }
 
@@ -79,7 +87,7 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   )
   const apresCarte = choisirCarte(d, 0, createRng(2))
   verifier('choisir une amélioration présente ensuite le trésor', apresCarte.phase.type === 'butin')
-  verifier('et elle est entrée dans le deck', apresCarte.deck.length === 11)
+  verifier('et elle est entrée dans le deck', apresCarte.deck.length === BASE + 1)
 }
 
 {
@@ -112,7 +120,7 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   d = palier(d, { ou: 'deck' }, rng)
   if (d.phase.type === 'sortie') d = descendre(d, rng)
   verifier('un trésor emporté tombe directement dans le deck', tresorsAuDeck(d) === 1)
-  verifier('et le palier a aussi donné son amélioration', d.deck.length === 12)
+  verifier('et le palier a aussi donné son amélioration', d.deck.length === BASE + 2)
 
   // Le fond reste un contenant : ce qu'on y jette se repêche jusqu'à Terminer.
   const auButin = jusquAuButin(d, rng)
@@ -208,12 +216,12 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   const rng = createRng(13)
   const dedans = palier(commencerDescente(rng, REGLAGE), { ou: 'deck' }, rng)
   verifier('un palier donne une amélioration ET un trésor',
-    dedans.deck.length === 12 && tresorsAuDeck(dedans) === 1)
+    dedans.deck.length === BASE + 2 && tresorsAuDeck(dedans) === 1)
   verifier('le trésor rangé compte dans le butin', butinTransporte(dedans) > 0)
 
   const laisse = palier(commencerDescente(rng, REGLAGE), { ou: 'jeter' }, rng)
   verifier("laisser le trésor garde quand même l'amélioration",
-    laisse.deck.length === 11 && tresorsAuDeck(laisse) === 0)
+    laisse.deck.length === BASE + 1 && tresorsAuDeck(laisse) === 0)
   verifier('un trésor laissé est perdu, pas reporté', butinTransporte(laisse) === 0)
   verifier('et on va quand même au point de sortie', laisse.phase.type === 'sortie')
 }

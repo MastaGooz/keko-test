@@ -86,6 +86,13 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
 - **L'équipement fait le deck**, le personnage est générique. Une arme = un set
   de cartes, la rareté fait la force du set. Armure et objets ajoutent leurs
   propres cartes.
+- **L'ARMURE DONNE DU BLOC, à la Slay the Spire** : il absorbe la salve de fin
+  de tour, puis **il tombe**. Ce n'est pas de la vie en réserve — c'est une
+  décision qui ne vaut que pour ce tour-ci, et qu'il faut reprendre au suivant.
+  *Sans la remise à zéro, bloquer deviendrait épargner.*
+- **Chaque trésor a un effet UNIQUE**, pas une échelle du même effet. Tranché
+  par Keko. Le soin proportionnel au prix qui tourne aujourd'hui est un
+  placeholder — il donne sa forme au mécanisme, pas son contenu.
 - **Équiper plus dilue.** La taille du deck est une ressource ; c'est ce qui
   rend le chargement intéressant au lieu d'être « tout prendre ».
 - **L'équipement se perd à la mort**, comme le sac. Une **arme commune
@@ -248,6 +255,25 @@ d'un de ces trois éléments, le test répondait non — et il avait tort.*
 La **descente** est jouable au doigt et déployée : une run de 6 paliers, du
 premier combat à l'extraction ou à la mort. Ni hub, ni marché, ni carte de
 donjon. Ce qui tourne :
+
+- **le deck vient de DEUX pièces d'équipement** (`logic/armes.ts`), toutes deux
+  communes et gratuites : le **Glaive** et le **Plastron**. C'est le chargement
+  de départ, et c'est déjà ce que le concept demande — plus un exemple vivant de
+  « équiper plus dilue » : le deck passe de 10 à 14 cartes, donc le Moulinet
+  sort moins souvent.
+
+  Le Plastron donne 3 Garde (1⚡ → 5 de bloc) et 1 Rempart (2⚡ → 11). **Bloquer
+  rapporte plus que frapper à énergie égale** (5 à 5,5 contre 3 à 3,5), et c'est
+  délibéré : un point de bloc ne vaut un point de vie que si la salve arrive, il
+  est perdu sinon. On paie le gâchis par l'avantage.
+
+  **La menace annoncée déduit le bloc** (`−8` devient `−3` quand on pose une
+  Garde). C'est ce chiffre qui rend la garde lisible : poser une carte doit
+  faire baisser ce qu'on va prendre, sous les yeux du joueur, sinon il ne sait
+  pas ce qu'elle lui a acheté.
+
+  Une carte qui ne frappe pas **montre son bloc là où les autres montrent leurs
+  dégâts** : un badge à zéro se lirait comme une carte inutile.
 
 - **le deck vient de l'équipement** (`logic/armes.ts`) : le **Glaive**, arme
   commune et gratuite, donne 5 Estoc (1⚡/3), 3 Taillade (2⚡/6), 2 Moulinet
@@ -1227,10 +1253,28 @@ Glaive, soin à `valeur / 12`) :
 rapporte plus en espérance mais tue une run sur trois. C'est au joueur de
 décider ce qu'il préfère, et c'est tout ce qu'on demande à un push-your-luck.
 
-**LE POINT À SURVEILLER : porter ne coûte que 4 points de survie** (71 % contre
-75 %). C'est faible — la cupidité en coûtait 12 avec le sac. Le poids ne mord
-pas encore assez, et les leviers connus restent les mêmes : allonger la run, ou
-donner plus d'un trésor par palier.
+**MESURE REFAITE APRÈS L'ARMURE**, qui a tout changé (400 descentes au fond,
+mordant à 1,45) :
+
+| politique | survie | or |
+|---|---|---|
+| tout prendre, brûler sous 30 PV | **92 %** | 213 |
+| tout refuser | **70 %** | 0 |
+| tout prendre, ne jamais garder | **0 %** | 0 |
+
+**LE DILEMME EST INVERSÉ, ET C'EST LE POINT À TRANCHER.** Prendre les trésors
+est désormais *meilleur* que les refuser — 92 % contre 70 % — parce qu'un trésor
+brûlé rend assez de PV pour payer largement son poids. La cupidité ne coûte plus
+rien : **elle rapporte.**
+
+C'est un défaut de contenu, pas de structure : le soin proportionnel au prix est
+un placeholder, et il est trop généreux dans un jeu devenu plus dur. *À
+reprendre quand chaque trésor aura son effet unique* — et tous ne devront pas
+soigner.
+
+**Second point à surveiller : bloquer n'est plus un choix, c'est une
+obligation** (0 % de survie sans jamais garder). L'armure est devenue une taxe
+plutôt qu'un arbitrage.
 
 Le squelette reste volontairement nu : pas de hub, pas de marché, pas de
 méta-progression.

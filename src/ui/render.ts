@@ -16,7 +16,7 @@ import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, tresorsAuDeck } from '../logic/descente.ts'
 import { creature, dessin, sceau, teteDeMort } from './illustrations.ts'
 
-const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡' }
+const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡', bloc: '⛉' }
 
 /**
  * Quelle silhouette, et quelle teinte, pour chaque nom d'ennemi. Trois espèces
@@ -309,11 +309,16 @@ function bandeauJoueur(etat: EtatCombat, fini: boolean): string {
   const marque =
     fini || menace === 0 ? '' : `<span class="menace-pv">−${menace}</span>`
 
+  // LE BLOC, quand il y en a. Il ne dure qu'un tour, donc il n'a pas de place
+  // réservée : une case vide en permanence dirait qu'il manque quelque chose.
+  const bloc = etat.bloc === 0 ? '' : `<span class="bloc-chiffre">${GLYPHE.bloc}${etat.bloc}</span>`
+
   // UN COMPTEUR, PLUS UNE BARRE. Sous l'orbe d'énergie, dans la même colonne :
-  // ce sont les deux réserves du joueur, elles se lisent au même endroit et de
-  // la même façon. La barre prenait toute une bande pour dire un chiffre.
+  // ce sont les réserves du joueur, elles se lisent au même endroit et de la
+  // même façon. La barre prenait toute une bande pour dire un chiffre.
   return (
     `<span class="pv-chiffre">${etat.pv}<span class="pv-max">/${etat.pvMax}</span></span>` +
+    bloc +
     marque
   )
 }
@@ -376,7 +381,9 @@ function ligneCarte(
 
   const debout = vivants(etat)
   const abordable = carte.cout <= etat.energie
-  const acheve = abordable && debout.some(({ ennemi }) => carte.degats >= ennemi.pv)
+  const acheve =
+    abordable && carte.degats > 0 && debout.some(({ ennemi }) => carte.degats >= ennemi.pv)
+  const bloque = carte.effets?.find((e) => e.type === 'bloc')?.montant ?? 0
   const vise = index === selection
 
   const classes = ['carte', 'combat']
@@ -399,7 +406,12 @@ function ligneCarte(
     // carte qui reste visible quand l'éventail se recouvre. Tout ce qui sert
     // à décider doit tenir là.
     `<span class="gemme">${carte.cout}</span>` +
-    `<span class="badge degats">${carte.degats}</span>` +
+    // UNE CARTE QUI NE FRAPPE PAS MONTRE CE QU'ELLE DONNE. Un badge de dégâts à
+    // zéro sur une garde se lit comme une carte inutile ; c'est son bloc qui
+    // porte la décision, il doit être là où on lit la puissance.
+    (bloque === 0
+      ? `<span class="badge degats">${carte.degats}</span>`
+      : `<span class="badge bloc">${GLYPHE.bloc}${bloque}</span>`) +
     `<span class="marque">${acheve ? '★' : ''}</span>` +
     `</button>`
   )
