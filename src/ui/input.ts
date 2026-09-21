@@ -134,12 +134,17 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         dispatch({ type: 'armurerie' })
         break
       case 'equiper': {
-        // La provenance vient de la piece glissee, la destination du slot
-        // survole -- exactement comme le rangement du butin. Une TAPE n'a pas
-        // de provenance : c'est alors la piece elle-meme qui la porte.
-        // `lieuSource` est pose par le glisser ; sur une tape il n'y en a pas,
-        // et c'est le slot du noeud lui-meme qui fait la provenance.
-        const source = lireSlot(noeud.dataset.lieuSource ?? noeud.dataset.lieu)
+        // LA TAPE REGARDE, LE GLISSER DEPLACE. Une tape n'a pas de provenance
+        // posee par le glisser : elle ouvre la piece en grand, comme une carte
+        // de la main. C'est le glisser seul qui equipe ou retire -- le geste
+        // qui deplace est celui qui s'y engage. Keko : « quand on clique au
+        // lieu d'equiper / retirer on va zoomer la carte ».
+        if (noeud.dataset.lieuSource === undefined) {
+          const piece = noeud.dataset.piece
+          if (piece !== undefined) dispatch({ type: 'zoomer', id: piece })
+          break
+        }
+        const source = lireSlot(noeud.dataset.lieuSource)
         const cible = lireSlot(noeud.dataset.slot)
         delete noeud.dataset.lieuSource
         // L'identifiant de ce qu'on DEPLACE, et non de ce que la cible contient :

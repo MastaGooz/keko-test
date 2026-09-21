@@ -156,7 +156,7 @@ export function render(
   seed: number,
   selection: number | null,
   occupation: Occupation = 'libre',
-  zoom: Carte | null = null,
+  zoom: Carte | Piece | null = null,
   agonie: readonly number[] = [],
   hub: Hub | null = null,
 ): void {
@@ -207,12 +207,20 @@ export function render(
 
   // La carte regardee de pres. Elle vient de l'ETAT et non d'une classe posee
   // a la main : le premier rendu venu la balaierait.
+  // Une carte de jeu, ou une PIECE D'EQUIPEMENT : le zoom montre l'une comme
+  // l'autre, a la meme taille. Une piece se reconnait a son set.
   const regardee = zoom
+  const grande =
+    regardee === null
+      ? ''
+      : 'set' in regardee
+        ? cartePiece(regardee)
+        : vitrine(regardee, regardee.type === 'tresor')
   view.zoom.innerHTML =
     regardee === null
       ? ''
       : `<button class="zoom-fond" type="button" data-action="fermerZoom" aria-label="Fermer">` +
-        `</button><div class="zoom-carte">${vitrine(regardee, regardee.type === 'tresor')}</div>`
+        `</button><div class="zoom-carte">${grande}</div>`
   view.root.classList.toggle('zoom-ouvert', regardee !== null)
 
   view.finTour.innerHTML = etiquetteFinTour(etat, occupation)

@@ -3231,6 +3231,15 @@ body {
   --accent: #9aa4b8;
 }
 
+/* La composition d'une piece est plus longue qu'un effet de carte -- « 2×
+   Moulinet 4⚡ 14 » debordait de 17 % de la bande et finissait en points de
+   suspension dans le zoom, la ou on vient justement la lire. Une pointe plus
+   petit ; sur la petite carte elle ne se lisait pas de toute facon, c'est le
+   zoom qui lit. */
+.piece-carte .effet {
+  font-size: 6.2cqw;
+}
+
 /* La rarete au lisere, comme la richesse d'un tresor au cadre. */
 .piece-carte.rare {
   box-shadow: 0 0 0 1px #4d6d84, 0 0.5rem 1rem #000c;

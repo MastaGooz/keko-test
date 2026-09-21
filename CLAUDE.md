@@ -1249,10 +1249,22 @@ compte : *ce qu'on emporte donne des cartes, donc ça se montre comme une carte.
 et c'est la seule information qui rende « équiper plus dilue » lisible sur la
 pièce elle-même : 10 pour le Glaive, 4 pour le Plastron. **Le badge dit sa
 force**, un seul chiffre : les plus gros dégâts ou le plus gros bloc. La
-composition exacte tient sous la carte, en légende — on la consulte, on ne
-décide pas dessus. Un slot vide a la forme de la carte qu'il attend.
+composition exacte vit dans la bande d'effet de la carte, une ligne par modèle
+— on la consulte en zoomant, on ne décide pas dessus. Un slot vide a la forme
+de la carte qu'il attend.
 
-Quatre règles qui portent l'écran :
+Cinq règles qui portent l'écran :
+
+- **La tape REGARDE, le glisser DÉPLACE.** Taper une pièce — au râtelier ou
+  dans un slot — l'ouvre en grand, exactement comme une carte de la main ; seul
+  le glisser équipe ou retire. Il y a eu une version où la tape équipait : elle
+  faisait passer d'un côté à l'autre une pièce qu'on voulait seulement lire, et
+  la composition d'une pièce ne se lit pas à la taille du râtelier. *Le geste
+  qui déplace est celui qui s'y engage.* Dans `input.ts`, c'est l'absence de
+  `lieuSource` (posé par le glisser seul) qui distingue les deux. Corollaire :
+  la bande d'effet d'une pièce est un cran plus petite que celle d'une carte
+  (`6.2cqw`), parce que « 2× Moulinet 4⚡ 14 » débordait de 17 % et finissait
+  en points de suspension dans le zoom, là où on vient justement la lire.
 
 - **On arrive avec l'équipement gratuit DÉJÀ équipé.** Un joueur qui débarque
   doit pouvoir descendre sans rien comprendre à l'écran ; l'armurerie se

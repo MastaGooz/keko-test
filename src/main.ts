@@ -35,6 +35,7 @@ import {
 import type { Occupation } from './ui/render.ts'
 import { mount, render, vitrine } from './ui/render.ts'
 import type { Hub, Slot } from './logic/hub.ts'
+import type { Piece } from './logic/armes.ts'
 import {
   creerHub,
   deplacerPiece,
@@ -91,7 +92,7 @@ let finSonnee = false
  * ailleurs : l'écran de butin montre lui aussi des cartes, et on doit pouvoir
  * les consulter avant de décider laquelle on jette.
  */
-let zoom: Carte | null = null
+let zoom: Carte | Piece | null = null
 /** La carte survolée ou tenue : elle montre ce qu'elle emporterait. */
 let survolee: number | null = null
 
@@ -280,9 +281,12 @@ function dispatch(action: Action): void {
       // Regarder une carte n'engage rien : ça ne repose pas celle qu'on tient.
       // On la cherche dans la main ET dans ce qu'on porte : c'est le même geste
       // en combat et sur l'écran de butin.
-      const vue =
+      // ...et dans l'armurerie : ce qu'on porte et ce qui reste au râtelier.
+      const vue: Carte | Piece | null =
         descente.combat.main.find((c) => c.id === action.id) ??
         descente.deck.find((c) => c.id === action.id) ??
+        hub.reserve.find((p) => p.id === action.id) ??
+        equipement(hub.chargement).find((p) => p.id === action.id) ??
         null
       zoom = vue
       break
