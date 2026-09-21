@@ -307,11 +307,15 @@ function corpsEnnemi(
 function bandeauJoueur(etat: EtatCombat, fini: boolean): string {
   const menace = menaceDuTour(etat)
   const marque =
-    fini || menace === 0
-      ? '<span class="intention calme">—</span>'
-      : `<span class="intention encaisse-a-venir">−${menace}</span>`
+    fini || menace === 0 ? '' : `<span class="menace-pv">−${menace}</span>`
 
-  return `${marque}${jauge(etat.pv, etat.pvMax)}`
+  // UN COMPTEUR, PLUS UNE BARRE. Sous l'orbe d'énergie, dans la même colonne :
+  // ce sont les deux réserves du joueur, elles se lisent au même endroit et de
+  // la même façon. La barre prenait toute une bande pour dire un chiffre.
+  return (
+    `<span class="pv-chiffre">${etat.pv}<span class="pv-max">/${etat.pvMax}</span></span>` +
+    marque
+  )
 }
 
 /**

@@ -527,14 +527,26 @@ donjon. Ce qui tourne :
   est la cible tactile. **Elles respirent**, décalées les unes des autres : une
   meute qui souffle à l'unisson fait machine, pas vivant. Le joueur, lui, reste
   une barre — il n'est pas un corps de plus à l'écran ;
-- **le joueur n'est PAS un corps sur la scène** : il est une **barre dans le
-  coin bas-gauche, au-dessus de la pioche**. Il a été une barre, puis un corps —
-  « une barre ne raconte pas un affrontement, un corps qui fait face, si » — et
-  il redevient une barre. *Ce n'est pas un retour en arrière, c'est un
-  changement de point de vue* : l'affrontement se raconte depuis sa place à lui.
-  Il ne se voit pas lui-même, il voit ce qu'il a en face, et il est du côté de
-  ses cartes. Il ne porte que ce qui sert à décider : ses PV, et ce qu'il
-  encaissera à la fin du tour.
+- **le joueur n'est PAS un corps sur la scène** : il est un **compteur `X/X`,
+  sous l'orbe d'énergie**. Il a été une barre, puis un corps — « une barre ne
+  raconte pas un affrontement, un corps qui fait face, si » — puis de nouveau
+  une barre. *Ce n'est pas un retour en arrière, c'est un changement de point de
+  vue* : l'affrontement se raconte depuis sa place à lui. Il ne se voit pas
+  lui-même, il voit ce qu'il a en face, et il est du côté de ses cartes.
+
+  **Et ce n'est même plus une barre.** Elle a traversé toute la largeur juste
+  au-dessus de la main — là elle coupait le regard sur le trajet que fait le
+  coup — puis le coin bas-gauche, avant d'arriver sous l'orbe. *Une barre prenait
+  une bande entière pour dire un chiffre*, et le joueur n'a pas de corps dont
+  elle dirait l'état.
+
+  Sous l'orbe, **les deux réserves du joueur se lisent au même endroit et de la
+  même façon** : énergie au-dessus, PV en dessous. Ce qu'il encaissera à la fin
+  du tour est un badge à côté, et il **n'apparaît que s'il y a une menace** —
+  une place vide se lit mieux qu'un tiret qu'il faut interpréter.
+
+  *Tout ce qui est à lui tient donc la bande gauche* : pioche, énergie, PV, et
+  la carte qu'il tient.
 
 - **LE GROS PLAN D'ATTAQUE A ÉTÉ ABANDONNÉ, et il faut savoir pourquoi pour ne
   pas le reproposer.** Il a existé : un voile sur la scène, les deux combattants
@@ -889,7 +901,10 @@ donjon. Ce qui tourne :
   main reste vide et les voisines se referment, exactement comme quand on la
   tient au doigt.
 
-  **DANS LE COIN GAUCHE, sur l'axe de la pioche, et À SA TAILLE DE MAIN.** Elle
+  **SUR L'AXE DE LA PIOCHE, À LA HAUTEUR DES ENNEMIS, et À SA TAILLE DE MAIN.**
+  Elle couvre la même bande verticale que la scène et s'y centre comme les corps
+  qu'elle vise : ils se regardent à la même hauteur, ce qui est tout l'intérêt
+  de la mettre en face d'eux — mesuré à 3 à 17 px près selon le format. Elle
   a été sous les ennemis, puis accrochée au bord gauche du rang ; dans les deux
   cas elle vivait DANS la scène, donc elle en décalait le contenu à l'instant
   même où l'on vise — *les cibles bougeaient sous le pouce*. Ancrée hors du flux
