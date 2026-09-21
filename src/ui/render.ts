@@ -469,7 +469,9 @@ function lignes(carte: Carte): string[] {
 
 /** Ce qu'est la carte, pour le pied. */
 function nature(carte: Carte): string {
-  if (carte.type === 'tresor') return `Trésor · ${richesse(carte.valeur ?? 0)}`
+  // Le rang de richesse ne s'écrit pas : il se lit au cadre, comme la rareté
+  // d'une pièce. Keko : « inutile de spécifier la qualité modeste en bas ».
+  if (carte.type === 'tresor') return 'Trésor'
   if (carte.degats > 0) return 'Attaque'
   if (carte.effets?.some((e) => e.type === 'bloc')) return 'Défense'
   return 'Action'

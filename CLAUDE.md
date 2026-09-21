@@ -1811,7 +1811,8 @@ une carte à jouer :
   ligne en italique. Un trésor dit d'abord ce qu'il vaut, puis ce que rapporte
   de le brûler ; une pièce y met sa composition, une ligne par modèle ;
 - le **pied** : sa nature gravée entre deux filets (« Attaque », « Défense »,
-  « Trésor · cossu », « Arme · commune »). Enfoui au repos, et c'est voulu ;
+  « Trésor », « Arme »). Ni la richesse d'un trésor ni la rareté d'une pièce
+  ne s'y écrivent : elles se lisent au cadre. Enfoui au repos, et c'est voulu ;
 - des **volutes** aux quatre coins : un seul SVG écrit à la main, dont le
   viewBox a le rapport exact de la carte (100 × 140), donc `preserveAspectRatio:
   none` ne déforme rien et une unité vaut 1cqw.
