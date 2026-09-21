@@ -2234,7 +2234,10 @@ body {
    la carte qu'il recoit (1,4), et elle suit la largeur toute seule. */
 .slots-butin .emplacement {
   flex: 0 0 auto;
-  width: min(8.5rem, var(--large));
+  /* A LA TAILLE DE LA MAIN, pas reduite : c'est la meme carte que celle qu'on
+     va porter, elle doit se lire comme elle. Keko : « il faudrait que les
+     cartes aient la taille normale, pas reduite ». */
+  width: var(--large);
   min-height: 0;
   aspect-ratio: 1 / 1.4;
 }
@@ -2391,7 +2394,7 @@ body {
   }
 
   .slots-butin .emplacement {
-    width: min(6rem, var(--large));
+    width: var(--large);
   }
 }
 
@@ -3121,19 +3124,35 @@ body {
   text-transform: uppercase;
 }
 
-/* LES PIECES SONT DES CARTES, donc elles se rangent en rangee, pas en liste :
-   une carte est plus haute que large, et trois cartes empilees ne tiennent pas
-   dans la hauteur d'un telephone. La rangee replie si le ratelier deborde, et
-   c'est l'etal qui defile -- jamais la page. */
-.rangee-pieces {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  align-content: flex-start;
+/* LE RATELIER EST UNE GRILLE DE CARTES REDUITES : on y cherche une piece, on
+   ne la lit pas la -- une tape l'ouvre en grand. La grille defile dans l'etal
+   si elle deborde, jamais la page. */
+.etal.reserve .rangee-pieces {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, var(--piece));
   justify-content: center;
+  align-content: flex-start;
   gap: 0.5rem;
   min-height: 0;
   overflow-y: auto;
+}
+
+/* LE CHARGEMENT, lui, est a taille de main : deux armes sur une ligne,
+   l'armure sur la ligne dessous. C'est ce qu'on emporte, il se lit tel qu'on
+   le portera. */
+.rangee-pieces.mains,
+.rangee-pieces.torse {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.etal.reserve {
+  flex: 1 1 0;
+}
+
+.etal.porte {
+  flex: 0 0 auto;
 }
 
 /* Une piece, au ratelier ou dans un slot : la carte, et sa legende dessous.
@@ -3167,10 +3186,18 @@ body {
   transform: none;
 }
 
-/* La taille d'une piece : une carte de main un peu reduite. Elle se resserre
-   avec l'ecran, et c'est la seule dimension a regler ici. */
+/* Deux tailles : la piece du RATELIER, reduite, et le SLOT du chargement, a
+   la taille de la main -- sauf quand deux lignes de cartes ne tiennent pas
+   dans la hauteur (un telephone couche : 390 px pour 2 x 142 plus le reste).
+   La borne par la hauteur retranche le chrome de l'ecran (11rem) et divise par
+   deux cartes de 1,4 de haut. */
 .voile.armurerie {
   --piece: min(6rem, calc(var(--large) * 0.85));
+  --piece-equip: min(var(--large), calc((100vh - 11rem) / 2.8));
+}
+
+.slot-equip {
+  width: var(--piece-equip);
 }
 
 /* Le slot VIDE a la forme de la carte qu'il attend : c'est une place, pas un
@@ -3245,6 +3272,9 @@ body {
 }
 
 .reserve-vide {
+  /* Dans la grille du ratelier, le message prend toute la largeur : sinon il
+     se tasse dans une cellule de la taille d'une piece. */
+  grid-column: 1 / -1;
   margin: auto 0;
   color: var(--muted);
   font-family: system-ui, sans-serif;

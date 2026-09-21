@@ -929,11 +929,17 @@ function armurerie(hub: Hub): string {
     `<div class="rangee-pieces">${enReserve}</div>` +
     `</div>` +
 
+    // LE CHARGEMENT À TAILLE DE MAIN, sur deux lignes : les deux armes, puis
+    // l'armure dessous. Le râtelier, lui, est une grille de cartes réduites —
+    // on y cherche, on n'y lit pas. Keko : « l'équipement de taille normale
+    // avec les deux armes sur une ligne et l'armure sur la ligne en dessous ».
     `<div class="etal porte">` +
     `<p class="etal-titre">Ce que tu emportes</p>` +
-    `<div class="rangee-pieces">` +
+    `<div class="rangee-pieces mains">` +
     slotEquipement(hub.chargement.mains[0], { ou: 'main', rang: 0 }, 'arme', false) +
     slotEquipement(hub.chargement.mains[1], { ou: 'main', rang: 1 }, 'arme', bloque) +
+    `</div>` +
+    `<div class="rangee-pieces torse">` +
     slotEquipement(hub.chargement.armure, { ou: 'armure' }, 'armure', false) +
     `</div>` +
     `</div>` +
@@ -986,7 +992,10 @@ function cartePiece(piece: Piece): string {
         const valeur = bloc > 0 ? GLYPHE.bloc + bloc : modele.degats
         return `<b>${nombre}×</b> ${modele.nom} <small>${modele.cout}${GLYPHE.energie} ${valeur}</small>`
       }),
-      `${bloque ? 'Armure' : 'Arme'} · ${piece.rarete}`,
+      // La rareté ne s'écrit pas : elle se lit au cadre, code couleur classique
+      // (`.piece-carte.rare`, `.epique`). Keko : « inutile d'afficher le niveau
+      // de rareté, on le fera via un code couleur ».
+      bloque ? 'Armure' : 'Arme',
     ) +
     `</div>`
   )
