@@ -1301,12 +1301,23 @@ Cinq règles qui portent l'écran :
   (code couleur classique, `.piece-carte.rare` / `.epique`).
 
   **Le râtelier montre ses cases vides** (douze au moins, en pointillé à la
-  forme d'une carte) : une grille de places, pas une liste de pièces. Et **le
-  fantôme du glisser garde la taille de ce qu'on a pris** : une pièce réduite
-  du râtelier reste réduite sous le doigt. Elle a grandi à la taille de la main
-  le temps d'un essai, puis Keko a tranché : « il vaut mieux laisser la carte
-  en mode réduit pour le drag and drop dans l'armurerie » — une grosse carte
-  sous le doigt cache les slots qu'on vise. Pour vérifier un glisser sans
+  forme d'une carte) : une grille de places, pas une liste de pièces. Et **dans
+  l'armurerie, le fantôme du glisser est TOUJOURS réduit** — qu'on prenne au
+  râtelier ou dans un slot du chargement, qui lui est à la taille de la main.
+  Il a grandi à la taille de la main le temps d'un essai, puis Keko a tranché :
+  « il vaut mieux laisser la carte en mode réduit pour le drag and drop dans
+  l'armurerie » — une grosse carte sous le doigt cache les slots qu'on vise.
+  La mesure est celle d'une case du râtelier, lue sur l'écran, parce que
+  `--piece` vit sur le voile et le fantôme est posé sur `body`. Ailleurs (le
+  butin), il garde la taille de ce qu'on a pris.
+
+  **Une pièce zoomée montre son set EN CARTES** : la pièce en grand à gauche,
+  et à sa droite les modèles qu'elle apporte, dessinés comme les vraies cartes
+  qu'on retrouvera en main (`vitrine`), chacun avec son nombre en pastille d'or
+  sur le coin. En ligne et non en éventail : ce sont des modèles, pas une main
+  — on les compare, on ne les tient pas. Bornés par la hauteur comme la pièce
+  (`min(9.5rem, 32vh)`), pour que la rangée tienne en paysage : 512 px sur un
+  667x320. Pour vérifier un glisser sans
   souris : dispatcher `pointerdown` puis `pointermove` SUR LA PIÈCE (les
   écouteurs sont sur la racine, un évènement lancé sur `window` n'y descend
   pas), puis mesurer `.fantome`.

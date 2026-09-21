@@ -214,13 +214,13 @@ export function render(
     regardee === null
       ? ''
       : 'set' in regardee
-        ? cartePiece(regardee)
+        ? zoomPiece(regardee)
         : vitrine(regardee, regardee.type === 'tresor')
   view.zoom.innerHTML =
     regardee === null
       ? ''
       : `<button class="zoom-fond" type="button" data-action="fermerZoom" aria-label="Fermer">` +
-        `</button><div class="zoom-carte">${grande}</div>`
+        `</button><div class="zoom-carte${regardee !== null && 'set' in regardee ? ' zoom-piece' : ''}">${grande}</div>`
   view.root.classList.toggle('zoom-ouvert', regardee !== null)
 
   view.finTour.innerHTML = etiquetteFinTour(etat, occupation)
@@ -909,6 +909,30 @@ function fin(descente: Descente, issue: 'extrait' | 'mort'): string {
  * une zone de dépôt et un bouton**, parce que sur un téléphone le glisser seul
  * est fragile — la tape doit toujours marcher.
  */
+/**
+ * UNE PIÈCE ZOOMÉE MONTRE SON SET EN CARTES. La pièce en grand à gauche, et
+ * à sa droite les modèles qu'elle apporte, dessinés comme les vraies cartes
+ * qu'on retrouvera en main, chacun avec son nombre d'exemplaires. La
+ * composition en trois lignes de texte disait la même chose ; en cartes, on
+ * voit ce qu'on va piocher. Keko : « afficher les cartes qu'elle apporte en
+ * image ».
+ *
+ * En ligne et non en éventail : ce sont des modèles, pas une main — on les
+ * compare, on ne les tient pas.
+ */
+function zoomPiece(piece: Piece): string {
+  const set = piece.set
+    .map(
+      ({ modele, nombre }) =>
+        `<span class="modele">` +
+        `<span class="compte">×${nombre}</span>` +
+        vitrine({ ...modele, id: `modele-${modele.nom}` }) +
+        `</span>`,
+    )
+    .join('')
+  return cartePiece(piece) + `<span class="set-piece">${set}</span>`
+}
+
 /** Les cases du râtelier qu'on montre même vides. */
 const CASES_RATELIER = 12
 

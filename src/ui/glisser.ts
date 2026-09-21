@@ -86,11 +86,16 @@ export function brancherGlisser(racine: HTMLElement): void {
       fantome = piece.cloneNode(true) as HTMLElement
       fantome.classList.remove('saisie')
       fantome.classList.add('fantome')
-      // Le fantome garde LA TAILLE DE CE QU'ON A PRIS : une piece reduite du
-      // ratelier reste reduite sous le doigt. Elle a grandi a la taille de la
-      // main le temps d'un essai ; Keko a tranche pour la taille reduite dans
-      // l'armurerie -- une grosse carte sous le doigt cache les slots qu'on vise.
-      fantome.style.width = `${piece.offsetWidth}px`
+      // DANS L'ARMURERIE, LE FANTOME EST TOUJOURS REDUIT -- qu'on prenne au
+      // ratelier ou dans un slot du chargement, qui lui est a la taille de la
+      // main. Une grosse carte sous le doigt cache les slots qu'on vise. La
+      // mesure est celle d'une case du ratelier, lue sur l'ecran : `--piece`
+      // vit sur le voile, et le fantome est pose sur `body`. Ailleurs (le
+      // butin), il garde la taille de ce qu'on a pris.
+      const caseReduite = piece.closest('.voile.armurerie')
+        ? racine.querySelector<HTMLElement>('.etal.reserve .case-ratelier, .etal.reserve .piece-equip')
+        : null
+      fantome.style.width = `${(caseReduite ?? piece).offsetWidth}px`
       document.body.appendChild(fantome)
     }
     if (fantome !== null) {
