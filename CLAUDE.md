@@ -1314,7 +1314,11 @@ Cinq règles qui portent l'écran :
   **Ce qu'on tient n'est plus à sa place** : dans l'armurerie, la pièce saisie
   disparaît de sa case le temps du glisser — `visibility: hidden`, pas
   `display: none`, pour que la grille ne bouge pas sous le doigt. Keko : « il
-  ne faut pas que l'item drag reste à son emplacement original ».
+  ne faut pas que l'item drag reste à son emplacement original ». **Mais la
+  case reste** : le bouton n'a ni bord ni fond, donc cacher sa carte faisait
+  disparaître le slot entier — « les slots disparaissent durant le drag, seule
+  la carte devrait ». La case saisie prend l'habit d'une case vide, en
+  pointillé.
 
   **Le slot survolé s'allume en bleu s'il prend ce qu'on tient, EN ROUGE
   sinon** — une armure sur un slot d'arme, ou un slot condamné par une arme à

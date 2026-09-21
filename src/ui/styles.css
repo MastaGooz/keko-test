@@ -2077,6 +2077,17 @@ body {
   visibility: hidden;
 }
 
+/* ...MAIS LA CASE RESTE. Le bouton n'a ni bord ni fond, donc cacher sa carte
+   faisait disparaitre le slot entier -- Keko : « les slots disparaissent
+   durant le drag, seule la carte devrait ». La case saisie prend l'habit d'une
+   case vide : le pointille a la forme de la carte partie. */
+.piece-equip.saisie,
+.slot-equip.saisie {
+  border: 1px dashed var(--trait);
+  border-radius: 12px;
+  background: #00000040;
+}
+
 /* --- le sac vu comme un inventaire de cartes ------------------------------- */
 
 /* Les tresors du sac sont des cartes, et on peut les reprendre pour les
