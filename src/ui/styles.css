@@ -3532,7 +3532,8 @@ body {
    hauteur ET que quatre tiennent dans la largeur a cote de la piece.
    Mesure : 8 modeles tiennent a 667x320. */
 .zoom-carte.zoom-piece {
-  --set: min(9.5rem, calc((100vh - 3.5rem) / 2.8), calc((100vw - 16rem - 6rem) / 4));
+  /* Les 2 x 1.75rem : les pastilles de nombre sous chaque ligne. */
+  --set: min(9.5rem, calc((100vh - 3.5rem - 3.5rem) / 2.8), calc((100vw - 16rem - 6rem) / 4));
   display: flex;
   align-items: center;
   gap: 1.25rem;
@@ -3550,7 +3551,10 @@ body {
 }
 
 .modele {
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
   flex: 0 0 auto;
 }
 
@@ -3560,20 +3564,17 @@ body {
   box-shadow: 0 0.75rem 1.5rem #000c, 0 0 0 1px #ffffff1a;
 }
 
-/* Le nombre d'exemplaires : une pastille d'or sur le coin de la carte, en
-   Cinzel comme la gemme. */
+/* Le nombre d'exemplaires : une pastille d'or SOUS la carte, en Cinzel comme
+   la gemme. Elle a ete posee sur le coin ; elle y cachait la gemme et se
+   lisait comme un badge de plus. */
 .compte {
-  position: absolute;
-  top: -0.5rem;
-  right: -0.5rem;
-  z-index: 3;
-  padding: 0.125rem 0.5rem;
+  padding: 0.125rem 0.625rem;
   border: 1px solid #c9a95a;
   border-radius: 999px;
   background: radial-gradient(circle at 35% 30%, #5b4a24, #221b0e 72%);
   color: #f2e4bd;
   font-family: "Cinzel", Georgia, serif;
-  font-size: 0.8125rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   line-height: 1.2;
   box-shadow: 0 1px 3px #000c, inset 0 1px 0 #ffffff1f;

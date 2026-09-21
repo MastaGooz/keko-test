@@ -1333,13 +1333,16 @@ Cinq règles qui portent l'écran :
   doigt : c'est ce qui dit où l'on peut aller avant d'y aller. Keko : « un
   petit effet sur les slots compatibles quand on drag, pas seulement
   au-dessus ». Dans l'armurerie seulement — sur l'écran de butin la main
-  entière est un dépôt, et une main qui clignote ne dit rien — et jamais la
-  case d'où vient la pièce. Le survol reste le signal fort.
+  entière est un dépôt, et une main qui clignote ne dit rien. La case d'où
+  vient la pièce s'allume aussi : la reposer est une destination comme une
+  autre (Keko l'a demandé). Le survol reste le signal fort.
 
   **Une pièce zoomée montre son set EN CARTES** : la pièce en grand à gauche,
   et à sa droite les modèles qu'elle apporte, dessinés comme les vraies cartes
   qu'on retrouvera en main (`vitrine`), chacun avec son nombre en pastille d'or
-  sur le coin. En ligne et non en éventail : ce sont des modèles, pas une main
+  SOUS la carte — sur le coin, elle cachait la gemme et se lisait comme un
+  badge de plus (Keko : « sous la carte, pas par-dessus »). La borne par la
+  hauteur retranche ces pastilles. En ligne et non en éventail : ce sont des modèles, pas une main
   — on les compare, on ne les tient pas.
 
   **PRÉVU POUR HUIT MODÈLES, PAS TROIS.** Keko : « on vise entre 3 et 8 cartes

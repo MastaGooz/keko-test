@@ -912,7 +912,7 @@ function fin(descente: Descente, issue: 'extrait' | 'mort'): string {
 /**
  * UNE PIÈCE ZOOMÉE MONTRE SON SET EN CARTES. La pièce en grand à gauche, et
  * à sa droite les modèles qu'elle apporte, dessinés comme les vraies cartes
- * qu'on retrouvera en main, chacun avec son nombre d'exemplaires. La
+ * qu'on retrouvera en main, chacun avec son nombre d'exemplaires dessous. La
  * composition en trois lignes de texte disait la même chose ; en cartes, on
  * voit ce qu'on va piocher. Keko : « afficher les cartes qu'elle apporte en
  * image ».
@@ -924,9 +924,11 @@ function zoomPiece(piece: Piece): string {
   const set = piece.set
     .map(
       ({ modele, nombre }) =>
+        // Le nombre SOUS la carte, pas par-dessus : une pastille sur le coin
+        // cachait la gemme et l'ornement, et se lisait comme un badge de plus.
         `<span class="modele">` +
-        `<span class="compte">×${nombre}</span>` +
         vitrine({ ...modele, id: `modele-${modele.nom}` }) +
+        `<span class="compte">×${nombre}</span>` +
         `</span>`,
     )
     .join('')

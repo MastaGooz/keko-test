@@ -56,13 +56,14 @@ export function brancherGlisser(racine: HTMLElement): void {
    * pas seulement celui sous le doigt. C'est ce qui dit ou l'on peut aller
    * avant d'y aller. Dans l'armurerie seulement : sur l'ecran de butin, la
    * main entiere est un depot, et une main qui clignote ne dit rien. La case
-   * d'ou vient la piece n'est pas une destination.
+   * d'ou vient la piece s'allume aussi : la reposer est une destination comme
+   * une autre -- Keko : « le slot dans lequel il etait n'affiche pas le
+   * contour bleu ».
    */
   function accueillir(tenue: HTMLElement): void {
     if (tenue.closest('.voile.armurerie') === null) return
     const genre = tenue.dataset.genre
     for (const d of racine.querySelectorAll<HTMLElement>('.voile.armurerie [data-depot]')) {
-      if (d === tenue) continue
       const attend = d.dataset.attend
       if (attend === undefined || genre === undefined || attend === genre) d.classList.add('accueille')
     }
