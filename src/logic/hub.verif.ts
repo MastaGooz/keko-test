@@ -1,0 +1,136 @@
+/**
+ * Vérifications de l'armurerie, sans navigateur.
+ *
+ * Ce qu'on vérifie ici, ce sont les règles qui rendent le chargement lisible :
+ * un slot n'accepte pas n'importe quoi, un échange ne fait rien disparaître, et
+ * mourir ne peut pas bloquer le jeu.
+ */
+import type { Arme, Armure } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, deckDeLEquipement } from './armes.ts'
+import {
+  creerHub,
+  deplacerPiece,
+  deuxMains,
+  equipement,
+  peutDescendre,
+  perdreLEquipement,
+  rentrer,
+} from './hub.ts'
+
+let echecs = 0
+function verifier(quoi: string, vrai: boolean): void {
+  if (!vrai) echecs += 1
+  console.log(`  ${vrai ? 'ok  ' : 'ECHEC'}  ${quoi}`)
+}
+
+const ESPADON: Arme = {
+  id: 'espadon',
+  nom: 'Espadon',
+  rarete: 'rare',
+  mains: 2,
+  set: [{ modele: { nom: 'Fendre', type: 'combat', cout: 3, degats: 12 }, nombre: 6 }],
+}
+
+const DAGUE: Arme = {
+  id: 'dague',
+  nom: 'Dague',
+  rarete: 'commune',
+  mains: 1,
+  set: [{ modele: { nom: 'Percer', type: 'combat', cout: 1, degats: 4 }, nombre: 6 }],
+}
+
+const COTTE: Armure = {
+  id: 'cotte',
+  nom: 'Cotte',
+  rarete: 'commune',
+  set: [{ modele: { nom: 'Parer', type: 'combat', cout: 1, degats: 0 }, nombre: 4 }],
+}
+
+// --- l'etat de depart -------------------------------------------------------
+
+{
+  const h = creerHub()
+  verifier("on arrive avec l'equipement gratuit DEJA equipe",
+    h.chargement.mains[0] === ARME_GRATUITE && h.chargement.armure === ARMURE_GRATUITE)
+  verifier('on peut donc descendre sans rien toucher', peutDescendre(h.chargement))
+  verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 14)
+  verifier('la reserve est vide au depart', h.reserve.length === 0)
+}
+
+// --- ce qu'un slot accepte --------------------------------------------------
+
+{
+  const h = { ...creerHub(), reserve: [COTTE, DAGUE] }
+
+  verifier('une armure ne tient pas en main',
+    deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, COTTE.id) === h)
+  verifier('une arme ne tient pas sur le torse',
+    deplacerPiece(h, { ou: 'reserve' }, { ou: 'armure' }, DAGUE.id) === h)
+  verifier("un identifiant inconnu ne deplace rien",
+    deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, 'aucune') === h)
+
+  const seconde = deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, DAGUE.id)
+  verifier('une arme a une main va dans le second slot',
+    seconde.chargement.mains[1] === DAGUE && seconde.reserve.length === 1)
+  verifier('et elle donne ses cartes', deckDeLEquipement(equipement(seconde.chargement)).length === 20)
+}
+
+// --- l'echange ne fait rien disparaitre -------------------------------------
+
+{
+  const h = { ...creerHub(), reserve: [DAGUE] }
+  const echange = deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 0 }, DAGUE.id)
+  verifier('poser sur un slot occupe echange',
+    echange.chargement.mains[0] === DAGUE && echange.reserve.includes(ARME_GRATUITE))
+  verifier('rien ne se perd dans l echange',
+    echange.reserve.length + equipement(echange.chargement).length ===
+      h.reserve.length + equipement(h.chargement).length)
+
+  const retire = deplacerPiece(echange, { ou: 'main', rang: 0 }, { ou: 'reserve' })
+  verifier('on peut vider un slot vers la reserve',
+    retire.chargement.mains[0] === null && retire.reserve.length === 2)
+  verifier('un slot vide ne donne rien a deplacer',
+    deplacerPiece(retire, { ou: 'main', rang: 0 }, { ou: 'reserve' }) === retire)
+}
+
+// --- l'arme a deux mains ----------------------------------------------------
+
+{
+  const h = { ...creerHub(), reserve: [ESPADON, DAGUE] }
+  const avecDague = deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, DAGUE.id)
+  verifier('on tient deux armes a une main', equipement(avecDague.chargement).length === 3)
+
+  // UNE ARME A DEUX MAINS CHASSE CE QUI TENAIT L'AUTRE SLOT, et tout de suite :
+  // un slot qui reste rempli mais inutilisable mentirait sur ce qu'on emporte.
+  const lourd = deplacerPiece(avecDague, { ou: 'reserve' }, { ou: 'main', rang: 0 }, ESPADON.id)
+  verifier("l'espadon prend le premier slot", lourd.chargement.mains[0] === ESPADON)
+  verifier('et il vide le second', lourd.chargement.mains[1] === null)
+  verifier('la dague chassee retourne a la reserve', lourd.reserve.includes(DAGUE))
+  verifier('deux mains se lit sur le chargement', deuxMains(lourd.chargement))
+  verifier("et rien ne s'est perdu",
+    lourd.reserve.length + equipement(lourd.chargement).length ===
+      avecDague.reserve.length + equipement(avecDague.chargement).length)
+
+  verifier('le second slot refuse une arme a deux mains',
+    deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, ESPADON.id) === h)
+}
+
+// --- rentrer, et mourir -----------------------------------------------------
+
+{
+  const h = creerHub()
+  verifier("l'or rapporte s'ajoute", rentrer(rentrer(h, 240), 120).or === 360)
+
+  // LE GARDE-FOU CONTRE LA SPIRALE : mourir avec son seul equipement ne peut
+  // pas bloquer le jeu. Il y a toujours de quoi repartir au ratelier.
+  const nu = { ...h, chargement: { mains: [null, null] as [null, null], armure: null } }
+  verifier('un chargement vide ne descend pas', !peutDescendre(nu.chargement))
+  const apresMort = perdreLEquipement(nu)
+  verifier('apres la mort on retrouve de quoi repartir', peutDescendre(apresMort.chargement))
+  verifier('une arme ET une armure, les deux gratuites',
+    apresMort.chargement.mains[0] === ARME_GRATUITE &&
+      apresMort.chargement.armure === ARMURE_GRATUITE)
+}
+
+if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)
+console.log('Tout passe.')

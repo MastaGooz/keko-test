@@ -2989,6 +2989,193 @@ body {
   }
 }
 
+/* --- l'armurerie ----------------------------------------------------------- */
+
+/* LA RESERVE A GAUCHE, CE QU'ON EMPORTE A DROITE. Deux etals cote a cote : on
+   prend a gauche, on pose a droite, et le sens de lecture fait le geste.
+
+   Le premier des deux temps du jeu -- s'equiper -- et ca doit prendre trente
+   secondes. D'ou des PIECES et pas des cartes : le deck en decoule, on ne le
+   compose pas. */
+.voile.armurerie {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: max(0.75rem, env(safe-area-inset-top)) 1rem;
+  overflow: hidden;
+}
+
+.voile.armurerie .titre {
+  margin: 0;
+}
+
+.voile.armurerie .note {
+  margin: 0;
+  text-align: center;
+}
+
+.etals {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 52rem;
+  min-height: 0;
+}
+
+.etal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.625rem;
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  background: #00000055;
+}
+
+/* Ce qu'on emporte se distingue de ce qu'on laisse : meme forme, autre chaleur.
+   Sans ca, les deux etals se lisent comme une seule liste en deux colonnes. */
+.etal.porte {
+  border-color: #6b4030;
+  background: linear-gradient(#32211e, #221816);
+}
+
+.etal-titre {
+  margin: 0;
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rangee-pieces {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Une piece, au ratelier ou dans un slot : meme objet, donc meme forme. Ce qui
+   change est ou elle est, pas ce qu'elle est. */
+.piece-equip,
+.slot-equip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.125rem;
+  width: 100%;
+  min-height: 3rem;
+  padding: 0.4375rem 0.625rem;
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  background: #171720;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Un slot VIDE se lit comme une place a remplir, pas comme un objet. */
+.slot-equip {
+  border-style: dashed;
+  color: var(--muted);
+  background: #00000040;
+}
+
+.slot-equip.occupe {
+  border-style: solid;
+  color: inherit;
+  background: #1d1a24;
+  cursor: grab;
+}
+
+/* Condamne par une arme a deux mains : sa contrepartie doit SE VOIR, sinon
+   l'arme lourde n'a l'air de rien couter. */
+.slot-equip.condamne {
+  opacity: 0.45;
+  border-style: dotted;
+}
+
+.piece-equip {
+  cursor: grab;
+}
+
+.piece-nom {
+  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
+  font-size: 0.9375rem;
+}
+
+.piece-detail {
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+  font-size: 0.6875rem;
+  line-height: 1.35;
+}
+
+.piece-detail .mini {
+  opacity: 0.75;
+}
+
+/* La rarete teinte le nom : c'est elle qui fait la force du set. */
+.piece-equip.rare .piece-nom,
+.slot-equip.occupe .piece-nom {
+  color: var(--fg);
+}
+
+.piece-equip.rare {
+  border-color: #4d6d84;
+}
+
+.piece-equip.epique {
+  border-color: #7a5a9e;
+}
+
+.reserve-vide {
+  margin: auto 0;
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.bouton.descendre {
+  flex: 0 0 auto;
+}
+
+/* Sur un ecran court, les deux etals restent cote a cote -- c'est la largeur
+   qu'on a -- mais tout se resserre. */
+@media (max-height: 430px) {
+  .voile.armurerie {
+    gap: 0.375rem;
+  }
+
+  .voile.armurerie .titre {
+    font-size: 0.9375rem;
+  }
+
+  .piece-equip,
+  .slot-equip {
+    min-height: 2.5rem;
+    padding: 0.3125rem 0.5rem;
+  }
+
+  .piece-nom {
+    font-size: 0.8125rem;
+  }
+
+  .piece-detail {
+    font-size: 0.625rem;
+  }
+}
+
 /* --- les gestes de la main ------------------------------------------------ */
 
 /* La carte saisie QUITTE LA MAIN : les autres se referment sur sa place, et on

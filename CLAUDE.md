@@ -1200,12 +1200,41 @@ c'était de ne plus le préparer carte par carte.
 
 ### La prochaine étape
 
-Le Glaive est branché : le deck vient de l'équipement. Pas encore d'écran de
-chargement — avec une seule arme il n'y a rien à choisir, et un sélecteur à une
-option serait un mensonge.
+Le deck vient de l'équipement, et l'armurerie existe. Elle n'avait pas lieu
+d'être tant qu'il n'y avait qu'une arme — *un sélecteur à une option est un
+mensonge* — mais avec deux pièces le choix est réel : emporter l'armure, ou
+partir avec un deck court et tranchant.
 
-**La suite, dans l'ordre :** une deuxième arme (qui demandera un verbe neuf,
-voir ci-dessous), puis les enchantements, puis armure et objets.
+**L'ARMURERIE EXISTE** (`logic/hub.ts`) : la réserve à gauche, ce qu'on emporte
+à droite — deux slots de main et un torse. On prend à gauche, on pose à droite,
+et le sens de lecture fait le geste.
+
+Ce qui s'y décide tient en une question, et elle est **déjà entière avec deux
+pièces** : partir léger ou partir couvert. Le Glaive seul donne dix cartes qui
+frappent toutes ; avec le Plastron, quatorze dont quatre qui ne frappent pas.
+*La taille du deck est une ressource, et c'est ici qu'on la dépense.* Le compte
+(« Deck de 14 cartes · 10 qui frappent ») est ce qui rend ça lisible **avant**
+de descendre : sans lui, une pièce de plus serait un gain sans contrepartie
+visible.
+
+Quatre règles qui portent l'écran :
+
+- **On arrive avec l'équipement gratuit DÉJÀ équipé.** Un joueur qui débarque
+  doit pouvoir descendre sans rien comprendre à l'écran ; l'armurerie se
+  découvre en y revenant, pas en y étant bloqué.
+- **Un slot n'accepte pas n'importe quoi** — une armure ne tient pas en main —
+  et **poser sur un slot occupé échange** : ce que la destination déloge repart
+  d'où vient la pièce, sinon échanger deux armes en ferait disparaître une.
+- **Une arme à deux mains chasse ce qui tenait l'autre slot**, tout de suite, et
+  le slot condamné se voit. *Un slot qui reste rempli mais inutilisable mentirait
+  sur ce qu'on emporte* — et l'arme lourde n'aurait l'air de rien coûter.
+- **Mourir ne peut pas bloquer le jeu** : on perd l'équipement emporté, et le
+  râtelier rend une arme et une armure gratuites. C'est le seul endroit où vit
+  ce garde-fou.
+
+**La suite, dans l'ordre :** les effets uniques des trésors (le soin actuel est
+un placeholder, et il inverse le dilemme — voir plus bas), puis une deuxième
+arme et une deuxième armure, qui donneront enfin à l'armurerie de quoi choisir.
 
 **Limite du moteur à connaître dès maintenant :** une carte n'a qu'un *coût* et
 des *dégâts*. Deux armes ne peuvent donc différer que par leur courbe
@@ -1286,6 +1315,7 @@ src/
   logic/   # PUR : aucun accès au DOM, à localStorage, à Date.now() ou au hasard non seedé
     rng.ts       # mulberry32 seedé — tout aléatoire du jeu passe par là
     state.ts     # GameState + transitions pures (état immuable : on retourne un nouvel objet)
+    hub.ts       # l'armurerie : la réserve, le chargement, ce que la mort coûte
     storage.ts   # (dé)sérialisation + interface StoragePort
   ui/      # TOUT ce qui touche au navigateur
     render.ts    # mount() construit le DOM une fois, render() le met à jour

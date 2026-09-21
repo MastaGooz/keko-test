@@ -14,6 +14,10 @@ import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
 import { consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, tresorsAuDeck } from '../logic/descente.ts'
+import type { Hub } from '../logic/hub.ts'
+import { deuxMains, equipement, peutDescendre } from '../logic/hub.ts'
+import type { Piece } from '../logic/armes.ts'
+import { deckDeLEquipement } from '../logic/armes.ts'
 import { creature, dessin, sceau, teteDeMort } from './illustrations.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡', bloc: '⛉' }
@@ -154,6 +158,7 @@ export function render(
   occupation: Occupation = 'libre',
   zoom: Carte | null = null,
   agonie: readonly number[] = [],
+  hub: Hub | null = null,
 ): void {
   view.root.classList.toggle('occupe', occupation !== 'libre')
   const etat = descente.combat
@@ -213,7 +218,9 @@ export function render(
   view.finTour.innerHTML = etiquetteFinTour(etat, occupation)
   view.finTour.disabled = fini || occupation !== 'libre'
 
-  view.palier.innerHTML = palier(descente)
+  // L'ARMURERIE PASSE PAR-DESSUS TOUT, comme les paliers : elle se pose sur le
+  // combat au lieu de le remplacer, donc la mise en page ne se refait pas.
+  view.palier.innerHTML = hub === null ? palier(descente) : armurerie(hub)
 
   view.journal.innerHTML = etat.evenements
     .slice(-3)
@@ -780,10 +787,119 @@ function fin(descente: Descente, issue: 'extrait' | 'mort'): string {
       : `Palier ${descente.profondeur}. <strong class="perdu">${valeur}</strong> ` +
         `de butin restent au fond, avec toi.`) +
     `</p>` +
-    `<button class="bouton secondaire" type="button" data-action="nouveau">` +
-    `Nouvelle descente</button>` +
+    // ON REVIENT A L'ARMURERIE, on ne relance pas une descente identique. C'est
+    // le premier des deux temps du jeu : ce qu'on vient de perdre ou de
+    // rapporter change ce qu'on emportera, et c'est là que ça se décide.
+    `<button class="bouton secondaire" type="button" data-action="armurerie">` +
+    `${extrait ? "À l'armurerie" : 'Repartir'}</button>` +
     `</div></div>`
   )
+}
+
+/**
+ * L'ARMURERIE : la réserve à gauche, ce qu'on emporte à droite.
+ *
+ * C'est le premier des deux temps du jeu — *s'équiper* — et ça doit prendre
+ * trente secondes. D'où des PIÈCES et pas des cartes : le deck en découle, on
+ * ne le compose pas. **Le coût de la perte doit rester proportionnel au travail
+ * investi**, et deux heures de deckbuilding perdues à la mort seraient une
+ * amputation.
+ *
+ * Les gestes sont ceux du butin, et c'est voulu : chaque slot est **à la fois
+ * une zone de dépôt et un bouton**, parce que sur un téléphone le glisser seul
+ * est fragile — la tape doit toujours marcher.
+ */
+function armurerie(hub: Hub): string {
+  const bloque = deuxMains(hub.chargement)
+  const deck = deckDeLEquipement(equipement(hub.chargement))
+  const combat = deck.filter((c) => c.degats > 0).length
+
+  const enReserve =
+    hub.reserve.length === 0
+      ? `<p class="reserve-vide">Rien d'autre au râtelier.<br>Ce que tu rapportes viendra ici.</p>`
+      : hub.reserve.map((p) => pieceEquipement(p, { ou: 'reserve' })).join('')
+
+  return (
+    `<div class="voile armurerie">` +
+    `<p class="titre">L'armurerie</p>` +
+
+    `<div class="etals">` +
+    `<div class="etal reserve" data-depot data-slot="reserve" data-action="equiper">` +
+    `<p class="etal-titre">Au râtelier</p>` +
+    `<div class="rangee-pieces">${enReserve}</div>` +
+    `</div>` +
+
+    `<div class="etal porte">` +
+    `<p class="etal-titre">Ce que tu emportes</p>` +
+    `<div class="rangee-pieces">` +
+    slotEquipement(hub.chargement.mains[0], { ou: 'main', rang: 0 }, 'arme', false) +
+    slotEquipement(hub.chargement.mains[1], { ou: 'main', rang: 1 }, 'arme', bloque) +
+    slotEquipement(hub.chargement.armure, { ou: 'armure' }, 'armure', false) +
+    `</div>` +
+    `</div>` +
+    `</div>` +
+
+    // CE QUE LE CHARGEMENT PRODUIT, en chiffres. C'est la seule chose qui rend
+    // « équiper plus dilue » lisible avant de descendre : sans ce compte, une
+    // pièce de plus est un gain sans contrepartie visible.
+    `<p class="note">` +
+    `Deck de <strong>${deck.length}</strong> cartes · ` +
+    `<strong>${combat}</strong> qui frappent · ` +
+    `or : <strong class="or">${hub.or}</strong>` +
+    `</p>` +
+
+    `<button class="bouton descendre" type="button" data-action="partir"` +
+    `${peutDescendre(hub.chargement) ? '' : ' disabled'}>` +
+    `${peutDescendre(hub.chargement) ? 'Descendre' : 'Il te faut une arme'}</button>` +
+    `</div>`
+  )
+}
+
+/** Une pièce au râtelier : elle se glisse, et une tape l'équipe. */
+function pieceEquipement(piece: Piece, slot: object): string {
+  const ou = JSON.stringify(slot).replace(/"/g, '&quot;')
+  return (
+    `<button class="piece-equip ${piece.rarete}" type="button" ` +
+    `data-glissable data-lieu="${ou}" data-piece="${piece.id}" ` +
+    `data-action="equiper" data-slot="auto">` +
+    `<span class="piece-nom">${piece.nom}</span>` +
+    `<span class="piece-detail">${detailPiece(piece)}</span>` +
+    `</button>`
+  )
+}
+
+/** Un slot du chargement : vide, occupé, ou condamné par une arme à deux mains. */
+function slotEquipement(
+  piece: Piece | null,
+  slot: object,
+  attendu: string,
+  bloque: boolean,
+): string {
+  const ou = JSON.stringify(slot).replace(/"/g, '&quot;')
+  const vide = bloque
+    ? `<span class="vide">tenu à deux mains</span>`
+    : `<span class="vide">${attendu}</span>`
+  return (
+    `<button class="slot-equip ${bloque ? 'condamne' : ''}${piece === null ? '' : ' occupe'}" ` +
+    `type="button" data-depot data-slot="${ou}" data-action="equiper"` +
+    `${piece === null ? '' : ` data-glissable data-lieu="${ou}" data-piece="${piece.id}"`}>` +
+    (piece === null
+      ? vide
+      : `<span class="piece-nom">${piece.nom}</span>` +
+        `<span class="piece-detail">${detailPiece(piece)}</span>`) +
+    `</button>`
+  )
+}
+
+/** Ce qu'une pièce apporte, en une ligne : c'est sur ça qu'on la choisit. */
+function detailPiece(piece: Piece): string {
+  return piece.set
+    .map(({ modele, nombre }) => {
+      const bloc = modele.effets?.find((e) => e.type === 'bloc')?.montant ?? 0
+      const quoi = bloc > 0 ? `${GLYPHE.bloc}${bloc}` : `${modele.degats}`
+      return `${nombre}× ${modele.nom} <span class="mini">${modele.cout}${GLYPHE.energie} ${quoi}</span>`
+    })
+    .join(' · ')
 }
 
 /**

@@ -1,6 +1,7 @@
 /** Gestion des entrées : traduit les événements navigateur en actions. */
 import type { View } from './render.ts'
 import type { Lieu } from '../logic/descente.ts'
+import type { Slot as SlotHub } from '../logic/hub.ts'
 
 export type Action =
   | { type: 'viser'; index: number }
@@ -18,6 +19,9 @@ export type Action =
   | { type: 'reordonnerTresors'; id: string; vers: number }
   | { type: 'validerJet' }
   | { type: 'terminerButin' }
+  | { type: 'equiper'; source: SlotHub | null; cible: SlotHub | null; id: string }
+  | { type: 'partir' }
+  | { type: 'armurerie' }
   | { type: 'descendre' }
   | { type: 'extraire' }
   | { type: 'panneau' }
@@ -37,6 +41,21 @@ function lireSource(noeud: HTMLElement): Lieu {
     return JSON.parse(brut) as Lieu
   } catch {
     return { ou: 'loot' }
+  }
+}
+
+/**
+ * Un slot d'armurerie, lu sur un attribut. `auto` veut dire « mets-la où elle
+ * va » — c'est ce que fait une tape sur une pièce du râtelier, et ça évite de
+ * demander au joueur de désigner un slot qu'il n'a pas le choix de désigner.
+ */
+function lireSlot(brut: string | undefined): SlotHub | null {
+  if (brut === undefined || brut === 'auto') return null
+  if (brut === 'reserve') return { ou: 'reserve' }
+  try {
+    return JSON.parse(brut) as SlotHub
+  } catch {
+    return null
   }
 }
 
@@ -110,6 +129,24 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         break
       case 'terminerButin':
         dispatch({ type: 'terminerButin' })
+        break
+      case 'armurerie':
+        dispatch({ type: 'armurerie' })
+        break
+      case 'equiper': {
+        // La provenance vient de la piece glissee, la destination du slot
+        // survole -- exactement comme le rangement du butin. Une TAPE n'a pas
+        // de provenance : c'est alors la piece elle-meme qui la porte.
+        // `lieuSource` est pose par le glisser ; sur une tape il n'y en a pas,
+        // et c'est le slot du noeud lui-meme qui fait la provenance.
+        const source = lireSlot(noeud.dataset.lieuSource ?? noeud.dataset.lieu)
+        const cible = lireSlot(noeud.dataset.slot)
+        delete noeud.dataset.lieuSource
+        dispatch({ type: 'equiper', source, cible, id: noeud.dataset.piece ?? '' })
+        break
+      }
+      case 'partir':
+        dispatch({ type: 'partir' })
         break
       case 'descendre':
         dispatch({ type: 'descendre' })

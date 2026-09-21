@@ -27,12 +27,22 @@ import {
   extraire,
   deplacerTresor,
   resoudreCombat,
+  butinTransporte,
   reordonnerTresors,
   terminerButin,
   validerJet,
 } from './logic/descente.ts'
 import type { Occupation } from './ui/render.ts'
 import { mount, render, vitrine } from './ui/render.ts'
+import type { Hub, Slot } from './logic/hub.ts'
+import {
+  creerHub,
+  deplacerPiece,
+  equipement,
+  peutDescendre,
+  perdreLEquipement,
+  rentrer,
+} from './logic/hub.ts'
 import type { Action } from './ui/input.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
@@ -124,6 +134,16 @@ let occupation: Occupation = 'libre'
 let agonie: number[] = []
 
 /**
+ * L'armurerie, et ce qu'on y possède.
+ *
+ * `auHub` dit si c'est elle qu'on regarde. C'est un état à part de la descente,
+ * et pas une phase de plus : **le hub survit aux runs**, c'est même sa raison
+ * d'être — l'or et l'équipement sont la seule progression qui persiste.
+ */
+let hub: Hub = creerHub()
+let auHub = true
+
+/**
  * Ce que dure l'extinction d'un corps sur la scène.
  *
  * Il faut qu'on ait le temps de voir QUI s'efface — c'est tout l'intérêt de le
@@ -133,10 +153,24 @@ let agonie: number[] = []
 const DUREE_AGONIE = 850
 
 /** Tout le hasard de la descente découle de la seed : la rejouer la rejoue. */
+/**
+ * Où va une pièce quand on la tape : le premier slot libre qui l'accepte, sinon
+ * le slot naturel qu'elle occuperait. Une armure n'a qu'une place, une arme en
+ * a deux — on remplit la première main libre.
+ */
+function slotNaturel(id: string): Slot | null {
+  const piece = hub.reserve.find((p) => p.id === id)
+  if (piece === undefined) return null
+  if (!('mains' in piece)) return { ou: 'armure' }
+  return hub.chargement.mains[0] === null || piece.mains === 2
+    ? { ou: 'main', rang: 0 }
+    : { ou: 'main', rang: 1 }
+}
+
 function demarrer(nouvelleSeed: number): void {
   seed = nouvelleSeed
   rng = createRng(seed)
-  descente = commencerDescente(rng)
+  descente = commencerDescente(rng, undefined, equipement(hub.chargement))
   agonie = []
   zoom = null
   survolee = null
@@ -147,7 +181,7 @@ function demarrer(nouvelleSeed: number): void {
 }
 
 function dessiner(): void {
-  render(view, descente, seed, selection, occupation, zoom, agonie)
+  render(view, descente, seed, selection, occupation, zoom, agonie, auHub ? hub : null)
   // Après le rendu : les jauges viennent d'être reconstruites, leur aperçu
   // avec. Une marque posée avant serait balayée.
   rafraichirApercu()
@@ -396,6 +430,30 @@ function dispatch(action: Action): void {
     case 'terminerButin':
       descente = terminerButin(descente)
       break
+    case 'armurerie':
+      // On rentre : le butin devient de l'or, et mourir coûte l'équipement.
+      if (descente.phase.type === 'fin') {
+        hub =
+          descente.phase.issue === 'extrait'
+            ? rentrer(hub, butinTransporte(descente))
+            : perdreLEquipement(hub)
+      }
+      auHub = true
+      break
+    case 'equiper': {
+      // Une TAPE n'a pas de destination : on met la pièce là où elle va. C'est
+      // le geste le plus court, et il n'y a rien à choisir — un slot de main
+      // n'accueille pas une armure.
+      const cible = action.cible ?? slotNaturel(action.id)
+      if (cible === null) break
+      hub = deplacerPiece(hub, action.source ?? { ou: 'reserve' }, cible, action.id)
+      break
+    }
+    case 'partir':
+      if (!peutDescendre(hub.chargement)) break
+      auHub = false
+      demarrer(Date.now() % 100000)
+      return
     case 'descendre':
       descente = descendre(descente, rng)
       break
