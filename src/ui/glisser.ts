@@ -23,6 +23,8 @@ export function brancherGlisser(racine: HTMLElement): void {
   let depart = { x: 0, y: 0 }
   let bouge = false
   let origine: string | null = null
+  /** Ce qu'on tient, quand le lieu seul ne suffit pas à le retrouver. */
+  let identite: string | null = null
 
   function depots(x: number, y: number): Element | null {
     // Le fantome ne capte pas le pointeur, on peut interroger sous le doigt.
@@ -61,6 +63,7 @@ export function brancherGlisser(racine: HTMLElement): void {
     if (cible === null) return
     piece = cible
     origine = cible.dataset.lieu ?? null
+    identite = cible.dataset.piece ?? null
     depart = { x: e.clientX, y: e.clientY }
     bouge = false
     // La capture garde les evenements meme si le doigt sort de la piece.
@@ -115,6 +118,12 @@ export function brancherGlisser(racine: HTMLElement): void {
     // fait ainsi que declencher la meme tape, avec une origine en plus. Aucune
     // logique n'est dupliquee. Le lecteur la retire en la lisant.
     if (origine !== null) cible.dataset.lieuSource = origine
+    // ET CE QU'ON TIENT, pas seulement d'où ça vient. Un lieu suffit à
+    // retrouver un trésor — il en porte l'identifiant — mais pas une pièce
+    // d'équipement : le râtelier en contient plusieurs, et la cible lisait
+    // alors l'identifiant de CE QU'ELLE CONTENAIT DÉJÀ. Le glisser depuis le
+    // râtelier ne faisait donc rien du tout.
+    if (identite !== null) cible.dataset.pieceSource = identite
     // REPOSER UNE CARTE DU BUTIN DANS LA MAIN DU BUTIN, c'est la REORDONNER --
     // pas la deplacer. `input.ts` en fait une action distincte ; sans ca elle
     // repartait au bout de la main a chaque fois, ce qui est un rangement qu'on

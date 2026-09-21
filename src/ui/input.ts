@@ -142,7 +142,11 @@ export function bindInput(view: View, dispatch: (action: Action) => void): void 
         const source = lireSlot(noeud.dataset.lieuSource ?? noeud.dataset.lieu)
         const cible = lireSlot(noeud.dataset.slot)
         delete noeud.dataset.lieuSource
-        dispatch({ type: 'equiper', source, cible, id: noeud.dataset.piece ?? '' })
+        // L'identifiant de ce qu'on DEPLACE, et non de ce que la cible contient :
+        // le glisser le pose avec la provenance, la tape le porte elle-meme.
+        const id = noeud.dataset.pieceSource ?? noeud.dataset.piece ?? ''
+        delete noeud.dataset.pieceSource
+        dispatch({ type: 'equiper', source, cible, id })
         break
       }
       case 'partir':

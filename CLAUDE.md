@@ -392,7 +392,14 @@ donjon. Ce qui tourne :
   sont plafonnés, sinon ils s'étalent sur grand écran jusqu'à égaler la pièce
   en main et la lecture s'inverse ;
 - **glisser-déposer au doigt** (`ui/glisser.ts`, `pointer*`), avec une règle :
-  **chaque destination est aussi un bouton**. Sur téléphone le glisser seul est
+  **chaque destination est aussi un bouton**.
+
+  Le glisser pose sur la cible **la provenance ET l'identité** de ce qu'on
+  tient, puis la clique. *L'identité n'est pas redondante* : un lieu suffit à
+  retrouver un trésor, qui porte son identifiant dans son lieu — mais pas une
+  pièce d'équipement, puisque le râtelier en contient plusieurs. Sans elle, la
+  cible lisait l'identifiant de **ce qu'elle contenait déjà**, et glisser depuis
+  le râtelier ne faisait rien du tout. Sur téléphone le glisser seul est
   fragile, la tape doit toujours marcher — c'est elle qui porte la
   fonctionnalité. Le glisser se contente de *cliquer* la cible survolée, donc
   aucune logique n'est dupliquée.
