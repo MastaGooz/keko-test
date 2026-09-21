@@ -3398,7 +3398,9 @@ body {
      C'est la zone qu'occupe la scene, ecrite pareil : `--emerge` pour la bande
      de main qui emerge, `--degagement` pour le vide qu'elle se garde au-dessus. */
   position: absolute;
-  left: 0;
+  /* Decalee du bord : collee a gauche elle avait l'air posee CONTRE l'ecran
+     plutot que tenue. */
+  left: 0.75rem;
   top: 0;
   bottom: calc(
     max(0.25rem, env(safe-area-inset-bottom)) + var(--emerge) + var(--degagement)
@@ -3407,6 +3409,14 @@ body {
   width: var(--large);
   display: flex;
   align-items: center;
+  /* ET UN PEU PLUS BAS que le centre de la scene : les corps d'en face ont
+     leur nom et leur jauge SOUS eux, donc leur masse visible est plus haute
+     que leur boite. Centree sur la boite, la carte paraissait au-dessus d'eux.
+
+     En LONGUEUR et pas en `%` : un pourcentage de padding se rapporte a la
+     largeur du bloc conteneur, pas a sa hauteur -- le piege est deja consigne
+     plus haut, il vaut ici aussi. */
+  padding-top: calc(var(--large) * 0.55);
   pointer-events: none;
 }
 

@@ -840,6 +840,18 @@ donjon. Ce qui tourne :
   produit pas toujours ce clic*, donc c'était le seul cas qui survivait. Les
   deux corrections de seuil qui ont précédé traitaient un symptôme.
 
+  **ET ON LE RECONNAÎT À SA POSITION, PAS À SA CIBLE.** Il a d'abord été filtré
+  par élément — la main, le fond du zoom — et ça laissait passer tout le reste,
+  dont **la scène** : en sortant une carte pour la jouer, le clic retombait sur
+  le décor, qui répond en *reposant la carte*. Keko : « le premier clic tactile
+  sur la cible ne marche pas, je dois le faire deux fois » — en réalité son
+  premier tap était bon, c'est le geste d'avant qui avait déjà annulé le
+  ciblage.
+
+  *Un clic de compatibilité tombe au pixel près là où le doigt a lâché* : c'est
+  le seul discriminant qui vaille, puisqu'un vrai tap est forcément ailleurs.
+  24 px de tolérance, pour le tremblement du doigt.
+
   **Rien ne se sélectionne dans ce jeu** (`user-select: none` et
   `-webkit-touch-callout: none` sur `body`). Un appui long sur une carte
   déclenchait la loupe et la sélection d'iOS, qui *interrompent le geste* : la

@@ -49,6 +49,15 @@ const DELAI_PRISE = 160
 const FENETRE_CLIC = 400
 
 /**
+ * À quelle distance du lâcher on reconnaît le clic de compatibilité.
+ *
+ * Il tombe au pixel près là où le doigt a quitté l'écran ; un vrai tap sur une
+ * cible est forcément ailleurs. 24 px laissent passer le tremblement du doigt
+ * sans mordre sur un geste voisin.
+ */
+const RAYON_CLIC = 24
+
+/**
  * Avale le `click` que le navigateur émet APRÈS un geste tactile.
  *
  * C'est un vestige de compatibilité : après un `pointerup` tactile, le
@@ -62,15 +71,29 @@ const FENETRE_CLIC = 400
  * plus trompeur — « il faut laisser enfoncé pour que ça zoome ». Un appui long
  * ne produit pas toujours ce clic, donc c'était le seul cas qui survivait.
  *
- * On ne l'avale que sur la main et le fond du zoom : ailleurs, un clic est un
- * vrai clic et doit passer.
+ * **On le reconnaît à sa POSITION, pas à sa cible.** Il a d'abord été filtré par
+ * élément — la main, le fond du zoom — et ça laissait passer tout le reste,
+ * dont la scène : en sortant une carte pour la jouer, le clic retombait sur le
+ * décor, qui répond en REPOSANT la carte. Keko : « le premier clic tactile sur
+ * la cible ne marche pas, je dois le faire deux fois » — en réalité son premier
+ * tap était bon, c'est le geste d'avant qui avait déjà annulé le ciblage.
+ *
+ * *Un clic de compatibilité tombe au pixel près là où le doigt a lâché* : c'est
+ * le seul discriminant qui vaille, puisqu'un vrai tap est ailleurs.
  */
-function avalerLeClicDeCompatibilite(): void {
+function avalerLeClicDeCompatibilite(x: number, y: number): void {
   let minuteur = 0
   const avaler = (e: Event): void => {
     const cible = e.target as HTMLElement | null
     if (cible === null) return
-    if (cible.closest('#cartes') === null && cible.closest('.zoom-fond') === null) return
+    // LE CLIC DE COMPATIBILITE TOMBE LA OU LE DOIGT A LACHE, au pixel près.
+    // C'est le seul discriminant fiable : un vrai tap sur une cible est
+    // ailleurs, et filtrer par ELEMENT laissait passer tout ce qui n'est ni la
+    // main ni le zoom — dont la scène, qui répond en reposant la carte.
+    const souris = e as MouseEvent
+    const memeEndroit = Math.hypot(souris.clientX - x, souris.clientY - y) <= RAYON_CLIC
+    const surLaMain = cible.closest('#cartes') !== null || cible.closest('.zoom-fond') !== null
+    if (!memeEndroit && !surLaMain) return
     e.stopPropagation()
     e.preventDefault()
     arreter()
@@ -242,7 +265,7 @@ export function brancherMain(view: View, gestes: GestesMain): void {
     const place = fenteSousLeDoigt(e.clientX)
     nettoyer()
     gestes.survol(null)
-    if (e.pointerType !== 'mouse') avalerLeClicDeCompatibilite()
+    if (e.pointerType !== 'mouse') avalerLeClicDeCompatibilite(e.clientX, e.clientY)
     if (!gestes.disponible()) return
     // Le DÉPLACEMENT décide, jamais la durée. Une carte soulevée puis reposée
     // sans avoir bougé se regarde : c'est le geste le plus courant, il ne peut
