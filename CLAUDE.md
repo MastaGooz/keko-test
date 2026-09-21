@@ -1827,6 +1827,16 @@ proportions sont identiques à 77 px et à 262. Ce qui doit rester au-dessus de
 la ligne de flottaison ET sur la bande gauche que l'éventail laisse voir : la
 gemme, le nom et la première ligne du cartouche.
 
+**Cinzel porte ses capitales HAUT dans sa boîte de ligne.** Centré par le
+flex, le nom paraissait collé en haut du fronton — Keko : « c'est collé en
+haut du rectangle ». Mesuré au canvas (`measureText`, boîtes réelles contre
+boîtes de police) : les glyphes étaient 0,13em au-dessus du centre. Correction
+de 0,12em, **en em pour suivre la taille de la carte**, aux trois endroits en
+Cinzel : `translate` sur le nom, `padding-top` sur la gemme (le chiffre est
+son contenu direct), et les filets du pied remontés vers les glyphes. Georgia
+en repli est presque centrée d'elle-même ; elle descend alors de 0,08em de
+trop, prix accepté.
+
 **Deux polices Google Fonts, Cinzel et EB Garamond — la seule ressource
 chargée depuis l'extérieur.** La borne était « aucune police téléchargée » ;
 Keko l'a levée lui-même (« police trop simple »), et un serif système n'existe

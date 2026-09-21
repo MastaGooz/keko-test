@@ -950,6 +950,11 @@ body {
   text-shadow:
     0 1px 0 #000,
     0 0 6cqw color-mix(in srgb, var(--filet) 30%, transparent);
+  /* CINZEL PORTE SES CAPITALES HAUT dans sa boite de ligne : centre par le
+     flex, le nom paraissait colle en haut du fronton. Mesure : les glyphes
+     etaient 0,13em au-dessus du centre. Le decalage est en em, donc il suit
+     la taille de la carte. Keko : « c'est colle en haut du rectangle ». */
+  translate: 0 0.12em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1013,6 +1018,10 @@ body {
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  /* Meme correction que le nom, par le remplissage : le chiffre est le
+     contenu direct du disque. */
+  padding-top: 0.24em;
+  box-sizing: border-box;
 }
 
 /* Quand la gemme ne porte pas un cout mais le sceau (le loot qui arrive). */
@@ -1085,6 +1094,9 @@ body {
 .pied::after {
   content: "";
   flex: 1 1 0;
+  /* Les filets se calent sur les glyphes, pas sur la boite de ligne (voir
+     `.carte .nom`). */
+  translate: 0 -0.12em;
   height: 1px;
   background: color-mix(in srgb, var(--filet) 35%, transparent);
 }
