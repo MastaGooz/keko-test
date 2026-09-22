@@ -48,7 +48,8 @@ function fig(contenu: string, etiquette: string, classes = ''): string {
 function carteCadre(cadre: string, classes: string, etiquette: string): string {
   return fig(
     `<div class="proto-carte" aria-label="${etiquette}">` +
-      `<img class="cadre" src="${cadre}" alt="" draggable="false"></div>`,
+      `<img class="cadre" src="${cadre}" alt="" draggable="false">` +
+      `<span class="cout">3</span></div>`,
     etiquette,
     classes,
   )

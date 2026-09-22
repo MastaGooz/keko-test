@@ -284,6 +284,12 @@ unique réutilisé par toutes les cartes. Ce qu'il faut savoir :
   transparent, donc pas un masque — la lueur et le relief seraient perdus ;
 - son URL porte la date du build (`?v=`), sinon le navigateur ressert l'ancien
   cadre quand Keko le change (piège déjà rencontré sur les portraits).
+- **le coût en énergie est une SPHÈRE en haut à gauche, par-dessus le coin du
+  cadre** : un verre noir bombé, un anneau néon qui rayonne, le chiffre
+  lumineux. Elle chevauche les deux filets du coin — c'est ce qui la fait tenir
+  *au* cadre, comme sertie, plutôt que posée dans la face. Elle prend le même
+  filtre de teinte que le cadre, pour tourner avec lui. Demandé par Keko « en
+  respectant le style actuel ».
 
 **Piste B, à côté : « Entaille du Néant »**, une carte que Keko a fait générer
 par ChatGPT. Son site est privé (401), mais il a déposé la page sauvegardée ;
