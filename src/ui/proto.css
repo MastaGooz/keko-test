@@ -1,0 +1,58 @@
+/* Le prototype de carte : une page nue, deux cartes, rien d'autre. */
+
+.proto {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 1rem;
+  background: #14131a;
+  color: #c9c4b8;
+  font-family: system-ui, sans-serif;
+}
+
+.proto-titre {
+  margin: 0;
+  font-size: 0.9375rem;
+  letter-spacing: 0.04em;
+  color: #8f8a80;
+}
+
+.proto-note {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #6f6b64;
+}
+
+.proto-note a {
+  color: #8fb7d0;
+}
+
+.proto-planche {
+  display: flex;
+  align-items: flex-end;
+  gap: 2rem;
+}
+
+/* ÉTAPE 1 : LE CONTOUR. Le rapport des cartes Magic, 63 sur 88. La taille
+   normale est celle de la main (`--large`, définie sur :root par le jeu) ; la
+   réduite est celle du râtelier. Un cadre sombre, un coin arrondi à 3,5 % de la
+   largeur comme sur une carte imprimée, et une face à peine plus claire pour
+   que le cadre se lise comme un cadre. */
+.proto-carte {
+  --l: var(--large, 11rem);
+  width: var(--l);
+  aspect-ratio: 63 / 88;
+  box-sizing: border-box;
+  border: 1px solid #5a5663;
+  border-radius: calc(var(--l) * 0.035);
+  background: #1e1c25;
+  box-shadow: 0 0.75rem 1.5rem #000a;
+}
+
+.proto-carte.reduite {
+  --l: calc(var(--large, 11rem) * 0.55);
+}

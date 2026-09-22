@@ -259,6 +259,17 @@ d'un de ces trois éléments, le test répondait non — et il avait tort.*
 
 ## État actuel
 
+**LA PAGE MONTRE LE PROTOTYPE DE CARTE, PAS LE JEU** (`src/entree.ts`) — le
+temps de reprendre le dessin des cartes en profondeur, une couche à la fois,
+avec Keko : la carte en réduit (le râtelier) et en taille normale (la main),
+côte à côte, sans rien autour. Le jeu n'a pas bougé, il est derrière
+**`?jeu`** (<https://mastagooz.github.io/keko-test/?jeu>). Le prototype vit
+dans `ui/proto.ts` + `ui/proto.css`, à part des styles du jeu, pour repartir
+d'une feuille blanche. Étape 1 : le contour seul, au rapport des cartes Magic
+(63/88), coin arrondi à 3,5 % de la largeur. Quand la carte sera validée, on la
+portera dans `render.ts` / `styles.css` et on retirera la bascule.
+
+
 La **descente** est jouable au doigt et déployée : une run de 6 paliers, du
 premier combat à l'extraction ou à la mort. Ni hub, ni marché, ni carte de
 donjon. Ce qui tourne :
