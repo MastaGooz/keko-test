@@ -334,6 +334,12 @@ donjon. Ce qui tourne :
   plus la main — *et c'est la main qu'on veut montrer, puisque c'est elle qu'on
   alourdit.*
 
+  **La même carte partout.** Un trésor se dessine à l'identique dans le loot,
+  dans la main du butin et en combat : la gemme portait le sceau hors de la
+  main et le coût dedans, et « la carte change quand je la ramasse » (Keko).
+  Tant qu'un trésor est une carte morte il n'a pas de coût, donc le sceau
+  partout ; le jour où il se joue, sa gemme dira son coût — partout aussi.
+
   **Le bouton AGIT, il n'attend pas.** Il disait « Range ton trésor » et restait
   désactivé tant qu'on n'avait pas glissé : il ne faisait qu'énoncer ce qui
   manquait. Il dit « Prendre » tant qu'il y a un trésor à décider, « Terminer »

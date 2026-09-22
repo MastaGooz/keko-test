@@ -559,9 +559,12 @@ function carteTresor(carte: Carte, place: string, enMain = true, abordable = tru
   const classes = ['carte', 'tresor', richesse(valeur)]
   if (enMain) classes.push(abordable ? 'jouable' : 'hors-prix')
 
-  // Hors de la main -- le loot qui arrive, le rebut -- la gemme ne porte pas un
-  // cout mais le sceau : la carte ne se joue pas la, elle se range.
-  const gemme = `<span class="gemme${enMain ? '' : ' sceau'}">${enMain ? carte.cout : sceau()}</span>`
+  // LA MÊME CARTE PARTOUT : dans le loot, dans la main du butin, en combat. La
+  // gemme portait le sceau hors de la main et le coût dedans, et la carte
+  // « changeait quand on la ramasse » (Keko). Tant qu'un trésor est une carte
+  // morte, il n'a pas de coût à montrer : le sceau, partout. Le jour où un
+  // trésor se joue (son effet unique), sa gemme dira son coût -- partout aussi.
+  const gemme = `<span class="gemme sceau">${jouable(carte) ? carte.cout : sceau()}</span>`
 
   return (
     `<div class="${classes.join(' ')}" ${place}>` +
