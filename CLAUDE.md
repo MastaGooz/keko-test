@@ -339,7 +339,12 @@ son chiffre agrandi pour le remplir (« mal proportionné »). Piège au passage
 le titre est un flex, donc le texte et son `<span>` sont deux items et
 l'espace entre eux se perd — un `gap` le rend. Et le générateur avait cassé un
 `-.5px` (regex sans point initial) en `-.1.453cqw` : corrigé à la main dans le
-fichier généré, à refaire dans le générateur si on régénère. *Une conversation ChatGPT
+fichier généré, à refaire dans le générateur si on régénère. Puis : le papier
+déchiré est **monté sur un fond rectangulaire** sombre aux coins doucement
+arrondis (la silhouette redevient un rectangle, ce que la main et le râtelier
+attendent, et la déchirure se lit comme une matière posée dessus) ; et le
+chiffre du coût est remonté dans son écusson, dont la pointe vers le bas met
+le centre visuel plus haut que le centre de la boîte. *Une conversation ChatGPT
 sauvegardée ne contient pas le code de ses canvas : il est dans les
 `saved_resource*.html` du dossier `_files`.* Un premier fichier, déposé par
 erreur, n'avait que des images générées (des cadres vierges en PNG) — piste

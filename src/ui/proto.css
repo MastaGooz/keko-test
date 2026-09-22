@@ -408,7 +408,31 @@
 /* Le conteneur de la carte générée : la figure porte la taille, l'article
    prend toute la largeur (voir proto-cendre.css, généré). */
 .cendre {
+  position: relative;
   width: 100%;
+}
+
+/* UN FOND RECTANGULAIRE SOUS LA CARTE DÉCHIRÉE : le papier aux bords irréguliers
+   est monté sur une carte de fond, sombre, aux coins doucement arrondis -- la
+   silhouette redevient un rectangle, ce que la main et le râtelier attendent,
+   et la déchirure se lit comme une matière posée dessus, pas comme un trou.
+   Keko : « rajouter un fond pour rendre la carte rectangulaire ». */
+.cendre::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: 3cqw;
+  background:
+    radial-gradient(120% 80% at 50% 0%, #ffffff08, transparent 60%),
+    linear-gradient(170deg, #22262b, #121517 60%, #0c0e10);
+  box-shadow:
+    inset 0 0 0 1px #3a3f45,
+    0 0.75rem 1.5rem #000a;
+}
+
+.cendre .cv-card {
+  z-index: 1;
 }
 
 /* DEUX RETOUCHES DE KEKO sur la carte générée (en surcharge, le CSS généré ne
@@ -449,7 +473,10 @@
   height: 16.5% !important;
 }
 
+/* L'écusson est une pointe vers le bas : son centre visuel est plus haut
+   que le centre de sa boîte. Le chiffre remonte d'autant -- Keko : « le coût
+   n'est pas au milieu de son container ». */
 .cendre .cv-cost span {
   font-size: 18.5cqw !important;
-  transform: translateY(-4%) !important;
+  transform: translate(-2%, -16%) !important;
 }
