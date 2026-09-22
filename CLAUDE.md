@@ -332,9 +332,13 @@ depuis ce bloc (préfixe → `.cendre`, chaque pixel → 100/344 cqw) : ne pas l
 de plus sur la ligne Google Fonts (Grenze Gotisch, Barlow Condensed, Crimson
 Pro). L'illustration est entièrement en CSS. **C'est la version que Keko
 aime** (« j'aime bien cette version »). Deux retouches à lui, en surcharge dans
-`proto.css` — le CSS généré ne se touche pas : le nom sur UNE ligne, droit,
-centré dans la bande du haut à la hauteur de l'écusson (il était en deux
-lignes, penché, coincé à droite : « mal placé ») ; l'écusson du coût rétréci et
+`proto.css` — le CSS généré ne se touche pas : le nom d'abord sur UNE ligne,
+droit, à la hauteur de l'écusson (il était en deux lignes, penché, coincé à
+droite : « mal placé »), puis **déplacé sur le haut du parchemin, au-dessus de
+la description** — Keko : « le titre ne serait pas mieux au-dessus de la
+description ? » — en encre sur le papier, souligné d'un fin trait ; l'image
+garde tout le haut de la carte avec le seul écusson, et la description descend
+d'un cran ; l'écusson du coût rétréci et
 son chiffre agrandi pour le remplir (« mal proportionné »). Piège au passage :
 le titre est un flex, donc le texte et son `<span>` sont deux items et
 l'espace entre eux se perd — un `gap` le rend. Et le générateur avait cassé un

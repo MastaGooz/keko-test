@@ -479,11 +479,16 @@
       hauteur de celui-ci ;
    2. l'ÉCUSSON DU COÛT était grand pour un petit chiffre -- « mal
       proportionné ». L'écusson rétrécit, le chiffre grandit : il le remplit. */
+/* LE NOM AU-DESSUS DE LA DESCRIPTION, sur le haut du parchemin : c'est là
+   qu'on le lit avec ce qu'il nomme, et l'illustration garde tout le haut de la
+   carte pour elle, avec le seul écusson du coût. Keko : « le titre ne serait
+   pas mieux au-dessus de la description ? ». En encre sur le papier, plus en
+   crème sur l'image ; un fin trait d'encre le souligne. */
 .cendre .cv-title {
-  top: 3.5% !important;
-  left: 22% !important;
-  right: 4% !important;
-  height: 15%;
+  top: 62.5% !important;
+  left: 8% !important;
+  right: 8% !important;
+  height: 9%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -491,7 +496,32 @@
   line-height: 1 !important;
   letter-spacing: 0 !important;
   white-space: nowrap;
+  color: #2a2220 !important;
+  text-shadow: 0 1px 0 #fff5d980 !important;
   transform: none !important;
+}
+
+.cendre .cv-title::after {
+  content: "";
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: -0.6cqw;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #2a222080 20% 80%, transparent);
+}
+
+/* La description descend sous le nom, un cran plus petite pour tenir. */
+.cendre .cv-effect {
+  top: 73% !important;
+}
+
+.cendre .cv-effect p {
+  font-size: 6cqw !important;
+}
+
+.cendre .cv-effect .cv-flavor {
+  margin-top: 2.2cqw !important;
 }
 
 /* Le titre est un flex (pour se centrer dans sa bande) : le texte et le
