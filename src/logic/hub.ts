@@ -16,7 +16,7 @@
  * Pur, comme tout `logic/` : aucun DOM, aucun hasard non seedé.
  */
 import type { Arme, Armure, Piece } from './armes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON } from './armes.ts'
 
 /**
  * Ce qu'on emporte. Deux mains et un torse — **les objets viendront s'ajouter
@@ -53,7 +53,10 @@ const VIDE: Chargement = { mains: [null, null], armure: null }
  */
 export function creerHub(): Hub {
   return {
-    reserve: [],
+    // L'ESPADON EST AU RÂTELIER DÈS LE DÉPART, en attendant un marché qui le
+    // vende : sans lui l'armurerie n'a rien à choisir. Il n'est pas gratuit
+    // au sens du garde-fou — mort avec, on le perd pour de bon.
+    reserve: [ESPADON],
     chargement: { mains: [ARME_GRATUITE, null], armure: ARMURE_GRATUITE },
     or: 0,
   }

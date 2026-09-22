@@ -399,5 +399,32 @@ function tresors(nombre: number): Carte[] {
   }))
 }
 
+// --- frapper tous les corps (l'Espadon) --------------------------------------
+
+{
+  const fauchage: Carte = {
+    id: 'fauchage-1',
+    nom: 'Fauchage',
+    type: 'combat',
+    cout: 2,
+    degats: 0,
+    effets: [{ type: 'degatsTous', montant: 5 }],
+  }
+  const brut = creerCombat(cartes(9, { nom: 'Estoc', cout: 1, degats: 3 }), [
+    { nom: 'Fort', pv: 20, pvMax: 20, degats: 3, periode: 1, compteur: 1 },
+    { nom: 'Faible', pv: 4, pvMax: 4, degats: 3, periode: 1, compteur: 1 },
+    { nom: 'Mort', pv: 0, pvMax: 10, degats: 3, periode: 1, compteur: 1 },
+  ], createRng(7))
+  const base = { ...brut, main: [fauchage, ...brut.main.slice(1)] }
+  const apres = jouerCarte(base, 0, -1)
+
+  egal(apres.ennemis[0]!.pv, 15, 'un fauchage frappe le premier corps')
+  egal(apres.ennemis[1]!.pv, 0, 'et acheve le faible du meme coup')
+  egal(apres.ennemis[2]!.pv, 0, 'un mort reste mort, pas de PV negatifs')
+  egal(apres.energie, base.energie - 2, 'il coute son energie')
+  verifie(apres !== base, 'il se joue sans cible (-1), comme un tresor brule')
+  egal(vivants(apres).length, 1, 'il ne reste qu\u2019un corps debout')
+}
+
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)
 console.log('Tout passe.')

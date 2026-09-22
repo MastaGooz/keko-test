@@ -108,7 +108,14 @@ let survolee: number | null = null
 function rafraichirApercu(): void {
   const index = survolee ?? selection
   const carte = index === null ? null : descente.combat.main[index]
-  apercuDegats(view, carte !== undefined && carte !== null && carte.type === 'combat' ? carte.degats : null)
+  // Une carte qui frappe TOUS les corps annonce ses dégâts sur chaque jauge.
+  const degats =
+    carte === undefined || carte === null || carte.type !== 'combat'
+      ? null
+      : carte.degats > 0
+        ? carte.degats
+        : (carte.effets?.find((e) => e.type === 'degatsTous')?.montant ?? 0)
+  apercuDegats(view, degats === 0 ? null : degats)
 }
 
 
@@ -344,6 +351,36 @@ function dispatch(action: Action): void {
             sonViser()
           })
           attente = Math.max(attente, DUREE_COUP)
+        }
+
+        // UNE FRAPPE À TOUS LES CORPS : la carte s'abat au milieu du rang, et
+        // CHAQUE corps encaisse sa part, ceux qui tombent entrent en agonie —
+        // exactement la séquence d'une frappe simple, répétée par corps. Sans
+        // ça, un Fauchage vidait les jauges sans que rien ne bouge.
+        if (action.cible === -1 && carte !== undefined && carte.effets?.some((e) => e.type === 'degatsTous')) {
+          const touches = combat.ennemis
+            .map((e, i) => ({ i, inflige: e.pv - (apres.ennemis[i]?.pv ?? 0), mort: e.pv > 0 && (apres.ennemis[i]?.pv ?? 0) <= 0 }))
+            .filter((t) => t.inflige > 0)
+          if (touches.length > 0) {
+            const milieu = touches[Math.floor((touches.length - 1) / 2)]!.i
+            const morts = touches.filter((t) => t.mort).map((t) => t.i)
+            agonie = [...agonie, ...morts]
+            marques.push(() => {
+              abattreCarte(view, milieu, vitrine(carte), () => {
+                for (const t of touches) encaisse(view, t.i, t.inflige)
+                sonFrappe((carte.cout - 1) / 3)
+                secouerEcran(view, 'forte')
+              })
+              if (morts.length > 0) {
+                window.setTimeout(() => sonAcheve(), INSTANT_ABATTUE + DUREE_COUP)
+                window.setTimeout(() => {
+                  agonie = agonie.filter((i) => !morts.includes(i))
+                  dessiner()
+                }, INSTANT_ABATTUE + DUREE_COUP + DUREE_AGONIE)
+              }
+            })
+            attente = INSTANT_ABATTUE + DUREE_COUP + (morts.length > 0 ? DUREE_AGONIE : 0)
+          }
         }
 
         const reste = apres.ennemis[action.cible]?.pv ?? 0

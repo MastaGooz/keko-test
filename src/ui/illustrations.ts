@@ -25,6 +25,22 @@ const TRACES: Record<string, string> = {
     '<path d="M3.5 26.5C9 12 20.5 5.5 28.5 4.5"/>' +
     '<path d="M7 28.5C12.5 17 21 11.5 27.5 10"/>' +
     '<path d="M28.5 4.5l-1.2 5.4 4-2.6z"/>',
+  // L'Espadon et son set : une lame a deux mains, et trois gestes larges.
+  Espadon:
+    '<path d="M16 1.5l2.8 6.5v13.5h-5.6V8z"/><path d="M6.5 22h19"/>' +
+    '<path d="M6.5 22q-2.5-1.5-1.5-4M25.5 22q2.5-1.5 1.5-4"/>' +
+    '<path d="M14.3 24h3.4v5h-3.4z"/><circle cx="16" cy="30.3" r="1.4"/>',
+  Fauchage:
+    '<path d="M3 19c7-11 19-11 26 0"/><path d="M29 19l-2.6-4.4 4.6-.4z"/>' +
+    '<path d="M9 23l-2 4.5M16 24v5M23 23l2 4.5"/>',
+  Fendre:
+    '<path d="M16 2.5v20"/><path d="M11 5.5l5-3 5 3"/>' +
+    '<path d="M16 22.5l-5.5 7M16 22.5l5.5 7"/><path d="M12.5 27.5l7 0"/>',
+  Tornade:
+    '<path d="M6 6c7-2 14-2 20 0-5 2-11 2-16 0"/>' +
+    '<path d="M9 12c5-1.5 10-1.5 14 0-3.5 1.5-8 1.5-11.5 0"/>' +
+    '<path d="M12 18c3-1 6-1 8 0-2 1-4.5 1-6.5 0"/>' +
+    '<path d="M14 24c1.5-.6 3-.6 4 0-1 .6-2.3 .6-3.3 0"/><path d="M16 27v3"/>',
   Moulinet:
     '<path d="M26.5 11.5a11 11 0 1 1-9.6-5.4"/>' +
     '<path d="M16.9 2.4l4.4 3.7-4.6 3.5z"/>' +

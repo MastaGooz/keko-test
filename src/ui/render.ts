@@ -472,7 +472,7 @@ function nature(carte: Carte): string {
   // Le rang de richesse ne s'écrit pas : il se lit au cadre, comme la rareté
   // d'une pièce. Keko : « inutile de spécifier la qualité modeste en bas ».
   if (carte.type === 'tresor') return 'Trésor'
-  if (carte.degats > 0) return 'Attaque'
+  if (carte.degats > 0 || carte.effets?.some((e) => e.type === 'degatsTous')) return 'Attaque'
   if (carte.effets?.some((e) => e.type === 'bloc')) return 'Défense'
   return 'Action'
 }
@@ -948,7 +948,8 @@ const CASES_RATELIER = 12
 function armurerie(hub: Hub): string {
   const bloque = deuxMains(hub.chargement)
   const deck = deckDeLEquipement(equipement(hub.chargement))
-  const combat = deck.filter((c) => c.degats > 0).length
+  // Frapper un corps ou tous : les deux comptent.
+  const combat = deck.filter((c) => c.degats > 0 || c.effets?.some((e) => e.type === 'degatsTous')).length
 
   // LE RÂTELIER MONTRE SES CASES VIDES : une grille de places, pas une liste
   // de pièces. Douze cases au moins — au-delà, elle grandit avec ce qu'on

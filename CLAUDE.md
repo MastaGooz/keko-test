@@ -1386,16 +1386,45 @@ Cinq règles qui portent l'écran :
   râtelier et la mort en posait un second au chargement — Keko : « le plastron
   est dédoublé ». Deux vérifications le tiennent dans `hub.verif.ts`.
 
-**La suite, dans l'ordre :** les effets uniques des trésors (le soin actuel est
-un placeholder, et il inverse le dilemme — voir plus bas), puis une deuxième
-arme et une deuxième armure, qui donneront enfin à l'armurerie de quoi choisir.
+**LA DEUXIÈME ARME EXISTE : L'ESPADON** (`logic/armes.ts`), et son verbe est
+neuf — **frapper TOUS les corps** (`degatsTous`, que le moteur savait déjà
+faire sans qu'aucune carte ne l'emploie). Quatre Fauchage (2⚡, 5 à tous),
+trois Fendre (3⚡, 9), une Tornade (5⚡, 10 à tous) : huit cartes contre dix, à
+deux mains — c'est la première pièce qui fait exister le slot condamné de
+l'armurerie. Rare, cadre bleu.
 
-**Limite du moteur à connaître dès maintenant :** une carte n'a qu'un *coût* et
-des *dégâts*. Deux armes ne peuvent donc différer que par leur courbe
-coût/dégâts, ce qui suffit pour le Glaive mais pas pour la suivante. **La
-deuxième arme demandera un verbe neuf** — frapper plusieurs cibles, rejouer,
-encaisser, décaler un compteur ennemi. C'est là qu'est le vrai budget de
-contenu.
+C'est l'arbitrage du multi-cibles pris à l'envers : le Glaive achève un corps
+pour qu'il ne frappe plus, l'Espadon use tout le rang et achève la meute d'un
+coup ; il paie ça contre un corps seul. **Calibré par simulation, même bot
+(brûler, achever, bloquer, frapper), 300 descentes au fond, avec le
+Plastron** — le script vit dans le scratchpad (`sim-armes.mjs`) :
+
+| arme | survie | tours contre 1 corps | 2 corps | 3 corps |
+|---|---|---|---|---|
+| Glaive | 99 % | 5,6 | 5,8 | 5,6 |
+| Espadon | 100 % | 6,7 | 5,1 | 3,8 |
+
+*Même survie, autre profil* : c'est ce qu'on cherchait. Ce que le balayage a
+appris : à survie au plafond, **c'est le profil par taille de groupe qui
+discrimine**, pas la survie ; Fauchage à 4 donnait 96 %, à 5 la parité ;
+Tornade à 8 traînait (1,6 par énergie et par corps), à 10 elle vaut son prix.
+Le premier bot (frapper d'abord, bloquer avec le reste) donnait 5 % de survie
+au Glaive — *un bot qui ne bloque pas avant de frapper ne mesure rien*.
+
+**L'Espadon attend au râtelier dès le départ, en attendant un marché** : sans
+lui l'armurerie n'a rien à choisir. Il n'est pas gratuit au sens du garde-fou —
+mort avec, on le perd pour de bon (et « Nouvelle descente » le rend).
+
+**Une frappe à tous les corps se joue sans cible**, comme un trésor brûlé : la
+carte sortie de la main s'abat au milieu du rang, chaque corps encaisse sa
+part, ceux qui tombent entrent en agonie — la séquence d'une frappe simple,
+répétée par corps (`main.ts`, `cibler` avec `-1`). L'aperçu sur les jauges lit
+`degatsTous` comme des dégâts. Et le compte « qui frappent » de l'armurerie
+compte les deux verbes.
+
+**La suite, dans l'ordre :** le consommable (potions ×3, brûlées à l'usage —
+et le soin quitte les trésors), les effets uniques des trésors, puis le bijou
+quand trois seront écrits sur papier.
 
 Tout le reste de la descente survit tel quel — points de sortie, sac,
 débordement, écran de récompense, mort qui prend tout.

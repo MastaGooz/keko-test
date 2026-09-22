@@ -6,7 +6,7 @@
  * mourir ne peut pas bloquer le jeu.
  */
 import type { Arme, Armure } from './armes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, deckDeLEquipement } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, deckDeLEquipement } from './armes.ts'
 import {
   creerHub,
   deplacerPiece,
@@ -54,7 +54,9 @@ const COTTE: Armure = {
     h.chargement.mains[0] === ARME_GRATUITE && h.chargement.armure === ARMURE_GRATUITE)
   verifier('on peut donc descendre sans rien toucher', peutDescendre(h.chargement))
   verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 14)
-  verifier('la reserve est vide au depart', h.reserve.length === 0)
+  // En attendant un marché, l'Espadon attend au râtelier : sans lui il n'y
+  // aurait rien à choisir.
+  verifier('le ratelier tient l’Espadon au depart, et rien d’autre', h.reserve.length === 1 && h.reserve[0] === ESPADON_REEL)
 }
 
 // --- ce qu'un slot accepte --------------------------------------------------

@@ -73,6 +73,61 @@ export const GLAIVE: Arme = {
 /** L'arme qu'on ne peut pas perdre : il y en a toujours une au râtelier. */
 export const ARME_GRATUITE = GLAIVE
 
+const FAUCHAGE: Modele = {
+  nom: 'Fauchage',
+  type: 'combat',
+  cout: 2,
+  degats: 0,
+  effets: [{ type: 'degatsTous', montant: 5 }],
+}
+const FENDRE: Modele = { nom: 'Fendre', type: 'combat', cout: 3, degats: 9 }
+const TORNADE: Modele = {
+  nom: 'Tornade',
+  type: 'combat',
+  cout: 5,
+  degats: 0,
+  effets: [{ type: 'degatsTous', montant: 10 }],
+}
+
+/**
+ * L'Espadon : la deuxième arme, et **son verbe est neuf** — frapper TOUS les
+ * corps. Le Glaive ne sait que frapper un corps ; deux armes qui ne diffèrent
+ * que par leur courbe coût/dégâts n'en font qu'une.
+ *
+ * Ce que ça change, et c'est l'arbitrage du multi-cibles pris à l'envers : le
+ * Glaive achève un corps pour qu'il ne frappe plus, l'Espadon use tout le rang
+ * à la fois et achève la meute d'un coup. Il paie ça contre un corps seul, où
+ * ses fauchages ne valent que 2,5 dégâts par énergie.
+ *
+ * **À deux mains** : il condamne le second slot. C'est la première pièce qui
+ * fait exister cette règle de l'armurerie.
+ *
+ * Huit cartes contre dix : partir avec est déjà partir plus léger.
+ *
+ * Calibré par simulation contre le Glaive, même bot, 300 descentes au fond,
+ * avec le Plastron :
+ *
+ * | arme    | survie | tours contre 1 corps | 2 corps | 3 corps |
+ * |---------|--------|----------------------|---------|---------|
+ * | Glaive  | 99 %   | 5,6                  | 5,8     | 5,6     |
+ * | Espadon | 100 %  | 6,7                  | 5,1     | 3,8     |
+ *
+ * Même survie, autre profil : c'est exactement ce qu'on voulait. Fauchage à 4
+ * donnait 96 % et à 5 la parité ; Tornade à 8 traînait (1,6 par énergie et par
+ * corps), à 10 elle vaut son prix.
+ */
+export const ESPADON: Arme = {
+  id: 'espadon',
+  nom: 'Espadon',
+  rarete: 'rare',
+  mains: 2,
+  set: [
+    { modele: FAUCHAGE, nombre: 4 },
+    { modele: FENDRE, nombre: 3 },
+    { modele: TORNADE, nombre: 1 },
+  ],
+}
+
 /* ---------------------------------------------------------------------- *
  * Les armures. Elles ne frappent pas : elles donnent du BLOC.
  * ---------------------------------------------------------------------- */
