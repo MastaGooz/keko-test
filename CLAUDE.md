@@ -265,9 +265,28 @@ avec Keko : la carte en réduit (le râtelier) et en taille normale (la main),
 côte à côte, sans rien autour. Le jeu n'a pas bougé, il est derrière
 **`?jeu`** (<https://mastagooz.github.io/keko-test/?jeu>). Le prototype vit
 dans `ui/proto.ts` + `ui/proto.css`, à part des styles du jeu, pour repartir
-d'une feuille blanche. Étape 1 : le contour seul, au rapport des cartes Magic
-(63/88), coin arrondi à 3,5 % de la largeur. Quand la carte sera validée, on la
-portera dans `render.ts` / `styles.css` et on retirera la bascule.
+d'une feuille blanche. Étape 1 : le contour seul, au rapport des cartes Magic.
+**Étape 2 : LE CADRE DE KEKO**, un PNG qu'il a dessiné (`public/cadre.png`) —
+double filet néon rouge et sa lueur sur une bande noire, la face transparente.
+C'est **la borne « pas d'images » levée par Keko lui-même**, pour un cadre
+unique réutilisé par toutes les cartes. Ce qu'il faut savoir :
+
+- l'original fait 2100 × 2900 et 2,3 Mo ; on sert une **réduction à 1050 px
+  (510 Ko)**, largement assez pour 400 px d'affichage. Si Keko refait le cadre,
+  refaire la réduction (Pillow, LANCZOS) ;
+- le cadre visible fait **2000 × 2800 (5/7 pile) dans une marge transparente
+  de 50 px** : la boîte de la carte est ce cadre, l'image déborde de sa marge
+  (2,5 % en largeur, 1,79 % en hauteur) pour que la lueur sorte sans agrandir la
+  boîte ;
+- **la face doit être noire** : la bande du cadre est du noir opaque ;
+- **la couleur se change par filtre** (`hue-rotate`, `saturate(0)` pour le
+  gris) : le noir reste noir, seul le néon tourne. Ce n'est pas un aplat sur
+  transparent, donc pas un masque — la lueur et le relief seraient perdus ;
+- son URL porte la date du build (`?v=`), sinon le navigateur ressert l'ancien
+  cadre quand Keko le change (piège déjà rencontré sur les portraits).
+
+Quand la carte sera validée, on la portera dans `render.ts` / `styles.css` et
+on retirera la bascule.
 
 
 La **descente** est jouable au doigt et déployée : une run de 6 paliers, du
