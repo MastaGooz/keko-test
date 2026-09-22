@@ -20,6 +20,8 @@
  *   celle-là attend Keko.
  */
 import './proto.css'
+import './proto-cendre.css'
+import { CENDRE } from './proto-cendre.ts'
 
 /** Le ruban du titre, l'original de la carte ChatGPT, déposé par Keko. */
 const RUBAN = `${import.meta.env.BASE_URL}title-ribbon.svg?v=${encodeURIComponent(__BUILD_TIME__)}`
@@ -72,6 +74,15 @@ function carteNeant(classes: string, etiquette: string): string {
   )
 }
 
+/**
+ * PISTE C : « SERMENT DE CENDRE », la carte CSS générée par ChatGPT, reprise
+ * telle quelle (markup et CSS générés, voir `proto-cendre.*`). Sa boîte est
+ * au rapport de l'original (344/502), avec une illustration tout en CSS.
+ */
+function carteCendre(classes: string, etiquette: string): string {
+  return fig(`<div class="cendre">${CENDRE}</div>`, etiquette, classes)
+}
+
 export function montrerProto(racine: HTMLElement, build: string): void {
   // LA DATE DU BUILD DANS L'URL : les fichiers de `public/` gardent leur nom,
   // donc sans ça le navigateur ressert l'ancien cadre quand Keko le change.
@@ -79,18 +90,21 @@ export function montrerProto(racine: HTMLElement, build: string): void {
 
   racine.innerHTML =
     `<div class="proto">` +
-    `<p class="proto-titre">Prototype de carte — deux pistes</p>` +
+    `<p class="proto-titre">Prototype de carte — trois pistes</p>` +
     `<div class="proto-planche">` +
     carteCadre(cadre, 'reduite', 'cadre · réduite') +
     carteCadre(cadre, '', 'cadre · normale') +
     `<span class="proto-sep"></span>` +
     carteNeant('reduite', 'Néant · réduite') +
     carteNeant('', 'Néant · normale') +
+    `<span class="proto-sep"></span>` +
+    carteCendre('reduite', 'Cendre · réduite') +
+    carteCendre('', 'Cendre · normale') +
     `</div>` +
     `<div class="proto-teintes">` +
     TEINTES.map(([teinte, quoi]) => carteCadre(cadre, `mini ${teinte}`, `${teinte} · ${quoi}`)).join('') +
     `</div>` +
-    `<p class="proto-note">à gauche le cadre de Keko, à droite la carte ChatGPT réécrite en proportions` +
+    `<p class="proto-note">le cadre néon de Keko · « Entaille du Néant » · « Serment de cendre », les deux cartes ChatGPT réécrites en proportions` +
     ` — <a href="?jeu">aller au jeu</a> · build ${build}</p>` +
     `</div>`
 }

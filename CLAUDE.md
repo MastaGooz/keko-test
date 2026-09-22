@@ -322,6 +322,20 @@ carte de 356 px et au rapport 1/1,48 ; il est réécrit en `cqw` (1cqw = 3,56 px
 de l'original) et au rapport 5/7, pour que la même carte tienne en réduit et
 en normal.
 
+**Piste C : « Serment de cendre »**, une seconde carte CSS générée par ChatGPT.
+Elle n'était pas dans la page de conversation sauvegardée mais dans **l'iframe
+du canvas** enregistrée à côté (`saved_resource.html`, bloc `#cendre-v3`, 65 Ko
+de CSS dont une texture de 52 Ko en ombres portées, tout en pixels pour une
+carte de 344 px). `proto-cendre.css` et `proto-cendre.ts` sont **générés**
+depuis ce bloc (préfixe → `.cendre`, chaque pixel → 100/344 cqw) : ne pas les
+éditer à la main, régénérer depuis `cendre.css` du scratchpad. Trois polices
+de plus sur la ligne Google Fonts (Grenze Gotisch, Barlow Condensed, Crimson
+Pro). L'illustration est entièrement en CSS. *Une conversation ChatGPT
+sauvegardée ne contient pas le code de ses canvas : il est dans les
+`saved_resource*.html` du dossier `_files`.* Un premier fichier, déposé par
+erreur, n'avait que des images générées (des cadres vierges en PNG) — piste
+écartée avec Keko, rien n'en reste.
+
 **Piège des container queries, rencontré ici :** les `cqw` d'un élément se
 résolvent contre son ANCÊTRE conteneur, jamais contre lui-même. Posé sur la
 carte, `container-type` laissait sa propre bordure et ses arrondis se mesurer

@@ -402,3 +402,11 @@
 .neant .type::after {
   right: -5.2cqw;
 }
+
+/* --- Piste C : « SERMENT DE CENDRE » ------------------------------------- */
+
+/* Le conteneur de la carte générée : la figure porte la taille, l'article
+   prend toute la largeur (voir proto-cendre.css, généré). */
+.cendre {
+  width: 100%;
+}
