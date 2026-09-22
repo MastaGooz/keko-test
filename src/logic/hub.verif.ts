@@ -6,7 +6,7 @@
  * mourir ne peut pas bloquer le jeu.
  */
 import type { Arme, Armure } from './armes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, deckDeLEquipement } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, CONSOMMABLE_GRATUIT, ESPADON as ESPADON_REEL, deckDeLEquipement } from './armes.ts'
 import {
   creerHub,
   deplacerPiece,
@@ -55,7 +55,8 @@ const COTTE: Armure = {
   verifier('on peut donc descendre sans rien toucher', peutDescendre(h.chargement))
   // Trois cartes d'arme, six d'armure : le format des douze (6 + 6), une
   // arme a une main en donnant trois.
-  verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 9)
+  verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 12)
+  verifier('les fioles sont dans le chargement de depart', h.chargement.consommable === CONSOMMABLE_GRATUIT)
   // En attendant un marché, l'Espadon attend au râtelier : sans lui il n'y
   // aurait rien à choisir.
   verifier('le ratelier tient l’Espadon au depart, et rien d’autre', h.reserve.length === 1 && h.reserve[0] === ESPADON_REEL)
@@ -76,7 +77,7 @@ const COTTE: Armure = {
   const seconde = deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, DAGUE.id)
   verifier('une arme a une main va dans le second slot',
     seconde.chargement.mains[1] === DAGUE && seconde.reserve.length === 1)
-  verifier('et elle donne ses cartes', deckDeLEquipement(equipement(seconde.chargement)).length === 9 + 6)
+  verifier('et elle donne ses cartes', deckDeLEquipement(equipement(seconde.chargement)).length === 12 + 6)
 }
 
 // --- l'echange ne fait rien disparaitre -------------------------------------
@@ -102,7 +103,8 @@ const COTTE: Armure = {
 {
   const h = { ...creerHub(), reserve: [ESPADON, DAGUE] }
   const avecDague = deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, DAGUE.id)
-  verifier('on tient deux armes a une main', equipement(avecDague.chargement).length === 3)
+  // Deux armes, l'armure, les fioles : quatre pieces.
+  verifier('on tient deux armes a une main', equipement(avecDague.chargement).length === 4)
 
   // UNE ARME A DEUX MAINS CHASSE CE QUI TENAIT L'AUTRE SLOT, et tout de suite :
   // un slot qui reste rempli mais inutilisable mentirait sur ce qu'on emporte.
@@ -127,7 +129,7 @@ const COTTE: Armure = {
 
   // LE GARDE-FOU CONTRE LA SPIRALE : mourir avec son seul equipement ne peut
   // pas bloquer le jeu. Il y a toujours de quoi repartir au ratelier.
-  const nu = { ...h, chargement: { mains: [null, null] as [null, null], armure: null } }
+  const nu = { ...h, chargement: { mains: [null, null] as [null, null], armure: null, consommable: null } }
   verifier('un chargement vide ne descend pas', !peutDescendre(nu.chargement))
   const apresMort = perdreLEquipement(nu)
   verifier('apres la mort on retrouve de quoi repartir', peutDescendre(apresMort.chargement))
@@ -140,7 +142,7 @@ const COTTE: Armure = {
   const sansPlastron = {
     ...h,
     reserve: [...h.reserve, ARMURE_GRATUITE],
-    chargement: { mains: [ARME_GRATUITE, null] as [Arme, null], armure: null },
+    chargement: { mains: [ARME_GRATUITE, null] as [Arme, null], armure: null, consommable: null },
   }
   const revenu = perdreLEquipement(sansPlastron)
   const exemplaires =
@@ -149,6 +151,18 @@ const COTTE: Armure = {
   verifier('mort sans le Plastron : il n’est pas dédoublé', exemplaires === 1)
   verifier('...et il est au chargement, pas au râtelier',
     revenu.chargement.armure === ARMURE_GRATUITE && !revenu.reserve.includes(ARMURE_GRATUITE))
+
+  // Le slot du consommable ne prend qu'un consommable, et rien d'autre ne le prend.
+  const auRatelier = deplacerPiece(h, { ou: 'consommable' }, { ou: 'reserve' })
+  verifier('on peut poser les fioles au ratelier', auRatelier.chargement.consommable === null && auRatelier.reserve.includes(CONSOMMABLE_GRATUIT))
+  const fiolesEnMain = deplacerPiece(auRatelier, { ou: 'reserve' }, { ou: 'main', rang: 1 }, CONSOMMABLE_GRATUIT.id)
+  verifier('les fioles ne tiennent pas en main', fiolesEnMain === auRatelier)
+  const fiolesAuTorse = deplacerPiece(auRatelier, { ou: 'reserve' }, { ou: 'armure' }, CONSOMMABLE_GRATUIT.id)
+  verifier('ni au torse', fiolesAuTorse === auRatelier)
+  const glaiveEnFiole = deplacerPiece(auRatelier, { ou: 'main', rang: 0 }, { ou: 'consommable' })
+  verifier('et une arme ne se boit pas', glaiveEnFiole === auRatelier)
+  const retour = deplacerPiece(auRatelier, { ou: 'reserve' }, { ou: 'consommable' }, CONSOMMABLE_GRATUIT.id)
+  verifier('les fioles reviennent dans leur slot', retour.chargement.consommable === CONSOMMABLE_GRATUIT)
 }
 
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)

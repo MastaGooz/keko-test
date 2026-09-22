@@ -91,8 +91,15 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   décision qui ne vaut que pour ce tour-ci, et qu'il faut reprendre au suivant.
   *Sans la remise à zéro, bloquer deviendrait épargner.*
 - **Chaque trésor a un effet UNIQUE**, pas une échelle du même effet. Tranché
-  par Keko. Le soin proportionnel au prix qui tourne aujourd'hui est un
-  placeholder — il donne sa forme au mécanisme, pas son contenu.
+  par Keko. Le soin proportionnel au prix a été le placeholder — retiré
+  depuis, parce qu'il rendait la cupidité rentable ; en attendant les effets,
+  un trésor est une carte morte. Le soin vit dans les **fioles**, un
+  consommable.
+- **Le chargement a quatre slots, et pas un de plus pour l'instant** : deux
+  mains, un torse, un consommable. Un **bijou** viendra (passif, sans carte,
+  qui change les règles et jamais les chiffres). Pas de casque ni de bottes :
+  chaque slot doit porter un verbe distinct — frapper, encaisser, boire — pas
+  une partie du corps.
 - **Équiper plus dilue.** La taille du deck est une ressource ; c'est ce qui
   rend le chargement intéressant au lieu d'être « tout prendre ».
 - **L'équipement se perd à la mort**, comme le sac. Une **arme commune
@@ -1441,9 +1448,40 @@ répétée par corps (`main.ts`, `cibler` avec `-1`). L'aperçu sur les jauges l
 `degatsTous` comme des dégâts. Et le compte « qui frappent » de l'armurerie
 compte les deux verbes.
 
-**La suite, dans l'ordre :** le consommable (potions ×3, brûlées à l'usage —
-et le soin quitte les trésors), les effets uniques des trésors, puis le bijou
-quand trois seront écrits sur papier.
+**LE CONSOMMABLE EXISTE : LES FIOLES** (`logic/armes.ts`, quatrième slot du
+chargement dans `logic/hub.ts`). Trois Fiole (1⚡, rend 10 PV, **exilée en se
+jouant**) : c'est une dilution qui s'évapore — trois cartes qui pèsent au
+premier combat, deux au deuxième, et le deck s'affûte à mesure qu'on boit.
+Vert, pied « Consommable », rangé à côté de l'armure sur la seconde ligne de
+l'armurerie ; son slot ne prend qu'un consommable et rien d'autre ne le prend
+(vérifié dans `hub.verif.ts`).
+
+**Et le soin a QUITTÉ les trésors.** Il y était un placeholder qui rendait la
+cupidité rentable (92 % en prenant tout contre 70 % en refusant). Un trésor
+est de nouveau une carte morte — grisée en main, injouable — jusqu'à ce que
+chaque trésor ait son effet unique, à écrire un par un avec Keko. Mesuré après
+(300 descentes, même bot) :
+
+| | tout prendre | tout refuser | sans fioles | sans armure |
+|---|---|---|---|---|
+| Glaive + Plastron + Fioles | 92 %, 547 d'or | 100 % | 86 % | 48 % |
+| Espadon + Plastron + Fioles | 81 %, 480 | 95 % | 68 % | 39 % |
+| deux Glaives + Plastron + Fioles | 91 %, 539 | 99 % | 79 % | 53 % |
+
+**La cupidité coûte de nouveau** — 8 à 14 points de survie contre de l'or —
+et les fioles valent 6 à 13 points. C'est le dilemme dans le bon sens.
+
+**Provisoire, à savoir :** les fioles sont gratuites et permanentes comme le
+Glaive et le Plastron, parce qu'il n'y a pas de marché. Le jour où le hub vend,
+une fiole bue est une fiole achetée — règle à écrire alors, pas maintenant.
+
+**Le bijou reste sur papier.** Keko le veut passif, sans carte — l'exception
+assumée à « ton deck est ton chargement », à une condition : qu'il change les
+règles, jamais les chiffres (« main de 6 », « le premier trésor pioché coûte
+0 »), sinon le hub vendrait de la sécurité. Il demande des crochets de règles
+dans `combat.ts` ; on les concevra sur trois bijoux précis, pas un en abstrait.
+
+**La suite, dans l'ordre :** les effets uniques des trésors, puis le bijou.
 
 Tout le reste de la descente survit tel quel — points de sortie, sac,
 débordement, écran de récompense, mort qui prend tout.

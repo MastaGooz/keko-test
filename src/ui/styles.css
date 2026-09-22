@@ -3360,6 +3360,12 @@ body {
   --accent: #9aa4b8;
 }
 
+/* Un consommable est vert : la couleur du soin, celle du chiffre qui monte
+   au-dessus du joueur. */
+.piece-carte.consommable {
+  --accent: #8ee4a1;
+}
+
 /* La composition d'une piece est un texte qui coule, jusqu'a huit modeles :
    une pointe plus petit, et il peut prendre toute la hauteur du cartouche. */
 .piece-carte .cartouche {

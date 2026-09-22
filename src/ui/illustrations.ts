@@ -41,6 +41,12 @@ const TRACES: Record<string, string> = {
     '<path d="M9 12c5-1.5 10-1.5 14 0-3.5 1.5-8 1.5-11.5 0"/>' +
     '<path d="M12 18c3-1 6-1 8 0-2 1-4.5 1-6.5 0"/>' +
     '<path d="M14 24c1.5-.6 3-.6 4 0-1 .6-2.3 .6-3.3 0"/><path d="M16 27v3"/>',
+  // La fiole : un col, une panse, le niveau du liquide.
+  Fiole:
+    '<path d="M12.5 3h7"/><path d="M14 3v6.5l-5.5 9a6.5 6.5 0 0 0 5.6 9.5h3.8a6.5 6.5 0 0 0 5.6-9.5L18 9.5V3"/>' +
+    '<path d="M9.5 21.5h13"/><path d="M12 25.5c2 1.5 6 1.5 8 0"/>',
+  // La piece « Fioles » porte le meme dessin que la carte « Fiole ».
+  Fioles: '',
   Moulinet:
     '<path d="M26.5 11.5a11 11 0 1 1-9.6-5.4"/>' +
     '<path d="M16.9 2.4l4.4 3.7-4.6 3.5z"/>' +
@@ -148,6 +154,8 @@ export function sceau(): string {
     '<circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="3.4"/></svg>'
   )
 }
+
+TRACES['Fioles'] = TRACES['Fiole']!
 
 export function dessin(nom: string): string {
   return (

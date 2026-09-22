@@ -42,6 +42,14 @@ export type Arme = Piece & {
 
 export type Armure = Piece
 
+/**
+ * Un consommable : une pièce dont les cartes SE DÉTRUISENT à l'usage. Trois
+ * fioles, c'est trois cartes qui pèsent au premier combat, deux au deuxième…
+ * le deck s'affûte à mesure qu'on boit. C'est aussi le logement du SOIN, qui
+ * quitte les trésors : un trésor qui soignait rendait la cupidité rentable.
+ */
+export type Consommable = Piece & { consommable: true }
+
 const ESTOC: Modele = { nom: 'Estoc', type: 'combat', cout: 1, degats: 3 }
 const TAILLADE: Modele = { nom: 'Taillade', type: 'combat', cout: 2, degats: 6 }
 const MOULINET: Modele = { nom: 'Moulinet', type: 'combat', cout: 4, degats: 14 }
@@ -183,6 +191,38 @@ export const PLASTRON: Armure = {
 
 /** L'armure qu'on ne peut pas perdre, comme le Glaive. */
 export const ARMURE_GRATUITE = PLASTRON
+
+/* ---------------------------------------------------------------------- *
+ * Les consommables. Ils se boivent : la carte est exilée en se jouant.
+ * ---------------------------------------------------------------------- */
+
+const FIOLE: Modele = {
+  nom: 'Fiole',
+  type: 'combat',
+  cout: 1,
+  degats: 0,
+  effets: [{ type: 'soin', montant: 10 }],
+  exil: true,
+}
+
+/**
+ * Trois fioles de vie. Le format des douze compte « + consommables » : elles
+ * s'ajoutent aux six qui frappent et aux six qui encaissent.
+ *
+ * **Provisoirement gratuites et permanentes**, comme le Glaive et le Plastron :
+ * il n'y a pas encore de marché pour les acheter, donc elles reviennent à
+ * chaque descente. Le jour où le hub vend, une fiole bue est une fiole
+ * achetée — c'est la règle à écrire alors, pas maintenant.
+ */
+export const FIOLES: Consommable = {
+  id: 'fioles',
+  nom: 'Fioles',
+  rarete: 'commune',
+  consommable: true,
+  set: [{ modele: FIOLE, nombre: 3 }],
+}
+
+export const CONSOMMABLE_GRATUIT = FIOLES
 
 /**
  * Le deck emporté, somme des sets de tout ce qui est équipé. Les identifiants

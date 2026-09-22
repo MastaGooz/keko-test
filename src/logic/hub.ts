@@ -15,8 +15,8 @@
  *
  * Pur, comme tout `logic/` : aucun DOM, aucun hasard non seedé.
  */
-import type { Arme, Armure, Piece } from './armes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON } from './armes.ts'
+import type { Arme, Armure, Consommable, Piece } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, CONSOMMABLE_GRATUIT, ESPADON } from './armes.ts'
 
 /**
  * Ce qu'on emporte. Deux mains et un torse — **les objets viendront s'ajouter
@@ -29,6 +29,8 @@ import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON } from './armes.ts'
 export type Chargement = {
   mains: [Arme | null, Arme | null]
   armure: Armure | null
+  /** Le consommable : des cartes qui se boivent. Un seul slot, à dessein. */
+  consommable: Consommable | null
 }
 
 export type Hub = {
@@ -40,9 +42,13 @@ export type Hub = {
 }
 
 /** Un slot où poser une pièce. `main` porte son rang, 0 ou 1. */
-export type Slot = { ou: 'main'; rang: 0 | 1 } | { ou: 'armure' } | { ou: 'reserve' }
+export type Slot =
+  | { ou: 'main'; rang: 0 | 1 }
+  | { ou: 'armure' }
+  | { ou: 'consommable' }
+  | { ou: 'reserve' }
 
-const VIDE: Chargement = { mains: [null, null], armure: null }
+const VIDE: Chargement = { mains: [null, null], armure: null, consommable: null }
 
 /**
  * L'armurerie au premier lancement : l'équipement gratuit, déjà équipé.
@@ -57,7 +63,11 @@ export function creerHub(): Hub {
     // vende : sans lui l'armurerie n'a rien à choisir. Il n'est pas gratuit
     // au sens du garde-fou — mort avec, on le perd pour de bon.
     reserve: [ESPADON],
-    chargement: { mains: [ARME_GRATUITE, null], armure: ARMURE_GRATUITE },
+    chargement: {
+      mains: [ARME_GRATUITE, null],
+      armure: ARMURE_GRATUITE,
+      consommable: CONSOMMABLE_GRATUIT,
+    },
     or: 0,
   }
 }
@@ -67,6 +77,7 @@ export function equipement(chargement: Chargement): Piece[] {
   const pieces: Piece[] = []
   for (const arme of chargement.mains) if (arme !== null) pieces.push(arme)
   if (chargement.armure !== null) pieces.push(chargement.armure)
+  if (chargement.consommable !== null) pieces.push(chargement.consommable)
   return pieces
 }
 
@@ -77,6 +88,10 @@ export function deuxMains(chargement: Chargement): boolean {
 
 function estArme(piece: Piece): piece is Arme {
   return 'mains' in piece
+}
+
+function estConsommable(piece: Piece): piece is Consommable {
+  return 'consommable' in piece
 }
 
 /**
@@ -103,7 +118,8 @@ export function deplacerPiece(hub: Hub, source: Slot, cible: Slot, id?: string):
 /** Un slot n'accepte pas n'importe quoi : une armure ne tient pas en main. */
 function accepte(slot: Slot, piece: Piece): boolean {
   if (slot.ou === 'reserve') return true
-  if (slot.ou === 'armure') return !estArme(piece)
+  if (slot.ou === 'consommable') return estConsommable(piece)
+  if (slot.ou === 'armure') return !estArme(piece) && !estConsommable(piece)
   if (!estArme(piece)) return false
   // Une arme à deux mains ne va que dans le premier slot : elle prend l'autre.
   return slot.rang === 0 || piece.mains === 1
@@ -121,6 +137,10 @@ function prendre(hub: Hub, slot: Slot, id?: string): { piece: Piece | null; hub:
     const piece = hub.chargement.armure
     return { piece, hub: { ...hub, chargement: { ...hub.chargement, armure: null } } }
   }
+  if (slot.ou === 'consommable') {
+    const piece = hub.chargement.consommable
+    return { piece, hub: { ...hub, chargement: { ...hub.chargement, consommable: null } } }
+  }
   const mains: [Arme | null, Arme | null] = [...hub.chargement.mains]
   const piece = mains[slot.rang]
   mains[slot.rang] = null
@@ -134,6 +154,13 @@ function poser(hub: Hub, slot: Slot, piece: Piece): { sortant: Piece | null; hub
   if (slot.ou === 'armure') {
     const sortant = hub.chargement.armure
     return { sortant, hub: { ...hub, chargement: { ...hub.chargement, armure: piece as Armure } } }
+  }
+  if (slot.ou === 'consommable') {
+    const sortant = hub.chargement.consommable
+    return {
+      sortant,
+      hub: { ...hub, chargement: { ...hub.chargement, consommable: piece as Consommable } },
+    }
   }
   const mains: [Arme | null, Arme | null] = [...hub.chargement.mains]
   const sortant = mains[slot.rang] ?? null
@@ -170,11 +197,15 @@ export function perdreLEquipement(hub: Hub): Hub {
   // est resté au râtelier : le remettre au chargement sans l'en retirer le
   // dédoublait. Keko : « si je pars sans plastron, quand je meurs le plastron
   // est dédoublé ». Ce qu'on rééquipe sort donc de la réserve s'il y était.
-  const gratuites = new Set([ARME_GRATUITE.id, ARMURE_GRATUITE.id])
+  const gratuites = new Set([ARME_GRATUITE.id, ARMURE_GRATUITE.id, CONSOMMABLE_GRATUIT.id])
   return {
     ...hub,
     reserve: hub.reserve.filter((p) => !gratuites.has(p.id)),
-    chargement: { mains: [ARME_GRATUITE, null], armure: ARMURE_GRATUITE },
+    chargement: {
+      mains: [ARME_GRATUITE, null],
+      armure: ARMURE_GRATUITE,
+      consommable: CONSOMMABLE_GRATUIT,
+    },
   }
 }
 

@@ -11,7 +11,7 @@
  * Seul endroit qui connaît la structure de la page.
  */
 import type { Carte, EtatCombat, Evenement } from '../logic/combat.ts'
-import { consequence, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
+import { consequence, jouable, menaceDuTour, tresorsEnMain, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, tresorsAuDeck } from '../logic/descente.ts'
 import type { Hub } from '../logic/hub.ts'
@@ -459,7 +459,7 @@ function lignes(carte: Carte): string[] {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
       if (carte.type === 'tresor') l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>et son or est perdu</small>`)
-      else l.push(`Rend <b>${e.montant}</b> PV`)
+      else l.push(`Rend <b>${e.montant}</b> PV`, ...(carte.exil === true ? [`<small>se boit : détruite</small>`] : []))
     }
     if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> énergie`)
     if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
@@ -472,6 +472,7 @@ function nature(carte: Carte): string {
   // Le rang de richesse ne s'écrit pas : il se lit au cadre, comme la rareté
   // d'une pièce. Keko : « inutile de spécifier la qualité modeste en bas ».
   if (carte.type === 'tresor') return 'Trésor'
+  if (carte.exil === true) return 'Consommable'
   if (carte.degats > 0 || carte.effets?.some((e) => e.type === 'degatsTous')) return 'Attaque'
   if (carte.effets?.some((e) => e.type === 'bloc')) return 'Défense'
   return 'Action'
@@ -490,7 +491,8 @@ function ligneCarte(
   const prise = `data-action="zoomer" data-carte-id="${carte.id}" data-main="${index}"`
   const place = eventail(index, total) + ' ' + prise
   if (carte.type === 'tresor') {
-    return carteTresor(carte, place, true, !fini && carte.cout <= etat.energie)
+    // Un trésor sans effet est une carte morte : grisé, comme une carte trop chère.
+    return carteTresor(carte, place, true, !fini && jouable(carte) && carte.cout <= etat.energie)
   }
 
   const debout = vivants(etat)
@@ -937,9 +939,11 @@ function zoomPiece(piece: Piece): string {
   return cartePiece(piece) + `<span class="set-piece">${set}</span>`
 }
 
-/** Ce qu'une pièce est : une arme a des mains, une armure n'en a pas. */
-function genre(piece: Piece): 'arme' | 'armure' {
-  return 'mains' in piece ? 'arme' : 'armure'
+/** Ce qu'une pièce est : une arme a des mains, un consommable se boit, le reste est armure. */
+function genre(piece: Piece): 'arme' | 'armure' | 'consommable' {
+  if ('mains' in piece) return 'arme'
+  if ('consommable' in piece) return 'consommable'
+  return 'armure'
 }
 
 /** Les cases du râtelier qu'on montre même vides. */
@@ -979,8 +983,11 @@ function armurerie(hub: Hub): string {
     slotEquipement(hub.chargement.mains[0], { ou: 'main', rang: 0 }, 'arme', false) +
     slotEquipement(hub.chargement.mains[1], { ou: 'main', rang: 1 }, 'arme', bloque) +
     `</div>` +
+    // L'armure et le consommable sur la seconde ligne : ce qui encaisse et ce
+    // qui se boit, sous ce qui frappe.
     `<div class="rangee-pieces torse">` +
     slotEquipement(hub.chargement.armure, { ou: 'armure' }, 'armure', false) +
+    slotEquipement(hub.chargement.consommable, { ou: 'consommable' }, 'consommable', false) +
     `</div>` +
     `</div>` +
     `</div>` +
@@ -1019,9 +1026,17 @@ function armurerie(hub: Hub): string {
  */
 function cartePiece(piece: Piece): string {
   const nb = piece.set.reduce((t, { nombre }) => t + nombre, 0)
-  const bloque = piece.set.some(({ modele }) => modele.effets?.some((e) => e.type === 'bloc'))
+  const g = genre(piece)
+  const pied =
+    g === 'armure'
+      ? 'Armure'
+      : g === 'consommable'
+        ? 'Consommable'
+        : // Une arme dit combien de mains elle prend : c'est ce qui décide si le
+          // second slot reste libre. Keko : « indiquer une main ou deux mains ».
+          `Arme · ${'mains' in piece && piece.mains === 2 ? 'deux mains' : 'une main'}`
   return (
-    `<div class="carte piece-carte ${piece.rarete}${bloque ? ' armure' : ' arme'}" style="--n:1">` +
+    `<div class="carte piece-carte ${piece.rarete} ${g}" style="--n:1">` +
     corpsCarte(
       piece.nom,
       `<span class="gemme cartes-donnees" title="${nb} cartes">${nb}</span>`,
@@ -1033,9 +1048,7 @@ function cartePiece(piece: Piece): string {
       // La rareté ne s'écrit pas : elle se lit au cadre, code couleur classique
       // (`.piece-carte.rare`, `.epique`). Keko : « inutile d'afficher le niveau
       // de rareté, on le fera via un code couleur ».
-      // Une arme dit combien de mains elle prend : c'est ce qui décide si le
-      // second slot reste libre. Keko : « indiquer une main ou deux mains ».
-      bloque ? 'Armure' : `Arme · ${'mains' in piece && piece.mains === 2 ? 'deux mains' : 'une main'}`,
+      pied,
     ) +
     `</div>`
   )

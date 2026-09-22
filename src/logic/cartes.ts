@@ -38,6 +38,11 @@ import { GLAIVE } from './armes.ts'
  * économique, jamais mécanique.
  */
 export function carteTresor(id: string, nom: string, valeur: number): Carte {
+  // PLUS DE SOIN SUR LES TRÉSORS. Il était un placeholder, et il rendait la
+  // cupidité rentable (92 % de survie en prenant tout contre 70 % en refusant).
+  // Le soin vit désormais dans les fioles, un consommable ; le trésor redevient
+  // une carte morte jusqu'à ce que chaque trésor ait son effet unique — décidé
+  // avec Keko, à écrire un par un.
   return {
     id,
     nom,
@@ -45,8 +50,6 @@ export function carteTresor(id: string, nom: string, valeur: number): Carte {
     cout: COUT_TRESOR,
     degats: 0,
     valeur,
-    effets: [{ type: 'soin', montant: soinDuTresor(valeur) }],
-    exil: true,
   }
 }
 
@@ -59,42 +62,11 @@ export function carteTresor(id: string, nom: string, valeur: number): Carte {
  */
 const COUT_TRESOR = 1
 
-/**
- * Le soin qu'un trésor rend quand on le brûle, proportionnel à son prix.
- *
- * PROVISOIRE, et c'est un chiffre de combat donc un rasoir : à revoir par
- * simulation, et avec Keko pour la nature même de l'effet — soigner n'est
- * qu'une façon d'« éviter le pire », il y en aura d'autres.
+/*
+ * `soinDuTresor` et `DIVISEUR_SOIN` ont vécu ici : le soin d'un trésor valait
+ * son prix divisé par douze. Calibré, mesuré, puis retiré — l'histoire est
+ * dans CLAUDE.md, le soin est dans les fioles.
  */
-function soinDuTresor(valeur: number): number {
-  return Math.round(valeur / DIVISEUR_SOIN)
-}
-
-/**
- * Le rapport prix → PV rendus. **Calibré par simulation, pas au jugé**, et
- * c'est le chiffre qui décide si le mécanisme existe. Balayage sur 400
- * descentes, politique « tout prendre », en comparant celui qui brûle dès qu'il
- * passe sous 30 PV à celui qui ne brûle jamais :
- *
- * | diviseur | ne brûle jamais | brûle sous 30 PV |
- * |---|---|---|
- * | 6 | 71 %, 418 d'or | 100 %, **397** d'or |
- * | **12** | 71 %, 418 d'or | 100 %, **282** d'or |
- * | 20 | 71 %, 418 d'or | 99 %, **228** d'or |
- *
- * À 6, brûler ne coûtait presque rien (−21 d'or) pour +29 points de survie :
- * **la cupidité devenait gratuite ET optimale**, l'exact contraire de ce qu'on
- * veut. À 20, brûler coûte si cher que l'option se referme et le trésor
- * redevient une carte morte avec du code en plus.
- *
- * À 12, l'arbitrage est réel et il n'a pas de bonne réponse : ne jamais brûler
- * rapporte plus en espérance (418 contre 282) mais tue une run sur trois.
- * *C'est au joueur de décider ce qu'il vaut mieux, et c'est tout ce qu'on
- * demande à un push-your-luck.*
- *
- * Exporté pour pouvoir le rebalayer. À refaire après toute retouche.
- */
-export const DIVISEUR_SOIN = 12
 
 /**
  * Des noms plutôt que « Trésor 1 » : une main pleine de babioles doit se lire
