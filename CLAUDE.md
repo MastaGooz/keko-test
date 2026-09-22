@@ -307,7 +307,13 @@ URL posée depuis le TS avec la date du build) ; **le grain est un SVG écrit à
 la main** (`public/copper-grain.svg`, une tuile de 192 px : bruit fin, taches
 de patine, rayures obliques qui traversent la tuile pour se répéter sans
 couture — trois filtres `feTurbulence`, tout translucide pour se poser SUR le
-dégradé cuivre) ; l'illustration attend Keko. Le code original est en pixels pour une
+dégradé cuivre) ; l'illustration attend Keko. **La plaque de type est prise dans le
+cadre** : elle était une pilule violette à cheval sur le bord bas (Keko : « pas
+élégant, l'intégrer dans le cadre ») ; c'est un trapèze en encre sombre
+encastré dans la bande de cuivre du bas, flush avec le bord, un filet d'or qui
+suit sa forme, deux pointes d'or aux flancs, le texte en petites capitales
+dorées — et le panneau de règles s'arrête au-dessus pour lui laisser sa
+bande. Le code original est en pixels pour une
 carte de 356 px et au rapport 1/1,48 ; il est réécrit en `cqw` (1cqw = 3,56 px
 de l'original) et au rapport 5/7, pour que la même carte tienne en réduit et
 en normal.
