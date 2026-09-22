@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="72" viewBox="0 0 320 72" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="cloth" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#61466c"/>
+      <stop offset=".55" stop-color="#50375f"/>
+      <stop offset="1" stop-color="#462f54"/>
+    </linearGradient>
+    <linearGradient id="reverse" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#453053"/>
+      <stop offset="1" stop-color="#372441"/>
+    </linearGradient>
+    <radialGradient id="wear" cx=".28" cy=".18" r=".8">
+      <stop stop-color="#c4a2ad" stop-opacity=".12"/>
+      <stop offset="1" stop-color="#c4a2ad" stop-opacity="0"/>
+    </radialGradient>
+    <path id="face" d="M24 14 C93 5 151 4 205 7 C244 8 272 10 297 15 L294 57 C240 51 201 49 162 50 C112 49 67 53 23 59 L26 37 Z"/>
+    <clipPath id="face-clip"><use href="#face"/></clipPath>
+    <filter id="grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".72" numOctaves="2" seed="13" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncR type="linear" slope="1.5" intercept="-.25"/>
+        <feFuncG type="linear" slope="1.5" intercept="-.25"/>
+        <feFuncB type="linear" slope="1.5" intercept="-.25"/>
+        <feFuncA type="linear" slope="0" intercept=".10"/>
+      </feComponentTransfer>
+    </filter>
+  </defs>
+
+  <!-- Extrémités courtes et obliques, placées derrière la face du ruban. -->
+  <g fill="url(#reverse)" stroke="#24192c" stroke-width="3.2" stroke-linejoin="round">
+    <path d="M28 23 L3 28 L10 58 L37 63 L43 35 Z" vector-effect="non-scaling-stroke"/>
+    <path d="M288 24 L316 29 L310 60 L281 63 L277 35 Z" vector-effect="non-scaling-stroke"/>
+  </g>
+  <path d="M23 48 L37 63 L37 50 Z" fill="#2d1e38"/>
+  <path d="M295 46 L281 63 L281 49 Z" fill="#2b1c35"/>
+
+  <!-- Courbes légèrement irrégulières ; un seul trait sombre au bord. -->
+  <use href="#face" fill="url(#cloth)"/>
+  <use href="#face" fill="url(#wear)"/>
+  <g clip-path="url(#face-clip)">
+    <rect width="320" height="72" filter="url(#grain)"/>
+  </g>
+  <use href="#face" fill="none" stroke="#24192c" stroke-width="3.2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+</svg>

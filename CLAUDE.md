@@ -290,8 +290,10 @@ par ChatGPT. Son site est privé (401), mais il a déposé la page sauvegardée 
 le HTML/CSS en a été extrait (copie dans le scratchpad, le fichier de 322 Ko
 — dont 313 Ko de CSS anti-pub injecté par le navigateur — ne reste pas dans
 `public/`). Trois fichiers manquaient à la sauvegarde : l'illustration, le
-ruban de titre, le grain du cuivre — remplacés par du CSS et du SVG à la main,
-sauf l'illustration, qui attend Keko. Le code original est en pixels pour une
+ruban de titre, le grain du cuivre. **Le ruban est le vrai** (Keko l'a
+récupéré : `public/title-ribbon.svg`, 320 × 72 étiré aux dimensions du titre,
+URL posée depuis le TS avec la date du build) ; le grain est refait à la main ;
+l'illustration attend Keko. Le code original est en pixels pour une
 carte de 356 px et au rapport 1/1,48 ; il est réécrit en `cqw` (1cqw = 3,56 px
 de l'original) et au rapport 5/7, pour que la même carte tienne en réduit et
 en normal.

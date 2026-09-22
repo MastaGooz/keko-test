@@ -11,7 +11,7 @@
  *   noire, recolorable par filtre ;
  * - **« Entaille du Néant »**, une carte que Keko a fait générer par ChatGPT
  *   (HTML/CSS récupéré d'une page sauvegardée) : cadre cuivre patiné, fenêtre
- *   d'art en arche, ruban de titre, panneau de règles en papier, bandeau de
+ *   d'art en arche, ruban de titre (le SVG de l'original, récupéré par Keko), panneau de règles en papier, bandeau de
  *   type violet. Le code original est en pixels pour une carte de 356 px ; il
  *   est réécrit ici en `cqw` pour que la même carte tienne en réduit et en
  *   normal, et au rapport 5/7 au lieu de 1/1,48. Trois fichiers manquaient à
@@ -20,6 +20,9 @@
  *   celle-là attend Keko.
  */
 import './proto.css'
+
+/** Le ruban du titre, l'original de la carte ChatGPT, déposé par Keko. */
+const RUBAN = `${import.meta.env.BASE_URL}title-ribbon.svg?v=${encodeURIComponent(__BUILD_TIME__)}`
 
 const TEINTES = [
   ['rouge', 'tel quel'],
@@ -54,7 +57,7 @@ function carteCadre(cadre: string, classes: string, etiquette: string): string {
 /** La carte « Entaille du Néant », structure reprise telle quelle. */
 function carteNeant(classes: string, etiquette: string): string {
   return fig(
-    `<article class="neant" aria-label="Carte Entaille du Néant">` +
+    `<article class="neant" style="--ruban:url('${RUBAN}')" aria-label="Carte Entaille du Néant">` +
       `<div class="art" role="img" aria-label="Illustration à venir"></div>` +
       `<h1 class="title">Entaille du Néant</h1>` +
       `<section class="rules"><p class="description">Infligez <strong>12 dégâts</strong>.<br>` +
