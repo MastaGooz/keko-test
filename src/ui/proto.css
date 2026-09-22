@@ -410,3 +410,46 @@
 .cendre {
   width: 100%;
 }
+
+/* DEUX RETOUCHES DE KEKO sur la carte générée (en surcharge, le CSS généré ne
+   se touche pas) :
+   1. le NOM était en deux lignes, penché, coincé à droite de l'écusson, en
+      haut de l'illustration -- « mal placé ». Il tient désormais SUR UNE
+      LIGNE, droit, centré dans la bande du haut à droite de l'écusson, à la
+      hauteur de celui-ci ;
+   2. l'ÉCUSSON DU COÛT était grand pour un petit chiffre -- « mal
+      proportionné ». L'écusson rétrécit, le chiffre grandit : il le remplit. */
+.cendre .cv-title {
+  top: 3.5% !important;
+  left: 22% !important;
+  right: 4% !important;
+  height: 15%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8.4cqw !important;
+  line-height: 1 !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap;
+  transform: none !important;
+}
+
+/* Le titre est un flex (pour se centrer dans sa bande) : le texte et le
+   <span> en sont deux items, et l'espace entre eux s'y perd. Un `gap` le rend. */
+.cendre .cv-title {
+  gap: 0.26em;
+}
+
+.cendre .cv-title span {
+  display: inline !important;
+}
+
+.cendre .cv-cost {
+  width: 19% !important;
+  height: 16.5% !important;
+}
+
+.cendre .cv-cost span {
+  font-size: 18.5cqw !important;
+  transform: translateY(-4%) !important;
+}

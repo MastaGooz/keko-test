@@ -330,7 +330,16 @@ carte de 344 px). `proto-cendre.css` et `proto-cendre.ts` sont **générés**
 depuis ce bloc (préfixe → `.cendre`, chaque pixel → 100/344 cqw) : ne pas les
 éditer à la main, régénérer depuis `cendre.css` du scratchpad. Trois polices
 de plus sur la ligne Google Fonts (Grenze Gotisch, Barlow Condensed, Crimson
-Pro). L'illustration est entièrement en CSS. *Une conversation ChatGPT
+Pro). L'illustration est entièrement en CSS. **C'est la version que Keko
+aime** (« j'aime bien cette version »). Deux retouches à lui, en surcharge dans
+`proto.css` — le CSS généré ne se touche pas : le nom sur UNE ligne, droit,
+centré dans la bande du haut à la hauteur de l'écusson (il était en deux
+lignes, penché, coincé à droite : « mal placé ») ; l'écusson du coût rétréci et
+son chiffre agrandi pour le remplir (« mal proportionné »). Piège au passage :
+le titre est un flex, donc le texte et son `<span>` sont deux items et
+l'espace entre eux se perd — un `gap` le rend. Et le générateur avait cassé un
+`-.5px` (regex sans point initial) en `-.1.453cqw` : corrigé à la main dans le
+fichier généré, à refaire dans le générateur si on régénère. *Une conversation ChatGPT
 sauvegardée ne contient pas le code de ses canvas : il est dans les
 `saved_resource*.html` du dossier `_files`.* Un premier fichier, déposé par
 erreur, n'avait que des images générées (des cadres vierges en PNG) — piste
