@@ -357,7 +357,13 @@ plus de relief : « c'était ce petit contraste qui donnait du relief ». Le
 réglage final : le fond est le même laiton **assombri d'un voile uniforme**
 (#00000030), **et aucune ombre sous la coque** : même courte et nette, elle la
 « différenciait trop du fond ». Le relief ne tient qu'au voile. L'ombre de la carte entière est
-portée par le conteneur `.cendre`) ; et le
+portée par le conteneur `.cendre`). **L'écusson du coût se détache du cadre**
+par un liseré d'encre sombre, puis un filet de laiton clair, puis le rouge —
+son bord était du même laiton que la coque et s'y fondait (Keko : « il
+fusionne trop avec le cadre »). Les trois couches sont le fond, `::before` et
+`::after` de `.cv-cost` ; les deux traits de lumière d'origine, qui vivaient
+sur `::after`, sont rendus par une ombre interne. Piège : sur `::after`,
+`inset` posé puis `top: auto` — l'auto annule l'inset et la couche disparaît ; et le
 chiffre du coût est remonté dans son écusson, dont la pointe vers le bas met
 le centre visuel plus haut que le centre de la boîte. *Une conversation ChatGPT
 sauvegardée ne contient pas le code de ses canvas : il est dans les
