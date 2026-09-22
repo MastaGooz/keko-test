@@ -512,6 +512,8 @@
 .cendre .cv-cost {
   width: 19% !important;
   height: 16.5% !important;
+  /* Un peu plus haut sur le coin (Keko) : 1,5 % -> 0,4 % du haut. */
+  top: 0.4% !important;
   background: #1a1316 !important;
   filter: drop-shadow(0.35cqw 0.5cqw 0 #0000008c) !important;
 }
@@ -543,5 +545,6 @@
    n'est pas au milieu de son container ». */
 .cendre .cv-cost span {
   font-size: 18.5cqw !important;
-  transform: translate(-2%, -16%) !important;
+  /* Et le chiffre encore un peu plus haut dedans (Keko). */
+  transform: translate(-2%, -24%) !important;
 }
