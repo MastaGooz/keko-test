@@ -303,8 +303,11 @@ le HTML/CSS en a été extrait (copie dans le scratchpad, le fichier de 322 Ko
 `public/`). Trois fichiers manquaient à la sauvegarde : l'illustration, le
 ruban de titre, le grain du cuivre. **Le ruban est le vrai** (Keko l'a
 récupéré : `public/title-ribbon.svg`, 320 × 72 étiré aux dimensions du titre,
-URL posée depuis le TS avec la date du build) ; le grain est refait à la main ;
-l'illustration attend Keko. Le code original est en pixels pour une
+URL posée depuis le TS avec la date du build) ; **le grain est un SVG écrit à
+la main** (`public/copper-grain.svg`, une tuile de 192 px : bruit fin, taches
+de patine, rayures obliques qui traversent la tuile pour se répéter sans
+couture — trois filtres `feTurbulence`, tout translucide pour se poser SUR le
+dégradé cuivre) ; l'illustration attend Keko. Le code original est en pixels pour une
 carte de 356 px et au rapport 1/1,48 ; il est réécrit en `cqw` (1cqw = 3,56 px
 de l'original) et au rapport 5/7, pour que la même carte tienne en réduit et
 en normal.

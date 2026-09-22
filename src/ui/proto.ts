@@ -23,6 +23,8 @@ import './proto.css'
 
 /** Le ruban du titre, l'original de la carte ChatGPT, déposé par Keko. */
 const RUBAN = `${import.meta.env.BASE_URL}title-ribbon.svg?v=${encodeURIComponent(__BUILD_TIME__)}`
+/** Le grain du cuivre, écrit à la main (`public/copper-grain.svg`) : la tuile manquante. */
+const GRAIN = `${import.meta.env.BASE_URL}copper-grain.svg?v=${encodeURIComponent(__BUILD_TIME__)}`
 
 const TEINTES = [
   ['rouge', 'tel quel'],
@@ -58,7 +60,7 @@ function carteCadre(cadre: string, classes: string, etiquette: string): string {
 /** La carte « Entaille du Néant », structure reprise telle quelle. */
 function carteNeant(classes: string, etiquette: string): string {
   return fig(
-    `<article class="neant" style="--ruban:url('${RUBAN}')" aria-label="Carte Entaille du Néant">` +
+    `<article class="neant" style="--ruban:url('${RUBAN}');--grain:url('${GRAIN}')" aria-label="Carte Entaille du Néant">` +
       `<div class="art" role="img" aria-label="Illustration à venir"></div>` +
       `<h1 class="title">Entaille du Néant</h1>` +
       `<section class="rules"><p class="description">Infligez <strong>12 dégâts</strong>.<br>` +

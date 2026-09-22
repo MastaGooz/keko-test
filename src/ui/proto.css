@@ -225,11 +225,13 @@
   border-radius: 6.2cqw;
   color: var(--paper);
   font-family: Georgia, "Times New Roman", serif;
-  /* Le grain du cuivre : l'original chargeait un SVG « copper-grain.svg »
-     absent de la page sauvegardée ; un bruit fractal en tient lieu. Puis la
-     patine, peinte dans le fond : des zones claires d'usure sur les bords. */
+  /* Le grain du cuivre : « copper-grain.svg », la tuile que l'original
+     chargeait -- absente de la page sauvegardée, réécrite à la main (bruit fin,
+     taches de patine, rayures obliques). 192 px dans l'original, soit 54cqw.
+     Puis la patine, peinte dans le fond : des zones claires d'usure sur les
+     bords. */
   background:
-    url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.15 0 0 0 0 0.1 0 0 0 0.35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 54cqw 54cqw repeat,
+    var(--grain) 0 0 / 54cqw 54cqw repeat,
     radial-gradient(ellipse 5.3cqw 0.85cqw at 24% 0.55cqw, rgba(255,220,165,.48), rgba(248,199,144,.18) 44%, transparent 78%),
     radial-gradient(ellipse 0.85cqw 6.7cqw at 0.55cqw 35%, rgba(255,220,165,.36), rgba(248,199,144,.12) 46%, transparent 78%),
     radial-gradient(ellipse 0.85cqw 4.5cqw at calc(100% - 0.55cqw) 73%, rgba(248,199,144,.32), transparent 78%),
