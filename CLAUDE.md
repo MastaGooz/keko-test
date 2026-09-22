@@ -338,7 +338,9 @@ donjon. Ce qui tourne :
   dans la main du butin et en combat : la gemme portait le sceau hors de la
   main et le coût dedans, et « la carte change quand je la ramasse » (Keko).
   Tant qu'un trésor est une carte morte il n'a pas de coût, donc le sceau
-  partout ; le jour où il se joue, sa gemme dira son coût — partout aussi.
+  partout ; le jour où il se joue, sa gemme dira son coût — partout aussi. Et
+  la main du butin ne pose ni « jouable » (liseré bleu) ni « hors-prix »
+  (grisé) : rien ne s'y joue, la carte y est celle du slot de loot.
 
   **Le bouton AGIT, il n'attend pas.** Il disait « Range ton trésor » et restait
   désactivé tant qu'on n'avait pas glissé : il ne faisait qu'énoncer ce qui

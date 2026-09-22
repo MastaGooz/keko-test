@@ -803,10 +803,14 @@ function butin(
         // LA MEME MAIN QU'EN COMBAT, gestes compris : on la tape pour regarder
         // la carte de près, on la glisse pour la ranger ailleurs ou la
         // réorganiser. `data-main` porte le rang, comme dans la main de combat.
+        // `enMain` a false : ici rien ne se joue, donc ni « jouable » (liseré
+        // bleu) ni « hors-prix » (grisé). La carte est la même que dans le
+        // slot de loot, à l'identique -- c'est ce qu'on range.
         carteTresor(
           c,
           `${eventail(i, portes.length)} ${lieu({ ou: 'deck', id: c.id })} ` +
             `data-action="zoomer" data-carte-id="${c.id}" data-main="${i}"`,
+          false,
         ),
       )
       .join('') +
