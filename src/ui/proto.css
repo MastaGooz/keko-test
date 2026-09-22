@@ -111,14 +111,17 @@
 .proto-carte .cout {
   --neon: #ff3a3a;
   position: absolute;
-  top: 1.5cqw;
-  left: 1.5cqw;
+  top: 1.2cqw;
+  left: 1.2cqw;
   z-index: 3;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 21cqw;
-  height: 21cqw;
+  /* Plus petite, et le chiffre plus grand dedans : Keko la trouvait « un poil
+     grosse, le chiffre trop petit ». 17 % de la largeur, le chiffre à 60 % du
+     diamètre. */
+  width: 17cqw;
+  height: 17cqw;
   border-radius: 50%;
   /* Le verre : sombre, un reflet en haut à gauche, une lueur rouge qui monte
      du bas -- la lumière de l'anneau qui se reflète dedans. */
@@ -135,16 +138,33 @@
     0 0 7cqw color-mix(in srgb, var(--neon) 45%, transparent),
     inset 0 0 2cqw color-mix(in srgb, var(--neon) 50%, transparent);
   color: #fff4f2;
-  font-family: system-ui, "Segoe UI", sans-serif;
-  font-size: 11.5cqw;
-  font-weight: 700;
+  /* Orbitron : une géométrique anguleuse, la police du néon et des cadrans --
+     celle qui va avec les filets droits et le triangle du cadre, là où une
+     sans classique faisait « formulaire ». Chargée avec les deux autres. */
+  font-family: "Orbitron", "Segoe UI", system-ui, sans-serif;
+  font-size: 10.2cqw;
+  font-weight: 900;
   line-height: 1;
+  padding-top: 0.08em;
+  box-sizing: border-box;
   font-variant-numeric: tabular-nums;
   text-shadow:
-    0 0 1.5cqw var(--neon),
-    0 0 4cqw color-mix(in srgb, var(--neon) 70%, transparent);
+    0 0 1.2cqw var(--neon),
+    0 0 3.5cqw color-mix(in srgb, var(--neon) 75%, transparent);
   pointer-events: none;
   user-select: none;
+}
+
+/* Un second anneau fin à l'intérieur, en écho aux DEUX filets du cadre : c'est
+   le détail qui fait sertie plutôt que collée. */
+.proto-carte .cout::before {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--neon) 55%, transparent);
+  box-shadow: 0 0 0.8cqw color-mix(in srgb, var(--neon) 35%, transparent);
+  pointer-events: none;
 }
 
 /* LA COULEUR SE CHANGE PAR FILTRE : le noir reste noir, seul le néon tourne.

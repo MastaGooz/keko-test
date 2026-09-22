@@ -289,7 +289,12 @@ unique réutilisé par toutes les cartes. Ce qu'il faut savoir :
   lumineux. Elle chevauche les deux filets du coin — c'est ce qui la fait tenir
   *au* cadre, comme sertie, plutôt que posée dans la face. Elle prend le même
   filtre de teinte que le cadre, pour tourner avec lui. Demandé par Keko « en
-  respectant le style actuel ».
+  respectant le style actuel ». Réglée une fois : 17 % de la largeur (elle
+  était « un poil grosse »), le chiffre à 60 % du diamètre, un second anneau
+  fin à l'intérieur en écho aux deux filets du cadre, et **Orbitron** pour le
+  chiffre — une géométrique anguleuse, la police du néon et des cadrans, là où
+  une sans classique faisait « formulaire ». Troisième police Google Fonts,
+  sur la même ligne que les deux autres.
 
 **Piste B, à côté : « Entaille du Néant »**, une carte que Keko a fait générer
 par ChatGPT. Son site est privé (401), mais il a déposé la page sauvegardée ;
