@@ -375,6 +375,16 @@ sauvegardée ne contient pas le code de ses canvas : il est dans les
 erreur, n'avait que des images générées (des cadres vierges en PNG) — piste
 écartée avec Keko, rien n'en reste.
 
+**Variante FULL ART de « Serment de cendre »**, à côté de la version parchemin
+(classe `fullart`, surcharges dans `proto.css`) : le parchemin disparaît,
+l'illustration prend toute la surface, et le nom, la description et le type
+sont dessinés dessus, sur un voile sombre qui monte du bas — c'est le bloc de
+la description qui porte le dégradé, le nom vit dedans au-dessus du texte
+(padding haut de 26cqw, sinon les deux se chevauchent), le type passe en
+`z-index` au-dessus du voile sinon il disparaît. Proposée par Keko (« et si on
+enlevait le papier, le texte dessiné directement sur l'illustration ? »), à
+juger contre la version parchemin.
+
 **Piège des container queries, rencontré ici :** les `cqw` d'un élément se
 résolvent contre son ANCÊTRE conteneur, jamais contre lui-même. Posé sur la
 carte, `container-type` laissait sa propre bordure et ses arrondis se mesurer

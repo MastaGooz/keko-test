@@ -79,8 +79,8 @@ function carteNeant(classes: string, etiquette: string): string {
  * telle quelle (markup et CSS générés, voir `proto-cendre.*`). Sa boîte est
  * au rapport de l'original (344/502), avec une illustration tout en CSS.
  */
-function carteCendre(classes: string, etiquette: string): string {
-  return fig(`<div class="cendre">${CENDRE}</div>`, etiquette, classes)
+function carteCendre(classes: string, etiquette: string, variante = ''): string {
+  return fig(`<div class="cendre ${variante}">${CENDRE}</div>`, etiquette, classes)
 }
 
 export function montrerProto(racine: HTMLElement, build: string): void {
@@ -100,6 +100,9 @@ export function montrerProto(racine: HTMLElement, build: string): void {
     `<span class="proto-sep"></span>` +
     carteCendre('reduite', 'Cendre · réduite') +
     carteCendre('', 'Cendre · normale') +
+    `<span class="proto-sep"></span>` +
+    carteCendre('reduite', 'full art · réduite', 'fullart') +
+    carteCendre('', 'full art · normale', 'fullart') +
     `</div>` +
     `<div class="proto-teintes">` +
     TEINTES.map(([teinte, quoi]) => carteCadre(cadre, `mini ${teinte}`, `${teinte} · ${quoi}`)).join('') +
