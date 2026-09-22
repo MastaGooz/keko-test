@@ -345,7 +345,10 @@ arrondis (la silhouette redevient un rectangle, ce que la main et le râtelier
 attendent, et la déchirure se lit comme une matière posée dessus — puis, à la demande de
 Keko, **ce fond est de la même matière laiton que la coque** : la déchirure ne
 se lit plus sur le bord de la carte mais sur le bord de la surface sombre, la
-carte est une plaque de laiton rectangulaire à l'intérieur irrégulier) ; et le
+carte est une plaque de laiton rectangulaire à l'intérieur irrégulier ; et
+l'arrêt sombre du dégradé d'origine — `#3d3b34` à 22 %, une fine ligne noire en
+diagonale, dessinée deux fois puisque le fond reprenait le dégradé sur une
+autre boîte — est retiré des deux, à la demande de Keko) ; et le
 chiffre du coût est remonté dans son écusson, dont la pointe vers le bas met
 le centre visuel plus haut que le centre de la boîte. *Une conversation ChatGPT
 sauvegardée ne contient pas le code de ses canvas : il est dans les
