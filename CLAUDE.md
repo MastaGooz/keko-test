@@ -1401,9 +1401,14 @@ Cinq règles qui portent l'écran :
 - **Un slot n'accepte pas n'importe quoi** — une armure ne tient pas en main —
   et **poser sur un slot occupé échange** : ce que la destination déloge repart
   d'où vient la pièce, sinon échanger deux armes en ferait disparaître une.
-- **Une arme à deux mains chasse ce qui tenait l'autre slot**, tout de suite, et
-  le slot condamné se voit. *Un slot qui reste rempli mais inutilisable mentirait
-  sur ce qu'on emporte* — et l'arme lourde n'aurait l'air de rien coûter.
+- **Une arme à deux mains se pose dans N'IMPORTE QUELLE main, et prend les
+  deux.** Elle vit dans le premier slot ; ce qui tenait l'autre main est chassé
+  au râtelier tout de suite, et ce qui occupait le slot visé repart d'où elle
+  vient. *Un slot qui reste rempli mais inutilisable mentirait sur ce qu'on
+  emporte.* Une fois posée, **son slot se centre seul et l'autre est masqué**,
+  pas barré : un slot « tenu à deux mains » disait la règle, un slot en moins
+  la montre. Keko : « on doit pouvoir la poser dans n'importe lequel des deux
+  slots ; une fois posée on décale le slot au centre et on masque l'autre ».
 - **Mourir ne peut pas bloquer le jeu** : on perd l'équipement emporté, et le
   râtelier rend une arme et une armure gratuites. C'est le seul endroit où vit
   ce garde-fou. **Les pièces gratuites sont uniques** : ce que la mort rééquipe

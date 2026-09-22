@@ -120,9 +120,10 @@ function accepte(slot: Slot, piece: Piece): boolean {
   if (slot.ou === 'reserve') return true
   if (slot.ou === 'consommable') return estConsommable(piece)
   if (slot.ou === 'armure') return !estArme(piece) && !estConsommable(piece)
-  if (!estArme(piece)) return false
-  // Une arme à deux mains ne va que dans le premier slot : elle prend l'autre.
-  return slot.rang === 0 || piece.mains === 1
+  // Une arme va dans l'une ou l'autre main. À deux mains aussi : on la pose où
+  // l'on veut, elle prend les deux -- Keko : « on doit pouvoir la poser dans
+  // n'importe lequel des deux slots ».
+  return estArme(piece)
 }
 
 function prendre(hub: Hub, slot: Slot, id?: string): { piece: Piece | null; hub: Hub } {
@@ -164,12 +165,19 @@ function poser(hub: Hub, slot: Slot, piece: Piece): { sortant: Piece | null; hub
   }
   const mains: [Arme | null, Arme | null] = [...hub.chargement.mains]
   const sortant = mains[slot.rang] ?? null
-  mains[slot.rang] = piece as Arme
-  // UNE ARME A DEUX MAINS CHASSE CE QUI TENAIT L'AUTRE SLOT. C'est sa
-  // contrepartie, et elle doit être immédiate : un slot qui reste rempli mais
-  // inutilisable mentirait sur ce qu'on emporte.
-  const chasse = (piece as Arme).mains === 2 ? mains[1] : null
-  if (chasse !== null) mains[1] = null
+  const arme = piece as Arme
+  // UNE ARME A DEUX MAINS PREND LES DEUX SLOTS, où qu'on la pose : elle vit
+  // dans le premier, et ce qui tenait l'autre main est CHASSÉ, tout de suite —
+  // un slot qui reste rempli mais inutilisable mentirait sur ce qu'on emporte.
+  // Ce qui occupait le slot visé, lui, repart d'où vient l'arme (`sortant`).
+  let chasse: Arme | null = null
+  if (arme.mains === 2) {
+    chasse = mains[1 - slot.rang] ?? null
+    mains[0] = arme
+    mains[1] = null
+  } else {
+    mains[slot.rang] = arme
+  }
   const apres = { ...hub, chargement: { ...hub.chargement, mains } }
   return {
     sortant,

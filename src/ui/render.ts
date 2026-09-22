@@ -979,9 +979,13 @@ function armurerie(hub: Hub): string {
     // avec les deux armes sur une ligne et l'armure sur la ligne en dessous ».
     `<div class="etal porte">` +
     `<p class="etal-titre">Ce que tu emportes</p>` +
-    `<div class="rangee-pieces mains">` +
+    // UNE ARME À DEUX MAINS N'A QU'UN SLOT, AU CENTRE : le second est masqué,
+    // pas condamné. Un slot barré « tenu à deux mains » disait la règle ; un
+    // slot en moins la montre. Keko : « une fois posée on décale le slot au
+    // centre et on masque l'autre ».
+    `<div class="rangee-pieces mains${bloque ? ' deux-mains' : ''}">` +
     slotEquipement(hub.chargement.mains[0], { ou: 'main', rang: 0 }, 'arme', false) +
-    slotEquipement(hub.chargement.mains[1], { ou: 'main', rang: 1 }, 'arme', bloque) +
+    (bloque ? '' : slotEquipement(hub.chargement.mains[1], { ou: 'main', rang: 1 }, 'arme', false)) +
     `</div>` +
     // L'armure et le consommable sur la seconde ligne : ce qui encaisse et ce
     // qui se boit, sous ce qui frappe.

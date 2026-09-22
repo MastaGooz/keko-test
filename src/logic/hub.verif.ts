@@ -117,8 +117,16 @@ const COTTE: Armure = {
     lourd.reserve.length + equipement(lourd.chargement).length ===
       avecDague.reserve.length + equipement(avecDague.chargement).length)
 
-  verifier('le second slot refuse une arme a deux mains',
-    deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, ESPADON.id) === h)
+  // POSEE SUR LE SECOND SLOT, elle prend quand meme les deux : elle vit dans
+  // le premier, et ce qui s'y trouvait est chasse.
+  const parLaDroite = deplacerPiece(avecDague, { ou: 'reserve' }, { ou: 'main', rang: 1 }, ESPADON.id)
+  verifier('posee sur le second slot, elle prend le premier', parLaDroite.chargement.mains[0] === ESPADON)
+  verifier('et le second est vide', parLaDroite.chargement.mains[1] === null)
+  verifier('ce qui tenait le premier est chasse au ratelier', parLaDroite.reserve.includes(ARME_GRATUITE))
+  verifier('et la dague delogee y retourne aussi', parLaDroite.reserve.includes(DAGUE))
+  verifier("rien ne s'est perdu par la droite",
+    parLaDroite.reserve.length + equipement(parLaDroite.chargement).length ===
+      avecDague.reserve.length + equipement(avecDague.chargement).length)
 }
 
 // --- rentrer, et mourir -----------------------------------------------------
