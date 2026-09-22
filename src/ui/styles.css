@@ -3344,11 +3344,7 @@ body {
    et c'est ce qui rend « equiper plus dilue » lisible sur la piece elle-meme.
    Meme sertissage que le cout d'une carte, autre teinte -- ce n'est pas de
    l'energie. */
-.piece-carte .gemme.cartes-donnees {
-  border-color: #9aa4b8;
-  background: radial-gradient(circle at 35% 30%, #4a505c, #1a1c22 72%);
-  color: #e6eaf0;
-}
+/* (La gemme ronde des pieces a cede la place au compteur en forme de carte.) */
 
 /* Une arme est froide, une armure est de fer : la teinte de la carte le dit
    avant le nom. */
@@ -3366,36 +3362,42 @@ body {
   --accent: #8ee4a1;
 }
 
-/* Le COMPTEUR d'un consommable : un chiffre dans une case carree, calee sur
-   le coin bas-droit de la fenetre d'art -- une pile d'objets, pas une gemme.
-   Il remplace la gemme, qui aurait dit le meme chiffre. */
+/* LE COMPTEUR D'UNE PIECE : son nombre de cartes, en haut a gauche, dans une
+   petite case EN FORME DE CARTE (5/7) -- la ou une carte de jeu porte sa gemme
+   de cout. Une carte pour dire « des cartes » : le joueur lit le poids de
+   l'objet sans lire de legende. Remplace la gemme ronde sur toutes les pieces. */
 .compteur {
   position: absolute;
-  top: 66cqw;
-  right: 4cqw;
+  top: 1.5cqw;
+  left: 3.5cqw;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 18cqw;
-  height: 18cqw;
-  padding: 0.24em 4cqw 0;
+  width: 11cqw;
+  height: 15.4cqw;
+  padding-top: 0.24em;
   box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, var(--filet) 70%, transparent);
-  border-radius: 3cqw;
-  background: linear-gradient(#24202a, #100e14);
+  border: 1px solid color-mix(in srgb, var(--filet) 75%, transparent);
+  border-radius: 1.5cqw;
+  background: linear-gradient(170deg, #2a2632, #100e14);
   box-shadow: 0 0 0 1.5cqw #15131a, 0 1px 3px #000c, inset 0 1px 0 #ffffff1a;
   color: #f2e4bd;
   font-family: var(--police-titre);
-  font-size: 10cqw;
+  font-size: 8.5cqw;
   font-weight: 700;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 }
 
-/* Sans gemme, le nom d'un consommable part du bord. */
-.piece-carte.consommable .fronton {
-  padding-left: 6cqw;
+/* Le filet interieur de la petite carte, comme sur la grande. */
+.compteur::before {
+  content: "";
+  position: absolute;
+  inset: 1.2cqw;
+  border: 1px solid color-mix(in srgb, var(--filet) 30%, transparent);
+  border-radius: 0.8cqw;
+  pointer-events: none;
 }
 
 /* La composition d'une piece est un texte qui coule, jusqu'a huit modeles :

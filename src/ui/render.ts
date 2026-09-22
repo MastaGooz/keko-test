@@ -1035,21 +1035,20 @@ function cartePiece(piece: Piece): string {
         : // Une arme dit combien de mains elle prend : c'est ce qui décide si le
           // second slot reste libre. Keko : « indiquer une main ou deux mains ».
           `Arme · ${'mains' in piece && piece.mains === 2 ? 'deux mains' : 'une main'}`
-  // UN CONSOMMABLE NE LISTE PAS SES DOSES, IL LES COMPTE. « 3× Fiole » dans
-  // le cartouche se lisait comme une composition ; ce que le joueur veut
-  // savoir, c'est ce que fait UNE fiole et combien il en reste. Le cartouche
-  // dit l'effet d'une dose, et un petit COMPTEUR — un chiffre dans une case,
-  // comme une pile d'objets — porte le nombre. Keko : « plutôt que 3× sur la
-  // potion, un petit compteur, chiffre dans un slot ». La gemme, qui compte
-  // les cartes, s'efface : elle ferait le même chiffre deux fois.
+  // TOUTE PIÈCE PORTE SON COMPTE DE CARTES EN HAUT À GAUCHE, dans une petite
+  // case EN FORME DE CARTE — là où une carte de jeu porte sa gemme de coût.
+  // Le joueur lit d'un coup d'oeil ce que l'objet ajoute au deck : c'est son
+  // POIDS, et c'est ce qui rend « équiper plus dilue » lisible sur la pièce.
+  // Keko : « chiffre en haut à gauche, rectangle en forme de carte avec le
+  // nombre dedans, pour tous les objets ». Un consommable y compte ses doses
+  // (une dose, une carte) et son cartouche dit ce que fait UNE dose.
   const dose = g === 'consommable' ? piece.set[0] : undefined
-  const compteur =
-    dose === undefined ? '' : `<span class="compteur" title="${dose.nombre} doses">${dose.nombre}</span>`
+  const compteur = `<span class="compteur" title="${nb} cartes">${nb}</span>`
   return (
     `<div class="carte piece-carte ${piece.rarete} ${g}" style="--n:1">` +
     corpsCarte(
       piece.nom,
-      dose === undefined ? `<span class="gemme cartes-donnees" title="${nb} cartes">${nb}</span>` : '',
+      compteur,
       // Sa composition, en UN texte qui coule : « 5× Estoc · 3× Taillade ·
       // 2× Moulinet ». Une ligne par modèle plafonnait à cinq ; une arme en
       // apportera jusqu'à huit. Le détail de chaque modèle — coût, dégâts —
@@ -1061,7 +1060,6 @@ function cartePiece(piece: Piece): string {
       // (`.piece-carte.rare`, `.epique`). Keko : « inutile d'afficher le niveau
       // de rareté, on le fera via un code couleur ».
       pied,
-      compteur,
     ) +
     `</div>`
   )

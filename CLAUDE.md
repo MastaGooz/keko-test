@@ -1290,9 +1290,14 @@ visible.
 jeu — une ligne de texte se lisait comme une entrée d'inventaire, une carte se
 prend en main. Même vocabulaire que les cartes de combat et le butin, et ça
 compte : *ce qu'on emporte donne des cartes, donc ça se montre comme une carte.*
-**La gemme dit combien de cartes la pièce ajoute au deck** — c'est son poids,
-et c'est la seule information qui rende « équiper plus dilue » lisible sur la
-pièce elle-même : 3 pour le Glaive, 6 pour le Plastron, 6 pour l'Espadon. Sa
+**Le COMPTEUR dit combien de cartes la pièce ajoute au deck** — en haut à
+gauche, là où une carte de jeu porte sa gemme de coût, dans une petite case EN
+FORME DE CARTE (5/7) : une carte pour dire « des cartes ». C'est son poids, et
+c'est la seule information qui rende « équiper plus dilue » lisible sur la
+pièce elle-même : 3 pour le Glaive, 6 pour le Plastron, 6 pour l'Espadon, 3
+pour les Fioles. Il a été une gemme ronde, puis (sur les consommables seuls)
+une case au coin de la fenêtre ; Keko a tranché : « chiffre en haut à gauche,
+rectangle en forme de carte, pour tous les objets ». Sa
 composition exacte vit dans le cartouche de la carte, une ligne par modèle —
 on la consulte en zoomant, on ne décide pas dessus. Un slot vide a la forme
 de la carte qu'il attend.
@@ -1453,11 +1458,8 @@ chargement dans `logic/hub.ts`). Trois Fiole (1⚡, rend 10 PV, **exilée en se
 jouant**) : c'est une dilution qui s'évapore — trois cartes qui pèsent au
 premier combat, deux au deuxième, et le deck s'affûte à mesure qu'on boit.
 Vert, pied « Consommable », rangé à côté de l'armure sur la seconde ligne de
-l'armurerie. **Sa carte ne liste pas ses doses, elle les compte** : le cartouche
-dit ce que fait UNE fiole, et un petit **compteur** — un chiffre dans une case
-carrée au coin bas-droit de la fenêtre, comme une pile d'objets — porte le
-nombre ; la gemme s'efface, elle aurait dit le même chiffre. Keko : « plutôt
-que 3× sur la potion, un petit compteur, chiffre dans un slot » ; son slot ne prend qu'un consommable et rien d'autre ne le prend
+l'armurerie. **Sa carte ne liste pas ses doses** : le cartouche dit ce que fait UNE
+fiole, et le compteur en haut à gauche (voir ci-dessous) porte le nombre ; son slot ne prend qu'un consommable et rien d'autre ne le prend
 (vérifié dans `hub.verif.ts`).
 
 **Et le soin a QUITTÉ les trésors.** Il y était un placeholder qui rendait la
