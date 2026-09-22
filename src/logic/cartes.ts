@@ -222,7 +222,30 @@ export const MENACE_DEPART = 0.45
  * **Et il faut savoir ce que ça n'a PAS corrigé** : « sans jamais garder » tombe
  * à zéro, donc bloquer n'est plus un choix mais une obligation.
  */
-const MORDANT = 1.45
+const MORDANT = 2.3
+
+/**
+ * LA VIGUEUR : ce qui reste des PV de la table des groupes. Le format des
+ * douze cartes (six qui frappent, six qui encaissent) a changé l'équation :
+ * avec six gardes dans le deck, un bloc est disponible presque chaque tour et
+ * les combats duraient dix tours contre cinq. On les raccourcit par les PV
+ * (x0,6) et on rend la morsure par les dégâts (mordant 1,45 → 2,3), plutôt
+ * que l'inverse — *un combat long et sûr n'est pas un combat*.
+ *
+ * Balayage (300 descentes, même bot, chargement + Plastron à 6 cartes) :
+ *
+ * | PV x / dégâts x | Espadon | Glaive seul | deux Glaives | sans armure |
+ * |---|---|---|---|---|
+ * | 0,7 / 1,4 | 98 % | 98 % | — | 24 % / 8 % |
+ * | **0,6 / 1,6** | **84 %** | **98 %** | **93 %** | **57 / 75 / 70 %** |
+ * | 0,6 / 1,8 | 37 % | 65 % | — | 28 % / 31 % |
+ * | 0,65 / 1,7 | 37 % | 51 % | — | 13 % / 3 % |
+ *
+ * La cible fixée avec Keko : cinq ou six tours par combat, ~90 % avec armure,
+ * l'armure chère mais pas obligatoire. 0,6 / 1,6 y est ; un cran de dégâts
+ * de plus et tout s'effondre — *une course n'a pas de pente douce*.
+ */
+const VIGUEUR = 0.6
 
 export function ennemisPourProfondeur(
   profondeur: number,
@@ -235,6 +258,8 @@ export function ennemisPourProfondeur(
   const facteur = (menaceDepart + (1 - menaceDepart) * part) * MORDANT
   return groupe.ennemis.map((ennemi) => ({
     ...ennemi,
+    pv: Math.round(ennemi.pv * VIGUEUR),
+    pvMax: Math.round(ennemi.pvMax * VIGUEUR),
     degats: Math.round(ennemi.degats * facteur),
   }))
 }

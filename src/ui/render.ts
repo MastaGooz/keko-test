@@ -1033,7 +1033,9 @@ function cartePiece(piece: Piece): string {
       // La rareté ne s'écrit pas : elle se lit au cadre, code couleur classique
       // (`.piece-carte.rare`, `.epique`). Keko : « inutile d'afficher le niveau
       // de rareté, on le fera via un code couleur ».
-      bloque ? 'Armure' : 'Arme',
+      // Une arme dit combien de mains elle prend : c'est ce qui décide si le
+      // second slot reste libre. Keko : « indiquer une main ou deux mains ».
+      bloque ? 'Armure' : `Arme · ${'mains' in piece && piece.mains === 2 ? 'deux mains' : 'une main'}`,
     ) +
     `</div>`
   )

@@ -63,10 +63,16 @@ export const GLAIVE: Arme = {
   nom: 'Glaive',
   rarete: 'commune',
   mains: 1,
+  // LE FORMAT : 12 cartes de base, 6 qui frappent et 6 qui encaissent. Une
+  // arme à une main en donne TROIS, toutes différentes — une arme à trois
+  // cartes dont deux sont pareilles n'en a qu'une et demie ; une arme à deux
+  // mains en donne six ; l'armure six. Tranché par Keko. Conséquence voulue :
+  // deux armes à une main font un BUILD, on compose deux verbes, là où dix
+  // cartes par arme faisaient que la seconde noyait la première.
   set: [
-    { modele: ESTOC, nombre: 5 },
-    { modele: TAILLADE, nombre: 3 },
-    { modele: MOULINET, nombre: 2 },
+    { modele: ESTOC, nombre: 1 },
+    { modele: TAILLADE, nombre: 1 },
+    { modele: MOULINET, nombre: 1 },
   ],
 }
 
@@ -102,7 +108,7 @@ const TORNADE: Modele = {
  * **À deux mains** : il condamne le second slot. C'est la première pièce qui
  * fait exister cette règle de l'armurerie.
  *
- * Huit cartes contre dix : partir avec est déjà partir plus léger.
+ * Six cartes, comme deux armes à une main : c'est le format des deux mains.
  *
  * Calibré par simulation contre le Glaive, même bot, 300 descentes au fond,
  * avec le Plastron :
@@ -122,8 +128,8 @@ export const ESPADON: Arme = {
   rarete: 'rare',
   mains: 2,
   set: [
-    { modele: FAUCHAGE, nombre: 4 },
-    { modele: FENDRE, nombre: 3 },
+    { modele: FAUCHAGE, nombre: 3 },
+    { modele: FENDRE, nombre: 2 },
     { modele: TORNADE, nombre: 1 },
   ],
 }
@@ -170,8 +176,8 @@ export const PLASTRON: Armure = {
   nom: 'Plastron',
   rarete: 'commune',
   set: [
-    { modele: GARDE, nombre: 3 },
-    { modele: REMPART, nombre: 1 },
+    { modele: GARDE, nombre: 4 },
+    { modele: REMPART, nombre: 2 },
   ],
 }
 

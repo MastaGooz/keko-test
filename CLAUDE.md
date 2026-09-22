@@ -259,10 +259,22 @@ donjon. Ce qui tourne :
 - **le deck vient de DEUX pièces d'équipement** (`logic/armes.ts`), toutes deux
   communes et gratuites : le **Glaive** et le **Plastron**. C'est le chargement
   de départ, et c'est déjà ce que le concept demande — plus un exemple vivant de
-  « équiper plus dilue » : le deck passe de 10 à 14 cartes, donc le Moulinet
+  « équiper plus dilue » : le deck passe de 3 à 9 cartes, donc le Moulinet
   sort moins souvent.
 
-  Le Plastron donne 3 Garde (1⚡ → 5 de bloc) et 1 Rempart (2⚡ → 11). **Bloquer
+  **LE FORMAT : 12 cartes de base, 6 qui frappent et 6 qui encaissent** (plus
+  les consommables, à venir). Une arme à une main en donne TROIS, toutes
+  différentes — une arme à trois cartes dont deux sont pareilles n'en a qu'une
+  et demie ; une arme à deux mains en donne six ; l'armure six. Tranché par
+  Keko. Ce que ça achète : **deux armes à une main font un build**, on compose
+  deux verbes — à dix cartes par arme, la seconde noyait la première. Et ce
+  que ça a coûté : à six gardes dans le deck, les combats duraient dix tours ;
+  les ennemis ont été recalibrés (voir `VIGUEUR` et `MORDANT` dans
+  `logic/cartes.ts`). Le chargement gratuit (Glaive + Plastron) fait 9 cartes,
+  pas 12 : il manque une arme, et c'est voulu — c'est le kit de survie, pas le
+  build.
+
+  Le Plastron donne 4 Garde (1⚡ → 5 de bloc) et 2 Rempart (2⚡ → 11). **Bloquer
   rapporte plus que frapper à énergie égale** (5 à 5,5 contre 3 à 3,5), et c'est
   délibéré : un point de bloc ne vaut un point de vie que si la salve arrive, il
   est perdu sinon. On paie le gâchis par l'avantage.
@@ -276,8 +288,9 @@ donjon. Ce qui tourne :
   ce qu'elles infligent** : un chiffre à zéro se lirait comme une carte inutile.
 
 - **le deck vient de l'équipement** (`logic/armes.ts`) : le **Glaive**, arme
-  commune et gratuite, donne 5 Estoc (1⚡/3), 3 Taillade (2⚡/6), 2 Moulinet
-  (4⚡/14). Délibérément compétente et sans relief — c'est la référence à
+  commune et gratuite, donne un Estoc (1⚡/3), une Taillade (2⚡/6), un Moulinet
+  (4⚡/14) — trois cartes, toutes différentes. Délibérément compétente et sans
+  relief — c'est la référence à
   laquelle les autres armes se compareront, et une arme de départ excitante
   rendrait les suivantes fades ;
 - **la boucle de run** (`logic/descente.ts`, pur) : combat → choix d'une
@@ -1259,10 +1272,10 @@ partir avec un deck court et tranchant.
 et le sens de lecture fait le geste.
 
 Ce qui s'y décide tient en une question, et elle est **déjà entière avec deux
-pièces** : partir léger ou partir couvert. Le Glaive seul donne dix cartes qui
-frappent toutes ; avec le Plastron, quatorze dont quatre qui ne frappent pas.
+pièces** : partir léger ou partir couvert. Le Glaive seul donne trois cartes
+qui frappent toutes ; avec le Plastron, neuf dont six qui ne frappent pas.
 *La taille du deck est une ressource, et c'est ici qu'on la dépense.* Le compte
-(« Deck de 14 cartes · 10 qui frappent ») est ce qui rend ça lisible **avant**
+(« Deck de 9 cartes · 3 qui frappent ») est ce qui rend ça lisible **avant**
 de descendre : sans lui, une pièce de plus serait un gain sans contrepartie
 visible.
 
@@ -1272,7 +1285,7 @@ prend en main. Même vocabulaire que les cartes de combat et le butin, et ça
 compte : *ce qu'on emporte donne des cartes, donc ça se montre comme une carte.*
 **La gemme dit combien de cartes la pièce ajoute au deck** — c'est son poids,
 et c'est la seule information qui rende « équiper plus dilue » lisible sur la
-pièce elle-même : 10 pour le Glaive, 4 pour le Plastron. Sa
+pièce elle-même : 3 pour le Glaive, 6 pour le Plastron, 6 pour l'Espadon. Sa
 composition exacte vit dans le cartouche de la carte, une ligne par modèle —
 on la consulte en zoomant, on ne décide pas dessus. Un slot vide a la forme
 de la carte qu'il attend.
@@ -1388,10 +1401,12 @@ Cinq règles qui portent l'écran :
 
 **LA DEUXIÈME ARME EXISTE : L'ESPADON** (`logic/armes.ts`), et son verbe est
 neuf — **frapper TOUS les corps** (`degatsTous`, que le moteur savait déjà
-faire sans qu'aucune carte ne l'emploie). Quatre Fauchage (2⚡, 5 à tous),
-trois Fendre (3⚡, 9), une Tornade (5⚡, 10 à tous) : huit cartes contre dix, à
+faire sans qu'aucune carte ne l'emploie). Trois Fauchage (2⚡, 5 à tous),
+deux Fendre (3⚡, 9), une Tornade (5⚡, 10 à tous) : six cartes, le format des
 deux mains — c'est la première pièce qui fait exister le slot condamné de
-l'armurerie. Rare, cadre bleu.
+l'armurerie. Rare, cadre bleu. Son pied dit « Arme · deux mains », celui du
+Glaive « Arme · une main » : c'est ce qui décide si le second slot reste
+libre.
 
 C'est l'arbitrage du multi-cibles pris à l'envers : le Glaive achève un corps
 pour qu'il ne frappe plus, l'Espadon use tout le rang et achève la meute d'un
@@ -1404,7 +1419,11 @@ Plastron** — le script vit dans le scratchpad (`sim-armes.mjs`) :
 | Glaive | 99 % | 5,6 | 5,8 | 5,6 |
 | Espadon | 100 % | 6,7 | 5,1 | 3,8 |
 
-*Même survie, autre profil* : c'est ce qu'on cherchait. Ce que le balayage a
+*Même survie, autre profil* : c'est ce qu'on cherchait. (Mesuré avant le
+format des douze ; après recalibrage, en 3 / 6 / 6 : Glaive + Plastron 96 %,
+Espadon + Plastron 83 %, deux Glaives + Plastron 93 % ; sans armure 67 / 51 /
+65 %. L'Espadon est un cran sous les deux Glaives — à revoir quand une seconde
+arme à une main existera pour de vrai.) Ce que le balayage a
 appris : à survie au plafond, **c'est le profil par taille de groupe qui
 discrimine**, pas la survie ; Fauchage à 4 donnait 96 %, à 5 la parité ;
 Tornade à 8 traînait (1,6 par énergie et par corps), à 10 elle vaut son prix.
