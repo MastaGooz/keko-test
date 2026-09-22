@@ -39,18 +39,36 @@
 
 /* ÉTAPE 1 : LE CONTOUR. Le rapport des cartes Magic, 63 sur 88. La taille
    normale est celle de la main (`--large`, définie sur :root par le jeu) ; la
-   réduite est celle du râtelier. Un cadre sombre, un coin arrondi à 3,5 % de la
-   largeur comme sur une carte imprimée, et une face à peine plus claire pour
-   que le cadre se lise comme un cadre. */
+   réduite est celle du râtelier.
+
+   Une BORDURE ÉPAISSE qui fait le tour — 5 % de la largeur, comme le cadre
+   noir d'une carte Magic — et des coins bien arrondis (6 % de la largeur).
+   La face est une zone à part, elle aussi arrondie, en retrait dans la
+   bordure. Keko : « coins plus arrondis, une bordure plus épaisse faisant le
+   tour de la carte ». */
 .proto-carte {
   --l: var(--large, 11rem);
+  --bord: calc(var(--l) * 0.05);
+  position: relative;
   width: var(--l);
   aspect-ratio: 63 / 88;
   box-sizing: border-box;
-  border: 1px solid #5a5663;
-  border-radius: calc(var(--l) * 0.035);
-  background: #1e1c25;
-  box-shadow: 0 0.75rem 1.5rem #000a;
+  padding: var(--bord);
+  border-radius: calc(var(--l) * 0.06);
+  background: #2a2733;
+  box-shadow:
+    0 0.75rem 1.5rem #000a,
+    inset 0 0 0 1px #4a4655;
+}
+
+/* La face, dans la bordure. */
+.proto-carte::before {
+  content: "";
+  position: absolute;
+  inset: var(--bord);
+  border-radius: calc(var(--l) * 0.06 - var(--bord));
+  background: #17161d;
+  box-shadow: inset 0 0 0 1px #0a0a0e;
 }
 
 .proto-carte.reduite {
