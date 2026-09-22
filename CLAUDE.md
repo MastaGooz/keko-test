@@ -348,7 +348,12 @@ se lit plus sur le bord de la carte mais sur le bord de la surface sombre, la
 carte est une plaque de laiton rectangulaire à l'intérieur irrégulier ; et
 l'arrêt sombre du dégradé d'origine — `#3d3b34` à 22 %, une fine ligne noire en
 diagonale, dessinée deux fois puisque le fond reprenait le dégradé sur une
-autre boîte — est retiré des deux, à la demande de Keko) ; et le
+autre boîte — est retiré des deux, à la demande de Keko. **Pour que le fond et
+la coque se fondent sans couture, il faut EXACTEMENT le même dégradé sur
+EXACTEMENT la même boîte, et rien d'autre** : un vignettage sur le fond, ou
+l'ombre portée que la coque projetait sur lui (`filter: drop-shadow` sur
+`.cv-card`), et la coque « ressort » — Keko l'a vu. L'ombre de la carte est
+portée par le conteneur `.cendre`) ; et le
 chiffre du coût est remonté dans son écusson, dont la pointe vers le bas met
 le centre visuel plus haut que le centre de la boîte. *Une conversation ChatGPT
 sauvegardée ne contient pas le code de ses canvas : il est dans les
