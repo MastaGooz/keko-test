@@ -307,13 +307,17 @@ URL posée depuis le TS avec la date du build) ; **le grain est un SVG écrit à
 la main** (`public/copper-grain.svg`, une tuile de 192 px : bruit fin, taches
 de patine, rayures obliques qui traversent la tuile pour se répéter sans
 couture — trois filtres `feTurbulence`, tout translucide pour se poser SUR le
-dégradé cuivre) ; l'illustration attend Keko. **La plaque de type est prise dans le
-cadre** : elle était une pilule violette à cheval sur le bord bas (Keko : « pas
-élégant, l'intégrer dans le cadre ») ; c'est un trapèze en encre sombre
-encastré dans la bande de cuivre du bas, flush avec le bord, un filet d'or qui
-suit sa forme, deux pointes d'or aux flancs, le texte en petites capitales
-dorées — et le panneau de règles s'arrête au-dessus pour lui laisser sa
-bande. Le code original est en pixels pour une
+dégradé cuivre) ; l'illustration attend Keko. **La plaque de type est un encart de plus
+dans le cuivre.** La grammaire de cette carte, c'est « une zone = un encart
+cerné d'encre sur le cuivre » (fenêtre d'art, panneau de règles) ; la plaque
+suit la même règle — un cartouche de cuivre plus sombre, cerné d'encre, pris
+dans la bande du bas et qui MORD sur le bas du panneau de règles : c'est le
+chevauchement qui fait « intégré ». Texte gravé (encre sur cuivre, rehaut
+clair), deux losanges d'encre à coeur d'or aux flancs. Deux versions jetées
+avant : une pilule violette à cheval sur le bord (« pas élégant »), puis un
+petit trapèze sombre posé sous le panneau (« pas vraiment intégré, trop petit,
+pas très beau ») — *poser un élément sous un autre n'est pas l'intégrer ; le
+faire de la même matière et le faire chevaucher, si.* Le code original est en pixels pour une
 carte de 356 px et au rapport 1/1,48 ; il est réécrit en `cqw` (1cqw = 3,56 px
 de l'original) et au rapport 5/7, pour que la même carte tienne en réduit et
 en normal.
