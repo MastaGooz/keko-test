@@ -435,15 +435,21 @@
      ombre en plus sur le fond, et la coque « ressort » (Keko l'a vu) -- le
      bord déchiré redevient visible parce que les deux matières ne sont plus
      la même. L'ombre portée de la carte est sur le conteneur, pas ici. */
-  background: linear-gradient(125deg, #f2ddaa 0%, #a88c5f 21%, #d2b787 23%, #d2b787 53%, #695c45 80%, #e7cda0);
+  /* ...avec UN CRAN DE MOINS DE LUMIÈRE : le fond est le même laiton, assombri
+     d'un voile uniforme, pour que la coque déchirée se lise comme une plaque
+     posée dessus. C'est ce relief que Keko voulait garder ; ce qu'il ne voulait
+     pas, c'était l'ombre floue de 18 px qui faisait un halo. */
+  background:
+    linear-gradient(#00000030, #00000030),
+    linear-gradient(125deg, #f2ddaa 0%, #a88c5f 21%, #d2b787 23%, #d2b787 53%, #695c45 80%, #e7cda0);
   box-shadow: inset 0 0 0 1px #4a3d2880;
 }
 
-/* La coque projetait sa propre ombre (`filter: drop-shadow`) sur le fond, et
-   c'est cette ombre qui la faisait ressortir du laiton. L'ombre de la carte
-   entière est portée par le conteneur. */
+/* La coque projetait une ombre floue de 18 px (`filter: drop-shadow`) sur le
+   fond, et c'est ce halo qui la faisait ressortir. Il reste une ombre COURTE
+   et nette, l'épaisseur d'une plaque posée : c'est le relief sans le halo. */
 .cendre .cv-card {
-  filter: none !important;
+  filter: drop-shadow(0 0.5cqw 0.4cqw #0007) !important;
 }
 
 .cendre {
