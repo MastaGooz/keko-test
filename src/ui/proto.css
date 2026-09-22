@@ -448,8 +448,10 @@
 /* La coque projetait une ombre floue de 18 px (`filter: drop-shadow`) sur le
    fond, et c'est ce halo qui la faisait ressortir. Il reste une ombre COURTE
    et nette, l'épaisseur d'une plaque posée : c'est le relief sans le halo. */
+/* ...puis plus d'ombre du tout : même courte, elle « différencie trop » la
+   coque du fond (Keko). Le relief ne tient qu'au voile qui assombrit le fond. */
 .cendre .cv-card {
-  filter: drop-shadow(0 0.5cqw 0.4cqw #0007) !important;
+  filter: none !important;
 }
 
 .cendre {

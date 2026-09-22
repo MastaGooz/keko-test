@@ -355,8 +355,8 @@ l'ombre portée que la coque projetait sur lui (`filter: drop-shadow` sur
 `.cv-card`), et la coque « ressort » — Keko l'a vu. Mais tout à fait fondus,
 plus de relief : « c'était ce petit contraste qui donnait du relief ». Le
 réglage final : le fond est le même laiton **assombri d'un voile uniforme**
-(#00000030), et la coque garde une ombre **courte et nette** (0,5cqw) —
-l'épaisseur d'une plaque posée, pas un halo. L'ombre de la carte entière est
+(#00000030), **et aucune ombre sous la coque** : même courte et nette, elle la
+« différenciait trop du fond ». Le relief ne tient qu'au voile. L'ombre de la carte entière est
 portée par le conteneur `.cendre`) ; et le
 chiffre du coût est remonté dans son écusson, dont la pointe vers le bas met
 le centre visuel plus haut que le centre de la boîte. *Une conversation ChatGPT
