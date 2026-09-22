@@ -383,7 +383,14 @@ la description qui porte le dégradé, le nom vit dedans au-dessus du texte
 (padding haut de 26cqw, sinon les deux se chevauchent), le type passe en
 `z-index` au-dessus du voile sinon il disparaît. Proposée par Keko (« et si on
 enlevait le papier, le texte dessiné directement sur l'illustration ? »), à
-juger contre la version parchemin.
+juger contre la version parchemin — **et c'est celle qu'il aime** (« j'aime
+beaucoup la version full art »). Elle est en tête de la planche.
+
+**La planche se replie** (`flex-wrap`) et la page se cale en haut et défile :
+centrée et plus large que l'écran, elle était coupée des deux côtés et la
+colonne de droite inaccessible — Keko, sur téléphone : « je ne la vois pas ».
+*Un flex centré qui déborde ne se fait pas défiler.* Vérifié à 844x390 : le
+full art est visible d'emblée, le reste passe à la ligne.
 
 **Piège des container queries, rencontré ici :** les `cqw` d'un élément se
 résolvent contre son ANCÊTRE conteneur, jamais contre lui-même. Posé sur la

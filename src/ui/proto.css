@@ -6,7 +6,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* En haut et non centré : centré, un contenu plus haut que l'écran déborde
+     par le haut sans pouvoir y revenir en défilant. */
+  justify-content: flex-start;
   gap: 1rem;
   padding: 1rem;
   overflow: auto;
@@ -33,10 +35,17 @@
   color: #8fb7d0;
 }
 
+/* LA PLANCHE PASSE À LA LIGNE quand elle ne tient pas en largeur. Centrée et
+   plus large que l'écran, elle était coupée des deux côtés et la colonne de
+   droite devenait inaccessible -- Keko, sur téléphone : « je ne la vois pas ».
+   Un flex centré qui déborde ne se fait pas défiler ; on replie. */
 .proto-planche {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
-  gap: 1.5rem;
+  justify-content: center;
+  gap: 1rem 1.5rem;
+  max-width: 100%;
 }
 
 .proto-sep {

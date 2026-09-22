@@ -92,6 +92,11 @@ export function montrerProto(racine: HTMLElement, build: string): void {
     `<div class="proto">` +
     `<p class="proto-titre">Prototype de carte — trois pistes</p>` +
     `<div class="proto-planche">` +
+    // Le full art en tête : c'est celle que Keko aime, elle doit être la
+    // première à l'écran, surtout sur téléphone où la planche se replie.
+    carteCendre('reduite', 'full art · réduite', 'fullart') +
+    carteCendre('', 'full art · normale', 'fullart') +
+    `<span class="proto-sep"></span>` +
     carteCadre(cadre, 'reduite', 'cadre · réduite') +
     carteCadre(cadre, '', 'cadre · normale') +
     `<span class="proto-sep"></span>` +
@@ -100,9 +105,6 @@ export function montrerProto(racine: HTMLElement, build: string): void {
     `<span class="proto-sep"></span>` +
     carteCendre('reduite', 'Cendre · réduite') +
     carteCendre('', 'Cendre · normale') +
-    `<span class="proto-sep"></span>` +
-    carteCendre('reduite', 'full art · réduite', 'fullart') +
-    carteCendre('', 'full art · normale', 'fullart') +
     `</div>` +
     `<div class="proto-teintes">` +
     TEINTES.map(([teinte, quoi]) => carteCadre(cadre, `mini ${teinte}`, `${teinte} · ${quoi}`)).join('') +
