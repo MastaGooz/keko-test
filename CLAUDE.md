@@ -1453,7 +1453,11 @@ chargement dans `logic/hub.ts`). Trois Fiole (1⚡, rend 10 PV, **exilée en se
 jouant**) : c'est une dilution qui s'évapore — trois cartes qui pèsent au
 premier combat, deux au deuxième, et le deck s'affûte à mesure qu'on boit.
 Vert, pied « Consommable », rangé à côté de l'armure sur la seconde ligne de
-l'armurerie ; son slot ne prend qu'un consommable et rien d'autre ne le prend
+l'armurerie. **Sa carte ne liste pas ses doses, elle les compte** : le cartouche
+dit ce que fait UNE fiole, et un petit **compteur** — un chiffre dans une case
+carrée au coin bas-droit de la fenêtre, comme une pile d'objets — porte le
+nombre ; la gemme s'efface, elle aurait dit le même chiffre. Keko : « plutôt
+que 3× sur la potion, un petit compteur, chiffre dans un slot » ; son slot ne prend qu'un consommable et rien d'autre ne le prend
 (vérifié dans `hub.verif.ts`).
 
 **Et le soin a QUITTÉ les trésors.** Il y était un placeholder qui rendait la

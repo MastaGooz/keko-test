@@ -3366,6 +3366,38 @@ body {
   --accent: #8ee4a1;
 }
 
+/* Le COMPTEUR d'un consommable : un chiffre dans une case carree, calee sur
+   le coin bas-droit de la fenetre d'art -- une pile d'objets, pas une gemme.
+   Il remplace la gemme, qui aurait dit le meme chiffre. */
+.compteur {
+  position: absolute;
+  top: 66cqw;
+  right: 4cqw;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18cqw;
+  height: 18cqw;
+  padding: 0.24em 4cqw 0;
+  box-sizing: border-box;
+  border: 1px solid color-mix(in srgb, var(--filet) 70%, transparent);
+  border-radius: 3cqw;
+  background: linear-gradient(#24202a, #100e14);
+  box-shadow: 0 0 0 1.5cqw #15131a, 0 1px 3px #000c, inset 0 1px 0 #ffffff1a;
+  color: #f2e4bd;
+  font-family: var(--police-titre);
+  font-size: 10cqw;
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sans gemme, le nom d'un consommable part du bord. */
+.piece-carte.consommable .fronton {
+  padding-left: 6cqw;
+}
+
 /* La composition d'une piece est un texte qui coule, jusqu'a huit modeles :
    une pointe plus petit, et il peut prendre toute la hauteur du cartouche. */
 .piece-carte .cartouche {
