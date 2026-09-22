@@ -285,6 +285,27 @@ unique réutilisé par toutes les cartes. Ce qu'il faut savoir :
 - son URL porte la date du build (`?v=`), sinon le navigateur ressert l'ancien
   cadre quand Keko le change (piège déjà rencontré sur les portraits).
 
+**Piste B, à côté : « Entaille du Néant »**, une carte que Keko a fait générer
+par ChatGPT. Son site est privé (401), mais il a déposé la page sauvegardée ;
+le HTML/CSS en a été extrait (copie dans le scratchpad, le fichier de 322 Ko
+— dont 313 Ko de CSS anti-pub injecté par le navigateur — ne reste pas dans
+`public/`). Trois fichiers manquaient à la sauvegarde : l'illustration, le
+ruban de titre, le grain du cuivre — remplacés par du CSS et du SVG à la main,
+sauf l'illustration, qui attend Keko. Le code original est en pixels pour une
+carte de 356 px et au rapport 1/1,48 ; il est réécrit en `cqw` (1cqw = 3,56 px
+de l'original) et au rapport 5/7, pour que la même carte tienne en réduit et
+en normal.
+
+**Piège des container queries, rencontré ici :** les `cqw` d'un élément se
+résolvent contre son ANCÊTRE conteneur, jamais contre lui-même. Posé sur la
+carte, `container-type` laissait sa propre bordure et ses arrondis se mesurer
+sur le viewport (1cqw = 25 px) — une pilule violette à bord de 36 px. La
+figure qui porte chaque carte est donc le conteneur, avec une largeur
+explicite (un conteneur `inline-size` ne peut pas prendre sa largeur de son
+contenu). Dans le jeu, `.carte` s'en sort parce que son chrome est dans des
+enfants ; le jour où une propriété de `.carte` elle-même passe en `cqw`, même
+piège.
+
 Quand la carte sera validée, on la portera dans `render.ts` / `styles.css` et
 on retirera la bascule.
 
