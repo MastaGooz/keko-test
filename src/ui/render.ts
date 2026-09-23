@@ -459,16 +459,31 @@ function lignes(carte: Carte): string[] {
       if (carte.type === 'tresor') l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>et son or est perdu</small>`)
       else {
         l.push(`Rend <b>${e.montant}</b> PV`)
-        // Une carte à usages dit ce qu'il lui reste ; une carte qui s'exile
-        // dit qu'elle se détruit.
-        if (carte.usages !== undefined) l.push(`<small>${carte.usages === 1 ? 'dernière gorgée' : `${carte.usages} gorgées`}</small>`)
-        else if (carte.exil === true) l.push(`<small>se boit : détruite</small>`)
+        // Une carte à usages ne l'écrit pas : ses gorgées sont des pastilles
+        // (`gorgees()`). Une carte qui s'exile dit qu'elle se détruit.
+        if (carte.usages === undefined && carte.exil === true) l.push(`<small>se boit : détruite</small>`)
       }
     }
     if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> énergie`)
     if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
   }
   return l
+}
+
+/**
+ * LES USAGES D'UNE CARTE EN PASTILLES, sous l'écusson du coût : une pastille
+ * pleine par gorgée qui reste, une vide par gorgée bue. Un compteur qui se
+ * voit, pas un chiffre à lire dans le texte -- Keko : « un compteur visuel en
+ * icône quelque part ». Sur la bande gauche, la seule visible dans l'éventail.
+ */
+function gorgees(carte: Carte): string {
+  if (carte.usages === undefined) return ''
+  const max = carte.usagesMax ?? carte.usages
+  const pastilles = Array.from(
+    { length: max },
+    (_, i) => `<i${i < carte.usages! ? ' class="pleine"' : ''}></i>`,
+  ).join('')
+  return `<span class="gorgees" title="${carte.usages} sur ${max}">${pastilles}</span>`
 }
 
 /** La famille d'une carte, pour la classe qui colore son écusson et son chiffre. */
@@ -533,7 +548,7 @@ function ligneCarte(
       `<span>${carte.cout}</span>`,
       lignes(carte),
       nature(carte),
-      acheve ? `<span class="marque">★</span>` : '',
+      (acheve ? `<span class="marque">★</span>` : '') + gorgees(carte),
     ) +
     `</button>`
   )
@@ -1065,17 +1080,8 @@ function cartePiece(piece: Piece): string {
   // POIDS, et c'est ce qui rend « équiper plus dilue » lisible sur la pièce.
   // Keko : « chiffre en haut à gauche, rectangle en forme de carte avec le
   // nombre dedans, pour tous les objets ».
-  // LE PAQUET ÉTALÉ : sous la case du compteur, LE MÊME SYMBOLE répété -- la
-  // même case, sans chiffre -- décalé légèrement vers la droite à chaque
-  // fois, autant de fois qu'il reste de cartes. Le nombre se lit deux fois,
-  // en chiffre et en épaisseur. Keko : « exactement le même symbole, juste
-  // sans chiffre et décalé légèrement vers la droite, X fois en comptant le
-  // premier ». Les plus lointains d'abord : ce qui vient après dans le DOM se
-  // pose par-dessus, et la case du chiffre vient en dernier.
-  const paquet = Array.from(
-    { length: nb - 1 },
-    (_, k) => `<span class="ecusson repli" style="--k:${nb - 1 - k}"></span>`,
-  ).join('')
+  // (Un paquet étalé a vécu derrière la case -- le même symbole répété une
+  // fois par carte. Keko l'a finalement retiré : le chiffre suffit.)
   return (
     `<div class="carte piece-carte ${piece.rarete} ${g}" style="--n:1" title="${nb} cartes">` +
     corpsCarte(
@@ -1093,8 +1099,6 @@ function cartePiece(piece: Piece): string {
       // (`.piece-carte.rare`, `.epique`). Keko : « inutile d'afficher le niveau
       // de rareté, on le fera via un code couleur ».
       pied,
-      '',
-      paquet,
     ) +
     `</div>`
   )
@@ -1154,7 +1158,7 @@ export function vitrine(carte: Carte, enMain = false): string {
   if (carte.type === 'tresor') return carteTresor(carte, 'style="--n:1"', enMain)
   return (
     `<div class="carte combat ${famille(carte)}" data-cout="${carte.cout}" style="--n:1">` +
-    corpsCarte(carte.nom, `<span>${carte.cout}</span>`, lignes(carte), nature(carte)) +
+    corpsCarte(carte.nom, `<span>${carte.cout}</span>`, lignes(carte), nature(carte), gorgees(carte)) +
     `</div>`
   )
 }

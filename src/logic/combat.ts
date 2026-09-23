@@ -70,6 +70,8 @@ export type Carte = {
    * gorgée par gorgée, au lieu de trois cartes qui polluaient la main.
    */
   usages?: number
+  /** Ce qu'elle en avait au départ : le rendu montre les pastilles vides. */
+  usagesMax?: number
   /**
    * Prix qu'en donnerait le marché noir, une fois la run terminée. Un trésor
    * ne rapporte RIEN en combat ni en fin de combat : il ne devient de l'or

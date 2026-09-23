@@ -209,6 +209,7 @@ const GORGEE: Modele = {
   degats: 0,
   effets: [{ type: 'soin', montant: 10 }],
   usages: 3,
+  usagesMax: 3,
 }
 
 /**

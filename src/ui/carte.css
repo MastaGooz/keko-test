@@ -304,13 +304,32 @@
   transform: translate(0, -6%);
 }
 
-/* LE PAQUET ÉTALÉ derrière le compteur : LE MÊME SYMBOLE, sans chiffre,
-   répété une fois par carte restante et décalé d'un cinquième de case vers la
-   droite à chaque fois. Ce sont de vraies cases (`.ecusson`), avec leurs trois
-   couches et leur ombre : c'est ce qui les fait lire comme des cartes sous la
-   première. Elles précèdent la case du chiffre dans le DOM, donc passent
-   dessous. Huit cartes font sept replis, soit un quart de la largeur de la
-   carte en plus -- ça tient. */
-.carte.piece-carte > .ecusson.repli {
-  translate: calc(var(--k) * 22%) 0;
+/* LES GORGÉES : une pastille par usage, sous l'écusson du coût, sur la bande
+   gauche. Pleine tant qu'il reste la gorgée, vide une fois bue -- un compteur
+   qui se voit sans se lire. Une goutte plutôt qu'un rond : c'est ce qu'on
+   boit. (Un paquet étalé a vécu derrière le compteur des pièces ; retiré.) */
+.carte > .gorgees {
+  position: absolute;
+  z-index: 3;
+  left: 5.5%;
+  top: 19.5%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6cqw;
+  filter: drop-shadow(0.35cqw 0.5cqw 0 #0000008c);
+}
+
+.carte > .gorgees > i {
+  display: block;
+  width: 7cqw;
+  height: 8.4cqw;
+  border: 0.35cqw solid #c9a86e;
+  border-radius: 50% 50% 50% 50% / 38% 38% 62% 62%;
+  background: #1a1316;
+  box-sizing: border-box;
+}
+
+.carte > .gorgees > i.pleine {
+  background: radial-gradient(circle at 35% 30%, #c8ffd4, #4fd87a 55%, #1f7a48);
+  box-shadow: 0 0 1.5cqw #7cf59a88;
 }
