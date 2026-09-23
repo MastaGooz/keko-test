@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Sceptre : une hampe d'or, un globe, une croix. Il penche, comme posé. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#4a2430"/>
+      <stop offset="0.5" stop-color="#26111a"/>
+      <stop offset="1" stop-color="#0e0609"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.4"/>
+      <stop offset="0.6" stop-color="#ffcf6a" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#ffcf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.4" stop-color="#e2b95c"/>
+      <stop offset="0.7" stop-color="#a9782c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <radialGradient id="globe" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#ffe6b0"/>
+      <stop offset="0.5" stop-color="#d9a24a"/>
+      <stop offset="1" stop-color="#6b4514"/>
+    </radialGradient>
+    <radialGradient id="rubis" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#ff8f8a"/>
+      <stop offset="0.5" stop-color="#c62633"/>
+      <stop offset="1" stop-color="#5a0f18"/>
+    </radialGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0e0609" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0e0609" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="47"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="380" r="330" fill="url(#halo)"/>
+
+  <g transform="translate(340 420) rotate(18)">
+    <!-- l'ombre -->
+    <rect x="-8" y="-180" width="40" height="560" rx="14" fill="#050203" opacity="0.5" filter="url(#flou)"/>
+    <!-- la hampe -->
+    <rect x="-16" y="-160" width="32" height="560" rx="12" fill="url(#or)"/>
+    <rect x="-16" y="-160" width="8" height="560" rx="4" fill="#fff1c2" opacity="0.35"/>
+    <!-- les colliers -->
+    <g fill="url(#or)" stroke="#5e3f12" stroke-width="2">
+      <rect x="-30" y="-150" width="60" height="26" rx="8"/>
+      <rect x="-30" y="60" width="60" height="26" rx="8"/>
+      <rect x="-30" y="360" width="60" height="30" rx="8"/>
+    </g>
+    <!-- la poignée gainée -->
+    <rect x="-20" y="90" width="40" height="260" rx="10" fill="#5a1c2b"/>
+    <g stroke="#e2b95c" stroke-width="4" opacity="0.6">
+      <line x1="-20" y1="130" x2="20" y2="150"/><line x1="-20" y1="190" x2="20" y2="210"/>
+      <line x1="-20" y1="250" x2="20" y2="270"/><line x1="-20" y1="310" x2="20" y2="330"/>
+    </g>
+    <!-- le globe -->
+    <circle cx="0" cy="-230" r="78" fill="url(#globe)"/>
+    <circle cx="0" cy="-230" r="78" fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.6"/>
+    <path d="M-78 -230 L78 -230 M0 -308 L0 -152" stroke="#5e3f12" stroke-width="5" opacity="0.5"/>
+    <path d="M-78 -230 L78 -230 M0 -308 L0 -152" stroke="#fff1c2" stroke-width="2" opacity="0.4"/>
+    <circle cx="-26" cy="-258" r="16" fill="#ffffff" opacity="0.4"/>
+    <!-- la croix -->
+    <rect x="-8" y="-380" width="16" height="80" rx="4" fill="url(#or)"/>
+    <rect x="-34" y="-356" width="68" height="16" rx="4" fill="url(#or)"/>
+    <circle cx="0" cy="-348" r="12" fill="url(#rubis)"/>
+    <!-- le pommeau -->
+    <circle cx="0" cy="410" r="26" fill="url(#or)"/>
+    <circle cx="0" cy="410" r="10" fill="url(#rubis)"/>
+  </g>
+
+  <g fill="#ffe9a8" opacity="0.7">
+    <circle cx="110" cy="200" r="3"/><circle cx="580" cy="180" r="2.5"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="620" cy="620" r="2.5"/>
+    <path d="M160 260 L164 274 L178 278 L164 282 L160 296 L156 282 L142 278 L156 274 Z"/>
+    <path d="M520 460 L523 470 L533 473 L523 476 L520 486 L517 476 L507 473 L517 470 Z"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

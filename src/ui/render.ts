@@ -18,7 +18,8 @@ import type { Hub } from '../logic/hub.ts'
 import { deuxMains, equipement, peutDescendre } from '../logic/hub.ts'
 import type { Piece } from '../logic/armes.ts'
 import { deckDeLEquipement } from '../logic/armes.ts'
-import { creature, dessin, sceau, teteDeMort } from './illustrations.ts'
+import { creature, sceau, teteDeMort } from './illustrations.ts'
+import { art, dosDeCarte } from './art.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡', bloc: '⛉' }
 
@@ -389,58 +390,45 @@ function energie(etat: EtatCombat, _visee: Carte | null): string {
  * ressent pas, une carte en travers de la main, si.
  */
 /**
- * L'ANATOMIE D'UNE CARTE, EN UN SEUL ENDROIT. Quatre fonctions la dessinaient
- * chacune à leur façon — carte de combat, trésor, pièce, vitrine — et c'est
- * ainsi que les proportions ont dérivé. Keko : « le nom en bas, l'échelle des
- * différents éléments, ça ne va pas du tout ».
+ * L'ANATOMIE DE LA CARTE, en un seul endroit — le gabarit « Serment de
+ * cendre » (voir `carte.css`). De bas en haut : la coque de laiton déchirée,
+ * la surface sombre, L'ILLUSTRATION EN PLEIN FORMAT, puis par-dessus l'écusson
+ * (le coût, ou ce qui en tient lieu), le nom, le texte d'effet et le type.
  *
- * De haut en bas, dans l'ordre où une carte à jouer se lit :
- * - le **titre** en tête : le nom, en petites capitales, centré. La **gemme**
- *   de coût est sertie dans son coin gauche et mord sur la fenêtre ;
- * - la **fenêtre d'art**, en arche, presque la moitié de la carte ;
- * - le **cartouche** : ce que fait la carte, en toutes lettres, centré. C'est
- *   LUI qui porte le chiffre, en accent et plus gros que le texte. Il y a eu un
- *   écusson à part pour le chiffre ; Keko : « déjà indiqué dans la description,
- *   donc inutile — en plus on ne sait pas si c'est attaque ou défense ». Le
- *   verbe et le chiffre ensemble disent les deux ;
- * - le **pied** : sa nature, en capitales discrètes. Enfoui au repos, et c'est
- *   ce qu'on lit le moins ;
- * - des **ornements** de coin, un seul SVG écrit à la main qui suit exactement
- *   le rapport 5/7 de la carte.
+ * Tout ce qui se manipule dans le jeu passe par ici — carte de combat,
+ * trésor, pièce d'équipement, vitrine — et c'est ce qui garantit qu'elles ne
+ * divergent pas. Chacune ne décide que de son écusson, de ses lignes et de
+ * son type.
  */
 function corpsCarte(
   nom: string,
-  gemme: string,
+  ecusson: string,
   lignes: readonly string[],
   nature: string,
   marque = '',
 ): string {
   return (
-    ORNEMENTS +
-    `<span class="fronton"><span class="nom">${nom}</span></span>` +
-    `<span class="vitre">${dessin(nom)}</span>` +
-    gemme +
-    `<span class="cartouche">${lignes.map((l) => `<span>${l}</span>`).join('')}</span>` +
-    `<span class="pied">${nature}</span>` +
+    `<span class="coque"></span>` +
+    `<span class="surface"></span>` +
+    `<span class="art" style="--art:url(${art(nom)})"></span>` +
+    `<span class="ecusson"><span>${ecusson}</span></span>` +
+    `<span class="nom-carte">${nom}</span>` +
+    `<span class="effet-carte ${cran(lignes)}">${lignes.join('<br>')}</span>` +
+    `<span class="type-carte">${nature}</span>` +
     marque
   )
 }
 
 /**
- * Les ornements de coin : quatre volutes, un seul tracé répété par symétrie.
- * Le viewBox a le rapport exact de la carte (5/7), donc `preserveAspectRatio`
- * peut être `none` sans rien déformer, et une unité vaut 1cqw.
+ * LA TAILLE DU TEXTE D'EFFET SUIT SA LONGUEUR : trois crans d'après le nombre
+ * de caractères hors balises, comme les jeux du genre. Un effet court garde la
+ * taille d'origine ; un effet complexe descend d'un ou deux crans plutôt que
+ * de déborder sur le type. Seuils réglés sur le prototype.
  */
-const VOLUTE =
-  '<path d="M5.5 15 V9 Q5.5 5.5 9 5.5 H15" /><path d="M8 13 Q8 8 13 8" /><circle cx="9.3" cy="9.3" r="1" fill="currentColor" stroke="none" />'
-const ORNEMENTS =
-  '<svg class="ornements" viewBox="0 0 100 140" preserveAspectRatio="none" aria-hidden="true" ' +
-  'fill="none" stroke="currentColor" stroke-width="0.7" stroke-linecap="round">' +
-  `<g>${VOLUTE}</g>` +
-  `<g transform="translate(100 0) scale(-1 1)">${VOLUTE}</g>` +
-  `<g transform="translate(0 140) scale(1 -1)">${VOLUTE}</g>` +
-  `<g transform="translate(100 140) scale(-1 -1)">${VOLUTE}</g>` +
-  '</svg>'
+function cran(lignes: readonly string[]): 'court' | 'moyen' | 'long' {
+  const n = lignes.join(' ').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').length
+  return n <= 44 ? 'court' : n <= 100 ? 'moyen' : 'long'
+}
 
 /**
  * Ce que fait la carte, en toutes lettres : une ligne par effet. Le chiffre
@@ -467,7 +455,16 @@ function lignes(carte: Carte): string[] {
   return l
 }
 
-/** Ce qu'est la carte, pour le pied. */
+/** La famille d'une carte, pour la classe qui colore son écusson et son chiffre. */
+function famille(carte: Carte): 'tresor' | 'consommable' | 'attaque' | 'defense' | 'action' {
+  if (carte.type === 'tresor') return 'tresor'
+  if (carte.exil === true) return 'consommable'
+  if (carte.degats > 0 || carte.effets?.some((e) => e.type === 'degatsTous')) return 'attaque'
+  if (carte.effets?.some((e) => e.type === 'bloc')) return 'defense'
+  return 'action'
+}
+
+/** Ce qu'est la carte, pour le type gravé en bas. */
 function nature(carte: Carte): string {
   // Le rang de richesse ne s'écrit pas : il se lit au cadre, comme la rareté
   // d'une pièce. Keko : « inutile de spécifier la qualité modeste en bas ».
@@ -501,7 +498,7 @@ function ligneCarte(
     abordable && carte.degats > 0 && debout.some(({ ennemi }) => carte.degats >= ennemi.pv)
   const vise = index === selection
 
-  const classes = ['carte', 'combat']
+  const classes = ['carte', 'combat', famille(carte)]
   if (!abordable) classes.push('hors-prix')
   else if (acheve) classes.push('acheve')
   else classes.push('jouable')
@@ -517,10 +514,10 @@ function ligneCarte(
     `${place}${fini ? ' disabled' : ''}>` +
     corpsCarte(
       carte.nom,
-      `<span class="gemme">${carte.cout}</span>`,
+      String(carte.cout),
       lignes(carte),
       nature(carte),
-      `<span class="marque">${acheve ? '★' : ''}</span>`,
+      acheve ? `<span class="marque">★</span>` : '',
     ) +
     `</button>`
   )
@@ -564,11 +561,11 @@ function carteTresor(carte: Carte, place: string, enMain = true, abordable = tru
   // « changeait quand on la ramasse » (Keko). Tant qu'un trésor est une carte
   // morte, il n'a pas de coût à montrer : le sceau, partout. Le jour où un
   // trésor se joue (son effet unique), sa gemme dira son coût -- partout aussi.
-  const gemme = `<span class="gemme sceau">${jouable(carte) ? carte.cout : sceau()}</span>`
+  const ecusson = jouable(carte) ? String(carte.cout) : sceau()
 
   return (
     `<div class="${classes.join(' ')}" ${place}>` +
-    corpsCarte(carte.nom, gemme, lignes(carte), nature(carte)) +
+    corpsCarte(carte.nom, ecusson, lignes(carte), nature(carte)) +
     `</div>`
   )
 }
@@ -620,7 +617,7 @@ function tasDeJeu(nom: string, combien: number): string {
   ).join('')
 
   return (
-    `<span class="pile-cartes${combien === 0 ? ' vide' : ''}">${pile}` +
+    `<span class="pile-cartes${combien === 0 ? ' vide' : ''}" style="--dos:url(${dosDeCarte()})">${pile}` +
     `<span class="etiquette-tas">` +
     `<span class="nom-tas">${nom}</span>` +
     `<span class="compte">${combien}</span>` +
@@ -1054,12 +1051,11 @@ function cartePiece(piece: Piece): string {
   // nombre dedans, pour tous les objets ». Un consommable y compte ses doses
   // (une dose, une carte) et son cartouche dit ce que fait UNE dose.
   const dose = g === 'consommable' ? piece.set[0] : undefined
-  const compteur = `<span class="compteur" title="${nb} cartes">${nb}</span>`
   return (
-    `<div class="carte piece-carte ${piece.rarete} ${g}" style="--n:1">` +
+    `<div class="carte piece-carte ${piece.rarete} ${g}" style="--n:1" title="${nb} cartes">` +
     corpsCarte(
       piece.nom,
-      compteur,
+      String(nb),
       // Sa composition, en UN texte qui coule : « 5× Estoc · 3× Taillade ·
       // 2× Moulinet ». Une ligne par modèle plafonnait à cinq ; une arme en
       // apportera jusqu'à huit. Le détail de chaque modèle — coût, dégâts —
@@ -1129,13 +1125,8 @@ function slotEquipement(
 export function vitrine(carte: Carte, enMain = false): string {
   if (carte.type === 'tresor') return carteTresor(carte, 'style="--n:1"', enMain)
   return (
-    `<div class="carte combat" data-cout="${carte.cout}" style="--n:1">` +
-    corpsCarte(
-      carte.nom,
-      `<span class="gemme">${carte.cout}</span>`,
-      lignes(carte),
-      nature(carte),
-    ) +
+    `<div class="carte combat ${famille(carte)}" data-cout="${carte.cout}" style="--n:1">` +
+    corpsCarte(carte.nom, String(carte.cout), lignes(carte), nature(carte)) +
     `</div>`
   )
 }

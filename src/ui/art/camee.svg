@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Camée : un profil d'ivoire sur un fond de corail, dans un ovale d'or.
+       Le plus petit trésor. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#4a2430"/>
+      <stop offset="0.5" stop-color="#26111a"/>
+      <stop offset="1" stop-color="#0e0609"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.3"/>
+      <stop offset="0.6" stop-color="#ffcf6a" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#ffcf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.4" stop-color="#e2b95c"/>
+      <stop offset="0.7" stop-color="#a9782c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <radialGradient id="corail" cx="40%" cy="35%" r="75%">
+      <stop offset="0" stop-color="#e8907a"/>
+      <stop offset="0.6" stop-color="#b8563f"/>
+      <stop offset="1" stop-color="#6e2a1c"/>
+    </radialGradient>
+    <linearGradient id="ivoire" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fffaf0"/>
+      <stop offset="1" stop-color="#d9c9a8"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0e0609" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0e0609" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="89"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="400" r="330" fill="url(#halo)"/>
+
+  <!-- l'ombre -->
+  <ellipse cx="352" cy="412" rx="170" ry="212" fill="#050203" opacity="0.6" filter="url(#flou)"/>
+  <!-- la monture -->
+  <ellipse cx="340" cy="400" rx="170" ry="212" fill="url(#or)"/>
+  <ellipse cx="340" cy="400" rx="170" ry="212" fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.6"/>
+  <ellipse cx="340" cy="400" rx="150" ry="190" fill="none" stroke="#fff1c2" stroke-width="5" stroke-dasharray="3 12" opacity="0.7"/>
+  <!-- le fond de corail -->
+  <ellipse cx="340" cy="400" rx="136" ry="174" fill="url(#corail)"/>
+  <ellipse cx="340" cy="400" rx="136" ry="174" fill="none" stroke="#5e3f12" stroke-width="4" opacity="0.5"/>
+  <!-- le profil d'ivoire, tourné vers la gauche -->
+  <path d="M400 240 C 330 230, 280 280, 282 350 C 283 380, 270 392, 262 404 C 256 412, 262 420, 274 422 C 280 440, 276 456, 290 466 C 300 474, 316 470, 322 484 C 326 500, 320 520, 330 540 L 330 574 L 440 574 L 440 500 C 470 470, 490 420, 486 360 C 482 290, 450 246, 400 240 Z" fill="url(#ivoire)"/>
+  <!-- la chevelure relevée -->
+  <path d="M330 262 C 360 220, 430 210, 470 250 C 500 280, 500 330, 486 360 C 470 300, 420 290, 380 300 C 350 306, 330 290, 330 262 Z" fill="#e8dcc0"/>
+  <path d="M480 300 C 500 340, 496 380, 470 400 C 476 360, 470 330, 458 316 Z" fill="#e8dcc0"/>
+  <!-- l'oeil, la bouche : deux touches -->
+  <path d="M300 372 Q314 364 328 372" fill="none" stroke="#b8563f" stroke-width="3" opacity="0.6"/>
+  <path d="M282 448 Q294 454 306 446" fill="none" stroke="#b8563f" stroke-width="3" opacity="0.6"/>
+  <!-- la bélière -->
+  <ellipse cx="340" cy="178" rx="22" ry="18" fill="none" stroke="url(#or)" stroke-width="10"/>
+  <!-- le reflet -->
+  <path d="M230 300 Q222 400 250 480 Q210 400 222 300 Z" fill="#ffffff" opacity="0.2"/>
+
+  <g fill="#ffe9a8" opacity="0.7">
+    <circle cx="110" cy="240" r="3"/><circle cx="580" cy="220" r="2.5"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="620" cy="640" r="2.5"/>
+    <path d="M120 440 L124 454 L138 458 L124 462 L120 476 L116 462 L102 458 L116 454 Z"/>
+    <path d="M570 360 L573 370 L583 373 L573 376 L570 386 L567 376 L557 373 L567 370 Z"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Espadon : la lame à deux mains, plus large, plus longue, la garde
+       massive et la longue poignée. Rare : une braise derrière. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="40%" r="75%">
+      <stop offset="0" stop-color="#3b3f4e"/>
+      <stop offset="0.5" stop-color="#1e2130"/>
+      <stop offset="1" stop-color="#0c0e16"/>
+    </radialGradient>
+    <radialGradient id="braise" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ff9a4a" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#ff9a4a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="acier" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f3f7f4"/>
+      <stop offset="0.5" stop-color="#c7d3cf"/>
+      <stop offset="0.52" stop-color="#7d8c89"/>
+      <stop offset="1" stop-color="#4e5c5a"/>
+    </linearGradient>
+    <linearGradient id="fer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4f4d"/>
+      <stop offset="0.5" stop-color="#1f2423"/>
+      <stop offset="1" stop-color="#0d1110"/>
+    </linearGradient>
+    <linearGradient id="cuir" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8a5a34"/>
+      <stop offset="0.5" stop-color="#5d3a20"/>
+      <stop offset="1" stop-color="#2f1c0f"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0c0e16" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0c0e16" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="101"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="ombre"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="360" r="320" fill="url(#braise)"/>
+
+  <g transform="translate(352 30)" opacity="0.45" filter="url(#ombre)">
+    <polygon points="0,0 -44,90 -46,520 46,520 44,90" fill="#0c0e16"/>
+  </g>
+  <g transform="translate(340 20)">
+    <!-- la lame, avec un ricasso plus étroit sous la garde -->
+    <polygon points="0,0 -44,90 -46,520 46,520 44,90" fill="url(#acier)"/>
+    <polygon points="0,0 -3,90 -3,520 3,520 3,90" fill="#e9f0ed" opacity="0.7"/>
+    <rect x="-10" y="130" width="20" height="360" rx="10" fill="#3f4c4a" opacity="0.55"/>
+    <!-- les crochets de parade -->
+    <path d="M-46 470 L-70 450 L-70 480 L-46 500 Z M46 470 L70 450 L70 480 L46 500 Z" fill="url(#fer)"/>
+    <!-- la grande garde -->
+    <path d="M-130 524 Q-80 506 -40 518 L40 518 Q80 506 130 524 L134 560 Q80 544 40 552 L-40 552 Q-80 544 -134 560 Z" fill="url(#fer)"/>
+    <circle cx="-126" cy="542" r="14" fill="url(#fer)"/><circle cx="126" cy="542" r="14" fill="url(#fer)"/>
+    <circle cx="0" cy="536" r="14" fill="#c9a04e"/>
+    <!-- la longue poignée -->
+    <rect x="-17" y="552" width="34" height="230" fill="url(#cuir)"/>
+    <g stroke="#1a0f08" stroke-width="3" opacity="0.7">
+      <line x1="-17" y1="572" x2="17" y2="580"/><line x1="-17" y1="598" x2="17" y2="606"/>
+      <line x1="-17" y1="624" x2="17" y2="632"/><line x1="-17" y1="650" x2="17" y2="658"/>
+      <line x1="-17" y1="676" x2="17" y2="684"/><line x1="-17" y1="702" x2="17" y2="710"/>
+      <line x1="-17" y1="728" x2="17" y2="736"/><line x1="-17" y1="754" x2="17" y2="762"/>
+    </g>
+    <rect x="-22" y="660" width="44" height="14" fill="url(#fer)"/>
+    <circle cx="0" cy="810" r="34" fill="url(#fer)"/>
+    <circle cx="-10" cy="800" r="10" fill="#9aa39f" opacity="0.5"/>
+    <circle cx="0" cy="810" r="11" fill="#c9a04e"/>
+  </g>
+
+  <g fill="#ffb066" opacity="0.7">
+    <circle cx="120" cy="240" r="3"/><circle cx="560" cy="160" r="2.5"/>
+    <circle cx="90" cy="560" r="2"/><circle cx="600" cy="520" r="2.5"/>
+    <circle cx="170" cy="440" r="2"/><circle cx="520" cy="420" r="2"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Glaive : l'arme commune, droite, debout, devant un petit soleil rouge.
+       La référence à laquelle les autres se comparent. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#3a4a44"/>
+      <stop offset="0.45" stop-color="#1d2a2b"/>
+      <stop offset="1" stop-color="#0c1315"/>
+    </radialGradient>
+    <radialGradient id="soleil" cx="42%" cy="36%" r="70%">
+      <stop offset="0" stop-color="#e8785a"/>
+      <stop offset="0.55" stop-color="#c2432f"/>
+      <stop offset="1" stop-color="#7e2723"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0.6" stop-color="#d9553a" stop-opacity="0.3"/>
+      <stop offset="1" stop-color="#d9553a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="acier" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f3f7f4"/>
+      <stop offset="0.5" stop-color="#c7d3cf"/>
+      <stop offset="0.52" stop-color="#7d8c89"/>
+      <stop offset="1" stop-color="#4e5c5a"/>
+    </linearGradient>
+    <linearGradient id="fer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4f4d"/>
+      <stop offset="0.5" stop-color="#1f2423"/>
+      <stop offset="1" stop-color="#0d1110"/>
+    </linearGradient>
+    <linearGradient id="cuir" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8a5a34"/>
+      <stop offset="0.5" stop-color="#5d3a20"/>
+      <stop offset="1" stop-color="#2f1c0f"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0c1315" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0c1315" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="97"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="ombre"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="300" r="300" fill="url(#halo)"/>
+  <circle cx="340" cy="300" r="180" fill="url(#soleil)"/>
+
+  <g transform="translate(352 60)" opacity="0.45" filter="url(#ombre)">
+    <polygon points="0,0 -30,70 -32,470 32,470 30,70" fill="#0c1315"/>
+  </g>
+  <g transform="translate(340 50)">
+    <polygon points="0,0 -30,70 -32,470 32,470 30,70" fill="url(#acier)"/>
+    <polygon points="0,0 -3,70 -3,470 3,470 3,70" fill="#e9f0ed" opacity="0.7"/>
+    <rect x="-7" y="100" width="14" height="340" rx="7" fill="#3f4c4a" opacity="0.55"/>
+    <path d="M-96 474 Q-60 460 -34 470 L34 470 Q60 460 96 474 L96 504 Q60 492 34 500 L-34 500 Q-60 492 -96 504 Z" fill="url(#fer)"/>
+    <path d="M-96 474 Q-60 460 -34 470 L34 470 Q60 460 96 474 L96 480 Q60 468 34 476 L-34 476 Q-60 468 -96 480 Z" fill="#8a9390" opacity="0.5"/>
+    <circle cx="0" cy="486" r="11" fill="#c9a04e"/>
+    <rect x="-15" y="500" width="30" height="150" fill="url(#cuir)"/>
+    <g stroke="#1a0f08" stroke-width="3" opacity="0.7">
+      <line x1="-15" y1="518" x2="15" y2="526"/><line x1="-15" y1="542" x2="15" y2="550"/>
+      <line x1="-15" y1="566" x2="15" y2="574"/><line x1="-15" y1="590" x2="15" y2="598"/>
+      <line x1="-15" y1="614" x2="15" y2="622"/>
+    </g>
+    <circle cx="0" cy="672" r="28" fill="url(#fer)"/>
+    <circle cx="-8" cy="664" r="9" fill="#9aa39f" opacity="0.5"/>
+    <circle cx="0" cy="672" r="9" fill="#c9a04e"/>
+  </g>
+
+  <g fill="#f4efe0" opacity="0.6">
+    <circle cx="120" cy="200" r="2.5"/><circle cx="560" cy="120" r="2"/>
+    <circle cx="90" cy="560" r="2"/><circle cx="600" cy="520" r="2.5"/>
+    <circle cx="160" cy="420" r="2"/><circle cx="520" cy="400" r="2"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

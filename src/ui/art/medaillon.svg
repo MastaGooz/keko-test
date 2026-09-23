@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Médaillon : un ovale d'or au bout de sa chaîne, une étoile gravée. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#4a2430"/>
+      <stop offset="0.5" stop-color="#26111a"/>
+      <stop offset="1" stop-color="#0e0609"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.35"/>
+      <stop offset="0.6" stop-color="#ffcf6a" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#ffcf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.4" stop-color="#e2b95c"/>
+      <stop offset="0.7" stop-color="#a9782c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <radialGradient id="face" cx="40%" cy="35%" r="70%">
+      <stop offset="0" stop-color="#e2b95c"/>
+      <stop offset="0.7" stop-color="#a9782c"/>
+      <stop offset="1" stop-color="#6b4a16"/>
+    </radialGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0e0609" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0e0609" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="73"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="420" r="330" fill="url(#halo)"/>
+
+  <!-- la chaîne, en maillons -->
+  <g fill="none" stroke="url(#or)" stroke-width="9">
+    <path d="M100 0 Q160 160 300 250" stroke-dasharray="22 12"/>
+    <path d="M580 0 Q520 160 380 250" stroke-dasharray="22 12"/>
+  </g>
+  <!-- la bélière -->
+  <ellipse cx="340" cy="262" rx="28" ry="22" fill="none" stroke="url(#or)" stroke-width="12"/>
+
+  <!-- l'ombre -->
+  <ellipse cx="352" cy="462" rx="160" ry="196" fill="#050203" opacity="0.6" filter="url(#flou)"/>
+  <!-- le médaillon -->
+  <ellipse cx="340" cy="450" rx="160" ry="196" fill="url(#or)"/>
+  <ellipse cx="340" cy="450" rx="160" ry="196" fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.6"/>
+  <ellipse cx="340" cy="450" rx="128" ry="160" fill="url(#face)"/>
+  <ellipse cx="340" cy="450" rx="128" ry="160" fill="none" stroke="#5e3f12" stroke-width="4" opacity="0.6"/>
+  <!-- le liseré perlé -->
+  <ellipse cx="340" cy="450" rx="144" ry="178" fill="none" stroke="#fff1c2" stroke-width="5" stroke-dasharray="4 14" opacity="0.7"/>
+  <!-- l'étoile gravée -->
+  <path d="M340 320 L362 410 L456 410 L380 466 L408 556 L340 500 L272 556 L300 466 L224 410 L318 410 Z" fill="#5e3f12" opacity="0.7"/>
+  <path d="M340 328 L360 414 L448 414 L376 468 L402 548 L340 496 L278 548 L304 468 L232 414 L320 414 Z" fill="url(#or)"/>
+  <circle cx="340" cy="450" r="18" fill="#c62633"/>
+  <!-- le reflet -->
+  <path d="M240 340 Q230 420 260 500 Q220 430 232 340 Z" fill="#ffffff" opacity="0.25"/>
+
+  <g fill="#ffe9a8" opacity="0.7">
+    <circle cx="110" cy="240" r="3"/><circle cx="580" cy="220" r="2.5"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="620" cy="640" r="2.5"/>
+    <path d="M130 480 L134 494 L148 498 L134 502 L130 516 L126 502 L112 498 L126 494 Z"/>
+    <path d="M560 380 L563 390 L573 393 L563 396 L560 406 L557 396 L547 393 L557 390 Z"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

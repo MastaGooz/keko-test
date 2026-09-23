@@ -1,3 +1,5 @@
+@import './carte.css';
+
 /* Prototype jetable. Le style ne sert qu'à deux choses : rendre le système
    lisible au doigt, et tenir l'écran court. Chaque couleur porte une
    information, aucune n'est là pour décorer. */
@@ -759,28 +761,8 @@ body {
   container-type: inline-size;
   padding: 0;
   overflow: hidden;
-  border: 1px solid #08080c;
-  border-radius: 10px;
-  /* DU CUIR, PAS DU CARTON. Cinq couches : une lumiere rasante venue du haut,
-     un vignettage qui assombrit les bords, deux grains croises qui font la
-     matiere, et le corps teinte par l'accent. Keko : « texture de la carte
-     trop basique ». */
-  background:
-    radial-gradient(120% 70% at 50% 0%, #ffffff0e, transparent 60%),
-    radial-gradient(100% 100% at 50% 50%, transparent 45%, #00000080 100%),
-    repeating-linear-gradient(33deg, #ffffff05 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(-33deg, #00000024 0 1px, transparent 1px 3px),
-    linear-gradient(
-      170deg,
-      color-mix(in srgb, var(--accent, #8a8a9a) 16%, #3a3540) 0%,
-      color-mix(in srgb, var(--accent, #8a8a9a) 6%, #201d26) 55%,
-      #131118 100%
-    );
-  box-shadow:
-    -5px 3px 14px #000b,
-    inset 0 1px 0 #ffffff1a,
-    inset 0 0 0 1px #000000aa,
-    inset 0 0 14px #00000080;
+  border: 0;
+  /* Sa PEAU -- le laiton, la coque, l'illustration -- vit dans carte.css. */
   color: inherit;
   font: inherit;
   cursor: pointer;
@@ -793,19 +775,6 @@ body {
     box-shadow 0.15s ease-out,
     border-color 0.15s ease-out;
   z-index: var(--i, 0);
-}
-
-/* Le filet dore : un cadre fin a 3cqw du bord, double d'un trait sombre --
-   c'est lui qui fait l'objet precieux, et les volutes de coin s'y accrochent. */
-.carte::before {
-  content: "";
-  position: absolute;
-  inset: 3cqw;
-  z-index: 1;
-  border-radius: 6px;
-  border: 1px solid color-mix(in srgb, var(--filet, #d8b96a) 45%, transparent);
-  box-shadow: inset 0 0 0 1px #00000066;
-  pointer-events: none;
 }
 
 /* Le lustre : un reflet oblique fige sur la carte posee, qui balaie la carte
@@ -886,241 +855,17 @@ body {
   );
 }
 
-/* --- L'ANATOMIE DE LA CARTE ----------------------------------------------
-
-   Une carte se lit de haut en bas, comme une carte a jouer : le FRONTON en
-   tete (le nom, la gemme de cout sertie dans le coin), la FENETRE d'art en
-   arche, le CARTOUCHE qui dit ce qu'elle fait -- et qui porte le chiffre --,
-   le PIED qui dit ce qu'elle est, et des VOLUTES aux quatre coins.
-
-   Il y a eu un ecusson a part pour le chiffre, a cheval sur la fenetre. Keko :
-   « deja indique dans la description, donc inutile -- en plus on ne sait pas
-   si c'est attaque ou defense ». Le cartouche dit les deux : le verbe ET le
-   chiffre.
-
-   Tout est en cqw : la carte fait 100cqw de large et 140cqw de haut, donc les
-   proportions sont les memes a 77 px et a 262. Au repos dans l'eventail, on
-   voit 76 % de la hauteur (106cqw) et la bande gauche : la gemme, le nom et
-   la premiere ligne du cartouche y sont. Le pied est enfoui, c'est ce qu'on
-   lit le moins.
-
-   Deux polices, les seules ressources externes du projet : Cinzel pour ce qui
-   est grave (nom, pied, gemme), EB Garamond pour ce qui se lit (cartouche).
-   Georgia prend le relais sans reseau. */
-
-.carte {
-  --filet: #d8b96a;
-  --police-titre: "Cinzel", Georgia, "Palatino Linotype", serif;
-  --police-texte: "EB Garamond", Georgia, "Palatino Linotype", serif;
-}
-
-.ornements {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  color: color-mix(in srgb, var(--filet) 70%, transparent);
-  pointer-events: none;
-}
-
-.fronton {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 18cqw;
-  display: flex;
-  align-items: center;
-  /* Le nom part de la gemme, il n'est pas centre : centre, la gemme mangeait
-     ses premieres lettres des qu'il etait long, et dans l'eventail c'est la
-     bande GAUCHE qu'on voit -- un nom cale a gauche se lit au repos. */
-  justify-content: flex-start;
-  padding: 0 5cqw 0 21cqw;
-  border-bottom: 1px solid color-mix(in srgb, var(--filet) 40%, transparent);
-  background: linear-gradient(180deg, #ffffff08, #00000024);
-}
-
-.carte .nom {
-  min-width: 0;
-  font-family: var(--police-titre);
-  font-size: 9cqw;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  line-height: 1;
-  color: #e8dab2;
-  text-shadow:
-    0 1px 0 #000,
-    0 0 6cqw color-mix(in srgb, var(--filet) 30%, transparent);
-  /* CINZEL PORTE SES CAPITALES HAUT dans sa boite de ligne : centre par le
-     flex, le nom paraissait colle en haut du fronton. Mesure : les glyphes
-     etaient 0,13em au-dessus du centre. Le decalage est en em, donc il suit
-     la taille de la carte. Keko : « c'est colle en haut du rectangle ». */
-  translate: 0 0.12em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* La fenetre d'art : une arche cerclee d'or, presque la moitie de la carte. */
-.vitre {
-  position: absolute;
-  top: 19cqw;
-  left: 7cqw;
-  right: 7cqw;
-  height: 60cqw;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50% 50% 5cqw 5cqw / 32% 32% 5cqw 5cqw;
-  background:
-    radial-gradient(60% 55% at 50% 45%, color-mix(in srgb, var(--accent, #888) 32%, transparent), transparent 74%),
-    linear-gradient(180deg, #ffffff0c 0%, transparent 42%),
-    linear-gradient(180deg, #0e0e14 0%, #05050a 100%);
-  box-shadow:
-    inset 0 0 0 1px #00000088,
-    inset 0 2px 10px #000000aa,
-    0 0 0 1px color-mix(in srgb, var(--filet) 45%, transparent);
-  color: var(--accent, var(--muted));
-  overflow: hidden;
-}
-
-.dessin {
-  width: 66%;
-  height: 66%;
-  /* Le trait rayonne : l'objet est eclaire, pas dessine au crayon. */
-  filter:
-    drop-shadow(0 0 4cqw color-mix(in srgb, currentColor 60%, transparent))
-    drop-shadow(0 1.5cqw 3cqw #000c);
-}
-
-/* La gemme de cout : un petit disque sombre serti dans le coin du fronton,
-   le chiffre en ivoire. Elle a ete un gros joyau jaune ; Keko : « trop
-   grossier et trop gros ». Le cout se lit, il ne crie pas. */
-.gemme {
-  position: absolute;
-  top: 1.5cqw;
-  left: 3cqw;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 15cqw;
-  height: 15cqw;
-  border: 1px solid #c9a95a;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #5b4a24, #221b0e 72%);
-  box-shadow:
-    0 0 0 1.5cqw #15131a,
-    0 1px 3px #000c,
-    inset 0 1px 0 #ffffff1f;
-  color: #f2e4bd;
-  font-family: var(--police-titre);
-  font-size: 8.5cqw;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  /* Meme correction que le nom, par le remplissage : le chiffre est le
-     contenu direct du disque. */
-  padding-top: 0.24em;
-  box-sizing: border-box;
-}
-
-/* Quand la gemme ne porte pas un cout mais le sceau (le loot qui arrive). */
-.gemme .dessin-sceau {
-  width: 60%;
-  height: 60%;
-}
-
-/* LE CARTOUCHE : ce que fait la carte, en toutes lettres, centre sous la
-   fenetre -- et c'est LUI qui porte le chiffre, en accent et plus gros. */
-.cartouche {
-  position: absolute;
-  top: 82cqw;
-  left: 7cqw;
-  right: 7cqw;
-  height: 44cqw;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  /* Cale en HAUT, pas centre dans sa boite : c'est la premiere ligne qui
-     porte le chiffre, et centree elle finissait a 324 px sur un ecran de 320
-     pour les cartes du bord (l'arc de l'eventail les fait descendre). Calee
-     en haut, elle reste bien au-dessus de la ligne de flottaison. */
-  justify-content: flex-start;
-  gap: 1cqw;
-  padding: 4cqw 2cqw 0;
-  overflow: hidden;
-  font-family: var(--police-texte);
-  font-size: 9cqw;
-  line-height: 1.2;
-  text-align: center;
-  color: #e3d8c0;
-  text-shadow: 0 1px 2px #000c;
-}
-
-.cartouche b {
-  color: var(--accent, var(--fg));
-  font-weight: 600;
-  font-size: 120%;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 5cqw color-mix(in srgb, var(--accent, #888) 45%, transparent);
-}
-
-.cartouche small {
-  font-size: 82%;
-  font-style: italic;
-  color: #a8a08f;
-}
-
-/* LE PIED : la nature de la carte, gravee entre deux filets. Enfoui au repos,
-   et c'est voulu : c'est ce qu'on lit le moins. */
-.pied {
-  position: absolute;
-  inset: auto 8cqw 4cqw 8cqw;
-  display: flex;
-  align-items: center;
-  gap: 3cqw;
-  font-family: var(--police-titre);
-  font-size: 5.4cqw;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  line-height: 1;
-  white-space: nowrap;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--filet) 55%, #8a8478);
-}
-
-.pied::before,
-.pied::after {
-  content: "";
-  flex: 1 1 0;
-  /* Les filets se calent sur les glyphes, pas sur la boite de ligne (voir
-     `.carte .nom`). */
-  translate: 0 -0.12em;
-  height: 1px;
-  background: color-mix(in srgb, var(--filet) 35%, transparent);
-}
-
-.marque {
-  position: absolute;
-  top: 4.5cqw;
-  right: 5cqw;
-  z-index: 2;
-  font-size: 9cqw;
-  line-height: 1;
-  color: var(--fg);
-  text-shadow: 0 0 6px #fff8;
-}
-
 /* --- etats ---------------------------------------------------------------- */
 
 .carte.jouable {
-  border-color: #4d6d84;
+  box-shadow:
+    inset 0 0 0 1px #4a3d2880,
+    0 0 0 1px #4d6d84,
+    0 0.5rem 0.75rem #0009;
 }
 
 /* Peut achever quelqu'un : c'est la decision que le multi-cibles rend tendue. */
 .carte.acheve {
-  border-color: #eef0f6;
   box-shadow:
     0 0 0 1px #ffffff55,
     0 3px 14px #ffffff33,
@@ -1164,7 +909,6 @@ body {
    pourcent de plus mord sur la scene au-dessus. */
 .carte.visee {
   transform: rotate(0deg) translateY(calc(-1 * var(--enfoui, 0px) - 1rem)) scale(1.08);
-  border-color: var(--joueur);
   z-index: 20;
   box-shadow:
     0 0 0 1px var(--joueur),
@@ -1195,66 +939,10 @@ body {
 
 /* --- le tresor ------------------------------------------------------------ */
 
-/* Plein et dore, jamais grise : l'appat et le poids sont le meme objet. Une
-   carte fantome se laisserait oublier -- c'est justement ce qu'on ne veut pas
-   faire oublier. */
+/* Sa couleur -- l'écusson d'or, le sceau -- et ses rangs de richesse vivent
+   dans carte.css. Ici, seulement ce qu'il n'est pas : un bouton. */
 .carte.tresor {
   cursor: default;
-  --filet: #f0cf7a;
-  border-color: var(--cadre, #6b5524);
-  background:
-    radial-gradient(120% 70% at 50% 0%, #ffe6a818, transparent 60%),
-    radial-gradient(100% 100% at 50% 50%, transparent 45%, #00000080 100%),
-    repeating-linear-gradient(33deg, #ffe0a008 0 1px, transparent 1px 3px),
-    repeating-linear-gradient(-33deg, #00000024 0 1px, transparent 1px 3px),
-    linear-gradient(170deg, var(--velours, #5a4820) 0%, #2e2410 55%, #191308 100%);
-}
-
-.carte.tresor::before {
-  border-color: color-mix(in srgb, var(--filet) 60%, transparent);
-}
-
-/* Trois rangs de richesse. Pas de la parure : le joueur doit voir sans lire un
-   chiffre que ce qu'il traine est une babiole ou une couronne. */
-.carte.tresor.modeste {
-  --accent: #b08d5a;
-  --cadre: #5c4a2a;
-  --velours: #453722;
-}
-
-.carte.tresor.cossu {
-  --accent: #dcb464;
-  --cadre: #7d6430;
-  --velours: #5a4820;
-}
-
-.carte.tresor.fastueux {
-  --accent: #ffd98a;
-  --cadre: #b08d3e;
-  --velours: #6d5726;
-  box-shadow:
-    0 0 0 1px #ffd98a33,
-    0 3px 14px #ffbf4a26,
-    inset 0 1px 0 #ffe9b81f;
-}
-
-/* Le tresor reprend l'anatomie commune, en dore : meme titre, meme gemme,
-   meme cartouche -- c'est une carte du deck, il faut qu'elle en ait l'air. */
-.carte.tresor .fronton {
-  background: linear-gradient(180deg, #ffe6a810, #00000024);
-}
-
-.carte.tresor .nom {
-  color: #f7e9c4;
-}
-
-.carte.tresor .gemme {
-  border-color: #f0cf7a;
-  background: radial-gradient(circle at 35% 30%, #7a6230, #2c2210 72%);
-}
-
-.carte.tresor .cartouche {
-  color: #e6d9b8;
 }
 
 .bouton {
@@ -1383,25 +1071,6 @@ body {
 .perdu {
   color: var(--ennemi);
   font-variant-numeric: tabular-nums;
-}
-
-/* --- l'identite des cartes par cout --------------------------------------- */
-
-/* Le petit coup est froid, le gros est chaud : on lit le poids d'une carte
-   avant d'avoir lu son chiffre. L'accent teinte le dessin, le liseré de la
-   plaque et le chiffre de degats. */
-.carte.combat[data-cout="1"] {
-  --accent: #7cc0e4;
-}
-
-.carte.combat[data-cout="2"] {
-  --accent: #8fd8a8;
-}
-
-.carte.combat[data-cout="3"],
-.carte.combat[data-cout="4"],
-.carte.combat[data-cout="5"] {
-  --accent: #efa863;
 }
 
 /* --- le coup se voit ------------------------------------------------------ */
@@ -2578,14 +2247,13 @@ body {
 .feuillet {
   position: absolute;
   inset: 0;
-  border: 1px solid var(--trait);
-  border-radius: 12px;
-  /* Le tissage croise remplace la fenetre d'art : c'est un dos, il n'a rien a
-     montrer, seulement une matiere. */
+  border: 1px solid #4a3d28;
+  border-radius: calc(var(--large) * 0.03);
+  /* Le dos : `art/dos.svg`, posé par le rendu (`--dos`) -- un médaillon d'or
+     sur la nuit, un semis de losanges. Il n'a rien a montrer, seulement une
+     matiere ; il porte le meme laiton que la face. */
   background:
-    radial-gradient(90% 46% at 50% 0%, #ffffff14, transparent 70%),
-    repeating-linear-gradient(45deg, #ffffff0a 0 2px, transparent 2px 8px),
-    repeating-linear-gradient(-45deg, #ffffff0a 0 2px, transparent 2px 8px),
+    var(--dos) center / cover no-repeat,
     linear-gradient(168deg, #35353f 0%, #26262f 46%, #191920 100%);
   box-shadow:
     -4px 3px 12px #000a,
@@ -2603,10 +2271,9 @@ body {
 .feuillet::before {
   content: "";
   position: absolute;
-  inset: 4px;
-  border-radius: 8px;
-  border: 1px solid #ffffff12;
-  border-bottom-color: #00000055;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 2px #a88c5f66, inset 0 1px 0 #ffffff22;
 }
 
 .pile-cartes.vide .feuillet {
@@ -3345,71 +3012,6 @@ body {
    Meme sertissage que le cout d'une carte, autre teinte -- ce n'est pas de
    l'energie. */
 /* (La gemme ronde des pieces a cede la place au compteur en forme de carte.) */
-
-/* Une arme est froide, une armure est de fer : la teinte de la carte le dit
-   avant le nom. */
-.piece-carte.arme {
-  --accent: #7fb6d9;
-}
-
-.piece-carte.armure {
-  --accent: #9aa4b8;
-}
-
-/* Un consommable est vert : la couleur du soin, celle du chiffre qui monte
-   au-dessus du joueur. */
-.piece-carte.consommable {
-  --accent: #8ee4a1;
-}
-
-/* LE COMPTEUR D'UNE PIECE : son nombre de cartes, en haut a gauche, dans une
-   petite case EN FORME DE CARTE (5/7) -- la ou une carte de jeu porte sa gemme
-   de cout. Une carte pour dire « des cartes » : le joueur lit le poids de
-   l'objet sans lire de legende. Remplace la gemme ronde sur toutes les pieces. */
-.compteur {
-  position: absolute;
-  top: 1.5cqw;
-  left: 3.5cqw;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 11cqw;
-  height: 15.4cqw;
-  padding-top: 0.24em;
-  box-sizing: border-box;
-  border: 1px solid color-mix(in srgb, var(--filet) 75%, transparent);
-  border-radius: 1.5cqw;
-  background: linear-gradient(170deg, #2a2632, #100e14);
-  box-shadow: 0 0 0 1.5cqw #15131a, 0 1px 3px #000c, inset 0 1px 0 #ffffff1a;
-  color: #f2e4bd;
-  font-family: var(--police-titre);
-  font-size: 8.5cqw;
-  font-weight: 700;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Le filet interieur de la petite carte, comme sur la grande. */
-.compteur::before {
-  content: "";
-  position: absolute;
-  inset: 1.2cqw;
-  border: 1px solid color-mix(in srgb, var(--filet) 30%, transparent);
-  border-radius: 0.8cqw;
-  pointer-events: none;
-}
-
-/* La composition d'une piece est un texte qui coule, jusqu'a huit modeles :
-   une pointe plus petit, et il peut prendre toute la hauteur du cartouche. */
-.piece-carte .cartouche {
-  font-size: 7cqw;
-  line-height: 1.25;
-}
-
-.piece-carte .cartouche > span {
-  overflow-wrap: anywhere;
-}
 
 /* La rarete au lisere, comme la richesse d'un tresor au cadre. */
 .piece-carte.rare {

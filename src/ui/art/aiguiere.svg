@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Aiguière : un pichet d'argent à long bec et anse, ceinturé d'or. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#4a2430"/>
+      <stop offset="0.5" stop-color="#26111a"/>
+      <stop offset="1" stop-color="#0e0609"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.3"/>
+      <stop offset="0.6" stop-color="#ffcf6a" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#ffcf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="argent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f4f4ee"/>
+      <stop offset="0.35" stop-color="#b9bcb4"/>
+      <stop offset="0.7" stop-color="#767a74"/>
+      <stop offset="1" stop-color="#3b3e3a"/>
+    </linearGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.5" stop-color="#e2b95c"/>
+      <stop offset="1" stop-color="#7a5620"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0e0609" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0e0609" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="83"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="400" r="330" fill="url(#halo)"/>
+  <ellipse cx="340" cy="660" rx="150" ry="24" fill="#050203" opacity="0.7" filter="url(#flou)"/>
+
+  <!-- l'anse -->
+  <path d="M440 270 Q560 300 540 440 Q530 520 450 540" fill="none" stroke="url(#argent)" stroke-width="26" stroke-linecap="round"/>
+  <path d="M440 270 Q560 300 540 440 Q530 520 450 540" fill="none" stroke="#3b3e3a" stroke-width="30" opacity="0.3"/>
+  <path d="M440 270 Q560 300 540 440 Q530 520 450 540" fill="none" stroke="url(#argent)" stroke-width="22" stroke-linecap="round"/>
+  <!-- la panse -->
+  <path d="M290 250 L390 250 Q400 330 450 380 Q500 430 480 560 Q470 630 340 630 Q210 630 200 560 Q180 430 230 380 Q280 330 290 250 Z" fill="url(#argent)"/>
+  <!-- le col et le bec -->
+  <path d="M290 250 L390 250 L390 210 L330 210 L280 150 L240 190 L290 210 Z" fill="url(#argent)"/>
+  <path d="M240 190 L280 150 L200 90 L160 130 Z" fill="url(#argent)"/>
+  <path d="M290 210 L390 210" stroke="#3b3e3a" stroke-width="6"/>
+  <!-- les ceintures d'or -->
+  <path d="M232 380 Q340 420 448 380 L452 400 Q340 440 228 400 Z" fill="url(#or)"/>
+  <path d="M206 540 Q340 580 474 540 L474 560 Q340 600 206 560 Z" fill="url(#or)"/>
+  <!-- le pied -->
+  <path d="M250 640 Q340 610 430 640 L430 658 L250 658 Z" fill="url(#or)"/>
+  <!-- les gravures -->
+  <g fill="none" stroke="#3b3e3a" stroke-width="3" opacity="0.5">
+    <path d="M280 460 Q340 500 400 460"/><path d="M280 480 Q340 520 400 480"/>
+  </g>
+  <!-- les reflets -->
+  <path d="M240 330 Q220 430 240 540 Q200 440 232 330 Z" fill="#ffffff" opacity="0.35"/>
+  <path d="M300 230 L310 230 L310 250 L300 250 Z" fill="#ffffff" opacity="0.4"/>
+
+  <g fill="#ffe9a8" opacity="0.7">
+    <circle cx="110" cy="240" r="3"/><circle cx="600" cy="200" r="2.5"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="620" cy="640" r="2.5"/>
+    <path d="M130 480 L134 494 L148 498 L134 502 L130 516 L126 502 L112 498 L126 494 Z"/>
+    <path d="M590 320 L593 330 L603 333 L593 336 L590 346 L587 336 L577 333 L587 330 Z"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

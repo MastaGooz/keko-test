@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Le repli : une carte sans illustration montre un sceau, pas un trou.
+       Si on le voit dans le jeu, c'est qu'un modèle n'a pas son dessin. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#3a3a44"/>
+      <stop offset="0.5" stop-color="#1e1e26"/>
+      <stop offset="1" stop-color="#0c0c11"/>
+    </radialGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e2b95c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0c0c11" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0c0c11" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="109"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+  </defs>
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <g transform="translate(340 380)" fill="none" stroke="url(#or)" stroke-width="10">
+    <path d="M0 -180 L156 -90 L156 90 L0 180 L-156 90 L-156 -90 Z"/>
+    <path d="M0 -110 L95 -55 L95 55 L0 110 L-95 55 L-95 -55 Z" opacity="0.6"/>
+    <circle r="30" fill="url(#or)" stroke="none"/>
+  </g>
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

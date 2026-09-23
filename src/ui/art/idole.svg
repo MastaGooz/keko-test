@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Idole : une figure trapue de pierre noire aux yeux de jade, les bras
+       croisés, sur un socle d'or. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#4a2430"/>
+      <stop offset="0.5" stop-color="#26111a"/>
+      <stop offset="1" stop-color="#0e0609"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.35"/>
+      <stop offset="0.6" stop-color="#ffcf6a" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#ffcf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.4" stop-color="#e2b95c"/>
+      <stop offset="0.7" stop-color="#a9782c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <linearGradient id="pierre" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4c4a52"/>
+      <stop offset="0.5" stop-color="#26242c"/>
+      <stop offset="1" stop-color="#0f0e14"/>
+    </linearGradient>
+    <radialGradient id="jade" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#c8ffd8"/>
+      <stop offset="0.5" stop-color="#3fbf7a"/>
+      <stop offset="1" stop-color="#0e5a35"/>
+    </radialGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0e0609" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0e0609" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="71"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="380" r="330" fill="url(#halo)"/>
+  <ellipse cx="340" cy="650" rx="200" ry="26" fill="#050203" opacity="0.7" filter="url(#flou)"/>
+
+  <!-- le socle d'or -->
+  <path d="M180 640 L500 640 L520 600 L160 600 Z" fill="url(#or)"/>
+  <rect x="200" y="570" width="280" height="34" fill="#a9782c"/>
+  <!-- le corps -->
+  <path d="M230 570 L230 380 Q230 330 280 330 L400 330 Q450 330 450 380 L450 570 Z" fill="url(#pierre)"/>
+  <!-- la tête -->
+  <path d="M250 330 L250 200 Q250 150 300 150 L380 150 Q430 150 430 200 L430 330 Z" fill="url(#pierre)"/>
+  <!-- la coiffe d'or -->
+  <path d="M240 200 L440 200 L440 180 L340 110 L240 180 Z" fill="url(#or)"/>
+  <rect x="240" y="196" width="200" height="16" fill="#5e3f12" opacity="0.6"/>
+  <!-- les yeux de jade -->
+  <g fill="url(#jade)">
+    <ellipse cx="300" cy="250" rx="24" ry="16"/><ellipse cx="380" cy="250" rx="24" ry="16"/>
+  </g>
+  <g fill="none" stroke="#e2b95c" stroke-width="4">
+    <ellipse cx="300" cy="250" rx="24" ry="16"/><ellipse cx="380" cy="250" rx="24" ry="16"/>
+  </g>
+  <g fill="#c8ffd8" opacity="0.35" filter="url(#flou)">
+    <ellipse cx="300" cy="250" rx="40" ry="28"/><ellipse cx="380" cy="250" rx="40" ry="28"/>
+  </g>
+  <!-- la bouche : une fente -->
+  <rect x="316" y="292" width="48" height="10" rx="4" fill="#0f0e14"/>
+  <!-- les bras croisés -->
+  <path d="M230 400 Q290 440 350 470 L450 400 L450 440 Q360 500 330 500 L230 440 Z" fill="#0f0e14" opacity="0.7"/>
+  <path d="M230 396 Q300 430 350 460 L450 396" fill="none" stroke="#4c4a52" stroke-width="30" stroke-linecap="round"/>
+  <path d="M450 396 Q380 430 330 460 L230 396" fill="none" stroke="#3a3840" stroke-width="30" stroke-linecap="round"/>
+  <!-- le collier d'or -->
+  <path d="M260 350 Q340 390 420 350" fill="none" stroke="url(#or)" stroke-width="10"/>
+  <circle cx="340" cy="378" r="14" fill="url(#jade)"/>
+  <!-- les gravures -->
+  <g stroke="#e2b95c" stroke-width="3" opacity="0.5" fill="none">
+    <path d="M250 520 L270 500 L290 520 L310 500"/><path d="M370 520 L390 500 L410 520 L430 500"/>
+  </g>
+
+  <g fill="#ffe9a8" opacity="0.7">
+    <circle cx="110" cy="200" r="3"/><circle cx="580" cy="180" r="2.5"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="620" cy="640" r="2.5"/>
+    <path d="M130 440 L134 454 L148 458 L134 462 L130 476 L126 462 L112 458 L126 454 Z"/>
+    <path d="M560 300 L563 310 L573 313 L563 316 L560 326 L557 316 L547 313 L557 310 Z"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

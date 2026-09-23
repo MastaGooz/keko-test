@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Moulinet : la lame tourne sur elle-même, deux arcs de lumière autour,
+       le grand soleil rouge derrière. Le gros coup du Glaive. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#3a4a44"/>
+      <stop offset="0.45" stop-color="#1d2a2b"/>
+      <stop offset="1" stop-color="#0c1315"/>
+    </radialGradient>
+    <radialGradient id="soleil" cx="42%" cy="36%" r="70%">
+      <stop offset="0" stop-color="#ee8560"/>
+      <stop offset="0.55" stop-color="#c2432f"/>
+      <stop offset="1" stop-color="#7e2723"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0.6" stop-color="#d9553a" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#d9553a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="acier" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f3f7f4"/>
+      <stop offset="0.5" stop-color="#c7d3cf"/>
+      <stop offset="0.52" stop-color="#7d8c89"/>
+      <stop offset="1" stop-color="#4e5c5a"/>
+    </linearGradient>
+    <linearGradient id="fer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4f4d"/>
+      <stop offset="0.5" stop-color="#1f2423"/>
+      <stop offset="1" stop-color="#0d1110"/>
+    </linearGradient>
+    <linearGradient id="cuir" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8a5a34"/>
+      <stop offset="0.5" stop-color="#5d3a20"/>
+      <stop offset="1" stop-color="#2f1c0f"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0c1315" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0c1315" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="5"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="6"/></filter>
+    <filter id="ombre"><feGaussianBlur stdDeviation="9"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="400" r="340" fill="url(#halo)"/>
+  <circle cx="340" cy="400" r="250" fill="url(#soleil)"/>
+  <path d="M105 470 A250 250 0 0 0 575 470 A275 275 0 0 1 105 470 Z" fill="#5a1d1c" opacity="0.5" filter="url(#flou)"/>
+
+  <!-- les arcs du tournoiement : deux faucilles opposées autour du centre -->
+  <g fill="#fff3d6">
+    <path d="M60 300 C 120 120, 380 60, 560 160 C 380 110, 160 180, 80 330 Z" opacity="0.85"/>
+    <path d="M620 500 C 560 690, 300 740, 120 640 C 300 690, 520 620, 600 470 Z" opacity="0.85"/>
+    <path d="M60 300 C 120 120, 380 60, 560 160 C 380 110, 160 180, 80 330 Z" opacity="0.45" filter="url(#flou)"/>
+    <path d="M620 500 C 560 690, 300 740, 120 640 C 300 690, 520 620, 600 470 Z" opacity="0.45" filter="url(#flou)"/>
+  </g>
+  <!-- les entailles laissées par la rotation -->
+  <g fill="#0c1315" opacity="0.9" transform="translate(340 400)">
+    <path d="M-200 -120 Q-60 -140 120 -180 Q-60 -128 -200 -120 Z"/>
+    <path d="M200 120 Q60 140 -120 180 Q60 128 200 120 Z"/>
+    <path d="M-150 60 Q-30 20 90 -60 Q-30 32 -150 60 Z" opacity="0.7"/>
+  </g>
+
+  <!-- la lame, presque à plat, en pleine rotation -->
+  <g transform="translate(352 416) rotate(-28)" opacity="0.45" filter="url(#ombre)">
+    <polygon points="0,-360 -30,-300 -32,60 32,60 30,-300" fill="#0c1315"/>
+  </g>
+  <g transform="translate(340 400) rotate(-28)">
+    <polygon points="0,-360 -30,-300 -32,60 32,60 30,-300" fill="url(#acier)"/>
+    <polygon points="0,-360 -3,-300 -3,60 3,60 3,-300" fill="#e9f0ed" opacity="0.7"/>
+    <rect x="-7" y="-270" width="14" height="300" rx="7" fill="#3f4c4a" opacity="0.5"/>
+    <path d="M-96 64 Q-60 50 -34 60 L34 60 Q60 50 96 64 L96 94 Q60 82 34 90 L-34 90 Q-60 82 -96 94 Z" fill="url(#fer)"/>
+    <circle cx="0" cy="76" r="11" fill="#c9a04e"/>
+    <rect x="-15" y="90" width="30" height="140" fill="url(#cuir)"/>
+    <g stroke="#1a0f08" stroke-width="3" opacity="0.7">
+      <line x1="-15" y1="108" x2="15" y2="116"/><line x1="-15" y1="132" x2="15" y2="140"/>
+      <line x1="-15" y1="156" x2="15" y2="164"/><line x1="-15" y1="180" x2="15" y2="188"/>
+      <line x1="-15" y1="204" x2="15" y2="212"/>
+    </g>
+    <circle cx="0" cy="252" r="28" fill="url(#fer)"/>
+    <circle cx="0" cy="252" r="9" fill="#c9a04e"/>
+  </g>
+
+  <g fill="#f4efe0">
+    <polygon points="118,470 134,462 142,490 124,496" opacity="0.85"/>
+    <polygon points="540,300 556,296 552,322" opacity="0.8"/>
+    <polygon points="470,600 486,592 494,610 480,616" opacity="0.7"/>
+    <circle cx="90" cy="460" r="3" opacity="0.7"/><circle cx="600" cy="220" r="2.5" opacity="0.6"/>
+    <circle cx="150" cy="150" r="2" opacity="0.5"/><circle cx="420" cy="90" r="2" opacity="0.5"/>
+  </g>
+  <g fill="#f0b27a" opacity="0.6">
+    <circle cx="240" cy="230" r="2.5"/><circle cx="470" cy="330" r="2"/>
+    <circle cx="380" cy="560" r="2.5"/><circle cx="180" cy="470" r="2"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

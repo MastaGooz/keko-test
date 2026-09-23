@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Garde : une rondache d'acier, l'umbo d'or au centre, sur une nuit
+       bleue. Le petit bloc du Plastron. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="36%" r="75%">
+      <stop offset="0" stop-color="#2c3d5c"/>
+      <stop offset="0.5" stop-color="#15213a"/>
+      <stop offset="1" stop-color="#080d18"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0.6" stop-color="#7fb0ff" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#7fb0ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="champ" cx="35%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#4a6a9a"/>
+      <stop offset="0.6" stop-color="#22355a"/>
+      <stop offset="1" stop-color="#0f1a30"/>
+    </radialGradient>
+    <linearGradient id="acier" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f3f7f4"/>
+      <stop offset="0.45" stop-color="#b7c3c0"/>
+      <stop offset="0.55" stop-color="#6d7c79"/>
+      <stop offset="1" stop-color="#3a4644"/>
+    </linearGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6e2a8"/>
+      <stop offset="0.55" stop-color="#c9a04e"/>
+      <stop offset="1" stop-color="#7a5a22"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#080d18" stop-opacity="0"/>
+      <stop offset="1" stop-color="#080d18" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="23"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="ombre"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="390" r="330" fill="url(#halo)"/>
+
+  <!-- l'ombre portée -->
+  <circle cx="356" cy="412" r="228" fill="#040710" opacity="0.6" filter="url(#ombre)"/>
+
+  <!-- le bouclier -->
+  <circle cx="340" cy="390" r="228" fill="url(#acier)"/>
+  <circle cx="340" cy="390" r="204" fill="#0f1a30"/>
+  <circle cx="340" cy="390" r="196" fill="url(#champ)"/>
+  <!-- le liseré intérieur -->
+  <circle cx="340" cy="390" r="170" fill="none" stroke="#9fb6d8" stroke-width="3" opacity="0.45"/>
+  <!-- les rivets -->
+  <g fill="url(#or)">
+    <circle cx="340" cy="176" r="9"/><circle cx="340" cy="604" r="9"/>
+    <circle cx="126" cy="390" r="9"/><circle cx="554" cy="390" r="9"/>
+    <circle cx="189" cy="239" r="8"/><circle cx="491" cy="239" r="8"/>
+    <circle cx="189" cy="541" r="8"/><circle cx="491" cy="541" r="8"/>
+  </g>
+  <!-- les quatre branches -->
+  <g stroke="#9fb6d8" stroke-width="5" opacity="0.35" stroke-linecap="round">
+    <line x1="340" y1="230" x2="340" y2="550"/><line x1="180" y1="390" x2="500" y2="390"/>
+  </g>
+  <!-- l'umbo -->
+  <circle cx="340" cy="390" r="64" fill="url(#or)"/>
+  <circle cx="340" cy="390" r="46" fill="#a4312c"/>
+  <circle cx="326" cy="374" r="16" fill="#fff0cd" opacity="0.55"/>
+  <!-- le reflet du haut -->
+  <path d="M150 300 A228 228 0 0 1 530 300 A200 200 0 0 0 150 300 Z" fill="#ffffff" opacity="0.12"/>
+
+  <g fill="#e9f0ff" opacity="0.6">
+    <circle cx="90" cy="180" r="2.5"/><circle cx="600" cy="140" r="2"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="610" cy="640" r="2.5"/>
+    <circle cx="560" cy="80" r="2"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

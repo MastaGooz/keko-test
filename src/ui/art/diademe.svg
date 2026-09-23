@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Diadème : un cercle fin, une goutte de saphir au front, des perles. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#4a2430"/>
+      <stop offset="0.5" stop-color="#26111a"/>
+      <stop offset="1" stop-color="#0e0609"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.4"/>
+      <stop offset="0.6" stop-color="#ffcf6a" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#ffcf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.4" stop-color="#e2b95c"/>
+      <stop offset="0.7" stop-color="#a9782c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <radialGradient id="saphir" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#bfe0ff"/>
+      <stop offset="0.5" stop-color="#2d63c8"/>
+      <stop offset="1" stop-color="#0f2a63"/>
+    </radialGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0e0609" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0e0609" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="43"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="400" r="330" fill="url(#halo)"/>
+  <ellipse cx="340" cy="590" rx="230" ry="26" fill="#050203" opacity="0.7" filter="url(#flou)"/>
+
+  <!-- le cercle, vu de trois quarts : une ellipse épaisse -->
+  <ellipse cx="340" cy="470" rx="230" ry="90" fill="none" stroke="url(#or)" stroke-width="30"/>
+  <ellipse cx="340" cy="470" rx="230" ry="90" fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.5"/>
+  <ellipse cx="340" cy="470" rx="230" ry="90" fill="none" stroke="#fff1c2" stroke-width="4" opacity="0.4" stroke-dasharray="80 400" stroke-dashoffset="-320"/>
+  <!-- le fronton : deux volutes qui montent vers la goutte -->
+  <path d="M340 385 C 250 390, 190 350, 220 290 C 250 250, 310 270, 300 320 C 296 340, 270 340, 268 322" fill="none" stroke="url(#or)" stroke-width="16" stroke-linecap="round"/>
+  <path d="M340 385 C 430 390, 490 350, 460 290 C 430 250, 370 270, 380 320 C 384 340, 410 340, 412 322" fill="none" stroke="url(#or)" stroke-width="16" stroke-linecap="round"/>
+  <path d="M340 385 L340 330" stroke="url(#or)" stroke-width="18" stroke-linecap="round"/>
+  <!-- la goutte de saphir -->
+  <path d="M340 200 C 300 260, 290 290, 290 320 C 290 350, 312 372, 340 372 C 368 372, 390 350, 390 320 C 390 290, 380 260, 340 200 Z" fill="url(#saphir)"/>
+  <path d="M340 200 C 300 260, 290 290, 290 320 C 290 350, 312 372, 340 372 C 368 372, 390 350, 390 320 C 390 290, 380 260, 340 200 Z" fill="none" stroke="url(#or)" stroke-width="7"/>
+  <ellipse cx="322" cy="290" rx="9" ry="20" fill="#ffffff" opacity="0.5"/>
+  <!-- les perles -->
+  <g fill="#fff6e0">
+    <circle cx="150" cy="420" r="12"/><circle cx="530" cy="420" r="12"/>
+    <circle cx="230" cy="372" r="10"/><circle cx="450" cy="372" r="10"/>
+    <circle cx="118" cy="478" r="10"/><circle cx="562" cy="478" r="10"/>
+  </g>
+  <g fill="#c9a04e" opacity="0.45">
+    <circle cx="154" cy="424" r="6"/><circle cx="534" cy="424" r="6"/>
+    <circle cx="234" cy="376" r="5"/><circle cx="454" cy="376" r="5"/>
+  </g>
+
+  <g fill="#ffe9a8" opacity="0.7">
+    <circle cx="110" cy="200" r="3"/><circle cx="580" cy="180" r="2.5"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="620" cy="620" r="2.5"/>
+    <path d="M540 260 L543 270 L553 273 L543 276 L540 286 L537 276 L527 273 L537 270 Z"/>
+    <path d="M130 300 L134 314 L148 318 L134 322 L130 336 L126 322 L112 318 L126 314 Z"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

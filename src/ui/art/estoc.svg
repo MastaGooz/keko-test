@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Estoc : une lame courte qui pique vers la droite, sous une lune pâle.
+       Le coup le plus léger du Glaive : froid, net, sans fracas. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="36%" r="75%">
+      <stop offset="0" stop-color="#2d3f45"/>
+      <stop offset="0.5" stop-color="#16242a"/>
+      <stop offset="1" stop-color="#0a1114"/>
+    </radialGradient>
+    <radialGradient id="lune" cx="40%" cy="36%" r="70%">
+      <stop offset="0" stop-color="#fbf3dc"/>
+      <stop offset="0.7" stop-color="#d9cfae"/>
+      <stop offset="1" stop-color="#9d9478"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0.6" stop-color="#e7dcb8" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#e7dcb8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="acier" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f3f7f4"/>
+      <stop offset="0.5" stop-color="#c7d3cf"/>
+      <stop offset="0.52" stop-color="#7d8c89"/>
+      <stop offset="1" stop-color="#4e5c5a"/>
+    </linearGradient>
+    <linearGradient id="fer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4f4d"/>
+      <stop offset="0.5" stop-color="#1f2423"/>
+      <stop offset="1" stop-color="#0d1110"/>
+    </linearGradient>
+    <linearGradient id="cuir" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a5a34"/>
+      <stop offset="0.5" stop-color="#5d3a20"/>
+      <stop offset="1" stop-color="#2f1c0f"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0a1114" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0a1114" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="ombre"><feGaussianBlur stdDeviation="9"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="380" cy="330" r="300" fill="url(#halo)"/>
+  <circle cx="380" cy="330" r="190" fill="url(#lune)"/>
+  <!-- les taches de la lune -->
+  <g fill="#8f866a" opacity="0.35">
+    <circle cx="430" cy="290" r="26"/><circle cx="330" cy="380" r="18"/>
+    <circle cx="460" cy="400" r="14"/><circle cx="360" cy="250" r="10"/>
+  </g>
+
+  <!-- les traînées du coup, qui partent de la gauche -->
+  <g fill="#e7dcb8" opacity="0.55" transform="rotate(-22 340 420)">
+    <path d="M40 400 Q200 392 380 400 Q200 408 40 400 Z"/>
+    <path d="M90 440 Q230 434 330 440 Q230 446 90 440 Z" opacity="0.7"/>
+    <path d="M120 362 Q240 356 320 362 Q240 368 120 362 Z" opacity="0.6"/>
+  </g>
+
+  <!-- l'ombre de la lame sur la lune -->
+  <g transform="translate(352 436) rotate(-22)" opacity="0.4" filter="url(#ombre)">
+    <polygon points="300,0 210,-16 -40,-16 -40,16 210,16" fill="#0a1114"/>
+  </g>
+
+  <!-- la lame, horizontale, la pointe à droite -->
+  <g transform="translate(340 420) rotate(-22)">
+    <polygon points="310,0 220,-17 -40,-17 -40,17 220,17" fill="url(#acier)"/>
+    <polygon points="310,0 220,-2 -40,-2 -40,2 220,2" fill="#eef3f0" opacity="0.8"/>
+    <rect x="-20" y="-4" width="200" height="8" rx="4" fill="#3f4c4a" opacity="0.5"/>
+    <!-- la garde -->
+    <path d="M-40 -52 Q-52 -20 -44 0 Q-52 20 -40 52 L-64 52 Q-58 20 -64 0 Q-58 -20 -64 -52 Z" fill="url(#fer)"/>
+    <!-- la poignée -->
+    <rect x="-160" y="-11" width="98" height="22" fill="url(#cuir)"/>
+    <g stroke="#1a0f08" stroke-width="3" opacity="0.7">
+      <line x1="-78" y1="-11" x2="-84" y2="11"/><line x1="-98" y1="-11" x2="-104" y2="11"/>
+      <line x1="-118" y1="-11" x2="-124" y2="11"/><line x1="-138" y1="-11" x2="-144" y2="11"/>
+    </g>
+    <circle cx="-176" cy="0" r="20" fill="url(#fer)"/>
+    <circle cx="-176" cy="0" r="7" fill="#c9a04e"/>
+    <!-- l'étincelle de la pointe -->
+    <circle cx="316" cy="-2" r="7" fill="#fff6dc"/>
+    <path d="M316 -30 L320 -6 L344 -2 L320 2 L316 26 L312 2 L288 -2 L312 -6 Z" fill="#fff6dc" opacity="0.9"/>
+  </g>
+
+  <g fill="#f4efe0" opacity="0.6">
+    <circle cx="120" cy="200" r="2.5"/><circle cx="560" cy="120" r="2"/>
+    <circle cx="90" cy="560" r="2"/><circle cx="600" cy="520" r="2.5"/>
+    <circle cx="200" cy="640" r="2"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

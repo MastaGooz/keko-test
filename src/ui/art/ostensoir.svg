@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Ostensoir : un soleil de rayons d'or autour d'une lunule blanche, sur
+       un pied. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#4a2430"/>
+      <stop offset="0.5" stop-color="#26111a"/>
+      <stop offset="1" stop-color="#0e0609"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.5"/>
+      <stop offset="0.6" stop-color="#ffcf6a" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#ffcf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.4" stop-color="#e2b95c"/>
+      <stop offset="0.7" stop-color="#a9782c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <radialGradient id="lunule" cx="45%" cy="40%" r="60%">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="0.7" stop-color="#f4ead0"/>
+      <stop offset="1" stop-color="#c9b78a"/>
+    </radialGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0e0609" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0e0609" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="59"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="360" r="340" fill="url(#halo)"/>
+  <ellipse cx="340" cy="660" rx="150" ry="24" fill="#050203" opacity="0.7" filter="url(#flou)"/>
+
+  <!-- les rayons : seize, alternés longs et courts -->
+  <g fill="url(#or)" transform="translate(340 360)">
+    <g id="r"><path d="M-14 -100 L0 -230 L14 -100 Z"/><path d="M-10 -100 L0 -170 L10 -100 Z" transform="rotate(22.5)"/></g>
+    <use href="#r" transform="rotate(45)"/><use href="#r" transform="rotate(90)"/><use href="#r" transform="rotate(135)"/>
+    <use href="#r" transform="rotate(180)"/><use href="#r" transform="rotate(225)"/><use href="#r" transform="rotate(270)"/><use href="#r" transform="rotate(315)"/>
+  </g>
+  <!-- la couronne du soleil -->
+  <circle cx="340" cy="360" r="108" fill="url(#or)"/>
+  <circle cx="340" cy="360" r="108" fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.6"/>
+  <circle cx="340" cy="360" r="86" fill="#5e3f12" opacity="0.6"/>
+  <!-- la lunule -->
+  <circle cx="340" cy="360" r="74" fill="url(#lunule)"/>
+  <circle cx="340" cy="360" r="74" fill="none" stroke="#e2b95c" stroke-width="5"/>
+  <!-- les perles de la couronne -->
+  <g fill="#fff6e0">
+    <circle cx="340" cy="262" r="7"/><circle cx="340" cy="458" r="7"/><circle cx="242" cy="360" r="7"/><circle cx="438" cy="360" r="7"/>
+    <circle cx="271" cy="291" r="6"/><circle cx="409" cy="291" r="6"/><circle cx="271" cy="429" r="6"/><circle cx="409" cy="429" r="6"/>
+  </g>
+  <!-- la tige, le noeud, le pied -->
+  <rect x="326" y="466" width="28" height="80" fill="url(#or)"/>
+  <ellipse cx="340" cy="560" rx="40" ry="20" fill="url(#or)"/>
+  <rect x="330" y="574" width="20" height="40" fill="url(#or)"/>
+  <path d="M200 650 Q340 590 480 650 L480 664 L200 664 Z" fill="url(#or)"/>
+  <path d="M200 650 Q340 590 480 650" fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.6"/>
+  <!-- la petite croix au sommet -->
+  <rect x="335" y="100" width="10" height="44" rx="3" fill="url(#or)"/>
+  <rect x="320" y="112" width="40" height="10" rx="3" fill="url(#or)"/>
+
+  <g fill="#ffe9a8" opacity="0.7">
+    <circle cx="90" cy="220" r="3"/><circle cx="600" cy="200" r="2.5"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="620" cy="620" r="2.5"/>
+    <path d="M140 500 L144 514 L158 518 L144 522 L140 536 L136 522 L122 518 L136 514 Z"/>
+    <path d="M550 520 L553 530 L563 533 L553 536 L550 546 L547 536 L537 533 L547 530 Z"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

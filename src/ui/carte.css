@@ -1,0 +1,309 @@
+/* ==========================================================================
+   LA CARTE : le gabarit « Serment de cendre », porté dans le jeu.
+
+   Choisi par Keko sur le prototype (`proto.ts`, derrière `?proto`) : une
+   plaque de laiton rectangulaire, une coque déchirée du même laiton posée
+   dessus, une surface sombre, et L'ILLUSTRATION EN PLEIN FORMAT sous le
+   cadre -- le nom, le texte d'effet et le type sont dessinés directement sur
+   elle. Pas de papier, pas de texte d'ambiance.
+
+   `.carte` (dans styles.css) garde tout ce qui fait d'elle un objet du jeu :
+   sa taille (`--large`), l'éventail, les états (jouable, achève, hors-prix,
+   visée, saisie), la plongée sous le bord. Ici ne vit que sa PEAU.
+
+   Tout est en cqw : `.carte` est le conteneur de taille, et les proportions
+   sont celles réglées sur le prototype à 264 px de large. Un `%` vertical se
+   rapporte à la hauteur de la carte (rapport 5/7 dans le jeu, 344/502 sur le
+   prototype : 4 % de moins, invisible).
+   ========================================================================== */
+
+.carte {
+  /* Le laiton du cadre : SANS l'arrêt sombre du dégradé d'origine (Keko :
+     « enlever les deux traits noirs »). */
+  --laiton: linear-gradient(125deg, #f2ddaa 0%, #a88c5f 21%, #d2b787 23%, #d2b787 53%, #695c45 80%, #e7cda0);
+  /* La déchirure de la coque, et de tout ce qui s'y cale. */
+  --decoupe: polygon(4% 0, 91% 1.5%, 100% 8%, 98% 92%, 93% 98%, 55% 99%, 50% 100%, 44% 99%, 3% 97%, 0 88%, 1% 5%);
+  --police-titre: "Grenze Gotisch", Georgia, "Palatino Linotype", serif;
+  --police-texte: "Crimson Pro", Georgia, "Palatino Linotype", serif;
+  --police-type: "Barlow Condensed", "Arial Narrow", sans-serif;
+  /* Le chiffre dans le texte d'effet, et les trois tons de l'écusson : une
+     attaque est rouge. Les autres natures les redéfinissent plus bas. */
+  --accent: #ffb98e;
+  --ecusson-haut: #df7650;
+  --ecusson-mi: #a4312c;
+  --ecusson-bas: #672729;
+  --ecusson-ombre: #5b2727;
+  isolation: isolate;
+  /* En %, PAS en cqw : les cqw de `.carte` elle-même se mesurent sur son
+     ancêtre conteneur -- ici aucun, donc sur le viewport -- et la carte
+     réduite du râtelier devenait une pilule. Les deux valeurs gardent le coin
+     rond sur une carte 5/7. */
+  border-radius: 3% / 2.14%;
+  /* LE FOND EST LE MÊME LAITON QUE LA COQUE, ASSOMBRI D'UN VOILE UNIFORME :
+     c'est ce voile seul qui fait le relief. Une ombre sous la coque, même
+     courte, la « différenciait trop du fond » (Keko). */
+  background:
+    linear-gradient(#00000030, #00000030),
+    var(--laiton);
+  box-shadow:
+    inset 0 0 0 1px #4a3d2880,
+    0 0.5rem 0.75rem #0009;
+  color: #f1e6cf;
+  font-family: var(--police-texte);
+}
+
+/* La coque déchirée, en laiton plein. */
+.carte > .coque {
+  position: absolute;
+  inset: 0;
+  background: var(--laiton);
+  clip-path: var(--decoupe);
+}
+
+/* La surface sombre, un cheveu à l'intérieur de la coque. */
+.carte > .surface {
+  position: absolute;
+  inset: 1.163cqw;
+  background: #171b1d;
+  clip-path: var(--decoupe);
+}
+
+/* L'ILLUSTRATION EN PLEIN FORMAT : exactement la boîte de la surface, donc
+   elle va jusqu'aux bords déchirés. `cover` : les dessins ont le rapport de
+   la carte (680 x 1000), il ne se rogne que 2 % en haut et en bas. */
+.carte > .art {
+  position: absolute;
+  inset: 1.163cqw;
+  clip-path: var(--decoupe);
+  background: var(--art) center / cover no-repeat, #171b1d;
+}
+
+/* L'ÉCUSSON DU COÛT, en haut à gauche : un liseré d'encre qui le découpe sur
+   le laiton, un filet de laiton clair, puis la couleur. Sa pointe vers le bas
+   met son centre visuel plus haut que le centre de sa boîte, d'où le chiffre
+   remonté. C'est la seule chose qui se lit dans l'éventail au repos : la
+   bande gauche est tout ce que la voisine laisse voir. */
+.carte > .ecusson {
+  position: absolute;
+  z-index: 3;
+  left: 1%;
+  top: 0.4%;
+  width: 19%;
+  height: 16.5%;
+  display: grid;
+  place-items: center;
+  background: #1a1316;
+  clip-path: polygon(0 0, 98% 5%, 90% 68%, 50% 100%, 10% 76%);
+  filter: drop-shadow(0.35cqw 0.5cqw 0 #0000008c);
+}
+
+.carte > .ecusson::before {
+  content: "";
+  position: absolute;
+  inset: 0.9cqw 1.1cqw 1.3cqw;
+  background: linear-gradient(160deg, #f4dfb0, #c9a86e 70%, #a88c5f);
+  clip-path: polygon(0 0, 100% 4%, 91% 68%, 50% 100%, 9% 76%);
+}
+
+.carte > .ecusson::after {
+  content: "";
+  position: absolute;
+  inset: 2.2cqw 2.5cqw 3cqw;
+  background: linear-gradient(130deg, var(--ecusson-haut), var(--ecusson-mi) 62%, var(--ecusson-bas));
+  clip-path: polygon(0 0, 100% 4%, 91% 68%, 50% 100%, 9% 76%);
+  box-shadow: inset 0.5cqw 0.6cqw 0 #f5bd8266;
+}
+
+.carte > .ecusson > span {
+  position: relative;
+  z-index: 1;
+  display: block;
+  font: 600 18.5cqw/0.8 var(--police-titre);
+  color: #fff0cd;
+  text-shadow: 0.581cqw 0.872cqw 0 var(--ecusson-ombre);
+  transform: translate(-2%, -24%);
+}
+
+/* LE NOM, sur le haut de la bande de texte, souligné d'un fin trait -- posé
+   sur l'illustration, donc en crème avec un cerne sombre. */
+.carte > .nom-carte {
+  position: absolute;
+  z-index: 2;
+  top: 62.5%;
+  left: 8%;
+  right: 8%;
+  height: 9%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 700 8.4cqw/1 var(--police-titre);
+  white-space: nowrap;
+  overflow: hidden;
+  color: #f7ead0;
+  text-shadow:
+    0 0.5cqw 0 #14181a,
+    0 0 3cqw #000c;
+}
+
+.carte > .nom-carte::after {
+  content: "";
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: -0.6cqw;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #f7ead099 20% 80%, transparent);
+}
+
+/* LE TEXTE D'EFFET, sous le nom. SA TAILLE SUIT SA LONGUEUR : trois crans
+   posés au rendu d'après le nombre de caractères (`cran()` dans render.ts).
+   Mesuré sur le prototype : l'effet de référence de 140 caractères tient au
+   cran long sans toucher le type. */
+.carte > .effet-carte {
+  position: absolute;
+  z-index: 2;
+  left: 8%;
+  right: 8%;
+  top: 73%;
+  text-align: center;
+  font: 400 6cqw/1.25 var(--police-texte);
+  color: #f1e6cf;
+  text-shadow: 0 0.4cqw 0.8cqw #000a;
+}
+
+.carte > .effet-carte.moyen {
+  font-size: 5.8cqw;
+  line-height: 1.22;
+}
+
+.carte > .effet-carte.long {
+  font-size: 5cqw;
+  line-height: 1.2;
+}
+
+.carte > .effet-carte b {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.carte > .effet-carte small {
+  font-size: 85%;
+  font-style: italic;
+  color: #c9bba3;
+}
+
+/* LE TYPE, gravé en bas du cadre. */
+.carte > .type-carte {
+  position: absolute;
+  z-index: 2;
+  bottom: 3%;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font: 600 3.488cqw/1 var(--police-type);
+  letter-spacing: 1.163cqw;
+  text-indent: 1.163cqw;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #e7c895;
+}
+
+/* La marque « peut achever » : une étoile au coin haut droit. */
+.carte > .marque {
+  position: absolute;
+  z-index: 3;
+  top: 3cqw;
+  right: 5cqw;
+  font-size: 9cqw;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 0 6px #fff8;
+}
+
+/* --- LES NATURES : la couleur de l'écusson et du chiffre --------------------
+
+   Une attaque est rouge (la couleur du gabarit), une défense est bleue, un
+   consommable est vert, un trésor est d'or. Le cadre ne change pas : c'est
+   l'illustration qui porte l'identité, l'écusson ne fait que la confirmer. */
+
+.carte.defense {
+  --accent: #9fd0ff;
+  --ecusson-haut: #6e9fe0;
+  --ecusson-mi: #2d5aa8;
+  --ecusson-bas: #1b3468;
+  --ecusson-ombre: #1b2d55;
+}
+
+.carte.consommable {
+  --accent: #a6f0b0;
+  --ecusson-haut: #7fd88f;
+  --ecusson-mi: #2f8f4e;
+  --ecusson-bas: #1a5530;
+  --ecusson-ombre: #173f27;
+}
+
+.carte.tresor {
+  --accent: #ffd98a;
+  --ecusson-haut: #f6e2a8;
+  --ecusson-mi: #c9a04e;
+  --ecusson-bas: #7a5a22;
+  --ecusson-ombre: #4a3410;
+}
+
+/* Un trésor mort n'a pas de coût : l'écusson porte le sceau, en encre sur
+   l'or. Le jour où il se joue, il portera son coût -- partout. */
+.carte.tresor > .ecusson .dessin-sceau {
+  display: block;
+  width: 9cqw;
+  height: 9cqw;
+  color: #3a2a10;
+  transform: translate(2%, 22%);
+}
+
+/* Le plus riche des trésors luit ; les deux autres se distinguent à leur
+   dessin. On préfère peu de gros trésors, encore faut-il le voir. */
+.carte.tresor.fastueux {
+  box-shadow:
+    inset 0 0 0 1px #4a3d2880,
+    0 0 0 1px #ffd98a33,
+    0 0 0.9rem #ffbf4a40,
+    0 0.5rem 0.75rem #0009;
+}
+
+/* --- LES PIÈCES D'ÉQUIPEMENT ------------------------------------------------
+
+   Le compteur remplace l'écusson : COMBIEN DE CARTES la pièce ajoute au deck,
+   dans une petite case EN FORME DE CARTE (5/7) -- une carte pour dire « des
+   cartes ». Keko : « chiffre en haut à gauche, rectangle en forme de carte,
+   pour tous les objets ». De fer sombre et non de couleur : ce n'est pas de
+   l'énergie. */
+.carte.piece-carte > .ecusson {
+  --ecusson-haut: #4a5058;
+  --ecusson-mi: #23272e;
+  --ecusson-bas: #0f1216;
+  --ecusson-ombre: #000;
+  width: 13.5%;
+  height: 13.5%;
+  left: 2.5%;
+  top: 1.6%;
+  clip-path: none;
+  border-radius: 1.2cqw;
+}
+
+.carte.piece-carte > .ecusson::before {
+  inset: 0.9cqw;
+  clip-path: none;
+  border-radius: 0.8cqw;
+}
+
+.carte.piece-carte > .ecusson::after {
+  inset: 1.8cqw;
+  clip-path: none;
+  border-radius: 0.5cqw;
+  box-shadow: inset 0 0.4cqw 0 #ffffff22;
+}
+
+.carte.piece-carte > .ecusson > span {
+  font-size: 11cqw;
+  transform: translate(0, -6%);
+}

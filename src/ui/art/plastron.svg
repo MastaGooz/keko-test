@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Plastron : une cuirasse d'acier, l'encolure et les épaulières, un
+       rivet d'or au sternum. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="36%" r="75%">
+      <stop offset="0" stop-color="#2c3d5c"/>
+      <stop offset="0.5" stop-color="#15213a"/>
+      <stop offset="1" stop-color="#080d18"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0.6" stop-color="#7fb0ff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#7fb0ff" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="acier" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#eef3f1"/>
+      <stop offset="0.4" stop-color="#b3c0bd"/>
+      <stop offset="0.6" stop-color="#6d7c79"/>
+      <stop offset="1" stop-color="#2f3a38"/>
+    </linearGradient>
+    <linearGradient id="acierSombre" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7d8c89"/>
+      <stop offset="1" stop-color="#2f3a38"/>
+    </linearGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6e2a8"/>
+      <stop offset="0.55" stop-color="#c9a04e"/>
+      <stop offset="1" stop-color="#7a5a22"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#080d18" stop-opacity="0"/>
+      <stop offset="1" stop-color="#080d18" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="103"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="ombre"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="400" r="330" fill="url(#halo)"/>
+
+  <!-- l'ombre -->
+  <path d="M150 260 Q340 200 530 260 L540 460 Q540 620 340 680 Q140 620 140 460 Z" fill="#040710" opacity="0.6" filter="url(#ombre)" transform="translate(12 16)"/>
+  <!-- les épaulières -->
+  <path d="M110 300 Q130 220 210 230 L230 330 L130 360 Z" fill="url(#acierSombre)"/>
+  <path d="M570 300 Q550 220 470 230 L450 330 L550 360 Z" fill="url(#acierSombre)"/>
+  <!-- la cuirasse -->
+  <path d="M150 260 Q220 230 270 240 Q300 300 340 300 Q380 300 410 240 Q460 230 530 260 L540 460 Q540 620 340 680 Q140 620 140 460 Z" fill="url(#acier)"/>
+  <!-- l'encolure -->
+  <path d="M270 240 Q300 300 340 300 Q380 300 410 240 Q380 270 340 272 Q300 270 270 240 Z" fill="#0f1a30"/>
+  <!-- la ligne du sternum et les pectoraux -->
+  <path d="M340 300 L340 640" stroke="#2f3a38" stroke-width="6" opacity="0.7"/>
+  <path d="M190 400 Q260 350 330 400 M490 400 Q420 350 350 400" fill="none" stroke="#2f3a38" stroke-width="5" opacity="0.6"/>
+  <path d="M190 400 Q260 350 330 400 M490 400 Q420 350 350 400" fill="none" stroke="#eef3f1" stroke-width="2" opacity="0.5" transform="translate(0 6)"/>
+  <!-- la taille : les tassettes -->
+  <path d="M160 520 Q340 580 520 520 L520 548 Q340 610 160 548 Z" fill="url(#acierSombre)"/>
+  <path d="M175 570 Q340 630 505 570 L505 596 Q340 660 175 596 Z" fill="url(#acierSombre)" opacity="0.9"/>
+  <!-- les rivets d'or -->
+  <g fill="url(#or)">
+    <circle cx="340" cy="420" r="14"/>
+    <circle cx="200" cy="300" r="7"/><circle cx="480" cy="300" r="7"/>
+    <circle cx="180" cy="540" r="6"/><circle cx="500" cy="540" r="6"/><circle cx="340" cy="560" r="6"/>
+    <circle cx="150" cy="330" r="6"/><circle cx="530" cy="330" r="6"/>
+  </g>
+  <!-- le reflet -->
+  <path d="M180 290 Q200 400 220 520 Q170 420 170 300 Z" fill="#ffffff" opacity="0.28"/>
+
+  <g fill="#e9f0ff" opacity="0.6">
+    <circle cx="90" cy="180" r="2.5"/><circle cx="600" cy="140" r="2"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="610" cy="640" r="2.5"/>
+    <circle cx="560" cy="80" r="2"/><circle cx="120" cy="90" r="2"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Torque : un col d'or torsadé, ouvert en bas, deux boules aux bouts. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#4a2430"/>
+      <stop offset="0.5" stop-color="#26111a"/>
+      <stop offset="1" stop-color="#0e0609"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.35"/>
+      <stop offset="0.6" stop-color="#ffcf6a" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#ffcf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.4" stop-color="#e2b95c"/>
+      <stop offset="0.7" stop-color="#a9782c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <radialGradient id="boule" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.5" stop-color="#d9a24a"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </radialGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0e0609" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0e0609" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="79"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="400" r="330" fill="url(#halo)"/>
+
+  <!-- l'ombre -->
+  <path d="M262 590 A 220 220 0 1 1 438 590" fill="none" stroke="#050203" stroke-width="60" opacity="0.5" filter="url(#flou)" transform="translate(10 14)"/>
+  <!-- l'anneau ouvert -->
+  <path d="M262 590 A 220 220 0 1 1 418 590" fill="none" stroke="url(#or)" stroke-width="54" stroke-linecap="round"/>
+  <path d="M262 590 A 220 220 0 1 1 418 590" fill="none" stroke="#5e3f12" stroke-width="58" opacity="0.35"/>
+  <path d="M262 590 A 220 220 0 1 1 418 590" fill="none" stroke="url(#or)" stroke-width="50" stroke-linecap="round"/>
+  <!-- la torsade : des traits obliques le long de l'anneau -->
+  <g fill="none" stroke="#5e3f12" stroke-width="5" opacity="0.45">
+    <path d="M262 590 A 220 220 0 1 1 418 590" stroke-dasharray="10 22" stroke-width="50"/>
+  </g>
+  <path d="M262 590 A 220 220 0 1 1 418 590" fill="none" stroke="#fff1c2" stroke-width="6" opacity="0.4" stroke-dasharray="120 320" stroke-dashoffset="-380"/>
+  <!-- les boules terminales -->
+  <circle cx="262" cy="596" r="44" fill="url(#boule)"/>
+  <circle cx="418" cy="596" r="44" fill="url(#boule)"/>
+  <circle cx="262" cy="596" r="44" fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.6"/>
+  <circle cx="418" cy="596" r="44" fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.6"/>
+  <g fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.5">
+    <circle cx="262" cy="596" r="26"/><circle cx="418" cy="596" r="26"/>
+  </g>
+  <circle cx="250" cy="584" r="10" fill="#ffffff" opacity="0.4"/>
+  <circle cx="406" cy="584" r="10" fill="#ffffff" opacity="0.4"/>
+
+  <g fill="#ffe9a8" opacity="0.7">
+    <circle cx="110" cy="200" r="3"/><circle cx="580" cy="180" r="2.5"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="620" cy="640" r="2.5"/>
+    <path d="M140 300 L144 314 L158 318 L144 322 L140 336 L136 322 L122 318 L136 314 Z"/>
+    <path d="M540 300 L543 310 L553 313 L543 316 L540 326 L537 316 L527 313 L537 310 Z"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

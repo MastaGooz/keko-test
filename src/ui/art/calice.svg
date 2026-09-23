@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Calice : une coupe d'or, un noeud, un pied large, un rubis à la
+       ceinture. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#4a2430"/>
+      <stop offset="0.5" stop-color="#26111a"/>
+      <stop offset="1" stop-color="#0e0609"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.4"/>
+      <stop offset="0.6" stop-color="#ffcf6a" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#ffcf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.35" stop-color="#e2b95c"/>
+      <stop offset="0.7" stop-color="#a9782c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <linearGradient id="orBas" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e2b95c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <radialGradient id="rubis" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#ff8f8a"/>
+      <stop offset="0.5" stop-color="#c62633"/>
+      <stop offset="1" stop-color="#5a0f18"/>
+    </radialGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0e0609" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0e0609" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="61"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="380" r="330" fill="url(#halo)"/>
+  <ellipse cx="340" cy="660" rx="170" ry="24" fill="#050203" opacity="0.7" filter="url(#flou)"/>
+
+  <!-- la coupe -->
+  <path d="M170 220 Q170 420 340 440 Q510 420 510 220 Z" fill="url(#or)"/>
+  <ellipse cx="340" cy="220" rx="170" ry="34" fill="#5e3f12"/>
+  <ellipse cx="340" cy="220" rx="170" ry="34" fill="none" stroke="#fff1c2" stroke-width="6" opacity="0.7"/>
+  <ellipse cx="340" cy="226" rx="150" ry="22" fill="#3a0d16"/>
+  <!-- la ceinture de la coupe -->
+  <path d="M188 320 Q340 360 492 320" fill="none" stroke="#5e3f12" stroke-width="4" opacity="0.6"/>
+  <path d="M188 330 Q340 370 492 330" fill="none" stroke="#fff1c2" stroke-width="3" opacity="0.4"/>
+  <circle cx="340" cy="346" r="22" fill="url(#rubis)"/>
+  <circle cx="340" cy="346" r="22" fill="none" stroke="#5e3f12" stroke-width="3"/>
+  <circle cx="250" cy="330" r="10" fill="#fff6e0"/><circle cx="430" cy="330" r="10" fill="#fff6e0"/>
+  <!-- la tige et le noeud -->
+  <rect x="322" y="436" width="36" height="60" fill="url(#or)"/>
+  <ellipse cx="340" cy="510" rx="52" ry="26" fill="url(#or)"/>
+  <ellipse cx="340" cy="510" rx="52" ry="26" fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.6"/>
+  <rect x="326" y="530" width="28" height="60" fill="url(#or)"/>
+  <!-- le pied -->
+  <path d="M190 650 Q340 570 490 650 L490 668 L190 668 Z" fill="url(#orBas)"/>
+  <path d="M190 650 Q340 570 490 650" fill="none" stroke="#fff1c2" stroke-width="3" opacity="0.4"/>
+  <!-- le reflet -->
+  <path d="M210 250 Q216 360 300 410 Q240 380 214 250 Z" fill="#ffffff" opacity="0.28"/>
+
+  <g fill="#ffe9a8" opacity="0.7">
+    <circle cx="110" cy="200" r="3"/><circle cx="580" cy="180" r="2.5"/>
+    <circle cx="70" cy="600" r="2"/><circle cx="620" cy="620" r="2.5"/>
+    <path d="M130 420 L134 434 L148 438 L134 442 L130 456 L126 442 L112 438 L126 434 Z"/>
+    <path d="M560 460 L563 470 L573 473 L563 476 L560 486 L557 476 L547 473 L557 470 Z"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

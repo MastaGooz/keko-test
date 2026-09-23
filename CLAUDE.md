@@ -259,200 +259,65 @@ d'un de ces trois éléments, le test répondait non — et il avait tort.*
 
 ## État actuel
 
-**LA PAGE MONTRE LE PROTOTYPE DE CARTE, PAS LE JEU** (`src/entree.ts`) — le
-temps de reprendre le dessin des cartes en profondeur, une couche à la fois,
-avec Keko : la carte en réduit (le râtelier) et en taille normale (la main),
-côte à côte, sans rien autour. Le jeu n'a pas bougé, il est derrière
-**`?jeu`** (<https://mastagooz.github.io/keko-test/?jeu>). Le prototype vit
-dans `ui/proto.ts` + `ui/proto.css`, à part des styles du jeu, pour repartir
-d'une feuille blanche. Étape 1 : le contour seul, au rapport des cartes Magic.
-**Étape 2 : LE CADRE DE KEKO**, un PNG qu'il a dessiné (`public/cadre.png`) —
-double filet néon rouge et sa lueur sur une bande noire, la face transparente.
-C'est **la borne « pas d'images » levée par Keko lui-même**, pour un cadre
-unique réutilisé par toutes les cartes. Ce qu'il faut savoir :
+**LE GABARIT « SERMENT DE CENDRE » EST LE DESIGN DU JEU** (`ui/carte.css`,
+`corpsCarte` dans `render.ts`). Keko : « on passe notre design en design du
+jeu ». Il a été choisi sur une planche de prototype qui a remplacé le jeu le
+temps de le trouver ; la planche reste derrière **`?proto`**
+(`ui/proto.ts`), pour juger une retouche de carte sans gagner un combat.
+L'histoire de ce choix — le cadre néon de Keko, « Entaille du Néant », la
+version parchemin, les trois essais de full art — est dans `git log` et dans
+les commentaires de `proto.css`.
 
-- l'original fait 2100 × 2900 et 2,3 Mo ; on sert une **réduction à 1050 px
-  (510 Ko)**, largement assez pour 400 px d'affichage. Si Keko refait le cadre,
-  refaire la réduction (Pillow, LANCZOS) ;
-- le cadre visible fait **2000 × 2800 (5/7 pile) dans une marge transparente
-  de 50 px** : la boîte de la carte est ce cadre, l'image déborde de sa marge
-  (2,5 % en largeur, 1,79 % en hauteur) pour que la lueur sorte sans agrandir la
-  boîte ;
-- **la face doit être noire** : la bande du cadre est du noir opaque ;
-- **la couleur se change par filtre** (`hue-rotate`, `saturate(0)` pour le
-  gris) : le noir reste noir, seul le néon tourne. Ce n'est pas un aplat sur
-  transparent, donc pas un masque — la lueur et le relief seraient perdus ;
-- son URL porte la date du build (`?v=`), sinon le navigateur ressert l'ancien
-  cadre quand Keko le change (piège déjà rencontré sur les portraits).
-- **le coût en énergie est une SPHÈRE en haut à gauche, par-dessus le coin du
-  cadre** : un verre noir bombé, un anneau néon qui rayonne, le chiffre
-  lumineux. Elle chevauche les deux filets du coin — c'est ce qui la fait tenir
-  *au* cadre, comme sertie, plutôt que posée dans la face. Elle prend le même
-  filtre de teinte que le cadre, pour tourner avec lui. Demandé par Keko « en
-  respectant le style actuel ». Réglée une fois : 17 % de la largeur (elle
-  était « un poil grosse »), le chiffre à 60 % du diamètre, un second anneau
-  fin à l'intérieur en écho aux deux filets du cadre, et **Orbitron** pour le
-  chiffre — une géométrique anguleuse, la police du néon et des cadrans, là où
-  une sans classique faisait « formulaire ». Troisième police Google Fonts,
-  sur la même ligne que les deux autres.
+Ce que la carte EST, et qui vaut pour toutes — combat, trésor, pièce
+d'équipement, vitrine du zoom, carte qui s'abat :
 
-**Piste B, à côté : « Entaille du Néant »**, une carte que Keko a fait générer
-par ChatGPT. Son site est privé (401), mais il a déposé la page sauvegardée ;
-le HTML/CSS en a été extrait (copie dans le scratchpad, le fichier de 322 Ko
-— dont 313 Ko de CSS anti-pub injecté par le navigateur — ne reste pas dans
-`public/`). Trois fichiers manquaient à la sauvegarde : l'illustration, le
-ruban de titre, le grain du cuivre. **Le ruban est le vrai** (Keko l'a
-récupéré : `public/title-ribbon.svg`, 320 × 72 étiré aux dimensions du titre,
-URL posée depuis le TS avec la date du build) ; **le grain est un SVG écrit à
-la main** (`public/copper-grain.svg`, une tuile de 192 px : bruit fin, taches
-de patine, rayures obliques qui traversent la tuile pour se répéter sans
-couture — trois filtres `feTurbulence`, tout translucide pour se poser SUR le
-dégradé cuivre) ; l'illustration attend Keko. **La plaque de type est un encart de plus
-dans le cuivre.** La grammaire de cette carte, c'est « une zone = un encart
-cerné d'encre sur le cuivre » (fenêtre d'art, panneau de règles) ; la plaque
-suit la même règle — un cartouche de cuivre plus sombre, cerné d'encre, pris
-dans la bande du bas et qui MORD sur le bas du panneau de règles : c'est le
-chevauchement qui fait « intégré ». Texte gravé (encre sur cuivre, rehaut
-clair), deux losanges d'encre à coeur d'or aux flancs. Deux versions jetées
-avant : une pilule violette à cheval sur le bord (« pas élégant »), puis un
-petit trapèze sombre posé sous le panneau (« pas vraiment intégré, trop petit,
-pas très beau ») — *poser un élément sous un autre n'est pas l'intégrer ; le
-faire de la même matière et le faire chevaucher, si.* Le code original est en pixels pour une
-carte de 356 px et au rapport 1/1,48 ; il est réécrit en `cqw` (1cqw = 3,56 px
-de l'original) et au rapport 5/7, pour que la même carte tienne en réduit et
-en normal.
+- **une plaque de laiton rectangulaire, une coque déchirée du même laiton
+  posée dessus, une surface sombre** ; le fond est le laiton assombri d'un
+  voile uniforme, et c'est ce voile seul qui fait le relief — une ombre sous
+  la coque la « différenciait trop du fond » (Keko) ;
+- **L'ILLUSTRATION EN PLEIN FORMAT**, calée sur la surface (même `inset`,
+  même découpe), le nom, le texte d'effet et le type dessinés directement
+  dessus. Pas de papier, pas de texte d'ambiance (« ça me rajoute trop de taf
+  et ça prend de la place »). Une image doit faire **2 : 3** (680 x 1000 ici),
+  le sujet dans les deux tiers du haut — le tiers du bas est sous le texte ;
+- **l'écusson du coût en haut à gauche**, pointe en bas, chiffre remonté ; sa
+  couleur dit la nature : rouge attaque, bleu défense, vert consommable, or
+  trésor (avec le sceau, tant qu'un trésor n'a pas de coût). Sur une pièce
+  d'équipement il devient **le compteur de cartes**, une petite case en forme
+  de carte, de fer sombre — ce n'est pas de l'énergie ;
+- **le texte d'effet a trois crans de taille** (`cran()` : ≤ 44 caractères,
+  ≤ 100, au-delà), pour qu'un effet complexe descende d'un cran plutôt que de
+  déborder sur le type. Mesuré sur le prototype : 140 caractères tiennent.
 
-**Piste C : « Serment de cendre »**, une seconde carte CSS générée par ChatGPT.
-Elle n'était pas dans la page de conversation sauvegardée mais dans **l'iframe
-du canvas** enregistrée à côté (`saved_resource.html`, bloc `#cendre-v3`, 65 Ko
-de CSS dont une texture de 52 Ko en ombres portées, tout en pixels pour une
-carte de 344 px). `proto-cendre.css` et `proto-cendre.ts` sont **générés**
-depuis ce bloc (préfixe → `.cendre`, chaque pixel → 100/344 cqw) : ne pas les
-éditer à la main, régénérer depuis `cendre.css` du scratchpad. Trois polices
-de plus sur la ligne Google Fonts (Grenze Gotisch, Barlow Condensed, Crimson
-Pro). L'illustration est entièrement en CSS. **C'est la version que Keko
-aime** (« j'aime bien cette version »). Deux retouches à lui, en surcharge dans
-`proto.css` — le CSS généré ne se touche pas : le nom d'abord sur UNE ligne,
-droit, à la hauteur de l'écusson (il était en deux lignes, penché, coincé à
-droite : « mal placé »), puis **déplacé sur le haut du parchemin, au-dessus de
-la description** — Keko : « le titre ne serait pas mieux au-dessus de la
-description ? » — en encre sur le papier, souligné d'un fin trait ; l'image
-garde tout le haut de la carte avec le seul écusson, et la description descend
-d'un cran ; l'écusson du coût rétréci et
-son chiffre agrandi pour le remplir (« mal proportionné »). Piège au passage :
-le titre est un flex, donc le texte et son `<span>` sont deux items et
-l'espace entre eux se perd — un `gap` le rend. Et le générateur avait cassé un
-`-.5px` (regex sans point initial) en `-.1.453cqw` : corrigé à la main dans le
-fichier généré, à refaire dans le générateur si on régénère. Puis : le papier
-déchiré est **monté sur un fond rectangulaire** sombre aux coins doucement
-arrondis (la silhouette redevient un rectangle, ce que la main et le râtelier
-attendent, et la déchirure se lit comme une matière posée dessus — puis, à la demande de
-Keko, **ce fond est de la même matière laiton que la coque** : la déchirure ne
-se lit plus sur le bord de la carte mais sur le bord de la surface sombre, la
-carte est une plaque de laiton rectangulaire à l'intérieur irrégulier ; et
-l'arrêt sombre du dégradé d'origine — `#3d3b34` à 22 %, une fine ligne noire en
-diagonale, dessinée deux fois puisque le fond reprenait le dégradé sur une
-autre boîte — est retiré des deux, à la demande de Keko. **Pour que le fond et
-la coque se fondent sans couture, il faut EXACTEMENT le même dégradé sur
-EXACTEMENT la même boîte, et rien d'autre** : un vignettage sur le fond, ou
-l'ombre portée que la coque projetait sur lui (`filter: drop-shadow` sur
-`.cv-card`), et la coque « ressort » — Keko l'a vu. Mais tout à fait fondus,
-plus de relief : « c'était ce petit contraste qui donnait du relief ». Le
-réglage final : le fond est le même laiton **assombri d'un voile uniforme**
-(#00000030), **et aucune ombre sous la coque** : même courte et nette, elle la
-« différenciait trop du fond ». Le relief ne tient qu'au voile. L'ombre de la carte entière est
-portée par le conteneur `.cendre`). **L'écusson du coût se détache du cadre**
-par un liseré d'encre sombre, puis un filet de laiton clair, puis le rouge —
-son bord était du même laiton que la coque et s'y fondait (Keko : « il
-fusionne trop avec le cadre »). Les trois couches sont le fond, `::before` et
-`::after` de `.cv-cost` ; les deux traits de lumière d'origine, qui vivaient
-sur `::after`, sont rendus par une ombre interne. Piège : sur `::after`,
-`inset` posé puis `top: auto` — l'auto annule l'inset et la couche disparaît ; et le
-chiffre du coût est remonté dans son écusson, dont la pointe vers le bas met
-le centre visuel plus haut que le centre de la boîte. *Une conversation ChatGPT
-sauvegardée ne contient pas le code de ses canvas : il est dans les
-`saved_resource*.html` du dossier `_files`.* Un premier fichier, déposé par
-erreur, n'avait que des images générées (des cadres vierges en PNG) — piste
-écartée avec Keko, rien n'en reste.
+**Chaque modèle a son illustration, un SVG dessiné à la main dans
+`ui/art/`** — 9 cartes de combat, 12 trésors, 4 pièces, un dos de carte, un
+repli (`defaut.svg`, un sceau : si on le voit en jeu, il manque un fichier).
+Servis par `ui/art.ts` via `import.meta.glob`, donc **empreintés par Vite** :
+remplacer un dessin change son URL, pas de piège de cache comme les portraits
+de `public/`. Le nom du fichier est le nom du modèle sans accent ni
+majuscule. Même grammaire pour tous : un fond de nuit propre à la famille
+(vert-sarcelle et soleil rouge pour le Glaive, ardoise et braise pour
+l'Espadon, bleu pour la défense, vert pour les fioles, velours bordeaux et or
+pour les trésors), le sujet centré dans les deux tiers du haut, un voile
+sombre qui monte sous le texte, un grain `feTurbulence`. Pour remplacer un
+dessin par une image de Keko : un fichier 2 : 3 au même nom, c'est tout.
 
-**Variante FULL ART de « Serment de cendre »**, à côté de la version parchemin
-(classe `fullart`, surcharges dans `proto.css`) : le parchemin disparaît,
-l'illustration prend toute la surface, et le nom, la description et le type
-sont dessinés dessus, sur un voile sombre qui monte du bas — c'est le bloc de
-la description qui porte le dégradé, le nom vit dedans au-dessus du texte
-(padding haut de 26cqw, sinon les deux se chevauchent), le type passe en
-`z-index` au-dessus du voile sinon il disparaît. Proposée par Keko (« et si on
-enlevait le papier, le texte dessiné directement sur l'illustration ? »), à
-juger contre la version parchemin — **et c'est celle qu'il aime** (« j'aime
-beaucoup la version full art »). Elle est en tête de la planche. **Et
-l'illustration n'y bouge pas** : c'est la carte normale SANS le papier, le
-texte posé sur la surface sombre de la coque, avec un voile léger qui fond le
-bas de la fenêtre d'art. Deux essais pour étirer l'image sur toute la hauteur
-ont donné deux bordures « bizarres » — la fenêtre d'art a son propre contour,
-la coque le sien, ils ne se superposent jamais tout à fait. Keko a tranché :
-« je préfère la bordure de Cendre normale, sans le papier ; au pire ne touche
-pas à l'illustration ». *Quand une retouche produit deux fois un défaut, c'est
-la retouche qu'il faut retirer, pas le défaut qu'il faut corriger.* Et
-même ça était trop : ce qu'il voulait, c'était **la carte normale avec le
-papier à opacité zéro, et rien d'autre** — texte en crème, seule concession.
-« Et ben là tu vois c'est bien. » *Livrer le changement littéral d'abord,
-montrer, puis retoucher une chose à la fois.*
+**Deux pièges de ce portage :**
 
-**La planche se replie** (`flex-wrap`) et la page se cale en haut et défile :
-centrée et plus large que l'écran, elle était coupée des deux côtés et la
-colonne de droite inaccessible — Keko, sur téléphone : « je ne la vois pas ».
-*Un flex centré qui déborde ne se fait pas défiler.* Vérifié à 844x390 : le
-full art est visible d'emblée, le reste passe à la ligne.
+- **les `cqw` de `.carte` elle-même se mesurent sur son ANCÊTRE conteneur**,
+  jamais sur elle — sans conteneur au-dessus, sur le viewport. Un
+  `border-radius: 3cqw` a fait de la carte réduite du râtelier une pilule
+  (30 px de rayon sur 85 de large). Tout ce qui se mesure SUR `.carte` est en
+  `%` ou en rem ; les `cqw` sont pour ses enfants ;
+- **la peau et l'objet sont séparés** : `carte.css` ne porte que le dessin de
+  la carte, `styles.css` garde `.carte` comme objet du jeu (taille, éventail,
+  états, plongée). Les états ne colorent plus une bordure — il n'y en a plus —
+  mais un `box-shadow`, qui doit redire l'ombre de base.
 
-**Plus de texte d'ambiance, nulle part.** Tranché par Keko : « ça me rajoute
-trop de taf et ça prend de la place ». Une carte porte son nom, son coût, son
-effet, son type — c'est tout.
-
-**La taille du texte d'effet suit sa longueur** : trois crans (`court` ≤ 44
-caractères, `moyen` ≤ 100, `long` au-delà), posés au rendu d'après le nombre
-de caractères hors balises (`cran()` dans `proto.ts`), le cran court étant la
-taille d'origine. Test de Keko, gardé sur la planche : « Regardez les 5
-premières cartes de votre deck, défaussez-en 2 de votre choix, puis replacez
-les autres dans l'ordre de votre choix » (140 caractères) débordait sur le
-type ; au cran long il tient, mesuré aux deux tailles. *À porter dans le jeu
-avec la carte : le rendu connaît le texte, c'est lui qui pose le cran.*
-
-**IL NE RESTE QUE LE FULL ART.** Keko : « on supprime toutes les cartes sauf
-les versions full art ». Le cadre néon (`cadre.png`), « Entaille du Néant », la
-version parchemin de « Serment de cendre » et la rangée de teintes sont
-retirés du prototype et du dépôt (`public/cadre.png`, `title-ribbon.svg`,
-`copper-grain.svg` supprimés — `git log` sait les rendre). La planche montre
-quatre cartes : réduite, normale, et les deux mêmes avec l'effet long de
-référence. C'est cette carte qu'on portera dans le jeu.
-
-**L'ILLUSTRATION EST EN PLEIN FORMAT, cadre et texte par-dessus.** Keko a
-d'abord demandé un aplat bleu à la place de l'illustration CSS, pour voir la
-taille du placeholder ; puis qu'il prenne toute la carte. La fenêtre d'art
-s'aligne donc sur la surface sombre (même `inset` de 1,163cqw, même découpe
-que `.cv-surface`) : **rapport 0,68**, quasiment 2 : 3, mesuré 258 x 379 px
-sur une carte de 264 x 385. Une image de 1000 x 1470 couvre tout ; le tiers du
-bas est recouvert par le nom et le texte, donc le sujet vit dans les deux
-tiers du haut, et les coins sont rognés par la découpe. Dedans, pour l'essai :
-**un SVG dessiné à la main** (`ui/proto-art.svg`, importé par Vite donc
-empreinté — pas dans `public/`, pas de piège de cache), dans l'esprit de la
-version CSS : disque rouge, lame en diagonale, entailles noires, éclats, un
-voile sombre qui monte sous le texte et un grain `feTurbulence`. Posé par une
-variable `--art` sur `.cendre`, en `cover`. La variante `bleu` reste dans
-`proto.css` pour remesurer le placeholder.
-
-**Piège des container queries, rencontré ici :** les `cqw` d'un élément se
-résolvent contre son ANCÊTRE conteneur, jamais contre lui-même. Posé sur la
-carte, `container-type` laissait sa propre bordure et ses arrondis se mesurer
-sur le viewport (1cqw = 25 px) — une pilule violette à bord de 36 px. La
-figure qui porte chaque carte est donc le conteneur, avec une largeur
-explicite (un conteneur `inline-size` ne peut pas prendre sa largeur de son
-contenu). Dans le jeu, `.carte` s'en sort parce que son chrome est dans des
-enfants ; le jour où une propriété de `.carte` elle-même passe en `cqw`, même
-piège.
-
-Quand la carte sera validée, on la portera dans `render.ts` / `styles.css` et
-on retirera la bascule.
-
+**À surveiller au doigt** : dans l'éventail au repos (76 % de la carte visible
+sur un téléphone), le nom est visible mais la première ligne de l'effet
+affleure la ligne de flottaison (382 px sur 390). Le chiffre se lit en levant
+la carte. Si ça manque, remonter le bloc de texte, pas réduire l'enfouissement.
 
 La **descente** est jouable au doigt et déployée : une run de 6 paliers, du
 premier combat à l'extraction ou à la mort. Ni hub, ni marché, ni carte de

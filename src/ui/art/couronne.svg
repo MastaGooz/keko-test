@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- Couronne : le plus gros trésor. Cinq pointes, des perles, un rubis. -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#4a2430"/>
+      <stop offset="0.5" stop-color="#26111a"/>
+      <stop offset="1" stop-color="#0e0609"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffcf6a" stop-opacity="0.45"/>
+      <stop offset="0.6" stop-color="#ffcf6a" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#ffcf6a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1c2"/>
+      <stop offset="0.4" stop-color="#e2b95c"/>
+      <stop offset="0.7" stop-color="#a9782c"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <linearGradient id="orSombre" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c99a45"/>
+      <stop offset="1" stop-color="#5e3f12"/>
+    </linearGradient>
+    <radialGradient id="rubis" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#ff8f8a"/>
+      <stop offset="0.5" stop-color="#c62633"/>
+      <stop offset="1" stop-color="#5a0f18"/>
+    </radialGradient>
+    <radialGradient id="saphir" cx="35%" cy="30%" r="70%">
+      <stop offset="0" stop-color="#9fd0ff"/>
+      <stop offset="0.5" stop-color="#2d63c8"/>
+      <stop offset="1" stop-color="#0f2a63"/>
+    </radialGradient>
+    <linearGradient id="velours" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8c2438"/>
+      <stop offset="1" stop-color="#3e0f1c"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#0e0609" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0e0609" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="41"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="12"/></filter>
+  </defs>
+
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <circle cx="340" cy="400" r="330" fill="url(#halo)"/>
+  <ellipse cx="340" cy="600" rx="220" ry="30" fill="#050203" opacity="0.7" filter="url(#flou)"/>
+
+  <!-- le bonnet de velours -->
+  <path d="M150 400 Q340 240 530 400 L530 470 L150 470 Z" fill="url(#velours)"/>
+  <!-- les pointes -->
+  <path d="M120 470 L120 300 L200 380 L260 230 L340 350 L420 230 L480 380 L560 300 L560 470 Z" fill="url(#or)"/>
+  <path d="M120 470 L120 300 L200 380 L260 230 L340 350 L420 230 L480 380 L560 300 L560 470 Z" fill="none" stroke="#5e3f12" stroke-width="3" opacity="0.6"/>
+  <!-- les perles des pointes -->
+  <g fill="#fff6e0">
+    <circle cx="120" cy="296" r="14"/><circle cx="260" cy="226" r="14"/>
+    <circle cx="420" cy="226" r="14"/><circle cx="560" cy="296" r="14"/>
+  </g>
+  <g fill="#c9a04e" opacity="0.5">
+    <circle cx="124" cy="300" r="7"/><circle cx="264" cy="230" r="7"/>
+    <circle cx="424" cy="230" r="7"/><circle cx="564" cy="300" r="7"/>
+  </g>
+  <!-- le bandeau -->
+  <rect x="110" y="460" width="460" height="90" rx="10" fill="url(#or)"/>
+  <rect x="110" y="460" width="460" height="14" fill="#fff1c2" opacity="0.5"/>
+  <rect x="110" y="536" width="460" height="14" fill="#5e3f12" opacity="0.6"/>
+  <!-- les gemmes du bandeau -->
+  <g transform="translate(340 505)">
+    <path d="M0 -34 L34 0 L0 34 L-34 0 Z" fill="url(#rubis)"/>
+    <path d="M0 -34 L34 0 L0 34 L-34 0 Z" fill="none" stroke="#5e3f12" stroke-width="3"/>
+  </g>
+  <g fill="url(#saphir)">
+    <circle cx="200" cy="505" r="22"/><circle cx="480" cy="505" r="22"/>
+  </g>
+  <g fill="none" stroke="#5e3f12" stroke-width="3">
+    <circle cx="200" cy="505" r="22"/><circle cx="480" cy="505" r="22"/>
+  </g>
+  <g fill="#fff6e0" opacity="0.6">
+    <circle cx="192" cy="497" r="6"/><circle cx="472" cy="497" r="6"/><circle cx="330" cy="492" r="7"/>
+  </g>
+  <!-- les rivets -->
+  <g fill="url(#orSombre)">
+    <circle cx="140" cy="505" r="8"/><circle cx="540" cy="505" r="8"/>
+    <circle cx="270" cy="505" r="8"/><circle cx="410" cy="505" r="8"/>
+  </g>
+
+  <g fill="#ffe9a8" opacity="0.7">
+    <circle cx="110" cy="200" r="3"/><circle cx="580" cy="180" r="2.5"/>
+    <circle cx="70" cy="560" r="2"/><circle cx="620" cy="600" r="2.5"/>
+    <path d="M150 140 L154 154 L168 158 L154 162 L150 176 L146 162 L132 158 L146 154 Z"/>
+    <path d="M540 120 L543 130 L553 133 L543 136 L540 146 L537 136 L527 133 L537 130 Z"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#voile)"/>
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>
