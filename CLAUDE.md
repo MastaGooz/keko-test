@@ -1792,6 +1792,30 @@ dessine rien du tout*, donc une image manquante laisserait un trou noir.
 dessine trop tôt retombe silencieusement sur la police par défaut : la carte
 sort en sans-serif et **aucune erreur ne le dit**.
 
+### Le geste : jalon 2, et il est passé
+
+**Sortir une carte de la main pour la jouer, la taper pour la regarder** — en
+3D, ça se refait au lancer de rayon, et c'était le dernier gros risque. Vérifié
+à la souris ET au doigt (évènements `pointerType: 'touch'`) : la tape courte
+regarde, le maintien suivi d'une sortie joue.
+
+**Les règles du geste sont celles du jeu 2D, et on ne les réapprend pas** —
+elles avaient coûté trois allers-retours avec Keko : au doigt c'est le
+**maintien** qui prend la carte (160 ms), le déplacement reste une seconde
+porte (16 px au doigt, 8 à la souris), et **ce qui décide de la tape, c'est le
+déplacement, jamais la durée**.
+
+Ce qui change, et c'est un gain : **la perspective fait ce que l'enfouissement
+faisait en CSS.** En 2D, la carte plongeait sous le bord bas pour gagner en
+taille ; ici la caméra recule et la main se couche vers le joueur. Le seul
+réglage qui compte pour la lisibilité est **le recul de la caméra** — la carte,
+elle, mesure toujours 1 de large.
+
+**Le pas de l'éventail vaut 72 % d'une carte, et pas 62 %** : le nom est
+CENTRÉ sur la carte, donc c'est le milieu qu'il faut dégager, pas le bord. En
+2D la bande gauche suffisait (gemme, nom calé à gauche) ; la règle ne se
+transpose pas telle quelle.
+
 ### Deux pièges déjà rencontrés
 
 - **`<primitive>` ne monte un objet QU'UNE FOIS.** Les cinq faces de laiton du
@@ -1824,7 +1848,8 @@ src/
     storage.ts   # (dé)sérialisation + interface StoragePort
   render/  # LE MOTEUR 3D (React + R3F), derrière `?r3f` -- en construction
     texture-carte.ts # la carte peinte au canvas, pour servir de texture
-    Carte3D.tsx      # le pavé, ses matériaux, son inclinaison
+    Carte3D.tsx      # le pavé, ses matériaux, sa place amortie
+    Main3D.tsx       # l'éventail et le geste : sortir pour jouer, taper pour voir
     Scene.tsx        # le canvas R3F, les lumières
   ui/      # TOUT ce qui touche au navigateur (le jeu 2D, encore la référence)
     render.ts    # mount() construit le DOM une fois, render() le met à jour

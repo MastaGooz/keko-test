@@ -14,28 +14,48 @@
  * Les cinq faces de laiton déclarées comme cinq `<primitive>` du même matériau
  * se démontaient l'une l'autre, le tableau de matériaux du pavé finissait
  * troué, et **la scène restait noire sans une seule erreur en console**.
+ *
+ * **La carte ne décide pas d'où elle est.** Sa place, son inclinaison et sa
+ * taille lui sont données ; elle les rejoint en s'amortissant. C'est ce qui
+ * permet à la main de recalculer tout l'éventail à chaque geste sans que rien
+ * ne saute — la même règle qu'en 2D, où le rendu se reconstruit entièrement.
  */
 import { useEffect, useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { CarteAPeindre } from './texture-carte.ts'
 import { peindreCarte } from './texture-carte.ts'
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
-const LARGE = 1
-const HAUT = 1.4
+export const LARGE = 1
+export const HAUT = 1.4
 const EPAISSEUR = 0.012
 
 type Props = {
   carte: CarteAPeindre
-  position?: [number, number, number]
-  /** De combien la carte suit le pointeur, en radians. 0 la fige. */
-  suivi?: number
-  /** Appelé quand la texture est posée : la carte est enfin visible. */
+  position: [number, number, number]
+  /** Inclinaison voulue, en radians. */
+  rotation?: [number, number, number]
+  taille?: number
+  /** Vitesse de rattrapage. Plus haut = plus sec. */
+  ressort?: number
   onPeinte?: () => void
+  onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
+  onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
+  onPointerOut?: (e: ThreeEvent<PointerEvent>) => void
 }
 
-export function Carte3D({ carte, position = [0, 0, 0], suivi = 0.35, onPeinte }: Props): React.JSX.Element {
+export function Carte3D({
+  carte,
+  position,
+  rotation = [0, 0, 0],
+  taille = 1,
+  ressort = 9,
+  onPeinte,
+  onPointerDown,
+  onPointerOver,
+  onPointerOut,
+}: Props): React.JSX.Element {
   const groupe = useRef<THREE.Group>(null)
 
   const { face, materiaux } = useMemo(() => {
@@ -80,19 +100,33 @@ export function Carte3D({ carte, position = [0, 0, 0], suivi = 0.35, onPeinte }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carte, face])
 
-  // LA CARTE SUIT LE POINTEUR, et c'est tout l'intérêt du volume : elle
-  // s'incline, donc la lumière glisse dessus. Amorti, sinon elle colle au
-  // doigt et le mouvement paraît mécanique.
-  useFrame((etat, delta) => {
-    if (groupe.current === null || suivi === 0) return
-    const k = 1 - Math.exp(-6 * delta)
-    groupe.current.rotation.x += (etat.pointer.y * suivi - groupe.current.rotation.x) * k
-    groupe.current.rotation.y += (etat.pointer.x * suivi - groupe.current.rotation.y) * k
+  // ELLE REJOINT SA PLACE, elle n'y saute pas. L'amortissement exponentiel est
+  // indépendant de la fréquence d'écran : à 120 Hz comme à 60, le mouvement
+  // dure le même temps.
+  useFrame((_, delta) => {
+    const g = groupe.current
+    if (g === null) return
+    const k = 1 - Math.exp(-ressort * delta)
+    g.position.x += (position[0] - g.position.x) * k
+    g.position.y += (position[1] - g.position.y) * k
+    g.position.z += (position[2] - g.position.z) * k
+    g.rotation.x += (rotation[0] - g.rotation.x) * k
+    g.rotation.y += (rotation[1] - g.rotation.y) * k
+    g.rotation.z += (rotation[2] - g.rotation.z) * k
+    const s = g.scale.x + (taille - g.scale.x) * k
+    g.scale.setScalar(s)
   })
 
   return (
     <group ref={groupe} position={position}>
-      <mesh castShadow receiveShadow material={materiaux}>
+      <mesh
+        castShadow
+        receiveShadow
+        material={materiaux}
+        onPointerDown={onPointerDown}
+        onPointerOver={onPointerOver}
+        onPointerOut={onPointerOut}
+      >
         <boxGeometry args={[LARGE, HAUT, EPAISSEUR]} />
       </mesh>
     </group>
