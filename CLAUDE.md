@@ -384,7 +384,13 @@ la description qui porte le dégradé, le nom vit dedans au-dessus du texte
 `z-index` au-dessus du voile sinon il disparaît. Proposée par Keko (« et si on
 enlevait le papier, le texte dessiné directement sur l'illustration ? »), à
 juger contre la version parchemin — **et c'est celle qu'il aime** (« j'aime
-beaucoup la version full art »). Elle est en tête de la planche.
+beaucoup la version full art »). Elle est en tête de la planche. **L'image y
+épouse la coque** : étirée sur toute la hauteur avec son propre contour (celui
+d'une fenêtre d'art posée sur le noir), elle laissait voir la surface sombre
+entre son bord et le laiton — une bande noire irrégulière qui se lisait comme
+une autre bordure (Keko : « pourquoi la bordure est différente ? »). Elle
+prend le retrait et le contour déchiré de la surface, et le voile du texte
+suit le bas déchiré de la coque.
 
 **La planche se replie** (`flex-wrap`) et la page se cale en haut et défile :
 centrée et plus large que l'écran, elle était coupée des deux côtés et la

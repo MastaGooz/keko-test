@@ -599,24 +599,32 @@
   display: none;
 }
 
+/* L'ILLUSTRATION ÉPOUSE LA COQUE. Étirée sur toute la hauteur avec son propre
+   contour (celui d'une fenêtre d'art posée sur le noir), elle laissait voir la
+   surface sombre entre son bord et le laiton : une bande noire irrégulière,
+   qui se lisait comme une autre bordure -- Keko : « pourquoi la bordure est
+   différente ? ». Elle prend le retrait et le contour déchiré de la surface :
+   il ne reste que le laiton, comme sur la version parchemin. */
 .cendre.fullart .cv-art {
-  inset: 3.198cqw !important;
+  inset: 1.163cqw !important;
   height: auto !important;
+  clip-path: polygon(4% 0, 91% 1.5%, 100% 8%, 98% 92%, 93% 98%, 55% 99%, 50% 100%, 44% 99%, 3% 97%, 0 88%, 1% 5%) !important;
 }
 
 /* Le voile : le bloc de la description s'étire sur le bas de l'image et porte
    le dégradé ; le nom vit dedans, au-dessus du texte. */
 .cendre.fullart .cv-effect {
   top: 54% !important;
-  bottom: 3.2cqw !important;
-  left: 3.2cqw !important;
-  right: 3.2cqw !important;
+  bottom: 1.163cqw !important;
+  left: 1.163cqw !important;
+  right: 1.163cqw !important;
   /* Le texte commence sous le nom (posé à 62 % de la hauteur, sur 9 %) :
      26cqw de haut de boîte, soit 18 % de la hauteur depuis 54 %. */
   padding: 26cqw 6cqw 9cqw;
   color: #f1e6cf !important;
   background: linear-gradient(180deg, transparent 0%, #0e1315b3 32%, #0b1012f2 60%, #0b1012 100%);
-  clip-path: polygon(0 0, 100% 0, 97% 100%, 0 100%);
+  /* Le voile suit le bas déchiré de la coque, comme l'illustration. */
+  clip-path: polygon(0 0, 100% 0, 98% 92%, 93% 98%, 55% 99%, 50% 100%, 44% 99%, 3% 97%, 0 88%);
 }
 
 .cendre.fullart .cv-effect p {
