@@ -294,12 +294,14 @@ d'équipement, vitrine du zoom, carte qui s'abat :
   couleur de sa nature. Un trésor porte l'écusson d'or avec le sceau (pas de
   coût) ; une pièce d'équipement porte **le compteur de cartes**, une petite
   case en forme de carte, de fer sombre — ce n'est pas de l'énergie — **et
-  derrière elle LE PAQUET ÉTALÉ** : une tranche par carte restante, décalée
-  d'un quart de case vers la droite, bord de laiton et ombre à gauche. Le
-  nombre se lit deux fois, en chiffre et en épaisseur. Keko : « d'autres
-  rectangles symbolisant des cartes sous la première mais décalés à droite,
-  X fois ». Sans bord franc, cinq tranches sombres côte à côte ne faisaient
-  qu'un bloc noir. Le maximum d'énergie (`/5`) vit À CÔTÉ de l'écusson du
+  derrière elle LE PAQUET ÉTALÉ** : LE MÊME SYMBOLE, sans chiffre, répété une
+  fois par carte restante et décalé d'un cinquième de case vers la droite à
+  chaque fois — de vraies cases (`.ecusson.repli`), avec leurs trois couches
+  et leur ombre, qui précèdent la case du chiffre dans le DOM donc passent
+  dessous. Le nombre se lit deux fois, en chiffre et en épaisseur. Keko :
+  « exactement le même symbole, juste sans chiffre et décalé légèrement vers
+  la droite, X fois en comptant le premier ». Une première version en
+  tranches sombres à bord de laiton n'était pas ça. Le maximum d'énergie (`/5`) vit À CÔTÉ de l'écusson du
   joueur, pas dedans : sous la pointe il était tout petit et n'y logeait pas.
   Et l'étiquette des tas (« PIOCHE 7 ») est une pastille EN HAUT du dos, sur
   une ligne : centrée dans la bande émergée, elle recouvrait le médaillon du

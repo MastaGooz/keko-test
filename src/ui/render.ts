@@ -414,11 +414,13 @@ function corpsCarte(
   lignes: readonly string[],
   nature: string,
   marque = '',
+  sousLEcusson = '',
 ): string {
   return (
     `<span class="coque"></span>` +
     `<span class="surface"></span>` +
     `<span class="art" style="--art:url(${art(nom)})"></span>` +
+    sousLEcusson +
     `<span class="ecusson">${ecusson}</span>` +
     `<span class="nom-carte">${nom}</span>` +
     `<span class="effet-carte ${cran(lignes)}">${lignes.join('<br>')}</span>` +
@@ -1059,17 +1061,22 @@ function cartePiece(piece: Piece): string {
   // nombre dedans, pour tous les objets ». Un consommable y compte ses doses
   // (une dose, une carte) et son cartouche dit ce que fait UNE dose.
   const dose = g === 'consommable' ? piece.set[0] : undefined
-  // LE PAQUET ÉTALÉ : sous la case du compteur, autant de cases décalées vers
-  // la droite qu'il reste de cartes -- comme un paquet qu'on aurait étalé du
-  // pouce, dont on verrait les tranches continuer. Le nombre se lit deux fois,
-  // en chiffre et en épaisseur. Keko : « d'autres rectangles symbolisant des
-  // cartes sous la première mais décalés à droite, X fois ».
-  const paquet = Array.from({ length: nb - 1 }, (_, k) => `<i style="--k:${k + 1}"></i>`).join('')
+  // LE PAQUET ÉTALÉ : sous la case du compteur, LE MÊME SYMBOLE répété -- la
+  // même case, sans chiffre -- décalé légèrement vers la droite à chaque
+  // fois, autant de fois qu'il reste de cartes. Le nombre se lit deux fois,
+  // en chiffre et en épaisseur. Keko : « exactement le même symbole, juste
+  // sans chiffre et décalé légèrement vers la droite, X fois en comptant le
+  // premier ». Les plus lointains d'abord : ce qui vient après dans le DOM se
+  // pose par-dessus, et la case du chiffre vient en dernier.
+  const paquet = Array.from(
+    { length: nb - 1 },
+    (_, k) => `<span class="ecusson repli" style="--k:${nb - 1 - k}"></span>`,
+  ).join('')
   return (
     `<div class="carte piece-carte ${piece.rarete} ${g}" style="--n:1" title="${nb} cartes">` +
     corpsCarte(
       piece.nom,
-      `<span>${nb}</span><span class="paquet">${paquet}</span>`,
+      `<span>${nb}</span>`,
       // Sa composition, en UN texte qui coule : « 5× Estoc · 3× Taillade ·
       // 2× Moulinet ». Une ligne par modèle plafonnait à cinq ; une arme en
       // apportera jusqu'à huit. Le détail de chaque modèle — coût, dégâts —
@@ -1081,6 +1088,8 @@ function cartePiece(piece: Piece): string {
       // (`.piece-carte.rare`, `.epique`). Keko : « inutile d'afficher le niveau
       // de rareté, on le fera via un code couleur ».
       pied,
+      '',
+      paquet,
     ) +
     `</div>`
   )
