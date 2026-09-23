@@ -145,13 +145,26 @@
     0 0 3cqw #000c;
 }
 
+/* LE TRAIT VIT DANS LA BOITE DU NOM, ET C'EST UNE CORRECTION. Il etait pose a
+   `bottom: -0.6cqw`, donc SOUS la boite -- que `overflow: hidden` (la, pour
+   couper un nom trop long) rognait. Un cqw suit la carte, pas le trait, qui
+   fait 1px partout : au-dela de ~167px de large le debordement depassait la
+   hauteur du trait et il disparaissait entierement, alors qu'en carte reduite
+   il en restait une fraction visible. Keko : « le separateur sous le nom
+   n'apparait que quand elles sont en format reduit ».
+
+   Regle generale : *un decalage en cqw sous un `overflow: hidden` ne cache pas
+   la meme chose selon la taille du conteneur* -- ce qui deborde d'une fraction
+   de pixel se voit, ce qui deborde de deux pixels non. */
 .carte > .nom-carte::after {
   content: "";
   position: absolute;
   left: 22%;
   right: 22%;
-  bottom: -0.6cqw;
-  height: 1px;
+  bottom: 0;
+  /* Il suit la carte comme tout le reste, avec un plancher d'un pixel : a
+     1px fixe il devenait un cheveu sur une carte de zoom. */
+  height: max(1px, 0.25cqw);
   background: linear-gradient(90deg, transparent, #f7ead099 20% 80%, transparent);
 }
 

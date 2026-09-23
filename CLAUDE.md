@@ -282,8 +282,12 @@ d'équipement, vitrine du zoom, carte qui s'abat :
 - **L'ILLUSTRATION EN PLEIN FORMAT**, calée sur la surface (même `inset`,
   même découpe), le nom, le texte d'effet et le type dessinés directement
   dessus. Pas de papier, pas de texte d'ambiance (« ça me rajoute trop de taf
-  et ça prend de la place »). Une image doit faire **2 : 3** (680 x 1000 ici),
-  le sujet dans les deux tiers du haut — le tiers du bas est sous le texte ;
+  et ça prend de la place »). **Une image fait 680 x 1000** (rapport
+  0,68, soit 17 : 25 — proche du 2 : 3 sans l'être), le sujet dans les deux
+  tiers du haut : le tiers du bas passe sous le texte. Elle est posée en
+  `cover` sur une boîte un peu moins haute que la carte (rapport 0,71), donc
+  **elle se rogne d'environ 2 % en haut et en bas** — ne rien mettre de décisif
+  contre ces deux bords ;
 - **l'écusson du coût en haut à gauche**, pointe en bas, chiffre remonté, **LE
   MÊME SUR TOUTE CARTE QUI COÛTE DE L'ÉNERGIE** — attaque, défense,
   consommable — et **l'orbe d'énergie du joueur est ce même écusson**, en plus
@@ -330,7 +334,7 @@ majuscule. Même grammaire pour tous : un fond de nuit propre à la famille
 l'Espadon, bleu pour la défense, vert pour les fioles, velours bordeaux et or
 pour les trésors), le sujet centré dans les deux tiers du haut, un voile
 sombre qui monte sous le texte, un grain `feTurbulence`. Pour remplacer un
-dessin par une image de Keko : un fichier 2 : 3 au même nom, c'est tout.
+dessin par une image de Keko : un fichier 680 x 1000 au même nom, c'est tout.
 
 **Deux pièges de ce portage :**
 
