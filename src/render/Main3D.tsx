@@ -45,10 +45,17 @@ const DELAI_PRISE = 160
  * passaient sous la voisine. En 2D la bande gauche suffisait — la gemme, le
  * nom calé à gauche — mais **ici le nom est centré**, donc c'est le milieu de
  * la carte qu'il faut dégager, pas son bord.
+ *
+ * **L'INCLINAISON A DOUBLÉ** (0,09 → 0,18 radian par cran, soit ~10° au lieu
+ * de 5). À 5°, cinq cartes ne s'écartaient que de 10° du bord au bord : elles
+ * se lisaient comme une rangée de cartes parallèles, pas comme une main tenue.
+ * Keko : « l'inclinaison est beaucoup trop droite ». Le creux suit, sinon
+ * l'arc penche sans se creuser et les cartes des bords partent de travers
+ * au lieu de descendre.
  */
 const PAS = 0.72
-const CREUX = 0.1
-const INCLINAISON = 0.09
+const CREUX = 0.17
+const INCLINAISON = 0.18
 
 /**
  * Où la main se pose, et de combien elle se couche vers le joueur.
@@ -60,6 +67,23 @@ const INCLINAISON = 0.09
 const Y_MAIN = -1
 const Z_MAIN = 1.1
 const COUCHE = 0.52
+
+/**
+ * À quelle profondeur voyage la carte qu'on tient.
+ *
+ * **ELLE DOIT PASSER DEVANT TOUTE LA MAIN, ET LE CALCUL EST SERRÉ** : les
+ * cartes de l'éventail sont couchées de `COUCHE`, donc leur haut avance en z
+ * de `sin(COUCHE) × HAUT/2`, soit 0,35 — exactement l'écart que la carte tenue
+ * avait au départ. Elle **traversait** donc ses voisines en les croisant
+ * (Keko : « quand je drag la carte traverse les autres »). À 0,9 d'écart, le
+ * bas de la carte tenue reste devant le haut des autres, quelle que soit son
+ * inclinaison.
+ *
+ * *Une carte couchée n'occupe pas le plan où on l'a posée* — c'est la leçon à
+ * garder : en 3D, la profondeur d'un objet incliné n'est pas celle de son
+ * origine.
+ */
+const Z_TENUE = Z_MAIN + 0.9
 
 /**
  * La hauteur à partir de laquelle lâcher JOUE la carte.
@@ -112,7 +136,10 @@ export function Main3D({ cartes, onJouer, onRegarder, onPeinte }: Props): React.
    * Un plan parallèle à l'écran, à la profondeur de la main : sans lui, le
    * pointeur ne dit qu'une direction, et la carte irait à l'infini.
    */
-  const plan = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), -Z_MAIN), [])
+  // Le plan est à la profondeur de la carte TENUE, pas à celle de la main :
+  // sinon la carte se décale du doigt par parallaxe, d'autant plus qu'on
+  // s'éloigne du centre de l'écran.
+  const plan = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), -Z_TENUE), [])
   const rayon = useMemo(() => new THREE.Raycaster(), [])
 
   const pointSousLeDoigt = useCallback(
@@ -208,12 +235,12 @@ export function Main3D({ cartes, onJouer, onRegarder, onPeinte }: Props): React.
     <group>
       {cartes.map((carte, i) => {
         if (i === tenue) {
-          const p = doigt ?? new THREE.Vector3(0, Y_MAIN + 0.4, Z_MAIN)
+          const p = doigt ?? new THREE.Vector3(0, Y_MAIN + 0.4, Z_TENUE)
           return (
             <Carte3D
               key={carte.nom + i}
               carte={carte}
-              position={[p.x, p.y, Z_MAIN + 0.35]}
+              position={[p.x, p.y, Z_TENUE]}
               rotation={[0.08, 0, 0]}
               taille={1.05}
               ressort={22}

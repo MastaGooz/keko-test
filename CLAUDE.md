@@ -1816,6 +1816,21 @@ CENTRÉ sur la carte, donc c'est le milieu qu'il faut dégager, pas le bord. En
 2D la bande gauche suffisait (gemme, nom calé à gauche) ; la règle ne se
 transpose pas telle quelle.
 
+**L'inclinaison a doublé** (~10° par cran au lieu de 5) : à 5°, cinq cartes ne
+s'écartaient que de 10° du bord au bord et se lisaient comme une rangée
+parallèle, pas comme une main tenue. Keko : « l'inclinaison est beaucoup trop
+droite ». Le creux de l'arc suit, sinon les cartes des bords partent de travers
+au lieu de descendre.
+
+**UNE CARTE COUCHÉE N'OCCUPE PAS LE PLAN OÙ ON L'A POSÉE**, et ça a coûté un
+bug : les cartes de la main sont couchées de `COUCHE`, donc leur haut avance en
+z de `sin(COUCHE) × HAUT/2` — soit 0,35, exactement l'écart que j'avais donné à
+la carte tenue. Elle **traversait** donc ses voisines en les croisant (Keko :
+« quand je drag la carte traverse les autres »). Elle voyage désormais 0,9
+devant la main, et le plan de projection du doigt est à CETTE profondeur : sur
+celui de la main, la carte se décalerait du doigt par parallaxe, d'autant plus
+qu'on s'éloigne du centre de l'écran.
+
 ### Deux pièges déjà rencontrés
 
 - **`<primitive>` ne monte un objet QU'UNE FOIS.** Les cinq faces de laiton du
