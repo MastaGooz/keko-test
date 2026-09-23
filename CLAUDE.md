@@ -296,15 +296,25 @@ d'équipement, vitrine du zoom, carte qui s'abat :
   case en forme de carte, de fer sombre — ce n'est pas de l'énergie — (Un paquet étalé a vécu
   derrière cette case — le même symbole répété une fois par carte, décalé
   vers la droite ; Keko l'a finalement retiré : le chiffre suffit.) **Une
-  carte à usages porte ses gorgées EN PASTILLES**, sous l'écusson du coût, sur
-  la bande gauche : une goutte pleine par gorgée qui reste, vide une fois bue
-  (`gorgees()` dans render.ts, `usagesMax` sur la carte pour dessiner les
-  vides). Un compteur qui se voit, pas un chiffre dans le texte — Keko : « un
-  compteur visuel en icône quelque part ». Le maximum d'énergie (`/5`) vit À CÔTÉ de l'écusson du
+  carte à usages porte ses CHARGES EN PASTILLES**, sous l'écusson du coût, sur
+  la bande gauche : un jeton de laiton plein par charge qui reste, un creux
+  sombre une fois dépensée (`charges()` dans render.ts, `usagesMax` sur la
+  carte pour dessiner les vides). Un compteur qui se voit, pas un chiffre dans
+  le texte — Keko : « un compteur visuel en icône quelque part ».
+
+  **LE MARQUEUR EST GÉNÉRIQUE, ET IL DOIT LE RESTER.** Il a été une goutte
+  verte : ça disait la gorgée, donc la potion, et rien d'autre. Keko : « c'est
+  vert et ça évoque trop la potion — on aura d'autres cartes à charge, il faut
+  un truc plus générique ». Un rond de laiton ne raconte que le compte, qui est
+  la seule chose que toutes ces cartes auront en commun — et il ne se confond
+  pas avec l'énergie, qui est un écusson à pointe partout dans le jeu. Le maximum d'énergie (`/5`) vit À CÔTÉ de l'écusson du
   joueur, pas dedans : sous la pointe il était tout petit et n'y logeait pas.
-  Et l'étiquette des tas (« PIOCHE 7 ») est une pastille EN HAUT du dos, sur
-  une ligne : centrée dans la bande émergée, elle recouvrait le médaillon du
-  dos ;
+  Et l'étiquette des tas est une MENTION, pas un compteur : « Pioche (7) » sur
+  une ligne, juste AU-DESSUS du tas, sans pastille ni fond ni bordure. Le
+  chiffre a été un gros nombre d'or serti sur le dos — il avait le poids d'une
+  valeur de jeu alors qu'on ne décide pas dessus. Keko : « plus discret, c'est
+  pas une info capitale ». Au-dessus et non plus SUR le dos, donc rien ne
+  recouvre plus le médaillon ;
 - **le texte d'effet a trois crans de taille** (`cran()` : ≤ 44 caractères,
   ≤ 100, au-delà), pour qu'un effet complexe descende d'un cran plutôt que de
   déborder sur le type. Mesuré sur le prototype : 140 caractères tiennent.

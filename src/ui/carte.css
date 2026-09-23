@@ -304,32 +304,43 @@
   transform: translate(0, -6%);
 }
 
-/* LES GORGÉES : une pastille par usage, sous l'écusson du coût, sur la bande
-   gauche. Pleine tant qu'il reste la gorgée, vide une fois bue -- un compteur
-   qui se voit sans se lire. Une goutte plutôt qu'un rond : c'est ce qu'on
-   boit. (Un paquet étalé a vécu derrière le compteur des pièces ; retiré.) */
-.carte > .gorgees {
+/* LES CHARGES : une pastille par usage, sous l'écusson du coût, sur la bande
+   gauche. Pleine tant qu'il reste la charge, creuse une fois dépensée -- un
+   compteur qui se voit sans se lire.
+
+   UN JETON DE LAITON, ET RIEN QUI RACONTE LA CARTE. C'était une goutte verte :
+   ça disait « gorgée », donc « potion », alors que le compteur servira à
+   d'autres cartes à charges. Keko : « c'est vert et ça évoque trop la potion,
+   il faut un truc plus générique ». Le rond est la forme qui ne dit rien
+   d'autre que le compte -- et il ne peut pas se confondre avec l'énergie, qui
+   est un écusson à pointe partout dans le jeu.
+
+   Même laiton que le filet et la gemme : la carte a un seul métal. */
+.carte > .charges {
   position: absolute;
   z-index: 3;
   left: 5.5%;
   top: 19.5%;
   display: flex;
   flex-direction: column;
-  gap: 1.6cqw;
+  gap: 1.7cqw;
   filter: drop-shadow(0.35cqw 0.5cqw 0 #0000008c);
 }
 
-.carte > .gorgees > i {
+.carte > .charges > i {
   display: block;
-  width: 7cqw;
-  height: 8.4cqw;
-  border: 0.35cqw solid #c9a86e;
-  border-radius: 50% 50% 50% 50% / 38% 38% 62% 62%;
-  background: #1a1316;
+  width: 7.2cqw;
+  height: 7.2cqw;
+  border: 0.35cqw solid #9d8355;
+  border-radius: 50%;
+  /* Creuse : un trou dans la plaque, la lumière vient toujours du haut. */
+  background: radial-gradient(circle at 50% 78%, #2a2118, #120e0c 70%);
+  box-shadow: inset 0 0.5cqw 0.5cqw #00000099;
   box-sizing: border-box;
 }
 
-.carte > .gorgees > i.pleine {
-  background: radial-gradient(circle at 35% 30%, #c8ffd4, #4fd87a 55%, #1f7a48);
-  box-shadow: 0 0 1.5cqw #7cf59a88;
+.carte > .charges > i.pleine {
+  border-color: #e0c489;
+  background: radial-gradient(circle at 35% 30%, #fff3d4, #e2bd72 52%, #8d6a2e);
+  box-shadow: 0 0 1.4cqw #f0d59a66, inset 0 -0.4cqw 0.5cqw #00000055;
 }

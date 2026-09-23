@@ -459,8 +459,8 @@ function lignes(carte: Carte): string[] {
       if (carte.type === 'tresor') l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>et son or est perdu</small>`)
       else {
         l.push(`Rend <b>${e.montant}</b> PV`)
-        // Une carte à usages ne l'écrit pas : ses gorgées sont des pastilles
-        // (`gorgees()`). Une carte qui s'exile dit qu'elle se détruit.
+        // Une carte à usages ne l'écrit pas : ses charges sont des pastilles
+        // (`charges()`). Une carte qui s'exile dit qu'elle se détruit.
         if (carte.usages === undefined && carte.exil === true) l.push(`<small>se boit : détruite</small>`)
       }
     }
@@ -471,19 +471,26 @@ function lignes(carte: Carte): string[] {
 }
 
 /**
- * LES USAGES D'UNE CARTE EN PASTILLES, sous l'écusson du coût : une pastille
- * pleine par gorgée qui reste, une vide par gorgée bue. Un compteur qui se
- * voit, pas un chiffre à lire dans le texte -- Keko : « un compteur visuel en
- * icône quelque part ». Sur la bande gauche, la seule visible dans l'éventail.
+ * LES CHARGES D'UNE CARTE EN PASTILLES, sous l'écusson du coût : une pastille
+ * pleine par charge qui reste, une vide par charge dépensée. Un compteur qui
+ * se voit, pas un chiffre à lire dans le texte -- Keko : « un compteur visuel
+ * en icône quelque part ». Sur la bande gauche, la seule visible dans
+ * l'éventail.
+ *
+ * **LE MARQUEUR EST GÉNÉRIQUE, ET IL DOIT LE RESTER.** Il a été une goutte
+ * verte, donc une gorgée : ça disait la potion et rien d'autre. Keko : « c'est
+ * vert et ça évoque trop la potion -- on aura d'autres cartes à charge, il faut
+ * un truc plus générique ». Une pastille de laiton ne raconte que le compte,
+ * qui est la seule chose que toutes ces cartes auront en commun.
  */
-function gorgees(carte: Carte): string {
+function charges(carte: Carte): string {
   if (carte.usages === undefined) return ''
   const max = carte.usagesMax ?? carte.usages
   const pastilles = Array.from(
     { length: max },
     (_, i) => `<i${i < carte.usages! ? ' class="pleine"' : ''}></i>`,
   ).join('')
-  return `<span class="gorgees" title="${carte.usages} sur ${max}">${pastilles}</span>`
+  return `<span class="charges" title="${carte.usages} charges sur ${max}">${pastilles}</span>`
 }
 
 /** La famille d'une carte, pour la classe qui colore son écusson et son chiffre. */
@@ -548,7 +555,7 @@ function ligneCarte(
       `<span>${carte.cout}</span>`,
       lignes(carte),
       nature(carte),
-      (acheve ? `<span class="marque">★</span>` : '') + gorgees(carte),
+      (acheve ? `<span class="marque">★</span>` : '') + charges(carte),
     ) +
     `</button>`
   )
@@ -649,10 +656,12 @@ function tasDeJeu(nom: string, combien: number): string {
 
   return (
     `<span class="pile-cartes${combien === 0 ? ' vide' : ''}" style="--dos:url(${dosDeCarte()})">${pile}` +
-    `<span class="etiquette-tas">` +
-    `<span class="nom-tas">${nom}</span>` +
-    `<span class="compte">${combien}</span>` +
-    `</span></span>`
+    // UNE SEULE LIGNE, DISCRETE, AU-DESSUS DU TAS. Le compte etait une pastille
+    // d'or posee sur le dos : il se lisait comme un chiffre de jeu alors que ce
+    // n'est pas une information capitale -- Keko : « le nombre de cartes dans la
+    // pioche et defausse doit etre plus discret, peut-etre marquer juste
+    // au-dessus : Pioche (X) ».
+    `<span class="etiquette-tas">${nom} (${combien})</span></span>`
   )
 }
 
@@ -1158,7 +1167,7 @@ export function vitrine(carte: Carte, enMain = false): string {
   if (carte.type === 'tresor') return carteTresor(carte, 'style="--n:1"', enMain)
   return (
     `<div class="carte combat ${famille(carte)}" data-cout="${carte.cout}" style="--n:1">` +
-    corpsCarte(carte.nom, `<span>${carte.cout}</span>`, lignes(carte), nature(carte), gorgees(carte)) +
+    corpsCarte(carte.nom, `<span>${carte.cout}</span>`, lignes(carte), nature(carte), charges(carte)) +
     `</div>`
   )
 }

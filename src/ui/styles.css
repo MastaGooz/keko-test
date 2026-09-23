@@ -2328,44 +2328,26 @@ body {
   opacity: 0.5;
 }
 
-/* L'etiquette vit dans la bande EMERGEE : sous la ligne de flottaison, elle
-   serait hors de l'ecran. Meme regle que le bandeau MORTE des tresors. */
-/* EN HAUT DU DOS, sur une ligne, dans une pastille : centrée dans la bande
-   émergée elle recouvrait le médaillon du dos (Keko : « il cache le dos de
-   carte »). Le dos garde son motif, l'étiquette prend le bord. */
+/* UNE MENTION, PAS UN COMPTEUR. « Pioche (7) » sur une ligne, JUSTE AU-DESSUS
+   du tas -- ni pastille, ni fond, ni bordure. Ce chiffre a ete un gros nombre
+   d'or serti sur le dos : il avait le poids d'une valeur de jeu alors qu'on ne
+   decide pas dessus. Keko : « plus discret, c'est pas une info capitale ».
+
+   Au-dessus et non plus SUR le dos : rien ne recouvre plus le medaillon, et le
+   probleme qui avait fait monter l'etiquette en haut du dos disparait de
+   lui-meme. Le cerne remplace le fond -- elle passe sur la scene, donc sur du
+   noir comme sur un corps. */
 .etiquette-tas {
   position: absolute;
-  top: 5%;
+  bottom: 100%;
   left: 50%;
   translate: -50% 0;
-  display: flex;
-  align-items: baseline;
-  gap: 0.25rem;
-  padding: 0.0625rem 0.5rem 0.125rem;
-  border: 1px solid #a88c5f88;
-  border-radius: 999px;
-  background: #0a0b10d9;
-  white-space: nowrap;
-}
-
-.compte {
-  font-size: 0.9375rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg);
-  text-shadow: 0 1px 3px #000;
-}
-
-.pile-cartes.vide .compte {
-  color: var(--muted);
-}
-
-.nom-tas {
-  font-size: 0.5625rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+  font-size: 0.625rem;
+  letter-spacing: 0.04em;
   color: var(--muted);
   white-space: nowrap;
+  text-shadow: 0 1px 2px #000, 0 0 3px #000;
 }
 
 /* --- les arches de visee --------------------------------------------------- */
