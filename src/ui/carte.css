@@ -220,26 +220,22 @@
   text-shadow: 0 0 6px #fff8;
 }
 
-/* --- LES NATURES : la couleur de l'écusson et du chiffre --------------------
+/* --- LES NATURES ------------------------------------------------------------
 
-   Une attaque est rouge (la couleur du gabarit), une défense est bleue, un
-   consommable est vert, un trésor est d'or. Le cadre ne change pas : c'est
-   l'illustration qui porte l'identité, l'écusson ne fait que la confirmer. */
+   L'ÉCUSSON DU COÛT EST LE MÊME SUR TOUTES LES CARTES QUI COÛTENT DE L'ÉNERGIE,
+   attaque, défense ou consommable : c'est le symbole de l'énergie, et l'orbe
+   du joueur porte exactement le même (`.energie`, dans styles.css) -- on lit
+   d'un coup d'oeil que le chiffre sur la carte se paie avec le chiffre sous
+   la pioche. Il a été coloré par nature (bleu défense, vert consommable) ;
+   Keko : « je voudrais que le symbole soit toujours le même ». Seul le
+   chiffre DANS le texte garde la couleur de sa nature. */
 
 .carte.defense {
   --accent: #9fd0ff;
-  --ecusson-haut: #6e9fe0;
-  --ecusson-mi: #2d5aa8;
-  --ecusson-bas: #1b3468;
-  --ecusson-ombre: #1b2d55;
 }
 
 .carte.consommable {
   --accent: #a6f0b0;
-  --ecusson-haut: #7fd88f;
-  --ecusson-mi: #2f8f4e;
-  --ecusson-bas: #1a5530;
-  --ecusson-ombre: #173f27;
 }
 
 .carte.tresor {

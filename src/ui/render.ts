@@ -380,7 +380,10 @@ function jauge(pv: number, pvMax: number): string {
  * joué la carte levée. Le coût, lui, est sur la gemme de la carte.
  */
 function energie(etat: EtatCombat, _visee: Carte | null): string {
-  return `<span class="chiffre">${etat.energie}<span class="sur">/${etat.energieMax}</span></span>`
+  // LE MÊME ÉCUSSON QUE LE COÛT DES CARTES : le chiffre courant dedans, le
+  // maximum en petit sous la pointe. Le joueur voit que ce qu'il tient sur la
+  // carte se paie avec ce qu'il a ici.
+  return `<span class="chiffre">${etat.energie}</span><span class="sur">/${etat.energieMax}</span>`
 }
 
 /**

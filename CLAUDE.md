@@ -280,11 +280,16 @@ d'équipement, vitrine du zoom, carte qui s'abat :
   dessus. Pas de papier, pas de texte d'ambiance (« ça me rajoute trop de taf
   et ça prend de la place »). Une image doit faire **2 : 3** (680 x 1000 ici),
   le sujet dans les deux tiers du haut — le tiers du bas est sous le texte ;
-- **l'écusson du coût en haut à gauche**, pointe en bas, chiffre remonté ; sa
-  couleur dit la nature : rouge attaque, bleu défense, vert consommable, or
-  trésor (avec le sceau, tant qu'un trésor n'a pas de coût). Sur une pièce
-  d'équipement il devient **le compteur de cartes**, une petite case en forme
-  de carte, de fer sombre — ce n'est pas de l'énergie ;
+- **l'écusson du coût en haut à gauche**, pointe en bas, chiffre remonté, **LE
+  MÊME SUR TOUTE CARTE QUI COÛTE DE L'ÉNERGIE** — attaque, défense,
+  consommable — et **l'orbe d'énergie du joueur est ce même écusson**, en plus
+  grand, le chiffre courant dedans et le maximum en petit sous la pointe. Il
+  a été coloré par nature ; Keko : « je voudrais que le symbole soit toujours
+  le même, et qu'on mette à jour le symbole de l'énergie de la même manière
+  pour que le joueur comprenne bien ». Seul le chiffre DANS le texte garde la
+  couleur de sa nature. Un trésor porte l'écusson d'or avec le sceau (pas de
+  coût) ; une pièce d'équipement porte **le compteur de cartes**, une petite
+  case en forme de carte, de fer sombre — ce n'est pas de l'énergie ;
 - **le texte d'effet a trois crans de taille** (`cran()` : ≤ 44 caractères,
   ≤ 100, au-delà), pour qu'un effet complexe descende d'un cran plutôt que de
   déborder sur le type. Mesuré sur le prototype : 140 caractères tiennent.

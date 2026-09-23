@@ -692,18 +692,45 @@ body {
   flex: 0 0 auto;
 }
 
+/* L'ORBE EST L'ÉCUSSON DU COÛT DES CARTES, en plus grand : les mêmes trois
+   couches (liseré d'encre, filet de laiton, rouge), la même pointe en bas, le
+   même chiffre en Grenze Gotisch. Keko : « mettre à jour le symbole de
+   l'énergie dispo de la même manière, pour que le joueur comprenne bien ».
+   Elle a été une orbe ronde et dorée -- une autre forme et une autre couleur
+   que ce qu'elle paie. Les proportions sont celles de l'écusson d'une carte
+   (19 % de large pour 16,5 % de haut sur un 5/7, soit 1 : 1,2). */
 .energie {
   position: relative;
   margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border: 1px solid var(--energie);
-  border-radius: 50%;
-  background: radial-gradient(60% 60% at 35% 28%, #6d5520, #2a2210 70%);
-  box-shadow: inset 0 -3px 8px #00000090, 0 0 0.75rem #ffc65c33;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 3rem;
+  background: #1a1316;
+  clip-path: polygon(0 0, 98% 5%, 90% 68%, 50% 100%, 10% 76%);
+}
+
+.energie::before {
+  content: "";
+  position: absolute;
+  inset: 0.14rem 0.16rem 0.2rem;
+  background: linear-gradient(160deg, #f4dfb0, #c9a86e 70%, #a88c5f);
+  clip-path: polygon(0 0, 100% 4%, 91% 68%, 50% 100%, 9% 76%);
+}
+
+.energie::after {
+  content: "";
+  position: absolute;
+  inset: 0.34rem 0.38rem 0.46rem;
+  background: linear-gradient(130deg, #df7650, #a4312c 62%, #672729);
+  clip-path: polygon(0 0, 100% 4%, 91% 68%, 50% 100%, 9% 76%);
+  box-shadow: inset 0.08rem 0.1rem 0 #f5bd8266;
+}
+
+/* La pointe de l'écusson ne porte pas d'ombre par `box-shadow` (le clip la
+   couperait) : c'est le conteneur qui la projette. */
+.orbe.energie {
+  filter: drop-shadow(0.06rem 0.08rem 0 #0000008c);
 }
 
 .chiffre {
@@ -1311,12 +1338,17 @@ body {
 }
 
 .energie {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.125rem;
+  height: 2.55rem;
 }
 
 .energie .chiffre {
-  font-size: 0.9375rem;
+  font-size: 1.45rem;
+}
+
+.energie .sur {
+  bottom: 0.6rem;
+  font-size: 0.45rem;
 }
 
 #ennemis {
@@ -2464,16 +2496,28 @@ body {
 
 .energie .chiffre {
   position: relative;
+  z-index: 1;
   margin: 0;
-  font-size: 1.0625rem;
-  font-weight: 800;
-  color: var(--energie);
-  text-shadow: 0 1px 3px #000;
+  font: 600 1.7rem/0.8 "Grenze Gotisch", Georgia, serif;
+  color: #fff0cd;
+  text-shadow: 0.06rem 0.08rem 0 #5b2727;
+  /* Le centre visuel d'une pointe est plus haut que le centre de sa boîte. */
+  transform: translate(-2%, -30%);
 }
 
+/* Le maximum, en petit, juste au-dessus de la pointe. */
 .energie .sur {
-  font-size: 0.625rem;
-  opacity: 0.7;
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  bottom: 0.72rem;
+  text-align: center;
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: #ffd9b8;
+  opacity: 0.85;
+  text-shadow: 0 1px 0 #5b2727;
 }
 
 /* --- telephone couche : la hauteur la plus serree -------------------------- */
