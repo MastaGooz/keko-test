@@ -119,9 +119,13 @@ export function Carte3D({
 
   return (
     <group ref={groupe} position={position}>
+      {/* ELLE PROJETTE UNE OMBRE, ELLE N'EN REÇOIT PAS. Une carte qui reçoit
+          des ombres reçoit aussi la SIENNE : à faible précision de carte
+          d'ombre — ce qui est le cas sur un téléphone — ça se voit comme des
+          taches sombres sur sa propre face, d'autant plus qu'elle est proche
+          de la caméra. Le sol reçoit les ombres, c'est tout ce qu'il faut. */}
       <mesh
         castShadow
-        receiveShadow
         material={materiaux}
         onPointerDown={onPointerDown}
         onPointerOver={onPointerOver}

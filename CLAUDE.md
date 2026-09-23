@@ -1939,6 +1939,28 @@ d'écran**, qui ramène l'onglet au premier plan. C'est la version 3D du piège
 déjà noté pour les iframes : *en arrière-plan, le navigateur gèle ce qu'on
 essaie de mesurer.*
 
+### Une carte qui noircit quand on la déplace : deux causes à surveiller
+
+Keko, sur téléphone : « quand je réorganise ma main, la carte déplacée devient
+noire et réapparaît quand je lâche ». **Non reproductible à la souris sur la
+machine de dev** — la texture n'est pas repeinte pendant le geste (vérifié en
+comptant les créations de canvas), donc ce n'est pas un remontage de composant.
+
+Deux causes plausibles, toutes deux corrigées, et il faudra que Keko dise
+laquelle tenait :
+
+1. **La mémoire de texture.** Une texture est stockée décompressée sur le GPU :
+   1024 x 1434 en RGBA font près de 6 Mo, mipmaps en plus, et il y en a une PAR
+   CARTE. La carte qu'on déplace est la plus proche de la caméra, donc celle
+   qui demande son niveau le plus détaillé — c'est là que le budget casse.
+   Largeur ramenée à **768**, ce qui reste au-dessus de la taille à l'écran
+   (~350 px au zoom) : le texte est vérifié net.
+2. **L'auto-ombrage.** Les cartes recevaient les ombres, donc **la leur** : à
+   faible précision de carte d'ombre — ce qui arrive vite sur un téléphone —
+   ça se voit comme des taches sombres sur la face, d'autant plus qu'elle est
+   proche. Elles projettent désormais sans recevoir (le sol reçoit, c'est tout
+   ce qu'il faut), avec un biais d'ombre en plus.
+
 ### Deux pièges déjà rencontrés
 
 - **`<primitive>` ne monte un objet QU'UNE FOIS.** Les cinq faces de laiton du

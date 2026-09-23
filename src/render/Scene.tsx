@@ -103,11 +103,16 @@ export function Scene(): React.JSX.Element {
             presets de drei téléchargent des HDR depuis un CDN, et ce projet ne
             dépend d'aucune ressource extérieure hors les deux polices. */}
         <ambientLight intensity={0.55} />
+        {/* Le biais d'ombre éloigne la profondeur comparée d'un cheveu : sans
+            lui, une surface s'ombre elle-même dès que la précision de la carte
+            d'ombre est courte — ce qui arrive vite sur un téléphone. */}
         <directionalLight
           position={[2.5, 3.5, 4]}
           intensity={2.2}
           castShadow
           shadow-mapSize={[1024, 1024]}
+          shadow-bias={-0.0008}
+          shadow-normalBias={0.02}
         />
         {/* Une lumière rasante froide côté gauche : c'est elle qui fait briller
             la tranche quand la carte s'incline, donc qui la rend solide. */}

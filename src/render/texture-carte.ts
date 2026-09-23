@@ -37,11 +37,19 @@ export type CarteAPeindre = {
 /**
  * La largeur de la texture, en pixels.
  *
- * Une carte fait au plus ~300 px de large à l'écran (un slot de zoom sur un
- * grand écran) ; à 1024 on garde de la marge pour l'inclinaison, qui étire la
- * carte en perspective, et pour les écrans à forte densité.
+ * Une carte fait au plus ~350 px de large à l'écran (celle qu'on regarde de
+ * près, sur un grand écran) : 768 garde de la marge pour la densité de pixels
+ * et pour la perspective, sans peser inutilement.
+ *
+ * **LA MÉMOIRE COMPTE ICI PLUS QU'AILLEURS.** Une texture est stockée
+ * décompressée sur le GPU : 1024 x 1434 en RGBA font près de 6 Mo, mipmaps en
+ * plus, et il y en a une PAR CARTE de la main. Sur un téléphone, une carte qui
+ * s'approche demande son niveau le plus détaillé, et c'est là que le budget
+ * casse — d'où une carte qui noircit pendant qu'on la déplace et redevient
+ * normale une fois reposée. À 768 le même jeu tient dans un peu plus de la
+ * moitié.
  */
-const LARGE = 1024
+const LARGE = 768
 const HAUT = Math.round(LARGE * 1.4)
 
 /** Un centième de la largeur : l'unité du gabarit (le `cqw` du CSS). */
