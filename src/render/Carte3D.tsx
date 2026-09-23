@@ -67,7 +67,7 @@ export function Carte3D({
 }: Props): React.JSX.Element {
   const groupe = useRef<THREE.Group>(null)
 
-  const { face, laiton, materiaux } = useMemo(() => {
+  const { face, laiton, halo, lueur, nimbe, materiaux } = useMemo(() => {
     const laiton = new THREE.MeshStandardMaterial({
       color: '#b79a6a',
       metalness: 0.85,
@@ -86,7 +86,38 @@ export function Carte3D({
     })
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
-    return { face, laiton, materiaux: [laiton, laiton, laiton, laiton, face, laiton] }
+    // LE CONTOUR : deux plans posés DERRIÈRE la carte, un peu plus grands
+    // qu'elle. Ce qui dépasse fait le liseré. `toneMapped: false` pour qu'il
+    // reste franc au lieu d'être ramené dans la plage du reste de la scène, et
+    // `depthWrite: false` pour qu'il n'occulte pas ce qui passe derrière.
+    const halo = new THREE.MeshBasicMaterial({
+      color: '#8fdcff',
+      transparent: true,
+      opacity: 0,
+      toneMapped: false,
+      depthWrite: false,
+    })
+    // LES COUCHES DE DIFFUSION, additives et de plus en plus faibles. Deux
+    // plutôt qu'une : à une seule, on lisait un SECOND RECTANGLE net posé
+    // autour du premier, pas une lumière. Un dégradé échelonné, même grossier,
+    // se lit comme un halo — l'oeil ne compte pas les paliers.
+    const lueur = new THREE.MeshBasicMaterial({
+      color: '#4aa8ff',
+      transparent: true,
+      opacity: 0,
+      toneMapped: false,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+    const nimbe = new THREE.MeshBasicMaterial({
+      color: '#2f7fdd',
+      transparent: true,
+      opacity: 0,
+      toneMapped: false,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    })
+    return { face, laiton, halo, lueur, nimbe, materiaux: [laiton, laiton, laiton, laiton, face, laiton] }
   }, [])
 
   useEffect(() => {
@@ -148,21 +179,34 @@ export function Carte3D({
     g.rotation.set(l.r.x, l.r.y, l.r.z + Math.sin(t * 23) * l.feu * 0.018)
     g.scale.setScalar(l.t)
 
-    // ET LE HALO : la carte s'éclaire d'elle-même. Un contour lumineux
-    // demanderait une passe de rendu en plus ; l'émission, elle, est gratuite
-    // et suit la forme exacte de la carte, tranche comprise.
-    //
-    // **C'EST LE CADRE QUI S'ALLUME, PAS LA FACE.** À intensité égale, la face
-    // vire au bleu et l'illustration disparaît sous le halo — la carte cesse
-    // d'être lisible au moment précis où l'on décide de la jouer. Le laiton,
-    // lui, cercle la carte : on voit qu'elle est prête sans rien perdre de ce
-    // qu'elle dit.
-    face.emissiveIntensity = l.feu * 0.09
-    laiton.emissiveIntensity = l.feu * 1.1
+    // ET LE CONTOUR S'ALLUME. **Rien ne touche plus à la carte elle-même** :
+    // une émission, même faible, lave l'illustration au moment précis où l'on
+    // décide de la jouer. Keko : « plutôt qu'une lueur sur la carte on peut pas
+    // un contour brillant ? ». La lumière est donc DERRIÈRE, et ce qui dépasse
+    // fait le liseré.
+    face.emissiveIntensity = 0
+    laiton.emissiveIntensity = l.feu * 0.35
+    halo.opacity = l.feu * 0.95
+    lueur.opacity = l.feu * 0.26
+    nimbe.opacity = l.feu * 0.13
   })
 
   return (
     <group ref={groupe} position={position}>
+      {/* LE CONTOUR, derrière la carte : deux plans un peu plus grands qu'elle,
+          dont seul le débord se voit. Ils ne captent pas le pointeur — sans
+          `raycast` neutralisé, ils élargiraient la zone sensible de la carte
+          d'un liseré invisible au repos. */}
+      <mesh position={[0, 0, -EPAISSEUR]} material={halo} raycast={() => null}>
+        <planeGeometry args={[LARGE + 0.038, HAUT + 0.038]} />
+      </mesh>
+      <mesh position={[0, 0, -EPAISSEUR * 1.5]} material={lueur} raycast={() => null}>
+        <planeGeometry args={[LARGE + 0.13, HAUT + 0.13]} />
+      </mesh>
+      <mesh position={[0, 0, -EPAISSEUR * 2]} material={nimbe} raycast={() => null}>
+        <planeGeometry args={[LARGE + 0.3, HAUT + 0.3]} />
+      </mesh>
+
       {/* ELLE PROJETTE UNE OMBRE, ELLE N'EN REÇOIT PAS. Une carte qui reçoit
           des ombres reçoit aussi la SIENNE : à faible précision de carte
           d'ombre — ce qui est le cas sur un téléphone — ça se voit comme des

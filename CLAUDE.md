@@ -1946,12 +1946,24 @@ qu'on est dans cette zone. C'est le seul repère possible, et c'est la règle du
 2D — *la zone qui déclenche n'a aucun bord à surligner, elle est tout l'écran
 au-dessus de la main, donc le repère doit voyager avec le doigt.*
 
-**C'est LE CADRE qui s'allume, pas la face.** À intensité égale, la face vire
-au bleu et l'illustration disparaît sous le halo : la carte cesse d'être
-lisible au moment précis où l'on décide de la jouer. Le laiton, lui, la cercle
-— on voit qu'elle est prête sans rien perdre de ce qu'elle dit. (Une émission
-plutôt qu'un contour : un contour demanderait une passe de rendu en plus,
-l'émission suit la forme exacte de la carte, tranche comprise.)
+**C'EST UN CONTOUR, ET RIEN NE TOUCHE À LA CARTE ELLE-MÊME.** Une émission,
+même faible, lave l'illustration au moment précis où l'on décide de jouer —
+essayé sur la face, puis sur le cadre seul, et Keko a tranché : « plutôt qu'une
+lueur sur la carte on peut pas un contour brillant ? ». La lumière est donc
+**derrière** : des plans un peu plus grands que la carte, dont seul le débord
+se voit.
+
+**Trois couches échelonnées, pas une.** À une seule, on lisait un SECOND
+RECTANGLE net posé autour du premier, pas une lumière : un liseré franc collé
+au bord, puis deux diffusions additives de plus en plus faibles et larges.
+*Un dégradé échelonné, même grossier, se lit comme un halo — l'oeil ne compte
+pas les paliers.*
+
+Deux détails qui comptent : les plans du contour **ne captent pas le pointeur**
+(`raycast` neutralisé), sinon ils élargiraient la zone sensible de la carte
+d'un liseré invisible au repos ; et ils sont en `toneMapped: false`, sans quoi
+ils seraient ramenés dans la plage du reste de la scène et perdraient leur
+éclat.
 
 **Le frémissement se pose PAR-DESSUS le mouvement, il n'en fait pas partie.**
 La place lissée est tenue à part de celle de l'objet : sans ça, l'amortissement
