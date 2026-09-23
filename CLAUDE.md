@@ -1959,6 +1959,16 @@ au bord, puis deux diffusions additives de plus en plus faibles et larges.
 *Un dégradé échelonné, même grossier, se lit comme un halo — l'oeil ne compte
 pas les paliers.*
 
+**LE CONTOUR EST DORÉ, PAS BLEU.** Le bleu est la couleur du joueur dans le jeu
+2D, mais sur une carte il jure avec le laiton du cadre : ça se lisait comme un
+liseré rapporté, pas comme la carte qui s'échauffe. Keko : « je voyais un
+contour doré/lumineux plutôt que bleu ». L'or est déjà sa matière.
+
+*Conséquence à connaître si on rechange la teinte* : les diffusions ont dû
+monter d'un tiers au passage à l'or. **En mélange additif sur un fond noir, un
+or chaud rend nettement moins fort qu'un bleu clair à opacité égale** — la
+couleur et l'intensité ne se règlent pas indépendamment.
+
 Deux détails qui comptent : les plans du contour **ne captent pas le pointeur**
 (`raycast` neutralisé), sinon ils élargiraient la zone sensible de la carte
 d'un liseré invisible au repos ; et ils sont en `toneMapped: false`, sans quoi

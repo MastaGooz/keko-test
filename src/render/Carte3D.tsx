@@ -72,7 +72,7 @@ export function Carte3D({
       color: '#b79a6a',
       metalness: 0.85,
       roughness: 0.38,
-      emissive: '#5cc8ff',
+      emissive: '#ffcf7a',
       emissiveIntensity: 0,
     })
     // Tant que la texture n'est pas peinte, la face est sombre et mate : une
@@ -81,7 +81,7 @@ export function Carte3D({
       color: '#1a1b20',
       roughness: 0.55,
       metalness: 0.15,
-      emissive: '#5cc8ff',
+      emissive: '#ffcf7a',
       emissiveIntensity: 0,
     })
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
@@ -91,7 +91,12 @@ export function Carte3D({
     // reste franc au lieu d'être ramené dans la plage du reste de la scène, et
     // `depthWrite: false` pour qu'il n'occulte pas ce qui passe derrière.
     const halo = new THREE.MeshBasicMaterial({
-      color: '#8fdcff',
+      // DORÉ, PAS BLEU. Le bleu est la couleur du joueur dans le jeu 2D, mais
+      // sur une carte il jure avec le laiton du cadre : le contour se lisait
+      // comme un liseré rapporté, pas comme la carte qui s'échauffe. L'or est
+      // déjà sa matière. Keko : « je voyais un contour doré/lumineux plutôt que
+      // bleu ».
+      color: '#ffe9ae',
       transparent: true,
       opacity: 0,
       toneMapped: false,
@@ -102,7 +107,7 @@ export function Carte3D({
     // autour du premier, pas une lumière. Un dégradé échelonné, même grossier,
     // se lit comme un halo — l'oeil ne compte pas les paliers.
     const lueur = new THREE.MeshBasicMaterial({
-      color: '#4aa8ff',
+      color: '#ffb958',
       transparent: true,
       opacity: 0,
       toneMapped: false,
@@ -110,7 +115,7 @@ export function Carte3D({
       blending: THREE.AdditiveBlending,
     })
     const nimbe = new THREE.MeshBasicMaterial({
-      color: '#2f7fdd',
+      color: '#c4761c',
       transparent: true,
       opacity: 0,
       toneMapped: false,
@@ -187,8 +192,11 @@ export function Carte3D({
     face.emissiveIntensity = 0
     laiton.emissiveIntensity = l.feu * 0.35
     halo.opacity = l.feu * 0.95
-    lueur.opacity = l.feu * 0.26
-    nimbe.opacity = l.feu * 0.13
+    // Les diffusions sont montées d'un tiers depuis le passage à l'or : en
+    // mélange additif sur un fond noir, un or chaud rend nettement moins fort
+    // qu'un bleu clair à opacité égale.
+    lueur.opacity = l.feu * 0.34
+    nimbe.opacity = l.feu * 0.18
   })
 
   return (
