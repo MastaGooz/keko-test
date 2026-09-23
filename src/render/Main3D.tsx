@@ -105,6 +105,16 @@ const Z_TENUE = Z_MAIN + 0.35
 const LIGNE_DE_JEU = -0.35
 
 /**
+ * De combien les voisines s'écartent pour ouvrir la fente.
+ *
+ * **UNE VRAIE FENTE S'OUVRE LÀ OÙ LA CARTE VA TOMBER** : celles d'avant vont à
+ * gauche, celles d'après à droite. Un simple repère posé sur une voisine ne
+ * suffisait pas en 2D — dans un éventail qui se recouvre, une arête ne dit pas
+ * de quel CÔTÉ de la carte on va tomber.
+ */
+const ECART_FENTE = 0.3
+
+/**
  * Où la carte regardée vient se poser, et ce que le voile cache derrière elle.
  *
  * À cette profondeur elle occupe ~73 % de la hauteur d'écran : assez pour lire
@@ -121,8 +131,30 @@ type Props = {
   zoomee?: number | null
   onJouer?: (index: number) => void
   onRegarder?: (index: number) => void
+  /** La carte a été reposée ailleurs dans la main. */
+  onReordonner?: (de: number, vers: number) => void
   onFermerZoom?: () => void
   onPeinte?: () => void
+}
+
+/**
+ * La place où la carte tombera dans la main : **le nombre de cartes dont le
+ * milieu est à gauche du doigt, LA CARTE TENUE EXCLUE.**
+ *
+ * Les deux points comptent, et c'est la règle du jeu 2D, où elle avait coûté
+ * un bug qui ne se voyait que dans un sens : le milieu plutôt que les bords,
+ * parce que les cartes se recouvrent et que deux voisines revendiqueraient la
+ * même bande ; et la carte tenue exclue, parce que c'est exactement l'index
+ * d'insertion dans la main *une fois retirée*, ce que le réordonnancement
+ * attend. La compter décalait d'un cran tous les déplacements vers la gauche.
+ */
+function placeSousLeDoigt(x: number, total: number): number {
+  const centre = (total - 1) / 2
+  let place = 0
+  for (let rang = 0; rang < total; rang += 1) {
+    if ((rang - centre) * PAS < x) place += 1
+  }
+  return place
 }
 
 /** La place d'une carte dans l'éventail, la carte tenue exclue. */
@@ -143,6 +175,7 @@ export function Main3D({
   zoomee = null,
   onJouer,
   onRegarder,
+  onReordonner,
   onFermerZoom,
   onPeinte,
 }: Props): React.JSX.Element {
@@ -243,12 +276,16 @@ export function Main3D({
         onRegarder?.(index)
         return
       }
-      if (point !== null && point.y > LIGNE_DE_JEU) onJouer?.(index)
+      if (point === null) return
+      // C'EST LA HAUTEUR DU DOIGT QUI TRANCHE : au-dessus de la main on joue,
+      // dedans on RANGE. Même règle qu'en 2D.
+      if (point.y > LIGNE_DE_JEU) onJouer?.(index)
+      else onReordonner?.(index, placeSousLeDoigt(point.x, cartes.length - 1))
     },
     // `bouger` et `detacher` sont stables : les fonctions se citent l'une
     // l'autre, et les lister ici les recréerait en boucle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onJouer, onRegarder, pointSousLeDoigt],
+    [cartes.length, onJouer, onRegarder, onReordonner, pointSousLeDoigt],
   )
 
   const bouger = useCallback(
@@ -308,6 +345,14 @@ export function Main3D({
   const sortie = tenue ?? zoomee
   const restantes = cartes.map((_, i) => i).filter((i) => i !== sortie)
 
+  // LA FENTE NE S'OUVRE QUE DANS LA MAIN. Au-dessus de la ligne de jeu, la
+  // carte part frapper : écarter ses voisines là-haut annoncerait un rangement
+  // qui n'aura pas lieu.
+  const fente =
+    tenue !== null && doigt !== null && doigt.y <= LIGNE_DE_JEU
+      ? placeSousLeDoigt(doigt.x, restantes.length)
+      : null
+
   return (
     <group>
       {/* LE VOILE DU ZOOM. Posé DANS la scène et non en HTML par-dessus :
@@ -358,12 +403,14 @@ export function Main3D({
         const rang = restantes.indexOf(i)
         const place = placeDansEventail(rang, restantes.length)
         const leve = survolee === i
+        // Les voisines d'avant s'écartent à gauche, celles d'après à droite.
+        const ecart = fente === null ? 0 : rang < fente ? -ECART_FENTE : ECART_FENTE
         return (
           <Carte3D
             key={carte.nom + i}
             carte={carte}
             position={[
-              place.position[0],
+              place.position[0] + ecart,
               place.position[1] + (leve ? HAUT * 0.22 : 0),
               place.position[2] + (leve ? 0.12 : 0),
             ]}

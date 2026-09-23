@@ -1864,6 +1864,28 @@ seule preuve visible qu'on ne regarde pas un cache.
 rétroactivement. Le vieux bundle déjà en cache ne le contient pas — il faut un
 rechargement forcé une fois, et ensuite seulement le mécanisme prend le relais.
 
+### Ranger sa main : la fente, portée telle quelle du 2D
+
+Glisser une carte **dans** la main la range ; au-dessus de la ligne de jeu,
+elle se joue. C'est la hauteur du doigt au lâcher qui tranche, comme en 2D.
+
+**Une vraie fente s'ouvre là où la carte tombera** : les voisines d'avant
+s'écartent à gauche, celles d'après à droite. Un repère posé sur une voisine ne
+suffisait pas — dans un éventail qui se recouvre, une arête ne dit pas de quel
+*côté* on va tomber. Et elle **ne s'ouvre que dans la main** : l'ouvrir plus
+haut annoncerait un rangement qui n'aura pas lieu.
+
+**La place est le nombre de cartes dont le milieu est à gauche du doigt, la
+carte tenue exclue.** Les deux points comptent, et c'est la règle du 2D où ils
+avaient coûté un bug qui ne se voyait que dans un sens : le milieu plutôt que
+les bords, parce que deux voisines qui se recouvrent revendiqueraient la même
+bande ; la carte tenue exclue, parce que c'est l'index d'insertion *une fois
+retirée*.
+
+**Ça passe par l'état**, comme en 2D, bien que ça n'ait aucun effet sur les
+règles : le rendu se reconstruit à chaque geste, donc un ordre qui ne vivrait
+que dans la scène serait balayé au premier déplacement.
+
 ### Le zoom : un voile DANS la scène, pas un calque par-dessus
 
 Taper une carte l'amène au centre, droite et grande (~73 % de la hauteur

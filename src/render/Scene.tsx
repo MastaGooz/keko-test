@@ -59,6 +59,26 @@ export function Scene(): React.JSX.Element {
 
   const fermerZoom = useCallback(() => setZoomee(null), [])
 
+  /**
+   * RANGER SA MAIN PASSE PAR L'ÉTAT, bien que ça n'ait aucun effet sur les
+   * règles : le rendu se reconstruit à chaque geste, donc un ordre qui ne
+   * vivrait que dans la scène serait balayé au premier déplacement. C'est la
+   * même raison qu'en 2D.
+   *
+   * `vers` est le rang VOULU une fois la carte retirée.
+   */
+  const reordonner = useCallback((de: number, vers: number) => {
+    setZoomee(null)
+    setMain((m) => {
+      const carte = m[de]
+      if (carte === undefined) return m
+      const restantes = m.filter((_, i) => i !== de)
+      const place = Math.max(0, Math.min(restantes.length, vers))
+      restantes.splice(place, 0, carte)
+      return restantes
+    })
+  }, [])
+
   return (
     <>
       {/* `touch-action: none` est posé sur le canvas par le CSS (`#app canvas`)
@@ -98,6 +118,7 @@ export function Scene(): React.JSX.Element {
           zoomee={zoomee}
           onJouer={jouer}
           onRegarder={regarder}
+          onReordonner={reordonner}
           onFermerZoom={fermerZoom}
           onPeinte={compter}
         />
