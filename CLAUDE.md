@@ -1939,6 +1939,27 @@ d'écran**, qui ramène l'onglet au premier plan. C'est la version 3D du piège
 déjà noté pour les iframes : *en arrière-plan, le navigateur gèle ce qu'on
 essaie de mesurer.*
 
+### La carte engagée s'allume et frémit
+
+Au-dessus de la main, lâcher joue la carte : elle **s'allume et frémit** tant
+qu'on est dans cette zone. C'est le seul repère possible, et c'est la règle du
+2D — *la zone qui déclenche n'a aucun bord à surligner, elle est tout l'écran
+au-dessus de la main, donc le repère doit voyager avec le doigt.*
+
+**C'est LE CADRE qui s'allume, pas la face.** À intensité égale, la face vire
+au bleu et l'illustration disparaît sous le halo : la carte cesse d'être
+lisible au moment précis où l'on décide de la jouer. Le laiton, lui, la cercle
+— on voit qu'elle est prête sans rien perdre de ce qu'elle dit. (Une émission
+plutôt qu'un contour : un contour demanderait une passe de rendu en plus,
+l'émission suit la forme exacte de la carte, tranche comprise.)
+
+**Le frémissement se pose PAR-DESSUS le mouvement, il n'en fait pas partie.**
+La place lissée est tenue à part de celle de l'objet : sans ça, l'amortissement
+mangerait le tremblement — il ramènerait la carte vers sa cible en croyant
+corriger un écart. Deux fréquences qui ne retombent jamais en phase, sinon ça
+se lit comme un balancement régulier, donc comme une animation, et non comme
+une carte qui vibre d'impatience.
+
 ### Le survol n'existe qu'à la souris — en 3D aussi
 
 **Au doigt, le `pointerover` part au toucher mais le `pointerout` n'arrive

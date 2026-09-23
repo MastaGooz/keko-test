@@ -403,6 +403,11 @@ export function Main3D({
               rotation={[0, 0, 0]}
               taille={1.05}
               ressort={22}
+              // AU-DESSUS DE LA MAIN, LÂCHER JOUE : la carte s'allume et
+              // frémit. C'est la seule zone qui déclenche quelque chose, et
+              // elle n'a aucun bord à surligner — le repère voyage donc avec
+              // le doigt, comme en 2D.
+              engagee={p.y > LIGNE_DE_JEU}
               onPeinte={onPeinte}
             />
           )

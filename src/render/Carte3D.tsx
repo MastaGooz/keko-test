@@ -39,6 +39,14 @@ type Props = {
   taille?: number
   /** Vitesse de rattrapage. Plus haut = plus sec. */
   ressort?: number
+  /**
+   * La carte est au-dessus de la zone qui la joue : elle s'allume et frémit.
+   *
+   * **C'est le seul repère possible ici**, et c'est la règle du jeu 2D : la
+   * zone qui déclenche n'a pas de bord à surligner — elle est tout l'écran
+   * au-dessus de la main — donc le repère doit voyager avec le doigt.
+   */
+  engagee?: boolean
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -51,6 +59,7 @@ export function Carte3D({
   rotation = [0, 0, 0],
   taille = 1,
   ressort = 9,
+  engagee = false,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -58,11 +67,13 @@ export function Carte3D({
 }: Props): React.JSX.Element {
   const groupe = useRef<THREE.Group>(null)
 
-  const { face, materiaux } = useMemo(() => {
+  const { face, laiton, materiaux } = useMemo(() => {
     const laiton = new THREE.MeshStandardMaterial({
       color: '#b79a6a',
       metalness: 0.85,
       roughness: 0.38,
+      emissive: '#5cc8ff',
+      emissiveIntensity: 0,
     })
     // Tant que la texture n'est pas peinte, la face est sombre et mate : une
     // carte blanche qui vire à l'illustration se verrait comme un défaut.
@@ -70,10 +81,12 @@ export function Carte3D({
       color: '#1a1b20',
       roughness: 0.55,
       metalness: 0.15,
+      emissive: '#5cc8ff',
+      emissiveIntensity: 0,
     })
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
-    return { face, materiaux: [laiton, laiton, laiton, laiton, face, laiton] }
+    return { face, laiton, materiaux: [laiton, laiton, laiton, laiton, face, laiton] }
   }, [])
 
   useEffect(() => {
@@ -97,21 +110,55 @@ export function Carte3D({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carte, face])
 
+  /**
+   * La place LISSÉE, tenue à part de celle du groupe.
+   *
+   * Sans elle, le frémissement serait mangé par l'amortissement : on
+   * l'ajouterait à la position, et l'image suivante la ramènerait vers la
+   * cible en croyant corriger un écart. *Le tremblement se pose PAR-DESSUS le
+   * mouvement, il n'en fait pas partie.*
+   */
+  const lisse = useRef({ p: new THREE.Vector3(...position), r: new THREE.Euler(...rotation), t: taille, feu: 0 })
+
   // ELLE REJOINT SA PLACE, elle n'y saute pas. L'amortissement exponentiel est
   // indépendant de la fréquence d'écran : à 120 Hz comme à 60, le mouvement
   // dure le même temps.
-  useFrame((_, delta) => {
+  useFrame((etat, delta) => {
     const g = groupe.current
     if (g === null) return
     const k = 1 - Math.exp(-ressort * delta)
-    g.position.x += (position[0] - g.position.x) * k
-    g.position.y += (position[1] - g.position.y) * k
-    g.position.z += (position[2] - g.position.z) * k
-    g.rotation.x += (rotation[0] - g.rotation.x) * k
-    g.rotation.y += (rotation[1] - g.rotation.y) * k
-    g.rotation.z += (rotation[2] - g.rotation.z) * k
-    const s = g.scale.x + (taille - g.scale.x) * k
-    g.scale.setScalar(s)
+    const l = lisse.current
+    l.p.x += (position[0] - l.p.x) * k
+    l.p.y += (position[1] - l.p.y) * k
+    l.p.z += (position[2] - l.p.z) * k
+    l.r.x += (rotation[0] - l.r.x) * k
+    l.r.y += (rotation[1] - l.r.y) * k
+    l.r.z += (rotation[2] - l.r.z) * k
+    l.t += (taille - l.t) * k
+
+    // LE FRÉMISSEMENT : court, rapide, et de deux fréquences qui ne retombent
+    // jamais en phase — sinon il se lit comme un balancement régulier, donc
+    // comme une animation, et non comme une carte qui vibre d'impatience.
+    const feuVise = engagee ? 1 : 0
+    l.feu += (feuVise - l.feu) * (1 - Math.exp(-12 * delta))
+    const t = etat.clock.elapsedTime
+    const amp = l.feu * 0.014
+
+    g.position.set(l.p.x + Math.sin(t * 37) * amp, l.p.y + Math.cos(t * 29) * amp, l.p.z)
+    g.rotation.set(l.r.x, l.r.y, l.r.z + Math.sin(t * 23) * l.feu * 0.018)
+    g.scale.setScalar(l.t)
+
+    // ET LE HALO : la carte s'éclaire d'elle-même. Un contour lumineux
+    // demanderait une passe de rendu en plus ; l'émission, elle, est gratuite
+    // et suit la forme exacte de la carte, tranche comprise.
+    //
+    // **C'EST LE CADRE QUI S'ALLUME, PAS LA FACE.** À intensité égale, la face
+    // vire au bleu et l'illustration disparaît sous le halo — la carte cesse
+    // d'être lisible au moment précis où l'on décide de la jouer. Le laiton,
+    // lui, cercle la carte : on voit qu'elle est prête sans rien perdre de ce
+    // qu'elle dit.
+    face.emissiveIntensity = l.feu * 0.09
+    laiton.emissiveIntensity = l.feu * 1.1
   })
 
   return (
