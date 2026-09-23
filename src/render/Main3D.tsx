@@ -20,10 +20,11 @@
  * - **la carte tenue QUITTE la main** : les voisines se referment sur sa
  *   place. La laisser en place montrerait une position qui n'a plus de sens.
  *
- * Ce qui change par rapport au 2D, et c'est un gain : **la main est inclinée
- * vers le joueur**. En CSS, l'éventail était plaqué et la carte plongeait sous
- * le bord de l'écran pour gagner en taille. Ici la perspective fait le travail
- * — les cartes du fond sont plus petites parce qu'elles sont plus loin.
+ * **LA MAIN EST VUE À PLAT**, face à la caméra, comme en 2D : les cartes ne
+ * sont pas couchées vers l'arrière et on ne les regarde pas de haut. Ce qui
+ * reste du 2D : l'arc, le creux, et la plongée sous le bord bas. Ce que la 3D
+ * ajoute : l'épaisseur, l'ombre portée d'une carte sur sa voisine, et le
+ * laiton du cadre qui prend la lumière.
  */
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useThree, type ThreeEvent } from '@react-three/fiber'
@@ -54,7 +55,7 @@ const DELAI_PRISE = 160
  * au lieu de descendre.
  */
 const PAS = 0.72
-const CREUX = 0.17
+const CREUX = 0.1
 const INCLINAISON = 0.18
 
 /**
@@ -62,28 +63,37 @@ const INCLINAISON = 0.18
  *
  * LA CARTE PLONGE SOUS LE BORD BAS, comme en 2D : au repos on n'en voit que le
  * haut, et c'est ce qui permet de la faire grande sans lui donner tout
- * l'écran. La part enfouie vaut ici ~20 %, contre 24 % sur un téléphone en 2D.
+ * l'écran. La part enfouie est plus faible qu'en 2D (~9 % contre 24 %) : sans
+ * couchage, la main prend moins de hauteur, donc elle a moins besoin de se
+ * cacher.
+ *
+ * **LA MAIN EST VUE À PLAT, PAS EN PLONGÉE, et `COUCHE` vaut donc zéro.** Elle
+ * a été couchée de 30° vers l'arrière, dans l'idée qu'une main tenue se
+ * regarde de haut ; Keko : « la main devrait être vue à plat, pas depuis le
+ * haut ». *Et il avait raison sur la cause du reste* : une carte couchée
+ * avance en profondeur, c'est ce qui la faisait croiser celle qu'on tient.
+ *
+ * Ce qu'on perd en couchant à zéro, et qu'il faudra rendre autrement si le
+ * volume manque : la lumière rasante ne glisse plus sur la face, elle
+ * n'accroche que le cadre et la tranche.
  */
-const Y_MAIN = -1
+const Y_MAIN = -1.3
 const Z_MAIN = 1.1
-const COUCHE = 0.52
+const COUCHE = 0
 
 /**
  * À quelle profondeur voyage la carte qu'on tient.
  *
- * **ELLE DOIT PASSER DEVANT TOUTE LA MAIN, ET LE CALCUL EST SERRÉ** : les
- * cartes de l'éventail sont couchées de `COUCHE`, donc leur haut avance en z
- * de `sin(COUCHE) × HAUT/2`, soit 0,35 — exactement l'écart que la carte tenue
- * avait au départ. Elle **traversait** donc ses voisines en les croisant
- * (Keko : « quand je drag la carte traverse les autres »). À 0,9 d'écart, le
- * bas de la carte tenue reste devant le haut des autres, quelle que soit son
- * inclinaison.
+ * **UNE CARTE COUCHÉE N'OCCUPE PAS LE PLAN OÙ ON L'A POSÉE**, et c'est ce qui
+ * avait causé la traversée : à 30° de couchage, le haut d'une carte avance en
+ * z de `sin(COUCHE) × HAUT/2`, soit 0,35 — exactement l'écart que la carte
+ * tenue avait alors. Depuis que la main est à plat, plus rien n'avance, et un
+ * petit écart suffit à la faire passer devant.
  *
- * *Une carte couchée n'occupe pas le plan où on l'a posée* — c'est la leçon à
- * garder : en 3D, la profondeur d'un objet incliné n'est pas celle de son
- * origine.
+ * *La leçon reste* : en 3D, la profondeur d'un objet incliné n'est pas celle
+ * de son origine. Si la main se recouche un jour, cet écart doit suivre.
  */
-const Z_TENUE = Z_MAIN + 0.9
+const Z_TENUE = Z_MAIN + 0.35
 
 /**
  * La hauteur à partir de laquelle lâcher JOUE la carte.
@@ -241,7 +251,7 @@ export function Main3D({ cartes, onJouer, onRegarder, onPeinte }: Props): React.
               key={carte.nom + i}
               carte={carte}
               position={[p.x, p.y, Z_TENUE]}
-              rotation={[0.08, 0, 0]}
+              rotation={[0, 0, 0]}
               taille={1.05}
               ressort={22}
               onPeinte={onPeinte}
@@ -260,7 +270,7 @@ export function Main3D({ cartes, onJouer, onRegarder, onPeinte }: Props): React.
               place.position[1] + (leve ? HAUT * 0.22 : 0),
               place.position[2] + (leve ? 0.12 : 0),
             ]}
-            rotation={leve ? [COUCHE * 0.45, 0, place.rotation[2] * 0.3] : place.rotation}
+            rotation={leve ? [0, 0, place.rotation[2] * 0.3] : place.rotation}
             taille={leve ? 1.08 : 1}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}

@@ -1819,17 +1819,34 @@ transpose pas telle quelle.
 **L'inclinaison a doublé** (~10° par cran au lieu de 5) : à 5°, cinq cartes ne
 s'écartaient que de 10° du bord au bord et se lisaient comme une rangée
 parallèle, pas comme une main tenue. Keko : « l'inclinaison est beaucoup trop
-droite ». Le creux de l'arc suit, sinon les cartes des bords partent de travers
-au lieu de descendre.
+droite ».
 
-**UNE CARTE COUCHÉE N'OCCUPE PAS LE PLAN OÙ ON L'A POSÉE**, et ça a coûté un
-bug : les cartes de la main sont couchées de `COUCHE`, donc leur haut avance en
-z de `sin(COUCHE) × HAUT/2` — soit 0,35, exactement l'écart que j'avais donné à
-la carte tenue. Elle **traversait** donc ses voisines en les croisant (Keko :
-« quand je drag la carte traverse les autres »). Elle voyage désormais 0,9
-devant la main, et le plan de projection du doigt est à CETTE profondeur : sur
-celui de la main, la carte se décalerait du doigt par parallaxe, d'autant plus
-qu'on s'éloigne du centre de l'écran.
+**LA MAIN EST VUE À PLAT, PAS EN PLONGÉE.** Elle a d'abord été couchée de 30°
+vers l'arrière, caméra légèrement au-dessus, dans l'idée qu'une main tenue se
+regarde de haut. Keko : « la main devrait être vue à plat, pas depuis le
+haut ». Les cartes sont donc frontales et la caméra regarde droit. Ce qui reste
+du 2D : l'arc, le creux, la plongée sous le bord bas. Ce que la 3D ajoute :
+l'épaisseur, l'ombre d'une carte sur sa voisine, le laiton qui prend la
+lumière. *Ce qu'on a perdu au passage*, et qu'il faudra rendre autrement si le
+volume manque : la lumière rasante ne glisse plus sur la face.
+
+**UNE CARTE COUCHÉE N'OCCUPE PAS LE PLAN OÙ ON L'A POSÉE**, et c'est ce qui
+causait la traversée — Keko l'avait diagnostiqué lui-même : « c'est le fait que
+les cartes soient trop à la verticale qui fait que la main traverse celle que
+je tiens ». À 30° de couchage, le haut d'une carte avance en z de
+`sin(COUCHE) × HAUT/2`, soit 0,35 : exactement l'écart que j'avais donné à la
+carte tenue. Main à plat, plus rien n'avance, et un petit écart suffit. *La
+leçon reste pour la suite : en 3D, la profondeur d'un objet incliné n'est pas
+celle de son origine.*
+
+**Le plan de projection du doigt suit la profondeur de la carte TENUE**, pas
+celle de la main : sinon la carte se décale du doigt par parallaxe, d'autant
+plus qu'on s'éloigne du centre de l'écran.
+
+**Le creux de l'arc et le couchage ne sont pas indépendants.** Le creux avait
+été monté à 0,17 pour accompagner l'inclinaison ; une fois la main mise à plat
+et enfouie sous le bord, il faisait passer le nom des cartes de bord sous
+l'écran. *Ce qui coûte le moins cher en plongée coûte le plus cher de face.*
 
 ### Deux pièges déjà rencontrés
 

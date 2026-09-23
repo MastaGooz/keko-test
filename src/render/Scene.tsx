@@ -56,11 +56,15 @@ export function Scene(): React.JSX.Element {
       {/* LE RECUL DE LA CAMÉRA DONNE SA TAILLE À LA CARTE : à cette distance
           et ce champ, une carte fait ~37 % de la hauteur d'écran, l'ordre de
           grandeur du jeu 2D. C'est le seul réglage qui compte pour la
-          lisibilité — la carte, elle, mesure toujours 1 de large. */}
+          lisibilité — la carte, elle, mesure toujours 1 de large.
+
+          ET LA CAMÉRA REGARDE DROIT : à `y = 0,55` elle plongeait sur la main,
+          qui se lisait alors comme vue de haut. Keko : « la main devrait être
+          vue à plat ». */}
       <Canvas
         shadows
         dpr={[1, 2]}
-        camera={{ position: [0, 0.55, 6], fov: 42 }}
+        camera={{ position: [0, 0, 6], fov: 42 }}
         style={{ position: 'fixed', inset: 0, background: '#0d0c11' }}
       >
         {/* L'éclairage est PROCÉDURAL, sans fichier d'environnement : les
