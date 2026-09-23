@@ -367,8 +367,13 @@ let contour: THREE.CanvasTexture | null = null
  *
  * **La texture et le plan le partagent**, et c'est indispensable : ils doivent
  * décrire la même chose pour que le liseré tombe exactement sur le bord.
+ *
+ * **SERRÉ, ET C'EST UNE CORRECTION.** À 26 %, la lumière débordait bien trop
+ * loin — Keko : « ça éclaire beaucoup trop autour de la carte […] il faudrait
+ * un glow assez proche de la carte ». Un halo qui s'étale n'éclaire pas la
+ * carte, il éclaire l'écran.
  */
-export const DEBORD_CONTOUR = 0.26
+export const DEBORD_CONTOUR = 0.13
 
 export function textureContour(): THREE.CanvasTexture {
   if (contour !== null) return contour
@@ -397,11 +402,16 @@ export function textureContour(): THREE.CanvasTexture {
   // sur tout le débord, le halo devient une brume qui n'éclaire rien ; c'est
   // près du bord qu'une lumière se lit.
   ctx.shadowColor = 'rgba(255, 255, 255, 0.95)'
+  // LA LUMIÈRE DOIT ÊTRE ÉTEINTE AVANT LE BORD DU PLAN, sinon on voit le
+  // rectangle qui la délimite — Keko : « on voit le rectangle qui délimite la
+  // lumière ». C'est ce qui règle les rayons : assez courts pour que l'alpha
+  // soit retombé à zéro bien avant le débord, pas seulement faible.
+  //
   // Les rayons sont donnés en `shadowBlur`, dont la portée utile vaut à peu
-  // près la MOITIÉ : pour que la lumière atteigne le bord du débord, il en
-  // faut le double. Mesuré sur le profil d'alpha de la texture — à rayons
-  // courts, elle plafonnait à 20 % juste avant la carte et ne se voyait pas.
-  for (const rayon of [debord * 1.2, debord * 0.6, debord * 0.25]) {
+  // près la MOITIÉ. Se vérifie sur le profil d'alpha de la texture, en lisant
+  // une ligne de pixels du bord vers le centre : il doit commencer par des
+  // zéros francs.
+  for (const rayon of [debord * 0.85, debord * 0.45, debord * 0.2]) {
     ctx.shadowBlur = rayon
     ctx.fillRect(debord, debord, l, h)
   }

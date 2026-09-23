@@ -2001,6 +2001,15 @@ même moteur de flou que le `box-shadow` du CSS — le rendu est le même, mais
 plaquable. Elle est **additive** : la lumière s'ajoute au fond au lieu de le
 recouvrir, et c'est toute la différence entre une lueur et une peinture claire.
 
+**LE HALO EST SERRÉ CONTRE LA CARTE, et il doit s'ÉTEINDRE avant le bord du
+plan.** Deux défauts distincts, signalés ensemble : à 26 % de débord, « ça
+éclaire beaucoup trop autour de la carte » — un halo qui s'étale n'éclaire pas
+la carte, il éclaire l'écran — et « on voit le rectangle qui délimite la
+lumière », parce que l'alpha valait encore 11/255 au bord du plan et se coupait
+net. Débord ramené à 13 %, rayons de flou réduits pour que l'alpha soit
+retombé à 2 au bord. *Une lueur qui se termine par une arête n'est pas une
+lueur.*
+
 Trois choses à savoir avant d'y retoucher, chacune ayant coûté un essai :
 
 - **le débord de la texture doit être EXACTEMENT celui du plan** (`DEBORD_CONTOUR`,
