@@ -74,7 +74,6 @@ import {
   sonPioche,
   sonViser,
 } from './ui/sons.ts'
-import { verifierVersion } from './ui/version.ts'
 
 const root = document.querySelector<HTMLDivElement>('#app')!
 const view = mount(root, __BUILD_TIME__)
@@ -615,4 +614,3 @@ demarrer(Date.now() % 100000)
 
 // Le cache de GitHub Pages peut servir un vieux HTML : on vérifie la date du
 // build à la source et on se recharge au besoin, une fois la partie affichée.
-void verifierVersion(__BUILD_TIME__)

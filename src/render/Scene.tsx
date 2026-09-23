@@ -110,6 +110,9 @@ export function Scene(): React.JSX.Element {
         </mesh>
       </Canvas>
 
+      {/* LA DATE DU BUILD, comme sur le jeu 2D : c'est la seule preuve visible
+          qu'on ne teste pas une version en cache. */}
+      <p className="build-3d">{__BUILD_TIME__}</p>
       {!pret && <p className="chargement-3d">Chargement…</p>}
       {pret && (
         <p className="note-3d">

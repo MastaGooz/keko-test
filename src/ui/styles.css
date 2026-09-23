@@ -3623,3 +3623,16 @@ body {
 #app canvas {
   touch-action: none;
 }
+
+/* La date du build sur la page du moteur 3D : la seule preuve visible qu'on ne
+   teste pas une version en cache. Meme role que celle du jeu 2D. */
+.build-3d {
+  position: fixed;
+  inset: 0.5rem auto auto 0.75rem;
+  margin: 0;
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+  font-size: 0.6875rem;
+  opacity: 0.6;
+  pointer-events: none;
+}

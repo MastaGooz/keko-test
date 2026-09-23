@@ -15,6 +15,13 @@
  * téléchargés que si on demande `?r3f`. La page par défaut garde son poids.
  */
 import './ui/styles.css'
+import { verifierVersion } from './ui/version.ts'
+
+// LE GARDE-FOU ANTI-CACHE VIT ICI, PAS DANS UNE BRANCHE. Il n'était appelé que
+// par le jeu 2D : la page `?r3f` gardait donc un vieux HTML, donc un vieux
+// bundle, indéfiniment — Keko testait une version périmée sans que rien ne le
+// dise. *Tout ce qui vaut pour une entrée du jeu vaut pour les trois.*
+void verifierVersion(__BUILD_TIME__)
 
 if (new URLSearchParams(location.search).has('r3f')) {
   void import('./render/monter.tsx').then(({ monter3d }) => {

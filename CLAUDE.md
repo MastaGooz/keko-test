@@ -1848,6 +1848,22 @@ plus qu'on s'éloigne du centre de l'écran.
 et enfouie sous le bord, il faisait passer le nom des cartes de bord sous
 l'écran. *Ce qui coûte le moins cher en plongée coûte le plus cher de face.*
 
+### Le garde-fou anti-cache vaut pour LES TROIS ENTRÉES
+
+`verifierVersion` n'était appelée que par `main.ts`, donc par le jeu 2D seul.
+La page `?r3f` gardait un vieux HTML — donc un vieux bundle — **indéfiniment**,
+et Keko y testait une version périmée sans que rien ne le dise : il a signalé
+un message qui n'existait plus depuis deux commits. L'appel vit désormais dans
+`entree.ts`, avant l'aiguillage : *tout ce qui vaut pour une entrée du jeu vaut
+pour les trois.*
+
+La date du build s'affiche aussi sur la page 3D, comme sur le jeu : c'est la
+seule preuve visible qu'on ne regarde pas un cache.
+
+*Et il faut le savoir* : un garde-fou ajouté ne peut pas se corriger
+rétroactivement. Le vieux bundle déjà en cache ne le contient pas — il faut un
+rechargement forcé une fois, et ensuite seulement le mécanisme prend le relais.
+
 ### Le zoom : un voile DANS la scène, pas un calque par-dessus
 
 Taper une carte l'amène au centre, droite et grande (~73 % de la hauteur
