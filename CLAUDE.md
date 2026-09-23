@@ -1953,12 +1953,30 @@ lueur sur la carte on peut pas un contour brillant ? ». La lumière est donc
 **derrière** : des plans un peu plus grands que la carte, dont seul le débord
 se voit.
 
-**UN LISERÉ, PAS UN DÉGRADÉ.** Il a eu deux couches de diffusion additives
-par-dessus, pour imiter un halo ; Keko : « j'aime pas trop le dégradé en 3
-couches autour de la carte, je voyais vraiment juste un petit contour d'une
-texture lumière brillante ». *Un halo diffus agrandit la carte, un liseré la
-souligne* — et c'est souligner qu'on veut : dire qu'elle est prête, pas la
-faire enfler.
+**LE FLOU EST DANS LA MATIÈRE, PAS DANS LE NOMBRE DE PLANS.** La référence est
+le `box-shadow` du jeu 2D — `0 0 0 2px` blanc puis `0 0 1.5rem` blanc
+translucide : *un liseré net ET un flou continu qui émet*. Deux essais l'ont
+raté avant d'y arriver : un plan de couleur unie donne un rectangle dur, et
+trois rectangles emboîtés laissent voir leurs paliers (Keko : « j'aime pas trop
+le dégradé en 3 couches » ; puis « le contour est juste clair, mais il n'émet
+aucune lumière »).
+
+La solution est une **texture** peinte au canvas avec `shadowBlur`, qui est le
+même moteur de flou que le `box-shadow` du CSS — le rendu est le même, mais
+plaquable. Elle est **additive** : la lumière s'ajoute au fond au lieu de le
+recouvrir, et c'est toute la différence entre une lueur et une peinture claire.
+
+Trois choses à savoir avant d'y retoucher, chacune ayant coûté un essai :
+
+- **le débord de la texture doit être EXACTEMENT celui du plan** (`DEBORD_CONTOUR`,
+  partagé). Plus large dans la texture, le liseré et le cœur du flou passent
+  derrière la carte et il ne reste que la frange la plus pâle : on ne voit
+  presque rien ;
+- **`shadowBlur` porte à peu près la moitié de sa valeur.** Pour que la lumière
+  atteigne le bord du débord, il faut des rayons du double ;
+- **ça se vérifie sur le profil d'alpha de la texture**, pas à l'oeil sur la
+  scène : lire une ligne de pixels du bord vers le centre dit tout de suite si
+  la lumière monte progressivement ou si elle plafonne trop tôt.
 
 Le liseré **respire** à peine, sur la même horloge que le frémissement mais
 bien plus lentement : c'est ce qui le fait lire comme une lumière et non comme

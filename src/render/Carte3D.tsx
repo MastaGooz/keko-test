@@ -24,7 +24,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { CarteAPeindre } from './texture-carte.ts'
-import { textureDeCarte } from './texture-carte.ts'
+import { DEBORD_CONTOUR, textureContour, textureDeCarte } from './texture-carte.ts'
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
 export const LARGE = 1
@@ -86,25 +86,27 @@ export function Carte3D({
     })
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
-    // LE CONTOUR : UN SEUL PLAN, à peine plus grand que la carte, posé
-    // derrière elle. Ce qui dépasse fait le liseré.
+    // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
+    // — un liseré net entouré d'un flou continu, peint au canvas avec le même
+    // moteur de flou que le `box-shadow` du jeu 2D.
     //
-    // **Un liseré, pas un dégradé.** Il a eu deux couches de diffusion
-    // additives par-dessus, pour imiter un halo ; Keko : « j'aime pas trop le
-    // dégradé en 3 couches autour de la carte, je voyais vraiment juste un
-    // petit contour d'une texture lumière brillante ». *Un halo diffus
-    // agrandit la carte, un liseré la souligne* — et c'est souligner qu'on
-    // veut : dire qu'elle est prête, pas la faire enfler.
+    // **Un plan de couleur unie ne peut pas faire ça** : il donne un rectangle
+    // dur, « juste clair, mais il n'émet aucune lumière » (Keko). Trois
+    // rectangles emboîtés non plus — on lisait les paliers. *Le flou est dans
+    // la matière, pas dans le nombre de plans.*
     //
-    // `toneMapped: false` pour qu'il reste franc au lieu d'être ramené dans la
-    // plage du reste de la scène, et `depthWrite: false` pour qu'il n'occulte
-    // pas ce qui passe derrière.
+    // Additif : la lumière s'AJOUTE au fond au lieu de le recouvrir, ce qui
+    // est la différence entre une lueur et une peinture claire. Et
+    // `toneMapped: false` pour qu'elle garde son éclat au lieu d'être ramenée
+    // dans la plage du reste de la scène.
     const halo = new THREE.MeshBasicMaterial({
-      color: '#fff0c4',
+      map: textureContour(),
+      color: '#ffe6ab',
       transparent: true,
       opacity: 0,
       toneMapped: false,
       depthWrite: false,
+      blending: THREE.AdditiveBlending,
     })
     return { face, laiton, halo, materiaux: [laiton, laiton, laiton, laiton, face, laiton] }
   }, [])
@@ -184,12 +186,12 @@ export function Carte3D({
 
   return (
     <group ref={groupe} position={position}>
-      {/* LE CONTOUR, derrière la carte : un plan à peine plus grand qu'elle,
-          dont seul le débord se voit. Il ne capte pas le pointeur — sans
-          `raycast` neutralisé, il élargirait la zone sensible de la carte d'un
-          liseré invisible au repos. */}
+      {/* LE CONTOUR, derrière la carte : un plan plus grand qu'elle, qui porte
+          la texture de lueur. Seul ce qui dépasse se voit — le centre est
+          masqué par la carte. Il ne capte pas le pointeur : sans `raycast`
+          neutralisé, il élargirait la zone sensible de tout son débord. */}
       <mesh position={[0, 0, -EPAISSEUR]} material={halo} raycast={() => null}>
-        <planeGeometry args={[LARGE + 0.03, HAUT + 0.03]} />
+        <planeGeometry args={[LARGE + DEBORD_CONTOUR * 2, HAUT + DEBORD_CONTOUR * 2]} />
       </mesh>
 
       {/* ELLE PROJETTE UNE OMBRE, ELLE N'EN REÇOIT PAS. Une carte qui reçoit

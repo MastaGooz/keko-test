@@ -341,3 +341,80 @@ export function textureDeCarte(carte: CarteAPeindre): Promise<THREE.CanvasTextur
   TEXTURES.set(cle, promesse)
   return promesse
 }
+
+/**
+ * LA TEXTURE DU CONTOUR LUMINEUX.
+ *
+ * Elle reproduit le `box-shadow` du jeu 2D, qui est ce que Keko veut voir :
+ * `0 0 0 2px blanc` puis `0 0 1.5rem blanc translucide` — **un liseré net ET
+ * un flou continu qui émet**.
+ *
+ * En 3D, un plan de couleur unie ne peut pas faire ça : il donne un rectangle
+ * dur. Trois rectangles emboîtés non plus — on lisait les paliers (Keko :
+ * « j'aime pas trop le dégradé en 3 couches »). *Le flou doit être dans la
+ * matière, pas dans le nombre de plans*, donc dans une texture.
+ *
+ * Elle est peinte au canvas avec `shadowBlur`, qui est exactement le même
+ * moteur de flou que le `box-shadow` du CSS : le rendu est le même, à ceci
+ * près qu'il devient une image qu'on peut plaquer.
+ *
+ * Une seule pour toutes les cartes : elle ne dépend d'aucune d'elles.
+ */
+let contour: THREE.CanvasTexture | null = null
+
+/**
+ * Le débord du flou, en fraction de la largeur de la carte.
+ *
+ * **La texture et le plan le partagent**, et c'est indispensable : ils doivent
+ * décrire la même chose pour que le liseré tombe exactement sur le bord.
+ */
+export const DEBORD_CONTOUR = 0.26
+
+export function textureContour(): THREE.CanvasTexture {
+  if (contour !== null) return contour
+
+  // LA CARTE OCCUPE LE CENTRE, ET LE DÉBORD DOIT ÊTRE EXACTEMENT CELUI DU
+  // PLAN qui portera la texture — sinon la partie utile passe derrière la
+  // carte et on ne voit plus rien. C'est arrivé : à débord plus large dans la
+  // texture que dans la géométrie, le liseré et le cœur du flou étaient
+  // masqués, il ne restait que la frange la plus pâle.
+  const l = 512
+  const debord = Math.round(l * DEBORD_CONTOUR)
+  const h = Math.round(l * 1.4)
+  const canvas = document.createElement('canvas')
+  canvas.width = l + debord * 2
+  canvas.height = h + debord * 2
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) {
+    contour = new THREE.CanvasTexture(canvas)
+    return contour
+  }
+
+  ctx.fillStyle = '#ffffff'
+  // LE FLOU D'ABORD, en plusieurs passes SERRÉES : une seule donne un halo
+  // trop sage, et c'est l'accumulation qui fait la lumière -- exactement comme
+  // deux `box-shadow` empilés dans le CSS. Les rayons restent COURTS : étalé
+  // sur tout le débord, le halo devient une brume qui n'éclaire rien ; c'est
+  // près du bord qu'une lumière se lit.
+  ctx.shadowColor = 'rgba(255, 255, 255, 0.95)'
+  // Les rayons sont donnés en `shadowBlur`, dont la portée utile vaut à peu
+  // près la MOITIÉ : pour que la lumière atteigne le bord du débord, il en
+  // faut le double. Mesuré sur le profil d'alpha de la texture — à rayons
+  // courts, elle plafonnait à 20 % juste avant la carte et ne se voyait pas.
+  for (const rayon of [debord * 1.2, debord * 0.6, debord * 0.25]) {
+    ctx.shadowBlur = rayon
+    ctx.fillRect(debord, debord, l, h)
+  }
+
+  // PUIS LE LISERÉ NET, sans ombre : c'est lui qui donne l'arête franche que
+  // le flou seul n'a pas. Il déborde d'environ 2 % de la carte, comme les 2 px
+  // du jeu 2D -- mesuré dans les pixels de CETTE texture, pas de l'écran.
+  ctx.shadowColor = 'transparent'
+  ctx.shadowBlur = 0
+  const arete = Math.round(l * 0.022)
+  ctx.fillRect(debord - arete, debord - arete, l + arete * 2, h + arete * 2)
+
+  contour = new THREE.CanvasTexture(canvas)
+  contour.colorSpace = THREE.SRGBColorSpace
+  return contour
+}
