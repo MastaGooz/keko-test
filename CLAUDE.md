@@ -1953,11 +1953,17 @@ lueur sur la carte on peut pas un contour brillant ? ». La lumière est donc
 **derrière** : des plans un peu plus grands que la carte, dont seul le débord
 se voit.
 
-**Trois couches échelonnées, pas une.** À une seule, on lisait un SECOND
-RECTANGLE net posé autour du premier, pas une lumière : un liseré franc collé
-au bord, puis deux diffusions additives de plus en plus faibles et larges.
-*Un dégradé échelonné, même grossier, se lit comme un halo — l'oeil ne compte
-pas les paliers.*
+**UN LISERÉ, PAS UN DÉGRADÉ.** Il a eu deux couches de diffusion additives
+par-dessus, pour imiter un halo ; Keko : « j'aime pas trop le dégradé en 3
+couches autour de la carte, je voyais vraiment juste un petit contour d'une
+texture lumière brillante ». *Un halo diffus agrandit la carte, un liseré la
+souligne* — et c'est souligner qu'on veut : dire qu'elle est prête, pas la
+faire enfler.
+
+Le liseré **respire** à peine, sur la même horloge que le frémissement mais
+bien plus lentement : c'est ce qui le fait lire comme une lumière et non comme
+un trait peint. Deux battements rapides se liraient comme un clignotement
+d'alerte.
 
 **LE CONTOUR EST DORÉ, PAS BLEU.** Le bleu est la couleur du joueur dans le jeu
 2D, mais sur une carte il jure avec le laiton du cadre : ça se lisait comme un

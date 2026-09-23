@@ -67,7 +67,7 @@ export function Carte3D({
 }: Props): React.JSX.Element {
   const groupe = useRef<THREE.Group>(null)
 
-  const { face, laiton, halo, lueur, nimbe, materiaux } = useMemo(() => {
+  const { face, laiton, halo, materiaux } = useMemo(() => {
     const laiton = new THREE.MeshStandardMaterial({
       color: '#b79a6a',
       metalness: 0.85,
@@ -86,43 +86,27 @@ export function Carte3D({
     })
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
-    // LE CONTOUR : deux plans posés DERRIÈRE la carte, un peu plus grands
-    // qu'elle. Ce qui dépasse fait le liseré. `toneMapped: false` pour qu'il
-    // reste franc au lieu d'être ramené dans la plage du reste de la scène, et
-    // `depthWrite: false` pour qu'il n'occulte pas ce qui passe derrière.
+    // LE CONTOUR : UN SEUL PLAN, à peine plus grand que la carte, posé
+    // derrière elle. Ce qui dépasse fait le liseré.
+    //
+    // **Un liseré, pas un dégradé.** Il a eu deux couches de diffusion
+    // additives par-dessus, pour imiter un halo ; Keko : « j'aime pas trop le
+    // dégradé en 3 couches autour de la carte, je voyais vraiment juste un
+    // petit contour d'une texture lumière brillante ». *Un halo diffus
+    // agrandit la carte, un liseré la souligne* — et c'est souligner qu'on
+    // veut : dire qu'elle est prête, pas la faire enfler.
+    //
+    // `toneMapped: false` pour qu'il reste franc au lieu d'être ramené dans la
+    // plage du reste de la scène, et `depthWrite: false` pour qu'il n'occulte
+    // pas ce qui passe derrière.
     const halo = new THREE.MeshBasicMaterial({
-      // DORÉ, PAS BLEU. Le bleu est la couleur du joueur dans le jeu 2D, mais
-      // sur une carte il jure avec le laiton du cadre : le contour se lisait
-      // comme un liseré rapporté, pas comme la carte qui s'échauffe. L'or est
-      // déjà sa matière. Keko : « je voyais un contour doré/lumineux plutôt que
-      // bleu ».
-      color: '#ffe9ae',
+      color: '#fff0c4',
       transparent: true,
       opacity: 0,
       toneMapped: false,
       depthWrite: false,
     })
-    // LES COUCHES DE DIFFUSION, additives et de plus en plus faibles. Deux
-    // plutôt qu'une : à une seule, on lisait un SECOND RECTANGLE net posé
-    // autour du premier, pas une lumière. Un dégradé échelonné, même grossier,
-    // se lit comme un halo — l'oeil ne compte pas les paliers.
-    const lueur = new THREE.MeshBasicMaterial({
-      color: '#ffb958',
-      transparent: true,
-      opacity: 0,
-      toneMapped: false,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    })
-    const nimbe = new THREE.MeshBasicMaterial({
-      color: '#c4761c',
-      transparent: true,
-      opacity: 0,
-      toneMapped: false,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    })
-    return { face, laiton, halo, lueur, nimbe, materiaux: [laiton, laiton, laiton, laiton, face, laiton] }
+    return { face, laiton, halo, materiaux: [laiton, laiton, laiton, laiton, face, laiton] }
   }, [])
 
   useEffect(() => {
@@ -190,29 +174,22 @@ export function Carte3D({
     // un contour brillant ? ». La lumière est donc DERRIÈRE, et ce qui dépasse
     // fait le liseré.
     face.emissiveIntensity = 0
-    laiton.emissiveIntensity = l.feu * 0.35
-    halo.opacity = l.feu * 0.95
-    // Les diffusions sont montées d'un tiers depuis le passage à l'or : en
-    // mélange additif sur un fond noir, un or chaud rend nettement moins fort
-    // qu'un bleu clair à opacité égale.
-    lueur.opacity = l.feu * 0.34
-    nimbe.opacity = l.feu * 0.18
+    laiton.emissiveIntensity = 0
+    // LE LISERÉ RESPIRE, à peine : c'est ce qui le fait lire comme une lumière
+    // et non comme un trait peint. Sur la même horloge que le frémissement,
+    // mais bien plus lente — deux battements rapides se liraient comme un
+    // clignotement d'alerte.
+    halo.opacity = l.feu * (0.88 + Math.sin(t * 6) * 0.12)
   })
 
   return (
     <group ref={groupe} position={position}>
-      {/* LE CONTOUR, derrière la carte : deux plans un peu plus grands qu'elle,
-          dont seul le débord se voit. Ils ne captent pas le pointeur — sans
-          `raycast` neutralisé, ils élargiraient la zone sensible de la carte
-          d'un liseré invisible au repos. */}
+      {/* LE CONTOUR, derrière la carte : un plan à peine plus grand qu'elle,
+          dont seul le débord se voit. Il ne capte pas le pointeur — sans
+          `raycast` neutralisé, il élargirait la zone sensible de la carte d'un
+          liseré invisible au repos. */}
       <mesh position={[0, 0, -EPAISSEUR]} material={halo} raycast={() => null}>
-        <planeGeometry args={[LARGE + 0.038, HAUT + 0.038]} />
-      </mesh>
-      <mesh position={[0, 0, -EPAISSEUR * 1.5]} material={lueur} raycast={() => null}>
-        <planeGeometry args={[LARGE + 0.13, HAUT + 0.13]} />
-      </mesh>
-      <mesh position={[0, 0, -EPAISSEUR * 2]} material={nimbe} raycast={() => null}>
-        <planeGeometry args={[LARGE + 0.3, HAUT + 0.3]} />
+        <planeGeometry args={[LARGE + 0.03, HAUT + 0.03]} />
       </mesh>
 
       {/* ELLE PROJETTE UNE OMBRE, ELLE N'EN REÇOIT PAS. Une carte qui reçoit
