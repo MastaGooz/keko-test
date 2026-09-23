@@ -3700,19 +3700,6 @@ body {
   font-weight: 400;
 }
 
-/* Les corps : leur etat en une ligne chacun, en haut. Provisoire -- ces
-   chiffres iront sur les cretures elles-memes, comme en 2D. */
-.corps-3d {
-  position: absolute;
-  inset: 2.25rem 0 auto;
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  flex-wrap: wrap;
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-
 .fin-3d {
   position: absolute;
   inset: 50% 1rem auto auto;
@@ -3732,4 +3719,130 @@ body {
 .fin-3d:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* --- ce que chaque creature dit d'elle-meme, ancre sur son corps ----------- */
+
+/* LES ETIQUETTES DES CREATURES : du HTML pose par-dessus le canvas, que
+   `Projeter` fait suivre le corps. Un point d'ancrage par bete, et le
+   placement autour se fait ici -- l'intention monte au-dessus de la tete, la
+   jauge descend sous les pattes. */
+.ancres-3d {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ancre-3d {
+  position: absolute;
+  inset: 0 auto auto 0;
+  /* `Projeter` ecrit le `transform` a chaque image : rien ici ne doit le
+     concurrencer. */
+  will-change: transform;
+}
+
+/* Les deux ancres sont projetees sur le haut de la tete et le bas des pattes :
+   il ne reste qu'a poser l'etiquette de part et d'autre du point, sans aucun
+   ecart fixe -- un ecart en rem ne suivrait pas la perspective. */
+.ancre-3d > .intention-3d,
+.ancre-3d > .vie-3d {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+}
+
+.ancre-3d.haute > .intention-3d {
+  bottom: 0;
+}
+
+.ancre-3d.basse > .vie-3d {
+  top: 0;
+}
+
+/* L'INTENTION, au-dessus de la tete : ce qu'il frappe et dans combien de
+   tours. C'est le seul chiffre qui compte avant de choisir sa cible. */
+.intention-3d {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  border: 1px solid #4a2b2b;
+  border-radius: 999px;
+  background: #0a0a10cc;
+  color: #8a5454;
+  font-family: system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Il frappe a la fin de CE tour : l'intention s'allume. La couleur porte le
+   tempo, aucun mot n'est requis. */
+.intention-3d.imminent {
+  border-color: #ff6b6b;
+  background: #3a1d1d;
+  color: #ff9b9b;
+  font-weight: 700;
+  box-shadow: 0 0 0.5rem #ff6b6b55;
+}
+
+.intention-3d small {
+  font-size: 0.75em;
+  opacity: 0.85;
+}
+
+.vie-3d {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  width: 7rem;
+  font-family: system-ui, sans-serif;
+}
+
+/* LA JAUGE RESTE UN TRAIT FIN, et le chiffre la DEBORDE. Elle a ete epaissie
+   pour le contenir dans le jeu 2D, et c'etait prendre le probleme a l'envers :
+   la hauteur d'une jauge dit quelque chose -- une barre epaisse pese autant
+   qu'une silhouette. Le chiffre n'a pas besoin d'etre contenu, il a besoin
+   d'etre lu. */
+.jauge-3d {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: #0a0a10;
+  box-shadow: inset 0 1px 2px #000, 0 0 0 1px #ffffff14;
+  /* Le chiffre depasse d'elle : elle ne peut plus rogner ce qu'elle contient.
+     C'est le REMPLISSAGE qui porte son propre arrondi. */
+  overflow: visible;
+}
+
+.remplissage-3d {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ff9090, #c4353f);
+  box-shadow: inset 0 1px 0 #ffffff40;
+}
+
+/* Il passe sur trois fonds -- le rouge de la jauge, le noir de sa partie vide,
+   le corps derriere -- donc il lui faut un cerne franc. */
+.chiffre-3d {
+  position: absolute;
+  inset: 50% 0 auto;
+  translate: 0 -50%;
+  text-align: center;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px #000, 0 0 3px #000, 0 0 6px #000;
+}
+
+.nom-3d {
+  color: #cfc7bb;
+  font-size: 0.75rem;
+  text-shadow: 0 1px 3px #000;
+  white-space: nowrap;
 }

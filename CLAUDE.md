@@ -1969,6 +1969,31 @@ feuille de style.** Le SVG des créatures s'appuie sur le CSS de la page —
 `currentColor` pour la chair, une classe pour l'oeil — donc il faut lui poser
 en ligne ce que le CSS lui donnait.
 
+**Chaque créature dit ce qu'elle est, sur son corps** : l'intention au-dessus
+de la tête — ce qu'elle frappe et dans combien de tours, allumée si c'est pour
+la fin de CE tour-ci — la jauge et le nom sous les pattes. Repris du 2D, y
+compris le chiffre DANS la barre au format `courant/max` : sans le maximum on
+ne sait pas si 23 est beaucoup, et à côté d'une barre il faut faire
+l'aller-retour entre les deux pour lire un seul fait.
+
+**Ce sont des étiquettes HTML ancrées, projetées à la main** (`Projeter`) — un
+chiffre reste net à toute distance et n'a rien à gagner à s'incliner avec la
+scène. Deux enseignements :
+
+- **le `<Html>` de drei ne tient pas ici.** Chaque instance monte sa propre
+  racine React, et avec React 19 deux instances dans la même scène se
+  démontaient l'une l'autre : « Attempted to synchronously unmount a root while
+  React was already rendering », et l'étiquette disparaissait sans autre
+  symptôme. Trente lignes de projection valent mieux qu'une dépendance qui se
+  démonte toute seule ;
+- **deux points projetés par créature, pas un seul avec des décalages en rem.**
+  Un écart fixe ne suit pas la perspective : la jauge finissait posée au milieu
+  du corps. On projette le haut de la tête et le bas des pattes.
+
+La projection **écrit directement dans le DOM**, sans passer par l'état React :
+une position qui change à chaque image déclencherait un rendu par image pour un
+résultat identique — même raison qui met le geste de la main dans une `ref`.
+
 **Les PV du combat sont ceux de la DESCENTE (90), pas ceux du combat isolé
 (30).** `CONFIG_DEFAUT` est calibré pour un duel unique ; les groupes, eux, le
 sont pour une run de six paliers. Les mélanger rendait le premier combat

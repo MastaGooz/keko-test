@@ -9,10 +9,11 @@
  * Ce qui manque encore, et qui viendra : les animations de coup, le point de
  * sortie, le butin. Ici on veut juste pouvoir jouer un combat entier.
  */
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Main3D } from './Main3D.tsx'
 import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
+import { Projeter } from './Projeter.tsx'
 import { aPeindre, combatDeDepart } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
 import { finDuTour, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
@@ -103,6 +104,24 @@ export function Scene(): React.JSX.Element {
     return [(i - centre) * (CORPS * 1.25), 0.75, 0] as [number, number, number]
   })
 
+  // Les étiquettes sont du HTML ancré sur les corps : `Projeter` les fait
+  // suivre. On garde les éléments dans une ref, jamais dans l'état — leur
+  // position change à chaque image.
+  //
+  // **DEUX POINTS PAR CRÉATURE, pas un seul avec des décalages en rem** : un
+  // écart fixe ne suit pas la perspective, et la jauge se retrouvait posée au
+  // milieu du corps. En projetant le haut de la tête et le bas des pattes, les
+  // étiquettes tiennent leur place à toute distance et à toute taille d'écran.
+  const hautes = useRef<(HTMLDivElement | null)[]>([])
+  const basses = useRef<(HTMLDivElement | null)[]>([])
+  const ancres = rang.flatMap(
+    (p) =>
+      [
+        [p[0], p[1] + CORPS * 0.62, p[2]],
+        [p[0], p[1] - CORPS * 0.62, p[2]],
+      ] as [number, number, number][],
+  )
+
   return (
     <>
       <Canvas
@@ -150,7 +169,53 @@ export function Scene(): React.JSX.Element {
           <planeGeometry args={[16, 10]} />
           <shadowMaterial opacity={0.5} />
         </mesh>
+
+        <Projeter
+          points={ancres}
+          cibles={combat.ennemis.flatMap((_, i) => [hautes.current[i] ?? null, basses.current[i] ?? null])}
+        />
       </Canvas>
+
+      {/* CE QUE CHAQUE CRÉATURE DIT D'ELLE-MÊME, ancré sur son corps :
+          l'intention au-dessus de la tête, la jauge et le nom sous les pattes.
+          En HTML plutôt qu'en volume — un chiffre reste net à toute distance,
+          et il n'a rien à gagner à s'incliner avec la scène. */}
+      <div className="ancres-3d">
+        {combat.ennemis.map((e, i) => (
+          <div key={`h-${e.nom}-${i}`} className="ancre-3d haute" ref={(el) => { hautes.current[i] = el }}>
+            {/* L'INTENTION : ce qu'il frappe et dans combien de tours, allumée
+                si c'est pour la fin de CE tour-ci. C'est le seul chiffre qui
+                compte avant de choisir sa cible — la couleur porte le tempo,
+                aucun mot n'est requis. */}
+            {e.pv > 0 && (
+              <span className={`intention-3d${e.compteur <= 1 ? ' imminent' : ''}`}>
+                ✖ {e.degats}
+                {e.compteur > 1 && <small> dans {e.compteur}</small>}
+              </span>
+            )}
+          </div>
+        ))}
+
+        {combat.ennemis.map((e, i) => (
+          <div key={`b-${e.nom}-${i}`} className="ancre-3d basse" ref={(el) => { basses.current[i] = el }}>
+            {/* LA JAUGE ET LE NOM. Le chiffre est DANS la barre, au format
+                `courant/max` : sans le maximum on ne sait pas si 23 est
+                beaucoup, et à côté d'une barre il faut faire l'aller-retour
+                entre les deux pour lire un seul fait. */}
+            {e.pv > 0 && (
+              <span className="vie-3d">
+                <span className="jauge-3d">
+                  <span className="remplissage-3d" style={{ width: `${(e.pv / e.pvMax) * 100}%` }} />
+                  <span className="chiffre-3d">
+                    {e.pv}/{e.pvMax}
+                  </span>
+                </span>
+                <span className="nom-3d">{e.nom}</span>
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
 
       {/* L'INTERFACE RESTE EN HTML, au-dessus du canvas : des chiffres et un
           bouton n'ont rien à gagner à être en volume, et ils restent nets à
@@ -171,16 +236,6 @@ export function Scene(): React.JSX.Element {
             </span>
             {combat.bloc > 0 && <span className="bloc-3d">⛉ {combat.bloc}</span>}
             {menace > 0 && !fini && <span className="menace-3d">−{menace}</span>}
-          </div>
-
-          <div className="corps-3d">
-            {combat.ennemis.map((e, i) =>
-              e.pv > 0 ? (
-                <span key={i} className="vie-3d">
-                  {e.nom} {e.pv}/{e.pvMax} · frappe {e.degats} dans {e.compteur}
-                </span>
-              ) : null,
-            )}
           </div>
 
           <p className="note-3d">

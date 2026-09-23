@@ -141,6 +141,7 @@ export function Ennemi3D({ ennemi, index, position, visable = false, onViser }: 
           <meshBasicMaterial color="#000000" transparent opacity={0.45} toneMapped={false} />
         </mesh>
       )}
+
     </group>
   )
 }
