@@ -64,6 +64,13 @@ export type Carte = {
    */
   exil?: boolean
   /**
+   * LES UTILISATIONS QUI RESTENT. Une carte à usages revient à la défausse
+   * avec une utilisation de moins, et elle est exilée quand elle en est à sa
+   * dernière : c'est le consommable -- UNE carte dans le deck, qui se vide
+   * gorgée par gorgée, au lieu de trois cartes qui polluaient la main.
+   */
+  usages?: number
+  /**
    * Prix qu'en donnerait le marché noir, une fois la run terminée. Un trésor
    * ne rapporte RIEN en combat ni en fin de combat : il ne devient de l'or
    * qu'au hub, s'il en ressort. Le moteur ne fait que le transporter.
@@ -326,7 +333,9 @@ export function mainMorte(etat: EtatCombat): boolean {
 function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number): void {
   // EXILÉE PLUTÔT QUE DÉFAUSSÉE : elle ne reviendra pas dans la pioche, et
   // `butin()` ne la compte plus — brûler un trésor, c'est perdre son or.
-  if (carte.exil !== true) etat.defausse.push(carte)
+  // Une carte à usages en perd un ; à zéro, elle est exilée comme un trésor.
+  const restante = carte.usages === undefined ? carte : { ...carte, usages: carte.usages - 1 }
+  if (carte.exil !== true && restante.usages !== 0) etat.defausse.push(restante)
 
   for (const effet of carte.effets ?? []) appliquerEffet(etat, effet)
 

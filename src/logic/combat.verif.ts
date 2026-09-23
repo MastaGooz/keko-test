@@ -426,5 +426,19 @@ function tresors(nombre: number): Carte[] {
   egal(vivants(apres).length, 1, 'il ne reste qu\u2019un corps debout')
 }
 
+
+cas('une carte à usages revient à la défausse avec un usage de moins, puis s’exile', () => {
+  // C'est le consommable en une seule carte : trois gorgées, puis plus rien.
+  const gorgee: Carte = { id: 'g', nom: 'Gorgée', type: 'combat', cout: 1, degats: 0, effets: [{ type: 'soin', montant: 10 }], usages: 2 }
+  const etat: EtatCombat = { ...combat([gorgee], ennemi({ pv: 10, degats: 1 })), pv: 10, main: [gorgee], pioche: [], defausse: [] }
+  const une = jouerCarte(etat, 0, 0)
+  egal(une.pv, 20, 'la gorgée soigne')
+  egal(une.defausse.length, 1, 'elle revient à la défausse')
+  egal(une.defausse[0]!.usages, 1, 'avec un usage de moins')
+  const deux = jouerCarte({ ...une, main: [une.defausse[0]!], defausse: [], energie: 5 }, 0, 0)
+  egal(deux.pv, 30, 'la dernière gorgée soigne encore')
+  egal(deux.defausse.length, 0, 'et la carte est exilée')
+})
+
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)
 console.log('Tout passe.')

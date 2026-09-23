@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
-  <!-- Fiole : un flacon de verre, la liqueur verte qui luit, un bouchon de
-       liège. Une dose : elle se boit, et disparaît. -->
+  <!-- Boire une gorgée : un flacon de verre, la liqueur verte qui luit, un
+       bouchon de liège. La carte de la potion : trois gorgées, puis plus rien. -->
   <defs>
     <radialGradient id="ciel" cx="50%" cy="40%" r="75%">
       <stop offset="0" stop-color="#25402f"/>

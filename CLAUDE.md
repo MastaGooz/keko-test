@@ -1383,8 +1383,8 @@ compte : *ce qu'on emporte donne des cartes, donc ça se montre comme une carte.
 gauche, là où une carte de jeu porte sa gemme de coût, dans une petite case EN
 FORME DE CARTE (5/7) : une carte pour dire « des cartes ». C'est son poids, et
 c'est la seule information qui rende « équiper plus dilue » lisible sur la
-pièce elle-même : 3 pour le Glaive, 6 pour le Plastron, 6 pour l'Espadon, 3
-pour les Fioles. Il a été une gemme ronde, puis (sur les consommables seuls)
+pièce elle-même : 3 pour le Glaive, 6 pour le Plastron, 6 pour l'Espadon, 1
+pour la Potion de soin. Il a été une gemme ronde, puis (sur les consommables seuls)
 une case au coin de la fenêtre ; Keko a tranché : « chiffre en haut à gauche,
 rectangle en forme de carte, pour tous les objets ». Sa
 composition exacte vit dans le cartouche de la carte, une ligne par modèle —
@@ -1547,14 +1547,29 @@ répétée par corps (`main.ts`, `cibler` avec `-1`). L'aperçu sur les jauges l
 `degatsTous` comme des dégâts. Et le compte « qui frappent » de l'armurerie
 compte les deux verbes.
 
-**LE CONSOMMABLE EXISTE : LES FIOLES** (`logic/armes.ts`, quatrième slot du
-chargement dans `logic/hub.ts`). Trois Fiole (1⚡, rend 10 PV, **exilée en se
-jouant**) : c'est une dilution qui s'évapore — trois cartes qui pèsent au
-premier combat, deux au deuxième, et le deck s'affûte à mesure qu'on boit.
+**LE CONSOMMABLE EXISTE : LA POTION DE SOIN** (`logic/armes.ts`, quatrième
+slot du chargement dans `logic/hub.ts`). **UNE seule carte dans le deck, et
+c'est la carte qui a des USAGES** : « Boire une gorgée » (1⚡, rend 10 PV,
+3 gorgées) revient à la défausse avec une gorgée de moins, et elle est
+**exilée à la dernière** (`usages` sur `Carte`, dans `combat.ts`). Il y a eu
+trois Fioles qui s'exilaient chacune ; Keko : « ça pollue trop la main ».
 Vert, pied « Consommable », rangé à côté de l'armure sur la seconde ligne de
-l'armurerie. **Sa carte ne liste pas ses doses** : le cartouche dit ce que fait UNE
-fiole, et le compteur en haut à gauche (voir ci-dessous) porte le nombre ; son slot ne prend qu'un consommable et rien d'autre ne le prend
-(vérifié dans `hub.verif.ts`).
+l'armurerie ; son slot ne prend qu'un consommable et rien d'autre ne le prend
+(vérifié dans `hub.verif.ts`, et les usages dans `combat.verif.ts`).
+
+**L'OBJET ET LA CARTE N'ONT PAS LE MÊME NOM, ET PAS LE MÊME TEXTE.** L'objet
+est ce qu'on emporte (« Potion de soin »), la carte est ce qu'on fait (« Boire
+une gorgée »). L'objet liste ses cartes comme toute pièce (« 1× Boire une
+gorgée ») ; l'effet et le compte de gorgées sont sur la carte. Keko : « on
+devrait différencier l'objet de la carte ». Le chargement gratuit fait donc
+**10 cartes** (3 + 6 + 1), pas 12.
+
+**Provisoire, à savoir :** la potion est gratuite et permanente comme le
+Glaive et le Plastron, parce qu'il n'y a pas de marché. Le jour où le hub
+vend, une potion bue est une potion achetée — règle à écrire alors, pas
+maintenant. Et les mesures de survie ci-dessous ont été faites avec trois
+fioles : **à refaire** avec une carte à trois gorgées, qui sort moins souvent
+mais pèse moins.
 
 **Et le soin a QUITTÉ les trésors.** Il y était un placeholder qui rendait la
 cupidité rentable (92 % en prenant tout contre 70 % en refusant). Un trésor
@@ -1569,11 +1584,8 @@ chaque trésor ait son effet unique, à écrire un par un avec Keko. Mesuré apr
 | deux Glaives + Plastron + Fioles | 91 %, 539 | 99 % | 79 % | 53 % |
 
 **La cupidité coûte de nouveau** — 8 à 14 points de survie contre de l'or —
-et les fioles valent 6 à 13 points. C'est le dilemme dans le bon sens.
-
-**Provisoire, à savoir :** les fioles sont gratuites et permanentes comme le
-Glaive et le Plastron, parce qu'il n'y a pas de marché. Le jour où le hub vend,
-une fiole bue est une fiole achetée — règle à écrire alors, pas maintenant.
+et les fioles valaient 6 à 13 points. C'est le dilemme dans le bon sens.
+(Mesuré avec trois fioles ; la potion à une carte est à remesurer.)
 
 **Le bijou reste sur papier.** Keko le veut passif, sans carte — l'exception
 assumée à « ton deck est ton chargement », à une condition : qu'il change les

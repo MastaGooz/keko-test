@@ -53,9 +53,9 @@ const COTTE: Armure = {
   verifier("on arrive avec l'equipement gratuit DEJA equipe",
     h.chargement.mains[0] === ARME_GRATUITE && h.chargement.armure === ARMURE_GRATUITE)
   verifier('on peut donc descendre sans rien toucher', peutDescendre(h.chargement))
-  // Trois cartes d'arme, six d'armure : le format des douze (6 + 6), une
-  // arme a une main en donnant trois.
-  verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 12)
+  // Trois cartes d'arme, six d'armure, UNE de potion : le format des douze
+  // (6 + 6) moins l'arme qui manque, plus le consommable en une seule carte.
+  verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 10)
   verifier('les fioles sont dans le chargement de depart', h.chargement.consommable === CONSOMMABLE_GRATUIT)
   // En attendant un marché, l'Espadon attend au râtelier : sans lui il n'y
   // aurait rien à choisir.
@@ -77,7 +77,7 @@ const COTTE: Armure = {
   const seconde = deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, DAGUE.id)
   verifier('une arme a une main va dans le second slot',
     seconde.chargement.mains[1] === DAGUE && seconde.reserve.length === 1)
-  verifier('et elle donne ses cartes', deckDeLEquipement(equipement(seconde.chargement)).length === 12 + 6)
+  verifier('et elle donne ses cartes', deckDeLEquipement(equipement(seconde.chargement)).length === 10 + 6)
 }
 
 // --- l'echange ne fait rien disparaitre -------------------------------------

@@ -8,8 +8,9 @@
  * et le navigateur ne peut pas resservir l'ancien. C'est le piège des portraits
  * de `public/`, évité à la source.
  *
- * Le nom du fichier est le nom du modèle, en minuscules et sans accent
- * (« Médaillon » → `medaillon.svg`). Un modèle sans dessin reçoit `defaut.svg`
+ * Le nom du fichier est le nom du modèle, en minuscules, sans accent, les
+ * espaces en tirets (« Médaillon » → `medaillon.svg`, « Boire une gorgée » →
+ * `boire-une-gorgee.svg`). Un modèle sans dessin reçoit `defaut.svg`
  * — un sceau, pas un trou : si on le voit en jeu, c'est qu'il manque un
  * fichier, et ça se voit.
  */
@@ -31,6 +32,7 @@ function cle(nom: string): string {
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase()
+    .replace(/\s+/g, '-')
 }
 
 /** L'URL de l'illustration d'un modèle, ou celle du repli. */

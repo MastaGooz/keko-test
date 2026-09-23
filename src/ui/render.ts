@@ -457,7 +457,13 @@ function lignes(carte: Carte): string[] {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
       if (carte.type === 'tresor') l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>et son or est perdu</small>`)
-      else l.push(`Rend <b>${e.montant}</b> PV`, ...(carte.exil === true ? [`<small>se boit : détruite</small>`] : []))
+      else {
+        l.push(`Rend <b>${e.montant}</b> PV`)
+        // Une carte à usages dit ce qu'il lui reste ; une carte qui s'exile
+        // dit qu'elle se détruit.
+        if (carte.usages !== undefined) l.push(`<small>${carte.usages === 1 ? 'dernière gorgée' : `${carte.usages} gorgées`}</small>`)
+        else if (carte.exil === true) l.push(`<small>se boit : détruite</small>`)
+      }
     }
     if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> énergie`)
     if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
@@ -468,7 +474,7 @@ function lignes(carte: Carte): string[] {
 /** La famille d'une carte, pour la classe qui colore son écusson et son chiffre. */
 function famille(carte: Carte): 'tresor' | 'consommable' | 'attaque' | 'defense' | 'action' {
   if (carte.type === 'tresor') return 'tresor'
-  if (carte.exil === true) return 'consommable'
+  if (carte.usages !== undefined || carte.exil === true) return 'consommable'
   if (carte.degats > 0 || carte.effets?.some((e) => e.type === 'degatsTous')) return 'attaque'
   if (carte.effets?.some((e) => e.type === 'bloc')) return 'defense'
   return 'action'
@@ -479,7 +485,7 @@ function nature(carte: Carte): string {
   // Le rang de richesse ne s'écrit pas : il se lit au cadre, comme la rareté
   // d'une pièce. Keko : « inutile de spécifier la qualité modeste en bas ».
   if (carte.type === 'tresor') return 'Trésor'
-  if (carte.exil === true) return 'Consommable'
+  if (carte.usages !== undefined || carte.exil === true) return 'Consommable'
   if (carte.degats > 0 || carte.effets?.some((e) => e.type === 'degatsTous')) return 'Attaque'
   if (carte.effets?.some((e) => e.type === 'bloc')) return 'Défense'
   return 'Action'
@@ -1058,9 +1064,7 @@ function cartePiece(piece: Piece): string {
   // Le joueur lit d'un coup d'oeil ce que l'objet ajoute au deck : c'est son
   // POIDS, et c'est ce qui rend « équiper plus dilue » lisible sur la pièce.
   // Keko : « chiffre en haut à gauche, rectangle en forme de carte avec le
-  // nombre dedans, pour tous les objets ». Un consommable y compte ses doses
-  // (une dose, une carte) et son cartouche dit ce que fait UNE dose.
-  const dose = g === 'consommable' ? piece.set[0] : undefined
+  // nombre dedans, pour tous les objets ».
   // LE PAQUET ÉTALÉ : sous la case du compteur, LE MÊME SYMBOLE répété -- la
   // même case, sans chiffre -- décalé légèrement vers la droite à chaque
   // fois, autant de fois qu'il reste de cartes. Le nombre se lit deux fois,
@@ -1081,9 +1085,10 @@ function cartePiece(piece: Piece): string {
       // 2× Moulinet ». Une ligne par modèle plafonnait à cinq ; une arme en
       // apportera jusqu'à huit. Le détail de chaque modèle — coût, dégâts —
       // n'est plus ici : le zoom le montre en vraies cartes.
-      dose === undefined
-        ? [piece.set.map(({ modele, nombre }) => `<b>${nombre}×</b>&nbsp;${modele.nom}`).join(' · ')]
-        : lignes({ ...dose.modele, id: '' }),
+      // L'objet liste ses cartes, TOUJOURS -- un consommable aussi : l'effet
+      // est sur la carte, pas sur l'objet (Keko : « on devrait différencier
+      // l'objet de la carte »).
+      [piece.set.map(({ modele, nombre }) => `<b>${nombre}×</b>&nbsp;${modele.nom}`).join(' · ')],
       // La rareté ne s'écrit pas : elle se lit au cadre, code couleur classique
       // (`.piece-carte.rare`, `.epique`). Keko : « inutile d'afficher le niveau
       // de rareté, on le fera via un code couleur ».

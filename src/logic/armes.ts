@@ -193,36 +193,43 @@ export const PLASTRON: Armure = {
 export const ARMURE_GRATUITE = PLASTRON
 
 /* ---------------------------------------------------------------------- *
- * Les consommables. Ils se boivent : la carte est exilée en se jouant.
+ * Les consommables. UNE carte dans le deck, qui a des USAGES : elle revient à
+ * la défausse avec un usage de moins, et elle est exilée à la dernière gorgée.
+ * Trois cartes qui s'exilaient chacune polluaient trop la main (Keko).
+ *
+ * L'OBJET ET LA CARTE N'ONT PAS LE MÊME NOM : l'objet est ce qu'on emporte
+ * (« Potion de soin »), la carte est ce qu'on fait (« Boire une gorgée »).
+ * L'objet liste ses cartes comme toute pièce ; l'effet est sur la carte.
  * ---------------------------------------------------------------------- */
 
-const FIOLE: Modele = {
-  nom: 'Fiole',
+const GORGEE: Modele = {
+  nom: 'Boire une gorgée',
   type: 'combat',
   cout: 1,
   degats: 0,
   effets: [{ type: 'soin', montant: 10 }],
-  exil: true,
+  usages: 3,
 }
 
 /**
- * Trois fioles de vie. Le format des douze compte « + consommables » : elles
- * s'ajoutent aux six qui frappent et aux six qui encaissent.
+ * Une potion à trois gorgées. Le format des douze compte « + consommables » :
+ * elle s'ajoute aux six qui frappent et aux six qui encaissent, pour UNE
+ * carte.
  *
- * **Provisoirement gratuites et permanentes**, comme le Glaive et le Plastron :
- * il n'y a pas encore de marché pour les acheter, donc elles reviennent à
- * chaque descente. Le jour où le hub vend, une fiole bue est une fiole
- * achetée — c'est la règle à écrire alors, pas maintenant.
+ * **Provisoirement gratuite et permanente**, comme le Glaive et le Plastron :
+ * il n'y a pas encore de marché pour l'acheter, donc elle revient à chaque
+ * descente. Le jour où le hub vend, une potion bue est une potion achetée —
+ * c'est la règle à écrire alors, pas maintenant.
  */
-export const FIOLES: Consommable = {
+export const POTION_DE_SOIN: Consommable = {
   id: 'fioles',
-  nom: 'Fioles',
+  nom: 'Potion de soin',
   rarete: 'commune',
   consommable: true,
-  set: [{ modele: FIOLE, nombre: 3 }],
+  set: [{ modele: GORGEE, nombre: 1 }],
 }
 
-export const CONSOMMABLE_GRATUIT = FIOLES
+export const CONSOMMABLE_GRATUIT = POTION_DE_SOIN
 
 /**
  * Le deck emporté, somme des sets de tout ce qui est équipé. Les identifiants
@@ -234,7 +241,7 @@ export function deckDeLEquipement(equipement: Piece[]): Carte[] {
     piece.set.flatMap(({ modele, nombre }) =>
       Array.from({ length: nombre }, (_, i) => ({
         ...modele,
-        id: `${piece.id}-${modele.nom.toLowerCase()}-${i + 1}`,
+        id: `${piece.id}-${modele.nom.toLowerCase().replace(/\s+/g, '-')}-${i + 1}`,
       })),
     ),
   )

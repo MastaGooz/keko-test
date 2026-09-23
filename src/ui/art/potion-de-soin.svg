@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
-  <!-- Fioles : trois flacons en rang, la liqueur verte, sur une étagère. Le
-       consommable : trois doses. -->
+  <!-- Potion de soin : trois flacons en rang, la liqueur verte, sur une
+       étagère. L'objet : il donne UNE carte à trois gorgées. -->
   <defs>
     <radialGradient id="ciel" cx="50%" cy="40%" r="75%">
       <stop offset="0" stop-color="#25402f"/>
