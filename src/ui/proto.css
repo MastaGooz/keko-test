@@ -590,40 +590,26 @@
 
 /* --- Variante FULL ART de « Serment de cendre » --------------------------- */
 
-/* Sans le parchemin : l'illustration prend toute la surface, et le nom, la
-   description et le type sont DESSINÉS DESSUS, sur un voile sombre qui monte
-   du bas pour les rendre lisibles. Keko : « et si on enlevait le papier, la
-   carte en mode full art, le texte dessiné directement sur l'illustration ? »
-   Proposée à côté de la version parchemin, pas à sa place. */
+/* LE STRICT MINIMUM, à la demande de Keko : la carte normale, avec le papier à
+   opacité zéro -- et rien d'autre ne bouge. Tout ce qui avait été ajouté
+   (voile, texte déplacé, image étirée) a donné des bordures bizarres et un
+   « c'est même pire ». Seule concession : le texte passe en crème, sinon il
+   est encre sur encre. Le reste se décidera en regardant ça. */
 .cendre.fullart .cv-paper {
-  display: none;
+  opacity: 0;
 }
 
-/* L'ILLUSTRATION NE BOUGE PAS : celle de la version parchemin, telle quelle,
-   dans sa fenêtre. Deux essais pour l'étirer sur toute la hauteur ont donné
-   deux bordures « bizarres » (Keko) -- la fenêtre d'art a son propre contour,
-   la coque le sien, et ils ne se superposent jamais tout à fait. Ce que Keko
-   veut est plus simple : la carte normale SANS le papier. La surface sombre de
-   la coque fait le fond du texte. */
+.cendre.fullart .cv-title {
+  color: #f7ead0 !important;
+  text-shadow: 0 0.5cqw 0 #14181a, 0 0 3cqw #000c !important;
+}
 
-/* Le voile : le bloc de la description s'étire sur le bas de l'image et porte
-   le dégradé ; le nom vit dedans, au-dessus du texte. */
+.cendre.fullart .cv-title::after {
+  background: linear-gradient(90deg, transparent, #f7ead099 20% 80%, transparent);
+}
+
 .cendre.fullart .cv-effect {
-  top: 54% !important;
-  bottom: 3.2cqw !important;
-  left: 3.2cqw !important;
-  right: 3.2cqw !important;
-  /* Le texte commence sous le nom (posé à 62 % de la hauteur, sur 9 %) :
-     26cqw de haut de boîte, soit 18 % de la hauteur depuis 54 %. */
-  padding: 26cqw 6cqw 9cqw;
   color: #f1e6cf !important;
-  /* Un voile léger qui fond le bas de la fenêtre d'art dans la surface sombre,
-     et rien d'autre : le fond du texte est la coque elle-même. */
-  background: linear-gradient(180deg, transparent 0%, #171b1dcc 28%, #171b1d 40%);
-}
-
-.cendre.fullart .cv-effect p {
-  text-shadow: 0 1px 2px #000c;
 }
 
 .cendre.fullart .cv-effect strong {
@@ -632,24 +618,4 @@
 
 .cendre.fullart .cv-effect .cv-flavor {
   color: #c9bba3 !important;
-}
-
-.cendre.fullart .cv-title {
-  top: 62% !important;
-  color: #f7ead0 !important;
-  text-shadow: 0 0.5cqw 0 #14181a, 0 0 3cqw #000c !important;
-  z-index: 3 !important;
-}
-
-.cendre.fullart .cv-title::after {
-  background: linear-gradient(90deg, transparent, #f7ead099 20% 80%, transparent);
-}
-
-.cendre.fullart .cv-effect {
-  z-index: 2;
-}
-
-/* Le type passe au-dessus du voile, sinon il disparaît dessous. */
-.cendre.fullart .cv-type {
-  z-index: 3;
 }
