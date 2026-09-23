@@ -417,6 +417,14 @@ les autres dans l'ordre de votre choix » (140 caractères) débordait sur le
 type ; au cran long il tient, mesuré aux deux tailles. *À porter dans le jeu
 avec la carte : le rendu connaît le texte, c'est lui qui pose le cran.*
 
+**IL NE RESTE QUE LE FULL ART.** Keko : « on supprime toutes les cartes sauf
+les versions full art ». Le cadre néon (`cadre.png`), « Entaille du Néant », la
+version parchemin de « Serment de cendre » et la rangée de teintes sont
+retirés du prototype et du dépôt (`public/cadre.png`, `title-ribbon.svg`,
+`copper-grain.svg` supprimés — `git log` sait les rendre). La planche montre
+quatre cartes : réduite, normale, et les deux mêmes avec l'effet long de
+référence. C'est cette carte qu'on portera dans le jeu.
+
 **Piège des container queries, rencontré ici :** les `cqw` d'un élément se
 résolvent contre son ANCÊTRE conteneur, jamais contre lui-même. Posé sur la
 carte, `container-type` laissait sa propre bordure et ses arrondis se mesurer
