@@ -20,6 +20,9 @@ import type { Consommable, Objet, Piece } from '../logic/armes.ts'
 import { carteDuConsommable, estConsommable } from '../logic/armes.ts'
 import { creature, sceau, teteDeMort } from './illustrations.ts'
 import { art, dosDeCarte, imageDeKeko } from './art.ts'
+// LE TEXTE D'UNE CARTE EST PARTAGÉ avec le moteur 3D : l'écrire deux fois,
+// c'est garantir qu'un jour les deux divergeront.
+import { famille, lignes, nature } from './texte-carte.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡', bloc: '⛉' }
 
@@ -443,36 +446,6 @@ function cran(lignes: readonly string[]): 'court' | 'moyen' | 'long' {
 }
 
 /**
- * Ce que fait la carte, en toutes lettres : une ligne par effet. Le chiffre
- * est dedans, en gras et en accent — c'est le seul endroit où il vit.
- */
-function lignes(carte: Carte): string[] {
-  const l: string[] = []
-  // L'or d'abord : c'est ce qu'un trésor EST, le reste est ce qu'il peut faire.
-  if (carte.type === 'tresor') l.push(`Vaut <b>${carte.valeur ?? 0}</b> or s'il ressort`)
-  if (carte.degats > 0) l.push(`Inflige <b>${carte.degats}</b> dégâts`)
-  for (const e of carte.effets ?? []) {
-    // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
-    // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
-    if (e.type === 'bloc') l.push(`Bloque <b>${e.montant}</b> dégâts`, `<small>ce tour seulement</small>`)
-    if (e.type === 'soin') {
-      // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
-      // le gain et le prix, sinon elle ment sur ce qu'on joue.
-      if (carte.type === 'tresor') l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>et son or est perdu</small>`)
-      else {
-        l.push(`Rend <b>${e.montant}</b> PV`)
-        // Une carte à usages ne l'écrit pas : ses charges sont des pastilles
-        // (`charges()`). Une carte qui s'exile dit qu'elle se détruit.
-        if (carte.usages === undefined && carte.exil === true) l.push(`<small>se boit : détruite</small>`)
-      }
-    }
-    if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> énergie`)
-    if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
-  }
-  return l
-}
-
-/**
  * LES CHARGES D'UNE CARTE EN PASTILLES, sous l'écusson du coût : une pastille
  * pleine par charge qui reste, une vide par charge dépensée. Un compteur qui
  * se voit, pas un chiffre à lire dans le texte -- Keko : « un compteur visuel
@@ -493,26 +466,6 @@ function charges(carte: Carte): string {
     (_, i) => `<i${i < carte.usages! ? ' class="pleine"' : ''}></i>`,
   ).join('')
   return `<span class="charges" title="${carte.usages} charges sur ${max}">${pastilles}</span>`
-}
-
-/** La famille d'une carte, pour la classe qui colore son écusson et son chiffre. */
-function famille(carte: Carte): 'tresor' | 'consommable' | 'attaque' | 'defense' | 'action' {
-  if (carte.type === 'tresor') return 'tresor'
-  if (carte.usages !== undefined || carte.exil === true) return 'consommable'
-  if (carte.degats > 0 || carte.effets?.some((e) => e.type === 'degatsTous')) return 'attaque'
-  if (carte.effets?.some((e) => e.type === 'bloc')) return 'defense'
-  return 'action'
-}
-
-/** Ce qu'est la carte, pour le type gravé en bas. */
-function nature(carte: Carte): string {
-  // Le rang de richesse ne s'écrit pas : il se lit au cadre, comme la rareté
-  // d'une pièce. Keko : « inutile de spécifier la qualité modeste en bas ».
-  if (carte.type === 'tresor') return 'Trésor'
-  if (carte.usages !== undefined || carte.exil === true) return 'Consommable'
-  if (carte.degats > 0 || carte.effets?.some((e) => e.type === 'degatsTous')) return 'Attaque'
-  if (carte.effets?.some((e) => e.type === 'bloc')) return 'Défense'
-  return 'Action'
 }
 
 function ligneCarte(

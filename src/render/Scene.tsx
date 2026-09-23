@@ -1,107 +1,116 @@
 /**
- * LA SCÈNE : le deuxième jalon du moteur 3D.
+ * LA SCÈNE : le combat, branché sur les vraies règles.
  *
- * Le premier prouvait qu'une carte tient en 3D sans perdre son texte. Celui-ci
- * prouve **le geste** : sortir une carte de la main pour la jouer, la taper
- * pour la regarder. C'est le dernier gros risque de la réécriture — en 2D, le
- * DOM portait le geste ; ici c'est du lancer de rayon, et ça se juge au doigt.
+ * Les deux premiers jalons ont prouvé qu'une carte tient en 3D sans perdre son
+ * texte, puis que le geste répond au doigt. Celui-ci branche `logic/` : le
+ * deck vient du chargement gratuit, les ennemis du même tirage que le jeu 2D,
+ * et jouer une carte passe par `jouerCarte`. **Aucune règle n'a été réécrite.**
  *
- * Les règles du jeu ne sont pas encore branchées : une carte jouée quitte la
- * main, et c'est tout. `logic/` est prêt et n'a pas bougé d'une ligne, mais
- * *brancher le combat avant d'avoir validé le geste reviendrait à construire
- * sur un doute.*
+ * Ce qui manque encore, et qui viendra : les animations de coup, le point de
+ * sortie, le butin. Ici on veut juste pouvoir jouer un combat entier.
  */
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Main3D } from './Main3D.tsx'
-import type { CarteAPeindre } from './texture-carte.ts'
+import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
+import { aPeindre, combatDeDepart } from './combat-3d.ts'
+import type { EtatCombat } from '../logic/combat.ts'
+import { finDuTour, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
 
-/** Cinq cartes du deck de départ, prises telles quelles. */
-const DEPART: CarteAPeindre[] = [
-  { id: 'estoc-1', nom: 'Estoc', cout: 1, effet: ['Inflige 3 dégâts'], type: 'Attaque' },
-  { id: 'garde-1', nom: 'Garde', cout: 1, effet: ['Bloque 5 dégâts', 'ce tour seulement'], type: 'Défense' },
-  { id: 'moulinet-1', nom: 'Moulinet', cout: 4, effet: ['Inflige 14 dégâts'], type: 'Attaque' },
-  { id: 'rempart-1', nom: 'Rempart', cout: 2, effet: ['Bloque 11 dégâts', 'ce tour seulement'], type: 'Défense' },
-  { id: 'potion-1', nom: 'Potion', cout: 1, effet: ['Rend 14 PV', 'se boit : détruite'], type: 'Consommable' },
-]
+/** La seed de départ. Une seule partie pour l'instant : on juge le combat. */
+const SEED = 1789
 
 export function Scene(): React.JSX.Element {
-  const [main, setMain] = useState<CarteAPeindre[]>(DEPART)
-  const [message, setMessage] = useState<string | null>(null)
-  // LE ZOOM VIENT DE L'ÉTAT, pas d'une marque posée sur la scène — même règle
-  // qu'en 2D, où le rendu se reconstruit à chaque geste et balaierait tout ce
-  // qui ne vit que dans l'affichage.
+  const depart = useMemo(() => combatDeDepart(SEED), [])
+  const [combat, setCombat] = useState<EtatCombat>(depart.combat)
   const [zoomee, setZoomee] = useState<number | null>(null)
+  /** La carte sortie de la main, en attente de sa cible. */
+  const [engagee, setEngagee] = useState<number | null>(null)
 
   // LE CHARGEMENT DOIT SE VOIR. Rien ne s'affiche tant que les polices et les
   // illustrations ne sont pas là — et sur un téléphone ça fait plusieurs
   // secondes d'écran noir. *Un écran noir sans signe de vie se lit comme une
-  // page cassée* : je m'y suis trompé moi-même en testant la version déployée.
+  // page cassée.*
   const [peintes, setPeintes] = useState(0)
   const compter = useCallback(() => setPeintes((n) => n + 1), [])
-  const pret = peintes >= DEPART.length
+  const pret = peintes > 0
 
-  const jouer = useCallback((index: number) => {
-    setZoomee(null)
-    setMain((m) => {
-      setMessage(`${m[index]?.nom ?? ''} jouée`)
-      return m.filter((_, i) => i !== index)
-    })
-  }, [])
-
-  // TAPER OUVRE LA CARTE EN GRAND. C'est la moitié du geste : le glisser joue,
-  // la tape lit — et sans elle, le recouvrement de l'éventail rend une carte
-  // illisible tant qu'on ne la sort pas.
-  const regarder = useCallback((index: number) => {
-    setZoomee(index)
-    setMessage(null)
-  }, [])
-
-  const fermerZoom = useCallback(() => setZoomee(null), [])
+  const main = useMemo(() => combat.main.map(aPeindre), [combat.main])
+  const debout = vivants(combat)
+  const menace = Math.max(0, menaceDuTour(combat) - combat.bloc)
+  const fini = combat.issue !== null
 
   /**
-   * RANGER SA MAIN PASSE PAR L'ÉTAT, bien que ça n'ait aucun effet sur les
-   * règles : le rendu se reconstruit à chaque geste, donc un ordre qui ne
-   * vivrait que dans la scène serait balayé au premier déplacement. C'est la
-   * même raison qu'en 2D.
+   * Jouer une carte. **Une carte qui ne vise personne part tout de suite** ;
+   * une carte qui vise attend sa cible — et s'il n'y a qu'un corps debout,
+   * elle y va directement.
    *
-   * `vers` est le rang VOULU une fois la carte retirée.
+   * *Un geste qui engage n'a plus rien à confirmer* : c'est la règle du 2D, et
+   * elle vaut d'autant plus ici que sortir la carte est déjà un engagement.
    */
+  const jouer = useCallback(
+    (index: number) => {
+      setZoomee(null)
+      const carte = combat.main[index]
+      if (carte === undefined || fini) return
+      if (carte.cout > combat.energie) return
+
+      if (!viseUneCible(carte)) {
+        setCombat((c) => jouerCarte(c, index, -1))
+        return
+      }
+      const cibles = vivants(combat)
+      if (cibles.length === 1) {
+        setCombat((c) => jouerCarte(c, index, cibles[0]!.index))
+        return
+      }
+      setEngagee(index)
+    },
+    [combat, fini],
+  )
+
+  const cibler = useCallback(
+    (cible: number) => {
+      if (engagee === null) return
+      setCombat((c) => jouerCarte(c, engagee, cible))
+      setEngagee(null)
+    },
+    [engagee],
+  )
+
   const reordonner = useCallback((de: number, vers: number) => {
     setZoomee(null)
-    setMain((m) => {
-      const carte = m[de]
-      if (carte === undefined) return m
-      const restantes = m.filter((_, i) => i !== de)
-      const place = Math.max(0, Math.min(restantes.length, vers))
-      restantes.splice(place, 0, carte)
-      return restantes
+    setCombat((c) => {
+      const carte = c.main[de]
+      if (carte === undefined) return c
+      const restantes = c.main.filter((_, i) => i !== de)
+      restantes.splice(Math.max(0, Math.min(restantes.length, vers)), 0, carte)
+      return { ...c, main: restantes }
     })
   }, [])
+
+  const terminer = useCallback(() => {
+    setEngagee(null)
+    setZoomee(null)
+    setCombat((c) => finDuTour(c, depart.rng))
+  }, [depart.rng])
+
+  // LE RANG DES ENNEMIS, centré au-dessus de la main. Ils se tiennent côte à
+  // côte et le joueur leur fait face depuis le bas de l'écran : c'est la main
+  // qui tient sa place.
+  const rang = combat.ennemis.map((_, i) => {
+    const centre = (combat.ennemis.length - 1) / 2
+    return [(i - centre) * (CORPS * 1.25), 0.75, 0] as [number, number, number]
+  })
 
   return (
     <>
-      {/* `touch-action: none` est posé sur le canvas par le CSS (`#app canvas`)
-          et non ici : la propriété ne s'hérite pas, et le `style` passé à
-          `<Canvas>` atterrit sur le DIV conteneur, pas sur le canvas.
-
-          LE RECUL DE LA CAMÉRA DONNE SA TAILLE À LA CARTE : à cette distance
-          et ce champ, une carte fait ~37 % de la hauteur d'écran, l'ordre de
-          grandeur du jeu 2D. C'est le seul réglage qui compte pour la
-          lisibilité — la carte, elle, mesure toujours 1 de large.
-
-          ET LA CAMÉRA REGARDE DROIT : à `y = 0,55` elle plongeait sur la main,
-          qui se lisait alors comme vue de haut. Keko : « la main devrait être
-          vue à plat ». */}
       <Canvas
         shadows
         dpr={[1, 2]}
         camera={{ position: [0, 0, 6], fov: 42 }}
         style={{ position: 'fixed', inset: 0, background: '#0d0c11' }}
       >
-        {/* L'éclairage est PROCÉDURAL, sans fichier d'environnement : les
-            presets de drei téléchargent des HDR depuis un CDN, et ce projet ne
-            dépend d'aucune ressource extérieure hors les deux polices. */}
         <ambientLight intensity={0.55} />
         {/* Le biais d'ombre éloigne la profondeur comparée d'un cheveu : sans
             lui, une surface s'ombre elle-même dès que la précision de la carte
@@ -114,38 +123,80 @@ export function Scene(): React.JSX.Element {
           shadow-bias={-0.0008}
           shadow-normalBias={0.02}
         />
-        {/* Une lumière rasante froide côté gauche : c'est elle qui fait briller
-            la tranche quand la carte s'incline, donc qui la rend solide. */}
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
+
+        {combat.ennemis.map((ennemi, i) => (
+          <Ennemi3D
+            key={`${ennemi.nom}-${i}`}
+            ennemi={ennemi}
+            index={i}
+            position={rang[i]!}
+            visable={engagee !== null}
+            onViser={cibler}
+          />
+        ))}
 
         <Main3D
           cartes={main}
           zoomee={zoomee}
           onJouer={jouer}
-          onRegarder={regarder}
+          onRegarder={setZoomee}
           onReordonner={reordonner}
-          onFermerZoom={fermerZoom}
+          onFermerZoom={() => setZoomee(null)}
           onPeinte={compter}
         />
 
-        {/* Le sol : il ne se voit pas, il reçoit les ombres. Sans lui, les
-            cartes flottent dans le noir et le volume ne se lit plus. */}
         <mesh position={[0, 0, -1.2]} receiveShadow>
           <planeGeometry args={[16, 10]} />
           <shadowMaterial opacity={0.5} />
         </mesh>
       </Canvas>
 
-      {/* LA DATE DU BUILD, comme sur le jeu 2D : c'est la seule preuve visible
-          qu'on ne teste pas une version en cache. */}
+      {/* L'INTERFACE RESTE EN HTML, au-dessus du canvas : des chiffres et un
+          bouton n'ont rien à gagner à être en volume, et ils restent nets à
+          toute taille d'écran. C'est la 3D qui sert la scène, pas l'inverse. */}
       <p className="build-3d">{__BUILD_TIME__}</p>
       {!pret && <p className="chargement-3d">Chargement…</p>}
+
       {pret && (
-        <p className="note-3d">
-          {zoomee !== null
-            ? 'Tape pour refermer'
-            : (message ?? 'Sors une carte de la main pour la jouer · tape-la pour la regarder')}
-        </p>
+        <div className="jeu-3d">
+          <div className="etat-3d">
+            <span className="orbe-3d">
+              {combat.energie}
+              <small>/{combat.energieMax}</small>
+            </span>
+            <span className="pv-3d">
+              {combat.pv}
+              <small>/{combat.pvMax}</small>
+            </span>
+            {combat.bloc > 0 && <span className="bloc-3d">⛉ {combat.bloc}</span>}
+            {menace > 0 && !fini && <span className="menace-3d">−{menace}</span>}
+          </div>
+
+          <div className="corps-3d">
+            {combat.ennemis.map((e, i) =>
+              e.pv > 0 ? (
+                <span key={i} className="vie-3d">
+                  {e.nom} {e.pv}/{e.pvMax} · frappe {e.degats} dans {e.compteur}
+                </span>
+              ) : null,
+            )}
+          </div>
+
+          <p className="note-3d">
+            {fini
+              ? combat.issue === 'victoire'
+                ? 'Victoire'
+                : 'Mort'
+              : engagee !== null
+                ? 'Choisis une cible'
+                : `Tour ${combat.tour} · ${debout.length} debout`}
+          </p>
+
+          <button className="fin-3d" type="button" onClick={terminer} disabled={fini}>
+            Fin du tour
+          </button>
+        </div>
       )}
     </>
   )

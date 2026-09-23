@@ -3636,3 +3636,100 @@ body {
   opacity: 0.6;
   pointer-events: none;
 }
+
+/* --- l'interface du moteur 3D, en HTML par-dessus le canvas ---------------- */
+
+/* Des chiffres et un bouton n'ont rien a gagner a etre en volume, et ils
+   restent nets a toute taille d'ecran : c'est la 3D qui sert la scene, pas
+   l'inverse. */
+.jeu-3d {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  font-family: system-ui, sans-serif;
+}
+
+.etat-3d {
+  position: absolute;
+  inset: auto auto 1rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.orbe-3d,
+.pv-3d,
+.bloc-3d,
+.menace-3d {
+  padding: 0.125rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.orbe-3d {
+  border: 1px solid #c9a95a;
+  background: radial-gradient(circle at 35% 30%, #5b4a24, #221b0e 72%);
+  color: #f2e4bd;
+}
+
+.pv-3d {
+  border: 1px solid #a33a3a;
+  background: #2a1114;
+  color: #ffd9d3;
+}
+
+.bloc-3d {
+  border: 1px solid #5cc8ff66;
+  background: #0d1f2a;
+  color: #bfe6ff;
+}
+
+.menace-3d {
+  border: 1px solid #ff5a4a;
+  background: #2a0f0c;
+  color: #ffb1a5;
+}
+
+.orbe-3d small,
+.pv-3d small {
+  opacity: 0.6;
+  font-size: 0.75em;
+  font-weight: 400;
+}
+
+/* Les corps : leur etat en une ligne chacun, en haut. Provisoire -- ces
+   chiffres iront sur les cretures elles-memes, comme en 2D. */
+.corps-3d {
+  position: absolute;
+  inset: 2.25rem 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.fin-3d {
+  position: absolute;
+  inset: 50% 1rem auto auto;
+  translate: 0 -50%;
+  pointer-events: auto;
+  min-height: 3.5rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--trait);
+  border-radius: 0.75rem;
+  background: #16161d;
+  color: var(--fg);
+  font: inherit;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.fin-3d:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

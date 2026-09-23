@@ -1939,6 +1939,41 @@ d'écran**, qui ramène l'onglet au premier plan. C'est la version 3D du piège
 déjà noté pour les iframes : *en arrière-plan, le navigateur gèle ce qu'on
 essaie de mesurer.*
 
+### Le combat, branché sur les vraies règles — jalon 3
+
+Le deck vient du **chargement gratuit** (`deckEmporte`), les ennemis du même
+tirage que le jeu 2D, et jouer une carte passe par `jouerCarte`. **Aucune règle
+n'a été réécrite** — `logic/` n'a pas bougé d'une ligne depuis le début de la
+réécriture, et c'est ce que la règle de pureté achetait.
+
+**Le texte d'une carte vit désormais dans `ui/texte-carte.ts`**, sans DOM,
+partagé par le rendu 2D et le moteur 3D. L'écrire deux fois, c'était garantir
+qu'un jour les deux divergeraient — la leçon des quatre fonctions qui
+dessinaient chacune leur carte avant `corpsCarte`. Le balisage qu'il produit
+(`<b>`, `<small>`) est du contenu : le DOM l'affiche, le canvas le retire.
+
+**Les créatures sont les SVG du jeu 2D**, plaqués sur des plans. On ne les
+redessine pas pour la 3D : ce sont les mêmes bêtes, et un second jeu de dessins
+divergerait du premier. Ce que la 3D leur apporte, c'est l'ombre au sol et la
+lumière de la scène.
+
+*Deux pièges pour transformer un SVG du jeu en texture, et les deux échouent en
+silence* :
+
+- **il lui faut `xmlns`**, sans quoi le navigateur refuse de le charger ;
+- **il lui faut des dimensions explicites** : un SVG qui n'a qu'un `viewBox`
+  n'a pas de taille intrinsèque et se rastérise à rien.
+
+Et surtout : **une image chargée depuis une URL de données ne voit aucune
+feuille de style.** Le SVG des créatures s'appuie sur le CSS de la page —
+`currentColor` pour la chair, une classe pour l'oeil — donc il faut lui poser
+en ligne ce que le CSS lui donnait.
+
+**Les PV du combat sont ceux de la DESCENTE (90), pas ceux du combat isolé
+(30).** `CONFIG_DEFAUT` est calibré pour un duel unique ; les groupes, eux, le
+sont pour une run de six paliers. Les mélanger rendait le premier combat
+injouable — *un chiffre de règle ne se lit pas hors de son barème.*
+
 ### La carte engagée s'allume et frémit
 
 Au-dessus de la main, lâcher joue la carte : elle **s'allume et frémit** tant
