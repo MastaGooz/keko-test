@@ -384,13 +384,15 @@ la description qui porte le dégradé, le nom vit dedans au-dessus du texte
 `z-index` au-dessus du voile sinon il disparaît. Proposée par Keko (« et si on
 enlevait le papier, le texte dessiné directement sur l'illustration ? »), à
 juger contre la version parchemin — **et c'est celle qu'il aime** (« j'aime
-beaucoup la version full art »). Elle est en tête de la planche. **L'image y
-épouse la coque** : étirée sur toute la hauteur avec son propre contour (celui
-d'une fenêtre d'art posée sur le noir), elle laissait voir la surface sombre
-entre son bord et le laiton — une bande noire irrégulière qui se lisait comme
-une autre bordure (Keko : « pourquoi la bordure est différente ? »). Elle
-prend le retrait et le contour déchiré de la surface, et le voile du texte
-suit le bas déchiré de la coque.
+beaucoup la version full art »). Elle est en tête de la planche. **Et
+l'illustration n'y bouge pas** : c'est la carte normale SANS le papier, le
+texte posé sur la surface sombre de la coque, avec un voile léger qui fond le
+bas de la fenêtre d'art. Deux essais pour étirer l'image sur toute la hauteur
+ont donné deux bordures « bizarres » — la fenêtre d'art a son propre contour,
+la coque le sien, ils ne se superposent jamais tout à fait. Keko a tranché :
+« je préfère la bordure de Cendre normale, sans le papier ; au pire ne touche
+pas à l'illustration ». *Quand une retouche produit deux fois un défaut, c'est
+la retouche qu'il faut retirer, pas le défaut qu'il faut corriger.*
 
 **La planche se replie** (`flex-wrap`) et la page se cale en haut et défile :
 centrée et plus large que l'écran, elle était coupée des deux côtés et la
