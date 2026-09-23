@@ -1939,6 +1939,23 @@ d'écran**, qui ramène l'onglet au premier plan. C'est la version 3D du piège
 déjà noté pour les iframes : *en arrière-plan, le navigateur gèle ce qu'on
 essaie de mesurer.*
 
+### Le survol n'existe qu'à la souris — en 3D aussi
+
+**Au doigt, le `pointerover` part au toucher mais le `pointerout` n'arrive
+jamais** : le doigt quitte l'écran sans passer « à côté ». La carte restait
+donc levée, comme si on la tenait encore — Keko : « elle reste parfois sortie
+alors que je ne touche plus l'écran ». C'est le pendant exact du `hover: hover`
+du jeu 2D, où la règle était déjà écrite ; elle ne se transpose pas toute
+seule, parce qu'en 3D le survol passe par des évènements et non par le CSS.
+
+Le survol est donc réservé à `pointerType === 'mouse'`, et un geste tactile
+l'éteint en se terminant.
+
+**Et un geste en cours est soldé avant d'en ouvrir un autre.** Si un
+`pointerup` se perd — second doigt, geste système — la carte précédente
+resterait sortie indéfiniment. *On ne laisse jamais deux gestes se
+superposer.*
+
 ### La carte qui clignote en noir : une CLÉ REACT bâtie sur l'index
 
 Keko : « la carte flash noire quand je la lâche puis reprend sa couleur ». La

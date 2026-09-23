@@ -252,6 +252,7 @@ export function Main3D({
     geste.current.prise = false
     setTenue(null)
     setDoigt(null)
+    setSurvolee(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -267,6 +268,8 @@ export function Main3D({
       g.prise = false
       setTenue(null)
       setDoigt(null)
+      // Au doigt, rien ne viendra éteindre le survol : on le solde ici.
+      if (e.pointerType !== 'mouse') setSurvolee(null)
       if (index < 0) return
 
       // LE DÉPLACEMENT DÉCIDE, PAS LA DURÉE. Une carte prise au maintien puis
@@ -309,6 +312,10 @@ export function Main3D({
       e.stopPropagation()
       const natif = e.nativeEvent
       const g = geste.current
+      // UN GESTE EN COURS EST SOLDÉ AVANT D'EN OUVRIR UN AUTRE. Si un `pointerup`
+      // s'est perdu — second doigt, geste système — la carte précédente resterait
+      // sortie pour toujours. On ne laisse jamais deux gestes se superposer.
+      if (g.index >= 0) annuler()
       g.index = index
       g.depart = { x: natif.clientX, y: natif.clientY }
       g.seuil = natif.pointerType === 'mouse' ? SEUIL_SOURIS : SEUIL_DOIGT
@@ -418,8 +425,18 @@ export function Main3D({
             taille={leve ? 1.08 : 1}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
-            onPointerOver={() => setSurvolee(i)}
-            onPointerOut={() => setSurvolee((s) => (s === i ? null : s))}
+            // LE SURVOL N'EXISTE QU'À LA SOURIS. Au doigt, le `pointerover`
+            // part au toucher mais **le `pointerout` n'arrive jamais** : le
+            // doigt quitte l'écran sans passer « à côté », donc la carte
+            // restait levée comme si on la tenait encore. Keko : « elle reste
+            // parfois sortie alors que je ne touche plus l'écran ». C'est le
+            // pendant du `hover: hover` du jeu 2D, où la règle est déjà écrite.
+            onPointerOver={(e) => {
+              if (e.nativeEvent.pointerType === 'mouse') setSurvolee(i)
+            }}
+            onPointerOut={(e) => {
+              if (e.nativeEvent.pointerType === 'mouse') setSurvolee((s) => (s === i ? null : s))
+            }}
           />
         )
       })}
