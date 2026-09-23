@@ -60,7 +60,11 @@ const EFFET_COURT = 'Inflige <strong>14</strong> dégâts.<br>Applique <strong>2
 const EFFET_LONG =
   'Regardez les <strong>5</strong> premières cartes de votre deck, défaussez-en ' +
   '<strong>2</strong> de votre choix, puis replacez les autres dans l’ordre de votre choix.'
+// Un effet MOYEN, entre les deux, pour voir les trois crans côte à côte.
+const EFFET_MOYEN =
+  'Inflige <strong>8</strong> dégâts.<br>Si la cible est affaiblie, applique <strong>2 Brûlures</strong> de plus.'
 const CENDRE_COURT = cendreAvec(EFFET_COURT)
+const CENDRE_MOYEN = cendreAvec(EFFET_MOYEN)
 const CENDRE_LONG = cendreAvec(EFFET_LONG)
 
 export function montrerProto(racine: HTMLElement, build: string): void {
@@ -71,11 +75,15 @@ export function montrerProto(racine: HTMLElement, build: string): void {
     `<div class="proto">` +
     `<p class="proto-titre">Prototype de carte — full art</p>` +
     `<div class="proto-planche">` +
-    carteCendre('reduite', 'réduite', 'fullart') +
-    carteCendre('', 'normale', 'fullart') +
+    // Les trois crans de texte, côte à côte, aux deux tailles.
+    carteCendre('reduite', 'court · réduite', 'fullart') +
+    carteCendre('', 'court · normale', 'fullart') +
     `<span class="proto-sep"></span>` +
-    carteCendre('reduite', 'texte long · réduite', 'fullart', CENDRE_LONG) +
-    carteCendre('', 'texte long · normale', 'fullart', CENDRE_LONG) +
+    carteCendre('reduite', 'moyen · réduite', 'fullart', CENDRE_MOYEN) +
+    carteCendre('', 'moyen · normale', 'fullart', CENDRE_MOYEN) +
+    `<span class="proto-sep"></span>` +
+    carteCendre('reduite', 'long · réduite', 'fullart', CENDRE_LONG) +
+    carteCendre('', 'long · normale', 'fullart', CENDRE_LONG) +
     `</div>` +
     `<p class="proto-note">« Serment de cendre » en full art — <a href="?jeu">aller au jeu</a> · build ${build}</p>` +
     `</div>`
