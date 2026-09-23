@@ -293,15 +293,14 @@ d'équipement, vitrine du zoom, carte qui s'abat :
   pour que le joueur comprenne bien ». Seul le chiffre DANS le texte garde la
   couleur de sa nature. Un trésor porte l'écusson d'or avec le sceau (pas de
   coût) ; une pièce d'équipement porte **le compteur de cartes**, une petite
-  case en forme de carte, de fer sombre — ce n'est pas de l'énergie — **et
-  derrière elle LE PAQUET ÉTALÉ** : LE MÊME SYMBOLE, sans chiffre, répété une
-  fois par carte restante et décalé d'un cinquième de case vers la droite à
-  chaque fois — de vraies cases (`.ecusson.repli`), avec leurs trois couches
-  et leur ombre, qui précèdent la case du chiffre dans le DOM donc passent
-  dessous. Le nombre se lit deux fois, en chiffre et en épaisseur. Keko :
-  « exactement le même symbole, juste sans chiffre et décalé légèrement vers
-  la droite, X fois en comptant le premier ». Une première version en
-  tranches sombres à bord de laiton n'était pas ça. Le maximum d'énergie (`/5`) vit À CÔTÉ de l'écusson du
+  case en forme de carte, de fer sombre — ce n'est pas de l'énergie — (Un paquet étalé a vécu
+  derrière cette case — le même symbole répété une fois par carte, décalé
+  vers la droite ; Keko l'a finalement retiré : le chiffre suffit.) **Une
+  carte à usages porte ses gorgées EN PASTILLES**, sous l'écusson du coût, sur
+  la bande gauche : une goutte pleine par gorgée qui reste, vide une fois bue
+  (`gorgees()` dans render.ts, `usagesMax` sur la carte pour dessiner les
+  vides). Un compteur qui se voit, pas un chiffre dans le texte — Keko : « un
+  compteur visuel en icône quelque part ». Le maximum d'énergie (`/5`) vit À CÔTÉ de l'écusson du
   joueur, pas dedans : sous la pointe il était tout petit et n'y logeait pas.
   Et l'étiquette des tas (« PIOCHE 7 ») est une pastille EN HAUT du dos, sur
   une ligne : centrée dans la bande émergée, elle recouvrait le médaillon du
