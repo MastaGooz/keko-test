@@ -8,6 +8,7 @@
 import type { Arme, Armure } from './armes.ts'
 import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART, deckDeLEquipement } from './armes.ts'
 import {
+  CAPACITE_PILE,
   creerHub,
   deckEmporte,
   deplacerPiece,
@@ -178,9 +179,9 @@ const COTTE: Armure = {
   const h = creerHub()
   const [p1, p2, p3] = POTIONS_DEPART
 
-  // ELLE EN PREND AUTANT QU'ON VEUT, et le meme modele plusieurs fois : c'est
-  // toute la difference avec un slot, et c'est ce qui fait de la dilution le
-  // seul frein.
+  // ELLE EN PREND PLUSIEURS, et le meme modele plusieurs fois : c'est toute la
+  // difference avec un slot. Mais PAS PLUS DE QUATRE -- sans plafond, on y met
+  // tout ce qu'on possede et la question ne se pose plus.
   const deux = deplacerPiece(h, { ou: 'reserve' }, { ou: 'pile' }, p2!.id)
   const trois = deplacerPiece(deux, { ou: 'reserve' }, { ou: 'pile' }, p3!.id)
   verifier('on empile plusieurs exemplaires du meme modele', trois.chargement.pile.length === 3)
@@ -199,6 +200,18 @@ const COTTE: Armure = {
   verifier('une arme ne se boit pas', deplacerPiece(h, { ou: 'main', rang: 0 }, { ou: 'pile' }) === h)
   verifier('une potion ne tient pas en main', deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, p1!.id) === h)
   verifier('ni au torse', deplacerPiece(h, { ou: 'reserve' }, { ou: 'armure' }, p1!.id) === h)
+
+  // LE PLAFOND : la cinquieme potion reste au ratelier.
+  const quatre = deplacerPiece(deplacerPiece(trois, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[3]!.id), { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id)
+  verifier('la pile plafonne a quatre', quatre.chargement.pile.length === CAPACITE_PILE)
+  verifier('la cinquieme reste au ratelier', quatre.reserve.some((o) => o.id === POTIONS_DEPART[4]!.id))
+  verifier('et le depot de trop ne change rien d’autre',
+    deplacerPiece(quatre, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id) === quatre)
+
+  // MAIS ON PEUT REPOSER SUR UNE PILE PLEINE CE QU'ON VIENT D'EN SORTIR : la
+  // destination se juge apres la prise, sinon la carte se refusait elle-meme.
+  const repose = deplacerPiece(quatre, { ou: 'pile' }, { ou: 'pile' }, quatre.chargement.pile[0]!.id)
+  verifier('une potion se repose sur sa propre pile pleine', repose.chargement.pile.length === CAPACITE_PILE)
 
   // CE QU'ON A BU NE REVIENT PAS. `rentrer` recoit les survivantes, et la pile
   // devient exactement ca -- c'est la seule ressource du jeu qui s'epuise.

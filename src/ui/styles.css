@@ -2966,9 +2966,10 @@ body {
      la colonne de droite, donc RETRECISSAIT le ratelier d'en face -- il passait
      de cinq colonnes a trois, avec une barre de defilement, pendant qu'on
      rangeait. *Un contenant qui se reduit quand on remplit son voisin fait
-     bouger ce qu'on n'a pas touche.* La mesure est celle du cas le plus large :
-     l'armure plus les deux slots que la pile peut atteindre. */
-  width: calc(var(--piece-equip) * 3.2 + 0.5rem);
+     bouger ce qu'on n'a pas touche.* La grille des consommables tient dans la
+     largeur d'UN slot, donc la mesure est la meme que la ligne des armes :
+     deux slots et leur intervalle. */
+  width: calc(var(--piece-equip) * 2 + 0.5rem);
 }
 
 .etal.reserve {
@@ -3076,67 +3077,100 @@ body {
   opacity: 0.75;
 }
 
-/* LA PILE DES CONSOMMABLES : un slot SANS CASES.
+/* LA PILE DES CONSOMMABLES : UNE GRILLE DE QUATRE CASES REDUITES, a cote de
+   l'armure.
 
-   C'est le seul endroit du chargement qui tient un nombre libre de cartes, et
-   sa forme doit le dire : pas une case qu'on remplit, un tas qui grossit. Les
-   cartes se RECOUVRENT comme dans une main -- c'est le vocabulaire des cartes
-   du jeu, et c'est ce qui permet a cinq potions de tenir a cote de l'armure
-   sur un telephone couche. La derniere posee est au-dessus, chacune se prend
-   par sa bande gauche. */
-.slot-pile {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+   Elle a d'abord ete un tas sans plafond, dont les cartes se recouvraient ;
+   Keko l'a repris -- « on ne peut pas donner des slots illimites, il faudrait
+   une limite ». Quatre cases QU'ON VOIT, occupees ou non, comme le ratelier
+   montre les siennes.
+
+   LA MESURE EST CELLE D'UN SLOT, ET ON NE PEUT PAS FAIRE PLUS GRAND. Deux
+   lignes de cases tiennent exactement dans la hauteur d'un slot, donc la ligne
+   du torse ne depasse pas celle des armes -- et c'est ce calage-la qui donne
+   sa taille a `--piece-equip` (la hauteur de l'ecran divisee par deux cartes).
+
+   Essayee a 1,5 slot pour que les cases soient plus lisibles, la grille faisait
+   2,05 slots de haut : la ligne du torse passait SOUS la note et la derniere
+   ligne de cases etait recouverte. *Rien ne le signalait* -- le voile est en
+   `overflow: hidden`, donc le debordement etait masque et le bouton restait
+   visible. Verifier une feuille, c'est verifier qu'elle ne deborde pas, pas
+   que le bouton se voit.
+
+   L'arithmetique ne laisse pas le choix : a cases de largeur c, le bloc fait
+   1,4 P + 2,8 c de haut, et le calage vaut 2,8 P -- donc c = P / 2 exactement.
+   Agrandir les cases oblige a retrecir les armes d'autant, et les armes sont
+   la piece maitresse de l'ecran. */
+.grille-pile {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.25rem;
   flex: 0 0 auto;
+  /* Deux colonnes et un intervalle dans la largeur d'un slot. */
+  width: var(--piece-equip);
   padding: 0;
   border: 0;
   background: none;
   cursor: pointer;
 }
 
-/* Vide, elle a la forme d'une carte comme n'importe quel slot : c'est une
-   place qui attend, et il faut pouvoir y viser. */
-.slot-pile.vide {
-  width: var(--piece-equip);
-}
-
-.tas-consommables {
-  display: flex;
-  align-items: center;
-}
-
-.tas-consommables .piece-equip {
-  width: var(--piece-equip);
-}
-
-/* LE PAS EST LE `min()` DE DEUX FORMULES, exactement comme la main -- et pour
-   la meme raison. Un recouvrement fixe garde l'allure a deux ou trois cartes
-   mais ne garantit plus rien au-dela : a cinq potions la pile poussait l'etal
-   et ECRASAIT LE RATELIER d'en face, qui se retrouvait en colonne avec une
-   barre de defilement. Le partage d'une largeur cible, lui, etalerait les
-   cartes quand elles sont peu nombreuses.
-
-   La cible est la largeur de DEUX slots, celle de la ligne des armes juste
-   au-dessus : la ligne du torse ne peut donc jamais depasser celle des mains,
-   quel que soit le nombre de potions. */
-.tas-consommables {
-  --pas: min(
-    calc(var(--piece-equip) * 0.6),
-    calc(var(--piece-equip) * 1.2 / max(1, var(--np) - 1))
-  );
-}
-
-.tas-consommables .piece-equip + .piece-equip {
-  margin-left: calc(var(--pas) - var(--piece-equip));
-}
-
-/* Une carte prise DANS la pile disparait simplement : il n'y a pas de case a
-   laisser derriere elle, contrairement a un slot. `visibility` garde sa place,
-   donc les voisines ne glissent pas sous le doigt. */
-.piece-equip.dans-pile.saisie {
+.case-pile {
+  display: block;
+  width: 100%;
+  aspect-ratio: 5 / 7;
+  padding: 0;
   border: 0;
   background: none;
+  cursor: grab;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.case-pile .carte {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  transform: none;
+}
+
+/* La case vide a la forme d'une carte, en pointille : c'est une place, pas un
+   trou. Le pointille est PLUS FRANC qu'au ratelier -- il se detache ici sur le
+   fond chaud de l'etal du chargement, et non sur du noir ; a la meme valeur,
+   on ne voyait pas qu'il restait trois places. */
+.case-pile.vide {
+  border: 1px dashed var(--trait);
+  border-radius: 8px;
+  background: #00000059;
+}
+
+/* Une carte prise DANS la grille disparait de sa case le temps du glisser --
+   la case, elle, reste : meme regle que le ratelier. */
+.case-pile.saisie .carte {
+  visibility: hidden;
+}
+
+.case-pile.saisie {
+  border: 1px dashed var(--trait);
+  border-radius: 8px;
+  background: #00000040;
+}
+
+/* PLEINE, ELLE LE DIT AVANT QU'ON LACHE. Le refus passe par `data-attend`
+   (« rien »), donc `glisser.ts` l'allume en rouge sans rien savoir de la
+   regle -- exactement comme un slot condamne par une arme a deux mains. */
+.grille-pile.survole {
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px var(--joueur), 0 0 0.75rem #5cc8ff55;
+}
+
+.grille-pile.survole-refus {
+  border-radius: 10px;
+  background: #ff3b2a1f;
+  box-shadow: 0 0 0 1px #ff5a4a, 0 0 1rem #ff3b2a55;
+}
+
+.grille-pile.accueille {
+  border-radius: 10px;
 }
 
 /* Une case vide du ratelier : la forme d'une carte, en pointille, comme un

@@ -39,14 +39,19 @@ export type Chargement = {
   mains: [Arme | null, Arme | null]
   armure: Armure | null
   /**
-   * LA PILE : les consommables emportés, et elle N'A PAS DE PLAFOND.
+   * LA PILE : les consommables emportés, **quatre au plus**.
    *
-   * C'est le seul endroit du chargement où l'on décide d'un NOMBRE, et c'est
-   * voulu : ailleurs un slot tient une pièce ou rien. Ici, ce qui retient le
-   * joueur n'est pas une case manquante mais la dilution — *la taille du deck
-   * est une ressource, et la pile est l'endroit où il la dépense sciemment.*
-   * Tranché par Keko : « on peut déposer plusieurs cartes dedans, même une en
-   * plusieurs exemplaires ».
+   * C'est le seul endroit du chargement où l'on décide d'un NOMBRE — ailleurs
+   * un slot tient une pièce ou rien — et on peut y mettre plusieurs
+   * exemplaires du même modèle. Tranché par Keko : « on peut déposer plusieurs
+   * cartes dedans, même une en plusieurs exemplaires ».
+   *
+   * **Mais il y a un plafond, et il est venu après coup.** Sans lui, la seule
+   * borne était la dilution — et Keko l'a repris : « on ne peut pas donner des
+   * slots illimités, il faudrait une limite ». *Un contenant sans fond n'est
+   * pas un choix, c'est un sac* : on y met tout ce qu'on possède et la
+   * question ne se pose plus. À quatre cases, emporter une potion de plus veut
+   * dire en laisser une autre.
    */
   pile: Consommable[]
 }
@@ -73,6 +78,15 @@ export type Slot =
   /** La pile des consommables. Sans rang : on pose dessus, elle n'a pas de cases. */
   | { ou: 'pile' }
   | { ou: 'reserve' }
+
+/**
+ * Combien de consommables on emporte au plus.
+ *
+ * Quatre, comme les quatre cases de la grille qui les montre : le nombre est
+ * une donnée de règle, pas une conséquence de la mise en page, mais les deux
+ * doivent dire la même chose.
+ */
+export const CAPACITE_PILE = 4
 
 const VIDE: Chargement = { mains: [null, null], armure: null, pile: [] }
 
@@ -142,20 +156,25 @@ function estArme(objet: Objet): objet is Arme {
 export function deplacerPiece(hub: Hub, source: Slot, cible: Slot, id?: string): Hub {
   const prise = prendre(hub, source, id)
   if (prise.piece === null) return hub
-  if (!accepte(cible, prise.piece)) return hub
+  // On juge la destination SUR LE HUB D'APRÈS LA PRISE : sans ça, reposer une
+  // potion sur une pile pleine se refusait elle-même, alors qu'elle venait
+  // d'en libérer la place.
+  if (!accepte(cible, prise.piece, prise.hub)) return hub
 
   const pose = poser(prise.hub, cible, prise.piece)
   // Ce que la destination délogeait repart là d'où vient la pièce. Sans ça,
   // échanger deux armes en ferait disparaître une.
   if (pose.sortant === null) return pose.hub
-  if (!accepte(source, pose.sortant)) return { ...pose.hub, reserve: [...pose.hub.reserve, pose.sortant] }
+  if (!accepte(source, pose.sortant, pose.hub)) return { ...pose.hub, reserve: [...pose.hub.reserve, pose.sortant] }
   return poser(pose.hub, source, pose.sortant).hub
 }
 
 /** Un slot n'accepte pas n'importe quoi : une armure ne tient pas en main. */
-function accepte(slot: Slot, piece: Objet): boolean {
+function accepte(slot: Slot, piece: Objet, hub: Hub): boolean {
   if (slot.ou === 'reserve') return true
-  if (slot.ou === 'pile') return estConsommable(piece)
+  // LA PILE EST PLEINE OU NON : c'est la seule destination dont l'acceptation
+  // dépend de ce qu'elle contient déjà, et non de ce qu'on lui tend.
+  if (slot.ou === 'pile') return estConsommable(piece) && hub.chargement.pile.length < CAPACITE_PILE
   if (slot.ou === 'armure') return !estArme(piece) && !estConsommable(piece)
   // Une arme va dans l'une ou l'autre main. À deux mains aussi : on la pose où
   // l'on veut, elle prend les deux -- Keko : « on doit pouvoir la poser dans
@@ -267,6 +286,11 @@ export function perdreLEquipement(hub: Hub): Hub {
       pile: [],
     },
   }
+}
+
+/** Reste-t-il de la place pour un consommable ? */
+export function pilePleine(chargement: Chargement): boolean {
+  return chargement.pile.length >= CAPACITE_PILE
 }
 
 /** Le chargement est-il seulement descendable ? Il faut au moins de quoi frapper. */

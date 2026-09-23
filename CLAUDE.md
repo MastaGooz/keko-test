@@ -108,10 +108,14 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   « les armes et armures sont des intermédiaires qui génèrent les cartes de
   deck », le consommable non — il *est* la carte, et c'est le **seul type de
   carte de deck qui apparaisse au râtelier**. D'où la pile plutôt qu'un slot :
-  on y dépose plusieurs cartes, y compris plusieurs exemplaires du même
-  modèle. Ce qui retient le joueur n'est donc pas une case manquante mais la
-  dilution — *la pile est le seul endroit du chargement où l'on décide d'un
-  nombre, et c'est là qu'on dépense sciemment la taille de son deck.*
+  on y dépose plusieurs cartes, y compris plusieurs exemplaires du même modèle.
+  *C'est le seul endroit du chargement où l'on décide d'un nombre.*
+- **LA PILE PLAFONNE À QUATRE** (`CAPACITE_PILE`). Elle a d'abord été sans
+  limite, la dilution devant suffire à retenir le joueur ; Keko l'a repris :
+  « on ne peut pas donner des slots illimités, il faudrait une limite ». *Un
+  contenant sans fond n'est pas un choix, c'est un sac* — on y met tout ce
+  qu'on possède et la question ne se pose plus. À quatre cases, emporter une
+  potion de plus veut dire en laisser une autre.
 - **Équiper plus dilue.** La taille du deck est une ressource ; c'est ce qui
   rend le chargement intéressant au lieu d'être « tout prendre ».
 - **L'équipement se perd à la mort**, comme le sac. Une **arme commune
@@ -1570,8 +1574,33 @@ compte les deux verbes.
 
 **LE CONSOMMABLE EXISTE : LA POTION** (`logic/armes.ts`, la **pile** du
 chargement dans `logic/hub.ts`). **Une carte, un soin, puis elle s'exile** :
-1⚡, rend 14 PV, détruite en se buvant. On en possède **cinq exemplaires**, on
-en emporte autant qu'on veut.
+1⚡, rend 14 PV, détruite en se buvant. On en possède **cinq exemplaires** et
+on en emporte **quatre au plus**.
+
+**La pile est une GRILLE DE QUATRE CASES, à côté de l'armure** — occupées ou
+non, comme le râtelier montre les siennes : c'est ce qui dit d'un coup d'oeil
+ce qu'il reste à décider. **Un seul dépôt pour les quatre**, et pas une case
+par slot : l'ordre n'a aucun effet (le deck est mélangé au combat), donc une
+case précise ne veut rien dire, et une grande zone se vise mieux au doigt
+qu'un quart de carte. Pleine, elle annonce `data-attend="rien"` — le glisser
+l'allume alors en rouge sans rien savoir de la règle, exactement comme un slot
+condamné par une arme à deux mains.
+
+**LA TAILLE DES CASES EST IMPOSÉE PAR L'ARITHMÉTIQUE, pas choisie.** Deux
+lignes de cases doivent tenir dans la hauteur d'un slot, et c'est ce calage-là
+qui donne sa taille à `--piece-equip` (la hauteur d'écran divisée par deux
+cartes). À cases de largeur `c`, le chargement fait `1,4 P + 2,8 c` de haut
+pour un budget de `2,8 P` : donc **`c = P / 2`, exactement**. Les agrandir
+oblige à rétrécir les armes d'autant.
+
+Essayée à 1,5 slot pour gagner en lisibilité, la grille faisait 2,05 slots de
+haut : la ligne du torse passait **sous la note** et la dernière ligne de
+cases était recouverte. *Rien ne le signalait* — le voile est en
+`overflow: hidden`, donc le débordement était masqué et le bouton restait
+visible. **Vérifier une feuille, c'est vérifier qu'elle ne déborde pas, pas
+que le bouton se voit.** Ça donne 37 x 51 px sur un téléphone courant, 24 x 34
+sur un iPhone SE couché, 117 x 164 sur un écran de PC : **à rejuger par Keko**
+— l'échange contre des armes plus petites est le sien.
 
 **L'objet et la carte n'ont plus deux noms**, et ce n'est pas un retour en
 arrière : on avait séparé « Potion de soin » (ce qu'on emporte) de « Boire une

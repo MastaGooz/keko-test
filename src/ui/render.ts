@@ -15,7 +15,7 @@ import { consequence, jouable, menaceDuTour, tresorsEnMain, vivants } from '../l
 import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, tresorsAuDeck } from '../logic/descente.ts'
 import type { Hub } from '../logic/hub.ts'
-import { deckEmporte, deuxMains, peutDescendre } from '../logic/hub.ts'
+import { CAPACITE_PILE, deckEmporte, deuxMains, peutDescendre } from '../logic/hub.ts'
 import type { Consommable, Objet, Piece } from '../logic/armes.ts'
 import { carteDuConsommable, estConsommable } from '../logic/armes.ts'
 import { creature, sceau, teteDeMort } from './illustrations.ts'
@@ -1011,37 +1011,45 @@ function objetEquipement(objet: Objet, slot: object): string {
 }
 
 /**
- * LA PILE DES CONSOMMABLES : un slot qui en tient AUTANT QU'ON VEUT.
+ * LA PILE DES CONSOMMABLES : UNE GRILLE DE QUATRE CASES, à côté de l'armure.
  *
- * C'est le seul endroit du chargement qui n'a pas de cases — on pose dessus,
- * rien n'en est délogé. Ce qui retient le joueur n'est donc pas une place
- * manquante mais la dilution, et c'est exactement ce que la décision de design
- * demande : *la taille du deck est une ressource, et la pile est l'endroit où
- * il la dépense sciemment.*
+ * Elle a d'abord été sans plafond, et Keko l'a repris : « on ne peut pas
+ * donner des slots illimités, il faudrait une limite ». *Un contenant sans
+ * fond n'est pas un choix, c'est un sac* — on y met tout ce qu'on possède et
+ * la question ne se pose plus. À quatre cases, emporter une potion de plus
+ * veut dire en laisser une autre.
  *
- * Les cartes se RECOUVRENT, comme dans une main : c'est le vocabulaire des
- * cartes du jeu, et c'est ce qui permet à cinq potions de tenir à côté de
- * l'armure sur un téléphone couché. La dernière posée est au-dessus, chacune
- * se prend par sa bande gauche.
+ * **Quatre cases visibles, occupées ou non**, comme le râtelier montre les
+ * siennes : c'est ce qui dit d'un coup d'oeil ce qu'il reste à décider. Elles
+ * sont RÉDUITES et tiennent en 2 x 2 dans la place d'un seul slot du
+ * chargement — la ligne du torse ne peut donc pas dépasser celle des armes.
+ *
+ * **Un seul dépôt pour les quatre**, et pas une case par slot : l'ordre n'a
+ * aucun effet (le deck est mélangé au combat), donc une case précise ne veut
+ * rien dire, et une grande zone se vise mieux au doigt qu'un quart de carte.
+ * Pleine, elle annonce `data-attend="rien"` — le glisser l'allume alors en
+ * rouge sans rien savoir de la règle, exactement comme un slot condamné par
+ * une arme à deux mains.
  */
 function pileConsommables(pile: Consommable[]): string {
   const ou = JSON.stringify({ ou: 'pile' }).replace(/"/g, '&quot;')
+  const pleine = pile.length >= CAPACITE_PILE
   const cartes = pile
     .map(
       (c) =>
-        `<button class="piece-equip dans-pile" type="button" ` +
+        `<button class="case-pile pleine" type="button" ` +
         `data-glissable data-lieu="${ou}" data-piece="${c.id}" data-genre="consommable" ` +
         `data-action="equiper" data-slot="${ou}">` +
         vitrine(carteDuConsommable(c)) +
         `</button>`,
     )
     .join('')
+  const vides = `<span class="case-pile vide"></span>`.repeat(Math.max(0, CAPACITE_PILE - pile.length))
   return (
-    `<div class="slot-pile${pile.length === 0 ? ' vide' : ''}" data-depot data-slot="${ou}" ` +
-    `data-action="equiper" data-attend="consommable">` +
-    (pile.length === 0
-      ? `<span class="carte-fantome">consommables</span>`
-      : `<span class="tas-consommables" style="--np:${pile.length}">${cartes}</span>`) +
+    `<div class="grille-pile${pleine ? ' pleine' : ''}" data-depot data-slot="${ou}" ` +
+    `data-action="equiper" data-attend="${pleine ? 'rien' : 'consommable'}">` +
+    cartes +
+    vides +
     `</div>`
   )
 }
