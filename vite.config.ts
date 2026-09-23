@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
 
 const buildTime = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC'
 
@@ -39,5 +40,5 @@ export default defineConfig(({ command }) => ({
     // SANS ERREUR : le combat redéborderait de l'écran et rien ne le dirait.
     cssTarget: ['chrome90', 'safari14', 'firefox90'],
   },
-  plugins: [datePubliee()],
+  plugins: [react(), datePubliee()],
 }))

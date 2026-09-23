@@ -74,9 +74,18 @@ const IMAGES: Record<string, string> = {
  * JavaScript.
  */
 export function imageDeKeko(nom: string): string {
+  const url = urlImageDeKeko(nom)
+  return url === null ? 'none' : `url(${url})`
+}
+
+/**
+ * La même URL, brute — ce qu'il faut pour charger l'image autrement que par le
+ * CSS : le moteur 3D la peint dans un canvas pour en faire une texture.
+ */
+export function urlImageDeKeko(nom: string): string | null {
   const fichier = IMAGES[cle(nom)]
-  if (fichier === undefined) return 'none'
-  return `url(${import.meta.env.BASE_URL}${fichier}?v=${encodeURIComponent(__BUILD_TIME__)})`
+  if (fichier === undefined) return null
+  return `${import.meta.env.BASE_URL}${fichier}?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
 /** Le dos de carte, pour les tas. */

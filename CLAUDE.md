@@ -1739,6 +1739,80 @@ plutôt qu'un arbitrage.
 Le squelette reste volontairement nu : pas de hub, pas de marché, pas de
 méta-progression.
 
+## LE MOTEUR PASSE EN 3D — décision de Keko
+
+**Le jeu est en cours de réécriture sur React + React Three Fiber.** Keko l'a
+tranché après avoir demandé conseil ailleurs : « autant commencer sur une base
+solide pour un rendu pro à la fin, quitte à rework ce qu'on a ».
+
+Ce que je lui ai dit avant, et qui reste vrai — *la stack ne fait pas le
+rendu* : R3F est un moteur 3D, pas un gain de qualité visuelle, et Slay the
+Spire comme Balatro sont en 2D. La décision est prise les yeux ouverts, avec
+son coût annoncé : **plusieurs semaines avant de retrouver ce qui se joue
+aujourd'hui**, et zéro avancée de design pendant ce temps.
+
+### Les deux règles de la transition
+
+1. **LE MOTEUR 3D SE CONSTRUIT DERRIÈRE `?r3f`, PAS À LA PLACE DU JEU.** Tant
+   qu'il n'a pas rattrapé ce qui se joue, la page par défaut reste la version
+   jouable. Keko teste depuis son téléphone et un PC distant : une réécriture
+   qui commence par casser la page le laisse sans rien pendant des semaines.
+   Même motif que `?proto`.
+2. **`src/logic/` SE TRANSPLANTE TEL QUEL.** 2 875 lignes de règles calibrées
+   par simulation, sans un accès au DOM — c'est la règle de pureté tenue depuis
+   le début, et c'est elle qui fait qu'un changement de moteur ne coûte pas le
+   jeu. Ce qui se refait, c'est `src/ui/` (7 157 lignes). *Ne pas importer
+   `render/` depuis `logic/`, exactement comme pour `ui/`.*
+
+### Le choix de rendu d'une carte : une texture peinte
+
+Le risque qui pouvait condamner la réécriture était **le texte** : une carte de
+ce jeu porte un nom, un cartouche à trois crans de taille et un type gravé.
+Trois façons de le rendre en 3D, une seule tient :
+
+- *du texte 3D* (géométrie ou police SDF) : net, mais toute la mise en page est
+  à recomposer dans la scène, et chaque ligne devient un objet à animer ;
+- *du HTML superposé* : on garde le gabarit CSS, mais il flotte AU-DESSUS de la
+  scène — ni lumière, ni inclinaison, ni ombre. Autant rester en 2D ;
+- **une texture peinte au canvas** (`render/texture-carte.ts`) : la carte est
+  une image, donc elle s'incline, prend la lumière et porte son ombre comme un
+  objet. Le texte y est net tant que la texture est plus grande que la carte à
+  l'écran — 1024 px de large, pour une carte qui en fait au plus ~300.
+
+**Les proportions sont celles du gabarit « Serment de cendre »**, reprises à
+l'identique (carte de 100 x 140, tout en centièmes de largeur). C'est ce qui
+fait que la carte 3D est la MÊME carte et pas une seconde version qui dérivera
+— et qu'une illustration dessinée pour l'une va dans l'autre.
+
+**Le repli d'illustration est explicite ici**, là où la carte 2D le laisse au
+CSS (qui ignore tout seul une couche de fond qui échoue) : *un canvas, lui, ne
+dessine rien du tout*, donc une image manquante laisserait un trou noir.
+
+**Et il faut attendre `document.fonts.ready` avant de peindre.** Un canvas qui
+dessine trop tôt retombe silencieusement sur la police par défaut : la carte
+sort en sans-serif et **aucune erreur ne le dit**.
+
+### Deux pièges déjà rencontrés
+
+- **`<primitive>` ne monte un objet QU'UNE FOIS.** Les cinq faces de laiton du
+  pavé, déclarées comme cinq `<primitive>` du même matériau, se démontaient
+  l'une l'autre : le tableau de matériaux finissait troué et **la scène restait
+  noire sans une seule erreur en console**. Les matériaux se construisent en
+  JavaScript (`useMemo`) et se passent en tableau à `material`.
+- **L'éclairage reste PROCÉDURAL.** Les presets d'environnement de drei
+  téléchargent des HDR depuis un CDN ; ce projet ne dépend d'aucune ressource
+  extérieure hors les deux polices.
+
+### Ce que ça coûte, mesuré
+
+| | page par défaut (le jeu 2D) | branche `?r3f` |
+|---|---|---|
+| JavaScript | 50 Ko (17 Ko gzip) | **1,13 Mo (311 Ko gzip)** |
+
+Les trois branches de `entree.ts` sont des imports **dynamiques** : React et
+three ne sont téléchargés que si l'on demande `?r3f`. Tant que le jeu 2D est la
+page par défaut, il garde son poids.
+
 ## Architecture — la règle à ne pas casser
 
 ```
@@ -1748,7 +1822,11 @@ src/
     state.ts     # GameState + transitions pures (état immuable : on retourne un nouvel objet)
     hub.ts       # l'armurerie : la réserve, le chargement, ce que la mort coûte
     storage.ts   # (dé)sérialisation + interface StoragePort
-  ui/      # TOUT ce qui touche au navigateur
+  render/  # LE MOTEUR 3D (React + R3F), derrière `?r3f` -- en construction
+    texture-carte.ts # la carte peinte au canvas, pour servir de texture
+    Carte3D.tsx      # le pavé, ses matériaux, son inclinaison
+    Scene.tsx        # le canvas R3F, les lumières
+  ui/      # TOUT ce qui touche au navigateur (le jeu 2D, encore la référence)
     render.ts    # mount() construit le DOM une fois, render() le met à jour
     effets.ts    # marques décoratives posées après un rendu (coup, secousse)
     duel.ts      # le gros plan d'attaque — décoratif lui aussi, supprimable
