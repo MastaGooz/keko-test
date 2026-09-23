@@ -73,17 +73,17 @@ export function montrerProto(racine: HTMLElement, build: string): void {
   // l'effet court et l'effet long de référence.
   racine.innerHTML =
     `<div class="proto">` +
-    `<p class="proto-titre">Prototype de carte — full art</p>` +
+    `<p class="proto-titre">Prototype de carte — full art, placeholder bleu</p>` +
     `<div class="proto-planche">` +
     // Les trois crans de texte, côte à côte, aux deux tailles.
-    carteCendre('reduite', 'court · réduite', 'fullart') +
-    carteCendre('', 'court · normale', 'fullart') +
+    carteCendre('reduite', 'court · réduite', 'fullart bleu') +
+    carteCendre('', 'court · normale', 'fullart bleu') +
     `<span class="proto-sep"></span>` +
-    carteCendre('reduite', 'moyen · réduite', 'fullart', CENDRE_MOYEN) +
-    carteCendre('', 'moyen · normale', 'fullart', CENDRE_MOYEN) +
+    carteCendre('reduite', 'moyen · réduite', 'fullart bleu', CENDRE_MOYEN) +
+    carteCendre('', 'moyen · normale', 'fullart bleu', CENDRE_MOYEN) +
     `<span class="proto-sep"></span>` +
-    carteCendre('reduite', 'long · réduite', 'fullart', CENDRE_LONG) +
-    carteCendre('', 'long · normale', 'fullart', CENDRE_LONG) +
+    carteCendre('reduite', 'long · réduite', 'fullart bleu', CENDRE_LONG) +
+    carteCendre('', 'long · normale', 'fullart bleu', CENDRE_LONG) +
     `</div>` +
     `<p class="proto-note">« Serment de cendre » en full art — <a href="?jeu">aller au jeu</a> · build ${build}</p>` +
     `</div>`

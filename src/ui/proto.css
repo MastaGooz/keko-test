@@ -303,3 +303,19 @@
   font-size: 5cqw !important;
   line-height: 1.2 !important;
 }
+
+/* --- L'ILLUSTRATION REMPLACÉE PAR UN APLAT BLEU --------------------------- */
+
+/* Pour voir la TAILLE du placeholder d'illustration : la fenêtre d'art garde
+   sa boîte et sa découpe, mais tout ce qu'elle dessine (le disque, la lame,
+   la poussière, les deux textures en pseudo-éléments) s'efface sous un bleu
+   franc. C'est la surface exacte qu'une vraie image devra couvrir. */
+.cendre.bleu .cv-art {
+  background: #2f6fd6;
+}
+
+.cendre.bleu .cv-art > *,
+.cendre.bleu .cv-art::before,
+.cendre.bleu .cv-art::after {
+  display: none;
+}
