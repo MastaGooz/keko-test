@@ -392,7 +392,11 @@ ont donné deux bordures « bizarres » — la fenêtre d'art a son propre conto
 la coque le sien, ils ne se superposent jamais tout à fait. Keko a tranché :
 « je préfère la bordure de Cendre normale, sans le papier ; au pire ne touche
 pas à l'illustration ». *Quand une retouche produit deux fois un défaut, c'est
-la retouche qu'il faut retirer, pas le défaut qu'il faut corriger.*
+la retouche qu'il faut retirer, pas le défaut qu'il faut corriger.* Et
+même ça était trop : ce qu'il voulait, c'était **la carte normale avec le
+papier à opacité zéro, et rien d'autre** — texte en crème, seule concession.
+« Et ben là tu vois c'est bien. » *Livrer le changement littéral d'abord,
+montrer, puis retoucher une chose à la fois.*
 
 **La planche se replie** (`flex-wrap`) et la page se cale en haut et défile :
 centrée et plus large que l'écran, elle était coupée des deux côtés et la
