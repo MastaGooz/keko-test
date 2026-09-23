@@ -19,7 +19,7 @@ import { CAPACITE_PILE, deckEmporte, deuxMains, peutDescendre } from '../logic/h
 import type { Consommable, Objet, Piece } from '../logic/armes.ts'
 import { carteDuConsommable, estConsommable } from '../logic/armes.ts'
 import { creature, sceau, teteDeMort } from './illustrations.ts'
-import { art, dosDeCarte } from './art.ts'
+import { art, dosDeCarte, imageDeKeko } from './art.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡', bloc: '⛉' }
 
@@ -419,7 +419,9 @@ function corpsCarte(
   return (
     `<span class="coque"></span>` +
     `<span class="surface"></span>` +
-    `<span class="art" style="--art:url(${art(nom)})"></span>` +
+    // Deux couches : l'image de Keko par-dessus, le dessin dessous. Si la
+    // première manque, le CSS l'ignore et le dessin reparaît tout seul.
+    `<span class="art" style="--art:url(${art(nom)});--art-keko:${imageDeKeko(nom)}"></span>` +
     sousLEcusson +
     `<span class="ecusson">${ecusson}</span>` +
     `<span class="nom-carte">${nom}</span>` +

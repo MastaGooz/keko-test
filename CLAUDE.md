@@ -2020,10 +2020,22 @@ La borne n'est pas « pas de dessins » — Keko l'a levée lui-même pour la ma
 Elle est : **pas d'assets, pas de fichiers image, pas de dépendance, pas de
 son.**
 
-**Une exception, ouverte par Keko : les portraits du joueur**
-(`ui/portrait.ts`). Il voulait essayer des images qu'il a faites — un croisé à
-la Darkest Dungeon, tourné vers la droite, donc vers les ennemis. Elles sont
-contenues à un seul fichier et à un seul corps.
+**Une exception, ouverte par Keko : ses propres images.** Elle a d'abord servi
+aux portraits du joueur (`ui/portrait.ts`, parti avec le gros plan d'attaque —
+il reste dans `git log`), et elle sert maintenant aux **illustrations de
+cartes** : `IMAGES` dans `ui/art.ts` associe un modèle à un fichier de
+`public/`. La première est `Glaive.png`.
+
+**Le repli est porté par le CSS, pas par une vérification** : la carte empile
+l'image de Keko AU-DESSUS du dessin SVG (`--art-keko` puis `--art`, dans
+`.carte > .art`), et une couche de fond qui échoue est simplement ignorée par
+le navigateur. *Un essai abandonné redonne donc le dessin d'origine*, sans
+image cassée et sans une ligne de JavaScript. Pour ajouter une image : un
+fichier 680 x 1000 dans `public/`, une ligne dans `IMAGES`.
+
+**La casse du nom compte.** `public/` est copié tel quel et GitHub Pages sert
+depuis Linux : un `glaive.png` demandé pour un `Glaive.png` posé marcherait sur
+la machine de dev et ferait un 404 en ligne.
 
 **Deux poses**, parce que le joueur est montré dans deux situations qui n'ont
 rien à voir : `public/joueur.png` au repos sur la scène et quand il encaisse,

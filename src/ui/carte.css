@@ -70,12 +70,21 @@
 
 /* L'ILLUSTRATION EN PLEIN FORMAT : exactement la boîte de la surface, donc
    elle va jusqu'aux bords déchirés. `cover` : les dessins ont le rapport de
-   la carte (680 x 1000), il ne se rogne que 2 % en haut et en bas. */
+   la carte (680 x 1000), il ne se rogne que 2 % en haut et en bas.
+
+   DEUX COUCHES, ET C'EST LE REPLI : l'image de Keko (`--art-keko`, dans
+   `public/`) par-dessus, le dessin SVG dessous. Une couche de fond qui echoue
+   est simplement ignoree par le navigateur, donc une image retiree redonne le
+   dessin d'origine -- sans une ligne de JavaScript, et sans laisser d'image
+   cassee. `--art-keko` vaut `none` quand il n'y en a pas. */
 .carte > .art {
   position: absolute;
   inset: 1.163cqw;
   clip-path: var(--decoupe);
-  background: var(--art) center / cover no-repeat, #171b1d;
+  background:
+    var(--art-keko, none) center / cover no-repeat,
+    var(--art) center / cover no-repeat,
+    #171b1d;
 }
 
 /* L'ÉCUSSON DU COÛT, en haut à gauche : un liseré d'encre qui le découpe sur
