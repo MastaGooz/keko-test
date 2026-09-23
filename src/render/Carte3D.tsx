@@ -31,9 +31,11 @@ type Props = {
   position?: [number, number, number]
   /** De combien la carte suit le pointeur, en radians. 0 la fige. */
   suivi?: number
+  /** Appelé quand la texture est posée : la carte est enfin visible. */
+  onPeinte?: () => void
 }
 
-export function Carte3D({ carte, position = [0, 0, 0], suivi = 0.35 }: Props): React.JSX.Element {
+export function Carte3D({ carte, position = [0, 0, 0], suivi = 0.35, onPeinte }: Props): React.JSX.Element {
   const groupe = useRef<THREE.Group>(null)
 
   const { face, materiaux } = useMemo(() => {
@@ -67,11 +69,15 @@ export function Carte3D({ carte, position = [0, 0, 0], suivi = 0.35 }: Props): R
       face.map = texture
       face.color.set('#ffffff')
       face.needsUpdate = true
+      onPeinte?.()
     })
     return () => {
       vivant = false
       texture?.dispose()
     }
+    // `onPeinte` volontairement hors des dépendances : une fonction recréée à
+    // chaque rendu du parent repeindrait la carte en boucle.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carte, face])
 
   // LA CARTE SUIT LE POINTEUR, et c'est tout l'intérêt du volume : elle

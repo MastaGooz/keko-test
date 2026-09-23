@@ -9,11 +9,12 @@
  * Trois cartes côte à côte plutôt qu'une : la lumière ne se lit que
  * comparativement. Une carte seule paraît toujours correcte.
  */
+import { useCallback, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Carte3D } from './Carte3D.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
 
-/** Trois cartes du jeu, prises telles quelles : arme, défense, consommable. */
+/** Trois cartes du jeu, prises telles quelles : arme, attaque, défense. */
 const CARTES: CarteAPeindre[] = [
   { nom: 'Glaive', cout: 3, effet: ['1× Estoc · 1× Taillade · 1× Moulinet'], type: 'Arme · une main' },
   { nom: 'Moulinet', cout: 4, effet: ['Inflige 14 dégâts'], type: 'Attaque' },
@@ -21,37 +22,54 @@ const CARTES: CarteAPeindre[] = [
 ]
 
 export function Scene(): React.JSX.Element {
+  // LE CHARGEMENT DOIT SE VOIR. Rien ne s'affiche tant que les polices et les
+  // illustrations ne sont pas là — et sur un téléphone ça fait plusieurs
+  // secondes d'écran noir. *Un écran noir sans signe de vie se lit comme une
+  // page cassée* : je m'y suis trompé moi-même en testant la version déployée.
+  const [peintes, setPeintes] = useState(0)
+  const compter = useCallback(() => setPeintes((n) => n + 1), [])
+  const pret = peintes >= CARTES.length
+
   return (
-    <Canvas
-      shadows
-      dpr={[1, 2]}
-      camera={{ position: [0, 0, 3.4], fov: 42 }}
-      style={{ position: 'fixed', inset: 0, background: '#0d0c11' }}
-    >
-      {/* L'éclairage est PROCÉDURAL, sans fichier d'environnement : les
-          presets de drei téléchargent des HDR depuis un CDN, et ce projet ne
-          dépend d'aucune ressource extérieure hors les deux polices. */}
-      <ambientLight intensity={0.55} />
-      <directionalLight
-        position={[2.5, 3.5, 4]}
-        intensity={2.2}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-      />
-      {/* Une lumière rasante froide côté gauche : c'est elle qui fait briller
-          la tranche quand la carte s'incline, donc qui la rend solide. */}
-      <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
+    <>
+      <Canvas
+        shadows
+        dpr={[1, 2]}
+        camera={{ position: [0, 0, 3.4], fov: 42 }}
+        style={{ position: 'fixed', inset: 0, background: '#0d0c11' }}
+      >
+        {/* L'éclairage est PROCÉDURAL, sans fichier d'environnement : les
+            presets de drei téléchargent des HDR depuis un CDN, et ce projet ne
+            dépend d'aucune ressource extérieure hors les deux polices. */}
+        <ambientLight intensity={0.55} />
+        <directionalLight
+          position={[2.5, 3.5, 4]}
+          intensity={2.2}
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+        />
+        {/* Une lumière rasante froide côté gauche : c'est elle qui fait briller
+            la tranche quand la carte s'incline, donc qui la rend solide. */}
+        <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
 
-      {CARTES.map((carte, i) => (
-        <Carte3D key={carte.nom} carte={carte} position={[(i - 1) * 1.25, 0, 0]} />
-      ))}
+        {CARTES.map((carte, i) => (
+          <Carte3D
+            key={carte.nom}
+            carte={carte}
+            position={[(i - 1) * 1.25, 0, 0]}
+            onPeinte={compter}
+          />
+        ))}
 
-      {/* Le sol : il ne se voit pas, il reçoit les ombres. Sans lui, les
-          cartes flottent dans le noir et le volume ne se lit plus. */}
-      <mesh position={[0, 0, -1.2]} receiveShadow>
-        <planeGeometry args={[14, 9]} />
-        <shadowMaterial opacity={0.5} />
-      </mesh>
-    </Canvas>
+        {/* Le sol : il ne se voit pas, il reçoit les ombres. Sans lui, les
+            cartes flottent dans le noir et le volume ne se lit plus. */}
+        <mesh position={[0, 0, -1.2]} receiveShadow>
+          <planeGeometry args={[14, 9]} />
+          <shadowMaterial opacity={0.5} />
+        </mesh>
+      </Canvas>
+
+      {!pret && <p className="chargement-3d">Chargement…</p>}
+    </>
   )
 }

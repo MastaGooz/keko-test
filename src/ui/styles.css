@@ -3564,3 +3564,31 @@ body {
   color: var(--muted);
   text-align: center;
 }
+
+/* LE CHARGEMENT DU MOTEUR 3D. Rien ne s'affiche tant que les polices et les
+   illustrations ne sont pas la, et sur un telephone ca fait plusieurs secondes
+   d'ecran noir -- qui se lisent comme une page cassee. Meme regle que le
+   bouton de fin de tour pendant la salve ennemie : on ne laisse jamais le
+   joueur devant un ecran muet. */
+.chargement-3d {
+  position: fixed;
+  inset: auto 0 2rem;
+  margin: 0;
+  color: var(--muted);
+  font-family: system-ui, sans-serif;
+  font-size: 0.875rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  animation: respire-chargement 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes respire-chargement {
+  from { opacity: 0.35; }
+  to { opacity: 0.9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chargement-3d {
+    animation: none;
+  }
+}
