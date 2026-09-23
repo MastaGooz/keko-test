@@ -1775,7 +1775,8 @@ body {
   animation: accueil 1.1s ease-in-out infinite alternate;
 }
 
-.slot-equip.accueille .carte-fantome {
+.slot-equip.accueille .carte-fantome,
+.slot-pile.accueille .carte-fantome {
   border-color: color-mix(in srgb, var(--joueur) 70%, var(--trait));
   border-style: solid;
 }
@@ -1805,12 +1806,14 @@ body {
 
 /* Le slot vide allume aussi sa carte fantome, sinon seul le bouton (invisible)
    change et rien ne se voit. */
-.slot-equip.survole .carte-fantome {
+.slot-equip.survole .carte-fantome,
+.slot-pile.survole .carte-fantome {
   border-color: var(--joueur);
   background: #5cc8ff24;
 }
 
-.slot-equip.survole-refus .carte-fantome {
+.slot-equip.survole-refus .carte-fantome,
+.slot-pile.survole-refus .carte-fantome {
   border-color: #ff5a4a;
   background: #ff3b2a1f;
 }
@@ -2958,6 +2961,14 @@ body {
   display: flex;
   justify-content: center;
   gap: 0.5rem;
+  /* LA LARGEUR EST FIXE, ET C'EST CE QUI PROTEGE LE RATELIER. L'etal se
+     dimensionnait sur son contenu : chaque potion posee sur la pile elargissait
+     la colonne de droite, donc RETRECISSAIT le ratelier d'en face -- il passait
+     de cinq colonnes a trois, avec une barre de defilement, pendant qu'on
+     rangeait. *Un contenant qui se reduit quand on remplit son voisin fait
+     bouger ce qu'on n'a pas touche.* La mesure est celle du cas le plus large :
+     l'armure plus les deux slots que la pile peut atteindre. */
+  width: calc(var(--piece-equip) * 3.2 + 0.5rem);
 }
 
 .etal.reserve {
@@ -3015,7 +3026,8 @@ body {
 
 /* Le slot VIDE a la forme de la carte qu'il attend : c'est une place, pas un
    objet. Pointille comme l'emplacement de loot, pour la meme raison. */
-.slot-equip .carte-fantome {
+.slot-equip .carte-fantome,
+.slot-pile .carte-fantome {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3062,6 +3074,69 @@ body {
 
 .piece-detail .mini {
   opacity: 0.75;
+}
+
+/* LA PILE DES CONSOMMABLES : un slot SANS CASES.
+
+   C'est le seul endroit du chargement qui tient un nombre libre de cartes, et
+   sa forme doit le dire : pas une case qu'on remplit, un tas qui grossit. Les
+   cartes se RECOUVRENT comme dans une main -- c'est le vocabulaire des cartes
+   du jeu, et c'est ce qui permet a cinq potions de tenir a cote de l'armure
+   sur un telephone couche. La derniere posee est au-dessus, chacune se prend
+   par sa bande gauche. */
+.slot-pile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* Vide, elle a la forme d'une carte comme n'importe quel slot : c'est une
+   place qui attend, et il faut pouvoir y viser. */
+.slot-pile.vide {
+  width: var(--piece-equip);
+}
+
+.tas-consommables {
+  display: flex;
+  align-items: center;
+}
+
+.tas-consommables .piece-equip {
+  width: var(--piece-equip);
+}
+
+/* LE PAS EST LE `min()` DE DEUX FORMULES, exactement comme la main -- et pour
+   la meme raison. Un recouvrement fixe garde l'allure a deux ou trois cartes
+   mais ne garantit plus rien au-dela : a cinq potions la pile poussait l'etal
+   et ECRASAIT LE RATELIER d'en face, qui se retrouvait en colonne avec une
+   barre de defilement. Le partage d'une largeur cible, lui, etalerait les
+   cartes quand elles sont peu nombreuses.
+
+   La cible est la largeur de DEUX slots, celle de la ligne des armes juste
+   au-dessus : la ligne du torse ne peut donc jamais depasser celle des mains,
+   quel que soit le nombre de potions. */
+.tas-consommables {
+  --pas: min(
+    calc(var(--piece-equip) * 0.6),
+    calc(var(--piece-equip) * 1.2 / max(1, var(--np) - 1))
+  );
+}
+
+.tas-consommables .piece-equip + .piece-equip {
+  margin-left: calc(var(--pas) - var(--piece-equip));
+}
+
+/* Une carte prise DANS la pile disparait simplement : il n'y a pas de case a
+   laisser derriere elle, contrairement a un slot. `visibility` garde sa place,
+   donc les voisines ne glissent pas sous le doigt. */
+.piece-equip.dans-pile.saisie {
+  border: 0;
+  background: none;
 }
 
 /* Une case vide du ratelier : la forme d'une carte, en pointille, comme un

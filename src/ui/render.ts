@@ -15,9 +15,9 @@ import { consequence, jouable, menaceDuTour, tresorsEnMain, vivants } from '../l
 import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, tresorsAuDeck } from '../logic/descente.ts'
 import type { Hub } from '../logic/hub.ts'
-import { deuxMains, equipement, peutDescendre } from '../logic/hub.ts'
-import type { Piece } from '../logic/armes.ts'
-import { deckDeLEquipement } from '../logic/armes.ts'
+import { deckEmporte, deuxMains, peutDescendre } from '../logic/hub.ts'
+import type { Consommable, Objet, Piece } from '../logic/armes.ts'
+import { carteDuConsommable, estConsommable } from '../logic/armes.ts'
 import { creature, sceau, teteDeMort } from './illustrations.ts'
 import { art, dosDeCarte } from './art.ts'
 
@@ -983,11 +983,67 @@ function zoomPiece(piece: Piece): string {
   return cartePiece(piece) + `<span class="set-piece">${set}</span>`
 }
 
-/** Ce qu'une pièce est : une arme a des mains, un consommable se boit, le reste est armure. */
-function genre(piece: Piece): 'arme' | 'armure' | 'consommable' {
-  if ('mains' in piece) return 'arme'
-  if ('consommable' in piece) return 'consommable'
+/** Ce qu'un objet est : une arme a des mains, un consommable est une carte. */
+function genre(objet: Objet): 'arme' | 'armure' | 'consommable' {
+  if (estConsommable(objet)) return 'consommable'
+  if ('mains' in objet) return 'arme'
   return 'armure'
+}
+
+/**
+ * UN OBJET AU RÂTELIER : une pièce se dessine en carte-de-pièce, un
+ * consommable en VRAIE CARTE.
+ *
+ * C'est la différence de nature, rendue visible : une arme est un
+ * intermédiaire qui génère des cartes — d'où son compteur — tandis qu'un
+ * consommable EST la carte qu'on retrouvera en main. La montrer telle quelle
+ * est la seule façon de le dire sans l'écrire.
+ */
+function objetEquipement(objet: Objet, slot: object): string {
+  const ou = JSON.stringify(slot).replace(/"/g, '&quot;')
+  return (
+    `<button class="piece-equip" type="button" ` +
+    `data-glissable data-lieu="${ou}" data-piece="${objet.id}" data-genre="${genre(objet)}" ` +
+    `data-action="equiper" data-slot="auto">` +
+    (estConsommable(objet) ? vitrine(carteDuConsommable(objet)) : cartePiece(objet)) +
+    `</button>`
+  )
+}
+
+/**
+ * LA PILE DES CONSOMMABLES : un slot qui en tient AUTANT QU'ON VEUT.
+ *
+ * C'est le seul endroit du chargement qui n'a pas de cases — on pose dessus,
+ * rien n'en est délogé. Ce qui retient le joueur n'est donc pas une place
+ * manquante mais la dilution, et c'est exactement ce que la décision de design
+ * demande : *la taille du deck est une ressource, et la pile est l'endroit où
+ * il la dépense sciemment.*
+ *
+ * Les cartes se RECOUVRENT, comme dans une main : c'est le vocabulaire des
+ * cartes du jeu, et c'est ce qui permet à cinq potions de tenir à côté de
+ * l'armure sur un téléphone couché. La dernière posée est au-dessus, chacune
+ * se prend par sa bande gauche.
+ */
+function pileConsommables(pile: Consommable[]): string {
+  const ou = JSON.stringify({ ou: 'pile' }).replace(/"/g, '&quot;')
+  const cartes = pile
+    .map(
+      (c) =>
+        `<button class="piece-equip dans-pile" type="button" ` +
+        `data-glissable data-lieu="${ou}" data-piece="${c.id}" data-genre="consommable" ` +
+        `data-action="equiper" data-slot="${ou}">` +
+        vitrine(carteDuConsommable(c)) +
+        `</button>`,
+    )
+    .join('')
+  return (
+    `<div class="slot-pile${pile.length === 0 ? ' vide' : ''}" data-depot data-slot="${ou}" ` +
+    `data-action="equiper" data-attend="consommable">` +
+    (pile.length === 0
+      ? `<span class="carte-fantome">consommables</span>`
+      : `<span class="tas-consommables" style="--np:${pile.length}">${cartes}</span>`) +
+    `</div>`
+  )
 }
 
 /** Les cases du râtelier qu'on montre même vides. */
@@ -995,7 +1051,10 @@ const CASES_RATELIER = 12
 
 function armurerie(hub: Hub): string {
   const bloque = deuxMains(hub.chargement)
-  const deck = deckDeLEquipement(equipement(hub.chargement))
+  // LE DECK COMPTE LA PILE : les consommables sont des cartes de deck comme
+  // les autres, ils diluent exactement pareil. Les oublier ici ferait mentir
+  // le seul chiffre qui rend « équiper plus dilue » lisible.
+  const deck = deckEmporte(hub.chargement)
   // Frapper un corps ou tous : les deux comptent.
   const combat = deck.filter((c) => c.degats > 0 || c.effets?.some((e) => e.type === 'degatsTous')).length
 
@@ -1004,7 +1063,7 @@ function armurerie(hub: Hub): string {
   // rapporte. Keko : « afficher les slots vides du râtelier qu'on voit le grid ».
   const cases = Math.max(CASES_RATELIER, hub.reserve.length)
   const enReserve =
-    hub.reserve.map((p) => pieceEquipement(p, { ou: 'reserve' })).join('') +
+    hub.reserve.map((p) => objetEquipement(p, { ou: 'reserve' })).join('') +
     `<span class="case-ratelier"></span>`.repeat(cases - hub.reserve.length)
 
   return (
@@ -1031,11 +1090,11 @@ function armurerie(hub: Hub): string {
     slotEquipement(hub.chargement.mains[0], { ou: 'main', rang: 0 }, 'arme', false) +
     (bloque ? '' : slotEquipement(hub.chargement.mains[1], { ou: 'main', rang: 1 }, 'arme', false)) +
     `</div>` +
-    // L'armure et le consommable sur la seconde ligne : ce qui encaisse et ce
-    // qui se boit, sous ce qui frappe.
+    // L'armure et la pile sur la seconde ligne : ce qui encaisse et ce qui se
+    // boit, sous ce qui frappe.
     `<div class="rangee-pieces torse">` +
     slotEquipement(hub.chargement.armure, { ou: 'armure' }, 'armure', false) +
-    slotEquipement(hub.chargement.consommable, { ou: 'consommable' }, 'consommable', false) +
+    pileConsommables(hub.chargement.pile) +
     `</div>` +
     `</div>` +
     `</div>` +
@@ -1110,20 +1169,6 @@ function cartePiece(piece: Piece): string {
       pied,
     ) +
     `</div>`
-  )
-}
-
-/** Une pièce au râtelier : elle se glisse, et une tape l'équipe. */
-function pieceEquipement(piece: Piece, slot: object): string {
-  const ou = JSON.stringify(slot).replace(/"/g, '&quot;')
-  return (
-    // `data-genre` : ce que la pièce EST, pour que le glisser puisse dire
-    // avant le dépôt si le slot survolé la prend.
-    `<button class="piece-equip" type="button" ` +
-    `data-glissable data-lieu="${ou}" data-piece="${piece.id}" data-genre="${genre(piece)}" ` +
-    `data-action="equiper" data-slot="auto">` +
-    cartePiece(piece) +
-    `</button>`
   )
 }
 

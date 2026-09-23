@@ -15,8 +15,17 @@
  *
  * Pur, comme tout `logic/` : aucun DOM, aucun hasard non seedé.
  */
-import type { Arme, Armure, Consommable, Piece } from './armes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, CONSOMMABLE_GRATUIT, ESPADON } from './armes.ts'
+import type { Carte } from './combat.ts'
+import type { Arme, Armure, Consommable, Objet, Piece } from './armes.ts'
+import {
+  ARME_GRATUITE,
+  ARMURE_GRATUITE,
+  ESPADON,
+  POTIONS_DEPART,
+  carteDuConsommable,
+  deckDeLEquipement,
+  estConsommable,
+} from './armes.ts'
 
 /**
  * Ce qu'on emporte. Deux mains et un torse — **les objets viendront s'ajouter
@@ -29,13 +38,29 @@ import { ARME_GRATUITE, ARMURE_GRATUITE, CONSOMMABLE_GRATUIT, ESPADON } from './
 export type Chargement = {
   mains: [Arme | null, Arme | null]
   armure: Armure | null
-  /** Le consommable : des cartes qui se boivent. Un seul slot, à dessein. */
-  consommable: Consommable | null
+  /**
+   * LA PILE : les consommables emportés, et elle N'A PAS DE PLAFOND.
+   *
+   * C'est le seul endroit du chargement où l'on décide d'un NOMBRE, et c'est
+   * voulu : ailleurs un slot tient une pièce ou rien. Ici, ce qui retient le
+   * joueur n'est pas une case manquante mais la dilution — *la taille du deck
+   * est une ressource, et la pile est l'endroit où il la dépense sciemment.*
+   * Tranché par Keko : « on peut déposer plusieurs cartes dedans, même une en
+   * plusieurs exemplaires ».
+   */
+  pile: Consommable[]
 }
 
 export type Hub = {
-  /** Ce qu'on possède et qui n'est pas équipé. */
-  reserve: Piece[]
+  /**
+   * Ce qu'on possède et qui n'est pas équipé — pièces ET consommables mêlés.
+   *
+   * **Le consommable est la seule CARTE DE DECK qui apparaisse ici** : les
+   * armes et les armures sont des intermédiaires, elles génèrent des cartes
+   * sans en être. C'est pour ça que le râtelier en montre les exemplaires un
+   * par un, et non un objet avec un compte.
+   */
+  reserve: Objet[]
   chargement: Chargement
   /** L'or rapporté des descentes. Rien ne s'achète encore. */
   or: number
@@ -45,10 +70,11 @@ export type Hub = {
 export type Slot =
   | { ou: 'main'; rang: 0 | 1 }
   | { ou: 'armure' }
-  | { ou: 'consommable' }
+  /** La pile des consommables. Sans rang : on pose dessus, elle n'a pas de cases. */
+  | { ou: 'pile' }
   | { ou: 'reserve' }
 
-const VIDE: Chargement = { mains: [null, null], armure: null, consommable: null }
+const VIDE: Chargement = { mains: [null, null], armure: null, pile: [] }
 
 /**
  * L'armurerie au premier lancement : l'équipement gratuit, déjà équipé.
@@ -62,23 +88,38 @@ export function creerHub(): Hub {
     // L'ESPADON EST AU RÂTELIER DÈS LE DÉPART, en attendant un marché qui le
     // vende : sans lui l'armurerie n'a rien à choisir. Il n'est pas gratuit
     // au sens du garde-fou — mort avec, on le perd pour de bon.
-    reserve: [ESPADON],
+    // CINQ POTIONS, dont une déjà dans la pile : on arrive équipé, donc on
+    // découvre la carte en jouant plutôt qu'en lisant l'armurerie.
+    reserve: [ESPADON, ...POTIONS_DEPART.slice(1)],
     chargement: {
       mains: [ARME_GRATUITE, null],
       armure: ARMURE_GRATUITE,
-      consommable: CONSOMMABLE_GRATUIT,
+      pile: [POTIONS_DEPART[0]!],
     },
     or: 0,
   }
 }
 
-/** Tout ce qui est équipé, dans l'ordre où ça donne ses cartes. */
+/** Les PIÈCES équipées, dans l'ordre où elles donnent leurs cartes. */
 export function equipement(chargement: Chargement): Piece[] {
   const pieces: Piece[] = []
   for (const arme of chargement.mains) if (arme !== null) pieces.push(arme)
   if (chargement.armure !== null) pieces.push(chargement.armure)
-  if (chargement.consommable !== null) pieces.push(chargement.consommable)
   return pieces
+}
+
+/**
+ * LE DECK EMPORTÉ : les sets des pièces, PLUS les cartes de la pile.
+ *
+ * Les deux sources n'ont pas la même nature — l'une génère des cartes, l'autre
+ * en est — mais elles finissent dans le même deck, et c'est tout ce que le
+ * combat a besoin de savoir.
+ */
+export function deckEmporte(chargement: Chargement): Carte[] {
+  return [
+    ...deckDeLEquipement(equipement(chargement)),
+    ...chargement.pile.map(carteDuConsommable),
+  ]
 }
 
 /** Vrai si le premier slot porte une arme à deux mains : le second est pris. */
@@ -86,12 +127,8 @@ export function deuxMains(chargement: Chargement): boolean {
   return chargement.mains[0]?.mains === 2
 }
 
-function estArme(piece: Piece): piece is Arme {
-  return 'mains' in piece
-}
-
-function estConsommable(piece: Piece): piece is Consommable {
-  return 'consommable' in piece
+function estArme(objet: Objet): objet is Arme {
+  return 'mains' in objet
 }
 
 /**
@@ -116,9 +153,9 @@ export function deplacerPiece(hub: Hub, source: Slot, cible: Slot, id?: string):
 }
 
 /** Un slot n'accepte pas n'importe quoi : une armure ne tient pas en main. */
-function accepte(slot: Slot, piece: Piece): boolean {
+function accepte(slot: Slot, piece: Objet): boolean {
   if (slot.ou === 'reserve') return true
-  if (slot.ou === 'consommable') return estConsommable(piece)
+  if (slot.ou === 'pile') return estConsommable(piece)
   if (slot.ou === 'armure') return !estArme(piece) && !estConsommable(piece)
   // Une arme va dans l'une ou l'autre main. À deux mains aussi : on la pose où
   // l'on veut, elle prend les deux -- Keko : « on doit pouvoir la poser dans
@@ -126,7 +163,7 @@ function accepte(slot: Slot, piece: Piece): boolean {
   return estArme(piece)
 }
 
-function prendre(hub: Hub, slot: Slot, id?: string): { piece: Piece | null; hub: Hub } {
+function prendre(hub: Hub, slot: Slot, id?: string): { piece: Objet | null; hub: Hub } {
   if (slot.ou === 'reserve') {
     const i = hub.reserve.findIndex((p) => p.id === id)
     if (i < 0) return { piece: null, hub }
@@ -138,9 +175,14 @@ function prendre(hub: Hub, slot: Slot, id?: string): { piece: Piece | null; hub:
     const piece = hub.chargement.armure
     return { piece, hub: { ...hub, chargement: { ...hub.chargement, armure: null } } }
   }
-  if (slot.ou === 'consommable') {
-    const piece = hub.chargement.consommable
-    return { piece, hub: { ...hub, chargement: { ...hub.chargement, consommable: null } } }
+  // LA PILE SE PREND PAR IDENTIFIANT, comme la réserve : elle en contient
+  // plusieurs, et souvent le même modèle. Le lieu seul ne dirait pas laquelle.
+  if (slot.ou === 'pile') {
+    const i = hub.chargement.pile.findIndex((c) => c.id === id)
+    if (i < 0) return { piece: null, hub }
+    const pile = [...hub.chargement.pile]
+    const [piece] = pile.splice(i, 1)
+    return { piece: piece ?? null, hub: { ...hub, chargement: { ...hub.chargement, pile } } }
   }
   const mains: [Arme | null, Arme | null] = [...hub.chargement.mains]
   const piece = mains[slot.rang]
@@ -148,7 +190,7 @@ function prendre(hub: Hub, slot: Slot, id?: string): { piece: Piece | null; hub:
   return { piece: piece ?? null, hub: { ...hub, chargement: { ...hub.chargement, mains } } }
 }
 
-function poser(hub: Hub, slot: Slot, piece: Piece): { sortant: Piece | null; hub: Hub } {
+function poser(hub: Hub, slot: Slot, piece: Objet): { sortant: Objet | null; hub: Hub } {
   if (slot.ou === 'reserve') {
     return { sortant: null, hub: { ...hub, reserve: [...hub.reserve, piece] } }
   }
@@ -156,15 +198,15 @@ function poser(hub: Hub, slot: Slot, piece: Piece): { sortant: Piece | null; hub
     const sortant = hub.chargement.armure
     return { sortant, hub: { ...hub, chargement: { ...hub.chargement, armure: piece as Armure } } }
   }
-  if (slot.ou === 'consommable') {
-    const sortant = hub.chargement.consommable
-    return {
-      sortant,
-      hub: { ...hub, chargement: { ...hub.chargement, consommable: piece as Consommable } },
-    }
+  // ON POSE SUR LA PILE, ON N'Y ÉCHANGE RIEN : elle n'a pas de cases, donc
+  // rien ne peut en être délogé. C'est ce qui la distingue de tous les autres
+  // slots du chargement.
+  if (slot.ou === 'pile') {
+    const pile = [...hub.chargement.pile, piece as Consommable]
+    return { sortant: null, hub: { ...hub, chargement: { ...hub.chargement, pile } } }
   }
   const mains: [Arme | null, Arme | null] = [...hub.chargement.mains]
-  const sortant = mains[slot.rang] ?? null
+  const sortant: Objet | null = mains[slot.rang] ?? null
   const arme = piece as Arme
   // UNE ARME A DEUX MAINS PREND LES DEUX SLOTS, où qu'on la pose : elle vit
   // dans le premier, et ce qui tenait l'autre main est CHASSÉ, tout de suite —
@@ -186,11 +228,18 @@ function poser(hub: Hub, slot: Slot, piece: Piece): { sortant: Piece | null; hub
 }
 
 /**
- * Ce qu'on rapporte d'une descente réussie : le butin devient de l'or, et
- * l'équipement rentre avec nous.
+ * Ce qu'on rapporte d'une descente réussie : le butin devient de l'or,
+ * l'équipement rentre avec nous — et **la pile revient AMPUTÉE de ce qu'on a
+ * bu**.
+ *
+ * C'est la seule ressource du jeu qui s'épuise à l'usage, et c'est une
+ * décision de Keko : une potion bue disparaît du râtelier, elle n'y repousse
+ * pas. Les survivantes sont celles dont la carte est encore dans le deck à
+ * l'arrivée — une carte bue s'exile, donc elle n'y est plus. *Rien à compter,
+ * l'état le dit déjà.*
  */
-export function rentrer(hub: Hub, butin: number): Hub {
-  return { ...hub, or: hub.or + butin }
+export function rentrer(hub: Hub, butin: number, pile: Consommable[]): Hub {
+  return { ...hub, or: hub.or + butin, chargement: { ...hub.chargement, pile } }
 }
 
 /**
@@ -205,14 +254,17 @@ export function perdreLEquipement(hub: Hub): Hub {
   // est resté au râtelier : le remettre au chargement sans l'en retirer le
   // dédoublait. Keko : « si je pars sans plastron, quand je meurs le plastron
   // est dédoublé ». Ce qu'on rééquipe sort donc de la réserve s'il y était.
-  const gratuites = new Set([ARME_GRATUITE.id, ARMURE_GRATUITE.id, CONSOMMABLE_GRATUIT.id])
+  const gratuites = new Set([ARME_GRATUITE.id, ARMURE_GRATUITE.id])
   return {
     ...hub,
     reserve: hub.reserve.filter((p) => !gratuites.has(p.id)),
     chargement: {
       mains: [ARME_GRATUITE, null],
       armure: ARMURE_GRATUITE,
-      consommable: CONSOMMABLE_GRATUIT,
+      // LA PILE EST PERDUE, ET RIEN NE LA REMPLACE. Le garde-fou ne couvre que
+      // de quoi frapper et encaisser : on peut descendre sans potion, on ne
+      // peut pas descendre sans arme. Ce qui restait au râtelier est intact.
+      pile: [],
     },
   }
 }

@@ -43,12 +43,47 @@ export type Arme = Piece & {
 export type Armure = Piece
 
 /**
- * Un consommable : une pièce dont les cartes SE DÉTRUISENT à l'usage. Trois
- * fioles, c'est trois cartes qui pèsent au premier combat, deux au deuxième…
- * le deck s'affûte à mesure qu'on boit. C'est aussi le logement du SOIN, qui
- * quitte les trésors : un trésor qui soignait rendait la cupidité rentable.
+ * UN CONSOMMABLE EST UNE CARTE DE DECK, PAS UNE PIÈCE.
+ *
+ * C'est la différence de nature que Keko a tranchée : « les armes et armures
+ * sont des intermédiaires qui génèrent les cartes de deck », le consommable
+ * non — il *est* la carte, et c'est le seul type de carte de deck qui
+ * apparaisse au râtelier. D'où l'absence de `set` : il n'a rien à générer.
+ *
+ * Conséquence directe, et elle simplifie : **l'objet et la carte n'ont plus
+ * deux noms.** On avait séparé « Potion de soin » (ce qu'on emporte) de
+ * « Boire une gorgée » (ce qu'on fait) parce qu'un intermédiaire les
+ * distinguait. Sans intermédiaire, il n'y a qu'une chose, et elle s'appelle
+ * Potion.
+ *
+ * L'`id` est celui de L'EXEMPLAIRE, pas du modèle : on en possède plusieurs,
+ * il faut pouvoir en déplacer un précis — et c'est aussi lui qui porte la
+ * carte dans le deck, ce qui permet de savoir à l'extraction laquelle a été
+ * bue.
  */
-export type Consommable = Piece & { consommable: true }
+export type Consommable = {
+  id: string
+  rarete: Rarete
+  /** La carte qu'il met dans le deck : la sienne, et une seule. */
+  modele: Modele
+}
+
+/** Ce qui peut vivre au râtelier : une pièce, ou un consommable. */
+export type Objet = Piece | Consommable
+
+export function estConsommable(objet: Objet): objet is Consommable {
+  return 'modele' in objet
+}
+
+/** Le nom d'un objet, quelle que soit sa nature. */
+export function nomObjet(objet: Objet): string {
+  return estConsommable(objet) ? objet.modele.nom : objet.nom
+}
+
+/** La carte qu'un consommable met dans le deck. Elle porte SON identifiant. */
+export function carteDuConsommable(consommable: Consommable): Carte {
+  return { ...consommable.modele, id: consommable.id }
+}
 
 const ESTOC: Modele = { nom: 'Estoc', type: 'combat', cout: 1, degats: 3 }
 const TAILLADE: Modele = { nom: 'Taillade', type: 'combat', cout: 2, degats: 6 }
@@ -193,44 +228,63 @@ export const PLASTRON: Armure = {
 export const ARMURE_GRATUITE = PLASTRON
 
 /* ---------------------------------------------------------------------- *
- * Les consommables. UNE carte dans le deck, qui a des USAGES : elle revient à
- * la défausse avec un usage de moins, et elle est exilée à la dernière gorgée.
- * Trois cartes qui s'exilaient chacune polluaient trop la main (Keko).
+ * LES CONSOMMABLES : des cartes qu'on empile soi-même.
  *
- * L'OBJET ET LA CARTE N'ONT PAS LE MÊME NOM : l'objet est ce qu'on emporte
- * (« Potion de soin »), la carte est ce qu'on fait (« Boire une gorgée »).
- * L'objet liste ses cartes comme toute pièce ; l'effet est sur la carte.
+ * UNE POTION EST UNE CARTE, UN SOIN, PUIS PLUS RIEN — elle s'exile. Elle a eu
+ * trois gorgées quand elle était seule dans son slot ; on peut désormais en
+ * empiler autant qu'on veut, donc c'est LE NOMBRE EMPORTÉ qui règle le soin,
+ * et il se règle là où on le voit. Tranché par Keko.
+ *
+ * Trois fioles imposées avaient été jugées « ça pollue trop la main » : la
+ * différence est qu'on les choisit maintenant, une par une, contre de la
+ * dilution. *Le jeu n'impose plus ce que le joueur décide.*
  * ---------------------------------------------------------------------- */
 
-const GORGEE: Modele = {
-  nom: 'Boire une gorgée',
+/**
+ * **14 PV pour 1⚡, calibré par simulation** (400 descentes au fond, Glaive +
+ * Plastron, bot qui bloque avant de frapper) :
+ *
+ * | potions emportées | 0 | 1 | 2 | 3 | 5 |
+ * |---|---|---|---|---|---|
+ * | à 10 PV | 79 % | 78 % | 83 % | 82 % | 83 % |
+ * | à 14 PV | 79 % | 83 % | 86 % | 93 % | 92 % |
+ * | à 18 PV | 79 % | 86 % | 91 % | 95 % | 97 % |
+ *
+ * **À 18, en emporter plus est TOUJOURS mieux** — la courbe ne plafonne
+ * jamais, donc le choix n'en est pas un. À 14 elle plafonne dès trois, et
+ * c'est ce qu'on veut : la quatrième ne rachète plus sa place.
+ *
+ * *Et le vrai coût n'est pas dans la run* : on n'en possède que cinq, et
+ * boire les détruit. Emporter toute la pile, c'est dépenser son stock — une
+ * simulation d'une seule descente ne peut pas le voir.
+ *
+ * Repère à garder : **une potion rend exactement ce que rend un palier**
+ * (`REGLAGE_DEFAUT.soin`).
+ */
+const POTION: Modele = {
+  nom: 'Potion',
   type: 'combat',
   cout: 1,
   degats: 0,
-  effets: [{ type: 'soin', montant: 10 }],
-  usages: 3,
-  usagesMax: 3,
+  effets: [{ type: 'soin', montant: 14 }],
+  exil: true,
+}
+
+/** Un exemplaire de potion. On en possède plusieurs, chacun a son identité. */
+export function potion(numero: number): Consommable {
+  return { id: `potion-${numero}`, rarete: 'commune', modele: POTION }
 }
 
 /**
- * Une potion à trois gorgées. Le format des douze compte « + consommables » :
- * elle s'ajoute aux six qui frappent et aux six qui encaissent, pour UNE
- * carte.
+ * Le stock de départ. **Cinq exemplaires, et ils s'épuisent pour de bon** :
+ * une potion bue ne revient pas au râtelier, une potion emportée est perdue
+ * avec le reste si l'on meurt. Tranché par Keko.
  *
- * **Provisoirement gratuite et permanente**, comme le Glaive et le Plastron :
- * il n'y a pas encore de marché pour l'acheter, donc elle revient à chaque
- * descente. Le jour où le hub vend, une potion bue est une potion achetée —
- * c'est la règle à écrire alors, pas maintenant.
+ * *Dette connue, et elle est volontaire* : sans marché, les cinq bues, il n'y
+ * a plus jamais de soin. Le garde-fou de la spirale ne couvre que de quoi
+ * frapper et encaisser — il faudra que le hub en vende.
  */
-export const POTION_DE_SOIN: Consommable = {
-  id: 'fioles',
-  nom: 'Potion de soin',
-  rarete: 'commune',
-  consommable: true,
-  set: [{ modele: GORGEE, nombre: 1 }],
-}
-
-export const CONSOMMABLE_GRATUIT = POTION_DE_SOIN
+export const POTIONS_DEPART: Consommable[] = [1, 2, 3, 4, 5].map(potion)
 
 /**
  * Le deck emporté, somme des sets de tout ce qui est équipé. Les identifiants

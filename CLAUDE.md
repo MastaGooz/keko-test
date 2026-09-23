@@ -98,12 +98,20 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   Keko l'a voulu quand même : « il devrait faire quelque chose même si c'est
   un effet temporaire placeholder ». **À remesurer par simulation** — la
   dernière mesure (cupidité qui coûte de nouveau, 8 à 14 points) date des
-  trésors inertes. Le soin principal vit dans les **fioles**, un consommable.
-- **Le chargement a quatre slots, et pas un de plus pour l'instant** : deux
-  mains, un torse, un consommable. Un **bijou** viendra (passif, sans carte,
-  qui change les règles et jamais les chiffres). Pas de casque ni de bottes :
-  chaque slot doit porter un verbe distinct — frapper, encaisser, boire — pas
-  une partie du corps.
+  trésors inertes. Le soin principal vit dans les **potions**, un consommable.
+- **Le chargement a trois slots et UNE PILE** : deux mains, un torse, et la
+  pile des consommables — qui n'a pas de plafond. Un **bijou** viendra
+  (passif, sans carte, qui change les règles et jamais les chiffres). Pas de
+  casque ni de bottes : chaque slot doit porter un verbe distinct — frapper,
+  encaisser, boire — pas une partie du corps.
+- **LE CONSOMMABLE EST UNE CARTE DE DECK, PAS UNE PIÈCE.** Tranché par Keko :
+  « les armes et armures sont des intermédiaires qui génèrent les cartes de
+  deck », le consommable non — il *est* la carte, et c'est le **seul type de
+  carte de deck qui apparaisse au râtelier**. D'où la pile plutôt qu'un slot :
+  on y dépose plusieurs cartes, y compris plusieurs exemplaires du même
+  modèle. Ce qui retient le joueur n'est donc pas une case manquante mais la
+  dilution — *la pile est le seul endroit du chargement où l'on décide d'un
+  nombre, et c'est là qu'on dépense sciemment la taille de son deck.*
 - **Équiper plus dilue.** La taille du deck est une ressource ; c'est ce qui
   rend le chargement intéressant au lieu d'être « tout prendre ».
 - **L'équipement se perd à la mort**, comme le sac. Une **arme commune
@@ -331,7 +339,7 @@ remplacer un dessin change son URL, pas de piège de cache comme les portraits
 de `public/`. Le nom du fichier est le nom du modèle sans accent ni
 majuscule. Même grammaire pour tous : un fond de nuit propre à la famille
 (vert-sarcelle et soleil rouge pour le Glaive, ardoise et braise pour
-l'Espadon, bleu pour la défense, vert pour les fioles, velours bordeaux et or
+l'Espadon, bleu pour la défense, vert pour les potions, velours bordeaux et or
 pour les trésors), le sujet centré dans les deux tiers du haut, un voile
 sombre qui monte sous le texte, un grain `feTurbulence`. Pour remplacer un
 dessin par une image de Keko : un fichier 680 x 1000 au même nom, c'est tout.
@@ -1560,29 +1568,58 @@ répétée par corps (`main.ts`, `cibler` avec `-1`). L'aperçu sur les jauges l
 `degatsTous` comme des dégâts. Et le compte « qui frappent » de l'armurerie
 compte les deux verbes.
 
-**LE CONSOMMABLE EXISTE : LA POTION DE SOIN** (`logic/armes.ts`, quatrième
-slot du chargement dans `logic/hub.ts`). **UNE seule carte dans le deck, et
-c'est la carte qui a des USAGES** : « Boire une gorgée » (1⚡, rend 10 PV,
-3 gorgées) revient à la défausse avec une gorgée de moins, et elle est
-**exilée à la dernière** (`usages` sur `Carte`, dans `combat.ts`). Il y a eu
-trois Fioles qui s'exilaient chacune ; Keko : « ça pollue trop la main ».
-Vert, pied « Consommable », rangé à côté de l'armure sur la seconde ligne de
-l'armurerie ; son slot ne prend qu'un consommable et rien d'autre ne le prend
-(vérifié dans `hub.verif.ts`, et les usages dans `combat.verif.ts`).
+**LE CONSOMMABLE EXISTE : LA POTION** (`logic/armes.ts`, la **pile** du
+chargement dans `logic/hub.ts`). **Une carte, un soin, puis elle s'exile** :
+1⚡, rend 14 PV, détruite en se buvant. On en possède **cinq exemplaires**, on
+en emporte autant qu'on veut.
 
-**L'OBJET ET LA CARTE N'ONT PAS LE MÊME NOM, ET PAS LE MÊME TEXTE.** L'objet
-est ce qu'on emporte (« Potion de soin »), la carte est ce qu'on fait (« Boire
-une gorgée »). L'objet liste ses cartes comme toute pièce (« 1× Boire une
-gorgée ») ; l'effet et le compte de gorgées sont sur la carte. Keko : « on
-devrait différencier l'objet de la carte ». Le chargement gratuit fait donc
-**10 cartes** (3 + 6 + 1), pas 12.
+**L'objet et la carte n'ont plus deux noms**, et ce n'est pas un retour en
+arrière : on avait séparé « Potion de soin » (ce qu'on emporte) de « Boire une
+gorgée » (ce qu'on fait) parce qu'un intermédiaire les distinguait. *Sans
+intermédiaire, il n'y a qu'une chose*, et elle s'appelle Potion. Le chargement
+de départ fait **10 cartes** (3 + 6 + 1 potion).
 
-**Provisoire, à savoir :** la potion est gratuite et permanente comme le
-Glaive et le Plastron, parce qu'il n'y a pas de marché. Le jour où le hub
-vend, une potion bue est une potion achetée — règle à écrire alors, pas
-maintenant. Et les mesures de survie ci-dessous ont été faites avec trois
-fioles : **à refaire** avec une carte à trois gorgées, qui sort moins souvent
-mais pèse moins.
+**Les charges ont disparu avec le slot unique.** La potion a eu trois gorgées
+le temps qu'elle était seule dans sa case ; maintenant qu'on en empile, c'est
+**le nombre emporté** qui règle le soin, et il se règle là où on le voit. Le
+compteur de charges reste dans le code (`charges()` dans `render.ts`, `usages`
+sur `Carte`, vérifié dans `combat.verif.ts`) : aucune carte ne l'emploie, il
+attend la prochaine.
+
+Trois fioles imposées avaient reçu « ça pollue trop la main » ; **la
+différence est qu'on les choisit maintenant**, une par une, contre de la
+dilution. *Le jeu n'impose plus ce que le joueur décide.*
+
+**14 PV, calibré par simulation** (400 descentes au fond, Glaive + Plastron,
+bot qui bloque avant de frapper) :
+
+| potions emportées | 0 | 1 | 2 | 3 | 5 |
+|---|---|---|---|---|---|
+| à 10 PV | 79 % | 78 % | 83 % | 82 % | 83 % |
+| à 14 PV | 79 % | 83 % | 86 % | 93 % | 92 % |
+| à 18 PV | 79 % | 86 % | 91 % | 95 % | 97 % |
+
+**À 18, en emporter plus est toujours mieux** — la courbe ne plafonne jamais,
+donc le choix n'en est pas un. À 14 elle plafonne dès trois. Repère à garder :
+une potion rend exactement ce que rend un palier (`REGLAGE_DEFAUT.soin`).
+
+**UNE POTION BUE NE REVIENT PAS**, et une potion emportée est perdue si l'on
+meurt. Tranché par Keko. C'est la **seule ressource du jeu qui s'épuise pour
+de bon** — et c'est là qu'est le vrai coût d'en emporter cinq, pas dans la
+dilution : *une simulation d'une seule descente ne peut pas le voir.*
+
+Comment on le sait, sans rien compter : une potion bue s'exile, donc sa carte
+n'est plus dans le deck à l'arrivée. `consommablesSurvivants` (dans
+`descente.ts`) lit ça directement, et `rentrer` remplace la pile par le
+résultat. C'est pour ça qu'une carte de consommable porte **l'identifiant de
+son exemplaire**.
+
+**DETTE CONNUE, ET ELLE EST VOLONTAIRE :** sans marché, les cinq bues, il n'y
+a plus jamais de soin. Le garde-fou de la spirale ne couvre que de quoi
+frapper et encaisser (`perdreLEquipement` rend une arme et une armure, pas une
+potion). Il faudra que le hub en vende.
+
+Les mesures de survie ci-dessous datent des trois fioles : **à refaire**.
 
 **Et le soin a QUITTÉ les trésors.** Il y était un placeholder qui rendait la
 cupidité rentable (92 % en prenant tout contre 70 % en refusant). Un trésor

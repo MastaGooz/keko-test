@@ -9,7 +9,7 @@
  */
 import { createRng } from './rng.ts'
 import { carteTresor } from './cartes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, deckDeLEquipement } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, deckDeLEquipement, potion } from './armes.ts'
 import type { Descente, Lieu, Reglage } from './descente.ts'
 import {
   butinTransporte,
@@ -24,7 +24,7 @@ import {
   resoudreCombat,
   tresorsAuDeck,
 } from './descente.ts'
-import { CHOIX_PAR_PALIER } from './descente.ts'
+import { CHOIX_PAR_PALIER, consommablesSurvivants } from './descente.ts'
 
 // La taille du deck de depart ne s'ecrit plus en dur : elle vient de
 // l'equipement, et une piece ajoutee la ferait mentir sans rien casser.
@@ -299,6 +299,29 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
 
   const choix = jusquAuChoix(enCombat, rng)
   verifier('on ne descend pas depuis une récompense', descendre(choix, rng) === choix)
+}
+
+// --- les consommables emportés, et ce qu'il en reste ------------------------
+
+{
+  const rng = createRng(77)
+  const pile = [potion(1), potion(2), potion(3)]
+  const d = commencerDescente(rng, REGLAGE, [ARME_GRATUITE, ARMURE_GRATUITE], pile)
+
+  // LEURS CARTES SONT DANS LE DECK, et elles portent l'identifiant de leur
+  // exemplaire : c'est ce qui permet de savoir laquelle a été bue.
+  verifier('la pile ajoute ses cartes au deck',
+    d.deck.length === deckDeLEquipement([ARME_GRATUITE, ARMURE_GRATUITE]).length + 3)
+  verifier('chaque carte porte l’identifiant de son exemplaire',
+    pile.every((c) => d.deck.some((k) => k.id === c.id)))
+  verifier('rien n’est bu au départ', consommablesSurvivants(d).length === 3)
+
+  // UNE POTION BUE S'EXILE, donc elle quitte le deck -- et `consommablesSurvivants`
+  // le lit directement, sans compteur à tenir. C'est ce qui fait qu'elle ne
+  // rentre pas au râtelier.
+  const bue = { ...d, deck: d.deck.filter((k) => k.id !== pile[1]!.id) }
+  verifier('une potion bue ne survit pas', consommablesSurvivants(bue).length === 2)
+  verifier('...et c’est bien celle-là', !consommablesSurvivants(bue).some((c) => c.id === pile[1]!.id))
 }
 
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)

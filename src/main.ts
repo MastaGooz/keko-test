@@ -28,6 +28,7 @@ import {
   deplacerTresor,
   resoudreCombat,
   butinTransporte,
+  consommablesSurvivants,
   reordonnerTresors,
   terminerButin,
   validerJet,
@@ -36,6 +37,7 @@ import type { Occupation } from './ui/render.ts'
 import { mount, render, vitrine } from './ui/render.ts'
 import type { Hub, Slot } from './logic/hub.ts'
 import type { Piece } from './logic/armes.ts'
+import { carteDuConsommable, estConsommable } from './logic/armes.ts'
 import {
   creerHub,
   deplacerPiece,
@@ -169,6 +171,9 @@ const DUREE_AGONIE = 850
 function slotNaturel(id: string): Slot | null {
   const piece = hub.reserve.find((p) => p.id === id)
   if (piece === undefined) return null
+  // UN CONSOMMABLE VA SUR LA PILE, toujours : elle n'a pas de cases, donc pas
+  // de « première libre » à chercher.
+  if (estConsommable(piece)) return { ou: 'pile' }
   if (!('mains' in piece)) return { ou: 'armure' }
   return hub.chargement.mains[0] === null || piece.mains === 2
     ? { ou: 'main', rang: 0 }
@@ -178,7 +183,7 @@ function slotNaturel(id: string): Slot | null {
 function demarrer(nouvelleSeed: number): void {
   seed = nouvelleSeed
   rng = createRng(seed)
-  descente = commencerDescente(rng, undefined, equipement(hub.chargement))
+  descente = commencerDescente(rng, undefined, equipement(hub.chargement), hub.chargement.pile)
   agonie = []
   zoom = null
   survolee = null
@@ -291,12 +296,18 @@ function dispatch(action: Action): void {
       // ...et dans l'armurerie : ce qu'on porte et ce qui reste au râtelier.
       // ...et dans les deux slots de l'écran de butin, le loot et le rebut.
       const butin = descente.phase.type === 'butin' ? [descente.phase.loot, descente.phase.aJeter] : []
+      // Un consommable du râtelier ou de la pile est une CARTE : on le zoome
+      // comme telle, pas comme une pièce à set.
+      const objet =
+        hub.reserve.find((p) => p.id === action.id) ??
+        equipement(hub.chargement).find((p) => p.id === action.id) ??
+        hub.chargement.pile.find((c) => c.id === action.id) ??
+        null
       const vue: Carte | Piece | null =
         descente.combat.main.find((c) => c.id === action.id) ??
         descente.deck.find((c) => c.id === action.id) ??
         butin.find((c) => c !== null && c.id === action.id) ??
-        hub.reserve.find((p) => p.id === action.id) ??
-        equipement(hub.chargement).find((p) => p.id === action.id) ??
+        (objet !== null && estConsommable(objet) ? carteDuConsommable(objet) : objet) ??
         null
       zoom = vue
       break
@@ -486,7 +497,7 @@ function dispatch(action: Action): void {
       if (descente.phase.type === 'fin') {
         hub =
           descente.phase.issue === 'extrait'
-            ? rentrer(hub, butinTransporte(descente))
+            ? rentrer(hub, butinTransporte(descente), consommablesSurvivants(descente))
             : perdreLEquipement(hub)
       }
       auHub = true

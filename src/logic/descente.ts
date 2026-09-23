@@ -35,8 +35,8 @@ import {
   ennemisPourProfondeur,
   tresorRecompense,
 } from './cartes.ts'
-import type { Piece } from './armes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, deckDeLEquipement } from './armes.ts'
+import type { Consommable, Piece } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, carteDuConsommable, deckDeLEquipement } from './armes.ts'
 
 /**
  * Les chiffres de la run, rassemblés et injectables — c'est ce qui permet de
@@ -142,6 +142,11 @@ export type Descente = {
   reglage: Reglage
   /** Ce qui a été emporté. Perdu à la mort, rapporté à l'extraction. */
   equipement: Piece[]
+  /**
+   * Les consommables emportés. **Ils s'épuisent** : ce qui rentre au râtelier
+   * n'est pas cette liste mais ce qu'il en reste (`consommablesSurvivants`).
+   */
+  consommables: Consommable[]
   profondeur: number
   phase: Phase
   combat: EtatCombat
@@ -181,12 +186,17 @@ export function commencerDescente(
   // demande, et ce qui montre tout de suite ce que « equiper plus dilue » veut
   // dire (10 cartes deviennent 14, donc le Moulinet sort moins souvent).
   equipement: Piece[] = [ARME_GRATUITE, ARMURE_GRATUITE],
+  // LA PILE : des cartes de deck qu'on emporte telles quelles, sans
+  // intermédiaire. C'est la seule partie du chargement qui n'est pas générée.
+  consommables: Consommable[] = [],
 ): Descente {
-  // Le deck n'existe pas en soi : c'est la somme des sets de l'équipement.
-  const deck = deckDeLEquipement(equipement)
+  // Le deck n'existe pas en soi : c'est la somme des sets de l'équipement,
+  // plus les consommables, qui sont déjà des cartes.
+  const deck = [...deckDeLEquipement(equipement), ...consommables.map(carteDuConsommable)]
   return {
     reglage,
     equipement,
+    consommables,
     profondeur: 1,
     phase: { type: 'combat' },
     combat: engager(1, deck, reglage.pvMax, rng, reglage),
@@ -409,4 +419,19 @@ export function butinTransporte(descente: Descente): number {
 /** Combien de trésors encombrent le deck, et donc la main. */
 export function tresorsAuDeck(descente: Descente): number {
   return descente.deck.filter((carte) => carte.type === 'tresor').length
+}
+
+/**
+ * Les consommables qui rentrent au râtelier : ceux qu'on n'a PAS bus.
+ *
+ * Une potion bue s'exile — elle quitte la pioche, la main et la défausse —
+ * donc elle n'est plus dans le deck. *Il n'y a rien à compter : l'état dit
+ * déjà ce qui reste.* C'est ce qui fait d'une potion la première ressource du
+ * jeu qui s'épuise pour de bon.
+ *
+ * À la mort, on n'appelle pas ceci : tout est perdu, pile comprise.
+ */
+export function consommablesSurvivants(descente: Descente): Consommable[] {
+  const restants = new Set(descente.deck.map((carte) => carte.id))
+  return descente.consommables.filter((c) => restants.has(c.id))
 }
