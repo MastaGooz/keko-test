@@ -319,3 +319,14 @@
 .cendre.bleu .cv-art::after {
   display: none;
 }
+
+/* ...ET IL PREND TOUTE LA CARTE : la fenêtre d'art s'aligne sur la surface
+   sombre (même `inset`, même découpe que `.cv-surface`), donc le bleu couvre
+   tout l'intérieur du cadre laiton ; le cadre, l'écusson, le nom, le texte et
+   le type restent par-dessus. Keko : « que ce placeholder prenne toute la
+   carte, et on met le bord et tout le reste par-dessus ». */
+.cendre.bleu .cv-art {
+  inset: 1.163cqw;
+  height: auto;
+  clip-path: polygon(4% 0, 91% 1.5%, 100% 8%, 98% 92%, 93% 98%, 55% 99%, 50% 100%, 44% 99%, 3% 97%, 0 88%, 1% 5%);
+}
