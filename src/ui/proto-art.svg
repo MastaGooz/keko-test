@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000" width="680" height="1000">
+  <!--
+    « Serment de cendre », l'illustration en plein format — dessinée à la main
+    dans l'esprit de la version CSS : un disque de soleil rouge sur une nuit
+    verte, une lame en diagonale qui le traverse, des entailles noires, de la
+    poussière. Le sujet vit dans les deux tiers du haut : le tiers du bas est
+    recouvert par le nom et le texte. Rapport 0,68, celui du placeholder.
+  -->
+  <defs>
+    <radialGradient id="ciel" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#3a4a44"/>
+      <stop offset="0.45" stop-color="#1d2a2b"/>
+      <stop offset="1" stop-color="#0c1315"/>
+    </radialGradient>
+    <radialGradient id="soleil" cx="42%" cy="36%" r="70%">
+      <stop offset="0" stop-color="#e8785a"/>
+      <stop offset="0.55" stop-color="#c2432f"/>
+      <stop offset="1" stop-color="#7e2723"/>
+    </radialGradient>
+    <radialGradient id="halo" cx="50%" cy="50%" r="50%">
+      <stop offset="0.6" stop-color="#d9553a" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#d9553a" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="acier" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f3f7f4"/>
+      <stop offset="0.5" stop-color="#c7d3cf"/>
+      <stop offset="0.52" stop-color="#7d8c89"/>
+      <stop offset="1" stop-color="#4e5c5a"/>
+    </linearGradient>
+    <linearGradient id="fer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4f4d"/>
+      <stop offset="0.5" stop-color="#1f2423"/>
+      <stop offset="1" stop-color="#0d1110"/>
+    </linearGradient>
+    <linearGradient id="cuir" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8a5a34"/>
+      <stop offset="0.5" stop-color="#5d3a20"/>
+      <stop offset="1" stop-color="#2f1c0f"/>
+    </linearGradient>
+    <linearGradient id="or" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f2d99a"/>
+      <stop offset="0.6" stop-color="#b9903f"/>
+      <stop offset="1" stop-color="#6d4d1c"/>
+    </linearGradient>
+    <linearGradient id="voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0c1315" stop-opacity="0"/>
+      <stop offset="0.6" stop-color="#0c1315" stop-opacity="0"/>
+      <stop offset="1" stop-color="#0c1315" stop-opacity="0.8"/>
+    </linearGradient>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.13"/></feComponentTransfer>
+    </filter>
+    <filter id="flou"><feGaussianBlur stdDeviation="3"/></filter>
+    <filter id="ombre"><feGaussianBlur stdDeviation="9"/></filter>
+  </defs>
+
+  <!-- La nuit -->
+  <rect width="680" height="1000" fill="url(#ciel)"/>
+
+  <!-- Le soleil et son halo -->
+  <circle cx="340" cy="400" r="330" fill="url(#halo)"/>
+  <circle cx="340" cy="400" r="235" fill="url(#soleil)"/>
+  <!-- une lèvre d'ombre en bas du disque, pour le volume -->
+  <path d="M120 470 A235 235 0 0 0 560 470 A260 260 0 0 1 120 470 Z" fill="#5a1d1c" opacity="0.55" filter="url(#flou)"/>
+
+  <!-- Les entailles noires qui traversent le disque -->
+  <g fill="#0c1315" opacity="0.92" transform="translate(340 430) rotate(38)">
+    <path d="M-140 -330 Q-118 -20 -150 300 Q-134 -20 -140 -330 Z"/>
+    <path d="M110 -370 Q140 -60 100 250 Q126 -60 110 -370 Z"/>
+    <path d="M170 -250 Q186 -30 160 160 Q174 -30 170 -250 Z"/>
+    <path d="M-60 -400 Q-48 -300 -70 -200 Q-56 -300 -60 -400 Z"/>
+  </g>
+
+  <!-- L'ombre de la lame sur le disque -->
+  <g transform="translate(352 446) rotate(38)" opacity="0.45" filter="url(#ombre)">
+    <polygon points="0,-430 -30,-360 -32,70 32,70 30,-360" fill="#0c1315"/>
+  </g>
+
+  <!-- La lame -->
+  <g transform="translate(340 430) rotate(38)">
+    <!-- le fer -->
+    <polygon points="0,-430 -30,-360 -32,70 32,70 30,-360" fill="url(#acier)"/>
+    <!-- l'arête centrale -->
+    <polygon points="0,-430 -3,-360 -3,70 3,70 3,-360" fill="#e9f0ed" opacity="0.7"/>
+    <!-- la gouttière -->
+    <rect x="-7" y="-330" width="14" height="380" rx="7" fill="#3f4c4a" opacity="0.55"/>
+    <rect x="-7" y="-330" width="5" height="380" rx="3" fill="#0f1616" opacity="0.5"/>
+    <!-- la garde -->
+    <path d="M-96 74 Q-60 60 -34 70 L34 70 Q60 60 96 74 L96 104 Q60 92 34 100 L-34 100 Q-60 92 -96 104 Z" fill="url(#fer)"/>
+    <path d="M-96 74 Q-60 60 -34 70 L34 70 Q60 60 96 74 L96 80 Q60 68 34 76 L-34 76 Q-60 68 -96 80 Z" fill="#8a9390" opacity="0.5"/>
+    <circle cx="0" cy="86" r="11" fill="url(#or)"/>
+    <!-- la poignée -->
+    <rect x="-15" y="100" width="30" height="150" fill="url(#cuir)"/>
+    <g stroke="#1a0f08" stroke-width="3" opacity="0.7">
+      <line x1="-15" y1="118" x2="15" y2="126"/>
+      <line x1="-15" y1="142" x2="15" y2="150"/>
+      <line x1="-15" y1="166" x2="15" y2="174"/>
+      <line x1="-15" y1="190" x2="15" y2="198"/>
+      <line x1="-15" y1="214" x2="15" y2="222"/>
+    </g>
+    <!-- le pommeau -->
+    <circle cx="0" cy="272" r="28" fill="url(#fer)"/>
+    <circle cx="-8" cy="264" r="9" fill="#9aa39f" opacity="0.5"/>
+    <circle cx="0" cy="272" r="9" fill="url(#or)"/>
+  </g>
+
+  <!-- Les éclats et la poussière -->
+  <g fill="#f4efe0">
+    <polygon points="118,270 134,262 142,290 124,296" opacity="0.85"/>
+    <polygon points="520,210 536,206 532,232" opacity="0.8"/>
+    <polygon points="470,600 486,592 494,610 480,616" opacity="0.7"/>
+    <polygon points="200,580 210,576 214,594" opacity="0.6"/>
+    <circle cx="90" cy="360" r="3" opacity="0.7"/>
+    <circle cx="560" cy="150" r="2.5" opacity="0.6"/>
+    <circle cx="600" cy="420" r="3.5" opacity="0.5"/>
+    <circle cx="150" cy="150" r="2" opacity="0.5"/>
+    <circle cx="420" cy="90" r="2" opacity="0.5"/>
+    <circle cx="260" cy="640" r="2.5" opacity="0.5"/>
+    <circle cx="70" cy="560" r="2" opacity="0.4"/>
+    <circle cx="610" cy="560" r="2" opacity="0.45"/>
+  </g>
+  <g fill="#f0b27a" opacity="0.55">
+    <circle cx="240" cy="230" r="2.5"/>
+    <circle cx="470" cy="330" r="2"/>
+    <circle cx="380" cy="560" r="2.5"/>
+    <circle cx="180" cy="470" r="2"/>
+  </g>
+
+  <!-- Le bas s'assombrit sous le texte -->
+  <rect width="680" height="1000" fill="url(#voile)"/>
+
+  <!-- Le grain -->
+  <rect width="680" height="1000" filter="url(#grain)"/>
+</svg>

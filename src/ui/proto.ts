@@ -13,6 +13,8 @@
 import './proto.css'
 import './proto-cendre.css'
 import { CENDRE } from './proto-cendre.ts'
+// L'illustration en plein format, un SVG à la main ; Vite en donne l'URL.
+import ART from './proto-art.svg'
 
 
 
@@ -33,7 +35,7 @@ function fig(contenu: string, etiquette: string, classes = ''): string {
  * au rapport de l'original (344/502), avec une illustration tout en CSS.
  */
 function carteCendre(classes: string, etiquette: string, variante = '', markup = CENDRE_COURT): string {
-  return fig(`<div class="cendre ${variante}">${markup}</div>`, etiquette, classes)
+  return fig(`<div class="cendre ${variante}" style="--art: url(${ART})">${markup}</div>`, etiquette, classes)
 }
 
 /**
@@ -73,17 +75,17 @@ export function montrerProto(racine: HTMLElement, build: string): void {
   // l'effet court et l'effet long de référence.
   racine.innerHTML =
     `<div class="proto">` +
-    `<p class="proto-titre">Prototype de carte — full art, placeholder bleu</p>` +
+    `<p class="proto-titre">Prototype de carte — full art, illustration en plein format</p>` +
     `<div class="proto-planche">` +
     // Les trois crans de texte, côte à côte, aux deux tailles.
-    carteCendre('reduite', 'court · réduite', 'fullart bleu') +
-    carteCendre('', 'court · normale', 'fullart bleu') +
+    carteCendre('reduite', 'court · réduite', 'fullart image') +
+    carteCendre('', 'court · normale', 'fullart image') +
     `<span class="proto-sep"></span>` +
-    carteCendre('reduite', 'moyen · réduite', 'fullart bleu', CENDRE_MOYEN) +
-    carteCendre('', 'moyen · normale', 'fullart bleu', CENDRE_MOYEN) +
+    carteCendre('reduite', 'moyen · réduite', 'fullart image', CENDRE_MOYEN) +
+    carteCendre('', 'moyen · normale', 'fullart image', CENDRE_MOYEN) +
     `<span class="proto-sep"></span>` +
-    carteCendre('reduite', 'long · réduite', 'fullart bleu', CENDRE_LONG) +
-    carteCendre('', 'long · normale', 'fullart bleu', CENDRE_LONG) +
+    carteCendre('reduite', 'long · réduite', 'fullart image', CENDRE_LONG) +
+    carteCendre('', 'long · normale', 'fullart image', CENDRE_LONG) +
     `</div>` +
     `<p class="proto-note">« Serment de cendre » en full art — <a href="?jeu">aller au jeu</a> · build ${build}</p>` +
     `</div>`

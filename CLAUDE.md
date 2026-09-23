@@ -425,6 +425,21 @@ retirés du prototype et du dépôt (`public/cadre.png`, `title-ribbon.svg`,
 quatre cartes : réduite, normale, et les deux mêmes avec l'effet long de
 référence. C'est cette carte qu'on portera dans le jeu.
 
+**L'ILLUSTRATION EST EN PLEIN FORMAT, cadre et texte par-dessus.** Keko a
+d'abord demandé un aplat bleu à la place de l'illustration CSS, pour voir la
+taille du placeholder ; puis qu'il prenne toute la carte. La fenêtre d'art
+s'aligne donc sur la surface sombre (même `inset` de 1,163cqw, même découpe
+que `.cv-surface`) : **rapport 0,68**, quasiment 2 : 3, mesuré 258 x 379 px
+sur une carte de 264 x 385. Une image de 1000 x 1470 couvre tout ; le tiers du
+bas est recouvert par le nom et le texte, donc le sujet vit dans les deux
+tiers du haut, et les coins sont rognés par la découpe. Dedans, pour l'essai :
+**un SVG dessiné à la main** (`ui/proto-art.svg`, importé par Vite donc
+empreinté — pas dans `public/`, pas de piège de cache), dans l'esprit de la
+version CSS : disque rouge, lame en diagonale, entailles noires, éclats, un
+voile sombre qui monte sous le texte et un grain `feTurbulence`. Posé par une
+variable `--art` sur `.cendre`, en `cover`. La variante `bleu` reste dans
+`proto.css` pour remesurer le placeholder.
+
 **Piège des container queries, rencontré ici :** les `cqw` d'un élément se
 résolvent contre son ANCÊTRE conteneur, jamais contre lui-même. Posé sur la
 carte, `container-type` laissait sa propre bordure et ses arrondis se mesurer

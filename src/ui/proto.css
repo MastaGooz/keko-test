@@ -330,3 +330,24 @@
   height: auto;
   clip-path: polygon(4% 0, 91% 1.5%, 100% 8%, 98% 92%, 93% 98%, 55% 99%, 50% 100%, 44% 99%, 3% 97%, 0 88%, 1% 5%);
 }
+
+/* --- Une IMAGE à la place du bleu ------------------------------------------- */
+
+/* Même boîte que le placeholder bleu — plein format, cadre et texte
+   par-dessus — mais une illustration dedans : un SVG dessiné à la main
+   (`proto-art.svg`, importé par Vite donc empreinté), dans l'esprit de la
+   version CSS. Keko : « tenter une image pour remplacer le placeholder bleu,
+   un peu comme celle d'avant, bien stylisée ». `cover` : l'image a le rapport
+   du placeholder, rien n'est rogné. */
+.cendre.image .cv-art {
+  inset: 1.163cqw;
+  height: auto;
+  clip-path: polygon(4% 0, 91% 1.5%, 100% 8%, 98% 92%, 93% 98%, 55% 99%, 50% 100%, 44% 99%, 3% 97%, 0 88%, 1% 5%);
+  background: var(--art) center / cover no-repeat;
+}
+
+.cendre.image .cv-art > *,
+.cendre.image .cv-art::before,
+.cendre.image .cv-art::after {
+  display: none;
+}
