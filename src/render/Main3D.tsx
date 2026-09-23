@@ -127,6 +127,8 @@ const Z_VOILE = 3
 
 type Props = {
   cartes: readonly CarteAPeindre[]
+  /** Les cartes qu'on peut jouer maintenant, dans le même ordre. */
+  jouables?: readonly boolean[]
   /** La carte qu'on regarde de près, s'il y en a une. */
   zoomee?: number | null
   onJouer?: (index: number) => void
@@ -172,6 +174,7 @@ function placeDansEventail(rang: number, total: number): {
 
 export function Main3D({
   cartes,
+  jouables,
   zoomee = null,
   onJouer,
   onRegarder,
@@ -406,8 +409,10 @@ export function Main3D({
               // AU-DESSUS DE LA MAIN, LÂCHER JOUE : la carte s'allume et
               // frémit. C'est la seule zone qui déclenche quelque chose, et
               // elle n'a aucun bord à surligner — le repère voyage donc avec
-              // le doigt, comme en 2D.
-              engagee={p.y > LIGNE_DE_JEU}
+              // le doigt, comme en 2D. Une carte injouable ne s'allume pas :
+              // *le halo dit « lâche et ça part »*, il mentirait.
+              engagee={p.y > LIGNE_DE_JEU && (jouables?.[i] ?? true)}
+              jouable={jouables?.[i] ?? true}
               onPeinte={onPeinte}
             />
           )
@@ -428,6 +433,7 @@ export function Main3D({
             ]}
             rotation={leve ? [0, 0, place.rotation[2] * 0.3] : place.rotation}
             taille={leve ? 1.08 : 1}
+            jouable={jouables?.[i] ?? true}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
             // LE SURVOL N'EXISTE QU'À LA SOURIS. Au doigt, le `pointerover`

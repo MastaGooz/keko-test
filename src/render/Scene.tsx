@@ -16,7 +16,7 @@ import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
 import { Projeter } from './Projeter.tsx'
 import { aPeindre, combatDeDepart } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
-import { finDuTour, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
+import { finDuTour, jouable, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
 
 /** La seed de départ. Une seule partie pour l'instant : on juge le combat. */
 const SEED = 1789
@@ -40,6 +40,13 @@ export function Scene(): React.JSX.Element {
   const debout = vivants(combat)
   const menace = Math.max(0, menaceDuTour(combat) - combat.bloc)
   const fini = combat.issue !== null
+  // CE QU'ON PEUT JOUER MAINTENANT : assez d'énergie, et le combat n'est pas
+  // fini. Un trésor n'est jouable par personne — il ne fait qu'occuper une
+  // place de main.
+  const jouables = useMemo(
+    () => combat.main.map((c) => !fini && jouable(c) && c.cout <= combat.energie),
+    [combat.main, combat.energie, fini],
+  )
 
   /**
    * Jouer une carte. **Une carte qui ne vise personne part tout de suite** ;
@@ -157,6 +164,7 @@ export function Scene(): React.JSX.Element {
 
         <Main3D
           cartes={main}
+          jouables={jouables}
           zoomee={zoomee}
           onJouer={jouer}
           onRegarder={setZoomee}

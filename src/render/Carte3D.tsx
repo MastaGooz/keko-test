@@ -47,6 +47,12 @@ type Props = {
    * au-dessus de la main — donc le repère doit voyager avec le doigt.
    */
   engagee?: boolean
+  /**
+   * Elle peut être jouée maintenant. Une carte trop chère reste **saisissable
+   * et zoomable** — on veut pouvoir la ranger et la regarder — mais elle
+   * s'éteint, et lâcher ne déclenche rien.
+   */
+  jouable?: boolean
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -60,6 +66,7 @@ export function Carte3D({
   taille = 1,
   ressort = 9,
   engagee = false,
+  jouable = true,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -75,10 +82,10 @@ export function Carte3D({
       emissive: '#ffcf7a',
       emissiveIntensity: 0,
     })
-    // Tant que la texture n'est pas peinte, la face est sombre et mate : une
-    // carte blanche qui vire à l'illustration se verrait comme un défaut.
+    // La couleur MULTIPLIE la texture : elle vaut blanc quand la carte est
+    // jouable, et c'est elle qui l'éteint sinon.
     const face = new THREE.MeshStandardMaterial({
-      color: '#1a1b20',
+      color: '#ffffff',
       roughness: 0.55,
       metalness: 0.15,
       emissive: '#ffcf7a',
@@ -120,7 +127,6 @@ export function Carte3D({
     void textureDeCarte(carte).then((texture) => {
       if (!vivant) return
       face.map = texture
-      face.color.set('#ffffff')
       face.needsUpdate = true
       onPeinte?.()
     })
@@ -140,7 +146,14 @@ export function Carte3D({
    * cible en croyant corriger un écart. *Le tremblement se pose PAR-DESSUS le
    * mouvement, il n'en fait pas partie.*
    */
-  const lisse = useRef({ p: new THREE.Vector3(...position), r: new THREE.Euler(...rotation), t: taille, feu: 0 })
+  const lisse = useRef({
+    p: new THREE.Vector3(...position),
+    r: new THREE.Euler(...rotation),
+    t: taille,
+    feu: 0,
+    /** L'éclat de la carte : 1 quand elle est jouable, moins quand elle est éteinte. */
+    vif: 1,
+  })
 
   // ELLE REJOINT SA PLACE, elle n'y saute pas. L'amortissement exponentiel est
   // indépendant de la fréquence d'écran : à 120 Hz comme à 60, le mouvement
@@ -175,6 +188,21 @@ export function Carte3D({
     // décide de la jouer. Keko : « plutôt qu'une lueur sur la carte on peut pas
     // un contour brillant ? ». La lumière est donc DERRIÈRE, et ce qui dépasse
     // fait le liseré.
+    // DANS LA MAIN, TOUT CE QUI EST INJOUABLE EST ÉTEINT. Sans ce retour, une
+    // carte trop chère ne répond pas et **rien ne dit pourquoi** : on croit à
+    // un bug. Keko : « j'ai un bug où je ne peux pas jouer de carte
+    // offensive » — c'était l'énergie, refusée en silence.
+    //
+    // On assombrit au lieu de rendre translucide : les cartes se recouvrent en
+    // éventail, et une carte transparente laisse voir sa voisine au travers —
+    // c'est la règle du jeu 2D, et elle tient d'autant plus ici que le
+    // matériau ne sait pas désaturer sans un shader.
+    const eteinte = 1 - Math.exp(-14 * delta)
+    const cible = jouable ? 1 : 0.42
+    l.vif += (cible - l.vif) * eteinte
+    face.color.setScalar(l.vif)
+    laiton.color.setRGB(0.718 * l.vif, 0.604 * l.vif, 0.416 * l.vif)
+
     face.emissiveIntensity = 0
     laiton.emissiveIntensity = 0
     // LE LISERÉ RESPIRE, à peine : c'est ce qui le fait lire comme une lumière

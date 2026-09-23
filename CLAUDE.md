@@ -1969,6 +1969,23 @@ feuille de style.** Le SVG des créatures s'appuie sur le CSS de la page —
 `currentColor` pour la chair, une classe pour l'oeil — donc il faut lui poser
 en ligne ce que le CSS lui donnait.
 
+**DANS LA MAIN, TOUT CE QUI EST INJOUABLE EST ÉTEINT** — carte trop chère,
+trésor, combat fini. Ce n'est pas du confort : sans ce retour, une carte
+refusée ne répond pas et **rien ne dit pourquoi**. Keko a signalé « un bug où
+je ne peux pas jouer de carte offensive » et l'absence de grisé comme deux
+choses distinctes ; *c'était la même*. Le refus silencieux se lit comme une
+panne.
+
+On **assombrit** au lieu de rendre translucide : les cartes se recouvrent en
+éventail, et une carte transparente laisse voir sa voisine au travers — la
+règle du jeu 2D, qui tient d'autant plus ici qu'un matériau ne sait pas
+désaturer sans un shader.
+
+Une carte trop chère reste **saisissable et zoomable** : on veut pouvoir la
+ranger et la regarder. C'est le dépôt qui refuse, pas la prise. Et **son halo
+ne s'allume pas** quand on la sort au-dessus de la main : le halo dit « lâche
+et ça part », il mentirait.
+
 **Chaque créature dit ce qu'elle est, sur son corps** : l'intention au-dessus
 de la tête — ce qu'elle frappe et dans combien de tours, allumée si c'est pour
 la fin de CE tour-ci — la jauge et le nom sous les pattes. Repris du 2D, y
