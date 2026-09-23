@@ -1848,6 +1848,39 @@ plus qu'on s'éloigne du centre de l'écran.
 et enfouie sous le bord, il faisait passer le nom des cartes de bord sous
 l'écran. *Ce qui coûte le moins cher en plongée coûte le plus cher de face.*
 
+### Le tactile : `touch-action` se pose sur le CANVAS
+
+**Sans `touch-action: none` sur le canvas lui-même, le navigateur prend le
+glisser pour un défilement**, s'approprie le geste et envoie un
+`pointercancel` dès les premiers pixels : au doigt, la carte partait au premier
+mouvement, sans qu'on ait lâché (Keko : « sur le tactile dès que je drag une
+carte elle disparaît dès que je la bouge même si je ne lâche pas »). Même
+piège que la main du jeu 2D, où la règle était déjà écrite.
+
+**Il se pose en CSS (`#app canvas`), pas sur le composant** : la propriété ne
+s'hérite pas, et le `style` passé à `<Canvas>` atterrit sur le DIV conteneur
+que R3F crée, pas sur le canvas. `manipulation`, hérité du `body`, ne suffit
+pas — il ne désactive que le double-tap.
+
+**Et `pointercancel` N'EST PAS UN LÂCHER** : c'est le système qui reprend le
+geste. Le traiter comme un lâcher faisait jouer la carte. Une annulation
+repose, elle ne conclut pas — ça vaut même une fois la cause première
+corrigée, parce qu'un appel entrant ou un geste à deux doigts annule aussi.
+
+### Sonder une scène 3D : l'onglet doit être AU PREMIER PLAN
+
+**Dans un onglet caché, les `requestAnimationFrame` ne tournent pas** — donc
+R3F ne démarre jamais, le canvas reste à sa taille par défaut (300 x 150) et
+la scène est vide. Une sonde JavaScript exécutée là voit une page morte, *sans
+la moindre erreur en console*.
+
+Ça m'a coûté une chasse au fantôme complète : j'ai retiré `StrictMode`, changé
+la structure du conteneur et posté un `resize` de secours, pour un bug qui
+n'existait pas. **Le seul verdict qui vaut sur une scène 3D est une capture
+d'écran**, qui ramène l'onglet au premier plan. C'est la version 3D du piège
+déjà noté pour les iframes : *en arrière-plan, le navigateur gèle ce qu'on
+essaie de mesurer.*
+
 ### Deux pièges déjà rencontrés
 
 - **`<primitive>` ne monte un objet QU'UNE FOIS.** Les cinq faces de laiton du

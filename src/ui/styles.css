@@ -3606,3 +3606,20 @@ body {
   text-align: center;
   pointer-events: none;
 }
+
+/* LE CANVAS DU MOTEUR 3D DOIT PORTER `touch-action: none` LUI-MEME.
+
+   Sans lui, le navigateur prend le glisser pour un defilement, s'approprie le
+   geste et envoie un `pointercancel` des les premiers pixels : la carte partait
+   au premier mouvement du doigt, sans qu'on ait lache (Keko : « sur le tactile
+   des que je drag une carte elle disparait des que je la bouge meme si je ne
+   lache pas »). Meme piege que la main du jeu 2D.
+
+   DEUX RAISONS DE LE METTRE ICI PLUTOT QUE SUR LE COMPOSANT : `touch-action`
+   ne s'herite pas, donc le poser sur un parent ne sert a rien ; et le `style`
+   passe a `<Canvas>` atterrit sur le DIV conteneur que R3F cree, pas sur le
+   canvas. `manipulation`, herite du `body`, ne suffit pas non plus -- il ne
+   desactive que le double-tap. */
+#app canvas {
+  touch-action: none;
+}

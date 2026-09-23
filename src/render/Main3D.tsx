@@ -165,13 +165,46 @@ export function Main3D({ cartes, onJouer, onRegarder, onPeinte }: Props): React.
     [camera, plan, rayon],
   )
 
+  /**
+   * Coupe l'écoute du geste en cours. Appelé par le lâcher comme par
+   * l'annulation : les deux finissent le geste, ils n'en tirent pas la même
+   * conclusion.
+   */
+  const detacher = useCallback(() => {
+    window.clearTimeout(geste.current.minuteur)
+    window.removeEventListener('pointermove', bouger)
+    window.removeEventListener('pointerup', relacher)
+    window.removeEventListener('pointercancel', annuler)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /**
+   * LE SYSTÈME A REPRIS LE GESTE : on repose la carte, on ne la joue pas.
+   *
+   * Un `pointercancel` n'est pas un lâcher — c'est le navigateur qui
+   * s'approprie le mouvement (défilement, geste système, appel entrant). Le
+   * traiter comme un lâcher faisait **jouer la carte dès qu'on la bougeait au
+   * doigt**, donc disparaître sans qu'on ait relâché. Keko : « sur le tactile
+   * dès que je drag une carte elle disparaît dès que je la bouge même si je ne
+   * lâche pas ».
+   *
+   * La cause première est corrigée ailleurs (`touchAction: 'none'` sur le
+   * canvas), mais **une annulation reste possible** — un appel, un geste à
+   * deux doigts — et dans ce cas la seule issue juste est de reposer.
+   */
+  const annuler = useCallback(() => {
+    detacher()
+    geste.current.index = -1
+    geste.current.prise = false
+    setTenue(null)
+    setDoigt(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const relacher = useCallback(
     (e: PointerEvent) => {
       const g = geste.current
-      window.clearTimeout(g.minuteur)
-      window.removeEventListener('pointermove', bouger)
-      window.removeEventListener('pointerup', relacher)
-      window.removeEventListener('pointercancel', relacher)
+      detacher()
 
       const index = g.index
       const bouge = Math.hypot(e.clientX - g.depart.x, e.clientY - g.depart.y) >= g.seuil
@@ -191,7 +224,8 @@ export function Main3D({ cartes, onJouer, onRegarder, onPeinte }: Props): React.
       }
       if (point !== null && point.y > LIGNE_DE_JEU) onJouer?.(index)
     },
-    // `bouger` est défini plus bas et stable : les deux se citent l'un l'autre.
+    // `bouger` et `detacher` sont stables : les fonctions se citent l'une
+    // l'autre, et les lister ici les recréerait en boucle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [onJouer, onRegarder, pointSousLeDoigt],
   )
@@ -230,11 +264,20 @@ export function Main3D({ cartes, onJouer, onRegarder, onPeinte }: Props): React.
         setTenue(index)
       }, DELAI_PRISE)
 
+      // LA CAPTURE GARDE LE FLUX D'ÉVÈNEMENTS quand le doigt sort du canvas —
+      // et sortir EST le geste. Elle jette si le pointeur n'est plus actif :
+      // sans garde, tout le glisser casserait pour un cas sans conséquence.
+      try {
+        ;(natif.target as Element | null)?.setPointerCapture?.(natif.pointerId)
+      } catch {
+        /* tant pis : les écouteurs de fenêtre suffisent dans presque tous les cas */
+      }
+
       window.addEventListener('pointermove', bouger)
       window.addEventListener('pointerup', relacher)
-      window.addEventListener('pointercancel', relacher)
+      window.addEventListener('pointercancel', annuler)
     },
-    [bouger, relacher],
+    [annuler, bouger, relacher],
   )
 
   // LES VOISINES SE REFERMENT sur la place de la carte tenue : on range celles

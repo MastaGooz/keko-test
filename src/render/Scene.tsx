@@ -53,7 +53,11 @@ export function Scene(): React.JSX.Element {
 
   return (
     <>
-      {/* LE RECUL DE LA CAMÉRA DONNE SA TAILLE À LA CARTE : à cette distance
+      {/* `touch-action: none` est posé sur le canvas par le CSS (`#app canvas`)
+          et non ici : la propriété ne s'hérite pas, et le `style` passé à
+          `<Canvas>` atterrit sur le DIV conteneur, pas sur le canvas.
+
+          LE RECUL DE LA CAMÉRA DONNE SA TAILLE À LA CARTE : à cette distance
           et ce champ, une carte fait ~37 % de la hauteur d'écran, l'ordre de
           grandeur du jeu 2D. C'est le seul réglage qui compte pour la
           lisibilité — la carte, elle, mesure toujours 1 de large.
