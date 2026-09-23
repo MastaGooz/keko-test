@@ -24,7 +24,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { CarteAPeindre } from './texture-carte.ts'
-import { peindreCarte } from './texture-carte.ts'
+import { textureDeCarte } from './texture-carte.ts'
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
 export const LARGE = 1
@@ -78,14 +78,12 @@ export function Carte3D({
 
   useEffect(() => {
     let vivant = true
-    let texture: THREE.CanvasTexture | null = null
-    void peindreCarte(carte).then((canvas) => {
+    // LA TEXTURE VIENT D'UN CACHE PARTAGÉ : deux cartes du même modèle se la
+    // prêtent, et une carte remontée la retrouve déjà prête — donc elle ne
+    // repasse jamais par son état sombre. Rien n'est libéré ici pour la même
+    // raison : elle ne nous appartient pas.
+    void textureDeCarte(carte).then((texture) => {
       if (!vivant) return
-      texture = new THREE.CanvasTexture(canvas)
-      // La carte se regarde de près et en biais : sans filtrage anisotrope le
-      // texte se brouille dès qu'elle s'incline.
-      texture.anisotropy = 8
-      texture.colorSpace = THREE.SRGBColorSpace
       face.map = texture
       face.color.set('#ffffff')
       face.needsUpdate = true
@@ -93,7 +91,6 @@ export function Carte3D({
     })
     return () => {
       vivant = false
-      texture?.dispose()
     }
     // `onPeinte` volontairement hors des dépendances : une fonction recréée à
     // chaque rendu du parent repeindrait la carte en boucle.

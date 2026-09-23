@@ -18,11 +18,11 @@ import type { CarteAPeindre } from './texture-carte.ts'
 
 /** Cinq cartes du deck de départ, prises telles quelles. */
 const DEPART: CarteAPeindre[] = [
-  { nom: 'Estoc', cout: 1, effet: ['Inflige 3 dégâts'], type: 'Attaque' },
-  { nom: 'Garde', cout: 1, effet: ['Bloque 5 dégâts', 'ce tour seulement'], type: 'Défense' },
-  { nom: 'Moulinet', cout: 4, effet: ['Inflige 14 dégâts'], type: 'Attaque' },
-  { nom: 'Rempart', cout: 2, effet: ['Bloque 11 dégâts', 'ce tour seulement'], type: 'Défense' },
-  { nom: 'Potion', cout: 1, effet: ['Rend 14 PV', 'se boit : détruite'], type: 'Consommable' },
+  { id: 'estoc-1', nom: 'Estoc', cout: 1, effet: ['Inflige 3 dégâts'], type: 'Attaque' },
+  { id: 'garde-1', nom: 'Garde', cout: 1, effet: ['Bloque 5 dégâts', 'ce tour seulement'], type: 'Défense' },
+  { id: 'moulinet-1', nom: 'Moulinet', cout: 4, effet: ['Inflige 14 dégâts'], type: 'Attaque' },
+  { id: 'rempart-1', nom: 'Rempart', cout: 2, effet: ['Bloque 11 dégâts', 'ce tour seulement'], type: 'Défense' },
+  { id: 'potion-1', nom: 'Potion', cout: 1, effet: ['Rend 14 PV', 'se boit : détruite'], type: 'Consommable' },
 ]
 
 export function Scene(): React.JSX.Element {

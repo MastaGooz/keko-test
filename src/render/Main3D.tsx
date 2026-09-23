@@ -373,7 +373,7 @@ export function Main3D({
         if (i === zoomee) {
           return (
             <Carte3D
-              key={carte.nom + i}
+              key={carte.id}
               carte={carte}
               position={[0, 0, Z_ZOOM]}
               rotation={[0, 0, 0]}
@@ -390,7 +390,7 @@ export function Main3D({
           const p = doigt ?? new THREE.Vector3(0, Y_MAIN + 0.4, Z_TENUE)
           return (
             <Carte3D
-              key={carte.nom + i}
+              key={carte.id}
               carte={carte}
               position={[p.x, p.y, Z_TENUE]}
               rotation={[0, 0, 0]}
@@ -407,7 +407,7 @@ export function Main3D({
         const ecart = fente === null ? 0 : rang < fente ? -ECART_FENTE : ECART_FENTE
         return (
           <Carte3D
-            key={carte.nom + i}
+            key={carte.id}
             carte={carte}
             position={[
               place.position[0] + ecart,

@@ -22,10 +22,19 @@
  * mesure en centièmes de largeur. On les garde à l'identique pour que la
  * carte 3D soit la MÊME carte, et pas une deuxième version qui dérivera.
  */
+import * as THREE from 'three'
 import { art, urlImageDeKeko } from '../ui/art.ts'
 
 /** Ce qu'il faut savoir d'une carte pour la peindre. */
 export type CarteAPeindre = {
+  /**
+   * L'identifiant de l'EXEMPLAIRE, et il n'est pas décoratif : c'est la clé
+   * React de la carte dans la main. Bâtie sur l'index, elle changeait au
+   * moindre réordonnancement — React démontait alors la carte et en remontait
+   * une autre, ce qui la faisait **clignoter en noir** le temps de repeindre.
+   * Le modèle du jeu porte déjà cet identifiant (`Carte.id`).
+   */
+  id: string
   nom: string
   cout: number
   /** Le cartouche, une entrée par ligne. */
@@ -291,4 +300,44 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
   ctx.letterSpacing = `${1.2 * U}px`
   ctx.fillText(carte.type.toUpperCase(), LARGE / 2, HAUT * 0.955)
   ctx.letterSpacing = '0px'
+}
+
+/**
+ * LES TEXTURES SONT PARTAGÉES ENTRE LES CARTES IDENTIQUES.
+ *
+ * Deux Gardes dans la main, c'est le même dessin : une seule texture suffit.
+ * Ça compte pour deux raisons, et la seconde est la plus importante :
+ *
+ * - **la mémoire.** Une texture vit décompressée sur le GPU, plusieurs mégas
+ *   pièce ; un deck en contient volontiers quatre exemplaires de la même
+ *   carte ;
+ * - **la stabilité.** Une carte qu'on remonte retrouve sa texture déjà prête,
+ *   donc elle ne repasse jamais par son état sombre.
+ *
+ * Elles ne sont jamais libérées, et c'est voulu : le nombre de MODÈLES est
+ * borné (quelques dizaines), alors que le nombre d'exemplaires manipulés dans
+ * une partie ne l'est pas.
+ */
+const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
+
+/** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
+function signature(carte: CarteAPeindre): string {
+  return `${carte.nom}|${carte.cout}|${carte.type}|${carte.effet.join('~')}`
+}
+
+export function textureDeCarte(carte: CarteAPeindre): Promise<THREE.CanvasTexture> {
+  const cle = signature(carte)
+  const connue = TEXTURES.get(cle)
+  if (connue !== undefined) return connue
+
+  const promesse = peindreCarte(carte).then((canvas) => {
+    const texture = new THREE.CanvasTexture(canvas)
+    // La carte se regarde de près et en biais : sans filtrage anisotrope le
+    // texte se brouille dès qu'elle s'incline.
+    texture.anisotropy = 8
+    texture.colorSpace = THREE.SRGBColorSpace
+    return texture
+  })
+  TEXTURES.set(cle, promesse)
+  return promesse
 }

@@ -1939,27 +1939,36 @@ d'écran**, qui ramène l'onglet au premier plan. C'est la version 3D du piège
 déjà noté pour les iframes : *en arrière-plan, le navigateur gèle ce qu'on
 essaie de mesurer.*
 
-### Une carte qui noircit quand on la déplace : deux causes à surveiller
+### La carte qui clignote en noir : une CLÉ REACT bâtie sur l'index
 
-Keko, sur téléphone : « quand je réorganise ma main, la carte déplacée devient
-noire et réapparaît quand je lâche ». **Non reproductible à la souris sur la
-machine de dev** — la texture n'est pas repeinte pendant le geste (vérifié en
-comptant les créations de canvas), donc ce n'est pas un remontage de composant.
+Keko : « la carte flash noire quand je la lâche puis reprend sa couleur ». La
+cause est entière dans un détail : les cartes de la main avaient pour clé
+React leur **index**. Au lâcher, le rangement change l'ordre, donc les clés
+changent, donc **React démonte la carte et en remonte une autre** — qui repart
+de son état sombre le temps d'être repeinte.
 
-Deux causes plausibles, toutes deux corrigées, et il faudra que Keko dise
-laquelle tenait :
+*Le mot « quand je la lâche » a tout donné* : pendant le glisser l'ordre ne
+change pas, donc rien ne clignotait, et j'avais d'abord cherché du côté du
+rendu (mémoire de texture, auto-ombrage) sans rien trouver. **Une clé qui
+dépend de la position dans la liste n'est pas une clé.**
 
-1. **La mémoire de texture.** Une texture est stockée décompressée sur le GPU :
-   1024 x 1434 en RGBA font près de 6 Mo, mipmaps en plus, et il y en a une PAR
-   CARTE. La carte qu'on déplace est la plus proche de la caméra, donc celle
-   qui demande son niveau le plus détaillé — c'est là que le budget casse.
-   Largeur ramenée à **768**, ce qui reste au-dessus de la taille à l'écran
-   (~350 px au zoom) : le texte est vérifié net.
-2. **L'auto-ombrage.** Les cartes recevaient les ombres, donc **la leur** : à
-   faible précision de carte d'ombre — ce qui arrive vite sur un téléphone —
-   ça se voit comme des taches sombres sur la face, d'autant plus qu'elle est
-   proche. Elles projettent désormais sans recevoir (le sol reçoit, c'est tout
-   ce qu'il faut), avec un biais d'ombre en plus.
+La carte porte donc un `id` d'exemplaire, comme le modèle du jeu (`Carte.id`).
+Mesuré avant/après sur le même geste : le réordonnancement ne déclenche plus
+**aucune** repeinture.
+
+**Et les textures sont partagées entre cartes identiques** (cache par
+signature : nom, coût, type, effet). Deux Gardes dans la main, c'est le même
+dessin. Ça sert deux fois : la mémoire — une texture vit décompressée sur le
+GPU, plusieurs mégas pièce, et un deck contient volontiers quatre exemplaires
+du même modèle — et la stabilité, puisqu'une carte remontée retrouve sa
+texture déjà prête. Elles ne sont jamais libérées, à dessein : le nombre de
+MODÈLES est borné, celui des exemplaires manipulés ne l'est pas.
+
+**Deux réglages faits au passage**, utiles mais qui n'étaient pas la cause :
+la texture est passée de 1024 à 768 de large (au-dessus de sa taille réelle à
+l'écran, texte vérifié net au zoom), et les cartes **projettent** les ombres
+sans en **recevoir** — une carte qui reçoit les ombres reçoit aussi la sienne,
+ce qui tache sa face dès que la carte d'ombre manque de précision.
 
 ### Deux pièges déjà rencontrés
 
