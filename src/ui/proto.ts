@@ -79,9 +79,22 @@ function carteNeant(classes: string, etiquette: string): string {
  * telle quelle (markup et CSS générés, voir `proto-cendre.*`). Sa boîte est
  * au rapport de l'original (344/502), avec une illustration tout en CSS.
  */
-function carteCendre(classes: string, etiquette: string, variante = ''): string {
-  return fig(`<div class="cendre ${variante}">${CENDRE}</div>`, etiquette, classes)
+function carteCendre(classes: string, etiquette: string, variante = '', markup = CENDRE): string {
+  return fig(`<div class="cendre ${variante}">${markup}</div>`, etiquette, classes)
 }
+
+/**
+ * LE TEST DU TEXTE LONG, demandé par Keko : la zone de description lui semble
+ * petite. Même carte, même variante, avec un effet complexe à la place de
+ * « Inflige 14 dégâts » -- rien d'autre ne change, pour voir ce qui loge.
+ */
+const TEXTE_LONG =
+  'Regardez les <strong>5</strong> premières cartes de votre deck, défaussez-en ' +
+  '<strong>2</strong> de votre choix, puis replacez les autres dans l’ordre de votre choix.'
+const CENDRE_LONG = CENDRE.replace(
+  /<section class="cv-effect">.*?<\/section>/,
+  `<section class="cv-effect"><p>${TEXTE_LONG}</p><p class="cv-flavor">Tout serment laisse une cicatrice.</p></section>`,
+)
 
 export function montrerProto(racine: HTMLElement, build: string): void {
   // LA DATE DU BUILD DANS L'URL : les fichiers de `public/` gardent leur nom,
@@ -96,6 +109,9 @@ export function montrerProto(racine: HTMLElement, build: string): void {
     // première à l'écran, surtout sur téléphone où la planche se replie.
     carteCendre('reduite', 'full art · réduite', 'fullart') +
     carteCendre('', 'full art · normale', 'fullart') +
+    `<span class="proto-sep"></span>` +
+    carteCendre('reduite', 'texte long · réduite', 'fullart', CENDRE_LONG) +
+    carteCendre('', 'texte long · normale', 'fullart', CENDRE_LONG) +
     `<span class="proto-sep"></span>` +
     carteCadre(cadre, 'reduite', 'cadre · réduite') +
     carteCadre(cadre, '', 'cadre · normale') +
