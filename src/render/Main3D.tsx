@@ -195,6 +195,8 @@ export function Main3D({
     seuil: SEUIL_SOURIS,
     prise: false,
     minuteur: 0,
+    /** De quoi couper l'écoute du geste, quelles que soient les fonctions. */
+    stop: null as AbortController | null,
   })
 
   /**
@@ -226,13 +228,27 @@ export function Main3D({
    * Coupe l'écoute du geste en cours. Appelé par le lâcher comme par
    * l'annulation : les deux finissent le geste, ils n'en tirent pas la même
    * conclusion.
+   *
+   * **PAR `AbortController`, ET SURTOUT PAS PAR `removeEventListener`**, et ça
+   * a coûté un bug difficile à lire : les fonctions du geste dépendent de
+   * `onJouer`, donc elles sont RECRÉÉES à chaque changement du combat. Un
+   * `detacher` qui les retire par référence retirait celles d'avant — les
+   * écouteurs posés restaient attachés, s'accumulaient, et c'est le plus
+   * ancien qui traitait le geste, avec un état périmé. Il lisait donc la carte
+   * au bon index dans la MAUVAISE main : une attaque partait sans cible et ne
+   * touchait personne.
+   *
+   * Keko : « je peux faire une attaque une fois puis ensuite aucune autre,
+   * même dans les tours suivants » — exactement le moment où `onJouer` change
+   * pour la première fois.
+   *
+   * *Un signal ne dépend d'aucune identité de fonction* : il coupe ce que ce
+   * geste-là a posé, et rien d'autre.
    */
   const detacher = useCallback(() => {
     window.clearTimeout(geste.current.minuteur)
-    window.removeEventListener('pointermove', bouger)
-    window.removeEventListener('pointerup', relacher)
-    window.removeEventListener('pointercancel', annuler)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    geste.current.stop?.abort()
+    geste.current.stop = null
   }, [])
 
   /**
@@ -319,6 +335,7 @@ export function Main3D({
       // s'est perdu — second doigt, geste système — la carte précédente resterait
       // sortie pour toujours. On ne laisse jamais deux gestes se superposer.
       if (g.index >= 0) annuler()
+      detacher()
       g.index = index
       g.depart = { x: natif.clientX, y: natif.clientY }
       g.seuil = natif.pointerType === 'mouse' ? SEUIL_SOURIS : SEUIL_DOIGT
@@ -341,11 +358,13 @@ export function Main3D({
         /* tant pis : les écouteurs de fenêtre suffisent dans presque tous les cas */
       }
 
-      window.addEventListener('pointermove', bouger)
-      window.addEventListener('pointerup', relacher)
-      window.addEventListener('pointercancel', annuler)
+      const stop = new AbortController()
+      g.stop = stop
+      window.addEventListener('pointermove', bouger, { signal: stop.signal })
+      window.addEventListener('pointerup', relacher, { signal: stop.signal })
+      window.addEventListener('pointercancel', annuler, { signal: stop.signal })
     },
-    [annuler, bouger, relacher],
+    [annuler, bouger, relacher, detacher],
   )
 
   // LES VOISINES SE REFERMENT sur la place de la carte tenue : on range celles

@@ -1969,6 +1969,28 @@ feuille de style.** Le SVG des créatures s'appuie sur le CSS de la page —
 `currentColor` pour la chair, une classe pour l'oeil — donc il faut lui poser
 en ligne ce que le CSS lui donnait.
 
+### Un geste dont les écouteurs se retirent par SIGNAL, jamais par référence
+
+Les fonctions du geste dépendent de `onJouer`, donc elles sont **recréées à
+chaque changement du combat**. Un `removeEventListener` posé dans une fonction
+figée (`useCallback` à dépendances vides) retirait alors *celles d'avant* : les
+écouteurs restaient attachés, s'accumulaient, et c'est **le plus ancien qui
+traitait le geste** — avec un état périmé. Il lisait donc la carte au bon index
+dans la MAUVAISE main, et une attaque partait sans cible : l'énergie
+descendait, personne n'était touché.
+
+Keko : « je peux faire une attaque une fois puis ensuite aucune autre, même
+dans les tours suivants » — exactement le moment où `onJouer` change pour la
+première fois.
+
+Chaque geste pose donc son `AbortController` et le coupe en finissant. *Un
+signal ne dépend d'aucune identité de fonction* : il coupe ce que ce geste-là a
+posé, et rien d'autre.
+
+**C'est un piège de fond de cette architecture**, pas un accident : dès qu'un
+écouteur de fenêtre est posé depuis un composant qui se rend souvent, le
+retirer par référence est faux.
+
 **DANS LA MAIN, TOUT CE QUI EST INJOUABLE EST ÉTEINT** — carte trop chère,
 trésor, combat fini. Ce n'est pas du confort : sans ce retour, une carte
 refusée ne répond pas et **rien ne dit pourquoi**. Keko a signalé « un bug où
