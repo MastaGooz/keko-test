@@ -14,7 +14,24 @@
  * la souris et le stylet.
  */
 
-const SEUIL = 6
+/**
+ * Sous ce deplacement, la souris n'a pas glisse : elle a clique. Elle ne
+ * derive pas, quelques pixels suffisent a la distinguer.
+ */
+const SEUIL_SOURIS = 8
+
+/**
+ * AU DOIGT IL EN FAUT LE DOUBLE, et c'est la meme lecon que sur la main de
+ * combat : une tape derive toujours de quelques pixels. Sous un seuil court,
+ * elle passait pour un glisser repose sur place -- donc `lieuSource` etait
+ * pose, donc une simple tape sur une piece EQUIPEE la retirait au lieu de
+ * l'ouvrir en grand. Keko : « quand je fais une touche simple sur les objets
+ * equipes ils sont desequipes au lieu d'etre zoomes ».
+ *
+ * La regle qui distingue les deux gestes (la tape regarde, le glisser deplace)
+ * etait juste ; c'est le seuil qui la rendait inatteignable au doigt.
+ */
+const SEUIL_DOIGT = 16
 
 export function brancherGlisser(racine: HTMLElement): void {
   let piece: HTMLElement | null = null
@@ -22,6 +39,8 @@ export function brancherGlisser(racine: HTMLElement): void {
   let survole: Element | null = null
   let depart = { x: 0, y: 0 }
   let bouge = false
+  /** Le seuil du pointeur en cours : la souris et le doigt ne derivent pas pareil. */
+  let seuil = SEUIL_SOURIS
   let origine: string | null = null
   /** Ce qu'on tient, quand le lieu seul ne suffit pas à le retrouver. */
   let identite: string | null = null
@@ -96,6 +115,7 @@ export function brancherGlisser(racine: HTMLElement): void {
     identite = cible.dataset.piece ?? null
     depart = { x: e.clientX, y: e.clientY }
     bouge = false
+    seuil = e.pointerType === 'mouse' ? SEUIL_SOURIS : SEUIL_DOIGT
     // La capture garde les evenements meme si le doigt sort de la piece.
     // Elle jette si le pointeur n'est plus actif : sans garde, tout le
     // glisser casserait pour un cas sans consequence.
@@ -110,7 +130,7 @@ export function brancherGlisser(racine: HTMLElement): void {
     if (piece === null) return
     if (!bouge) {
       // Sous le seuil, c'est encore une tape : on ne declenche rien.
-      if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < SEUIL) return
+      if (Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < seuil) return
       bouge = true
       piece.classList.add('saisie')
       accueillir(piece)
