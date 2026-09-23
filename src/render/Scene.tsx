@@ -28,6 +28,10 @@ const DEPART: CarteAPeindre[] = [
 export function Scene(): React.JSX.Element {
   const [main, setMain] = useState<CarteAPeindre[]>(DEPART)
   const [message, setMessage] = useState<string | null>(null)
+  // LE ZOOM VIENT DE L'ÉTAT, pas d'une marque posée sur la scène — même règle
+  // qu'en 2D, où le rendu se reconstruit à chaque geste et balaierait tout ce
+  // qui ne vit que dans l'affichage.
+  const [zoomee, setZoomee] = useState<number | null>(null)
 
   // LE CHARGEMENT DOIT SE VOIR. Rien ne s'affiche tant que les polices et les
   // illustrations ne sont pas là — et sur un téléphone ça fait plusieurs
@@ -38,18 +42,22 @@ export function Scene(): React.JSX.Element {
   const pret = peintes >= DEPART.length
 
   const jouer = useCallback((index: number) => {
+    setZoomee(null)
     setMain((m) => {
       setMessage(`${m[index]?.nom ?? ''} jouée`)
       return m.filter((_, i) => i !== index)
     })
   }, [])
 
+  // TAPER OUVRE LA CARTE EN GRAND. C'est la moitié du geste : le glisser joue,
+  // la tape lit — et sans elle, le recouvrement de l'éventail rend une carte
+  // illisible tant qu'on ne la sort pas.
   const regarder = useCallback((index: number) => {
-    setMain((m) => {
-      setMessage(`${m[index]?.nom ?? ''} — regardée`)
-      return m
-    })
+    setZoomee(index)
+    setMessage(null)
   }, [])
+
+  const fermerZoom = useCallback(() => setZoomee(null), [])
 
   return (
     <>
@@ -85,7 +93,14 @@ export function Scene(): React.JSX.Element {
             la tranche quand la carte s'incline, donc qui la rend solide. */}
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
 
-        <Main3D cartes={main} onJouer={jouer} onRegarder={regarder} onPeinte={compter} />
+        <Main3D
+          cartes={main}
+          zoomee={zoomee}
+          onJouer={jouer}
+          onRegarder={regarder}
+          onFermerZoom={fermerZoom}
+          onPeinte={compter}
+        />
 
         {/* Le sol : il ne se voit pas, il reçoit les ombres. Sans lui, les
             cartes flottent dans le noir et le volume ne se lit plus. */}
@@ -98,7 +113,9 @@ export function Scene(): React.JSX.Element {
       {!pret && <p className="chargement-3d">Chargement…</p>}
       {pret && (
         <p className="note-3d">
-          {message ?? 'Sors une carte de la main pour la jouer · tape-la pour la regarder'}
+          {zoomee !== null
+            ? 'Tape pour refermer'
+            : (message ?? 'Sors une carte de la main pour la jouer · tape-la pour la regarder')}
         </p>
       )}
     </>

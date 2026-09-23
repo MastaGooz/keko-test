@@ -104,10 +104,24 @@ const Z_TENUE = Z_MAIN + 0.35
  */
 const LIGNE_DE_JEU = -0.35
 
+/**
+ * Où la carte regardée vient se poser, et ce que le voile cache derrière elle.
+ *
+ * À cette profondeur elle occupe ~73 % de la hauteur d'écran : assez pour lire
+ * le cartouche entier, pas assez pour déborder. Le voile est un plan large
+ * posé juste derrière — **il intercepte les rayons**, donc il neutralise la
+ * main d'un coup sans qu'on ait à désactiver quoi que ce soit.
+ */
+const Z_ZOOM = 3.5
+const Z_VOILE = 3
+
 type Props = {
   cartes: readonly CarteAPeindre[]
+  /** La carte qu'on regarde de près, s'il y en a une. */
+  zoomee?: number | null
   onJouer?: (index: number) => void
   onRegarder?: (index: number) => void
+  onFermerZoom?: () => void
   onPeinte?: () => void
 }
 
@@ -124,7 +138,14 @@ function placeDansEventail(rang: number, total: number): {
   }
 }
 
-export function Main3D({ cartes, onJouer, onRegarder, onPeinte }: Props): React.JSX.Element {
+export function Main3D({
+  cartes,
+  zoomee = null,
+  onJouer,
+  onRegarder,
+  onFermerZoom,
+  onPeinte,
+}: Props): React.JSX.Element {
   const { camera } = useThree()
   const [tenue, setTenue] = useState<number | null>(null)
   const [survolee, setSurvolee] = useState<number | null>(null)
@@ -281,12 +302,45 @@ export function Main3D({ cartes, onJouer, onRegarder, onPeinte }: Props): React.
   )
 
   // LES VOISINES SE REFERMENT sur la place de la carte tenue : on range celles
-  // qui restent comme si elle n'avait jamais été là.
-  const restantes = cartes.map((_, i) => i).filter((i) => i !== tenue)
+  // qui restent comme si elle n'avait jamais été là. La carte REGARDÉE sort de
+  // la main pour la même raison — sa place d'origine n'a plus de sens tant
+  // qu'on la tient sous les yeux.
+  const sortie = tenue ?? zoomee
+  const restantes = cartes.map((_, i) => i).filter((i) => i !== sortie)
 
   return (
     <group>
+      {/* LE VOILE DU ZOOM. Posé DANS la scène et non en HTML par-dessus :
+          au-dessus du canvas, il faudrait le percer pour laisser voir la carte,
+          alors qu'ici il suffit de mettre la carte devant. Et comme il
+          intercepte les rayons, la main devient insensible sans qu'on touche à
+          quoi que ce soit. */}
+      {zoomee !== null && (
+        <mesh position={[0, 0, Z_VOILE]} onPointerDown={() => onFermerZoom?.()}>
+          <planeGeometry args={[40, 24]} />
+          <meshBasicMaterial color="#05050a" transparent opacity={0.8} />
+        </mesh>
+      )}
+
       {cartes.map((carte, i) => {
+        // LA CARTE REGARDÉE vient au centre, droite et grande. Une tape
+        // dessus la repose : elle referme ce qu'elle a ouvert.
+        if (i === zoomee) {
+          return (
+            <Carte3D
+              key={carte.nom + i}
+              carte={carte}
+              position={[0, 0, Z_ZOOM]}
+              rotation={[0, 0, 0]}
+              ressort={14}
+              onPeinte={onPeinte}
+              onPointerDown={(e) => {
+                e.stopPropagation()
+                onFermerZoom?.()
+              }}
+            />
+          )
+        }
         if (i === tenue) {
           const p = doigt ?? new THREE.Vector3(0, Y_MAIN + 0.4, Z_TENUE)
           return (

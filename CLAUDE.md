@@ -1848,6 +1848,26 @@ plus qu'on s'éloigne du centre de l'écran.
 et enfouie sous le bord, il faisait passer le nom des cartes de bord sous
 l'écran. *Ce qui coûte le moins cher en plongée coûte le plus cher de face.*
 
+### Le zoom : un voile DANS la scène, pas un calque par-dessus
+
+Taper une carte l'amène au centre, droite et grande (~73 % de la hauteur
+d'écran) ; taper n'importe où la repose. C'est l'autre moitié du geste — sans
+elle, le recouvrement de l'éventail rend une carte illisible tant qu'on ne la
+sort pas.
+
+**Le voile est un plan posé DANS la scène**, entre la main et la carte
+regardée. En HTML par-dessus le canvas, il faudrait le percer pour laisser
+voir la carte ; ici il suffit de mettre la carte devant. Et comme un plan
+**intercepte les rayons**, la main devient insensible au doigt sans qu'on ait
+à désactiver quoi que ce soit — l'équivalent 3D du fond plein écran du zoom 2D.
+
+**La carte regardée sort de la main**, comme la carte tenue : sa place
+d'origine n'a plus de sens tant qu'on la tient sous les yeux, et les voisines
+se referment dessus.
+
+**Le zoom vient de l'état**, jamais d'une marque posée sur la scène — même
+règle qu'en 2D, où le rendu se reconstruit à chaque geste.
+
 ### Le tactile : `touch-action` se pose sur le CANVAS
 
 **Sans `touch-action: none` sur le canvas lui-même, le navigateur prend le
