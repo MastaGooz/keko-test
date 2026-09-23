@@ -619,3 +619,17 @@
 .cendre.fullart .cv-effect .cv-flavor {
   color: #c9bba3 !important;
 }
+
+/* LA TAILLE DU TEXTE SUIT SA LONGUEUR : trois crans posés au rendu d'après le
+   nombre de caractères (`cran()` dans proto.ts). Le cran court est la taille
+   d'origine. Mesuré : l'effet long de référence (« Regardez les 5 premières
+   cartes… », 140 caractères) tient au cran long sans toucher le type. */
+.cendre .cv-effect.moyen p {
+  font-size: 5.8cqw !important;
+  line-height: 1.22 !important;
+}
+
+.cendre .cv-effect.long p {
+  font-size: 5cqw !important;
+  line-height: 1.2 !important;
+}

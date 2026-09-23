@@ -404,6 +404,19 @@ colonne de droite inaccessible — Keko, sur téléphone : « je ne la vois pas 
 *Un flex centré qui déborde ne se fait pas défiler.* Vérifié à 844x390 : le
 full art est visible d'emblée, le reste passe à la ligne.
 
+**Plus de texte d'ambiance, nulle part.** Tranché par Keko : « ça me rajoute
+trop de taf et ça prend de la place ». Une carte porte son nom, son coût, son
+effet, son type — c'est tout.
+
+**La taille du texte d'effet suit sa longueur** : trois crans (`court` ≤ 44
+caractères, `moyen` ≤ 100, `long` au-delà), posés au rendu d'après le nombre
+de caractères hors balises (`cran()` dans `proto.ts`), le cran court étant la
+taille d'origine. Test de Keko, gardé sur la planche : « Regardez les 5
+premières cartes de votre deck, défaussez-en 2 de votre choix, puis replacez
+les autres dans l'ordre de votre choix » (140 caractères) débordait sur le
+type ; au cran long il tient, mesuré aux deux tailles. *À porter dans le jeu
+avec la carte : le rendu connaît le texte, c'est lui qui pose le cran.*
+
 **Piège des container queries, rencontré ici :** les `cqw` d'un élément se
 résolvent contre son ANCÊTRE conteneur, jamais contre lui-même. Posé sur la
 carte, `container-type` laissait sa propre bordure et ses arrondis se mesurer

@@ -79,22 +79,36 @@ function carteNeant(classes: string, etiquette: string): string {
  * telle quelle (markup et CSS générés, voir `proto-cendre.*`). Sa boîte est
  * au rapport de l'original (344/502), avec une illustration tout en CSS.
  */
-function carteCendre(classes: string, etiquette: string, variante = '', markup = CENDRE): string {
+function carteCendre(classes: string, etiquette: string, variante = '', markup = CENDRE_COURT): string {
   return fig(`<div class="cendre ${variante}">${markup}</div>`, etiquette, classes)
 }
 
 /**
- * LE TEST DU TEXTE LONG, demandé par Keko : la zone de description lui semble
- * petite. Même carte, même variante, avec un effet complexe à la place de
- * « Inflige 14 dégâts » -- rien d'autre ne change, pour voir ce qui loge.
+ * PLUS DE TEXTE D'AMBIANCE, nulle part : Keko l'a fait sauter (« ça me rajoute
+ * trop de taf et ça prend de la place »). Et LA TAILLE DU TEXTE S'ADAPTE À SA
+ * LONGUEUR : trois crans d'après le nombre de caractères, comme les jeux du
+ * genre — un effet court garde la taille d'origine, un effet complexe descend
+ * d'un ou deux crans plutôt que de déborder sur le type.
  */
-const TEXTE_LONG =
+function cran(texte: string): 'court' | 'moyen' | 'long' {
+  const n = texte.replace(/<[^>]+>/g, '').length
+  return n <= 44 ? 'court' : n <= 100 ? 'moyen' : 'long'
+}
+
+/** La carte Cendre avec un effet donné (HTML), sans texte d'ambiance. */
+function cendreAvec(effet: string): string {
+  return CENDRE.replace(
+    /<section class="cv-effect">.*?<\/section>/,
+    `<section class="cv-effect ${cran(effet)}"><p>${effet}</p></section>`,
+  )
+}
+
+const EFFET_COURT = 'Inflige <strong>14</strong> dégâts.<br>Applique <strong>2 Brûlures.</strong>'
+const EFFET_LONG =
   'Regardez les <strong>5</strong> premières cartes de votre deck, défaussez-en ' +
   '<strong>2</strong> de votre choix, puis replacez les autres dans l’ordre de votre choix.'
-const CENDRE_LONG = CENDRE.replace(
-  /<section class="cv-effect">.*?<\/section>/,
-  `<section class="cv-effect"><p>${TEXTE_LONG}</p><p class="cv-flavor">Tout serment laisse une cicatrice.</p></section>`,
-)
+const CENDRE_COURT = cendreAvec(EFFET_COURT)
+const CENDRE_LONG = cendreAvec(EFFET_LONG)
 
 export function montrerProto(racine: HTMLElement, build: string): void {
   // LA DATE DU BUILD DANS L'URL : les fichiers de `public/` gardent leur nom,
