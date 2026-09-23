@@ -38,11 +38,12 @@ import { GLAIVE } from './armes.ts'
  * économique, jamais mécanique.
  */
 export function carteTresor(id: string, nom: string, valeur: number): Carte {
-  // PLUS DE SOIN SUR LES TRÉSORS. Il était un placeholder, et il rendait la
-  // cupidité rentable (92 % de survie en prenant tout contre 70 % en refusant).
-  // Le soin vit désormais dans les fioles, un consommable ; le trésor redevient
-  // une carte morte jusqu'à ce que chaque trésor ait son effet unique — décidé
-  // avec Keko, à écrire un par un.
+  // UN PLACEHOLDER, DE NOUVEAU : brûler le trésor rend des PV, la carte est
+  // détruite et son or avec. Le soin avait été retiré parce qu'à `valeur / 12`
+  // il rendait la cupidité rentable ; Keko veut quand même que le trésor FASSE
+  // quelque chose en attendant les effets uniques (« il devrait faire quelque
+  // chose même si c'est un effet temporaire placeholder »). Il revient à
+  // `valeur / 20`, moins généreux -- à remesurer par simulation, pas au jugé.
   return {
     id,
     nom,
@@ -50,8 +51,17 @@ export function carteTresor(id: string, nom: string, valeur: number): Carte {
     cout: COUT_TRESOR,
     degats: 0,
     valeur,
+    effets: [{ type: 'soin', montant: soinDuTresor(valeur) }],
+    exil: true,
   }
 }
+
+/** Ce que rend un trésor brûlé : la puissance suit le prix, jamais moins de 2. */
+export function soinDuTresor(valeur: number): number {
+  return Math.max(2, Math.round(valeur / DIVISEUR_SOIN))
+}
+
+const DIVISEUR_SOIN = 20
 
 /**
  * Ce que coûte de brûler un trésor, en énergie.
@@ -62,11 +72,6 @@ export function carteTresor(id: string, nom: string, valeur: number): Carte {
  */
 const COUT_TRESOR = 1
 
-/*
- * `soinDuTresor` et `DIVISEUR_SOIN` ont vécu ici : le soin d'un trésor valait
- * son prix divisé par douze. Calibré, mesuré, puis retiré — l'histoire est
- * dans CLAUDE.md, le soin est dans les fioles.
- */
 
 /**
  * Des noms plutôt que « Trésor 1 » : une main pleine de babioles doit se lire

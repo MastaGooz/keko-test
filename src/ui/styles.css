@@ -702,6 +702,13 @@ body {
 .energie {
   position: relative;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.energie .ecu {
+  position: relative;
   display: grid;
   place-items: center;
   width: 2.5rem;
@@ -710,7 +717,7 @@ body {
   clip-path: polygon(0 0, 98% 5%, 90% 68%, 50% 100%, 10% 76%);
 }
 
-.energie::before {
+.energie .ecu::before {
   content: "";
   position: absolute;
   inset: 0.14rem 0.16rem 0.2rem;
@@ -718,7 +725,7 @@ body {
   clip-path: polygon(0 0, 100% 4%, 91% 68%, 50% 100%, 9% 76%);
 }
 
-.energie::after {
+.energie .ecu::after {
   content: "";
   position: absolute;
   inset: 0.34rem 0.38rem 0.46rem;
@@ -1337,7 +1344,7 @@ body {
   font-size: 0.5625rem;
 }
 
-.energie {
+.energie .ecu {
   width: 2.125rem;
   height: 2.55rem;
 }
@@ -1347,8 +1354,7 @@ body {
 }
 
 .energie .sur {
-  bottom: 0.6rem;
-  font-size: 0.45rem;
+  font-size: 0.6875rem;
 }
 
 #ennemis {
@@ -2324,21 +2330,26 @@ body {
 
 /* L'etiquette vit dans la bande EMERGEE : sous la ligne de flottaison, elle
    serait hors de l'ecran. Meme regle que le bandeau MORTE des tresors. */
+/* EN HAUT DU DOS, sur une ligne, dans une pastille : centrée dans la bande
+   émergée elle recouvrait le médaillon du dos (Keko : « il cache le dos de
+   carte »). Le dos garde son motif, l'étiquette prend le bord. */
 .etiquette-tas {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: var(--emerge);
+  top: 5%;
+  left: 50%;
+  translate: -50% 0;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.125rem;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding: 0.0625rem 0.5rem 0.125rem;
+  border: 1px solid #a88c5f88;
+  border-radius: 999px;
+  background: #0a0b10d9;
+  white-space: nowrap;
 }
 
 .compte {
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: var(--fg);
@@ -2505,19 +2516,13 @@ body {
   transform: translate(-2%, -30%);
 }
 
-/* Le maximum, en petit, juste au-dessus de la pointe. */
+/* Le maximum, À CÔTÉ de l'écusson : dedans, sous la pointe, il était tout
+   petit et n'y logeait pas (Keko). */
 .energie .sur {
-  position: absolute;
-  z-index: 1;
-  left: 0;
-  right: 0;
-  bottom: 0.72rem;
-  text-align: center;
-  font-size: 0.5rem;
+  font-size: 0.8125rem;
   font-weight: 700;
-  color: #ffd9b8;
-  opacity: 0.85;
-  text-shadow: 0 1px 0 #5b2727;
+  color: #c9bba3;
+  text-shadow: 0 1px 2px #000;
 }
 
 /* --- telephone couche : la hauteur la plus serree -------------------------- */

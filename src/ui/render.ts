@@ -383,7 +383,12 @@ function energie(etat: EtatCombat, _visee: Carte | null): string {
   // LE MÊME ÉCUSSON QUE LE COÛT DES CARTES : le chiffre courant dedans, le
   // maximum en petit sous la pointe. Le joueur voit que ce qu'il tient sur la
   // carte se paie avec ce qu'il a ici.
-  return `<span class="chiffre">${etat.energie}</span><span class="sur">/${etat.energieMax}</span>`
+  // Le maximum vit À CÔTÉ de l'écusson, pas dedans : sous la pointe il était
+  // tout petit et n'y logeait pas (Keko).
+  return (
+    `<span class="ecu"><span class="chiffre">${etat.energie}</span></span>` +
+    `<span class="sur">/${etat.energieMax}</span>`
+  )
 }
 
 /**
@@ -414,7 +419,7 @@ function corpsCarte(
     `<span class="coque"></span>` +
     `<span class="surface"></span>` +
     `<span class="art" style="--art:url(${art(nom)})"></span>` +
-    `<span class="ecusson"><span>${ecusson}</span></span>` +
+    `<span class="ecusson">${ecusson}</span>` +
     `<span class="nom-carte">${nom}</span>` +
     `<span class="effet-carte ${cran(lignes)}">${lignes.join('<br>')}</span>` +
     `<span class="type-carte">${nature}</span>` +
@@ -517,7 +522,7 @@ function ligneCarte(
     `${place}${fini ? ' disabled' : ''}>` +
     corpsCarte(
       carte.nom,
-      String(carte.cout),
+      `<span>${carte.cout}</span>`,
       lignes(carte),
       nature(carte),
       acheve ? `<span class="marque">★</span>` : '',
@@ -564,7 +569,7 @@ function carteTresor(carte: Carte, place: string, enMain = true, abordable = tru
   // « changeait quand on la ramasse » (Keko). Tant qu'un trésor est une carte
   // morte, il n'a pas de coût à montrer : le sceau, partout. Le jour où un
   // trésor se joue (son effet unique), sa gemme dira son coût -- partout aussi.
-  const ecusson = jouable(carte) ? String(carte.cout) : sceau()
+  const ecusson = `<span>${jouable(carte) ? carte.cout : sceau()}</span>`
 
   return (
     `<div class="${classes.join(' ')}" ${place}>` +
@@ -1054,11 +1059,17 @@ function cartePiece(piece: Piece): string {
   // nombre dedans, pour tous les objets ». Un consommable y compte ses doses
   // (une dose, une carte) et son cartouche dit ce que fait UNE dose.
   const dose = g === 'consommable' ? piece.set[0] : undefined
+  // LE PAQUET ÉTALÉ : sous la case du compteur, autant de cases décalées vers
+  // la droite qu'il reste de cartes -- comme un paquet qu'on aurait étalé du
+  // pouce, dont on verrait les tranches continuer. Le nombre se lit deux fois,
+  // en chiffre et en épaisseur. Keko : « d'autres rectangles symbolisant des
+  // cartes sous la première mais décalés à droite, X fois ».
+  const paquet = Array.from({ length: nb - 1 }, (_, k) => `<i style="--k:${k + 1}"></i>`).join('')
   return (
     `<div class="carte piece-carte ${piece.rarete} ${g}" style="--n:1" title="${nb} cartes">` +
     corpsCarte(
       piece.nom,
-      String(nb),
+      `<span>${nb}</span><span class="paquet">${paquet}</span>`,
       // Sa composition, en UN texte qui coule : « 5× Estoc · 3× Taillade ·
       // 2× Moulinet ». Une ligne par modèle plafonnait à cinq ; une arme en
       // apportera jusqu'à huit. Le détail de chaque modèle — coût, dégâts —
@@ -1129,7 +1140,7 @@ export function vitrine(carte: Carte, enMain = false): string {
   if (carte.type === 'tresor') return carteTresor(carte, 'style="--n:1"', enMain)
   return (
     `<div class="carte combat ${famille(carte)}" data-cout="${carte.cout}" style="--n:1">` +
-    corpsCarte(carte.nom, String(carte.cout), lignes(carte), nature(carte)) +
+    corpsCarte(carte.nom, `<span>${carte.cout}</span>`, lignes(carte), nature(carte)) +
     `</div>`
   )
 }

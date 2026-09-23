@@ -91,10 +91,14 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   décision qui ne vaut que pour ce tour-ci, et qu'il faut reprendre au suivant.
   *Sans la remise à zéro, bloquer deviendrait épargner.*
 - **Chaque trésor a un effet UNIQUE**, pas une échelle du même effet. Tranché
-  par Keko. Le soin proportionnel au prix a été le placeholder — retiré
-  depuis, parce qu'il rendait la cupidité rentable ; en attendant les effets,
-  un trésor est une carte morte. Le soin vit dans les **fioles**, un
-  consommable.
+  par Keko. En attendant, **le placeholder est de retour** : brûler un trésor
+  (1⚡, la carte est détruite, son or avec) rend `valeur / 20` PV, jamais moins
+  de 2 — 12 pour une Couronne, 2 pour un Camée. Il avait été retiré à
+  `valeur / 12` parce qu'il rendait la cupidité rentable (92 % contre 70 %) ;
+  Keko l'a voulu quand même : « il devrait faire quelque chose même si c'est
+  un effet temporaire placeholder ». **À remesurer par simulation** — la
+  dernière mesure (cupidité qui coûte de nouveau, 8 à 14 points) date des
+  trésors inertes. Le soin principal vit dans les **fioles**, un consommable.
 - **Le chargement a quatre slots, et pas un de plus pour l'instant** : deux
   mains, un torse, un consommable. Un **bijou** viendra (passif, sans carte,
   qui change les règles et jamais les chiffres). Pas de casque ni de bottes :
@@ -289,7 +293,17 @@ d'équipement, vitrine du zoom, carte qui s'abat :
   pour que le joueur comprenne bien ». Seul le chiffre DANS le texte garde la
   couleur de sa nature. Un trésor porte l'écusson d'or avec le sceau (pas de
   coût) ; une pièce d'équipement porte **le compteur de cartes**, une petite
-  case en forme de carte, de fer sombre — ce n'est pas de l'énergie ;
+  case en forme de carte, de fer sombre — ce n'est pas de l'énergie — **et
+  derrière elle LE PAQUET ÉTALÉ** : une tranche par carte restante, décalée
+  d'un quart de case vers la droite, bord de laiton et ombre à gauche. Le
+  nombre se lit deux fois, en chiffre et en épaisseur. Keko : « d'autres
+  rectangles symbolisant des cartes sous la première mais décalés à droite,
+  X fois ». Sans bord franc, cinq tranches sombres côte à côte ne faisaient
+  qu'un bloc noir. Le maximum d'énergie (`/5`) vit À CÔTÉ de l'écusson du
+  joueur, pas dedans : sous la pointe il était tout petit et n'y logeait pas.
+  Et l'étiquette des tas (« PIOCHE 7 ») est une pastille EN HAUT du dos, sur
+  une ligne : centrée dans la bande émergée, elle recouvrait le médaillon du
+  dos ;
 - **le texte d'effet a trois crans de taille** (`cran()` : ≤ 44 caractères,
   ≤ 100, au-delà), pour qu'un effet complexe descende d'un cran plutôt que de
   déborder sur le type. Mesuré sur le prototype : 140 caractères tiennent.

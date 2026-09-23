@@ -303,3 +303,32 @@
   font-size: 11cqw;
   transform: translate(0, -6%);
 }
+
+/* LE PAQUET ÉTALÉ derrière le compteur : une tranche par carte restante,
+   chacune décalée d'un quart de case vers la droite, sous la case du chiffre.
+   Elles sont dans l'écusson mais en `z-index` négatif : dans son contexte
+   d'empilement elles passent SOUS ses couches, et la case du chiffre reste
+   nette par-dessus. Huit cartes font sept tranches, soit 47 % de la largeur
+   de la carte en plus -- ça tient. */
+.carte.piece-carte > .ecusson {
+  overflow: visible;
+}
+
+.carte.piece-carte > .ecusson > .paquet {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.carte.piece-carte > .ecusson > .paquet > i {
+  position: absolute;
+  /* Un cheveu plus courtes que la case du chiffre : elles sont DESSOUS. */
+  inset: 4% 0;
+  translate: calc(var(--k) * 26%) 0;
+  border-radius: 1.2cqw;
+  /* Un bord de laiton franc et une ombre vers la gauche : sans eux, cinq
+     tranches sombres côte à côte ne faisaient qu'un bloc noir. */
+  border: 1px solid #c9a86e;
+  background: linear-gradient(#2c2428, #17121a);
+  box-shadow: -0.4cqw 0 0.6cqw #000c;
+}
