@@ -90,6 +90,14 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   de tour, puis **il tombe**. Ce n'est pas de la vie en réserve — c'est une
   décision qui ne vaut que pour ce tour-ci, et qu'il faut reprendre au suivant.
   *Sans la remise à zéro, bloquer deviendrait épargner.*
+- **UN TRÉSOR A TOUJOURS UN COÛT ET FAIT TOUJOURS QUELQUE CHOSE. L'idée de la
+  carte morte est ABANDONNÉE.** Tranché par Keko : « les trésors ont toujours
+  un coût, jamais une carte morte, on a abandonné cette idée ». Tout ce qui
+  suit sur la « carte morte » est de l'histoire — le mécanisme a été validé
+  sous cette forme, puis dépassé. *Ce qui reste vrai, c'est le POIDS* : un
+  trésor pris est une carte de plus dans le deck, donc une bonne carte tirée
+  moins souvent. L'encombrement ne tenait pas à l'inutilité de la carte, il
+  tient à son existence.
 - **Chaque trésor a un effet UNIQUE**, pas une échelle du même effet. Tranché
   par Keko. En attendant, **le placeholder est de retour** : brûler un trésor
   (1⚡, la carte est détruite, son or avec) rend `valeur / 20` PV, jamais moins
@@ -459,8 +467,9 @@ donjon. Ce qui tourne :
   **La même carte partout.** Un trésor se dessine à l'identique dans le loot,
   dans la main du butin et en combat : la gemme portait le sceau hors de la
   main et le coût dedans, et « la carte change quand je la ramasse » (Keko).
-  Tant qu'un trésor est une carte morte il n'a pas de coût, donc le sceau
-  partout ; le jour où il se joue, sa gemme dira son coût — partout aussi. Et
+  Un trésor porte son COÛT, partout : il se joue, donc il en a un. (Le sceau
+  d'or datait du temps où il était une carte morte ; cette idée est
+  abandonnée.) Et
   la main du butin ne pose ni « jouable » (liseré bleu) ni « hors-prix »
   (grisé) : rien ne s'y joue, la carte y est celle du slot de loot.
 
@@ -594,8 +603,8 @@ donjon. Ce qui tourne :
   MORTE, avec trois **rangs de richesse** au cadre (modeste / cossu /
   fastueux) : la décision de design veut qu'on préfère peu de gros trésors,
   encore faut-il voir sans lire un chiffre ce qu'on traîne ;
-- **dans la main, tout ce qui est injouable est grisé** — trésors compris, au
-  même titre qu'une carte trop chère. On a d'abord refusé de griser les
+- **dans la main, tout ce qui est injouable est grisé** — une carte trop
+  chère, et un trésor quand on n'a plus de quoi le brûler. On a d'abord refusé de griser les
   trésors, pour que l'appât reste visible ; **la raison a changé**, pas
   l'objectif : l'appât vit désormais dans l'écran de butin, où le trésor est
   doré et détaillé. En combat il ne fait plus qu'occuper une place, et le dire
@@ -1668,8 +1677,9 @@ Les mesures de survie ci-dessous datent des trois fioles : **à refaire**.
 
 **Et le soin a QUITTÉ les trésors.** Il y était un placeholder qui rendait la
 cupidité rentable (92 % en prenant tout contre 70 % en refusant). Un trésor
-est de nouveau une carte morte — grisée en main, injouable — jusqu'à ce que
-chaque trésor ait son effet unique, à écrire un par un avec Keko. Mesuré après
+garde son effet de brûlure en attendant que chacun ait le sien, à écrire un
+par un avec Keko. **Il n'est plus question d'en refaire une carte morte** :
+l'idée est abandonnée. Mesuré après
 (300 descentes, même bot) :
 
 | | tout prendre | tout refuser | sans fioles | sans armure |
