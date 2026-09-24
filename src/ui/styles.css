@@ -4193,14 +4193,23 @@ body {
   60% { transform: translateX(2px); }
 }
 
+/* L'ARRONDI VIT SUR LE CONTENANT, PAS SUR LES SEGMENTS : c'est ce qui rend les
+   separations DROITES. Chaque segment portait le sien, donc chaque frontiere
+   interne etait une double courbe -- or un arrondi arrondit les DEUX bouts
+   d'un segment, alors qu'un seul des deux est un bord de la barre. */
+.vie-couleurs {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 999px;
+}
+
 .vie-rouge,
-.vie-bleu {
+.vie-bleu,
+.vie-jaune {
   position: absolute;
   top: 0;
   bottom: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
 }
 
 .vie-rouge {
@@ -4217,20 +4226,18 @@ body {
    vide, donc c'est la qu'on cherche ce qu'on va perdre. Posee a gauche, la
    bande se lirait comme ce qui reste. */
 .vie-jaune {
-  position: absolute;
-  top: 0;
   right: 0;
-  bottom: 0;
-  border-radius: 999px;
   background: linear-gradient(#f5d06a, #d9a02f);
 }
 
 /* LE CHIFFRE DEBORDE SA BARRE, il n'est pas contenu par elle : la hauteur
    d'une jauge dit quelque chose, une barre epaisse pese autant qu'une
-   silhouette. Il lui faut donc un cerne franc, parce qu'il passe sur trois
-   fonds. */
+   silhouette. Il vit donc HORS du rognage, centre sur sa portion. Il lui faut
+   un cerne franc, parce qu'il passe sur trois fonds. */
 .vie-chiffre {
-  position: relative;
+  position: absolute;
+  top: 50%;
+  translate: -50% -50%;
   color: #fff;
   font-size: 0.8125rem;
   font-weight: 700;

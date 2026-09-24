@@ -2743,7 +2743,17 @@ créatures, et il est plafonné aux PV restants. La menace **déduit déjà
 l'armure**, donc le jaune dit des PV perdus pour de bon : poser une Garde le
 fait reculer sous les yeux du joueur, ce qui est tout l'intérêt du chiffre.
 
-Chaque chiffre est au MILIEU de sa portion, comme sur les créatures.
+**LES SÉPARATIONS SONT DROITES**, et seuls les bouts de la barre sont
+arrondis. Chaque segment portait son propre arrondi, donc chaque frontière
+interne était une double courbe — Keko : « je voudrais que les séparations
+entre barre rouge, jauge et bleu soient droites ». *Un arrondi sur un segment
+arrondit ses DEUX bouts, or un seul des deux est un bord de la barre.*
+L'arrondi vit donc sur un contenant qui rogne les couleurs, et les segments
+n'en ont aucun.
+
+Chaque chiffre est au MILIEU de sa portion, comme sur les créatures — et il vit
+HORS de ce rognage, sans quoi il serait coupé par lui : le chiffre déborde la
+barre, il n'est pas contenu par elle.
 
 **L'ORBE SE CENTRE DANS L'ÉCART, LA BARRE PART DU BORD DE L'ÉCRAN.** Les deux
 ont d'abord partagé une colonne, et à 667 px de large l'écart entre le tas et

@@ -44,16 +44,32 @@ export function BarreVie3D({ pv, pvMax, armure, menace, encaisse }: Props): Reac
 
   return (
     <div className={`vie-barre${encaisse ? ' encaisse' : ''}`}>
-      <span className="vie-rouge" style={{ width: part(pv) }}>
-        {perdus > 0 && <span className="vie-jaune" style={{ width: partDuRouge }} />}
-        <span className="vie-chiffre">
-          {pv}
-          <small>/{pvMax}</small>
+      {/* LES COULEURS SONT DANS UN CONTENANT QUI LES ROGNE, et c'est ce qui
+          rend les séparations DROITES : l'arrondi vit sur le contenant seul,
+          les segments n'en ont aucun. Chacun portait le sien, donc chaque
+          frontière interne était une double courbe — Keko : « je voudrais que
+          les séparations entre barre rouge, jauge et bleu soient droites ».
+          *Un arrondi sur un segment arrondit ses DEUX bouts, or un seul des
+          deux est un bord de la barre.* */}
+      <span className="vie-couleurs">
+        <span className="vie-rouge" style={{ width: part(pv) }}>
+          {perdus > 0 && <span className="vie-jaune" style={{ width: partDuRouge }} />}
         </span>
+        {armure > 0 && (
+          <span className="vie-bleu" style={{ left: part(pv), width: part(armure) }} />
+        )}
+      </span>
+
+      {/* LES CHIFFRES SONT AU-DESSUS, hors du rognage : ils DÉBORDENT la barre
+          et n'ont pas à être contenus par elle. La hauteur d'une jauge dit
+          quelque chose — une barre épaisse pèse autant qu'une silhouette. */}
+      <span className="vie-chiffre" style={{ left: part(pv / 2) }}>
+        {pv}
+        <small>/{pvMax}</small>
       </span>
       {armure > 0 && (
-        <span className="vie-bleu" style={{ left: part(pv), width: part(armure) }}>
-          <span className="vie-chiffre">{armure}</span>
+        <span className="vie-chiffre" style={{ left: part(pv + armure / 2) }}>
+          {armure}
         </span>
       )}
     </div>
