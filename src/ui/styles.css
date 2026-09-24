@@ -3654,7 +3654,10 @@ body {
 
 .etat-3d {
   position: fixed;
-  inset: auto auto 1rem 1rem;
+  /* LES DEUX RÉSERVES DU JOUEUR SE DÉCALENT POUR LE TAS. Comme en 2D, la
+     pioche tient le coin et l'orbe se pose à sa droite : tout ce qui est au
+     joueur reste sur la bande gauche. */
+  inset: auto auto 1rem 5.5rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -3722,6 +3725,47 @@ body {
 .fin-3d:disabled {
   opacity: 0.4;
   cursor: default;
+}
+
+/* --- la pioche et la defausse, en symbole --------------------------------- */
+
+/* UN PAQUET VU EN 3/4, un coin vers le bas, et son compte AU-DESSUS. Les deux
+   tas tiennent les coins bas, pioche a gauche et defausse a droite, comme en
+   2D -- c'est leur place qui dit lequel est lequel. */
+.tas-3d {
+  position: absolute;
+  bottom: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.0625rem;
+  width: 3.75rem;
+  pointer-events: none;
+}
+
+.tas-3d.pioche {
+  left: 0.75rem;
+}
+
+.tas-3d.defausse {
+  right: 0.75rem;
+}
+
+.tas-dessin {
+  display: block;
+  width: 100%;
+  filter: drop-shadow(0 2px 4px #000000a8);
+}
+
+/* LE CHIFFRE EST UNE MENTION, PAS UN COMPTEUR : ni pastille, ni fond, ni
+   bordure. On ne decide pas dessus -- Keko, sur le jeu 2D : « plus discret,
+   c'est pas une info capitale ». */
+.tas-compte {
+  color: #d7c894;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px #000, 0 0 6px #000;
 }
 
 /* --- ce que chaque creature dit d'elle-meme, ancre sur son corps ----------- */

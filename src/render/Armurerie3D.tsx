@@ -271,6 +271,19 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
     sousLeDoigt !== null &&
     accepteDepuis(hub, portee.slot, sousLeDoigt, portee.objet.id)
   const tailleTenue = accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt) : REDUIT
+
+  /**
+   * ELLE NE FRÉMIT QU'AU-DESSUS D'UN SLOT DU CHARGEMENT QUI LA PREND.
+   *
+   * Le frémissement dit « lâche et ça part », donc il doit être vrai — il
+   * frémissait pendant tout le geste, y compris en plein vide où lâcher ne
+   * fait rien. Demandé par Keko. *Un repère permanent ne repère plus rien.*
+   *
+   * Le râtelier en est exclu bien qu'il accepte tout : c'est l'endroit d'où
+   * l'on vient, et y reposer n'est pas ce que le geste cherche.
+   */
+  const surUnSlot =
+    accueille && sousLeDoigt !== null && sousLeDoigt.ou !== 'reserve'
   const casesVides = Math.max(0, CASES_MINIMUM - hub.reserve.length)
 
   return (
@@ -346,7 +359,7 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
             taille={suitLeDoigt ? tailleTenue : t.taille}
             ombre={false}
             ressort={suitLeDoigt ? 22 : 16}
-            engagee={suitLeDoigt}
+            engagee={suitLeDoigt && surUnSlot}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />

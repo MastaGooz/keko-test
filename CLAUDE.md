@@ -2690,6 +2690,47 @@ le compte passe de 10 à 13 cartes dont 6 qui frappent), zoomer une pièce,
 descendre, mourir — le hub rend le Glaive et le Plastron, et la potion
 emportée est perdue.
 
+### La pioche et la défausse, en SYMBOLE et non en tas de cartes
+
+`render/Tas3D.tsx`. Le jeu 2D en faisait de vraies piles de dos de carte,
+enfouies sous le bord comme la main — *un tas doit être fait des mêmes cartes
+que la main, sinon c'est l'icône d'un tas et pas un tas.* **Ici c'est
+l'inverse, et c'est Keko qui l'a demandé** : un symbole dessiné, « un paquet de
+cartes posé en perspective, un coin orienté vers le bas, vue en 3/4 ». La scène
+3D a déjà ses cartes en volume ; ces deux-là ne se manipulent jamais, elles se
+consultent — *ce qu'on ne touche pas n'a pas besoin d'être un objet.*
+
+Le dessus est un losange (un carré vu de trois quarts depuis le haut) et
+l'épaisseur pend sous ses deux arêtes basses : **sans les flancs, le losange se
+lirait comme une carte à plat et non comme une pile.** Trois traits en travers
+de l'épaisseur disent que ce sont des cartes et non un bloc. Lumière du haut et
+de la droite, comme partout : dessus le plus clair, flanc droit ensuite, flanc
+gauche sombre.
+
+**Le viewBox colle au dessin.** Carré, il laissait un tiers de vide et le
+paquet paraissait deux fois trop petit pour la place qu'il occupait.
+
+**Le chiffre est au-dessus, et c'est une MENTION** : ni pastille, ni fond, ni
+bordure. Même raison qu'en 2D — on ne décide pas dessus, et il a déjà été un
+gros nombre d'or qui avait le poids d'une valeur de jeu.
+
+**Les deux tas tiennent les coins bas**, pioche à gauche et défausse à droite :
+c'est leur place qui dit lequel est lequel, comme en 2D. **L'orbe et les PV se
+décalent à droite du tas de gauche**, exactement comme le 2D pose l'orbe à
+droite de la pioche — *tout ce qui est au joueur reste sur la bande gauche.*
+Vérifié à 844x390 et 667x320 : aucun contact avec la main.
+
+### Dans l'armurerie, la pièce ne frémit QUE sur un slot qui la prend
+
+Le frémissement dit « lâche et ça part », donc il doit être vrai. Il courait
+pendant tout le geste, y compris en plein vide où lâcher ne fait rien.
+Demandé par Keko. *Un repère permanent ne repère plus rien.*
+
+Le râtelier en est exclu bien qu'il accepte tout : c'est l'endroit d'où l'on
+vient, et y reposer n'est pas ce que le geste cherche. Le halo suit, puisque
+`engagee` porte les deux — et c'est cohérent : en combat aussi il ne s'allume
+que là où lâcher déclenche quelque chose.
+
 ### Une frappe sur TOUT LE RANG, maintenant qu'elle est atteignable
 
 L'Espadon devenant équipable, `degatsTous` sort enfin en jeu. Il jouait sans

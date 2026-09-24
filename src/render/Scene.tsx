@@ -26,6 +26,7 @@ import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
 import { Armurerie3D, compteDuDeck } from './Armurerie3D.tsx'
 import { Zoom3D } from './Zoom3D.tsx'
+import { Tas3D } from './Tas3D.tsx'
 import type { Entree } from './Zoom3D.tsx'
 import { aPeindre, descenteDeDepart, pieceAPeindre, setAPeindre } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
@@ -941,6 +942,12 @@ export function Scene(): React.JSX.Element {
 
       {pret && enCombat && (
         <div className="jeu-3d">
+          {/* LES DEUX TAS TIENNENT LES COINS BAS, pioche à gauche et défausse
+              à droite. Ils vivent DANS la ligne de jeu, qui est déjà en
+              `pointer-events: none` : on ne les touche jamais, on les lit. */}
+          <Tas3D nom="pioche" compte={combat.pioche.length} />
+          <Tas3D nom="defausse" compte={combat.defausse.length} />
+
           <p className="note-3d">
             {fini
               ? combat.issue === 'victoire'
