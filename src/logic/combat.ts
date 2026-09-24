@@ -29,7 +29,10 @@ import type { Rng } from './rng.ts'
  * est calé dessus (l'aperçu sur les jauges, `consequence`, les simulations).
  */
 export type Effet =
-  /** Frappe tous les corps debout, en plus de la cible. */
+  /**
+   * Frappe TOUS les corps debout — et une carte qui le fait **ne désigne
+   * personne** : sa portée est le rang entier.
+   */
   | { type: 'degatsTous'; montant: number }
   /**
    * Du **bloc**, à la Slay the Spire : il absorbe les dégâts de la salve de fin
@@ -297,14 +300,33 @@ export function jouable(carte: Carte): boolean {
 }
 
 /**
- * La carte a-t-elle besoin qu'on lui désigne un corps ?
+ * LA PORTÉE D'UNE CARTE, ET IL N'Y EN A QUE TROIS.
  *
- * Ce qui frappe tout le monde, soigne ou rend de l'énergie n'a rien à viser —
- * et **demander une cible pour ça serait un geste vide** : deux tapes au lieu
- * d'une, sur un choix qui n'en est pas un.
+ * Tranché par Keko : « soit une carte n'a pas de cible, soit elle a une cible,
+ * soit elle cible tous les ennemis. Pas de carte où on cible soi-même X
+ * ennemis. »
+ *
+ * - `aucune` — elle agit sur le joueur ou sur le tour : bloc, soin, énergie.
+ *   **Demander une cible pour ça serait un geste vide** : un choix qui n'en
+ *   est pas un.
+ * - `une` — un corps à désigner, et c'est la flèche qui le fait.
+ * - `toutes` — le rang entier, donc rien à désigner non plus.
+ *
+ * *Ce que ça ferme* : une carte qui frapperait une cible **et** tout le rang,
+ * ou qui demanderait de choisir trois corps sur cinq. Le modèle le permettait,
+ * et chaque cas de ce genre aurait demandé son propre geste. À trois portées,
+ * **le geste se déduit de la carte** — il n'y a rien à décider au cas par cas.
  */
+export type Portee = 'aucune' | 'une' | 'toutes'
+
+export function portee(carte: Carte): Portee {
+  if (carte.effets?.some((effet) => effet.type === 'degatsTous') ?? false) return 'toutes'
+  return carte.degats > 0 ? 'une' : 'aucune'
+}
+
+/** La carte a-t-elle besoin qu'on lui désigne un corps ? */
 export function viseUneCible(carte: Carte): boolean {
-  return carte.degats > 0
+  return portee(carte) === 'une'
 }
 
 function estVivant(etat: EtatCombat, index: number): boolean {

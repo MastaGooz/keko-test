@@ -183,6 +183,22 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
 - Le **système de combat** est tranché : tour par tour à énergie, voir la
   section dédiée ci-dessous. L'horloge partagée a été essayée puis abandonnée,
   mesures à l'appui — ne pas la ressortir sans en reparler à Keko.
+- **UNE CARTE A EXACTEMENT UNE PORTÉE SUR TROIS** (`portee`, dans
+  `logic/combat.ts`) : **aucune cible** (bloc, soin, énergie — elle agit sur
+  le joueur ou sur le tour), **une cible** (on désigne un corps), ou **tous
+  les ennemis**. Tranché par Keko : « soit une carte n'a pas de cible, soit
+  elle a une cible, soit elle cible tous les ennemis. Pas de carte où on cible
+  soi-même X ennemis. »
+
+  *Ce que ça ferme* : une carte qui frapperait une cible ET tout le rang, ou
+  qui demanderait d'en choisir trois sur cinq. Le modèle le permettait —
+  `degatsTous` disait « en plus de la cible » — et chacun de ces cas aurait
+  réclamé son propre geste. À trois portées, **le geste se déduit de la
+  carte**, il n'y a rien à décider au cas par cas.
+
+  Le type ne peut pas l'exprimer, donc **deux vérifications le tiennent**
+  (`combat.verif.ts`) : la portée de chaque forme, et le fait qu'aucune carte
+  du jeu ne mélange les deux.
 - **Plusieurs ennemis par combat**, cible choisie à la tape. Un mort ne
   frappe plus, donc achever vaut mieux que cogner au rendement — à condition
   que les cartes soient en mesure d'achever. Ne pas aligner de gros sacs de PV.

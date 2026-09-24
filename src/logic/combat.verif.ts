@@ -17,8 +17,11 @@ import {
   mainMorte,
   menaceDuTour,
   reordonnerMain,
+  portee,
+  viseUneCible,
   vivants,
 } from './combat.ts'
+import { ESPADON, GLAIVE, PLASTRON, POTIONS_DEPART } from './armes.ts'
 
 const CONFIG: ConfigCombat = { pvMax: 30, tailleMain: 5, energieMax: 5 }
 
@@ -438,6 +441,38 @@ cas('une carte à usages revient à la défausse avec un usage de moins, puis s�
   const deux = jouerCarte({ ...une, main: [une.defausse[0]!], defausse: [], energie: 5 }, 0, 0)
   egal(deux.pv, 30, 'la dernière gorgée soigne encore')
   egal(deux.defausse.length, 0, 'et la carte est exilée')
+})
+
+/**
+ * LES TROIS PORTÉES, ET PAS UNE DE PLUS.
+ *
+ * Tranché par Keko : « soit une carte n'a pas de cible, soit elle a une cible,
+ * soit elle cible tous les ennemis. Pas de carte où on cible soi-même X
+ * ennemis. » La vérification vit ici parce que le TYPE ne peut pas l'exprimer
+ * — rien n'empêcherait d'écrire une carte à `degats: 6` ET `degatsTous`, et
+ * elle demanderait alors un geste qui n'existe pas.
+ */
+cas('une carte a exactement une portée sur trois', () => {
+  const garde: Carte = { id: 'g', nom: 'Garde', type: 'combat', cout: 1, degats: 0, effets: [{ type: 'bloc', montant: 5 }] }
+  const estoc: Carte = { id: 'e', nom: 'Estoc', type: 'combat', cout: 1, degats: 3 }
+  const tornade: Carte = { id: 't', nom: 'Tornade', type: 'combat', cout: 5, degats: 0, effets: [{ type: 'degatsTous', montant: 10 }] }
+  egal(portee(garde), 'aucune', 'ce qui bloque ne désigne personne')
+  egal(portee(estoc), 'une', 'ce qui frappe désigne un corps')
+  egal(portee(tornade), 'toutes', 'ce qui frappe le rang ne désigne personne non plus')
+  verifie(!viseUneCible(garde) && !viseUneCible(tornade), 'et seul le coup simple demande une cible')
+})
+
+cas('aucune carte du jeu ne mélange une cible et le rang entier', () => {
+  // Tout ce que le jeu peut mettre dans un deck : les sets des pièces, plus
+  // les consommables, qui sont déjà des cartes.
+  const modeles = [
+    ...[GLAIVE, ESPADON, PLASTRON].flatMap((piece) => piece.set.map((entree) => entree.modele)),
+    ...POTIONS_DEPART.map((c) => c.modele),
+  ]
+  const melangees = modeles.filter(
+    (m) => m.degats > 0 && (m.effets?.some((e) => e.type === 'degatsTous') ?? false),
+  )
+  egal(melangees.length, 0, 'sinon il faudrait un geste de visée rien que pour elle')
 })
 
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)
