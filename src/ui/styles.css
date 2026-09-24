@@ -4253,6 +4253,34 @@ body {
   font-weight: 400;
 }
 
+/* CE QU'ON VA PRENDRE, ecrit SUR sa bande : la longueur et le chiffre disent
+   la meme chose au meme endroit. Il est un cran plus petit que les PV -- c'est
+   une annonce, pas une reserve.
+
+   MEME TRAITEMENT QUE LES AUTRES CHIFFRES : ivoire et cerne noir. Il a ete
+   sombre sur halo dore, ce qui ne tenait que sur le jaune -- or quand la bande
+   est etroite le chiffre deborde sur le rouge, ou un texte sombre disparait. */
+.vie-chiffre.menace {
+  font-size: 0.75rem;
+}
+
+/* LE CHIFFRE ENCAISSE SAUTE AU-DESSUS DE LA BARRE, jamais dessous : sa regle
+   etait scopee a l'ancienne pastille de PV, donc il retombait dans le flux et
+   se posait sous la barre. */
+.vie-bloc > .degats-3d.recu {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  color: #ff5a4a;
+  font-family: system-ui, sans-serif;
+  font-size: 1.375rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px #000, 0 0 6px #000, 0 0 12px #000;
+  animation: degats-sautent 0.8s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
 /* --- l'orbe d'energie, au-dessus de la pioche ------------------------------ */
 
 /* LE MEME OBJET QUE LE SYMBOLE DE COUT DES CARTES : socle sombre, filet de

@@ -2755,6 +2755,20 @@ Chaque chiffre est au MILIEU de sa portion, comme sur les créatures — et il v
 HORS de ce rognage, sans quoi il serait coupé par lui : le chiffre déborde la
 barre, il n'est pas contenu par elle.
 
+**ET CE QU'ON VA PRENDRE EST ÉCRIT SUR LA BANDE JAUNE**, pas sous la barre.
+Keko : « les dégâts entrants ne devraient pas être affichés sous la barre mais
+plutôt sur la partie jaune ». Le chiffre tombait dans le flux parce que sa
+règle de placement était restée scopée à l'ancienne pastille de PV, qui
+n'existe plus — *une règle attachée à un élément supprimé ne signale rien, elle
+laisse simplement son contenu retomber ailleurs.*
+
+**Un chiffre ne sort jamais de sa barre** (`clamp(1.1rem, …, 100% - 1.1rem)`) :
+sur un téléphone la barre ne fait que 130 px, et le milieu d'une bande jaune
+collée au bout y tombait si près du bord que le chiffre passait dans le noir.
+*Un repère qui sort de ce qu'il repère ne repère plus rien.* Il porte donc le
+même ivoire à cerne noir que les deux autres — sombre sur halo doré, il ne
+tenait que sur le jaune, or une bande étroite le fait déborder sur le rouge.
+
 **L'ORBE SE CENTRE DANS L'ÉCART, LA BARRE PART DU BORD DE L'ÉCRAN.** Les deux
 ont d'abord partagé une colonne, et à 667 px de large l'écart entre le tas et
 la main ne fait que 83 px : la barre y mordait sur la première carte. *Un objet

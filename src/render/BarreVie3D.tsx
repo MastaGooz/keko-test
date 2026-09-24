@@ -36,6 +36,13 @@ type Props = {
 export function BarreVie3D({ pv, pvMax, armure, menace, encaisse }: Props): React.JSX.Element {
   const echelle = Math.max(pvMax, pv + armure, 1)
   const part = (v: number): string => `${Math.max(0, Math.min(100, (v / echelle) * 100))}%`
+  /**
+   * OÙ POSER UN CHIFFRE : au milieu de sa portion, mais JAMAIS hors de la
+   * barre. Sur un téléphone la barre ne fait que 130 px, et le milieu d'une
+   * bande jaune collée au bout y tombe si près du bord que le chiffre passait
+   * dans le noir. *Un repère qui sort de ce qu'il repère ne repère plus rien.*
+   */
+  const milieu = (v: number): string => `clamp(1.1rem, ${part(v)}, calc(100% - 1.1rem))`
   // Le jaune est PLAFONNÉ aux PV restants : au-delà il sortirait du rouge, et
   // l'excès n'apprendrait rien de plus que « c'est mort ».
   const perdus = Math.min(menace, pv)
@@ -63,13 +70,25 @@ export function BarreVie3D({ pv, pvMax, armure, menace, encaisse }: Props): Reac
       {/* LES CHIFFRES SONT AU-DESSUS, hors du rognage : ils DÉBORDENT la barre
           et n'ont pas à être contenus par elle. La hauteur d'une jauge dit
           quelque chose — une barre épaisse pèse autant qu'une silhouette. */}
-      <span className="vie-chiffre" style={{ left: part(pv / 2) }}>
+      <span className="vie-chiffre" style={{ left: milieu(pv / 2) }}>
         {pv}
         <small>/{pvMax}</small>
       </span>
       {armure > 0 && (
-        <span className="vie-chiffre" style={{ left: part(pv + armure / 2) }}>
+        <span className="vie-chiffre" style={{ left: milieu(pv + armure / 2) }}>
           {armure}
+        </span>
+      )}
+
+      {/* CE QU'ON VA PRENDRE EST ÉCRIT SUR LA BANDE JAUNE, pas sous la barre.
+          Keko : « les dégâts entrants ne devraient pas être affichés sous la
+          barre mais plutôt sur la partie jaune ». *Un chiffre posé à côté de
+          ce qu'il mesure demande un aller-retour ; posé dessus, la longueur et
+          le chiffre disent la même chose au même endroit* — c'est déjà la
+          règle des jauges de créature. */}
+      {perdus > 0 && (
+        <span className="vie-chiffre menace" style={{ left: milieu(pv - perdus / 2) }}>
+          −{perdus}
         </span>
       )}
     </div>
