@@ -45,7 +45,10 @@
     <filter id="flou"><feGaussianBlur stdDeviation="8"/></filter>
   </defs>
 
-  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <!-- PAS DE CIEL ICI : le fond commun de toutes les cartes est
+       `public/Background.png`, peint SOUS ce dessin. Le dégradé « ciel »
+       reste défini au-dessus — le remettre en `<rect>` plein format rend
+       à la carte son fond de famille. -->
 
   <!-- le rocher -->
   <path d="M90 720 Q60 600 160 540 Q240 470 340 490 Q460 470 540 540 Q640 600 600 720 Z" fill="url(#roc)"/>

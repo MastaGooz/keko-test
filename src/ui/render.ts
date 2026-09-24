@@ -19,7 +19,7 @@ import { CAPACITE_PILE, deckEmporte, deuxMains, peutDescendre } from '../logic/h
 import type { Consommable, Objet, Piece } from '../logic/armes.ts'
 import { carteDuConsommable, estConsommable } from '../logic/armes.ts'
 import { creature, sceau, teteDeMort } from './illustrations.ts'
-import { art, dosDeCarte, imageDeKeko } from './art.ts'
+import { art, dosDeCarte, imageDeKeko, urlDuFond } from './art.ts'
 // LE TEXTE D'UNE CARTE EST PARTAGÉ avec le moteur 3D : l'écrire deux fois,
 // c'est garantir qu'un jour les deux divergeront.
 import { famille, lignes, nature } from './texte-carte.ts'
@@ -424,7 +424,7 @@ function corpsCarte(
     `<span class="surface"></span>` +
     // Deux couches : l'image de Keko par-dessus, le dessin dessous. Si la
     // première manque, le CSS l'ignore et le dessin reparaît tout seul.
-    `<span class="art" style="--art:url(${art(nom)});--art-keko:${imageDeKeko(nom)}"></span>` +
+    `<span class="art" style="--art:url(${art(nom)});--art-keko:${imageDeKeko(nom)};--art-fond:url(${urlDuFond()})"></span>` +
     sousLEcusson +
     `<span class="ecusson">${ecusson}</span>` +
     `<span class="nom-carte">${nom}</span>` +

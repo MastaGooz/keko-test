@@ -49,7 +49,10 @@
     <filter id="flou"><feGaussianBlur stdDeviation="6"/></filter>
   </defs>
 
-  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <!-- PAS DE CIEL ICI : le fond commun de toutes les cartes est
+       `public/Background.png`, peint SOUS ce dessin. Le dégradé « ciel »
+       reste défini au-dessus — le remettre en `<rect>` plein format rend
+       à la carte son fond de famille. -->
   <ellipse cx="340" cy="560" rx="360" ry="140" fill="url(#braise)"/>
 
   <!-- les trois silhouettes prises dans le coup -->

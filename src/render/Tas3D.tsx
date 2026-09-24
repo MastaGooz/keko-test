@@ -16,35 +16,55 @@
  */
 
 /**
- * LE PAQUET EST FAIT DE CARTES RECTANGULAIRES, ET ÇA SE CALCULE.
+ * LE PAQUET EST FAIT DE CARTES RECTANGULAIRES, ET SON COIN POINTE DROIT EN BAS.
  *
- * Le losange a d'abord été dessiné à la main, symétrique : c'était un CARRÉ vu
- * de trois quarts, et Keko l'a vu tout de suite — « les paquets dessinent des
- * cartes carrées, il faudrait rectangulaire ». *Un losange symétrique ne peut
- * pas être autre chose qu'un carré* ; le rapport de la carte ne se devine pas
- * à l'oeil, il se projette.
+ * Deux corrections successives de Keko, et la seconde vient de la première.
  *
- * On part donc du vrai rectangle (1 x 1,4, le rapport du gabarit), on le fait
- * pivoter d'un quart de tour pour mettre un coin devant, et on écrase la
- * profondeur : c'est la vue de trois quarts. **Le signe qu'un rectangle est
- * bien un rectangle, c'est que ses deux coins de côté ne sont PAS à la même
- * hauteur** — un carré les aurait alignés.
+ * 1. Le losange a d'abord été dessiné à la main, symétrique : c'était un CARRÉ
+ *    vu de trois quarts — « les paquets dessinent des cartes carrées, il
+ *    faudrait rectangulaire ». *Un losange symétrique ne peut pas être autre
+ *    chose qu'un carré* ; le rapport de la carte ne se devine pas à l'oeil, il
+ *    se projette.
+ * 2. Le rectangle a ensuite été pivoté d'un quart de tour, et son coin bas
+ *    tombait alors à DROITE du centre. Sur le tas de gauche ça ne se voyait
+ *    pas ; collé au bord droit, le même penchant faisait paraître la défausse
+ *    de travers — Keko : « je voudrais que l'image du paquet de défausse soit
+ *    identique à celui de la pioche, il est bizarre là ». Les deux dessins
+ *    étaient pourtant rigoureusement identiques, vérifié dans le DOM : *ce qui
+ *    changeait, c'était le bord d'écran contre lequel la forme penchait.*
+ *
+ * D'où l'angle : le SEUL pour lequel la diagonale du rectangle tombe à la
+ * verticale, donc le seul qui mette un coin **droit en bas**. C'est aussi ce
+ * que Keko demandait au départ — « comme si un coin du paquet était orienté
+ * vers le bas ».
+ *
+ * **Un rectangle ne peut pas être symétrique en plus de ça**, et c'est ce qui
+ * le distingue d'un carré : ses deux coins de CÔTÉ restent à des hauteurs
+ * différentes. Le carré les aurait alignés.
  */
 const RAPPORT = 1.4
 /** Ce qui reste de la profondeur une fois le paquet vu d'en haut. */
-const ECRASEMENT = 0.55
-const RAYON = 44
+const ECRASEMENT = 0.62
+const RAYON = 46
 const CENTRE: [number, number] = [50, 44]
 const EPAISSEUR = 16
 
-/** Un coin du rectangle, pivoté d'un quart de tour puis écrasé. */
+const ANGLE = Math.atan2(-1, RAPPORT)
+const COS = Math.cos(ANGLE)
+const SIN = Math.sin(ANGLE)
+
+/** Un coin du rectangle, pivoté puis écrasé par la vue de trois quarts. */
 function coin(sx: number, sy: number): [number, number] {
-  const x = (sx * 1 - sy * RAPPORT) / 2
-  const y = (sx * 1 + sy * RAPPORT) / 2
-  const norme = (1 + RAPPORT) / 2
+  const x = (sx * 1) / 2
+  const y = (sy * RAPPORT) / 2
+  const rx = x * COS - y * SIN
+  const ry = x * SIN + y * COS
+  // Normalisé sur la demi-diagonale, pour que le dessin garde sa taille quel
+  // que soit le rapport de la carte.
+  const demiDiagonale = Math.hypot(1, RAPPORT) / 2
   return [
-    CENTRE[0] + (RAYON * x) / norme,
-    CENTRE[1] - (RAYON * ECRASEMENT * y) / norme,
+    CENTRE[0] + (RAYON * rx) / demiDiagonale,
+    CENTRE[1] - (RAYON * ECRASEMENT * ry) / demiDiagonale,
   ]
 }
 

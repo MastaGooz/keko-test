@@ -79,6 +79,24 @@ export function imageDeKeko(nom: string): string {
 }
 
 /**
+ * LE FOND COMMUN À TOUTES LES CARTES, fourni par Keko.
+ *
+ * Il se peint sous l'illustration : *le décor appartient à la carte, le sujet
+ * appartient au modèle.* Une image de modèle n'a donc plus à porter son propre
+ * ciel — mais tant qu'elle en porte un, elle le recouvre, et le fond ne se
+ * voit pas.
+ *
+ * **Même piège de cache que les autres images de `public/`** : le fichier est
+ * copié tel quel, sans empreinte de contenu dans son nom, donc son URL doit
+ * porter la date du build — sans quoi le remplacer ne changerait rien à
+ * l'écran. Et le chemin passe par `BASE_URL`, sinon il pointerait à la racine
+ * du domaine au lieu de `/keko-test/`.
+ */
+export function urlDuFond(): string {
+  return `${import.meta.env.BASE_URL}Background.png?v=${encodeURIComponent(__BUILD_TIME__)}`
+}
+
+/**
  * La même URL, brute — ce qu'il faut pour charger l'image autrement que par le
  * CSS : le moteur 3D la peint dans un canvas pour en faire une texture.
  */

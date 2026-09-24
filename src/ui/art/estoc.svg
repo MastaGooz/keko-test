@@ -44,7 +44,10 @@
     <filter id="ombre"><feGaussianBlur stdDeviation="9"/></filter>
   </defs>
 
-  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <!-- PAS DE CIEL ICI : le fond commun de toutes les cartes est
+       `public/Background.png`, peint SOUS ce dessin. Le dégradé « ciel »
+       reste défini au-dessus — le remettre en `<rect>` plein format rend
+       à la carte son fond de famille. -->
   <circle cx="380" cy="330" r="300" fill="url(#halo)"/>
   <circle cx="380" cy="330" r="190" fill="url(#lune)"/>
   <!-- les taches de la lune -->

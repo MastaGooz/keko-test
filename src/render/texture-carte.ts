@@ -23,7 +23,7 @@
  * carte 3D soit la MÊME carte, et pas une deuxième version qui dérivera.
  */
 import * as THREE from 'three'
-import { art, urlImageDeKeko } from '../ui/art.ts'
+import { art, urlDuFond, urlImageDeKeko } from '../ui/art.ts'
 
 /** Ce qu'il faut savoir d'une carte pour la peindre. */
 export type CarteAPeindre = {
@@ -126,6 +126,22 @@ async function illustration(nom: string): Promise<HTMLImageElement | null> {
   return null
 }
 
+/**
+ * LE FOND COMMUN, chargé UNE FOIS pour toutes les cartes.
+ *
+ * La promesse est mémorisée, pas l'image : `peindreCarte` est appelée par
+ * modèle, et sans ça le premier écran lancerait autant de chargements qu'il y
+ * a de cartes différentes — pour un fichier qui pèse un mégaoctet et demi.
+ * *Une ressource partagée se charge une fois, même si dix appelants la
+ * demandent en même temps.*
+ */
+let fondCommun: Promise<HTMLImageElement | null> | null = null
+
+function fond(): Promise<HTMLImageElement | null> {
+  fondCommun ??= charger(urlDuFond())
+  return fondCommun
+}
+
 function charger(url: string): Promise<HTMLImageElement | null> {
   return new Promise((resoudre) => {
     const image = new Image()
@@ -207,7 +223,11 @@ export async function peindreCarte(carte: CarteAPeindre): Promise<HTMLCanvasElem
   const ctx = canvas.getContext('2d')
   if (ctx === null) return canvas
 
-  const [image] = await Promise.all([illustration(carte.nom), document.fonts.ready])
+  const [image, decor] = await Promise.all([
+    illustration(carte.nom),
+    fond(),
+    document.fonts.ready,
+  ])
 
   // LES COINS SONT RONDS, et c'est la texture qui les porte : tout ce qui
   // suit est peint dans un rectangle arrondi, et le canvas reste transparent
@@ -242,6 +262,11 @@ export async function peindreCarte(carte: CarteAPeindre): Promise<HTMLCanvasElem
   ctx.clip()
   ctx.fillStyle = '#171b1d'
   ctx.fillRect(0, 0, LARGE, HAUT)
+  // LE FOND COMMUN D'ABORD, LE SUJET PAR-DESSUS. Demandé par Keko : une seule
+  // image de décor pour toutes les cartes, et le modèle ne porte plus que ce
+  // qu'il montre. Le repli reste celui d'avant — sans fond, la surface sombre
+  // suffit et rien ne casse.
+  if (decor !== null) couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
   if (image !== null) couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
 
   // LE VOILE SOUS LE TEXTE : le tiers du bas passe sous le nom et le

@@ -2690,6 +2690,40 @@ le compte passe de 10 à 13 cartes dont 6 qui frappent), zoomer une pièce,
 descendre, mourir — le hub rend le Glaive et le Plastron, et la potion
 emportée est perdue.
 
+### LE FOND DE CARTE EST COMMUN À TOUTES : `public/Background.png`
+
+Fourni par Keko — « à utiliser comme background de toutes les cartes, on
+dessine l'objet/l'action par-dessus ». C'est une surface texturée bleu nuit,
+sans cadre ni sujet : *le décor appartient à la carte, le sujet appartient au
+modèle.*
+
+Il se peint sous l'illustration, dans les DEUX moteurs : `texture-carte.ts`
+l'ajoute au canvas, et la carte 2D une couche de plus dans son
+`background` (`--art-fond`, sous `--art`). Même règle de cache que les autres
+fichiers de `public/` : **l'URL porte la date du build**, sinon le remplacer ne
+changerait rien à l'écran.
+
+**LES 24 DESSINS ONT PERDU LEUR CIEL, et il le fallait.** Chacun peignait un
+`<rect>` plein format qui recouvrait entièrement le fond commun : *le poser
+sous des illustrations opaques n'aurait rigoureusement rien changé.* Le retrait
+est mécanique — une seule ligne par fichier, remplacée par le commentaire qui
+dit comment la rendre. Les halos, disques et étoiles propres à chaque dessin
+RESTENT : ils deviennent des lueurs sur le fond commun, et c'est ce qui donne
+son relief à la carte.
+
+`dos.svg` et `defaut.svg` gardent le leur : ce ne sont pas des faces de carte.
+
+**Ce que ça coûte, et c'est à rejuger par Keko :** le fond de nuit propre à
+chaque famille disparaît — vert-sarcelle pour le Glaive, ardoise pour
+l'Espadon, bleu pour la défense, bordeaux pour les trésors. Le code couleur ne
+tient plus que par l'accent, qui teinte le corps de la carte et le liseré.
+Remettre un ciel est une ligne par dessin.
+
+**Une image de modèle n'a donc plus à porter son propre fond**, et il vaut
+mieux qu'elle n'en porte pas : `Glaive.png` est opaque et recouvre le fond
+commun de bout en bout. Les prochaines devraient être des PNG à canal alpha,
+sujet seul.
+
 ### La pioche et la défausse, en SYMBOLE et non en tas de cartes
 
 `render/Tas3D.tsx`. Le jeu 2D en faisait de vraies piles de dos de carte,
@@ -2719,6 +2753,17 @@ lirait comme une carte à plat et non comme une pile.** Trois traits en travers
 de l'épaisseur disent que ce sont des cartes et non un bloc. Lumière du haut et
 de la droite, comme partout : dessus le plus clair, flanc droit ensuite, flanc
 gauche sombre.
+
+**ET SON COIN POINTE DROIT EN BAS.** Pivoté d'un quart de tour, le rectangle
+posait son coin bas à DROITE du centre : invisible sur le tas de gauche,
+franchement de travers une fois collé au bord droit — Keko : « je voudrais que
+l'image du paquet de défausse soit identique à celui de la pioche, il est
+bizarre là ». Les deux dessins étaient pourtant rigoureusement identiques,
+vérifié dans le DOM : *ce qui changeait, c'était le bord d'écran contre lequel
+la forme penchait.* L'angle retenu est le seul pour lequel la diagonale du
+rectangle tombe à la verticale. **Un rectangle ne peut pas être symétrique en
+plus de ça** — ses deux coins de côté restent à des hauteurs différentes, et
+c'est précisément ce qui le distingue d'un carré.
 
 **Le viewBox colle au dessin.** Carré, il laissait un tiers de vide et le
 paquet paraissait deux fois trop petit pour la place qu'il occupait.

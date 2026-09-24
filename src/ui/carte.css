@@ -84,6 +84,7 @@
   background:
     var(--art-keko, none) center / cover no-repeat,
     var(--art) center / cover no-repeat,
+    var(--art-fond, none) center / cover no-repeat,
     #171b1d;
 }
 

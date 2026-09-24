@@ -51,7 +51,10 @@
     <filter id="ombre"><feGaussianBlur stdDeviation="9"/></filter>
   </defs>
 
-  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <!-- PAS DE CIEL ICI : le fond commun de toutes les cartes est
+       `public/Background.png`, peint SOUS ce dessin. Le dégradé « ciel »
+       reste défini au-dessus — le remettre en `<rect>` plein format rend
+       à la carte son fond de famille. -->
   <circle cx="360" cy="360" r="320" fill="url(#halo)"/>
   <circle cx="360" cy="360" r="215" fill="url(#soleil)"/>
   <path d="M158 420 A215 215 0 0 0 562 420 A240 240 0 0 1 158 420 Z" fill="#5a1d1c" opacity="0.5" filter="url(#flou)"/>
