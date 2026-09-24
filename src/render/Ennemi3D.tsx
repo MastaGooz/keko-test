@@ -13,7 +13,8 @@
  * Le jour où Keko dessine ses créatures, elles remplaceront ces SVG par le
  * même chemin que `Glaive.png` : une image, un nom, rien d'autre.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { Ennemi } from '../logic/combat.ts'
 import { creature } from '../ui/illustrations.ts'
@@ -77,11 +78,24 @@ type Props = {
   /** Il est visable : une carte est engagée et il est encore debout. */
   visable?: boolean
   onViser?: (index: number) => void
+  /** L'instant du dernier coup encaissé, en secondes d'horloge de scène. */
+  touche?: number | null
+  /** L'instant de sa mort, même horloge. Il s'efface ensuite. */
+  mortDepuis?: number | null
 }
 
-export function Ennemi3D({ ennemi, index, position, visable = false, onViser }: Props): React.JSX.Element {
+export function Ennemi3D({
+  ennemi,
+  index,
+  position,
+  visable = false,
+  onViser,
+  touche = null,
+  mortDepuis = null,
+}: Props): React.JSX.Element {
   const [texture, setTexture] = useState<THREE.Texture | null>(null)
   const mort = ennemi.pv <= 0
+  const groupe = useRef<THREE.Group>(null)
 
   useEffect(() => {
     let vivant = true
@@ -110,6 +124,33 @@ export function Ennemi3D({ ennemi, index, position, visable = false, onViser }: 
     materiau.needsUpdate = true
   }, [materiau, texture])
 
+  // LE COUP SE VOIT : le corps touché tressaille. Court, décroissant, et il
+  // travaille sur le groupe entier — l'ombre bouge avec le corps.
+  //
+  // LA MORT S'ACHÈVE SUR LA SCÈNE : le corps devenu noir garde sa PLACE dans
+  // le rang le temps du fondu, sinon les voisins glissent sous le doigt au
+  // moment où l'on choisit sa cible suivante. Il s'efface en 600 ms, après un
+  // temps où on le regarde — c'est la seule image de toute la séquence qu'on
+  // ait envie de regarder.
+  useFrame((etat) => {
+    const g = groupe.current
+    if (g === null) return
+    const t = etat.clock.elapsedTime
+    let dx = 0
+    if (touche !== null) {
+      const dt = t - touche
+      if (dt >= 0 && dt < 0.26) dx = Math.sin(dt * 62) * 0.07 * (1 - dt / 0.26)
+    }
+    g.position.set(position[0] + dx, position[1], position[2])
+
+    if (mortDepuis !== null) {
+      const dt = t - mortDepuis
+      // 0,7 s de corps noir et de tampon, puis 0,6 s de fondu.
+      const k = Math.max(0, Math.min(1, (dt - 0.7) / 0.6))
+      materiau.opacity = 0.35 * (1 - k)
+    }
+  })
+
   // UN MORT NE FRAPPE PLUS, et il doit se voir comme tel : il s'éteint en
   // silhouette noire, comme en 2D. Il garde sa place dans le rang — sinon les
   // voisins glissent sous le doigt au moment où l'on choisit sa cible.
@@ -121,7 +162,7 @@ export function Ennemi3D({ ennemi, index, position, visable = false, onViser }: 
   materiau.opacity = mort ? 0.35 : 1
 
   return (
-    <group position={position}>
+    <group ref={groupe} position={position}>
       <mesh
         onPointerDown={(e) => {
           if (mort || !visable) return

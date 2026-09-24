@@ -1939,6 +1939,45 @@ d'écran**, qui ramène l'onglet au premier plan. C'est la version 3D du piège
 déjà noté pour les iframes : *en arrière-plan, le navigateur gèle ce qu'on
 essaie de mesurer.*
 
+### Le coup se voit — jalon 4
+
+**La carte jouée s'abat sur sa cible** (`CarteQuiSAbat`), en trois temps portés
+tels quels du 2D : elle arrive haut et grande, **marque un temps d'arrêt** —
+sans lui la chute se lit comme une apparition — puis tombe d'un coup sec et
+s'écrase avant de s'effacer. L'impact est à 220 ms, et c'est là, *pas à la
+tape*, que l'état change et que partent le tressaillement et le chiffre.
+
+Un plan plutôt que le pavé de `Carte3D` : il faut de la transparence pour le
+fondu, et 450 ms ne laissent pas voir une tranche. La texture est la même,
+prise dans le même cache — c'est LA carte qu'on vient de lâcher.
+
+**Le jeu a des temps.** Tant qu'un coup se joue, la main est verrouillée
+(`verrou`), le bouton de fin de tour aussi, et le combat ne se résout pas.
+Un coup qui tue garde le verrou plus longtemps : on ne rend pas la main tant
+que le corps n'est pas tombé.
+
+**La mort, sur la scène** : le corps devenu noir garde sa place dans le rang
+le temps du fondu — sinon les voisins glissent sous le doigt au moment où l'on
+choisit sa cible suivante. La tête de mort s'abat en tampon **90 ms après
+l'impact** (le coup d'abord, ce qu'il a fait ensuite), reste 0,7 s, puis le
+corps s'efface en 600 ms.
+
+**Trois ancres HTML par créature** désormais : haute (intention), centre
+(chiffre de dégâts, tampon), basse (jauge et nom). Le chiffre porte une clé par
+coup, pour que deux coups sur le même corps ne se superposent pas et que le
+nettoyage du premier ne coupe pas le second.
+
+**L'horloge des animations est celle de la scène** (`clock.elapsedTime`,
+recopiée hors du canvas par `Horloge`) : c'est la seule qui s'arrête quand
+l'onglet est caché, donc la seule qui ne fasse pas sauter un coup en plein vol
+au retour.
+
+*Pour sonder une animation courte* : les appels de l'outil de navigateur sont
+SÉRIALISÉS, donc une sonde qui attend ne voit jamais le geste lancé après elle.
+Poser un `MutationObserver` et un `setInterval` dans la page (`window.__journal`)
+AVANT le geste, puis lire après — c'est ce qui a prouvé la séquence verrou →
+chiffre → état.
+
 ### Le combat, branché sur les vraies règles — jalon 3
 
 Le deck vient du **chargement gratuit** (`deckEmporte`), les ennemis du même

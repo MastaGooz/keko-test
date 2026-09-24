@@ -14,9 +14,25 @@ import { Canvas } from '@react-three/fiber'
 import { Main3D } from './Main3D.tsx'
 import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
 import { Projeter } from './Projeter.tsx'
+import { CarteQuiSAbat, TEMPS_FIN, TEMPS_IMPACT } from './CarteQuiSAbat.tsx'
+import { Horloge, lireHorloge } from './horloge.tsx'
 import { aPeindre, combatDeDepart } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
-import { finDuTour, jouable, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
+import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
+import type { CarteAPeindre } from './texture-carte.ts'
+import { teteDeMort } from '../ui/illustrations.ts'
+
+/** Un coup encaissé par un corps : de quoi afficher le chiffre qui saute. */
+type Coup = { cle: number; cible: number; degats: number; tue: boolean }
+
+/** La carte en train de s'abattre. */
+type EnVol = {
+  cle: number
+  carte: CarteAPeindre
+  depuis: [number, number, number]
+  vers: [number, number, number]
+  debut: number
+}
 
 /** La seed de départ. Une seule partie pour l'instant : on juge le combat. */
 const SEED = 1789
@@ -30,6 +46,15 @@ export function Scene(): React.JSX.Element {
   /** Une carte est tenue au doigt. */
   const [saisie, setSaisie] = useState(false)
 
+  // LE JEU A DES TEMPS. Tant qu'un coup se joue, la main est verrouillée et le
+  // combat ne se résout pas : l'état ne change qu'à l'IMPACT, pas à la tape.
+  const [verrou, setVerrou] = useState(false)
+  const [enVol, setEnVol] = useState<EnVol | null>(null)
+  const [coups, setCoups] = useState<Coup[]>([])
+  const [touches, setTouches] = useState<Record<number, number>>({})
+  const [morts, setMorts] = useState<Record<number, number>>({})
+  const cleSuivante = useRef(0)
+
   // LE CHARGEMENT DOIT SE VOIR. Rien ne s'affiche tant que les polices et les
   // illustrations ne sont pas là — et sur un téléphone ça fait plusieurs
   // secondes d'écran noir. *Un écran noir sans signe de vie se lit comme une
@@ -42,12 +67,58 @@ export function Scene(): React.JSX.Element {
   const debout = vivants(combat)
   const menace = Math.max(0, menaceDuTour(combat) - combat.bloc)
   const fini = combat.issue !== null
+
+  // LE RANG DES ENNEMIS, centré au-dessus de la main. Ils se tiennent côte à
+  // côte et le joueur leur fait face depuis le bas de l'écran : c'est la main
+  // qui tient sa place.
+  const rang = combat.ennemis.map((_, i) => {
+    const centre = (combat.ennemis.length - 1) / 2
+    return [(i - centre) * (CORPS * 1.25), 0.75, 0] as [number, number, number]
+  })
   // CE QU'ON PEUT JOUER MAINTENANT : assez d'énergie, et le combat n'est pas
   // fini. Un trésor n'est jouable par personne — il ne fait qu'occuper une
   // place de main.
   const jouables = useMemo(
     () => combat.main.map((c) => !fini && jouable(c) && c.cout <= combat.energie),
     [combat.main, combat.energie, fini],
+  )
+
+  /**
+   * LE COUP, EN TROIS TEMPS : la carte s'abat, l'état change à l'impact, puis
+   * la main est rendue. `frapper` est le seul endroit qui applique
+   * `jouerCarte` sur une cible — la tape directe et le ciblage y passent tous
+   * les deux.
+   *
+   * Le verrou passe de 220 à 450 ms par coup, et un coup qui tue le garde
+   * plus longtemps : on ne rend pas la main tant que le corps n'est pas tombé.
+   */
+  const frapper = useCallback(
+    (index: number, cible: number, depuis: [number, number, number]) => {
+      const carte = combat.main[index]
+      const vers = rang[cible]
+      if (carte === undefined || vers === undefined) return
+      const cons = consequence(combat, carte, cible)
+      const cle = cleSuivante.current++
+      setVerrou(true)
+      setEngagee(null)
+      setEnVol({ cle, carte: aPeindre(carte), depuis, vers, debut: lireHorloge() })
+
+      window.setTimeout(() => {
+        setCombat((c) => jouerCarte(c, index, cible))
+        setTouches((t) => ({ ...t, [cible]: lireHorloge() }))
+        setCoups((cs) => [...cs, { cle, cible, degats: carte.degats, tue: cons.tue }])
+        // LE TAMPON TOMBE 90 ms APRÈS L'IMPACT : le coup d'abord, ce qu'il a
+        // fait ensuite. L'ordre inverse ferait lire la mort comme la cause.
+        if (cons.tue) window.setTimeout(() => setMorts((m) => ({ ...m, [cible]: lireHorloge() })), 90)
+        window.setTimeout(() => setCoups((cs) => cs.filter((k) => k.cle !== cle)), 800)
+      }, TEMPS_IMPACT * 1000)
+
+      window.setTimeout(() => {
+        setEnVol(null)
+        setVerrou(false)
+      }, TEMPS_FIN * 1000 + (cons.tue ? 900 : 0))
+    },
+    [combat, rang],
   )
 
   /**
@@ -59,10 +130,10 @@ export function Scene(): React.JSX.Element {
    * elle vaut d'autant plus ici que sortir la carte est déjà un engagement.
    */
   const jouer = useCallback(
-    (index: number) => {
+    (index: number, depuis: [number, number, number]) => {
       setZoomee(null)
       const carte = combat.main[index]
-      if (carte === undefined || fini) return
+      if (carte === undefined || fini || verrou) return
       if (carte.cout > combat.energie) return
 
       if (!viseUneCible(carte)) {
@@ -71,21 +142,21 @@ export function Scene(): React.JSX.Element {
       }
       const cibles = vivants(combat)
       if (cibles.length === 1) {
-        setCombat((c) => jouerCarte(c, index, cibles[0]!.index))
+        frapper(index, cibles[0]!.index, depuis)
         return
       }
       setEngagee(index)
     },
-    [combat, fini],
+    [combat, fini, frapper, verrou],
   )
 
   const cibler = useCallback(
     (cible: number) => {
-      if (engagee === null) return
-      setCombat((c) => jouerCarte(c, engagee, cible))
-      setEngagee(null)
+      if (engagee === null || verrou) return
+      // La carte engagée a été lâchée au-dessus de la main : elle part de là.
+      frapper(engagee, cible, [0, -0.2, 1.45])
     },
-    [engagee],
+    [engagee, frapper, verrou],
   )
 
   const reordonner = useCallback((de: number, vers: number) => {
@@ -105,13 +176,6 @@ export function Scene(): React.JSX.Element {
     setCombat((c) => finDuTour(c, depart.rng))
   }, [depart.rng])
 
-  // LE RANG DES ENNEMIS, centré au-dessus de la main. Ils se tiennent côte à
-  // côte et le joueur leur fait face depuis le bas de l'écran : c'est la main
-  // qui tient sa place.
-  const rang = combat.ennemis.map((_, i) => {
-    const centre = (combat.ennemis.length - 1) / 2
-    return [(i - centre) * (CORPS * 1.25), 0.75, 0] as [number, number, number]
-  })
 
   // Les étiquettes sont du HTML ancré sur les corps : `Projeter` les fait
   // suivre. On garde les éléments dans une ref, jamais dans l'état — leur
@@ -122,11 +186,13 @@ export function Scene(): React.JSX.Element {
   // milieu du corps. En projetant le haut de la tête et le bas des pattes, les
   // étiquettes tiennent leur place à toute distance et à toute taille d'écran.
   const hautes = useRef<(HTMLDivElement | null)[]>([])
+  const centres = useRef<(HTMLDivElement | null)[]>([])
   const basses = useRef<(HTMLDivElement | null)[]>([])
   const ancres = rang.flatMap(
     (p) =>
       [
         [p[0], p[1] + CORPS * 0.62, p[2]],
+        [p[0], p[1], p[2]],
         [p[0], p[1] - CORPS * 0.62, p[2]],
       ] as [number, number, number][],
   )
@@ -175,10 +241,20 @@ export function Scene(): React.JSX.Element {
             ennemi={ennemi}
             index={i}
             position={rang[i]!}
-            visable={engagee !== null}
+            visable={engagee !== null && !verrou}
             onViser={cibler}
+            touche={touches[i] ?? null}
+            mortDepuis={morts[i] ?? null}
           />
         ))}
+
+        {/* La carte qui s'abat vit sur la scène et non dans la main : un rendu
+            de la main la balaierait en plein vol, et le coup en déclenche un. */}
+        {enVol !== null && (
+          <CarteQuiSAbat key={enVol.cle} carte={enVol.carte} depuis={enVol.depuis} vers={enVol.vers} debut={enVol.debut} />
+        )}
+
+        <Horloge />
 
         <Main3D
           cartes={main}
@@ -190,6 +266,7 @@ export function Scene(): React.JSX.Element {
           onFermerZoom={() => setZoomee(null)}
           onPeinte={compter}
           onSaisie={setSaisie}
+          verrou={verrou}
         />
 
         <mesh position={[0, 0, -1.2]} receiveShadow>
@@ -199,7 +276,11 @@ export function Scene(): React.JSX.Element {
 
         <Projeter
           points={ancres}
-          cibles={combat.ennemis.flatMap((_, i) => [hautes.current[i] ?? null, basses.current[i] ?? null])}
+          cibles={combat.ennemis.flatMap((_, i) => [
+            hautes.current[i] ?? null,
+            centres.current[i] ?? null,
+            basses.current[i] ?? null,
+          ])}
         />
       </Canvas>
 
@@ -219,6 +300,24 @@ export function Scene(): React.JSX.Element {
                 ✖ {e.degats}
                 {e.compteur > 1 && <small> dans {e.compteur}</small>}
               </span>
+            )}
+          </div>
+        ))}
+
+        {combat.ennemis.map((e, i) => (
+          <div key={`c-${e.nom}-${i}`} className="ancre-3d centre" ref={(el) => { centres.current[i] = el }}>
+            {/* LE CHIFFRE DES DÉGÂTS saute au-dessus du corps touché. Une clé
+                par coup : deux coups sur le même corps ne se superposent pas,
+                et le nettoyage du premier ne coupe pas le second. */}
+            {coups.filter((k) => k.cible === i).map((k) => (
+              <span key={k.cle} className={`degats-3d${k.tue ? ' fatal' : ''}`}>−{k.degats}</span>
+            ))}
+            {/* LA TÊTE DE MORT S'ABAT COMME UN TAMPON : énorme et translucide,
+                elle fond sur le corps, DÉPASSE sa taille de repos et y
+                revient. C'est le dépassement qui fait le coup de tampon ; sans
+                lui, un zoom inversé se lit comme un fondu qui rétrécit. */}
+            {morts[i] !== undefined && (
+              <span className="tampon-3d" dangerouslySetInnerHTML={{ __html: teteDeMort() }} />
             )}
           </div>
         ))}
@@ -277,7 +376,7 @@ export function Scene(): React.JSX.Element {
                 : `Tour ${combat.tour} · ${debout.length} debout`}
           </p>
 
-          <button className="fin-3d" type="button" onClick={terminer} disabled={fini}>
+          <button className="fin-3d" type="button" onClick={terminer} disabled={fini || verrou}>
             Fin du tour
           </button>
         </div>

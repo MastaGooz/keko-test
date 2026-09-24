@@ -3886,3 +3886,68 @@ body {
 .build-3d {
   z-index: 3;
 }
+
+/* --- le coup, en 3D ---------------------------------------------------- */
+
+/* LE CHIFFRE DES DEGATS saute au-dessus du corps touche, puis s'efface. En
+   HTML ancre : un chiffre reste net a toute distance. */
+.ancre-3d.centre > .degats-3d {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  translate: -50% 0;
+  color: #ffb1a5;
+  font-family: system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px #000, 0 0 6px #000, 0 0 12px #000;
+  animation: degats-sautent 0.8s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+.ancre-3d.centre > .degats-3d.fatal {
+  color: #ff5a4a;
+  font-size: 1.9rem;
+}
+
+@keyframes degats-sautent {
+  0% { translate: -50% 0.5rem; opacity: 0; scale: 0.7; }
+  18% { translate: -50% -1.2rem; opacity: 1; scale: 1.15; }
+  70% { translate: -50% -2rem; opacity: 1; scale: 1; }
+  100% { translate: -50% -2.6rem; opacity: 0; scale: 1; }
+}
+
+/* LA TETE DE MORT S'ABAT COMME UN TAMPON sur le corps devenu noir : enorme et
+   translucide, elle fond, DEPASSE sa taille de repos et y revient. 260 ms,
+   brutales -- tout le reste est immobile, c'est le seul mouvement. */
+.ancre-3d.centre > .tampon-3d {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4.5rem;
+  height: 4.5rem;
+  translate: -50% -50%;
+  color: #ff3b2a;
+  filter: drop-shadow(0 0 0.5rem #ff3b2a99);
+  animation: tampon-3d 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.4) forwards;
+  pointer-events: none;
+}
+
+.ancre-3d.centre > .tampon-3d svg {
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes tampon-3d {
+  0% { scale: 3.2; opacity: 0.15; }
+  70% { scale: 1.18; opacity: 1; }
+  100% { scale: 1; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ancre-3d.centre > .degats-3d,
+  .ancre-3d.centre > .tampon-3d {
+    animation-duration: 0.01s;
+  }
+}

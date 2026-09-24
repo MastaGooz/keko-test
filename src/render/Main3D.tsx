@@ -131,7 +131,8 @@ type Props = {
   jouables?: readonly boolean[]
   /** La carte qu'on regarde de près, s'il y en a une. */
   zoomee?: number | null
-  onJouer?: (index: number) => void
+  /** La carte a été sortie de la main : on la joue. `depuis` est le point du lâcher. */
+  onJouer?: (index: number, depuis: [number, number, number]) => void
   onRegarder?: (index: number) => void
   /** La carte a été reposée ailleurs dans la main. */
   onReordonner?: (de: number, vers: number) => void
@@ -139,6 +140,11 @@ type Props = {
   onPeinte?: () => void
   /** Une carte est tenue au doigt (ou vient d'être lâchée). */
   onSaisie?: (tenue: boolean) => void
+  /**
+   * LE JEU A DES TEMPS. Tant qu'une animation se déroule, la main ne répond
+   * pas : le coup se joue en entier avant qu'on puisse en lancer un autre.
+   */
+  verrou?: boolean
 }
 
 /**
@@ -184,6 +190,7 @@ export function Main3D({
   onFermerZoom,
   onPeinte,
   onSaisie,
+  verrou = false,
 }: Props): React.JSX.Element {
   const { camera } = useThree()
   const [tenue, setTenue] = useState<number | null>(null)
@@ -310,7 +317,7 @@ export function Main3D({
       if (point === null) return
       // C'EST LA HAUTEUR DU DOIGT QUI TRANCHE : au-dessus de la main on joue,
       // dedans on RANGE. Même règle qu'en 2D.
-      if (point.y > LIGNE_DE_JEU) onJouer?.(index)
+      if (point.y > LIGNE_DE_JEU) onJouer?.(index, [point.x, point.y, point.z])
       else onReordonner?.(index, placeSousLeDoigt(point.x, cartes.length - 1))
     },
     // `bouger` et `detacher` sont stables : les fonctions se citent l'une
@@ -337,6 +344,9 @@ export function Main3D({
 
   const prendre = useCallback(
     (index: number) => (e: ThreeEvent<PointerEvent>) => {
+      // Verrouillée, la main ne prend rien : ni geste, ni survol qui la
+      // ferait paraître jouable pendant qu'elle ne l'est pas.
+      if (verrou) return
       e.stopPropagation()
       const natif = e.nativeEvent
       const g = geste.current
@@ -373,7 +383,7 @@ export function Main3D({
       window.addEventListener('pointerup', relacher, { signal: stop.signal })
       window.addEventListener('pointercancel', annuler, { signal: stop.signal })
     },
-    [annuler, bouger, relacher, detacher],
+    [annuler, bouger, relacher, detacher, verrou],
   )
 
   // LES VOISINES SE REFERMENT sur la place de la carte tenue : on range celles
