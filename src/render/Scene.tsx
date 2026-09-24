@@ -622,16 +622,28 @@ export function Scene(): React.JSX.Element {
         />
         )}
 
-        {/* LE SOL QUI RECOIT LES OMBRES N'EXISTE QUE PENDANT LE COMBAT. Les
-            cartes d'un ecran de palier sont posees DEVANT le voile, mais leur
-            ombre, elle, tombe derriere lui : on voyait trois rectangles noirs
-            alignes sous les trois offres, qui ne se lisaient ni comme des
-            ombres ni comme rien d'autre. *Une ombre portee sur un decor qu'on
-            vient de masquer ne raconte plus le meme objet.* */}
+        {/* LE SOL QUI RECOIT LES OMBRES SE TIENT JUSTE DERRIÈRE LA MAIN.
+
+            Il était loin en arrière (z = −1,2), et la lumière vient d'en haut à
+            droite : l'ombre d'une carte partait donc à plus d'une carte en bas
+            à gauche d'elle, si loin qu'on ne la voyait qu'en levant la carte
+            très haut. Keko : « l'ombre des cartes est trop loin de la carte ».
+            *La distance entre l'objet et ce qui reçoit son ombre EST la
+            longueur du jet* — rapprocher le sol est le seul réglage qui la
+            raccourcisse sans toucher à la lumière.
+
+            Au repos l'ombre affleure donc la carte ; elle s'en détache quand on
+            la lève, ce qui dit la hauteur. `depthWrite` coupé : le plan passe
+            devant les créatures, et il ne doit rien masquer d'autre que ce
+            qu'il assombrit.
+
+            Il N'EXISTE QUE PENDANT LE COMBAT : les cartes d'un écran de palier
+            sont posées devant le voile, mais leur ombre tomberait derrière lui
+            — on voyait trois rectangles noirs alignés sous les trois offres. */}
         {enCombat && (
-          <mesh position={[0, 0, -1.2]} receiveShadow>
+          <mesh position={[0, 0, 0.9]} receiveShadow>
             <planeGeometry args={[16, 10]} />
-            <shadowMaterial opacity={0.5} />
+            <shadowMaterial opacity={0.42} depthWrite={false} />
           </mesh>
         )}
 

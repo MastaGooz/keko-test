@@ -2008,6 +2008,22 @@ reste levée tant que je ne hover pas une autre carte ». *Tout ce qui désigne
 une carte de la main entre deux rendus se désigne par son `id`* : la clé, le
 survol, la carte en vol.
 
+### La distance au sol EST la longueur de l'ombre
+
+Le plan qui reçoit les ombres se tenait loin en arrière (z = −1,2) et la
+lumière vient d'en haut à droite : l'ombre d'une carte partait donc à plus
+d'une carte en bas à gauche d'elle, si loin qu'on ne la voyait qu'en levant la
+carte très haut. Keko : « l'ombre des cartes est trop loin de la carte ».
+
+*La distance entre l'objet et ce qui reçoit son ombre EST la longueur du jet* —
+rapprocher le sol est le seul réglage qui la raccourcisse **sans toucher à la
+lumière**, qui éclaire aussi tout le reste. Il se tient donc juste derrière la
+main : au repos l'ombre affleure la carte, et elle s'en détache quand on la
+lève, ce qui dit la hauteur.
+
+`depthWrite` coupé, parce que le plan passe désormais devant les créatures : il
+ne doit rien masquer d'autre que ce qu'il assombrit.
+
 ### LA PROFONDEUR N'EST PAS UNE POSITION, C'EST UN ORDRE
 
 Une carte survolée avance d'un cheveu pour passer devant ses voisines.
