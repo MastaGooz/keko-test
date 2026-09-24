@@ -4083,75 +4083,13 @@ body {
   color: #e8c8c2;
 }
 
-/* LES BOUTONS ANCRES SOUS LEUR EMPLACEMENT. `Projeter` reecrit leur
-   `transform` a chaque image : rien ici ne doit le concurrencer, d'ou le
-   `inset` a zero et le decalage porte entierement par le transform. */
-.ancres-butin {
-  position: fixed;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-}
+/* LES BOUTONS DU BUTIN VIVENT DANS LA SCENE (`Bouton3D`), pas ici.
 
-/* L'ANCRE EST UN POINT, pas une boite : `Projeter` la centre sur lui
-   (`translate(-50%, -50%)`), et une boite de taille nulle se centre sur
-   elle-meme. */
-.ancre-butin {
-  position: absolute;
-  inset: 0 auto auto 0;
-  will-change: transform;
-}
+   Un bouton HTML doit etre au-dessus du canvas pour recevoir le clic -- un
+   canvas capte le pointeur partout, meme la ou il ne dessine rien -- donc la
+   carte qu'on promene passait forcement DERRIERE lui. Aucun ordre de calques
+   ne pouvait donner l'inverse : tant que le bouton et la carte vivent dans des
+   mondes differents, leur ordre se decide ailleurs que par leur profondeur.
 
-/* LES BOUTONS PENDENT SOUS LE POINT, ils ne s'y centrent pas. Centres, la
-   colonne remontait de sa demi-hauteur et mordait le bas de la carte -- et
-   d'autant plus qu'elle comptait deux boutons. *Un bloc dont la hauteur
-   change doit s'accrocher par le bord qui ne bouge pas.* */
-.ancre-butin > .sous-slot {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  translate: -50% 0;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* LES DEUX ISSUES DU REBUT SONT PLUS PETITES que les boutons qui engagent
-   l'ecran : elles decident d'une carte, pas du palier. La hauteur s'arrete
-   quand meme a 3rem -- c'est le plancher tactile du projet. */
-.bouton-3d.petit {
-  min-height: 3rem;
-  padding: 0.5rem 0.9rem;
-  font-size: 0.8125rem;
-}
-
-.ancre-butin .bouton-3d {
-  pointer-events: auto;
-  white-space: nowrap;
-}
-
-/* « TERMINER » RESTE AU BORD DROIT : c'est la sortie de l'ecran, pas une
-   decision sur un tresor, et c'est la que le pouce trouve deja « Fin du
-   tour » en combat. */
-.palier-3d > .actions-3d {
-  position: absolute;
-  inset: 50% 1rem auto auto;
-  translate: 0 -50%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  align-items: stretch;
-  pointer-events: auto;
-}
-
-.bouton-3d.perdre {
-  border-color: #b3382a;
-  background: linear-gradient(#4a1712, #2a0f0c);
-  color: #ffc9c0;
-}
-
-.bouton-3d.garder {
-  border-color: #3f8f5a;
-  background: linear-gradient(#153322, #0d1f15);
-  color: #c4e8d2;
-}
+   Il ne reste en CSS que les boutons des ecrans ou rien ne se manipule --
+   point de sortie, fin de descente. */

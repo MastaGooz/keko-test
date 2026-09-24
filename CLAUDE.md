@@ -2139,19 +2139,28 @@ où était « Prendre »** une fois le trésor décidé : le second n'apparaît 
 fois le premier consommé, et *un bouton qui se déplace entre deux états
 successifs oblige à le chercher deux fois.*
 
-**TOUS LES BOUTONS S'ÉTEIGNENT PENDANT UN GLISSER**, et ça règle deux choses
-d'un coup. Ils sont posés AU-DESSUS du canvas — sinon le voile de l'écran les
-noircirait — donc une carte promenée passait DERRIÈRE eux ; à 35 % d'opacité
-elle se lit au travers, et le bouton ne la masque plus. Et un bouton reste
-inerte tant qu'on tient une carte : *on est au milieu d'un geste, rien d'autre
-n'a à répondre.* Keko : « le bouton prendre et terminer est passé par-dessus la
-carte quand je la drague ; il devrait être exactement comme quand un objet est
-dans le slot jeter ».
+**LES BOUTONS DU BUTIN VIVENT DANS LA SCÈNE** (`Bouton3D`), et ce n'est pas
+une coquetterie : **un bouton HTML doit être au-dessus du canvas pour recevoir
+le clic** — un canvas capte le pointeur partout, même là où il ne dessine rien
+— donc la carte qu'on promène passait forcément DERRIÈRE lui. Keko : « le
+bouton prendre/terminer est au-dessus de la carte quand je la drague alors
+qu'il devrait être en dessous ».
 
-*La leçon est de méthode* : entre « la carte passe devant » et « le bouton
-reste lisible », il n'y avait pas d'ordre d'empilement qui satisfasse les deux.
-**Baisser l'opacité les réconcilie, parce qu'elle ne choisit pas** — elle
-laisse voir les deux.
+*Aucun ordre de calques ne pouvait donner l'inverse* : tant que le bouton et la
+carte vivent dans des mondes différents, leur ordre se décide ailleurs que par
+leur profondeur. Le descendre sous le canvas le rendait inerte ET noirci par le
+voile ; le laisser dessus masquait la carte. Dans la scène, la question ne se
+pose plus — la carte tenue est devant, le bouton derrière, et le clic suit le
+même rayon que tout le reste.
+
+**Leur hauteur se compte en PIXELS, pas en unités de scène** : un bouton
+mesuré dans le monde ferait 27 px sur un téléphone et 69 sur un moniteur, alors
+que c'est le doigt qui le touche — et *le doigt ne change pas de taille avec
+l'écran*. La conversion se fait donc à l'envers, depuis la fenêtre, pour tenir
+le plancher de 48 px du projet.
+
+**Ils s'éteignent pendant un glisser** : on est au milieu d'un geste, rien
+d'autre n'a à répondre.
 
 **« Terminer » se GRISE quand une carte attend dans le rebut, il ne disparaît
 pas.** Le projet veut d'ordinaire qu'un bouton agisse ou ne soit pas là — « il

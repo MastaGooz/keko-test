@@ -25,6 +25,7 @@
  */
 import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
+import { Bouton3D, tailleBouton } from './Bouton3D.tsx'
 import { Carte3D } from './Carte3D.tsx'
 import { Z_MAIN, hauteurVisibleA, surLePlan } from './Cadrage.tsx'
 import { Z_TENUE, ligneDeLaMain } from './Main3D.tsx'
@@ -54,6 +55,19 @@ export const Z_SLOTS = Z_MAIN
  * sous lui, et sur un téléphone — où tout est proportionnellement plus grand —
  * ils tomberaient sinon dans la main.
  */
+/** Les deux issues du rebut, épaule contre épaule sous leur emplacement. */
+function ecartJeter(): number {
+  return tailleBouton('Reprendre', 'garder', true, Z_SLOTS, window.innerHeight).largeur / 2 + 0.03
+}
+function ecartReprendre(): number {
+  return tailleBouton('Jeter', 'perdre', true, Z_SLOTS, window.innerHeight).largeur / 2 + 0.03
+}
+
+/** De combien descendre le centre d'un bouton pour qu'il passe sous la carte. */
+function bas(petit: boolean, hauteurFenetrePx: number): number {
+  return tailleBouton('X', 'or', petit, Z_SLOTS, hauteurFenetrePx).hauteur / 2 + 0.06
+}
+
 function places(): {
   xLoot: number
   yLoot: number
@@ -73,8 +87,10 @@ function places(): {
     // Borné : sur un écran large, collé au bord, il sortirait du regard.
     xJeter: Math.min(demiLarge - 0.65, 2.2),
     yJeter,
-    sousLoot: yLoot - 0.74,
-    sousJeter: yJeter - 0.72,
+    // Sous le bas de la carte, plus la demi-hauteur du bouton et un cheveu :
+    // il se CENTRE sur son point, il n'y pend pas.
+    sousLoot: yLoot - 0.7 - bas(false, h),
+    sousJeter: yJeter - 0.7 - bas(true, h),
   }
 }
 
@@ -106,27 +122,8 @@ export function slotSous(
   return null
 }
 
-/**
- * Où poser les boutons : sous chaque emplacement.
- *
- * **« Terminer » se pose exactement où était « Prendre »**, pas au centre de
- * la place du trésor : c'est le même geste au même endroit, l'un après
- * l'autre. Un bouton qui se déplace entre deux états successifs oblige à le
- * chercher deux fois.
- */
-export function ancresDuButin(): [number, number, number][] {
-  const { xLoot, xJeter, sousLoot, sousJeter } = places()
-  return [
-    [xLoot, sousLoot, Z_SLOTS],
-    [xJeter, sousJeter, Z_SLOTS],
-  ]
-}
-
 /** Ce que lâcher à cet endroit veut dire, sur l'écran de butin. */
-function destinationDe(
-  point: THREE.Vector3,
-  avecLoot: boolean,
-): Destination | null {
+function destinationDe(point: THREE.Vector3, avecLoot: boolean): Destination | null {
   // SOUS LA LIGNE DE JEU, C'EST LA MAIN : le trésor rejoint ce qu'on emporte,
   // exactement comme une carte de combat qu'on repose dans sa main.
   if (point.y <= ligneDeLaMain(window.innerHeight)) return 'deck'
@@ -189,6 +186,13 @@ type Props = {
   aJeter: CarteAPeindre | null
   /** Un trésor a été glissé d'un emplacement vers ailleurs. */
   onDeplacer?: (source: Emplacement, cible: Destination) => void
+  /** Ce qu'on peut décider maintenant. Un bouton absent n'est pas dessiné. */
+  onPrendreLoot?: () => void
+  onTerminer?: () => void
+  onJeter?: () => void
+  onReprendre?: () => void
+  /** Une carte est tenue ailleurs sur l'écran : tout s'éteint. */
+  gestEnCours?: boolean
   onRegarder?: (carte: CarteAPeindre) => void
   /** Une carte est tenue : le parent fait passer la scène devant l'interface. */
   onSaisie?: (tenue: boolean) => void
@@ -199,13 +203,18 @@ export function Butin3D({
   loot,
   aJeter,
   onDeplacer,
+  onPrendreLoot,
+  onTerminer,
+  onJeter,
+  onReprendre,
+  gestEnCours = false,
   onRegarder,
   onSaisie,
   onPeinte,
 }: Props): React.JSX.Element {
   // Index 0 : ce qui arrive. Index 1 : ce qu'on s'apprête à jeter.
   const cartes = [loot, aJeter]
-  const { xLoot, yLoot, xJeter, yJeter } = places()
+  const { xLoot, yLoot, xJeter, yJeter, sousLoot, sousJeter } = places()
 
   const { tenue, doigt, prendre } = useGesteCarte({
     z: Z_TENUE,
@@ -263,6 +272,57 @@ export function Butin3D({
         onPrendre={prendre(1)}
         onPeinte={onPeinte}
       />
+
+      {/* LES BOUTONS SONT DANS LA SCÈNE, donc DERRIÈRE la carte qu'on promène :
+          c'est la seule façon d'obtenir cet ordre, puisqu'un bouton HTML doit
+          être au-dessus du canvas pour recevoir le clic. Ils s'éteignent
+          pendant un geste — on est au milieu d'un mouvement, rien d'autre n'a
+          à répondre — et on voit alors la carte au travers. */}
+      {loot !== null ? (
+        <Bouton3D
+          texte="Prendre"
+          ton="or"
+          position={[xLoot, sousLoot, Z_SLOTS]}
+          eteint={tenue !== null || gestEnCours}
+          onCliquer={onPrendreLoot}
+        />
+      ) : (
+        // GRISÉ, PAS ABSENT, tant qu'une carte attend dans le rebut : il vient
+        // d'apparaître à la place du trésor, le voir s'effacer aussitôt
+        // donnerait l'impression de l'avoir cassé.
+        <Bouton3D
+          texte="Terminer"
+          ton="or"
+          position={[xLoot, sousLoot, Z_SLOTS]}
+          eteint={aJeter !== null || tenue !== null || gestEnCours}
+          onCliquer={onTerminer}
+        />
+      )}
+
+      {aJeter !== null && (
+        <>
+          {/* JETER DEMANDE DEUX GESTES : on voit ce qu'on s'apprête à perdre,
+              puis on valide. Et l'autre issue est posée juste à côté — un
+              glisser qu'il faut deviner ne vaut pas un bouton qui dit le choix
+              inverse. */}
+          <Bouton3D
+            texte="Jeter"
+            ton="perdre"
+            petit
+            position={[xJeter - ecartJeter(), sousJeter, Z_SLOTS]}
+            eteint={tenue !== null || gestEnCours}
+            onCliquer={onJeter}
+          />
+          <Bouton3D
+            texte="Reprendre"
+            ton="garder"
+            petit
+            position={[xJeter + ecartReprendre(), sousJeter, Z_SLOTS]}
+            eteint={tenue !== null || gestEnCours}
+            onCliquer={onReprendre}
+          />
+        </>
+      )}
 
       {/* LA CARTE TENUE SUIT LE DOIGT, hors de sa case. */}
       {portee !== null && doigt !== null && (

@@ -23,7 +23,7 @@ import { Cadrage, FOV, zCamera } from './Cadrage.tsx'
 import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
-import { Butin3D, ancresDuButin, slotSous } from './Butin3D.tsx'
+import { Butin3D, slotSous } from './Butin3D.tsx'
 import { Zoom3D } from './Zoom3D.tsx'
 import { aPeindre, descenteDeDepart } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
@@ -482,10 +482,6 @@ export function Scene(): React.JSX.Element {
   // écart fixe ne suit pas la perspective, et la jauge se retrouvait posée au
   // milieu du corps. En projetant le haut de la tête et le bas des pattes, les
   // étiquettes tiennent leur place à toute distance et à toute taille d'écran.
-  /** Les deux ancres de l'écran de butin : sous le loot, sous le rebut. */
-  const sousLoot = useRef<HTMLDivElement | null>(null)
-  const sousJeter = useRef<HTMLDivElement | null>(null)
-
   const hautes = useRef<(HTMLDivElement | null)[]>([])
   const centres = useRef<(HTMLDivElement | null)[]>([])
   const basses = useRef<(HTMLDivElement | null)[]>([])
@@ -596,6 +592,11 @@ export function Scene(): React.JSX.Element {
               loot={loot}
               aJeter={aJeter}
               onDeplacer={deplacerDepuisSlot}
+              onPrendreLoot={prendreLoot}
+              onTerminer={terminerLeButin}
+              onJeter={confirmerJet}
+              onReprendre={reprendre}
+              gestEnCours={saisie}
               onRegarder={setZoomee}
               onSaisie={setSaisie}
               onPeinte={compter}
@@ -670,14 +671,6 @@ export function Scene(): React.JSX.Element {
           }
         />
 
-        {/* Les boutons du butin suivent leur emplacement : « Prendre » sous le
-            trésor qui arrive, les deux issues sous le rebut. */}
-        {phase.type === 'butin' && (
-          <Projeter
-            points={ancresDuButin()}
-            cibles={() => [sousLoot.current, sousJeter.current]}
-          />
-        )}
       </Canvas>
 
       {/* CE QUE CHAQUE CRÉATURE DIT D'ELLE-MÊME, ancré sur son corps :
@@ -738,87 +731,6 @@ export function Scene(): React.JSX.Element {
           </div>
         ))}
       </div>
-
-      {/* LES BOUTONS DU BUTIN, ancrés sous leur emplacement. Ils vivent hors du
-          panneau parce qu'ils sont projetés : leur `transform` est réécrit à
-          chaque image, et rien d'autre ne doit le disputer.
-
-          TOUS S'ÉTEIGNENT PENDANT UN GLISSER, et ça règle deux choses d'un
-          coup. Ils sont posés AU-DESSUS du canvas — sinon le voile de l'écran
-          les noircirait — donc une carte promenée passait derrière eux ; à 35 %
-          d'opacité, elle se lit au travers. Et un bouton reste inerte tant
-          qu'on tient une carte : *on est au milieu d'un geste, rien d'autre
-          n'a à répondre.* Keko : « le bouton prendre et terminer est passé
-          par-dessus la carte quand je la drague ; il devrait être exactement
-          comme quand un objet est dans le slot jeter ». */}
-      {pret && phase.type === 'butin' && (
-        <div className="ancres-butin">
-          {/* SOUS LA PLACE DU TRÉSOR : « Prendre » tant qu'il y en a un, puis
-              « Terminer » AU MÊME ENDROIT. Le second n'apparaît qu'une fois le
-              premier consommé — *un bouton qui se déplace entre deux états
-              successifs oblige à le chercher deux fois.* */}
-          <div className="ancre-butin" ref={sousLoot}>
-            <div className="sous-slot">
-              {phase.loot !== null ? (
-                <button
-                  type="button"
-                  className="bouton-3d prendre"
-                  onClick={prendreLoot}
-                  disabled={saisie}
-                >
-                  Prendre
-                </button>
-              ) : (
-                // GRISÉ, PAS ABSENT, tant qu'une carte attend dans le rebut.
-                // Le projet veut d'ordinaire qu'un bouton agisse ou ne soit pas
-                // là ; Keko a tranché l'inverse ici, et il a raison sur ce
-                // cas-là : *le bouton vient d'apparaître à la place du trésor*,
-                // le voir disparaître aussitôt qu'on pose une carte à jeter
-                // donnerait l'impression de l'avoir cassé.
-                <button
-                  type="button"
-                  className="bouton-3d prendre"
-                  onClick={terminerLeButin}
-                  disabled={phase.aJeter !== null || saisie}
-                >
-                  Terminer
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="ancre-butin" ref={sousJeter}>
-            <div className="sous-slot">
-            {/* JETER DEMANDE DEUX GESTES : on voit ce qu'on s'apprête à perdre,
-                puis on valide. Et l'autre issue est posée juste à côté — un
-                glisser qu'il faut deviner ne vaut pas un bouton qui dit le
-                choix inverse. */}
-            {phase.aJeter !== null && (
-              <>
-                {/* Le prix perdu est déjà écrit SUR la carte, juste au-dessus :
-                    le répéter sur le bouton allonge un mot qui doit rester un
-                    verbe. */}
-                <button
-                  type="button"
-                  className="bouton-3d petit perdre"
-                  onClick={confirmerJet}
-                  disabled={saisie}
-                >
-                  Jeter
-                </button>
-                <button
-                  type="button"
-                  className="bouton-3d petit garder"
-                  onClick={reprendre}
-                  disabled={saisie}
-                >
-                  Reprendre
-                </button>
-              </>
-            )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* L'INTERFACE RESTE EN HTML, au-dessus du canvas : des chiffres et un
           bouton n'ont rien à gagner à être en volume, et ils restent nets à
