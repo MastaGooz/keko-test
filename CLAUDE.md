@@ -2137,6 +2137,148 @@ cache de textures. *Une dépendance d'effet ne doit jamais être un objet qu'on
 vient de construire* — et quand on en tient un, la bonne dépendance est la
 valeur qui le caractérise, pas sa référence.
 
+### LA CARTE SE POSE, LA FLÈCHE VISE
+
+**Le même système qu'il y ait un corps debout ou cinq.** Keko : « il faudrait
+le même système qu'il y ait une cible ou plusieurs ». Plus rien n'est visé
+automatiquement, et la visée en deux temps a disparu avec.
+
+Dès qu'une carte qui **demande une cible** passe en zone de jeu, elle **cesse
+de suivre le doigt** : elle se cale au centre, juste au-dessus de la main et
+devant elle, et c'est une **flèche** (`Fleche3D`) qui prend le relais jusqu'au
+pointeur. Lâcher sur un corps le frappe ; lâcher dans le vide **remet la carte
+dans la main** et rien n'est joué. Une carte qui ne vise personne — garde,
+potion, coup à tout le rang — part toujours dès qu'on la lâche au-dessus de la
+main : elle n'a rien à désigner.
+
+*Ce que ça achète* : la carte ne masque plus ce qu'on vise. Tant qu'elle
+suivait le pouce, elle se posait précisément sur le corps qu'on cherchait à
+désigner — sur un téléphone, la cible disparaissait sous la carte au moment
+exact où il fallait la voir.
+
+**ELLE SE POSE UNE DEMI-CARTE SOUS LA LIGNE DE JEU** (`ANCRE_VISEE`), pas sur
+la ligne elle-même : ancrée dessus, son haut montait jusqu'aux corps et les
+recouvrait — le défaut qu'on venait de corriger, reproduit autrement. Elle
+chevauche le haut de la main, qu'elle masque sans conséquence (on ne choisit
+plus dedans), et laisse le rang entièrement libre.
+
+**La flèche est un trait pointillé en cloche**, comme les arches du jeu 2D :
+des pastilles qui grossissent vers la pointe et une tête orientée sur la
+tangente. *Pas une ligne* — `LineBasicMaterial` est plafonné à 1 px de large
+sur la plupart des machines, ce qui donne un fil invisible au doigt. Elle est
+**dorée quand elle tient un corps, pâle sinon** : c'est le seul repère qui
+dise, avant de lâcher, si le coup partira. Le halo de la carte suit la même
+règle.
+
+**Trois niveaux sur les corps, et ils doivent rester distincts** : mat, lueur
+qui respire sur un corps qu'on PEUT viser, éclat franc (et un rien plus gros)
+sur celui que la flèche désigne. Le deuxième ne peut pas dépendre d'un survol
+— *il n'y en a pas au doigt.*
+
+**LA CIBLE SE RECALCULE AU LÂCHER**, depuis le point de lâcher. Celle qu'on
+affichait pendant le geste vit dans un rendu que l'écouteur, posé au
+`pointerdown`, ne voit pas — c'est la même famille de piège que les écouteurs
+retirés par référence.
+
+**Les morts gardent leur index mais sortent du champ** : les index de cible
+sont ceux du moteur, et les compacter ici ferait viser le voisin. On les envoie
+au loin, ils deviennent simplement inatteignables.
+
+*Piège de mesure, et il a coûté une fausse piste* : **les coordonnées de
+l'outil de navigateur ne sont pas celles de la page**. Le repère des clics
+valait 1568 de large quand `window.innerWidth` en faisait 2560 — un
+`pointerup` fabriqué à la main avec les coordonnées de l'outil tombait à un
+tiers d'écran de là, et désignait la mauvaise créature. Le jeu, lui, visait
+juste. **Vérifier `innerWidth` avant de fabriquer un évènement.**
+
+### L'écran de butin — et c'est l'écran de jeu
+
+`Butin3D.tsx`. Ce qu'on emporte est **littéralement la main** : même éventail,
+même taille de carte, même enfouissement sous le bord, mêmes gestes — c'est
+`Main3D`, inchangée, avec les trésors portés dedans. *C'est la main qu'on
+alourdit, donc c'est la main qu'on montre.* Le module ne dessine que ce qui
+s'ajoute au-dessus : **deux emplacements**, ce qui arrive et ce qu'on jette.
+
+**Chaque emplacement est aussi un bouton**, comme en 2D : sur téléphone le
+glisser seul est fragile, donc la tape doit toujours marcher. Taper « Jeter »
+vide y envoie le trésor qui arrive — c'est le refus ; le glisser depuis la
+main désigne la même destination. **Et on compare sur LE PLAN DES
+EMPLACEMENTS** (`slotSous`), pas en coordonnées de scène : la carte tenue vit
+devant eux, donc un doigt pile dessus donne deux points éloignés. Même piège
+que la visée d'une créature.
+
+**Le halo ne s'allume que là où lâcher fait quelque chose** (`zoneActive` sur
+`Main3D`). En combat tout l'espace au-dessus de la main joue la carte, donc le
+halo dit vrai partout ; ici seuls les deux emplacements reçoivent, et *un halo
+allumé au-dessus du vide promettrait un dépôt qui n'aura pas lieu.*
+
+**JETER DEMANDE DEUX GESTES**, et la carte posée dans le rebut reste
+**ENTIÈRE avec une lueur ROUGE** (`peril` sur `Carte3D`) — Keko, sur le 2D :
+« au lieu de la foncer, on devrait mettre une lueur rouge autour ». Une carte
+éteinte se lit comme déjà perdue alors qu'elle ne l'est pas, et on doit
+pouvoir la lire avant de valider. Elle ne frémit pas : le frémissement dit
+« lâche et ça part », c'est le vocabulaire d'un geste en cours. À côté,
+« Jeter — 65 d'or » en rouge et « Reprendre » en vert : les deux issues,
+côte à côte.
+
+**Les boutons vivent au bord droit, pas en bas** : le bas de l'écran est à la
+main, comme en combat, et c'est là que le pouce trouve déjà « Fin du tour ».
+
+**L'emplacement de loot disparaît une fois vide** ; « Jeter » reste. Et un
+emplacement occupé **ne se zoome pas** — différence assumée avec le 2D, où le
+slot était plus petit que la main : ici la carte y est à sa taille de main et
+sans voisine par-dessus. *Le zoom existe pour défaire un recouvrement, pas par
+principe.*
+
+### LE GESTE EST UN MODULE, PAS UN BOUT DE LA MAIN
+
+`geste-carte.ts`. Prendre, promener, lâcher vivaient dans `Main3D`, et ils y
+étaient enfermés : les emplacements du butin ne pouvaient ni se zoomer ni se
+glisser, alors que ce sont les mêmes cartes. Keko : « je ne peux pas cliquer
+sur le trésor dans le slot de loot pour zoomer ni le drag vers la main ». *Ce
+sont les mêmes cartes, ce doit être le même geste* — et le réécrire à côté,
+c'était refaire la faute des quatre fonctions qui dessinaient chacune leur
+carte avant `corpsCarte`.
+
+**Le hook ne décide de RIEN.** Il dit « celle-ci est tenue », « le doigt est
+là », « elle a été tapée », « elle a été lâchée ici ». Ce que ça VEUT DIRE —
+jouer, ranger, déposer — appartient à l'écran. La main garde donc sa règle
+(au-dessus de la ligne on joue, dedans on range) et le butin la sienne (sous
+la ligne c'est la main, au-dessus c'est un emplacement).
+
+**LE ZOOM PORTE LA CARTE, PAS UN INDEX DE MAIN** (`Zoom3D.tsx`), et c'est
+exactement la correction que le jeu 2D avait déjà faite : tant qu'il était un
+index dans `combat.main`, il était impossible de zoomer ailleurs. Il vit
+désormais au-dessus de tous les écrans, et n'importe lequel lui passe une
+carte. `Main3D` ne connaît plus le zoom du tout : elle reçoit seulement
+`envolee`, l'identifiant d'une carte **qui n'est plus dans la main** — celle
+qui s'abat, celle qui attend sa cible, celle qu'on regarde. Trois raisons, un
+seul mécanisme.
+
+**Ce qu'on tient n'est plus à sa place** : la case d'où vient la carte reprend
+l'habit d'une case vide le temps du glisser, et elle dit toujours ce qu'elle
+attend. Règle de l'armurerie 2D — sans son nom, c'est un pointillé muet.
+
+*Piège de test, rencontré deux fois* : un glisser lancé dans le même lot
+d'actions qu'un changement d'écran part avant que React n'ait rendu, et il ne
+touche rien. **Ça ressemble exactement à un geste cassé.** Laisser la scène se
+poser avant de mesurer.
+
+### La page figée : une DÉPENDANCE D'EFFET qui est un objet neuf
+
+**Le plus coûteux de cette étape, et il ne dit rien du tout.** `Carte3D`
+chargeait sa texture dans un effet dépendant de `carte`, l'objet. Un parent qui
+construit sa carte à la volée — `aPeindre(phase.loot)` — en fabrique une
+NOUVELLE à chaque rendu : l'effet se relançait, `onPeinte` incrémentait un
+compteur d'état, le rendu repartait. Boucle infinie, page gelée, **pas une
+seule erreur en console**, et le premier symptôme était un clic qui « ne
+marchait qu'une fois sur deux » sur l'écran de récompense.
+
+L'effet dépend désormais de la **signature du modèle**, qui est déjà la clé du
+cache de textures. *Une dépendance d'effet ne doit jamais être un objet qu'on
+vient de construire* — et quand on en tient un, la bonne dépendance est la
+valeur qui le caractérise, pas sa référence.
+
 ### Viser à plusieurs corps : LÂCHER SUR LE CORPS
 
 **Sortir une carte offensive à plusieurs ennemis ne changeait RIEN à l'écran.**

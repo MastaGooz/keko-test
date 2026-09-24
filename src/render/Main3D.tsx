@@ -26,12 +26,14 @@
  * ajoute : l'épaisseur, l'ombre portée d'une carte sur sa voisine, et le
  * laiton du cadre qui prend la lumière.
  */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Carte3D, HAUT } from './Carte3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
-import { Z_MAIN, hauteurVisibleA } from './Cadrage.tsx'
+import { Fleche3D } from './Fleche3D.tsx'
+import { CORPS } from './Ennemi3D.tsx'
+import { Z_MAIN, hauteurVisibleA, surLePlan } from './Cadrage.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
 
 /**
@@ -120,6 +122,18 @@ export const LIGNE_DE_JEU = -0.35
  */
 const ECART_FENTE = 0.3
 
+/**
+ * Où la carte qui vise vient se poser : au centre, **juste au-dessus de la
+ * main et devant elle**.
+ *
+ * Posée sur la ligne de jeu elle-même, son haut montait jusqu'aux corps et les
+ * recouvrait — précisément le défaut qu'on voulait corriger en la décrochant
+ * du doigt. Elle se cale donc une demi-carte plus bas : elle chevauche le haut
+ * de la main, qu'elle masque sans conséquence (on ne choisit plus dedans), et
+ * elle laisse le rang entièrement libre.
+ */
+const ANCRE_VISEE = LIGNE_DE_JEU - 0.45
+
 
 type Props = {
   cartes: readonly CarteAPeindre[]
@@ -136,8 +150,12 @@ type Props = {
    * main et les index glissent — un index cacherait alors sa voisine.
    */
   envolee?: string | null
-  /** La carte a été sortie de la main : on la joue. `depuis` est le point du lâcher. */
-  onJouer?: (index: number, depuis: [number, number, number]) => void
+  /**
+   * La carte a été sortie de la main : on la joue. `depuis` est le point du
+   * lâcher, `cible` le corps sous la pointe de la flèche — `null` quand il n'y
+   * en a pas, ce qui **annule** pour une carte qui doit viser.
+   */
+  onJouer?: (index: number, depuis: [number, number, number], cible: number | null) => void
   /** Tapée : l'écran décide quoi en faire — ici, la regarder de près. */
   onRegarder?: (index: number) => void
   /** La carte a été reposée ailleurs dans la main. */
@@ -154,6 +172,23 @@ type Props = {
    * promettrait un dépôt qui n'aura pas lieu.*
    */
   zoneActive?: (point: [number, number, number]) => boolean
+  /**
+   * LES CARTES QUI DEMANDENT UNE CIBLE. Passée en zone de jeu, une de
+   * celles-là **cesse de suivre le doigt** : elle se pose au-dessus de la
+   * main et c'est une flèche qui vise.
+   */
+  viseur?: readonly boolean[]
+  /** Les corps visables, en coordonnées de scène. */
+  cibles?: readonly [number, number, number][]
+  /**
+   * La visée a changé : une carte attend une cible, et voici celle qui est
+   * sous la pointe.
+   *
+   * Prévenu par effet et non à chaque mouvement du doigt : le parent n'a
+   * besoin de se redessiner que quand la RÉPONSE change, pas soixante fois
+   * par seconde.
+   */
+  onVise?: (actif: boolean, cible: number | null) => void
   /**
    * LE JEU A DES TEMPS. Tant qu'une animation se déroule, la main ne répond
    * pas : le coup se joue en entier avant qu'on puisse en lancer un autre.
@@ -204,6 +239,9 @@ export function Main3D({
   onPeinte,
   onSaisie,
   zoneActive,
+  viseur,
+  cibles,
+  onVise,
   verrou = false,
 }: Props): React.JSX.Element {
   const { size } = useThree()
@@ -226,6 +264,22 @@ export function Main3D({
    *
    * La main n'en garde que ce qui lui appartient : ce qu'un lâcher VEUT DIRE.
    */
+  /**
+   * Quel corps se trouve sous ce point.
+   *
+   * **On ramène le point sur LE PLAN DES CORPS** : la carte tenue et la
+   * flèche vivent devant eux, donc un doigt pile sur une créature donne deux
+   * points éloignés en coordonnées de scène.
+   */
+  const corpsSous = (point: THREE.Vector3): number | null => {
+    if (cibles === undefined) return null
+    const [x, y] = surLePlan([point.x, point.y, point.z], 0, window.innerHeight)
+    const i = cibles.findIndex(
+      (c) => Math.abs(x - c[0]) < CORPS * 0.55 && Math.abs(y - c[1]) < CORPS * 0.6,
+    )
+    return i < 0 ? null : i
+  }
+
   const { tenue, doigt, prendre } = useGesteCarte({
     z: Z_TENUE,
     verrou,
@@ -233,7 +287,11 @@ export function Main3D({
     onLacher: (i, p) => {
       // C'EST LA HAUTEUR DU DOIGT QUI TRANCHE : au-dessus de la main on joue,
       // dedans on RANGE. Même règle qu'en 2D.
-      if (p.y > LIGNE_DE_JEU) onJouer?.(i, [p.x, p.y, p.z])
+      //
+      // La cible se RECALCULE ici depuis le point de lâcher : celle qu'on
+      // affichait pendant le geste vit dans un rendu que cet écouteur, posé au
+      // `pointerdown`, ne voit pas.
+      if (p.y > LIGNE_DE_JEU) onJouer?.(i, [p.x, p.y, p.z], corpsSous(p))
       else onReordonner?.(i, placeSousLeDoigt(p.x, cartes.length - 1))
     },
     // Au doigt, rien ne viendra éteindre le survol : on le solde ici.
@@ -256,6 +314,27 @@ export function Main3D({
   const sortie = tenue ?? enVol
   const restantes = cartes.map((_, i) => i).filter((i) => i !== sortie)
 
+  /**
+   * LA CARTE SE POSE ET LA FLÈCHE PREND LE RELAIS.
+   *
+   * Passée en zone de jeu, une carte qui doit viser cesse de suivre le doigt :
+   * elle se cale au CENTRE de la main, juste au-dessus d'elle — la hauteur
+   * exacte à partir de laquelle lâcher joue. *Tant qu'elle suivait le pouce,
+   * elle se posait sur le corps qu'on cherchait à désigner*, et sur un
+   * téléphone la cible disparaissait sous la carte au moment précis où il
+   * fallait la voir. Demandé par Keko, et c'est le geste de Hearthstone.
+   *
+   * Le même système qu'il y ait un corps debout ou cinq : rien n'est visé
+   * automatiquement, on désigne toujours.
+   */
+  const ancree = tenue !== null && doigt !== null && doigt.y > LIGNE_DE_JEU && (viseur?.[tenue] ?? false)
+  const cible = ancree && doigt !== null ? corpsSous(doigt) : null
+  const ancre = useMemo(() => new THREE.Vector3(0, ANCRE_VISEE, Z_TENUE), [])
+
+  useEffect(() => {
+    onVise?.(ancree, cible)
+  }, [ancree, cible, onVise])
+
   // LA FENTE NE S'OUVRE QUE DANS LA MAIN. Au-dessus de la ligne de jeu, la
   // carte part frapper : écarter ses voisines là-haut annoncerait un rangement
   // qui n'aura pas lieu.
@@ -266,11 +345,21 @@ export function Main3D({
 
   return (
     <group>
+      {/* LA FLÈCHE part du haut de la carte posée et suit le doigt. */}
+      {ancree && doigt !== null && (
+        <Fleche3D
+          depuis={new THREE.Vector3(ancre.x, ancre.y + HAUT * 0.5, ancre.z)}
+          vers={doigt}
+          valide={cible !== null}
+        />
+      )}
+
       {cartes.map((carte, i) => {
         // LA CARTE QUI S'ABAT n'est plus ici : c'est `CarteQuiSAbat` qui la montre.
         if (i === enVol) return null
         if (i === tenue) {
-          const p = doigt ?? new THREE.Vector3(0, Y_MAIN + LEVEE_INITIALE, Z_TENUE)
+          const suivi = doigt ?? new THREE.Vector3(0, Y_MAIN + LEVEE_INITIALE, Z_TENUE)
+          const p = ancree ? ancre : suivi
           return (
             <Carte3D
               key={carte.id}
@@ -284,10 +373,13 @@ export function Main3D({
               // elle n'a aucun bord à surligner — le repère voyage donc avec
               // le doigt, comme en 2D. Une carte injouable ne s'allume pas :
               // *le halo dit « lâche et ça part »*, il mentirait.
+              // Une carte posée ne s'allume que si la flèche tient un corps :
+              // *le halo dit « lâche et ça part »*, il mentirait sinon.
               engagee={
-                p.y > LIGNE_DE_JEU &&
+                suivi.y > LIGNE_DE_JEU &&
                 (jouables?.[i] ?? true) &&
-                (zoneActive === undefined || zoneActive([p.x, p.y, Z_TENUE]))
+                (zoneActive === undefined || zoneActive([suivi.x, suivi.y, Z_TENUE])) &&
+                (!ancree || cible !== null)
               }
               jouable={jouables?.[i] ?? true}
               onPeinte={onPeinte}

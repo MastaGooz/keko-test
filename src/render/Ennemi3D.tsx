@@ -129,9 +129,10 @@ type Props = {
   ennemi: Ennemi
   index: number
   position: [number, number, number]
-  /** Il est visable : une carte est engagée et il est encore debout. */
+  /** Il est visable : une carte attend une cible et il est encore debout. */
   visable?: boolean
-  onViser?: (index: number) => void
+  /** La flèche le DÉSIGNE : lâcher maintenant le frappe. */
+  designe?: boolean
   /** L'instant du dernier coup encaissé, en secondes d'horloge de scène. */
   touche?: number | null
   /** L'instant où il s'élance pour frapper le joueur, même horloge. */
@@ -145,7 +146,7 @@ export function Ennemi3D({
   index,
   position,
   visable = false,
-  onViser,
+  designe = false,
   touche = null,
   assaut = null,
   mortDepuis = null,
@@ -214,7 +215,9 @@ export function Ennemi3D({
       }
     }
     g.position.set(position[0] + dx, position[1] + dy, position[2])
-    g.scale.setScalar(echelle)
+    // Le corps désigné se gonfle un rien : la couleur seule se lit mal sur
+    // une silhouette déjà claire.
+    g.scale.setScalar(echelle * (designe ? 1.06 : 1))
 
     // UN CORPS QU'ON PEUT VISER S'ALLUME, et il respire. C'est le seul repère
     // quand une carte attend sa cible : au doigt il n'y a pas de survol, donc
@@ -222,8 +225,13 @@ export function Ennemi3D({
     // carte à plusieurs ennemis ne changeait RIEN à l'écran — Keko : « quand
     // il y a plusieurs ennemis et que je joue une carte offensive, rien ne se
     // passe ». *Un état du jeu qui ne se voit pas n'existe pas.*
+    // TROIS NIVEAUX, ET ILS DOIVENT RESTER DISTINCTS : mat, lueur qui respire
+    // sur un corps qu'on PEUT viser, éclat franc sur celui que la flèche
+    // désigne. Le deuxième ne peut pas dépendre d'un survol — *il n'y en a
+    // pas au doigt* — c'est l'arbitrage central du multi-cibles.
     if (!mort && texture !== null) {
-      materiau.color.setScalar(visable ? 1.25 + Math.sin(t * 5) * 0.2 : 1)
+      if (designe) materiau.color.setScalar(1.9)
+      else materiau.color.setScalar(visable ? 1.22 + Math.sin(t * 5) * 0.18 : 1)
     }
 
     if (mortDepuis !== null) {
@@ -246,13 +254,7 @@ export function Ennemi3D({
 
   return (
     <group ref={groupe} position={position}>
-      <mesh
-        onPointerDown={(e) => {
-          if (mort || !visable) return
-          e.stopPropagation()
-          onViser?.(index)
-        }}
-      >
+      <mesh>
         <planeGeometry args={[CORPS, CORPS * (60 / 64)]} />
         <primitive object={materiau} attach="material" />
       </mesh>

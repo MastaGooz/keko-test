@@ -13,14 +13,13 @@
  * palier sont des voiles posés dessus.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
-import { Carte3D } from './Carte3D.tsx'
-import { Main3D } from './Main3D.tsx'
+import { Canvas } from '@react-three/fiber'
+import { LIGNE_DE_JEU, Main3D, Z_TENUE } from './Main3D.tsx'
 import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
 import { Projeter } from './Projeter.tsx'
 import { CarteQuiSAbat, TEMPS_FIN, TEMPS_IMPACT } from './CarteQuiSAbat.tsx'
 import { Horloge, lireHorloge } from './horloge.tsx'
-import { Cadrage, FOV, hauteurVisibleA, surLePlan, zCamera } from './Cadrage.tsx'
+import { Cadrage, FOV, zCamera } from './Cadrage.tsx'
 import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
@@ -65,47 +64,6 @@ type EnVol = {
  * monstre.
  */
 const PAS_ENTRE_FRAPPES = 0.62
-
-/** La profondeur de la carte qui attend sa cible : devant le rang. */
-const Z_ENGAGEE = 0.35
-
-/**
- * LA CARTE ENGAGÉE FLOTTE DEVANT LE RANG, à la hauteur des corps qu'elle vise
- * et à sa taille de main : c'est la même carte qu'on vient de sortir, elle n'a
- * pas de raison de rapetisser en chemin. Sa place dans la main reste vide et
- * les voisines se referment — l'y remettre pendant qu'on choisit défairait le
- * geste.
- *
- * **Elle se borne à l'écran.** Posée bêtement à gauche du premier corps, elle
- * en sortait dès que le rang comptait cinq créatures — et c'est justement là
- * qu'on a le plus besoin de savoir ce qu'on tient. La mesure se fait ici, dans
- * le canvas, parce que `useThree` est la seule source qui suive un
- * redimensionnement.
- */
-function CarteEngagee({
-  carte,
-  xRang,
-  onPeinte,
-}: {
-  carte: CarteAPeindre
-  xRang: number
-  onPeinte?: () => void
-}): React.JSX.Element {
-  const { size } = useThree()
-  const demiLarge = (hauteurVisibleA(Z_ENGAGEE, size.height) * (size.width / size.height)) / 2
-  const x = Math.max(-(demiLarge - 0.62), xRang)
-  return (
-    <Carte3D
-      carte={carte}
-      position={[x, 0.75, Z_ENGAGEE]}
-      rotation={[0, 0, 0]}
-      engagee
-      ombre={false}
-      ressort={16}
-      onPeinte={onPeinte}
-    />
-  )
-}
 
 /** Ce que le joueur encaisse, pour le chiffre qui saute à côté de ses PV. */
 type CoupRecu = { cle: number; degats: number }
@@ -154,8 +112,20 @@ export function Scene(): React.JSX.Element {
    * emplacement du butin. C'est la leçon du jeu 2D, reprise telle quelle.
    */
   const [zoomee, setZoomee] = useState<CarteAPeindre | null>(null)
-  /** La carte sortie de la main, en attente de sa cible. */
-  const [engagee, setEngagee] = useState<number | null>(null)
+  /**
+   * LA VISÉE EN COURS : une carte attend une cible, et voici le corps sous la
+   * pointe de la flèche. Prévenu par `Main3D` quand la RÉPONSE change, pas à
+   * chaque mouvement du doigt.
+   */
+  const [visee, setVisee] = useState<{ actif: boolean; cible: number | null }>({
+    actif: false,
+    cible: null,
+  })
+  const marquerVisee = useCallback(
+    (actif: boolean, cible: number | null) =>
+      setVisee((v) => (v.actif === actif && v.cible === cible ? v : { actif, cible })),
+    [],
+  )
   /** Une carte est tenue au doigt. */
   const [saisie, setSaisie] = useState(false)
 
@@ -197,17 +167,30 @@ export function Scene(): React.JSX.Element {
     const centre = (combat.ennemis.length - 1) / 2
     return [(i - centre) * (CORPS * 1.25), 0.75, 0] as [number, number, number]
   })
-  // La carte engagée se pose à gauche du rang, dans l'écart qui sépare les
-  // deux camps : elle est SUR LA TRAJECTOIRE, entre celui qui frappe et ceux
-  // qu'il vise.
-  const gaucheDuRang = (rang[0]?.[0] ?? 0) - CORPS * 0.95
-
   // CE QU'ON PEUT JOUER MAINTENANT : assez d'énergie, et le combat n'est pas
   // fini. Un trésor n'est jouable par personne — il ne fait qu'occuper une
   // place de main.
   const jouables = useMemo(
     () => combat.main.map((c) => !fini && jouable(c) && c.cout <= combat.energie),
     [combat.main, combat.energie, fini],
+  )
+
+  /**
+   * LES CARTES QUI DEMANDENT UNE CIBLE, et les corps qu'on peut désigner.
+   *
+   * **Les morts gardent leur index mais sortent du champ** : les index de
+   * cible sont ceux du moteur, et les décaler ici ferait viser le voisin.
+   * Les envoyer au loin les rend simplement inatteignables.
+   */
+  const viseurs = useMemo(() => combat.main.map(viseUneCible), [combat.main])
+  const cibles = useMemo(
+    () =>
+      combat.ennemis.map((e, i) =>
+        e.pv > 0 ? (rang[i] ?? [9999, 9999, 0]) : ([9999, 9999, 0] as [number, number, number]),
+      ),
+    // `rang` se recalcule à chaque rendu : il suit le nombre d'ennemis.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [combat.ennemis],
   )
 
   /**
@@ -227,7 +210,6 @@ export function Scene(): React.JSX.Element {
       const cons = consequence(combat, carte, cible)
       const cle = cleSuivante.current++
       setVerrou(true)
-      setEngagee(null)
       setEnVol({ cle, carte: aPeindre(carte), depuis, vers, debut: lireHorloge() })
 
       window.setTimeout(() => {
@@ -250,15 +232,20 @@ export function Scene(): React.JSX.Element {
   )
 
   /**
-   * Jouer une carte. **Une carte qui ne vise personne part tout de suite** ;
-   * une carte qui vise attend sa cible — et s'il n'y a qu'un corps debout,
-   * elle y va directement.
+   * Jouer une carte.
    *
-   * *Un geste qui engage n'a plus rien à confirmer* : c'est la règle du 2D, et
-   * elle vaut d'autant plus ici que sortir la carte est déjà un engagement.
+   * **Une carte qui ne vise personne part dès qu'on la lâche en zone de jeu**
+   * — une garde, une potion, un coup qui frappe tout le rang n'ont rien à
+   * désigner. Une carte qui vise, elle, part sur le corps que la flèche
+   * tenait ; lâchée dans le vide, elle **revient dans la main** et rien n'est
+   * joué.
+   *
+   * *C'est le même système qu'il y ait un corps debout ou cinq* : plus rien
+   * n'est visé automatiquement. Keko : « il faudrait le même système qu'il y
+   * ait une cible ou plusieurs ».
    */
   const jouer = useCallback(
-    (index: number, depuis: [number, number, number]) => {
+    (index: number, _depuis: [number, number, number], cible: number | null) => {
       setZoomee(null)
       const carte = combat.main[index]
       if (carte === undefined || fini || verrou) return
@@ -268,44 +255,12 @@ export function Scene(): React.JSX.Element {
         majCombat((c) => jouerCarte(c, index, -1))
         return
       }
-      const cibles = vivants(combat)
-      if (cibles.length === 1) {
-        frapper(index, cibles[0]!.index, depuis)
-        return
-      }
-
-      // LÂCHER SUR UN CORPS LE VISE. C'est le geste de Hearthstone, et il n'a
-      // pas d'équivalent en 2D — là-bas la tape était ambiguë, donc il fallait
-      // deux temps et des arches pour montrer les cibles. Ici le doigt tient
-      // déjà la carte : *un geste qui engage n'a plus rien à confirmer.*
-      //
-      // On compare sur LE PLAN DES CORPS, pas en coordonnées de scène : la
-      // carte tenue vit une demi-unité devant eux, donc un doigt pile sur une
-      // créature donne deux points éloignés.
-      const [x, y] = surLePlan(depuis, 0, window.innerHeight)
-      const sous = cibles.find(({ index: i }) => {
-        const p = rang[i]
-        return p !== undefined && Math.abs(x - p[0]) < CORPS * 0.55 && Math.abs(y - p[1]) < CORPS * 0.6
-      })
-      if (sous !== undefined) {
-        frapper(index, sous.index, depuis)
-        return
-      }
-
-      // Lâchée à côté, la carte attend sa cible : elle sort de la main et
-      // flotte devant le rang, les corps visables s'allument.
-      setEngagee(index)
+      if (cible === null) return
+      // La carte part de sa place d'attente : au centre, juste au-dessus de
+      // la main. C'est de là qu'on l'a vue se poser.
+      frapper(index, cible, [0, LIGNE_DE_JEU, Z_TENUE])
     },
-    [combat, fini, frapper, majCombat, rang, verrou],
-  )
-
-  const cibler = useCallback(
-    (cible: number) => {
-      if (engagee === null || verrou) return
-      // La carte engagée a été lâchée au-dessus de la main : elle part de là.
-      frapper(engagee, cible, [0, -0.2, 1.45])
-    },
-    [engagee, frapper, verrou],
+    [combat, fini, frapper, majCombat, verrou],
   )
 
   const reordonner = useCallback((de: number, vers: number) => {
@@ -333,7 +288,6 @@ export function Scene(): React.JSX.Element {
    */
   const terminer = useCallback(() => {
     if (fini || verrou) return
-    setEngagee(null)
     setZoomee(null)
     const apres = finDuTour(combat, depart.rng)
     const frappes = apres.evenements
@@ -570,17 +524,13 @@ export function Scene(): React.JSX.Element {
             ennemi={ennemi}
             index={i}
             position={rang[i]!}
-            visable={enCombat && engagee !== null && !verrou}
-            onViser={cibler}
+            visable={enCombat && visee.actif && !verrou}
+            designe={visee.cible === i}
             touche={touches[i] ?? null}
             assaut={assauts[i] ?? null}
             mortDepuis={morts[i] ?? null}
           />
         ))}
-
-        {engagee !== null && main[engagee] !== undefined && (
-          <CarteEngagee carte={main[engagee]!} xRang={gaucheDuRang} onPeinte={compter} />
-        )}
 
         {/* La carte qui s'abat vit sur la scène et non dans la main : un rendu
             de la main la balaierait en plein vol, et le coup en déclenche un. */}
@@ -637,7 +587,10 @@ export function Scene(): React.JSX.Element {
         <Main3D
           cartes={main}
           jouables={jouables}
-          envolee={enVol?.carte.id ?? zoomee?.id ?? (engagee === null ? null : (main[engagee]?.id ?? null))}
+          envolee={enVol?.carte.id ?? zoomee?.id ?? null}
+          viseur={viseurs}
+          cibles={cibles}
+          onVise={marquerVisee}
           onJouer={jouer}
           onRegarder={(i) => setZoomee(main[i] ?? null)}
           onReordonner={reordonner}
@@ -766,8 +719,8 @@ export function Scene(): React.JSX.Element {
               ? combat.issue === 'victoire'
                 ? 'Victoire'
                 : 'Mort'
-              : engagee !== null
-                ? 'Choisis une cible'
+              : visee.actif
+                ? 'Vise un corps'
                 : `Tour ${combat.tour} · ${debout.length} debout`}
           </p>
 
