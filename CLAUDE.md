@@ -2088,6 +2088,40 @@ slot était plus petit que la main : ici la carte y est à sa taille de main et
 sans voisine par-dessus. *Le zoom existe pour défaire un recouvrement, pas par
 principe.*
 
+### LE GESTE EST UN MODULE, PAS UN BOUT DE LA MAIN
+
+`geste-carte.ts`. Prendre, promener, lâcher vivaient dans `Main3D`, et ils y
+étaient enfermés : les emplacements du butin ne pouvaient ni se zoomer ni se
+glisser, alors que ce sont les mêmes cartes. Keko : « je ne peux pas cliquer
+sur le trésor dans le slot de loot pour zoomer ni le drag vers la main ». *Ce
+sont les mêmes cartes, ce doit être le même geste* — et le réécrire à côté,
+c'était refaire la faute des quatre fonctions qui dessinaient chacune leur
+carte avant `corpsCarte`.
+
+**Le hook ne décide de RIEN.** Il dit « celle-ci est tenue », « le doigt est
+là », « elle a été tapée », « elle a été lâchée ici ». Ce que ça VEUT DIRE —
+jouer, ranger, déposer — appartient à l'écran. La main garde donc sa règle
+(au-dessus de la ligne on joue, dedans on range) et le butin la sienne (sous
+la ligne c'est la main, au-dessus c'est un emplacement).
+
+**LE ZOOM PORTE LA CARTE, PAS UN INDEX DE MAIN** (`Zoom3D.tsx`), et c'est
+exactement la correction que le jeu 2D avait déjà faite : tant qu'il était un
+index dans `combat.main`, il était impossible de zoomer ailleurs. Il vit
+désormais au-dessus de tous les écrans, et n'importe lequel lui passe une
+carte. `Main3D` ne connaît plus le zoom du tout : elle reçoit seulement
+`envolee`, l'identifiant d'une carte **qui n'est plus dans la main** — celle
+qui s'abat, celle qui attend sa cible, celle qu'on regarde. Trois raisons, un
+seul mécanisme.
+
+**Ce qu'on tient n'est plus à sa place** : la case d'où vient la carte reprend
+l'habit d'une case vide le temps du glisser, et elle dit toujours ce qu'elle
+attend. Règle de l'armurerie 2D — sans son nom, c'est un pointillé muet.
+
+*Piège de test, rencontré deux fois* : un glisser lancé dans le même lot
+d'actions qu'un changement d'écran part avant que React n'ait rendu, et il ne
+touche rien. **Ça ressemble exactement à un geste cassé.** Laisser la scène se
+poser avant de mesurer.
+
 ### La page figée : une DÉPENDANCE D'EFFET qui est un objet neuf
 
 **Le plus coûteux de cette étape, et il ne dit rien du tout.** `Carte3D`

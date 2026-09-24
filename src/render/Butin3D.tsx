@@ -8,18 +8,24 @@
  * main qu'on alourdit, donc c'est la main qu'on montre.*
  *
  * Ce module ne dessine que ce qui s'ajoute au-dessus d'elle : **deux
- * emplacements**, ce qui arrive et ce qu'on jette. Le reste est `Main3D`,
- * inchangée.
+ * emplacements**, ce qui arrive et ce qu'on jette.
  *
- * **CHAQUE EMPLACEMENT EST AUSSI UN BOUTON**, comme en 2D : sur téléphone le
- * glisser seul est fragile, donc la tape doit toujours marcher. Taper
- * « Jeter » vide y envoie le trésor qui arrive ; le glisser ne fait que
- * désigner la même destination.
+ * **ET UN EMPLACEMENT SE MANIPULE COMME LA MAIN.** Il a d'abord été un simple
+ * présentoir — on ne pouvait ni zoomer la carte posée dedans, ni la glisser
+ * ailleurs. Keko : « je ne peux pas cliquer sur le trésor dans le slot de loot
+ * pour zoomer ni le drag vers la main ». C'est le même geste partout
+ * (`geste-carte.ts`) : *ce sont les mêmes cartes, ce doit être le même geste.*
+ *
+ * **CHAQUE EMPLACEMENT RESTE AUSSI UN BOUTON**, comme en 2D : sur téléphone le
+ * glisser est fragile, donc la tape doit toujours marcher. Taper « Jeter »
+ * vide y envoie le trésor qui arrive.
  */
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { Carte3D } from './Carte3D.tsx'
 import { Z_MAIN, surLePlan } from './Cadrage.tsx'
+import { LIGNE_DE_JEU, Z_TENUE } from './Main3D.tsx'
+import { useGesteCarte } from './geste-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
 import { textureSlot } from './texture-carte.ts'
 
@@ -34,6 +40,9 @@ const PORTEE_X = 0.62
 const PORTEE_Y = 0.85
 
 export type Emplacement = 'loot' | 'jeter'
+
+/** Où un trésor peut atterrir : un emplacement, ou la main de ce qu'on porte. */
+export type Destination = Emplacement | 'deck'
 
 /**
  * Quel emplacement se trouve sous ce point de lâcher.
@@ -54,6 +63,17 @@ export function slotSous(
   return null
 }
 
+/** Ce que lâcher à cet endroit veut dire, sur l'écran de butin. */
+function destinationDe(
+  point: THREE.Vector3,
+  avecLoot: boolean,
+): Destination | null {
+  // SOUS LA LIGNE DE JEU, C'EST LA MAIN : le trésor rejoint ce qu'on emporte,
+  // exactement comme une carte de combat qu'on repose dans sa main.
+  if (point.y <= LIGNE_DE_JEU) return 'deck'
+  return slotSous([point.x, point.y, point.z], window.innerHeight, avecLoot)
+}
+
 type SlotProps = {
   nom: string
   accent: string
@@ -61,11 +81,14 @@ type SlotProps = {
   carte: CarteAPeindre | null
   /** La carte posée ici est en train d'être perdue : contour rouge. */
   peril?: boolean
+  /** Le geste qui prend la carte posée. */
+  onPrendre?: (e: import('@react-three/fiber').ThreeEvent<PointerEvent>) => void
+  /** Une tape sur l'emplacement VIDE : il reçoit. */
   onTaper?: () => void
   onPeinte?: () => void
 }
 
-function Slot({ nom, accent, x, carte, peril = false, onTaper, onPeinte }: SlotProps): React.JSX.Element {
+function Slot({ nom, accent, x, carte, peril = false, onPrendre, onTaper, onPeinte }: SlotProps): React.JSX.Element {
   const materiau = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
@@ -77,11 +100,6 @@ function Slot({ nom, accent, x, carte, peril = false, onTaper, onPeinte }: SlotP
     [nom, accent],
   )
 
-  // UN EMPLACEMENT OCCUPÉ NE SE ZOOME PAS, et c'est une différence assumée
-  // avec le jeu 2D : là-bas le slot était plus petit que la main. Ici la carte
-  // y est **à sa taille de main et sans voisine par-dessus**, donc elle se lit
-  // déjà entièrement. *Le zoom existe pour défaire un recouvrement, pas par
-  // principe.*
   if (carte !== null) {
     return (
       <Carte3D
@@ -92,6 +110,7 @@ function Slot({ nom, accent, x, carte, peril = false, onTaper, onPeinte }: SlotP
         ombre={false}
         ressort={16}
         onPeinte={onPeinte}
+        onPointerDown={onPrendre}
       />
     )
   }
@@ -115,10 +134,49 @@ type Props = {
   aJeter: CarteAPeindre | null
   /** Taper « Jeter » vide y envoie le trésor qui arrive. */
   onJeterLeLoot?: () => void
+  /** Un trésor a été glissé d'un emplacement vers ailleurs. */
+  onDeplacer?: (source: Emplacement, cible: Destination) => void
+  onRegarder?: (carte: CarteAPeindre) => void
+  /** Une carte est tenue : le parent fait passer la scène devant l'interface. */
+  onSaisie?: (tenue: boolean) => void
   onPeinte?: () => void
 }
 
-export function Butin3D({ loot, aJeter, onJeterLeLoot, onPeinte }: Props): React.JSX.Element {
+export function Butin3D({
+  loot,
+  aJeter,
+  onJeterLeLoot,
+  onDeplacer,
+  onRegarder,
+  onSaisie,
+  onPeinte,
+}: Props): React.JSX.Element {
+  // Index 0 : ce qui arrive. Index 1 : ce qu'on s'apprête à jeter.
+  const cartes = [loot, aJeter]
+
+  const { tenue, doigt, prendre } = useGesteCarte({
+    z: Z_TENUE,
+    onTaper: (i) => {
+      const carte = cartes[i]
+      if (carte !== undefined && carte !== null) onRegarder?.(carte)
+    },
+    onLacher: (i, point) => {
+      const source: Emplacement = i === 0 ? 'loot' : 'jeter'
+      const cible = destinationDe(point, loot !== null)
+      if (cible !== null && cible !== source) onDeplacer?.(source, cible)
+    },
+  })
+
+  useEffect(() => {
+    onSaisie?.(tenue !== null)
+  }, [tenue, onSaisie])
+
+  const portee = tenue === null ? null : (cartes[tenue] ?? null)
+  // Le halo ne s'allume que là où lâcher fait quelque chose : *un halo au-dessus
+  // du vide promettrait un dépôt qui n'aura pas lieu.*
+  const active =
+    portee !== null && doigt !== null && destinationDe(doigt, loot !== null) !== null
+
   return (
     <group>
       {/* L'EMPLACEMENT DE LOOT DISPARAÎT UNE FOIS VIDE. Tant qu'il est là, il
@@ -127,17 +185,44 @@ export function Butin3D({ loot, aJeter, onJeterLeLoot, onPeinte }: Props): React
           écran se lit comme un endroit où poser*, donc comme une tâche en
           attente. */}
       {loot !== null && (
-        <Slot nom="Butin" accent="#c9a95a" x={X_LOOT} carte={loot} onPeinte={onPeinte} />
+        <Slot
+          nom="Butin"
+          accent="#c9a95a"
+          x={X_LOOT}
+          // CE QU'ON TIENT N'EST PLUS À SA PLACE : la case reprend l'habit
+          // d'une case vide le temps du glisser, et elle dit toujours ce
+          // qu'elle attend. Règle de l'armurerie 2D : sans son nom, c'est un
+          // pointillé muet.
+          carte={tenue === 0 ? null : loot}
+          onPrendre={prendre(0)}
+          onPeinte={onPeinte}
+        />
       )}
+
       <Slot
         nom="Jeter"
         accent={aJeter === null ? '#8a6a62' : '#ff6a52'}
         x={X_JETER}
-        carte={aJeter}
+        carte={tenue === 1 ? null : aJeter}
         peril
-        onTaper={loot === null ? undefined : onJeterLeLoot}
+        onPrendre={prendre(1)}
+        onTaper={aJeter === null && loot !== null ? onJeterLeLoot : undefined}
         onPeinte={onPeinte}
       />
+
+      {/* LA CARTE TENUE SUIT LE DOIGT, hors de sa case. */}
+      {portee !== null && doigt !== null && (
+        <Carte3D
+          carte={portee}
+          position={[doigt.x, doigt.y, Z_TENUE]}
+          rotation={[0, 0, 0]}
+          taille={1.05}
+          ressort={22}
+          engagee={active}
+          ombre={false}
+          onPeinte={onPeinte}
+        />
+      )}
     </group>
   )
 }

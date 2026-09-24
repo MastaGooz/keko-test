@@ -26,19 +26,13 @@
  * ajoute : l'épaisseur, l'ombre portée d'une carte sur sa voisine, et le
  * laiton du cadre qui prend la lumière.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useThree, type ThreeEvent } from '@react-three/fiber'
+import { useEffect, useState } from 'react'
+import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Carte3D, HAUT } from './Carte3D.tsx'
-import { Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
+import { useGesteCarte } from './geste-carte.ts'
+import { Z_MAIN, hauteurVisibleA } from './Cadrage.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
-
-/** Sous ce déplacement, la souris n'a pas glissé : elle a cliqué. */
-const SEUIL_SOURIS = 8
-/** Au doigt il en faut le double : une tape dérive. */
-const SEUIL_DOIGT = 16
-/** Au doigt, rester appuyé prend la carte, même sans bouger d'un pixel. */
-const DELAI_PRISE = 160
 
 /**
  * L'arc de l'éventail.
@@ -102,7 +96,7 @@ function yMain(hauteurFenetrePx: number): number {
  * *La leçon reste* : en 3D, la profondeur d'un objet incliné n'est pas celle
  * de son origine. Si la main se recouche un jour, cet écart doit suivre.
  */
-const Z_TENUE = Z_MAIN + 0.35
+export const Z_TENUE = Z_MAIN + 0.35
 
 /** Y de repos de la carte tenue avant que le doigt n'ait bougé, en fonction de la main. */
 const LEVEE_INITIALE = 0.4
@@ -114,7 +108,7 @@ const LEVEE_INITIALE = 0.4
  * elle est la seule qui ne demande aucune cible à viser — donc la seule qui
  * marche avant que les ennemis existent.
  */
-const LIGNE_DE_JEU = -0.35
+export const LIGNE_DE_JEU = -0.35
 
 /**
  * De combien les voisines s'écartent pour ouvrir la fente.
@@ -126,24 +120,11 @@ const LIGNE_DE_JEU = -0.35
  */
 const ECART_FENTE = 0.3
 
-/**
- * Où la carte regardée vient se poser, et ce que le voile cache derrière elle.
- *
- * À cette profondeur elle occupe ~73 % de la hauteur d'écran : assez pour lire
- * le cartouche entier, pas assez pour déborder. Le voile est un plan large
- * posé juste derrière — **il intercepte les rayons**, donc il neutralise la
- * main d'un coup sans qu'on ait à désactiver quoi que ce soit.
- */
-/** Distances CAMÉRA → carte regardée, et caméra → voile : elles suivent le recul. */
-const RECUL_ZOOM = 2.5
-const RECUL_VOILE = 3
 
 type Props = {
   cartes: readonly CarteAPeindre[]
   /** Les cartes qu'on peut jouer maintenant, dans le même ordre. */
   jouables?: readonly boolean[]
-  /** La carte qu'on regarde de près, s'il y en a une. */
-  zoomee?: number | null
   /**
    * L'identifiant d'une carte qui N'EST PLUS DANS LA MAIN alors que l'état
    * l'y compte encore : celle qui s'abat sur sa cible, ou celle qui attend
@@ -157,10 +138,10 @@ type Props = {
   envolee?: string | null
   /** La carte a été sortie de la main : on la joue. `depuis` est le point du lâcher. */
   onJouer?: (index: number, depuis: [number, number, number]) => void
+  /** Tapée : l'écran décide quoi en faire — ici, la regarder de près. */
   onRegarder?: (index: number) => void
   /** La carte a été reposée ailleurs dans la main. */
   onReordonner?: (de: number, vers: number) => void
-  onFermerZoom?: () => void
   onPeinte?: () => void
   /** Une carte est tenue au doigt (ou vient d'être lâchée). */
   onSaisie?: (tenue: boolean) => void
@@ -216,30 +197,19 @@ function placeDansEventail(rang: number, total: number, y: number): {
 export function Main3D({
   cartes,
   jouables,
-  zoomee = null,
   envolee = null,
   onJouer,
   onRegarder,
   onReordonner,
-  onFermerZoom,
   onPeinte,
   onSaisie,
   zoneActive,
   verrou = false,
 }: Props): React.JSX.Element {
-  const { camera, size } = useThree()
-  const [tenue, setTenue] = useState<number | null>(null)
-  // Le cadrage de CETTE fenêtre : la main au bord bas, le zoom à sa distance
-  // de lecture, quelle que soit la profondeur où la caméra a reculé.
+  const { size } = useThree()
+  // Le cadrage de CETTE fenêtre : la main reste collée au bord bas quelle que
+  // soit la profondeur où la caméra a reculé.
   const Y_MAIN = yMain(size.height)
-  const Z_ZOOM = zCamera(size.height) - RECUL_ZOOM
-  const Z_VOILE = zCamera(size.height) - RECUL_VOILE
-
-  // Le parent veut savoir quand on tient une carte : c'est lui qui fait passer
-  // la scène devant l'interface le temps du geste.
-  useEffect(() => {
-    onSaisie?.(tenue !== null)
-  }, [tenue, onSaisie])
   // LE SURVOL SE MÉMORISE PAR IDENTIFIANT, JAMAIS PAR INDEX. En index, la
   // carte survolée puis jouée laissait son numéro derrière elle : la main se
   // refermait, sa voisine héritait de l'index — et se levait, indéfiniment,
@@ -248,197 +218,42 @@ export function Main3D({
   // et elle reste levée tant que je ne hover pas une autre carte ». Même
   // famille que la clé React bâtie sur l'index.
   const [survolee, setSurvolee] = useState<string | null>(null)
-  const [doigt, setDoigt] = useState<THREE.Vector3 | null>(null)
-
-  // L'état du geste en cours. Dans une ref et non dans l'état React : il change
-  // à chaque `pointermove` et ne doit pas provoquer de rendu.
-  const geste = useRef({
-    index: -1,
-    depart: { x: 0, y: 0 },
-    seuil: SEUIL_SOURIS,
-    prise: false,
-    minuteur: 0,
-    /** De quoi couper l'écoute du geste, quelles que soient les fonctions. */
-    stop: null as AbortController | null,
-  })
-
   /**
-   * Le plan sur lequel le doigt promène la carte.
+   * LE GESTE EST PARTAGÉ (`geste-carte.ts`) : prendre, promener, lâcher sont
+   * les mêmes ici et sur l'écran de butin. *Ce sont les mêmes cartes, ce doit
+   * être le même geste* — et le réécrire à côté, c'était garantir qu'un jour
+   * les deux divergent.
    *
-   * Un plan parallèle à l'écran, à la profondeur de la main : sans lui, le
-   * pointeur ne dit qu'une direction, et la carte irait à l'infini.
+   * La main n'en garde que ce qui lui appartient : ce qu'un lâcher VEUT DIRE.
    */
-  // Le plan est à la profondeur de la carte TENUE, pas à celle de la main :
-  // sinon la carte se décale du doigt par parallaxe, d'autant plus qu'on
-  // s'éloigne du centre de l'écran.
-  const plan = useMemo(() => new THREE.Plane(new THREE.Vector3(0, 0, 1), -Z_TENUE), [])
-  const rayon = useMemo(() => new THREE.Raycaster(), [])
-
-  const pointSousLeDoigt = useCallback(
-    (e: PointerEvent): THREE.Vector3 | null => {
-      const ndc = new THREE.Vector2(
-        (e.clientX / window.innerWidth) * 2 - 1,
-        -(e.clientY / window.innerHeight) * 2 + 1,
-      )
-      rayon.setFromCamera(ndc, camera)
-      const point = new THREE.Vector3()
-      return rayon.ray.intersectPlane(plan, point) === null ? null : point
-    },
-    [camera, plan, rayon],
-  )
-
-  /**
-   * Coupe l'écoute du geste en cours. Appelé par le lâcher comme par
-   * l'annulation : les deux finissent le geste, ils n'en tirent pas la même
-   * conclusion.
-   *
-   * **PAR `AbortController`, ET SURTOUT PAS PAR `removeEventListener`**, et ça
-   * a coûté un bug difficile à lire : les fonctions du geste dépendent de
-   * `onJouer`, donc elles sont RECRÉÉES à chaque changement du combat. Un
-   * `detacher` qui les retire par référence retirait celles d'avant — les
-   * écouteurs posés restaient attachés, s'accumulaient, et c'est le plus
-   * ancien qui traitait le geste, avec un état périmé. Il lisait donc la carte
-   * au bon index dans la MAUVAISE main : une attaque partait sans cible et ne
-   * touchait personne.
-   *
-   * Keko : « je peux faire une attaque une fois puis ensuite aucune autre,
-   * même dans les tours suivants » — exactement le moment où `onJouer` change
-   * pour la première fois.
-   *
-   * *Un signal ne dépend d'aucune identité de fonction* : il coupe ce que ce
-   * geste-là a posé, et rien d'autre.
-   */
-  const detacher = useCallback(() => {
-    window.clearTimeout(geste.current.minuteur)
-    geste.current.stop?.abort()
-    geste.current.stop = null
-  }, [])
-
-  /**
-   * LE SYSTÈME A REPRIS LE GESTE : on repose la carte, on ne la joue pas.
-   *
-   * Un `pointercancel` n'est pas un lâcher — c'est le navigateur qui
-   * s'approprie le mouvement (défilement, geste système, appel entrant). Le
-   * traiter comme un lâcher faisait **jouer la carte dès qu'on la bougeait au
-   * doigt**, donc disparaître sans qu'on ait relâché. Keko : « sur le tactile
-   * dès que je drag une carte elle disparaît dès que je la bouge même si je ne
-   * lâche pas ».
-   *
-   * La cause première est corrigée ailleurs (`touchAction: 'none'` sur le
-   * canvas), mais **une annulation reste possible** — un appel, un geste à
-   * deux doigts — et dans ce cas la seule issue juste est de reposer.
-   */
-  const annuler = useCallback(() => {
-    detacher()
-    geste.current.index = -1
-    geste.current.prise = false
-    setTenue(null)
-    setDoigt(null)
-    setSurvolee(null)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  const relacher = useCallback(
-    (e: PointerEvent) => {
-      const g = geste.current
-      detacher()
-
-      const index = g.index
-      const bouge = Math.hypot(e.clientX - g.depart.x, e.clientY - g.depart.y) >= g.seuil
-      const point = pointSousLeDoigt(e)
-      g.index = -1
-      g.prise = false
-      setTenue(null)
-      setDoigt(null)
-      // Au doigt, rien ne viendra éteindre le survol : on le solde ici.
-      if (e.pointerType !== 'mouse') setSurvolee(null)
-      if (index < 0) return
-
-      // LE DÉPLACEMENT DÉCIDE, PAS LA DURÉE. Une carte prise au maintien puis
-      // reposée sans avoir bougé se regarde — il n'existe aucune façon de
-      // rater ce geste-là.
-      if (!bouge) {
-        onRegarder?.(index)
-        return
-      }
-      if (point === null) return
+  const { tenue, doigt, prendre } = useGesteCarte({
+    z: Z_TENUE,
+    verrou,
+    onTaper: (i) => onRegarder?.(i),
+    onLacher: (i, p) => {
       // C'EST LA HAUTEUR DU DOIGT QUI TRANCHE : au-dessus de la main on joue,
       // dedans on RANGE. Même règle qu'en 2D.
-      if (point.y > LIGNE_DE_JEU) onJouer?.(index, [point.x, point.y, point.z])
-      else onReordonner?.(index, placeSousLeDoigt(point.x, cartes.length - 1))
+      if (p.y > LIGNE_DE_JEU) onJouer?.(i, [p.x, p.y, p.z])
+      else onReordonner?.(i, placeSousLeDoigt(p.x, cartes.length - 1))
     },
-    // `bouger` et `detacher` sont stables : les fonctions se citent l'une
-    // l'autre, et les lister ici les recréerait en boucle.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cartes.length, onJouer, onRegarder, onReordonner, pointSousLeDoigt],
-  )
-
-  const bouger = useCallback(
-    (e: PointerEvent) => {
-      const g = geste.current
-      if (g.index < 0) return
-      if (!g.prise) {
-        const loin = Math.hypot(e.clientX - g.depart.x, e.clientY - g.depart.y) >= g.seuil
-        if (!loin) return
-        g.prise = true
-        window.clearTimeout(g.minuteur)
-        setTenue(g.index)
-      }
-      setDoigt(pointSousLeDoigt(e))
+    // Au doigt, rien ne viendra éteindre le survol : on le solde ici.
+    onFin: (type) => {
+      if (type !== 'mouse') setSurvolee(null)
     },
-    [pointSousLeDoigt],
-  )
+  })
 
-  const prendre = useCallback(
-    (index: number) => (e: ThreeEvent<PointerEvent>) => {
-      // Verrouillée, la main ne prend rien : ni geste, ni survol qui la
-      // ferait paraître jouable pendant qu'elle ne l'est pas.
-      if (verrou) return
-      e.stopPropagation()
-      const natif = e.nativeEvent
-      const g = geste.current
-      // UN GESTE EN COURS EST SOLDÉ AVANT D'EN OUVRIR UN AUTRE. Si un `pointerup`
-      // s'est perdu — second doigt, geste système — la carte précédente resterait
-      // sortie pour toujours. On ne laisse jamais deux gestes se superposer.
-      if (g.index >= 0) annuler()
-      detacher()
-      g.index = index
-      g.depart = { x: natif.clientX, y: natif.clientY }
-      g.seuil = natif.pointerType === 'mouse' ? SEUIL_SOURIS : SEUIL_DOIGT
-      g.prise = false
-      // AU DOIGT, LE MAINTIEN PREND LA CARTE. On appuie, elle monte — sans ça,
-      // la dérive d'une tape la ferait passer pour un glisser.
-      window.clearTimeout(g.minuteur)
-      g.minuteur = window.setTimeout(() => {
-        if (geste.current.index !== index) return
-        geste.current.prise = true
-        setTenue(index)
-      }, DELAI_PRISE)
-
-      // LA CAPTURE GARDE LE FLUX D'ÉVÈNEMENTS quand le doigt sort du canvas —
-      // et sortir EST le geste. Elle jette si le pointeur n'est plus actif :
-      // sans garde, tout le glisser casserait pour un cas sans conséquence.
-      try {
-        ;(natif.target as Element | null)?.setPointerCapture?.(natif.pointerId)
-      } catch {
-        /* tant pis : les écouteurs de fenêtre suffisent dans presque tous les cas */
-      }
-
-      const stop = new AbortController()
-      g.stop = stop
-      window.addEventListener('pointermove', bouger, { signal: stop.signal })
-      window.addEventListener('pointerup', relacher, { signal: stop.signal })
-      window.addEventListener('pointercancel', annuler, { signal: stop.signal })
-    },
-    [annuler, bouger, relacher, detacher, verrou],
-  )
+  // Le parent veut savoir quand on tient une carte : c'est lui qui fait passer
+  // la scène devant l'interface le temps du geste.
+  useEffect(() => {
+    onSaisie?.(tenue !== null)
+  }, [tenue, onSaisie])
 
   // LES VOISINES SE REFERMENT sur la place de la carte tenue : on range celles
   // qui restent comme si elle n'avait jamais été là. La carte REGARDÉE sort de
   // la main pour la même raison — sa place d'origine n'a plus de sens tant
   // qu'on la tient sous les yeux.
   const enVol = envolee === null ? -1 : cartes.findIndex((c) => c.id === envolee)
-  const sortie = tenue ?? zoomee ?? enVol
+  const sortie = tenue ?? enVol
   const restantes = cartes.map((_, i) => i).filter((i) => i !== sortie)
 
   // LA FENTE NE S'OUVRE QUE DANS LA MAIN. Au-dessus de la ligne de jeu, la
@@ -451,39 +266,9 @@ export function Main3D({
 
   return (
     <group>
-      {/* LE VOILE DU ZOOM. Posé DANS la scène et non en HTML par-dessus :
-          au-dessus du canvas, il faudrait le percer pour laisser voir la carte,
-          alors qu'ici il suffit de mettre la carte devant. Et comme il
-          intercepte les rayons, la main devient insensible sans qu'on touche à
-          quoi que ce soit. */}
-      {zoomee !== null && (
-        <mesh position={[0, 0, Z_VOILE]} onPointerDown={() => onFermerZoom?.()}>
-          <planeGeometry args={[40, 24]} />
-          <meshBasicMaterial color="#05050a" transparent opacity={0.8} />
-        </mesh>
-      )}
-
       {cartes.map((carte, i) => {
         // LA CARTE QUI S'ABAT n'est plus ici : c'est `CarteQuiSAbat` qui la montre.
         if (i === enVol) return null
-        // LA CARTE REGARDÉE vient au centre, droite et grande. Une tape
-        // dessus la repose : elle referme ce qu'elle a ouvert.
-        if (i === zoomee) {
-          return (
-            <Carte3D
-              key={carte.id}
-              carte={carte}
-              position={[0, 0, Z_ZOOM]}
-              rotation={[0, 0, 0]}
-              ressort={14}
-              onPeinte={onPeinte}
-              onPointerDown={(e) => {
-                e.stopPropagation()
-                onFermerZoom?.()
-              }}
-            />
-          )
-        }
         if (i === tenue) {
           const p = doigt ?? new THREE.Vector3(0, Y_MAIN + LEVEE_INITIALE, Z_TENUE)
           return (

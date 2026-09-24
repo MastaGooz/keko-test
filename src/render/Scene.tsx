@@ -25,6 +25,7 @@ import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
+import { Zoom3D } from './Zoom3D.tsx'
 import { aPeindre, descenteDeDepart } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
 import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
@@ -147,7 +148,12 @@ export function Scene(): React.JSX.Element {
     (f: (c: EtatCombat) => EtatCombat) => setDescente((d) => ({ ...d, combat: f(d.combat) })),
     [],
   )
-  const [zoomee, setZoomee] = useState<number | null>(null)
+  /**
+   * LE ZOOM PORTE LA CARTE, PAS UN INDEX DE MAIN. Index, il était enfermé dans
+   * `combat.main` : impossible de regarder de près le trésor posé dans un
+   * emplacement du butin. C'est la leçon du jeu 2D, reprise telle quelle.
+   */
+  const [zoomee, setZoomee] = useState<CarteAPeindre | null>(null)
   /** La carte sortie de la main, en attente de sa cible. */
   const [engagee, setEngagee] = useState<number | null>(null)
   /** Une carte est tenue au doigt. */
@@ -471,6 +477,17 @@ export function Scene(): React.JSX.Element {
     [descente, tresors],
   )
 
+  /**
+   * Un trésor glissé DEPUIS un emplacement : vers l'autre, ou vers la main.
+   * Le modèle est un `Lieu` des deux côtés, donc il n'y a pas de cas
+   * particulier — *ce que la destination déloge repart d'où vient la carte.*
+   */
+  const deplacerDepuisSlot = useCallback(
+    (source: 'loot' | 'jeter', cible: 'loot' | 'jeter' | 'deck') =>
+      setDescente(deplacerTresor(descente, { ou: source }, { ou: cible })),
+    [descente],
+  )
+
   /** Taper « Jeter » vide y envoie le trésor qui arrive : c'est le refus. */
   const refuserLeLoot = useCallback(
     () => setDescente(deplacerTresor(descente, { ou: 'loot' }, { ou: 'jeter' })),
@@ -571,6 +588,11 @@ export function Scene(): React.JSX.Element {
           <CarteQuiSAbat key={enVol.cle} carte={enVol.carte} depuis={enVol.depuis} vers={enVol.vers} debut={enVol.debut} />
         )}
 
+        {/* LA CARTE QU'ON REGARDE DE PRÈS, au-dessus de tout le monde : la
+            main de combat, celle du butin et les emplacements lui envoient la
+            même carte. */}
+        <Zoom3D carte={zoomee} onFermer={() => setZoomee(null)} onPeinte={compter} />
+
         <Horloge />
         <Cadrage />
         <Secousse />
@@ -589,6 +611,9 @@ export function Scene(): React.JSX.Element {
               loot={loot}
               aJeter={aJeter}
               onJeterLeLoot={refuserLeLoot}
+              onDeplacer={deplacerDepuisSlot}
+              onRegarder={setZoomee}
+              onSaisie={setSaisie}
               onPeinte={compter}
             />
             {/* CE QU'ON EMPORTE EST LITTÉRALEMENT LA MAIN : même éventail,
@@ -596,11 +621,10 @@ export function Scene(): React.JSX.Element {
                 grisé — la carte y est celle de l'emplacement d'à côté. */}
             <Main3D
               cartes={tresors}
-              zoomee={zoomee}
+              envolee={zoomee?.id ?? null}
               onJouer={deposer}
-              onRegarder={setZoomee}
+              onRegarder={(i) => setZoomee(tresors[i] ?? null)}
               onReordonner={rangerTresor}
-              onFermerZoom={() => setZoomee(null)}
               onPeinte={compter}
               onSaisie={setSaisie}
               zoneActive={(p) => slotSous(p, window.innerHeight, phase.loot !== null) !== null}
@@ -613,12 +637,10 @@ export function Scene(): React.JSX.Element {
         <Main3D
           cartes={main}
           jouables={jouables}
-          zoomee={zoomee}
-          envolee={enVol?.carte.id ?? (engagee === null ? null : (main[engagee]?.id ?? null))}
+          envolee={enVol?.carte.id ?? zoomee?.id ?? (engagee === null ? null : (main[engagee]?.id ?? null))}
           onJouer={jouer}
-          onRegarder={setZoomee}
+          onRegarder={(i) => setZoomee(main[i] ?? null)}
           onReordonner={reordonner}
-          onFermerZoom={() => setZoomee(null)}
           onPeinte={compter}
           onSaisie={setSaisie}
           verrou={verrou}
