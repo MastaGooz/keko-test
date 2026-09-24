@@ -29,7 +29,7 @@ import { Zoom3D } from './Zoom3D.tsx'
 import type { Entree } from './Zoom3D.tsx'
 import { aPeindre, descenteDeDepart, pieceAPeindre, setAPeindre } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
-import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
+import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
 import { creerHub, deplacerPiece, equipement, perdreLEquipement, peutDescendre, rentrer } from '../logic/hub.ts'
@@ -282,6 +282,89 @@ export function Scene(): React.JSX.Element {
   )
 
   /**
+   * UNE FRAPPE SUR TOUT LE RANG, et c'est la séquence d'une frappe simple
+   * RÉPÉTÉE PAR CORPS.
+   *
+   * La carte s'abat **au milieu du rang** plutôt que sur un corps : elle n'en
+   * vise aucun, donc tomber sur l'un d'eux mentirait sur ce qu'elle fait.
+   * Chaque corps encaisse ensuite sa part — son chiffre, sa secousse, son
+   * tampon s'il tombe — parce que la règle du multi-cibles vaut ici aussi :
+   * *on doit savoir qui a pris quoi.*
+   *
+   * Un seul `jouerCarte`, à l'impact : les règles frappent tout le monde d'un
+   * coup, c'est le rendu qui s'égrène.
+   */
+  const frapperTous = useCallback(
+    (index: number, depuis: [number, number, number]) => {
+      const carte = combat.main[index]
+      if (carte === undefined) return
+      const montant =
+        carte.effets?.reduce((t, e) => (e.type === 'degatsTous' ? t + e.montant : t), 0) ?? 0
+      const vises = combat.ennemis
+        .map((ennemi, i) => ({ ennemi, i }))
+        .filter(({ ennemi }) => ennemi.pv > 0)
+      // LE MILIEU DU RANG : la moyenne des corps debout, pas le centre de
+      // l'écran — un rang d'un seul corps doit la voir tomber sur lui.
+      const places = vises.map(({ i }) => rang[i]).filter((p) => p !== undefined)
+      const milieu: [number, number, number] =
+        places.length === 0
+          ? [0, 0, 0]
+          : [
+              places.reduce((t, p) => t + p[0], 0) / places.length,
+              places.reduce((t, p) => t + p[1], 0) / places.length,
+              places.reduce((t, p) => t + p[2], 0) / places.length,
+            ]
+      const tue = vises.some(({ ennemi }) => montant >= ennemi.pv)
+      const cle = cleSuivante.current++
+      setVerrou(true)
+      setEnVol({ cle, carte: aPeindre(carte), depuis, vers: milieu, debut: lireHorloge() })
+
+      window.setTimeout(() => {
+        majCombat((c) => jouerCarte(c, index, -1))
+        secouer('forte')
+        const maintenant = lireHorloge()
+        setTouches((t) => {
+          const suite = { ...t }
+          for (const { i } of vises) suite[i] = maintenant
+          return suite
+        })
+        // CHAQUE CORPS A SA PROPRE CLÉ, tirée du même compteur que les coups
+        // simples. Une clé dérivée de celle du vol (`cle * 100 + n`) finirait
+        // par recouvrir celle d'un coup ordinaire, et le nettoyage de l'une
+        // emporterait l'autre — *une clé ne se fabrique pas, elle se tire.*
+        const cles = vises.map(() => cleSuivante.current++)
+        setCoups((cs) => [
+          ...cs,
+          ...vises.map(({ ennemi, i }, n) => ({
+            cle: cles[n]!,
+            cible: i,
+            degats: montant,
+            tue: montant >= ennemi.pv,
+          })),
+        ])
+        const tombes = vises.filter(({ ennemi }) => montant >= ennemi.pv)
+        if (tombes.length > 0) {
+          window.setTimeout(() => {
+            const t = lireHorloge()
+            setMorts((m) => {
+              const suite = { ...m }
+              for (const { i } of tombes) suite[i] = t
+              return suite
+            })
+          }, 90)
+        }
+        window.setTimeout(() => setCoups((cs) => cs.filter((k) => !cles.includes(k.cle))), 800)
+      }, TEMPS_IMPACT * 1000)
+
+      window.setTimeout(() => {
+        setEnVol(null)
+        setVerrou(false)
+      }, TEMPS_FIN * 1000 + (tue ? 900 : 0))
+    },
+    [combat, majCombat, rang],
+  )
+
+  /**
    * Jouer une carte.
    *
    * **Une carte qui ne vise personne part dès qu'on la lâche en zone de jeu**
@@ -302,14 +385,17 @@ export function Scene(): React.JSX.Element {
       if (carte.cout > combat.energie) return
 
       if (!viseUneCible(carte)) {
-        majCombat((c) => jouerCarte(c, index, -1))
+        // Une carte qui frappe TOUT LE RANG s'abat quand même : elle ne vise
+        // personne, mais elle fait quelque chose, et ça doit se voir.
+        if (portee(carte) === 'toutes') frapperTous(index, depuis)
+        else majCombat((c) => jouerCarte(c, index, -1))
         return
       }
       if (cible === null) return
       // Elle part d'où on l'a VUE : sa place d'attente au-dessus de la main.
       frapper(index, cible, depuis)
     },
-    [combat, fini, frapper, majCombat, verrou],
+    [combat, fini, frapper, frapperTous, majCombat, verrou],
   )
 
   const reordonner = useCallback((de: number, vers: number) => {

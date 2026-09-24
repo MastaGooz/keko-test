@@ -2723,6 +2723,31 @@ le compte passe de 10 à 13 cartes dont 6 qui frappent), zoomer une pièce,
 descendre, mourir — le hub rend le Glaive et le Plastron, et la potion
 emportée est perdue.
 
+### Une frappe sur TOUT LE RANG, maintenant qu'elle est atteignable
+
+L'Espadon devenant équipable, `degatsTous` sort enfin en jeu. Il jouait sans
+la moindre animation : l'état changeait, les jauges tombaient, rien ne reliait
+les deux.
+
+`frapperTous` est la séquence d'une frappe simple **répétée par corps** — même
+vol, même verrou, même tampon de mort. Deux choses qui lui sont propres :
+
+- **la carte s'abat AU MILIEU DU RANG**, la moyenne des corps debout. Elle ne
+  vise personne, donc tomber sur l'un d'eux mentirait sur ce qu'elle fait — et
+  la moyenne, plutôt que le centre de l'écran, la fait tomber sur le corps
+  quand il n'en reste qu'un ;
+- **chaque corps a son chiffre, sa secousse et son tampon**, parce que la
+  règle du multi-cibles vaut ici aussi : *on doit savoir qui a pris quoi.*
+
+**Une clé ne se fabrique pas, elle se tire.** Les chiffres de dégâts ont
+d'abord porté une clé dérivée de celle du vol (`cle * 100 + n`) ; au bout d'une
+centaine de cartes jouées elle aurait recouvert celle d'un coup ordinaire, et
+le nettoyage de l'une aurait emporté l'autre. Chaque corps touché tire donc sa
+clé du même compteur que les coups simples.
+
+Vérifié au navigateur : Tornade (10 à tous) laisse les trois corps debout,
+Fauchage (5 à tous) les abat tous les trois d'un coup et le palier s'ouvre.
+
 ### Le combat, branché sur les vraies règles — jalon 3
 
 Le deck vient du **chargement gratuit** (`deckEmporte`), les ennemis du même
