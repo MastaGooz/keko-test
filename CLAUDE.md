@@ -1981,6 +1981,17 @@ même texture — et on perdrait la tranche de laiton, la seule chose qui rende
 le volume lisible. Le contour lumineux suit les coins ronds lui aussi : un halo
 carré autour d'une carte arrondie se lirait comme un cadre posé dessus.
 
+### Le survol se mémorise par IDENTIFIANT, jamais par index
+
+Même famille de bug que la clé React bâtie sur l'index. La carte survolée
+puis jouée laissait son numéro derrière elle : la main se refermait, sa
+voisine héritait de l'index — et se levait indéfiniment, puisqu'aucun
+`pointerout` ne vient jamais pour une carte qu'on n'a pas survolée. Keko :
+« une autre carte se lève comme si j'étais en train de la hover, et elle
+reste levée tant que je ne hover pas une autre carte ». *Tout ce qui désigne
+une carte de la main entre deux rendus se désigne par son `id`* : la clé, le
+survol, la carte en vol.
+
 ### Pas de survol pendant qu'on tient une carte
 
 En la promenant, le pointeur passe sur ses voisines, qui se levaient comme si

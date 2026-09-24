@@ -228,7 +228,14 @@ export function Main3D({
   useEffect(() => {
     onSaisie?.(tenue !== null)
   }, [tenue, onSaisie])
-  const [survolee, setSurvolee] = useState<number | null>(null)
+  // LE SURVOL SE MÉMORISE PAR IDENTIFIANT, JAMAIS PAR INDEX. En index, la
+  // carte survolée puis jouée laissait son numéro derrière elle : la main se
+  // refermait, sa voisine héritait de l'index — et se levait, indéfiniment,
+  // puisqu'aucun `pointerout` ne viendrait pour une carte jamais survolée.
+  // Keko : « une autre carte se lève comme si j'étais en train de la hover,
+  // et elle reste levée tant que je ne hover pas une autre carte ». Même
+  // famille que la clé React bâtie sur l'index.
+  const [survolee, setSurvolee] = useState<string | null>(null)
   const [doigt, setDoigt] = useState<THREE.Vector3 | null>(null)
 
   // L'état du geste en cours. Dans une ref et non dans l'état React : il change
@@ -488,7 +495,7 @@ export function Main3D({
         }
         const rang = restantes.indexOf(i)
         const place = placeDansEventail(rang, restantes.length, Y_MAIN)
-        const leve = survolee === i
+        const leve = survolee === carte.id
         // Les voisines d'avant s'écartent à gauche, celles d'après à droite.
         const ecart = fente === null ? 0 : rang < fente ? -ECART_FENTE : ECART_FENTE
         return (
@@ -517,10 +524,10 @@ export function Main3D({
             // soulèvent comme quand je les hover sans avoir de drag en
             // cours ». Une carte tenue est le seul objet du geste.
             onPointerOver={(e) => {
-              if (e.nativeEvent.pointerType === 'mouse' && tenue === null) setSurvolee(i)
+              if (e.nativeEvent.pointerType === 'mouse' && tenue === null) setSurvolee(carte.id)
             }}
             onPointerOut={(e) => {
-              if (e.nativeEvent.pointerType === 'mouse') setSurvolee((s) => (s === i ? null : s))
+              if (e.nativeEvent.pointerType === 'mouse') setSurvolee((s) => (s === carte.id ? null : s))
             }}
           />
         )
