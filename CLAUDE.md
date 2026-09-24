@@ -2431,94 +2431,6 @@ valait 1568 de large quand `window.innerWidth` en faisait 2560 — un
 tiers d'écran de là, et désignait la mauvaise créature. Le jeu, lui, visait
 juste. **Vérifier `innerWidth` avant de fabriquer un évènement.**
 
-### L'écran de butin — et c'est l'écran de jeu
-
-`Butin3D.tsx`. Ce qu'on emporte est **littéralement la main** : même éventail,
-même taille de carte, même enfouissement sous le bord, mêmes gestes — c'est
-`Main3D`, inchangée, avec les trésors portés dedans. *C'est la main qu'on
-alourdit, donc c'est la main qu'on montre.* Le module ne dessine que ce qui
-s'ajoute au-dessus : **deux emplacements**, ce qui arrive et ce qu'on jette.
-
-**Chaque emplacement est aussi un bouton**, comme en 2D : sur téléphone le
-glisser seul est fragile, donc la tape doit toujours marcher. Taper « Jeter »
-vide y envoie le trésor qui arrive — c'est le refus ; le glisser depuis la
-main désigne la même destination. **Et on compare sur LE PLAN DES
-EMPLACEMENTS** (`slotSous`), pas en coordonnées de scène : la carte tenue vit
-devant eux, donc un doigt pile dessus donne deux points éloignés. Même piège
-que la visée d'une créature.
-
-**Le halo ne s'allume que là où lâcher fait quelque chose** (`zoneActive` sur
-`Main3D`). En combat tout l'espace au-dessus de la main joue la carte, donc le
-halo dit vrai partout ; ici seuls les deux emplacements reçoivent, et *un halo
-allumé au-dessus du vide promettrait un dépôt qui n'aura pas lieu.*
-
-**JETER DEMANDE DEUX GESTES**, et la carte posée dans le rebut reste
-**ENTIÈRE avec une lueur ROUGE** (`peril` sur `Carte3D`) — Keko, sur le 2D :
-« au lieu de la foncer, on devrait mettre une lueur rouge autour ». Une carte
-éteinte se lit comme déjà perdue alors qu'elle ne l'est pas, et on doit
-pouvoir la lire avant de valider. Elle ne frémit pas : le frémissement dit
-« lâche et ça part », c'est le vocabulaire d'un geste en cours. À côté,
-« Jeter — 65 d'or » en rouge et « Reprendre » en vert : les deux issues,
-côte à côte.
-
-**Les boutons vivent au bord droit, pas en bas** : le bas de l'écran est à la
-main, comme en combat, et c'est là que le pouce trouve déjà « Fin du tour ».
-
-**L'emplacement de loot disparaît une fois vide** ; « Jeter » reste. Et un
-emplacement occupé **ne se zoome pas** — différence assumée avec le 2D, où le
-slot était plus petit que la main : ici la carte y est à sa taille de main et
-sans voisine par-dessus. *Le zoom existe pour défaire un recouvrement, pas par
-principe.*
-
-### LE GESTE EST UN MODULE, PAS UN BOUT DE LA MAIN
-
-`geste-carte.ts`. Prendre, promener, lâcher vivaient dans `Main3D`, et ils y
-étaient enfermés : les emplacements du butin ne pouvaient ni se zoomer ni se
-glisser, alors que ce sont les mêmes cartes. Keko : « je ne peux pas cliquer
-sur le trésor dans le slot de loot pour zoomer ni le drag vers la main ». *Ce
-sont les mêmes cartes, ce doit être le même geste* — et le réécrire à côté,
-c'était refaire la faute des quatre fonctions qui dessinaient chacune leur
-carte avant `corpsCarte`.
-
-**Le hook ne décide de RIEN.** Il dit « celle-ci est tenue », « le doigt est
-là », « elle a été tapée », « elle a été lâchée ici ». Ce que ça VEUT DIRE —
-jouer, ranger, déposer — appartient à l'écran. La main garde donc sa règle
-(au-dessus de la ligne on joue, dedans on range) et le butin la sienne (sous
-la ligne c'est la main, au-dessus c'est un emplacement).
-
-**LE ZOOM PORTE LA CARTE, PAS UN INDEX DE MAIN** (`Zoom3D.tsx`), et c'est
-exactement la correction que le jeu 2D avait déjà faite : tant qu'il était un
-index dans `combat.main`, il était impossible de zoomer ailleurs. Il vit
-désormais au-dessus de tous les écrans, et n'importe lequel lui passe une
-carte. `Main3D` ne connaît plus le zoom du tout : elle reçoit seulement
-`envolee`, l'identifiant d'une carte **qui n'est plus dans la main** — celle
-qui s'abat, celle qui attend sa cible, celle qu'on regarde. Trois raisons, un
-seul mécanisme.
-
-**Ce qu'on tient n'est plus à sa place** : la case d'où vient la carte reprend
-l'habit d'une case vide le temps du glisser, et elle dit toujours ce qu'elle
-attend. Règle de l'armurerie 2D — sans son nom, c'est un pointillé muet.
-
-*Piège de test, rencontré deux fois* : un glisser lancé dans le même lot
-d'actions qu'un changement d'écran part avant que React n'ait rendu, et il ne
-touche rien. **Ça ressemble exactement à un geste cassé.** Laisser la scène se
-poser avant de mesurer.
-
-### La page figée : une DÉPENDANCE D'EFFET qui est un objet neuf
-
-**Le plus coûteux de cette étape, et il ne dit rien du tout.** `Carte3D`
-chargeait sa texture dans un effet dépendant de `carte`, l'objet. Un parent qui
-construit sa carte à la volée — `aPeindre(phase.loot)` — en fabrique une
-NOUVELLE à chaque rendu : l'effet se relançait, `onPeinte` incrémentait un
-compteur d'état, le rendu repartait. Boucle infinie, page gelée, **pas une
-seule erreur en console**, et le premier symptôme était un clic qui « ne
-marchait qu'une fois sur deux » sur l'écran de récompense.
-
-L'effet dépend désormais de la **signature du modèle**, qui est déjà la clé du
-cache de textures. *Une dépendance d'effet ne doit jamais être un objet qu'on
-vient de construire* — et quand on en tient un, la bonne dépendance est la
-valeur qui le caractérise, pas sa référence.
-
 ### Viser à plusieurs corps : LÂCHER SUR LE CORPS
 
 **Sortir une carte offensive à plusieurs ennemis ne changeait RIEN à l'écran.**
@@ -2624,10 +2536,6 @@ seconde fois : la menace tombait à zéro dès qu'on posait une Garde, donc elle
 disparaissait au lieu de baisser. C'est précisément ce chiffre qui doit rendre
 la garde lisible.
 
-**Gap connu, à reprendre** : un trésor affiche encore une gemme de coût dans
-la main 3D, là où le 2D lui met le sceau d'or. Tant qu'un trésor est une carte
-morte, il n'a pas de coût.
-
 ### La salve ennemie — jalon 5
 
 **Les ennemis frappent CHACUN SON TOUR** (`terminer` dans `Scene.tsx`), à
@@ -2663,7 +2571,7 @@ Le bouton dit « Les ennemis frappent… » et la main reste verrouillée jusqu'
 ce que le dernier bond soit retombé. Mesuré dans la page (sonde à 40 ms) :
 impact à ~270 ms, main rendue à ~680 ms pour un frappeur.
 
-### L'ARMURERIE EN 3D — jalon 5, et la boucle est fermée
+### L'ARMURERIE EN 3D — jalon 7, et la boucle est fermée
 
 `render/Armurerie3D.tsx`. **C'est le premier écran et celui où l'on revient** :
 la descente ne s'ouvre plus toute seule, elle naît du chargement
