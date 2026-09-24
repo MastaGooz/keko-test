@@ -24,7 +24,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { CarteAPeindre } from './texture-carte.ts'
-import { DEBORD_CONTOUR, textureContour, textureDeCarte } from './texture-carte.ts'
+import { DEBORD_CONTOUR, signature, textureContour, textureDeCarte } from './texture-carte.ts'
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
 export const LARGE = 1
@@ -116,6 +116,20 @@ type Props = {
    * de la main s'en tire parce que ses voisines reçoivent la sienne.*
    */
   ombre?: boolean
+  /**
+   * Elle est en train de se faire jeter : **le contour passe au ROUGE, et la
+   * carte reste ENTIÈRE.**
+   *
+   * Elle a été assombrie et désaturée dans le jeu 2D, et Keko l'a repris : « au
+   * lieu de la foncer, on devrait mettre une lueur rouge autour ». Une carte
+   * éteinte se lit comme déjà perdue, alors qu'elle ne l'est pas — et on doit
+   * pouvoir la LIRE avant de valider.
+   *
+   * Elle ne frémit pas : le frémissement dit « lâche et ça part », c'est le
+   * vocabulaire d'un geste en cours. Une carte posée dans le rebut attend, elle
+   * ne s'impatiente pas.
+   */
+  peril?: boolean
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -131,6 +145,7 @@ export function Carte3D({
   engagee = false,
   jouable = true,
   ombre = true,
+  peril = false,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -224,10 +239,19 @@ ${nuanceur.fragmentShader}`
     return () => {
       vivant = false
     }
-    // `onPeinte` volontairement hors des dépendances : une fonction recréée à
-    // chaque rendu du parent repeindrait la carte en boucle.
+    // ON DÉPEND DE LA SIGNATURE DU MODÈLE, PAS DE L'OBJET, et ça a coûté une
+    // page figée. Un parent qui construit sa carte à la volée
+    // (`aPeindre(phase.loot)`) en fabrique une NOUVELLE à chaque rendu : l'effet
+    // se relançait, `onPeinte` incrémentait un compteur d'état, le rendu
+    // repartait — boucle infinie, sans une seule erreur en console. *Une
+    // dépendance d'effet ne doit jamais être un objet qu'on vient de
+    // construire*, et ici la bonne clé est celle du cache de textures.
+    //
+    // `onPeinte` reste volontairement hors des dépendances, pour la même
+    // famille de raison : une fonction recréée à chaque rendu du parent
+    // repeindrait la carte en boucle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [carte, face])
+  }, [signature(carte), face])
 
   /**
    * La place LISSÉE, tenue à part de celle du groupe.
@@ -265,13 +289,13 @@ ${nuanceur.fragmentShader}`
     // LE FRÉMISSEMENT : court, rapide, et de deux fréquences qui ne retombent
     // jamais en phase — sinon il se lit comme un balancement régulier, donc
     // comme une animation, et non comme une carte qui vibre d'impatience.
-    const feuVise = engagee ? 1 : 0
+    const feuVise = engagee || peril ? 1 : 0
     l.feu += (feuVise - l.feu) * (1 - Math.exp(-12 * delta))
     const t = etat.clock.elapsedTime
-    const amp = l.feu * 0.014
+    const amp = peril ? 0 : l.feu * 0.014
 
     g.position.set(l.p.x + Math.sin(t * 37) * amp, l.p.y + Math.cos(t * 29) * amp, l.p.z)
-    g.rotation.set(l.r.x, l.r.y, l.r.z + Math.sin(t * 23) * l.feu * 0.018)
+    g.rotation.set(l.r.x, l.r.y, l.r.z + (peril ? 0 : Math.sin(t * 23) * l.feu * 0.018))
     g.scale.setScalar(l.t)
 
     // ET LE CONTOUR S'ALLUME. **Rien ne touche plus à la carte elle-même** :
@@ -306,6 +330,7 @@ ${nuanceur.fragmentShader}`
     // et non comme un trait peint. Sur la même horloge que le frémissement,
     // mais bien plus lente — deux battements rapides se liraient comme un
     // clignotement d'alerte.
+    halo.color.set(peril ? '#ff6a52' : '#ffe6ab')
     halo.opacity = l.feu * (0.88 + Math.sin(t * 6) * 0.12)
   })
 

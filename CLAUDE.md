@@ -2049,6 +2049,60 @@ Poser un `MutationObserver` et un `setInterval` dans la page (`window.__journal`
 AVANT le geste, puis lire après — c'est ce qui a prouvé la séquence verrou →
 chiffre → état.
 
+### L'écran de butin — et c'est l'écran de jeu
+
+`Butin3D.tsx`. Ce qu'on emporte est **littéralement la main** : même éventail,
+même taille de carte, même enfouissement sous le bord, mêmes gestes — c'est
+`Main3D`, inchangée, avec les trésors portés dedans. *C'est la main qu'on
+alourdit, donc c'est la main qu'on montre.* Le module ne dessine que ce qui
+s'ajoute au-dessus : **deux emplacements**, ce qui arrive et ce qu'on jette.
+
+**Chaque emplacement est aussi un bouton**, comme en 2D : sur téléphone le
+glisser seul est fragile, donc la tape doit toujours marcher. Taper « Jeter »
+vide y envoie le trésor qui arrive — c'est le refus ; le glisser depuis la
+main désigne la même destination. **Et on compare sur LE PLAN DES
+EMPLACEMENTS** (`slotSous`), pas en coordonnées de scène : la carte tenue vit
+devant eux, donc un doigt pile dessus donne deux points éloignés. Même piège
+que la visée d'une créature.
+
+**Le halo ne s'allume que là où lâcher fait quelque chose** (`zoneActive` sur
+`Main3D`). En combat tout l'espace au-dessus de la main joue la carte, donc le
+halo dit vrai partout ; ici seuls les deux emplacements reçoivent, et *un halo
+allumé au-dessus du vide promettrait un dépôt qui n'aura pas lieu.*
+
+**JETER DEMANDE DEUX GESTES**, et la carte posée dans le rebut reste
+**ENTIÈRE avec une lueur ROUGE** (`peril` sur `Carte3D`) — Keko, sur le 2D :
+« au lieu de la foncer, on devrait mettre une lueur rouge autour ». Une carte
+éteinte se lit comme déjà perdue alors qu'elle ne l'est pas, et on doit
+pouvoir la lire avant de valider. Elle ne frémit pas : le frémissement dit
+« lâche et ça part », c'est le vocabulaire d'un geste en cours. À côté,
+« Jeter — 65 d'or » en rouge et « Reprendre » en vert : les deux issues,
+côte à côte.
+
+**Les boutons vivent au bord droit, pas en bas** : le bas de l'écran est à la
+main, comme en combat, et c'est là que le pouce trouve déjà « Fin du tour ».
+
+**L'emplacement de loot disparaît une fois vide** ; « Jeter » reste. Et un
+emplacement occupé **ne se zoome pas** — différence assumée avec le 2D, où le
+slot était plus petit que la main : ici la carte y est à sa taille de main et
+sans voisine par-dessus. *Le zoom existe pour défaire un recouvrement, pas par
+principe.*
+
+### La page figée : une DÉPENDANCE D'EFFET qui est un objet neuf
+
+**Le plus coûteux de cette étape, et il ne dit rien du tout.** `Carte3D`
+chargeait sa texture dans un effet dépendant de `carte`, l'objet. Un parent qui
+construit sa carte à la volée — `aPeindre(phase.loot)` — en fabrique une
+NOUVELLE à chaque rendu : l'effet se relançait, `onPeinte` incrémentait un
+compteur d'état, le rendu repartait. Boucle infinie, page gelée, **pas une
+seule erreur en console**, et le premier symptôme était un clic qui « ne
+marchait qu'une fois sur deux » sur l'écran de récompense.
+
+L'effet dépend désormais de la **signature du modèle**, qui est déjà la clé du
+cache de textures. *Une dépendance d'effet ne doit jamais être un objet qu'on
+vient de construire* — et quand on en tient un, la bonne dépendance est la
+valeur qui le caractérise, pas sa référence.
+
 ### Viser à plusieurs corps : LÂCHER SUR LE CORPS
 
 **Sortir une carte offensive à plusieurs ennemis ne changeait RIEN à l'écran.**

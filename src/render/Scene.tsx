@@ -24,6 +24,7 @@ import { Cadrage, FOV, hauteurVisibleA, surLePlan, zCamera } from './Cadrage.tsx
 import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
+import { Butin3D, slotSous } from './Butin3D.tsx'
 import { aPeindre, descenteDeDepart } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
 import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
@@ -34,6 +35,7 @@ import {
   deplacerTresor,
   descendre,
   extraire,
+  reordonnerTresors,
   resoudreCombat,
   terminerButin,
   tresorsAuDeck,
@@ -414,18 +416,72 @@ export function Scene(): React.JSX.Element {
   )
 
   /**
-   * PRENDRE OU REFUSER. Refuser n'est pas « ne rien faire » : le trésor passe
-   * par le rebut et y est validé, donc il est perdu pour de bon — c'est la
-   * règle, et elle doit passer par les mêmes fonctions que le reste.
+   * PRENDRE LE TRÉSOR : il tombe dans le deck, où il pèsera dès la main
+   * suivante. **L'écran ne se referme pas pour autant** — c'est là qu'on
+   * décide aussi de ce qu'on lâche, et refermer sur le premier geste punirait
+   * l'exploration.
    */
   const prendreLoot = useCallback(
-    () => setDescente(terminerButin(deplacerTresor(descente, { ou: 'loot' }, { ou: 'deck' }))),
+    () => setDescente(deplacerTresor(descente, { ou: 'loot' }, { ou: 'deck' })),
     [descente],
   )
-  const refuserLoot = useCallback(
-    () => setDescente(terminerButin(validerJet(deplacerTresor(descente, { ou: 'loot' }, { ou: 'jeter' })))),
+
+  /**
+   * LES TRÉSORS PORTÉS SONT LA MAIN. Pas une rangée de vignettes dans une
+   * feuille : *c'est la main qu'on alourdit, donc c'est la main qu'on
+   * montre*, avec son éventail, sa taille de carte et ses gestes.
+   */
+  /** Ce qui arrive et ce qu'on s'apprête à jeter, prêts à peindre. */
+  const loot = useMemo(
+    () => (phase.type === 'butin' && phase.loot !== null ? aPeindre(phase.loot) : null),
+    [phase],
+  )
+  const aJeter = useMemo(
+    () => (phase.type === 'butin' && phase.aJeter !== null ? aPeindre(phase.aJeter) : null),
+    [phase],
+  )
+  const offres = useMemo(
+    () => (phase.type === 'recompense' ? phase.cartes.map(aPeindre) : []),
+    [phase],
+  )
+
+  const tresors = useMemo(
+    () => descente.deck.filter((c) => c.type === 'tresor').map(aPeindre),
+    [descente.deck],
+  )
+
+  /** Lâcher un trésor porté sur un emplacement l'y range. */
+  const deposer = useCallback(
+    (index: number, depuis: [number, number, number]) => {
+      if (phase.type !== 'butin') return
+      const carte = tresors[index]
+      const ou = slotSous(depuis, window.innerHeight, phase.loot !== null)
+      if (carte === undefined || ou === null) return
+      setDescente(deplacerTresor(descente, { ou: 'deck', id: carte.id }, { ou }))
+    },
+    [descente, phase, tresors],
+  )
+
+  const rangerTresor = useCallback(
+    (de: number, vers: number) => {
+      const carte = tresors[de]
+      if (carte === undefined) return
+      setDescente(reordonnerTresors(descente, carte.id, vers))
+    },
+    [descente, tresors],
+  )
+
+  /** Taper « Jeter » vide y envoie le trésor qui arrive : c'est le refus. */
+  const refuserLeLoot = useCallback(
+    () => setDescente(deplacerTresor(descente, { ou: 'loot' }, { ou: 'jeter' })),
     [descente],
   )
+  const reprendre = useCallback(
+    () => setDescente(deplacerTresor(descente, { ou: 'jeter' }, { ou: 'deck' })),
+    [descente],
+  )
+  const confirmerJet = useCallback(() => setDescente(validerJet(descente)), [descente])
+  const terminerLeButin = useCallback(() => setDescente(terminerButin(descente)), [descente])
 
   const plusBas = useCallback(() => setDescente(descendre(descente, depart.rng)), [descente, depart.rng])
   const sortir = useCallback(() => setDescente(extraire(descente)), [descente])
@@ -522,10 +578,34 @@ export function Scene(): React.JSX.Element {
         {/* LES ÉCRANS DE PALIER SONT DES VOILES sur la scène : on est encore
             dans le donjon, et le rang qu'on vient de vider reste derrière. */}
         {phase.type === 'recompense' && (
-          <Etal3D cartes={phase.cartes.map(aPeindre)} onChoisir={choisirRecompense} onPeinte={compter} />
+          <Etal3D cartes={offres} onChoisir={choisirRecompense} onPeinte={compter} />
         )}
-        {phase.type === 'butin' && phase.loot !== null && (
-          <Etal3D cartes={[aPeindre(phase.loot)]} onPeinte={compter} />
+        {phase.type === 'butin' && (
+          <>
+            {/* LE VOILE D'ABORD : on est encore dans le donjon, le rang vidé
+                reste derrière. `Etal3D` sans carte ne dessine que lui. */}
+            <Etal3D cartes={[]} onPeinte={compter} />
+            <Butin3D
+              loot={loot}
+              aJeter={aJeter}
+              onJeterLeLoot={refuserLeLoot}
+              onPeinte={compter}
+            />
+            {/* CE QU'ON EMPORTE EST LITTÉRALEMENT LA MAIN : même éventail,
+                même taille, mêmes gestes. Rien ne s'y joue, donc rien n'y est
+                grisé — la carte y est celle de l'emplacement d'à côté. */}
+            <Main3D
+              cartes={tresors}
+              zoomee={zoomee}
+              onJouer={deposer}
+              onRegarder={setZoomee}
+              onReordonner={rangerTresor}
+              onFermerZoom={() => setZoomee(null)}
+              onPeinte={compter}
+              onSaisie={setSaisie}
+              zoneActive={(p) => slotSous(p, window.innerHeight, phase.loot !== null) !== null}
+            />
+          </>
         )}
         {(phase.type === 'sortie' || phase.type === 'fin') && <Etal3D cartes={[]} onPeinte={compter} />}
 
@@ -696,22 +776,54 @@ export function Scene(): React.JSX.Element {
             <>
               <div className="haut-3d">
                 <p className="titre-3d">
-                  {phase.loot === null ? 'Rien à décider' : `${phase.loot.nom} · ${phase.loot.valeur ?? 0} d'or`}
+                  {phase.aJeter !== null
+                    ? `Tu vas perdre ${phase.aJeter.nom}`
+                    : phase.loot === null
+                      ? 'Ton chargement'
+                      : `${phase.loot.nom} · ${phase.loot.valeur ?? 0} d'or`}
                 </p>
               {/* LE POIDS SE DIT AVANT LE GESTE : un trésor pris est une carte
                   de plus dans le deck, et elle pèse dès la main suivante. */}
+                {/* LE POIDS SE DIT AVANT LE GESTE : un trésor pris est une
+                    carte de plus dans le deck, et elle pèse dès la main
+                    suivante. */}
                 <p className="sous-3d">
                   Tu portes {tresorsAuDeck(descente)} trésor{tresorsAuDeck(descente) > 1 ? 's' : ''} ·{' '}
-                  {butinTransporte(descente)} d'or
+                  {butinTransporte(descente)} d'or · glisse un trésor sur « Jeter » pour l'abandonner
                 </p>
               </div>
-              <div className="choix-3d">
-                <button type="button" className="bouton-3d prendre" onClick={prendreLoot}>
-                  Prendre
-                </button>
-                <button type="button" className="bouton-3d refuser" onClick={refuserLoot}>
-                  Refuser
-                </button>
+              {/* LES BOUTONS PASSENT AU BORD DROIT : le bas de l'écran est
+                  à la main, comme en combat, et c'est là que le pouce trouve
+                  déjà « Fin du tour ».
+
+                  ILS AGISSENT, ILS N'ATTENDENT PAS. « Prendre » tant qu'il y a
+                  un trésor à décider, « Terminer » ensuite — un bouton qui
+                  reste désactivé en énonçant ce qui manque ne fait rien. */}
+              <div className="actions-3d">
+                {phase.aJeter !== null && (
+                  <>
+                    {/* JETER DEMANDE DEUX GESTES : on voit ce qu'on s'apprête
+                        à perdre, puis on valide. Et l'autre issue est posée
+                        juste à côté — un glisser qu'il faut deviner ne vaut
+                        pas un bouton qui dit le choix inverse. */}
+                    <button type="button" className="bouton-3d perdre" onClick={confirmerJet}>
+                      Jeter — {phase.aJeter.valeur ?? 0} d'or
+                    </button>
+                    <button type="button" className="bouton-3d garder" onClick={reprendre}>
+                      Reprendre
+                    </button>
+                  </>
+                )}
+                {phase.aJeter === null && phase.loot !== null && (
+                  <button type="button" className="bouton-3d prendre" onClick={prendreLoot}>
+                    Prendre
+                  </button>
+                )}
+                {phase.aJeter === null && phase.loot === null && (
+                  <button type="button" className="bouton-3d prendre" onClick={terminerLeButin}>
+                    Terminer
+                  </button>
+                )}
               </div>
             </>
           )}

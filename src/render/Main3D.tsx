@@ -165,6 +165,15 @@ type Props = {
   /** Une carte est tenue au doigt (ou vient d'être lâchée). */
   onSaisie?: (tenue: boolean) => void
   /**
+   * Lâcher ICI déclenchera quelque chose.
+   *
+   * En combat, tout ce qui est au-dessus de la main joue la carte : la zone
+   * n'a pas de bord et le halo dit la vérité partout. Sur l'écran de butin
+   * seuls les deux emplacements reçoivent — *un halo allumé au-dessus du vide
+   * promettrait un dépôt qui n'aura pas lieu.*
+   */
+  zoneActive?: (point: [number, number, number]) => boolean
+  /**
    * LE JEU A DES TEMPS. Tant qu'une animation se déroule, la main ne répond
    * pas : le coup se joue en entier avant qu'on puisse en lancer un autre.
    */
@@ -215,6 +224,7 @@ export function Main3D({
   onFermerZoom,
   onPeinte,
   onSaisie,
+  zoneActive,
   verrou = false,
 }: Props): React.JSX.Element {
   const { camera, size } = useThree()
@@ -489,7 +499,11 @@ export function Main3D({
               // elle n'a aucun bord à surligner — le repère voyage donc avec
               // le doigt, comme en 2D. Une carte injouable ne s'allume pas :
               // *le halo dit « lâche et ça part »*, il mentirait.
-              engagee={p.y > LIGNE_DE_JEU && (jouables?.[i] ?? true)}
+              engagee={
+                p.y > LIGNE_DE_JEU &&
+                (jouables?.[i] ?? true) &&
+                (zoneActive === undefined || zoneActive([p.x, p.y, Z_TENUE]))
+              }
               jouable={jouables?.[i] ?? true}
               onPeinte={onPeinte}
             />

@@ -330,7 +330,7 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
 const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
-function signature(carte: CarteAPeindre): string {
+export function signature(carte: CarteAPeindre): string {
   return `${carte.nom}|${carte.cout}|${carte.type}|${carte.effet.join('~')}`
 }
 
@@ -349,6 +349,51 @@ export function textureDeCarte(carte: CarteAPeindre): Promise<THREE.CanvasTextur
   })
   TEXTURES.set(cle, promesse)
   return promesse
+}
+
+/**
+ * UN EMPLACEMENT VIDE A LA FORME DE LA CARTE QU'IL ATTEND, et il la GARDE.
+ *
+ * C'est la règle du jeu 2D, et elle a un prix qu'on paie volontiers : un
+ * emplacement qui change de taille selon ce qu'il contient, ou selon la
+ * présence de son voisin, est un emplacement qu'on rate au doigt. Il dit
+ * aussi ce qu'il attend — sans son nom, c'est un pointillé muet.
+ */
+const SLOTS = new Map<string, THREE.CanvasTexture>()
+
+export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {
+  const cle = `${nom}|${accent}`
+  const connue = SLOTS.get(cle)
+  if (connue !== undefined) return connue
+
+  const l = 512
+  const h = Math.round(l * 1.4)
+  const canvas = document.createElement('canvas')
+  canvas.width = l
+  canvas.height = h
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  SLOTS.set(cle, texture)
+
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) return texture
+
+  const marge = l * 0.03
+  ctx.strokeStyle = accent
+  ctx.lineWidth = l * 0.016
+  ctx.setLineDash([l * 0.07, l * 0.05])
+  ctx.beginPath()
+  ctx.roundRect(marge, marge, l - marge * 2, h - marge * 2, l * 0.05)
+  ctx.stroke()
+
+  ctx.setLineDash([])
+  ctx.fillStyle = accent
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `600 ${Math.round(l * 0.11)}px Cinzel, Georgia, serif`
+  ctx.fillText(nom.toUpperCase(), l / 2, h / 2)
+  texture.needsUpdate = true
+  return texture
 }
 
 /**
