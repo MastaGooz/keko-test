@@ -339,7 +339,7 @@ function peindreCompteur(ctx: CanvasRenderingContext2D, nombre: number): void {
  * n'existe que pour ça : une fois le choix fait, il ne reste qu'un dessin.
  */
 export type StyleCout = 'blason' | 'losange' | 'hexagone' | 'orbe' | 'eclat'
-let styleCout: StyleCout = 'blason'
+let styleCout: StyleCout = 'orbe'
 
 export function choisirStyleCout(style: StyleCout): void {
   styleCout = style

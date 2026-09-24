@@ -76,5 +76,6 @@ export async function montrerPlancheEcusson(racine: HTMLElement, build: string):
       boite.appendChild(loupe)
     }
   }
-  choisirStyleCout('blason')
+  // ON REPOSE CE QUE LE JEU UTILISE, pas ce qui vient d'être dessiné.
+  choisirStyleCout('orbe')
 }

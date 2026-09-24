@@ -2690,7 +2690,7 @@ le compte passe de 10 à 13 cartes dont 6 qui frappent), zoomer une pièce,
 descendre, mourir — le hub rend le Glaive et le Plastron, et la potion
 emportée est perdue.
 
-### LE SYMBOLE DU COÛT est à rechoisir — la planche vit derrière `?ecusson`
+### LE SYMBOLE DU COÛT EST UN ORBE — tranché par Keko
 
 Keko : « on dirait un bouclier, ça ne renvoie pas trop à l'énergie, et la
 couleur rouge est un peu bizarre ». **Les deux gênes ont la même racine, et
@@ -2707,10 +2707,32 @@ descend comme un bouclier), **hexagone** (une pièce mécanique, aucune parenté
 héraldique), **orbe** (l'objet du joueur, en petit) et **éclat** (un
 scintillement à quatre branches).
 
-**Le jeu n'a pas changé** : `styleCout` vaut `blason` tant que Keko n'a pas
-tranché. Une fois le choix fait, il ne reste qu'un dessin et la variable
-disparaît — et **l'orbe du joueur devra suivre**, sinon on aura recréé le
-défaut qu'on corrige.
+**Keko a choisi l'ORBE** : « essayons l'orbe, mais il faudrait une orbe sur les
+cartes, puis le même symbole avec X/X dans l'interface de combat ». C'est la
+règle prise au mot — le joueur voit le même objet sur sa carte et dans son coin
+d'écran, donc il n'a rien à apprendre. `styleCout` vaut donc `orbe` ; la
+variable et la planche restent le temps d'essayer, elles disparaîtront avec le
+choix définitif.
+
+**ET L'ORBE DU JOUEUR EST LE MÊME OBJET** (`render/Orbe3D.tsx`), en SVG plutôt
+qu'en texture : un chiffre d'interface reste net à toute taille et n'a rien à
+gagner à passer par un canvas. Même construction, même ordre — socle sombre,
+filet de laiton, coeur d'ambre, chiffre en ivoire.
+
+**Il porte `X/X`, le maximum DEDANS.** En 2D il vivait à côté de l'écusson
+parce qu'il ne logeait pas sous sa pointe ; un disque a de la place au centre.
+Le courant est gros, le maximum petit : *on décide sur ce qu'il reste, pas sur
+ce qu'on avait.*
+
+**Il est AU-DESSUS DE LA PIOCHE**, et l'objection du jeu 2D ne tient plus : là
+-bas l'orbe avait dû être poussé À DROITE du tas parce que le tas était une
+carte à la taille de la main, donc « au-dessus » l'envoyait en haut de l'écran.
+Ici le tas est un petit symbole.
+
+**Les deux coins sont des COLONNES** (`.coin-3d`), pas des éléments calés
+chacun sur une hauteur écrite à la main : l'orbe s'empile sur la pioche, et si
+le tas change de taille il suit. Vérifié à 844x390 et 667x320, sans contact
+avec la main.
 
 Deux choses apprises en dessinant :
 
