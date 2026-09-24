@@ -525,7 +525,19 @@ export function Scene(): React.JSX.Element {
         // d'aucune commande, donc la scène monte au-dessus et redescend au
         // lâcher. Keko : « la carte est toujours sous le bouton fin de tour
         // et les deux textes gris en haut ».
-        style={{ position: 'fixed', inset: 0, zIndex: saisie || zoomee !== null ? 4 : 2 }}
+        //
+        // MAIS SEULEMENT EN COMBAT. Sur l'écran de butin, la scène porte un
+        // VOILE : la faire monter pendant un glisser le passait par-dessus les
+        // boutons, qui s'assombrissaient d'un coup — Keko : « quand je drague
+        // un trésor, le bouton terminer est grisé trop sombre ». Et il n'y a
+        // rien à découvrir là-bas : aucun bouton ne surplombe la zone où l'on
+        // promène la carte. *Une règle posée pour un écran ne se généralise
+        // pas à ceux qui n'ont pas le même problème.*
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: (saisie && enCombat) || zoomee !== null ? 4 : 2,
+        }}
       >
         <ambientLight intensity={0.55} />
         {/* Le biais d'ombre éloigne la profondeur comparée d'un cheveu : sans

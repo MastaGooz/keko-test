@@ -2709,15 +2709,22 @@ part, et tout s'étage : le fond, puis ce que la carte a le droit de recouvrir
 (jauges, intentions, énergie, PV), puis la scène, puis ce qui doit rester
 au-dessus de tout — la ligne d'état et le bouton de fin de tour.
 
-**ET LA SCÈNE PASSE DEVANT TOUT LE TEMPS D'UN GESTE.** Au repos, le bouton de
-fin de tour et les lignes d'état restent au-dessus — il faut pouvoir cliquer
-le bouton. Mais une carte qu'on tient ou qu'on regarde ne doit passer sous
-rien (Keko : « la carte est toujours sous le bouton fin de tour et les deux
-textes gris en haut ») : pendant ce temps on n'a besoin d'aucune commande,
-donc la scène monte au-dessus (`zIndex` 4) et redescend au lâcher. `Main3D`
-signale la saisie par `onSaisie`, et c'est le parent qui étage. Vérifié dans
-les deux sens : pendant le geste `elementFromPoint` renvoie le canvas sur le
-bouton, après le lâcher il renvoie le bouton et le clic passe le tour.
+**ET LA SCÈNE PASSE DEVANT TOUT LE TEMPS D'UN GESTE — MAIS SEULEMENT EN
+COMBAT.** Au repos, le bouton de fin de tour et les lignes d'état restent
+au-dessus : il faut pouvoir cliquer le bouton. Mais une carte qu'on tient ou
+qu'on regarde ne doit passer sous rien (Keko : « la carte est toujours sous le
+bouton fin de tour et les deux textes gris en haut ») : pendant ce temps on
+n'a besoin d'aucune commande, donc la scène monte au-dessus (`zIndex` 4) et
+redescend au lâcher. `Main3D` signale la saisie par `onSaisie`, et c'est le
+parent qui étage.
+
+**Sur l'écran de butin, la scène porte un VOILE** : la faire monter pendant un
+glisser le passait par-dessus les boutons, qui s'assombrissaient d'un coup —
+Keko : « quand je drague un trésor, le bouton terminer est grisé trop sombre ».
+Et il n'y a rien à découvrir là-bas, aucun bouton ne surplombe la zone où l'on
+promène la carte. *Une règle posée pour un écran ne se généralise pas à ceux
+qui n'ont pas le même problème.* Le zoom, lui, fait toujours monter la scène :
+son voile doit couvrir l'interface.
 
 **PIÈGE : `position: fixed` crée un contexte d'empilement dans Chrome, même
 sans `z-index`.** Le bouton était enfermé dans le bloc d'interface et restait
