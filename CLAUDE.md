@@ -1939,6 +1939,45 @@ d'écran**, qui ramène l'onglet au premier plan. C'est la version 3D du piège
 déjà noté pour les iframes : *en arrière-plan, le navigateur gèle ce qu'on
 essaie de mesurer.*
 
+### Le cadrage : la carte est PLAFONNÉE, comme en 2D
+
+En 3D, une carte fait 1 de large et sa taille en pixels suit la hauteur de la
+fenêtre — ~37 % quelle qu'elle soit. Sur téléphone c'est la taille du jeu 2D ;
+sur un écran de PC ça donnait des cartes deux fois plus grandes que l'ancienne
+version (Keko : « sur PC c'est beaucoup trop gros »). Le 2D plafonne à
+`11rem x 1,4`, soit 370 px de haut à 24 px/rem : `Cadrage` reprend ce plafond
+en **reculant la caméra** dès que 37 % de la hauteur le dépasserait. Tout
+recule avec elle, ennemis compris — c'est ce que fait le 2D, où les corps sont
+plafonnés aussi.
+
+**Toute position qui dépend du cadrage se CALCULE à partir de `Cadrage`**
+(`zCamera`, `hauteurVisibleA`) et n'est jamais une constante : la main doit
+rester collée au bord bas, le zoom à sa distance de lecture, quelle que soit la
+profondeur de la caméra. Une main à `y = -1,3` fixe flottait au milieu de
+l'écran dès que la caméra reculait.
+
+### Les coins sont ronds : la carte est faite de DEUX pièces
+
+Un pavé aux arêtes arrondies (`RoundedBoxGeometry`, rayon 3 % comme le
+`border-radius` du gabarit) porte le laiton — c'est le corps, avec sa tranche —
+et un plan un cheveu devant porte la face peinte, dont les coins sont
+transparents : la texture est peinte dans un `roundRect`, et `alphaTest` coupe
+ce qui est hors du dessin. Aux coins, la face laisse voir le laiton arrondi du
+corps : le cadre déborde d'un cheveu, comme la coque 2D.
+
+Pourquoi pas un seul pavé arrondi texturé : `RoundedBoxGeometry` **n'a pas de
+groupes de matériaux**, donc la face et la tranche partageraient la même
+texture — et on perdrait la tranche de laiton, la seule chose qui rende le
+volume lisible. Le contour lumineux suit les coins ronds lui aussi : un halo
+carré autour d'une carte arrondie se lirait comme un cadre posé dessus.
+
+### Pas de survol pendant qu'on tient une carte
+
+En la promenant, le pointeur passe sur ses voisines, qui se levaient comme si
+on les survolait (Keko : « les autres cartes de la main se soulèvent comme
+quand je les hover sans avoir de drag en cours »). Le survol est ignoré tant
+que `tenue !== null` : *une carte tenue est le seul objet du geste.*
+
 ### Le coup se voit — jalon 4
 
 **La carte jouée s'abat sur sa cible** (`CarteQuiSAbat`), en trois temps portés

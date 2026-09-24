@@ -23,6 +23,7 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import type { CarteAPeindre } from './texture-carte.ts'
 import { DEBORD_CONTOUR, textureContour, textureDeCarte } from './texture-carte.ts'
 
@@ -30,6 +31,30 @@ import { DEBORD_CONTOUR, textureContour, textureDeCarte } from './texture-carte.
 export const LARGE = 1
 export const HAUT = 1.4
 const EPAISSEUR = 0.012
+
+/** Le rayon des coins : 3 % de la largeur, comme le `border-radius` du gabarit. */
+export const RAYON_COIN = 0.03
+
+/**
+ * LA CARTE EST FAITE DE DEUX PIÈCES, et c'est ce qui donne les coins ronds.
+ *
+ * Un pavé aux arêtes arrondies porte le laiton — c'est le CORPS, avec sa
+ * tranche — et un plan posé un cheveu devant porte la face peinte, dont les
+ * coins sont transparents (la texture est peinte dans un rectangle arrondi,
+ * et `alphaTest` coupe ce qui est hors du dessin). Aux coins, le plan laisse
+ * donc voir le laiton arrondi du corps : le cadre déborde d'un cheveu, comme
+ * la coque du gabarit 2D.
+ *
+ * Pourquoi pas un seul pavé arrondi texturé : `RoundedBoxGeometry` n'a pas de
+ * groupes de matériaux, donc la face et la tranche partageraient la même
+ * texture — et on perdrait la tranche de laiton, la seule chose qui rende le
+ * volume lisible. Keko : « il faudrait arrondir un peu le bord des cartes ».
+ *
+ * Les géométries sont partagées par toutes les cartes : elles ne changent
+ * jamais.
+ */
+const GEOMETRIE_CORPS = new RoundedBoxGeometry(LARGE, HAUT, EPAISSEUR, 2, RAYON_COIN)
+const GEOMETRIE_FACE = new THREE.PlaneGeometry(LARGE, HAUT)
 
 type Props = {
   carte: CarteAPeindre
@@ -74,7 +99,7 @@ export function Carte3D({
 }: Props): React.JSX.Element {
   const groupe = useRef<THREE.Group>(null)
 
-  const { face, laiton, halo, materiaux } = useMemo(() => {
+  const { face, laiton, halo } = useMemo(() => {
     const laiton = new THREE.MeshStandardMaterial({
       color: '#b79a6a',
       metalness: 0.85,
@@ -90,6 +115,9 @@ export function Carte3D({
       metalness: 0.15,
       emissive: '#ffcf7a',
       emissiveIntensity: 0,
+      // Les coins de la texture sont transparents : on les coupe franchement
+      // plutôt que de les fondre, sinon la face se mélangerait au laiton.
+      alphaTest: 0.5,
     })
 
     // UNE CARTE INJOUABLE PASSE EN NOIR ET BLANC, pas seulement en sombre.
@@ -139,7 +167,7 @@ ${nuanceur.fragmentShader}`
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     })
-    return { face, laiton, halo, materiaux: [laiton, laiton, laiton, laiton, face, laiton] }
+    return { face, laiton, halo }
   }, [])
 
   useEffect(() => {
@@ -252,19 +280,25 @@ ${nuanceur.fragmentShader}`
         <planeGeometry args={[LARGE + DEBORD_CONTOUR * 2, HAUT + DEBORD_CONTOUR * 2]} />
       </mesh>
 
-      {/* ELLE PROJETTE UNE OMBRE, ELLE N'EN REÇOIT PAS. Une carte qui reçoit
+      {/* LE CORPS : le laiton, tranche et coins arrondis compris. C'est lui
+          qui porte les évènements — il couvre toute la carte.
+
+          ELLE PROJETTE UNE OMBRE, ELLE N'EN REÇOIT PAS. Une carte qui reçoit
           des ombres reçoit aussi la SIENNE : à faible précision de carte
           d'ombre — ce qui est le cas sur un téléphone — ça se voit comme des
           taches sombres sur sa propre face, d'autant plus qu'elle est proche
           de la caméra. Le sol reçoit les ombres, c'est tout ce qu'il faut. */}
       <mesh
         castShadow
-        material={materiaux}
+        geometry={GEOMETRIE_CORPS}
+        material={laiton}
         onPointerDown={onPointerDown}
         onPointerOver={onPointerOver}
         onPointerOut={onPointerOut}
       >
-        <boxGeometry args={[LARGE, HAUT, EPAISSEUR]} />
+        {/* LA FACE : la carte peinte, un cheveu devant le corps. Ses coins
+            transparents laissent voir le laiton arrondi derrière. */}
+        <mesh geometry={GEOMETRIE_FACE} material={face} position={[0, 0, EPAISSEUR / 2 + 0.001]} raycast={() => null} />
       </mesh>
     </group>
   )

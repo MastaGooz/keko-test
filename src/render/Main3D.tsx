@@ -30,6 +30,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Carte3D, HAUT } from './Carte3D.tsx'
+import { Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
 
 /** Sous ce déplacement, la souris n'a pas glissé : elle a cliqué. */
@@ -77,9 +78,17 @@ const INCLINAISON = 0.18
  * volume manque : la lumière rasante ne glisse plus sur la face, elle
  * n'accroche que le cadre et la tranche.
  */
-const Y_MAIN = -1.3
-const Z_MAIN = 1.1
 const COUCHE = 0
+
+/**
+ * Où la main se pose en y, pour cette fenêtre : collée au bord bas, la carte
+ * enfouie de ~9 %. **Calculée, pas fixée** : la caméra recule sur grand écran
+ * (`Cadrage`), donc le bord bas de l'écran descend en unités de scène — une
+ * constante laissait la main flotter au milieu.
+ */
+function yMain(hauteurFenetrePx: number): number {
+  return -hauteurVisibleA(Z_MAIN, hauteurFenetrePx) / 2 + HAUT * 0.41
+}
 
 /**
  * À quelle profondeur voyage la carte qu'on tient.
@@ -94,6 +103,9 @@ const COUCHE = 0
  * de son origine. Si la main se recouche un jour, cet écart doit suivre.
  */
 const Z_TENUE = Z_MAIN + 0.35
+
+/** Y de repos de la carte tenue avant que le doigt n'ait bougé, en fonction de la main. */
+const LEVEE_INITIALE = 0.4
 
 /**
  * La hauteur à partir de laquelle lâcher JOUE la carte.
@@ -122,8 +134,9 @@ const ECART_FENTE = 0.3
  * posé juste derrière — **il intercepte les rayons**, donc il neutralise la
  * main d'un coup sans qu'on ait à désactiver quoi que ce soit.
  */
-const Z_ZOOM = 3.5
-const Z_VOILE = 3
+/** Distances CAMÉRA → carte regardée, et caméra → voile : elles suivent le recul. */
+const RECUL_ZOOM = 2.5
+const RECUL_VOILE = 3
 
 type Props = {
   cartes: readonly CarteAPeindre[]
@@ -168,14 +181,14 @@ function placeSousLeDoigt(x: number, total: number): number {
 }
 
 /** La place d'une carte dans l'éventail, la carte tenue exclue. */
-function placeDansEventail(rang: number, total: number): {
+function placeDansEventail(rang: number, total: number, y: number): {
   position: [number, number, number]
   rotation: [number, number, number]
 } {
   const centre = (total - 1) / 2
   const ecart = rang - centre
   return {
-    position: [ecart * PAS, Y_MAIN - Math.abs(ecart) * CREUX, Z_MAIN + rang * 0.01],
+    position: [ecart * PAS, y - Math.abs(ecart) * CREUX, Z_MAIN + rang * 0.01],
     rotation: [COUCHE, 0, -ecart * INCLINAISON],
   }
 }
@@ -192,8 +205,13 @@ export function Main3D({
   onSaisie,
   verrou = false,
 }: Props): React.JSX.Element {
-  const { camera } = useThree()
+  const { camera, size } = useThree()
   const [tenue, setTenue] = useState<number | null>(null)
+  // Le cadrage de CETTE fenêtre : la main au bord bas, le zoom à sa distance
+  // de lecture, quelle que soit la profondeur où la caméra a reculé.
+  const Y_MAIN = yMain(size.height)
+  const Z_ZOOM = zCamera(size.height) - RECUL_ZOOM
+  const Z_VOILE = zCamera(size.height) - RECUL_VOILE
 
   // Le parent veut savoir quand on tient une carte : c'est lui qui fait passer
   // la scène devant l'interface le temps du geste.
@@ -435,7 +453,7 @@ export function Main3D({
           )
         }
         if (i === tenue) {
-          const p = doigt ?? new THREE.Vector3(0, Y_MAIN + 0.4, Z_TENUE)
+          const p = doigt ?? new THREE.Vector3(0, Y_MAIN + LEVEE_INITIALE, Z_TENUE)
           return (
             <Carte3D
               key={carte.id}
@@ -456,7 +474,7 @@ export function Main3D({
           )
         }
         const rang = restantes.indexOf(i)
-        const place = placeDansEventail(rang, restantes.length)
+        const place = placeDansEventail(rang, restantes.length, Y_MAIN)
         const leve = survolee === i
         // Les voisines d'avant s'écartent à gauche, celles d'après à droite.
         const ecart = fente === null ? 0 : rang < fente ? -ECART_FENTE : ECART_FENTE
@@ -480,8 +498,13 @@ export function Main3D({
             // restait levée comme si on la tenait encore. Keko : « elle reste
             // parfois sortie alors que je ne touche plus l'écran ». C'est le
             // pendant du `hover: hover` du jeu 2D, où la règle est déjà écrite.
+            // ...ET PAS PENDANT QU'ON TIENT UNE CARTE. En la promenant, le
+            // pointeur passe sur ses voisines, qui se levaient comme si on
+            // les survolait — Keko : « les autres cartes de la main se
+            // soulèvent comme quand je les hover sans avoir de drag en
+            // cours ». Une carte tenue est le seul objet du geste.
             onPointerOver={(e) => {
-              if (e.nativeEvent.pointerType === 'mouse') setSurvolee(i)
+              if (e.nativeEvent.pointerType === 'mouse' && tenue === null) setSurvolee(i)
             }}
             onPointerOut={(e) => {
               if (e.nativeEvent.pointerType === 'mouse') setSurvolee((s) => (s === i ? null : s))

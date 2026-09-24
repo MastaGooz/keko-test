@@ -172,6 +172,15 @@ export async function peindreCarte(carte: CarteAPeindre): Promise<HTMLCanvasElem
 
   const [image] = await Promise.all([illustration(carte.nom), document.fonts.ready])
 
+  // LES COINS SONT RONDS, et c'est la texture qui les porte : tout ce qui
+  // suit est peint dans un rectangle arrondi, et le canvas reste transparent
+  // en dehors. Rayon : 3 % de la largeur, comme le `border-radius` du gabarit
+  // 2D. Le matériau coupe ces coins (`alphaTest`) et laisse voir le laiton
+  // arrondi du corps de la carte.
+  ctx.beginPath()
+  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * 0.03)
+  ctx.clip()
+
   // LA PLAQUE : le laiton, assombri d'un voile uniforme. C'est ce voile seul
   // qui fait le relief -- une ombre sous la coque la « différenciait trop du
   // fond » (Keko).
@@ -402,6 +411,14 @@ export function textureContour(): THREE.CanvasTexture {
   // sur tout le débord, le halo devient une brume qui n'éclaire rien ; c'est
   // près du bord qu'une lumière se lit.
   ctx.shadowColor = 'rgba(255, 255, 255, 0.95)'
+  // Le contour suit les coins ronds de la carte : un halo carré autour d'une
+  // carte arrondie se lirait comme un cadre posé dessus.
+  const coin = l * 0.03
+  const rect = (x: number, y: number, lg: number, ht: number): void => {
+    ctx.beginPath()
+    ctx.roundRect(x, y, lg, ht, coin)
+    ctx.fill()
+  }
   // LA LUMIÈRE DOIT ÊTRE ÉTEINTE AVANT LE BORD DU PLAN, sinon on voit le
   // rectangle qui la délimite — Keko : « on voit le rectangle qui délimite la
   // lumière ». C'est ce qui règle les rayons : assez courts pour que l'alpha
@@ -413,7 +430,7 @@ export function textureContour(): THREE.CanvasTexture {
   // zéros francs.
   for (const rayon of [debord * 0.85, debord * 0.45, debord * 0.2]) {
     ctx.shadowBlur = rayon
-    ctx.fillRect(debord, debord, l, h)
+    rect(debord, debord, l, h)
   }
 
   // PUIS LE LISERÉ NET, sans ombre : c'est lui qui donne l'arête franche que
@@ -422,7 +439,7 @@ export function textureContour(): THREE.CanvasTexture {
   ctx.shadowColor = 'transparent'
   ctx.shadowBlur = 0
   const arete = Math.round(l * 0.022)
-  ctx.fillRect(debord - arete, debord - arete, l + arete * 2, h + arete * 2)
+  rect(debord - arete, debord - arete, l + arete * 2, h + arete * 2)
 
   contour = new THREE.CanvasTexture(canvas)
   contour.colorSpace = THREE.SRGBColorSpace

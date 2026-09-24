@@ -16,6 +16,7 @@ import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
 import { Projeter } from './Projeter.tsx'
 import { CarteQuiSAbat, TEMPS_FIN, TEMPS_IMPACT } from './CarteQuiSAbat.tsx'
 import { Horloge, lireHorloge } from './horloge.tsx'
+import { Cadrage, FOV, zCamera } from './Cadrage.tsx'
 import { aPeindre, combatDeDepart } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
 import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
@@ -207,7 +208,9 @@ export function Scene(): React.JSX.Element {
       <Canvas
         shadows
         dpr={[1, 2]}
-        camera={{ position: [0, 0, 6], fov: 42 }}
+        // La position initiale suit le cadrage ; `Cadrage` la tient ensuite
+        // à jour quand la fenêtre change.
+        camera={{ position: [0, 0, zCamera(window.innerHeight)], fov: FOV }}
         // LE CANVAS EST TRANSPARENT, et le fond vit derrière lui : c'est ce
         // qui permet de glisser l'interface DESSOUS. Avec un fond sur le
         // canvas, tout ce qu'on met derrière disparaît.
@@ -255,6 +258,7 @@ export function Scene(): React.JSX.Element {
         )}
 
         <Horloge />
+        <Cadrage />
 
         <Main3D
           cartes={main}
