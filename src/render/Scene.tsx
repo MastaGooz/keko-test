@@ -741,7 +741,16 @@ export function Scene(): React.JSX.Element {
 
       {/* LES BOUTONS DU BUTIN, ancrés sous leur emplacement. Ils vivent hors du
           panneau parce qu'ils sont projetés : leur `transform` est réécrit à
-          chaque image, et rien d'autre ne doit le disputer. */}
+          chaque image, et rien d'autre ne doit le disputer.
+
+          TOUS S'ÉTEIGNENT PENDANT UN GLISSER, et ça règle deux choses d'un
+          coup. Ils sont posés AU-DESSUS du canvas — sinon le voile de l'écran
+          les noircirait — donc une carte promenée passait derrière eux ; à 35 %
+          d'opacité, elle se lit au travers. Et un bouton reste inerte tant
+          qu'on tient une carte : *on est au milieu d'un geste, rien d'autre
+          n'a à répondre.* Keko : « le bouton prendre et terminer est passé
+          par-dessus la carte quand je la drague ; il devrait être exactement
+          comme quand un objet est dans le slot jeter ». */}
       {pret && phase.type === 'butin' && (
         <div className="ancres-butin">
           {/* SOUS LA PLACE DU TRÉSOR : « Prendre » tant qu'il y en a un, puis
@@ -751,7 +760,12 @@ export function Scene(): React.JSX.Element {
           <div className="ancre-butin" ref={sousLoot}>
             <div className="sous-slot">
               {phase.loot !== null ? (
-                <button type="button" className="bouton-3d prendre" onClick={prendreLoot}>
+                <button
+                  type="button"
+                  className="bouton-3d prendre"
+                  onClick={prendreLoot}
+                  disabled={saisie}
+                >
                   Prendre
                 </button>
               ) : (
@@ -765,7 +779,7 @@ export function Scene(): React.JSX.Element {
                   type="button"
                   className="bouton-3d prendre"
                   onClick={terminerLeButin}
-                  disabled={phase.aJeter !== null}
+                  disabled={phase.aJeter !== null || saisie}
                 >
                   Terminer
                 </button>
@@ -783,10 +797,20 @@ export function Scene(): React.JSX.Element {
                 {/* Le prix perdu est déjà écrit SUR la carte, juste au-dessus :
                     le répéter sur le bouton allonge un mot qui doit rester un
                     verbe. */}
-                <button type="button" className="bouton-3d petit perdre" onClick={confirmerJet}>
+                <button
+                  type="button"
+                  className="bouton-3d petit perdre"
+                  onClick={confirmerJet}
+                  disabled={saisie}
+                >
                   Jeter
                 </button>
-                <button type="button" className="bouton-3d petit garder" onClick={reprendre}>
+                <button
+                  type="button"
+                  className="bouton-3d petit garder"
+                  onClick={reprendre}
+                  disabled={saisie}
+                >
                   Reprendre
                 </button>
               </>

@@ -2139,6 +2139,20 @@ où était « Prendre »** une fois le trésor décidé : le second n'apparaît 
 fois le premier consommé, et *un bouton qui se déplace entre deux états
 successifs oblige à le chercher deux fois.*
 
+**TOUS LES BOUTONS S'ÉTEIGNENT PENDANT UN GLISSER**, et ça règle deux choses
+d'un coup. Ils sont posés AU-DESSUS du canvas — sinon le voile de l'écran les
+noircirait — donc une carte promenée passait DERRIÈRE eux ; à 35 % d'opacité
+elle se lit au travers, et le bouton ne la masque plus. Et un bouton reste
+inerte tant qu'on tient une carte : *on est au milieu d'un geste, rien d'autre
+n'a à répondre.* Keko : « le bouton prendre et terminer est passé par-dessus la
+carte quand je la drague ; il devrait être exactement comme quand un objet est
+dans le slot jeter ».
+
+*La leçon est de méthode* : entre « la carte passe devant » et « le bouton
+reste lisible », il n'y avait pas d'ordre d'empilement qui satisfasse les deux.
+**Baisser l'opacité les réconcilie, parce qu'elle ne choisit pas** — elle
+laisse voir les deux.
+
 **« Terminer » se GRISE quand une carte attend dans le rebut, il ne disparaît
 pas.** Le projet veut d'ordinaire qu'un bouton agisse ou ne soit pas là — « il
 agit, il n'attend pas » — et Keko a tranché l'inverse ici. Il a raison sur ce
