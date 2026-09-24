@@ -24,7 +24,7 @@ import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { Carte3D } from './Carte3D.tsx'
 import { Z_MAIN, surLePlan } from './Cadrage.tsx'
-import { LIGNE_DE_JEU, Z_TENUE } from './Main3D.tsx'
+import { Z_TENUE, ligneDeLaMain } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
 import { textureSlot } from './texture-carte.ts'
@@ -70,7 +70,7 @@ function destinationDe(
 ): Destination | null {
   // SOUS LA LIGNE DE JEU, C'EST LA MAIN : le trésor rejoint ce qu'on emporte,
   // exactement comme une carte de combat qu'on repose dans sa main.
-  if (point.y <= LIGNE_DE_JEU) return 'deck'
+  if (point.y <= ligneDeLaMain(window.innerHeight)) return 'deck'
   return slotSous([point.x, point.y, point.z], window.innerHeight, avecLoot)
 }
 

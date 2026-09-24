@@ -51,8 +51,13 @@ type Options = {
   verrou?: boolean
   /** Reposée sans avoir bougé : on la regarde. */
   onTaper?: (index: number) => void
-  /** Lâchée après avoir bougé. À l'écran de dire ce que l'endroit veut dire. */
-  onLacher?: (index: number, point: THREE.Vector3) => void
+  /**
+   * Lâchée après avoir bougé. À l'écran de dire ce que l'endroit veut dire.
+   *
+   * `depart` est le point où le doigt a PRIS la carte : ce qui décide d'un
+   * geste, ce n'est pas une hauteur absolue mais **de combien on a levé**.
+   */
+  onLacher?: (index: number, point: THREE.Vector3, depart: THREE.Vector3) => void
   /** Le geste se termine, quelle qu'en soit l'issue. `null` = annulé. */
   onFin?: (pointerType: string | null) => void
 }
@@ -62,6 +67,8 @@ export type Geste = {
   tenue: number | null
   /** Où le doigt la promène, sur le plan `z`. */
   doigt: THREE.Vector3 | null
+  /** Où le doigt l'a prise. C'est de là que se mesure ce qu'on a levé. */
+  depart: THREE.Vector3 | null
   /** À brancher sur le `pointerdown` de la carte d'index `index`. */
   prendre: (index: number) => (e: ThreeEvent<PointerEvent>) => void
 }
@@ -70,6 +77,7 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
   const { camera } = useThree()
   const [tenue, setTenue] = useState<number | null>(null)
   const [doigt, setDoigt] = useState<THREE.Vector3 | null>(null)
+  const [depart, setDepart] = useState<THREE.Vector3 | null>(null)
 
   // L'état du geste en cours. Dans une ref et non dans l'état React : il
   // change à chaque `pointermove` et ne doit pas provoquer de rendu.
@@ -79,6 +87,8 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
     seuil: SEUIL_SOURIS,
     prise: false,
     minuteur: 0,
+    /** Le point de prise, en coordonnées de scène. */
+    ancre: null as THREE.Vector3 | null,
     /** De quoi couper l'écoute du geste, quelles que soient les fonctions. */
     stop: null as AbortController | null,
   })
@@ -142,6 +152,7 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
     geste.current.prise = false
     setTenue(null)
     setDoigt(null)
+    setDepart(null)
     onFin?.(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -154,10 +165,13 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
       const index = g.index
       const bouge = Math.hypot(e.clientX - g.depart.x, e.clientY - g.depart.y) >= g.seuil
       const point = pointSousLeDoigt(e)
+      const ancre = g.ancre
       g.index = -1
       g.prise = false
+      g.ancre = null
       setTenue(null)
       setDoigt(null)
+      setDepart(null)
       onFin?.(e.pointerType)
       if (index < 0) return
 
@@ -169,8 +183,8 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
         onTaper?.(index)
         return
       }
-      if (point === null) return
-      onLacher?.(index, point)
+      if (point === null || ancre === null) return
+      onLacher?.(index, point, ancre)
     },
     // `detacher` est stable ; le citer entre fonctions les recréerait en boucle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -206,6 +220,8 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
       detacher()
       g.index = index
       g.depart = { x: natif.clientX, y: natif.clientY }
+      g.ancre = pointSousLeDoigt(natif)
+      setDepart(g.ancre)
       g.seuil = natif.pointerType === 'mouse' ? SEUIL_SOURIS : SEUIL_DOIGT
       g.prise = false
       // AU DOIGT, LE MAINTIEN PREND LA CARTE. On appuie, elle monte.
@@ -233,8 +249,8 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
       window.addEventListener('pointerup', relacher, { signal: stop.signal })
       window.addEventListener('pointercancel', annuler, { signal: stop.signal })
     },
-    [annuler, bouger, relacher, detacher, verrou],
+    [annuler, bouger, relacher, detacher, pointSousLeDoigt, verrou],
   )
 
-  return { tenue, doigt, prendre }
+  return { tenue, doigt, depart, prendre }
 }

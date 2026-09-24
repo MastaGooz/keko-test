@@ -104,13 +104,30 @@ export const Z_TENUE = Z_MAIN + 0.35
 const LEVEE_INITIALE = 0.4
 
 /**
- * La hauteur à partir de laquelle lâcher JOUE la carte.
+ * CE QUI ACTIVE LA CARTE, C'EST DE COMBIEN ON L'A LEVÉE, pas une hauteur
+ * absolue.
  *
- * Au-dessus de la main, on joue ; dedans, on range. Même règle qu'en 2D, et
- * elle est la seule qui ne demande aucune cible à viser — donc la seule qui
- * marche avant que les ennemis existent.
+ * Elle a d'abord été une ligne fixe au milieu de l'écran : il fallait
+ * remonter la carte de près d'un tiers de la hauteur avant qu'elle ne passe
+ * en zone de jeu. Keko : « la hauteur nécessaire à activer la carte devrait
+ * être plus basse, dès que le joueur la lève un peu vers le haut ». *Une
+ * hauteur absolue mesure une position, alors que le geste est un
+ * mouvement* — et la prise ne part pas toujours du même endroit d'une carte à
+ * l'autre, puisque l'éventail les décale.
+ *
+ * Mesuré depuis le point de PRISE, donc : un tiers de carte suffit.
  */
-export const LIGNE_DE_JEU = -0.35
+const LEVEE_ACTIVE = 0.38
+
+/**
+ * La hauteur au-dessus de laquelle on n'est plus DANS la main.
+ *
+ * Sert là où il n'y a pas de geste à mesurer — l'écran de butin, qui demande
+ * seulement si un trésor a été lâché au-dessus de la main ou dedans.
+ */
+export function ligneDeLaMain(hauteurFenetrePx: number): number {
+  return yMain(hauteurFenetrePx) + HAUT * 0.5
+}
 
 /**
  * De combien les voisines s'écartent pour ouvrir la fente.
@@ -126,13 +143,14 @@ const ECART_FENTE = 0.3
  * Où la carte qui vise vient se poser : au centre, **juste au-dessus de la
  * main et devant elle**.
  *
- * Posée sur la ligne de jeu elle-même, son haut montait jusqu'aux corps et les
- * recouvrait — précisément le défaut qu'on voulait corriger en la décrochant
- * du doigt. Elle se cale donc une demi-carte plus bas : elle chevauche le haut
- * de la main, qu'elle masque sans conséquence (on ne choisit plus dedans), et
- * elle laisse le rang entièrement libre.
+ * Posée plus haut, son sommet montait jusqu'aux corps et les recouvrait —
+ * précisément le défaut qu'on voulait corriger en la décrochant du doigt. Ici
+ * elle chevauche le haut de la main, qu'elle masque sans conséquence (on ne
+ * choisit plus dedans), et laisse le rang entièrement libre.
  */
-const ANCRE_VISEE = LIGNE_DE_JEU - 0.45
+export function ancreVisee(hauteurFenetrePx: number): number {
+  return yMain(hauteurFenetrePx) + HAUT * 0.5
+}
 
 
 type Props = {
@@ -280,19 +298,26 @@ export function Main3D({
     return i < 0 ? null : i
   }
 
-  const { tenue, doigt, prendre } = useGesteCarte({
+  const { tenue, doigt, depart, prendre } = useGesteCarte({
     z: Z_TENUE,
     verrou,
     onTaper: (i) => onRegarder?.(i),
-    onLacher: (i, p) => {
-      // C'EST LA HAUTEUR DU DOIGT QUI TRANCHE : au-dessus de la main on joue,
-      // dedans on RANGE. Même règle qu'en 2D.
+    onLacher: (i, p, pris) => {
+      // C'EST CE QU'ON A LEVÉ QUI TRANCHE : au-dessus de la main on joue,
+      // dedans on RANGE. Même règle qu'en 2D, mesurée depuis la prise.
       //
       // La cible se RECALCULE ici depuis le point de lâcher : celle qu'on
       // affichait pendant le geste vit dans un rendu que cet écouteur, posé au
       // `pointerdown`, ne voit pas.
-      if (p.y > LIGNE_DE_JEU) onJouer?.(i, [p.x, p.y, p.z], corpsSous(p))
-      else onReordonner?.(i, placeSousLeDoigt(p.x, cartes.length - 1))
+      if (p.y > pris.y + LEVEE_ACTIVE) {
+        // La carte part de sa place d'attente quand elle s'y est posée : c'est
+        // de là qu'on l'a vue viser.
+        const ancree = viseur?.[i] ?? false
+        const depuis: [number, number, number] = ancree
+          ? [0, ancreVisee(size.height), Z_TENUE]
+          : [p.x, p.y, p.z]
+        onJouer?.(i, depuis, corpsSous(p))
+      } else onReordonner?.(i, placeSousLeDoigt(p.x, cartes.length - 1))
     },
     // Au doigt, rien ne viendra éteindre le survol : on le solde ici.
     onFin: (type) => {
@@ -327,9 +352,14 @@ export function Main3D({
    * Le même système qu'il y ait un corps debout ou cinq : rien n'est visé
    * automatiquement, on désigne toujours.
    */
-  const ancree = tenue !== null && doigt !== null && doigt.y > LIGNE_DE_JEU && (viseur?.[tenue] ?? false)
+  // Assez levée pour que lâcher fasse quelque chose.
+  const enZoneDeJeu = doigt !== null && depart !== null && doigt.y > depart.y + LEVEE_ACTIVE
+  const ancree = tenue !== null && enZoneDeJeu && (viseur?.[tenue] ?? false)
   const cible = ancree && doigt !== null ? corpsSous(doigt) : null
-  const ancre = useMemo(() => new THREE.Vector3(0, ANCRE_VISEE, Z_TENUE), [])
+  const ancre = useMemo(
+    () => new THREE.Vector3(0, ancreVisee(size.height), Z_TENUE),
+    [size.height],
+  )
 
   useEffect(() => {
     onVise?.(ancree, cible)
@@ -339,7 +369,7 @@ export function Main3D({
   // carte part frapper : écarter ses voisines là-haut annoncerait un rangement
   // qui n'aura pas lieu.
   const fente =
-    tenue !== null && doigt !== null && doigt.y <= LIGNE_DE_JEU
+    tenue !== null && doigt !== null && !enZoneDeJeu
       ? placeSousLeDoigt(doigt.x, restantes.length)
       : null
 
@@ -368,15 +398,13 @@ export function Main3D({
               rotation={[0, 0, 0]}
               taille={1.05}
               ressort={22}
-              // AU-DESSUS DE LA MAIN, LÂCHER JOUE : la carte s'allume et
-              // frémit. C'est la seule zone qui déclenche quelque chose, et
-              // elle n'a aucun bord à surligner — le repère voyage donc avec
-              // le doigt, comme en 2D. Une carte injouable ne s'allume pas :
-              // *le halo dit « lâche et ça part »*, il mentirait.
-              // Une carte posée ne s'allume que si la flèche tient un corps :
+              // LÂCHER ICI FAIT QUELQUE CHOSE : la carte s'allume et frémit.
+              // La zone n'a aucun bord à surligner, donc le repère voyage avec
+              // le doigt, comme en 2D. Une carte injouable ne s'allume pas, et
+              // une carte posée seulement si la flèche tient un corps :
               // *le halo dit « lâche et ça part »*, il mentirait sinon.
               engagee={
-                suivi.y > LIGNE_DE_JEU &&
+                enZoneDeJeu &&
                 (jouables?.[i] ?? true) &&
                 (zoneActive === undefined || zoneActive([suivi.x, suivi.y, Z_TENUE])) &&
                 (!ancree || cible !== null)

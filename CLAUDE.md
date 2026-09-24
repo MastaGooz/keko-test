@@ -2156,12 +2156,23 @@ suivait le pouce, elle se posait précisément sur le corps qu'on cherchait à
 désigner — sur un téléphone, la cible disparaissait sous la carte au moment
 exact où il fallait la voir.
 
-**ELLE SE POSE UNE DEMI-CARTE SOUS LA LIGNE DE JEU** (`ANCRE_VISEE`), pas sur
-la ligne elle-même : ancrée dessus, son haut montait jusqu'aux corps et les
-recouvrait — le défaut qu'on venait de corriger, reproduit autrement. Elle
-chevauche le haut de la main, qu'elle masque sans conséquence (on ne choisit
-plus dedans), et laisse le rang entièrement libre.
+**CE QUI ACTIVE LA CARTE, C'EST DE COMBIEN ON L'A LEVÉE**, pas une hauteur
+absolue. La ligne était fixe au milieu de l'écran : il fallait remonter la
+carte de près d'un tiers de la hauteur avant qu'elle ne passe en zone de jeu.
+Keko : « la hauteur nécessaire à activer la carte devrait être plus basse, dès
+que le joueur la lève un peu vers le haut ». *Une hauteur absolue mesure une
+position, alors que le geste est un mouvement* — et la prise ne part pas du
+même endroit d'une carte à l'autre, puisque l'éventail les décale. Mesuré
+depuis le point de PRISE, un tiers de carte suffit (`LEVEE_ACTIVE`, ~11 % de
+la hauteur d'écran).
 
+Corollaire : **un déplacement horizontal ne l'active jamais**, donc ranger sa
+main reste franc. Et la ligne absolue survit là où il n'y a pas de geste à
+mesurer — l'écran de butin, qui demande seulement si un trésor a été lâché
+au-dessus de la main ou dedans (`ligneDeLaMain`).
+
+**Elle se pose juste au-dessus de la main** (`ancreVisee`, une demi-carte
+au-dessus du rang de la main). Posée plus haut, son sommet montait jusqu'aux
 **La flèche est un trait pointillé en cloche**, comme les arches du jeu 2D :
 des pastilles qui grossissent vers la pointe et une tête orientée sur la
 tangente. *Pas une ligne* — `LineBasicMaterial` est plafonné à 1 px de large

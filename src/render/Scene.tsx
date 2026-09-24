@@ -14,7 +14,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { LIGNE_DE_JEU, Main3D, Z_TENUE } from './Main3D.tsx'
+import { Main3D } from './Main3D.tsx'
 import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
 import { Projeter } from './Projeter.tsx'
 import { CarteQuiSAbat, TEMPS_FIN, TEMPS_IMPACT } from './CarteQuiSAbat.tsx'
@@ -245,7 +245,7 @@ export function Scene(): React.JSX.Element {
    * ait une cible ou plusieurs ».
    */
   const jouer = useCallback(
-    (index: number, _depuis: [number, number, number], cible: number | null) => {
+    (index: number, depuis: [number, number, number], cible: number | null) => {
       setZoomee(null)
       const carte = combat.main[index]
       if (carte === undefined || fini || verrou) return
@@ -256,9 +256,8 @@ export function Scene(): React.JSX.Element {
         return
       }
       if (cible === null) return
-      // La carte part de sa place d'attente : au centre, juste au-dessus de
-      // la main. C'est de là qu'on l'a vue se poser.
-      frapper(index, cible, [0, LIGNE_DE_JEU, Z_TENUE])
+      // Elle part d'où on l'a VUE : sa place d'attente au-dessus de la main.
+      frapper(index, cible, depuis)
     },
     [combat, fini, frapper, majCombat, verrou],
   )
