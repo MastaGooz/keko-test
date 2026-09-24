@@ -3747,6 +3747,18 @@ body {
   left: 0.75rem;
 }
 
+/* LA PIOCHE EST LE MIROIR DE LA DEFAUSSE. Le paquet penche : son coin bas est
+   centre, mais son grand axe monte vers la droite. Les deux tas dessines a
+   l'identique penchaient donc du meme cote, et les coins bas de l'ecran ne se
+   repondaient pas. Demande par Keko.
+
+   Le miroir est porte par le CSS et non par un second dessin : *un seul
+   dessin, deux poses* -- sinon les deux divergeraient au premier retouchage.
+   L'ombre portee n'a qu'un decalage vertical, elle survit au retournement. */
+.tas-3d.pioche .tas-dessin {
+  transform: scaleX(-1);
+}
+
 .tas-3d.defausse {
   right: 0.75rem;
 }

@@ -2765,6 +2765,17 @@ rectangle tombe à la verticale. **Un rectangle ne peut pas être symétrique en
 plus de ça** — ses deux coins de côté restent à des hauteurs différentes, et
 c'est précisément ce qui le distingue d'un carré.
 
+**ET LA PIOCHE EST LE MIROIR DE LA DÉFAUSSE.** Le paquet penche : son coin bas
+est centré, mais son grand axe monte vers la droite — un rectangle ne peut pas
+être symétrique, c'est ce qui le distingue d'un carré. Dessinés à l'identique,
+les deux tas penchaient donc du même côté et les coins bas de l'écran ne se
+répondaient pas. Demandé par Keko.
+
+**Le miroir est porté par le CSS, pas par un second dessin** : *un seul dessin,
+deux poses* — sinon les deux divergeraient au premier retouchage. L'ombre
+portée n'a qu'un décalage vertical, elle survit au retournement ; seul le flanc
+éclairé change de côté, ce qui ne se voit pas à cette taille.
+
 **Le viewBox colle au dessin.** Carré, il laissait un tiers de vide et le
 paquet paraissait deux fois trop petit pour la place qu'il occupait.
 
