@@ -2172,53 +2172,33 @@ suivait le pouce, elle se posait précisément sur le corps qu'on cherchait à
 désigner — sur un téléphone, la cible disparaissait sous la carte au moment
 exact où il fallait la voir.
 
-**CE QUI ACTIVE LA CARTE, C'EST DE COMBIEN ON L'A LEVÉE**, pas une hauteur
-absolue. La ligne était fixe au milieu de l'écran : il fallait remonter la
-carte de près d'un tiers de la hauteur avant qu'elle ne passe en zone de jeu.
-Keko : « la hauteur nécessaire à activer la carte devrait être plus basse, dès
-que le joueur la lève un peu vers le haut », puis « encore plus bas, dès qu'il
-la monte d'un poil ». *Une hauteur absolue mesure une position, alors que le
-geste est un mouvement* — et la prise ne part pas du même endroit d'une carte
-à l'autre, puisque l'éventail les décale. Mesuré depuis le point de PRISE,
-donc, et court : `LEVEE_ACTIVE`, **~6 % de la hauteur d'écran**.
+**CE QUI ACTIVE LA CARTE, C'EST DE SORTIR DE LA MAIN** — un NIVEAU, pas une
+distance parcourue (`ligneDeLaMain` : le haut du rang de la main). Au-dessus,
+lâcher joue ; dedans, lâcher range. La même ligne pour toutes les cartes,
+qu'elles visent ou non.
 
-**ET LE GESTE DOIT ÊTRE UN MINIMUM VERTICAL** (`PENTE_ACTIVE`). Le seuil de
-hauteur seul ne sépare pas les deux gestes : ranger sa main est un long
-glisser LATÉRAL, et sur cette distance la main dérive vers le haut bien assez
-pour franchir n'importe quel seuil court. Keko : « quand je veux déplacer une
-carte d'attaque dans la main pour réorganiser, elle s'active, le moindre
-mouvement vers le haut l'active ».
+**Il a fallu quatre réglages pour y revenir, et c'est la leçon.** La hauteur a
+d'abord été absolue mais posée au milieu de l'écran — « trop haut » — puis
+mesurée depuis le point de prise : un tiers de carte, un poil, un cran du
+milieu, et à chaque fois « trop bas ». Keko a fini par le dire en clair : « il
+faudrait que les cartes passent en mode ciblage plus haut, au même niveau
+qu'on peut lâcher = jouer les cartes sans ciblage ». *Il décrivait un niveau
+depuis le début.* Une distance depuis la prise ne peut pas dire « la carte est
+sortie de la main » : selon l'endroit où on l'a saisie, la même distance la
+laisse dedans ou l'emmène au-dessus des corps.
 
-*Monter le seuil ne pouvait pas suffire* — il aurait fallu le mettre si haut
-que jouer redevenait un voyage, ce que Keko avait déjà refusé deux fois. On
-demande donc aussi que la montée pèse un minimum face au déplacement latéral.
-La pente reste douce (0,4) parce qu'un coup porté sur un corps de bout de rang
-est forcément très oblique, et **elle ne vaut qu'à l'ACTIVATION** : une fois
-la carte posée, seule la hauteur la fait redescendre, sinon elle retomberait
-dans la main au moment où l'on balaie le rang pour choisir sa cible.
+**Quand un seuil oscille sans jamais convenir, c'est qu'il mesure la mauvaise
+chose.** Le détour par le relatif avait d'ailleurs obligé à compenser un
+second défaut — ranger sa main est un long glisser latéral dont la dérive
+franchissait n'importe quel seuil court, ce qui avait demandé une contrainte
+de pente. Avec la ligne, le problème **disparaît** : une dérive ne fait pas
+sortir de la main.
 
-*Le chiffre a été réglé en quatre passes par Keko*, et l'aller-retour vaut
-d'être noté : un tiers de carte (« trop haut »), un poil (« trop bas »), le
-cran du milieu (« encore trop bas »), puis la pente. **Un seuil de geste ne se
-devine pas au raisonnement, il se pose au doigt** — et quand un seuil oscille
-sans jamais convenir, c'est qu'il mesure la mauvaise chose.
-
-**LE SEUIL A DEUX BORDS** (`LEVEE_RETOUR`, plus basse), et ce n'est pas une
-coquetterie : à seuil unique et si court, le moindre tremblement fait
-clignoter la carte entre le doigt et sa place d'attente. *Un seuil qui décide
-d'un basculement visible doit avoir de l'hystérésis.*
-
-**Le lâcher relit l'état AFFICHÉ, pas un seuil recalculé** : la zone vit dans
-une `ref`, donc elle traverse les rendus que l'écouteur — posé au
-`pointerdown` — ne voit pas, et le coup part exactement comme le joueur le
-voyait. Le point de lâcher sert de seconde porte, au cas où le dernier
-mouvement et le lâcher tombent dans la même image : *un coup qui ne part pas
-se remarque bien plus qu'un coup qui part.*
-
-Corollaire : **un déplacement horizontal ne l'active jamais**, donc ranger sa
-main reste franc. Et la ligne absolue survit là où il n'y a pas de geste à
-mesurer — l'écran de butin, qui demande seulement si un trésor a été lâché
-au-dessus de la main ou dedans (`ligneDeLaMain`).
+Deux garde-fous restent, et ils sont de nature différente : un **plancher de
+montée** (`LEVEE_MIN`), parce qu'on saisit souvent une carte par le haut, qui
+affleure déjà la ligne — sans lui elle basculerait au premier pixel ; et un
+**second bord** (`RETOUR`), parce qu'un doigt posé pile sur la ligne ferait
+clignoter la carte entre sa place d'attente et la main.
 
 **Elle DÉPASSE À PEINE DE LA MAIN** (`ancreVisee`) : elle s'assoit dedans,
 seul son haut émerge. Keko : « quand la carte flotte pour cibler, il faudrait

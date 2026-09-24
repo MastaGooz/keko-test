@@ -101,53 +101,45 @@ function yMain(hauteurFenetrePx: number): number {
 export const Z_TENUE = Z_MAIN + 0.35
 
 /**
- * CE QUI ACTIVE LA CARTE, C'EST DE COMBIEN ON L'A LEVÉE, pas une hauteur
- * absolue.
+ * CE QUI ACTIVE LA CARTE, C'EST DE SORTIR DE LA MAIN.
  *
- * Elle a d'abord été une ligne fixe au milieu de l'écran : il fallait
- * remonter la carte de près d'un tiers de la hauteur avant qu'elle ne passe
- * en zone de jeu. Keko : « la hauteur nécessaire à activer la carte devrait
- * être plus basse, dès que le joueur la lève un peu vers le haut ». *Une
- * hauteur absolue mesure une position, alors que le geste est un
- * mouvement* — et la prise ne part pas toujours du même endroit d'une carte à
- * l'autre, puisque l'éventail les décale.
+ * **Un NIVEAU, pas une distance parcourue**, et il a fallu quatre réglages
+ * pour y revenir. La hauteur a d'abord été absolue mais posée au milieu de
+ * l'écran (« trop haut »), puis mesurée depuis le point de prise — un tiers de
+ * carte, un poil, un cran du milieu — et à chaque fois Keko la trouvait trop
+ * basse, jusqu'à : « il faudrait que les cartes passent en mode ciblage plus
+ * haut, au même niveau qu'on peut lâcher = jouer les cartes sans ciblage ».
  *
- * Mesuré depuis le point de PRISE, donc, et **court** : Keko l'a fait
- * descendre deux fois — « dès que le joueur la lève un peu vers le haut »,
- * puis « dès qu'il la monte d'un poil » — avant de le faire remonter d'un
- * cran, « un poil plus haut quand même, c'est trop bas là ». Le réglage tenu
- * est donc le troisième : ~6 % de la hauteur d'écran, assez pour que ce soit
- * un geste voulu, trop peu pour que ce soit un voyage.
+ * *Il décrivait un niveau depuis le début.* Une distance depuis la prise ne
+ * peut pas dire « la carte est sortie de la main » — selon l'endroit où l'on
+ * a saisi la carte, la même distance la laisse dedans ou l'emmène au-dessus
+ * des corps. La ligne est donc le HAUT DE LA MAIN (`ligneDeLaMain`) : au-
+ * dessus, lâcher joue ; dedans, lâcher range. La même pour toutes les cartes,
+ * qu'elles visent ou non.
  *
- * `LEVEE_RETOUR` est plus basse que `LEVEE_ACTIVE`, et ce n'est pas une
- * coquetterie : à seuil unique et si court, le moindre tremblement du doigt
- * fait clignoter la carte entre le doigt et sa place d'attente. **Un seuil qui
- * décide d'un basculement visible doit avoir deux bords.**
+ * *Ce que ça règle au passage* : ranger sa main est un long glisser latéral,
+ * et sa dérive franchissait n'importe quel seuil court. Elle ne peut pas
+ * franchir le haut de la main sans en sortir — le problème disparaît au lieu
+ * d'être compensé.
  */
-const LEVEE_ACTIVE = 0.3
-const LEVEE_RETOUR = 0.14
 
 /**
- * ET LE GESTE DOIT ÊTRE UN MINIMUM VERTICAL.
+ * La montée minimale, même au-dessus de la ligne.
  *
- * Le seuil de hauteur seul ne sépare pas les deux gestes : ranger sa main est
- * un long glisser LATÉRAL, et sur cette distance la main dérive vers le haut
- * bien assez pour franchir n'importe quel seuil court. Keko : « quand je veux
- * déplacer une carte d'attaque dans la main pour réorganiser, elle s'active,
- * le moindre mouvement vers le haut l'active ».
- *
- * *Monter le seuil ne pouvait pas suffire* — il aurait fallu le mettre si haut
- * que jouer redevenait un voyage, ce que Keko avait déjà refusé. On demande
- * donc aussi que la montée pèse un minimum face au déplacement latéral : un
- * glisser franchement horizontal n'active rien, quelle que soit sa dérive.
- *
- * La pente reste douce (0,4), parce qu'un coup porté sur un corps de bout de
- * rang est forcément très oblique : à pente raide, viser le bord devenait
- * impossible. **Et elle ne vaut qu'à l'ACTIVATION** : une fois la carte
- * posée, seule la hauteur la fait redescendre, sinon elle retomberait dans la
- * main au moment où l'on balaie le rang pour choisir sa cible.
+ * On saisit souvent une carte par le haut, qui affleure déjà la ligne : sans
+ * ce plancher, la carte basculerait au premier pixel de glissement, avant même
+ * qu'on ait voulu quoi que ce soit.
  */
-const PENTE_ACTIVE = 0.4
+const LEVEE_MIN = 0.25
+
+/**
+ * De combien la carte redescend sous la ligne avant de retomber dans la main.
+ *
+ * **Un seuil qui décide d'un basculement visible doit avoir deux bords** :
+ * sans ça, un doigt posé pile sur la ligne fait clignoter la carte entre sa
+ * place d'attente et la main.
+ */
+const RETOUR = 0.12
 
 /**
  * La hauteur au-dessus de laquelle on n'est plus DANS la main.
@@ -400,14 +392,13 @@ export function Main3D({
    * Le même système qu'il y ait un corps debout ou cinq : rien n'est visé
    * automatiquement, on désigne toujours.
    */
-  // ASSEZ LEVÉE POUR QUE LÂCHER FASSE QUELQUE CHOSE, avec ses deux bords. La
-  // valeur vit dans une `ref` parce que le lâcher doit la relire depuis un
-  // écouteur qui ne voit pas les rendus.
+  // SORTIE DE LA MAIN : lâcher ici fait quelque chose. La valeur vit dans une
+  // `ref` parce que le lâcher doit la relire depuis un écouteur qui ne voit
+  // pas les rendus.
+  const ligne = ligneDeLaMain(size.height)
   if (doigt === null || depart === null) zone.current = false
-  else if (!zone.current) {
-    const montee = doigt.y - depart.y
-    zone.current = montee > LEVEE_ACTIVE && montee > Math.abs(doigt.x - depart.x) * PENTE_ACTIVE
-  } else zone.current = doigt.y > depart.y + LEVEE_RETOUR
+  else if (!zone.current) zone.current = doigt.y > ligne && doigt.y > depart.y + LEVEE_MIN
+  else zone.current = doigt.y > ligne - RETOUR
   const enZoneDeJeu = zone.current
   const ancree = tenue !== null && enZoneDeJeu && (viseur?.[tenue] ?? false)
   const cible = ancree && doigt !== null ? corpsSous(doigt) : null
