@@ -26,7 +26,7 @@
  * ajoute : l'épaisseur, l'ombre portée d'une carte sur sa voisine, et le
  * laiton du cadre qui prend la lumière.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Carte3D, HAUT } from './Carte3D.tsx'
@@ -100,9 +100,6 @@ function yMain(hauteurFenetrePx: number): number {
  */
 export const Z_TENUE = Z_MAIN + 0.35
 
-/** Y de repos de la carte tenue avant que le doigt n'ait bougé, en fonction de la main. */
-const LEVEE_INITIALE = 0.4
-
 /**
  * CE QUI ACTIVE LA CARTE, C'EST DE COMBIEN ON L'A LEVÉE, pas une hauteur
  * absolue.
@@ -115,9 +112,17 @@ const LEVEE_INITIALE = 0.4
  * mouvement* — et la prise ne part pas toujours du même endroit d'une carte à
  * l'autre, puisque l'éventail les décale.
  *
- * Mesuré depuis le point de PRISE, donc : un tiers de carte suffit.
+ * Mesuré depuis le point de PRISE, donc — et **un poil suffit** : Keko l'a
+ * redemandé plus bas encore, « dès que le joueur la monte d'un poil par
+ * rapport au y de base ».
+ *
+ * `LEVEE_RETOUR` est plus basse que `LEVEE_ACTIVE`, et ce n'est pas une
+ * coquetterie : à seuil unique et si court, le moindre tremblement du doigt
+ * fait clignoter la carte entre le doigt et sa place d'attente. **Un seuil qui
+ * décide d'un basculement visible doit avoir deux bords.**
  */
-const LEVEE_ACTIVE = 0.38
+const LEVEE_ACTIVE = 0.12
+const LEVEE_RETOUR = 0.05
 
 /**
  * La hauteur au-dessus de laquelle on n'est plus DANS la main.
@@ -298,6 +303,9 @@ export function Main3D({
     return i < 0 ? null : i
   }
 
+  /** L'état affiché de la zone de jeu, relu au lâcher. */
+  const zone = useRef(false)
+
   const { tenue, doigt, depart, prendre } = useGesteCarte({
     z: Z_TENUE,
     verrou,
@@ -306,10 +314,19 @@ export function Main3D({
       // C'EST CE QU'ON A LEVÉ QUI TRANCHE : au-dessus de la main on joue,
       // dedans on RANGE. Même règle qu'en 2D, mesurée depuis la prise.
       //
-      // La cible se RECALCULE ici depuis le point de lâcher : celle qu'on
-      // affichait pendant le geste vit dans un rendu que cet écouteur, posé au
-      // `pointerdown`, ne voit pas.
-      if (p.y > pris.y + LEVEE_ACTIVE) {
+      // **On relit l'état AFFICHÉ**, pas un seuil recalculé : c'est une `ref`,
+      // donc elle traverse les rendus que cet écouteur — posé au
+      // `pointerdown` — ne voit pas, et le lâcher fait exactement ce que le
+      // joueur voyait.
+      //
+      // La cible, elle, se recalcule depuis le point de lâcher, pour la même
+      // raison en sens inverse : celle qu'on affichait vit dans un rendu
+      // invisible d'ici.
+      // Le point de lâcher sert de SECONDE PORTE : si le dernier mouvement et
+      // le lâcher tombent dans la même image, React n'a pas encore rendu et la
+      // `ref` a une image de retard. *Un coup qui ne part pas se remarque bien
+      // plus qu'un coup qui part.*
+      if (zone.current || p.y > pris.y + LEVEE_RETOUR) {
         // La carte part de sa place d'attente quand elle s'y est posée : c'est
         // de là qu'on l'a vue viser.
         const ancree = viseur?.[i] ?? false
@@ -336,7 +353,14 @@ export function Main3D({
   // la main pour la même raison — sa place d'origine n'a plus de sens tant
   // qu'on la tient sous les yeux.
   const enVol = envolee === null ? -1 : cartes.findIndex((c) => c.id === envolee)
-  const sortie = tenue ?? enVol
+  // LA CARTE SORT DE LA MAIN QUAND ON LA DÉPLACE, pas quand on la tient. Tant
+  // que le doigt n'a pas bougé elle garde sa place dans l'éventail, seulement
+  // soulevée : sans ça, un simple maintien la faisait sauter au CENTRE de la
+  // main — Keko : « elle devrait rester dans la main et pas aller au centre
+  // même si on ne bouge pas ». *Une carte qu'on tient sans la bouger n'a pas
+  // encore quitté sa place.*
+  const deplacee = tenue !== null && doigt !== null ? tenue : null
+  const sortie = deplacee ?? enVol
   const restantes = cartes.map((_, i) => i).filter((i) => i !== sortie)
 
   /**
@@ -352,8 +376,13 @@ export function Main3D({
    * Le même système qu'il y ait un corps debout ou cinq : rien n'est visé
    * automatiquement, on désigne toujours.
    */
-  // Assez levée pour que lâcher fasse quelque chose.
-  const enZoneDeJeu = doigt !== null && depart !== null && doigt.y > depart.y + LEVEE_ACTIVE
+  // ASSEZ LEVÉE POUR QUE LÂCHER FASSE QUELQUE CHOSE, avec ses deux bords. La
+  // valeur vit dans une `ref` parce que le lâcher doit la relire depuis un
+  // écouteur qui ne voit pas les rendus.
+  if (doigt === null || depart === null) zone.current = false
+  else if (!zone.current) zone.current = doigt.y > depart.y + LEVEE_ACTIVE
+  else zone.current = doigt.y > depart.y + LEVEE_RETOUR
+  const enZoneDeJeu = zone.current
   const ancree = tenue !== null && enZoneDeJeu && (viseur?.[tenue] ?? false)
   const cible = ancree && doigt !== null ? corpsSous(doigt) : null
   const ancre = useMemo(
@@ -387,8 +416,8 @@ export function Main3D({
       {cartes.map((carte, i) => {
         // LA CARTE QUI S'ABAT n'est plus ici : c'est `CarteQuiSAbat` qui la montre.
         if (i === enVol) return null
-        if (i === tenue) {
-          const suivi = doigt ?? new THREE.Vector3(0, Y_MAIN + LEVEE_INITIALE, Z_TENUE)
+        if (i === deplacee) {
+          const suivi = doigt ?? ancre
           const p = ancree ? ancre : suivi
           return (
             <Carte3D
@@ -416,7 +445,9 @@ export function Main3D({
         }
         const rang = restantes.indexOf(i)
         const place = placeDansEventail(rang, restantes.length, Y_MAIN)
-        const leve = survolee === carte.id
+        // Une carte survolée se lève ; une carte qu'on TIENT sans l'avoir
+        // encore bougée aussi — c'est tout ce qui dit qu'on la tient.
+        const leve = survolee === carte.id || i === tenue
         // Les voisines d'avant s'écartent à gauche, celles d'après à droite.
         const ecart = fente === null ? 0 : rang < fente ? -ECART_FENTE : ECART_FENTE
         return (

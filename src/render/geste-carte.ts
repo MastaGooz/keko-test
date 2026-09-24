@@ -37,6 +37,22 @@ const SEUIL_SOURIS = 8
 const SEUIL_DOIGT = 16
 const DELAI_PRISE = 160
 
+/**
+ * À LA SOURIS, LE MAINTIEN NE FAIT RIEN — ni prendre la carte, ni la
+ * regarder.
+ *
+ * Le maintien est une réponse au tactile, où une tape dérive de quelques
+ * pixels et se ferait passer pour un glisser. **La souris n'a pas ce
+ * problème** : huit pixels suffisent à la distinguer. Gardé pour elle, il
+ * donnait un geste que personne n'a demandé — on appuyait, la carte se
+ * soulevait, on relâchait sans avoir bougé et elle s'ouvrait en grand. Keko :
+ * « le zoom doit se déclencher uniquement en clic simple, pas en maintien ».
+ *
+ * Au doigt la règle ne bouge pas : *le déplacement décide, jamais la durée*,
+ * sinon le zoom devient impossible à ouvrir.
+ */
+const DUREE_CLIC = 320
+
 type Options = {
   /**
    * La profondeur du plan sur lequel le doigt promène la carte.
@@ -87,6 +103,8 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
     seuil: SEUIL_SOURIS,
     prise: false,
     minuteur: 0,
+    /** Quand le doigt s'est posé : sert à séparer le clic du maintien. */
+    debut: 0,
     /** Le point de prise, en coordonnées de scène. */
     ancre: null as THREE.Vector3 | null,
     /** De quoi couper l'écoute du geste, quelles que soient les fonctions. */
@@ -175,12 +193,13 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
       onFin?.(e.pointerType)
       if (index < 0) return
 
-      // LE DÉPLACEMENT DÉCIDE, PAS LA DURÉE. Une carte prise au maintien puis
-      // reposée sans avoir bougé se regarde — *il n'existe aucune façon de
-      // rater ce geste-là* : un appui bref l'ouvre, un appui long aussi, et
-      // entre les deux la carte se soulève pour dire qu'on la tient.
+      // AU DOIGT, LE DÉPLACEMENT DÉCIDE, PAS LA DURÉE : une carte reposée sans
+      // avoir bougé se regarde, qu'on ait appuyé un instant ou trois
+      // secondes — *il n'existe aucune façon de rater ce geste-là*. À la
+      // souris, un maintien n'est pas un clic et ne doit rien ouvrir.
       if (!bouge) {
-        onTaper?.(index)
+        const maintenu = e.pointerType === 'mouse' && performance.now() - g.debut > DUREE_CLIC
+        if (!maintenu) onTaper?.(index)
         return
       }
       if (point === null || ancre === null) return
@@ -224,13 +243,17 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
       setDepart(g.ancre)
       g.seuil = natif.pointerType === 'mouse' ? SEUIL_SOURIS : SEUIL_DOIGT
       g.prise = false
-      // AU DOIGT, LE MAINTIEN PREND LA CARTE. On appuie, elle monte.
+      g.debut = performance.now()
+      // AU DOIGT, LE MAINTIEN PREND LA CARTE. On appuie, elle se soulève. À la
+      // souris, seul le déplacement la prend : elle ne dérive pas.
       window.clearTimeout(g.minuteur)
-      g.minuteur = window.setTimeout(() => {
-        if (geste.current.index !== index) return
-        geste.current.prise = true
-        setTenue(index)
-      }, DELAI_PRISE)
+      if (natif.pointerType !== 'mouse') {
+        g.minuteur = window.setTimeout(() => {
+          if (geste.current.index !== index) return
+          geste.current.prise = true
+          setTenue(index)
+        }, DELAI_PRISE)
+      }
 
       // LA CAPTURE GARDE LE FLUX D'ÉVÈNEMENTS quand le doigt sort du canvas —
       // et sortir EST le geste. Elle jette si le pointeur n'est plus actif :

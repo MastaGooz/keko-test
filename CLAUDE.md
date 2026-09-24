@@ -2176,11 +2176,23 @@ exact où il fallait la voir.
 absolue. La ligne était fixe au milieu de l'écran : il fallait remonter la
 carte de près d'un tiers de la hauteur avant qu'elle ne passe en zone de jeu.
 Keko : « la hauteur nécessaire à activer la carte devrait être plus basse, dès
-que le joueur la lève un peu vers le haut ». *Une hauteur absolue mesure une
-position, alors que le geste est un mouvement* — et la prise ne part pas du
-même endroit d'une carte à l'autre, puisque l'éventail les décale. Mesuré
-depuis le point de PRISE, un tiers de carte suffit (`LEVEE_ACTIVE`, ~11 % de
-la hauteur d'écran).
+que le joueur la lève un peu vers le haut », puis « encore plus bas, dès qu'il
+la monte d'un poil ». *Une hauteur absolue mesure une position, alors que le
+geste est un mouvement* — et la prise ne part pas du même endroit d'une carte
+à l'autre, puisque l'éventail les décale. Mesuré depuis le point de PRISE, un
+poil suffit : `LEVEE_ACTIVE`, ~3 % de la hauteur d'écran.
+
+**LE SEUIL A DEUX BORDS** (`LEVEE_RETOUR`, plus basse), et ce n'est pas une
+coquetterie : à seuil unique et si court, le moindre tremblement fait
+clignoter la carte entre le doigt et sa place d'attente. *Un seuil qui décide
+d'un basculement visible doit avoir de l'hystérésis.*
+
+**Le lâcher relit l'état AFFICHÉ, pas un seuil recalculé** : la zone vit dans
+une `ref`, donc elle traverse les rendus que l'écouteur — posé au
+`pointerdown` — ne voit pas, et le coup part exactement comme le joueur le
+voyait. Le point de lâcher sert de seconde porte, au cas où le dernier
+mouvement et le lâcher tombent dans la même image : *un coup qui ne part pas
+se remarque bien plus qu'un coup qui part.*
 
 Corollaire : **un déplacement horizontal ne l'active jamais**, donc ranger sa
 main reste franc. Et la ligne absolue survit là où il n'y a pas de geste à
@@ -2655,6 +2667,31 @@ mangerait le tremblement — il ramènerait la carte vers sa cible en croyant
 corriger un écart. Deux fréquences qui ne retombent jamais en phase, sinon ça
 se lit comme un balancement régulier, donc comme une animation, et non comme
 une carte qui vibre d'impatience.
+
+### À LA SOURIS, LE MAINTIEN NE FAIT RIEN
+
+Deux défauts d'un seul tenant, tous deux signalés par Keko sur PC.
+
+**Une carte qu'on tient sans l'avoir bougée reste À SA PLACE.** Elle sautait
+au CENTRE de la main dès que le maintien la prenait, parce que la carte tenue
+se dessine au doigt et qu'avant le premier mouvement il n'y a pas de doigt —
+la valeur de repli était le centre. Keko : « elle devrait rester dans la main
+et pas aller au centre même si on ne bouge pas ». Elle garde donc sa place
+dans l'éventail, seulement soulevée comme au survol : *une carte qu'on tient
+sans la bouger n'a pas encore quitté sa place.*
+
+**Et le maintien n'ouvre plus le zoom à la souris.** Le maintien est une
+réponse au TACTILE, où une tape dérive de quelques pixels et se ferait passer
+pour un glisser ; la souris n'a pas ce problème, huit pixels suffisent à
+trancher. Gardé pour elle, il donnait un geste que personne n'a demandé — on
+appuyait, la carte montait, on relâchait sans avoir bougé et elle s'ouvrait en
+grand. Keko : « le zoom doit se déclencher uniquement en clic simple, pas en
+maintien ». À la souris, donc : seul le déplacement prend la carte, et seul un
+clic court la regarde.
+
+**Au doigt, rien ne bouge** : le maintien prend toujours la carte, et *le
+déplacement décide, jamais la durée* — sinon le zoom redevient impossible à
+ouvrir, ce qui avait coûté trois allers-retours en 2D.
 
 ### Le survol n'existe qu'à la souris — en 3D aussi
 
