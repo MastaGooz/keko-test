@@ -3945,9 +3945,56 @@ body {
   100% { scale: 1; opacity: 1; }
 }
 
+/* LE JOUEUR ENCAISSE. Il n'a pas de corps : c'est son compteur de PV qui
+   tressaille, et le chiffre saute a cote, comme au-dessus d'une creature. */
+.pv-3d {
+  position: relative;
+}
+
+.pv-3d.encaisse {
+  animation: tressaille-3d 0.26s ease-out;
+}
+
+@keyframes tressaille-3d {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  25% {
+    translate: -0.4rem 0;
+  }
+  60% {
+    translate: 0.3rem 0;
+  }
+}
+
+.pv-3d > .degats-3d.recu {
+  position: absolute;
+  left: 100%;
+  bottom: 0;
+  margin-left: 0.5rem;
+  color: #ff5a4a;
+  font-family: system-ui, sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px #000, 0 0 6px #000, 0 0 12px #000;
+  animation: degats-recus 0.8s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
+  pointer-events: none;
+}
+
+@keyframes degats-recus {
+  0% { translate: 0 0.5rem; opacity: 0; scale: 0.7; }
+  18% { translate: 0 -1.2rem; opacity: 1; scale: 1.15; }
+  70% { translate: 0 -2rem; opacity: 1; scale: 1; }
+  100% { translate: 0 -2.6rem; opacity: 0; scale: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ancre-3d.centre > .degats-3d,
-  .ancre-3d.centre > .tampon-3d {
+  .ancre-3d.centre > .tampon-3d,
+  .pv-3d > .degats-3d.recu,
+  .pv-3d.encaisse {
     animation-duration: 0.01s;
   }
 }

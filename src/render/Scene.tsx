@@ -17,6 +17,8 @@ import { Projeter } from './Projeter.tsx'
 import { CarteQuiSAbat, TEMPS_FIN, TEMPS_IMPACT } from './CarteQuiSAbat.tsx'
 import { Horloge, lireHorloge } from './horloge.tsx'
 import { Cadrage, FOV, zCamera } from './Cadrage.tsx'
+import { Secousse, secouer } from './Secousse.tsx'
+import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { aPeindre, combatDeDepart } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
 import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
@@ -34,6 +36,21 @@ type EnVol = {
   vers: [number, number, number]
   debut: number
 }
+
+/**
+ * Le temps entre deux ennemis d'une même salve. **Il doit dépasser un assaut
+ * complet, secousse comprise** (580 + 260 ms) : sinon l'élan du suivant
+ * démarre pendant la secousse du précédent, et l'anticipation — tout
+ * l'intérêt du geste — se fait secouer. Règle du 2D, mesurée sur le deuxième
+ * monstre.
+ */
+const PAS_ENTRE_FRAPPES = 0.62
+
+/** Ce que le joueur encaisse, pour le chiffre qui saute à côté de ses PV. */
+type CoupRecu = { cle: number; degats: number }
+
+/** Les réserves du joueur telles qu'on les MONTRE pendant la salve. */
+type Salve = { pv: number; bloc: number }
 
 /** La seed de départ. Une seule partie pour l'instant : on juge le combat. */
 const SEED = 1789
@@ -54,6 +71,12 @@ export function Scene(): React.JSX.Element {
   const [coups, setCoups] = useState<Coup[]>([])
   const [touches, setTouches] = useState<Record<number, number>>({})
   const [morts, setMorts] = useState<Record<number, number>>({})
+  /** L'instant où chaque ennemi s'élance, pendant la salve. */
+  const [assauts, setAssauts] = useState<Record<number, number>>({})
+  /** Les coups encaissés par le joueur, le temps que le chiffre saute. */
+  const [recus, setRecus] = useState<CoupRecu[]>([])
+  /** La salve en cours : PV et bloc affichés s'égrènent frappe par frappe. */
+  const [salve, setSalve] = useState<Salve | null>(null)
   const cleSuivante = useRef(0)
 
   // LE CHARGEMENT DOIT SE VOIR. Rien ne s'affiche tant que les polices et les
@@ -107,6 +130,7 @@ export function Scene(): React.JSX.Element {
       window.setTimeout(() => {
         setCombat((c) => jouerCarte(c, index, cible))
         setTouches((t) => ({ ...t, [cible]: lireHorloge() }))
+        secouer('normale')
         setCoups((cs) => [...cs, { cle, cible, degats: carte.degats, tue: cons.tue }])
         // LE TAMPON TOMBE 90 ms APRÈS L'IMPACT : le coup d'abord, ce qu'il a
         // fait ensuite. L'ordre inverse ferait lire la mort comme la cause.
@@ -171,11 +195,73 @@ export function Scene(): React.JSX.Element {
     })
   }, [])
 
+  /**
+   * LA FIN DU TOUR : les ennemis frappent CHACUN SON TOUR, avec sa propre
+   * part de dégâts. Une salve simultanée ne se lit pas — on voit tout bouger
+   * sans savoir qui a pris quoi. D'où la séquence, et un total qui s'égrène.
+   *
+   * Les règles se jouent d'un coup (`finDuTour`), mais **l'état ne s'applique
+   * qu'une fois la salve passée** : entre-temps, ce sont les réserves
+   * affichées (`salve`) qui descendent frappe par frappe, à l'impact de
+   * chacune. Sinon les PV sautaient à leur valeur finale à la tape, avant que
+   * le premier ennemi n'ait bougé — et la main se redistribuait sous les yeux
+   * pendant que les bêtes bondissaient.
+   */
   const terminer = useCallback(() => {
+    if (fini || verrou) return
     setEngagee(null)
     setZoomee(null)
-    setCombat((c) => finDuTour(c, depart.rng))
-  }, [depart.rng])
+    const apres = finDuTour(combat, depart.rng)
+    const frappes = apres.evenements
+      .slice(combat.evenements.length)
+      .filter((e): e is Extract<typeof e, { type: 'frappe' }> => e.type === 'frappe')
+
+    if (frappes.length === 0) {
+      setCombat(apres)
+      return
+    }
+
+    // QUI FRAPPE : les évènements ne portent qu'un nom, et deux bêtes peuvent
+    // le partager. On les apparie dans l'ordre des frappeurs — le même ordre
+    // que `finDuTour` parcourt.
+    const frappeurs = combat.ennemis
+      .map((e, i) => ({ e, i }))
+      .filter(({ e }) => e.pv > 0 && e.compteur <= 1)
+      .map(({ i }) => i)
+
+    setVerrou(true)
+    setSalve({ pv: combat.pv, bloc: combat.bloc })
+    let bloc = combat.bloc
+    frappes.forEach((frappe, rang) => {
+      const index = frappeurs[rang] ?? -1
+      const debut = rang * PAS_ENTRE_FRAPPES
+      window.setTimeout(() => {
+        if (index >= 0) setAssauts((a) => ({ ...a, [index]: lireHorloge() }))
+      }, debut * 1000)
+
+      // L'IMPACT : le joueur encaisse ce qu'il encaisse VRAIMENT (bloc
+      // déduit), et le bloc rend ce qu'il a absorbé.
+      const absorbe = (combat.ennemis[index]?.degats ?? frappe.degats) - frappe.degats
+      bloc = Math.max(0, bloc - absorbe)
+      const blocApres = bloc
+      window.setTimeout(() => {
+        const cle = cleSuivante.current++
+        setSalve({ pv: frappe.pvJoueur, bloc: blocApres })
+        setRecus((r) => [...r, { cle, degats: frappe.degats }])
+        secouer('forte')
+        window.setTimeout(() => setRecus((r) => r.filter((k) => k.cle !== cle)), 800)
+      }, (debut + INSTANT_IMPACT) * 1000)
+    })
+
+    // LA MAIN REVIENT AU JOUEUR quand le dernier bond a fini de retomber.
+    const fin = (frappes.length - 1) * PAS_ENTRE_FRAPPES + DUREE_ASSAUT + 0.1
+    window.setTimeout(() => {
+      setCombat(apres)
+      setSalve(null)
+      setAssauts({})
+      setVerrou(false)
+    }, fin * 1000)
+  }, [combat, depart.rng, fini, verrou])
 
 
   // Les étiquettes sont du HTML ancré sur les corps : `Projeter` les fait
@@ -247,6 +333,7 @@ export function Scene(): React.JSX.Element {
             visable={engagee !== null && !verrou}
             onViser={cibler}
             touche={touches[i] ?? null}
+            assaut={assauts[i] ?? null}
             mortDepuis={morts[i] ?? null}
           />
         ))}
@@ -259,6 +346,7 @@ export function Scene(): React.JSX.Element {
 
         <Horloge />
         <Cadrage />
+        <Secousse />
 
         <Main3D
           cartes={main}
@@ -360,12 +448,21 @@ export function Scene(): React.JSX.Element {
               {combat.energie}
               <small>/{combat.energieMax}</small>
             </span>
-            <span className="pv-3d">
-              {combat.pv}
+            {/* LE JOUEUR N'A PAS DE CORPS : c'est son compteur de PV qui
+                tressaille, et le chiffre saute à côté. Pendant la salve, ce
+                sont les réserves de `salve` qu'on montre — elles descendent
+                frappe par frappe, à l'impact. */}
+            <span className={`pv-3d${recus.length > 0 ? ' encaisse' : ''}`}>
+              {(salve ?? combat).pv}
               <small>/{combat.pvMax}</small>
+              {recus.map((k) => (
+                <span key={k.cle} className="degats-3d recu">
+                  −{k.degats}
+                </span>
+              ))}
             </span>
-            {combat.bloc > 0 && <span className="bloc-3d">⛉ {combat.bloc}</span>}
-          {menace > 0 && !fini && <span className="menace-3d">−{menace}</span>}
+            {(salve ?? combat).bloc > 0 && <span className="bloc-3d">⛉ {(salve ?? combat).bloc}</span>}
+          {menace > 0 && !fini && salve === null && <span className="menace-3d">−{menace}</span>}
         </div>
       )}
 
@@ -381,8 +478,11 @@ export function Scene(): React.JSX.Element {
                 : `Tour ${combat.tour} · ${debout.length} debout`}
           </p>
 
+          {/* LE BOUTON PORTE LE TOUR DE QUI C'EST : sans « Les ennemis
+              frappent… », une seconde et demie sans réponse ressemble à un jeu
+              qui a planté. */}
           <button className="fin-3d" type="button" onClick={terminer} disabled={fini || verrou}>
-            Fin du tour
+            {salve !== null ? 'Les ennemis frappent…' : 'Fin du tour'}
           </button>
         </div>
       )}

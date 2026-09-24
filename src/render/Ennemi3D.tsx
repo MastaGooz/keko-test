@@ -71,6 +71,34 @@ function textureCreature(nom: string, cle: string): Promise<THREE.Texture | null
   })
 }
 
+/** Durée de l'assaut, en secondes — celle de la règle CSS `.silhouette.assaut`. */
+export const DUREE_ASSAUT = 0.58
+
+/** Quand l'impact tombe dans l'assaut : 46 % du geste. */
+export const INSTANT_IMPACT = DUREE_ASSAUT * 0.46
+
+function lisser(t: number): number {
+  return t * t * (3 - 2 * t)
+}
+
+/**
+ * La courbe du bond, en fraction du corps : les mêmes paliers que les
+ * `@keyframes assaut` du 2D (0 → 34 % recul, 46 % impact, 60 % rebond, 100 %
+ * repos), chacun avec sa propre accélération.
+ */
+function bond(k: number): { dy: number; echelle: number } {
+  const entre = (a: number, b: number, de: number, vers: number, courbe: (x: number) => number) => {
+    const x = courbe((k - a) / (b - a))
+    return de + (vers - de) * x
+  }
+  const sortie = (x: number) => 1 - (1 - x) * (1 - x)
+  const entree = (x: number) => x * x
+  if (k < 0.34) return { dy: entre(0, 0.34, 0, 0.13, sortie), echelle: entre(0, 0.34, 1, 0.9, sortie) }
+  if (k < 0.46) return { dy: entre(0.34, 0.46, 0.13, -0.17, entree), echelle: entre(0.34, 0.46, 0.9, 1.16, entree) }
+  if (k < 0.6) return { dy: entre(0.46, 0.6, -0.17, -0.08, sortie), echelle: entre(0.46, 0.6, 1.16, 1.05, sortie) }
+  return { dy: entre(0.6, 1, -0.08, 0, lisser), echelle: entre(0.6, 1, 1.05, 1, lisser) }
+}
+
 type Props = {
   ennemi: Ennemi
   index: number
@@ -80,6 +108,8 @@ type Props = {
   onViser?: (index: number) => void
   /** L'instant du dernier coup encaissé, en secondes d'horloge de scène. */
   touche?: number | null
+  /** L'instant où il s'élance pour frapper le joueur, même horloge. */
+  assaut?: number | null
   /** L'instant de sa mort, même horloge. Il s'efface ensuite. */
   mortDepuis?: number | null
 }
@@ -91,6 +121,7 @@ export function Ennemi3D({
   visable = false,
   onViser,
   touche = null,
+  assaut = null,
   mortDepuis = null,
 }: Props): React.JSX.Element {
   const [texture, setTexture] = useState<THREE.Texture | null>(null)
@@ -141,7 +172,23 @@ export function Ennemi3D({
       const dt = t - touche
       if (dt >= 0 && dt < 0.26) dx = Math.sin(dt * 62) * 0.07 * (1 - dt / 0.26)
     }
-    g.position.set(position[0] + dx, position[1], position[2])
+    // L'ASSAUT : un franc haut-bas, sans aucune rotation, porté tel quel du
+    // 2D. Il monte en se ramassant, marque le temps, puis tombe d'un coup sous
+    // sa position de repos avant de remonter. TOUT LE POIDS VIENT DU CONTRASTE
+    // DE VITESSE : la montée prend 34 % du geste, la chute 12 %. L'impact
+    // tombe à 46 % — c'est là que le joueur encaisse.
+    let dy = 0
+    let echelle = 1
+    if (assaut !== null) {
+      const k = (t - assaut) / DUREE_ASSAUT
+      if (k >= 0 && k < 1) {
+        const b = bond(k)
+        dy = b.dy * CORPS
+        echelle = b.echelle
+      }
+    }
+    g.position.set(position[0] + dx, position[1] + dy, position[2])
+    g.scale.setScalar(echelle)
 
     if (mortDepuis !== null) {
       const dt = t - mortDepuis

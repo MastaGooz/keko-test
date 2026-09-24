@@ -2038,6 +2038,41 @@ Poser un `MutationObserver` et un `setInterval` dans la page (`window.__journal`
 AVANT le geste, puis lire après — c'est ce qui a prouvé la séquence verrou →
 chiffre → état.
 
+### La salve ennemie — jalon 5
+
+**Les ennemis frappent CHACUN SON TOUR** (`terminer` dans `Scene.tsx`), à
+620 ms d'intervalle, avec sa propre part de dégâts — une salve simultanée ne
+se lit pas. Chaque bête fait **le bond du 2D**, porté en fraction du corps
+(`bond()` dans `Ennemi3D.tsx`) : elle monte en se ramassant sur 34 % du
+geste, tombe d'un coup sous sa position de repos à 46 % — c'est l'impact —
+puis remonte. Aucune rotation. Chaque palier porte sa propre accélération,
+comme les `@keyframes assaut`.
+
+**Les règles se jouent d'un coup, l'état s'applique à la FIN.** `finDuTour`
+est pur et rend l'état d'après en une fois ; si on l'appliquait à la tape,
+les PV sauteraient à leur valeur finale et la main se redistribuerait sous
+les yeux avant que la première bête n'ait bougé. Pendant la salve, ce sont
+donc les réserves affichées (`salve`) qui descendent, à l'impact de chaque
+frappe, lues dans les évènements `frappe` — qui portent ce que le joueur
+**encaisse vraiment**, bloc déduit. Le bloc affiché rend ce qu'il a absorbé.
+
+**Qui frappe, quand les évènements ne portent qu'un nom** : on apparie les
+frappes aux ennemis dont le compteur est échu, dans l'ordre du rang — c'est
+l'ordre que `finDuTour` parcourt, et il s'arrête au coup fatal, donc la
+liste des frappes ne peut être que plus courte, jamais décalée.
+
+**Le joueur n'a pas de corps** : c'est son compteur de PV qui tressaille, et
+le chiffre saute à côté (`.degats-3d.recu`). La secousse d'écran est **la
+caméra qui tremble** (`Secousse.tsx`), pas un `transform` sur le DOM — ni
+contexte d'empilement, ni enfants `fixed` déplacés, et les étiquettes
+ancrées suivent d'elles-mêmes puisqu'elles sont projetées à chaque image.
+Forte quand on encaisse, normale quand on porte un coup ; son amplitude est
+en unités de scène, donc la même fraction de l'écran partout.
+
+Le bouton dit « Les ennemis frappent… » et la main reste verrouillée jusqu'à
+ce que le dernier bond soit retombé. Mesuré dans la page (sonde à 40 ms) :
+impact à ~270 ms, main rendue à ~680 ms pour un frappeur.
+
 ### Le combat, branché sur les vraies règles — jalon 3
 
 Le deck vient du **chargement gratuit** (`deckEmporte`), les ennemis du même
