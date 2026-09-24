@@ -112,17 +112,20 @@ export const Z_TENUE = Z_MAIN + 0.35
  * mouvement* — et la prise ne part pas toujours du même endroit d'une carte à
  * l'autre, puisque l'éventail les décale.
  *
- * Mesuré depuis le point de PRISE, donc — et **un poil suffit** : Keko l'a
- * redemandé plus bas encore, « dès que le joueur la monte d'un poil par
- * rapport au y de base ».
+ * Mesuré depuis le point de PRISE, donc, et **court** : Keko l'a fait
+ * descendre deux fois — « dès que le joueur la lève un peu vers le haut »,
+ * puis « dès qu'il la monte d'un poil » — avant de le faire remonter d'un
+ * cran, « un poil plus haut quand même, c'est trop bas là ». Le réglage tenu
+ * est donc le troisième : ~6 % de la hauteur d'écran, assez pour que ce soit
+ * un geste voulu, trop peu pour que ce soit un voyage.
  *
  * `LEVEE_RETOUR` est plus basse que `LEVEE_ACTIVE`, et ce n'est pas une
  * coquetterie : à seuil unique et si court, le moindre tremblement du doigt
  * fait clignoter la carte entre le doigt et sa place d'attente. **Un seuil qui
  * décide d'un basculement visible doit avoir deux bords.**
  */
-const LEVEE_ACTIVE = 0.12
-const LEVEE_RETOUR = 0.05
+const LEVEE_ACTIVE = 0.22
+const LEVEE_RETOUR = 0.11
 
 /**
  * La hauteur au-dessus de laquelle on n'est plus DANS la main.

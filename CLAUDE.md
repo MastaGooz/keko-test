@@ -2179,8 +2179,13 @@ Keko : « la hauteur nécessaire à activer la carte devrait être plus basse, d
 que le joueur la lève un peu vers le haut », puis « encore plus bas, dès qu'il
 la monte d'un poil ». *Une hauteur absolue mesure une position, alors que le
 geste est un mouvement* — et la prise ne part pas du même endroit d'une carte
-à l'autre, puisque l'éventail les décale. Mesuré depuis le point de PRISE, un
-poil suffit : `LEVEE_ACTIVE`, ~3 % de la hauteur d'écran.
+à l'autre, puisque l'éventail les décale. Mesuré depuis le point de PRISE,
+donc, et court : `LEVEE_ACTIVE`, **~6 % de la hauteur d'écran**.
+
+*Le chiffre a été réglé en trois passes par Keko*, et l'aller-retour vaut
+d'être noté : un tiers de carte (« trop haut »), puis un poil (« trop bas »),
+puis le cran du milieu. **Un seuil de geste ne se devine pas au raisonnement,
+il se pose au doigt.**
 
 **LE SEUIL A DEUX BORDS** (`LEVEE_RETOUR`, plus basse), et ce n'est pas une
 coquetterie : à seuil unique et si court, le moindre tremblement fait
