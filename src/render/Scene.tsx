@@ -131,11 +131,19 @@ export function Scene(): React.JSX.Element {
 
   return (
     <>
+      {/* LE FOND, derrière tout : il était porté par le canvas, mais un canvas
+          opaque ne laisse rien passer dessous — or c'est exactement ce qu'il
+          faut pour glisser l'interface SOUS les cartes. */}
+      <div className="fond-3d" />
+
       <Canvas
         shadows
         dpr={[1, 2]}
         camera={{ position: [0, 0, 6], fov: 42 }}
-        style={{ position: 'fixed', inset: 0, background: '#0d0c11' }}
+        // LE CANVAS EST TRANSPARENT, et le fond vit derrière lui : c'est ce
+        // qui permet de glisser l'interface DESSOUS. Avec un fond sur le
+        // canvas, tout ce qu'on met derrière disparaît.
+        style={{ position: 'fixed', inset: 0, zIndex: 2 }}
       >
         <ambientLight intensity={0.55} />
         {/* Le biais d'ombre éloigne la profondeur comparée d'un cheveu : sans
@@ -232,8 +240,7 @@ export function Scene(): React.JSX.Element {
       {!pret && <p className="chargement-3d">Chargement…</p>}
 
       {pret && (
-        <div className="jeu-3d">
-          <div className="etat-3d">
+        <div className="etat-3d">
             <span className="orbe-3d">
               {combat.energie}
               <small>/{combat.energieMax}</small>
@@ -243,9 +250,12 @@ export function Scene(): React.JSX.Element {
               <small>/{combat.pvMax}</small>
             </span>
             {combat.bloc > 0 && <span className="bloc-3d">⛉ {combat.bloc}</span>}
-            {menace > 0 && !fini && <span className="menace-3d">−{menace}</span>}
-          </div>
+          {menace > 0 && !fini && <span className="menace-3d">−{menace}</span>}
+        </div>
+      )}
 
+      {pret && (
+        <div className="jeu-3d">
           <p className="note-3d">
             {fini
               ? combat.issue === 'victoire'

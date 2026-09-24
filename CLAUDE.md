@@ -1998,10 +1998,31 @@ je ne peux pas jouer de carte offensive » et l'absence de grisé comme deux
 choses distinctes ; *c'était la même*. Le refus silencieux se lit comme une
 panne.
 
-On **assombrit** au lieu de rendre translucide : les cartes se recouvrent en
-éventail, et une carte transparente laisse voir sa voisine au travers — la
-règle du jeu 2D, qui tient d'autant plus ici qu'un matériau ne sait pas
-désaturer sans un shader.
+Elle passe en **NOIR ET BLANC**, pas seulement en sombre : une carte sombre se
+lit comme une carte mal éclairée, une carte désaturée se lit comme une carte
+hors jeu. C'est le `grayscale` du jeu 2D. **Un matériau ne sait pas
+désaturer**, donc on le lui apprend — trois lignes injectées dans son nuanceur
+(`onBeforeCompile`), pilotées par un uniforme. C'est gratuit en mémoire, là où
+peindre une seconde texture grise par modèle doublerait un budget qui est
+justement ce qui coince sur un téléphone.
+
+On assombrit **sans** rendre translucide : les cartes se recouvrent en
+éventail, et une carte transparente laisse voir sa voisine au travers.
+
+### L'empilement : ce que la carte recouvre, et ce qui reste au-dessus
+
+La carte qu'on tient vit dans le canvas, l'interface est du HTML par-dessus :
+la carte passait donc **derrière les jauges, l'énergie et les PV** pendant tout
+le glisser. Le canvas est désormais **transparent**, le fond est un calque à
+part, et tout s'étage : le fond, puis ce que la carte a le droit de recouvrir
+(jauges, intentions, énergie, PV), puis la scène, puis ce qui doit rester
+au-dessus de tout — la ligne d'état et le bouton de fin de tour.
+
+**PIÈGE : `position: fixed` crée un contexte d'empilement dans Chrome, même
+sans `z-index`.** Le bouton était enfermé dans le bloc d'interface et restait
+sous le canvas quel que soit son propre z-index — il ne répondait plus au clic,
+et `elementFromPoint` renvoyait le canvas. *Les deux groupes doivent être des
+frères, pas un parent et son enfant.*
 
 Une carte trop chère reste **saisissable et zoomable** : on veut pouvoir la
 ranger et la regarder. C'est le dépôt qui refuse, pas la prise. Et **son halo

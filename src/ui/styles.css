@@ -3650,7 +3650,7 @@ body {
 }
 
 .etat-3d {
-  position: absolute;
+  position: fixed;
   inset: auto auto 1rem 1rem;
   display: flex;
   flex-direction: column;
@@ -3845,4 +3845,44 @@ body {
   font-size: 0.75rem;
   text-shadow: 0 1px 3px #000;
   white-space: nowrap;
+}
+
+/* --- l'empilement du moteur 3D -------------------------------------------- */
+
+/* LA CARTE QU'ON TIENT DOIT PASSER DEVANT L'INTERFACE. Keko : « une partie de
+   l'UI est par-dessus les cartes durant le drag ». L'interface est du HTML, la
+   carte vit dans le canvas : tant que le canvas est sous le HTML, la carte
+   passe derriere quoi qu'on fasse.
+
+   D'ou cet ordre : le fond, puis ce que la carte a le droit de recouvrir
+   (jauges, intentions, energie, PV), puis le canvas, puis ce qui doit rester
+   AU-DESSUS de tout -- le bouton de fin de tour, qu'on doit pouvoir cliquer,
+   et les deux lignes d'etat.
+
+   Le canvas est transparent : sans ca, ce qui est dessous ne se verrait pas. */
+.fond-3d {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: #0d0c11;
+}
+
+/* CE QUE LA CARTE A LE DROIT DE RECOUVRIR : les jauges, les intentions,
+   l'energie, les PV. */
+.ancres-3d,
+.etat-3d {
+  z-index: 1;
+}
+
+/* CE QUI RESTE AU-DESSUS DE TOUT : la ligne d'etat et le bouton, qu'on doit
+   pouvoir cliquer.
+
+   ATTENTION, PIEGE : `position: fixed` cree un contexte d'empilement dans
+   Chrome, meme sans z-index. Le bouton etait donc enferme dans `.jeu-3d` et
+   restait SOUS le canvas quel que soit son propre z-index -- il ne repondait
+   plus au clic. C'est pour ca que l'etat (`.etat-3d`) a ete SORTI de ce bloc :
+   les deux groupes doivent etre des freres, pas un parent et son enfant. */
+.jeu-3d,
+.build-3d {
+  z-index: 3;
 }

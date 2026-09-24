@@ -83,7 +83,7 @@ export function Carte3D({
       emissiveIntensity: 0,
     })
     // La couleur MULTIPLIE la texture : elle vaut blanc quand la carte est
-    // jouable, et c'est elle qui l'éteint sinon.
+    // jouable, et c'est elle qui l'assombrit sinon.
     const face = new THREE.MeshStandardMaterial({
       color: '#ffffff',
       roughness: 0.55,
@@ -91,6 +91,30 @@ export function Carte3D({
       emissive: '#ffcf7a',
       emissiveIntensity: 0,
     })
+
+    // UNE CARTE INJOUABLE PASSE EN NOIR ET BLANC, pas seulement en sombre.
+    // Keko : « il faudrait que la carte soit vraiment en noir et blanc ».
+    // Assombrir ne suffit pas : une carte sombre se lit comme une carte mal
+    // éclairée, alors qu'une carte désaturée se lit comme une carte hors jeu —
+    // c'est le `grayscale` du jeu 2D.
+    //
+    // **Un matériau ne sait pas désaturer**, donc on le lui apprend : trois
+    // lignes injectées dans son nuanceur, pilotées par un uniforme. C'est
+    // gratuit en mémoire, là où peindre une seconde texture grise par modèle
+    // doublerait le budget — et la mémoire de texture est justement ce qui
+    // coince sur un téléphone.
+    face.onBeforeCompile = (nuanceur) => {
+      nuanceur.uniforms.uGris = { value: 0 }
+      face.userData.nuanceur = nuanceur
+      nuanceur.fragmentShader = nuanceur.fragmentShader.replace(
+        '#include <map_fragment>',
+        `#include <map_fragment>
+         float luminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(luminance), uGris);`,
+      )
+      nuanceur.fragmentShader = `uniform float uGris;
+${nuanceur.fragmentShader}`
+    }
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -198,10 +222,16 @@ export function Carte3D({
     // c'est la règle du jeu 2D, et elle tient d'autant plus ici que le
     // matériau ne sait pas désaturer sans un shader.
     const eteinte = 1 - Math.exp(-14 * delta)
-    const cible = jouable ? 1 : 0.42
+    const cible = jouable ? 1 : 0.52
     l.vif += (cible - l.vif) * eteinte
     face.color.setScalar(l.vif)
     laiton.color.setRGB(0.718 * l.vif, 0.604 * l.vif, 0.416 * l.vif)
+
+    // La désaturation suit le même amortissement : la carte s'éteint ET perd
+    // ses couleurs d'un seul mouvement.
+    const gris = (1 - l.vif) / (1 - 0.52)
+    const nuanceur = face.userData.nuanceur as { uniforms: { uGris: { value: number } } } | undefined
+    if (nuanceur !== undefined) nuanceur.uniforms.uGris.value = gris
 
     face.emissiveIntensity = 0
     laiton.emissiveIntensity = 0
