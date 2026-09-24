@@ -463,11 +463,6 @@ export function Scene(): React.JSX.Element {
     [descente],
   )
 
-  /** Taper « Jeter » vide y envoie le trésor qui arrive : c'est le refus. */
-  const refuserLeLoot = useCallback(
-    () => setDescente(deplacerTresor(descente, { ou: 'loot' }, { ou: 'jeter' })),
-    [descente],
-  )
   const reprendre = useCallback(
     () => setDescente(deplacerTresor(descente, { ou: 'jeter' }, { ou: 'deck' })),
     [descente],
@@ -588,7 +583,6 @@ export function Scene(): React.JSX.Element {
             <Butin3D
               loot={loot}
               aJeter={aJeter}
-              onJeterLeLoot={refuserLeLoot}
               onDeplacer={deplacerDepuisSlot}
               onRegarder={setZoomee}
               onSaisie={setSaisie}

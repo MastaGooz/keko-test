@@ -16,9 +16,12 @@
  * pour zoomer ni le drag vers la main ». C'est le même geste partout
  * (`geste-carte.ts`) : *ce sont les mêmes cartes, ce doit être le même geste.*
  *
- * **CHAQUE EMPLACEMENT RESTE AUSSI UN BOUTON**, comme en 2D : sur téléphone le
- * glisser est fragile, donc la tape doit toujours marcher. Taper « Jeter »
- * vide y envoie le trésor qui arrive.
+ * **MAIS UN EMPLACEMENT VIDE NE REÇOIT PAS À LA TAPE.** Le jeu 2D en fait une
+ * règle — chaque destination est aussi un bouton — et elle ne tient pas ici :
+ * taper « Jeter » y envoyait le trésor, et *une tape est trop facile à
+ * déclencher pour une décision qu'on ne reprend pas.* Keko l'a retiré. Jeter
+ * demande donc de GLISSER, un geste qu'on ne fait pas par mégarde, puis de
+ * valider.
  */
 import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
@@ -140,12 +143,10 @@ type SlotProps = {
   peril?: boolean
   /** Le geste qui prend la carte posée. */
   onPrendre?: (e: import('@react-three/fiber').ThreeEvent<PointerEvent>) => void
-  /** Une tape sur l'emplacement VIDE : il reçoit. */
-  onTaper?: () => void
   onPeinte?: () => void
 }
 
-function Slot({ nom, accent, x, y, carte, peril = false, onPrendre, onTaper, onPeinte }: SlotProps): React.JSX.Element {
+function Slot({ nom, accent, x, y, carte, peril = false, onPrendre, onPeinte }: SlotProps): React.JSX.Element {
   const materiau = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
@@ -172,15 +173,12 @@ function Slot({ nom, accent, x, y, carte, peril = false, onPrendre, onTaper, onP
     )
   }
 
+  // UN EMPLACEMENT VIDE NE RÉPOND PAS À LA TAPE. Il l'a fait — taper « Jeter »
+  // y envoyait le trésor — et Keko l'a retiré : *une tape est trop facile à
+  // déclencher pour une décision qu'on ne reprend pas.* Il faut désormais y
+  // GLISSER la carte, un geste qu'on ne fait pas par mégarde.
   return (
-    <mesh
-      position={[x, y, Z_SLOTS]}
-      material={materiau}
-      onPointerDown={(e) => {
-        e.stopPropagation()
-        onTaper?.()
-      }}
-    >
+    <mesh position={[x, y, Z_SLOTS]} material={materiau}>
       <planeGeometry args={[1, 1.4]} />
     </mesh>
   )
@@ -189,8 +187,6 @@ function Slot({ nom, accent, x, y, carte, peril = false, onPrendre, onTaper, onP
 type Props = {
   loot: CarteAPeindre | null
   aJeter: CarteAPeindre | null
-  /** Taper « Jeter » vide y envoie le trésor qui arrive. */
-  onJeterLeLoot?: () => void
   /** Un trésor a été glissé d'un emplacement vers ailleurs. */
   onDeplacer?: (source: Emplacement, cible: Destination) => void
   onRegarder?: (carte: CarteAPeindre) => void
@@ -202,7 +198,6 @@ type Props = {
 export function Butin3D({
   loot,
   aJeter,
-  onJeterLeLoot,
   onDeplacer,
   onRegarder,
   onSaisie,
@@ -266,7 +261,6 @@ export function Butin3D({
         carte={tenue === 1 ? null : aJeter}
         peril
         onPrendre={prendre(1)}
-        onTaper={aJeter === null && loot !== null ? onJeterLeLoot : undefined}
         onPeinte={onPeinte}
       />
 

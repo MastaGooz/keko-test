@@ -423,7 +423,14 @@ export function Main3D({
   else if (!zone.current) zone.current = doigt.y > ligne && doigt.y > depart.y + LEVEE_MIN
   else zone.current = doigt.y > ligne - RETOUR
   const enZoneDeJeu = zone.current
-  const ancree = tenue !== null && enZoneDeJeu && (viseur?.[tenue] ?? false)
+  // UNE CARTE TROP CHÈRE NE VISE PAS. Elle reste saisissable et zoomable — on
+  // veut pouvoir la ranger et la regarder — mais elle ne se pose pas, et
+  // aucune flèche n'en part : *elle aurait montré une visée que le lâcher
+  // refuse*, et les corps se seraient allumés pour rien. C'est le dépôt qui
+  // refuse, pas la prise, mais il n'a aucune raison de le faire en silence
+  // après avoir laissé croire le contraire.
+  const ancree =
+    tenue !== null && enZoneDeJeu && (viseur?.[tenue] ?? false) && (jouables?.[tenue] ?? true)
   const cible = ancree && doigt !== null ? corpsSous(doigt) : null
   const ancre = useMemo(
     () => new THREE.Vector3(0, ancreVisee(size.height), Z_TENUE),

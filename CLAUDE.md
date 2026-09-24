@@ -2089,13 +2089,17 @@ même taille de carte, même enfouissement sous le bord, mêmes gestes — c'est
 alourdit, donc c'est la main qu'on montre.* Le module ne dessine que ce qui
 s'ajoute au-dessus : **deux emplacements**, ce qui arrive et ce qu'on jette.
 
-**Chaque emplacement est aussi un bouton**, comme en 2D : sur téléphone le
-glisser seul est fragile, donc la tape doit toujours marcher. Taper « Jeter »
-vide y envoie le trésor qui arrive — c'est le refus ; le glisser depuis la
-main désigne la même destination. **Et on compare sur LE PLAN DES
-EMPLACEMENTS** (`slotSous`), pas en coordonnées de scène : la carte tenue vit
-devant eux, donc un doigt pile dessus donne deux points éloignés. Même piège
-que la visée d'une créature.
+**MAIS UN EMPLACEMENT VIDE NE REÇOIT PAS À LA TAPE.** Le jeu 2D en fait une
+règle — chaque destination est aussi un bouton, parce que le glisser est
+fragile sur téléphone — et elle ne tient pas ici : taper « Jeter » y envoyait
+le trésor, et *une tape est trop facile à déclencher pour une décision qu'on
+ne reprend pas.* Keko l'a retiré. Jeter demande donc de GLISSER, un geste
+qu'on ne fait pas par mégarde, puis de valider — les deux gestes que la règle
+2D voulait déjà.
+
+**Et on compare sur LE PLAN DES EMPLACEMENTS** (`slotSous`), pas en
+coordonnées de scène : la carte tenue vit devant eux, donc un doigt pile
+dessus donne deux points éloignés. Même piège que la visée d'une créature.
 
 **Le halo ne s'allume que là où lâcher fait quelque chose** (`zoneActive` sur
 `Main3D`). En combat tout l'espace au-dessus de la main joue la carte, donc le
@@ -2346,6 +2350,13 @@ premier halo des cartes.
 qui respire sur un corps qu'on PEUT viser, éclat franc (et un rien plus gros)
 sur celui que la flèche désigne. Le deuxième ne peut pas dépendre d'un survol
 — *il n'y en a pas au doigt.*
+
+**UNE CARTE TROP CHÈRE NE VISE PAS.** Elle reste saisissable et zoomable — on
+veut pouvoir la ranger et la regarder — mais elle ne se pose pas et aucune
+flèche n'en part : *elle aurait montré une visée que le lâcher refuse*, et les
+corps se seraient allumés pour rien. C'est toujours le dépôt qui refuse, pas
+la prise, mais il n'a aucune raison de le faire en silence après avoir laissé
+croire le contraire.
 
 **LA CIBLE SE RECALCULE AU LÂCHER**, depuis le point de lâcher. Celle qu'on
 affichait pendant le geste vit dans un rendu que l'écouteur, posé au
