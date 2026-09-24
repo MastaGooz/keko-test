@@ -2182,10 +2182,26 @@ geste est un mouvement* — et la prise ne part pas du même endroit d'une carte
 à l'autre, puisque l'éventail les décale. Mesuré depuis le point de PRISE,
 donc, et court : `LEVEE_ACTIVE`, **~6 % de la hauteur d'écran**.
 
-*Le chiffre a été réglé en trois passes par Keko*, et l'aller-retour vaut
-d'être noté : un tiers de carte (« trop haut »), puis un poil (« trop bas »),
-puis le cran du milieu. **Un seuil de geste ne se devine pas au raisonnement,
-il se pose au doigt.**
+**ET LE GESTE DOIT ÊTRE UN MINIMUM VERTICAL** (`PENTE_ACTIVE`). Le seuil de
+hauteur seul ne sépare pas les deux gestes : ranger sa main est un long
+glisser LATÉRAL, et sur cette distance la main dérive vers le haut bien assez
+pour franchir n'importe quel seuil court. Keko : « quand je veux déplacer une
+carte d'attaque dans la main pour réorganiser, elle s'active, le moindre
+mouvement vers le haut l'active ».
+
+*Monter le seuil ne pouvait pas suffire* — il aurait fallu le mettre si haut
+que jouer redevenait un voyage, ce que Keko avait déjà refusé deux fois. On
+demande donc aussi que la montée pèse un minimum face au déplacement latéral.
+La pente reste douce (0,4) parce qu'un coup porté sur un corps de bout de rang
+est forcément très oblique, et **elle ne vaut qu'à l'ACTIVATION** : une fois
+la carte posée, seule la hauteur la fait redescendre, sinon elle retomberait
+dans la main au moment où l'on balaie le rang pour choisir sa cible.
+
+*Le chiffre a été réglé en quatre passes par Keko*, et l'aller-retour vaut
+d'être noté : un tiers de carte (« trop haut »), un poil (« trop bas »), le
+cran du milieu (« encore trop bas »), puis la pente. **Un seuil de geste ne se
+devine pas au raisonnement, il se pose au doigt** — et quand un seuil oscille
+sans jamais convenir, c'est qu'il mesure la mauvaise chose.
 
 **LE SEUIL A DEUX BORDS** (`LEVEE_RETOUR`, plus basse), et ce n'est pas une
 coquetterie : à seuil unique et si court, le moindre tremblement fait

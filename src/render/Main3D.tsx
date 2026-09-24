@@ -124,8 +124,30 @@ export const Z_TENUE = Z_MAIN + 0.35
  * fait clignoter la carte entre le doigt et sa place d'attente. **Un seuil qui
  * décide d'un basculement visible doit avoir deux bords.**
  */
-const LEVEE_ACTIVE = 0.22
-const LEVEE_RETOUR = 0.11
+const LEVEE_ACTIVE = 0.3
+const LEVEE_RETOUR = 0.14
+
+/**
+ * ET LE GESTE DOIT ÊTRE UN MINIMUM VERTICAL.
+ *
+ * Le seuil de hauteur seul ne sépare pas les deux gestes : ranger sa main est
+ * un long glisser LATÉRAL, et sur cette distance la main dérive vers le haut
+ * bien assez pour franchir n'importe quel seuil court. Keko : « quand je veux
+ * déplacer une carte d'attaque dans la main pour réorganiser, elle s'active,
+ * le moindre mouvement vers le haut l'active ».
+ *
+ * *Monter le seuil ne pouvait pas suffire* — il aurait fallu le mettre si haut
+ * que jouer redevenait un voyage, ce que Keko avait déjà refusé. On demande
+ * donc aussi que la montée pèse un minimum face au déplacement latéral : un
+ * glisser franchement horizontal n'active rien, quelle que soit sa dérive.
+ *
+ * La pente reste douce (0,4), parce qu'un coup porté sur un corps de bout de
+ * rang est forcément très oblique : à pente raide, viser le bord devenait
+ * impossible. **Et elle ne vaut qu'à l'ACTIVATION** : une fois la carte
+ * posée, seule la hauteur la fait redescendre, sinon elle retomberait dans la
+ * main au moment où l'on balaie le rang pour choisir sa cible.
+ */
+const PENTE_ACTIVE = 0.4
 
 /**
  * La hauteur au-dessus de laquelle on n'est plus DANS la main.
@@ -316,7 +338,7 @@ export function Main3D({
     z: Z_TENUE,
     verrou,
     onTaper: (i) => onRegarder?.(i),
-    onLacher: (i, p, pris) => {
+    onLacher: (i, p) => {
       // C'EST CE QU'ON A LEVÉ QUI TRANCHE : au-dessus de la main on joue,
       // dedans on RANGE. Même règle qu'en 2D, mesurée depuis la prise.
       //
@@ -328,11 +350,7 @@ export function Main3D({
       // La cible, elle, se recalcule depuis le point de lâcher, pour la même
       // raison en sens inverse : celle qu'on affichait vit dans un rendu
       // invisible d'ici.
-      // Le point de lâcher sert de SECONDE PORTE : si le dernier mouvement et
-      // le lâcher tombent dans la même image, React n'a pas encore rendu et la
-      // `ref` a une image de retard. *Un coup qui ne part pas se remarque bien
-      // plus qu'un coup qui part.*
-      if (zone.current || p.y > pris.y + LEVEE_RETOUR) {
+      if (zone.current) {
         // La carte part de sa place d'attente quand elle s'y est posée : c'est
         // de là qu'on l'a vue viser.
         const ancree = viseur?.[i] ?? false
@@ -386,8 +404,10 @@ export function Main3D({
   // valeur vit dans une `ref` parce que le lâcher doit la relire depuis un
   // écouteur qui ne voit pas les rendus.
   if (doigt === null || depart === null) zone.current = false
-  else if (!zone.current) zone.current = doigt.y > depart.y + LEVEE_ACTIVE
-  else zone.current = doigt.y > depart.y + LEVEE_RETOUR
+  else if (!zone.current) {
+    const montee = doigt.y - depart.y
+    zone.current = montee > LEVEE_ACTIVE && montee > Math.abs(doigt.x - depart.x) * PENTE_ACTIVE
+  } else zone.current = doigt.y > depart.y + LEVEE_RETOUR
   const enZoneDeJeu = zone.current
   const ancree = tenue !== null && enZoneDeJeu && (viseur?.[tenue] ?? false)
   const cible = ancree && doigt !== null ? corpsSous(doigt) : null
