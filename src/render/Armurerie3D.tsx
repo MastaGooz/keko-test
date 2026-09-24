@@ -143,6 +143,9 @@ function tailleDuSlot(slot: Slot): number {
 /** Ce que le slot attend, pour le dessiner vide. */
 const ATTEND: Record<string, string> = { main: 'Arme', armure: 'Armure', pile: 'Objet' }
 
+/** La teinte d'une case vide : le râtelier et la pile sont plus discrets. */
+const TEINTE: Record<string, string> = { reserve: '#3c3a35', pile: '#4a4a40' }
+
 type CaseProps = {
   nom: string
   position: [number, number, number]
@@ -303,7 +306,7 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
           nom=""
           position={placeReserve(hub.reserve.length + i, size.height, size.width)}
           taille={REDUIT}
-          accent="#3c3a35"
+          accent={TEINTE.reserve}
         />
       ))}
 
@@ -327,9 +330,26 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
           nom=""
           position={places.pile[hub.chargement.pile.length + i] ?? places.pile[0]!}
           taille={PILE}
-          accent="#4a4a40"
+          accent={TEINTE.pile}
         />
       ))}
+
+      {/* LA CASE D'OÙ L'ON TIENT LA PIÈCE RESTE VISIBLE, en pointillé, et elle
+          DIT CE QU'ELLE ATTEND. Les cases vides se déduisent du chargement,
+          or la pièce y est encore tant qu'on ne l'a pas lâchée : sa place
+          devenait donc un trou noir le temps du geste. Keko : « quand je drag
+          un objet depuis l'équipement, le slot dont il provient n'apparaît
+          plus ». *Un emplacement qu'on ne voit plus est un emplacement qu'on
+          ne peut plus viser pour y revenir* — et c'était déjà la règle en 2D,
+          où un pointillé muet avait valu la même remarque. */}
+      {portee !== null && doigt !== null && (
+        <CaseVide
+          nom={ATTEND[portee.slot.ou] ?? ''}
+          position={portee.position}
+          taille={portee.taille}
+          accent={TEINTE[portee.slot.ou]}
+        />
+      )}
 
       {/* LA PIÈCE TENUE NE CHANGE JAMAIS D'INSTANCE, et c'est tout le sujet.
           Elle a d'abord été DÉMONTÉE de la grille le temps du geste, une

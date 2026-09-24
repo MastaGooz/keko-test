@@ -16,41 +16,76 @@
  */
 
 /**
- * LE PAQUET VU EN 3/4, UN COIN VERS LE BAS.
+ * LE PAQUET EST FAIT DE CARTES RECTANGULAIRES, ET ÇA SE CALCULE.
  *
- * La face du dessus est un losange — un carré vu de trois quarts depuis le
- * haut — et l'épaisseur pend sous ses deux arêtes basses. C'est ce qui fait le
- * relief : sans les deux flancs, le losange se lirait comme une carte à plat
- * et non comme une pile.
+ * Le losange a d'abord été dessiné à la main, symétrique : c'était un CARRÉ vu
+ * de trois quarts, et Keko l'a vu tout de suite — « les paquets dessinent des
+ * cartes carrées, il faudrait rectangulaire ». *Un losange symétrique ne peut
+ * pas être autre chose qu'un carré* ; le rapport de la carte ne se devine pas
+ * à l'oeil, il se projette.
  *
- * La lumière vient du haut et de la droite, comme partout dans le jeu : le
- * dessus est le plus clair, le flanc droit le suit, le flanc gauche reste
- * sombre. Trois traits en travers de l'épaisseur disent que ce sont des
- * cartes empilées et non un bloc.
+ * On part donc du vrai rectangle (1 x 1,4, le rapport du gabarit), on le fait
+ * pivoter d'un quart de tour pour mettre un coin devant, et on écrase la
+ * profondeur : c'est la vue de trois quarts. **Le signe qu'un rectangle est
+ * bien un rectangle, c'est que ses deux coins de côté ne sont PAS à la même
+ * hauteur** — un carré les aurait alignés.
  */
-const NEAR: [number, number] = [50, 66]
-const GAUCHE: [number, number] = [10, 44]
-const LOIN: [number, number] = [50, 22]
-const DROITE: [number, number] = [90, 44]
+const RAPPORT = 1.4
+/** Ce qui reste de la profondeur une fois le paquet vu d'en haut. */
+const ECRASEMENT = 0.55
+const RAYON = 44
+const CENTRE: [number, number] = [50, 44]
 const EPAISSEUR = 16
 
-/** Un point descendu de l'épaisseur du paquet. */
-function bas([x, y]: [number, number], e = EPAISSEUR): string {
-  return `${x},${y + e}`
+/** Un coin du rectangle, pivoté d'un quart de tour puis écrasé. */
+function coin(sx: number, sy: number): [number, number] {
+  const x = (sx * 1 - sy * RAPPORT) / 2
+  const y = (sx * 1 + sy * RAPPORT) / 2
+  const norme = (1 + RAPPORT) / 2
+  return [
+    CENTRE[0] + (RAYON * x) / norme,
+    CENTRE[1] - (RAYON * ECRASEMENT * y) / norme,
+  ]
 }
 
-const DESSUS = `${NEAR[0]},${NEAR[1]} ${GAUCHE[0]},${GAUCHE[1]} ${LOIN[0]},${LOIN[1]} ${DROITE[0]},${DROITE[1]}`
-const FLANC_GAUCHE = `${GAUCHE[0]},${GAUCHE[1]} ${NEAR[0]},${NEAR[1]} ${bas(NEAR)} ${bas(GAUCHE)}`
-const FLANC_DROIT = `${NEAR[0]},${NEAR[1]} ${DROITE[0]},${DROITE[1]} ${bas(DROITE)} ${bas(NEAR)}`
+const LOIN = coin(-1, 1)
+const GAUCHE = coin(-1, -1)
+const NEAR = coin(1, -1)
+const DROITE = coin(1, 1)
+
+function pt([x, y]: [number, number], e = 0): string {
+  return `${x.toFixed(2)},${(y + e).toFixed(2)}`
+}
+
+const DESSUS = [LOIN, GAUCHE, NEAR, DROITE].map((c) => pt(c)).join(' ')
+const FLANC_GAUCHE = `${pt(GAUCHE)} ${pt(NEAR)} ${pt(NEAR, EPAISSEUR)} ${pt(GAUCHE, EPAISSEUR)}`
+const FLANC_DROIT = `${pt(NEAR)} ${pt(DROITE)} ${pt(DROITE, EPAISSEUR)} ${pt(NEAR, EPAISSEUR)}`
 
 /** Le losange du dessus, rentré vers son centre : le jonc intérieur. */
 function jonc(part: number): string {
-  const cx = 50
-  const cy = (NEAR[1] + LOIN[1]) / 2
-  const p = ([x, y]: [number, number]): string =>
-    `${cx + (x - cx) * part},${cy + (y - cy) * part}`
-  return `${p(NEAR)} ${p(GAUCHE)} ${p(LOIN)} ${p(DROITE)}`
+  return [LOIN, GAUCHE, NEAR, DROITE]
+    .map(([x, y]) =>
+      pt([CENTRE[0] + (x - CENTRE[0]) * part, CENTRE[1] + (y - CENTRE[1]) * part]),
+    )
+    .join(' ')
 }
+
+/**
+ * LE CADRE COLLE AU DESSIN, épaisseur comprise. Un viewBox carré laissait un
+ * tiers de vide et le paquet paraissait deux fois trop petit pour sa place.
+ */
+const BORDS = [LOIN, GAUCHE, NEAR, DROITE]
+const MARGE = 3
+const X0 = Math.min(...BORDS.map((c) => c[0])) - MARGE
+const Y0 = Math.min(...BORDS.map((c) => c[1])) - MARGE
+const CADRE = [
+  X0,
+  Y0,
+  Math.max(...BORDS.map((c) => c[0])) + MARGE - X0,
+  Math.max(...BORDS.map((c) => c[1])) + EPAISSEUR + MARGE - Y0,
+]
+  .map((v) => v.toFixed(2))
+  .join(' ')
 
 type Props = {
   /** Sert aussi d'identifiant de dégradé : deux SVG qui partagent un `id` font
@@ -64,10 +99,7 @@ export function Tas3D({ nom, compte }: Props): React.JSX.Element {
   return (
     <div className={`tas-3d ${nom}`}>
       <span className="tas-compte">{compte}</span>
-      {/* LE CADRE COLLE AU DESSIN. Le losange va de 10 à 90 en x et de 22 à 82
-          en y — épaisseur comprise ; un viewBox carré laissait donc un tiers
-          de vide et le paquet paraissait deux fois trop petit pour sa place. */}
-      <svg viewBox="7 19 86 66" className="tas-dessin" aria-hidden="true">
+      <svg viewBox={CADRE} className="tas-dessin" aria-hidden="true">
         <defs>
           <linearGradient id={`${id}-dessus`} x1="0" y1="0" x2="0.6" y2="1">
             <stop offset="0" stopColor="#3b3f4c" />
@@ -76,15 +108,16 @@ export function Tas3D({ nom, compte }: Props): React.JSX.Element {
         </defs>
 
         {/* LES DEUX FLANCS D'ABORD : le dessus se pose dessus et masque leur
-            arête haute, ce qui évite un liseré en travers du paquet. */}
+            arête haute, ce qui évite un liseré en travers du paquet. La
+            lumière vient du haut et de la droite, comme partout dans le jeu. */}
         <polygon points={FLANC_GAUCHE} fill="#15171e" />
         <polygon points={FLANC_DROIT} fill="#23262f" />
 
-        {/* LES FEUILLETS : ce sont des cartes, pas un bloc. */}
+        {/* LES FEUILLETS : ce sont des cartes empilées, pas un bloc. */}
         {[0.3, 0.55, 0.8].map((f) => (
           <polyline
             key={f}
-            points={`${bas(GAUCHE, EPAISSEUR * f)} ${bas(NEAR, EPAISSEUR * f)} ${bas(DROITE, EPAISSEUR * f)}`}
+            points={`${pt(GAUCHE, EPAISSEUR * f)} ${pt(NEAR, EPAISSEUR * f)} ${pt(DROITE, EPAISSEUR * f)}`}
             fill="none"
             stroke="#0c0d12"
             strokeWidth="1.1"

@@ -2700,8 +2700,21 @@ cartes posé en perspective, un coin orienté vers le bas, vue en 3/4 ». La sc�
 3D a déjà ses cartes en volume ; ces deux-là ne se manipulent jamais, elles se
 consultent — *ce qu'on ne touche pas n'a pas besoin d'être un objet.*
 
-Le dessus est un losange (un carré vu de trois quarts depuis le haut) et
-l'épaisseur pend sous ses deux arêtes basses : **sans les flancs, le losange se
+**LE PAQUET EST FAIT DE CARTES RECTANGULAIRES, ET ÇA SE CALCULE.** Le losange
+a d'abord été dessiné à la main, symétrique — donc un CARRÉ vu de trois quarts,
+que Keko a vu tout de suite : « les paquets dessinent des cartes carrées, il
+faudrait rectangulaire ». *Un losange symétrique ne peut pas être autre chose
+qu'un carré* ; le rapport de la carte ne se devine pas à l'oeil, il se
+projette. On part donc du vrai rectangle (1 x 1,4, le rapport du gabarit), on
+le fait pivoter d'un quart de tour pour mettre un coin devant, et on écrase la
+profondeur.
+
+**Le signe qu'un rectangle est bien un rectangle, c'est que ses deux coins de
+CÔTÉ ne sont pas à la même hauteur** — un carré les aurait alignés. Vérifié sur
+les points produits : arêtes projetées dans un rapport de 1,40 exactement,
+coins de côté à 40 et 48.
+
+Le dessus est ce losange et l'épaisseur pend sous ses deux arêtes basses : **sans les flancs, le losange se
 lirait comme une carte à plat et non comme une pile.** Trois traits en travers
 de l'épaisseur disent que ce sont des cartes et non un bloc. Lumière du haut et
 de la droite, comme partout : dessus le plus clair, flanc droit ensuite, flanc
@@ -2719,6 +2732,19 @@ c'est leur place qui dit lequel est lequel, comme en 2D. **L'orbe et les PV se
 décalent à droite du tas de gauche**, exactement comme le 2D pose l'orbe à
 droite de la pioche — *tout ce qui est au joueur reste sur la bande gauche.*
 Vérifié à 844x390 et 667x320 : aucun contact avec la main.
+
+### La case d'où l'on tient la pièce reste visible
+
+Les cases vides se déduisent du chargement, or la pièce y est encore tant qu'on
+ne l'a pas lâchée : sa place devenait donc un trou noir le temps du geste.
+Keko : « quand je drag un objet depuis l'équipement, le slot dont il provient
+n'apparaît plus ». *Un emplacement qu'on ne voit plus est un emplacement qu'on
+ne peut plus viser pour y revenir.*
+
+Elle prend l'habit d'une case vide, en pointillé, **et elle dit ce qu'elle
+attend** — c'était déjà la règle en 2D, où un pointillé muet avait valu la même
+remarque. Une seule case suffit : celle de la pièce tenue, quel que soit son
+contenant.
 
 ### Dans l'armurerie, la pièce ne frémit QUE sur un slot qui la prend
 
