@@ -1,15 +1,18 @@
 /**
- * LA SCÈNE : le combat, branché sur les vraies règles.
+ * LA SCÈNE : la DESCENTE entière, branchée sur les vraies règles.
  *
- * Les deux premiers jalons ont prouvé qu'une carte tient en 3D sans perdre son
- * texte, puis que le geste répond au doigt. Celui-ci branche `logic/` : le
- * deck vient du chargement gratuit, les ennemis du même tirage que le jeu 2D,
- * et jouer une carte passe par `jouerCarte`. **Aucune règle n'a été réécrite.**
+ * Elle a d'abord tenu un combat isolé, le temps de prouver qu'une carte tient
+ * en 3D, que le geste répond au doigt et que le coup se voit. Elle tient
+ * désormais une `Descente` : combat → récompense → butin → point de sortie →
+ * palier suivant, jusqu'à l'extraction ou la mort. **Aucune règle n'a été
+ * réécrite** — tout vient de `logic/descente.ts`, qui n'a pas bougé d'une
+ * ligne depuis le jeu 2D.
  *
- * Ce qui manque encore, et qui viendra : les animations de coup, le point de
- * sortie, le butin. Ici on veut juste pouvoir jouer un combat entier.
+ * *Le combat n'est donc plus qu'une phase parmi d'autres* : `descente.combat`
+ * est ce qu'on dessine tant que `phase.type === 'combat'`, et les écrans de
+ * palier sont des voiles posés dessus.
  */
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Main3D } from './Main3D.tsx'
 import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
@@ -19,9 +22,22 @@ import { Horloge, lireHorloge } from './horloge.tsx'
 import { Cadrage, FOV, zCamera } from './Cadrage.tsx'
 import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
-import { aPeindre, combatDeDepart } from './combat-3d.ts'
+import { Etal3D } from './Palier3D.tsx'
+import { aPeindre, descenteDeDepart } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
 import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
+import type { Descente } from '../logic/descente.ts'
+import {
+  butinTransporte,
+  choisirCarte,
+  deplacerTresor,
+  descendre,
+  extraire,
+  resoudreCombat,
+  terminerButin,
+  tresorsAuDeck,
+  validerJet,
+} from '../logic/descente.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
 import { teteDeMort } from '../ui/illustrations.ts'
 
@@ -52,12 +68,36 @@ type CoupRecu = { cle: number; degats: number }
 /** Les réserves du joueur telles qu'on les MONTRE pendant la salve. */
 type Salve = { pv: number; bloc: number }
 
-/** La seed de départ. Une seule partie pour l'instant : on juge le combat. */
+/** La seed de départ. « Nouvelle descente » l'incrémente. */
 const SEED = 1789
 
+/**
+ * LE TEMPS QU'ON REDONNE AU JOUEUR avant de lui poser un calque dessus.
+ *
+ * Assez pour que l'oeil enregistre le rang vide, trop court pour qu'on
+ * attende. Sans lui, le dernier coup se refermait et le palier s'ouvrait dans
+ * la même image : on ne voyait jamais le champ de bataille qu'on venait de
+ * vider, ni son propre corps une fois le coup encaissé.
+ */
+const RESPIRATION = 600
+
 export function Scene(): React.JSX.Element {
-  const depart = useMemo(() => combatDeDepart(SEED), [])
-  const [combat, setCombat] = useState<EtatCombat>(depart.combat)
+  const [graine, setGraine] = useState(SEED)
+  const depart = useMemo(() => descenteDeDepart(graine), [graine])
+  const [descente, setDescente] = useState<Descente>(depart.descente)
+  const combat = descente.combat
+  const phase = descente.phase
+  const enCombat = phase.type === 'combat'
+
+  /**
+   * Le combat est une PHASE de la descente, donc on ne le remplace jamais
+   * seul : on repose la descente autour de lui. Tout ce qui suit continue de
+   * raisonner sur `combat`, c'est le seul endroit qui sache les recoller.
+   */
+  const majCombat = useCallback(
+    (f: (c: EtatCombat) => EtatCombat) => setDescente((d) => ({ ...d, combat: f(d.combat) })),
+    [],
+  )
   const [zoomee, setZoomee] = useState<number | null>(null)
   /** La carte sortie de la main, en attente de sa cible. */
   const [engagee, setEngagee] = useState<number | null>(null)
@@ -89,7 +129,10 @@ export function Scene(): React.JSX.Element {
 
   const main = useMemo(() => combat.main.map(aPeindre), [combat.main])
   const debout = vivants(combat)
-  const menace = Math.max(0, menaceDuTour(combat) - combat.bloc)
+  // `menaceDuTour` DÉDUIT DÉJÀ LE BLOC : le retrancher encore affichait zéro
+  // dès qu'on posait une Garde, donc une menace qui disparaît au lieu de
+  // baisser. C'est précisément ce chiffre qui doit rendre la garde lisible.
+  const menace = menaceDuTour(combat)
   const fini = combat.issue !== null
 
   // LE RANG DES ENNEMIS, centré au-dessus de la main. Ils se tiennent côte à
@@ -128,7 +171,7 @@ export function Scene(): React.JSX.Element {
       setEnVol({ cle, carte: aPeindre(carte), depuis, vers, debut: lireHorloge() })
 
       window.setTimeout(() => {
-        setCombat((c) => jouerCarte(c, index, cible))
+        majCombat((c) => jouerCarte(c, index, cible))
         setTouches((t) => ({ ...t, [cible]: lireHorloge() }))
         secouer('normale')
         setCoups((cs) => [...cs, { cle, cible, degats: carte.degats, tue: cons.tue }])
@@ -143,7 +186,7 @@ export function Scene(): React.JSX.Element {
         setVerrou(false)
       }, TEMPS_FIN * 1000 + (cons.tue ? 900 : 0))
     },
-    [combat, rang],
+    [combat, majCombat, rang],
   )
 
   /**
@@ -162,7 +205,7 @@ export function Scene(): React.JSX.Element {
       if (carte.cout > combat.energie) return
 
       if (!viseUneCible(carte)) {
-        setCombat((c) => jouerCarte(c, index, -1))
+        majCombat((c) => jouerCarte(c, index, -1))
         return
       }
       const cibles = vivants(combat)
@@ -172,7 +215,7 @@ export function Scene(): React.JSX.Element {
       }
       setEngagee(index)
     },
-    [combat, fini, frapper, verrou],
+    [combat, fini, frapper, majCombat, verrou],
   )
 
   const cibler = useCallback(
@@ -186,14 +229,14 @@ export function Scene(): React.JSX.Element {
 
   const reordonner = useCallback((de: number, vers: number) => {
     setZoomee(null)
-    setCombat((c) => {
+    majCombat((c) => {
       const carte = c.main[de]
       if (carte === undefined) return c
       const restantes = c.main.filter((_, i) => i !== de)
       restantes.splice(Math.max(0, Math.min(restantes.length, vers)), 0, carte)
       return { ...c, main: restantes }
     })
-  }, [])
+  }, [majCombat])
 
   /**
    * LA FIN DU TOUR : les ennemis frappent CHACUN SON TOUR, avec sa propre
@@ -217,7 +260,7 @@ export function Scene(): React.JSX.Element {
       .filter((e): e is Extract<typeof e, { type: 'frappe' }> => e.type === 'frappe')
 
     if (frappes.length === 0) {
-      setCombat(apres)
+      majCombat(() => apres)
       return
     }
 
@@ -256,13 +299,64 @@ export function Scene(): React.JSX.Element {
     // LA MAIN REVIENT AU JOUEUR quand le dernier bond a fini de retomber.
     const fin = (frappes.length - 1) * PAS_ENTRE_FRAPPES + DUREE_ASSAUT + 0.1
     window.setTimeout(() => {
-      setCombat(apres)
+      majCombat(() => apres)
       setSalve(null)
       setAssauts({})
       setVerrou(false)
     }, fin * 1000)
-  }, [combat, depart.rng, fini, verrou])
+  }, [combat, depart.rng, fini, majCombat, verrou])
 
+
+  /**
+   * LE COMBAT SE REFERME QUAND LA SCÈNE A FINI DE PARLER. Le verrou couvre le
+   * dernier coup, tampon de mort compris ; on redonne ensuite la scène au
+   * joueur une demi-seconde, puis le palier s'ouvre. `resoudreCombat` est
+   * appelé HORS d'un `setState` : il consomme le RNG, et React double les
+   * fonctions de mise à jour en mode strict.
+   */
+  useEffect(() => {
+    if (!enCombat || combat.issue === null || verrou) return
+    const t = window.setTimeout(() => setDescente(resoudreCombat(descente, depart.rng)), RESPIRATION)
+    return () => window.clearTimeout(t)
+  }, [enCombat, combat.issue, verrou, descente, depart.rng])
+
+  // UN NOUVEAU COMBAT EFFACE LES MARQUES DE L'ANCIEN. Elles sont indexées par
+  // rang d'ennemi : sans ça, le mort du palier précédent poserait sa tête de
+  // mort sur le vivant qui prend sa place.
+  useEffect(() => {
+    setTouches({})
+    setMorts({})
+    setAssauts({})
+    setCoups([])
+    setRecus([])
+    setSalve(null)
+  }, [descente.profondeur, graine])
+
+  // Une descente neuve repart de son propre tirage.
+  useEffect(() => setDescente(depart.descente), [depart])
+
+  const choisirRecompense = useCallback(
+    (index: number) => setDescente(choisirCarte(descente, index, depart.rng)),
+    [descente, depart.rng],
+  )
+
+  /**
+   * PRENDRE OU REFUSER. Refuser n'est pas « ne rien faire » : le trésor passe
+   * par le rebut et y est validé, donc il est perdu pour de bon — c'est la
+   * règle, et elle doit passer par les mêmes fonctions que le reste.
+   */
+  const prendreLoot = useCallback(
+    () => setDescente(terminerButin(deplacerTresor(descente, { ou: 'loot' }, { ou: 'deck' }))),
+    [descente],
+  )
+  const refuserLoot = useCallback(
+    () => setDescente(terminerButin(validerJet(deplacerTresor(descente, { ou: 'loot' }, { ou: 'jeter' })))),
+    [descente],
+  )
+
+  const plusBas = useCallback(() => setDescente(descendre(descente, depart.rng)), [descente, depart.rng])
+  const sortir = useCallback(() => setDescente(extraire(descente)), [descente])
+  const recommencer = useCallback(() => setGraine((g) => g + 1), [])
 
   // Les étiquettes sont du HTML ancré sur les corps : `Projeter` les fait
   // suivre. On garde les éléments dans une ref, jamais dans l'état — leur
@@ -330,7 +424,7 @@ export function Scene(): React.JSX.Element {
             ennemi={ennemi}
             index={i}
             position={rang[i]!}
-            visable={engagee !== null && !verrou}
+            visable={enCombat && engagee !== null && !verrou}
             onViser={cibler}
             touche={touches[i] ?? null}
             assaut={assauts[i] ?? null}
@@ -348,6 +442,17 @@ export function Scene(): React.JSX.Element {
         <Cadrage />
         <Secousse />
 
+        {/* LES ÉCRANS DE PALIER SONT DES VOILES sur la scène : on est encore
+            dans le donjon, et le rang qu'on vient de vider reste derrière. */}
+        {phase.type === 'recompense' && (
+          <Etal3D cartes={phase.cartes.map(aPeindre)} onChoisir={choisirRecompense} onPeinte={compter} />
+        )}
+        {phase.type === 'butin' && phase.loot !== null && (
+          <Etal3D cartes={[aPeindre(phase.loot)]} onPeinte={compter} />
+        )}
+        {(phase.type === 'sortie' || phase.type === 'fin') && <Etal3D cartes={[]} onPeinte={compter} />}
+
+        {enCombat && (
         <Main3D
           cartes={main}
           jouables={jouables}
@@ -361,11 +466,20 @@ export function Scene(): React.JSX.Element {
           onSaisie={setSaisie}
           verrou={verrou}
         />
+        )}
 
-        <mesh position={[0, 0, -1.2]} receiveShadow>
-          <planeGeometry args={[16, 10]} />
-          <shadowMaterial opacity={0.5} />
-        </mesh>
+        {/* LE SOL QUI RECOIT LES OMBRES N'EXISTE QUE PENDANT LE COMBAT. Les
+            cartes d'un ecran de palier sont posees DEVANT le voile, mais leur
+            ombre, elle, tombe derriere lui : on voyait trois rectangles noirs
+            alignes sous les trois offres, qui ne se lisaient ni comme des
+            ombres ni comme rien d'autre. *Une ombre portee sur un decor qu'on
+            vient de masquer ne raconte plus le meme objet.* */}
+        {enCombat && (
+          <mesh position={[0, 0, -1.2]} receiveShadow>
+            <planeGeometry args={[16, 10]} />
+            <shadowMaterial opacity={0.5} />
+          </mesh>
+        )}
 
         <Projeter
           points={ancres}
@@ -442,7 +556,7 @@ export function Scene(): React.JSX.Element {
       <p className="build-3d">{__BUILD_TIME__}</p>
       {!pret && <p className="chargement-3d">Chargement…</p>}
 
-      {pret && (
+      {pret && enCombat && (
         <div className="etat-3d">
             <span className="orbe-3d">
               {combat.energie}
@@ -466,7 +580,7 @@ export function Scene(): React.JSX.Element {
         </div>
       )}
 
-      {pret && (
+      {pret && enCombat && (
         <div className="jeu-3d">
           <p className="note-3d">
             {fini
@@ -484,6 +598,83 @@ export function Scene(): React.JSX.Element {
           <button className="fin-3d" type="button" onClick={terminer} disabled={fini || verrou}>
             {salve !== null ? 'Les ennemis frappent…' : 'Fin du tour'}
           </button>
+        </div>
+      )}
+
+      {/* LE PANNEAU DU PALIER : le titre en haut, les boutons en bas, et la
+          rangée de cartes entre les deux — dans le canvas, donc sous ce
+          panneau en HTML. Il ne recouvre jamais les cartes : il les encadre. */}
+      {pret && !enCombat && (
+        <div className="palier-3d">
+          {phase.type === 'recompense' && (
+            <>
+              <div className="haut-3d">
+                <p className="titre-3d">Palier {descente.profondeur} · une amélioration</p>
+                <p className="sous-3d">Pour cette descente seulement. Tape la carte que tu emportes.</p>
+              </div>
+            </>
+          )}
+
+          {phase.type === 'butin' && (
+            <>
+              <div className="haut-3d">
+                <p className="titre-3d">
+                  {phase.loot === null ? 'Rien à décider' : `${phase.loot.nom} · ${phase.loot.valeur ?? 0} d'or`}
+                </p>
+              {/* LE POIDS SE DIT AVANT LE GESTE : un trésor pris est une carte
+                  de plus dans le deck, et elle pèse dès la main suivante. */}
+                <p className="sous-3d">
+                  Tu portes {tresorsAuDeck(descente)} trésor{tresorsAuDeck(descente) > 1 ? 's' : ''} ·{' '}
+                  {butinTransporte(descente)} d'or
+                </p>
+              </div>
+              <div className="choix-3d">
+                <button type="button" className="bouton-3d prendre" onClick={prendreLoot}>
+                  Prendre
+                </button>
+                <button type="button" className="bouton-3d refuser" onClick={refuserLoot}>
+                  Refuser
+                </button>
+              </div>
+            </>
+          )}
+
+          {phase.type === 'sortie' && (
+            <>
+              <div className="haut-3d">
+                <p className="titre-3d">Point de sortie · palier {descente.profondeur}</p>
+                <p className="sous-3d">
+                  {combat.pv}/{combat.pvMax} PV · {butinTransporte(descente)} d'or dans le deck. Mourir prend tout.
+                </p>
+              </div>
+              <div className="choix-3d">
+                <button type="button" className="bouton-3d refuser" onClick={sortir}>
+                  Ressortir
+                </button>
+                <button type="button" className="bouton-3d prendre" onClick={plusBas}>
+                  Descendre
+                </button>
+              </div>
+            </>
+          )}
+
+          {phase.type === 'fin' && (
+            <>
+              <div className="haut-3d">
+                <p className="titre-3d">{phase.issue === 'extrait' ? 'Extrait' : 'Mort'}</p>
+                <p className="sous-3d">
+                  {phase.issue === 'extrait'
+                    ? `Tu rapportes ${butinTransporte(descente)} d'or.`
+                    : 'Le butin et l\'équipement sont perdus.'}
+                </p>
+              </div>
+              <div className="choix-3d">
+                <button type="button" className="bouton-3d prendre" onClick={recommencer}>
+                  Nouvelle descente
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
     </>

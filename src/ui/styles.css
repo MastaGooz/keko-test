@@ -3998,3 +3998,79 @@ body {
     animation-duration: 0.01s;
   }
 }
+
+/* --- les ecrans de palier, en 3D ---------------------------------------- */
+
+/* LE PANNEAU ENCADRE LES CARTES, il ne les recouvre pas : le titre en haut,
+   les boutons en bas, et la rangee de cartes entre les deux -- qui vit dans
+   le canvas, donc sous ce panneau. D'ou le `pointer-events: none` : seuls les
+   boutons prennent le doigt, le reste laisse passer vers les cartes. */
+.palier-3d {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  pointer-events: none;
+  text-align: center;
+}
+
+/* Le titre et sa ligne d'explication forment UN bloc, en haut. Separes, le
+   `space-between` les envoyait aux deux bords de l'ecran -- l'explication se
+   retrouvait au sol, a lire loin de ce qu'elle explique. Une seule boite, donc
+   un seul element de flex -- et le `space-between` n'a plus que deux extremes
+   a ecarter : ce bloc, et les boutons. */
+.palier-3d .titre-3d {
+  margin: 0;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #f2e4bd;
+  text-shadow: 0 1px 3px #000, 0 0 12px #000;
+}
+
+.palier-3d .sous-3d {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: #b8b4a8;
+  text-shadow: 0 1px 3px #000, 0 0 10px #000;
+}
+
+/* Le titre et sa ligne d'explication forment UN bloc en haut ; les boutons
+   tombent en bas. `space-between` sur trois enfants les ecarterait tous les
+   trois, d'ou la marge automatique qui pousse les boutons au sol. */
+.palier-3d > .choix-3d {
+  margin-top: auto;
+  display: flex;
+  gap: 0.75rem;
+  pointer-events: auto;
+}
+
+.bouton-3d {
+  min-height: 3.5rem;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid var(--trait);
+  border-radius: 0.75rem;
+  background: #16161d;
+  color: var(--fg);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bouton-3d.prendre {
+  border-color: #c9a95a;
+  background: linear-gradient(#3a2f16, #221b0e);
+  color: #f2e4bd;
+}
+
+.bouton-3d.refuser {
+  border-color: #6b4a4a;
+  background: #1d1214;
+  color: #e8c8c2;
+}

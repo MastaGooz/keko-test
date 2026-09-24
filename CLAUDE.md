@@ -2049,6 +2049,70 @@ Poser un `MutationObserver` et un `setInterval` dans la page (`window.__journal`
 AVANT le geste, puis lire après — c'est ce qui a prouvé la séquence verrou →
 chiffre → état.
 
+### La descente entière — jalon 6
+
+`Scene` tenait un combat isolé ; elle tient désormais une **`Descente`**, et
+le combat n'est plus qu'une phase : combat → récompense → butin → point de
+sortie → palier suivant, jusqu'à l'extraction ou la mort. **Aucune règle n'a
+été réécrite** — tout vient de `logic/descente.ts`, qui n'a pas bougé d'une
+ligne depuis le jeu 2D. C'est la troisième fois que la règle de pureté rend
+ce qu'elle coûte.
+
+**Le combat ne se referme que quand la scène a fini de parler** : le verrou
+couvre le dernier coup, tampon de mort compris, puis on **redonne la scène au
+joueur 600 ms** avant de poser le voile. Sans ça le palier s'ouvrait dans la
+même image que la frappe fatale — on ne voyait jamais le rang qu'on venait de
+vider. La pause vaut pour la victoire comme pour la mort.
+
+**Les écrans de palier sont des VOILES, pas des lieux** (`Palier3D.tsx`) :
+un plan posé dans la scène, entre les créatures et les cartes du choix. Le
+champ de bataille reste visible derrière, corps tombés compris — *on est
+encore dans le donjon*. C'est la règle du 2D ; seule l'armurerie sera un lieu,
+avec un voile opaque. Et comme un plan intercepte les rayons, ce qu'il
+recouvre devient insensible au doigt sans qu'on désactive quoi que ce soit.
+
+**Les cartes du choix sont à la profondeur de la main**, donc à sa taille :
+ce sont exactement les cartes qu'on retrouvera dedans. En rangée et non en
+éventail — *on les compare, on ne les tient pas* — et la rangée se resserre
+toute seule si elle menace de sortir de l'écran.
+
+**LE SOL QUI REÇOIT LES OMBRES N'EXISTE QUE PENDANT LE COMBAT.** Les cartes
+d'un palier sont devant le voile, mais leur ombre tombe *derrière* lui : on
+voyait trois rectangles noirs alignés sous les trois offres, qui ne se
+lisaient ni comme des ombres ni comme rien d'autre. *Une ombre portée sur un
+décor qu'on vient de masquer ne raconte plus le même objet.*
+
+**Un nouveau combat efface les marques de l'ancien.** Tressaillements, têtes
+de mort et assauts sont indexés par rang d'ennemi : sans remise à zéro au
+changement de palier, le mort du palier précédent posait son tampon sur le
+vivant qui prenait sa place.
+
+**Tout ce qui consomme le RNG s'appelle HORS d'un `setState`.** React double
+les fonctions de mise à jour en mode strict : `resoudreCombat`, `choisirCarte`
+et `descendre` y tireraient deux fois, et la partie ne serait plus celle que
+la seed annonce.
+
+**Le panneau encadre les cartes, il ne les recouvre pas** : titre en haut,
+boutons en bas, et `pointer-events: none` partout sauf sur les boutons — les
+cartes vivent dans le canvas, dessous. Le titre et sa ligne d'explication
+forment **une seule boîte**, sinon le `space-between` envoyait l'explication
+au sol, à lire loin de ce qu'elle explique.
+
+**Le rangement du butin n'est pas encore là** : le trésor se prend ou se
+refuse, et refuser passe par le rebut validé — la même porte que le jeu 2D,
+pas un raccourci. Ce qui manque est l'inventaire complet, où *la main du
+butin EST la main de combat* ; c'est l'étape suivante, et le geste existe
+déjà.
+
+**`menaceDuTour` DÉDUIT DÉJÀ LE BLOC**, et la scène le retranchait une
+seconde fois : la menace tombait à zéro dès qu'on posait une Garde, donc elle
+disparaissait au lieu de baisser. C'est précisément ce chiffre qui doit rendre
+la garde lisible.
+
+**Gap connu, à reprendre** : un trésor affiche encore une gemme de coût dans
+la main 3D, là où le 2D lui met le sceau d'or. Tant qu'un trésor est une carte
+morte, il n'a pas de coût.
+
 ### La salve ennemie — jalon 5
 
 **Les ennemis frappent CHACUN SON TOUR** (`terminer` dans `Scene.tsx`), à
