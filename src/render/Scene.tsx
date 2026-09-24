@@ -264,6 +264,7 @@ export function Scene(): React.JSX.Element {
           cartes={main}
           jouables={jouables}
           zoomee={zoomee}
+          envolee={enVol?.carte.id ?? null}
           onJouer={jouer}
           onRegarder={setZoomee}
           onReordonner={reordonner}

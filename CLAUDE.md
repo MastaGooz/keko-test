@@ -2005,6 +2005,17 @@ prise dans le même cache — c'est LA carte qu'on vient de lâcher.
 Un coup qui tue garde le verrou plus longtemps : on ne rend pas la main tant
 que le corps n'est pas tombé.
 
+**LA CARTE QUI S'ABAT N'EST PLUS DANS LA MAIN — même si l'état ne l'en a pas
+encore retirée.** L'état change à l'impact, 220 ms après le lâcher, et le
+geste, lui, est fini dès le lâcher : pendant ces 220 ms la main redessinait
+la carte à sa place, en même temps que sa copie tombait sur l'ennemi. Keko :
+« une autre image d'elle revient en main ». La main reçoit l'identifiant de
+la carte en vol (`envolee`) et la saute, ses voisines refermées comme pour
+une carte tenue. **Par identifiant, pas par index** : à l'impact la carte
+quitte la main et les index glissent — un index aurait caché sa voisine
+jusqu'à la fin du vol. *Deux horloges — celle du geste et celle de l'état —
+laissent toujours une fenêtre entre elles ; c'est au rendu de la couvrir.*
+
 **La mort, sur la scène** : le corps devenu noir garde sa place dans le rang
 le temps du fondu — sinon les voisins glissent sous le doigt au moment où l'on
 choisit sa cible suivante. La tête de mort s'abat en tampon **90 ms après

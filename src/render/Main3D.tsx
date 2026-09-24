@@ -144,6 +144,15 @@ type Props = {
   jouables?: readonly boolean[]
   /** La carte qu'on regarde de près, s'il y en a une. */
   zoomee?: number | null
+  /**
+   * L'identifiant de la carte qui S'ABAT sur sa cible. L'état ne la retire
+   * de la main qu'à l'impact, 220 ms après le lâcher — et le geste, lui, est
+   * fini : sans ce filtre, la main la redessinait à sa place pendant que sa
+   * copie tombait sur l'ennemi. Keko : « une autre image d'elle revient en
+   * main ». Par identifiant et non par index : à l'impact, la carte quitte la
+   * main et les index glissent — un index cacherait alors sa voisine.
+   */
+  envolee?: string | null
   /** La carte a été sortie de la main : on la joue. `depuis` est le point du lâcher. */
   onJouer?: (index: number, depuis: [number, number, number]) => void
   onRegarder?: (index: number) => void
@@ -197,6 +206,7 @@ export function Main3D({
   cartes,
   jouables,
   zoomee = null,
+  envolee = null,
   onJouer,
   onRegarder,
   onReordonner,
@@ -408,7 +418,8 @@ export function Main3D({
   // qui restent comme si elle n'avait jamais été là. La carte REGARDÉE sort de
   // la main pour la même raison — sa place d'origine n'a plus de sens tant
   // qu'on la tient sous les yeux.
-  const sortie = tenue ?? zoomee
+  const enVol = envolee === null ? -1 : cartes.findIndex((c) => c.id === envolee)
+  const sortie = tenue ?? zoomee ?? enVol
   const restantes = cartes.map((_, i) => i).filter((i) => i !== sortie)
 
   // LA FENTE NE S'OUVRE QUE DANS LA MAIN. Au-dessus de la ligne de jeu, la
@@ -434,6 +445,8 @@ export function Main3D({
       )}
 
       {cartes.map((carte, i) => {
+        // LA CARTE QUI S'ABAT n'est plus ici : c'est `CarteQuiSAbat` qui la montre.
+        if (i === enVol) return null
         // LA CARTE REGARDÉE vient au centre, droite et grande. Une tape
         // dessus la repose : elle referme ce qu'elle a ouvert.
         if (i === zoomee) {
