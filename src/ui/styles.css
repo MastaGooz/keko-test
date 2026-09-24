@@ -4066,6 +4066,11 @@ body {
   cursor: pointer;
 }
 
+.bouton-3d:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
 .bouton-3d.prendre {
   border-color: #c9a95a;
   background: linear-gradient(#3a2f16, #221b0e);

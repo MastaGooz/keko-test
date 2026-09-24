@@ -2139,6 +2139,14 @@ où était « Prendre »** une fois le trésor décidé : le second n'apparaît 
 fois le premier consommé, et *un bouton qui se déplace entre deux états
 successifs oblige à le chercher deux fois.*
 
+**« Terminer » se GRISE quand une carte attend dans le rebut, il ne disparaît
+pas.** Le projet veut d'ordinaire qu'un bouton agisse ou ne soit pas là — « il
+agit, il n'attend pas » — et Keko a tranché l'inverse ici. Il a raison sur ce
+cas précis : *le bouton vient d'apparaître à la place du trésor*, le voir
+s'effacer à l'instant où l'on pose une carte à jeter donnerait l'impression de
+l'avoir cassé. La règle vaut pour un bouton qui n'a jamais été là, pas pour un
+qui vient d'arriver.
+
 **Les deux issues du rebut sont plus petites** que les boutons qui engagent
 l'écran : elles décident d'une carte, pas du palier. Et « Jeter » ne répète
 pas l'or perdu — il est déjà écrit SUR la carte, juste au-dessus ; le redire

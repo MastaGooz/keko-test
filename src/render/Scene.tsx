@@ -743,11 +743,20 @@ export function Scene(): React.JSX.Element {
                   Prendre
                 </button>
               ) : (
-                phase.aJeter === null && (
-                  <button type="button" className="bouton-3d prendre" onClick={terminerLeButin}>
-                    Terminer
-                  </button>
-                )
+                // GRISÉ, PAS ABSENT, tant qu'une carte attend dans le rebut.
+                // Le projet veut d'ordinaire qu'un bouton agisse ou ne soit pas
+                // là ; Keko a tranché l'inverse ici, et il a raison sur ce
+                // cas-là : *le bouton vient d'apparaître à la place du trésor*,
+                // le voir disparaître aussitôt qu'on pose une carte à jeter
+                // donnerait l'impression de l'avoir cassé.
+                <button
+                  type="button"
+                  className="bouton-3d prendre"
+                  onClick={terminerLeButin}
+                  disabled={phase.aJeter !== null}
+                >
+                  Terminer
+                </button>
               )}
             </div>
           </div>
