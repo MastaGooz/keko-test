@@ -2232,9 +2232,15 @@ seul format* — et la seule façon de le voir est de mesurer l'autre.
 des pastilles qui grossissent vers la pointe et une tête orientée sur la
 tangente. *Pas une ligne* — `LineBasicMaterial` est plafonné à 1 px de large
 sur la plupart des machines, ce qui donne un fil invisible au doigt. Elle est
-**dorée quand elle tient un corps, pâle sinon** : c'est le seul repère qui
-dise, avant de lâcher, si le coup partira. Le halo de la carte suit la même
-règle.
+**dorée quand elle tient un corps, pâle sinon**, et c'est le SEUL repère qui
+dise si le coup partira.
+
+**Le halo de la carte, lui, brûle pendant tout le ciblage**, cible ou pas. Il
+a d'abord suivi la flèche, et Keko l'a repris : « on peut activer la
+vibration/glow de la carte durant tout le ciblage, seule la couleur de la
+flèche indique si la cible est valide ». *Un signal par fait* : le halo dit
+« cette carte est engagée », ce qui reste vrai tant qu'on cherche sa cible ;
+la validité se lit au bout de la flèche, là où le doigt regarde déjà.
 
 **Trois niveaux sur les corps, et ils doivent rester distincts** : mat, lueur
 qui respire sur un corps qu'on PEUT viser, éclat franc (et un rien plus gros)

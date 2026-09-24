@@ -449,16 +449,19 @@ export function Main3D({
               rotation={[0, 0, 0]}
               taille={1.05}
               ressort={22}
-              // LÂCHER ICI FAIT QUELQUE CHOSE : la carte s'allume et frémit.
-              // La zone n'a aucun bord à surligner, donc le repère voyage avec
-              // le doigt, comme en 2D. Une carte injouable ne s'allume pas, et
-              // une carte posée seulement si la flèche tient un corps :
-              // *le halo dit « lâche et ça part »*, il mentirait sinon.
+              // LÂCHER ICI FAIT QUELQUE CHOSE : la carte s'allume et frémit,
+              // et elle le fait **pendant TOUT le ciblage**, pas seulement
+              // quand la flèche tient un corps. Demandé par Keko, et c'est
+              // plus juste : le halo dit « cette carte est engagée », ce qui
+              // reste vrai tant qu'on cherche sa cible. *C'est à la FLÈCHE
+              // seule de dire si le coup partira* — un seul signal pour un
+              // seul fait, et il est déjà là où le doigt regarde.
+              //
+              // Une carte injouable, elle, ne s'allume jamais.
               engagee={
                 enZoneDeJeu &&
                 (jouables?.[i] ?? true) &&
-                (zoneActive === undefined || zoneActive([suivi.x, suivi.y, Z_TENUE])) &&
-                (!ancree || cible !== null)
+                (zoneActive === undefined || zoneActive([suivi.x, suivi.y, Z_TENUE]))
               }
               jouable={jouables?.[i] ?? true}
               onPeinte={onPeinte}
