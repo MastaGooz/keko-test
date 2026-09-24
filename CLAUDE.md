@@ -2690,6 +2690,40 @@ le compte passe de 10 à 13 cartes dont 6 qui frappent), zoomer une pièce,
 descendre, mourir — le hub rend le Glaive et le Plastron, et la potion
 emportée est perdue.
 
+### LE SYMBOLE DU COÛT est à rechoisir — la planche vit derrière `?ecusson`
+
+Keko : « on dirait un bouclier, ça ne renvoie pas trop à l'énergie, et la
+couleur rouge est un peu bizarre ». **Les deux gênes ont la même racine, et
+c'est une incohérence de fond** : le symbole des cartes est un BLASON — pointe
+en bas, comme un écu — et il est ROUGE, alors que l'énergie du joueur est un
+orbe d'OR dans l'interface. Or la règle de Keko est que ce soit le MÊME symbole
+(« pour que le joueur comprenne bien »). *Deux objets qui doivent être le même
+n'ont jamais eu ni la même forme ni la même couleur.*
+
+Cinq pistes, toutes en ambre — la couleur de l'énergie dans ce jeu :
+**blason** (l'actuel, pour comparer), **losange** pointe en haut (l'inverse
+exact de l'écu : une pointe qui monte se lit comme un éclat, une pointe qui
+descend comme un bouclier), **hexagone** (une pièce mécanique, aucune parenté
+héraldique), **orbe** (l'objet du joueur, en petit) et **éclat** (un
+scintillement à quatre branches).
+
+**Le jeu n'a pas changé** : `styleCout` vaut `blason` tant que Keko n'a pas
+tranché. Une fois le choix fait, il ne reste qu'un dessin et la variable
+disparaît — et **l'orbe du joueur devra suivre**, sinon on aura recréé le
+défaut qu'on corrige.
+
+Deux choses apprises en dessinant :
+
+- **le chiffre est plus petit que sur le blason**, et ce n'est pas un réglage
+  d'humeur : l'écu est plus HAUT que large, ces formes-ci sont inscrites dans
+  un carré. Le même corps de police remplissait toute la figure et recouvrait
+  le coeur d'ambre — *on ne voyait plus que le chiffre, donc plus aucune piste
+  ne se distinguait* ;
+- **l'éclat a eu six branches, et six branches égales font une étoile de
+  David.** *Une forme géométrique n'est jamais seulement une forme* : elle
+  traîne ce qu'on lit d'elle ailleurs. Quatre branches fines ne disent que la
+  lumière.
+
 ### LE FOND DE CARTE EST COMMUN À TOUTES : `public/Background.png`
 
 Fourni par Keko — « à utiliser comme background de toutes les cartes, on

@@ -279,7 +279,7 @@ export async function peindreCarte(carte: CarteAPeindre): Promise<HTMLCanvasElem
   ctx.fillRect(0, HAUT * 0.5, LARGE, HAUT * 0.5)
   ctx.restore()
 
-  if (carte.compteur === undefined) peindreEcusson(ctx, carte.cout)
+  if (carte.compteur === undefined) peindreCout(ctx, carte.cout)
   else peindreCompteur(ctx, carte.compteur)
   peindreTextes(ctx, carte)
   return canvas
@@ -323,6 +323,184 @@ function peindreCompteur(ctx: CanvasRenderingContext2D, nombre: number): void {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText(String(nombre), x + l / 2, y + h * 0.54)
+}
+
+/**
+ * LE STYLE DU SYMBOLE DE COÛT, le temps d'en choisir un.
+ *
+ * Keko sur l'écusson actuel : « on dirait un bouclier, ça ne renvoie pas trop
+ * à l'énergie, et la couleur rouge est un peu bizarre ». Les deux gênes ont la
+ * même racine : c'est un BLASON — pointe en bas, comme un écu — et il est
+ * ROUGE, alors que l'énergie du joueur est un orbe d'OR dans l'interface.
+ * *Deux objets qui doivent être le même n'ont jamais eu ni la même forme ni la
+ * même couleur.*
+ *
+ * Les candidats se jugent sur `?ecusson`, à la taille réelle. Cette variable
+ * n'existe que pour ça : une fois le choix fait, il ne reste qu'un dessin.
+ */
+export type StyleCout = 'blason' | 'losange' | 'hexagone' | 'orbe' | 'eclat'
+let styleCout: StyleCout = 'blason'
+
+export function choisirStyleCout(style: StyleCout): void {
+  styleCout = style
+}
+
+/** Le socle sombre, le filet de laiton, puis le coeur : commun à tous. */
+function serti(
+  ctx: CanvasRenderingContext2D,
+  forme: (marge: number) => void,
+  coeur: [string, string, string],
+  x: number,
+  y: number,
+  l: number,
+  h: number,
+): void {
+  ctx.save()
+  ctx.shadowColor = '#0000008c'
+  ctx.shadowOffsetX = 0.35 * U
+  ctx.shadowOffsetY = 0.5 * U
+  forme(0)
+  ctx.fillStyle = '#12100c'
+  ctx.fill()
+  ctx.restore()
+
+  const filet = ctx.createLinearGradient(x, y, x + l, y + h)
+  filet.addColorStop(0, '#f4dfb0')
+  filet.addColorStop(0.7, '#c9a86e')
+  filet.addColorStop(1, '#a88c5f')
+  forme(1.1 * U)
+  ctx.fillStyle = filet
+  ctx.fill()
+
+  const dedans = ctx.createLinearGradient(x, y, x + l, y + h)
+  dedans.addColorStop(0, coeur[0])
+  dedans.addColorStop(0.62, coeur[1])
+  dedans.addColorStop(1, coeur[2])
+  forme(2.6 * U)
+  ctx.fillStyle = dedans
+  ctx.fill()
+}
+
+/** L'AMBRE : la couleur de l'énergie dans ce jeu, celle de l'orbe du joueur. */
+const AMBRE: [string, string, string] = ['#8a6a2c', '#4a3713', '#241a08']
+
+/**
+ * Le chiffre, en ivoire, centré sur la forme.
+ *
+ * **Il est plus petit que sur le blason**, et ce n'est pas un réglage d'humeur :
+ * l'écu est plus HAUT que large (0,165 de la carte contre 0,19), alors que ces
+ * formes-ci sont inscrites dans un carré. Le même corps de police y remplissait
+ * toute la figure et recouvrait le coeur d'ambre — *on ne voyait plus que le
+ * chiffre, donc plus aucune des cinq pistes ne se distinguait.*
+ */
+function chiffre(ctx: CanvasRenderingContext2D, cout: number, cx: number, cy: number): void {
+  ctx.fillStyle = '#fff0cd'
+  ctx.font = `600 ${13.5 * U}px "Grenze Gotisch", Georgia, serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.shadowColor = '#2a1c06'
+  ctx.shadowOffsetX = 0.581 * U
+  ctx.shadowOffsetY = 0.872 * U
+  ctx.fillText(String(cout), cx, cy)
+  ctx.shadowColor = 'transparent'
+}
+
+function polygone(
+  ctx: CanvasRenderingContext2D,
+  cotes: number,
+  depart: number,
+  cx: number,
+  cy: number,
+  r: number,
+): void {
+  ctx.beginPath()
+  for (let i = 0; i < cotes; i += 1) {
+    const a = depart + (i * 2 * Math.PI) / cotes
+    const px = cx + Math.cos(a) * r
+    const py = cy + Math.sin(a) * r
+    if (i === 0) ctx.moveTo(px, py)
+    else ctx.lineTo(px, py)
+  }
+  ctx.closePath()
+}
+
+function peindreCout(ctx: CanvasRenderingContext2D, cout: number): void {
+  if (styleCout === 'blason') return peindreEcusson(ctx, cout)
+
+  // Un peu plus large que l'écu : inscrite dans un carré, une forme perd de la
+  // surface utile par rapport à un écu qui s'étire en hauteur.
+  const l = 0.205 * LARGE
+  const cx = 0.012 * LARGE + l / 2
+  const cy = 0.006 * HAUT + l / 2
+  const r = l / 2
+  const x = cx - r
+  const y = cy - r
+
+  if (styleCout === 'losange') {
+    // LE LOSANGE, POINTE EN HAUT : l'inverse exact de l'écu. Une pointe qui
+    // monte se lit comme un éclat, une pointe qui descend comme un bouclier.
+    serti(ctx, (m) => polygone(ctx, 4, -Math.PI / 2, cx, cy, r - m), AMBRE, x, y, l, l)
+  } else if (styleCout === 'hexagone') {
+    // L'HEXAGONE : une pièce mécanique, aucune parenté héraldique.
+    serti(ctx, (m) => polygone(ctx, 6, -Math.PI / 2, cx, cy, r - m), AMBRE, x, y, l, l)
+  } else if (styleCout === 'orbe') {
+    // L'ORBE : exactement l'objet que porte déjà le joueur, en petit. C'est la
+    // règle de Keko prise au mot — « que le symbole soit toujours le même ».
+    serti(
+      ctx,
+      (m) => {
+        ctx.beginPath()
+        ctx.arc(cx, cy, r - m, 0, Math.PI * 2)
+      },
+      AMBRE,
+      x,
+      y,
+      l,
+      l,
+    )
+    const lueur = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.35, 0, cx, cy, r)
+    lueur.addColorStop(0, '#ffd98a66')
+    lueur.addColorStop(1, '#ffd98a00')
+    ctx.beginPath()
+    ctx.arc(cx, cy, r - 2.6 * U, 0, Math.PI * 2)
+    ctx.fillStyle = lueur
+    ctx.fill()
+  } else {
+    // L'ÉCLAT : un scintillement à QUATRE branches derrière un disque. Il en a
+    // eu six, et six branches égales font une étoile de David — *une forme
+    // géométrique n'est jamais seulement une forme*, elle traîne ce qu'on lit
+    // d'elle ailleurs. Quatre branches fines ne disent que la lumière.
+    ctx.save()
+    ctx.shadowColor = '#0000008c'
+    ctx.shadowOffsetY = 0.5 * U
+    ctx.beginPath()
+    for (let i = 0; i < 8; i += 1) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 4
+      const rr = i % 2 === 0 ? r : r * 0.3
+      const px = cx + Math.cos(a) * rr
+      const py = cy + Math.sin(a) * rr
+      if (i === 0) ctx.moveTo(px, py)
+      else ctx.lineTo(px, py)
+    }
+    ctx.closePath()
+    const or = ctx.createLinearGradient(x, y, x + l, y + l)
+    or.addColorStop(0, '#f4dfb0')
+    or.addColorStop(1, '#a88c5f')
+    ctx.fillStyle = or
+    ctx.fill()
+    ctx.restore()
+    ctx.beginPath()
+    ctx.arc(cx, cy, r * 0.56, 0, Math.PI * 2)
+    ctx.fillStyle = '#241a08'
+    ctx.fill()
+    ctx.beginPath()
+    ctx.arc(cx, cy, r * 0.56, 0, Math.PI * 2)
+    ctx.strokeStyle = '#c9a86e'
+    ctx.lineWidth = 1.1 * U
+    ctx.stroke()
+  }
+
+  chiffre(ctx, cout, cx, cy)
 }
 
 function peindreEcusson(ctx: CanvasRenderingContext2D, cout: number): void {

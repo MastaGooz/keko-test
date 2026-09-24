@@ -4149,3 +4149,91 @@ body {
 
    Il ne reste en CSS que les boutons des ecrans ou rien ne se manipule --
    point de sortie, fin de descente. */
+
+
+/* --- la planche des symboles de cout, derriere `?ecusson` ------------------ */
+
+/* Elle vit derriere un parametre comme `?proto` : Keko juge depuis son
+   telephone, il lui faut une page deployee et non un fichier de scratchpad. */
+.ec-page {
+  min-height: 100vh;
+  padding: 1.5rem 1rem 3rem;
+  background: #0b0c10;
+  color: #e6ddc8;
+  font-family: system-ui, sans-serif;
+}
+
+.ec-titre {
+  margin: 0 0 0.25rem;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 1.5rem;
+  color: #e9d7a4;
+  text-align: center;
+}
+
+.ec-note {
+  max-width: 34rem;
+  margin: 0 auto 1.5rem;
+  color: #9aa0ab;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.ec-rang {
+  max-width: 60rem;
+  margin: 0 auto 1.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid #23262f;
+}
+
+.ec-rang h2 {
+  margin: 0;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 1.0625rem;
+  color: #e9d7a4;
+}
+
+.ec-rang p {
+  margin: 0.125rem 0 0.75rem;
+  color: #79808c;
+  font-size: 0.8125rem;
+}
+
+.ec-cartes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+/* A LA TAILLE DE LA MAIN : c'est a cette taille qu'on jouera, donc c'est
+   celle-la qui tranche. */
+.ec-carte {
+  width: 7rem;
+  height: auto;
+  border-radius: 0.25rem;
+}
+
+/* LA LOUPE : le meme dessin, rogne sur son coin haut-gauche. */
+.ec-loupe {
+  overflow: hidden;
+  width: 7rem;
+  height: 7rem;
+  border: 1px solid #23262f;
+  border-radius: 0.25rem;
+}
+
+.ec-loupe > canvas {
+  display: block;
+  width: 28rem;
+  height: auto;
+  margin: -0.5rem 0 0 -0.5rem;
+}
+
+.ec-build {
+  margin: 2rem 0 0;
+  color: #4a505c;
+  font-size: 0.75rem;
+  text-align: center;
+}

@@ -28,6 +28,11 @@ if (new URLSearchParams(location.search).has('r3f')) {
     const racine = document.getElementById('app')
     if (racine !== null) monter3d(racine)
   })
+} else if (new URLSearchParams(location.search).has('ecusson')) {
+  void import('./render/planche-ecusson.ts').then(({ montrerPlancheEcusson }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) void montrerPlancheEcusson(racine, __BUILD_TIME__)
+  })
 } else if (new URLSearchParams(location.search).has('proto')) {
   void import('./ui/proto.ts').then(({ montrerProto }) => {
     const racine = document.getElementById('app')
