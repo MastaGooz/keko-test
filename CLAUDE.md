@@ -2008,6 +2008,22 @@ reste levée tant que je ne hover pas une autre carte ». *Tout ce qui désigne
 une carte de la main entre deux rendus se désigne par son `id`* : la clé, le
 survol, la carte en vol.
 
+### LA PROFONDEUR N'EST PAS UNE POSITION, C'EST UN ORDRE
+
+Une carte survolée avance d'un cheveu pour passer devant ses voisines.
+Amortie au même rythme que le reste, cette avance TRAÎNE au retour : la carte
+avait repris sa place dans l'éventail que sa voisine ne repassait devant elle
+qu'un instant après. Keko : « elle repasse un peu tard à sa position en
+depth ».
+
+*Une carte est devant sa voisine ou elle ne l'est pas* — il n'y a rien à
+interpoler là-dedans. La profondeur a donc son propre ressort (`ressortZ`),
+quatre fois plus vif que le mouvement : **l'ordre se rend avant la place.**
+
+Il reste réglable plutôt que fixé une fois pour toutes, parce que les grands
+déplacements en z — la carte qu'on regarde de près, celle qu'on tient — ont
+besoin, eux, de voyager avec le reste.
+
 ### Pas de survol pendant qu'on tient une carte
 
 En la promenant, le pointeur passe sur ses voisines, qui se levaient comme si

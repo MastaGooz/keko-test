@@ -96,6 +96,21 @@ type Props = {
   /** Vitesse de rattrapage. Plus haut = plus sec. */
   ressort?: number
   /**
+   * La vitesse de rattrapage de la PROFONDEUR, quand elle doit être plus vive
+   * que le reste.
+   *
+   * **La profondeur n'est pas une position, c'est un ordre** : une carte est
+   * devant sa voisine ou elle ne l'est pas. Amortie au même rythme que le
+   * mouvement, elle traîne — la carte survolée avait repris sa place dans
+   * l'éventail que sa voisine ne repassait devant elle qu'un instant après.
+   * Keko : « elle repasse un peu tard à sa position en depth ».
+   *
+   * Reste réglable plutôt que fixé, parce que les grands déplacements en z —
+   * la carte qu'on regarde de près, celle qu'on tient — ont besoin, eux, de
+   * voyager avec le reste.
+   */
+  ressortZ?: number
+  /**
    * La carte est au-dessus de la zone qui la joue : elle s'allume et frémit.
    *
    * **C'est le seul repère possible ici**, et c'est la règle du jeu 2D : la
@@ -142,6 +157,7 @@ export function Carte3D({
   rotation = [0, 0, 0],
   taille = 1,
   ressort = 9,
+  ressortZ,
   engagee = false,
   jouable = true,
   ombre = true,
@@ -277,10 +293,11 @@ ${nuanceur.fragmentShader}`
     const g = groupe.current
     if (g === null) return
     const k = 1 - Math.exp(-ressort * delta)
+    const kz = 1 - Math.exp(-(ressortZ ?? ressort) * delta)
     const l = lisse.current
     l.p.x += (position[0] - l.p.x) * k
     l.p.y += (position[1] - l.p.y) * k
-    l.p.z += (position[2] - l.p.z) * k
+    l.p.z += (position[2] - l.p.z) * kz
     l.r.x += (rotation[0] - l.r.x) * k
     l.r.y += (rotation[1] - l.r.y) * k
     l.r.z += (rotation[2] - l.r.z) * k

@@ -504,6 +504,10 @@ export function Main3D({
             ]}
             rotation={leve ? [0, 0, place.rotation[2] * 0.3] : place.rotation}
             taille={leve ? 1.08 : 1}
+            // L'ORDRE SE REND AVANT LA PLACE : la profondeur rattrape quatre
+            // fois plus vite que le mouvement, sinon la voisine met un instant
+            // à repasser devant une carte qui a déjà fini de redescendre.
+            ressortZ={36}
             jouable={jouables?.[i] ?? true}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
