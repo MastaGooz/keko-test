@@ -2113,11 +2113,17 @@ inclinées ». La carte est donc **enfouie de 20 %** sous le bord bas (au lieu
 de 9), et l'inclinaison passe de ~10° à ~7° par cran — 27° d'écart entre les
 deux cartes extrêmes au lieu de 41.
 
-**LA BORNE DE L'ENFOUISSEMENT, C'EST LE NOM.** À 24 % — la valeur du jeu 2D —
-les cartes des bords, que le creux de l'arc descend encore, perdaient le leur.
-*Une carte sans nom n'est plus une carte, c'est une couleur.* Le creux a donc
-été aplati avec l'inclinaison, pour que la part enfouie soit à peu près la
-même d'un bout à l'autre de la main.
+**LA BORNE DE L'ENFOUISSEMENT, C'EST LE NOM, et elle se calcule.** Il est
+peint à 67 % de la hauteur de la carte (`peindreTextes`), donc son bas tombe à
+**30 % du bord inférieur** : au-delà, il passe sous la ligne de flottaison, et
+*une carte sans nom n'est plus une carte, c'est une couleur.* Le creux de
+l'arc entre dans le calcul, puisqu'il enfonce les cartes des bords d'un cran
+de plus — il a été aplati d'autant, pour que la part enfouie soit la même d'un
+bout à l'autre de la main.
+
+**25,5 % est donc le maximum**, et la main y est. Descendre encore demande de
+remonter le nom DANS le dessin de la carte : c'est une décision de gabarit,
+pas de mise en page, donc elle revient à Keko.
 
 *Ça vaut sur tous les formats sans rien recalculer* : l'enfouissement est une
 fraction DE LA CARTE, pas une hauteur d'écran — une carte plus grande sur

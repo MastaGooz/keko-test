@@ -56,7 +56,7 @@ import type { CarteAPeindre } from './texture-carte.ts'
  * lieu de descendre.
  */
 const PAS = 0.72
-const CREUX = 0.05
+const CREUX = 0.025
 const INCLINAISON = 0.12
 
 /**
@@ -82,22 +82,26 @@ const COUCHE = 0
 
 /**
  * Où la main se pose en y, pour cette fenêtre : collée au bord bas, la carte
- * **enfouie de 20 %**. Elle l'a d'abord été de 9 %, et la main montait trop
+ * **enfouie de 25,5 %**, et c'est le MAXIMUM. Elle l'a d'abord été de 9 %, et la main montait trop
  * haut : Keko : « la main de cartes est trop haute, il faudrait la descendre
  * un peu, même si on ne voit pas la partie inférieure des cartes ». *Ce qui
  * est enfoui est ce qu'on lit le moins* — le pied et la fin du cartouche — et
  * lever la carte le rend.
  *
- * **La borne, c'est le NOM.** À 24 % d'enfouissement, les cartes des bords —
- * que le creux de l'arc descend encore — perdaient le leur, et une carte sans
- * nom n'est plus une carte, c'est une couleur. Le creux a donc été aplati en
- * même temps, pour que la part enfouie soit à peu près la même d'un bout à
- * l'autre de la main. **Calculée, pas fixée** : la caméra recule sur grand écran
+ * **LA BORNE, C'EST LE NOM**, et elle se calcule : il est peint à 67 % de la
+ * hauteur de la carte (`peindreTextes`), donc son bas tombe à 30 % du bord
+ * inférieur. Au-delà, il passe sous la ligne de flottaison — et *une carte
+ * sans nom n'est plus une carte, c'est une couleur.* Le creux de l'arc compte
+ * dans le calcul, puisqu'il enfonce les cartes des bords d'un cran de plus :
+ * il a été aplati d'autant.
+ *
+ * Descendre encore demande de remonter le nom DANS le dessin de la carte,
+ * ce qui est une décision de gabarit, pas de mise en page. **Calculée, pas fixée** : la caméra recule sur grand écran
  * (`Cadrage`), donc le bord bas de l'écran descend en unités de scène — une
  * constante laissait la main flotter au milieu.
  */
 function yMain(hauteurFenetrePx: number): number {
-  return -hauteurVisibleA(Z_MAIN, hauteurFenetrePx) / 2 + HAUT * 0.3
+  return -hauteurVisibleA(Z_MAIN, hauteurFenetrePx) / 2 + HAUT * 0.245
 }
 
 /**
