@@ -2200,12 +2200,19 @@ affleure déjà la ligne — sans lui elle basculerait au premier pixel ; et un
 **second bord** (`RETOUR`), parce qu'un doigt posé pile sur la ligne ferait
 clignoter la carte entre sa place d'attente et la main.
 
-**Elle DÉPASSE À PEINE DE LA MAIN** (`ancreVisee`) : elle s'assoit dedans,
-seul son haut émerge. Keko : « quand la carte flotte pour cibler, il faudrait
-qu'elle flotte beaucoup plus bas, qu'elle dépasse à peine de la main ».
-Assise là, elle ne dit plus qu'une chose, la bonne — *c'est celle-là que tu
-tiens* — et tout le reste de l'écran appartient aux corps et à la flèche.
-Posée plus haut, son sommet montait jusqu'aux
+**ELLE SE POSE PILE SUR LA LIGNE QUI L'A ACTIVÉE** (`ancreVisee` renvoie
+`ligneDeLaMain`), et c'est un réglage de Keko : « quand la carte est en cours
+de ciblage, il faudrait qu'elle soit à la même hauteur que celle nécessaire
+pour la faire passer en mode ciblage ». *Donc elle ne saute pas* : au moment
+où le doigt franchit la ligne, la carte y est déjà — elle ne fait que se
+recentrer, et le décrochage se lit comme un ancrage plutôt que comme un bond.
+
+C'est une hauteur qu'on avait déjà essayée, mais pour une raison qui ne tenait
+pas : elle était alors calculée à part du seuil, donc la carte bondissait au
+basculement et paraissait trop haute. *Une valeur juste au mauvais endroit se
+lit comme une valeur fausse.* Elle sort désormais de la même fonction que la
+ligne et ne peut plus en diverger.
+
 **La flèche est un trait pointillé en cloche**, comme les arches du jeu 2D :
 des pastilles qui grossissent vers la pointe et une tête orientée sur la
 tangente. *Pas une ligne* — `LineBasicMaterial` est plafonné à 1 px de large
