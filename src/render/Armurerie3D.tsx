@@ -31,7 +31,7 @@ import { textureSlot } from './texture-carte.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
-import { CAPACITE_PILE, deuxMains } from '../logic/hub.ts'
+import { CAPACITE_PILE, accepteDepuis, deuxMains } from '../logic/hub.ts'
 
 const Z_PLAN = Z_MAIN
 
@@ -124,6 +124,20 @@ function placesCharge(
       Z_PLAN,
     ]),
   }
+}
+
+/**
+ * LA TAILLE QU'UNE PIÈCE AURA UNE FOIS POSÉE LÀ.
+ *
+ * Le chargement se lit à la taille de la main, la réserve et la pile en
+ * réduit. C'est cette valeur que prend la pièce tenue quand elle survole un
+ * slot qui l'accepte : *ce qu'on montre pendant le geste est ce qu'on aura
+ * après.*
+ */
+function tailleDuSlot(slot: Slot): number {
+  if (slot.ou === 'pile') return PILE
+  if (slot.ou === 'reserve') return REDUIT
+  return 1
 }
 
 /** Ce que le slot attend, pour le dessiner vide. */
@@ -235,6 +249,28 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
   }, [tenue, onSaisie])
 
   const portee = tenue === null ? null : (objets[tenue] ?? null)
+
+  /**
+   * LA PIÈCE TENUE PREND LA TAILLE DU SLOT QUI L'ACCEPTE.
+   *
+   * Réduite, elle ne cache pas les cases qu'on vise — c'est la règle de Keko
+   * sur le fantôme de l'armurerie 2D, et elle tient. Mais au-dessus d'un slot
+   * qui la prend, elle grandit jusqu'à la taille qu'elle y aura : *le signal
+   * et l'aperçu sont la même chose*, et en 3D une taille se lit d'un coup
+   * d'oeil là où le 2D allumait un liseré bleu.
+   *
+   * Un slot qui refuse ne la fait pas grandir, donc le refus se lit AVANT le
+   * lâcher — un slot qui promet puis ne fait rien a l'air cassé.
+   *
+   * `Carte3D` amortit déjà sa taille : la carte enfle et se retasse toute
+   * seule, il n'y a aucune animation à écrire.
+   */
+  const sousLeDoigt = doigt === null ? null : slotSous(doigt)
+  const accueille =
+    portee !== null &&
+    sousLeDoigt !== null &&
+    accepteDepuis(hub, portee.slot, sousLeDoigt, portee.objet.id)
+  const tailleTenue = accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt) : REDUIT
   const casesVides = Math.max(0, CASES_MINIMUM - hub.reserve.length)
 
   return (
@@ -301,15 +337,15 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
         ),
       )}
 
-      {/* LA PIÈCE TENUE SUIT LE DOIGT, et **elle reste réduite** : une grosse
-          carte sous le doigt cache les slots qu'on vise. Tranché par Keko en
-          2D. */}
+      {/* LA PIÈCE TENUE SUIT LE DOIGT, réduite par défaut — une grosse carte
+          sous le doigt cache les slots qu'on vise (tranché par Keko en 2D) —
+          et à sa taille de slot dès qu'un slot la prend. */}
       {portee !== null && doigt !== null && (
         <Carte3D
           carte={pieceAPeindre(portee.objet)}
           position={[doigt.x, doigt.y, Z_TENUE]}
           rotation={[0, 0, 0]}
-          taille={REDUIT}
+          taille={tailleTenue}
           ombre={false}
           ressort={22}
           engagee

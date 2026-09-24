@@ -9,6 +9,7 @@ import type { Arme, Armure } from './armes.ts'
 import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART, deckDeLEquipement } from './armes.ts'
 import {
   CAPACITE_PILE,
+  accepteDepuis,
   creerHub,
   deckEmporte,
   deplacerPiece,
@@ -212,6 +213,23 @@ const COTTE: Armure = {
   // destination se juge apres la prise, sinon la carte se refusait elle-meme.
   const repose = deplacerPiece(quatre, { ou: 'pile' }, { ou: 'pile' }, quatre.chargement.pile[0]!.id)
   verifier('une potion se repose sur sa propre pile pleine', repose.chargement.pile.length === CAPACITE_PILE)
+
+  // CE QUE LE RENDU DEMANDE AUX RÈGLES : ce depot aboutirait-il ? C'est ce
+  // qui fait grandir la piece tenue au-dessus d'un slot qui la prend, donc il
+  // doit dire exactement ce que `deplacerPiece` fera.
+  verifier('une potion est acceptee par la pile',
+    accepteDepuis(h, { ou: 'reserve' }, { ou: 'pile' }, p2!.id))
+  verifier('...mais pas par une main',
+    !accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, p2!.id))
+  verifier('une pile pleine refuse une potion de plus',
+    !accepteDepuis(quatre, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id))
+  // LE CAS QUI JUSTIFIE LA FONCTION : juge apres la prise, pas avant.
+  verifier('...mais accepte celle qui en sort',
+    accepteDepuis(quatre, { ou: 'pile' }, { ou: 'pile' }, quatre.chargement.pile[0]!.id))
+  // Une main vide ne tient rien, donc rien ne part de la : la piece tenue ne
+  // peut pas grandir pour un deplacement qui n'existe pas.
+  verifier('un slot vide n’offre rien',
+    !accepteDepuis(h, { ou: 'main', rang: 1 }, { ou: 'reserve' }))
 
   // CE QU'ON A BU NE REVIENT PAS. `rentrer` recoit les survivantes, et la pile
   // devient exactement ca -- c'est la seule ressource du jeu qui s'epuise.

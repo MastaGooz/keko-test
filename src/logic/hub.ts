@@ -169,6 +169,22 @@ export function deplacerPiece(hub: Hub, source: Slot, cible: Slot, id?: string):
   return poser(pose.hub, source, pose.sortant).hub
 }
 
+/**
+ * CE DÉPLACEMENT ABOUTIRAIT-IL ? La question du rendu, posée aux règles.
+ *
+ * L'affichage a besoin de savoir, **pendant** le glisser, si le slot sous le
+ * doigt prend ce qu'on tient — pour le dire avant qu'on lâche. Il ne peut pas
+ * appeler `accepte` directement : la pile pleine se refuserait elle-même quand
+ * on y repose une potion qui vient d'en sortir. C'est exactement le
+ * raisonnement de `deplacerPiece`, donc c'est LUI qu'on réutilise — *une règle
+ * recopiée dans le rendu est une règle qui divergera.*
+ */
+export function accepteDepuis(hub: Hub, source: Slot, cible: Slot, id?: string): boolean {
+  const prise = prendre(hub, source, id)
+  if (prise.piece === null) return false
+  return accepte(cible, prise.piece, prise.hub)
+}
+
 /** Un slot n'accepte pas n'importe quoi : une armure ne tient pas en main. */
 function accepte(slot: Slot, piece: Objet, hub: Hub): boolean {
   if (slot.ou === 'reserve') return true

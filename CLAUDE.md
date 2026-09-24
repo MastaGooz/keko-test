@@ -2612,6 +2612,36 @@ pour huit modèles : quatre par ligne, deux lignes, et la taille d'une carte du
 set bornée trois fois — plafond, hauteur (deux lignes plus leurs pastilles),
 largeur (quatre à côté de la pièce). Vérifié à 844x390 et 667x320.
 
+**LA PIÈCE TENUE PREND LA TAILLE DU SLOT QUI L'ACCEPTE**, et reste réduite
+partout ailleurs. Demandé par Keko : « quand on drag un objet depuis le stash
+vers l'équipement, on peut lui redonner sa taille normale dès qu'il est
+au-dessus d'un slot compatible ? »
+
+*C'est le liseré bleu du 2D, dit autrement* : en 3D une taille se lit d'un coup
+d'oeil, et **le signal et l'aperçu deviennent la même chose** — la carte montre
+où elle peut aller ET ce qu'elle y sera. Le refus se lit donc avant le lâcher,
+ce qui était déjà la règle : un slot qui promet puis ne fait rien a l'air
+cassé. Réduite par défaut, elle ne cache toujours pas les cases qu'on vise,
+l'autre tranchage de Keko sur l'armurerie 2D.
+
+**Le rendu DEMANDE la règle, il ne la recopie pas** (`accepteDepuis`, dans
+`logic/hub.ts`). Il ne pouvait pas appeler `accepte` directement : une potion
+reposée sur sa propre pile pleine se serait refusée elle-même. La fonction
+refait donc le raisonnement de `deplacerPiece` — prendre, puis juger — et
+quatre vérifications la tiennent.
+
+`Carte3D` amortit déjà sa taille, donc la carte enfle et se retasse toute
+seule : aucune animation à écrire. Mesuré à la sonde sur trois glissers réels :
+Espadon vers une main 0,52 → 1 → 0,52, potion vers le torse 0,52 sans bouger
+(refus), potion vers la pile 0,52 → 0,5.
+
+**Limite connue, et elle est structurelle : la pile ne dit rien.** Ses cases
+font une demi-carte de main, donc presque exactement la taille réduite du
+râtelier — 4 % d'écart, invisible. Un consommable n'a donc aucun retour
+au-dessus de sa destination. *C'est l'arithmétique des cases qui l'impose*, pas
+un réglage : les agrandir obligerait à rétrécir les armes d'autant. S'il faut
+un signal là, il faudra allumer le SLOT et non la carte.
+
 **Le bouton « Descendre » vit au CENTRE BAS.** Ancré au coin droit comme ceux
 du butin, il recouvrait la seconde ligne de la pile sur un téléphone couché —
 et *rien ne le signalait*, puisqu'il restait parfaitement visible : c'est ce
