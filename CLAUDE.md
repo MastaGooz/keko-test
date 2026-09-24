@@ -2642,6 +2642,13 @@ au-dessus de sa destination. *C'est l'arithmétique des cases qui l'impose*, pas
 un réglage : les agrandir obligerait à rétrécir les armes d'autant. S'il faut
 un signal là, il faudra allumer le SLOT et non la carte.
 
+**ET IL SE GRISE QUAND ON NE PEUT PAS PARTIR** — sans arme, il n'y a rien pour
+frapper (`peutDescendre`). La règle existait et `descendreAuDonjon` refusait
+déjà, mais **en silence** : le bouton avait l'air actif et ne faisait rien, ce
+qui se lit comme une panne. C'est exactement ce qu'on a corrigé sur les cartes
+injouables de la main — *le refus silencieux est pire qu'un refus franc.*
+Demandé par Keko, au même gris que pendant un glisser.
+
 **Le bouton « Descendre » vit au CENTRE BAS.** Ancré au coin droit comme ceux
 du butin, il recouvrait la seconde ligne de la pile sur un téléphone couché —
 et *rien ne le signalait*, puisqu'il restait parfaitement visible : c'est ce

@@ -31,7 +31,7 @@ import { textureSlot } from './texture-carte.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
-import { CAPACITE_PILE, accepteDepuis, deuxMains } from '../logic/hub.ts'
+import { CAPACITE_PILE, accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
 
 const Z_PLAN = Z_MAIN
 
@@ -358,11 +358,16 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
           téléphone couché — et *rien ne le signalait*, puisqu'il restait
           parfaitement visible : c'est ce qu'il cachait qui manquait. La bande
           centrale, elle, est vide à tous les formats. */}
+      {/* IL SE GRISE QUAND ON NE PEUT PAS PARTIR : sans arme, il n'y a rien
+          pour frapper, et `descendreAuDonjon` refusait déjà en silence. *Un
+          bouton qui a l'air actif et ne fait rien se lit comme une panne* —
+          c'est exactement ce qu'on a corrigé sur les cartes injouables de la
+          main. Demandé par Keko, au même gris que pendant un glisser. */}
       <Bouton3D
         texte="Descendre"
         ton="or"
         position={[0, -demiHaut + 0.5, Z_PLAN]}
-        eteint={tenue !== null}
+        eteint={tenue !== null || !peutDescendre(hub.chargement)}
         onCliquer={onDescendre}
       />
     </group>
