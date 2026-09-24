@@ -75,11 +75,17 @@ const PAS_ENTRE_FRAPPES = 0.62
  * recouvrir la jauge et le nom des créatures. Keko : « sur téléphone, la carte
  * d'attaque en cours de ciblage masque l'ennemi ».
  *
- * Le rang monte donc, et la place vient du haut de l'écran — d'où la note de
- * tour passée dans un coin. *Ce qui est proportionnel à l'écran ne se règle
- * pas sur un seul format.*
+ * Le rang est donc monté, et la place est venue du haut de l'écran — d'où la
+ * note de tour passée dans un coin. *Ce qui est proportionnel à l'écran ne se
+ * règle pas sur un seul format.*
+ *
+ * **Il est redescendu d'un cran depuis**, parce que la main a baissé deux fois
+ * entre-temps : la ligne de jeu et la place de la carte qui vise en sont
+ * calculées, donc la marge s'était rouverte toute seule. Keko : « sur
+ * téléphone, on devrait descendre un poil l'ennemi ». *Un réglage posé pour
+ * dégager un conflit doit se relire quand le conflit se déplace.*
  */
-const HAUTEUR_RANG = 1.3
+const HAUTEUR_RANG = 1.1
 
 /** Ce que le joueur encaisse, pour le chiffre qui saute à côté de ses PV. */
 type CoupRecu = { cle: number; degats: number }

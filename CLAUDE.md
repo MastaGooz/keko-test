@@ -2267,10 +2267,19 @@ moniteur. La carte qui attend sa cible venait alors recouvrir la jauge et le
 nom des créatures, sans que ça se voie jamais sur la machine de dev. Keko :
 « sur téléphone, la carte d'attaque en cours de ciblage masque l'ennemi ».
 
-Le rang monte (`HAUTEUR_RANG`), les étiquettes serrent les corps d'un cran, et
-la place vient du haut de l'écran — la note de tour part dans le coin droit.
-Mesuré en iframe aux deux formats serrés : à 844x390 il reste 11 px entre le
-nom et le haut de la carte, à 667x320 il en reste 3, et l'intention ne touche
+Le rang est monté (`HAUTEUR_RANG`), les étiquettes serrent les corps d'un
+cran, et la place est venue du haut de l'écran — la note de tour est partie
+dans le coin droit.
+
+**Puis il est redescendu**, parce que la main a baissé deux fois entre-temps :
+la ligne de jeu et la place de la carte qui vise sont CALCULÉES depuis la
+main, donc la marge s'était rouverte toute seule. Keko : « sur téléphone, on
+devrait descendre un poil l'ennemi ». *Un réglage posé pour dégager un conflit
+doit se relire quand le conflit se déplace* — sinon il reste comme une
+cicatrice, à compenser un problème qui n'existe plus.
+
+Mesuré en iframe aux deux formats serrés : à 844x390 il reste 19 px entre le
+nom et le haut de la carte, à 667x320 il en reste 11, et l'intention ne touche
 pas le bord haut. *Ce qui est proportionnel à l'écran ne se règle pas sur un
 seul format* — et la seule façon de le voir est de mesurer l'autre.
 
