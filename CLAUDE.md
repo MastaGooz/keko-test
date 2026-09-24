@@ -1958,17 +1958,27 @@ l'écran dès que la caméra reculait.
 
 ### Les coins sont ronds : la carte est faite de DEUX pièces
 
-Un pavé aux arêtes arrondies (`RoundedBoxGeometry`, rayon 3 % comme le
-`border-radius` du gabarit) porte le laiton — c'est le corps, avec sa tranche —
-et un plan un cheveu devant porte la face peinte, dont les coins sont
-transparents : la texture est peinte dans un `roundRect`, et `alphaTest` coupe
-ce qui est hors du dessin. Aux coins, la face laisse voir le laiton arrondi du
-corps : le cadre déborde d'un cheveu, comme la coque 2D.
+Une **forme arrondie extrudée** (`ExtrudeGeometry` d'un `THREE.Shape` à
+quatre arcs, rayon 3 % comme le `border-radius` du gabarit) porte le laiton —
+c'est le corps, avec sa tranche — et un plan un cheveu devant porte la face
+peinte, dont les coins sont transparents : la texture est peinte dans un
+`roundRect`, et `alphaTest` coupe ce qui est hors du dessin. Aux coins, la
+face laisse voir le laiton arrondi du corps : le cadre déborde d'un cheveu,
+comme la coque 2D.
 
-Pourquoi pas un seul pavé arrondi texturé : `RoundedBoxGeometry` **n'a pas de
-groupes de matériaux**, donc la face et la tranche partageraient la même
-texture — et on perdrait la tranche de laiton, la seule chose qui rende le
-volume lisible. Le contour lumineux suit les coins ronds lui aussi : un halo
+**Le corps a d'abord été un `RoundedBoxGeometry`, et c'était un piège
+silencieux** : il borne son rayon à la MOITIÉ DE LA PLUS PETITE DIMENSION
+(`Math.min(width / 2, height / 2, depth / 2, radius)`), donc sur une carte de
+0,012 d'épaisseur le rayon tombait à 0,006 — le corps restait carré, et l'on
+voyait le laiton en angle droit derrière la face arrondie. Keko : « derrière
+une autre forme (couleur jaune/doré…) reste et est un angle droit ». Rien ne
+le disait : la géométrie se construit sans erreur. *Un pavé arrondi n'arrondit
+que ce que son épaisseur permet ; pour une plaque mince, on extrude un
+profil.*
+
+Pourquoi pas un seul volume texturé : la face et la tranche partageraient la
+même texture — et on perdrait la tranche de laiton, la seule chose qui rende
+le volume lisible. Le contour lumineux suit les coins ronds lui aussi : un halo
 carré autour d'une carte arrondie se lirait comme un cadre posé dessus.
 
 ### Pas de survol pendant qu'on tient une carte

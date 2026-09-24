@@ -23,7 +23,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
-import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import type { CarteAPeindre } from './texture-carte.ts'
 import { DEBORD_CONTOUR, textureContour, textureDeCarte } from './texture-carte.ts'
 
@@ -38,22 +37,54 @@ export const RAYON_COIN = 0.03
 /**
  * LA CARTE EST FAITE DE DEUX PIÈCES, et c'est ce qui donne les coins ronds.
  *
- * Un pavé aux arêtes arrondies porte le laiton — c'est le CORPS, avec sa
- * tranche — et un plan posé un cheveu devant porte la face peinte, dont les
- * coins sont transparents (la texture est peinte dans un rectangle arrondi,
- * et `alphaTest` coupe ce qui est hors du dessin). Aux coins, le plan laisse
- * donc voir le laiton arrondi du corps : le cadre déborde d'un cheveu, comme
- * la coque du gabarit 2D.
+ * Une forme 2D aux coins arrondis, EXTRUDÉE de l'épaisseur, porte le laiton —
+ * c'est le CORPS, avec sa tranche — et un plan posé un cheveu devant porte la
+ * face peinte, dont les coins sont transparents (la texture est peinte dans
+ * un rectangle arrondi, et `alphaTest` coupe ce qui est hors du dessin). Aux
+ * coins, le plan laisse donc voir le laiton arrondi du corps : le cadre
+ * déborde d'un cheveu, comme la coque du gabarit 2D.
  *
- * Pourquoi pas un seul pavé arrondi texturé : `RoundedBoxGeometry` n'a pas de
- * groupes de matériaux, donc la face et la tranche partageraient la même
- * texture — et on perdrait la tranche de laiton, la seule chose qui rende le
- * volume lisible. Keko : « il faudrait arrondir un peu le bord des cartes ».
+ * **Pas `RoundedBoxGeometry`, et ça a coûté un aller-retour** : elle arrondit
+ * dans les TROIS dimensions et borne son rayon par la plus petite — ici
+ * l'épaisseur, 0,012. Le rayon demandé (0,03) était écrasé à presque rien :
+ * les coins du corps restaient droits pendant que la face, elle, était bien
+ * arrondie. Keko : « on voit que la bordure a été arrondie, mais derrière une
+ * autre forme dorée reste et est un angle droit ». *Une carte est une forme
+ * plate avec une épaisseur, pas un volume aux arêtes molles* — l'extrusion
+ * dit exactement ça.
+ *
+ * Pourquoi pas la face directement sur l'extrusion : ses UV sont en
+ * coordonnées de scène, pas de 0 à 1, donc la texture s'y plaquerait de
+ * travers. Le plan devant garde des UV propres.
  *
  * Les géométries sont partagées par toutes les cartes : elles ne changent
  * jamais.
  */
-const GEOMETRIE_CORPS = new RoundedBoxGeometry(LARGE, HAUT, EPAISSEUR, 2, RAYON_COIN)
+function formeDeCarte(): THREE.Shape {
+  const l = LARGE / 2
+  const h = HAUT / 2
+  const r = RAYON_COIN
+  const forme = new THREE.Shape()
+  forme.moveTo(-l + r, -h)
+  forme.lineTo(l - r, -h)
+  forme.absarc(l - r, -h + r, r, -Math.PI / 2, 0, false)
+  forme.lineTo(l, h - r)
+  forme.absarc(l - r, h - r, r, 0, Math.PI / 2, false)
+  forme.lineTo(-l + r, h)
+  forme.absarc(-l + r, h - r, r, Math.PI / 2, Math.PI, false)
+  forme.lineTo(-l, -h + r)
+  forme.absarc(-l + r, -h + r, r, Math.PI, (3 * Math.PI) / 2, false)
+  return forme
+}
+
+const GEOMETRIE_CORPS = new THREE.ExtrudeGeometry(formeDeCarte(), {
+  depth: EPAISSEUR,
+  bevelEnabled: false,
+  curveSegments: 8,
+})
+// L'extrusion part de z = 0 vers l'avant : on la recentre sur l'épaisseur,
+// pour que la face posée à +EPAISSEUR/2 affleure bien le corps.
+GEOMETRIE_CORPS.translate(0, 0, -EPAISSEUR / 2)
 const GEOMETRIE_FACE = new THREE.PlaneGeometry(LARGE, HAUT)
 
 type Props = {
