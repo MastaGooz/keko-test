@@ -35,26 +35,43 @@ export const Z_SLOTS = Z_MAIN
 /**
  * OÙ SE POSENT LES DEUX EMPLACEMENTS.
  *
- * **Le trésor qui arrive est EN HAUT AU CENTRE**, son bouton juste dessous ;
- * **ce qu'on jette est à gauche**, à l'écart, avec ses deux issues sous lui ;
- * et « Terminer » attend à droite. Disposition demandée par Keko, et elle dit
- * la bonne chose : *une seule décision occupe le milieu de l'écran*, les deux
- * autres sont des sorties latérales.
+ * **Le trésor qui arrive est EN HAUT AU CENTRE**, son bouton juste dessous —
+ * c'est la seule décision de l'écran, elle occupe le milieu. **Ce qu'on jette
+ * est à droite**, à mi-hauteur, avec ses deux issues sous lui. Et **une fois
+ * le trésor décidé, « Terminer » vient prendre sa place** : le bouton
+ * n'apparaît qu'après, donc il hérite de l'endroit où l'oeil regardait déjà.
+ * Disposition tranchée par Keko.
  *
  * Calculé depuis la fenêtre plutôt que fixé : la caméra recule sur grand
  * écran, donc le bord du champ visible n'est pas au même endroit — un
  * emplacement posé à une distance constante finirait au milieu de nulle part.
+ *
+ * **Le rebut se cale au milieu de ce qui est LIBRE**, entre le haut de la main
+ * et le haut de l'écran, et non au milieu de l'écran : ses boutons pendent
+ * sous lui, et sur un téléphone — où tout est proportionnellement plus grand —
+ * ils tomberaient sinon dans la main.
  */
-function places(): { xLoot: number; xJeter: number; y: number; yBoutons: number } {
-  const demiHaut = hauteurVisibleA(Z_SLOTS, window.innerHeight) / 2
-  const demiLarge = demiHaut * (window.innerWidth / window.innerHeight)
-  const y = demiHaut - 0.9
+function places(): {
+  xLoot: number
+  yLoot: number
+  xJeter: number
+  yJeter: number
+  sousLoot: number
+  sousJeter: number
+} {
+  const h = window.innerHeight
+  const demiHaut = hauteurVisibleA(Z_SLOTS, h) / 2
+  const demiLarge = demiHaut * (window.innerWidth / h)
+  const yLoot = demiHaut - 0.9
+  const yJeter = (ligneDeLaMain(h) + demiHaut) / 2
   return {
     xLoot: 0,
+    yLoot,
     // Borné : sur un écran large, collé au bord, il sortirait du regard.
-    xJeter: -Math.min(demiLarge - 0.65, 2.2),
-    y,
-    yBoutons: y - 0.74,
+    xJeter: Math.min(demiLarge - 0.65, 2.2),
+    yJeter,
+    sousLoot: yLoot - 0.74,
+    sousJeter: yJeter - 0.72,
   }
 }
 
@@ -79,20 +96,22 @@ export function slotSous(
   hauteurFenetrePx: number,
   avecLoot: boolean,
 ): Emplacement | null {
-  const { xLoot, xJeter, y: ySlots } = places()
+  const { xLoot, yLoot, xJeter, yJeter } = places()
   const [x, y] = surLePlan(point, Z_SLOTS, hauteurFenetrePx)
-  if (Math.abs(y - ySlots) > PORTEE_Y) return null
-  if (avecLoot && Math.abs(x - xLoot) < PORTEE_X) return 'loot'
-  if (Math.abs(x - xJeter) < PORTEE_X) return 'jeter'
+  if (avecLoot && Math.abs(x - xLoot) < PORTEE_X && Math.abs(y - yLoot) < PORTEE_Y) return 'loot'
+  if (Math.abs(x - xJeter) < PORTEE_X && Math.abs(y - yJeter) < PORTEE_Y) return 'jeter'
   return null
 }
 
-/** Où poser les boutons de chaque emplacement : juste dessous. */
-export function ancresDuButin(): [number, number, number][] {
-  const { xLoot, xJeter, yBoutons } = places()
+/**
+ * Où poser les boutons : sous chaque emplacement — sauf « Terminer », qui
+ * vient AU CENTRE de la place du trésor une fois celui-ci décidé.
+ */
+export function ancresDuButin(avecLoot: boolean): [number, number, number][] {
+  const { xLoot, yLoot, xJeter, sousLoot, sousJeter } = places()
   return [
-    [xLoot, yBoutons, Z_SLOTS],
-    [xJeter, yBoutons, Z_SLOTS],
+    [xLoot, avecLoot ? sousLoot : yLoot, Z_SLOTS],
+    [xJeter, sousJeter, Z_SLOTS],
   ]
 }
 
@@ -187,7 +206,7 @@ export function Butin3D({
 }: Props): React.JSX.Element {
   // Index 0 : ce qui arrive. Index 1 : ce qu'on s'apprête à jeter.
   const cartes = [loot, aJeter]
-  const { xLoot, xJeter, y } = places()
+  const { xLoot, yLoot, xJeter, yJeter } = places()
 
   const { tenue, doigt, prendre } = useGesteCarte({
     z: Z_TENUE,
@@ -224,7 +243,7 @@ export function Butin3D({
           nom="Butin"
           accent="#c9a95a"
           x={xLoot}
-          y={y}
+          y={yLoot}
           // CE QU'ON TIENT N'EST PLUS À SA PLACE : la case reprend l'habit
           // d'une case vide le temps du glisser, et elle dit toujours ce
           // qu'elle attend. Règle de l'armurerie 2D : sans son nom, c'est un
@@ -239,7 +258,7 @@ export function Butin3D({
         nom="Jeter"
         accent={aJeter === null ? '#8a6a62' : '#ff6a52'}
         x={xJeter}
-        y={y}
+        y={yJeter}
         carte={tenue === 1 ? null : aJeter}
         peril
         onPrendre={prendre(1)}

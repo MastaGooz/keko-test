@@ -2112,12 +2112,19 @@ pouvoir la lire avant de valider. Elle ne frémit pas : le frémissement dit
 côte à côte.
 
 **CHAQUE BOUTON SOUS SON EMPLACEMENT.** Le trésor qui arrive est **en haut au
-centre**, « Prendre » juste dessous ; **« Jeter » est à gauche**, à l'écart,
-avec ses deux issues sous lui ; et « Terminer » attend à droite. Disposition
-demandée par Keko, et elle dit la bonne chose : *une seule décision occupe le
-milieu de l'écran*, les deux autres sont des sorties latérales. La ligne de
-poids (« Tu portes 2 trésors · 130 d'or ») part dans le coin — centrée, elle
-s'asseyait sur le bord haut du trésor.
+centre**, « Prendre » juste dessous — *une seule décision occupe le milieu de
+l'écran.* **« Jeter » est à droite, à mi-hauteur**, avec ses deux issues côte
+à côte sous lui (rouge et vert, comme en 2D). Et **« Terminer » vient prendre
+la place du trésor** une fois celui-ci décidé : le bouton n'apparaît qu'après,
+donc il hérite de l'endroit où l'oeil regardait déjà — et l'emplacement vide ne
+reste pas là à demander qu'on y pose quelque chose. Disposition tranchée par
+Keko. La ligne de poids (« Tu portes 2 trésors · 130 d'or ») part dans le
+coin — centrée, elle s'asseyait sur le bord haut du trésor.
+
+**Le rebut se cale au milieu de ce qui est LIBRE**, entre le haut de la main et
+le haut de l'écran, et non au milieu de l'écran : ses boutons pendent sous lui,
+et sur un téléphone — où tout est proportionnellement plus grand — ils
+tomberaient sinon dans la main.
 
 Les boutons sont **ancrés en 3D** (`ancresDuButin`, projeté par `Projeter`) et
 non posés en CSS : les emplacements se calculent depuis le champ visible, qui
