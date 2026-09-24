@@ -104,13 +104,17 @@ export function slotSous(
 }
 
 /**
- * Où poser les boutons : sous chaque emplacement — sauf « Terminer », qui
- * vient AU CENTRE de la place du trésor une fois celui-ci décidé.
+ * Où poser les boutons : sous chaque emplacement.
+ *
+ * **« Terminer » se pose exactement où était « Prendre »**, pas au centre de
+ * la place du trésor : c'est le même geste au même endroit, l'un après
+ * l'autre. Un bouton qui se déplace entre deux états successifs oblige à le
+ * chercher deux fois.
  */
-export function ancresDuButin(avecLoot: boolean): [number, number, number][] {
-  const { xLoot, yLoot, xJeter, sousLoot, sousJeter } = places()
+export function ancresDuButin(): [number, number, number][] {
+  const { xLoot, xJeter, sousLoot, sousJeter } = places()
   return [
-    [xLoot, avecLoot ? sousLoot : yLoot, Z_SLOTS],
+    [xLoot, sousLoot, Z_SLOTS],
     [xJeter, sousJeter, Z_SLOTS],
   ]
 }

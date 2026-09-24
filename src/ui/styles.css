@@ -4111,11 +4111,13 @@ body {
   gap: 0.5rem;
 }
 
-/* « Terminer » ne pend pas sous l'emplacement : il le REMPLACE, donc il se
-   centre sur le point. */
-.ancre-butin > .sous-slot.centre {
-  top: 50%;
-  translate: -50% -50%;
+/* LES DEUX ISSUES DU REBUT SONT PLUS PETITES que les boutons qui engagent
+   l'ecran : elles decident d'une carte, pas du palier. La hauteur s'arrete
+   quand meme a 3rem -- c'est le plancher tactile du projet. */
+.bouton-3d.petit {
+  min-height: 3rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.8125rem;
 }
 
 .ancre-butin .bouton-3d {

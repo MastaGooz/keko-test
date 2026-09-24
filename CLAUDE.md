@@ -2114,10 +2114,16 @@ côte à côte.
 **CHAQUE BOUTON SOUS SON EMPLACEMENT.** Le trésor qui arrive est **en haut au
 centre**, « Prendre » juste dessous — *une seule décision occupe le milieu de
 l'écran.* **« Jeter » est à droite, à mi-hauteur**, avec ses deux issues côte
-à côte sous lui (rouge et vert, comme en 2D). Et **« Terminer » vient prendre
-la place du trésor** une fois celui-ci décidé : le bouton n'apparaît qu'après,
-donc il hérite de l'endroit où l'oeil regardait déjà — et l'emplacement vide ne
-reste pas là à demander qu'on y pose quelque chose. Disposition tranchée par
+à côte sous lui (rouge et vert, comme en 2D). Et **« Terminer » se pose EXACTEMENT
+où était « Prendre »** une fois le trésor décidé : le second n'apparaît qu'une
+fois le premier consommé, et *un bouton qui se déplace entre deux états
+successifs oblige à le chercher deux fois.*
+
+**Les deux issues du rebut sont plus petites** que les boutons qui engagent
+l'écran : elles décident d'une carte, pas du palier. Et « Jeter » ne répète
+pas l'or perdu — il est déjà écrit SUR la carte, juste au-dessus ; le redire
+allonge un mot qui doit rester un verbe. (La hauteur s'arrête quand même à
+3rem : c'est le plancher tactile du projet.) Disposition tranchée par
 Keko. La ligne de poids (« Tu portes 2 trésors · 130 d'or ») part dans le
 coin — centrée, elle s'asseyait sur le bord haut du trésor.
 

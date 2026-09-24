@@ -656,7 +656,7 @@ export function Scene(): React.JSX.Element {
             trésor qui arrive, les deux issues sous le rebut. */}
         {phase.type === 'butin' && (
           <Projeter
-            points={ancresDuButin(phase.loot !== null)}
+            points={ancresDuButin()}
             cibles={() => [sousLoot.current, sousJeter.current]}
           />
         )}
@@ -726,13 +726,12 @@ export function Scene(): React.JSX.Element {
           chaque image, et rien d'autre ne doit le disputer. */}
       {pret && phase.type === 'butin' && (
         <div className="ancres-butin">
-          {/* LA PLACE DU TRÉSOR : « Prendre » dessous tant qu'il y en a un, puis
-              « Terminer » EN PLEIN DEDANS. Le bouton n'apparaît qu'une fois le
-              trésor décidé, donc il hérite de l'endroit où l'oeil regardait
-              déjà — et l'emplacement vide ne reste pas là à demander qu'on y
-              pose quelque chose. */}
+          {/* SOUS LA PLACE DU TRÉSOR : « Prendre » tant qu'il y en a un, puis
+              « Terminer » AU MÊME ENDROIT. Le second n'apparaît qu'une fois le
+              premier consommé — *un bouton qui se déplace entre deux états
+              successifs oblige à le chercher deux fois.* */}
           <div className="ancre-butin" ref={sousLoot}>
-            <div className={`sous-slot${phase.loot === null ? ' centre' : ''}`}>
+            <div className="sous-slot">
               {phase.loot !== null ? (
                 <button type="button" className="bouton-3d prendre" onClick={prendreLoot}>
                   Prendre
@@ -754,10 +753,13 @@ export function Scene(): React.JSX.Element {
                 choix inverse. */}
             {phase.aJeter !== null && (
               <>
-                <button type="button" className="bouton-3d perdre" onClick={confirmerJet}>
-                  Jeter — {phase.aJeter.valeur ?? 0} d'or
+                {/* Le prix perdu est déjà écrit SUR la carte, juste au-dessus :
+                    le répéter sur le bouton allonge un mot qui doit rester un
+                    verbe. */}
+                <button type="button" className="bouton-3d petit perdre" onClick={confirmerJet}>
+                  Jeter
                 </button>
-                <button type="button" className="bouton-3d garder" onClick={reprendre}>
+                <button type="button" className="bouton-3d petit garder" onClick={reprendre}>
                   Reprendre
                 </button>
               </>
