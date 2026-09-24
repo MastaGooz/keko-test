@@ -24,11 +24,16 @@ import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
+import { Armurerie3D, compteDuDeck } from './Armurerie3D.tsx'
 import { Zoom3D } from './Zoom3D.tsx'
-import { aPeindre, descenteDeDepart } from './combat-3d.ts'
+import type { Entree } from './Zoom3D.tsx'
+import { aPeindre, descenteDeDepart, pieceAPeindre, setAPeindre } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
 import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, viseUneCible, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
+import type { Hub, Slot } from '../logic/hub.ts'
+import { creerHub, deplacerPiece, equipement, perdreLEquipement, peutDescendre, rentrer } from '../logic/hub.ts'
+import { commencerDescente, consommablesSurvivants } from '../logic/descente.ts'
 import {
   butinTransporte,
   choisirCarte,
@@ -94,7 +99,8 @@ type CoupRecu = { cle: number; degats: number }
 type Salve = { pv: number; bloc: number }
 
 /**
- * La seed de départ. « Nouvelle descente » l'incrémente.
+ * La seed de départ. Remonter au hub l'incrémente : la descente suivante a
+ * son propre tirage.
  *
  * `?r3f&seed=42` rejoue une partie précise — c'est ce qui permet de retomber
  * sur un groupe de trois créatures sans relancer vingt descentes.
@@ -114,10 +120,29 @@ const RESPIRATION = 600
 export function Scene(): React.JSX.Element {
   const [graine, setGraine] = useState(SEED)
   const depart = useMemo(() => descenteDeDepart(graine), [graine])
-  const [descente, setDescente] = useState<Descente>(depart.descente)
-  const combat = descente.combat
-  const phase = descente.phase
-  const enCombat = phase.type === 'combat'
+  /**
+   * L'ARMURERIE EST LE PREMIER ÉCRAN, et la descente vient d'elle.
+   *
+   * Tant que le chargement était figé, la question qui porte le concept —
+   * partir léger ou partir couvert — n'existait pas : le deck était donné.
+   * `descente` n'est donc plus l'état racine, c'est ce que le hub produit
+   * quand on descend, et ce qui lui revient quand on remonte.
+   */
+  const [hub, setHub] = useState<Hub>(() => creerHub())
+  const [descente, setDescente] = useState<Descente | null>(null)
+  /**
+   * LA DESCENTE EN COURS, ou celle de départ tant qu'on est au hub.
+   *
+   * Un repli plutôt qu'une garde dans chaque rappel : la moitié de ce fichier
+   * ne s'exécute qu'en descente, et vingt `if (descente === null) return`
+   * n'auraient rien dit de plus que `auHub`. Ce qui compte est écrit une fois,
+   * ici : *au hub, on ne joue pas.*
+   */
+  const enCours = descente ?? depart.descente
+  const combat = enCours.combat
+  const phase = enCours.phase
+  const auHub = descente === null
+  const enCombat = !auHub && phase.type === 'combat'
 
   /**
    * Le combat est une PHASE de la descente, donc on ne le remplace jamais
@@ -125,7 +150,8 @@ export function Scene(): React.JSX.Element {
    * raisonner sur `combat`, c'est le seul endroit qui sache les recoller.
    */
   const majCombat = useCallback(
-    (f: (c: EtatCombat) => EtatCombat) => setDescente((d) => ({ ...d, combat: f(d.combat) })),
+    (f: (c: EtatCombat) => EtatCombat) =>
+      setDescente((d) => (d === null ? d : { ...d, combat: f(d.combat) })),
     [],
   )
   /**
@@ -134,6 +160,8 @@ export function Scene(): React.JSX.Element {
    * emplacement du butin. C'est la leçon du jeu 2D, reprise telle quelle.
    */
   const [zoomee, setZoomee] = useState<CarteAPeindre | null>(null)
+  /** Le set de la pièce regardée, s'il s'agit d'une pièce d'équipement. */
+  const [zoomSet, setZoomSet] = useState<Entree[]>([])
   /**
    * LA VISÉE EN COURS : une carte attend une cible, et voici le corps sous la
    * pointe de la flèche. Prévenu par `Main3D` quand la RÉPONSE change, pas à
@@ -372,9 +400,9 @@ export function Scene(): React.JSX.Element {
    */
   useEffect(() => {
     if (!enCombat || combat.issue === null || verrou) return
-    const t = window.setTimeout(() => setDescente(resoudreCombat(descente, depart.rng)), RESPIRATION)
+    const t = window.setTimeout(() => setDescente(resoudreCombat(enCours, depart.rng)), RESPIRATION)
     return () => window.clearTimeout(t)
-  }, [enCombat, combat.issue, verrou, descente, depart.rng])
+  }, [enCombat, combat.issue, verrou, enCours, depart.rng])
 
   // UN NOUVEAU COMBAT EFFACE LES MARQUES DE L'ANCIEN. Elles sont indexées par
   // rang d'ennemi : sans ça, le mort du palier précédent poserait sa tête de
@@ -386,14 +414,47 @@ export function Scene(): React.JSX.Element {
     setCoups([])
     setRecus([])
     setSalve(null)
-  }, [descente.profondeur, graine])
+  }, [enCours.profondeur, graine])
 
-  // Une descente neuve repart de son propre tirage.
-  useEffect(() => setDescente(depart.descente), [depart])
+  /**
+   * LA DESCENTE PART DU CHARGEMENT, et elle y revient.
+   *
+   * `commencerDescente` construit le deck depuis les pièces équipées : c'est
+   * la règle du jeu — *le deck est la somme de ce qu'on porte* — et c'est
+   * exactement ce que l'armurerie sert à décider.
+   */
+  const descendreAuDonjon = useCallback(() => {
+    if (!peutDescendre(hub.chargement)) return
+    setDescente(commencerDescente(depart.rng, undefined, equipement(hub.chargement), hub.chargement.pile))
+  }, [depart.rng, hub])
+
+  const bougerPiece = useCallback(
+    (source: Slot, cible: Slot, id: string) => setHub((h) => deplacerPiece(h, source, cible, id)),
+    [],
+  )
+
+  /**
+   * REMONTER AU HUB. **Ce qui rentre n'est pas ce qu'on avait emporté** : les
+   * potions bues se sont exilées du deck, donc `consommablesSurvivants` les
+   * compte à l'état, sans rien tenir à part. Et la mort prend l'équipement —
+   * le garde-fou qui rend de quoi repartir vit dans `perdreLEquipement`, là et
+   * nulle part ailleurs.
+   */
+  const remonter = useCallback(
+    (mort: boolean) => {
+      setHub((h) =>
+        mort
+          ? perdreLEquipement(h)
+          : rentrer(h, butinTransporte(enCours), consommablesSurvivants(enCours)),
+      )
+      setDescente(null)
+    },
+    [enCours],
+  )
 
   const choisirRecompense = useCallback(
-    (index: number) => setDescente(choisirCarte(descente, index, depart.rng)),
-    [descente, depart.rng],
+    (index: number) => setDescente(choisirCarte(enCours, index, depart.rng)),
+    [enCours, depart.rng],
   )
 
   /**
@@ -403,8 +464,8 @@ export function Scene(): React.JSX.Element {
    * l'exploration.
    */
   const prendreLoot = useCallback(
-    () => setDescente(deplacerTresor(descente, { ou: 'loot' }, { ou: 'deck' })),
-    [descente],
+    () => setDescente(deplacerTresor(enCours, { ou: 'loot' }, { ou: 'deck' })),
+    [enCours],
   )
 
   /**
@@ -427,8 +488,8 @@ export function Scene(): React.JSX.Element {
   )
 
   const tresors = useMemo(
-    () => descente.deck.filter((c) => c.type === 'tresor').map(aPeindre),
-    [descente.deck],
+    () => enCours.deck.filter((c) => c.type === 'tresor').map(aPeindre),
+    [enCours.deck],
   )
 
   /** Lâcher un trésor porté sur un emplacement l'y range. */
@@ -438,18 +499,18 @@ export function Scene(): React.JSX.Element {
       const carte = tresors[index]
       const ou = slotSous(depuis, window.innerHeight, phase.loot !== null)
       if (carte === undefined || ou === null) return
-      setDescente(deplacerTresor(descente, { ou: 'deck', id: carte.id }, { ou }))
+      setDescente(deplacerTresor(enCours, { ou: 'deck', id: carte.id }, { ou }))
     },
-    [descente, phase, tresors],
+    [enCours, phase, tresors],
   )
 
   const rangerTresor = useCallback(
     (de: number, vers: number) => {
       const carte = tresors[de]
       if (carte === undefined) return
-      setDescente(reordonnerTresors(descente, carte.id, vers))
+      setDescente(reordonnerTresors(enCours, carte.id, vers))
     },
-    [descente, tresors],
+    [enCours, tresors],
   )
 
   /**
@@ -459,20 +520,23 @@ export function Scene(): React.JSX.Element {
    */
   const deplacerDepuisSlot = useCallback(
     (source: 'loot' | 'jeter', cible: 'loot' | 'jeter' | 'deck') =>
-      setDescente(deplacerTresor(descente, { ou: source }, { ou: cible })),
-    [descente],
+      setDescente(deplacerTresor(enCours, { ou: source }, { ou: cible })),
+    [enCours],
   )
 
   const reprendre = useCallback(
-    () => setDescente(deplacerTresor(descente, { ou: 'jeter' }, { ou: 'deck' })),
-    [descente],
+    () => setDescente(deplacerTresor(enCours, { ou: 'jeter' }, { ou: 'deck' })),
+    [enCours],
   )
-  const confirmerJet = useCallback(() => setDescente(validerJet(descente)), [descente])
-  const terminerLeButin = useCallback(() => setDescente(terminerButin(descente)), [descente])
+  const confirmerJet = useCallback(() => setDescente(validerJet(enCours)), [enCours])
+  const terminerLeButin = useCallback(() => setDescente(terminerButin(enCours)), [enCours])
 
-  const plusBas = useCallback(() => setDescente(descendre(descente, depart.rng)), [descente, depart.rng])
-  const sortir = useCallback(() => setDescente(extraire(descente)), [descente])
-  const recommencer = useCallback(() => setGraine((g) => g + 1), [])
+  const plusBas = useCallback(() => setDescente(descendre(enCours, depart.rng)), [enCours, depart.rng])
+  const sortir = useCallback(() => setDescente(extraire(enCours)), [enCours])
+  const recommencer = useCallback(() => {
+    remonter(enCours.phase.type === 'fin' && enCours.phase.issue === 'mort')
+    setGraine((g) => g + 1)
+  }, [enCours, remonter])
 
   // Les étiquettes sont du HTML ancré sur les corps : `Projeter` les fait
   // suivre. On garde les éléments dans une ref, jamais dans l'état — leur
@@ -549,7 +613,7 @@ export function Scene(): React.JSX.Element {
         />
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
 
-        {combat.ennemis.map((ennemi, i) => (
+        {!auHub && combat.ennemis.map((ennemi, i) => (
           <Ennemi3D
             key={`${ennemi.nom}-${i}`}
             ennemi={ennemi}
@@ -572,7 +636,15 @@ export function Scene(): React.JSX.Element {
         {/* LA CARTE QU'ON REGARDE DE PRÈS, au-dessus de tout le monde : la
             main de combat, celle du butin et les emplacements lui envoient la
             même carte. */}
-        <Zoom3D carte={zoomee} onFermer={() => setZoomee(null)} onPeinte={compter} />
+        <Zoom3D
+          carte={zoomee}
+          set={zoomSet}
+          onFermer={() => {
+            setZoomee(null)
+            setZoomSet([])
+          }}
+          onPeinte={compter}
+        />
 
         <Horloge />
         <Cadrage />
@@ -580,10 +652,27 @@ export function Scene(): React.JSX.Element {
 
         {/* LES ÉCRANS DE PALIER SONT DES VOILES sur la scène : on est encore
             dans le donjon, et le rang qu'on vient de vider reste derrière. */}
-        {phase.type === 'recompense' && (
+        {!auHub && phase.type === 'recompense' && (
           <Etal3D cartes={offres} onChoisir={choisirRecompense} onPeinte={compter} />
         )}
-        {phase.type === 'butin' && (
+        {/* L'ARMURERIE : le premier écran, et celui où l'on revient. C'est un
+            LIEU — son fond est opaque — alors que les paliers sont des voiles
+            sur le donjon. */}
+        {auHub && (
+          <Armurerie3D
+            hub={hub}
+            onDeplacer={bougerPiece}
+            onRegarder={(objet) => {
+              setZoomee(pieceAPeindre(objet))
+              setZoomSet(setAPeindre(objet))
+            }}
+            onDescendre={descendreAuDonjon}
+            onSaisie={setSaisie}
+            onPeinte={compter}
+          />
+        )}
+
+        {!auHub && phase.type === 'butin' && (
           <>
             {/* LE VOILE D'ABORD : on est encore dans le donjon, le rang vidé
                 reste derrière. `Etal3D` sans carte ne dessine que lui. */}
@@ -616,7 +705,9 @@ export function Scene(): React.JSX.Element {
             />
           </>
         )}
-        {(phase.type === 'sortie' || phase.type === 'fin') && <Etal3D cartes={[]} onPeinte={compter} />}
+        {!auHub && (phase.type === 'sortie' || phase.type === 'fin') && (
+          <Etal3D cartes={[]} onPeinte={compter} />
+        )}
 
         {enCombat && (
         <Main3D
@@ -677,7 +768,7 @@ export function Scene(): React.JSX.Element {
           l'intention au-dessus de la tête, la jauge et le nom sous les pattes.
           En HTML plutôt qu'en volume — un chiffre reste net à toute distance,
           et il n'a rien à gagner à s'incliner avec la scène. */}
-      <div className="ancres-3d">
+      <div className="ancres-3d" style={{ display: auHub ? 'none' : undefined }}>
         {combat.ennemis.map((e, i) => (
           <div key={`h-${e.nom}-${i}`} className="ancre-3d haute" ref={(el) => { hautes.current[i] = el }}>
             {/* L'INTENTION : ce qu'il frappe et dans combien de tours, allumée
@@ -786,12 +877,28 @@ export function Scene(): React.JSX.Element {
       {/* LE PANNEAU DU PALIER : le titre en haut, les boutons en bas, et la
           rangée de cartes entre les deux — dans le canvas, donc sous ce
           panneau en HTML. Il ne recouvre jamais les cartes : il les encadre. */}
-      {pret && !enCombat && (
+      {/* LE COMPTE DU DECK, avant de descendre. Sans lui, une pièce de plus
+          serait un gain sans contrepartie visible — et c'est exactement la
+          contrepartie qui fait le choix. */}
+      {pret && auHub && (
+        <div className="palier-3d">
+          <div className="haut-3d">
+            <p className="titre-3d">Ton chargement</p>
+            <p className="sous-3d">
+              Deck de {compteDuDeck(hub).total} carte{compteDuDeck(hub).total > 1 ? 's' : ''} ·{' '}
+              {compteDuDeck(hub).frappent} qui frappent
+              {hub.or > 0 && ` · ${hub.or} d'or rapporté`}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {pret && !auHub && !enCombat && (
         <div className="palier-3d">
           {phase.type === 'recompense' && (
             <>
               <div className="haut-3d">
-                <p className="titre-3d">Palier {descente.profondeur} · une amélioration</p>
+                <p className="titre-3d">Palier {enCours.profondeur} · une amélioration</p>
                 <p className="sous-3d">Pour cette descente seulement. Tape la carte que tu emportes.</p>
               </div>
             </>
@@ -805,8 +912,8 @@ export function Scene(): React.JSX.Element {
                   appartient au trésor qu'on décide, et centré, ce texte
                   s'asseyait sur son bord haut. */}
               <p className="note-3d">
-                Tu portes {tresorsAuDeck(descente)} trésor{tresorsAuDeck(descente) > 1 ? 's' : ''} ·{' '}
-                {butinTransporte(descente)} d'or
+                Tu portes {tresorsAuDeck(enCours)} trésor{tresorsAuDeck(enCours) > 1 ? 's' : ''} ·{' '}
+                {butinTransporte(enCours)} d'or
               </p>
             </>
           )}
@@ -814,9 +921,9 @@ export function Scene(): React.JSX.Element {
           {phase.type === 'sortie' && (
             <>
               <div className="haut-3d">
-                <p className="titre-3d">Point de sortie · palier {descente.profondeur}</p>
+                <p className="titre-3d">Point de sortie · palier {enCours.profondeur}</p>
                 <p className="sous-3d">
-                  {combat.pv}/{combat.pvMax} PV · {butinTransporte(descente)} d'or dans le deck. Mourir prend tout.
+                  {combat.pv}/{combat.pvMax} PV · {butinTransporte(enCours)} d'or dans le deck. Mourir prend tout.
                 </p>
               </div>
               <div className="choix-3d">
@@ -836,13 +943,17 @@ export function Scene(): React.JSX.Element {
                 <p className="titre-3d">{phase.issue === 'extrait' ? 'Extrait' : 'Mort'}</p>
                 <p className="sous-3d">
                   {phase.issue === 'extrait'
-                    ? `Tu rapportes ${butinTransporte(descente)} d'or.`
+                    ? `Tu rapportes ${butinTransporte(enCours)} d'or.`
                     : 'Le butin et l\'équipement sont perdus.'}
                 </p>
               </div>
               <div className="choix-3d">
                 <button type="button" className="bouton-3d prendre" onClick={recommencer}>
-                  Nouvelle descente
+                  {/* IL RAMÈNE À L'ARMURERIE, et il le dit. « Nouvelle
+                      descente » annonçait un combat alors qu'on arrive sur un
+                      écran de chargement — *un bouton nomme ce qu'il ouvre,
+                      pas ce qui viendra après.* */}
+                  Retour à l'armurerie
                 </button>
               </div>
             </>

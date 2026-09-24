@@ -37,6 +37,16 @@ export type CarteAPeindre = {
   id: string
   nom: string
   cout: number
+  /**
+   * LE COMPTE DE CARTES d'une pièce d'équipement, s'il s'agit d'une pièce.
+   *
+   * Elle porte alors ce chiffre là où une carte porte sa gemme de coût, dans
+   * une petite case **en forme de carte** : une carte pour dire « des cartes ».
+   * C'est son POIDS, et c'est la seule information qui rende « équiper plus
+   * dilue » lisible sur la pièce elle-même. Tranché par Keko en 2D, repris
+   * tel quel ici.
+   */
+  compteur?: number
   /** Le cartouche, une entrée par ligne. */
   effet: readonly string[]
   /** Le type gravé au pied : « Attaque », « Trésor »… */
@@ -149,6 +159,33 @@ function cran(lignes: readonly string[]): number {
   return 5 * U
 }
 
+/**
+ * Coupe les lignes du cartouche pour qu'aucune ne dépasse `max`.
+ *
+ * Le canvas n'a pas de mise en page : il faut mesurer mot à mot. Un mot seul
+ * plus large que la carte reste sur sa ligne — mieux vaut un mot qui déborde
+ * qu'un mot coupé en deux.
+ */
+function replier(
+  ctx: CanvasRenderingContext2D,
+  entrees: readonly string[],
+  max: number,
+): string[] {
+  const sorties: string[] = []
+  for (const entree of entrees) {
+    let courante = ''
+    for (const mot of nu(entree).split(' ')) {
+      const essai = courante === '' ? mot : `${courante} ${mot}`
+      if (courante !== '' && ctx.measureText(essai).width > max) {
+        sorties.push(courante)
+        courante = mot
+      } else courante = essai
+    }
+    sorties.push(courante)
+  }
+  return sorties
+}
+
 /** Retire le balisage des lignes d'effet : le canvas ne lit que du texte. */
 function nu(ligne: string): string {
   return ligne.replace(/<[^>]+>/g, '')
@@ -217,9 +254,50 @@ export async function peindreCarte(carte: CarteAPeindre): Promise<HTMLCanvasElem
   ctx.fillRect(0, HAUT * 0.5, LARGE, HAUT * 0.5)
   ctx.restore()
 
-  peindreEcusson(ctx, carte.cout)
+  if (carte.compteur === undefined) peindreEcusson(ctx, carte.cout)
+  else peindreCompteur(ctx, carte.compteur)
   peindreTextes(ctx, carte)
   return canvas
+}
+
+/**
+ * LE COMPTEUR D'UNE PIÈCE : une case en forme de carte, de fer sombre.
+ *
+ * Volontairement PAS l'écusson d'énergie, qui est le même sur toute carte qui
+ * coûte : *ce chiffre n'est pas un coût*, c'est ce que la pièce ajoute au
+ * deck. Deux symboles pour deux choses.
+ */
+function peindreCompteur(ctx: CanvasRenderingContext2D, nombre: number): void {
+  const l = 0.155 * LARGE
+  const h = l * 1.4
+  const x = 0.022 * LARGE
+  const y = 0.016 * HAUT
+  const coin = 1.6 * U
+
+  ctx.save()
+  ctx.shadowColor = '#0000008c'
+  ctx.shadowOffsetX = 0.35 * U
+  ctx.shadowOffsetY = 0.5 * U
+  ctx.beginPath()
+  ctx.roundRect(x, y, l, h, coin)
+  const fer = ctx.createLinearGradient(x, y, x + l, y + h)
+  fer.addColorStop(0, '#3b4148')
+  fer.addColorStop(1, '#1b1f24')
+  ctx.fillStyle = fer
+  ctx.fill()
+  ctx.restore()
+
+  ctx.beginPath()
+  ctx.roundRect(x + 0.9 * U, y + 0.9 * U, l - 1.8 * U, h - 1.8 * U, coin * 0.8)
+  ctx.strokeStyle = '#8d9aa6'
+  ctx.lineWidth = 0.7 * U
+  ctx.stroke()
+
+  ctx.fillStyle = '#e8eef4'
+  ctx.font = `600 ${15 * U}px "Grenze Gotisch", Georgia, serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(String(nombre), x + l / 2, y + h * 0.54)
 }
 
 function peindreEcusson(ctx: CanvasRenderingContext2D, cout: number): void {
@@ -292,14 +370,26 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
   ctx.fillRect(LARGE * 0.22, yNom + 5.2 * U, LARGE * 0.56, Math.max(1, 0.25 * U))
 
   // LE CARTOUCHE : ce que fait la carte, centré, une ligne par entrée.
-  const taille = cran(carte.effet)
+  //
+  // **IL SE REPLIE.** En 2D c'est le navigateur qui coupe les lignes ; un
+  // canvas, lui, écrit tout droit et laisse déborder *sans rien signaler* —
+  // la composition de l'Espadon sortait des deux côtés de la carte. Le repli
+  // se fait à la taille choisie, et s'il coûte une ligne de trop on descend
+  // d'un cran : c'est exactement ce que `cran` fait pour un effet long.
+  let taille = cran(carte.effet)
   ctx.font = `400 ${taille}px "Crimson Pro", Georgia, serif`
+  let lignes = replier(ctx, carte.effet, LARGE * 0.86)
+  if (lignes.length > carte.effet.length + 1) {
+    taille *= 0.82
+    ctx.font = `400 ${taille}px "Crimson Pro", Georgia, serif`
+    lignes = replier(ctx, carte.effet, LARGE * 0.86)
+  }
   ctx.fillStyle = '#f1e6cf'
   ctx.shadowColor = '#000000aa'
   ctx.shadowOffsetY = 0.4 * U
   ctx.shadowBlur = 0.8 * U
-  carte.effet.forEach((ligne, i) => {
-    ctx.fillText(nu(ligne), LARGE / 2, HAUT * 0.755 + i * taille * 1.25)
+  lignes.forEach((ligne, i) => {
+    ctx.fillText(ligne, LARGE / 2, HAUT * 0.755 + i * taille * 1.25)
   })
   ctx.shadowColor = 'transparent'
 
@@ -331,7 +421,7 @@ const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
 export function signature(carte: CarteAPeindre): string {
-  return `${carte.nom}|${carte.cout}|${carte.type}|${carte.effet.join('~')}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.effet.join('~')}`
 }
 
 export function textureDeCarte(carte: CarteAPeindre): Promise<THREE.CanvasTexture> {
@@ -392,6 +482,52 @@ export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {
   ctx.textBaseline = 'middle'
   ctx.font = `600 ${Math.round(l * 0.11)}px Cinzel, Georgia, serif`
   ctx.fillText(nom.toUpperCase(), l / 2, h / 2)
+  texture.needsUpdate = true
+  return texture
+}
+
+/**
+ * LA PASTILLE D'OR : combien d'exemplaires d'un modèle une pièce apporte.
+ *
+ * Elle vit **SOUS** la carte du set, jamais sur son coin — là, elle cachait la
+ * gemme de coût et se lisait comme un badge de plus. Tranché par Keko :
+ * « sous la carte, pas par-dessus ».
+ */
+const PASTILLES = new Map<number, THREE.CanvasTexture>()
+
+export function texturePastille(nombre: number): THREE.CanvasTexture {
+  const connue = PASTILLES.get(nombre)
+  if (connue !== undefined) return connue
+
+  const l = 256
+  const h = 128
+  const canvas = document.createElement('canvas')
+  canvas.width = l
+  canvas.height = h
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  PASTILLES.set(nombre, texture)
+
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) return texture
+
+  const r = h * 0.42
+  ctx.beginPath()
+  ctx.roundRect(l / 2 - r * 1.5, h / 2 - r, r * 3, r * 2, r)
+  const or = ctx.createLinearGradient(0, h / 2 - r, 0, h / 2 + r)
+  or.addColorStop(0, '#f6dFa4')
+  or.addColorStop(1, '#b8913f')
+  ctx.fillStyle = or
+  ctx.fill()
+  ctx.strokeStyle = '#6a5121'
+  ctx.lineWidth = h * 0.035
+  ctx.stroke()
+
+  ctx.fillStyle = '#2a1f07'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `700 ${Math.round(h * 0.5)}px Cinzel, Georgia, serif`
+  ctx.fillText(`×${nombre}`, l / 2, h * 0.54)
   texture.needsUpdate = true
   return texture
 }

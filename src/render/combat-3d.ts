@@ -10,6 +10,8 @@ import { createRng } from '../logic/rng.ts'
 import type { Descente } from '../logic/descente.ts'
 import { commencerDescente } from '../logic/descente.ts'
 import { creerHub, equipement } from '../logic/hub.ts'
+import type { Objet } from '../logic/armes.ts'
+import { estConsommable } from '../logic/armes.ts'
 import { lignes, nature, sansBalises } from '../ui/texte-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
 
@@ -26,6 +28,49 @@ export function aPeindre(carte: Carte): CarteAPeindre {
     cout: carte.cout,
     effet: lignes(carte).map(sansBalises),
     type: nature(carte),
+  }
+}
+
+/**
+ * UNE PIÈCE D'ÉQUIPEMENT, telle qu'on la peint.
+ *
+ * **Une pièce est une CARTE**, comme tout ce qu'on manipule dans ce jeu — une
+ * ligne de texte se lirait comme une entrée d'inventaire, une carte se prend
+ * en main. Elle porte son COMPTE DE CARTES là où une carte porte son coût, et
+ * sa composition en un texte qui coule : « 3× Estoc · 2× Taillade ». Le détail
+ * de chaque modèle vit dans le zoom, en vraies cartes.
+ *
+ * Un consommable liste sa carte comme les autres : *l'objet n'est pas la
+ * carte* — « Potion » est ce qu'on emporte, « rend 14 PV » est ce que fait la
+ * carte.
+ */
+export function setAPeindre(objet: Objet): { carte: CarteAPeindre; nombre: number }[] {
+  const set = estConsommable(objet) ? [{ modele: objet.modele, nombre: 1 }] : objet.set
+  // Un modèle n'a pas d'identifiant d'exemplaire — on lui en donne un stable,
+  // parce que React a besoin d'une clé et que l'INDEX N'EN EST PAS UNE.
+  return set.map((e, i) => ({
+    carte: aPeindre({ ...e.modele, id: `${objet.id}-${i}` }),
+    nombre: e.nombre,
+  }))
+}
+
+export function pieceAPeindre(objet: Objet): CarteAPeindre {
+  const set = estConsommable(objet) ? [{ modele: objet.modele, nombre: 1 }] : objet.set
+  const pied = estConsommable(objet)
+    ? 'Consommable'
+    : 'mains' in objet
+      ? `Arme · ${objet.mains === 2 ? 'deux mains' : 'une main'}`
+      : 'Armure'
+  // UN CONSOMMABLE N'A PAS DE NOM À LUI : il EST sa carte, et elle s'appelle
+  // Potion. L'objet et la carte ont eu deux noms le temps qu'un intermédiaire
+  // les sépare ; sans intermédiaire, il n'y a qu'une chose.
+  return {
+    id: objet.id,
+    nom: estConsommable(objet) ? objet.modele.nom : objet.nom,
+    cout: 0,
+    compteur: set.reduce((total, e) => total + e.nombre, 0),
+    effet: [set.map((e) => `${e.nombre}× ${e.modele.nom}`).join(' · ')],
+    type: pied,
   }
 }
 

@@ -2663,6 +2663,66 @@ Le bouton dit « Les ennemis frappent… » et la main reste verrouillée jusqu'
 ce que le dernier bond soit retombé. Mesuré dans la page (sonde à 40 ms) :
 impact à ~270 ms, main rendue à ~680 ms pour un frappeur.
 
+### L'ARMURERIE EN 3D — jalon 5, et la boucle est fermée
+
+`render/Armurerie3D.tsx`. **C'est le premier écran et celui où l'on revient** :
+la descente ne s'ouvre plus toute seule, elle naît du chargement
+(`commencerDescente` avec `equipement(hub.chargement)`) et y retourne à la
+mort comme à l'extraction. Sans cet écran, la question qui porte tout le
+concept — *partir léger ou partir couvert* — n'était pas jouable en 3D.
+
+Toutes les règles du hub 2D valent telles quelles, parce que `logic/hub.ts`
+n'a pas bougé : le râtelier en grille de cartes réduites, le chargement à la
+taille de la main, la tape qui REGARDE et le glisser qui DÉPLACE, l'échange
+sur un slot occupé, l'arme à deux mains qui prend les deux, la pile de quatre
+cases, et le garde-fou qui rend une arme et une armure gratuites à la mort.
+
+**Un raccourci plutôt que vingt gardes.** `descente` est désormais
+`Descente | null`, et `null` veut dire « au hub ». La moitié de `Scene.tsx` ne
+s'exécute qu'en descente ; un `if (descente === null) return` dans chaque
+rappel n'aurait rien dit de plus. Un `enCours = descente ?? depart.descente`
+porte le repli en un seul endroit, et `auHub` dit la règle : *au hub, on ne
+joue pas.*
+
+**Le compteur d'une pièce n'est PAS l'écusson d'énergie.** `peindreCompteur`
+dessine une case en forme de carte, de fer sombre, là où une carte porte sa
+gemme : *ce chiffre n'est pas un coût*, c'est ce que la pièce ajoute au deck.
+Deux symboles pour deux choses, et c'est la seule information qui rende
+« équiper plus dilue » lisible sur la pièce elle-même. Il entre dans
+`signature()`, sans quoi deux cartes de même nom partageraient la texture.
+
+**LE CARTOUCHE SE REPLIE, et c'est un piège du canvas.** En 2D c'est le
+navigateur qui coupe les lignes ; un canvas écrit tout droit et laisse déborder
+**sans rien signaler** — la composition de l'Espadon sortait des deux côtés de
+la carte. `replier()` mesure mot à mot ; si le repli coûte une ligne de trop,
+la taille descend d'un cran, exactement ce que `cran` fait pour un effet long.
+Ça vaut pour toutes les cartes, pas seulement les pièces.
+
+**Une pièce zoomée montre son set EN CARTES**, avec sa pastille d'or SOUS
+chaque carte (`texturePastille`) — sur le coin elle cachait la gemme. Prévu
+pour huit modèles : quatre par ligne, deux lignes, et la taille d'une carte du
+set bornée trois fois — plafond, hauteur (deux lignes plus leurs pastilles),
+largeur (quatre à côté de la pièce). Vérifié à 844x390 et 667x320.
+
+**Le bouton « Descendre » vit au CENTRE BAS.** Ancré au coin droit comme ceux
+du butin, il recouvrait la seconde ligne de la pile sur un téléphone couché —
+et *rien ne le signalait*, puisqu'il restait parfaitement visible : c'est ce
+qu'il cachait qui manquait. La bande centrale est vide à tous les formats,
+puisque le râtelier tient la gauche et le chargement la droite.
+
+**La taille d'une case de la pile est imposée, pas choisie** : deux lignes
+doivent tenir dans la hauteur d'un slot, et une carte fait 1,4 fois sa
+largeur, donc `c = P / 2` exactement. Même arithmétique qu'en 2D.
+
+Et le bouton de fin de run dit **« Retour à l'armurerie »** : il nomme ce
+qu'il ouvre, pas ce qui viendra après.
+
+**Vérifié au navigateur, boucle entière** : équiper l'Espadon au glisser (le
+Glaive repart au râtelier, le second slot est masqué, le premier se centre,
+le compte passe de 10 à 13 cartes dont 6 qui frappent), zoomer une pièce,
+descendre, mourir — le hub rend le Glaive et le Plastron, et la potion
+emportée est perdue.
+
 ### Le combat, branché sur les vraies règles — jalon 3
 
 Le deck vient du **chargement gratuit** (`deckEmporte`), les ennemis du même
