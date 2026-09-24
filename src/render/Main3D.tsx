@@ -148,13 +148,16 @@ const ECART_FENTE = 0.3
  * Où la carte qui vise vient se poser : au centre, **juste au-dessus de la
  * main et devant elle**.
  *
- * Posée plus haut, son sommet montait jusqu'aux corps et les recouvrait —
- * précisément le défaut qu'on voulait corriger en la décrochant du doigt. Ici
- * elle chevauche le haut de la main, qu'elle masque sans conséquence (on ne
- * choisit plus dedans), et laisse le rang entièrement libre.
+ * **Elle DÉPASSE À PEINE de la main**, et c'est un réglage de Keko : « quand
+ * la carte flotte pour cibler, il faudrait qu'elle flotte beaucoup plus bas,
+ * qu'elle dépasse à peine de la main ». Posée plus haut, son sommet montait
+ * jusqu'aux corps et les recouvrait — précisément le défaut qu'on voulait
+ * corriger en la décrochant du doigt. Assise dans la main, elle ne dit plus
+ * qu'une chose, la bonne : *c'est celle-là que tu tiens.* Le reste de l'écran
+ * appartient aux corps et à la flèche.
  */
 export function ancreVisee(hauteurFenetrePx: number): number {
-  return yMain(hauteurFenetrePx) + HAUT * 0.5
+  return yMain(hauteurFenetrePx) + HAUT * 0.15
 }
 
 

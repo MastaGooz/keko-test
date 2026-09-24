@@ -2199,8 +2199,12 @@ main reste franc. Et la ligne absolue survit là où il n'y a pas de geste à
 mesurer — l'écran de butin, qui demande seulement si un trésor a été lâché
 au-dessus de la main ou dedans (`ligneDeLaMain`).
 
-**Elle se pose juste au-dessus de la main** (`ancreVisee`, une demi-carte
-au-dessus du rang de la main). Posée plus haut, son sommet montait jusqu'aux
+**Elle DÉPASSE À PEINE DE LA MAIN** (`ancreVisee`) : elle s'assoit dedans,
+seul son haut émerge. Keko : « quand la carte flotte pour cibler, il faudrait
+qu'elle flotte beaucoup plus bas, qu'elle dépasse à peine de la main ».
+Assise là, elle ne dit plus qu'une chose, la bonne — *c'est celle-là que tu
+tiens* — et tout le reste de l'écran appartient aux corps et à la flèche.
+Posée plus haut, son sommet montait jusqu'aux
 **La flèche est un trait pointillé en cloche**, comme les arches du jeu 2D :
 des pastilles qui grossissent vers la pointe et une tête orientée sur la
 tangente. *Pas une ligne* — `LineBasicMaterial` est plafonné à 1 px de large
