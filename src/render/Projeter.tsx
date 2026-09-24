@@ -24,8 +24,15 @@ import * as THREE from 'three'
 type Props = {
   /** Un point de la scène par étiquette, dans le même ordre que les éléments. */
   points: readonly [number, number, number][]
-  /** Les éléments à déplacer. Un `null` est simplement sauté. */
-  cibles: readonly (HTMLElement | null)[]
+  /**
+   * Les éléments à déplacer, RELUS À CHAQUE IMAGE. Un `null` est sauté.
+   *
+   * Une fonction et non un tableau : les éléments viennent de `ref`s, qui ne
+   * sont remplies qu'APRÈS le rendu. Un tableau figé au rendu contenait donc
+   * des `null` tant qu'un autre rendu ne venait pas — ce qui arrive tout le
+   * temps en combat, et jamais sur un écran qui ne bouge pas.
+   */
+  cibles: () => readonly (HTMLElement | null)[]
 }
 
 export function Projeter({ points, cibles }: Props): null {
@@ -35,8 +42,9 @@ export function Projeter({ points, cibles }: Props): null {
   const v = useMemo(() => new THREE.Vector3(), [])
 
   useFrame(() => {
+    const els = cibles()
     points.forEach((p, i) => {
-      const el = cibles[i]
+      const el = els[i]
       if (el === null || el === undefined) return
       v.set(p[0], p[1], p[2]).project(camera)
       const x = (v.x * 0.5 + 0.5) * size.width

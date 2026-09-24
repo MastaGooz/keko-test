@@ -2111,8 +2111,29 @@ pouvoir la lire avant de valider. Elle ne frémit pas : le frémissement dit
 « Jeter — 65 d'or » en rouge et « Reprendre » en vert : les deux issues,
 côte à côte.
 
-**Les boutons vivent au bord droit, pas en bas** : le bas de l'écran est à la
-main, comme en combat, et c'est là que le pouce trouve déjà « Fin du tour ».
+**CHAQUE BOUTON SOUS SON EMPLACEMENT.** Le trésor qui arrive est **en haut au
+centre**, « Prendre » juste dessous ; **« Jeter » est à gauche**, à l'écart,
+avec ses deux issues sous lui ; et « Terminer » attend à droite. Disposition
+demandée par Keko, et elle dit la bonne chose : *une seule décision occupe le
+milieu de l'écran*, les deux autres sont des sorties latérales. La ligne de
+poids (« Tu portes 2 trésors · 130 d'or ») part dans le coin — centrée, elle
+s'asseyait sur le bord haut du trésor.
+
+Les boutons sont **ancrés en 3D** (`ancresDuButin`, projeté par `Projeter`) et
+non posés en CSS : les emplacements se calculent depuis le champ visible, qui
+change avec le recul de la caméra, donc un bouton à une position fixe finirait
+à côté de sa carte.
+
+**Ils PENDENT sous le point d'ancrage, ils ne s'y centrent pas.** Centrée, la
+colonne remontait de sa demi-hauteur et mordait le bas de la carte — d'autant
+plus qu'elle compte deux boutons quand on s'apprête à jeter. *Un bloc dont la
+hauteur change doit s'accrocher par le bord qui ne bouge pas.*
+
+**Et `Projeter` relit ses cibles À CHAQUE IMAGE**, au lieu de recevoir un
+tableau figé au rendu. Les éléments viennent de `ref`s, remplies seulement
+APRÈS le rendu : un tableau capturé contenait donc des `null` tant qu'un autre
+rendu ne venait pas — ce qui arrive tout le temps en combat, et **jamais sur
+un écran qui ne bouge pas**. Le défaut ne pouvait apparaître que là.
 
 **L'emplacement de loot disparaît une fois vide** ; « Jeter » reste. Et un
 emplacement occupé **ne se zoome pas** — différence assumée avec le 2D, où le
@@ -2296,6 +2317,17 @@ vibration/glow de la carte durant tout le ciblage, seule la couleur de la
 flèche indique si la cible est valide ». *Un signal par fait* : le halo dit
 « cette carte est engagée », ce qui reste vrai tant qu'on cherche sa cible ;
 la validité se lit au bout de la flèche, là où le doigt regarde déjà.
+
+**LE CORPS DÉSIGNÉ PORTE UN HALO DORÉ** (`HALO_CIBLE`), posé DERRIÈRE lui :
+un dégradé radial additif, qui s'allume en fondu et respire comme le contour
+des cartes. Éclaircir la créature ne suffisait pas — une silhouette déjà
+claire encaisse mal un gain de luminosité, et rien ne déborde d'elle. Keko :
+« ce serait bien d'avoir un effet de glow doré autour d'un ennemi ciblé par la
+flèche ». *Ce qui se lit d'un coup d'oeil, c'est ce qui dépasse du sujet*, pas
+ce qui se passe dedans. Il porte l'or de la flèche : c'est le même signal, il
+doit avoir la même couleur. Et il est **serré contre le corps** — étalé, il
+débordait sur les voisins et ne désignait plus personne, exactement comme le
+premier halo des cartes.
 
 **Trois niveaux sur les corps, et ils doivent rester distincts** : mat, lueur
 qui respire sur un corps qu'on PEUT viser, éclat franc (et un rien plus gros)

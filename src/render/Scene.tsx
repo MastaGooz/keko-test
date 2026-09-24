@@ -23,7 +23,7 @@ import { Cadrage, FOV, zCamera } from './Cadrage.tsx'
 import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
-import { Butin3D, slotSous } from './Butin3D.tsx'
+import { Butin3D, ancresDuButin, slotSous } from './Butin3D.tsx'
 import { Zoom3D } from './Zoom3D.tsx'
 import { aPeindre, descenteDeDepart } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
@@ -487,6 +487,10 @@ export function Scene(): React.JSX.Element {
   // écart fixe ne suit pas la perspective, et la jauge se retrouvait posée au
   // milieu du corps. En projetant le haut de la tête et le bas des pattes, les
   // étiquettes tiennent leur place à toute distance et à toute taille d'écran.
+  /** Les deux ancres de l'écran de butin : sous le loot, sous le rebut. */
+  const sousLoot = useRef<HTMLDivElement | null>(null)
+  const sousJeter = useRef<HTMLDivElement | null>(null)
+
   const hautes = useRef<(HTMLDivElement | null)[]>([])
   const centres = useRef<(HTMLDivElement | null)[]>([])
   const basses = useRef<(HTMLDivElement | null)[]>([])
@@ -639,12 +643,20 @@ export function Scene(): React.JSX.Element {
 
         <Projeter
           points={ancres}
-          cibles={combat.ennemis.flatMap((_, i) => [
-            hautes.current[i] ?? null,
-            centres.current[i] ?? null,
-            basses.current[i] ?? null,
-          ])}
+          cibles={() =>
+            combat.ennemis.flatMap((_, i) => [
+              hautes.current[i] ?? null,
+              centres.current[i] ?? null,
+              basses.current[i] ?? null,
+            ])
+          }
         />
+
+        {/* Les boutons du butin suivent leur emplacement : « Prendre » sous le
+            trésor qui arrive, les deux issues sous le rebut. */}
+        {phase.type === 'butin' && (
+          <Projeter points={ancresDuButin()} cibles={() => [sousLoot.current, sousJeter.current]} />
+        )}
       </Canvas>
 
       {/* CE QUE CHAQUE CRÉATURE DIT D'ELLE-MÊME, ancré sur son corps :
@@ -705,6 +717,41 @@ export function Scene(): React.JSX.Element {
           </div>
         ))}
       </div>
+
+      {/* LES BOUTONS DU BUTIN, ancrés sous leur emplacement. Ils vivent hors du
+          panneau parce qu'ils sont projetés : leur `transform` est réécrit à
+          chaque image, et rien d'autre ne doit le disputer. */}
+      {pret && phase.type === 'butin' && (
+        <div className="ancres-butin">
+          <div className="ancre-butin" ref={sousLoot}>
+            <div className="sous-slot">
+              {phase.loot !== null && (
+                <button type="button" className="bouton-3d prendre" onClick={prendreLoot}>
+                  Prendre
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="ancre-butin" ref={sousJeter}>
+            <div className="sous-slot">
+            {/* JETER DEMANDE DEUX GESTES : on voit ce qu'on s'apprête à perdre,
+                puis on valide. Et l'autre issue est posée juste à côté — un
+                glisser qu'il faut deviner ne vaut pas un bouton qui dit le
+                choix inverse. */}
+            {phase.aJeter !== null && (
+              <>
+                <button type="button" className="bouton-3d perdre" onClick={confirmerJet}>
+                  Jeter — {phase.aJeter.valeur ?? 0} d'or
+                </button>
+                <button type="button" className="bouton-3d garder" onClick={reprendre}>
+                  Reprendre
+                </button>
+              </>
+            )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* L'INTERFACE RESTE EN HTML, au-dessus du canvas : des chiffres et un
           bouton n'ont rien à gagner à être en volume, et ils restent nets à
@@ -773,57 +820,29 @@ export function Scene(): React.JSX.Element {
 
           {phase.type === 'butin' && (
             <>
-              <div className="haut-3d">
-                <p className="titre-3d">
-                  {phase.aJeter !== null
-                    ? `Tu vas perdre ${phase.aJeter.nom}`
-                    : phase.loot === null
-                      ? 'Ton chargement'
-                      : `${phase.loot.nom} · ${phase.loot.valeur ?? 0} d'or`}
-                </p>
               {/* LE POIDS SE DIT AVANT LE GESTE : un trésor pris est une carte
-                  de plus dans le deck, et elle pèse dès la main suivante. */}
-                {/* LE POIDS SE DIT AVANT LE GESTE : un trésor pris est une
-                    carte de plus dans le deck, et elle pèse dès la main
-                    suivante. */}
-                <p className="sous-3d">
-                  Tu portes {tresorsAuDeck(descente)} trésor{tresorsAuDeck(descente) > 1 ? 's' : ''} ·{' '}
-                  {butinTransporte(descente)} d'or · glisse un trésor sur « Jeter » pour l'abandonner
-                </p>
-              </div>
-              {/* LES BOUTONS PASSENT AU BORD DROIT : le bas de l'écran est
-                  à la main, comme en combat, et c'est là que le pouce trouve
-                  déjà « Fin du tour ».
+                  de plus dans le deck, et elle pèse dès la main suivante. Mais
+                  il va DANS LE COIN, pas au milieu : le centre de l'écran
+                  appartient au trésor qu'on décide, et centré, ce texte
+                  s'asseyait sur son bord haut. */}
+              <p className="note-3d">
+                Tu portes {tresorsAuDeck(descente)} trésor{tresorsAuDeck(descente) > 1 ? 's' : ''} ·{' '}
+                {butinTransporte(descente)} d'or
+              </p>
+              {/* CHAQUE BOUTON SOUS SON EMPLACEMENT, et « Terminer » à droite.
+                  La décision qui compte occupe le milieu de l'écran ; les deux
+                  autres sont des sorties latérales.
 
-                  ILS AGISSENT, ILS N'ATTENDENT PAS. « Prendre » tant qu'il y a
-                  un trésor à décider, « Terminer » ensuite — un bouton qui
-                  reste désactivé en énonçant ce qui manque ne fait rien. */}
-              <div className="actions-3d">
-                {phase.aJeter !== null && (
-                  <>
-                    {/* JETER DEMANDE DEUX GESTES : on voit ce qu'on s'apprête
-                        à perdre, puis on valide. Et l'autre issue est posée
-                        juste à côté — un glisser qu'il faut deviner ne vaut
-                        pas un bouton qui dit le choix inverse. */}
-                    <button type="button" className="bouton-3d perdre" onClick={confirmerJet}>
-                      Jeter — {phase.aJeter.valeur ?? 0} d'or
-                    </button>
-                    <button type="button" className="bouton-3d garder" onClick={reprendre}>
-                      Reprendre
-                    </button>
-                  </>
-                )}
-                {phase.aJeter === null && phase.loot !== null && (
-                  <button type="button" className="bouton-3d prendre" onClick={prendreLoot}>
-                    Prendre
-                  </button>
-                )}
-                {phase.aJeter === null && phase.loot === null && (
+                  ILS AGISSENT, ILS N'ATTENDENT PAS : chacun n'apparaît que
+                  quand il fait quelque chose — un bouton désactivé qui énonce
+                  ce qui manque ne sert à rien. */}
+              {phase.loot === null && phase.aJeter === null && (
+                <div className="actions-3d">
                   <button type="button" className="bouton-3d prendre" onClick={terminerLeButin}>
                     Terminer
                   </button>
-                )}
-              </div>
+                </div>
+              )}
             </>
           )}
 

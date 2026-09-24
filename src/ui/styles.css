@@ -4078,9 +4078,48 @@ body {
   color: #e8c8c2;
 }
 
-/* LES BOUTONS DE L'ECRAN DE BUTIN VIVENT AU BORD DROIT, pas en bas : le bas
-   de l'ecran est a la main, exactement comme en combat, et c'est la que le
-   pouce trouve deja « Fin du tour ». */
+/* LES BOUTONS ANCRES SOUS LEUR EMPLACEMENT. `Projeter` reecrit leur
+   `transform` a chaque image : rien ici ne doit le concurrencer, d'ou le
+   `inset` a zero et le decalage porte entierement par le transform. */
+.ancres-butin {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* L'ANCRE EST UN POINT, pas une boite : `Projeter` la centre sur lui
+   (`translate(-50%, -50%)`), et une boite de taille nulle se centre sur
+   elle-meme. */
+.ancre-butin {
+  position: absolute;
+  inset: 0 auto auto 0;
+  will-change: transform;
+}
+
+/* LES BOUTONS PENDENT SOUS LE POINT, ils ne s'y centrent pas. Centres, la
+   colonne remontait de sa demi-hauteur et mordait le bas de la carte -- et
+   d'autant plus qu'elle comptait deux boutons. *Un bloc dont la hauteur
+   change doit s'accrocher par le bord qui ne bouge pas.* */
+.ancre-butin > .sous-slot {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ancre-butin .bouton-3d {
+  pointer-events: auto;
+  white-space: nowrap;
+}
+
+/* « TERMINER » RESTE AU BORD DROIT : c'est la sortie de l'ecran, pas une
+   decision sur un tresor, et c'est la que le pouce trouve deja « Fin du
+   tour » en combat. */
 .palier-3d > .actions-3d {
   position: absolute;
   inset: 50% 1rem auto auto;

@@ -23,7 +23,7 @@
 import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import { Carte3D } from './Carte3D.tsx'
-import { Z_MAIN, surLePlan } from './Cadrage.tsx'
+import { Z_MAIN, hauteurVisibleA, surLePlan } from './Cadrage.tsx'
 import { Z_TENUE, ligneDeLaMain } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
@@ -31,9 +31,32 @@ import { textureSlot } from './texture-carte.ts'
 
 /** Les emplacements vivent à la profondeur de la main : même taille de carte. */
 export const Z_SLOTS = Z_MAIN
-const Y_SLOTS = 0.52
-const X_LOOT = -0.82
-const X_JETER = 0.82
+
+/**
+ * OÙ SE POSENT LES DEUX EMPLACEMENTS.
+ *
+ * **Le trésor qui arrive est EN HAUT AU CENTRE**, son bouton juste dessous ;
+ * **ce qu'on jette est à gauche**, à l'écart, avec ses deux issues sous lui ;
+ * et « Terminer » attend à droite. Disposition demandée par Keko, et elle dit
+ * la bonne chose : *une seule décision occupe le milieu de l'écran*, les deux
+ * autres sont des sorties latérales.
+ *
+ * Calculé depuis la fenêtre plutôt que fixé : la caméra recule sur grand
+ * écran, donc le bord du champ visible n'est pas au même endroit — un
+ * emplacement posé à une distance constante finirait au milieu de nulle part.
+ */
+function places(): { xLoot: number; xJeter: number; y: number; yBoutons: number } {
+  const demiHaut = hauteurVisibleA(Z_SLOTS, window.innerHeight) / 2
+  const demiLarge = demiHaut * (window.innerWidth / window.innerHeight)
+  const y = demiHaut - 0.9
+  return {
+    xLoot: 0,
+    // Borné : sur un écran large, collé au bord, il sortirait du regard.
+    xJeter: -Math.min(demiLarge - 0.65, 2.2),
+    y,
+    yBoutons: y - 0.74,
+  }
+}
 
 /** La demi-largeur d'un emplacement, plus la marge du doigt. */
 const PORTEE_X = 0.62
@@ -56,11 +79,21 @@ export function slotSous(
   hauteurFenetrePx: number,
   avecLoot: boolean,
 ): Emplacement | null {
+  const { xLoot, xJeter, y: ySlots } = places()
   const [x, y] = surLePlan(point, Z_SLOTS, hauteurFenetrePx)
-  if (Math.abs(y - Y_SLOTS) > PORTEE_Y) return null
-  if (avecLoot && Math.abs(x - X_LOOT) < PORTEE_X) return 'loot'
-  if (Math.abs(x - X_JETER) < PORTEE_X) return 'jeter'
+  if (Math.abs(y - ySlots) > PORTEE_Y) return null
+  if (avecLoot && Math.abs(x - xLoot) < PORTEE_X) return 'loot'
+  if (Math.abs(x - xJeter) < PORTEE_X) return 'jeter'
   return null
+}
+
+/** Où poser les boutons de chaque emplacement : juste dessous. */
+export function ancresDuButin(): [number, number, number][] {
+  const { xLoot, xJeter, yBoutons } = places()
+  return [
+    [xLoot, yBoutons, Z_SLOTS],
+    [xJeter, yBoutons, Z_SLOTS],
+  ]
 }
 
 /** Ce que lâcher à cet endroit veut dire, sur l'écran de butin. */
@@ -78,6 +111,7 @@ type SlotProps = {
   nom: string
   accent: string
   x: number
+  y: number
   carte: CarteAPeindre | null
   /** La carte posée ici est en train d'être perdue : contour rouge. */
   peril?: boolean
@@ -88,7 +122,7 @@ type SlotProps = {
   onPeinte?: () => void
 }
 
-function Slot({ nom, accent, x, carte, peril = false, onPrendre, onTaper, onPeinte }: SlotProps): React.JSX.Element {
+function Slot({ nom, accent, x, y, carte, peril = false, onPrendre, onTaper, onPeinte }: SlotProps): React.JSX.Element {
   const materiau = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
@@ -104,7 +138,7 @@ function Slot({ nom, accent, x, carte, peril = false, onPrendre, onTaper, onPein
     return (
       <Carte3D
         carte={carte}
-        position={[x, Y_SLOTS, Z_SLOTS]}
+        position={[x, y, Z_SLOTS]}
         rotation={[0, 0, 0]}
         peril={peril}
         ombre={false}
@@ -117,7 +151,7 @@ function Slot({ nom, accent, x, carte, peril = false, onPrendre, onTaper, onPein
 
   return (
     <mesh
-      position={[x, Y_SLOTS, Z_SLOTS]}
+      position={[x, y, Z_SLOTS]}
       material={materiau}
       onPointerDown={(e) => {
         e.stopPropagation()
@@ -153,6 +187,7 @@ export function Butin3D({
 }: Props): React.JSX.Element {
   // Index 0 : ce qui arrive. Index 1 : ce qu'on s'apprête à jeter.
   const cartes = [loot, aJeter]
+  const { xLoot, xJeter, y } = places()
 
   const { tenue, doigt, prendre } = useGesteCarte({
     z: Z_TENUE,
@@ -188,7 +223,8 @@ export function Butin3D({
         <Slot
           nom="Butin"
           accent="#c9a95a"
-          x={X_LOOT}
+          x={xLoot}
+          y={y}
           // CE QU'ON TIENT N'EST PLUS À SA PLACE : la case reprend l'habit
           // d'une case vide le temps du glisser, et elle dit toujours ce
           // qu'elle attend. Règle de l'armurerie 2D : sans son nom, c'est un
@@ -202,7 +238,8 @@ export function Butin3D({
       <Slot
         nom="Jeter"
         accent={aJeter === null ? '#8a6a62' : '#ff6a52'}
-        x={X_JETER}
+        x={xJeter}
+        y={y}
         carte={tenue === 1 ? null : aJeter}
         peril
         onPrendre={prendre(1)}

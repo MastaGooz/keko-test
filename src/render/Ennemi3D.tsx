@@ -125,6 +125,39 @@ const OMBRE_SOL = ((): THREE.CanvasTexture | null => {
   return new THREE.CanvasTexture(toile)
 })()
 
+/**
+ * LE HALO DU CORPS DÉSIGNÉ : un dégradé radial doré, posé DERRIÈRE lui.
+ *
+ * Éclaircir la créature ne suffisait pas — une silhouette déjà claire encaisse
+ * mal un gain de luminosité, et rien ne déborde d'elle. Keko : « ce serait
+ * bien d'avoir un effet de glow doré autour d'un ennemi ciblé par la flèche ».
+ * *Ce qui se lit d'un coup d'oeil, c'est ce qui dépasse du sujet*, pas ce qui
+ * se passe dedans.
+ *
+ * Additif, comme le contour des cartes : la lumière s'AJOUTE au fond au lieu
+ * de le recouvrir — c'est toute la différence entre une lueur et une tache
+ * claire. Et il porte l'or de la flèche : *c'est le même signal, il doit avoir
+ * la même couleur.*
+ */
+const HALO_CIBLE = ((): THREE.CanvasTexture | null => {
+  const toile = document.createElement('canvas')
+  toile.width = 128
+  toile.height = 128
+  const ctx = toile.getContext('2d')
+  if (ctx === null) return null
+  const degrade = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
+  // SERRÉ CONTRE LE CORPS : étalé, il déborde sur les voisins et n'éclaire
+  // plus personne en particulier — c'est la même correction que le contour
+  // des cartes. *Une lueur qui couvre tout le rang ne désigne rien.*
+  degrade.addColorStop(0, 'rgba(255, 224, 160, 0.95)')
+  degrade.addColorStop(0.3, 'rgba(255, 205, 125, 0.5)')
+  degrade.addColorStop(0.62, 'rgba(255, 195, 115, 0.11)')
+  degrade.addColorStop(1, 'rgba(255, 195, 115, 0)')
+  ctx.fillStyle = degrade
+  ctx.fillRect(0, 0, 128, 128)
+  return new THREE.CanvasTexture(toile)
+})()
+
 type Props = {
   ennemi: Ennemi
   index: number
@@ -165,6 +198,19 @@ export function Ennemi3D({
     }
   }, [ennemi.nom, index])
 
+  const halo = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: HALO_CIBLE,
+        transparent: true,
+        opacity: 0,
+        depthWrite: false,
+        toneMapped: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    [],
+  )
+
   const materiau = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
@@ -190,7 +236,10 @@ export function Ennemi3D({
   // moment où l'on choisit sa cible suivante. Il s'efface en 600 ms, après un
   // temps où on le regarde — c'est la seule image de toute la séquence qu'on
   // ait envie de regarder.
-  useFrame((etat) => {
+  /** L'allumage du halo, amorti : il monte et descend au lieu de sauter. */
+  const lisse = useRef(0)
+
+  useFrame((etat, delta) => {
     const g = groupe.current
     if (g === null) return
     const t = etat.clock.elapsedTime
@@ -230,9 +279,16 @@ export function Ennemi3D({
     // désigne. Le deuxième ne peut pas dépendre d'un survol — *il n'y en a
     // pas au doigt* — c'est l'arbitrage central du multi-cibles.
     if (!mort && texture !== null) {
-      if (designe) materiau.color.setScalar(1.9)
+      if (designe) materiau.color.setScalar(1.45)
       else materiau.color.setScalar(visable ? 1.22 + Math.sin(t * 5) * 0.18 : 1)
     }
+    // LE HALO S'ALLUME EN FONDU, il n'apparaît pas : un corps qui s'embrase
+    // d'une image à l'autre pendant qu'on balaie le rang fait clignoter tout
+    // l'écran. Il respire ensuite, comme le contour des cartes — c'est ce qui
+    // le fait lire comme une lumière et non comme un calque posé.
+    const vise = designe && !mort ? 1 : 0
+    lisse.current += (vise - lisse.current) * (1 - Math.exp(-16 * delta))
+    halo.opacity = lisse.current * (0.82 + Math.sin(t * 5) * 0.18)
 
     if (mortDepuis !== null) {
       const dt = t - mortDepuis
@@ -257,6 +313,13 @@ export function Ennemi3D({
       <mesh>
         <planeGeometry args={[CORPS, CORPS * (60 / 64)]} />
         <primitive object={materiau} attach="material" />
+      </mesh>
+
+      {/* LE HALO DE VISÉE, derrière le corps : seul ce qui dépasse se voit. Il
+          ne capte pas le pointeur — il élargirait la zone sensible de la bête
+          d'un anneau invisible au repos. */}
+      <mesh position={[0, 0, -0.03]} material={halo} raycast={() => null}>
+        <planeGeometry args={[CORPS * 1.35, CORPS * 1.35]} />
       </mesh>
 
       {/* L'OMBRE AU SOL : c'est elle qui pose la bête dans un lieu. Un cadre
