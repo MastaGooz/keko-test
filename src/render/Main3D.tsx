@@ -145,7 +145,9 @@ type Props = {
   /** La carte qu'on regarde de près, s'il y en a une. */
   zoomee?: number | null
   /**
-   * L'identifiant de la carte qui S'ABAT sur sa cible. L'état ne la retire
+   * L'identifiant d'une carte qui N'EST PLUS DANS LA MAIN alors que l'état
+   * l'y compte encore : celle qui s'abat sur sa cible, ou celle qui attend
+   * qu'on lui en désigne une. L'état ne la retire
    * de la main qu'à l'impact, 220 ms après le lâcher — et le geste, lui, est
    * fini : sans ce filtre, la main la redessinait à sa place pendant que sa
    * copie tombait sur l'ennemi. Keko : « une autre image d'elle revient en

@@ -59,6 +59,26 @@ export function hauteurVisibleA(z: number, hauteurFenetrePx: number): number {
   return 2 * (zCamera(hauteurFenetrePx) - z) * tanDemiChamp()
 }
 
+/**
+ * Où un point de la scène se projette sur le plan `zPlan`, vu de la caméra.
+ *
+ * **Deux objets à des profondeurs différentes ne se comparent pas en x et y.**
+ * La carte qu'on tient vit devant le rang des créatures : le doigt peut être
+ * pile sur un corps à l'écran alors que les deux points sont à une demi-unité
+ * l'un de l'autre dans la scène. On ramène donc le lâcher sur le plan des
+ * corps avant de chercher qui est dessous — c'est la version 3D du
+ * `elementFromPoint` que le jeu 2D utilise sous le doigt.
+ */
+export function surLePlan(
+  point: [number, number, number],
+  zPlan: number,
+  hauteurFenetrePx: number,
+): [number, number] {
+  const zCam = zCamera(hauteurFenetrePx)
+  const k = (zCam - zPlan) / (zCam - point[2])
+  return [point[0] * k, point[1] * k]
+}
+
 export function Cadrage(): null {
   const { camera, size } = useThree()
   useEffect(() => {

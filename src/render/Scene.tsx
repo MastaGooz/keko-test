@@ -13,13 +13,14 @@
  * palier sont des voiles posés dessus.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { Canvas, useThree } from '@react-three/fiber'
+import { Carte3D } from './Carte3D.tsx'
 import { Main3D } from './Main3D.tsx'
 import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
 import { Projeter } from './Projeter.tsx'
 import { CarteQuiSAbat, TEMPS_FIN, TEMPS_IMPACT } from './CarteQuiSAbat.tsx'
 import { Horloge, lireHorloge } from './horloge.tsx'
-import { Cadrage, FOV, zCamera } from './Cadrage.tsx'
+import { Cadrage, FOV, hauteurVisibleA, surLePlan, zCamera } from './Cadrage.tsx'
 import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
@@ -62,14 +63,60 @@ type EnVol = {
  */
 const PAS_ENTRE_FRAPPES = 0.62
 
+/** La profondeur de la carte qui attend sa cible : devant le rang. */
+const Z_ENGAGEE = 0.35
+
+/**
+ * LA CARTE ENGAGÉE FLOTTE DEVANT LE RANG, à la hauteur des corps qu'elle vise
+ * et à sa taille de main : c'est la même carte qu'on vient de sortir, elle n'a
+ * pas de raison de rapetisser en chemin. Sa place dans la main reste vide et
+ * les voisines se referment — l'y remettre pendant qu'on choisit défairait le
+ * geste.
+ *
+ * **Elle se borne à l'écran.** Posée bêtement à gauche du premier corps, elle
+ * en sortait dès que le rang comptait cinq créatures — et c'est justement là
+ * qu'on a le plus besoin de savoir ce qu'on tient. La mesure se fait ici, dans
+ * le canvas, parce que `useThree` est la seule source qui suive un
+ * redimensionnement.
+ */
+function CarteEngagee({
+  carte,
+  xRang,
+  onPeinte,
+}: {
+  carte: CarteAPeindre
+  xRang: number
+  onPeinte?: () => void
+}): React.JSX.Element {
+  const { size } = useThree()
+  const demiLarge = (hauteurVisibleA(Z_ENGAGEE, size.height) * (size.width / size.height)) / 2
+  const x = Math.max(-(demiLarge - 0.62), xRang)
+  return (
+    <Carte3D
+      carte={carte}
+      position={[x, 0.75, Z_ENGAGEE]}
+      rotation={[0, 0, 0]}
+      engagee
+      ombre={false}
+      ressort={16}
+      onPeinte={onPeinte}
+    />
+  )
+}
+
 /** Ce que le joueur encaisse, pour le chiffre qui saute à côté de ses PV. */
 type CoupRecu = { cle: number; degats: number }
 
 /** Les réserves du joueur telles qu'on les MONTRE pendant la salve. */
 type Salve = { pv: number; bloc: number }
 
-/** La seed de départ. « Nouvelle descente » l'incrémente. */
-const SEED = 1789
+/**
+ * La seed de départ. « Nouvelle descente » l'incrémente.
+ *
+ * `?r3f&seed=42` rejoue une partie précise — c'est ce qui permet de retomber
+ * sur un groupe de trois créatures sans relancer vingt descentes.
+ */
+const SEED = Number(new URLSearchParams(window.location.search).get('seed')) || 1789
 
 /**
  * LE TEMPS QU'ON REDONNE AU JOUEUR avant de lui poser un calque dessus.
@@ -142,6 +189,11 @@ export function Scene(): React.JSX.Element {
     const centre = (combat.ennemis.length - 1) / 2
     return [(i - centre) * (CORPS * 1.25), 0.75, 0] as [number, number, number]
   })
+  // La carte engagée se pose à gauche du rang, dans l'écart qui sépare les
+  // deux camps : elle est SUR LA TRAJECTOIRE, entre celui qui frappe et ceux
+  // qu'il vise.
+  const gaucheDuRang = (rang[0]?.[0] ?? 0) - CORPS * 0.95
+
   // CE QU'ON PEUT JOUER MAINTENANT : assez d'énergie, et le combat n'est pas
   // fini. Un trésor n'est jouable par personne — il ne fait qu'occuper une
   // place de main.
@@ -213,9 +265,30 @@ export function Scene(): React.JSX.Element {
         frapper(index, cibles[0]!.index, depuis)
         return
       }
+
+      // LÂCHER SUR UN CORPS LE VISE. C'est le geste de Hearthstone, et il n'a
+      // pas d'équivalent en 2D — là-bas la tape était ambiguë, donc il fallait
+      // deux temps et des arches pour montrer les cibles. Ici le doigt tient
+      // déjà la carte : *un geste qui engage n'a plus rien à confirmer.*
+      //
+      // On compare sur LE PLAN DES CORPS, pas en coordonnées de scène : la
+      // carte tenue vit une demi-unité devant eux, donc un doigt pile sur une
+      // créature donne deux points éloignés.
+      const [x, y] = surLePlan(depuis, 0, window.innerHeight)
+      const sous = cibles.find(({ index: i }) => {
+        const p = rang[i]
+        return p !== undefined && Math.abs(x - p[0]) < CORPS * 0.55 && Math.abs(y - p[1]) < CORPS * 0.6
+      })
+      if (sous !== undefined) {
+        frapper(index, sous.index, depuis)
+        return
+      }
+
+      // Lâchée à côté, la carte attend sa cible : elle sort de la main et
+      // flotte devant le rang, les corps visables s'allument.
       setEngagee(index)
     },
-    [combat, fini, frapper, majCombat, verrou],
+    [combat, fini, frapper, majCombat, rang, verrou],
   )
 
   const cibler = useCallback(
@@ -432,6 +505,10 @@ export function Scene(): React.JSX.Element {
           />
         ))}
 
+        {engagee !== null && main[engagee] !== undefined && (
+          <CarteEngagee carte={main[engagee]!} xRang={gaucheDuRang} onPeinte={compter} />
+        )}
+
         {/* La carte qui s'abat vit sur la scène et non dans la main : un rendu
             de la main la balaierait en plein vol, et le coup en déclenche un. */}
         {enVol !== null && (
@@ -457,7 +534,7 @@ export function Scene(): React.JSX.Element {
           cartes={main}
           jouables={jouables}
           zoomee={zoomee}
-          envolee={enVol?.carte.id ?? null}
+          envolee={enVol?.carte.id ?? (engagee === null ? null : (main[engagee]?.id ?? null))}
           onJouer={jouer}
           onRegarder={setZoomee}
           onReordonner={reordonner}

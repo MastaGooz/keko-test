@@ -99,6 +99,32 @@ function bond(k: number): { dy: number; echelle: number } {
   return { dy: entre(0.6, 1, -0.08, 0, lisser), echelle: entre(0.6, 1, 1.05, 1, lisser) }
 }
 
+/**
+ * L'OMBRE AU SOL EST UN DÉGRADÉ, JAMAIS UN RECTANGLE.
+ *
+ * C'est elle qui pose la bête dans un lieu — un cadre autour d'elle la
+ * remettrait dans la vignette dont on l'a sortie. Mais un plan noir uni sous
+ * un corps ne se lit pas comme une ombre : il se lit comme **une barre**, le
+ * défaut exact que le jeu 2D avait rencontré sur le corps en agonie. Une
+ * ombre n'a pas d'arête.
+ *
+ * Peinte une fois pour toutes : toutes les créatures partagent la texture.
+ */
+const OMBRE_SOL = ((): THREE.CanvasTexture | null => {
+  const toile = document.createElement('canvas')
+  toile.width = 64
+  toile.height = 64
+  const ctx = toile.getContext('2d')
+  if (ctx === null) return null
+  const degrade = ctx.createRadialGradient(32, 32, 0, 32, 32, 32)
+  degrade.addColorStop(0, 'rgba(0, 0, 0, 0.8)')
+  degrade.addColorStop(0.5, 'rgba(0, 0, 0, 0.38)')
+  degrade.addColorStop(1, 'rgba(0, 0, 0, 0)')
+  ctx.fillStyle = degrade
+  ctx.fillRect(0, 0, 64, 64)
+  return new THREE.CanvasTexture(toile)
+})()
+
 type Props = {
   ennemi: Ennemi
   index: number
@@ -190,6 +216,16 @@ export function Ennemi3D({
     g.position.set(position[0] + dx, position[1] + dy, position[2])
     g.scale.setScalar(echelle)
 
+    // UN CORPS QU'ON PEUT VISER S'ALLUME, et il respire. C'est le seul repère
+    // quand une carte attend sa cible : au doigt il n'y a pas de survol, donc
+    // « visable » ne peut pas dépendre d'un pointeur. Sans lui, sortir une
+    // carte à plusieurs ennemis ne changeait RIEN à l'écran — Keko : « quand
+    // il y a plusieurs ennemis et que je joue une carte offensive, rien ne se
+    // passe ». *Un état du jeu qui ne se voit pas n'existe pas.*
+    if (!mort && texture !== null) {
+      materiau.color.setScalar(visable ? 1.25 + Math.sin(t * 5) * 0.2 : 1)
+    }
+
     if (mortDepuis !== null) {
       const dt = t - mortDepuis
       // 0,7 s de corps noir et de tampon, puis 0,6 s de fondu.
@@ -224,9 +260,9 @@ export function Ennemi3D({
       {/* L'OMBRE AU SOL : c'est elle qui pose la bête dans un lieu. Un cadre
           autour la remettrait dans la vignette dont on l'a sortie. */}
       {!mort && (
-        <mesh position={[0, -CORPS * 0.48, -0.02]} rotation={[0, 0, 0]}>
-          <planeGeometry args={[CORPS * 0.8, CORPS * 0.12]} />
-          <meshBasicMaterial color="#000000" transparent opacity={0.45} toneMapped={false} />
+        <mesh position={[0, -CORPS * 0.46, -0.02]}>
+          <planeGeometry args={[CORPS * 0.95, CORPS * 0.3]} />
+          <meshBasicMaterial map={OMBRE_SOL} transparent depthWrite={false} toneMapped={false} />
         </mesh>
       )}
 

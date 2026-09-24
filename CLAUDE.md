@@ -2049,6 +2049,51 @@ Poser un `MutationObserver` et un `setInterval` dans la page (`window.__journal`
 AVANT le geste, puis lire après — c'est ce qui a prouvé la séquence verrou →
 chiffre → état.
 
+### Viser à plusieurs corps : LÂCHER SUR LE CORPS
+
+**Sortir une carte offensive à plusieurs ennemis ne changeait RIEN à l'écran.**
+Keko : « quand il y a plusieurs ennemis et que je joue une carte offensive,
+rien ne se passe ». La carte retournait dans la main, `engagee` passait à son
+index, et le seul signe était une ligne de texte grise en haut. *Un état du
+jeu qui ne se voit pas n'existe pas.*
+
+Trois réponses, et la première suffit presque toujours :
+
+1. **Lâcher la carte SUR un corps le vise.** C'est le geste de Hearthstone, et
+   il n'a pas d'équivalent en 2D : là-bas la tape était ambiguë — elle pouvait
+   vouloir dire « repose » — donc il fallait deux temps, des arches de visée et
+   une carte qui flotte. Ici le doigt tient déjà la carte : *un geste qui
+   engage n'a plus rien à confirmer.*
+
+   **On compare sur LE PLAN DES CORPS**, pas en coordonnées de scène
+   (`surLePlan`, dans `Cadrage.tsx`). La carte tenue vit une demi-unité devant
+   le rang : un doigt pile sur une créature donne deux points éloignés. C'est
+   la version 3D du `elementFromPoint` que le jeu 2D fait sous le doigt.
+
+2. **Lâchée à côté, la carte flotte devant le rang** (`CarteEngagee`), à la
+   hauteur des corps et à sa taille de main, avec son halo doré — la même
+   carte dans le même état. Sa place dans la main reste vide. Elle **se borne
+   à l'écran** : posée bêtement à gauche du premier corps, elle en sortait dès
+   cinq créatures, et c'est justement là qu'on a le plus besoin de savoir ce
+   qu'on tient.
+
+3. **Les corps visables s'allument et respirent.** Au doigt il n'y a pas de
+   survol, donc « visable » ne peut pas dépendre d'un pointeur — c'est
+   l'arbitrage central du multi-cibles, et il doit être permanent.
+
+**Une carte qui flotte seule ne porte pas d'ombre** (`ombre={false}`). Son
+ombre tombait en plein champ, loin d'elle, et se lisait comme une tache noire
+au sol. *Une carte de la main s'en tire parce que ses voisines reçoivent la
+sienne.*
+
+**Et l'ombre au sol d'une créature est un DÉGRADÉ, jamais un rectangle.** Un
+plan noir uni sous un corps ne se lit pas comme une ombre mais comme **une
+barre** — le défaut exact que le 2D avait rencontré sur le corps en agonie,
+retrouvé ici pour la même raison. *Une ombre n'a pas d'arête.*
+
+**`?r3f&seed=42` rejoue une partie précise**, ce qui permet de retomber sur un
+groupe de trois créatures sans relancer vingt descentes.
+
 ### La descente entière — jalon 6
 
 `Scene` tenait un combat isolé ; elle tient désormais une **`Descente`**, et

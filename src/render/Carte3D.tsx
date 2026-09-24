@@ -109,6 +109,13 @@ type Props = {
    * s'éteint, et lâcher ne déclenche rien.
    */
   jouable?: boolean
+  /**
+   * Elle porte son ombre. Vrai partout sauf pour une carte qui flotte SEULE
+   * au-dessus du décor : son ombre tombe alors en plein champ, loin d'elle,
+   * et ne se lit plus comme une ombre mais comme une tache noire. *Une carte
+   * de la main s'en tire parce que ses voisines reçoivent la sienne.*
+   */
+  ombre?: boolean
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -123,6 +130,7 @@ export function Carte3D({
   ressort = 9,
   engagee = false,
   jouable = true,
+  ombre = true,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -320,7 +328,7 @@ ${nuanceur.fragmentShader}`
           taches sombres sur sa propre face, d'autant plus qu'elle est proche
           de la caméra. Le sol reçoit les ombres, c'est tout ce qu'il faut. */}
       <mesh
-        castShadow
+        castShadow={ombre}
         geometry={GEOMETRIE_CORPS}
         material={laiton}
         onPointerDown={onPointerDown}
