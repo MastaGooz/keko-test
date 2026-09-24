@@ -3596,14 +3596,17 @@ body {
 /* La ligne d'etat du moteur 3D : ce que le geste vient de faire. Provisoire --
    elle disparaitra quand le combat sera branche et que la scene le dira
    elle-meme. */
+/* LA NOTE DE TOUR PASSE DANS LE COIN. Centree en haut, elle occupait la bande
+   dont le rang avait besoin pour monter -- et elle ne se consulte pas, elle se
+   remarque. Keko : « on vire le texte tour - debout ». */
 .note-3d {
   position: fixed;
-  inset: 0.75rem 0 auto;
+  inset: 0.5rem 0.75rem auto auto;
   margin: 0;
   color: var(--muted);
   font-family: system-ui, sans-serif;
-  font-size: 0.8125rem;
-  text-align: center;
+  font-size: 0.75rem;
+  text-align: right;
   pointer-events: none;
 }
 

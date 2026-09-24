@@ -2213,6 +2213,21 @@ basculement et paraissait trop haute. *Une valeur juste au mauvais endroit se
 lit comme une valeur fausse.* Elle sort désormais de la même fonction que la
 ligne et ne peut plus en diverger.
 
+**LE RANG EST MONTÉ POUR ELLE, et c'est un problème de FORMAT.** Sur un
+téléphone la caméra ne recule pas — elle ne le fait que pour plafonner la
+taille des cartes sur grand écran — donc tout y est proportionnellement plus
+grand : une carte occupe 40 % de la hauteur d'écran contre 31 % sur un
+moniteur. La carte qui attend sa cible venait alors recouvrir la jauge et le
+nom des créatures, sans que ça se voie jamais sur la machine de dev. Keko :
+« sur téléphone, la carte d'attaque en cours de ciblage masque l'ennemi ».
+
+Le rang monte (`HAUTEUR_RANG`), les étiquettes serrent les corps d'un cran, et
+la place vient du haut de l'écran — la note de tour part dans le coin droit.
+Mesuré en iframe aux deux formats serrés : à 844x390 il reste 11 px entre le
+nom et le haut de la carte, à 667x320 il en reste 3, et l'intention ne touche
+pas le bord haut. *Ce qui est proportionnel à l'écran ne se règle pas sur un
+seul format* — et la seule façon de le voir est de mesurer l'autre.
+
 **La flèche est un trait pointillé en cloche**, comme les arches du jeu 2D :
 des pastilles qui grossissent vers la pointe et une tête orientée sur la
 tangente. *Pas une ligne* — `LineBasicMaterial` est plafonné à 1 px de large

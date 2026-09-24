@@ -65,6 +65,22 @@ type EnVol = {
  */
 const PAS_ENTRE_FRAPPES = 0.62
 
+/**
+ * LA HAUTEUR DU RANG.
+ *
+ * **Sur un téléphone, la caméra ne recule pas** — elle ne le fait que pour
+ * plafonner la taille des cartes sur grand écran — donc tout y est
+ * proportionnellement plus grand : une carte occupe 40 % de la hauteur d'écran
+ * contre 31 % sur un moniteur. La carte qui attend sa cible venait alors
+ * recouvrir la jauge et le nom des créatures. Keko : « sur téléphone, la carte
+ * d'attaque en cours de ciblage masque l'ennemi ».
+ *
+ * Le rang monte donc, et la place vient du haut de l'écran — d'où la note de
+ * tour passée dans un coin. *Ce qui est proportionnel à l'écran ne se règle
+ * pas sur un seul format.*
+ */
+const HAUTEUR_RANG = 1.3
+
 /** Ce que le joueur encaisse, pour le chiffre qui saute à côté de ses PV. */
 type CoupRecu = { cle: number; degats: number }
 
@@ -165,7 +181,7 @@ export function Scene(): React.JSX.Element {
   // qui tient sa place.
   const rang = combat.ennemis.map((_, i) => {
     const centre = (combat.ennemis.length - 1) / 2
-    return [(i - centre) * (CORPS * 1.25), 0.75, 0] as [number, number, number]
+    return [(i - centre) * (CORPS * 1.25), HAUTEUR_RANG, 0] as [number, number, number]
   })
   // CE QU'ON PEUT JOUER MAINTENANT : assez d'énergie, et le combat n'est pas
   // fini. Un trésor n'est jouable par personne — il ne fait qu'occuper une
@@ -471,9 +487,12 @@ export function Scene(): React.JSX.Element {
   const ancres = rang.flatMap(
     (p) =>
       [
-        [p[0], p[1] + CORPS * 0.62, p[2]],
+        // Les étiquettes SERRENT le corps d'un cran de plus depuis que le rang
+        // est monté : c'est la place qu'on rend en haut et en bas de l'écran,
+        // et elles flottaient un peu loin de la bête de toute façon.
+        [p[0], p[1] + CORPS * 0.36, p[2]],
         [p[0], p[1], p[2]],
-        [p[0], p[1] - CORPS * 0.62, p[2]],
+        [p[0], p[1] - CORPS * 0.48, p[2]],
       ] as [number, number, number][],
   )
 
