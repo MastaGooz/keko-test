@@ -88,5 +88,6 @@ export function Cadrage(): null {
       camera.updateProjectionMatrix()
     }
   }, [camera, size.height])
+
   return null
 }

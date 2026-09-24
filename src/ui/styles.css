@@ -4153,19 +4153,121 @@ body {
    point de sortie, fin de descente. */
 
 
+/* --- la vie du joueur : une barre, comme celle des creatures --------------- */
+
+/* ELLE PART DU BORD DE L'ECRAN et s'arrete avant la main : c'est la seule
+   facon qu'elle ait une longueur lisible sur un telephone. Elle vit a la
+   hauteur du haut des cartes, donc elle ne croise jamais le tas de pioche, qui
+   est tout en bas. */
+.vie-bloc {
+  position: absolute;
+  left: 0.75rem;
+  width: calc(var(--main-gauche, 14rem) - 1.45rem);
+  /* UN PLANCHER, parce que sur un ecran court le haut de la main descend sous
+     le sommet du tas de pioche : la barre venait alors s'asseoir sur son
+     compte. Le tas occupe 5,05rem depuis le bas, compte compris : on se pose
+     juste au-dessus. */
+  bottom: max(5.4rem, calc(var(--main-haut, 7rem) - 1rem));
+}
+
+/* L'ARMURE S'AJOUTE AUX PV SANS ALLONGER LA BARRE : l'echelle vaut
+   `max(pvMax, pv + armure)`, donc c'est le rouge qui cede la place au bleu.
+   Une barre qui s'allongerait dirait que le joueur a plus de vie qu'il n'en
+   aura jamais, alors que l'armure TOMBE a la fin du tour. */
+.vie-barre {
+  position: relative;
+  width: 100%;
+  height: 0.875rem;
+  border-radius: 999px;
+  background: #1a0d10;
+  box-shadow: inset 0 1px 2px #000000a8;
+}
+
+.vie-barre.encaisse {
+  animation: vie-secousse 260ms ease-out;
+}
+
+@keyframes vie-secousse {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  60% { transform: translateX(2px); }
+}
+
+.vie-rouge,
+.vie-bleu {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+}
+
+.vie-rouge {
+  left: 0;
+  background: linear-gradient(#c0413c, #8d2725);
+}
+
+/* L'ARMURE EN BLEU, collee au rouge : elle s'y ajoute. */
+.vie-bleu {
+  background: linear-gradient(#5a91d6, #2f5c96);
+}
+
+/* CE QU'ON VA PRENDRE OCCUPE LA DROITE DU ROUGE : c'est par la que la jauge se
+   vide, donc c'est la qu'on cherche ce qu'on va perdre. Posee a gauche, la
+   bande se lirait comme ce qui reste. */
+.vie-jaune {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 999px;
+  background: linear-gradient(#f5d06a, #d9a02f);
+}
+
+/* LE CHIFFRE DEBORDE SA BARRE, il n'est pas contenu par elle : la hauteur
+   d'une jauge dit quelque chose, une barre epaisse pese autant qu'une
+   silhouette. Il lui faut donc un cerne franc, parce qu'il passe sur trois
+   fonds. */
+.vie-chiffre {
+  position: relative;
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-shadow: 0 1px 2px #000, 0 0 3px #000, 0 0 6px #000;
+  white-space: nowrap;
+}
+
+.vie-chiffre small {
+  opacity: 0.65;
+  font-size: 0.8em;
+  font-weight: 400;
+}
+
 /* --- l'orbe d'energie, au-dessus de la pioche ------------------------------ */
 
 /* LE MEME OBJET QUE LE SYMBOLE DE COUT DES CARTES : socle sombre, filet de
    laiton, coeur d'ambre, chiffre en ivoire. C'est la regle de Keko -- le meme
    symbole partout, pour qu'on le comprenne d'un coup. */
-/* IL N'EST PLUS EMPILE SUR LA PIOCHE : il se pose DANS L'ECART entre le tas
-   et la main, et plus haut. Demande par Keko. Empile, il repoussait le tas
-   vers le bas et se lisait comme une etiquette du tas plutot que comme la
-   reserve du joueur. */
+/* LA COLONNE DU JOUEUR OCCUPE L'ECART entre la pioche et la main : l'energie
+   en haut, la vie dessous. Les deux bornes viennent de la scene
+   (`ReperesDeLaMain`), parce que le bord de la main ne se devine pas en CSS --
+   il depend du recul de la camera.
+
+   ELLE COMMENCE AU-DESSUS DU HAUT DES CARTES. Demande par Keko : plus bas,
+   l'orbe se lisait comme une etiquette du tas de pioche, dont le compte
+   tombait juste en dessous. */
+/* L'ORBE SE CENTRE DANS L'ECART entre la pioche et la main ; la barre, elle,
+   part du bord de l'ecran. Ils ont d'abord partage une colonne, et a 667 px de
+   large l'ecart ne fait que 83 px : la barre y mordait sur la premiere carte.
+   Un objet qui porte un chiffre a besoin d'une LONGUEUR, un objet qui marque
+   une place a besoin d'un MILIEU. */
 .orbe-jeu {
   position: absolute;
-  left: 5.3rem;
-  bottom: 6rem;
+  left: calc((4.5rem + var(--main-gauche, 14rem)) / 2 - 1.625rem);
+  bottom: max(6.9rem, calc(var(--main-haut, 7rem) + 0.5rem));
   display: grid;
   place-items: center;
   width: 3.25rem;

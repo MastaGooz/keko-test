@@ -2724,6 +2724,45 @@ parce qu'il ne logeait pas sous sa pointe ; un disque a de la place au centre.
 Le courant est gros, le maximum petit : *on décide sur ce qu'il reste, pas sur
 ce qu'on avait.*
 
+### LA VIE DU JOUEUR EST UNE BARRE, comme celle des créatures
+
+`render/BarreVie3D.tsx`. Trois pastilles vivaient côte à côte — `90/90`,
+`⛉ 5`, `−12`. Keko les a réunies en une barre qui s'étend entre la pioche et
+la main : *le joueur lit son état avec la même grammaire que celle d'en face.*
+
+**L'ARMURE S'AJOUTE AUX PV SANS ALLONGER LA BARRE**, et c'est la demande qui
+décide de l'échelle : la barre vaut `max(pvMax, pv + armure)`, donc gagner de
+l'armure ne fait pas grandir la jauge — c'est le rouge qui cède la place au
+bleu. Une barre qui s'allongerait dirait que le joueur a plus de vie qu'il n'en
+aura jamais, alors que l'armure **tombe à la fin du tour**.
+
+**CE QU'ON VA PRENDRE EST EN JAUNE, À DROITE DU ROUGE.** C'est par là que la
+jauge se vide, donc c'est là qu'on cherche ce qu'on va perdre ; posée à gauche,
+la bande se lirait comme ce qui reste. Même règle que l'aperçu sur les
+créatures, et il est plafonné aux PV restants. La menace **déduit déjà
+l'armure**, donc le jaune dit des PV perdus pour de bon : poser une Garde le
+fait reculer sous les yeux du joueur, ce qui est tout l'intérêt du chiffre.
+
+Chaque chiffre est au MILIEU de sa portion, comme sur les créatures.
+
+**L'ORBE SE CENTRE DANS L'ÉCART, LA BARRE PART DU BORD DE L'ÉCRAN.** Les deux
+ont d'abord partagé une colonne, et à 667 px de large l'écart entre le tas et
+la main ne fait que 83 px : la barre y mordait sur la première carte. *Un objet
+qui porte un chiffre a besoin d'une LONGUEUR, un objet qui marque une place a
+besoin d'un MILIEU* — les deux ne se calent pas pareil. La barre vit à la
+hauteur du haut des cartes, donc elle ne croise jamais le tas, qui est tout en
+bas ; un plancher la retient quand même au-dessus de son compte sur un écran
+court.
+
+**LE BORD DE LA MAIN VIENT DE LA SCÈNE** (`ReperesDeLaMain`), publié en CSS sur
+`:root` — c'est le choix de `Projeter`, qui écrit directement dans le DOM :
+une position qui ne dépend que de la fenêtre n'a pas à passer par l'état React.
+Il se calcule pour une main PLEINE et non pour la main courante, *sinon la
+barre et l'orbe se déplaceraient à chaque carte jouée*. Et **la rotation de
+l'éventail compte** : les cartes des bords débordent de leur demi-largeur de
+`sin(inclinaison) × demi-hauteur`, et sans ce terme la barre mordait sur la
+première carte — *l'envergure d'un éventail n'est pas celle de ses centres.*
+
 **IL SE POSE DANS L'ÉCART entre la pioche et la main, plus haut que les deux.**
 Il a d'abord été empilé directement sur le tas — Keko : « il va falloir placer
 le symbole avec X/X un peu plus haut, et au niveau du x, entre la pioche et la

@@ -170,6 +170,47 @@ export function ligneDeLaMain(hauteurFenetrePx: number): number {
 }
 
 /**
+ * LES REPÈRES DE LA MAIN, PUBLIÉS EN CSS.
+ *
+ * L'interface est du HTML posé par-dessus le canvas, et elle doit se caler sur
+ * des mesures qui ne vivent que dans la scène : le bord gauche de la main et la
+ * hauteur de son bord haut. On les écrit sur `:root` — *c'est le choix de
+ * `Projeter`, qui écrit directement dans le DOM* : une position qui ne dépend
+ * que de la fenêtre n'a pas à passer par l'état React.
+ *
+ * **Le bord gauche se calcule pour une main PLEINE, pas pour la main
+ * courante** : sinon l'orbe et la barre de vie se déplaceraient à chaque carte
+ * jouée. *Ce qui sert de bord à autre chose doit être stable, même si l'objet
+ * qui le donne bouge.*
+ *
+ * Ça vit ici et non dans `Cadrage` parce que le pas de l'éventail et la
+ * hauteur de la main y sont : les importer depuis `Cadrage` ferait un cycle,
+ * et les recopier les ferait diverger.
+ */
+const CARTES_PLEINES = 5
+
+export function ReperesDeLaMain(): null {
+  const { size } = useThree()
+  useEffect(() => {
+    const parUnite = size.height / hauteurVisibleA(Z_MAIN, size.height)
+    // LA ROTATION COMPTE. Les cartes des bords sont inclinées, donc elles
+    // débordent de leur demi-largeur : `sin(inclinaison) × demi-hauteur`. Sans
+    // ce terme la barre de vie mordait sur la première carte — *l'envergure
+    // d'un éventail n'est pas celle de ses centres.*
+    const crans = (CARTES_PLEINES - 1) / 2
+    const debord = Math.sin(INCLINAISON * crans) * (HAUT / 2)
+    const demiEnvergure = ((CARTES_PLEINES - 1) * PAS + 1) / 2 + debord
+    const gauche = size.width / 2 - demiEnvergure * parUnite
+    const visible = hauteurVisibleA(Z_MAIN, size.height)
+    const haut = ((ligneDeLaMain(size.height) + visible / 2) / visible) * size.height
+    const style = document.documentElement.style
+    style.setProperty('--main-gauche', `${Math.round(gauche)}px`)
+    style.setProperty('--main-haut', `${Math.round(haut)}px`)
+  }, [size.width, size.height])
+  return null
+}
+
+/**
  * De combien les voisines s'écartent pour ouvrir la fente.
  *
  * **UNE VRAIE FENTE S'OUVRE LÀ OÙ LA CARTE VA TOMBER** : celles d'avant vont à

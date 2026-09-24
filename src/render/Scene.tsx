@@ -14,7 +14,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { Main3D } from './Main3D.tsx'
+import { Main3D, ReperesDeLaMain } from './Main3D.tsx'
 import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
 import { Projeter } from './Projeter.tsx'
 import { CarteQuiSAbat, TEMPS_FIN, TEMPS_IMPACT } from './CarteQuiSAbat.tsx'
@@ -28,6 +28,7 @@ import { Armurerie3D, compteDuDeck } from './Armurerie3D.tsx'
 import { Zoom3D } from './Zoom3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
+import { BarreVie3D } from './BarreVie3D.tsx'
 import type { Entree } from './Zoom3D.tsx'
 import { aPeindre, descenteDeDepart, pieceAPeindre, setAPeindre } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
@@ -736,6 +737,7 @@ export function Scene(): React.JSX.Element {
 
         <Horloge />
         <Cadrage />
+        <ReperesDeLaMain />
         <Secousse />
 
         {/* LES ÉCRANS DE PALIER SONT DES VOILES sur la scène : on est encore
@@ -918,26 +920,6 @@ export function Scene(): React.JSX.Element {
       {!pret && <p className="chargement-3d">Chargement…</p>}
 
       {pret && enCombat && (
-        <div className="etat-3d">
-            {/* LE JOUEUR N'A PAS DE CORPS : c'est son compteur de PV qui
-                tressaille, et le chiffre saute à côté. Pendant la salve, ce
-                sont les réserves de `salve` qu'on montre — elles descendent
-                frappe par frappe, à l'impact. */}
-            <span className={`pv-3d${recus.length > 0 ? ' encaisse' : ''}`}>
-              {(salve ?? combat).pv}
-              <small>/{combat.pvMax}</small>
-              {recus.map((k) => (
-                <span key={k.cle} className="degats-3d recu">
-                  −{k.degats}
-                </span>
-              ))}
-            </span>
-            {(salve ?? combat).bloc > 0 && <span className="bloc-3d">⛉ {(salve ?? combat).bloc}</span>}
-          {menace > 0 && !fini && salve === null && <span className="menace-3d">−{menace}</span>}
-        </div>
-      )}
-
-      {pret && enCombat && (
         <div className="jeu-3d">
           {/* LES DEUX TAS TIENNENT LES COINS BAS, pioche à gauche et défausse
               à droite. Ils vivent DANS la ligne de jeu, qui est déjà en
@@ -948,7 +930,31 @@ export function Scene(): React.JSX.Element {
               LES DEUX COINS SONT DES COLONNES, et c'est ce qui évite de caler
               l'orbe sur une hauteur de tas écrite à la main : il s'empile, et
               si le tas change de taille il suit. */}
+          {/* TOUT CE QUI EST AU JOUEUR TIENT L'ÉCART entre la pioche et la
+              main : son énergie au-dessus, sa vie en dessous. */}
+          {/* L'ORBE SE CENTRE DANS L'ÉCART entre la pioche et la main, la
+              BARRE part du bord de l'écran. Ils ont d'abord partagé une
+              colonne, et à 667 px de large l'écart ne fait que 83 px : la
+              barre y mordait sur la première carte. *Un objet qui porte un
+              chiffre a besoin d'une longueur, un objet qui marque une place a
+              besoin d'un milieu* — les deux ne se calent pas pareil. */}
           <Orbe3D courant={combat.energie} max={combat.energieMax} />
+          <div className="vie-bloc">
+            {/* PENDANT LA SALVE, ce sont les réserves de `salve` qu'on montre :
+                elles descendent frappe par frappe, à l'impact. */}
+            <BarreVie3D
+              pv={(salve ?? combat).pv}
+              pvMax={combat.pvMax}
+              armure={(salve ?? combat).bloc}
+              menace={fini || salve !== null ? 0 : menace}
+              encaisse={recus.length > 0}
+            />
+            {recus.map((k) => (
+              <span key={k.cle} className="degats-3d recu">
+                −{k.degats}
+              </span>
+            ))}
+          </div>
           <div className="coin-3d gauche">
             <Tas3D nom="pioche" compte={combat.pioche.length} />
           </div>
