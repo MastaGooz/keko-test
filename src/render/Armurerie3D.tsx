@@ -318,51 +318,41 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
         />
       ))}
 
-      {/* CE QU'ON TIENT N'EST PLUS À SA PLACE : la case reste, la pièce en
-          sort. Sans ça, la grille ne bougeait pas mais la pièce se dédoublait
-          sous le doigt. */}
-      {objets.map((t, i) =>
-        i === tenue ? null : (
+      {/* LA PIÈCE TENUE NE CHANGE JAMAIS D'INSTANCE, et c'est tout le sujet.
+          Elle a d'abord été DÉMONTÉE de la grille le temps du geste, une
+          seconde carte suivant le doigt à côté. Au lâcher, il existe un rendu
+          où la carte est relâchée mais où le chargement n'a pas encore
+          changé : elle se remontait donc dans le râtelier, puis glissait vers
+          le slot. Keko : « au moment de drop elle repart dans le stash puis
+          glisse vers le slot au lieu de partir de l'endroit où elle est
+          droppée ».
+
+          Une seule carte, du râtelier au doigt puis au slot : l'amortissement
+          de `Carte3D` fait l'atterrissage, et il part forcément d'où on a
+          lâché puisque c'est là qu'elle est. *Deux instances pour un seul
+          objet, c'est un saut de position à chaque relais.*
+
+          Conséquence heureuse : un dépôt REFUSÉ la ramène à sa case au lieu de
+          l'y téléporter. Et une pièce prise au maintien sans être bougée reste
+          à sa place — elle n'a pas encore quitté sa case. */}
+      {objets.map((t, i) => {
+        const suitLeDoigt = i === tenue && doigt !== null
+        return (
           <Carte3D
             key={t.objet.id}
             carte={pieceAPeindre(t.objet)}
-            position={t.position}
+            position={suitLeDoigt ? [doigt.x, doigt.y, Z_TENUE] : t.position}
             rotation={[0, 0, 0]}
-            taille={t.taille}
+            taille={suitLeDoigt ? tailleTenue : t.taille}
             ombre={false}
-            ressort={16}
+            ressort={suitLeDoigt ? 22 : 16}
+            engagee={suitLeDoigt}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />
-        ),
-      )}
+        )
+      })}
 
-      {/* LA PIÈCE TENUE SUIT LE DOIGT, réduite par défaut — une grosse carte
-          sous le doigt cache les slots qu'on vise (tranché par Keko en 2D) —
-          et à sa taille de slot dès qu'un slot la prend. */}
-      {portee !== null && doigt !== null && (
-        <Carte3D
-          carte={pieceAPeindre(portee.objet)}
-          position={[doigt.x, doigt.y, Z_TENUE]}
-          rotation={[0, 0, 0]}
-          taille={tailleTenue}
-          ombre={false}
-          ressort={22}
-          engagee
-          onPeinte={onPeinte}
-        />
-      )}
-
-      {/* LE BOUTON VIT AU CENTRE BAS, entre la réserve et le chargement.
-          Ancré au coin droit, il recouvrait la seconde ligne de la pile sur un
-          téléphone couché — et *rien ne le signalait*, puisqu'il restait
-          parfaitement visible : c'est ce qu'il cachait qui manquait. La bande
-          centrale, elle, est vide à tous les formats. */}
-      {/* IL SE GRISE QUAND ON NE PEUT PAS PARTIR : sans arme, il n'y a rien
-          pour frapper, et `descendreAuDonjon` refusait déjà en silence. *Un
-          bouton qui a l'air actif et ne fait rien se lit comme une panne* —
-          c'est exactement ce qu'on a corrigé sur les cartes injouables de la
-          main. Demandé par Keko, au même gris que pendant un glisser. */}
       <Bouton3D
         texte="Descendre"
         ton="or"

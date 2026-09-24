@@ -2612,6 +2612,28 @@ pour huit modèles : quatre par ligne, deux lignes, et la taille d'une carte du
 set bornée trois fois — plafond, hauteur (deux lignes plus leurs pastilles),
 largeur (quatre à côté de la pièce). Vérifié à 844x390 et 667x320.
 
+**LA PIÈCE TENUE NE CHANGE JAMAIS D'INSTANCE.** Elle a d'abord été DÉMONTÉE de
+la grille le temps du geste, une seconde carte suivant le doigt à côté — et au
+lâcher elle repartait de sa case d'origine pour glisser vers le slot. Keko :
+« au moment de drop elle repart dans le stash puis glisse vers le slot au lieu
+de partir de l'endroit où elle est droppée ».
+
+**La cause, mesurée à la sonde sur les rendus** : il existe un rendu où la
+carte est relâchée (`tenue` à `null`) mais où le chargement n'a pas encore
+changé. La carte s'y remontait donc à sa place d'avant, et le rendu suivant la
+faisait glisser. *Deux instances pour un seul objet, c'est un saut de position
+à chaque relais.*
+
+Une seule carte, du râtelier au doigt puis au slot : l'amortissement de
+`Carte3D` fait l'atterrissage, et il part forcément d'où l'on a lâché puisque
+c'est là qu'elle est. Vérifié en comptant les montages : huit au chargement de
+la page, **zéro pendant tout le glisser**.
+
+Deux corrections viennent avec, sans rien coûter : un dépôt REFUSÉ ramène la
+pièce à sa case au lieu de l'y téléporter, et une pièce prise au maintien sans
+être bougée reste à sa place — avant, elle disparaissait jusqu'au premier
+mouvement.
+
 **LA PIÈCE TENUE PREND LA TAILLE DU SLOT QUI L'ACCEPTE**, et reste réduite
 partout ailleurs. Demandé par Keko : « quand on drag un objet depuis le stash
 vers l'équipement, on peut lui redonner sa taille normale dès qu'il est
