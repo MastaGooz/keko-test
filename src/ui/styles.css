@@ -4158,13 +4158,18 @@ body {
 /* LE MEME OBJET QUE LE SYMBOLE DE COUT DES CARTES : socle sombre, filet de
    laiton, coeur d'ambre, chiffre en ivoire. C'est la regle de Keko -- le meme
    symbole partout, pour qu'on le comprenne d'un coup. */
+/* IL N'EST PLUS EMPILE SUR LA PIOCHE : il se pose DANS L'ECART entre le tas
+   et la main, et plus haut. Demande par Keko. Empile, il repoussait le tas
+   vers le bas et se lisait comme une etiquette du tas plutot que comme la
+   reserve du joueur. */
 .orbe-jeu {
-  position: relative;
+  position: absolute;
+  left: 5.3rem;
+  bottom: 6rem;
   display: grid;
   place-items: center;
   width: 3.25rem;
   height: 3.25rem;
-  margin-bottom: 0.375rem;
   filter: drop-shadow(0 2px 5px #000000a8);
 }
 

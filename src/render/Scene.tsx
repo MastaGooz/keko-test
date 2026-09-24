@@ -948,8 +948,8 @@ export function Scene(): React.JSX.Element {
               LES DEUX COINS SONT DES COLONNES, et c'est ce qui évite de caler
               l'orbe sur une hauteur de tas écrite à la main : il s'empile, et
               si le tas change de taille il suit. */}
+          <Orbe3D courant={combat.energie} max={combat.energieMax} />
           <div className="coin-3d gauche">
-            <Orbe3D courant={combat.energie} max={combat.energieMax} />
             <Tas3D nom="pioche" compte={combat.pioche.length} />
           </div>
           <div className="coin-3d droite">

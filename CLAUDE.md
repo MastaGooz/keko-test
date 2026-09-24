@@ -2724,15 +2724,20 @@ parce qu'il ne logeait pas sous sa pointe ; un disque a de la place au centre.
 Le courant est gros, le maximum petit : *on décide sur ce qu'il reste, pas sur
 ce qu'on avait.*
 
-**Il est AU-DESSUS DE LA PIOCHE**, et l'objection du jeu 2D ne tient plus : là
--bas l'orbe avait dû être poussé À DROITE du tas parce que le tas était une
-carte à la taille de la main, donc « au-dessus » l'envoyait en haut de l'écran.
-Ici le tas est un petit symbole.
+**IL SE POSE DANS L'ÉCART entre la pioche et la main, plus haut que les deux.**
+Il a d'abord été empilé directement sur le tas — Keko : « il va falloir placer
+le symbole avec X/X un peu plus haut, et au niveau du x, entre la pioche et la
+main ». *Empilé, il se lisait comme une étiquette du tas* et non comme la
+réserve du joueur : le compte de la pioche tombait juste en dessous, et les
+deux chiffres se suivaient.
 
-**Les deux coins sont des COLONNES** (`.coin-3d`), pas des éléments calés
-chacun sur une hauteur écrite à la main : l'orbe s'empile sur la pioche, et si
-le tas change de taille il suit. Vérifié à 844x390 et 667x320, sans contact
-avec la main.
+Dans l'écart il a sa propre place, au-dessus des PV, et la bande gauche se lit
+de bas en haut : le tas, les PV, l'énergie. Vérifié à 844x390, 667x320 et en
+plein écran — *le creux entre le tas et la main existe à tous les formats*,
+parce que la main se réserve une gouttière d'une carte de chaque côté.
+
+Les deux coins bas restent des COLONNES (`.coin-3d`) : rien n'y est calé sur
+une hauteur écrite à la main.
 
 Deux choses apprises en dessinant :
 
