@@ -44,7 +44,19 @@ export function Zoom3D({ carte, onFermer, onPeinte }: Props): React.JSX.Element 
 
   return (
     <group>
-      <mesh position={[0, 0, zVoile]} onPointerDown={() => onFermer?.()}>
+      {/* LE VOILE ARRÊTE L'ÉVÈNEMENT. Un plan intercepte bien le rayon, mais
+          R3F prévient TOUS les objets qu'il traverse : sans `stopPropagation`,
+          une tape sur le voile fermait le zoom *et* atteignait la carte
+          derrière, qui le rouvrait aussitôt sur elle. On ne pouvait donc pas
+          refermer en tapant sur la main — l'endroit le plus naturel.
+          *Intercepter le rayon n'est pas intercepter l'évènement.* */}
+      <mesh
+        position={[0, 0, zVoile]}
+        onPointerDown={(e) => {
+          e.stopPropagation()
+          onFermer?.()
+        }}
+      >
         <planeGeometry args={[40, 24]} />
         <meshBasicMaterial color="#05050a" transparent opacity={0.8} />
       </mesh>

@@ -2747,7 +2747,20 @@ corriger un écart. Deux fréquences qui ne retombent jamais en phase, sinon ça
 se lit comme un balancement régulier, donc comme une animation, et non comme
 une carte qui vibre d'impatience.
 
-### À LA SOURIS, LE MAINTIEN NE FAIT RIEN
+### Intercepter le rayon n'est pas intercepter l'évènement
+
+Le voile du zoom est un plan posé devant la scène, et il intercepte bien le
+rayon — mais **R3F prévient TOUS les objets que le rayon traverse**, pas
+seulement le premier. Sans `stopPropagation`, une tape sur le voile fermait le
+zoom *et* atteignait la carte derrière, qui le rouvrait aussitôt sur elle : on
+ne pouvait donc pas refermer en tapant sur la main, l'endroit le plus naturel.
+Le défaut ne se voyait qu'en tapant PILE sur une carte — partout ailleurs il
+n'y avait rien derrière, et ça marchait.
+
+*C'est la différence avec le DOM*, où un élément opaque arrête l'évènement
+pour ceux qui sont dessous. En 3D, la profondeur trie, elle ne bloque pas.
+
+### LE MAINTIEN NE FAIT RIEN
 
 Deux défauts d'un seul tenant, tous deux signalés par Keko sur PC.
 
@@ -2759,18 +2772,22 @@ et pas aller au centre même si on ne bouge pas ». Elle garde donc sa place
 dans l'éventail, seulement soulevée comme au survol : *une carte qu'on tient
 sans la bouger n'a pas encore quitté sa place.*
 
-**Et le maintien n'ouvre plus le zoom à la souris.** Le maintien est une
-réponse au TACTILE, où une tape dérive de quelques pixels et se ferait passer
-pour un glisser ; la souris n'a pas ce problème, huit pixels suffisent à
-trancher. Gardé pour elle, il donnait un geste que personne n'a demandé — on
+**Et le maintien n'ouvre plus le zoom, NI à la souris NI au doigt.** On
 appuyait, la carte montait, on relâchait sans avoir bougé et elle s'ouvrait en
-grand. Keko : « le zoom doit se déclencher uniquement en clic simple, pas en
-maintien ». À la souris, donc : seul le déplacement prend la carte, et seul un
-clic court la regarde.
+grand : un geste que personne n'a demandé. Keko l'a signalé deux fois, une par
+appareil. Seul un appui **bref** regarde la carte ; un appui long la tient, et
+la relâcher ne demande rien.
 
-**Au doigt, rien ne bouge** : le maintien prend toujours la carte, et *le
-déplacement décide, jamais la durée* — sinon le zoom redevient impossible à
-ouvrir, ce qui avait coûté trois allers-retours en 2D.
+À la souris, le maintien ne la prend même pas : huit pixels suffisent à
+distinguer un clic d'un glisser, alors qu'au doigt une tape dérive toujours un
+peu — là, le maintien reste la prise en main.
+
+**C'est un retour sur la règle du jeu 2D**, qui disait « le déplacement décide,
+jamais la durée » de peur que le zoom devienne impossible à ouvrir au doigt.
+*La crainte ne tient plus, et la raison est structurelle* : en 2D le zoom était
+le SEUL usage de la tape, ici la carte se prend au maintien et se regarde à la
+tape — deux gestes, deux réponses. **Une règle héritée doit se relire dans le
+système où on la porte**, pas seulement dans celui qui l'a produite.
 
 ### Le survol n'existe qu'à la souris — en 3D aussi
 

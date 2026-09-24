@@ -38,18 +38,19 @@ const SEUIL_DOIGT = 16
 const DELAI_PRISE = 160
 
 /**
- * À LA SOURIS, LE MAINTIEN NE FAIT RIEN — ni prendre la carte, ni la
- * regarder.
+ * LE MAINTIEN N'OUVRE PAS LE ZOOM — ni au doigt, ni à la souris.
  *
- * Le maintien est une réponse au tactile, où une tape dérive de quelques
- * pixels et se ferait passer pour un glisser. **La souris n'a pas ce
- * problème** : huit pixels suffisent à la distinguer. Gardé pour elle, il
- * donnait un geste que personne n'a demandé — on appuyait, la carte se
- * soulevait, on relâchait sans avoir bougé et elle s'ouvrait en grand. Keko :
- * « le zoom doit se déclencher uniquement en clic simple, pas en maintien ».
+ * On appuyait, la carte se soulevait, on relâchait sans avoir bougé et elle
+ * s'ouvrait en grand : un geste que personne n'a demandé. Keko : « le zoom
+ * doit se déclencher uniquement en clic simple, pas en maintien », puis sur
+ * téléphone : « quand je tape une carte longtemps mais que je ne bouge pas au
+ * moment où je lâche, ça déclenche le zoom, alors que ça ne devrait pas ».
  *
- * Au doigt la règle ne bouge pas : *le déplacement décide, jamais la durée*,
- * sinon le zoom devient impossible à ouvrir.
+ * **C'est un retour sur la règle du jeu 2D**, qui disait « le déplacement
+ * décide, jamais la durée » de peur que le zoom devienne impossible à ouvrir
+ * au doigt. La crainte ne tient plus : là-bas le zoom était le SEUL usage de
+ * la tape, ici la carte se prend au maintien et se regarde à la tape — deux
+ * gestes, deux réponses. Un appui bref ouvre, un appui long tient.
  */
 const DUREE_CLIC = 320
 
@@ -193,13 +194,11 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
       onFin?.(e.pointerType)
       if (index < 0) return
 
-      // AU DOIGT, LE DÉPLACEMENT DÉCIDE, PAS LA DURÉE : une carte reposée sans
-      // avoir bougé se regarde, qu'on ait appuyé un instant ou trois
-      // secondes — *il n'existe aucune façon de rater ce geste-là*. À la
-      // souris, un maintien n'est pas un clic et ne doit rien ouvrir.
+      // REPOSÉE SANS AVOIR BOUGÉ : on la regarde, mais seulement si l'appui
+      // était bref. Un maintien n'est pas une tape — c'est la prise en main,
+      // et la relâcher ne demande rien.
       if (!bouge) {
-        const maintenu = e.pointerType === 'mouse' && performance.now() - g.debut > DUREE_CLIC
-        if (!maintenu) onTaper?.(index)
+        if (performance.now() - g.debut <= DUREE_CLIC) onTaper?.(index)
         return
       }
       if (point === null || ancre === null) return
