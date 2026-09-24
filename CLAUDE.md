@@ -2104,6 +2104,30 @@ slot était plus petit que la main : ici la carte y est à sa taille de main et
 sans voisine par-dessus. *Le zoom existe pour défaire un recouvrement, pas par
 principe.*
 
+### La main : plus basse, et l'éventail plus plat
+
+Keko : « la main de cartes est trop haute, il faudrait la descendre un peu,
+même si on ne voit pas la partie inférieure des cartes », et « il faudrait
+diminuer l'angle de l'éventail, les cartes en bordure de main sont trop
+inclinées ». La carte est donc **enfouie de 20 %** sous le bord bas (au lieu
+de 9), et l'inclinaison passe de ~10° à ~7° par cran — 27° d'écart entre les
+deux cartes extrêmes au lieu de 41.
+
+**LA BORNE DE L'ENFOUISSEMENT, C'EST LE NOM.** À 24 % — la valeur du jeu 2D —
+les cartes des bords, que le creux de l'arc descend encore, perdaient le leur.
+*Une carte sans nom n'est plus une carte, c'est une couleur.* Le creux a donc
+été aplati avec l'inclinaison, pour que la part enfouie soit à peu près la
+même d'un bout à l'autre de la main.
+
+*Ça vaut sur tous les formats sans rien recalculer* : l'enfouissement est une
+fraction DE LA CARTE, pas une hauteur d'écran — une carte plus grande sur
+téléphone s'enfouit d'autant plus en pixels, et son nom reste à la même place
+relative.
+
+**Et tout ce qui se cale sur la main suit**, parce que `ligneDeLaMain` et
+`ancreVisee` sortent de `yMain` : la ligne d'activation et la place de la
+carte qui vise descendent du même coup, sans réglage séparé.
+
 ### LE GESTE EST UN MODULE, PAS UN BOUT DE LA MAIN
 
 `geste-carte.ts`. Prendre, promener, lâcher vivaient dans `Main3D`, et ils y

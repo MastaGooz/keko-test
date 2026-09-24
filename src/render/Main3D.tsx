@@ -44,16 +44,20 @@ import type { CarteAPeindre } from './texture-carte.ts'
  * nom calé à gauche — mais **ici le nom est centré**, donc c'est le milieu de
  * la carte qu'il faut dégager, pas son bord.
  *
- * **L'INCLINAISON A DOUBLÉ** (0,09 → 0,18 radian par cran, soit ~10° au lieu
- * de 5). À 5°, cinq cartes ne s'écartaient que de 10° du bord au bord : elles
- * se lisaient comme une rangée de cartes parallèles, pas comme une main tenue.
- * Keko : « l'inclinaison est beaucoup trop droite ». Le creux suit, sinon
- * l'arc penche sans se creuser et les cartes des bords partent de travers
- * au lieu de descendre.
+ * **L'INCLINAISON a d'abord doublé, puis rendu un tiers.** À 5° par cran,
+ * cinq cartes ne s'écartaient que de 10° du bord au bord : elles se lisaient
+ * comme une rangée parallèle, pas comme une main tenue (Keko : « l'inclinaison
+ * est beaucoup trop droite »). À 10°, les cartes des bords partaient trop de
+ * travers — « trop inclinées ». Le réglage tenu est ~7°, soit 27° d'écart
+ * entre les deux extrêmes.
+ *
+ * **Le creux suit toujours l'inclinaison**, dans le même rapport : sans ça,
+ * l'arc penche sans se creuser et les cartes des bords partent de travers au
+ * lieu de descendre.
  */
 const PAS = 0.72
-const CREUX = 0.1
-const INCLINAISON = 0.18
+const CREUX = 0.05
+const INCLINAISON = 0.12
 
 /**
  * Où la main se pose, et de combien elle se couche vers le joueur.
@@ -78,12 +82,22 @@ const COUCHE = 0
 
 /**
  * Où la main se pose en y, pour cette fenêtre : collée au bord bas, la carte
- * enfouie de ~9 %. **Calculée, pas fixée** : la caméra recule sur grand écran
+ * **enfouie de 20 %**. Elle l'a d'abord été de 9 %, et la main montait trop
+ * haut : Keko : « la main de cartes est trop haute, il faudrait la descendre
+ * un peu, même si on ne voit pas la partie inférieure des cartes ». *Ce qui
+ * est enfoui est ce qu'on lit le moins* — le pied et la fin du cartouche — et
+ * lever la carte le rend.
+ *
+ * **La borne, c'est le NOM.** À 24 % d'enfouissement, les cartes des bords —
+ * que le creux de l'arc descend encore — perdaient le leur, et une carte sans
+ * nom n'est plus une carte, c'est une couleur. Le creux a donc été aplati en
+ * même temps, pour que la part enfouie soit à peu près la même d'un bout à
+ * l'autre de la main. **Calculée, pas fixée** : la caméra recule sur grand écran
  * (`Cadrage`), donc le bord bas de l'écran descend en unités de scène — une
  * constante laissait la main flotter au milieu.
  */
 function yMain(hauteurFenetrePx: number): number {
-  return -hauteurVisibleA(Z_MAIN, hauteurFenetrePx) / 2 + HAUT * 0.41
+  return -hauteurVisibleA(Z_MAIN, hauteurFenetrePx) / 2 + HAUT * 0.3
 }
 
 /**
