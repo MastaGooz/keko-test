@@ -26,7 +26,7 @@
  * ajoute : l'épaisseur, l'ombre portée d'une carte sur sa voisine, et le
  * laiton du cadre qui prend la lumière.
  */
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Carte3D, HAUT } from './Carte3D.tsx'
@@ -137,6 +137,8 @@ type Props = {
   onReordonner?: (de: number, vers: number) => void
   onFermerZoom?: () => void
   onPeinte?: () => void
+  /** Une carte est tenue au doigt (ou vient d'être lâchée). */
+  onSaisie?: (tenue: boolean) => void
 }
 
 /**
@@ -181,9 +183,16 @@ export function Main3D({
   onReordonner,
   onFermerZoom,
   onPeinte,
+  onSaisie,
 }: Props): React.JSX.Element {
   const { camera } = useThree()
   const [tenue, setTenue] = useState<number | null>(null)
+
+  // Le parent veut savoir quand on tient une carte : c'est lui qui fait passer
+  // la scène devant l'interface le temps du geste.
+  useEffect(() => {
+    onSaisie?.(tenue !== null)
+  }, [tenue, onSaisie])
   const [survolee, setSurvolee] = useState<number | null>(null)
   const [doigt, setDoigt] = useState<THREE.Vector3 | null>(null)
 

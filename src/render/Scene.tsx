@@ -27,6 +27,8 @@ export function Scene(): React.JSX.Element {
   const [zoomee, setZoomee] = useState<number | null>(null)
   /** La carte sortie de la main, en attente de sa cible. */
   const [engagee, setEngagee] = useState<number | null>(null)
+  /** Une carte est tenue au doigt. */
+  const [saisie, setSaisie] = useState(false)
 
   // LE CHARGEMENT DOIT SE VOIR. Rien ne s'affiche tant que les polices et les
   // illustrations ne sont pas là — et sur un téléphone ça fait plusieurs
@@ -143,7 +145,15 @@ export function Scene(): React.JSX.Element {
         // LE CANVAS EST TRANSPARENT, et le fond vit derrière lui : c'est ce
         // qui permet de glisser l'interface DESSOUS. Avec un fond sur le
         // canvas, tout ce qu'on met derrière disparaît.
-        style={{ position: 'fixed', inset: 0, zIndex: 2 }}
+        //
+        // ET LA SCÈNE PASSE DEVANT TOUT LE TEMPS D'UN GESTE. Au repos, le
+        // bouton de fin de tour et les lignes d'état restent au-dessus — il
+        // faut pouvoir cliquer le bouton. Mais une carte qu'on tient ou qu'on
+        // regarde ne doit passer sous rien : pendant ce temps on n'a besoin
+        // d'aucune commande, donc la scène monte au-dessus et redescend au
+        // lâcher. Keko : « la carte est toujours sous le bouton fin de tour
+        // et les deux textes gris en haut ».
+        style={{ position: 'fixed', inset: 0, zIndex: saisie || zoomee !== null ? 4 : 2 }}
       >
         <ambientLight intensity={0.55} />
         {/* Le biais d'ombre éloigne la profondeur comparée d'un cheveu : sans
@@ -179,6 +189,7 @@ export function Scene(): React.JSX.Element {
           onReordonner={reordonner}
           onFermerZoom={() => setZoomee(null)}
           onPeinte={compter}
+          onSaisie={setSaisie}
         />
 
         <mesh position={[0, 0, -1.2]} receiveShadow>
