@@ -3765,9 +3765,14 @@ body {
   transform: scaleX(-1);
 }
 
+/* L'IMAGE PORTE SES MARGES, LE SVG N'EN AVAIT PAS. Le viewBox collait au
+   dessin ; `Deck.png` laisse 14 a 17 % de transparent sur chaque bord, donc le
+   paquet paraitrait un tiers plus petit a place egale. On l'agrandit d'autant
+   et on laisse deborder -- la colonne ne sert qu'a l'aligner. */
 .tas-dessin {
   display: block;
-  width: 100%;
+  width: 138%;
+  margin: -12% -19% -16%;
   filter: drop-shadow(0 2px 4px #000000a8);
 }
 

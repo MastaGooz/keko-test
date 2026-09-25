@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { Ennemi } from '../logic/combat.ts'
-import { urlDeLEnnemi } from '../ui/art.ts'
+import { CAMP, type Decor, urlDeLEnnemi } from '../ui/art.ts'
 import { boiteDe, mesurerBoite } from './silhouette.ts'
 import { creature } from '../ui/illustrations.ts'
 
@@ -67,14 +67,23 @@ export function identiteEnnemi(nom: string): string {
 
 /**
  * LE DÉCOR SUIT CEUX QU'ON AFFRONTE : les cultistes au temple, les gobelins au
- * camp. C'est ce que les deux fonds de Keko demandent — *un décor qui ne
- * changerait jamais ne serait qu'un papier peint.*
+ * camp. C'est ce que les fonds de Keko demandent — *un décor qui ne changerait
+ * jamais ne serait qu'un papier peint.*
  *
  * Il se lit sur le PREMIER corps du rang : un groupe est d'une seule famille, et
  * le premier survit à la mort des autres tant qu'il n'est pas tombé lui-même.
+ *
+ * **ET LE CAMP S'ENFONCE AVEC LA DESCENTE** : porte, forge, tentes, répartis sur
+ * la profondeur. Ses trois vues ne sont pas trois lieux, c'est un seul qu'on
+ * traverse — et *tirer la vue au sort aurait dit l'inverse.* La part est celle
+ * du palier dans la run, donc la progression tient quelle que soit sa longueur ;
+ * les paliers de cultistes la trouent sans la casser, puisqu'on ne revient
+ * jamais en arrière.
  */
-export function decorDuRang(noms: readonly string[]): 'temple' | 'camp' {
-  return FIGURES[noms[0] ?? '']?.famille === 'gobelins' ? 'camp' : 'temple'
+export function decorDuRang(noms: readonly string[], part: number): Decor {
+  if (FIGURES[noms[0] ?? '']?.famille !== 'gobelins') return 'temple'
+  const i = Math.min(CAMP.length - 1, Math.floor(Math.max(0, part) * CAMP.length))
+  return CAMP[i]!
 }
 
 /**

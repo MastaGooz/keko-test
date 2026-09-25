@@ -118,12 +118,22 @@ export function urlDuCout(): string {
  *
  * Même piège de cache que les autres fichiers de `public/`.
  */
-export type Decor = 'temple' | 'camp'
+export type Decor = 'temple' | 'camp-porte' | 'camp-forge' | 'camp-tente'
 
 const DECORS: Record<Decor, string> = {
   temple: 'Temple.webp',
-  camp: 'Camp.webp',
+  'camp-porte': 'Camp_porte.webp',
+  'camp-forge': 'Camp_forge.webp',
+  'camp-tente': 'Camp_tente.webp',
 }
+
+/**
+ * LES TROIS VUES DU CAMP, DANS L'ORDRE OÙ L'ON S'Y ENFONCE : la porte d'abord,
+ * puis la forge, puis les tentes. *Une descente traverse un lieu*, elle ne le
+ * retire pas au hasard — et trois décors tirés au sort auraient dit « trois
+ * camps » là où ils peuvent dire « un camp, de plus en plus loin ».
+ */
+export const CAMP: readonly Decor[] = ['camp-porte', 'camp-forge', 'camp-tente']
 
 export function urlDuDecor(decor: Decor): string {
   return `${import.meta.env.BASE_URL}${DECORS[decor]}?v=${encodeURIComponent(__BUILD_TIME__)}`
@@ -165,6 +175,18 @@ export function urlDeLEnnemi(nom: string): string | null {
   const fichier = IMAGES_ENNEMIS[cle(nom)]
   if (fichier === undefined) return null
   return `${import.meta.env.BASE_URL}${fichier}?v=${encodeURIComponent(__BUILD_TIME__)}`
+}
+
+/**
+ * LE PAQUET DE CARTES — le symbole de la pioche et de la défausse, dessiné par
+ * Keko. Il remplace le losange en perspective qu'on projetait à la main ; ce
+ * dessin-là reste dans `git log`, avec sa leçon (un losange symétrique ne peut
+ * être qu'un carré, le rapport d'une carte se projette et ne se devine pas).
+ *
+ * Même piège de cache que les autres fichiers de `public/`.
+ */
+export function urlDuDeck(): string {
+  return `${import.meta.env.BASE_URL}Deck.png?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
 /** Le dos de carte, pour les tas. */

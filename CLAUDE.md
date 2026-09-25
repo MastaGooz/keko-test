@@ -3036,9 +3036,16 @@ hasard — il frappe un tour sur deux en frappant plus fort, le tempo même d'un
 kamikaze.
 
 **LE DÉCOR SUIT CEUX QU'ON AFFRONTE** (`decorDuRang`) : les cultistes au temple,
-les gobelins au camp. C'est ce que les deux fonds demandent — *un décor qui ne
+les gobelins au camp. C'est ce que les fonds demandent — *un décor qui ne
 changerait jamais ne serait qu'un papier peint.* Il se lit sur le premier corps
 du rang, puisqu'un groupe est d'une seule famille.
+
+**ET LE CAMP S'ENFONCE AVEC LA DESCENTE** : porte, forge, tentes, répartis sur la
+profondeur (2 paliers chacun sur une run de 6). Ses trois vues ne sont pas trois
+lieux, c'est un seul qu'on traverse — et *tirer la vue au sort aurait dit
+l'inverse.* La part est celle du palier dans la run, donc la progression tient
+quelle que soit sa longueur ; les paliers de cultistes la trouent sans la
+casser, puisqu'on ne revient jamais en arrière.
 
 **LES REPÈRES SE POSENT SUR LE SUJET, PAS SUR SON CADRE** (`silhouette.ts`).
 Toutes les images font le même carré, mais le sujet n'y occupe pas la même
@@ -3170,6 +3177,16 @@ la forme penchait.* L'angle retenu est le seul pour lequel la diagonale du
 rectangle tombe à la verticale. **Un rectangle ne peut pas être symétrique en
 plus de ça** — ses deux coins de côté restent à des hauteurs différentes, et
 c'est précisément ce qui le distingue d'un carré.
+
+**C'EST MAINTENANT LE DESSIN DE KEKO** (`public/Deck.png`) : un paquet doré vu
+en 3/4, qui remplace le losange projeté à la main. Ce qu'il a coûté reste dans
+`git log`, et sa leçon vaut d'être retenue — *un losange symétrique ne peut pas
+être autre chose qu'un carré*, le rapport d'une carte se projette et ne se
+devine pas à l'oeil.
+
+**L'image est agrandie pour compenser ses marges** : le viewBox du SVG collait au
+dessin, un PNG porte ses bords transparents (14 à 17 % de chaque côté). Sans
+ça, le paquet paraîtrait un tiers plus petit à place égale dans le coin.
 
 **ET LA PIOCHE EST LE MIROIR DE LA DÉFAUSSE.** Le paquet penche : son coin bas
 est centré, mais son grand axe monte vers la droite — un rectangle ne peut pas

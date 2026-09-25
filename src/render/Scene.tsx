@@ -674,8 +674,14 @@ export function Scene(): React.JSX.Element {
   const [, remesure] = useState(0)
   const mesure = useCallback(() => remesure((n) => n + 1), [])
 
-  // LE DÉCOR SUIT CEUX QU'ON AFFRONTE, et il se relit à chaque combat.
-  const decor = decorDuRang(combat.ennemis.map((e) => e.nom))
+  // LE DÉCOR SUIT CEUX QU'ON AFFRONTE, et il se relit à chaque combat. La part
+  // de profondeur décide de quelle vue du camp : on s'y enfonce.
+  const profondeurMax = Math.max(1, enCours.reglage.profondeurMax)
+  const part = profondeurMax > 1 ? (enCours.profondeur - 1) / (profondeurMax - 1) : 0
+  const decor = decorDuRang(
+    combat.ennemis.map((e) => e.nom),
+    part,
+  )
 
   const ancres = rang.flatMap(
     (p, i) => {
