@@ -4285,24 +4285,86 @@ body {
    ne dit plus quelle est sa taille. Keko : « on ne voit pas la taille max
    quand on a perdu des PV ». Une jauge sans cadre ne montre que ce qui reste,
    jamais ce qu'on a perdu. */
-/* MEME SERTISSAGE QUE LES CREATURES : le joueur lit son etat avec la meme
-   grammaire que celle d'en face, et ca vaut jusqu'au metal.
+/* LA BARRE DU JOUEUR EST UNE PIECE DE FERRONNERIE, PAS UN RECTANGLE.
 
-   LE CONTOUR RESTE CLAIR, et c'est sa fonction : sans lui, une barre a moitie
-   vide ne dit plus quelle est sa taille -- Keko : « on ne voit pas la taille max
-   quand on a perdu des PV ». Il passe du blanc pur au laiton clair, double d'un
-   noir : la meme lecture, dans la langue du jeu. */
+   Keko l'a trouvee « vraiment classique et pas stylisee » deux fois de suite,
+   malgre un sertissage de laiton et un lustre. Le defaut n'etait pas
+   l'habillage : *une barre horizontale a coins droits EST le vocabulaire par
+   defaut des jeux video*, et aucune decoration ne le defait. C'est la
+   SILHOUETTE qu'il fallait changer.
+
+   Trois pieces desormais, la ou un rectangle borde n'en est qu'une : une plaque
+   de laiton aux coins coupes, une ferrure a chaque extremite avec son rivet, et
+   un creux de pierre au milieu ou coule le rouge.
+
+   La barre elle-meme ne porte plus rien : elle n'est que la boite qui tient les
+   trois, et le chiffre qui la deborde. */
 .vie-barre {
   position: relative;
   flex: 1;
-  height: 0.875rem;
-  border: 1px solid #d8bb72;
-  border-radius: 2px;
-  background: linear-gradient(180deg, #120a0d, #1f1216);
-  box-shadow:
-    inset 0 1px 2px #000000a8,
-    0 0 0 1px #000000a8,
-    0 1px 4px #000000b0;
+  /* PLUS EPAISSE QU'UNE JAUGE DE CREATURE, et c'est la contrepartie de la
+     plaque : il faut que le laiton se VOIE autour du creux, sinon il ne reste
+     qu'un lisere et on retombe sur le rectangle borde d'avant. Le joueur n'a
+     pas de corps, donc cette hauteur ne pese sur aucune silhouette. */
+  height: 1.45rem;
+}
+
+/* LA PLAQUE PORTE LA SILHOUETTE. Elle vit dans son propre element parce qu'un
+   rognage sur `.vie-barre` emporterait le chiffre, qui doit deborder. */
+.vie-plaque {
+  position: absolute;
+  inset: 0;
+  /* LES COINS SONT COUPES, pas arrondis : un biseau est de la ferronnerie, un
+     arrondi est un gabarit. */
+  clip-path: polygon(
+    0.3rem 0,
+    calc(100% - 0.3rem) 0,
+    100% 50%,
+    calc(100% - 0.3rem) 100%,
+    0.3rem 100%,
+    0 50%
+  );
+  background: linear-gradient(180deg, #f6e4b4 0%, #c2a366 42%, #8a7346 72%, #5e4e30 100%);
+  box-shadow: 0 1px 4px #000000b0;
+}
+
+/* LE CREUX DE PIERRE, en retrait dans la plaque : c'est lui qui recoit le
+   rouge. Sa partie vide est striee -- du noir uni se lirait comme un trou, pas
+   comme une gorge taillee. */
+.vie-couleurs {
+  position: absolute;
+  inset: 0.34rem 0.62rem;
+  overflow: hidden;
+  border-radius: 1px;
+  background:
+    repeating-linear-gradient(90deg, #ffffff08 0 1px, #0000 1px 4px),
+    linear-gradient(180deg, #150c10, #0a0609);
+  box-shadow: inset 0 1px 2px #000, inset 0 -1px 0 #ffffff1a;
+}
+
+/* LES DEUX FERRURES, par-dessus la plaque : ce sont elles qui font lire une
+   piece montee plutot qu'une jauge. Chacune porte son rivet. */
+.vie-barre::before,
+.vie-barre::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0.52rem;
+  background:
+    radial-gradient(circle at 50% 50%, #5e4e30 0 12%, #0000 13%),
+    linear-gradient(180deg, #fbeecb, #b2955c 55%, #6b5a38);
+  box-shadow: 0 1px 3px #00000099;
+}
+
+.vie-barre::before {
+  left: 0;
+  clip-path: polygon(0.3rem 0, 100% 0, 100% 100%, 0.3rem 100%, 0 50%);
+}
+
+.vie-barre::after {
+  right: 0;
+  clip-path: polygon(0 0, calc(100% - 0.3rem) 0, 100% 50%, calc(100% - 0.3rem) 100%, 0 100%);
 }
 
 /* L'ARMURE DANS UN BOUCLIER, A DROITE DE LA BARRE. Elle y etait un segment
@@ -4347,13 +4409,8 @@ body {
 /* L'ARRONDI VIT SUR LE CONTENANT, PAS SUR LES SEGMENTS : c'est ce qui rend les
    separations DROITES. Chaque segment portait le sien, donc chaque frontiere
    interne etait une double courbe -- or un arrondi arrondit les DEUX bouts
-   d'un segment, alors qu'un seul des deux est un bord de la barre. */
-.vie-couleurs {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  border-radius: 1px;
-}
+   d'un segment, alors qu'un seul des deux est un bord de la barre. Le contenant
+   est le creux de pierre, declare plus haut avec la plaque. */
 
 .vie-rouge,
 .vie-jaune {

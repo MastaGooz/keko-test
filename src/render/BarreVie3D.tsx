@@ -5,10 +5,25 @@
  * réunies autour d'une barre, la même que celle des créatures — *le joueur lit
  * son état avec la même grammaire que celle d'en face.*
  *
- * **LA BARRE PORTE UN CONTOUR BLANC**, et ce n'est pas un ornement : sans lui,
- * une barre à moitié vide ne dit plus quelle est sa taille. Keko : « on ne
- * voit pas la taille max quand on a perdu des PV ». *Une jauge sans cadre ne
- * montre que ce qui reste, jamais ce qu'on a perdu.*
+ * **CE N'EST PLUS UN RECTANGLE, ET C'ÉTAIT LE VRAI DÉFAUT.** Keko l'a trouvée
+ * « vraiment classique et pas stylisée » deux fois de suite, malgré un
+ * sertissage de laiton et un lustre : *une barre horizontale à coins droits EST
+ * le vocabulaire par défaut des jeux vidéo*, et aucun habillage ne le défait.
+ * C'est la silhouette qu'il fallait changer.
+ *
+ * Elle est donc taillée dans une **plaque de laiton** : coins coupés en biseau,
+ * une **ferrure** à chaque extrémité avec son rivet, et un **creux de pierre**
+ * au milieu où coule le rouge. Trois pièces, comme une ferronnerie — là où un
+ * rectangle bordé n'en est qu'une.
+ *
+ * **La plaque vit dans un élément à elle**, parce qu'elle porte le rognage de
+ * la silhouette : sur `.vie-barre`, ce rognage emporterait le chiffre, qui doit
+ * déborder.
+ *
+ * **LE CADRE CLAIR RESTE, et c'est sa fonction** : sans lui, une barre à moitié
+ * vide ne dit plus quelle est sa taille. Keko : « on ne voit pas la taille max
+ * quand on a perdu des PV ». *Une jauge sans cadre ne montre que ce qui reste,
+ * jamais ce qu'on a perdu.* C'est désormais la plaque qui le porte.
  *
  * **L'ARMURE A QUITTÉ LA BARRE** : elle est à sa droite, dans un bouclier, avec
  * son chiffre. Elle y était un segment bleu collé au rouge, ce qui la faisait
@@ -57,6 +72,12 @@ export function BarreVie3D({ pv, pvMax, armure, menace, encaisse }: Props): Reac
   return (
     <div className="vie-rangee">
       <div className={`vie-barre${encaisse ? ' encaisse' : ''}`}>
+        {/* LA PLAQUE DE LAITON, dans un élément à elle.
+            Elle porte la SILHOUETTE — des coins coupés, des ferrures aux deux
+            bouts — et elle ne peut donc pas être portée par `.vie-barre` : son
+            rognage emporterait le chiffre, qui doit déborder. */}
+        <span className="vie-plaque" />
+
         {/* LES COULEURS SONT DANS UN CONTENANT QUI LES ROGNE, et c'est ce qui
             rend la séparation DROITE : l'arrondi vit sur le contenant seul.
             *Un arrondi sur un segment arrondit ses DEUX bouts, or un seul des
