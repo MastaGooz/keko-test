@@ -22,13 +22,17 @@
  * la barre changerait de longueur en gagnant une Garde, et son remplissage
  * sauterait à l'instant même où l'on veut lire ce qu'on vient de gagner.
  *
- * **CE QU'ON VA PRENDRE EST EN JAUNE, SANS CHIFFRE.** La bande occupe la droite
- * du rouge — c'est par là que la jauge se vide, donc c'est là qu'on cherche ce
- * qu'on va perdre ; posée à gauche elle se lirait comme ce qui reste. Elle a
- * porté son chiffre, Keko l'a retiré : la longueur suffit, et un troisième
- * nombre sur une barre de 130 px en faisait une ligne de comptes. La menace
- * **déduit déjà l'armure**, donc le jaune dit des PV perdus pour de bon :
- * poser une Garde le fait reculer sous les yeux du joueur.
+ * **CE QU'ON VA PRENDRE EST EN JAUNE**, à droite du rouge — c'est par là que la
+ * jauge se vide, donc c'est là qu'on cherche ce qu'on va perdre ; posée à
+ * gauche elle se lirait comme ce qui reste. La menace **déduit déjà
+ * l'armure**, donc le jaune dit des PV perdus pour de bon : poser une Garde le
+ * fait reculer sous les yeux du joueur.
+ *
+ * **SON CHIFFRE EST ANCRÉ AU BORD DROIT DE LA BARRE**, pas centré sur la
+ * bande. Centré, il suivait une bande qui rétrécit : sur un téléphone il
+ * finissait à cheval sur le bord et tombait dans le noir, et il fallait le
+ * borner. *Un repère qui doit rester lisible se pose à un endroit FIXE ; c'est
+ * la couleur derrière lui qui bouge, pas lui.*
  */
 
 type Props = {
@@ -70,6 +74,8 @@ export function BarreVie3D({ pv, pvMax, armure, menace, encaisse }: Props): Reac
           {pv}
           <small>/{pvMax}</small>
         </span>
+
+        {perdus > 0 && <span className="vie-chiffre menace">−{perdus}</span>}
       </div>
 
       <div className="vie-armure">

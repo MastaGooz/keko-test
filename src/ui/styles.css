@@ -4282,6 +4282,18 @@ body {
   white-space: nowrap;
 }
 
+/* CE QU'ON VA PRENDRE, ANCRE AU BORD DROIT DE LA BARRE -- pas centre sur sa
+   bande. Centre, il suivait une bande qui retrecit : sur un telephone il
+   finissait a cheval sur le bord et tombait dans le noir. Un repere qui doit
+   rester lisible se pose a un endroit FIXE ; c'est la couleur derriere lui qui
+   bouge, pas lui. */
+.vie-chiffre.menace {
+  left: auto;
+  right: 0.4rem;
+  translate: 0 -50%;
+  font-size: 0.75rem;
+}
+
 .vie-chiffre small {
   opacity: 0.65;
   font-size: 0.8em;

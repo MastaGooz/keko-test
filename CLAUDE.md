@@ -2748,13 +2748,17 @@ la barre changerait de longueur en gagnant une Garde, et son remplissage
 sauterait à l'instant même où l'on veut lire ce qu'on vient de gagner. Du coup
 l'échelle de la barre est redevenue `pvMax` tout simplement.
 
-**CE QU'ON VA PRENDRE EST EN JAUNE, À DROITE DU ROUGE, ET SANS CHIFFRE.** C'est
-par là que la jauge se vide, donc c'est là qu'on cherche ce qu'on va perdre ;
-posée à gauche, la bande se lirait comme ce qui reste. Elle a porté son
-chiffre, Keko l'a retiré : la longueur suffit, et *un troisième nombre sur une
-barre de 130 px en faisait une ligne de comptes*. La menace **déduit déjà
-l'armure**, donc le jaune dit des PV perdus pour de bon : poser une Garde le
-fait reculer sous les yeux du joueur.
+**CE QU'ON VA PRENDRE EST EN JAUNE, À DROITE DU ROUGE.** C'est par là que la
+jauge se vide, donc c'est là qu'on cherche ce qu'on va perdre ; posée à gauche,
+la bande se lirait comme ce qui reste. La menace **déduit déjà l'armure**, donc
+le jaune dit des PV perdus pour de bon : poser une Garde le fait reculer sous
+les yeux du joueur.
+
+**SON CHIFFRE EST ANCRÉ AU BORD DROIT DE LA BARRE**, à l'intérieur — pas centré
+sur la bande. Centré, il suivait une bande qui rétrécit : sur un téléphone il
+finissait à cheval sur le bord et tombait dans le noir, ce qui avait demandé de
+le borner. *Un repère qui doit rester lisible se pose à un endroit FIXE ; c'est
+la couleur derrière lui qui bouge, pas lui.*
 
 Le chiffre des PV est au milieu de la barre, comme sur les créatures — et il
 vit HORS du rognage des couleurs, sans quoi il serait coupé par lui : le
