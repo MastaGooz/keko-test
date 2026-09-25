@@ -24,7 +24,13 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { CarteAPeindre } from './texture-carte.ts'
-import { DEBORD_CONTOUR, signature, textureContour, textureDeCarte } from './texture-carte.ts'
+import {
+  DEBORD_CONTOUR,
+  signature,
+  textureContour,
+  textureDeCarte,
+  textureDuDos,
+} from './texture-carte.ts'
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
 export const LARGE = 1
@@ -145,6 +151,12 @@ type Props = {
    * ne s'impatiente pas.
    */
   peril?: boolean
+  /**
+   * Elle montre son DOS et non sa face. Le dos est peint par le même module,
+   * depuis la même anatomie : *c'est la même carte vue de l'autre côté*, pas
+   * un second objet.
+   */
+  dos?: boolean
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -162,6 +174,7 @@ export function Carte3D({
   jouable = true,
   ombre = true,
   peril = false,
+  dos = false,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -246,7 +259,7 @@ ${nuanceur.fragmentShader}`
     // prêtent, et une carte remontée la retrouve déjà prête — donc elle ne
     // repasse jamais par son état sombre. Rien n'est libéré ici pour la même
     // raison : elle ne nous appartient pas.
-    void textureDeCarte(carte).then((texture) => {
+    void (dos ? textureDuDos() : textureDeCarte(carte)).then((texture) => {
       if (!vivant) return
       face.map = texture
       face.needsUpdate = true
@@ -267,7 +280,7 @@ ${nuanceur.fragmentShader}`
     // famille de raison : une fonction recréée à chaque rendu du parent
     // repeindrait la carte en boucle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature(carte), face])
+  }, [signature(carte), face, dos])
 
   /**
    * La place LISSÉE, tenue à part de celle du groupe.

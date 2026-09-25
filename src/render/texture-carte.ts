@@ -642,6 +642,209 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
  * borné (quelques dizaines), alors que le nombre d'exemplaires manipulés dans
  * une partie ne l'est pas.
  */
+/**
+ * LE DOS DE CARTE.
+ *
+ * **Il part de la MÊME anatomie que la face** — plaque de laiton, coque
+ * déchirée, surface sombre à la même découpe — et c'est ce qui en fait la même
+ * carte vue de l'autre côté plutôt qu'un second objet. Un dos dessiné à part
+ * aurait dérivé, exactement comme les quatre fonctions qui peignaient chacune
+ * leur carte avant `corpsCarte`.
+ *
+ * **Il n'a rien à montrer, seulement une matière** : pas de texte, pas de
+ * sujet, rien qui puisse dire quelle carte est dessous. Tout ce qu'il porte est
+ * donc SYMÉTRIQUE — un dos qui aurait un haut et un bas se lirait à l'envers
+ * une fois sur deux.
+ *
+ * Le vocabulaire est celui des cartes, sans rien inventer : le fond commun de
+ * Keko comme matière, le laiton du cadre, une fenêtre en arche devenue anneau,
+ * et l'éclat à quatre branches — *quatre et non six, parce que six branches
+ * égales font une étoile de David*, la leçon déjà payée sur la planche des
+ * symboles de coût.
+ */
+async function peindreDos(): Promise<HTMLCanvasElement> {
+  const canvas = document.createElement('canvas')
+  canvas.width = LARGE
+  canvas.height = HAUT
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) return canvas
+
+  const decor = await fond()
+
+  ctx.beginPath()
+  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * 0.03)
+  ctx.clip()
+
+  // LA PLAQUE ET LA COQUE, comme sur la face.
+  ctx.fillStyle = laiton(ctx)
+  ctx.fillRect(0, 0, LARGE, HAUT)
+  ctx.fillStyle = '#00000030'
+  ctx.fillRect(0, 0, LARGE, HAUT)
+  ctx.save()
+  chemin(ctx, DECOUPE, 0, 0, LARGE, HAUT)
+  ctx.clip()
+  ctx.fillStyle = laiton(ctx)
+  ctx.fillRect(0, 0, LARGE, HAUT)
+  ctx.restore()
+
+  const marge = 1.163 * U
+  ctx.save()
+  chemin(ctx, DECOUPE, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+  ctx.clip()
+
+  // LA MATIÈRE EST LE FOND COMMUN DES CARTES, poussé au noir. *Le décor
+  // appartient à la carte* : le dos n'a pas à s'en inventer un autre.
+  ctx.fillStyle = '#0a0b10'
+  ctx.fillRect(0, 0, LARGE, HAUT)
+  if (decor !== null) {
+    ctx.globalAlpha = 0.5
+    couvrir(ctx, decor, 0, 0, LARGE, HAUT)
+    ctx.globalAlpha = 1
+  }
+  ctx.fillStyle = '#080910b0'
+  ctx.fillRect(0, 0, LARGE, HAUT)
+
+  const cx = 50 * U
+  const cy = 70 * U
+
+  // LE SEMIS DE LOSANGES : la trame du dos 2D, et l'écho du paquet vu en 3/4.
+  // Très pâle — c'est une matière, pas un motif qu'on regarde.
+  ctx.strokeStyle = '#c9a04e'
+  ctx.lineWidth = 0.34 * U
+  ctx.globalAlpha = 0.16
+  const PAS = 13 * U
+  for (let y = -PAS; y < HAUT + PAS; y += PAS) {
+    for (let x = -PAS; x < LARGE + PAS; x += PAS) {
+      const d = ((y / PAS) % 2 === 0 ? 0 : PAS / 2) + x
+      ctx.beginPath()
+      ctx.moveTo(d, y - PAS * 0.34)
+      ctx.lineTo(d + PAS * 0.34, y)
+      ctx.lineTo(d, y + PAS * 0.34)
+      ctx.lineTo(d - PAS * 0.34, y)
+      ctx.closePath()
+      ctx.stroke()
+    }
+  }
+  ctx.globalAlpha = 1
+
+  // LES RAYONS, depuis le médaillon : ils rattachent le centre au champ, sinon
+  // le médaillon se lit comme une vignette posée dessus.
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.globalAlpha = 0.2
+  ctx.fillStyle = '#c9a04e'
+  for (let i = 0; i < 16; i++) {
+    ctx.rotate((Math.PI * 2) / 16)
+    ctx.beginPath()
+    ctx.moveTo(0, -25 * U)
+    ctx.lineTo(1.1 * U, -46 * U)
+    ctx.lineTo(-1.1 * U, -46 * U)
+    ctx.closePath()
+    ctx.fill()
+  }
+  ctx.restore()
+  ctx.globalAlpha = 1
+
+  // LE VIGNETTAGE, qui creuse le champ autour du médaillon.
+  const creux = ctx.createRadialGradient(cx, cy, 8 * U, cx, cy, 78 * U)
+  creux.addColorStop(0, '#00000000')
+  creux.addColorStop(0.55, '#00000066')
+  creux.addColorStop(1, '#000000d8')
+  ctx.fillStyle = creux
+  ctx.fillRect(0, 0, LARGE, HAUT)
+
+  // LE MÉDAILLON : un anneau de laiton, un jonc intérieur, un coeur d'ambre.
+  // C'est la fenêtre en arche de la face, devenue ronde parce qu'un dos n'a
+  // pas de haut.
+  const coeur = ctx.createRadialGradient(cx, cy - 4 * U, 1, cx, cy, 20 * U)
+  coeur.addColorStop(0, '#2a1d09')
+  coeur.addColorStop(1, '#0b0a08')
+  ctx.beginPath()
+  ctx.arc(cx, cy, 19.5 * U, 0, Math.PI * 2)
+  ctx.fillStyle = coeur
+  ctx.fill()
+
+  const or = ctx.createLinearGradient(cx, cy - 22 * U, cx, cy + 22 * U)
+  or.addColorStop(0, '#f2ddaa')
+  or.addColorStop(0.5, '#c9a04e')
+  or.addColorStop(1, '#7a5620')
+
+  ctx.strokeStyle = or
+  ctx.lineWidth = 2.1 * U
+  ctx.beginPath()
+  ctx.arc(cx, cy, 19.5 * U, 0, Math.PI * 2)
+  ctx.stroke()
+
+  ctx.globalAlpha = 0.55
+  ctx.lineWidth = 0.8 * U
+  ctx.beginPath()
+  ctx.arc(cx, cy, 16 * U, 0, Math.PI * 2)
+  ctx.stroke()
+  ctx.globalAlpha = 1
+
+  // L'ÉCLAT À QUATRE BRANCHES. Six branches égales font une étoile de David :
+  // *une forme géométrique n'est jamais seulement une forme*, elle traîne ce
+  // qu'on lit d'elle ailleurs.
+  ctx.save()
+  ctx.translate(cx, cy)
+  ctx.fillStyle = or
+  for (const [longue, courte, alpha] of [
+    [13 * U, 3.1 * U, 1],
+    [8.4 * U, 1.7 * U, 0.6],
+  ] as [number, number, number][]) {
+    ctx.globalAlpha = alpha
+    ctx.rotate(alpha === 1 ? 0 : Math.PI / 4)
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath()
+      ctx.moveTo(0, -longue)
+      ctx.quadraticCurveTo(courte * 0.35, -courte, courte, 0)
+      ctx.quadraticCurveTo(courte * 0.35, courte, 0, longue)
+      ctx.quadraticCurveTo(-courte * 0.35, courte, -courte, 0)
+      ctx.quadraticCurveTo(-courte * 0.35, -courte, 0, -longue)
+      ctx.closePath()
+      ctx.fill()
+      ctx.rotate(Math.PI / 2)
+    }
+  }
+  ctx.globalAlpha = 1
+  ctx.beginPath()
+  ctx.arc(0, 0, 2.6 * U, 0, Math.PI * 2)
+  ctx.fillStyle = '#0b0a08'
+  ctx.fill()
+  ctx.lineWidth = 0.7 * U
+  ctx.strokeStyle = or
+  ctx.stroke()
+  ctx.restore()
+
+  // LES DEUX JONCS, qui suivent la découpe de la coque : le cadre de la face,
+  // repris à vide.
+  ctx.strokeStyle = or
+  ctx.lineWidth = 0.9 * U
+  ctx.globalAlpha = 0.7
+  chemin(ctx, DECOUPE, 3.4 * U, 3.4 * U, LARGE - 6.8 * U, HAUT - 6.8 * U)
+  ctx.stroke()
+  ctx.globalAlpha = 0.34
+  ctx.lineWidth = 0.5 * U
+  chemin(ctx, DECOUPE, 5.6 * U, 5.6 * U, LARGE - 11.2 * U, HAUT - 11.2 * U)
+  ctx.stroke()
+  ctx.globalAlpha = 1
+
+  ctx.restore()
+  return canvas
+}
+
+let DOS: Promise<THREE.CanvasTexture> | null = null
+
+export function textureDuDos(): Promise<THREE.CanvasTexture> {
+  DOS ??= peindreDos().then((canvas) => {
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.anisotropy = 8
+    texture.colorSpace = THREE.SRGBColorSpace
+    return texture
+  })
+  return DOS
+}
+
 const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
