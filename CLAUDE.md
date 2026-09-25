@@ -3191,6 +3191,11 @@ Le dessus est ce losange et l'épaisseur pend sous ses deux arêtes basses : **s
 lirait comme une carte à plat et non comme une pile.** Trois traits en travers
 de l'épaisseur disent que ce sont des cartes et non un bloc.
 
+*Le dos a été jugé au centre de l'armurerie, à sa vraie taille et sur un vrai
+pavé ; le banc d'essai est retiré, le dos reste.* `textureDuDos` et la prop
+`dos` de `Carte3D` attendent une carte face cachée — Keko : « on le garde pour
+plus tard ».
+
 **ET LE COEUR DU MÉDAILLON DIT QUEL TAS C'EST** : un éventail de trois cartes
 pour la pioche, une carte barrée d'une croix pour la défausse (proposée par
 Keko). *Seul le coeur change* — matière, cadre, semis et rayons restent

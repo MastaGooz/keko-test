@@ -299,24 +299,6 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
         <meshBasicMaterial color="#0b0c10" />
       </mesh>
 
-      {/* BANC D'ESSAI DU DOS DE CARTE — À RETIRER.
-          Keko veut le juger seul, à sa vraie taille et à sa vraie forme : donc
-          une `Carte3D` ordinaire, avec son pavé, ses coins ronds et sa tranche
-          de laiton, à la profondeur de la main pour qu'elle ait exactement la
-          taille qu'elle aura en jeu. La bande centrale de l'armurerie est vide
-          à tous les formats — le râtelier tient la gauche, le chargement la
-          droite — donc elle ne recouvre rien.
-
-          Une carte de test lui est passée pour la forme : `dos` la fait
-          ignorer. */}
-      <Carte3D
-        carte={{ id: 'dos', nom: '', cout: 0, effet: [], type: '' }}
-        dos
-        position={[0, 0.15, Z_PLAN]}
-        taille={1}
-        ombre={false}
-      />
-
       {/* LES CASES VIDES DE LA RÉSERVE : une grille de places, pas une liste. */}
       {Array.from({ length: casesVides }, (_, i) => (
         <CaseVide

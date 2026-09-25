@@ -645,6 +645,11 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
 /**
  * LE DOS DE CARTE.
  *
+ * **Il sert aujourd'hui aux deux tas** (`Tas3D`), plaqué sur le dessus du
+ * paquet. `textureDuDos` et la prop `dos` de `Carte3D` sont prêtes pour une
+ * vraie carte face cachée — Keko l'a fait juger au centre de l'armurerie, puis
+ * demandé de retirer le banc d'essai « mais on le garde pour plus tard ».
+ *
  * **Il part de la MÊME anatomie que la face** — plaque de laiton, coque
  * déchirée, surface sombre à la même découpe — et c'est ce qui en fait la même
  * carte vue de l'autre côté plutôt qu'un second objet. Un dos dessiné à part
