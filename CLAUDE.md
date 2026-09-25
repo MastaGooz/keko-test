@@ -3191,6 +3191,23 @@ Le dessus est ce losange et l'épaisseur pend sous ses deux arêtes basses : **s
 lirait comme une carte à plat et non comme une pile.** Trois traits en travers
 de l'épaisseur disent que ce sont des cartes et non un bloc.
 
+**ET LE COEUR DU MÉDAILLON DIT QUEL TAS C'EST** : un éventail de trois cartes
+pour la pioche, une carte barrée d'une croix pour la défausse (proposée par
+Keko). *Seul le coeur change* — matière, cadre, semis et rayons restent
+identiques, parce que ce sont les mêmes cartes et que seul ce qu'on en fait
+diffère. C'est le seul endroit où le paquet cesse de montrer exactement ce que
+montre une carte retournée, et c'est assumé : **une information de jeu prime sur
+la cohérence décorative.**
+
+**LE MÉDAILLON EST PLUS GRAND SUR UN TAS** (×1,55), et c'est une question
+d'ÉCHELLE DE LECTURE, pas de goût : le dos est dessiné pour une carte qui fait
+250 px à l'écran, un paquet des coins n'en fait que 110 — au même rapport, son
+coeur tombait à 25 px et la croix de la défausse s'y confondait avec le contour
+de la carte qu'elle barre. *Un symbole ne se règle pas à la taille où on le
+dessine, mais à celle où on le regarde.* C'est aussi ce que son rôle demande :
+sur une carte le médaillon est un ornement, sur un tas c'est une **étiquette**,
+qui doit se lire du coin de l'oeil.
+
 **LE DESSUS DU PAQUET EST LE DOS DE CARTE**, demandé par Keko. *C'est la même
 carte partout* — la règle déjà payée sur les trésors (« la carte change quand je
 la ramasse ») : le paquet montre exactement ce que montrera une carte retournée,

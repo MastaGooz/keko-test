@@ -662,7 +662,126 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
  * égales font une étoile de David*, la leçon déjà payée sur la planche des
  * symboles de coût.
  */
-async function peindreDos(): Promise<HTMLCanvasElement> {
+/**
+ * CE QUE PORTE LE COEUR DU MÉDAILLON.
+ *
+ * `eclat` est le dos nu, celui d'une carte quelconque. Les deux autres servent
+ * aux tas : Keko veut « un symbole qui permette au joueur d'identifier
+ * rapidement la pile pioche / défausse ».
+ *
+ * **Seul le coeur change, jamais le reste.** La matière, le cadre de laiton,
+ * le semis et les rayons restent identiques — *ce sont les mêmes cartes, seul
+ * ce qu'on en fait diffère.* Un second dessin de paquet aurait dit « deux
+ * objets » là où il n'y en a qu'un.
+ *
+ * C'est le seul endroit où le paquet cesse de montrer exactement ce que montre
+ * une carte retournée, et c'est assumé : **une information de jeu prime sur la
+ * cohérence décorative.** Savoir d'un coup d'oeil où l'on pioche et où l'on
+ * défausse vaut mieux qu'un médaillon fidèle.
+ */
+export type Embleme = 'eclat' | 'pioche' | 'defausse'
+
+/** Une carte vue de face, en trait — la brique des deux emblèmes de tas. */
+function carteDeSymbole(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  l: number,
+  angle: number,
+  plein: boolean,
+): void {
+  ctx.save()
+  ctx.translate(x, y)
+  ctx.rotate(angle)
+  ctx.beginPath()
+  ctx.roundRect(-l / 2, (-l * 1.4) / 2, l, l * 1.4, l * 0.16)
+  if (plein) {
+    ctx.fillStyle = '#0b0a08'
+    ctx.fill()
+  }
+  ctx.stroke()
+  ctx.restore()
+}
+
+function peindreEmbleme(ctx: CanvasRenderingContext2D, embleme: Embleme, or: CanvasGradient): void {
+  ctx.strokeStyle = or
+  ctx.lineJoin = 'round'
+  ctx.lineCap = 'round'
+
+  if (embleme === 'pioche') {
+    // TROIS CARTES EN ÉVENTAIL : un paquet dont on tire. Les deux du fond sont
+    // en trait seul, celle de devant est pleine — sans ça les trois contours se
+    // croisent et ne se lisent plus à la taille d'un médaillon.
+    ctx.lineWidth = 1.9 * U
+    carteDeSymbole(ctx, -5.2 * U, 0.8 * U, 9 * U, -0.42, false)
+    carteDeSymbole(ctx, 5.2 * U, 0.8 * U, 9 * U, 0.42, false)
+    carteDeSymbole(ctx, 0, -1.4 * U, 9.4 * U, 0, true)
+    return
+  }
+
+  if (embleme === 'defausse') {
+    // UNE CARTE BARRÉE D'UNE CROIX, proposé par Keko. La croix DÉBORDE la
+    // carte : contenue, elle se lirait comme un motif imprimé dessus.
+    //
+    // ELLE EST FRANCHE, et il l'a fallu : à la taille réelle du médaillon — une
+    // trentaine de pixels — un trait fin sur fond noir se confondait avec le
+    // contour de la carte, et l'ensemble ne se lisait plus comme une croix.
+    // *Un symbole ne se règle pas à la taille où on le dessine, mais à celle où
+    // on le regarde.* La croix est donc peinte sous un liseré sombre, pour se
+    // détacher du trait de la carte qu'elle traverse.
+    ctx.lineWidth = 1.9 * U
+    carteDeSymbole(ctx, 0, 0, 10.4 * U, 0, true)
+
+    const b = 9.6 * U
+    const croix = (): void => {
+      ctx.beginPath()
+      ctx.moveTo(-b, -b)
+      ctx.lineTo(b, b)
+      ctx.moveTo(b, -b)
+      ctx.lineTo(-b, b)
+      ctx.stroke()
+    }
+    ctx.strokeStyle = '#0b0a08'
+    ctx.lineWidth = 5.4 * U
+    croix()
+    ctx.strokeStyle = or
+    ctx.lineWidth = 3.1 * U
+    croix()
+    return
+  }
+
+  // L'ÉCLAT À QUATRE BRANCHES. Six branches égales font une étoile de David :
+  // *une forme géométrique n'est jamais seulement une forme*, elle traîne ce
+  // qu'on lit d'elle ailleurs.
+  ctx.fillStyle = or
+  for (const [longue, courte, alpha] of [
+    [13 * U, 3.1 * U, 1],
+    [8.4 * U, 1.7 * U, 0.6],
+  ] as [number, number, number][]) {
+    ctx.globalAlpha = alpha
+    ctx.rotate(alpha === 1 ? 0 : Math.PI / 4)
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath()
+      ctx.moveTo(0, -longue)
+      ctx.quadraticCurveTo(courte * 0.35, -courte, courte, 0)
+      ctx.quadraticCurveTo(courte * 0.35, courte, 0, longue)
+      ctx.quadraticCurveTo(-courte * 0.35, courte, -courte, 0)
+      ctx.quadraticCurveTo(-courte * 0.35, -courte, 0, -longue)
+      ctx.closePath()
+      ctx.fill()
+      ctx.rotate(Math.PI / 2)
+    }
+  }
+  ctx.globalAlpha = 1
+  ctx.beginPath()
+  ctx.arc(0, 0, 2.6 * U, 0, Math.PI * 2)
+  ctx.fillStyle = '#0b0a08'
+  ctx.fill()
+  ctx.lineWidth = 0.7 * U
+  ctx.stroke()
+}
+
+async function peindreDos(embleme: Embleme = 'eclat'): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
   canvas.width = LARGE
   canvas.height = HAUT
@@ -706,6 +825,9 @@ async function peindreDos(): Promise<HTMLCanvasElement> {
 
   const cx = 50 * U
   const cy = 70 * U
+  const ECHELLE_COEUR = embleme === 'eclat' ? 1 : 1.55
+  const RAYON_MEDAILLON = 19.5 * ECHELLE_COEUR * U
+
 
   // LE SEMIS DE LOSANGES : la trame du dos 2D, et l'écho du paquet vu en 3/4.
   // Très pâle — c'est une matière, pas un motif qu'on regarde.
@@ -736,7 +858,7 @@ async function peindreDos(): Promise<HTMLCanvasElement> {
   for (let i = 0; i < 16; i++) {
     ctx.rotate((Math.PI * 2) / 16)
     ctx.beginPath()
-    ctx.moveTo(0, -25 * U)
+    ctx.moveTo(0, -(RAYON_MEDAILLON + 5.5 * U))
     ctx.lineTo(1.1 * U, -46 * U)
     ctx.lineTo(-1.1 * U, -46 * U)
     ctx.closePath()
@@ -753,14 +875,24 @@ async function peindreDos(): Promise<HTMLCanvasElement> {
   ctx.fillStyle = creux
   ctx.fillRect(0, 0, LARGE, HAUT)
 
+  // LE MÉDAILLON EST PLUS GRAND SUR UN TAS, et c'est une question d'ÉCHELLE DE
+  // LECTURE, pas de goût : le dos est dessiné pour une carte qui fait 250 px à
+  // l'écran, un paquet des coins n'en fait que 110. Au même rapport, son coeur
+  // tombait à 25 px et la croix de la défausse s'y confondait avec le contour
+  // de la carte qu'elle barre. *Un symbole ne se règle pas à la taille où on le
+  // dessine, mais à celle où on le regarde.*
+  //
+  // C'est aussi ce que demande son rôle : sur une carte le médaillon est un
+  // ornement, sur un tas il est une ÉTIQUETTE — il doit se lire du coin de
+  // l'oeil, sans qu'on aille le chercher.
   // LE MÉDAILLON : un anneau de laiton, un jonc intérieur, un coeur d'ambre.
   // C'est la fenêtre en arche de la face, devenue ronde parce qu'un dos n'a
   // pas de haut.
-  const coeur = ctx.createRadialGradient(cx, cy - 4 * U, 1, cx, cy, 20 * U)
+  const coeur = ctx.createRadialGradient(cx, cy - 4 * U, 1, cx, cy, RAYON_MEDAILLON * 1.03)
   coeur.addColorStop(0, '#2a1d09')
   coeur.addColorStop(1, '#0b0a08')
   ctx.beginPath()
-  ctx.arc(cx, cy, 19.5 * U, 0, Math.PI * 2)
+  ctx.arc(cx, cy, RAYON_MEDAILLON, 0, Math.PI * 2)
   ctx.fillStyle = coeur
   ctx.fill()
 
@@ -770,50 +902,23 @@ async function peindreDos(): Promise<HTMLCanvasElement> {
   or.addColorStop(1, '#7a5620')
 
   ctx.strokeStyle = or
-  ctx.lineWidth = 2.1 * U
+  ctx.lineWidth = 2.1 * ECHELLE_COEUR * U
   ctx.beginPath()
-  ctx.arc(cx, cy, 19.5 * U, 0, Math.PI * 2)
+  ctx.arc(cx, cy, RAYON_MEDAILLON, 0, Math.PI * 2)
   ctx.stroke()
 
   ctx.globalAlpha = 0.55
-  ctx.lineWidth = 0.8 * U
+  ctx.lineWidth = 0.8 * ECHELLE_COEUR * U
   ctx.beginPath()
-  ctx.arc(cx, cy, 16 * U, 0, Math.PI * 2)
+  ctx.arc(cx, cy, RAYON_MEDAILLON - 3.5 * ECHELLE_COEUR * U, 0, Math.PI * 2)
   ctx.stroke()
   ctx.globalAlpha = 1
 
-  // L'ÉCLAT À QUATRE BRANCHES. Six branches égales font une étoile de David :
-  // *une forme géométrique n'est jamais seulement une forme*, elle traîne ce
-  // qu'on lit d'elle ailleurs.
+  // LE COEUR : l'éclat sur une carte, le symbole du tas sur un paquet.
   ctx.save()
   ctx.translate(cx, cy)
-  ctx.fillStyle = or
-  for (const [longue, courte, alpha] of [
-    [13 * U, 3.1 * U, 1],
-    [8.4 * U, 1.7 * U, 0.6],
-  ] as [number, number, number][]) {
-    ctx.globalAlpha = alpha
-    ctx.rotate(alpha === 1 ? 0 : Math.PI / 4)
-    for (let i = 0; i < 4; i++) {
-      ctx.beginPath()
-      ctx.moveTo(0, -longue)
-      ctx.quadraticCurveTo(courte * 0.35, -courte, courte, 0)
-      ctx.quadraticCurveTo(courte * 0.35, courte, 0, longue)
-      ctx.quadraticCurveTo(-courte * 0.35, courte, -courte, 0)
-      ctx.quadraticCurveTo(-courte * 0.35, -courte, 0, -longue)
-      ctx.closePath()
-      ctx.fill()
-      ctx.rotate(Math.PI / 2)
-    }
-  }
-  ctx.globalAlpha = 1
-  ctx.beginPath()
-  ctx.arc(0, 0, 2.6 * U, 0, Math.PI * 2)
-  ctx.fillStyle = '#0b0a08'
-  ctx.fill()
-  ctx.lineWidth = 0.7 * U
-  ctx.strokeStyle = or
-  ctx.stroke()
+  ctx.scale(ECHELLE_COEUR, ECHELLE_COEUR)
+  peindreEmbleme(ctx, embleme, or)
   ctx.restore()
 
   // LES DEUX JONCS, qui suivent la découpe de la coque : le cadre de la face,
@@ -843,10 +948,12 @@ async function peindreDos(): Promise<HTMLCanvasElement> {
  * Réduit à 256 : un tas fait 120 px à l'écran, et la data URL voyage dans le
  * DOM. À pleine taille elle pèserait dix fois plus pour rien.
  */
-let DOS_URL: Promise<string> | null = null
+const DOS_URL = new Map<Embleme, Promise<string>>()
 
-export function urlDuDosPeint(): Promise<string> {
-  DOS_URL ??= peindreDos().then((grand) => {
+export function urlDuDosPeint(embleme: Embleme = 'eclat'): Promise<string> {
+  const connu = DOS_URL.get(embleme)
+  if (connu !== undefined) return connu
+  const promesse = peindreDos(embleme).then((grand) => {
     const petit = document.createElement('canvas')
     petit.width = 256
     petit.height = Math.round(256 * 1.4)
@@ -855,7 +962,8 @@ export function urlDuDosPeint(): Promise<string> {
     ctx.drawImage(grand, 0, 0, petit.width, petit.height)
     return petit.toDataURL('image/png')
   })
-  return DOS_URL
+  DOS_URL.set(embleme, promesse)
+  return promesse
 }
 
 let DOS: Promise<THREE.CanvasTexture> | null = null

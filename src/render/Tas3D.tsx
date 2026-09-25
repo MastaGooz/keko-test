@@ -190,10 +190,15 @@ export function Tas3D({ nom, compte }: Props): React.JSX.Element {
   /**
    * LE DESSUS DU PAQUET EST LE DOS DE CARTE, demandé par Keko.
    *
-   * *C'est la même carte partout* — la règle du dépôt, déjà payée sur les
-   * trésors (« la carte change quand je la ramasse ») : le paquet montre
-   * exactement ce que montrera une carte retournée, et pas un motif qui lui
-   * ressemble.
+   * *C'est la même carte* — la règle du dépôt, déjà payée sur les trésors
+   * (« la carte change quand je la ramasse ») : même matière, même cadre, même
+   * semis que ce que montrera une carte retournée.
+   *
+   * **Seul le coeur du médaillon diffère**, et il porte le symbole du tas :
+   * Keko veut « un symbole qui permette au joueur d'identifier rapidement la
+   * pile pioche / défausse ». C'est le seul endroit où le paquet cesse d'être
+   * fidèle, et c'est assumé — *une information de jeu prime sur la cohérence
+   * décorative.*
    *
    * Il arrive en différé, parce qu'il charge le fond commun des cartes. Le
    * losange peint reste dessous comme repli : *un dessus qui manquerait
@@ -202,13 +207,13 @@ export function Tas3D({ nom, compte }: Props): React.JSX.Element {
   const [dos, setDos] = useState<string | null>(null)
   useEffect(() => {
     let vivant = true
-    void urlDuDosPeint().then((url) => {
+    void urlDuDosPeint(nom === 'pioche' ? 'pioche' : 'defausse').then((url) => {
       if (vivant && url !== '') setDos(url)
     })
     return () => {
       vivant = false
     }
-  }, [])
+  }, [nom])
 
   return (
     <div className={`tas-3d ${nom}`}>
