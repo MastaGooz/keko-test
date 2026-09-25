@@ -2802,6 +2802,32 @@ normalise les guillemets.
 `⛉ 5`, `−12`. Keko les a réunies en une barre qui s'étend entre la pioche et
 la main : *le joueur lit son état avec la même grammaire que celle d'en face.*
 
+**LES DEUX JAUGES SONT SERTIES DE LAITON.** Keko : « la barre de PV fait très
+générique et pas stylisée ». Elle l'était, et pour une raison précise : une
+capsule à `border-radius: 999px` avec un dégradé à deux tons et un liseré blanc
+translucide, c'est **la forme par défaut d'une barre de progression web** —
+*le seul objet de l'écran à ne pas parler la langue du reste*, alors que les
+cartes ont leur cadre de laiton, le paquet son filet d'or et le coût son disque
+cerclé de crème.
+
+Trois changements, un par grief :
+
+- **le sertissage** — un filet de laiton doublé d'un noir : c'est lui qui la
+  fait lire comme une pièce plutôt que comme un widget ;
+- **l'arrondi tombe de 999 px à 2** : une capsule est une forme de gabarit, une
+  arête franche est de la ferronnerie. *Ça ne coûte rien et ça change tout* ;
+- **le lustre oblique** qui balaie le remplissage, celui des cartes — et un
+  dégradé à quatre tons au lieu de deux, parce que la lumière vient du haut et
+  qu'il en faut quatre pour lire un volume.
+
+**Le nom passe en Cinzel**, la police des noms dans ce jeu : une sans-serif
+grise sous une jauge sertie jurait avec elle. Il y gagne la lisibilité qui lui
+manquait sur le sable du camp — crème cernée de noir plutôt que gris pâle.
+
+**Et le contour de la barre du joueur reste clair**, parce que c'est sa
+FONCTION ; il passe seulement du blanc pur au laiton clair doublé d'un noir. La
+même lecture, dans la langue du jeu.
+
 **LA BARRE PORTE UN CONTOUR BLANC**, et ce n'est pas un ornement : sans lui,
 une barre à moitié vide ne dit plus quelle est sa taille. Keko : « on ne voit
 pas la taille max quand on a perdu des PV ». *Une jauge sans cadre ne montre

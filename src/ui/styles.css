@@ -3876,25 +3876,65 @@ body {
    la hauteur d'une jauge dit quelque chose -- une barre epaisse pese autant
    qu'une silhouette. Le chiffre n'a pas besoin d'etre contenu, il a besoin
    d'etre lu. */
+/* ELLE EST SERTIE DE LAITON, comme tout ce qui compte dans ce jeu.
+
+   Keko : « la barre de PV fait tres generique et pas stylisee ». Elle l'etait :
+   une capsule a `border-radius: 999px` avec un degrade et un liseré blanc
+   translucide, c'est-a-dire la forme par defaut d'une barre de progression web
+   -- *le seul objet de l'ecran a ne pas parler la langue du reste.* Les cartes
+   ont leur cadre de laiton, le paquet son filet d'or, le cout son disque cercle
+   de creme.
+
+   Trois changements, et chacun repond a un mot de « generique » :
+
+   - LE SERTISSAGE, un filet de laiton double d'un noir : c'est lui qui la fait
+     lire comme une piece, pas comme un widget ;
+   - L'ARRONDI TOMBE DE 999px A 2px. Une capsule est une forme de gabarit ; une
+     arete franche est de la ferronnerie. *Ca ne coute rien et ca change tout.*
+   - LE LUSTRE OBLIQUE qui balaie le remplissage, comme celui des cartes.
+
+   Ce qui NE change pas : elle reste un trait fin, et le chiffre la DEBORDE. Elle
+   a ete epaissie pour le contenir dans le jeu 2D, et c'etait prendre le probleme
+   a l'envers -- la hauteur d'une jauge dit quelque chose, une barre epaisse pese
+   autant qu'une silhouette. */
 .jauge-3d {
   position: relative;
   display: block;
   width: 100%;
   height: 0.5rem;
-  border-radius: 999px;
-  background: #0a0a10;
-  box-shadow: inset 0 1px 2px #000, 0 0 0 1px #ffffff14;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #05050a, #15131c);
+  box-shadow:
+    inset 0 1px 2px #000,
+    0 0 0 1px #8a6f36,
+    0 0 0 2px #0000008c,
+    0 1px 3px #000000b0;
   /* Le chiffre depasse d'elle : elle ne peut plus rogner ce qu'elle contient.
      C'est le REMPLISSAGE qui porte son propre arrondi. */
   overflow: visible;
 }
 
+/* LA LUMIERE VIENT DU HAUT, comme partout : arete claire en haut, creux sombre
+   en bas. Un degrade a deux tons donnait une surface plate ; il en faut quatre
+   pour qu'on lise un volume. */
 .remplissage-3d {
   position: absolute;
   inset: 0 auto 0 0;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ff9090, #c4353f);
-  box-shadow: inset 0 1px 0 #ffffff40;
+  border-radius: 1px;
+  background: linear-gradient(180deg, #ff9a7e 0%, #e2483a 38%, #a61f1a 72%, #6d1310 100%);
+  box-shadow:
+    inset 0 1px 0 #ffcbb4,
+    inset 0 -1px 2px #3a0806;
+}
+
+/* LE LUSTRE : une bande claire en biais, celle qui balaie les cartes. C'est ce
+   qui separe une surface peinte d'une surface eclairee. */
+.remplissage-3d::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(105deg, #fff0 30%, #ffffff3d 48%, #fff0 62%);
 }
 
 /* Il passe sur trois fonds -- le rouge de la jauge, le noir de sa partie vide,
@@ -3904,17 +3944,27 @@ body {
   inset: 50% 0 auto;
   translate: 0 -50%;
   text-align: center;
-  color: #fff;
+  /* La creme du jeu plutot qu'un blanc pur : c'est la couleur des chiffres sur
+     les cartes, et elle s'accorde au laiton du sertissage. */
+  color: #fff3e0;
   font-size: 0.75rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   text-shadow: 0 1px 2px #000, 0 0 3px #000, 0 0 6px #000;
 }
 
+/* LE NOM EST EN CINZEL, comme celui des cartes : c'est la police des noms dans
+   ce jeu, et une sans-serif grise sous une jauge sertie jurait avec elle.
+
+   Il gagne au passage la lisibilite qui lui manquait sur le sable du camp --
+   creme cernee de noir plutot que gris pale. */
 .nom-3d {
-  color: #cfc7bb;
-  font-size: 0.75rem;
-  text-shadow: 0 1px 3px #000;
+  color: #e8d9b4;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-shadow: 0 1px 3px #000, 0 0 6px #000, 0 0 2px #000;
   white-space: nowrap;
 }
 
@@ -4231,14 +4281,24 @@ body {
    ne dit plus quelle est sa taille. Keko : « on ne voit pas la taille max
    quand on a perdu des PV ». Une jauge sans cadre ne montre que ce qui reste,
    jamais ce qu'on a perdu. */
+/* MEME SERTISSAGE QUE LES CREATURES : le joueur lit son etat avec la meme
+   grammaire que celle d'en face, et ca vaut jusqu'au metal.
+
+   LE CONTOUR RESTE CLAIR, et c'est sa fonction : sans lui, une barre a moitie
+   vide ne dit plus quelle est sa taille -- Keko : « on ne voit pas la taille max
+   quand on a perdu des PV ». Il passe du blanc pur au laiton clair, double d'un
+   noir : la meme lecture, dans la langue du jeu. */
 .vie-barre {
   position: relative;
   flex: 1;
   height: 0.875rem;
-  border: 1px solid #ffffffd9;
-  border-radius: 999px;
-  background: #1a0d10;
-  box-shadow: inset 0 1px 2px #000000a8, 0 0 4px #00000099;
+  border: 1px solid #d8bb72;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #120a0d, #1f1216);
+  box-shadow:
+    inset 0 1px 2px #000000a8,
+    0 0 0 1px #000000a8,
+    0 1px 4px #000000b0;
 }
 
 /* L'ARMURE DANS UN BOUCLIER, A DROITE DE LA BARRE. Elle y etait un segment
@@ -4288,7 +4348,7 @@ body {
   position: absolute;
   inset: 0;
   overflow: hidden;
-  border-radius: 999px;
+  border-radius: 1px;
 }
 
 .vie-rouge,
@@ -4300,7 +4360,17 @@ body {
 
 .vie-rouge {
   left: 0;
-  background: linear-gradient(#c0413c, #8d2725);
+  background: linear-gradient(180deg, #ff9a7e 0%, #e2483a 38%, #a61f1a 72%, #6d1310 100%);
+  box-shadow: inset 0 1px 0 #ffcbb4;
+}
+
+/* Le meme lustre que sur les creatures. Il est porte par le rouge et non par la
+   barre : *c'est le remplissage qui est une surface*, le logement est un creux. */
+.vie-rouge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, #fff0 30%, #ffffff33 48%, #fff0 62%);
 }
 
 /* CE QU'ON VA PRENDRE OCCUPE LA DROITE DU ROUGE : c'est par la que la jauge se
@@ -4308,7 +4378,9 @@ body {
    bande se lirait comme ce qui reste. */
 .vie-jaune {
   right: 0;
-  background: linear-gradient(#f5d06a, #d9a02f);
+  background: linear-gradient(180deg, #ffe9a4 0%, #f0bc4a 45%, #c98d1e 100%);
+  box-shadow: inset 0 1px 0 #fff0c9;
+  z-index: 1;
 }
 
 /* LE CHIFFRE DEBORDE SA BARRE, il n'est pas contenu par elle : la hauteur
@@ -4320,7 +4392,7 @@ body {
   top: 50%;
   left: 50%;
   translate: -50% -50%;
-  color: #fff;
+  color: #fff3e0;
   font-size: 0.8125rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
