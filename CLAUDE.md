@@ -2790,6 +2790,16 @@ collée au bout y tombait si près du bord que le chiffre passait dans le noir.
 même ivoire à cerne noir que les deux autres — sombre sur halo doré, il ne
 tenait que sur le jaune, or une bande étroite le fait déborder sur le rouge.
 
+**LA BARRE S'ARRÊTE OÙ S'ARRÊTE L'ORBE.** Elle allait jusqu'à la main, et sur
+un écran de PC l'écart est si large qu'elle faisait 700 px pour 90 PV — Keko :
+« sur PC la barre de PV est trop longue, il faudrait qu'elle s'arrête là où
+s'arrête le symbole de l'énergie ». L'orbe étant centré dans l'écart, son bord
+droit se calcule, et les deux tombent au même pixel (mesuré : 455 et 455).
+*Mais la borne par la main reste*, et elle mord sur un téléphone où l'écart ne
+fait que 83 px : le bouclier y passerait sous les cartes, donc la barre s'y
+arrête 26 px avant l'orbe. **Ce qui cadre un élément sur grand écran n'est pas
+ce qui le cadre sur petit.**
+
 **L'ORBE SE CENTRE DANS L'ÉCART, LA BARRE PART DU BORD DE L'ÉCRAN.** Les deux
 ont d'abord partagé une colonne, et à 667 px de large l'écart entre le tas et
 la main ne fait que 83 px : la barre y mordait sur la première carte. *Un objet

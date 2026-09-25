@@ -4155,14 +4155,26 @@ body {
 
 /* --- la vie du joueur : une barre, comme celle des creatures --------------- */
 
-/* ELLE PART DU BORD DE L'ECRAN et s'arrete avant la main : c'est la seule
-   facon qu'elle ait une longueur lisible sur un telephone. Elle vit a la
-   hauteur du haut des cartes, donc elle ne croise jamais le tas de pioche, qui
-   est tout en bas. */
+/* ELLE PART DU BORD DE L'ECRAN et S'ARRETE OU S'ARRETE L'ORBE. Elle allait
+   jusqu'a la main, et sur un ecran de PC l'ecart est si large qu'elle faisait
+   700 px pour 90 PV -- Keko : « sur PC la barre de PV est trop longue, il
+   faudrait qu'elle s'arrete la ou s'arrete le symbole de l'energie ». L'orbe
+   etant centre dans l'ecart, son bord droit vaut `(4,5rem + main) / 2 +
+   1,625rem` ; la rangee y ajoute le bouclier et son ecart.
+
+   LA BORNE PAR LA MAIN RESTE, et elle mord sur un telephone : la, l'ecart ne
+   fait que 83 px, et le bouclier passerait sous les cartes. *Ce qui cadre un
+   element sur grand ecran n'est pas ce qui le cadre sur petit.*
+
+   Elle vit a la hauteur du haut des cartes, donc elle ne croise jamais le tas
+   de pioche, qui est tout en bas. */
 .vie-bloc {
   position: absolute;
   left: 0.75rem;
-  width: calc(var(--main-gauche, 14rem) - 1.45rem);
+  width: min(
+    calc((4.5rem + var(--main-gauche, 14rem)) / 2 + 2.75rem),
+    calc(var(--main-gauche, 14rem) - 1.45rem)
+  );
   /* UN PLANCHER, parce que sur un ecran court le haut de la main descend sous
      le sommet du tas de pioche : la barre venait alors s'asseoir sur son
      compte. Le tas occupe 5,05rem depuis le bas, compte compris : on se pose
