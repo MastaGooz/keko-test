@@ -3753,29 +3753,30 @@ body {
   width: 3.75rem;
 }
 
-/* LA DEFAUSSE EST LE MIROIR DE LA PIOCHE. Le paquet penche : les deux tas
+/* LA PIOCHE EST LE MIROIR DE LA DEFAUSSE. Le paquet penche : les deux tas
    dessines a l'identique pencheraient du meme cote, et les coins bas de l'ecran
    ne se repondraient pas. Demande par Keko.
 
-   C'EST LA DEFAUSSE QU'ON RETOURNE, PAS LA PIOCHE. Le losange dessine a la main
-   penchait dans l'autre sens que `Deck.png` : le miroir etait donc sur l'autre
-   tas, et le remplacer par l'image de Keko a inverse les deux -- « les sens sont
-   inverses ». *Un miroir se pose contre le sens du dessin, donc il se relit
-   quand le dessin change.*
+   C'EST LA PIOCHE QU'ON RETOURNE, et le cote depend du DESSIN : les images de
+   Keko penchaient dans l'autre sens que ce trace, donc le miroir avait migre
+   sur la defausse le temps qu'elles servent -- « les sens sont inverses ».
+   *Un miroir se pose contre le sens du dessin, donc il se relit quand le dessin
+   change.* On est revenu au trace, le miroir revient avec lui.
 
-   Il reste porte par le CSS et non par un second fichier : *un seul dessin, deux
+   Il reste porte par le CSS et non par un second trace : *un seul dessin, deux
    poses* -- sinon les deux divergeraient au premier retouchage. L'ombre portee
    n'a qu'un decalage vertical, elle survit au retournement. */
-.tas-3d.defausse .tas-dessin {
+.tas-3d.pioche .tas-dessin {
   transform: scaleX(-1);
 }
 
-/* LA TAILLE ET LES MARGES SONT CALCULEES PAR `Tas3D`, depuis le dessin lui-meme
-   : un PNG porte ses bords transparents, et leur part change a chaque fois que
-   Keko redessine le symbole. Un facteur ecrit ici serait faux des l'image
-   suivante, sans que rien ne le signale. */
+/* LE VIEWBOX COLLE AU TRACE, donc l'icone remplit sa colonne sans compensation.
+   C'est ce qu'un dessin en code a de plus qu'un PNG : *il n'a pas de marge a
+   deviner.* Les images qui ont tenu ce role un moment demandaient un
+   agrandissement, et ce facteur etait faux des qu'elles changeaient. */
 .tas-dessin {
   display: block;
+  width: 100%;
   filter: drop-shadow(0 2px 4px #000000a8);
 }
 

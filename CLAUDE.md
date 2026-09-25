@@ -3204,32 +3204,19 @@ rectangle tombe à la verticale. **Un rectangle ne peut pas être symétrique en
 plus de ça** — ses deux coins de côté restent à des hauteurs différentes, et
 c'est précisément ce qui le distingue d'un carré.
 
-**C'EST MAINTENANT LE DESSIN DE KEKO** (`public/Deck.png`) : un paquet doré vu
-en 3/4, qui remplace le losange projeté à la main. Ce qu'il a coûté reste dans
-`git log`, et sa leçon vaut d'être retenue — *un losange symétrique ne peut pas
-être autre chose qu'un carré*, le rapport d'une carte se projette et ne se
-devine pas à l'oeil.
+**IL A ÉTÉ REMPLACÉ PAR DES IMAGES, PUIS REPRIS.** `Deck.png`, puis
+`Pioche.png` et `Défausse.png`, ont tenu ce rôle quelques commits ; Keko est
+revenu au tracé. Les fichiers restent dans `public/` et `urlDuTas` les sert
+toujours — rien ne les appelle, une ligne suffit à les reposer.
 
-**LE CADRAGE SE CALCULE, IL NE SE RÈGLE PLUS.** Un PNG porte ses bords
-transparents là où le viewBox d'un SVG collait au dessin : le paquet paraît plus
-petit que sa place, il faut l'agrandir d'autant. Ce facteur a été écrit à la
-main deux fois, et **il a été faux les deux fois dès l'image suivante** —
-`Deck.png` laissait 30 % de vide, ses remplaçants 19, leur mise à jour 22 en
-largeur mais 33 en hauteur. *Une compensation calée à la main sur un fichier est
-fausse dès que le fichier change*, et rien ne le signale puisque l'image
-s'affiche quand même.
-
-`Tas3D` mesure donc le dessin dans son cadre (`silhouette.ts`, le module des
-créatures) et en déduit l'agrandissement et les quatre marges. Vérifié hors
-navigateur sur les deux fichiers : 124,8 % et 117,7 % de largeur, pour un paquet
-qui occupe **97,0 % de sa colonne dans les deux cas**. Keko peut redessiner ces
-symboles comme il veut, proportions comprises.
-
-**Deux pièges évités là-dedans**, et tous deux déjà payés ailleurs : les `%`
-d'une MARGE se rapportent à la largeur du bloc conteneur et jamais à sa hauteur
-(la tête de mort), donc la marge verticale passe par le rapport de l'image ; et
-la toile de mesure garde ce rapport, sinon le dessin serait écrasé et les marges
-fausses sur l'axe écrasé.
+*Ce que l'aller-retour a laissé*, et qui vaut mieux que le dessin lui-même :
+**un PNG porte ses bords transparents là où un viewBox colle au tracé**, donc il
+faut l'agrandir — et ce facteur, écrit à la main, **a été faux à chaque mise à
+jour de l'image**, sans que rien ne le signale puisqu'elle s'affiche quand même
+(30 % de vide pour le premier fichier, 19 pour ses remplaçants, 22 en largeur
+mais 33 en hauteur pour leur mise à jour). `silhouette.ts` sait désormais le
+calculer, et il sert déjà aux créatures. Ici la question ne se pose plus : *un
+dessin en code n'a pas de marge à deviner.*
 
 **ET LA PIOCHE EST LE MIROIR DE LA DÉFAUSSE.** Le paquet penche : son coin bas
 est centré, mais son grand axe monte vers la droite — un rectangle ne peut pas
