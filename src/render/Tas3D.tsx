@@ -141,17 +141,28 @@ export function Tas3D({ nom, compte }: Props): React.JSX.Element {
 
         {/* LES DEUX FLANCS D'ABORD : le dessus se pose dessus et masque leur
             arête haute, ce qui évite un liseré en travers du paquet. La
-            lumière vient du haut et de la droite, comme partout dans le jeu. */}
-        <polygon points={FLANC_GAUCHE} fill="#15171e" />
-        <polygon points={FLANC_DROIT} fill="#23262f" />
+            lumière vient du haut et de la droite, comme partout dans le jeu —
+            d'où le flanc droit plus clair que le gauche.
 
-        {/* LES FEUILLETS : ce sont des cartes empilées, pas un bloc. */}
+            LA TRANCHE EST EN LAITON PÂLE, PAS EN ARDOISE. Keko : « c'est
+            dommage que les tranches des cartes soient foncées, un peu utiliser
+            un doré très pâle plutôt, car là on voit pas bien ». Elles étaient
+            presque noires, donc l'épaisseur — la seule chose qui distingue un
+            paquet d'une carte posée à plat — se perdait dans l'ombre portée.
+            *Ce qui dit le volume doit être ce qui se voit le mieux.* */}
+        <polygon points={FLANC_GAUCHE} fill="#d8bd7f" />
+        <polygon points={FLANC_DROIT} fill="#f2ddaa" />
+
+        {/* LES FEUILLETS : ce sont des cartes empilées, pas un bloc. Sur une
+            tranche noire ils ne disaient rien ; sur du laiton, chaque trait est
+            une carte — *c'est la tranche claire qui les rend lisibles.* */}
         {[0.3, 0.55, 0.8].map((f) => (
           <polyline
             key={f}
             points={`${pt(GAUCHE, EPAISSEUR * f)} ${pt(NEAR, EPAISSEUR * f)} ${pt(DROITE, EPAISSEUR * f)}`}
             fill="none"
-            stroke="#0c0d12"
+            stroke="#8a6a2c"
+            strokeOpacity="0.55"
             strokeWidth="1.1"
           />
         ))}

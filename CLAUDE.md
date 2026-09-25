@@ -3189,7 +3189,16 @@ coins de côté à 40 et 48.
 
 Le dessus est ce losange et l'épaisseur pend sous ses deux arêtes basses : **sans les flancs, le losange se
 lirait comme une carte à plat et non comme une pile.** Trois traits en travers
-de l'épaisseur disent que ce sont des cartes et non un bloc. Lumière du haut et
+de l'épaisseur disent que ce sont des cartes et non un bloc.
+
+**LA TRANCHE EST EN LAITON PÂLE, PAS EN ARDOISE.** Keko : « c'est dommage que
+les tranches des cartes soient foncées, un peu utiliser un doré très pâle
+plutôt, car là on voit pas bien ». Elles étaient presque noires, donc
+l'épaisseur — *la seule chose qui distingue un paquet d'une carte posée à plat*
+— se perdait dans son ombre portée. Et les trois feuillets ne disaient rien sur
+du noir, là où chaque trait se lit comme une carte sur du laiton. La lumière
+vient du haut et de la droite, donc le flanc droit est plus clair que le
+gauche. Lumière du haut et
 de la droite, comme partout : dessus le plus clair, flanc droit ensuite, flanc
 gauche sombre.
 
