@@ -3191,6 +3191,24 @@ Le dessus est ce losange et l'épaisseur pend sous ses deux arêtes basses : **s
 lirait comme une carte à plat et non comme une pile.** Trois traits en travers
 de l'épaisseur disent que ce sont des cartes et non un bloc.
 
+**LE NOMBRE DE FEUILLETS NE DÉCORE PAS L'ÉPAISSEUR, IL LA DIVISE.** Il y en
+avait trois — Keko : « les séparations ne sont pas assez nombreuses, on dirait
+que les cartes sont super épaisses ». *Trois traits donnent quatre cartes, et
+une carte d'un quart de tranche n'est pas une carte, c'est une planche.* À
+douze, l'épaisseur totale ne change pas d'un pixel mais elle se lit enfin comme
+un paquet. Le trait s'affine d'autant : à trois on pouvait l'appuyer, à douze un
+trait épais mangerait la carte qu'il sépare.
+
+**UN `stroke` SVG EST CENTRÉ SUR LE TRACÉ**, donc la moitié de sa largeur sort
+du polygone — le liseré du dessus débordait des flancs tout autour. Invisible
+tant que la tranche était noire, voyant dès qu'elle est devenue claire : Keko
+l'a vu tout de suite (« le rectangle doré qui entoure la carte du dessus est
+plus grand que le reste du paquet »). *Une correction de couleur peut révéler un
+défaut de géométrie qui existait depuis toujours.* SVG ne sait pas aligner un
+trait à l'intérieur (`stroke-alignment` n'existe nulle part), donc on le rogne
+avec un `clipPath` de la MÊME forme, ce qui n'en laisse que la moitié
+intérieure — d'où la largeur doublée, puisqu'on en perd la moitié.
+
 **LA TRANCHE EST EN LAITON PÂLE, PAS EN ARDOISE.** Keko : « c'est dommage que
 les tranches des cartes soient foncées, un peu utiliser un doré très pâle
 plutôt, car là on voit pas bien ». Elles étaient presque noires, donc

@@ -93,6 +93,20 @@ const DESSUS = [LOIN, GAUCHE, NEAR, DROITE].map((c) => pt(c)).join(' ')
 const FLANC_GAUCHE = `${pt(GAUCHE)} ${pt(NEAR)} ${pt(NEAR, EPAISSEUR)} ${pt(GAUCHE, EPAISSEUR)}`
 const FLANC_DROIT = `${pt(NEAR)} ${pt(DROITE)} ${pt(DROITE, EPAISSEUR)} ${pt(NEAR, EPAISSEUR)}`
 
+/**
+ * COMBIEN DE CARTES ON VOIT DANS LA TRANCHE.
+ *
+ * Il y en avait TROIS, et Keko : « les séparations entre les cartes ne sont pas
+ * assez nombreuses, on dirait que les cartes sont super épaisses ». C'est
+ * exactement ça : *le nombre de traits ne décore pas l'épaisseur, il la DIVISE*
+ * — trois traits sur une tranche donnent quatre cartes de 4 unités chacune, et
+ * une carte de 4 unités d'épaisseur n'est pas une carte, c'est une planche.
+ *
+ * À douze, chaque feuillet fait un peu plus d'une unité : l'épaisseur totale ne
+ * change pas, mais elle se lit enfin comme un paquet.
+ */
+const FEUILLETS = 12
+
 /** Le losange du dessus, rentré vers son centre : le jonc intérieur. */
 function jonc(part: number): string {
   return [LOIN, GAUCHE, NEAR, DROITE]
@@ -156,23 +170,40 @@ export function Tas3D({ nom, compte }: Props): React.JSX.Element {
         {/* LES FEUILLETS : ce sont des cartes empilées, pas un bloc. Sur une
             tranche noire ils ne disaient rien ; sur du laiton, chaque trait est
             une carte — *c'est la tranche claire qui les rend lisibles.* */}
-        {[0.3, 0.55, 0.8].map((f) => (
+        {Array.from({ length: FEUILLETS - 1 }, (_, i) => (i + 1) / FEUILLETS).map((f) => (
           <polyline
             key={f}
             points={`${pt(GAUCHE, EPAISSEUR * f)} ${pt(NEAR, EPAISSEUR * f)} ${pt(DROITE, EPAISSEUR * f)}`}
             fill="none"
             stroke="#8a6a2c"
-            strokeOpacity="0.55"
-            strokeWidth="1.1"
+            strokeOpacity="0.5"
+            // Plus fin qu'avant : à trois traits on pouvait les appuyer, à
+            // douze un trait épais mangerait la carte qu'il sépare.
+            strokeWidth="0.55"
           />
         ))}
 
+        {/* LE LISERÉ NE DÉBORDE PLUS DU PAQUET. Un `stroke` SVG est CENTRÉ sur
+            le tracé, donc la moitié de sa largeur sort du polygone : le dessus
+            débordait des flancs de 1 unité tout autour. Invisible tant que la
+            tranche était noire, voyant dès qu'elle est devenue claire — Keko :
+            « le rectangle doré qui entoure la carte du dessus est plus grand
+            que le reste du paquet ».
+
+            SVG ne sait pas aligner un trait à l'intérieur (`stroke-alignment`
+            n'existe nulle part) : on le rogne donc avec un `clipPath` de la
+            MÊME forme, ce qui ne laisse que la moitié intérieure. D'où la
+            largeur doublée — on en perd la moitié. */}
+        <clipPath id={`${id}-dessus-coupe`}>
+          <polygon points={DESSUS} />
+        </clipPath>
         <polygon
           points={DESSUS}
           fill={`url(#${id}-dessus)`}
           stroke="#c9a95a"
-          strokeWidth="2"
+          strokeWidth="4"
           strokeLinejoin="round"
+          clipPath={`url(#${id}-dessus-coupe)`}
         />
         <polygon points={jonc(0.62)} fill="none" stroke="#c9a95a" strokeWidth="1.2" opacity="0.5" />
         <polygon points={jonc(0.24)} fill="#c9a95a" opacity="0.22" />
