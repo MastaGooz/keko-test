@@ -3351,7 +3351,24 @@ paquet paraissait deux fois trop petit pour la place qu'il occupait.
 bordure. Même raison qu'en 2D — on ne décide pas dessus, et il a déjà été un
 gros nombre d'or qui avait le poids d'une valeur de jeu.
 
-**ILS FONT LE DOUBLE DEPUIS**, demandé par Keko — « c'est trop petit là ». Ce
+**LEUR TAILLE EST BORNÉE PAR LA HAUTEUR D'ÉCRAN** (`--tas: min(7.5rem, 21vh)`).
+En rem seuls, ils prenaient 14 à 18 % de la largeur sur un téléphone contre 7 %
+sur un écran de PC — Keko : « sur téléphone les paquets sont trop gros, mais
+nikel sur PC ». *Une taille absolue n'est pas une taille : elle vaut ce que vaut
+l'écran autour.* Le plafond en rem l'emporte sur grand écran, donc **le PC ne
+bouge pas** et seul le téléphone rétrécit, d'un tiers. Mesuré : 10 % de la
+largeur à 667x320 comme à 844x390, 7 % à 2560x1271.
+
+**ET DEUX BORDS QUI DOIVENT COÏNCIDER SE CALCULENT L'UN DEPUIS L'AUTRE.** Le
+bord droit de l'orbe et celui de la barre de PV avaient chacun leur formule :
+ils divergeaient dès que le format changeait — l'orbe dépassait de 6 px à
+667x320 et rentrait de 45 px sur un écran de PC. Même chose pour leur
+empilement vertical, où l'orbe se calait sur le tas et est venue toucher la
+barre dès que le tas a rétréci. *Ce qui s'aligne se mesure depuis ce sur quoi
+ça s'aligne*, jamais chacun de son côté.
+
+**ILS ONT FAIT LE DOUBLE À UN MOMENT**, demandé par Keko — « c'est trop petit
+là ». Ce
 n'est pas qu'une largeur : **deux repères se calculent depuis la hauteur du
 tas** et devaient suivre, sinon ils restent comme des cicatrices. Le plancher de
 la barre de PV (5,4 → 9,6rem), et surtout **l'orbe d'énergie**, qui se posait à

@@ -22,6 +22,16 @@ html {
 }
 
 :root {
+  /* LA TAILLE DES TAS, bornee par la HAUTEUR d'ecran comme tout ce qui compte
+     dans ce jeu. En rem seuls, ils prenaient 14 a 18 % de la largeur sur un
+     telephone contre 7 % sur un ecran de PC -- Keko : « sur telephone les
+     paquets sont trop gros, mais nikel sur PC ». *Une taille absolue n'est pas
+     une taille : elle vaut ce que vaut l'ecran autour.*
+
+     Le plancher de la barre de PV et celui de l'orbe se calculent depuis ce
+     jeton, parce qu'ils se posent AU-DESSUS du tas : sans ca, un tas qui
+     retrecit laisse un trou sous eux. */
+  --tas: min(7.5rem, 21vh);
   --bg: #16161a;
   --fg: #f2f2f5;
   --muted: #9a9aa6;
@@ -3753,7 +3763,7 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.0625rem;
-  width: 7.5rem;
+  width: var(--tas);
 }
 
 /* LA PIOCHE EST LE MIROIR DE LA DEFAUSSE. Le paquet penche : les deux tas
@@ -4268,7 +4278,7 @@ body {
      desormais 9,3rem depuis le bas, compte compris, et on se pose juste
      au-dessus. *Une valeur derivee d'une taille se relit quand cette taille
      change*, sinon elle reste comme une cicatrice. */
-  bottom: max(9.6rem, calc(var(--main-haut, 7rem) - 1rem));
+  bottom: max(calc(var(--tas) * 1.253 + 0.2rem), calc(var(--main-haut, 7rem) - 1rem));
 }
 
 /* LA BARRE ET LE BOUCLIER, cote a cote. LA PLACE DU BOUCLIER EST RESERVEE,
@@ -4585,15 +4595,33 @@ body {
    est bornee par le meme bord. */
 .orbe-jeu {
   position: absolute;
-  left: min(
-    calc((8.25rem + var(--main-gauche, 14rem)) / 2 - 1.625rem),
-    calc(var(--main-gauche, 14rem) - 3.6rem)
+  /* SON BORD DROIT EST CELUI DE LA BARRE, et c'est la demande d'origine de
+     Keko -- « qu'elle s'arrete la ou s'arrete le symbole de l'energie ». Les
+     deux etaient calcules SEPAREMENT, donc ils divergeaient des que le format
+     changeait : l'orbe depassait de 6 px a 667x320 et rentrait de 45 px sur un
+     ecran de PC. *Deux bords qui doivent coincider se calculent l'un depuis
+     l'autre, jamais chacun de son cote.* */
+  left: calc(
+    0.75rem +
+      min(
+        calc((8.25rem + var(--main-gauche, 14rem)) / 2 + 2.75rem),
+        calc(var(--main-gauche, 14rem) - 1.45rem)
+      ) - 3.25rem
   );
   /* UN POIL PLUS HAUT QUE LA BARRE, demande par Keko : « c'est un peu proche
      la ». La barre a epaissi en devenant une piece de ferronnerie, donc l'ecart
      qui separait les deux s'est mange tout seul -- *une marge se relit quand ce
      qu'elle separe change de taille.* */
-  bottom: max(11.9rem, calc(var(--main-haut, 7rem) + 1.1rem));
+  /* SA HAUTEUR SE COMPTE DEPUIS LA BARRE, pas depuis le tas. Les deux avaient
+     leur propre plancher cale sur la hauteur du tas ; quand celui-ci a retreci
+     pour le telephone, ils ont baisse de facons differentes et l'orbe est venue
+     se coller a la barre. *Deux objets empiles se mesurent l'un depuis
+     l'autre* -- c'est la meme correction que pour leurs bords droits, un cran
+     plus haut. Les 2,3rem sont la hauteur du bloc de vie (1,55) plus le
+     degagement que Keko a demande entre les deux. */
+  bottom: calc(
+    max(calc(var(--tas) * 1.253 + 0.2rem), calc(var(--main-haut, 7rem) - 1rem)) + 2.3rem
+  );
   display: grid;
   place-items: center;
   width: 3.25rem;
