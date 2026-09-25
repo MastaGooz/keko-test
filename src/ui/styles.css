@@ -32,6 +32,24 @@ html {
      jeton, parce qu'ils se posent AU-DESSUS du tas : sans ca, un tas qui
      retrecit laisse un trou sous eux. */
   --tas: min(7.5rem, 21vh);
+
+  /* OU COMMENCE L'ORBE D'ENERGIE, et c'est LUI qui commande.
+     Elle se CENTRE dans l'ecart entre le tas et la main, et la barre de PV
+     s'arrete a son bord droit -- c'est la demande d'origine de Keko, « que la
+     barre s'arrete la ou s'arrete le symbole de l'energie ». L'avoir inverse
+     un moment (l'orbe calee sur la barre) la poussait tout a droite sur
+     telephone, ou la barre va presque jusqu'a la main : « sur tel l'energie est
+     encore un peu trop a droite ».
+
+     *Ce qui a une place naturelle commande ; ce qui n'en a pas suit.* Un objet
+     qui marque un endroit a besoin d'un MILIEU, un objet qui porte un chiffre a
+     besoin d'une LONGUEUR -- et la longueur se deduit du milieu, pas l'inverse.
+
+     La borne retient l'orbe a gauche de la main quand l'ecart se reduit. */
+  --orbe-gauche: min(
+    calc((0.75rem + var(--tas) + var(--main-gauche, 14rem)) / 2 - 1.625rem),
+    calc(var(--main-gauche, 14rem) - 3.6rem)
+  );
   --bg: #16161a;
   --fg: #f2f2f5;
   --muted: #9a9aa6;
@@ -4268,10 +4286,10 @@ body {
 .vie-bloc {
   position: absolute;
   left: 0.75rem;
-  width: min(
-    calc((8.25rem + var(--main-gauche, 14rem)) / 2 + 2.75rem),
-    calc(var(--main-gauche, 14rem) - 1.45rem)
-  );
+  /* ELLE S'ARRETE AU BORD DROIT DE L'ORBE : 3,25rem de large moins les 0,75 du
+     bord gauche de l'ecran d'ou elle part. Les deux se calculaient chacun de
+     son cote et divergeaient des que le format changeait. */
+  width: calc(var(--orbe-gauche) + 2.5rem);
   /* UN PLANCHER, parce que sur un ecran court le haut de la main descend sous
      le sommet du tas de pioche : la barre venait alors s'asseoir sur son
      compte. LE TAS AYANT DOUBLE, le plancher double avec lui -- il occupe
@@ -4595,30 +4613,7 @@ body {
    est bornee par le meme bord. */
 .orbe-jeu {
   position: absolute;
-  /* SON BORD DROIT EST CELUI DE LA BARRE, et c'est la demande d'origine de
-     Keko -- « qu'elle s'arrete la ou s'arrete le symbole de l'energie ». Les
-     deux etaient calcules SEPAREMENT, donc ils divergeaient des que le format
-     changeait : l'orbe depassait de 6 px a 667x320 et rentrait de 45 px sur un
-     ecran de PC. *Deux bords qui doivent coincider se calculent l'un depuis
-     l'autre, jamais chacun de son cote.* */
-  left: calc(
-    0.75rem +
-      min(
-        calc((8.25rem + var(--main-gauche, 14rem)) / 2 + 2.75rem),
-        calc(var(--main-gauche, 14rem) - 1.45rem)
-      ) - 3.25rem
-  );
-  /* UN POIL PLUS HAUT QUE LA BARRE, demande par Keko : « c'est un peu proche
-     la ». La barre a epaissi en devenant une piece de ferronnerie, donc l'ecart
-     qui separait les deux s'est mange tout seul -- *une marge se relit quand ce
-     qu'elle separe change de taille.* */
-  /* SA HAUTEUR SE COMPTE DEPUIS LA BARRE, pas depuis le tas. Les deux avaient
-     leur propre plancher cale sur la hauteur du tas ; quand celui-ci a retreci
-     pour le telephone, ils ont baisse de facons differentes et l'orbe est venue
-     se coller a la barre. *Deux objets empiles se mesurent l'un depuis
-     l'autre* -- c'est la meme correction que pour leurs bords droits, un cran
-     plus haut. Les 2,3rem sont la hauteur du bloc de vie (1,55) plus le
-     degagement que Keko a demande entre les deux. */
+  left: var(--orbe-gauche);
   bottom: calc(
     max(calc(var(--tas) * 1.253 + 0.2rem), calc(var(--main-haut, 7rem) - 1rem)) + 2.3rem
   );
