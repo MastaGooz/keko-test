@@ -3793,9 +3793,22 @@ Cycle : `npm run build` -> commit -> push -> attendre la fin du workflow ->
 dire à Keko d'aller tester. Lui rappeler de vérifier la **date de build affichée
 sur la page** pour être sûr qu'il ne voit pas une version en cache.
 
-**Terminer chaque réponse par le lien de la page** :
-<https://mastagooz.github.io/keko-test/>. Keko teste depuis son téléphone et un
-PC distant — le lien doit être sous son pouce, pas à retrouver dans l'historique.
+**TERMINER CHAQUE RÉPONSE PAR LE LIEN DE CE QU'ON VIENT DE FAIRE**, et tant que
+le moteur 3D est en construction c'est <https://mastagooz.github.io/keko-test/?r3f>
+— **avec le `?r3f`**. Keko teste depuis son téléphone et un PC distant : le lien
+doit être sous son pouce, pas à retrouver dans l'historique.
+
+*La racine nue ouvre le jeu 2D*, donc elle ne montre RIEN de ce qu'on vient de
+changer, et Keko devait ajouter le paramètre à la main à chaque fois. Il l'a
+demandé : « tu peux me remettre le lien à chaque fois ? de la version nouvelle ».
+Le jour où la 3D deviendra la page par défaut, le `?r3f` tombera tout seul.
+
+**Y ACCROCHER LE HASH DU COMMIT** (`&v=<sha court>`) : l'URL change donc à chaque
+déploiement, et le navigateur ne peut pas resservir un vieux bundle. Le
+garde-fou `verifierVersion` et la date de build affichée restent les filets —
+mais *un garde-fou ajouté ne corrige pas rétroactivement un cache déjà posé*,
+alors qu'une URL neuve, si. Le paramètre est ignoré par `entree.ts`, qui ne fait
+qu'un `has('r3f')`.
 
 **Attendre le bon run, pas le dernier.** Comparer le `headSha` du run au `HEAD`
 local avant de conclure : juste après un push, `gh run list --limit 1` renvoie
