@@ -712,10 +712,16 @@ function peindreEmbleme(ctx: CanvasRenderingContext2D, embleme: Embleme, or: Can
     // TROIS CARTES EN ÉVENTAIL : un paquet dont on tire. Les deux du fond sont
     // en trait seul, celle de devant est pleine — sans ça les trois contours se
     // croisent et ne se lisent plus à la taille d'un médaillon.
+    // L'ÉVENTAIL POINTE VERS LE BAS, demandé par Keko — le haut devient le bas.
+    // Une rotation d'un demi-tour, plutôt que trois placements recalculés : la
+    // figure est la même, c'est son sens qui change.
     ctx.lineWidth = 1.9 * U
+    ctx.save()
+    ctx.rotate(Math.PI)
     carteDeSymbole(ctx, -5.2 * U, 0.8 * U, 9 * U, -0.42, false)
     carteDeSymbole(ctx, 5.2 * U, 0.8 * U, 9 * U, 0.42, false)
     carteDeSymbole(ctx, 0, -1.4 * U, 9.4 * U, 0, true)
+    ctx.restore()
     return
   }
 
@@ -732,7 +738,7 @@ function peindreEmbleme(ctx: CanvasRenderingContext2D, embleme: Embleme, or: Can
     ctx.lineWidth = 1.9 * U
     carteDeSymbole(ctx, 0, 0, 10.4 * U, 0, true)
 
-    const b = 9.6 * U
+    const b = 8.1 * U
     const croix = (): void => {
       ctx.beginPath()
       ctx.moveTo(-b, -b)
