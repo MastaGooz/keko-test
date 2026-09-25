@@ -3753,15 +3753,20 @@ body {
   width: 3.75rem;
 }
 
-/* LA PIOCHE EST LE MIROIR DE LA DEFAUSSE. Le paquet penche : son coin bas est
-   centre, mais son grand axe monte vers la droite. Les deux tas dessines a
-   l'identique penchaient donc du meme cote, et les coins bas de l'ecran ne se
-   repondaient pas. Demande par Keko.
+/* LA DEFAUSSE EST LE MIROIR DE LA PIOCHE. Le paquet penche : les deux tas
+   dessines a l'identique pencheraient du meme cote, et les coins bas de l'ecran
+   ne se repondraient pas. Demande par Keko.
 
-   Le miroir est porte par le CSS et non par un second dessin : *un seul
-   dessin, deux poses* -- sinon les deux divergeraient au premier retouchage.
-   L'ombre portee n'a qu'un decalage vertical, elle survit au retournement. */
-.tas-3d.pioche .tas-dessin {
+   C'EST LA DEFAUSSE QU'ON RETOURNE, PAS LA PIOCHE. Le losange dessine a la main
+   penchait dans l'autre sens que `Deck.png` : le miroir etait donc sur l'autre
+   tas, et le remplacer par l'image de Keko a inverse les deux -- « les sens sont
+   inverses ». *Un miroir se pose contre le sens du dessin, donc il se relit
+   quand le dessin change.*
+
+   Il reste porte par le CSS et non par un second fichier : *un seul dessin, deux
+   poses* -- sinon les deux divergeraient au premier retouchage. L'ombre portee
+   n'a qu'un decalage vertical, elle survit au retournement. */
+.tas-3d.defausse .tas-dessin {
   transform: scaleX(-1);
 }
 
