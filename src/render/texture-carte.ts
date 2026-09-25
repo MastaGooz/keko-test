@@ -23,7 +23,7 @@
  * carte 3D soit la MÊME carte, et pas une deuxième version qui dérivera.
  */
 import * as THREE from 'three'
-import { art, urlDuFond, urlImageDeKeko } from '../ui/art.ts'
+import { art, urlDuCout, urlDuFond, urlImageDeKeko } from '../ui/art.ts'
 
 /** Ce qu'il faut savoir d'une carte pour la peindre. */
 export type CarteAPeindre = {
@@ -142,6 +142,14 @@ function fond(): Promise<HTMLImageElement | null> {
   return fondCommun
 }
 
+/** Le symbole du coût, chargé une fois lui aussi. */
+let symboleCout: Promise<HTMLImageElement | null> | null = null
+
+function coutPeint(): Promise<HTMLImageElement | null> {
+  symboleCout ??= charger(urlDuCout())
+  return symboleCout
+}
+
 function charger(url: string): Promise<HTMLImageElement | null> {
   return new Promise((resoudre) => {
     const image = new Image()
@@ -223,9 +231,10 @@ export async function peindreCarte(carte: CarteAPeindre): Promise<HTMLCanvasElem
   const ctx = canvas.getContext('2d')
   if (ctx === null) return canvas
 
-  const [image, decor] = await Promise.all([
+  const [image, decor, symbole] = await Promise.all([
     illustration(carte.nom),
     fond(),
+    coutPeint(),
     document.fonts.ready,
   ])
 
@@ -279,7 +288,7 @@ export async function peindreCarte(carte: CarteAPeindre): Promise<HTMLCanvasElem
   ctx.fillRect(0, HAUT * 0.5, LARGE, HAUT * 0.5)
   ctx.restore()
 
-  if (carte.compteur === undefined) peindreCout(ctx, carte.cout)
+  if (carte.compteur === undefined) peindreCout(ctx, carte.cout, symbole)
   else peindreCompteur(ctx, carte.compteur)
   peindreTextes(ctx, carte)
   return canvas
@@ -424,7 +433,11 @@ function polygone(
   ctx.closePath()
 }
 
-function peindreCout(ctx: CanvasRenderingContext2D, cout: number): void {
+function peindreCout(
+  ctx: CanvasRenderingContext2D,
+  cout: number,
+  symbole: HTMLImageElement | null,
+): void {
   if (styleCout === 'blason') return peindreEcusson(ctx, cout)
 
   // Un peu plus large que l'écu : inscrite dans un carré, une forme perd de la
@@ -435,6 +448,15 @@ function peindreCout(ctx: CanvasRenderingContext2D, cout: number): void {
   const r = l / 2
   const x = cx - r
   const y = cy - r
+
+  // L'IMAGE DE KEKO REMPLACE LE CERCLE DESSINÉ, quand elle est là. Le dessin
+  // reste derrière elle comme repli : *un canvas ne dessine rien du tout si
+  // l'image manque*, et on aurait un chiffre posé sur le vide.
+  if (styleCout === 'orbe' && symbole !== null) {
+    ctx.drawImage(symbole, x, y, l, l)
+    chiffre(ctx, cout, cx, cy)
+    return
+  }
 
   if (styleCout === 'losange') {
     // LE LOSANGE, POINTE EN HAUT : l'inverse exact de l'écu. Une pointe qui

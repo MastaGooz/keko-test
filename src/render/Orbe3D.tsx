@@ -18,13 +18,11 @@
  * était une carte à la taille de la main et qu'« au-dessus » envoyait l'orbe en
  * haut de l'écran ; ici le tas est un petit symbole, et l'objection tombe.
  *
- * Il est en SVG et non peint au canvas comme celui des cartes : un chiffre
- * d'interface reste net à toute taille, et il n'a rien à gagner à passer par
- * une texture.
+ * Le chiffre est du HTML et non une texture : il reste net à toute taille, et
+ * il n'a rien à gagner à passer par un canvas.
  */
 
-/** Les mêmes teintes que `peindreCout`, dans le même ordre. */
-const SOCLE = '#12100c'
+import { urlDuCout } from '../ui/art.ts'
 
 type Props = {
   courant: number
@@ -34,28 +32,11 @@ type Props = {
 export function Orbe3D({ courant, max }: Props): React.JSX.Element {
   return (
     <div className="orbe-jeu">
-      <svg viewBox="0 0 100 100" aria-hidden="true">
-        <defs>
-          <linearGradient id="orbe-filet" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#f4dfb0" />
-            <stop offset="0.7" stopColor="#c9a86e" />
-            <stop offset="1" stopColor="#a88c5f" />
-          </linearGradient>
-          <linearGradient id="orbe-coeur" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#8a6a2c" />
-            <stop offset="0.62" stopColor="#4a3713" />
-            <stop offset="1" stopColor="#241a08" />
-          </linearGradient>
-          <radialGradient id="orbe-lueur" cx="0.35" cy="0.3" r="0.72">
-            <stop offset="0" stopColor="#ffd98a" stopOpacity="0.4" />
-            <stop offset="1" stopColor="#ffd98a" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-        <circle cx="50" cy="50" r="49" fill={SOCLE} />
-        <circle cx="50" cy="50" r="46" fill="url(#orbe-filet)" />
-        <circle cx="50" cy="50" r="40" fill="url(#orbe-coeur)" />
-        <circle cx="50" cy="50" r="40" fill="url(#orbe-lueur)" />
-      </svg>
+      {/* LE SYMBOLE EST L'IMAGE DE KEKO, la même que sur les cartes. Le cercle
+          dessiné qu'elle remplace vit dans `git log` ; ce qui compte est que
+          les deux endroits partagent UN fichier, donc qu'ils ne puissent plus
+          diverger. */}
+      <img src={urlDuCout()} alt="" aria-hidden="true" />
       <span className="orbe-chiffre">
         {courant}
         <small>/{max}</small>

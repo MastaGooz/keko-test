@@ -4358,11 +4358,12 @@ body {
   filter: drop-shadow(0 2px 5px #000000a8);
 }
 
-.orbe-jeu > svg {
+.orbe-jeu > img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 /* LE COURANT EST GROS, LE MAXIMUM PETIT : on decide sur ce qu'il reste, pas

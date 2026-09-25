@@ -97,6 +97,18 @@ export function urlDuFond(): string {
 }
 
 /**
+ * LE SYMBOLE DU COÛT, fourni par Keko — il remplace le cercle dessiné.
+ *
+ * Il sert aux DEUX endroits, et c'est la règle : le même symbole sur la carte
+ * et dans le coin du joueur, « pour que le joueur comprenne bien ». Même piège
+ * de cache que les autres fichiers de `public/` : l'URL porte la date du
+ * build, sinon le remplacer ne changerait rien à l'écran.
+ */
+export function urlDuCout(): string {
+  return `${import.meta.env.BASE_URL}Cost.png?v=${encodeURIComponent(__BUILD_TIME__)}`
+}
+
+/**
  * La même URL, brute — ce qu'il faut pour charger l'image autrement que par le
  * CSS : le moteur 3D la peint dans un canvas pour en faire une texture.
  */

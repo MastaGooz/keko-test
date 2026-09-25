@@ -2707,6 +2707,17 @@ descend comme un bouclier), **hexagone** (une pièce mécanique, aucune parenté
 héraldique), **orbe** (l'objet du joueur, en petit) et **éclat** (un
 scintillement à quatre branches).
 
+**ET LE DESSIN A CÉDÉ LA PLACE À `public/Cost.png`**, fourni par Keko : un
+disque sombre cerclé de crème, avec un petit repère en haut. Un seul fichier
+pour les DEUX endroits — la carte et le coin du joueur — donc ils ne peuvent
+plus diverger. Le cercle peint reste derrière comme repli : *un canvas ne
+dessine rien du tout si l'image manque*, et on aurait un chiffre posé sur le
+vide.
+
+L'image est chargée UNE fois pour toutes les cartes (promesse mémorisée), comme
+le fond commun : `peindreCarte` est appelée par modèle, et sans ça le premier
+écran lancerait autant de chargements qu'il y a de cartes différentes.
+
 **Keko a choisi l'ORBE** : « essayons l'orbe, mais il faudrait une orbe sur les
 cartes, puis le même symbole avec X/X dans l'interface de combat ». C'est la
 règle prise au mot — le joueur voit le même objet sur sa carte et dans son coin
