@@ -2802,35 +2802,49 @@ normalise les guillemets.
 `⛉ 5`, `−12`. Keko les a réunies en une barre qui s'étend entre la pioche et
 la main : *le joueur lit son état avec la même grammaire que celle d'en face.*
 
-**LA BARRE DU JOUEUR EST UNE PIÈCE DE FERRONNERIE, PAS UN RECTANGLE.** Keko l'a
-trouvée « vraiment classique et pas stylisée » deux fois de suite, malgré un
-sertissage et un lustre. Le défaut n'était pas l'habillage : *une barre
-horizontale à coins droits EST le vocabulaire par défaut des jeux vidéo*, et
-aucune décoration ne le défait. Il a fallu changer la **silhouette**, puis
-charger l'habillage — « je sais pas, avec des effets ? un contour sympa ? »
+**LA BARRE DU JOUEUR : CE QUI LA STYLISE, C'EST SA DÉCOUPE, PAS SA MATIÈRE.**
+Keko l'a trouvée « vraiment classique et pas stylisée » deux fois de suite,
+malgré un sertissage et un lustre. Le défaut n'était pas l'habillage : *une
+barre horizontale à coins droits EST le vocabulaire par défaut des jeux
+vidéo*, et aucune décoration ne le défait — il fallait changer la
+**silhouette**.
 
-Ce qu'elle porte, et chaque pièce fait une chose :
+**Puis l'inverse : trop chargée.** La passe suivante lui avait donné une patine
+en stries, des rivets répartis, des ferrures à encoches et des graduations tous
+les dixièmes. Keko : « c'est beaucoup trop chargé, séparer la barre en segments
+je suis pas fan, la texture du contour est trop complexe, il faudrait un contour
+minimaliste mais stylisé — par contre l'effet de brillance qui se déplace est
+super ».
 
-- une **plaque de laiton aux coins coupés** — un biseau est de la ferronnerie,
-  un arrondi est un gabarit — avec sa **patine** en stries fines et ses
-  **rivets**. *Un métal sans accident se lit comme une couleur* ;
-- une **ferrure à chaque extrémité**, avec rivet et encoches : c'est elle qui
-  fait lire une pièce montée plutôt qu'une jauge ;
-- un **creux de pierre** en retrait, **gradué tous les dixièmes** — les
-  graduations passent PAR-DESSUS le rouge, sinon elles disparaîtraient sous lui
-  dès le premier point de vie. C'est ce qui le fait lire comme un INSTRUMENT ;
-- une **crête claire** au bord du remplissage et une **lueur** qui en déborde :
-  *un liquide dans une gorge a un niveau, et un niveau se voit* ;
-- un **balayage** lent sur le laiton et un **pouls** sur la seule lueur — ce qui
-  bat, c'est ce qui déborde, jamais la couleur, qui doit rester lisible.
+*Les deux verdicts ne se contredisent pas* : le premier disait que la FORME
+était générique, le second que la MATIÈRE la brouillait. Ce qui reste :
+
+- **les coins coupés en biseau**, et eux seuls — un biseau est de la
+  ferronnerie, un arrondi est un gabarit. C'est la seule stylisation, et elle
+  porte tout ;
+- **un dégradé de laiton propre**, un liseré clair en haut, deux embouts nus ;
+- **le balayage lumineux**, le seul effet retenu : c'est lui qui fait lire du
+  MÉTAL là où un dégradé fixe ne donne qu'une couleur ;
+- **une crête claire** au bord du remplissage — un liquide dans une gorge a un
+  niveau, et un niveau se voit.
+
+Ce qui est parti : graduations, rivets, stries, encoches, lueur débordante et
+pulsation. *Un seul effet qui bouge par pièce*, et Keko a choisi lequel.
+
+**Le bord se juge en RATIO, pas en épaisseur** : à 0,34rem sur une barre de
+1,45, le laiton prenait 47 % de la hauteur et écrasait la gorge qu'il encadre.
+À 0,22 il en prend 30 %.
 
 **La plaque vit dans son propre élément** : portée par `.vie-barre`, son rognage
-emporterait le chiffre, qui doit déborder.
+emporterait le chiffre, qui doit déborder. Et **un `::after` est dessiné APRÈS
+le contenu de son élément**, donc l'embout droit recouvrait le chiffre de
+menace — *l'ordre du DOM ne suffit pas quand un pseudo-élément est dans la
+course.*
 
 **PIÈGE : un dégradé en POURCENTAGE change de sens quand l'élément change de
 proportions.** Le lustre oblique des créatures, repris tel quel, délavait tout
 le milieu du rouge en blanc — il vaut sur une jauge de 7rem, pas sur les 28rem
-du joueur. Il est retiré ; la crête et la lueur disent mieux la même chose.
+du joueur.
 
 **LES DEUX JAUGES SONT SERTIES DE LAITON.** Keko : « la barre de PV fait très
 générique et pas stylisée ». Elle l'était, et pour une raison précise : une
