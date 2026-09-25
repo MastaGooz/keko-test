@@ -2963,6 +2963,42 @@ Quatre contraintes de dessin, et les trois premières ont une raison mécanique 
    `#000000` et la tête de mort s'abat dessus : il ne reste que la forme ;
 4. le haut du cadre n'a plus à être dégagé depuis que l'intention est montée.
 
+**LES ÉTIQUETTES PASSENT DEVANT LEUR PROPRE CORPS** (`.ancres-3d` en
+`z-index: 3`). L'ombre au sol est dessinée DANS le canvas, sous les pattes : à
+1, la jauge passait dessous et l'ombre lui mordait le dessus. Keko : « l'ombre
+du cultiste est par-dessus sa barre de PV ». *Une étiquette qui annote un corps
+ne peut pas vivre derrière lui.* Elles restent **sous les cartes qu'on
+manipule** sans règle nouvelle : le canvas monte à 4 dès qu'une carte est
+tenue, regardée **ou en vol** — ce dernier cas a dû être ajouté, sinon une
+carte qui s'abat passerait derrière la jauge du corps qu'elle frappe. À égalité
+avec `.jeu-3d`, c'est l'ordre du DOM qui tranche et les ancres y viennent
+avant : le bouton de fin de tour reste cliquable.
+
+**LE HALO DE VISÉE SUIT LA SILHOUETTE, ce n'est plus un disque.** Un dégradé
+radial derrière un corps qui n'est pas rond laisse de la lumière là où il n'y a
+personne et n'en met pas assez au bout des bras. Keko : « le halo des ennemis
+est un halo rond, on peut pas faire un contour lumineux autour de l'image qui
+suit sa forme ? » *Un halo désigne d'autant mieux qu'il épouse ce qu'il
+désigne.*
+
+**LE FLOU EST DANS LA MATIÈRE, PAS DANS LA GÉOMÉTRIE** — la leçon du contour
+des cartes, transposée telle quelle : on peint l'OMBRE de la créature au canvas
+avec `shadowBlur`, le même moteur de flou que le `box-shadow` du CSS. L'image
+est dessinée HORS du cadre et c'est `shadowOffsetX` qui ramène son ombre
+dedans : on obtient la lueur seule, sans la silhouette en couleur par-dessus.
+Deux passes — un coeur serré qui fait le liseré, une diffusion large qui fait
+la lumière — chacune redessinée plusieurs fois, parce qu'une ombre floue est
+pâle et que l'alpha s'accumule. Elle se peint depuis la texture RÉELLEMENT
+affichée, donc le dessin SVG de repli a son contour comme l'image de Keko.
+
+Les trois règles des cartes valent ici : le débord de la texture est
+exactement celui du plan (`DEBORD_HALO`), `shadowBlur` porte la moitié de sa
+valeur, et **ça se vérifie sur le profil d'alpha**. Mesuré sur le Cultiste :
+à 0,22 / 0,60 il restait 9 d'alpha au bord du plan — assez pour qu'une arête se
+devine sous les pattes, là où le sujet touche presque le bord de son image ; à
+0,18 / 0,42 il tombe à **0**, pour une frange lumineuse de 39 px sur une toile
+de 360.
+
 **BANC D'ESSAI : `ENNEMI_UNIQUE`** (`Ennemi3D.tsx`) donne à TOUS les corps la
 même identité. Keko juge un dessin qu'il vient de faire, et il l'a demandé
 seul — *un dessin ne se juge pas à côté des silhouettes qu'il doit remplacer*,

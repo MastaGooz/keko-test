@@ -707,6 +707,13 @@ export function Scene(): React.JSX.Element {
         // lâcher. Keko : « la carte est toujours sous le bouton fin de tour
         // et les deux textes gris en haut ».
         //
+        // ET UNE CARTE EN VOL COMPTE COMME UNE CARTE TENUE. Depuis que les
+        // étiquettes des créatures passent devant le canvas, une carte qui
+        // s'abat passerait DERRIÈRE la jauge du corps qu'elle frappe. Le
+        // geste est fini, mais *ce qui est à l'écran est toujours une carte
+        // de la main* — et l'entrée est verrouillée pendant tout le vol, donc
+        // couvrir le bouton ne piège personne.
+        //
         // MAIS SEULEMENT EN COMBAT. Sur l'écran de butin, la scène porte un
         // VOILE : la faire monter pendant un glisser le passait par-dessus les
         // boutons, qui s'assombrissaient d'un coup — Keko : « quand je drague
@@ -717,7 +724,7 @@ export function Scene(): React.JSX.Element {
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: (saisie && enCombat) || zoomee !== null ? 4 : 2,
+          zIndex: ((saisie || enVol !== null) && enCombat) || zoomee !== null ? 4 : 2,
         }}
       >
         <ambientLight intensity={0.55} />

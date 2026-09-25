@@ -3935,11 +3935,29 @@ body {
   background-size: cover;
 }
 
-/* CE QUE LA CARTE A LE DROIT DE RECOUVRIR : les jauges, les intentions,
-   l'energie, les PV. */
-.ancres-3d,
+/* CE QUE LA CARTE A LE DROIT DE RECOUVRIR : l'energie et les PV du joueur.
+   La carte qu'on tient monte le canvas au-dessus d'eux. */
 .etat-3d {
   z-index: 1;
+}
+
+/* LES ETIQUETTES DES CREATURES PASSENT DEVANT LEUR PROPRE CORPS.
+
+   L'ombre au sol est dessinee DANS le canvas, sous les pattes : a z-index 1
+   la jauge passait dessous et l'ombre lui mordait le dessus. Keko : « l'ombre
+   du cultiste est par-dessus sa barre de PV, la barre doit etre au-dessus de
+   son image ». *Une etiquette qui annote un corps ne peut pas vivre derriere
+   lui.*
+
+   Elles restent SOUS les cartes qu'on manipule, et sans regle nouvelle : le
+   canvas monte a 4 des qu'une carte est tenue, regardee ou en vol, donc
+   l'ordre s'inverse tout seul le temps du geste. C'est ce que Keko demande —
+   « mais en dessous des cartes drag ».
+
+   A egalite avec `.jeu-3d`, c'est l'ordre du DOM qui tranche, et les ancres y
+   viennent AVANT : le bouton de fin de tour reste donc cliquable. */
+.ancres-3d {
+  z-index: 3;
 }
 
 /* CE QUI RESTE AU-DESSUS DE TOUT : la ligne d'etat et le bouton, qu'on doit

@@ -168,7 +168,7 @@ const OMBRE_SOL = ((): THREE.CanvasTexture | null => {
 })()
 
 /**
- * LE HALO DU CORPS DÉSIGNÉ : un dégradé radial doré, posé DERRIÈRE lui.
+ * LE HALO DU CORPS DÉSIGNÉ : UN CONTOUR QUI SUIT SA SILHOUETTE.
  *
  * Éclaircir la créature ne suffisait pas — une silhouette déjà claire encaisse
  * mal un gain de luminosité, et rien ne déborde d'elle. Keko : « ce serait
@@ -176,29 +176,81 @@ const OMBRE_SOL = ((): THREE.CanvasTexture | null => {
  * *Ce qui se lit d'un coup d'oeil, c'est ce qui dépasse du sujet*, pas ce qui
  * se passe dedans.
  *
+ * **C'ÉTAIT UN DISQUE, ET ÇA SE VOYAIT.** Un dégradé radial derrière un corps
+ * qui n'est pas rond laisse de la lumière là où il n'y a personne, et n'en met
+ * pas assez au bout des bras. Keko : « le halo des ennemis est un halo rond,
+ * on peut pas faire un contour lumineux autour de l'image qui suit sa
+ * forme ? ». *Un halo désigne d'autant mieux qu'il épouse ce qu'il désigne.*
+ *
+ * **LE FLOU EST DANS LA MATIÈRE, PAS DANS LA GÉOMÉTRIE** — c'est exactement la
+ * leçon du contour des cartes, et elle se transpose telle quelle : on peint
+ * l'OMBRE de la créature au canvas avec `shadowBlur`, qui est le même moteur
+ * de flou que le `box-shadow` du CSS. L'image elle-même est dessinée HORS du
+ * cadre et c'est `shadowOffsetX` qui ramène son ombre dedans : on obtient la
+ * lueur seule, sans la silhouette en couleur par-dessus.
+ *
+ * Deux passes, et les deux comptent : un coeur serré qui fait le liseré, une
+ * diffusion large qui fait la lumière. Chacune redessinée plusieurs fois,
+ * parce qu'une ombre floue est pâle et que l'alpha s'accumule.
+ *
+ * Trois choses à savoir avant d'y retoucher, toutes héritées des cartes :
+ *
+ * - **le débord de la texture est EXACTEMENT celui du plan** (`DEBORD_HALO`,
+ *   partagé). Plus large dans la texture, le coeur du flou passe derrière le
+ *   corps et il ne reste que la frange la plus pâle ;
+ * - **`shadowBlur` porte à peu près la moitié de sa valeur**, d'où les rayons
+ *   doublés — mais ils restent SOUS le débord, sinon la lueur se couperait
+ *   net au bord du plan. *Une lueur qui se termine par une arête n'est pas une
+ *   lueur* ;
+ * - **ça se vérifie sur le profil d'alpha de la texture**, pas à l'oeil sur la
+ *   scène.
+ *
  * Additif, comme le contour des cartes : la lumière s'AJOUTE au fond au lieu
  * de le recouvrir — c'est toute la différence entre une lueur et une tache
  * claire. Et il porte l'or de la flèche : *c'est le même signal, il doit avoir
  * la même couleur.*
  */
-const HALO_CIBLE = ((): THREE.CanvasTexture | null => {
+const DEBORD_HALO = 0.2
+
+/** L'or de la flèche de visée. */
+const OR_VISEE = 'rgba(255, 208, 128, 1)'
+
+function textureContour(image: CanvasImageSource, rapport: number): THREE.CanvasTexture | null {
+  const HAUT = 256
+  const LARGE = Math.round(HAUT * rapport)
   const toile = document.createElement('canvas')
-  toile.width = 128
-  toile.height = 128
+  // La toile porte le PLAN ENTIER, débord compris : c'est ce qui garantit que
+  // la texture et la géométrie parlent des mêmes bords.
+  toile.width = Math.round(LARGE * (1 + 2 * DEBORD_HALO))
+  toile.height = Math.round(HAUT * (1 + 2 * DEBORD_HALO))
   const ctx = toile.getContext('2d')
   if (ctx === null) return null
-  const degrade = ctx.createRadialGradient(64, 64, 0, 64, 64, 64)
-  // SERRÉ CONTRE LE CORPS : étalé, il déborde sur les voisins et n'éclaire
-  // plus personne en particulier — c'est la même correction que le contour
-  // des cartes. *Une lueur qui couvre tout le rang ne désigne rien.*
-  degrade.addColorStop(0, 'rgba(255, 224, 160, 0.95)')
-  degrade.addColorStop(0.3, 'rgba(255, 205, 125, 0.5)')
-  degrade.addColorStop(0.62, 'rgba(255, 195, 115, 0.11)')
-  degrade.addColorStop(1, 'rgba(255, 195, 115, 0)')
-  ctx.fillStyle = degrade
-  ctx.fillRect(0, 0, 128, 128)
-  return new THREE.CanvasTexture(toile)
-})()
+
+  const mx = (toile.width - LARGE) / 2
+  const my = (toile.height - HAUT) / 2
+  ctx.shadowColor = OR_VISEE
+  // L'IMAGE EST PEINTE HORS CADRE, SON OMBRE TOMBE DEDANS : sans ce décalage
+  // on aurait la silhouette en couleur par-dessus sa propre lueur.
+  ctx.shadowOffsetX = toile.width
+
+  // [flou visé en pixels, nombre de passes]. Le flou reste sous `my`, le
+  // débord, pour que l'alpha soit retombé avant le bord du plan.
+  for (const [portee, passes] of [
+    [my * 0.18, 4],
+    [my * 0.42, 3],
+  ] as [number, number][]) {
+    ctx.shadowBlur = portee * 2
+    for (let i = 0; i < passes; i++) ctx.drawImage(image, mx - toile.width, my, LARGE, HAUT)
+    // Mesuré sur le profil d'alpha du Cultiste : 0 au bord du plan, pour une
+    // frange lumineuse de 39 px sur une toile de 360. À 0,22 / 0,60 il restait
+    // 9 — assez pour qu'une arête se devine sous les pattes, là où le sujet
+    // touche presque le bord de son image.
+  }
+
+  const texture = new THREE.CanvasTexture(toile)
+  texture.colorSpace = THREE.SRGBColorSpace
+  return texture
+}
 
 type Props = {
   ennemi: Ennemi
@@ -268,21 +320,37 @@ export function Ennemi3D({
     return HAUT_CORPS * rapport
   }, [texture])
 
-  /** Le halo reste CARRÉ : sa texture est un dégradé radial. */
-  const etendue = Math.max(large, HAUT_CORPS)
+  /**
+   * LE CONTOUR SE PEINT DEPUIS LA TEXTURE DU CORPS, donc il suit la silhouette
+   * de ce qui est vraiment affiché — image de Keko comme dessin de repli.
+   */
+  const contour = useMemo(() => {
+    const img = texture?.image as CanvasImageSource | undefined
+    if (img === undefined) return null
+    return textureContour(img, large / HAUT_CORPS)
+  }, [texture, large])
 
   const halo = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
-        map: HALO_CIBLE,
         transparent: true,
         opacity: 0,
         depthWrite: false,
+        // Sans ça il serait ramené dans la plage du reste de la scène et
+        // perdrait son éclat — même réglage que le contour des cartes.
         toneMapped: false,
         blending: THREE.AdditiveBlending,
       }),
     [],
   )
+
+  useEffect(() => {
+    halo.map = contour
+    halo.needsUpdate = true
+    // On libère l'ancienne : une texture vit décompressée sur le GPU, et une
+    // créature qui change de dessin en laisserait une derrière elle.
+    return () => contour?.dispose()
+  }, [halo, contour])
 
   const materiau = useMemo(
     () =>
@@ -391,9 +459,13 @@ export function Ennemi3D({
       {/* LE HALO DE VISÉE, derrière le corps : seul ce qui dépasse se voit. Il
           ne capte pas le pointeur — il élargirait la zone sensible de la bête
           d'un anneau invisible au repos. */}
-      <mesh position={[0, 0, -0.03]} material={halo} raycast={() => null}>
-        <planeGeometry args={[etendue * 1.35, etendue * 1.35]} />
-      </mesh>
+      {contour !== null && (
+        <mesh position={[0, 0, -0.03]} material={halo} raycast={() => null}>
+          <planeGeometry
+            args={[large * (1 + 2 * DEBORD_HALO), HAUT_CORPS * (1 + 2 * DEBORD_HALO)]}
+          />
+        </mesh>
+      )}
 
       {/* L'OMBRE AU SOL : c'est elle qui pose la bête dans un lieu. Un cadre
           autour la remettrait dans la vignette dont on l'a sortie. */}
