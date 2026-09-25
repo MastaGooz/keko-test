@@ -9,24 +9,29 @@
  * manipulent jamais, elles se consultent — *ce qu'on ne touche pas n'a pas
  * besoin d'être un objet.*
  *
- * **C'EST MAINTENANT LE DESSIN DE KEKO** (`public/Deck.png`), qui remplace le
- * losange qu'on projetait à la main. Ce qu'il a coûté reste dans `git log`, et
- * sa leçon vaut d'être retenue : *un losange symétrique ne peut pas être autre
- * chose qu'un carré*, le rapport d'une carte se projette et ne se devine pas à
- * l'oeil — et une forme qui penche ne se juge pas au milieu de l'écran mais
- * contre le bord auquel elle est collée.
+ * **CE SONT MAINTENANT LES DESSINS DE KEKO** (`Pioche.png`, `Défausse.png`),
+ * qui remplacent le losange qu'on projetait à la main. Un seul fichier a
+ * d'abord servi aux deux ; chacun porte désormais SON symbole — un éventail
+ * d'un côté, une carte barrée de l'autre — parce que *deux tas qui ne disent
+ * pas la même chose n'ont pas de raison de montrer le même dessin*.
  *
- * **L'IMAGE EST AGRANDIE POUR COMPENSER SES MARGES.** Le viewBox du SVG collait
- * au dessin ; un PNG, lui, porte ses bords transparents — ici 14 à 17 % de
- * chaque côté. Sans la compensation, le paquet paraîtrait un tiers plus petit
- * que celui qu'il remplace, à place égale dans le coin.
+ * Ce que le losange a coûté reste dans `git log`, et ses deux leçons valent
+ * d'être retenues : *un losange symétrique ne peut pas être autre chose qu'un
+ * carré* — le rapport d'une carte se projette et ne se devine pas à l'oeil — et
+ * une forme qui penche ne se juge pas au milieu de l'écran mais contre le bord
+ * auquel elle est collée.
+ *
+ * **L'IMAGE EST AGRANDIE POUR COMPENSER SES MARGES**, et le facteur se
+ * remesure à chaque dessin : `Deck.png` laissait 30 % de vide, ces deux-ci n'en
+ * laissent que 19 — garder l'agrandissement d'avant les aurait sortis 17 % trop
+ * gros. *Une compensation est calée sur UN fichier, pas sur l'idée de fichier.*
  *
  * **Le chiffre est AU-DESSUS, et il est discret.** Il a été un gros nombre d'or
  * serti sur le dos dans le jeu 2D : il avait le poids d'une valeur de jeu alors
  * qu'on ne décide pas dessus. Keko : « plus discret, c'est pas une info
  * capitale ». Au-dessus et non sur le paquet, donc rien ne recouvre le dessin.
  */
-import { urlDuDeck } from '../ui/art.ts'
+import { urlDuTas } from '../ui/art.ts'
 
 type Props = {
   nom: 'pioche' | 'defausse'
@@ -37,12 +42,12 @@ export function Tas3D({ nom, compte }: Props): React.JSX.Element {
   return (
     <div className={`tas-3d ${nom}`}>
       <span className="tas-compte">{compte}</span>
-      {/* LA PIOCHE EST LE MIROIR DE LA DÉFAUSSE, et le miroir reste porté par le
-          CSS : *un seul dessin, deux poses* — sinon les deux divergeraient au
-          premier retouchage. Le paquet penche, donc deux tas identiques
-          penchaient du même côté et les coins bas de l'écran ne se répondaient
-          pas. Demandé par Keko. */}
-      <img className="tas-dessin" src={urlDuDeck()} alt="" aria-hidden="true" />
+      {/* LA DÉFAUSSE EST RETOURNÉE PAR LE CSS. Les deux dessins penchent du même
+          côté, donc les coins bas de l'écran ne se répondraient pas sans ça —
+          Keko l'a demandé en les fournissant. Ce n'est plus « un seul dessin,
+          deux poses » mais deux dessins dont un se retourne : le symbole
+          appartient au tas, l'inclinaison appartient au coin. */}
+      <img className="tas-dessin" src={urlDuTas(nom)} alt="" aria-hidden="true" />
     </div>
   )
 }

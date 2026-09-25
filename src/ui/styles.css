@@ -3771,13 +3771,21 @@ body {
 }
 
 /* L'IMAGE PORTE SES MARGES, LE SVG N'EN AVAIT PAS. Le viewBox collait au
-   dessin ; `Deck.png` laisse 14 a 17 % de transparent sur chaque bord, donc le
-   paquet paraitrait un tiers plus petit a place egale. On l'agrandit d'autant
-   et on laisse deborder -- la colonne ne sert qu'a l'aligner. */
+   dessin ; un PNG porte ses bords transparents, donc le paquet paraitrait plus
+   petit a place egale. On l'agrandit d'autant et on laisse deborder -- la
+   colonne ne sert qu'a l'aligner.
+
+   ET LE FACTEUR SE RECALCULE A CHAQUE DESSIN. `Deck.png` laissait 30 % de vide,
+   `Pioche.png` et `Défausse.png` n'en laissent que 19 : garder l'agrandissement
+   d'avant les aurait sortis 17 % trop gros. *Une compensation est calee sur UN
+   fichier, pas sur l'idee de fichier* -- elle se remesure quand il change.
+
+   Le vide n'est pas centre non plus (4 % en haut, 12 % en bas), d'ou des marges
+   verticales inegales. */
 .tas-dessin {
   display: block;
-  width: 138%;
-  margin: -12% -19% -16%;
+  width: 121%;
+  margin: -5% -10.5% -14%;
   filter: drop-shadow(0 2px 4px #000000a8);
 }
 

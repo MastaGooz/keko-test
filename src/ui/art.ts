@@ -178,15 +178,30 @@ export function urlDeLEnnemi(nom: string): string | null {
 }
 
 /**
- * LE PAQUET DE CARTES — le symbole de la pioche et de la défausse, dessiné par
- * Keko. Il remplace le losange en perspective qu'on projetait à la main ; ce
- * dessin-là reste dans `git log`, avec sa leçon (un losange symétrique ne peut
- * être qu'un carré, le rapport d'une carte se projette et ne se devine pas).
+ * LES DEUX PAQUETS — pioche et défausse, dessinés par Keko. Ils remplacent le
+ * losange en perspective qu'on projetait à la main ; ce dessin-là reste dans
+ * `git log`, avec sa leçon (un losange symétrique ne peut être qu'un carré, le
+ * rapport d'une carte se projette et ne se devine pas).
+ *
+ * **Chacun a son symbole** — un éventail pour la pioche, une carte barrée pour
+ * la défausse — mais les deux penchent du même côté, donc le miroir de la
+ * défausse reste porté par le CSS.
+ *
+ * **LE NOM DU FICHIER PORTE UN ACCENT**, et c'est le seul du dossier. Il faut
+ * donc l'encoder : `é` vaut deux octets en UTF-8, et une URL qui les envoie
+ * bruts est un pari sur le serveur. `encodeURIComponent` ne touche pas au point
+ * ni aux lettres ASCII, donc la même ligne sert aux deux fichiers.
  *
  * Même piège de cache que les autres fichiers de `public/`.
  */
-export function urlDuDeck(): string {
-  return `${import.meta.env.BASE_URL}Deck.png?v=${encodeURIComponent(__BUILD_TIME__)}`
+const TAS: Record<'pioche' | 'defausse', string> = {
+  pioche: 'Pioche.png',
+  defausse: 'Défausse.png',
+}
+
+export function urlDuTas(nom: 'pioche' | 'defausse'): string {
+  const fichier = encodeURIComponent(TAS[nom])
+  return `${import.meta.env.BASE_URL}${fichier}?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
 /** Le dos de carte, pour les tas. */
