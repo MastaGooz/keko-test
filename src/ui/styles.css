@@ -4615,7 +4615,7 @@ body {
   position: absolute;
   left: var(--orbe-gauche);
   bottom: calc(
-    max(calc(var(--tas) * 1.253 + 0.2rem), calc(var(--main-haut, 7rem) - 1rem)) + 2.3rem
+    max(calc(var(--tas) * 1.253 + 0.2rem), calc(var(--main-haut, 7rem) - 1rem)) + 1.95rem
   );
   display: grid;
   place-items: center;
