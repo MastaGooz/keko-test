@@ -25,6 +25,7 @@ import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
 import { Armurerie3D, compteDuDeck } from './Armurerie3D.tsx'
+import { urlDuDonjon } from '../ui/art.ts'
 import { Zoom3D } from './Zoom3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
@@ -673,7 +674,12 @@ export function Scene(): React.JSX.Element {
       {/* LE FOND, derrière tout : il était porté par le canvas, mais un canvas
           opaque ne laisse rien passer dessous — or c'est exactement ce qu'il
           faut pour glisser l'interface SOUS les cartes. */}
-      <div className="fond-3d" />
+      {/* LE DONJON. Il vit sur le calque du fond, sous tout le reste : la scène
+          est un canvas TRANSPARENT depuis que la carte qu'on tient doit passer
+          devant les jauges. L'armurerie le couvre de son voile opaque — *c'est
+          un lieu, pas un calque* — alors que les écrans de palier le laissent
+          voir, puisqu'on est encore dans le donjon. */}
+      <div className="fond-3d" style={{ backgroundImage: `url(${urlDuDonjon()})` }} />
 
       <Canvas
         shadows

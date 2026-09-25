@@ -109,6 +109,20 @@ export function urlDuCout(): string {
 }
 
 /**
+ * LE DONJON, fond de l'écran de combat — fourni par Keko, en 16:9.
+ *
+ * Il est posé en `cover`, donc **la largeur est toujours entière et c'est la
+ * hauteur qui se rogne** : rien sur un écran 16:9, jusqu'à 23 % sur le
+ * téléphone le plus large. Ce qui doit rester visible tient donc entre 12 % et
+ * 88 % de la hauteur de l'image.
+ *
+ * Même piège de cache que les autres fichiers de `public/`.
+ */
+export function urlDuDonjon(): string {
+  return `${import.meta.env.BASE_URL}Dungeon.webp?v=${encodeURIComponent(__BUILD_TIME__)}`
+}
+
+/**
  * La même URL, brute — ce qu'il faut pour charger l'image autrement que par le
  * CSS : le moteur 3D la peint dans un canvas pour en faire une texture.
  */

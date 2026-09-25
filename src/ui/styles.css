@@ -3921,11 +3921,18 @@ body {
    et les deux lignes d'etat.
 
    Le canvas est transparent : sans ca, ce qui est dessous ne se verrait pas. */
+/* LE FOND DU DONJON, pose en COVER : la largeur est toujours entiere et c'est
+   la hauteur qui se rogne, jusqu'a 23 % sur le telephone le plus large. La
+   couleur reste dessous comme repli -- une couche de fond qui echoue est
+   simplement ignoree par le navigateur, et l'ecran ne devient pas blanc. */
 .fond-3d {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background: #0d0c11;
+  background-color: #0d0c11;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 /* CE QUE LA CARTE A LE DROIT DE RECOUVRIR : les jauges, les intentions,

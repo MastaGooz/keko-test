@@ -2917,6 +2917,34 @@ Deux choses apprises en dessinant :
   traîne ce qu'on lit d'elle ailleurs. Quatre branches fines ne disent que la
   lumière.
 
+### LE DONJON EN FOND DE COMBAT : `public/Dungeon.webp`
+
+Fourni par Keko, en 16:9 (1672 x 941). Il vit sur `.fond-3d`, le calque du
+fond, sous tout le reste : *la scène est un canvas TRANSPARENT* depuis que la
+carte qu'on tient doit passer devant les jauges, donc le fond ne peut pas être
+peint dedans.
+
+**Posé en `cover`, la largeur est toujours entière et c'est la hauteur qui se
+rogne.** C'est ce qui décide du cadrage à respecter dans l'image :
+
+| format | rogné en hauteur |
+|---|---|
+| 1920x1080, 2560x1440 | rien |
+| 1366x700 | 9 % |
+| 667x320 | 15 % |
+| 844x390 | 18 % |
+| 780x340 | 23 % |
+
+*Ce qui doit rester visible tient donc entre 12 % et 88 % de la hauteur*, et
+rien ne se perd jamais en largeur. Le 16:9 est le bon rapport parce qu'il est
+le plus étroit de tous les formats visés : tout écran plus large rogne du haut
+et du bas, aucun ne rogne des côtés.
+
+**L'armurerie le couvre de son voile opaque** — *c'est un lieu, pas un calque*
+— alors que les écrans de palier le laissent voir, puisqu'on est encore dans
+le donjon. La couleur de fond reste dessous comme repli : une couche de fond
+qui échoue est simplement ignorée par le navigateur.
+
 ### LE FOND DE CARTE EST COMMUN À TOUTES : `public/Background.png`
 
 Fourni par Keko — « à utiliser comme background de toutes les cartes, on
