@@ -2730,18 +2730,35 @@ ce qu'on avait.*
 `⛉ 5`, `−12`. Keko les a réunies en une barre qui s'étend entre la pioche et
 la main : *le joueur lit son état avec la même grammaire que celle d'en face.*
 
-**L'ARMURE S'AJOUTE AUX PV SANS ALLONGER LA BARRE**, et c'est la demande qui
-décide de l'échelle : la barre vaut `max(pvMax, pv + armure)`, donc gagner de
-l'armure ne fait pas grandir la jauge — c'est le rouge qui cède la place au
-bleu. Une barre qui s'allongerait dirait que le joueur a plus de vie qu'il n'en
-aura jamais, alors que l'armure **tombe à la fin du tour**.
+**LA BARRE PORTE UN CONTOUR BLANC**, et ce n'est pas un ornement : sans lui,
+une barre à moitié vide ne dit plus quelle est sa taille. Keko : « on ne voit
+pas la taille max quand on a perdu des PV ». *Une jauge sans cadre ne montre
+que ce qui reste, jamais ce qu'on a perdu.*
 
-**CE QU'ON VA PRENDRE EST EN JAUNE, À DROITE DU ROUGE.** C'est par là que la
-jauge se vide, donc c'est là qu'on cherche ce qu'on va perdre ; posée à gauche,
-la bande se lirait comme ce qui reste. Même règle que l'aperçu sur les
-créatures, et il est plafonné aux PV restants. La menace **déduit déjà
+**L'ARMURE A QUITTÉ LA BARRE** : elle est à sa droite, dans un BOUCLIER, avec
+son chiffre. Elle y a d'abord été un segment bleu collé au rouge, ce qui la
+faisait lire comme de la vie en réserve — or **c'est une décision qui ne vaut
+que pour ce tour-ci**, et elle tombe à la fin. Un objet à part le dit ; une
+portion de la même barre le niait. *Le symbole est un bouclier parce que c'est
+exactement ce qu'il est* — la raison inverse de celle qui a fait retirer l'écu
+du coût des cartes, qui lui ne protégeait rien.
+
+**La place du bouclier est RÉSERVÉE, qu'il y ait de l'armure ou non** : sinon
+la barre changerait de longueur en gagnant une Garde, et son remplissage
+sauterait à l'instant même où l'on veut lire ce qu'on vient de gagner. Du coup
+l'échelle de la barre est redevenue `pvMax` tout simplement.
+
+**CE QU'ON VA PRENDRE EST EN JAUNE, À DROITE DU ROUGE, ET SANS CHIFFRE.** C'est
+par là que la jauge se vide, donc c'est là qu'on cherche ce qu'on va perdre ;
+posée à gauche, la bande se lirait comme ce qui reste. Elle a porté son
+chiffre, Keko l'a retiré : la longueur suffit, et *un troisième nombre sur une
+barre de 130 px en faisait une ligne de comptes*. La menace **déduit déjà
 l'armure**, donc le jaune dit des PV perdus pour de bon : poser une Garde le
-fait reculer sous les yeux du joueur, ce qui est tout l'intérêt du chiffre.
+fait reculer sous les yeux du joueur.
+
+Le chiffre des PV est au milieu de la barre, comme sur les créatures — et il
+vit HORS du rognage des couleurs, sans quoi il serait coupé par lui : le
+chiffre déborde la barre, il n'est pas contenu par elle.
 
 **LES SÉPARATIONS SONT DROITES**, et seuls les bouts de la barre sont
 arrondis. Chaque segment portait son propre arrondi, donc chaque frontière
