@@ -3210,9 +3210,26 @@ en 3/4, qui remplace le losange projeté à la main. Ce qu'il a coûté reste da
 être autre chose qu'un carré*, le rapport d'une carte se projette et ne se
 devine pas à l'oeil.
 
-**L'image est agrandie pour compenser ses marges** : le viewBox du SVG collait au
-dessin, un PNG porte ses bords transparents (14 à 17 % de chaque côté). Sans
-ça, le paquet paraîtrait un tiers plus petit à place égale dans le coin.
+**LE CADRAGE SE CALCULE, IL NE SE RÈGLE PLUS.** Un PNG porte ses bords
+transparents là où le viewBox d'un SVG collait au dessin : le paquet paraît plus
+petit que sa place, il faut l'agrandir d'autant. Ce facteur a été écrit à la
+main deux fois, et **il a été faux les deux fois dès l'image suivante** —
+`Deck.png` laissait 30 % de vide, ses remplaçants 19, leur mise à jour 22 en
+largeur mais 33 en hauteur. *Une compensation calée à la main sur un fichier est
+fausse dès que le fichier change*, et rien ne le signale puisque l'image
+s'affiche quand même.
+
+`Tas3D` mesure donc le dessin dans son cadre (`silhouette.ts`, le module des
+créatures) et en déduit l'agrandissement et les quatre marges. Vérifié hors
+navigateur sur les deux fichiers : 124,8 % et 117,7 % de largeur, pour un paquet
+qui occupe **97,0 % de sa colonne dans les deux cas**. Keko peut redessiner ces
+symboles comme il veut, proportions comprises.
+
+**Deux pièges évités là-dedans**, et tous deux déjà payés ailleurs : les `%`
+d'une MARGE se rapportent à la largeur du bloc conteneur et jamais à sa hauteur
+(la tête de mort), donc la marge verticale passe par le rapport de l'image ; et
+la toile de mesure garde ce rapport, sinon le dessin serait écrasé et les marges
+fausses sur l'axe écrasé.
 
 **ET LA PIOCHE EST LE MIROIR DE LA DÉFAUSSE.** Le paquet penche : son coin bas
 est centré, mais son grand axe monte vers la droite — un rectangle ne peut pas

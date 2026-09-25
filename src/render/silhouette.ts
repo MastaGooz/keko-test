@@ -31,10 +31,12 @@ export type Boite = {
   bas: number
   gauche: number
   droite: number
+  /** Largeur / hauteur du CADRE. On ne suppose jamais qu'il est carré. */
+  rapport: number
 }
 
 /** Le repli : le sujet remplit son cadre. C'est le cas des silhouettes SVG. */
-export const CADRE_PLEIN: Boite = { haut: 0, bas: 0, gauche: 0, droite: 0 }
+export const CADRE_PLEIN: Boite = { haut: 0, bas: 0, gauche: 0, droite: 0, rapport: 1 }
 
 const BOITES = new Map<string, Boite>()
 
@@ -51,17 +53,26 @@ export function boiteDe(cle: string): Boite {
 export function mesurerBoite(cle: string, image: CanvasImageSource): boolean {
   if (BOITES.has(cle)) return false
 
-  const T = 96
+  // LA TOILE GARDE LE RAPPORT DE L'IMAGE : la rendre carrée écraserait le
+  // dessin, et les marges qu'on en tire seraient fausses sur l'axe écrasé.
+  const nat = image as { naturalWidth?: number; naturalHeight?: number; width?: number; height?: number }
+  const l = nat.naturalWidth ?? (typeof nat.width === 'number' ? nat.width : 0)
+  const h = nat.naturalHeight ?? (typeof nat.height === 'number' ? nat.height : 0)
+  const rapport = l > 0 && h > 0 ? l / h : 1
+
+  const COTE = 96
+  const T = COTE
+  const TH = Math.max(1, Math.round(COTE / rapport))
   const toile = document.createElement('canvas')
   toile.width = T
-  toile.height = T
+  toile.height = TH
   const ctx = toile.getContext('2d', { willReadFrequently: true })
   if (ctx === null) return false
-  ctx.drawImage(image, 0, 0, T, T)
+  ctx.drawImage(image, 0, 0, T, TH)
 
   let donnees: Uint8ClampedArray
   try {
-    donnees = ctx.getImageData(0, 0, T, T).data
+    donnees = ctx.getImageData(0, 0, T, TH).data
   } catch {
     // Une image d'une autre origine souille le canvas. Ça n'arrive pas ici —
     // tout vient de `public/` — mais une lecture qui jette ne doit pas
@@ -70,10 +81,10 @@ export function mesurerBoite(cle: string, image: CanvasImageSource): boolean {
   }
 
   let x0 = T
-  let y0 = T
+  let y0 = TH
   let x1 = -1
   let y1 = -1
-  for (let y = 0; y < T; y++) {
+  for (let y = 0; y < TH; y++) {
     for (let x = 0; x < T; x++) {
       // Le même seuil que la mesure hors ligne : sous 12, c'est la frange
       // d'antialiasing du dessin, pas le dessin.
@@ -90,10 +101,11 @@ export function mesurerBoite(cle: string, image: CanvasImageSource): boolean {
   if (x1 < 0) return false
 
   BOITES.set(cle, {
-    haut: y0 / T,
-    bas: (T - 1 - y1) / T,
+    haut: y0 / TH,
+    bas: (TH - 1 - y1) / TH,
     gauche: x0 / T,
     droite: (T - 1 - x1) / T,
+    rapport,
   })
   return true
 }
