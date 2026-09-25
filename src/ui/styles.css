@@ -4366,7 +4366,11 @@ body {
    sous lui des le premier point de vie. */
 .vie-couleurs {
   position: absolute;
-  inset: 0.34rem 0.62rem;
+  /* LE BORD SE JUGE EN RATIO, PAS EN EPAISSEUR. A 0,34rem sur une barre de
+     1,45, le laiton prenait 47 % de la hauteur et ecrasait la gorge qu'il
+     encadre -- Keko : « le bord est un peu epais en comparaison a la barre ».
+     A 0,22 il en prend 30 %, et le creux redevient le sujet. */
+  inset: 0.22rem 0.52rem;
   overflow: hidden;
   border-radius: 1px;
   background:
@@ -4395,7 +4399,7 @@ body {
   position: absolute;
   top: -0.06rem;
   bottom: -0.06rem;
-  width: 0.62rem;
+  width: 0.5rem;
   background:
     radial-gradient(circle at 50% 50%, #3d3016 0 16%, #8a7346 17% 22%, #0000 23%),
     repeating-linear-gradient(180deg, #00000024 0 1px, #0000 1px 3px),
@@ -4537,6 +4541,11 @@ body {
   top: 50%;
   left: 50%;
   translate: -50% -50%;
+  /* AU-DESSUS DES FERRURES. Un `::after` est dessine APRES le contenu de son
+     element : la ferrure droite recouvrait donc les degats entrants -- Keko :
+     « les degats entrants sont affiches en dessous de la bordure ». *L'ordre
+     du DOM ne suffit pas quand un pseudo-element est dans la course.* */
+  z-index: 2;
   color: #fff3e0;
   font-size: 0.8125rem;
   font-weight: 700;
@@ -4551,9 +4560,11 @@ body {
    finissait a cheval sur le bord et tombait dans le noir. Un repere qui doit
    rester lisible se pose a un endroit FIXE ; c'est la couleur derriere lui qui
    bouge, pas lui. */
+/* IL SE CALE SUR LE CREUX, pas sur la barre : ancre a 0,4rem il tombait sur la
+   ferrure, qui commence a 0,52. *Un reperage se mesure depuis ce qu'il repere.* */
 .vie-chiffre.menace {
   left: auto;
-  right: 0.4rem;
+  right: 0.68rem;
   translate: 0 -50%;
   font-size: 0.75rem;
 }
