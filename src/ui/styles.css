@@ -3745,12 +3745,15 @@ body {
   right: 0.75rem;
 }
 
+/* DEUX FOIS PLUS GRAND QU'AVANT, demande par Keko : « c'est trop petit la ».
+   Deux reperes en dependent et doivent suivre -- le plancher de la barre de PV,
+   qui se pose au-dessus du tas, et la gouttiere que la main laisse aux coins. */
 .tas-3d {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.0625rem;
-  width: 3.75rem;
+  width: 7.5rem;
 }
 
 /* LA PIOCHE EST LE MIROIR DE LA DEFAUSSE. Le paquet penche : les deux tas
@@ -4256,14 +4259,16 @@ body {
   position: absolute;
   left: 0.75rem;
   width: min(
-    calc((4.5rem + var(--main-gauche, 14rem)) / 2 + 2.75rem),
+    calc((8.25rem + var(--main-gauche, 14rem)) / 2 + 2.75rem),
     calc(var(--main-gauche, 14rem) - 1.45rem)
   );
   /* UN PLANCHER, parce que sur un ecran court le haut de la main descend sous
      le sommet du tas de pioche : la barre venait alors s'asseoir sur son
-     compte. Le tas occupe 5,05rem depuis le bas, compte compris : on se pose
-     juste au-dessus. */
-  bottom: max(5.4rem, calc(var(--main-haut, 7rem) - 1rem));
+     compte. LE TAS AYANT DOUBLE, le plancher double avec lui -- il occupe
+     desormais 9,3rem depuis le bas, compte compris, et on se pose juste
+     au-dessus. *Une valeur derivee d'une taille se relit quand cette taille
+     change*, sinon elle reste comme une cicatrice. */
+  bottom: max(9.6rem, calc(var(--main-haut, 7rem) - 1rem));
 }
 
 /* LA BARRE ET LE BOUCLIER, cote a cote. LA PLACE DU BOUCLIER EST RESERVEE,
@@ -4453,10 +4458,23 @@ body {
    large l'ecart ne fait que 83 px : la barre y mordait sur la premiere carte.
    Un objet qui porte un chiffre a besoin d'une LONGUEUR, un objet qui marque
    une place a besoin d'un MILIEU. */
+/* LE TAS A DOUBLE, DONC L'ORBE REMONTE ET SE BORNE. Elle se posait a 6,9rem du
+   bas, une valeur calee sur l'ancienne hauteur du tas : le tas agrandi lui
+   passait dessous et elle mordait son coin de 16 px a 844x390. *Une valeur
+   derivee d'une taille se relit quand cette taille change.*
+
+   Elle se centre toujours dans l'ecart entre le tas et la main, mais avec une
+   BORNE : l'ecart s'est reduit d'autant que le tas a grandi, et sur un petit
+   ecran le centre tomberait sous la premiere carte. La borne la retient a
+   gauche de la main -- meme raisonnement que la barre de PV, dont la longueur
+   est bornee par le meme bord. */
 .orbe-jeu {
   position: absolute;
-  left: calc((4.5rem + var(--main-gauche, 14rem)) / 2 - 1.625rem);
-  bottom: max(6.9rem, calc(var(--main-haut, 7rem) + 0.5rem));
+  left: min(
+    calc((8.25rem + var(--main-gauche, 14rem)) / 2 - 1.625rem),
+    calc(var(--main-gauche, 14rem) - 3.6rem)
+  );
+  bottom: max(11.3rem, calc(var(--main-haut, 7rem) + 0.5rem));
   display: grid;
   place-items: center;
   width: 3.25rem;

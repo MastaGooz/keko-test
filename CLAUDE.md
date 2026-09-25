@@ -3245,6 +3245,20 @@ paquet paraissait deux fois trop petit pour la place qu'il occupait.
 bordure. Même raison qu'en 2D — on ne décide pas dessus, et il a déjà été un
 gros nombre d'or qui avait le poids d'une valeur de jeu.
 
+**ILS FONT LE DOUBLE DEPUIS**, demandé par Keko — « c'est trop petit là ». Ce
+n'est pas qu'une largeur : **deux repères se calculent depuis la hauteur du
+tas** et devaient suivre, sinon ils restent comme des cicatrices. Le plancher de
+la barre de PV (5,4 → 9,6rem), et surtout **l'orbe d'énergie**, qui se posait à
+6,9rem du bas : le tas agrandi lui passait dessous et mordait son coin de 16 px
+à 844x390. *Une valeur dérivée d'une taille se relit quand cette taille change.*
+
+L'orbe se centre toujours dans l'écart entre le tas et la main, mais avec une
+**borne** : l'écart s'est réduit d'autant que le tas a grandi, et sur un petit
+écran le centre tomberait sous la première carte. Mesuré après correction —
+844x390 : 72 px entre le tas et la main, l'orbe 49 px au-dessus du tas, la barre
+22 px ; 667x320, le format le plus serré : 22 px de chaque côté, mêmes marges
+verticales, zéro débordement.
+
 **Les deux tas tiennent les coins bas**, pioche à gauche et défausse à droite :
 c'est leur place qui dit lequel est lequel, comme en 2D. **L'orbe et les PV se
 décalent à droite du tas de gauche**, exactement comme le 2D pose l'orbe à
