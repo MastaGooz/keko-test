@@ -238,6 +238,8 @@ export function Butin3D({
   // du vide promettrait un dépôt qui n'aura pas lieu.*
   const active =
     portee !== null && doigt !== null && destinationDe(doigt, loot !== null) !== null
+  const survoleLeRebut =
+    portee !== null && doigt !== null && destinationDe(doigt, loot !== null) === 'jeter'
 
   return (
     <group>
@@ -262,9 +264,14 @@ export function Butin3D({
         />
       )}
 
+      {/* LE REBUT NE ROUGIT QUE SOUS LA CARTE. Il rougissait dès qu'une carte
+          était sortie, où qu'elle soit — Keko : « il est rouge quand une carte
+          en est sortie, peu importe où elle est, même loin de lui, ça ne va
+          pas ». *Un avertissement permanent n'avertit de rien* : c'est ce
+          qu'on survole qui menace, pas ce qu'on tient. */}
       <Slot
         nom="Jeter"
-        accent={aJeter === null ? '#8a6a62' : '#ff6a52'}
+        accent={survoleLeRebut ? '#ff6a52' : '#8a6a62'}
         x={xJeter}
         y={yJeter}
         carte={tenue === 1 ? null : aJeter}
@@ -324,7 +331,10 @@ export function Butin3D({
         </>
       )}
 
-      {/* LA CARTE TENUE SUIT LE DOIGT, hors de sa case. */}
+      {/* LA CARTE TENUE SUIT LE DOIGT, hors de sa case. Au-dessus du rebut,
+          son halo passe au ROUGE et elle frémit quand même : *un halo doré sur
+          une carte qu'on s'apprête à perdre dirait le contraire de ce qui va
+          se passer.* Demandé par Keko. */}
       {portee !== null && doigt !== null && (
         <Carte3D
           carte={portee}
@@ -333,6 +343,7 @@ export function Butin3D({
           taille={1.05}
           ressort={22}
           engagee={active}
+          peril={survoleLeRebut}
           ombre={false}
           onPeinte={onPeinte}
         />

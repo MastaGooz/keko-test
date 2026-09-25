@@ -2724,6 +2724,59 @@ parce qu'il ne logeait pas sous sa pointe ; un disque a de la place au centre.
 Le courant est gros, le maximum petit : *on décide sur ce qu'il reste, pas sur
 ce qu'on avait.*
 
+### LE PAS DE L'ÉVENTAIL SE RESSERRE — et `?main=20` pour le voir
+
+Keko : « on peut faire un test avec 20 cartes en main pour voir ? ». D'où le
+banc d'essai `?r3f&main=20` : la taille de main est devenue un **réglage**
+(`Reglage.tailleMain`) et non une constante, ce qu'elle devra être de toute
+façon le jour où un bijou dira « main de 6 ». L'URL répète aussi les pièces
+d'équipement jusqu'à ce que le deck dépasse la main — *répéter l'équipement
+plutôt que dupliquer les cartes*, pour que le deck garde ses proportions.
+
+**Et le test a trouvé ce qu'on cherchait : la main débordait déjà à DIX
+cartes.** Le pas valait 72 % d'une carte quoi qu'il arrive, donc l'éventail
+sortait de l'écran des deux côtés et allait recouvrir les tas. C'est
+exactement le problème que le jeu 2D avait résolu, et la solution se porte
+telle quelle : **le pas vaut 72 % — sauf s'il faut serrer pour tenir entre les
+gouttières**, et c'est le `min()` des deux. Le pas fixe seul ne garantit rien ;
+le partage de la largeur seul étalerait cinq cartes sur toute la fenêtre.
+
+**L'inclinaison suit le pas** : resserrée, une main qui garderait ses 7° par
+cran finirait à la verticale sur ses bords. *Ce qui se tasse en largeur doit se
+tasser en angle.*
+
+À vingt cartes la main tient dans l'écran, les gemmes de coût restent toutes
+lisibles, et les noms disparaissent sous le recouvrement — la bande
+haut-gauche fait son travail.
+
+### LE REBUT NE ROUGIT QUE SOUS LA CARTE, et la carte rougit avec lui
+
+Keko : « la lumière autour de la carte trésor quand elle vibre au-dessus du
+slot jeter devrait être rouge, et le slot ne devrait être rouge que lorsqu'une
+carte flotte au-dessus de lui — actuellement il est rouge dès qu'une carte en
+est sortie, même loin de lui ». Deux corrections d'un même défaut : *un
+avertissement permanent n'avertit de rien.* C'est ce qu'on survole qui menace,
+pas ce qu'on tient.
+
+**Le frémissement suit `engagee`, la couleur suit `peril`, et les deux se
+cumulent.** Le péril coupait le tremblement, ce qui était juste pour une carte
+POSÉE dans le rebut — elle n'est plus dans un geste — et faux pour une carte
+qu'on TIENT au-dessus de lui. *Un état dit ce qui va arriver, l'autre dit qu'on
+est en train de le faire.*
+
+**PIÈGE DE DIAGNOSTIC, et il a coûté une fausse piste : la carte de loot n'est
+pas portée par la main.** Elle vit dans `Butin3D`, qui a son propre geste ;
+j'avais d'abord teint le halo dans `Main3D`, et rien ne changeait à l'écran.
+*Deux composants portent une carte sur cet écran, et le trésor qui arrive n'est
+pas dans celui qu'on croit.*
+
+**PIÈGE DE TEST, à ne pas réapprendre : un serveur de dev peut servir une
+version PÉRIMÉE d'un fichier.** Le code sur le disque était juste, la page
+recevait l'ancien, et rien ne le disait. Vérifier par
+`fetch('/src/.../X.tsx')` avant de conclure qu'une correction ne marche pas —
+et se méfier du test lui-même : `includes("'peril'")` échoue parce qu'esbuild
+normalise les guillemets.
+
 ### LA VIE DU JOUEUR EST UNE BARRE, comme celle des créatures
 
 `render/BarreVie3D.tsx`. Trois pastilles vivaient côte à côte — `90/90`,

@@ -30,13 +30,20 @@ import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
 import { BarreVie3D } from './BarreVie3D.tsx'
 import type { Entree } from './Zoom3D.tsx'
-import { aPeindre, descenteDeDepart, pieceAPeindre, setAPeindre } from './combat-3d.ts'
+import {
+  TAILLE_MAIN_URL,
+  aPeindre,
+  descenteDeDepart,
+  equipementPourTenir,
+  pieceAPeindre,
+  setAPeindre,
+} from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
 import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
 import { creerHub, deplacerPiece, equipement, perdreLEquipement, peutDescendre, rentrer } from '../logic/hub.ts'
-import { commencerDescente, consommablesSurvivants } from '../logic/descente.ts'
+import { REGLAGE_DEFAUT, commencerDescente, consommablesSurvivants } from '../logic/descente.ts'
 import {
   butinTransporte,
   choisirCarte,
@@ -514,7 +521,16 @@ export function Scene(): React.JSX.Element {
    */
   const descendreAuDonjon = useCallback(() => {
     if (!peutDescendre(hub.chargement)) return
-    setDescente(commencerDescente(depart.rng, undefined, equipement(hub.chargement), hub.chargement.pile))
+    // LA MAIN DEMANDÉE PAR L'URL VAUT AUSSI POUR LES DESCENTES SUIVANTES :
+    // sinon `?main=20` ne tiendrait que jusqu'au premier retour au hub.
+    setDescente(
+      commencerDescente(
+        depart.rng,
+        { ...REGLAGE_DEFAUT, tailleMain: TAILLE_MAIN_URL() },
+        equipementPourTenir(equipement(hub.chargement), TAILLE_MAIN_URL()),
+        hub.chargement.pile,
+      ),
+    )
   }, [depart.rng, hub])
 
   const bougerPiece = useCallback(
@@ -791,7 +807,13 @@ export function Scene(): React.JSX.Element {
               onReordonner={rangerTresor}
               onPeinte={compter}
               onSaisie={setSaisie}
-              zoneActive={(p) => slotSous(p, window.innerHeight, phase.loot !== null) !== null}
+              // LE REBUT EST UNE PERTE, PAS UN DÉPÔT : la main en tire un
+              // halo rouge au lieu du doré. *Un halo doré sur une carte qu'on
+              // s'apprête à perdre dirait le contraire de ce qui va se passer.*
+              zoneActive={(p) => {
+                const ou = slotSous(p, window.innerHeight, phase.loot !== null)
+                return ou === null ? 'non' : ou === 'jeter' ? 'peril' : 'depot'
+              }}
             />
           </>
         )}

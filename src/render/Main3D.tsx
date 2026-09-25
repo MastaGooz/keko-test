@@ -56,6 +56,38 @@ import type { CarteAPeindre } from './texture-carte.ts'
  * lieu de descendre.
  */
 const PAS = 0.72
+
+/**
+ * CE QUE LA MAIN SE RÉSERVE DE CHAQUE CÔTÉ, en largeurs de carte.
+ *
+ * Les coins bas portent les tas, et le flanc gauche l'orbe et la barre de vie.
+ * La main ne doit jamais aller les recouvrir : c'est la gouttière du jeu 2D,
+ * qui vaut là-bas une carte plus 3,25rem.
+ */
+const GOUTTIERE = 1.45
+
+/**
+ * LE PAS VAUT 72 % D'UNE CARTE — SAUF S'IL FAUT SERRER POUR TENIR À L'ÉCRAN.
+ *
+ * C'est la règle du jeu 2D portée telle quelle, et là-bas les deux formules
+ * ont existé seules avant qu'on prenne leur minimum. **Le pas fixe ne garantit
+ * rien** : à partir d'une dizaine de cartes la main sortait de l'écran des
+ * deux côtés et allait recouvrir les tas — vu en ouvrant `?main=20`. **Le
+ * partage de la largeur seul est faux aussi** : à cinq cartes il les
+ * étalerait sur toute la fenêtre, et la main deviendrait une rangée de cartes
+ * espacées au lieu d'un éventail tenu.
+ *
+ * Le `min()` des deux garde l'allure à cinq cartes ET se tasse tout seul
+ * au-delà.
+ */
+function pasDeLEventail(nombre: number, hauteurPx: number, largeurPx: number): number {
+  if (nombre <= 1) return PAS
+  const visible = hauteurVisibleA(Z_MAIN, hauteurPx)
+  const enCartes = (visible * largeurPx) / hauteurPx
+  // L'envergure d'un éventail de `n` cartes au pas `p` vaut `(n - 1) p + 1`.
+  const dispo = Math.max(1, enCartes - 2 * GOUTTIERE - 1)
+  return Math.min(PAS, dispo / (nombre - 1))
+}
 const CREUX = 0.025
 const INCLINAISON = 0.12
 
@@ -278,7 +310,15 @@ type Props = {
    * seuls les deux emplacements reçoivent — *un halo allumé au-dessus du vide
    * promettrait un dépôt qui n'aura pas lieu.*
    */
-  zoneActive?: (point: [number, number, number]) => boolean
+  /**
+   * CE QUE LÂCHER ICI FERAIT : rien, un dépôt ordinaire, ou une PERTE.
+   *
+   * La main ne connaît pas les écrans qui l'emploient ; elle leur demande
+   * seulement de quelle nature est l'endroit sous le doigt, et en tire la
+   * couleur du halo. *Un halo doré sur une carte qu'on s'apprête à perdre
+   * dirait exactement le contraire de ce qui va se passer.*
+   */
+  zoneActive?: (point: [number, number, number]) => 'non' | 'depot' | 'peril'
   /**
    * LES CARTES QUI DEMANDENT UNE CIBLE. Passée en zone de jeu, une de
    * celles-là **cesse de suivre le doigt** : elle se pose au-dessus de la
@@ -314,25 +354,29 @@ type Props = {
  * d'insertion dans la main *une fois retirée*, ce que le réordonnancement
  * attend. La compter décalait d'un cran tous les déplacements vers la gauche.
  */
-function placeSousLeDoigt(x: number, total: number): number {
+function placeSousLeDoigt(x: number, total: number, pas: number): number {
   const centre = (total - 1) / 2
   let place = 0
   for (let rang = 0; rang < total; rang += 1) {
-    if ((rang - centre) * PAS < x) place += 1
+    if ((rang - centre) * pas < x) place += 1
   }
   return place
 }
 
 /** La place d'une carte dans l'éventail, la carte tenue exclue. */
-function placeDansEventail(rang: number, total: number, y: number): {
+function placeDansEventail(rang: number, total: number, y: number, pas: number): {
   position: [number, number, number]
   rotation: [number, number, number]
 } {
   const centre = (total - 1) / 2
   const ecart = rang - centre
+  // L'INCLINAISON SUIT LE PAS : resserrée, une main qui garderait ses 7° par
+  // cran finirait à la verticale sur ses bords. *Ce qui se tasse en largeur
+  // doit se tasser en angle.*
+  const serre = pas / PAS
   return {
-    position: [ecart * PAS, y - Math.abs(ecart) * CREUX, Z_MAIN + rang * 0.01],
-    rotation: [COUCHE, 0, -ecart * INCLINAISON],
+    position: [ecart * pas, y - Math.abs(ecart) * CREUX * serre, Z_MAIN + rang * 0.01],
+    rotation: [COUCHE, 0, -ecart * INCLINAISON * serre],
   }
 }
 
@@ -355,6 +399,12 @@ export function Main3D({
   // Le cadrage de CETTE fenêtre : la main reste collée au bord bas quelle que
   // soit la profondeur où la caméra a reculé.
   const Y_MAIN = yMain(size.height)
+  // LE PAS SE RECALCULE À CHAQUE RENDU : il dépend du nombre de cartes, donc
+  // il change quand on en joue une. Une `ref` le porte aussi, parce que le
+  // geste est capté au `pointerdown` et lit ce pas-là au lâcher.
+  const pas = pasDeLEventail(cartes.length, size.height, size.width)
+  const pasCourant = useRef(pas)
+  pasCourant.current = pas
   // LE SURVOL SE MÉMORISE PAR IDENTIFIANT, JAMAIS PAR INDEX. En index, la
   // carte survolée puis jouée laissait son numéro derrière elle : la main se
   // refermait, sa voisine héritait de l'index — et se levait, indéfiniment,
@@ -414,7 +464,7 @@ export function Main3D({
           ? [0, ancreVisee(size.height), Z_TENUE]
           : [p.x, p.y, p.z]
         onJouer?.(i, depuis, corpsSous(p))
-      } else onReordonner?.(i, placeSousLeDoigt(p.x, cartes.length - 1))
+      } else onReordonner?.(i, placeSousLeDoigt(p.x, cartes.length - 1, pasCourant.current))
     },
     // Au doigt, rien ne viendra éteindre le survol : on le solde ici.
     onFin: (type) => {
@@ -487,7 +537,7 @@ export function Main3D({
   // qui n'aura pas lieu.
   const fente =
     tenue !== null && doigt !== null && !enZoneDeJeu
-      ? placeSousLeDoigt(doigt.x, restantes.length)
+      ? placeSousLeDoigt(doigt.x, restantes.length, pas)
       : null
 
   return (
@@ -507,6 +557,7 @@ export function Main3D({
         if (i === deplacee) {
           const suivi = doigt ?? ancre
           const p = ancree ? ancre : suivi
+          const nature = zoneActive === undefined ? 'depot' : zoneActive([suivi.x, suivi.y, Z_TENUE])
           return (
             <Carte3D
               key={carte.id}
@@ -524,18 +575,17 @@ export function Main3D({
               // seul fait, et il est déjà là où le doigt regarde.
               //
               // Une carte injouable, elle, ne s'allume jamais.
-              engagee={
-                enZoneDeJeu &&
-                (jouables?.[i] ?? true) &&
-                (zoneActive === undefined || zoneActive([suivi.x, suivi.y, Z_TENUE]))
-              }
+              engagee={enZoneDeJeu && (jouables?.[i] ?? true) && nature !== 'non'}
+              // LA CARTE QU'ON VA PERDRE S'ENTOURE DE ROUGE, pas d'or — et
+              // elle FRÉMIT quand même, parce qu'on est en plein geste.
+              peril={enZoneDeJeu && nature === 'peril'}
               jouable={jouables?.[i] ?? true}
               onPeinte={onPeinte}
             />
           )
         }
         const rang = restantes.indexOf(i)
-        const place = placeDansEventail(rang, restantes.length, Y_MAIN)
+        const place = placeDansEventail(rang, restantes.length, Y_MAIN, pas)
         // Une carte survolée se lève ; une carte qu'on TIENT sans l'avoir
         // encore bougée aussi — c'est tout ce qui dit qu'on la tient.
         const leve = survolee === carte.id || i === tenue

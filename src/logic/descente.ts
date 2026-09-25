@@ -58,6 +58,16 @@ export type Reglage = {
    *  au dernier. 1 = le duel au couteau d'origine dès le début. */
   menaceDepart: number
   profondeurMax: number
+  /**
+   * Combien de cartes on tient.
+   *
+   * Cinq depuis l'horloge, et **les maths de l'encombrement n'ont pas bougé**
+   * depuis. C'est un réglage et non une constante parce qu'un bijou pourra le
+   * changer — « main de 6 » est exactement le genre de règle qu'ils doivent
+   * porter — et parce qu'on veut pouvoir regarder une main maxée sans
+   * fabriquer un deck à la main.
+   */
+  tailleMain: number
 }
 
 /**
@@ -87,6 +97,7 @@ export const REGLAGE_DEFAUT: Reglage = {
   soin: 14,
   menaceDepart: 0.62,
   profondeurMax: 6,
+  tailleMain: 5,
 }
 
 /** Combien d'améliorations sont proposées après un combat. */
@@ -170,7 +181,7 @@ function engager(
     deck,
     ennemisPourProfondeur(profondeur, reglage.profondeurMax, rng, reglage.menaceDepart),
     rng,
-    { ...CONFIG_DEFAUT, pvMax: reglage.pvMax },
+    { ...CONFIG_DEFAUT, pvMax: reglage.pvMax, tailleMain: reglage.tailleMain },
   )
   // Les PV ne se rechargent pas d'un combat à l'autre : c'est ce qui rend le
   // point de sortie tendu. `creerCombat` repart du maximum, on le corrige ici

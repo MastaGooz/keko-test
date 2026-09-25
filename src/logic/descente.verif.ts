@@ -30,7 +30,11 @@ import { CHOIX_PAR_PALIER, consommablesSurvivants } from './descente.ts'
 // l'equipement, et une piece ajoutee la ferait mentir sans rien casser.
 const BASE = deckDeLEquipement([ARME_GRATUITE, ARMURE_GRATUITE]).length
 
-const REGLAGE: Reglage = { pvMax: 100, soin: 20, menaceDepart: 0.45, profondeurMax: 4 }
+const REGLAGE: Reglage = { pvMax: 100, soin: 20, menaceDepart: 0.45, profondeurMax: 4, tailleMain: 5 }
+
+// LA TAILLE DE MAIN EST UN REGLAGE, pas une constante : un bijou pourra la
+// changer, et on veut pouvoir regarder une main maxee sans fabriquer un deck.
+const GRANDE_MAIN: Reglage = { ...REGLAGE, tailleMain: 9 }
 
 let echecs = 0
 
@@ -74,6 +78,16 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   verifier("le deck de depart vient bien de DEUX pieces d'equipement",
     d.equipement.length === 2 && d.deck.some((c) => c.nom === 'Garde'))
   verifier('on part à pleins PV', d.combat.pv === REGLAGE.pvMax)
+  verifier('on tient cinq cartes', d.combat.main.length === REGLAGE.tailleMain)
+}
+
+{
+  // LE REGLAGE PORTE LA TAILLE DE MAIN, et la piocheuse la suit : sans ca,
+  // changer le nombre ne changerait que le premier tirage.
+  const d = commencerDescente(createRng(7), GRANDE_MAIN)
+  verifier('une grande main se remplit d’autant', d.combat.main.length === 9)
+  verifier('...et la pioche en a d’autant moins',
+    d.combat.pioche.length === BASE - 9)
 }
 
 {

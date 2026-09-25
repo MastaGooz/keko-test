@@ -309,10 +309,16 @@ ${nuanceur.fragmentShader}`
     const feuVise = engagee || peril ? 1 : 0
     l.feu += (feuVise - l.feu) * (1 - Math.exp(-12 * delta))
     const t = etat.clock.elapsedTime
-    const amp = peril ? 0 : l.feu * 0.014
+    // **LE FRÉMISSEMENT SUIT `engagee`, LA COULEUR SUIT `peril`**, et les deux
+    // se cumulent. Le péril coupait le tremblement, ce qui était juste pour
+    // une carte POSÉE dans le rebut — elle n'est plus dans un geste — mais
+    // faux pour une carte qu'on TIENT au-dessus de lui : là on est en plein
+    // geste, et Keko veut qu'elle vibre en rouge. *Un état dit ce qui va
+    // arriver, l'autre dit qu'on est en train de le faire.*
+    const amp = engagee ? l.feu * 0.014 : 0
 
     g.position.set(l.p.x + Math.sin(t * 37) * amp, l.p.y + Math.cos(t * 29) * amp, l.p.z)
-    g.rotation.set(l.r.x, l.r.y, l.r.z + (peril ? 0 : Math.sin(t * 23) * l.feu * 0.018))
+    g.rotation.set(l.r.x, l.r.y, l.r.z + (engagee ? Math.sin(t * 23) * l.feu * 0.018 : 0))
     g.scale.setScalar(l.t)
 
     // ET LE CONTOUR S'ALLUME. **Rien ne touche plus à la carte elle-même** :

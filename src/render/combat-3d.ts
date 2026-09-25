@@ -8,8 +8,10 @@
 import type { Carte } from '../logic/combat.ts'
 import { createRng } from '../logic/rng.ts'
 import type { Descente } from '../logic/descente.ts'
-import { commencerDescente } from '../logic/descente.ts'
+import { REGLAGE_DEFAUT, commencerDescente } from '../logic/descente.ts'
 import { creerHub, equipement } from '../logic/hub.ts'
+import type { Piece } from '../logic/armes.ts'
+import { deckDeLEquipement } from '../logic/armes.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import { lignes, nature, sansBalises } from '../ui/texte-carte.ts'
@@ -87,9 +89,48 @@ export function pieceAPeindre(objet: Objet): CarteAPeindre {
  * hors de son barème*, et la meilleure façon de ne pas s'y tromper est de ne
  * pas le recopier.
  */
-export function descenteDeDepart(seed: number): { descente: Descente; rng: ReturnType<typeof createRng> } {
+export function descenteDeDepart(
+  seed: number,
+  tailleMain = TAILLE_MAIN_DEMANDEE,
+): { descente: Descente; rng: ReturnType<typeof createRng> } {
   const rng = createRng(seed)
   const hub = creerHub()
-  const descente = commencerDescente(rng, undefined, equipement(hub.chargement), hub.chargement.pile)
+  const descente = commencerDescente(
+    rng,
+    { ...REGLAGE_DEFAUT, tailleMain },
+    equipementPourTenir(equipement(hub.chargement), tailleMain),
+    hub.chargement.pile,
+  )
   return { descente, rng }
+}
+
+/**
+ * COMBIEN DE CARTES ON TIENT, demandé par l'URL : `?r3f&main=20`.
+ *
+ * Un banc d'essai, pas une option de jeu — Keko : « on peut faire un test avec
+ * 20 cartes en main pour voir ? ». Il vit dans une URL et non dans un réglage
+ * caché parce qu'il n'y a pas encore de panneau en 3D, et que Keko juge depuis
+ * son téléphone : *ce qui se teste doit pouvoir s'ouvrir d'un lien.*
+ */
+export function TAILLE_MAIN_URL(): number {
+  const demande = Number(new URLSearchParams(location.search).get('main'))
+  return Number.isFinite(demande) && demande >= 1 ? Math.min(30, Math.round(demande)) : REGLAGE_DEFAUT.tailleMain
+}
+
+const TAILLE_MAIN_DEMANDEE = TAILLE_MAIN_URL()
+
+/**
+ * DE QUOI REMPLIR LA MAIN. Le chargement gratuit donne 10 cartes ; en demander
+ * 20 n'en tirerait que 10, et on ne verrait pas ce qu'on voulait voir. On
+ * répète donc les pièces jusqu'à ce que le deck dépasse la main.
+ *
+ * *Répéter l'équipement plutôt que dupliquer les cartes* : le deck reste la
+ * somme de ce qu'on porte, donc il garde ses proportions — six gardes pour
+ * trois frappes, comme dans une vraie main.
+ */
+export function equipementPourTenir(pieces: Piece[], tailleMain: number): Piece[] {
+  const parTour = deckDeLEquipement(pieces).length
+  if (parTour === 0 || parTour > tailleMain) return pieces
+  const fois = Math.ceil((tailleMain + 1) / parTour)
+  return Array.from({ length: fois }, () => pieces).flat()
 }
