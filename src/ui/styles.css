@@ -4466,6 +4466,13 @@ body {
     inset -2px 0 0 #ffd9c4;
 }
 
+/* PLEINE, LA CRETE DISPARAIT : elle marque le niveau du liquide, et a 100 % ce
+   niveau EST le bord de la gorge. Il n'en restait qu'un lisere creme au bout de
+   la barre. */
+.vie-rouge.plein {
+  box-shadow: inset 0 1px 0 #ffcbb4;
+}
+
 /* PAS DE PULSATION SUR LE ROUGE. Elle a existe le temps d'un essai ; avec le
    balayage du laiton, deux mouvements se disputaient le meme objet. *Un seul
    effet qui bouge par piece* -- et Keko a choisi lequel. */

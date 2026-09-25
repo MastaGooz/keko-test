@@ -83,7 +83,17 @@ export function BarreVie3D({ pv, pvMax, armure, menace, encaisse }: Props): Reac
             *Un arrondi sur un segment arrondit ses DEUX bouts, or un seul des
             deux est un bord de la barre.* */}
         <span className="vie-couleurs">
-          <span className="vie-rouge" style={{ width: part(pv) }}>
+          {/* LA CRÊTE NE S'AFFICHE QUE SI LA BARRE N'EST PAS PLEINE. Elle marque
+              le NIVEAU du liquide ; à 100 % ce niveau est le bord de la gorge,
+              et elle n'y dit plus rien — il ne reste qu'un liseré crème au bout
+              de la barre, que Keko a pris pour un défaut : « il y a un petit
+              bout de la barre à droite qui est blanc même quand elle est
+              pleine ». *Un repère qui marque une frontière n'a rien à marquer
+              quand la frontière est le bord.* */}
+          <span
+            className={`vie-rouge${pv >= echelle ? ' plein' : ''}`}
+            style={{ width: part(pv) }}
+          >
             {perdus > 0 && <span className="vie-jaune" style={{ width: partDuRouge }} />}
           </span>
         </span>
