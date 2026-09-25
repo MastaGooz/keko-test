@@ -4589,7 +4589,11 @@ body {
     calc((8.25rem + var(--main-gauche, 14rem)) / 2 - 1.625rem),
     calc(var(--main-gauche, 14rem) - 3.6rem)
   );
-  bottom: max(11.3rem, calc(var(--main-haut, 7rem) + 0.5rem));
+  /* UN POIL PLUS HAUT QUE LA BARRE, demande par Keko : « c'est un peu proche
+     la ». La barre a epaissi en devenant une piece de ferronnerie, donc l'ecart
+     qui separait les deux s'est mange tout seul -- *une marge se relit quand ce
+     qu'elle separe change de taille.* */
+  bottom: max(11.9rem, calc(var(--main-haut, 7rem) + 1.1rem));
   display: grid;
   place-items: center;
   width: 3.25rem;
