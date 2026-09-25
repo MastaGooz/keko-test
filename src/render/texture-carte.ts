@@ -833,6 +833,31 @@ async function peindreDos(): Promise<HTMLCanvasElement> {
   return canvas
 }
 
+/**
+ * LE DOS EN IMAGE, pour ce qui n'est pas une texture 3D.
+ *
+ * Les deux tas des coins sont du SVG : ils ont besoin d'une URL, pas d'une
+ * texture. On repeint donc le MÊME canvas en petit — *un seul dessin, deux
+ * usages* — plutôt que d'en refaire un second qui finirait par diverger.
+ *
+ * Réduit à 256 : un tas fait 120 px à l'écran, et la data URL voyage dans le
+ * DOM. À pleine taille elle pèserait dix fois plus pour rien.
+ */
+let DOS_URL: Promise<string> | null = null
+
+export function urlDuDosPeint(): Promise<string> {
+  DOS_URL ??= peindreDos().then((grand) => {
+    const petit = document.createElement('canvas')
+    petit.width = 256
+    petit.height = Math.round(256 * 1.4)
+    const ctx = petit.getContext('2d')
+    if (ctx === null) return ''
+    ctx.drawImage(grand, 0, 0, petit.width, petit.height)
+    return petit.toDataURL('image/png')
+  })
+  return DOS_URL
+}
+
 let DOS: Promise<THREE.CanvasTexture> | null = null
 
 export function textureDuDos(): Promise<THREE.CanvasTexture> {

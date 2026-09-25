@@ -80,6 +80,47 @@ function coin(sx: number, sy: number): [number, number] {
   ]
 }
 
+/**
+ * LA MÊME PROJECTION, EN MATRICE — pour y poser le dos de carte.
+ *
+ * `coin()` fait une rotation puis un écrasement vertical : deux opérations
+ * LINÉAIRES, donc l'ensemble est affine, donc exprimable en `matrix()`. *C'est
+ * ce qui permet de plaquer une image sur le dessus du paquet* — SVG ne sait pas
+ * faire de projection perspective, et il n'en a pas besoin ici.
+ *
+ * Le repère source est celui d'une carte : 1 de large, `RAPPORT` de haut,
+ * centrée sur zéro. Une image posée de (−0,5 ; −0,7) à (0,5 ; 0,7) tombe donc
+ * exactement sur les quatre coins calculés ci-dessous.
+ */
+const DEMI_DIAGONALE = Math.hypot(1, RAPPORT) / 2
+const K = RAYON / DEMI_DIAGONALE
+
+/**
+ * LE REPÈRE LOCAL DE L'IMAGE, ET IL NE PEUT PAS ÊTRE PETIT.
+ *
+ * Posée à sa taille naturelle dans ce repère — 1 sur 1,4 — l'image est
+ * **rastérisée à un pixel** avant que la matrice ne l'agrandisse : le dessus du
+ * paquet devenait une tache unie de la couleur moyenne du dos. *Un navigateur
+ * rasterise une image à sa taille LOCALE, pas à celle qu'elle aura après
+ * transformation.*
+ *
+ * On la pose donc à 100 de large et on divise la matrice d'autant : la
+ * transformation finale est exactement la même, mais elle part d'une image
+ * dessinée à sa vraie résolution.
+ */
+const ECHELLE = 100
+
+const MATRICE = [
+  (K * COS) / ECHELLE,
+  (-K * ECRASEMENT * SIN) / ECHELLE,
+  (-K * SIN) / ECHELLE,
+  (-K * ECRASEMENT * COS) / ECHELLE,
+  CENTRE[0],
+  CENTRE[1],
+]
+  .map((v) => v.toFixed(6))
+  .join(' ')
+
 const LOIN = coin(-1, 1)
 const GAUCHE = coin(-1, -1)
 const NEAR = coin(1, -1)
@@ -133,6 +174,9 @@ const CADRE = [
   .map((v) => v.toFixed(2))
   .join(' ')
 
+import { useEffect, useState } from 'react'
+import { urlDuDosPeint } from './texture-carte.ts'
+
 type Props = {
   /** Sert aussi d'identifiant de dégradé : deux SVG qui partagent un `id` font
    *  que le second emprunte la couleur du premier. */
@@ -142,6 +186,30 @@ type Props = {
 
 export function Tas3D({ nom, compte }: Props): React.JSX.Element {
   const id = `tas-${nom}`
+
+  /**
+   * LE DESSUS DU PAQUET EST LE DOS DE CARTE, demandé par Keko.
+   *
+   * *C'est la même carte partout* — la règle du dépôt, déjà payée sur les
+   * trésors (« la carte change quand je la ramasse ») : le paquet montre
+   * exactement ce que montrera une carte retournée, et pas un motif qui lui
+   * ressemble.
+   *
+   * Il arrive en différé, parce qu'il charge le fond commun des cartes. Le
+   * losange peint reste dessous comme repli : *un dessus qui manquerait
+   * laisserait voir le décor à travers le paquet.*
+   */
+  const [dos, setDos] = useState<string | null>(null)
+  useEffect(() => {
+    let vivant = true
+    void urlDuDosPeint().then((url) => {
+      if (vivant && url !== '') setDos(url)
+    })
+    return () => {
+      vivant = false
+    }
+  }, [])
+
   return (
     <div className={`tas-3d ${nom}`}>
       <span className="tas-compte">{compte}</span>
@@ -205,8 +273,41 @@ export function Tas3D({ nom, compte }: Props): React.JSX.Element {
           strokeLinejoin="round"
           clipPath={`url(#${id}-dessus-coupe)`}
         />
-        <polygon points={jonc(0.62)} fill="none" stroke="#c9a95a" strokeWidth="1.2" opacity="0.5" />
-        <polygon points={jonc(0.24)} fill="#c9a95a" opacity="0.22" />
+
+        {/* LE DOS, PLAQUÉ PAR LA MATRICE. Il porte déjà son cadre de laiton,
+            donc il remplace les deux joncs que le losange peint avait — *deux
+            cadres l'un sur l'autre ne font pas un cadre plus riche.* Rogné par
+            la même forme, pour que ses coins arrondis ne laissent pas voir le
+            décor au travers. */}
+        {dos !== null ? (
+          // LE ROGNAGE VIT SUR UN GROUPE, PAS SUR L'IMAGE. Un `clip-path` est
+          // défini dans le repère de l'élément qui le porte : posé sur l'image,
+          // il subissait la matrice avec elle et ne tombait plus sur le
+          // losange. Sur un groupe sans transformation, il reste dans le repère
+          // du viewBox, là où le polygone a été calculé.
+          <g clipPath={`url(#${id}-dessus-coupe)`}>
+            <image
+              href={dos}
+              x={-ECHELLE / 2}
+              y={(-ECHELLE * RAPPORT) / 2}
+              width={ECHELLE}
+              height={ECHELLE * RAPPORT}
+              preserveAspectRatio="none"
+              transform={`matrix(${MATRICE})`}
+            />
+          </g>
+        ) : (
+          <>
+            <polygon
+              points={jonc(0.62)}
+              fill="none"
+              stroke="#c9a95a"
+              strokeWidth="1.2"
+              opacity="0.5"
+            />
+            <polygon points={jonc(0.24)} fill="#c9a95a" opacity="0.22" />
+          </>
+        )}
       </svg>
     </div>
   )

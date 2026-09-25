@@ -3191,6 +3191,28 @@ Le dessus est ce losange et l'épaisseur pend sous ses deux arêtes basses : **s
 lirait comme une carte à plat et non comme une pile.** Trois traits en travers
 de l'épaisseur disent que ce sont des cartes et non un bloc.
 
+**LE DESSUS DU PAQUET EST LE DOS DE CARTE**, demandé par Keko. *C'est la même
+carte partout* — la règle déjà payée sur les trésors (« la carte change quand je
+la ramasse ») : le paquet montre exactement ce que montrera une carte retournée,
+pas un motif qui lui ressemble. Le dos étant symétrique par construction, il
+survit au miroir de la défausse sans qu'on ait à s'en occuper.
+
+**La projection du paquet est AFFINE**, donc exprimable en `matrix()` : `coin()`
+fait une rotation puis un écrasement vertical, deux opérations linéaires. SVG ne
+sait pas faire de projection perspective, et il n'en a pas besoin ici.
+
+**Deux pièges SVG, et les deux donnent un dessin muet plutôt qu'une erreur :**
+
+- **un navigateur rastérise une image à sa taille LOCALE, pas à celle qu'elle
+  aura après transformation.** Posée à 1 × 1,4 unité, l'image sortait à un pixel
+  étiré — le dessus devenait une tache unie de la couleur moyenne du dos. On la
+  pose donc à 100 de large et on divise la matrice d'autant : transformation
+  identique, résolution réelle ;
+- **un `clip-path` est défini dans le repère de l'élément qui le porte.** Posé
+  sur l'image, il subissait la matrice avec elle et ne tombait plus sur le
+  losange. Il vit donc sur un groupe sans transformation, où le repère est
+  encore celui du viewBox.
+
 **LE NOMBRE DE FEUILLETS NE DÉCORE PAS L'ÉPAISSEUR, IL LA DIVISE.** Il y en
 avait trois — Keko : « les séparations ne sont pas assez nombreuses, on dirait
 que les cartes sont super épaisses ». *Trois traits donnent quatre cartes, et
