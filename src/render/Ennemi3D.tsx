@@ -142,6 +142,43 @@ function bond(k: number): { dy: number; echelle: number } {
 }
 
 /**
+ * ELLES RESPIRENT. « C'est le détail qui sépare une bête d'une vignette : sans
+ * lui, la scène est une illustration ; avec, quelque chose t'attend. »
+ *
+ * La règle vient du jeu 2D et **on ne la réapprend pas** : même ampleur
+ * (`scale(1.028, 1.035)` et deux pixels de levée sur un corps de 119), même
+ * tempo, mêmes décalages. Keko : « il y a zéro animation sur les images des
+ * ennemis ». Elle n'avait simplement jamais été portée — les silhouettes SVG
+ * la tenaient du CSS, une image plaquée sur un plan n'hérite de rien.
+ *
+ * **DÉCALÉES : une meute qui souffle à l'unisson fait machine, pas vivant.**
+ * Les trois couples durée/avance sont ceux des règles `:nth-child` du 2D, et
+ * ils tournent au-delà de trois corps. *Deux périodes voisines mais premières
+ * entre elles ne retombent jamais en phase* — c'est ce qui empêche le rang de
+ * se resynchroniser au bout d'un moment.
+ *
+ * **LES PIEDS RESTENT AU SOL.** En 2D, `transform-origin: 50% 100%` le disait ;
+ * en 3D un plan grandit autour de son centre, donc il faut remonter le corps de
+ * la moitié de ce qu'il gagne en hauteur. Sans ça la bête s'enfonce dans le sol
+ * à chaque inspiration.
+ */
+const SOUFFLES: [number, number][] = [
+  [3.4, 0],
+  [3.9, -1.15],
+  [3.1, -2.4],
+]
+
+function souffle(t: number, index: number): { sx: number; sy: number; dy: number } {
+  const [duree, avance] = SOUFFLES[index % SOUFFLES.length]!
+  // `ease-in-out` sur un aller-retour, c'est une cosinusoïde : la forme est la
+  // même, sans table d'étapes à tenir à jour.
+  const k = (1 - Math.cos((2 * Math.PI * (t - avance)) / duree)) / 2
+  const sx = 1 + 0.028 * k
+  const sy = 1 + 0.035 * k
+  return { sx, sy, dy: HAUT_CORPS * (0.017 * k + (sy - 1) / 2) }
+}
+
+/**
  * L'OMBRE AU SOL EST UN DÉGRADÉ, JAMAIS UN RECTANGLE.
  *
  * C'est elle qui pose la bête dans un lieu — un cadre autour d'elle la
@@ -281,6 +318,16 @@ export function Ennemi3D({
   const [texture, setTexture] = useState<THREE.Texture | null>(null)
   const mort = ennemi.pv <= 0
   const groupe = useRef<THREE.Group>(null)
+  /**
+   * LA RESPIRATION PORTE LE CORPS SEUL, PAS LE GROUPE.
+   *
+   * L'ombre au sol est dans le groupe : emportée par le souffle, elle monterait
+   * avec la bête et se décollerait du sol à chaque inspiration — *une ombre qui
+   * suit son objet n'est plus une ombre, c'est un décalque.* Le 2D avait la
+   * même séparation, la silhouette animée et le socle immobile. Le halo, lui,
+   * est le contour du corps : il respire avec lui.
+   */
+  const poitrine = useRef<THREE.Group>(null)
 
   const identite = identiteEnnemi(ennemi.nom)
 
@@ -409,6 +456,25 @@ export function Ennemi3D({
     // une silhouette déjà claire.
     g.scale.setScalar(echelle * (designe ? 1.06 : 1))
 
+    // LE SOUFFLE, et il cède la place à l'assaut comme en 2D : deux mouvements
+    // sur la même propriété se marchent dessus, et c'est le bond qu'on veut
+    // voir. Il reprend tout seul à la fin.
+    //
+    // COUPÉ NET À LA MORT. Un corps qui continue de souffler une fraction de
+    // seconde après avoir été abattu, c'est le défaut déjà corrigé en 2D — et
+    // ici il se verrait d'autant plus que le tampon tombe sur un corps immobile.
+    const pt = poitrine.current
+    if (pt !== null) {
+      if (mort || assaut !== null) {
+        pt.scale.set(1, 1, 1)
+        pt.position.y = 0
+      } else {
+        const r = souffle(t, index)
+        pt.scale.set(r.sx, r.sy, 1)
+        pt.position.y = r.dy
+      }
+    }
+
     // UN CORPS QU'ON PEUT VISER S'ALLUME, et il respire. C'est le seul repère
     // quand une carte attend sa cible : au doigt il n'y a pas de survol, donc
     // « visable » ne peut pas dépendre d'un pointeur. Sans lui, sortir une
@@ -451,21 +517,23 @@ export function Ennemi3D({
 
   return (
     <group ref={groupe} position={position}>
-      <mesh>
-        <planeGeometry args={[large, HAUT_CORPS]} />
-        <primitive object={materiau} attach="material" />
-      </mesh>
+      <group ref={poitrine}>
+        <mesh>
+          <planeGeometry args={[large, HAUT_CORPS]} />
+          <primitive object={materiau} attach="material" />
+        </mesh>
 
       {/* LE HALO DE VISÉE, derrière le corps : seul ce qui dépasse se voit. Il
           ne capte pas le pointeur — il élargirait la zone sensible de la bête
           d'un anneau invisible au repos. */}
-      {contour !== null && (
-        <mesh position={[0, 0, -0.03]} material={halo} raycast={() => null}>
-          <planeGeometry
-            args={[large * (1 + 2 * DEBORD_HALO), HAUT_CORPS * (1 + 2 * DEBORD_HALO)]}
-          />
-        </mesh>
-      )}
+        {contour !== null && (
+          <mesh position={[0, 0, -0.03]} material={halo} raycast={() => null}>
+            <planeGeometry
+              args={[large * (1 + 2 * DEBORD_HALO), HAUT_CORPS * (1 + 2 * DEBORD_HALO)]}
+            />
+          </mesh>
+        )}
+      </group>
 
       {/* L'OMBRE AU SOL : c'est elle qui pose la bête dans un lieu. Un cadre
           autour la remettrait dans la vignette dont on l'a sortie. */}

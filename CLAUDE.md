@@ -2974,6 +2974,31 @@ carte qui s'abat passerait derrière la jauge du corps qu'elle frappe. À égali
 avec `.jeu-3d`, c'est l'ordre du DOM qui tranche et les ancres y viennent
 avant : le bouton de fin de tour reste cliquable.
 
+**ELLES RESPIRENT — la règle du 2D, enfin portée.** Keko : « il y a zéro
+animation sur les images des ennemis ». Elle n'avait jamais été transposée : les
+silhouettes SVG la tenaient du CSS, une image plaquée sur un plan n'hérite de
+rien. Mêmes valeurs, on ne les réapprend pas — `scale(1.028, 1.035)`, deux
+pixels de levée sur un corps de 119, `ease-in-out` (une cosinusoïde en donne
+exactement la forme, sans table d'étapes), et les trois couples durée/avance des
+règles `:nth-child` : 3,4 s / 0, 3,9 s / −1,15 s, 3,1 s / −2,4 s. *Deux périodes
+voisines mais premières entre elles ne retombent jamais en phase* — c'est ce qui
+empêche le rang de se resynchroniser.
+
+Trois choses à ne pas défaire :
+
+- **le souffle porte le CORPS SEUL, pas le groupe.** L'ombre au sol est dans le
+  groupe : emportée par lui, elle monterait avec la bête et se décollerait du
+  sol à chaque inspiration. *Une ombre qui suit son objet n'est plus une ombre.*
+  Le 2D avait la même séparation — silhouette animée, socle immobile. Le halo,
+  lui, est le contour du corps : il respire avec lui ;
+- **les pieds restent au sol.** En 2D `transform-origin: 50% 100%` le disait ; en
+  3D un plan grandit autour de son centre, donc on remonte le corps de la moitié
+  de ce qu'il gagne en hauteur ;
+- **il cède la place à l'assaut et se coupe NET à la mort.** Deux mouvements sur
+  la même propriété se marchent dessus, et c'est le bond qu'on veut voir ; un
+  corps qui souffle encore après avoir été abattu est le défaut déjà corrigé en
+  2D, d'autant plus visible ici que le tampon tombe sur un corps immobile.
+
 **LE HALO DE VISÉE SUIT LA SILHOUETTE, ce n'est plus un disque.** Un dégradé
 radial derrière un corps qui n'est pas rond laisse de la lumière là où il n'y a
 personne et n'en met pas assez au bout des bras. Keko : « le halo des ennemis
