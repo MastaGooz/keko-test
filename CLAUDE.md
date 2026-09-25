@@ -2764,6 +2764,14 @@ POSÉE dans le rebut — elle n'est plus dans un geste — et faux pour une cart
 qu'on TIENT au-dessus de lui. *Un état dit ce qui va arriver, l'autre dit qu'on
 est en train de le faire.*
 
+**DEUX GESTES SUR UN MÊME ÉCRAN, ET LE SLOT DOIT ÉCOUTER LES DEUX.** Le trésor
+peut venir de l'emplacement de loot, dont le geste vit dans `Butin3D`, ou de la
+MAIN, dont le geste vit dans `Main3D` : le rebut ne voyait que le premier —
+Keko : « quand je drag depuis la main des trésors vers le slot jeter, il ne
+passe pas en rouge ». La main dit donc au parent la nature de la zone sous le
+doigt (`onZone`), et le parent la transmet au rebut. *Un écran qui a deux
+gestes doit écouter les deux.*
+
 **PIÈGE DE DIAGNOSTIC, et il a coûté une fausse piste : la carte de loot n'est
 pas portée par la main.** Elle vit dans `Butin3D`, qui a son propre geste ;
 j'avais d'abord teint le halo dans `Main3D`, et rien ne changeait à l'écran.

@@ -303,6 +303,15 @@ type Props = {
   /** Une carte est tenue au doigt (ou vient d'être lâchée). */
   onSaisie?: (tenue: boolean) => void
   /**
+   * CE QUE LÂCHER ICI FERAIT, dit au PARENT à chaque changement.
+   *
+   * L'écran de butin en a besoin : le slot de rebut doit rougir sous la carte,
+   * or *la carte peut venir de la main comme de l'emplacement de loot*, et
+   * chacun a son propre geste. Sans ce retour, le slot ne voyait que les
+   * cartes qui partaient de lui.
+   */
+  onZone?: (nature: 'non' | 'depot' | 'peril') => void
+  /**
    * Lâcher ICI déclenchera quelque chose.
    *
    * En combat, tout ce qui est au-dessus de la main joue la carte : la zone
@@ -389,6 +398,7 @@ export function Main3D({
   onReordonner,
   onPeinte,
   onSaisie,
+  onZone,
   zoneActive,
   viseur,
   cibles,
@@ -532,6 +542,19 @@ export function Main3D({
     onVise?.(ancree, cible)
   }, [ancree, cible, onVise])
 
+  // LA NATURE DE LA ZONE SOUS LE DOIGT, calculée une fois pour toutes : la
+  // carte tenue s'en teinte, et le parent l'apprend.
+  const nature: 'non' | 'depot' | 'peril' =
+    tenue === null || doigt === null || !enZoneDeJeu
+      ? 'non'
+      : zoneActive === undefined
+        ? 'depot'
+        : zoneActive([doigt.x, doigt.y, Z_TENUE])
+
+  useEffect(() => {
+    onZone?.(nature)
+  }, [nature, onZone])
+
   // LA FENTE NE S'OUVRE QUE DANS LA MAIN. Au-dessus de la ligne de jeu, la
   // carte part frapper : écarter ses voisines là-haut annoncerait un rangement
   // qui n'aura pas lieu.
@@ -557,7 +580,6 @@ export function Main3D({
         if (i === deplacee) {
           const suivi = doigt ?? ancre
           const p = ancree ? ancre : suivi
-          const nature = zoneActive === undefined ? 'depot' : zoneActive([suivi.x, suivi.y, Z_TENUE])
           return (
             <Carte3D
               key={carte.id}

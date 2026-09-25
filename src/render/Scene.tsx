@@ -169,6 +169,8 @@ export function Scene(): React.JSX.Element {
    * `combat.main` : impossible de regarder de près le trésor posé dans un
    * emplacement du butin. C'est la leçon du jeu 2D, reprise telle quelle.
    */
+  /** La main tient un trésor au-dessus du rebut : le slot doit le savoir. */
+  const [mainSurLeRebut, setMainSurLeRebut] = useState(false)
   const [zoomee, setZoomee] = useState<CarteAPeindre | null>(null)
   /** Le set de la pièce regardée, s'il s'agit d'une pièce d'équipement. */
   const [zoomSet, setZoomSet] = useState<Entree[]>([])
@@ -795,6 +797,7 @@ export function Scene(): React.JSX.Element {
               onRegarder={setZoomee}
               onSaisie={setSaisie}
               onPeinte={compter}
+              mainSurLeRebut={mainSurLeRebut}
             />
             {/* CE QU'ON EMPORTE EST LITTÉRALEMENT LA MAIN : même éventail,
                 même taille, mêmes gestes. Rien ne s'y joue, donc rien n'y est
@@ -814,6 +817,7 @@ export function Scene(): React.JSX.Element {
                 const ou = slotSous(p, window.innerHeight, phase.loot !== null)
                 return ou === null ? 'non' : ou === 'jeter' ? 'peril' : 'depot'
               }}
+              onZone={(n) => setMainSurLeRebut(n === 'peril')}
             />
           </>
         )}

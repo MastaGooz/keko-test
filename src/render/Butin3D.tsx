@@ -197,6 +197,8 @@ type Props = {
   /** Une carte est tenue : le parent fait passer la scène devant l'interface. */
   onSaisie?: (tenue: boolean) => void
   onPeinte?: () => void
+  /** La MAIN tient une carte au-dessus du rebut : son geste vit ailleurs. */
+  mainSurLeRebut?: boolean
 }
 
 export function Butin3D({
@@ -211,6 +213,7 @@ export function Butin3D({
   onRegarder,
   onSaisie,
   onPeinte,
+  mainSurLeRebut = false,
 }: Props): React.JSX.Element {
   // Index 0 : ce qui arrive. Index 1 : ce qu'on s'apprête à jeter.
   const cartes = [loot, aJeter]
@@ -238,8 +241,14 @@ export function Butin3D({
   // du vide promettrait un dépôt qui n'aura pas lieu.*
   const active =
     portee !== null && doigt !== null && destinationDe(doigt, loot !== null) !== null
+  // LA CARTE PEUT VENIR DE DEUX ENDROITS : de l'emplacement de loot, dont le
+  // geste vit ici, ou de la MAIN, dont le geste vit dans `Main3D`. Le slot
+  // doit rougir dans les deux cas — Keko : « quand je drag depuis la main des
+  // trésors vers le slot jeter, il ne passe pas en rouge ». *Un écran qui a
+  // deux gestes doit écouter les deux.*
   const survoleLeRebut =
-    portee !== null && doigt !== null && destinationDe(doigt, loot !== null) === 'jeter'
+    (portee !== null && doigt !== null && destinationDe(doigt, loot !== null) === 'jeter') ||
+    mainSurLeRebut
 
   return (
     <group>
