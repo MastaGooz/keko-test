@@ -18,6 +18,7 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { Ennemi } from '../logic/combat.ts'
 import { urlDeLEnnemi } from '../ui/art.ts'
+import { boiteDe, mesurerBoite } from './silhouette.ts'
 import { creature } from '../ui/illustrations.ts'
 
 /** La hauteur d'un corps, en unités de carte (une carte fait 1 de large). */
@@ -30,23 +31,50 @@ const RAPPORT_SVG = 64 / 60
 export const HAUT_CORPS = CORPS / RAPPORT_SVG
 
 /**
- * BANC D'ESSAI : TOUS LES CORPS PRENNENT CETTE IDENTITÉ.
+ * QUI EST QUI : le nom du moteur, la figure qu'on lui donne.
  *
- * Keko juge une créature qu'il vient de dessiner, et il l'a demandée seule —
- * *un dessin ne se juge pas à côté des silhouettes qu'il doit remplacer*, on
- * comparerait deux vocabulaires au lieu de regarder le nouveau.
+ * Keko a dessiné cinq créatures — trois gobelins (dague, fronde, baril de
+ * poudre) et deux cultistes (dague, encens) — et les groupes de combat en
+ * comptent six. **La correspondance vit ICI, pas dans `logic/`** : les trois
+ * groupes sont calibrés par simulation, et *un chiffre de règle ne se rejoue
+ * pas pour une question d'habillage.* Renommer une bête ou lui changer son
+ * dessin ne coûte donc rien.
  *
- * **C'est un réglage de RENDU, pas de règles.** `logic/cartes.ts` garde ses
- * trois groupes calibrés par simulation : le nombre de corps, les PV, les
- * dégâts et les périodes ne bougent pas d'un chiffre. Seuls le nom affiché et
- * le dessin changent — donc on voit toujours un groupe d'un, de deux ou de
- * trois, et une seule constante à remettre à `null` pour rendre le bestiaire.
+ * Les deux familles se répartissent d'elles-mêmes sur les groupes existants :
+ * le corps seul et le duo sont des CULTISTES, la meute de trois est la bande de
+ * GOBELINS — un dessin par corps, exactement. Et le décor suit la famille,
+ * puisque Keko a fourni les deux qu'il fallait : temple et camp.
+ *
+ * Le Traînard prend le porteur de baril, et ce n'est pas un hasard : il frappe
+ * un tour sur deux en frappant plus fort, ce qui est précisément le tempo d'un
+ * kamikaze.
  */
-export const ENNEMI_UNIQUE: string | null = 'Cultiste'
+type Figure = { nom: string; famille: 'cultistes' | 'gobelins' }
 
-/** Sous quelle identité ce corps se montre. */
+const FIGURES: Record<string, Figure> = {
+  Garde: { nom: 'Cultiste', famille: 'cultistes' },
+  Roquet: { nom: 'Cultiste', famille: 'cultistes' },
+  Cabot: { nom: 'Officiant', famille: 'cultistes' },
+  Meneur: { nom: 'Gobelin', famille: 'gobelins' },
+  Suiveur: { nom: 'Frondeur', famille: 'gobelins' },
+  Traînard: { nom: 'Poudrier', famille: 'gobelins' },
+}
+
+/** Sous quelle figure ce corps se montre. Sans entrée, il garde son nom. */
 export function identiteEnnemi(nom: string): string {
-  return ENNEMI_UNIQUE ?? nom
+  return FIGURES[nom]?.nom ?? nom
+}
+
+/**
+ * LE DÉCOR SUIT CEUX QU'ON AFFRONTE : les cultistes au temple, les gobelins au
+ * camp. C'est ce que les deux fonds de Keko demandent — *un décor qui ne
+ * changerait jamais ne serait qu'un papier peint.*
+ *
+ * Il se lit sur le PREMIER corps du rang : un groupe est d'une seule famille, et
+ * le premier survit à la mort des autres tant qu'il n'est pas tombé lui-même.
+ */
+export function decorDuRang(noms: readonly string[]): 'temple' | 'camp' {
+  return FIGURES[noms[0] ?? '']?.famille === 'gobelins' ? 'camp' : 'temple'
 }
 
 /**
@@ -303,6 +331,8 @@ type Props = {
   assaut?: number | null
   /** L'instant de sa mort, même horloge. Il s'efface ensuite. */
   mortDepuis?: number | null
+  /** La silhouette vient d'être mesurée : la scène doit replacer ses ancres. */
+  onMesure?: () => void
 }
 
 export function Ennemi3D({
@@ -314,6 +344,7 @@ export function Ennemi3D({
   touche = null,
   assaut = null,
   mortDepuis = null,
+  onMesure,
 }: Props): React.JSX.Element {
   const [texture, setTexture] = useState<THREE.Texture | null>(null)
   const mort = ennemi.pv <= 0
@@ -343,10 +374,19 @@ export function Ennemi3D({
     const url = urlDeLEnnemi(identite)
     const dessin = (): Promise<THREE.Texture | null> =>
       textureCreature(identite, `${identite}-${index}`)
-    void (url === null ? dessin() : textureImage(url).then((t) => t ?? dessin())).then(pose)
+    void (url === null ? dessin() : textureImage(url).then((t) => t ?? dessin())).then((t) => {
+      pose(t)
+      // LA SILHOUETTE SE MESURE UNE FOIS, et c'est `mesurerBoite` qui le tient :
+      // sans ça, prévenir la scène la ferait se rendre, donc remesurer, donc
+      // prévenir — la boucle infinie qui gèle la page sans rien dire.
+      if (t !== null && vivant && mesurerBoite(identite, t.image as CanvasImageSource)) onMesure?.()
+    })
     return () => {
       vivant = false
     }
+    // `onMesure` est volontairement hors des dépendances : c'est un signal, pas
+    // une donnée, et l'y mettre relancerait le chargement à chaque rendu du parent.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identite, index])
 
   /**
@@ -371,6 +411,18 @@ export function Ennemi3D({
    * LE CONTOUR SE PEINT DEPUIS LA TEXTURE DU CORPS, donc il suit la silhouette
    * de ce qui est vraiment affiché — image de Keko comme dessin de repli.
    */
+  /**
+   * L'OMBRE SE POSE SOUS LES VRAIES PATTES, pas sous le bord du cadre.
+   *
+   * Un gobelin laisse 6 % de vide sous lui : calée sur le cadre, son ombre s'en
+   * détachait et se lisait comme un trait noir posé plus bas — *le défaut déjà
+   * payé deux fois*, sur `joueur.png` et sur le corps en agonie. Elle prend
+   * aussi la LARGEUR du sujet : une ombre plus large que le corps ne se lit plus
+   * comme la sienne.
+   */
+  const boite = boiteDe(identite)
+  const sol = -HAUT_CORPS * (0.5 - boite.bas)
+
   const contour = useMemo(() => {
     const img = texture?.image as CanvasImageSource | undefined
     if (img === undefined) return null
@@ -538,8 +590,8 @@ export function Ennemi3D({
       {/* L'OMBRE AU SOL : c'est elle qui pose la bête dans un lieu. Un cadre
           autour la remettrait dans la vignette dont on l'a sortie. */}
       {!mort && (
-        <mesh position={[0, -CORPS * 0.46, -0.02]}>
-          <planeGeometry args={[large * 0.95, CORPS * 0.3]} />
+        <mesh position={[0, sol + HAUT_CORPS * 0.012, -0.02]}>
+          <planeGeometry args={[large * (1 - boite.gauche - boite.droite) * 1.05, CORPS * 0.3]} />
           <meshBasicMaterial map={OMBRE_SOL} transparent depthWrite={false} toneMapped={false} />
         </mesh>
       )}

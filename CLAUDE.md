@@ -3024,17 +3024,53 @@ devine sous les pattes, là où le sujet touche presque le bord de son image ; �
 0,18 / 0,42 il tombe à **0**, pour une frange lumineuse de 39 px sur une toile
 de 360.
 
-**BANC D'ESSAI : `ENNEMI_UNIQUE`** (`Ennemi3D.tsx`) donne à TOUS les corps la
-même identité. Keko juge un dessin qu'il vient de faire, et il l'a demandé
-seul — *un dessin ne se juge pas à côté des silhouettes qu'il doit remplacer*,
-on comparerait deux vocabulaires au lieu de regarder le nouveau. **C'est un
-réglage de RENDU** : `logic/cartes.ts` garde ses trois groupes calibrés par
-simulation, donc on voit toujours un groupe d'un, de deux ou de trois corps,
-et il suffit de remettre la constante à `null` pour rendre le bestiaire.
+**CINQ CRÉATURES, ET LA CORRESPONDANCE VIT DANS `render/`.** Keko a dessiné
+trois gobelins (dague, fronde, baril de poudre) et deux cultistes (dague,
+encens) ; les groupes en comptent six corps. `FIGURES` (`Ennemi3D.tsx`) associe
+chaque nom du moteur à un nom affiché et à une famille — *un chiffre de règle ne
+se rejoue pas pour une question d'habillage*, donc `logic/cartes.ts` n'a pas
+bougé. Les deux familles se répartissent d'elles-mêmes : le corps seul et le duo
+sont des CULTISTES, la meute de trois est la bande de GOBELINS, un dessin par
+corps exactement. Le Traînard prend le porteur de baril, et ce n'est pas un
+hasard — il frappe un tour sur deux en frappant plus fort, le tempo même d'un
+kamikaze.
 
-### LE DONJON EN FOND DE COMBAT : `public/Dungeon.webp`
+**LE DÉCOR SUIT CEUX QU'ON AFFRONTE** (`decorDuRang`) : les cultistes au temple,
+les gobelins au camp. C'est ce que les deux fonds demandent — *un décor qui ne
+changerait jamais ne serait qu'un papier peint.* Il se lit sur le premier corps
+du rang, puisqu'un groupe est d'une seule famille.
 
-Fourni par Keko, en 16:9 (1672 x 941). Il vit sur `.fond-3d`, le calque du
+**LES REPÈRES SE POSENT SUR LE SUJET, PAS SUR SON CADRE** (`silhouette.ts`).
+Toutes les images font le même carré, mais le sujet n'y occupe pas la même
+place : les cultistes touchent presque les deux bords, **les gobelins laissent
+26 % de vide au-dessus de la tête et 6 % sous les pattes**. *C'est ainsi que
+Keko dit qu'un gobelin est plus petit*, et c'est la bonne façon de le dire —
+elle ne demande aucun réglage de notre côté. Mais l'ombre au sol serait tombée
+6 % sous ses pattes, et son badge d'intention aurait flotté un quart de cadre
+au-dessus de son crâne. **Un repère calé sur la marge d'un dessin se déplace
+avec le dessin** : la leçon déjà payée sur l'intention du Cultiste se repaie à
+chaque image dont le cadrage diffère.
+
+On mesure donc la boîte du sujet en lisant l'alpha, dans un canvas de 96 — on
+cherche des bords à 1 % près, pas des pixels. L'ombre y prend sa hauteur ET sa
+largeur (une ombre plus large que le corps ne se lit plus comme la sienne), les
+deux ancres d'étiquette aussi.
+
+**Deux choses à ne pas défaire :** la mesure n'arrive qu'APRÈS le premier rendu,
+donc elle doit prévenir la scène, sinon les étiquettes resteraient sur le cadre
+jusqu'au rendu suivant — *qui arrive tout le temps en combat et JAMAIS sur un
+écran qui ne bouge pas*, même piège que les cibles de `Projeter`. Et elle ne
+prévient qu'à la PREMIÈRE mesure, le cache s'en portant garant : un signal qui
+repartirait à chaque rendu serait la boucle infinie déjà rencontrée sur les
+textures de cartes, celle qui gèle la page sans une erreur en console.
+
+*Le banc d'essai `ENNEMI_UNIQUE` a disparu avec l'arrivée des cinq dessins : il
+servait à juger le premier seul, et il reste dans `git log` si un prochain
+dessin demande le même traitement.*
+
+### LES DÉCORS DE COMBAT : `public/Temple.webp` et `public/Camp.webp`
+
+Fournis par Keko, en 16:9 (1672 x 940). Ils vivent sur `.fond-3d`, le calque du
 fond, sous tout le reste : *la scène est un canvas TRANSPARENT* depuis que la
 carte qu'on tient doit passer devant les jauges, donc le fond ne peut pas être
 peint dedans.

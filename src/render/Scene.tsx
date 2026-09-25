@@ -15,7 +15,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Main3D, ReperesDeLaMain } from './Main3D.tsx'
-import { CORPS, Ennemi3D, HAUT_CORPS, identiteEnnemi } from './Ennemi3D.tsx'
+import { CORPS, decorDuRang, Ennemi3D, HAUT_CORPS, identiteEnnemi } from './Ennemi3D.tsx'
+import { boiteDe } from './silhouette.ts'
 import { Projeter } from './Projeter.tsx'
 import { CarteQuiSAbat, TEMPS_FIN, TEMPS_IMPACT } from './CarteQuiSAbat.tsx'
 import { Horloge, lireHorloge } from './horloge.tsx'
@@ -25,7 +26,7 @@ import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
 import { Armurerie3D, compteDuDeck } from './Armurerie3D.tsx'
-import { urlDuDonjon } from '../ui/art.ts'
+import { urlDuDecor } from '../ui/art.ts'
 import { Zoom3D } from './Zoom3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
@@ -657,9 +658,32 @@ export function Scene(): React.JSX.Element {
   const hautes = useRef<(HTMLDivElement | null)[]>([])
   const centres = useRef<(HTMLDivElement | null)[]>([])
   const basses = useRef<(HTMLDivElement | null)[]>([])
+  /**
+   * UNE SILHOUETTE MESURÉE DOIT REPLACER LES ANCRES.
+   *
+   * La boîte du sujet n'est connue qu'une fois l'image chargée, donc APRÈS le
+   * premier rendu : sans ce signal, les étiquettes resteraient calées sur le
+   * cadre jusqu'au rendu suivant — qui arrive tout le temps en combat, et
+   * JAMAIS sur un écran qui ne bouge pas. Même piège que les cibles de
+   * `Projeter`.
+   *
+   * Il ne part qu'à la PREMIÈRE mesure, `silhouette.ts` s'en porte garant :
+   * un signal qui reviendrait à chaque rendu serait la boucle infinie déjà
+   * rencontrée sur les textures de cartes.
+   */
+  const [, remesure] = useState(0)
+  const mesure = useCallback(() => remesure((n) => n + 1), [])
+
+  // LE DÉCOR SUIT CEUX QU'ON AFFRONTE, et il se relit à chaque combat.
+  const decor = decorDuRang(combat.ennemis.map((e) => e.nom))
+
   const ancres = rang.flatMap(
-    (p) =>
-      [
+    (p, i) => {
+      // LES ÉTIQUETTES SE POSENT SUR LE SUJET, PAS SUR SON CADRE. Toutes les
+      // images font le même carré, mais un gobelin y laisse un quart de vide
+      // au-dessus de la tête : son badge d'intention aurait flotté loin de lui.
+      const boite = boiteDe(identiteEnnemi(combat.ennemis[i]?.nom ?? ''))
+      return [
         // Les étiquettes SERRENT le corps d'un cran de plus depuis que le rang
         // est monté : c'est la place qu'on rend en haut et en bas de l'écran,
         // et elles flottaient un peu loin de la bête de toute façon.
@@ -671,10 +695,13 @@ export function Scene(): React.JSX.Element {
         // Cultiste. *Un repère calé sur la marge d'un dessin se déplace avec
         // le dessin* — au sommet du plan, il est au-dessus de la tête quelle
         // que soit l'image.
-        [p[0], p[1] + HAUT_CORPS * 0.5, p[2]],
+        [p[0], p[1] + HAUT_CORPS * (0.5 - boite.haut), p[2]],
         [p[0], p[1], p[2]],
-        [p[0], p[1] - CORPS * 0.48, p[2]],
-      ] as [number, number, number][],
+        // Le petit écart sous les pattes est celui d'avant : la jauge ne colle
+        // pas au corps, elle se pose en dessous.
+        [p[0], p[1] - HAUT_CORPS * (0.5 - boite.bas) - CORPS * 0.012, p[2]],
+      ] as [number, number, number][]
+    },
   )
 
   return (
@@ -687,7 +714,7 @@ export function Scene(): React.JSX.Element {
           devant les jauges. L'armurerie le couvre de son voile opaque — *c'est
           un lieu, pas un calque* — alors que les écrans de palier le laissent
           voir, puisqu'on est encore dans le donjon. */}
-      <div className="fond-3d" style={{ backgroundImage: `url(${urlDuDonjon()})` }} />
+      <div className="fond-3d" style={{ backgroundImage: `url(${urlDuDecor(decor)})` }} />
 
       <Canvas
         shadows
@@ -752,6 +779,7 @@ export function Scene(): React.JSX.Element {
             touche={touches[i] ?? null}
             assaut={assauts[i] ?? null}
             mortDepuis={morts[i] ?? null}
+            onMesure={mesure}
           />
         ))}
 

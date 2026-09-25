@@ -109,7 +109,7 @@ export function urlDuCout(): string {
 }
 
 /**
- * LE DONJON, fond de l'écran de combat — fourni par Keko, en 16:9.
+ * LES DÉCORS DE COMBAT — fournis par Keko, en 16:9.
  *
  * Il est posé en `cover`, donc **la largeur est toujours entière et c'est la
  * hauteur qui se rogne** : rien sur un écran 16:9, jusqu'à 23 % sur le
@@ -118,8 +118,15 @@ export function urlDuCout(): string {
  *
  * Même piège de cache que les autres fichiers de `public/`.
  */
-export function urlDuDonjon(): string {
-  return `${import.meta.env.BASE_URL}Dungeon.webp?v=${encodeURIComponent(__BUILD_TIME__)}`
+export type Decor = 'temple' | 'camp'
+
+const DECORS: Record<Decor, string> = {
+  temple: 'Temple.webp',
+  camp: 'Camp.webp',
+}
+
+export function urlDuDecor(decor: Decor): string {
+  return `${import.meta.env.BASE_URL}${DECORS[decor]}?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
 /**
@@ -146,7 +153,11 @@ export function urlImageDeKeko(nom: string): string | null {
  * sombre au milieu de la scène.
  */
 const IMAGES_ENNEMIS: Record<string, string> = {
-  cultiste: 'Cultist.png',
+  cultiste: 'Cultiste_dague.png',
+  officiant: 'Cultiste_encens.png',
+  gobelin: 'Gobelin_dague.png',
+  frondeur: 'Gobelin_fronde.png',
+  poudrier: 'Gobelin_kamikaz.png',
 }
 
 /** L'image de Keko pour cette créature, s'il y en a une. */
