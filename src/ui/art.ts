@@ -132,6 +132,30 @@ export function urlImageDeKeko(nom: string): string | null {
   return `${import.meta.env.BASE_URL}${fichier}?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
+/**
+ * LES CRÉATURES DE KEKO, par nom d'ennemi.
+ *
+ * Même règle que les images de cartes — un fichier dans `public/`, une ligne
+ * ici, la casse exacte — mais une table à part, parce qu'une créature n'est pas
+ * un modèle de carte : les deux peuvent porter le même nom sans être la même
+ * chose.
+ *
+ * **Le repli reste le SVG dessiné** (`ui/illustrations.ts`), et il est
+ * explicite ici : en 3D l'image devient une texture, et *un plan sans texture
+ * n'est pas ignoré comme une couche de fond CSS* — il resterait un rectangle
+ * sombre au milieu de la scène.
+ */
+const IMAGES_ENNEMIS: Record<string, string> = {
+  cultiste: 'Cultist.png',
+}
+
+/** L'image de Keko pour cette créature, s'il y en a une. */
+export function urlDeLEnnemi(nom: string): string | null {
+  const fichier = IMAGES_ENNEMIS[cle(nom)]
+  if (fichier === undefined) return null
+  return `${import.meta.env.BASE_URL}${fichier}?v=${encodeURIComponent(__BUILD_TIME__)}`
+}
+
 /** Le dos de carte, pour les tas. */
 export function dosDeCarte(): string {
   return ART['dos'] ?? ''

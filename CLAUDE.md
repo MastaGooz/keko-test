@@ -2917,6 +2917,60 @@ Deux choses apprises en dessinant :
   traîne ce qu'on lit d'elle ailleurs. Quatre branches fines ne disent que la
   lumière.
 
+### LES CRÉATURES DE KEKO : `public/Cultist.png`
+
+Première image d'ennemi, et elle remplace les silhouettes SVG par le même
+chemin que `Glaive.png` — un fichier dans `public/`, une ligne dans
+`IMAGES_ENNEMIS` (`ui/art.ts`), rien d'autre. Le dessin reste le repli, et
+**il est explicite ici** : en 3D l'image devient une texture, et *un plan sans
+texture n'est pas ignoré comme une couche de fond CSS* — il laisserait un
+rectangle sombre au milieu de la scène.
+
+**LA HAUTEUR EST FIXE, LA LARGEUR SUIT L'IMAGE** (`HAUT_CORPS`). Une texture
+est ÉTIRÉE pour remplir son plan : `Cultist.png` est carrée, et sur un plan en
+64:60 elle aurait été élargie de 7 %. On lit donc le rapport de ce qu'on a
+vraiment chargé. Les corps gardent tous la même hauteur — c'est elle que la
+scène attend, puisque l'ombre au sol, les deux ancres d'étiquette et l'écart
+entre les corps s'en déduisent — et c'est la largeur qui varie. L'ombre et le
+halo suivent la taille réelle, sans quoi ils déborderaient d'un corps étroit.
+
+**L'INTENTION SE POSE AU SOMMET DU CADRE, PAS DEDANS.** Elle était à 11,6 %
+SOUS le bord haut, calée à l'oeil sur des silhouettes qui laissent du ciel
+au-dessus d'elles ; l'image de Keko monte à 1,3 % du bord, et le badge tombait
+pile sur le masque du Cultiste. *Un repère calé sur la marge d'un dessin se
+déplace avec le dessin.* Mesuré après correction : 19 px de marge en haut à
+844x390, 12 px à 667x320, zéro débordement.
+
+**Le format à donner pour une nouvelle créature :**
+
+| | |
+|---|---|
+| rapport | celui qu'on veut — le plan le suit ; hauteur commune |
+| taille | 1024 de haut suffit (mesuré : ~690 px réels au pire, écran rétina) |
+| fichier | PNG ou WebP **à canal alpha**, dans `public/` |
+
+Quatre contraintes de dessin, et les trois premières ont une raison mécanique :
+
+1. **le sujet doit toucher le bord BAS.** L'ombre au sol est un plan séparé,
+   posé juste sous le cadre (`-CORPS * 0.46`) : une marge transparente sous les
+   pattes l'en détache et elle se lit comme **un trait noir** — le défaut déjà
+   payé deux fois, sur `joueur.png` et sur le corps en agonie ;
+2. **pas de blanc pur.** Le matériau MULTIPLIE la texture : un corps désigné
+   par la flèche est éclairci à ×1,45, un corps visable respire jusqu'à ×1,40.
+   Ce qui est déjà blanc ne peut plus s'allumer, et c'est le signal central du
+   multi-cibles. `Cultist.png` n'a aucun pixel quasi blanc — vérifié ;
+3. **la silhouette doit se lire en NOIR.** À la mort l'image passe en
+   `#000000` et la tête de mort s'abat dessus : il ne reste que la forme ;
+4. le haut du cadre n'a plus à être dégagé depuis que l'intention est montée.
+
+**BANC D'ESSAI : `ENNEMI_UNIQUE`** (`Ennemi3D.tsx`) donne à TOUS les corps la
+même identité. Keko juge un dessin qu'il vient de faire, et il l'a demandé
+seul — *un dessin ne se juge pas à côté des silhouettes qu'il doit remplacer*,
+on comparerait deux vocabulaires au lieu de regarder le nouveau. **C'est un
+réglage de RENDU** : `logic/cartes.ts` garde ses trois groupes calibrés par
+simulation, donc on voit toujours un groupe d'un, de deux ou de trois corps,
+et il suffit de remettre la constante à `null` pour rendre le bestiaire.
+
 ### LE DONJON EN FOND DE COMBAT : `public/Dungeon.webp`
 
 Fourni par Keko, en 16:9 (1672 x 941). Il vit sur `.fond-3d`, le calque du

@@ -17,10 +17,37 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { Ennemi } from '../logic/combat.ts'
+import { urlDeLEnnemi } from '../ui/art.ts'
 import { creature } from '../ui/illustrations.ts'
 
 /** La hauteur d'un corps, en unités de carte (une carte fait 1 de large). */
 export const CORPS = 1.5
+
+/** Le rapport du dessin des créatures SVG : `viewBox="0 0 64 60"`. */
+const RAPPORT_SVG = 64 / 60
+
+/** La hauteur d'un corps. C'est elle qui est FIXE, jamais la largeur. */
+export const HAUT_CORPS = CORPS / RAPPORT_SVG
+
+/**
+ * BANC D'ESSAI : TOUS LES CORPS PRENNENT CETTE IDENTITÉ.
+ *
+ * Keko juge une créature qu'il vient de dessiner, et il l'a demandée seule —
+ * *un dessin ne se juge pas à côté des silhouettes qu'il doit remplacer*, on
+ * comparerait deux vocabulaires au lieu de regarder le nouveau.
+ *
+ * **C'est un réglage de RENDU, pas de règles.** `logic/cartes.ts` garde ses
+ * trois groupes calibrés par simulation : le nombre de corps, les PV, les
+ * dégâts et les périodes ne bougent pas d'un chiffre. Seuls le nom affiché et
+ * le dessin changent — donc on voit toujours un groupe d'un, de deux ou de
+ * trois, et une seule constante à remettre à `null` pour rendre le bestiaire.
+ */
+export const ENNEMI_UNIQUE: string | null = 'Cultiste'
+
+/** Sous quelle identité ce corps se montre. */
+export function identiteEnnemi(nom: string): string {
+  return ENNEMI_UNIQUE ?? nom
+}
 
 /**
  * Quelle silhouette et quelle teinte pour chaque nom. Repris du jeu 2D : trois
@@ -32,6 +59,21 @@ const ESPECES: Record<string, { espece: string; teinte: string }> = {
   Roquet: { espece: 'roquet', teinte: '#9a7f6a' },
   Traînard: { espece: 'trainard', teinte: '#7f8f76' },
   Rôdeur: { espece: 'rodeur', teinte: '#8a7b9c' },
+}
+
+/** Une image de Keko, chargée telle quelle. */
+function textureImage(url: string): Promise<THREE.Texture | null> {
+  return new Promise((resoudre) => {
+    const image = new Image()
+    image.onload = () => {
+      const texture = new THREE.Texture(image)
+      texture.colorSpace = THREE.SRGBColorSpace
+      texture.needsUpdate = true
+      resoudre(texture)
+    }
+    image.onerror = () => resoudre(null)
+    image.src = url
+  })
 }
 
 /**
@@ -188,15 +230,46 @@ export function Ennemi3D({
   const mort = ennemi.pv <= 0
   const groupe = useRef<THREE.Group>(null)
 
+  const identite = identiteEnnemi(ennemi.nom)
+
   useEffect(() => {
     let vivant = true
-    void textureCreature(ennemi.nom, `${ennemi.nom}-${index}`).then((t) => {
+    const pose = (t: THREE.Texture | null): void => {
       if (vivant) setTexture(t)
-    })
+    }
+    // L'IMAGE DE KEKO D'ABORD, LE DESSIN EN REPLI — et le repli est explicite,
+    // parce qu'une texture manquante ne s'ignore pas : elle laisserait un
+    // rectangle sombre à la place du corps. C'est la différence avec la carte
+    // 2D, où le CSS écarte tout seul une couche de fond qui échoue.
+    const url = urlDeLEnnemi(identite)
+    const dessin = (): Promise<THREE.Texture | null> =>
+      textureCreature(identite, `${identite}-${index}`)
+    void (url === null ? dessin() : textureImage(url).then((t) => t ?? dessin())).then(pose)
     return () => {
       vivant = false
     }
-  }, [ennemi.nom, index])
+  }, [identite, index])
+
+  /**
+   * LA HAUTEUR EST FIXE, LA LARGEUR SUIT L'IMAGE.
+   *
+   * Une texture est ÉTIRÉE pour remplir son plan : une image carrée sur un plan
+   * en 64:60 serait élargie de 7 %. On lit donc le rapport de ce qu'on a
+   * vraiment chargé — les corps gardent tous la même hauteur, ce qui est ce que
+   * la scène attend (l'ombre au sol, les deux ancres d'étiquette et l'écart
+   * entre les corps se calculent depuis elle), et c'est la largeur qui varie.
+   */
+  const large = useMemo(() => {
+    const img = texture?.image as { width?: number; height?: number } | undefined
+    const rapport =
+      img?.width !== undefined && img.height !== undefined && img.height > 0
+        ? img.width / img.height
+        : RAPPORT_SVG
+    return HAUT_CORPS * rapport
+  }, [texture])
+
+  /** Le halo reste CARRÉ : sa texture est un dégradé radial. */
+  const etendue = Math.max(large, HAUT_CORPS)
 
   const halo = useMemo(
     () =>
@@ -311,7 +384,7 @@ export function Ennemi3D({
   return (
     <group ref={groupe} position={position}>
       <mesh>
-        <planeGeometry args={[CORPS, CORPS * (60 / 64)]} />
+        <planeGeometry args={[large, HAUT_CORPS]} />
         <primitive object={materiau} attach="material" />
       </mesh>
 
@@ -319,14 +392,14 @@ export function Ennemi3D({
           ne capte pas le pointeur — il élargirait la zone sensible de la bête
           d'un anneau invisible au repos. */}
       <mesh position={[0, 0, -0.03]} material={halo} raycast={() => null}>
-        <planeGeometry args={[CORPS * 1.35, CORPS * 1.35]} />
+        <planeGeometry args={[etendue * 1.35, etendue * 1.35]} />
       </mesh>
 
       {/* L'OMBRE AU SOL : c'est elle qui pose la bête dans un lieu. Un cadre
           autour la remettrait dans la vignette dont on l'a sortie. */}
       {!mort && (
         <mesh position={[0, -CORPS * 0.46, -0.02]}>
-          <planeGeometry args={[CORPS * 0.95, CORPS * 0.3]} />
+          <planeGeometry args={[large * 0.95, CORPS * 0.3]} />
           <meshBasicMaterial map={OMBRE_SOL} transparent depthWrite={false} toneMapped={false} />
         </mesh>
       )}

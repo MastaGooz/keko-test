@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Main3D, ReperesDeLaMain } from './Main3D.tsx'
-import { CORPS, Ennemi3D } from './Ennemi3D.tsx'
+import { CORPS, Ennemi3D, HAUT_CORPS, identiteEnnemi } from './Ennemi3D.tsx'
 import { Projeter } from './Projeter.tsx'
 import { CarteQuiSAbat, TEMPS_FIN, TEMPS_IMPACT } from './CarteQuiSAbat.tsx'
 import { Horloge, lireHorloge } from './horloge.tsx'
@@ -663,7 +663,15 @@ export function Scene(): React.JSX.Element {
         // Les étiquettes SERRENT le corps d'un cran de plus depuis que le rang
         // est monté : c'est la place qu'on rend en haut et en bas de l'écran,
         // et elles flottaient un peu loin de la bête de toute façon.
-        [p[0], p[1] + CORPS * 0.36, p[2]],
+        //
+        // MAIS L'INTENTION SE POSE AU SOMMET DU CADRE, PAS DEDANS. Elle était
+        // à 11,6 % SOUS le bord haut, calée à l'oeil sur les silhouettes SVG
+        // qui laissent du ciel au-dessus d'elles ; la première image de Keko
+        // monte à 1,3 % du bord, et le badge tombait pile sur le masque du
+        // Cultiste. *Un repère calé sur la marge d'un dessin se déplace avec
+        // le dessin* — au sommet du plan, il est au-dessus de la tête quelle
+        // que soit l'image.
+        [p[0], p[1] + HAUT_CORPS * 0.5, p[2]],
         [p[0], p[1], p[2]],
         [p[0], p[1] - CORPS * 0.48, p[2]],
       ] as [number, number, number][],
@@ -938,7 +946,7 @@ export function Scene(): React.JSX.Element {
                     {e.pv}/{e.pvMax}
                   </span>
                 </span>
-                <span className="nom-3d">{e.nom}</span>
+                <span className="nom-3d">{identiteEnnemi(e.nom)}</span>
               </span>
             )}
           </div>
