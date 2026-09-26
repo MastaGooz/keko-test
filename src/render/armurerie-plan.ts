@@ -37,20 +37,7 @@ import { CAPACITE_PILE } from '../logic/hub.ts'
 
 export const Z_PLAN = Z_MAIN
 
-/**
- * La taille d'une case du coffre, en fraction d'une carte de la main.
- *
- * **Elle a fait l'aller-retour, et c'est la lecture qui tranche.** Descendue
- * de 0,52 à 0,44 pour gagner une ligne — j'avais écrit qu'*une case plus
- * petite ne coûte rien à la lecture* puisqu'on cherche au cadre et à la
- * silhouette — puis remontée à 0,54 : Keko, « on a du mal à lire les petites
- * cartes dans le coffre ». *Elle coûtait bien quelque chose*, et le nom d'une
- * arme fait partie de ce qu'on cherche.
- *
- * Le pied disparu a rendu la hauteur qui payait ce gain : à 0,54 le coffre
- * garde ses lignes.
- */
-export const REDUIT = 0.62
+
 
 /**
  * LA TAILLE D'UNE CASE DE LA PILE EST IMPOSÉE PAR L'ARITHMÉTIQUE, pas choisie.
@@ -110,9 +97,12 @@ export type PlanArmurerie = {
   mains: [[number, number, number], [number, number, number]]
   armure: [number, number, number]
   pile: [number, number, number][]
-  /** La taille d'une pièce du chargement, en fraction d'une carte de la main. */
+  /**
+   * La taille d'une carte, en fraction d'une carte de la main — **la même
+   * partout dans l'armurerie**, coffre compris.
+   */
   tailleCharge: number
-  /** Celle d'une case de la pile : la MOITIÉ, par arithmétique. */
+  /** Celle d'une case de la pile : la même, depuis que tout s'aligne. */
   taillePile: number
   /** La colonne des stats, à droite : quatre cartouches empilés. */
   stats: Rect
@@ -218,23 +208,47 @@ export function planArmurerie(
     h: onglets.y - hOnglets / 2 - (yPanneaux - hPanneaux / 2) - padGrille,
   }
 
+  /**
+   * UNE SEULE TAILLE DE CARTE DANS TOUTE L'ARMURERIE.
+   *
+   * Keko : « toutes les cartes du coffre ET de l'équipement ont la même taille
+   * — la taille actuelle de l'équipement est bien, faisons ça dans le coffre ».
+   *
+   * *Le coffre avait la sienne, écrite à la main* — 0,52, puis 0,44, puis 0,54,
+   * puis 0,62 — et à chaque réglage il fallait la rejuger contre celle du
+   * chargement. **Une page qui montre le même objet à deux endroits n'a aucune
+   * raison de le montrer à deux échelles** : c'est la même carte, c'est la même
+   * taille, et elle se calcule une fois.
+   *
+   * C'est l'équipement qui la fixe, parce que c'est lui qui est CONTRAINT : ses
+   * sept slots doivent tenir dans un panneau, alors que le coffre n'a qu'à
+   * remplir le sien avec ce qu'il peut.
+   */
+  const COLONNES_EQUIP = 3
+  const RANGEES_EQUIP = 3
+  const tailleCharge = Math.min(
+    1,
+    (lEquip - marge * 2) / (COLONNES_EQUIP * 1.12),
+    ((hPanneaux - hEntete) * 0.94) / (RANGEES_EQUIP * 1.4 * 1.12),
+  )
+
   // Une case, plus un cheveu : la grille doit respirer sans s'étaler.
-  const pasX = REDUIT * 1.16
-  const pasY = REDUIT * 1.4 * 1.12
+  const pasX = tailleCharge * 1.16
+  const pasY = tailleCharge * 1.4 * 1.12
   const barre: Rect = {
     x: xCoffre + lCoffre / 2 - padGrille - gouttiere / 2,
     y: grille.y,
     l: gouttiere * 0.44,
     h: grille.h,
   }
-  const colonnes = Math.max(3, Math.floor(grille.l / pasX))
-  const lignes = Math.max(2, Math.floor(grille.h / pasY))
-  // LES LIGNES SE RÉPARTISSENT DANS LA HAUTEUR, elles ne s'empilent pas depuis
-  // le haut : à pas fixe, il restait toujours une fraction de rangée en bas du
-  // coffre — *un vide qui n'est le bord de rien se lit comme un oubli.* Le pas
-  // s'étire donc jusqu'à remplir, sans jamais dépasser d'un tiers : au-delà,
-  // ce ne serait plus une grille mais des cases éparpillées.
-  const pasYPlein = Math.min(grille.h / lignes, pasY * 1.34)
+  const colonnes = Math.max(2, Math.floor(grille.l / pasX))
+  const lignes = Math.max(1, Math.floor(grille.h / pasY))
+  // LES LIGNES S'ÉTIRENT UN PEU POUR REMPLIR, mais à peine : à pas fixe il
+  // restait une fraction de rangée en bas du coffre, et à pas libre les deux
+  // rangées d'un coffre à grandes cartes se retrouvaient aux deux bouts du
+  // panneau. *Une grille se lit à son pas régulier* — ce qui reste en bas est
+  // de l'étagère vide, et une étagère vide est ce qu'on attend d'un coffre.
+  const pasYPlein = Math.min(grille.h / lignes, pasY * 1.08)
 
   /**
    * L'ÉQUIPEMENT : UNE RANGÉE DE CE QU'ON PORTE, UNE RANGÉE DE CE QU'ON BOIT.
@@ -266,13 +280,6 @@ export function planArmurerie(
   const hEnteteEquip = hEntete
   const dedans = hPanneaux - hEnteteEquip
   const yDedans = yPanneaux + hPanneaux / 2 - hEnteteEquip - dedans / 2
-  const COLONNES_EQUIP = 3
-  const RANGEES_EQUIP = 3
-  const tailleCharge = Math.min(
-    1,
-    (lEquip - marge * 2) / (COLONNES_EQUIP * 1.12),
-    (dedans * 0.94) / (RANGEES_EQUIP * 1.4 * 1.12),
-  )
   const taillePile = tailleCharge
   const pasCharge = tailleCharge * 1.12
   const pasRangee = tailleCharge * 1.4 * 1.12

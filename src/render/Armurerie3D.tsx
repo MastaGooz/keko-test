@@ -46,7 +46,7 @@ import type { Hub, Slot } from '../logic/hub.ts'
 import { CAPACITE_PILE, accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
 import type { PlanArmurerie } from './armurerie-plan.ts'
-import { REDUIT, contenuDuCoffre, placeCase, planArmurerie } from './armurerie-plan.ts'
+import { contenuDuCoffre, placeCase, planArmurerie } from './armurerie-plan.ts'
 import { aPeindre } from './combat-3d.ts'
 
 /**
@@ -59,7 +59,6 @@ import { aPeindre } from './combat-3d.ts'
  */
 function tailleDuSlot(slot: Slot, plan: PlanArmurerie): number {
   if (slot.ou === 'pile') return plan.taillePile
-  if (slot.ou === 'reserve') return REDUIT
   return plan.tailleCharge
 }
 
@@ -168,7 +167,7 @@ export function Armurerie3D({
           id: objet.id,
           slot: { ou: 'reserve' } as Slot,
           position: placeCase(plan, rang),
-          taille: REDUIT,
+          taille: plan.tailleCharge,
         },
       ]
     }),
@@ -182,7 +181,7 @@ export function Armurerie3D({
           id: tresor.id,
           slot: { ou: 'reserve' } as Slot,
           position: placeCase(plan, rang),
-          taille: REDUIT,
+          taille: plan.tailleCharge,
         },
       ]
     }),
@@ -298,7 +297,7 @@ export function Armurerie3D({
     portee.objet !== null &&
     sousLeDoigt !== null &&
     accepteDepuis(hub, portee.slot, sousLeDoigt, portee.objet.id)
-  const tailleTenue = accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt, plan) : REDUIT
+  const tailleTenue = accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt, plan) : plan.tailleCharge
 
   /**
    * ELLE NE FRÉMIT QU'AU-DESSUS D'UN SLOT DU CHARGEMENT QUI LA PREND.
@@ -321,7 +320,7 @@ export function Armurerie3D({
           key={`vide-${i}`}
           nom=""
           position={placeCase(plan, montrees + i)}
-          taille={REDUIT}
+          taille={plan.tailleCharge}
           accent={TEINTE.reserve}
         />
       ))}
