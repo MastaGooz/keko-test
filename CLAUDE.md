@@ -3256,18 +3256,31 @@ celui du chargement (0,6) ; une carte qui grandit en cours de geste change de
 texture en chemin, et elle y GAGNE en netteté, donc le relais se lit dans le
 bon sens.
 
-**LE NOMBRE DE LIGNES SUIT LA HAUTEUR DE L'ÉCRAN**, et les lignes se
-RÉPARTISSENT dedans plutôt que de s'empiler depuis le haut : à pas fixe, il
-restait toujours une fraction de rangée en bas — *un vide qui n'est le bord de
-rien se lit comme un oubli.* Le pas s'étire donc jusqu'à remplir, sans jamais
-dépasser d'un tiers : au-delà, ce ne serait plus une grille mais des cases
-éparpillées. La case du coffre a fait l'aller-retour, et c'est la lecture qui a
-tranché : descendue de 0,52 à 0,44 pour gagner une rangée — j'avais écrit
-qu'*une case plus petite ne coûte rien à la lecture*, puisqu'on cherche au
-cadre et à la silhouette — puis remontée à 0,62 en deux fois, Keko : « on a du mal à lire
-les petites cartes dans le coffre ». **Elle coûtait bien quelque chose**, et le
-nom d'une arme fait partie de ce qu'on cherche. Le pied disparu a rendu la
-hauteur qui payait le gain, donc le coffre garde ses lignes.
+**LE NOMBRE DE LIGNES SUIT LA HAUTEUR DE L'ÉCRAN** : la grille remplit son
+cadre au lieu de laisser un vide sous elle, et ce qui dépasse se défile.
+
+**UNE SEULE TAILLE DE CARTE DANS TOUTE L'ARMURERIE**, et elle n'est plus
+écrite à la main. Keko : « toutes les cartes du coffre ET de l'équipement ont
+la même taille — la taille actuelle de l'équipement est bien, faisons ça dans
+le coffre ».
+
+*Le coffre avait la sienne*, réglée quatre fois de suite — 0,52, puis 0,44
+pour gagner une rangée, puis 0,54, puis 0,62 quand Keko a dit « on a du mal à
+lire les petites cartes ». J'avais écrit qu'*une case plus petite ne coûte
+rien à la lecture* puisqu'on cherche au cadre et à la silhouette : **c'était
+faux**, le nom d'une arme fait partie de ce qu'on cherche.
+
+Mais le vrai défaut était en amont : **une page qui montre le même objet à
+deux endroits n'a aucune raison de le montrer à deux échelles.** C'est donc
+l'équipement qui fixe la taille — parce que c'est lui qui est CONTRAINT, ses
+sept slots devant tenir dans un panneau — et le coffre la reprend. Il n'y a
+plus de chiffre à rejuger.
+
+Ce que ça coûte : à grandes cartes, le coffre n'a plus que huit cases sur un
+écran de PC. *Ce qui reste en bas est de l'étagère vide, et une étagère vide
+est ce qu'on attend d'un coffre* — les lignes s'étirent d'un rien pour
+absorber la fraction de rangée qui traîne, pas plus : à pas libre, deux
+rangées se retrouvaient aux deux bouts du panneau.
 
 **LE ZOOM PASSE AU-DESSUS DE TOUT, donc les commandes s'effacent.** Keko :
 « quand je clique sur une carte pour la zoomer, certains éléments de l'UI
