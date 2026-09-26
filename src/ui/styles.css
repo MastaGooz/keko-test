@@ -5068,39 +5068,33 @@ body {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  /* LE RAIL SE CALE EN HAUT, comme les deux panneaux : centre, il flottait
-     entre leur bord haut et le bouton, et la colonne ne se lisait plus comme
-     la troisieme du meme rang. */
-  justify-content: flex-start;
-  gap: clamp(0.35rem, 1.6vh, 0.8rem);
+  /* LES STATS SE CENTRENT DANS LEUR COLONNE, demande par Keko. Calees en haut,
+     elles pendaient du bord superieur avec tout le vide sous elles ; au milieu,
+     *le rail occupe sa colonne au lieu d'y etre accroche.* */
+  justify-content: center;
+  gap: 0;
 }
 
-/* CHAQUE COUPLE EST UN CARTOUCHE. *Quatre chiffres et quatre symboles alignes
-   ne disent pas lesquels vont ensemble* : l'oeil les apparie par la proximite,
-   et une rangee reguliere n'en a aucune. Un fond commun le dit sans un mot.
+/* LES COUPLES SONT SEPARES PAR UN FILET, plus enfermes dans un cartouche.
+   Demande par Keko : « on peut enlever les rectangles et mettre juste des
+   separateurs entre les stats ? »
 
-   La meme ferronnerie que les cadres, en petit : un filet de laiton, un fond a
-   peine plus clair, et deux coins coupes. */
+   *Le probleme reste le meme* -- dire quel chiffre va avec quel symbole -- mais
+   il se resout par la COUPURE plutot que par l'enfermement : ce qui est entre
+   deux traits va ensemble. Quatre cadres empiles faisaient quatre objets ; un
+   rail coupe en quatre fait une seule piece.
+
+   Le premier n'a pas de filet : *un separateur separe, il n'encadre pas.* */
 .arm-mesure {
   display: flex;
   align-items: center;
-  /* LE CHIFFRE CALE A DROITE, LE SYMBOLE A GAUCHE DE LUI : empiles, quatre
-     couples de largeurs differentes se liraient comme une colonne en zigzag.
-     C'est le meme reflexe que les chiffres tabulaires. */
-  justify-content: flex-end;
-  gap: 0.4rem;
-  padding: 0.22rem 0.55rem;
-  border: 1px solid #5a4b2e;
-  background: linear-gradient(180deg, #16171d, #101119);
-  box-shadow: inset 0 1px 0 #ffffff0f, 0 1px 4px #00000080;
-  clip-path: polygon(
-    0.3rem 0,
-    100% 0,
-    100% calc(100% - 0.3rem),
-    calc(100% - 0.3rem) 100%,
-    0 100%,
-    0 0.3rem
-  );
+  justify-content: center;
+  gap: 0.45rem;
+  padding: clamp(0.3rem, 1.1vh, 0.6rem) 0.4rem;
+}
+
+.arm-mesure + .arm-mesure {
+  border-top: 1px solid #ffffff1a;
 }
 
 /* LE PAQUET GARDE SA TAILLE DE COMBAT, en plus petit : c'est le meme objet,

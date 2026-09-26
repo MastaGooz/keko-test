@@ -3134,11 +3134,25 @@ chargement plus grandes et une ligne de coffre de plus. **Une bande qui ne
 porte qu'une rangée de chiffres coûte toute sa hauteur à ce qu'il y a
 au-dessus.**
 
-Le rail se cale **en haut**, comme les deux panneaux : centré, il flottait
-entre leur bord haut et le bouton, et la colonne ne se lisait plus comme la
-troisième du même rang. Et ses cartouches s'étirent sur toute sa largeur —
-alignés à la même longueur, ils se lisent comme un rail de jauges et non comme
-quatre étiquettes de tailles différentes.
+**Le rail se CENTRE dans sa colonne** et ses couples sont séparés par un
+FILET, plus enfermés dans un cartouche. Keko : « on peut enlever les
+rectangles et mettre juste des séparateurs entre les stats ? et surtout :
+centrer les stats dans la colonne ». *Le problème reste le même* — dire quel
+chiffre va avec quel symbole — mais il se résout par la COUPURE plutôt que par
+l'enfermement : **ce qui est entre deux traits va ensemble.** Quatre cadres
+empilés faisaient quatre objets ; un rail coupé en quatre fait une seule
+pièce. Et le premier n'a pas de filet : *un séparateur sépare, il n'encadre
+pas.*
+
+**LA HAUTEUR D'UN BOUTON N'EST PLUS UN NOMBRE FIXE.** À 52 px partout, il
+touchait le cadre voisin sur un téléphone et se perdait sur un écran de PC —
+Keko : « sur téléphone le bouton descendre touche le bloc de l'équipement, il
+faudrait le réduire un poil, mais sur PC il est tout petit il faudrait le
+grossir ». *Le doigt ne change pas de taille, mais la PAGE si* : un bouton doit
+rester atteignable au doigt **et** proportionné à ce qui l'entoure. C'est donc
+une part de la hauteur d'écran (8,5 %), bornée en bas par le plancher tactile
+du projet — 48 px — et en haut à 72 pour qu'il ne devienne pas une enseigne.
+La règle vaut pour tous les boutons du moteur, pas seulement celui-ci.
 
 **LE BANDEAU NE DIT PLUS QUE LE LIEU.** Le chargement, le compte du deck et
 l'or en sont partis, demandé par Keko : *ce qu'on lit sans décider dessus n'a

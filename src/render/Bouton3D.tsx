@@ -30,9 +30,23 @@ import { hauteurVisibleA } from './Cadrage.tsx'
  * un téléphone et 69 sur un moniteur, alors que c'est le doigt qui le touche,
  * et **le doigt ne change pas de taille avec l'écran**. Le projet demande
  * 48 px au minimum ; la conversion se fait donc à l'envers, depuis la fenêtre.
+ *
+ * **MAIS PAS UN NOMBRE FIXE NON PLUS.** À 52 px partout, il touchait le cadre
+ * voisin sur un téléphone et se perdait sur un écran de PC — Keko : « sur
+ * téléphone le bouton descendre touche le bloc de l'équipement, il faudrait le
+ * réduire un poil, mais sur PC il est tout petit il faudrait le grossir ».
+ *
+ * *Le doigt ne change pas de taille, mais la PAGE si* : un bouton doit rester
+ * atteignable au doigt **et** proportionné à ce qui l'entoure. D'où une part
+ * de la hauteur d'écran, bornée en bas par le plancher tactile du projet et en
+ * haut pour qu'il ne devienne pas une enseigne.
  */
-const HAUT_PX = 52
-const HAUT_PETIT_PX = 44
+function hauteurBoutonPx(hauteurFenetrePx: number, petit: boolean): number {
+  const part = hauteurFenetrePx * (petit ? 0.072 : 0.085)
+  return petit
+    ? Math.max(42, Math.min(60, part))
+    : Math.max(48, Math.min(72, part))
+}
 
 /** La hauteur d'un bouton en unités de scène, à cette profondeur. */
 function hauteurMonde(px: number, z: number, hauteurFenetrePx: number): number {
@@ -127,7 +141,7 @@ export function Bouton3D({ texte, ton, position, petit = false, eteint = false, 
   )
   materiau.opacity = eteint ? 0.35 : 1
 
-  const haut = hauteurMonde(petit ? HAUT_PETIT_PX : HAUT_PX, position[2], size.height)
+  const haut = hauteurMonde(hauteurBoutonPx(size.height, petit), position[2], size.height)
   return (
     <mesh
       position={position}
@@ -153,6 +167,6 @@ export function tailleBouton(
   z: number,
   hauteurFenetrePx: number,
 ): { largeur: number; hauteur: number } {
-  const hauteur = hauteurMonde(petit ? HAUT_PETIT_PX : HAUT_PX, z, hauteurFenetrePx)
+  const hauteur = hauteurMonde(hauteurBoutonPx(hauteurFenetrePx, petit), z, hauteurFenetrePx)
   return { hauteur, largeur: hauteur * plaque(texte, ton).rapport }
 }
