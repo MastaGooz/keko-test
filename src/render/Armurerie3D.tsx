@@ -45,7 +45,8 @@ import type { Carte } from '../logic/combat.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
 import { CAPACITE_PILE, accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
-import { PILE, REDUIT, Z_PLAN, contenuDuCoffre, placeCase, planArmurerie } from './armurerie-plan.ts'
+import type { PlanArmurerie } from './armurerie-plan.ts'
+import { REDUIT, Z_PLAN, contenuDuCoffre, placeCase, planArmurerie } from './armurerie-plan.ts'
 import { aPeindre } from './combat-3d.ts'
 
 /**
@@ -56,10 +57,10 @@ import { aPeindre } from './combat-3d.ts'
  * slot qui l'accepte : *ce qu'on montre pendant le geste est ce qu'on aura
  * après.*
  */
-function tailleDuSlot(slot: Slot): number {
-  if (slot.ou === 'pile') return PILE
+function tailleDuSlot(slot: Slot, plan: PlanArmurerie): number {
+  if (slot.ou === 'pile') return plan.taillePile
   if (slot.ou === 'reserve') return REDUIT
-  return 1
+  return plan.tailleCharge
 }
 
 /** Ce que le slot attend, pour le dessiner vide. */
@@ -195,7 +196,7 @@ export function Armurerie3D({
               id: arme.id,
               slot: { ou: 'main', rang } as Slot,
               position: plan.mains[rang as 0 | 1],
-              taille: 1,
+              taille: plan.tailleCharge,
             },
           ],
     ),
@@ -208,7 +209,7 @@ export function Armurerie3D({
             id: hub.chargement.armure.id,
             slot: { ou: 'armure' } as Slot,
             position: plan.armure,
-            taille: 1,
+            taille: plan.tailleCharge,
           },
         ]),
     ...hub.chargement.pile.map((objet, i) => ({
@@ -217,20 +218,39 @@ export function Armurerie3D({
       id: objet.id,
       slot: { ou: 'pile' } as Slot,
       position: plan.pile[i] ?? plan.pile[0]!,
-      taille: PILE,
+      taille: plan.taillePile,
     })),
   ]
 
-  /** Quel slot se trouve sous ce point. Le coffre est tout le flanc gauche. */
+  /**
+   * Quel slot se trouve sous ce point. Le coffre est tout le flanc gauche.
+   *
+   * **LES ZONES SUIVENT LA TAILLE DES PIÈCES**, elles ne sont pas écrites à la
+   * main : sur un téléphone, où le chargement se réduit, des zones fixes se
+   * recouvraient les unes les autres — et *une zone plus grande que son slot
+   * vole le dépôt à sa voisine.*
+   */
   const slotSous = (point: THREE.Vector3): Slot | null => {
+    const t = plan.tailleCharge
     const pres = (p: [number, number, number], l: number, h: number): boolean =>
       Math.abs(point.x - p[0]) < l && Math.abs(point.y - p[1]) < h
     // Une arme à deux mains se pose dans N'IMPORTE QUELLE main : les deux
     // zones restent sensibles, c'est la règle qui décide où elle atterrit.
-    if (pres(plan.mains[0], 0.6, 0.75)) return { ou: 'main', rang: 0 }
-    if (pres(plan.mains[1], 0.6, 0.75)) return { ou: 'main', rang: 1 }
-    if (pres(plan.armure, 0.6, 0.75)) return { ou: 'armure' }
-    if (pres([plan.pile[0]![0], plan.armure[1], 0], 0.62, 0.78)) return { ou: 'pile' }
+    if (pres(plan.mains[0], t * 0.54, t * 0.74)) return { ou: 'main', rang: 0 }
+    if (pres(plan.mains[1], t * 0.54, t * 0.74)) return { ou: 'main', rang: 1 }
+    if (pres(plan.armure, t * 0.54, t * 0.74)) return { ou: 'armure' }
+    // LA PILE EST UNE SEULE ZONE POUR SES QUATRE CASES : l'ordre n'y a aucun
+    // effet, donc une case précise ne veut rien dire — et une grande zone se
+    // vise mieux au doigt qu'un quart de carte.
+    const demiX = Math.abs(plan.pile[1]![0] - plan.pile[0]![0]) / 2 + plan.taillePile * 0.58
+    const demiY =
+      Math.abs(plan.pile[0]![1] - plan.pile[2]![1]) / 2 + plan.taillePile * 1.4 * 0.58
+    const milieu: [number, number, number] = [
+      (plan.pile[0]![0] + plan.pile[1]![0]) / 2,
+      plan.armure[1],
+      0,
+    ]
+    if (pres(milieu, demiX, demiY)) return { ou: 'pile' }
     // Hors du cadre de l'équipement, c'est le coffre : on y repose.
     if (point.x < plan.equipement.x - plan.equipement.l / 2) return { ou: 'reserve' }
     return null
@@ -278,7 +298,7 @@ export function Armurerie3D({
     portee.objet !== null &&
     sousLeDoigt !== null &&
     accepteDepuis(hub, portee.slot, sousLeDoigt, portee.objet.id)
-  const tailleTenue = accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt) : REDUIT
+  const tailleTenue = accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt, plan) : REDUIT
 
   /**
    * ELLE NE FRÉMIT QU'AU-DESSUS D'UN SLOT DU CHARGEMENT QUI LA PREND.
@@ -312,20 +332,20 @@ export function Armurerie3D({
           barrer : *un slot qui reste rempli mais inutilisable mentirait sur ce
           qu'on emporte.* */}
       {hub.chargement.mains[0] === null && (
-        <CaseVide nom={ATTEND.main!} position={plan.mains[0]} taille={1} />
+        <CaseVide nom={ATTEND.main!} position={plan.mains[0]} taille={plan.tailleCharge} />
       )}
       {!aDeuxMains && hub.chargement.mains[1] === null && (
-        <CaseVide nom={ATTEND.main!} position={plan.mains[1]} taille={1} />
+        <CaseVide nom={ATTEND.main!} position={plan.mains[1]} taille={plan.tailleCharge} />
       )}
       {hub.chargement.armure === null && (
-        <CaseVide nom={ATTEND.armure!} position={plan.armure} taille={1} />
+        <CaseVide nom={ATTEND.armure!} position={plan.armure} taille={plan.tailleCharge} />
       )}
       {Array.from({ length: CAPACITE_PILE - hub.chargement.pile.length }, (_, i) => (
         <CaseVide
           key={`pile-${i}`}
           nom=""
           position={plan.pile[hub.chargement.pile.length + i] ?? plan.pile[0]!}
-          taille={PILE}
+          taille={plan.taillePile}
           accent={TEINTE.pile}
         />
       ))}

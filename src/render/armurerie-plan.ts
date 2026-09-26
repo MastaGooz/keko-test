@@ -97,6 +97,10 @@ export type PlanArmurerie = {
   mains: [[number, number, number], [number, number, number]]
   armure: [number, number, number]
   pile: [number, number, number][]
+  /** La taille d'une pièce du chargement, en fraction d'une carte de la main. */
+  tailleCharge: number
+  /** Celle d'une case de la pile : la MOITIÉ, par arithmétique. */
+  taillePile: number
   /** Le pied de page : le bouton et l'état du chargement. */
   pied: Rect
 }
@@ -196,20 +200,45 @@ export function planArmurerie(
   // ce ne serait plus une grille mais des cases éparpillées.
   const pasYPlein = Math.min(grille.h / lignes, pasY * 1.34)
 
-  // L'ÉQUIPEMENT : deux mains sur une ligne, le torse et la pile sur l'autre,
-  // le tout centré dans son cadre plutôt que collé à son bord.
+  /**
+   * L'ÉQUIPEMENT : deux mains sur une ligne, le torse et la pile sur l'autre.
+   *
+   * **LA PIÈCE SE DIMENSIONNE, ELLE N'EST PAS DE TAILLE FIXE.** Le champ
+   * visible est plus PETIT en unités de scène sur un téléphone — la caméra n'y
+   * recule pas, elle ne le fait que pour plafonner la taille des cartes sur
+   * grand écran — donc un cadre qui tenait deux rangées de 1,4 sur un moniteur
+   * n'en tenait plus qu'une et demie sur un téléphone : *les slots se
+   * chevauchaient et débordaient par le bas.* Keko l'a vu tout de suite.
+   *
+   * On part donc de la PLACE et on en déduit la taille, jamais l'inverse —
+   * deux contraintes, la plus dure gagne :
+   *
+   * - la hauteur, parce qu'il faut DEUX rangées de 1,4 plus leur air ;
+   * - la largeur, parce qu'il faut DEUX colonnes plus la leur.
+   *
+   * Et jamais au-delà de 1 : le chargement se lit à la taille de la main, pas
+   * plus grand. *C'est la même leçon que `--piece-equip` en 2D, où la hauteur
+   * d'écran imposait déjà la taille des slots.*
+   */
   const hEnteteEquip = hEntete
   const dedans = hPanneaux - hEnteteEquip
   const yDedans = yPanneaux + hPanneaux / 2 - hEnteteEquip - dedans / 2
-  // Une carte de chargement fait 1,4 de haut : deux rangées plus l'air entre
-  // elles. On la rétrécit si le cadre ne les tient pas.
-  const pasCharge = Math.min(1.18, (lEquip - marge * 2) / 2)
-  const pasRangee = dedans / 2
+  const tailleCharge = Math.min(
+    1,
+    (dedans * 0.94) / (2 * 1.4 * 1.06),
+    (lEquip - marge * 2) / (2 * 1.12),
+  )
+  // LA CASE DE LA PILE FAIT LA MOITIÉ D'UNE PIÈCE, par arithmétique et non par
+  // choix : deux lignes de cases doivent tenir dans la hauteur d'un slot, et
+  // une carte fait 1,4 fois sa largeur, donc `c = P / 2` exactement.
+  const taillePile = tailleCharge / 2
+  const pasCharge = tailleCharge * 1.12
+  const pasRangee = tailleCharge * 1.4 * 1.06
   const yMains = yDedans + pasRangee / 2
   const yArmure = yDedans - pasRangee / 2
   const xArme = aDeuxMains ? xEquip : xEquip - pasCharge / 2
-  const pasPileX = PILE * 1.1
-  const pasPileY = PILE * 1.4 * 1.06
+  const pasPileX = taillePile * 1.1
+  const pasPileY = taillePile * 1.4 * 1.06
 
   return {
     demiHaut,
@@ -229,6 +258,8 @@ export function planArmurerie(
       [xEquip + pasCharge / 2, yMains, Z_PLAN],
     ],
     armure: [xEquip - pasCharge / 2, yArmure, Z_PLAN],
+    tailleCharge,
+    taillePile,
     pile: Array.from({ length: CAPACITE_PILE }, (_, i) => [
       xEquip + pasCharge / 2 + (i % 2 === 0 ? -pasPileX / 2 : pasPileX / 2),
       yArmure + (i < 2 ? pasPileY / 2 : -pasPileY / 2),

@@ -3155,6 +3155,25 @@ toujours pas tranchée, donc rien ne change de ce côté-là, et les deux compte
 cohabitent en attendant un marché. *Un total ne montre pas un butin* — c'est la
 raison qui avait déjà fait dessiner le loot en cartes.
 
+**LA PIÈCE DU CHARGEMENT SE DIMENSIONNE, ELLE N'EST PAS DE TAILLE FIXE.** Keko :
+« sur téléphone les cases de l'équipement ne sont pas bien agencées, elles se
+superposent et dépassent un peu en bas ». *Le champ visible est plus PETIT en
+unités de scène sur un téléphone* — la caméra n'y recule pas, elle ne le fait
+que pour plafonner la taille des cartes sur grand écran — donc un cadre qui
+tenait deux rangées de 1,4 sur un moniteur n'en tenait plus qu'une et demie.
+
+On part donc de la PLACE et on en déduit la taille, jamais l'inverse : deux
+contraintes, la hauteur (deux rangées plus leur air) et la largeur (deux
+colonnes), la plus dure gagne — et jamais au-delà de 1, le chargement se lit à
+la taille de la main et pas plus grand. *C'est la même leçon que
+`--piece-equip` en 2D, où la hauteur d'écran imposait déjà la taille des
+slots*, et la case de la pile reste la moitié d'une pièce par la même
+arithmétique.
+
+**Et les zones de dépôt suivent**, elles ne sont plus écrites à la main : à
+taille fixe elles se recouvraient les unes les autres sur un téléphone, et
+*une zone plus grande que son slot vole le dépôt à sa voisine.*
+
 **LE NOMBRE DE LIGNES SUIT LA HAUTEUR DE L'ÉCRAN**, et les lignes se
 RÉPARTISSENT dedans plutôt que de s'empiler depuis le haut : à pas fixe, il
 restait toujours une fraction de rangée en bas — *un vide qui n'est le bord de
