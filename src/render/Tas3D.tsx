@@ -183,13 +183,13 @@ type Props = {
   nom: 'pioche' | 'defausse'
   compte: number
   /**
-   * La durée du mélange en cours, en secondes ; `null` au repos.
+   * Vrai le temps du mélange : le tas TREMBLE.
    *
-   * *Une durée plutôt qu'un booléen* : le gonflement doit couvrir exactement
-   * le temps que met la défausse à remonter, et c'est la scène qui le sait —
-   * une valeur recopiée en CSS dériverait au premier réglage.
+   * Le gonflement, lui, n'est plus là-dedans — il suit les arrivées (`choc`),
+   * une par brassée. *Un tas gonfle parce qu'on y verse quelque chose, pas
+   * parce qu'un mélange est en cours.*
    */
-  brasse?: number | null
+  brasse?: boolean
   /**
    * Un compteur d'arrivées : le tas gonfle une fois à chaque incrément.
    *
@@ -200,7 +200,7 @@ type Props = {
   choc?: number
 }
 
-export function Tas3D({ nom, compte, brasse = null, choc = 0 }: Props): React.JSX.Element {
+export function Tas3D({ nom, compte, brasse = false, choc = 0 }: Props): React.JSX.Element {
   const id = `tas-${nom}`
   const dessin = useRef<SVGSVGElement>(null)
 
@@ -261,10 +261,7 @@ export function Tas3D({ nom, compte, brasse = null, choc = 0 }: Props): React.JS
   }, [nom])
 
   return (
-    <div
-      className={`tas-3d ${nom}${brasse !== null ? ' brasse' : ''}`}
-      style={brasse !== null ? ({ '--brasse-duree': `${brasse}s` } as React.CSSProperties) : undefined}
-    >
+    <div className={`tas-3d ${nom}${brasse ? ' brasse' : ''}`}>
       <span className="tas-compte">{compte}</span>
       <svg ref={dessin} viewBox={CADRE} className="tas-dessin" aria-hidden="true">
         <defs>

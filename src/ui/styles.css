@@ -3809,45 +3809,16 @@ body {
   animation: tas-brasse 0.14s linear infinite;
 }
 
-/* ET LE PAQUET GONFLE PENDANT QU'IL SE REMPLIT. Demande par Keko, pour les deux
-   tas : celui qui se remplit et celui qui se vide reagissent ensemble, puisque
-   c'est le seul moment ou l'un passe dans l'autre.
+/* LE GONFLEMENT N'EST PAS ICI : il suit les ARRIVEES, une par chose versee dans
+   le tas (`choc`, dans Tas3D.tsx), et il est joue a la main pour pouvoir se
+   relancer avant d'etre fini. Il a vecu en CSS comme une pulsation calee sur la
+   duree du melange -- *un tas gonfle parce qu'on y verse quelque chose, pas
+   parce qu'un melange est en cours*, et c'est ce que Keko a demande en voulant
+   « le meme systeme » des deux cotes.
 
-   LE GONFLEMENT EST SUR LE DESSIN, LE TREMBLEMENT SUR LE CONTENEUR. Sur le
-   conteneur, le chiffre au-dessus enflerait avec le paquet -- or c'est une
-   MENTION, pas une valeur de jeu : la voir grossir lui donnerait un poids
-   qu'elle n'a pas.
-
-   `scale` EST UNE PROPRIETE A PART, pas un `transform` : elle se compose avec
-   le `scaleX(-1)` qui retourne la pioche au lieu de l'ecraser. Le meme piege
-   que le tremblement, resolu de la meme facon.
-
-   IL SE REPETE, il ne se joue pas qu'une fois. Demande par Keko : un seul
-   gonflement sur toute la duree se lisait comme un sursaut au demarrage, puis
-   plus rien pendant que les brassees continuaient d'arriver. *Ce qui dure doit
-   pulser* -- c'est le tas qui travaille tout le temps du melange, comme il
-   tremble tout le temps du melange.
-
-   TROIS PULSATIONS, ET LA PERIODE SE DEDUIT DE LA DUREE (`--brasse-duree / 3`,
-   donnee par la scene) : un chiffre ecrit ici deriverait au premier reglage, et
-   la derniere pulsation serait coupee en plein vol.
-
-   IL MONTE VITE ET REDESCEND LENTEMENT -- le contraste de vitesse du bond des
-   creatures : un gonflement symetrique se lirait comme une respiration, pas
-   comme un choc. */
-@keyframes tas-gonfle {
-  0% { scale: 1; }
-  30% { scale: 1.16; }
-  100% { scale: 1; }
-}
-
-.tas-3d.brasse .tas-dessin {
-  animation: tas-gonfle calc(var(--brasse-duree, 0.58s) / 3) ease-out infinite;
-}
-
+   Ce qui reste ici est le TREMBLEMENT, qui lui dure bien tout le melange. */
 @media (prefers-reduced-motion: reduce) {
-  .tas-3d.brasse,
-  .tas-3d.brasse .tas-dessin {
+  .tas-3d.brasse {
     animation: none;
   }
 }

@@ -257,8 +257,15 @@ export function Scene(): React.JSX.Element {
   const [dissolutions, setDissolutions] = useState<Dissolution[]>([])
   /** La pioche tremble pendant qu'on y reverse la défausse. */
   const [brasse, setBrasse] = useState(false)
-  /** Un compteur d'arrivées : la défausse gonfle à chaque carte qu'on y jette. */
+  /**
+   * Un compteur d'arrivées par tas : il gonfle à chaque chose qu'on y verse.
+   *
+   * *Le même système des deux côtés* — Keko : « comme pour la défausse, la
+   * pioche devrait avoir le gonflement pour chaque carte mise dedans ». La
+   * pioche le doit à ses brassées, la défausse aux cartes qu'on y jette.
+   */
   const [chocDefausse, setChocDefausse] = useState(0)
+  const [chocPioche, setChocPioche] = useState(0)
 
   /**
    * Ce qu'il faut pour peindre une carte qui vient de QUITTER la main : une
@@ -447,12 +454,14 @@ export function Scene(): React.JSX.Element {
       const vide = coinDe('defausse')
       if (vide !== null && pioche !== null) {
         for (let i = 0; i < BRASSEES; i += 1) {
-          trajetsNeufs.push({
-            cle: `m-${i}-${t}`,
-            depuis: vide,
-            vers: pioche,
-            debut: t + debutMelange + i * PAS_BRASSEE,
-          })
+          const debut = debutMelange + i * PAS_BRASSEE
+          trajetsNeufs.push({ cle: `m-${i}-${t}`, depuis: vide, vers: pioche, debut: t + debut })
+          // ELLE ENCAISSE CHAQUE BRASSÉE, comme la défausse encaisse chaque
+          // carte : c'est le même geste, du même côté du trajet.
+          window.setTimeout(
+            () => setChocPioche((n) => n + 1),
+            (debut + DUREE_TRAINEE * 0.85) * 1000,
+          )
         }
         window.setTimeout(() => setBrasse(true), debutMelange * 1000)
         window.setTimeout(() => setBrasse(false), (debutMelange + DUREE_MELANGE) * 1000)
@@ -1446,14 +1455,15 @@ export function Scene(): React.JSX.Element {
             <Tas3D
               nom="pioche"
               compte={combat.pioche.length}
-              brasse={brasse ? DUREE_MELANGE : null}
+              brasse={brasse}
+              choc={chocPioche}
             />
           </div>
           <div className="coin-3d droite">
             <Tas3D
               nom="defausse"
               compte={combat.defausse.length}
-              brasse={brasse ? DUREE_MELANGE : null}
+              brasse={brasse}
               choc={chocDefausse}
             />
           </div>
