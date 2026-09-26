@@ -48,7 +48,7 @@ html {
      La borne retient l'orbe a gauche de la main quand l'ecart se reduit. */
   --orbe-gauche: min(
     calc((0.75rem + var(--tas) + var(--main-gauche, 14rem)) / 2 - 1.625rem),
-    calc(var(--main-gauche, 14rem) - 5.3rem)
+    calc(var(--main-gauche, 14rem) - 5.65rem)
   );
   --bg: #16161a;
   --fg: #f2f2f5;
@@ -3727,6 +3727,12 @@ body {
   font-weight: 400;
 }
 
+.orbe-chiffre > small {
+  position: absolute;
+  bottom: 0;
+  left: 100%;
+}
+
 .fin-3d {
   position: absolute;
   inset: 50% 1rem auto auto;
@@ -4323,7 +4329,7 @@ body {
      moins le bord gauche d'ou part la barre (0,75), PLUS ce que le bouclier
      occupe au-dela (1,5 + 0,375 de gouttiere). Et la borne de l'orbe se resserre
      d'autant, sinon le bouclier irait mordre la main. */
-  width: calc(var(--orbe-gauche) + 4.375rem);
+  width: calc(var(--orbe-gauche) + 4.725rem);
   /* UN PLANCHER, parce que sur un ecran court le haut de la main descend sous
      le sommet du tas de pioche : la barre venait alors s'asseoir sur son
      compte. LE TAS AYANT DOUBLE, le plancher double avec lui -- il occupe
@@ -4468,13 +4474,23 @@ body {
    bleu colle au rouge, ce qui la faisait lire comme de la vie en reserve --
    or c'est une decision qui ne vaut que pour CE tour-ci, et elle tombe a la
    fin. Un objet a part le dit ; une portion de la meme barre le niait. */
+/* PLUS GRAND QU'AVANT, demande par Keko. Il ne parait que quand le joueur a de
+   l'armure, donc c'est le moment ou il doit se voir -- et sa place reste
+   reservee le reste du temps, sinon la barre changerait de longueur en gagnant
+   une Garde. Ce qu'il coute : la rangee de vie grandit avec lui, donc la barre
+   s'allonge et l'orbe remonte d'autant. Les deux formules qui en dependent
+   sont plus haut, et elles le disent. */
 .vie-armure {
   position: relative;
   display: grid;
   flex: none;
   place-items: center;
-  width: 1.5rem;
-  height: 1.55rem;
+  width: 1.85rem;
+  height: 1.85rem;
+}
+
+.vie-armure > .vie-chiffre {
+  font-size: 0.9375rem;
 }
 
 .vie-armure > svg {
@@ -4650,7 +4666,7 @@ body {
   position: absolute;
   left: var(--orbe-gauche);
   bottom: calc(
-    max(calc(var(--tas) * 1.253 + 0.2rem), calc(var(--main-haut, 7rem) - 1rem)) + 1.95rem
+    max(calc(var(--tas) * 1.253 + 0.2rem), calc(var(--main-haut, 7rem) - 1rem)) + 2.1rem
   );
   display: grid;
   place-items: center;
@@ -4668,7 +4684,17 @@ body {
 }
 
 /* LE COURANT EST GROS, LE MAXIMUM PETIT : on decide sur ce qu'il reste, pas
-   sur ce qu'on avait. */
+   sur ce qu'on avait.
+
+   ET C'EST LE COURANT QUI EST CENTRE, PAS LA PAIRE. Le « /5 » allonge le texte
+   vers la droite : centre comme un bloc, le gros chiffre tombait a gauche du
+   disque -- Keko : « les chiffres X/X dans le symbole energie ne sont pas
+   centres au milieu ». *Ce qu'on lit doit etre au centre, pas la boite qui le
+   contient* -- la meme erreur que d'aligner un conteneur au lieu de son
+   contenu, deja payee sur la barre de vie.
+
+   Le maximum sort donc du flux et se pose a droite du chiffre, ce qui laisse
+   celui-ci seul a se centrer. */
 .orbe-chiffre {
   position: relative;
   color: #f7ecd2;
