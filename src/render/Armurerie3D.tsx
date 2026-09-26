@@ -38,7 +38,7 @@ import { Bouton3D } from './Bouton3D.tsx'
 import { Z_TENUE } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import { pieceAPeindre } from './combat-3d.ts'
-import { DEBORD_CONTOUR, textureHaloSlot, textureSlot } from './texture-carte.ts'
+import { textureSlot, textureSlotVif } from './texture-carte.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Carte } from '../logic/combat.ts'
@@ -73,10 +73,13 @@ function tailleDuSlot(slot: Slot, plan: PlanArmurerie): number {
  * l'y avoir amenée — Keko : « il faudrait que quand je drag un truc, le slot
  * d'équipement qui correspond se mette en surbrillance ».
  *
- * C'est la texture de contour des cartes, en BLEU et derrière le slot : elle
- * déborde, donc elle se voit aussi bien autour d'une case vide qu'autour d'une
- * carte déjà posée — *un slot occupé s'échange, il doit s'allumer comme les
- * autres.*
+ * C'est SON PROPRE POINTILLÉ qui s'allume, en or, et rien n'est ajouté autour :
+ * un contour lumineux posé derrière débordait de la case — Keko : « ça dépasse
+ * des pointillés et le contour est très épais ». *Une case a déjà sa forme ; on
+ * l'allume, on ne la double pas.*
+ *
+ * Il se pose DEVANT la carte : un slot occupé s'échange, donc il s'allume comme
+ * les autres, et sa carte masquerait ce qu'on glisserait dessous.
  */
 function SlotAccueille({
   position,
@@ -88,10 +91,10 @@ function SlotAccueille({
   const materiau = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
-        map: textureHaloSlot(),
-        color: '#8fc2ff',
+        map: textureSlotVif(),
+        color: '#ffc774',
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.8,
         toneMapped: false,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
@@ -102,11 +105,15 @@ function SlotAccueille({
   // battements rapides comme une alerte. Même horloge que le contour des
   // cartes.
   useFrame((etat) => {
-    materiau.opacity = 0.42 + Math.sin(etat.clock.elapsedTime * 3.4) * 0.22
+    materiau.opacity = 0.72 + Math.sin(etat.clock.elapsedTime * 3.4) * 0.22
   })
   return (
-    <mesh position={[position[0], position[1], position[2] - 0.02]} raycast={() => null} material={materiau}>
-      <planeGeometry args={[(1 + DEBORD_CONTOUR * 2) * taille, (1.4 + DEBORD_CONTOUR * 2) * taille]} />
+    <mesh
+      position={[position[0], position[1], position[2] + 0.03]}
+      raycast={() => null}
+      material={materiau}
+    >
+      <planeGeometry args={[taille, taille * 1.4]} />
     </mesh>
   )
 }

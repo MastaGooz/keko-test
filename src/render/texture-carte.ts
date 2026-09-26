@@ -1280,62 +1280,65 @@ export function textureContour(): THREE.CanvasTexture {
 }
 
 /**
- * LE HALO D'UN SLOT QUI ACCUEILLE — le contour des cartes, mais ÉVIDÉ.
+ * UN SLOT QUI ACCUEILLE : SON PROPRE POINTILLÉ, EN VIF.
  *
- * `textureContour` est un rectangle lumineux plein : autour d'une carte c'est
- * parfait, puisqu'elle en masque le centre. **Un slot VIDE ne masque rien**,
- * et le halo s'y lisait comme une dalle bleue posée dans la case. *Une lueur
- * qui remplit sa forme n'est plus un contour.*
+ * Il a d'abord été le contour lumineux des cartes, teinté en bleu et posé
+ * derrière la case. Keko : « je trouve l'effet un peu grossier — ça dépasse
+ * des pointillés et le contour est très épais ; on peut pas plutôt dessiner le
+ * rectangle pointillé en plus vif et lumineux, et l'intérieur en doré ? »
  *
- * On creuse donc le centre après coup (`destination-out`), en laissant un
- * voile : le slot s'allume doucement à l'intérieur et franchement sur son
- * bord, occupé ou non.
+ * *Un halo qui déborde désigne une ZONE, pas un emplacement.* La case, elle,
+ * a déjà sa forme — le pointillé — et il suffit de l'allumer : même tracé,
+ * même place, en or et avec sa propre lueur. Rien ne dépasse, puisque rien
+ * n'est ajouté.
+ *
+ * Il se pose DEVANT la carte et non derrière : un slot occupé s'échange, donc
+ * il doit s'allumer aussi, et sa carte masquerait tout ce qu'on mettrait
+ * dessous. L'intérieur reste à peine teinté pour cette raison — c'est le
+ * cadre qui parle, le fond ne fait que dire « ici ».
  */
-let haloSlot: THREE.CanvasTexture | null = null
+let slotVif: THREE.CanvasTexture | null = null
 
-export function textureHaloSlot(): THREE.CanvasTexture {
-  if (haloSlot !== null) return haloSlot
+export function textureSlotVif(): THREE.CanvasTexture {
+  if (slotVif !== null) return slotVif
 
   const l = 512
-  const debord = Math.round(l * DEBORD_CONTOUR)
   const h = Math.round(l * 1.4)
   const canvas = document.createElement('canvas')
-  canvas.width = l + debord * 2
-  canvas.height = h + debord * 2
+  canvas.width = l
+  canvas.height = h
   const ctx = canvas.getContext('2d')
   if (ctx === null) {
-    haloSlot = new THREE.CanvasTexture(canvas)
-    return haloSlot
+    slotVif = new THREE.CanvasTexture(canvas)
+    return slotVif
   }
 
-  const coin = l * 0.03
-  const rect = (x: number, y: number, lg: number, ht: number): void => {
+  // LE MÊME TRACÉ QUE LA CASE VIDE — même marge, même rayon, même cadence de
+  // tirets : c'est ce qui fait que le pointillé s'ALLUME au lieu de s'ajouter.
+  const marge = l * 0.03
+  const trace = (): void => {
     ctx.beginPath()
-    ctx.roundRect(x, y, lg, ht, coin)
-    ctx.fill()
+    ctx.roundRect(marge, marge, l - marge * 2, h - marge * 2, l * 0.05)
   }
 
-  ctx.fillStyle = '#ffffff'
-  ctx.shadowColor = 'rgba(255, 255, 255, 0.95)'
-  for (const rayon of [debord * 0.85, debord * 0.45, debord * 0.2]) {
+  // L'intérieur, à peine : une carte posée dessus doit rester lisible.
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.075)'
+  trace()
+  ctx.fill()
+
+  // Le pointillé, en trois passes de lueur de plus en plus serrée : c'est
+  // l'accumulation qui fait la lumière, comme le contour des cartes.
+  ctx.setLineDash([l * 0.07, l * 0.05])
+  ctx.lineWidth = l * 0.018
+  ctx.strokeStyle = '#ffffff'
+  ctx.shadowColor = 'rgba(255, 255, 255, 0.9)'
+  for (const rayon of [l * 0.045, l * 0.022, 0]) {
     ctx.shadowBlur = rayon
-    rect(debord, debord, l, h)
+    trace()
+    ctx.stroke()
   }
-  ctx.shadowColor = 'transparent'
-  ctx.shadowBlur = 0
-  const arete = Math.round(l * 0.022)
-  rect(debord - arete, debord - arete, l + arete * 2, h + arete * 2)
 
-  // ON CREUSE, en laissant un voile : le bord garde toute sa lumière, le
-  // centre n'en garde qu'un cinquième — assez pour dire « ici », pas assez
-  // pour recouvrir ce qui s'y trouve.
-  ctx.globalCompositeOperation = 'destination-out'
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
-  const marge = Math.round(l * 0.035)
-  rect(debord + marge, debord + marge, l - marge * 2, h - marge * 2)
-  ctx.globalCompositeOperation = 'source-over'
-
-  haloSlot = new THREE.CanvasTexture(canvas)
-  haloSlot.colorSpace = THREE.SRGBColorSpace
-  return haloSlot
+  slotVif = new THREE.CanvasTexture(canvas)
+  slotVif.colorSpace = THREE.SRGBColorSpace
+  return slotVif
 }

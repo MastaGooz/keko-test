@@ -3157,19 +3157,27 @@ mais il fallait déjà l'y avoir amenée. Keko : « il faudrait que quand je dra
 un truc, le slot d'équipement qui correspond se mette en surbrillance ». *Ce
 qui dit où l'on peut aller doit se voir AVANT d'y aller.*
 
-C'est la **texture de contour des cartes, en bleu et derrière le slot** : elle
-déborde, donc elle se lit aussi bien autour d'une case vide qu'autour d'une
-carte déjà posée — *un slot occupé s'échange, il doit s'allumer comme les
-autres.* Le râtelier en est exclu, comme le frémissement : c'est l'endroit
-d'où l'on vient. La pile s'allume case par case, parce que ce qu'on doit lire
-est la RANGÉE qui reçoit, même si le dépôt n'est qu'une zone.
+**C'EST SON PROPRE POINTILLÉ QUI S'ALLUME**, en or, et rien n'est ajouté
+autour. Il a d'abord été le contour lumineux des cartes, teinté en bleu et posé
+DERRIÈRE la case — Keko : « je trouve l'effet un peu grossier : ça dépasse des
+pointillés et le contour est très épais ; on peut pas plutôt dessiner le
+rectangle pointillé en plus vif et lumineux, et l'intérieur en doré ? »
 
-**Mais le contour des cartes est un rectangle PLEIN**, et il le fallait :
-autour d'une carte, c'est elle qui en masque le centre. **Un slot vide ne
-masque rien**, et le halo s'y lisait comme une dalle bleue posée dans la case.
-`textureHaloSlot` le creuse donc après coup (`destination-out`) en laissant un
-voile : bord franc, intérieur à peine teinté. *Une lueur qui remplit sa forme
-n'est plus un contour.* Elle respire, comme le liseré des cartes.
+*Un halo qui déborde désigne une zone, pas un emplacement.* La case a déjà sa
+forme : même tracé, même marge, même cadence de tirets, repeints en blanc avec
+trois passes de lueur de plus en plus serrées, et le matériau les teinte en or.
+**Rien ne dépasse, puisque rien n'est ajouté** — et l'or est déjà la couleur de
+tout ce qui a de la valeur ici, là où le bleu était celle du joueur en 2D.
+
+Il se pose **DEVANT la carte** et non derrière : un slot occupé s'échange, donc
+il s'allume comme les autres, et sa carte masquerait tout ce qu'on glisserait
+dessous. L'intérieur n'est teinté qu'à peine, pour cette raison exactement —
+*c'est le cadre qui parle, le fond ne fait que dire « ici ».* Il respire, comme
+le liseré des cartes.
+
+Le râtelier en est exclu, comme le frémissement : c'est l'endroit d'où l'on
+vient. La pile s'allume case par case, parce que ce qu'on doit lire est la
+RANGÉE qui reçoit, même si le dépôt n'est qu'une zone.
 
 **Le coffre s'est donc centré en largeur.** À grandes cartes il n'en tient plus
 que trois par ligne, et calées à gauche elles laissaient une colonne de vide
