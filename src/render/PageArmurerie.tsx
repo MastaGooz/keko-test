@@ -175,6 +175,17 @@ export function PageArmurerie({
 
           Ce sont les MÊMES objets qu'en combat — le paquet de pioche, l'orbe —
           parce que c'est là qu'il les retrouvera. */}
+      {/* CHAQUE COUPLE EST UN CARTOUCHE, et le chiffre y vient AVANT son
+          symbole. Keko : « le chiffre d'abord, puis l'icône — et un moyen de
+          bien voir que tel chiffre correspond à tel icône ».
+
+          *Quatre chiffres et quatre symboles alignés ne disent pas lesquels
+          vont ensemble* : l'oeil les apparie par la proximité, et une rangée
+          régulière n'en a aucune. Un fond commun le dit sans un mot — et ce
+          n'est pas une décoration : c'est la seule chose qui les relie.
+
+          L'énergie n'en a pas besoin de la même façon : son chiffre est DANS
+          son symbole. Elle garde le cartouche pour rester de la famille. */}
       <div className="arm-etat" style={boite(plan.pied)}>
         {/* LE COMPTE DU DECK EST À GAUCHE DU PAQUET, demandé par Keko. Au-dessus
             — sa place en combat — il se lisait comme une étiquette du tas ;
@@ -187,15 +198,15 @@ export function PageArmurerie({
           </span>
         </span>
         <span className="arm-mesure">
-          <CoeurIcone />
           <span className="arm-chiffre">{pvMax}</span>
+          <CoeurIcone />
         </span>
         <span className="arm-mesure arm-orbe">
           <Orbe3D courant={energieMax} max={energieMax} seul />
         </span>
         <span className="arm-mesure">
-          <MainIcone />
           <span className="arm-chiffre">{tailleMain}</span>
+          <MainIcone />
         </span>
       </div>
       </div>

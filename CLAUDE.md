@@ -3195,6 +3195,17 @@ RÉSERVE, comme le paquet dit un nombre de cartes et l'orbe une quantité
 d'énergie : les quatre mesures deviennent quatre symboles et quatre chiffres,
 ce qui est exactement la rangée qu'on cherchait.
 
+**CHAQUE COUPLE EST UN CARTOUCHE, et le chiffre vient AVANT son symbole.**
+Keko : « le chiffre d'abord, puis l'icône — et un moyen de bien voir que tel
+chiffre correspond à tel icône ». *Quatre chiffres et quatre symboles alignés
+ne disent pas lesquels vont ensemble* : l'oeil les apparie par la proximité, et
+une rangée régulière n'en offre aucune. Un fond commun le dit sans un mot — ce
+n'est pas une décoration, c'est la seule chose qui les relie. La même
+ferronnerie que les cadres, en petit : un filet de laiton, deux coins coupés.
+
+L'énergie garde le cartouche pour rester de la famille, mais elle n'avait pas
+le problème : *son chiffre est DANS son symbole.*
+
 **LES QUATRE CHIFFRES ONT LA MÊME VOIX** — même corps, même graisse, celle de
 l'orbe. Keko : « utilise la même taille / bold pour le chiffre deck et main que
 ceux utilisés pour l'énergie ». *Quatre mesures du même état ne peuvent pas se
