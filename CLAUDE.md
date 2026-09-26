@@ -2297,6 +2297,34 @@ qui s'en va.*
 redresser d'abord : c'est exactement l'erreur de la version où la carte
 voyageait entière et arrivait droite.
 
+**ET ELLE RÉTRÉCIT JUSQU'À DEVENIR LITTÉRALEMENT LA TÊTE DE LA COMÈTE.** Keko :
+« ce serait super que la carte qui devient lumière rétrécisse vraiment et
+devienne effectivement la tête de la comète, non ? » Elle s'embrasait puis
+DISPARAISSAIT, et une traînée partait de là : *deux évènements au même endroit,
+pas une transformation.* Elle grandissait même d'un rien, ce qui disait
+exactement l'inverse — « elle enfle et s'évapore ».
+
+**POUR QUE CE SOIT UN SEUL OBJET, IL FAUT QUE LES DEUX SE REJOIGNENT SUR TOUT**
+— la place, la taille, l'inclinaison et le dessin. D'où un CONTRAT partagé dans
+`sillage.ts` plutôt que des valeurs de chaque côté :
+
+- la carte finit exactement à la taille de la tête (`TETE_SILLAGE` ×
+  `ETIRE_TETE`) ;
+- elle s'éteint exactement quand la traînée part (`PART_ENVOL`) — une image de
+  plus et son jumeau immobile resterait à côté de la tête qui s'en va ;
+- la tête naît à l'inclinaison de la carte (`rotationDepart`) et se couche sur
+  sa route en chemin. La carte porte l'angle de l'éventail, la tête celui de la
+  trajectoire : sans ce basculement, le passage de l'une à l'autre saute — et
+  s'incliner dans sa course est de toute façon ce que fait un objet lancé ;
+- **le dessin bascule AVANT la taille d'arrivée** : sur le dernier tiers, la
+  carte se fond dans le rectangle de crème qui sera la tête, deux plans
+  superposés à la même transformation. Sans ce fondu, le liseré d'ambre
+  apparaissait d'un coup au relais — *une transformation qui se termine par une
+  substitution n'en est pas une.*
+
+*Une valeur écrite des deux côtés se serait désaccordée au premier réglage, et
+le raccord est précisément ce qui ne doit jamais se voir.*
+
 **L'ÉCLAT PASSE PAR LA COULEUR, pas par un plan blanc posé dessus.** En
 `toneMapped: false`, une couleur au-delà de 1 éclaircit la texture au lieu de la
 recouvrir : *l'image reste lisible pendant qu'elle blanchit*, là où un voile

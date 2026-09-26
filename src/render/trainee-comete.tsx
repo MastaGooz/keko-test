@@ -50,7 +50,17 @@ import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import type { PropsSillage } from './sillage.ts'
-import { borne, courbeEntre, DUREE_TRAINEE, lisser } from './sillage.ts'
+import {
+  AMBRE,
+  borne,
+  courbeEntre,
+  CREME,
+  DUREE_TRAINEE,
+  ETIRE_TETE,
+  lisser,
+  TETE_SILLAGE,
+  TEXTURE_TETE,
+} from './sillage.ts'
 
 /** Ce qui sépare le départ de la tête de celui de la queue. */
 const RETARD_QUEUE = 0.38
@@ -61,16 +71,17 @@ const SEGMENTS = 24
 /** La demi-largeur du sillage, en unités de scène (une carte fait 1 de large). */
 const LARGEUR = 0.062
 
-/** La largeur de la tête. Sa hauteur en découle : c'est une CARTE. */
-const TETE = 0.15
+/**
+ * La largeur de la tête et son étirement viennent de `sillage.ts` : c'est le
+ * CONTRAT avec la carte qui s'éteint, puisqu'elle doit finir exactement à cette
+ * taille. *Le raccord est ce qui ne doit jamais se voir.*
+ */
+const TETE = TETE_SILLAGE
 
 /** Le rapport du gabarit, celui de toutes les cartes du jeu. */
 const RAPPORT = 1.4
 
 const LOSANGES = 3
-
-const CREME = '#fff4dd'
-const AMBRE = '#e8ac54'
 
 /**
  * LA MATIÈRE DU SILLAGE : DEUX APLATS, ET UNE ARÊTE FRANCHE.
@@ -115,44 +126,6 @@ const SILLAGE = ((): THREE.CanvasTexture | null => {
   return new THREE.CanvasTexture(toile)
 })()
 
-/**
- * LA TÊTE EST UNE CARTE, PAS UN DISQUE.
- *
- * Keko : « tu crois que la tête de la comète pourrait évoquer la forme d'un
- * rectangle, comme si la carte était une comète ? » *C'est la dernière chose
- * qui manquait pour que l'effet dise ce qu'il transporte* — le sillage donnait
- * la trajectoire et la vitesse, mais un disque en tête pouvait être n'importe
- * quoi. Un rectangle au rapport du gabarit, coins arrondis compris, ne peut
- * être qu'une carte.
- *
- * *La toile a le rapport de la carte* : peinte carrée puis étirée, ses coins
- * arrondis seraient des ovales et le rayon ne serait plus celui du gabarit.
- *
- * Un cadre et rien dedans : à une trentaine de pixels, un médaillon ou un
- * second filet tournent en bouillie. **Un symbole ne se règle pas à la taille
- * où on le dessine, mais à celle où on le regarde** — la leçon du médaillon
- * des tas, prise dans l'autre sens.
- */
-const COEUR = ((): THREE.CanvasTexture | null => {
-  const L = 72
-  const H = Math.round(L * RAPPORT)
-  const toile = document.createElement('canvas')
-  toile.width = L
-  toile.height = H
-  const ctx = toile.getContext('2d')
-  if (ctx === null) return null
-  const m = 5
-  // Le même rayon que le gabarit : 3 % de la largeur de la carte.
-  ctx.beginPath()
-  ctx.roundRect(m, m, L - 2 * m, H - 2 * m, L * 0.09)
-  ctx.fillStyle = CREME
-  ctx.fill()
-  ctx.lineWidth = 7
-  ctx.strokeStyle = AMBRE
-  ctx.stroke()
-  return new THREE.CanvasTexture(toile)
-})()
-
 /** LES LOSANGES : la forme du médaillon des cartes, pleine et cerclée. */
 const LOSANGE = ((): THREE.CanvasTexture | null => {
   const C = 64
@@ -177,7 +150,12 @@ const LOSANGE = ((): THREE.CanvasTexture | null => {
   return new THREE.CanvasTexture(toile)
 })()
 
-export function TraineeComete({ depuis, vers, debut }: PropsSillage): React.JSX.Element {
+export function TraineeComete({
+  depuis,
+  vers,
+  debut,
+  rotationDepart,
+}: PropsSillage): React.JSX.Element {
   const ruban = useRef<THREE.Mesh>(null)
   const tete = useRef<THREE.Mesh>(null)
   const eclats = useRef<THREE.InstancedMesh>(null)
@@ -240,7 +218,7 @@ export function TraineeComete({ depuis, vers, debut }: PropsSillage): React.JSX.
   const matiereTete = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
-        map: COEUR,
+        map: TEXTURE_TETE,
         transparent: true,
         depthWrite: false,
         toneMapped: false,
@@ -340,10 +318,23 @@ export function TraineeComete({ depuis, vers, debut }: PropsSillage): React.JSX.
     // ELLE FILE DANS SA LONGUEUR. La hauteur d'un plan est son axe Y local,
     // donc on retranche un quart de tour pour la coucher sur la tangente : la
     // carte fend l'air par sa tranche, et le sillage sort de son bord arrière.
-    n.rotation.set(0, 0, Math.atan2(travail.tangente.y, travail.tangente.x) - Math.PI / 2 + penchant)
+    const cible = Math.atan2(travail.tangente.y, travail.tangente.x) - Math.PI / 2 + penchant
+    // ELLE PART DE L'INCLINAISON DE LA CARTE QUI VIENT DE S'ÉTEINDRE, et bascule
+    // sur sa route en chemin. *Sans ça le raccord saute* : la carte porte
+    // l'angle de l'éventail, la tête celui de la trajectoire, et le passage de
+    // l'une à l'autre se verrait comme un à-coup. La carte s'incline donc dans
+    // sa course, ce qu'un objet lancé fait de toute façon.
+    let angle = cible
+    if (rotationDepart !== undefined) {
+      let ecart = cible - rotationDepart
+      while (ecart > Math.PI) ecart -= Math.PI * 2
+      while (ecart < -Math.PI) ecart += Math.PI * 2
+      angle = rotationDepart + ecart * lisser(borne(avantTete / 0.35))
+    }
+    n.rotation.set(0, 0, angle)
     // Un rien d'étirement dans le sens de la marche : le contraste de vitesse
     // du reste du jeu, appliqué à une carte lancée.
-    n.scale.set(0.93, 1.18, 1)
+    n.scale.set(ETIRE_TETE[0], ETIRE_TETE[1], 1)
 
     const pantin = travail.pantin
     for (let i = 0; i < LOSANGES; i += 1) {

@@ -22,6 +22,7 @@ import {
   yMain,
 } from './Main3D.tsx'
 import { DUREE_TRAINEE, Trainee } from './Trainee.tsx'
+import { PART_ENVOL } from './sillage.ts'
 import { CarteQuiSeDissout, DUREE_DISSOLUTION, PAS_DISSOLUTION } from './CarteQuiSeDissout.tsx'
 import { depuisEcran, Z_MAIN } from './Cadrage.tsx'
 import { CORPS, decorDuRang, Ennemi3D, HAUT_CORPS, identiteEnnemi } from './Ennemi3D.tsx'
@@ -88,6 +89,8 @@ type Trajet = {
   depuis: [number, number, number]
   vers: [number, number, number]
   debut: number
+  /** L'inclinaison de la carte qui vient de s'éteindre là, s'il y en avait une. */
+  rotationDepart?: number
 }
 
 /** Le temps entre deux cartes piochées : elles arrivent l'une après l'autre. */
@@ -482,9 +485,14 @@ export function Scene(): React.JSX.Element {
      * Il part un cheveu avant la fin du vol : les grains convergent sur la fin,
      * donc le tas doit déjà répondre quand les premiers le touchent.
      */
-    const jeterVers = (cle: string, depuis: [number, number, number], debut: number): void => {
+    const jeterVers = (
+      cle: string,
+      depuis: [number, number, number],
+      debut: number,
+      rotationDepart?: number,
+    ): void => {
       if (defausse === null) return
-      trajetsNeufs.push({ cle, depuis, vers: defausse, debut })
+      trajetsNeufs.push({ cle, depuis, vers: defausse, debut, rotationDepart })
       window.setTimeout(
         () => setChocDefausse((n) => n + 1),
         (debut - t + DUREE_TRAINEE * 0.85) * 1000,
@@ -508,10 +516,16 @@ export function Scene(): React.JSX.Element {
           rotation: ou.rotation,
           debut: depart,
         })
-        // LA TRAÎNÉE PART QUAND L'EMBRASEMENT FINIT : c'est ce décalage qui
-        // fait lire la carte DEVENUE traînée, plutôt que deux choses sans
-        // rapport.
-        jeterVers(`d-${id}-${t}`, ou.position, depart + DUREE_DISSOLUTION * 0.72)
+        // LE RELAIS TOMBE À L'INSTANT OÙ LA CARTE A FINI DE RÉTRÉCIR, et la
+        // traînée reprend son inclinaison : c'est ce raccord exact qui fait
+        // lire la carte DEVENUE tête de comète, plutôt que deux choses sans
+        // rapport au même endroit.
+        jeterVers(
+          `d-${id}-${t}`,
+          ou.position,
+          depart + DUREE_DISSOLUTION * PART_ENVOL,
+          ou.rotation[2],
+        )
       })
     }
 
@@ -545,7 +559,9 @@ export function Scene(): React.JSX.Element {
         jeterVers(
           `j-${jouee.id}-${t}`,
           jouee.place,
-          t + (jouee.embrase ? DUREE_DISSOLUTION * 0.72 : (TEMPS_FIN - TEMPS_IMPACT) * 0.7),
+          t + (jouee.embrase ? DUREE_DISSOLUTION * PART_ENVOL : (TEMPS_FIN - TEMPS_IMPACT) * 0.7),
+          // Une carte jouée sans cible s'éteint DROITE, sortie de la main.
+          jouee.embrase ? 0 : undefined,
         )
       }
     }
@@ -1269,7 +1285,13 @@ export function Scene(): React.JSX.Element {
             n'a ni taille de carte ni inclinaison, donc elle ne peut pas être en
             désaccord avec la main qu'elle rejoint. */}
         {trajets.map((v) => (
-          <Trainee key={v.cle} depuis={v.depuis} vers={v.vers} debut={v.debut} />
+          <Trainee
+            key={v.cle}
+            depuis={v.depuis}
+            vers={v.vers}
+            debut={v.debut}
+            rotationDepart={v.rotationDepart}
+          />
         ))}
 
         {/* LA DÉFAUSSE EST LA NAISSANCE À L'ENVERS : la carte s'embrase à sa

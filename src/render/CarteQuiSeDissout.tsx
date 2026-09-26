@@ -1,14 +1,31 @@
 /**
- * LA CARTE DÉFAUSSÉE S'EMBRASE, PUIS PART EN LUMIÈRE.
+ * LA CARTE DÉFAUSSÉE RÉTRÉCIT JUSQU'À DEVENIR LA TÊTE DE LA COMÈTE.
  *
- * Keko : « il faudrait que quand les cartes sont défaussées on ait l'effet
- * inverse — lumière puis transfert vers la défausse ».
+ * Keko, en deux temps : « il faudrait que quand les cartes sont défaussées on
+ * ait l'effet inverse — lumière puis transfert vers la défausse », puis « ce
+ * serait super que la carte qui devient lumière rétrécisse vraiment et
+ * devienne effectivement la tête de la comète, non ? »
  *
- * *C'est la naissance jouée à l'envers*, et il le fallait : la pioche fait
- * arriver une traînée qui devient une carte, la défausse doit faire d'une carte
- * une traînée qui s'en va. Sans ce temps d'embrasement, la carte disparaissait
- * de la main à l'instant où la traînée partait du coin — **on ne voyait pas
- * qu'elle était devenue la traînée**, seulement deux choses sans rapport.
+ * *C'est la naissance jouée à l'envers* : la pioche fait arriver une traînée
+ * qui devient une carte, la défausse doit faire d'une carte une traînée qui
+ * s'en va. Mais la première version s'embrasait puis DISPARAISSAIT, et une
+ * traînée partait de là — **deux évènements au même endroit, pas une
+ * transformation.**
+ *
+ * **POUR QUE CE SOIT UN SEUL OBJET, IL FAUT QUE LES DEUX SE REJOIGNENT SUR
+ * TOUT** : la place, la taille, l'inclinaison et le dessin. D'où le contrat
+ * partagé dans `sillage.ts` — la carte finit exactement à la taille de la tête
+ * (`TETE_SILLAGE` × `ETIRE_TETE`), s'éteint exactement quand la traînée part
+ * (`PART_ENVOL`), et la tête reprend son inclinaison pour se coucher sur sa
+ * route en chemin. *Une valeur écrite des deux côtés se serait désaccordée au
+ * premier réglage, et le raccord est précisément ce qui ne doit jamais se
+ * voir.*
+ *
+ * **LE DESSIN BASCULE AVANT LA TAILLE D'ARRIVÉE.** Sur son dernier tiers, la
+ * carte se fond dans le rectangle de crème qui SERA la tête — deux plans
+ * superposés, même transformation, opacités croisées. Sans ce fondu, le liseré
+ * d'ambre apparaissait d'un coup au moment du relais : *une transformation qui
+ * se termine par une substitution n'en est pas une.*
  *
  * **Elle reste à sa place, avec l'inclinaison de l'éventail.** Une carte qui
  * s'en va n'a aucune raison de se redresser d'abord : c'est la même erreur que
@@ -25,6 +42,7 @@ import * as THREE from 'three'
 import type { CarteAPeindre } from './texture-carte.ts'
 import { textureDeCarte } from './texture-carte.ts'
 import { HAUT, LARGE } from './Carte3D.tsx'
+import { borne, ETIRE_TETE, lisser, PART_ENVOL, TETE_SILLAGE, TEXTURE_TETE } from './sillage.ts'
 
 /** Ce que dure l'embrasement avant que la traînée ne parte, en secondes. */
 export const DUREE_DISSOLUTION = 0.22
@@ -43,6 +61,9 @@ export const PAS_DISSOLUTION = 0.05
  */
 const AVANCE = 0.06
 
+/** La métamorphose s'achève quand la traînée prend le relais, pas après. */
+const DUREE = DUREE_DISSOLUTION * PART_ENVOL
+
 type Props = {
   carte: CarteAPeindre
   place: [number, number, number]
@@ -52,9 +73,21 @@ type Props = {
 }
 
 export function CarteQuiSeDissout({ carte, place, rotation, debut }: Props): React.JSX.Element {
-  const mesh = useRef<THREE.Mesh>(null)
-  const materiau = useMemo(
+  const groupe = useRef<THREE.Group>(null)
+
+  const matiereCarte = useMemo(
     () => new THREE.MeshBasicMaterial({ transparent: true, toneMapped: false, depthWrite: false }),
+    [],
+  )
+  const matiereTete = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: TEXTURE_TETE,
+        transparent: true,
+        toneMapped: false,
+        depthWrite: false,
+        opacity: 0,
+      }),
     [],
   )
 
@@ -63,36 +96,52 @@ export function CarteQuiSeDissout({ carte, place, rotation, debut }: Props): Rea
     void textureDeCarte(carte)
       .then((t) => {
         if (!vivant) return
-        materiau.map = t
-        materiau.needsUpdate = true
+        matiereCarte.map = t
+        matiereCarte.needsUpdate = true
       })
       .catch(() => {})
     return () => {
       vivant = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [carte.nom, carte.cout, materiau])
+  }, [carte.nom, carte.cout, matiereCarte])
 
   useFrame((etat) => {
-    const m = mesh.current
-    if (m === null) return
-    const k = Math.max(0, Math.min(1, (etat.clock.elapsedTime - debut) / DUREE_DISSOLUTION))
-    // Elle s'embrase d'abord, s'efface ensuite : les deux se recouvrent à peine,
-    // pour qu'on voie bien la lumière AVANT de la voir partir.
-    materiau.color.setScalar(1 + 2.4 * k * k)
-    materiau.opacity = k < 0.62 ? 1 : 1 - (k - 0.62) / 0.38
-    m.scale.setScalar(1 + 0.08 * k)
+    const g = groupe.current
+    if (g === null) return
+    const k = borne((etat.clock.elapsedTime - debut) / DUREE)
+    // ELLE S'EFFACE EXACTEMENT QUAND LA TRAÎNÉE PART : la laisser une image de
+    // plus poserait un jumeau immobile à côté de la tête qui s'en va.
+    g.visible = k < 1
+    if (!g.visible) return
+
+    matiereCarte.color.setScalar(1 + 2.6 * k * k)
+    // LE DESSIN BASCULE AVANT LA TAILLE : le dernier tiers fond la carte dans
+    // le rectangle qui sera la tête, pour que le relais ne montre aucune
+    // substitution.
+    const bascule = lisser(borne((k - 0.62) / 0.38))
+    matiereCarte.opacity = 1 - bascule
+    matiereTete.opacity = bascule
+
+    // ELLE RÉTRÉCIT JUSQU'À LA TAILLE EXACTE DE LA TÊTE. Elle grandissait d'un
+    // rien avant, ce qui disait « elle enfle et s'évapore » — l'inverse de ce
+    // qu'on raconte maintenant.
+    const e = lisser(k)
+    g.scale.set(
+      1 + (TETE_SILLAGE * ETIRE_TETE[0] - 1) * e,
+      1 + (TETE_SILLAGE * ETIRE_TETE[1] - 1) * e,
+      1,
+    )
   })
 
   return (
-    <mesh
-      ref={mesh}
-      position={[place[0], place[1], place[2] + AVANCE]}
-      rotation={rotation}
-      material={materiau}
-      raycast={() => null}
-    >
-      <planeGeometry args={[LARGE, HAUT]} />
-    </mesh>
+    <group ref={groupe} position={[place[0], place[1], place[2] + AVANCE]} rotation={rotation}>
+      <mesh material={matiereCarte} raycast={() => null}>
+        <planeGeometry args={[LARGE, HAUT]} />
+      </mesh>
+      <mesh material={matiereTete} position={[0, 0, 0.001]} raycast={() => null}>
+        <planeGeometry args={[LARGE, HAUT]} />
+      </mesh>
+    </group>
   )
 }
