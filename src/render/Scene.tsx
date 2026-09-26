@@ -288,7 +288,20 @@ export function Scene(): React.JSX.Element {
    * un seul mouvement, et c'est chacune qu'on doit voir arriver.
    */
   const mainAvant = useRef<string[] | null>(null)
-  const dejaJouee = useRef<string | null>(null)
+  /**
+   * LA DERNIÈRE CARTE JOUÉE, ET OÙ ELLE S'EST ABATTUE.
+   *
+   * Elle ne brûle pas dans la main : elle vient de tomber sur sa cible, et
+   * c'est de LÀ que sa traînée doit partir. *Sans la place, on ne saurait que
+   * l'exclure* — et c'est ce qu'on faisait, donc sa traînée partait de son
+   * ancien rang dans l'éventail.
+   */
+  const dejaJouee = useRef<{
+    id: string
+    place: [number, number, number]
+    /** Faux quand elle s'est déjà abattue : on ne la rallume pas. */
+    embrase: boolean
+  } | null>(null)
 
   useEffect(() => {
     if (!enCombat) {
@@ -327,8 +340,9 @@ export function Scene(): React.JSX.Element {
     // LES PARTANTES SE COMPTENT AVANT LA PIOCHE, parce que c'est leur nombre
     // qui dit combien de temps dure l'embrasement — et la pioche attend qu'il
     // soit fini.
-    const partantes = avant.filter((id) => !ids.includes(id) && id !== dejaJouee.current)
+    const jouee = dejaJouee.current
     dejaJouee.current = null
+    const partantes = avant.filter((id) => !ids.includes(id) && id !== jouee?.id)
     const embrasement = partantes.length > 0 ? DUREE_DISSOLUTION + (partantes.length - 1) * PAS_DISSOLUTION : 0
 
     // LA PIOCHE : une traînée par carte, puis la carte naît à sa place quand
@@ -361,45 +375,81 @@ export function Scene(): React.JSX.Element {
       setAttendues((x) => [...x, ...piochees.map((c) => c.id)])
     }
 
-    // LA DÉFAUSSE : la carte a déjà quitté la main, la traînée part de la place
-    // qu'elle occupait. *Pas d'apparition au bout* — on ne fait pas naître une
-    // carte dans un tas.
-    if (partantes.length > 0) {
-      const defausse = coinDe('defausse')
+    const defausse = coinDe('defausse')
+    const neuves: Dissolution[] = []
+
+    // LA DÉFAUSSE : la carte s'embrase à sa place dans l'éventail, puis c'est
+    // la traînée qui s'en va. *Pas d'apparition au bout* — on ne fait pas
+    // naître une carte dans un tas.
+    if (partantes.length > 0 && defausse !== null) {
       const pasAvant = pasDeLEventail(avant.length, window.innerHeight, window.innerWidth)
-      if (defausse !== null) {
-        const neuves: Dissolution[] = []
-        partantes.forEach((id, n) => {
-          const carte = mainCartes.current.get(id)
-          if (carte === undefined) return
-          const ou = placeDansEventail(avant.indexOf(id), avant.length, y, pasAvant)
-          const depart = t + n * PAS_DISSOLUTION
-          neuves.push({
-            cle: `x-${id}-${t}`,
-            carte,
-            place: ou.position,
-            rotation: ou.rotation,
-            debut: depart,
-          })
-          // LA TRAÎNÉE PART QUAND L'EMBRASEMENT FINIT : c'est ce décalage qui
-          // fait lire la carte DEVENUE traînée, plutôt que deux choses sans
-          // rapport.
-          trajetsNeufs.push({
-            cle: `d-${id}-${t}`,
-            depuis: ou.position,
-            vers: defausse,
-            debut: depart + DUREE_DISSOLUTION * 0.72,
-          })
+      partantes.forEach((id, n) => {
+        const carte = mainCartes.current.get(id)
+        if (carte === undefined) return
+        const ou = placeDansEventail(avant.indexOf(id), avant.length, y, pasAvant)
+        const depart = t + n * PAS_DISSOLUTION
+        neuves.push({
+          cle: `x-${id}-${t}`,
+          carte,
+          place: ou.position,
+          rotation: ou.rotation,
+          debut: depart,
         })
-        if (neuves.length > 0) {
-          setDissolutions((v) => [...v, ...neuves])
-          const cles = new Set(neuves.map((x) => x.cle))
-          window.setTimeout(
-            () => setDissolutions((v) => v.filter((x) => !cles.has(x.cle))),
-            (embrasement + 0.06) * 1000,
-          )
-        }
+        // LA TRAÎNÉE PART QUAND L'EMBRASEMENT FINIT : c'est ce décalage qui
+        // fait lire la carte DEVENUE traînée, plutôt que deux choses sans
+        // rapport.
+        trajetsNeufs.push({
+          cle: `d-${id}-${t}`,
+          depuis: ou.position,
+          vers: defausse,
+          debut: depart + DUREE_DISSOLUTION * 0.72,
+        })
+      })
+    }
+
+    // LA CARTE JOUÉE PART D'OÙ ELLE EST, PAS D'OÙ ELLE ÉTAIT. Elle a quitté
+    // l'éventail avant d'être jouée — elle s'est abattue sur un corps, ou on
+    // l'a lâchée au-dessus de la main — et sa traînée partait quand même de
+    // son ancien rang. Keko : « l'effet de particules part de sa position en
+    // main précédente au lieu de sa position réelle quand je la joue ».
+    //
+    // *Et une carte qui s'est abattue ne s'embrase pas* : `CarteQuiSAbat` l'a
+    // déjà écrasée puis effacée. Seule celle qui ne vise personne brûle, là où
+    // le doigt l'a lâchée.
+    if (jouee !== null && !ids.includes(jouee.id)) {
+      const carte = mainCartes.current.get(jouee.id)
+      if (jouee.embrase && carte !== undefined) {
+        neuves.push({
+          cle: `x-${jouee.id}-${t}`,
+          carte,
+          place: jouee.place,
+          // Droite : sortie de la main, elle ne porte plus l'angle de
+          // l'éventail — c'est ainsi qu'on la tenait au doigt.
+          rotation: [0, 0, 0],
+          debut: t,
+        })
       }
+      // Une potion ou un trésor brûlé s'EXILE : il ne rejoint aucun tas, donc
+      // rien ne doit voler vers la défausse.
+      if (defausse !== null && combat.defausse.some((c) => c.id === jouee.id)) {
+        trajetsNeufs.push({
+          cle: `j-${jouee.id}-${t}`,
+          depuis: jouee.place,
+          vers: defausse,
+          // Elle part quand ce qu'on a vu d'elle s'achève : la fin de sa chute
+          // si elle s'est abattue, la fin de son embrasement sinon.
+          debut: t + (jouee.embrase ? DUREE_DISSOLUTION * 0.72 : (TEMPS_FIN - TEMPS_IMPACT) * 0.7),
+        })
+      }
+    }
+
+    if (neuves.length > 0) {
+      setDissolutions((v) => [...v, ...neuves])
+      const cles = new Set(neuves.map((x) => x.cle))
+      window.setTimeout(
+        () => setDissolutions((v) => v.filter((x) => !cles.has(x.cle))),
+        (Math.max(embrasement, DUREE_DISSOLUTION) + 0.06) * 1000,
+      )
     }
 
     if (trajetsNeufs.length === 0) return
@@ -477,6 +527,7 @@ export function Scene(): React.JSX.Element {
       setEnVol({ cle, carte: aPeindre(carte), depuis, vers, debut: lireHorloge() })
 
       window.setTimeout(() => {
+        dejaJouee.current = { id: carte.id, place: vers, embrase: false }
         majCombat((c) => jouerCarte(c, index, cible))
         setTouches((t) => ({ ...t, [cible]: lireHorloge() }))
         secouer('normale')
@@ -534,6 +585,7 @@ export function Scene(): React.JSX.Element {
       setEnVol({ cle, carte: aPeindre(carte), depuis, vers: milieu, debut: lireHorloge() })
 
       window.setTimeout(() => {
+        dejaJouee.current = { id: carte.id, place: milieu, embrase: false }
         majCombat((c) => jouerCarte(c, index, -1))
         secouer('forte')
         const maintenant = lireHorloge()
@@ -602,7 +654,13 @@ export function Scene(): React.JSX.Element {
         // Une carte qui frappe TOUT LE RANG s'abat quand même : elle ne vise
         // personne, mais elle fait quelque chose, et ça doit se voir.
         if (portee(carte) === 'toutes') frapperTous(index, depuis)
-        else majCombat((c) => jouerCarte(c, index, -1))
+        else {
+          // ELLE BRÛLE OÙ ON L'A LÂCHÉE. Elle n'a pas de chute à jouer, donc
+          // c'est son embrasement qui tient lieu de départ — et il doit se
+          // produire là où on vient de la voir, pas dans sa case d'avant.
+          dejaJouee.current = { id: carte.id, place: depuis, embrase: true }
+          majCombat((c) => jouerCarte(c, index, -1))
+        }
         return
       }
       if (cible === null) return

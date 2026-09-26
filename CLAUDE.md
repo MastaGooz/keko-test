@@ -2201,6 +2201,27 @@ Corollaire : **le ménage se cale sur la dernière traînée, pas sur leur nombr
 Un départ n'est plus un multiple du décalage depuis que la pioche attend, et une
 traînée balayée avant d'arriver ne se voit tout simplement pas.
 
+**LA CARTE JOUÉE PART D'OÙ ELLE EST, PAS D'OÙ ELLE ÉTAIT.** Keko : « quand je
+joue une carte, l'effet de particules part de sa position en main précédente au
+lieu de sa position réelle quand je la joue ». *Une carte jouée a quitté
+l'éventail avant de partir* — elle s'est abattue sur un corps, ou on l'a lâchée
+au-dessus de la main — donc sa place d'avant ne raconte plus rien. La scène
+retient désormais ce qu'elle a joué ET où (`dejaJouee`) : un identifiant seul ne
+permettait que de l'exclure, et c'est justement ce qu'on croyait faire.
+
+Deux départs selon ce qu'on a vu d'elle, et la différence est un **drapeau
+d'embrasement** :
+
+- **celle qui s'abat ne brûle pas.** `CarteQuiSAbat` l'a déjà écrasée puis
+  effacée sur sa cible ; la rallumer dans la main en ferait une seconde carte.
+  Sa traînée part **du corps frappé**, quand sa chute finit de s'effacer ;
+- **celle qui ne vise personne brûle où le doigt l'a lâchée**, droite et non
+  inclinée : sortie de la main, elle ne porte plus l'angle de l'éventail.
+
+**Et ce qui s'EXILE ne vole nulle part** : une potion bue, un trésor brûlé ne
+rejoignent aucun tas. On le lit sur l'état d'après — la carte est-elle dans
+`defausse` ? — plutôt qu'en recopiant la règle.
+
 **PIÈGE DE VÉRIFICATION, et il a coûté quatre allers-retours :** *une action
 `javascript_tool` ne ramène pas l'onglet au premier plan, une capture d'écran
 si.* Un clic déclenché en JavaScript se joue donc dans un onglet caché, où les
