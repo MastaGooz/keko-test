@@ -2347,24 +2347,31 @@ Corollaire : **le ménage se cale sur la dernière traînée, pas sur leur nombr
 Un départ n'est plus un multiple du décalage depuis que la pioche attend, et une
 traînée balayée avant d'arriver ne se voit tout simplement pas.
 
-**LA CARTE JOUÉE PART D'OÙ ELLE EST, PAS D'OÙ ELLE ÉTAIT.** Keko : « quand je
-joue une carte, l'effet de particules part de sa position en main précédente au
-lieu de sa position réelle quand je la joue ». *Une carte jouée a quitté
-l'éventail avant de partir* — elle s'est abattue sur un corps, ou on l'a lâchée
-au-dessus de la main — donc sa place d'avant ne raconte plus rien. La scène
-retient désormais ce qu'elle a joué ET où (`dejaJouee`) : un identifiant seul ne
-permettait que de l'exclure, et c'est justement ce qu'on croyait faire.
+**UNE CARTE UTILISÉE N'A PAS DE COMÈTE — SEUL LE TAS RÉAGIT.** Tranché par
+Keko : « une carte utilisée n'est jamais affectée par cette animation ; on fait
+juste trembler / gonfler le paquet de défausse pour signifier qu'il augmente,
+mais la disparition de la carte sera son animation d'utilisation ».
 
-Deux départs selon ce qu'on a vu d'elle, et la différence est un **drapeau
-d'embrasement** :
+*Et c'est juste* : **la comète raconte un TRANSIT** — une carte quitte la main
+sans qu'on l'ait décidé, et il faut dire où elle va. Une carte jouée, elle, a
+déjà toute une scène à son nom : on l'a sortie de la main, elle s'est abattue
+sur le corps visé. Lui ajouter un vol vers le tas raconterait **deux fois le
+même départ**.
 
-- **celle qui s'abat ne brûle pas.** `CarteQuiSAbat` l'a déjà écrasée puis
-  effacée sur sa cible ; la rallumer dans la main en ferait une seconde carte.
-  Sa traînée part **du corps frappé**, quand sa chute finit de s'effacer ;
-- **celle qui ne vise personne brûle où le doigt l'a lâchée**, droite et non
-  inclinée : sortie de la main, elle ne porte plus l'angle de l'éventail.
+La scène ne retient donc de la carte jouée qu'une chose (`dejaJouee`) : **quand
+le tas doit encaisser** — à la fin de son animation d'utilisation, pas à
+l'instant où les règles changent. Une carte qui s'abat est encore à l'écran
+230 ms après l'impact ; une carte sans cible disparaît au lâcher, donc le tas
+répond tout de suite.
 
-**Et ce qui s'EXILE ne vole nulle part** : une potion bue, un trésor brûlé ne
+*L'étape d'avant reste dans `git log`* : la traînée partait alors du corps
+frappé, et il avait fallu d'abord corriger qu'elle partait de son ancien rang
+dans l'éventail — Keko : « l'effet de particules part de sa position en main
+précédente au lieu de sa position réelle quand je la joue ». La règle qui en
+sort tient toujours : *une carte jouée a quitté l'éventail avant de partir,
+donc sa place d'avant ne raconte plus rien.*
+
+**Et ce qui s'EXILE ne fait rien bouger** : une potion bue, un trésor brûlé ne
 rejoignent aucun tas. On le lit sur l'état d'après — la carte est-elle dans
 `defausse` ? — plutôt qu'en recopiant la règle.
 

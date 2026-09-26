@@ -314,14 +314,6 @@ export function Scene(): React.JSX.Element {
    */
   const mainAvant = useRef<string[] | null>(null)
   /**
-   * LA DERNIÈRE CARTE JOUÉE, ET OÙ ELLE S'EST ABATTUE.
-   *
-   * Elle ne brûle pas dans la main : elle vient de tomber sur sa cible, et
-   * c'est de LÀ que sa traînée doit partir. *Sans la place, on ne saurait que
-   * l'exclure* — et c'est ce qu'on faisait, donc sa traînée partait de son
-   * ancien rang dans l'éventail.
-   */
-  /**
    * LA FIN DE TOUR NE SE DÉDUIT PAS, ELLE SE DÉCLARE.
    *
    * Comparer deux mains suffit tant que les cartes changent ; à la fin d'un
@@ -342,12 +334,25 @@ export function Scene(): React.JSX.Element {
     melange: boolean
   } | null>(null)
 
-  const dejaJouee = useRef<{
-    id: string
-    place: [number, number, number]
-    /** Faux quand elle s'est déjà abattue : on ne la rallume pas. */
-    embrase: boolean
-  } | null>(null)
+  /**
+   * LA DERNIÈRE CARTE JOUÉE, ET QUAND SON ANIMATION S'ACHÈVE.
+   *
+   * **UNE CARTE UTILISÉE N'A PAS DE COMÈTE.** Tranché par Keko : « une carte
+   * utilisée n'est jamais affectée par cette animation ; on fait juste
+   * trembler / gonfler le paquet de défausse pour signifier qu'il augmente,
+   * mais la disparition de la carte sera son animation d'utilisation ».
+   *
+   * *Et c'est juste* : la comète raconte un TRANSIT — une carte quitte la main
+   * sans qu'on l'ait décidé, et il faut dire où elle va. Une carte jouée, elle,
+   * a déjà toute une scène à son nom : on l'a sortie de la main, elle s'est
+   * abattue sur un corps. Lui ajouter un vol vers le tas raconterait deux fois
+   * le même départ.
+   *
+   * Il ne reste donc à savoir qu'une chose : **quand le tas doit encaisser** —
+   * à la fin de l'animation d'utilisation, pas à l'instant où les règles
+   * changent.
+   */
+  const dejaJouee = useRef<{ id: string; finAnimation: number } | null>(null)
 
   useEffect(() => {
     if (!enCombat) {
@@ -529,41 +534,21 @@ export function Scene(): React.JSX.Element {
       })
     }
 
-    // LA CARTE JOUÉE PART D'OÙ ELLE EST, PAS D'OÙ ELLE ÉTAIT. Elle a quitté
-    // l'éventail avant d'être jouée — elle s'est abattue sur un corps, ou on
-    // l'a lâchée au-dessus de la main — et sa traînée partait quand même de
-    // son ancien rang. Keko : « l'effet de particules part de sa position en
-    // main précédente au lieu de sa position réelle quand je la joue ».
+    // UNE CARTE JOUÉE NE VOLE PAS, ELLE TOMBE DANS LE TAS. Elle a déjà son
+    // animation — le geste qui la sort de la main, la chute sur le corps visé
+    // — et la faire partir en comète par-dessus raconterait deux fois le même
+    // départ. Seul le TAS réagit, et au bon moment : quand ce qu'on voyait
+    // d'elle s'achève, pas quand les règles changent.
     //
-    // *Et une carte qui s'est abattue ne s'embrase pas* : `CarteQuiSAbat` l'a
-    // déjà écrasée puis effacée. Seule celle qui ne vise personne brûle, là où
-    // le doigt l'a lâchée.
-    if (jouee !== null && !ids.includes(jouee.id)) {
-      const carte = mainCartes.current.get(jouee.id)
-      if (jouee.embrase && carte !== undefined) {
-        neuves.push({
-          cle: `x-${jouee.id}-${t}`,
-          carte,
-          place: jouee.place,
-          // Droite : sortie de la main, elle ne porte plus l'angle de
-          // l'éventail — c'est ainsi qu'on la tenait au doigt.
-          rotation: [0, 0, 0],
-          debut: t,
-        })
-      }
-      // Une potion ou un trésor brûlé s'EXILE : il ne rejoint aucun tas, donc
-      // rien ne doit voler vers la défausse.
-      if (combat.defausse.some((c) => c.id === jouee.id)) {
-        // Elle part quand ce qu'on a vu d'elle s'achève : la fin de sa chute
-        // si elle s'est abattue, la fin de son embrasement sinon.
-        jeterVers(
-          `j-${jouee.id}-${t}`,
-          jouee.place,
-          t + (jouee.embrase ? DUREE_DISSOLUTION * PART_ENVOL : (TEMPS_FIN - TEMPS_IMPACT) * 0.7),
-          // Une carte jouée sans cible s'éteint DROITE, sortie de la main.
-          jouee.embrase ? 0 : undefined,
-        )
-      }
+    // Une potion ou un trésor brûlé s'EXILE : il ne rejoint aucun tas, donc
+    // rien n'y tombe.
+    if (
+      jouee !== null &&
+      !ids.includes(jouee.id) &&
+      defausse !== null &&
+      combat.defausse.some((c) => c.id === jouee.id)
+    ) {
+      window.setTimeout(() => setChocDefausse((n) => n + 1), jouee.finAnimation * 1000)
     }
 
     if (neuves.length > 0) {
@@ -650,7 +635,9 @@ export function Scene(): React.JSX.Element {
       setEnVol({ cle, carte: aPeindre(carte), depuis, vers, debut: lireHorloge() })
 
       window.setTimeout(() => {
-        dejaJouee.current = { id: carte.id, place: vers, embrase: false }
+        // LE TAS ENCAISSE QUAND LA CHUTE S'ACHÈVE, pas à l'impact : la carte
+        // est encore à l'écran pendant tout ce temps-là.
+        dejaJouee.current = { id: carte.id, finAnimation: TEMPS_FIN - TEMPS_IMPACT }
         majCombat((c) => jouerCarte(c, index, cible))
         setTouches((t) => ({ ...t, [cible]: lireHorloge() }))
         secouer('normale')
@@ -708,7 +695,7 @@ export function Scene(): React.JSX.Element {
       setEnVol({ cle, carte: aPeindre(carte), depuis, vers: milieu, debut: lireHorloge() })
 
       window.setTimeout(() => {
-        dejaJouee.current = { id: carte.id, place: milieu, embrase: false }
+        dejaJouee.current = { id: carte.id, finAnimation: TEMPS_FIN - TEMPS_IMPACT }
         majCombat((c) => jouerCarte(c, index, -1))
         secouer('forte')
         const maintenant = lireHorloge()
@@ -778,10 +765,9 @@ export function Scene(): React.JSX.Element {
         // personne, mais elle fait quelque chose, et ça doit se voir.
         if (portee(carte) === 'toutes') frapperTous(index, depuis)
         else {
-          // ELLE BRÛLE OÙ ON L'A LÂCHÉE. Elle n'a pas de chute à jouer, donc
-          // c'est son embrasement qui tient lieu de départ — et il doit se
-          // produire là où on vient de la voir, pas dans sa case d'avant.
-          dejaJouee.current = { id: carte.id, place: depuis, embrase: true }
+          // Celle-ci n'a pas de chute à jouer : elle disparaît au lâcher, donc
+          // le tas encaisse tout de suite.
+          dejaJouee.current = { id: carte.id, finAnimation: 0 }
           majCombat((c) => jouerCarte(c, index, -1))
         }
         return
