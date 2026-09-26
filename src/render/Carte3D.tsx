@@ -291,13 +291,29 @@ ${nuanceur.fragmentShader}`
     return { face, laiton, halo }
   }, [])
 
+  /**
+   * UNE PETITE CARTE PREND UNE PETITE TEXTURE.
+   *
+   * À 0,44 de large — la case du coffre — une carte fait une centaine de
+   * pixels à l'écran pour une texture de 768 : le GPU la minifie de deux
+   * niveaux et demi et **mélange deux étages de mipmap**, dont un plus petit
+   * qu'elle. Keko : « pourquoi les cartes réduites sont floues ? » *Ce n'était
+   * pas la peinture, c'était la minification.*
+   *
+   * Le seuil est celui du chargement : au-dessus, la carte se lit en grand et
+   * mérite sa pleine résolution. Une carte qui grandit en cours de geste
+   * change de texture en chemin — elle y GAGNE en netteté, donc le relais se
+   * lit dans le bon sens.
+   */
+  const petite = taille < 0.6
+
   useEffect(() => {
     let vivant = true
     // LA TEXTURE VIENT D'UN CACHE PARTAGÉ : deux cartes du même modèle se la
     // prêtent, et une carte remontée la retrouve déjà prête — donc elle ne
     // repasse jamais par son état sombre. Rien n'est libéré ici pour la même
     // raison : elle ne nous appartient pas.
-    void (dos ? textureDuDos() : textureDeCarte(carte))
+    void (dos ? textureDuDos() : textureDeCarte(carte, petite))
       .then((texture) => {
         if (!vivant) return
         face.map = texture
@@ -324,7 +340,7 @@ ${nuanceur.fragmentShader}`
     // famille de raison : une fonction recréée à chaque rendu du parent
     // repeindrait la carte en boucle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature(carte), face, dos])
+  }, [signature(carte), face, dos, petite])
 
   /**
    * La place LISSÉE, tenue à part de celle du groupe.

@@ -996,14 +996,50 @@ export function signature(carte: CarteAPeindre): string {
   return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.effet.join('~')}`
 }
 
-export function textureDeCarte(carte: CarteAPeindre): Promise<THREE.CanvasTexture> {
-  const cle = signature(carte)
+/**
+ * LA PETITE CARTE A SA PROPRE TEXTURE, ET C'EST POURQUOI ELLE EST NETTE.
+ *
+ * Keko : « pourquoi les cartes réduites sont floues ? » *Ce n'était pas la
+ * peinture, c'était le MIPMAP.* Une carte du coffre fait une centaine de
+ * pixels à l'écran pour une texture de 768 : le GPU la minifie de 2,3 niveaux
+ * et **mélange deux étages de mipmap**, dont un plus petit qu'elle — le texte
+ * s'y brouille par construction, quel que soit le soin mis à le peindre.
+ *
+ * On redessine donc la carte dans une toile à sa taille, une fois, et c'est
+ * elle qu'on plaque : *il n'y a plus de minification à faire*, donc plus rien
+ * à mélanger. Le rééchantillonnage du canvas en `high` vaut mieux que la
+ * réduction en boîte que le GPU fabrique pour ses mipmaps.
+ *
+ * **Ça vaut son cache à part** : le même modèle peut être au coffre ET au
+ * chargement, et les deux tailles cohabitent. Une petite pèse 0,4 Mo contre
+ * 4,4 — c'est la moins chère des deux.
+ */
+function reduire(source: HTMLCanvasElement, largeur: number): HTMLCanvasElement {
+  const petit = document.createElement('canvas')
+  petit.width = largeur
+  petit.height = Math.round(largeur * 1.4)
+  const ctx = petit.getContext('2d')
+  if (ctx === null) return source
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(source, 0, 0, petit.width, petit.height)
+  return petit
+}
+
+/** La largeur d'une texture de petite carte, en pixels. */
+const PETITE = 256
+
+export function textureDeCarte(
+  carte: CarteAPeindre,
+  petite = false,
+): Promise<THREE.CanvasTexture> {
+  const cle = petite ? `${signature(carte)}#p` : signature(carte)
   const connue = TEXTURES.get(cle)
   if (connue !== undefined) return connue
 
   const promesse = peindreCarte(carte)
     .then((canvas) => {
-      const texture = new THREE.CanvasTexture(canvas)
+      const texture = new THREE.CanvasTexture(petite ? reduire(canvas, PETITE) : canvas)
       // La carte se regarde de près et en biais : sans filtrage anisotrope le
       // texte se brouille dès qu'elle s'incline.
       texture.anisotropy = 8

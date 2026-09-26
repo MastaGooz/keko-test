@@ -3221,6 +3221,25 @@ arithmétique.
 taille fixe elles se recouvraient les unes les autres sur un téléphone, et
 *une zone plus grande que son slot vole le dépôt à sa voisine.*
 
+**UNE PETITE CARTE PREND UNE PETITE TEXTURE.** Keko : « pourquoi les cartes
+réduites sont floues ? » *Ce n'était pas la peinture, c'était la
+MINIFICATION.* Une carte du coffre fait une centaine de pixels à l'écran pour
+une texture de 768 : le GPU la minifie de deux niveaux et demi et **mélange
+deux étages de mipmap**, dont un plus petit qu'elle — le texte s'y brouille
+par construction, quel que soit le soin mis à le peindre.
+
+On redessine donc la carte dans une toile à sa taille (256 de large), une
+fois, et c'est elle qu'on plaque : *il n'y a plus de minification à faire,
+donc plus rien à mélanger.* Le rééchantillonnage du canvas en `high` vaut
+d'ailleurs mieux que la réduction en boîte que le GPU fabrique pour ses
+mipmaps.
+
+Elle a son **cache à part** — le même modèle peut être au coffre ET au
+chargement — et ça ne coûte presque rien : 0,4 Mo contre 4,4. Le seuil est
+celui du chargement (0,6) ; une carte qui grandit en cours de geste change de
+texture en chemin, et elle y GAGNE en netteté, donc le relais se lit dans le
+bon sens.
+
 **LE NOMBRE DE LIGNES SUIT LA HAUTEUR DE L'ÉCRAN**, et les lignes se
 RÉPARTISSENT dedans plutôt que de s'empiler depuis le haut : à pas fixe, il
 restait toujours une fraction de rangée en bas — *un vide qui n'est le bord de
