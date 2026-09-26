@@ -3144,6 +3144,14 @@ empilés faisaient quatre objets ; un rail coupé en quatre fait une seule
 pièce. Et le premier n'a pas de filet : *un séparateur sépare, il n'encadre
 pas.*
 
+**TOUTES LES LIGNES DU RAIL ONT LA MÊME HAUTEUR.** Keko : « c'est dommage que
+la ligne de l'énergie soit plus haute que les autres ». Chaque symbole dictait
+la sienne — l'orbe est un disque, le paquet un losange, la main un éventail —
+donc le rail avait des marches, et *un rail dont les crans ne sont pas
+réguliers n'est plus un rail.* **C'est la ligne qui fixe la hauteur, et les
+symboles s'y inscrivent** en gardant leur rapport : ils se mesurent sur elle et
+non plus sur la fenêtre.
+
 **LA HAUTEUR D'UN BOUTON N'EST PLUS UN NOMBRE FIXE.** À 52 px partout, il
 touchait le cadre voisin sur un téléphone et se perdait sur un écran de PC —
 Keko : « sur téléphone le bouton descendre touche le bloc de l'équipement, il
@@ -3153,6 +3161,12 @@ rester atteignable au doigt **et** proportionné à ce qui l'entoure. C'est donc
 une part de la hauteur d'écran (8,5 %), bornée en bas par le plancher tactile
 du projet — 48 px — et en haut à 72 pour qu'il ne devienne pas une enseigne.
 La règle vaut pour tous les boutons du moteur, pas seulement celui-ci.
+
+**Et la colonne fait au moins la largeur de son bouton.** Il vit dedans et sa
+largeur sort de son texte : trop étroite, la colonne le laissait déborder sur
+l'équipement — *une colonne qui ne contient pas ce qu'on y met n'est pas une
+colonne.* C'est aussi ce qui a permis de le grossir sur téléphone sans rouvrir
+la collision.
 
 **LE BANDEAU NE DIT PLUS QUE LE LIEU.** Le chargement, le compte du deck et
 l'or en sont partis, demandé par Keko : *ce qu'on lit sans décider dessus n'a

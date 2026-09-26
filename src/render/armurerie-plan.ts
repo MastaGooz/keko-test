@@ -28,6 +28,7 @@
  * au-dessus.*
  */
 import { Z_MAIN, hauteurVisibleA } from './Cadrage.tsx'
+import { tailleBouton } from './Bouton3D.tsx'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Carte } from '../logic/combat.ts'
@@ -167,7 +168,16 @@ export function planArmurerie(
   // Les stats sont un rail de cartouches : leur largeur est celle de leur
   // contenu, pas une part du reste. On la borne pour qu'un grand écran ne
   // l'étire pas en panneau.
-  const lStats = Math.min(largeurUtile * 0.15, 2.05)
+  // LA COLONNE FAIT AU MOINS LA LARGEUR DE SON BOUTON. Il vit dedans, et sa
+  // largeur sort de son texte : trop étroite, la colonne le laissait déborder
+  // sur l'équipement — *une colonne qui ne contient pas ce qu'on y met n'est
+  // pas une colonne.* C'est aussi ce qui permet de grossir le bouton sans
+  // rouvrir la collision.
+  const lBouton = tailleBouton('Descendre', 'or', false, Z_PLAN, hauteurFenetrePx).largeur
+  const lStats = Math.min(
+    Math.max(largeurUtile * 0.15, lBouton * 1.14),
+    largeurUtile * 0.3,
+  )
   const lCoffre = (largeurUtile - lStats) * 0.615
   const lEquip = largeurUtile - lStats - lCoffre
   const xCoffre = -demiLarge + marge + lCoffre / 2

@@ -5090,7 +5090,13 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  padding: clamp(0.3rem, 1.1vh, 0.6rem) 0.4rem;
+  /* TOUTES LES LIGNES ONT LA MEME HAUTEUR. Demande par Keko : « c'est dommage
+     que la ligne de l'energie soit plus haute que les autres ». Chaque symbole
+     dictait la sienne, donc le rail avait des marches -- *un rail dont les
+     crans ne sont pas reguliers n'est plus un rail.* La ligne fixe la hauteur,
+     et c'est aux symboles de s'y tenir. */
+  height: clamp(1.9rem, 5.4vh, 3rem);
+  padding: 0 0.4rem;
 }
 
 .arm-mesure + .arm-mesure {
@@ -5099,17 +5105,22 @@ body {
 
 /* LE PAQUET GARDE SA TAILLE DE COMBAT, en plus petit : c'est le meme objet,
    et c'est tout l'interet de le montrer ici. */
+/* LES SYMBOLES SE MESURENT SUR LA LIGNE, plus sur la fenetre : c'est elle qui
+   commande, et ils s'y inscrivent en gardant leur rapport. */
 .arm-tas {
   display: block;
-  width: clamp(1.8rem, 5.2vh, 3rem);
+  width: auto;
+  height: 84%;
 }
 
 /* LE TAS PORTE SA PROPRE LARGEUR (`--tas`), calee pour le combat : sans ce
    rappel il debordait de sa place et passait sous la barre de vie. *Un
    composant qui porte son ancrage doit pouvoir le rendre* -- la meme chose
    que pour l'orbe. */
-.arm-tas .tas-3d {
-  width: 100%;
+.arm-tas .tas-3d,
+.arm-tas .tas-dessin {
+  width: auto;
+  height: 100%;
 }
 
 .arm-tas .tas-compte {
@@ -5124,8 +5135,9 @@ body {
   position: relative;
   left: auto;
   bottom: auto;
-  width: clamp(1.9rem, 5.6vh, 3rem);
-  height: clamp(1.9rem, 5.6vh, 3rem);
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
 }
 
 /* LA VIE EST UN COEUR, PAS UNE JAUGE. Demande par Keko, et c'est juste sur le
@@ -5135,7 +5147,8 @@ body {
    nombre de cartes. La jauge et ses trois regles vivent dans `git log`. */
 .arm-icone {
   display: block;
-  width: clamp(1.5rem, 4.4vh, 2.4rem);
+  width: auto;
+  height: 72%;
   filter: drop-shadow(0 1px 2px #000000a8);
 }
 

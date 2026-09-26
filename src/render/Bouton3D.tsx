@@ -42,10 +42,10 @@ import { hauteurVisibleA } from './Cadrage.tsx'
  * haut pour qu'il ne devienne pas une enseigne.
  */
 function hauteurBoutonPx(hauteurFenetrePx: number, petit: boolean): number {
-  const part = hauteurFenetrePx * (petit ? 0.072 : 0.085)
+  const part = hauteurFenetrePx * (petit ? 0.076 : 0.09)
   return petit
-    ? Math.max(42, Math.min(60, part))
-    : Math.max(48, Math.min(72, part))
+    ? Math.max(46, Math.min(62, part))
+    : Math.max(54, Math.min(76, part))
 }
 
 /** La hauteur d'un bouton en unités de scène, à cette profondeur. */
