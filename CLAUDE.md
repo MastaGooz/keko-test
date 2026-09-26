@@ -2176,6 +2176,41 @@ Quatre choses à ne pas défaire :
   l'énergie, le filet des tas : c'est la couleur de tout ce qui a de la valeur
   ici. Un sillage blanc aurait été un effet posé par-dessus le jeu.
 
+**TROIS PISTES COHABITENT, LE TEMPS DE TRANCHER** (`?r3f&sillage=…`). Keko a
+demandé à voir les autres avant de choisir, donc elles vivent derrière une URL
+— pas derrière un réglage caché : il n'y a pas encore de panneau en 3D et il
+juge depuis son téléphone. Même motif que `?main=20` et que la planche
+`?ecusson` : *ce qui se teste doit pouvoir s'ouvrir d'un lien.*
+
+| | `sillage=` | ce que ça raconte |
+|---|---|---|
+| **comète** (défaut) | `comete` | de la lumière file, avec une tête et un sillage |
+| **éclats de carte** | `esquilles` | **une carte** file, en morceaux qui culbutent |
+| **sceaux** | `glyphes` | rien ne file : le trajet **s'écrit** d'un bout à l'autre |
+
+Ce que chacune achète, et ce qu'elle coûte :
+
+- **les éclats** (`trainee-esquilles.tsx`) : on sait ce qui voyage sans l'avoir
+  appris — la chose qui a brûlé dans la main est celle qui file vers le tas, en
+  morceaux. *Mais elle est moins lisible en petit* : un éclat fait une
+  vingtaine de pixels sur un téléphone, donc c'est surtout le laiton qu'on lit,
+  pas la forme. Ils culbutent chacun sur son axe (quatre rectangles qui
+  tournent ensemble se lisent comme un objet rigide) et **se redressent en
+  arrivant**, parce qu'une carte entre dans un tas à plat ;
+- **les sceaux** (`trainee-glyphes.tsx`) : le seul registre qui dise un monde
+  plutôt qu'un effet, et le seul qui fasse lire le trajet **comme une phrase**,
+  avec un début et une fin. *Mais il est plus lent à lire* — un sillage se
+  comprend en périphérie, une inscription demande un regard, donc cinq cartes
+  défaussées d'un coup risquent la soupe de signes. **Un sceau ne se déplace
+  pas** : il naît, il brûle et il s'éteint là où il est — *un signe qui glisse
+  redevient une particule*, et on aurait refait la comète en moins bien.
+
+**Ce qu'elles partagent, et rien d'autre** (`sillage.ts`) : la DURÉE, parce que
+la scène cale dessus les chocs des tas et la naissance des cartes — changer de
+piste ne doit jamais décaler le cycle — et la COURBE, parce que les trois
+doivent raconter le même trajet. La piste se lit une fois pour toutes dans
+`Trainee.tsx` : le jour où Keko tranche, il ne reste qu'un import à garder.
+
 **PIÈGE, et il s'est vu tout de suite à la capture : une traînée qui n'est pas
 encore partie se posait à l'ORIGINE de la scène.** Elles sont toutes montées
 d'un coup et s'égrènent ensuite ; celles qui attendaient leur tour gardaient une
