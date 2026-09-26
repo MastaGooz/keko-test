@@ -257,6 +257,8 @@ export function Scene(): React.JSX.Element {
   const [dissolutions, setDissolutions] = useState<Dissolution[]>([])
   /** La pioche tremble pendant qu'on y reverse la défausse. */
   const [brasse, setBrasse] = useState(false)
+  /** Un compteur d'arrivées : la défausse gonfle à chaque carte qu'on y jette. */
+  const [chocDefausse, setChocDefausse] = useState(0)
 
   /**
    * Ce qu'il faut pour peindre une carte qui vient de QUITTER la main : une
@@ -460,6 +462,26 @@ export function Scene(): React.JSX.Element {
     const defausse = coinDe('defausse')
     const neuves: Dissolution[] = []
 
+    /**
+     * TOUT CE QUI PART À LA DÉFAUSSE PASSE PAR ICI, et le tas l'ENCAISSE.
+     *
+     * Demandé par Keko : la traînée arrivait et le tas ne bougeait pas — *on
+     * jetait quelque chose dans un objet qui ne le sentait pas passer.* Le
+     * choc est posé au même endroit que le trajet, sans quoi il faudrait
+     * penser à l'ajouter à chaque nouvelle façon de défausser une carte.
+     *
+     * Il part un cheveu avant la fin du vol : les grains convergent sur la fin,
+     * donc le tas doit déjà répondre quand les premiers le touchent.
+     */
+    const jeterVers = (cle: string, depuis: [number, number, number], debut: number): void => {
+      if (defausse === null) return
+      trajetsNeufs.push({ cle, depuis, vers: defausse, debut })
+      window.setTimeout(
+        () => setChocDefausse((n) => n + 1),
+        (debut - t + DUREE_TRAINEE * 0.85) * 1000,
+      )
+    }
+
     // LA DÉFAUSSE : la carte s'embrase à sa place dans l'éventail, puis c'est
     // la traînée qui s'en va. *Pas d'apparition au bout* — on ne fait pas
     // naître une carte dans un tas.
@@ -480,12 +502,7 @@ export function Scene(): React.JSX.Element {
         // LA TRAÎNÉE PART QUAND L'EMBRASEMENT FINIT : c'est ce décalage qui
         // fait lire la carte DEVENUE traînée, plutôt que deux choses sans
         // rapport.
-        trajetsNeufs.push({
-          cle: `d-${id}-${t}`,
-          depuis: ou.position,
-          vers: defausse,
-          debut: depart + DUREE_DISSOLUTION * 0.72,
-        })
+        jeterVers(`d-${id}-${t}`, ou.position, depart + DUREE_DISSOLUTION * 0.72)
       })
     }
 
@@ -513,15 +530,14 @@ export function Scene(): React.JSX.Element {
       }
       // Une potion ou un trésor brûlé s'EXILE : il ne rejoint aucun tas, donc
       // rien ne doit voler vers la défausse.
-      if (defausse !== null && combat.defausse.some((c) => c.id === jouee.id)) {
-        trajetsNeufs.push({
-          cle: `j-${jouee.id}-${t}`,
-          depuis: jouee.place,
-          vers: defausse,
-          // Elle part quand ce qu'on a vu d'elle s'achève : la fin de sa chute
-          // si elle s'est abattue, la fin de son embrasement sinon.
-          debut: t + (jouee.embrase ? DUREE_DISSOLUTION * 0.72 : (TEMPS_FIN - TEMPS_IMPACT) * 0.7),
-        })
+      if (combat.defausse.some((c) => c.id === jouee.id)) {
+        // Elle part quand ce qu'on a vu d'elle s'achève : la fin de sa chute
+        // si elle s'est abattue, la fin de son embrasement sinon.
+        jeterVers(
+          `j-${jouee.id}-${t}`,
+          jouee.place,
+          t + (jouee.embrase ? DUREE_DISSOLUTION * 0.72 : (TEMPS_FIN - TEMPS_IMPACT) * 0.7),
+        )
       }
     }
 
@@ -1438,6 +1454,7 @@ export function Scene(): React.JSX.Element {
               nom="defausse"
               compte={combat.defausse.length}
               brasse={brasse ? DUREE_MELANGE : null}
+              choc={chocDefausse}
             />
           </div>
 

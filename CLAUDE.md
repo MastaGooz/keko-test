@@ -2290,6 +2290,24 @@ premier réglage. D'où un prop qui porte la durée plutôt qu'un booléen — e
 période de la pulsation s'en déduit (`/ 3`), sinon la dernière serait coupée en
 plein vol.
 
+**ET LA DÉFAUSSE ENCAISSE CHAQUE CARTE QU'ON Y JETTE**, pas seulement le
+mélange. Demandé par Keko. La traînée arrivait et le tas ne bougeait pas : *on
+jetait quelque chose dans un objet qui ne le sentait pas passer.*
+
+**Ça passe par l'API d'animation, pas par une classe CSS**, parce qu'il faut
+pouvoir RELANCER le geste alors qu'il n'est pas fini — cinq cartes partent à
+50 ms d'intervalle. Une classe qu'on retire et qu'on repose ne redémarre pas
+l'animation sans un reflow forcé ; une animation lancée à la main remplace
+simplement la précédente. Le prop est un **compteur d'arrivées** et non un
+instant : on ne veut pas savoir quand une carte est tombée, seulement qu'il en
+est tombé une de plus.
+
+**Et le choc est posé au même endroit que le trajet** (`jeterVers`), sinon il
+faudrait penser à l'ajouter à chaque nouvelle façon de défausser une carte — il
+y en a déjà deux, la fin de tour et la carte jouée. Il part un cheveu avant la
+fin du vol : les grains convergent sur la fin, donc le tas doit déjà répondre
+quand les premiers le touchent.
+
 Prix connu, et il est assumé : un tour qui remélange met ~1,9 s à rendre la
 main, contre ~1,1 s sans. *C'est le seul moment où le deck se retourne*, et il
 n'arrive qu'une fois par tas vidé.

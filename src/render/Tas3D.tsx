@@ -174,7 +174,7 @@ const CADRE = [
   .map((v) => v.toFixed(2))
   .join(' ')
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { urlDuDosPeint } from './texture-carte.ts'
 
 type Props = {
@@ -190,10 +190,47 @@ type Props = {
    * une valeur recopiée en CSS dériverait au premier réglage.
    */
   brasse?: number | null
+  /**
+   * Un compteur d'arrivées : le tas gonfle une fois à chaque incrément.
+   *
+   * *Un compteur plutôt qu'un instant* — on ne veut pas savoir QUAND une carte
+   * est tombée, seulement qu'il en est tombé une de plus, et deux arrivées
+   * rapprochées doivent relancer le geste sans l'attendre.
+   */
+  choc?: number
 }
 
-export function Tas3D({ nom, compte, brasse = null }: Props): React.JSX.Element {
+export function Tas3D({ nom, compte, brasse = null, choc = 0 }: Props): React.JSX.Element {
   const id = `tas-${nom}`
+  const dessin = useRef<SVGSVGElement>(null)
+
+  /**
+   * LE TAS ENCAISSE CHAQUE CARTE QU'ON Y JETTE. Demandé par Keko. La traînée
+   * arrivait et le tas ne bougeait pas : *on jetait quelque chose dans un
+   * objet qui ne le sentait pas passer.*
+   *
+   * **Ça passe par l'API d'animation, pas par une classe CSS**, parce qu'il
+   * faut pouvoir RELANCER le geste alors qu'il n'est pas fini — cinq cartes
+   * partent à 50 ms d'intervalle. Une classe qu'on retire et qu'on repose ne
+   * redémarre pas l'animation sans un reflow forcé ; une animation qu'on lance
+   * à la main remplace simplement la précédente.
+   *
+   * `scale` et non `transform` : la même raison que le gonflement du mélange —
+   * la pioche porte un `scaleX(-1)` qu'un `transform` écraserait. Le tas de
+   * droite n'en a pas, mais une règle qui ne vaut que pour un tas sur deux est
+   * une règle qu'on oubliera.
+   */
+  useEffect(() => {
+    if (choc === 0) return
+    const el = dessin.current
+    if (el === null || typeof el.animate !== 'function') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const jeu = el.animate([{ scale: '1' }, { scale: '1.16', offset: 0.3 }, { scale: '1' }], {
+      duration: 190,
+      easing: 'ease-out',
+    })
+    return () => jeu.cancel()
+  }, [choc])
 
   /**
    * LE DESSUS DU PAQUET EST LE DOS DE CARTE, demandé par Keko.
@@ -229,7 +266,7 @@ export function Tas3D({ nom, compte, brasse = null }: Props): React.JSX.Element 
       style={brasse !== null ? ({ '--brasse-duree': `${brasse}s` } as React.CSSProperties) : undefined}
     >
       <span className="tas-compte">{compte}</span>
-      <svg viewBox={CADRE} className="tas-dessin" aria-hidden="true">
+      <svg ref={dessin} viewBox={CADRE} className="tas-dessin" aria-hidden="true">
         <defs>
           <linearGradient id={`${id}-dessus`} x1="0" y1="0" x2="0.6" y2="1">
             <stop offset="0" stopColor="#3b3f4c" />
