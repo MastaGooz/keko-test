@@ -2375,6 +2375,39 @@ donc sa place d'avant ne raconte plus rien.*
 rejoignent aucun tas. On le lit sur l'état d'après — la carte est-elle dans
 `defausse` ? — plutôt qu'en recopiant la règle.
 
+### LA CARTE DE GARDE SE REPLIE SUR LE BOUCLIER
+
+Keko : « quand on joue une carte d'armure, il faudrait une animation où la
+carte va vers l'emplacement où est affiché l'armure ». *C'était le dernier trou
+de la séquence* : une carte qui vise a sa chute sur le corps, une carte
+défaussée a sa comète, et une garde ne faisait rien du tout — elle disparaissait
+au lâcher et un chiffre bleu changeait dans un coin, sans que rien ne relie les
+deux.
+
+**ELLE NE S'ABAT PAS, ELLE SE REPLIE** (`CarteVersArmure.tsx`). La carte qui
+frappe arrive haut, marque un temps d'arrêt et tombe d'un coup sec : c'est le
+vocabulaire d'un coup porté. Une garde fait l'inverse — elle *rentre*. Elle se
+ramasse vers le bouclier **en accélérant**, là où la frappe part vite et
+s'arrête net. *Deux gestes opposés ne peuvent pas partager la même courbe.*
+
+**Elle passe en ACIER en chemin**, et c'est ce qui dit qu'elle DEVIENT l'armure
+plutôt qu'elle n'irait se ranger à côté. Même mécanique que la carte défaussée
+qui vire à la crème de la tête de comète : *une transformation se raconte par
+la couleur de ce qui arrive, pas par une substitution à la fin.*
+
+**L'ÉTAT ATTEND L'ARRIVÉE.** Si l'armure montait au lâcher, le bouclier
+afficherait déjà son chiffre pendant que la carte vole vers lui : *on verrait
+la conséquence avant la cause.* Même règle que la frappe, dont l'état change à
+l'impact et pas à la tape — et donc même verrou d'entrée pendant le vol.
+
+**Le bouclier encaisse** (`choc` sur `BarreVie3D`), par l'API d'animation comme
+les tas : il faut pouvoir relancer le geste avant qu'il soit fini, on peut poser
+deux gardes coup sur coup. Sa place est **toujours réservée**, avec ou sans
+armure, donc la carte a une cible même pour la première garde du tour.
+
+**Et faute de bouclier à l'écran, la carte se joue sans rien montrer** : *une
+animation ne doit jamais pouvoir empêcher un coup.*
+
 ### LE CYCLE SE DÉCLARE, IL NE SE DÉDUIT PAS — et le mélange se voit
 
 **Une carte défaussée puis REPIOCHÉE porte le même identifiant des deux côtés**,

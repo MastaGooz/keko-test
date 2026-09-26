@@ -41,6 +41,7 @@ import { Zoom3D } from './Zoom3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
 import { BarreVie3D } from './BarreVie3D.tsx'
+import { CarteVersArmure, FIN_ARMURE, TEMPS_ARMURE } from './CarteVersArmure.tsx'
 import type { Entree } from './Zoom3D.tsx'
 import {
   TAILLE_MAIN_URL,
@@ -260,6 +261,17 @@ export function Scene(): React.JSX.Element {
   const [dissolutions, setDissolutions] = useState<Dissolution[]>([])
   /** La pioche tremble pendant qu'on y reverse la défausse. */
   const [brasse, setBrasse] = useState(false)
+  /** La carte de garde en route vers le bouclier. */
+  const [versArmure, setVersArmure] = useState<{
+    cle: string
+    carte: CarteAPeindre
+    depuis: [number, number, number]
+    vers: [number, number, number]
+    debut: number
+  } | null>(null)
+  /** Le bouclier encaisse : il gonfle quand la carte s'y replie. */
+  const [chocArmure, setChocArmure] = useState(0)
+
   /**
    * Un compteur d'arrivées par tas : il gonfle à chaque chose qu'on y verse.
    *
@@ -598,6 +610,68 @@ export function Scene(): React.JSX.Element {
   )
 
   /**
+   * LA CARTE DE GARDE SE REPLIE SUR LE BOUCLIER.
+   *
+   * Keko : « quand on joue une carte d'armure, il faudrait une animation où la
+   * carte va vers l'emplacement où est affiché l'armure ». *C'était le dernier
+   * trou de la séquence* : une carte qui vise a sa chute sur le corps, une
+   * carte défaussée a sa comète, et une garde ne faisait rien — elle
+   * disparaissait au lâcher et un chiffre bleu changeait dans un coin.
+   *
+   * **L'ÉTAT ATTEND L'ARRIVÉE.** Si l'armure montait au lâcher, le bouclier
+   * afficherait déjà son chiffre pendant que la carte vole vers lui : *on
+   * verrait la conséquence avant la cause.* Même règle que la frappe, dont
+   * l'état change à l'impact et pas à la tape — et donc même verrou d'entrée
+   * pendant le vol.
+   *
+   * **Le bouclier est du HTML**, la carte vit dans le canvas : sa place se lit
+   * dans le DOM et se reprojette avec `depuisEcran`, exactement comme les tas.
+   * Faute de bouclier à l'écran, on joue la carte sans rien montrer — *une
+   * animation ne doit jamais pouvoir empêcher un coup.*
+   */
+  const proteger = useCallback(
+    (index: number, depuis: [number, number, number]) => {
+      const carte = combat.main[index]
+      if (carte === undefined) return
+      const el = document.querySelector('.vie-armure')
+      const r = el?.getBoundingClientRect() ?? null
+      const vers =
+        r === null
+          ? null
+          : depuisEcran(
+              r.left + r.width / 2,
+              r.top + r.height / 2,
+              Z_MAIN,
+              window.innerWidth,
+              window.innerHeight,
+            )
+      const poser = (): void => {
+        dejaJouee.current = { id: carte.id, finAnimation: 0 }
+        majCombat((c) => jouerCarte(c, index, -1))
+      }
+      if (vers === null) {
+        poser()
+        return
+      }
+
+      const cle = `a-${cleSuivante.current++}`
+      setVerrou(true)
+      setVersArmure({ cle, carte: aPeindre(carte), depuis, vers, debut: lireHorloge() })
+
+      window.setTimeout(() => {
+        poser()
+        setChocArmure((n) => n + 1)
+      }, TEMPS_ARMURE * 1000)
+
+      window.setTimeout(() => {
+        setVersArmure(null)
+        setVerrou(false)
+      }, FIN_ARMURE * 1000)
+    },
+    [combat, majCombat],
+  )
+
+  /**
    * LES CARTES QUI DEMANDENT UNE CIBLE, et les corps qu'on peut désigner.
    *
    * **Les morts gardent leur index mais sortent du champ** : les index de
@@ -764,8 +838,9 @@ export function Scene(): React.JSX.Element {
         // Une carte qui frappe TOUT LE RANG s'abat quand même : elle ne vise
         // personne, mais elle fait quelque chose, et ça doit se voir.
         if (portee(carte) === 'toutes') frapperTous(index, depuis)
+        else if (carte.effets?.some((e) => e.type === 'bloc') === true) proteger(index, depuis)
         else {
-          // Celle-ci n'a pas de chute à jouer : elle disparaît au lâcher, donc
+          // Celle-ci n'a pas de scène à jouer : elle disparaît au lâcher, donc
           // le tas encaisse tout de suite.
           dejaJouee.current = { id: carte.id, finAnimation: 0 }
           majCombat((c) => jouerCarte(c, index, -1))
@@ -776,7 +851,7 @@ export function Scene(): React.JSX.Element {
       // Elle part d'où on l'a VUE : sa place d'attente au-dessus de la main.
       frapper(index, cible, depuis)
     },
-    [combat, fini, frapper, frapperTous, majCombat, verrou],
+    [combat, fini, frapper, frapperTous, majCombat, proteger, verrou],
   )
 
   const reordonner = useCallback((de: number, vers: number) => {
@@ -1057,9 +1132,10 @@ export function Scene(): React.JSX.Element {
   const enVolOuVolant = useMemo(() => {
     const ids = [...attendues]
     if (enVol !== null) ids.push(enVol.carte.id)
+    if (versArmure !== null) ids.push(versArmure.carte.id)
     if (zoomee !== null) ids.push(zoomee.id)
     return ids
-  }, [attendues, enVol, zoomee])
+  }, [attendues, enVol, versArmure, zoomee])
 
   // LE DÉCOR SUIT CEUX QU'ON AFFRONTE, et il se relit à chaque combat. La part
   // de profondeur décide de quelle vue du camp : on s'y enfonce.
@@ -1178,6 +1254,15 @@ export function Scene(): React.JSX.Element {
 
         {/* La carte qui s'abat vit sur la scène et non dans la main : un rendu
             de la main la balaierait en plein vol, et le coup en déclenche un. */}
+        {versArmure !== null && (
+          <CarteVersArmure
+            key={versArmure.cle}
+            carte={versArmure.carte}
+            depuis={versArmure.depuis}
+            vers={versArmure.vers}
+            debut={versArmure.debut}
+          />
+        )}
         {enVol !== null && (
           <CarteQuiSAbat key={enVol.cle} carte={enVol.carte} depuis={enVol.depuis} vers={enVol.vers} debut={enVol.debut} />
         )}
@@ -1447,6 +1532,7 @@ export function Scene(): React.JSX.Element {
               armure={(salve ?? combat).bloc}
               menace={fini || salve !== null ? 0 : menace}
               encaisse={recus.length > 0}
+              choc={chocArmure}
             />
             {recus.map((k) => (
               <span key={k.cle} className="degats-3d recu">

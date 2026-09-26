@@ -49,6 +49,7 @@
  * borner. *Un repère qui doit rester lisible se pose à un endroit FIXE ; c'est
  * la couleur derrière lui qui bouge, pas lui.*
  */
+import { useEffect, useRef } from 'react'
 
 type Props = {
   pv: number
@@ -58,9 +59,45 @@ type Props = {
   menace: number
   /** Le joueur vient d'encaisser : la barre tressaille. */
   encaisse: boolean
+  /**
+   * Un compteur de gardes posées : le bouclier gonfle à chaque incrément.
+   *
+   * *Un compteur plutôt qu'un instant*, comme les tas : on ne veut pas savoir
+   * quand une carte s'y est repliée, seulement qu'il y en a une de plus — et
+   * deux gardes de suite doivent relancer le geste sans l'attendre.
+   */
+  choc?: number
 }
 
-export function BarreVie3D({ pv, pvMax, armure, menace, encaisse }: Props): React.JSX.Element {
+export function BarreVie3D({
+  pv,
+  pvMax,
+  armure,
+  menace,
+  encaisse,
+  choc = 0,
+}: Props): React.JSX.Element {
+  const bouclier = useRef<HTMLDivElement>(null)
+
+  /**
+   * LE BOUCLIER ENCAISSE LA CARTE QUI S'Y REPLIE.
+   *
+   * Même mécanique que les tas : **l'API d'animation et non une classe CSS**,
+   * parce qu'il faut pouvoir relancer le geste avant qu'il ne soit fini — on
+   * peut poser deux gardes coup sur coup.
+   */
+  useEffect(() => {
+    if (choc === 0) return
+    const el = bouclier.current
+    if (el === null || typeof el.animate !== 'function') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const jeu = el.animate([{ scale: '1' }, { scale: '1.35', offset: 0.28 }, { scale: '1' }], {
+      duration: 260,
+      easing: 'ease-out',
+    })
+    return () => jeu.cancel()
+  }, [choc])
+
   const echelle = Math.max(pvMax, 1)
   const part = (v: number): string => `${Math.max(0, Math.min(100, (v / echelle) * 100))}%`
   // Le jaune est PLAFONNÉ aux PV restants : au-delà il sortirait du rouge, et
@@ -105,7 +142,7 @@ export function BarreVie3D({ pv, pvMax, armure, menace, encaisse }: Props): Reac
         {perdus > 0 && <span className="vie-chiffre menace">−{perdus}</span>}
       </div>
 
-      <div className="vie-armure">
+      <div className="vie-armure" ref={bouclier}>
         {armure > 0 && (
           <>
             <svg viewBox="0 0 100 104" aria-hidden="true">
