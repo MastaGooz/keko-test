@@ -176,7 +176,12 @@ export function PageArmurerie({
           Ce sont les MÊMES objets qu'en combat — le paquet de pioche, l'orbe —
           parce que c'est là qu'il les retrouvera. */}
       <div className="arm-etat" style={boite(plan.pied)}>
+        {/* LE COMPTE DU DECK EST À GAUCHE DU PAQUET, demandé par Keko. Au-dessus
+            — sa place en combat — il se lisait comme une étiquette du tas ;
+            ici c'est une MESURE de ce qu'on emporte, elle s'aligne avec les
+            trois autres. */}
         <span className="arm-mesure">
+          <span className="arm-chiffre">{deck.total}</span>
           <span className="arm-tas">
             <Tas3D nom="pioche" compte={deck.total} />
           </span>

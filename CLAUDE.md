@@ -3187,6 +3187,24 @@ retrouvera ; l'orbe n'y montre que son maximum, puisqu'à l'armurerie rien n'a
 rendre* : l'orbe et le tas se posent en `fixed` pour le combat, et sans ce
 rappel l'orbe atterrissait au milieu du coffre.
 
+**LES QUATRE CHIFFRES ONT LA MÊME VOIX** — même corps, même graisse, celle de
+l'orbe. Keko : « utilise la même taille / bold pour le chiffre deck et main que
+ceux utilisés pour l'énergie ». *Quatre mesures du même état ne peuvent pas se
+lire à quatre voix* : c'est ce qui les fait lire comme une rangée et non comme
+quatre ornements posés côte à côte. La jauge de vie a dû grandir d'autant pour
+faire sa place au sien.
+
+**Et le compte du deck est passé À GAUCHE du paquet**, demandé par Keko.
+Au-dessus — sa place en combat, où l'on ne décide pas dessus — il se lisait
+comme une étiquette du tas ; ici c'est une MESURE de ce qu'on emporte, donc
+elle s'aligne avec les trois autres.
+
+**Le chiffre de l'orbe descend d'un cheveu sur TOUS les écrans** (0,06em), pas
+seulement sur téléphone. *Un chiffre se centre sur sa boîte de ligne, dont le
+bas est réservé aux jambages qu'un chiffre n'a pas* : il paraît donc toujours
+un peu haut, et ça se voyait aussi en grand. Le téléphone garde sa correction
+plus forte, parce que le disque de `Cost.png` y ajoute son propre décentrage.
+
 ### LE SYMBOLE DU COÛT EST UN ORBE — tranché par Keko
 
 Keko : « on dirait un bouclier, ça ne renvoie pas trop à l'énergie, et la

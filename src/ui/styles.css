@@ -4750,6 +4750,12 @@ body {
   font-variant-numeric: tabular-nums;
   line-height: 1;
   text-shadow: 0 1px 3px #000, 0 0 6px #00000099;
+  /* UN CHIFFRE SE CENTRE SUR SA BOITE DE LIGNE, dont le bas est reserve aux
+     jambages qu'un chiffre n'a pas : il parait donc toujours un peu haut, et
+     Keko l'a repris a la taille de l'ecran de PC aussi. En `em`, donc la
+     correction suit la taille du chiffre. Le telephone en remet, parce que le
+     disque de `Cost.png` y ajoute son propre decentrage. */
+  translate: 0 0.06em;
 }
 
 /* SUR TELEPHONE, LES CHIFFRES DESCENDENT D'UN CHEVEU.
@@ -5024,6 +5030,29 @@ body {
   pointer-events: none;
 }
 
+/* LES QUATRE CHIFFRES DU PIED ONT LA MEME VOIX. Demande par Keko : « utilise
+   la meme taille / bold pour le chiffre deck et main que ceux utilises pour
+   l'energie ». *Quatre mesures du meme etat ne peuvent pas se lire a quatre
+   voix* -- c'est ce qui les fait lire comme une rangee et non comme quatre
+   ornements poses cote a cote. */
+.arm-chiffre,
+.arm-jauge-chiffre {
+  color: #f7ecd2;
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-shadow: 0 1px 3px #000, 0 0 6px #00000099;
+}
+
+/* LE COMPTE DU DECK PASSE A GAUCHE DU PAQUET, et non plus au-dessus. Demande
+   par Keko. Au-dessus, il se lisait comme une etiquette du tas -- c'etait sa
+   place en combat, ou l'on ne decide pas dessus ; ici c'est une MESURE de ce
+   qu'on emporte, donc elle s'aligne avec les trois autres. */
+.arm-tas .tas-compte {
+  display: none;
+}
+
 /* L'ETAT DE CE QU'ON EMPORTE : le deck, la vie, l'energie, la main. Quatre
    chiffres et rien d'autre -- *avant de descendre, le joueur doit voir avec
    quoi il descend.* */
@@ -5081,7 +5110,9 @@ body {
   display: grid;
   place-items: center;
   width: clamp(3.4rem, 11vh, 6rem);
-  height: clamp(0.85rem, 2.6vh, 1.3rem);
+  /* LA JAUGE PORTE LE MEME CHIFFRE QUE LES AUTRES, donc elle doit lui faire
+     sa place : a 0,85rem de haut, le 1,125rem du chiffre la debordait. */
+  height: clamp(1.25rem, 3.3vh, 1.7rem);
   border: 1px solid #6b5936;
   border-radius: 2px;
   background: #0a0609;
@@ -5096,8 +5127,6 @@ body {
 
 .arm-jauge-chiffre {
   position: relative;
-  color: #fff4dd;
-  font-size: clamp(0.58rem, 1.8vh, 0.9rem);
   text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 6px #000;
 }
 
@@ -5107,8 +5136,4 @@ body {
   filter: drop-shadow(0 1px 2px #000000a8);
 }
 
-.arm-chiffre {
-  color: #f0e0bd;
-  font-size: clamp(0.7rem, 2.1vh, 1.1rem);
-  text-shadow: 0 1px 3px #000;
-}
+
