@@ -81,8 +81,24 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
     (H * 0.88) / (lignes * 1.82),
     largeurSet / (colonnes * 1.1),
   )
-  const xPiece = seule ? 0 : -L / 2 + marge + piece / 2
-  const xSet = xPiece + piece / 2 + marge + largeurSet / 2
+  /**
+   * LE COUPLE SE CENTRE, PAS LA PIÈCE SEULE.
+   *
+   * Keko : « la carte zoomée est toute à droite quand elle génère des cartes
+   * de deck, et la carte générée au milieu de l'espace restant ; je voudrais
+   * que le couple soit mieux placé, pourquoi pas centré sur l'écran ? »
+   *
+   * *La pièce était collée au bord et le set flottait dans ce qui restait* :
+   * deux objets centrés chacun de leur côté, donc un ensemble qui ne l'est
+   * jamais. On mesure ce que la grille occupe VRAIMENT — le budget qui a servi
+   * à la dimensionner est plus large qu'elle dès qu'il y a moins de quatre
+   * modèles — et on centre la somme.
+   */
+  const pasXSet = uneCarte * 1.1
+  const largeurOccupee = Math.min(colonnes, seule ? 1 : set.length) * pasXSet
+  const ensemble = seule ? piece : piece + marge + largeurOccupee
+  const xPiece = seule ? 0 : -ensemble / 2 + piece / 2
+  const xSet = xPiece + piece / 2 + marge + largeurOccupee / 2
   const pasX = uneCarte * 1.1
   const pasY = uneCarte * 1.82
 
@@ -128,8 +144,8 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                 }}
               />
               {/* LA PASTILLE SOUS LA CARTE, jamais sur son coin. */}
-              <mesh position={[x, y - uneCarte * 0.62, zCarte + 0.02]}>
-                <planeGeometry args={[uneCarte * 0.52, uneCarte * 0.26]} />
+              <mesh position={[x, y - uneCarte * 0.58, zCarte + 0.02]}>
+                <planeGeometry args={[uneCarte * 0.37, uneCarte * 0.185]} />
                 <meshBasicMaterial
                   map={texturePastille(entree.nombre)}
                   transparent

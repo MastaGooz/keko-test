@@ -53,6 +53,15 @@ type Props = {
   pvMax: number
   energieMax: number
   tailleMain: number
+  /**
+   * Une carte est ouverte en grand : les commandes s'effacent.
+   *
+   * *Le zoom doit être au-dessus de TOUT* — son voile vit dans le canvas, et
+   * les onglets comme la barre sont un calque par-dessus lui. Les laisser
+   * visibles, c'est laisser des boutons flotter sur une carte qu'on regarde,
+   * et pire : cliquables. Keko : « certains éléments de l'UI passent devant ».
+   */
+  zoomee?: boolean
 }
 
 export function PageArmurerie({
@@ -64,6 +73,7 @@ export function PageArmurerie({
   pvMax,
   energieMax,
   tailleMain,
+  zoomee = false,
 }: Props): React.JSX.Element {
   const fenetre = useFenetre()
   const plan = planArmurerie(fenetre.h, fenetre.l, deuxMains(hub.chargement))
@@ -211,7 +221,7 @@ export function PageArmurerie({
       </div>
       </div>
 
-      <div className="arm-commandes">
+      <div className="arm-commandes" style={zoomee ? { display: 'none' } : undefined}>
       {/* LES ONGLETS : ce qu'on possède se range par nature, et les TRÉSORS y
           ont leur case bien qu'aucun slot ne les prenne. *Le coffre est ce
           qu'on possède, pas ce qu'on peut porter.* */}

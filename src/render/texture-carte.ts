@@ -1130,9 +1130,14 @@ export function texturePastille(nombre: number): THREE.CanvasTexture {
   const ctx = canvas.getContext('2d')
   if (ctx === null) return texture
 
-  const r = h * 0.42
+  // LE JETON REMPLIT SA TOILE. Il a rétréci à l'écran — Keko : « la bulle
+  // indiquant le nombre d'exemplaires sous les cartes est trop grosse » — donc
+  // le chiffre doit occuper une plus grande part de ce qui reste, sinon il
+  // rétrécit avec lui et devient illisible. *Ce qu'on réduit à l'écran, on
+  // l'agrandit dans sa texture.*
+  const r = h * 0.47
   ctx.beginPath()
-  ctx.roundRect(l / 2 - r * 1.5, h / 2 - r, r * 3, r * 2, r)
+  ctx.roundRect(l / 2 - r * 1.35, h / 2 - r, r * 2.7, r * 2, r)
   const or = ctx.createLinearGradient(0, h / 2 - r, 0, h / 2 + r)
   or.addColorStop(0, '#f6dFa4')
   or.addColorStop(1, '#b8913f')
@@ -1145,8 +1150,16 @@ export function texturePastille(nombre: number): THREE.CanvasTexture {
   ctx.fillStyle = '#2a1f07'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.font = `700 ${Math.round(h * 0.5)}px Cinzel, Georgia, serif`
-  ctx.fillText(`×${nombre}`, l / 2, h * 0.54)
+  // LE SIGNE ET LE CHIFFRE SONT EN GRAS, demandé par Keko : à cette taille, un
+  // Cinzel de 700 se lit comme un trait fin. Un trait par-dessus le remplissage
+  // épaissit chaque jambage sans changer de police — *on n'ajoute pas une
+  // fonte pour deux caractères.*
+  ctx.font = `700 ${Math.round(h * 0.62)}px Cinzel, Georgia, serif`
+  ctx.lineWidth = h * 0.045
+  ctx.strokeStyle = '#2a1f07'
+  ctx.lineJoin = 'round'
+  ctx.strokeText(`×${nombre}`, l / 2, h * 0.55)
+  ctx.fillText(`×${nombre}`, l / 2, h * 0.55)
   texture.needsUpdate = true
   return texture
 }

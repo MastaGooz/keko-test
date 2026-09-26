@@ -3250,6 +3250,28 @@ dépasser d'un tiers : au-delà, ce ne serait plus une grille mais des cases
 la silhouette, on lit le détail en zoomant. Mesuré : 9 x 3 cases sur un écran
 de PC comme sur un téléphone couché.
 
+**LE ZOOM PASSE AU-DESSUS DE TOUT, donc les commandes s'effacent.** Keko :
+« quand je clique sur une carte pour la zoomer, certains éléments de l'UI
+passent devant ». Le voile du zoom vit DANS le canvas, et les onglets comme la
+barre sont un calque par-dessus lui : *les laisser visibles, c'est laisser des
+boutons flotter sur une carte qu'on regarde — et pire, cliquables.* Le reste du
+chrome n'avait pas le problème, il est déjà sous le canvas.
+
+**ET LE COUPLE ZOOMÉ SE CENTRE, pas la pièce seule.** Keko : « la carte zoomée
+est toute à droite quand elle génère des cartes de deck, et la carte générée au
+milieu de l'espace restant ». *La pièce était collée au bord et le set flottait
+dans ce qui restait* : deux objets centrés chacun de leur côté, donc un
+ensemble qui ne l'est jamais. On mesure ce que la grille occupe VRAIMENT — le
+budget qui a servi à la dimensionner est plus large qu'elle dès qu'il y a moins
+de quatre modèles — et on centre la somme.
+
+**Le jeton du nombre d'exemplaires a rétréci et s'est épaissi.** Keko : « la
+bulle est trop grosse, et le × et le chiffre devraient être en gras ». Il
+remplit maintenant davantage sa propre toile : *ce qu'on réduit à l'écran, on
+l'agrandit dans sa texture*, sinon le chiffre rétrécit avec le jeton. Le gras
+passe par un trait par-dessus le remplissage — on n'ajoute pas une fonte pour
+deux caractères.
+
 **LA MOLETTE SE POSE SUR LA FENÊTRE, PAS SUR LE CADRE.** Le cadre est en
 `pointer-events: none` — sinon il volerait le doigt aux cartes — donc il ne
 reçoit aucun évènement. On écoute partout et on n'agit que si le pointeur est

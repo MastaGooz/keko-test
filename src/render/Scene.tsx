@@ -1691,6 +1691,7 @@ export function Scene(): React.JSX.Element {
           pvMax={combat.pvMax}
           energieMax={combat.energieMax}
           tailleMain={combat.tailleMain}
+          zoomee={zoomee !== null}
         />
       )}
 
