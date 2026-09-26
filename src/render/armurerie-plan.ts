@@ -117,6 +117,8 @@ export type PlanArmurerie = {
   tailleCharge: number
   /** Celle d'une case de la pile : la même, depuis que tout s'aligne. */
   taillePile: number
+  /** Celle d'une case du coffre : un cran sous, pour en montrer plus. */
+  tailleCoffre: number
   /** La colonne des stats, à droite : quatre cartouches empilés. */
   stats: Rect
   /** Le bouton de départ, sous les stats. */
@@ -250,9 +252,25 @@ export function planArmurerie(
     (hDedans * 0.96 - RANGEES_EQUIP * hNom) / (RANGEES_EQUIP * 1.4 * 1.12),
   )
 
+  /**
+   * LE COFFRE EST UN CRAN SOUS LE CHARGEMENT — et c'est un arbitrage de Keko,
+   * pas un oubli de la règle précédente.
+   *
+   * Tout était à la même taille, et à deux rangées d'équipement les cartes ont
+   * tellement grandi que le coffre n'en montrait plus que six. Keko :
+   * « finalement on pourrait réduire un peu la taille ? 6 éléments par page
+   * c'est un peu limite ». *Un coffre est un endroit où l'on CHERCHE* : il lui
+   * faut du monde sous les yeux, là où le chargement montre ce qu'on emporte.
+   *
+   * Ce qui reste de la règle d'avant : **une seule taille de RÉFÉRENCE**, celle
+   * du chargement, et le coffre en est une fraction. Il n'y a toujours pas deux
+   * chiffres à rejuger l'un contre l'autre.
+   */
+  const tailleCoffre = tailleCharge * 0.68
+
   // Une case, plus un cheveu : la grille doit respirer sans s'étaler.
-  const pasX = tailleCharge * 1.16
-  const pasY = tailleCharge * 1.4 * 1.12
+  const pasX = tailleCoffre * 1.16
+  const pasY = tailleCoffre * 1.4 * 1.12
   const barre: Rect = {
     x: xCoffre + lCoffre / 2 - padGrille - gouttiere / 2,
     y: grille.y,
@@ -323,7 +341,14 @@ export function planArmurerie(
   const place = (rang: number): number => xEquip + (rang - (hautes - 1) / 2) * pasCharge
   // « Armes » couvre les deux mains — ou la seule, quand une arme les prend
   // toutes les deux et que le second slot est masqué.
-  const lArmes = (aDeuxMains ? 1 : 2) * pasCharge
+  //
+  // LES DEUX FILETS NE SE TOUCHENT PAS. Bout à bout, ils faisaient UN trait
+  // continu sous les trois slots, donc on ne voyait plus où « Armes » s'arrête
+  // et où « Armure » commence — Keko : « il faudrait que la ligne coupe entre
+  // arme et armure ». *Un séparateur qui touche son voisin n'en sépare plus
+  // aucun* ; c'est la coupure qui porte l'information, pas le trait.
+  const coupe = pasCharge * 0.14
+  const lArmes = (aDeuxMains ? 1 : 2) * pasCharge - coupe
   const xArmes = aDeuxMains ? place(0) : (place(0) + place(1)) / 2
 
   // LE BOUTON VIT SOUS LES STATS, dans la même colonne : c'est ce qu'on fait
@@ -351,6 +376,7 @@ export function planArmurerie(
     armure: [place(hautes - 1), yPorte, Z_PLAN],
     tailleCharge,
     taillePile,
+    tailleCoffre,
     // LA PILE EST UNE RANGÉE, centrée comme celle du haut. Elle a été un bloc
     // de deux par deux ; à trois cases, une seule ligne se lit d'un coup.
     pile: Array.from({ length: CAPACITE_PILE }, (_, i) => [
@@ -359,7 +385,7 @@ export function planArmurerie(
       Z_PLAN,
     ]),
     nomArmes: { x: xArmes, y: yNomPorte, l: lArmes, h: hNom },
-    nomArmure: { x: place(hautes - 1), y: yNomPorte, l: pasCharge, h: hNom },
+    nomArmure: { x: place(hautes - 1), y: yNomPorte, l: pasCharge - coupe, h: hNom },
     nomObjets: { x: xEquip, y: yNomObjets, l: CAPACITE_PILE * pasCharge, h: hNom },
     stats: { x: xStats, y: yPanneaux + hBouton / 2, l: lStats, h: hPanneaux - hBouton },
     bouton: [xStats, basPanneaux + hBouton / 2, Z_PLAN],

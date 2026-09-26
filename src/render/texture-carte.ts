@@ -1278,3 +1278,64 @@ export function textureContour(): THREE.CanvasTexture {
   contour.colorSpace = THREE.SRGBColorSpace
   return contour
 }
+
+/**
+ * LE HALO D'UN SLOT QUI ACCUEILLE — le contour des cartes, mais ÉVIDÉ.
+ *
+ * `textureContour` est un rectangle lumineux plein : autour d'une carte c'est
+ * parfait, puisqu'elle en masque le centre. **Un slot VIDE ne masque rien**,
+ * et le halo s'y lisait comme une dalle bleue posée dans la case. *Une lueur
+ * qui remplit sa forme n'est plus un contour.*
+ *
+ * On creuse donc le centre après coup (`destination-out`), en laissant un
+ * voile : le slot s'allume doucement à l'intérieur et franchement sur son
+ * bord, occupé ou non.
+ */
+let haloSlot: THREE.CanvasTexture | null = null
+
+export function textureHaloSlot(): THREE.CanvasTexture {
+  if (haloSlot !== null) return haloSlot
+
+  const l = 512
+  const debord = Math.round(l * DEBORD_CONTOUR)
+  const h = Math.round(l * 1.4)
+  const canvas = document.createElement('canvas')
+  canvas.width = l + debord * 2
+  canvas.height = h + debord * 2
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) {
+    haloSlot = new THREE.CanvasTexture(canvas)
+    return haloSlot
+  }
+
+  const coin = l * 0.03
+  const rect = (x: number, y: number, lg: number, ht: number): void => {
+    ctx.beginPath()
+    ctx.roundRect(x, y, lg, ht, coin)
+    ctx.fill()
+  }
+
+  ctx.fillStyle = '#ffffff'
+  ctx.shadowColor = 'rgba(255, 255, 255, 0.95)'
+  for (const rayon of [debord * 0.85, debord * 0.45, debord * 0.2]) {
+    ctx.shadowBlur = rayon
+    rect(debord, debord, l, h)
+  }
+  ctx.shadowColor = 'transparent'
+  ctx.shadowBlur = 0
+  const arete = Math.round(l * 0.022)
+  rect(debord - arete, debord - arete, l + arete * 2, h + arete * 2)
+
+  // ON CREUSE, en laissant un voile : le bord garde toute sa lumière, le
+  // centre n'en garde qu'un cinquième — assez pour dire « ici », pas assez
+  // pour recouvrir ce qui s'y trouve.
+  ctx.globalCompositeOperation = 'destination-out'
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
+  const marge = Math.round(l * 0.035)
+  rect(debord + marge, debord + marge, l - marge * 2, h - marge * 2)
+  ctx.globalCompositeOperation = 'source-over'
+
+  haloSlot = new THREE.CanvasTexture(canvas)
+  haloSlot.colorSpace = THREE.SRGBColorSpace
+  return haloSlot
+}

@@ -3137,12 +3137,39 @@ reste quand une arme à deux mains masque l'autre slot. Un filet sous le mot dit
 jusqu'où il porte : *un mot centré au-dessus de trois cases ne dit pas combien
 il en coiffe.*
 
+**ET LES DEUX FILETS NE SE TOUCHENT PAS.** Bout à bout, ils faisaient UN trait
+continu sous les trois slots — donc plus rien ne disait où « Armes » s'arrête.
+Keko : « il faudrait que la ligne coupe entre arme et armure ». *Un séparateur
+qui touche son voisin n'en sépare plus aucun* : c'est la COUPURE qui porte
+l'information, pas le trait.
+
 **Et la bande du nom entre dans le calcul de la taille des cartes.** Prise sur
 la place des slots, elle les aurait fait déborder du panneau — le défaut déjà
 payé sur téléphone. Le panneau tient donc **deux rangées et deux bandes**, et
 comme il a perdu une rangée en chemin, *les cartes ont grandi* : la taille
 unique de l'armurerie sort toujours de la contrainte la plus dure, trois
 colonnes en largeur ou deux rangées en hauteur.
+
+**TOUS LES SLOTS QUI PRENNENT LA PIÈCE TENUE S'ALLUMENT** — pas seulement celui
+sous le doigt. C'est la règle de l'armurerie 2D (`accueille`), qui n'avait
+jamais été portée : la pièce grandissait bien au-dessus d'un slot compatible,
+mais il fallait déjà l'y avoir amenée. Keko : « il faudrait que quand je drag
+un truc, le slot d'équipement qui correspond se mette en surbrillance ». *Ce
+qui dit où l'on peut aller doit se voir AVANT d'y aller.*
+
+C'est la **texture de contour des cartes, en bleu et derrière le slot** : elle
+déborde, donc elle se lit aussi bien autour d'une case vide qu'autour d'une
+carte déjà posée — *un slot occupé s'échange, il doit s'allumer comme les
+autres.* Le râtelier en est exclu, comme le frémissement : c'est l'endroit
+d'où l'on vient. La pile s'allume case par case, parce que ce qu'on doit lire
+est la RANGÉE qui reçoit, même si le dépôt n'est qu'une zone.
+
+**Mais le contour des cartes est un rectangle PLEIN**, et il le fallait :
+autour d'une carte, c'est elle qui en masque le centre. **Un slot vide ne
+masque rien**, et le halo s'y lisait comme une dalle bleue posée dans la case.
+`textureHaloSlot` le creuse donc après coup (`destination-out`) en laissant un
+voile : bord franc, intérieur à peine teinté. *Une lueur qui remplit sa forme
+n'est plus un contour.* Elle respire, comme le liseré des cartes.
 
 **Le coffre s'est donc centré en largeur.** À grandes cartes il n'en tient plus
 que trois par ligne, et calées à gauche elles laissaient une colonne de vide
@@ -3328,11 +3355,25 @@ l'équipement qui fixe la taille — parce que c'est lui qui est CONTRAINT, ses
 sept slots devant tenir dans un panneau — et le coffre la reprend. Il n'y a
 plus de chiffre à rejuger.
 
-Ce que ça coûte : à grandes cartes, le coffre n'a plus que huit cases sur un
-écran de PC. *Ce qui reste en bas est de l'étagère vide, et une étagère vide
-est ce qu'on attend d'un coffre* — les lignes s'étirent d'un rien pour
-absorber la fraction de rangée qui traîne, pas plus : à pas libre, deux
-rangées se retrouvaient aux deux bouts du panneau.
+**PUIS LE COFFRE EST REDESCENDU D'UN CRAN — à 68 % de cette taille.** Les noms
+de groupe ont fait passer l'équipement à deux rangées, donc ses cartes ont
+grandi, donc le coffre n'en montrait plus que six. Keko : « finalement on
+pourrait réduire un peu la taille ? 6 éléments par page c'est un peu limite ».
+*Un coffre est un endroit où l'on CHERCHE* — il lui faut du monde sous les
+yeux, là où le chargement montre ce qu'on emporte, et ce n'est pas le même
+travail.
+
+**Ce qui reste de la règle d'avant, et c'est l'essentiel : il n'y a toujours
+qu'une taille de RÉFÉRENCE**, celle du chargement, dont le coffre est une
+fraction. On ne rejuge pas deux chiffres l'un contre l'autre, on en bouge un.
+Mesuré : 6 cases avant, **15 après** (5 x 3) sur un écran de PC comme sur un
+téléphone couché — le pas de ligne était à un cheveu de basculer, donc c'est
+une rangée entière qui se gagne pour 10 % de taille.
+
+*Ce qui reste en bas est de l'étagère vide, et une étagère vide est ce qu'on
+attend d'un coffre* — les lignes s'étirent d'un rien pour absorber la fraction
+de rangée qui traîne, pas plus : à pas libre, deux rangées se retrouvaient aux
+deux bouts du panneau.
 
 **LE ZOOM PASSE AU-DESSUS DE TOUT, donc les commandes s'effacent.** Keko :
 « quand je clique sur une carte pour la zoomer, certains éléments de l'UI

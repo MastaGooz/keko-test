@@ -31,14 +31,14 @@
  * dépasse se défile.
  */
 import { useEffect, useMemo } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Carte3D } from './Carte3D.tsx'
 import { Bouton3D } from './Bouton3D.tsx'
 import { Z_TENUE } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import { pieceAPeindre } from './combat-3d.ts'
-import { textureSlot } from './texture-carte.ts'
+import { DEBORD_CONTOUR, textureHaloSlot, textureSlot } from './texture-carte.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Carte } from '../logic/combat.ts'
@@ -59,7 +59,56 @@ import { aPeindre } from './combat-3d.ts'
  */
 function tailleDuSlot(slot: Slot, plan: PlanArmurerie): number {
   if (slot.ou === 'pile') return plan.taillePile
+  if (slot.ou === 'reserve') return plan.tailleCoffre
   return plan.tailleCharge
+}
+
+/**
+ * TOUS LES SLOTS QUI PRENNENT CE QU'ON TIENT S'ALLUMENT — pas seulement celui
+ * sous le doigt.
+ *
+ * C'est la règle de l'armurerie 2D (`accueille`), qui n'avait pas été portée :
+ * *ce qui dit où l'on peut aller doit se voir AVANT d'y aller.* En 3D la pièce
+ * tenue grandissait bien au-dessus d'un slot compatible, mais il fallait déjà
+ * l'y avoir amenée — Keko : « il faudrait que quand je drag un truc, le slot
+ * d'équipement qui correspond se mette en surbrillance ».
+ *
+ * C'est la texture de contour des cartes, en BLEU et derrière le slot : elle
+ * déborde, donc elle se voit aussi bien autour d'une case vide qu'autour d'une
+ * carte déjà posée — *un slot occupé s'échange, il doit s'allumer comme les
+ * autres.*
+ */
+function SlotAccueille({
+  position,
+  taille,
+}: {
+  position: [number, number, number]
+  taille: number
+}): React.JSX.Element {
+  const materiau = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: textureHaloSlot(),
+        color: '#8fc2ff',
+        transparent: true,
+        opacity: 0.5,
+        toneMapped: false,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    [],
+  )
+  // Elle RESPIRE, lentement : une lueur fixe se lit comme un cadre peint, deux
+  // battements rapides comme une alerte. Même horloge que le contour des
+  // cartes.
+  useFrame((etat) => {
+    materiau.opacity = 0.42 + Math.sin(etat.clock.elapsedTime * 3.4) * 0.22
+  })
+  return (
+    <mesh position={[position[0], position[1], position[2] - 0.02]} raycast={() => null} material={materiau}>
+      <planeGeometry args={[(1 + DEBORD_CONTOUR * 2) * taille, (1.4 + DEBORD_CONTOUR * 2) * taille]} />
+    </mesh>
+  )
 }
 
 /** La teinte d'une case vide : le râtelier et la pile sont plus discrets. */
@@ -164,7 +213,7 @@ export function Armurerie3D({
           id: objet.id,
           slot: { ou: 'reserve' } as Slot,
           position: placeCase(plan, rang),
-          taille: plan.tailleCharge,
+          taille: plan.tailleCoffre,
         },
       ]
     }),
@@ -178,7 +227,7 @@ export function Armurerie3D({
           id: tresor.id,
           slot: { ou: 'reserve' } as Slot,
           position: placeCase(plan, rang),
-          taille: plan.tailleCharge,
+          taille: plan.tailleCoffre,
         },
       ]
     }),
@@ -294,7 +343,8 @@ export function Armurerie3D({
     portee.objet !== null &&
     sousLeDoigt !== null &&
     accepteDepuis(hub, portee.slot, sousLeDoigt, portee.objet.id)
-  const tailleTenue = accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt, plan) : plan.tailleCharge
+  const tailleTenue =
+    accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt, plan) : plan.tailleCoffre
 
   /**
    * ELLE NE FRÉMIT QU'AU-DESSUS D'UN SLOT DU CHARGEMENT QUI LA PREND.
@@ -305,19 +355,48 @@ export function Armurerie3D({
    */
   const surUnSlot = accueille && sousLeDoigt !== null && sousLeDoigt.ou !== 'reserve'
 
+  /**
+   * LES SLOTS QUI PRENNENT CE QU'ON TIENT, tant qu'on le tient.
+   *
+   * Le râtelier en est exclu, comme le frémissement : c'est l'endroit d'où
+   * l'on vient, et *y reposer n'est pas ce que le geste cherche.* La pile
+   * s'allume case par case — c'est une seule zone de dépôt, mais ce qu'on
+   * doit lire c'est la RANGÉE qui reçoit.
+   */
+  const candidats: { slot: Slot; position: [number, number, number]; taille: number }[] =
+    portee === null || portee.objet === null
+      ? []
+      : [
+          { slot: { ou: 'main', rang: 0 } as Slot, position: plan.mains[0] },
+          ...(aDeuxMains ? [] : [{ slot: { ou: 'main', rang: 1 } as Slot, position: plan.mains[1] }]),
+          { slot: { ou: 'armure' } as Slot, position: plan.armure },
+          ...plan.pile.map((position) => ({ slot: { ou: 'pile' } as Slot, position })),
+        ]
+          .filter(({ slot }) => accepteDepuis(hub, portee.slot, slot, portee.objet!.id))
+          .map(({ slot, position }) => ({ slot, position, taille: tailleDuSlot(slot, plan) }))
+
   /** Les cases vides du coffre : la grille est pleine, qu'il y ait de quoi ou non. */
   const montrees = Math.max(0, Math.min(cases, total - depart))
   const vides = cases - montrees
 
   return (
     <group>
+      {/* CE QUI PREND LA PIÈCE QU'ON TIENT S'ALLUME. */}
+      {candidats.map(({ slot, position, taille }) => (
+        <SlotAccueille
+          key={`accueil-${slot.ou}-${slot.ou === 'main' ? slot.rang : ''}-${position[0].toFixed(3)}`}
+          position={position}
+          taille={taille}
+        />
+      ))}
+
       {/* LES CASES VIDES DU COFFRE : une grille de places, pas une liste. */}
       {Array.from({ length: vides }, (_, i) => (
         <CaseVide
           key={`vide-${i}`}
           nom=""
           position={placeCase(plan, montrees + i)}
-          taille={plan.tailleCharge}
+          taille={plan.tailleCoffre}
           accent={TEINTE.reserve}
         />
       ))}
