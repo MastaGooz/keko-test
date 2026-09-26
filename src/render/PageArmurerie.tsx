@@ -22,7 +22,14 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import type { Onglet } from './armurerie-plan.ts'
-import { NOM_ONGLET, ONGLETS, contenuDuCoffre, enPixels, planArmurerie } from './armurerie-plan.ts'
+import {
+  NOM_ONGLET,
+  ONGLETS,
+  contenuDuCoffre,
+  enPixels,
+  pixelsParUnite,
+  planArmurerie,
+} from './armurerie-plan.ts'
 import { compteDuDeck } from './Armurerie3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
@@ -104,7 +111,7 @@ export function PageArmurerie({
   // montrerait une grille vide sans qu'on comprenne pourquoi.
   useEffect(() => {
     if (defilement > maxDefilement) onDefilement(maxDefilement)
-  }, [defilement, maxDefilement, onDefilement])
+  }, [defilement, maxDefilement, onDefilement, plan.pasY, fenetre.h])
 
   /**
    * LA MOLETTE SE POSE SUR LA FENÊTRE, PAS SUR LE CADRE.
@@ -121,7 +128,11 @@ export function PageArmurerie({
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
         return
       }
-      const pas = e.deltaY > 0 ? 1 : -1
+      // EN CONTINU, PAS PAR LIGNES : on convertit les pixels de la molette en
+      // lignes. Un cran ordinaire (~100 px) avance d'un peu plus d'une
+      // demi-rangée, donc le coffre glisse au lieu de sauter.
+      const lignePx = plan.pasY * pixelsParUnite(fenetre.h)
+      const pas = lignePx > 0 ? e.deltaY / lignePx : 0
       onDefilement(Math.max(0, Math.min(maxDefilement, defilement + pas)))
     }
     window.addEventListener('wheel', rouler, { passive: true })
@@ -135,8 +146,10 @@ export function PageArmurerie({
     const suivre = (ev: PointerEvent): void => {
       const r = piste.current?.getBoundingClientRect()
       if (r === undefined || r.height === 0) return
+      // Le pouce suit le doigt SANS s'arrêter aux lignes : c'est la même
+      // grandeur continue que la molette.
       const part = (ev.clientY - r.top) / r.height
-      onDefilement(Math.max(0, Math.min(maxDefilement, Math.round(part * lignesTotal))))
+      onDefilement(Math.max(0, Math.min(maxDefilement, part * lignesTotal)))
     }
     const finir = (): void => {
       window.removeEventListener('pointermove', suivre)

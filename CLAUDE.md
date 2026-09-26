@@ -3193,19 +3193,45 @@ maintenant aussi — et c'est **la surbrillance qui a rendu le défaut visible**
 puisqu'elle, elle demandait la règle : le slot s'allumait pour de bonnes
 raisons au-dessus d'une zone qui répondait autre chose.
 
-**LE COFFRE TOURNE UNE PAGE, IL NE FAIT PAS DE TRAVELLING.** Keko : « la ligne
-du bas change de cartes instantanément tandis que les deux autres au-dessus se
-déplacent, et inversement quand on remonte ». *Les deux moitiés du mouvement
-étaient vraies séparément et fausses ensemble* : une carte qui reste à l'écran
-garde son identifiant, donc son instance, donc elle GLISSAIT vers sa nouvelle
-ligne (c'est l'amortissement de `Carte3D`, et il a raison quand une carte VA
-quelque part) ; une carte qui entre est une instance neuve, donc elle naît en
-place.
+**LE COFFRE DÉFILE EN CONTINU, ET LE MEUBLE COUPE CE QUI EN SORT.**
 
-D'où le jeton `saut` sur `Carte3D` : quand il change, la carte se pose d'un
-coup au lieu de rejoindre sa cible. *L'amortissement est juste quand l'OBJET se
-déplace, il ment quand c'est le CONTENU qui change sous lui* — et une grille
-qui défile par lignes est une page qu'on tourne.
+Il a d'abord défilé **par lignes**, et c'était bancal : une carte qui reste à
+l'écran garde son identifiant, donc son instance, donc elle GLISSAIT vers sa
+nouvelle ligne (c'est l'amortissement de `Carte3D`, et il a raison quand une
+carte VA quelque part) ; une carte qui entre est une instance neuve, donc elle
+naissait en place. Keko : « la ligne du bas change de cartes instantanément
+tandis que les deux autres au-dessus se déplacent ». *Les deux moitiés du
+mouvement étaient vraies séparément et fausses ensemble.*
+
+Le jeton `saut` de `Carte3D` a réglé ça — quand il change, la carte se pose
+d'un coup au lieu de rejoindre sa cible — mais Keko a voulu voir le continu, et
+c'est mieux : **`defilement` est resté un nombre de lignes, il est simplement
+devenu FRACTIONNAIRE.** Sa partie entière dit la première ligne tirée du
+coffre, son reste de combien la grille est remontée ; on tire **une rangée de
+plus** que ce qui tient, et les deux rangées des bords sont à moitié sorties.
+
+*Le jeton reste indispensable* : sans lui, l'amortissement ferait traîner les
+cartes derrière le doigt à chaque image. Avec le défilement continu, il change
+à chaque image — donc la grille suit exactement le pouce. **C'est le défilement
+qui porte le mouvement, plus le ressort.**
+
+**CE QUI SORT DU MEUBLE EST COUPÉ**, et c'est ce qui rend le continu possible :
+sans découpe, les rangées des bords passeraient sur les onglets et sous le
+cadre. Deux plans de découpe (`clippingPlanes`), donnés par l'écran — *une
+carte ne sait pas ce qui la borne* — et `localClippingEnabled` sur le
+renderer. Trois choses à savoir :
+
+- ils sont en espace **MONDE** : la scène de l'armurerie n'a aucune
+  transformation, donc ils se lisent directement sur le plan de la page ;
+- **poser un plan change le NUANCEUR**, pas seulement une valeur : il faut
+  `needsUpdate`. Les matériaux d'une carte lui sont propres, donc on ne coupe
+  jamais celle du voisin ;
+- **on ne coupe pas ce qu'on TIENT.** Une carte sortie du coffre traverse
+  l'écran : le plan la trancherait au bord du meuble qu'elle vient de quitter.
+
+La molette convertit ses pixels en lignes (un cran ordinaire vaut un peu plus
+d'une demi-rangée) et le pouce suit le doigt sans s'arrêter aux lignes : *la
+même grandeur continue pour les deux gestes.*
 
 **Le jeton est le même pour TOUTES les cartes de l'écran**, chargement compris,
 alors que seul le coffre défile. Donné aux seules cartes du coffre, il

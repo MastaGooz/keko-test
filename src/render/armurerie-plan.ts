@@ -392,10 +392,16 @@ export function planArmurerie(
   }
 }
 
-/** La place d'une case du coffre, dans la grille visible. */
+/**
+ * La place d'une case du coffre, dans la grille visible.
+ *
+ * `decalage` est le reste du défilement — la part de ligne dont toute la
+ * grille est remontée. Il vaut zéro quand on tombe pile sur une ligne.
+ */
 export function placeCase(
   plan: PlanArmurerie,
   rang: number,
+  decalage = 0,
 ): [number, number, number] {
   const colonne = rang % plan.colonnes
   const ligne = Math.floor(rang / plan.colonnes)
@@ -405,7 +411,7 @@ export function placeCase(
   // pas de ce qu'il y a dedans, donc rien ne bouge jamais.
   const x0 = plan.grille.x - (plan.colonnes * plan.pasX) / 2 + plan.pasX / 2
   const y0 = plan.grille.y + plan.grille.h / 2 - plan.pasY / 2
-  return [x0 + colonne * plan.pasX, y0 - ligne * plan.pasY, Z_PLAN]
+  return [x0 + colonne * plan.pasX, y0 - ligne * plan.pasY + decalage, Z_PLAN]
 }
 
 /**

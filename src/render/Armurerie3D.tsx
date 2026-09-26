@@ -126,9 +126,17 @@ type CaseProps = {
   position: [number, number, number]
   taille: number
   accent?: string
+  /** De quoi la couper au bord du meuble, quand le coffre défile. */
+  clipper?: THREE.Plane[] | null
 }
 
-function CaseVide({ nom, position, taille, accent = '#6f6a5e' }: CaseProps): React.JSX.Element {
+function CaseVide({
+  nom,
+  position,
+  taille,
+  accent = '#6f6a5e',
+  clipper = null,
+}: CaseProps): React.JSX.Element {
   const materiau = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
@@ -136,8 +144,9 @@ function CaseVide({ nom, position, taille, accent = '#6f6a5e' }: CaseProps): Rea
         transparent: true,
         depthWrite: false,
         toneMapped: false,
+        clippingPlanes: clipper,
       }),
-    [nom, accent],
+    [nom, accent, clipper],
   )
   return (
     <mesh position={position} material={materiau}>
@@ -175,7 +184,36 @@ export function Armurerie3D({
   const { size } = useThree()
   const aDeuxMains = deuxMains(hub.chargement)
   const plan = planArmurerie(size.height, size.width, aDeuxMains)
-  const cases = plan.colonnes * plan.lignes
+
+  /**
+   * LE COFFRE DÉFILE EN CONTINU, PAS PAR LIGNES.
+   *
+   * `defilement` compte toujours en lignes, mais il est FRACTIONNAIRE : sa
+   * partie entière dit la première ligne tirée du coffre, son reste de combien
+   * la grille est remontée. On tire donc **une rangée de plus** que ce qui
+   * tient, et les deux rangées des bords sont à moitié sorties du meuble.
+   */
+  const ligneBase = Math.floor(defilement)
+  const reste = (defilement - ligneBase) * plan.pasY
+  const cases = plan.colonnes * (plan.lignes + 1)
+
+  /**
+   * CE QUI SORT DU MEUBLE EST COUPÉ, et c'est ce qui rend le continu possible :
+   * sans découpe, les rangées des bords déborderaient sur les onglets et sous
+   * le cadre. Les plans sont en espace MONDE — la scène de l'armurerie n'a
+   * aucune transformation, donc ils se lisent directement sur le plan.
+   */
+  const { gl } = useThree()
+  useEffect(() => {
+    gl.localClippingEnabled = true
+  }, [gl])
+  const clipper = useMemo(
+    () => [
+      new THREE.Plane(new THREE.Vector3(0, -1, 0), plan.grille.y + plan.grille.h / 2),
+      new THREE.Plane(new THREE.Vector3(0, 1, 0), -(plan.grille.y - plan.grille.h / 2)),
+    ],
+    [plan.grille.y, plan.grille.h],
+  )
 
   /**
    * CE QUE L'ONGLET MONTRE.
@@ -188,8 +226,8 @@ export function Armurerie3D({
   const contenu = useMemo(() => contenuDuCoffre(hub, onglet), [hub, onglet])
 
   const total = contenu.pieces.length + contenu.tresors.length
-  /** La première case visible : le défilement compte en LIGNES, pas en pixels. */
-  const depart = defilement * plan.colonnes
+  /** La première case tirée du coffre : la ligne entière, le reste est visuel. */
+  const depart = ligneBase * plan.colonnes
 
   /**
    * TOUT CE QUI SE MANIPULE, À PLAT ET DANS UN SEUL ORDRE.
@@ -219,7 +257,7 @@ export function Armurerie3D({
           tresor: null,
           id: objet.id,
           slot: { ou: 'reserve' } as Slot,
-          position: placeCase(plan, rang),
+          position: placeCase(plan, rang, reste),
           taille: plan.tailleCoffre,
         },
       ]
@@ -233,7 +271,7 @@ export function Armurerie3D({
           tresor,
           id: tresor.id,
           slot: { ou: 'reserve' } as Slot,
-          position: placeCase(plan, rang),
+          position: placeCase(plan, rang, reste),
           taille: plan.tailleCoffre,
         },
       ]
@@ -409,9 +447,10 @@ export function Armurerie3D({
         <CaseVide
           key={`vide-${i}`}
           nom=""
-          position={placeCase(plan, montrees + i)}
+          position={placeCase(plan, montrees + i, reste)}
           taille={plan.tailleCoffre}
           accent={TEINTE.reserve}
+          clipper={clipper}
         />
       ))}
 
@@ -483,6 +522,10 @@ export function Armurerie3D({
             // au moment où l'une d'elles part dans un slot, et elle s'y
             // téléporterait au lieu d'y atterrir.
             saut={defilement}
+            // ON NE COUPE PAS CE QU'ON TIENT : la carte sortie du coffre
+            // traverse l'écran, et un plan de découpe la trancherait au bord
+            // du meuble qu'elle vient de quitter.
+            clipper={t.slot.ou === 'reserve' && !suitLeDoigt ? clipper : null}
             engagee={suitLeDoigt && surUnSlot}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}

@@ -135,6 +135,15 @@ type Props = {
    */
   saut?: unknown
   /**
+   * DE QUOI LA COUPER AU BORD DE SA FENÊTRE.
+   *
+   * Le coffre défile en continu : ses rangées du haut et du bas sont à moitié
+   * sorties du meuble, et *une carte qui déborde de son cadre ne se lit plus
+   * comme rangée dedans.* Les plans sont donnés par l'écran qui la montre —
+   * une carte ne sait pas ce qui la borne.
+   */
+  clipper?: THREE.Plane[] | null
+  /**
    * La carte est au-dessus de la zone qui la joue : elle s'allume et frémit.
    *
    * **C'est le seul repère possible ici**, et c'est la règle du jeu 2D : la
@@ -209,6 +218,7 @@ export function Carte3D({
   peril = false,
   dos = false,
   saut = null,
+  clipper = null,
   apparue = null,
   onPeinte,
   onPointerDown,
@@ -378,6 +388,17 @@ ${nuanceur.fragmentShader}`
   // ELLE REJOINT SA PLACE, elle n'y saute pas. L'amortissement exponentiel est
   // indépendant de la fréquence d'écran : à 120 Hz comme à 60, le mouvement
   // dure le même temps.
+  // LES PLANS DE DÉCOUPE SE POSENT SUR LES MATÉRIAUX, et il faut recompiler :
+  // passer de « rien » à « deux plans » change le nuanceur, pas seulement une
+  // valeur. Les matériaux sont propres à l'instance, donc on ne coupe jamais
+  // la carte du voisin.
+  useEffect(() => {
+    for (const m of [face, laiton, halo]) {
+      m.clippingPlanes = clipper
+      m.needsUpdate = true
+    }
+  }, [clipper, face, laiton, halo])
+
   const jeton = useRef(saut)
 
   useFrame((etat, delta) => {
