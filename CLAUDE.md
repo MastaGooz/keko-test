@@ -2138,12 +2138,51 @@ quelle autre. Le problème disparaît au lieu d'être corrigé.
 lumière fait la couture entre les deux. *Sans elle, la carte apparaîtrait* — ce
 qui est précisément ce qu'on voulait éviter.
 
-**Trois détails qui portent la traînée** (`Trainee.tsx`) : le grain est une
-TEXTURE et non un carré, parce que `PointsMaterial` rend des carrés durs et
-qu'un semis de carrés se lit comme du bruit ; les grains **convergent**, leur
-écart se résorbant en chemin, sinon l'arrivée se lit comme une explosion au lieu
-de désigner l'endroit où la carte va naître ; et chacun a sa propre bosse, sans
-quoi ils suivent tous la même corde et la traînée devient un trait.
+**CE QUI VOLE EST UNE COMÈTE, PAS UN SEMIS** (`Trainee.tsx`). La première
+version était un nuage de grains ; Keko : « je trouve le truc un peu bateau, des
+petites particules transparentes… t'as un truc plus original et stylé ? »
+
+*Un semis de grains n'a pas de forme*, et c'est ce qui le rendait banal : il dit
+« il se passe quelque chose » sans dire QUOI. Or ce qui traverse l'écran est un
+objet précis — une carte qui part au tas, une carte qui en sort — donc il lui
+faut **un corps, une tête et un sens**. Trois pièces, et chacune fait un travail
+que les deux autres ne font pas :
+
+- **le SILLAGE**, un ruban de lumière tendu le long de l'arc, large derrière la
+  tête et effilé vers la queue : il donne la TRAJECTOIRE. Un grain isolé ne dit
+  pas d'où il vient, un ruban raconte tout le chemin d'un coup d'oeil ;
+- **la TÊTE**, un coeur clair qui ouvre la route : elle donne le SENS — sans
+  elle, le ruban se lirait aussi bien à l'envers ;
+- **les ESQUILLES**, une poignée d'éclats qui se détachent et dérivent : elles
+  donnent la MATIÈRE. Un ruban seul est lisse, donc synthétique.
+
+**La longueur du sillage n'est pas un réglage, c'est un DÉCALAGE** : la queue
+part 38 % plus tard que la tête et arrive 38 % plus tard. Le ruban naît donc
+court, s'étire en chemin et se résorbe dans le tas — *un ruban de longueur fixe
+se lit comme un objet rigide qu'on déplace.*
+
+Quatre choses à ne pas défaire :
+
+- **le ruban est construit à la main**, pas avec une ligne : `LineBasicMaterial`
+  est plafonné à 1 px de large sur la plupart des machines. La règle était déjà
+  écrite pour la flèche de visée ;
+- **la perpendiculaire se prend dans le plan de l'ÉCRAN** (produit vectoriel
+  avec l'axe de vue), sinon un ruban orienté dans l'espace se met de profil en
+  cours de route et disparaît ;
+- **le flou est dans la MATIÈRE**, comme le halo des cartes : la texture
+  s'éteint en longueur *et* se fond sur ses deux bords, parce qu'*une arête
+  franche trahirait un rectangle* ;
+- **l'or du jeu, pas un blanc neutre.** Le laiton des cartes, l'ambre de
+  l'énergie, le filet des tas : c'est la couleur de tout ce qui a de la valeur
+  ici. Un sillage blanc aurait été un effet posé par-dessus le jeu.
+
+**PIÈGE, et il s'est vu tout de suite à la capture : une traînée qui n'est pas
+encore partie se posait à l'ORIGINE de la scène.** Elles sont toutes montées
+d'un coup et s'égrènent ensuite ; celles qui attendaient leur tour gardaient une
+géométrie à zéro, donc leur tête faisait un point blanc en plein milieu de
+l'écran une bonne seconde avant que quoi que ce soit ne vole. *Un objet qui n'a
+pas encore de place ne doit pas être invisible par sa couleur, il doit être
+invisible tout court.*
 
 **ON NE DEMANDE RIEN AUX RÈGLES.** `logic/` ne sait pas qu'il existe une
 animation : on compare la main d'avant à celle d'après, et *l'écart entre deux
