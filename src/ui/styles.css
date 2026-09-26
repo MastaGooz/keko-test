@@ -4549,7 +4549,12 @@ body {
 .vie-jaune {
   right: 0;
   background: linear-gradient(180deg, #ffe9a4 0%, #f0bc4a 45%, #c98d1e 100%);
-  box-shadow: inset 0 1px 0 #fff0c9, inset 1px 0 0 #fff6de;
+  /* PAS DE CRETE A GAUCHE DU JAUNE NON PLUS. Elle marquait la frontiere avec le
+     rouge -- Keko : « pourquoi y a-t-il un trait blanc entre la barre de vie
+     rouge et les degats entrants jaunes ? ». *Deux couleurs franches se
+     separent toutes seules* ; le trait clair ne faisait qu'ajouter une
+     troisieme valeur entre elles. Meme correction qu'au bout du rouge. */
+  box-shadow: inset 0 1px 0 #fff0c9;
   z-index: 1;
 }
 
