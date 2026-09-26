@@ -27,9 +27,17 @@ import { urlDuCout } from '../ui/art.ts'
 type Props = {
   courant: number
   max: number
+  /**
+   * Le chiffre SEUL, sans son maximum.
+   *
+   * *À l'armurerie il n'y a pas de courant* : rien n'a été dépensé, donc
+   * « 5/5 » y dirait deux fois la même chose. On montre la réserve, pas son
+   * état — et c'est le même objet qu'en combat, ce qui est tout l'intérêt.
+   */
+  seul?: boolean
 }
 
-export function Orbe3D({ courant, max }: Props): React.JSX.Element {
+export function Orbe3D({ courant, max, seul = false }: Props): React.JSX.Element {
   return (
     <div className="orbe-jeu">
       {/* LE SYMBOLE EST L'IMAGE DE KEKO, la même que sur les cartes. Le cercle
@@ -39,7 +47,7 @@ export function Orbe3D({ courant, max }: Props): React.JSX.Element {
       <img src={urlDuCout()} alt="" aria-hidden="true" />
       <span className="orbe-chiffre">
         {courant}
-        <small>/{max}</small>
+        {!seul && <small>/{max}</small>}
       </span>
     </div>
   )

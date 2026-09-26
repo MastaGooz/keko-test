@@ -29,6 +29,7 @@ import {
   resoudreCombat,
   butinTransporte,
   consommablesSurvivants,
+  tresorsTransportes,
   reordonnerTresors,
   terminerButin,
   validerJet,
@@ -496,7 +497,7 @@ function dispatch(action: Action): void {
       if (descente.phase.type === 'fin') {
         hub =
           descente.phase.issue === 'extrait'
-            ? rentrer(hub, butinTransporte(descente), consommablesSurvivants(descente))
+            ? rentrer(hub, butinTransporte(descente), consommablesSurvivants(descente), tresorsTransportes(descente))
             : perdreLEquipement(hub)
       }
       auHub = true

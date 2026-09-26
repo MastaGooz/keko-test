@@ -427,6 +427,18 @@ export function butinTransporte(descente: Descente): number {
   return descente.deck.reduce((total, carte) => total + (carte.valeur ?? 0), 0)
 }
 
+/**
+ * LES TRÉSORS QU'ON RAPPORTE, un par un.
+ *
+ * `butinTransporte` en donne la VALEUR ; celle-ci donne les cartes. Le coffre
+ * du hub les garde pour qu'on voie ce qu'on a sorti du donjon — *un total ne
+ * montre pas un butin*, et c'est la même raison qui a fait dessiner le loot en
+ * cartes plutôt qu'en lignes de texte.
+ */
+export function tresorsTransportes(descente: Descente): Carte[] {
+  return descente.deck.filter((carte) => carte.type === 'tresor')
+}
+
 /** Combien de trésors encombrent le deck, et donc la main. */
 export function tresorsAuDeck(descente: Descente): number {
   return descente.deck.filter((carte) => carte.type === 'tresor').length

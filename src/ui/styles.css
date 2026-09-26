@@ -4862,3 +4862,253 @@ body {
   font-size: 0.75rem;
   text-align: center;
 }
+
+/* ===================================================================== */
+/* L'ARMURERIE : le chrome de la page, par-dessus les cartes du canvas.   */
+/*                                                                        */
+/* CE QUI TOUCHE LE POINTEUR EST NOMME, LE RESTE EST TRANSPARENT. Les     */
+/* cadres couvrent la moitie de l'ecran : en `pointer-events: auto` ils   */
+/* empecheraient de prendre une carte. Seuls les onglets et le pouce de   */
+/* la barre repondent.                                                    */
+/* ===================================================================== */
+/* DEUX CALQUES, ET C'EST LE CANVAS QUI PASSE ENTRE EUX. Les cadres sont
+   OPAQUES -- l'armurerie est un lieu, son fond l'est aussi -- donc ils passent
+   SOUS le canvas, sinon ils masqueraient les cartes qu'ils encadrent. Les
+   onglets et la barre, eux, doivent repondre au doigt, donc au-dessus.
+
+   *Un z-index sur un parent enferme ses enfants* : les deux calques sont des
+   FRERES -- le meme piege que le bouton de fin de tour enferme dans
+   `.jeu-3d`. */
+.arm-fond,
+.arm-commandes {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  font-family: var(--titre, 'Cinzel'), Georgia, serif;
+}
+
+/* LE FOND EST LE LIEU : opaque, sous le canvas transparent. Il remplace le
+   voile qui etait dessine DANS la scene -- un plan opaque dans le canvas
+   aurait cache les cadres qui vivent derriere lui. */
+.arm-fond {
+  z-index: 1;
+  background: #0b0c10;
+}
+
+.arm-commandes {
+  z-index: 5;
+}
+
+.arm-fond > *,
+.arm-commandes > * {
+  position: fixed;
+}
+
+/* LE BANDEAU NE DIT PLUS QUE LE LIEU. Le chargement, le deck et l'or en sont
+   partis : *ce qu'on lit sans decider dessus n'a rien a faire en tete de
+   page* -- ils vivent desormais dans l'etat du pied. */
+.arm-titre {
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: #f0e0bd;
+  font-size: clamp(0.95rem, 3.1vh, 1.7rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 5px #000, 0 0 1.4rem #e8ac5433;
+}
+
+/* LE CADRE EST UN MEUBLE, pas une boite de dialogue : un filet de laiton, un
+   fond a peine plus clair que la piece, et des coins coupes -- la meme
+   ferronnerie que la barre de vie. */
+.arm-cadre {
+  border: 1px solid #6b5936;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #14151b, #0d0e13);
+  box-shadow:
+    inset 0 1px 0 #ffffff12,
+    inset 0 0 2.5rem #00000080,
+    0 2px 10px #00000099;
+  clip-path: polygon(
+    0.55rem 0,
+    100% 0,
+    100% calc(100% - 0.55rem),
+    calc(100% - 0.55rem) 100%,
+    0 100%,
+    0 0.55rem
+  );
+}
+
+/* LE NOM DU MEUBLE SE POSE SUR SON BORD HAUT, comme une plaque vissee -- et
+   c'est un FRERE du cadre, pas son enfant : le cadre a les coins coupes, et un
+   rognage emporte tout ce qu'il contient. */
+.arm-nom {
+  translate: -50% -50%;
+  padding: 0.05rem 0.9rem;
+  border: 1px solid #6b5936;
+  border-radius: 2px;
+  background: #16171d;
+  color: #e6cf9d;
+  font-size: clamp(0.6rem, 1.9vh, 0.95rem);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.arm-onglets {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0 0.6rem;
+}
+
+/* UN ONGLET EST UN BOUTON PLAT QUI S'ALLUME, pas un bouton en relief : le
+   relief est reserve a ce qui ENGAGE (Descendre), et changer d'onglet
+   n'engage rien. */
+.arm-onglet {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 0.22rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: none;
+  color: #8f8674;
+  font: inherit;
+  font-size: clamp(0.55rem, 1.7vh, 0.9rem);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.arm-onglet:hover {
+  color: #d8c69c;
+}
+
+.arm-onglet.actif {
+  border-color: #6b5936;
+  background: #211d15;
+  color: #f2dfae;
+}
+
+/* LA PISTE EST UN BORD DU COFFRE autant qu'une commande : elle reste la meme
+   quand tout tient, sinon la grille sauterait d'une colonne selon le
+   remplissage. */
+.arm-piste {
+  border-radius: 999px;
+  background: #00000066;
+  box-shadow: inset 0 0 0 1px #ffffff0f;
+}
+
+.arm-pouce {
+  position: absolute;
+  left: 0;
+  right: 0;
+  min-height: 1.2rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #a98f5c, #6b5936);
+  box-shadow: inset 0 1px 0 #ffffff33;
+  cursor: grab;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+/* Rien a faire glisser : le pouce remplit la piste et cesse d'etre une
+   commande -- *un rail qu'on peut tirer sans rien deplacer ment.* */
+.arm-pouce.plein {
+  background: #3a332480;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* L'ETAT DE CE QU'ON EMPORTE : le deck, la vie, l'energie, la main. Quatre
+   chiffres et rien d'autre -- *avant de descendre, le joueur doit voir avec
+   quoi il descend.* */
+/* L'ETAT VIT DANS LE PIED DE PAGE, cale sur le meme plan que les cadres :
+   pose en `bottom` a la main, il chevauchait le bas de l'equipement. */
+.arm-etat {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(0.5rem, 1.6vw, 1.1rem);
+  padding-right: clamp(0.6rem, 2vw, 1.6rem);
+}
+
+.arm-mesure {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* LE PAQUET GARDE SA TAILLE DE COMBAT, en plus petit : c'est le meme objet,
+   et c'est tout l'interet de le montrer ici. */
+.arm-tas {
+  display: block;
+  width: clamp(1.8rem, 5.2vh, 3rem);
+}
+
+/* LE TAS PORTE SA PROPRE LARGEUR (`--tas`), calee pour le combat : sans ce
+   rappel il debordait de sa place et passait sous la barre de vie. *Un
+   composant qui porte son ancrage doit pouvoir le rendre* -- la meme chose
+   que pour l'orbe. */
+.arm-tas .tas-3d {
+  width: 100%;
+}
+
+.arm-tas .tas-compte {
+  font-size: clamp(0.6rem, 1.8vh, 0.9rem);
+}
+
+/* L'ORBE EST LE MEME OBJET QU'EN COMBAT, mais il n'y est pas ANCRE de la meme
+   facon : en combat il se pose dans l'ecart entre la pioche et la main, ici il
+   prend simplement sa place dans la rangee. *Un composant qui porte son propre
+   ancrage doit pouvoir le rendre* -- sinon il atterrit au milieu du coffre. */
+.arm-orbe > .orbe-jeu {
+  position: relative;
+  left: auto;
+  bottom: auto;
+  width: clamp(1.9rem, 5.6vh, 3rem);
+  height: clamp(1.9rem, 5.6vh, 3rem);
+}
+
+/* LA JAUGE EST PLEINE, forcement : on n'a rien perdu avant de partir. Elle
+   porte la MEME ferronnerie que celle du combat, en court. */
+.arm-jauge {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(3.4rem, 11vh, 6rem);
+  height: clamp(0.85rem, 2.6vh, 1.3rem);
+  border: 1px solid #6b5936;
+  border-radius: 2px;
+  background: #0a0609;
+  overflow: hidden;
+}
+
+.arm-jauge-plein {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #d8434b, #8d1f2a 60%, #5d121b);
+}
+
+.arm-jauge-chiffre {
+  position: relative;
+  color: #fff4dd;
+  font-size: clamp(0.58rem, 1.8vh, 0.9rem);
+  text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 6px #000;
+}
+
+.arm-icone {
+  display: block;
+  width: clamp(1.5rem, 4.4vh, 2.4rem);
+  filter: drop-shadow(0 1px 2px #000000a8);
+}
+
+.arm-chiffre {
+  color: #f0e0bd;
+  font-size: clamp(0.7rem, 2.1vh, 1.1rem);
+  text-shadow: 0 1px 3px #000;
+}

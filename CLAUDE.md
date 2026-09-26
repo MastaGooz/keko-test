@@ -3113,6 +3113,80 @@ le compte passe de 10 à 13 cartes dont 6 qui frappent), zoomer une pièce,
 descendre, mourir — le hub rend le Glaive et le Plastron, et la potion
 emportée est perdue.
 
+### LA PAGE D'ARMURERIE : UN BANDEAU, DEUX MEUBLES, UN PIED
+
+Elle avait deux panneaux collés aux bords et un énorme vide au milieu — Keko :
+« c'est moche ». Elle est désormais cadrée : **ARMURERIE** en bandeau, le
+**Coffre** sur les deux tiers de gauche, l'**Équipement** sur le tiers de
+droite, et un pied qui porte le bouton et l'état du chargement. *Le vide n'est
+plus un trou, c'est une marge.*
+
+**LE BANDEAU NE DIT PLUS QUE LE LIEU.** Le chargement, le compte du deck et
+l'or en sont partis, demandé par Keko : *ce qu'on lit sans décider dessus n'a
+rien à faire en tête de page.* Le compte du deck n'a pas disparu pour autant —
+il est passé dans le pied, avec le reste.
+
+**UN SEUL CALCUL POUR LES DEUX MONDES** (`armurerie-plan.ts`). Les cartes
+vivent dans le canvas, les cadres et les onglets sont du HTML par-dessus : s'ils
+se plaçaient chacun de leur côté, le cadre ne tomberait plus autour de sa
+grille au premier réglage. Tout est en **fractions du champ visible**, jamais en
+unités écrites à la main — la page doit tenir de 667 x 320 à un écran de PC.
+
+**DEUX CALQUES, ET C'EST LE CANVAS QUI PASSE ENTRE EUX.** Les cadres sont
+opaques — l'armurerie est un lieu — donc ils passent **sous** le canvas, sinon
+ils masquent les cartes qu'ils encadrent. C'est d'ailleurs ce fond HTML qui a
+remplacé le voile dessiné DANS la scène : *un plan opaque dans le canvas aurait
+caché ce qui vit derrière lui.* Les onglets et la barre, eux, doivent répondre
+au doigt, donc au-dessus. **Ce sont des FRÈRES, pas un parent et son enfant** :
+un `z-index` sur un parent enferme ses enfants — le piège déjà payé sur le
+bouton de fin de tour.
+
+**LE COFFRE A DES ONGLETS** — tout / armes / armures / objets / trésors — et
+**les trésors y sont** : Keko, « oui les trésors sont maintenant ici même s'ils
+ne peuvent pas être équipés ». *Le coffre est ce qu'on POSSÈDE, pas ce qu'on
+peut porter.* Un trésor s'y regarde et ne se glisse nulle part, ce qui est
+exactement ce que dit un objet qu'aucun slot n'accepte — et c'est le garde-fou
+du concept : **un trésor rentré au hub n'en ressort plus.**
+
+*Ça a demandé une place dans le modèle* : `hub.tresors`, rempli par `rentrer`.
+Ils n'étaient nulle part — la descente les convertissait en or et la carte
+disparaissait. **L'or continue de se compter à côté** : l'économie n'est
+toujours pas tranchée, donc rien ne change de ce côté-là, et les deux comptes
+cohabitent en attendant un marché. *Un total ne montre pas un butin* — c'est la
+raison qui avait déjà fait dessiner le loot en cartes.
+
+**LE NOMBRE DE LIGNES SUIT LA HAUTEUR DE L'ÉCRAN**, et les lignes se
+RÉPARTISSENT dedans plutôt que de s'empiler depuis le haut : à pas fixe, il
+restait toujours une fraction de rangée en bas — *un vide qui n'est le bord de
+rien se lit comme un oubli.* Le pas s'étire donc jusqu'à remplir, sans jamais
+dépasser d'un tiers : au-delà, ce ne serait plus une grille mais des cases
+éparpillées. La case du coffre est passée de 0,52 à 0,44 pour gagner une rangée
+— *une case plus petite ne coûte rien à la lecture*, on cherche au cadre et à
+la silhouette, on lit le détail en zoomant. Mesuré : 9 x 3 cases sur un écran
+de PC comme sur un téléphone couché.
+
+**LA MOLETTE SE POSE SUR LA FENÊTRE, PAS SUR LE CADRE.** Le cadre est en
+`pointer-events: none` — sinon il volerait le doigt aux cartes — donc il ne
+reçoit aucun évènement. On écoute partout et on n'agit que si le pointeur est
+DANS le coffre. La barre de défilement, elle, reste visible même quand tout
+tient : *un rail qui apparaît et disparaît fait sauter la grille d'une
+colonne* ; son pouce se grise quand il n'y a rien à tirer, parce qu'*un rail
+qu'on peut tirer sans rien déplacer ment.*
+
+**LA PLAQUE DU MEUBLE EST UN FRÈRE DU CADRE, PAS SON ENFANT.** Le cadre a les
+coins coupés (`clip-path`), et *un rognage emporte tout ce qu'il contient* : la
+plaque, posée à cheval sur le bord haut, s'y coupait en deux. Même famille que
+le chiffre de la barre de vie, qui doit vivre hors du contenant qui rogne.
+
+**LE PIED PORTE CE AVEC QUOI ON DESCEND** : le paquet de pioche et son compte
+de cartes, la vie, l'énergie et la taille de la main. Demandé par Keko — *avant
+de descendre, le joueur doit voir avec quoi il descend.* Ce sont **les mêmes
+objets qu'en combat**, le paquet et l'orbe, parce que c'est là qu'il les
+retrouvera ; l'orbe n'y montre que son maximum, puisqu'à l'armurerie rien n'a
+été dépensé. *Un composant qui porte son propre ancrage doit pouvoir le
+rendre* : l'orbe et le tas se posent en `fixed` pour le combat, et sans ce
+rappel l'orbe atterrissait au milieu du coffre.
+
 ### LE SYMBOLE DU COÛT EST UN ORBE — tranché par Keko
 
 Keko : « on dirait un bouclier, ça ne renvoie pas trop à l'énergie, et la

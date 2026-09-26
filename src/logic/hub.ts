@@ -67,6 +67,20 @@ export type Hub = {
    */
   reserve: Objet[]
   chargement: Chargement
+  /**
+   * LES TRÉSORS RAPPORTÉS, ET ILS RESTENT LÀ.
+   *
+   * *Un trésor rentré au hub n'en ressort plus* — c'est le garde-fou qui rend
+   * tout le reste sûr. Mais il n'était nulle part : la descente le convertissait
+   * en or et la carte disparaissait. Keko : « les trésors sont maintenant ici,
+   * même s'ils ne peuvent pas être équipés ».
+   *
+   * *Un total ne montre pas un butin* : c'est la raison qui avait déjà fait
+   * dessiner le loot en cartes plutôt qu'en lignes de texte. Le coffre les
+   * garde donc en cartes, à consulter — l'or continue de se compter à côté,
+   * l'économie n'étant toujours pas tranchée.
+   */
+  tresors: Carte[]
   /** L'or rapporté des descentes. Rien ne s'achète encore. */
   or: number
 }
@@ -105,6 +119,7 @@ export function creerHub(): Hub {
     // CINQ POTIONS, dont une déjà dans la pile : on arrive équipé, donc on
     // découvre la carte en jouant plutôt qu'en lisant l'armurerie.
     reserve: [ESPADON, ...POTIONS_DEPART.slice(1)],
+    tresors: [],
     chargement: {
       mains: [ARME_GRATUITE, null],
       armure: ARMURE_GRATUITE,
@@ -273,8 +288,21 @@ function poser(hub: Hub, slot: Slot, piece: Objet): { sortant: Objet | null; hub
  * l'arrivée — une carte bue s'exile, donc elle n'y est plus. *Rien à compter,
  * l'état le dit déjà.*
  */
-export function rentrer(hub: Hub, butin: number, pile: Consommable[]): Hub {
-  return { ...hub, or: hub.or + butin, chargement: { ...hub.chargement, pile } }
+export function rentrer(
+  hub: Hub,
+  butin: number,
+  pile: Consommable[],
+  tresors: Carte[] = [],
+): Hub {
+  return {
+    ...hub,
+    or: hub.or + butin,
+    // LE COFFRE LES GARDE, et il ne les rend jamais : c'est le garde-fou qui
+    // interdit qu'un trésor reparte en run. Ils s'y consommeront le jour où un
+    // marché existera.
+    tresors: [...hub.tresors, ...tresors],
+    chargement: { ...hub.chargement, pile },
+  }
 }
 
 /**

@@ -11,120 +11,42 @@
  *
  * **C'est un LIEU, pas un calque** : son fond est opaque. Les écrans de palier
  * laissent voir le donjon derrière eux parce qu'on y est encore ; au hub, il
- * n'y a pas de combat à montrer.
+ * n'y a pas de combat à montrer. *Ce fond est désormais du HTML*
+ * (`PageArmurerie`), sous le canvas : un plan opaque dessiné ICI aurait caché
+ * les cadres, qui vivent derrière lui.
  *
- * **La réserve est une grille de cartes réduites, le chargement est à la
- * taille de la main** : on cherche dans la réserve, on lit ce qu'on emporte
- * tel qu'on le portera. Et la réserve montre ses cases vides — c'est une
- * grille de places, pas une liste d'objets.
+ * **Le COFFRE est une grille de cartes réduites, le chargement est à la
+ * taille de la main** : on cherche dans le coffre, on lit ce qu'on emporte tel
+ * qu'on le portera. Et le coffre montre ses cases vides — c'est une grille de
+ * places, pas une liste d'objets.
+ *
+ * **LE COFFRE A DES ONGLETS, ET LES TRÉSORS Y SONT.** Keko : « le stash devrait
+ * avoir des onglets : tout / armes / armures / consommables / trésors — oui,
+ * les trésors sont maintenant ici même s'ils ne peuvent pas être équipés ».
+ * *Un trésor rentré ne repart jamais* : il se consulte, il ne se glisse pas, et
+ * c'est exactement ce que dit un objet qu'aucun slot n'accepte.
+ *
+ * **Le nombre de lignes suit la hauteur de l'écran** (`armurerie-plan.ts`) : la
+ * grille remplit son cadre au lieu de laisser un vide sous elle, et ce qui
+ * dépasse se défile.
  */
 import { useEffect, useMemo } from 'react'
 import { useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Carte3D } from './Carte3D.tsx'
 import { Bouton3D } from './Bouton3D.tsx'
-import { Z_MAIN, hauteurVisibleA } from './Cadrage.tsx'
 import { Z_TENUE } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import { pieceAPeindre } from './combat-3d.ts'
 import { textureSlot } from './texture-carte.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
+import type { Carte } from '../logic/combat.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
 import { CAPACITE_PILE, accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
-
-const Z_PLAN = Z_MAIN
-
-/** La taille d'une case de la réserve, en fraction d'une carte de la main. */
-const REDUIT = 0.52
-
-/**
- * LA TAILLE D'UNE CASE DE LA PILE EST IMPOSÉE PAR L'ARITHMÉTIQUE, pas choisie.
- *
- * Deux lignes de cases doivent tenir dans la hauteur d'un slot. Une carte fait
- * 1,4 fois sa largeur, donc deux cases de largeur `c` font `2,8 c` de haut ;
- * pour que ça vaille la hauteur d'un slot (1,4), il faut **`c = 1 / 2`,
- * exactement**. Les agrandir obligerait à rétrécir les armes d'autant.
- */
-const PILE = 0.5
-
-/** Combien de cases la réserve montre au minimum : une grille, pas une liste. */
-const CASES_MINIMUM = 12
-const COLONNES = 4
-
-/**
- * Où tout se pose, mesuré depuis la fenêtre.
- *
- * La réserve à gauche, le chargement à droite : **on prend à gauche, on pose à
- * droite, et le sens de lecture fait le geste.**
- */
-function plan(hauteurFenetrePx: number, largeurFenetrePx: number): {
-  demiHaut: number
-  demiLarge: number
-  pasReserve: number
-  coinReserve: [number, number]
-  xCharge: number
-  yMains: number
-  yArmure: number
-  pasCharge: number
-} {
-  const demiHaut = hauteurVisibleA(Z_PLAN, hauteurFenetrePx) / 2
-  const demiLarge = (demiHaut * largeurFenetrePx) / hauteurFenetrePx
-  // Une case réduite, plus un cheveu : la grille doit respirer sans s'étaler.
-  const pasReserve = REDUIT * 1.14
-  return {
-    demiHaut,
-    demiLarge,
-    pasReserve,
-    coinReserve: [-demiLarge + 0.45, demiHaut - 0.85],
-    xCharge: demiLarge - 1.55,
-    yMains: demiHaut - 1.15,
-    yArmure: demiHaut - 2.75,
-    pasCharge: 1.18,
-  }
-}
-
-/** La place d'une case de la réserve, en coordonnées de scène. */
-function placeReserve(i: number, hauteurFenetrePx: number, largeurFenetrePx: number): [number, number, number] {
-  const { coinReserve, pasReserve } = plan(hauteurFenetrePx, largeurFenetrePx)
-  const colonne = i % COLONNES
-  const ligne = Math.floor(i / COLONNES)
-  return [coinReserve[0] + colonne * pasReserve, coinReserve[1] - ligne * pasReserve * 1.4, Z_PLAN]
-}
-
-/** Les places du chargement, dans l'ordre : main gauche, main droite, armure, pile. */
-function placesCharge(
-  hauteurFenetrePx: number,
-  largeurFenetrePx: number,
-  aDeuxMains: boolean,
-): {
-  mains: [[number, number, number], [number, number, number]]
-  armure: [number, number, number]
-  pile: [number, number, number][]
-} {
-  const { xCharge, yMains, yArmure, pasCharge } = plan(hauteurFenetrePx, largeurFenetrePx)
-  // Deux colonnes serrées, deux lignes centrées sur la ligne du torse.
-  const pasX = PILE * 1.1
-  const pasY = PILE * 1.4 * 1.06
-  // UNE ARME À DEUX MAINS SE CENTRE, et l'autre slot est MASQUÉ, pas barré :
-  // un slot « tenu à deux mains » dirait la règle, un slot en moins la montre.
-  const xArme = aDeuxMains ? xCharge : xCharge - pasCharge / 2
-  return {
-    mains: [
-      [xArme, yMains, Z_PLAN],
-      [xCharge + pasCharge / 2, yMains, Z_PLAN],
-    ],
-    armure: [xCharge - pasCharge / 2, yArmure, Z_PLAN],
-    // LA PILE EST UNE GRILLE DE QUATRE CASES, à côté de l'armure : occupées ou
-    // non, comme la réserve montre les siennes. C'est ce qui dit d'un coup
-    // d'oeil ce qu'il reste à décider.
-    pile: Array.from({ length: CAPACITE_PILE }, (_, i) => [
-      xCharge + pasCharge / 2 + (i % 2 === 0 ? -pasX / 2 : pasX / 2),
-      yArmure + (i < 2 ? pasY / 2 : -pasY / 2),
-      Z_PLAN,
-    ]),
-  }
-}
+import type { Onglet } from './armurerie-plan.ts'
+import { PILE, REDUIT, Z_PLAN, contenuDuCoffre, placeCase, planArmurerie } from './armurerie-plan.ts'
+import { aPeindre } from './combat-3d.ts'
 
 /**
  * LA TAILLE QU'UNE PIÈCE AURA UNE FOIS POSÉE LÀ.
@@ -173,19 +95,48 @@ function CaseVide({ nom, position, taille, accent = '#6f6a5e' }: CaseProps): Rea
 
 type Props = {
   hub: Hub
+  /** Ce que le coffre montre : l'onglet choisi, et la première ligne visible. */
+  onglet: Onglet
+  defilement: number
   /** Un objet a été glissé d'un endroit à un autre. */
   onDeplacer?: (source: Slot, cible: Slot, id: string) => void
   onRegarder?: (objet: Objet) => void
+  /** Un trésor se REGARDE et ne se glisse pas : il n'a aucun slot. */
+  onRegarderTresor?: (tresor: Carte) => void
   onDescendre?: () => void
   onSaisie?: (tenue: boolean) => void
   onPeinte?: () => void
 }
 
-export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie, onPeinte }: Props): React.JSX.Element {
+export function Armurerie3D({
+  hub,
+  onglet,
+  defilement,
+  onDeplacer,
+  onRegarder,
+  onRegarderTresor,
+  onDescendre,
+  onSaisie,
+  onPeinte,
+}: Props): React.JSX.Element {
   const { size } = useThree()
-  const { demiHaut } = plan(size.height, size.width)
   const aDeuxMains = deuxMains(hub.chargement)
-  const places = placesCharge(size.height, size.width, aDeuxMains)
+  const plan = planArmurerie(size.height, size.width, aDeuxMains)
+  const cases = plan.colonnes * plan.lignes
+
+  /**
+   * CE QUE L'ONGLET MONTRE.
+   *
+   * *Le coffre est ce qu'on POSSÈDE, pas ce qu'on peut porter* : les trésors y
+   * tiennent leur place bien qu'aucun slot ne les prenne. Ils viennent en queue
+   * de l'onglet « Tout » — on fouille un coffre pour s'équiper, donc ce qui
+   * s'équipe se lit d'abord.
+   */
+  const contenu = useMemo(() => contenuDuCoffre(hub, onglet), [hub, onglet])
+
+  const total = contenu.pieces.length + contenu.tresors.length
+  /** La première case visible : le défilement compte en LIGNES, pas en pixels. */
+  const depart = defilement * plan.colonnes
 
   /**
    * TOUT CE QUI SE MANIPULE, À PLAT ET DANS UN SEUL ORDRE.
@@ -193,43 +144,95 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
    * Le geste ne connaît qu'un index ; c'est cette liste qui dit d'où vient la
    * pièce. *Un seul tableau plutôt qu'un cas par contenant* — c'est la même
    * raison qui fait du modèle un `Lieu` dans les règles.
+   *
+   * **Seul ce qui est À L'ÉCRAN y entre** : la grille est une fenêtre sur le
+   * coffre, pas la liste entière. Une carte hors de la fenêtre n'est pas
+   * dessinée ailleurs, elle n'est pas dessinée du tout.
    */
-  const objets: { objet: Objet; slot: Slot; position: [number, number, number]; taille: number }[] = [
-    ...hub.reserve.map((objet, i) => ({
-      objet,
-      slot: { ou: 'reserve' } as Slot,
-      position: placeReserve(i, size.height, size.width),
-      taille: REDUIT,
-    })),
+  const objets: {
+    objet: Objet | null
+    tresor: Carte | null
+    id: string
+    slot: Slot
+    position: [number, number, number]
+    taille: number
+  }[] = [
+    ...contenu.pieces.flatMap((objet, i) => {
+      const rang = i - depart
+      if (rang < 0 || rang >= cases) return []
+      return [
+        {
+          objet,
+          tresor: null,
+          id: objet.id,
+          slot: { ou: 'reserve' } as Slot,
+          position: placeCase(plan, rang),
+          taille: REDUIT,
+        },
+      ]
+    }),
+    ...contenu.tresors.flatMap((tresor, i) => {
+      const rang = contenu.pieces.length + i - depart
+      if (rang < 0 || rang >= cases) return []
+      return [
+        {
+          objet: null,
+          tresor,
+          id: tresor.id,
+          slot: { ou: 'reserve' } as Slot,
+          position: placeCase(plan, rang),
+          taille: REDUIT,
+        },
+      ]
+    }),
     ...hub.chargement.mains.flatMap((arme, rang) =>
       arme === null
         ? []
-        : [{ objet: arme as Objet, slot: { ou: 'main', rang } as Slot, position: places.mains[rang as 0 | 1], taille: 1 }],
+        : [
+            {
+              objet: arme as Objet,
+              tresor: null,
+              id: arme.id,
+              slot: { ou: 'main', rang } as Slot,
+              position: plan.mains[rang as 0 | 1],
+              taille: 1,
+            },
+          ],
     ),
     ...(hub.chargement.armure === null
       ? []
-      : [{ objet: hub.chargement.armure as Objet, slot: { ou: 'armure' } as Slot, position: places.armure, taille: 1 }]),
+      : [
+          {
+            objet: hub.chargement.armure as Objet,
+            tresor: null,
+            id: hub.chargement.armure.id,
+            slot: { ou: 'armure' } as Slot,
+            position: plan.armure,
+            taille: 1,
+          },
+        ]),
     ...hub.chargement.pile.map((objet, i) => ({
       objet: objet as Objet,
+      tresor: null,
+      id: objet.id,
       slot: { ou: 'pile' } as Slot,
-      position: places.pile[i] ?? places.pile[0]!,
+      position: plan.pile[i] ?? plan.pile[0]!,
       taille: PILE,
     })),
   ]
 
-  /** Quel slot se trouve sous ce point. La réserve est tout le flanc gauche. */
+  /** Quel slot se trouve sous ce point. Le coffre est tout le flanc gauche. */
   const slotSous = (point: THREE.Vector3): Slot | null => {
-    const { xCharge, yMains, yArmure, pasCharge } = plan(size.height, size.width)
-    // Une arme à deux mains se pose dans N'IMPORTE QUELLE main : les deux
-    // zones restent sensibles, c'est la règle qui décide où elle atterrit.
     const pres = (p: [number, number, number], l: number, h: number): boolean =>
       Math.abs(point.x - p[0]) < l && Math.abs(point.y - p[1]) < h
-    if (pres(places.mains[0], 0.6, 0.75)) return { ou: 'main', rang: 0 }
-    if (pres(places.mains[1], 0.6, 0.75)) return { ou: 'main', rang: 1 }
-    if (pres(places.armure, 0.6, 0.75)) return { ou: 'armure' }
-    if (pres([xCharge + pasCharge / 2, yArmure, 0], 0.62, 0.78)) return { ou: 'pile' }
-    // Hors du chargement, c'est la réserve : elle n'a pas de cases, on y repose.
-    if (point.x < xCharge - pasCharge - 0.2 || point.y > yMains + 0.9) return { ou: 'reserve' }
+    // Une arme à deux mains se pose dans N'IMPORTE QUELLE main : les deux
+    // zones restent sensibles, c'est la règle qui décide où elle atterrit.
+    if (pres(plan.mains[0], 0.6, 0.75)) return { ou: 'main', rang: 0 }
+    if (pres(plan.mains[1], 0.6, 0.75)) return { ou: 'main', rang: 1 }
+    if (pres(plan.armure, 0.6, 0.75)) return { ou: 'armure' }
+    if (pres([plan.pile[0]![0], plan.armure[1], 0], 0.62, 0.78)) return { ou: 'pile' }
+    // Hors du cadre de l'équipement, c'est le coffre : on y repose.
+    if (point.x < plan.equipement.x - plan.equipement.l / 2) return { ou: 'reserve' }
     return null
   }
 
@@ -237,12 +240,16 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
     z: Z_TENUE,
     onTaper: (i) => {
       const t = objets[i]
-      if (t !== undefined) onRegarder?.(t.objet)
+      if (t === undefined) return
+      if (t.tresor !== null) onRegarderTresor?.(t.tresor)
+      else if (t.objet !== null) onRegarder?.(t.objet)
     },
     onLacher: (i, point) => {
       const t = objets[i]
       const cible = slotSous(point)
-      if (t === undefined || cible === null) return
+      // UN TRÉSOR NE SE DÉPLACE PAS : aucun slot ne le prend, et le coffre ne
+      // le rend jamais. *Il se consulte, c'est tout ce qu'il fait ici.*
+      if (t === undefined || t.objet === null || cible === null) return
       onDeplacer?.(t.slot, cible, t.objet.id)
     },
   })
@@ -264,13 +271,11 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
    *
    * Un slot qui refuse ne la fait pas grandir, donc le refus se lit AVANT le
    * lâcher — un slot qui promet puis ne fait rien a l'air cassé.
-   *
-   * `Carte3D` amortit déjà sa taille : la carte enfle et se retasse toute
-   * seule, il n'y a aucune animation à écrire.
    */
   const sousLeDoigt = doigt === null ? null : slotSous(doigt)
   const accueille =
     portee !== null &&
+    portee.objet !== null &&
     sousLeDoigt !== null &&
     accepteDepuis(hub, portee.slot, sousLeDoigt, portee.objet.id)
   const tailleTenue = accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt) : REDUIT
@@ -281,30 +286,21 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
    * Le frémissement dit « lâche et ça part », donc il doit être vrai — il
    * frémissait pendant tout le geste, y compris en plein vide où lâcher ne
    * fait rien. Demandé par Keko. *Un repère permanent ne repère plus rien.*
-   *
-   * Le râtelier en est exclu bien qu'il accepte tout : c'est l'endroit d'où
-   * l'on vient, et y reposer n'est pas ce que le geste cherche.
    */
-  const surUnSlot =
-    accueille && sousLeDoigt !== null && sousLeDoigt.ou !== 'reserve'
-  const casesVides = Math.max(0, CASES_MINIMUM - hub.reserve.length)
+  const surUnSlot = accueille && sousLeDoigt !== null && sousLeDoigt.ou !== 'reserve'
+
+  /** Les cases vides du coffre : la grille est pleine, qu'il y ait de quoi ou non. */
+  const montrees = Math.max(0, Math.min(cases, total - depart))
+  const vides = cases - montrees
 
   return (
     <group>
-      {/* LE VOILE EST OPAQUE : l'armurerie est un LIEU. Un voile translucide y
-          laissait voir des bêtes qui respirent derrière un râtelier, alors
-          qu'au hub il n'y a pas de combat. */}
-      <mesh position={[0, 0, Z_PLAN - 0.5]}>
-        <planeGeometry args={[40, 24]} />
-        <meshBasicMaterial color="#0b0c10" />
-      </mesh>
-
-      {/* LES CASES VIDES DE LA RÉSERVE : une grille de places, pas une liste. */}
-      {Array.from({ length: casesVides }, (_, i) => (
+      {/* LES CASES VIDES DU COFFRE : une grille de places, pas une liste. */}
+      {Array.from({ length: vides }, (_, i) => (
         <CaseVide
           key={`vide-${i}`}
           nom=""
-          position={placeReserve(hub.reserve.length + i, size.height, size.width)}
+          position={placeCase(plan, montrees + i)}
           taille={REDUIT}
           accent={TEINTE.reserve}
         />
@@ -316,32 +312,30 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
           barrer : *un slot qui reste rempli mais inutilisable mentirait sur ce
           qu'on emporte.* */}
       {hub.chargement.mains[0] === null && (
-        <CaseVide nom={ATTEND.main!} position={places.mains[0]} taille={1} />
+        <CaseVide nom={ATTEND.main!} position={plan.mains[0]} taille={1} />
       )}
       {!aDeuxMains && hub.chargement.mains[1] === null && (
-        <CaseVide nom={ATTEND.main!} position={places.mains[1]} taille={1} />
+        <CaseVide nom={ATTEND.main!} position={plan.mains[1]} taille={1} />
       )}
       {hub.chargement.armure === null && (
-        <CaseVide nom={ATTEND.armure!} position={places.armure} taille={1} />
+        <CaseVide nom={ATTEND.armure!} position={plan.armure} taille={1} />
       )}
       {Array.from({ length: CAPACITE_PILE - hub.chargement.pile.length }, (_, i) => (
         <CaseVide
           key={`pile-${i}`}
           nom=""
-          position={places.pile[hub.chargement.pile.length + i] ?? places.pile[0]!}
+          position={plan.pile[hub.chargement.pile.length + i] ?? plan.pile[0]!}
           taille={PILE}
           accent={TEINTE.pile}
         />
       ))}
 
       {/* LA CASE D'OÙ L'ON TIENT LA PIÈCE RESTE VISIBLE, en pointillé, et elle
-          DIT CE QU'ELLE ATTEND. Les cases vides se déduisent du chargement,
-          or la pièce y est encore tant qu'on ne l'a pas lâchée : sa place
-          devenait donc un trou noir le temps du geste. Keko : « quand je drag
-          un objet depuis l'équipement, le slot dont il provient n'apparaît
-          plus ». *Un emplacement qu'on ne voit plus est un emplacement qu'on
-          ne peut plus viser pour y revenir* — et c'était déjà la règle en 2D,
-          où un pointillé muet avait valu la même remarque. */}
+          DIT CE QU'ELLE ATTEND. Les cases vides se déduisent du chargement, or
+          la pièce y est encore tant qu'on ne l'a pas lâchée : sa place
+          devenait donc un trou noir le temps du geste. *Un emplacement qu'on
+          ne voit plus est un emplacement qu'on ne peut plus viser pour y
+          revenir.* */}
       {portee !== null && doigt !== null && (
         <CaseVide
           nom={ATTEND[portee.slot.ou] ?? ''}
@@ -352,28 +346,16 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
       )}
 
       {/* LA PIÈCE TENUE NE CHANGE JAMAIS D'INSTANCE, et c'est tout le sujet.
-          Elle a d'abord été DÉMONTÉE de la grille le temps du geste, une
-          seconde carte suivant le doigt à côté. Au lâcher, il existe un rendu
-          où la carte est relâchée mais où le chargement n'a pas encore
-          changé : elle se remontait donc dans le râtelier, puis glissait vers
-          le slot. Keko : « au moment de drop elle repart dans le stash puis
-          glisse vers le slot au lieu de partir de l'endroit où elle est
-          droppée ».
-
-          Une seule carte, du râtelier au doigt puis au slot : l'amortissement
-          de `Carte3D` fait l'atterrissage, et il part forcément d'où on a
-          lâché puisque c'est là qu'elle est. *Deux instances pour un seul
-          objet, c'est un saut de position à chaque relais.*
-
-          Conséquence heureuse : un dépôt REFUSÉ la ramène à sa case au lieu de
-          l'y téléporter. Et une pièce prise au maintien sans être bougée reste
-          à sa place — elle n'a pas encore quitté sa case. */}
+          Une seule carte, du coffre au doigt puis au slot : l'amortissement de
+          `Carte3D` fait l'atterrissage, et il part forcément d'où on a lâché
+          puisque c'est là qu'elle est. *Deux instances pour un seul objet,
+          c'est un saut de position à chaque relais.* */}
       {objets.map((t, i) => {
         const suitLeDoigt = i === tenue && doigt !== null
         return (
           <Carte3D
-            key={t.objet.id}
-            carte={pieceAPeindre(t.objet)}
+            key={t.id}
+            carte={t.tresor === null ? pieceAPeindre(t.objet!) : aPeindre(t.tresor)}
             position={suitLeDoigt ? [doigt.x, doigt.y, Z_TENUE] : t.position}
             rotation={[0, 0, 0]}
             taille={suitLeDoigt ? tailleTenue : t.taille}
@@ -389,7 +371,7 @@ export function Armurerie3D({ hub, onDeplacer, onRegarder, onDescendre, onSaisie
       <Bouton3D
         texte="Descendre"
         ton="or"
-        position={[0, -demiHaut + 0.5, Z_PLAN]}
+        position={[plan.pied.x, plan.pied.y, Z_PLAN]}
         eteint={tenue !== null || !peutDescendre(hub.chargement)}
         onCliquer={onDescendre}
       />

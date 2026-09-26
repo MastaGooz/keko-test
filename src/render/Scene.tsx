@@ -35,7 +35,9 @@ import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
-import { Armurerie3D, compteDuDeck } from './Armurerie3D.tsx'
+import { Armurerie3D } from './Armurerie3D.tsx'
+import type { Onglet } from './armurerie-plan.ts'
+import { PageArmurerie } from './PageArmurerie.tsx'
 import { urlDuDecor } from '../ui/art.ts'
 import { Zoom3D } from './Zoom3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
@@ -57,7 +59,12 @@ import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, portee, vise
 import type { Descente } from '../logic/descente.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
 import { creerHub, deplacerPiece, equipement, perdreLEquipement, peutDescendre, rentrer } from '../logic/hub.ts'
-import { REGLAGE_DEFAUT, commencerDescente, consommablesSurvivants } from '../logic/descente.ts'
+import {
+  REGLAGE_DEFAUT,
+  commencerDescente,
+  consommablesSurvivants,
+  tresorsTransportes,
+} from '../logic/descente.ts'
 import {
   butinTransporte,
   choisirCarte,
@@ -262,6 +269,10 @@ export function Scene(): React.JSX.Element {
   const [dissolutions, setDissolutions] = useState<Dissolution[]>([])
   /** La pioche tremble pendant qu'on y reverse la défausse. */
   const [brasse, setBrasse] = useState(false)
+  /** Ce que le coffre montre, et depuis quelle ligne. */
+  const [onglet, setOnglet] = useState<Onglet>('tout')
+  const [defilement, setDefilement] = useState(0)
+
   /** La carte de garde en route vers le bouclier. */
   const [versArmure, setVersArmure] = useState<{
     cle: string
@@ -1073,7 +1084,7 @@ export function Scene(): React.JSX.Element {
       setHub((h) =>
         mort
           ? perdreLEquipement(h)
-          : rentrer(h, butinTransporte(enCours), consommablesSurvivants(enCours)),
+          : rentrer(h, butinTransporte(enCours), consommablesSurvivants(enCours), tresorsTransportes(enCours)),
       )
       setDescente(null)
     },
@@ -1372,10 +1383,16 @@ export function Scene(): React.JSX.Element {
         {auHub && (
           <Armurerie3D
             hub={hub}
+            onglet={onglet}
+            defilement={defilement}
             onDeplacer={bougerPiece}
             onRegarder={(objet) => {
               setZoomee(pieceAPeindre(objet))
               setZoomSet(setAPeindre(objet))
+            }}
+            onRegarderTresor={(tresor) => {
+              setZoomee(aPeindre(tresor))
+              setZoomSet([])
             }}
             onDescendre={descendreAuDonjon}
             onSaisie={setSaisie}
@@ -1661,20 +1678,20 @@ export function Scene(): React.JSX.Element {
       {/* LE PANNEAU DU PALIER : le titre en haut, les boutons en bas, et la
           rangée de cartes entre les deux — dans le canvas, donc sous ce
           panneau en HTML. Il ne recouvre jamais les cartes : il les encadre. */}
-      {/* LE COMPTE DU DECK, avant de descendre. Sans lui, une pièce de plus
-          serait un gain sans contrepartie visible — et c'est exactement la
-          contrepartie qui fait le choix. */}
       {pret && auHub && (
-        <div className="palier-3d">
-          <div className="haut-3d">
-            <p className="titre-3d">Ton chargement</p>
-            <p className="sous-3d">
-              Deck de {compteDuDeck(hub).total} carte{compteDuDeck(hub).total > 1 ? 's' : ''} ·{' '}
-              {compteDuDeck(hub).frappent} qui frappent
-              {hub.or > 0 && ` · ${hub.or} d'or rapporté`}
-            </p>
-          </div>
-        </div>
+        <PageArmurerie
+          hub={hub}
+          onglet={onglet}
+          onOnglet={(o) => {
+            setOnglet(o)
+            setDefilement(0)
+          }}
+          defilement={defilement}
+          onDefilement={setDefilement}
+          pvMax={combat.pvMax}
+          energieMax={combat.energieMax}
+          tailleMain={combat.tailleMain}
+        />
       )}
 
       {pret && !auHub && !enCombat && (
