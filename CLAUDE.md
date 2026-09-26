@@ -2375,38 +2375,66 @@ donc sa place d'avant ne raconte plus rien.*
 rejoignent aucun tas. On le lit sur l'état d'après — la carte est-elle dans
 `defausse` ? — plutôt qu'en recopiant la règle.
 
-### LA CARTE DE GARDE SE REPLIE SUR LE BOUCLIER
+### CHAQUE CARTE VA OÙ SON EFFET SE LIT — et pas deux fois de la même façon
 
-Keko : « quand on joue une carte d'armure, il faudrait une animation où la
-carte va vers l'emplacement où est affiché l'armure ». *C'était le dernier trou
-de la séquence* : une carte qui vise a sa chute sur le corps, une carte
-défaussée a sa comète, et une garde ne faisait rien du tout — elle disparaissait
-au lâcher et un chiffre bleu changeait dans un coin, sans que rien ne relie les
-deux.
+Keko, en deux fois : « quand on joue une carte d'armure, il faudrait une
+animation où la carte va vers l'emplacement où est affiché l'armure », puis
+« maintenant la potion il faudrait une animation aussi — et d'ailleurs toutes
+les cartes qui soignent — où la carte va sur la barre d'HP avec une anim de
+soin ».
 
-**ELLE NE S'ABAT PAS, ELLE SE REPLIE** (`CarteVersArmure.tsx`). La carte qui
-frappe arrive haut, marque un temps d'arrêt et tombe d'un coup sec : c'est le
-vocabulaire d'un coup porté. Une garde fait l'inverse — elle *rentre*. Elle se
-ramasse vers le bouclier **en accélérant**, là où la frappe part vite et
-s'arrête net. *Deux gestes opposés ne peuvent pas partager la même courbe.*
+*C'était le dernier trou de la séquence* : une carte qui vise avait sa chute
+sur le corps, une carte défaussée sa comète, et une garde ou une potion ne
+faisaient rien du tout — elles disparaissaient au lâcher pendant qu'un chiffre
+changeait dans un coin, sans que rien ne relie les deux.
 
-**Elle passe en ACIER en chemin**, et c'est ce qui dit qu'elle DEVIENT l'armure
-plutôt qu'elle n'irait se ranger à côté. Même mécanique que la carte défaussée
-qui vire à la crème de la tête de comète : *une transformation se raconte par
-la couleur de ce qui arrive, pas par une substitution à la fin.*
+**LA RÈGLE EST POSÉE SUR L'EFFET, PAS SUR LA CARTE** : toute carte qui donne du
+bloc va au bouclier, toute carte qui rend des PV va à la barre — y compris un
+trésor brûlé. *Nommer la potion aurait fait une exception là où il y a une
+règle.* Et **le soin passe avant la garde** : une carte qui ferait les deux n'a
+qu'une scène à jouer, et rendre des PV est le geste le plus parlant.
+
+**TROIS GESTES, TROIS COURBES, ET C'EST TOUT LE POINT** :
+
+- la carte qui **frappe** (`CarteQuiSAbat`) arrive haut, marque un temps
+  d'arrêt et tombe d'un coup sec — un coup porté ;
+- la carte de **garde** (`CarteVersArmure`) se ramasse sur le bouclier **en
+  accélérant**, là où la frappe part vite et s'arrête net — elle *rentre*. Un
+  petit crochet vers le haut au départ, sans quoi une ligne droite vers un coin
+  de l'écran se lit comme un glissement de menu ;
+- la carte qui **soigne** (`CarteVersSoin`) monte au-dessus de la barre,
+  **bascule comme une fiole qu'on penche**, marque son temps, puis se déverse
+  dedans. *Le temps d'arrêt en haut est ce qui fait le versement* — sans lui on
+  lit une carte qui tombe, pas une fiole qu'on vide.
+
+*Un même trajet rejoué avec une autre couleur ne raconterait rien* : ce qui
+distingue un soin d'une garde, c'est le geste, pas la teinte.
+
+**Chacune vire à la couleur de ce qu'elle devient** — acier pour la garde, vert
+de sève pour le soin — et c'est ce qui dit qu'elle DEVIENT l'effet plutôt
+qu'elle n'irait se ranger à côté. Même mécanique que la carte défaussée qui
+vire à la crème de la tête de comète.
 
 **L'ÉTAT ATTEND L'ARRIVÉE.** Si l'armure montait au lâcher, le bouclier
 afficherait déjà son chiffre pendant que la carte vole vers lui : *on verrait
 la conséquence avant la cause.* Même règle que la frappe, dont l'état change à
 l'impact et pas à la tape — et donc même verrou d'entrée pendant le vol.
 
-**Le bouclier encaisse** (`choc` sur `BarreVie3D`), par l'API d'animation comme
-les tas : il faut pouvoir relancer le geste avant qu'il soit fini, on peut poser
-deux gardes coup sur coup. Sa place est **toujours réservée**, avec ou sans
-armure, donc la carte a une cible même pour la première garde du tour.
+**LA DESTINATION ENCAISSE** : le bouclier gonfle (`choc`), la barre s'illumine
+de vert (`soin`). Par l'API d'animation comme les tas, parce qu'il faut pouvoir
+relancer le geste avant qu'il soit fini — on peut poser deux gardes coup sur
+coup. Le voile vert vit DANS le contenant qui rogne les couleurs, donc il
+épouse la barre : *le vert seul serait un calque posé dessus, le halo seul une
+lueur sans cause* — les deux ensemble disent que c'est la barre qui reçoit.
 
-**Et faute de bouclier à l'écran, la carte se joue sans rien montrer** : *une
-animation ne doit jamais pouvoir empêcher un coup.*
+La place du bouclier est **toujours réservée**, avec ou sans armure, donc la
+carte a une cible même pour la première garde du tour. **Et faute de repère à
+l'écran, la carte se joue sans rien montrer** : *une animation ne doit jamais
+pouvoir empêcher un coup.*
+
+Les deux repères passent par le même `repereDe` : ils sont du HTML, les cartes
+vivent dans le canvas, et `depuisEcran` suit le recul de la caméra sans qu'on
+s'en occupe — le chemin des tas.
 
 ### LE CYCLE SE DÉCLARE, IL NE SE DÉDUIT PAS — et le mélange se voit
 

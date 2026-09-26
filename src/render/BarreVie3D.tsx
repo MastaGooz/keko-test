@@ -67,6 +67,12 @@ type Props = {
    * deux gardes de suite doivent relancer le geste sans l'attendre.
    */
   choc?: number
+  /**
+   * Un compteur de soins reçus : la barre s'illumine de vert à chaque
+   * incrément. Même mécanique que `choc`, et pour la même raison — on peut
+   * boire deux potions coup sur coup.
+   */
+  soin?: number
 }
 
 export function BarreVie3D({
@@ -76,8 +82,11 @@ export function BarreVie3D({
   menace,
   encaisse,
   choc = 0,
+  soin = 0,
 }: Props): React.JSX.Element {
   const bouclier = useRef<HTMLDivElement>(null)
+  const barre = useRef<HTMLDivElement>(null)
+  const seve = useRef<HTMLSpanElement>(null)
 
   /**
    * LE BOUCLIER ENCAISSE LA CARTE QUI S'Y REPLIE.
@@ -98,6 +107,49 @@ export function BarreVie3D({
     return () => jeu.cancel()
   }, [choc])
 
+  /**
+   * LE SOIN SE VOIT SUR LA BARRE, PAS À CÔTÉ D'ELLE.
+   *
+   * Un voile vert passe SUR le remplissage — donc rogné comme lui — et la
+   * plaque s'auréole en même temps. *Le vert seul serait un calque posé sur la
+   * barre ; le halo seul serait une lueur sans cause.* Les deux ensemble
+   * disent que c'est la barre qui reçoit.
+   *
+   * Par l'API d'animation, comme les tas et le bouclier : il faut pouvoir
+   * relancer le geste avant qu'il soit fini.
+   */
+  useEffect(() => {
+    if (soin === 0) return
+    if (typeof document.createElement('div').animate !== 'function') return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const jeux: Animation[] = []
+    const v = seve.current
+    if (v !== null) {
+      jeux.push(
+        v.animate([{ opacity: 0 }, { opacity: 0.85, offset: 0.2 }, { opacity: 0 }], {
+          duration: 620,
+          easing: 'ease-out',
+        }),
+      )
+    }
+    const b = barre.current
+    if (b !== null) {
+      jeux.push(
+        b.animate(
+          [
+            { filter: 'drop-shadow(0 0 0 #7ae6a400)' },
+            { filter: 'drop-shadow(0 0 0.5rem #7ae6a4cc)', offset: 0.22 },
+            { filter: 'drop-shadow(0 0 0 #7ae6a400)' },
+          ],
+          { duration: 620, easing: 'ease-out' },
+        ),
+      )
+    }
+    return () => {
+      for (const j of jeux) j.cancel()
+    }
+  }, [soin])
+
   const echelle = Math.max(pvMax, 1)
   const part = (v: number): string => `${Math.max(0, Math.min(100, (v / echelle) * 100))}%`
   // Le jaune est PLAFONNÉ aux PV restants : au-delà il sortirait du rouge, et
@@ -108,7 +160,7 @@ export function BarreVie3D({
 
   return (
     <div className="vie-rangee">
-      <div className={`vie-barre${encaisse ? ' encaisse' : ''}`}>
+      <div className={`vie-barre${encaisse ? ' encaisse' : ''}`} ref={barre}>
         {/* LA PLAQUE DE LAITON, dans un élément à elle.
             Elle porte la SILHOUETTE — des coins coupés, des ferrures aux deux
             bouts — et elle ne peut donc pas être portée par `.vie-barre` : son
@@ -129,6 +181,9 @@ export function BarreVie3D({
           <span className="vie-rouge" style={{ width: part(pv) }}>
             {perdus > 0 && <span className="vie-jaune" style={{ width: partDuRouge }} />}
           </span>
+          {/* LE VOILE DE SOIN vit DANS le contenant qui rogne : il épouse la
+              barre au lieu de la déborder. */}
+          <span className="vie-seve" ref={seve} />
         </span>
 
         {/* LE CHIFFRE EST AU-DESSUS, hors du rognage : il DÉBORDE la barre et

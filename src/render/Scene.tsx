@@ -42,6 +42,7 @@ import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
 import { BarreVie3D } from './BarreVie3D.tsx'
 import { CarteVersArmure, FIN_ARMURE, TEMPS_ARMURE } from './CarteVersArmure.tsx'
+import { CarteVersSoin, FIN_SOIN, TEMPS_SOIN } from './CarteVersSoin.tsx'
 import type { Entree } from './Zoom3D.tsx'
 import {
   TAILLE_MAIN_URL,
@@ -271,6 +272,16 @@ export function Scene(): React.JSX.Element {
   } | null>(null)
   /** Le bouclier encaisse : il gonfle quand la carte s'y replie. */
   const [chocArmure, setChocArmure] = useState(0)
+  /** La carte de soin en route vers la barre de vie. */
+  const [versSoin, setVersSoin] = useState<{
+    cle: string
+    carte: CarteAPeindre
+    depuis: [number, number, number]
+    vers: [number, number, number]
+    debut: number
+  } | null>(null)
+  /** La barre s'illumine : elle vient de recevoir un soin. */
+  const [chocSoin, setChocSoin] = useState(0)
 
   /**
    * Un compteur d'arrivées par tas : il gonfle à chaque chose qu'on y verse.
@@ -610,6 +621,69 @@ export function Scene(): React.JSX.Element {
   )
 
   /**
+   * OÙ SE TROUVE UN REPÈRE DE L'INTERFACE, EN COORDONNÉES DE SCÈNE.
+   *
+   * Le bouclier et la barre sont du HTML, les cartes vivent dans le canvas :
+   * `depuisEcran` est l'inverse de `Projeter`, et il passe par le champ
+   * visible à la profondeur de la main — il suit donc le recul de la caméra
+   * sans qu'on s'en occupe. Même chemin que les tas.
+   */
+  const repereDe = useCallback((selecteur: string): [number, number, number] | null => {
+    const r = document.querySelector(selecteur)?.getBoundingClientRect() ?? null
+    if (r === null) return null
+    return depuisEcran(
+      r.left + r.width / 2,
+      r.top + r.height / 2,
+      Z_MAIN,
+      window.innerWidth,
+      window.innerHeight,
+    )
+  }, [])
+
+  /**
+   * LA CARTE QUI SOIGNE SE VERSE DANS LA BARRE DE VIE.
+   *
+   * Keko : « la potion il faudrait une animation aussi — et d'ailleurs toutes
+   * les cartes qui soignent — où la carte va sur la barre d'HP avec une anim
+   * de soin ». *La règle est posée sur l'EFFET et pas sur la potion* : toute
+   * carte qui rend des PV y a droit, y compris un trésor brûlé.
+   *
+   * Même contrat que la garde : **l'état attend l'arrivée**, donc verrou
+   * pendant le vol, et faute de barre à l'écran on joue la carte sans rien
+   * montrer.
+   */
+  const soigner = useCallback(
+    (index: number, depuis: [number, number, number]) => {
+      const carte = combat.main[index]
+      if (carte === undefined) return
+      const poser = (): void => {
+        dejaJouee.current = { id: carte.id, finAnimation: 0 }
+        majCombat((c) => jouerCarte(c, index, -1))
+      }
+      const vers = repereDe('.vie-barre')
+      if (vers === null) {
+        poser()
+        return
+      }
+
+      const cle = `s-${cleSuivante.current++}`
+      setVerrou(true)
+      setVersSoin({ cle, carte: aPeindre(carte), depuis, vers, debut: lireHorloge() })
+
+      window.setTimeout(() => {
+        poser()
+        setChocSoin((n) => n + 1)
+      }, TEMPS_SOIN * 1000)
+
+      window.setTimeout(() => {
+        setVersSoin(null)
+        setVerrou(false)
+      }, FIN_SOIN * 1000)
+    },
+    [combat, majCombat, repereDe],
+  )
+
+  /**
    * LA CARTE DE GARDE SE REPLIE SUR LE BOUCLIER.
    *
    * Keko : « quand on joue une carte d'armure, il faudrait une animation où la
@@ -633,18 +707,7 @@ export function Scene(): React.JSX.Element {
     (index: number, depuis: [number, number, number]) => {
       const carte = combat.main[index]
       if (carte === undefined) return
-      const el = document.querySelector('.vie-armure')
-      const r = el?.getBoundingClientRect() ?? null
-      const vers =
-        r === null
-          ? null
-          : depuisEcran(
-              r.left + r.width / 2,
-              r.top + r.height / 2,
-              Z_MAIN,
-              window.innerWidth,
-              window.innerHeight,
-            )
+      const vers = repereDe('.vie-armure')
       const poser = (): void => {
         dejaJouee.current = { id: carte.id, finAnimation: 0 }
         majCombat((c) => jouerCarte(c, index, -1))
@@ -668,7 +731,7 @@ export function Scene(): React.JSX.Element {
         setVerrou(false)
       }, FIN_ARMURE * 1000)
     },
-    [combat, majCombat],
+    [combat, majCombat, repereDe],
   )
 
   /**
@@ -838,6 +901,9 @@ export function Scene(): React.JSX.Element {
         // Une carte qui frappe TOUT LE RANG s'abat quand même : elle ne vise
         // personne, mais elle fait quelque chose, et ça doit se voir.
         if (portee(carte) === 'toutes') frapperTous(index, depuis)
+        // LE SOIN PASSE AVANT LA GARDE : une carte qui ferait les deux n'a
+        // qu'une scène à jouer, et rendre des PV est le geste le plus parlant.
+        else if (carte.effets?.some((e) => e.type === 'soin') === true) soigner(index, depuis)
         else if (carte.effets?.some((e) => e.type === 'bloc') === true) proteger(index, depuis)
         else {
           // Celle-ci n'a pas de scène à jouer : elle disparaît au lâcher, donc
@@ -851,7 +917,7 @@ export function Scene(): React.JSX.Element {
       // Elle part d'où on l'a VUE : sa place d'attente au-dessus de la main.
       frapper(index, cible, depuis)
     },
-    [combat, fini, frapper, frapperTous, majCombat, proteger, verrou],
+    [combat, fini, frapper, frapperTous, majCombat, proteger, soigner, verrou],
   )
 
   const reordonner = useCallback((de: number, vers: number) => {
@@ -1133,9 +1199,10 @@ export function Scene(): React.JSX.Element {
     const ids = [...attendues]
     if (enVol !== null) ids.push(enVol.carte.id)
     if (versArmure !== null) ids.push(versArmure.carte.id)
+    if (versSoin !== null) ids.push(versSoin.carte.id)
     if (zoomee !== null) ids.push(zoomee.id)
     return ids
-  }, [attendues, enVol, versArmure, zoomee])
+  }, [attendues, enVol, versArmure, versSoin, zoomee])
 
   // LE DÉCOR SUIT CEUX QU'ON AFFRONTE, et il se relit à chaque combat. La part
   // de profondeur décide de quelle vue du camp : on s'y enfonce.
@@ -1254,6 +1321,15 @@ export function Scene(): React.JSX.Element {
 
         {/* La carte qui s'abat vit sur la scène et non dans la main : un rendu
             de la main la balaierait en plein vol, et le coup en déclenche un. */}
+        {versSoin !== null && (
+          <CarteVersSoin
+            key={versSoin.cle}
+            carte={versSoin.carte}
+            depuis={versSoin.depuis}
+            vers={versSoin.vers}
+            debut={versSoin.debut}
+          />
+        )}
         {versArmure !== null && (
           <CarteVersArmure
             key={versArmure.cle}
@@ -1533,6 +1609,7 @@ export function Scene(): React.JSX.Element {
               menace={fini || salve !== null ? 0 : menace}
               encaisse={recus.length > 0}
               choc={chocArmure}
+              soin={chocSoin}
             />
             {recus.map((k) => (
               <span key={k.cle} className="degats-3d recu">
