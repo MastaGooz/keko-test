@@ -50,7 +50,7 @@ export const Z_PLAN = Z_MAIN
  * Le pied disparu a rendu la hauteur qui payait ce gain : à 0,54 le coffre
  * garde ses lignes.
  */
-export const REDUIT = 0.54
+export const REDUIT = 0.62
 
 /**
  * LA TAILLE D'UNE CASE DE LA PILE EST IMPOSÉE PAR L'ARITHMÉTIQUE, pas choisie.
@@ -183,7 +183,10 @@ export function planArmurerie(
     Math.max(largeurUtile * 0.15, lBouton * 1.14),
     largeurUtile * 0.3,
   )
-  const lCoffre = (largeurUtile - lStats) * 0.615
+  // LE COFFRE REND ENCORE UN PEU DE LARGEUR : l'équipement lui en demande,
+  // maintenant que ses sept cartes sont à la même taille et tiennent sur
+  // quatre colonnes.
+  const lCoffre = (largeurUtile - lStats) * 0.55
   const lEquip = largeurUtile - lStats - lCoffre
   const xCoffre = -demiLarge + marge + lCoffre / 2
   const xStats = demiLarge - marge - lStats / 2
@@ -234,44 +237,51 @@ export function planArmurerie(
   const pasYPlein = Math.min(grille.h / lignes, pasY * 1.34)
 
   /**
-   * L'ÉQUIPEMENT : deux mains sur une ligne, le torse et la pile sur l'autre.
+   * L'ÉQUIPEMENT : UNE RANGÉE DE CE QU'ON PORTE, UNE RANGÉE DE CE QU'ON BOIT.
+   *
+   * **Toutes ses cartes ont la même taille**, demandé par Keko. La pile valait
+   * la moitié d'une pièce — une arithmétique imposée par deux lignes de cases
+   * dans la hauteur d'un slot — et ça faisait deux échelles dans un même
+   * panneau : *une case plus petite dit « moins important », alors qu'une
+   * potion emportée pèse autant qu'une arme dans le deck.*
+   *
+   * D'où **trois rangées** : les pièces équipées en haut — deux ou trois selon
+   * qu'une arme prend les deux mains — et la pile en bloc de deux par deux
+   * dessous. *Quatre consommables sur une seule ligne tenaient aussi*, mais la
+   * largeur les bornait à quatre colonnes et le panneau restait à moitié vide :
+   * **c'est la contrainte la plus dure qui fixe la taille, donc mieux vaut
+   * qu'elle porte sur le petit côté.** À trois colonnes, les cartes gagnent un
+   * tiers.
+   *
+   * **Chaque rangée se centre**, elle ne s'aligne pas à gauche : deux cartes
+   * calées sur une grille de trois laisseraient un trou au bout, et un trou au
+   * bout d'une rangée se lit comme une case libre.
    *
    * **LA PIÈCE SE DIMENSIONNE, ELLE N'EST PAS DE TAILLE FIXE.** Le champ
    * visible est plus PETIT en unités de scène sur un téléphone — la caméra n'y
-   * recule pas, elle ne le fait que pour plafonner la taille des cartes sur
-   * grand écran — donc un cadre qui tenait deux rangées de 1,4 sur un moniteur
-   * n'en tenait plus qu'une et demie sur un téléphone : *les slots se
-   * chevauchaient et débordaient par le bas.* Keko l'a vu tout de suite.
-   *
-   * On part donc de la PLACE et on en déduit la taille, jamais l'inverse —
-   * deux contraintes, la plus dure gagne :
-   *
-   * - la hauteur, parce qu'il faut DEUX rangées de 1,4 plus leur air ;
-   * - la largeur, parce qu'il faut DEUX colonnes plus la leur.
-   *
-   * Et jamais au-delà de 1 : le chargement se lit à la taille de la main, pas
-   * plus grand. *C'est la même leçon que `--piece-equip` en 2D, où la hauteur
-   * d'écran imposait déjà la taille des slots.*
+   * recule pas — donc on part de la PLACE et on en déduit la taille : la
+   * largeur (quatre colonnes) ou la hauteur (deux rangées), la plus dure
+   * gagne, et jamais au-delà de 1.
    */
   const hEnteteEquip = hEntete
   const dedans = hPanneaux - hEnteteEquip
   const yDedans = yPanneaux + hPanneaux / 2 - hEnteteEquip - dedans / 2
+  const COLONNES_EQUIP = 3
+  const RANGEES_EQUIP = 3
   const tailleCharge = Math.min(
     1,
-    (dedans * 0.94) / (2 * 1.4 * 1.06),
-    (lEquip - marge * 2) / (2 * 1.12),
+    (lEquip - marge * 2) / (COLONNES_EQUIP * 1.12),
+    (dedans * 0.94) / (RANGEES_EQUIP * 1.4 * 1.12),
   )
-  // LA CASE DE LA PILE FAIT LA MOITIÉ D'UNE PIÈCE, par arithmétique et non par
-  // choix : deux lignes de cases doivent tenir dans la hauteur d'un slot, et
-  // une carte fait 1,4 fois sa largeur, donc `c = P / 2` exactement.
-  const taillePile = tailleCharge / 2
+  const taillePile = tailleCharge
   const pasCharge = tailleCharge * 1.12
-  const pasRangee = tailleCharge * 1.4 * 1.06
-  const yMains = yDedans + pasRangee / 2
-  const yArmure = yDedans - pasRangee / 2
-  const xArme = aDeuxMains ? xEquip : xEquip - pasCharge / 2
-  const pasPileX = taillePile * 1.1
-  const pasPileY = taillePile * 1.4 * 1.06
+  const pasRangee = tailleCharge * 1.4 * 1.12
+  const yPorte = yDedans + pasRangee
+  const yPile = [yDedans, yDedans - pasRangee]
+  // La rangée du haut se centre sur ce qu'elle porte : deux cartes si l'arme
+  // prend les deux mains, trois sinon.
+  const hautes = aDeuxMains ? 2 : 3
+  const place = (rang: number): number => xEquip + (rang - (hautes - 1) / 2) * pasCharge
 
   // LE BOUTON VIT SOUS LES STATS, dans la même colonne : c'est ce qu'on fait
   // une fois qu'on a lu ce qu'on emporte. Sa bande est réservée en haut de la
@@ -292,15 +302,16 @@ export function planArmurerie(
     pasY: pasYPlein,
     equipement: { x: xEquip, y: yPanneaux, l: lEquip, h: hPanneaux },
     mains: [
-      [xArme, yMains, Z_PLAN],
-      [xEquip + pasCharge / 2, yMains, Z_PLAN],
+      [place(0), yPorte, Z_PLAN],
+      [place(1), yPorte, Z_PLAN],
     ],
-    armure: [xEquip - pasCharge / 2, yArmure, Z_PLAN],
+    armure: [place(hautes - 1), yPorte, Z_PLAN],
     tailleCharge,
     taillePile,
+    // LA PILE EN BLOC DE DEUX PAR DEUX, centré comme la rangée du haut.
     pile: Array.from({ length: CAPACITE_PILE }, (_, i) => [
-      xEquip + pasCharge / 2 + (i % 2 === 0 ? -pasPileX / 2 : pasPileX / 2),
-      yArmure + (i < 2 ? pasPileY / 2 : -pasPileY / 2),
+      xEquip + ((i % 2) - 0.5) * pasCharge,
+      yPile[i < 2 ? 0 : 1]!,
       Z_PLAN,
     ]),
     stats: { x: xStats, y: yPanneaux + hBouton / 2, l: lStats, h: hPanneaux - hBouton },

@@ -3202,6 +3202,22 @@ toujours pas tranchée, donc rien ne change de ce côté-là, et les deux compte
 cohabitent en attendant un marché. *Un total ne montre pas un butin* — c'est la
 raison qui avait déjà fait dessiner le loot en cartes.
 
+**TOUTES LES CARTES DE L'ÉQUIPEMENT ONT LA MÊME TAILLE.** Demandé par Keko. La
+pile valait la moitié d'une pièce — une arithmétique imposée par deux lignes de
+cases dans la hauteur d'un slot — et ça faisait deux échelles dans un même
+panneau : *une case plus petite dit « moins important », alors qu'une potion
+emportée pèse autant qu'une arme dans le deck.*
+
+D'où **trois rangées** : les pièces équipées en haut — deux ou trois selon
+qu'une arme prend les deux mains — et la pile en bloc de deux par deux
+dessous. *Quatre consommables sur une seule ligne tenaient aussi*, mais la
+largeur les bornait alors à quatre colonnes et le panneau restait à moitié
+vide : **c'est la contrainte la plus dure qui fixe la taille, donc mieux vaut
+qu'elle porte sur le petit côté.** À trois colonnes, les cartes gagnent un
+tiers. Et **chaque rangée se centre** — deux cartes calées sur une grille de
+trois laisseraient un trou au bout, et un trou au bout d'une rangée se lit
+comme une case libre.
+
 **LA PIÈCE DU CHARGEMENT SE DIMENSIONNE, ELLE N'EST PAS DE TAILLE FIXE.** Keko :
 « sur téléphone les cases de l'équipement ne sont pas bien agencées, elles se
 superposent et dépassent un peu en bas ». *Le champ visible est plus PETIT en
@@ -3248,7 +3264,7 @@ dépasser d'un tiers : au-delà, ce ne serait plus une grille mais des cases
 éparpillées. La case du coffre a fait l'aller-retour, et c'est la lecture qui a
 tranché : descendue de 0,52 à 0,44 pour gagner une rangée — j'avais écrit
 qu'*une case plus petite ne coûte rien à la lecture*, puisqu'on cherche au
-cadre et à la silhouette — puis remontée à 0,54, Keko : « on a du mal à lire
+cadre et à la silhouette — puis remontée à 0,62 en deux fois, Keko : « on a du mal à lire
 les petites cartes dans le coffre ». **Elle coûtait bien quelque chose**, et le
 nom d'une arme fait partie de ce qu'on cherche. Le pied disparu a rendu la
 hauteur qui payait le gain, donc le coffre garde ses lignes.

@@ -241,15 +241,15 @@ export function Armurerie3D({
     if (pres(plan.armure, t * 0.54, t * 0.74)) return { ou: 'armure' }
     // LA PILE EST UNE SEULE ZONE POUR SES QUATRE CASES : l'ordre n'y a aucun
     // effet, donc une case précise ne veut rien dire — et une grande zone se
-    // vise mieux au doigt qu'un quart de carte.
-    const demiX = Math.abs(plan.pile[1]![0] - plan.pile[0]![0]) / 2 + plan.taillePile * 0.58
-    const demiY =
-      Math.abs(plan.pile[0]![1] - plan.pile[2]![1]) / 2 + plan.taillePile * 1.4 * 0.58
-    const milieu: [number, number, number] = [
-      (plan.pile[0]![0] + plan.pile[1]![0]) / 2,
-      plan.armure[1],
-      0,
-    ]
+    // vise mieux au doigt qu'un quart de carte. Elle tient toute la rangée du
+    // bas, donc elle se déduit de ses extrémités.
+    const gauche = Math.min(...plan.pile.map((p) => p[0]))
+    const droite = Math.max(...plan.pile.map((p) => p[0]))
+    const bas = Math.min(...plan.pile.map((p) => p[1]))
+    const haut = Math.max(...plan.pile.map((p) => p[1]))
+    const milieu: [number, number, number] = [(gauche + droite) / 2, (bas + haut) / 2, 0]
+    const demiX = (droite - gauche) / 2 + plan.taillePile * 0.56
+    const demiY = (haut - bas) / 2 + plan.taillePile * 1.4 * 0.56
     if (pres(milieu, demiX, demiY)) return { ou: 'pile' }
     // Hors du cadre de l'équipement, c'est le coffre : on y repose.
     if (point.x < plan.equipement.x - plan.equipement.l / 2) return { ou: 'reserve' }
