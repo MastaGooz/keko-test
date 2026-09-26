@@ -1001,14 +1001,25 @@ export function textureDeCarte(carte: CarteAPeindre): Promise<THREE.CanvasTextur
   const connue = TEXTURES.get(cle)
   if (connue !== undefined) return connue
 
-  const promesse = peindreCarte(carte).then((canvas) => {
-    const texture = new THREE.CanvasTexture(canvas)
-    // La carte se regarde de près et en biais : sans filtrage anisotrope le
-    // texte se brouille dès qu'elle s'incline.
-    texture.anisotropy = 8
-    texture.colorSpace = THREE.SRGBColorSpace
-    return texture
-  })
+  const promesse = peindreCarte(carte)
+    .then((canvas) => {
+      const texture = new THREE.CanvasTexture(canvas)
+      // La carte se regarde de près et en biais : sans filtrage anisotrope le
+      // texte se brouille dès qu'elle s'incline.
+      texture.anisotropy = 8
+      texture.colorSpace = THREE.SRGBColorSpace
+      return texture
+    })
+    .catch((raison: unknown) => {
+      // UNE PROMESSE REJETÉE EN CACHE CONDAMNE LE MODÈLE POUR TOUTE LA SESSION.
+      // Sans ce retrait, une peinture qui échoue une fois — une image qui ne
+      // charge pas, une police qui tarde — laisse toutes les cartes de ce
+      // modèle sans texture jusqu'au rechargement. *Un cache doit retenir les
+      // succès, pas les échecs.*
+      TEXTURES.delete(cle)
+      console.error('[carte] peinture échouée', signature(carte), raison)
+      throw raison
+    })
   TEXTURES.set(cle, promesse)
   return promesse
 }

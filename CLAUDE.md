@@ -3777,6 +3777,36 @@ l'écran, texte vérifié net au zoom), et les cartes **projettent** les ombres
 sans en **recevoir** — une carte qui reçoit les ombres reçoit aussi la sienne,
 ce qui tache sa face dès que la carte d'ombre manque de précision.
 
+### Des cartes toutes blanches ou toutes noires
+
+Keko : « parfois j'ai des cartes toutes blanches ou toutes noires et je ne peux
+rien voir de ce qu'il y a dessus ». **Pas reproduit en local** — d'où trois
+causes plausibles traitées d'un coup, plutôt qu'un correctif au jugé sur une
+seule. Si ça revient, c'est qu'il en restait une quatrième, et la console porte
+désormais une ligne quand une peinture échoue.
+
+**1. `onBeforeCompile` SANS `customProgramCacheKey`.** three met les programmes
+compilés en cache, et **sa clé ignore ce que `onBeforeCompile` a injecté** :
+deux `MeshStandardMaterial` de mêmes réglages y sont indiscernables, même si
+l'un a reçu trois lignes de nuanceur et l'autre non. Celui qui hérite du mauvais
+programme sort une carte uniformément blanche ou noire — *et seulement parfois*,
+puisque ça dépend de l'ordre de compilation. C'est le correctif que three
+prescrit dès qu'on touche au nuanceur, et le seul des trois qui explique les
+DEUX symptômes.
+
+**2. Une promesse rejetée en cache condamne le modèle pour toute la session.**
+`TEXTURES` retenait la promesse de `peindreCarte`, rejet compris : une peinture
+qui échoue une fois — une image qui ne charge pas, une police qui tarde —
+laissait toutes les cartes de ce modèle sans texture jusqu'au rechargement. *Un
+cache doit retenir les succès, pas les échecs.*
+
+**3. La face était BLANCHE avant d'avoir sa texture.** La couleur multiplie la
+texture ; sans texture, `#ffffff` donne une dalle éclatante. Elle part
+désormais sombre, et le `useFrame` ne lui rend sa luminosité qu'une fois la map
+posée — *la règle déjà écrite pour les créatures* : « tant que la texture n'est
+pas là, la couleur est sombre », parce qu'on croit alors à un bug de rendu
+plutôt qu'à une image manquante.
+
 ### Deux pièges déjà rencontrés
 
 - **`<primitive>` ne monte un objet QU'UNE FOIS.** Les cinq faces de laiton du

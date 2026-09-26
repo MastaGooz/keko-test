@@ -193,7 +193,12 @@ export function Carte3D({
     // La couleur MULTIPLIE la texture : elle vaut blanc quand la carte est
     // jouable, et c'est elle qui l'assombrit sinon.
     const face = new THREE.MeshStandardMaterial({
-      color: '#ffffff',
+      // SOMBRE TANT QUE LA TEXTURE N'EST PAS LÀ. En blanc, une carte dont la
+      // peinture tarde ou échoue est une dalle éclatante au milieu de la main,
+      // et on croit à un bug de rendu plutôt qu'à une image manquante — c'est
+      // la règle déjà écrite pour les créatures. Le `useFrame` rend sa couleur
+      // à la carte dès que sa texture arrive.
+      color: '#1b1a22',
       roughness: 0.55,
       metalness: 0.15,
       emissive: '#ffcf7a',
@@ -226,6 +231,20 @@ export function Carte3D({
       nuanceur.fragmentShader = `uniform float uGris;
 ${nuanceur.fragmentShader}`
     }
+    /**
+     * SANS CETTE CLÉ, DEUX MATÉRIAUX PEUVENT PARTAGER UN PROGRAMME QUI N'EST
+     * PAS LE LEUR.
+     *
+     * three met les programmes compilés en cache, et **sa clé ignore ce que
+     * `onBeforeCompile` a injecté** : deux `MeshStandardMaterial` de mêmes
+     * réglages y sont indiscernables, même si l'un a reçu trois lignes de
+     * nuanceur et l'autre non. Celui qui hérite du mauvais programme sort une
+     * carte uniformément blanche ou noire — *et seulement parfois*, puisque ça
+     * dépend de l'ordre dans lequel ils ont été compilés.
+     *
+     * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
+     */
+    face.customProgramCacheKey = () => 'carte-face-desaturable'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -259,12 +278,18 @@ ${nuanceur.fragmentShader}`
     // prêtent, et une carte remontée la retrouve déjà prête — donc elle ne
     // repasse jamais par son état sombre. Rien n'est libéré ici pour la même
     // raison : elle ne nous appartient pas.
-    void (dos ? textureDuDos() : textureDeCarte(carte)).then((texture) => {
-      if (!vivant) return
-      face.map = texture
-      face.needsUpdate = true
-      onPeinte?.()
-    })
+    void (dos ? textureDuDos() : textureDeCarte(carte))
+      .then((texture) => {
+        if (!vivant) return
+        face.map = texture
+        face.needsUpdate = true
+        onPeinte?.()
+      })
+      // L'échec est déjà signalé par le cache, qui s'y vide pour permettre une
+      // nouvelle tentative. Ici on absorbe seulement le rejet : sans ça il
+      // remonterait en « unhandled rejection », du bruit qui masquerait la vraie
+      // ligne.
+      .catch(() => {})
     return () => {
       vivant = false
     }
@@ -351,7 +376,10 @@ ${nuanceur.fragmentShader}`
     const eteinte = 1 - Math.exp(-14 * delta)
     const cible = jouable ? 1 : 0.52
     l.vif += (cible - l.vif) * eteinte
-    face.color.setScalar(l.vif)
+    // La couleur MULTIPLIE la texture : sans texture, la laisser monter à 1
+    // donnerait une dalle blanche. On attend qu'il y ait quelque chose à
+    // éclairer.
+    if (face.map !== null) face.color.setScalar(l.vif)
     laiton.color.setRGB(0.718 * l.vif, 0.604 * l.vif, 0.416 * l.vif)
 
     // La désaturation suit le même amortissement : la carte s'éteint ET perd
