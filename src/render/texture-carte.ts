@@ -1087,21 +1087,41 @@ export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {
   const ctx = canvas.getContext('2d')
   if (ctx === null) return texture
 
-  const marge = l * 0.03
-  ctx.strokeStyle = accent
-  ctx.lineWidth = l * 0.016
-  ctx.setLineDash([l * 0.07, l * 0.05])
-  ctx.beginPath()
-  ctx.roundRect(marge, marge, l - marge * 2, h - marge * 2, l * 0.05)
-  ctx.stroke()
+  const peindre = (): void => {
+    ctx.clearRect(0, 0, l, h)
+    const marge = l * 0.03
+    ctx.strokeStyle = accent
+    ctx.lineWidth = l * 0.016
+    ctx.setLineDash([l * 0.07, l * 0.05])
+    ctx.beginPath()
+    ctx.roundRect(marge, marge, l - marge * 2, h - marge * 2, l * 0.05)
+    ctx.stroke()
 
-  ctx.setLineDash([])
-  ctx.fillStyle = accent
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.font = `600 ${Math.round(l * 0.11)}px Cinzel, Georgia, serif`
-  ctx.fillText(nom.toUpperCase(), l / 2, h / 2)
-  texture.needsUpdate = true
+    if (nom !== '') {
+      ctx.setLineDash([])
+      ctx.fillStyle = accent
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.font = `600 ${Math.round(l * 0.11)}px Cinzel, Georgia, serif`
+      ctx.fillText(nom.toUpperCase(), l / 2, h / 2)
+    }
+    texture.needsUpdate = true
+  }
+
+  peindre()
+  /**
+   * ET ON REPEINT QUAND LA POLICE ARRIVE.
+   *
+   * Un canvas qui dessine avant `document.fonts.ready` retombe SILENCIEUSEMENT
+   * sur la police par défaut — la règle est écrite pour les cartes, elle ne
+   * l'était pas ici. Comme la texture est mise en cache, le premier slot
+   * peint gardait Georgia et les suivants avaient Cinzel : **deux mots de même
+   * corps qui n'ont pas la même taille à l'écran.** Keko : « les slots arme /
+   * armure ne sont pas écrits à la même taille ».
+   */
+  if (nom !== '' && document.fonts.status !== 'loaded') {
+    void document.fonts.ready.then(peindre)
+  }
   return texture
 }
 

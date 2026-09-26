@@ -181,7 +181,7 @@ const COTTE: Armure = {
   const [p1, p2, p3] = POTIONS_DEPART
 
   // ELLE EN PREND PLUSIEURS, et le meme modele plusieurs fois : c'est toute la
-  // difference avec un slot. Mais PAS PLUS DE QUATRE -- sans plafond, on y met
+  // difference avec un slot. Mais PAS PLUS DE TROIS -- sans plafond, on y met
   // tout ce qu'on possede et la question ne se pose plus.
   const deux = deplacerPiece(h, { ou: 'reserve' }, { ou: 'pile' }, p2!.id)
   const trois = deplacerPiece(deux, { ou: 'reserve' }, { ou: 'pile' }, p3!.id)
@@ -202,16 +202,16 @@ const COTTE: Armure = {
   verifier('une potion ne tient pas en main', deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, p1!.id) === h)
   verifier('ni au torse', deplacerPiece(h, { ou: 'reserve' }, { ou: 'armure' }, p1!.id) === h)
 
-  // LE PLAFOND : la cinquieme potion reste au ratelier.
-  const quatre = deplacerPiece(deplacerPiece(trois, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[3]!.id), { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id)
-  verifier('la pile plafonne a quatre', quatre.chargement.pile.length === CAPACITE_PILE)
-  verifier('la cinquieme reste au ratelier', quatre.reserve.some((o) => o.id === POTIONS_DEPART[4]!.id))
+  // LE PLAFOND : la quatrieme potion reste au ratelier.
+  const pleine = deplacerPiece(deplacerPiece(trois, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[3]!.id), { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id)
+  verifier('la pile plafonne a CAPACITE_PILE', pleine.chargement.pile.length === CAPACITE_PILE)
+  verifier('la quatrieme reste au ratelier', pleine.reserve.some((o) => o.id === POTIONS_DEPART[3]!.id))
   verifier('et le depot de trop ne change rien d’autre',
-    deplacerPiece(quatre, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id) === quatre)
+    deplacerPiece(pleine, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id) === pleine)
 
   // MAIS ON PEUT REPOSER SUR UNE PILE PLEINE CE QU'ON VIENT D'EN SORTIR : la
   // destination se juge apres la prise, sinon la carte se refusait elle-meme.
-  const repose = deplacerPiece(quatre, { ou: 'pile' }, { ou: 'pile' }, quatre.chargement.pile[0]!.id)
+  const repose = deplacerPiece(pleine, { ou: 'pile' }, { ou: 'pile' }, pleine.chargement.pile[0]!.id)
   verifier('une potion se repose sur sa propre pile pleine', repose.chargement.pile.length === CAPACITE_PILE)
 
   // CE QUE LE RENDU DEMANDE AUX RÈGLES : ce depot aboutirait-il ? C'est ce
@@ -222,10 +222,10 @@ const COTTE: Armure = {
   verifier('...mais pas par une main',
     !accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, p2!.id))
   verifier('une pile pleine refuse une potion de plus',
-    !accepteDepuis(quatre, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id))
+    !accepteDepuis(pleine, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id))
   // LE CAS QUI JUSTIFIE LA FONCTION : juge apres la prise, pas avant.
   verifier('...mais accepte celle qui en sort',
-    accepteDepuis(quatre, { ou: 'pile' }, { ou: 'pile' }, quatre.chargement.pile[0]!.id))
+    accepteDepuis(pleine, { ou: 'pile' }, { ou: 'pile' }, pleine.chargement.pile[0]!.id))
   // Une main vide ne tient rien, donc rien ne part de la : la piece tenue ne
   // peut pas grandir pour un deplacement qui n'existe pas.
   verifier('un slot vide n’offre rien',

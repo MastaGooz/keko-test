@@ -62,9 +62,6 @@ function tailleDuSlot(slot: Slot, plan: PlanArmurerie): number {
   return plan.tailleCharge
 }
 
-/** Ce que le slot attend, pour le dessiner vide. */
-const ATTEND: Record<string, string> = { main: 'Arme', armure: 'Armure', pile: 'Objet' }
-
 /** La teinte d'une case vide : le râtelier et la pile sont plus discrets. */
 const TEINTE: Record<string, string> = { reserve: '#3c3a35', pile: '#4a4a40' }
 
@@ -238,7 +235,7 @@ export function Armurerie3D({
     if (pres(plan.mains[0], t * 0.54, t * 0.74)) return { ou: 'main', rang: 0 }
     if (pres(plan.mains[1], t * 0.54, t * 0.74)) return { ou: 'main', rang: 1 }
     if (pres(plan.armure, t * 0.54, t * 0.74)) return { ou: 'armure' }
-    // LA PILE EST UNE SEULE ZONE POUR SES QUATRE CASES : l'ordre n'y a aucun
+    // LA PILE EST UNE SEULE ZONE POUR TOUTES SES CASES : l'ordre n'y a aucun
     // effet, donc une case précise ne veut rien dire — et une grande zone se
     // vise mieux au doigt qu'un quart de carte. Elle tient toute la rangée du
     // bas, donc elle se déduit de ses extrémités.
@@ -326,18 +323,21 @@ export function Armurerie3D({
       ))}
 
       {/* LES SLOTS DU CHARGEMENT, vides : ils ont la forme de ce qu'ils
-          attendent, et ils le DISENT — sans leur nom, ce n'est qu'un pointillé
-          muet. Une arme à deux mains masque le second slot au lieu de le
-          barrer : *un slot qui reste rempli mais inutilisable mentirait sur ce
-          qu'on emporte.* */}
+          attendent, et c'est le NOM DE GROUPE au-dessus d'eux qui le dit —
+          « Armes » coiffe les deux mains, « Armure » son slot, « Objets » la
+          rangée des consommables. Le mot vivait DANS la case : il ne nommait
+          rien du tout pour la pile, et deux cases voisines ne l'écrivaient pas
+          à la même taille. Une arme à deux mains masque le second slot au lieu
+          de le barrer : *un slot qui reste rempli mais inutilisable mentirait
+          sur ce qu'on emporte.* */}
       {hub.chargement.mains[0] === null && (
-        <CaseVide nom={ATTEND.main!} position={plan.mains[0]} taille={plan.tailleCharge} />
+        <CaseVide nom="" position={plan.mains[0]} taille={plan.tailleCharge} />
       )}
       {!aDeuxMains && hub.chargement.mains[1] === null && (
-        <CaseVide nom={ATTEND.main!} position={plan.mains[1]} taille={plan.tailleCharge} />
+        <CaseVide nom="" position={plan.mains[1]} taille={plan.tailleCharge} />
       )}
       {hub.chargement.armure === null && (
-        <CaseVide nom={ATTEND.armure!} position={plan.armure} taille={plan.tailleCharge} />
+        <CaseVide nom="" position={plan.armure} taille={plan.tailleCharge} />
       )}
       {Array.from({ length: CAPACITE_PILE - hub.chargement.pile.length }, (_, i) => (
         <CaseVide
@@ -357,7 +357,7 @@ export function Armurerie3D({
           revenir.* */}
       {portee !== null && doigt !== null && (
         <CaseVide
-          nom={ATTEND[portee.slot.ou] ?? ''}
+          nom=""
           position={portee.position}
           taille={portee.taille}
           accent={TEINTE[portee.slot.ou]}

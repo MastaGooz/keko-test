@@ -118,12 +118,18 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   carte de deck qui apparaisse au râtelier**. D'où la pile plutôt qu'un slot :
   on y dépose plusieurs cartes, y compris plusieurs exemplaires du même modèle.
   *C'est le seul endroit du chargement où l'on décide d'un nombre.*
-- **LA PILE PLAFONNE À QUATRE** (`CAPACITE_PILE`). Elle a d'abord été sans
+- **LA PILE PLAFONNE À TROIS** (`CAPACITE_PILE`). Elle a d'abord été sans
   limite, la dilution devant suffire à retenir le joueur ; Keko l'a repris :
   « on ne peut pas donner des slots illimités, il faudrait une limite ». *Un
   contenant sans fond n'est pas un choix, c'est un sac* — on y met tout ce
-  qu'on possède et la question ne se pose plus. À quatre cases, emporter une
+  qu'on possède et la question ne se pose plus. À trois cases, emporter une
   potion de plus veut dire en laisser une autre.
+
+  **Quatre d'abord, puis trois** — Keko : « on va passer les consommables à 3
+  max, tout sur une ligne ». *Un bloc de deux par deux se compte, une rangée
+  se voit* : à trois cases, ce qu'on emporte se lit sans énumérer. La mesure
+  de survie disait déjà que la courbe plafonne dès trois potions (93 % contre
+  92 % à cinq) : **le quatrième slot ne décidait plus rien.**
 - **Équiper plus dilue.** La taille du deck est une ressource ; c'est ce qui
   rend le chargement intéressant au lieu d'être « tout prendre ».
 - **L'équipement se perd à la mort**, comme le sac. Une **arme commune
@@ -1600,16 +1606,20 @@ compte les deux verbes.
 **LE CONSOMMABLE EXISTE : LA POTION** (`logic/armes.ts`, la **pile** du
 chargement dans `logic/hub.ts`). **Une carte, un soin, puis elle s'exile** :
 1⚡, rend 14 PV, détruite en se buvant. On en possède **cinq exemplaires** et
-on en emporte **quatre au plus**.
+on en emporte **trois au plus**.
 
-**La pile est une GRILLE DE QUATRE CASES, à côté de l'armure** — occupées ou
+**La pile est une RANGÉE DE TROIS CASES, sous les pièces** — occupées ou
 non, comme le râtelier montre les siennes : c'est ce qui dit d'un coup d'oeil
-ce qu'il reste à décider. **Un seul dépôt pour les quatre**, et pas une case
+ce qu'il reste à décider. **Un seul dépôt pour les trois**, et pas une case
 par slot : l'ordre n'a aucun effet (le deck est mélangé au combat), donc une
 case précise ne veut rien dire, et une grande zone se vise mieux au doigt
 qu'un quart de carte. Pleine, elle annonce `data-attend="rien"` — le glisser
 l'allume alors en rouge sans rien savoir de la règle, exactement comme un slot
 condamné par une arme à deux mains.
+
+*Ce qui suit vaut pour le chargement 2D, resté en bloc de deux par deux ; le
+moteur 3D range désormais les trois cases sur une ligne, à la taille des
+pièces.*
 
 **LA TAILLE DES CASES EST IMPOSÉE PAR L'ARITHMÉTIQUE, pas choisie.** Deux
 lignes de cases doivent tenir dans la hauteur d'un slot, et c'est ce calage-là
@@ -3100,12 +3110,54 @@ et *rien ne le signalait*, puisqu'il restait parfaitement visible : c'est ce
 qu'il cachait qui manquait. La bande centrale est vide à tous les formats,
 puisque le râtelier tient la gauche et le chargement la droite.
 
-**La taille d'une case de la pile est imposée, pas choisie** : deux lignes
-doivent tenir dans la hauteur d'un slot, et une carte fait 1,4 fois sa
-largeur, donc `c = P / 2` exactement. Même arithmétique qu'en 2D.
+**LES SLOTS SE RANGENT PAR GROUPE, ET LE GROUPE PORTE SON NOM.** Une rangée
+de pièces — les deux mains et le torse — coiffée de « Armes » et « Armure »,
+puis une rangée de trois consommables coiffée de « Consommables ». Demandé par
+Keko : « il faudrait que le nom soit au-dessus des slots, "Armes" au-dessus
+des deux slots, armure et consommable au-dessus du bloc des consommables ».
+
+Le mot vivait **DANS la case vide**, un par slot, et il y avait deux défauts
+d'un seul tenant :
+
+- **rien ne nommait la pile.** Ses cases étaient muettes — Keko : « rien
+  n'indique les slots consommables » — parce qu'un mot par case aurait répété
+  trois fois la même chose. *Un nom posé sur le GROUPE le dit une fois, et il
+  le dit encore quand les cases sont pleines* ;
+- **deux mots voisins n'avaient pas la même taille.** `textureSlot` peint au
+  canvas et **ne l'attendait pas** : un canvas qui dessine avant
+  `document.fonts.ready` retombe SILENCIEUSEMENT sur la police par défaut, et
+  la texture part en cache telle quelle. Le premier slot peint gardait Georgia,
+  les suivants avaient Cinzel. La règle était écrite pour les cartes ; *une
+  règle de peinture vaut pour tout ce qui peint*, pas pour ce sur quoi on l'a
+  apprise. `textureSlot` repeint donc quand la police arrive — ce qui vaut
+  aussi pour les slots du butin, qui gardent leur nom.
+
+**« Armes » couvre les DEUX mains**, et se replie en « Arme » sur la seule qui
+reste quand une arme à deux mains masque l'autre slot. Un filet sous le mot dit
+jusqu'où il porte : *un mot centré au-dessus de trois cases ne dit pas combien
+il en coiffe.*
+
+**Et la bande du nom entre dans le calcul de la taille des cartes.** Prise sur
+la place des slots, elle les aurait fait déborder du panneau — le défaut déjà
+payé sur téléphone. Le panneau tient donc **deux rangées et deux bandes**, et
+comme il a perdu une rangée en chemin, *les cartes ont grandi* : la taille
+unique de l'armurerie sort toujours de la contrainte la plus dure, trois
+colonnes en largeur ou deux rangées en hauteur.
+
+**Le coffre s'est donc centré en largeur.** À grandes cartes il n'en tient plus
+que trois par ligne, et calées à gauche elles laissaient une colonne de vide
+contre le bord droit du meuble — *un vide au bout d'une rangée se lit comme une
+case qu'on n'a pas dessinée.* Le compte de colonnes ne dépend pas du contenu,
+donc rien ne saute quand une ligne s'ajoute ; en hauteur, au contraire, la
+grille reste calée en haut.
 
 Et le bouton de fin de run dit **« Retour à l'armurerie »** : il nomme ce
 qu'il ouvre, pas ce qui viendra après.
+
+**Vérifié au navigateur** (1568 x 778, puis en cadre à 844 x 390 et
+667 x 320, zéro débordement) : trois potions entrent dans la pile, la
+quatrième est refusée et reste au coffre, et l'Espadon posé en main replie
+« Armes » en « Arme » sur le slot qui reste.
 
 **Vérifié au navigateur, boucle entière** : équiper l'Espadon au glisser (le
 Glaive repart au râtelier, le second slot est masqué, le premier se centre,

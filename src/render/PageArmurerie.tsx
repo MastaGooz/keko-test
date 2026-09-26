@@ -178,6 +178,26 @@ export function PageArmurerie({
         Équipement
       </span>
 
+      {/* LES NOMS DE GROUPE, AU-DESSUS DES SLOTS QU'ILS NOMMENT. Keko : « il
+          faudrait que le nom soit au-dessus des slots, "Armes" au-dessus des
+          deux slots, armure et consommable au-dessus du bloc des
+          consommables ».
+
+          Le mot vivait DANS la case vide, un par slot. *Rien ne nommait la
+          pile* — une case vide muette ne dit pas ce qu'elle attend — et deux
+          cases voisines ne l'écrivaient pas à la même taille. **Un nom posé
+          sur un GROUPE le dit une fois pour deux slots, et il le dit encore
+          quand les cases sont pleines.** */}
+      <p className="arm-groupe" style={boite(plan.nomArmes)}>
+        {deuxMains(hub.chargement) ? 'Arme' : 'Armes'}
+      </p>
+      <p className="arm-groupe" style={boite(plan.nomArmure)}>
+        Armure
+      </p>
+      <p className="arm-groupe" style={boite(plan.nomObjets)}>
+        Consommables
+      </p>
+
       {/* L'ÉTAT DE CE QU'ON EMPORTE, en bas à droite : le deck, la vie,
           l'énergie et la main. Demandé par Keko — *avant de descendre, le
           joueur doit voir avec quoi il descend*, et ces quatre chiffres le

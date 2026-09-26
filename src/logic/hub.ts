@@ -96,11 +96,16 @@ export type Slot =
 /**
  * Combien de consommables on emporte au plus.
  *
- * Quatre, comme les quatre cases de la grille qui les montre : le nombre est
- * une donnée de règle, pas une conséquence de la mise en page, mais les deux
- * doivent dire la même chose.
+ * **Trois**, tranché par Keko : « on va passer les consommables à 3 max, tout
+ * sur une ligne ». Il en a tenu quatre, en bloc de deux par deux sous les
+ * pièces ; *un bloc se compte, une rangée se voit* — et la rangée unique rend
+ * au panneau la hauteur qui paie les noms de groupe au-dessus des slots.
+ *
+ * Le nombre est une donnée de RÈGLE, pas une conséquence de la mise en page,
+ * mais les deux doivent dire la même chose : la grille en montre exactement
+ * `CAPACITE_PILE`, occupées ou non.
  */
-export const CAPACITE_PILE = 4
+export const CAPACITE_PILE = 3
 
 const VIDE: Chargement = { mains: [null, null], armure: null, pile: [] }
 

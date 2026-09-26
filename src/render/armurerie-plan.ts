@@ -98,6 +98,19 @@ export type PlanArmurerie = {
   armure: [number, number, number]
   pile: [number, number, number][]
   /**
+   * LES NOMS DE GROUPE, au-dessus des slots qu'ils nomment.
+   *
+   * Ils ont d'abord été écrits DANS la case vide, un mot par slot. Deux
+   * défauts : rien ne nommait la pile — Keko, « rien n'indique les slots
+   * consommables » — et les mots n'avaient pas la même taille d'un slot à
+   * l'autre, parce que `textureSlot` peignait avant que Cinzel ne soit
+   * chargée et gardait sa texture en cache. *Un nom au-dessus d'un GROUPE dit
+   * ce que la case dit, et il le dit une fois pour deux slots.*
+   */
+  nomArmes: Rect
+  nomArmure: Rect
+  nomObjets: Rect
+  /**
    * La taille d'une carte, en fraction d'une carte de la main — **la même
    * partout dans l'armurerie**, coffre compris.
    */
@@ -225,11 +238,16 @@ export function planArmurerie(
    * remplir le sien avec ce qu'il peut.
    */
   const COLONNES_EQUIP = 3
-  const RANGEES_EQUIP = 3
+  const RANGEES_EQUIP = 2
+  const hDedans = hPanneaux - hEntete
+  // La bande d'un nom de groupe. Il y en a une par rangée, et elles entrent
+  // dans le calcul de la taille : un titre pris sur la place des cartes les
+  // ferait déborder du panneau, exactement ce qui est arrivé sur téléphone.
+  const hNom = Math.min(hDedans * 0.1, 0.34)
   const tailleCharge = Math.min(
     1,
     (lEquip - marge * 2) / (COLONNES_EQUIP * 1.12),
-    ((hPanneaux - hEntete) * 0.94) / (RANGEES_EQUIP * 1.4 * 1.12),
+    (hDedans * 0.96 - RANGEES_EQUIP * hNom) / (RANGEES_EQUIP * 1.4 * 1.12),
   )
 
   // Une case, plus un cheveu : la grille doit respirer sans s'étaler.
@@ -249,6 +267,12 @@ export function planArmurerie(
   // panneau. *Une grille se lit à son pas régulier* — ce qui reste en bas est
   // de l'étagère vide, et une étagère vide est ce qu'on attend d'un coffre.
   const pasYPlein = Math.min(grille.h / lignes, pasY * 1.08)
+  // ET LA GRILLE SE CENTRE EN LARGEUR. À grandes cartes, le coffre n'en tient
+  // plus que trois par ligne : calées à gauche, elles laissaient une colonne
+  // de vide contre le bord droit du meuble — *un vide au bout d'une rangée se
+  // lit comme une case qu'on n'a pas dessinée.* Le compte de colonnes ne
+  // dépend pas du contenu, donc rien ne saute quand une ligne s'ajoute.
+  const pasXPlein = Math.min(grille.l / colonnes, pasX * 1.1)
 
   /**
    * L'ÉQUIPEMENT : UNE RANGÉE DE CE QU'ON PORTE, UNE RANGÉE DE CE QU'ON BOIT.
@@ -277,18 +301,30 @@ export function planArmurerie(
    * largeur (quatre colonnes) ou la hauteur (deux rangées), la plus dure
    * gagne, et jamais au-delà de 1.
    */
-  const hEnteteEquip = hEntete
-  const dedans = hPanneaux - hEnteteEquip
-  const yDedans = yPanneaux + hPanneaux / 2 - hEnteteEquip - dedans / 2
+  const yDedans = yPanneaux + hPanneaux / 2 - hEntete - hDedans / 2
   const taillePile = tailleCharge
   const pasCharge = tailleCharge * 1.12
   const pasRangee = tailleCharge * 1.4 * 1.12
-  const yPorte = yDedans + pasRangee
-  const yPile = [yDedans, yDedans - pasRangee]
+
+  // DEUX ÉTAGES, CHACUN COIFFÉ DE SON NOM, et le tout centré dans le panneau :
+  // nom, rangée, nom, rangée. On empile depuis le haut du bloc, pas depuis le
+  // bord du panneau — *un bloc plus court que sa boîte doit se centrer dedans,
+  // sinon tout le jeu s'accumule d'un seul côté.*
+  const hBloc = 2 * hNom + 2 * pasRangee
+  const yHautBloc = yDedans + hBloc / 2
+  const yNomPorte = yHautBloc - hNom / 2
+  const yPorte = yHautBloc - hNom - pasRangee / 2
+  const yNomObjets = yHautBloc - hNom - pasRangee - hNom / 2
+  const yObjets = yHautBloc - 2 * hNom - 2 * pasRangee + pasRangee / 2
+
   // La rangée du haut se centre sur ce qu'elle porte : deux cartes si l'arme
   // prend les deux mains, trois sinon.
   const hautes = aDeuxMains ? 2 : 3
   const place = (rang: number): number => xEquip + (rang - (hautes - 1) / 2) * pasCharge
+  // « Armes » couvre les deux mains — ou la seule, quand une arme les prend
+  // toutes les deux et que le second slot est masqué.
+  const lArmes = (aDeuxMains ? 1 : 2) * pasCharge
+  const xArmes = aDeuxMains ? place(0) : (place(0) + place(1)) / 2
 
   // LE BOUTON VIT SOUS LES STATS, dans la même colonne : c'est ce qu'on fait
   // une fois qu'on a lu ce qu'on emporte. Sa bande est réservée en haut de la
@@ -305,7 +341,7 @@ export function planArmurerie(
     barre,
     colonnes,
     lignes,
-    pasX,
+    pasX: pasXPlein,
     pasY: pasYPlein,
     equipement: { x: xEquip, y: yPanneaux, l: lEquip, h: hPanneaux },
     mains: [
@@ -315,12 +351,16 @@ export function planArmurerie(
     armure: [place(hautes - 1), yPorte, Z_PLAN],
     tailleCharge,
     taillePile,
-    // LA PILE EN BLOC DE DEUX PAR DEUX, centré comme la rangée du haut.
+    // LA PILE EST UNE RANGÉE, centrée comme celle du haut. Elle a été un bloc
+    // de deux par deux ; à trois cases, une seule ligne se lit d'un coup.
     pile: Array.from({ length: CAPACITE_PILE }, (_, i) => [
-      xEquip + ((i % 2) - 0.5) * pasCharge,
-      yPile[i < 2 ? 0 : 1]!,
+      xEquip + (i - (CAPACITE_PILE - 1) / 2) * pasCharge,
+      yObjets,
       Z_PLAN,
     ]),
+    nomArmes: { x: xArmes, y: yNomPorte, l: lArmes, h: hNom },
+    nomArmure: { x: place(hautes - 1), y: yNomPorte, l: pasCharge, h: hNom },
+    nomObjets: { x: xEquip, y: yNomObjets, l: CAPACITE_PILE * pasCharge, h: hNom },
     stats: { x: xStats, y: yPanneaux + hBouton / 2, l: lStats, h: hPanneaux - hBouton },
     bouton: [xStats, basPanneaux + hBouton / 2, Z_PLAN],
   }
@@ -333,9 +373,11 @@ export function placeCase(
 ): [number, number, number] {
   const colonne = rang % plan.colonnes
   const ligne = Math.floor(rang / plan.colonnes)
-  // La grille se cale en HAUT À GAUCHE de sa zone : on lit un coffre de haut
-  // en bas, et une grille centrée sauterait à chaque ligne qui s'ajoute.
-  const x0 = plan.grille.x - plan.grille.l / 2 + plan.pasX / 2
+  // La grille se cale en HAUT de sa zone : on lit un coffre de haut en bas, et
+  // une grille centrée verticalement sauterait à chaque ligne qui s'ajoute.
+  // En largeur, au contraire, elle se centre : le nombre de colonnes ne dépend
+  // pas de ce qu'il y a dedans, donc rien ne bouge jamais.
+  const x0 = plan.grille.x - (plan.colonnes * plan.pasX) / 2 + plan.pasX / 2
   const y0 = plan.grille.y + plan.grille.h / 2 - plan.pasY / 2
   return [x0 + colonne * plan.pasX, y0 - ligne * plan.pasY, Z_PLAN]
 }

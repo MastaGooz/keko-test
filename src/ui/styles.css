@@ -4961,6 +4961,24 @@ body {
   white-space: nowrap;
 }
 
+/* UN NOM DE GROUPE COIFFE SES SLOTS : pas une plaque vissee comme le nom du
+   meuble -- ce n'est pas un meuble, c'est un rayon. Un filet sous le mot, sur
+   toute la largeur du groupe, qui dit jusqu'ou il porte : *un mot centre au-
+   dessus de trois cases ne dit pas combien il en coiffe.* */
+.arm-groupe {
+  display: grid;
+  place-items: end center;
+  margin: 0;
+  padding-bottom: 0.14rem;
+  border-bottom: 1px solid #6b593677;
+  color: #c9b88e;
+  font-size: clamp(0.5rem, 1.55vh, 0.8rem);
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
 .arm-onglets {
   display: flex;
   align-items: center;
