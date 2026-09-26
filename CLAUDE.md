@@ -2176,9 +2176,23 @@ tout ce qu'on voudra rendre graphique plutôt que lumineux.
 
 Ce que ça impose, et qui tient ensemble :
 
-- **le coeur est PLEIN** — un disque de crème à 100 % cerclé d'ambre, étiré
-  dans le sens de la marche. C'est ce que Keko demandait : *un centre
-  translucide n'a pas de centre* ;
+- **le coeur est PLEIN** — de la crème à 100 % cerclée d'ambre. C'est ce que
+  Keko demandait : *un centre translucide n'a pas de centre* ;
+- **ET LA TÊTE EST UNE CARTE**, pas un disque. Keko : « tu crois que la tête de
+  la comète pourrait évoquer la forme d'un rectangle, comme si la carte était
+  une comète ? » *C'est la dernière chose qui manquait pour que l'effet dise ce
+  qu'il transporte* — le sillage donnait la trajectoire et la vitesse, mais un
+  disque en tête pouvait être n'importe quoi ; un rectangle au rapport du
+  gabarit, coins arrondis compris, ne peut être qu'une carte. Elle est
+  **couchée sur la tangente** (la hauteur d'un plan est son axe Y, d'où le
+  quart de tour à retrancher) : la carte fend l'air par sa tranche, et le
+  sillage sort de son bord arrière. Elle penche d'un rien, différemment à
+  chaque traînée, parce que cinq cartes qui filent exactement dans le même axe
+  se lisent comme une machine.
+
+  *La toile a le rapport de la carte* : peinte carrée puis étirée, ses coins
+  arrondis seraient des ovales. Et il n'y a **rien dedans** — à une trentaine
+  de pixels, un médaillon ou un second filet tournent en bouillie ;
 - **l'effilement est GÉOMÉTRIQUE, pas fait d'opacité.** Un trait dessiné se
   termine en pointe, il ne s'évapore pas. L'opacité ne sert plus qu'à la sortie,
   sur le dernier quart ;

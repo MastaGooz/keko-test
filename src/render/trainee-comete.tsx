@@ -16,9 +16,11 @@
  *
  * Trois pièces, toutes opaques en leur coeur :
  *
- * - **LA TÊTE**, un disque de crème à 100 % cerclé d'ambre, étiré dans le sens
- *   de la marche. C'est elle que Keko demandait pleine : *un centre translucide
- *   n'a pas de centre*, et c'est ce qui faisait bouillie ;
+ * - **LA TÊTE, QUI EST UNE CARTE** — un rectangle de crème à 100 % cerclé
+ *   d'ambre, au rapport du gabarit, couché dans le sens de la marche. Keko la
+ *   voulait pleine (*un centre translucide n'a pas de centre*), puis
+ *   rectangulaire : « comme si la carte était une comète ». *C'est ce qui fait
+ *   que l'effet dit enfin ce qu'il transporte* ;
  * - **LE SILLAGE**, un ruban à DEUX APLATS — un coeur de crème opaque, une
  *   bordure d'ambre — qui s'affine en pointe. La transparence ne fait plus
  *   l'effilement, c'est la GÉOMÉTRIE : un trait dessiné se termine en pointe,
@@ -59,8 +61,11 @@ const SEGMENTS = 24
 /** La demi-largeur du sillage, en unités de scène (une carte fait 1 de large). */
 const LARGEUR = 0.062
 
-/** Le diamètre de la tête, avant son étirement dans le sens de la marche. */
-const TETE = 0.2
+/** La largeur de la tête. Sa hauteur en découle : c'est une CARTE. */
+const TETE = 0.15
+
+/** Le rapport du gabarit, celui de toutes les cartes du jeu. */
+const RAPPORT = 1.4
 
 const LOSANGES = 3
 
@@ -110,19 +115,39 @@ const SILLAGE = ((): THREE.CanvasTexture | null => {
   return new THREE.CanvasTexture(toile)
 })()
 
-/** LA TÊTE : un disque plein cerclé d'ambre. Rien d'autre — c'est le point. */
+/**
+ * LA TÊTE EST UNE CARTE, PAS UN DISQUE.
+ *
+ * Keko : « tu crois que la tête de la comète pourrait évoquer la forme d'un
+ * rectangle, comme si la carte était une comète ? » *C'est la dernière chose
+ * qui manquait pour que l'effet dise ce qu'il transporte* — le sillage donnait
+ * la trajectoire et la vitesse, mais un disque en tête pouvait être n'importe
+ * quoi. Un rectangle au rapport du gabarit, coins arrondis compris, ne peut
+ * être qu'une carte.
+ *
+ * *La toile a le rapport de la carte* : peinte carrée puis étirée, ses coins
+ * arrondis seraient des ovales et le rayon ne serait plus celui du gabarit.
+ *
+ * Un cadre et rien dedans : à une trentaine de pixels, un médaillon ou un
+ * second filet tournent en bouillie. **Un symbole ne se règle pas à la taille
+ * où on le dessine, mais à celle où on le regarde** — la leçon du médaillon
+ * des tas, prise dans l'autre sens.
+ */
 const COEUR = ((): THREE.CanvasTexture | null => {
-  const C = 64
+  const L = 72
+  const H = Math.round(L * RAPPORT)
   const toile = document.createElement('canvas')
-  toile.width = C
-  toile.height = C
+  toile.width = L
+  toile.height = H
   const ctx = toile.getContext('2d')
   if (ctx === null) return null
+  const m = 5
+  // Le même rayon que le gabarit : 3 % de la largeur de la carte.
   ctx.beginPath()
-  ctx.arc(C / 2, C / 2, C * 0.34, 0, Math.PI * 2)
+  ctx.roundRect(m, m, L - 2 * m, H - 2 * m, L * 0.09)
   ctx.fillStyle = CREME
   ctx.fill()
-  ctx.lineWidth = 6
+  ctx.lineWidth = 7
   ctx.strokeStyle = AMBRE
   ctx.stroke()
   return new THREE.CanvasTexture(toile)
@@ -234,8 +259,14 @@ export function TraineeComete({ depuis, vers, debut }: PropsSillage): React.JSX.
     [],
   )
 
-  const formeTete = useMemo(() => new THREE.PlaneGeometry(TETE, TETE), [])
-  const formeEclat = useMemo(() => new THREE.PlaneGeometry(TETE * 0.6, TETE * 0.6), [])
+  const formeTete = useMemo(() => new THREE.PlaneGeometry(TETE, TETE * RAPPORT), [])
+  const formeEclat = useMemo(() => new THREE.PlaneGeometry(TETE * 0.62, TETE * 0.62), [])
+
+  /**
+   * DE COMBIEN LA CARTE PENCHE, et c'est propre à chaque traînée : cinq cartes
+   * qui filent exactement dans le même axe se lisent comme une machine.
+   */
+  const penchant = useMemo(() => (Math.random() - 0.5) * 0.5, [])
 
   const travail = useMemo(
     () => ({
@@ -306,8 +337,13 @@ export function TraineeComete({ depuis, vers, debut }: PropsSillage): React.JSX.
     n.position.copy(travail.p)
     // ELLE POINTE OÙ ELLE VA, et elle s'étire dans ce sens : un disque rond ne
     // dit pas de quel côté ça file.
-    n.rotation.set(0, 0, Math.atan2(travail.tangente.y, travail.tangente.x))
-    n.scale.set(1.5, 1, 1)
+    // ELLE FILE DANS SA LONGUEUR. La hauteur d'un plan est son axe Y local,
+    // donc on retranche un quart de tour pour la coucher sur la tangente : la
+    // carte fend l'air par sa tranche, et le sillage sort de son bord arrière.
+    n.rotation.set(0, 0, Math.atan2(travail.tangente.y, travail.tangente.x) - Math.PI / 2 + penchant)
+    // Un rien d'étirement dans le sens de la marche : le contraste de vitesse
+    // du reste du jeu, appliqué à une carte lancée.
+    n.scale.set(0.93, 1.18, 1)
 
     const pantin = travail.pantin
     for (let i = 0; i < LOSANGES; i += 1) {
@@ -336,7 +372,7 @@ export function TraineeComete({ depuis, vers, debut }: PropsSillage): React.JSX.
     matiereEclats.opacity = sortie
     // Le coeur reste PLEIN tant qu'il vole : c'est ce que Keko demandait.
     matiereTete.opacity = sortie
-    n.scale.multiplyScalar(0.75 + 0.25 * sortie)
+    n.scale.multiplyScalar(0.8 + 0.2 * sortie)
   })
 
   return (
