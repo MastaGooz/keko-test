@@ -48,7 +48,7 @@ html {
      La borne retient l'orbe a gauche de la main quand l'ecart se reduit. */
   --orbe-gauche: min(
     calc((0.75rem + var(--tas) + var(--main-gauche, 14rem)) / 2 - 1.625rem),
-    calc(var(--main-gauche, 14rem) - 3.6rem)
+    calc(var(--main-gauche, 14rem) - 5.3rem)
   );
   --bg: #16161a;
   --fg: #f2f2f5;
@@ -4286,10 +4286,21 @@ body {
 .vie-bloc {
   position: absolute;
   left: 0.75rem;
-  /* ELLE S'ARRETE AU BORD DROIT DE L'ORBE : 3,25rem de large moins les 0,75 du
-     bord gauche de l'ecran d'ou elle part. Les deux se calculaient chacun de
-     son cote et divergeaient des que le format changeait. */
-  width: calc(var(--orbe-gauche) + 2.5rem);
+  /* LA BARRE S'ARRETE AU BORD DROIT DE L'ORBE -- LA BARRE, PAS LE BLOC.
+
+     C'est la nuance qui a coute deux allers-retours : `.vie-bloc` contient la
+     barre ET le bouclier d'armure, dont la place est reservee a droite. Aligner
+     le BLOC sur l'orbe laissait donc la barre visible s'arreter 30 px avant, et
+     l'orbe paraissait deborder -- Keko : « je voudrais que l'extremite droite
+     de la barre de vie et l'energie soient au meme niveau, mais l'energie
+     deborde a droite ». *J'avais mesure le conteneur au lieu de l'objet
+     visible, et la mesure disait zero.*
+
+     La largeur vaut donc : le bord droit de l'orbe (--orbe-gauche + 3,25),
+     moins le bord gauche d'ou part la barre (0,75), PLUS ce que le bouclier
+     occupe au-dela (1,5 + 0,375 de gouttiere). Et la borne de l'orbe se resserre
+     d'autant, sinon le bouclier irait mordre la main. */
+  width: calc(var(--orbe-gauche) + 4.375rem);
   /* UN PLANCHER, parce que sur un ecran court le haut de la main descend sous
      le sommet du tas de pioche : la barre venait alors s'asseoir sur son
      compte. LE TAS AYANT DOUBLE, le plancher double avec lui -- il occupe

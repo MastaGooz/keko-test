@@ -3359,6 +3359,14 @@ l'écran autour.* Le plafond en rem l'emporte sur grand écran, donc **le PC ne
 bouge pas** et seul le téléphone rétrécit, d'un tiers. Mesuré : 10 % de la
 largeur à 667x320 comme à 844x390, 7 % à 2560x1271.
 
+**MESURER LE CONTENEUR N'EST PAS MESURER L'OBJET, et ça a coûté deux
+allers-retours.** `.vie-bloc` contient la barre ET le bouclier d'armure, dont la
+place est réservée à droite. Aligner le BLOC sur l'orbe laissait donc la barre
+visible s'arrêter 30 px avant — Keko : « je voudrais que l'extrémité droite de
+la barre de vie et l'énergie soient au même niveau, mais l'énergie déborde à
+droite » — *et ma sonde disait zéro*, puisqu'elle comparait les conteneurs.
+Vérifier un alignement, c'est mesurer ce que l'oeil voit.
+
 **ET DEUX BORDS QUI DOIVENT COÏNCIDER SE CALCULENT L'UN DEPUIS L'AUTRE.** Le
 bord droit de l'orbe et celui de la barre de PV avaient chacun leur formule :
 ils divergeaient dès que le format changeait — l'orbe dépassait de 6 px à
