@@ -187,10 +187,8 @@ export function PageArmurerie({
           </span>
         </span>
         <span className="arm-mesure">
-          <span className="arm-jauge">
-            <span className="arm-jauge-plein" />
-            <span className="arm-jauge-chiffre">{pvMax}</span>
-          </span>
+          <CoeurIcone />
+          <span className="arm-chiffre">{pvMax}</span>
         </span>
         <span className="arm-mesure arm-orbe">
           <Orbe3D courant={energieMax} max={energieMax} seul />
@@ -235,6 +233,48 @@ export function PageArmurerie({
 
       </div>
     </>
+  )
+}
+
+/**
+ * LE COEUR : la vie, en symbole plutôt qu'en jauge.
+ *
+ * Keko : « on peut mettre un coeur à la place de la barre ? » *Et il a raison
+ * pour une raison de fond* : une jauge dit un ÉTAT — ce qu'il reste sur ce
+ * qu'on avait — et à l'armurerie il n'y a pas d'état, rien n'a été perdu. Une
+ * barre toujours pleine ne mesure rien ; **le coeur dit une réserve**, comme
+ * le paquet dit un nombre de cartes et l'orbe une quantité d'énergie.
+ *
+ * *Les quatre mesures deviennent donc quatre symboles et quatre chiffres*, ce
+ * qui est exactement la rangée qu'on cherchait.
+ */
+function CoeurIcone(): React.JSX.Element {
+  return (
+    <svg className="arm-icone" viewBox="0 0 40 37" aria-hidden="true">
+      <defs>
+        <linearGradient id="arm-coeur" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0" stopColor="#e2565e" />
+          <stop offset="0.6" stopColor="#9d2330" />
+          <stop offset="1" stopColor="#5d121b" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M20 34.5C20 34.5 2.8 22.6 2.8 12.6 2.8 6.6 7.4 2 13.2 2 16.6 2 19 4.1 20 6.3 21 4.1 23.4 2 26.8 2 32.6 2 37.2 6.6 37.2 12.6 37.2 22.6 20 34.5 20 34.5Z"
+        fill="url(#arm-coeur)"
+        stroke="#2a1013"
+        strokeWidth={2}
+        strokeLinejoin="round"
+      />
+      {/* La lumiere vient du haut, comme partout : un reflet sur le lobe
+          gauche, et rien d'autre. */}
+      <path
+        d="M9.5 9.5C10.6 7.4 12.6 6.2 14.6 6.4"
+        fill="none"
+        stroke="#ffffffaa"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+    </svg>
   )
 }
 

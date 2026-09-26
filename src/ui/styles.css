@@ -5035,8 +5035,7 @@ body {
    l'energie ». *Quatre mesures du meme etat ne peuvent pas se lire a quatre
    voix* -- c'est ce qui les fait lire comme une rangee et non comme quatre
    ornements poses cote a cote. */
-.arm-chiffre,
-.arm-jauge-chiffre {
+.arm-chiffre {
   color: #f7ecd2;
   font-size: 1.125rem;
   font-weight: 700;
@@ -5103,33 +5102,11 @@ body {
   height: clamp(1.9rem, 5.6vh, 3rem);
 }
 
-/* LA JAUGE EST PLEINE, forcement : on n'a rien perdu avant de partir. Elle
-   porte la MEME ferronnerie que celle du combat, en court. */
-.arm-jauge {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: clamp(3.4rem, 11vh, 6rem);
-  /* LA JAUGE PORTE LE MEME CHIFFRE QUE LES AUTRES, donc elle doit lui faire
-     sa place : a 0,85rem de haut, le 1,125rem du chiffre la debordait. */
-  height: clamp(1.25rem, 3.3vh, 1.7rem);
-  border: 1px solid #6b5936;
-  border-radius: 2px;
-  background: #0a0609;
-  overflow: hidden;
-}
-
-.arm-jauge-plein {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, #d8434b, #8d1f2a 60%, #5d121b);
-}
-
-.arm-jauge-chiffre {
-  position: relative;
-  text-shadow: 0 1px 0 #000, 0 0 3px #000, 0 0 6px #000;
-}
-
+/* LA VIE EST UN COEUR, PAS UNE JAUGE. Demande par Keko, et c'est juste sur le
+   fond : une jauge dit un ETAT -- ce qu'il reste sur ce qu'on avait -- et a
+   l'armurerie il n'y a pas d'etat, rien n'a ete perdu. *Une barre toujours
+   pleine ne mesure rien.* Le coeur dit une RESERVE, comme le paquet dit un
+   nombre de cartes. La jauge et ses trois regles vivent dans `git log`. */
 .arm-icone {
   display: block;
   width: clamp(1.5rem, 4.4vh, 2.4rem);

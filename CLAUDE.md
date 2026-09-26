@@ -3187,6 +3187,14 @@ retrouvera ; l'orbe n'y montre que son maximum, puisqu'à l'armurerie rien n'a
 rendre* : l'orbe et le tas se posent en `fixed` pour le combat, et sans ce
 rappel l'orbe atterrissait au milieu du coffre.
 
+**LA VIE EST UN COEUR, PAS UNE JAUGE.** Keko : « on peut mettre un coeur à la
+place de la barre ? » *Et c'est juste sur le fond* : une jauge dit un ÉTAT — ce
+qu'il reste sur ce qu'on avait — et à l'armurerie il n'y a pas d'état, rien n'a
+été perdu. **Une barre toujours pleine ne mesure rien.** Le coeur dit une
+RÉSERVE, comme le paquet dit un nombre de cartes et l'orbe une quantité
+d'énergie : les quatre mesures deviennent quatre symboles et quatre chiffres,
+ce qui est exactement la rangée qu'on cherchait.
+
 **LES QUATRE CHIFFRES ONT LA MÊME VOIX** — même corps, même graisse, celle de
 l'orbe. Keko : « utilise la même taille / bold pour le chiffre deck et main que
 ceux utilisés pour l'énergie ». *Quatre mesures du même état ne peuvent pas se
