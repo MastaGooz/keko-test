@@ -14,11 +14,18 @@
  * de cases pour occuper la hauteur de l'écran, différent donc entre PC et
  * téléphone ».
  *
- * **LA PAGE EST UN BANDEAU, DEUX PANNEAUX, UN PIED.** Elle avait deux panneaux
- * collés aux bords et un énorme vide au milieu — Keko : « c'est moche ». Le
- * coffre prend donc les deux tiers de la largeur et l'équipement le reste,
- * séparés d'une seule gouttière : *le vide n'est plus un trou, c'est une
- * marge.*
+ * **LA PAGE EST UN BANDEAU ET TROIS COLONNES** : le coffre, l'équipement, les
+ * stats. Elle avait deux panneaux collés aux bords et un énorme vide au milieu
+ * — Keko : « c'est moche » — puis deux colonnes et un pied, et enfin trois :
+ * « on devrait passer les stats à droite de l'écran en colonne vu qu'on peut
+ * réduire le coffre en largeur, et pourquoi pas passer le bouton pour lancer
+ * la run sous la colonne des stats ».
+ *
+ * *Ce que ça achète, et ce n'était pas qu'un rangement* : le pied disparaît, et
+ * ses 26 % de hauteur reviennent aux deux panneaux — donc des pièces de
+ * chargement plus grandes et une ligne de coffre de plus. **Une bande qui ne
+ * porte qu'une rangée de chiffres coûte toute sa hauteur à ce qu'il y a
+ * au-dessus.*
  */
 import { Z_MAIN, hauteurVisibleA } from './Cadrage.tsx'
 import type { Objet } from '../logic/armes.ts'
@@ -101,8 +108,10 @@ export type PlanArmurerie = {
   tailleCharge: number
   /** Celle d'une case de la pile : la MOITIÉ, par arithmétique. */
   taillePile: number
-  /** Le pied de page : le bouton et l'état du chargement. */
-  pied: Rect
+  /** La colonne des stats, à droite : quatre cartouches empilés. */
+  stats: Rect
+  /** Le bouton de départ, sous les stats. */
+  bouton: [number, number, number]
 }
 
 /** Combien de pixels vaut une unité de scène, à la profondeur du plan. */
@@ -141,20 +150,29 @@ export function planArmurerie(
   // fixes y mangerait tout.
   const marge = Math.min(demiLarge * 0.045, 0.5)
   const hTitre = demiHaut * 0.19
-  const hPied = demiHaut * 0.26
+  // LE PIED N'EST PLUS QU'UNE MARGE : ce qu'il portait vit dans la colonne de
+  // droite, et sa hauteur est revenue aux panneaux.
+  const hPied = demiHaut * 0.07
   const hautPanneaux = demiHaut - hTitre - marge * 0.5
   const basPanneaux = -demiHaut + hPied
   const hPanneaux = hautPanneaux - basPanneaux
   const yPanneaux = (hautPanneaux + basPanneaux) / 2
 
-  // DEUX TIERS / UN TIERS : le coffre est ce qu'on fouille, l'équipement ce
-  // qu'on compose. *Une colonne qui se remplit mérite la place, une colonne à
+  // TROIS COLONNES, ET C'EST LE COFFRE QUI CÈDE. Il est ce qu'on fouille, donc
+  // il mérite la place — mais il la rend en LARGEUR plutôt qu'en lignes : une
+  // colonne de cases en moins ne coûte presque rien, et elle paie la colonne
+  // des stats. *Une colonne qui se remplit mérite la place, une colonne à
   // trois slots ne la réclame pas.*
-  const largeurUtile = 2 * demiLarge - 2 * marge - marge
-  const lCoffre = largeurUtile * 0.635
-  const lEquip = largeurUtile - lCoffre
+  const largeurUtile = 2 * demiLarge - 2 * marge - 2 * marge
+  // Les stats sont un rail de cartouches : leur largeur est celle de leur
+  // contenu, pas une part du reste. On la borne pour qu'un grand écran ne
+  // l'étire pas en panneau.
+  const lStats = Math.min(largeurUtile * 0.15, 2.05)
+  const lCoffre = (largeurUtile - lStats) * 0.615
+  const lEquip = largeurUtile - lStats - lCoffre
   const xCoffre = -demiLarge + marge + lCoffre / 2
-  const xEquip = demiLarge - marge - lEquip / 2
+  const xStats = demiLarge - marge - lStats / 2
+  const xEquip = xStats - lStats / 2 - marge - lEquip / 2
 
   const coffre: Rect = { x: xCoffre, y: yPanneaux, l: lCoffre, h: hPanneaux }
 
@@ -240,6 +258,11 @@ export function planArmurerie(
   const pasPileX = taillePile * 1.1
   const pasPileY = taillePile * 1.4 * 1.06
 
+  // LE BOUTON VIT SOUS LES STATS, dans la même colonne : c'est ce qu'on fait
+  // une fois qu'on a lu ce qu'on emporte. Sa bande est réservée en haut de la
+  // colonne, sinon le dernier cartouche s'assoirait dessus.
+  const hBouton = Math.min(1, hPanneaux * 0.2)
+
   return {
     demiHaut,
     demiLarge,
@@ -265,7 +288,8 @@ export function planArmurerie(
       yArmure + (i < 2 ? pasPileY / 2 : -pasPileY / 2),
       Z_PLAN,
     ]),
-    pied: { x: 0, y: -demiHaut + hPied / 2, l: 2 * demiLarge, h: hPied },
+    stats: { x: xStats, y: yPanneaux + hBouton / 2, l: lStats, h: hPanneaux - hBouton },
+    bouton: [xStats, basPanneaux + hBouton / 2, Z_PLAN],
   }
 }
 

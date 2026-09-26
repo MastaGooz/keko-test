@@ -3113,13 +3113,32 @@ le compte passe de 10 à 13 cartes dont 6 qui frappent), zoomer une pièce,
 descendre, mourir — le hub rend le Glaive et le Plastron, et la potion
 emportée est perdue.
 
-### LA PAGE D'ARMURERIE : UN BANDEAU, DEUX MEUBLES, UN PIED
+### LA PAGE D'ARMURERIE : UN BANDEAU ET TROIS COLONNES
 
 Elle avait deux panneaux collés aux bords et un énorme vide au milieu — Keko :
-« c'est moche ». Elle est désormais cadrée : **ARMURERIE** en bandeau, le
-**Coffre** sur les deux tiers de gauche, l'**Équipement** sur le tiers de
-droite, et un pied qui porte le bouton et l'état du chargement. *Le vide n'est
-plus un trou, c'est une marge.*
+« c'est moche » — puis deux colonnes et un pied, et enfin trois colonnes :
+« on devrait passer les stats à droite de l'écran en colonne vu qu'on peut
+réduire le coffre en largeur, et pourquoi pas passer le bouton pour lancer la
+run sous la colonne des stats ».
+
+**ARMURERIE** en bandeau, puis le **Coffre**, l'**Équipement** et les **stats**
+— un rail de cartouches, avec le bouton dessous. *Le vide n'est plus un trou,
+c'est une marge.*
+
+**C'EST LE COFFRE QUI CÈDE, ET IL LA REND EN LARGEUR.** Une colonne de cases en
+moins ne coûte presque rien, et elle paie la colonne des stats.
+
+*Ce que ça achète, et ce n'était pas qu'un rangement* : **le pied disparaît**,
+et ses 26 % de hauteur reviennent aux deux panneaux — donc des pièces de
+chargement plus grandes et une ligne de coffre de plus. **Une bande qui ne
+porte qu'une rangée de chiffres coûte toute sa hauteur à ce qu'il y a
+au-dessus.**
+
+Le rail se cale **en haut**, comme les deux panneaux : centré, il flottait
+entre leur bord haut et le bouton, et la colonne ne se lisait plus comme la
+troisième du même rang. Et ses cartouches s'étirent sur toute sa largeur —
+alignés à la même longueur, ils se lisent comme un rail de jauges et non comme
+quatre étiquettes de tailles différentes.
 
 **LE BANDEAU NE DIT PLUS QUE LE LIEU.** Le chargement, le compte du deck et
 l'or en sont partis, demandé par Keko : *ce qu'on lit sans décider dessus n'a

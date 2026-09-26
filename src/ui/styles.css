@@ -5055,14 +5055,24 @@ body {
 /* L'ETAT DE CE QU'ON EMPORTE : le deck, la vie, l'energie, la main. Quatre
    chiffres et rien d'autre -- *avant de descendre, le joueur doit voir avec
    quoi il descend.* */
-/* L'ETAT VIT DANS LE PIED DE PAGE, cale sur le meme plan que les cadres :
-   pose en `bottom` a la main, il chevauchait le bas de l'equipement. */
+/* LES STATS SONT UNE COLONNE A DROITE, plus une rangee en pied. Demande par
+   Keko : « on devrait passer les stats a droite de l'ecran en colonne vu qu'on
+   peut reduire le coffre en largeur ». *Une bande qui ne porte qu'une rangee
+   de chiffres coute toute sa hauteur a ce qu'il y a au-dessus* -- le pied
+   parti, ses 26 % reviennent aux panneaux.
+
+   Les cartouches s'etirent sur la largeur de la colonne : alignes a la meme
+   longueur, ils se lisent comme un RAIL de jauges et non comme quatre
+   etiquettes de tailles differentes. */
 .arm-etat {
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: clamp(0.5rem, 1.6vw, 1.1rem);
-  padding-right: clamp(0.6rem, 2vw, 1.6rem);
+  flex-direction: column;
+  align-items: stretch;
+  /* LE RAIL SE CALE EN HAUT, comme les deux panneaux : centre, il flottait
+     entre leur bord haut et le bouton, et la colonne ne se lisait plus comme
+     la troisieme du meme rang. */
+  justify-content: flex-start;
+  gap: clamp(0.35rem, 1.6vh, 0.8rem);
 }
 
 /* CHAQUE COUPLE EST UN CARTOUCHE. *Quatre chiffres et quatre symboles alignes
@@ -5074,6 +5084,10 @@ body {
 .arm-mesure {
   display: flex;
   align-items: center;
+  /* LE CHIFFRE CALE A DROITE, LE SYMBOLE A GAUCHE DE LUI : empiles, quatre
+     couples de largeurs differentes se liraient comme une colonne en zigzag.
+     C'est le meme reflexe que les chiffres tabulaires. */
+  justify-content: flex-end;
   gap: 0.4rem;
   padding: 0.22rem 0.55rem;
   border: 1px solid #5a4b2e;

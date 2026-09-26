@@ -186,7 +186,7 @@ export function PageArmurerie({
 
           L'énergie n'en a pas besoin de la même façon : son chiffre est DANS
           son symbole. Elle garde le cartouche pour rester de la famille. */}
-      <div className="arm-etat" style={boite(plan.pied)}>
+      <div className="arm-etat" style={boite(plan.stats)}>
         {/* LE COMPTE DU DECK EST À GAUCHE DU PAQUET, demandé par Keko. Au-dessus
             — sa place en combat — il se lisait comme une étiquette du tas ;
             ici c'est une MESURE de ce qu'on emporte, elle s'aligne avec les
