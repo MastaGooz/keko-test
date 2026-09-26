@@ -3892,12 +3892,32 @@ body {
   opacity: 0.85;
 }
 
+/* LA JAUGE SE RETRECIT QUAND LES CORPS SE SERRENT.
+
+   Elle avait une largeur fixe : a trois corps sur un telephone, les jauges se
+   touchaient -- Keko : « les barres de vie ennemies sont trop larges sur
+   telephone et sont collees les unes aux autres ». *Une largeur ecrite a la
+   main ne peut pas savoir combien de voisins elle aura.*
+
+   `--pas-rang` est l'ecart REEL entre deux corps a l'ecran, publie par la scene
+   (`ReperesDuRang`) : il tient compte du nombre d'ennemis, du recul de la
+   camera et du format d'un seul coup. La gouttiere de 0,6rem est ce qui reste
+   entre deux jauges voisines.
+
+   LE PLAFOND EST BORNE PAR LA HAUTEUR D'ECRAN, comme les tas : en rem seuls,
+   une jauge de 7rem prend 17 % de la largeur d'un telephone contre 7 % d'un
+   ecran de PC -- *une taille absolue n'est pas une taille.* Le rem l'emporte
+   sur grand ecran, donc rien n'y bouge.
+
+   C'est ce plafond qu'un boss relevera : il suffira de poser `--vie-plafond`
+   sur sa creature. Les adds garderont le leur, et l'ecart du rang continuera
+   de borner tout le monde. */
 .vie-3d {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
-  width: 7rem;
+  width: min(var(--vie-plafond, min(7rem, 24vh)), calc(var(--pas-rang, 999px) - 1.2rem));
   font-family: system-ui, sans-serif;
 }
 
@@ -3988,10 +4008,13 @@ body {
 
    Il gagne au passage la lisibilite qui lui manquait sur le sable du camp --
    creme cernee de noir plutot que gris pale. */
+/* LE NOM SUIT LA JAUGE. En `nowrap` et a taille fixe, il debordait des que la
+   jauge se resserrait -- et un nom qui deborde va chevaucher le voisin, ce qui
+   est pire que le probleme qu'on vient de regler. */
 .nom-3d {
   color: #e8d9b4;
   font-family: Cinzel, Georgia, serif;
-  font-size: 0.72rem;
+  font-size: min(0.72rem, calc(var(--pas-rang, 999px) / 9));
   font-weight: 600;
   letter-spacing: 0.04em;
   text-shadow: 0 1px 3px #000, 0 0 6px #000, 0 0 2px #000;
@@ -4497,18 +4520,14 @@ body {
    deborde : sans elles, le remplissage etait un aplat qui s'arretait net, et
    c'est ce qui faisait « habillage tres leger ». *Un liquide dans une gorge a
    un niveau, et un niveau se voit.* */
+/* PAS DE CRETE AU BOUT DU ROUGE. Elle marquait le niveau du liquide, et c'etait
+   juste en theorie ; a l'ecran, un trait creme de 2 px au bout d'une coulee
+   rouge se lit comme une salissure -- Keko : « quand la barre n'est pas pleine
+   on a un trait jaune a la fin, c'est moche ». *Le niveau se voit deja : c'est
+   la ou la couleur s'arrete.* */
 .vie-rouge {
   left: 0;
   background: linear-gradient(180deg, #ff9a7e 0%, #e2483a 38%, #a61f1a 72%, #6d1310 100%);
-  box-shadow:
-    inset 0 1px 0 #ffcbb4,
-    inset -2px 0 0 #ffd9c4;
-}
-
-/* PLEINE, LA CRETE DISPARAIT : elle marque le niveau du liquide, et a 100 % ce
-   niveau EST le bord de la gorge. Il n'en restait qu'un lisere creme au bout de
-   la barre. */
-.vie-rouge.plein {
   box-shadow: inset 0 1px 0 #ffcbb4;
 }
 

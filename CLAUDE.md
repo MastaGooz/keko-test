@@ -2802,6 +2802,35 @@ normalise les guillemets.
 `⛉ 5`, `−12`. Keko les a réunies en une barre qui s'étend entre la pioche et
 la main : *le joueur lit son état avec la même grammaire que celle d'en face.*
 
+**LES JAUGES DES CRÉATURES SE RESSERRENT QUAND LES CORPS SE SERRENT.** Elles
+avaient une largeur fixe : à trois corps sur un téléphone, elles se touchaient
+— Keko : « les barres de vie ennemies sont trop larges sur téléphone et sont
+collées les unes aux autres, il faudrait les réduire quand elles sont trop
+proches ». *Une largeur écrite à la main ne peut pas savoir combien de voisins
+elle aura.*
+
+Deux bornes, et elles répondent à deux choses différentes :
+
+- **l'écart RÉEL entre deux corps à l'écran** (`--pas-rang`, publié par
+  `ReperesDuRang` sur le modèle de `ReperesDeLaMain`). On mesure l'écart, pas le
+  nombre d'ennemis : il dépend aussi du recul de la caméra et du format. Et
+  c'est le PLUS PETIT écart du rang qui commande, ce qui prépare le jour où les
+  corps n'auront plus tous la même largeur ;
+- **un plafond borné par la hauteur d'écran** (`min(7rem, 24vh)`), comme les
+  tas : en rem seuls, une jauge prend 17 % de la largeur d'un téléphone contre
+  7 % d'un écran de PC. Le rem l'emporte sur grand écran, donc **rien n'y
+  bouge**.
+
+Mesuré : à 667x320 la jauge passe de 112 à 77 px et l'écart de 18 à 53 ; à
+844x390 de 112 à 94 px pour 65 d'écart ; à 1900x1000 tout est inchangé.
+
+**LE NOM SUIT LA JAUGE** (`min(0.72rem, --pas-rang / 9)`) : en `nowrap` et à
+taille fixe il débordait dès qu'elle se resserrait, et *un nom qui déborde va
+chevaucher le voisin*, ce qui est pire que le problème qu'on vient de régler.
+
+**POUR UN BOSS**, il suffira de poser `--vie-plafond` sur sa créature : ses adds
+garderont le leur, et l'écart du rang continuera de borner tout le monde.
+
 **LA BARRE DU JOUEUR : CE QUI LA STYLISE, C'EST SA DÉCOUPE, PAS SA MATIÈRE.**
 Keko l'a trouvée « vraiment classique et pas stylisée » deux fois de suite,
 malgré un sertissage et un lustre. Le défaut n'était pas l'habillage : *une

@@ -18,7 +18,7 @@
  * une `ref`.
  */
 import { useFrame, useThree } from '@react-three/fiber'
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import * as THREE from 'three'
 
 type Props = {
@@ -56,6 +56,54 @@ export function Projeter({ points, cibles }: Props): null {
       // laisser l'étiquette réapparaître à l'envers de l'écran.
       el.style.visibility = v.z > 1 ? 'hidden' : 'visible'
     })
+  })
+
+  return null
+}
+
+/**
+ * L'ÉCART ENTRE DEUX CORPS DU RANG, publié en pixels pour le CSS.
+ *
+ * Les jauges des créatures avaient une largeur fixe : à trois corps sur un
+ * téléphone elles se touchaient — Keko : « les barres de vie ennemies sont trop
+ * larges sur téléphone et sont collées les unes aux autres, il faudrait les
+ * réduire quand elles sont trop proches ». *Une largeur écrite à la main ne
+ * peut pas savoir combien de voisins elle aura* : entre un corps et trois, la
+ * place disponible est divisée par trois.
+ *
+ * On mesure donc l'écart RÉEL à l'écran, pas le nombre d'ennemis : il dépend
+ * aussi du recul de la caméra et du format. Et c'est le PLUS PETIT écart du
+ * rang qui commande, ce qui prépare le jour où les corps n'auront plus tous la
+ * même largeur — un boss et ses adds.
+ *
+ * Un seul corps : pas d'écart, donc pas de contrainte. On publie une valeur
+ * assez grande pour que le plafond en rem l'emporte.
+ *
+ * Même motif que `ReperesDeLaMain` : ça ne dépend que de la géométrie, donc ça
+ * écrit directement dans le DOM sans passer par l'état — sinon ce serait un
+ * rendu React par image pour un résultat identique.
+ */
+export function ReperesDuRang({ rang }: { rang: readonly [number, number, number][] }): null {
+  const { camera, size } = useThree()
+  const v = useMemo(() => new THREE.Vector3(), [])
+  const dernier = useRef(-1)
+
+  useFrame(() => {
+    let pas = 9999
+    if (rang.length >= 2) {
+      const xs = rang.map((p) => {
+        v.set(p[0], p[1], p[2]).project(camera)
+        return (v.x * 0.5 + 0.5) * size.width
+      })
+      for (let i = 1; i < xs.length; i++) pas = Math.min(pas, Math.abs(xs[i]! - xs[i - 1]!))
+    }
+    const arrondi = Math.round(pas)
+    // On n'écrit que si ça change : poser une propriété CSS invalide le style
+    // de tout le sous-arbre, et ici rien ne bouge la plupart du temps.
+    if (arrondi !== dernier.current) {
+      dernier.current = arrondi
+      document.documentElement.style.setProperty('--pas-rang', `${arrondi}px`)
+    }
   })
 
   return null

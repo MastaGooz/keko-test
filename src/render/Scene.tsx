@@ -17,7 +17,7 @@ import { Canvas } from '@react-three/fiber'
 import { Main3D, ReperesDeLaMain } from './Main3D.tsx'
 import { CORPS, decorDuRang, Ennemi3D, HAUT_CORPS, identiteEnnemi } from './Ennemi3D.tsx'
 import { boiteDe } from './silhouette.ts'
-import { Projeter } from './Projeter.tsx'
+import { Projeter, ReperesDuRang } from './Projeter.tsx'
 import { CarteQuiSAbat, TEMPS_FIN, TEMPS_IMPACT } from './CarteQuiSAbat.tsx'
 import { Horloge, lireHorloge } from './horloge.tsx'
 import { Cadrage, FOV, zCamera } from './Cadrage.tsx'
@@ -921,6 +921,11 @@ export function Scene(): React.JSX.Element {
             <shadowMaterial opacity={0.42} depthWrite={false} />
           </mesh>
         )}
+
+        {/* L'ÉCART ENTRE LES CORPS, publié pour que les jauges s'y adaptent :
+            à trois corps sur un téléphone, une largeur fixe les faisait se
+            toucher. */}
+        {!auHub && <ReperesDuRang rang={rang} />}
 
         <Projeter
           points={ancres}
