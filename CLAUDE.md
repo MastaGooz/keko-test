@@ -2138,9 +2138,10 @@ quelle autre. Le problème disparaît au lieu d'être corrigé.
 lumière fait la couture entre les deux. *Sans elle, la carte apparaîtrait* — ce
 qui est précisément ce qu'on voulait éviter.
 
-**CE QUI VOLE EST UNE COMÈTE, PAS UN SEMIS** (`Trainee.tsx`). La première
-version était un nuage de grains ; Keko : « je trouve le truc un peu bateau, des
-petites particules transparentes… t'as un truc plus original et stylé ? »
+**CE QUI VOLE EST UNE COMÈTE, PAS UN SEMIS** (`trainee-comete.tsx`). La
+première version était un nuage de grains ; Keko : « je trouve le truc un peu
+bateau, des petites particules transparentes… t'as un truc plus original et
+stylé ? »
 
 *Un semis de grains n'a pas de forme*, et c'est ce qui le rendait banal : il dit
 « il se passe quelque chose » sans dire QUOI. Or ce qui traverse l'écran est un
@@ -2161,7 +2162,39 @@ part 38 % plus tard que la tête et arrive 38 % plus tard. Le ruban naît donc
 court, s'étire en chemin et se résorbe dans le tas — *un ruban de longueur fixe
 se lit comme un objet rigide qu'on déplace.*
 
-Quatre choses à ne pas défaire :
+**PUIS ELLE EST PASSÉE DU LUMINEUX AU DESSINÉ.** Keko : « j'aime bien la
+comète c'est sûr, mais c'est possible d'avoir un rendu plus *dessin* — moins
+particule — avec peut-être le centre de la comète en opacité 100 % ? L'idée est
+de matcher le dessin des cartes, un peu minimaliste / stylisé. »
+
+**CE QUI FAIT « PARTICULE » N'EST PAS LA FORME, C'EST LE MÉLANGE ADDITIF.** Une
+couleur qui s'ajoute au fond est toujours une lueur : elle n'a pas de bord, elle
+n'a pas de matière, elle se lit comme de la lumière parasite. Le même ruban,
+posé en mélange **normal** avec des aplats et une arête franche, devient un
+trait peint. *C'est le mélange qu'on a changé, pas le dessin* — et ça vaut pour
+tout ce qu'on voudra rendre graphique plutôt que lumineux.
+
+Ce que ça impose, et qui tient ensemble :
+
+- **le coeur est PLEIN** — un disque de crème à 100 % cerclé d'ambre, étiré
+  dans le sens de la marche. C'est ce que Keko demandait : *un centre
+  translucide n'a pas de centre* ;
+- **l'effilement est GÉOMÉTRIQUE, pas fait d'opacité.** Un trait dessiné se
+  termine en pointe, il ne s'évapore pas. L'opacité ne sert plus qu'à la sortie,
+  sur le dernier quart ;
+- **deux aplats, pas trois** — un coeur de crème, une bordure d'ambre. Keko
+  avait écarté un dégradé en trois couches sur le contour des cartes : au-delà
+  de deux tons on lit les paliers au lieu de lire la matière ;
+- **les grains sont devenus des LOSANGES pleins**, la forme du médaillon du dos
+  de carte. Ce sont des formes, pas des particules ;
+- **elle ne s'allume pas, elle est là.** Une montée progressive redonnerait une
+  lueur qui s'installe ; un dessin apparaît d'un coup.
+
+**Une arête franche n'est pas une arête crénelée** : les transitions de la
+texture gardent un pixel de fondu, sans quoi le bord scintille dès que le ruban
+bouge.
+
+Trois choses à ne pas défaire :
 
 - **le ruban est construit à la main**, pas avec une ligne : `LineBasicMaterial`
   est plafonné à 1 px de large sur la plupart des machines. La règle était déjà
@@ -2169,9 +2202,6 @@ Quatre choses à ne pas défaire :
 - **la perpendiculaire se prend dans le plan de l'ÉCRAN** (produit vectoriel
   avec l'axe de vue), sinon un ruban orienté dans l'espace se met de profil en
   cours de route et disparaît ;
-- **le flou est dans la MATIÈRE**, comme le halo des cartes : la texture
-  s'éteint en longueur *et* se fond sur ses deux bords, parce qu'*une arête
-  franche trahirait un rectangle* ;
 - **l'or du jeu, pas un blanc neutre.** Le laiton des cartes, l'ambre de
   l'énergie, le filet des tas : c'est la couleur de tout ce qui a de la valeur
   ici. Un sillage blanc aurait été un effet posé par-dessus le jeu.

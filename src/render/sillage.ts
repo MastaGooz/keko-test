@@ -64,23 +64,3 @@ export function courbeEntre(
   milieu.z += 0.25
   return new THREE.QuadraticBezierCurve3(a, milieu, b)
 }
-
-/**
- * LE GRAIN DE LUMIÈRE : un dégradé radial, jamais un carré.
- * `PointsMaterial` rend des carrés durs sans texture, et un semis de carrés se
- * lit comme du bruit.
- */
-export const GRAIN = ((): THREE.CanvasTexture | null => {
-  const toile = document.createElement('canvas')
-  toile.width = 64
-  toile.height = 64
-  const ctx = toile.getContext('2d')
-  if (ctx === null) return null
-  const d = ctx.createRadialGradient(32, 32, 0, 32, 32, 32)
-  d.addColorStop(0, 'rgba(255, 249, 226, 1)')
-  d.addColorStop(0.3, 'rgba(255, 213, 132, 0.65)')
-  d.addColorStop(1, 'rgba(255, 186, 96, 0)')
-  ctx.fillStyle = d
-  ctx.fillRect(0, 0, 64, 64)
-  return new THREE.CanvasTexture(toile)
-})()
