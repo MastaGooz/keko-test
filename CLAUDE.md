@@ -3352,6 +3352,14 @@ au doigt, donc au-dessus. **Ce sont des FRÈRES, pas un parent et son enfant** :
 un `z-index` sur un parent enferme ses enfants — le piège déjà payé sur le
 bouton de fin de tour.
 
+**UN CONSOMMABLE S'APPELLE UN OBJET, PARTOUT.** L'onglet du coffre disait
+« Objets », le groupe de slots « Consommables », et le pied des cartes
+« Consommable ». Keko a unifié sur le nom de la catégorie du coffre. *Une même
+famille ne peut pas s'appeler de trois façons selon l'écran où on la regarde* —
+et c'est le mot le plus court des trois, ce qui ne gâte rien sur un pied de
+carte enfoui aux trois quarts. Le TYPE du modèle (`Consommable`) ne bouge pas :
+c'est du code, il ne se lit nulle part à l'écran.
+
 **LE COFFRE A DES ONGLETS** — tout / armes / armures / objets / trésors — et
 **les trésors y sont** : Keko, « oui les trésors sont maintenant ici même s'ils
 ne peuvent pas être équipés ». *Le coffre est ce qu'on POSSÈDE, pas ce qu'on
@@ -3522,6 +3530,11 @@ ferronnerie que les cadres, en petit : un filet de laiton, deux coins coupés.
 
 L'énergie garde le cartouche pour rester de la famille, mais elle n'avait pas
 le problème : *son chiffre est DANS son symbole.*
+
+**L'ORDRE DU RAIL : VIE, DECK, MAIN, ÉNERGIE.** Tranché par Keko. Il va du
+plus durable au plus volatil — les PV traversent la descente, le deck la run,
+la main le tour, l'énergie ne survit pas au tour. *Une colonne de mesures se
+lit de haut en bas : son ordre doit dire quelque chose.*
 
 **LES QUATRE CHIFFRES ONT LA MÊME VOIX** — même corps, même graisse, celle de
 l'orbe. Keko : « utilise la même taille / bold pour le chiffre deck et main que

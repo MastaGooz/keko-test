@@ -61,7 +61,7 @@ export function setAPeindre(objet: Objet): { carte: CarteAPeindre; nombre: numbe
 export function pieceAPeindre(objet: Objet): CarteAPeindre {
   const set = estConsommable(objet) ? [{ modele: objet.modele, nombre: 1 }] : objet.set
   const pied = estConsommable(objet)
-    ? 'Consommable'
+    ? 'Objet'
     : 'mains' in objet
       ? `Arme · ${objet.mains === 2 ? 'deux mains' : 'une main'}`
       : 'Armure'

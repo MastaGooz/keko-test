@@ -1101,7 +1101,7 @@ function cartePiece(piece: Piece): string {
     g === 'armure'
       ? 'Armure'
       : g === 'consommable'
-        ? 'Consommable'
+        ? 'Objet'
         : // Une arme dit combien de mains elle prend : c'est ce qui décide si le
           // second slot reste libre. Keko : « indiquer une main ou deux mains ».
           `Arme · ${'mains' in piece && piece.mains === 2 ? 'deux mains' : 'une main'}`

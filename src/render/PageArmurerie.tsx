@@ -207,8 +207,14 @@ export function PageArmurerie({
       <p className="arm-groupe" style={boite(plan.nomArmure)}>
         Armure
       </p>
+      {/* « OBJETS », le nom de la catégorie du coffre — et celui que porte
+          désormais le pied des cartes. *Une même famille ne peut pas s'appeler
+          de trois façons selon l'endroit où on la regarde* : l'onglet disait
+          Objets, le groupe Consommables, la carte Consommable. Demandé par
+          Keko. Le mot est aussi le plus court, ce qui ne gâte rien sur un
+          téléphone. */}
       <p className="arm-groupe" style={boite(plan.nomObjets)}>
-        Consommables
+        Objets
       </p>
 
       {/* L'ÉTAT DE CE QU'ON EMPORTE, en bas à droite : le deck, la vie,
@@ -229,7 +235,14 @@ export function PageArmurerie({
 
           L'énergie n'en a pas besoin de la même façon : son chiffre est DANS
           son symbole. Elle garde le cartouche pour rester de la famille. */}
+      {/* L'ORDRE EST CELUI DE KEKO : vie, deck, main, énergie. Il va du plus
+          durable au plus volatil — les PV traversent la descente, le deck la
+          run, la main le tour, l'énergie ne survit pas au tour. */}
       <div className="arm-etat" style={boite(plan.stats)}>
+        <span className="arm-mesure">
+          <span className="arm-chiffre">{pvMax}</span>
+          <CoeurIcone />
+        </span>
         {/* LE COMPTE DU DECK EST À GAUCHE DU PAQUET, demandé par Keko. Au-dessus
             — sa place en combat — il se lisait comme une étiquette du tas ;
             ici c'est une MESURE de ce qu'on emporte, elle s'aligne avec les
@@ -241,15 +254,11 @@ export function PageArmurerie({
           </span>
         </span>
         <span className="arm-mesure">
-          <span className="arm-chiffre">{pvMax}</span>
-          <CoeurIcone />
+          <span className="arm-chiffre">{tailleMain}</span>
+          <MainIcone />
         </span>
         <span className="arm-mesure arm-orbe">
           <Orbe3D courant={energieMax} max={energieMax} seul />
-        </span>
-        <span className="arm-mesure">
-          <span className="arm-chiffre">{tailleMain}</span>
-          <MainIcone />
         </span>
       </div>
       </div>
