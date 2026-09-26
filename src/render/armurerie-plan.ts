@@ -40,12 +40,17 @@ export const Z_PLAN = Z_MAIN
 /**
  * La taille d'une case du coffre, en fraction d'une carte de la main.
  *
- * **Elle a baissé de 0,52 à 0,44 pour gagner une ligne.** Keko : « il faudrait
- * plus de cases pour occuper la hauteur de l'écran ». *Une case plus petite ne
- * coûte rien à la lecture* — on cherche dans le coffre au cadre et à la
- * silhouette, on lit le détail en zoomant — et elle rend une rangée entière.
+ * **Elle a fait l'aller-retour, et c'est la lecture qui tranche.** Descendue
+ * de 0,52 à 0,44 pour gagner une ligne — j'avais écrit qu'*une case plus
+ * petite ne coûte rien à la lecture* puisqu'on cherche au cadre et à la
+ * silhouette — puis remontée à 0,54 : Keko, « on a du mal à lire les petites
+ * cartes dans le coffre ». *Elle coûtait bien quelque chose*, et le nom d'une
+ * arme fait partie de ce qu'on cherche.
+ *
+ * Le pied disparu a rendu la hauteur qui payait ce gain : à 0,54 le coffre
+ * garde ses lignes.
  */
-export const REDUIT = 0.44
+export const REDUIT = 0.54
 
 /**
  * LA TAILLE D'UNE CASE DE LA PILE EST IMPOSÉE PAR L'ARITHMÉTIQUE, pas choisie.

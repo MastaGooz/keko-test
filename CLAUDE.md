@@ -3245,10 +3245,13 @@ RÉPARTISSENT dedans plutôt que de s'empiler depuis le haut : à pas fixe, il
 restait toujours une fraction de rangée en bas — *un vide qui n'est le bord de
 rien se lit comme un oubli.* Le pas s'étire donc jusqu'à remplir, sans jamais
 dépasser d'un tiers : au-delà, ce ne serait plus une grille mais des cases
-éparpillées. La case du coffre est passée de 0,52 à 0,44 pour gagner une rangée
-— *une case plus petite ne coûte rien à la lecture*, on cherche au cadre et à
-la silhouette, on lit le détail en zoomant. Mesuré : 9 x 3 cases sur un écran
-de PC comme sur un téléphone couché.
+éparpillées. La case du coffre a fait l'aller-retour, et c'est la lecture qui a
+tranché : descendue de 0,52 à 0,44 pour gagner une rangée — j'avais écrit
+qu'*une case plus petite ne coûte rien à la lecture*, puisqu'on cherche au
+cadre et à la silhouette — puis remontée à 0,54, Keko : « on a du mal à lire
+les petites cartes dans le coffre ». **Elle coûtait bien quelque chose**, et le
+nom d'une arme fait partie de ce qu'on cherche. Le pied disparu a rendu la
+hauteur qui payait le gain, donc le coffre garde ses lignes.
 
 **LE ZOOM PASSE AU-DESSUS DE TOUT, donc les commandes s'effacent.** Keko :
 « quand je clique sur une carte pour la zoomer, certains éléments de l'UI
