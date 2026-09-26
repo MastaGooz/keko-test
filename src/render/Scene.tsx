@@ -14,7 +14,15 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { Main3D, ReperesDeLaMain } from './Main3D.tsx'
+import {
+  Main3D,
+  pasDeLEventail,
+  placeDansEventail,
+  ReperesDeLaMain,
+  yMain,
+} from './Main3D.tsx'
+import { CarteQuiVole, DECALAGE_VOL, DUREE_VOL, type SensDuVol } from './CarteQuiVole.tsx'
+import { depuisEcran, hauteurVisibleA, Z_MAIN } from './Cadrage.tsx'
 import { CORPS, decorDuRang, Ennemi3D, HAUT_CORPS, identiteEnnemi } from './Ennemi3D.tsx'
 import { boiteDe } from './silhouette.ts'
 import { Projeter, ReperesDuRang } from './Projeter.tsx'
@@ -71,6 +79,17 @@ type EnVol = {
   depuis: [number, number, number]
   vers: [number, number, number]
   debut: number
+}
+
+/** Une carte qui va du paquet à la main, ou de la main au paquet. */
+type Vol = {
+  cle: string
+  carte: CarteAPeindre
+  coin: [number, number, number]
+  place: [number, number, number]
+  debut: number
+  sens: SensDuVol
+  echelleTas: number
 }
 
 /**
@@ -197,6 +216,14 @@ export function Scene(): React.JSX.Element {
   // combat ne se résout pas : l'état ne change qu'à l'IMPACT, pas à la tape.
   const [verrou, setVerrou] = useState(false)
   const [enVol, setEnVol] = useState<EnVol | null>(null)
+
+  /**
+   * LES CARTES QUI VONT DU PAQUET À LA MAIN, ET RETOUR.
+   *
+   * Keko voulait voir d'où viennent les cartes : jusqu'ici la main se
+   * remplissait d'un coup et les tas des coins ne servaient qu'à compter.
+   */
+  const [vols, setVols] = useState<Vol[]>([])
   const [coups, setCoups] = useState<Coup[]>([])
   const [touches, setTouches] = useState<Record<number, number>>({})
   const [morts, setMorts] = useState<Record<number, number>>({})
@@ -217,6 +244,112 @@ export function Scene(): React.JSX.Element {
   const pret = peintes > 0
 
   const main = useMemo(() => combat.main.map(aPeindre), [combat.main])
+
+  /**
+   * Ce qu'il faut pour peindre une carte qui vient de QUITTER la main : une
+   * fois partie, l'état ne la porte plus, et on ne peut plus la dessiner.
+   */
+  const mainCartes = useRef(new Map<string, CarteAPeindre>())
+  for (const c of combat.main) mainCartes.current.set(c.id, aPeindre(c))
+
+  /**
+   * LES VOLS DE PIOCHE ET DE DÉFAUSSE.
+   *
+   * On compare la main d'avant à celle d'après : ce qui est apparu vient du
+   * paquet de pioche, ce qui a disparu s'en va à la défausse. *On ne demande
+   * rien aux règles* — `logic/` ne sait pas qu'il existe une animation, et
+   * l'écart entre deux états suffit à la déduire.
+   *
+   * LA CARTE JOUÉE EST LA SEULE EXCEPTION : elle a déjà son trajet, celui qui
+   * s'abat sur la cible. La faire voler aussi vers la défausse la montrerait
+   * deux fois.
+   *
+   * Les cartes partent l'une après l'autre : cinq d'un coup se liraient comme
+   * un seul mouvement, et c'est chacune qu'on doit voir arriver.
+   */
+  const mainAvant = useRef<string[] | null>(null)
+  const dejaJouee = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!enCombat) {
+      mainAvant.current = null
+      return
+    }
+    const ids = combat.main.map((c) => c.id)
+    const avant = mainAvant.current ?? []
+    mainAvant.current = ids
+
+    const coinDe = (nom: 'pioche' | 'defausse'): { point: [number, number, number]; echelle: number } | null => {
+      const el = document.querySelector(`.tas-3d.${nom} .tas-dessin`)
+      if (el === null) return null
+      const r = el.getBoundingClientRect()
+      const w = window.innerWidth
+      const h = window.innerHeight
+      const largeurVisible = (hauteurVisibleA(Z_MAIN, h) * w) / h
+      // Ce qu'une carte de la main mesure à l'écran : elle fait 1 de large.
+      const carteEnPx = w / largeurVisible
+      return {
+        point: depuisEcran(r.left + r.width / 2, r.top + r.height / 2, Z_MAIN, w, h),
+        echelle: Math.max(0.15, Math.min(1, r.width / carteEnPx)),
+      }
+    }
+
+    const pas = pasDeLEventail(ids.length, window.innerHeight, window.innerWidth)
+    const y = yMain(window.innerHeight)
+    const placeDe = (rang: number): [number, number, number] =>
+      placeDansEventail(rang, ids.length, y, pas).position
+
+    const nouveaux: Vol[] = []
+    const t = lireHorloge()
+
+    const piochees = combat.main.filter((c) => !avant.includes(c.id))
+    const pioche = piochees.length > 0 ? coinDe('pioche') : null
+    if (pioche !== null) {
+      piochees.forEach((carte, n) => {
+        nouveaux.push({
+          cle: `p-${carte.id}`,
+          carte: aPeindre(carte),
+          coin: pioche.point,
+          place: placeDe(combat.main.indexOf(carte)),
+          debut: t + n * DECALAGE_VOL,
+          sens: 'pioche',
+          echelleTas: pioche.echelle,
+        })
+      })
+    }
+
+    const partantes = avant.filter((id) => !ids.includes(id) && id !== dejaJouee.current)
+    dejaJouee.current = null
+    if (partantes.length > 0) {
+      const defausse = coinDe('defausse')
+      const pasAvant = pasDeLEventail(avant.length, window.innerHeight, window.innerWidth)
+      if (defausse !== null) {
+        partantes.forEach((id, n) => {
+          const carte = mainCartes.current.get(id)
+          if (carte === undefined) return
+          nouveaux.push({
+            cle: `d-${id}`,
+            carte,
+            coin: defausse.point,
+            place: placeDansEventail(avant.indexOf(id), avant.length, y, pasAvant).position,
+            debut: t + n * DECALAGE_VOL,
+            sens: 'defausse',
+            echelleTas: defausse.echelle,
+          })
+        })
+      }
+    }
+
+    if (nouveaux.length === 0) return
+    setVols((v) => [...v, ...nouveaux])
+    const fin = DUREE_VOL + (nouveaux.length - 1) * DECALAGE_VOL
+    const cles = new Set(nouveaux.map((x) => x.cle))
+    window.setTimeout(() => setVols((v) => v.filter((x) => !cles.has(x.cle))), fin * 1000 + 40)
+    // On ne dépend QUE de la main : `enCombat` la suit, et les autres valeurs
+    // sont lues au moment du déclenchement.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [combat.main])
+
   const debout = vivants(combat)
   // `menaceDuTour` DÉDUIT DÉJÀ LE BLOC : le retrancher encore affichait zéro
   // dès qu'on posait une Garde, donc une menace qui disparaît au lieu de
@@ -674,6 +807,15 @@ export function Scene(): React.JSX.Element {
   const [, remesure] = useState(0)
   const mesure = useCallback(() => remesure((n) => n + 1), [])
 
+  /** Tout ce que la main ne doit PAS dessiner : ce qui s'abat, ce qu'on
+   *  regarde, et ce qui vole encore depuis le paquet. */
+  const enVolOuVolant = useMemo(() => {
+    const ids = vols.filter((v) => v.sens === 'pioche').map((v) => v.carte.id)
+    if (enVol !== null) ids.push(enVol.carte.id)
+    if (zoomee !== null) ids.push(zoomee.id)
+    return ids
+  }, [vols, enVol, zoomee])
+
   // LE DÉCOR SUIT CEUX QU'ON AFFRONTE, et il se relit à chaque combat. La part
   // de profondeur décide de quelle vue du camp : on s'y enfonce.
   const profondeurMax = Math.max(1, enCours.reglage.profondeurMax)
@@ -880,11 +1022,26 @@ export function Scene(): React.JSX.Element {
           <Etal3D cartes={[]} onPeinte={compter} />
         )}
 
+        {/* LES CARTES QUI VONT ET VIENNENT DU PAQUET. Elles vivent hors de la
+            main, comme la carte qui s'abat : la main ne dessine que ce qui y
+            est POSÉ. */}
+        {vols.map((v) => (
+          <CarteQuiVole
+            key={v.cle}
+            carte={v.carte}
+            depuis={v.coin}
+            vers={v.place}
+            debut={v.debut}
+            sens={v.sens}
+            echelleTas={v.echelleTas}
+          />
+        ))}
+
         {enCombat && (
         <Main3D
           cartes={main}
           jouables={jouables}
-          envolee={enVol?.carte.id ?? zoomee?.id ?? null}
+          envolee={enVolOuVolant}
           viseur={viseurs}
           cibles={cibles}
           onVise={marquerVisee}

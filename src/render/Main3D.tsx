@@ -80,7 +80,7 @@ const GOUTTIERE = 1.45
  * Le `min()` des deux garde l'allure à cinq cartes ET se tasse tout seul
  * au-delà.
  */
-function pasDeLEventail(nombre: number, hauteurPx: number, largeurPx: number): number {
+export function pasDeLEventail(nombre: number, hauteurPx: number, largeurPx: number): number {
   if (nombre <= 1) return PAS
   const visible = hauteurVisibleA(Z_MAIN, hauteurPx)
   const enCartes = (visible * largeurPx) / hauteurPx
@@ -132,7 +132,7 @@ const COUCHE = 0
  * (`Cadrage`), donc le bord bas de l'écran descend en unités de scène — une
  * constante laissait la main flotter au milieu.
  */
-function yMain(hauteurFenetrePx: number): number {
+export function yMain(hauteurFenetrePx: number): number {
   return -hauteurVisibleA(Z_MAIN, hauteurFenetrePx) / 2 + HAUT * 0.245
 }
 
@@ -288,7 +288,14 @@ type Props = {
    * main ». Par identifiant et non par index : à l'impact, la carte quitte la
    * main et les index glissent — un index cacherait alors sa voisine.
    */
-  envolee?: string | null
+  /**
+   * Les cartes qui NE SONT PLUS dans la main bien que l'état les y compte
+   * encore : celle qui s'abat, celle qui attend sa cible, celle qu'on regarde,
+   * et maintenant celles qui volent depuis le paquet. Trois raisons, un seul
+   * mécanisme — et il en fallait plusieurs à la fois depuis que la pioche fait
+   * voler cinq cartes l'une après l'autre.
+   */
+  envolee?: string | readonly string[] | null
   /**
    * La carte a été sortie de la main : on la joue. `depuis` est le point du
    * lâcher, `cible` le corps sous la pointe de la flèche — `null` quand il n'y
@@ -372,8 +379,14 @@ function placeSousLeDoigt(x: number, total: number, pas: number): number {
   return place
 }
 
-/** La place d'une carte dans l'éventail, la carte tenue exclue. */
-function placeDansEventail(rang: number, total: number, y: number, pas: number): {
+/**
+ * La place d'une carte dans l'éventail, la carte tenue exclue.
+ *
+ * **Exportée**, parce qu'une carte qui vole du paquet vers la main doit
+ * atterrir à sa VRAIE place : viser le centre puis laisser l'amortissement
+ * corriger se lirait comme un ressaut à l'arrivée.
+ */
+export function placeDansEventail(rang: number, total: number, y: number, pas: number): {
   position: [number, number, number]
   rotation: [number, number, number]
 } {
@@ -492,7 +505,10 @@ export function Main3D({
   // qui restent comme si elle n'avait jamais été là. La carte REGARDÉE sort de
   // la main pour la même raison — sa place d'origine n'a plus de sens tant
   // qu'on la tient sous les yeux.
-  const enVol = envolee === null ? -1 : cartes.findIndex((c) => c.id === envolee)
+  const envolees = useMemo(
+    () => new Set(envolee === null ? [] : typeof envolee === 'string' ? [envolee] : envolee),
+    [envolee],
+  )
   // LA CARTE SORT DE LA MAIN QUAND ON LA DÉPLACE, pas quand on la tient. Tant
   // que le doigt n'a pas bougé elle garde sa place dans l'éventail, seulement
   // soulevée : sans ça, un simple maintien la faisait sauter au CENTRE de la
@@ -500,8 +516,9 @@ export function Main3D({
   // même si on ne bouge pas ». *Une carte qu'on tient sans la bouger n'a pas
   // encore quitté sa place.*
   const deplacee = tenue !== null && doigt !== null ? tenue : null
-  const sortie = deplacee ?? enVol
-  const restantes = cartes.map((_, i) => i).filter((i) => i !== sortie)
+  const restantes = cartes
+    .map((_, i) => i)
+    .filter((i) => i !== deplacee && !envolees.has(cartes[i]!.id))
 
   /**
    * LA CARTE SE POSE ET LA FLÈCHE PREND LE RELAIS.
@@ -575,8 +592,9 @@ export function Main3D({
       )}
 
       {cartes.map((carte, i) => {
-        // LA CARTE QUI S'ABAT n'est plus ici : c'est `CarteQuiSAbat` qui la montre.
-        if (i === enVol) return null
+        // LA CARTE QUI S'ABAT n'est plus ici, ni celles qui volent depuis le
+        // paquet : ce sont `CarteQuiSAbat` et `CarteQuiVole` qui les montrent.
+        if (envolees.has(carte.id)) return null
         if (i === deplacee) {
           const suivi = doigt ?? ancre
           const p = ancree ? ancre : suivi

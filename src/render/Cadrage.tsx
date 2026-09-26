@@ -79,6 +79,33 @@ export function surLePlan(
   return [point[0] * k, point[1] * k]
 }
 
+/**
+ * OÙ TOMBE UN POINT DE L'ÉCRAN, à une profondeur donnée de la scène.
+ *
+ * C'est l'inverse de `Projeter`, et il le fallait dès qu'un objet de la scène
+ * doit partir d'un objet du DOM : les tas de pioche et de défausse sont du HTML
+ * posé dans les coins, la main vit dans le canvas. *Sans cette conversion, une
+ * carte qui vole du paquet vers la main partirait d'un point inventé.*
+ *
+ * On passe par le champ visible à cette profondeur, donc ça suit le recul de la
+ * caméra sans qu'on ait à s'en occuper.
+ */
+export function depuisEcran(
+  xPx: number,
+  yPx: number,
+  z: number,
+  largeurFenetrePx: number,
+  hauteurFenetrePx: number,
+): [number, number, number] {
+  const hauteurVisible = hauteurVisibleA(z, hauteurFenetrePx)
+  const largeurVisible = (hauteurVisible * largeurFenetrePx) / hauteurFenetrePx
+  return [
+    (xPx / largeurFenetrePx - 0.5) * largeurVisible,
+    (0.5 - yPx / hauteurFenetrePx) * hauteurVisible,
+    z,
+  ]
+}
+
 export function Cadrage(): null {
   const { camera, size } = useThree()
   useEffect(() => {
