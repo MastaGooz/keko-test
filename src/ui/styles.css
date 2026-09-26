@@ -3785,6 +3785,36 @@ body {
   width: var(--tas);
 }
 
+/* LA PIOCHE TREMBLE PENDANT QU'ON LA REMPLIT. Demande par Keko : « quand on
+   melange la defausse on peut faire un effet de particules de la defausse vers
+   la pioche avec la pioche qui tremble ». Le tas se reconstituait tout seul,
+   donc le remelange ne se voyait qu'a deux chiffres qui changent.
+
+   C'EST LE CONTENEUR QUI TREMBLE, PAS LE DESSIN : `.tas-dessin` porte deja un
+   `transform` (le miroir de la pioche), et une animation sur la meme propriete
+   l'ecraserait -- le paquet se retournerait a l'endroit le temps du melange.
+
+   Une translation et rien d'autre : une rotation ferait pivoter un objet pose
+   a plat, ce qui se lirait comme un basculement et non comme un choc. */
+@keyframes tas-brasse {
+  0% { translate: 0 0; }
+  20% { translate: -2px 1px; }
+  40% { translate: 2px -1px; }
+  60% { translate: -1px -1px; }
+  80% { translate: 1px 1px; }
+  100% { translate: 0 0; }
+}
+
+.tas-3d.brasse {
+  animation: tas-brasse 0.14s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tas-3d.brasse {
+    animation: none;
+  }
+}
+
 /* LA PIOCHE EST LE MIROIR DE LA DEFAUSSE. Le paquet penche : les deux tas
    dessines a l'identique pencheraient du meme cote, et les coins bas de l'ecran
    ne se repondraient pas. Demande par Keko.

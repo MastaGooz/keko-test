@@ -93,6 +93,17 @@ type Trajet = {
 /** Le temps entre deux cartes piochées : elles arrivent l'une après l'autre. */
 const DECALAGE_PIOCHE = 0.1
 
+/**
+ * LE MÉLANGE : la défausse remonte dans la pioche, en plusieurs brassées.
+ *
+ * Une seule traînée dirait « une carte » ; c'est tout un tas qui se retourne,
+ * donc il en faut plusieurs, décalées. La pioche tremble pendant ce temps —
+ * *c'est elle qu'on remplit, c'est elle qui doit réagir.*
+ */
+const BRASSEES = 5
+const PAS_BRASSEE = 0.06
+const DUREE_MELANGE = (BRASSEES - 1) * PAS_BRASSEE + DUREE_TRAINEE
+
 /** Une carte qui s'embrase avant de partir en lumière vers la défausse. */
 type Dissolution = {
   cle: string
@@ -244,6 +255,8 @@ export function Scene(): React.JSX.Element {
   /** Les cartes que l'état compte déjà mais dont la traînée n'est pas arrivée. */
   const [attendues, setAttendues] = useState<readonly string[]>([])
   const [dissolutions, setDissolutions] = useState<Dissolution[]>([])
+  /** La pioche tremble pendant qu'on y reverse la défausse. */
+  const [brasse, setBrasse] = useState(false)
 
   /**
    * Ce qu'il faut pour peindre une carte qui vient de QUITTER la main : une
@@ -296,6 +309,27 @@ export function Scene(): React.JSX.Element {
    * l'exclure* — et c'est ce qu'on faisait, donc sa traînée partait de son
    * ancien rang dans l'éventail.
    */
+  /**
+   * LA FIN DE TOUR NE SE DÉDUIT PAS, ELLE SE DÉCLARE.
+   *
+   * Comparer deux mains suffit tant que les cartes changent ; à la fin d'un
+   * tour, non — **une carte défaussée puis REPIOCHÉE porte le même
+   * identifiant dans les deux mains**, donc l'écart ne la voyait ni partir ni
+   * revenir, et elle restait plantée là pendant que ses voisines faisaient le
+   * tour. Keko : « quand je pioche une carte qui était déjà dans ma main
+   * précédente, elle y reste au lieu de faire défausse > mélange > pioche ».
+   *
+   * `finDuTour` est pur et se calcule AVANT d'être appliqué : on sait donc
+   * tout du cycle à l'avance — ce qui part, ce qui arrive, et s'il a fallu
+   * remélanger en cours de route.
+   */
+  const finDeTour = useRef<{
+    sortantes: readonly string[]
+    /** Ce qu'on pioche avant que la pioche ne se vide. */
+    avantMelange: number
+    melange: boolean
+  } | null>(null)
+
   const dejaJouee = useRef<{
     id: string
     place: [number, number, number]
@@ -342,14 +376,40 @@ export function Scene(): React.JSX.Element {
     // soit fini.
     const jouee = dejaJouee.current
     dejaJouee.current = null
-    const partantes = avant.filter((id) => !ids.includes(id) && id !== jouee?.id)
+    const tour = finDeTour.current
+    finDeTour.current = null
+    // À LA FIN D'UN TOUR, TOUTE LA MAIN PART ET TOUTE LA MAIN ARRIVE — même
+    // les cartes qui portent le même identifiant des deux côtés. L'écart entre
+    // deux mains ne peut pas le dire, et c'est bien pour ça que la fin de tour
+    // se déclare au lieu de se déduire.
+    const partantes =
+      tour !== null ? tour.sortantes : avant.filter((id) => !ids.includes(id) && id !== jouee?.id)
     const embrasement = partantes.length > 0 ? DUREE_DISSOLUTION + (partantes.length - 1) * PAS_DISSOLUTION : 0
 
     // LA PIOCHE : une traînée par carte, puis la carte naît à sa place quand
     // la traînée y meurt. Elles partent l'une après l'autre — cinq d'un coup se
     // liraient comme un seul mouvement, et c'est chacune qu'on doit voir venir.
     const retardPioche = embrasement * 0.8
-    const piochees = combat.main.filter((c) => !avant.includes(c.id))
+    const piochees = tour !== null ? combat.main : combat.main.filter((c) => !avant.includes(c.id))
+
+    /**
+     * LE CYCLE A UN ORDRE, ET LE MÉLANGE EST DEDANS : défausse de la main,
+     * pioche, et quand la pioche se vide, **on reverse la défausse avant de
+     * continuer**. Demandé par Keko, et c'est aussi ce que font les règles —
+     * `piocher` remélange au milieu de sa boucle, pas avant.
+     *
+     * Le mélange attend que la main soit ARRIVÉE à la défausse : elle en fait
+     * partie, donc la reverser pendant qu'elle vole dirait l'inverse de ce qui
+     * se passe. Et il attend la première vague, sinon deux flux se croisent au
+     * même instant.
+     */
+    const avantMelange = tour?.melange === true ? tour.avantMelange : piochees.length
+    const finDefausse = partantes.length > 0 ? embrasement + DUREE_TRAINEE : 0
+    const finVague =
+      avantMelange > 0 ? retardPioche + (avantMelange - 1) * DECALAGE_PIOCHE + DUREE_TRAINEE : 0
+    const debutMelange = Math.max(finDefausse, finVague)
+    const retardReste = debutMelange + DUREE_MELANGE
+
     const pioche = piochees.length > 0 ? coinDe('pioche') : null
     if (pioche !== null) {
       piochees.forEach((carte, n) => {
@@ -357,7 +417,10 @@ export function Scene(): React.JSX.Element {
         // même temps et au MÊME endroit — l'éventail d'avant et celui d'après
         // ont les mêmes places — donc la carte qui naissait recouvrait celle
         // qui partait. *Un remplacement se raconte dans l'ordre.*
-        const depart = retardPioche + n * DECALAGE_PIOCHE
+        const depart =
+          n < avantMelange
+            ? retardPioche + n * DECALAGE_PIOCHE
+            : retardReste + (n - avantMelange) * DECALAGE_PIOCHE
         trajetsNeufs.push({
           cle: `p-${carte.id}-${t}`,
           depuis: pioche,
@@ -373,6 +436,25 @@ export function Scene(): React.JSX.Element {
         )
       })
       setAttendues((x) => [...x, ...piochees.map((c) => c.id)])
+    }
+
+    // LE MÉLANGE SE VOIT : la défausse remonte dans la pioche en brassées, et
+    // la pioche tremble le temps qu'on la remplit. Sans ça, le tas se
+    // reconstituait tout seul et le joueur voyait juste deux chiffres changer.
+    if (tour?.melange === true) {
+      const vide = coinDe('defausse')
+      if (vide !== null && pioche !== null) {
+        for (let i = 0; i < BRASSEES; i += 1) {
+          trajetsNeufs.push({
+            cle: `m-${i}-${t}`,
+            depuis: vide,
+            vers: pioche,
+            debut: t + debutMelange + i * PAS_BRASSEE,
+          })
+        }
+        window.setTimeout(() => setBrasse(true), debutMelange * 1000)
+        window.setTimeout(() => setBrasse(false), (debutMelange + DUREE_MELANGE) * 1000)
+      }
     }
 
     const defausse = coinDe('defausse')
@@ -701,7 +783,17 @@ export function Scene(): React.JSX.Element {
       .slice(combat.evenements.length)
       .filter((e): e is Extract<typeof e, { type: 'frappe' }> => e.type === 'frappe')
 
+    // CE QUE LE CYCLE VA RACONTER, calculé sur l'état d'AVANT : combien de
+    // cartes la pioche peut encore donner, et s'il faudra reverser la défausse
+    // pour finir. `finDuTour` fait exactement ce calcul dans sa boucle.
+    const cycle = {
+      sortantes: combat.main.map((c) => c.id),
+      avantMelange: Math.min(combat.pioche.length, apres.main.length),
+      melange: apres.main.length > combat.pioche.length,
+    }
+
     if (frappes.length === 0) {
+      finDeTour.current = cycle
       majCombat(() => apres)
       return
     }
@@ -741,6 +833,7 @@ export function Scene(): React.JSX.Element {
     // LA MAIN REVIENT AU JOUEUR quand le dernier bond a fini de retomber.
     const fin = (frappes.length - 1) * PAS_ENTRE_FRAPPES + DUREE_ASSAUT + 0.1
     window.setTimeout(() => {
+      finDeTour.current = cycle
       majCombat(() => apres)
       setSalve(null)
       setAssauts({})
@@ -1329,7 +1422,7 @@ export function Scene(): React.JSX.Element {
             ))}
           </div>
           <div className="coin-3d gauche">
-            <Tas3D nom="pioche" compte={combat.pioche.length} />
+            <Tas3D nom="pioche" compte={combat.pioche.length} brasse={brasse} />
           </div>
           <div className="coin-3d droite">
             <Tas3D nom="defausse" compte={combat.defausse.length} />

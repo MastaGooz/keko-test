@@ -2222,6 +2222,48 @@ d'embrasement** :
 rejoignent aucun tas. On le lit sur l'état d'après — la carte est-elle dans
 `defausse` ? — plutôt qu'en recopiant la règle.
 
+### LE CYCLE SE DÉCLARE, IL NE SE DÉDUIT PAS — et le mélange se voit
+
+**Une carte défaussée puis REPIOCHÉE porte le même identifiant des deux côtés**,
+donc l'écart entre deux mains ne la voyait ni partir ni revenir : elle restait
+plantée là pendant que ses voisines faisaient le tour. Keko : « quand je pioche
+une carte qui était déjà dans ma main précédente, elle y reste au lieu de faire
+défausse > mélange > pioche ».
+
+*Le diff était la bonne idée pour un coup joué, et la mauvaise pour une fin de
+tour* : là, **toute la main part et toute la main arrive**, quels que soient les
+identifiants. `finDuTour` étant pur et calculé AVANT d'être appliqué, la scène
+sait tout du cycle à l'avance — ce qui sort, ce qui entre, et s'il faudra
+remélanger en cours de route. Elle le dépose dans un ref (`finDeTour`) que
+l'effet consomme, exactement comme la carte jouée dépose la sienne.
+
+**L'ordre est celui que Keko a dicté, et c'est aussi celui des règles** :
+défausse de la main → pioche → *si la pioche se vide*, on reverse la défausse →
+on finit de piocher. `piocher` remélange au milieu de sa boucle, pas avant, donc
+la pioche se fait en DEUX VAGUES quand le tas s'épuise. Le nombre de cartes de
+la première vague se lit sur l'état d'avant (`min(pioche, main d'après)`), et le
+mélange a lieu dès que la seconde en compte une.
+
+**Le mélange attend que la main soit ARRIVÉE à la défausse.** Elle en fait
+partie — `piocher` la défausse avant de remélanger — donc la reverser pendant
+qu'elle vole dirait l'inverse de ce qui se passe.
+
+**ET IL SE VOIT** : cinq brassées de lumière de la défausse vers la pioche, et
+**la pioche TREMBLE** pendant qu'on la remplit (demandé par Keko). Une seule
+traînée dirait « une carte » ; c'est un tas qui se retourne. Sans ça, le tas se
+reconstituait tout seul et le remélange ne se lisait qu'à deux chiffres qui
+changent.
+
+**Le tremblement est porté par le CONTENEUR, pas par le dessin** : `.tas-dessin`
+porte déjà un `transform` — le miroir de la pioche — et une animation sur la
+même propriété l'écraserait, donc le paquet se remettrait à l'endroit le temps
+du mélange. *Une translation et rien d'autre* : une rotation ferait pivoter un
+objet posé à plat, ce qui se lirait comme un basculement et non comme un choc.
+
+Prix connu, et il est assumé : un tour qui remélange met ~1,9 s à rendre la
+main, contre ~1,1 s sans. *C'est le seul moment où le deck se retourne*, et il
+n'arrive qu'une fois par tas vidé.
+
 **PIÈGE DE VÉRIFICATION, et il a coûté quatre allers-retours :** *une action
 `javascript_tool` ne ramène pas l'onglet au premier plan, une capture d'écran
 si.* Un clic déclenché en JavaScript se joue donc dans un onglet caché, où les
