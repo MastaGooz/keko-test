@@ -297,6 +297,12 @@ type Props = {
    */
   envolee?: string | readonly string[] | null
   /**
+   * Les cartes qui viennent d'arriver, et quand : elles naissent lumineuses.
+   * Le reste de la main ne s'en aperçoit pas — *une carte qui apparaît est une
+   * carte comme les autres, avec sa place et son inclinaison.*
+   */
+  apparues?: Readonly<Record<string, number>>
+  /**
    * La carte a été sortie de la main : on la joue. `depuis` est le point du
    * lâcher, `cible` le corps sous la pointe de la flèche — `null` quand il n'y
    * en a pas, ce qui **annule** pour une carte qui doit viser.
@@ -406,6 +412,7 @@ export function Main3D({
   cartes,
   jouables,
   envolee = null,
+  apparues,
   onJouer,
   onRegarder,
   onReordonner,
@@ -592,9 +599,11 @@ export function Main3D({
       )}
 
       {cartes.map((carte, i) => {
-        // LA CARTE QUI S'ABAT n'est plus ici, ni celles qui volent depuis le
-        // paquet : ce sont `CarteQuiSAbat` et `CarteQuiVole` qui les montrent.
+        // LA CARTE QUI S'ABAT n'est plus ici, ni celles dont la traînée n'est
+        // pas encore arrivée : `CarteQuiSAbat` montre la première, et les
+        // autres n'existent pas encore à l'écran.
         if (envolees.has(carte.id)) return null
+        const apparue = apparues?.[carte.id] ?? null
         if (i === deplacee) {
           const suivi = doigt ?? ancre
           const p = ancree ? ancre : suivi
@@ -647,6 +656,7 @@ export function Main3D({
             // à repasser devant une carte qui a déjà fini de redescendre.
             ressortZ={36}
             jouable={jouables?.[i] ?? true}
+            apparue={apparue}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
             // LE SURVOL N'EXISTE QU'À LA SOURIS. Au doigt, le `pointerover`

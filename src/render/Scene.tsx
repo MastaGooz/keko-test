@@ -21,8 +21,8 @@ import {
   ReperesDeLaMain,
   yMain,
 } from './Main3D.tsx'
-import { CarteQuiVole, DECALAGE_VOL, DUREE_VOL, type SensDuVol } from './CarteQuiVole.tsx'
-import { depuisEcran, hauteurVisibleA, Z_MAIN } from './Cadrage.tsx'
+import { DUREE_TRAINEE, Trainee } from './Trainee.tsx'
+import { depuisEcran, Z_MAIN } from './Cadrage.tsx'
 import { CORPS, decorDuRang, Ennemi3D, HAUT_CORPS, identiteEnnemi } from './Ennemi3D.tsx'
 import { boiteDe } from './silhouette.ts'
 import { Projeter, ReperesDuRang } from './Projeter.tsx'
@@ -81,16 +81,16 @@ type EnVol = {
   debut: number
 }
 
-/** Une carte qui va du paquet à la main, ou de la main au paquet. */
-type Vol = {
+/** Une traînée de lumière entre un paquet et une place de la main. */
+type Trajet = {
   cle: string
-  carte: CarteAPeindre
-  coin: [number, number, number]
-  place: [number, number, number]
+  depuis: [number, number, number]
+  vers: [number, number, number]
   debut: number
-  sens: SensDuVol
-  echelleTas: number
 }
+
+/** Le temps entre deux cartes piochées : elles arrivent l'une après l'autre. */
+const DECALAGE_PIOCHE = 0.1
 
 /**
  * Le temps entre deux ennemis d'une même salve. **Il doit dépasser un assaut
@@ -218,12 +218,21 @@ export function Scene(): React.JSX.Element {
   const [enVol, setEnVol] = useState<EnVol | null>(null)
 
   /**
-   * LES CARTES QUI VONT DU PAQUET À LA MAIN, ET RETOUR.
+   * LES TRAÎNÉES, ET LES CARTES QUI VIENNENT DE NAÎTRE.
    *
-   * Keko voulait voir d'où viennent les cartes : jusqu'ici la main se
-   * remplissait d'un coup et les tas des coins ne servaient qu'à compter.
+   * Keko voulait voir d'où viennent les cartes, et il a écarté la première
+   * version — une carte entière qui voyage — pour deux raisons qui tenaient
+   * ensemble : elle partait presque à sa taille finale, et elle arrivait
+   * DROITE, la main se formant à plat avant de basculer en éventail.
+   *
+   * *Une traînée n'a ni taille de carte ni inclinaison* : elle ne peut pas
+   * être en désaccord avec la main qu'elle rejoint. La carte, elle, naît
+   * directement à sa place.
    */
-  const [vols, setVols] = useState<Vol[]>([])
+  const [trajets, setTrajets] = useState<Trajet[]>([])
+  const [apparues, setApparues] = useState<Record<string, number>>({})
+  /** Les cartes que l'état compte déjà mais dont la traînée n'est pas arrivée. */
+  const [attendues, setAttendues] = useState<readonly string[]>([])
   const [coups, setCoups] = useState<Coup[]>([])
   const [touches, setTouches] = useState<Record<number, number>>({})
   const [morts, setMorts] = useState<Record<number, number>>({})
@@ -244,13 +253,6 @@ export function Scene(): React.JSX.Element {
   const pret = peintes > 0
 
   const main = useMemo(() => combat.main.map(aPeindre), [combat.main])
-
-  /**
-   * Ce qu'il faut pour peindre une carte qui vient de QUITTER la main : une
-   * fois partie, l'état ne la porte plus, et on ne peut plus la dessiner.
-   */
-  const mainCartes = useRef(new Map<string, CarteAPeindre>())
-  for (const c of combat.main) mainCartes.current.set(c.id, aPeindre(c))
 
   /**
    * LES VOLS DE PIOCHE ET DE DÉFAUSSE.
@@ -279,19 +281,21 @@ export function Scene(): React.JSX.Element {
     const avant = mainAvant.current ?? []
     mainAvant.current = ids
 
-    const coinDe = (nom: 'pioche' | 'defausse'): { point: [number, number, number]; echelle: number } | null => {
+    // LE POINT DE DÉPART VIENT DU DOM : les tas sont du HTML posé dans les
+    // coins, la main vit dans le canvas. `depuisEcran` est l'inverse de
+    // `Projeter`, et il passe par le champ visible à la profondeur de la main,
+    // donc il suit le recul de la caméra sans qu'on s'en occupe.
+    const coinDe = (nom: 'pioche' | 'defausse'): [number, number, number] | null => {
       const el = document.querySelector(`.tas-3d.${nom} .tas-dessin`)
       if (el === null) return null
       const r = el.getBoundingClientRect()
-      const w = window.innerWidth
-      const h = window.innerHeight
-      const largeurVisible = (hauteurVisibleA(Z_MAIN, h) * w) / h
-      // Ce qu'une carte de la main mesure à l'écran : elle fait 1 de large.
-      const carteEnPx = w / largeurVisible
-      return {
-        point: depuisEcran(r.left + r.width / 2, r.top + r.height / 2, Z_MAIN, w, h),
-        echelle: Math.max(0.15, Math.min(1, r.width / carteEnPx)),
-      }
+      return depuisEcran(
+        r.left + r.width / 2,
+        r.top + r.height / 2,
+        Z_MAIN,
+        window.innerWidth,
+        window.innerHeight,
+      )
     }
 
     const pas = pasDeLEventail(ids.length, window.innerHeight, window.innerWidth)
@@ -299,25 +303,37 @@ export function Scene(): React.JSX.Element {
     const placeDe = (rang: number): [number, number, number] =>
       placeDansEventail(rang, ids.length, y, pas).position
 
-    const nouveaux: Vol[] = []
+    const trajetsNeufs: Trajet[] = []
     const t = lireHorloge()
 
+    // LA PIOCHE : une traînée par carte, puis la carte naît à sa place quand
+    // la traînée y meurt. Elles partent l'une après l'autre — cinq d'un coup se
+    // liraient comme un seul mouvement, et c'est chacune qu'on doit voir venir.
     const piochees = combat.main.filter((c) => !avant.includes(c.id))
     const pioche = piochees.length > 0 ? coinDe('pioche') : null
     if (pioche !== null) {
       piochees.forEach((carte, n) => {
-        nouveaux.push({
-          cle: `p-${carte.id}`,
-          carte: aPeindre(carte),
-          coin: pioche.point,
-          place: placeDe(combat.main.indexOf(carte)),
-          debut: t + n * DECALAGE_VOL,
-          sens: 'pioche',
-          echelleTas: pioche.echelle,
+        const depart = n * DECALAGE_PIOCHE
+        trajetsNeufs.push({
+          cle: `p-${carte.id}-${t}`,
+          depuis: pioche,
+          vers: placeDe(combat.main.indexOf(carte)),
+          debut: t + depart,
         })
+        window.setTimeout(
+          () => {
+            setApparues((a) => ({ ...a, [carte.id]: lireHorloge() }))
+            setAttendues((x) => x.filter((id) => id !== carte.id))
+          },
+          (depart + DUREE_TRAINEE) * 1000,
+        )
       })
+      setAttendues((x) => [...x, ...piochees.map((c) => c.id)])
     }
 
+    // LA DÉFAUSSE : la carte a déjà quitté la main, la traînée part de la place
+    // qu'elle occupait. *Pas d'apparition au bout* — on ne fait pas naître une
+    // carte dans un tas.
     const partantes = avant.filter((id) => !ids.includes(id) && id !== dejaJouee.current)
     dejaJouee.current = null
     if (partantes.length > 0) {
@@ -325,26 +341,21 @@ export function Scene(): React.JSX.Element {
       const pasAvant = pasDeLEventail(avant.length, window.innerHeight, window.innerWidth)
       if (defausse !== null) {
         partantes.forEach((id, n) => {
-          const carte = mainCartes.current.get(id)
-          if (carte === undefined) return
-          nouveaux.push({
-            cle: `d-${id}`,
-            carte,
-            coin: defausse.point,
-            place: placeDansEventail(avant.indexOf(id), avant.length, y, pasAvant).position,
-            debut: t + n * DECALAGE_VOL,
-            sens: 'defausse',
-            echelleTas: defausse.echelle,
+          trajetsNeufs.push({
+            cle: `d-${id}-${t}`,
+            depuis: placeDansEventail(avant.indexOf(id), avant.length, y, pasAvant).position,
+            vers: defausse,
+            debut: t + n * 0.05,
           })
         })
       }
     }
 
-    if (nouveaux.length === 0) return
-    setVols((v) => [...v, ...nouveaux])
-    const fin = DUREE_VOL + (nouveaux.length - 1) * DECALAGE_VOL
-    const cles = new Set(nouveaux.map((x) => x.cle))
-    window.setTimeout(() => setVols((v) => v.filter((x) => !cles.has(x.cle))), fin * 1000 + 40)
+    if (trajetsNeufs.length === 0) return
+    setTrajets((v) => [...v, ...trajetsNeufs])
+    const fin = DUREE_TRAINEE * 1.4 + trajetsNeufs.length * DECALAGE_PIOCHE
+    const cles = new Set(trajetsNeufs.map((x) => x.cle))
+    window.setTimeout(() => setTrajets((v) => v.filter((x) => !cles.has(x.cle))), fin * 1000 + 60)
     // On ne dépend QUE de la main : `enCombat` la suit, et les autres valeurs
     // sont lues au moment du déclenchement.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -810,11 +821,11 @@ export function Scene(): React.JSX.Element {
   /** Tout ce que la main ne doit PAS dessiner : ce qui s'abat, ce qu'on
    *  regarde, et ce qui vole encore depuis le paquet. */
   const enVolOuVolant = useMemo(() => {
-    const ids = vols.filter((v) => v.sens === 'pioche').map((v) => v.carte.id)
+    const ids = [...attendues]
     if (enVol !== null) ids.push(enVol.carte.id)
     if (zoomee !== null) ids.push(zoomee.id)
     return ids
-  }, [vols, enVol, zoomee])
+  }, [attendues, enVol, zoomee])
 
   // LE DÉCOR SUIT CEUX QU'ON AFFRONTE, et il se relit à chaque combat. La part
   // de profondeur décide de quelle vue du camp : on s'y enfonce.
@@ -1022,19 +1033,11 @@ export function Scene(): React.JSX.Element {
           <Etal3D cartes={[]} onPeinte={compter} />
         )}
 
-        {/* LES CARTES QUI VONT ET VIENNENT DU PAQUET. Elles vivent hors de la
-            main, comme la carte qui s'abat : la main ne dessine que ce qui y
-            est POSÉ. */}
-        {vols.map((v) => (
-          <CarteQuiVole
-            key={v.cle}
-            carte={v.carte}
-            depuis={v.coin}
-            vers={v.place}
-            debut={v.debut}
-            sens={v.sens}
-            echelleTas={v.echelleTas}
-          />
+        {/* CE QUI VOLE N'EST PAS LA CARTE, mais une traînée de lumière : elle
+            n'a ni taille de carte ni inclinaison, donc elle ne peut pas être en
+            désaccord avec la main qu'elle rejoint. */}
+        {trajets.map((v) => (
+          <Trainee key={v.cle} depuis={v.depuis} vers={v.vers} debut={v.debut} />
         ))}
 
         {enCombat && (
@@ -1042,6 +1045,7 @@ export function Scene(): React.JSX.Element {
           cartes={main}
           jouables={jouables}
           envolee={enVolOuVolant}
+          apparues={apparues}
           viseur={viseurs}
           cibles={cibles}
           onVise={marquerVisee}

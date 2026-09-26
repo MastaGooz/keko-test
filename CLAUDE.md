@@ -2109,52 +2109,63 @@ chiffre → état.
 
 ### La pioche et la défausse ont un trajet
 
-Keko : « ce qui serait super cool c'est d'avoir un effet de pioche / défausse où
-on prend / place les cartes dans les paquets correspondants ; la carte serait
-prise sur le dessus, et flip back-face avant d'arriver dans la main, avec un
-changement progressif d'échelle ».
+Keko : « un effet de pioche / défausse où on prend / place les cartes dans les
+paquets correspondants ». *Jusqu'ici la main se remplissait d'un coup* : cinq
+cartes apparaissaient là où il n'y avait rien, et les tas des coins ne servaient
+qu'à compter.
 
-*Jusqu'ici la main se remplissait d'un coup* : cinq cartes apparaissaient là où
-il n'y avait rien, et les tas des coins ne servaient qu'à compter. Le trajet
-leur donne un rôle — **on voit d'où viennent les cartes**, exactement comme le
-coup a gagné le sien quand la carte s'est mise à s'abattre sur sa cible.
+**CE QUI VOLE N'EST PAS LA CARTE, C'EST UNE TRAÎNÉE DE LUMIÈRE.** La première
+version faisait voyager la carte entière, en la retournant et en la faisant
+grandir depuis le tas ; Keko l'a écartée pour deux raisons qui tenaient
+ensemble, et qu'on ne pouvait pas traiter séparément :
+
+- **elle partait presque à sa taille finale.** Un tas fait 68 % d'une carte de
+  main : partir de là ne se lit pas comme « on l'a prise dans le paquet », juste
+  comme un glissement ;
+- **elle arrivait DROITE.** On lui donnait la position de sa place dans
+  l'éventail, mais pas sa rotation — la main se formait donc à plat, puis
+  basculait d'un coup quand les vraies cartes prenaient le relais. Keko : « la
+  main formée par la pioche n'est pas bien positionnée, droite, pas en éventail,
+  avant d'être soudainement mise en éventail ».
+
+*Une traînée n'a ni taille de carte ni inclinaison : elle ne peut pas être en
+désaccord avec la main qu'elle rejoint.* Et la carte, elle, **naît directement à
+sa place** — c'est `Carte3D` qui la pose, avec son éventail, comme n'importe
+quelle autre. Le problème disparaît au lieu d'être corrigé.
+
+**LA CARTE NAÎT LUMINEUSE ET PREND SON IMAGE ENSUITE** (`apparue`, dans
+`Carte3D`) : la traînée meurt à l'endroit exact où la carte se forme, et la
+lumière fait la couture entre les deux. *Sans elle, la carte apparaîtrait* — ce
+qui est précisément ce qu'on voulait éviter.
+
+**Trois détails qui portent la traînée** (`Trainee.tsx`) : le grain est une
+TEXTURE et non un carré, parce que `PointsMaterial` rend des carrés durs et
+qu'un semis de carrés se lit comme du bruit ; les grains **convergent**, leur
+écart se résorbant en chemin, sinon l'arrivée se lit comme une explosion au lieu
+de désigner l'endroit où la carte va naître ; et chacun a sa propre bosse, sans
+quoi ils suivent tous la même corde et la traînée devient un trait.
 
 **ON NE DEMANDE RIEN AUX RÈGLES.** `logic/` ne sait pas qu'il existe une
 animation : on compare la main d'avant à celle d'après, et *l'écart entre deux
-états suffit à déduire ce qui a été pioché et ce qui part à la défausse*. La
-carte jouée est la seule exception, puisqu'elle a déjà son trajet — la faire
-voler aussi la montrerait deux fois.
-
-**LE RETOURNEMENT DIT LE SENS** : on pioche dos en avant et la carte se révèle
-en chemin, on défausse face en avant et elle se referme. Sans lui, une carte qui
-part vers la défausse ressemblerait à une carte qu'on repose.
-
-**DEUX PLANS DOS À DOS, pas un plan à double face** : un matériau `DoubleSide`
-afficherait la même image des deux côtés. Le passage se fait tout seul au
-profil, là où les deux sont invisibles.
-
-**`p` EST UNE SEULE GRANDEUR : la part du chemin faite vers la main**, 0 au
-paquet et 1 dans la main. La pioche va de 0 à 1, la défausse de 1 à 0 — *et il
-ne faut pas en faire deux.* J'avais d'abord échangé le départ et l'arrivée EN
-PLUS d'inverser l'avance, ce qui revient à ne rien inverser : les cartes
-défaussées finissaient leur course à leur place dans la main, de dos, et y
-restaient.
+états suffit à déduire ce qui est pioché et ce qui part à la défausse*. La carte
+jouée est la seule exception, puisqu'elle a déjà son trajet — la faire voler
+aussi la montrerait deux fois.
 
 **LE POINT DE DÉPART VIENT DU DOM** (`depuisEcran`, dans `Cadrage.tsx`) : les
 tas sont du HTML posé dans les coins, la main vit dans le canvas. C'est
 l'inverse de `Projeter`, et ça passe par le champ visible à la profondeur de la
-main, donc ça suit le recul de la caméra sans qu'on s'en occupe. L'échelle de
-départ est celle du tas mesurée à l'écran : *partir à sa taille est ce qui donne
-l'impression qu'on y a pris la carte*, plutôt que de la faire glisser du coin.
+main, donc ça suit le recul de la caméra sans qu'on s'en occupe.
 
-**Elles atterrissent à leur VRAIE place** — `placeDansEventail` est exportée
-pour ça. Viser le centre et laisser l'amortissement corriger se lirait comme un
-ressaut à l'arrivée.
+**Et la main peut avoir plusieurs cartes absentes à la fois** : `envolee` prend
+une liste. Elle en avait déjà trois usages — la carte qui s'abat, celle qui
+attend sa cible, celle qu'on regarde — mais jamais deux ensemble ; une pioche en
+retient cinq, le temps que leur traînée arrive.
 
-**Et la main peut avoir PLUSIEURS cartes absentes à la fois** : `envolee` prend
-désormais une liste. Elle en avait déjà trois usages — la carte qui s'abat,
-celle qui attend sa cible, celle qu'on regarde — mais jamais deux ensemble ;
-une pioche en fait voler cinq.
+*La version à carte entière reste dans `git log`*, avec sa leçon : `p` doit être
+une seule grandeur, la part du chemin faite vers la main. J'y avais échangé le
+départ et l'arrivée EN PLUS d'inverser l'avance, ce qui revient à ne rien
+inverser — les cartes défaussées finissaient à leur place dans la main, de dos,
+et y restaient.
 
 ### L'écran de butin — et c'est l'écran de jeu
 

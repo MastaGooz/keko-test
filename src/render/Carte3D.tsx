@@ -33,6 +33,9 @@ import {
 } from './texture-carte.ts'
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
+/** Ce que dure l'éclat d'une carte qui vient d'arriver, en secondes. */
+export const DUREE_APPARITION = 0.4
+
 export const LARGE = 1
 export const HAUT = 1.4
 const EPAISSEUR = 0.012
@@ -157,6 +160,21 @@ type Props = {
    * un second objet.
    */
   dos?: boolean
+  /**
+   * L'instant où elle vient d'arriver dans la main, en secondes d'horloge de
+   * la scène.
+   *
+   * **ELLE NAÎT LUMINEUSE ET PREND SON IMAGE ENSUITE** — Keko : « la carte
+   * apparaît lumineuse et prend son image ensuite, un truc fluide ». La
+   * traînée de particules meurt à l'endroit exact où elle se forme, donc la
+   * lumière fait la couture entre les deux : *sans elle, la carte
+   * apparaîtrait, ce qui est précisément ce qu'on voulait éviter.*
+   *
+   * Elle naît À SA PLACE, avec l'inclinaison de l'éventail — c'est tout
+   * l'intérêt de ne plus faire voyager la carte elle-même : une carte qu'on
+   * déplace arrive droite et bascule après coup.
+   */
+  apparue?: number | null
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -175,6 +193,7 @@ export function Carte3D({
   ombre = true,
   peril = false,
   dos = false,
+  apparue = null,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -388,8 +407,20 @@ ${nuanceur.fragmentShader}`
     const nuanceur = face.userData.nuanceur as { uniforms: { uGris: { value: number } } } | undefined
     if (nuanceur !== undefined) nuanceur.uniforms.uGris.value = gris
 
-    face.emissiveIntensity = 0
-    laiton.emissiveIntensity = 0
+    // L'APPARITION : la carte s'allume, puis la lumière tombe et l'image
+    // prend le dessus. Elle grandit d'un cheveu en même temps — sans ça,
+    // l'éclat se lirait comme un reflet plutôt que comme une naissance.
+    let eclat = 0
+    if (apparue !== null) {
+      const dt = etat.clock.elapsedTime - apparue
+      if (dt >= 0 && dt < DUREE_APPARITION) {
+        const k = dt / DUREE_APPARITION
+        eclat = (1 - k) * (1 - k)
+        g.scale.setScalar(l.t * (1 + 0.1 * eclat))
+      }
+    }
+    face.emissiveIntensity = eclat * 1.5
+    laiton.emissiveIntensity = eclat * 1.1
     // LE LISERÉ RESPIRE, à peine : c'est ce qui le fait lire comme une lumière
     // et non comme un trait peint. Sur la même horloge que le frémissement,
     // mais bien plus lente — deux battements rapides se liraient comme un
