@@ -139,6 +139,63 @@ export function PageArmurerie({
     return () => window.removeEventListener('wheel', rouler)
   }, [defilement, maxDefilement, onDefilement])
 
+  /**
+   * CE QUE DIT CHAQUE STAT, en une infobulle. Demandé par Keko : « quand la
+   * souris survole une stat — ou qu'on tape dessus sur téléphone — une petite
+   * bulle explique la stat ».
+   *
+   * *Un chiffre à côté d'un symbole se devine, il ne se lit pas* : un coeur
+   * pour la vie, soit, mais un paquet vaut aussi bien « cartes du deck » que
+   * « cartes en pioche ». La bulle le dit en trois mots, sans encombrer un
+   * rail qui doit rester quatre lignes.
+   *
+   * **LE RAIL NE CAPTE PAS LE POINTEUR, et il ne doit pas** : il vit sous le
+   * canvas, dans le calque du fond, pour qu'une carte promenée passe DEVANT
+   * lui. On écoute donc la fenêtre et on compare la position aux rectangles
+   * des lignes — exactement ce que fait déjà la molette du coffre, et pour la
+   * même raison.
+   */
+  const LIBELLES = ['Points de vie', 'Cartes dans le deck', 'Cartes en main', 'Énergie par tour']
+  const mesures = useRef<(HTMLSpanElement | null)[]>([])
+  const [bulle, setBulle] = useState<{ i: number; x: number; y: number } | null>(null)
+
+  useEffect(() => {
+    const viser = (x: number, y: number): { i: number; x: number; y: number } | null => {
+      for (const [i, el] of mesures.current.entries()) {
+        if (el === null) continue
+        const r = el.getBoundingClientRect()
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+          return { i, x: r.left, y: r.top + r.height / 2 }
+        }
+      }
+      return null
+    }
+    // LE SURVOL N'EXISTE QU'À LA SOURIS. Au doigt, le `pointerover` part au
+    // toucher et le `pointerout` n'arrive jamais : la bulle resterait ouverte.
+    // C'est la règle déjà écrite pour les cartes de la main.
+    const survol = (e: PointerEvent): void => {
+      if (e.pointerType !== 'mouse') return
+      setBulle(viser(e.clientX, e.clientY))
+    }
+    let minuteur = 0
+    const tape = (e: PointerEvent): void => {
+      if (e.pointerType === 'mouse') return
+      const vise = viser(e.clientX, e.clientY)
+      window.clearTimeout(minuteur)
+      setBulle((avant) => (vise !== null && avant?.i === vise.i ? null : vise))
+      // Au doigt il n'y a pas de « sortie » : la bulle se referme toute seule,
+      // sinon elle reste posée sur l'écran jusqu'au prochain geste.
+      if (vise !== null) minuteur = window.setTimeout(() => setBulle(null), 2600)
+    }
+    window.addEventListener('pointermove', survol)
+    window.addEventListener('pointerdown', tape)
+    return () => {
+      window.clearTimeout(minuteur)
+      window.removeEventListener('pointermove', survol)
+      window.removeEventListener('pointerdown', tape)
+    }
+  }, [])
+
   /** Le pouce se traîne : sa place dans la piste dit la ligne du haut. */
   const piste = useRef<HTMLDivElement>(null)
   const glisserPouce = (e: React.PointerEvent): void => {
@@ -239,7 +296,7 @@ export function PageArmurerie({
           durable au plus volatil — les PV traversent la descente, le deck la
           run, la main le tour, l'énergie ne survit pas au tour. */}
       <div className="arm-etat" style={boite(plan.stats)}>
-        <span className="arm-mesure">
+        <span className="arm-mesure" ref={(el) => void (mesures.current[0] = el)}>
           <span className="arm-chiffre">{pvMax}</span>
           <CoeurIcone />
         </span>
@@ -247,23 +304,38 @@ export function PageArmurerie({
             — sa place en combat — il se lisait comme une étiquette du tas ;
             ici c'est une MESURE de ce qu'on emporte, elle s'aligne avec les
             trois autres. */}
-        <span className="arm-mesure">
+        <span className="arm-mesure" ref={(el) => void (mesures.current[1] = el)}>
           <span className="arm-chiffre">{deck.total}</span>
           <span className="arm-tas">
             <Tas3D nom="pioche" compte={deck.total} />
           </span>
         </span>
-        <span className="arm-mesure">
+        <span className="arm-mesure" ref={(el) => void (mesures.current[2] = el)}>
           <span className="arm-chiffre">{tailleMain}</span>
           <MainIcone />
         </span>
-        <span className="arm-mesure arm-orbe">
+        <span className="arm-mesure arm-orbe" ref={(el) => void (mesures.current[3] = el)}>
           <Orbe3D courant={energieMax} max={energieMax} seul />
         </span>
       </div>
+
       </div>
 
       <div className="arm-commandes" style={zoomee ? { display: 'none' } : undefined}>
+      {/* LA BULLE VIT AU-DESSUS DU CANVAS, et il le faut : posée dans le calque
+          du fond, elle passait DERRIÈRE les cartes de l'équipement — on n'en
+          lisait que la moitié qui dépassait. Elle ne capte pas le pointeur,
+          donc elle ne prend rien à personne.
+
+          Elle s'ouvre À GAUCHE de sa ligne : le rail tient le bord droit de
+          l'écran, et une bulle qui partirait vers la droite en sortirait. Et
+          elle est posée au pixel où vit la ligne, jamais dans son flux — la
+          ligne est un `flex` serré, y ajouter un enfant la déformerait. */}
+      {bulle !== null && (
+        <span className="arm-bulle" style={{ left: `${bulle.x}px`, top: `${bulle.y}px` }}>
+          {LIBELLES[bulle.i]}
+        </span>
+      )}
       {/* LES ONGLETS : ce qu'on possède se range par nature, et les TRÉSORS y
           ont leur case bien qu'aucun slot ne les prenne. *Le coffre est ce
           qu'on possède, pas ce qu'on peut porter.* */}

@@ -3531,6 +3531,28 @@ ferronnerie que les cadres, en petit : un filet de laiton, deux coins coupés.
 L'énergie garde le cartouche pour rester de la famille, mais elle n'avait pas
 le problème : *son chiffre est DANS son symbole.*
 
+**CHAQUE STAT DIT SON NOM EN INFOBULLE** — au survol à la souris, à la tape au
+doigt. Demandé par Keko. *Un chiffre à côté d'un symbole se devine, il ne se
+lit pas* : un coeur pour la vie, soit, mais un paquet vaut aussi bien « cartes
+du deck » que « cartes en pioche ». La bulle le dit en trois mots sans
+encombrer un rail qui doit rester quatre lignes.
+
+Quatre choses, et trois sont des règles déjà écrites ailleurs :
+
+- **le rail ne capte pas le pointeur, et il ne doit pas** : il vit sous le
+  canvas pour qu'une carte promenée passe DEVANT lui. On écoute donc la
+  FENÊTRE et on compare la position aux rectangles des lignes — le motif de la
+  molette du coffre ;
+- **mais la bulle, elle, vit AU-DESSUS du canvas.** Posée dans le calque du
+  fond, elle passait derrière les cartes de l'équipement : on n'en lisait que
+  la moitié qui dépassait ;
+- **le survol n'existe qu'à la souris.** Au doigt le `pointerover` part au
+  toucher et le `pointerout` n'arrive jamais : la bulle resterait ouverte. Une
+  tape l'ouvre, une deuxième la referme, et *elle se referme toute seule au
+  bout de 2,6 s* — au doigt il n'y a pas de « sortie » ;
+- **elle s'ouvre à GAUCHE** : le rail tient le bord droit de l'écran. Vérifié à
+  844 x 390, où elle s'arrête 8 px avant sa ligne sans sortir de l'écran.
+
 **L'ORDRE DU RAIL : VIE, DECK, MAIN, ÉNERGIE.** Tranché par Keko. Il va du
 plus durable au plus volatil — les PV traversent la descente, le deck la run,
 la main le tour, l'énergie ne survit pas au tour. *Une colonne de mesures se
