@@ -473,6 +473,16 @@ export function Armurerie3D({
             taille={suitLeDoigt ? tailleTenue : t.taille}
             ombre={false}
             ressort={suitLeDoigt ? 22 : 16}
+            // LE COFFRE TOURNE UNE PAGE, IL NE FAIT PAS DE TRAVELLING : au
+            // changement de ligne, toutes les cartes se posent d'un coup.
+            // Sinon celles qui restent glissent pendant que les entrantes
+            // naissent en place — Keko : « la ligne du bas change de cartes
+            // instantanément tandis que les deux autres au-dessus se
+            // déplacent ». Le jeton est le MÊME pour tout l'écran, y compris
+            // le chargement : donné aux seules cartes du coffre, il changerait
+            // au moment où l'une d'elles part dans un slot, et elle s'y
+            // téléporterait au lieu d'y atterrir.
+            saut={defilement}
             engagee={suitLeDoigt && surUnSlot}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}

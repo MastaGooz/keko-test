@@ -3193,6 +3193,26 @@ maintenant aussi — et c'est **la surbrillance qui a rendu le défaut visible**
 puisqu'elle, elle demandait la règle : le slot s'allumait pour de bonnes
 raisons au-dessus d'une zone qui répondait autre chose.
 
+**LE COFFRE TOURNE UNE PAGE, IL NE FAIT PAS DE TRAVELLING.** Keko : « la ligne
+du bas change de cartes instantanément tandis que les deux autres au-dessus se
+déplacent, et inversement quand on remonte ». *Les deux moitiés du mouvement
+étaient vraies séparément et fausses ensemble* : une carte qui reste à l'écran
+garde son identifiant, donc son instance, donc elle GLISSAIT vers sa nouvelle
+ligne (c'est l'amortissement de `Carte3D`, et il a raison quand une carte VA
+quelque part) ; une carte qui entre est une instance neuve, donc elle naît en
+place.
+
+D'où le jeton `saut` sur `Carte3D` : quand il change, la carte se pose d'un
+coup au lieu de rejoindre sa cible. *L'amortissement est juste quand l'OBJET se
+déplace, il ment quand c'est le CONTENU qui change sous lui* — et une grille
+qui défile par lignes est une page qu'on tourne.
+
+**Le jeton est le même pour TOUTES les cartes de l'écran**, chargement compris,
+alors que seul le coffre défile. Donné aux seules cartes du coffre, il
+changerait à l'instant où l'une d'elles part dans un slot — et elle s'y
+téléporterait au lieu d'y atterrir, ce qui est précisément la correction que
+« la pièce tenue ne change jamais d'instance » avait coûté.
+
 **POUR ÉPROUVER LE DÉFILEMENT : `?r3f&coffre=40`.** Le coffre de départ ne
 contient que cinq objets — *on ne peut rien dire d'une barre de défilement
 avec une seule page.* Un banc d'essai, comme `?main=20`, et pour la même

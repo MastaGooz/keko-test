@@ -120,6 +120,21 @@ type Props = {
    */
   ressortZ?: number
   /**
+   * UN JETON QUI DIT « CETTE FOIS, NE GLISSE PAS ».
+   *
+   * L'amortissement est juste quand une carte VA quelque part — on la suit du
+   * regard. Il ment quand c'est le CONTENU qui change sous elle : le coffre
+   * qui défile d'une ligne garde ses cartes du milieu, qui glissaient donc
+   * vers le haut, pendant que la ligne entrante naissait déjà en place. Keko :
+   * « la ligne du bas change de cartes instantanément tandis que les deux
+   * autres au-dessus se déplacent ».
+   *
+   * *Une grille qui défile par lignes tourne une page, elle ne fait pas un
+   * travelling.* Dès que ce jeton change, la carte se pose d'un coup à sa
+   * place — et tout le monde saute ensemble.
+   */
+  saut?: unknown
+  /**
    * La carte est au-dessus de la zone qui la joue : elle s'allume et frémit.
    *
    * **C'est le seul repère possible ici**, et c'est la règle du jeu 2D : la
@@ -193,6 +208,7 @@ export function Carte3D({
   ombre = true,
   peril = false,
   dos = false,
+  saut = null,
   apparue = null,
   onPeinte,
   onPointerDown,
@@ -362,9 +378,19 @@ ${nuanceur.fragmentShader}`
   // ELLE REJOINT SA PLACE, elle n'y saute pas. L'amortissement exponentiel est
   // indépendant de la fréquence d'écran : à 120 Hz comme à 60, le mouvement
   // dure le même temps.
+  const jeton = useRef(saut)
+
   useFrame((etat, delta) => {
     const g = groupe.current
     if (g === null) return
+    // LE SAUT D'ABORD : la place lissée rejoint sa cible sans transition, et
+    // l'amortissement qui suit n'a plus rien à rattraper.
+    if (jeton.current !== saut) {
+      jeton.current = saut
+      lisse.current.p.set(position[0], position[1], position[2])
+      lisse.current.r.set(rotation[0], rotation[1], rotation[2])
+      lisse.current.t = taille
+    }
     const k = 1 - Math.exp(-ressort * delta)
     const kz = 1 - Math.exp(-(ressortZ ?? ressort) * delta)
     const l = lisse.current
