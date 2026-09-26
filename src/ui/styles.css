@@ -3822,19 +3822,27 @@ body {
    le `scaleX(-1)` qui retourne la pioche au lieu de l'ecraser. Le meme piege
    que le tremblement, resolu de la meme facon.
 
+   IL SE REPETE, il ne se joue pas qu'une fois. Demande par Keko : un seul
+   gonflement sur toute la duree se lisait comme un sursaut au demarrage, puis
+   plus rien pendant que les brassees continuaient d'arriver. *Ce qui dure doit
+   pulser* -- c'est le tas qui travaille tout le temps du melange, comme il
+   tremble tout le temps du melange.
+
+   TROIS PULSATIONS, ET LA PERIODE SE DEDUIT DE LA DUREE (`--brasse-duree / 3`,
+   donnee par la scene) : un chiffre ecrit ici deriverait au premier reglage, et
+   la derniere pulsation serait coupee en plein vol.
+
    IL MONTE VITE ET REDESCEND LENTEMENT -- le contraste de vitesse du bond des
    creatures : un gonflement symetrique se lirait comme une respiration, pas
-   comme un choc. Et il ne se joue QU'UNE FOIS, sur toute la duree du melange,
-   qui lui est donnee par la scene (`--brasse-duree`) : une duree recopiee ici
-   deriverait au premier reglage. */
+   comme un choc. */
 @keyframes tas-gonfle {
   0% { scale: 1; }
-  22% { scale: 1.16; }
+  30% { scale: 1.16; }
   100% { scale: 1; }
 }
 
 .tas-3d.brasse .tas-dessin {
-  animation: tas-gonfle var(--brasse-duree, 0.58s) ease-out;
+  animation: tas-gonfle calc(var(--brasse-duree, 0.58s) / 3) ease-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

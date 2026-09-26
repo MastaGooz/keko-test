@@ -2274,14 +2274,21 @@ Trois choses à ne pas défaire :
   avec le `scaleX(-1)` qui retourne la pioche au lieu de l'écraser. Même piège
   que le tremblement, résolu de la même façon — *quand deux animations visent
   le même objet, il leur faut deux propriétés* ;
-- **il monte vite et redescend lentement** (pic à 22 %), le contraste de vitesse
+- **il monte vite et redescend lentement** (pic à 30 %), le contraste de vitesse
   du bond des créatures : un gonflement symétrique se lirait comme une
-  respiration, pas comme un choc.
+  respiration, pas comme un choc ;
+- **IL SE RÉPÈTE**, trois pulsations sur la durée du mélange. Keko : « je
+  voulais un effet de gonflement répété, pas un seul coup ». Un gonflement
+  unique se lisait comme un sursaut au démarrage, puis plus rien pendant que
+  les brassées continuaient d'arriver — *ce qui dure doit pulser*, exactement
+  comme le tremblement qui court tout le mélange.
 
 **La durée vient de la scène** (`--brasse-duree`, posé en ligne depuis le
 composant) et non d'un chiffre recopié dans la feuille de style : elle doit
 couvrir exactement le mélange, et une valeur écrite deux fois dériverait au
-premier réglage. D'où un prop qui porte la durée plutôt qu'un booléen.
+premier réglage. D'où un prop qui porte la durée plutôt qu'un booléen — et la
+période de la pulsation s'en déduit (`/ 3`), sinon la dernière serait coupée en
+plein vol.
 
 Prix connu, et il est assumé : un tour qui remélange met ~1,9 s à rendre la
 main, contre ~1,1 s sans. *C'est le seul moment où le deck se retourne*, et il
