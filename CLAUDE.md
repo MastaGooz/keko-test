@@ -3179,6 +3179,37 @@ Le râtelier en est exclu, comme le frémissement : c'est l'endroit d'où l'on
 vient. La pile s'allume case par case, parce que ce qu'on doit lire est la
 RANGÉE qui reçoit, même si le dépôt n'est qu'une zone.
 
+**BUG CORRIGÉ AU PASSAGE, ET IL VENAIT DE LÀ : une arme à deux mains
+empêchait d'équiper une armure.** Keko : « le slot s'illumine mais je ne peux
+pas déposer l'armure dedans ». Quand une deux-mains masque le second slot, le
+chargement se resserre sur deux cases — et **la place du slot masqué devient
+celle de l'ARMURE**. Sa zone de dépôt, elle, était restée : `slotSous` la
+testait en premier et répondait « main », la règle refusait l'armure, et rien
+ne se passait.
+
+*Une zone de dépôt survit à la case qu'elle recouvre si on ne la retire pas
+avec elle.* Le rendu sautait déjà ce slot (`!aDeuxMains`), la zone le saute
+maintenant aussi — et c'est **la surbrillance qui a rendu le défaut visible**,
+puisqu'elle, elle demandait la règle : le slot s'allumait pour de bonnes
+raisons au-dessus d'une zone qui répondait autre chose.
+
+**POUR ÉPROUVER LE DÉFILEMENT : `?r3f&coffre=40`.** Le coffre de départ ne
+contient que cinq objets — *on ne peut rien dire d'une barre de défilement
+avec une seule page.* Un banc d'essai, comme `?main=20`, et pour la même
+raison : ce qui se teste doit pouvoir s'ouvrir d'un lien.
+
+Il **répète les pièces qui existent** (Espadon, Glaive, Plastron, Potion) et
+tire des trésors dans la vraie table de butin. Deux détours valent d'être
+retenus :
+
+- *numéroter les copies dans leur nom* semblait plus lisible — mais
+  l'illustration se cherche par nom de modèle, donc « Potion 3 » sortait avec
+  le sceau de repli. **Un banc d'essai qui montre des cartes cassées ne se
+  juge pas** ;
+- **quatre modèles pour cinq colonnes**, pas cinq : à cinq, le motif retombait
+  en phase d'une ligne à l'autre et toutes les lignes étaient identiques au
+  pixel près — *on ne voyait pas que ça défilait.*
+
 **Le coffre s'est donc centré en largeur.** À grandes cartes il n'en tient plus
 que trois par ligne, et calées à gauche elles laissaient une colonne de vide
 contre le bord droit du meuble — *un vide au bout d'une rangée se lit comme une

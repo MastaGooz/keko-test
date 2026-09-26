@@ -289,7 +289,14 @@ export function Armurerie3D({
     // Une arme à deux mains se pose dans N'IMPORTE QUELLE main : les deux
     // zones restent sensibles, c'est la règle qui décide où elle atterrit.
     if (pres(plan.mains[0], t * 0.54, t * 0.74)) return { ou: 'main', rang: 0 }
-    if (pres(plan.mains[1], t * 0.54, t * 0.74)) return { ou: 'main', rang: 1 }
+    // LE SECOND SLOT N'EXISTE PLUS QUAND UNE ARME PREND LES DEUX MAINS, et sa
+    // ZONE non plus. Il est masqué au rendu, mais sa place restait sensible —
+    // or le chargement se resserre alors sur deux cases, donc cette place est
+    // devenue celle de l'ARMURE. On y déposait une armure, la zone répondait
+    // « main », la règle refusait : le slot s'allumait et le dépôt ne faisait
+    // rien (Keko). *Une zone de dépôt survit à la case qu'elle recouvre si on
+    // ne la retire pas avec elle.*
+    if (!aDeuxMains && pres(plan.mains[1], t * 0.54, t * 0.74)) return { ou: 'main', rang: 1 }
     if (pres(plan.armure, t * 0.54, t * 0.74)) return { ou: 'armure' }
     // LA PILE EST UNE SEULE ZONE POUR TOUTES SES CASES : l'ordre n'y a aucun
     // effet, donc une case précise ne veut rien dire — et une grande zone se

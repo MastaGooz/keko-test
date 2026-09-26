@@ -9,11 +9,13 @@ import type { Carte } from '../logic/combat.ts'
 import { createRng } from '../logic/rng.ts'
 import type { Descente } from '../logic/descente.ts'
 import { REGLAGE_DEFAUT, commencerDescente } from '../logic/descente.ts'
+import type { Hub } from '../logic/hub.ts'
 import { creerHub, equipement } from '../logic/hub.ts'
 import type { Piece } from '../logic/armes.ts'
-import { deckDeLEquipement } from '../logic/armes.ts'
+import { ESPADON, GLAIVE, PLASTRON, POTIONS_DEPART, deckDeLEquipement } from '../logic/armes.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
+import { tresorRecompense } from '../logic/cartes.ts'
 import { lignes, nature, sansBalises } from '../ui/texte-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
 
@@ -118,6 +120,53 @@ export function TAILLE_MAIN_URL(): number {
 }
 
 const TAILLE_MAIN_DEMANDEE = TAILLE_MAIN_URL()
+
+/**
+ * DE QUOI ÉPROUVER LE DÉFILEMENT DU COFFRE : `?r3f&coffre=40`.
+ *
+ * Un banc d'essai, comme `?main=20`, et pour la même raison : *ce qui se teste
+ * doit pouvoir s'ouvrir d'un lien*, puisque Keko juge depuis son téléphone. Le
+ * coffre de départ ne contient que cinq objets — on ne peut rien dire d'une
+ * barre de défilement avec une seule page.
+ *
+ * **On RÉPÈTE ce qui existe, on n'invente pas de pièces** : la réserve garde
+ * ses proportions (des armes et des consommables), donc les onglets restent
+ * peuplés. Les trésors viennent de la vraie table de butin, à des profondeurs
+ * croissantes — ils ont donc les valeurs qu'ils auraient en jeu.
+ */
+export function COFFRE_URL(): number {
+  const demande = Number(new URLSearchParams(location.search).get('coffre'))
+  return Number.isFinite(demande) && demande > 0 ? Math.min(200, Math.round(demande)) : 0
+}
+
+export function coffreDeTest(hub: Hub, combien = COFFRE_URL()): Hub {
+  if (combien <= 0) return hub
+  // LES QUATRE PIÈCES QUI EXISTENT, pas cinq copies de deux. La réserve de
+  // départ ne contient qu'un Espadon et des potions : à cinq colonnes, chaque
+  // ligne se ressemblait au pixel près et *on ne voyait pas le coffre
+  // défiler*. En répétant les vrais modèles, le motif se décale d'une ligne à
+  // l'autre — et chaque carte garde SON dessin.
+  //
+  // *Numéroter les copies dans leur nom avait l'air plus lisible* : l'art se
+  // cherche par nom de modèle, donc « Potion 3 » sortait avec le sceau de
+  // repli. **Un banc d'essai qui montre des cartes cassées ne se juge pas.**
+  // QUATRE modèles pour CINQ colonnes : le motif se décale d'une case à chaque
+  // ligne. À cinq modèles il retombait en phase et les colonnes devenaient
+  // uniformes — on ne voyait toujours pas défiler.
+  const modeles: Objet[] = [ESPADON, GLAIVE, PLASTRON, POTIONS_DEPART[0]!]
+  const reserve = [...hub.reserve]
+  for (let i = 0; reserve.length < combien; i += 1) {
+    const modele = modeles[i % modeles.length]!
+    // Un identifiant PROPRE à la copie : tout se désigne par id dans le hub,
+    // et deux pièces qui partagent le leur se déplaceraient ensemble.
+    reserve.push({ ...modele, id: `${modele.id}-essai-${i}` })
+  }
+  const rng = createRng(4242)
+  const tresors = Array.from({ length: Math.max(6, Math.round(combien / 3)) }, (_, n) =>
+    tresorRecompense(1 + (n % 8), rng, `essai-${n}`),
+  )
+  return { ...hub, reserve, tresors }
+}
 
 /**
  * DE QUOI REMPLIR LA MAIN. Le chargement gratuit donne 10 cartes ; en demander
