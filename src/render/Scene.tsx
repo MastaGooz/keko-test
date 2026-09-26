@@ -22,6 +22,7 @@ import {
   yMain,
 } from './Main3D.tsx'
 import { DUREE_TRAINEE, Trainee } from './Trainee.tsx'
+import { CarteQuiSeDissout, DUREE_DISSOLUTION, PAS_DISSOLUTION } from './CarteQuiSeDissout.tsx'
 import { depuisEcran, Z_MAIN } from './Cadrage.tsx'
 import { CORPS, decorDuRang, Ennemi3D, HAUT_CORPS, identiteEnnemi } from './Ennemi3D.tsx'
 import { boiteDe } from './silhouette.ts'
@@ -91,6 +92,15 @@ type Trajet = {
 
 /** Le temps entre deux cartes piochées : elles arrivent l'une après l'autre. */
 const DECALAGE_PIOCHE = 0.1
+
+/** Une carte qui s'embrase avant de partir en lumière vers la défausse. */
+type Dissolution = {
+  cle: string
+  carte: CarteAPeindre
+  place: [number, number, number]
+  rotation: [number, number, number]
+  debut: number
+}
 
 /**
  * Le temps entre deux ennemis d'une même salve. **Il doit dépasser un assaut
@@ -233,6 +243,14 @@ export function Scene(): React.JSX.Element {
   const [apparues, setApparues] = useState<Record<string, number>>({})
   /** Les cartes que l'état compte déjà mais dont la traînée n'est pas arrivée. */
   const [attendues, setAttendues] = useState<readonly string[]>([])
+  const [dissolutions, setDissolutions] = useState<Dissolution[]>([])
+
+  /**
+   * Ce qu'il faut pour peindre une carte qui vient de QUITTER la main : une
+   * fois partie, l'état ne la porte plus, et on ne peut plus la dessiner.
+   */
+  const mainCartes = useRef(new Map<string, CarteAPeindre>())
+  for (const c of combat.main) mainCartes.current.set(c.id, aPeindre(c))
   const [coups, setCoups] = useState<Coup[]>([])
   const [touches, setTouches] = useState<Record<number, number>>({})
   const [morts, setMorts] = useState<Record<number, number>>({})
@@ -306,14 +324,26 @@ export function Scene(): React.JSX.Element {
     const trajetsNeufs: Trajet[] = []
     const t = lireHorloge()
 
+    // LES PARTANTES SE COMPTENT AVANT LA PIOCHE, parce que c'est leur nombre
+    // qui dit combien de temps dure l'embrasement — et la pioche attend qu'il
+    // soit fini.
+    const partantes = avant.filter((id) => !ids.includes(id) && id !== dejaJouee.current)
+    dejaJouee.current = null
+    const embrasement = partantes.length > 0 ? DUREE_DISSOLUTION + (partantes.length - 1) * PAS_DISSOLUTION : 0
+
     // LA PIOCHE : une traînée par carte, puis la carte naît à sa place quand
     // la traînée y meurt. Elles partent l'une après l'autre — cinq d'un coup se
     // liraient comme un seul mouvement, et c'est chacune qu'on doit voir venir.
+    const retardPioche = embrasement * 0.8
     const piochees = combat.main.filter((c) => !avant.includes(c.id))
     const pioche = piochees.length > 0 ? coinDe('pioche') : null
     if (pioche !== null) {
       piochees.forEach((carte, n) => {
-        const depart = n * DECALAGE_PIOCHE
+        // ON NE PIOCHE PAS PENDANT QUE LA MAIN BRÛLE. Les deux se jouaient en
+        // même temps et au MÊME endroit — l'éventail d'avant et celui d'après
+        // ont les mêmes places — donc la carte qui naissait recouvrait celle
+        // qui partait. *Un remplacement se raconte dans l'ordre.*
+        const depart = retardPioche + n * DECALAGE_PIOCHE
         trajetsNeufs.push({
           cle: `p-${carte.id}-${t}`,
           depuis: pioche,
@@ -334,26 +364,52 @@ export function Scene(): React.JSX.Element {
     // LA DÉFAUSSE : la carte a déjà quitté la main, la traînée part de la place
     // qu'elle occupait. *Pas d'apparition au bout* — on ne fait pas naître une
     // carte dans un tas.
-    const partantes = avant.filter((id) => !ids.includes(id) && id !== dejaJouee.current)
-    dejaJouee.current = null
     if (partantes.length > 0) {
       const defausse = coinDe('defausse')
       const pasAvant = pasDeLEventail(avant.length, window.innerHeight, window.innerWidth)
       if (defausse !== null) {
+        const neuves: Dissolution[] = []
         partantes.forEach((id, n) => {
+          const carte = mainCartes.current.get(id)
+          if (carte === undefined) return
+          const ou = placeDansEventail(avant.indexOf(id), avant.length, y, pasAvant)
+          const depart = t + n * PAS_DISSOLUTION
+          neuves.push({
+            cle: `x-${id}-${t}`,
+            carte,
+            place: ou.position,
+            rotation: ou.rotation,
+            debut: depart,
+          })
+          // LA TRAÎNÉE PART QUAND L'EMBRASEMENT FINIT : c'est ce décalage qui
+          // fait lire la carte DEVENUE traînée, plutôt que deux choses sans
+          // rapport.
           trajetsNeufs.push({
             cle: `d-${id}-${t}`,
-            depuis: placeDansEventail(avant.indexOf(id), avant.length, y, pasAvant).position,
+            depuis: ou.position,
             vers: defausse,
-            debut: t + n * 0.05,
+            debut: depart + DUREE_DISSOLUTION * 0.72,
           })
         })
+        if (neuves.length > 0) {
+          setDissolutions((v) => [...v, ...neuves])
+          const cles = new Set(neuves.map((x) => x.cle))
+          window.setTimeout(
+            () => setDissolutions((v) => v.filter((x) => !cles.has(x.cle))),
+            (embrasement + 0.06) * 1000,
+          )
+        }
       }
     }
 
     if (trajetsNeufs.length === 0) return
     setTrajets((v) => [...v, ...trajetsNeufs])
-    const fin = DUREE_TRAINEE * 1.4 + trajetsNeufs.length * DECALAGE_PIOCHE
+    // LE MÉNAGE SE CALE SUR LA DERNIÈRE TRAÎNÉE, pas sur leur nombre : depuis
+    // que la pioche attend la fin de l'embrasement, un départ n'est plus un
+    // multiple du décalage, et une traînée balayée avant d'arriver ne se voit
+    // tout simplement pas.
+    const dernier = Math.max(...trajetsNeufs.map((x) => x.debut - t))
+    const fin = dernier + DUREE_TRAINEE * 1.4
     const cles = new Set(trajetsNeufs.map((x) => x.cle))
     window.setTimeout(() => setTrajets((v) => v.filter((x) => !cles.has(x.cle))), fin * 1000 + 60)
     // On ne dépend QUE de la main : `enCombat` la suit, et les autres valeurs
@@ -1038,6 +1094,18 @@ export function Scene(): React.JSX.Element {
             désaccord avec la main qu'elle rejoint. */}
         {trajets.map((v) => (
           <Trainee key={v.cle} depuis={v.depuis} vers={v.vers} debut={v.debut} />
+        ))}
+
+        {/* LA DÉFAUSSE EST LA NAISSANCE À L'ENVERS : la carte s'embrase à sa
+            place, puis c'est la traînée qui s'en va. */}
+        {dissolutions.map((v) => (
+          <CarteQuiSeDissout
+            key={v.cle}
+            carte={v.carte}
+            place={v.place}
+            rotation={v.rotation}
+            debut={v.debut}
+          />
         ))}
 
         {enCombat && (

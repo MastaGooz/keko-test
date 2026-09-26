@@ -2167,6 +2167,51 @@ départ et l'arrivée EN PLUS d'inverser l'avance, ce qui revient à ne rien
 inverser — les cartes défaussées finissaient à leur place dans la main, de dos,
 et y restaient.
 
+### La défausse s'embrase d'abord — c'est la naissance à l'envers
+
+Keko : « il faudrait que quand les cartes sont défaussées on ait l'effet
+inverse — lumière puis transfert vers la défausse ». *La pioche fait arriver une
+traînée qui devient une carte ; la défausse doit faire d'une carte une traînée
+qui s'en va.*
+
+**LA CARTE RESTE À SA PLACE, AVEC L'INCLINAISON DE L'ÉVENTAIL**
+(`CarteQuiSeDissout.tsx`). Une carte qui s'en va n'a aucune raison de se
+redresser d'abord : c'est exactement l'erreur de la version où la carte
+voyageait entière et arrivait droite.
+
+**L'ÉCLAT PASSE PAR LA COULEUR, pas par un plan blanc posé dessus.** En
+`toneMapped: false`, une couleur au-delà de 1 éclaircit la texture au lieu de la
+recouvrir : *l'image reste lisible pendant qu'elle blanchit*, là où un voile
+l'aurait effacée d'un coup.
+
+**LA TRAÎNÉE PART QUAND L'EMBRASEMENT FINIT** (72 % de sa durée). Sans ce
+décalage, la carte disparaissait de la main à l'instant où la traînée partait du
+coin : on ne voyait pas qu'elle était **devenue** la traînée, seulement deux
+choses sans rapport.
+
+**ET ON NE PIOCHE PAS PENDANT QUE LA MAIN BRÛLE.** Les deux se jouaient en même
+temps et **au même endroit** — l'éventail d'avant et celui d'après ont les mêmes
+places, donc la carte qui naissait tombait exactement sur celle qui partait, et
+le test de profondeur tranchait en faveur de la nouvelle : *on ne voyait rien
+brûler du tout.* La pioche attend donc 80 % de l'embrasement, et ce qui brûle
+passe en plus d'un cheveu devant son plan — ce qui s'en va quitte le plan de la
+main. **Un remplacement se raconte dans l'ordre.**
+
+Corollaire : **le ménage se cale sur la dernière traînée, pas sur leur nombre.**
+Un départ n'est plus un multiple du décalage depuis que la pioche attend, et une
+traînée balayée avant d'arriver ne se voit tout simplement pas.
+
+**PIÈGE DE VÉRIFICATION, et il a coûté quatre allers-retours :** *une action
+`javascript_tool` ne ramène pas l'onglet au premier plan, une capture d'écran
+si.* Un clic déclenché en JavaScript se joue donc dans un onglet caché, où les
+`requestAnimationFrame` ne tournent pas — `lireHorloge()` reste à zéro, toutes
+les animations naissent déjà finies, et **rien en console ne le dit**. La règle
+était déjà écrite pour les scènes 3D ; elle vaut aussi pour les gestes qu'on
+déclenche, pas seulement pour les mesures qu'on lit. Deuxième piège du même
+essai : **un module rechargé à chaud dédouble sa variable de module**, donc
+`lireHorloge()` peut rendre une valeur vieille de trente secondes. Pour juger une
+animation, recharger la page pour de bon et ne cliquer qu'à la souris.
+
 ### L'écran de butin — et c'est l'écran de jeu
 
 `Butin3D.tsx`. Ce qu'on emporte est **littéralement la main** : même éventail,
