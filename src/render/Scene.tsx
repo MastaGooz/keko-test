@@ -1421,11 +1421,24 @@ export function Scene(): React.JSX.Element {
               </span>
             ))}
           </div>
+          {/* LES DEUX TAS RÉAGISSENT AU MÉLANGE, et au même instant : c'est le
+              seul moment où l'un se vide DANS l'autre. Keko : « on peut faire
+              un effet de gonflement en même temps que le tremblement quand la
+              pioche se remplit, et appliquer le même effet à la défausse quand
+              elle se vide ? » */}
           <div className="coin-3d gauche">
-            <Tas3D nom="pioche" compte={combat.pioche.length} brasse={brasse} />
+            <Tas3D
+              nom="pioche"
+              compte={combat.pioche.length}
+              brasse={brasse ? DUREE_MELANGE : null}
+            />
           </div>
           <div className="coin-3d droite">
-            <Tas3D nom="defausse" compte={combat.defausse.length} />
+            <Tas3D
+              nom="defausse"
+              compte={combat.defausse.length}
+              brasse={brasse ? DUREE_MELANGE : null}
+            />
           </div>
 
           <p className="note-3d">

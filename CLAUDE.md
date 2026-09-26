@@ -2260,6 +2260,29 @@ même propriété l'écraserait, donc le paquet se remettrait à l'endroit le te
 du mélange. *Une translation et rien d'autre* : une rotation ferait pivoter un
 objet posé à plat, ce qui se lirait comme un basculement et non comme un choc.
 
+**ET LE PAQUET GONFLE PENDANT QUE LE TAS TREMBLE**, sur les DEUX tas : celui qui
+se remplit et celui qui se vide réagissent ensemble, puisque c'est le seul
+moment où l'un passe dans l'autre. Demandé par Keko.
+
+Trois choses à ne pas défaire :
+
+- **le gonflement est sur le DESSIN, le tremblement sur le CONTENEUR.** Sur le
+  conteneur, le chiffre au-dessus enflerait avec le paquet — or c'est une
+  MENTION, pas une valeur de jeu, et la voir grossir lui donnerait un poids
+  qu'elle n'a pas ;
+- **`scale` est une propriété à part, pas un `transform`** : elle se compose
+  avec le `scaleX(-1)` qui retourne la pioche au lieu de l'écraser. Même piège
+  que le tremblement, résolu de la même façon — *quand deux animations visent
+  le même objet, il leur faut deux propriétés* ;
+- **il monte vite et redescend lentement** (pic à 22 %), le contraste de vitesse
+  du bond des créatures : un gonflement symétrique se lirait comme une
+  respiration, pas comme un choc.
+
+**La durée vient de la scène** (`--brasse-duree`, posé en ligne depuis le
+composant) et non d'un chiffre recopié dans la feuille de style : elle doit
+couvrir exactement le mélange, et une valeur écrite deux fois dériverait au
+premier réglage. D'où un prop qui porte la durée plutôt qu'un booléen.
+
 Prix connu, et il est assumé : un tour qui remélange met ~1,9 s à rendre la
 main, contre ~1,1 s sans. *C'est le seul moment où le deck se retourne*, et il
 n'arrive qu'une fois par tas vidé.

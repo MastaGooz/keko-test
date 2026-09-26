@@ -182,11 +182,17 @@ type Props = {
    *  que le second emprunte la couleur du premier. */
   nom: 'pioche' | 'defausse'
   compte: number
-  /** Vrai le temps qu'on reverse la défausse dedans : le tas tremble. */
-  brasse?: boolean
+  /**
+   * La durée du mélange en cours, en secondes ; `null` au repos.
+   *
+   * *Une durée plutôt qu'un booléen* : le gonflement doit couvrir exactement
+   * le temps que met la défausse à remonter, et c'est la scène qui le sait —
+   * une valeur recopiée en CSS dériverait au premier réglage.
+   */
+  brasse?: number | null
 }
 
-export function Tas3D({ nom, compte, brasse = false }: Props): React.JSX.Element {
+export function Tas3D({ nom, compte, brasse = null }: Props): React.JSX.Element {
   const id = `tas-${nom}`
 
   /**
@@ -218,7 +224,10 @@ export function Tas3D({ nom, compte, brasse = false }: Props): React.JSX.Element
   }, [nom])
 
   return (
-    <div className={`tas-3d ${nom}${brasse ? ' brasse' : ''}`}>
+    <div
+      className={`tas-3d ${nom}${brasse !== null ? ' brasse' : ''}`}
+      style={brasse !== null ? ({ '--brasse-duree': `${brasse}s` } as React.CSSProperties) : undefined}
+    >
       <span className="tas-compte">{compte}</span>
       <svg viewBox={CADRE} className="tas-dessin" aria-hidden="true">
         <defs>

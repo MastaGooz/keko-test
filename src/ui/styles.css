@@ -3809,8 +3809,37 @@ body {
   animation: tas-brasse 0.14s linear infinite;
 }
 
+/* ET LE PAQUET GONFLE PENDANT QU'IL SE REMPLIT. Demande par Keko, pour les deux
+   tas : celui qui se remplit et celui qui se vide reagissent ensemble, puisque
+   c'est le seul moment ou l'un passe dans l'autre.
+
+   LE GONFLEMENT EST SUR LE DESSIN, LE TREMBLEMENT SUR LE CONTENEUR. Sur le
+   conteneur, le chiffre au-dessus enflerait avec le paquet -- or c'est une
+   MENTION, pas une valeur de jeu : la voir grossir lui donnerait un poids
+   qu'elle n'a pas.
+
+   `scale` EST UNE PROPRIETE A PART, pas un `transform` : elle se compose avec
+   le `scaleX(-1)` qui retourne la pioche au lieu de l'ecraser. Le meme piege
+   que le tremblement, resolu de la meme facon.
+
+   IL MONTE VITE ET REDESCEND LENTEMENT -- le contraste de vitesse du bond des
+   creatures : un gonflement symetrique se lirait comme une respiration, pas
+   comme un choc. Et il ne se joue QU'UNE FOIS, sur toute la duree du melange,
+   qui lui est donnee par la scene (`--brasse-duree`) : une duree recopiee ici
+   deriverait au premier reglage. */
+@keyframes tas-gonfle {
+  0% { scale: 1; }
+  22% { scale: 1.16; }
+  100% { scale: 1; }
+}
+
+.tas-3d.brasse .tas-dessin {
+  animation: tas-gonfle var(--brasse-duree, 0.58s) ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .tas-3d.brasse {
+  .tas-3d.brasse,
+  .tas-3d.brasse .tas-dessin {
     animation: none;
   }
 }
