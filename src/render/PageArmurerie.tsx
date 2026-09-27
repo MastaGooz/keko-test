@@ -35,6 +35,7 @@ import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
 import type { Hub } from '../logic/hub.ts'
 import { deuxMains, peutDescendre } from '../logic/hub.ts'
+import { urlDeLArmurerie } from '../ui/art.ts'
 import { Z_PLAN } from './armurerie-plan.ts'
 import { tailleBouton } from './Bouton3D.tsx'
 
@@ -306,7 +307,12 @@ export function PageArmurerie({
   return (
     <>
       <div className="arm-fond">
+      {/* LE SYMBOLE DU LIEU, à gauche de son nom — fourni par Keko. Il se pose
+          DANS la ligne du titre et non au coin de l'écran : *une enseigne se
+          lit avec son mot*, et le titre est centré. Sa hauteur suit celle du
+          texte, donc il grandit avec la page sans réglage à part. */}
       <p className="arm-titre" style={boite(plan.titre)}>
+        <img className="arm-embleme" src={urlDeLArmurerie()} alt="" />
         Armurerie
       </p>
 

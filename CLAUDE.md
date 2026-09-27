@@ -3384,6 +3384,15 @@ l'équipement — *une colonne qui ne contient pas ce qu'on y met n'est pas une
 colonne.* C'est aussi ce qui a permis de le grossir sur téléphone sans rouvrir
 la collision.
 
+**LE TITRE PORTE L'EMBLÈME DU LIEU** (`public/Armurerie.png`, fourni par
+Keko) : un écu croisé d'une épée et d'une hache, à gauche du mot. Il vit DANS
+la ligne du titre et non au coin de l'écran — *une enseigne se lit avec son
+mot*, et le titre est centré. Sa hauteur est en `em`, donc il suit le texte
+sans réglage à part ; elle est bornée pour tenir dans la bande (à 2,6em il
+faisait 40 px pour une bande de 37 sur un téléphone couché, et mordait le bord
+haut de l'écran). Même piège de cache que les autres fichiers de `public/` :
+l'URL porte la date du build.
+
 **LE BANDEAU NE DIT PLUS QUE LE LIEU.** Le chargement, le compte du deck et
 l'or en sont partis, demandé par Keko : *ce qu'on lit sans décider dessus n'a
 rien à faire en tête de page.* Le compte du deck n'a pas disparu pour autant —
