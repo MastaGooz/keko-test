@@ -3076,6 +3076,14 @@ Deux symboles pour deux choses, et c'est la seule information qui rende
 « équiper plus dilue » lisible sur la pièce elle-même. Il entre dans
 `signature()`, sans quoi deux cartes de même nom partageraient la texture.
 
+**SA MARGE SE MESURE AU BORD QU'ON VOIT, pas au bord de la toile.** Posé à la
+même distance du canvas en x et en y, il paraissait coller au cadre à gauche et
+respirer en haut — Keko : « décaler un poil le symbole vers la droite, son
+écart au bord doit être le même que l'écart au bord du haut ». *La coque de la
+carte est une découpe DÉCHIRÉE, pas un rectangle* : son bord gauche rentre de
+3 % au niveau du compteur là où le bord haut ne rentre presque pas. La marge
+gauche est donc calculée depuis la découpe, pas recopiée de la verticale.
+
 **LE CARTOUCHE SE REPLIE, et c'est un piège du canvas.** En 2D c'est le
 navigateur qui coupe les lignes ; un canvas écrit tout droit et laisse déborder
 **sans rien signaler** — la composition de l'Espadon sortait des deux côtés de

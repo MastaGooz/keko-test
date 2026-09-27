@@ -304,7 +304,15 @@ export async function peindreCarte(carte: CarteAPeindre): Promise<HTMLCanvasElem
 function peindreCompteur(ctx: CanvasRenderingContext2D, nombre: number): void {
   const l = 0.155 * LARGE
   const h = l * 1.4
-  const x = 0.022 * LARGE
+  // SON ÉCART AU BORD GAUCHE VAUT CELUI DU HAUT, et il fallait le CALCULER :
+  // la coque de la carte est une découpe déchirée, pas un rectangle, et son
+  // bord gauche rentre de 3 % au niveau du compteur là où le bord haut ne
+  // rentre presque pas. Posés à la même distance du canvas, les deux écarts
+  // n'étaient donc pas les mêmes à l'oeil — Keko : « décaler un poil le
+  // symbole vers la droite, son écart au bord doit être le même que l'écart au
+  // bord du haut ». *Une marge se mesure au bord qu'on VOIT, pas au bord de la
+  // toile.*
+  const x = 0.05 * LARGE
   const y = 0.016 * HAUT
   const coin = 1.6 * U
 
