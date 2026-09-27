@@ -39,6 +39,7 @@ import { Z_TENUE } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import { pieceAPeindre } from './combat-3d.ts'
 import { textureSlot, textureSlotVif } from './texture-carte.ts'
+import { SON_PRENDRE, jouerSon } from './sons.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Carte } from '../logic/combat.ts'
@@ -367,6 +368,10 @@ export function Armurerie3D({
       // UN TRÉSOR NE SE DÉPLACE PAS : aucun slot ne le prend, et le coffre ne
       // le rend jamais. *Il se consulte, c'est tout ce qu'il fait ici.*
       if (t === undefined || t.objet === null || cible === null) return
+      // LE SON DE LA POSE, et seulement si le dépôt ABOUTIT : un slot qui
+      // refuse ne doit pas sonner comme un slot qui prend. On demande la règle
+      // plutôt que de la recopier — la même que celle qui allume le slot.
+      if (accepteDepuis(hub, t.slot, cible, t.objet.id)) jouerSon(SON_PRENDRE)
       onDeplacer?.(t.slot, cible, t.objet.id)
     },
   })

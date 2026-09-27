@@ -19,6 +19,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
+import { SON_PRENDRE, jouerSon } from './sons.ts'
 
 /**
  * CE QUI PREND LA CARTE N'EST PAS LE MÊME AU DOIGT ET À LA SOURIS.
@@ -219,6 +220,10 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
         g.prise = true
         window.clearTimeout(g.minuteur)
         setTenue(g.index)
+        // LE SON DE LA PRISE VIT ICI, pas dans les écrans : c'est le seul
+        // endroit où une carte est prise, qu'elle vienne de la main, du butin
+        // ou du coffre. *Un geste unique n'a qu'un son, posé une fois.*
+        jouerSon(SON_PRENDRE)
       }
       setDoigt(pointSousLeDoigt(e))
     },
@@ -251,6 +256,7 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
           if (geste.current.index !== index) return
           geste.current.prise = true
           setTenue(index)
+          jouerSon(SON_PRENDRE)
         }, DELAI_PRISE)
       }
 

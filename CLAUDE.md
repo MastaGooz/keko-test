@@ -5015,6 +5015,43 @@ zéro**. Les enveloppes partent et reviennent à 0,0001, jamais au silence exact
 Sur iPhone, l'interrupteur silence coupe aussi le Web Audio — si Keko n'entend
 rien, vérifier ça avant de chercher un bug.
 
+### LES SONS DE KEKO : des FICHIERS, dans `public/`
+
+`render/sons.ts`. La borne « pas de son en fichier » tombe comme était tombée
+celle des images : *ce que Keko fabrique lui-même, le jeu le sert.* Le premier
+est `public/Take card.aac`.
+
+**Le format à lui donner** : `.m4a` (AAC) ou `.mp3` — les seuls lus partout,
+Safari/iOS compris ; `.wav` pour un effet très court, parce que MP3 et AAC
+ajoutent quelques millisecondes de silence à l'encodage, inaudibles sur une
+musique mais sensibles sur un son de 100 ms. Mono, 44,1 kHz. **La casse du nom
+compte**, et l'URL porte la date du build comme toutes les ressources de
+`public/` — sinon le remplacer ne changerait rien.
+
+**Le décodage a un REPLI**, et il le fallait : le fichier de Keko est de l'AAC
+BRUT (ADTS, sorti de ffmpeg), que Chrome et Safari décodent mais que Firefox
+peut refuser. Si `decodeAudioData` échoue, on garde un `<audio>` qu'on clone à
+chaque lecture — *un son qui ne se décode pas doit se jouer quand même, pas se
+taire en silence.* (Vérifié sur Chrome : c'est bien le chemin Web Audio qui
+sert, le repli n'est pas sollicité.)
+
+**LE SON DE LA PRISE VIT DANS LE GESTE, pas dans les écrans** — `geste-carte.ts`
+est le seul endroit où une carte est prise, qu'elle vienne de la main, du butin
+ou du coffre. *Un geste unique n'a qu'un son, posé une fois*, et les deux portes
+de la prise (le maintien au doigt, le déplacement à la souris) le partagent.
+
+**Et le son de la POSE ne se joue qu'où l'on RANGE** : l'armurerie et le butin,
+jamais en combat. Tranché par Keko, et c'est la même raison qui prive la carte
+jouée de sa comète : *une carte jouée a déjà toute une scène à son nom.* Il ne
+part que si le dépôt ABOUTIT — on demande la règle (`accepteDepuis`) plutôt que
+de la recopier, la même qui allume le slot : *un slot qui refuse ne doit pas
+sonner comme un slot qui prend.*
+
+Deux règles tenues de `ui/sons.ts` : le contexte audio ne naît que sur un geste,
+et aucun son ne peut casser le jeu. Le cache ne retient que les succès — une
+promesse rejetée gardée condamnerait le son pour toute la session, la leçon des
+textures de cartes.
+
 ### Les arches de visée
 
 Posées en **coordonnées d'écran** dans un SVG fixe sans `viewBox` (une unité

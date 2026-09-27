@@ -24,6 +24,7 @@
  * valider.
  */
 import { useEffect, useMemo } from 'react'
+import { SON_PRENDRE, jouerSon } from './sons.ts'
 import * as THREE from 'three'
 import { Bouton3D, tailleBouton } from './Bouton3D.tsx'
 import { Carte3D } from './Carte3D.tsx'
@@ -228,7 +229,11 @@ export function Butin3D({
     onLacher: (i, point) => {
       const source: Emplacement = i === 0 ? 'loot' : 'jeter'
       const cible = destinationDe(point, loot !== null)
-      if (cible !== null && cible !== source) onDeplacer?.(source, cible)
+      if (cible === null || cible === source) return
+      // LE SON DE LA POSE : le trésor entre dans un emplacement. En combat il
+      // n'y en a pas — *une carte jouée a déjà toute une scène à son nom.*
+      jouerSon(SON_PRENDRE)
+      onDeplacer?.(source, cible)
     },
   })
 

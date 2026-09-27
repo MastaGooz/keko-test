@@ -35,6 +35,7 @@ import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
+import { SON_PRENDRE, jouerSon, precharger } from './sons.ts'
 import { Armurerie3D } from './Armurerie3D.tsx'
 import type { Onglet } from './armurerie-plan.ts'
 import { PageArmurerie } from './PageArmurerie.tsx'
@@ -1132,6 +1133,13 @@ export function Scene(): React.JSX.Element {
     [enCours.deck],
   )
 
+  // ON PRÉCHARGE LE SON AU DÉMARRAGE. Le fichier est minuscule, et *le premier
+  // geste ne doit pas être muet* : décodé à la volée, il arriverait après la
+  // carte qu'il accompagne.
+  useEffect(() => {
+    void precharger(SON_PRENDRE)
+  }, [])
+
   /** Lâcher un trésor porté sur un emplacement l'y range. */
   const deposer = useCallback(
     (index: number, depuis: [number, number, number]) => {
@@ -1139,6 +1147,9 @@ export function Scene(): React.JSX.Element {
       const carte = tresors[index]
       const ou = slotSous(depuis, window.innerHeight, phase.loot !== null)
       if (carte === undefined || ou === null) return
+      // MÊME SON QUE LE RESTE DES DÉPÔTS : la main du butin EST la main, mais
+      // ce qu'on y fait est un rangement, pas un coup.
+      jouerSon(SON_PRENDRE)
       setDescente(deplacerTresor(enCours, { ou: 'deck', id: carte.id }, { ou }))
     },
     [enCours, phase, tresors],
