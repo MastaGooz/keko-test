@@ -331,12 +331,30 @@ export async function peindreCarte(
  * objet qui dit la même chose à deux échelles*, et les dessiner à deux
  * endroits garantirait qu'un jour ils divergent.
  */
+/**
+ * LES CHIFFRES DE GRENZE GOTISCH SONT ELZÉVIRIENS, et c'est ce qui décentre.
+ *
+ * Le « 3 » descend sous la ligne de base, le « 1 » s'arrête dessus, le « 6 »
+ * monte plus haut : leurs boîtes réelles n'ont pas la même hauteur. *Les
+ * centrer CHACUN sur la sienne ferait sauter la ligne de base d'un voisin à
+ * l'autre* — dans une liste de composition, deux chiffres côte à côte ne
+ * peuvent pas être posés à deux hauteurs. On centre donc sur la boîte COMMUNE
+ * à tous les chiffres, mesurée une fois pour toutes au canvas : 57 au-dessus
+ * de la ligne de base et 10 en dessous, pour 100 px de police.
+ */
+const MILIEU_CHIFFRE = (0.57 - 0.1) / 2
+
+/** L'assiette du compteur du coin, laissée telle qu'elle était réglée. */
+const ASSIETTE_COMPTEUR = 0.626
+
 function caseDeCarte(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   l: number,
   nombre: number,
+  /** Où poser le MILIEU du chiffre, en part de la hauteur de la case. */
+  assiette = 0.5,
 ): void {
   const h = l * 1.4
   const coin = l * 0.105
@@ -361,11 +379,15 @@ function caseDeCarte(
   ctx.lineWidth = filet * 0.78
   ctx.stroke()
 
+  const police = l * 0.97
   ctx.fillStyle = '#e8eef4'
-  ctx.font = `600 ${l * 0.97}px "Grenze Gotisch", Georgia, serif`
+  ctx.font = `600 ${police}px "Grenze Gotisch", Georgia, serif`
   ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillText(String(nombre), x + l / 2, y + h * 0.54)
+  // ON POSE LA LIGNE DE BASE, pas une boîte de ligne. `middle` se mesure sur
+  // la boîte de POLICE — jambages compris, et un chiffre n'en a pas — donc il
+  // pose le chiffre trop bas de sa propre moitié de descente.
+  ctx.textBaseline = 'alphabetic'
+  ctx.fillText(String(nombre), x + l / 2, y + h * assiette + police * MILIEU_CHIFFRE)
 }
 
 /**
@@ -387,7 +409,7 @@ function peindreCompteur(ctx: CanvasRenderingContext2D, nombre: number): void {
   // toile.*
   const x = 0.05 * LARGE
   const y = 0.016 * HAUT
-  caseDeCarte(ctx, x, y, l, nombre)
+  caseDeCarte(ctx, x, y, l, nombre, ASSIETTE_COMPTEUR)
 }
 
 /**

@@ -3177,6 +3177,24 @@ Quatre choses qui portent le bloc, et aucune n'est un réglage d'humeur :
 - **elle est bornée en haut** (10 unités), pour qu'un modèle seul ne s'étale
   pas sur la bande entière.
 
+**LE CHIFFRE SE CENTRE SUR LA BOÎTE DES CHIFFRES, pas sur sa boîte de ligne.**
+Keko : « c'est pas vraiment centré verticalement ». `textBaseline: 'middle'` se
+mesure sur la boîte de POLICE — jambages compris — donc il pose un chiffre, qui
+n'en a pas, trop bas de la moitié de cette descente : mesuré, **17,7 % de la
+largeur de la case.**
+
+*Et on ne peut pas non plus centrer chaque chiffre sur SA propre boîte* :
+**Grenze Gotisch a des chiffres elzéviriens** — le « 3 » descend sous la ligne
+de base, le « 1 » s'arrête dessus, le « 6 » monte plus haut. Chacun sur sa
+boîte, la ligne de base sauterait d'un voisin à l'autre, et *deux chiffres
+côte à côte dans une liste ne peuvent pas être posés à deux hauteurs.* On pose
+donc la ligne de base, calée sur la boîte COMMUNE à tous les chiffres, mesurée
+une fois au canvas (57 au-dessus, 10 en dessous, pour 100 px de police).
+
+**Le compteur du coin garde son assiette** (`ASSIETTE_COMPTEUR`), au pixel
+près : Keko n'a demandé que celui de la composition. *Une retouche demandée sur
+un endroit ne se généralise pas à l'autre tant qu'il n'a pas été jugé.*
+
 La composition entre dans `signature()`, sans quoi deux pièces de même nom
 partageraient la texture. Le texte qui coule reste en repli : il sert au jeu 2D
 et à tout ce qui ne peint pas la composition.
