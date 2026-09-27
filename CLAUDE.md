@@ -5111,10 +5111,22 @@ sert, le repli n'est pas sollicité.)
 quand on pose. Le second a d'abord été le premier, faute d'avoir l'autre
 fichier — *prendre et poser ne peuvent pas sonner pareil.*
 
-**LE SON DE LA PRISE VIT DANS LE GESTE, pas dans les écrans** — `geste-carte.ts`
-est le seul endroit où une carte est prise, qu'elle vienne de la main, du butin
-ou du coffre. *Un geste unique n'a qu'un son, posé une fois*, et les deux portes
-de la prise (le maintien au doigt, le déplacement à la souris) le partagent.
+**LE SON DU CONTACT VIT DANS LE GESTE, pas dans les écrans** — `geste-carte.ts`
+est le seul endroit où l'on touche une carte, qu'elle vienne de la main, du
+butin ou du coffre. *Un geste unique n'a qu'un son, posé une fois.*
+
+**ET IL PART AU CONTACT, PAS À LA PRISE.** Au doigt, une carte n'est prise
+qu'après un MAINTIEN de 160 ms : le son en héritait, et Keko l'entendait comme
+une latence. *Ce n'était pas le son qui était en retard, c'était la prise* —
+mesuré à la sonde, 0 ms au lâcher contre ~160 ms au contact, alors que
+l'appareil n'avouait que 40 ms de tampon.
+
+Il dit donc « j'ai touché cette carte » et non « je l'ai prise », et c'est aussi
+ce que Keko a voulu étendre : **on le joue TOUJOURS quand on zoome une carte.**
+Ça ne demande rien de plus — *tous les zooms du jeu commencent là*, puisque
+c'est le même geste qui regarde et qui prend. Vérifié : une tape sonne et ouvre
+le zoom, un glisser complet donne exactement deux sons, le contact puis la
+pose.
 
 **Et celui de la POSE ne se joue qu'où l'on RANGE** : l'armurerie et le butin,
 jamais en combat. Tranché par Keko, et c'est la même raison qui prive la carte

@@ -220,10 +220,6 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
         g.prise = true
         window.clearTimeout(g.minuteur)
         setTenue(g.index)
-        // LE SON DE LA PRISE VIT ICI, pas dans les écrans : c'est le seul
-        // endroit où une carte est prise, qu'elle vienne de la main, du butin
-        // ou du coffre. *Un geste unique n'a qu'un son, posé une fois.*
-        jouerSon(SON_PRENDRE)
       }
       setDoigt(pointSousLeDoigt(e))
     },
@@ -234,6 +230,19 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
     (index: number) => (e: ThreeEvent<PointerEvent>) => {
       if (verrou) return
       e.stopPropagation()
+      /**
+       * LE SON PART AU CONTACT, pas à la prise. Au doigt, une carte n'est
+       * prise qu'après un MAINTIEN de 160 ms : le son en héritait, et Keko
+       * l'entendait comme une latence — *ce n'était pas le son qui était en
+       * retard, c'était la prise.* (Mesuré : 0 ms au lâcher, ~160 ms au
+       * contact.)
+       *
+       * Il dit donc « j'ai touché cette carte » et non « je l'ai prise », ce
+       * qui est aussi ce que Keko voulait étendre : **on le joue TOUJOURS
+       * quand on zoome une carte** — et tous les zooms du jeu commencent ici,
+       * puisque c'est le même geste qui regarde et qui prend.
+       */
+      jouerSon(SON_PRENDRE)
       const natif = e.nativeEvent
       const g = geste.current
       // UN GESTE EN COURS EST SOLDÉ AVANT D'EN OUVRIR UN AUTRE. Si un
@@ -256,7 +265,6 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
           if (geste.current.index !== index) return
           geste.current.prise = true
           setTenue(index)
-          jouerSon(SON_PRENDRE)
         }, DELAI_PRISE)
       }
 
