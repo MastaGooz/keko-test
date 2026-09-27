@@ -24,7 +24,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
-import { geometrieDOnde, matiereDOnde, poserLOnde } from './onde.tsx'
+import { geometrieDOnde, matiereDOnde, poserLOnde, poussiereDOnde } from './onde.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
 import {
   DEBORD_CONTOUR,
@@ -542,6 +542,9 @@ ${nuanceur.fragmentShader}`
    */
   const vague = useRef<THREE.Mesh>(null)
   const matiereOnde = useMemo(() => matiereDOnde(), [])
+  // LA POUSSIÈRE EST PROPRE À CHAQUE CARTE : son semis est figé au montage,
+  // sans quoi les grains se réarrangeraient à chaque rendu.
+  const poussiere = useMemo(() => poussiereDOnde(LARGE, HAUT, RAYON_COIN), [])
 
   /** Le jeton vu au dernier tour, pour savoir qu'il vient de changer. */
   const jetonCulbute = useRef(culbute)
@@ -790,7 +793,7 @@ ${nuanceur.fragmentShader}`
     laiton.emissiveIntensity = eclat * 1.1
     // L'ONDE, une fois la carte fixée dans son slot.
     if (l.debutOnde !== null) {
-      if (poserLOnde(t - l.debutOnde, vague.current, matiereOnde)) l.debutOnde = null
+      if (poserLOnde(t - l.debutOnde, vague.current, matiereOnde, poussiere)) l.debutOnde = null
     }
 
     // LE LISERÉ RESPIRE, à peine : c'est ce qui le fait lire comme une lumière
@@ -824,6 +827,16 @@ ${nuanceur.fragmentShader}`
         position={[0, 0, -EPAISSEUR * 1.5]}
         raycast={() => null}
         scale={1}
+      />
+      {/* LA POUSSIÈRE : des grains détachés du contour. *Un liseré dit la
+          forme, le semis dit la matière* — la leçon des esquilles de la
+          comète, où un ruban lisse avait eu besoin d'elles. */}
+      <points
+        geometry={poussiere.geometrie}
+        material={poussiere.matiere}
+        position={[0, 0, -EPAISSEUR * 1.5]}
+        raycast={() => null}
+        frustumCulled={false}
       />
 
       {/* LE CORPS : le laiton, tranche et coins arrondis compris. C'est lui

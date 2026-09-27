@@ -3381,6 +3381,27 @@ Trois conséquences, et elles tiennent ensemble :
   dimensions lui sont passées par la carte, *deux modules qui décriraient la
   même forme chacun de leur côté divergeraient au premier réglage.*
 
+**ET ELLE EST FAITE DE POUSSIÈRE.** Keko : « qu'elle aille moins loin, soit
+moins épaisse, et soit accompagnée de petites étincelles — je visualise une
+onde à texture un peu de poussière ». Le trait seul était propre, donc
+*synthétique* : c'est la remarque déjà faite au sillage de la comète, où un
+ruban lisse avait eu besoin de ses esquilles. **Un liseré dit la FORME, le
+semis dit la MATIÈRE** — et il faut les deux.
+
+Trois choses à ne pas défaire :
+
+- **les grains partent DU CONTOUR, jamais du centre.** *Une poussière qui
+  jaillit du milieu se lit comme une explosion, une poussière qui se détache
+  d'un bord se lit comme de la matière qui s'envole* ;
+- **leur intensité passe par la COULEUR, pas par l'opacité.** En mélange
+  additif un grain noir est un grain invisible, et c'est la seule façon de
+  faire vivre chacun à son rythme avec un seul matériau ;
+- **le semis est TIRÉ UNE FOIS, d'une fonction de l'index.** Il ne passe pas
+  par le RNG seedé — il ne décide de rien — mais il ne doit pas tirer à chaque
+  image non plus : *un semis qui se réarrange sous les yeux n'est plus une
+  matière, c'est du bruit.* Leurs directions s'écartent un peu du radial, sinon
+  ils dessinent une étoile, et une étoile est un motif.
+
 L'or additif du reste du jeu, et le contraste de vitesse du bond des créatures :
 elle part vite et s'éteint lentement.
 
