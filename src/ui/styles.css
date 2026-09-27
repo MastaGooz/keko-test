@@ -4920,11 +4920,6 @@ body {
   gap: 0.5em;
   margin: 0;
   color: #f0e0bd;
-  /* LA POLICE DU NOM DES CARTES, a l'essai -- demande par Keko. C'est celle
-     que `texture-carte.ts` peint sur chaque titre de carte : *le nom d'un lieu
-     et le nom d'un objet parlent alors la meme langue.* */
-  font-family: 'Grenze Gotisch', Georgia, serif;
-  font-weight: 700;
   font-size: clamp(0.95rem, 3.1vh, 1.7rem);
   letter-spacing: 0.22em;
   text-transform: uppercase;
