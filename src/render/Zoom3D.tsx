@@ -143,9 +143,13 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                   onFermer?.()
                 }}
               />
-              {/* LA PASTILLE SOUS LA CARTE, jamais sur son coin. */}
-              <mesh position={[x, y - uneCarte * 0.58, zCarte + 0.02]}>
-                <planeGeometry args={[uneCarte * 0.37, uneCarte * 0.185]} />
+              {/* LA MENTION PASSE SOUS LE BAS DE LA CARTE, et ne le mord
+                  plus : la carte descend à `-0,54` (elle est décalée de 0,16
+                  vers le haut), or la bulle commençait à `-0,49`. *Une mention
+                  qui chevauche ce qu'elle annote se lit comme un badge collé
+                  dessus.* */}
+              <mesh position={[x, y - uneCarte * 0.68, zCarte + 0.02]}>
+                <planeGeometry args={[uneCarte * 0.42, uneCarte * 0.21]} />
                 <meshBasicMaterial
                   map={texturePastille(entree.nombre)}
                   transparent

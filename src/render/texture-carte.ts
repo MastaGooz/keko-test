@@ -1134,11 +1134,18 @@ export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {
 }
 
 /**
- * LA PASTILLE D'OR : combien d'exemplaires d'un modèle une pièce apporte.
+ * COMBIEN D'EXEMPLAIRES UNE PIÈCE APPORTE — **une mention, pas un jeton.**
  *
- * Elle vit **SOUS** la carte du set, jamais sur son coin — là, elle cachait la
- * gemme de coût et se lisait comme un badge de plus. Tranché par Keko :
- * « sous la carte, pas par-dessus ».
+ * C'était une bulle d'or pleine, cerclée de brun, posée sous la carte du set.
+ * Keko : « le nombre d'exemplaires en dessous est moche, la bulle n'est pas
+ * élégante, elle casse avec le style épuré et stylisé de l'interface ». *Une
+ * capsule pleine est le vocabulaire d'un badge web*, et c'est le seul objet de
+ * cet écran à ne pas parler la langue du reste — les cartes ont leur laiton,
+ * les titres leurs capitales, les tas leur filet.
+ *
+ * Il ne reste donc que le texte : « ×3 » en or, sur rien. C'est la règle déjà
+ * tranchée pour l'étiquette des tas — *on ne décide pas sur ce chiffre, donc
+ * il n'a pas à peser comme une valeur de jeu.*
  */
 const PASTILLES = new Map<number, THREE.CanvasTexture>()
 
@@ -1158,37 +1165,28 @@ export function texturePastille(nombre: number): THREE.CanvasTexture {
   const ctx = canvas.getContext('2d')
   if (ctx === null) return texture
 
-  // LE JETON REMPLIT SA TOILE. Il a rétréci à l'écran — Keko : « la bulle
-  // indiquant le nombre d'exemplaires sous les cartes est trop grosse » — donc
-  // le chiffre doit occuper une plus grande part de ce qui reste, sinon il
-  // rétrécit avec lui et devient illisible. *Ce qu'on réduit à l'écran, on
-  // l'agrandit dans sa texture.*
-  const r = h * 0.47
-  ctx.beginPath()
-  ctx.roundRect(l / 2 - r * 1.35, h / 2 - r, r * 2.7, r * 2, r)
-  const or = ctx.createLinearGradient(0, h / 2 - r, 0, h / 2 + r)
-  or.addColorStop(0, '#f6dFa4')
-  or.addColorStop(1, '#b8913f')
-  ctx.fillStyle = or
-  ctx.fill()
-  ctx.strokeStyle = '#6a5121'
-  ctx.lineWidth = h * 0.035
-  ctx.stroke()
+  const peindre = (): void => {
+    ctx.clearRect(0, 0, l, h)
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.font = `700 ${Math.round(h * 0.68)}px Cinzel, Georgia, serif`
+    // UNE OMBRE, PAS UN FOND : elle détache le chiffre du voile sombre sans
+    // lui donner de bord. *Ce qui porte un contour se lit comme un objet.*
+    ctx.shadowColor = '#000000d0'
+    ctx.shadowBlur = h * 0.14
+    ctx.shadowOffsetY = h * 0.03
+    const or = ctx.createLinearGradient(0, h * 0.18, 0, h * 0.82)
+    or.addColorStop(0, '#f8e7b8')
+    or.addColorStop(1, '#c9a04e')
+    ctx.fillStyle = or
+    ctx.fillText(`×${nombre}`, l / 2, h * 0.55)
+    texture.needsUpdate = true
+  }
 
-  ctx.fillStyle = '#2a1f07'
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  // LE SIGNE ET LE CHIFFRE SONT EN GRAS, demandé par Keko : à cette taille, un
-  // Cinzel de 700 se lit comme un trait fin. Un trait par-dessus le remplissage
-  // épaissit chaque jambage sans changer de police — *on n'ajoute pas une
-  // fonte pour deux caractères.*
-  ctx.font = `700 ${Math.round(h * 0.62)}px Cinzel, Georgia, serif`
-  ctx.lineWidth = h * 0.045
-  ctx.strokeStyle = '#2a1f07'
-  ctx.lineJoin = 'round'
-  ctx.strokeText(`×${nombre}`, l / 2, h * 0.55)
-  ctx.fillText(`×${nombre}`, l / 2, h * 0.55)
-  texture.needsUpdate = true
+  peindre()
+  // Un canvas qui peint avant `document.fonts.ready` retombe SILENCIEUSEMENT
+  // sur la police par défaut, et sa texture part en cache telle quelle.
+  if (document.fonts.status !== 'loaded') void document.fonts.ready.then(peindre)
   return texture
 }
 

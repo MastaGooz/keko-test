@@ -3624,12 +3624,23 @@ ensemble qui ne l'est jamais. On mesure ce que la grille occupe VRAIMENT — le
 budget qui a servi à la dimensionner est plus large qu'elle dès qu'il y a moins
 de quatre modèles — et on centre la somme.
 
-**Le jeton du nombre d'exemplaires a rétréci et s'est épaissi.** Keko : « la
-bulle est trop grosse, et le × et le chiffre devraient être en gras ». Il
-remplit maintenant davantage sa propre toile : *ce qu'on réduit à l'écran, on
-l'agrandit dans sa texture*, sinon le chiffre rétrécit avec le jeton. Le gras
-passe par un trait par-dessus le remplissage — on n'ajoute pas une fonte pour
-deux caractères.
+**LE NOMBRE D'EXEMPLAIRES EST UNE MENTION, PLUS UN JETON.** Il a été une bulle
+d'or pleine, cerclée de brun ; Keko : « le nombre d'exemplaires en dessous est
+moche, la bulle n'est pas élégante, elle casse avec le style épuré et stylisé
+de l'interface ». *Une capsule pleine est le vocabulaire d'un badge web* — et
+c'était le seul objet de cet écran à ne pas parler la langue du reste, alors
+que les cartes ont leur laiton, les titres leurs capitales et les tas leur
+filet.
+
+Il ne reste que le texte : « ×3 » en or dégradé, Cinzel, sur rien. Une ombre le
+détache du voile sans lui donner de bord — *ce qui porte un contour se lit
+comme un objet.* C'est la règle déjà tranchée pour l'étiquette des tas : on ne
+décide pas sur ce chiffre, donc il n'a pas à peser comme une valeur de jeu.
+
+**Et il passe SOUS le bas de la carte**, qu'il mordait : la carte du set est
+décalée de 0,16 vers le haut, donc son bas tombe à −0,54, et la bulle
+commençait à −0,49. *Une mention qui chevauche ce qu'elle annote se lit comme
+un badge collé dessus.*
 
 **LA MOLETTE SE POSE SUR LA FENÊTRE, PAS SUR LE CADRE.** Le cadre est en
 `pointer-events: none` — sinon il volerait le doigt aux cartes — donc il ne
