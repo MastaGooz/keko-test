@@ -3559,11 +3559,22 @@ ne bouge : une ligne.
 **Ce qui rend un texte net, ce n'est pas la taille de la toile, c'est de le
 tracer UNE SEULE FOIS, à la bonne taille.**
 
+**ET LE NOM ET LE TYPE ONT GROSSI D'UN QUART** (8,4 → 10,5 unités pour le nom,
+3,6 → 4,6 pour le pied). Keko : « c'est surtout le titre et le type de la carte
+que je voudrais mieux voir ». *Ce sont les deux seules choses qu'on lit sur une
+carte qu'on ne zoome pas* — ce qui sert à RECONNAÎTRE doit être lisible à la
+taille où l'on cherche, et la composition, elle, se consulte au zoom. Ça vaut
+partout, main de combat comprise : **la même carte partout.**
+
+**Le nom se rétrécit s'il ne tient pas.** Il est écrit d'un trait, sans repli :
+plus gros, « Reliquaire d'ossements » serait sorti des deux côtés de la carte
+*sans rien signaler* — le canvas ne prévient jamais qu'il déborde, exactement
+ce qui était arrivé au cartouche de l'Espadon. Et le trait qui le souligne se
+pose sous ses jambages, quelle que soit la taille retenue.
+
 *Ce qui reste, et qui n'est plus un problème de résolution* : à 97 px de large
 — la case du coffre — la composition d'une pièce fait 7 px de haut. Elle est
-nette, elle est petite. Les leviers sont ailleurs : agrandir les cartes,
-agrandir ce texte au détriment de sa longueur, ou assumer qu'*on le consulte en
-zoomant* — c'est déjà ce que dit la règle du gabarit.
+nette, elle est petite, et c'est assumé : on la lit en zoomant.
 
 Elle a son **cache à part** — le même modèle peut être au coffre ET au
 chargement — et ça ne coûte presque rien : 0,4 Mo contre 4,4. Le seuil est

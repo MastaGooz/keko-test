@@ -600,13 +600,32 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
 
-  // LE NOM, sur le haut de la bande de texte, souligné d'un fin trait.
-  ctx.font = `700 ${8.4 * U}px "Grenze Gotisch", Georgia, serif`
+  /**
+   * LE NOM, sur le haut de la bande de texte, souligné d'un fin trait.
+   *
+   * **Il a grossi d'un quart**, et le type du pied avec — Keko : « c'est
+   * surtout le titre et le type de la carte que je voudrais mieux voir, on va
+   * essayer plus gros ». Ce sont les deux seules choses qu'on lit sur une
+   * carte qu'on ne zoome pas : *ce qui sert à reconnaître doit être lisible à
+   * la taille où l'on cherche*, et la composition, elle, se consulte au zoom.
+   *
+   * **ET IL SE RÉTRÉCIT S'IL NE TIENT PAS.** Un nom est écrit d'un trait,
+   * sans repli — plus gros, « Reliquaire d'ossements » serait sorti des deux
+   * côtés de la carte *sans rien signaler*, exactement ce qui était arrivé au
+   * cartouche de l'Espadon. Le canvas ne prévient jamais qu'il déborde.
+   */
+  let tailleNom = 10.5 * U
+  const tientDans = LARGE * 0.84
+  ctx.font = `700 ${tailleNom}px "Grenze Gotisch", Georgia, serif`
+  while (ctx.measureText(carte.nom).width > tientDans && tailleNom > 6 * U) {
+    tailleNom *= 0.94
+    ctx.font = `700 ${tailleNom}px "Grenze Gotisch", Georgia, serif`
+  }
   ctx.fillStyle = '#f7ead0'
   ctx.shadowColor = '#14181a'
   ctx.shadowOffsetY = 0.5 * U
   ctx.shadowBlur = 3 * U
-  const yNom = HAUT * 0.67
+  const yNom = HAUT * 0.665
   ctx.fillText(carte.nom, LARGE / 2, yNom)
   ctx.shadowColor = 'transparent'
   ctx.shadowOffsetY = 0
@@ -618,7 +637,9 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
   trait.addColorStop(0.8, '#f7ead099')
   trait.addColorStop(1, '#f7ead000')
   ctx.fillStyle = trait
-  ctx.fillRect(LARGE * 0.22, yNom + 5.2 * U, LARGE * 0.56, Math.max(1, 0.25 * U))
+  // Le trait suit le nom : il se pose sous ses jambages, quelle que soit la
+  // taille à laquelle il a fallu l'écrire.
+  ctx.fillRect(LARGE * 0.22, yNom + tailleNom * 0.68, LARGE * 0.56, Math.max(1, 0.25 * U))
 
   // LE CARTOUCHE : ce que fait la carte, centré, une ligne par entrée.
   //
@@ -645,7 +666,7 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
   ctx.shadowColor = 'transparent'
 
   // LE PIED : sa nature gravée, en petites capitales espacées.
-  ctx.font = `600 ${3.6 * U}px "Barlow Condensed", "Arial Narrow", sans-serif`
+  ctx.font = `600 ${4.6 * U}px "Barlow Condensed", "Arial Narrow", sans-serif`
   ctx.fillStyle = '#c9b892'
   ctx.letterSpacing = `${1.2 * U}px`
   ctx.fillText(carte.type.toUpperCase(), LARGE / 2, HAUT * 0.955)
