@@ -40,7 +40,7 @@ import { Z_TENUE } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import { pieceAPeindre } from './combat-3d.ts'
 import { textureSlot, textureSlotVif } from './texture-carte.ts'
-import { SON_POSER, SON_TOURNER, jouerSon } from './sons.ts'
+import { SON_EQUIPER, SON_POSER, SON_TOURNER, jouerSon } from './sons.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Carte } from '../logic/combat.ts'
@@ -636,6 +636,10 @@ export function Armurerie3D({
             // main de combat.
             reflet={tenue === null && !sousLeZoom}
             culbute={culbute !== null && culbute.id === t.id ? culbute.n : null}
+            // ELLE S'ENCASTRE : le son part à l'instant où l'onde s'échappe,
+            // et c'est la CARTE qui le dit — elle seule sait quand sa culbute
+            // finit.
+            onFixee={() => jouerSon(SON_EQUIPER)}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />

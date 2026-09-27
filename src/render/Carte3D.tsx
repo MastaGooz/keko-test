@@ -268,6 +268,16 @@ type Props = {
    * image qui disparaît un temps sur deux.*
    */
   culbute?: unknown
+  /**
+   * Sa culbute vient de finir : elle est fixée, et l'onde part.
+   *
+   * **Elle dit ce qui se passe, pas ce que ça veut dire.** Le son de
+   * l'équipement appartient à l'armurerie, pas à la carte — même partage que
+   * `geste-carte.ts`, où le hook annonce « tapée », « lâchée ici », et laisse
+   * l'écran décider. *C'est ce qui permet à la même carte de servir en combat,
+   * au butin et au hub sans rien savoir d'eux.*
+   */
+  onFixee?: () => void
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -291,6 +301,7 @@ export function Carte3D({
   apparue = null,
   reflet = false,
   culbute = null,
+  onFixee,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -720,6 +731,10 @@ ${nuanceur.fragmentShader}`
       l.p.set(position[0], position[1], position[2])
       l.r.set(rotation[0], rotation[1], rotation[2])
       l.t = taille
+      // LA CARTE DIT QU'ELLE S'EST FIXÉE ; ce que ça veut dire appartient à
+      // l'écran. *Elle ne connaît pas les sons* — même partage que le geste,
+      // où le hook annonce « tapée », « lâchée ici », et rien de plus.
+      onFixee?.()
     }
 
     g.position.set(

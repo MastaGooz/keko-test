@@ -5476,11 +5476,24 @@ sert, le repli n'est pas sollicité.)
 quand on pose. Le second a d'abord été le premier, faute d'avoir l'autre
 fichier — *prendre et poser ne peuvent pas sonner pareil.*
 
-**ET UN TROISIÈME POUR LA CULBUTE** : `Card spin.aac`, fourni par Keko — « à
-jouer dès que la carte commence à tourner avant de se fixer ». Il part donc au
-LÂCHER, en même temps que la culbute : *elle tourne dès la première image, elle
-n'attend pas d'être montée.* Il ne sonne que pour un dépôt dans un SLOT, comme
-la culbute elle-même : reposer au coffre est un rangement, pas un équipement.
+**ET DEUX DE PLUS POUR LA CULBUTE**, tous deux fournis par Keko :
+`Card spin.aac` « dès que la carte commence à tourner avant de se fixer », et
+`Equip.aac` « au moment où la carte se fixe et déclenche l'onde ».
+
+Le premier part au LÂCHER, en même temps que la culbute — *elle tourne dès la
+première image, elle n'attend pas d'être montée* — et le second à la fin,
+exactement quand l'onde s'échappe. **Aucun des deux ne sonne pour un dépôt au
+coffre**, comme la culbute elle-même : reposer au coffre est un rangement, pas
+un équipement.
+
+*Quatre sons pour un seul geste, et aucun n'en double un autre* : on prend, on
+lâche, ça tourne, ça s'encastre.
+
+**LA CARTE DIT QU'ELLE S'EST FIXÉE ; CE QUE ÇA VEUT DIRE APPARTIENT À
+L'ÉCRAN.** `Carte3D` ne connaît pas les sons — elle appelle `onFixee` et
+l'armurerie décide. C'est le même partage que `geste-carte.ts`, où le hook
+annonce « tapée », « lâchée ici », et rien de plus : *c'est ce qui permet à la
+même carte de servir en combat, au butin et au hub sans rien savoir d'eux.*
 
 **LE SON DU CONTACT VIT DANS LE GESTE, pas dans les écrans** — `geste-carte.ts`
 est le seul endroit où l'on touche une carte, qu'elle vienne de la main, du

@@ -36,6 +36,7 @@ import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
 import {
+  SON_EQUIPER,
   SON_POSER,
   SON_PRENDRE,
   SON_TOURNER,
@@ -1161,6 +1162,7 @@ export function Scene(): React.JSX.Element {
     void precharger(SON_PRENDRE)
     void precharger(SON_POSER)
     void precharger(SON_TOURNER)
+    void precharger(SON_EQUIPER)
     // ON RÉVEILLE LE SON AU PREMIER CONTACT de la page : un contexte audio né
     // hors d'un geste est SUSPENDU, et le reprendre au moment où l'on veut
     // jouer met le premier son en retard sur le geste qui l'a demandé.

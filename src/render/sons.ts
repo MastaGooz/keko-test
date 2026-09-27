@@ -40,6 +40,15 @@ export const SON_POSER = 'Card drop.aac'
 export const SON_TOURNER = 'Card spin.aac'
 
 /**
+ * Celui d'une pièce qui SE FIXE, à l'instant où l'onde s'en échappe. Fourni
+ * par Keko : « à jouer au moment où la carte se fixe et déclenche l'onde ».
+ *
+ * *C'est le troisième temps d'un même geste* — on prend, on lâche, ça tourne,
+ * et ça s'encastre : chaque temps a son son, et aucun n'en double un autre.
+ */
+export const SON_EQUIPER = 'Equip.aac'
+
+/**
  * L'URL d'un fichier de `public/`. **Elle porte la date du build** : les
  * fichiers y sont copiés tels quels, sans empreinte de contenu dans leur nom,
  * donc sans ça le navigateur resservirait celui qu'il a en cache — le piège
