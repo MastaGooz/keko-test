@@ -35,7 +35,7 @@ import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
-import { SON_POSER, SON_PRENDRE, jouerSon, precharger } from './sons.ts'
+import { SON_POSER, SON_PRENDRE, amorcerLeSon, diagnosticSon, jouerSon, precharger } from './sons.ts'
 import { Armurerie3D } from './Armurerie3D.tsx'
 import type { Onglet } from './armurerie-plan.ts'
 import { PageArmurerie } from './PageArmurerie.tsx'
@@ -1153,6 +1153,25 @@ export function Scene(): React.JSX.Element {
   useEffect(() => {
     void precharger(SON_PRENDRE)
     void precharger(SON_POSER)
+    // ON RÉVEILLE LE SON AU PREMIER CONTACT de la page : un contexte audio né
+    // hors d'un geste est SUSPENDU, et le reprendre au moment où l'on veut
+    // jouer met le premier son en retard sur le geste qui l'a demandé.
+    const amorcer = (): void => amorcerLeSon()
+    window.addEventListener('pointerdown', amorcer, { once: true })
+    return () => window.removeEventListener('pointerdown', amorcer)
+  }, [])
+
+  /**
+   * LA LIGNE DE LATENCE, derrière `?son`. Keko : « pourquoi sur téléphone y a
+   * une latence entre le moment où je drag/drop et le son ? » *Je ne peux pas
+   * mesurer sur son appareil* — alors c'est l'appareil qui le dit. Même motif
+   * que la ligne des gros plans en 2D.
+   */
+  const [latence, setLatence] = useState('')
+  useEffect(() => {
+    if (!new URLSearchParams(location.search).has('son')) return
+    const minuteur = window.setInterval(() => setLatence(diagnosticSon()), 250)
+    return () => window.clearInterval(minuteur)
   }, [])
 
   /** Lâcher un trésor porté sur un emplacement l'y range. */
@@ -1640,6 +1659,8 @@ export function Scene(): React.JSX.Element {
           toute taille d'écran. C'est la 3D qui sert la scène, pas l'inverse. */}
       <p className="build-3d">{__BUILD_TIME__}</p>
       {!pret && <p className="chargement-3d">Chargement…</p>}
+
+      {latence !== '' && <p className="latence-son">{latence}</p>}
 
       {pret && enCombat && (
         <div className="jeu-3d">

@@ -5106,6 +5106,25 @@ body {
   gap: 0;
 }
 
+/* LA LIGNE DE LATENCE DU SON, derriere `?son` : ce que l'appareil avoue de son
+   propre tampon. Elle ne touche rien et ne coupe rien -- on la lit, on ne
+   clique pas dessus. */
+.latence-son {
+  position: fixed;
+  top: 0.25rem;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 9;
+  margin: 0;
+  padding: 0.1rem 0.5rem;
+  border-radius: 2px;
+  background: #000000aa;
+  color: #c9b88e;
+  font-family: ui-monospace, monospace;
+  font-size: 0.7rem;
+  pointer-events: none;
+}
+
 /* L'INFOBULLE D'UNE STAT : une plaquette de la meme ferronnerie que le reste,
    posee A GAUCHE de sa ligne -- le rail tient le bord droit de l'ecran. Elle
    ne capte jamais le pointeur : elle explique, elle ne se manipule pas. */

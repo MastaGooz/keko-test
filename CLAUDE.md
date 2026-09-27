@@ -5123,6 +5123,31 @@ part que si le dépôt ABOUTIT — on demande la règle (`accepteDepuis`) plutô
 de la recopier, la même qui allume le slot : *un slot qui refuse ne doit pas
 sonner comme un slot qui prend.*
 
+**LE SON SE RÉVEILLE AU PREMIER CONTACT, pas au premier son.** Keko : « pourquoi
+sur téléphone y a une latence entre le moment où je drag/drop et le son ? » Un
+contexte audio créé hors d'un geste — ici par le préchargement — naît
+**suspendu**, et le reprendre coûte du temps : assez, sur un téléphone, pour
+que le premier son arrive après le geste qui l'a demandé. Un `pointerdown` posé
+`once` sur la fenêtre l'ouvre et y joue un tampon d'une image à volume nul :
+certains navigateurs ne le considèrent démarré qu'après une première lecture.
+Le contexte demande aussi `latencyHint: 'interactive'` — c'est le défaut de la
+spécification, mais *le tampon d'un contexte « balanced » s'entend sur un
+téléphone.*
+
+**ET L'APPAREIL DIT SA PROPRE LATENCE, derrière `?son`** : par quel chemin le
+son sort (Web Audio ou le repli `<audio>`), l'état du contexte, et ce que le
+navigateur avoue de son tampon. *Une impression de retard ne se discute pas,
+elle se mesure* — et je ne peux pas mesurer sur l'appareil de Keko. Même motif
+que la ligne des gros plans en 2D. Relevé sur la machine de dev : Web Audio,
+`base 10 ms`, `sortie 40 ms`.
+
+**Trois causes possibles, et la troisième n'est pas le son :** le repli
+`<audio>` (100 à 300 ms sur mobile) si le décodeur refuse l'AAC brut ; la
+latence de sortie de l'appareil, que la ligne affiche ; et surtout — **au
+doigt, la PRISE elle-même attend le maintien de 160 ms.** Le son part quand la
+carte est prise, donc il hérite de ce délai. *Ce n'est pas le son qui est en
+retard, c'est la prise* — et la pose, elle, part au lâcher.
+
 Deux règles tenues de `ui/sons.ts` : le contexte audio ne naît que sur un geste,
 et aucun son ne peut casser le jeu. Le cache ne retient que les succès — une
 promesse rejetée gardée condamnerait le son pour toute la session, la leçon des

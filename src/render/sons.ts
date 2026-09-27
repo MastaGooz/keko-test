@@ -51,12 +51,58 @@ function ouvrir(): AudioContext | null {
       audible = false
       return null
     }
-    contexte = new Fabrique()
+    // `interactive` DEMANDE LA PLUS COURTE LATENCE DE SORTIE que l'appareil
+    // sache tenir. C'est le défaut de la spécification, mais il vaut mieux le
+    // dire : sur un téléphone, le tampon audio par défaut d'un contexte
+    // « balanced » s'entend — c'est un retard entre le doigt et le son.
+    contexte = new Fabrique({ latencyHint: 'interactive' })
   }
   // Ouvert hors d'un geste, il naît SUSPENDU : on le relance au premier son,
   // qui part toujours d'une tape ou d'un clic.
   if (contexte.state === 'suspended') void contexte.resume()
   return contexte
+}
+
+/**
+ * ON RÉVEILLE LE SON AU PREMIER CONTACT, pas au premier son.
+ *
+ * Un contexte créé hors d'un geste naît SUSPENDU, et le reprendre coûte du
+ * temps — sur un téléphone, assez pour que le premier son arrive après le
+ * geste qui l'a demandé. *Le réveil doit avoir lieu avant qu'on en ait
+ * besoin*, et le premier contact de la page suffit.
+ *
+ * Un tampon d'une image, joué à volume nul : certains navigateurs ne
+ * considèrent le contexte comme vraiment démarré qu'après une première
+ * lecture.
+ */
+export function amorcerLeSon(): void {
+  const ctx = ouvrir()
+  if (ctx === null) return
+  const source = ctx.createBufferSource()
+  source.buffer = ctx.createBuffer(1, 1, ctx.sampleRate)
+  const gain = ctx.createGain()
+  gain.gain.value = 0
+  source.connect(gain).connect(ctx.destination)
+  source.start()
+}
+
+/** Par où le son est passé, pour la ligne de diagnostic. */
+let chemin = '—'
+
+/**
+ * CE QUE L'APPAREIL DIT DE SA PROPRE LATENCE.
+ *
+ * *Une impression de retard ne se discute pas, elle se mesure* — et je ne peux
+ * pas mesurer sur le téléphone de Keko. Cette ligne existe pour ça, comme
+ * celle des gros plans en 2D : elle dit par quel chemin le son sort, et ce que
+ * le navigateur avoue de son propre tampon.
+ */
+export function diagnosticSon(): string {
+  if (contexte === null) return 'son : pas encore ouvert'
+  const ms = (v: number | undefined): string =>
+    v === undefined || Number.isNaN(v) ? '?' : `${Math.round(v * 1000)} ms`
+  const sortie = (contexte as AudioContext & { outputLatency?: number }).outputLatency
+  return `son : ${chemin} · ${contexte.state} · base ${ms(contexte.baseLatency)} · sortie ${ms(sortie)}`
 }
 
 const TAMPONS = new Map<string, AudioBuffer>()
@@ -109,11 +155,13 @@ export function jouerSon(nom: string, volume = 1): void {
     gain.gain.value = volume
     source.connect(gain).connect(ctx.destination)
     source.start()
+    chemin = 'Web Audio'
     return
   }
 
   const repli = REPLIS.get(nom)
   if (repli !== undefined) {
+    chemin = 'repli <audio>'
     const copie = repli.cloneNode() as HTMLAudioElement
     copie.volume = Math.min(1, volume)
     void copie.play().catch(() => undefined)
