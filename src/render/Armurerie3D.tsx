@@ -170,6 +170,14 @@ type Props = {
   onRegarderTresor?: (tresor: Carte) => void
   onDescendre?: () => void
   onSaisie?: (tenue: boolean) => void
+  /**
+   * UNE CARTE EST REGARDÉE DE PRÈS, donc l'armurerie est sous le voile du
+   * zoom. Ses cartes cessent de répondre au curseur : *ce qu'on ne regarde
+   * plus n'a pas à bouger*, et le `stopPropagation` du voile ne suffit pas —
+   * il ne joue qu'au prochain mouvement, or on ouvre le zoom en CLIQUANT sur
+   * une carte, donc le curseur est déjà dessus et elle resterait penchée.
+   */
+  sousLeZoom?: boolean
   onPeinte?: () => void
 }
 
@@ -183,6 +191,7 @@ export function Armurerie3D({
   onRegarderTresor,
   onDescendre,
   onSaisie,
+  sousLeZoom = false,
   onPeinte,
 }: Props): React.JSX.Element {
   const { size } = useThree()
@@ -587,7 +596,7 @@ export function Armurerie3D({
             // geste* : les autres cesseraient de basculer sous un doigt qui ne
             // les regarde plus. C'est la règle déjà tenue par le survol de la
             // main de combat.
-            reflet={tenue === null}
+            reflet={tenue === null && !sousLeZoom}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />

@@ -1459,6 +1459,7 @@ export function Scene(): React.JSX.Element {
             }}
             onDescendre={descendreAuDonjon}
             onSaisie={setSaisie}
+            sousLeZoom={zoomee !== null}
             onPeinte={compter}
           />
         )}

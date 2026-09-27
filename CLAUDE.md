@@ -2052,6 +2052,18 @@ Trois choses à ne pas défaire :
   frémissement par-dessus la position : mêlée à elle, l'amortissement la
   mangerait en croyant corriger un écart.
 
+**ET CE QUI EST SOUS LE VOILE NE RÉPOND PLUS.** Les cartes de l'armurerie
+continuaient de s'incliner et de briller derrière le zoom — Keko. **Deux
+correctifs, parce qu'il y a deux causes** :
+
+- *le voile ne coupait que le `pointerdown`.* R3F prévient TOUS les objets que
+  le rayon traverse, donc il lui faut aussi un `stopPropagation` sur le
+  `pointermove` — c'est la même leçon que pour la tape, et elle vaut pour tout
+  écran recouvert ;
+- *ça ne joue qu'au PROCHAIN mouvement*, or on ouvre le zoom en CLIQUANT sur
+  une carte : le curseur est déjà dessus, et elle resterait penchée sans
+  bouger. `Armurerie3D` reçoit donc `sousLeZoom` et éteint `reflet`.
+
 **LE LUSTRE EST DISCRET**, et il a été baissé deux fois — Keko : « je trouve la
 brillance un peu forte ». *Un lustre qui délave l'illustration cesse d'être une
 matière et devient un voile* : ce qu'on doit lire sur une carte regardée de

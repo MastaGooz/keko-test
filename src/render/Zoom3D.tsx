@@ -123,6 +123,12 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           e.stopPropagation()
           onFermer?.()
         }}
+        // ET IL ARRÊTE AUSSI LE MOUVEMENT. Sans ça, les cartes de l'écran
+        // recouvert continuaient de s'incliner et de briller sous le curseur,
+        // derrière le voile — Keko. *Ce que le voile cache, il doit aussi le
+        // rendre insensible*, et c'est exactement ce que le `pointerdown`
+        // faisait déjà : R3F prévient TOUS les objets que le rayon traverse.
+        onPointerMove={(e) => e.stopPropagation()}
       >
         <planeGeometry args={[40, 24]} />
         <meshBasicMaterial color="#05050a" transparent opacity={0.8} />
