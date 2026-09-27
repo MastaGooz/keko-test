@@ -1034,20 +1034,39 @@ function reduire(source: HTMLCanvasElement, largeur: number): HTMLCanvasElement 
   return petit
 }
 
-/** La largeur d'une texture de petite carte, en pixels. */
-const PETITE = 256
+/**
+ * LES TROIS TAILLES DE TEXTURE, et **c'est la taille RÉELLE à l'écran qui
+ * choisit**, pas un seuil en unités de scène.
+ *
+ * Il n'y en avait que deux, et le seuil se lisait sur la taille de la carte
+ * dans la scène : une carte du chargement passait donc en 256 px de texture
+ * alors qu'elle en occupe 280 sur un écran haute densité — *une texture plus
+ * petite que ce qu'elle couvre est floue par construction*, quel que soit le
+ * soin mis à la peindre. Keko : « la résolution des textes des cartes hors
+ * zoom ».
+ *
+ * La netteté se joue en pixels PHYSIQUES : ce sont eux qu'on compte, densité
+ * d'écran comprise.
+ */
+const TAILLES = [256, 512, 768] as const
+
+/** La toile qu'il faut pour couvrir cette largeur sans étirer ni minifier. */
+export function tailleQuIlFaut(largeurPx: number): number {
+  return TAILLES.find((t) => t >= largeurPx) ?? TAILLES[TAILLES.length - 1]!
+}
 
 export function textureDeCarte(
   carte: CarteAPeindre,
-  petite = false,
+  largeurPx = 768,
 ): Promise<THREE.CanvasTexture> {
-  const cle = petite ? `${signature(carte)}#p` : signature(carte)
+  const voulue = tailleQuIlFaut(largeurPx)
+  const cle = `${signature(carte)}#${voulue}`
   const connue = TEXTURES.get(cle)
   if (connue !== undefined) return connue
 
   const promesse = peindreCarte(carte)
     .then((canvas) => {
-      const texture = new THREE.CanvasTexture(petite ? reduire(canvas, PETITE) : canvas)
+      const texture = new THREE.CanvasTexture(voulue < 768 ? reduire(canvas, voulue) : canvas)
       // La carte se regarde de près et en biais : sans filtrage anisotrope le
       // texte se brouille dès qu'elle s'incline.
       texture.anisotropy = 8

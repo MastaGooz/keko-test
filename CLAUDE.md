@@ -3528,6 +3528,21 @@ arithmétique.
 taille fixe elles se recouvraient les unes les autres sur un téléphone, et
 *une zone plus grande que son slot vole le dépôt à sa voisine.*
 
+**ET C'EST LA TAILLE RÉELLE À L'ÉCRAN QUI CHOISIT LA TEXTURE, densité
+comprise.** Il n'y avait que deux toiles — 256 et 768 — et le choix se lisait
+sur la taille de la carte dans la SCÈNE (un seuil à 0,6). Ce seuil ignorait à
+la fois le cadrage et le `devicePixelRatio` : une carte du chargement prenait
+une toile de 256 px alors qu'elle en couvre 280 sur un écran haute densité, et
+*une texture plus petite que ce qu'elle couvre est floue par construction*,
+quel que soit le soin mis à la peindre. Keko : « la résolution des textes des
+cartes hors zoom ».
+
+Trois toiles désormais (256 / 512 / 768), choisies sur les **pixels
+physiques** que la carte occupe. Et c'est la TOILE qui sert de dépendance à
+l'effet, pas la largeur : celle-ci varie à chaque pixel de redimensionnement et
+pendant qu'une carte grandit sous le doigt, alors que la texture ne change
+qu'aux paliers.
+
 **UNE PETITE CARTE PREND UNE PETITE TEXTURE.** Keko : « pourquoi les cartes
 réduites sont floues ? » *Ce n'était pas la peinture, c'était la
 MINIFICATION.* Une carte du coffre fait une centaine de pixels à l'écran pour

@@ -21,8 +21,9 @@
  * ne saute — la même règle qu'en 2D, où le rendu se reconstruit entièrement.
  */
 import { useEffect, useMemo, useRef } from 'react'
-import { useFrame, type ThreeEvent } from '@react-three/fiber'
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
+import { hauteurVisibleA } from './Cadrage.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
 import {
   DEBORD_CONTOUR,
@@ -30,6 +31,7 @@ import {
   textureContour,
   textureDeCarte,
   textureDuDos,
+  tailleQuIlFaut,
 } from './texture-carte.ts'
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
@@ -226,6 +228,8 @@ export function Carte3D({
   onPointerOut,
 }: Props): React.JSX.Element {
   const groupe = useRef<THREE.Group>(null)
+  const { size, viewport } = useThree()
+  const dpr = viewport.dpr
 
   const { face, laiton, halo } = useMemo(() => {
     const laiton = new THREE.MeshStandardMaterial({
@@ -331,7 +335,17 @@ ${nuanceur.fragmentShader}`
    * change de texture en chemin — elle y GAGNE en netteté, donc le relais se
    * lit dans le bon sens.
    */
-  const petite = taille < 0.6
+  /**
+   * LA TEXTURE SE CHOISIT SUR LA TAILLE RÉELLE, densité d'écran comprise.
+   *
+   * Le seuil se lisait sur la taille dans la SCÈNE (0,6), donc il ignorait et
+   * le cadrage et le `devicePixelRatio` : une carte du chargement prenait une
+   * toile de 256 px alors qu'elle en couvre 280 sur un écran haute densité, et
+   * *une texture plus petite que ce qu'elle couvre est floue par
+   * construction.* On compte donc les pixels physiques qu'elle occupe, et on
+   * prend la toile qui les couvre.
+   */
+  const largeurPx = taille * (size.height / hauteurVisibleA(position[2], size.height)) * dpr
 
   useEffect(() => {
     let vivant = true
@@ -339,7 +353,7 @@ ${nuanceur.fragmentShader}`
     // prêtent, et une carte remontée la retrouve déjà prête — donc elle ne
     // repasse jamais par son état sombre. Rien n'est libéré ici pour la même
     // raison : elle ne nous appartient pas.
-    void (dos ? textureDuDos() : textureDeCarte(carte, petite))
+    void (dos ? textureDuDos() : textureDeCarte(carte, largeurPx))
       .then((texture) => {
         if (!vivant) return
         face.map = texture
@@ -366,7 +380,10 @@ ${nuanceur.fragmentShader}`
     // famille de raison : une fonction recréée à chaque rendu du parent
     // repeindrait la carte en boucle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [signature(carte), face, dos, petite])
+    // LA DÉPENDANCE EST LA TOILE, PAS LA LARGEUR : celle-ci varie à chaque
+    // pixel de redimensionnement et pendant qu'une carte grandit sous le
+    // doigt, alors que la texture, elle, ne change qu'aux paliers.
+  }, [signature(carte), face, dos, tailleQuIlFaut(largeurPx)])
 
   /**
    * La place LISSÉE, tenue à part de celle du groupe.
