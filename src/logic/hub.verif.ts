@@ -66,7 +66,11 @@ const COTTE: Armure = {
   // En attendant un marché, l'Espadon attend au râtelier avec les potions
   // qu'on n'a pas prises : sans lui il n'y aurait rien à choisir.
   verifier('le ratelier tient l’Espadon au depart', h.reserve.includes(ESPADON_REEL))
-  verifier('et les quatre autres potions', h.reserve.length === 5)
+  // LE COMPTE SE FAIT PAR MODÈLE, pas sur la longueur de la réserve : elle
+  // accueille aussi le banc d'essai de la Super potion, et une liste qui
+  // grandit ne doit pas faire tomber une vérification qui parle d'autre chose.
+  verifier('et les quatre autres potions',
+    h.reserve.filter((o) => POTIONS_DEPART.some((p) => p.id === o.id)).length === 4)
 }
 
 // --- ce qu'un slot accepte --------------------------------------------------

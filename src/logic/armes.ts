@@ -276,6 +276,34 @@ export function potion(numero: number): Consommable {
 }
 
 /**
+ * LA SUPER POTION : deux fois le soin, pour le même coût. **C'est un banc
+ * d'essai**, pas un objet calibré — Keko : « tu peux ajouter un nouvel objet,
+ * super potion, pour tester un truc ? »
+ *
+ * *Le chiffre n'est pas réglé, il est DOUBLE* : 28 contre 14, sans autre
+ * contrepartie que d'occuper la même case de pile. À mesurer par simulation
+ * avant d'en faire un objet du jeu — la courbe du soin plafonne dès trois
+ * potions à 14, et rien ne dit où elle plafonne à 28.
+ */
+const SUPER_POTION: Modele = {
+  nom: 'Super potion',
+  type: 'combat',
+  cout: 1,
+  degats: 0,
+  effets: [{ type: 'soin', montant: 28 }],
+  exil: true,
+}
+
+/** Un exemplaire de super potion. Son identifiant lui est propre, comme tout
+ * consommable : c'est lui qui dit, à l'arrivée, laquelle a été bue. */
+export function superPotion(numero: number): Consommable {
+  return { id: `super-potion-${numero}`, rarete: 'rare', modele: SUPER_POTION }
+}
+
+/** Deux exemplaires au râtelier, de quoi éprouver la pile sans la remplir. */
+export const SUPER_POTIONS_DEPART: Consommable[] = [1, 2].map(superPotion)
+
+/**
  * Le stock de départ. **Cinq exemplaires, et ils s'épuisent pour de bon** :
  * une potion bue ne revient pas au râtelier, une potion emportée est perdue
  * avec le reste si l'on meurt. Tranché par Keko.

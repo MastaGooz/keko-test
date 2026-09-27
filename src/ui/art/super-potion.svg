@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 1000">
+  <!-- La Super potion : la même fiole, en plus grand et en plus riche — de
+       l'or dans le verre, une couronne de liège, et la lueur qui déborde.
+       *Deux fois le soin, donc deux fois la lumière.* Les identifiants des
+       dégradés portent un préfixe : deux dessins qui partagent un `id` font
+       que le second emprunte les couleurs du premier. -->
+  <defs>
+    <radialGradient id="sp-lueur" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffe9a8" stop-opacity="0.6"/>
+      <stop offset="0.5" stop-color="#8cf7b4" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#8cf7b4" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sp-liqueur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff6cf"/>
+      <stop offset="0.35" stop-color="#9dffb9"/>
+      <stop offset="0.75" stop-color="#3fcf85"/>
+      <stop offset="1" stop-color="#16663f"/>
+    </linearGradient>
+    <linearGradient id="sp-verre" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.4"/>
+      <stop offset="0.3" stop-color="#ffffff" stop-opacity="0.07"/>
+      <stop offset="0.8" stop-color="#ffffff" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.28"/>
+    </linearGradient>
+    <linearGradient id="sp-liege" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#b98a55"/>
+      <stop offset="0.5" stop-color="#8a5f34"/>
+      <stop offset="1" stop-color="#4f3419"/>
+    </linearGradient>
+    <linearGradient id="sp-or" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe9b0"/>
+      <stop offset="0.5" stop-color="#c9a04e"/>
+      <stop offset="1" stop-color="#6d4f1e"/>
+    </linearGradient>
+    <linearGradient id="sp-voile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.55" stop-color="#060d0a" stop-opacity="0"/>
+      <stop offset="1" stop-color="#060d0a" stop-opacity="0.85"/>
+    </linearGradient>
+    <filter id="sp-grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="52"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
+    </filter>
+    <filter id="sp-flou"><feGaussianBlur stdDeviation="12"/></filter>
+    <clipPath id="sp-dedans">
+      <path d="M288 226 L392 226 L392 318 Q492 374 492 506 Q492 662 340 662 Q188 662 188 506 Q188 374 288 318 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- PAS DE CIEL : le fond commun de toutes les cartes est peint dessous. -->
+  <circle cx="340" cy="460" r="360" fill="url(#sp-lueur)"/>
+
+  <!-- l'ombre au sol -->
+  <ellipse cx="340" cy="684" rx="168" ry="28" fill="#020604" opacity="0.7" filter="url(#sp-flou)"/>
+
+  <!-- le flacon : le verre sombre -->
+  <path d="M288 226 L392 226 L392 318 Q492 374 492 506 Q492 662 340 662 Q188 662 188 506 Q188 374 288 318 Z" fill="#0b1a12"/>
+  <!-- la liqueur, jusqu'au col -->
+  <g clip-path="url(#sp-dedans)">
+    <rect x="180" y="360" width="320" height="310" fill="url(#sp-liqueur)"/>
+    <ellipse cx="340" cy="360" rx="156" ry="18" fill="#fff3c8" opacity="0.85"/>
+    <g fill="#f4ffe8" opacity="0.75">
+      <circle cx="296" cy="560" r="8"/><circle cx="386" cy="512" r="6"/><circle cx="340" cy="610" r="5"/>
+      <circle cx="258" cy="470" r="5"/><circle cx="414" cy="596" r="7"/><circle cx="362" cy="430" r="4"/>
+      <circle cx="310" cy="486" r="3"/><circle cx="392" cy="648" r="4"/>
+    </g>
+  </g>
+  <!-- le verre par-dessus : reflets -->
+  <path d="M288 226 L392 226 L392 318 Q492 374 492 506 Q492 662 340 662 Q188 662 188 506 Q188 374 288 318 Z" fill="url(#sp-verre)"/>
+  <path d="M236 396 Q220 476 230 574" stroke="#ffffff" stroke-width="11" stroke-linecap="round" fill="none" opacity="0.35"/>
+  <path d="M300 246 L300 308" stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity="0.3"/>
+
+  <!-- LE COL CERCLÉ D'OR : c'est ce qui la distingue au premier coup d'oeil,
+       avant même qu'on lise son nom. -->
+  <rect x="282" y="210" width="116" height="24" rx="7" fill="#0b1a12"/>
+  <rect x="278" y="206" width="124" height="12" rx="6" fill="url(#sp-or)"/>
+  <rect x="298" y="142" width="84" height="74" rx="11" fill="url(#sp-liege)"/>
+  <rect x="298" y="142" width="84" height="15" rx="6" fill="#d3a56f" opacity="0.6"/>
+
+  <!-- la ficelle d'or et le médaillon -->
+  <path d="M288 240 Q340 256 392 240" stroke="#c9a04e" stroke-width="5" fill="none"/>
+  <circle cx="340" cy="272" r="24" fill="url(#sp-or)"/>
+  <circle cx="340" cy="272" r="13" fill="#0b1a12" opacity="0.55"/>
+
+  <!-- la lueur qui monte de la liqueur, plus large que sur la potion -->
+  <ellipse cx="340" cy="520" rx="140" ry="112" fill="#a6ffcb" opacity="0.28" filter="url(#sp-flou)"/>
+
+  <g fill="#ffeec0" opacity="0.65">
+    <circle cx="112" cy="286" r="3"/><circle cx="568" cy="232" r="2.5"/>
+    <circle cx="84" cy="556" r="2.5"/><circle cx="604" cy="594" r="3"/>
+    <circle cx="492" cy="112" r="2.5"/><circle cx="160" cy="648" r="2.5"/>
+    <circle cx="536" cy="430" r="2"/><circle cx="146" cy="404" r="2"/>
+  </g>
+
+  <rect width="680" height="1000" fill="url(#sp-voile)"/>
+  <rect width="680" height="1000" filter="url(#sp-grain)"/>
+</svg>

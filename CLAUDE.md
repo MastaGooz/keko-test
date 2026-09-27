@@ -1686,6 +1686,15 @@ bot qui bloque avant de frapper) :
 donc le choix n'en est pas un. À 14 elle plafonne dès trois. Repère à garder :
 une potion rend exactement ce que rend un palier (`REGLAGE_DEFAUT.soin`).
 
+**UN BANC D'ESSAI AU RÂTELIER : LA SUPER POTION** (28 PV pour 1⚡, deux
+exemplaires, cadre rare). Demandée par Keko — « pour tester un truc ». *Le
+chiffre n'est pas réglé, il est DOUBLE* : aucune autre contrepartie que la
+case de pile qu'elle occupe. **À mesurer par simulation avant d'en faire un
+objet du jeu** — la courbe du soin plafonne dès trois potions à 14, et rien ne
+dit où elle plafonne à 28. Elle a son dessin (`art/super-potion.svg`), donc
+elle se juge comme une vraie carte : *ce que Keko doit juger doit être
+présentable.*
+
 **UNE POTION BUE NE REVIENT PAS**, et une potion emportée est perdue si l'on
 meurt. Tranché par Keko. C'est la **seule ressource du jeu qui s'épuise pour
 de bon** — et c'est là qu'est le vrai coût d'en emporter cinq, pas dans la
