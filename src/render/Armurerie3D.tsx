@@ -395,6 +395,34 @@ export function Armurerie3D({
    * marque posée sur la scène serait balayée par le rendu qui suit.
    */
   const [culbute, setCulbute] = useState<{ id: string; n: number } | null>(null)
+  /**
+   * LA PIÈCE QUI N'EST PAS ENCORE ARRIVÉE, et dont la case doit rester
+   * dessinée.
+   *
+   * Les cases vides se déduisent du chargement, donc elles disparaissaient à
+   * l'instant du lâcher — pendant que la carte tournait encore en l'air ou
+   * glissait vers sa place. Keko : « les pointillés qui dessinent le slot
+   * disparaissent déjà quand l'animation de spin commence ; il faudrait qu'ils
+   * disparaissent au moment où la carte se fixe ».
+   *
+   * *Une case n'est occupée que lorsque quelque chose y est posé* — l'état du
+   * jeu, lui, a changé bien avant.
+   */
+  const [enVol, setEnVol] = useState<string | null>(null)
+
+  /**
+   * UN GARDE-FOU : la case en attente ne peut pas rester là pour toujours.
+   *
+   * C'est la carte qui annonce son arrivée, et elle le fait sans faute — mais
+   * si jamais elle était démontée en plein vol (un changement d'onglet, un
+   * redimensionnement), personne ne le dirait plus. *Un dessin qui dépend d'un
+   * message doit savoir s'effacer si le message ne vient pas.*
+   */
+  useEffect(() => {
+    if (enVol === null) return
+    const minuteur = window.setTimeout(() => setEnVol(null), 2000)
+    return () => window.clearTimeout(minuteur)
+  }, [enVol])
 
   // ON LA REPOSE UNE FOIS LA SCÈNE JOUÉE : sans ça elle rejouerait au moindre
   // remontage, et la carte culbuterait sans qu'on y ait touché.
@@ -447,7 +475,13 @@ export function Armurerie3D({
       // refuse ne doit pas sonner comme un slot qui prend. On demande la règle
       // plutôt que de la recopier — la même que celle qui allume le slot.
       const pris = accepteDepuis(hub, t.slot, cible, t.objet.id)
-      if (pris) jouerSon(SON_POSER)
+      if (pris) {
+        jouerSon(SON_POSER)
+        // SA CASE RESTE DESSINÉE JUSQU'À CE QU'ELLE Y SOIT. Vrai pour un slot
+        // du chargement comme pour une case du coffre : dans les deux cas la
+        // carte met un moment à arriver.
+        setEnVol(t.objet.id)
+      }
       // ELLE CULBUTE EN SE FIXANT — mais seulement dans un SLOT. Reposer au
       // râtelier n'est pas un équipement, c'est un rangement : *une mise en
       // scène qui se joue à chaque geste cesse d'en distinguer un.*
@@ -597,6 +631,24 @@ export function Armurerie3D({
         />
       )}
 
+      {/* LA CASE DE CE QUI N'EST PAS ENCORE ARRIVÉ. Sa place se LIT sur la
+          carte en vol : au rendu, l'état du jeu l'a déjà déplacée, donc on sait
+          où elle va — elle, en revanche, n'y est pas encore. */}
+      {enVol !== null &&
+        (() => {
+          const vol = objets.find((o) => o.id === enVol)
+          if (vol === undefined) return null
+          return (
+            <CaseVide
+              nom=""
+              position={vol.position}
+              taille={vol.taille}
+              accent={TEINTE[vol.slot.ou]}
+              clipper={vol.slot.ou === 'reserve' ? clipper : null}
+            />
+          )
+        })()}
+
       {/* LA PIÈCE TENUE NE CHANGE JAMAIS D'INSTANCE, et c'est tout le sujet.
           Une seule carte, du coffre au doigt puis au slot : l'amortissement de
           `Carte3D` fait l'atterrissage, et il part forcément d'où on a lâché
@@ -640,6 +692,9 @@ export function Armurerie3D({
             // et c'est la CARTE qui le dit — elle seule sait quand sa culbute
             // finit.
             onFixee={() => jouerSon(SON_EQUIPER)}
+            // ELLE EST POSÉE : sa case cesse d'être dessinée. C'est la carte
+            // qui le dit, parce qu'elle seule sait où en est son mouvement.
+            onArrivee={() => setEnVol((v) => (v === t.id ? null : v))}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />

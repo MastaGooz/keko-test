@@ -68,6 +68,15 @@ const ENFLE_CULBUTE = 0.5
 /** Combien de tours entiers elle fait — face, dos, face. */
 const TOURS_CULBUTE = 2
 
+/**
+ * À quelle distance de sa cible une carte est considérée comme ARRIVÉE.
+ *
+ * L'amortissement est asymptotique : elle n'atteint jamais exactement sa
+ * place, donc il faut un seuil — un demi-centième de carte, soit moins d'un
+ * pixel à l'écran.
+ */
+const SEUIL_ARRIVEE = 0.005
+
 /** Ce que la carte regardée bascule quand le curseur va d'un bord à l'autre. */
 const INCLINAISON_REFLET = 0.34
 /**
@@ -278,6 +287,15 @@ type Props = {
    * au butin et au hub sans rien savoir d'eux.*
    */
   onFixee?: () => void
+  /**
+   * Elle a fini de se déplacer : elle est VISUELLEMENT à sa place.
+   *
+   * Ce n'est pas `onFixee`, qui marque l'instant d'un choc ; c'est la fin du
+   * mouvement, culbute ou simple glissement amorti. *L'état du jeu change au
+   * lâcher, la carte met encore un moment à y arriver* — et il y a des choses
+   * qu'on ne doit pas effacer avant qu'elle soit posée.
+   */
+  onArrivee?: () => void
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -302,6 +320,7 @@ export function Carte3D({
   reflet = false,
   culbute = null,
   onFixee,
+  onArrivee,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -536,6 +555,8 @@ ${nuanceur.fragmentShader}`
     debutCulbute: null as number | null,
     /** Quand l'onde s'échappe du slot — à la fin de la culbute. */
     debutOnde: null as number | null,
+    /** Elle est à sa place : on ne le signale qu'au moment où ça CHANGE. */
+    arrivee: true,
   })
 
   /**
@@ -735,6 +756,22 @@ ${nuanceur.fragmentShader}`
       // l'écran. *Elle ne connaît pas les sons* — même partage que le geste,
       // où le hook annonce « tapée », « lâchée ici », et rien de plus.
       onFixee?.()
+    }
+
+    /**
+     * EST-ELLE ARRIVÉE ? On ne le dit qu'à la TRANSITION, sinon ce serait un
+     * message par image. Une culbute en cours compte comme un voyage : la
+     * place lissée y est déjà à la cible alors que la carte, elle, tourne
+     * encore en l'air.
+     */
+    const posee =
+      l.debutCulbute === null &&
+      Math.abs(l.p.x - position[0]) < SEUIL_ARRIVEE &&
+      Math.abs(l.p.y - position[1]) < SEUIL_ARRIVEE &&
+      Math.abs(l.t - taille) < SEUIL_ARRIVEE
+    if (posee !== l.arrivee) {
+      l.arrivee = posee
+      if (posee) onArrivee?.()
     }
 
     g.position.set(
