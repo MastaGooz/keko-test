@@ -1636,6 +1636,25 @@ qu'un quart de carte. Pleine, elle annonce `data-attend="rien"` — le glisser
 l'allume alors en rouge sans rien savoir de la règle, exactement comme un slot
 condamné par une arme à deux mains.
 
+**PUIS LA PILE A EU DES CASES, ET ON Y POSE À LA PLACE.** Tant qu'elle n'était
+qu'une zone de dépôt, **pleine, elle n'avait plus aucune porte** — Keko : « si
+j'ai 3 petites potions équipées, je ne peux pas mettre une grosse potion à la
+place », et « je ne peux pas réorganiser les objets équipés au sein d'une même
+catégorie ».
+
+Le rang d'une case est donc **facultatif** dans le `Slot` : sans lui on pose
+SUR LA PILE (elle s'allonge, et refuse quand elle est pleine), avec lui on pose
+SUR UNE CASE — *elle échange, comme tous les autres slots du chargement.* Ce
+qu'elle déloge repart d'où vient la pièce, ce qui donne les deux gestes d'un
+coup : remplacer une potion par une autre, et ranger deux cases entre elles.
+
+*La zone de dépôt reste large*, parce qu'une grande zone se vise mieux au doigt
+qu'un quart de carte : le rang n'est renseigné que si le point tombe VRAIMENT
+dans une case. Conséquence à connaître : viser une case occupée alors qu'il
+reste de la place remplace au lieu d'ajouter — c'est la règle des mains et du
+torse, et *deux slots voisins ne peuvent pas répondre différemment au même
+geste.*
+
 *Ce qui suit vaut pour le chargement 2D, resté en bloc de deux par deux ; le
 moteur 3D range désormais les trois cases sur une ligne, à la taille des
 pièces.*
