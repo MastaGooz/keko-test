@@ -34,7 +34,7 @@
 import * as THREE from 'three'
 
 /** Ce que dure l'onde, en secondes. */
-export const DUREE_ONDE = 0.72
+export const DUREE_ONDE = 0.58
 
 /** De combien elle s'écarte de la carte, en parts de sa largeur. */
 const ECART_ONDE = 0.3
@@ -233,7 +233,10 @@ export function poussiereDOnde(large: number, haut: number, rayon: number): Pous
       dx: Math.cos(angle),
       dy: Math.sin(angle),
       portee: large * PORTEE_GRAIN * (0.35 + tirage(i, 2) * 0.65),
-      retard: tirage(i, 3) * 0.22,
+      // LE RETARD EST UNE PART DE LA DURÉE, pas un temps écrit à la main :
+      // sinon régler la vitesse de l'onde étalerait ou tasserait les grains
+      // sans qu'on l'ait demandé.
+      retard: tirage(i, 3) * DUREE_ONDE * 0.3,
     }
   })
   const geometrie = new THREE.BufferGeometry()
