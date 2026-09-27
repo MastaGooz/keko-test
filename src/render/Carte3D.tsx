@@ -47,8 +47,14 @@ export const RAYON_COIN = 0.03
 
 /** Ce que la carte regardée bascule quand le curseur va d'un bord à l'autre. */
 const INCLINAISON_REFLET = 0.34
-/** Et de combien elle s'avance vers le regard, en unités de scène. */
-const AVANCEE_REFLET = 0.06
+/**
+ * Et de combien elle s'avance vers le regard, EN PART DE SA LARGEUR.
+ *
+ * En unités de scène, la même avancée était un cheveu sur une carte zoomée et
+ * un bond sur une case de coffre — *une distance absolue n'est pas une
+ * distance : elle vaut ce que vaut l'objet autour d'elle.*
+ */
+const AVANCEE_REFLET = 0.05
 
 /**
  * LA CARTE EST FAITE DE DEUX PIÈCES, et c'est ce qui donne les coins ronds.
@@ -556,7 +562,7 @@ ${nuanceur.fragmentShader}`
     g.position.set(
       l.p.x + Math.sin(t * 37) * amp,
       l.p.y + Math.cos(t * 29) * amp,
-      l.p.z + l.brille * AVANCEE_REFLET,
+      l.p.z + l.brille * AVANCEE_REFLET * l.t,
     )
     g.rotation.set(
       l.r.x - l.vy * INCLINAISON_REFLET,

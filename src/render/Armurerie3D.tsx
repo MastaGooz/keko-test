@@ -581,6 +581,13 @@ export function Armurerie3D({
             // du meuble qu'elle vient de quitter.
             clipper={t.slot.ou === 'reserve' && !suitLeDoigt ? clipper : null}
             engagee={suitLeDoigt && surUnSlot}
+            // ELLE RÉPOND AU CURSEUR — TANT QU'ON NE TIENT RIEN. Keko a voulu
+            // l'effet du zoom partout dans l'armurerie ; mais ici le pointeur
+            // sert aussi à PRENDRE, et *une carte tenue est le seul objet du
+            // geste* : les autres cesseraient de basculer sous un doigt qui ne
+            // les regarde plus. C'est la règle déjà tenue par le survol de la
+            // main de combat.
+            reflet={tenue === null}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />

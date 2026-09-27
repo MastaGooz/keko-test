@@ -2013,14 +2013,25 @@ Keko : « on peut avoir un effet qui bouge les cartes en 3D quand elles sont
 zoomées et qu'on passe le curseur dessus ? avec de la brillance ? »
 
 Elle **s'incline sous le pointeur**, **s'avance d'un cheveu** et **un lustre
-balaie sa face là où il se pose** (`reflet`, sur `Carte3D`). *C'est le seul
-écran où l'on REGARDE une carte sans rien en faire* — ailleurs le pointeur sert
-à la prendre, et une carte qui bascule au moment où on la saisit serait du
-bruit. Les modèles du set en profitent aussi : ce sont des cartes du même
-écran.
+balaie sa face là où il se pose** (`reflet`, sur `Carte3D`). Les modèles du set
+en profitent aussi : ce sont des cartes du même écran.
+
+**ET TOUTE L'ARMURERIE L'A EU ENSUITE** — coffre et chargement — Keko : « on
+peut étendre cet effet à toute l'armurerie ? » *J'avais écrit que le zoom
+serait le seul écran concerné, parce qu'ailleurs le pointeur sert à PRENDRE :
+c'était une objection, pas une règle*, et elle se lève en une ligne —
+**l'effet s'éteint dès qu'on tient une carte** (`reflet={tenue === null}`). Une
+carte tenue est le seul objet du geste, et les autres cessent alors de basculer
+sous un doigt qui ne les regarde plus. C'est la règle déjà tenue par le survol
+de la main de combat. Vérifié : un glisser reste impeccable, et aucune carte ne
+reste penchée derrière lui.
 
 **L'avancée n'est pas un ornement.** Sans elle, l'inclinaison se lit comme une
-image qui gondole ; avec elle, comme un objet qu'on tourne vers soi.
+image qui gondole ; avec elle, comme un objet qu'on tourne vers soi. **Elle se
+compte en part de la LARGEUR de la carte**, pas en unités de scène : la même
+distance absolue était un cheveu sur une carte zoomée et un bond sur une case
+de coffre. *Une distance absolue n'est pas une distance — elle vaut ce que vaut
+l'objet autour d'elle.*
 
 **LE LUSTRE VIT DANS LE NUANCEUR, pas dans un plan posé dessus.** Un second
 plan aurait demandé sa propre texture PAR CARTE — pour lui donner son propre
