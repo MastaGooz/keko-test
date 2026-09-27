@@ -3694,13 +3694,18 @@ ferronnerie que les cadres, en petit : un filet de laiton, deux coins coupés.
 L'énergie garde le cartouche pour rester de la famille, mais elle n'avait pas
 le problème : *son chiffre est DANS son symbole.*
 
-**ET CE CHIFFRE-LÀ SE MESURE SUR SON DISQUE, pas sur la racine.** En `rem`, il
-ne suivait pas l'orbe : celui-ci prend la hauteur de la bande, qui est une
-fraction du champ visible, donc sur un téléphone le même chiffre remplissait
-72 % du disque et touchait ses bords — Keko l'a vu là et nulle part ailleurs.
-Une requête de conteneur (`cqh`) le cale à 42 % du disque partout. *Un contenu
-qui vit DANS une forme doit se mesurer sur elle*, et une taille absolue ne vaut
-que pour l'écran où on l'a réglée.
+**ET C'EST LE SYMBOLE QUI GROSSIT, PAS LE CHIFFRE QUI RÉTRÉCIT.** Le chiffre
+était en `rem`, donc il ne suivait pas l'orbe — celui-ci prend la hauteur de la
+bande, une fraction du champ visible : sur téléphone il remplissait 72 % du
+disque et touchait ses bords. Mesuré sur le disque (`cqh`), il suivait enfin la
+forme mais devenait minuscule ; Keko : « c'est peu visible ».
+
+La bonne réponse était l'inverse : **le chiffre reprend la taille des trois
+autres mesures, et le disque s'agrandit de 22 % pour l'accueillir.** *Quatre
+chiffres qui disent la même sorte de chose se lisent à la même voix*, et
+celui-là n'a aucune raison d'être l'exception parce qu'il vit dans un disque.
+Mesuré à 844 x 390 : disque 30 px, chiffre 18 px — exactement celui de ses
+voisins — et 3 px de marge avant le titre du groupe dessous.
 
 **CHAQUE STAT DIT SON NOM EN INFOBULLE** — « Points de vie », « Cartes dans le
 deck », « Taille de la main », « Points d'action » — au survol à la souris, à la tape au

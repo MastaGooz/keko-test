@@ -5232,17 +5232,21 @@ body {
   width: auto;
   height: 100%;
   aspect-ratio: 1;
-  /* LE CHIFFRE SE MESURE SUR SON DISQUE, pas sur la racine. En `rem` il ne
-     suivait pas l'orbe : celui-ci prend la hauteur de la bande, qui est une
-     fraction du champ visible, donc sur un telephone le meme chiffre
-     remplissait presque tout le disque -- Keko : « le chiffre dans le symbole
-     des points d'action est trop gros, il touche les bords ».
-     *Un contenu qui vit DANS une forme doit se mesurer sur elle.* */
-  container-type: size;
+  /* LE DISQUE DEBORDE UN PEU DE SA LIGNE, et c'est ce qui rend son chiffre
+     lisible. Mesure sur le disque (`cqh`), le chiffre suivait bien la forme
+     mais devenait minuscule sur telephone -- Keko : « c'est peu visible ».
+     Alors on inverse : **le chiffre reprend la taille des autres mesures, et
+     c'est le SYMBOLE qui grossit pour l'accueillir.** *Quatre chiffres qui
+     disent la meme sorte de chose se lisent a la meme voix*, et celui-ci n'a
+     aucune raison d'etre l'exception parce qu'il vit dans un disque. */
+  scale: 1.22;
 }
 
 .arm-orbe .orbe-chiffre {
-  font-size: 42cqh;
+  font-size: 1.125rem;
+  /* Le disque etant agrandi par un `scale`, son contenu l'est aussi : on lui
+     rend sa taille pour qu'il reste celle des voisins. */
+  font-size: calc(1.125rem / 1.22);
 }
 
 /* LA VIE EST UN COEUR, PAS UNE JAUGE. Demande par Keko, et c'est juste sur le
