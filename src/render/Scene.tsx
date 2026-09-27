@@ -35,7 +35,7 @@ import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
-import { SON_PRENDRE, jouerSon, precharger } from './sons.ts'
+import { SON_POSER, SON_PRENDRE, jouerSon, precharger } from './sons.ts'
 import { Armurerie3D } from './Armurerie3D.tsx'
 import type { Onglet } from './armurerie-plan.ts'
 import { PageArmurerie } from './PageArmurerie.tsx'
@@ -1152,6 +1152,7 @@ export function Scene(): React.JSX.Element {
   // carte qu'il accompagne.
   useEffect(() => {
     void precharger(SON_PRENDRE)
+    void precharger(SON_POSER)
   }, [])
 
   /** Lâcher un trésor porté sur un emplacement l'y range. */
@@ -1163,7 +1164,7 @@ export function Scene(): React.JSX.Element {
       if (carte === undefined || ou === null) return
       // MÊME SON QUE LE RESTE DES DÉPÔTS : la main du butin EST la main, mais
       // ce qu'on y fait est un rangement, pas un coup.
-      jouerSon(SON_PRENDRE)
+      jouerSon(SON_POSER)
       setDescente(deplacerTresor(enCours, { ou: 'deck', id: carte.id }, { ou }))
     },
     [enCours, phase, tresors],

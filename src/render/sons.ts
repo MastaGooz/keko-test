@@ -20,8 +20,15 @@
  * quand même, pas se taire en silence.*
  */
 
-/** Le son d'une carte qu'on prend, et qu'on pose. Fourni par Keko. */
+/** Le son d'une carte qu'on PREND. Fourni par Keko. */
 export const SON_PRENDRE = 'Take card.aac'
+
+/**
+ * Celui d'une carte qu'on POSE dans un slot. *Prendre et poser sont deux
+ * gestes, donc deux sons* — le second a d'abord été le premier, faute d'avoir
+ * l'autre fichier.
+ */
+export const SON_POSER = 'Card drop.aac'
 
 /**
  * L'URL d'un fichier de `public/`. **Elle porte la date du build** : les

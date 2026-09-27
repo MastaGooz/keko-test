@@ -5085,12 +5085,16 @@ chaque lecture — *un son qui ne se décode pas doit se jouer quand même, pas 
 taire en silence.* (Vérifié sur Chrome : c'est bien le chemin Web Audio qui
 sert, le repli n'est pas sollicité.)
 
+**DEUX GESTES, DEUX SONS** : `Take card.aac` quand on prend, `Card drop.aac`
+quand on pose. Le second a d'abord été le premier, faute d'avoir l'autre
+fichier — *prendre et poser ne peuvent pas sonner pareil.*
+
 **LE SON DE LA PRISE VIT DANS LE GESTE, pas dans les écrans** — `geste-carte.ts`
 est le seul endroit où une carte est prise, qu'elle vienne de la main, du butin
 ou du coffre. *Un geste unique n'a qu'un son, posé une fois*, et les deux portes
 de la prise (le maintien au doigt, le déplacement à la souris) le partagent.
 
-**Et le son de la POSE ne se joue qu'où l'on RANGE** : l'armurerie et le butin,
+**Et celui de la POSE ne se joue qu'où l'on RANGE** : l'armurerie et le butin,
 jamais en combat. Tranché par Keko, et c'est la même raison qui prive la carte
 jouée de sa comète : *une carte jouée a déjà toute une scène à son nom.* Il ne
 part que si le dépôt ABOUTIT — on demande la règle (`accepteDepuis`) plutôt que
