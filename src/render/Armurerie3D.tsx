@@ -30,10 +30,11 @@
  * grille remplit son cadre au lieu de laisser un vide sous elle, et ce qui
  * dépasse se défile.
  */
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
-import { Carte3D } from './Carte3D.tsx'
+import { Carte3D, DUREE_CULBUTE } from './Carte3D.tsx'
+import { DUREE_ONDE } from './onde.tsx'
 import { Bouton3D } from './Bouton3D.tsx'
 import { Z_TENUE } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
@@ -386,6 +387,26 @@ export function Armurerie3D({
     return null
   }
 
+  /**
+   * LA PIÈCE QU'ON VIENT DE POSER DANS UN SLOT, et l'instant du lâcher.
+   *
+   * Elle vit dans l'ÉTAT et non dans le DOM, comme tout ce qui doit survivre
+   * à un rendu : le chargement change à l'instant même où l'on pose, donc une
+   * marque posée sur la scène serait balayée par le rendu qui suit.
+   */
+  const [culbute, setCulbute] = useState<{ id: string; n: number } | null>(null)
+
+  // ON LA REPOSE UNE FOIS LA SCÈNE JOUÉE : sans ça elle rejouerait au moindre
+  // remontage, et la carte culbuterait sans qu'on y ait touché.
+  useEffect(() => {
+    if (culbute === null) return
+    const minuteur = window.setTimeout(
+      () => setCulbute(null),
+      (DUREE_CULBUTE + DUREE_ONDE + 0.3) * 1000,
+    )
+    return () => window.clearTimeout(minuteur)
+  }, [culbute])
+
   const { tenue, doigt, prendre } = useGesteCarte({
     z: Z_TENUE,
     onTaper: (i) => {
@@ -425,7 +446,15 @@ export function Armurerie3D({
       // LE SON DE LA POSE, et seulement si le dépôt ABOUTIT : un slot qui
       // refuse ne doit pas sonner comme un slot qui prend. On demande la règle
       // plutôt que de la recopier — la même que celle qui allume le slot.
-      if (accepteDepuis(hub, t.slot, cible, t.objet.id)) jouerSon(SON_POSER)
+      const pris = accepteDepuis(hub, t.slot, cible, t.objet.id)
+      if (pris) jouerSon(SON_POSER)
+      // ELLE CULBUTE EN SE FIXANT — mais seulement dans un SLOT. Reposer au
+      // râtelier n'est pas un équipement, c'est un rangement : *une mise en
+      // scène qui se joue à chaque geste cesse d'en distinguer un.*
+      if (pris && cible.ou !== 'reserve') {
+        const piece = t.objet.id
+        setCulbute((c) => ({ id: piece, n: (c?.n ?? 0) + 1 }))
+      }
       onDeplacer?.(t.slot, cible, t.objet.id)
     },
   })
@@ -490,6 +519,11 @@ export function Armurerie3D({
   const montrees = Math.max(0, Math.min(cases, total - depart))
   const vides = cases - montrees
 
+  /**
+   * OÙ L'ONDE DOIT PARTIR : la place de la carte qu'on vient de poser. On la
+   * RETIENT, parce que l'onde reste montée après coup et n'a aucune raison de
+   * sauter à l'origine quand la culbute s'efface.
+   */
   return (
     <group>
       {/* CE QUI PREND LA PIÈCE QU'ON TIENT S'ALLUME. */}
@@ -597,11 +631,23 @@ export function Armurerie3D({
             // les regarde plus. C'est la règle déjà tenue par le survol de la
             // main de combat.
             reflet={tenue === null && !sousLeZoom}
+            culbute={culbute !== null && culbute.id === t.id ? culbute.n : null}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />
         )
       })}
+
+      {/* L'ONDE EST TOUJOURS MONTÉE, et c'est un correctif, pas un choix de
+          style : montée À L'INSTANT du dépôt, son `useFrame` ne partait
+          jamais — le composant se rendait (quatre fois, vérifié) sans qu'une
+          seule image ne l'atteigne. *Un objet R3F qui naît au milieu d'un
+          geste peut manquer la boucle ; un objet qui existe déjà ne peut
+          pas.* Elle dort donc, invisible, et c'est le JETON qui la réveille.
+
+          Sa place se LIT sur la carte qui vient de tomber, et se retient :
+          quand la culbute s'efface, l'onde a fini de jouer, mais elle ne doit
+          pas sauter à l'origine pour autant. */}
 
       <Bouton3D
         texte="Descendre"

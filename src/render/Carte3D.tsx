@@ -24,6 +24,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
+import { ANNEAUX_ONDE, matieresDOnde, poserLOnde } from './onde.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
 import {
   DEBORD_CONTOUR,
@@ -44,6 +45,28 @@ const EPAISSEUR = 0.012
 
 /** Le rayon des coins : 3 % de la largeur, comme le `border-radius` du gabarit. */
 export const RAYON_COIN = 0.03
+
+/**
+ * LA CULBUTE : ce que fait une pièce qu'on vient de poser dans un slot.
+ *
+ * Demandé par Keko — « elle grossit comme si on l'approchait de la caméra,
+ * elle tourne plusieurs fois sur elle-même face/dos en plongeant d'un coup
+ * vers le slot, et quand elle se fixe une onde d'énergie s'en échappe ».
+ *
+ * **Tout le poids vient du CONTRASTE DE VITESSE**, comme le bond des créatures
+ * et la carte qui s'abat : elle monte lentement, marque le temps qu'il faut
+ * pour qu'on la voie tourner, puis tombe d'un coup. Les deux phases ne durent
+ * pas pareil — la chute fait un tiers du temps pour la moitié du trajet.
+ */
+export const DUREE_CULBUTE = 0.66
+/** La part du temps passée à monter et à tourner ; le reste est la chute. */
+const PART_MONTEE = 0.64
+/** De combien elle s'approche de la caméra, en part de sa propre largeur. */
+const APPROCHE_CULBUTE = 1.15
+/** Et de combien elle grossit en chemin. */
+const ENFLE_CULBUTE = 0.5
+/** Combien de tours entiers elle fait — face, dos, face. */
+const TOURS_CULBUTE = 2
 
 /** Ce que la carte regardée bascule quand le curseur va d'un bord à l'autre. */
 const INCLINAISON_REFLET = 0.34
@@ -228,6 +251,21 @@ type Props = {
    * survol du projet.
    */
   reflet?: boolean
+  /**
+   * UN JETON QUI DIT « TU VIENS D'ÊTRE POSÉE DANS UN SLOT » : la carte joue
+   * alors sa culbute et se moque de l'amortissement.
+   *
+   * **C'EST UN JETON, PAS UN INSTANT**, et ça a coûté une fausse piste : un
+   * instant lu dehors (`lireHorloge`) peut être en retard de plusieurs
+   * secondes sur `clock.elapsedTime` — *l'horloge qui compte est celle de la
+   * scène, et seule la scène la connaît.* La carte note donc elle-même quand
+   * la culbute commence, comme `saut` lui fait sauter sa place.
+   *
+   * Elle montre son DOS en tournant : un plan de plus, monté pour l'occasion
+   * seulement. *Une carte qui tourne sans verso n'est pas une carte, c'est une
+   * image qui disparaît un temps sur deux.*
+   */
+  culbute?: unknown
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -250,6 +288,7 @@ export function Carte3D({
   clipper = null,
   apparue = null,
   reflet = false,
+  culbute = null,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -259,7 +298,7 @@ export function Carte3D({
   const { size, viewport } = useThree()
   const dpr = viewport.dpr
 
-  const { face, laiton, halo } = useMemo(() => {
+  const { face, laiton, halo, verso } = useMemo(() => {
     const laiton = new THREE.MeshStandardMaterial({
       color: '#b79a6a',
       metalness: 0.85,
@@ -379,7 +418,18 @@ ${nuanceur.fragmentShader}`
       depthWrite: false,
       blending: THREE.AdditiveBlending,
     })
-    return { face, laiton, halo }
+    /**
+     * LE VERSO, pour la culbute seule. Il n'est plaqué que pendant qu'elle
+     * tourne : le reste du temps le laiton du corps suffit, et *un plan de
+     * plus par carte pour une seconde d'animation ne vaut pas son prix.*
+     */
+    const verso = new THREE.MeshStandardMaterial({
+      color: '#1b1a22',
+      roughness: 0.55,
+      metalness: 0.15,
+      alphaTest: 0.5,
+    })
+    return { face, laiton, halo, verso }
   }, [])
 
   /**
@@ -466,7 +516,34 @@ ${nuanceur.fragmentShader}`
     vy: 0,
     /** Combien le reflet est présent : 1 sous le curseur, 0 sinon. */
     brille: 0,
+    /** D'où la culbute est partie, figé à son premier instant. */
+    depart: new THREE.Vector3(),
+    departT: 1,
+    /** Quand elle a commencé, en secondes d'horloge de scène ; `null` sinon. */
+    debutCulbute: null as number | null,
+    /** Quand l'onde s'échappe du slot — à la fin de la culbute. */
+    debutOnde: null as number | null,
   })
+
+  /**
+   * L'ONDE VIT DANS LA CARTE, et c'est ce qui l'a fait marcher.
+   *
+   * Elle a d'abord été un composant voisin, monté par l'écran au moment du
+   * dépôt puis monté en permanence, déclenché par une prop puis par une ref :
+   * **dans tous les cas sa boucle d'animation s'arrêtait à l'instant du
+   * lâcher**, mesuré à la sonde. La carte, elle, voit sa culbute sans faute —
+   * *le plus sûr moyen qu'une mise en scène parte à l'heure est de la confier
+   * à l'objet qui la joue.*
+   *
+   * Ses rayons sont en unités de CARTE, donc l'échelle du groupe les met
+   * d'elle-même à la taille du slot : rien à convertir.
+   */
+  const anneaux = useRef<(THREE.Mesh | null)[]>([])
+  const centreOnde = useRef<THREE.Mesh>(null)
+  const matieresOnde = useMemo(() => matieresDOnde(), [])
+
+  /** Le jeton vu au dernier tour, pour savoir qu'il vient de changer. */
+  const jetonCulbute = useRef(culbute)
 
   /**
    * OÙ LE CURSEUR SE TIENT, brut. Il vit dans une `ref` et non dans l'état :
@@ -497,11 +574,30 @@ ${nuanceur.fragmentShader}`
   // valeur. Les matériaux sont propres à l'instance, donc on ne coupe jamais
   // la carte du voisin.
   useEffect(() => {
-    for (const m of [face, laiton, halo]) {
+    for (const m of [face, laiton, halo, verso]) {
       m.clippingPlanes = clipper
       m.needsUpdate = true
     }
-  }, [clipper, face, laiton, halo])
+  }, [clipper, face, laiton, halo, verso])
+
+  // LA TEXTURE DU DOS N'ARRIVE QUE QUAND LA CULBUTE COMMENCE : elle sort du
+  // même cache partagé que les faces, donc la première la paie et les
+  // suivantes la retrouvent prête.
+  useEffect(() => {
+    if (culbute === null || culbute === undefined || verso.map !== null) return
+    let vivant = true
+    void textureDuDos()
+      .then((texture) => {
+        if (!vivant) return
+        verso.map = texture
+        verso.color.setScalar(1)
+        verso.needsUpdate = true
+      })
+      .catch(() => {})
+    return () => {
+      vivant = false
+    }
+  }, [culbute, verso])
 
   const jeton = useRef(saut)
 
@@ -558,6 +654,69 @@ ${nuanceur.fragmentShader}`
     l.brille += ((dessus ? 1 : 0) - l.brille) * kReflet
     l.vx += ((dessus ? curseur.current.x : 0) - l.vx) * kReflet
     l.vy += ((dessus ? curseur.current.y : 0) - l.vy) * kReflet
+
+    /**
+     * LA CULBUTE PREND LA MAIN SUR TOUT LE RESTE, et c'est voulu : pendant
+     * qu'elle se joue, la carte n'est plus un objet qui rejoint sa place, elle
+     * est une mise en scène. L'amortissement reprend à la fin, remis à la
+     * cible pour qu'il n'ait rien à rattraper.
+     */
+    if (jetonCulbute.current !== culbute) {
+      jetonCulbute.current = culbute
+      if (culbute !== null && culbute !== undefined) {
+        l.debutCulbute = t
+        l.depart.copy(l.p)
+        l.departT = l.t
+      }
+    }
+    if (l.debutCulbute !== null) {
+      const dt = t - l.debutCulbute
+      if (dt < DUREE_CULBUTE) {
+        const p = dt / DUREE_CULBUTE
+        // ELLE MONTE VERS LA CAMÉRA, puis TOMBE D'UN COUP. Le premier temps
+        // freine en arrivant (on la regarde tourner), le second part de rien
+        // et accélère jusqu'au bout — *c'est le contraste qui fait le poids,
+        // pas la distance.*
+        let x: number, y: number, z: number, ech: number
+        const haut = APPROCHE_CULBUTE * l.departT
+        const grosse = l.departT * (1 + ENFLE_CULBUTE)
+        // Elle ne fait qu'un tiers du chemin en montant : le reste se fait
+        // dans la chute, et c'est ce qui la rend brutale.
+        const xHaut = l.depart.x + (position[0] - l.depart.x) * 0.35
+        const yHaut = l.depart.y + (position[1] - l.depart.y) * 0.35 + haut * 0.1
+        if (p < PART_MONTEE) {
+          const q = p / PART_MONTEE
+          const m = 1 - (1 - q) * (1 - q) * (1 - q)
+          x = l.depart.x + (xHaut - l.depart.x) * m
+          y = l.depart.y + (yHaut - l.depart.y) * m
+          z = l.depart.z + haut * m
+          ech = l.departT + (grosse - l.departT) * m
+        } else {
+          const q = (p - PART_MONTEE) / (1 - PART_MONTEE)
+          const c = q * q * q
+          x = xHaut + (position[0] - xHaut) * c
+          y = yHaut + (position[1] - yHaut) * c
+          z = l.depart.z + haut * (1 - c) + (position[2] - l.depart.z) * c
+          ech = grosse + (taille - grosse) * c
+        }
+        g.position.set(x, y, z)
+        g.scale.setScalar(ech)
+        // LES TOURS SE FONT SUR TOUTE LA SÉQUENCE et tombent JUSTE : deux
+        // tours entiers, donc la face revient devant au moment où elle se
+        // fixe. Un compte qui ne retombe pas rond finirait de biais.
+        const r = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2
+        g.rotation.set(0, TOURS_CULBUTE * Math.PI * 2 * r, 0)
+        return
+      }
+      // ELLE SE POSE, et l'amortissement repart de la cible : sinon il
+      // rattraperait un écart que la mise en scène vient d'inventer. C'est
+      // aussi l'instant où l'onde s'échappe.
+      l.debutOnde = t
+      l.debutCulbute = null
+      l.p.set(position[0], position[1], position[2])
+      l.r.set(rotation[0], rotation[1], rotation[2])
+      l.t = taille
+    }
 
     g.position.set(
       l.p.x + Math.sin(t * 37) * amp,
@@ -628,6 +787,17 @@ ${nuanceur.fragmentShader}`
     }
     face.emissiveIntensity = eclat * 1.5
     laiton.emissiveIntensity = eclat * 1.1
+    // L'ONDE, une fois la carte fixée dans son slot.
+    if (l.debutOnde !== null) {
+      const fini = poserLOnde(
+        t - l.debutOnde,
+        anneaux.current,
+        centreOnde.current,
+        matieresOnde,
+      )
+      if (fini) l.debutOnde = null
+    }
+
     // LE LISERÉ RESPIRE, à peine : c'est ce qui le fait lire comme une lumière
     // et non comme un trait peint. Sur la même horloge que le frémissement,
     // mais bien plus lente — deux battements rapides se liraient comme un
@@ -645,6 +815,29 @@ ${nuanceur.fragmentShader}`
       <mesh position={[0, 0, -EPAISSEUR]} material={halo} raycast={() => null}>
         <planeGeometry args={[LARGE + DEBORD_CONTOUR * 2, HAUT + DEBORD_CONTOUR * 2]} />
       </mesh>
+
+      {/* L'ONDE : des anneaux posés devant la face, en unités de carte. Ils
+          sont toujours là et dorment à opacité nulle — *un objet qui naît au
+          milieu d'un geste peut manquer la boucle ; un objet qui existe déjà
+          ne peut pas.* */}
+      <group position={[0, 0, EPAISSEUR / 2 + 0.01]}>
+        {Array.from({ length: ANNEAUX_ONDE }, (_, i) => (
+          <mesh
+            key={i}
+            ref={(m) => {
+              anneaux.current[i] = m
+            }}
+            material={matieresOnde[i]}
+            raycast={() => null}
+            scale={0}
+          >
+            <ringGeometry args={[0.44, 0.5, 64]} />
+          </mesh>
+        ))}
+        <mesh ref={centreOnde} material={matieresOnde[ANNEAUX_ONDE]} raycast={() => null} scale={0}>
+          <circleGeometry args={[0.5, 48]} />
+        </mesh>
+      </group>
 
       {/* LE CORPS : le laiton, tranche et coins arrondis compris. C'est lui
           qui porte les évènements — il couvre toute la carte.
@@ -672,6 +865,17 @@ ${nuanceur.fragmentShader}`
         {/* LA FACE : la carte peinte, un cheveu devant le corps. Ses coins
             transparents laissent voir le laiton arrondi derrière. */}
         <mesh geometry={GEOMETRIE_FACE} material={face} position={[0, 0, EPAISSEUR / 2 + 0.001]} raycast={() => null} />
+        {/* LE VERSO, le temps de la culbute : sans lui, la carte disparaît un
+            demi-tour sur deux et le geste ne se lit plus. */}
+        {culbute !== null && culbute !== undefined && (
+          <mesh
+            geometry={GEOMETRIE_FACE}
+            material={verso}
+            position={[0, 0, -EPAISSEUR / 2 - 0.001]}
+            rotation={[0, Math.PI, 0]}
+            raycast={() => null}
+          />
+        )}
       </mesh>
     </group>
   )

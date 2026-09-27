@@ -3314,6 +3314,56 @@ pièce à sa case au lieu de l'y téléporter, et une pièce prise au maintien s
 être bougée reste à sa place — avant, elle disparaissait jusqu'au premier
 mouvement.
 
+**UNE PIÈCE QU'ON POSE DANS UN SLOT CULBUTE, ET UNE ONDE S'EN ÉCHAPPE.**
+Demandé par Keko : « elle grossit comme si on l'approchait de la caméra, elle
+tourne plusieurs fois sur elle-même face/dos en plongeant d'un coup vers le
+slot, et quand elle se fixe on fait un petit effet d'onde, comme si une énergie
+magique s'en échappait ».
+
+**Tout le poids vient du CONTRASTE DE VITESSE**, comme le bond des créatures et
+la carte qui s'abat : elle monte lentement en grossissant — le temps qu'on la
+voie tourner — puis tombe d'un coup. La chute fait un tiers du temps pour les
+deux tiers du trajet.
+
+Quatre choses à ne pas défaire :
+
+- **elle montre son DOS en tournant.** Un plan de plus, monté pour l'occasion
+  seulement : *une carte qui tourne sans verso n'est pas une carte, c'est une
+  image qui disparaît un temps sur deux.* Sa texture sort du même cache que les
+  faces, donc la première culbute la paie et les suivantes la retrouvent ;
+- **deux tours ENTIERS**, pour que la face revienne devant à l'instant où elle
+  se fixe. Un compte qui ne retombe pas rond la laisserait de biais ;
+- **la culbute prend la main sur l'amortissement**, et le lui rend en le
+  remettant à la cible : sinon il rattraperait un écart que la mise en scène
+  vient d'inventer ;
+- **elle ne se joue que dans un SLOT.** Reposer au râtelier est un rangement,
+  pas un équipement — *une mise en scène qui se joue à chaque geste cesse d'en
+  distinguer un.*
+
+**C'EST UN JETON QUI LA DÉCLENCHE, PAS UN INSTANT, et ça a coûté une fausse
+piste.** `lireHorloge()` peut être en retard de plusieurs secondes sur
+`clock.elapsedTime` — mesuré : 7,4 contre 24,1, l'écart d'un module rechargé à
+chaud qui dédouble sa variable. *L'horloge qui compte est celle de la scène, et
+seule la scène la connaît* : la carte note elle-même quand la culbute commence,
+comme `saut` lui fait sauter sa place.
+
+**ET L'ONDE VIT DANS LA CARTE, pas à côté d'elle.** C'est le vrai coût de cette
+étape. Elle a été un composant voisin monté au moment du dépôt, puis monté en
+permanence, déclenché par une prop, puis par un effet, puis par une ref écrite
+à la main : **dans les quatre cas sa boucle d'animation s'arrêtait à l'instant
+du lâcher**, mesuré à la sonde (`t` figé à la milliseconde du drop). La carte,
+elle, voit sa culbute sans faute.
+
+*La règle qu'on en tire* : **le plus sûr moyen qu'une mise en scène parte à
+l'heure est de la confier à l'objet qui la joue.** Les anneaux sont donc des
+enfants de la carte, et leurs rayons sont en unités de CARTE — l'échelle du
+groupe les met d'elle-même à la taille du slot, il n'y a rien à convertir.
+`onde.tsx` ne monte plus rien : il prête sa matière et son mouvement.
+
+Trois anneaux décalés plutôt qu'un seul — *c'est le décalage qui fait l'onde,
+pas la forme*, la leçon des cinq brassées du mélange — un éclat bref au centre
+pour le choc, et l'or additif du reste du jeu.
+
 **LA PIÈCE TENUE PREND LA TAILLE DU SLOT QUI L'ACCEPTE**, et reste réduite
 partout ailleurs. Demandé par Keko : « quand on drag un objet depuis le stash
 vers l'équipement, on peut lui redonner sa taille normale dès qu'il est
