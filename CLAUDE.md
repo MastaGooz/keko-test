@@ -3694,6 +3694,14 @@ ferronnerie que les cadres, en petit : un filet de laiton, deux coins coupés.
 L'énergie garde le cartouche pour rester de la famille, mais elle n'avait pas
 le problème : *son chiffre est DANS son symbole.*
 
+**ET CE CHIFFRE-LÀ SE MESURE SUR SON DISQUE, pas sur la racine.** En `rem`, il
+ne suivait pas l'orbe : celui-ci prend la hauteur de la bande, qui est une
+fraction du champ visible, donc sur un téléphone le même chiffre remplissait
+72 % du disque et touchait ses bords — Keko l'a vu là et nulle part ailleurs.
+Une requête de conteneur (`cqh`) le cale à 42 % du disque partout. *Un contenu
+qui vit DANS une forme doit se mesurer sur elle*, et une taille absolue ne vaut
+que pour l'écran où on l'a réglée.
+
 **CHAQUE STAT DIT SON NOM EN INFOBULLE** — « Points de vie », « Cartes dans le
 deck », « Taille de la main », « Points d'action » — au survol à la souris, à la tape au
 doigt. Demandé par Keko. *Un chiffre à côté d'un symbole se devine, il ne se

@@ -5232,6 +5232,17 @@ body {
   width: auto;
   height: 100%;
   aspect-ratio: 1;
+  /* LE CHIFFRE SE MESURE SUR SON DISQUE, pas sur la racine. En `rem` il ne
+     suivait pas l'orbe : celui-ci prend la hauteur de la bande, qui est une
+     fraction du champ visible, donc sur un telephone le meme chiffre
+     remplissait presque tout le disque -- Keko : « le chiffre dans le symbole
+     des points d'action est trop gros, il touche les bords ».
+     *Un contenu qui vit DANS une forme doit se mesurer sur elle.* */
+  container-type: size;
+}
+
+.arm-orbe .orbe-chiffre {
+  font-size: 42cqh;
 }
 
 /* LA VIE EST UN COEUR, PAS UNE JAUGE. Demande par Keko, et c'est juste sur le
