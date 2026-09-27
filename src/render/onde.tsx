@@ -37,16 +37,17 @@ import * as THREE from 'three'
 export const DUREE_ONDE = 0.72
 
 /** De combien elle s'écarte de la carte, en parts de sa largeur. */
-const ECART_ONDE = 0.42
+const ECART_ONDE = 0.3
 
 /**
- * La demi-épaisseur du trait, en parts de la largeur de la carte.
+ * La longueur de la TRAÎNE, vers l'intérieur, en parts de la largeur.
  *
- * Elle a DOUBLÉ en même temps que le trait s'est mis à fondre sur ses bords :
- * *un dégradé a besoin de place pour se faire*, et une bande large qui
- * s'estompe se lit plus fine qu'un liseré net deux fois plus mince.
+ * Ce n'est plus une épaisseur : le front est net sur le bord EXTÉRIEUR et ne
+ * fond que vers le dedans. *Une crête suivie d'une traîne se lit plus fine
+ * qu'une bande symétrique de même largeur*, parce que l'oeil place le trait là
+ * où il est franc.
  */
-const TRAIT = 0.055
+const TRAINE = 0.07
 
 /** En combien de points le contour est échantillonné. */
 const SEGMENTS = 160
@@ -55,7 +56,10 @@ const SEGMENTS = 160
 const GRAINS = 26
 
 /** Jusqu'où va le plus lointain, en parts de la largeur. */
-const PORTEE_GRAIN = 0.6
+const PORTEE_GRAIN = 0.55
+
+/** Où l'on range un grain qui ne joue pas : derrière tout, hors du champ. */
+const LOIN = -900
 
 /** Un rectangle aux coins arrondis, dans le plan XY, centré sur l'origine. */
 function contour(large: number, haut: number, rayon: number): THREE.Path {
@@ -91,23 +95,27 @@ function ondule(t: number): number {
 }
 
 /**
- * LE TRAIT DE L'ONDE : une BANDE qui s'éteint sur ses deux bords.
+ * LE TRAIT DE L'ONDE : UN FRONT NET, UNE TRAÎNE QUI S'ÉTEINT DEDANS.
  *
- * Il a d'abord été un liseré plein — une forme à trou, nette des deux côtés —
- * et Keko l'a repris : « je trouve l'onde trop pleine, il faudrait un truc
- * plus naturel avec un dégradé ». *Un trait qui commence et finit net est un
- * TRACÉ ; une lumière, elle, n'a pas de bord* — c'est la leçon déjà payée sur
- * le halo des cartes, où un rectangle de couleur unie ne pouvait pas passer
- * pour une lueur.
+ * Il a d'abord été un liseré plein, puis une bande fondue des DEUX côtés —
+ * Keko : « je voudrais un truc plus fin, qui progresse un peu moins loin, et
+ * qui est plein juste sur le bord, avec vers l'intérieur un dégradé de moins
+ * en moins opaque qui le suit ».
  *
- * D'où une bande construite à la main : trois rangées de points le long du
- * contour — intérieur, milieu, extérieur — et la lumière portée par les
- * COULEURS DE SOMMET, nulle sur les bords, pleine au centre. Le dégradé est
- * alors interpolé par le GPU, sans texture ni shader.
+ * *C'est la forme d'une vague, et elle n'est pas symétrique* : une crête
+ * franche à l'avant, une traîne derrière. Deux rangées suffisent donc — le
+ * contour lui-même, à pleine lumière, et une rangée en retrait, éteinte.
  *
- * **Elle respire aussi le long du tour** : sans ça, une bande d'intensité
- * constante reste un tracé, juste un peu plus doux. C'est la modulation qui la
- * rend vivante.
+ * **LE DÉGRADÉ PASSE PAR L'ALPHA, PAS PAR LA COULEUR, et ça a coûté un bug
+ * visible.** *Le canvas du jeu est TRANSPARENT* : en mélange additif, un
+ * sommet noir mais d'alpha plein n'ajoute aucune couleur ET écrit quand même
+ * de l'alpha — donc un pixel NOIR OPAQUE par-dessus la page. Keko : « il y a
+ * un bug qui laisse des particules noires après l'effet ». Les couleurs de
+ * sommet sont donc en RGBA, et c'est l'alpha qui s'éteint.
+ *
+ * **Elle respire le long du tour** : sans ça, un front d'intensité constante
+ * reste un tracé, juste un peu plus doux. C'est la modulation qui la rend
+ * vivante.
  *
  * Ses dimensions sont celles du gabarit, passées par la carte — *deux modules
  * qui décriraient la même forme chacun de leur côté divergeraient au premier
@@ -120,7 +128,7 @@ export function geometrieDOnde(
 ): THREE.BufferGeometry {
   const points = contour(large, haut, rayon).getSpacedPoints(SEGMENTS)
   const n = SEGMENTS
-  const e = large * TRAIT
+  const e = large * TRAINE
   const places: number[] = []
   const teintes: number[] = []
 
@@ -130,7 +138,7 @@ export function geometrieDOnde(
     const apres = points[(i + 1) % n]!
     // LA NORMALE SORT DE LA TANGENTE, pas du centre : sur un rectangle, une
     // direction radiale part de travers dès qu'on s'éloigne des diagonales, et
-    // la bande s'épaissirait aux coins.
+    // la traîne s'épaissirait aux coins.
     const tx = apres.x - avant.x
     const ty = apres.y - avant.y
     const l = Math.hypot(tx, ty) || 1
@@ -140,22 +148,22 @@ export function geometrieDOnde(
       nx = -nx
       ny = -ny
     }
-    places.push(p.x - nx * e, p.y - ny * e, 0, p.x, p.y, 0, p.x + nx * e, p.y + ny * e, 0)
-    const m = 0.4 + 0.6 * ondule(i / n)
-    teintes.push(0, 0, 0, m, m * 0.87, m * 0.62, 0, 0, 0)
+    // Le front est SUR le contour, la traîne rentre : rien ne dépasse devant.
+    places.push(p.x, p.y, 0, p.x - nx * e, p.y - ny * e, 0)
+    const m = 0.45 + 0.55 * ondule(i / n)
+    teintes.push(1, 0.87, 0.62, m, 1, 0.87, 0.62, 0)
   }
 
   const indices: number[] = []
   for (let i = 0; i < n; i++) {
-    const a = i * 3
-    const b = ((i + 1) % n) * 3
+    const a = i * 2
+    const b = ((i + 1) % n) * 2
     indices.push(a, a + 1, b + 1, a, b + 1, b)
-    indices.push(a + 1, a + 2, b + 2, a + 1, b + 2, b + 1)
   }
 
   const geometrie = new THREE.BufferGeometry()
   geometrie.setAttribute('position', new THREE.Float32BufferAttribute(places, 3))
-  geometrie.setAttribute('color', new THREE.Float32BufferAttribute(teintes, 3))
+  geometrie.setAttribute('color', new THREE.Float32BufferAttribute(teintes, 4))
   geometrie.setIndex(indices)
   return geometrie
 }
@@ -206,9 +214,11 @@ export type Poussiere = {
  * du milieu se lit comme une explosion, une poussière qui se détache d'un bord
  * se lit comme de la matière qui s'envole.*
  *
- * **L'intensité passe par la COULEUR, pas par l'opacité.** En mélange additif,
- * un grain noir est un grain invisible — et c'est la seule façon de faire
- * vivre chaque grain à son rythme avec un seul matériau.
+ * **L'intensité passe par l'ALPHA de chaque sommet**, ce qui permet de les
+ * faire vivre à leur rythme avec un seul matériau — et un grain éteint est
+ * en plus **renvoyé hors du champ**. Les deux, parce qu'un grain noir d'alpha
+ * plein tache le canvas transparent (voir le trait), et parce qu'un grain
+ * qu'on ne dessine pas est le seul qui ne puisse rien tacher du tout.
  */
 export function poussiereDOnde(large: number, haut: number, rayon: number): Poussiere {
   const trace = contour(large, haut, rayon).getSpacedPoints(GRAINS * 4)
@@ -227,10 +237,14 @@ export function poussiereDOnde(large: number, haut: number, rayon: number): Pous
     }
   })
   const geometrie = new THREE.BufferGeometry()
-  geometrie.setAttribute('position', new THREE.BufferAttribute(new Float32Array(GRAINS * 3), 3))
-  geometrie.setAttribute('color', new THREE.BufferAttribute(new Float32Array(GRAINS * 3), 3))
+  const places = new Float32Array(GRAINS * 3)
+  // AU LOIN TANT QU'ILS NE JOUENT PAS : un grain qui attend son tour à
+  // l'origine serait un point posé au milieu de la carte.
+  for (let i = 0; i < GRAINS; i++) places[i * 3 + 2] = LOIN
+  geometrie.setAttribute('position', new THREE.BufferAttribute(places, 3))
+  geometrie.setAttribute('color', new THREE.BufferAttribute(new Float32Array(GRAINS * 4), 4))
   const matiere = new THREE.PointsMaterial({
-    size: large * 0.045,
+    size: large * 0.04,
     sizeAttenuation: true,
     vertexColors: true,
     transparent: true,
@@ -276,7 +290,8 @@ export function poserLOnde(
   poussiere.semis.forEach((grain, i) => {
     const g = fini ? -1 : (dt - grain.retard) / (DUREE_ONDE - grain.retard)
     if (g < 0 || g >= 1) {
-      teintes.setXYZ(i, 0, 0, 0)
+      teintes.setXYZW(i, 1, 0.87, 0.62, 0)
+      places.setXYZ(i, 0, 0, LOIN)
       return
     }
     const e = 1 - (1 - g) * (1 - g) * (1 - g)
@@ -284,7 +299,7 @@ export function poserLOnde(
     // Il s'allume d'un coup et s'éteint en traînant : un grain qui monterait
     // en douceur se lirait comme une lampe, pas comme une étincelle.
     const vif = (1 - g) * (1 - g) * (0.6 + tirage(i, 4) * 0.8)
-    teintes.setXYZ(i, vif, vif * 0.87, vif * 0.62)
+    teintes.setXYZW(i, 1, 0.87, 0.62, Math.min(1, vif))
   })
   places.needsUpdate = true
   teintes.needsUpdate = true

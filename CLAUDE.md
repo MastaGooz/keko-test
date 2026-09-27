@@ -3376,26 +3376,36 @@ Trois conséquences, et elles tiennent ensemble :
   plutôt que se poser dessus ;
 - **une seule vague**, puisqu'elle part à la taille de l'objet — *la première
   dit déjà tout, les suivantes n'étaient qu'un écho* ;
-- **le trait est une BANDE QUI S'ÉTEINT SUR SES DEUX BORDS**, pas un liseré
-  plein. Il a d'abord été une forme à trou, nette des deux côtés — Keko : « je
-  trouve l'onde trop pleine, il faudrait un truc plus naturel avec un
-  dégradé ». *Un trait qui commence et finit net est un TRACÉ ; une lumière,
-  elle, n'a pas de bord* — c'est la leçon déjà payée sur le halo des cartes.
+- **le trait est UN FRONT NET SUIVI D'UNE TRAÎNE QUI S'ÉTEINT DEDANS.** Il a
+  été un liseré plein, puis une bande fondue des deux côtés, avant que Keko ne
+  le dise exactement : « plus fin, qui progresse un peu moins loin, et qui est
+  plein juste sur le bord, avec vers l'intérieur un dégradé de moins en moins
+  opaque qui le suit ».
 
-  Trois rangées de points le long du contour — intérieur, milieu, extérieur —
-  et la lumière portée par les **couleurs de sommet**, nulle sur les bords,
-  pleine au centre : le dégradé est interpolé par le GPU, sans texture ni
-  shader. **La normale sort de la TANGENTE, pas du centre** : sur un rectangle,
-  une direction radiale part de travers dès qu'on s'éloigne des diagonales, et
-  la bande s'épaissirait aux coins.
+  *C'est la forme d'une vague, et elle n'est pas symétrique* — une crête
+  franche à l'avant, une traîne derrière. Deux rangées suffisent donc : le
+  contour lui-même à pleine lumière, une rangée en retrait, éteinte. **Une
+  crête suivie d'une traîne se lit plus fine qu'une bande symétrique de même
+  largeur**, parce que l'oeil place le trait là où il est franc.
 
-  **Elle respire le long du tour**, par une somme de trois sinus — sans ça une
-  bande d'intensité constante reste un tracé, juste un peu plus doux. Les
+  **LE DÉGRADÉ PASSE PAR L'ALPHA, PAS PAR LA COULEUR, et ça a coûté un bug
+  visible.** *Le canvas du jeu est TRANSPARENT* : en mélange additif, un sommet
+  noir mais d'alpha plein n'ajoute aucune couleur ET écrit quand même de
+  l'alpha — donc un pixel NOIR OPAQUE par-dessus la page. Keko : « il y a un
+  bug qui laisse des particules noires après l'effet ». Les couleurs de sommet
+  sont donc en RGBA (three l'accepte dès que l'attribut a quatre composantes),
+  c'est l'alpha qui s'éteint, et un grain qui ne joue pas est en plus renvoyé
+  **hors du champ** : *un grain qu'on ne dessine pas est le seul qui ne puisse
+  rien tacher du tout.*
+
+  **La normale sort de la TANGENTE, pas du centre** : sur un rectangle, une
+  direction radiale part de travers dès qu'on s'éloigne des diagonales, et la
+  traîne s'épaissirait aux coins.
+
+  **Elle respire le long du tour**, par une somme de trois sinus — sans ça un
+  front d'intensité constante reste un tracé, juste un peu plus doux. Les
   fréquences sont ENTIÈRES, parce que le contour est fermé : une fréquence qui
-  ne retombe pas juste laisserait une couture là où le tracé se referme. Et sa
-  demi-épaisseur a DOUBLÉ au passage — *un dégradé a besoin de place pour se
-  faire*, et une bande large qui s'estompe se lit plus fine qu'un liseré net
-  deux fois plus mince.
+  ne retombe pas juste laisserait une couture là où le tracé se referme.
 
   Ses dimensions lui sont passées par la carte : *deux modules qui décriraient
   la même forme chacun de leur côté divergeraient au premier réglage.*
