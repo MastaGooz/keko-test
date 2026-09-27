@@ -296,6 +296,15 @@ type Props = {
    * qu'on ne doit pas effacer avant qu'elle soit posée.
    */
   onArrivee?: () => void
+  /**
+   * ELLE NE RÉPOND PLUS AU POINTEUR : ni tape, ni glisser, ni survol.
+   *
+   * Le temps qu'une mise en scène se joue, la carte n'est plus un objet qu'on
+   * manipule — Keko : « durant l'animation, il faut que la carte devienne non
+   * cliquable, sinon tu peux la recliquer, la draguer, etc. » *Une carte qu'on
+   * peut reprendre en plein vol est une carte à deux endroits à la fois.*
+   */
+  inerte?: boolean
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -321,6 +330,7 @@ export function Carte3D({
   culbute = null,
   onFixee,
   onArrivee,
+  inerte = false,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -580,6 +590,28 @@ ${nuanceur.fragmentShader}`
 
   /** Le jeton vu au dernier tour, pour savoir qu'il vient de changer. */
   const jetonCulbute = useRef(culbute)
+
+  /**
+   * ON COUPE LE RAYON À LA SOURCE plutôt que de retirer les écouteurs.
+   *
+   * Un mesh sans `onPointerDown` laisse quand même passer le survol, et R3F
+   * prévient TOUS les objets que le rayon traverse : il faut que celui-ci
+   * cesse d'exister pour le lancer de rayon, pas seulement qu'il se taise.
+   *
+   * La valeur est lue dans une REF, et la fonction n'est construite qu'une
+   * fois : changer la prop `raycast` d'un objet entre deux rendus est le genre
+   * de chose qui se restaure mal.
+   */
+  const estInerte = useRef(inerte)
+  estInerte.current = inerte
+  const raycastDuCorps = useMemo(
+    () =>
+      function (this: THREE.Mesh, rayon: THREE.Raycaster, touches: THREE.Intersection[]): void {
+        if (estInerte.current) return
+        THREE.Mesh.prototype.raycast.call(this, rayon, touches)
+      },
+    [],
+  )
 
   /**
    * OÙ LE CURSEUR SE TIENT, brut. Il vit dans une `ref` et non dans l'état :
@@ -903,6 +935,7 @@ ${nuanceur.fragmentShader}`
         castShadow={ombre}
         geometry={GEOMETRIE_CORPS}
         material={laiton}
+        raycast={raycastDuCorps}
         onPointerDown={onPointerDown}
         onPointerMove={reflet ? suivreLeCurseur : undefined}
         onPointerOver={(e) => {

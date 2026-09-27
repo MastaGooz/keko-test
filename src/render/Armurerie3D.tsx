@@ -695,6 +695,9 @@ export function Armurerie3D({
             // ELLE EST POSÉE : sa case cesse d'être dessinée. C'est la carte
             // qui le dit, parce qu'elle seule sait où en est son mouvement.
             onArrivee={() => setEnVol((v) => (v === t.id ? null : v))}
+            // ELLE NE SE RATTRAPE PAS EN PLEIN VOL : tant qu'elle n'est pas
+            // posée, elle ne répond plus au doigt.
+            inerte={enVol === t.id}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />
