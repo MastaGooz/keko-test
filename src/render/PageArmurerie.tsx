@@ -155,7 +155,7 @@ export function PageArmurerie({
    * des lignes — exactement ce que fait déjà la molette du coffre, et pour la
    * même raison.
    */
-  const LIBELLES = ['Points de vie', 'Cartes dans le deck', 'Cartes en main', 'Énergie par tour']
+  const LIBELLES = ['Points de vie', 'Cartes dans le deck', 'Taille de la main', 'Énergie par tour']
   const mesures = useRef<(HTMLSpanElement | null)[]>([])
   const [bulle, setBulle] = useState<{ i: number; x: number; y: number } | null>(null)
 
@@ -165,7 +165,14 @@ export function PageArmurerie({
         if (el === null) continue
         const r = el.getBoundingClientRect()
         if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-          return { i, x: r.left, y: r.top + r.height / 2 }
+          // LA BULLE SE POSE SUR LE CONTENU, PAS SUR LA LIGNE. La ligne prend
+          // toute la largeur de la colonne alors que son couple chiffre +
+          // symbole s'y CENTRE : accrochée à son bord gauche, la bulle
+          // s'ouvrait très loin de ce qu'elle explique — Keko l'a vu sur
+          // téléphone, où la colonne est proportionnellement plus large.
+          // *Une bulle désigne ce qu'on regarde, pas la boîte qui le contient.*
+          const bords = [...el.children].map((c) => c.getBoundingClientRect().left)
+          return { i, x: bords.length > 0 ? Math.min(...bords) : r.left, y: r.top + r.height / 2 }
         }
       }
       return null

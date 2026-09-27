@@ -3550,8 +3550,13 @@ Quatre choses, et trois sont des règles déjà écrites ailleurs :
   toucher et le `pointerout` n'arrive jamais : la bulle resterait ouverte. Une
   tape l'ouvre, une deuxième la referme, et *elle se referme toute seule au
   bout de 2,6 s* — au doigt il n'y a pas de « sortie » ;
-- **elle s'ouvre à GAUCHE** : le rail tient le bord droit de l'écran. Vérifié à
-  844 x 390, où elle s'arrête 8 px avant sa ligne sans sortir de l'écran.
+- **elle s'ouvre à GAUCHE** : le rail tient le bord droit de l'écran. Et elle
+  se pose sur le CONTENU de la ligne, pas sur la ligne : celle-ci prend toute
+  la largeur de la colonne alors que son couple chiffre + symbole s'y CENTRE,
+  donc accrochée à son bord gauche la bulle s'ouvrait très loin de ce qu'elle
+  explique — Keko l'a vu sur téléphone, où la colonne est proportionnellement
+  plus large (65 px d'écart). *Une bulle désigne ce qu'on regarde, pas la boîte
+  qui le contient.* Vérifié à 844 x 390 : 8 px entre elle et son chiffre.
 
 **L'ORDRE DU RAIL : VIE, DECK, MAIN, ÉNERGIE.** Tranché par Keko. Il va du
 plus durable au plus volatil — les PV traversent la descente, le deck la run,
