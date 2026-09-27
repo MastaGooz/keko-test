@@ -3516,6 +3516,20 @@ faisait 40 px pour une bande de 37 sur un téléphone couché, et mordait le bor
 haut de l'écran). Même piège de cache que les autres fichiers de `public/` :
 l'URL porte la date du build.
 
+**LE TITRE PASSE À LA POLICE DES CARTES, à l'essai** (Grenze Gotisch, celle
+que `texture-carte.ts` peint sur chaque nom de carte). Demandé par Keko : « on
+peut utiliser la police du titre des cartes pour le titre armurerie en haut
+pour tester ? » *Le nom d'un lieu et le nom d'un objet parlent alors la même
+langue*, et elle est déjà chargée — rien à ajouter à `index.html`.
+
+Deux choses mesurées, à savoir si on la garde : elle est **plus étroite**, donc
+le bandeau tient toujours à 667x320 sans déborder ; et ses capitales tombent
+**2 px sous** le centre de la boîte de ligne à 39 px de corps (sa boîte de
+police est très dissymétrique, 43 au-dessus et 15 en dessous), donc le mot est
+un cheveu plus bas que l'emblème, qui lui se centre sur la boîte. *C'est le même
+défaut que Cinzel dans le fronton des cartes 2D* — il se corrige en `em` si
+Keko le voit.
+
 **LE BANDEAU NE DIT PLUS QUE LE LIEU.** Le chargement, le compte du deck et
 l'or en sont partis, demandé par Keko : *ce qu'on lit sans décider dessus n'a
 rien à faire en tête de page.* Le compte du deck n'a pas disparu pour autant —
