@@ -107,6 +107,15 @@ export function urlDeLArmurerie(): string {
 }
 
 /**
+ * L'ARMURIER, le PNJ du lieu — fourni par Keko. Il coiffe la colonne des
+ * stats. Même piège de cache que le reste de `public/` : l'URL porte la date
+ * du build.
+ */
+export function urlDeLArmurier(): string {
+  return `${import.meta.env.BASE_URL}Armurier.png?v=${encodeURIComponent(__BUILD_TIME__)}`
+}
+
+/**
  * LE SYMBOLE DU COÛT, fourni par Keko — il remplace le cercle dessiné.
  *
  * Il sert aux DEUX endroits, et c'est la règle : le même symbole sur la carte

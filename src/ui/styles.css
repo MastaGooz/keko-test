@@ -5130,6 +5130,21 @@ body {
   translate: -50% calc(-100% - 0.5rem);
 }
 
+/* LE PORTRAIT DE L'ARMURIER : il coiffe la colonne, les mesures dessous.
+   Borne par la HAUTEUR avant la largeur -- c'est elle qui manque, jamais la
+   largeur, et a pleine largeur il ne resterait rien pour les stats sur un
+   telephone couche. `contain` parce qu'une image n'a pas de rapport
+   intrinseque une fois ses deux bornes posees. */
+.arm-pnj {
+  align-self: center;
+  max-width: 100%;
+  max-height: 46%;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 0.5rem;
+  filter: drop-shadow(0 6px 18px #000000cc);
+}
+
 /* LES COUPLES SONT SEPARES PAR UN FILET, plus enfermes dans un cartouche.
    Demande par Keko : « on peut enlever les rectangles et mettre juste des
    separateurs entre les stats ? »

@@ -3626,6 +3626,17 @@ coins coupés (`clip-path`), et *un rognage emporte tout ce qu'il contient* : la
 plaque, posée à cheval sur le bord haut, s'y coupait en deux. Même famille que
 le chiffre de la barre de vie, qui doit vivre hors du contenant qui rogne.
 
+**L'ARMURIER COIFFE LA COLONNE DES STATS** (`public/Armurier.png`, fourni par
+Keko) : le premier visage du jeu, et les quatre mesures descendent sous lui.
+*On regarde celui qui tient la boutique, puis ce qu'on emporte.*
+
+**Il se borne par la HAUTEUR avant la largeur**, comme tout ce qui compte ici :
+à pleine largeur de colonne il mesurerait 254 px sur un téléphone couché, où la
+colonne n'en fait que 264 — il ne resterait rien pour les stats. Mesuré après
+bornage : 83 x 121 px à 844 x 390, et c'est la LARGEUR qui le borne sur un
+écran de PC. Le format qu'il respecte est celui des illustrations de cartes
+(1034 x 1521, rapport 0,68) : *un seul gabarit d'image dans tout le projet.*
+
 **LE PIED PORTE CE AVEC QUOI ON DESCEND** : le paquet de pioche et son compte
 de cartes, la vie, l'énergie et la taille de la main. Demandé par Keko — *avant
 de descendre, le joueur doit voir avec quoi il descend.* Ce sont **les mêmes

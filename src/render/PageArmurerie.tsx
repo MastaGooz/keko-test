@@ -35,7 +35,7 @@ import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
 import type { Hub } from '../logic/hub.ts'
 import { deuxMains, peutDescendre } from '../logic/hub.ts'
-import { urlDeLArmurerie } from '../ui/art.ts'
+import { urlDeLArmurerie, urlDeLArmurier } from '../ui/art.ts'
 import { Z_PLAN } from './armurerie-plan.ts'
 import { tailleBouton } from './Bouton3D.tsx'
 
@@ -374,6 +374,16 @@ export function PageArmurerie({
           durable au plus volatil — les PV traversent la descente, le deck la
           run, la main le tour, l'énergie ne survit pas au tour. */}
       <div className="arm-etat" style={boite(plan.stats)}>
+        {/* L'ARMURIER TIENT LE HAUT DE SA COLONNE, les mesures dessous. C'est
+            le premier visage du jeu, et il a sa place ici plutôt qu'au milieu
+            d'un panneau : *on regarde celui qui tient la boutique, puis ce
+            qu'on emporte.*
+
+            Il se BORNE PAR LA HAUTEUR, comme tout ce qui compte dans ce jeu :
+            à pleine largeur il mesurerait 254 px sur un téléphone couché, où
+            la colonne n'en fait que 264 — il ne resterait rien pour les quatre
+            mesures. Sur un écran de PC, c'est la largeur qui le borne. */}
+        <img className="arm-pnj" src={urlDeLArmurier()} alt="" />
         <span className="arm-mesure" ref={(el) => void (mesures.current[0] = el)}>
           <span className="arm-chiffre">{pvMax}</span>
           <CoeurIcone />
