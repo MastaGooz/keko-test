@@ -2052,6 +2052,11 @@ Trois choses à ne pas défaire :
   frémissement par-dessus la position : mêlée à elle, l'amortissement la
   mangerait en croyant corriger un écart.
 
+**LE LUSTRE EST DISCRET**, et il a été baissé deux fois — Keko : « je trouve la
+brillance un peu forte ». *Un lustre qui délave l'illustration cesse d'être une
+matière et devient un voile* : ce qu'on doit lire sur une carte regardée de
+près, c'est la carte.
+
 **Souris seulement**, comme tout survol du projet : au doigt le `pointerout`
 n'arrive jamais et la carte resterait penchée après la tape.
 

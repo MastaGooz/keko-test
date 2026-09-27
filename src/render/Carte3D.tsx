@@ -609,7 +609,9 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uLustre!.value = 0.5 + (l.vx + l.vy) * 0.5
       // Il RESPIRE à peine, sur l'horloge lente du liseré : c'est ce qui le
       // fait lire comme de la lumière et non comme un aplat peint.
-      nuanceur.uniforms.uLustreForce!.value = l.brille * (0.22 + Math.sin(t * 3) * 0.04)
+      // ELLE EST DISCRÈTE. Keko l'a trouvée « un peu forte » : un lustre qui
+      // délave l'illustration cesse d'être une matière et devient un voile.
+      nuanceur.uniforms.uLustreForce!.value = l.brille * (0.13 + Math.sin(t * 3) * 0.03)
     }
 
     // L'APPARITION : la carte s'allume, puis la lumière tombe et l'image
