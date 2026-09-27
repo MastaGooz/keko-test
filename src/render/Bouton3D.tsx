@@ -18,8 +18,8 @@
  * Le dessin reprend celui des boutons CSS : une plaque arrondie, un liseré,
  * un mot. Peint une fois par libellé et par ton, comme les emplacements.
  */
-import { useMemo } from 'react'
-import { useThree } from '@react-three/fiber'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
 
@@ -118,6 +118,123 @@ function plaque(texte: string, ton: TonBouton): { texture: THREE.CanvasTexture; 
   return fait
 }
 
+/**
+ * LE SURVOL S'ÉCRIT EN DEUX TEXTURES, et aucune ne redessine le bouton.
+ *
+ * Le MASQUE dit où est la plaque — blanc dedans, noir dehors. Il sert
+ * d'`alphaMap` au balayage, ce qui permet de faire GLISSER la bande sans que
+ * ses bords sortent des coins arrondis : *ce qui bouge est la lumière, ce qui
+ * tient est la forme.* (three lit le canal VERT d'une `alphaMap`, d'où un
+ * masque franchement noir et blanc, jamais une couche transparente.)
+ *
+ * La LUEUR est le halo posé derrière, peint au `shadowBlur` du canvas — le
+ * même moteur de flou que le `box-shadow` du CSS, comme le contour des cartes.
+ */
+const MASQUES = new Map<string, THREE.CanvasTexture>()
+
+function masqueBouton(rapport: number): THREE.CanvasTexture {
+  const cle = rapport.toFixed(3)
+  const connu = MASQUES.get(cle)
+  if (connu !== undefined) return connu
+
+  const h = 128
+  const large = Math.round(h * rapport)
+  const toile = document.createElement('canvas')
+  toile.width = large
+  toile.height = h
+  const texture = new THREE.CanvasTexture(toile)
+  MASQUES.set(cle, texture)
+  const ctx = toile.getContext('2d')
+  if (ctx === null) return texture
+
+  ctx.fillStyle = '#000000'
+  ctx.fillRect(0, 0, large, h)
+  const marge = h * 0.06
+  ctx.beginPath()
+  ctx.roundRect(marge, marge, large - marge * 2, h - marge * 2, h * 0.22)
+  ctx.fillStyle = '#ffffff'
+  ctx.fill()
+  texture.needsUpdate = true
+  return texture
+}
+
+/**
+ * LA BANDE QUI BALAIE : un lustre oblique, transparent à ses deux bouts.
+ *
+ * C'est l'effet que Keko avait retenu sur la barre de vie — « l'effet de
+ * brillance qui se déplace est super » — et c'est lui qui fait lire du MÉTAL
+ * là où un éclaircissement uniforme ne donne qu'une couleur plus claire.
+ */
+let bandeBalayage: THREE.CanvasTexture | null = null
+
+function balayage(): THREE.CanvasTexture {
+  if (bandeBalayage !== null) return bandeBalayage
+
+  const large = 256
+  const h = 128
+  const toile = document.createElement('canvas')
+  toile.width = large
+  toile.height = h
+  const texture = new THREE.CanvasTexture(toile)
+  // LA BANDE NE SE RÉPÈTE PAS : décalée, elle doit SORTIR du bouton, pas y
+  // rentrer par l'autre bord. Un bord transparent prolongé fait exactement ça.
+  texture.wrapS = THREE.ClampToEdgeWrapping
+  texture.wrapT = THREE.ClampToEdgeWrapping
+  bandeBalayage = texture
+  const ctx = toile.getContext('2d')
+  if (ctx === null) return texture
+
+  // Oblique, comme le lustre des cartes et de la jauge : une brillance
+  // verticale se lirait comme une barre, pas comme un reflet qui glisse.
+  ctx.translate(large / 2, h / 2)
+  ctx.rotate(-0.42)
+  const g = ctx.createLinearGradient(-large * 0.22, 0, large * 0.22, 0)
+  g.addColorStop(0, 'rgba(255, 246, 222, 0)')
+  g.addColorStop(0.5, 'rgba(255, 246, 222, 0.85)')
+  g.addColorStop(1, 'rgba(255, 246, 222, 0)')
+  ctx.fillStyle = g
+  ctx.fillRect(-large * 0.22, -h, large * 0.44, h * 2)
+  texture.needsUpdate = true
+  return texture
+}
+
+const LUEURS = new Map<string, THREE.CanvasTexture>()
+
+function lueurBouton(rapport: number): THREE.CanvasTexture {
+  const cle = rapport.toFixed(3)
+  const connue = LUEURS.get(cle)
+  if (connue !== undefined) return connue
+
+  const h = 128
+  const debord = Math.round(h * DEBORD_LUEUR)
+  const large = Math.round(h * rapport)
+  const toile = document.createElement('canvas')
+  toile.width = large + debord * 2
+  toile.height = h + debord * 2
+  const texture = new THREE.CanvasTexture(toile)
+  texture.colorSpace = THREE.SRGBColorSpace
+  LUEURS.set(cle, texture)
+  const ctx = toile.getContext('2d')
+  if (ctx === null) return texture
+
+  ctx.fillStyle = '#ffffff'
+  ctx.shadowColor = 'rgba(255, 255, 255, 0.95)'
+  // Des rayons COURTS : la lumière doit être éteinte avant le bord du plan,
+  // sinon on voit le rectangle qui la délimite. Même règle que le contour des
+  // cartes, et elle se vérifie sur le profil d'alpha.
+  for (const rayon of [debord * 0.8, debord * 0.4]) {
+    ctx.shadowBlur = rayon
+    ctx.beginPath()
+    ctx.roundRect(debord, debord, large, h, h * 0.22)
+    ctx.fill()
+  }
+  texture.needsUpdate = true
+  return texture
+}
+
+/** Ce que la lueur déborde du bouton, en fraction de sa hauteur. */
+const DEBORD_LUEUR = 0.28
+
 type Props = {
   texte: string
   ton: TonBouton
@@ -139,20 +256,108 @@ export function Bouton3D({ texte, ton, position, petit = false, eteint = false, 
     () => new THREE.MeshBasicMaterial({ map: texture, transparent: true, toneMapped: false, depthWrite: false }),
     [texture],
   )
-  materiau.opacity = eteint ? 0.35 : 1
+
+  /**
+   * LE SURVOL RÉCHAUFFE LE BOUTON. Demandé par Keko : « quand on hover le
+   * bouton descendre, ce serait sympa de lui donner une petite animation
+   * lumineuse, voire plus ».
+   *
+   * Trois choses qui se cumulent, et chacune fait un travail que les autres ne
+   * font pas : la plaque s'ÉCLAIRCIT (elle chauffe), un halo la DÉBORDE (elle
+   * rayonne), un lustre la TRAVERSE (c'est du métal). Plus un rien d'échelle —
+   * *un bouton qui s'avance se propose.*
+   *
+   * **Un bouton ÉTEINT ne s'allume pas** : il ne fait rien, et c'est sa bulle
+   * qui dit pourquoi. Et le survol est réservé à la SOURIS — au doigt le
+   * `pointerout` n'arrive jamais, le bouton resterait allumé après la tape.
+   */
+  const [survole, setSurvole] = useState(false)
+  const vivant = survole && !eteint
+  const groupe = useRef<THREE.Group>(null)
+  const halo = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: lueurBouton(rapport),
+        color: '#ffd89a',
+        transparent: true,
+        opacity: 0,
+        toneMapped: false,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    [rapport],
+  )
+  const lustre = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        map: balayage().clone(),
+        alphaMap: masqueBouton(rapport),
+        transparent: true,
+        opacity: 0,
+        toneMapped: false,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      }),
+    [rapport],
+  )
+
+  // ON REND LE CURSEUR EN PARTANT, toujours : un composant qui disparaît
+  // pendant qu'on le survole laisserait la main posée sur la page.
+  useEffect(() => {
+    return () => {
+      document.body.style.cursor = ''
+    }
+  }, [])
+  useEffect(() => {
+    document.body.style.cursor = vivant ? 'pointer' : ''
+  }, [vivant])
+
+  const feu = useRef(0)
+  useFrame((etat, delta) => {
+    feu.current += ((vivant ? 1 : 0) - feu.current) * (1 - Math.exp(-11 * delta))
+    const v = feu.current
+    materiau.opacity = eteint ? 0.35 : 1
+    // La couleur MULTIPLIE la texture : au-delà de 1 elle éclaircit la plaque
+    // au lieu de la recouvrir. *L'image reste lisible pendant qu'elle chauffe.*
+    materiau.color.setScalar(1 + v * 0.3)
+    halo.opacity = v * 0.5
+    lustre.opacity = v * 0.55
+    // LE LUSTRE TRAVERSE, IL NE CLIGNOTE PAS : il repart d'un bord à intervalle
+    // régulier, et le masque l'empêche de déborder des coins arrondis.
+    const carte = lustre.map
+    if (carte !== null) carte.offset.x = 0.5 - ((etat.clock.elapsedTime * 0.55) % 1.6)
+    if (groupe.current !== null) groupe.current.scale.setScalar(1 + v * 0.035)
+  })
 
   const haut = hauteurMonde(hauteurBoutonPx(size.height, petit), position[2], size.height)
   return (
-    <mesh
-      position={position}
-      material={materiau}
-      onPointerDown={(e) => {
-        e.stopPropagation()
-        if (!eteint) onCliquer?.()
-      }}
-    >
-      <planeGeometry args={[haut * rapport, haut]} />
-    </mesh>
+    <group ref={groupe} position={position}>
+      {/* LE HALO, DERRIÈRE : seul son débord se voit, la plaque masque le
+          reste. Il ne capte pas le pointeur, sinon il élargirait la zone
+          sensible du bouton de tout son débord. */}
+      <mesh position={[0, 0, -0.002]} material={halo} raycast={() => null}>
+        <planeGeometry args={[haut * (rapport + DEBORD_LUEUR * 2), haut * (1 + DEBORD_LUEUR * 2)]} />
+      </mesh>
+
+      <mesh
+        material={materiau}
+        onPointerDown={(e) => {
+          e.stopPropagation()
+          if (!eteint) onCliquer?.()
+        }}
+        onPointerOver={(e) => {
+          if (e.pointerType === 'mouse') setSurvole(true)
+        }}
+        onPointerOut={() => setSurvole(false)}
+      >
+        <planeGeometry args={[haut * rapport, haut]} />
+      </mesh>
+
+      {/* LE LUSTRE, DEVANT la plaque et masqué par sa forme. */}
+      <mesh position={[0, 0, 0.002]} material={lustre} raycast={() => null}>
+        <planeGeometry args={[haut * rapport, haut]} />
+      </mesh>
+    </group>
   )
 }
 

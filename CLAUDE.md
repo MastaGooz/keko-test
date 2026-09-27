@@ -2601,6 +2601,31 @@ où était « Prendre »** une fois le trésor décidé : le second n'apparaît 
 fois le premier consommé, et *un bouton qui se déplace entre deux états
 successifs oblige à le chercher deux fois.*
 
+**UN BOUTON SURVOLÉ CHAUFFE.** Demandé par Keko : « quand on hover le bouton
+descendre, ce serait sympa de lui donner une petite animation lumineuse, voire
+plus ». Trois choses qui se cumulent, et chacune fait un travail que les autres
+ne font pas : la plaque **s'éclaircit** (elle chauffe), un halo la **déborde**
+(elle rayonne), un lustre oblique la **traverse** (c'est du métal) — plus un
+rien d'échelle, *un bouton qui s'avance se propose.* Le lustre est l'effet que
+Keko avait retenu sur la barre de vie, « la brillance qui se déplace ».
+
+Quatre points à ne pas défaire :
+
+- **le balayage glisse, le masque tient.** Faire bouger la bande, c'est décaler
+  sa texture — et ses bords sortiraient alors des coins arrondis. Un second
+  plan porte donc un MASQUE en `alphaMap`, qui lui ne bouge pas : *ce qui
+  bouge est la lumière, ce qui tient est la forme.* (three lit le canal VERT
+  d'une `alphaMap`, d'où un masque franchement noir et blanc et non une couche
+  transparente.) ;
+- **le halo ne capte pas le pointeur**, sinon il élargirait la zone sensible du
+  bouton de tout son débord — la règle du contour des cartes ;
+- **un bouton ÉTEINT ne s'allume pas.** Il ne fait rien, et c'est sa bulle qui
+  dit pourquoi ;
+- **le survol est réservé à la SOURIS**, et le curseur est rendu au démontage :
+  au doigt le `pointerout` n'arrive jamais, le bouton resterait allumé après la
+  tape — et un composant qui disparaît pendant qu'on le survole laisserait la
+  main posée sur la page.
+
 **LES BOUTONS DU BUTIN VIVENT DANS LA SCÈNE** (`Bouton3D`), et ce n'est pas
 une coquetterie : **un bouton HTML doit être au-dessus du canvas pour recevoir
 le clic** — un canvas capte le pointeur partout, même là où il ne dessine rien
