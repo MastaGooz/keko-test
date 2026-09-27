@@ -5095,14 +5095,14 @@ body {
    Les cartouches s'etirent sur la largeur de la colonne : alignes a la meme
    longueur, ils se lisent comme un RAIL de jauges et non comme quatre
    etiquettes de tailles differentes. */
+/* LE RAIL EST COUCHE : quatre mesures sur UNE LIGNE, en haut de l'equipement.
+   Il a ete une colonne a droite, et depuis que l'armurier la coiffe elles se
+   lisaient comme ses statistiques. */
 .arm-etat {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: stretch;
-  /* LES STATS SE CENTRENT DANS LEUR COLONNE, demande par Keko. Calees en haut,
-     elles pendaient du bord superieur avec tout le vide sous elles ; au milieu,
-     *le rail occupe sa colonne au lieu d'y etre accroche.* */
-  justify-content: center;
+  justify-content: space-evenly;
   gap: 0;
 }
 
@@ -5135,13 +5135,12 @@ body {
    largeur, et a pleine largeur il ne resterait rien pour les stats sur un
    telephone couche. `contain` parce qu'une image n'a pas de rapport
    intrinseque une fois ses deux bornes posees. */
+/* L'ARMURIER OCCUPE TOUTE SA COLONNE. `contain` le borne par la dimension la
+   plus dure sans jamais le deformer -- la largeur sur un ecran de PC, la
+   hauteur sur un telephone couche. */
 .arm-pnj {
-  align-self: center;
-  max-width: 100%;
-  max-height: 46%;
-  width: auto;
   object-fit: contain;
-  margin-bottom: 0.5rem;
+  object-position: center bottom;
   filter: drop-shadow(0 6px 18px #000000cc);
 }
 
@@ -5157,6 +5156,7 @@ body {
    Le premier n'a pas de filet : *un separateur separe, il n'encadre pas.* */
 .arm-mesure {
   display: flex;
+  flex: 1 1 0;
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
@@ -5165,12 +5165,17 @@ body {
      dictait la sienne, donc le rail avait des marches -- *un rail dont les
      crans ne sont pas reguliers n'est plus un rail.* La ligne fixe la hauteur,
      et c'est aux symboles de s'y tenir. */
-  height: clamp(1.9rem, 5.4vh, 3rem);
+  /* LA BANDE FIXE LA HAUTEUR, plus la ligne : couchee, c'est elle qui commande,
+     et les symboles s'y inscrivent comme avant. */
+  height: 100%;
   padding: 0 0.4rem;
 }
 
+/* LE SEPARATEUR SUIT LE SENS DU RAIL : un filet vertical entre deux couches
+   d'une ligne, comme il etait horizontal entre deux crans d'une colonne. *Ce
+   qui est entre deux traits va ensemble*, quel que soit le sens de lecture. */
 .arm-mesure + .arm-mesure {
-  border-top: 1px solid #ffffff1a;
+  border-left: 1px solid #ffffff1a;
 }
 
 /* LE PAQUET GARDE SA TAILLE DE COMBAT, en plus petit : c'est le meme objet,

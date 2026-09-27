@@ -373,17 +373,15 @@ export function PageArmurerie({
       {/* L'ORDRE EST CELUI DE KEKO : vie, deck, main, énergie. Il va du plus
           durable au plus volatil — les PV traversent la descente, le deck la
           run, la main le tour, l'énergie ne survit pas au tour. */}
-      <div className="arm-etat" style={boite(plan.stats)}>
-        {/* L'ARMURIER TIENT LE HAUT DE SA COLONNE, les mesures dessous. C'est
-            le premier visage du jeu, et il a sa place ici plutôt qu'au milieu
-            d'un panneau : *on regarde celui qui tient la boutique, puis ce
-            qu'on emporte.*
+      {/* L'ARMURIER PREND TOUTE SA COLONNE. Il a d'abord coiffé le rail des
+          mesures, et *elles se lisaient alors comme LES SIENNES* — Keko : « on
+          dirait que c'est les stats du PNJ maintenant ». Elles sont parties en
+          bande au-dessus de l'équipement ; lui n'a plus rien à partager. */}
+      <img className="arm-pnj" style={boite(plan.pnj)} src={urlDeLArmurier()} alt="" />
 
-            Il se BORNE PAR LA HAUTEUR, comme tout ce qui compte dans ce jeu :
-            à pleine largeur il mesurerait 254 px sur un téléphone couché, où
-            la colonne n'en fait que 264 — il ne resterait rien pour les quatre
-            mesures. Sur un écran de PC, c'est la largeur qui le borne. */}
-        <img className="arm-pnj" src={urlDeLArmurier()} alt="" />
+      {/* LES QUATRE MESURES EN BANDE, au-dessus de ce qu'on équipe : *ce qu'on
+          emporte se mesure au-dessus de ce qu'on porte.* */}
+      <div className="arm-etat" style={boite(plan.stats)}>
         <span className="arm-mesure" ref={(el) => void (mesures.current[0] = el)}>
           <span className="arm-chiffre">{pvMax}</span>
           <CoeurIcone />

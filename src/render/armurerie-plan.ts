@@ -120,7 +120,10 @@ export type PlanArmurerie = {
   /** Celle d'une case du coffre : un cran sous, pour en montrer plus. */
   tailleCoffre: number
   /** La colonne des stats, à droite : quatre cartouches empilés. */
+  /** La bande des quatre mesures, en haut de l'équipement. */
   stats: Rect
+  /** La colonne de l'armurier, à droite, au-dessus du bouton. */
+  pnj: Rect
   /** Le bouton de départ, sous les stats. */
   bouton: [number, number, number]
 }
@@ -239,9 +242,28 @@ export function planArmurerie(
    * sept slots doivent tenir dans un panneau, alors que le coffre n'a qu'à
    * remplir le sien avec ce qu'il peut.
    */
+  /**
+   * LES QUATRE MESURES PASSENT EN BANDE, en haut de l'équipement.
+   *
+   * Elles tenaient la colonne de droite, en rail vertical — et depuis que
+   * l'armurier la coiffe, *elles se lisaient comme SES statistiques.* Keko :
+   * « on dirait que c'est les stats du PNJ maintenant… et si on plaçait les
+   * stats en haut de l'onglet équipement sur une ligne ? »
+   *
+   * Elles sont bien où elles doivent être : ce qu'on emporte se mesure
+   * au-dessus de ce qu'on équipe. **Ça coûte une bande de hauteur au
+   * chargement**, donc des cartes un peu plus petites — le prix est connu et
+   * assumé, « vu qu'on a peu de place ».
+   */
+  // Sa hauteur est celle que le RAIL avait par ligne, pas une part généreuse :
+  // les symboles s'y inscrivent, et à bande trop haute ils grossissent avec
+  // elle — un coeur de 70 px à côté d'un chiffre de 20 ne se lit plus comme
+  // une mesure.
+  const hStats = Math.min(hPanneaux * 0.075, 0.4)
+
   const COLONNES_EQUIP = 3
   const RANGEES_EQUIP = 2
-  const hDedans = hPanneaux - hEntete
+  const hDedans = hPanneaux - hEntete - hStats
   // La bande d'un nom de groupe. Il y en a une par rangée, et elles entrent
   // dans le calcul de la taille : un titre pris sur la place des cartes les
   // ferait déborder du panneau, exactement ce qui est arrivé sur téléphone.
@@ -319,7 +341,7 @@ export function planArmurerie(
    * largeur (quatre colonnes) ou la hauteur (deux rangées), la plus dure
    * gagne, et jamais au-delà de 1.
    */
-  const yDedans = yPanneaux + hPanneaux / 2 - hEntete - hDedans / 2
+  const yDedans = yPanneaux + hPanneaux / 2 - hEntete - hStats - hDedans / 2
   const taillePile = tailleCharge
   const pasCharge = tailleCharge * 1.12
   const pasRangee = tailleCharge * 1.4 * 1.12
@@ -387,7 +409,16 @@ export function planArmurerie(
     nomArmes: { x: xArmes, y: yNomPorte, l: lArmes, h: hNom },
     nomArmure: { x: place(hautes - 1), y: yNomPorte, l: pasCharge - coupe, h: hNom },
     nomObjets: { x: xEquip, y: yNomObjets, l: CAPACITE_PILE * pasCharge, h: hNom },
-    stats: { x: xStats, y: yPanneaux + hBouton / 2, l: lStats, h: hPanneaux - hBouton },
+    stats: {
+      x: xEquip,
+      y: yPanneaux + hPanneaux / 2 - hEntete - hStats / 2,
+      l: lEquip - marge * 2,
+      h: hStats,
+    },
+    // L'ARMURIER PREND TOUTE SA COLONNE, le bouton excepté : c'est le premier
+    // visage du jeu, et il n'a plus rien à partager depuis que les mesures
+    // sont parties en bande.
+    pnj: { x: xStats, y: yPanneaux + hBouton / 2, l: lStats, h: hPanneaux - hBouton },
     bouton: [xStats, basPanneaux + hBouton / 2, Z_PLAN],
   }
 }
