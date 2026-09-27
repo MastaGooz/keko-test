@@ -104,6 +104,12 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
     depart: { x: 0, y: 0 },
     seuil: SEUIL_SOURIS,
     prise: false,
+    /**
+     * LA CARTE A-T-ELLE ÉTÉ PROMENÉE ? Pas « est-elle loin de son départ » :
+     * un aller-retour ramène le doigt à son point de départ, et le geste se
+     * lisait alors comme s'il n'avait jamais eu lieu.
+     */
+    promene: false,
     minuteur: 0,
     /** Quand le doigt s'est posé : sert à séparer le clic du maintien. */
     debut: 0,
@@ -183,7 +189,14 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
       detacher()
 
       const index = g.index
-      const bouge = Math.hypot(e.clientX - g.depart.x, e.clientY - g.depart.y) >= g.seuil
+      // **ON SE DEMANDE SI LA CARTE A ÉTÉ PROMENÉE, pas où le doigt s'arrête.**
+      // Le critère était la distance entre le départ et le LÂCHER : reposer un
+      // objet sur la case d'où on l'avait pris ramène le doigt à son point de
+      // départ, donc le geste ne faisait plus rien du tout — ni dépôt, ni son.
+      // Keko : « quand je drop dans son slot où il était au début du drag, ça
+      // ne produit pas de son ». *Un aller-retour est un geste, pas une
+      // absence de geste.*
+      const bouge = g.promene || Math.hypot(e.clientX - g.depart.x, e.clientY - g.depart.y) >= g.seuil
       const point = pointSousLeDoigt(e)
       const ancre = g.ancre
       g.index = -1
@@ -214,9 +227,12 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
     (e: PointerEvent) => {
       const g = geste.current
       if (g.index < 0) return
+      // Le seuil se juge à CHAQUE mouvement, même une fois la carte prise :
+      // c'est lui qui retient qu'elle a été promenée, et le maintien au doigt
+      // la prend sans qu'on ait bougé d'un pixel.
+      if (Math.hypot(e.clientX - g.depart.x, e.clientY - g.depart.y) >= g.seuil) g.promene = true
       if (!g.prise) {
-        const loin = Math.hypot(e.clientX - g.depart.x, e.clientY - g.depart.y) >= g.seuil
-        if (!loin) return
+        if (!g.promene) return
         g.prise = true
         window.clearTimeout(g.minuteur)
         setTenue(g.index)
@@ -256,6 +272,7 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
       setDepart(g.ancre)
       g.seuil = natif.pointerType === 'mouse' ? SEUIL_SOURIS : SEUIL_DOIGT
       g.prise = false
+      g.promene = false
       g.debut = performance.now()
       // AU DOIGT, LE MAINTIEN PREND LA CARTE. On appuie, elle se soulève. À la
       // souris, seul le déplacement la prend : elle ne dérive pas.

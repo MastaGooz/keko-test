@@ -204,19 +204,24 @@ export function PageArmurerie({
         if (el === null) continue
         const r = el.getBoundingClientRect()
         if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-          // LA BULLE SE POSE SUR LE CONTENU, PAS SUR LA LIGNE. La ligne prend
-          // toute la largeur de la colonne alors que son couple chiffre +
-          // symbole s'y CENTRE : accrochée à son bord gauche, la bulle
-          // s'ouvrait très loin de ce qu'elle explique — Keko l'a vu sur
-          // téléphone, où la colonne est proportionnellement plus large.
-          // *Une bulle désigne ce qu'on regarde, pas la boîte qui le contient.*
-          const bords = [...el.children].map((c) => c.getBoundingClientRect().left)
+          // LA BULLE SE POSE SUR LE CONTENU, PAS SUR LA LIGNE, et AU-DESSUS.
+          // Elle s'ouvrait à gauche du temps où les mesures étaient une
+          // colonne ; en bande, la gauche d'une mesure est la mesure d'à côté
+          // — Keko : « on devrait mettre les infobulles des stats au-dessus
+          // d'elles plutôt qu'à gauche ». *Une bulle s'ouvre du côté où il y a
+          // de la place, et ce côté change avec la disposition.*
+          //
+          // Elle se centre sur le COUPLE chiffre + symbole, pas sur la ligne :
+          // celle-ci s'étire à part égale dans la bande, le couple s'y centre.
+          const boites = [...el.children].map((c) => c.getBoundingClientRect())
+          const gauche = boites.length > 0 ? Math.min(...boites.map((b) => b.left)) : r.left
+          const droite = boites.length > 0 ? Math.max(...boites.map((b) => b.right)) : r.right
           return {
             cle: `stat-${i}`,
             texte: LIBELLES[i] ?? '',
-            x: bords.length > 0 ? Math.min(...bords) : r.left,
-            y: r.top + r.height / 2,
-            place: 'gauche',
+            x: (gauche + droite) / 2,
+            y: r.top,
+            place: 'dessus',
           }
         }
       }

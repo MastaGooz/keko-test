@@ -3708,13 +3708,15 @@ Quatre choses, et trois sont des règles déjà écrites ailleurs :
   *C'est un CONSTAT, pas une phrase adressée* : la bulle dit l'état du
   chargement, comme « Arme » ou « Objets » au-dessus des slots. Tranché par
   Keko, qui a écarté « Tu n'as pas d'arme équipée » ;
-- **elle s'ouvre à GAUCHE** : le rail tient le bord droit de l'écran. Et elle
-  se pose sur le CONTENU de la ligne, pas sur la ligne : celle-ci prend toute
-  la largeur de la colonne alors que son couple chiffre + symbole s'y CENTRE,
-  donc accrochée à son bord gauche la bulle s'ouvrait très loin de ce qu'elle
-  explique — Keko l'a vu sur téléphone, où la colonne est proportionnellement
-  plus large (65 px d'écart). *Une bulle désigne ce qu'on regarde, pas la boîte
-  qui le contient.* Vérifié à 844 x 390 : 8 px entre elle et son chiffre.
+- **elle s'ouvre AU-DESSUS** — elle partait à gauche du temps où les mesures
+  étaient une colonne, mais *en bande, la gauche d'une mesure est la mesure
+  d'à côté.* Keko : « on devrait mettre les infobulles des stats au-dessus
+  d'elles ». **Une bulle s'ouvre du côté où il y a de la place, et ce côté
+  change avec la disposition.** Et elle se centre sur le COUPLE chiffre +
+  symbole, jamais sur la ligne : celle-ci s'étire à part égale dans la bande,
+  le couple s'y centre — *une bulle désigne ce qu'on regarde, pas la boîte qui
+  le contient.* Vérifié à 844 x 390 : elle tient entre le titre de la page et
+  sa mesure.
 
 **L'ORDRE DU RAIL : VIE, DECK, MAIN, ÉNERGIE.** Tranché par Keko. Il va du
 plus durable au plus volatil — les PV traversent la descente, le deck la run,
@@ -5114,6 +5116,17 @@ fichier — *prendre et poser ne peuvent pas sonner pareil.*
 **LE SON DU CONTACT VIT DANS LE GESTE, pas dans les écrans** — `geste-carte.ts`
 est le seul endroit où l'on touche une carte, qu'elle vienne de la main, du
 butin ou du coffre. *Un geste unique n'a qu'un son, posé une fois.*
+
+**UN ALLER-RETOUR EST UN GESTE, pas une absence de geste.** Le hook décidait
+« tape ou lâcher » sur la distance entre le départ et le LÂCHER : reposer un
+objet sur la case d'où on venait de le prendre ramène le doigt à son point de
+départ, donc le geste ne faisait plus rien du tout — ni dépôt, ni son. Keko :
+« quand je drop dans son slot où il était au début du drag, ça ne produit pas
+de son ». Le geste retient désormais qu'il a été PROMENÉ (`promene`, posé à
+chaque mouvement qui dépasse le seuil), et c'est ça qu'on lui demande à la fin.
+
+*La règle du maintien survit* : appuyer sans bouger ne promène rien, donc ça ne
+fait toujours rien — vérifié, un seul son (le contact) et aucun dépôt.
 
 **ET IL PART AU CONTACT, PAS À LA PRISE.** Au doigt, une carte n'est prise
 qu'après un MAINTIEN de 160 ms : le son en héritait, et Keko l'entendait comme
