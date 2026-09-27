@@ -34,7 +34,21 @@ import { compteDuDeck } from './Armurerie3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
 import type { Hub } from '../logic/hub.ts'
-import { deuxMains } from '../logic/hub.ts'
+import { deuxMains, peutDescendre } from '../logic/hub.ts'
+import { Z_PLAN } from './armurerie-plan.ts'
+import { tailleBouton } from './Bouton3D.tsx'
+
+/**
+ * Ce qu'une infobulle a besoin de savoir : son texte, son point d'ancrage, et
+ * de quel côté elle s'ouvre. `cle` sert à la refermer d'une seconde tape.
+ */
+type Bulle = {
+  cle: string
+  texte: string
+  x: number
+  y: number
+  place: 'gauche' | 'dessus'
+}
 
 /** La taille de la fenêtre, suivie pour replacer les cadres au redimensionnement. */
 function useFenetre(): { l: number; h: number } {
@@ -157,10 +171,34 @@ export function PageArmurerie({
    */
   const LIBELLES = ['Points de vie', 'Cartes dans le deck', 'Taille de la main', "Points d'action"]
   const mesures = useRef<(HTMLSpanElement | null)[]>([])
-  const [bulle, setBulle] = useState<{ i: number; x: number; y: number } | null>(null)
+  const [bulle, setBulle] = useState<Bulle | null>(null)
+
+  /**
+   * ET LE BOUTON GRISÉ DIT POURQUOI IL L'EST.
+   *
+   * Sans arme, on ne peut pas descendre : le bouton s'éteint, et *un refus
+   * muet se lit comme une panne* — c'est la règle qui l'avait fait griser, et
+   * elle demande son deuxième temps. Keko : « pour que le joueur sache
+   * pourquoi il peut pas cliquer ».
+   *
+   * Il vit dans la SCÈNE, pas en HTML, donc son rectangle se calcule : sa
+   * place vient du plan, sa taille de `tailleBouton` — les deux en unités de
+   * scène, converties en pixels comme tout le chrome. *Ce qui doit coïncider
+   * se calcule à un seul endroit*, et ici c'est le plan.
+   */
+  const bloque = !peutDescendre(hub.chargement)
+  const rectBouton = (): { left: number; right: number; top: number; bottom: number } => {
+    const b = tailleBouton('Descendre', 'or', false, Z_PLAN, fenetre.h)
+    const p = enPixels(
+      { x: plan.bouton[0], y: plan.bouton[1], l: b.largeur, h: b.hauteur },
+      fenetre.h,
+      fenetre.l,
+    )
+    return { left: p.left, right: p.left + p.width, top: p.top, bottom: p.top + p.height }
+  }
 
   useEffect(() => {
-    const viser = (x: number, y: number): { i: number; x: number; y: number } | null => {
+    const viser = (x: number, y: number): Bulle | null => {
       for (const [i, el] of mesures.current.entries()) {
         if (el === null) continue
         const r = el.getBoundingClientRect()
@@ -172,7 +210,27 @@ export function PageArmurerie({
           // téléphone, où la colonne est proportionnellement plus large.
           // *Une bulle désigne ce qu'on regarde, pas la boîte qui le contient.*
           const bords = [...el.children].map((c) => c.getBoundingClientRect().left)
-          return { i, x: bords.length > 0 ? Math.min(...bords) : r.left, y: r.top + r.height / 2 }
+          return {
+            cle: `stat-${i}`,
+            texte: LIBELLES[i] ?? '',
+            x: bords.length > 0 ? Math.min(...bords) : r.left,
+            y: r.top + r.height / 2,
+            place: 'gauche',
+          }
+        }
+      }
+      // LE BOUTON N'A SA BULLE QUE QUAND IL REFUSE : *une explication qui
+      // s'affiche aussi quand tout va bien n'explique plus rien.*
+      if (bloque) {
+        const b = rectBouton()
+        if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) {
+          return {
+            cle: 'bouton',
+            texte: "Tu n'as pas d'arme équipée",
+            x: (b.left + b.right) / 2,
+            y: b.top,
+            place: 'dessus',
+          }
         }
       }
       return null
@@ -189,7 +247,7 @@ export function PageArmurerie({
       if (e.pointerType === 'mouse') return
       const vise = viser(e.clientX, e.clientY)
       window.clearTimeout(minuteur)
-      setBulle((avant) => (vise !== null && avant?.i === vise.i ? null : vise))
+      setBulle((avant) => (vise !== null && avant?.cle === vise.cle ? null : vise))
       // Au doigt il n'y a pas de « sortie » : la bulle se referme toute seule,
       // sinon elle reste posée sur l'écran jusqu'au prochain geste.
       if (vise !== null) minuteur = window.setTimeout(() => setBulle(null), 2600)
@@ -201,7 +259,10 @@ export function PageArmurerie({
       window.removeEventListener('pointermove', survol)
       window.removeEventListener('pointerdown', tape)
     }
-  }, [])
+    // Le rectangle du bouton se relit à chaque geste, donc il suit la fenêtre
+    // tout seul ; seul l'état « bloqué » doit relancer l'écoute.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bloque])
 
   /** Le pouce se traîne : sa place dans la piste dit la ligne du haut. */
   const piste = useRef<HTMLDivElement>(null)
@@ -339,8 +400,11 @@ export function PageArmurerie({
           elle est posée au pixel où vit la ligne, jamais dans son flux — la
           ligne est un `flex` serré, y ajouter un enfant la déformerait. */}
       {bulle !== null && (
-        <span className="arm-bulle" style={{ left: `${bulle.x}px`, top: `${bulle.y}px` }}>
-          {LIBELLES[bulle.i]}
+        <span
+          className={`arm-bulle${bulle.place === 'dessus' ? ' dessus' : ''}`}
+          style={{ left: `${bulle.x}px`, top: `${bulle.y}px` }}
+        >
+          {bulle.texte}
         </span>
       )}
       {/* LES ONGLETS : ce qu'on possède se range par nature, et les TRÉSORS y

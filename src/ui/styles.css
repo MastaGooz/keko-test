@@ -5110,6 +5110,13 @@ body {
   box-shadow: 0 2px 10px #000000aa;
 }
 
+/* AU-DESSUS DE CE QU'ELLE EXPLIQUE, quand ce qu'elle explique tient le bas de
+   l'ecran : le bouton « Descendre » n'a pas de place a sa gauche, et une bulle
+   posee sous lui sortirait de la page. */
+.arm-bulle.dessus {
+  translate: -50% calc(-100% - 0.5rem);
+}
+
 /* LES COUPLES SONT SEPARES PAR UN FILET, plus enfermes dans un cartouche.
    Demande par Keko : « on peut enlever les rectangles et mettre juste des
    separateurs entre les stats ? »
