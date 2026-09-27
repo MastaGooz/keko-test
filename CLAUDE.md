@@ -3191,9 +3191,20 @@ côte à côte dans une liste ne peuvent pas être posés à deux hauteurs.* On 
 donc la ligne de base, calée sur la boîte COMMUNE à tous les chiffres, mesurée
 une fois au canvas (57 au-dessus, 10 en dessous, pour 100 px de police).
 
-**Le compteur du coin garde son assiette** (`ASSIETTE_COMPTEUR`), au pixel
-près : Keko n'a demandé que celui de la composition. *Une retouche demandée sur
-un endroit ne se généralise pas à l'autre tant qu'il n'a pas été jugé.*
+**LE COMPTEUR DU COIN GARDE SON CODE D'ORIGINE, pas une valeur réputée
+équivalente.** Je l'avais d'abord rejoué par le nouveau chemin avec une
+assiette calculée pour tomber au même endroit — et Keko l'a vu tout de suite :
+« tu as touché à la carte en haut à gauche alors que je t'avais dit de ne pas
+le faire ». **Mesuré après coup : 8 px d'écart sur une case de 119**, là où mon
+calcul en annonçait 0,1.
+
+*L'erreur était dans l'hypothèse* : `middle` ne se mesure pas sur
+`fontBoundingBox`, contrairement à ce que j'avais supposé pour convertir. **Une
+équivalence calculée entre deux chemins de rendu n'est pas une équivalence tant
+qu'on ne l'a pas mesurée sur les pixels** — et quand le réglage d'en face a été
+validé par Keko, la bonne réponse n'est pas de le recalculer, c'est de ne pas y
+toucher. `caseDeCarte` sans assiette reprend donc exactement l'ancien code, et
+c'est l'absence du paramètre qui dit « ne rien changer ici ».
 
 La composition entre dans `signature()`, sans quoi deux pièces de même nom
 partageraient la texture. Le texte qui coule reste en repli : il sert au jeu 2D

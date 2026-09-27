@@ -344,17 +344,23 @@ export async function peindreCarte(
  */
 const MILIEU_CHIFFRE = (0.57 - 0.1) / 2
 
-/** L'assiette du compteur du coin, laissée telle qu'elle était réglée. */
-const ASSIETTE_COMPTEUR = 0.626
-
 function caseDeCarte(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   l: number,
   nombre: number,
-  /** Où poser le MILIEU du chiffre, en part de la hauteur de la case. */
-  assiette = 0.5,
+  /**
+   * Où poser le MILIEU du chiffre, en part de la hauteur de la case.
+   *
+   * **Sans elle, on reprend le réglage HISTORIQUE du compteur du coin**, au
+   * caractère près — Keko ne l'a pas jugé et le trouve déjà centré. *Une
+   * correction demandée sur un endroit ne se porte pas à l'autre par
+   * équivalence calculée* : j'avais cru les deux chemins identiques à 0,1 px,
+   * ils ne l'étaient pas, et `middle` ne se mesure pas partout sur la même
+   * boîte.
+   */
+  assiette?: number,
 ): void {
   const h = l * 1.4
   const coin = l * 0.105
@@ -383,6 +389,11 @@ function caseDeCarte(
   ctx.fillStyle = '#e8eef4'
   ctx.font = `600 ${police}px "Grenze Gotisch", Georgia, serif`
   ctx.textAlign = 'center'
+  if (assiette === undefined) {
+    ctx.textBaseline = 'middle'
+    ctx.fillText(String(nombre), x + l / 2, y + h * 0.54)
+    return
+  }
   // ON POSE LA LIGNE DE BASE, pas une boîte de ligne. `middle` se mesure sur
   // la boîte de POLICE — jambages compris, et un chiffre n'en a pas — donc il
   // pose le chiffre trop bas de sa propre moitié de descente.
@@ -409,7 +420,7 @@ function peindreCompteur(ctx: CanvasRenderingContext2D, nombre: number): void {
   // toile.*
   const x = 0.05 * LARGE
   const y = 0.016 * HAUT
-  caseDeCarte(ctx, x, y, l, nombre, ASSIETTE_COMPTEUR)
+  caseDeCarte(ctx, x, y, l, nombre)
 }
 
 /**
@@ -771,7 +782,7 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
       let x = (LARGE - total) / 2
       rang.forEach((i) => {
         const entree = compo[i]!
-        caseDeCarte(ctx, x, y - caseL * 0.7, caseL, entree.nombre)
+        caseDeCarte(ctx, x, y - caseL * 0.7, caseL, entree.nombre, 0.5)
         ctx.font = `400 ${ligne * 0.62}px "Crimson Pro", Georgia, serif`
         ctx.textAlign = 'left'
         ctx.textBaseline = 'middle'
