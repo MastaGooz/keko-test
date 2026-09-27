@@ -10,6 +10,7 @@ import { carteTresor } from './cartes.ts'
 import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART, SUPER_POTIONS_DEPART, deckDeLEquipement } from './armes.ts'
 import {
   CAPACITE_PILE,
+  consommablesDeLaPile,
   echangerDansCoffre,
   accepteDepuis,
   creerHub,
@@ -61,7 +62,7 @@ const COTTE: Armure = {
   // Trois cartes d'arme, six d'armure : le format des douze moins l'arme qui
   // manque. La potion s'y ajoute par la pile, qui n'est pas une piece.
   verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 9)
-  verifier('une potion est deja sur la pile', h.chargement.pile.length === 1)
+  verifier('une potion est deja sur la pile', consommablesDeLaPile(h.chargement.pile).length === 1)
   verifier('elle ajoute sa carte au deck emporte', deckEmporte(h.chargement).length === 10)
   // En attendant un marché, l'Espadon attend au râtelier avec les potions
   // qu'on n'a pas prises : sans lui il n'y aurait rien à choisir.
@@ -145,7 +146,8 @@ const COTTE: Armure = {
 
 {
   const h = creerHub()
-  verifier("l'or rapporte s'ajoute", rentrer(rentrer(h, 240, h.chargement.pile), 120, h.chargement.pile).or === 360)
+  const survivantes = consommablesDeLaPile(h.chargement.pile)
+  verifier("l'or rapporte s'ajoute", rentrer(rentrer(h, 240, survivantes), 120, survivantes).or === 360)
 
   // LE GARDE-FOU CONTRE LA SPIRALE : mourir avec son seul equipement ne peut
   // pas bloquer le jeu. Il y a toujours de quoi repartir au ratelier.
@@ -176,7 +178,7 @@ const COTTE: Armure = {
   // couvre que de quoi frapper et encaisser. Ce qui restait au ratelier, lui,
   // n'est pas touche -- on ne perd que ce qu'on emportait.
   const mortAvecPile = perdreLEquipement({ ...h, chargement: { ...h.chargement, pile: POTIONS_DEPART.slice(0, 2) } })
-  verifier('mourir vide la pile', mortAvecPile.chargement.pile.length === 0)
+  verifier('mourir vide la pile', consommablesDeLaPile(mortAvecPile.chargement.pile).length === 0)
   verifier('mais le ratelier garde ses potions', mortAvecPile.reserve.length === h.reserve.length)
 }
 
@@ -189,7 +191,7 @@ const COTTE: Armure = {
   // On remplit la pile : elle en tient CAPACITE_PILE.
   let pleine = h
   for (const p of [p2, p3]) pleine = deplacerPiece(pleine, { ou: 'reserve' }, { ou: 'pile' }, p!.id)
-  verifier('la pile est pleine pour le test', pleine.chargement.pile.length === CAPACITE_PILE)
+  verifier('la pile est pleine pour le test', consommablesDeLaPile(pleine.chargement.pile).length === CAPACITE_PILE)
 
   // SANS RANG, une pile pleine refuse : c'est la regle d'avant, inchangee.
   verifier('une pile pleine refuse qu on l allonge',
@@ -199,7 +201,7 @@ const COTTE: Armure = {
   const remplacee = deplacerPiece(pleine, { ou: 'reserve' }, { ou: 'pile', rang: 1 }, sup.id)
   verifier('viser une case remplace ce qu elle tient',
     remplacee.chargement.pile[1]!.id === sup.id)
-  verifier('...sans allonger la pile', remplacee.chargement.pile.length === CAPACITE_PILE)
+  verifier('...sans allonger la pile', consommablesDeLaPile(remplacee.chargement.pile).length === CAPACITE_PILE)
   // La pile vaut [p1, p2, p3] : le rang 1, c'est p2.
   verifier('...et la delogee rentre au ratelier',
     remplacee.reserve.some((o) => o.id === p2!.id))
@@ -207,7 +209,7 @@ const COTTE: Armure = {
   // RANGER LA PILE : deux cases echangent, rien ne sort.
   const range = deplacerPiece(pleine, { ou: 'pile' }, { ou: 'pile', rang: 2 }, p1!.id)
   verifier('deux cases de la pile s echangent',
-    range.chargement.pile[2]!.id === p1!.id && range.chargement.pile.length === CAPACITE_PILE)
+    range.chargement.pile[2]!.id === p1!.id && consommablesDeLaPile(range.chargement.pile).length === CAPACITE_PILE)
   verifier('...et rien n est parti au ratelier', range.reserve.length === pleine.reserve.length)
 
   // Le rendu demande la meme chose que la regle.
@@ -215,6 +217,26 @@ const COTTE: Armure = {
     accepteDepuis(pleine, { ou: 'reserve' }, { ou: 'pile', rang: 0 }, sup.id))
   verifier('...et qu une pile pleine refuse sans rang',
     !accepteDepuis(pleine, { ou: 'reserve' }, { ou: 'pile' }, sup.id))
+}
+
+// --- la pile est POSITIONNELLE ----------------------------------------------
+
+{
+  const h = creerHub()
+  const [, p2, p3] = POTIONS_DEPART
+  // On pose dans la DERNIERE case alors que la deuxieme est libre.
+  const loin = deplacerPiece(h, { ou: 'reserve' }, { ou: 'pile', rang: 2 }, p2!.id)
+  verifier('on pose dans la case qu on vise', loin.chargement.pile[2]!.id === p2!.id)
+  verifier('...et la case du milieu reste libre', loin.chargement.pile[1] === null)
+
+  // SORTIR LAISSE SA CASE OUVERTE : les voisines ne glissent pas.
+  const sortie = deplacerPiece(loin, { ou: 'pile' }, { ou: 'reserve' }, p2!.id)
+  verifier('sortir laisse la case ouverte', sortie.chargement.pile[2] === null)
+  verifier('...et la premiere n a pas bouge', sortie.chargement.pile[0]!.id === h.chargement.pile[0]!.id)
+
+  // SANS RANG, on prend la premiere libre : un depot large doit bien poser.
+  const large = deplacerPiece(h, { ou: 'reserve' }, { ou: 'pile' }, p3!.id)
+  verifier('sans rang, la premiere case libre', large.chargement.pile[1]!.id === p3!.id)
 }
 
 // --- ranger le coffre --------------------------------------------------------
@@ -249,15 +271,15 @@ const COTTE: Armure = {
   // tout ce qu'on possede et la question ne se pose plus.
   const deux = deplacerPiece(h, { ou: 'reserve' }, { ou: 'pile' }, p2!.id)
   const trois = deplacerPiece(deux, { ou: 'reserve' }, { ou: 'pile' }, p3!.id)
-  verifier('on empile plusieurs exemplaires du meme modele', trois.chargement.pile.length === 3)
+  verifier('on empile plusieurs exemplaires du meme modele', consommablesDeLaPile(trois.chargement.pile).length === 3)
   verifier('et le deck grossit d’autant', deckEmporte(trois.chargement).length === 12)
-  verifier('rien ne s’est perdu en chemin', trois.reserve.length + trois.chargement.pile.length === h.reserve.length + 1)
+  verifier('rien ne s’est perdu en chemin', trois.reserve.length + consommablesDeLaPile(trois.chargement.pile).length === h.reserve.length + 1)
 
   // ON EN REPREND UNE PRECISE : la pile se prend par identifiant, sinon on ne
   // saurait pas laquelle des trois on retire.
   const moins = deplacerPiece(trois, { ou: 'pile' }, { ou: 'reserve' }, p2!.id)
-  verifier('on retire un exemplaire precis', moins.chargement.pile.length === 2)
-  verifier('...et c’est bien celui-la', !moins.chargement.pile.some((c) => c.id === p2!.id))
+  verifier('on retire un exemplaire precis', consommablesDeLaPile(moins.chargement.pile).length === 2)
+  verifier('...et c’est bien celui-la', !moins.chargement.pile.some((c) => c?.id === p2!.id))
   verifier('il repart au ratelier', moins.reserve.some((o) => o.id === p2!.id))
 
   // La pile ne prend QUE des consommables, et un consommable ne va nulle part
@@ -268,7 +290,7 @@ const COTTE: Armure = {
 
   // LE PLAFOND : la quatrieme potion reste au ratelier.
   const pleine = deplacerPiece(deplacerPiece(trois, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[3]!.id), { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id)
-  verifier('la pile plafonne a CAPACITE_PILE', pleine.chargement.pile.length === CAPACITE_PILE)
+  verifier('la pile plafonne a CAPACITE_PILE', consommablesDeLaPile(pleine.chargement.pile).length === CAPACITE_PILE)
   verifier('la quatrieme reste au ratelier', pleine.reserve.some((o) => o.id === POTIONS_DEPART[3]!.id))
   verifier('et le depot de trop ne change rien d’autre',
     deplacerPiece(pleine, { ou: 'reserve' }, { ou: 'pile' }, POTIONS_DEPART[4]!.id) === pleine)
@@ -276,7 +298,7 @@ const COTTE: Armure = {
   // MAIS ON PEUT REPOSER SUR UNE PILE PLEINE CE QU'ON VIENT D'EN SORTIR : la
   // destination se juge apres la prise, sinon la carte se refusait elle-meme.
   const repose = deplacerPiece(pleine, { ou: 'pile' }, { ou: 'pile' }, pleine.chargement.pile[0]!.id)
-  verifier('une potion se repose sur sa propre pile pleine', repose.chargement.pile.length === CAPACITE_PILE)
+  verifier('une potion se repose sur sa propre pile pleine', consommablesDeLaPile(repose.chargement.pile).length === CAPACITE_PILE)
 
   // CE QUE LE RENDU DEMANDE AUX RÈGLES : ce depot aboutirait-il ? C'est ce
   // qui fait grandir la piece tenue au-dessus d'un slot qui la prend, donc il
@@ -297,8 +319,9 @@ const COTTE: Armure = {
 
   // CE QU'ON A BU NE REVIENT PAS. `rentrer` recoit les survivantes, et la pile
   // devient exactement ca -- c'est la seule ressource du jeu qui s'epuise.
-  const bue = rentrer(trois, 0, trois.chargement.pile.slice(0, 1))
-  verifier('rentrer ne rend que les potions non bues', bue.chargement.pile.length === 1)
+  const bue = rentrer(trois, 0, consommablesDeLaPile(trois.chargement.pile).slice(0, 1))
+  verifier('rentrer ne rend que les potions non bues',
+    consommablesDeLaPile(bue.chargement.pile).length === 1)
   verifier('le ratelier n’en repousse pas', bue.reserve.length === trois.reserve.length)
 }
 

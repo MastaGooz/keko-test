@@ -10,7 +10,7 @@ import { createRng } from '../logic/rng.ts'
 import type { Descente } from '../logic/descente.ts'
 import { REGLAGE_DEFAUT, commencerDescente } from '../logic/descente.ts'
 import type { Hub } from '../logic/hub.ts'
-import { creerHub, equipement } from '../logic/hub.ts'
+import { creerHub, equipement, consommablesDeLaPile } from '../logic/hub.ts'
 import type { Piece } from '../logic/armes.ts'
 import { ESPADON, GLAIVE, PLASTRON, POTIONS_DEPART, deckDeLEquipement } from '../logic/armes.ts'
 import type { Objet } from '../logic/armes.ts'
@@ -101,7 +101,7 @@ export function descenteDeDepart(
     rng,
     { ...REGLAGE_DEFAUT, tailleMain },
     equipementPourTenir(equipement(hub.chargement), tailleMain),
-    hub.chargement.pile,
+    consommablesDeLaPile(hub.chargement.pile),
   )
   return { descente, rng }
 }

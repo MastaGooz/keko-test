@@ -45,8 +45,7 @@ import {
   equipement,
   peutDescendre,
   perdreLEquipement,
-  rentrer,
-} from './logic/hub.ts'
+  rentrer, consommablesDeLaPile } from './logic/hub.ts'
 import type { Action } from './ui/input.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
@@ -183,7 +182,7 @@ function slotNaturel(id: string): Slot | null {
 function demarrer(nouvelleSeed: number): void {
   seed = nouvelleSeed
   rng = createRng(seed)
-  descente = commencerDescente(rng, undefined, equipement(hub.chargement), hub.chargement.pile)
+  descente = commencerDescente(rng, undefined, equipement(hub.chargement), consommablesDeLaPile(hub.chargement.pile))
   agonie = []
   zoom = null
   survolee = null
@@ -301,7 +300,7 @@ function dispatch(action: Action): void {
       const objet =
         hub.reserve.find((p) => p.id === action.id) ??
         equipement(hub.chargement).find((p) => p.id === action.id) ??
-        hub.chargement.pile.find((c) => c.id === action.id) ??
+        consommablesDeLaPile(hub.chargement.pile).find((c) => c.id === action.id) ??
         null
       const vue: Carte | Piece | null =
         descente.combat.main.find((c) => c.id === action.id) ??

@@ -54,7 +54,20 @@ export type Chargement = {
    * question ne se pose plus. À quatre cases, emporter une potion de plus veut
    * dire en laisser une autre.
    */
-  pile: Consommable[]
+  /**
+   * LA PILE EST POSITIONNELLE : toujours `CAPACITE_PILE` cases, `null` pour
+   * une case libre. Elle a été une LISTE compacte, et le joueur ne pouvait
+   * pas choisir où poser — Keko : « je ne peux pas décider dans quel slot, ça
+   * met l'objet toujours dans le slot le plus libre en partant de la gauche,
+   * c'est pas fou ».
+   *
+   * *C'est exactement la leçon du sac en 2D* : une liste compactée remonte les
+   * vides à la fin et fait glisser les voisins, donc **le joueur perd son
+   * rangement en le manipulant.** L'ordre n'a toujours aucun effet sur les
+   * règles — le deck est mélangé au combat — mais ranger est un geste qu'on
+   * doit pouvoir faire sans qu'il se défasse.
+   */
+  pile: (Consommable | null)[]
 }
 
 export type Hub = {
@@ -152,7 +165,17 @@ export function echangerDansCoffre(hub: Hub, idA: string, idB: string): Hub {
   return hub
 }
 
-const VIDE: Chargement = { mains: [null, null], armure: null, pile: [] }
+/** Une pile vide : ses cases existent toutes, elles ne tiennent rien. */
+export function pileVide(): (Consommable | null)[] {
+  return Array.from({ length: CAPACITE_PILE }, () => null)
+}
+
+/** Ce que la pile contient VRAIMENT, sans ses trous. */
+export function consommablesDeLaPile(pile: (Consommable | null)[]): Consommable[] {
+  return pile.filter((c): c is Consommable => c !== null)
+}
+
+const VIDE: Chargement = { mains: [null, null], armure: null, pile: pileVide() }
 
 /**
  * L'armurerie au premier lancement : l'équipement gratuit, déjà équipé.
@@ -173,7 +196,7 @@ export function creerHub(): Hub {
     chargement: {
       mains: [ARME_GRATUITE, null],
       armure: ARMURE_GRATUITE,
-      pile: [POTIONS_DEPART[0]!],
+      pile: [POTIONS_DEPART[0]!, ...pileVide().slice(1)],
     },
     or: 0,
   }
@@ -197,7 +220,7 @@ export function equipement(chargement: Chargement): Piece[] {
 export function deckEmporte(chargement: Chargement): Carte[] {
   return [
     ...deckDeLEquipement(equipement(chargement)),
-    ...chargement.pile.map(carteDuConsommable),
+    ...consommablesDeLaPile(chargement.pile).map(carteDuConsommable),
   ]
 }
 
@@ -260,8 +283,11 @@ function accepte(slot: Slot, piece: Objet, hub: Hub): boolean {
     // UNE CASE OCCUPÉE PREND TOUJOURS, même pile pleine : on ne l'allonge pas,
     // on remplace ce qu'elle tient. C'est la règle des autres slots du
     // chargement, enfin rendue à la pile.
+    // UNE CASE VISÉE PREND TOUJOURS : vide elle reçoit, occupée elle échange.
+    // Sans rang, il faut qu'il reste une case libre — c'est le seul cas où la
+    // pile peut refuser.
     if (slot.rang !== undefined && slot.rang < hub.chargement.pile.length) return true
-    return hub.chargement.pile.length < CAPACITE_PILE
+    return hub.chargement.pile.some((c) => c === null)
   }
   if (slot.ou === 'armure') return !estArme(piece) && !estConsommable(piece)
   // Une arme va dans l'une ou l'autre main. À deux mains aussi : on la pose où
@@ -285,11 +311,14 @@ function prendre(hub: Hub, slot: Slot, id?: string): { piece: Objet | null; hub:
   // LA PILE SE PREND PAR IDENTIFIANT, comme la réserve : elle en contient
   // plusieurs, et souvent le même modèle. Le lieu seul ne dirait pas laquelle.
   if (slot.ou === 'pile') {
-    const i = hub.chargement.pile.findIndex((c) => c.id === id)
+    const i = hub.chargement.pile.findIndex((c) => c !== null && c.id === id)
     if (i < 0) return { piece: null, hub }
     const pile = [...hub.chargement.pile]
-    const [piece] = pile.splice(i, 1)
-    return { piece: piece ?? null, hub: { ...hub, chargement: { ...hub.chargement, pile } } }
+    const piece = pile[i] ?? null
+    // ELLE LAISSE SA CASE OUVERTE : on peut l'y remettre, et les voisines ne
+    // glissent pas sous le doigt.
+    pile[i] = null
+    return { piece, hub: { ...hub, chargement: { ...hub.chargement, pile } } }
   }
   const mains: [Arme | null, Arme | null] = [...hub.chargement.mains]
   const piece = mains[slot.rang]
@@ -311,13 +340,16 @@ function poser(hub: Hub, slot: Slot, piece: Objet): { sortant: Objet | null; hub
   // de remplacer une potion que d'échanger deux cases entre elles.
   if (slot.ou === 'pile') {
     const pile = [...hub.chargement.pile]
-    if (slot.rang !== undefined && slot.rang < pile.length) {
-      const sortant = pile[slot.rang] ?? null
-      pile[slot.rang] = piece as Consommable
-      return { sortant, hub: { ...hub, chargement: { ...hub.chargement, pile } } }
-    }
-    pile.push(piece as Consommable)
-    return { sortant: null, hub: { ...hub, chargement: { ...hub.chargement, pile } } }
+    // DANS LA CASE VISÉE quand on en vise une — c'est elle qui décide, pas
+    // l'ordre de la liste. Sans rang (une tape, un dépôt large), la première
+    // libre : il faut bien poser quelque part.
+    const ou = slot.rang !== undefined && slot.rang < pile.length
+      ? slot.rang
+      : pile.findIndex((c) => c === null)
+    if (ou < 0) return { sortant: null, hub }
+    const sortant = pile[ou] ?? null
+    pile[ou] = piece as Consommable
+    return { sortant, hub: { ...hub, chargement: { ...hub.chargement, pile } } }
   }
   const mains: [Arme | null, Arme | null] = [...hub.chargement.mains]
   const sortant: Objet | null = mains[slot.rang] ?? null
@@ -355,9 +387,13 @@ function poser(hub: Hub, slot: Slot, piece: Objet): { sortant: Objet | null; hub
 export function rentrer(
   hub: Hub,
   butin: number,
-  pile: Consommable[],
+  survivants: Consommable[],
   tresors: Carte[] = [],
 ): Hub {
+  // CE QUI A ÉTÉ BU LAISSE SA CASE VIDE, le reste ne bouge pas : la pile est
+  // positionnelle, donc on ne la reconstruit pas — on l'ampute.
+  const restants = new Set(survivants.map((c) => c.id))
+  const pile = hub.chargement.pile.map((c) => (c !== null && restants.has(c.id) ? c : null))
   return {
     ...hub,
     or: hub.or + butin,
@@ -391,14 +427,14 @@ export function perdreLEquipement(hub: Hub): Hub {
       // LA PILE EST PERDUE, ET RIEN NE LA REMPLACE. Le garde-fou ne couvre que
       // de quoi frapper et encaisser : on peut descendre sans potion, on ne
       // peut pas descendre sans arme. Ce qui restait au râtelier est intact.
-      pile: [],
+      pile: pileVide(),
     },
   }
 }
 
 /** Reste-t-il de la place pour un consommable ? */
 export function pilePleine(chargement: Chargement): boolean {
-  return chargement.pile.length >= CAPACITE_PILE
+  return chargement.pile.every((c) => c !== null)
 }
 
 /** Le chargement est-il seulement descendable ? Il faut au moins de quoi frapper. */

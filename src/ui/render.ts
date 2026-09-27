@@ -15,7 +15,7 @@ import { consequence, jouable, menaceDuTour, tresorsEnMain, vivants } from '../l
 import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, tresorsAuDeck } from '../logic/descente.ts'
 import type { Hub } from '../logic/hub.ts'
-import { CAPACITE_PILE, deckEmporte, deuxMains, peutDescendre } from '../logic/hub.ts'
+import { CAPACITE_PILE, deckEmporte, deuxMains, peutDescendre, consommablesDeLaPile } from '../logic/hub.ts'
 import type { Consommable, Objet, Piece } from '../logic/armes.ts'
 import { carteDuConsommable, estConsommable } from '../logic/armes.ts'
 import { creature, sceau, teteDeMort } from './illustrations.ts'
@@ -1057,7 +1057,7 @@ function armurerie(hub: Hub): string {
     // boit, sous ce qui frappe.
     `<div class="rangee-pieces torse">` +
     slotEquipement(hub.chargement.armure, { ou: 'armure' }, 'armure', false) +
-    pileConsommables(hub.chargement.pile) +
+    pileConsommables(consommablesDeLaPile(hub.chargement.pile)) +
     `</div>` +
     `</div>` +
     `</div>` +

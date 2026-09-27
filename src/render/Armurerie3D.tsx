@@ -44,7 +44,7 @@ import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Carte } from '../logic/combat.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
-import { CAPACITE_PILE, accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
+import { accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
 import type { PlanArmurerie } from './armurerie-plan.ts'
 import { caseSousLePoint, contenuDuCoffre, placeCase, planArmurerie } from './armurerie-plan.ts'
@@ -310,14 +310,22 @@ export function Armurerie3D({
             taille: plan.tailleCharge,
           },
         ]),
-    ...hub.chargement.pile.map((objet, i) => ({
-      objet: objet as Objet,
-      tresor: null,
-      id: objet.id,
-      slot: { ou: 'pile' } as Slot,
-      position: plan.pile[i] ?? plan.pile[0]!,
-      taille: plan.taillePile,
-    })),
+    // LA PILE EST POSITIONNELLE : chaque consommable est À SA CASE, et les
+    // trous restent des trous. C'est ce qui permet de décider où l'on pose.
+    ...hub.chargement.pile.flatMap((objet, i) =>
+      objet === null
+        ? []
+        : [
+            {
+              objet: objet as Objet,
+              tresor: null,
+              id: objet.id,
+              slot: { ou: 'pile', rang: i } as Slot,
+              position: plan.pile[i] ?? plan.pile[0]!,
+              taille: plan.taillePile,
+            },
+          ],
+    ),
   ]
 
   /**
@@ -513,15 +521,19 @@ export function Armurerie3D({
       {hub.chargement.armure === null && (
         <CaseVide nom="" position={plan.armure} taille={plan.tailleCharge} />
       )}
-      {Array.from({ length: CAPACITE_PILE - hub.chargement.pile.length }, (_, i) => (
-        <CaseVide
-          key={`pile-${i}`}
-          nom=""
-          position={plan.pile[hub.chargement.pile.length + i] ?? plan.pile[0]!}
-          taille={plan.taillePile}
-          accent={TEINTE.pile}
-        />
-      ))}
+      {hub.chargement.pile.flatMap((objet, i) =>
+        objet !== null
+          ? []
+          : [
+              <CaseVide
+                key={`pile-${i}`}
+                nom=""
+                position={plan.pile[i] ?? plan.pile[0]!}
+                taille={plan.taillePile}
+                accent={TEINTE.pile}
+              />,
+            ],
+      )}
 
       {/* LA CASE D'OÙ L'ON TIENT LA PIÈCE RESTE VISIBLE, en pointillé, et elle
           DIT CE QU'ELLE ATTEND. Les cases vides se déduisent du chargement, or
@@ -592,7 +604,7 @@ export function compteDuDeck(hub: Hub): { total: number; frappent: number } {
     ...hub.chargement.mains.filter((a) => a !== null),
     ...(hub.chargement.armure === null ? [] : [hub.chargement.armure]),
   ]
-  let total = hub.chargement.pile.length
+  let total = hub.chargement.pile.filter((c) => c !== null).length
   let frappent = 0
   for (const piece of pieces) {
     for (const { modele, nombre } of piece.set) {

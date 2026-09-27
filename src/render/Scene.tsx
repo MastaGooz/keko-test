@@ -67,8 +67,7 @@ import {
   equipement,
   perdreLEquipement,
   peutDescendre,
-  rentrer,
-} from '../logic/hub.ts'
+  rentrer, consommablesDeLaPile } from '../logic/hub.ts'
 import {
   REGLAGE_DEFAUT,
   commencerDescente,
@@ -1072,7 +1071,7 @@ export function Scene(): React.JSX.Element {
         depart.rng,
         { ...REGLAGE_DEFAUT, tailleMain: TAILLE_MAIN_URL() },
         equipementPourTenir(equipement(hub.chargement), TAILLE_MAIN_URL()),
-        hub.chargement.pile,
+        consommablesDeLaPile(hub.chargement.pile),
       ),
     )
   }, [depart.rng, hub])

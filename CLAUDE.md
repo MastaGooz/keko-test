@@ -1636,6 +1636,24 @@ qu'un quart de carte. Pleine, elle annonce `data-attend="rien"` — le glisser
 l'allume alors en rouge sans rien savoir de la règle, exactement comme un slot
 condamné par une arme à deux mains.
 
+**ET LA PILE EST DEVENUE POSITIONNELLE** : toujours `CAPACITE_PILE` cases,
+`null` pour une case libre. Elle était une LISTE compacte, donc poser ajoutait
+à la suite — Keko : « je ne peux pas décider dans quel slot, ça met l'objet
+toujours dans le slot le plus libre en partant de la gauche, c'est pas fou ».
+
+*C'est mot pour mot la leçon du sac en 2D* : une liste compactée remonte les
+vides à la fin et fait glisser les voisins, donc **le joueur perd son rangement
+en le manipulant.** Sortir un objet laisse SA case ouverte, on peut l'y
+remettre, et poser sur la troisième case alors que la deuxième est libre pose
+bien sur la troisième. L'ordre n'a toujours aucun effet sur les règles — le
+deck est mélangé au combat — mais *ranger est un geste qu'on doit pouvoir faire
+sans qu'il se défasse.*
+
+Sans rang (un dépôt large, une tape), on prend la première case libre : il faut
+bien poser quelque part. Et le type dit la règle : `(Consommable | null)[]`,
+donc tout ce qui lit la pile passe par `consommablesDeLaPile` et ne peut pas
+oublier les trous.
+
 **PUIS LA PILE A EU DES CASES, ET ON Y POSE À LA PLACE.** Tant qu'elle n'était
 qu'une zone de dépôt, **pleine, elle n'avait plus aucune porte** — Keko : « si
 j'ai 3 petites potions équipées, je ne peux pas mettre une grosse potion à la
