@@ -4968,7 +4968,13 @@ body {
   border-radius: 2px;
   background: #16171d;
   color: #e6cf9d;
-  font-size: clamp(0.6rem, 1.9vh, 0.95rem);
+  /* TROIS CRANS QUI SE DISTINGUENT : le lieu, le meuble, ses onglets. Le nom
+     du meuble etait a 1,9vh contre 1,7 pour un onglet -- un pixel et demi
+     d'ecart sur un ecran de PC, donc *deux niveaux de titre qu'on ne pouvait
+     pas distinguer*. Keko : « les sous-titres devraient etre plus gros que les
+     onglets, mais plus petits que le titre armurerie ». Il se pose au milieu
+     des deux autres (2,4vh entre 1,7 et 3,1). */
+  font-size: clamp(0.72rem, 2.4vh, 1.2rem);
   letter-spacing: 0.16em;
   text-transform: uppercase;
   white-space: nowrap;

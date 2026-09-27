@@ -3596,6 +3596,15 @@ normale sur une carte* ; en capitales espacées sur une bande de page, sa
 graisse gothique se lit comme une enseigne de taverne et non comme un lieu. Le
 titre garde donc la police héritée. Ne pas la reproposer.
 
+**TROIS CRANS DE TITRE, ET ILS SE DISTINGUENT** : le lieu, le meuble, ses
+onglets. Le nom d'un meuble était à `1,9vh` contre `1,7` pour un onglet — un
+pixel et demi d'écart sur un écran de PC, donc *deux niveaux de titre qu'on ne
+pouvait pas distinguer.* Keko : « les sous-titres coffre/équipement devraient
+être plus gros que les onglets, mais plus petits que le titre armurerie ». Il
+se pose donc au milieu des deux autres (`2,4vh` entre 1,7 et 3,1). Mesuré à
+844x390 comme à 667x320 : 15,2 / 11,5 / 8,8 px, les plaques tiennent dans leurs
+cadres, zéro débordement.
+
 **LE BANDEAU NE DIT PLUS QUE LE LIEU.** Le chargement, le compte du deck et
 l'or en sont partis, demandé par Keko : *ce qu'on lit sans décider dessus n'a
 rien à faire en tête de page.* Le compte du deck n'a pas disparu pour autant —
