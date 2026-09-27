@@ -3543,18 +3543,27 @@ l'effet, pas la largeur : celle-ci varie à chaque pixel de redimensionnement et
 pendant qu'une carte grandit sous le doigt, alors que la texture ne change
 qu'aux paliers.
 
-**UNE PETITE CARTE PREND UNE PETITE TEXTURE.** Keko : « pourquoi les cartes
-réduites sont floues ? » *Ce n'était pas la peinture, c'était la
-MINIFICATION.* Une carte du coffre fait une centaine de pixels à l'écran pour
-une texture de 768 : le GPU la minifie de deux niveaux et demi et **mélange
-deux étages de mipmap**, dont un plus petit qu'elle — le texte s'y brouille
-par construction, quel que soit le soin mis à le peindre.
+**ET ON PEINT À LA TAILLE D'AFFICHAGE, on ne réduit plus après coup.** C'est la
+troisième passe sur ce sujet, et c'est celle qui règle vraiment la lisibilité —
+Keko : « la résolution des textes hors zoom est très peu lisible, la solution
+actuelle n'est pas terrible ».
 
-On redessine donc la carte dans une toile à sa taille (256 de large), une
-fois, et c'est elle qu'on plaque : *il n'y a plus de minification à faire,
-donc plus rien à mélanger.* Le rééchantillonnage du canvas en `high` vaut
-d'ailleurs mieux que la réduction en boîte que le GPU fabrique pour ses
-mipmaps.
+*Réduire un bitmap n'est pas rendre du texte.* La petite carte était peinte à
+768 puis rééchantillonnée : le texte y était rastérisé à 19 px puis écrasé à
+10, donc mou par construction, quel que soit le soin mis au filtre. Une mise à
+l'échelle du CONTEXTE (`ctx.scale`) change tout — le moteur de police rend
+alors chaque glyphe **à sa taille finale**, avec son antialiasing et son
+hinting. Tout le dessin continue de parler en unités de 768, donc rien d'autre
+ne bouge : une ligne.
+
+**Ce qui rend un texte net, ce n'est pas la taille de la toile, c'est de le
+tracer UNE SEULE FOIS, à la bonne taille.**
+
+*Ce qui reste, et qui n'est plus un problème de résolution* : à 97 px de large
+— la case du coffre — la composition d'une pièce fait 7 px de haut. Elle est
+nette, elle est petite. Les leviers sont ailleurs : agrandir les cartes,
+agrandir ce texte au détriment de sa longueur, ou assumer qu'*on le consulte en
+zoomant* — c'est déjà ce que dit la règle du gabarit.
 
 Elle a son **cache à part** — le même modèle peut être au coffre ET au
 chargement — et ça ne coûte presque rien : 0,4 Mo contre 4,4. Le seuil est

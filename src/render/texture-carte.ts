@@ -224,12 +224,30 @@ function nu(ligne: string): string {
  * police par défaut, et la carte sort en sans-serif sans qu'aucune erreur ne
  * le dise.
  */
-export async function peindreCarte(carte: CarteAPeindre): Promise<HTMLCanvasElement> {
+export async function peindreCarte(
+  carte: CarteAPeindre,
+  largeur = LARGE,
+): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
-  canvas.width = LARGE
-  canvas.height = HAUT
+  canvas.width = Math.round(largeur)
+  canvas.height = Math.round(largeur * 1.4)
   const ctx = canvas.getContext('2d')
   if (ctx === null) return canvas
+  /**
+   * ON PEINT À LA TAILLE D'AFFICHAGE, on ne réduit plus après coup.
+   *
+   * La petite carte était peinte à 768 puis **rééchantillonnée en bitmap** :
+   * le texte y était rastérisé à 19 px puis écrasé à 10, donc mou par
+   * construction — Keko : « la résolution des textes hors zoom est très peu
+   * lisible, la solution actuelle n'est pas terrible ».
+   *
+   * Une mise à l'échelle du CONTEXTE change tout : le moteur de police rend
+   * alors chaque glyphe **à sa taille finale**, avec son antialiasing et son
+   * hinting. Tout le dessin continue de parler en unités de 768 (`U`), donc
+   * rien d'autre ne bouge. *Ce qui rend un texte net, ce n'est pas la taille
+   * de la toile, c'est de le tracer une seule fois, à la bonne taille.*
+   */
+  if (largeur !== LARGE) ctx.scale(largeur / LARGE, largeur / LARGE)
 
   const [image, decor, symbole] = await Promise.all([
     illustration(carte.nom),
@@ -1022,17 +1040,6 @@ export function signature(carte: CarteAPeindre): string {
  * chargement, et les deux tailles cohabitent. Une petite pèse 0,4 Mo contre
  * 4,4 — c'est la moins chère des deux.
  */
-function reduire(source: HTMLCanvasElement, largeur: number): HTMLCanvasElement {
-  const petit = document.createElement('canvas')
-  petit.width = largeur
-  petit.height = Math.round(largeur * 1.4)
-  const ctx = petit.getContext('2d')
-  if (ctx === null) return source
-  ctx.imageSmoothingEnabled = true
-  ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(source, 0, 0, petit.width, petit.height)
-  return petit
-}
 
 /**
  * LES TROIS TAILLES DE TEXTURE, et **c'est la taille RÉELLE à l'écran qui
@@ -1048,7 +1055,7 @@ function reduire(source: HTMLCanvasElement, largeur: number): HTMLCanvasElement 
  * La netteté se joue en pixels PHYSIQUES : ce sont eux qu'on compte, densité
  * d'écran comprise.
  */
-const TAILLES = [256, 512, 768] as const
+const TAILLES = [160, 224, 288, 384, 512, 768, 1024] as const
 
 /** La toile qu'il faut pour couvrir cette largeur sans étirer ni minifier. */
 export function tailleQuIlFaut(largeurPx: number): number {
@@ -1064,9 +1071,9 @@ export function textureDeCarte(
   const connue = TEXTURES.get(cle)
   if (connue !== undefined) return connue
 
-  const promesse = peindreCarte(carte)
+  const promesse = peindreCarte(carte, voulue)
     .then((canvas) => {
-      const texture = new THREE.CanvasTexture(voulue < 768 ? reduire(canvas, voulue) : canvas)
+      const texture = new THREE.CanvasTexture(canvas)
       // La carte se regarde de près et en biais : sans filtrage anisotrope le
       // texte se brouille dès qu'elle s'incline.
       texture.anisotropy = 8
