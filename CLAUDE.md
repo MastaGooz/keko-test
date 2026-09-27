@@ -3570,8 +3570,8 @@ Quatre choses, et trois sont des règles déjà écrites ailleurs :
   toucher et le `pointerout` n'arrive jamais : la bulle resterait ouverte. Une
   tape l'ouvre, une deuxième la referme, et *elle se referme toute seule au
   bout de 2,6 s* — au doigt il n'y a pas de « sortie » ;
-- **le bouton « Descendre » a la sienne quand il REFUSE** : « Tu n'as pas
-  d'arme équipée ». Le griser disait qu'on ne peut pas partir, pas pourquoi —
+- **le bouton « Descendre » a la sienne quand il REFUSE** : « Aucune arme
+  équipée ». Le griser disait qu'on ne peut pas partir, pas pourquoi —
   Keko : « pour que le joueur sache pourquoi il peut pas cliquer ». *Un refus
   muet se lit comme une panne*, et c'est exactement la raison qui l'avait fait
   griser : la bulle en est le deuxième temps. Elle ne s'affiche QUE dans ce
@@ -3579,8 +3579,9 @@ Quatre choses, et trois sont des règles déjà écrites ailleurs :
   rien — et elle s'ouvre AU-DESSUS, le bouton tenant le bas de l'écran. Le
   bouton vit dans la scène, donc son rectangle se calcule : sa place vient du
   plan, sa taille de `tailleBouton`, converties en pixels comme tout le chrome.
-  (Le jeu TUTOIE — « Tu portes 2 trésors », « Tu vas perdre Idole » — donc la
-  bulle aussi.) ;
+  *C'est un CONSTAT, pas une phrase adressée* : la bulle dit l'état du
+  chargement, comme « Arme » ou « Objets » au-dessus des slots. Tranché par
+  Keko, qui a écarté « Tu n'as pas d'arme équipée » ;
 - **elle s'ouvre à GAUCHE** : le rail tient le bord droit de l'écran. Et elle
   se pose sur le CONTENU de la ligne, pas sur la ligne : celle-ci prend toute
   la largeur de la colonne alors que son couple chiffre + symbole s'y CENTRE,

@@ -226,7 +226,11 @@ export function PageArmurerie({
         if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) {
           return {
             cle: 'bouton',
-            texte: "Tu n'as pas d'arme équipée",
+            // « AUCUNE ARME ÉQUIPÉE », tranché par Keko. Un CONSTAT plutôt
+            // qu'une phrase adressée : la bulle dit l'état du chargement, elle
+            // ne s'adresse pas au joueur — c'est la même voix que « Arme »,
+            // « Armure », « Objets » au-dessus des slots.
+            texte: 'Aucune arme équipée',
             x: (b.left + b.right) / 2,
             y: b.top,
             place: 'dessus',
