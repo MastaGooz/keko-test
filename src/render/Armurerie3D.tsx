@@ -355,7 +355,15 @@ export function Armurerie3D({
     const milieu: [number, number, number] = [(gauche + droite) / 2, (bas + haut) / 2, 0]
     const demiX = (droite - gauche) / 2 + plan.taillePile * 0.56
     const demiY = (haut - bas) / 2 + plan.taillePile * 1.4 * 0.56
-    if (pres(milieu, demiX, demiY)) return { ou: 'pile' }
+    if (pres(milieu, demiX, demiY)) {
+      // DANS LA PILE, ON VISE UNE CASE QUAND ON EN VISE VRAIMENT UNE. La zone
+      // reste large — *une grande zone se vise mieux au doigt qu'un quart de
+      // carte* — mais si le point tombe DANS une case, on le dit : c'est ce
+      // qui permet de remplacer une potion par une autre quand la pile est
+      // pleine, et de ranger deux cases entre elles.
+      const rang = plan.pile.findIndex((p) => Math.abs(point.x - p[0]) < plan.taillePile * 0.56)
+      return rang >= 0 ? { ou: 'pile', rang } : { ou: 'pile' }
+    }
     // Hors du cadre de l'équipement, c'est le coffre : on y repose.
     if (point.x < plan.equipement.x - plan.equipement.l / 2) return { ou: 'reserve' }
     return null

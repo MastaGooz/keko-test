@@ -7,7 +7,7 @@
  */
 import type { Arme, Armure } from './armes.ts'
 import { carteTresor } from './cartes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART, deckDeLEquipement } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART, SUPER_POTIONS_DEPART, deckDeLEquipement } from './armes.ts'
 import {
   CAPACITE_PILE,
   echangerDansCoffre,
@@ -178,6 +178,43 @@ const COTTE: Armure = {
   const mortAvecPile = perdreLEquipement({ ...h, chargement: { ...h.chargement, pile: POTIONS_DEPART.slice(0, 2) } })
   verifier('mourir vide la pile', mortAvecPile.chargement.pile.length === 0)
   verifier('mais le ratelier garde ses potions', mortAvecPile.reserve.length === h.reserve.length)
+}
+
+// --- remplacer et ranger DANS la pile ---------------------------------------
+
+{
+  const h = creerHub()
+  const [p1, p2, p3] = POTIONS_DEPART
+  const sup = SUPER_POTIONS_DEPART[0]!
+  // On remplit la pile : elle en tient CAPACITE_PILE.
+  let pleine = h
+  for (const p of [p2, p3]) pleine = deplacerPiece(pleine, { ou: 'reserve' }, { ou: 'pile' }, p!.id)
+  verifier('la pile est pleine pour le test', pleine.chargement.pile.length === CAPACITE_PILE)
+
+  // SANS RANG, une pile pleine refuse : c'est la regle d'avant, inchangee.
+  verifier('une pile pleine refuse qu on l allonge',
+    deplacerPiece(pleine, { ou: 'reserve' }, { ou: 'pile' }, sup.id) === pleine)
+
+  // AVEC UN RANG, elle remplace -- et la delogee repart d'ou vient la piece.
+  const remplacee = deplacerPiece(pleine, { ou: 'reserve' }, { ou: 'pile', rang: 1 }, sup.id)
+  verifier('viser une case remplace ce qu elle tient',
+    remplacee.chargement.pile[1]!.id === sup.id)
+  verifier('...sans allonger la pile', remplacee.chargement.pile.length === CAPACITE_PILE)
+  // La pile vaut [p1, p2, p3] : le rang 1, c'est p2.
+  verifier('...et la delogee rentre au ratelier',
+    remplacee.reserve.some((o) => o.id === p2!.id))
+
+  // RANGER LA PILE : deux cases echangent, rien ne sort.
+  const range = deplacerPiece(pleine, { ou: 'pile' }, { ou: 'pile', rang: 2 }, p1!.id)
+  verifier('deux cases de la pile s echangent',
+    range.chargement.pile[2]!.id === p1!.id && range.chargement.pile.length === CAPACITE_PILE)
+  verifier('...et rien n est parti au ratelier', range.reserve.length === pleine.reserve.length)
+
+  // Le rendu demande la meme chose que la regle.
+  verifier('le rendu sait qu une case occupee prend',
+    accepteDepuis(pleine, { ou: 'reserve' }, { ou: 'pile', rang: 0 }, sup.id))
+  verifier('...et qu une pile pleine refuse sans rang',
+    !accepteDepuis(pleine, { ou: 'reserve' }, { ou: 'pile' }, sup.id))
 }
 
 // --- ranger le coffre --------------------------------------------------------

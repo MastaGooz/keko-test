@@ -90,8 +90,15 @@ export type Hub = {
 export type Slot =
   | { ou: 'main'; rang: 0 | 1 }
   | { ou: 'armure' }
-  /** La pile des consommables. Sans rang : on pose dessus, elle n'a pas de cases. */
-  | { ou: 'pile' }
+  /**
+    * La pile des consommables. **Le rang est facultatif, et c'est tout le
+    * sujet** : sans lui on POSE sur la pile (elle s'allonge), avec lui on pose
+    * SUR UNE CASE (elle échange). *Une pile pleine n'avait aucune porte* —
+    * Keko : « si j'ai 3 petites potions équipées, je ne peux pas mettre une
+    * grosse potion à la place ». Et c'est aussi ce qui permet d'y ranger, en
+    * échangeant deux cases entre elles.
+    */
+  | { ou: 'pile'; rang?: number }
   | { ou: 'reserve' }
 
 /**
@@ -248,7 +255,14 @@ function accepte(slot: Slot, piece: Objet, hub: Hub): boolean {
   if (slot.ou === 'reserve') return true
   // LA PILE EST PLEINE OU NON : c'est la seule destination dont l'acceptation
   // dépend de ce qu'elle contient déjà, et non de ce qu'on lui tend.
-  if (slot.ou === 'pile') return estConsommable(piece) && hub.chargement.pile.length < CAPACITE_PILE
+  if (slot.ou === 'pile') {
+    if (!estConsommable(piece)) return false
+    // UNE CASE OCCUPÉE PREND TOUJOURS, même pile pleine : on ne l'allonge pas,
+    // on remplace ce qu'elle tient. C'est la règle des autres slots du
+    // chargement, enfin rendue à la pile.
+    if (slot.rang !== undefined && slot.rang < hub.chargement.pile.length) return true
+    return hub.chargement.pile.length < CAPACITE_PILE
+  }
   if (slot.ou === 'armure') return !estArme(piece) && !estConsommable(piece)
   // Une arme va dans l'une ou l'autre main. À deux mains aussi : on la pose où
   // l'on veut, elle prend les deux -- Keko : « on doit pouvoir la poser dans
@@ -291,11 +305,18 @@ function poser(hub: Hub, slot: Slot, piece: Objet): { sortant: Objet | null; hub
     const sortant = hub.chargement.armure
     return { sortant, hub: { ...hub, chargement: { ...hub.chargement, armure: piece as Armure } } }
   }
-  // ON POSE SUR LA PILE, ON N'Y ÉCHANGE RIEN : elle n'a pas de cases, donc
-  // rien ne peut en être délogé. C'est ce qui la distingue de tous les autres
-  // slots du chargement.
+  // SUR LA PILE : au bout si on vise la pile, À LA PLACE si on vise une case.
+  // Ce qu'elle délogeait repart d'où vient la pièce, comme partout ailleurs —
+  // c'est `deplacerPiece` qui s'en charge, et c'est ce qui permet aussi bien
+  // de remplacer une potion que d'échanger deux cases entre elles.
   if (slot.ou === 'pile') {
-    const pile = [...hub.chargement.pile, piece as Consommable]
+    const pile = [...hub.chargement.pile]
+    if (slot.rang !== undefined && slot.rang < pile.length) {
+      const sortant = pile[slot.rang] ?? null
+      pile[slot.rang] = piece as Consommable
+      return { sortant, hub: { ...hub, chargement: { ...hub.chargement, pile } } }
+    }
+    pile.push(piece as Consommable)
     return { sortant: null, hub: { ...hub, chargement: { ...hub.chargement, pile } } }
   }
   const mains: [Arme | null, Arme | null] = [...hub.chargement.mains]
