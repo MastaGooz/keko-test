@@ -1299,7 +1299,24 @@ export function Scene(): React.JSX.Element {
         style={{
           position: 'fixed',
           inset: 0,
-          zIndex: ((saisie || enVol !== null) && enCombat) || zoomee !== null ? 4 : 2,
+          //
+          // ET À L'ARMURERIE, LA SCÈNE PASSE AU-DESSUS DES COMMANDES (6, contre
+          // 5) le temps d'un glisser : les onglets du coffre et la barre de
+          // défilement sont du HTML par-dessus le canvas, donc la carte qu'on
+          // promène leur passait DERRIÈRE — Keko : « les noms des catégories en
+          // haut du coffre et la barre de défilement sont au-dessus de la
+          // carte ». *Ce qui gêne ici n'est pas ce qui gênait au butin* : il n'y
+          // a pas de voile dans ce canvas, donc rien ne s'assombrit en montant,
+          // et perdre les onglets pendant un geste ne coûte rien — on est déjà
+          // en train de faire autre chose.
+          zIndex:
+            zoomee !== null
+              ? 4
+              : saisie && auHub
+                ? 6
+                : (saisie || enVol !== null) && enCombat
+                  ? 4
+                  : 2,
         }}
       >
         <ambientLight intensity={0.55} />

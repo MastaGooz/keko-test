@@ -3387,6 +3387,18 @@ se plaçaient chacun de leur côté, le cadre ne tomberait plus autour de sa
 grille au premier réglage. Tout est en **fractions du champ visible**, jamais en
 unités écrites à la main — la page doit tenir de 667 x 320 à un écran de PC.
 
+**ET PENDANT UN GLISSER, LE CANVAS PASSE AU-DESSUS DES COMMANDES.** Les
+onglets du coffre et la barre de défilement sont du HTML par-dessus lui, donc
+la carte qu'on promène leur passait DERRIÈRE — Keko : « les noms des catégories
+en haut du coffre et la barre de défilement sont au-dessus de la carte ». La
+scène monte donc à 6 le temps du geste, et redescend au lâcher.
+
+*Ce qui gêne ici n'est pas ce qui gênait au butin*, où la même montée avait été
+refusée : là-bas le canvas porte un VOILE, qui assombrissait les boutons en
+passant dessus. Ce canvas-ci n'en a pas — le fond de l'armurerie est du HTML —
+donc rien ne s'assombrit. Et perdre les onglets le temps d'un geste ne coûte
+rien : on est déjà en train de faire autre chose.
+
 **DEUX CALQUES, ET C'EST LE CANVAS QUI PASSE ENTRE EUX.** Les cadres sont
 opaques — l'armurerie est un lieu — donc ils passent **sous** le canvas, sinon
 ils masquent les cartes qu'ils encadrent. C'est d'ailleurs ce fond HTML qui a
