@@ -672,72 +672,95 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
   ctx.fillRect(LARGE * 0.22, yNom + tailleNom * 0.68, LARGE * 0.56, Math.max(1, 0.25 * U))
 
   /**
-   * LA COMPOSITION D'UNE PIÈCE : une ligne par modèle, chacune ouverte par la
-   * petite carte de son nombre. Demandé par Keko — « une icône de carte un peu
-   * comme en haut à gauche, avec un chiffre dedans, et le nom de la carte à sa
-   * droite, plutôt que "3×" ».
+   * LA COMPOSITION D'UNE PIÈCE : un modèle, sa petite carte, son nom. Demandé
+   * par Keko — « une icône de carte un peu comme en haut à gauche, avec un
+   * chiffre dedans, et le nom de la carte à sa droite, plutôt que "3×" ».
    *
    * *Le « × » disait un NOMBRE, la case dit ce qu'on COMPTE* — et c'est
    * exactement le symbole du compteur du coin, donc la pièce répète en petit
    * ce qu'elle annonce en grand. Les deux sortent de `caseDeCarte`, sans quoi
    * ils divergeraient au premier réglage.
    *
-   * **DEUX COLONNES AU-DELÀ DE QUATRE MODÈLES**, parce qu'une pièce doit
-   * pouvoir en porter huit : à huit lignes dans la bande du cartouche, chacune
-   * tomberait à 3,4 unités et ne se lirait plus. C'est le repli de la vitrine
-   * du zoom, qui range déjà ses modèles quatre par ligne sur deux rangées.
+   * **ÇA COULE : plusieurs modèles par ligne, à UNE condition — le couple
+   * case + nom ne se coupe jamais.** Tranché par Keko. Une entrée par ligne
+   * gâchait la largeur et poussait le bloc vers le bas ; deux colonnes fixes
+   * gâchaient l'inverse dès qu'un nom était court. *L'entrée est le mot
+   * insécable de ce texte-là*, et le reste se range comme une phrase.
    *
-   * **La ligne se dimensionne sur la PLACE**, pas l'inverse, et elle est
-   * bornée en haut pour qu'un modèle seul ne s'étale pas.
+   * **Et l'écart ENTRE deux entrées est plus grand que celui qui sépare une
+   * case de son nom** (0,62 contre 0,26) : c'est la seule chose qui dise où
+   * un couple s'arrête, puisqu'il n'y a ni puce ni séparateur.
+   *
+   * **LE BLOC PEND SOUS LE NOM, il ne se centre plus dans la bande.** Centré,
+   * à trois lignes il finissait plus près du pied que du titre — Keko. Il part
+   * donc du même trait que le cartouche ordinaire (`0,752`) et descend : *ce
+   * qui suit un titre commence sous le titre.*
+   *
+   * **La taille cède jusqu'à ce que tout tienne**, en hauteur comme en
+   * largeur : même garde-fou que `replier` pour le cartouche — *un canvas
+   * écrit tout droit et laisse déborder sans rien signaler* — et on ne peut
+   * pas couper un nom de carte en deux.
    */
   if (carte.composition !== undefined && carte.composition.length > 0) {
     const compo = carte.composition
-    const haut = HAUT * 0.745
+    const haut = HAUT * 0.752
     const bas = HAUT * 0.935
-    const colonnes = compo.length > 4 ? 2 : 1
-    const parColonne = Math.ceil(compo.length / colonnes)
-    const ligne = Math.min(10 * U, (bas - haut) / parColonne)
-    const caseL = ligne * 0.56
-    const ecart = ligne * 0.26
-    // LE BLOC SE CENTRE DANS LA BANDE : à deux modèles il ne la remplit pas,
-    // et un bloc calé en haut laisserait tout le vide juste au-dessus du pied.
-    const yHaut = (haut + bas) / 2 - (ligne * parColonne) / 2
-    const lColonne = (LARGE * 0.9) / colonnes
+    const large = LARGE * 0.88
 
-    // UN NOM TROP LONG FAIT DESCENDRE TOUTE LA COLONNE D'UN CRAN, et c'est le
-    // même garde-fou que `replier` pour le cartouche : *un canvas écrit tout
-    // droit et laisse déborder sans rien signaler.* On ne peut pas couper un
-    // nom de carte en deux, donc c'est la taille qui cède — et elle cède pour
-    // TOUTE la composition, sinon les lignes n'auraient plus la même voix.
-    let police = ligne * 0.62
-    ctx.font = `400 ${police}px "Crimson Pro", Georgia, serif`
-    const place = lColonne - caseL - ecart
-    const plusLarge = Math.max(...compo.map((e) => ctx.measureText(e.nom).width))
-    if (plusLarge > place) police *= place / plusLarge
+    /** Range les entrées au fil de l'eau, à cette taille de ligne. */
+    const composer = (ligne: number) => {
+      const caseL = ligne * 0.56
+      const ecart = ligne * 0.26
+      const entre = ligne * 0.62
+      ctx.font = `400 ${ligne * 0.62}px "Crimson Pro", Georgia, serif`
+      const larges = compo.map((e) => caseL + ecart + ctx.measureText(e.nom).width)
+      const rangs: number[][] = []
+      let courant: number[] = []
+      let x = 0
+      larges.forEach((l, i) => {
+        if (courant.length > 0 && x + entre + l > large) {
+          rangs.push(courant)
+          courant = []
+          x = 0
+        }
+        x += courant.length > 0 ? entre + l : l
+        courant.push(i)
+      })
+      if (courant.length > 0) rangs.push(courant)
+      return { caseL, ecart, entre, larges, rangs }
+    }
 
-    // LES CASES S'ALIGNENT, C'EST LE BLOC QUI SE CENTRE. Chaque ligne centrée
-    // sur elle-même décalait sa case d'un mot à l'autre, et *une colonne de
-    // repères qui tremble se lit comme un défaut d'impression* : ce sont des
-    // entrées de liste, elles s'ouvrent au même endroit. Le bord droit reste
-    // irrégulier, ce qui est exactement ce que fait une liste.
-    ctx.font = `400 ${police}px "Crimson Pro", Georgia, serif`
-    const bloc = caseL + ecart + Math.max(...compo.map((e) => ctx.measureText(e.nom).width))
+    let ligne = 10 * U
+    let plan = composer(ligne)
+    while (
+      ligne > 3 * U &&
+      (Math.max(...plan.larges) > large || plan.rangs.length * ligne > bas - haut)
+    ) {
+      ligne *= 0.92
+      plan = composer(ligne)
+    }
+    const { caseL, ecart, entre, larges, rangs } = plan
 
-    compo.forEach((entree, i) => {
-      const colonne = Math.floor(i / parColonne)
-      const rang = i % parColonne
-      const y = yHaut + ligne * (rang + 0.5)
-      const x = LARGE * 0.05 + lColonne * colonne + (lColonne - bloc) / 2
-      caseDeCarte(ctx, x, y - caseL * 0.7, caseL, entree.nombre)
-      ctx.font = `400 ${police}px "Crimson Pro", Georgia, serif`
-      ctx.textAlign = 'left'
-      ctx.textBaseline = 'middle'
-      ctx.fillStyle = '#f1e6cf'
-      ctx.shadowColor = '#000000aa'
-      ctx.shadowOffsetY = 0.4 * U
-      ctx.shadowBlur = 0.8 * U
-      ctx.fillText(entree.nom, x + caseL + ecart, y)
-      ctx.shadowColor = 'transparent'
+    // CHAQUE RANG SE CENTRE, comme le cartouche qu'il remplace.
+    rangs.forEach((rang, r) => {
+      const y = haut + ligne * (r + 0.5)
+      const total =
+        rang.reduce((somme, i) => somme + larges[i]!, 0) + entre * (rang.length - 1)
+      let x = (LARGE - total) / 2
+      rang.forEach((i) => {
+        const entree = compo[i]!
+        caseDeCarte(ctx, x, y - caseL * 0.7, caseL, entree.nombre)
+        ctx.font = `400 ${ligne * 0.62}px "Crimson Pro", Georgia, serif`
+        ctx.textAlign = 'left'
+        ctx.textBaseline = 'middle'
+        ctx.fillStyle = '#f1e6cf'
+        ctx.shadowColor = '#000000aa'
+        ctx.shadowOffsetY = 0.4 * U
+        ctx.shadowBlur = 0.8 * U
+        ctx.fillText(entree.nom, x + caseL + ecart, y)
+        ctx.shadowColor = 'transparent'
+        x += larges[i]! + entre
+      })
     })
     ctx.textAlign = 'center'
     peindrePied(ctx, carte)

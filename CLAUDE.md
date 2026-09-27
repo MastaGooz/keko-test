@@ -3150,32 +3150,40 @@ compteur du coin promet. Les deux sortent de `caseDeCarte` (`texture-carte.ts`),
 sinon ils divergeraient au premier réglage, comme les quatre fonctions qui
 dessinaient chacune leur carte avant `corpsCarte`.
 
+**ÇA COULE : plusieurs modèles par ligne, à UNE condition — le couple case +
+nom ne se coupe jamais.** Tranché par Keko : « on peut en mettre plusieurs sur
+une ligne À CONDITION que le couple icône + texte d'une carte ajoutée loge sur
+la même ligne ».
+
+*L'entrée est le mot insécable de ce texte-là*, et le reste se range comme une
+phrase. Les deux dispositions rigides essayées avant échouaient chacune sur la
+moitié des cas : une entrée par ligne gâchait la largeur et poussait le bloc
+vers le bas, deux colonnes fixes gâchaient l'inverse dès qu'un nom était court.
+
 Quatre choses qui portent le bloc, et aucune n'est un réglage d'humeur :
 
-- **les cases S'ALIGNENT, c'est le BLOC qui se centre.** Chaque ligne centrée
-  sur elle-même décalait sa case d'un mot à l'autre, et *une colonne de repères
-  qui tremble se lit comme un défaut d'impression*. Ce sont des entrées de
-  liste : elles s'ouvrent au même endroit, et le bord droit reste irrégulier ;
-- **DEUX COLONNES AU-DELÀ DE QUATRE MODÈLES.** Une pièce doit pouvoir en porter
-  huit (tranché par Keko) ; à huit lignes dans la bande du cartouche, chacune
-  tomberait à 3,4 unités et ne se lirait plus. C'est le repli de la vitrine du
-  zoom, qui range déjà ses modèles quatre par ligne sur deux rangées ;
-- **la ligne se dimensionne sur la PLACE**, pas l'inverse — elle a la bande du
-  cartouche à se partager — et elle est bornée en haut pour qu'un modèle seul
-  ne s'étale pas ;
-- **un nom trop long fait descendre TOUTE la composition d'un cran.** Même
-  garde-fou que `replier` : *un canvas écrit tout droit et laisse déborder sans
-  rien signaler.* On ne peut pas couper un nom de carte en deux, donc c'est la
-  taille qui cède — et pour toutes les lignes à la fois, sinon elles n'auraient
-  plus la même voix.
+- **l'écart ENTRE deux entrées est plus grand que celui qui sépare une case de
+  son nom** (0,62 contre 0,26). C'est la seule chose qui dise où un couple
+  s'arrête, puisqu'il n'y a ni puce ni séparateur — *un groupe se lit par ses
+  blancs.* Chaque rang se centre, comme le cartouche qu'il remplace ;
+- **LE BLOC PEND SOUS LE NOM, il ne se centre plus dans la bande.** Centré, à
+  trois lignes il finissait plus près du pied que du titre — Keko. Il part donc
+  du même trait que le cartouche ordinaire (`0,752`) et descend : *ce qui suit
+  un titre commence sous le titre* ;
+- **la taille CÈDE jusqu'à ce que tout tienne**, en hauteur comme en largeur.
+  Même garde-fou que `replier` : *un canvas écrit tout droit et laisse déborder
+  sans rien signaler* — et on ne peut pas couper un nom de carte en deux, donc
+  c'est la taille qui recule, pour toute la composition à la fois ;
+- **elle est bornée en haut** (10 unités), pour qu'un modèle seul ne s'étale
+  pas sur la bande entière.
 
 La composition entre dans `signature()`, sans quoi deux pièces de même nom
 partageraient la texture. Le texte qui coule reste en repli : il sert au jeu 2D
 et à tout ce qui ne peint pas la composition.
 
-Vérifié au navigateur à huit modèles, à trois, à un, et avec un nom de vingt-
-trois caractères : rien ne sort de la carte, et la colonne des cases reste
-droite.
+Vérifié au navigateur à huit modèles, à trois, à deux, à un, et avec un nom de
+vingt-trois caractères : rien ne sort de la carte, et le couple ne se sépare
+jamais.
 
 **Une pièce zoomée montre son set EN CARTES**, avec sa pastille d'or SOUS
 chaque carte (`texturePastille`) — sur le coin elle cachait la gemme. Prévu
