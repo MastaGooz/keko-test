@@ -130,6 +130,25 @@ Acquises. **Ne pas les remettre en question sans demander à Keko.**
   se voit* : à trois cases, ce qu'on emporte se lit sans énumérer. La mesure
   de survie disait déjà que la courbe plafonne dès trois potions (93 % contre
   92 % à cinq) : **le quatrième slot ne décidait plus rien.**
+- **LA RÉSERVE DU TOUR S'APPELLE DES POINTS D'ACTION, PLUS DE L'ÉNERGIE.**
+  Tranché par Keko : « on change le nom, les PA renvoient au temps et c'est ce
+  que je veux — plus une carte coûte de PA, plus l'action est longue et
+  puissante ».
+
+  *Le vocabulaire doit dire la règle*, comme « enchantement » plutôt que
+  « maîtrise » : de l'énergie se dépense sans rien dire de ce qu'on fait, un
+  point d'action dit qu'on prend du TEMPS. Un Moulinet à 4 n'est pas « plus
+  cher » qu'un Estoc à 1, il est plus **long** — et c'est ce qui rend naturel
+  qu'il frappe plus fort.
+
+  *Ça rend au combat l'axe que l'abandon de l'horloge partagée avait emporté*,
+  sans en rappeler la machinerie : le tempo redevient lisible dans le coût,
+  alors qu'il n'y a toujours ni frise ni compteur continu.
+
+  **Le code garde `energie` partout** (`combat.ts`, `Orbe3D`, les jetons CSS) :
+  c'est un nom interne, il ne se lit nulle part à l'écran. À renommer le jour
+  où on touchera à ces fichiers pour une autre raison — pas avant, un
+  renommage traversant `logic/` pour un mot ne vaut pas son risque.
 - **Équiper plus dilue.** La taille du deck est une ressource ; c'est ce qui
   rend le chargement intéressant au lieu d'être « tout prendre ».
 - **L'équipement se perd à la mort**, comme le sac. Une **arme commune
@@ -3531,7 +3550,8 @@ ferronnerie que les cadres, en petit : un filet de laiton, deux coins coupés.
 L'énergie garde le cartouche pour rester de la famille, mais elle n'avait pas
 le problème : *son chiffre est DANS son symbole.*
 
-**CHAQUE STAT DIT SON NOM EN INFOBULLE** — au survol à la souris, à la tape au
+**CHAQUE STAT DIT SON NOM EN INFOBULLE** — « Points de vie », « Cartes dans le
+deck », « Taille de la main », « Points d'action » — au survol à la souris, à la tape au
 doigt. Demandé par Keko. *Un chiffre à côté d'un symbole se devine, il ne se
 lit pas* : un coeur pour la vie, soit, mais un paquet vaut aussi bien « cartes
 du deck » que « cartes en pioche ». La bulle le dit en trois mots sans

@@ -37,7 +37,10 @@ export function lignes(carte: Carte): string[] {
         if (carte.usages === undefined && carte.exil === true) l.push(`<small>se boit : détruite</small>`)
       }
     }
-    if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> énergie`)
+    // POINTS D'ACTION, ET PAS « ÉNERGIE » : le mot renvoie au TEMPS, et c'est
+    // ce que Keko veut dire — *plus une carte coûte, plus l'action est longue
+    // et puissante.* Le code garde `energie` partout, c'est un nom interne.
+    if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> points d'action`)
     if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
   }
   return l

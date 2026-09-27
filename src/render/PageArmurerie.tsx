@@ -155,7 +155,7 @@ export function PageArmurerie({
    * des lignes — exactement ce que fait déjà la molette du coffre, et pour la
    * même raison.
    */
-  const LIBELLES = ['Points de vie', 'Cartes dans le deck', 'Taille de la main', 'Énergie par tour']
+  const LIBELLES = ['Points de vie', 'Cartes dans le deck', 'Taille de la main', "Points d'action"]
   const mesures = useRef<(HTMLSpanElement | null)[]>([])
   const [bulle, setBulle] = useState<{ i: number; x: number; y: number } | null>(null)
 
