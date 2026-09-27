@@ -5476,6 +5476,12 @@ sert, le repli n'est pas sollicité.)
 quand on pose. Le second a d'abord été le premier, faute d'avoir l'autre
 fichier — *prendre et poser ne peuvent pas sonner pareil.*
 
+**ET UN TROISIÈME POUR LA CULBUTE** : `Card spin.aac`, fourni par Keko — « à
+jouer dès que la carte commence à tourner avant de se fixer ». Il part donc au
+LÂCHER, en même temps que la culbute : *elle tourne dès la première image, elle
+n'attend pas d'être montée.* Il ne sonne que pour un dépôt dans un SLOT, comme
+la culbute elle-même : reposer au coffre est un rangement, pas un équipement.
+
 **LE SON DU CONTACT VIT DANS LE GESTE, pas dans les écrans** — `geste-carte.ts`
 est le seul endroit où l'on touche une carte, qu'elle vienne de la main, du
 butin ou du coffre. *Un geste unique n'a qu'un son, posé une fois.*

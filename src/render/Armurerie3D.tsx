@@ -40,7 +40,7 @@ import { Z_TENUE } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import { pieceAPeindre } from './combat-3d.ts'
 import { textureSlot, textureSlotVif } from './texture-carte.ts'
-import { SON_POSER, jouerSon } from './sons.ts'
+import { SON_POSER, SON_TOURNER, jouerSon } from './sons.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Carte } from '../logic/combat.ts'
@@ -453,6 +453,10 @@ export function Armurerie3D({
       // scène qui se joue à chaque geste cesse d'en distinguer un.*
       if (pris && cible.ou !== 'reserve') {
         const piece = t.objet.id
+        // LE SON DE LA CULBUTE PART AVEC ELLE. Fourni par Keko : « à jouer
+        // dès que la carte commence à tourner avant de se fixer » — et elle
+        // tourne dès la première image, elle n'attend pas d'être montée.
+        jouerSon(SON_TOURNER)
         setCulbute((c) => ({ id: piece, n: (c?.n ?? 0) + 1 }))
       }
       onDeplacer?.(t.slot, cible, t.objet.id)

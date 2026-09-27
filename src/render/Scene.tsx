@@ -35,7 +35,15 @@ import { Secousse, secouer } from './Secousse.tsx'
 import { DUREE_ASSAUT, INSTANT_IMPACT } from './Ennemi3D.tsx'
 import { Etal3D } from './Palier3D.tsx'
 import { Butin3D, slotSous } from './Butin3D.tsx'
-import { SON_POSER, SON_PRENDRE, amorcerLeSon, diagnosticSon, jouerSon, precharger } from './sons.ts'
+import {
+  SON_POSER,
+  SON_PRENDRE,
+  SON_TOURNER,
+  amorcerLeSon,
+  diagnosticSon,
+  jouerSon,
+  precharger,
+} from './sons.ts'
 import { Armurerie3D } from './Armurerie3D.tsx'
 import type { Onglet } from './armurerie-plan.ts'
 import { PageArmurerie } from './PageArmurerie.tsx'
@@ -1152,6 +1160,7 @@ export function Scene(): React.JSX.Element {
   useEffect(() => {
     void precharger(SON_PRENDRE)
     void precharger(SON_POSER)
+    void precharger(SON_TOURNER)
     // ON RÉVEILLE LE SON AU PREMIER CONTACT de la page : un contexte audio né
     // hors d'un geste est SUSPENDU, et le reprendre au moment où l'on veut
     // jouer met le premier son en retard sur le geste qui l'a demandé.

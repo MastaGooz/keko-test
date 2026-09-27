@@ -31,6 +31,15 @@ export const SON_PRENDRE = 'Take card.aac'
 export const SON_POSER = 'Card drop.aac'
 
 /**
+ * Celui d'une pièce qui CULBUTE avant de se fixer dans son slot. Fourni par
+ * Keko : « à jouer dès que la carte commence à tourner avant de se fixer ».
+ *
+ * Il part donc au LÂCHER, comme la culbute elle-même — *la rotation commence
+ * à la première image, elle n'attend pas que la carte soit montée.*
+ */
+export const SON_TOURNER = 'Card spin.aac'
+
+/**
  * L'URL d'un fichier de `public/`. **Elle porte la date du build** : les
  * fichiers y sont copiés tels quels, sans empreinte de contenu dans leur nom,
  * donc sans ça le navigateur resservirait celui qu'il a en cache — le piège
