@@ -4,20 +4,25 @@
  * Demandé par Keko, au bout de la culbute : « quand elle se fixe dedans on
  * fait un petit effet d'onde, comme si une énergie magique s'en échappait ».
  *
+ * **ELLE PASSE SOUS LA CARTE, ET ELLE A SA FORME.** Trois anneaux ronds
+ * posés par-dessus ont vécu une version ; Keko : « je voudrais que l'onde
+ * soit sous la carte posée, pas par-dessus, et que l'onde soit la même forme
+ * que la carte, en une seule vague ».
+ *
+ * *Les trois corrections disent la même chose* : ce qui s'échappe doit
+ * s'échapper DE la carte. Un cercle par-dessus est un effet appliqué ; un
+ * contour de carte qui sort de dessous elle, c'est la carte qui rayonne. Et
+ * une seule vague, parce qu'elle part exactement à la taille de l'objet —
+ * *la première dit déjà tout, les suivantes n'étaient qu'un écho.*
+ *
  * **Ce module ne monte rien : il prête sa matière et son mouvement à
- * `Carte3D`.** Elle a d'abord été un composant voisin, monté au moment du
+ * `Carte3D`.** L'onde a d'abord été un composant voisin, monté au moment du
  * dépôt puis monté en permanence, déclenché par une prop puis par une ref —
  * et **dans tous les cas sa boucle s'arrêtait à l'instant du lâcher**, mesuré
  * à la sonde. *Le plus sûr moyen qu'une mise en scène parte à l'heure est de
  * la confier à l'objet qui la joue.*
  *
- * **Trois anneaux décalés, pas un seul.** Un anneau unique se lit comme un
- * cercle qu'on agrandit ; trois qui se suivent se lisent comme quelque chose
- * qui *sort* — c'est le décalage qui fait l'onde, pas la forme. Même raison
- * que les cinq brassées du mélange, là où une traînée aurait dit « une
- * carte ».
- *
- * **Additif, et en or.** L'or est la couleur de tout ce qui a de la valeur
+ * **Additive, et en or.** L'or est la couleur de tout ce qui a de la valeur
  * ici ; et une lumière qui s'AJOUTE au fond est une lueur, là où une couleur
  * qui le recouvre est une peinture claire — la leçon du contour des cartes.
  */
@@ -26,76 +31,87 @@ import * as THREE from 'three'
 /** Ce que dure l'onde, en secondes. */
 export const DUREE_ONDE = 0.72
 
-/** Ce que chaque anneau attend derrière son prédécesseur. */
-const DECALAGE = 0.085
+/** De combien elle s'écarte de la carte, en parts de sa largeur. */
+const ECART_ONDE = 1.15
 
-/** Combien d'anneaux la composent. L'éclat central vient en plus. */
-export const ANNEAUX_ONDE = 3
+/** L'épaisseur du trait, en parts de la largeur de la carte. */
+const TRAIT = 0.055
 
-/** Ce que dure l'éclat du centre : le choc, pas la lueur. */
-const DUREE_ECLAT = 0.22
+/** Un rectangle aux coins arrondis, dans le plan XY, centré sur l'origine. */
+function contour(large: number, haut: number, rayon: number): THREE.Path {
+  const l = large / 2
+  const h = haut / 2
+  const r = Math.min(rayon, l, h)
+  const p = new THREE.Path()
+  p.moveTo(-l + r, -h)
+  p.lineTo(l - r, -h)
+  p.absarc(l - r, -h + r, r, -Math.PI / 2, 0, false)
+  p.lineTo(l, h - r)
+  p.absarc(l - r, h - r, r, 0, Math.PI / 2, false)
+  p.lineTo(-l + r, h)
+  p.absarc(-l + r, h - r, r, Math.PI / 2, Math.PI, false)
+  p.lineTo(-l, -h + r)
+  p.absarc(-l + r, -h + r, r, Math.PI, (3 * Math.PI) / 2, false)
+  return p
+}
 
-/** Les matériaux d'une onde : un par anneau, plus un pour l'éclat. */
-export function matieresDOnde(): THREE.MeshBasicMaterial[] {
-  return Array.from(
-    { length: ANNEAUX_ONDE + 1 },
-    () =>
-      new THREE.MeshBasicMaterial({
-        color: '#ffd9a0',
-        transparent: true,
-        opacity: 0,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-        toneMapped: false,
-        side: THREE.DoubleSide,
-      }),
-  )
+/**
+ * LE TRAIT DE L'ONDE : le contour de la carte, creusé de l'intérieur.
+ *
+ * Une forme pleine avec un TROU, et non deux tracés superposés : c'est la
+ * seule façon d'obtenir un liseré fermé qui suit les coins arrondis. Ses
+ * dimensions sont celles du gabarit, passées par la carte — *deux modules qui
+ * décriraient la même forme chacun de leur côté divergeraient au premier
+ * réglage.*
+ */
+export function geometrieDOnde(
+  large: number,
+  haut: number,
+  rayon: number,
+): THREE.ShapeGeometry {
+  const e = large * TRAIT
+  const forme = new THREE.Shape(contour(large, haut, rayon).getPoints(24))
+  forme.holes.push(contour(large - e * 2, haut - e * 2, Math.max(0, rayon - e)))
+  return new THREE.ShapeGeometry(forme, 24)
+}
+
+/** La matière d'une onde : de l'or qui s'ajoute au fond. */
+export function matiereDOnde(): THREE.MeshBasicMaterial {
+  return new THREE.MeshBasicMaterial({
+    color: '#ffd9a0',
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+    toneMapped: false,
+    side: THREE.DoubleSide,
+  })
 }
 
 /**
  * Pose l'onde à `dt` secondes de son départ. Rend `true` quand elle a fini.
  *
- * Les rayons sont en unités de CARTE : l'échelle du groupe qui la porte les
- * met d'elle-même à la taille du slot, il n'y a rien à convertir.
+ * Elle part EXACTEMENT à la taille de la carte et s'écarte : posée derrière
+ * elle, elle n'existe que par ce qui dépasse — *c'est ce qui la fait sortir
+ * de dessous plutôt que se poser dessus.*
  */
 export function poserLOnde(
   dt: number,
-  anneaux: readonly (THREE.Mesh | null)[],
-  eclat: THREE.Mesh | null,
-  matieres: readonly THREE.MeshBasicMaterial[],
+  maille: THREE.Mesh | null,
+  matiere: THREE.MeshBasicMaterial,
 ): boolean {
-  let fini = true
-  anneaux.forEach((maille, i) => {
-    const matiere = matieres[i]
-    if (maille === null || matiere === undefined) return
-    const q = (dt - i * DECALAGE) / DUREE_ONDE
-    if (q < 0 || q >= 1) {
-      matiere.opacity = 0
-      maille.scale.setScalar(0)
-      if (q < 1) fini = false
-      return
-    }
-    fini = false
-    // IL PART VITE ET S'ÉTEINT LENTEMENT, le contraste de vitesse du bond des
-    // créatures : une onde régulière se lit comme une animation, pas comme
-    // quelque chose qui s'échappe.
-    const e = 1 - (1 - q) * (1 - q) * (1 - q)
-    maille.scale.setScalar(0.3 + 2.4 * e)
-    matiere.opacity = (1 - q) * (1 - q) * 0.9
-  })
-
-  // L'ÉCLAT AU CENTRE est bref : c'est le coup, pas la lueur. Sans lui,
-  // l'onde naît de rien et se lit comme un cercle posé là.
-  const matiere = matieres[ANNEAUX_ONDE]
-  if (eclat !== null && matiere !== undefined) {
-    const q = dt / DUREE_ECLAT
-    if (q < 0 || q >= 1) {
-      matiere.opacity = 0
-      eclat.scale.setScalar(0)
-    } else {
-      eclat.scale.setScalar(0.55 + 1.1 * q)
-      matiere.opacity = (1 - q) * 0.6
-    }
+  if (maille === null) return true
+  const q = dt / DUREE_ONDE
+  if (q < 0 || q >= 1) {
+    matiere.opacity = 0
+    maille.scale.setScalar(1)
+    return q >= 1
   }
-  return fini
+  // ELLE PART VITE ET S'ÉTEINT LENTEMENT, le contraste de vitesse du bond des
+  // créatures : une onde régulière se lit comme une animation, pas comme
+  // quelque chose qui s'échappe.
+  const e = 1 - (1 - q) * (1 - q) * (1 - q)
+  maille.scale.setScalar(1 + ECART_ONDE * e)
+  matiere.opacity = (1 - q) * (1 - q) * 0.95
+  return false
 }

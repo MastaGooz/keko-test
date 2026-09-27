@@ -24,7 +24,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
-import { ANNEAUX_ONDE, matieresDOnde, poserLOnde } from './onde.tsx'
+import { geometrieDOnde, matiereDOnde, poserLOnde } from './onde.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
 import {
   DEBORD_CONTOUR,
@@ -131,6 +131,8 @@ const GEOMETRIE_CORPS = new THREE.ExtrudeGeometry(formeDeCarte(), {
 // pour que la face posée à +EPAISSEUR/2 affleure bien le corps.
 GEOMETRIE_CORPS.translate(0, 0, -EPAISSEUR / 2)
 const GEOMETRIE_FACE = new THREE.PlaneGeometry(LARGE, HAUT)
+/** Le contour de l'onde : la forme de la carte, creusée. Partagée par toutes. */
+const GEOMETRIE_ONDE = geometrieDOnde(LARGE, HAUT, RAYON_COIN)
 
 type Props = {
   carte: CarteAPeindre
@@ -538,9 +540,8 @@ ${nuanceur.fragmentShader}`
    * Ses rayons sont en unités de CARTE, donc l'échelle du groupe les met
    * d'elle-même à la taille du slot : rien à convertir.
    */
-  const anneaux = useRef<(THREE.Mesh | null)[]>([])
-  const centreOnde = useRef<THREE.Mesh>(null)
-  const matieresOnde = useMemo(() => matieresDOnde(), [])
+  const vague = useRef<THREE.Mesh>(null)
+  const matiereOnde = useMemo(() => matiereDOnde(), [])
 
   /** Le jeton vu au dernier tour, pour savoir qu'il vient de changer. */
   const jetonCulbute = useRef(culbute)
@@ -789,13 +790,7 @@ ${nuanceur.fragmentShader}`
     laiton.emissiveIntensity = eclat * 1.1
     // L'ONDE, une fois la carte fixée dans son slot.
     if (l.debutOnde !== null) {
-      const fini = poserLOnde(
-        t - l.debutOnde,
-        anneaux.current,
-        centreOnde.current,
-        matieresOnde,
-      )
-      if (fini) l.debutOnde = null
+      if (poserLOnde(t - l.debutOnde, vague.current, matiereOnde)) l.debutOnde = null
     }
 
     // LE LISERÉ RESPIRE, à peine : c'est ce qui le fait lire comme une lumière
@@ -816,28 +811,20 @@ ${nuanceur.fragmentShader}`
         <planeGeometry args={[LARGE + DEBORD_CONTOUR * 2, HAUT + DEBORD_CONTOUR * 2]} />
       </mesh>
 
-      {/* L'ONDE : des anneaux posés devant la face, en unités de carte. Ils
-          sont toujours là et dorment à opacité nulle — *un objet qui naît au
-          milieu d'un geste peut manquer la boucle ; un objet qui existe déjà
-          ne peut pas.* */}
-      <group position={[0, 0, EPAISSEUR / 2 + 0.01]}>
-        {Array.from({ length: ANNEAUX_ONDE }, (_, i) => (
-          <mesh
-            key={i}
-            ref={(m) => {
-              anneaux.current[i] = m
-            }}
-            material={matieresOnde[i]}
-            raycast={() => null}
-            scale={0}
-          >
-            <ringGeometry args={[0.44, 0.5, 64]} />
-          </mesh>
-        ))}
-        <mesh ref={centreOnde} material={matieresOnde[ANNEAUX_ONDE]} raycast={() => null} scale={0}>
-          <circleGeometry args={[0.5, 48]} />
-        </mesh>
-      </group>
+      {/* L'ONDE : le contour de la carte, posé DERRIÈRE elle. Elle part
+          exactement à sa taille, donc on ne voit que ce qui dépasse — *c'est
+          ce qui la fait sortir de dessous plutôt que se poser dessus.* Elle
+          est toujours là et dort à opacité nulle : un objet qui naît au milieu
+          d'un geste peut manquer la boucle, un objet qui existe déjà ne peut
+          pas. */}
+      <mesh
+        ref={vague}
+        geometry={GEOMETRIE_ONDE}
+        material={matiereOnde}
+        position={[0, 0, -EPAISSEUR * 1.5]}
+        raycast={() => null}
+        scale={1}
+      />
 
       {/* LE CORPS : le laiton, tranche et coins arrondis compris. C'est lui
           qui porte les évènements — il couvre toute la carte.

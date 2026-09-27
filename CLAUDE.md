@@ -3360,9 +3360,29 @@ enfants de la carte, et leurs rayons sont en unités de CARTE — l'échelle du
 groupe les met d'elle-même à la taille du slot, il n'y a rien à convertir.
 `onde.tsx` ne monte plus rien : il prête sa matière et son mouvement.
 
-Trois anneaux décalés plutôt qu'un seul — *c'est le décalage qui fait l'onde,
-pas la forme*, la leçon des cinq brassées du mélange — un éclat bref au centre
-pour le choc, et l'or additif du reste du jeu.
+**ELLE PASSE SOUS LA CARTE, ELLE A SA FORME, ET C'EST UNE SEULE VAGUE.** Trois
+anneaux ronds posés par-dessus ont vécu une version ; Keko : « je voudrais que
+l'onde soit sous la carte posée, pas par-dessus, et que l'onde soit la même
+forme que la carte, en une seule vague ».
+
+*Les trois corrections disent la même chose* : ce qui s'échappe doit s'échapper
+DE la carte. Un cercle par-dessus est un effet appliqué ; un contour de carte
+qui sort de dessous elle, c'est la carte qui rayonne.
+
+Trois conséquences, et elles tiennent ensemble :
+
+- **elle part EXACTEMENT à la taille de la carte**, posée derrière elle : on ne
+  voit donc que ce qui dépasse, et c'est ce qui la fait sortir de dessous
+  plutôt que se poser dessus ;
+- **une seule vague**, puisqu'elle part à la taille de l'objet — *la première
+  dit déjà tout, les suivantes n'étaient qu'un écho* ;
+- **le trait est une forme À TROU**, pas deux tracés superposés : c'est la
+  seule façon d'obtenir un liseré fermé qui suit les coins arrondis. Ses
+  dimensions lui sont passées par la carte, *deux modules qui décriraient la
+  même forme chacun de leur côté divergeraient au premier réglage.*
+
+L'or additif du reste du jeu, et le contraste de vitesse du bond des créatures :
+elle part vite et s'éteint lentement.
 
 **LA PIÈCE TENUE PREND LA TAILLE DU SLOT QUI L'ACCEPTE**, et reste réduite
 partout ailleurs. Demandé par Keko : « quand on drag un objet depuis le stash
