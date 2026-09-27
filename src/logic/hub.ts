@@ -107,6 +107,43 @@ export type Slot =
  */
 export const CAPACITE_PILE = 3
 
+/**
+ * ÉCHANGER DEUX OBJETS DU COFFRE — c'est tout ce que « ranger » veut dire ici.
+ *
+ * Le coffre est une LISTE, et le rendu la découpe en grille : y poser un objet
+ * sur un autre l'envoyait au bout, parce que le seul déplacement qui existait
+ * était « repose au râtelier ». Keko : « je ne peux pas réorganiser le coffre,
+ * si je bouge un objet sur un autre il va systématiquement à la fin au lieu
+ * d'échanger leurs places ».
+ *
+ * **L'échange, pas l'insertion** : c'est ce que demande Keko, et c'est aussi
+ * ce qui se voit — une insertion fait glisser tout ce qui suit, donc le
+ * rangement qu'on vient de faire bouge sous les yeux. *Un échange ne déplace
+ * que les deux cases qu'on regarde.*
+ *
+ * **On n'échange QUE dans la même liste.** Les trésors ne sont pas des pièces :
+ * ils vivent dans `tresors`, ne s'équipent jamais, et la grille ne les met à la
+ * suite que pour les montrer. Un échange entre les deux ferait passer un trésor
+ * pour une pièce à la première lecture de `reserve`.
+ */
+export function echangerDansCoffre(hub: Hub, idA: string, idB: string): Hub {
+  if (idA === idB) return hub
+  const permuter = <T extends { id: string }>(liste: T[]): T[] | null => {
+    const a = liste.findIndex((o) => o.id === idA)
+    const b = liste.findIndex((o) => o.id === idB)
+    if (a < 0 || b < 0) return null
+    const copie = [...liste]
+    copie[a] = liste[b]!
+    copie[b] = liste[a]!
+    return copie
+  }
+  const reserve = permuter(hub.reserve)
+  if (reserve !== null) return { ...hub, reserve }
+  const tresors = permuter(hub.tresors)
+  if (tresors !== null) return { ...hub, tresors }
+  return hub
+}
+
 const VIDE: Chargement = { mains: [null, null], armure: null, pile: [] }
 
 /**

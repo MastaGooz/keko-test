@@ -47,7 +47,7 @@ import type { Hub, Slot } from '../logic/hub.ts'
 import { CAPACITE_PILE, accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
 import type { PlanArmurerie } from './armurerie-plan.ts'
-import { contenuDuCoffre, placeCase, planArmurerie } from './armurerie-plan.ts'
+import { caseSousLePoint, contenuDuCoffre, placeCase, planArmurerie } from './armurerie-plan.ts'
 import { aPeindre } from './combat-3d.ts'
 
 /**
@@ -163,6 +163,8 @@ type Props = {
   defilement: number
   /** Un objet a été glissé d'un endroit à un autre. */
   onDeplacer?: (source: Slot, cible: Slot, id: string) => void
+  /** Deux objets du coffre changent de place. */
+  onEchanger?: (idA: string, idB: string) => void
   onRegarder?: (objet: Objet) => void
   /** Un trésor se REGARDE et ne se glisse pas : il n'a aucun slot. */
   onRegarderTresor?: (tresor: Carte) => void
@@ -176,6 +178,7 @@ export function Armurerie3D({
   onglet,
   defilement,
   onDeplacer,
+  onEchanger,
   onRegarder,
   onRegarderTresor,
   onDescendre,
@@ -248,6 +251,8 @@ export function Armurerie3D({
     slot: Slot
     position: [number, number, number]
     taille: number
+    /** Sa case dans la grille visible, pour les seuls objets du coffre. */
+    rang?: number
   }[] = [
     ...contenu.pieces.flatMap((objet, i) => {
       const rang = i - depart
@@ -260,6 +265,7 @@ export function Armurerie3D({
           slot: { ou: 'reserve' } as Slot,
           position: placeCase(plan, rang, reste),
           taille: plan.tailleCoffre,
+          rang,
         },
       ]
     }),
@@ -274,6 +280,7 @@ export function Armurerie3D({
           slot: { ou: 'reserve' } as Slot,
           position: placeCase(plan, rang, reste),
           taille: plan.tailleCoffre,
+          rang,
         },
       ]
     }),
@@ -365,6 +372,28 @@ export function Armurerie3D({
     onLacher: (i, point) => {
       const t = objets[i]
       const cible = slotSous(point)
+      /**
+       * DANS LE COFFRE, ON RANGE : lâcher sur une case OCCUPÉE échange les deux
+       * objets au lieu de renvoyer le nôtre à la fin de la liste. C'est la
+       * seule chose que « réorganiser » veut dire ici, et ça ne concerne que le
+       * coffre — un slot du chargement a déjà sa règle d'échange, écrite dans
+       * `deplacerPiece`.
+       *
+       * *On ne range qu'entre objets DU COFFRE* : une pièce qu'on retire d'un
+       * slot rentre au râtelier par la porte ordinaire, elle ne prend la place
+       * de personne.
+       */
+      if (cible?.ou === 'reserve' && t?.slot.ou === 'reserve' && t.objet !== null) {
+        const rang = caseSousLePoint(plan, point.x, point.y, reste)
+        const vise = rang === null ? undefined : objets.find(
+          (o) => o.slot.ou === 'reserve' && o.rang === rang,
+        )
+        if (vise !== undefined && vise.id !== t.id) {
+          jouerSon(SON_PRENDRE)
+          onEchanger?.(t.id, vise.id)
+          return
+        }
+      }
       // UN TRÉSOR NE SE DÉPLACE PAS : aucun slot ne le prend, et le coffre ne
       // le rend jamais. *Il se consulte, c'est tout ce qu'il fait ici.*
       if (t === undefined || t.objet === null || cible === null) return

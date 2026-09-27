@@ -60,7 +60,15 @@ import type { EtatCombat } from '../logic/combat.ts'
 import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
-import { creerHub, deplacerPiece, equipement, perdreLEquipement, peutDescendre, rentrer } from '../logic/hub.ts'
+import {
+  creerHub,
+  deplacerPiece,
+  echangerDansCoffre,
+  equipement,
+  perdreLEquipement,
+  peutDescendre,
+  rentrer,
+} from '../logic/hub.ts'
 import {
   REGLAGE_DEFAUT,
   commencerDescente,
@@ -1074,6 +1082,12 @@ export function Scene(): React.JSX.Element {
     [],
   )
 
+  /** Ranger le coffre : deux objets changent de place, rien d'autre ne bouge. */
+  const rangerCoffre = useCallback(
+    (a: string, b: string) => setHub((h) => echangerDansCoffre(h, a, b)),
+    [],
+  )
+
   /**
    * REMONTER AU HUB. **Ce qui rentre n'est pas ce qu'on avait emporté** : les
    * potions bues se sont exilées du deck, donc `consommablesSurvivants` les
@@ -1415,6 +1429,7 @@ export function Scene(): React.JSX.Element {
             onglet={onglet}
             defilement={defilement}
             onDeplacer={bougerPiece}
+            onEchanger={rangerCoffre}
             onRegarder={(objet) => {
               setZoomee(pieceAPeindre(objet))
               setZoomSet(setAPeindre(objet))

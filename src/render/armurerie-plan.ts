@@ -415,6 +415,36 @@ export function placeCase(
 }
 
 /**
+ * LA CASE DU COFFRE SOUS CE POINT, ou `null` si le point tombe à côté.
+ *
+ * C'est `placeCase` à l'envers, et ça doit le rester : *deux calculs qui se
+ * répondent doivent se lire l'un sous l'autre*, sinon le premier réglage de pas
+ * les désaccorde. Le décalage continu du défilement entre dans les deux.
+ */
+export function caseSousLePoint(
+  plan: PlanArmurerie,
+  x: number,
+  y: number,
+  decalage = 0,
+): number | null {
+  const x0 = plan.grille.x - (plan.colonnes * plan.pasX) / 2 + plan.pasX / 2
+  const y0 = plan.grille.y + plan.grille.h / 2 - plan.pasY / 2 + decalage
+  const colonne = Math.round((x - x0) / plan.pasX)
+  const ligne = Math.round((y0 - y) / plan.pasY)
+  if (colonne < 0 || colonne >= plan.colonnes) return null
+  // Une rangée de plus que ce qui tient : le défilement continu en montre
+  // toujours une à moitié sortie, et on doit pouvoir y déposer.
+  if (ligne < 0 || ligne > plan.lignes) return null
+  // ON RESTE DANS LA CASE, pas seulement dans sa colonne : entre deux cases, le
+  // dépôt ne vise personne, et *échanger avec un voisin qu'on n'a pas désigné
+  // serait pire que ne rien faire.*
+  const centre = [x0 + colonne * plan.pasX, y0 - ligne * plan.pasY]
+  if (Math.abs(x - centre[0]!) > plan.tailleCoffre * 0.6) return null
+  if (Math.abs(y - centre[1]!) > plan.tailleCoffre * 0.84) return null
+  return ligne * plan.colonnes + colonne
+}
+
+/**
  * CE QUE L'ONGLET MONTRE — **et un seul filtre pour les deux mondes**.
  *
  * La scène place les cartes, l'interface dimensionne le pouce de la barre de

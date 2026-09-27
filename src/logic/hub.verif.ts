@@ -6,9 +6,11 @@
  * mourir ne peut pas bloquer le jeu.
  */
 import type { Arme, Armure } from './armes.ts'
+import { carteTresor } from './cartes.ts'
 import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART, deckDeLEquipement } from './armes.ts'
 import {
   CAPACITE_PILE,
+  echangerDansCoffre,
   accepteDepuis,
   creerHub,
   deckEmporte,
@@ -172,6 +174,27 @@ const COTTE: Armure = {
   const mortAvecPile = perdreLEquipement({ ...h, chargement: { ...h.chargement, pile: POTIONS_DEPART.slice(0, 2) } })
   verifier('mourir vide la pile', mortAvecPile.chargement.pile.length === 0)
   verifier('mais le ratelier garde ses potions', mortAvecPile.reserve.length === h.reserve.length)
+}
+
+// --- ranger le coffre --------------------------------------------------------
+
+{
+  const h = creerHub()
+  const [a, b] = h.reserve
+  const range = echangerDansCoffre(h, a!.id, b!.id)
+  verifier('l’echange remet les deux objets a la place l’un de l’autre',
+    range.reserve[0]!.id === b!.id && range.reserve[1]!.id === a!.id)
+  verifier('...et ne change rien d’autre', range.reserve.length === h.reserve.length)
+  verifier('un objet avec lui-meme ne fait rien', echangerDansCoffre(h, a!.id, a!.id) === h)
+  verifier('un identifiant inconnu ne fait rien', echangerDansCoffre(h, a!.id, 'fantome') === h)
+
+  // ON N'ECHANGE QUE DANS LA MEME LISTE : un tresor n'est pas une piece, et il
+  // ne doit jamais se retrouver dans `reserve`.
+  const avecTresor = { ...h, tresors: [carteTresor('t-1', 'Camee', 45), carteTresor('t-2', 'Idole', 90)] }
+  const melange = echangerDansCoffre(avecTresor, a!.id, 't-1')
+  verifier('une piece ne s’echange pas avec un tresor', melange === avecTresor)
+  const tresors = echangerDansCoffre(avecTresor, 't-1', 't-2')
+  verifier('deux tresors s’echangent entre eux', tresors.tresors[0]!.id === 't-2')
 }
 
 // --- la pile des consommables -----------------------------------------------

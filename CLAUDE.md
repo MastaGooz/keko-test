@@ -3501,6 +3501,28 @@ celui du chargement (0,6) ; une carte qui grandit en cours de geste change de
 texture en chemin, et elle y GAGNE en netteté, donc le relais se lit dans le
 bon sens.
 
+**ON RANGE LE COFFRE EN POSANT UN OBJET SUR UN AUTRE** : les deux échangent
+leurs places. Ça n'existait pas — le seul déplacement vers le coffre était
+« repose au râtelier », qui ajoute à la FIN de la liste, donc un objet glissé
+sur son voisin filait au bout. Keko : « je ne peux pas réorganiser le coffre ».
+
+**L'échange, pas l'insertion**, et ce n'est pas qu'une commodité : une
+insertion fait glisser tout ce qui suit, donc le rangement qu'on vient de faire
+bouge sous les yeux. *Un échange ne déplace que les deux cases qu'on regarde.*
+
+**Et seulement DANS la même liste** (`echangerDansCoffre`) : les trésors ne sont
+pas des pièces, ils vivent à part et la grille ne les met à la suite que pour
+les montrer. Un trésor ne se glisse toujours pas — *il se consulte, c'est tout
+ce qu'il fait ici* — donc ranger ne concerne que les pièces, et une pièce qu'on
+retire d'un slot rentre par la porte ordinaire, sans prendre la place de
+personne.
+
+**La case visée se calcule à l'envers de `placeCase`**, décalage continu du
+défilement compris, et les deux fonctions se lisent l'une sous l'autre : *deux
+calculs qui se répondent se désaccordent au premier réglage s'ils vivent
+ailleurs.* Le dépôt doit tomber DANS la case, pas seulement dans sa colonne —
+*échanger avec un voisin qu'on n'a pas désigné serait pire que ne rien faire.*
+
 **LE NOMBRE DE LIGNES SUIT LA HAUTEUR DE L'ÉCRAN** : la grille remplit son
 cadre au lieu de laisser un vide sous elle, et ce qui dépasse se défile.
 
