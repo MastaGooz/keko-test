@@ -39,8 +39,17 @@ export const DUREE_ONDE = 0.72
 /** De combien elle s'écarte de la carte, en parts de sa largeur. */
 const ECART_ONDE = 0.42
 
-/** L'épaisseur du trait, en parts de la largeur de la carte. */
-const TRAIT = 0.028
+/**
+ * La demi-épaisseur du trait, en parts de la largeur de la carte.
+ *
+ * Elle a DOUBLÉ en même temps que le trait s'est mis à fondre sur ses bords :
+ * *un dégradé a besoin de place pour se faire*, et une bande large qui
+ * s'estompe se lit plus fine qu'un liseré net deux fois plus mince.
+ */
+const TRAIT = 0.055
+
+/** En combien de points le contour est échantillonné. */
+const SEGMENTS = 160
 
 /** Combien de grains s'en détachent. */
 const GRAINS = 26
@@ -67,29 +76,100 @@ function contour(large: number, haut: number, rayon: number): THREE.Path {
 }
 
 /**
- * LE TRAIT DE L'ONDE : le contour de la carte, creusé de l'intérieur.
+ * CE QUI FAIT RESPIRER LE TRAIT : une somme de sinus sur le tour.
  *
- * Une forme pleine avec un TROU, et non deux tracés superposés : c'est la
- * seule façon d'obtenir un liseré fermé qui suit les coins arrondis. Ses
- * dimensions sont celles du gabarit, passées par la carte — *deux modules qui
- * décriraient la même forme chacun de leur côté divergeraient au premier
+ * Les fréquences sont ENTIÈRES, et il le faut : le contour est fermé, donc une
+ * fréquence qui ne retombe pas juste laisserait une couture visible là où le
+ * tracé se referme. Trois harmoniques suffisent — *deux font un battement
+ * régulier, quatre font du bruit.*
+ */
+function ondule(t: number): number {
+  const a = Math.sin(t * Math.PI * 2 * 3 + 0.7)
+  const b = Math.sin(t * Math.PI * 2 * 7 + 2.1)
+  const c = Math.sin(t * Math.PI * 2 * 13 + 4.3)
+  return (a * 0.5 + b * 0.32 + c * 0.18 + 1) / 2
+}
+
+/**
+ * LE TRAIT DE L'ONDE : une BANDE qui s'éteint sur ses deux bords.
+ *
+ * Il a d'abord été un liseré plein — une forme à trou, nette des deux côtés —
+ * et Keko l'a repris : « je trouve l'onde trop pleine, il faudrait un truc
+ * plus naturel avec un dégradé ». *Un trait qui commence et finit net est un
+ * TRACÉ ; une lumière, elle, n'a pas de bord* — c'est la leçon déjà payée sur
+ * le halo des cartes, où un rectangle de couleur unie ne pouvait pas passer
+ * pour une lueur.
+ *
+ * D'où une bande construite à la main : trois rangées de points le long du
+ * contour — intérieur, milieu, extérieur — et la lumière portée par les
+ * COULEURS DE SOMMET, nulle sur les bords, pleine au centre. Le dégradé est
+ * alors interpolé par le GPU, sans texture ni shader.
+ *
+ * **Elle respire aussi le long du tour** : sans ça, une bande d'intensité
+ * constante reste un tracé, juste un peu plus doux. C'est la modulation qui la
+ * rend vivante.
+ *
+ * Ses dimensions sont celles du gabarit, passées par la carte — *deux modules
+ * qui décriraient la même forme chacun de leur côté divergeraient au premier
  * réglage.*
  */
 export function geometrieDOnde(
   large: number,
   haut: number,
   rayon: number,
-): THREE.ShapeGeometry {
+): THREE.BufferGeometry {
+  const points = contour(large, haut, rayon).getSpacedPoints(SEGMENTS)
+  const n = SEGMENTS
   const e = large * TRAIT
-  const forme = new THREE.Shape(contour(large, haut, rayon).getPoints(24))
-  forme.holes.push(contour(large - e * 2, haut - e * 2, Math.max(0, rayon - e)))
-  return new THREE.ShapeGeometry(forme, 24)
+  const places: number[] = []
+  const teintes: number[] = []
+
+  for (let i = 0; i < n; i++) {
+    const p = points[i]!
+    const avant = points[(i - 1 + n) % n]!
+    const apres = points[(i + 1) % n]!
+    // LA NORMALE SORT DE LA TANGENTE, pas du centre : sur un rectangle, une
+    // direction radiale part de travers dès qu'on s'éloigne des diagonales, et
+    // la bande s'épaissirait aux coins.
+    const tx = apres.x - avant.x
+    const ty = apres.y - avant.y
+    const l = Math.hypot(tx, ty) || 1
+    let nx = -ty / l
+    let ny = tx / l
+    if (nx * p.x + ny * p.y < 0) {
+      nx = -nx
+      ny = -ny
+    }
+    places.push(p.x - nx * e, p.y - ny * e, 0, p.x, p.y, 0, p.x + nx * e, p.y + ny * e, 0)
+    const m = 0.4 + 0.6 * ondule(i / n)
+    teintes.push(0, 0, 0, m, m * 0.87, m * 0.62, 0, 0, 0)
+  }
+
+  const indices: number[] = []
+  for (let i = 0; i < n; i++) {
+    const a = i * 3
+    const b = ((i + 1) % n) * 3
+    indices.push(a, a + 1, b + 1, a, b + 1, b)
+    indices.push(a + 1, a + 2, b + 2, a + 1, b + 2, b + 1)
+  }
+
+  const geometrie = new THREE.BufferGeometry()
+  geometrie.setAttribute('position', new THREE.Float32BufferAttribute(places, 3))
+  geometrie.setAttribute('color', new THREE.Float32BufferAttribute(teintes, 3))
+  geometrie.setIndex(indices)
+  return geometrie
 }
 
-/** La matière de l'onde : de l'or qui s'ajoute au fond. */
+/**
+ * La matière de l'onde : de l'or qui s'ajoute au fond.
+ *
+ * Sa couleur est BLANCHE parce que la teinte vit dans les sommets — c'est eux
+ * qui portent à la fois l'or et le dégradé.
+ */
 export function matiereDOnde(): THREE.MeshBasicMaterial {
   return new THREE.MeshBasicMaterial({
-    color: '#ffd9a0',
+    color: '#ffffff',
+    vertexColors: true,
     transparent: true,
     opacity: 0,
     blending: THREE.AdditiveBlending,

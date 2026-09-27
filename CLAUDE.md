@@ -3376,10 +3376,29 @@ Trois conséquences, et elles tiennent ensemble :
   plutôt que se poser dessus ;
 - **une seule vague**, puisqu'elle part à la taille de l'objet — *la première
   dit déjà tout, les suivantes n'étaient qu'un écho* ;
-- **le trait est une forme À TROU**, pas deux tracés superposés : c'est la
-  seule façon d'obtenir un liseré fermé qui suit les coins arrondis. Ses
-  dimensions lui sont passées par la carte, *deux modules qui décriraient la
-  même forme chacun de leur côté divergeraient au premier réglage.*
+- **le trait est une BANDE QUI S'ÉTEINT SUR SES DEUX BORDS**, pas un liseré
+  plein. Il a d'abord été une forme à trou, nette des deux côtés — Keko : « je
+  trouve l'onde trop pleine, il faudrait un truc plus naturel avec un
+  dégradé ». *Un trait qui commence et finit net est un TRACÉ ; une lumière,
+  elle, n'a pas de bord* — c'est la leçon déjà payée sur le halo des cartes.
+
+  Trois rangées de points le long du contour — intérieur, milieu, extérieur —
+  et la lumière portée par les **couleurs de sommet**, nulle sur les bords,
+  pleine au centre : le dégradé est interpolé par le GPU, sans texture ni
+  shader. **La normale sort de la TANGENTE, pas du centre** : sur un rectangle,
+  une direction radiale part de travers dès qu'on s'éloigne des diagonales, et
+  la bande s'épaissirait aux coins.
+
+  **Elle respire le long du tour**, par une somme de trois sinus — sans ça une
+  bande d'intensité constante reste un tracé, juste un peu plus doux. Les
+  fréquences sont ENTIÈRES, parce que le contour est fermé : une fréquence qui
+  ne retombe pas juste laisserait une couture là où le tracé se referme. Et sa
+  demi-épaisseur a DOUBLÉ au passage — *un dégradé a besoin de place pour se
+  faire*, et une bande large qui s'estompe se lit plus fine qu'un liseré net
+  deux fois plus mince.
+
+  Ses dimensions lui sont passées par la carte : *deux modules qui décriraient
+  la même forme chacun de leur côté divergeraient au premier réglage.*
 
 **ET ELLE EST FAITE DE POUSSIÈRE.** Keko : « qu'elle aille moins loin, soit
 moins épaisse, et soit accompagnée de petites étincelles — je visualise une
