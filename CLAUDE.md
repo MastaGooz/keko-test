@@ -3137,6 +3137,46 @@ la carte. `replier()` mesure mot à mot ; si le repli coûte une ligne de trop,
 la taille descend d'un cran, exactement ce que `cran` fait pour un effet long.
 Ça vaut pour toutes les cartes, pas seulement les pièces.
 
+**CE QU'UNE PIÈCE APPORTE SE DESSINE, ça ne s'écrit plus.** Le cartouche
+alignait « 3× Fauchage · 2× Fendre · 1× Tornade » ; c'est désormais **une ligne
+par modèle, ouverte par la petite carte de son nombre** — la même case de fer
+sombre que le compteur du coin. Demandé par Keko : « une icône de carte un peu
+comme en haut à gauche, avec un chiffre dedans, et le nom de la carte à sa
+droite, plutôt que "3×" ».
+
+*Le « × » disait un NOMBRE, la case dit ce qu'on COMPTE* — et la pièce répète
+alors en petit ce qu'elle annonce en grand, ce qui est exactement ce que le
+compteur du coin promet. Les deux sortent de `caseDeCarte` (`texture-carte.ts`),
+sinon ils divergeraient au premier réglage, comme les quatre fonctions qui
+dessinaient chacune leur carte avant `corpsCarte`.
+
+Quatre choses qui portent le bloc, et aucune n'est un réglage d'humeur :
+
+- **les cases S'ALIGNENT, c'est le BLOC qui se centre.** Chaque ligne centrée
+  sur elle-même décalait sa case d'un mot à l'autre, et *une colonne de repères
+  qui tremble se lit comme un défaut d'impression*. Ce sont des entrées de
+  liste : elles s'ouvrent au même endroit, et le bord droit reste irrégulier ;
+- **DEUX COLONNES AU-DELÀ DE QUATRE MODÈLES.** Une pièce doit pouvoir en porter
+  huit (tranché par Keko) ; à huit lignes dans la bande du cartouche, chacune
+  tomberait à 3,4 unités et ne se lirait plus. C'est le repli de la vitrine du
+  zoom, qui range déjà ses modèles quatre par ligne sur deux rangées ;
+- **la ligne se dimensionne sur la PLACE**, pas l'inverse — elle a la bande du
+  cartouche à se partager — et elle est bornée en haut pour qu'un modèle seul
+  ne s'étale pas ;
+- **un nom trop long fait descendre TOUTE la composition d'un cran.** Même
+  garde-fou que `replier` : *un canvas écrit tout droit et laisse déborder sans
+  rien signaler.* On ne peut pas couper un nom de carte en deux, donc c'est la
+  taille qui cède — et pour toutes les lignes à la fois, sinon elles n'auraient
+  plus la même voix.
+
+La composition entre dans `signature()`, sans quoi deux pièces de même nom
+partageraient la texture. Le texte qui coule reste en repli : il sert au jeu 2D
+et à tout ce qui ne peint pas la composition.
+
+Vérifié au navigateur à huit modèles, à trois, à un, et avec un nom de vingt-
+trois caractères : rien ne sort de la carte, et la colonne des cases reste
+droite.
+
 **Une pièce zoomée montre son set EN CARTES**, avec sa pastille d'or SOUS
 chaque carte (`texturePastille`) — sur le coin elle cachait la gemme. Prévu
 pour huit modèles : quatre par ligne, deux lignes, et la taille d'une carte du

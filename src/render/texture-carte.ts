@@ -49,6 +49,17 @@ export type CarteAPeindre = {
   compteur?: number
   /** Le cartouche, une entrée par ligne. */
   effet: readonly string[]
+  /**
+   * CE QU'UNE PIÈCE APPORTE, MODÈLE PAR MODÈLE — et c'est un DESSIN, pas une
+   * phrase. Demandé par Keko : « une icône de carte un peu comme en haut à
+   * gauche, avec un chiffre dedans, et le nom de la carte à sa droite, plutôt
+   * que "3×" ».
+   *
+   * *Le « × » disait un nombre, la petite carte dit ce qu'on compte* : c'est
+   * le même symbole que le compteur du coin, donc la pièce répète en petit ce
+   * qu'elle annonce en grand. Quand il est là, il remplace le cartouche.
+   */
+  composition?: readonly { nombre: number; nom: string }[]
   /** Le type gravé au pied : « Attaque », « Trésor »… */
   type: string
 }
@@ -313,31 +324,28 @@ export async function peindreCarte(
 }
 
 /**
- * LE COMPTEUR D'UNE PIÈCE : une case en forme de carte, de fer sombre.
+ * UNE CASE EN FORME DE CARTE, de fer sombre, avec son chiffre dedans.
  *
- * Volontairement PAS l'écusson d'énergie, qui est le même sur toute carte qui
- * coûte : *ce chiffre n'est pas un coût*, c'est ce que la pièce ajoute au
- * deck. Deux symboles pour deux choses.
+ * Elle sert au COMPTEUR du coin (ce que la pièce ajoute au deck) et à chaque
+ * ligne de la composition (combien d'exemplaires d'un modèle) : *c'est le même
+ * objet qui dit la même chose à deux échelles*, et les dessiner à deux
+ * endroits garantirait qu'un jour ils divergent.
  */
-function peindreCompteur(ctx: CanvasRenderingContext2D, nombre: number): void {
-  const l = 0.155 * LARGE
+function caseDeCarte(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  l: number,
+  nombre: number,
+): void {
   const h = l * 1.4
-  // SON ÉCART AU BORD GAUCHE VAUT CELUI DU HAUT, et il fallait le CALCULER :
-  // la coque de la carte est une découpe déchirée, pas un rectangle, et son
-  // bord gauche rentre de 3 % au niveau du compteur là où le bord haut ne
-  // rentre presque pas. Posés à la même distance du canvas, les deux écarts
-  // n'étaient donc pas les mêmes à l'oeil — Keko : « décaler un poil le
-  // symbole vers la droite, son écart au bord doit être le même que l'écart au
-  // bord du haut ». *Une marge se mesure au bord qu'on VOIT, pas au bord de la
-  // toile.*
-  const x = 0.05 * LARGE
-  const y = 0.016 * HAUT
-  const coin = 1.6 * U
+  const coin = l * 0.105
+  const filet = Math.max(0.4, l * 0.058)
 
   ctx.save()
   ctx.shadowColor = '#0000008c'
-  ctx.shadowOffsetX = 0.35 * U
-  ctx.shadowOffsetY = 0.5 * U
+  ctx.shadowOffsetX = l * 0.023
+  ctx.shadowOffsetY = l * 0.033
   ctx.beginPath()
   ctx.roundRect(x, y, l, h, coin)
   const fer = ctx.createLinearGradient(x, y, x + l, y + h)
@@ -348,16 +356,38 @@ function peindreCompteur(ctx: CanvasRenderingContext2D, nombre: number): void {
   ctx.restore()
 
   ctx.beginPath()
-  ctx.roundRect(x + 0.9 * U, y + 0.9 * U, l - 1.8 * U, h - 1.8 * U, coin * 0.8)
+  ctx.roundRect(x + filet, y + filet, l - filet * 2, h - filet * 2, coin * 0.8)
   ctx.strokeStyle = '#8d9aa6'
-  ctx.lineWidth = 0.7 * U
+  ctx.lineWidth = filet * 0.78
   ctx.stroke()
 
   ctx.fillStyle = '#e8eef4'
-  ctx.font = `600 ${15 * U}px "Grenze Gotisch", Georgia, serif`
+  ctx.font = `600 ${l * 0.97}px "Grenze Gotisch", Georgia, serif`
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText(String(nombre), x + l / 2, y + h * 0.54)
+}
+
+/**
+ * LE COMPTEUR D'UNE PIÈCE : une case en forme de carte, de fer sombre.
+ *
+ * Volontairement PAS l'écusson d'énergie, qui est le même sur toute carte qui
+ * coûte : *ce chiffre n'est pas un coût*, c'est ce que la pièce ajoute au
+ * deck. Deux symboles pour deux choses.
+ */
+function peindreCompteur(ctx: CanvasRenderingContext2D, nombre: number): void {
+  const l = 0.155 * LARGE
+  // SON ÉCART AU BORD GAUCHE VAUT CELUI DU HAUT, et il fallait le CALCULER :
+  // la coque de la carte est une découpe déchirée, pas un rectangle, et son
+  // bord gauche rentre de 3 % au niveau du compteur là où le bord haut ne
+  // rentre presque pas. Posés à la même distance du canvas, les deux écarts
+  // n'étaient donc pas les mêmes à l'oeil — Keko : « décaler un poil le
+  // symbole vers la droite, son écart au bord doit être le même que l'écart au
+  // bord du haut ». *Une marge se mesure au bord qu'on VOIT, pas au bord de la
+  // toile.*
+  const x = 0.05 * LARGE
+  const y = 0.016 * HAUT
+  caseDeCarte(ctx, x, y, l, nombre)
 }
 
 /**
@@ -641,6 +671,79 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
   // taille à laquelle il a fallu l'écrire.
   ctx.fillRect(LARGE * 0.22, yNom + tailleNom * 0.68, LARGE * 0.56, Math.max(1, 0.25 * U))
 
+  /**
+   * LA COMPOSITION D'UNE PIÈCE : une ligne par modèle, chacune ouverte par la
+   * petite carte de son nombre. Demandé par Keko — « une icône de carte un peu
+   * comme en haut à gauche, avec un chiffre dedans, et le nom de la carte à sa
+   * droite, plutôt que "3×" ».
+   *
+   * *Le « × » disait un NOMBRE, la case dit ce qu'on COMPTE* — et c'est
+   * exactement le symbole du compteur du coin, donc la pièce répète en petit
+   * ce qu'elle annonce en grand. Les deux sortent de `caseDeCarte`, sans quoi
+   * ils divergeraient au premier réglage.
+   *
+   * **DEUX COLONNES AU-DELÀ DE QUATRE MODÈLES**, parce qu'une pièce doit
+   * pouvoir en porter huit : à huit lignes dans la bande du cartouche, chacune
+   * tomberait à 3,4 unités et ne se lirait plus. C'est le repli de la vitrine
+   * du zoom, qui range déjà ses modèles quatre par ligne sur deux rangées.
+   *
+   * **La ligne se dimensionne sur la PLACE**, pas l'inverse, et elle est
+   * bornée en haut pour qu'un modèle seul ne s'étale pas.
+   */
+  if (carte.composition !== undefined && carte.composition.length > 0) {
+    const compo = carte.composition
+    const haut = HAUT * 0.745
+    const bas = HAUT * 0.935
+    const colonnes = compo.length > 4 ? 2 : 1
+    const parColonne = Math.ceil(compo.length / colonnes)
+    const ligne = Math.min(10 * U, (bas - haut) / parColonne)
+    const caseL = ligne * 0.56
+    const ecart = ligne * 0.26
+    // LE BLOC SE CENTRE DANS LA BANDE : à deux modèles il ne la remplit pas,
+    // et un bloc calé en haut laisserait tout le vide juste au-dessus du pied.
+    const yHaut = (haut + bas) / 2 - (ligne * parColonne) / 2
+    const lColonne = (LARGE * 0.9) / colonnes
+
+    // UN NOM TROP LONG FAIT DESCENDRE TOUTE LA COLONNE D'UN CRAN, et c'est le
+    // même garde-fou que `replier` pour le cartouche : *un canvas écrit tout
+    // droit et laisse déborder sans rien signaler.* On ne peut pas couper un
+    // nom de carte en deux, donc c'est la taille qui cède — et elle cède pour
+    // TOUTE la composition, sinon les lignes n'auraient plus la même voix.
+    let police = ligne * 0.62
+    ctx.font = `400 ${police}px "Crimson Pro", Georgia, serif`
+    const place = lColonne - caseL - ecart
+    const plusLarge = Math.max(...compo.map((e) => ctx.measureText(e.nom).width))
+    if (plusLarge > place) police *= place / plusLarge
+
+    // LES CASES S'ALIGNENT, C'EST LE BLOC QUI SE CENTRE. Chaque ligne centrée
+    // sur elle-même décalait sa case d'un mot à l'autre, et *une colonne de
+    // repères qui tremble se lit comme un défaut d'impression* : ce sont des
+    // entrées de liste, elles s'ouvrent au même endroit. Le bord droit reste
+    // irrégulier, ce qui est exactement ce que fait une liste.
+    ctx.font = `400 ${police}px "Crimson Pro", Georgia, serif`
+    const bloc = caseL + ecart + Math.max(...compo.map((e) => ctx.measureText(e.nom).width))
+
+    compo.forEach((entree, i) => {
+      const colonne = Math.floor(i / parColonne)
+      const rang = i % parColonne
+      const y = yHaut + ligne * (rang + 0.5)
+      const x = LARGE * 0.05 + lColonne * colonne + (lColonne - bloc) / 2
+      caseDeCarte(ctx, x, y - caseL * 0.7, caseL, entree.nombre)
+      ctx.font = `400 ${police}px "Crimson Pro", Georgia, serif`
+      ctx.textAlign = 'left'
+      ctx.textBaseline = 'middle'
+      ctx.fillStyle = '#f1e6cf'
+      ctx.shadowColor = '#000000aa'
+      ctx.shadowOffsetY = 0.4 * U
+      ctx.shadowBlur = 0.8 * U
+      ctx.fillText(entree.nom, x + caseL + ecart, y)
+      ctx.shadowColor = 'transparent'
+    })
+    ctx.textAlign = 'center'
+    peindrePied(ctx, carte)
+    return
+  }
+
   // LE CARTOUCHE : ce que fait la carte, centré, une ligne par entrée.
   //
   // **IL SE REPLIE.** En 2D c'est le navigateur qui coupe les lignes ; un
@@ -665,9 +768,15 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
   })
   ctx.shadowColor = 'transparent'
 
-  // LE PIED : sa nature gravée, en petites capitales espacées.
+  peindrePied(ctx, carte)
+}
+
+/** LE PIED : sa nature gravée, en petites capitales espacées. */
+function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): void {
   ctx.font = `600 ${4.6 * U}px "Barlow Condensed", "Arial Narrow", sans-serif`
   ctx.fillStyle = '#c9b892'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
   ctx.letterSpacing = `${1.2 * U}px`
   ctx.fillText(carte.type.toUpperCase(), LARGE / 2, HAUT * 0.955)
   ctx.letterSpacing = '0px'
@@ -1040,7 +1149,8 @@ const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
 export function signature(carte: CarteAPeindre): string {
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.effet.join('~')}`
+  const compo = (carte.composition ?? []).map((e) => `${e.nombre}:${e.nom}`).join('~')
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.effet.join('~')}|${compo}`
 }
 
 /**

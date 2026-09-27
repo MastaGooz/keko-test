@@ -73,7 +73,11 @@ export function pieceAPeindre(objet: Objet): CarteAPeindre {
     nom: estConsommable(objet) ? objet.modele.nom : objet.nom,
     cout: 0,
     compteur: set.reduce((total, e) => total + e.nombre, 0),
+    // LE CARTOUCHE D'UNE PIÈCE EST UN DESSIN, pas une phrase : une petite
+    // carte par modèle, son nombre dedans, son nom à droite. Le texte reste
+    // en repli — il sert au 2D et à tout ce qui ne peint pas la composition.
     effet: [set.map((e) => `${e.nombre}× ${e.modele.nom}`).join(' · ')],
+    composition: set.map((e) => ({ nombre: e.nombre, nom: e.modele.nom })),
     type: pied,
   }
 }
