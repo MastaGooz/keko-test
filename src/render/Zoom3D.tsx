@@ -11,6 +11,13 @@
  * trésor dans le slot de loot pour zoomer ». Il vit donc ici, au-dessus de
  * tout le monde, et n'importe quel écran peut lui passer une carte.
  *
+ * **ELLE RÉPOND AU CURSEUR** (`reflet`) : elle s'incline sous lui, s'avance
+ * d'un cheveu, et un lustre balaie sa face là où il se pose. Demandé par
+ * Keko. *C'est le seul écran où l'on REGARDE une carte sans rien en faire* —
+ * ailleurs le pointeur sert à la prendre, et une carte qui bascule au moment
+ * où on la saisit serait du bruit. Les modèles du set y répondent aussi : ce
+ * sont des cartes du même écran.
+ *
  * **Le voile est un plan posé DANS la scène**, entre ce qu'on regardait et la
  * carte. En HTML par-dessus le canvas il faudrait le percer pour laisser voir
  * la carte ; ici il suffit de mettre la carte devant. Et comme un plan
@@ -137,6 +144,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                 taille={uneCarte}
                 ombre={false}
                 ressort={14}
+                reflet
                 onPeinte={onPeinte}
                 onPointerDown={(e) => {
                   e.stopPropagation()
@@ -167,6 +175,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
         rotation={[0, 0, 0]}
         ressort={14}
         ombre={false}
+        reflet
         onPeinte={onPeinte}
         onPointerDown={(e) => {
           e.stopPropagation()

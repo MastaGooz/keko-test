@@ -2007,6 +2007,50 @@ se referment dessus.
 **Le zoom vient de l'état**, jamais d'une marque posée sur la scène — même
 règle qu'en 2D, où le rendu se reconstruit à chaque geste.
 
+### LA CARTE REGARDÉE RÉPOND AU CURSEUR
+
+Keko : « on peut avoir un effet qui bouge les cartes en 3D quand elles sont
+zoomées et qu'on passe le curseur dessus ? avec de la brillance ? »
+
+Elle **s'incline sous le pointeur**, **s'avance d'un cheveu** et **un lustre
+balaie sa face là où il se pose** (`reflet`, sur `Carte3D`). *C'est le seul
+écran où l'on REGARDE une carte sans rien en faire* — ailleurs le pointeur sert
+à la prendre, et une carte qui bascule au moment où on la saisit serait du
+bruit. Les modèles du set en profitent aussi : ce sont des cartes du même
+écran.
+
+**L'avancée n'est pas un ornement.** Sans elle, l'inclinaison se lit comme une
+image qui gondole ; avec elle, comme un objet qu'on tourne vers soi.
+
+**LE LUSTRE VIT DANS LE NUANCEUR, pas dans un plan posé dessus.** Un second
+plan aurait demandé sa propre texture PAR CARTE — pour lui donner son propre
+décalage — et un masque à la forme des coins arrondis. Trois lignes injectées
+dans le fragment shader ne coûtent rien et se plaquent exactement sur ce qui
+est peint. Elles rejoignent la désaturation, qui vivait déjà là.
+
+Trois choses à ne pas défaire :
+
+- **la varying est la NÔTRE, pas `vMapUv`.** Celle de three n'existe que si la
+  map est là AU MOMENT DE LA COMPILATION — or la texture d'une carte arrive
+  plus tard, de façon asynchrone : le shader ne compilerait pas au premier
+  rendu. `uv`, lui, est toujours déclaré par three ;
+- **la bande se pose SOUS le curseur**, elle ne le fuit pas : la diagonale de
+  la carte vaut `(u + v) / 2`, et le point visé y tombe exactement. *Un reflet
+  qu'on ne peut pas promener n'est pas un reflet, c'est une animation* ;
+- **l'inclinaison se pose PAR-DESSUS la rotation lissée**, comme le
+  frémissement par-dessus la position : mêlée à elle, l'amortissement la
+  mangerait en croyant corriger un écart.
+
+**Souris seulement**, comme tout survol du projet : au doigt le `pointerout`
+n'arrive jamais et la carte resterait penchée après la tape.
+
+*Piège de vérification, et il a coûté trois captures* : **un survol envoyé dans
+le même lot d'actions que le clic qui ouvre le zoom ne touche rien** — React
+n'a pas encore rendu la carte, donc le rayon ne rencontre personne, et comme
+rien ne bouge ensuite l'effet ne se déclenche jamais. Ça ressemble exactement à
+un effet cassé. C'est la règle déjà écrite pour les glissers : laisser la scène
+se poser avant de mesurer.
+
 ### Le tactile : `touch-action` se pose sur le CANVAS
 
 **Sans `touch-action: none` sur le canvas lui-même, le navigateur prend le

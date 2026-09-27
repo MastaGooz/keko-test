@@ -45,6 +45,11 @@ const EPAISSEUR = 0.012
 /** Le rayon des coins : 3 % de la largeur, comme le `border-radius` du gabarit. */
 export const RAYON_COIN = 0.03
 
+/** Ce que la carte regardée bascule quand le curseur va d'un bord à l'autre. */
+const INCLINAISON_REFLET = 0.34
+/** Et de combien elle s'avance vers le regard, en unités de scène. */
+const AVANCEE_REFLET = 0.06
+
 /**
  * LA CARTE EST FAITE DE DEUX PIÈCES, et c'est ce qui donne les coins ronds.
  *
@@ -201,6 +206,22 @@ type Props = {
    * déplace arrive droite et bascule après coup.
    */
   apparue?: number | null
+  /**
+   * ELLE RÉPOND AU CURSEUR : elle s'incline sous lui, s'avance d'un cheveu, et
+   * un lustre balaie sa face là où il se pose.
+   *
+   * Demandé par Keko pour la carte qu'on regarde de près — « un effet qui
+   * bouge les cartes en 3D quand elles sont zoomées et qu'on passe le curseur
+   * dessus, avec de la brillance ». *C'est le seul écran où l'on REGARDE une
+   * carte sans rien en faire* : ailleurs le pointeur sert à la prendre, et
+   * une carte qui bascule sous le doigt au moment où on la saisit serait du
+   * bruit.
+   *
+   * **Souris seulement.** Au doigt le `pointerout` n'arrive jamais — la carte
+   * resterait penchée après la tape — et c'est la règle déjà écrite pour tout
+   * survol du projet.
+   */
+  reflet?: boolean
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -222,6 +243,7 @@ export function Carte3D({
   saut = null,
   clipper = null,
   apparue = null,
+  reflet = false,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -268,16 +290,49 @@ export function Carte3D({
     // gratuit en mémoire, là où peindre une seconde texture grise par modèle
     // doublerait le budget — et la mémoire de texture est justement ce qui
     // coince sur un téléphone.
+    /**
+     * LE LUSTRE VIT DANS LE NUANCEUR, PAS DANS UN PLAN POSÉ DESSUS.
+     *
+     * Une bande claire oblique qui balaie la face quand le curseur s'y
+     * promène. Un second plan aurait demandé sa propre texture PAR CARTE
+     * (pour lui donner son propre décalage) et un masque à la forme des coins
+     * arrondis ; trois lignes de nuanceur ne coûtent rien et se plaquent
+     * exactement sur ce qui est peint.
+     *
+     * **La varying est la NÔTRE, pas `vMapUv`.** Celle de three n'existe que
+     * si la map est là AU MOMENT DE LA COMPILATION — or la texture d'une
+     * carte arrive plus tard, de façon asynchrone : le shader ne compilerait
+     * pas au premier rendu. `uv`, lui, est toujours déclaré.
+     *
+     * Le lustre s'ajoute à `diffuseColor` AVANT le test d'alpha, donc il
+     * n'allume jamais les coins transparents.
+     */
     face.onBeforeCompile = (nuanceur) => {
       nuanceur.uniforms.uGris = { value: 0 }
+      nuanceur.uniforms.uLustre = { value: 0.5 }
+      nuanceur.uniforms.uLustreForce = { value: 0 }
       face.userData.nuanceur = nuanceur
+      nuanceur.vertexShader = `varying vec2 vLustreUv;
+${nuanceur.vertexShader}`.replace(
+        '#include <begin_vertex>',
+        `#include <begin_vertex>
+         vLustreUv = uv;`,
+      )
       nuanceur.fragmentShader = nuanceur.fragmentShader.replace(
         '#include <map_fragment>',
         `#include <map_fragment>
          float luminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(luminance), uGris);`,
+         diffuseColor.rgb = mix(diffuseColor.rgb, vec3(luminance), uGris);
+         float bande = (vLustreUv.x + vLustreUv.y) * 0.5;
+         float ecart = bande - uLustre;
+         diffuseColor.rgb += vec3(1.0, 0.95, 0.82)
+           * uLustreForce
+           * (exp(-ecart * ecart * 95.0) + 0.5 * exp(-ecart * ecart * 480.0));`,
       )
       nuanceur.fragmentShader = `uniform float uGris;
+uniform float uLustre;
+uniform float uLustreForce;
+varying vec2 vLustreUv;
 ${nuanceur.fragmentShader}`
     }
     /**
@@ -293,7 +348,7 @@ ${nuanceur.fragmentShader}`
      *
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
-    face.customProgramCacheKey = () => 'carte-face-desaturable'
+    face.customProgramCacheKey = () => 'carte-face-desaturable-lustree'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -400,7 +455,33 @@ ${nuanceur.fragmentShader}`
     feu: 0,
     /** L'éclat de la carte : 1 quand elle est jouable, moins quand elle est éteinte. */
     vif: 1,
+    /** Où le curseur se tient sur la carte, amorti, en parts de −0,5 à 0,5. */
+    vx: 0,
+    vy: 0,
+    /** Combien le reflet est présent : 1 sous le curseur, 0 sinon. */
+    brille: 0,
   })
+
+  /**
+   * OÙ LE CURSEUR SE TIENT, brut. Il vit dans une `ref` et non dans l'état :
+   * il change à chaque image, et un rendu React par image donnerait le même
+   * résultat pour bien plus cher — la règle déjà tenue par le geste et par la
+   * projection des étiquettes.
+   */
+  const curseur = useRef({ dessus: false, x: 0, y: 0 })
+
+  const suivreLeCurseur = (e: ThreeEvent<PointerEvent>): void => {
+    if (!reflet || e.pointerType !== 'mouse') return
+    const g = groupe.current
+    if (g === null) return
+    // ON LIT LE POINT DANS LE REPÈRE DE LA CARTE : sa matrice monde porte
+    // déjà sa taille, donc le résultat est en unités de carte quel que soit
+    // le zoom.
+    const local = g.worldToLocal(e.point.clone())
+    curseur.current.dessus = true
+    curseur.current.x = THREE.MathUtils.clamp(local.x / LARGE, -0.5, 0.5)
+    curseur.current.y = THREE.MathUtils.clamp(local.y / HAUT, -0.5, 0.5)
+  }
 
   // ELLE REJOINT SA PLACE, elle n'y saute pas. L'amortissement exponentiel est
   // indépendant de la fréquence d'écran : à 120 Hz comme à 60, le mouvement
@@ -454,8 +535,34 @@ ${nuanceur.fragmentShader}`
     // arriver, l'autre dit qu'on est en train de le faire.*
     const amp = engagee ? l.feu * 0.014 : 0
 
-    g.position.set(l.p.x + Math.sin(t * 37) * amp, l.p.y + Math.cos(t * 29) * amp, l.p.z)
-    g.rotation.set(l.r.x, l.r.y, l.r.z + (engagee ? Math.sin(t * 23) * l.feu * 0.018 : 0))
+    /**
+     * ELLE S'INCLINE SOUS LE CURSEUR, et le lustre le suit.
+     *
+     * L'inclinaison se pose PAR-DESSUS la rotation lissée, comme le
+     * frémissement se pose par-dessus la position : mêlée à elle, elle serait
+     * mangée par l'amortissement, qui la ramènerait vers la cible en croyant
+     * corriger un écart.
+     *
+     * Elle s'avance aussi d'un cheveu — *un objet qu'on regarde vient vers
+     * soi* — et c'est ce qui fait que l'inclinaison se lit comme du volume et
+     * non comme une image qui gondole.
+     */
+    const kReflet = 1 - Math.exp(-9 * delta)
+    const dessus = reflet && curseur.current.dessus
+    l.brille += ((dessus ? 1 : 0) - l.brille) * kReflet
+    l.vx += ((dessus ? curseur.current.x : 0) - l.vx) * kReflet
+    l.vy += ((dessus ? curseur.current.y : 0) - l.vy) * kReflet
+
+    g.position.set(
+      l.p.x + Math.sin(t * 37) * amp,
+      l.p.y + Math.cos(t * 29) * amp,
+      l.p.z + l.brille * AVANCEE_REFLET,
+    )
+    g.rotation.set(
+      l.r.x - l.vy * INCLINAISON_REFLET,
+      l.r.y + l.vx * INCLINAISON_REFLET,
+      l.r.z + (engagee ? Math.sin(t * 23) * l.feu * 0.018 : 0),
+    )
     g.scale.setScalar(l.t)
 
     // ET LE CONTOUR S'ALLUME. **Rien ne touche plus à la carte elle-même** :
@@ -484,8 +591,20 @@ ${nuanceur.fragmentShader}`
     // La désaturation suit le même amortissement : la carte s'éteint ET perd
     // ses couleurs d'un seul mouvement.
     const gris = (1 - l.vif) / (1 - 0.52)
-    const nuanceur = face.userData.nuanceur as { uniforms: { uGris: { value: number } } } | undefined
-    if (nuanceur !== undefined) nuanceur.uniforms.uGris.value = gris
+    const nuanceur = face.userData.nuanceur as
+      | { uniforms: Record<string, { value: number }> }
+      | undefined
+    if (nuanceur !== undefined) {
+      nuanceur.uniforms.uGris!.value = gris
+      // LA BANDE SE POSE SOUS LE CURSEUR, elle ne le fuit pas : la diagonale
+      // de la carte vaut `(u + v) / 2`, et le point visé y tombe exactement.
+      // *Un reflet qu'on ne peut pas promener n'est pas un reflet, c'est une
+      // animation.*
+      nuanceur.uniforms.uLustre!.value = 0.5 + (l.vx + l.vy) * 0.5
+      // Il RESPIRE à peine, sur l'horloge lente du liseré : c'est ce qui le
+      // fait lire comme de la lumière et non comme un aplat peint.
+      nuanceur.uniforms.uLustreForce!.value = l.brille * (0.22 + Math.sin(t * 3) * 0.04)
+    }
 
     // L'APPARITION : la carte s'allume, puis la lumière tombe et l'image
     // prend le dessus. Elle grandit d'un cheveu en même temps — sans ça,
@@ -532,8 +651,15 @@ ${nuanceur.fragmentShader}`
         geometry={GEOMETRIE_CORPS}
         material={laiton}
         onPointerDown={onPointerDown}
-        onPointerOver={onPointerOver}
-        onPointerOut={onPointerOut}
+        onPointerMove={reflet ? suivreLeCurseur : undefined}
+        onPointerOver={(e) => {
+          suivreLeCurseur(e)
+          onPointerOver?.(e)
+        }}
+        onPointerOut={(e) => {
+          curseur.current.dessus = false
+          onPointerOut?.(e)
+        }}
       >
         {/* LA FACE : la carte peinte, un cheveu devant le corps. Ses coins
             transparents laissent voir le laiton arrondi derrière. */}
