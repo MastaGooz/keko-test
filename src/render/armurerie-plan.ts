@@ -261,7 +261,34 @@ export function planArmurerie(
   // les symboles s'y inscrivent, et à bande trop haute ils grossissent avec
   // elle — un coeur de 70 px à côté d'un chiffre de 20 ne se lit plus comme
   // une mesure.
-  const hStats = Math.min(hPanneaux * 0.075, 0.4)
+  // ET ELLE A UN PLANCHER, PARCE QU'ELLE PORTE UN CHIFFRE QUI N'EN A PAS.
+  //
+  // Keko : « on avait agrandi le symbole des PA pour que les bords du cercle ne
+  // touchent pas le chiffre ; mais sur la page web du téléphone le cercle est
+  // toujours petit, alors qu'en app installée c'est la bonne taille ».
+  //
+  // *La cause n'est pas le téléphone, c'est la BARRE DU NAVIGATEUR* : elle
+  // mange une centaine de pixels, donc la bande — une fraction du champ
+  // visible — rétrécit avec elle. Le chiffre, lui, est en `rem`, et le `rem`
+  // est PLANCHONNÉ à 16 px par son `clamp` : il ne bouge plus. Mesuré en cadre :
+  // à 386 px de haut, disque 29,9 px pour un chiffre de 18 (rapport 1,66) ; à
+  // 296 px, disque 22,7 px pour le même 18 — le chiffre touche le cercle.
+  //
+  // **Une bande doit être au moins aussi haute que ce qu'elle contient**, et
+  // c'est ici que ça se règle, pas sur l'orbe : le corriger là-bas l'aurait
+  // fait déborder sur le titre du groupe d'en dessous. Ce que ça coûte est
+  // connu — quelques pixels de moins pour les cartes du chargement, sur les
+  // seuls écrans courts.
+  //
+  // 24,5 px : la hauteur qu'a la bande à 844 x 390, là où le rapport a été
+  // validé. Au-dessus de cette taille elle ne mord jamais ; en dessous, le
+  // `rem` est de toute façon bloqué à son plancher, donc la constante vaut
+  // dans tout son domaine.
+  const PLANCHER_STATS_PX = 24.5
+  const hStats = Math.max(
+    Math.min(hPanneaux * 0.075, 0.4),
+    PLANCHER_STATS_PX / pixelsParUnite(hauteurFenetrePx),
+  )
 
   const COLONNES_EQUIP = 3
   const RANGEES_EQUIP = 2

@@ -4204,6 +4204,32 @@ celui-là n'a aucune raison d'être l'exception parce qu'il vit dans un disque.
 Mesuré à 844 x 390 : disque 30 px, chiffre 18 px — exactement celui de ses
 voisins — et 3 px de marge avant le titre du groupe dessous.
 
+**ET LA BANDE A UN PLANCHER, parce qu'elle porte un chiffre qui n'en a pas.**
+Keko : « on avait agrandi le symbole des PA pour que les bords du cercle ne
+touchent pas le chiffre ; mais quand j'ouvre la page web sur tél le cercle est
+toujours petit, alors qu'en app installée c'est la bonne taille ».
+
+*La cause n'est pas le téléphone, c'est la BARRE DU NAVIGATEUR* : elle mange
+une centaine de pixels de hauteur, donc la bande — une fraction du champ
+visible — rétrécit avec elle. Le chiffre, lui, est en `rem`, et le `rem` est
+**plafonné par le bas** à 16 px par son `clamp` : il ne bouge plus. Mesuré en
+cadre : à 386 px de haut, disque 29,9 px pour un chiffre de 18 (rapport 1,66) ;
+à 296 px, disque 22,7 px pour le même 18 — le chiffre touche le cercle.
+
+**Deux grandeurs qui doivent garder leur rapport ne peuvent pas suivre deux
+règles différentes.** La bande se plancher donc à la hauteur qu'elle a à
+844 x 390, et tout le reste suit. *Ça se règle sur la BANDE, pas sur l'orbe* :
+grossir l'orbe seul le faisait déborder sur le titre du groupe d'en dessous —
+mesuré, −1,4 px à 296 et −3,7 px à 246. Prix connu et assumé : quelques pixels
+de moins pour les cartes du chargement, sur les seuls écrans courts.
+
+Mesuré après correction, à 390 / 300 / 250 px de haut : bande 24,5 px partout,
+rapport 1,66 partout, et 2,9 / 1,4 / 0,6 px avant le titre — zéro débordement.
+
+*L'app installée n'avait rien de spécial* : elle est simplement en plein écran,
+donc elle voyait déjà la bonne hauteur. **Un défaut qui n'apparaît qu'en onglet
+est un défaut de hauteur visible, pas de plateforme.**
+
 **CHAQUE STAT DIT SON NOM EN INFOBULLE** — « Points de vie », « Cartes dans le
 deck », « Taille de la main », « Points d'action » — au survol à la souris, à la tape au
 doigt. Demandé par Keko. *Un chiffre à côté d'un symbole se devine, il ne se
