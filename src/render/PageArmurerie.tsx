@@ -576,7 +576,26 @@ export function PageArmurerie({
            * redémarre pas sans un reflow forcé.*
            */
           e.currentTarget.animate(
-            [{ translate: '0 0' }, { translate: '0 2px', offset: 0.28 }, { translate: '0 0' }],
+            [
+              { translate: '0 0' },
+              {
+                translate: '0 2px',
+                // ET IL S'ALLUME EN MÊME TEMPS. Keko : « le bouton ne s'éclaire
+                // pas quand je le tape sur tél ». *Le fond de l'appui dépend du
+                // navigateur sur un écran tactile* — `:active` n'y est pas
+                // garanti — alors que l'animation, elle, part du clic. C'est
+                // donc elle qui porte la lumière, et le survol n'a plus à être
+                // le seul à savoir le faire.
+                borderColor: '#d8bb79',
+                backgroundColor: '#342c1c',
+                color: '#ffeec2',
+                offset: 0.28,
+              },
+              { translate: '0 0' },
+            ],
+            // LA COULEUR N'EST DONNÉE QU'AU MILIEU : les deux bouts la
+            // prennent de l'état courant, donc le bouton déjà allumé sous la
+            // souris ne s'éteint pas d'abord pour se rallumer.
             { duration: 190, easing: 'ease-out' },
           )
           onTrier?.()

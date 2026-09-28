@@ -4285,8 +4285,20 @@ lentement — le contraste de vitesse du bond des créatures et du gonflement de
 tas, *un aller-retour symétrique se lirait comme un rebond, pas comme une
 touche.* Par l'API d'animation et non par une classe, pour la raison habituelle :
 on peut ranger deux fois de suite, et *une classe qu'on retire et qu'on repose
-ne redémarre pas sans un reflow forcé.* Le fond de l'appui (`:active`) le
-double sans le gêner : *l'un tient le FOND, l'autre la PLACE.*
+ne redémarre pas sans un reflow forcé.*
+
+**ET C'EST L'ANIMATION QUI PORTE LA LUMIÈRE, pas l'appui.** Keko : « le bouton
+ne s'éclaire pas quand je le tape sur tél ». *Le fond de l'appui dépend du
+navigateur sur un écran tactile* — `:active` n'y est pas garanti — alors que
+l'animation, elle, part du clic. **La couleur n'est donnée qu'au keyframe du
+milieu** : les deux bouts la prennent de l'état courant, donc le bouton déjà
+allumé sous la souris ne s'éteint pas d'abord pour se rallumer.
+
+**Et ses angles sont adoucis, en POUR CENT et non en pixels** : le carré va de
+22 px sur un téléphone à 60 sur un écran de PC, et *un rayon fixe y dirait deux
+choses différentes* — franc en petit, presque droit en grand. Ça reste loin de
+la capsule : une arête adoucie est de la ferronnerie, un demi-cercle est un
+gabarit.
 
 **Sa zone sensible déborde son dessin** (un `::after` en débord). L'en-tête ne
 fait qu'une vingtaine de pixels sur un téléphone et *le doigt ne rétrécit pas

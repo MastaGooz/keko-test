@@ -5024,7 +5024,12 @@ body {
   justify-content: center;
   padding: 0;
   border: 1px solid #6b593655;
-  border-radius: 2px;
+  /* UN ANGLE ADOUCI, demande par Keko. En POUR CENT et non en pixels : le carre
+     va de 22 px sur un telephone a 60 sur un ecran de PC, et *un rayon fixe y
+     dirait deux choses differentes* -- franc en petit, presque droit en grand.
+     Ca reste loin de la capsule : une arete adoucie est de la ferronnerie, un
+     demi-cercle est un gabarit. */
+  border-radius: 16%;
   background: none;
   color: #8f8674;
   cursor: pointer;
