@@ -1452,8 +1452,8 @@ export function textureNombre(nombre: number): THREE.CanvasTexture {
     // contenant qui ne contient pas ment.* On mesure, et c'est la police qui
     // cède — la corde utile vaut un peu plus de trois quarts du diamètre
     // intérieur, ce qui garde « 13 » presque aussi gros qu'un chiffre seul.
-    const dedans = (rayon - filet) * 1.62
-    let police = rayon * 1.45
+    const dedans = (rayon - filet) * 1.7
+    let police = rayon * 1.62
     ctx.font = `700 ${police}px "Grenze Gotisch", Georgia, serif`
     const large = ctx.measureText(String(nombre)).width
     if (large > dedans) {

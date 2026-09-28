@@ -61,7 +61,7 @@ const EPAISSEUR = 0.012
  *
  * La valeur est le DIAMÈTRE du disque en part de carte.
  */
-const CHIFFRE_PILE = 0.26
+const CHIFFRE_PILE = 0.31
 /** À cheval sur le coin : ce qu'il en garde DANS la carte. */
 const DEDANS_PILE = 0.55
 

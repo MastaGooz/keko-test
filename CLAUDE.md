@@ -3996,9 +3996,15 @@ pouvait pas faire : *un fond opaque doit prendre la place de ce qu'il couvre.*
 Le « × » ne revient pas : seul, dans un coin, un chiffre ne peut être qu'un
 compte.
 
-**Le chiffre REMPLIT son disque** — 54 % du diamètre, contre 40 au premier
-essai. Keko : « on peut grossir le chiffre dans la bulle ? » *Une pastille qui
+**Le chiffre REMPLIT son disque, et le disque a grossi avec lui** — 60 % du
+diamètre contre 40 au premier essai, pour un disque passé de 0,26 à 0,31 carte.
+Keko, en deux fois : « on peut grossir le chiffre dans la bulle ? », puis « on
+peut grossir le chiffre encore un peu, et la bulle avec ? » *Une pastille qui
 garde de la marge tout autour se lit comme un point, pas comme un compte.*
+
+**Sa borne, c'est la GOUTTIÈRE de la grille** : le disque déborde du coin de
+0,135 carte pour un écart de 0,16 entre deux colonnes et 0,168 entre deux
+rangées — vérifié à deux rangées, il ne touche jamais la carte d'à côté.
 
 **Et il RENTRE, quel qu'il soit** : on mesure sa largeur et c'est la police qui
 cède — *un contenant qui ne contient pas ment*, et à deux chiffres il sortait du
