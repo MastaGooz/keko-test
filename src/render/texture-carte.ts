@@ -361,21 +361,10 @@ function caseDeCarte(
    * boîte.
    */
   assiette?: number,
-  /**
-   * LE FER OU LE LAITON — et ce n'est pas une coquetterie.
-   *
-   * La case de fer dit « cette pièce ajoute N cartes au deck » ; la même case
-   * en laiton dit « il y en a N exemplaires ». *Deux chiffres qui comptent des
-   * cartes méritent le même symbole, mais pas la même matière* — sans quoi une
-   * pièce empilée porterait deux fois le même objet pour deux faits
-   * différents. L'or est déjà la couleur de ce qu'on possède ici.
-   */
-  teinte: 'fer' | 'laiton' = 'fer',
 ): void {
   const h = l * 1.4
   const coin = l * 0.105
   const filet = Math.max(0.4, l * 0.058)
-  const laiton = teinte === 'laiton'
 
   ctx.save()
   ctx.shadowColor = '#0000008c'
@@ -383,21 +372,21 @@ function caseDeCarte(
   ctx.shadowOffsetY = l * 0.033
   ctx.beginPath()
   ctx.roundRect(x, y, l, h, coin)
-  const fond = ctx.createLinearGradient(x, y, x + l, y + h)
-  fond.addColorStop(0, laiton ? '#6d5423' : '#3b4148')
-  fond.addColorStop(1, laiton ? '#2c2210' : '#1b1f24')
-  ctx.fillStyle = fond
+  const fer = ctx.createLinearGradient(x, y, x + l, y + h)
+  fer.addColorStop(0, '#3b4148')
+  fer.addColorStop(1, '#1b1f24')
+  ctx.fillStyle = fer
   ctx.fill()
   ctx.restore()
 
   ctx.beginPath()
   ctx.roundRect(x + filet, y + filet, l - filet * 2, h - filet * 2, coin * 0.8)
-  ctx.strokeStyle = laiton ? '#d9b872' : '#8d9aa6'
+  ctx.strokeStyle = '#8d9aa6'
   ctx.lineWidth = filet * 0.78
   ctx.stroke()
 
   const police = l * 0.97
-  ctx.fillStyle = laiton ? '#fbf0d2' : '#e8eef4'
+  ctx.fillStyle = '#e8eef4'
   ctx.font = `600 ${police}px "Grenze Gotisch", Georgia, serif`
   ctx.textAlign = 'center'
   if (assiette === undefined) {
@@ -1375,40 +1364,40 @@ export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {
 }
 
 /**
- * COMBIEN D'EXEMPLAIRES — **un chiffre DANS un symbole**, plus une mention.
+ * COMBIEN D'EXEMPLAIRES — **le chiffre seul, cerné de noir, SUR LE COIN.**
  *
- * Il a été une bulle d'or pleine, puis du texte nu (« ×3 ») posé sur rien.
- * Keko a tranché la troisième forme : « sur téléphone les chiffres indiquant
- * le nombre de cartes dans la pile sont trop petits… on peut plutôt les
- * indiquer sans mettre le "×" devant, et afficher directement le chiffre dans
- * un symbole en bas à droite des cartes ? »
+ * Quatre formes ont précédé, et chacune a appris quelque chose : une bulle
+ * d'or pleine (« la bulle n'est pas élégante, elle casse avec le style épuré
+ * et stylisé »), « ×3 » en texte nu dans le coin haut-droit (« il faudrait
+ * mettre le nombre sous la carte, pas dedans »), le même sous la carte puis
+ * grossi d'un tiers (« sur téléphone c'est trop petit »), et une case de
+ * laiton en bas à droite — écartée à son tour : **« ça va masquer des éléments
+ * de la carte… la taille du chiffre est bien, mais je le voyais vraiment sur
+ * le COIN de la carte, et pas dans un symbole de carte ; essayons juste le
+ * chiffre avec un outline noir pour la visibilité ».**
  *
- * *Un chiffre nu se lit à la taille où il est écrit ; un chiffre sur une plaque
- * se lit à la taille de la plaque.* C'était le vrai problème sur un petit
- * écran — pas le corps du texte, mais l'absence de fond sous lui.
+ * *Ce qui manquait n'était ni la taille ni un fond, c'était un CERNE.* Un
+ * chiffre cerné se détache de n'importe quoi, donc il n'a plus besoin qu'on
+ * lui réserve une place — et posé sur le coin, moitié dedans moitié dehors, il
+ * ne recouvre plus rien. C'est le raisonnement du chiffre des jauges, qui
+ * déborde sa barre plutôt que d'être contenu par elle.
  *
- * Le symbole est **la case en forme de carte**, celle du compteur du coin :
- * une carte pour dire des cartes. En LAITON, parce qu'elle ne dit pas la même
- * chose que celle de fer — *ce qu'on possède, pas ce que ça ajoute au deck.*
- * Et le « × » tombe : dans une case, un chiffre ne peut plus être qu'un
+ * Le « × » ne revient pas : seul, dans un coin, un chiffre ne peut être qu'un
  * compte.
  */
 const BADGES = new Map<number, THREE.CanvasTexture>()
 
-/** La marge autour de la case, en part de la largeur : l'ombre y loge. */
-const MARGE_BADGE = 0.064
-/** Le rapport largeur/hauteur de la toile, donc du plan qui la porte. */
-export const RAPPORT_BADGE = 1 / (1.4 * (1 - 2 * MARGE_BADGE) + 2 * MARGE_BADGE)
+/** La part de la toile que le chiffre occupe : le reste est le jeu du cerne. */
+export const PART_CHIFFRE = 0.62
 
 export function textureNombre(nombre: number): THREE.CanvasTexture {
   const connue = BADGES.get(nombre)
   if (connue !== undefined) return connue
 
-  const l = 220
-  const h = Math.round(l / RAPPORT_BADGE)
+  const c = 256
   const canvas = document.createElement('canvas')
-  canvas.width = l
-  canvas.height = h
+  canvas.width = c
+  canvas.height = c
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   BADGES.set(nombre, texture)
@@ -1417,9 +1406,34 @@ export function textureNombre(nombre: number): THREE.CanvasTexture {
   if (ctx === null) return texture
 
   const peindre = (): void => {
-    ctx.clearRect(0, 0, l, h)
-    const m = l * MARGE_BADGE
-    caseDeCarte(ctx, m, m, l - m * 2, nombre, undefined, 'laiton')
+    ctx.clearRect(0, 0, c, c)
+    const police = c * PART_CHIFFRE
+    ctx.font = `700 ${police}px "Grenze Gotisch", Georgia, serif`
+    ctx.textAlign = 'center'
+    // LA LIGNE DE BASE, pas une boîte de ligne : `middle` se mesure sur la
+    // boîte de POLICE, jambages compris, et un chiffre n'en a pas.
+    ctx.textBaseline = 'alphabetic'
+    const y = c / 2 + police * MILIEU_CHIFFRE
+
+    // LE CERNE D'ABORD, LE CHIFFRE DESSUS. Un trait est centré sur le tracé,
+    // donc il en sort pour moitié — c'est exactement ce qu'on veut ici, et
+    // `round` évite les pointes que les jonctions d'un chiffre produiraient.
+    ctx.lineJoin = 'round'
+    ctx.miterLimit = 2
+    ctx.strokeStyle = '#000000'
+    ctx.lineWidth = police * 0.16
+    // Une ombre SOUS le cerne : elle le détache encore d'un fond sombre sans
+    // lui donner de bord — *ce qui porte un contour se lit comme un objet.*
+    ctx.shadowColor = '#000000c0'
+    ctx.shadowBlur = police * 0.12
+    ctx.strokeText(String(nombre), c / 2, y)
+    ctx.shadowBlur = 0
+
+    const or = ctx.createLinearGradient(0, c * 0.2, 0, c * 0.85)
+    or.addColorStop(0, '#f8e7b8')
+    or.addColorStop(1, '#c9a04e')
+    ctx.fillStyle = or
+    ctx.fillText(String(nombre), c / 2, y)
     texture.needsUpdate = true
   }
 

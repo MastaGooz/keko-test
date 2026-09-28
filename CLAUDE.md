@@ -3967,32 +3967,37 @@ propriété de l'objet, c'est une propriété de l'étagère* — il disparaît 
 la carte en sort. Il est enfant de la carte, donc il suit sa place amortie, sa taille et son
 inclinaison : *ce qui annote une carte bouge avec elle.*
 
-**ET C'EST UN CHIFFRE DANS UN SYMBOLE, EN BAS À DROITE.** Trois formes ont
-précédé, et chacune a été écartée pour une raison différente : une bulle d'or
-pleine (« la bulle n'est pas élégante, elle casse avec le style épuré »), puis
-« ×3 » en texte nu posé dans le coin haut-droit (« il faudrait mettre le nombre
-sous la carte, pas dedans »), puis le même texte sous la carte, grossi d'un
-tiers. Keko a tranché la quatrième : « sur téléphone les chiffres indiquant le
-nombre de cartes dans la pile sont trop petits… on peut plutôt les afficher
-directement dans un symbole en bas à droite des cartes, sans le "×" devant ? »
+**ET C'EST LE CHIFFRE SEUL, CERNÉ DE NOIR, À CHEVAL SUR LE COIN BAS-DROIT.**
+Quatre formes ont précédé, et chacune a appris quelque chose :
 
-*Un chiffre nu se lit à la taille où il est écrit ; un chiffre sur une plaque se
-lit à la taille de la plaque.* C'était le vrai défaut sur un petit écran, et pas
-le corps du texte : **une case du coffre ne fait que 46 px de large à 844 x 390,
-et 33 à 667 x 320** — tout y est minuscule, donc ce qui manquait était un fond,
-pas des points de police.
+1. une **bulle d'or pleine** sous la carte — « la bulle n'est pas élégante, elle
+   casse avec le style épuré et stylisé » ;
+2. **« ×3 » en texte nu dans le coin haut-droit** — « il faudrait mettre le
+   nombre sous la carte, pas dedans » ;
+3. le même **sous la carte**, puis grossi d'un tiers — « sur téléphone les
+   chiffres sont trop petits » ;
+4. une **case de laiton en bas à droite**, la case en forme de carte du
+   compteur du coin — « ça va masquer des éléments de la carte… la taille du
+   chiffre est bien, mais je le voyais vraiment sur le COIN de la carte, et pas
+   dans un symbole de carte ; essayons juste le chiffre avec un outline noir
+   pour la visibilité ».
 
-Le symbole est **la case en forme de carte**, celle du compteur du coin : une
-carte pour dire des cartes. Mais **en LAITON et non en fer**, parce qu'elle ne
-dit pas la même chose — *ce qu'on possède, pas ce que la pièce ajoute au deck* —
-et une pièce empilée porte les deux à la fois, à deux coins opposés. Le « × »
-tombe avec : dans une case, un chiffre ne peut plus être qu'un compte.
+*Ce qui manquait n'était ni la taille ni un fond, c'était un CERNE.* Un chiffre
+cerné se détache de n'importe quoi, donc **il n'a plus besoin qu'on lui réserve
+une place** : posé à cheval sur le coin, moitié dedans moitié dehors, il ne
+recouvre plus rien. C'est le raisonnement du chiffre des jauges, qui déborde sa
+barre plutôt que d'être contenu par elle — et c'est ce qu'une plaque, elle, ne
+pouvait pas faire : *un fond opaque doit prendre la place de ce qu'il couvre.*
 
-**ET SA TAILLE N'EST PAS LA MÊME PARTOUT** (`pileTaille`) : 0,30 carte au
-coffre, 0,17 dans le zoom. *Un symbole ne se règle pas à la taille où on le
+Le « × » ne revient pas : seul, dans un coin, un chiffre ne peut être qu'un
+compte.
+
+**ET SON CORPS N'EST PAS LE MÊME PARTOUT** (`pileTaille`) : 0,25 carte au
+coffre, 0,15 dans le zoom. *Un symbole ne se règle pas à la taille où on le
 dessine, mais à celle où on le regarde* — la règle du médaillon du dos, plus
-grand sur un tas que sur une carte. À 0,30 dans le zoom il recouvrait la ligne
-d'effet qu'on est justement venu lire.
+grand sur un tas que sur une carte. **Une case du coffre ne fait que 46 px de
+large à 844 x 390, et 33 à 667 x 320** : tout y est minuscule, alors que dans le
+zoom la carte en fait quatre fois plus.
 
 **Le zoom porte le même badge** (demandé par Keko : « on fait pareil pour les
 chiffres qui indiquent le nombre de cartes de chaque exemplaire quand on

@@ -28,7 +28,7 @@ import { geometrieDOnde, matiereDOnde, poserLOnde, poussiereDOnde } from './onde
 import type { CarteAPeindre } from './texture-carte.ts'
 import {
   DEBORD_CONTOUR,
-  RAPPORT_BADGE,
+  PART_CHIFFRE,
   textureNombre,
   signature,
   textureContour,
@@ -46,23 +46,29 @@ export const HAUT = 1.4
 const EPAISSEUR = 0.012
 
 /**
- * LE NOMBRE D'EXEMPLAIRES, dans sa case de laiton, EN BAS À DROITE.
+ * LE NOMBRE D'EXEMPLAIRES : le chiffre seul, cerné de noir, **SUR LE COIN**.
  *
- * Keko : « sur téléphone les chiffres indiquant le nombre de cartes dans la
- * pile sont trop petits… on peut plutôt les afficher directement dans un
- * symbole en bas à droite des cartes, sans le "×" ? »
+ * Keko, après une case de laiton essayée au même endroit : « ça va masquer des
+ * éléments de la carte… la taille du chiffre est bien, mais je le voyais
+ * vraiment sur le coin de la carte, et pas dans un symbole de carte ; essayons
+ * juste le chiffre avec un outline noir pour la visibilité ».
  *
- * *Un chiffre nu se lit à la taille où il est écrit ; un chiffre sur une
- * plaque se lit à la taille de la plaque* — c'était le vrai défaut sur un
- * petit écran, pas le corps du texte. Il a été une bulle d'or, puis du texte
- * nu sous la carte ; il revient DANS la carte parce qu'il y a maintenant un
- * fond pour le porter.
+ * *Un chiffre cerné n'a pas besoin qu'on lui réserve une place* : il se
+ * détache de n'importe quoi, donc il peut se poser à cheval sur le coin —
+ * moitié dedans, moitié dehors — et ne recouvre plus rien. C'est le
+ * raisonnement du chiffre des jauges, qui déborde sa barre plutôt que d'être
+ * contenu par elle.
  *
  * Il reste posé EN PLUS de la texture, jamais peint dedans : *le nombre n'est
  * pas une propriété de l'objet, c'est une propriété de l'étagère* — une Potion
  * empilée et une Potion équipée partagent leur dessin.
+ *
+ * La valeur est le CORPS du chiffre en part de carte ; la toile qui le porte
+ * est plus large d'autant que le cerne a besoin de jeu.
  */
-const MENTION_L = 0.3
+const CHIFFRE_PILE = 0.25
+/** À cheval sur le coin : ce qu'il en garde DANS la carte. */
+const DEDANS_PILE = 0.55
 
 /** Le rayon des coins : 3 % de la largeur, comme le `border-radius` du gabarit. */
 export const RAYON_COIN = 0.03
@@ -353,14 +359,14 @@ type Props = {
    */
   pile?: number
   /**
-   * SA LARGEUR, en part de la carte — **et elle n'est pas la même partout.**
+   * LE CORPS DU CHIFFRE, en part de la carte — **et il n'est pas le même
+   * partout.**
    *
    * *Un symbole ne se règle pas à la taille où on le dessine, mais à celle où
    * on le regarde* : la règle est déjà écrite pour le médaillon du dos, plus
    * grand sur un tas que sur une carte. Une case du coffre ne fait que 46 px
-   * de large sur un téléphone, donc le badge doit y prendre beaucoup de
-   * place ; dans le zoom la carte en fait quatre fois plus, et la même
-   * fraction couvrirait la ligne d'effet qu'on est venu lire.
+   * de large sur un téléphone, donc le chiffre doit y prendre beaucoup de
+   * place ; dans le zoom la carte en fait quatre fois plus.
    */
   pileTaille?: number
   /**
@@ -399,7 +405,7 @@ export function Carte3D({
   onArrivee,
   inerte = false,
   pile,
-  pileTaille = MENTION_L,
+  pileTaille = CHIFFRE_PILE,
   curseurPartage,
   onPeinte,
   onPointerDown,
@@ -1014,25 +1020,26 @@ ${nuanceur.fragmentShader}`
         frustumCulled={false}
       />
 
-      {/* LE NOMBRE D'EXEMPLAIRES, dans sa case de laiton. Il est enfant de la
-          carte, donc il suit sa place amortie, sa taille et son inclinaison :
-          *ce qui annote une carte bouge avec elle.* */}
+      {/* LE NOMBRE D'EXEMPLAIRES, À CHEVAL SUR LE COIN BAS-DROIT. Il est
+          enfant de la carte, donc il suit sa place amortie, sa taille et son
+          inclinaison : *ce qui annote une carte bouge avec elle.* */}
       {pile !== undefined && pile > 0 && (
         <mesh
           position={[
-            LARGE / 2 - 0.05 - pileTaille / 2,
-            -HAUT / 2 + 0.048 + pileTaille / RAPPORT_BADGE / 2,
+            LARGE / 2 - pileTaille * (DEDANS_PILE - 0.5),
+            -HAUT / 2 + pileTaille * (DEDANS_PILE - 0.5),
             EPAISSEUR / 2 + 0.003,
           ]}
           raycast={() => null}
         >
-          <planeGeometry args={[pileTaille, pileTaille / RAPPORT_BADGE]} />
+          {/* La toile est plus large que le corps du chiffre : le cerne et son
+              ombre y logent. */}
+          <planeGeometry args={[pileTaille / PART_CHIFFRE, pileTaille / PART_CHIFFRE]} />
           <meshBasicMaterial
             map={textureNombre(pile)}
             transparent
-            // ELLE N'ÉCRIT PAS DE PROFONDEUR : le chiffre est plus grand que
-            // la gouttière de la grille, donc son plan mord d'un cheveu sur la
-            // rangée du dessous — *ce qui est transparent ne doit rien cacher.*
+            // IL N'ÉCRIT PAS DE PROFONDEUR : son plan déborde de la carte, et
+            // *ce qui est transparent ne doit rien cacher.*
             depthWrite={false}
             toneMapped={false}
           />

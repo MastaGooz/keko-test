@@ -267,8 +267,8 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                 // une place qu'elle peut quitter : il la suit sous la loupe.
                 pile={entree.nombre}
                 // Plus petit qu'au coffre : ici la carte est quatre fois plus
-                // grande, et c'est la ligne d'effet qu'on est venu lire.
-                pileTaille={0.17}
+                // grande, et un chiffre à la même fraction y crierait.
+                pileTaille={0.15}
                 onPeinte={onPeinte}
                 onPointerOver={(e) => {
                   // LE SURVOL N'EXISTE QU'À LA SOURIS : au doigt le
