@@ -4325,11 +4325,25 @@ clé de cache du programme a changé avec lui — *three ignore ce que
 `onBeforeCompile` a injecté*, la leçon des cartes blanches ou noires.
 
 **ET UNE AURÉOLE CHROMATIQUE ANIMÉE FAIT LE TOUR DE LA CARTE.** Demandée par
-Keko. C'est **la même texture de contour que le halo ordinaire**, donc la même
-silhouette et le même flou : elle épouse la carte au lieu de l'entourer d'un
-rond. Ce qui change est la couleur, qui **tourne avec l'angle autour du
-centre** — *un arc-en-ciel qui fait le tour d'un objet se lit comme une
-irisation, un arc-en-ciel qui le traverse se lit comme un drapeau.*
+Keko. Elle garde **la silhouette de la carte** au lieu de l'entourer d'un rond,
+et sa couleur **tourne avec l'angle autour du centre** — *un arc-en-ciel qui
+fait le tour d'un objet se lit comme une irisation, un arc-en-ciel qui le
+traverse se lit comme un drapeau.*
+
+**MAIS ELLE A SA PROPRE TEXTURE, SANS ARÊTE** (`textureAureole`). Elle a
+d'abord repris celle du contour, et Keko : « c'est pas terrible, je voyais un
+truc plus lumière, ça la fait outline ». *Ce qui faisait l'outline était le
+liseré net* — la dernière passe du contour, celle qui lui donne son arête
+franche. Elle est indispensable pour dire « cette carte est engagée », qui est
+un ÉTAT et veut un bord ; elle est exactement ce qu'il ne faut pas pour dire
+« cette carte rayonne ».
+
+**Une lumière n'a pas de bord, elle a une décroissance.** L'auréole n'a donc
+que le flou, en trois portées empilées, sur un débord deux fois et demie plus
+large — *une seule passe donne un bord de brume, c'est l'empilement qui fait la
+décroissance.* Et l'alpha y retombe à 5/255 au bord du plan, mesuré sur le
+profil de la texture : **une lueur qui se termine par une arête n'est pas une
+lueur**, et c'est la règle déjà payée sur le halo ordinaire.
 
 Elle est **le seul effet du jeu dont le TEMPS soit le moteur**, et c'est
 assumé : une pièce légendaire posée dans un coffre ne bouge pas, donc rien

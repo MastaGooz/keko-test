@@ -1747,6 +1747,65 @@ export function textureContour(): THREE.CanvasTexture {
 }
 
 /**
+ * LA LUEUR DE L'AURÉOLE : **la même silhouette, mais SANS ARÊTE.**
+ *
+ * Keko, sur la première auréole qui reprenait le contour ordinaire : « c'est
+ * pas terrible, je voyais un truc plus lumière, ça la fait outline ». *Ce qui
+ * faisait l'outline était le liseré net* — la dernière passe du contour, celle
+ * qui lui donne son arête franche. Elle est indispensable pour dire « cette
+ * carte est engagée », qui est un ÉTAT et veut un bord ; elle est exactement ce
+ * qu'il ne faut pas pour dire « cette carte rayonne ».
+ *
+ * **Une lumière n'a pas de bord, elle a une décroissance.** Cette texture n'a
+ * donc que le flou, en passes longues, sur un débord bien plus large — et
+ * l'alpha y retombe à zéro avant le bord du plan, sinon on verrait le rectangle
+ * qui la délimite.
+ */
+let aureole: THREE.CanvasTexture | null = null
+
+/** Le débord de l'auréole : deux fois et demie celui du contour. */
+export const DEBORD_AUREOLE = 0.34
+
+export function textureAureole(): THREE.CanvasTexture {
+  if (aureole !== null) return aureole
+
+  const l = 512
+  const debord = Math.round(l * DEBORD_AUREOLE)
+  const h = Math.round(l * 1.4)
+  const canvas = document.createElement('canvas')
+  canvas.width = l + debord * 2
+  canvas.height = h + debord * 2
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) {
+    aureole = new THREE.CanvasTexture(canvas)
+    return aureole
+  }
+
+  ctx.fillStyle = '#ffffff'
+  ctx.shadowColor = 'rgba(255, 255, 255, 0.72)'
+  const coin = l * 0.03
+  const rect = (x: number, y: number, lg: number, ht: number): void => {
+    ctx.beginPath()
+    ctx.roundRect(x, y, lg, ht, coin)
+    ctx.fill()
+  }
+  // TROIS PORTÉES, de la plus longue à la plus courte : c'est l'empilement qui
+  // fait une décroissance douce là où une seule passe donne un bord de brume.
+  // La portée utile d'un flou vaut à peu près la MOITIÉ de son rayon, donc le
+  // plus long reste sous le double du débord — *une lueur qui se termine par
+  // une arête n'est pas une lueur.*
+  for (const rayon of [debord * 1.05, debord * 0.6, debord * 0.3]) {
+    ctx.shadowBlur = rayon
+    rect(debord, debord, l, h)
+  }
+  // ET PAS DE LISERÉ. C'est toute la différence avec le contour.
+
+  aureole = new THREE.CanvasTexture(canvas)
+  aureole.colorSpace = THREE.SRGBColorSpace
+  return aureole
+}
+
+/**
  * UN SLOT QUI ACCUEILLE : SON PROPRE POINTILLÉ, EN VIF.
  *
  * Il a d'abord été le contour lumineux des cartes, teinté en bleu et posé

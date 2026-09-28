@@ -27,11 +27,13 @@ import { hauteurVisibleA } from './Cadrage.tsx'
 import { geometrieDOnde, matiereDOnde, poserLOnde, poussiereDOnde } from './onde.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
 import {
+  DEBORD_AUREOLE,
   DEBORD_CONTOUR,
   METAL_3D,
   PART_DISQUE,
   textureNombre,
   signature,
+  textureAureole,
   textureContour,
   textureDeCarte,
   textureDuDos,
@@ -641,7 +643,7 @@ ${nuanceur.fragmentShader}`
      */
     const aureole = new THREE.ShaderMaterial({
       uniforms: {
-        uTexte: { value: textureContour() },
+        uTexte: { value: textureAureole() },
         uTemps: { value: 0 },
         uForce: { value: 0 },
       },
@@ -1095,7 +1097,7 @@ ${nuanceur.fragmentShader}`
     if (carte.rarete === 'legendaire') {
       aureole.uniforms.uTemps!.value = t
       aureole.uniforms.uForce!.value =
-        l.vif * (0.5 + Math.sin(t * 1.7) * 0.09 + Math.sin(t * 2.6) * 0.05)
+        l.vif * (1.05 + Math.sin(t * 1.7) * 0.16 + Math.sin(t * 2.6) * 0.09)
     }
 
     // L'APPARITION : la carte s'allume, puis la lumière tombe et l'image
@@ -1140,7 +1142,7 @@ ${nuanceur.fragmentShader}`
           doit lire en premier — *un état du jeu passe devant une parure.* */}
       {carte.rarete === 'legendaire' && (
         <mesh position={[0, 0, -EPAISSEUR * 1.2]} material={aureole} raycast={() => null}>
-          <planeGeometry args={[LARGE + DEBORD_CONTOUR * 2, HAUT + DEBORD_CONTOUR * 2]} />
+          <planeGeometry args={[LARGE + DEBORD_AUREOLE * 2, HAUT + DEBORD_AUREOLE * 2]} />
         </mesh>
       )}
 
