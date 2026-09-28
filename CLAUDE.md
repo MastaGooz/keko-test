@@ -3238,10 +3238,14 @@ Quatre choses qui portent le bloc, et aucune n'est un réglage d'humeur :
   son nom** (0,62 contre 0,26). C'est la seule chose qui dise où un couple
   s'arrête, puisqu'il n'y a ni puce ni séparateur — *un groupe se lit par ses
   blancs.* Chaque rang se centre, comme le cartouche qu'il remplace ;
-- **LE BLOC PEND SOUS LE NOM, il ne se centre plus dans la bande.** Centré, à
-  trois lignes il finissait plus près du pied que du titre — Keko. Il part donc
-  du même trait que le cartouche ordinaire (`0,752`) et descend : *ce qui suit
-  un titre commence sous le titre* ;
+- **LE BLOC PEND SOUS LE NOM, il ne se centre plus dans la bande** : *ce qui
+  suit un titre commence sous le titre.* **Mais ses BORNES ont dû être
+  équilibrées** : à trois lignes il touchait presque le pied pendant qu'il
+  restait du vide sous le titre — Keko : « les trois lignes de description sont
+  mal centrées verticalement, plus proches du bas que du haut ». Le trait sous
+  le nom tombe à 0,72 et le pied commence à 0,94 : la bande va donc de 0,741 à
+  0,919, le même air des deux côtés. *Ce n'était pas le centrage qui était faux,
+  c'étaient les bornes* ;
 - **la taille CÈDE jusqu'à ce que tout tienne**, en hauteur comme en largeur.
   Même garde-fou que `replier` : *un canvas écrit tout droit et laisse déborder
   sans rien signaler* — et on ne peut pas couper un nom de carte en deux, donc
@@ -3287,10 +3291,39 @@ vingt-trois caractères : rien ne sort de la carte, et le couple ne se sépare
 jamais.
 
 **Une pièce zoomée montre son set EN CARTES**, avec sa pastille d'or SOUS
-chaque carte (`texturePastille`) — sur le coin elle cachait la gemme. Prévu
-pour huit modèles : quatre par ligne, deux lignes, et la taille d'une carte du
-set bornée trois fois — plafond, hauteur (deux lignes plus leurs pastilles),
-largeur (quatre à côté de la pièce). Vérifié à 844x390 et 667x320.
+chaque carte (`texturePastille`) — sur le coin elle cachait la gemme. Quatre
+par ligne, deux lignes au plus.
+
+**LA TAILLE D'UNE CARTE DU SET NE DÉPEND PAS DE LEUR NOMBRE, et une LOUPE rend
+la lisibilité.** Keko, en découvrant le banc d'essai à huit modèles : « on peut
+afficher systématiquement la taille qu'on voit actuellement sur l'Espadon, mais
+quand le joueur maintient son doigt ou survole, on grossit la carte ? »
+
+*Ça règle les deux problèmes d'un coup.* La taille se calcule pour la grille
+PLEINE — quatre colonnes, deux lignes — même quand la pièce n'apporte que trois
+modèles : **une page qui montre le même objet ne le montre pas à deux échelles
+selon ce qu'il y a à côté**, et une pièce riche se lit donc comme une pièce
+pauvre. La lisibilité, elle, vient à la demande : **au survol à la souris, au
+MAINTIEN au doigt** (160 ms, le seuil de la prise en main — *un appui long veut
+dire la même chose partout dans ce jeu*).
+
+Trois choses à ne pas défaire :
+
+- **elle grossit sur place, mais bornée à l'écran** : une carte agrandie qu'on
+  ne voit qu'à moitié n'a pas été agrandie. Même borne que la carte qui attend
+  sa cible en combat ;
+- **un appui long a servi à REGARDER : le relâcher repose la carte, il ne
+  referme pas le zoom.** Une tape, elle, garde son sens d'avant ;
+- **la pastille disparaît sous la loupe** : elle annote une place que la carte
+  vient de quitter.
+
+*Ce qui a mené là* : la vitrine ne peut pas déborder — la taille est bornée par
+la hauteur et par la largeur, donc elle rapetisse — mais à huit modèles sur un
+téléphone couché, une carte du set tombait à 44 px de large pour une pièce de
+346. **Le débordement n'était pas le problème, la lisibilité l'était**, et ça ne
+se juge pas sur une capture : d'où le banc d'essai `?r3f&set=8`, qui donne ses
+modèles à l'Espadon plutôt que d'inventer une pièce — *l'art se cherche par nom
+de modèle, et un banc d'essai qui montre des cartes cassées ne se juge pas.*
 
 **LA PIÈCE TENUE NE CHANGE JAMAIS D'INSTANCE.** Elle a d'abord été DÉMONTÉE de
 la grille le temps du geste, une seconde carte suivant le doigt à côté — et au

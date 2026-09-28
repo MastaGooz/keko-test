@@ -736,8 +736,16 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
    */
   if (carte.composition !== undefined && carte.composition.length > 0) {
     const compo = carte.composition
-    const haut = HAUT * 0.752
-    const bas = HAUT * 0.935
+    // LA BANDE EST ÉQUILIBRÉE ENTRE SES DEUX VOISINS : le trait sous le nom
+    // tombe à 0,72 et le pied commence à 0,94, donc elle laisse le même air
+    // en haut et en bas. Elle descendait trop — à trois lignes le bloc
+    // touchait presque le type pendant qu'il restait du vide sous le titre.
+    // Keko : « les trois lignes de description sont mal centrées
+    // verticalement, plus proches du bas que du haut ». *Un bloc qui PEND doit
+    // pendre d'un crochet bien placé* : ce n'était pas le centrage qui était
+    // faux, c'étaient les bornes.
+    const haut = HAUT * 0.741
+    const bas = HAUT * 0.919
     const large = LARGE * 0.88
 
     /** Range les entrées au fil de l'eau, à cette taille de ligne. */

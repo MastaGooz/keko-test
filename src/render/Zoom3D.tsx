@@ -24,6 +24,7 @@
  * **intercepte les rayons**, tout ce qu'il recouvre devient insensible au
  * doigt sans qu'on ait à désactiver quoi que ce soit.
  */
+import { useEffect, useRef, useState } from 'react'
 import { useThree } from '@react-three/fiber'
 import { Carte3D } from './Carte3D.tsx'
 import { zCamera, hauteurVisibleA } from './Cadrage.tsx'
@@ -55,6 +56,17 @@ const RECUL_VOILE = 3
 export type Entree = { carte: CarteAPeindre; nombre: number }
 
 const COLONNES_SET = 4
+/** Et sur combien de lignes au plus : c'est ce qui borne la taille d'une carte. */
+const LIGNES_SET = 2
+
+/**
+ * Ce qu'il faut maintenir le doigt pour qu'une carte du set grossisse.
+ *
+ * Le même seuil que la prise en main d'une carte : *un appui long veut dire la
+ * même chose partout dans ce jeu.* À la souris, le survol suffit — il n'y a
+ * rien à distinguer.
+ */
+const DELAI_LOUPE = 160
 
 type Props = {
   carte: CarteAPeindre | null
@@ -65,6 +77,63 @@ type Props = {
 
 export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Element | null {
   const { size } = useThree()
+
+  /**
+   * LA CARTE DU SET QU'ON REGARDE DE PLUS PRÈS.
+   *
+   * Demandé par Keko : « on peut afficher systématiquement la taille qu'on voit
+   * actuellement sur l'Espadon, mais quand le joueur maintient son doigt ou
+   * survole, on grossit la carte ? »
+   *
+   * *Ça règle les deux problèmes d'un coup* : la grille garde une taille fixe,
+   * donc la mise en page ne dépend plus du nombre de modèles — une pièce à
+   * trois cartes et une pièce à huit se lisent au même format — et la
+   * lisibilité, qui manquait à cette taille, revient à la demande.
+   */
+  const [loupe, setLoupe] = useState<string | null>(null)
+  const appui = useRef<{ minuteur: number; ouverte: boolean; couper: AbortController } | null>(null)
+
+  // Elle ne survit pas au changement de carte zoomée : on regarde autre chose.
+  const idZoome = carte?.id ?? null
+  useEffect(() => setLoupe(null), [idZoome])
+  useEffect(
+    () => () => {
+      if (appui.current !== null) {
+        window.clearTimeout(appui.current.minuteur)
+        appui.current.couper.abort()
+      }
+    },
+    [],
+  )
+
+  /**
+   * AU DOIGT, C'EST LE MAINTIEN QUI GROSSIT — et la tape ferme, comme avant.
+   *
+   * Les écouteurs se retirent par SIGNAL et non par référence : c'est la règle
+   * du projet, et elle vaut d'autant plus ici que ce gestionnaire est recréé à
+   * chaque rendu.
+   */
+  const maintenir = (id: string): void => {
+    const couper = new AbortController()
+    const etat = { minuteur: 0, ouverte: false, couper }
+    etat.minuteur = window.setTimeout(() => {
+      etat.ouverte = true
+      setLoupe(id)
+    }, DELAI_LOUPE)
+    appui.current = etat
+    const fin = (): void => {
+      window.clearTimeout(etat.minuteur)
+      couper.abort()
+      appui.current = null
+      // Un appui long a servi à REGARDER : le relâcher repose la carte, il ne
+      // referme pas le zoom. Une tape, elle, garde son sens d'avant.
+      if (etat.ouverte) setLoupe(null)
+      else onFermer?.()
+    }
+    window.addEventListener('pointerup', fin, { signal: couper.signal })
+    window.addEventListener('pointercancel', fin, { signal: couper.signal })
+  }
+
   if (carte === null) return null
   const zCarte = zCamera(size.height) - RECUL_ZOOM
   const zVoile = zCamera(size.height) - RECUL_VOILE
@@ -81,13 +150,22 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
   // qu'on regarde, le set n'est que ce qu'elle apporte.
   const piece = seule ? H * 0.72 / 1.4 : Math.min((H * 0.8) / 1.4, L * 0.26)
   const largeurSet = L - 3 * marge - piece
-  // Trois bornes : le plafond, la hauteur (deux lignes + leurs pastilles),
-  // la largeur (quatre côte à côte).
+  /**
+   * LA TAILLE D'UNE CARTE DU SET NE DÉPEND PAS DE LEUR NOMBRE.
+   *
+   * Elle se calcule pour la grille PLEINE — quatre colonnes, deux lignes —
+   * même quand la pièce n'apporte que trois modèles. *Une page qui montre le
+   * même objet ne le montre pas à deux échelles selon ce qu'il y a à côté*, et
+   * c'est ce qui fait qu'une pièce riche et une pièce pauvre se lisent pareil.
+   * La lisibilité, elle, vient de la loupe.
+   */
   const uneCarte = Math.min(
     piece * 0.62,
-    (H * 0.88) / (lignes * 1.82),
-    largeurSet / (colonnes * 1.1),
+    (H * 0.88) / (LIGNES_SET * 1.82),
+    largeurSet / (COLONNES_SET * 1.1),
   )
+  /** Ce qu'une carte du set devient quand on la regarde de plus près. */
+  const tailleLoupe = Math.min(piece * 0.95, (H * 0.66) / 1.4)
   /**
    * LE COUPLE SE CENTRE, PAS LA PIÈCE SEULE.
    *
@@ -141,20 +219,46 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           const parLigne = Math.min(colonnes, set.length - ligne * colonnes)
           const x = xSet + (colonne - (parLigne - 1) / 2) * pasX
           const y = ((lignes - 1) / 2 - ligne) * pasY
+          const grossie = loupe === entree.carte.id
+          const t = grossie ? tailleLoupe : uneCarte
+          // ELLE GROSSIT SUR PLACE, mais ne sort pas de l'écran : bornée comme
+          // la carte qui attend sa cible en combat. *Une carte agrandie qu'on
+          // ne voit qu'à moitié n'a pas été agrandie.*
+          const demiL = t / 2
+          const demiH = (t * 1.4) / 2
+          const xCarte = grossie
+            ? Math.min(Math.max(x, -L / 2 + demiL + marge), L / 2 - demiL - marge)
+            : x
+          const yCarte = grossie
+            ? Math.min(Math.max(y, -H / 2 + demiH), H / 2 - demiH)
+            : y + uneCarte * 0.16
           return (
             <group key={entree.carte.id}>
               <Carte3D
                 carte={entree.carte}
-                position={[x, y + uneCarte * 0.16, zCarte]}
+                position={[xCarte, yCarte, zCarte + (grossie ? 0.35 : 0)]}
                 rotation={[0, 0, 0]}
-                taille={uneCarte}
+                taille={t}
                 ombre={false}
                 ressort={14}
                 reflet
                 onPeinte={onPeinte}
+                onPointerOver={(e) => {
+                  // LE SURVOL N'EXISTE QU'À LA SOURIS : au doigt le
+                  // `pointerout` n'arrive jamais, la carte resterait grosse.
+                  if (e.pointerType === 'mouse') setLoupe(entree.carte.id)
+                }}
+                onPointerOut={(e) => {
+                  if (e.pointerType === 'mouse')
+                    setLoupe((l) => (l === entree.carte.id ? null : l))
+                }}
                 onPointerDown={(e) => {
                   e.stopPropagation()
-                  onFermer?.()
+                  if (e.pointerType === 'mouse') {
+                    onFermer?.()
+                    return
+                  }
+                  maintenir(entree.carte.id)
                 }}
               />
               {/* LA MENTION PASSE SOUS LE BAS DE LA CARTE, et ne le mord
@@ -162,14 +266,18 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                   vers le haut), or la bulle commençait à `-0,49`. *Une mention
                   qui chevauche ce qu'elle annote se lit comme un badge collé
                   dessus.* */}
-              <mesh position={[x, y - uneCarte * 0.68, zCarte + 0.02]}>
-                <planeGeometry args={[uneCarte * 0.42, uneCarte * 0.21]} />
-                <meshBasicMaterial
-                  map={texturePastille(entree.nombre)}
-                  transparent
-                  toneMapped={false}
-                />
-              </mesh>
+              {/* Elle disparaît sous la loupe : elle annote une place que la
+                  carte vient de quitter. */}
+              {!grossie && (
+                <mesh position={[x, y - uneCarte * 0.68, zCarte + 0.02]}>
+                  <planeGeometry args={[uneCarte * 0.42, uneCarte * 0.21]} />
+                  <meshBasicMaterial
+                    map={texturePastille(entree.nombre)}
+                    transparent
+                    toneMapped={false}
+                  />
+                </mesh>
+              )}
             </group>
           )
         })}
