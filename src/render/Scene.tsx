@@ -1113,10 +1113,21 @@ export function Scene(): React.JSX.Element {
 
   const bougerPiece = useCallback((source: Slot, cible: Slot, id: string) => {
     setHub((h) => deplacerPiece(h, source, cible, id))
-    // Reposer au coffre n'est pas équiper. Un dépôt refusé ne change pas le
-    // hub, donc aucune stat ne bouge et l'effet ne trouve rien à jouer.
-    if (cible.ou !== 'reserve') setEquipements((n) => n + 1)
   }, [])
+
+  /**
+   * UN GARDE-FOU : une pose qui ne se pose jamais ne peut pas figer l'écran.
+   *
+   * La carte annonce son arrivée sans faute, mais si elle était démontée en
+   * plein vol, `fixations` ne rattraperait jamais `equipements` et la bande
+   * garderait ses anciens chiffres. *Un affichage qui attend un message doit
+   * savoir se rendre s'il ne vient pas.*
+   */
+  useEffect(() => {
+    if (fixations >= equipements) return
+    const minuteur = window.setTimeout(() => setFixations(equipements), 1600)
+    return () => window.clearTimeout(minuteur)
+  }, [equipements, fixations])
 
   /** Ranger le coffre : deux objets changent de place, rien d'autre ne bouge. */
   const rangerCoffre = useCallback(
@@ -1497,6 +1508,7 @@ export function Scene(): React.JSX.Element {
               setZoomSet([])
             }}
             onDescendre={descendreAuDonjon}
+            onPoseCommence={() => setEquipements((n) => n + 1)}
             onEquipee={() => setFixations((n) => n + 1)}
             onSaisie={setSaisie}
             sousLeZoom={zoomee !== null}

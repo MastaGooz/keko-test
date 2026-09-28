@@ -178,6 +178,13 @@ type Props = {
    * est la seule à le connaître.
    */
   onEquipee?: () => void
+  /**
+   * Une pièce vient d'être lâchée dans un slot, et le dépôt est ACCEPTÉ.
+   *
+   * *Un dépôt refusé ne compte pas* : sans ça, l'écran attendrait une arrivée
+   * qui ne viendrait jamais, et les chiffres resteraient figés.
+   */
+  onPoseCommence?: () => void
   onSaisie?: (tenue: boolean) => void
   /**
    * UNE CARTE EST REGARDÉE DE PRÈS, donc l'armurerie est sous le voile du
@@ -200,6 +207,7 @@ export function Armurerie3D({
   onRegarderTresor,
   onDescendre,
   onEquipee,
+  onPoseCommence,
   onSaisie,
   sousLeZoom = false,
   onPeinte,
@@ -500,6 +508,7 @@ export function Armurerie3D({
         // dès que la carte commence à tourner avant de se fixer » — et elle
         // tourne dès la première image, elle n'attend pas d'être montée.
         jouerSon(SON_TOURNER)
+        onPoseCommence?.()
         setCulbute((c) => ({ id: piece, n: (c?.n ?? 0) + 1 }))
       }
       onDeplacer?.(t.slot, cible, t.objet.id)

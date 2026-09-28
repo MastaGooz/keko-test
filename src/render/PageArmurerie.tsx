@@ -219,63 +219,49 @@ export function PageArmurerie({
    * que le combat évite déjà en faisant monter l'armure à l'impact et non à la
    * tape.
    *
-   * C'est un ÉTAT et non une ref : il change ce qui est à l'écran.
-   */
-  const [figees, setFigees] = useState<number[] | null>(null)
-
-  // AU LÂCHER, ON FIGE : l'état du jeu a déjà changé à cet instant, donc c'est
-  // la dernière occasion de savoir ce qu'il y avait avant. Cet effet est
-  // déclaré AVANT celui qui retient les valeurs à chaque rendu — l'ordre des
-  // effets est celui de leur déclaration, et c'est ce qui lui fait voir les
-  // anciennes.
-  useEffect(() => {
-    if (equipements > 0) setFigees(avant.current)
-  }, [equipements])
-
-  /**
-   * UN GARDE-FOU : les chiffres ne peuvent pas rester figés pour toujours.
+   * **ÇA SE DÉCIDE PENDANT LE RENDU, JAMAIS DANS UN EFFET**, et ça a coûté un
+   * aller-retour : figé par un état posé dans un effet, l'ancien chiffre ne
+   * revenait qu'APRÈS un premier rendu montrant le nouveau — Keko : « on voit
+   * le chiffre changer au moment où on lâche, puis revenir comme avant, pour
+   * enfin changer quand la carte se fixe ». *Un effet arrive toujours trop
+   * tard pour cacher ce que le rendu vient de montrer.*
    *
-   * C'est la carte qui annonce son arrivée, et elle le fait sans faute — mais
-   * si elle était démontée en plein vol, personne ne le dirait plus et la
-   * bande mentirait jusqu'au prochain geste. *Un affichage qui attend un
-   * message doit savoir se rendre s'il ne vient pas.*
+   * Deux compteurs suffisent : tant qu'il en est parti plus qu'il n'en est
+   * arrivé, une carte est en vol, et la bande garde ce qu'elle avait.
    */
-  useEffect(() => {
-    if (figees === null) return
-    const minuteur = window.setTimeout(() => setFigees(null), 1600)
-    return () => window.clearTimeout(minuteur)
-  }, [figees])
+  const enVol = equipements > fixations
+  const changees = useRef<boolean[]>([])
+  if (!enVol) {
+    // Ce qui a bougé depuis la dernière fois que rien ne volait : c'est ce que
+    // l'effet animera à l'arrivée.
+    changees.current = valeurs.map((v, i) => v !== avant.current[i])
+    avant.current = valeurs
+  }
+  const montrees = enVol ? avant.current : valeurs
 
   useEffect(() => {
-    const anciennes = figees
-    setFigees(null)
-    if (fixations > 0 && anciennes !== null) {
-      valeurs.forEach((v, i) => {
-        if (v === anciennes[i]) return
-        vifs.current[i]?.animate(
-          [
-            { scale: '1', filter: 'brightness(1) drop-shadow(0 0 0 #e8ac5400)' },
-            {
-              scale: '1.26',
-              filter: 'brightness(1.9) drop-shadow(0 0 0.7rem #e8ac54cc)',
-              offset: 0.28,
-            },
-            { scale: '1', filter: 'brightness(1) drop-shadow(0 0 0 #e8ac5400)' },
-          ],
-          { duration: 560, easing: 'ease-out' },
-        )
-      })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (fixations === 0) return
+    changees.current.forEach((aBouge, i) => {
+      if (!aBouge) return
+      vifs.current[i]?.animate(
+        [
+          { scale: '1', filter: 'brightness(1) drop-shadow(0 0 0 #e8ac5400)' },
+          {
+            scale: '1.26',
+            filter: 'brightness(1.9) drop-shadow(0 0 0.7rem #e8ac54cc)',
+            offset: 0.28,
+          },
+          { scale: '1', filter: 'brightness(1) drop-shadow(0 0 0 #e8ac5400)' },
+        ],
+        { duration: 560, easing: 'ease-out' },
+      )
+    })
   }, [fixations])
-  // ON RETIENT LES VALEURS À CHAQUE RENDU, pas seulement quand on équipe :
-  // sinon un déséquipement laisserait une vieille valeur en mémoire, et le
-  // prochain équipement croirait que deux stats ont bougé.
-  useEffect(() => {
-    avant.current = valeurs
-  })
-  /** Ce que la bande AFFICHE : l'ancien tant que la carte n'est pas posée. */
-  const [pvVu, deckVu, mainVu, paVu] = figees ?? valeurs
+
+  const pvVu = montrees[0] ?? pvMax
+  const deckVu = montrees[1] ?? deck.total
+  const mainVu = montrees[2] ?? tailleMain
+  const paVu = montrees[3] ?? energieMax
 
   const [bulle, setBulle] = useState<Bulle | null>(null)
 

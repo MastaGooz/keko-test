@@ -5243,7 +5243,13 @@ body {
    facon : en combat il se pose dans l'ecart entre la pioche et la main, ici il
    prend simplement sa place dans la rangee. *Un composant qui porte son propre
    ancrage doit pouvoir le rendre* -- sinon il atterrit au milieu du coffre. */
-.arm-orbe > .orbe-jeu {
+/* DESCENDANT, PAS ENFANT DIRECT : le couple chiffre + symbole vit desormais
+   dans un `.arm-vif` -- celui qui s'anime quand la stat change -- et un `>`
+   cessait donc de matcher. L'orbe reprenait son style de COMBAT, en
+   `position: absolute`, et disparaissait de la bande sans qu'aucune erreur ne
+   le dise. *Un selecteur d'enfant direct est une dependance au DOM exact :
+   inserer un conteneur le casse en silence.* */
+.arm-orbe .orbe-jeu {
   position: relative;
   left: auto;
   bottom: auto;

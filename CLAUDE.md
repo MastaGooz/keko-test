@@ -4182,10 +4182,28 @@ Trois choses à ne pas défaire :
   aussi changer au moment où la carte se fixe ». La bande montrait la nouvelle
   valeur pendant que la carte tournait encore — *on voyait la conséquence avant
   la cause*, exactement ce que le combat évite en faisant monter l'armure à
-  l'impact et non à la tape. Les valeurs affichées sont donc figées du lâcher à
-  la fixation, et un garde-fou les rend au bout d'une seconde et demie si la
-  carte disparaissait en vol : *un affichage qui attend un message doit savoir
-  se rendre s'il ne vient pas.*
+  l'impact et non à la tape.
+
+  **ÇA SE DÉCIDE PENDANT LE RENDU, JAMAIS DANS UN EFFET**, et ça a coûté un
+  aller-retour : figé par un état posé dans un effet, l'ancien chiffre ne
+  revenait qu'APRÈS un premier rendu montrant le nouveau — Keko : « on voit le
+  chiffre changer au moment où on lâche, puis revenir comme avant, pour enfin
+  changer quand la carte se fixe ». *Un effet arrive toujours trop tard pour
+  cacher ce que le rendu vient de montrer.* Deux compteurs suffisent : tant
+  qu'il en est parti plus qu'il n'en est arrivé, une carte est en vol et la
+  bande garde ce qu'elle avait.
+
+  Le compteur de départ n'avance que si le dépôt ABOUTIT — sinon l'écran
+  attendrait une arrivée qui ne viendrait jamais — et un garde-fou resynchronise
+  au bout d'une seconde et demie : *un affichage qui attend un message doit
+  savoir se rendre s'il ne vient pas.*
+
+  **PIÈGE PAYÉ AU PASSAGE : un sélecteur d'enfant direct est une dépendance au
+  DOM exact.** Le couple chiffre + symbole a gagné un conteneur (`.arm-vif`,
+  celui qui s'anime), et `.arm-orbe > .orbe-jeu` a cessé de matcher : l'orbe a
+  repris son style de COMBAT, en `position: absolute`, et **a disparu de la
+  bande sans qu'aucune erreur ne le dise** — Keko : « en plus le symbole
+  d'énergie a disparu ». Insérer un conteneur casse un `>` en silence.
 
 Par l'API d'animation et non par une classe, pour la raison habituelle : deux
 pièces équipées coup sur coup doivent pouvoir relancer le geste avant qu'il
