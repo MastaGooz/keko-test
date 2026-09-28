@@ -172,10 +172,42 @@ export const METAL_3D: Record<string, string> = {
   legendaire: '#e2f1fc',
 }
 
+/**
+ * LE DIAMANT EST IRISÉ, et c'est ce qui le sépare de l'argent.
+ *
+ * Keko : « je trouve que le diamant est exactement comme l'argent
+ * visuellement, je propose de lui rajouter un côté holographique ». *Deux
+ * métaux froids et clairs ne se distinguent pas par leur clarté* — il en
+ * faudrait un blanc et un plus blanc, ce qui n'existe pas. Ce qui les sépare,
+ * c'est que l'un a UNE couleur et l'autre les a TOUTES.
+ *
+ * Le dégradé garde donc exactement la même structure de lumière que les quatre
+ * autres — clair, sombre, moyen, nuit, bord, aux mêmes offsets — mais chaque
+ * palier prend une teinte différente du spectre. *Une irisation n'est pas une
+ * couleur de plus, c'est un arc-en-ciel qui traverse la même lumière.*
+ */
+const IRISATION: readonly (readonly [number, string])[] = [
+  [0, '#ffffff'],
+  [0.11, '#b9ecff'],
+  [0.21, '#7f9fc4'],
+  [0.23, '#d7e9ff'],
+  [0.32, '#ffd6f4'],
+  [0.43, '#eafcff'],
+  [0.53, '#fff4c6'],
+  [0.66, '#cfbcff'],
+  [0.8, '#6c8ba8'],
+  [0.9, '#d8f4ff'],
+  [1, '#fff4fb'],
+]
+
 /** Le laiton du cadre, en dégradé oblique comme dans le CSS. */
 function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient {
-  const [clair, sombre, moyen, nuit, bord] = METAUX[rarete ?? 'commune'] ?? METAUX.commune!
   const g = ctx.createLinearGradient(0, 0, LARGE, HAUT)
+  if (rarete === 'legendaire') {
+    for (const [ou, ton] of IRISATION) g.addColorStop(ou, ton)
+    return g
+  }
+  const [clair, sombre, moyen, nuit, bord] = METAUX[rarete ?? 'commune'] ?? METAUX.commune!
   g.addColorStop(0, clair)
   g.addColorStop(0.21, sombre)
   g.addColorStop(0.23, moyen)
@@ -457,8 +489,27 @@ function caseDeCarte(
   ctx.font = `600 ${police}px "Grenze Gotisch", Georgia, serif`
   ctx.textAlign = 'center'
   if (assiette === undefined) {
+    /**
+     * SEUL, UN CHIFFRE SE CENTRE SUR SON PROPRE ENCRE.
+     *
+     * Keko : « pourquoi le 3 en haut à gauche n'est pas centré verticalement
+     * dans le symbole alors que pour le 6 c'est le cas ? » *Grenze Gotisch a
+     * des chiffres elzéviriens* : mesuré à 100 px, le 6 monte à 57 et
+     * s'arrête à 1 sous la ligne de base, le 3 monte à 48 et descend à 10.
+     * Posés sur la même boîte de police, leurs encres se retrouvent donc à
+     * onze points d'écart — le 6 tombait juste, le 3 pendait.
+     *
+     * **DANS UNE LISTE ON ALIGNE, SEUL ON CENTRE**, et c'est toute la
+     * différence avec la composition juste en dessous : là, plusieurs cases
+     * s'empilent et deux chiffres voisins ne peuvent pas être posés à deux
+     * hauteurs, donc ils partagent la boîte COMMUNE (`assiette`). Ici la case
+     * est seule sur sa carte : rien ne l'oblige à s'aligner sur personne, et
+     * ce qu'on veut est qu'elle soit centrée, quel que soit le chiffre.
+     */
     ctx.textBaseline = 'middle'
-    ctx.fillText(String(nombre), x + l / 2, y + h * 0.54)
+    const encre = ctx.measureText(String(nombre))
+    const milieu = (encre.actualBoundingBoxDescent - encre.actualBoundingBoxAscent) / 2
+    ctx.fillText(String(nombre), x + l / 2, y + h * 0.5 - milieu)
     return
   }
   // ON POSE LA LIGNE DE BASE, pas une boîte de ligne. `middle` se mesure sur

@@ -3275,6 +3275,22 @@ côte à côte dans une liste ne peuvent pas être posés à deux hauteurs.* On 
 donc la ligne de base, calée sur la boîte COMMUNE à tous les chiffres, mesurée
 une fois au canvas (57 au-dessus, 10 en dessous, pour 100 px de police).
 
+**ET SEUL, UN CHIFFRE SE CENTRE SUR SON PROPRE ENCRE.** Keko : « pourquoi le 3
+en haut à gauche n'est pas centré verticalement dans le symbole alors que pour
+le 6 c'est le cas ? » *Grenze Gotisch a des chiffres elzéviriens* : mesuré à
+100 px, le 6 monte à 57 et s'arrête à 1 sous la ligne de base, le 3 monte à 48
+et descend à 10. Posés sur la même boîte de police, leurs encres se retrouvent
+à onze points d'écart — le 6 tombait juste, le 3 pendait.
+
+**DANS UNE LISTE ON ALIGNE, SEUL ON CENTRE**, et c'est toute la différence avec
+la composition juste en dessous : là, plusieurs cases s'empilent et *deux
+chiffres voisins ne peuvent pas être posés à deux hauteurs*, donc ils partagent
+la boîte COMMUNE. Ici la case est seule sur sa carte : rien ne l'oblige à
+s'aligner sur personne, et ce qu'on veut est qu'elle soit centrée quel que soit
+le chiffre. On mesure donc l'encre du chiffre qu'on écrit, et on la centre.
+Mesuré après coup, sur la texture : 0,489 à 0,498 de la case pour 1, 3, 6 et
+12 — un demi-point d'écart au lieu de onze.
+
 **LE COMPTEUR DU COIN GARDE SON CODE D'ORIGINE, pas une valeur réputée
 équivalente.** Je l'avais d'abord rejoué par le nouveau chemin avec une
 assiette calculée pour tomber au même endroit — et Keko l'a vu tout de suite :
@@ -4252,9 +4268,17 @@ règle*, comme « enchantement » plutôt que « maîtrise ».
 **Le danger de cette échelle est que trois de ses crans sont jaunes.** Le laiton
 reste donc terne et un peu olive, le bronze part dans le CUIVRE — plus rouge,
 plus sombre — et l'or est franchement saturé et clair : *ce qui les sépare n'est
-pas la teinte seule, c'est la teinte ET la valeur.* L'argent et le diamant sont
-les deux froids, et le diamant se distingue en étant plus clair que tout le
-reste, presque blanc.
+pas la teinte seule, c'est la teinte ET la valeur.*
+
+**ET LE DIAMANT EST IRISÉ**, parce que sa clarté ne suffisait pas à le séparer
+de l'argent — Keko : « le diamant est exactement comme l'argent visuellement, je
+propose de lui rajouter un côté holographique ». *Deux métaux froids et clairs
+ne se distinguent pas par leur clarté* : il en faudrait un blanc et un plus
+blanc, ce qui n'existe pas. Ce qui les sépare, c'est que **l'un a UNE couleur et
+l'autre les a TOUTES.** Son dégradé garde exactement la structure de lumière des
+quatre autres, aux mêmes offsets, mais chaque palier prend une teinte du
+spectre : *une irisation n'est pas une couleur de plus, c'est un arc-en-ciel qui
+traverse la même lumière.*
 
 **LE LAITON NU EST LE COMMUN** : la carte ordinaire ne change pas d'un pixel, et
 seules les pièces rares se signalent. *Une échelle dont le premier cran est le
