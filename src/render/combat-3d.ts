@@ -12,7 +12,14 @@ import { REGLAGE_DEFAUT, commencerDescente } from '../logic/descente.ts'
 import type { Hub } from '../logic/hub.ts'
 import { creerHub, equipement, consommablesDeLaPile } from '../logic/hub.ts'
 import type { Piece } from '../logic/armes.ts'
-import { ESPADON, GLAIVE, PLASTRON, POTIONS_DEPART, deckDeLEquipement } from '../logic/armes.ts'
+import {
+  ESPADON,
+  GLAIVE,
+  PLASTRON,
+  POTIONS_DEPART,
+  SUPER_POTIONS_DEPART,
+  deckDeLEquipement,
+} from '../logic/armes.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import { tresorRecompense } from '../logic/cartes.ts'
@@ -199,6 +206,47 @@ export function setDeTest(hub: Hub, combien = SET_URL()): Hub {
   const modeles = [...ESPADON.set, ...GLAIVE.set, ...PLASTRON.set].slice(0, combien)
   const espadon = { ...ESPADON, set: modeles }
   return { ...hub, reserve: hub.reserve.map((o) => (o.id === ESPADON.id ? espadon : o)) }
+}
+
+/**
+ * DE QUOI JUGER DE GROSSES PILES : `?r3f&piles=13,6`.
+ *
+ * Keko : « on peut tester d'avoir 6 super potions et 13 potions normales ? » —
+ * le coffre de départ n'en a que quatre et deux, donc *le compte d'une pile ne
+ * passe jamais à deux chiffres*, et c'est justement ce qu'il faut voir pour
+ * juger le badge du coin.
+ *
+ * On REMPLACE les consommables de la réserve plutôt que d'en ajouter à la
+ * suite : on veut deux piles nettes, pas la somme des deux. Chaque copie
+ * garde le modèle qui existe — *un banc d'essai qui montre des cartes cassées
+ * ne se juge pas* — et prend son propre identifiant, puisque tout se désigne
+ * par id dans le hub.
+ */
+export function PILES_URL(): [number, number] | null {
+  const demande = new URLSearchParams(location.search).get('piles')
+  if (demande === null) return null
+  const [a, b] = demande.split(',').map((n) => Number(n))
+  const borne = (n: number | undefined, defaut: number): number =>
+    n !== undefined && Number.isFinite(n) && n > 0 ? Math.min(99, Math.round(n)) : defaut
+  return [borne(a, 13), borne(b, 6)]
+}
+
+export function pilesDeTest(hub: Hub, combien = PILES_URL()): Hub {
+  if (combien === null) return hub
+  const [potions, supers] = combien
+  const modelePotion = POTIONS_DEPART[0]!
+  const modeleSuper = SUPER_POTIONS_DEPART[0]!
+  const copies = (modele: Objet, n: number, marque: string): Objet[] =>
+    Array.from({ length: n }, (_, i) => ({ ...modele, id: `${modele.id}-${marque}-${i}` }))
+  const reste = hub.reserve.filter((o) => !estConsommable(o))
+  return {
+    ...hub,
+    reserve: [
+      ...reste,
+      ...copies(modelePotion, potions, 'essai'),
+      ...copies(modeleSuper, supers, 'essai'),
+    ],
+  }
 }
 
 /**

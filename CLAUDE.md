@@ -3967,8 +3967,8 @@ propriété de l'objet, c'est une propriété de l'étagère* — il disparaît 
 la carte en sort. Il est enfant de la carte, donc il suit sa place amortie, sa taille et son
 inclinaison : *ce qui annote une carte bouge avec elle.*
 
-**ET C'EST LE CHIFFRE SEUL, CERNÉ DE NOIR, À CHEVAL SUR LE COIN BAS-DROIT.**
-Quatre formes ont précédé, et chacune a appris quelque chose :
+**ET C'EST UN CHIFFRE DANS UN DISQUE, À CHEVAL SUR LE COIN BAS-DROIT.** Cinq
+formes ont précédé, et chacune a appris quelque chose :
 
 1. une **bulle d'or pleine** sous la carte — « la bulle n'est pas élégante, elle
    casse avec le style épuré et stylisé » ;
@@ -3977,27 +3977,40 @@ Quatre formes ont précédé, et chacune a appris quelque chose :
 3. le même **sous la carte**, puis grossi d'un tiers — « sur téléphone les
    chiffres sont trop petits » ;
 4. une **case de laiton en bas à droite**, la case en forme de carte du
-   compteur du coin — « ça va masquer des éléments de la carte… la taille du
-   chiffre est bien, mais je le voyais vraiment sur le COIN de la carte, et pas
-   dans un symbole de carte ; essayons juste le chiffre avec un outline noir
-   pour la visibilité ».
+   compteur du coin — « ça va masquer des éléments de la carte… je le voyais
+   vraiment sur le COIN de la carte, et pas dans un symbole de carte » ;
+5. **le chiffre seul, cerné de noir**, à cheval sur le coin — jusqu'à « on peut
+   mettre le chiffre dans un conteneur type cercle ? »
 
-*Ce qui manquait n'était ni la taille ni un fond, c'était un CERNE.* Un chiffre
-cerné se détache de n'importe quoi, donc **il n'a plus besoin qu'on lui réserve
-une place** : posé à cheval sur le coin, moitié dedans moitié dehors, il ne
-recouvre plus rien. C'est le raisonnement du chiffre des jauges, qui déborde sa
-barre plutôt que d'être contenu par elle — et c'est ce qu'une plaque, elle, ne
+*Ce que la case avait de faux n'était pas d'être un contenant, c'était de DIRE
+quelque chose* : une carte pour dire des cartes, alors que le coin haut-gauche
+le disait déjà pour un autre fait. **Un rond ne prétend à rien**, donc il
+contient sans parler.
+
+Et ce qui reste des formes précédentes porte le reste : il est PETIT et **à
+cheval sur le coin**, moitié dedans moitié dehors, donc il ne recouvre rien.
+C'est le raisonnement du chiffre des jauges, qui déborde sa barre plutôt que
+d'être contenu par elle — et c'est ce qu'une plaque alignée sur la carte ne
 pouvait pas faire : *un fond opaque doit prendre la place de ce qu'il couvre.*
 
 Le « × » ne revient pas : seul, dans un coin, un chiffre ne peut être qu'un
-compte.
+compte. **Et le chiffre RENTRE, quel qu'il soit** : on mesure sa largeur et
+c'est la police qui cède — *un contenant qui ne contient pas ment*, et à deux
+chiffres il sortait du disque.
 
-**ET SON CORPS N'EST PAS LE MÊME PARTOUT** (`pileTaille`) : 0,25 carte au
-coffre, 0,15 dans le zoom. *Un symbole ne se règle pas à la taille où on le
+**SON DIAMÈTRE N'EST PAS LE MÊME PARTOUT** (`pileTaille`) : 0,26 carte au
+coffre, 0,16 dans le zoom. *Un symbole ne se règle pas à la taille où on le
 dessine, mais à celle où on le regarde* — la règle du médaillon du dos, plus
 grand sur un tas que sur une carte. **Une case du coffre ne fait que 46 px de
 large à 844 x 390, et 33 à 667 x 320** : tout y est minuscule, alors que dans le
 zoom la carte en fait quatre fois plus.
+
+**POUR JUGER DE GROSSES PILES : `?r3f&piles=13,6`.** Demandé par Keko — « on
+peut tester d'avoir 6 super potions et 13 potions normales ? » Le coffre de
+départ n'en a que quatre et deux, donc *le compte d'une pile n'y passe jamais à
+deux chiffres*, et c'est justement ce qu'il faut voir. On REMPLACE les
+consommables de la réserve plutôt que d'en ajouter à la suite : on veut deux
+piles nettes, pas la somme des deux.
 
 **Le zoom porte le même badge** (demandé par Keko : « on fait pareil pour les
 chiffres qui indiquent le nombre de cartes de chaque exemplaire quand on

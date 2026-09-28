@@ -1364,31 +1364,43 @@ export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {
 }
 
 /**
- * COMBIEN D'EXEMPLAIRES — **le chiffre seul, cerné de noir, SUR LE COIN.**
+ * COMBIEN D'EXEMPLAIRES — **un chiffre dans un DISQUE, à cheval sur le coin.**
  *
- * Quatre formes ont précédé, et chacune a appris quelque chose : une bulle
- * d'or pleine (« la bulle n'est pas élégante, elle casse avec le style épuré
- * et stylisé »), « ×3 » en texte nu dans le coin haut-droit (« il faudrait
- * mettre le nombre sous la carte, pas dedans »), le même sous la carte puis
- * grossi d'un tiers (« sur téléphone c'est trop petit »), et une case de
- * laiton en bas à droite — écartée à son tour : **« ça va masquer des éléments
- * de la carte… la taille du chiffre est bien, mais je le voyais vraiment sur
- * le COIN de la carte, et pas dans un symbole de carte ; essayons juste le
- * chiffre avec un outline noir pour la visibilité ».**
+ * Cinq formes ont précédé, et chacune a appris quelque chose : une bulle d'or
+ * pleine sous la carte (« la bulle n'est pas élégante, elle casse avec le
+ * style épuré et stylisé »), « ×3 » en texte nu dans le coin haut-droit (« il
+ * faudrait mettre le nombre sous la carte, pas dedans »), le même sous la
+ * carte puis grossi d'un tiers (« sur téléphone c'est trop petit »), une case
+ * de laiton en bas à droite (« ça va masquer des éléments de la carte… je le
+ * voyais vraiment sur le COIN de la carte, et pas dans un symbole de carte »),
+ * et le chiffre seul cerné de noir — jusqu'à **« on peut mettre le chiffre
+ * dans un conteneur type cercle ? »**
  *
- * *Ce qui manquait n'était ni la taille ni un fond, c'était un CERNE.* Un
- * chiffre cerné se détache de n'importe quoi, donc il n'a plus besoin qu'on
- * lui réserve une place — et posé sur le coin, moitié dedans moitié dehors, il
- * ne recouvre plus rien. C'est le raisonnement du chiffre des jauges, qui
- * déborde sa barre plutôt que d'être contenu par elle.
+ * *Ce que la case avait de faux n'était pas d'être un contenant, c'était de
+ * dire quelque chose* : une carte pour dire des cartes, alors que le coin
+ * haut-gauche le disait déjà pour un autre fait. **Un rond ne prétend à rien**,
+ * donc il contient sans parler.
+ *
+ * Ce qui reste des deux formes précédentes : il est PETIT et **à cheval sur le
+ * coin**, moitié dedans moitié dehors, donc il ne recouvre rien. C'est le
+ * raisonnement du chiffre des jauges, qui déborde sa barre plutôt que d'être
+ * contenu par elle.
  *
  * Le « × » ne revient pas : seul, dans un coin, un chiffre ne peut être qu'un
  * compte.
  */
 const BADGES = new Map<number, THREE.CanvasTexture>()
 
-/** La part de la toile que le chiffre occupe : le reste est le jeu du cerne. */
-export const PART_CHIFFRE = 0.62
+/**
+ * LE DISQUE, en part de la toile : le reste est le jeu de son ombre.
+ *
+ * Keko : « on peut mettre le chiffre dans un conteneur type cercle ? » *Un
+ * rond est le seul contenant qui ne prétende pas être autre chose* — la case
+ * en forme de carte disait « des cartes », et elle le disait déjà en haut à
+ * gauche pour un autre fait. Il reste petit et à cheval sur le coin, donc il
+ * ne masque toujours rien.
+ */
+export const PART_DISQUE = 0.78
 
 export function textureNombre(nombre: number): THREE.CanvasTexture {
   const connue = BADGES.get(nombre)
@@ -1407,33 +1419,50 @@ export function textureNombre(nombre: number): THREE.CanvasTexture {
 
   const peindre = (): void => {
     ctx.clearRect(0, 0, c, c)
-    const police = c * PART_CHIFFRE
+    const rayon = (c * PART_DISQUE) / 2
+    const filet = rayon * 0.11
+
+    // LE DISQUE : sombre au centre, cerclé de laiton. La même ferronnerie que
+    // les cartouches et les cadres, en tout petit.
+    ctx.save()
+    ctx.shadowColor = '#000000b0'
+    ctx.shadowBlur = rayon * 0.35
+    ctx.shadowOffsetY = rayon * 0.08
+    ctx.beginPath()
+    ctx.arc(c / 2, c / 2, rayon - filet / 2, 0, Math.PI * 2)
+    const fond = ctx.createLinearGradient(0, c / 2 - rayon, 0, c / 2 + rayon)
+    fond.addColorStop(0, '#2a2317')
+    fond.addColorStop(1, '#0e0c08')
+    ctx.fillStyle = fond
+    ctx.fill()
+    ctx.restore()
+
+    ctx.beginPath()
+    ctx.arc(c / 2, c / 2, rayon - filet / 2, 0, Math.PI * 2)
+    ctx.strokeStyle = '#c9a04e'
+    ctx.lineWidth = filet
+    ctx.stroke()
+
+    // LE CHIFFRE RENTRE, quel qu'il soit : à deux chiffres il déborderait du
+    // disque, et *un contenant qui ne contient pas ment.* On mesure, et c'est
+    // la police qui cède.
+    const dedans = (rayon - filet) * 1.55
+    let police = rayon * 1.08
     ctx.font = `700 ${police}px "Grenze Gotisch", Georgia, serif`
+    const large = ctx.measureText(String(nombre)).width
+    if (large > dedans) {
+      police *= dedans / large
+      ctx.font = `700 ${police}px "Grenze Gotisch", Georgia, serif`
+    }
     ctx.textAlign = 'center'
     // LA LIGNE DE BASE, pas une boîte de ligne : `middle` se mesure sur la
     // boîte de POLICE, jambages compris, et un chiffre n'en a pas.
     ctx.textBaseline = 'alphabetic'
-    const y = c / 2 + police * MILIEU_CHIFFRE
-
-    // LE CERNE D'ABORD, LE CHIFFRE DESSUS. Un trait est centré sur le tracé,
-    // donc il en sort pour moitié — c'est exactement ce qu'on veut ici, et
-    // `round` évite les pointes que les jonctions d'un chiffre produiraient.
-    ctx.lineJoin = 'round'
-    ctx.miterLimit = 2
-    ctx.strokeStyle = '#000000'
-    ctx.lineWidth = police * 0.16
-    // Une ombre SOUS le cerne : elle le détache encore d'un fond sombre sans
-    // lui donner de bord — *ce qui porte un contour se lit comme un objet.*
-    ctx.shadowColor = '#000000c0'
-    ctx.shadowBlur = police * 0.12
-    ctx.strokeText(String(nombre), c / 2, y)
-    ctx.shadowBlur = 0
-
-    const or = ctx.createLinearGradient(0, c * 0.2, 0, c * 0.85)
+    const or = ctx.createLinearGradient(0, c / 2 - rayon, 0, c / 2 + rayon)
     or.addColorStop(0, '#f8e7b8')
-    or.addColorStop(1, '#c9a04e')
+    or.addColorStop(1, '#d8b471')
     ctx.fillStyle = or
-    ctx.fillText(String(nombre), c / 2, y)
+    ctx.fillText(String(nombre), c / 2, c / 2 + police * MILIEU_CHIFFRE)
     texture.needsUpdate = true
   }
 

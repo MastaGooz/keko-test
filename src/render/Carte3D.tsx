@@ -28,7 +28,7 @@ import { geometrieDOnde, matiereDOnde, poserLOnde, poussiereDOnde } from './onde
 import type { CarteAPeindre } from './texture-carte.ts'
 import {
   DEBORD_CONTOUR,
-  PART_CHIFFRE,
+  PART_DISQUE,
   textureNombre,
   signature,
   textureContour,
@@ -46,27 +46,22 @@ export const HAUT = 1.4
 const EPAISSEUR = 0.012
 
 /**
- * LE NOMBRE D'EXEMPLAIRES : le chiffre seul, cerné de noir, **SUR LE COIN**.
+ * LE NOMBRE D'EXEMPLAIRES : un chiffre dans un DISQUE, **à cheval sur le coin
+ * bas-droit**.
  *
- * Keko, après une case de laiton essayée au même endroit : « ça va masquer des
- * éléments de la carte… la taille du chiffre est bien, mais je le voyais
- * vraiment sur le coin de la carte, et pas dans un symbole de carte ; essayons
- * juste le chiffre avec un outline noir pour la visibilité ».
- *
- * *Un chiffre cerné n'a pas besoin qu'on lui réserve une place* : il se
- * détache de n'importe quoi, donc il peut se poser à cheval sur le coin —
- * moitié dedans, moitié dehors — et ne recouvre plus rien. C'est le
+ * *Un disque n'a pas besoin qu'on lui réserve une place* : posé à cheval sur
+ * le coin, moitié dedans moitié dehors, il ne recouvre rien. C'est le
  * raisonnement du chiffre des jauges, qui déborde sa barre plutôt que d'être
- * contenu par elle.
+ * contenu par elle — et c'est ce qu'une case en forme de carte, plus grande et
+ * alignée sur la carte, ne pouvait pas faire.
  *
  * Il reste posé EN PLUS de la texture, jamais peint dedans : *le nombre n'est
  * pas une propriété de l'objet, c'est une propriété de l'étagère* — une Potion
  * empilée et une Potion équipée partagent leur dessin.
  *
- * La valeur est le CORPS du chiffre en part de carte ; la toile qui le porte
- * est plus large d'autant que le cerne a besoin de jeu.
+ * La valeur est le DIAMÈTRE du disque en part de carte.
  */
-const CHIFFRE_PILE = 0.25
+const CHIFFRE_PILE = 0.26
 /** À cheval sur le coin : ce qu'il en garde DANS la carte. */
 const DEDANS_PILE = 0.55
 
@@ -359,7 +354,7 @@ type Props = {
    */
   pile?: number
   /**
-   * LE CORPS DU CHIFFRE, en part de la carte — **et il n'est pas le même
+   * LE DIAMÈTRE DU DISQUE, en part de la carte — **et il n'est pas le même
    * partout.**
    *
    * *Un symbole ne se règle pas à la taille où on le dessine, mais à celle où
@@ -1032,9 +1027,8 @@ ${nuanceur.fragmentShader}`
           ]}
           raycast={() => null}
         >
-          {/* La toile est plus large que le corps du chiffre : le cerne et son
-              ombre y logent. */}
-          <planeGeometry args={[pileTaille / PART_CHIFFRE, pileTaille / PART_CHIFFRE]} />
+          {/* La toile est plus large que le disque : son ombre y loge. */}
+          <planeGeometry args={[pileTaille / PART_DISQUE, pileTaille / PART_DISQUE]} />
           <meshBasicMaterial
             map={textureNombre(pile)}
             transparent
