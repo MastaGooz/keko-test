@@ -173,6 +173,35 @@ export function coffreDeTest(hub: Hub, combien = COFFRE_URL()): Hub {
 }
 
 /**
+ * DE QUOI JUGER UNE PIÈCE RICHE : `?r3f&set=8`.
+ *
+ * Keko : « si une carte d'équipement génère plus de 3 cartes, on fait comment ?
+ * car ça ne loge pas à l'écran » — et il parlait du ZOOM, où le set se montre
+ * en vraies cartes. *La vitrine ne peut pas déborder* : la taille d'une carte
+ * du set y est bornée par la hauteur (deux lignes plus leurs pastilles) et par
+ * la largeur (quatre à côté de la pièce), donc elle RAPETISSE au lieu de
+ * sortir. Ce qui se juge n'est donc pas le débordement, c'est la LISIBILITÉ —
+ * et ça ne se juge pas sur une capture, ça se juge sur son téléphone.
+ *
+ * **On donne ses modèles à l'ESPADON plutôt que d'inventer une pièce.** L'art
+ * se cherche par nom de modèle : une « Lame d'essai » sortirait avec le sceau
+ * de repli, et *un banc d'essai qui montre des cartes cassées ne se juge pas.*
+ * Les modèles viennent des trois pièces qui existent — huit au total, chacun
+ * avec son vrai dessin.
+ */
+export function SET_URL(): number {
+  const demande = Number(new URLSearchParams(location.search).get('set'))
+  return Number.isFinite(demande) && demande > 0 ? Math.min(8, Math.round(demande)) : 0
+}
+
+export function setDeTest(hub: Hub, combien = SET_URL()): Hub {
+  if (combien <= 0) return hub
+  const modeles = [...ESPADON.set, ...GLAIVE.set, ...PLASTRON.set].slice(0, combien)
+  const espadon = { ...ESPADON, set: modeles }
+  return { ...hub, reserve: hub.reserve.map((o) => (o.id === ESPADON.id ? espadon : o)) }
+}
+
+/**
  * DE QUOI REMPLIR LA MAIN. Le chargement gratuit donne 10 cartes ; en demander
  * 20 n'en tirerait que 10, et on ne verrait pas ce qu'on voulait voir. On
  * répète donc les pièces jusqu'à ce que le deck dépasse la main.
