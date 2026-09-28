@@ -3194,9 +3194,16 @@ Deux symboles pour deux choses, et c'est la seule information qui rende
 « équiper plus dilue » lisible sur la pièce elle-même. Il entre dans
 `signature()`, sans quoi deux cartes de même nom partageraient la texture.
 
-**SA MARGE SE MESURE AU BORD QU'ON VOIT, pas au bord de la toile.** Posé à la
-même distance du canvas en x et en y, il paraissait coller au cadre à gauche et
-respirer en haut — Keko : « décaler un poil le symbole vers la droite, son
+**SA MARGE SE MESURE AU BORD QU'ON VOIT, pas au bord de la toile** — et c'est
+vrai des DEUX symboles du coin. L'orbe du coût a fini par se décaler de 1,6 %
+de la largeur vers la droite pour la même raison (Keko : « l'écart avec le bord
+est trop faible par rapport à l'écart avec le bord du haut »), et le compteur
+des pièces d'un cheveu vers le bas — 4 px et 3,5 px sur une carte de 250, à
+peine 1,5 sur une case de coffre. *Une marge égale en nombre n'est pas une
+marge égale à l'oeil.*
+
+Posé à la même distance du canvas en x et en y, il paraissait coller au cadre à
+gauche et respirer en haut — Keko : « décaler un poil le symbole vers la droite, son
 écart au bord doit être le même que l'écart au bord du haut ». *La coque de la
 carte est une découpe DÉCHIRÉE, pas un rectangle* : son bord gauche rentre de
 3 % au niveau du compteur là où le bord haut ne rentre presque pas. La marge

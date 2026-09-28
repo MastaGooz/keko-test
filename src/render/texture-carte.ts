@@ -419,7 +419,10 @@ function peindreCompteur(ctx: CanvasRenderingContext2D, nombre: number): void {
   // bord du haut ». *Une marge se mesure au bord qu'on VOIT, pas au bord de la
   // toile.*
   const x = 0.05 * LARGE
-  const y = 0.016 * HAUT
+  // ET IL DESCEND D'UN CHEVEU. Demandé par Keko, pour la même raison en
+  // miroir : la case est plus large que haute, donc à marges égales elle
+  // paraît collée au bord du haut.
+  const y = 0.026 * HAUT
   caseDeCarte(ctx, x, y, l, nombre)
 }
 
@@ -532,7 +535,13 @@ function peindreCout(
   // Un peu plus large que l'écu : inscrite dans un carré, une forme perd de la
   // surface utile par rapport à un écu qui s'étire en hauteur.
   const l = 0.205 * LARGE
-  const cx = 0.012 * LARGE + l / 2
+  // SA MARGE GAUCHE SE MESURE AU BORD QU'ON VOIT, pas au bord de la toile —
+  // la même leçon que le compteur des pièces, et il a fallu la repayer ici :
+  // la coque de la carte est une découpe DÉCHIRÉE, et près du coin son bord
+  // gauche rentre plus que le bord haut. À distance égale du canvas, l'écart
+  // paraissait donc plus serré à gauche. Keko : « l'écart avec le bord est
+  // trop faible par rapport à l'écart avec le bord du haut ».
+  const cx = 0.028 * LARGE + l / 2
   const cy = 0.006 * HAUT + l / 2
   const r = l / 2
   const x = cx - r
