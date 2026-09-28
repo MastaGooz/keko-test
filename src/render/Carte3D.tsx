@@ -536,14 +536,26 @@ ${nuanceur.vertexShader}`.replace(
          // carte regardée de près il est là.
          float phase = trame * 64.0 + incidence * 7.0;
          float net = 1.0 - smoothstep(0.18, 0.5, fwidth(phase));
-         float reseau = 1.0 - 0.28 * net * (0.5 - 0.5 * sin(phase * 6.28318));
-         // Elle accroche surtout la lumière là où la carte est claire : le
-         // cadre s'embrase, l'illustration garde son sujet.
-         // ELLE ACCROCHE LE MÉTAL, PAS LE SUJET. Le carré de la luminance
-         // creuse l'écart : le cadre clair s'embrase, l'illustration sombre
-         // garde son dessin — *un lustre qui délave l'image cesse d'être une
-         // matière et devient un voile*, la leçon du lustre ordinaire.
-         float prise = 0.1 + 0.9 * luminance * luminance;
+
+         // ELLE ACCROCHE LE MÉTAL, ET RIEN QUE LUI.
+         //
+         // Keko : « l'image est couverte de lignes en diagonale, comme si la
+         // texture avait changé, c'est voulu ? » Non : le réseau passait sur
+         // TOUTE la carte, illustration comprise, et des stries en travers d'un
+         // dessin ne se lisent pas comme un reflet, elles se lisent comme une
+         // autre texture. *Un foil est une feuille posée sur le CADRE, pas une
+         // trame imprimée sur l'image.*
+         //
+         // Le carré de la luminance ne suffisait pas — il atténuait sans
+         // couper. Un seuil doux tranche : sous 38 % de clarté il n'y a plus
+         // rien, au-dessus de 75 % il y a tout. Le cadre s'embrase, la lame
+         // brille parce qu'elle EST claire, et le fond de nuit garde son
+         // dessin.
+         float metal = smoothstep(0.38, 0.75, luminance);
+         float reseau = 1.0 - 0.3 * net * metal * (0.5 - 0.5 * sin(phase * 6.28318));
+         // Il reste un souffle d'irisation partout : *une carte foil n'est pas
+         // un cadre foil sur une carte mate.*
+         float prise = 0.06 + 0.94 * metal;
          diffuseColor.rgb += arc * uIris * prise * reseau * (0.11 + uLustreForce * 1.9);
 
          // ET LA BANDE DE BRILLANCE PREND LES MÊMES COULEURS. Keko : « je

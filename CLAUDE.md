@@ -4297,9 +4297,16 @@ Quatre pièces, et chacune fait un travail que les autres ne font pas :
   trois lignes au lieu d'une conversion HSV ;
 - **le RÉSEAU**, de fines stries qui rejouent la diffraction d'un vrai foil.
   *Sans elles on lit un dégradé, pas un métal gravé* ;
-- **la prise au CARRÉ de la luminance** : le cadre clair s'embrase,
-  l'illustration sombre garde son dessin — *un lustre qui délave l'image cesse
-  d'être une matière et devient un voile*, la leçon du lustre ordinaire ;
+- **le masque de MÉTAL** : le réseau et l'irisation n'accrochent que ce qui est
+  clair. Keko, sur la première version : « l'image est couverte de lignes en
+  diagonale, comme si la texture avait changé, c'est voulu ? » Non — le réseau
+  passait sur toute la carte, et *des stries en travers d'un dessin ne se lisent
+  pas comme un reflet, elles se lisent comme une autre texture.* **Un foil est
+  une feuille posée sur le CADRE, pas une trame imprimée sur l'image.** Le carré
+  de la luminance ne suffisait pas, il atténuait sans couper ; un seuil doux
+  tranche — rien sous 38 % de clarté, tout au-dessus de 75. Il reste un souffle
+  d'irisation partout, parce qu'*une carte foil n'est pas un cadre foil sur une
+  carte mate* ;
 - **la bande de brillance prend les mêmes couleurs** : *un foil n'a pas un
   reflet blanc*, ce qui passe dessus se décompose. C'est précisément ce que
   Keko demandait.
