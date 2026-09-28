@@ -181,7 +181,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
   // LE DISQUE DU COMPTE SE MESURE EN REM, comme au coffre : il appartient à
   // l'interface, pas au dessin, donc il ne suit pas la taille de la carte. Un
   // peu plus généreux qu'au coffre — ici on ne cherche pas, on lit.
-  const tailleCompte = tailleDuCompte((uneCarte * size.height) / H, 1.15)
+  const tailleCompte = tailleDuCompte((uneCarte * size.height) / H, 1.15, 0.13)
   const zLoupe = zCarte + AVANCEE_LOUPE
   const hLoupe = hauteurVisibleA(zLoupe, size.height)
   const lLoupe = (hLoupe * size.width) / size.height

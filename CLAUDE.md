@@ -4019,14 +4019,24 @@ de PC**, où les cases font trois fois plus. Keko : « les chiffres indiquant le
 nombre de cartes, la taille est bonne sur tél mais sur PC c'est trop gros ».
 
 Il vaut donc **0,9rem au coffre et 1,15rem dans le zoom** — là on ne cherche
-pas, on lit — soit 14 px et 18 px sur un téléphone, 22 et 28 sur un grand
-écran, où la racine grandit elle aussi. C'est la règle du projet depuis le
-début : *toute l'interface est dimensionnée en `rem`.*
+pas, on lit. C'est la règle du projet depuis le début : *toute l'interface est
+dimensionnée en `rem`.*
+
+**Mais le rem SEUL l'a rendu trop discret sur grand écran** — Keko : « tu as
+trop réduit sur le PC » — parce que la racine ne grandit que de moitié quand la
+carte triple. *Ce qui est vrai des deux côtés, c'est que la vérité est entre
+les deux* : on prend **le plus grand des deux règles**, une part de carte (20 %
+au coffre, 13 % au zoom) et la taille en rem, et le rem ne commande plus que
+sur les petits écrans, là où la carte est si menue qu'une fraction ne suffirait
+pas.
+
+Mesuré : 14 px au coffre sur un téléphone et 31 sur un écran de PC, contre 14
+et 48 quand il n'était qu'une fraction, 14 et 22 quand il n'était qu'un rem.
 
 **Les bornes, elles, restent en part de carte** (12 % à 34 %) : en dessous il
 cesserait d'être lisible, au-dessus il sortirait de la gouttière de la grille.
 **Une case du coffre ne fait que 46 px de large à 844 x 390, et 33 à
-667 x 320** — c'est la borne haute qui joue là, pas le rem.
+667 x 320.**
 
 **POUR JUGER DE GROSSES PILES : `?r3f&piles=13,6`.** Demandé par Keko — « on
 peut tester d'avoir 6 super potions et 13 potions normales ? » Le coffre de
@@ -4271,10 +4281,15 @@ que le rond est trop gros ».
 
 *Un contenant n'a qu'une taille juste : celle de ce qu'il contient.* Le chiffre
 étant en `rem`, le disque l'est aussi — 1,66 fois son corps, le rapport validé
-à 844 x 390, donc 30 px sur un téléphone et 45 sur un grand écran. **Deux
-grandeurs qui doivent garder leur rapport ne peuvent pas suivre deux règles
-différentes**, et c'est la leçon du plancher de la bande, rencontrée deux
-paragraphes plus haut dans l'autre sens.
+à 844 x 390.
+
+**Mais en rem SEUL il devenait plus petit que le coeur et le paquet sur un
+grand écran** — Keko : « tu as trop réduit sur le PC ». *Un rail de mesures se
+lit à une seule échelle* : le disque reprend donc la part de bande de ses
+voisins (76 %), et **le rem n'est plus qu'un PLANCHER**, qui ne commande que là
+où la bande est trop courte pour son chiffre, c'est-à-dire sur téléphone. 30 px
+sur un téléphone, 61 sur un grand écran, contre 98 quand il suivait la bande
+seule.
 
 Le plancher de la bande reste utile pour autre chose : il l'empêche d'être si
 courte que le disque écraserait le titre du groupe dessous.

@@ -75,16 +75,21 @@ const DEDANS_PILE = 0.55
  * chiffres indiquant le nombre de cartes, la taille est bonne sur tél mais sur
  * PC c'est trop gros ».
  *
- * Il se compte donc en **rem**, comme tout le chrome du projet : 0,9rem de
- * diamètre, soit 14,4 px sur un téléphone et 21,6 px sur un grand écran, où la
- * racine grandit elle aussi. **Les bornes restent en part de carte** : sous
- * 12 % il cesserait d'être lisible, au-dessus de 34 % il déborderait de la
- * gouttière de la grille.
+ * Il se compte donc en **rem**, comme tout le chrome du projet — mais le rem
+ * seul l'a rendu trop discret sur un grand écran (Keko : « tu as trop réduit
+ * sur le PC »), parce que la racine ne grandit que de moitié quand la carte
+ * triple. *Ce qui est vrai des deux côtés, c'est que la vérité est entre les
+ * deux* : on prend donc le PLUS GRAND des deux règles — une part de carte, et
+ * une taille en rem — et le rem ne commande plus que sur les petits écrans,
+ * là où la carte est si menue qu'une fraction ne suffirait pas.
+ *
+ * **Et les bornes restent en part de carte** : sous 12 % il cesserait d'être
+ * lisible, au-dessus de 34 % il déborderait de la gouttière de la grille.
  */
-export function tailleDuCompte(carteEnPx: number, rems = 0.9): number {
+export function tailleDuCompte(carteEnPx: number, rems = 0.9, plancher = 0.2): number {
   if (carteEnPx <= 0) return CHIFFRE_PILE
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
-  return THREE.MathUtils.clamp((rems * rem) / carteEnPx, 0.12, 0.34)
+  return THREE.MathUtils.clamp(Math.max(plancher, (rems * rem) / carteEnPx), 0.12, 0.34)
 }
 
 /** Le rayon des coins : 3 % de la largeur, comme le `border-radius` du gabarit. */
