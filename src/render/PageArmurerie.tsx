@@ -561,6 +561,24 @@ export function PageArmurerie({
            * retirer laisserait l'utilisateur sans place.
            */
           if (e.detail > 0) e.currentTarget.blur()
+          /**
+           * **IL S'ENFONCE.** Keko : « le feel n'est pas bon, on devrait faire
+           * un petit effet au clic en baissant le bouton comme s'il
+           * s'enfonçait ». *Au doigt, le survol n'existe pas et l'appui dure
+           * trop peu pour se voir* — il faut donc un geste qui se rejoue.
+           *
+           * Il descend VITE et remonte lentement, le contraste de vitesse du
+           * bond des créatures et du gonflement des tas : *un aller-retour
+           * symétrique se lirait comme un rebond, pas comme une touche.*
+           *
+           * Par l'API d'animation et non par une classe : on peut ranger deux
+           * fois de suite, et *une classe qu'on retire et qu'on repose ne
+           * redémarre pas sans un reflow forcé.*
+           */
+          e.currentTarget.animate(
+            [{ translate: '0 0' }, { translate: '0 2px', offset: 0.28 }, { translate: '0 0' }],
+            { duration: 190, easing: 'ease-out' },
+          )
           onTrier?.()
         }}
         title="Ranger le coffre"

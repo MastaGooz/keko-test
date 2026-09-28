@@ -4263,13 +4263,30 @@ de même catégorie et même rareté s'échangeraient à chaque clic. *Les piles
 referment d'elles-mêmes* : deux exemplaires ont même catégorie, même rareté et
 même nom.
 
-**ET IL NE GARDE PAS LE FOCUS.** Après un clic à la souris, il restait allumé
-jusqu'au clic suivant — Keko : « ça fait croire qu'on aurait un fonctionnement
-on/off à tort ». *Un bouton qui agit n'a pas d'état* : il fait, et il retombe.
-C'est la règle déjà tenue par les boutons du butin — « il agit, il n'attend
-pas ». On le rend donc **au pointeur seulement** (`e.detail > 0`) : au clavier,
-le focus est le seul repère de l'endroit où l'on est, et le retirer laisserait
-l'utilisateur sans place.
+**ET IL NE RESTE PAS ALLUMÉ, NI À LA SOURIS NI AU DOIGT.** Keko : « ça fait
+croire qu'on aurait un fonctionnement on/off à tort ». *Un bouton qui agit n'a
+pas d'état* : il fait, et il retombe — la règle déjà tenue par les boutons du
+butin, « il agit, il n'attend pas ». **Deux causes, une par appareil**, et
+corriger la première ne corrigeait pas la seconde :
+
+- à la souris, c'était le **FOCUS**, gardé jusqu'au clic suivant. On le rend au
+  pointeur seulement (`e.detail > 0`) : au clavier, le focus est le seul repère
+  de l'endroit où l'on est, et le retirer laisserait l'utilisateur sans place ;
+- au doigt, c'était le **SURVOL**, qui reste collé après la tape. `.arm-tri:hover`
+  n'était pas sous `@media (hover: hover)` — *la règle est écrite dans le projet
+  depuis la main du jeu 2D*, elle manquait ici et aux onglets voisins, qui
+  gardaient de la même façon l'air d'être choisis.
+
+**ET IL S'ENFONCE QUAND ON L'ACTIONNE.** Keko : « le feel n'est pas bon, on
+devrait faire un petit effet au clic en baissant le bouton comme s'il
+s'enfonçait ». *Au doigt le survol n'existe pas, et l'appui dure trop peu pour
+se voir* : il fallait un geste qui se rejoue. Il descend vite et remonte
+lentement — le contraste de vitesse du bond des créatures et du gonflement des
+tas, *un aller-retour symétrique se lirait comme un rebond, pas comme une
+touche.* Par l'API d'animation et non par une classe, pour la raison habituelle :
+on peut ranger deux fois de suite, et *une classe qu'on retire et qu'on repose
+ne redémarre pas sans un reflow forcé.* Le fond de l'appui (`:active`) le
+double sans le gêner : *l'un tient le FOND, l'autre la PLACE.*
 
 **Sa zone sensible déborde son dessin** (un `::after` en débord). L'en-tête ne
 fait qu'une vingtaine de pixels sur un téléphone et *le doigt ne rétrécit pas

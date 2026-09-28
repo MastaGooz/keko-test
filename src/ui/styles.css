@@ -5050,16 +5050,35 @@ body {
   inset: -0.7rem -0.5rem -0.2rem -0.7rem;
 }
 
-.arm-tri:hover {
-  border-color: #a98c4f;
-  background: #211d15;
-  color: #f0ddae;
+/* LE SURVOL NE S'ACTIVE QUE LA OU IL EXISTE. Sans ce garde, la teinte reste
+   COLLEE apres la tape sur telephone -- le bouton avait l'air allume jusqu'a
+   ce qu'on touche autre chose, exactement ce que le focus faisait a la souris.
+   *La regle est ecrite dans le projet depuis la main du jeu 2D* ; elle
+   manquait ici, et aux onglets voisins. */
+@media (hover: hover) and (pointer: fine) {
+  .arm-tri:hover {
+    border-color: #a98c4f;
+    background: #211d15;
+    color: #f0ddae;
+  }
 }
 
-/* AU DOIGT, le survol n'existe pas : c'est l'appui qui doit repondre. */
+/* ET IL S'ENFONCE QUAND ON L'ACTIONNE. Demande par Keko -- « le feel n'est pas
+   bon, on devrait faire un petit effet au clic en baissant le bouton comme
+   s'il s'enfoncait ». *Un bouton sans reponse au doigt ne dit pas qu'il a
+   compris* : le survol ne vaut qu'a la souris, et rien ne repondait au tap.
+
+   L'appui tient l'etat tant qu'on presse, et l'animation le rejoue pour les
+   tapes trop breves pour qu'on le voie -- les deux ne se marchent pas dessus,
+   l'une tient le FOND, l'autre la PLACE. */
 .arm-tri:active {
   background: #2a2419;
   color: #f0ddae;
+}
+
+/* Pas de pastille bleue d'iOS par-dessus : c'est notre effet qu'on doit voir. */
+.arm-tri {
+  -webkit-tap-highlight-color: transparent;
 }
 
 .arm-onglet {
@@ -5080,8 +5099,12 @@ body {
   transition: color 0.12s, border-color 0.12s, background 0.12s;
 }
 
-.arm-onglet:hover {
-  color: #d8c69c;
+/* MEME GARDE QUE LE BOUTON DE RANGEMENT : sur telephone, un survol colle
+   apres la tape et l'onglet garde l'air choisi alors qu'un autre l'est. */
+@media (hover: hover) and (pointer: fine) {
+  .arm-onglet:hover {
+    color: #d8c69c;
+  }
 }
 
 .arm-onglet.actif {
