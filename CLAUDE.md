@@ -4324,6 +4324,24 @@ même pour toutes les cartes, sinon chaque rareté compilerait le sien. Et la
 clé de cache du programme a changé avec lui — *three ignore ce que
 `onBeforeCompile` a injecté*, la leçon des cartes blanches ou noires.
 
+**ET UNE AURÉOLE CHROMATIQUE ANIMÉE FAIT LE TOUR DE LA CARTE.** Demandée par
+Keko. C'est **la même texture de contour que le halo ordinaire**, donc la même
+silhouette et le même flou : elle épouse la carte au lieu de l'entourer d'un
+rond. Ce qui change est la couleur, qui **tourne avec l'angle autour du
+centre** — *un arc-en-ciel qui fait le tour d'un objet se lit comme une
+irisation, un arc-en-ciel qui le traverse se lit comme un drapeau.*
+
+Elle est **le seul effet du jeu dont le TEMPS soit le moteur**, et c'est
+assumé : une pièce légendaire posée dans un coffre ne bouge pas, donc rien
+d'autre ne pourrait l'animer. Partout ailleurs *la couleur ne bouge que si
+l'objet bouge* — ici il n'y a pas d'objet qui bouge. Elle respire sur deux
+fréquences qui ne retombent jamais en phase, comme le frémissement : *un
+battement régulier se lit comme un clignotement d'alerte.*
+
+**Elle passe DERRIÈRE le halo ordinaire** : quand une pièce légendaire est
+engagée, c'est l'or de l'engagement qu'on doit lire en premier — *un état du
+jeu passe devant une parure.*
+
 **LE LAITON NU EST LE COMMUN** : la carte ordinaire ne change pas d'un pixel, et
 seules les pièces rares se signalent. *Une échelle dont le premier cran est le
 silence se lit mieux qu'une échelle qui crie partout.*

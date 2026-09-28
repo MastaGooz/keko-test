@@ -439,7 +439,7 @@ export function Carte3D({
   const { size, viewport } = useThree()
   const dpr = viewport.dpr
 
-  const { face, laiton, halo, verso } = useMemo(() => {
+  const { face, laiton, halo, verso, aureole } = useMemo(() => {
     const laiton = new THREE.MeshStandardMaterial({
       // LA TRANCHE SUIT LE CADRE. La coque peinte prend la teinte de la
       // rareté ; si le corps restait laiton, l'épaisseur trahirait le métal
@@ -624,7 +624,50 @@ ${nuanceur.fragmentShader}`
       metalness: 0.15,
       alphaTest: 0.5,
     })
-    return { face, laiton, halo, verso }
+    /**
+     * L'AURÉOLE CHROMATIQUE DU DIAMANT — demandée par Keko : « un effet de
+     * brillance chromatique autour de la carte, animé ».
+     *
+     * **Elle épouse la carte au lieu de l'entourer d'un rond** : c'est la même
+     * texture de contour que le halo ordinaire, donc la même silhouette et le
+     * même flou. Ce qui change est la COULEUR, qui tourne avec l'angle autour
+     * du centre — *un arc-en-ciel qui fait le tour d'un objet se lit comme une
+     * irisation, un arc-en-ciel qui le traverse se lit comme un drapeau.*
+     *
+     * Elle est le seul effet du jeu dont le temps soit le moteur, et c'est
+     * assumé : une pièce légendaire posée dans un coffre ne bouge pas, donc
+     * rien d'autre ne pourrait l'animer. Ailleurs, *la couleur ne bouge que si
+     * l'objet bouge* — ici il n'y a pas d'objet qui bouge.
+     */
+    const aureole = new THREE.ShaderMaterial({
+      uniforms: {
+        uTexte: { value: textureContour() },
+        uTemps: { value: 0 },
+        uForce: { value: 0 },
+      },
+      vertexShader: `varying vec2 vUvA;
+        void main() {
+          vUvA = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }`,
+      fragmentShader: `uniform sampler2D uTexte;
+        uniform float uTemps;
+        uniform float uForce;
+        varying vec2 vUvA;
+        void main() {
+          float masque = texture2D(uTexte, vUvA).a;
+          vec2 d = vUvA - 0.5;
+          float angle = atan(d.y, d.x) / 6.28318;
+          float teinte = fract(angle + uTemps * 0.09);
+          vec3 arc = 0.5 + 0.5 * cos(6.28318 * (teinte + vec3(0.0, 0.33, 0.67)));
+          gl_FragColor = vec4(arc * masque * uForce, masque * uForce);
+        }`,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+      blending: THREE.AdditiveBlending,
+    })
+    return { face, laiton, halo, verso, aureole }
   }, [])
 
   // ELLE SE POSE SUR LE MATÉRIAU, elle ne le reconstruit pas : le rebâtir à
@@ -1046,6 +1089,15 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uIris!.value = carte.rarete === 'legendaire' ? 1 : 0
     }
 
+    // L'AURÉOLE TOURNE ET RESPIRE. Deux fréquences qui ne retombent jamais en
+    // phase, comme le frémissement : *un battement régulier se lit comme un
+    // clignotement d'alerte.*
+    if (carte.rarete === 'legendaire') {
+      aureole.uniforms.uTemps!.value = t
+      aureole.uniforms.uForce!.value =
+        l.vif * (0.5 + Math.sin(t * 1.7) * 0.09 + Math.sin(t * 2.6) * 0.05)
+    }
+
     // L'APPARITION : la carte s'allume, puis la lumière tombe et l'image
     // prend le dessus. Elle grandit d'un cheveu en même temps — sans ça,
     // l'éclat se lirait comme un reflet plutôt que comme une naissance.
@@ -1082,6 +1134,15 @@ ${nuanceur.fragmentShader}`
       <mesh position={[0, 0, -EPAISSEUR]} material={halo} raycast={() => null}>
         <planeGeometry args={[LARGE + DEBORD_CONTOUR * 2, HAUT + DEBORD_CONTOUR * 2]} />
       </mesh>
+
+      {/* L'AURÉOLE DU DIAMANT, un cheveu derrière le halo ordinaire : quand
+          une pièce légendaire est engagée, c'est l'or de l'engagement qu'on
+          doit lire en premier — *un état du jeu passe devant une parure.* */}
+      {carte.rarete === 'legendaire' && (
+        <mesh position={[0, 0, -EPAISSEUR * 1.2]} material={aureole} raycast={() => null}>
+          <planeGeometry args={[LARGE + DEBORD_CONTOUR * 2, HAUT + DEBORD_CONTOUR * 2]} />
+        </mesh>
+      )}
 
       {/* L'ONDE : le contour de la carte, posé DERRIÈRE elle. Elle part
           exactement à sa taille, donc on ne voit que ce qui dépasse — *c'est
