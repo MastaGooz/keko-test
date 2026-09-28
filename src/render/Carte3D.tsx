@@ -501,6 +501,7 @@ export function Carte3D({
       nuanceur.uniforms.uGris = { value: 0 }
       nuanceur.uniforms.uLustre = { value: 0.5 }
       nuanceur.uniforms.uLustreForce = { value: 0 }
+      nuanceur.uniforms.uIris = { value: 0 }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -514,14 +515,51 @@ ${nuanceur.vertexShader}`.replace(
          float luminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(luminance), uGris);
          float bande = (vLustreUv.x + vLustreUv.y) * 0.5;
+
+         // L'IRISATION : elle tourne avec l'ANGLE DE VUE, pas avec le temps.
+         // C'est ce qui sépare un hologramme d'un arc-en-ciel peint — la
+         // couleur ne bouge que si l'objet bouge.
+         float incidence = 1.0 - abs(dot(normalize(vViewPosition), normalize(vNormal)));
+         float trame = vLustreUv.x * 0.62 + vLustreUv.y * 0.38;
+         float teinte = fract(trame * 1.15 + incidence * 1.9 + uLustre * 0.4);
+         vec3 arc = 0.5 + 0.5 * cos(6.28318 * (teinte + vec3(0.0, 0.33, 0.67)));
+         // LE RÉSEAU : de fines stries, comme celles qui font la diffraction
+         // d'un vrai foil — *sans elles on lit un dégradé, pas un métal
+         // gravé* — ET IL S'EFFACE QUAND IL DEVIENT PLUS FIN QUE LE PIXEL.
+         //
+         // Une case de coffre fait 46 px sur un téléphone : soixante stries y
+         // tomberaient à une par pixel et **battraient au moindre mouvement**.
+         // La dérivée d'écran dit combien une strie couvre ; au-delà d'un
+         // quart de période on les fond, et il ne reste que l'arc-en-ciel
+         // lisse. *Un réseau trop fin pour l'écran doit disparaître, pas
+         // moirer* — c'est le repli d'un détail, pas sa suppression : sur une
+         // carte regardée de près il est là.
+         float phase = trame * 64.0 + incidence * 7.0;
+         float net = 1.0 - smoothstep(0.18, 0.5, fwidth(phase));
+         float reseau = 1.0 - 0.28 * net * (0.5 - 0.5 * sin(phase * 6.28318));
+         // Elle accroche surtout la lumière là où la carte est claire : le
+         // cadre s'embrase, l'illustration garde son sujet.
+         // ELLE ACCROCHE LE MÉTAL, PAS LE SUJET. Le carré de la luminance
+         // creuse l'écart : le cadre clair s'embrase, l'illustration sombre
+         // garde son dessin — *un lustre qui délave l'image cesse d'être une
+         // matière et devient un voile*, la leçon du lustre ordinaire.
+         float prise = 0.1 + 0.9 * luminance * luminance;
+         diffuseColor.rgb += arc * uIris * prise * reseau * (0.11 + uLustreForce * 1.9);
+
+         // ET LA BANDE DE BRILLANCE PREND LES MÊMES COULEURS. Keko : « je
+         // voudrais un effet holographique aussi sur son effet de brillance
+         // quand on la fait bouger ». *Un foil n'a pas un reflet blanc* : ce
+         // qui passe dessus se décompose.
          float ecart = bande - uLustre;
-         diffuseColor.rgb += vec3(1.0, 0.95, 0.82)
+         vec3 tonLustre = mix(vec3(1.0, 0.95, 0.82), arc * 1.5, uIris);
+         diffuseColor.rgb += tonLustre
            * uLustreForce
            * (exp(-ecart * ecart * 95.0) + 0.5 * exp(-ecart * ecart * 480.0));`,
       )
       nuanceur.fragmentShader = `uniform float uGris;
 uniform float uLustre;
 uniform float uLustreForce;
+uniform float uIris;
 varying vec2 vLustreUv;
 ${nuanceur.fragmentShader}`
     }
@@ -538,7 +576,7 @@ ${nuanceur.fragmentShader}`
      *
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
-    face.customProgramCacheKey = () => 'carte-face-desaturable-lustree'
+    face.customProgramCacheKey = () => 'carte-face-desaturable-lustree-irisee'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -990,6 +1028,10 @@ ${nuanceur.fragmentShader}`
       // ELLE EST DISCRÈTE. Keko l'a trouvée « un peu forte » : un lustre qui
       // délave l'illustration cesse d'être une matière et devient un voile.
       nuanceur.uniforms.uLustreForce!.value = l.brille * (0.13 + Math.sin(t * 3) * 0.03)
+      // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
+      // la carte : un uniforme plutôt qu'un second programme, sinon chaque
+      // rareté compilerait son nuanceur.
+      nuanceur.uniforms.uIris!.value = carte.rarete === 'legendaire' ? 1 : 0
     }
 
     // L'APPARITION : la carte s'allume, puis la lumière tombe et l'image

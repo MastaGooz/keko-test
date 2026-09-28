@@ -4280,6 +4280,43 @@ quatre autres, aux mêmes offsets, mais chaque palier prend une teinte du
 spectre : *une irisation n'est pas une couleur de plus, c'est un arc-en-ciel qui
 traverse la même lumière.*
 
+**ET LE FOIL EST UN NUANCEUR, pas une texture.** Keko : « je voudrais un effet
+holographique aussi sur la carte, et notamment sur son effet de brillance quand
+on la fait bouger — un vrai effet pro, un shader ? »
+
+*Une texture ne peut pas faire ça*, et la raison est la définition même d'un
+hologramme : **sa couleur dépend de l'angle sous lequel on le regarde.** Une
+image peinte, elle, est la même de partout. Le terme s'ajoute donc dans le
+fragment shader de la face — là où vivent déjà la désaturation et le lustre —
+et il est piloté par **l'incidence** (`1 - |vue · normale|`), pas par une
+horloge : *la couleur ne bouge que si l'objet bouge.*
+
+Quatre pièces, et chacune fait un travail que les autres ne font pas :
+
+- **l'arc-en-ciel**, une teinte tirée d'un cosinus décalé sur les trois canaux :
+  trois lignes au lieu d'une conversion HSV ;
+- **le RÉSEAU**, de fines stries qui rejouent la diffraction d'un vrai foil.
+  *Sans elles on lit un dégradé, pas un métal gravé* ;
+- **la prise au CARRÉ de la luminance** : le cadre clair s'embrase,
+  l'illustration sombre garde son dessin — *un lustre qui délave l'image cesse
+  d'être une matière et devient un voile*, la leçon du lustre ordinaire ;
+- **la bande de brillance prend les mêmes couleurs** : *un foil n'a pas un
+  reflet blanc*, ce qui passe dessus se décompose. C'est précisément ce que
+  Keko demandait.
+
+**LE RÉSEAU S'EFFACE QUAND IL DEVIENT PLUS FIN QUE LE PIXEL.** Une case de
+coffre fait 46 px sur un téléphone : soixante stries y tomberaient à une par
+pixel et battraient au moindre mouvement. La dérivée d'écran (`fwidth`) dit
+combien une strie couvre, et au-delà d'un quart de période on les fond — il ne
+reste que l'arc-en-ciel lisse. *Un réseau trop fin pour l'écran doit
+disparaître, pas moirer* : c'est le repli d'un détail, pas sa suppression, et
+sur une carte regardée de près il est là.
+
+**Un uniforme plutôt qu'un second programme** (`uIris`) : le nuanceur est le
+même pour toutes les cartes, sinon chaque rareté compilerait le sien. Et la
+clé de cache du programme a changé avec lui — *three ignore ce que
+`onBeforeCompile` a injecté*, la leçon des cartes blanches ou noires.
+
 **LE LAITON NU EST LE COMMUN** : la carte ordinaire ne change pas d'un pixel, et
 seules les pièces rares se signalent. *Une échelle dont le premier cran est le
 silence se lit mieux qu'une échelle qui crie partout.*
