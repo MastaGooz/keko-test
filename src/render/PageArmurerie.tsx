@@ -209,8 +209,19 @@ export function PageArmurerie({
   const deck = compteDuDeck(hub)
   const valeurs = [pvMax, deck.total, tailleMain, energieMax]
   const avant = useRef(valeurs)
-  /** Ce que les stats valaient juste avant le lâcher, en attente de l'arrivée. */
-  const gele = useRef<number[] | null>(null)
+  /**
+   * CE QU'ON MONTRE TANT QUE LA CARTE N'EST PAS POSÉE.
+   *
+   * **Le chiffre attend l'arrivée, lui aussi.** Keko : « le chiffre doit lui
+   * aussi changer au moment où la carte se fixe ». L'état du jeu bouge dès le
+   * lâcher, donc la stat sautait à sa nouvelle valeur pendant que la carte
+   * tournait encore — *on voyait la conséquence avant la cause*, exactement ce
+   * que le combat évite déjà en faisant monter l'armure à l'impact et non à la
+   * tape.
+   *
+   * C'est un ÉTAT et non une ref : il change ce qui est à l'écran.
+   */
+  const [figees, setFigees] = useState<number[] | null>(null)
 
   // AU LÂCHER, ON FIGE : l'état du jeu a déjà changé à cet instant, donc c'est
   // la dernière occasion de savoir ce qu'il y avait avant. Cet effet est
@@ -218,12 +229,26 @@ export function PageArmurerie({
   // effets est celui de leur déclaration, et c'est ce qui lui fait voir les
   // anciennes.
   useEffect(() => {
-    if (equipements > 0) gele.current = avant.current
+    if (equipements > 0) setFigees(avant.current)
   }, [equipements])
 
+  /**
+   * UN GARDE-FOU : les chiffres ne peuvent pas rester figés pour toujours.
+   *
+   * C'est la carte qui annonce son arrivée, et elle le fait sans faute — mais
+   * si elle était démontée en plein vol, personne ne le dirait plus et la
+   * bande mentirait jusqu'au prochain geste. *Un affichage qui attend un
+   * message doit savoir se rendre s'il ne vient pas.*
+   */
   useEffect(() => {
-    const anciennes = gele.current
-    gele.current = null
+    if (figees === null) return
+    const minuteur = window.setTimeout(() => setFigees(null), 1600)
+    return () => window.clearTimeout(minuteur)
+  }, [figees])
+
+  useEffect(() => {
+    const anciennes = figees
+    setFigees(null)
     if (fixations > 0 && anciennes !== null) {
       valeurs.forEach((v, i) => {
         if (v === anciennes[i]) return
@@ -249,6 +274,9 @@ export function PageArmurerie({
   useEffect(() => {
     avant.current = valeurs
   })
+  /** Ce que la bande AFFICHE : l'ancien tant que la carte n'est pas posée. */
+  const [pvVu, deckVu, mainVu, paVu] = figees ?? valeurs
+
   const [bulle, setBulle] = useState<Bulle | null>(null)
 
   /**
@@ -465,7 +493,7 @@ export function PageArmurerie({
       <div className="arm-etat" style={boite(plan.stats)}>
         <span className="arm-mesure" ref={(el) => void (mesures.current[0] = el)}>
           <span className="arm-vif" ref={(el) => void (vifs.current[0] = el)}>
-            <span className="arm-chiffre">{pvMax}</span>
+            <span className="arm-chiffre">{pvVu}</span>
             <CoeurIcone />
           </span>
         </span>
@@ -475,21 +503,21 @@ export function PageArmurerie({
             trois autres. */}
         <span className="arm-mesure" ref={(el) => void (mesures.current[1] = el)}>
           <span className="arm-vif" ref={(el) => void (vifs.current[1] = el)}>
-            <span className="arm-chiffre">{deck.total}</span>
+            <span className="arm-chiffre">{deckVu}</span>
             <span className="arm-tas">
-              <Tas3D nom="pioche" compte={deck.total} />
+              <Tas3D nom="pioche" compte={deckVu ?? 0} />
             </span>
           </span>
         </span>
         <span className="arm-mesure" ref={(el) => void (mesures.current[2] = el)}>
           <span className="arm-vif" ref={(el) => void (vifs.current[2] = el)}>
-            <span className="arm-chiffre">{tailleMain}</span>
+            <span className="arm-chiffre">{mainVu}</span>
             <MainIcone />
           </span>
         </span>
         <span className="arm-mesure arm-orbe" ref={(el) => void (mesures.current[3] = el)}>
           <span className="arm-vif" ref={(el) => void (vifs.current[3] = el)}>
-            <Orbe3D courant={energieMax} max={energieMax} seul />
+            <Orbe3D courant={paVu ?? 0} max={paVu ?? 0} seul />
           </span>
         </span>
       </div>

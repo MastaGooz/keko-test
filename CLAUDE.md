@@ -4177,7 +4177,15 @@ Trois choses à ne pas défaire :
   jeu change dès le lâcher, donc c'est là qu'on fige ce que les stats valaient
   ; la fixation, une demi-seconde plus tard, déclenche l'effet. Un seul
   compteur ne pouvait pas faire les deux — à l'arrivée, la valeur d'avant a
-  disparu depuis longtemps.
+  disparu depuis longtemps ;
+- **ET LE CHIFFRE ATTEND L'ARRIVÉE, LUI AUSSI.** Keko : « le chiffre doit lui
+  aussi changer au moment où la carte se fixe ». La bande montrait la nouvelle
+  valeur pendant que la carte tournait encore — *on voyait la conséquence avant
+  la cause*, exactement ce que le combat évite en faisant monter l'armure à
+  l'impact et non à la tape. Les valeurs affichées sont donc figées du lâcher à
+  la fixation, et un garde-fou les rend au bout d'une seconde et demie si la
+  carte disparaissait en vol : *un affichage qui attend un message doit savoir
+  se rendre s'il ne vient pas.*
 
 Par l'API d'animation et non par une classe, pour la raison habituelle : deux
 pièces équipées coup sur coup doivent pouvoir relancer le geste avant qu'il
