@@ -4038,6 +4038,21 @@ cesserait d'être lisible, au-dessus il sortirait de la gouttière de la grille.
 **Une case du coffre ne fait que 46 px de large à 844 x 390, et 33 à
 667 x 320.**
 
+**ET IL SE PEINT À SA TAILLE D'AFFICHAGE, comme les cartes.** Keko : « on dirait
+que le contour n'est pas très net, on peut rendre les chiffres avec un contour
+plus net ? » *Réduire un bitmap n'est pas rendre du texte* — la leçon déjà payée
+sur les cartes elles-mêmes, et rejouée ici sans y penser : le disque était peint
+sur une toile de 256 pour couvrir 40 px à l'écran, donc son chiffre était
+rastérisé à 160 px puis écrasé à 25 par les mipmaps. **Mou par construction**,
+quel que soit le soin mis à le dessiner.
+
+Cinq toiles (48 à 224), choisies sur les **pixels physiques** que le disque
+occupe, densité comprise ; le dessin continue de parler en unités de 256 et
+c'est le CONTEXTE qui est mis à l'échelle, donc le moteur de police trace chaque
+glyphe à sa taille finale. La texture est mise en cache par nombre ET par toile,
+et elle demande le filtrage anisotrope — *le disque se regarde en biais dès
+qu'on incline la carte.*
+
 **POUR JUGER DE GROSSES PILES : `?r3f&piles=13,6`.** Demandé par Keko — « on
 peut tester d'avoir 6 super potions et 13 potions normales ? » Le coffre de
 départ n'en a que quatre et deux, donc *le compte d'une pile n'y passe jamais à

@@ -1389,7 +1389,7 @@ export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {
  * Le « × » ne revient pas : seul, dans un coin, un chiffre ne peut être qu'un
  * compte.
  */
-const BADGES = new Map<number, THREE.CanvasTexture>()
+const BADGES = new Map<string, THREE.CanvasTexture>()
 
 /**
  * LE DISQUE, en part de la toile : le reste est le jeu de son ombre.
@@ -1402,22 +1402,49 @@ const BADGES = new Map<number, THREE.CanvasTexture>()
  */
 export const PART_DISQUE = 0.78
 
-export function textureNombre(nombre: number): THREE.CanvasTexture {
-  const connue = BADGES.get(nombre)
+/** Les toiles du disque : un badge est petit, il n'en faut pas de grandes. */
+const TOILES_BADGE = [48, 72, 108, 160, 224] as const
+
+/** Celle qu'il faut pour couvrir cette largeur sans étirer ni minifier. */
+export function toileDuNombre(largeurPx: number): number {
+  return TOILES_BADGE.find((t) => t >= largeurPx) ?? TOILES_BADGE[TOILES_BADGE.length - 1]!
+}
+
+/**
+ * ET ON PEINT À LA TAILLE D'AFFICHAGE, on ne réduit pas après coup.
+ *
+ * Keko : « on dirait que le contour n'est pas très net, on peut rendre les
+ * chiffres avec un contour plus net ? » *Réduire un bitmap n'est pas rendre du
+ * texte* — c'est la leçon déjà payée sur les cartes elles-mêmes : peint à 256
+ * pour être affiché sur 31, le chiffre était rastérisé à 160 px puis écrasé à
+ * 20 par les mipmaps, donc mou par construction.
+ *
+ * Tout le dessin continue de parler en unités de 256 ; c'est le CONTEXTE qui
+ * est mis à l'échelle, donc le moteur de police trace chaque glyphe **à sa
+ * taille finale**, avec son antialiasing et son hinting. Une ligne.
+ */
+export function textureNombre(nombre: number, largeurPx = 256): THREE.CanvasTexture {
+  const toile = toileDuNombre(largeurPx)
+  const cle = `${nombre}#${toile}`
+  const connue = BADGES.get(cle)
   if (connue !== undefined) return connue
 
   const c = 256
   const canvas = document.createElement('canvas')
-  canvas.width = c
-  canvas.height = c
+  canvas.width = toile
+  canvas.height = toile
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
-  BADGES.set(nombre, texture)
+  // Le disque se regarde en biais dès qu'on incline la carte : sans filtrage
+  // anisotrope son cerne se brouille.
+  texture.anisotropy = 8
+  BADGES.set(cle, texture)
 
   const ctx = canvas.getContext('2d')
   if (ctx === null) return texture
 
   const peindre = (): void => {
+    ctx.setTransform(toile / c, 0, 0, toile / c, 0, 0)
     ctx.clearRect(0, 0, c, c)
     const rayon = (c * PART_DISQUE) / 2
     const filet = rayon * 0.11

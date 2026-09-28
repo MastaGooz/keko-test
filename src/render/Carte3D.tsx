@@ -1057,7 +1057,10 @@ ${nuanceur.fragmentShader}`
           {/* La toile est plus large que le disque : son ombre y loge. */}
           <planeGeometry args={[pileTaille / PART_DISQUE, pileTaille / PART_DISQUE]} />
           <meshBasicMaterial
-            map={textureNombre(pile)}
+            // LA TOILE SE CHOISIT SUR LES PIXELS PHYSIQUES qu'elle couvre, et
+            // le dessin s'y peint à sa taille d'affichage : *réduire un bitmap
+            // n'est pas rendre du texte.* La règle est celle des cartes.
+            map={textureNombre(pile, (largeurPx * pileTaille) / PART_DISQUE)}
             transparent
             // IL N'ÉCRIT PAS DE PROFONDEUR : son plan déborde de la carte, et
             // *ce qui est transparent ne doit rien cacher.*
