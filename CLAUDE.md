@@ -3964,13 +3964,41 @@ même objet.*
 règle de la même carte partout : une Potion empilée et une Potion équipée
 doivent partager leur dessin, donc leur texture. *Le nombre n'est pas une
 propriété de l'objet, c'est une propriété de l'étagère* — il disparaît dès que
-la carte en sort. Il vit dans le coin haut-DROIT, le seul libre : la bande
-haut-gauche porte le compteur de cartes de la pièce, le pied porte son type.
-C'est une MENTION, pas un jeton — « ×3 » en or sur rien, avec une ombre qui le
-détache sans lui donner de bord, comme le nombre d'exemplaires du zoom et
-l'étiquette des tas. Et il est enfant de la carte, donc il suit sa place
-amortie, sa taille et son inclinaison : *ce qui est écrit sur une carte bouge
+la carte en sort. C'est une MENTION, pas un jeton — « ×3 » en or sur rien, avec
+une ombre qui le détache sans lui donner de bord, comme le nombre d'exemplaires
+du zoom et l'étiquette des tas. Et il est enfant de la carte, donc il suit sa
+place amortie, sa taille et son inclinaison : *ce qui annote une carte bouge
 avec elle.*
+
+**ET IL VIT SOUS LA CARTE, PAS DEDANS.** Il a d'abord été posé dans le coin
+haut-droit, le seul libre du dessin ; Keko : « il faudrait mettre le nombre sous
+la carte je pense, pas dedans ». *Une mention posée sur une illustration se lit
+comme un badge collé dessus* — c'est exactement le chemin qu'avait déjà fait le
+nombre d'exemplaires du zoom. **Sa hauteur est imposée par la GOUTTIÈRE de la
+grille** (0,168 carte entre deux rangées) : il s'y centre, et la rangée du
+dessous n'est jamais touchée.
+
+**LA PILE RESTE QUAND ON EN TIRE UNE CARTE.** Keko : « quand je drag une carte
+d'une pile, la pile disparaît alors qu'il faudrait qu'elle reste et que seul le
+nombre change ». *On ne prend pas LA pile, on en prend UN exemplaire* — donc ce
+qu'on soulève doit découvrir ce qu'il y avait dessous, pas un trou.
+
+D'où la **doublure** : la carte suivante de la pile, posée d'un cheveu derrière
+la première. Invisible tant que celle-ci la recouvre, elle porte le compte
+diminué dès qu'elle s'en va. Trois choses la tiennent :
+
+- **elle porte l'identifiant du DEUXIÈME exemplaire**, donc au lâcher — quand le
+  premier part s'équiper — elle devient le dessus de la pile **sans changer
+  d'instance** : rien ne saute. C'est la règle déjà payée sur la pièce tenue,
+  *deux instances pour un seul objet, c'est un saut de position à chaque
+  relais* ;
+- **elle ne se prend pas et ne se vise pas** : elle est `inerte`, et le
+  rangement l'ignore quand il cherche la case sous le doigt. *C'est une
+  épaisseur, pas un objet de plus* ;
+- **le compte passe de l'une à l'autre**, il n'est jamais sur les deux : la
+  carte du dessus le porte tant qu'elle est en place, la doublure le reprend —
+  moins une — dès que le doigt l'emmène. *Un exemplaire qu'on tient n'est plus
+  dans la pile.*
 
 **ET RANGER DÉPLACE LA PILE ENTIÈRE**, pas son représentant :
 `echangerDansCoffre` prend désormais deux LISTES d'identifiants et replace des

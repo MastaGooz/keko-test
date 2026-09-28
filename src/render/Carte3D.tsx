@@ -44,9 +44,21 @@ export const LARGE = 1
 export const HAUT = 1.4
 const EPAISSEUR = 0.012
 
-/** La mention du nombre d'exemplaires : au rapport 2:1 de sa toile. */
-const MENTION_L = 0.36
+/**
+ * La mention du nombre d'exemplaires, au rapport 2:1 de sa toile — **SOUS la
+ * carte**, jamais dessus. Keko : « il faudrait mettre le nombre sous la carte,
+ * pas dedans ». *Une mention posée sur une illustration se lit comme un badge
+ * collé dessus* — c'est la règle déjà tranchée pour le nombre d'exemplaires du
+ * zoom, qui avait fait exactement le même chemin.
+ *
+ * Elle loge dans la GOUTTIÈRE de la grille du coffre — 0,168 carte entre deux
+ * rangées — donc sa hauteur ne peut pas la dépasser : on la centre dans
+ * l'écart, et la rangée du dessous n'est jamais touchée.
+ */
+const MENTION_L = 0.3
 const MENTION_H = MENTION_L / 2
+/** Le milieu de la gouttière : une demi-carte, plus la moitié de l'écart. */
+const MENTION_Y = -(1.4 / 2) - 0.084
 
 /** Le rayon des coins : 3 % de la largeur, comme le `border-radius` du gabarit. */
 export const RAYON_COIN = 0.03
@@ -965,19 +977,17 @@ ${nuanceur.fragmentShader}`
         frustumCulled={false}
       />
 
-      {/* LA PILE : « x3 » en or, dans le coin haut-DROIT. La bande
-          haut-gauche porte deja le compteur de cartes de la piece, et le pied
-          est enfoui sous le bord des la main — *le seul coin libre est celui
-          -la.* C'est une MENTION, pas un jeton : du texte sur rien, avec une
-          ombre qui le detache sans lui donner de bord. La regle est deja
-          tranchee pour l'etiquette des tas et pour le nombre d'exemplaires du
-          zoom — on ne decide pas sur ce chiffre.
+      {/* LA PILE : « x3 » en or, SOUS la carte. C'est une MENTION, pas un
+          jeton : du texte sur rien, avec une ombre qui le détache sans lui
+          donner de bord. La règle est déjà tranchée pour l'étiquette des tas
+          et pour le nombre d'exemplaires du zoom — on ne décide pas sur ce
+          chiffre, donc il n'a pas à peser comme une valeur de jeu.
 
           Elle est enfant de la carte, donc elle suit sa place amortie, sa
-          taille et son inclinaison : *ce qui est ecrit sur une carte bouge
-          avec elle.* */}
+          taille et son inclinaison : *ce qui annote une carte bouge avec
+          elle.* */}
       {pile !== undefined && pile > 1 && (
-        <mesh position={[LARGE * 0.5 - MENTION_L / 2 - 0.045, HAUT * 0.5 - MENTION_H / 2 - 0.05, EPAISSEUR / 2 + 0.003]} raycast={() => null}>
+        <mesh position={[0, MENTION_Y, EPAISSEUR / 2 + 0.003]} raycast={() => null}>
           <planeGeometry args={[MENTION_L, MENTION_H]} />
           <meshBasicMaterial map={texturePastille(pile)} transparent toneMapped={false} />
         </mesh>

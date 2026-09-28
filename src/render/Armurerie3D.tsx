@@ -197,6 +197,56 @@ type Props = {
   onPeinte?: () => void
 }
 
+/**
+ * LA CARTE DE DESSOUS D'UNE PILE, quand il y en a plus d'une.
+ *
+ * Elle porte l'identifiant du DEUXIÈME exemplaire — donc au lâcher, quand le
+ * premier part s'équiper, elle devient le dessus de la pile sans changer
+ * d'instance : rien ne saute. *Deux instances pour un seul objet, c'est un
+ * saut de position à chaque relais.* Son dessin est celui du représentant,
+ * puisque deux exemplaires empilés sont par définition la même carte.
+ */
+function doublureDe<T extends { nombre: number; ids: string[] }>(
+  pile: T,
+  objet: Objet | null,
+  tresor: Carte | null,
+  position: [number, number, number],
+  taille: number,
+  rang: number,
+): {
+  objet: Objet | null
+  tresor: Carte | null
+  id: string
+  slot: Slot
+  position: [number, number, number]
+  taille: number
+  rang?: number
+  pile?: number
+  ids?: string[]
+  doublure?: boolean
+  chef?: string
+}[] {
+  const dessous = pile.ids[1]
+  if (pile.nombre < 2 || dessous === undefined) return []
+  return [
+    {
+      objet,
+      tresor,
+      id: dessous,
+      slot: { ou: 'reserve' } as Slot,
+      // UN CHEVEU DERRIÈRE : sans écart les deux cartes se disputent le test
+      // de profondeur, et l'une clignote sur l'autre.
+      position: [position[0], position[1], position[2] - 0.004],
+      taille,
+      rang,
+      pile: pile.nombre - 1,
+      ids: pile.ids.slice(1),
+      doublure: true,
+      chef: pile.ids[0],
+    },
+  ]
+}
+
 export function Armurerie3D({
   hub,
   onglet,
@@ -284,6 +334,14 @@ export function Armurerie3D({
     pile?: number
     /** Leurs identifiants : ranger déplace la pile entière. */
     ids?: string[]
+    /**
+     * LA CARTE DE DESSOUS D'UNE PILE : celle qu'on voit quand on soulève la
+     * première. Elle ne répond pas au doigt et n'est jamais la cible d'un
+     * rangement — *c'est une épaisseur, pas un objet de plus.*
+     */
+    doublure?: boolean
+    /** Pour une doublure : l'identifiant de la carte posée dessus. */
+    chef?: string
   }[] = [
     ...contenu.pieces.flatMap((pile, i) => {
       const objet = pile.objet
@@ -301,6 +359,7 @@ export function Armurerie3D({
           pile: pile.nombre,
           ids: pile.ids,
         },
+        ...doublureDe(pile, objet, null, placeCase(plan, rang, reste), plan.tailleCoffre, rang),
       ]
     }),
     ...contenu.tresors.flatMap((pile, i) => {
@@ -319,6 +378,7 @@ export function Armurerie3D({
           pile: pile.nombre,
           ids: pile.ids,
         },
+        ...doublureDe(pile, null, tresor, placeCase(plan, rang, reste), plan.tailleCoffre, rang),
       ]
     }),
     ...hub.chargement.mains.flatMap((arme, rang) =>
@@ -487,7 +547,7 @@ export function Armurerie3D({
       if (cible?.ou === 'reserve' && t?.slot.ou === 'reserve' && t.objet !== null) {
         const rang = caseSousLePoint(plan, point.x, point.y, reste)
         const vise = rang === null ? undefined : objets.find(
-          (o) => o.slot.ou === 'reserve' && o.rang === rang,
+          (o) => o.slot.ou === 'reserve' && o.rang === rang && o.doublure !== true,
         )
         if (vise !== undefined && vise.id !== t.id) {
           jouerSon(SON_POSER)
@@ -698,6 +758,27 @@ export function Armurerie3D({
           c'est un saut de position à chaque relais.* */}
       {objets.map((t, i) => {
         const suitLeDoigt = i === tenue && doigt !== null
+        /**
+         * LA PILE RESTE, SEUL LE NOMBRE CHANGE. Keko : « quand je drag une
+         * carte d'une pile, la pile disparaît alors qu'il faudrait qu'elle
+         * reste et que seul le nombre change ». *On ne prend pas LA pile, on
+         * en prend UN exemplaire* — donc ce qu'on soulève doit découvrir ce
+         * qu'il y avait dessous, pas un trou.
+         *
+         * Le compte suit : il vit sur la carte du dessus tant qu'elle est en
+         * place, et passe à la doublure — diminué d'une — dès qu'elle s'en va.
+         * *Un exemplaire qu'on tient dans la main n'est plus dans la pile.*
+         */
+        const chefSorti =
+          doigt !== null && tenue !== null && objets[tenue]?.id === (t.chef ?? t.id)
+        const compte =
+          t.doublure === true
+            ? chefSorti
+              ? t.pile
+              : undefined
+            : chefSorti
+              ? undefined
+              : t.pile
         return (
           <Carte3D
             key={t.id}
@@ -742,8 +823,10 @@ export function Armurerie3D({
             onArrivee={() => setEnVol((v) => (v === t.id ? null : v))}
             // ELLE NE SE RATTRAPE PAS EN PLEIN VOL : tant qu'elle n'est pas
             // posée, elle ne répond plus au doigt.
-            inerte={enVol === t.id}
-            pile={t.pile}
+            // UNE DOUBLURE NE SE PREND PAS : c'est l'épaisseur de la
+            // pile, et la carte du dessus est déjà l'exemplaire qu'on tire.
+            inerte={enVol === t.id || t.doublure === true}
+            pile={compte}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />
