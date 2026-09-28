@@ -12,6 +12,7 @@ import {
   CAPACITE_PILE,
   consommablesDeLaPile,
   echangerDansCoffre,
+  rangerEnFinDeCoffre,
   accepteDepuis,
   creerHub,
   deckEmporte,
@@ -266,6 +267,18 @@ const COTTE: Armure = {
   verifier('une pile incomplete ne fait rien',
     echangerDansCoffre(h, [a!.id], [potions[0]!, 'fantome']) === h)
   verifier('une liste vide ne fait rien', echangerDansCoffre(h, [a!.id], []) === h)
+
+  // SUR UNE CASE VIDE, on va au bout : il n'y a personne avec qui echanger.
+  const auBout = rangerEnFinDeCoffre(h, [a!.id])
+  verifier('un objet range en fin de coffre y va',
+    auBout.reserve[auBout.reserve.length - 1]!.id === a!.id)
+  verifier('...sans rien perdre', auBout.reserve.length === h.reserve.length)
+  const pileAuBout = rangerEnFinDeCoffre(h, potions)
+  verifier('une pile entiere y va aussi, dans son ordre',
+    pileAuBout.reserve.slice(-potions.length).every((o, i) => o.id === potions[i]))
+  verifier('une pile incomplete ne fait rien',
+    rangerEnFinDeCoffre(h, [potions[0]!, 'fantome']) === h)
+  verifier('une liste vide ne fait rien non plus', rangerEnFinDeCoffre(h, []) === h)
 
   // ON N'ECHANGE QUE DANS LA MEME LISTE : un tresor n'est pas une piece, et il
   // ne doit jamais se retrouver dans `reserve`.

@@ -368,16 +368,6 @@ type Props = {
    */
   inerte?: boolean
   /**
-   * ELLE NE SE DESSINE PAS — mais elle reste MONTÉE.
-   *
-   * *Une carte démontée puis remontée repasse par son état sombre* le temps
-   * que sa texture revienne du cache, donc elle clignote ; et elle perdrait
-   * l'amortissement de sa place. Quand il ne s'agit que de la faire
-   * disparaître un instant — la doublure d'une pile qu'on emporte en entier —
-   * il suffit de ne pas la rendre visible.
-   */
-  cachee?: boolean
-  /**
    * COMBIEN D'EXEMPLAIRES IDENTIQUES CETTE CARTE REPRESENTE — au coffre, la
    * pile. Rien en dessous de deux : *une mention qui dit « il y en a un » ne
    * dit rien.*
@@ -436,7 +426,6 @@ export function Carte3D({
   onFixee,
   onArrivee,
   inerte = false,
-  cachee = false,
   pile,
   pileTaille = CHIFFRE_PILE,
   curseurPartage,
@@ -1019,7 +1008,7 @@ ${nuanceur.fragmentShader}`
   })
 
   return (
-    <group ref={groupe} position={position} visible={!cachee}>
+    <group ref={groupe} position={position}>
       {/* LE CONTOUR, derrière la carte : un plan plus grand qu'elle, qui porte
           la texture de lueur. Seul ce qui dépasse se voit — le centre est
           masqué par la carte. Il ne capte pas le pointeur : sans `raycast`

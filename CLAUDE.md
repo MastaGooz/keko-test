@@ -4124,16 +4124,31 @@ on range LA PILE.** Un exemplaire seul n'aurait de toute façon nulle part où
 aller : *le coffre regroupe par ce qu'il montre*, donc deux tas identiques à
 deux endroits ne peuvent pas exister.
 
-Restait à le DIRE pendant le geste. Au-dessus d'une case occupée du coffre : la
-carte tenue prend le compte de sa pile, la doublure s'efface et le pointillé de
-la case d'origine revient. Au-dessus d'un slot : la pile reste avec son compte
-diminué et la carte tenue n'en porte aucun. C'est la règle du slot qui
-s'allume — *l'effet comme le refus se lisent avant le lâcher.*
+**ET ÇA NE SE DIT PAS PENDANT LE GESTE.** J'avais fait s'effacer la pile
+d'origine dès que le doigt passait au-dessus d'une case du coffre, pour annoncer
+que le tas entier suivrait. Keko : « la pile d'origine disparaît et réapparaît
+bizarrement quand la carte draguée passe par-dessus d'autres cartes du coffre ».
+*Un aperçu qui s'allume et s'éteint à chaque case traversée n'annonce rien, il
+clignote* — et en balayant le coffre on en traverse cinq.
 
-**La doublure s'efface sans se DÉMONTER** (`cachee` sur `Carte3D`) : une carte
-démontée puis remontée repasse par son état sombre le temps que sa texture
-revienne du cache, donc elle clignoterait à chaque fois que le doigt traverse
-une case.
+La règle est donc celle que Keko a dictée : **on soulève l'exemplaire du dessus,
+la pile reste à sa place en attendant le lâcher, et c'est le lâcher qui
+décide.** Le geste ne montre qu'une chose, et elle est vraie jusqu'au bout : on
+tient une carte.
+
+*À retenir si le sujet revient* : **un aperçu ne vaut que si la cible se
+désigne**, comme un slot du chargement qu'on vise et qu'on quitte ; une grille
+de cases identiques qu'on traverse par dizaines n'en est pas une.
+
+**ET SUR UNE CASE VIDE, la pile va au bout de la liste** (`rangerEnFinDeCoffre`).
+Keko : « quand je drague un objet d'une pile sur une case vide du coffre, elle
+n'est pas déplacée, alors qu'une carte sans pile est placée en dernière
+position ». Il n'y a là personne avec qui échanger, donc on range à la suite —
+et une carte seule le faisait déjà par la porte ordinaire du « repose au
+râtelier ». **Mais une pile, non** : `deplacerPiece` n'en déplaçait qu'un
+exemplaire, et comme le coffre montre une pile à la place de son PREMIER
+exemplaire, rien ne bougeait. *Ce qui vaut pour l'échange vaut pour le
+rangement : on déplace le bloc.*
 
 **ET UNE PILE S'INCLINE D'UN BLOC.** Keko : « quand je fais bouger la carte du
 dessus d'une pile avec ma souris, elle traverse celle d'en dessous, il faudrait

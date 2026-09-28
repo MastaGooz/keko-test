@@ -173,6 +173,8 @@ type Props = {
   onDeplacer?: (source: Slot, cible: Slot, id: string) => void
   /** Deux objets du coffre changent de place. */
   onEchanger?: (idsA: string[], idsB: string[]) => void
+  /** Poser sur une case VIDE du coffre : l'objet — ou la pile — va au bout. */
+  onRanger?: (ids: string[]) => void
   onRegarder?: (objet: Objet) => void
   /** Un trésor se REGARDE et ne se glisse pas : il n'a aucun slot. */
   onRegarderTresor?: (tresor: Carte) => void
@@ -261,6 +263,7 @@ export function Armurerie3D({
   defilement,
   onDeplacer,
   onEchanger,
+  onRanger,
   onRegarder,
   onRegarderTresor,
   onDescendre,
@@ -584,6 +587,15 @@ export function Armurerie3D({
           onEchanger?.(t.ids ?? [t.id], vise.ids ?? [vise.id])
           return
         }
+        // SUR UNE CASE VIDE, on range en fin de liste — là où la grille garde
+        // ses étagères vides. Une carte seule y allait déjà par la porte
+        // ordinaire ; *une PILE, non* : `deplacerPiece` n'en déplaçait qu'un
+        // exemplaire, et le coffre montre une pile à la place de son premier.
+        if (vise === undefined && rang !== null) {
+          jouerSon(SON_POSER)
+          onRanger?.(t.ids ?? [t.id])
+          return
+        }
       }
       // UN TRÉSOR NE SE DÉPLACE PAS : aucun slot ne le prend, et le coffre ne
       // le rend jamais. *Il se consulte, c'est tout ce qu'il fait ici.*
@@ -667,37 +679,26 @@ export function Armurerie3D({
    * **LA DESTINATION DÉCIDE CE QU'ON EMPORTE : un exemplaire, ou LA PILE.**
    *
    * Keko : « le joueur n'a aucun moyen pour déplacer une pile entière dans le
-   * coffre ». Il l'avait en réalité — `echangerDansCoffre` replace des blocs
-   * depuis le début — mais **rien ne le lui disait** : on soulevait un
-   * exemplaire, la pile restait derrière avec son compte diminué, et treize
-   * cartes sautaient au lâcher. *Un geste qui montre une chose et en fait une
-   * autre n'existe pas pour celui qui le fait.*
+   * coffre ». Il l'avait — `echangerDansCoffre` replace des blocs — mais rien
+   * ne le lui disait. Les deux intentions sont distinctes et se lisent à la
+   * destination : **vers un slot on équipe UN exemplaire, vers le coffre on
+   * range LA PILE.** Un exemplaire seul n'aurait de toute façon nulle part où
+   * aller : *le coffre regroupe par ce qu'il montre*, donc deux tas identiques
+   * à deux endroits ne peuvent pas exister.
    *
-   * Les deux intentions sont pourtant distinctes et se lisent à la
-   * destination : **vers un slot, on équipe UN exemplaire ; vers une case du
-   * coffre, on range LA PILE** — un exemplaire seul n'aurait de toute façon
-   * nulle part où aller, puisque le coffre regroupe par ce qu'il montre.
+   * **ET ÇA NE SE DIT PAS PENDANT LE GESTE.** J'avais fait s'effacer la pile
+   * d'origine dès que le doigt passait au-dessus d'une case du coffre, pour
+   * annoncer que le tas entier suivrait. Keko : « la pile d'origine disparaît
+   * et réapparaît bizarrement quand la carte passe par-dessus d'autres cartes
+   * du coffre ». *Un aperçu qui s'allume et s'éteint à chaque case traversée
+   * n'annonce rien, il clignote* — et en balayant le coffre on en traverse
+   * cinq.
    *
-   * Reste donc à le DIRE pendant le geste : au-dessus d'une case du coffre, la
-   * carte tenue prend le compte de sa pile, la doublure s'efface et le
-   * pointillé de la case d'origine revient. C'est la règle du slot qui
-   * s'allume — *le refus comme l'effet se lisent avant le lâcher.*
+   * La règle est donc celle que Keko a dictée : **on soulève l'exemplaire du
+   * dessus, la pile reste à sa place en attendant le lâcher, et c'est le
+   * lâcher qui décide.** Le geste ne montre qu'une chose, et elle est vraie
+   * jusqu'au bout : on tient une carte.
    */
-  const caseVisee =
-    doigt === null ? null : caseSousLePoint(plan, doigt.x, doigt.y, reste)
-  const pileEntiere =
-    portee !== null &&
-    (portee.pile ?? 1) > 1 &&
-    portee.slot.ou === 'reserve' &&
-    sousLeDoigt?.ou === 'reserve' &&
-    caseVisee !== null &&
-    objets.some(
-      (o) =>
-        o.slot.ou === 'reserve' &&
-        o.rang === caseVisee &&
-        o.doublure !== true &&
-        o.id !== portee.id,
-    )
 
   /**
    * LES SLOTS QUI PRENNENT CE QU'ON TIENT, tant qu'on le tient.
@@ -793,11 +794,8 @@ export function Armurerie3D({
           carte de dessous, pas un trou — Keko : « le slot en pointillé ne doit
           pas devenir visible quand il y a encore des cartes de la pile en
           dessous ». *Un pointillé dit « il n'y a rien ici », et il y a encore
-          quelque chose.*
-
-          Sauf quand c'est la PILE ENTIÈRE qui part : là, la case se vide pour
-          de bon, et le pointillé redevient vrai. */}
-      {portee !== null && doigt !== null && ((portee.pile ?? 1) < 2 || pileEntiere) && (
+          quelque chose.* */}
+      {portee !== null && doigt !== null && (portee.pile ?? 1) < 2 && (
         <CaseVide
           nom=""
           position={portee.position}
@@ -844,15 +842,12 @@ export function Armurerie3D({
          */
         const chefSorti =
           doigt !== null && tenue !== null && objets[tenue]?.id === (t.chef ?? t.id)
-        // ET LA DOUBLURE S'EFFACE QUAND C'EST LA PILE ENTIÈRE QUI PART : là,
-        // ce n'est plus un exemplaire qu'on soulève, c'est le tas.
-        const cachee = t.doublure === true && chefSorti && pileEntiere
         const reste =
           t.doublure === true
             ? chefSorti
               ? t.pile
               : undefined
-            : chefSorti && !pileEntiere
+            : chefSorti
               ? undefined
               : t.pile
         // UNE CARTE SEULE NE SE COMPTE PAS : au coffre, « 1 » n'apprend rien.
@@ -911,7 +906,6 @@ export function Armurerie3D({
             // UNE DOUBLURE NE SE PREND PAS : c'est l'épaisseur de la
             // pile, et la carte du dessus est déjà l'exemplaire qu'on tire.
             inerte={enVol === t.id || t.doublure === true}
-            cachee={cachee}
             pile={compte}
             pileTaille={tailleCompte}
             onPeinte={onPeinte}

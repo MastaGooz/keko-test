@@ -75,6 +75,7 @@ import {
   creerHub,
   deplacerPiece,
   echangerDansCoffre,
+  rangerEnFinDeCoffre,
   equipement,
   perdreLEquipement,
   peutDescendre,
@@ -1136,6 +1137,12 @@ export function Scene(): React.JSX.Element {
     [],
   )
 
+  /** Sur une case VIDE, il n'y a personne avec qui échanger : on va au bout. */
+  const finDuCoffre = useCallback(
+    (ids: string[]) => setHub((h) => rangerEnFinDeCoffre(h, ids)),
+    [],
+  )
+
   /**
    * REMONTER AU HUB. **Ce qui rentre n'est pas ce qu'on avait emporté** : les
    * potions bues se sont exilées du deck, donc `consommablesSurvivants` les
@@ -1511,6 +1518,7 @@ export function Scene(): React.JSX.Element {
             defilement={defilement}
             onDeplacer={bougerPiece}
             onEchanger={rangerCoffre}
+            onRanger={finDuCoffre}
             onRegarder={(objet) => {
               setZoomee(pieceAPeindre(objet))
               setZoomSet(setAPeindre(objet))

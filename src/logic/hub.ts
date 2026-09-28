@@ -129,6 +129,34 @@ export type Slot =
 export const CAPACITE_PILE = 3
 
 /**
+ * RANGER UN OBJET — OU UNE PILE — EN FIN DE COFFRE.
+ *
+ * C'est ce que « poser sur une case VIDE » veut dire : il n'y a personne avec
+ * qui échanger, donc l'objet va au bout de la liste, là où la grille garde ses
+ * étagères vides. Une carte seule le faisait déjà, par la porte ordinaire du
+ * « repose au râtelier » — **mais une pile, non** : `deplacerPiece` n'en
+ * déplaçait qu'un exemplaire, et comme le coffre montre une pile à la place de
+ * son PREMIER exemplaire, rien ne bougeait. Keko : « quand je drag un objet
+ * d'une pile sur une case vide du coffre, elle n'est pas déplacée, alors qu'une
+ * carte sans pile est placée en dernière position ».
+ *
+ * *Ce qui vaut pour l'échange vaut pour le rangement* : on déplace le bloc.
+ */
+export function rangerEnFinDeCoffre(hub: Hub, ids: readonly string[]): Hub {
+  if (ids.length === 0) return hub
+  const dedans = new Set(ids)
+  const bloc = hub.reserve.filter((o) => dedans.has(o.id))
+  if (bloc.length !== dedans.size) return hub
+  const reste = hub.reserve.filter((o) => !dedans.has(o.id))
+  // DÉJÀ AU BOUT : on ne rend pas un hub neuf pour rien, sinon le rendu
+  // repart et la carte croit avoir bougé.
+  if (reste.length === hub.reserve.length - bloc.length && hub.reserve.at(-1) === bloc.at(-1)) {
+    return hub
+  }
+  return { ...hub, reserve: [...reste, ...bloc] }
+}
+
+/**
  * ÉCHANGER DEUX OBJETS DU COFFRE — c'est tout ce que « ranger » veut dire ici.
  *
  * Le coffre est une LISTE, et le rendu la découpe en grille : y poser un objet
