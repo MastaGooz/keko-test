@@ -4204,6 +4204,42 @@ calculs qui se répondent se désaccordent au premier réglage s'ils vivent
 ailleurs.* Le dépôt doit tomber DANS la case, pas seulement dans sa colonne —
 *échanger avec un voisin qu'on n'a pas désigné serait pire que ne rien faire.*
 
+**UN BOUTON RANGE LE COFFRE D'UN COUP**, par catégorie puis par rareté.
+Demandé par Keko : « un bouton dans le coffre, au-dessus des catégories, pour
+ranger le coffre en triant les objets par catégorie et par rareté au sein des
+catégories ; il aurait un symbole de rangement, pas du texte ».
+
+**Il vit dans l'en-tête, AU-DESSUS des onglets, et c'est ce qui le définit** :
+*un onglet dit ce qu'on regarde, ce bouton dit ce qu'on fait au meuble entier.*
+L'en-tête ne portait que la plaque du meuble, centrée — il y restait toute la
+largeur. Le dessin est trois barres décroissantes surmontées d'une flèche, le
+signe de tri universel : *un symbole qui a besoin d'une légende n'en est pas
+un.*
+
+L'ordre des catégories est **celui des onglets** — armes, armures, objets —
+parce que *deux façons de dire le même classement finissent par diverger* : le
+joueur qui range retrouve exactement l'ordre dans lequel le coffre lui propose
+de chercher. Au sein d'une catégorie la rareté décroît, puis le nom, **et cet
+ordre stable n'est pas un luxe** : sans lui, deux objets de même catégorie et
+même rareté s'échangeraient à chaque clic. Les trésors, qui vivent dans leur
+propre liste, se rangent par valeur décroissante — c'est la seule rareté qu'ils
+aient. *Les piles se referment d'elles-mêmes* : deux exemplaires ont même
+catégorie, même rareté et même nom.
+
+Deux détails de placement, et les deux sont des règles déjà écrites :
+
+- **il déborde vers le HAUT, jamais vers le bas** : son bas s'aligne sur celui
+  de l'en-tête, donc il ne mord pas sur les onglets — *deux commandes voisines
+  ne peuvent pas se disputer le même pixel* ;
+- **sa zone sensible déborde son dessin** (un `::after` en débord). L'en-tête
+  ne fait qu'une vingtaine de pixels sur un téléphone et *le doigt ne rétrécit
+  pas avec l'écran* : le carré garde la taille de la bande, la prise s'étend
+  autour de lui — 41 x 35 px au lieu de 25 x 25 à 844 x 390. **Pas vers le
+  bas**, où les onglets commencent aussitôt : une zone plus grande que son
+  bouton vole le geste à sa voisine, la leçon des slots du chargement. *Ça
+  reste sous le plancher tactile de 48 px du projet* — comme les onglets
+  eux-mêmes, que la hauteur de la bande contraint de la même façon.
+
 **LE NOMBRE DE LIGNES SUIT LA HAUTEUR DE L'ÉCRAN** : la grille remplit son
 cadre au lieu de laisser un vide sous elle, et ce qui dépasse se défile.
 

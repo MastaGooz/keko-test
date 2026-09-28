@@ -86,6 +86,8 @@ export type PlanArmurerie = {
   coffre: Rect
   /** La bande des onglets, dans le coffre. */
   onglets: Rect
+  /** Le bouton qui range le coffre, dans l'en-tête au-dessus des onglets. */
+  tri: Rect
   /** La zone des cases, dans le coffre. */
   grille: Rect
   /** La barre de défilement, à droite de la grille. */
@@ -215,6 +217,30 @@ export function planArmurerie(
     y: yPanneaux + hPanneaux / 2 - hEntete - hOnglets / 2,
     l: lCoffre,
     h: hOnglets,
+  }
+
+  /**
+   * LE BOUTON QUI RANGE, dans l'en-tête, contre le bord droit du meuble.
+   *
+   * Keko : « un bouton dans le coffre, au-dessus des catégories, pour ranger le
+   * coffre en triant les objets par catégorie et par rareté ; il aurait un
+   * symbole de rangement, pas du texte ».
+   *
+   * *L'en-tête ne portait que la plaque du meuble*, centrée et à cheval sur le
+   * bord : il y reste toute la largeur. Et il est AU-DESSUS des onglets, donc
+   * il ne dit pas ce qu'on regarde mais ce qu'on fait au meuble entier — ce
+   * qui est exactement la différence entre les deux.
+   */
+  const cote = Math.min(hEntete * 1.1, hOnglets * 0.78)
+  const tri: Rect = {
+    x: xCoffre + lCoffre / 2 - marge * 0.8 - cote / 2,
+    // IL DÉBORDE VERS LE HAUT, JAMAIS VERS LE BAS : son bas s'aligne sur celui
+    // de l'en-tête, donc il ne mord pas sur les onglets — *deux commandes
+    // voisines ne peuvent pas se disputer le même pixel.* Ce qui dépasse par
+    // le haut chevauche le bord du cadre, exactement comme la plaque du meuble.
+    y: yPanneaux + hPanneaux / 2 - hEntete + cote / 2,
+    l: cote,
+    h: cote,
   }
 
   // LA BARRE DE DÉFILEMENT MANGE SA PLACE À DROITE : sinon elle passerait sur
@@ -413,6 +439,7 @@ export function planArmurerie(
     titre: { x: 0, y: demiHaut - hTitre / 2, l: 2 * demiLarge, h: hTitre },
     coffre,
     onglets,
+    tri,
     grille,
     barre,
     colonnes,

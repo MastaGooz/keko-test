@@ -69,6 +69,8 @@ function useFenetre(): { l: number; h: number } {
 type Props = {
   hub: Hub
   onglet: Onglet
+  /** Ranger le coffre : par catégorie, puis par rareté. */
+  onTrier?: () => void
   onOnglet: (o: Onglet) => void
   defilement: number
   onDefilement: (n: number) => void
@@ -103,6 +105,7 @@ type Props = {
 export function PageArmurerie({
   hub,
   onglet,
+  onTrier,
   onOnglet,
   defilement,
   onDefilement,
@@ -531,6 +534,41 @@ export function PageArmurerie({
       {/* LES ONGLETS : ce qu'on possède se range par nature, et les TRÉSORS y
           ont leur case bien qu'aucun slot ne les prenne. *Le coffre est ce
           qu'on possède, pas ce qu'on peut porter.* */}
+      {/* RANGER LE COFFRE : un symbole, pas un mot. Demandé par Keko. Il vit
+          dans l'en-tête, AU-DESSUS des onglets — *un onglet dit ce qu'on
+          regarde, ce bouton dit ce qu'on fait au meuble entier*, et les deux
+          ne se mélangent pas.
+
+          Le dessin est trois barres décroissantes surmontées d'une flèche : le
+          signe de tri universel, qui n'a besoin d'aucune légende. Il est
+          écrit à la main, comme tout le SVG du projet. */}
+      <button
+        type="button"
+        className="arm-tri"
+        style={boite(plan.tri)}
+        onClick={onTrier}
+        title="Ranger le coffre"
+        aria-label="Ranger le coffre"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M4 6.5h11M4 12h7.5M4 17.5h4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.1"
+            strokeLinecap="round"
+          />
+          <path
+            d="M18.5 5.5v13m0 0 3-3.4m-3 3.4-3-3.4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.1"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </button>
+
       <div className="arm-onglets" style={boite(plan.onglets)}>
         {ONGLETS.map((o) => (
           <button

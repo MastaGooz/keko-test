@@ -5009,6 +5009,58 @@ body {
 /* UN ONGLET EST UN BOUTON PLAT QUI S'ALLUME, pas un bouton en relief : le
    relief est reserve a ce qui ENGAGE (Descendre), et changer d'onglet
    n'engage rien. */
+/* RANGER LE COFFRE : un symbole, pas un mot. Demande par Keko -- « un bouton
+   dans le coffre au-dessus des categories pour ranger le coffre, avec un
+   symbole de rangement, pas du texte ».
+
+   Il vit dans l'EN-TETE, au-dessus des onglets : *un onglet dit ce qu'on
+   regarde, celui-ci dit ce qu'on fait au meuble entier.* Meme famille que les
+   onglets -- laiton eteint qui s'allume au survol -- mais sans leur cadre
+   actif : il n'a pas d'etat, il agit. */
+.arm-tri {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #6b593655;
+  border-radius: 2px;
+  background: none;
+  color: #8f8674;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.arm-tri > svg {
+  width: 68%;
+  height: 68%;
+}
+
+/* SA ZONE SENSIBLE DÉBORDE SON DESSIN. L'en-tete du meuble ne fait qu'une
+   vingtaine de pixels de haut sur un telephone, et *le doigt ne retrecit pas
+   avec l'ecran* : le carre garde la taille de la bande, la prise s'etend
+   autour de lui. Pas vers le BAS, ou les onglets commencent aussitot -- une
+   zone plus grande que son bouton vole le geste a sa voisine, la lecon des
+   slots du chargement. */
+.arm-tri::after {
+  content: '';
+  position: absolute;
+  inset: -0.6rem -0.4rem 0 -0.6rem;
+}
+
+.arm-tri:hover {
+  border-color: #a98c4f;
+  background: #211d15;
+  color: #f0ddae;
+}
+
+/* AU DOIGT, le survol n'existe pas : c'est l'appui qui doit repondre. */
+.arm-tri:active {
+  background: #2a2419;
+  color: #f0ddae;
+}
+
 .arm-onglet {
   flex: 0 1 auto;
   min-width: 0;

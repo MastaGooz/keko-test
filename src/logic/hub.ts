@@ -16,7 +16,7 @@
  * Pur, comme tout `logic/` : aucun DOM, aucun hasard non seedé.
  */
 import type { Carte } from './combat.ts'
-import type { Arme, Armure, Consommable, Objet, Piece } from './armes.ts'
+import type { Arme, Armure, Consommable, Objet, Piece, Rarete } from './armes.ts'
 import {
   ARME_GRATUITE,
   ARMURE_GRATUITE,
@@ -26,6 +26,7 @@ import {
   carteDuConsommable,
   deckDeLEquipement,
   estConsommable,
+  nomObjet,
 } from './armes.ts'
 
 /**
@@ -127,6 +128,49 @@ export type Slot =
  * `CAPACITE_PILE`, occupées ou non.
  */
 export const CAPACITE_PILE = 3
+
+/**
+ * RANGER LE COFFRE D'UN COUP : par catégorie, puis par rareté.
+ *
+ * Demandé par Keko : « un bouton dans le coffre, au-dessus des catégories,
+ * pour ranger le coffre en triant les objets par catégorie, et par rareté au
+ * sein des catégories ».
+ *
+ * L'ordre des catégories est **celui des onglets** — armes, armures, objets —
+ * parce que *deux façons de dire le même classement finiraient par diverger* :
+ * le joueur qui range retrouve exactement l'ordre dans lequel le coffre lui
+ * propose de chercher.
+ *
+ * Au sein d'une catégorie, la rareté décroît : ce qu'on a de mieux se lit en
+ * premier. À rareté égale, le nom — il faut bien un ordre stable, et *deux
+ * rangements du même coffre doivent donner la même chose.*
+ *
+ * **Les piles se referment d'elles-mêmes** : deux exemplaires d'un objet ont
+ * même catégorie, même rareté et même nom, donc ils se retrouvent voisins sans
+ * qu'on ait à les grouper.
+ *
+ * Les trésors vivent dans leur propre liste, que la grille montre à la suite :
+ * on les range par VALEUR décroissante, ce qui est la seule rareté qu'ils
+ * aient.
+ */
+const RANG_CATEGORIE = (o: Objet): number =>
+  'mains' in o ? 0 : estConsommable(o) ? 2 : 1
+
+const RANG_RARETE: Record<Rarete, number> = { epique: 0, rare: 1, commune: 2 }
+
+export function trierLeCoffre(hub: Hub): Hub {
+  const reserve = [...hub.reserve].sort(
+    (a, b) =>
+      RANG_CATEGORIE(a) - RANG_CATEGORIE(b) ||
+      RANG_RARETE[a.rarete] - RANG_RARETE[b.rarete] ||
+      nomObjet(a).localeCompare(nomObjet(b)) ||
+      a.id.localeCompare(b.id),
+  )
+  const tresors = [...hub.tresors].sort(
+    (a, b) => (b.valeur ?? 0) - (a.valeur ?? 0) || a.nom.localeCompare(b.nom),
+  )
+  return { ...hub, reserve, tresors }
+}
 
 /**
  * RANGER UN OBJET — OU UNE PILE — EN FIN DE COFFRE.

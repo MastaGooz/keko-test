@@ -76,6 +76,7 @@ import {
   deplacerPiece,
   echangerDansCoffre,
   rangerEnFinDeCoffre,
+  trierLeCoffre,
   equipement,
   perdreLEquipement,
   peutDescendre,
@@ -1143,6 +1144,9 @@ export function Scene(): React.JSX.Element {
     [],
   )
 
+  /** Le bouton de l'en-tête : tout le coffre, par catégorie puis par rareté. */
+  const rangerTout = useCallback(() => setHub(trierLeCoffre), [])
+
   /**
    * REMONTER AU HUB. **Ce qui rentre n'est pas ce qu'on avait emporté** : les
    * potions bues se sont exilées du deck, donc `consommablesSurvivants` les
@@ -1820,6 +1824,7 @@ export function Scene(): React.JSX.Element {
         <PageArmurerie
           hub={hub}
           onglet={onglet}
+          onTrier={rangerTout}
           onOnglet={(o) => {
             setOnglet(o)
             setDefilement(0)

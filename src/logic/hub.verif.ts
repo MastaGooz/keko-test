@@ -13,6 +13,7 @@ import {
   consommablesDeLaPile,
   echangerDansCoffre,
   rangerEnFinDeCoffre,
+  trierLeCoffre,
   accepteDepuis,
   creerHub,
   deckEmporte,
@@ -279,6 +280,24 @@ const COTTE: Armure = {
   verifier('une pile incomplete ne fait rien',
     rangerEnFinDeCoffre(h, [potions[0]!, 'fantome']) === h)
   verifier('une liste vide ne fait rien non plus', rangerEnFinDeCoffre(h, []) === h)
+
+  // RANGER TOUT : par categorie, puis par rarete. L'ordre des categories est
+  // celui des onglets -- armes, armures, objets.
+  const range2 = trierLeCoffre({
+    ...h,
+    reserve: [...POTIONS_DEPART.slice(0, 2), ARMURE_GRATUITE, ESPADON_REEL, ARME_GRATUITE],
+    tresors: [carteTresor('t-1', 'Camee', 45), carteTresor('t-2', 'Idole', 240)],
+  })
+  const categorie = range2.reserve.map((o) => ('mains' in o ? 'arme' : 'modele' in o ? 'objet' : 'armure'))
+  verifier('les armes viennent en premier', categorie[0] === 'arme' && categorie[1] === 'arme')
+  verifier('...puis les armures', categorie[2] === 'armure')
+  verifier('...puis les objets', categorie[3] === 'objet' && categorie[4] === 'objet')
+  verifier('la rarete decroit dans la categorie', range2.reserve[0]!.id === ESPADON_REEL.id)
+  verifier('les tresors se rangent par valeur', range2.tresors[0]!.id === 't-2')
+  // DEUX RANGEMENTS DU MEME COFFRE DONNENT LA MEME CHOSE : sans ordre stable,
+  // deux objets de meme categorie et meme rarete s'echangeraient a chaque clic.
+  verifier('ranger deux fois ne change plus rien',
+    trierLeCoffre(range2).reserve.map((o) => o.id).join() === range2.reserve.map((o) => o.id).join())
 
   // ON N'ECHANGE QUE DANS LA MEME LISTE : un tresor n'est pas une piece, et il
   // ne doit jamais se retrouver dans `reserve`.
