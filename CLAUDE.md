@@ -4046,12 +4046,28 @@ sur une toile de 256 pour couvrir 40 px à l'écran, donc son chiffre était
 rastérisé à 160 px puis écrasé à 25 par les mipmaps. **Mou par construction**,
 quel que soit le soin mis à le dessiner.
 
-Cinq toiles (48 à 224), choisies sur les **pixels physiques** que le disque
-occupe, densité comprise ; le dessin continue de parler en unités de 256 et
-c'est le CONTEXTE qui est mis à l'échelle, donc le moteur de police trace chaque
-glyphe à sa taille finale. La texture est mise en cache par nombre ET par toile,
-et elle demande le filtrage anisotrope — *le disque se regarde en biais dès
-qu'on incline la carte.*
+La toile se cale donc sur les **pixels physiques** que le disque occupe,
+densité comprise, à huit pixels près : les cartes se contentent d'une échelle de
+paliers parce qu'elles sont grandes, *un badge de quarante pixels n'a pas de
+marge à donner*. Le dessin continue de parler en unités de 256 et c'est le
+CONTEXTE qui est mis à l'échelle, donc le moteur de police trace chaque glyphe à
+sa taille finale. Le cache porte le nombre ET la toile.
+
+**ET IL N'A PAS DE MIPMAPS — c'était là le vrai flou.** Keko, après cette
+première correction : « c'est toujours un peu flou le chiffre ». *Une toile à
+la bonne taille ne suffit pas* : dès qu'une texture est ne serait-ce qu'un peu
+minifiée, three échantillonne ENTRE le niveau plein et le niveau demi — donc la
+moitié de ce qu'on voit vient d'une image deux fois plus petite, quel que soit
+le soin mis au dessin. Un badge est toujours à sa taille ou tout près, donc le
+niveau plein suffit et il n'y a plus rien de flou à mélanger. **C'est ce que les
+cartes ne peuvent pas se permettre** — une carte s'éloigne et s'incline, un
+`LinearFilter` seul y scintillerait.
+
+**Et le chiffre n'est plus en gras.** Keko le soupçonnait, et il avait raison
+sur le fond : Grenze Gotisch est une gothique, ses pleins sont déjà épais, et à
+vingt pixels le 700 referme les contrepoinçons — le creux d'un 6, la fente d'un
+3. *Ce qui se bouche se lit comme ce qui est flou.* Le 600 est d'ailleurs la
+graisse des chiffres des cases de la carte.
 
 **POUR JUGER DE GROSSES PILES : `?r3f&piles=13,6`.** Demandé par Keko — « on
 peut tester d'avoir 6 super potions et 13 potions normales ? » Le coffre de

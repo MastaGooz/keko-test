@@ -1402,12 +1402,19 @@ const BADGES = new Map<string, THREE.CanvasTexture>()
  */
 export const PART_DISQUE = 0.78
 
-/** Les toiles du disque : un badge est petit, il n'en faut pas de grandes. */
-const TOILES_BADGE = [48, 72, 108, 160, 224] as const
-
-/** Celle qu'il faut pour couvrir cette largeur sans étirer ni minifier. */
+/**
+ * LA TOILE DU DISQUE COLLE À SA TAILLE À L'ÉCRAN, à huit pixels près.
+ *
+ * Les cartes se contentent d'une échelle de toiles parce qu'elles sont grandes
+ * et qu'une marge y coûte peu ; **un badge de quarante pixels, lui, n'a pas de
+ * marge à donner.** Un palier trop haut, et la texture se minifie ; minifiée,
+ * elle passe par la moitié de sa taille — et c'est le flou qu'on cherchait.
+ *
+ * Le pas de huit borne le cache : il n'y a de toute façon qu'une poignée de
+ * tailles dans une session, une par format d'écran.
+ */
 export function toileDuNombre(largeurPx: number): number {
-  return TOILES_BADGE.find((t) => t >= largeurPx) ?? TOILES_BADGE[TOILES_BADGE.length - 1]!
+  return Math.min(256, Math.max(32, Math.ceil(largeurPx / 8) * 8))
 }
 
 /**
@@ -1435,9 +1442,23 @@ export function textureNombre(nombre: number, largeurPx = 256): THREE.CanvasText
   canvas.height = toile
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
-  // Le disque se regarde en biais dès qu'on incline la carte : sans filtrage
-  // anisotrope son cerne se brouille.
-  texture.anisotropy = 8
+  /**
+   * **PAS DE MIPMAPS, ET C'ÉTAIT LÀ LE FLOU.**
+   *
+   * Keko, après la mise à la taille d'affichage : « c'est toujours un peu flou
+   * le chiffre ». *Une toile à la bonne taille ne suffit pas* : dès qu'une
+   * texture est ne serait-ce qu'un peu minifiée, three échantillonne ENTRE le
+   * niveau plein et le niveau demi — donc la moitié de ce qu'on voit vient
+   * d'une image deux fois plus petite, quelle que soit la finesse du dessin.
+   *
+   * Un badge est toujours à sa taille ou tout près : le niveau plein suffit,
+   * et sans chaîne de mipmaps il n'y a plus rien de flou à mélanger. C'est ce
+   * que les cartes, elles, ne peuvent pas se permettre — une carte s'éloigne,
+   * s'incline, et un `LinearFilter` seul y scintillerait.
+   */
+  texture.generateMipmaps = false
+  texture.minFilter = THREE.LinearFilter
+  texture.magFilter = THREE.LinearFilter
   BADGES.set(cle, texture)
 
   const ctx = canvas.getContext('2d')
@@ -1479,13 +1500,19 @@ export function textureNombre(nombre: number, largeurPx = 256): THREE.CanvasText
     // contenant qui ne contient pas ment.* On mesure, et c'est la police qui
     // cède — la corde utile vaut un peu plus de trois quarts du diamètre
     // intérieur, ce qui garde « 13 » presque aussi gros qu'un chiffre seul.
+    //
+    // **ET IL N'EST PAS EN GRAS.** Keko le soupçonnait, et il avait raison sur
+    // le fond : Grenze Gotisch est une gothique, ses pleins sont déjà épais, et
+    // à vingt pixels le 700 referme les contrepoinçons — le creux d'un 6, la
+    // fente d'un 3. *Ce qui se bouche se lit comme ce qui est flou.* Le 600 est
+    // d'ailleurs la graisse des chiffres des cases de la carte.
     const dedans = (rayon - filet) * 1.7
     let police = rayon * 1.62
-    ctx.font = `700 ${police}px "Grenze Gotisch", Georgia, serif`
+    ctx.font = `600 ${police}px "Grenze Gotisch", Georgia, serif`
     const large = ctx.measureText(String(nombre)).width
     if (large > dedans) {
       police *= dedans / large
-      ctx.font = `700 ${police}px "Grenze Gotisch", Georgia, serif`
+      ctx.font = `600 ${police}px "Grenze Gotisch", Georgia, serif`
     }
     ctx.textAlign = 'center'
     // LA LIGNE DE BASE, pas une boîte de ligne : `middle` se mesure sur la
