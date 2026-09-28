@@ -3195,11 +3195,12 @@ Deux symboles pour deux choses, et c'est la seule information qui rende
 `signature()`, sans quoi deux cartes de même nom partageraient la texture.
 
 **SA MARGE SE MESURE AU BORD QU'ON VOIT, pas au bord de la toile** — et c'est
-vrai des DEUX symboles du coin. L'orbe du coût a fini par se décaler de 1,6 %
-de la largeur vers la droite pour la même raison (Keko : « l'écart avec le bord
-est trop faible par rapport à l'écart avec le bord du haut »), et le compteur
-des pièces d'un cheveu vers le bas — 4 px et 3,5 px sur une carte de 250, à
-peine 1,5 sur une case de coffre. *Une marge égale en nombre n'est pas une
+vrai des DEUX symboles du coin. L'orbe du coût a fini par se décaler de 1 % de la
+largeur vers la droite pour la même raison (Keko : « l'écart avec le bord est
+trop faible par rapport à l'écart avec le bord du haut »), et le compteur des
+pièces de 1,8 % de la hauteur vers le bas — 2,5 px et 6 px sur une carte de
+250. *Les deux ont demandé une seconde passe* : le premier réglage envoyait
+l'orbe trop loin et ne descendait pas assez le compteur. *Une marge égale en nombre n'est pas une
 marge égale à l'oeil.*
 
 Posé à la même distance du canvas en x et en y, il paraissait coller au cadre à
