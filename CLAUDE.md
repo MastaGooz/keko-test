@@ -4739,6 +4739,14 @@ et du bas, aucun ne rogne des côtés.
 le donjon. La couleur de fond reste dessous comme repli : une couche de fond
 qui échoue est simplement ignorée par le navigateur.
 
+**ET AU HUB, LE DÉCOR N'EST MÊME PAS CHARGÉ.** Le voile suffisait une fois la
+page là — mais il n'arrive qu'avec elle, c'est-à-dire une fois les premières
+cartes peintes : on voyait donc le temple pendant tout le chargement. Keko :
+« au lancement de l'armurerie, on voit le background temple avant qu'elle se
+dessine ». *Ce qui se découvre pendant un chargement doit être le lieu où l'on
+arrive, pas celui d'où l'on ne vient pas.* La couleur de `.fond-3d` est déjà
+celle de la pierre sombre, à un cheveu de celle du voile.
+
 ### LE FOND DE CARTE EST COMMUN À TOUTES : `public/Background.png`
 
 Fourni par Keko — « à utiliser comme background de toutes les cartes, on

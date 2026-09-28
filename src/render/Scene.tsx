@@ -1356,7 +1356,18 @@ export function Scene(): React.JSX.Element {
           devant les jauges. L'armurerie le couvre de son voile opaque — *c'est
           un lieu, pas un calque* — alors que les écrans de palier le laissent
           voir, puisqu'on est encore dans le donjon. */}
-      <div className="fond-3d" style={{ backgroundImage: `url(${urlDuDecor(decor)})` }} />
+      {/* AU HUB, LE DÉCOR DU DONJON NE SE MONTRE PAS — pas même une image.
+          L'armurerie le couvrait bien de son voile opaque, mais ce voile
+          n'arrive qu'avec la page, une fois les premières cartes peintes :
+          on voyait donc le temple le temps du chargement. Keko : « au
+          lancement de l'armurerie, on voit le background temple avant qu'elle
+          se dessine ». *Ce qui se découvre pendant un chargement doit être le
+          lieu où l'on arrive, pas celui d'où l'on ne vient pas.* La couleur de
+          fond de `.fond-3d` est déjà celle de la pierre sombre. */}
+      <div
+        className="fond-3d"
+        style={auHub ? undefined : { backgroundImage: `url(${urlDuDecor(decor)})` }}
+      />
 
       <Canvas
         shadows
