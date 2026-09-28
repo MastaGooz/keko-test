@@ -26,7 +26,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { useThree } from '@react-three/fiber'
-import { Carte3D } from './Carte3D.tsx'
+import { Carte3D, tailleDuCompte } from './Carte3D.tsx'
 import { zCamera, hauteurVisibleA } from './Cadrage.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
 
@@ -178,6 +178,10 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * qui se calcule depuis `Cadrage`, et elle vaut aussi à l'intérieur d'un
    * écran.
    */
+  // LE DISQUE DU COMPTE SE MESURE EN REM, comme au coffre : il appartient à
+  // l'interface, pas au dessin, donc il ne suit pas la taille de la carte. Un
+  // peu plus généreux qu'au coffre — ici on ne cherche pas, on lit.
+  const tailleCompte = tailleDuCompte((uneCarte * size.height) / H, 1.15)
   const zLoupe = zCarte + AVANCEE_LOUPE
   const hLoupe = hauteurVisibleA(zLoupe, size.height)
   const lLoupe = (hLoupe * size.width) / size.height
@@ -266,9 +270,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                 // symbole partout* — et posé SUR la carte, il n'annote plus
                 // une place qu'elle peut quitter : il la suit sous la loupe.
                 pile={entree.nombre}
-                // Plus petit qu'au coffre : ici la carte est quatre fois plus
-                // grande, et un disque à la même fraction y crierait.
-                pileTaille={0.19}
+                pileTaille={tailleCompte}
                 onPeinte={onPeinte}
                 onPointerOver={(e) => {
                   // LE SURVOL N'EXISTE QU'À LA SOURIS : au doigt le

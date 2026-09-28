@@ -65,6 +65,28 @@ const CHIFFRE_PILE = 0.31
 /** À cheval sur le coin : ce qu'il en garde DANS la carte. */
 const DEDANS_PILE = 0.55
 
+/**
+ * QUELLE PART DE LA CARTE LE DISQUE DOIT PRENDRE, sur un écran donné.
+ *
+ * *Le disque n'appartient pas à la carte, il appartient à l'interface* : c'est
+ * un repère qu'on lit du coin de l'oeil, pas un élément du dessin. Réglé en
+ * part de carte, il valait 14 px sur un téléphone — la taille validée — et
+ * 48 px sur un écran de PC, où les cases font trois fois plus. Keko : « les
+ * chiffres indiquant le nombre de cartes, la taille est bonne sur tél mais sur
+ * PC c'est trop gros ».
+ *
+ * Il se compte donc en **rem**, comme tout le chrome du projet : 0,9rem de
+ * diamètre, soit 14,4 px sur un téléphone et 21,6 px sur un grand écran, où la
+ * racine grandit elle aussi. **Les bornes restent en part de carte** : sous
+ * 12 % il cesserait d'être lisible, au-dessus de 34 % il déborderait de la
+ * gouttière de la grille.
+ */
+export function tailleDuCompte(carteEnPx: number, rems = 0.9): number {
+  if (carteEnPx <= 0) return CHIFFRE_PILE
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+  return THREE.MathUtils.clamp((rems * rem) / carteEnPx, 0.12, 0.34)
+}
+
 /** Le rayon des coins : 3 % de la largeur, comme le `border-radius` du gabarit. */
 export const RAYON_COIN = 0.03
 

@@ -4011,12 +4011,22 @@ cède — *un contenant qui ne contient pas ment*, et à deux chiffres il sortai
 disque. La corde utile vaut un peu plus des trois quarts du diamètre intérieur,
 donc « 13 » reste presque aussi gros qu'un chiffre seul.
 
-**SON DIAMÈTRE N'EST PAS LE MÊME PARTOUT** (`pileTaille`) : 0,26 carte au
-coffre, 0,16 dans le zoom. *Un symbole ne se règle pas à la taille où on le
-dessine, mais à celle où on le regarde* — la règle du médaillon du dos, plus
-grand sur un tas que sur une carte. **Une case du coffre ne fait que 46 px de
-large à 844 x 390, et 33 à 667 x 320** : tout y est minuscule, alors que dans le
-zoom la carte en fait quatre fois plus.
+**SON DIAMÈTRE SE COMPTE EN REM, PAS EN PART DE CARTE** (`tailleDuCompte`).
+*Le disque n'appartient pas à la carte, il appartient à l'interface* : c'est un
+repère qu'on lit du coin de l'oeil, pas un élément du dessin. Réglé en fraction,
+il valait 14 px sur un téléphone — la taille validée — et **48 px sur un écran
+de PC**, où les cases font trois fois plus. Keko : « les chiffres indiquant le
+nombre de cartes, la taille est bonne sur tél mais sur PC c'est trop gros ».
+
+Il vaut donc **0,9rem au coffre et 1,15rem dans le zoom** — là on ne cherche
+pas, on lit — soit 14 px et 18 px sur un téléphone, 22 et 28 sur un grand
+écran, où la racine grandit elle aussi. C'est la règle du projet depuis le
+début : *toute l'interface est dimensionnée en `rem`.*
+
+**Les bornes, elles, restent en part de carte** (12 % à 34 %) : en dessous il
+cesserait d'être lisible, au-dessus il sortirait de la gouttière de la grille.
+**Une case du coffre ne fait que 46 px de large à 844 x 390, et 33 à
+667 x 320** — c'est la borne haute qui joue là, pas le rem.
 
 **POUR JUGER DE GROSSES PILES : `?r3f&piles=13,6`.** Demandé par Keko — « on
 peut tester d'avoir 6 super potions et 13 potions normales ? » Le coffre de
@@ -4246,11 +4256,28 @@ disque et touchait ses bords. Mesuré sur le disque (`cqh`), il suivait enfin la
 forme mais devenait minuscule ; Keko : « c'est peu visible ».
 
 La bonne réponse était l'inverse : **le chiffre reprend la taille des trois
-autres mesures, et le disque s'agrandit de 22 % pour l'accueillir.** *Quatre
+autres mesures, et c'est le disque qui s'ajuste pour l'accueillir.** *Quatre
 chiffres qui disent la même sorte de chose se lisent à la même voix*, et
 celui-là n'a aucune raison d'être l'exception parce qu'il vit dans un disque.
 Mesuré à 844 x 390 : disque 30 px, chiffre 18 px — exactement celui de ses
 voisins — et 3 px de marge avant le titre du groupe dessous.
+
+**ET LE DISQUE SE MESURE SUR SON CHIFFRE, PAS SUR LA BANDE.** Il a d'abord été
+`height: 100%` de la bande, agrandi de 22 % : juste sur un téléphone, où la
+bande est courte, et gonflé sur un écran de PC, où elle fait trois fois plus —
+98 px de disque pour un chiffre de 27, contre 30 pour 18 sur un téléphone.
+Keko : « la taille du symbole des PA est bien sur tél, mais sur PC je trouve
+que le rond est trop gros ».
+
+*Un contenant n'a qu'une taille juste : celle de ce qu'il contient.* Le chiffre
+étant en `rem`, le disque l'est aussi — 1,66 fois son corps, le rapport validé
+à 844 x 390, donc 30 px sur un téléphone et 45 sur un grand écran. **Deux
+grandeurs qui doivent garder leur rapport ne peuvent pas suivre deux règles
+différentes**, et c'est la leçon du plancher de la bande, rencontrée deux
+paragraphes plus haut dans l'autre sens.
+
+Le plancher de la bande reste utile pour autre chose : il l'empêche d'être si
+courte que le disque écraserait le titre du groupe dessous.
 
 **ET LA BANDE A UN PLANCHER, parce qu'elle porte un chiffre qui n'en a pas.**
 Keko : « on avait agrandi le symbole des PA pour que les bords du cercle ne

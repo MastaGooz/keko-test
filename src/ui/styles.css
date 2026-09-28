@@ -5254,23 +5254,29 @@ body {
   left: auto;
   bottom: auto;
   width: auto;
-  height: 100%;
   aspect-ratio: 1;
-  /* LE DISQUE DEBORDE UN PEU DE SA LIGNE, et c'est ce qui rend son chiffre
-     lisible. Mesure sur le disque (`cqh`), le chiffre suivait bien la forme
-     mais devenait minuscule sur telephone -- Keko : « c'est peu visible ».
-     Alors on inverse : **le chiffre reprend la taille des autres mesures, et
-     c'est le SYMBOLE qui grossit pour l'accueillir.** *Quatre chiffres qui
-     disent la meme sorte de chose se lisent a la meme voix*, et celui-ci n'a
-     aucune raison d'etre l'exception parce qu'il vit dans un disque. */
-  scale: 1.22;
+  /* LE DISQUE SE MESURE SUR SON CHIFFRE, PAS SUR LA BANDE.
+     *Un contenant n'a qu'une taille juste : celle de ce qu'il contient.*
+
+     Il a d'abord ete `height: 100%` de la bande, agrandi de 22 % pour que ses
+     bords ne touchent pas le chiffre. Ca marchait sur telephone, ou la bande
+     est courte -- et ca gonflait sur un ecran de PC, ou elle fait trois fois
+     plus : le disque y prenait 98 px pour un chiffre de 27, contre 30 pour 18
+     sur un telephone. Keko : « la taille du symbole des PA est bien sur tel,
+     mais sur PC le rond est trop gros ».
+
+     **Deux grandeurs qui doivent garder leur rapport ne peuvent pas suivre
+     deux regles differentes** -- la lecon de la bande elle-meme, dont le
+     plancher existe pour la raison inverse. Le chiffre est en `rem`, donc le
+     disque aussi : 1,66 fois son corps, le rapport valide a 844 x 390.
+
+     Le plancher de la bande reste utile pour autre chose : il l'empeche
+     d'etre si courte que le disque ecraserait le titre du groupe dessous. */
+  height: calc(1.125rem * 1.66);
 }
 
 .arm-orbe .orbe-chiffre {
   font-size: 1.125rem;
-  /* Le disque etant agrandi par un `scale`, son contenu l'est aussi : on lui
-     rend sa taille pour qu'il reste celle des voisins. */
-  font-size: calc(1.125rem / 1.22);
 }
 
 /* LA VIE EST UN COEUR, PAS UNE JAUGE. Demande par Keko, et c'est juste sur le

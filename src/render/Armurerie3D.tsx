@@ -48,7 +48,14 @@ import type { Hub, Slot } from '../logic/hub.ts'
 import { accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
 import type { PlanArmurerie } from './armurerie-plan.ts'
-import { caseSousLePoint, contenuDuCoffre, placeCase, planArmurerie } from './armurerie-plan.ts'
+import {
+  caseSousLePoint,
+  contenuDuCoffre,
+  pixelsParUnite,
+  placeCase,
+  planArmurerie,
+} from './armurerie-plan.ts'
+import { tailleDuCompte } from './Carte3D.tsx'
 import { aPeindre } from './combat-3d.ts'
 
 /**
@@ -266,6 +273,10 @@ export function Armurerie3D({
   const { size } = useThree()
   const aDeuxMains = deuxMains(hub.chargement)
   const plan = planArmurerie(size.height, size.width, aDeuxMains)
+  // LE DISQUE DU COMPTE SE MESURE EN REM, pas en part de carte : c'est un
+  // repère d'interface, et une case du coffre fait trois fois plus de pixels
+  // sur un écran de PC que sur un téléphone.
+  const tailleCompte = tailleDuCompte(plan.tailleCoffre * pixelsParUnite(size.height))
 
   /**
    * LE COFFRE DÉFILE EN CONTINU, PAS PAR LIGNES.
@@ -859,6 +870,7 @@ export function Armurerie3D({
             // pile, et la carte du dessus est déjà l'exemplaire qu'on tire.
             inerte={enVol === t.id || t.doublure === true}
             pile={compte}
+            pileTaille={tailleCompte}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />
