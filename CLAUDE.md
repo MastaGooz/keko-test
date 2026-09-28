@@ -4211,34 +4211,43 @@ catégories ; il aurait un symbole de rangement, pas du texte ».
 
 **Il vit dans l'en-tête, AU-DESSUS des onglets, et c'est ce qui le définit** :
 *un onglet dit ce qu'on regarde, ce bouton dit ce qu'on fait au meuble entier.*
-L'en-tête ne portait que la plaque du meuble, centrée — il y restait toute la
-largeur. Le dessin est trois barres décroissantes surmontées d'une flèche, le
-signe de tri universel : *un symbole qui a besoin d'une légende n'en est pas
-un.*
+Le dessin est trois barres décroissantes surmontées d'une flèche, le signe de
+tri universel : *un symbole qui a besoin d'une légende n'en est pas un.*
+
+**DANS LE COIN HAUT-GAUCHE, ET DEDANS.** Il a d'abord été à droite, débordant
+d'un cheveu sur le bord du cadre — Keko : « le bouton est mal positionné, il
+déborde sur le bord du panneau coffre ; je le voyais dans le coin haut-gauche ».
+*Un bouton à cheval sur un cadre se lit comme une pièce qui a glissé*, là où la
+plaque du meuble le chevauche exprès : elle NOMME le cadre, elle n'agit pas
+dessus. Il tient donc dans la bande (90 % de sa hauteur) et s'aligne sur la
+marge gauche des onglets, juste au-dessus du premier.
 
 L'ordre des catégories est **celui des onglets** — armes, armures, objets —
 parce que *deux façons de dire le même classement finissent par diverger* : le
 joueur qui range retrouve exactement l'ordre dans lequel le coffre lui propose
-de chercher. Au sein d'une catégorie la rareté décroît, puis le nom, **et cet
-ordre stable n'est pas un luxe** : sans lui, deux objets de même catégorie et
-même rareté s'échangeraient à chaque clic. Les trésors, qui vivent dans leur
-propre liste, se rangent par valeur décroissante — c'est la seule rareté qu'ils
-aient. *Les piles se referment d'elles-mêmes* : deux exemplaires ont même
-catégorie, même rareté et même nom.
+de chercher.
 
-Deux détails de placement, et les deux sont des règles déjà écrites :
+**Au sein d'une catégorie, la rareté MONTE** : le commun d'abord, le rare au
+bout. Tranché par Keko — « il faudrait que le tri mette les objets faibles en
+premier et les objets rares en dernier ». *Une liste qui monte se termine sur ce
+qu'on cherche*, et le coffre se lit alors de haut en bas comme une progression.
+Les trésors, qui vivent dans leur propre liste, suivent le même sens : par
+valeur croissante, la seule rareté qu'ils aient.
 
-- **il déborde vers le HAUT, jamais vers le bas** : son bas s'aligne sur celui
-  de l'en-tête, donc il ne mord pas sur les onglets — *deux commandes voisines
-  ne peuvent pas se disputer le même pixel* ;
-- **sa zone sensible déborde son dessin** (un `::after` en débord). L'en-tête
-  ne fait qu'une vingtaine de pixels sur un téléphone et *le doigt ne rétrécit
-  pas avec l'écran* : le carré garde la taille de la bande, la prise s'étend
-  autour de lui — 41 x 35 px au lieu de 25 x 25 à 844 x 390. **Pas vers le
-  bas**, où les onglets commencent aussitôt : une zone plus grande que son
-  bouton vole le geste à sa voisine, la leçon des slots du chargement. *Ça
-  reste sous le plancher tactile de 48 px du projet* — comme les onglets
-  eux-mêmes, que la hauteur de la bande contraint de la même façon.
+Puis le nom, **et cet ordre stable n'est pas un luxe** : sans lui, deux objets
+de même catégorie et même rareté s'échangeraient à chaque clic. *Les piles se
+referment d'elles-mêmes* : deux exemplaires ont même catégorie, même rareté et
+même nom.
+
+**Sa zone sensible déborde son dessin** (un `::after` en débord). L'en-tête ne
+fait qu'une vingtaine de pixels sur un téléphone et *le doigt ne rétrécit pas
+avec l'écran* : le carré garde la taille de la bande, la prise s'étend autour de
+lui — 39 x 35 px au lieu de 20 x 20 à 844 x 390. Vers la gauche et le haut il
+n'y a que le bord du meuble, donc rien à voler ; **vers le bas, à peine**, parce
+que les onglets commencent aussitôt et qu'*une zone plus grande que son bouton
+vole le geste à sa voisine* — la leçon des slots du chargement. *Ça reste sous
+le plancher tactile de 48 px du projet* : la bande ne le permet pas, et les
+onglets eux-mêmes sont logés à la même enseigne.
 
 **LE NOMBRE DE LIGNES SUIT LA HAUTEUR DE L'ÉCRAN** : la grille remplit son
 cadre au lieu de laisser un vide sous elle, et ce qui dépasse se défile.

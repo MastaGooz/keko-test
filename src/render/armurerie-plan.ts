@@ -231,14 +231,15 @@ export function planArmurerie(
    * il ne dit pas ce qu'on regarde mais ce qu'on fait au meuble entier — ce
    * qui est exactement la différence entre les deux.
    */
-  const cote = Math.min(hEntete * 1.1, hOnglets * 0.78)
+  // IL TIENT DANS LA BANDE, ET DANS LE COIN HAUT-GAUCHE. Keko : « le bouton est
+  // mal positionné, il déborde sur le bord du panneau coffre ; je voyais le
+  // bouton dans le coin haut-gauche du panneau ». *Un bouton à cheval sur un
+  // cadre se lit comme une pièce qui a glissé*, alors que la plaque du meuble,
+  // elle, chevauche exprès — elle NOMME le cadre, elle n'agit pas dessus.
+  const cote = Math.min(hEntete * 0.9, hOnglets * 0.78)
   const tri: Rect = {
-    x: xCoffre + lCoffre / 2 - marge * 0.8 - cote / 2,
-    // IL DÉBORDE VERS LE HAUT, JAMAIS VERS LE BAS : son bas s'aligne sur celui
-    // de l'en-tête, donc il ne mord pas sur les onglets — *deux commandes
-    // voisines ne peuvent pas se disputer le même pixel.* Ce qui dépasse par
-    // le haut chevauche le bord du cadre, exactement comme la plaque du meuble.
-    y: yPanneaux + hPanneaux / 2 - hEntete + cote / 2,
+    x: xCoffre - lCoffre / 2 + marge * 0.8 + cote / 2,
+    y: yPanneaux + hPanneaux / 2 - hEntete / 2,
     l: cote,
     h: cote,
   }

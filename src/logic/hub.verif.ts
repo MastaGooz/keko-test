@@ -292,8 +292,10 @@ const COTTE: Armure = {
   verifier('les armes viennent en premier', categorie[0] === 'arme' && categorie[1] === 'arme')
   verifier('...puis les armures', categorie[2] === 'armure')
   verifier('...puis les objets', categorie[3] === 'objet' && categorie[4] === 'objet')
-  verifier('la rarete decroit dans la categorie', range2.reserve[0]!.id === ESPADON_REEL.id)
-  verifier('les tresors se rangent par valeur', range2.tresors[0]!.id === 't-2')
+  // LE COMMUN D'ABORD, LE RARE AU BOUT : tranche par Keko. Une liste qui monte
+  // se termine sur ce qu'on cherche.
+  verifier('la rarete monte dans la categorie', range2.reserve[1]!.id === ESPADON_REEL.id)
+  verifier('les tresors se rangent par valeur', range2.tresors[0]!.id === 't-1')
   // DEUX RANGEMENTS DU MEME COFFRE DONNENT LA MEME CHOSE : sans ordre stable,
   // deux objets de meme categorie et meme rarete s'echangeraient a chaque clic.
   verifier('ranger deux fois ne change plus rien',

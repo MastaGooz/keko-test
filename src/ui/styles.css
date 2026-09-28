@@ -5042,11 +5042,12 @@ body {
    avec l'ecran* : le carre garde la taille de la bande, la prise s'etend
    autour de lui. Pas vers le BAS, ou les onglets commencent aussitot -- une
    zone plus grande que son bouton vole le geste a sa voisine, la lecon des
-   slots du chargement. */
+   slots du chargement. Vers la GAUCHE et le HAUT, il n'y a que le bord du
+   meuble : rien a voler. */
 .arm-tri::after {
   content: '';
   position: absolute;
-  inset: -0.6rem -0.4rem 0 -0.6rem;
+  inset: -0.7rem -0.5rem -0.2rem -0.7rem;
 }
 
 .arm-tri:hover {

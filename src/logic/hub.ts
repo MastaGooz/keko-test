@@ -141,22 +141,25 @@ export const CAPACITE_PILE = 3
  * le joueur qui range retrouve exactement l'ordre dans lequel le coffre lui
  * propose de chercher.
  *
- * Au sein d'une catégorie, la rareté décroît : ce qu'on a de mieux se lit en
- * premier. À rareté égale, le nom — il faut bien un ordre stable, et *deux
- * rangements du même coffre doivent donner la même chose.*
+ * Au sein d'une catégorie, la rareté MONTE : le commun d'abord, le rare au
+ * bout. Tranché par Keko — « il faudrait que le tri mette les objets faibles en
+ * premier et les objets rares en dernier ». *Une liste qui monte se termine sur
+ * ce qu'on cherche*, et le coffre se lit de haut en bas comme une progression.
+ * À rareté égale, le nom — il faut bien un ordre stable, et *deux rangements du
+ * même coffre doivent donner la même chose.*
  *
  * **Les piles se referment d'elles-mêmes** : deux exemplaires d'un objet ont
  * même catégorie, même rareté et même nom, donc ils se retrouvent voisins sans
  * qu'on ait à les grouper.
  *
  * Les trésors vivent dans leur propre liste, que la grille montre à la suite :
- * on les range par VALEUR décroissante, ce qui est la seule rareté qu'ils
- * aient.
+ * on les range par VALEUR croissante, dans le même sens — c'est la seule
+ * rareté qu'ils aient.
  */
 const RANG_CATEGORIE = (o: Objet): number =>
   'mains' in o ? 0 : estConsommable(o) ? 2 : 1
 
-const RANG_RARETE: Record<Rarete, number> = { epique: 0, rare: 1, commune: 2 }
+const RANG_RARETE: Record<Rarete, number> = { commune: 0, rare: 1, epique: 2 }
 
 export function trierLeCoffre(hub: Hub): Hub {
   const reserve = [...hub.reserve].sort(
@@ -167,7 +170,7 @@ export function trierLeCoffre(hub: Hub): Hub {
       a.id.localeCompare(b.id),
   )
   const tresors = [...hub.tresors].sort(
-    (a, b) => (b.valeur ?? 0) - (a.valeur ?? 0) || a.nom.localeCompare(b.nom),
+    (a, b) => (a.valeur ?? 0) - (b.valeur ?? 0) || a.nom.localeCompare(b.nom),
   )
   return { ...hub, reserve, tresors }
 }
