@@ -68,6 +68,9 @@ const LIGNES_SET = 2
  */
 const DELAI_LOUPE = 160
 
+/** De combien la carte regardée s'avance vers l'oeil. */
+const AVANCEE_LOUPE = 0.35
+
 type Props = {
   carte: CarteAPeindre | null
   set?: readonly Entree[]
@@ -164,8 +167,22 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
     (H * 0.88) / (LIGNES_SET * 1.82),
     largeurSet / (COLONNES_SET * 1.1),
   )
-  /** Ce qu'une carte du set devient quand on la regarde de plus près. */
-  const tailleLoupe = Math.min(piece * 0.95, (H * 0.66) / 1.4)
+  /**
+   * CE QU'UNE CARTE DU SET DEVIENT SOUS LA LOUPE — et le champ dans lequel
+   * elle doit tenir.
+   *
+   * **Elle s'avance vers l'oeil, donc son champ visible RÉTRÉCIT.** Bornée sur
+   * celui des autres cartes, elle sortait par le haut quand on regardait la
+   * rangée du dessus — Keko : « ce serait bien que le zoom ne se fasse pas en
+   * dehors du champ de vision ». *Un objet qu'on rapproche de la caméra n'est
+   * plus mesuré par la même règle* : c'est la leçon déjà écrite pour tout ce
+   * qui se calcule depuis `Cadrage`, et elle vaut aussi à l'intérieur d'un
+   * écran.
+   */
+  const zLoupe = zCarte + AVANCEE_LOUPE
+  const hLoupe = hauteurVisibleA(zLoupe, size.height)
+  const lLoupe = (hLoupe * size.width) / size.height
+  const tailleLoupe = Math.min(piece * 0.95, (hLoupe * 0.66) / 1.4)
   /**
    * LE COUPLE SE CENTRE, PAS LA PIÈCE SEULE.
    *
@@ -227,16 +244,16 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           const demiL = t / 2
           const demiH = (t * 1.4) / 2
           const xCarte = grossie
-            ? Math.min(Math.max(x, -L / 2 + demiL + marge), L / 2 - demiL - marge)
+            ? Math.min(Math.max(x, -lLoupe / 2 + demiL + marge), lLoupe / 2 - demiL - marge)
             : x
           const yCarte = grossie
-            ? Math.min(Math.max(y, -H / 2 + demiH), H / 2 - demiH)
+            ? Math.min(Math.max(y, -hLoupe / 2 + demiH), hLoupe / 2 - demiH)
             : y + uneCarte * 0.16
           return (
             <group key={entree.carte.id}>
               <Carte3D
                 carte={entree.carte}
-                position={[xCarte, yCarte, zCarte + (grossie ? 0.35 : 0)]}
+                position={[xCarte, yCarte, grossie ? zLoupe : zCarte]}
                 rotation={[0, 0, 0]}
                 taille={t}
                 ombre={false}

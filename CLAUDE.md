@@ -3309,21 +3309,39 @@ dire la même chose partout dans ce jeu*).
 
 Trois choses à ne pas défaire :
 
-- **elle grossit sur place, mais bornée à l'écran** : une carte agrandie qu'on
-  ne voit qu'à moitié n'a pas été agrandie. Même borne que la carte qui attend
-  sa cible en combat ;
+- **elle grossit sur place, mais bornée à SON champ à elle.** Elle s'avance de
+  0,35 vers l'oeil, et *un objet qu'on rapproche de la caméra n'est plus mesuré
+  par la même règle* : bornée sur le champ des autres cartes, elle sortait par
+  le haut quand on regardait la rangée du dessus — Keko : « ce serait bien que
+  le zoom ne se fasse pas en dehors du champ de vision ». La borne se calcule
+  donc à `zCarte + AVANCEE_LOUPE`, et la carte se décale vers le bas plutôt que
+  de dépasser ;
 - **un appui long a servi à REGARDER : le relâcher repose la carte, il ne
   referme pas le zoom.** Une tape, elle, garde son sens d'avant ;
 - **la pastille disparaît sous la loupe** : elle annote une place que la carte
   vient de quitter.
 
 *Ce qui a mené là* : la vitrine ne peut pas déborder — la taille est bornée par
-la hauteur et par la largeur, donc elle rapetisse — mais à huit modèles sur un
-téléphone couché, une carte du set tombait à 44 px de large pour une pièce de
-346. **Le débordement n'était pas le problème, la lisibilité l'était**, et ça ne
-se juge pas sur une capture : d'où le banc d'essai `?r3f&set=8`, qui donne ses
-modèles à l'Espadon plutôt que d'inventer une pièce — *l'art se cherche par nom
-de modèle, et un banc d'essai qui montre des cartes cassées ne se juge pas.*
+la hauteur et par la largeur, donc elle rapetisse. **Le débordement n'était pas
+le problème, la lisibilité l'était**, et ça ne se juge pas sur une capture :
+d'où le banc d'essai `?r3f&set=8`, qui donne ses modèles à l'Espadon plutôt que
+d'inventer une pièce — *l'art se cherche par nom de modèle, et un banc d'essai
+qui montre des cartes cassées ne se juge pas.*
+
+Ce que ça donne, calculé sur les formules de `Cadrage` :
+
+| format | une carte du set | sous la loupe |
+|---|---|---|
+| 844x390 | 94 px | 184 px |
+| 667x320 | 77 px | 151 px |
+| 1568x778 | 188 px | 367 px |
+| 2560x1271 | 307 px | 599 px |
+
+*Un chiffre de ces notes était faux et a circulé* : « 44 px à huit modèles »
+datait d'un réglage antérieur de la taille de la pièce, et je l'ai resservi tel
+quel à Keko avant de le recalculer. **Une mesure écrite une fois ne reste pas
+vraie quand ce qui la produit a bougé** — celles-ci se refont en dix lignes
+contre `Cadrage`.
 
 **LA PIÈCE TENUE NE CHANGE JAMAIS D'INSTANCE.** Elle a d'abord été DÉMONTÉE de
 la grille le temps du geste, une seconde carte suivant le doigt à côté — et au
