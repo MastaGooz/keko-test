@@ -4219,8 +4219,22 @@ d'un cheveu sur le bord du cadre — Keko : « le bouton est mal positionné, il
 déborde sur le bord du panneau coffre ; je le voyais dans le coin haut-gauche ».
 *Un bouton à cheval sur un cadre se lit comme une pièce qui a glissé*, là où la
 plaque du meuble le chevauche exprès : elle NOMME le cadre, elle n'agit pas
-dessus. Il tient donc dans la bande (90 % de sa hauteur) et s'aligne sur la
-marge gauche des onglets, juste au-dessus du premier.
+dessus.
+
+**ET LE MÊME ÉCART AU HAUT ET À GAUCHE**, dit par un seul nombre — *deux marges
+calculées chacune de leur côté se désaccordent au premier réglage*. Keko : « il
+touche le bord haut et il est trop loin du bord gauche, il faudrait le même
+écart » : il était aligné sur la marge des onglets à gauche, et à un pixel du
+bord en haut.
+
+**C'est la BANDE qui a cédé, pas le bouton.** *Un carré dans une bande trop
+courte ne peut pas avoir de marge* : à 23 px d'en-tête, égaliser sur la marge
+gauche l'aurait réduit à dix pixels. L'en-tête s'est donc rouverte d'un tiers
+(7 % → 9,5 % du panneau), et ce qu'elle prend, elle le prend à une grille dont
+les lignes s'étirent déjà pour remplir — **mesuré, le compte de cases ne bouge
+pas** : 5 x 3 avant comme après, du téléphone à l'écran de PC. Le côté du carré
+est ce qui reste de la bande une fois les deux marges prises : 19 px pour 6 de
+marge à 844 x 390.
 
 L'ordre des catégories est **celui des onglets** — armes, armures, objets —
 parce que *deux façons de dire le même classement finissent par diverger* : le
@@ -4242,7 +4256,7 @@ même nom.
 **Sa zone sensible déborde son dessin** (un `::after` en débord). L'en-tête ne
 fait qu'une vingtaine de pixels sur un téléphone et *le doigt ne rétrécit pas
 avec l'écran* : le carré garde la taille de la bande, la prise s'étend autour de
-lui — 39 x 35 px au lieu de 20 x 20 à 844 x 390. Vers la gauche et le haut il
+lui — 38 x 33 px au lieu de 19 x 19 à 844 x 390. Vers la gauche et le haut il
 n'y a que le bord du meuble, donc rien à voler ; **vers le bas, à peine**, parce
 que les onglets commencent aussitôt et qu'*une zone plus grande que son bouton
 vole le geste à sa voisine* — la leçon des slots du chargement. *Ça reste sous
