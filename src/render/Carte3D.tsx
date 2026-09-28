@@ -28,6 +28,7 @@ import { geometrieDOnde, matiereDOnde, poserLOnde, poussiereDOnde } from './onde
 import type { CarteAPeindre } from './texture-carte.ts'
 import {
   DEBORD_CONTOUR,
+  METAL_3D,
   PART_DISQUE,
   textureNombre,
   signature,
@@ -440,7 +441,11 @@ export function Carte3D({
 
   const { face, laiton, halo, verso } = useMemo(() => {
     const laiton = new THREE.MeshStandardMaterial({
-      color: '#b79a6a',
+      // LA TRANCHE SUIT LE CADRE. La coque peinte prend la teinte de la
+      // rareté ; si le corps restait laiton, l'épaisseur trahirait le métal
+      // d'à côté dès que la carte s'incline — *un objet n'est pas fait de deux
+      // matières sur deux millimètres.*
+      color: METAL_3D.commune,
       metalness: 0.85,
       roughness: 0.38,
       emissive: '#ffcf7a',
@@ -571,6 +576,13 @@ ${nuanceur.fragmentShader}`
     })
     return { face, laiton, halo, verso }
   }, [])
+
+  // ELLE SE POSE SUR LE MATÉRIAU, elle ne le reconstruit pas : le rebâtir à
+  // chaque changement de carte referait aussi son nuanceur, et la carte
+  // repasserait par son état sombre.
+  useEffect(() => {
+    laiton.color.set(METAL_3D[carte.rarete ?? 'commune'] ?? METAL_3D.commune!)
+  }, [laiton, carte.rarete])
 
   /**
    * UNE PETITE CARTE PREND UNE PETITE TEXTURE.

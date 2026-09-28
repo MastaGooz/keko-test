@@ -4204,6 +4204,62 @@ calculs qui se répondent se désaccordent au premier réglage s'ils vivent
 ailleurs.* Le dépôt doit tomber DANS la case, pas seulement dans sa colonne —
 *échanger avec un voisin qu'on n'a pas désigné serait pire que ne rien faire.*
 
+**LA RARETÉ SE LIT AU MÉTAL DU CADRE — cinq crans.** Keko : « j'aimerais
+distinguer les cartes par rareté visuellement… un code vert/bleu/violet/orange
+classique, mais je ne sais pas comment le mettre en place ».
+
+**Le principe qui décide de tout : une ÉCHELLE se dit en couleur, une FAMILLE
+se dit en forme.** La rareté est une échelle — cinq crans ordonnés — et la
+couleur est faite pour ça. Le type (arme, armure, objet, carte de deck) est une
+catégorie : il n'y a rien à ordonner, et **cinq couleurs de plus entreraient en
+collision frontale avec les cinq de la rareté** — si les deux prennent la
+couleur, plus rien ne se lit. Le type garde donc la forme : le symbole du coin,
+l'illustration, le mot du pied.
+
+*Observation qui cadre le problème du type* : une carte d'objet et une carte de
+deck ne se regardent JAMAIS côte à côte, sauf dans le zoom d'une pièce. En
+combat la main ne contient que des cartes de deck ; au coffre et au chargement,
+que des objets. **Partout ailleurs, c'est le contexte qui tranche**, donc le
+marqueur n'a pas besoin de crier.
+
+**Le support est la coque de laiton elle-même, teintée** : le dégradé garde
+exactement son profil de lumière — clair, sombre, moyen, très sombre, clair —
+et seule la teinte se décale. *Ça reste du métal, et non une couleur posée
+dessus.* Une seule structure pour cinq palettes (`METAUX`), sinon cinq dégradés
+écrits chacun de leur côté divergeraient au premier réglage.
+
+**LE LAITON NU EST LE COMMUN** : la carte ordinaire ne change pas d'un pixel, et
+seules les pièces rares se signalent. *Une échelle dont le premier cran est le
+silence se lit mieux qu'une échelle qui crie partout.*
+
+Trois choses à ne pas défaire :
+
+- **la tranche 3D suit le cadre** (`METAL_3D`). Si le corps restait laiton,
+  l'épaisseur trahirait le métal d'à côté dès que la carte s'incline — *un objet
+  n'est pas fait de deux matières sur deux millimètres.* La teinte se POSE sur
+  le matériau et ne le reconstruit pas : le rebâtir referait son nuanceur, et la
+  carte repasserait par son état sombre ;
+- **le DOS reste laiton** : *une carte retournée ne dit rien de ce qu'elle
+  est* ;
+- **la rareté entre dans `signature()`**, sans quoi deux pièces de même nom et
+  de rareté différente partageraient la texture.
+
+**LES TRÉSORS EN SONT DEHORS.** Tranché par Keko : « le montant d'or parle par
+lui-même ». *Un trésor n'est pas un objet qu'on porte, c'est un butin qu'on
+compte.* En cherchant ce que ça déloge, on a d'ailleurs trouvé qu'il n'y avait
+presque rien à déloger : les « trois rangs de richesse » n'existent qu'en 2D, et
+seul `fastueux` y porte une règle — **`cossu` et `modeste` ont un nom dans le
+code et rien à l'écran.** En 3D, tous les trésors sont identiques et seul leur
+chiffre les sépare.
+
+**POUR JUGER L'ÉCHELLE : `?r3f&raretes`.** Le jeu n'emploie que deux crans sur
+cinq, et *on ne juge pas une échelle sur deux barreaux* : le banc met une copie
+de chaque pièce à chaque rareté, dans l'ordre. Les trois crans neufs — peu
+commune, épique, légendaire — n'ont encore aucun objet ; ils existent pour que
+le contenu à venir n'ait pas à rouvrir le modèle, *et parce qu'une échelle se
+dessine entière ou pas du tout.* (Aucune migration de sauvegarde : la
+sauvegarde ne porte que la seed et les taps.)
+
 **UN BOUTON RANGE LE COFFRE D'UN COUP**, par catégorie puis par rareté.
 Demandé par Keko : « un bouton dans le coffre, au-dessus des catégories, pour
 ranger le coffre en triant les objets par catégorie et par rareté au sein des

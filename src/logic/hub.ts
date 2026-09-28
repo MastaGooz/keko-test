@@ -159,7 +159,13 @@ export const CAPACITE_PILE = 3
 const RANG_CATEGORIE = (o: Objet): number =>
   'mains' in o ? 0 : estConsommable(o) ? 2 : 1
 
-const RANG_RARETE: Record<Rarete, number> = { commune: 0, rare: 1, epique: 2 }
+const RANG_RARETE: Record<Rarete, number> = {
+  commune: 0,
+  peuCommune: 1,
+  rare: 2,
+  epique: 3,
+  legendaire: 4,
+}
 
 export function trierLeCoffre(hub: Hub): Hub {
   const reserve = [...hub.reserve].sort(

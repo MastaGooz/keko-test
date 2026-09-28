@@ -61,6 +61,7 @@ import {
   aPeindre,
   coffreDeTest,
   pilesDeTest,
+  raretesDeTest,
   setDeTest,
   descenteDeDepart,
   equipementPourTenir,
@@ -214,7 +215,7 @@ export function Scene(): React.JSX.Element {
    * `descente` n'est donc plus l'état racine, c'est ce que le hub produit
    * quand on descend, et ce qui lui revient quand on remonte.
    */
-  const [hub, setHub] = useState<Hub>(() => pilesDeTest(setDeTest(coffreDeTest(creerHub()))))
+  const [hub, setHub] = useState<Hub>(() => raretesDeTest(pilesDeTest(setDeTest(coffreDeTest(creerHub())))))
   const [descente, setDescente] = useState<Descente | null>(null)
   /**
    * LA DESCENTE EN COURS, ou celle de départ tant qu'on est au hub.

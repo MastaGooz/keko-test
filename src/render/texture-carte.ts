@@ -62,6 +62,24 @@ export type CarteAPeindre = {
   composition?: readonly { nombre: number; nom: string }[]
   /** Le type gravé au pied : « Attaque », « Trésor »… */
   type: string
+  /**
+   * SA RARETÉ, si elle en a une — et c'est le CADRE qui la porte.
+   *
+   * Keko voulait « un code vert/bleu/violet/orange classique ». Le support est
+   * la coque de laiton elle-même, teintée : *ce qui est rare est fait d'un
+   * autre métal.* Le dégradé garde exactement son profil de lumière, seule la
+   * teinte se décale — donc ça reste du métal, et non une couleur posée dessus.
+   *
+   * **Le laiton nu EST le commun** : la carte ordinaire ne change pas d'un
+   * pixel, et seules les pièces rares se signalent. *Une échelle dont le
+   * premier cran est le silence se lit mieux qu'une échelle qui crie partout.*
+   *
+   * **Et la couleur ne dit QUE la rareté.** Le type — arme, armure, objet,
+   * carte de deck — se lit à la forme : le symbole du coin, l'illustration, le
+   * mot du pied. *Une échelle se dit en couleur, une famille se dit en forme*,
+   * et deux codes couleur sur un même objet n'en laissent lire aucun.
+   */
+  rarete?: string
 }
 
 /**
@@ -107,15 +125,45 @@ function chemin(ctx: CanvasRenderingContext2D, points: readonly [number, number]
   ctx.closePath()
 }
 
+/**
+ * LES CINQ MÉTAUX DE LA RARETÉ.
+ *
+ * Chacun donne les cinq tons du même dégradé — clair, sombre, moyen, très
+ * sombre, clair — **et c'est une seule structure de lumière pour cinq
+ * teintes** : le cadre garde son relief, son reflet oblique et son bord
+ * éclairé, il ne change que de métal. *Cinq dégradés écrits chacun de leur
+ * côté auraient divergé au premier réglage.*
+ *
+ * Le COMMUN est le laiton du gabarit, au ton près : la carte ordinaire ne
+ * bouge pas.
+ */
+const METAUX: Record<string, readonly [string, string, string, string, string]> = {
+  commune: ['#f2ddaa', '#a88c5f', '#d2b787', '#695c45', '#e7cda0'],
+  peuCommune: ['#dff0c2', '#6f9155', '#a9c98a', '#3d5734', '#d2e6b4'],
+  rare: ['#c6dcf5', '#5a7ea8', '#93b6d8', '#31475f', '#b7d2ee'],
+  epique: ['#e0c8f2', '#7e5ea6', '#b394d2', '#45305e', '#d5beea'],
+  legendaire: ['#ffdcae', '#c07a2c', '#f0a851', '#6b3d12', '#ffd09b'],
+}
+
+/** La couleur du CORPS en 3D — la tranche et le cheveu de cadre qui déborde. */
+export const METAL_3D: Record<string, string> = {
+  commune: '#b79a6a',
+  peuCommune: '#8fae72',
+  rare: '#7a9dc4',
+  epique: '#9d7cc2',
+  legendaire: '#d8973f',
+}
+
 /** Le laiton du cadre, en dégradé oblique comme dans le CSS. */
-function laiton(ctx: CanvasRenderingContext2D): CanvasGradient {
+function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient {
+  const [clair, sombre, moyen, nuit, bord] = METAUX[rarete ?? 'commune'] ?? METAUX.commune!
   const g = ctx.createLinearGradient(0, 0, LARGE, HAUT)
-  g.addColorStop(0, '#f2ddaa')
-  g.addColorStop(0.21, '#a88c5f')
-  g.addColorStop(0.23, '#d2b787')
-  g.addColorStop(0.53, '#d2b787')
-  g.addColorStop(0.8, '#695c45')
-  g.addColorStop(1, '#e7cda0')
+  g.addColorStop(0, clair)
+  g.addColorStop(0.21, sombre)
+  g.addColorStop(0.23, moyen)
+  g.addColorStop(0.53, moyen)
+  g.addColorStop(0.8, nuit)
+  g.addColorStop(1, bord)
   return g
 }
 
@@ -278,8 +326,9 @@ export async function peindreCarte(
 
   // LA PLAQUE : le laiton, assombri d'un voile uniforme. C'est ce voile seul
   // qui fait le relief -- une ombre sous la coque la « différenciait trop du
-  // fond » (Keko).
-  ctx.fillStyle = laiton(ctx)
+  // fond » (Keko). Sa teinte dit la RARETÉ ; le dos, lui, reste laiton —
+  // *une carte retournée ne dit rien de ce qu'elle est.*
+  ctx.fillStyle = laiton(ctx, carte.rarete)
   ctx.fillRect(0, 0, LARGE, HAUT)
   ctx.fillStyle = '#00000030'
   ctx.fillRect(0, 0, LARGE, HAUT)
@@ -288,7 +337,7 @@ export async function peindreCarte(
   ctx.save()
   chemin(ctx, DECOUPE, 0, 0, LARGE, HAUT)
   ctx.clip()
-  ctx.fillStyle = laiton(ctx)
+  ctx.fillStyle = laiton(ctx, carte.rarete)
   ctx.fillRect(0, 0, LARGE, HAUT)
   ctx.restore()
 
@@ -1223,7 +1272,7 @@ const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
 export function signature(carte: CarteAPeindre): string {
   const compo = (carte.composition ?? []).map((e) => `${e.nombre}:${e.nom}`).join('~')
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.effet.join('~')}|${compo}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.effet.join('~')}|${compo}`
 }
 
 /**

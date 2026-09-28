@@ -15,7 +15,19 @@
  */
 import type { Carte } from './combat.ts'
 
-export type Rarete = 'commune' | 'rare' | 'epique'
+/**
+ * L'ÉCHELLE DE RARETÉ, en CINQ crans — le code couleur classique.
+ *
+ * Tranché par Keko : « un code vert/bleu/violet/orange classique », et « les
+ * cinq tout de suite ». Le jeu n'en emploie que deux pour l'instant (commune
+ * et rare) ; les trois autres existent pour que le contenu à venir n'ait pas à
+ * rouvrir le modèle, et parce qu'une échelle se dessine entière ou pas du tout.
+ *
+ * **Elle ne vaut QUE pour ce qui s'équipe.** Les trésors en sont dehors —
+ * tranché par Keko : « le montant d'or parle par lui-même ». *Un trésor n'est
+ * pas un objet qu'on porte, c'est un butin qu'on compte.*
+ */
+export type Rarete = 'commune' | 'peuCommune' | 'rare' | 'epique' | 'legendaire'
 
 /** Un modèle de carte : tout sauf l'identifiant d'exemplaire. */
 export type Modele = Omit<Carte, 'id'>

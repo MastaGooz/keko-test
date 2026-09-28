@@ -11,7 +11,7 @@ import type { Descente } from '../logic/descente.ts'
 import { REGLAGE_DEFAUT, commencerDescente } from '../logic/descente.ts'
 import type { Hub } from '../logic/hub.ts'
 import { creerHub, equipement, consommablesDeLaPile } from '../logic/hub.ts'
-import type { Piece } from '../logic/armes.ts'
+import type { Piece, Rarete } from '../logic/armes.ts'
 import {
   ESPADON,
   GLAIVE,
@@ -86,6 +86,9 @@ export function pieceAPeindre(objet: Objet): CarteAPeindre {
     effet: [set.map((e) => `${e.nombre}× ${e.modele.nom}`).join(' · ')],
     composition: set.map((e) => ({ nombre: e.nombre, nom: e.modele.nom })),
     type: pied,
+    // SA RARETÉ VA AU CADRE. Une carte de deck n'en a pas et n'en aura pas :
+    // elle garde le laiton, qui est le commun.
+    rarete: objet.rarete,
   }
 }
 
@@ -206,6 +209,32 @@ export function setDeTest(hub: Hub, combien = SET_URL()): Hub {
   const modeles = [...ESPADON.set, ...GLAIVE.set, ...PLASTRON.set].slice(0, combien)
   const espadon = { ...ESPADON, set: modeles }
   return { ...hub, reserve: hub.reserve.map((o) => (o.id === ESPADON.id ? espadon : o)) }
+}
+
+/**
+ * DE QUOI JUGER L'ÉCHELLE DE RARETÉ : `?r3f&raretes`.
+ *
+ * Le jeu n'emploie que deux crans sur cinq — commune et rare — donc *on ne peut
+ * pas juger une échelle sur deux barreaux.* Le coffre reçoit une copie de
+ * chaque pièce à chaque rareté, dans l'ordre de l'échelle, pour que les cinq
+ * métaux se comparent côte à côte.
+ *
+ * On REPREND les pièces qui existent plutôt que d'en inventer : l'art se
+ * cherche par nom de modèle, et *un banc d'essai qui montre des cartes cassées
+ * ne se juge pas.*
+ */
+export function RARETES_URL(): boolean {
+  return new URLSearchParams(location.search).has('raretes')
+}
+
+export function raretesDeTest(hub: Hub, actif = RARETES_URL()): Hub {
+  if (!actif) return hub
+  const echelle: Rarete[] = ['commune', 'peuCommune', 'rare', 'epique', 'legendaire']
+  const modeles: Objet[] = [GLAIVE, PLASTRON, POTIONS_DEPART[0]!]
+  const reserve = echelle.flatMap((rarete) =>
+    modeles.map((modele) => ({ ...modele, id: `${modele.id}-${rarete}`, rarete })),
+  )
+  return { ...hub, reserve, tresors: hub.tresors }
 }
 
 /**
