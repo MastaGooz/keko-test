@@ -4003,7 +4003,13 @@ diminué dès qu'elle s'en va. Trois choses la tiennent :
 - **le compte passe de l'une à l'autre**, il n'est jamais sur les deux : la
   carte du dessus le porte tant qu'elle est en place, la doublure le reprend —
   moins une — dès que le doigt l'emmène. *Un exemplaire qu'on tient n'est plus
-  dans la pile.*
+  dans la pile* ;
+- **et la case d'origine ne se dessine PAS en pointillé.** La règle veut
+  qu'elle reste visible le temps du geste — *un emplacement qu'on ne voit plus
+  est un emplacement qu'on ne peut plus viser pour y revenir* — mais elle ne
+  vaut que pour une case qui se vide. Keko : « le slot en pointillé ne doit pas
+  devenir visible quand il y a encore des cartes de la pile en dessous ». *Un
+  pointillé dit « il n'y a rien ici », et il y a encore quelque chose.*
 
 **ET UNE PILE S'INCLINE D'UN BLOC.** Keko : « quand je fais bouger la carte du
 dessus d'une pile avec ma souris, elle traverse celle d'en dessous, il faudrait

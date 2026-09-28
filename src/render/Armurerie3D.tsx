@@ -740,8 +740,14 @@ export function Armurerie3D({
           la pièce y est encore tant qu'on ne l'a pas lâchée : sa place
           devenait donc un trou noir le temps du geste. *Un emplacement qu'on
           ne voit plus est un emplacement qu'on ne peut plus viser pour y
-          revenir.* */}
-      {portee !== null && doigt !== null && (
+          revenir.*
+
+          MAIS PAS SI LA PILE N'EST PAS VIDE : ce qu'on soulève découvre la
+          carte de dessous, pas un trou — Keko : « le slot en pointillé ne doit
+          pas devenir visible quand il y a encore des cartes de la pile en
+          dessous ». *Un pointillé dit « il n'y a rien ici », et il y a encore
+          quelque chose.* */}
+      {portee !== null && doigt !== null && (portee.pile ?? 1) < 2 && (
         <CaseVide
           nom=""
           position={portee.position}
