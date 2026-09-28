@@ -4171,7 +4171,13 @@ Trois choses à ne pas défaire :
   grandir avec elle, et *un séparateur qui bouge n'est plus une frontière* ;
 - **on retient les valeurs à CHAQUE rendu, pas seulement quand on équipe** :
   sinon un déséquipement laisserait une vieille valeur en mémoire, et
-  l'équipement suivant croirait que deux stats ont bougé.
+  l'équipement suivant croirait que deux stats ont bougé ;
+- **L'EFFET PART QUAND LA CARTE SE FIXE, pas quand on la lâche** — Keko. *Il
+  faut donc les DEUX instants, et c'est ce qui n'était pas évident* : l'état du
+  jeu change dès le lâcher, donc c'est là qu'on fige ce que les stats valaient
+  ; la fixation, une demi-seconde plus tard, déclenche l'effet. Un seul
+  compteur ne pouvait pas faire les deux — à l'arrivée, la valeur d'avant a
+  disparu depuis longtemps.
 
 Par l'API d'animation et non par une classe, pour la raison habituelle : deux
 pièces équipées coup sur coup doivent pouvoir relancer le geste avant qu'il

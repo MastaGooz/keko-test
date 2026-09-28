@@ -1099,6 +1099,17 @@ export function Scene(): React.JSX.Element {
    * RETIRERAIT quelque chose doit quand même se signaler quand on le met.
    */
   const [equipements, setEquipements] = useState(0)
+  /**
+   * ET COMBIEN SE SONT POSÉES. Keko : « il faudrait que l'effet soit joué au
+   * moment où la carte se fixe, pas quand on la lâche ».
+   *
+   * *Il faut les deux instants, et c'est ce qui n'était pas évident* : le
+   * premier fige ce que les stats valaient AVANT, puisque l'état du jeu change
+   * dès le lâcher ; le second déclenche l'effet. Un seul compteur ne pourrait
+   * pas faire les deux — à la fixation, la valeur d'avant a disparu depuis une
+   * demi-seconde.
+   */
+  const [fixations, setFixations] = useState(0)
 
   const bougerPiece = useCallback((source: Slot, cible: Slot, id: string) => {
     setHub((h) => deplacerPiece(h, source, cible, id))
@@ -1486,6 +1497,7 @@ export function Scene(): React.JSX.Element {
               setZoomSet([])
             }}
             onDescendre={descendreAuDonjon}
+            onEquipee={() => setFixations((n) => n + 1)}
             onSaisie={setSaisie}
             sousLeZoom={zoomee !== null}
             onPeinte={compter}
@@ -1786,6 +1798,7 @@ export function Scene(): React.JSX.Element {
           energieMax={combat.energieMax}
           tailleMain={combat.tailleMain}
           equipements={equipements}
+          fixations={fixations}
           zoomee={zoomee !== null}
         />
       )}

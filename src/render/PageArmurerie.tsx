@@ -84,6 +84,12 @@ type Props = {
    */
   equipements: number
   /**
+   * Et combien s'y sont POSÉES. C'est lui qui joue l'effet : `equipements`
+   * marque le lâcher — donc l'instant où l'on fige ce que les stats valaient —
+   * et celui-ci l'arrivée.
+   */
+  fixations: number
+  /**
    * Une carte est ouverte en grand : les commandes s'effacent.
    *
    * *Le zoom doit être au-dessus de TOUT* — son voile vit dans le canvas, et
@@ -104,6 +110,7 @@ export function PageArmurerie({
   energieMax,
   tailleMain,
   equipements,
+  fixations,
   zoomee = false,
 }: Props): React.JSX.Element {
   const fenetre = useFenetre()
@@ -202,9 +209,22 @@ export function PageArmurerie({
   const deck = compteDuDeck(hub)
   const valeurs = [pvMax, deck.total, tailleMain, energieMax]
   const avant = useRef(valeurs)
+  /** Ce que les stats valaient juste avant le lâcher, en attente de l'arrivée. */
+  const gele = useRef<number[] | null>(null)
+
+  // AU LÂCHER, ON FIGE : l'état du jeu a déjà changé à cet instant, donc c'est
+  // la dernière occasion de savoir ce qu'il y avait avant. Cet effet est
+  // déclaré AVANT celui qui retient les valeurs à chaque rendu — l'ordre des
+  // effets est celui de leur déclaration, et c'est ce qui lui fait voir les
+  // anciennes.
   useEffect(() => {
-    const anciennes = avant.current
-    if (equipements > 0) {
+    if (equipements > 0) gele.current = avant.current
+  }, [equipements])
+
+  useEffect(() => {
+    const anciennes = gele.current
+    gele.current = null
+    if (fixations > 0 && anciennes !== null) {
       valeurs.forEach((v, i) => {
         if (v === anciennes[i]) return
         vifs.current[i]?.animate(
@@ -222,7 +242,7 @@ export function PageArmurerie({
       })
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [equipements])
+  }, [fixations])
   // ON RETIENT LES VALEURS À CHAQUE RENDU, pas seulement quand on équipe :
   // sinon un déséquipement laisserait une vieille valeur en mémoire, et le
   // prochain équipement croirait que deux stats ont bougé.

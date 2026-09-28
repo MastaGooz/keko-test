@@ -170,6 +170,14 @@ type Props = {
   /** Un trésor se REGARDE et ne se glisse pas : il n'a aucun slot. */
   onRegarderTresor?: (tresor: Carte) => void
   onDescendre?: () => void
+  /**
+   * Une pièce vient de SE FIXER dans un slot — pas d'être lâchée.
+   *
+   * *L'état du jeu change au lâcher, la mise en scène finit bien après* : ce
+   * qui doit se voir à l'arrivée a besoin de ce deuxième instant, et la carte
+   * est la seule à le connaître.
+   */
+  onEquipee?: () => void
   onSaisie?: (tenue: boolean) => void
   /**
    * UNE CARTE EST REGARDÉE DE PRÈS, donc l'armurerie est sous le voile du
@@ -191,6 +199,7 @@ export function Armurerie3D({
   onRegarder,
   onRegarderTresor,
   onDescendre,
+  onEquipee,
   onSaisie,
   sousLeZoom = false,
   onPeinte,
@@ -691,7 +700,10 @@ export function Armurerie3D({
             // ELLE S'ENCASTRE : le son part à l'instant où l'onde s'échappe,
             // et c'est la CARTE qui le dit — elle seule sait quand sa culbute
             // finit.
-            onFixee={() => jouerSon(SON_EQUIPER)}
+            onFixee={() => {
+              jouerSon(SON_EQUIPER)
+              onEquipee?.()
+            }}
             // ELLE EST POSÉE : sa case cesse d'être dessinée. C'est la carte
             // qui le dit, parce qu'elle seule sait où en est son mouvement.
             onArrivee={() => setEnVol((v) => (v === t.id ? null : v))}
