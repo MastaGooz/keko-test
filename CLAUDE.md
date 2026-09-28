@@ -3974,9 +3974,14 @@ avec elle.*
 haut-droit, le seul libre du dessin ; Keko : « il faudrait mettre le nombre sous
 la carte je pense, pas dedans ». *Une mention posée sur une illustration se lit
 comme un badge collé dessus* — c'est exactement le chemin qu'avait déjà fait le
-nombre d'exemplaires du zoom. **Sa hauteur est imposée par la GOUTTIÈRE de la
-grille** (0,168 carte entre deux rangées) : il s'y centre, et la rangée du
-dessous n'est jamais touchée.
+nombre d'exemplaires du zoom. **Il se centre dans la GOUTTIÈRE de la grille**
+(0,168 carte entre deux rangées).
+
+**Et il a grossi d'un tiers ensuite** — Keko : « on peut grossir un peu le
+chiffre qui indique le nombre ? il est peu visible ». *Son plan mord donc d'un
+cheveu sur la rangée du dessous*, mais les glyphes, eux, restent dans la
+gouttière : ce qui dépasse est transparent, et le plan n'écrit plus de
+profondeur pour ne rien cacher.
 
 **LA PILE RESTE QUAND ON EN TIRE UNE CARTE.** Keko : « quand je drag une carte
 d'une pile, la pile disparaît alors qu'il faudrait qu'elle reste et que seul le
@@ -3999,6 +4004,21 @@ diminué dès qu'elle s'en va. Trois choses la tiennent :
   carte du dessus le porte tant qu'elle est en place, la doublure le reprend —
   moins une — dès que le doigt l'emmène. *Un exemplaire qu'on tient n'est plus
   dans la pile.*
+
+**ET UNE PILE S'INCLINE D'UN BLOC.** Keko : « quand je fais bouger la carte du
+dessus d'une pile avec ma souris, elle traverse celle d'en dessous, il faudrait
+bouger tout le paquet ». *Deux cartes empilées ne sont pas deux objets à
+l'oeil*, donc elles ne peuvent pas répondre séparément au curseur : la doublure
+lit **le curseur de la carte du dessus** (`curseurPartage`, un objet mutable
+par pile, gardé dans une `ref` comme le geste et la projection des étiquettes)
+et s'incline exactement comme elle.
+
+*Rotations identiques autour de centres alignés : les deux plans restent
+parallèles, ils ne peuvent plus se traverser.* Restait l'ÉPAISSEUR — une carte
+est un volume de 0,012, pas une face — donc l'écart entre les deux est passé à
+0,02 : **deux surfaces qui ne se croisent pas peuvent quand même
+s'interpénétrer par leur corps.** En perspective, 0,02 sur 4,9 de recul ne se
+voit pas.
 
 **ET RANGER DÉPLACE LA PILE ENTIÈRE**, pas son représentant :
 `echangerDansCoffre` prend désormais deux LISTES d'identifiants et replace des

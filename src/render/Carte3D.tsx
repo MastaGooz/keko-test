@@ -55,7 +55,7 @@ const EPAISSEUR = 0.012
  * rangées — donc sa hauteur ne peut pas la dépasser : on la centre dans
  * l'écart, et la rangée du dessous n'est jamais touchée.
  */
-const MENTION_L = 0.3
+const MENTION_L = 0.42
 const MENTION_H = MENTION_L / 2
 /** Le milieu de la gouttière : une demi-carte, plus la moitié de l'écart. */
 const MENTION_Y = -(1.4 / 2) - 0.084
@@ -348,6 +348,14 @@ type Props = {
    * propriete de l'objet, c'est une propriete de l'etagere.
    */
   pile?: number
+  /**
+   * LE CURSEUR D'UNE AUTRE CARTE, quand deux n'en font qu'une à l'oeil.
+   *
+   * Une pile du coffre est dessinée en deux cartes — celle du dessus et son
+   * épaisseur — mais elle se regarde comme un seul objet : les deux lisent
+   * donc le même curseur et s'inclinent ensemble.
+   */
+  curseurPartage?: { dessus: boolean; x: number; y: number }
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -376,6 +384,7 @@ export function Carte3D({
   onArrivee,
   inerte = false,
   pile,
+  curseurPartage,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -638,7 +647,7 @@ ${nuanceur.fragmentShader}`
   // penchée* — exactement le défaut qui avait fait réserver le survol à la
   // souris.
   useEffect(() => {
-    if (!refletAuDoigt) curseur.current.dessus = false
+    if (!refletAuDoigt) curseur.dessus = false
   }, [refletAuDoigt])
 
   /** Le jeton vu au dernier tour, pour savoir qu'il vient de changer. */
@@ -672,7 +681,19 @@ ${nuanceur.fragmentShader}`
    * résultat pour bien plus cher — la règle déjà tenue par le geste et par la
    * projection des étiquettes.
    */
-  const curseur = useRef({ dessus: false, x: 0, y: 0 })
+  const propre = useRef({ dessus: false, x: 0, y: 0 })
+  /**
+   * ET IL PEUT ÊTRE PARTAGÉ — c'est ce qui fait bouger UNE PILE D'UN BLOC.
+   *
+   * Keko : « quand je fais bouger la carte du dessus d'une pile avec ma
+   * souris, elle traverse celle d'en dessous, il faudrait bouger tout le
+   * paquet ». *Deux cartes empilées ne sont pas deux objets à l'oeil*, donc
+   * elles ne peuvent pas répondre séparément : la doublure lit le curseur de
+   * la carte du dessus et s'incline exactement comme elle. Rotations
+   * identiques autour de centres alignés : les deux plans restent parallèles,
+   * ils ne peuvent plus se traverser.
+   */
+  const curseur = curseurPartage ?? propre.current
 
   const suivreLeCurseur = (e: ThreeEvent<PointerEvent>): void => {
     if (!reflet) return
@@ -683,9 +704,9 @@ ${nuanceur.fragmentShader}`
     // déjà sa taille, donc le résultat est en unités de carte quel que soit
     // le zoom.
     const local = g.worldToLocal(e.point.clone())
-    curseur.current.dessus = true
-    curseur.current.x = THREE.MathUtils.clamp(local.x / LARGE, -0.5, 0.5)
-    curseur.current.y = THREE.MathUtils.clamp(local.y / HAUT, -0.5, 0.5)
+    curseur.dessus = true
+    curseur.x = THREE.MathUtils.clamp(local.x / LARGE, -0.5, 0.5)
+    curseur.y = THREE.MathUtils.clamp(local.y / HAUT, -0.5, 0.5)
   }
 
   // ELLE REJOINT SA PLACE, elle n'y saute pas. L'amortissement exponentiel est
@@ -772,10 +793,10 @@ ${nuanceur.fragmentShader}`
      * non comme une image qui gondole.
      */
     const kReflet = 1 - Math.exp(-9 * delta)
-    const dessus = reflet && curseur.current.dessus
+    const dessus = reflet && curseur.dessus
     l.brille += ((dessus ? 1 : 0) - l.brille) * kReflet
-    l.vx += ((dessus ? curseur.current.x : 0) - l.vx) * kReflet
-    l.vy += ((dessus ? curseur.current.y : 0) - l.vy) * kReflet
+    l.vx += ((dessus ? curseur.x : 0) - l.vx) * kReflet
+    l.vy += ((dessus ? curseur.y : 0) - l.vy) * kReflet
 
     /**
      * LA CULBUTE PREND LA MAIN SUR TOUT LE RESTE, et c'est voulu : pendant
@@ -989,7 +1010,15 @@ ${nuanceur.fragmentShader}`
       {pile !== undefined && pile > 1 && (
         <mesh position={[0, MENTION_Y, EPAISSEUR / 2 + 0.003]} raycast={() => null}>
           <planeGeometry args={[MENTION_L, MENTION_H]} />
-          <meshBasicMaterial map={texturePastille(pile)} transparent toneMapped={false} />
+          <meshBasicMaterial
+            map={texturePastille(pile)}
+            transparent
+            // ELLE N'ÉCRIT PAS DE PROFONDEUR : le chiffre est plus grand que
+            // la gouttière de la grille, donc son plan mord d'un cheveu sur la
+            // rangée du dessous — *ce qui est transparent ne doit rien cacher.*
+            depthWrite={false}
+            toneMapped={false}
+          />
         </mesh>
       )}
 
@@ -1013,7 +1042,7 @@ ${nuanceur.fragmentShader}`
           onPointerOver?.(e)
         }}
         onPointerOut={(e) => {
-          curseur.current.dessus = false
+          curseur.dessus = false
           onPointerOut?.(e)
         }}
       >

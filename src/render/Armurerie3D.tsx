@@ -30,7 +30,7 @@
  * grille remplit son cadre au lieu de laisser un vide sous elle, et ce qui
  * dépasse se défile.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { Carte3D, DUREE_CULBUTE } from './Carte3D.tsx'
@@ -234,9 +234,10 @@ function doublureDe<T extends { nombre: number; ids: string[] }>(
       tresor,
       id: dessous,
       slot: { ou: 'reserve' } as Slot,
-      // UN CHEVEU DERRIÈRE : sans écart les deux cartes se disputent le test
-      // de profondeur, et l'une clignote sur l'autre.
-      position: [position[0], position[1], position[2] - 0.004],
+      // DERRIÈRE, ET DE PLUS D'UNE ÉPAISSEUR DE CARTE : sans cet écart les
+      // deux volumes s'interpénètrent — une carte a du corps, pas seulement
+      // une face. Ça reste invisible en perspective (0,4 % de la distance).
+      position: [position[0], position[1], position[2] - 0.02],
       taille,
       rang,
       pile: pile.nombre - 1,
@@ -304,6 +305,22 @@ export function Armurerie3D({
    * de l'onglet « Tout » — on fouille un coffre pour s'équiper, donc ce qui
    * s'équipe se lit d'abord.
    */
+  /**
+   * UN CURSEUR PAR PILE, partagé par la carte du dessus et son épaisseur.
+   *
+   * Il vit dans une `ref` et pas dans l'état : il change à chaque image, comme
+   * le geste et la projection des étiquettes. La clé est l'identifiant de la
+   * carte du DESSUS, donc les deux se retrouvent sans rien se dire.
+   */
+  const curseurs = useRef(new Map<string, { dessus: boolean; x: number; y: number }>())
+  const curseurDe = (id: string): { dessus: boolean; x: number; y: number } => {
+    const deja = curseurs.current.get(id)
+    if (deja !== undefined) return deja
+    const neuf = { dessus: false, x: 0, y: 0 }
+    curseurs.current.set(id, neuf)
+    return neuf
+  }
+
   const contenu = useMemo(() => contenuDuCoffre(hub, onglet), [hub, onglet])
 
   const total = contenu.pieces.length + contenu.tresors.length
@@ -810,6 +827,12 @@ export function Armurerie3D({
             // les regarde plus. C'est la règle déjà tenue par le survol de la
             // main de combat.
             reflet={tenue === null && !sousLeZoom}
+            // UNE PILE S'INCLINE D'UN BLOC : la doublure lit le curseur de la
+            // carte posée dessus. *Deux cartes empilées ne sont pas deux
+            // objets à l'oeil.*
+            curseurPartage={
+              t.doublure === true || (t.pile ?? 1) > 1 ? curseurDe(t.chef ?? t.id) : undefined
+            }
             culbute={culbute !== null && culbute.id === t.id ? culbute.n : null}
             // ELLE S'ENCASTRE : le son part à l'instant où l'onde s'échappe,
             // et c'est la CARTE qui le dit — elle seule sait quand sa culbute
