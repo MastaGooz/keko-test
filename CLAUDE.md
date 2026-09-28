@@ -4288,6 +4288,13 @@ reste donc terne et un peu olive, le bronze part dans le CUIVRE — plus rouge,
 plus sombre — et l'or est franchement saturé et clair : *ce qui les sépare n'est
 pas la teinte seule, c'est la teinte ET la valeur.*
 
+**ET L'OR A ÉTÉ POUSSÉ EN SATURATION, PAS EN CLARTÉ.** Keko : « on peut appuyer
+un peu sur le doré de l'or pour bien le différencier du laiton sur le cadre ? »
+*Le laiton est un jaune ROMPU, l'or est un jaune PUR* : leurs teintes sont
+voisines — 35° contre 44° — et ce qui les sépare est le gris qu'il y a dedans.
+L'éclaircir l'aurait rapproché du laiton clair ; le saturer l'en éloigne, et
+son ton sombre descend d'autant pour que le cadre garde son relief.
+
 **ET LE DIAMANT EST IRISÉ**, parce que sa clarté ne suffisait pas à le séparer
 de l'argent — Keko : « le diamant est exactement comme l'argent visuellement, je
 propose de lui rajouter un côté holographique ». *Deux métaux froids et clairs

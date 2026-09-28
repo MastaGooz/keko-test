@@ -159,7 +159,12 @@ const METAUX: Record<string, readonly [string, string, string, string, string]> 
   commune: ['#f2ddaa', '#a88c5f', '#d2b787', '#695c45', '#e7cda0'],
   peuCommune: ['#eab98d', '#8a512c', '#bd7f52', '#432516', '#dda379'],
   rare: ['#f4f7fa', '#8a949e', '#ccd5dd', '#4a525b', '#e4eaf0'],
-  epique: ['#ffeda6', '#c8961a', '#f4c948', '#6d4a06', '#ffe08a'],
+  // L'OR EST POUSSÉ EN SATURATION, pas en clarté (Keko : « appuyer un peu
+  // sur le doré pour bien le différencier du laiton »). *Le laiton est un
+  // jaune ROMPU, l'or est un jaune PUR* : ce qui les sépare n'est pas leur
+  // teinte — elles sont voisines — mais le gris qu'il y a dedans. Éclaircir
+  // l'or l'aurait rapproché du laiton clair ; le saturer l'en éloigne.
+  epique: ['#fff29a', '#b8820a', '#ffc61f', '#5c3a00', '#ffd45e'],
   legendaire: ['#ffffff', '#a9c8e0', '#e6f3fd', '#7192aa', '#f6fcff'],
 }
 
@@ -168,7 +173,7 @@ export const METAL_3D: Record<string, string> = {
   commune: '#b79a6a',
   peuCommune: '#9c6237',
   rare: '#c3ccd4',
-  epique: '#e3b433',
+  epique: '#f2b81a',
   legendaire: '#e2f1fc',
 }
 
