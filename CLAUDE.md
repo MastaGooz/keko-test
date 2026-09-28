@@ -4263,6 +4263,14 @@ de même catégorie et même rareté s'échangeraient à chaque clic. *Les piles
 referment d'elles-mêmes* : deux exemplaires ont même catégorie, même rareté et
 même nom.
 
+**ET IL NE GARDE PAS LE FOCUS.** Après un clic à la souris, il restait allumé
+jusqu'au clic suivant — Keko : « ça fait croire qu'on aurait un fonctionnement
+on/off à tort ». *Un bouton qui agit n'a pas d'état* : il fait, et il retombe.
+C'est la règle déjà tenue par les boutons du butin — « il agit, il n'attend
+pas ». On le rend donc **au pointeur seulement** (`e.detail > 0`) : au clavier,
+le focus est le seul repère de l'endroit où l'on est, et le retirer laisserait
+l'utilisateur sans place.
+
 **Sa zone sensible déborde son dessin** (un `::after` en débord). L'en-tête ne
 fait qu'une vingtaine de pixels sur un téléphone et *le doigt ne rétrécit pas
 avec l'écran* : le carré garde la taille de la bande, la prise s'étend autour de

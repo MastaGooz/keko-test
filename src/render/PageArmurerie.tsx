@@ -546,7 +546,23 @@ export function PageArmurerie({
         type="button"
         className="arm-tri"
         style={boite(plan.tri)}
-        onClick={onTrier}
+        onClick={(e) => {
+          /**
+           * **LE FOCUS N'EST PAS UN ÉTAT DU JEU.**
+           *
+           * Après un clic à la souris, le bouton gardait l'air allumé jusqu'au
+           * clic suivant — Keko : « ça fait croire qu'on aurait un
+           * fonctionnement on/off à tort ». *Un bouton qui agit n'a pas
+           * d'état* : il fait, et il retombe. C'est la règle déjà tenue par
+           * les boutons du butin — « il agit, il n'attend pas ».
+           *
+           * On ne le rend QU'AU POINTEUR (`detail > 0`) : au clavier, le
+           * focus est le seul repère de l'endroit où l'on est, et le lui
+           * retirer laisserait l'utilisateur sans place.
+           */
+          if (e.detail > 0) e.currentTarget.blur()
+          onTrier?.()
+        }}
         title="Ranger le coffre"
         aria-label="Ranger le coffre"
       >
