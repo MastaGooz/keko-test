@@ -4152,6 +4152,31 @@ plus durable au plus volatil — les PV traversent la descente, le deck la run,
 la main le tour, l'énergie ne survit pas au tour. *Une colonne de mesures se
 lit de haut en bas : son ordre doit dire quelque chose.*
 
+**UNE STAT QUI CHANGE EN ÉQUIPANT SE SIGNALE.** Keko : « quand on équipe un
+objet qui change une des stats affichées au-dessus, ce serait cool d'avoir un
+effet visuel sur la stat et/ou son icône — pas quand on déséquipe par contre ».
+Elle enfle et s'illumine d'un coup, puis retombe : le contraste de vitesse du
+gonflement des tas, *un effet symétrique se lit comme une respiration, pas
+comme un choc.*
+
+Trois choses à ne pas défaire :
+
+- **c'est le GESTE qui décide, pas le sens de la variation.** Comparer les
+  valeurs suffirait aujourd'hui — seul le deck bouge, et équiper le fait
+  toujours monter — mais Keko annonce d'autres stats, et *un bijou qui
+  RETIRERAIT quelque chose doit quand même se signaler quand on le met.* D'où
+  un compteur d'équipements, qu'un retour au coffre n'incrémente pas ;
+- **c'est le COUPLE chiffre + symbole qui s'anime, pas la ligne.** Le filet qui
+  sépare deux mesures appartient à la seconde : scaler la ligne l'aurait fait
+  grandir avec elle, et *un séparateur qui bouge n'est plus une frontière* ;
+- **on retient les valeurs à CHAQUE rendu, pas seulement quand on équipe** :
+  sinon un déséquipement laisserait une vieille valeur en mémoire, et
+  l'équipement suivant croirait que deux stats ont bougé.
+
+Par l'API d'animation et non par une classe, pour la raison habituelle : deux
+pièces équipées coup sur coup doivent pouvoir relancer le geste avant qu'il
+soit fini.
+
 **LES QUATRE CHIFFRES ONT LA MÊME VOIX** — même corps, même graisse, celle de
 l'orbe. Keko : « utilise la même taille / bold pour le chiffre deck et main que
 ceux utilisés pour l'énergie ». *Quatre mesures du même état ne peuvent pas se

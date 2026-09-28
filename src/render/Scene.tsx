@@ -1086,10 +1086,26 @@ export function Scene(): React.JSX.Element {
     )
   }, [depart.rng, hub])
 
-  const bougerPiece = useCallback(
-    (source: Slot, cible: Slot, id: string) => setHub((h) => deplacerPiece(h, source, cible, id)),
-    [],
-  )
+  /**
+   * COMBIEN DE FOIS ON A ÉQUIPÉ, et jamais déséquipé.
+   *
+   * Keko : « quand on équipe un objet qui change une des stats affichées
+   * au-dessus, ce serait cool d'avoir un effet visuel sur la stat — pas quand
+   * on déséquipe par contre ».
+   *
+   * *C'est le GESTE qui décide, pas le sens de la variation.* Comparer les
+   * valeurs suffirait aujourd'hui, où seul le deck bouge et où équiper le fait
+   * toujours monter — mais Keko annonce d'autres stats, et un bijou qui
+   * RETIRERAIT quelque chose doit quand même se signaler quand on le met.
+   */
+  const [equipements, setEquipements] = useState(0)
+
+  const bougerPiece = useCallback((source: Slot, cible: Slot, id: string) => {
+    setHub((h) => deplacerPiece(h, source, cible, id))
+    // Reposer au coffre n'est pas équiper. Un dépôt refusé ne change pas le
+    // hub, donc aucune stat ne bouge et l'effet ne trouve rien à jouer.
+    if (cible.ou !== 'reserve') setEquipements((n) => n + 1)
+  }, [])
 
   /** Ranger le coffre : deux objets changent de place, rien d'autre ne bouge. */
   const rangerCoffre = useCallback(
@@ -1769,6 +1785,7 @@ export function Scene(): React.JSX.Element {
           pvMax={combat.pvMax}
           energieMax={combat.energieMax}
           tailleMain={combat.tailleMain}
+          equipements={equipements}
           zoomee={zoomee !== null}
         />
       )}

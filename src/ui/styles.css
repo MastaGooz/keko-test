@@ -5203,6 +5203,18 @@ body {
   border-left: 1px solid #ffffff1a;
 }
 
+/* LE COUPLE CHIFFRE + SYMBOLE, dans son propre element : c'est lui qui enfle
+   quand la stat change, et pas la ligne. Le filet qui separe deux mesures
+   appartient a la seconde -- scaler la ligne l'aurait fait grandir avec elle,
+   et *un separateur qui bouge n'est plus une frontiere.* */
+.arm-vif {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  height: 100%;
+}
+
 /* LE PAQUET GARDE SA TAILLE DE COMBAT, en plus petit : c'est le meme objet,
    et c'est tout l'interet de le montrer ici. */
 /* LES SYMBOLES SE MESURENT SUR LA LIGNE, plus sur la fenetre : c'est elle qui

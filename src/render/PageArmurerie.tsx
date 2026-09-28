@@ -76,6 +76,14 @@ type Props = {
   energieMax: number
   tailleMain: number
   /**
+   * COMBIEN DE FOIS ON A ÉQUIPÉ depuis l'ouverture de l'écran.
+   *
+   * Ce n'est pas une mesure, c'est un JETON : quand il change, les stats qui
+   * ont bougé se signalent. *Un déséquipement ne l'incrémente pas* — Keko veut
+   * l'effet quand on met, pas quand on retire.
+   */
+  equipements: number
+  /**
    * Une carte est ouverte en grand : les commandes s'effacent.
    *
    * *Le zoom doit être au-dessus de TOUT* — son voile vit dans le canvas, et
@@ -95,6 +103,7 @@ export function PageArmurerie({
   pvMax,
   energieMax,
   tailleMain,
+  equipements,
   zoomee = false,
 }: Props): React.JSX.Element {
   const fenetre = useFenetre()
@@ -172,6 +181,54 @@ export function PageArmurerie({
    */
   const LIBELLES = ['Points de vie', 'Cartes dans le deck', 'Taille de la main', "Points d'action"]
   const mesures = useRef<(HTMLSpanElement | null)[]>([])
+  /** Le couple chiffre + symbole de chaque mesure : c'est LUI qui s'anime. */
+  const vifs = useRef<(HTMLSpanElement | null)[]>([])
+
+  /**
+   * UNE STAT QUI CHANGE EN ÉQUIPANT SE SIGNALE.
+   *
+   * Elle enfle et s'illumine d'un coup, puis retombe — le contraste de vitesse
+   * du gonflement des tas : *un effet symétrique se lit comme une respiration,
+   * pas comme un choc.*
+   *
+   * **C'est le COUPLE qui s'anime, pas la ligne.** Le filet qui sépare deux
+   * mesures appartient à la seconde : scaler la ligne l'aurait fait grandir
+   * avec elle, et *un séparateur qui bouge n'est plus une frontière.*
+   *
+   * **Par l'API d'animation, pas par une classe** : deux pièces équipées coup
+   * sur coup doivent relancer le geste avant qu'il soit fini — la règle déjà
+   * tenue par les tas.
+   */
+  const deck = compteDuDeck(hub)
+  const valeurs = [pvMax, deck.total, tailleMain, energieMax]
+  const avant = useRef(valeurs)
+  useEffect(() => {
+    const anciennes = avant.current
+    if (equipements > 0) {
+      valeurs.forEach((v, i) => {
+        if (v === anciennes[i]) return
+        vifs.current[i]?.animate(
+          [
+            { scale: '1', filter: 'brightness(1) drop-shadow(0 0 0 #e8ac5400)' },
+            {
+              scale: '1.26',
+              filter: 'brightness(1.9) drop-shadow(0 0 0.7rem #e8ac54cc)',
+              offset: 0.28,
+            },
+            { scale: '1', filter: 'brightness(1) drop-shadow(0 0 0 #e8ac5400)' },
+          ],
+          { duration: 560, easing: 'ease-out' },
+        )
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [equipements])
+  // ON RETIENT LES VALEURS À CHAQUE RENDU, pas seulement quand on équipe :
+  // sinon un déséquipement laisserait une vieille valeur en mémoire, et le
+  // prochain équipement croirait que deux stats ont bougé.
+  useEffect(() => {
+    avant.current = valeurs
+  })
   const [bulle, setBulle] = useState<Bulle | null>(null)
 
   /**
@@ -295,7 +352,6 @@ export function PageArmurerie({
     suivre(e.nativeEvent)
   }
 
-  const deck = compteDuDeck(hub)
 
   /**
    * DEUX CALQUES, ET C'EST LE CANVAS QUI PASSE ENTRE EUX.
@@ -388,25 +444,33 @@ export function PageArmurerie({
           emporte se mesure au-dessus de ce qu'on porte.* */}
       <div className="arm-etat" style={boite(plan.stats)}>
         <span className="arm-mesure" ref={(el) => void (mesures.current[0] = el)}>
-          <span className="arm-chiffre">{pvMax}</span>
-          <CoeurIcone />
+          <span className="arm-vif" ref={(el) => void (vifs.current[0] = el)}>
+            <span className="arm-chiffre">{pvMax}</span>
+            <CoeurIcone />
+          </span>
         </span>
         {/* LE COMPTE DU DECK EST À GAUCHE DU PAQUET, demandé par Keko. Au-dessus
             — sa place en combat — il se lisait comme une étiquette du tas ;
             ici c'est une MESURE de ce qu'on emporte, elle s'aligne avec les
             trois autres. */}
         <span className="arm-mesure" ref={(el) => void (mesures.current[1] = el)}>
-          <span className="arm-chiffre">{deck.total}</span>
-          <span className="arm-tas">
-            <Tas3D nom="pioche" compte={deck.total} />
+          <span className="arm-vif" ref={(el) => void (vifs.current[1] = el)}>
+            <span className="arm-chiffre">{deck.total}</span>
+            <span className="arm-tas">
+              <Tas3D nom="pioche" compte={deck.total} />
+            </span>
           </span>
         </span>
         <span className="arm-mesure" ref={(el) => void (mesures.current[2] = el)}>
-          <span className="arm-chiffre">{tailleMain}</span>
-          <MainIcone />
+          <span className="arm-vif" ref={(el) => void (vifs.current[2] = el)}>
+            <span className="arm-chiffre">{tailleMain}</span>
+            <MainIcone />
+          </span>
         </span>
         <span className="arm-mesure arm-orbe" ref={(el) => void (mesures.current[3] = el)}>
-          <Orbe3D courant={energieMax} max={energieMax} seul />
+          <span className="arm-vif" ref={(el) => void (vifs.current[3] = el)}>
+            <Orbe3D courant={energieMax} max={energieMax} seul />
+          </span>
         </span>
       </div>
 
