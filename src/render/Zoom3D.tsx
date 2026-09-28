@@ -273,6 +273,24 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                 pileTaille={tailleCompte}
                 onPeinte={onPeinte}
                 onPointerOver={(e) => {
+                  /**
+                   * **CELLE DE DEVANT PREND LE SURVOL, ET LE GARDE.**
+                   *
+                   * Keko : « quand la souris se déplace sur la carte zoomée
+                   * mais que sa position survole aussi la carte à côté, c'est
+                   * la carte à côté qui se met à zoomer ; je voudrais que le
+                   * zoom s'arrête seulement quand la souris SORT de la carte
+                   * zoomée ».
+                   *
+                   * *En 3D, la profondeur trie, elle ne bloque pas* — la règle
+                   * déjà payée sur le voile du zoom : R3F prévient TOUS les
+                   * objets que le rayon traverse. La carte grossie s'avance
+                   * vers l'oeil et déborde sur sa voisine, donc le rayon
+                   * touchait les deux, et la plus lointaine gagnait en
+                   * arrivant la dernière. Un `stopPropagation` rend au premier
+                   * touché ce que le DOM lui donnerait tout seul.
+                   */
+                  e.stopPropagation()
                   // LE SURVOL N'EXISTE QU'À LA SOURIS : au doigt le
                   // `pointerout` n'arrive jamais, la carte resterait grosse.
                   if (e.pointerType === 'mouse') setLoupe(entree.carte.id)

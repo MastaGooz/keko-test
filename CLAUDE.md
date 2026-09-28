@@ -3326,6 +3326,16 @@ Trois choses à ne pas défaire :
   de dépasser ;
 - **un appui long a servi à REGARDER : le relâcher repose la carte, il ne
   referme pas le zoom.** Une tape, elle, garde son sens d'avant ;
+- **celle de devant prend le survol, et le GARDE.** Keko : « quand la souris se
+  déplace sur la carte zoomée mais que sa position survole aussi la carte à
+  côté, c'est la carte à côté qui se met à zoomer ; je voudrais que le zoom
+  s'arrête seulement quand la souris SORT de la carte zoomée ». *En 3D, la
+  profondeur trie, elle ne bloque pas* — la règle déjà payée sur le voile du
+  zoom : R3F prévient TOUS les objets que le rayon traverse. La carte grossie
+  s'avance vers l'oeil et déborde sur sa voisine, donc le rayon touchait les
+  deux, et **la plus lointaine gagnait en arrivant la dernière**. Un
+  `stopPropagation` rend au premier touché ce que le DOM lui donnerait tout
+  seul ;
 - **la pastille disparaît sous la loupe** : elle annote une place que la carte
   vient de quitter.
 
