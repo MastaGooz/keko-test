@@ -244,19 +244,35 @@ const COTTE: Armure = {
 {
   const h = creerHub()
   const [a, b] = h.reserve
-  const range = echangerDansCoffre(h, a!.id, b!.id)
+  const range = echangerDansCoffre(h, [a!.id], [b!.id])
   verifier('l’echange remet les deux objets a la place l’un de l’autre',
     range.reserve[0]!.id === b!.id && range.reserve[1]!.id === a!.id)
   verifier('...et ne change rien d’autre', range.reserve.length === h.reserve.length)
-  verifier('un objet avec lui-meme ne fait rien', echangerDansCoffre(h, a!.id, a!.id) === h)
-  verifier('un identifiant inconnu ne fait rien', echangerDansCoffre(h, a!.id, 'fantome') === h)
+  verifier('un objet avec lui-meme ne fait rien', echangerDansCoffre(h, [a!.id], [a!.id]) === h)
+  verifier('un identifiant inconnu ne fait rien', echangerDansCoffre(h, [a!.id], ['fantome']) === h)
+
+  // ON DEPLACE DES PILES, PAS DES ELEMENTS. Le coffre regroupe les exemplaires
+  // identiques : echanger deux representants laisserait leurs doublures
+  // derriere eux, donc la pile ne bougerait pas.
+  const potions = h.reserve
+    .filter((o) => POTIONS_DEPART.some((q) => q.id === o.id))
+    .map((o) => o.id)
+  const pile = echangerDansCoffre(h, [a!.id], potions)
+  verifier('une pile entiere prend la place de l’objet vise',
+    pile.reserve.slice(0, potions.length).every((o, i) => o.id === potions[i]))
+  verifier('...et l’objet vise se retrouve la ou la pile etait',
+    pile.reserve[potions.length]!.id === a!.id)
+  verifier('...sans rien perdre', pile.reserve.length === h.reserve.length)
+  verifier('une pile incomplete ne fait rien',
+    echangerDansCoffre(h, [a!.id], [potions[0]!, 'fantome']) === h)
+  verifier('une liste vide ne fait rien', echangerDansCoffre(h, [a!.id], []) === h)
 
   // ON N'ECHANGE QUE DANS LA MEME LISTE : un tresor n'est pas une piece, et il
   // ne doit jamais se retrouver dans `reserve`.
   const avecTresor = { ...h, tresors: [carteTresor('t-1', 'Camee', 45), carteTresor('t-2', 'Idole', 90)] }
-  const melange = echangerDansCoffre(avecTresor, a!.id, 't-1')
+  const melange = echangerDansCoffre(avecTresor, [a!.id], ['t-1'])
   verifier('une piece ne s’echange pas avec un tresor', melange === avecTresor)
-  const tresors = echangerDansCoffre(avecTresor, 't-1', 't-2')
+  const tresors = echangerDansCoffre(avecTresor, ['t-1'], ['t-2'])
   verifier('deux tresors s’echangent entre eux', tresors.tresors[0]!.id === 't-2')
 }
 

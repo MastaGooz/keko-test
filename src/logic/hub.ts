@@ -147,17 +147,54 @@ export const CAPACITE_PILE = 3
  * suite que pour les montrer. Un échange entre les deux ferait passer un trésor
  * pour une pièce à la première lecture de `reserve`.
  */
-export function echangerDansCoffre(hub: Hub, idA: string, idB: string): Hub {
-  if (idA === idB) return hub
+export function echangerDansCoffre(
+  hub: Hub,
+  idsA: readonly string[],
+  idsB: readonly string[],
+): Hub {
+  if (idsA.length === 0 || idsB.length === 0) return hub
+  const a = new Set(idsA)
+  const b = new Set(idsB)
+  if (idsA.some((id) => b.has(id))) return hub
+
   const permuter = <T extends { id: string }>(liste: T[]): T[] | null => {
-    const a = liste.findIndex((o) => o.id === idA)
-    const b = liste.findIndex((o) => o.id === idB)
-    if (a < 0 || b < 0) return null
-    const copie = [...liste]
-    copie[a] = liste[b]!
-    copie[b] = liste[a]!
-    return copie
+    const blocA = liste.filter((o) => a.has(o.id))
+    const blocB = liste.filter((o) => b.has(o.id))
+    if (blocA.length !== a.size || blocB.length !== b.size) return null
+
+    /**
+     * ON REPLACE DES BLOCS, PAS DES ÉLÉMENTS.
+     *
+     * Le coffre regroupe les exemplaires identiques en piles, et *c'est la
+     * PILE qu'on déplace* : échanger deux représentants laisserait leurs
+     * doublures derrière eux, donc la pile ne bougerait pas d'un pouce.
+     *
+     * On parcourt la liste dans l'ordre : au PREMIER élément d'un bloc on
+     * écrit l'autre bloc entier, aux suivants rien. Ce qui n'appartient à
+     * aucun des deux ne bouge pas — *un rangement qui déplace ce qu'on n'a
+     * pas touché n'est plus un rangement.*
+     */
+    const sortie: T[] = []
+    let poseA = false
+    let poseB = false
+    for (const o of liste) {
+      if (a.has(o.id)) {
+        if (!poseA) {
+          poseA = true
+          sortie.push(...blocB)
+        }
+      } else if (b.has(o.id)) {
+        if (!poseB) {
+          poseB = true
+          sortie.push(...blocA)
+        }
+      } else {
+        sortie.push(o)
+      }
+    }
+    return sortie
   }
+
   const reserve = permuter(hub.reserve)
   if (reserve !== null) return { ...hub, reserve }
   const tresors = permuter(hub.tresors)

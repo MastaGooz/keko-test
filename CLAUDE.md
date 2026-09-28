@@ -3947,6 +3947,38 @@ celui du chargement (0,6) ; une carte qui grandit en cours de geste change de
 texture en chemin, et elle y GAGNE en netteté, donc le relais se lit dans le
 bon sens.
 
+**LE COFFRE EMPILE LES DOUBLONS, ET LA PILE PORTE SON COMPTE.** Demandé par
+Keko : « il faudrait regrouper par stack les objets qu'on a en double dans le
+coffre, avec un petit compteur pour indiquer le nombre dans le stack ». *Cinq
+potions occupaient cinq cases d'une étagère où l'on CHERCHE* — et cinq fois le
+même dessin ne se lit pas cinq fois plus vite, il se lit moins bien.
+
+**CE QUI FAIT DEUX OBJETS « LES MÊMES », C'EST CE QU'ILS MONTRENT** : la
+`signature()` de la carte peinte, qui est déjà la clé du cache de textures.
+Pas leur identifiant — il est unique par exemplaire, et il le faut, puisque
+tout se désigne par id dans le hub. Pas leur modèle non plus, qu'une pièce
+d'équipement n'a pas. *Deux objets qui partagent une texture sont, à l'oeil, le
+même objet.*
+
+**LE COMPTE EST POSÉ EN PLUS DE LA TEXTURE, JAMAIS PEINT DEDANS**, et c'est la
+règle de la même carte partout : une Potion empilée et une Potion équipée
+doivent partager leur dessin, donc leur texture. *Le nombre n'est pas une
+propriété de l'objet, c'est une propriété de l'étagère* — il disparaît dès que
+la carte en sort. Il vit dans le coin haut-DROIT, le seul libre : la bande
+haut-gauche porte le compteur de cartes de la pièce, le pied porte son type.
+C'est une MENTION, pas un jeton — « ×3 » en or sur rien, avec une ombre qui le
+détache sans lui donner de bord, comme le nombre d'exemplaires du zoom et
+l'étiquette des tas. Et il est enfant de la carte, donc il suit sa place
+amortie, sa taille et son inclinaison : *ce qui est écrit sur une carte bouge
+avec elle.*
+
+**ET RANGER DÉPLACE LA PILE ENTIÈRE**, pas son représentant :
+`echangerDansCoffre` prend désormais deux LISTES d'identifiants et replace des
+BLOCS. Échanger deux représentants laisserait leurs doublures derrière eux —
+la pile ne bougerait pas d'un pouce, alors qu'elle est ce qu'on a saisi. Ce
+qui n'appartient à aucun des deux blocs ne bouge pas : *un rangement qui
+déplace ce qu'on n'a pas touché n'est plus un rangement.*
+
 **ON RANGE LE COFFRE EN POSANT UN OBJET SUR UN AUTRE** : les deux échangent
 leurs places. Ça n'existait pas — le seul déplacement vers le coffre était
 « repose au râtelier », qui ajoute à la FIN de la liste, donc un objet glissé

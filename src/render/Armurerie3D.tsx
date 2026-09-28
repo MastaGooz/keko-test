@@ -165,7 +165,7 @@ type Props = {
   /** Un objet a été glissé d'un endroit à un autre. */
   onDeplacer?: (source: Slot, cible: Slot, id: string) => void
   /** Deux objets du coffre changent de place. */
-  onEchanger?: (idA: string, idB: string) => void
+  onEchanger?: (idsA: string[], idsB: string[]) => void
   onRegarder?: (objet: Objet) => void
   /** Un trésor se REGARDE et ne se glisse pas : il n'a aucun slot. */
   onRegarderTresor?: (tresor: Carte) => void
@@ -280,8 +280,13 @@ export function Armurerie3D({
     taille: number
     /** Sa case dans la grille visible, pour les seuls objets du coffre. */
     rang?: number
+    /** Combien d'exemplaires identiques la case porte. 1 hors du coffre. */
+    pile?: number
+    /** Leurs identifiants : ranger déplace la pile entière. */
+    ids?: string[]
   }[] = [
-    ...contenu.pieces.flatMap((objet, i) => {
+    ...contenu.pieces.flatMap((pile, i) => {
+      const objet = pile.objet
       const rang = i - depart
       if (rang < 0 || rang >= cases) return []
       return [
@@ -293,10 +298,13 @@ export function Armurerie3D({
           position: placeCase(plan, rang, reste),
           taille: plan.tailleCoffre,
           rang,
+          pile: pile.nombre,
+          ids: pile.ids,
         },
       ]
     }),
-    ...contenu.tresors.flatMap((tresor, i) => {
+    ...contenu.tresors.flatMap((pile, i) => {
+      const tresor = pile.objet
       const rang = contenu.pieces.length + i - depart
       if (rang < 0 || rang >= cases) return []
       return [
@@ -308,6 +316,8 @@ export function Armurerie3D({
           position: placeCase(plan, rang, reste),
           taille: plan.tailleCoffre,
           rang,
+          pile: pile.nombre,
+          ids: pile.ids,
         },
       ]
     }),
@@ -481,7 +491,9 @@ export function Armurerie3D({
         )
         if (vise !== undefined && vise.id !== t.id) {
           jouerSon(SON_POSER)
-          onEchanger?.(t.id, vise.id)
+          // ON DEPLACE LA PILE ENTIERE, pas son representant : les
+          // doublures resteraient derriere lui et rien ne bougerait.
+          onEchanger?.(t.ids ?? [t.id], vise.ids ?? [vise.id])
           return
         }
       }
@@ -731,6 +743,7 @@ export function Armurerie3D({
             // ELLE NE SE RATTRAPE PAS EN PLEIN VOL : tant qu'elle n'est pas
             // posée, elle ne répond plus au doigt.
             inerte={enVol === t.id}
+            pile={t.pile}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
           />

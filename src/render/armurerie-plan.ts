@@ -31,6 +31,8 @@ import { Z_MAIN, hauteurVisibleA } from './Cadrage.tsx'
 import { tailleBouton } from './Bouton3D.tsx'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
+import { aPeindre, pieceAPeindre } from './combat-3d.ts'
+import { signature } from './texture-carte.ts'
 import type { Carte } from '../logic/combat.ts'
 import type { Hub } from '../logic/hub.ts'
 import { CAPACITE_PILE } from '../logic/hub.ts'
@@ -482,7 +484,51 @@ export function caseSousLePoint(
  * défilement : les deux ont besoin du même compte. *Deux filtres écrits
  * séparément se seraient désaccordés au premier onglet ajouté.*
  */
-export function contenuDuCoffre(hub: Hub, onglet: Onglet): { pieces: Objet[]; tresors: Carte[] } {
+/**
+ * UNE PILE DU COFFRE : un exemplaire montré, et combien il y en a derrière.
+ *
+ * Keko : « il faudrait regrouper par stack les objets qu'on a en double dans
+ * le coffre, avec un petit compteur ». *Cinq potions occupaient cinq cases
+ * d'une étagère où l'on CHERCHE* — et cinq fois le même dessin ne se lit pas
+ * cinq fois plus vite, il se lit moins bien.
+ *
+ * `ids` porte TOUS les exemplaires, parce que ranger déplace la pile entière :
+ * échanger deux représentants laisserait leurs doublures derrière eux.
+ */
+export type Pile<T> = { objet: T; nombre: number; ids: string[] }
+
+/**
+ * CE QUI FAIT DEUX OBJETS « LES MÊMES » : ce qu'ils MONTRENT.
+ *
+ * Pas leur identifiant — il est unique par exemplaire, et il le faut : tout se
+ * désigne par id dans le hub, deux pièces qui partageraient le leur se
+ * déplaceraient ensemble. Pas leur modèle non plus, qu'une pièce d'équipement
+ * n'a pas. *La signature de la carte peinte dit exactement ce qu'on voit*, et
+ * c'est déjà la clé du cache de textures : deux objets qui partagent une
+ * texture sont, à l'oeil, le même objet.
+ */
+function empiler<T extends { id: string }>(liste: T[], cle: (o: T) => string): Pile<T>[] {
+  const piles: Pile<T>[] = []
+  const parCle = new Map<string, Pile<T>>()
+  for (const objet of liste) {
+    const k = cle(objet)
+    const deja = parCle.get(k)
+    if (deja === undefined) {
+      const pile = { objet, nombre: 1, ids: [objet.id] }
+      parCle.set(k, pile)
+      piles.push(pile)
+    } else {
+      deja.nombre += 1
+      deja.ids.push(objet.id)
+    }
+  }
+  return piles
+}
+
+export function contenuDuCoffre(
+  hub: Hub,
+  onglet: Onglet,
+): { pieces: Pile<Objet>[]; tresors: Pile<Carte>[] } {
   const estArme = (o: Objet): boolean => 'mains' in o
   const estArmure = (o: Objet): boolean => !('mains' in o) && !estConsommable(o)
   const pieces =
@@ -496,5 +542,8 @@ export function contenuDuCoffre(hub: Hub, onglet: Onglet): { pieces: Objet[]; tr
             ? hub.reserve.filter(estConsommable)
             : []
   const tresors = onglet === 'tout' || onglet === 'tresors' ? hub.tresors : []
-  return { pieces, tresors }
+  return {
+    pieces: empiler(pieces, (o) => signature(pieceAPeindre(o))),
+    tresors: empiler(tresors, (t) => signature(aPeindre(t))),
+  }
 }

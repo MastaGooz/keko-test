@@ -28,6 +28,7 @@ import { geometrieDOnde, matiereDOnde, poserLOnde, poussiereDOnde } from './onde
 import type { CarteAPeindre } from './texture-carte.ts'
 import {
   DEBORD_CONTOUR,
+  texturePastille,
   signature,
   textureContour,
   textureDeCarte,
@@ -42,6 +43,10 @@ export const DUREE_APPARITION = 0.4
 export const LARGE = 1
 export const HAUT = 1.4
 const EPAISSEUR = 0.012
+
+/** La mention du nombre d'exemplaires : au rapport 2:1 de sa toile. */
+const MENTION_L = 0.36
+const MENTION_H = MENTION_L / 2
 
 /** Le rayon des coins : 3 % de la largeur, comme le `border-radius` du gabarit. */
 export const RAYON_COIN = 0.03
@@ -318,6 +323,19 @@ type Props = {
    * peut reprendre en plein vol est une carte à deux endroits à la fois.*
    */
   inerte?: boolean
+  /**
+   * COMBIEN D'EXEMPLAIRES IDENTIQUES CETTE CARTE REPRESENTE — au coffre, la
+   * pile. Rien en dessous de deux : *une mention qui dit « il y en a un » ne
+   * dit rien.*
+   *
+   * Keko : « il faudrait regrouper par stack les objets qu'on a en double dans
+   * le coffre, avec un petit compteur ». Elle est posee EN PLUS de la texture
+   * et jamais peinte dedans, pour la raison qui vaut partout ici : **la meme
+   * carte partout.** Une Potion empilee et une Potion equipee doivent
+   * partager leur dessin, donc leur texture — et le compte n'est pas une
+   * propriete de l'objet, c'est une propriete de l'etagere.
+   */
+  pile?: number
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -345,6 +363,7 @@ export function Carte3D({
   onFixee,
   onArrivee,
   inerte = false,
+  pile,
   onPeinte,
   onPointerDown,
   onPointerOver,
@@ -945,6 +964,24 @@ ${nuanceur.fragmentShader}`
         raycast={() => null}
         frustumCulled={false}
       />
+
+      {/* LA PILE : « x3 » en or, dans le coin haut-DROIT. La bande
+          haut-gauche porte deja le compteur de cartes de la piece, et le pied
+          est enfoui sous le bord des la main — *le seul coin libre est celui
+          -la.* C'est une MENTION, pas un jeton : du texte sur rien, avec une
+          ombre qui le detache sans lui donner de bord. La regle est deja
+          tranchee pour l'etiquette des tas et pour le nombre d'exemplaires du
+          zoom — on ne decide pas sur ce chiffre.
+
+          Elle est enfant de la carte, donc elle suit sa place amortie, sa
+          taille et son inclinaison : *ce qui est ecrit sur une carte bouge
+          avec elle.* */}
+      {pile !== undefined && pile > 1 && (
+        <mesh position={[LARGE * 0.5 - MENTION_L / 2 - 0.045, HAUT * 0.5 - MENTION_H / 2 - 0.05, EPAISSEUR / 2 + 0.003]} raycast={() => null}>
+          <planeGeometry args={[MENTION_L, MENTION_H]} />
+          <meshBasicMaterial map={texturePastille(pile)} transparent toneMapped={false} />
+        </mesh>
+      )}
 
       {/* LE CORPS : le laiton, tranche et coins arrondis compris. C'est lui
           qui porte les évènements — il couvre toute la carte.

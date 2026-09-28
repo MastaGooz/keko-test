@@ -1131,7 +1131,7 @@ export function Scene(): React.JSX.Element {
 
   /** Ranger le coffre : deux objets changent de place, rien d'autre ne bouge. */
   const rangerCoffre = useCallback(
-    (a: string, b: string) => setHub((h) => echangerDansCoffre(h, a, b)),
+    (a: string[], b: string[]) => setHub((h) => echangerDansCoffre(h, a, b)),
     [],
   )
 
