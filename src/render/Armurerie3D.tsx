@@ -664,6 +664,42 @@ export function Armurerie3D({
   const surUnSlot = accueille && sousLeDoigt !== null && sousLeDoigt.ou !== 'reserve'
 
   /**
+   * **LA DESTINATION DÉCIDE CE QU'ON EMPORTE : un exemplaire, ou LA PILE.**
+   *
+   * Keko : « le joueur n'a aucun moyen pour déplacer une pile entière dans le
+   * coffre ». Il l'avait en réalité — `echangerDansCoffre` replace des blocs
+   * depuis le début — mais **rien ne le lui disait** : on soulevait un
+   * exemplaire, la pile restait derrière avec son compte diminué, et treize
+   * cartes sautaient au lâcher. *Un geste qui montre une chose et en fait une
+   * autre n'existe pas pour celui qui le fait.*
+   *
+   * Les deux intentions sont pourtant distinctes et se lisent à la
+   * destination : **vers un slot, on équipe UN exemplaire ; vers une case du
+   * coffre, on range LA PILE** — un exemplaire seul n'aurait de toute façon
+   * nulle part où aller, puisque le coffre regroupe par ce qu'il montre.
+   *
+   * Reste donc à le DIRE pendant le geste : au-dessus d'une case du coffre, la
+   * carte tenue prend le compte de sa pile, la doublure s'efface et le
+   * pointillé de la case d'origine revient. C'est la règle du slot qui
+   * s'allume — *le refus comme l'effet se lisent avant le lâcher.*
+   */
+  const caseVisee =
+    doigt === null ? null : caseSousLePoint(plan, doigt.x, doigt.y, reste)
+  const pileEntiere =
+    portee !== null &&
+    (portee.pile ?? 1) > 1 &&
+    portee.slot.ou === 'reserve' &&
+    sousLeDoigt?.ou === 'reserve' &&
+    caseVisee !== null &&
+    objets.some(
+      (o) =>
+        o.slot.ou === 'reserve' &&
+        o.rang === caseVisee &&
+        o.doublure !== true &&
+        o.id !== portee.id,
+    )
+
+  /**
    * LES SLOTS QUI PRENNENT CE QU'ON TIENT, tant qu'on le tient.
    *
    * Le râtelier en est exclu, comme le frémissement : c'est l'endroit d'où
@@ -757,8 +793,11 @@ export function Armurerie3D({
           carte de dessous, pas un trou — Keko : « le slot en pointillé ne doit
           pas devenir visible quand il y a encore des cartes de la pile en
           dessous ». *Un pointillé dit « il n'y a rien ici », et il y a encore
-          quelque chose.* */}
-      {portee !== null && doigt !== null && (portee.pile ?? 1) < 2 && (
+          quelque chose.*
+
+          Sauf quand c'est la PILE ENTIÈRE qui part : là, la case se vide pour
+          de bon, et le pointillé redevient vrai. */}
+      {portee !== null && doigt !== null && ((portee.pile ?? 1) < 2 || pileEntiere) && (
         <CaseVide
           nom=""
           position={portee.position}
@@ -805,12 +844,15 @@ export function Armurerie3D({
          */
         const chefSorti =
           doigt !== null && tenue !== null && objets[tenue]?.id === (t.chef ?? t.id)
+        // ET LA DOUBLURE S'EFFACE QUAND C'EST LA PILE ENTIÈRE QUI PART : là,
+        // ce n'est plus un exemplaire qu'on soulève, c'est le tas.
+        const cachee = t.doublure === true && chefSorti && pileEntiere
         const reste =
           t.doublure === true
             ? chefSorti
               ? t.pile
               : undefined
-            : chefSorti
+            : chefSorti && !pileEntiere
               ? undefined
               : t.pile
         // UNE CARTE SEULE NE SE COMPTE PAS : au coffre, « 1 » n'apprend rien.
@@ -869,6 +911,7 @@ export function Armurerie3D({
             // UNE DOUBLURE NE SE PREND PAS : c'est l'épaisseur de la
             // pile, et la carte du dessus est déjà l'exemplaire qu'on tire.
             inerte={enVol === t.id || t.doublure === true}
+            cachee={cachee}
             pile={compte}
             pileTaille={tailleCompte}
             onPeinte={onPeinte}

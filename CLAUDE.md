@@ -4110,6 +4110,31 @@ diminué dès qu'elle s'en va. Trois choses la tiennent :
   devenir visible quand il y a encore des cartes de la pile en dessous ». *Un
   pointillé dit « il n'y a rien ici », et il y a encore quelque chose.*
 
+**ET C'EST LA DESTINATION QUI DÉCIDE CE QU'ON EMPORTE : un exemplaire, ou LA
+PILE.** Keko : « le joueur n'a aucun moyen pour déplacer une pile entière dans
+le coffre ». Il l'avait en réalité — `echangerDansCoffre` replace des blocs
+depuis le début — mais **rien ne le lui disait** : on soulevait un exemplaire,
+la pile restait derrière avec son compte diminué, et treize cartes sautaient au
+lâcher. *Un geste qui montre une chose et en fait une autre n'existe pas pour
+celui qui le fait.*
+
+Les deux intentions sont pourtant distinctes, et elles se lisent à la
+destination : **vers un slot on équipe UN exemplaire, vers une case du coffre
+on range LA PILE.** Un exemplaire seul n'aurait de toute façon nulle part où
+aller : *le coffre regroupe par ce qu'il montre*, donc deux tas identiques à
+deux endroits ne peuvent pas exister.
+
+Restait à le DIRE pendant le geste. Au-dessus d'une case occupée du coffre : la
+carte tenue prend le compte de sa pile, la doublure s'efface et le pointillé de
+la case d'origine revient. Au-dessus d'un slot : la pile reste avec son compte
+diminué et la carte tenue n'en porte aucun. C'est la règle du slot qui
+s'allume — *l'effet comme le refus se lisent avant le lâcher.*
+
+**La doublure s'efface sans se DÉMONTER** (`cachee` sur `Carte3D`) : une carte
+démontée puis remontée repasse par son état sombre le temps que sa texture
+revienne du cache, donc elle clignoterait à chaque fois que le doigt traverse
+une case.
+
 **ET UNE PILE S'INCLINE D'UN BLOC.** Keko : « quand je fais bouger la carte du
 dessus d'une pile avec ma souris, elle traverse celle d'en dessous, il faudrait
 bouger tout le paquet ». *Deux cartes empilées ne sont pas deux objets à
