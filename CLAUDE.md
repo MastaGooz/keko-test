@@ -3402,9 +3402,14 @@ Quatre choses à ne pas défaire :
 - **la culbute prend la main sur l'amortissement**, et le lui rend en le
   remettant à la cible : sinon il rattraperait un écart que la mise en scène
   vient d'inventer ;
-- **elle ne se joue que dans un SLOT.** Reposer au râtelier est un rangement,
-  pas un équipement — *une mise en scène qui se joue à chaque geste cesse d'en
-  distinguer un.*
+- **elle ne se joue qu'en S'ÉQUIPANT** : en venant du COFFRE, et en allant
+  dans un slot. Reposer au râtelier est un rangement ; passer d'un slot à un
+  autre non plus n'est pas un équipement — Keko : « quand on déplace un objet
+  d'un slot déjà équipé à un autre, on ne va pas déclencher l'animation ».
+  *On était déjà équipé de cette pièce, on ne vient pas de l'être* : le deck ne
+  bouge pas, aucune stat ne change, et **une mise en scène qui se joue à chaque
+  geste cesse d'en distinguer un.** Les deux sons et l'effet des stats suivent
+  la culbute — ils disent le même moment, ils ne peuvent pas partir sans elle.
 
 **C'EST UN JETON QUI LA DÉCLENCHE, PAS UN INSTANT, et ça a coûté une fausse
 piste.** `lireHorloge()` peut être en retard de plusieurs secondes sur

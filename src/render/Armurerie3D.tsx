@@ -499,10 +499,22 @@ export function Armurerie3D({
         // carte met un moment à arriver.
         setEnVol(t.objet.id)
       }
-      // ELLE CULBUTE EN SE FIXANT — mais seulement dans un SLOT. Reposer au
-      // râtelier n'est pas un équipement, c'est un rangement : *une mise en
-      // scène qui se joue à chaque geste cesse d'en distinguer un.*
-      if (pris && cible.ou !== 'reserve') {
+      /**
+       * ELLE CULBUTE EN S'ÉQUIPANT — donc en venant DU COFFRE, et en allant
+       * dans un SLOT.
+       *
+       * Reposer au râtelier n'est pas un équipement, c'est un rangement ; et
+       * passer d'un slot à un autre non plus — Keko : « quand on déplace un
+       * objet d'un slot déjà équipé à un autre, on ne va pas déclencher
+       * l'animation, pareil pour l'arme d'un slot d'arme à un autre ». *On
+       * était déjà équipé de cette pièce, on ne vient pas de l'être* : le deck
+       * ne bouge pas, aucune stat ne change, et une mise en scène qui se joue
+       * à chaque geste cesse d'en distinguer un.
+       *
+       * Les deux sons et l'effet des stats suivent la culbute : ils disent le
+       * même moment, ils ne peuvent pas partir sans elle.
+       */
+      if (pris && t.slot.ou === 'reserve' && cible.ou !== 'reserve') {
         const piece = t.objet.id
         // LE SON DE LA CULBUTE PART AVEC ELLE. Fourni par Keko : « à jouer
         // dès que la carte commence à tourner avant de se fixer » — et elle
