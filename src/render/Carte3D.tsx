@@ -504,6 +504,7 @@ export function Carte3D({
       nuanceur.uniforms.uLustre = { value: 0.5 }
       nuanceur.uniforms.uLustreForce = { value: 0 }
       nuanceur.uniforms.uIris = { value: 0 }
+      nuanceur.uniforms.uOr = { value: 0 }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -565,7 +566,12 @@ ${nuanceur.vertexShader}`.replace(
          // quand on la fait bouger ». *Un foil n'a pas un reflet blanc* : ce
          // qui passe dessus se décompose.
          float ecart = bande - uLustre;
-         vec3 tonLustre = mix(vec3(1.0, 0.95, 0.82), arc * 1.5, uIris);
+         // ET LA LUMIÈRE QUI PASSE SUR L'OR EST DORÉE. Keko : « un effet qui
+         // rend la lumière un peu dorée quand on bouge la carte ». *Un reflet
+         // prend la couleur de ce qu'il touche* — c'est ce qui sépare une
+         // plaque d'or d'une plaque claire.
+         vec3 blanc = mix(vec3(1.0, 0.95, 0.82), vec3(1.5, 1.06, 0.42), uOr);
+         vec3 tonLustre = mix(blanc, arc * 1.5, uIris);
          diffuseColor.rgb += tonLustre
            * uLustreForce
            * (exp(-ecart * ecart * 95.0) + 0.5 * exp(-ecart * ecart * 480.0));`,
@@ -574,6 +580,7 @@ ${nuanceur.vertexShader}`.replace(
 uniform float uLustre;
 uniform float uLustreForce;
 uniform float uIris;
+uniform float uOr;
 varying vec2 vLustreUv;
 ${nuanceur.fragmentShader}`
     }
@@ -590,7 +597,7 @@ ${nuanceur.fragmentShader}`
      *
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
-    face.customProgramCacheKey = () => 'carte-face-desaturable-lustree-irisee'
+    face.customProgramCacheKey = () => 'carte-face-desaturable-lustree-irisee-doree'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -646,6 +653,12 @@ ${nuanceur.fragmentShader}`
         uTexte: { value: textureAureole() },
         uTemps: { value: 0 },
         uForce: { value: 0 },
+        // **UNE SEULE AURÉOLE POUR DEUX MÉTAUX.** L'or en veut une aussi
+        // (Keko), mais dorée et non chromatique : *un métal qui a UNE couleur
+        // ne rayonne pas un arc-en-ciel.* Un facteur de mélange plutôt qu'un
+        // second matériau — même nuanceur, même texture, deux réglages.
+        uArc: { value: 1 },
+        uTon: { value: new THREE.Color('#ffb545') },
       },
       vertexShader: `varying vec2 vUvA;
         void main() {
@@ -655,6 +668,8 @@ ${nuanceur.fragmentShader}`
       fragmentShader: `uniform sampler2D uTexte;
         uniform float uTemps;
         uniform float uForce;
+        uniform float uArc;
+        uniform vec3 uTon;
         varying vec2 vUvA;
         void main() {
           float masque = texture2D(uTexte, vUvA).a;
@@ -662,7 +677,8 @@ ${nuanceur.fragmentShader}`
           float angle = atan(d.y, d.x) / 6.28318;
           float teinte = fract(angle + uTemps * 0.09);
           vec3 arc = 0.5 + 0.5 * cos(6.28318 * (teinte + vec3(0.0, 0.33, 0.67)));
-          gl_FragColor = vec4(arc * masque * uForce, masque * uForce);
+          vec3 ton = mix(uTon, arc, uArc);
+          gl_FragColor = vec4(ton * masque * uForce, masque * uForce);
         }`,
       transparent: true,
       depthWrite: false,
@@ -1089,15 +1105,25 @@ ${nuanceur.fragmentShader}`
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
       // rareté compilerait son nuanceur.
       nuanceur.uniforms.uIris!.value = carte.rarete === 'legendaire' ? 1 : 0
+      nuanceur.uniforms.uOr!.value = carte.rarete === 'epique' ? 1 : 0
     }
 
     // L'AURÉOLE TOURNE ET RESPIRE. Deux fréquences qui ne retombent jamais en
     // phase, comme le frémissement : *un battement régulier se lit comme un
     // clignotement d'alerte.*
-    if (carte.rarete === 'legendaire') {
+    const precieux = carte.rarete === 'legendaire' || carte.rarete === 'epique'
+    if (precieux) {
+      const chromatique = carte.rarete === 'legendaire'
       aureole.uniforms.uTemps!.value = t
+      aureole.uniforms.uArc!.value = chromatique ? 1 : 0
+      // L'OR RAYONNE PLUS SAGEMENT QUE LE DIAMANT : il n'a qu'une couleur,
+      // donc rien ne fait varier sa lueur — *une lumière qui ne change pas
+      // doit être plus discrète, sinon elle devient un décor.*
       aureole.uniforms.uForce!.value =
-        l.vif * (1.05 + Math.sin(t * 1.7) * 0.16 + Math.sin(t * 2.6) * 0.09)
+        l.vif *
+        ((chromatique ? 1.05 : 0.78) +
+          Math.sin(t * 1.7) * 0.16 +
+          Math.sin(t * 2.6) * 0.09)
     }
 
     // L'APPARITION : la carte s'allume, puis la lumière tombe et l'image
@@ -1137,10 +1163,11 @@ ${nuanceur.fragmentShader}`
         <planeGeometry args={[LARGE + DEBORD_CONTOUR * 2, HAUT + DEBORD_CONTOUR * 2]} />
       </mesh>
 
-      {/* L'AURÉOLE DU DIAMANT, un cheveu derrière le halo ordinaire : quand
-          une pièce légendaire est engagée, c'est l'or de l'engagement qu'on
-          doit lire en premier — *un état du jeu passe devant une parure.* */}
-      {carte.rarete === 'legendaire' && (
+      {/* L'AURÉOLE DES DEUX MÉTAUX PRÉCIEUX, un cheveu derrière le halo
+          ordinaire : quand une pièce est engagée, c'est l'or de l'engagement
+          qu'on doit lire en premier — *un état du jeu passe devant une
+          parure.* */}
+      {(carte.rarete === 'legendaire' || carte.rarete === 'epique') && (
         <mesh position={[0, 0, -EPAISSEUR * 1.2]} material={aureole} raycast={() => null}>
           <planeGeometry args={[LARGE + DEBORD_AUREOLE * 2, HAUT + DEBORD_AUREOLE * 2]} />
         </mesh>

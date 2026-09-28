@@ -2069,6 +2069,24 @@ brillance un peu forte ». *Un lustre qui délave l'illustration cesse d'être u
 matière et devient un voile* : ce qu'on doit lire sur une carte regardée de
 près, c'est la carte.
 
+**ET L'OR A LA SIENNE, DORÉE — le même nuanceur, deux réglages.** Keko :
+« pour l'or je voudrais une brillance dorée autour + un effet qui rend la
+lumière un peu dorée quand on bouge la carte ». *Un métal qui n'a QU'UNE
+couleur ne rayonne pas un arc-en-ciel* : un facteur de mélange (`uArc`) choisit
+entre la teinte tournante du diamant et un or fixe, sur la même texture et le
+même maillage. Deux matériaux auraient divergé au premier réglage.
+
+**Elle rayonne plus sagement que celle du diamant** (0,78 contre 1,05) : rien
+ne fait varier sa couleur, et *une lumière qui ne change pas doit être plus
+discrète, sinon elle devient un décor.*
+
+**Et la lumière qui passe SUR l'or est dorée** : le lustre du nuanceur vire de
+la crème chaude (`1,00 / 0,95 / 0,82`) à l'or franc (`1,50 / 1,06 / 0,42`) par
+un second uniforme (`uOr`), indépendant de `uIris` — *l'or prend la couleur du
+reflet sans emprunter la trame ni l'arc-en-ciel du diamant.* C'est ce qui
+sépare une plaque d'or d'une plaque claire : **un reflet prend la couleur de ce
+qu'il touche.**
+
 **Souris seulement**, comme tout survol du projet : au doigt le `pointerout`
 n'arrive jamais et la carte resterait penchée après la tape.
 
