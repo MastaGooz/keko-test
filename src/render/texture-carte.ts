@@ -361,10 +361,21 @@ function caseDeCarte(
    * boîte.
    */
   assiette?: number,
+  /**
+   * LE FER OU LE LAITON — et ce n'est pas une coquetterie.
+   *
+   * La case de fer dit « cette pièce ajoute N cartes au deck » ; la même case
+   * en laiton dit « il y en a N exemplaires ». *Deux chiffres qui comptent des
+   * cartes méritent le même symbole, mais pas la même matière* — sans quoi une
+   * pièce empilée porterait deux fois le même objet pour deux faits
+   * différents. L'or est déjà la couleur de ce qu'on possède ici.
+   */
+  teinte: 'fer' | 'laiton' = 'fer',
 ): void {
   const h = l * 1.4
   const coin = l * 0.105
   const filet = Math.max(0.4, l * 0.058)
+  const laiton = teinte === 'laiton'
 
   ctx.save()
   ctx.shadowColor = '#0000008c'
@@ -372,21 +383,21 @@ function caseDeCarte(
   ctx.shadowOffsetY = l * 0.033
   ctx.beginPath()
   ctx.roundRect(x, y, l, h, coin)
-  const fer = ctx.createLinearGradient(x, y, x + l, y + h)
-  fer.addColorStop(0, '#3b4148')
-  fer.addColorStop(1, '#1b1f24')
-  ctx.fillStyle = fer
+  const fond = ctx.createLinearGradient(x, y, x + l, y + h)
+  fond.addColorStop(0, laiton ? '#6d5423' : '#3b4148')
+  fond.addColorStop(1, laiton ? '#2c2210' : '#1b1f24')
+  ctx.fillStyle = fond
   ctx.fill()
   ctx.restore()
 
   ctx.beginPath()
   ctx.roundRect(x + filet, y + filet, l - filet * 2, h - filet * 2, coin * 0.8)
-  ctx.strokeStyle = '#8d9aa6'
+  ctx.strokeStyle = laiton ? '#d9b872' : '#8d9aa6'
   ctx.lineWidth = filet * 0.78
   ctx.stroke()
 
   const police = l * 0.97
-  ctx.fillStyle = '#e8eef4'
+  ctx.fillStyle = laiton ? '#fbf0d2' : '#e8eef4'
   ctx.font = `600 ${police}px "Grenze Gotisch", Georgia, serif`
   ctx.textAlign = 'center'
   if (assiette === undefined) {
@@ -1364,52 +1375,51 @@ export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {
 }
 
 /**
- * COMBIEN D'EXEMPLAIRES UNE PIÈCE APPORTE — **une mention, pas un jeton.**
+ * COMBIEN D'EXEMPLAIRES — **un chiffre DANS un symbole**, plus une mention.
  *
- * C'était une bulle d'or pleine, cerclée de brun, posée sous la carte du set.
- * Keko : « le nombre d'exemplaires en dessous est moche, la bulle n'est pas
- * élégante, elle casse avec le style épuré et stylisé de l'interface ». *Une
- * capsule pleine est le vocabulaire d'un badge web*, et c'est le seul objet de
- * cet écran à ne pas parler la langue du reste — les cartes ont leur laiton,
- * les titres leurs capitales, les tas leur filet.
+ * Il a été une bulle d'or pleine, puis du texte nu (« ×3 ») posé sur rien.
+ * Keko a tranché la troisième forme : « sur téléphone les chiffres indiquant
+ * le nombre de cartes dans la pile sont trop petits… on peut plutôt les
+ * indiquer sans mettre le "×" devant, et afficher directement le chiffre dans
+ * un symbole en bas à droite des cartes ? »
  *
- * Il ne reste donc que le texte : « ×3 » en or, sur rien. C'est la règle déjà
- * tranchée pour l'étiquette des tas — *on ne décide pas sur ce chiffre, donc
- * il n'a pas à peser comme une valeur de jeu.*
+ * *Un chiffre nu se lit à la taille où il est écrit ; un chiffre sur une plaque
+ * se lit à la taille de la plaque.* C'était le vrai problème sur un petit
+ * écran — pas le corps du texte, mais l'absence de fond sous lui.
+ *
+ * Le symbole est **la case en forme de carte**, celle du compteur du coin :
+ * une carte pour dire des cartes. En LAITON, parce qu'elle ne dit pas la même
+ * chose que celle de fer — *ce qu'on possède, pas ce que ça ajoute au deck.*
+ * Et le « × » tombe : dans une case, un chiffre ne peut plus être qu'un
+ * compte.
  */
-const PASTILLES = new Map<number, THREE.CanvasTexture>()
+const BADGES = new Map<number, THREE.CanvasTexture>()
 
-export function texturePastille(nombre: number): THREE.CanvasTexture {
-  const connue = PASTILLES.get(nombre)
+/** La marge autour de la case, en part de la largeur : l'ombre y loge. */
+const MARGE_BADGE = 0.064
+/** Le rapport largeur/hauteur de la toile, donc du plan qui la porte. */
+export const RAPPORT_BADGE = 1 / (1.4 * (1 - 2 * MARGE_BADGE) + 2 * MARGE_BADGE)
+
+export function textureNombre(nombre: number): THREE.CanvasTexture {
+  const connue = BADGES.get(nombre)
   if (connue !== undefined) return connue
 
-  const l = 256
-  const h = 128
+  const l = 220
+  const h = Math.round(l / RAPPORT_BADGE)
   const canvas = document.createElement('canvas')
   canvas.width = l
   canvas.height = h
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
-  PASTILLES.set(nombre, texture)
+  BADGES.set(nombre, texture)
 
   const ctx = canvas.getContext('2d')
   if (ctx === null) return texture
 
   const peindre = (): void => {
     ctx.clearRect(0, 0, l, h)
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.font = `700 ${Math.round(h * 0.68)}px Cinzel, Georgia, serif`
-    // UNE OMBRE, PAS UN FOND : elle détache le chiffre du voile sombre sans
-    // lui donner de bord. *Ce qui porte un contour se lit comme un objet.*
-    ctx.shadowColor = '#000000d0'
-    ctx.shadowBlur = h * 0.14
-    ctx.shadowOffsetY = h * 0.03
-    const or = ctx.createLinearGradient(0, h * 0.18, 0, h * 0.82)
-    or.addColorStop(0, '#f8e7b8')
-    or.addColorStop(1, '#c9a04e')
-    ctx.fillStyle = or
-    ctx.fillText(`×${nombre}`, l / 2, h * 0.55)
+    const m = l * MARGE_BADGE
+    caseDeCarte(ctx, m, m, l - m * 2, nombre, undefined, 'laiton')
     texture.needsUpdate = true
   }
 

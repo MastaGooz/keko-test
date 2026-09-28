@@ -794,7 +794,7 @@ export function Armurerie3D({
          */
         const chefSorti =
           doigt !== null && tenue !== null && objets[tenue]?.id === (t.chef ?? t.id)
-        const compte =
+        const reste =
           t.doublure === true
             ? chefSorti
               ? t.pile
@@ -802,6 +802,9 @@ export function Armurerie3D({
             : chefSorti
               ? undefined
               : t.pile
+        // UNE CARTE SEULE NE SE COMPTE PAS : au coffre, « 1 » n'apprend rien.
+        // Le zoom, lui, l'affiche — *on y compare des quantités.*
+        const compte = reste !== undefined && reste > 1 ? reste : undefined
         return (
           <Carte3D
             key={t.id}

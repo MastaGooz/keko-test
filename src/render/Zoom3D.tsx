@@ -28,7 +28,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useThree } from '@react-three/fiber'
 import { Carte3D } from './Carte3D.tsx'
 import { zCamera, hauteurVisibleA } from './Cadrage.tsx'
-import { texturePastille } from './texture-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
 
 /**
@@ -260,6 +259,16 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                 ressort={14}
                 reflet
                 refletAuDoigt={grossie}
+                // LE NOMBRE D'EXEMPLAIRES EST SUR LA CARTE, en bas à droite,
+                // dans sa case de laiton. Keko : « on fait pareil pour les
+                // chiffres qui indiquent le nombre de cartes de chaque
+                // exemplaire quand on zoome ». *Le même fait se dit du même
+                // symbole partout* — et posé SUR la carte, il n'annote plus
+                // une place qu'elle peut quitter : il la suit sous la loupe.
+                pile={entree.nombre}
+                // Plus petit qu'au coffre : ici la carte est quatre fois plus
+                // grande, et c'est la ligne d'effet qu'on est venu lire.
+                pileTaille={0.17}
                 onPeinte={onPeinte}
                 onPointerOver={(e) => {
                   // LE SURVOL N'EXISTE QU'À LA SOURIS : au doigt le
@@ -279,23 +288,6 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                   maintenir(entree.carte.id)
                 }}
               />
-              {/* LA MENTION PASSE SOUS LE BAS DE LA CARTE, et ne le mord
-                  plus : la carte descend à `-0,54` (elle est décalée de 0,16
-                  vers le haut), or la bulle commençait à `-0,49`. *Une mention
-                  qui chevauche ce qu'elle annote se lit comme un badge collé
-                  dessus.* */}
-              {/* Elle disparaît sous la loupe : elle annote une place que la
-                  carte vient de quitter. */}
-              {!grossie && (
-                <mesh position={[x, y - uneCarte * 0.68, zCarte + 0.02]}>
-                  <planeGeometry args={[uneCarte * 0.42, uneCarte * 0.21]} />
-                  <meshBasicMaterial
-                    map={texturePastille(entree.nombre)}
-                    transparent
-                    toneMapped={false}
-                  />
-                </mesh>
-              )}
             </group>
           )
         })}

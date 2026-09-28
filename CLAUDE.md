@@ -3964,24 +3964,41 @@ même objet.*
 règle de la même carte partout : une Potion empilée et une Potion équipée
 doivent partager leur dessin, donc leur texture. *Le nombre n'est pas une
 propriété de l'objet, c'est une propriété de l'étagère* — il disparaît dès que
-la carte en sort. C'est une MENTION, pas un jeton — « ×3 » en or sur rien, avec
-une ombre qui le détache sans lui donner de bord, comme le nombre d'exemplaires
-du zoom et l'étiquette des tas. Et il est enfant de la carte, donc il suit sa
-place amortie, sa taille et son inclinaison : *ce qui annote une carte bouge
-avec elle.*
+la carte en sort. Il est enfant de la carte, donc il suit sa place amortie, sa taille et son
+inclinaison : *ce qui annote une carte bouge avec elle.*
 
-**ET IL VIT SOUS LA CARTE, PAS DEDANS.** Il a d'abord été posé dans le coin
-haut-droit, le seul libre du dessin ; Keko : « il faudrait mettre le nombre sous
-la carte je pense, pas dedans ». *Une mention posée sur une illustration se lit
-comme un badge collé dessus* — c'est exactement le chemin qu'avait déjà fait le
-nombre d'exemplaires du zoom. **Il se centre dans la GOUTTIÈRE de la grille**
-(0,168 carte entre deux rangées).
+**ET C'EST UN CHIFFRE DANS UN SYMBOLE, EN BAS À DROITE.** Trois formes ont
+précédé, et chacune a été écartée pour une raison différente : une bulle d'or
+pleine (« la bulle n'est pas élégante, elle casse avec le style épuré »), puis
+« ×3 » en texte nu posé dans le coin haut-droit (« il faudrait mettre le nombre
+sous la carte, pas dedans »), puis le même texte sous la carte, grossi d'un
+tiers. Keko a tranché la quatrième : « sur téléphone les chiffres indiquant le
+nombre de cartes dans la pile sont trop petits… on peut plutôt les afficher
+directement dans un symbole en bas à droite des cartes, sans le "×" devant ? »
 
-**Et il a grossi d'un tiers ensuite** — Keko : « on peut grossir un peu le
-chiffre qui indique le nombre ? il est peu visible ». *Son plan mord donc d'un
-cheveu sur la rangée du dessous*, mais les glyphes, eux, restent dans la
-gouttière : ce qui dépasse est transparent, et le plan n'écrit plus de
-profondeur pour ne rien cacher.
+*Un chiffre nu se lit à la taille où il est écrit ; un chiffre sur une plaque se
+lit à la taille de la plaque.* C'était le vrai défaut sur un petit écran, et pas
+le corps du texte : **une case du coffre ne fait que 46 px de large à 844 x 390,
+et 33 à 667 x 320** — tout y est minuscule, donc ce qui manquait était un fond,
+pas des points de police.
+
+Le symbole est **la case en forme de carte**, celle du compteur du coin : une
+carte pour dire des cartes. Mais **en LAITON et non en fer**, parce qu'elle ne
+dit pas la même chose — *ce qu'on possède, pas ce que la pièce ajoute au deck* —
+et une pièce empilée porte les deux à la fois, à deux coins opposés. Le « × »
+tombe avec : dans une case, un chiffre ne peut plus être qu'un compte.
+
+**ET SA TAILLE N'EST PAS LA MÊME PARTOUT** (`pileTaille`) : 0,30 carte au
+coffre, 0,17 dans le zoom. *Un symbole ne se règle pas à la taille où on le
+dessine, mais à celle où on le regarde* — la règle du médaillon du dos, plus
+grand sur un tas que sur une carte. À 0,30 dans le zoom il recouvrait la ligne
+d'effet qu'on est justement venu lire.
+
+**Le zoom porte le même badge** (demandé par Keko : « on fait pareil pour les
+chiffres qui indiquent le nombre de cartes de chaque exemplaire quand on
+zoome »), et il y gagne au passage : posé SUR la carte, il n'annote plus une
+place qu'elle peut quitter, donc **il la suit sous la loupe** au lieu de
+disparaître.
 
 **LA PILE RESTE QUAND ON EN TIRE UNE CARTE.** Keko : « quand je drag une carte
 d'une pile, la pile disparaît alors qu'il faudrait qu'elle reste et que seul le

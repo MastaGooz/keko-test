@@ -28,7 +28,8 @@ import { geometrieDOnde, matiereDOnde, poserLOnde, poussiereDOnde } from './onde
 import type { CarteAPeindre } from './texture-carte.ts'
 import {
   DEBORD_CONTOUR,
-  texturePastille,
+  RAPPORT_BADGE,
+  textureNombre,
   signature,
   textureContour,
   textureDeCarte,
@@ -45,20 +46,23 @@ export const HAUT = 1.4
 const EPAISSEUR = 0.012
 
 /**
- * La mention du nombre d'exemplaires, au rapport 2:1 de sa toile — **SOUS la
- * carte**, jamais dessus. Keko : « il faudrait mettre le nombre sous la carte,
- * pas dedans ». *Une mention posée sur une illustration se lit comme un badge
- * collé dessus* — c'est la règle déjà tranchée pour le nombre d'exemplaires du
- * zoom, qui avait fait exactement le même chemin.
+ * LE NOMBRE D'EXEMPLAIRES, dans sa case de laiton, EN BAS À DROITE.
  *
- * Elle loge dans la GOUTTIÈRE de la grille du coffre — 0,168 carte entre deux
- * rangées — donc sa hauteur ne peut pas la dépasser : on la centre dans
- * l'écart, et la rangée du dessous n'est jamais touchée.
+ * Keko : « sur téléphone les chiffres indiquant le nombre de cartes dans la
+ * pile sont trop petits… on peut plutôt les afficher directement dans un
+ * symbole en bas à droite des cartes, sans le "×" ? »
+ *
+ * *Un chiffre nu se lit à la taille où il est écrit ; un chiffre sur une
+ * plaque se lit à la taille de la plaque* — c'était le vrai défaut sur un
+ * petit écran, pas le corps du texte. Il a été une bulle d'or, puis du texte
+ * nu sous la carte ; il revient DANS la carte parce qu'il y a maintenant un
+ * fond pour le porter.
+ *
+ * Il reste posé EN PLUS de la texture, jamais peint dedans : *le nombre n'est
+ * pas une propriété de l'objet, c'est une propriété de l'étagère* — une Potion
+ * empilée et une Potion équipée partagent leur dessin.
  */
-const MENTION_L = 0.42
-const MENTION_H = MENTION_L / 2
-/** Le milieu de la gouttière : une demi-carte, plus la moitié de l'écart. */
-const MENTION_Y = -(1.4 / 2) - 0.084
+const MENTION_L = 0.3
 
 /** Le rayon des coins : 3 % de la largeur, comme le `border-radius` du gabarit. */
 export const RAYON_COIN = 0.03
@@ -349,6 +353,17 @@ type Props = {
    */
   pile?: number
   /**
+   * SA LARGEUR, en part de la carte — **et elle n'est pas la même partout.**
+   *
+   * *Un symbole ne se règle pas à la taille où on le dessine, mais à celle où
+   * on le regarde* : la règle est déjà écrite pour le médaillon du dos, plus
+   * grand sur un tas que sur une carte. Une case du coffre ne fait que 46 px
+   * de large sur un téléphone, donc le badge doit y prendre beaucoup de
+   * place ; dans le zoom la carte en fait quatre fois plus, et la même
+   * fraction couvrirait la ligne d'effet qu'on est venu lire.
+   */
+  pileTaille?: number
+  /**
    * LE CURSEUR D'UNE AUTRE CARTE, quand deux n'en font qu'une à l'oeil.
    *
    * Une pile du coffre est dessinée en deux cartes — celle du dessus et son
@@ -384,6 +399,7 @@ export function Carte3D({
   onArrivee,
   inerte = false,
   pile,
+  pileTaille = MENTION_L,
   curseurPartage,
   onPeinte,
   onPointerDown,
@@ -998,20 +1014,21 @@ ${nuanceur.fragmentShader}`
         frustumCulled={false}
       />
 
-      {/* LA PILE : « x3 » en or, SOUS la carte. C'est une MENTION, pas un
-          jeton : du texte sur rien, avec une ombre qui le détache sans lui
-          donner de bord. La règle est déjà tranchée pour l'étiquette des tas
-          et pour le nombre d'exemplaires du zoom — on ne décide pas sur ce
-          chiffre, donc il n'a pas à peser comme une valeur de jeu.
-
-          Elle est enfant de la carte, donc elle suit sa place amortie, sa
-          taille et son inclinaison : *ce qui annote une carte bouge avec
-          elle.* */}
-      {pile !== undefined && pile > 1 && (
-        <mesh position={[0, MENTION_Y, EPAISSEUR / 2 + 0.003]} raycast={() => null}>
-          <planeGeometry args={[MENTION_L, MENTION_H]} />
+      {/* LE NOMBRE D'EXEMPLAIRES, dans sa case de laiton. Il est enfant de la
+          carte, donc il suit sa place amortie, sa taille et son inclinaison :
+          *ce qui annote une carte bouge avec elle.* */}
+      {pile !== undefined && pile > 0 && (
+        <mesh
+          position={[
+            LARGE / 2 - 0.05 - pileTaille / 2,
+            -HAUT / 2 + 0.048 + pileTaille / RAPPORT_BADGE / 2,
+            EPAISSEUR / 2 + 0.003,
+          ]}
+          raycast={() => null}
+        >
+          <planeGeometry args={[pileTaille, pileTaille / RAPPORT_BADGE]} />
           <meshBasicMaterial
-            map={texturePastille(pile)}
+            map={textureNombre(pile)}
             transparent
             // ELLE N'ÉCRIT PAS DE PROFONDEUR : le chiffre est plus grand que
             // la gouttière de la grille, donc son plan mord d'un cheveu sur la
