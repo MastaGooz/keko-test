@@ -126,7 +126,18 @@ function chemin(ctx: CanvasRenderingContext2D, points: readonly [number, number]
 }
 
 /**
- * LES CINQ MÉTAUX DE LA RARETÉ.
+ * LES CINQ MÉTAUX DE LA RARETÉ — **laiton, bronze, argent, or, diamant.**
+ *
+ * Tranché par Keko, qui a écarté sa propre première idée : « je pense que
+ * c'est pas hyper cohérent d'utiliser les couleurs de rareté RPG classiques,
+ * on peut tenter laiton / bronze / argent / or / diamant ? »
+ *
+ * *Et c'est exactement juste* : la carte de ce jeu EST une plaque de métal.
+ * Un vert et un violet posés dessus restaient des couleurs de jeu vidéo
+ * plaquées sur un objet ; une échelle d'alliages, elle, **est déjà dans la
+ * matière** — la carte ne change pas de langue pour dire sa valeur, elle
+ * change d'alliage. Le vocabulaire dit la règle, comme « enchantement »
+ * plutôt que « maîtrise ».
  *
  * Chacun donne les cinq tons du même dégradé — clair, sombre, moyen, très
  * sombre, clair — **et c'est une seule structure de lumière pour cinq
@@ -135,23 +146,30 @@ function chemin(ctx: CanvasRenderingContext2D, points: readonly [number, number]
  * côté auraient divergé au premier réglage.*
  *
  * Le COMMUN est le laiton du gabarit, au ton près : la carte ordinaire ne
- * bouge pas.
+ * bouge pas d'un pixel.
+ *
+ * **Le danger de cette échelle est que trois de ses crans sont jaunes.** Le
+ * laiton reste donc terne et un peu olive, le bronze part dans le CUIVRE — plus
+ * rouge, plus sombre — et l'or est franchement saturé et clair : ce qui les
+ * sépare n'est pas la teinte seule, c'est la teinte ET la valeur. L'argent et
+ * le diamant, eux, sont les deux froids, et le diamant se distingue en étant
+ * **plus clair que tout le reste**, presque blanc.
  */
 const METAUX: Record<string, readonly [string, string, string, string, string]> = {
   commune: ['#f2ddaa', '#a88c5f', '#d2b787', '#695c45', '#e7cda0'],
-  peuCommune: ['#dff0c2', '#6f9155', '#a9c98a', '#3d5734', '#d2e6b4'],
-  rare: ['#c6dcf5', '#5a7ea8', '#93b6d8', '#31475f', '#b7d2ee'],
-  epique: ['#e0c8f2', '#7e5ea6', '#b394d2', '#45305e', '#d5beea'],
-  legendaire: ['#ffdcae', '#c07a2c', '#f0a851', '#6b3d12', '#ffd09b'],
+  peuCommune: ['#eab98d', '#8a512c', '#bd7f52', '#432516', '#dda379'],
+  rare: ['#f4f7fa', '#8a949e', '#ccd5dd', '#4a525b', '#e4eaf0'],
+  epique: ['#ffeda6', '#c8961a', '#f4c948', '#6d4a06', '#ffe08a'],
+  legendaire: ['#ffffff', '#a9c8e0', '#e6f3fd', '#7192aa', '#f6fcff'],
 }
 
 /** La couleur du CORPS en 3D — la tranche et le cheveu de cadre qui déborde. */
 export const METAL_3D: Record<string, string> = {
   commune: '#b79a6a',
-  peuCommune: '#8fae72',
-  rare: '#7a9dc4',
-  epique: '#9d7cc2',
-  legendaire: '#d8973f',
+  peuCommune: '#9c6237',
+  rare: '#c3ccd4',
+  epique: '#e3b433',
+  legendaire: '#e2f1fc',
 }
 
 /** Le laiton du cadre, en dégradé oblique comme dans le CSS. */

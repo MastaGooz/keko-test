@@ -3326,6 +3326,17 @@ Trois choses à ne pas défaire :
   de dépasser ;
 - **un appui long a servi à REGARDER : le relâcher repose la carte, il ne
   referme pas le zoom.** Une tape, elle, garde son sens d'avant ;
+- **elle grossit MOINS quand la carte est déjà grande.** Keko : « sur PC les
+  cartes générées sont zoomées trop gros au survol — c'est bien sur téléphone —
+  je trouve le zoom trop agressif ». *Le rapport était le même partout* (×1,95)
+  parce que les deux bornes sont des fractions du même champ : rien dans le
+  calcul ne savait qu'une carte du set fait 94 px sur un téléphone et 307 sur un
+  écran de PC. Or **le travail de la loupe n'est pas le même aux deux bouts** :
+  en petit elle rend LISIBLE, en grand la carte l'est déjà et il ne lui reste
+  qu'à DÉSIGNER celle qu'on regarde — *et une désignation n'a pas besoin de
+  doubler.* Le grossissement vise donc une taille absolue (190 px) et se borne
+  entre ×1,95 et ×1,28. C'est la règle du disque du compte et du plafond de la
+  main, appliquée à un geste ;
 - **celle de devant prend le survol, et le GARDE.** Keko : « quand la souris se
   déplace sur la carte zoomée mais que sa position survole aussi la carte à
   côté, c'est la carte à côté qui se met à zoomer ; je voudrais que le zoom
@@ -4227,6 +4238,23 @@ exactement son profil de lumière — clair, sombre, moyen, très sombre, clair 
 et seule la teinte se décale. *Ça reste du métal, et non une couleur posée
 dessus.* Une seule structure pour cinq palettes (`METAUX`), sinon cinq dégradés
 écrits chacun de leur côté divergeraient au premier réglage.
+
+**ET L'ÉCHELLE EST UNE ÉCHELLE D'ALLIAGES : laiton, bronze, argent, or,
+diamant.** Keko a écarté sa propre première idée : « je pense que c'est pas
+hyper cohérent d'utiliser les couleurs de rareté RPG classiques, on peut tenter
+laiton / bronze / argent / or / diamant ? » *Et c'est exactement juste* : la
+carte de ce jeu EST une plaque de métal. Un vert et un violet posés dessus
+restaient des couleurs de jeu vidéo plaquées sur un objet ; une échelle
+d'alliages, elle, **est déjà dans la matière** — la carte ne change pas de
+langue pour dire sa valeur, elle change d'alliage. *Le vocabulaire dit la
+règle*, comme « enchantement » plutôt que « maîtrise ».
+
+**Le danger de cette échelle est que trois de ses crans sont jaunes.** Le laiton
+reste donc terne et un peu olive, le bronze part dans le CUIVRE — plus rouge,
+plus sombre — et l'or est franchement saturé et clair : *ce qui les sépare n'est
+pas la teinte seule, c'est la teinte ET la valeur.* L'argent et le diamant sont
+les deux froids, et le diamant se distingue en étant plus clair que tout le
+reste, presque blanc.
 
 **LE LAITON NU EST LE COMMUN** : la carte ordinaire ne change pas d'un pixel, et
 seules les pièces rares se signalent. *Une échelle dont le premier cran est le

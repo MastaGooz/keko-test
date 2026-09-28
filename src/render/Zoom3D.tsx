@@ -66,6 +66,8 @@ const LIGNES_SET = 2
  * rien à distinguer.
  */
 const DELAI_LOUPE = 160
+/** La largeur à laquelle une carte du set se lit sans effort, en pixels. */
+const CIBLE_LOUPE_PX = 190
 
 /** De combien la carte regardée s'avance vers l'oeil. */
 const AVANCEE_LOUPE = 0.35
@@ -185,7 +187,27 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
   const zLoupe = zCarte + AVANCEE_LOUPE
   const hLoupe = hauteurVisibleA(zLoupe, size.height)
   const lLoupe = (hLoupe * size.width) / size.height
-  const tailleLoupe = Math.min(piece * 0.95, (hLoupe * 0.66) / 1.4)
+  /**
+   * **LA LOUPE GROSSIT MOINS QUAND LA CARTE EST DÉJÀ GRANDE.**
+   *
+   * Keko : « sur PC les cartes générées sont zoomées trop gros quand je
+   * survole — c'est bien sur téléphone — je trouve le zoom trop agressif ».
+   *
+   * *Le rapport était le même partout* (×1,95) parce que les deux bornes sont
+   * des fractions du même champ : rien dans le calcul ne savait qu'une carte du
+   * set fait 94 px sur un téléphone et 307 sur un écran de PC. Or **le travail
+   * de la loupe n'est pas le même aux deux bouts** : en petit elle rend
+   * lisible, en grand la carte l'est déjà et il ne lui reste qu'à DÉSIGNER
+   * celle qu'on regarde. Une désignation n'a pas besoin de doubler.
+   *
+   * Le grossissement vise donc une taille ABSOLUE — la taille à laquelle une
+   * carte se lit — et se borne entre les deux : ×1,95 tant qu'on en a besoin,
+   * ×1,28 quand on ne l'a plus. C'est la règle du disque du compte et du
+   * plafond de la main, appliquée à un geste.
+   */
+  const uneCartePx = (uneCarte * size.height) / H
+  const grossissement = Math.max(1.28, Math.min(1.95, CIBLE_LOUPE_PX / uneCartePx))
+  const tailleLoupe = Math.min(piece * 0.95, (hLoupe * 0.66) / 1.4, uneCarte * grossissement)
   /**
    * LE COUPLE SE CENTRE, PAS LA PIÈCE SEULE.
    *
