@@ -263,6 +263,19 @@ type Props = {
    */
   reflet?: boolean
   /**
+   * LE REFLET RÉPOND AUSSI AU DOIGT, tant que celui-ci est POSÉ dessus.
+   *
+   * Demandé par Keko : « sur tél, quand on zoome sur une des cartes ajoutées,
+   * on peut faire l'effet de mouvement / brillance ? »
+   *
+   * *Ce n'est pas une exception à la règle du survol, c'en est l'application* :
+   * si le survol est réservé à la souris, c'est parce qu'au doigt le
+   * `pointerout` n'arrive jamais et que la carte resterait penchée. Ici
+   * l'écran sait exactement quand le doigt se lève — c'est lui qui a armé le
+   * maintien — donc il coupe, et le défaut n'existe pas.
+   */
+  refletAuDoigt?: boolean
+  /**
    * UN JETON QUI DIT « TU VIENS D'ÊTRE POSÉE DANS UN SLOT » : la carte joue
    * alors sa culbute et se moque de l'amortissement.
    *
@@ -327,6 +340,7 @@ export function Carte3D({
   clipper = null,
   apparue = null,
   reflet = false,
+  refletAuDoigt = false,
   culbute = null,
   onFixee,
   onArrivee,
@@ -588,6 +602,14 @@ ${nuanceur.fragmentShader}`
   // sans quoi les grains se réarrangeraient à chaque rendu.
   const poussiere = useMemo(() => poussiereDOnde(LARGE, HAUT, RAYON_COIN), [])
 
+  // LE DOIGT SE LÈVE SANS PRÉVENIR LA CARTE : c'est l'écran qui le sait, et
+  // il le dit en reprenant sa prop. *Sans cette coupure, la carte resterait
+  // penchée* — exactement le défaut qui avait fait réserver le survol à la
+  // souris.
+  useEffect(() => {
+    if (!refletAuDoigt) curseur.current.dessus = false
+  }, [refletAuDoigt])
+
   /** Le jeton vu au dernier tour, pour savoir qu'il vient de changer. */
   const jetonCulbute = useRef(culbute)
 
@@ -622,7 +644,8 @@ ${nuanceur.fragmentShader}`
   const curseur = useRef({ dessus: false, x: 0, y: 0 })
 
   const suivreLeCurseur = (e: ThreeEvent<PointerEvent>): void => {
-    if (!reflet || e.pointerType !== 'mouse') return
+    if (!reflet) return
+    if (e.pointerType !== 'mouse' && !refletAuDoigt) return
     const g = groupe.current
     if (g === null) return
     // ON LIT LE POINT DANS LE REPÈRE DE LA CARTE : sa matrice monde porte

@@ -3321,6 +3321,21 @@ Trois choses à ne pas défaire :
 - **la pastille disparaît sous la loupe** : elle annote une place que la carte
   vient de quitter.
 
+**ET LE REFLET RÉPOND AU DOIGT, tant qu'il reste posé.** Keko : « sur tél,
+quand on zoome sur une des cartes ajoutées, on peut faire l'effet de mouvement
+/ brillance ? Et faire la même sur la carte d'équipement déjà zoomée à gauche
+si le joueur maintient le tap dessus ? »
+
+*Ce n'est pas une exception à la règle du survol, c'en est l'application.* Si
+le survol est réservé à la souris, c'est parce qu'au doigt le `pointerout`
+n'arrive jamais et que la carte resterait penchée — ici l'écran sait exactement
+quand le doigt se lève, puisque c'est lui qui a armé le maintien : il reprend
+la prop, et `Carte3D` coupe. Le défaut n'existe pas.
+
+**La pièce répond au même geste**, sans grossir : elle est déjà à sa taille de
+lecture, mais elle s'incline et son lustre la balaie. *Le même geste doit
+donner la même réponse, quelle que soit la carte qu'il touche.*
+
 *Ce qui a mené là* : la vitrine ne peut pas déborder — la taille est bornée par
 la hauteur et par la largeur, donc elle rapetisse. **Le débordement n'était pas
 le problème, la lisibilité l'était**, et ça ne se juge pas sur une capture :

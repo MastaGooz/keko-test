@@ -259,6 +259,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                 ombre={false}
                 ressort={14}
                 reflet
+                refletAuDoigt={grossie}
                 onPeinte={onPeinte}
                 onPointerOver={(e) => {
                   // LE SURVOL N'EXISTE QU'À LA SOURIS : au doigt le
@@ -299,6 +300,11 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           )
         })}
 
+      {/* LA PIÈCE RÉPOND AU MAINTIEN, ELLE AUSSI. Keko : « et faire la même sur
+          la carte d'équipement déjà zoomée à gauche si le joueur maintient le
+          tap dessus ». Elle ne grossit pas — elle est déjà à sa taille de
+          lecture — mais elle s'incline et son lustre la balaie : *le même geste
+          doit donner la même réponse, quelle que soit la carte qu'il touche.* */}
       <Carte3D
         carte={carte}
         taille={piece}
@@ -307,10 +313,15 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
         ressort={14}
         ombre={false}
         reflet
+        refletAuDoigt={loupe === carte.id}
         onPeinte={onPeinte}
         onPointerDown={(e) => {
           e.stopPropagation()
-          onFermer?.()
+          if (e.pointerType === 'mouse') {
+            onFermer?.()
+            return
+          }
+          maintenir(carte.id)
         }}
       />
     </group>
