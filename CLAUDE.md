@@ -4224,17 +4224,27 @@ dessus.
 **ET LE MÊME ÉCART AU HAUT ET À GAUCHE**, dit par un seul nombre — *deux marges
 calculées chacune de leur côté se désaccordent au premier réglage*. Keko : « il
 touche le bord haut et il est trop loin du bord gauche, il faudrait le même
-écart » : il était aligné sur la marge des onglets à gauche, et à un pixel du
-bord en haut.
+écart », puis « la même distance qu'entre le bord et le premier bouton de
+catégorie ».
 
-**C'est la BANDE qui a cédé, pas le bouton.** *Un carré dans une bande trop
-courte ne peut pas avoir de marge* : à 23 px d'en-tête, égaliser sur la marge
-gauche l'aurait réduit à dix pixels. L'en-tête s'est donc rouverte d'un tiers
-(7 % → 9,5 % du panneau), et ce qu'elle prend, elle le prend à une grille dont
-les lignes s'étirent déjà pour remplir — **mesuré, le compte de cases ne bouge
-pas** : 5 x 3 avant comme après, du téléphone à l'écran de PC. Le côté du carré
-est ce qui reste de la bande une fois les deux marges prises : 19 px pour 6 de
-marge à 844 x 390.
+**C'EST LE CARRÉ QUI DESCEND SOUS LA BANDE, PAS LA BANDE QUI GROSSIT.** *Un
+carré dans une bande trop courte ne peut pas avoir de marge* : à 23 px
+d'en-tête, une marge de quinze l'aurait réduit à rien — et rouvrir l'en-tête
+coûtait de la hauteur à la grille. Or **la bande des onglets est largement plus
+haute que son texte**, qui s'y centre : il reste un vide au-dessus du premier
+onglet, et le carré s'y avance. *Une place libre n'appartient à personne tant
+que rien ne s'y dessine.*
+
+Mesuré : à 844 x 390, 14 px de marge des deux côtés (le premier onglet est à
+15) pour un carré de 22, et 5 px encore entre le bas du bouton et le haut de
+l'onglet ; à 667 x 320, 11 px de marge et 2 px de reste ; sur un écran de PC,
+38 px de marge et un carré de 60.
+
+*La distance au premier onglet ne pouvait pas servir de cible telle quelle* :
+la rangée est CENTRÉE, donc ce qui la précède est un reste de centrage — 15 px
+sur un téléphone, mais 235 sur un écran de PC. **Une valeur qui n'est le
+résultat d'aucune décision ne peut pas en devenir une**, donc le bouton garde
+sa propre marge, réglée pour tomber juste là où Keko la voyait.
 
 L'ordre des catégories est **celui des onglets** — armes, armures, objets —
 parce que *deux façons de dire le même classement finissent par diverger* : le
@@ -4256,7 +4266,7 @@ même nom.
 **Sa zone sensible déborde son dessin** (un `::after` en débord). L'en-tête ne
 fait qu'une vingtaine de pixels sur un téléphone et *le doigt ne rétrécit pas
 avec l'écran* : le carré garde la taille de la bande, la prise s'étend autour de
-lui — 38 x 33 px au lieu de 19 x 19 à 844 x 390. Vers la gauche et le haut il
+lui — 41 x 36 px au lieu de 22 x 22 à 844 x 390. Vers la gauche et le haut il
 n'y a que le bord du meuble, donc rien à voler ; **vers le bas, à peine**, parce
 que les onglets commencent aussitôt et qu'*une zone plus grande que son bouton
 vole le geste à sa voisine* — la leçon des slots du chargement. *Ça reste sous

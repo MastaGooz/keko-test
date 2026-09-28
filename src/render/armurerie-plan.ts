@@ -211,15 +211,7 @@ export function planArmurerie(
   const hOnglets = Math.min(hPanneaux * 0.17, 0.6)
   // L'EN-TÊTE NE PORTE QUE LA PLAQUE, qui est à cheval sur le bord : au-delà,
   // c'est du vide au-dessus des onglets, et il se voyait.
-  //
-  // **ELLE S'EST ROUVERTE D'UN TIERS POUR LE BOUTON DE RANGEMENT.** Keko : « il
-  // touche le bord haut et il est trop loin du bord gauche, il faudrait le même
-  // écart ». *Un carré dans une bande trop courte ne peut pas avoir de marge* :
-  // à 23 px de bande, l'égaliser sur la marge gauche l'aurait réduit à dix
-  // pixels. **C'est la bande qui devait céder, pas le bouton** — et ce qu'elle
-  // prend, elle le prend à une grille dont les lignes s'étirent déjà pour
-  // remplir : mesuré, le compte de rangées ne bouge pas.
-  const hEntete = Math.min(hPanneaux * 0.095, 0.32)
+  const hEntete = Math.min(hPanneaux * 0.07, 0.24)
   const onglets: Rect = {
     x: xCoffre,
     y: yPanneaux + hPanneaux / 2 - hEntete - hOnglets / 2,
@@ -247,10 +239,18 @@ export function planArmurerie(
   //
   // **LE MÊME ÉCART AU HAUT ET À GAUCHE**, et c'est un seul nombre qui le dit :
   // deux marges calculées chacune de leur côté se désaccordent au premier
-  // réglage. Le côté du carré est ce qui reste de la bande une fois les deux
-  // marges prises.
-  const ecartTri = hEntete * 0.19
-  const cote = Math.min(hEntete - 2 * ecartTri, hOnglets * 0.78)
+  // réglage. Keko l'a voulu ensuite plus large — « la même distance qu'entre le
+  // bord et le premier bouton de catégorie ».
+  //
+  // **ET C'EST LE CARRÉ QUI DESCEND SOUS LA BANDE, PAS LA BANDE QUI GROSSIT.**
+  // *Un carré dans une bande trop courte ne peut pas avoir de marge* : à 23 px
+  // d'en-tête, une marge de quinze l'aurait réduit à rien, et rouvrir la bande
+  // coûtait une rangée de coffre. Or la bande des onglets est LARGEMENT plus
+  // haute que son texte, qui s'y centre : il reste un vide au-dessus du premier
+  // onglet, et le carré s'y avance. *Une place libre n'appartient à personne
+  // tant que rien ne s'y dessine.*
+  const ecartTri = Math.min(marge * 0.8, hEntete * 0.6)
+  const cote = Math.min(hEntete * 0.95, hOnglets * 0.4)
   const tri: Rect = {
     x: xCoffre - lCoffre / 2 + ecartTri + cote / 2,
     y: yPanneaux + hPanneaux / 2 - ecartTri - cote / 2,
