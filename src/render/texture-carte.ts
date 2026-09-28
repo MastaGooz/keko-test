@@ -1443,11 +1443,17 @@ export function textureNombre(nombre: number): THREE.CanvasTexture {
     ctx.lineWidth = filet
     ctx.stroke()
 
-    // LE CHIFFRE RENTRE, quel qu'il soit : à deux chiffres il déborderait du
-    // disque, et *un contenant qui ne contient pas ment.* On mesure, et c'est
-    // la police qui cède.
-    const dedans = (rayon - filet) * 1.55
-    let police = rayon * 1.08
+    // LE CHIFFRE REMPLIT SON DISQUE. Keko : « on peut grossir le chiffre dans
+    // la bulle ? » *Une pastille qui garde de la marge tout autour se lit
+    // comme un point, pas comme un compte* — à 40 % du diamètre le chiffre
+    // flottait, il en prend maintenant 54.
+    //
+    // MAIS IL RENTRE, QUEL QU'IL SOIT : à deux chiffres il déborderait, et *un
+    // contenant qui ne contient pas ment.* On mesure, et c'est la police qui
+    // cède — la corde utile vaut un peu plus de trois quarts du diamètre
+    // intérieur, ce qui garde « 13 » presque aussi gros qu'un chiffre seul.
+    const dedans = (rayon - filet) * 1.62
+    let police = rayon * 1.45
     ctx.font = `700 ${police}px "Grenze Gotisch", Georgia, serif`
     const large = ctx.measureText(String(nombre)).width
     if (large > dedans) {
