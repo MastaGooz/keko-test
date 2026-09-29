@@ -30,6 +30,7 @@ import {
   DEBORD_AUREOLE,
   DEBORD_CONTOUR,
   METAL_3D,
+  LAITON_3D,
   PART_DISQUE,
   textureNombre,
   signature,
@@ -447,7 +448,7 @@ export function Carte3D({
       // rareté ; si le corps restait laiton, l'épaisseur trahirait le métal
       // d'à côté dès que la carte s'incline — *un objet n'est pas fait de deux
       // matières sur deux millimètres.*
-      color: METAL_3D.commune,
+      color: LAITON_3D,
       metalness: 0.85,
       roughness: 0.38,
       emissive: '#ffcf7a',
@@ -505,6 +506,8 @@ export function Carte3D({
       nuanceur.uniforms.uLustreForce = { value: 0 }
       nuanceur.uniforms.uIris = { value: 0 }
       nuanceur.uniforms.uOr = { value: 0 }
+      nuanceur.uniforms.uBordure = { value: 0 }
+      nuanceur.uniforms.uTemps = { value: 0 }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -574,13 +577,42 @@ ${nuanceur.vertexShader}`.replace(
          vec3 tonLustre = mix(blanc, arc * 1.5, uIris);
          diffuseColor.rgb += tonLustre
            * uLustreForce
-           * (exp(-ecart * ecart * 95.0) + 0.5 * exp(-ecart * ecart * 480.0));`,
+           * (exp(-ecart * ecart * 95.0) + 0.5 * exp(-ecart * ecart * 480.0));
+
+         // ET LA BORDURE DU DIAMANT S'ALLUME, avec une lumière qui EN FAIT LE
+         // TOUR. Keko : « on peut ajouter un effet de lumière qui shine la
+         // bordure de la carte ? »
+         //
+         // La bande est calculée sur la DISTANCE AU BORD, pas sur la
+         // luminance : le masque de métal du foil accroche aussi la lame d'un
+         // Glaive et le plastron, et *une bordure qui s'allume au milieu de la
+         // carte n'est plus une bordure.* La distance en y se compte en
+         // largeurs de carte (elle en fait 1,4 de haut), sinon le liseré serait
+         // plus épais en haut qu'à gauche.
+         vec2 versLeBord = min(vLustreUv, 1.0 - vLustreUv);
+         float auBord = min(versLeBord.x, versLeBord.y * 1.4);
+         float cadre = 1.0 - smoothstep(0.016, 0.052, auBord);
+
+         // Le point de lumière tourne à l'ANGLE, comme l'auréole : c'est le
+         // même mouvement vu de l'intérieur du cadre. L'écart au centre est
+         // remis aux proportions de la carte, sinon la lumière traînerait sur
+         // les grands côtés et filerait dans les coins.
+         vec2 dc = (vLustreUv - 0.5) * vec2(1.0, 1.4);
+         float tourne = fract(atan(dc.y, dc.x) * 0.15915494 - uTemps * 0.13);
+         float pointe = pow(0.5 + 0.5 * cos(6.28318 * tourne), 16.0);
+         // Un fond constant PLUS le point qui passe : *un liseré qui ne
+         // s'allume qu'au passage n'est pas une bordure lumineuse, c'est un
+         // clignotant.*
+         diffuseColor.rgb +=
+           mix(vec3(1.0), arc, 0.55) * uBordure * cadre * (0.2 + pointe * 2.0);`,
       )
       nuanceur.fragmentShader = `uniform float uGris;
 uniform float uLustre;
 uniform float uLustreForce;
 uniform float uIris;
 uniform float uOr;
+uniform float uBordure;
+uniform float uTemps;
 varying vec2 vLustreUv;
 ${nuanceur.fragmentShader}`
     }
@@ -597,7 +629,7 @@ ${nuanceur.fragmentShader}`
      *
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
-    face.customProgramCacheKey = () => 'carte-face-desaturable-lustree-irisee-doree'
+    face.customProgramCacheKey = () => 'carte-face-desaturable-lustree-irisee-doree-bordee'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -692,7 +724,9 @@ ${nuanceur.fragmentShader}`
   // chaque changement de carte referait aussi son nuanceur, et la carte
   // repasserait par son état sombre.
   useEffect(() => {
-    laiton.color.set(METAL_3D[carte.rarete ?? 'commune'] ?? METAL_3D.commune!)
+    laiton.color.set(
+      carte.rarete === undefined ? LAITON_3D : (METAL_3D[carte.rarete] ?? LAITON_3D),
+    )
   }, [laiton, carte.rarete])
 
   /**
@@ -1105,6 +1139,10 @@ ${nuanceur.fragmentShader}`
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
       // rareté compilerait son nuanceur.
       nuanceur.uniforms.uIris!.value = carte.rarete === 'legendaire' ? 1 : 0
+      // LE TOUR DE LUMIÈRE EST AU DIAMANT SEUL, et il s'éteint avec la carte :
+      // une pièce hors jeu ne rayonne pas.
+      nuanceur.uniforms.uTemps!.value = t
+      nuanceur.uniforms.uBordure!.value = carte.rarete === 'legendaire' ? l.vif : 0
       nuanceur.uniforms.uOr!.value = carte.rarete === 'epique' ? 1 : 0
     }
 

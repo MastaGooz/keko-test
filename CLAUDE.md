@@ -4249,7 +4249,7 @@ calculs qui se répondent se désaccordent au premier réglage s'ils vivent
 ailleurs.* Le dépôt doit tomber DANS la case, pas seulement dans sa colonne —
 *échanger avec un voisin qu'on n'a pas désigné serait pire que ne rien faire.*
 
-**LA RARETÉ SE LIT AU MÉTAL DU CADRE — cinq crans.** Keko : « j'aimerais
+**LA RARETÉ SE LIT AU MÉTAL DU CADRE — quatre crans.** Keko : « j'aimerais
 distinguer les cartes par rareté visuellement… un code vert/bleu/violet/orange
 classique, mais je ne sais pas comment le mettre en place ».
 
@@ -4273,8 +4273,7 @@ et seule la teinte se décale. *Ça reste du métal, et non une couleur posée
 dessus.* Une seule structure pour cinq palettes (`METAUX`), sinon cinq dégradés
 écrits chacun de leur côté divergeraient au premier réglage.
 
-**ET L'ÉCHELLE EST UNE ÉCHELLE D'ALLIAGES : laiton, bronze, argent, or,
-diamant.** Keko a écarté sa propre première idée : « je pense que c'est pas
+**ET L'ÉCHELLE EST UNE ÉCHELLE D'ALLIAGES : bronze, argent, or, diamant.** Keko a écarté sa propre première idée : « je pense que c'est pas
 hyper cohérent d'utiliser les couleurs de rareté RPG classiques, on peut tenter
 laiton / bronze / argent / or / diamant ? » *Et c'est exactement juste* : la
 carte de ce jeu EST une plaque de métal. Un vert et un violet posés dessus
@@ -4283,17 +4282,31 @@ d'alliages, elle, **est déjà dans la matière** — la carte ne change pas de
 langue pour dire sa valeur, elle change d'alliage. *Le vocabulaire dit la
 règle*, comme « enchantement » plutôt que « maîtrise ».
 
-**Le danger de cette échelle est que trois de ses crans sont jaunes.** Le laiton
-reste donc terne et un peu olive, le bronze part dans le CUIVRE — plus rouge,
-plus sombre — et l'or est franchement saturé et clair : *ce qui les sépare n'est
-pas la teinte seule, c'est la teinte ET la valeur.*
+**LE LAITON N'EST PLUS UNE RARETÉ — c'est le métal de TOUT LE RESTE.** Keko :
+« on va laisser tomber les équipements laiton, ça ajoute une rareté pour rien
+et c'est pas très lisible en comparaison à l'or ; on va garder le laiton pour
+les trésors. » *Deux jaunes rompus voisins ne font pas deux crans*, et le bas
+d'une échelle ne doit pas se disputer la lecture avec son haut.
+
+Il reste donc **le métal du gabarit, celui de ce qui n'a PAS de rareté** : les
+cartes de deck, les trésors, le dos. L'échelle d'équipement commence au bronze,
+et *une carte qui ne dit rien ne change pas d'alliage.* Le type le porte
+(`rarete?`) : `undefined` vaut laiton, ce n'est pas une valeur de plus à
+maintenir.
+
+**Le danger qui restait est que deux crans sont jaunes.** Le bronze part donc
+dans le CUIVRE — plus rouge, plus sombre — et l'or est franchement saturé et
+clair : *ce qui les sépare n'est pas la teinte seule, c'est la teinte ET la
+valeur.*
 
 **ET L'OR A ÉTÉ POUSSÉ EN SATURATION, PAS EN CLARTÉ.** Keko : « on peut appuyer
 un peu sur le doré de l'or pour bien le différencier du laiton sur le cadre ? »
 *Le laiton est un jaune ROMPU, l'or est un jaune PUR* : leurs teintes sont
 voisines — 35° contre 44° — et ce qui les sépare est le gris qu'il y a dedans.
 L'éclaircir l'aurait rapproché du laiton clair ; le saturer l'en éloigne, et
-son ton sombre descend d'autant pour que le cadre garde son relief.
+son ton sombre descend d'autant pour que le cadre garde son relief. *C'est ce
+réglage qui a rendu le cran laiton inutile* : une fois l'or franc, le laiton ne
+disait plus qu'« un or terne », donc rien.
 
 **ET LE DIAMANT EST IRISÉ**, parce que sa clarté ne suffisait pas à le séparer
 de l'argent — Keko : « le diamant est exactement comme l'argent visuellement, je
@@ -4348,6 +4361,31 @@ sur une carte regardée de près il est là.
 même pour toutes les cartes, sinon chaque rareté compilerait le sien. Et la
 clé de cache du programme a changé avec lui — *three ignore ce que
 `onBeforeCompile` a injecté*, la leçon des cartes blanches ou noires.
+
+**ET LA BORDURE DU DIAMANT S'ALLUME, avec une lumière qui EN FAIT LE TOUR.**
+Keko : « on peut ajouter un effet de lumière qui shine la bordure de la carte,
+et renforcer un peu la couleur pour bien différencier de l'argent ? »
+
+*Les deux demandes visent le même écart* : l'argent et le diamant sont les deux
+métaux froids, donc **tout ce qui les sépare doit être ce que l'argent ne fait
+pas** — de la couleur, et du mouvement.
+
+**Le liseré se calcule sur la DISTANCE AU BORD, jamais sur la luminance.** Le
+masque de métal du foil accroche aussi la lame d'un Glaive et le plastron d'une
+armure, et *une bordure qui s'allume au milieu de la carte n'est plus une
+bordure.* La distance verticale se compte en LARGEURS de carte — elle en fait
+1,4 de haut — sinon le liseré serait plus épais en haut qu'à gauche.
+
+**Le point de lumière tourne à l'angle, comme l'auréole** : c'est le même
+mouvement, vu de l'intérieur du cadre. L'écart au centre est remis aux
+proportions de la carte, sinon la lumière traînerait sur les grands côtés et
+filerait dans les coins. Et il y a **un fond constant EN PLUS du point qui
+passe** : *un liseré qui ne s'allume qu'au passage n'est pas une bordure
+lumineuse, c'est un clignotant.*
+
+**Et l'irisation a été saturée d'un cran** — les mêmes offsets, les mêmes
+paliers de lumière, des teintes plus franches. *Le diamant ne se distingue pas
+de l'argent en étant plus clair*, il s'en distingue en ayant des couleurs.
 
 **ET UNE AURÉOLE CHROMATIQUE ANIMÉE FAIT LE TOUR DE LA CARTE.** Demandée par
 Keko. Elle garde **la silhouette de la carte** au lieu de l'entourer d'un rond,
@@ -4406,10 +4444,10 @@ code et rien à l'écran.** En 3D, tous les trésors sont identiques et seul leu
 chiffre les sépare.
 
 **POUR JUGER L'ÉCHELLE : `?r3f&raretes`.** Le jeu n'emploie que deux crans sur
-cinq, et *on ne juge pas une échelle sur deux barreaux* : le banc met une copie
-de chaque pièce à chaque rareté, dans l'ordre. Les trois crans neufs — peu
-commune, épique, légendaire — n'ont encore aucun objet ; ils existent pour que
-le contenu à venir n'ait pas à rouvrir le modèle, *et parce qu'une échelle se
+quatre, et *on ne juge pas une échelle sur deux barreaux* : le banc met une
+copie de chaque pièce à chaque rareté, dans l'ordre. Les deux crans neufs —
+épique, légendaire — n'ont encore aucun objet ; ils existent pour que le
+contenu à venir n'ait pas à rouvrir le modèle, *et parce qu'une échelle se
 dessine entière ou pas du tout.* (Aucune migration de sauvegarde : la
 sauvegarde ne porte que la seed et les taps.)
 

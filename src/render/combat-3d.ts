@@ -229,7 +229,7 @@ export function RARETES_URL(): boolean {
 
 export function raretesDeTest(hub: Hub, actif = RARETES_URL()): Hub {
   if (!actif) return hub
-  const echelle: Rarete[] = ['commune', 'peuCommune', 'rare', 'epique', 'legendaire']
+  const echelle: Rarete[] = ['commune', 'rare', 'epique', 'legendaire']
   const modeles: Objet[] = [GLAIVE, PLASTRON, POTIONS_DEPART[0]!]
   const reserve = echelle.flatMap((rarete) =>
     modeles.map((modele) => ({ ...modele, id: `${modele.id}-${rarete}`, rarete })),

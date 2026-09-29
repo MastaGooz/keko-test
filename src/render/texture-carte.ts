@@ -155,9 +155,24 @@ function chemin(ctx: CanvasRenderingContext2D, points: readonly [number, number]
  * le diamant, eux, sont les deux froids, et le diamant se distingue en étant
  * **plus clair que tout le reste**, presque blanc.
  */
+/**
+ * LE LAITON N'EST PLUS UNE RARETÉ — c'est le métal de TOUT LE RESTE.
+ *
+ * Keko : « on va laisser tomber les équipements laiton, ça ajoute une rareté
+ * pour rien et c'est pas très lisible en comparaison à l'or ; on va garder le
+ * laiton pour les trésors. » *Deux jaunes rompus voisins ne font pas deux
+ * crans* — et le bas de l'échelle ne doit pas se disputer la lecture avec son
+ * haut.
+ *
+ * Il reste donc le métal du gabarit, celui de ce qui n'a PAS de rareté : les
+ * cartes de deck, les trésors, le dos. **L'échelle d'équipement commence au
+ * bronze**, et une carte qui ne dit rien ne change pas d'alliage.
+ */
+const LAITON: readonly [string, string, string, string, string] =
+  ['#f2ddaa', '#a88c5f', '#d2b787', '#695c45', '#e7cda0']
+
 const METAUX: Record<string, readonly [string, string, string, string, string]> = {
-  commune: ['#f2ddaa', '#a88c5f', '#d2b787', '#695c45', '#e7cda0'],
-  peuCommune: ['#eab98d', '#8a512c', '#bd7f52', '#432516', '#dda379'],
+  commune: ['#eab98d', '#8a512c', '#bd7f52', '#432516', '#dda379'],
   rare: ['#f4f7fa', '#8a949e', '#ccd5dd', '#4a525b', '#e4eaf0'],
   // L'OR EST POUSSÉ EN SATURATION, pas en clarté (Keko : « appuyer un peu
   // sur le doré pour bien le différencier du laiton »). *Le laiton est un
@@ -170,12 +185,14 @@ const METAUX: Record<string, readonly [string, string, string, string, string]> 
 
 /** La couleur du CORPS en 3D — la tranche et le cheveu de cadre qui déborde. */
 export const METAL_3D: Record<string, string> = {
-  commune: '#b79a6a',
-  peuCommune: '#9c6237',
+  commune: '#9c6237',
   rare: '#c3ccd4',
   epique: '#f2b81a',
-  legendaire: '#e2f1fc',
+  legendaire: '#cfe3ff',
 }
+
+/** Le laiton du corps : ce que porte une carte SANS rareté. */
+export const LAITON_3D = '#b79a6a'
 
 /**
  * LE DIAMANT EST IRISÉ, et c'est ce qui le sépare de l'argent.
@@ -193,16 +210,16 @@ export const METAL_3D: Record<string, string> = {
  */
 const IRISATION: readonly (readonly [number, string])[] = [
   [0, '#ffffff'],
-  [0.11, '#b9ecff'],
-  [0.21, '#7f9fc4'],
-  [0.23, '#d7e9ff'],
-  [0.32, '#ffd6f4'],
-  [0.43, '#eafcff'],
-  [0.53, '#fff4c6'],
-  [0.66, '#cfbcff'],
-  [0.8, '#6c8ba8'],
-  [0.9, '#d8f4ff'],
-  [1, '#fff4fb'],
+  [0.11, '#7fe4ff'],
+  [0.21, '#5f7fc4'],
+  [0.23, '#c2e2ff'],
+  [0.32, '#ffb0ec'],
+  [0.43, '#d6fdff'],
+  [0.53, '#ffec9a'],
+  [0.66, '#b49cff'],
+  [0.8, '#4e74a8'],
+  [0.9, '#b9ecff'],
+  [1, '#ffe4f6'],
 ]
 
 /** Le laiton du cadre, en dégradé oblique comme dans le CSS. */
@@ -212,7 +229,9 @@ function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient 
     for (const [ou, ton] of IRISATION) g.addColorStop(ou, ton)
     return g
   }
-  const [clair, sombre, moyen, nuit, bord] = METAUX[rarete ?? 'commune'] ?? METAUX.commune!
+  // Sans rareté, c'est le LAITON : une carte de deck, un trésor, le dos.
+  const [clair, sombre, moyen, nuit, bord] =
+    rarete === undefined ? LAITON : (METAUX[rarete] ?? LAITON)
   g.addColorStop(0, clair)
   g.addColorStop(0.21, sombre)
   g.addColorStop(0.23, moyen)

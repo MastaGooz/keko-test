@@ -161,10 +161,9 @@ const RANG_CATEGORIE = (o: Objet): number =>
 
 const RANG_RARETE: Record<Rarete, number> = {
   commune: 0,
-  peuCommune: 1,
-  rare: 2,
-  epique: 3,
-  legendaire: 4,
+  rare: 1,
+  epique: 2,
+  legendaire: 3,
 }
 
 export function trierLeCoffre(hub: Hub): Hub {

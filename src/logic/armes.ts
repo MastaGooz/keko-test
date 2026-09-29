@@ -27,7 +27,7 @@ import type { Carte } from './combat.ts'
  * tranché par Keko : « le montant d'or parle par lui-même ». *Un trésor n'est
  * pas un objet qu'on porte, c'est un butin qu'on compte.*
  */
-export type Rarete = 'commune' | 'peuCommune' | 'rare' | 'epique' | 'legendaire'
+export type Rarete = 'commune' | 'rare' | 'epique' | 'legendaire'
 
 /** Un modèle de carte : tout sauf l'identifiant d'exemplaire. */
 export type Modele = Omit<Carte, 'id'>
