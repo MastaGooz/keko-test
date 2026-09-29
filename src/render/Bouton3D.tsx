@@ -54,6 +54,21 @@ function hauteurMonde(px: number, z: number, hauteurFenetrePx: number): number {
 }
 
 /** Les tons disponibles : le fond, le liseré, l'encre. */
+/**
+ * LE RAYON DES COINS — ZÉRO : la plaque est un rectangle franc.
+ *
+ * Demandé par Keko : « on peut mettre le bouton descendre et place en angle
+ * droit aussi ? » *Un arrondi est une forme de gabarit, une arête franche est
+ * de la ferronnerie* — la règle qui a ramené la barre de vie de la capsule au
+ * biseau, puis les infobulles à zéro, puis le bouton de rangement.
+ *
+ * Il vit en un seul endroit parce que TROIS dessins le lisent : la plaque, le
+ * masque du balayage et le halo du survol. *Trois rayons écrits chacun de leur
+ * côté se désaccorderaient au premier réglage*, et le halo déborderait d'une
+ * forme qui ne serait plus la sienne.
+ */
+const RAYON = 0
+
 const TONS = {
   or: { fond: ['#3a2f16', '#221b0e'], trait: '#c9a95a', encre: '#f2e4bd' },
   perdre: { fond: ['#4a1712', '#2a0f0c'], trait: '#b3382a', encre: '#ffc9c0' },
@@ -96,7 +111,7 @@ function plaque(texte: string, ton: TonBouton): { texture: THREE.CanvasTexture; 
 
   const { fond, trait, encre } = TONS[ton]
   const marge = h * 0.06
-  const rayon = h * 0.22
+  const rayon = h * RAYON
   const degrade = ctx.createLinearGradient(0, 0, 0, h)
   degrade.addColorStop(0, fond[0])
   degrade.addColorStop(1, fond[1])
@@ -151,7 +166,7 @@ function masqueBouton(rapport: number): THREE.CanvasTexture {
   ctx.fillRect(0, 0, large, h)
   const marge = h * 0.06
   ctx.beginPath()
-  ctx.roundRect(marge, marge, large - marge * 2, h - marge * 2, h * 0.22)
+  ctx.roundRect(marge, marge, large - marge * 2, h - marge * 2, h * RAYON)
   ctx.fillStyle = '#ffffff'
   ctx.fill()
   texture.needsUpdate = true
@@ -225,7 +240,7 @@ function lueurBouton(rapport: number): THREE.CanvasTexture {
   for (const rayon of [debord * 0.8, debord * 0.4]) {
     ctx.shadowBlur = rayon
     ctx.beginPath()
-    ctx.roundRect(debord, debord, large, h, h * 0.22)
+    ctx.roundRect(debord, debord, large, h, h * RAYON)
     ctx.fill()
   }
   texture.needsUpdate = true

@@ -2737,6 +2737,17 @@ où était « Prendre »** une fois le trésor décidé : le second n'apparaît 
 fois le premier consommé, et *un bouton qui se déplace entre deux états
 successifs oblige à le chercher deux fois.*
 
+**ET SA PLAQUE EST UN RECTANGLE FRANC, sans arrondi.** Demandé par Keko : « on
+peut mettre le bouton descendre et place en angle droit aussi ? » *Un arrondi
+est une forme de gabarit, une arête franche est de la ferronnerie* — la règle
+qui a ramené la barre de vie de la capsule au biseau, puis les infobulles à
+zéro, puis le bouton de rangement, et qui finit par tout rattraper.
+
+**Le rayon vit en UN SEUL endroit, parce que TROIS dessins le lisent** : la
+plaque, le masque du balayage et le halo du survol. *Trois rayons écrits chacun
+de leur côté se désaccorderaient au premier réglage*, et le halo déborderait
+alors d'une forme qui ne serait plus la sienne.
+
 **UN BOUTON SURVOLÉ CHAUFFE.** Demandé par Keko : « quand on hover le bouton
 descendre, ce serait sympa de lui donner une petite animation lumineuse, voire
 plus ». Trois choses qui se cumulent, et chacune fait un travail que les autres
