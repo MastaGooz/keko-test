@@ -4488,12 +4488,16 @@ quelle que soit sa forme finale ».
 
 Quatre choses qui la portent :
 
-- **elle vit SOUS L'ORBE, sur la bande gauche** — la place que le gabarit
-  réserve depuis le début à un compteur propre à la carte, celle des pastilles
-  de charges. *Tout ce qui sert à décider vit sur la bande haut-gauche*, parce
-  que le recouvrement de l'éventail mange la droite et la ligne de flottaison
-  le bas — et **un trésor ne se lève jamais**, donc ce qui passe sous cette
-  ligne lui est perdu pour toujours ;
+- **elle est EN HAUT, CENTRÉE, sur la ligne de l'orbe** — demandé par Keko.
+  Elle a d'abord vécu sous l'orbe, sur la bande gauche, par la règle qui veut
+  que *tout ce qui sert à décider tienne dans le quart que l'éventail laisse
+  voir* ; centrée, elle est cachée par la voisine tant qu'on ne lève pas la
+  carte. **Mais un trésor ne se joue pas** : on ne décide pas dessus en combat,
+  on décide au butin et au coffre, où la carte est entière. *La règle vaut pour
+  ce sur quoi on décide dans la MAIN, et une valeur de butin n'en est pas.*
+  Elle se cale sur le CENTRE de l'orbe et non sur le haut de la carte : les
+  deux forment alors une ligne d'en-tête, là où deux hauteurs voisines mais
+  différentes se liraient comme un défaut d'alignement ;
 - **le chiffre est À CÔTÉ du symbole, pas dedans**, et c'est la grammaire des
   MESURES — celle de la bande de stats de l'armurerie. L'orbe et la case en
   forme de carte mettent leur chiffre dedans parce qu'ils disent un COÛT et un
@@ -4506,6 +4510,24 @@ Quatre choses qui la portent :
 - **le mot suit l'affichage** : là où la carte ne parle plus d'or, brûler fait
   perdre « sa valeur » et non « son or ». *Une carte ne peut pas perdre un or
   qu'elle n'a jamais annoncé.*
+
+**ET LE JONC S'INTERROMPT AUTOUR DE L'ORBE, il ne passe pas dessous.** Keko :
+« le symbole de coût se superpose avec la seconde ligne du cadre et c'est
+moche ». L'orbe est un DISQUE posé dans le coin, donc ses côtés sont
+transparents : le filet ressortait de part et d'autre et venait mourir sur son
+bord. *Un trait qui rentre dans un objet et n'en sort pas se lit comme un
+raccord raté.*
+
+Les deux échappatoires étaient fermées — **déplacer l'orbe** est exclu, c'est
+le même symbole à la même place sur toute carte, et **enfoncer le jonc** aurait
+demandé de l'inset au-delà du disque, soit un cinquième de la carte. Reste la
+bonne réponse : *un sertissage s'ouvre pour laisser passer la pierre.* Le tracé
+se découpe d'un disque un cheveu plus large que l'orbe (`clip('evenodd')`), et
+la coupure se lit comme un geste de ferronnier.
+
+**La place de l'orbe vit désormais en un seul endroit** (`ORBE_CX`, `ORBE_CY`) :
+le jonc doit s'en écarter, et *deux endroits qui décrivent la même place se
+désaccordent au premier réglage.*
 
 **Et le jeu 2D garde la phrase.** `lignes()` prend un `valeurAPart` que seul le
 moteur 3D passe : *un moteur qui ne sait pas montrer une chose ne doit pas

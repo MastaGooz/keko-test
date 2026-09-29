@@ -161,6 +161,17 @@ const CADRE_TRESOR: readonly [number, number][] = [
   [93.5, 100], [6.5, 100], [0, 95.36], [0, 4.64],
 ]
 
+/**
+ * LA PLACE DE L'ORBE DU COÛT, en un seul endroit.
+ *
+ * Elle servait à `peindreCout` seule ; le jonc du cadre de trésor doit
+ * maintenant s'écarter d'elle, et *deux endroits qui décrivent la même place
+ * se désaccordent au premier réglage.*
+ */
+const ORBE_L = 0.205 * LARGE
+const ORBE_CX = 0.022 * LARGE + ORBE_L / 2
+const ORBE_CY = 0.006 * HAUT + ORBE_L / 2
+
 /** L'écusson du coût : pointe en bas, comme sur toute carte qui coûte. */
 const ECUSSON: readonly [number, number][] = [
   [0, 0], [98, 5], [90, 68], [50, 100], [10, 76],
@@ -505,12 +516,32 @@ export async function peindreCarte(
   // croisent. *Un filet n'a jamais à traverser un chiffre.*
   if (carte.tresor === true) {
     const jonc = 3.2 * U
+    ctx.save()
+    // IL S'INTERROMPT AUTOUR DE L'ORBE, il ne passe pas dessous.
+    //
+    // Keko : « le symbole de coût se superpose avec la seconde ligne du cadre
+    // et c'est moche ». L'orbe est un DISQUE posé dans le coin, donc ses côtés
+    // sont transparents : le filet ressortait de part et d'autre et venait
+    // mourir sur son bord. *Un trait qui rentre dans un objet et n'en sort pas
+    // se lit comme un raccord raté.*
+    //
+    // Le décaler était exclu — l'orbe est le même symbole à la même place sur
+    // TOUTE carte, c'est la règle de Keko — et l'enfoncer davantage aurait
+    // demandé de l'inset au-delà du disque, soit un cinquième de la carte.
+    // Reste la bonne réponse : *un sertissage s'ouvre pour laisser passer la
+    // pierre.* Le tracé se découpe donc d'un disque un cheveu plus large que
+    // l'orbe, par la règle du non-zéro inversée.
+    ctx.beginPath()
+    ctx.rect(0, 0, LARGE, HAUT)
+    ctx.arc(ORBE_CX, ORBE_CY, ORBE_L / 2 + 1.1 * U, 0, Math.PI * 2)
+    ctx.clip('evenodd')
     ctx.strokeStyle = laiton(ctx, carte.rarete)
     ctx.lineWidth = 0.55 * U
     ctx.globalAlpha = 0.72
     chemin(ctx, coque, jonc, jonc, LARGE - jonc * 2, HAUT - jonc * 2)
     ctx.stroke()
     ctx.globalAlpha = 1
+    ctx.restore()
   }
 
   if (carte.compteur === undefined) peindreCout(ctx, carte.cout, symbole)
@@ -725,13 +756,18 @@ function chiffre(ctx: CanvasRenderingContext2D, cout: number, cx: number, cy: nu
 /**
  * LA VALEUR D'UN TRÉSOR : une gemme, puis le chiffre à sa droite.
  *
- * **Elle vit SOUS L'ORBE, sur la bande gauche** — la place que le gabarit
- * réserve depuis le début à un compteur propre à la carte (c'est là que vivent
- * les pastilles de charges). Deux raisons qui n'en font qu'une : *tout ce qui
- * sert à décider vit sur la bande haut-gauche*, parce que le recouvrement de
- * l'éventail mange la droite et que la ligne de flottaison mange le bas. Un
- * trésor ne se lève jamais, donc ce qui passe sous cette ligne lui est perdu
- * pour toujours.
+ * **Elle est EN HAUT, CENTRÉE, sur la ligne de l'orbe** — demandé par Keko.
+ * Elle a d'abord vécu sous l'orbe, sur la bande gauche, par la règle qui veut
+ * que *tout ce qui sert à décider tienne dans le quart que l'éventail laisse
+ * voir* ; centrée, elle est cachée par la voisine tant qu'on ne lève pas la
+ * carte. *Mais un trésor ne se joue pas* : on ne décide pas dessus en combat,
+ * on décide au butin et au coffre, où la carte est entière. **La règle vaut
+ * pour ce sur quoi on décide dans la MAIN, et une valeur de butin n'en est
+ * pas.**
+ *
+ * Elle se cale sur le CENTRE de l'orbe, pas sur le haut de la carte : les deux
+ * forment alors une ligne d'en-tête, là où deux hauteurs voisines mais
+ * différentes se liraient comme un défaut d'alignement.
  *
  * **Le chiffre est À CÔTÉ du symbole, pas dedans**, et c'est la grammaire des
  * MESURES — celle de la bande de stats de l'armurerie. L'orbe et la case en
@@ -751,10 +787,14 @@ function chiffre(ctx: CanvasRenderingContext2D, cout: number, cx: number, cy: nu
 function peindreValeur(ctx: CanvasRenderingContext2D, valeur: number): void {
   const l = 6.2 * U
   const h = l * 1.16
-  // Elle DÉGAGE LE SECOND JONC du cadre de trésor (posé à 3,2 %) : un badge
-  // posé dessus se lirait comme une pièce qui a glissé.
-  const x = 5.4 * U
-  const y = 0.183 * HAUT
+  const ecart = 1.7 * U
+  // ON MESURE LE COUPLE ENTIER AVANT DE LE POSER : centrer la gemme seule
+  // enverrait le chiffre à droite, et *une bulle qui désigne ce qu'on regarde
+  // se centre sur le couple, jamais sur une de ses moitiés.*
+  ctx.font = `600 ${8.6 * U}px "Grenze Gotisch", Georgia, serif`
+  const texte = String(valeur)
+  const x = (LARGE - (l + ecart + ctx.measureText(texte).width)) / 2
+  const y = ORBE_CY - h / 2
 
   const dessus = y + h * 0.36
   ctx.beginPath()
@@ -788,12 +828,11 @@ function peindreValeur(ctx: CanvasRenderingContext2D, valeur: number): void {
   ctx.fill()
 
   ctx.fillStyle = '#fff0cd'
-  ctx.font = `600 ${8.6 * U}px "Grenze Gotisch", Georgia, serif`
   ctx.textAlign = 'left'
   ctx.textBaseline = 'middle'
   ctx.shadowColor = '#0d0a04'
   ctx.shadowBlur = 1.6 * U
-  ctx.fillText(String(valeur), x + l + 1.7 * U, y + h * 0.52)
+  ctx.fillText(texte, x + l + ecart, y + h * 0.52)
   ctx.shadowBlur = 0
   ctx.shadowColor = 'transparent'
   ctx.textAlign = 'center'
@@ -827,15 +866,15 @@ function peindreCout(
 
   // Un peu plus large que l'écu : inscrite dans un carré, une forme perd de la
   // surface utile par rapport à un écu qui s'étire en hauteur.
-  const l = 0.205 * LARGE
+  const l = ORBE_L
   // SA MARGE GAUCHE SE MESURE AU BORD QU'ON VOIT, pas au bord de la toile —
   // la même leçon que le compteur des pièces, et il a fallu la repayer ici :
   // la coque de la carte est une découpe DÉCHIRÉE, et près du coin son bord
   // gauche rentre plus que le bord haut. À distance égale du canvas, l'écart
   // paraissait donc plus serré à gauche. Keko : « l'écart avec le bord est
   // trop faible par rapport à l'écart avec le bord du haut ».
-  const cx = 0.022 * LARGE + l / 2
-  const cy = 0.006 * HAUT + l / 2
+  const cx = ORBE_CX
+  const cy = ORBE_CY
   const r = l / 2
   const x = cx - r
   const y = cy - r
