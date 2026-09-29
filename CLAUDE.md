@@ -5235,11 +5235,26 @@ hub. Celle-ci vient dessous et en pierre parce qu'elle est le repli.
   du rail ne descend jamais sous celle de son bouton (*une colonne qui ne
   contient pas ce qu'on y met n'est pas une colonne*), donc il aurait fait
   passer le rail de 29 % à ~52 % de la largeur d'un téléphone couché. `plaque()`
-  sait donc couper sur `
-` : la largeur suit la plus longue ligne, la hauteur
-  le nombre de lignes, et le bloc se centre. La plaque étant rendue à hauteur
-  fixe, le texte s'y lit **plus petit** — ce qui est juste pour une action
-  secondaire.
+  sait donc couper sur un saut de ligne : la largeur suit la plus longue ligne,
+  et le bloc se centre.
+- **LES DEUX ONT LA MÊME PLAQUE ET LA MÊME POLICE.** Demandé par Keko — *deux
+  actions de même rang, l'une sous l'autre, ne peuvent pas avoir deux tailles.*
+  Ça a demandé les deux moitiés, et aucune ne suffisait seule :
+
+  - **la TOILE garde sa hauteur quel que soit le nombre de lignes.** Elle
+    grandissait avec elles ; or la plaque est rendue à une hauteur FIXE à
+    l'écran, donc une toile plus haute est réduite d'autant — et son texte avec,
+    à 73 % de celui du voisin. *Deux lignes se serrent dans la hauteur, elles ne
+    la repoussent pas* ;
+  - **un rapport PLANCHER, partagé** (`rapportMin`) : le plan mesure les deux
+    libellés, garde le plus large et le donne aux deux. La plaque s'élargit, son
+    texte reste centré.
+
+  Prix mesuré, et il est assumé : le rail passe de 170 à 185 px à 667 x 320
+  (25 % à 28 % de la largeur), puisque « Équipement » est plus large que
+  « Descendre ». *C'est la largeur du plus long qui commande*, et les deux
+  libellés vivent donc dans `armurerie-plan.ts` — **ce qui décide d'une largeur
+  ne peut pas être écrit ailleurs que là où la largeur se calcule.**
 - **LES DEUX BOUTONS SE TOUCHENT PRESQUE**, écartés de la hauteur RÉELLE d'un
   bouton et non d'une bande réservée deux fois plus haute : *deux boutons
   séparés d'un vide se lisent comme deux objets sans rapport.* La bande du bas

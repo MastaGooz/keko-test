@@ -93,8 +93,12 @@ const TEXTURES = new Map<string, { texture: THREE.CanvasTexture; rapport: number
  * pas d'une constante : « Jeter » et « Nouvelle descente » ne peuvent pas
  * tenir dans la même boîte, et une plaque étirée déformerait ses coins.
  */
-function plaque(texte: string, ton: TonBouton): { texture: THREE.CanvasTexture; rapport: number } {
-  const cle = `${texte}|${ton}`
+function plaque(
+  texte: string,
+  ton: TonBouton,
+  rapportMin = 0,
+): { texture: THREE.CanvasTexture; rapport: number } {
+  const cle = `${texte}|${ton}|${rapportMin}`
   const connue = TEXTURES.get(cle)
   if (connue !== undefined) return connue
 
@@ -105,20 +109,27 @@ function plaque(texte: string, ton: TonBouton): { texture: THREE.CanvasTexture; 
    * une colonne ne peut pas être plus large que sa colonne*, et l'y forcer
    * aurait mangé la moitié de l'écran sur un téléphone.
    *
-   * La hauteur de la plaque suit le nombre de lignes, la largeur la plus longue
-   * d'entre elles : la plaque reste compacte au lieu de s'étirer.
+   * **LA TOILE GARDE SA HAUTEUR, quel que soit le nombre de lignes**, et c'est
+   * ce qui donne à deux boutons voisins la MÊME taille de police : la plaque
+   * est rendue à une hauteur fixe à l'écran, donc une toile plus haute serait
+   * réduite d'autant, et son texte avec. *Deux lignes se serrent dans la
+   * hauteur, elles ne la repoussent pas.*
    */
   const lignes = texte.split('\n')
-  const corps = Math.round(128 * 0.36)
+  const h = 128
+  const corps = Math.round(h * 0.36)
   const interligne = Math.round(corps * 1.22)
-  const h = Math.max(128, interligne * lignes.length + Math.round(128 * 0.5))
   const police = `600 ${corps}px system-ui, -apple-system, "Segoe UI", sans-serif`
   const mesure = document.createElement('canvas').getContext('2d')
   let large = h * 3
   if (mesure !== null) {
     mesure.font = police
-    large = Math.round(Math.max(...lignes.map((l) => mesure.measureText(l).width)) + 128 * 1.1)
+    large = Math.round(Math.max(...lignes.map((l) => mesure.measureText(l).width)) + h * 1.1)
   }
+  // **UN RAPPORT PLANCHER**, pour que deux boutons d'un même groupe aient la
+  // même largeur : *deux actions de même rang ne peuvent pas avoir deux
+  // tailles.* La plaque s'élargit, son texte reste centré.
+  large = Math.max(large, Math.round(rapportMin * h))
 
   const toile = document.createElement('canvas')
   toile.width = large
@@ -286,12 +297,28 @@ type Props = {
    * la carte qu'on promène de rester lisible même quand elle le croise.
    */
   eteint?: boolean
+  /**
+   * Un rapport largeur/hauteur PLANCHER, partagé par les boutons d'un même
+   * groupe : *deux actions de même rang se lisent à la même taille.*
+   */
+  rapportMin?: number
   onCliquer?: () => void
 }
 
-export function Bouton3D({ texte, ton, position, petit = false, eteint = false, onCliquer }: Props): React.JSX.Element {
+export function Bouton3D({
+  texte,
+  ton,
+  position,
+  petit = false,
+  eteint = false,
+  rapportMin = 0,
+  onCliquer,
+}: Props): React.JSX.Element {
   const { size } = useThree()
-  const { texture, rapport } = useMemo(() => plaque(texte, ton), [texte, ton])
+  const { texture, rapport } = useMemo(
+    () => plaque(texte, ton, rapportMin),
+    [texte, ton, rapportMin],
+  )
   const materiau = useMemo(
     () => new THREE.MeshBasicMaterial({ map: texture, transparent: true, toneMapped: false, depthWrite: false }),
     [texture],
@@ -411,7 +438,8 @@ export function tailleBouton(
   petit: boolean,
   z: number,
   hauteurFenetrePx: number,
+  rapportMin = 0,
 ): { largeur: number; hauteur: number } {
   const hauteur = hauteurMonde(hauteurBoutonPx(hauteurFenetrePx, petit), z, hauteurFenetrePx)
-  return { hauteur, largeur: hauteur * plaque(texte, ton).rapport }
+  return { hauteur, largeur: hauteur * plaque(texte, ton, rapportMin).rapport }
 }

@@ -37,6 +37,14 @@ import { CAPACITE_PILE, estTresor } from '../logic/hub.ts'
 
 export const Z_PLAN = Z_MAIN
 
+/**
+ * LES DEUX FAÇONS DE PARTIR, et leurs libellés vivent ICI parce que le plan
+ * doit les mesurer pour dimensionner le rail : *ce qui décide d'une largeur ne
+ * peut pas être écrit ailleurs que là où la largeur se calcule.*
+ */
+export const TEXTE_DESCENDRE = 'Descendre'
+export const TEXTE_FORTUNE = 'Équipement\ngratuit'
+
 
 
 /**
@@ -157,6 +165,8 @@ export type PlanArmurerie = {
    * plutôt que de la partager.
    */
   boutonFortune: [number, number, number]
+  /** Le rapport que les DEUX boutons de départ partagent. */
+  rapportDepart: number
 }
 
 /** Combien de pixels vaut une unité de scène, à la profondeur du plan. */
@@ -224,7 +234,14 @@ export function planArmurerie(
   // mangerait le coffre. Elle ne descend jamais sous son bouton : il vit
   // dedans, et *une colonne qui ne contient pas ce qu'on y met n'est pas une
   // colonne.*
-  const lBouton = tailleBouton('Descendre', 'or', false, Z_PLAN, hauteurFenetrePx).largeur
+  // LES DEUX DÉPARTS ONT LA MÊME PLAQUE. Demandé par Keko — *deux actions de
+  // même rang, l'une sous l'autre, ne peuvent pas avoir deux tailles.* On prend
+  // donc la plus large des deux et on la donne aux deux, la police étant déjà
+  // commune depuis que la toile garde sa hauteur.
+  const bDescendre = tailleBouton(TEXTE_DESCENDRE, 'or', false, Z_PLAN, hauteurFenetrePx)
+  const bFortune = tailleBouton(TEXTE_FORTUNE, 'pierre', false, Z_PLAN, hauteurFenetrePx)
+  const lBouton = Math.max(bDescendre.largeur, bFortune.largeur)
+  const rapportDepart = lBouton / bDescendre.hauteur
   // Le `+ marge` n'est pas décoratif : la bande RÉSERVÉE vaut `lRail`, mais le
   // rail DESSINÉ en retranche sa marge, et c'est lui que le bouton doit tenir.
   // Mesuré sans : le bouton dépassait de 3 px à 932x430.
@@ -514,7 +531,7 @@ export function planArmurerie(
   // on les écarte de la hauteur RÉELLE d'un bouton, pas d'une bande réservée
   // deux fois plus haute — *deux boutons séparés d'un vide se lisent comme deux
   // objets sans rapport.*
-  const hBouton = tailleBouton('Descendre', 'or', false, Z_PLAN, hauteurFenetrePx).hauteur
+  const hBouton = bDescendre.hauteur
   // La bande réservée en tient DEUX, plus l'air autour et entre eux : sans ça
   // la liste des destinations s'assoirait sur le premier.
   const bandeDepart = 2 * hBouton + 3 * marge
@@ -570,6 +587,7 @@ export function planArmurerie(
     pnj: { x: xStats, y: yPanneaux, l: lStats, h: hPanneaux },
     bouton: [xRail, basPanneaux + 2 * marge + hBouton * 1.5, Z_PLAN],
     boutonFortune: [xRail, basPanneaux + marge + hBouton / 2, Z_PLAN],
+    rapportDepart,
   }
 }
 

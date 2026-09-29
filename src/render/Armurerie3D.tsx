@@ -47,6 +47,7 @@ import type { Carte } from '../logic/combat.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
 import { accepteDepuis, deuxMains, estTresor, peutDescendre } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
+import { TEXTE_DESCENDRE, TEXTE_FORTUNE } from './armurerie-plan.ts'
 import type { PlanArmurerie } from './armurerie-plan.ts'
 import {
   caseSousLePoint,
@@ -951,7 +952,8 @@ export function Armurerie3D({
           une entrée de la liste. Il s'éteint sans arme — il n'y a rien pour
           frapper — et la bulle de la page dit pourquoi. */}
       <Bouton3D
-        texte="Descendre"
+        texte={TEXTE_DESCENDRE}
+        rapportMin={plan.rapportDepart}
         ton="or"
         position={plan.bouton}
         eteint={tenue !== null || !peutDescendre(hub.chargement)}
@@ -965,7 +967,8 @@ export function Armurerie3D({
           pendant un glisser comme tous les autres : on est déjà en train de
           faire autre chose. */}
       <Bouton3D
-        texte={'Équipement\ngratuit'}
+        texte={TEXTE_FORTUNE}
+        rapportMin={plan.rapportDepart}
         ton="pierre"
         position={plan.boutonFortune}
         eteint={tenue !== null}
