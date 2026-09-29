@@ -4797,6 +4797,27 @@ trésors maintenant ? »
 marchent plus dessus : un trésor d'or et une arme épique partagent leur métal
 et n'ont pas la même silhouette.
 
+**TROIS CADRES À L'ESSAI POUR LA CARTE DE DECK — `?r3f&cadre=1|2|3`.** Keko :
+« je voudrais que tu me proposes un nouveau cadre pour les cartes de deck
+(celles générées par l'équipement) afin de bien les distinguer. »
+
+*Le principe ne change pas* : **une échelle se dit en couleur, une famille se
+dit en forme.** La rareté a pris la couleur, donc le type prend la silhouette —
+c'est déjà ce qui sépare le trésor du reste, et il ne restait qu'à départager la
+PIÈCE de la CARTE qu'elle produit. *Elles ne se regardent côte à côte qu'au zoom
+d'une pièce* — mais c'est là que la confusion se paie, puisque c'est là qu'on
+compare.
+
+| | `cadre=` | ce que ça dit | lisibilité en petit |
+|---|---|---|---|
+| **franc** | `1` | la carte est une IMAGE, pas un objet : plus de silhouette | faible — presque invisible à 100 px |
+| **encoché** | `2` | une plaque qu'on CLIPSE : deux entailles à mi-hauteur | **la meilleure** |
+| **crans** | `3` | une fiche qu'on TIRE : deux crans hauts | moyenne |
+
+**La pièce garde la coque déchirée**, et c'est voulu : *elle est le métal brut
+dont les cartes sont arrachées*, donc c'est elle qui doit porter la déchirure.
+Si Keko préfère l'inverse, il n'y a qu'à échanger les deux.
+
 **ET SA VALEUR A QUITTÉ LE CARTOUCHE : une gemme, puis le chiffre.** Keko :
 « pour le gain en or des trésors on ne va pas l'afficher directement dans la
 description ; on va afficher une valeur de qualité avec un petit symbole, hors
@@ -4847,6 +4868,15 @@ Quatre choses qui la portent :
   pictogramme. *Le flou est dans la matière* — la réponse déjà donnée au
   contour des cartes et au halo des créatures ;
 
+- **son cerne porte la COULEUR DU CHIFFRE, pas du noir.** Keko : « je trouve
+  l'outline noir sur la gemme des trésors un peu moche, on peut mettre cet
+  outline de la même couleur que le texte à côté ? » *Un cerne noir sur une
+  pierre dorée en fait un pictogramme découpé*, là où le même trait en crème la
+  relie à sa valeur — les deux moitiés du couple se lisent alors comme un seul
+  objet. Ce que le noir faisait, c'était DÉTACHER du fond : le crème le rend par
+  l'OMBRE, exactement comme le chiffre, qui porte la sienne depuis toujours.
+  **Un cerne sépare par sa couleur, une ombre sépare par sa profondeur** — et
+  ici la seconde suffit ;
 - **et un ÉCLAT À QUATRE BRANCHES, à cheval sur l'arête.** Le projet avait déjà
   tranché cette forme en cherchant le symbole du coût : *six branches égales
   font une étoile de David, quatre branches fines ne disent que la lumière.* Il

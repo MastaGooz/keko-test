@@ -181,6 +181,59 @@ const CADRE_TRESOR: readonly [number, number][] = [
 ]
 
 /**
+ * TROIS CADRES À L'ESSAI POUR LA CARTE DE DECK — `?r3f&cadre=1|2|3`.
+ *
+ * Keko : « je voudrais que tu me proposes un nouveau cadre pour les cartes de
+ * deck (celles générées par l'équipement) afin de bien les distinguer. »
+ *
+ * *Le principe ne change pas* : **une échelle se dit en couleur, une famille se
+ * dit en forme** — la rareté a pris la couleur, donc le type prend la
+ * silhouette. C'est déjà ce qui sépare le trésor du reste, et il ne restait
+ * plus qu'à départager la PIÈCE d'équipement de la CARTE qu'elle produit.
+ *
+ * *Elles ne se regardent côte à côte qu'à un seul endroit* — le zoom d'une
+ * pièce, où le set s'étale à sa droite — mais c'est là que la confusion se
+ * paie, puisque c'est précisément là qu'on compare.
+ *
+ * Trois pistes, et chacune raconte autre chose :
+ *
+ * | | `cadre=` | ce que ça dit |
+ * |---|---|---|
+ * | **franc** | `1` | la carte est une IMAGE, pas un objet : plus de silhouette, un liseré régulier |
+ * | **encoché** | `2` | une plaque qu'on CLIPSE : deux entailles au milieu des côtés |
+ * | **crans** | `3` | une fiche qu'on TIRE : deux crans hauts, comme un onglet |
+ *
+ * **La pièce garde la coque déchirée**, et c'est voulu : *elle est le métal
+ * brut dont les cartes sont arrachées*, donc c'est elle qui doit porter la
+ * déchirure. Si Keko préfère l'inverse, il n'y a qu'à échanger les deux.
+ */
+const CADRE_FRANC: readonly [number, number][] = [
+  [0, 0], [100, 0], [100, 100], [0, 100],
+]
+
+const CADRE_ENCOCHE: readonly [number, number][] = [
+  [0, 0], [100, 0], [100, 43], [95.5, 50], [100, 57], [100, 100],
+  [0, 100], [0, 57], [4.5, 50], [0, 43],
+]
+
+const CADRE_CRANS: readonly [number, number][] = [
+  [0, 0], [100, 0], [100, 17], [94, 21.5], [100, 26], [100, 100],
+  [0, 100], [0, 26], [6, 21.5], [0, 17],
+]
+
+/**
+ * Le cadre à l'essai, lu UNE fois : c'est un réglage de session, donc il ne
+ * change jamais en cours de route et n'a pas à entrer dans `signature()`.
+ */
+const CADRE_DECK: readonly [number, number][] | null = (() => {
+  const demande = new URLSearchParams(location.search).get('cadre')
+  if (demande === '1') return CADRE_FRANC
+  if (demande === '2') return CADRE_ENCOCHE
+  if (demande === '3') return CADRE_CRANS
+  return null
+})()
+
+/**
  * LA PLACE DE L'ORBE DU COÛT, en un seul endroit.
  *
  * Elle servait à `peindreCout` seule ; le jonc du cadre de trésor doit
@@ -484,8 +537,13 @@ export async function peindreCarte(
   ctx.fillStyle = '#00000030'
   ctx.fillRect(0, 0, LARGE, HAUT)
 
-  // LA COQUE, en laiton plein — déchirée, ou franche si c'est un trésor.
-  const coque = carte.tresor === true ? CADRE_TRESOR : DECOUPE
+  // LA COQUE, en laiton plein — déchirée, franche si c'est un trésor, et à
+  // l'essai si c'est une carte de DECK (`?r3f&cadre=1|2|3`). Une pièce
+  // d'équipement se reconnaît à son compteur : elle garde la déchirure, parce
+  // que *c'est d'elle que les cartes sont arrachées.*
+  const deDeck = carte.tresor !== true && carte.compteur === undefined
+  const coque =
+    carte.tresor === true ? CADRE_TRESOR : deDeck && CADRE_DECK !== null ? CADRE_DECK : DECOUPE
   ctx.save()
   chemin(ctx, coque, 0, 0, LARGE, HAUT)
   ctx.clip()
@@ -838,14 +896,32 @@ function peindreValeur(ctx: CanvasRenderingContext2D, valeur: number): void {
     ctx.closePath()
   }
 
-  // LE CERNE D'ABORD, sous tout le reste : la gemme se pose sur
-  // l'illustration, qui peut être claire. *Un symbole sans cerne disparaît sur
-  // son propre fond.*
+  /**
+   * LE CERNE D'ABORD, sous tout le reste : la gemme se pose sur
+   * l'illustration, qui peut être claire. *Un symbole sans cerne disparaît sur
+   * son propre fond.*
+   *
+   * **Il porte la couleur du chiffre d'à côté, pas du noir.** Keko : « je
+   * trouve l'outline noir sur la gemme des trésors un peu moche, on peut
+   * mettre cet outline de la même couleur que le texte à côté ? » *Un cerne
+   * noir sur une pierre dorée en fait un pictogramme découpé*, là où le même
+   * trait en crème la relie à sa valeur — les deux moitiés du couple se lisent
+   * alors comme un seul objet.
+   *
+   * Ce que le noir faisait, c'était DÉTACHER du fond : le crème le rend par
+   * l'OMBRE, exactement comme le chiffre, qui porte la sienne depuis toujours.
+   * *Un cerne sépare par sa couleur, une ombre sépare par sa profondeur* — et
+   * ici la seconde suffit.
+   */
   taille([[0.2, 0], [0.8, 0], [1, 0.36], [0.5, 1], [0, 0.36]])
-  ctx.strokeStyle = '#1a1204'
+  ctx.save()
+  ctx.shadowColor = '#0d0a04'
+  ctx.shadowBlur = 1.6 * U
+  ctx.strokeStyle = '#fff0cd'
   ctx.lineWidth = 0.85 * U
   ctx.lineJoin = 'round'
   ctx.stroke()
+  ctx.restore()
 
   // LA TAILLE EST FAITE D'APLATS, JAMAIS DE TRAITS. La gemme ne dépasse jamais
   // une vingtaine de pixels à l'écran — 6 dans une case de coffre — et *un
