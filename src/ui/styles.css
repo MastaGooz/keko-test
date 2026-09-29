@@ -5024,12 +5024,13 @@ body {
   justify-content: center;
   padding: 0;
   border: 1px solid #6b593655;
-  /* UN ANGLE ADOUCI, demande par Keko. En POUR CENT et non en pixels : le carre
-     va de 22 px sur un telephone a 60 sur un ecran de PC, et *un rayon fixe y
-     dirait deux choses differentes* -- franc en petit, presque droit en grand.
-     Ca reste loin de la capsule : une arete adoucie est de la ferronnerie, un
-     demi-cercle est un gabarit. */
-  border-radius: 16%;
+  /* DES ANGLES DROITS, et c'est un retour en arriere assume. Keko avait demande
+     de les adoucir (« on peut arrondir un peu ses angles ? »), puis les a
+     repris en voyant la bulle passer a l'angle vif : « les angles ne sont pas
+     totalement droits sur le bouton ». *Un arrondi est une forme de gabarit,
+     une arete franche est de la ferronnerie* -- la meme regle qui a ramene la
+     barre de vie de la capsule au biseau, et les bulles a zero. */
+  border-radius: 0;
   background: none;
   color: #8f8674;
   cursor: pointer;

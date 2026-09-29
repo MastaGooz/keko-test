@@ -4899,11 +4899,18 @@ l'animation, elle, part du clic. **La couleur n'est donnée qu'au keyframe du
 milieu** : les deux bouts la prennent de l'état courant, donc le bouton déjà
 allumé sous la souris ne s'éteint pas d'abord pour se rallumer.
 
-**Et ses angles sont adoucis, en POUR CENT et non en pixels** : le carré va de
-22 px sur un téléphone à 60 sur un écran de PC, et *un rayon fixe y dirait deux
-choses différentes* — franc en petit, presque droit en grand. Ça reste loin de
-la capsule : une arête adoucie est de la ferronnerie, un demi-cercle est un
-gabarit.
+**ET IL SONNE COMME UNE POSE.** Demandé par Keko : *ranger le coffre, c'est
+reposer des cartes*, donc c'est le bruit d'un dépôt qui aboutit et pas celui de
+la prise. Il ne part que si le bouton range vraiment — *un slot qui refuse ne
+doit pas sonner comme un slot qui prend*, et ça vaut pour un bouton.
+
+**Ses angles sont DROITS, et c'est un retour en arrière assumé.** Keko avait
+demandé de les adoucir — « on peut arrondir un peu ses angles ? » — puis les a
+repris en voyant la bulle passer à l'angle vif : « les angles ne sont pas
+totalement droits sur le bouton ». *Un arrondi est une forme de gabarit, une
+arête franche est de la ferronnerie* : la même règle a ramené la barre de vie
+de la capsule au biseau, puis les bulles à zéro, et elle finit par tout
+rattraper.
 
 **Sa zone sensible déborde son dessin** (un `::after` en débord). L'en-tête ne
 fait qu'une vingtaine de pixels sur un téléphone et *le doigt ne rétrécit pas

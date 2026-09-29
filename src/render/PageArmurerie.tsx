@@ -35,6 +35,7 @@ import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
 import type { Hub } from '../logic/hub.ts'
 import { deuxMains } from '../logic/hub.ts'
+import { SON_POSER, jouerSon } from './sons.ts'
 import { urlDeLArmurerie, urlDeLArmurier } from '../ui/art.ts'
 
 /**
@@ -588,7 +589,15 @@ export function PageArmurerie({
             // souris ne s'éteint pas d'abord pour se rallumer.
             { duration: 190, easing: 'ease-out' },
           )
-          onTrier?.()
+          // LE SON DE LA POSE, demandé par Keko. *Ranger le coffre, c'est
+          // reposer des cartes* — donc c'est ce bruit-là, celui d'un dépôt qui
+          // aboutit, et pas celui de la prise. Il ne part QUE si le bouton
+          // range vraiment, comme partout ailleurs : un slot qui refuse ne
+          // sonne pas comme un slot qui prend.
+          if (onTrier !== undefined) {
+            jouerSon(SON_POSER)
+            onTrier()
+          }
         }}
         aria-label="Ranger le coffre"
       >
