@@ -71,6 +71,26 @@ export type Chargement = {
   pile: (Consommable | null)[]
 }
 
+/**
+ * **CE QUI VIT AU COFFRE : une seule liste, pièces et trésors mêlés.**
+ *
+ * Ils ont vécu dans deux listes, que la grille montrait à la suite — et c'est
+ * exactement ce qui empêchait de les ranger ensemble : *un ordre d'affichage
+ * qui sort de deux listes concaténées ne peut pas les entrelacer.* Keko :
+ * « on peut réorganiser les armes / armures / objets ensemble ? là les trésors
+ * ne peuvent pas être changés de position avec une arme par ex ».
+ *
+ * **Le coffre est une étagère, pas deux.** Ce qui distingue un trésor n'est plus
+ * la liste où il vit, c'est son TYPE — et c'est le type qui l'empêche d'entrer
+ * dans un slot, là où la séparation des listes le faisait par construction.
+ */
+export type ContenuCoffre = Objet | Carte
+
+/** Un trésor rapporté, par opposition à ce qui peut s'équiper. */
+export function estTresor(o: ContenuCoffre): o is Carte {
+  return 'type' in o && o.type === 'tresor'
+}
+
 export type Hub = {
   /**
    * Ce qu'on possède et qui n'est pas équipé — pièces ET consommables mêlés.
@@ -80,22 +100,8 @@ export type Hub = {
    * sans en être. C'est pour ça que le râtelier en montre les exemplaires un
    * par un, et non un objet avec un compte.
    */
-  reserve: Objet[]
+  reserve: ContenuCoffre[]
   chargement: Chargement
-  /**
-   * LES TRÉSORS RAPPORTÉS, ET ILS RESTENT LÀ.
-   *
-   * *Un trésor rentré au hub n'en ressort plus* — c'est le garde-fou qui rend
-   * tout le reste sûr. Mais il n'était nulle part : la descente le convertissait
-   * en or et la carte disparaissait. Keko : « les trésors sont maintenant ici,
-   * même s'ils ne peuvent pas être équipés ».
-   *
-   * *Un total ne montre pas un butin* : c'est la raison qui avait déjà fait
-   * dessiner le loot en cartes plutôt qu'en lignes de texte. Le coffre les
-   * garde donc en cartes, à consulter — l'or continue de se compter à côté,
-   * l'économie n'étant toujours pas tranchée.
-   */
-  tresors: Carte[]
   /** L'or rapporté des descentes. Rien ne s'achète encore. */
   or: number
 }
@@ -156,8 +162,18 @@ export const CAPACITE_PILE = 3
  * on les range par VALEUR croissante, dans le même sens — c'est la seule
  * rareté qu'ils aient.
  */
-const RANG_CATEGORIE = (o: Objet): number =>
-  'mains' in o ? 0 : estConsommable(o) ? 2 : 1
+const RANG_CATEGORIE = (o: ContenuCoffre): number =>
+  estTresor(o) ? 3 : 'mains' in o ? 0 : estConsommable(o) ? 2 : 1
+
+/**
+ * Ce qui départage DANS une catégorie : la rareté pour ce qui s'équipe, la
+ * VALEUR pour un trésor — *c'est la seule rareté qu'il ait.* Les deux échelles
+ * ne se comparent jamais entre elles, puisque la catégorie tranche avant.
+ */
+const rangInterne = (o: ContenuCoffre): number =>
+  estTresor(o) ? (o.valeur ?? 0) : RANG_RARETE[o.rarete]
+
+const nomAuCoffre = (o: ContenuCoffre): string => (estTresor(o) ? o.nom : nomObjet(o))
 
 const RANG_RARETE: Record<Rarete, number> = {
   commune: 0,
@@ -170,14 +186,11 @@ export function trierLeCoffre(hub: Hub): Hub {
   const reserve = [...hub.reserve].sort(
     (a, b) =>
       RANG_CATEGORIE(a) - RANG_CATEGORIE(b) ||
-      RANG_RARETE[a.rarete] - RANG_RARETE[b.rarete] ||
-      nomObjet(a).localeCompare(nomObjet(b)) ||
+      rangInterne(a) - rangInterne(b) ||
+      nomAuCoffre(a).localeCompare(nomAuCoffre(b)) ||
       a.id.localeCompare(b.id),
   )
-  const tresors = [...hub.tresors].sort(
-    (a, b) => (a.valeur ?? 0) - (b.valeur ?? 0) || a.nom.localeCompare(b.nom),
-  )
-  return { ...hub, reserve, tresors }
+  return { ...hub, reserve }
 }
 
 /**
@@ -197,12 +210,6 @@ export function trierLeCoffre(hub: Hub): Hub {
 export function rangerEnFinDeCoffre(hub: Hub, ids: readonly string[]): Hub {
   if (ids.length === 0) return hub
   const dedans = new Set(ids)
-  /**
-   * **CHAQUE LISTE SE RANGE DANS LA SIENNE.** Les trésors ne sont pas des
-   * pièces — ils vivent dans `tresors`, et la grille ne les met à la suite que
-   * pour les montrer. On essaie donc les deux, exactement comme
-   * `echangerDansCoffre` : *ce qui vaut pour l'échange vaut pour le rangement.*
-   */
   const auBout = <T extends { id: string }>(liste: T[]): T[] | null => {
     const bloc = liste.filter((o) => dedans.has(o.id))
     if (bloc.length !== dedans.size) return null
@@ -213,10 +220,7 @@ export function rangerEnFinDeCoffre(hub: Hub, ids: readonly string[]): Hub {
     return [...reste, ...bloc]
   }
   const reserve = auBout(hub.reserve)
-  if (reserve !== null) return { ...hub, reserve }
-  const tresors = auBout(hub.tresors)
-  if (tresors !== null) return { ...hub, tresors }
-  return hub
+  return reserve === null ? hub : { ...hub, reserve }
 }
 
 /**
@@ -233,10 +237,12 @@ export function rangerEnFinDeCoffre(hub: Hub, ids: readonly string[]): Hub {
  * rangement qu'on vient de faire bouge sous les yeux. *Un échange ne déplace
  * que les deux cases qu'on regarde.*
  *
- * **On n'échange QUE dans la même liste.** Les trésors ne sont pas des pièces :
- * ils vivent dans `tresors`, ne s'équipent jamais, et la grille ne les met à la
- * suite que pour les montrer. Un échange entre les deux ferait passer un trésor
- * pour une pièce à la première lecture de `reserve`.
+ * **ET TOUT S'ÉCHANGE AVEC TOUT**, trésors compris. Keko : « on peut
+ * réorganiser les armes / armures / objets ensemble ? là les trésors ne peuvent
+ * pas être changés de position avec une arme ». Ils vivaient dans une seconde
+ * liste que la grille montrait à la suite, donc *aucun ordre d'affichage ne
+ * pouvait les entrelacer* — c'est le modèle qui l'interdisait, pas le geste.
+ * Une seule étagère, un seul ordre.
  */
 export function echangerDansCoffre(
   hub: Hub,
@@ -287,10 +293,7 @@ export function echangerDansCoffre(
   }
 
   const reserve = permuter(hub.reserve)
-  if (reserve !== null) return { ...hub, reserve }
-  const tresors = permuter(hub.tresors)
-  if (tresors !== null) return { ...hub, tresors }
-  return hub
+  return reserve === null ? hub : { ...hub, reserve }
 }
 
 /** Une pile vide : ses cases existent toutes, elles ne tiennent rien. */
@@ -320,7 +323,6 @@ export function creerHub(): Hub {
     // CINQ POTIONS, dont une déjà dans la pile : on arrive équipé, donc on
     // découvre la carte en jouant plutôt qu'en lisant l'armurerie.
     reserve: [ESPADON, ...POTIONS_DEPART.slice(1), ...SUPER_POTIONS_DEPART],
-    tresors: [],
     chargement: {
       mains: [ARME_GRATUITE, null],
       armure: ARMURE_GRATUITE,
@@ -427,10 +429,20 @@ function accepte(slot: Slot, piece: Objet, hub: Hub): boolean {
 function prendre(hub: Hub, slot: Slot, id?: string): { piece: Objet | null; hub: Hub } {
   if (slot.ou === 'reserve') {
     const i = hub.reserve.findIndex((p) => p.id === id)
-    if (i < 0) return { piece: null, hub }
+    const vise = i < 0 ? undefined : hub.reserve[i]
+    /**
+     * **UN TRÉSOR NE SE PREND PAS.** Il vit désormais dans la même liste que
+     * les pièces, donc c'est le TYPE qui le tient hors des slots — la
+     * séparation des listes le faisait par construction, et ce garde-fou la
+     * remplace. *Sans lui, un trésor passerait le test du torse*, qui ne
+     * demande que « ni arme ni consommable ».
+     *
+     * Le ranger reste possible : `echangerDansCoffre` ne passe pas par ici.
+     */
+    if (vise === undefined || estTresor(vise)) return { piece: null, hub }
     const reserve = [...hub.reserve]
-    const [piece] = reserve.splice(i, 1)
-    return { piece: piece ?? null, hub: { ...hub, reserve } }
+    reserve.splice(i, 1)
+    return { piece: vise, hub: { ...hub, reserve } }
   }
   if (slot.ou === 'armure') {
     const piece = hub.chargement.armure
@@ -527,8 +539,9 @@ export function rentrer(
     or: hub.or + butin,
     // LE COFFRE LES GARDE, et il ne les rend jamais : c'est le garde-fou qui
     // interdit qu'un trésor reparte en run. Ils s'y consommeront le jour où un
-    // marché existera.
-    tresors: [...hub.tresors, ...tresors],
+    // marché existera — et ils entrent dans la MÊME liste que le reste, donc à
+    // la suite de ce qu'on possède déjà.
+    reserve: [...hub.reserve, ...tresors],
     chargement: { ...hub.chargement, pile },
   }
 }

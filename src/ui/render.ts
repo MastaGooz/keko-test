@@ -15,7 +15,7 @@ import { consequence, jouable, menaceDuTour, tresorsEnMain, vivants } from '../l
 import type { Descente } from '../logic/descente.ts'
 import { butinTransporte, tresorsAuDeck } from '../logic/descente.ts'
 import type { Hub } from '../logic/hub.ts'
-import { CAPACITE_PILE, deckEmporte, deuxMains, peutDescendre, consommablesDeLaPile } from '../logic/hub.ts'
+import { CAPACITE_PILE, deckEmporte, deuxMains, estTresor, peutDescendre, consommablesDeLaPile } from '../logic/hub.ts'
 import type { Consommable, Objet, Piece } from '../logic/armes.ts'
 import { carteDuConsommable, estConsommable } from '../logic/armes.ts'
 import { creature, sceau, teteDeMort } from './illustrations.ts'
@@ -1024,10 +1024,15 @@ function armurerie(hub: Hub): string {
   // LE RÂTELIER MONTRE SES CASES VIDES : une grille de places, pas une liste
   // de pièces. Douze cases au moins — au-delà, elle grandit avec ce qu'on
   // rapporte. Keko : « afficher les slots vides du râtelier qu'on voit le grid ».
-  const cases = Math.max(CASES_RATELIER, hub.reserve.length)
+  // LE RÂTELIER 2D NE MONTRE QUE CE QUI S'ÉQUIPE. Le coffre est devenu une
+  // seule liste, trésors compris — mais le jeu 2D n'a pas d'onglets pour les
+  // ranger, et *un objet qu'aucun slot n'accepte n'a rien à faire dans un
+  // râtelier.* Ils restent au modèle, seul l'affichage les écarte.
+  const portables = hub.reserve.filter((p): p is Objet => !estTresor(p))
+  const cases = Math.max(CASES_RATELIER, portables.length)
   const enReserve =
-    hub.reserve.map((p) => objetEquipement(p, { ou: 'reserve' })).join('') +
-    `<span class="case-ratelier"></span>`.repeat(cases - hub.reserve.length)
+    portables.map((p) => objetEquipement(p, { ou: 'reserve' })).join('') +
+    `<span class="case-ratelier"></span>`.repeat(cases - portables.length)
 
   return (
     `<div class="voile armurerie">` +

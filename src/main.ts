@@ -45,7 +45,7 @@ import {
   equipement,
   peutDescendre,
   perdreLEquipement,
-  rentrer, consommablesDeLaPile } from './logic/hub.ts'
+  rentrer, consommablesDeLaPile, estTresor } from './logic/hub.ts'
 import type { Action } from './ui/input.ts'
 import { bindInput } from './ui/input.ts'
 import { brancherGlisser } from './ui/glisser.ts'
@@ -168,8 +168,11 @@ const DUREE_AGONIE = 850
  * a deux — on remplit la première main libre.
  */
 function slotNaturel(id: string): Slot | null {
-  const piece = hub.reserve.find((p) => p.id === id)
-  if (piece === undefined) return null
+  const trouve = hub.reserve.find((p) => p.id === id)
+  // UN TRÉSOR N'A PAS DE SLOT NATUREL : il vit au coffre avec le reste depuis
+  // qu'il n'y a qu'une étagère, mais rien ne l'accepte.
+  if (trouve === undefined || estTresor(trouve)) return null
+  const piece = trouve
   // UN CONSOMMABLE VA SUR LA PILE, toujours : elle n'a pas de cases, donc pas
   // de « première libre » à chercher.
   if (estConsommable(piece)) return { ou: 'pile' }
@@ -306,7 +309,13 @@ function dispatch(action: Action): void {
         descente.combat.main.find((c) => c.id === action.id) ??
         descente.deck.find((c) => c.id === action.id) ??
         butin.find((c) => c !== null && c.id === action.id) ??
-        (objet !== null && estConsommable(objet) ? carteDuConsommable(objet) : objet) ??
+        // UN TRÉSOR DU COFFRE SE ZOOME TEL QUEL : c'est déjà une carte, il n'y a
+        // pas d'intermédiaire à convertir.
+        (objet === null || estTresor(objet)
+          ? objet
+          : estConsommable(objet)
+            ? carteDuConsommable(objet)
+            : objet) ??
         null
       zoom = vue
       break

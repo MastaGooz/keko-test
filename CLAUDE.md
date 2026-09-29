@@ -4148,12 +4148,40 @@ déjà fait dessiner le loot en cartes. Leur place naturelle est **l'écran où 
 se consomment**, marché ou craft, puisque c'est la seule chose qu'ils font au
 hub. Ne pas retirer l'onglet avant que cet écran existe.
 
-*Ça a demandé une place dans le modèle* : `hub.tresors`, rempli par `rentrer`.
-Ils n'étaient nulle part — la descente les convertissait en or et la carte
-disparaissait. **L'or continue de se compter à côté** : l'économie n'est
-toujours pas tranchée, donc rien ne change de ce côté-là, et les deux comptes
-cohabitent en attendant un marché. *Un total ne montre pas un butin* — c'est la
-raison qui avait déjà fait dessiner le loot en cartes.
+*Ça a demandé une place dans le modèle.* Ils n'étaient nulle part — la descente
+les convertissait en or et la carte disparaissait. **L'or continue de se compter
+à côté** : l'économie n'est toujours pas tranchée, donc rien ne change de ce
+côté-là, et les deux comptes cohabitent en attendant un marché. *Un total ne
+montre pas un butin* — c'est la raison qui avait déjà fait dessiner le loot en
+cartes.
+
+**ET LE COFFRE EST UNE SEULE LISTE : `reserve`, pièces et trésors mêlés.** Ils
+ont d'abord eu la leur (`hub.tresors`), que la grille montrait à la suite — et
+c'est exactement ce qui empêchait de les ranger ensemble. Keko : « on peut
+réorganiser les armes / armures / objets ensemble ? là les trésors ne peuvent
+pas être changés de position avec une arme par ex ».
+
+*Un ordre d'affichage tiré de deux listes concaténées ne peut pas les
+entrelacer* : ce n'était pas le geste qui refusait, c'était le modèle qui ne
+pouvait pas l'exprimer. **Le coffre est une étagère, pas deux**, et un seul
+ordre suffit alors à tout dire.
+
+Trois choses à ne pas défaire :
+
+- **C'est le TYPE qui tient un trésor hors des slots**, plus la liste où il
+  vit. `prendre` refuse de le sortir du coffre pour le poser ailleurs, et c'est
+  le seul garde-fou nécessaire — *sans lui un trésor passerait le test du
+  torse*, qui ne demande que « ni arme ni consommable ». Trois vérifications le
+  tiennent (`hub.verif.ts`) ;
+- **le ranger reste possible** : `echangerDansCoffre` et `rangerEnFinDeCoffre`
+  ne passent pas par `prendre`, ils replacent des blocs dans la liste. *Un
+  trésor ne s'équipe pas ; ça ne veut pas dire qu'il ne se range pas* ;
+- **le tri les met en DERNIER** (rang 4 de catégorie), par valeur croissante —
+  la seule rareté qu'ils aient. Ce qui sert à partir se lit d'abord.
+
+**Le râtelier du jeu 2D les écarte à l'affichage** : il n'a pas d'onglets pour
+les ranger, et *un objet qu'aucun slot n'accepte n'a rien à faire dans un
+râtelier*. Ils restent au modèle, seul l'affichage les saute.
 
 **TOUTES LES CARTES DE L'ÉQUIPEMENT ONT LA MÊME TAILLE.** Demandé par Keko. La
 pile valait la moitié d'une pièce — une arithmétique imposée par deux lignes de

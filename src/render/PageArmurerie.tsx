@@ -145,7 +145,7 @@ export function PageArmurerie({
   }
 
   const contenu = contenuDuCoffre(hub, onglet)
-  const total = contenu.pieces.length + contenu.tresors.length
+  const total = contenu.length
   const lignesTotal = Math.max(plan.lignes, Math.ceil(total / plan.colonnes))
   const maxDefilement = Math.max(0, lignesTotal - plan.lignes)
 

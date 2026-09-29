@@ -10,7 +10,7 @@ import { createRng } from '../logic/rng.ts'
 import type { Descente } from '../logic/descente.ts'
 import { REGLAGE_DEFAUT, commencerDescente } from '../logic/descente.ts'
 import type { Hub } from '../logic/hub.ts'
-import { creerHub, equipement, consommablesDeLaPile } from '../logic/hub.ts'
+import { creerHub, equipement, consommablesDeLaPile, estTresor } from '../logic/hub.ts'
 import type { Piece, Rarete } from '../logic/armes.ts'
 import {
   ESPADON,
@@ -195,7 +195,8 @@ export function coffreDeTest(hub: Hub, combien = COFFRE_URL()): Hub {
   const tresors = Array.from({ length: Math.max(6, Math.round(combien / 3)) }, (_, n) =>
     tresorRecompense(1 + (n % 8), rng, `essai-${n}`),
   )
-  return { ...hub, reserve, tresors }
+  // LE COFFRE EST UNE SEULE LISTE : les trésors s'y rangent avec le reste.
+  return { ...hub, reserve: [...reserve, ...tresors] }
 }
 
 /**
@@ -250,7 +251,7 @@ export function raretesDeTest(hub: Hub, actif = RARETES_URL()): Hub {
   const reserve = echelle.flatMap((rarete) =>
     modeles.map((modele) => ({ ...modele, id: `${modele.id}-${rarete}`, rarete })),
   )
-  return { ...hub, reserve, tresors: hub.tresors }
+  return { ...hub, reserve }
 }
 
 /**
@@ -283,7 +284,7 @@ export function pilesDeTest(hub: Hub, combien = PILES_URL()): Hub {
   const modeleSuper = SUPER_POTIONS_DEPART[0]!
   const copies = (modele: Objet, n: number, marque: string): Objet[] =>
     Array.from({ length: n }, (_, i) => ({ ...modele, id: `${modele.id}-${marque}-${i}` }))
-  const reste = hub.reserve.filter((o) => !estConsommable(o))
+  const reste = hub.reserve.filter((o) => estTresor(o) || !estConsommable(o))
   return {
     ...hub,
     reserve: [

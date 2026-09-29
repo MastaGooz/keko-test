@@ -12,6 +12,7 @@ import {
   CAPACITE_PILE,
   consommablesDeLaPile,
   echangerDansCoffre,
+  estTresor,
   rangerEnFinDeCoffre,
   trierLeCoffre,
   accepteDepuis,
@@ -285,35 +286,58 @@ const COTTE: Armure = {
   // celui des onglets -- armes, armures, objets.
   const range2 = trierLeCoffre({
     ...h,
-    reserve: [...POTIONS_DEPART.slice(0, 2), ARMURE_GRATUITE, ESPADON_REEL, ARME_GRATUITE],
-    tresors: [carteTresor('t-1', 'Camee', 45), carteTresor('t-2', 'Idole', 240)],
+    reserve: [
+      ...POTIONS_DEPART.slice(0, 2),
+      carteTresor('t-2', 'Idole', 240),
+      ARMURE_GRATUITE,
+      ESPADON_REEL,
+      carteTresor('t-1', 'Camee', 45),
+      ARME_GRATUITE,
+    ],
   })
-  const categorie = range2.reserve.map((o) => ('mains' in o ? 'arme' : 'modele' in o ? 'objet' : 'armure'))
+  const categorie = range2.reserve.map((o) =>
+    estTresor(o) ? 'tresor' : 'mains' in o ? 'arme' : 'modele' in o ? 'objet' : 'armure',
+  )
   verifier('les armes viennent en premier', categorie[0] === 'arme' && categorie[1] === 'arme')
   verifier('...puis les armures', categorie[2] === 'armure')
   verifier('...puis les objets', categorie[3] === 'objet' && categorie[4] === 'objet')
+  // LES TRESORS FERMENT LA MARCHE : ils ne s'equipent pas, donc ce qu'on
+  // cherche pour partir se lit d'abord.
+  verifier('...et les tresors en dernier', categorie[5] === 'tresor' && categorie[6] === 'tresor')
   // LE COMMUN D'ABORD, LE RARE AU BOUT : tranche par Keko. Une liste qui monte
   // se termine sur ce qu'on cherche.
   verifier('la rarete monte dans la categorie', range2.reserve[1]!.id === ESPADON_REEL.id)
-  verifier('les tresors se rangent par valeur', range2.tresors[0]!.id === 't-1')
+  verifier('les tresors se rangent par valeur', range2.reserve[5]!.id === 't-1')
   // DEUX RANGEMENTS DU MEME COFFRE DONNENT LA MEME CHOSE : sans ordre stable,
   // deux objets de meme categorie et meme rarete s'echangeraient a chaque clic.
   verifier('ranger deux fois ne change plus rien',
     trierLeCoffre(range2).reserve.map((o) => o.id).join() === range2.reserve.map((o) => o.id).join())
 
-  // ON N'ECHANGE QUE DANS LA MEME LISTE : un tresor n'est pas une piece, et il
-  // ne doit jamais se retrouver dans `reserve`.
-  const avecTresor = { ...h, tresors: [carteTresor('t-1', 'Camee', 45), carteTresor('t-2', 'Idole', 90)] }
+  // TOUT S'ECHANGE AVEC TOUT, tresors compris. Keko : « on peut reorganiser
+  // les armes / armures / objets ensemble ? la les tresors ne peuvent pas etre
+  // changes de position avec une arme ». Une seule etagere, un seul ordre.
+  const avecTresor = {
+    ...h,
+    reserve: [...h.reserve, carteTresor('t-1', 'Camee', 45), carteTresor('t-2', 'Idole', 90)],
+  }
   const melange = echangerDansCoffre(avecTresor, [a!.id], ['t-1'])
-  verifier('une piece ne s’echange pas avec un tresor', melange === avecTresor)
+  const ou = (hub: typeof avecTresor, id: string): number =>
+    hub.reserve.findIndex((o) => o.id === id)
+  verifier('une piece s’echange avec un tresor',
+    ou(melange, 't-1') === ou(avecTresor, a!.id) && ou(melange, a!.id) === ou(avecTresor, 't-1'))
+  verifier('...sans rien perdre', melange.reserve.length === avecTresor.reserve.length)
   const tresors = echangerDansCoffre(avecTresor, ['t-1'], ['t-2'])
-  verifier('deux tresors s’echangent entre eux', tresors.tresors[0]!.id === 't-2')
-  // ET UN TRESOR SE RANGE EN FIN DE SA PROPRE LISTE. Keko : « dans le coffre,
-  // je ne peux pas reorganiser les tresors comme le reste des cartes ».
+  verifier('deux tresors s’echangent entre eux', ou(tresors, 't-2') === ou(avecTresor, 't-1'))
+  // ET UN TRESOR SE RANGE EN FIN DE COFFRE, comme n'importe quoi d'autre.
   const tresorAuBout = rangerEnFinDeCoffre(avecTresor, ['t-1'])
-  verifier('un tresor va au bout des tresors', tresorAuBout.tresors.at(-1)!.id === 't-1')
-  verifier('...et la reserve n’a pas bouge',
-    tresorAuBout.reserve.map((o) => o.id).join() === avecTresor.reserve.map((o) => o.id).join())
+  verifier('un tresor va au bout du coffre', tresorAuBout.reserve.at(-1)!.id === 't-1')
+
+  // UN TRESOR NE S'EQUIPE JAMAIS : c'est le TYPE qui le tient hors des slots,
+  // depuis qu'il vit dans la meme liste que les pieces.
+  verifier('un tresor n’entre pas dans le torse',
+    !accepteDepuis(avecTresor, { ou: 'reserve' }, { ou: 'armure' }, 't-1'))
+  verifier('...ni en main', !accepteDepuis(avecTresor, { ou: 'reserve' }, { ou: 'main', rang: 0 }, 't-1'))
+  verifier('...ni dans la pile', !accepteDepuis(avecTresor, { ou: 'reserve' }, { ou: 'pile' }, 't-1'))
 }
 
 // --- la pile des consommables -----------------------------------------------

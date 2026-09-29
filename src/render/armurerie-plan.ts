@@ -29,13 +29,11 @@
  */
 import { Z_MAIN, hauteurVisibleA } from './Cadrage.tsx'
 import { tailleBouton } from './Bouton3D.tsx'
-import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import { aPeindre, pieceAPeindre } from './combat-3d.ts'
 import { signature } from './texture-carte.ts'
-import type { Carte } from '../logic/combat.ts'
-import type { Hub } from '../logic/hub.ts'
-import { CAPACITE_PILE } from '../logic/hub.ts'
+import type { ContenuCoffre, Hub } from '../logic/hub.ts'
+import { CAPACITE_PILE, estTresor } from '../logic/hub.ts'
 
 export const Z_PLAN = Z_MAIN
 
@@ -657,25 +655,25 @@ function empiler<T extends { id: string }>(liste: T[], cle: (o: T) => string): P
   return piles
 }
 
-export function contenuDuCoffre(
-  hub: Hub,
-  onglet: Onglet,
-): { pieces: Pile<Objet>[]; tresors: Pile<Carte>[] } {
-  const estArme = (o: Objet): boolean => 'mains' in o
-  const estArmure = (o: Objet): boolean => !('mains' in o) && !estConsommable(o)
-  const pieces =
-    onglet === 'tout'
-      ? hub.reserve
-      : onglet === 'armes'
-        ? hub.reserve.filter(estArme)
-        : onglet === 'armures'
-          ? hub.reserve.filter(estArmure)
-          : onglet === 'consommables'
-            ? hub.reserve.filter(estConsommable)
-            : []
-  const tresors = onglet === 'tout' || onglet === 'tresors' ? hub.tresors : []
-  return {
-    pieces: empiler(pieces, (o) => signature(pieceAPeindre(o))),
-    tresors: empiler(tresors, (t) => signature(aPeindre(t))),
+/**
+ * CE QUE L'ONGLET MONTRE — **une seule liste, dans l'ordre du coffre.**
+ *
+ * Les pièces et les trésors ont vécu dans deux listes que la grille montrait à
+ * la suite ; *un ordre d'affichage tiré de deux listes concaténées ne peut pas
+ * les entrelacer*, donc on ne pouvait pas ranger un trésor entre deux armes.
+ * Keko l'a demandé, et c'est le modèle qui a cédé : **le coffre est une
+ * étagère, pas deux.**
+ */
+export function contenuDuCoffre(hub: Hub, onglet: Onglet): Pile<ContenuCoffre>[] {
+  const garde = (o: ContenuCoffre): boolean => {
+    if (onglet === 'tout') return true
+    if (estTresor(o)) return onglet === 'tresors'
+    if (onglet === 'armes') return 'mains' in o
+    if (onglet === 'armures') return !('mains' in o) && !estConsommable(o)
+    if (onglet === 'consommables') return estConsommable(o)
+    return false
   }
+  return empiler(hub.reserve.filter(garde), (o) =>
+    signature(estTresor(o) ? aPeindre(o) : pieceAPeindre(o)),
+  )
 }

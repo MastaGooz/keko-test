@@ -45,7 +45,7 @@ import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Carte } from '../logic/combat.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
-import { accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
+import { accepteDepuis, deuxMains, estTresor, peutDescendre } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
 import type { PlanArmurerie } from './armurerie-plan.ts'
 import {
@@ -340,7 +340,7 @@ export function Armurerie3D({
 
   const contenu = useMemo(() => contenuDuCoffre(hub, onglet), [hub, onglet])
 
-  const total = contenu.pieces.length + contenu.tresors.length
+  const total = contenu.length
   /** La première case tirée du coffre : la ligne entière, le reste est visuel. */
   const depart = ligneBase * plan.colonnes
 
@@ -377,42 +377,30 @@ export function Armurerie3D({
     /** Pour une doublure : l'identifiant de la carte posée dessus. */
     chef?: string
   }[] = [
-    ...contenu.pieces.flatMap((pile, i) => {
-      const objet = pile.objet
+    /**
+     * LE COFFRE EST UNE SEULE LISTE, pièces et trésors mêlés — donc une seule
+     * boucle. *Deux boucles concaténées donnaient un ordre que le joueur ne
+     * pouvait pas défaire* : les trésors venaient forcément après.
+     */
+    ...contenu.flatMap((pile, i) => {
       const rang = i - depart
       if (rang < 0 || rang >= cases) return []
+      const ou = placeCase(plan, rang, reste)
+      const tresor = estTresor(pile.objet) ? pile.objet : null
+      const objet = tresor === null ? (pile.objet as Objet) : null
       return [
         {
           objet,
-          tresor: null,
-          id: objet.id,
-          slot: { ou: 'reserve' } as Slot,
-          position: placeCase(plan, rang, reste),
-          taille: plan.tailleCoffre,
-          rang,
-          pile: pile.nombre,
-          ids: pile.ids,
-        },
-        ...doublureDe(pile, objet, null, placeCase(plan, rang, reste), plan.tailleCoffre, rang),
-      ]
-    }),
-    ...contenu.tresors.flatMap((pile, i) => {
-      const tresor = pile.objet
-      const rang = contenu.pieces.length + i - depart
-      if (rang < 0 || rang >= cases) return []
-      return [
-        {
-          objet: null,
           tresor,
-          id: tresor.id,
+          id: pile.objet.id,
           slot: { ou: 'reserve' } as Slot,
-          position: placeCase(plan, rang, reste),
+          position: ou,
           taille: plan.tailleCoffre,
           rang,
           pile: pile.nombre,
           ids: pile.ids,
         },
-        ...doublureDe(pile, null, tresor, placeCase(plan, rang, reste), plan.tailleCoffre, rang),
+        ...doublureDe(pile, objet, tresor, ou, plan.tailleCoffre, rang),
       ]
     }),
     ...hub.chargement.mains.flatMap((arme, rang) =>
