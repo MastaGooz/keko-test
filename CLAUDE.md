@@ -3749,6 +3749,20 @@ Le râtelier en est exclu, comme le frémissement : c'est l'endroit d'où l'on
 vient. La pile s'allume case par case, parce que ce qu'on doit lire est la
 RANGÉE qui reçoit, même si le dépôt n'est qu'une zone.
 
+**ET CHAQUE CASE DE LA PILE DOIT PORTER SON RANG.** Keko : « quand mes objets
+sont pleins (3/3) et que j'en drag un autre depuis le coffre, les slots des
+objets ne s'éclairent pas ». Elles étaient testées avec un slot `pile` NU —
+sans rang, la règle répond « on ajoute à la pile », donc elle refuse quand elle
+est pleine ; avec un rang, elle répond « on pose SUR CETTE CASE », et **une case
+occupée s'échange**. C'est la règle des mains et du torse, et la pile la suit
+depuis qu'elle a des cases.
+
+*La surbrillance doit poser exactement la question que le lâcher posera* —
+sinon elle éteint un slot qui prend, ce qui est le pire des deux sens : le
+joueur croit que c'est refusé et n'essaie pas. Vérifié sur la règle (pile
+pleine : `pile` nu refuse, `pile` + rang accepte) et au navigateur, une Super
+potion posée sur une case pleine remplace bien sa Potion.
+
 **BUG CORRIGÉ AU PASSAGE, ET IL VENAIT DE LÀ : une arme à deux mains
 empêchait d'équiper une armure.** Keko : « le slot s'illumine mais je ne peux
 pas déposer l'armure dedans ». Quand une deux-mains masque le second slot, le

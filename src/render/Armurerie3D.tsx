@@ -715,7 +715,20 @@ export function Armurerie3D({
           { slot: { ou: 'main', rang: 0 } as Slot, position: plan.mains[0] },
           ...(aDeuxMains ? [] : [{ slot: { ou: 'main', rang: 1 } as Slot, position: plan.mains[1] }]),
           { slot: { ou: 'armure' } as Slot, position: plan.armure },
-          ...plan.pile.map((position) => ({ slot: { ou: 'pile' } as Slot, position })),
+          // CHAQUE CASE DE LA PILE PORTE SON RANG, et c'est ce qui manquait.
+          //
+          // Keko : « quand mes objets sont pleins (3/3) et que j'en drag un
+          // autre depuis le coffre, les slots des objets ne s'éclairent pas ».
+          // Elles étaient testées avec `{ ou: 'pile' }` NU — sans rang, la
+          // règle répond « on ajoute à la pile », donc elle refuse quand elle
+          // est pleine. Avec un rang, elle répond « on pose SUR CETTE CASE »,
+          // et **une case occupée s'échange** : c'est la règle des mains et du
+          // torse, et la pile la suit depuis qu'elle a des cases.
+          //
+          // *La surbrillance doit poser exactement la question que le lâcher
+          // posera* — sinon elle éteint un slot qui prend, ce qui est le pire
+          // des deux sens : le joueur croit que c'est refusé et n'essaie pas.
+          ...plan.pile.map((position, rang) => ({ slot: { ou: 'pile', rang } as Slot, position })),
         ]
           .filter(({ slot }) => accepteDepuis(hub, portee.slot, slot, portee.objet!.id))
           .map(({ slot, position }) => ({ slot, position, taille: tailleDuSlot(slot, plan) }))
@@ -734,7 +747,7 @@ export function Armurerie3D({
       {/* CE QUI PREND LA PIÈCE QU'ON TIENT S'ALLUME. */}
       {candidats.map(({ slot, position, taille }) => (
         <SlotAccueille
-          key={`accueil-${slot.ou}-${slot.ou === 'main' ? slot.rang : ''}-${position[0].toFixed(3)}`}
+          key={`accueil-${slot.ou}-${'rang' in slot ? slot.rang : ''}-${position[0].toFixed(3)}`}
           position={position}
           taille={taille}
         />
