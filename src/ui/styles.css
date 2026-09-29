@@ -5395,185 +5395,84 @@ body {
 
 
 /* ==========================================================================
-   LA PLACE : la grille des PNJ
+   LE RAIL DES DESTINATIONS
 
-   DEUX LIGNES DE QUATRE, et c'est une correction de Keko -- « on va mettre ca
-   sur deux lignes parce que la c'est moche ». Une rangee de huit etait bornee
-   par la LARGEUR : le portrait n'y prenait que 38 % de la hauteur sur un ecran
-   de PC, et tout le reste etait du vide. Ce qui est borne par une seule
-   dimension gaspille l'autre.
+   C'est lui le hub : on n'arrive plus sur une page qui ne sert qu'a choisir,
+   on arrive DANS un lieu et le rail dit ou l'on peut aller. La forme des jeux
+   d'extraction -- et la seule des trois etudiees qui tienne au doigt sans etre
+   redessinee : une liste se raccourcit, une illustration ne se reflow pas.
    ========================================================================== */
-.hub-page {
-  position: fixed;
-  inset: 0;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  /* La bande du bas appartient au BOUTON, qui vit dans le canvas : la grille
-     ne doit pas s'y avancer. *Une place reservee ne se partage pas.* */
-  padding: 0.8rem 1rem calc(var(--pnj-bande) * 100vh) 1rem;
-  --hub-ecart: min(1.1rem, 1.6vw);
-  /* LA LARGEUR D'UN PNJ SE DEDUIT DE LA PLACE, jamais l'inverse -- la lecon de
-     `--piece-equip` a l'armurerie. Deux contraintes, la plus dure gagne :
-     quatre colonnes en largeur, et deux lignes en hauteur. Une ligne fait
-     1,41 fois la largeur d'un PNJ : 1 pour le buste (carre), 0,34 pour
-     l'enseigne et 0,07 pour l'ecart entre les deux.
-
-     LE BUSTE PAIE LE TEXTE. A l'image entiere (0,68) une ligne faisait 1,71,
-     donc le PNJ etait plus etroit d'un bon tiers et son enseigne avec -- Keko :
-     « les textes et les icones sont trop petites, on peut gagner de la place en
-     rognant l'image du PNJ en bas ? » *Ce qui contraint la mise en page ici,
-     c'est la hauteur, et les jambes d'un marchand ne disent rien de son
-     metier.* */
-  --pnj: min(
-    calc((min(100vw, 120rem) - 2rem - (var(--pnj-cols) - 1) * var(--hub-ecart)) / var(--pnj-cols)),
-    calc((100vh * (1 - var(--pnj-bande)) - 2.5rem - var(--hub-ecart)) / 2.81)
-  );
-}
-
-/* LA GRILLE PREND TOUTE LA LARGEUR, les PNJ se centrent dans leur case.
-   A deux lignes c'est la HAUTEUR qui borne le portrait, donc des colonnes a
-   largeur fixe laissaient une marge de chaque cote et le groupe flottait au
-   milieu : *une place ou les boutiques se serrent au centre n'est pas une
-   place, c'est une file.* */
-.hub-rue {
-  display: grid;
-  width: min(100%, 120rem);
-  grid-template-columns: repeat(var(--pnj-cols), 1fr);
-  justify-items: center;
-  align-items: end;
-  gap: var(--hub-ecart);
-}
-
-.hub-pnj {
+.arm-rail {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.5em;
-  /* IL PREND TOUTE SA CASE, pas seulement la largeur du buste : c'est la
-     HAUTEUR qui borne le portrait, donc il reste de la largeur inutilisee dans
-     la colonne -- et c'est elle qui paie l'enseigne. */
-  width: 100%;
+  gap: 0.25rem;
   padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  /* TOUT CE QUI S'ECRIT ICI SUIT LA LARGEUR DU PORTRAIT : a huit, un nom en
-     rem deborderait sur son voisin -- la lecon du nom des creatures, qui suit
-     l'ecart du rang.
-
-     LE COEFFICIENT EST MESURE, pas choisi : l'enseigne tient le blason
-     (1,7em), l'ecart (0,4em), son remplissage (0,6em) et le mot -- « Armurerie »
-     en fait 6,9 a cette graisse, soit 9,6em en tout. A 0,115 le nom etait COUPE
-     sur un telephone couche (71 px pour 60 de place, mesure).
-
-     LE COEFFICIENT SUIT LA LARGEUR DE L'ENSEIGNE, pas celle du buste. Keko :
-     « je trouve que le symbole d'armurerie et le texte a cote sont trop
-     petits ». La plaque deborde desormais le buste d'un facteur 1,45, donc le
-     mot a d'autant plus de place : 0,097 devient 0,14 et tout grandit de 45 %.
-     *La place perdue par le buste en hauteur se recupere en largeur.*
-
-     LE PLAFOND EN REM NE MORD QUE SUR GRAND ECRAN, et c'est LUI qui regle le
-     PC. Keko : « la taille est bien sur tel, mais sur PC c'est trop gros ».
-     *Une proportion seule ne borne rien* : a 0,14 du buste, l'enseigne suivait
-     un buste qui triple entre un telephone et un moniteur, donc elle triplait
-     avec lui. Le `min` des deux est la reponse deja donnee aux tas, aux jauges
-     et au disque du compte -- la fraction commande en petit, le rem en grand.
-
-     Il ne touche PAS au telephone : la fraction y vaut 13 px pour un rem de
-     16, donc tout plafond au-dessus de 0,82rem la laisse gagner. */
-  font-size: min(1.15rem, calc(var(--pnj) * 0.14));
-  transition:
-    transform 180ms ease-out,
-    filter 180ms ease-out;
+  pointer-events: auto;
 }
 
-/* LE PORTRAIT EST POSE A MEME LA PLACE, sans cadre : c'est deja ce que fait
-   l'armurier dans sa colonne, et *un panneau autour d'un personnage
-   l'enferme dans une vignette au lieu de le poser dans un lieu.* */
-.hub-portrait {
-  display: block;
-  width: var(--pnj);
-  /* UN BUSTE, PAS UNE SILHOUETTE : la boite est carree et l'image la remplit
-     par le HAUT. On garde donc les deux tiers superieurs du dessin -- la tete,
-     les epaules, ce qu'il tient dans les mains -- et c'est tout ce qui nomme un
-     metier. */
-  aspect-ratio: 1 / 1;
-  object-fit: cover;
-  object-position: top;
-  /* ET IL S'ETEINT EN BAS plutot que de se couper net : *une image tranchee a
-     l'horizontale se lit comme une image cassee*, alors qu'un fondu se lit
-     comme une ombre ou le marchand se tient. */
-  mask-image: linear-gradient(180deg, #000 74%, #0000 100%);
-  pointer-events: none;
-}
-
-/* L'ENSEIGNE N'A PLUS DE CADRE : un filet dessous, et rien d'autre.
-
-   Keko : « je trouve le cadre autour du texte et du symbole inutile, ca
-   surcharge un peu, un simple trait dessous suffirait non ? » *Et c'est la
-   meme correction que le rail des stats*, ou quatre cartouches empiles
-   faisaient quatre objets la ou un trait suffit : **ce qui est au-dessus d'un
-   trait va ensemble.** Ici il n'y a rien a separer d'un voisin -- l'ecart des
-   colonnes le fait deja -- donc le cadre n'enfermait que du vide. */
-.hub-enseigne {
-  position: relative;
+.arm-lieu {
   display: flex;
+  flex: 1 1 0;
   align-items: center;
-  justify-content: center;
-  gap: 0.4em;
-  /* ELLE DEBORDE LE BUSTE, et c'est voulu : une enseigne de boutique est plus
-     large que le marchand. Le `min` la retient dans sa case sur les formats ou
-     la largeur redevient la contrainte. */
-  width: min(100%, calc(var(--pnj) * 1.45));
-  padding: 0 0 0.34em;
+  justify-content: flex-start;
+  gap: 0.5em;
+  min-height: 0;
+  padding: 0 0.5em;
+  border: 0;
+  /* PAS DE CADRE, UN FILET SOUS CHACUN : la meme correction que l'enseigne du
+     hub et que le rail des stats -- *ce qui est au-dessus d'un trait va
+     ensemble*, et huit cadres empiles feraient huit objets. */
+  border-bottom: 1px solid #6b593655;
+  background: none;
+  color: #c7b48c;
+  font-family: Cinzel, Georgia, serif;
+  font-size: min(0.85rem, calc(var(--rail-l) * 0.15));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color 160ms ease-out,
+    background 160ms ease-out;
 }
 
-/* LE FILET S'ETEINT A SES DEUX BOUTS : une arete franche redonnerait un bord,
-   donc un cadre a une face. *Un trait qui s'eteint souligne, un trait qui
-   s'arrete encadre.* */
-.hub-enseigne::after {
-  content: '';
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 1px;
-  background: linear-gradient(90deg, #6b593600, #8a7446 22%, #c2a56a 50%, #8a7446 78%, #6b593600);
+/* LE LIEU OU L'ON EST SE LIT AU FILET, pas a un fond plein : *un bandeau
+   colore sous un mot se lit comme une selection de menu*, un filet vif se lit
+   comme l'onglet ouvert. */
+.arm-lieu.actif {
+  color: #ffeec2;
+  border-bottom-color: #d8bb79;
+  background: linear-gradient(90deg, #d8bb7920, #d8bb7900);
 }
 
-/* SA HAUTEUR SE MESURE SUR LE TEXTE (em), pas sur la fenetre : il grandit donc
-   avec le nom, et un seul reglage suffit. Meme regle qu'au bandeau.
+/* UNE PLACE TENUE N'EST PAS UN BOUTON CASSE : elle est eteinte et ne repond
+   pas, et c'est ce qui dit qu'il y aura quelque chose ici. */
+.arm-lieu:disabled {
+  color: #6f6550;
+  cursor: default;
+}
 
-   IL PASSE A 2,1em, demande par Keko. *Sa borne est la largeur de la plaque* :
-   le couple tient le blason, l'ecart, le remplissage et le mot -- 10em en tout
-   a cette valeur, pour une plaque de 1,45 buste et un mot a 0,14. Au-dela il
-   pousserait « Armurerie » hors de son enseigne. */
-.hub-blason {
-  height: 2.1em;
+.arm-lieu-blason {
+  height: 1.9em;
   width: auto;
   flex: none;
   filter: drop-shadow(0 1px 3px #000000aa);
 }
 
-.hub-nom {
-  color: #f0e0bd;
-  font-family: Cinzel, Georgia, serif;
-  font-size: 1em;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 3px #000;
-  white-space: nowrap;
+.arm-lieu:disabled .arm-lieu-blason {
+  opacity: 0.22;
+  filter: grayscale(1);
+}
+
+.arm-lieu-nom {
   overflow: hidden;
+  white-space: nowrap;
   text-overflow: ellipsis;
 }
 
-/* LE SURVOL N'EXISTE QU'A LA SOURIS : au doigt le `pointerout` n'arrive jamais
-   et le PNJ resterait allume apres la tape. La regle est ecrite dans ce projet
-   depuis la main du jeu 2D. */
 @media (hover: hover) and (pointer: fine) {
-  .hub-pnj:hover {
-    transform: translateY(-0.35em);
-    filter: brightness(1.14);
+  .arm-lieu:not(:disabled):hover {
+    color: #ffeec2;
   }
 }
-

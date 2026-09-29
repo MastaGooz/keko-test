@@ -3195,145 +3195,63 @@ Le bouton dit « Les ennemis frappent… » et la main reste verrouillée jusqu'
 ce que le dernier bond soit retombé. Mesuré dans la page (sonde à 40 ms) :
 impact à ~270 ms, main rendue à ~680 ms pour un frappeur.
 
-### LA PLACE : le jeu s'ouvre sur le HUB, l'armurerie n'en est qu'une porte
+### LE HUB EST UN RAIL, PAS UN ÉCRAN
 
-`render/PageHub.tsx`. Demandé par Keko : « on peut ouvrir le jeu sur un nouvel
-écran hub où on aura tous les PNJ ? avec en affichage le PNJ de l'armurier,
-avec en dessous le blason et le texte armurerie, qu'on utilise en placeholder
-pour voir ce que ça donne si on avait 8 PNJ différents ? »
+`render/destinations.ts`, et le rail lui-même vit dans `PageArmurerie`.
 
-**C'EST UN BANC D'ESSAI DE MISE EN PAGE, PAS DU CONTENU.** Les huit portent le
-même portrait et la même enseigne : ce qu'on juge est la RANGÉE — sa densité,
-la taille d'un visage, la lisibilité d'un nom à huit. *Inventer sept métiers
-pour en juger la place, ce serait trancher du design en passant.*
+**Il a d'abord été une page**, une grille de huit portraits qu'on ouvrait au
+lancement. Keko, après l'avoir vue : « pas fou comme interface finalement le
+hub, il faudrait un truc plus professionnel ». *Le défaut n'était pas
+l'habillage* : c'était un MENU déguisé en lieu — huit vignettes qui ne
+portaient aucun état, aucun chiffre, aucune décision, et dont la seule fonction
+était d'en ouvrir une autre. **Aucun style ne sauve un écran qui n'a rien à
+dire**, et *un écran qui ne sert qu'à en choisir un autre est un écran de
+trop.*
 
-**DEUX LIGNES DE QUATRE, et c'est une correction de Keko** — « on va mettre ça
-sur deux lignes parce que là c'est moche ». Une seule rangée de huit était
-bornée par la LARGEUR, et elle gaspillait tout le reste : le portrait n'y
-prenait que 38 % de la hauteur sur un écran de PC. *Ce qui est borné par une
-seule dimension gaspille l'autre.* À deux lignes les deux contraintes se
-rejoignent — 33 % de la hauteur par ligne, donc les deux tiers de l'écran.
+**Trois formes ont été comparées, et le genre tranche assez net** :
 
-**ET LE PORTRAIT EST UN BUSTE, pas une silhouette — c'est ce qui paie le
-texte.** Keko : « les textes et les icônes sont trop petites, on peut gagner de
-la place en rognant l'image du PNJ en bas ? » *Ce qui contraint cette page,
-c'est la HAUTEUR*, et une image en 0,68 mangeait 1,47 fois la largeur d'un PNJ
-par ligne. À buste carré elle n'en mange qu'une, donc tout grandit d'un bon
-tiers : le nom passe de 7,8 à 10,7 px sur un téléphone couché, le blason de 14
-à 18. *Et les jambes d'un marchand ne disent rien de son métier.*
+| | ce que ça donne | ce que ça coûte |
+|---|---|---|
+| **le rail** (Tarkov et les jeux d'extraction) | une barre de destinations permanente, le lieu choisi prend tout le reste | rien à dessiner ; c'est de l'interface, pas un lieu |
+| le décor à points chauds (Darkest Dungeon) | une vraie place illustrée qu'on habite | une grande image par lieu, et **ça ne se reflow pas** : sur un téléphone, les points chauds deviennent minuscules |
+| la salle traversée (Hades) | le plus vivant du genre | une scène jouable et une pose par PNJ — hors de portée ici |
 
-**Il s'éteint en bas plutôt que de se couper net** : une image tranchée à
-l'horizontale se lit comme une image cassée, un fondu se lit comme l'ombre où
-le marchand se tient.
+**Keko a choisi le rail.** On arrive donc DIRECTEMENT dans l'armurerie : le vide
+disparaît parce que la page vide disparaît, et l'aller-retour avec elle.
 
-**L'ENSEIGNE N'A PAS DE CADRE : un filet dessous, et rien d'autre.** Keko :
-« je trouve le cadre autour du texte et du symbole inutile, ça surcharge un
-peu, un simple trait dessous suffirait non ? » *C'est la même correction que le
-rail des stats*, où quatre cartouches empilés faisaient quatre objets là où un
-trait suffit : **ce qui est au-dessus d'un trait va ensemble.** Ici il n'y avait
-rien à séparer d'un voisin — l'écart des colonnes le fait déjà — donc le cadre
-n'enfermait que du vide.
+Quatre choses qui le portent :
 
-**Le filet s'éteint à ses deux bouts** : une arête franche redonnerait un bord,
-donc un cadre à une face. *Un trait qui s'éteint souligne, un trait qui
-s'arrête encadre.*
+- **le rail prend sa bande AVANT tout le reste**, et le plan se calcule depuis
+  son bord — *une bande réservée ne se partage pas.* Sa largeur est bornée par
+  la HAUTEUR comme tout ici, et **elle ne descend jamais sous son bouton**, qui
+  vit dedans : *une colonne qui ne contient pas ce qu'on y met n'est pas une
+  colonne.* Le `+ marge` de ce calcul n'est pas décoratif — la bande réservée
+  vaut `lRail`, le rail DESSINÉ en retranche sa marge, et c'est lui que le
+  bouton doit tenir. Mesuré sans : le bouton dépassait de 3 px à 932x430 ;
+- **« Descendre » est au bas du rail, détaché des destinations.** *C'est la
+  seule action qui quitte le hub*, donc elle ne peut pas être une entrée de la
+  liste. Et il retrouve son extinction sans arme plus sa bulle « Aucune arme
+  équipée », reparties avec lui ;
+- **pas de cadre par entrée, un filet sous chacune**, et le lieu ouvert se lit
+  au filet vif plutôt qu'à un fond plein : *un bandeau coloré sous un mot se
+  lit comme une sélection de menu*, un filet vif se lit comme l'onglet ouvert.
+  C'est la correction déjà faite à l'enseigne du hub et au rail des stats ;
+- **le titre se centre sur ce qu'il coiffe**, pas sur la fenêtre : le rail
+  n'est pas de l'armurerie, c'est ce qui permet d'en sortir.
 
-**ET L'ENSEIGNE DÉBORDE LE BUSTE**, d'un facteur 1,45. Keko : « je trouve que
-le symbole d'armurerie et le texte à côté sont trop petits ». *La place perdue
-par le buste en hauteur se récupère en largeur* : c'est la hauteur qui borne le
-portrait, donc il reste de la largeur inutilisée dans la colonne, et c'est elle
-qui paie la plaque. Le coefficient du mot suit la largeur de l'ENSEIGNE et non
-celle du buste — 0,097 devient 0,14, et tout grandit encore de 27 %.
+**Huit entrées, une seule ouverte**, et c'est le banc d'essai que Keko voulait —
+« voir ce que ça donne si on avait 8 PNJ différents ». Le rail le rend gratuit :
+les sept autres sont des places tenues, éteintes, qui disent ce que le hub aura
+sans rien promettre. *Sept métiers inventés pour juger une mise en page, ce
+serait trancher du design en passant.*
 
-*Et une enseigne de boutique est plus large que le marchand*, donc ça ne se lit
-pas comme un défaut.
-
-**Prix connu : le buste rétrécit d'autant** (97 px au lieu de 111 sur un
-téléphone couché), puisque l'enseigne prend plus de hauteur de ligne. C'est
-l'échange que Keko a demandé — *ce qu'on lit d'abord sur une place, c'est
-l'enseigne, pas le visage.*
-
-**Et le blason est passé à 2,1em**, demandé par Keko. *Sa borne est la largeur
-de la plaque* : le couple tient le blason, l'écart, le remplissage et le mot —
-10em en tout à cette valeur, pour une plaque de 1,45 buste et un mot à 0,14.
-Au-delà il pousserait « Armurerie » hors de son enseigne.
-
-**ET C'EST LE PLAFOND EN REM QUI RÈGLE LE PC.** Keko : « la taille est bien sur
-tél, mais sur PC c'est trop gros ». *Une proportion seule ne borne rien* : à
-0,14 du buste, l'enseigne suivait un buste qui triple entre un téléphone et un
-moniteur, donc elle triplait avec lui. Le `min(rem, fraction)` est la réponse
-déjà donnée aux tas, aux jauges et au disque du compte — **la fraction commande
-en petit, le rem en grand.**
-
-Il ne touche PAS au téléphone, et c'est ce qui rend le réglage sûr : la
-fraction y vaut 13 px pour un rem de 16, donc tout plafond au-dessus de 0,82rem
-la laisse gagner. Le plafond a donc pu bouger trois fois (0,95 → 1,25 → 1,8 →
-1,15rem) sans jamais déranger le format sur lequel Keko avait validé.
-
-Mesuré : le nom passe de 25 à 18 px à 1366, de 43 à 28 à 2560, et ne bouge pas
-d'un pixel sur un téléphone.
-
-**La grille prend toute la largeur, les PNJ se centrent dans leur case.** À
-colonnes de largeur fixe, le groupe se serrait au milieu avec une marge de
-chaque côté : *une place où les boutiques se serrent au centre n'est pas une
-place, c'est une file.*
-
-**Tout est du HTML.** Il n'y a pas une seule carte sur cet écran, donc rien à
-faire passer par le canvas — *un nom reste net à toute taille et n'a rien à
-gagner à devenir une texture.*
-
-Quatre choses à ne pas défaire :
-
-- **la largeur d'un PNJ se déduit de la PLACE**, jamais l'inverse : deux
-  contraintes, huit colonnes en largeur et le portrait plus son enseigne en
-  hauteur, la plus dure gagne. C'est la leçon de `--piece-equip` à l'armurerie ;
-- **le coefficient du nom est MESURÉ, pas choisi.** L'enseigne tient le blason
-  (1,7em), l'écart, son remplissage et le mot — « Armurerie » en fait 6,9 à
-  cette graisse, soit 9,6em en tout. À 0,115 le nom était **coupé** sur un
-  téléphone couché (71 px pour 60 de place, mesuré) ; à 0,097 il reste 65 px de
-  mot pour 70 de case à 667x320, le format le plus serré. *Un nom qui déborde
-  va chevaucher son voisin* — la leçon du nom des créatures ;
-- **le portrait est posé à même la place, sans cadre** : c'est déjà ce que fait
-  l'armurier dans sa colonne, et *un panneau autour d'un personnage l'enferme
-  dans une vignette au lieu de le poser dans un lieu* ;
-- **LA PLACE N'ATTEND RIEN.** `pret` compte les cartes peintes, et il n'y en a
-  pas une seule ici : gardé derrière lui, l'écran restait sur « Chargement… »
-  pour toujours. *Un écran sans carte ne peut pas attendre qu'elles arrivent.*
-
-**C'EST DE LA PLACE QU'ON DESCEND, et l'armurerie n'équipe plus que le
-chargement.** Tranché par Keko : « plutôt que mettre le bouton place en haut à
-gauche de l'armurerie, on va utiliser le bouton descendre qu'on remplace par
-place, et le bouton descendre va dans le hub ». *Un écran a UN bouton, et il
-dit ce qu'on fait en le quittant* — c'est plus clair qu'un bouton de retour en
-coin, qui se cherche.
-
-Deux choses suivent le bouton, parce qu'elles lui appartiennent :
-
-- **son extinction sans arme** (`peutDescendre`) — il n'y a rien pour frapper ;
-- **sa bulle, « Aucune arme équipée »** : *un refus muet se lit comme une
-  panne*, et la raison doit s'afficher là où le refus se produit. Elle vit dans
-  `PageHub` maintenant, et elle a quitté `PageArmurerie` avec lui.
-
-**Il vit dans le CANVAS**, comme tous les boutons du moteur : c'est le même
-objet qu'aux paliers et au butin, et *le refaire en HTML garantirait qu'un jour
-les deux divergent.* Sa place se calcule depuis `Cadrage` — bas du champ
-visible, centré — et **la bande qu'il occupe est retranchée de la grille** :
-une place réservée ne se partage pas.
-
-**Et `auHub` ne suffisait plus** : il disait à la fois « on ne joue pas » et
-« on est à l'armurerie », deux faits différents depuis qu'il y a deux écrans.
-D'où `lieu`, et deux dérivés lisibles (`surLaPlace`, `aLArmurerie`). **La fin
-d'une run ramène sur la PLACE**, pas dans l'armurerie : *le jeu s'ouvre là, il
-y retombe.*
-
-Mesuré à 844x390, 667x320, 932x430, 1366x700, 1920x1080 et 2560x1215 : aucun
-débordement, aucun nom coupé. Le nom va de 10,9 px sur un iPhone SE couché à
-27,6 sur un grand écran, et le blason de 23 à 58.
-
-**Ce qui reste à juger** : les PNJ flottent — il n'y a pas de sol sous eux,
-alors que la règle des créatures dit que *c'est l'ombre sous les pattes qui
-fait le lieu*. Et un cadrage plus haut que large sur les portraits (une vitrine
-de boutique) les grandirait encore, mais c'est un recadrage des images.
+**CE QUI RESTE À TRANCHER, et c'est mesuré :** à huit entrées, le rail prend
+**26 % de la largeur à 667x320** (20 % à 844x390), et chaque entrée n'y fait que
+**25 px de haut** — sous le plancher tactile de 48 px du projet. *Huit
+destinations en colonne ne tiennent pas sur un petit téléphone en paysage*, et
+ce n'est pas un réglage : 8 x 48 px font 384, pour 202 de disponible. Deux
+sorties si ça gêne — une barre HORIZONTALE en haut sur les écrans courts (en
+paysage, c'est la largeur qu'on a), ou un rail réduit à ses emblèmes sans texte.
 
 ### L'ARMURERIE EN 3D — jalon 7, et la boucle est fermée
 

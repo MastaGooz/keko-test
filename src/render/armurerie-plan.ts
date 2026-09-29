@@ -82,6 +82,27 @@ export type PlanArmurerie = {
   demiLarge: number
   /** Le bandeau du titre, en haut. */
   titre: Rect
+  /**
+   * LE RAIL DES DESTINATIONS, sur le bord gauche — et il remplace l'écran de
+   * place.
+   *
+   * Tranché par Keko après lui avoir montré trois formes de hub : « pas fou
+   * comme interface finalement le hub, il faudrait un truc plus
+   * professionnel ». *Un écran qui ne sert qu'à en choisir un autre est un
+   * écran de trop* — la grille de portraits ne portait aucun état, aucun
+   * chiffre, aucune décision, et aucun habillage ne sauve un écran qui n'a
+   * rien à dire.
+   *
+   * Le rail est la forme des jeux d'extraction (Tarkov et les siens) : une
+   * barre de destinations permanente, et le lieu choisi occupe tout le reste.
+   * **C'est aussi la seule des trois qui tienne au doigt sans être
+   * redessinée** : *une liste se raccourcit, une illustration ne se reflow
+   * pas.* Le décor de ville à points chauds — la forme de Darkest Dungeon —
+   * est plus beau et demande une grande image par lieu.
+   */
+  rail: Rect
+  /** La liste elle-même : le rail moins la bande du bouton, en bas. */
+  railListe: Rect
   /** Le cadre du coffre, bandeau d'onglets compris. */
   coffre: Rect
   /** La bande des onglets, dans le coffre. */
@@ -181,7 +202,22 @@ export function planArmurerie(
   // colonne de cases en moins ne coûte presque rien, et elle paie la colonne
   // des stats. *Une colonne qui se remplit mérite la place, une colonne à
   // trois slots ne la réclame pas.*
-  const largeurUtile = 2 * demiLarge - 2 * marge - 2 * marge
+  // LE RAIL PREND SA BANDE AVANT TOUT LE RESTE, et le reste se calcule depuis
+  // son bord : *une bande réservée ne se partage pas.* Sa largeur est bornée
+  // par la HAUTEUR comme tout le reste ici — sur un téléphone couché le champ
+  // est deux fois plus petit, et une bande en fraction de largeur seule y
+  // mangerait le coffre. Elle ne descend jamais sous son bouton : il vit
+  // dedans, et *une colonne qui ne contient pas ce qu'on y met n'est pas une
+  // colonne.*
+  const lBouton = tailleBouton('Descendre', 'or', false, Z_PLAN, hauteurFenetrePx).largeur
+  // Le `+ marge` n'est pas décoratif : la bande RÉSERVÉE vaut `lRail`, mais le
+  // rail DESSINÉ en retranche sa marge, et c'est lui que le bouton doit tenir.
+  // Mesuré sans : le bouton dépassait de 3 px à 932x430.
+  const lRail = Math.max(Math.min(2 * demiLarge * 0.15, demiHaut * 0.66), lBouton * 1.12 + marge)
+  const xRail = -demiLarge + marge + (lRail - marge) / 2
+  const gauche = -demiLarge + lRail
+
+  const largeurUtile = demiLarge - gauche - 2 * marge - 2 * marge
   // Les stats sont un rail de cartouches : leur largeur est celle de leur
   // contenu, pas une part du reste. On la borne pour qu'un grand écran ne
   // l'étire pas en panneau.
@@ -190,7 +226,6 @@ export function planArmurerie(
   // sur l'équipement — *une colonne qui ne contient pas ce qu'on y met n'est
   // pas une colonne.* C'est aussi ce qui permet de grossir le bouton sans
   // rouvrir la collision.
-  const lBouton = tailleBouton('Descendre', 'or', false, Z_PLAN, hauteurFenetrePx).largeur
   const lStats = Math.min(
     Math.max(largeurUtile * 0.15, lBouton * 1.14),
     largeurUtile * 0.3,
@@ -200,7 +235,7 @@ export function planArmurerie(
   // quatre colonnes.
   const lCoffre = (largeurUtile - lStats) * 0.55
   const lEquip = largeurUtile - lStats - lCoffre
-  const xCoffre = -demiLarge + marge + lCoffre / 2
+  const xCoffre = gauche + marge + lCoffre / 2
   const xStats = demiLarge - marge - lStats / 2
   const xEquip = xStats - lStats / 2 - marge - lEquip / 2
 
@@ -451,7 +486,21 @@ export function planArmurerie(
   return {
     demiHaut,
     demiLarge,
-    titre: { x: 0, y: demiHaut - hTitre / 2, l: 2 * demiLarge, h: hTitre },
+    // LE TITRE SE CENTRE SUR CE QU'IL COIFFE, pas sur la fenêtre : le rail
+    // n'est pas de l'armurerie, c'est ce qui permet d'en sortir.
+    titre: {
+      x: (gauche + demiLarge) / 2,
+      y: demiHaut - hTitre / 2,
+      l: demiLarge - gauche,
+      h: hTitre,
+    },
+    rail: { x: xRail, y: yPanneaux, l: lRail - marge, h: hPanneaux },
+    railListe: {
+      x: xRail,
+      y: yPanneaux + (hBouton + marge) / 2,
+      l: lRail - marge,
+      h: hPanneaux - hBouton - marge,
+    },
     coffre,
     onglets,
     tri,
@@ -489,8 +538,11 @@ export function planArmurerie(
     // L'ARMURIER PREND TOUTE SA COLONNE, le bouton excepté : c'est le premier
     // visage du jeu, et il n'a plus rien à partager depuis que les mesures
     // sont parties en bande.
-    pnj: { x: xStats, y: yPanneaux + hBouton / 2, l: lStats, h: hPanneaux - hBouton },
-    bouton: [xStats, basPanneaux + hBouton / 2, Z_PLAN],
+    // L'ARMURIER PREND TOUTE SA COLONNE depuis que le bouton est parti dans le
+    // rail : *le départ ne se décide pas dans l'armurerie, il se décide au
+    // hub.*
+    pnj: { x: xStats, y: yPanneaux, l: lStats, h: hPanneaux },
+    bouton: [xRail, basPanneaux + hBouton / 2, Z_PLAN],
   }
 }
 

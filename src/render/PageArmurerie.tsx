@@ -34,9 +34,12 @@ import { compteDuDeck } from './Armurerie3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
 import type { Hub } from '../logic/hub.ts'
-import { deuxMains } from '../logic/hub.ts'
+import { deuxMains, peutDescendre } from '../logic/hub.ts'
 import { SON_POSER, jouerSon } from './sons.ts'
+import { tailleBouton } from './Bouton3D.tsx'
+import { Z_PLAN } from './armurerie-plan.ts'
 import { urlDeLArmurerie, urlDeLArmurier } from '../ui/art.ts'
+import { DESTINATIONS } from './destinations.ts'
 
 /**
  * Ce qu'une infobulle a besoin de savoir : son texte, son point d'ancrage, et
@@ -290,8 +293,24 @@ export function PageArmurerie({
 
   const [bulle, setBulle] = useState<Bulle | null>(null)
 
-  // LA BULLE DU BOUTON EST PARTIE AVEC LUI, sur la place : c'est là qu'on
-  // descend, donc c'est là que le refus doit s'expliquer.
+  /**
+   * ET LE BOUTON ÉTEINT DIT POURQUOI IL L'EST.
+   *
+   * Sans arme, on ne peut pas descendre : *un refus muet se lit comme une
+   * panne*. Le bouton vit dans la SCÈNE, donc son rectangle se calcule — sa
+   * place vient du plan, sa taille de `tailleBouton`. *Ce qui doit coïncider
+   * se calcule à un seul endroit*, et ici c'est le plan.
+   */
+  const bloque = !peutDescendre(hub.chargement)
+  const rectBouton = (): { left: number; right: number; top: number; bottom: number } => {
+    const b = tailleBouton('Descendre', 'or', false, Z_PLAN, fenetre.h)
+    const p = enPixels(
+      { x: plan.bouton[0], y: plan.bouton[1], l: b.largeur, h: b.hauteur },
+      fenetre.h,
+      fenetre.l,
+    )
+    return { left: p.left, right: p.left + p.width, top: p.top, bottom: p.top + p.height }
+  }
 
   useEffect(() => {
     const viser = (x: number, y: number): Bulle | null => {
@@ -316,6 +335,22 @@ export function PageArmurerie({
             texte: LIBELLES[i] ?? '',
             x: (gauche + droite) / 2,
             y: r.top,
+            place: 'dessus',
+          }
+        }
+      }
+      // LE BOUTON N'A SA BULLE QUE QUAND IL REFUSE : *une explication qui
+      // s'affiche aussi quand tout va bien n'explique plus rien.*
+      if (bloque) {
+        const b = rectBouton()
+        if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) {
+          // « AUCUNE ARME ÉQUIPÉE », tranché par Keko. Un CONSTAT plutôt
+          // qu'une phrase adressée : la bulle dit l'état du chargement.
+          return {
+            cle: 'bouton',
+            texte: 'Aucune arme équipée',
+            x: (b.left + b.right) / 2,
+            y: b.top,
             place: 'dessus',
           }
         }
@@ -356,7 +391,10 @@ export function PageArmurerie({
       window.removeEventListener('pointermove', survol)
       window.removeEventListener('pointerdown', tape)
     }
-  }, [])
+    // Le rectangle du bouton se relit à chaque geste, donc il suit la fenêtre
+    // tout seul ; seul l'état « bloqué » doit relancer l'écoute.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bloque])
 
   /** Le pouce se traîne : sa place dans la piste dit la ligne du haut. */
   const piste = useRef<HTMLDivElement>(null)
@@ -504,6 +542,34 @@ export function PageArmurerie({
       </div>
 
       <div className="arm-commandes" style={zoomee ? { display: 'none' } : undefined}>
+      {/* LE RAIL DES DESTINATIONS, sur le bord gauche. C'est lui le hub : on
+          n'arrive plus sur une page qui ne sert qu'à choisir, on arrive DANS
+          un lieu et le rail dit où l'on peut aller.
+
+          Il vit dans les COMMANDES et non dans le fond : celui-ci est en
+          `pointer-events: none` pour laisser prendre les cartes, donc un
+          bouton posé dedans ne répondrait pas. */}
+      <nav
+        className="arm-rail"
+        style={{
+          ...boite(plan.railListe),
+          // LA TAILLE DU TEXTE SUIT LA LARGEUR DU RAIL, pas la fenetre : il est
+          // borne par la hauteur, donc sa largeur ne suit pas celle de l'ecran.
+          '--rail-l': `${boite(plan.railListe).width as number}px`,
+        } as React.CSSProperties}
+      >
+        {DESTINATIONS.map((d, i) => (
+          <button
+            key={i}
+            type="button"
+            className={`arm-lieu${i === 0 ? ' actif' : ''}`}
+            disabled={!d.ouvert}
+          >
+            <img className="arm-lieu-blason" src={urlDeLArmurerie()} alt="" draggable={false} />
+            <span className="arm-lieu-nom">{d.nom}</span>
+          </button>
+        ))}
+      </nav>
       {/* LA BULLE VIT AU-DESSUS DU CANVAS, et il le faut : posée dans le calque
           du fond, elle passait DERRIÈRE les cartes de l'équipement — on n'en
           lisait que la moitié qui dépassait. Elle ne capte pas le pointeur,
