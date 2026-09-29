@@ -34,10 +34,8 @@ import { compteDuDeck } from './Armurerie3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
 import { Orbe3D } from './Orbe3D.tsx'
 import type { Hub } from '../logic/hub.ts'
-import { deuxMains, peutDescendre } from '../logic/hub.ts'
+import { deuxMains } from '../logic/hub.ts'
 import { urlDeLArmurerie, urlDeLArmurier } from '../ui/art.ts'
-import { Z_PLAN } from './armurerie-plan.ts'
-import { tailleBouton } from './Bouton3D.tsx'
 
 /**
  * Ce qu'une infobulle a besoin de savoir : son texte, son point d'ancrage, et
@@ -72,8 +70,6 @@ type Props = {
   /** Ranger le coffre : par catégorie, puis par rareté. */
   onTrier?: () => void
   onOnglet: (o: Onglet) => void
-  /** Ressortir sur la place. Sans lui, l'armurerie serait un cul-de-sac. */
-  onRetour?: () => void
   defilement: number
   onDefilement: (n: number) => void
   pvMax: number
@@ -109,7 +105,6 @@ export function PageArmurerie({
   onglet,
   onTrier,
   onOnglet,
-  onRetour,
   defilement,
   onDefilement,
   pvMax,
@@ -271,29 +266,8 @@ export function PageArmurerie({
 
   const [bulle, setBulle] = useState<Bulle | null>(null)
 
-  /**
-   * ET LE BOUTON GRISÉ DIT POURQUOI IL L'EST.
-   *
-   * Sans arme, on ne peut pas descendre : le bouton s'éteint, et *un refus
-   * muet se lit comme une panne* — c'est la règle qui l'avait fait griser, et
-   * elle demande son deuxième temps. Keko : « pour que le joueur sache
-   * pourquoi il peut pas cliquer ».
-   *
-   * Il vit dans la SCÈNE, pas en HTML, donc son rectangle se calcule : sa
-   * place vient du plan, sa taille de `tailleBouton` — les deux en unités de
-   * scène, converties en pixels comme tout le chrome. *Ce qui doit coïncider
-   * se calcule à un seul endroit*, et ici c'est le plan.
-   */
-  const bloque = !peutDescendre(hub.chargement)
-  const rectBouton = (): { left: number; right: number; top: number; bottom: number } => {
-    const b = tailleBouton('Descendre', 'or', false, Z_PLAN, fenetre.h)
-    const p = enPixels(
-      { x: plan.bouton[0], y: plan.bouton[1], l: b.largeur, h: b.hauteur },
-      fenetre.h,
-      fenetre.l,
-    )
-    return { left: p.left, right: p.left + p.width, top: p.top, bottom: p.top + p.height }
-  }
+  // LA BULLE DU BOUTON EST PARTIE AVEC LUI, sur la place : c'est là qu'on
+  // descend, donc c'est là que le refus doit s'expliquer.
 
   useEffect(() => {
     const viser = (x: number, y: number): Bulle | null => {
@@ -318,24 +292,6 @@ export function PageArmurerie({
             texte: LIBELLES[i] ?? '',
             x: (gauche + droite) / 2,
             y: r.top,
-            place: 'dessus',
-          }
-        }
-      }
-      // LE BOUTON N'A SA BULLE QUE QUAND IL REFUSE : *une explication qui
-      // s'affiche aussi quand tout va bien n'explique plus rien.*
-      if (bloque) {
-        const b = rectBouton()
-        if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) {
-          return {
-            cle: 'bouton',
-            // « AUCUNE ARME ÉQUIPÉE », tranché par Keko. Un CONSTAT plutôt
-            // qu'une phrase adressée : la bulle dit l'état du chargement, elle
-            // ne s'adresse pas au joueur — c'est la même voix que « Arme »,
-            // « Armure », « Objets » au-dessus des slots.
-            texte: 'Aucune arme équipée',
-            x: (b.left + b.right) / 2,
-            y: b.top,
             place: 'dessus',
           }
         }
@@ -366,10 +322,7 @@ export function PageArmurerie({
       window.removeEventListener('pointermove', survol)
       window.removeEventListener('pointerdown', tape)
     }
-    // Le rectangle du bouton se relit à chaque geste, donc il suit la fenêtre
-    // tout seul ; seul l'état « bloqué » doit relancer l'écoute.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bloque])
+  }, [])
 
   /** Le pouce se traîne : sa place dans la piste dit la ligne du haut. */
   const piste = useRef<HTMLDivElement>(null)
@@ -517,14 +470,6 @@ export function PageArmurerie({
       </div>
 
       <div className="arm-commandes" style={zoomee ? { display: 'none' } : undefined}>
-      {/* LE RETOUR À LA PLACE. Il vit dans les COMMANDES et non dans le fond :
-          celui-ci est en `pointer-events: none` pour laisser prendre les
-          cartes, donc un bouton posé dedans ne répondrait pas. */}
-      {onRetour !== undefined && (
-        <button type="button" className="arm-retour" onClick={onRetour}>
-          ← Place
-        </button>
-      )}
       {/* LA BULLE VIT AU-DESSUS DU CANVAS, et il le faut : posée dans le calque
           du fond, elle passait DERRIÈRE les cartes de l'équipement — on n'en
           lisait que la moitié qui dépassait. Elle ne capte pas le pointeur,

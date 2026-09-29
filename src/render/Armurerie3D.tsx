@@ -45,7 +45,7 @@ import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Carte } from '../logic/combat.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
-import { accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
+import { accepteDepuis, deuxMains } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
 import type { PlanArmurerie } from './armurerie-plan.ts'
 import {
@@ -178,7 +178,7 @@ type Props = {
   onRegarder?: (objet: Objet) => void
   /** Un trésor se REGARDE et ne se glisse pas : il n'a aucun slot. */
   onRegarderTresor?: (tresor: Carte) => void
-  onDescendre?: () => void
+  onRetour?: () => void
   /**
    * Une pièce vient de SE FIXER dans un slot — pas d'être lâchée.
    *
@@ -266,7 +266,7 @@ export function Armurerie3D({
   onRanger,
   onRegarder,
   onRegarderTresor,
-  onDescendre,
+  onRetour,
   onEquipee,
   onPoseCommence,
   onSaisie,
@@ -925,12 +925,18 @@ export function Armurerie3D({
           quand la culbute s'efface, l'onde a fini de jouer, mais elle ne doit
           pas sauter à l'origine pour autant. */}
 
+      {/* LE BOUTON DE L'ÉCRAN RAMÈNE SUR LA PLACE — c'est de là qu'on descend
+          désormais. Tranché par Keko : « plutôt que mettre le bouton place en
+          haut à gauche, on va utiliser le bouton descendre qu'on remplace par
+          place, et le bouton descendre va dans le hub ». *Un écran a UN bouton,
+          et il dit ce qu'on fait en le quittant* — la place lance la run,
+          l'armurerie n'équipe. */}
       <Bouton3D
-        texte="Descendre"
+        texte="Place"
         ton="or"
         position={plan.bouton}
-        eteint={tenue !== null || !peutDescendre(hub.chargement)}
-        onCliquer={onDescendre}
+        eteint={tenue !== null}
+        onCliquer={onRetour}
       />
     </group>
   )

@@ -5382,11 +5382,13 @@ body {
 
 
 /* ==========================================================================
-   LE HUB : la place et ses PNJ
+   LA PLACE : la grille des PNJ
 
-   Une RANGEE, pas une grille : en paysage c'est la hauteur qui manque, et
-   deux rangees mettraient le portrait a 90 px sur un telephone couche contre
-   138 en une seule. Une rue de boutiques se lit de gauche a droite.
+   DEUX LIGNES DE QUATRE, et c'est une correction de Keko -- « on va mettre ca
+   sur deux lignes parce que la c'est moche ». Une rangee de huit etait bornee
+   par la LARGEUR : le portrait n'y prenait que 38 % de la hauteur sur un ecran
+   de PC, et tout le reste etait du vide. Ce qui est borne par une seule
+   dimension gaspille l'autre.
    ========================================================================== */
 .hub-page {
   position: fixed;
@@ -5395,22 +5397,32 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-  /* LA LARGEUR D'UN PNJ SE DEDUIT DE LA PLACE, jamais l'inverse -- la lecon
-     de `--piece-equip` a l'armurerie. Deux contraintes, la plus dure gagne :
-     la largeur (huit colonnes et leurs ecarts) et la hauteur (le portrait
-     fait 1/0,68 de sa largeur, plus la bande de l'enseigne). */
+  /* La bande du bas appartient au BOUTON, qui vit dans le canvas : la grille
+     ne doit pas s'y avancer. *Une place reservee ne se partage pas.* */
+  padding: 0.8rem 1rem calc(var(--pnj-bande) * 100vh) 1rem;
   --hub-ecart: min(1.1rem, 1.6vw);
+  /* LA LARGEUR D'UN PNJ SE DEDUIT DE LA PLACE, jamais l'inverse -- la lecon de
+     `--piece-equip` a l'armurerie. Deux contraintes, la plus dure gagne :
+     quatre colonnes en largeur, et deux lignes en hauteur. Une ligne fait
+     1,71 fois la largeur d'un PNJ : 1,47 pour le portrait (il est en 0,68) et
+     0,24 pour l'enseigne, qui se mesure sur son texte. */
   --pnj: min(
-    calc((min(100vw, 120rem) - 2rem - (var(--pnj-n) - 1) * var(--hub-ecart)) / var(--pnj-n)),
-    calc((100vh - 6rem) * 0.68)
+    calc((min(100vw, 120rem) - 2rem - (var(--pnj-cols) - 1) * var(--hub-ecart)) / var(--pnj-cols)),
+    calc((100vh * (1 - var(--pnj-bande)) - 2.5rem - var(--hub-ecart)) / 3.42)
   );
 }
 
+/* LA GRILLE PREND TOUTE LA LARGEUR, les PNJ se centrent dans leur case.
+   A deux lignes c'est la HAUTEUR qui borne le portrait, donc des colonnes a
+   largeur fixe laissaient une marge de chaque cote et le groupe flottait au
+   milieu : *une place ou les boutiques se serrent au centre n'est pas une
+   place, c'est une file.* */
 .hub-rue {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
+  display: grid;
+  width: min(100%, 120rem);
+  grid-template-columns: repeat(var(--pnj-cols), 1fr);
+  justify-items: center;
+  align-items: end;
   gap: var(--hub-ecart);
 }
 
@@ -5426,13 +5438,13 @@ body {
   cursor: pointer;
   /* TOUT CE QUI S'ECRIT ICI SUIT LA LARGEUR DU PORTRAIT : a huit, un nom en
      rem deborderait sur son voisin -- la lecon du nom des creatures, qui suit
-     l'ecart du rang. */
-  /* LE COEFFICIENT EST MESURE, pas choisi : l'enseigne tient le blason
+     l'ecart du rang.
+
+     LE COEFFICIENT EST MESURE, pas choisi : l'enseigne tient le blason
      (1,7em), l'ecart (0,4em), son remplissage (0,6em) et le mot -- « Armurerie »
      en fait 6,9 a cette graisse, soit 9,6em en tout. A 0,115 le nom etait COUPE
-     sur un telephone couche (71 px pour 60 de place, mesure) ; a 0,097 il reste
-     65 px de mot pour 70 de case a 667x320, le format le plus serre. */
-  font-size: min(0.78rem, calc(var(--pnj) * 0.097));
+     sur un telephone couche (71 px pour 60 de place, mesure). */
+  font-size: min(0.95rem, calc(var(--pnj) * 0.097));
   transition:
     transform 180ms ease-out,
     filter 180ms ease-out;
@@ -5505,30 +5517,3 @@ body {
   }
 }
 
-/* LE RETOUR A LA PLACE, au coin haut-gauche de l'armurerie. */
-/* IL PASSE SOUS LA DATE DE BUILD, il ne la recouvre pas : *c'est la seule
-   preuve visible qu'on ne regarde pas un cache*, et on la lit avant tout le
-   reste quand quelque chose cloche. */
-.arm-retour {
-  top: 1.6rem;
-  left: 0.6rem;
-  padding: 0.3em 0.75em;
-  border: 1px solid #6b5936;
-  border-radius: 3px;
-  background: linear-gradient(180deg, #1b1c24, #101118);
-  color: #e6d2a4;
-  font-family: Cinzel, Georgia, serif;
-  font-size: clamp(0.62rem, 1.6vh, 0.85rem);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  cursor: pointer;
-  pointer-events: auto;
-  -webkit-tap-highlight-color: transparent;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .arm-retour:hover {
-    border-color: #d8bb79;
-    color: #ffeec2;
-  }
-}

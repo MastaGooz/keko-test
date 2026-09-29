@@ -48,7 +48,7 @@ import {
 import { Armurerie3D } from './Armurerie3D.tsx'
 import type { Onglet } from './armurerie-plan.ts'
 import { PageArmurerie } from './PageArmurerie.tsx'
-import { PageHub } from './PageHub.tsx'
+import { BoutonDeLaPlace, BullePlace, PageHub } from './PageHub.tsx'
 import { urlDuDecor } from '../ui/art.ts'
 import { Zoom3D } from './Zoom3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
@@ -1531,6 +1531,16 @@ export function Scene(): React.JSX.Element {
         {/* L'ARMURERIE : le premier écran, et celui où l'on revient. C'est un
             LIEU — son fond est opaque — alors que les paliers sont des voiles
             sur le donjon. */}
+        {/* LE BOUTON DE LA PLACE vit dans le canvas comme tous les autres :
+            c'est le MÊME objet qu'à l'armurerie et aux paliers, et *le refaire
+            en HTML garantirait qu'un jour les deux divergent.* */}
+        {surLaPlace && (
+          <BoutonDeLaPlace
+            bloque={!peutDescendre(hub.chargement)}
+            onDescendre={descendreAuDonjon}
+          />
+        )}
+
         {aLArmurerie && (
           <Armurerie3D
             hub={hub}
@@ -1547,7 +1557,7 @@ export function Scene(): React.JSX.Element {
               setZoomee(aPeindre(tresor))
               setZoomSet([])
             }}
-            onDescendre={descendreAuDonjon}
+            onRetour={() => setLieu('place')}
             onPoseCommence={() => setEquipements((n) => n + 1)}
             onEquipee={() => setFixations((n) => n + 1)}
             onSaisie={setSaisie}
@@ -1840,14 +1850,18 @@ export function Scene(): React.JSX.Element {
       {/* LE PANNEAU DU PALIER : le titre en haut, les boutons en bas, et la
           rangée de cartes entre les deux — dans le canvas, donc sous ce
           panneau en HTML. Il ne recouvre jamais les cartes : il les encadre. */}
-      {surLaPlace && <PageHub onEntrer={() => setLieu('armurerie')} />}
+      {surLaPlace && (
+        <>
+          <PageHub onEntrer={() => setLieu('armurerie')} />
+          <BullePlace bloque={!peutDescendre(hub.chargement)} />
+        </>
+      )}
 
       {pret && aLArmurerie && (
         <PageArmurerie
           hub={hub}
           onglet={onglet}
           onTrier={rangerTout}
-          onRetour={() => setLieu('place')}
           onOnglet={(o) => {
             setOnglet(o)
             setDefilement(0)

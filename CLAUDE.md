@@ -3196,11 +3196,22 @@ même portrait et la même enseigne : ce qu'on juge est la RANGÉE — sa densit
 la taille d'un visage, la lisibilité d'un nom à huit. *Inventer sept métiers
 pour en juger la place, ce serait trancher du design en passant.*
 
-**UNE RANGÉE, PAS UNE GRILLE.** Huit portraits en 4 x 2 demanderaient deux fois
-la hauteur d'un visage, et c'est la hauteur qui manque en paysage : le calcul
-le dit — sur un téléphone couché, deux rangées mettraient le portrait à 90 px
-de haut, une seule en donne 132. Et *une rue de boutiques se lit de gauche à
-droite* : le métier se voit à l'enseigne, pas à la position dans une grille.
+**DEUX LIGNES DE QUATRE, et c'est une correction de Keko** — « on va mettre ça
+sur deux lignes parce que là c'est moche ». Une seule rangée de huit était
+bornée par la LARGEUR, et elle gaspillait tout le reste : le portrait n'y
+prenait que 38 % de la hauteur sur un écran de PC. *Ce qui est borné par une
+seule dimension gaspille l'autre.* À deux lignes les deux contraintes se
+rejoignent — 33 % de la hauteur par ligne, donc les deux tiers de l'écran.
+
+**Prix connu, et il est assumé : sur un téléphone c'est un peu plus PETIT.** Là
+c'est la hauteur qui borne dans les deux cas, donc partager en deux lignes
+rétrécit — 80 px de large contre 90 en une seule rangée. *Ce qui gagne sur
+grand écran perd sur petit quand la contrainte change de côté.*
+
+**La grille prend toute la largeur, les PNJ se centrent dans leur case.** À
+colonnes de largeur fixe, le groupe se serrait au milieu avec une marge de
+chaque côté : *une place où les boutiques se serrent au centre n'est pas une
+place, c'est une file.*
 
 **Tout est du HTML.** Il n'y a pas une seule carte sur cet écran, donc rien à
 faire passer par le canvas — *un nom reste net à toute taille et n'a rien à
@@ -3224,25 +3235,39 @@ Quatre choses à ne pas défaire :
   pas une seule ici : gardé derrière lui, l'écran restait sur « Chargement… »
   pour toujours. *Un écran sans carte ne peut pas attendre qu'elles arrivent.*
 
+**C'EST DE LA PLACE QU'ON DESCEND, et l'armurerie n'équipe plus que le
+chargement.** Tranché par Keko : « plutôt que mettre le bouton place en haut à
+gauche de l'armurerie, on va utiliser le bouton descendre qu'on remplace par
+place, et le bouton descendre va dans le hub ». *Un écran a UN bouton, et il
+dit ce qu'on fait en le quittant* — c'est plus clair qu'un bouton de retour en
+coin, qui se cherche.
+
+Deux choses suivent le bouton, parce qu'elles lui appartiennent :
+
+- **son extinction sans arme** (`peutDescendre`) — il n'y a rien pour frapper ;
+- **sa bulle, « Aucune arme équipée »** : *un refus muet se lit comme une
+  panne*, et la raison doit s'afficher là où le refus se produit. Elle vit dans
+  `PageHub` maintenant, et elle a quitté `PageArmurerie` avec lui.
+
+**Il vit dans le CANVAS**, comme tous les boutons du moteur : c'est le même
+objet qu'aux paliers et au butin, et *le refaire en HTML garantirait qu'un jour
+les deux divergent.* Sa place se calcule depuis `Cadrage` — bas du champ
+visible, centré — et **la bande qu'il occupe est retranchée de la grille** :
+une place réservée ne se partage pas.
+
 **Et `auHub` ne suffisait plus** : il disait à la fois « on ne joue pas » et
 « on est à l'armurerie », deux faits différents depuis qu'il y a deux écrans.
 D'où `lieu`, et deux dérivés lisibles (`surLaPlace`, `aLArmurerie`). **La fin
 d'une run ramène sur la PLACE**, pas dans l'armurerie : *le jeu s'ouvre là, il
 y retombe.*
 
-Le retour se fait par un bouton au coin haut-gauche de l'armurerie — sans lui
-elle serait un cul-de-sac. Il vit dans les COMMANDES et non dans le fond, qui
-est en `pointer-events: none` pour laisser prendre les cartes, et il passe
-**sous la date de build** : *c'est la seule preuve visible qu'on ne regarde pas
-un cache.*
+Mesuré à 844x390, 667x320, 1366x700 et 1920x1080 : aucun débordement, aucun nom
+coupé, et le portrait prend 29 à 33 % de la hauteur par ligne.
 
-Mesuré à 844x390, 667x320 et 1366x700 : aucun débordement, aucun nom coupé.
-
-**Ce qui reste à juger, et c'est le point de la manoeuvre** : à huit de front,
-le portrait ne prend que 38 % de la hauteur sur un écran de PC — la largeur
-borne tout. Trois leviers si c'est trop vide : moins de PNJ par rangée, un
-cadrage plus haut que large sur les portraits (une vitrine de boutique, donc un
-recadrage des images), ou un sol sous la rangée pour les asseoir.
+**Ce qui reste à juger** : les PNJ flottent — il n'y a pas de sol sous eux,
+alors que la règle des créatures dit que *c'est l'ombre sous les pattes qui
+fait le lieu*. Et un cadrage plus haut que large sur les portraits (une vitrine
+de boutique) les grandirait encore, mais c'est un recadrage des images.
 
 ### L'ARMURERIE EN 3D — jalon 7, et la boucle est fermée
 
