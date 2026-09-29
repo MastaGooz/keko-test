@@ -4845,6 +4845,29 @@ de même catégorie et même rareté s'échangeraient à chaque clic. *Les piles
 referment d'elles-mêmes* : deux exemplaires ont même catégorie, même rareté et
 même nom.
 
+**ET SA BULLE EST LA NÔTRE, PLUS CELLE DU NAVIGATEUR.** Il portait un `title` :
+le navigateur l'affichait DESSOUS, à sa façon, coins arrondis et police système
+comprises. Keko : « l'infobulle de ranger le coffre devrait être au-dessus, pas
+en dessous, et exactement dans le même style que les infobulles des stats ».
+
+*Un `title` n'est pas une infobulle, c'est l'infobulle DU NAVIGATEUR* — on n'en
+règle ni la place, ni le délai, ni le dessin. Le seul moyen d'avoir la nôtre est
+de ne pas lui laisser la sienne. L'`aria-label` reste : c'est lui qui nomme le
+bouton pour un lecteur d'écran, et il ne dessine rien.
+
+**Elle s'ouvre par le BORD GAUCHE, pas centrée.** *Une bulle se centre quand
+elle a de la place des deux côtés* — le bouton est à quinze pixels du bord, donc
+centrée elle sortait de l'écran de 32 px sur un téléphone couché. C'est la même
+règle que la bulle des stats, qui est passée de la gauche au dessus quand les
+mesures sont devenues une bande : **une bulle s'ouvre du côté où il y a de la
+place, et ce côté dépend de l'endroit qu'elle annote.**
+
+**ET TOUTES LES BULLES ONT PERDU LEUR ARRONDI.** Keko : « donne-lui les coins
+pointus plutôt qu'arrondis, comme le reste de l'interface ». *Un arrondi est une
+forme de gabarit, une arête franche est de la ferronnerie* — c'est le
+raisonnement qui avait déjà fait tomber la capsule de la barre de vie à 2 px, et
+il va jusqu'au bout ici.
+
 **ET IL NE RESTE PAS ALLUMÉ, NI À LA SOURIS NI AU DOIGT.** Keko : « ça fait
 croire qu'on aurait un fonctionnement on/off à tort ». *Un bouton qui agit n'a
 pas d'état* : il fait, et il retombe — la règle déjà tenue par les boutons du

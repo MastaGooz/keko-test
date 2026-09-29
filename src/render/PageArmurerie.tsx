@@ -46,7 +46,14 @@ type Bulle = {
   texte: string
   x: number
   y: number
-  place: 'gauche' | 'dessus'
+  /**
+   * D'où elle s'ouvre. `coin` est `dessus` par le BORD GAUCHE au lieu du
+   * milieu : *une bulle se centre quand elle a de la place des deux côtés*, et
+   * le bouton de rangement tient le coin haut-gauche du meuble — centrée, elle
+   * sortirait de l'écran par la gauche sur un téléphone (mesuré : 32 px
+   * dehors).
+   */
+  place: 'gauche' | 'dessus' | 'coin'
 }
 
 /** La taille de la fenêtre, suivie pour replacer les cadres au redimensionnement. */
@@ -189,6 +196,22 @@ export function PageArmurerie({
    */
   const LIBELLES = ['Points de vie', 'Cartes dans le deck', 'Taille de la main', "Points d'action"]
   const mesures = useRef<(HTMLSpanElement | null)[]>([])
+  /**
+   * LE BOUTON DE RANGEMENT A NOTRE BULLE, PLUS CELLE DU NAVIGATEUR.
+   *
+   * Il portait un `title` : le navigateur l'affichait DESSOUS, à sa façon, avec
+   * ses coins arrondis et sa police système. Keko : « l'infobulle de ranger le
+   * coffre devrait être au-dessus, pas en dessous, et exactement dans le même
+   * style que les infobulles des stats ».
+   *
+   * *Un `title` n'est pas une infobulle, c'est une infobulle du navigateur* —
+   * on n'en règle ni la place, ni le délai, ni le dessin. Le seul moyen d'avoir
+   * la nôtre est de ne pas lui laisser la sienne.
+   *
+   * `aria-label` RESTE : c'est lui qui nomme le bouton pour un lecteur
+   * d'écran, et il ne dessine rien.
+   */
+  const tri = useRef<HTMLButtonElement | null>(null)
   /** Le couple chiffre + symbole de chaque mesure : c'est LUI qui s'anime. */
   const vifs = useRef<(HTMLSpanElement | null)[]>([])
 
@@ -294,6 +317,16 @@ export function PageArmurerie({
             y: r.top,
             place: 'dessus',
           }
+        }
+      }
+      const t = tri.current
+      if (t !== null) {
+        const r = t.getBoundingClientRect()
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+          // AU-DESSUS, comme celles des stats : le bouton tient le coin
+          // haut-gauche du meuble, donc il a de la place au-dessus de lui et
+          // presque rien à sa gauche.
+          return { cle: 'tri', texte: 'Ranger le coffre', x: r.left, y: r.top, place: 'coin' }
         }
       }
       return null
@@ -481,7 +514,7 @@ export function PageArmurerie({
           ligne est un `flex` serré, y ajouter un enfant la déformerait. */}
       {bulle !== null && (
         <span
-          className={`arm-bulle${bulle.place === 'dessus' ? ' dessus' : ''}`}
+          className={`arm-bulle${bulle.place === 'gauche' ? '' : ' dessus'}${bulle.place === 'coin' ? ' coin' : ''}`}
           style={{ left: `${bulle.x}px`, top: `${bulle.y}px` }}
         >
           {bulle.texte}
@@ -500,6 +533,7 @@ export function PageArmurerie({
           écrit à la main, comme tout le SVG du projet. */}
       <button
         type="button"
+        ref={tri}
         className="arm-tri"
         style={boite(plan.tri)}
         onClick={(e) => {
@@ -556,7 +590,6 @@ export function PageArmurerie({
           )
           onTrier?.()
         }}
-        title="Ranger le coffre"
         aria-label="Ranger le coffre"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">

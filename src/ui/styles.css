@@ -5219,7 +5219,12 @@ body {
   translate: calc(-100% - 0.5rem) -50%;
   padding: 0.18rem 0.6rem;
   border: 1px solid #6b5936;
-  border-radius: 2px;
+  /* DES COINS POINTUS, comme le reste de l'interface. Keko : « donne-lui les
+     coins pointus plutot qu'arrondis ». *Un arrondi est une forme de gabarit,
+     une arete franche est de la ferronnerie* -- c'est le raisonnement qui avait
+     deja fait tomber la capsule de la barre de vie a 2 px, et il va jusqu'au
+     bout ici. */
+  border-radius: 0;
   background: #16171dee;
   color: #e6cf9d;
   font-size: clamp(0.58rem, 1.6vh, 0.85rem);
@@ -5234,6 +5239,13 @@ body {
    posee sous lui sortirait de la page. */
 .arm-bulle.dessus {
   translate: -50% calc(-100% - 0.5rem);
+}
+
+/* ET PAR LE BORD GAUCHE quand ce qu'elle explique tient un COIN. *Une bulle se
+   centre quand elle a de la place des deux cotes* : le bouton de rangement est
+   a quinze pixels du bord, donc centree elle sortait de l'ecran. */
+.arm-bulle.coin {
+  translate: 0 calc(-100% - 0.5rem);
 }
 
 /* LE PORTRAIT DE L'ARMURIER : il coiffe la colonne, les mesures dessous.
