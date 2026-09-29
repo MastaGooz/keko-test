@@ -515,8 +515,26 @@ function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient 
   g.addColorStop(0, clair)
   g.addColorStop(0.21, sombre)
   g.addColorStop(0.23, moyen)
-  g.addColorStop(0.53, moyen)
-  g.addColorStop(0.8, nuit)
+  /**
+   * **LE PLATEAU MOYEN S'ALLONGE, ET LA NUIT SE REPLIE DANS LE COIN.**
+   *
+   * Keko : « il y a une couleur assombrissante sur l'entaille de droite qui la
+   * rend peu visible, on peut la décaler ? » — et c'était mesurable. Le dégradé
+   * court sur la DIAGONALE, donc le montant droit à la hauteur du titre tombait
+   * à 77 % de sa course, juste dans le ton `nuit` (qui commençait à 80 %) ;
+   * l'entaille gauche, elle, est à 45 %, en plein ton moyen.
+   *
+   * *Et le creux d'une entaille vaut « 30 % de noir » sur le métal, pas une
+   * couleur à elle* : l'écart absolu s'effondre quand le métal est déjà sombre —
+   * 0,24 de luminance sur un laiton clair, 0,06 sur un laiton nuit. **Un
+   * contraste relatif ne reste pas un contraste.**
+   *
+   * Le plateau va donc jusqu'à 78 % et la nuit ne commence qu'à 93 % : la
+   * structure de lumière du métal ne change pas — clair, sombre, moyen, nuit,
+   * bord — c'est sa part la plus noire qui se replie dans le coin bas-droit.
+   */
+  g.addColorStop(0.78, moyen)
+  g.addColorStop(0.93, nuit)
   g.addColorStop(1, bord)
   return g
 }

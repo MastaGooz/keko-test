@@ -4556,6 +4556,20 @@ combat la main ne contient que des cartes de deck ; au coffre et au chargement,
 que des objets. **Partout ailleurs, c'est le contexte qui tranche**, donc le
 marqueur n'a pas besoin de crier.
 
+**LE PLATEAU MOYEN VA JUSQU'À 78 %, ET LA NUIT SE REPLIE DANS LE COIN.** Keko :
+« il y a une couleur assombrissante sur l'entaille de droite qui la rend peu
+visible, on peut la décaler ? » — et c'était mesurable. Le dégradé court sur la
+DIAGONALE de la carte, donc le montant droit à la hauteur du titre tombait à
+77 % de sa course, juste dans le ton `nuit` qui commençait à 80 % ; l'entaille
+gauche, elle, est à 45 %, en plein ton moyen.
+
+*Et le creux d'une entaille vaut « 30 % de noir » sur le métal, pas une couleur
+à elle* : l'écart absolu s'effondre quand le métal est déjà sombre — 0,24 de
+luminance sur un laiton clair, 0,06 sur un laiton nuit. **Un contraste relatif
+ne reste pas un contraste.** La structure de lumière ne change pas — clair,
+sombre, moyen, nuit, bord — c'est sa part la plus noire qui se concentre dans le
+coin bas-droit.
+
 **Le support est la coque de laiton elle-même, teintée** : le dégradé garde
 exactement son profil de lumière — clair, sombre, moyen, très sombre, clair —
 et seule la teinte se décale. *Ça reste du métal, et non une couleur posée
