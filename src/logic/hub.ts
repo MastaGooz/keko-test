@@ -17,14 +17,18 @@
  */
 import type { Carte } from './combat.ts'
 import type { Arme, Armure, Consommable, Objet, Piece, Rarete } from './armes.ts'
+import type { Rng } from './rng.ts'
 import {
   ARME_GRATUITE,
+  ARMES_COMMUNES,
   ARMURE_GRATUITE,
+  ARMURES_COMMUNES,
   ESPADON,
   POTIONS_DEPART,
   SUPER_POTIONS_DEPART,
   carteDuConsommable,
   deckDeLEquipement,
+  potion,
   estConsommable,
   nomObjet,
 } from './armes.ts'
@@ -570,6 +574,53 @@ export function perdreLEquipement(hub: Hub): Hub {
       // peut pas descendre sans arme. Ce qui restait au râtelier est intact.
       pile: pileVide(),
     },
+  }
+}
+
+/**
+ * UN CHARGEMENT DE FORTUNE, tiré au hasard dans ce qui est commun.
+ *
+ * Demandé par Keko : un bouton sous l'armurier, « similaire au bouton
+ * descendre, sauf qu'il génère un stuff de niveau minimal aléatoire ».
+ *
+ * *C'est une FABRICATION, pas une fouille* : les exemplaires sont neufs, ils ne
+ * sortent pas du coffre. L'armurier ne prête pas ce qu'on possède, il donne ce
+ * qu'il a sous la main.
+ *
+ * **Ce qui était équipé repart au coffre — sauf ce que ce bouton avait déjà
+ * fabriqué, qui disparaît.** Sans ça, appuyer trois fois laisserait trois
+ * Glaives de fortune derrière soi : *un chargement de fortune ne s'accumule
+ * pas.* C'est le préfixe de l'identifiant qui le dit, et rien d'autre n'a à le
+ * savoir.
+ *
+ * Le tirage passe par le RNG SEEDÉ, comme tout hasard du jeu — c'est la règle
+ * de pureté de `logic/`, et elle vaut même pour un confort d'interface.
+ */
+const MARQUE_FORTUNE = 'fortune-'
+
+export function equipementDeFortune(hub: Hub, rng: Rng): Hub {
+  const marque = `${MARQUE_FORTUNE}${rng.getState().toString(36)}`
+  const tire = <T,>(liste: readonly T[]): T =>
+    liste[Math.min(liste.length - 1, Math.floor(rng.next() * liste.length))]!
+
+  const arme: Arme = { ...tire(ARMES_COMMUNES), id: `${marque}-a` }
+  const armure: Armure = { ...tire(ARMURES_COMMUNES), id: `${marque}-b` }
+  // AU MOINS UNE POTION, jamais zéro : un chargement de fortune doit pouvoir
+  // descendre, et *une pile vide ne se distingue pas d'un oubli.*
+  const combien = 1 + Math.floor(rng.next() * CAPACITE_PILE)
+  const pile = pileVide().map((_, i) =>
+    i < combien ? { ...potion(0), id: `${marque}-p${i}` } : null,
+  )
+
+  const rendu: Objet[] = [
+    ...equipement(hub.chargement),
+    ...consommablesDeLaPile(hub.chargement.pile),
+  ].filter((o) => !o.id.startsWith(MARQUE_FORTUNE))
+
+  return {
+    ...hub,
+    reserve: [...hub.reserve, ...rendu],
+    chargement: { mains: [arme, null], armure, pile },
   }
 }
 

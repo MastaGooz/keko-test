@@ -147,6 +147,16 @@ export type PlanArmurerie = {
   pnj: Rect
   /** Le bouton de départ, sous les stats. */
   bouton: [number, number, number]
+  /**
+   * LE BOUTON DE FORTUNE, sous l'armurier.
+   *
+   * Demandé par Keko : « un bouton sous le PNJ armurier, qu'on va remonter en
+   * haut de sa colonne d'ailleurs ; similaire au bouton descendre, sauf qu'il
+   * génère un stuff de niveau minimal aléatoire ». *C'est l'armurier qui le
+   * donne*, donc il se pose sous lui — et le portrait lui cède sa bande basse
+   * plutôt que de la partager.
+   */
+  boutonFortune: [number, number, number]
 }
 
 /** Combien de pixels vaut une unité de scène, à la profondeur du plan. */
@@ -550,8 +560,15 @@ export function planArmurerie(
     // L'ARMURIER PREND TOUTE SA COLONNE depuis que le bouton est parti dans le
     // rail : *le départ ne se décide pas dans l'armurerie, il se décide au
     // hub.*
-    pnj: { x: xStats, y: yPanneaux, l: lStats, h: hPanneaux },
+    // L'ARMURIER REMONTE : il garde sa colonne, moins la bande de son bouton.
+    pnj: {
+      x: xStats,
+      y: yPanneaux + (hBouton + marge) / 2,
+      l: lStats,
+      h: hPanneaux - hBouton - marge,
+    },
     bouton: [xRail, basPanneaux + hBouton / 2, Z_PLAN],
+    boutonFortune: [xStats, basPanneaux + hBouton / 2, Z_PLAN],
   }
 }
 

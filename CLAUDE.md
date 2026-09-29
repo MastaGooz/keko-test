@@ -5213,6 +5213,34 @@ par Keko) — le premier visage du jeu, du haut du panneau jusqu'au bouton. Son
 format est celui des illustrations de cartes (1034 x 1521, rapport 0,68) : *un
 seul gabarit d'image dans tout le projet.*
 
+**ET IL PORTE SON BOUTON : « FOURBIR ».** Demandé par Keko — « un bouton sous
+le PNJ armurier, qu'on va remonter en haut de sa colonne d'ailleurs ; similaire
+au bouton descendre, sauf qu'il génère un stuff de niveau minimal aléatoire ».
+Le portrait lui cède donc sa bande basse plutôt que de la partager : *c'est
+l'armurier qui donne, le bouton se pose sous lui.*
+
+- **C'est une FABRICATION, pas une fouille** : les exemplaires sont neufs, ils
+  ne sortent pas du coffre. *L'armurier ne prête pas ce qu'on possède, il donne
+  ce qu'il a sous la main* — une arme et une armure tirées dans
+  `ARMES_COMMUNES` / `ARMURES_COMMUNES`, et de une à trois potions.
+- **Ce qui était équipé repart au coffre, sauf ce que ce bouton avait déjà
+  fabriqué**, qui disparaît. Sans ça, appuyer trois fois laisserait trois
+  Glaives de fortune derrière soi : *un chargement de fortune ne s'accumule
+  pas.* C'est le préfixe de l'identifiant qui le dit, et rien d'autre n'a à le
+  savoir.
+- **Son tirage a SON PROPRE RNG seedé**, à côté de celui de la descente : tout
+  hasard du jeu passe par un RNG seedé — c'est la règle de pureté de `logic/` —
+  mais consommer celui de la descente ferait qu'appuyer sur le bouton changerait
+  la partie que la seed annonce.
+- **Son ton est la PIERRE, pas l'or.** *Deux boutons d'or côte à côte se
+  disputent le regard* : « Descendre » est la seule action qui quitte le hub,
+  celui-ci n'est qu'un confort, donc il prend la matière du lieu sans son accent.
+- **Le mot est à rejuger.** Keko : « je sais pas, il faudrait un truc en un seul
+  mot ». *Fourbir ses armes* est l'expression du métier et dit l'ensemble du
+  geste — préparer tout son équipement — là où « Équiper » dit ce que le glisser
+  fait déjà, pièce par pièce. Les autres candidats étaient « Armer » et
+  « Parer ».
+
 **ET LES QUATRE MESURES SONT PASSÉES EN BANDE**, sur une ligne en haut de
 l'équipement. Elles coiffaient cette colonne, sous le portrait — et *elles se
 lisaient alors comme LES SIENNES.* Keko : « on dirait que c'est les stats du

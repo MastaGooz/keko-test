@@ -73,6 +73,15 @@ const TONS = {
   or: { fond: ['#3a2f16', '#221b0e'], trait: '#c9a95a', encre: '#f2e4bd' },
   perdre: { fond: ['#4a1712', '#2a0f0c'], trait: '#b3382a', encre: '#ffc9c0' },
   garder: { fond: ['#153322', '#0d1f15'], trait: '#3f8f5a', encre: '#c4e8d2' },
+  /**
+   * LA PIERRE : le ton d'un bouton de CONFORT, pas d'une décision.
+   *
+   * « Fourbir » remplit le chargement d'un coup ; il ne doit pas rivaliser avec
+   * « Descendre », qui est la seule action qui quitte le hub. *Deux boutons d'or
+   * côte à côte se disputent le regard* — celui-ci prend donc la matière du
+   * lieu, sans son accent.
+   */
+  pierre: { fond: ['#2b2a2c', '#171718'], trait: '#7d786a', encre: '#ddd5c2' },
 } as const
 
 export type TonBouton = keyof typeof TONS

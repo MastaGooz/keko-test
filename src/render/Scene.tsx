@@ -71,11 +71,13 @@ import {
 import type { EtatCombat } from '../logic/combat.ts'
 import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
+import { createRng } from '../logic/rng.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
 import {
   creerHub,
   deplacerPiece,
   echangerDansCoffre,
+  equipementDeFortune,
   rangerEnFinDeCoffre,
   trierLeCoffre,
   equipement,
@@ -207,6 +209,15 @@ const RESPIRATION = 600
 export function Scene(): React.JSX.Element {
   const [graine, setGraine] = useState(SEED)
   const depart = useMemo(() => descenteDeDepart(graine), [graine])
+  /**
+   * LE TIRAGE DU CHARGEMENT DE FORTUNE, à part de celui de la descente.
+   *
+   * *Tout hasard du jeu passe par un RNG seedé* — c'est la règle de pureté de
+   * `logic/` — mais celui-ci ne doit pas consommer le RNG de la descente, sinon
+   * appuyer sur « Fourbir » changerait la partie que la seed annonce. Il vit
+   * donc à côté, seedé depuis la même graine, et il avance à chaque appui.
+   */
+  const rngFortune = useMemo(() => createRng(graine ^ 0x5f0132), [graine])
   /**
    * L'ARMURERIE EST LE PREMIER ÉCRAN, et la descente vient d'elle.
    *
@@ -1542,6 +1553,7 @@ export function Scene(): React.JSX.Element {
               setZoomSet([])
             }}
             onDescendre={descendreAuDonjon}
+            onFourbir={() => setHub((h) => equipementDeFortune(h, rngFortune))}
             onPoseCommence={() => setEquipements((n) => n + 1)}
             onEquipee={() => setFixations((n) => n + 1)}
             onSaisie={setSaisie}

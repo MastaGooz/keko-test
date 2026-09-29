@@ -183,6 +183,11 @@ type Props = {
   onRegarderTresor?: (tresor: Carte) => void
   onDescendre?: () => void
   /**
+   * L'ARMURIER DONNE UN CHARGEMENT DE FORTUNE. *C'est une fabrication, pas une
+   * fouille* : les exemplaires sont neufs, ils ne sortent pas du coffre.
+   */
+  onFourbir?: () => void
+  /**
    * Une pièce vient de SE FIXER dans un slot — pas d'être lâchée.
    *
    * *L'état du jeu change au lâcher, la mise en scène finit bien après* : ce
@@ -270,6 +275,7 @@ export function Armurerie3D({
   onRegarder,
   onRegarderTresor,
   onDescendre,
+  onFourbir,
   onEquipee,
   onPoseCommence,
   onSaisie,
@@ -950,6 +956,18 @@ export function Armurerie3D({
         position={plan.bouton}
         eteint={tenue !== null || !peutDescendre(hub.chargement)}
         onCliquer={onDescendre}
+      />
+
+      {/* LE BOUTON DE L'ARMURIER, sous lui. *Il ne dit pas ce qu'on possède, il
+          dit ce qu'il donne* — un chargement de fortune tiré dans le commun,
+          fabriqué sur place. Il s'éteint pendant un glisser comme tous les
+          autres : on est déjà en train de faire autre chose. */}
+      <Bouton3D
+        texte="Fourbir"
+        ton="pierre"
+        position={plan.boutonFortune}
+        eteint={tenue !== null}
+        onCliquer={onFourbir}
       />
     </group>
   )
