@@ -4435,8 +4435,49 @@ Trois choses à ne pas défaire :
 - **la rareté entre dans `signature()`**, sans quoi deux pièces de même nom et
   de rareté différente partageraient la texture.
 
-**LES TRÉSORS EN SONT DEHORS.** Tranché par Keko : « le montant d'or parle par
-lui-même ». *Un trésor n'est pas un objet qu'on porte, c'est un butin qu'on
+**LE TRÉSOR SE DIT PAR LA FORME DE SON CADRE, jamais par sa couleur.** Keko :
+« j'ai besoin d'un contour trésor et cartes de deck différents pour bien
+visualiser, et je peux pas utiliser l'or pour les trésors, ce qui est dommage. »
+
+*C'est exactement le cas que la règle prévoit* : la couleur est prise par la
+rareté, et « trésor ou carte de deck » n'est pas une échelle, c'est une
+famille — **une échelle se dit en couleur, une famille se dit en forme.**
+Chercher une couleur pour les trésors, c'était se battre contre l'axe des
+raretés, et perdre à chaque cran neuf.
+
+Toutes les cartes du jeu portent donc la coque DÉCHIRÉE du gabarit ; le trésor
+porte un **cadre franc à coins coupés**, la ferronnerie qu'on parle déjà sur la
+barre de vie, les cartouches et les cadres des meubles. *Et ça dit quelque
+chose de vrai* : un trésor est sorti du donjon ENTIER, là où les cartes que
+fabrique l'équipement en sont arrachées.
+
+Quatre choses qui le portent :
+
+- **le biseau se compte en largeurs de carte** — 6,5 % en x, donc 6,5 / 1,4 en
+  y — sinon il serait plus long en haut qu'à gauche et cesserait de se lire
+  comme un angle à 45° ;
+- **il s'arrête avant l'ORBE DU COÛT**, qui vit dans ce coin sur toute carte.
+  Le disque approche le coin à 9 % de la largeur en diagonale, donc une coupe à
+  6,5 passe dessous sans le mordre. *Un coin coupé qui tranche le chiffre de
+  coût ne serait pas un cadre, ce serait un défaut* — et c'est ce qui a fermé
+  l'idée d'un biseau franc, qui aurait été plus lisible ;
+- **un SECOND JONC en retrait**, parce que les deux signaux ne travaillent pas
+  à la même échelle : *le coin coupé se lit dans l'éventail, le jonc se lit au
+  coffre* — à 97 px de large un biseau ne fait que 6 px, alors qu'un double
+  trait se voit encore. Il se pose après l'illustration et avant les textes,
+  donc le nom, le cartouche et l'orbe passent dessus : *un filet n'a jamais à
+  traverser un chiffre* ;
+- **la famille passe par un DRAPEAU** (`tresor`), pas par le mot du pied. Celui
+  -ci est du texte affiché — « Consommable » est déjà devenu « Objet » une
+  fois — et *un dessin ne se décide pas sur une étiquette qui peut changer.*
+
+**La couleur reste donc entièrement libre, et les quatre alliages ne bougent
+pas.** C'est une porte qu'on n'a pas franchie : le jour où l'or reviendrait aux
+trésors, la forme suffirait déjà à les séparer d'une arme épique. À rouvrir
+avec Keko, et pas avant d'avoir vu si la forme porte assez toute seule.
+
+**LES TRÉSORS RESTENT HORS DE L'ÉCHELLE DE RARETÉ.** Tranché par Keko : « le
+montant d'or parle par lui-même ». *Un trésor n'est pas un objet qu'on porte, c'est un butin qu'on
 compte.* En cherchant ce que ça déloge, on a d'ailleurs trouvé qu'il n'y avait
 presque rien à déloger : les « trois rangs de richesse » n'existent qu'en 2D, et
 seul `fastueux` y porte une règle — **`cossu` et `modeste` ont un nom dans le

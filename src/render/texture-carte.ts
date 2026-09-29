@@ -63,6 +63,19 @@ export type CarteAPeindre = {
   /** Le type gravé au pied : « Attaque », « Trésor »… */
   type: string
   /**
+   * UN TRÉSOR, et c'est la FORME de son cadre qui le dit.
+   *
+   * Keko : « j'ai besoin d'un contour trésor et cartes de deck différents pour
+   * bien visualiser, et je peux pas utiliser l'or pour les trésors, ce qui est
+   * dommage. » *La couleur est prise par la rareté*, et « trésor ou carte de
+   * deck » n'est pas une échelle, c'est une famille : **une échelle se dit en
+   * couleur, une famille se dit en forme.**
+   *
+   * Les quatre alliages restent donc intacts, et le trésor se distingue par sa
+   * SILHOUETTE — voir `CADRE_TRESOR`.
+   */
+  tresor?: boolean
+  /**
    * SA RARETÉ, si elle en a une — et c'est le CADRE qui la porte.
    *
    * Keko voulait « un code vert/bleu/violet/orange classique ». Le support est
@@ -107,6 +120,31 @@ const U = LARGE / 100
 const DECOUPE: readonly [number, number][] = [
   [4, 0], [91, 1.5], [100, 8], [98, 92], [93, 98],
   [55, 99], [50, 100], [44, 99], [3, 97], [0, 88], [1, 5],
+]
+
+/**
+ * LE CADRE D'UN TRÉSOR : un sertissage, pas une déchirure.
+ *
+ * Toutes les cartes du jeu portent la coque DÉCHIRÉE du gabarit — c'est la
+ * signature du dessin. Le trésor, lui, porte un cadre FRANC à coins coupés,
+ * la ferronnerie qu'on parle déjà sur la barre de vie, les cartouches et les
+ * cadres des meubles.
+ *
+ * *Et ça dit quelque chose de vrai* : un trésor est sorti du donjon ENTIER,
+ * là où les cartes que fabrique l'équipement en sont arrachées.
+ *
+ * **Le biseau se compte en largeurs de carte** — 6,5 % en x, donc 6,5 / 1,4 en
+ * y — sinon il serait plus long en haut qu'à gauche et ne se lirait plus comme
+ * un angle à 45°.
+ *
+ * **Et il s'arrête avant l'ORBE DU COÛT**, qui vit dans ce coin sur toute
+ * carte : le disque approche le coin à 9 % de la largeur en diagonale, donc
+ * une coupe à 6,5 passe dessous sans le mordre. *Un coin coupé qui tranche le
+ * chiffre de coût ne serait pas un cadre, ce serait un défaut.*
+ */
+const CADRE_TRESOR: readonly [number, number][] = [
+  [6.5, 0], [93.5, 0], [100, 4.64], [100, 95.36],
+  [93.5, 100], [6.5, 100], [0, 95.36], [0, 4.64],
 ]
 
 /** L'écusson du coût : pointe en bas, comme sur toute carte qui coûte. */
@@ -407,9 +445,10 @@ export async function peindreCarte(
   ctx.fillStyle = '#00000030'
   ctx.fillRect(0, 0, LARGE, HAUT)
 
-  // LA COQUE DÉCHIRÉE, en laiton plein.
+  // LA COQUE, en laiton plein — déchirée, ou franche si c'est un trésor.
+  const coque = carte.tresor === true ? CADRE_TRESOR : DECOUPE
   ctx.save()
-  chemin(ctx, DECOUPE, 0, 0, LARGE, HAUT)
+  chemin(ctx, coque, 0, 0, LARGE, HAUT)
   ctx.clip()
   ctx.fillStyle = laiton(ctx, carte.rarete)
   ctx.fillRect(0, 0, LARGE, HAUT)
@@ -419,7 +458,7 @@ export async function peindreCarte(
   // la coque, à la même découpe.
   const marge = 1.163 * U
   ctx.save()
-  chemin(ctx, DECOUPE, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+  chemin(ctx, coque, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
   ctx.clip()
   ctx.fillStyle = '#171b1d'
   ctx.fillRect(0, 0, LARGE, HAUT)
@@ -439,6 +478,26 @@ export async function peindreCarte(
   ctx.fillStyle = voile
   ctx.fillRect(0, HAUT * 0.5, LARGE, HAUT * 0.5)
   ctx.restore()
+
+  // ET LE TRÉSOR PORTE UN SECOND JONC, en retrait du premier.
+  //
+  // *Le coin coupé se lit dans l'éventail, le jonc se lit au coffre* : à 97 px
+  // de large un biseau ne fait que 6 px, alors qu'un double trait se voit
+  // encore. Deux signaux pour un seul fait, et ils disent la même chose — un
+  // objet SERTI plutôt qu'une carte arrachée.
+  //
+  // Il se pose APRÈS l'illustration et AVANT les textes : le nom et le
+  // cartouche passent dessus, et l'orbe du coût le recouvre là où ils se
+  // croisent. *Un filet n'a jamais à traverser un chiffre.*
+  if (carte.tresor === true) {
+    const jonc = 3.2 * U
+    ctx.strokeStyle = laiton(ctx, carte.rarete)
+    ctx.lineWidth = 0.55 * U
+    ctx.globalAlpha = 0.72
+    chemin(ctx, coque, jonc, jonc, LARGE - jonc * 2, HAUT - jonc * 2)
+    ctx.stroke()
+    ctx.globalAlpha = 1
+  }
 
   if (carte.compteur === undefined) peindreCout(ctx, carte.cout, symbole)
   else peindreCompteur(ctx, carte.compteur)

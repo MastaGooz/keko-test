@@ -39,6 +39,10 @@ export function aPeindre(carte: Carte): CarteAPeindre {
     cout: carte.cout,
     effet: lignes(carte).map(sansBalises),
     type: nature(carte),
+    // LA FAMILLE PASSE PAR UN DRAPEAU, pas par le mot du pied. Celui-ci est
+    // du TEXTE AFFICHÉ — « Consommable » est déjà devenu « Objet » une fois —
+    // et *un dessin ne se décide pas sur une étiquette qui peut changer.*
+    tresor: carte.type === 'tresor',
   }
 }
 
