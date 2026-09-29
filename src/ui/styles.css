@@ -5404,11 +5404,18 @@ body {
   /* LA LARGEUR D'UN PNJ SE DEDUIT DE LA PLACE, jamais l'inverse -- la lecon de
      `--piece-equip` a l'armurerie. Deux contraintes, la plus dure gagne :
      quatre colonnes en largeur, et deux lignes en hauteur. Une ligne fait
-     1,71 fois la largeur d'un PNJ : 1,47 pour le portrait (il est en 0,68) et
-     0,24 pour l'enseigne, qui se mesure sur son texte. */
+     1,24 fois la largeur d'un PNJ : 1 pour le buste (carre) et 0,24 pour
+     l'enseigne, qui se mesure sur son texte.
+
+     LE BUSTE PAIE LE TEXTE. A l'image entiere (0,68) une ligne faisait 1,71,
+     donc le PNJ etait plus etroit d'un bon tiers et son enseigne avec -- Keko :
+     « les textes et les icones sont trop petites, on peut gagner de la place en
+     rognant l'image du PNJ en bas ? » *Ce qui contraint la mise en page ici,
+     c'est la hauteur, et les jambes d'un marchand ne disent rien de son
+     metier.* */
   --pnj: min(
     calc((min(100vw, 120rem) - 2rem - (var(--pnj-cols) - 1) * var(--hub-ecart)) / var(--pnj-cols)),
-    calc((100vh * (1 - var(--pnj-bande)) - 2.5rem - var(--hub-ecart)) / 3.42)
+    calc((100vh * (1 - var(--pnj-bande)) - 2.5rem - var(--hub-ecart)) / 2.48)
   );
 }
 
@@ -5443,8 +5450,14 @@ body {
      LE COEFFICIENT EST MESURE, pas choisi : l'enseigne tient le blason
      (1,7em), l'ecart (0,4em), son remplissage (0,6em) et le mot -- « Armurerie »
      en fait 6,9 a cette graisse, soit 9,6em en tout. A 0,115 le nom etait COUPE
-     sur un telephone couche (71 px pour 60 de place, mesure). */
-  font-size: min(0.95rem, calc(var(--pnj) * 0.097));
+     sur un telephone couche (71 px pour 60 de place, mesure).
+
+     LE PLAFOND EN REM NE MORD QUE SUR GRAND ECRAN, et il a ete relache : a
+     0,95rem le nom plafonnait des 1366 px de large, donc l'enseigne cessait de
+     grandir avec sa boutique alors que la place, elle, continuait. *Un plafond
+     absolu dans une mise en page proportionnelle finit par contredire la
+     proportion.* */
+  font-size: min(1.25rem, calc(var(--pnj) * 0.097));
   transition:
     transform 180ms ease-out,
     filter 180ms ease-out;
@@ -5456,9 +5469,17 @@ body {
 .hub-portrait {
   display: block;
   width: 100%;
-  aspect-ratio: 1034 / 1521;
-  object-fit: contain;
-  filter: drop-shadow(0 6px 14px #000000cc);
+  /* UN BUSTE, PAS UNE SILHOUETTE : la boite est carree et l'image la remplit
+     par le HAUT. On garde donc les deux tiers superieurs du dessin -- la tete,
+     les epaules, ce qu'il tient dans les mains -- et c'est tout ce qui nomme un
+     metier. */
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  object-position: top;
+  /* ET IL S'ETEINT EN BAS plutot que de se couper net : *une image tranchee a
+     l'horizontale se lit comme une image cassee*, alors qu'un fondu se lit
+     comme une ombre ou le marchand se tient. */
+  mask-image: linear-gradient(180deg, #000 74%, #0000 100%);
   pointer-events: none;
 }
 

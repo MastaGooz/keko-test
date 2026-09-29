@@ -3203,10 +3203,22 @@ prenait que 38 % de la hauteur sur un écran de PC. *Ce qui est borné par une
 seule dimension gaspille l'autre.* À deux lignes les deux contraintes se
 rejoignent — 33 % de la hauteur par ligne, donc les deux tiers de l'écran.
 
-**Prix connu, et il est assumé : sur un téléphone c'est un peu plus PETIT.** Là
-c'est la hauteur qui borne dans les deux cas, donc partager en deux lignes
-rétrécit — 80 px de large contre 90 en une seule rangée. *Ce qui gagne sur
-grand écran perd sur petit quand la contrainte change de côté.*
+**ET LE PORTRAIT EST UN BUSTE, pas une silhouette — c'est ce qui paie le
+texte.** Keko : « les textes et les icônes sont trop petites, on peut gagner de
+la place en rognant l'image du PNJ en bas ? » *Ce qui contraint cette page,
+c'est la HAUTEUR*, et une image en 0,68 mangeait 1,47 fois la largeur d'un PNJ
+par ligne. À buste carré elle n'en mange qu'une, donc tout grandit d'un bon
+tiers : le nom passe de 7,8 à 10,7 px sur un téléphone couché, le blason de 14
+à 18. *Et les jambes d'un marchand ne disent rien de son métier.*
+
+**Il s'éteint en bas plutôt que de se couper net** : une image tranchée à
+l'horizontale se lit comme une image cassée, un fondu se lit comme l'ombre où
+le marchand se tient.
+
+**Le plafond du nom a été relâché avec** (0,95 → 1,25rem) : il mordait dès
+1366 px de large, donc l'enseigne cessait de grandir avec sa boutique alors que
+la place, elle, continuait. *Un plafond absolu dans une mise en page
+proportionnelle finit par contredire la proportion.*
 
 **La grille prend toute la largeur, les PNJ se centrent dans leur case.** À
 colonnes de largeur fixe, le groupe se serrait au milieu avec une marge de
@@ -3261,8 +3273,9 @@ D'où `lieu`, et deux dérivés lisibles (`surLaPlace`, `aLArmurerie`). **La fin
 d'une run ramène sur la PLACE**, pas dans l'armurerie : *le jeu s'ouvre là, il
 y retombe.*
 
-Mesuré à 844x390, 667x320, 1366x700 et 1920x1080 : aucun débordement, aucun nom
-coupé, et le portrait prend 29 à 33 % de la hauteur par ligne.
+Mesuré à 844x390, 667x320, 932x430, 1366x700, 1920x1080 et 2560x1215 : aucun
+débordement, aucun nom coupé. Le nom va de 8,5 px sur un iPhone SE couché à
+30 sur un grand écran.
 
 **Ce qui reste à juger** : les PNJ flottent — il n'y a pas de sol sous eux,
 alors que la règle des créatures dit que *c'est l'ombre sous les pattes qui
