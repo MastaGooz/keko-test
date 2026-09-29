@@ -3947,138 +3947,55 @@ le compte passe de 10 à 13 cartes dont 6 qui frappent), zoomer une pièce,
 descendre, mourir — le hub rend le Glaive et le Plastron, et la potion
 emportée est perdue.
 
-### L'ARMURERIE ET LE COFFRE SONT DEUX LIEUX — et on n'équipe plus en glissant
+### SÉPARER L'ARMURERIE DU COFFRE A ÉTÉ ESSAYÉ, ET ABANDONNÉ
 
-Keko : « l'armurerie sert à équiper, je pense qu'on se prend la tête à fusionner
-armurerie et coffre. On affiche uniquement le panneau équipement. Le joueur peut
-cliquer sur les slots d'équipement, ce qui affiche les cartes disponibles pour ce
-slot, et le joueur clique pour en choisir une. » Puis, en corrigeant ma
-proposition : « **attention : le coffre ne disparaît**, on a un onglet armurerie
-avec le panneau équipement, et un onglet coffre avec le coffre actuel ».
+**Ne pas le reproposer.** Keko l'avait demandé — « l'armurerie sert à équiper,
+je pense qu'on se prend la tête à fusionner armurerie et coffre » — puis l'a
+arrêté net une fois en main : **« on a fait une bêtise avec ce système, c'est
+chiant, retour à l'armurerie avec le coffre qu'on avait avant. »**
 
-*Deux meubles côte à côte, c'était deux moitiés d'écran et aucune des deux à sa
-taille.* Le chargement était borné par un panneau large d'un tiers d'écran, et le
-coffre n'en montrait que quinze cases. **Le rail des destinations existait déjà
-pour porter ce choix** : le coffre y prend son entrée à côté de l'armurerie, et
-chaque lieu prend toute la place à droite du rail.
+Ce qui a été construit, en deux passes : le coffre est devenu une destination du
+rail à côté de l'armurerie, chaque lieu prenant tout l'écran ; puis, comme le
+glisser d'un meuble à l'autre n'était plus possible, un **bouton « Changer »
+sous chaque slot** ouvrant un menu — le slot à gauche, l'onglet du coffre à
+droite — où le glisser revenait.
 
-Ce que ça donne, mesuré : la carte du chargement passe de 38 à 60 px sur un
-téléphone couché (de 111 à 148 sur un portable), et le coffre de **15 à 27
-places** — 9 colonnes sur 3 rangées **à tous les formats**, avec des cases plus
-grandes qu'avant. *Les deux à la fois, parce que la place vient d'ailleurs.*
+**Les chiffres étaient pourtant bons**, et c'est ce qui rend la leçon utile : la
+carte du chargement passait de 38 à 60 px sur un téléphone couché, le coffre de
+15 à 27 places, et les deux meubles cessaient de se disputer la largeur.
 
-**Et rien n'est mort** : les onglets du coffre, le bouton de rangement, la
-réorganisation par échange, les piles et leur compte sont exactement ceux
-d'avant. Ils ont simplement leur meuble pour eux.
+**Ce qui les a fait perdre, c'est le GESTE.** Équiper demandait d'ouvrir un
+menu, glisser, refermer — là où les deux meubles côte à côte le font d'un seul
+glisser, sans rien ouvrir ni fermer. *Une place gagnée ne rachète pas un geste
+perdu* : le joueur passe trente secondes dans cet écran, et c'est le nombre de
+gestes qui décide de ce qu'il en ressent, pas le nombre de pixels par carte.
 
-**LE GESTE CHANGE, ET C'EST LE COEUR DE LA DEMANDE.** Le glisser d'un meuble à
-l'autre ne pouvait plus exister — les deux ne sont plus à l'écran en même temps.
-Il a d'abord été remplacé par une tape sur le slot qui ouvrait un choix ; Keko
-l'a repris aussitôt : « je voudrais garder le clic = zoom et affichage des
-cartes, le clic ne fait pas changer d'arme ; il faudrait un autre système pour
-changer un slot ». Et l'argument est décisif : **le joueur veut zoomer une carte
-PENDANT qu'il change d'arme** — si la tape sert à choisir, elle ne sert plus à
-lire, et c'est précisément le moment où lire compte.
+**Deux pièges payés en chemin**, qui valent pour tout le reste du projet :
 
-**Le système est celui que Keko a dicté** : « un bouton changer sous chaque
-slot ; quand le joueur clique, on ouvre un menu avec à gauche le slot en
-question et à droite l'onglet du coffre correspondant — on retourne au système
-précédent de drag and drop ».
+- **`.arm-commandes > *` pose le `position: fixed` qui porte les coordonnées du
+  plan, et il a exactement la même spécificité (0,1,0) qu'une règle de classe** :
+  une règle écrite plus bas l'emporte. Un `position: relative` posé pour ancrer
+  un `::after` a renvoyé six boutons dans le flux — décalés, et une rangée hors
+  de l'écran. *Un élément `fixed` est déjà un bloc conteneur pour ses enfants
+  absolus : il n'y avait rien à ancrer.* Et je ne l'ai pas vu parce que je l'ai
+  ajouté APRÈS mes captures : **une vérification faite avant la dernière
+  retouche ne vérifie pas la dernière retouche** ;
+- **un minuteur posé dans un effet meurt avec lui.** La bulle d'une infobulle se
+  ferme au bout de 2,6 s au doigt, mais son minuteur vivait dans l'effet des
+  écouteurs, que l'ouverture d'un calque remontait : le nettoyage l'annulait et
+  la bulle restait à l'écran pour toujours. *Ce qu'un minuteur devait effacer
+  doit l'être aussi par le changement d'écran lui-même.*
 
-*Et ça remet tout d'aplomb* : le glisser n'avait pas disparu parce qu'il était
-mauvais, mais parce que les deux meubles n'étaient plus à l'écran ensemble. **Ce
-menu les y remet, réduits à ce que le geste concerne** — un slot, une catégorie
-— et la tape redevient le zoom PARTOUT, menu compris.
-
-- **Une action qui n'est pas un geste a besoin d'un bouton**, et un bouton par
-  slot dit lequel il change sans qu'on ait à le désigner ensuite. Sa bande entre
-  dans le calcul de la taille des cartes, au même titre que les noms de groupe :
-  *une bande prise sur la place des slots les ferait déborder du panneau.*
-- **C'est un SYMBOLE, pas le mot.** Deux flèches opposées, et une bulle qui le
-  nomme au survol — celle du projet, pas un `title`. Une case de slot fait 40 px
-  de large sur un téléphone couché : « CHANGER » y tombait à huit pixels de corps
-  et les trois boutons se touchaient. *Un mot qui ne tient pas dans son bouton
-  n'est pas un libellé, c'est une tache.* C'est déjà le raisonnement du bouton de
-  rangement du coffre.
-- **Sa prise déborde vers le BAS seulement.** La bande ne fait que 25 px et *le
-  doigt ne rétrécit pas avec l'écran* ; mais au-dessus il y a la carte du slot,
-  et *une zone plus grande que son bouton vole le geste à sa voisine.*
-- **Le menu montre ce que la RÈGLE accepte** (`candidatsPourSlot`, qui appelle
-  `accepteDepuis`). Pour les trois familles de slots ça revient exactement à
-  l'onglet du coffre que Keko demande — et rien n'y est proposé qu'on ne puisse
-  poser.
-- **C'est le même geste qu'ailleurs, donc la même liste.** Les cartes du menu
-  entrent dans le tableau que `useGesteCarte` parcourt : prendre, promener,
-  lâcher, zoomer, la culbute, l'onde, les deux sons et l'effet sur les stats
-  marchent sans une ligne de plus. *Un second geste écrit à côté aurait divergé
-  du premier* — la faute des quatre fonctions qui dessinaient chacune leur carte
-  avant `corpsCarte`.
-- **Retirer, c'est glisser du slot vers la grille.** Le sens inverse du même
-  geste, dans le même écran : il n'y a plus de case « Retirer » à inventer.
-- **Le voile se tape pour fermer, et « Fermer » est là aussi** : *un calque plein
-  écran doit pouvoir se quitter sans viser.*
-- **Sa grille a SA taille de case**, pas celle du coffre : elle est plus étroite
-  d'une colonne de slot et ne montre qu'une catégorie. À taille de coffre elle
-  alignait onze cases minuscules pour deux armes — *une grille se règle sur ce
-  qu'elle contient, pas sur celle d'à côté.* Cinq colonnes visées.
-- **AUCUN `position` SUR LE BOUTON.** `.arm-commandes > *` pose le `fixed` qui
-  porte les coordonnées du plan, et il a **exactement la même spécificité**
-  (0,1,0) : une règle écrite plus bas dans la feuille l'emporte. Un
-  `position: relative` posé pour ancrer le `::after` a donc renvoyé les six
-  boutons dans le flux — Keko : « les boutons armes et armures sont décalés et
-  j'ai pas de boutons pour les objets », ceux du bas étant simplement poussés
-  hors de l'écran. *Un élément `fixed` est déjà un bloc conteneur pour ses
-  enfants absolus : il n'y avait rien à ancrer.*
-
-  **Et je ne l'ai pas vu parce que je l'ai ajouté APRÈS mes captures.** La
-  règle du projet vaut ici : *une vérification faite avant la dernière
-  retouche ne vérifie pas la dernière retouche.*
-- **UN MINUTEUR POSÉ DANS UN EFFET MEURT AVEC LUI.** Au doigt la bulle se ferme
-  toute seule au bout de 2,6 s — mais son minuteur vit dans l'effet des
-  écouteurs, et cet effet se remonte quand le menu s'ouvre : le nettoyage
-  l'annulait, donc la bulle du bouton restait à l'écran pour toujours, jusque
-  dans le coffre. Keko : « quand je tape dessus sur tél, l'infobulle Changer
-  reste au milieu de l'écran coffre ». *Ce qu'un minuteur devait effacer doit
-  l'être aussi par le changement d'écran lui-même.*
-- **Le défilement est PARTAGÉ avec le coffre** : ils ne sont jamais à l'écran
-  ensemble, donc un seul compteur suffit — remis à zéro en changeant de grille.
-  Et la barre a son pouce, parce qu'*au doigt il n'y a pas de molette.*
-
-**ET LE COFFRE NE SUIT PLUS LA TAILLE DU CHARGEMENT.** Il en était encore borné
-par le haut (72 % d'une pièce), donc la bande des boutons « Changer » — qui a
-rétréci les pièces — a rétréci le coffre AVEC, dans un lieu où ces boutons
-n'existent même pas. *Une contrainte posée dans un écran ne doit pas voyager
-dans un autre* : son plafond est désormais un nombre à lui, et il retrouve ses
-9 colonnes.
-
-**ET LES TRÉSORS SE RANGENT COMME LE RESTE.** Keko : « dans le coffre, je ne
-peux pas réorganiser les trésors comme le reste des cartes ». La règle savait
-déjà le faire — `echangerDansCoffre` essaie les deux listes — mais le rendu
-exigeait une PIÈCE pour même y penser, et `rangerEnFinDeCoffre` ne connaissait
-que `reserve`. *Un trésor ne s'équipe pas ; ça ne veut pas dire qu'il ne se
-range pas.* Les deux listes restent étanches, et c'est la règle qui le garantit :
-aucune ne contient les deux blocs d'un échange mixte.
-
-**Le plan calcule TOUJOURS les deux géométries**, c'est la vue qui décide
-laquelle se dessine : *un plan qui changerait de forme selon le lieu obligerait
-chaque lecteur à savoir où il est.* Et la HAUTEUR se calcule avant les largeurs,
-parce que c'est elle qui fixe la taille des cartes du chargement et que la
-largeur dont le panneau a besoin s'en déduit — *on part de la place, on en déduit
-la taille.*
-
-**L'armurier ne prend plus que son image** : sa colonne est bornée par
-`hauteur x 0,68`, le rapport de son fichier, parce qu'au-delà elle n'ajouterait
-que du vide de chaque côté du portrait. C'est la remarque de Keko — « je pense
-que le PNJ prend trop de place » — remise là où elle se règle.
-
-*Reste à faire, et Keko le verra tout de suite* : **les huit entrées du rail
-portent le même blason**, celui de l'armurerie. Le coffre en voudra un à lui.
+**Ce qui est GARDÉ de l'épisode : les trésors se rangent dans le coffre.** Keko :
+« dans le coffre, je ne peux pas réorganiser les trésors comme le reste des
+cartes ». La règle savait déjà le faire — `echangerDansCoffre` essaie les deux
+listes — mais le rendu exigeait une PIÈCE pour même y penser, et
+`rangerEnFinDeCoffre` ne connaissait que `reserve`. *Un trésor ne s'équipe pas ;
+ça ne veut pas dire qu'il ne se range pas.* Les deux listes restent étanches, et
+c'est la règle qui le garantit : aucune ne contient les deux blocs d'un échange
+mixte.
 
 ### LA PAGE D'ARMURERIE : UN BANDEAU ET TROIS COLONNES
-
-*Ce qui suit décrit l'écran d'avant la séparation : il avait le coffre,
-l'équipement et les stats côte à côte. La disposition en colonnes vaut toujours
-pour ce qu'elle a appris, mais **il n'y a plus qu'un meuble par lieu.***
 
 
 Elle avait deux panneaux collés aux bords et un énorme vide au milieu — Keko :

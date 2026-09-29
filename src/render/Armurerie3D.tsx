@@ -49,19 +49,14 @@ import { accepteDepuis, deuxMains, peutDescendre } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
 import type { PlanArmurerie } from './armurerie-plan.ts'
 import {
-  Z_VOILE_MENU,
-  candidatsPourSlot,
   caseSousLePoint,
   contenuDuCoffre,
-  pieceDuSlot,
   pixelsParUnite,
   placeCase,
-  placeCaseMenu,
   planArmurerie,
 } from './armurerie-plan.ts'
 import { tailleDuCompte } from './Carte3D.tsx'
 import { aPeindre } from './combat-3d.ts'
-import type { Lieu } from './destinations.ts'
 
 /**
  * LA TAILLE QU'UNE PIÈCE AURA UNE FOIS POSÉE LÀ.
@@ -145,12 +140,6 @@ type CaseProps = {
   accent?: string
   /** De quoi la couper au bord du meuble, quand le coffre défile. */
   clipper?: THREE.Plane[] | null
-  /**
-   * UNE CASE VIDE DU CHARGEMENT EST UN BOUTON : la taper ouvre le choix de ce
-   * qu'on peut y mettre. Demandé par Keko. *Sans ça, un slot vide n'aurait
-   * aucune porte* — il n'y a plus de coffre à côté d'où glisser une pièce.
-   */
-  onCliquer?: () => void
 }
 
 function CaseVide({
@@ -159,7 +148,6 @@ function CaseVide({
   taille,
   accent = '#6f6a5e',
   clipper = null,
-  onCliquer,
 }: CaseProps): React.JSX.Element {
   const materiau = useMemo(
     () =>
@@ -173,18 +161,7 @@ function CaseVide({
     [nom, accent, clipper],
   )
   return (
-    <mesh
-      position={position}
-      material={materiau}
-      onPointerDown={
-        onCliquer === undefined
-          ? undefined
-          : (e) => {
-              e.stopPropagation()
-              onCliquer()
-            }
-      }
-    >
+    <mesh position={position} material={materiau}>
       <planeGeometry args={[taille, taille * 1.4]} />
     </mesh>
   )
@@ -192,23 +169,6 @@ function CaseVide({
 
 type Props = {
   hub: Hub
-  /**
-   * LE LIEU OÙ L'ON EST : l'armurerie ou le coffre.
-   *
-   * Les deux étaient deux colonnes d'un même écran ; ce sont désormais deux
-   * destinations du rail, et chacune prend toute la place. *Le plan calcule
-   * toujours les deux géométries — c'est la VUE qui décide laquelle se
-   * dessine.*
-   */
-  lieu: Lieu
-  /**
-   * LE SLOT DONT ON CHOISIT LE CONTENU, ou `null`.
-   *
-   * Il vit dans l'état du parent et non ici, comme l'onglet du coffre : *ce qui
-   * survit à un remontage de la scène ne peut pas vivre dedans.*
-   */
-  choix: Slot | null
-  onChoix?: (slot: Slot | null) => void
   /** Ce que le coffre montre : l'onglet choisi, et la première ligne visible. */
   onglet: Onglet
   defilement: number
@@ -302,9 +262,6 @@ function doublureDe<T extends { nombre: number; ids: string[] }>(
 
 export function Armurerie3D({
   hub,
-  lieu,
-  choix,
-  onChoix,
   onglet,
   defilement,
   onDeplacer,
@@ -321,24 +278,6 @@ export function Armurerie3D({
 }: Props): React.JSX.Element {
   const { size } = useThree()
   const aDeuxMains = deuxMains(hub.chargement)
-  /**
-   * DEUX LIEUX, DEUX MEUBLES, ET JAMAIS LES DEUX ENSEMBLE.
-   *
-   * Tranché par Keko : « on a un onglet armurerie avec le panneau équipement, et
-   * un onglet coffre avec le coffre actuel ». *Ce qui n'est pas à l'écran n'est
-   * pas dans la liste* — le geste ne connaît qu'un index, donc une carte
-   * dessinée nulle part ne doit pas y figurer.
-   */
-  const auCoffre = lieu === 'coffre'
-  /**
-   * LE MENU DE CHANGEMENT EST OUVERT — le slot à gauche, son onglet à droite.
-   *
-   * *Il remet les deux meubles à l'écran*, réduits à ce que le geste concerne :
-   * c'est ce qui rend le glisser possible de nouveau, alors que l'armurerie et
-   * le coffre sont devenus deux lieux.
-   */
-  const slotDuMenu = auCoffre ? null : choix
-  const menuOuvert = slotDuMenu !== null
   const plan = planArmurerie(size.height, size.width, aDeuxMains)
   // LE DISQUE DU COMPTE SE MESURE EN REM, pas en part de carte : c'est un
   // repère d'interface, et une case du coffre fait trois fois plus de pixels
@@ -374,17 +313,6 @@ export function Armurerie3D({
     ],
     [plan.grille.y, plan.grille.h],
   )
-  // La grille du menu se coupe comme celle du coffre, sur SES bords à elle.
-  const clipperMenu = useMemo(
-    () => [
-      new THREE.Plane(new THREE.Vector3(0, -1, 0), plan.menuGrille.y + plan.menuGrille.h / 2),
-      new THREE.Plane(new THREE.Vector3(0, 1, 0), -(plan.menuGrille.y - plan.menuGrille.h / 2)),
-    ],
-    [plan.menuGrille.y, plan.menuGrille.h],
-  )
-  const resteMenu = (defilement - ligneBase) * plan.menuPasY
-  const casesMenu = plan.menuColonnes * (plan.menuLignes + 1)
-  const departMenu = ligneBase * plan.menuColonnes
 
   /**
    * CE QUE L'ONGLET MONTRE.
@@ -411,19 +339,6 @@ export function Armurerie3D({
   }
 
   const contenu = useMemo(() => contenuDuCoffre(hub, onglet), [hub, onglet])
-  /**
-   * CE QUE LE MENU PROPOSE — **et c'est la RÈGLE qui répond**.
-   *
-   * `candidatsPourSlot` refait le raisonnement complet de `deplacerPiece`, donc
-   * tout ce qui est montré est déposable : c'est la même fonction qui allume
-   * les slots pendant un glisser. Pour les trois familles de slots, ça revient
-   * exactement à l'onglet du coffre correspondant, que Keko a demandé.
-   */
-  const candidatsMenu = useMemo(
-    () => (slotDuMenu === null ? [] : candidatsPourSlot(hub, slotDuMenu)),
-    [hub, slotDuMenu],
-  )
-  const porteeDuSlot = slotDuMenu === null ? null : pieceDuSlot(hub, slotDuMenu)
 
   const total = contenu.pieces.length + contenu.tresors.length
   /** La première case tirée du coffre : la ligne entière, le reste est visuel. */
@@ -461,45 +376,7 @@ export function Armurerie3D({
     doublure?: boolean
     /** Pour une doublure : l'identifiant de la carte posée dessus. */
     chef?: string
-  }[] = menuOuvert
-    ? [
-        // LE SLOT, À GAUCHE, à sa taille de main : *c'est ce qu'on remplit, il
-        // doit se lire comme il se lira.*
-        ...(porteeDuSlot === null
-          ? []
-          : [
-              {
-                objet: porteeDuSlot,
-                tresor: null,
-                id: porteeDuSlot.id,
-                slot: slotDuMenu,
-                position: plan.menuSlot,
-                taille: plan.tailleCharge,
-              },
-            ]),
-        // L'ONGLET DU COFFRE, À DROITE, aux cases du coffre.
-        ...candidatsMenu.flatMap((pile, i) => {
-          const rang = i - departMenu
-          if (rang < 0 || rang >= casesMenu) return []
-          const ou = placeCaseMenu(plan, rang, resteMenu)
-          return [
-            {
-              objet: pile.objet,
-              tresor: null,
-              id: pile.objet.id,
-              slot: { ou: 'reserve' } as Slot,
-              position: ou,
-              taille: plan.menuTaille,
-              rang,
-              pile: pile.nombre,
-              ids: pile.ids,
-            },
-            ...doublureDe(pile, pile.objet, null, ou, plan.menuTaille, rang),
-          ]
-        }),
-      ]
-    : auCoffre
-    ? [
+  }[] = [
     ...contenu.pieces.flatMap((pile, i) => {
       const objet = pile.objet
       const rang = i - depart
@@ -538,8 +415,6 @@ export function Armurerie3D({
         ...doublureDe(pile, null, tresor, placeCase(plan, rang, reste), plan.tailleCoffre, rang),
       ]
     }),
-      ]
-    : [
     ...hub.chargement.mains.flatMap((arme, rang) =>
       arme === null
         ? []
@@ -582,7 +457,7 @@ export function Armurerie3D({
             },
           ],
     ),
-      ]
+  ]
 
   /**
    * Quel slot se trouve sous ce point. Le coffre est tout le flanc gauche.
@@ -593,29 +468,6 @@ export function Armurerie3D({
    * vole le dépôt à sa voisine.*
    */
   const slotSous = (point: THREE.Vector3): Slot | null => {
-    /**
-     * DANS LE MENU, DEUX DESTINATIONS ET RIEN D'AUTRE : le slot à gauche, le
-     * coffre à droite. *C'est tout ce que cet écran sait faire*, et c'est ce
-     * qui rend le glisser lisible — on va d'un côté ou de l'autre.
-     */
-    if (menuOuvert) {
-      const s = plan.menuSlot
-      const t = plan.tailleCharge
-      if (Math.abs(point.x - s[0]) < t * 0.62 && Math.abs(point.y - s[1]) < t * 0.82) {
-        return slotDuMenu
-      }
-      const g = plan.menuGrille
-      if (
-        Math.abs(point.x - g.x) < g.l / 2 + plan.menuPasX * 0.3 &&
-        Math.abs(point.y - g.y) < g.h / 2
-      ) {
-        return { ou: 'reserve' }
-      }
-      return null
-    }
-    // AU COFFRE, TOUT EST LE COFFRE : il n'y a plus de slot à côté, et le seul
-    // déplacement possible est un rangement entre deux cases.
-    if (auCoffre) return { ou: 'reserve' }
     const t = plan.tailleCharge
     const pres = (p: [number, number, number], l: number, h: number): boolean =>
       Math.abs(point.x - p[0]) < l && Math.abs(point.y - p[1]) < h
@@ -651,16 +503,8 @@ export function Armurerie3D({
       const rang = plan.pile.findIndex((p) => Math.abs(point.x - p[0]) < plan.taillePile * 0.56)
       return rang >= 0 ? { ou: 'pile', rang } : { ou: 'pile' }
     }
-    /**
-     * **À L'ARMURERIE, LÂCHER À CÔTÉ NE FAIT RIEN.**
-     *
-     * Un lâcher hors du cadre renvoyait la pièce au coffre — c'était la seule
-     * porte pour déséquiper tant que les deux meubles se touchaient. Le coffre
-     * est parti dans sa propre destination, donc « hors du cadre » ne désigne
-     * plus rien : *une zone de dépôt qui n'a plus de meuble derrière elle
-     * déséquiperait par mégarde.* Retirer une pièce passe désormais par la case
-     * « Retirer » du choix, qui le dit avant de le faire.
-     */
+    // Hors du cadre de l'équipement, c'est le coffre : on y repose.
+    if (point.x < plan.equipement.x - plan.equipement.l / 2) return { ou: 'reserve' }
     return null
   }
 
@@ -714,16 +558,6 @@ export function Armurerie3D({
 
   const { tenue, doigt, prendre } = useGesteCarte({
     z: Z_TENUE,
-    /**
-     * **LA TAPE REGARDE, PARTOUT ET TOUJOURS.**
-     *
-     * Elle a ouvert le choix d'un slot le temps d'une version ; Keko l'a
-     * repris : « je voudrais garder le clic = zoom et affichage des cartes, le
-     * clic ne fait pas changer d'arme ». *Et il faut le garder jusque DANS le
-     * menu de changement* — c'est précisément là qu'on veut lire une pièce
-     * avant de la prendre. Changer un slot passe donc par son bouton, pas par
-     * un geste qu'on emprunte à la lecture.
-     */
     onTaper: (i) => {
       const t = objets[i]
       if (t === undefined) return
@@ -755,7 +589,7 @@ export function Armurerie3D({
        * d'échanger un trésor contre une pièce, puisqu'aucune des deux ne
        * contient les deux blocs.
        */
-      if (!menuOuvert && cible?.ou === 'reserve' && t?.slot.ou === 'reserve') {
+      if (cible?.ou === 'reserve' && t?.slot.ou === 'reserve') {
         const rang = caseSousLePoint(plan, point.x, point.y, reste)
         const vise = rang === null ? undefined : objets.find(
           (o) => o.slot.ou === 'reserve' && o.rang === rang && o.doublure !== true,
@@ -888,12 +722,10 @@ export function Armurerie3D({
    * s'allume case par case — c'est une seule zone de dépôt, mais ce qu'on
    * doit lire c'est la RANGÉE qui reçoit.
    */
-  const candidats: { slot: Slot; position: [number, number, number]; taille: number }[] = (
-    portee === null || portee.objet === null || auCoffre
+  const candidats: { slot: Slot; position: [number, number, number]; taille: number }[] =
+    portee === null || portee.objet === null
       ? []
-      : menuOuvert
-        ? [{ slot: slotDuMenu, position: plan.menuSlot }]
-        : [
+      : [
           { slot: { ou: 'main', rang: 0 } as Slot, position: plan.mains[0] },
           ...(aDeuxMains ? [] : [{ slot: { ou: 'main', rang: 1 } as Slot, position: plan.mains[1] }]),
           { slot: { ou: 'armure' } as Slot, position: plan.armure },
@@ -912,8 +744,7 @@ export function Armurerie3D({
           // des deux sens : le joueur croit que c'est refusé et n'essaie pas.
           ...plan.pile.map((position, rang) => ({ slot: { ou: 'pile', rang } as Slot, position })),
         ]
-  )
-          .filter(({ slot }) => accepteDepuis(hub, portee!.slot, slot, portee!.objet!.id))
+          .filter(({ slot }) => accepteDepuis(hub, portee.slot, slot, portee.objet!.id))
           .map(({ slot, position }) => ({ slot, position, taille: tailleDuSlot(slot, plan) }))
 
   /** Les cases vides du coffre : la grille est pleine, qu'il y ait de quoi ou non. */
@@ -925,47 +756,8 @@ export function Armurerie3D({
    * RETIENT, parce que l'onde reste montée après coup et n'a aucune raison de
    * sauter à l'origine quand la culbute s'efface.
    */
-  /** Les cases vides de la grille du menu : une grille de places, comme le coffre. */
-  const montreesMenu = Math.max(0, Math.min(casesMenu, candidatsMenu.length - departMenu))
-
   return (
     <group>
-      {/* LE MENU DE CHANGEMENT : son voile, la case du slot, les cases vides de
-          sa grille. Les cartes, elles, sont dans la liste commune — *c'est le
-          même geste qu'ailleurs*, donc la même liste. */}
-      {menuOuvert && (
-        <>
-          {/* LE VOILE ARRÊTE L'ÉVÈNEMENT, pas seulement le rayon : R3F prévient
-              TOUS les objets que le rayon traverse. Il arrête aussi le
-              MOUVEMENT, sinon les cartes de l'armurerie continueraient de
-              s'incliner sous le curseur derrière lui. */}
-          <mesh
-            position={[0, 0, Z_VOILE_MENU]}
-            onPointerDown={(e) => {
-              e.stopPropagation()
-              onChoix?.(null)
-            }}
-            onPointerMove={(e) => e.stopPropagation()}
-          >
-            <planeGeometry args={[40, 24]} />
-            <meshBasicMaterial color="#05050a" transparent opacity={0.95} />
-          </mesh>
-          {porteeDuSlot === null && (
-            <CaseVide nom="" position={plan.menuSlot} taille={plan.tailleCharge} />
-          )}
-          {Array.from({ length: casesMenu - montreesMenu }, (_, i) => (
-            <CaseVide
-              key={`menu-vide-${i}`}
-              nom=""
-              position={placeCaseMenu(plan, montreesMenu + i, resteMenu)}
-              taille={plan.menuTaille}
-              accent={TEINTE.reserve}
-              clipper={clipperMenu}
-            />
-          ))}
-        </>
-      )}
-
       {/* CE QUI PREND LA PIÈCE QU'ON TIENT S'ALLUME. */}
       {candidats.map(({ slot, position, taille }) => (
         <SlotAccueille
@@ -976,7 +768,7 @@ export function Armurerie3D({
       ))}
 
       {/* LES CASES VIDES DU COFFRE : une grille de places, pas une liste. */}
-      {auCoffre && Array.from({ length: vides }, (_, i) => (
+      {Array.from({ length: vides }, (_, i) => (
         <CaseVide
           key={`vide-${i}`}
           nom=""
@@ -995,45 +787,28 @@ export function Armurerie3D({
           à la même taille. Une arme à deux mains masque le second slot au lieu
           de le barrer : *un slot qui reste rempli mais inutilisable mentirait
           sur ce qu'on emporte.* */}
-      {!auCoffre && hub.chargement.mains[0] === null && (
-        <CaseVide
-          nom=""
-          position={plan.mains[0]}
-          taille={plan.tailleCharge}
-          onCliquer={() => onChoix?.({ ou: 'main', rang: 0 })}
-        />
+      {hub.chargement.mains[0] === null && (
+        <CaseVide nom="" position={plan.mains[0]} taille={plan.tailleCharge} />
       )}
-      {!auCoffre && !aDeuxMains && hub.chargement.mains[1] === null && (
-        <CaseVide
-          nom=""
-          position={plan.mains[1]}
-          taille={plan.tailleCharge}
-          onCliquer={() => onChoix?.({ ou: 'main', rang: 1 })}
-        />
+      {!aDeuxMains && hub.chargement.mains[1] === null && (
+        <CaseVide nom="" position={plan.mains[1]} taille={plan.tailleCharge} />
       )}
-      {!auCoffre && hub.chargement.armure === null && (
-        <CaseVide
-          nom=""
-          position={plan.armure}
-          taille={plan.tailleCharge}
-          onCliquer={() => onChoix?.({ ou: 'armure' })}
-        />
+      {hub.chargement.armure === null && (
+        <CaseVide nom="" position={plan.armure} taille={plan.tailleCharge} />
       )}
-      {!auCoffre &&
-        hub.chargement.pile.flatMap((objet, i) =>
-          objet !== null
-            ? []
-            : [
-                <CaseVide
-                  key={`pile-${i}`}
-                  nom=""
-                  position={plan.pile[i] ?? plan.pile[0]!}
-                  taille={plan.taillePile}
-                  accent={TEINTE.pile}
-                  onCliquer={() => onChoix?.({ ou: 'pile', rang: i })}
-                />,
-              ],
-        )}
+      {hub.chargement.pile.flatMap((objet, i) =>
+        objet !== null
+          ? []
+          : [
+              <CaseVide
+                key={`pile-${i}`}
+                nom=""
+                position={plan.pile[i] ?? plan.pile[0]!}
+                taille={plan.taillePile}
+                accent={TEINTE.pile}
+              />,
+            ],
+      )}
 
       {/* LA CASE D'OÙ L'ON TIENT LA PIÈCE RESTE VISIBLE, en pointillé, et elle
           DIT CE QU'ELLE ATTEND. Les cases vides se déduisent du chargement, or
@@ -1127,9 +902,7 @@ export function Armurerie3D({
             // ON NE COUPE PAS CE QU'ON TIENT : la carte sortie du coffre
             // traverse l'écran, et un plan de découpe la trancherait au bord
             // du meuble qu'elle vient de quitter.
-            clipper={
-              t.slot.ou === 'reserve' && !suitLeDoigt ? (menuOuvert ? clipperMenu : clipper) : null
-            }
+            clipper={t.slot.ou === 'reserve' && !suitLeDoigt ? clipper : null}
             engagee={suitLeDoigt && surUnSlot}
             // ELLE RÉPOND AU CURSEUR — TANT QU'ON NE TIENT RIEN. Keko a voulu
             // l'effet du zoom partout dans l'armurerie ; mais ici le pointeur

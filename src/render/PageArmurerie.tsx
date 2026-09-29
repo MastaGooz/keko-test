@@ -25,8 +25,6 @@ import type { Onglet } from './armurerie-plan.ts'
 import {
   NOM_ONGLET,
   ONGLETS,
-  NOM_ONGLET as NOMS,
-  candidatsPourSlot,
   contenuDuCoffre,
   enPixels,
   pixelsParUnite,
@@ -42,8 +40,6 @@ import { tailleBouton } from './Bouton3D.tsx'
 import { Z_PLAN } from './armurerie-plan.ts'
 import { urlDeLArmurerie, urlDeLArmurier } from '../ui/art.ts'
 import { DESTINATIONS } from './destinations.ts'
-import type { Lieu } from './destinations.ts'
-import type { Slot } from '../logic/hub.ts'
 
 /**
  * Ce qu'une infobulle a besoin de savoir : son texte, son point d'ancrage, et
@@ -81,16 +77,6 @@ function useFenetre(): { l: number; h: number } {
 
 type Props = {
   hub: Hub
-  /** Le lieu du hub où l'on est, et de quoi en changer. */
-  lieu: Lieu
-  onLieu: (l: Lieu) => void
-  /**
-   * Le slot dont on choisit le contenu. La page n'en dessine que le TITRE :
-   * les cartes vivent dans le canvas, comme partout ailleurs.
-   */
-  choix: Slot | null
-  /** Ouvrir — ou refermer — le menu de changement d'un slot. */
-  onChoix: (slot: Slot | null) => void
   onglet: Onglet
   /** Ranger le coffre : par catégorie, puis par rareté. */
   onTrier?: () => void
@@ -127,10 +113,6 @@ type Props = {
 
 export function PageArmurerie({
   hub,
-  lieu,
-  onLieu,
-  choix,
-  onChoix,
   onglet,
   onTrier,
   onOnglet,
@@ -145,40 +127,6 @@ export function PageArmurerie({
 }: Props): React.JSX.Element {
   const fenetre = useFenetre()
   const plan = planArmurerie(fenetre.h, fenetre.l, deuxMains(hub.chargement))
-  /**
-   * CHAQUE LIEU NE DESSINE QUE SON MEUBLE.
-   *
-   * Tranché par Keko : « on a un onglet armurerie avec le panneau équipement, et
-   * un onglet coffre avec le coffre actuel ». Le plan calcule toujours les deux
-   * géométries — *un plan qui changerait de forme selon le lieu obligerait
-   * chaque lecteur à savoir où il est* — et c'est la vue qui choisit.
-   */
-  const auCoffre = lieu === 'coffre'
-  /**
-   * CE QU'ON EST EN TRAIN DE CHOISIR, en un mot.
-   *
-   * Les cartes du choix vivent dans le canvas ; seul le titre est écrit, comme
-   * tout le texte de cet écran. *Il nomme le slot et pas le meuble* : c'est
-   * une décision, elle a un objet.
-   */
-  /**
-   * CE QUE LE MENU MONTRE À DROITE : l'onglet du coffre correspondant.
-   *
-   * Dicté par Keko — « à gauche le slot en question et à droite l'onglet du
-   * coffre correspondant ». *C'est la catégorie du slot, donc elle se déduit
-   * de lui* et n'a pas à être choisie.
-   */
-  const ongletDuMenu: Onglet =
-    choix === null ? 'tout' : choix.ou === 'armure' ? 'armures' : choix.ou === 'pile' ? 'consommables' : 'armes'
-  const menuOuvert = choix !== null && !auCoffre
-  const lignesMenu =
-    choix === null
-      ? 1
-      : Math.max(
-          plan.menuLignes,
-          Math.ceil(candidatsPourSlot(hub, choix).length / plan.menuColonnes),
-        )
-  const maxMenu = Math.max(0, lignesMenu - plan.menuLignes)
   const boite = (r: Parameters<typeof enPixels>[0]): React.CSSProperties => {
     const p = enPixels(r, fenetre.h, fenetre.l)
     return { left: `${p.left}px`, top: `${p.top}px`, width: `${p.width}px`, height: `${p.height}px` }
@@ -216,13 +164,9 @@ export function PageArmurerie({
    * partout, et on n'agit que si le pointeur est DANS le coffre.
    */
   const cadreCoffre = useRef<HTMLDivElement>(null)
-  const cadreMenu = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const rouler = (e: WheelEvent): void => {
-      // LE MENU PASSE DEVANT LE COFFRE : quand il est ouvert, c'est SA grille
-      // qu'on défile, et le coffre n'est même pas à l'écran.
-      const cadre = menuOuvert ? cadreMenu.current : cadreCoffre.current
-      const r = cadre?.getBoundingClientRect()
+      const r = cadreCoffre.current?.getBoundingClientRect()
       if (r === undefined) return
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
         return
@@ -230,14 +174,13 @@ export function PageArmurerie({
       // EN CONTINU, PAS PAR LIGNES : on convertit les pixels de la molette en
       // lignes. Un cran ordinaire (~100 px) avance d'un peu plus d'une
       // demi-rangée, donc le coffre glisse au lieu de sauter.
-      const lignePx = (menuOuvert ? plan.menuPasY : plan.pasY) * pixelsParUnite(fenetre.h)
+      const lignePx = plan.pasY * pixelsParUnite(fenetre.h)
       const pas = lignePx > 0 ? e.deltaY / lignePx : 0
-      const borne = menuOuvert ? maxMenu : maxDefilement
-      onDefilement(Math.max(0, Math.min(borne, defilement + pas)))
+      onDefilement(Math.max(0, Math.min(maxDefilement, defilement + pas)))
     }
     window.addEventListener('wheel', rouler, { passive: true })
     return () => window.removeEventListener('wheel', rouler)
-  }, [defilement, maxDefilement, maxMenu, menuOuvert, onDefilement])
+  }, [defilement, maxDefilement, onDefilement])
 
   /**
    * CE QUE DIT CHAQUE STAT, en une infobulle. Demandé par Keko : « quand la
@@ -273,8 +216,6 @@ export function PageArmurerie({
    * d'écran, et il ne dessine rien.
    */
   const tri = useRef<HTMLButtonElement | null>(null)
-  /** Les boutons « Changer » : leur bulle les nomme, puisqu'ils n'ont qu'un symbole. */
-  const changers = useRef<(HTMLButtonElement | null)[]>([])
   /** Le couple chiffre + symbole de chaque mesure : c'est LUI qui s'anime. */
   const vifs = useRef<(HTMLSpanElement | null)[]>([])
 
@@ -351,20 +292,6 @@ export function PageArmurerie({
   const paVu = montrees[3] ?? energieMax
 
   const [bulle, setBulle] = useState<Bulle | null>(null)
-  /**
-   * **UNE BULLE NE SURVIT PAS À CE QU'ELLE ANNOTAIT.**
-   *
-   * Au doigt elle se ferme d'elle-même au bout de 2,6 s — mais son minuteur vit
-   * dans l'effet des écouteurs, et cet effet se remonte quand le menu s'ouvre :
-   * le nettoyage annulait le minuteur, donc la bulle du bouton « Changer »
-   * restait à l'écran pour toujours, jusque dans le coffre. Keko : « quand je
-   * tape dessus sur tél, l'infobulle Changer reste au milieu de l'écran
-   * coffre ».
-   *
-   * *Un minuteur posé dans un effet meurt avec lui* : ce qu'il devait effacer
-   * doit donc l'être aussi, et par le changement d'écran lui-même.
-   */
-  useEffect(() => setBulle(null), [lieu, menuOuvert])
 
   /**
    * ET LE BOUTON ÉTEINT DIT POURQUOI IL L'EST.
@@ -428,22 +355,6 @@ export function PageArmurerie({
           }
         }
       }
-      // LES BOUTONS N'EXISTENT PAS QUAND LE MENU EST OUVERT : leurs `ref`s
-      // survivent au démontage, et une bulle posée sur un bouton disparu
-      // resterait à l'écran jusqu'au prochain mouvement.
-      for (const [i, el] of (menuOuvert ? [] : changers.current).entries()) {
-        if (el === null) continue
-        const r = el.getBoundingClientRect()
-        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-          return {
-            cle: `changer-${i}`,
-            texte: 'Changer',
-            x: (r.left + r.right) / 2,
-            y: r.top,
-            place: 'dessus',
-          }
-        }
-      }
       const t = tri.current
       if (t !== null) {
         const r = t.getBoundingClientRect()
@@ -483,31 +394,19 @@ export function PageArmurerie({
     // Le rectangle du bouton se relit à chaque geste, donc il suit la fenêtre
     // tout seul ; seul l'état « bloqué » doit relancer l'écoute.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bloque, menuOuvert])
+  }, [bloque])
 
   /** Le pouce se traîne : sa place dans la piste dit la ligne du haut. */
   const piste = useRef<HTMLDivElement>(null)
-  const pisteMenu = useRef<HTMLDivElement>(null)
-  /**
-   * UN SEUL GESTE POUR LES DEUX BARRES — celle du coffre et celle du menu.
-   *
-   * *Au doigt il n'y a pas de molette* : sans ce pouce, la grille du menu
-   * serait impossible à défiler sur un téléphone. Le geste ne change pas d'une
-   * barre à l'autre, donc il ne s'écrit qu'une fois.
-   */
-  const glisserPouceDe = (
-    ref: React.RefObject<HTMLDivElement | null>,
-    max: number,
-    total: number,
-  ) => (e: React.PointerEvent): void => {
+  const glisserPouce = (e: React.PointerEvent): void => {
     e.preventDefault()
     const suivre = (ev: PointerEvent): void => {
-      const r = ref.current?.getBoundingClientRect()
+      const r = piste.current?.getBoundingClientRect()
       if (r === undefined || r.height === 0) return
       // Le pouce suit le doigt SANS s'arrêter aux lignes : c'est la même
       // grandeur continue que la molette.
       const part = (ev.clientY - r.top) / r.height
-      onDefilement(Math.max(0, Math.min(max, part * total)))
+      onDefilement(Math.max(0, Math.min(maxDefilement, part * lignesTotal)))
     }
     const finir = (): void => {
       window.removeEventListener('pointermove', suivre)
@@ -517,8 +416,6 @@ export function PageArmurerie({
     window.addEventListener('pointerup', finir)
     suivre(e.nativeEvent)
   }
-  const glisserPouce = glisserPouceDe(piste, maxDefilement, lignesTotal)
-  const glisserPouceMenu = glisserPouceDe(pisteMenu, maxMenu, lignesMenu)
 
 
   /**
@@ -536,132 +433,117 @@ export function PageArmurerie({
   return (
     <>
       <div className="arm-fond">
-      {auCoffre && (
-        <>
-          <div className="arm-cadre" style={boite(plan.coffre)} ref={cadreCoffre} />
-          <span className="arm-nom" style={plaque(plan.coffre)}>
-            Coffre
+      <div className="arm-cadre" style={boite(plan.coffre)} ref={cadreCoffre} />
+      <span className="arm-nom" style={plaque(plan.coffre)}>
+        Coffre
+      </span>
+
+      <div className="arm-cadre" style={boite(plan.equipement)} />
+      <span className="arm-nom" style={plaque(plan.equipement)}>
+        Équipement
+      </span>
+
+      {/* LES NOMS DE GROUPE, AU-DESSUS DES SLOTS QU'ILS NOMMENT. Keko : « il
+          faudrait que le nom soit au-dessus des slots, "Armes" au-dessus des
+          deux slots, armure et consommable au-dessus du bloc des
+          consommables ».
+
+          Le mot vivait DANS la case vide, un par slot. *Rien ne nommait la
+          pile* — une case vide muette ne dit pas ce qu'elle attend — et deux
+          cases voisines ne l'écrivaient pas à la même taille. **Un nom posé
+          sur un GROUPE le dit une fois pour deux slots, et il le dit encore
+          quand les cases sont pleines.** */}
+      <p className="arm-groupe" style={boite(plan.nomArmes)}>
+        {deuxMains(hub.chargement) ? 'Arme' : 'Armes'}
+      </p>
+      <p className="arm-groupe" style={boite(plan.nomArmure)}>
+        Armure
+      </p>
+      {/* « OBJETS », le nom de la catégorie du coffre — et celui que porte
+          désormais le pied des cartes. *Une même famille ne peut pas s'appeler
+          de trois façons selon l'endroit où on la regarde* : l'onglet disait
+          Objets, le groupe Consommables, la carte Consommable. Demandé par
+          Keko. Le mot est aussi le plus court, ce qui ne gâte rien sur un
+          téléphone. */}
+      <p className="arm-groupe" style={boite(plan.nomObjets)}>
+        Objets
+      </p>
+
+      {/* L'ÉTAT DE CE QU'ON EMPORTE, en bas à droite : le deck, la vie,
+          l'énergie et la main. Demandé par Keko — *avant de descendre, le
+          joueur doit voir avec quoi il descend*, et ces quatre chiffres le
+          disent sans qu'il ait à ouvrir quoi que ce soit.
+
+          Ce sont les MÊMES objets qu'en combat — le paquet de pioche, l'orbe —
+          parce que c'est là qu'il les retrouvera. */}
+      {/* CHAQUE COUPLE EST UN CARTOUCHE, et le chiffre y vient AVANT son
+          symbole. Keko : « le chiffre d'abord, puis l'icône — et un moyen de
+          bien voir que tel chiffre correspond à tel icône ».
+
+          *Quatre chiffres et quatre symboles alignés ne disent pas lesquels
+          vont ensemble* : l'oeil les apparie par la proximité, et une rangée
+          régulière n'en a aucune. Un fond commun le dit sans un mot — et ce
+          n'est pas une décoration : c'est la seule chose qui les relie.
+
+          L'énergie n'en a pas besoin de la même façon : son chiffre est DANS
+          son symbole. Elle garde le cartouche pour rester de la famille. */}
+      {/* L'ORDRE EST CELUI DE KEKO : vie, deck, main, énergie. Il va du plus
+          durable au plus volatil — les PV traversent la descente, le deck la
+          run, la main le tour, l'énergie ne survit pas au tour. */}
+      {/* L'ARMURIER PREND TOUTE SA COLONNE. Il a d'abord coiffé le rail des
+          mesures, et *elles se lisaient alors comme LES SIENNES* — Keko : « on
+          dirait que c'est les stats du PNJ maintenant ». Elles sont parties en
+          bande au-dessus de l'équipement ; lui n'a plus rien à partager. */}
+      <img className="arm-pnj" style={boite(plan.pnj)} src={urlDeLArmurier()} alt="" />
+
+      {/* LES QUATRE MESURES EN BANDE, au-dessus de ce qu'on équipe : *ce qu'on
+          emporte se mesure au-dessus de ce qu'on porte.* */}
+      {/* LA BANDE SE MESURE SUR SA LARGEUR AUTANT QUE SUR SA HAUTEUR : quatre
+          mesures dans un panneau étroit ne tiennent pas, et *la contrainte la
+          plus dure gagne.* */}
+      <div
+        className="arm-etat"
+        style={
+          {
+            ...boite(plan.stats),
+            // ON REPREND LA VALEUR AU PLAN, pas à `boite` : celle-ci rend déjà
+            // des chaînes en `px`, et la recoller donnait un « 182pxpx » que le
+            // navigateur jette EN SILENCE — la hauteur des symboles dépendait
+            // de ce `calc`, donc elle tombait avec lui et ils disparaissaient.
+            '--etat-l': `${enPixels(plan.stats, fenetre.h, fenetre.l).width}px`,
+          } as React.CSSProperties
+        }
+      >
+        <span className="arm-mesure" ref={(el) => void (mesures.current[0] = el)}>
+          <span className="arm-vif" ref={(el) => void (vifs.current[0] = el)}>
+            <span className="arm-chiffre">{pvVu}</span>
+            <CoeurIcone />
           </span>
-        </>
-      )}
-
-      {!auCoffre && (
-        <>
-          <div className="arm-cadre" style={boite(plan.equipement)} />
-          <span className="arm-nom" style={plaque(plan.equipement)}>
-            Équipement
-          </span>
-        </>
-      )}
-
-      {/* TOUT CE QUI SUIT EST L'ARMURERIE, et elle seule : les noms de groupe,
-          l'armurier et la bande des mesures. Le coffre a son propre lieu, donc
-          plus rien ne les partage. */}
-      {!auCoffre && (
-        <>
-        {/* LES NOMS DE GROUPE, AU-DESSUS DES SLOTS QU'ILS NOMMENT. Keko : « il
-            faudrait que le nom soit au-dessus des slots, "Armes" au-dessus des
-            deux slots, armure et consommable au-dessus du bloc des
-            consommables ».
-
-            Le mot vivait DANS la case vide, un par slot. *Rien ne nommait la
-            pile* — une case vide muette ne dit pas ce qu'elle attend — et deux
-            cases voisines ne l'écrivaient pas à la même taille. **Un nom posé
-            sur un GROUPE le dit une fois pour deux slots, et il le dit encore
-            quand les cases sont pleines.** */}
-        <p className="arm-groupe" style={boite(plan.nomArmes)}>
-          {deuxMains(hub.chargement) ? 'Arme' : 'Armes'}
-        </p>
-        <p className="arm-groupe" style={boite(plan.nomArmure)}>
-          Armure
-        </p>
-        {/* « OBJETS », le nom de la catégorie du coffre — et celui que porte
-            désormais le pied des cartes. *Une même famille ne peut pas s'appeler
-            de trois façons selon l'endroit où on la regarde* : l'onglet disait
-            Objets, le groupe Consommables, la carte Consommable. Demandé par
-            Keko. Le mot est aussi le plus court, ce qui ne gâte rien sur un
-            téléphone. */}
-        <p className="arm-groupe" style={boite(plan.nomObjets)}>
-          Objets
-        </p>
-
-        {/* L'ÉTAT DE CE QU'ON EMPORTE, en bas à droite : le deck, la vie,
-            l'énergie et la main. Demandé par Keko — *avant de descendre, le
-            joueur doit voir avec quoi il descend*, et ces quatre chiffres le
-            disent sans qu'il ait à ouvrir quoi que ce soit.
-
-            Ce sont les MÊMES objets qu'en combat — le paquet de pioche, l'orbe —
-            parce que c'est là qu'il les retrouvera. */}
-        {/* CHAQUE COUPLE EST UN CARTOUCHE, et le chiffre y vient AVANT son
-            symbole. Keko : « le chiffre d'abord, puis l'icône — et un moyen de
-            bien voir que tel chiffre correspond à tel icône ».
-
-            *Quatre chiffres et quatre symboles alignés ne disent pas lesquels
-            vont ensemble* : l'oeil les apparie par la proximité, et une rangée
-            régulière n'en a aucune. Un fond commun le dit sans un mot — et ce
-            n'est pas une décoration : c'est la seule chose qui les relie.
-
-            L'énergie n'en a pas besoin de la même façon : son chiffre est DANS
-            son symbole. Elle garde le cartouche pour rester de la famille. */}
-        {/* L'ORDRE EST CELUI DE KEKO : vie, deck, main, énergie. Il va du plus
-            durable au plus volatil — les PV traversent la descente, le deck la
-            run, la main le tour, l'énergie ne survit pas au tour. */}
-        {/* L'ARMURIER PREND TOUTE SA COLONNE. Il a d'abord coiffé le rail des
-            mesures, et *elles se lisaient alors comme LES SIENNES* — Keko : « on
-            dirait que c'est les stats du PNJ maintenant ». Elles sont parties en
-            bande au-dessus de l'équipement ; lui n'a plus rien à partager. */}
-        <img className="arm-pnj" style={boite(plan.pnj)} src={urlDeLArmurier()} alt="" />
-
-        {/* LES QUATRE MESURES EN BANDE, au-dessus de ce qu'on équipe : *ce qu'on
-            emporte se mesure au-dessus de ce qu'on porte.* */}
-        {/* LA BANDE SE MESURE SUR SA LARGEUR AUTANT QUE SUR SA HAUTEUR : quatre
-            mesures dans un panneau étroit ne tiennent pas, et *la contrainte la
-            plus dure gagne.* */}
-        <div
-          className="arm-etat"
-          style={
-            {
-              ...boite(plan.stats),
-              // ON REPREND LA VALEUR AU PLAN, pas à `boite` : celle-ci rend déjà
-              // des chaînes en `px`, et la recoller donnait un « 182pxpx » que le
-              // navigateur jette EN SILENCE — la hauteur des symboles dépendait
-              // de ce `calc`, donc elle tombait avec lui et ils disparaissaient.
-              '--etat-l': `${enPixels(plan.stats, fenetre.h, fenetre.l).width}px`,
-            } as React.CSSProperties
-          }
-        >
-          <span className="arm-mesure" ref={(el) => void (mesures.current[0] = el)}>
-            <span className="arm-vif" ref={(el) => void (vifs.current[0] = el)}>
-              <span className="arm-chiffre">{pvVu}</span>
-              <CoeurIcone />
+        </span>
+        {/* LE COMPTE DU DECK EST À GAUCHE DU PAQUET, demandé par Keko. Au-dessus
+            — sa place en combat — il se lisait comme une étiquette du tas ;
+            ici c'est une MESURE de ce qu'on emporte, elle s'aligne avec les
+            trois autres. */}
+        <span className="arm-mesure" ref={(el) => void (mesures.current[1] = el)}>
+          <span className="arm-vif" ref={(el) => void (vifs.current[1] = el)}>
+            <span className="arm-chiffre">{deckVu}</span>
+            <span className="arm-tas">
+              <Tas3D nom="pioche" compte={deckVu ?? 0} />
             </span>
           </span>
-          {/* LE COMPTE DU DECK EST À GAUCHE DU PAQUET, demandé par Keko. Au-dessus
-              — sa place en combat — il se lisait comme une étiquette du tas ;
-              ici c'est une MESURE de ce qu'on emporte, elle s'aligne avec les
-              trois autres. */}
-          <span className="arm-mesure" ref={(el) => void (mesures.current[1] = el)}>
-            <span className="arm-vif" ref={(el) => void (vifs.current[1] = el)}>
-              <span className="arm-chiffre">{deckVu}</span>
-              <span className="arm-tas">
-                <Tas3D nom="pioche" compte={deckVu ?? 0} />
-              </span>
-            </span>
+        </span>
+        <span className="arm-mesure" ref={(el) => void (mesures.current[2] = el)}>
+          <span className="arm-vif" ref={(el) => void (vifs.current[2] = el)}>
+            <span className="arm-chiffre">{mainVu}</span>
+            <MainIcone />
           </span>
-          <span className="arm-mesure" ref={(el) => void (mesures.current[2] = el)}>
-            <span className="arm-vif" ref={(el) => void (vifs.current[2] = el)}>
-              <span className="arm-chiffre">{mainVu}</span>
-              <MainIcone />
-            </span>
+        </span>
+        <span className="arm-mesure arm-orbe" ref={(el) => void (mesures.current[3] = el)}>
+          <span className="arm-vif" ref={(el) => void (vifs.current[3] = el)}>
+            <Orbe3D courant={paVu ?? 0} max={paVu ?? 0} seul />
           </span>
-          <span className="arm-mesure arm-orbe" ref={(el) => void (mesures.current[3] = el)}>
-            <span className="arm-vif" ref={(el) => void (vifs.current[3] = el)}>
-              <Orbe3D courant={paVu ?? 0} max={paVu ?? 0} seul />
-            </span>
-          </span>
-        </div>
-        </>
-      )}
+        </span>
+      </div>
 
       </div>
 
@@ -682,23 +564,12 @@ export function PageArmurerie({
           '--rail-l': `${enPixels(plan.railListe, fenetre.h, fenetre.l).width}px`,
         } as React.CSSProperties}
       >
-        {/* DEUX ENTRÉES OUVERTES DÉSORMAIS : l'armurerie et le coffre. C'est la
-            forme que Keko a dictée — « un onglet armurerie avec le panneau
-            équipement, et un onglet coffre avec le coffre actuel » — et le rail
-            l'attendait : *il existait déjà pour porter un choix de lieu.* */}
         {DESTINATIONS.map((d, i) => (
           <button
             key={i}
             type="button"
-            className={`arm-lieu${d.lieu === lieu ? ' actif' : ''}`}
+            className={`arm-lieu${i === 0 ? ' actif' : ''}`}
             disabled={!d.ouvert}
-            onClick={(e) => {
-              // LE FOCUS N'EST PAS UN ÉTAT DU JEU : c'est l'entrée ACTIVE qui
-              // dit où l'on est, et un bouton qui garde l'air pressé après le
-              // clic laisse croire à deux lieux ouverts.
-              if (e.detail > 0) e.currentTarget.blur()
-              if (d.lieu !== undefined) onLieu(d.lieu)
-            }}
           >
             <img className="arm-lieu-blason" src={urlDeLArmurerie()} alt="" draggable={false} />
             <span className="arm-lieu-nom">{d.nom}</span>
@@ -733,7 +604,6 @@ export function PageArmurerie({
           Le dessin est trois barres décroissantes surmontées d'une flèche : le
           signe de tri universel, qui n'a besoin d'aucune légende. Il est
           écrit à la main, comme tout le SVG du projet. */}
-      {auCoffre && (
       <button
         type="button"
         ref={tri}
@@ -821,12 +691,10 @@ export function PageArmurerie({
           />
         </svg>
       </button>
-      )}
 
       {/* LES ONGLETS SE MESURENT SUR LEUR BANDE : cinq mots dans un coffre
           rétréci ne tiennent pas, et *un contenu qui ne suit qu'une dimension
           déborde dès que l'autre se serre.* */}
-      {auCoffre && (
       <div
         className="arm-onglets"
         style={
@@ -847,12 +715,10 @@ export function PageArmurerie({
           </button>
         ))}
       </div>
-      )}
 
       {/* LA BARRE DE DÉFILEMENT reste visible même quand tout tient : c'est un
           bord du coffre autant qu'une commande, et *un rail qui apparaît et
           disparaît fait sauter la grille d'une colonne.* */}
-      {auCoffre && (
       <div className="arm-piste" style={boite(plan.barre)} ref={piste}>
         <span
           className={`arm-pouce${maxDefilement === 0 ? ' plein' : ''}`}
@@ -863,97 +729,6 @@ export function PageArmurerie({
           onPointerDown={glisserPouce}
         />
       </div>
-      )}
-
-      {/* LE BOUTON « CHANGER », SOUS CHAQUE SLOT. Tranché par Keko : la tape
-          est prise par la lecture — *et elle doit l'être, puisqu'on veut lire
-          une pièce avant de la changer* — donc l'action a son bouton, et un
-          bouton par slot dit lequel il change sans qu'on ait à le désigner
-          ensuite.
-
-          Il vit dans les COMMANDES, au-dessus du canvas : pendant un glisser la
-          scène monte au-dessus de lui, donc la carte qu'on promène passe
-          devant. */}
-      {!auCoffre &&
-        !menuOuvert &&
-        [...plan.actionsPorte, ...plan.actionsPile].map((a, i) => (
-          <button
-            key={i}
-            type="button"
-            className="arm-changer"
-            style={
-              {
-                ...boite(a.rect),
-                // SON CORPS SUIT SA BANDE, pas la fenêtre : la bande est une
-                // fraction du panneau, donc elle se serre avec lui.
-                '--changer-h': `${enPixels(a.rect, fenetre.h, fenetre.l).height}px`,
-              } as React.CSSProperties
-            }
-            ref={(el) => void (changers.current[i] = el)}
-            onClick={(e) => {
-              // LE FOCUS N'EST PAS UN ÉTAT DU JEU : un bouton qui agit n'a pas
-              // d'état, il fait et il retombe.
-              if (e.detail > 0) e.currentTarget.blur()
-              onChoix(a.slot)
-            }}
-            aria-label="Changer"
-          >
-            {/* UN SYMBOLE, PAS LE MOT — et ce n'est pas un choix de style.
-                Une case de slot fait 40 px de large sur un téléphone couché :
-                « CHANGER » y tombait à huit pixels de corps et les trois
-                boutons se touchaient. *Un mot qui ne tient pas dans son bouton
-                n'est pas un libellé, c'est une tache.* Deux flèches opposées
-                disent l'échange, et la bulle le nomme au survol — exactement ce
-                que fait déjà le bouton de rangement du coffre. */}
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path
-                d="M3.5 8.5h13m0 0-3.2-3.2M16.5 8.5l-3.2 3.2M20.5 15.5h-13m0 0 3.2-3.2M7.5 15.5l3.2 3.2"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        ))}
-
-      {/* LE MENU DE CHANGEMENT : son cadre, son titre, le nom de la colonne de
-          gauche et la barre de sa grille. Les cartes vivent dans le canvas,
-          sous ce calque — *le cadre n'a pas de fond*, sinon il les cacherait. */}
-      {menuOuvert && (
-        <>
-          <div className="arm-menu-cadre" style={boite(plan.menu)} ref={cadreMenu} />
-          <div className="arm-menu-entete" style={boite(plan.menuTitre)}>
-            <span className="arm-menu-titre">{NOMS[ongletDuMenu]}</span>
-            <button
-              type="button"
-              className="arm-menu-fermer"
-              onClick={(e) => {
-                if (e.detail > 0) e.currentTarget.blur()
-                onChoix(null)
-              }}
-            >
-              Fermer
-            </button>
-          </div>
-          {/* « ÉQUIPÉ » nomme la colonne de gauche : à gauche ce qu'on porte,
-              à droite ce qu'on possède. */}
-          <p className="arm-groupe" style={boite(plan.menuNom)}>
-            Équipé
-          </p>
-          <div className="arm-piste" style={boite(plan.menuBarre)} ref={pisteMenu}>
-            <span
-              className={`arm-pouce${maxMenu === 0 ? ' plein' : ''}`}
-              style={{
-                top: `${(defilement / lignesMenu) * 100}%`,
-                height: `${(plan.menuLignes / lignesMenu) * 100}%`,
-              }}
-              onPointerDown={glisserPouceMenu}
-            />
-          </div>
-        </>
-      )}
 
       </div>
     </>

@@ -34,20 +34,10 @@ import { estConsommable } from '../logic/armes.ts'
 import { aPeindre, pieceAPeindre } from './combat-3d.ts'
 import { signature } from './texture-carte.ts'
 import type { Carte } from '../logic/combat.ts'
-import type { Hub, Slot } from '../logic/hub.ts'
-import { CAPACITE_PILE, accepteDepuis } from '../logic/hub.ts'
+import type { Hub } from '../logic/hub.ts'
+import { CAPACITE_PILE } from '../logic/hub.ts'
 
 export const Z_PLAN = Z_MAIN
-
-/**
- * LE MENU DE CHANGEMENT SE POSE ENTRE L'ÉCRAN ET LA CARTE QU'ON TIENT.
- *
- * `Z_TENUE` vaut `Z_PLAN + 0,35` : le voile et les cartes du menu doivent donc
- * rester EN DEÇÀ, sinon la carte qu'on promène passerait derrière la grille
- * qu'elle survole. *Une carte tenue est devant tout ce qu'elle traverse.*
- */
-export const Z_VOILE_MENU = Z_PLAN + 0.12
-export const Z_MENU = Z_PLAN + 0.2
 
 
 
@@ -159,43 +149,6 @@ export type PlanArmurerie = {
   pnj: Rect
   /** Le bouton de départ, sous les stats. */
   bouton: [number, number, number]
-  /**
-   * LE BOUTON « CHANGER » DE CHAQUE SLOT, sous lui.
-   *
-   * Tranché par Keko : « je voudrais garder le clic = zoom et affichage des
-   * cartes (le clic ne fait pas changer d'arme), il faudrait un autre système
-   * pour changer un slot. Je propose un bouton changer sous chaque slot. »
-   *
-   * *La tape est déjà prise par la lecture* — et elle doit l'être, puisqu'on
-   * veut lire une pièce avant de la changer. **Une action qui n'est pas un
-   * geste a besoin d'un bouton**, et un bouton par slot dit lequel il change
-   * sans qu'on ait à le désigner ensuite.
-   */
-  actionsPorte: { rect: Rect; slot: Slot }[]
-  actionsPile: { rect: Rect; slot: Slot }[]
-  /**
-   * LE MENU DE CHANGEMENT : le slot à gauche, l'onglet du coffre à droite.
-   *
-   * Dicté par Keko : « on ouvre un menu avec à gauche le slot en question et à
-   * droite l'onglet du coffre correspondant (on retourne au système précédent
-   * de drag and drop) ». *Le glisser n'avait pas disparu parce qu'il était
-   * mauvais, mais parce que les deux meubles n'étaient plus à l'écran ensemble*
-   * — ce menu les y remet, réduits à ce que le geste concerne.
-   */
-  menu: Rect
-  menuTitre: Rect
-  /** Le slot lui-même, à gauche, et la bande qui le nomme. */
-  menuSlot: [number, number, number]
-  menuNom: Rect
-  /** La grille du coffre, à droite, filtrée sur ce qui va dans le slot. */
-  menuGrille: Rect
-  menuBarre: Rect
-  /** La taille d'une case du menu : la sienne, pas celle du coffre. */
-  menuTaille: number
-  menuColonnes: number
-  menuLignes: number
-  menuPasX: number
-  menuPasY: number
 }
 
 /** Combien de pixels vaut une unité de scène, à la profondeur du plan. */
@@ -271,118 +224,48 @@ export function planArmurerie(
   const xRail = -demiLarge + marge + (lRail - marge) / 2
   const gauche = -demiLarge + lRail
 
+  const largeurUtile = demiLarge - gauche - 2 * marge - 2 * marge
+  // Les stats sont un rail de cartouches : leur largeur est celle de leur
+  // contenu, pas une part du reste. On la borne pour qu'un grand écran ne
+  // l'étire pas en panneau.
+  // LA COLONNE FAIT AU MOINS LA LARGEUR DE SON BOUTON. Il vit dedans, et sa
+  // largeur sort de son texte : trop étroite, la colonne le laissait déborder
+  // sur l'équipement — *une colonne qui ne contient pas ce qu'on y met n'est
+  // pas une colonne.* C'est aussi ce qui permet de grossir le bouton sans
+  // rouvrir la collision.
   /**
-   * **LA HAUTEUR D'ABORD, LES LARGEURS ENSUITE.**
+   * LA COLONNE DE L'ARMURIER N'EST PLUS TENUE PAR LE BOUTON.
    *
-   * C'est la hauteur qui fixe la taille des cartes du chargement — deux
-   * rangées et leurs deux titres doivent tenir dans le panneau — donc la
-   * largeur dont ce panneau a besoin se DÉDUIT d'elle. *On part de la place, on
-   * en déduit la taille*, et ici l'ordre compte : calculer les colonnes avant
-   * les bandes obligerait à deviner ce que les cartes vont mesurer.
+   * Elle avait un PLANCHER à la largeur de « Descendre » — il vivait dedans, et
+   * *une colonne qui ne contient pas ce qu'on y met n'est pas une colonne.* Le
+   * bouton est parti dans le rail, et le plancher est resté : sur un téléphone,
+   * où le rail a pris un cinquième de la largeur, c'est lui qui commandait, et
+   * le portrait mangeait plus de place que le panneau d'équipement (211 px
+   * contre 183 à 844 x 390). Les onglets et les stats débordaient de leurs
+   * cadres — Keko : « je pense que le PNJ prend trop de place ».
+   *
+   * **Une contrainte posée pour un contenu se relit quand ce contenu s'en
+   * va** — sinon elle reste comme une cicatrice, à tenir de la place pour
+   * quelque chose qui n'est plus là.
    */
+  const lStats = largeurUtile * 0.15
+  // LE COFFRE REND ENCORE UN PEU DE LARGEUR : l'équipement lui en demande,
+  // maintenant que ses sept cartes sont à la même taille et tiennent sur
+  // quatre colonnes.
+  const lCoffre = (largeurUtile - lStats) * 0.55
+  const lEquip = largeurUtile - lStats - lCoffre
+  const xCoffre = gauche + marge + lCoffre / 2
+  const xStats = demiLarge - marge - lStats / 2
+  const xEquip = xStats - lStats / 2 - marge - lEquip / 2
+
+  const coffre: Rect = { x: xCoffre, y: yPanneaux, l: lCoffre, h: hPanneaux }
+
+  // Le bandeau d'onglets vit DANS le cadre, sous son titre : le titre nomme le
+  // meuble, les onglets disent ce qu'on y regarde.
   const hOnglets = Math.min(hPanneaux * 0.17, 0.6)
   // L'EN-TÊTE NE PORTE QUE LA PLAQUE, qui est à cheval sur le bord : au-delà,
   // c'est du vide au-dessus des onglets, et il se voyait.
   const hEntete = Math.min(hPanneaux * 0.07, 0.24)
-
-  /**
-   * LES QUATRE MESURES EN BANDE, en haut de l'équipement.
-   *
-   * Elles tenaient la colonne de droite, en rail vertical — et depuis que
-   * l'armurier la coiffe, *elles se lisaient comme SES statistiques.* Keko :
-   * « on dirait que c'est les stats du PNJ maintenant… et si on plaçait les
-   * stats en haut de l'onglet équipement sur une ligne ? »
-   *
-   * **ET ELLE A UN PLANCHER, PARCE QU'ELLE PORTE UN CHIFFRE QUI N'EN A PAS.**
-   * Keko : « on avait agrandi le symbole des PA pour que les bords du cercle ne
-   * touchent pas le chiffre ; mais sur la page web du téléphone le cercle est
-   * toujours petit, alors qu'en app installée c'est la bonne taille ».
-   *
-   * *La cause n'est pas le téléphone, c'est la BARRE DU NAVIGATEUR* : elle
-   * mange une centaine de pixels, donc la bande — une fraction du champ
-   * visible — rétrécit avec elle. Le chiffre, lui, est en `rem`, et le `rem`
-   * est PLANCHONNÉ à 16 px par son `clamp` : il ne bouge plus. **Une bande doit
-   * être au moins aussi haute que ce qu'elle contient**, et c'est ici que ça se
-   * règle, pas sur l'orbe : le corriger là-bas l'aurait fait déborder sur le
-   * titre du groupe d'en dessous.
-   *
-   * 24,5 px : la hauteur qu'a la bande à 844 x 390, là où le rapport a été
-   * validé.
-   */
-  const PLANCHER_STATS_PX = 24.5
-  const hStats = Math.max(
-    Math.min(hPanneaux * 0.075, 0.4),
-    PLANCHER_STATS_PX / pixelsParUnite(hauteurFenetrePx),
-  )
-
-  const COLONNES_EQUIP = 3
-  const RANGEES_EQUIP = 2
-  const hDedans = hPanneaux - hEntete - hStats
-  // La bande d'un nom de groupe. Il y en a une par rangée, et elles entrent
-  // dans le calcul de la taille : un titre pris sur la place des cartes les
-  // ferait déborder du panneau, exactement ce qui est arrivé sur téléphone.
-  const hNom = Math.min(hDedans * 0.1, 0.34)
-  /**
-   * LA BANDE DU BOUTON « CHANGER », sous chaque rangée de slots.
-   *
-   * Demandé par Keko : « je propose un bouton changer sous chaque slot ». Elle
-   * entre dans le calcul de la taille des cartes au même titre que les noms de
-   * groupe — *une bande prise sur la place des slots les ferait déborder du
-   * panneau*, le défaut déjà payé sur téléphone.
-   */
-  const hAction = Math.min(hDedans * 0.085, 0.3)
-  /** Ce que la HAUTEUR du panneau permet à une carte du chargement. */
-  const parHauteur = Math.min(
-    1,
-    (hDedans * 0.96 - RANGEES_EQUIP * (hNom + hAction)) / (RANGEES_EQUIP * 1.4 * 1.12),
-  )
-
-  /**
-   * **CHAQUE LIEU PREND TOUTE LA PLACE À DROITE DU RAIL.**
-   *
-   * L'armurerie et le coffre étaient deux colonnes d'un même écran, et
-   * *aucune des deux n'était à sa taille* : les cartes du chargement étaient
-   * bornées par un panneau large d'un tiers d'écran, et le coffre n'en montrait
-   * que quinze. Keko : « on a un onglet armurerie avec le panneau équipement,
-   * et un onglet coffre avec le coffre actuel ».
-   *
-   * Les deux géométries se calculent toujours toutes les deux — c'est la VUE
-   * qui décide laquelle se dessine. *Un plan qui changerait de forme selon le
-   * lieu obligerait chaque lecteur à savoir où il est.*
-   */
-  const dispo = demiLarge - gauche
-  // Trois marges pour deux colonnes (l'équipement et l'armurier), deux pour le
-  // coffre qui est seul.
-  const utileArm = dispo - 3 * marge
-  /**
-   * L'ARMURIER NE PREND PAS PLUS QUE SON IMAGE.
-   *
-   * Son fichier est au rapport des illustrations de cartes (0,68), donc une
-   * colonne plus large que `hauteur x 0,68` ne lui sert à rien : elle
-   * n'ajouterait que du vide de chaque côté du portrait. Et elle est bornée à
-   * 42 % de la place — *un visage ne peut pas tenir plus de place que ce qu'on
-   * vient décider*, c'est la remarque de Keko (« je pense que le PNJ prend trop
-   * de place ») remise là où elle se règle.
-   */
-  const lStats = Math.min(utileArm * 0.42, hPanneaux * 0.68)
-  const lEquip = utileArm - lStats
-  const lCoffre = dispo - 2 * marge
-  const xEquip = gauche + marge + lEquip / 2
-  const xStats = gauche + marge + lEquip + marge + lStats / 2
-  const xCoffre = gauche + marge + lCoffre / 2
-
-  /**
-   * UNE SEULE TAILLE DE CARTE DANS LE CHARGEMENT, et c'est la plus dure des
-   * deux contraintes qui la fixe : trois colonnes en largeur, deux rangées et
-   * leurs titres en hauteur. Jamais au-delà de 1 — *le chargement se lit à la
-   * taille de la main, et pas plus grand.*
-   */
-  const tailleCharge = Math.min(parHauteur, (lEquip - marge * 2) / (COLONNES_EQUIP * 1.12))
-
-  const coffre: Rect = { x: xCoffre, y: yPanneaux, l: lCoffre, h: hPanneaux }
-
-  // Le bandeau d'onglets vit DANS le cadre, sous sa plaque : la plaque nomme
-  // le meuble, les onglets disent ce qu'on y regarde.
   const onglets: Rect = {
     x: xCoffre,
     y: yPanneaux + hPanneaux / 2 - hEntete - hOnglets / 2,
@@ -440,37 +323,96 @@ export function planArmurerie(
     h: onglets.y - hOnglets / 2 - (yPanneaux - hPanneaux / 2) - padGrille,
   }
 
+  /**
+   * UNE SEULE TAILLE DE CARTE DANS TOUTE L'ARMURERIE.
+   *
+   * Keko : « toutes les cartes du coffre ET de l'équipement ont la même taille
+   * — la taille actuelle de l'équipement est bien, faisons ça dans le coffre ».
+   *
+   * *Le coffre avait la sienne, écrite à la main* — 0,52, puis 0,44, puis 0,54,
+   * puis 0,62 — et à chaque réglage il fallait la rejuger contre celle du
+   * chargement. **Une page qui montre le même objet à deux endroits n'a aucune
+   * raison de le montrer à deux échelles** : c'est la même carte, c'est la même
+   * taille, et elle se calcule une fois.
+   *
+   * C'est l'équipement qui la fixe, parce que c'est lui qui est CONTRAINT : ses
+   * sept slots doivent tenir dans un panneau, alors que le coffre n'a qu'à
+   * remplir le sien avec ce qu'il peut.
+   */
+  /**
+   * LES QUATRE MESURES PASSENT EN BANDE, en haut de l'équipement.
+   *
+   * Elles tenaient la colonne de droite, en rail vertical — et depuis que
+   * l'armurier la coiffe, *elles se lisaient comme SES statistiques.* Keko :
+   * « on dirait que c'est les stats du PNJ maintenant… et si on plaçait les
+   * stats en haut de l'onglet équipement sur une ligne ? »
+   *
+   * Elles sont bien où elles doivent être : ce qu'on emporte se mesure
+   * au-dessus de ce qu'on équipe. **Ça coûte une bande de hauteur au
+   * chargement**, donc des cartes un peu plus petites — le prix est connu et
+   * assumé, « vu qu'on a peu de place ».
+   */
+  // Sa hauteur est celle que le RAIL avait par ligne, pas une part généreuse :
+  // les symboles s'y inscrivent, et à bande trop haute ils grossissent avec
+  // elle — un coeur de 70 px à côté d'un chiffre de 20 ne se lit plus comme
+  // une mesure.
+  // ET ELLE A UN PLANCHER, PARCE QU'ELLE PORTE UN CHIFFRE QUI N'EN A PAS.
+  //
+  // Keko : « on avait agrandi le symbole des PA pour que les bords du cercle ne
+  // touchent pas le chiffre ; mais sur la page web du téléphone le cercle est
+  // toujours petit, alors qu'en app installée c'est la bonne taille ».
+  //
+  // *La cause n'est pas le téléphone, c'est la BARRE DU NAVIGATEUR* : elle
+  // mange une centaine de pixels, donc la bande — une fraction du champ
+  // visible — rétrécit avec elle. Le chiffre, lui, est en `rem`, et le `rem`
+  // est PLANCHONNÉ à 16 px par son `clamp` : il ne bouge plus. Mesuré en cadre :
+  // à 386 px de haut, disque 29,9 px pour un chiffre de 18 (rapport 1,66) ; à
+  // 296 px, disque 22,7 px pour le même 18 — le chiffre touche le cercle.
+  //
+  // **Une bande doit être au moins aussi haute que ce qu'elle contient**, et
+  // c'est ici que ça se règle, pas sur l'orbe : le corriger là-bas l'aurait
+  // fait déborder sur le titre du groupe d'en dessous. Ce que ça coûte est
+  // connu — quelques pixels de moins pour les cartes du chargement, sur les
+  // seuls écrans courts.
+  //
+  // 24,5 px : la hauteur qu'a la bande à 844 x 390, là où le rapport a été
+  // validé. Au-dessus de cette taille elle ne mord jamais ; en dessous, le
+  // `rem` est de toute façon bloqué à son plancher, donc la constante vaut
+  // dans tout son domaine.
+  const PLANCHER_STATS_PX = 24.5
+  const hStats = Math.max(
+    Math.min(hPanneaux * 0.075, 0.4),
+    PLANCHER_STATS_PX / pixelsParUnite(hauteurFenetrePx),
+  )
+
+  const COLONNES_EQUIP = 3
+  const RANGEES_EQUIP = 2
+  const hDedans = hPanneaux - hEntete - hStats
+  // La bande d'un nom de groupe. Il y en a une par rangée, et elles entrent
+  // dans le calcul de la taille : un titre pris sur la place des cartes les
+  // ferait déborder du panneau, exactement ce qui est arrivé sur téléphone.
+  const hNom = Math.min(hDedans * 0.1, 0.34)
+  const tailleCharge = Math.min(
+    1,
+    (lEquip - marge * 2) / (COLONNES_EQUIP * 1.12),
+    (hDedans * 0.96 - RANGEES_EQUIP * hNom) / (RANGEES_EQUIP * 1.4 * 1.12),
+  )
 
   /**
-   * **LE COFFRE A SA TAILLE, ET ELLE NE SUIT PLUS CELLE DU CHARGEMENT.**
+   * LE COFFRE EST UN CRAN SOUS LE CHARGEMENT — et c'est un arbitrage de Keko,
+   * pas un oubli de la règle précédente.
    *
-   * Elle en a longtemps été une fraction, parce que les deux meubles
-   * partageaient l'écran : *une page qui montre le même objet à deux endroits
-   * n'a aucune raison de le montrer à deux échelles.* Ils ne le partagent plus,
-   * donc plus rien ne les oblige à une échelle commune — et le coffre peut
-   * enfin se mesurer sur SON panneau.
+   * Tout était à la même taille, et à deux rangées d'équipement les cartes ont
+   * tellement grandi que le coffre n'en montrait plus que six. Keko :
+   * « finalement on pourrait réduire un peu la taille ? 6 éléments par page
+   * c'est un peu limite ». *Un coffre est un endroit où l'on CHERCHE* : il lui
+   * faut du monde sous les yeux, là où le chargement montre ce qu'on emporte.
    *
-   * **Il se mesure en COLONNES, pas en fraction d'une autre carte.** *Un coffre
-   * est un endroit où l'on CHERCHE* — il lui faut du monde sous les yeux — donc
-   * ce qu'on lui demande est un nombre de cases par ligne, et la taille s'en
-   * déduit. Neuf, et le résultat est **le même meuble à tous les formats** :
-   * neuf colonnes sur trois rangées, du téléphone couché à l'écran de PC.
-   *
-   * Le plafond, lui, reste une fraction du chargement : *le coffre est un cran
-   * sous ce qu'on emporte*, et sans lui un grand écran en ferait des cartes
-   * aussi grandes que les slots.
-   *
-   * Mesuré : la case passe de 36 à 53 px sur un téléphone couché, de 76 à
-   * 106 px sur un écran de portable — **et le coffre de 15 à 27 places.** Les
-   * deux à la fois, parce que la place vient d'ailleurs.
-   *
-   * **ET IL NE SUIT PLUS DU TOUT LE CHARGEMENT.** Il en était encore borné par
-   * le haut (72 % d'une pièce), donc la bande des boutons « Changer » — qui a
-   * rétréci les pièces — a rétréci le coffre AVEC, dans un lieu où ces boutons
-   * n'existent même pas. *Une contrainte posée dans un écran ne doit pas
-   * voyager dans un autre* : le plafond est désormais un nombre à lui.
+   * Ce qui reste de la règle d'avant : **une seule taille de RÉFÉRENCE**, celle
+   * du chargement, et le coffre en est une fraction. Il n'y a toujours pas deux
+   * chiffres à rejuger l'un contre l'autre.
    */
-  const tailleCoffre = Math.min(0.62, grille.l / (9 * 1.16))
+  const tailleCoffre = tailleCharge * 0.68
 
   // Une case, plus un cheveu : la grille doit respirer sans s'étaler.
   const pasX = tailleCoffre * 1.16
@@ -532,16 +474,12 @@ export function planArmurerie(
   // nom, rangée, nom, rangée. On empile depuis le haut du bloc, pas depuis le
   // bord du panneau — *un bloc plus court que sa boîte doit se centrer dedans,
   // sinon tout le jeu s'accumule d'un seul côté.*
-  // Chaque étage fait : nom, rangée, boutons. Deux étages, et le tout centré.
-  const hEtage = hNom + pasRangee + hAction
-  const hBloc = 2 * hEtage
+  const hBloc = 2 * hNom + 2 * pasRangee
   const yHautBloc = yDedans + hBloc / 2
   const yNomPorte = yHautBloc - hNom / 2
   const yPorte = yHautBloc - hNom - pasRangee / 2
-  const yActionPorte = yHautBloc - hNom - pasRangee - hAction / 2
-  const yNomObjets = yHautBloc - hEtage - hNom / 2
-  const yObjets = yHautBloc - hEtage - hNom - pasRangee / 2
-  const yActionObjets = yHautBloc - hEtage - hNom - pasRangee - hAction / 2
+  const yNomObjets = yHautBloc - hNom - pasRangee - hNom / 2
+  const yObjets = yHautBloc - 2 * hNom - 2 * pasRangee + pasRangee / 2
 
   // La rangée du haut se centre sur ce qu'elle porte : deux cartes si l'arme
   // prend les deux mains, trois sinon.
@@ -563,81 +501,6 @@ export function planArmurerie(
   // une fois qu'on a lu ce qu'on emporte. Sa bande est réservée en haut de la
   // colonne, sinon le dernier cartouche s'assoirait dessus.
   const hBouton = Math.min(1, hPanneaux * 0.2)
-
-  /**
-   * LE MENU DE CHANGEMENT — deux colonnes, comme l'armurerie l'était.
-   *
-   * À gauche le slot seul, à sa taille de main : *c'est ce qu'on remplit, il
-   * doit se lire comme il se lira.* À droite l'onglet du coffre correspondant,
-   * aux cases du coffre. Entre les deux, le geste d'avant.
-   *
-   * Il prend TOUT le lieu, pas le seul panneau : c'est une décision, et une
-   * décision prend l'écran. C'est déjà ce que fait le zoom.
-   */
-  const menuZone: Rect = {
-    x: gauche + marge + (dispo - 2 * marge) / 2,
-    y: yPanneaux,
-    l: dispo - 2 * marge,
-    h: hPanneaux,
-  }
-  const hMenuTitre = Math.min(menuZone.h * 0.1, 0.42)
-  const hMenuCorps = menuZone.h - hMenuTitre
-  const hautCorps = menuZone.y + menuZone.h / 2 - hMenuTitre
-  // La colonne du slot ne réclame que sa carte : le reste va à la grille, qui
-  // est ce qu'on fouille.
-  const lMenuSlot = Math.min(menuZone.l * 0.3, tailleCharge * 1.7)
-  const gouttiereMenu = Math.min(0.34, menuZone.l * 0.045)
-  const lMenuGrille = menuZone.l - lMenuSlot - marge - gouttiereMenu
-  const xMenuSlot = menuZone.x - menuZone.l / 2 + lMenuSlot / 2
-  const xMenuGrille = menuZone.x - menuZone.l / 2 + lMenuSlot + marge + lMenuGrille / 2
-  const hMenuNom = Math.min(hMenuCorps * 0.11, 0.34)
-  /**
-   * LA GRILLE DU MENU A SA PROPRE TAILLE DE CASE.
-   *
-   * Celle du coffre est réglée pour NEUF colonnes sur toute la largeur d'un
-   * lieu ; la grille du menu est plus étroite d'une colonne de slot, et elle ne
-   * montre qu'une catégorie. À taille de coffre elle alignait onze cases
-   * minuscules pour deux armes — *une grille se règle sur ce qu'elle contient,
-   * pas sur celle d'à côté.* Cinq colonnes, jamais plus grand qu'une carte du
-   * chargement.
-   */
-  const tailleMenuCase = Math.min(tailleCharge, lMenuGrille / (5 * 1.16))
-  const menuPasX = tailleMenuCase * 1.16
-  const menuPasY = tailleMenuCase * 1.4 * 1.12
-  // LE NOM COIFFE LES DEUX COLONNES, et la grille comme la carte du slot se
-  // calent sous lui : *deux colonnes d'un même écran commencent à la même
-  // hauteur.*
-  const hautContenu = hautCorps - hMenuNom
-  const basCorps = menuZone.y - menuZone.h / 2
-  const hGrilleMenu = hautContenu - basCorps
-  const yGrilleMenu = hautContenu - hGrilleMenu / 2
-  const menu = {
-    menu: menuZone,
-    menuTitre: {
-      x: menuZone.x,
-      y: menuZone.y + menuZone.h / 2 - hMenuTitre / 2,
-      l: menuZone.l,
-      h: hMenuTitre,
-    },
-    menuSlot: [xMenuSlot, hautContenu - (tailleCharge * 1.4) / 2, Z_MENU] as [
-      number,
-      number,
-      number,
-    ],
-    menuNom: { x: xMenuSlot, y: hautCorps - hMenuNom / 2, l: lMenuSlot, h: hMenuNom },
-    menuGrille: { x: xMenuGrille, y: yGrilleMenu, l: lMenuGrille, h: hGrilleMenu },
-    menuBarre: {
-      x: xMenuGrille + lMenuGrille / 2 + gouttiereMenu / 2,
-      y: yGrilleMenu,
-      l: gouttiereMenu * 0.44,
-      h: hGrilleMenu,
-    },
-    menuTaille: tailleMenuCase,
-    menuColonnes: Math.max(1, Math.floor(lMenuGrille / menuPasX)),
-    menuLignes: Math.max(1, Math.floor(hGrilleMenu / menuPasY)),
-    menuPasX,
-    menuPasY,
-  }
 
   return {
     demiHaut,
@@ -691,43 +554,7 @@ export function planArmurerie(
     // hub.*
     pnj: { x: xStats, y: yPanneaux, l: lStats, h: hPanneaux },
     bouton: [xRail, basPanneaux + hBouton / 2, Z_PLAN],
-    // CHAQUE BOUTON PORTE SON SLOT, et c'est le plan qui le dit : la rangée
-    // du haut compte deux ou trois cases selon qu'une arme prend les deux
-    // mains, et *une règle recopiée dans le rendu est une règle qui divergera.*
-    actionsPorte: Array.from({ length: hautes }, (_, i) => ({
-      rect: { x: place(i), y: yActionPorte, l: pasCharge - coupe, h: hAction },
-      slot: (i === hautes - 1 ? { ou: 'armure' } : { ou: 'main', rang: i as 0 | 1 }) as Slot,
-    })),
-    actionsPile: Array.from({ length: CAPACITE_PILE }, (_, i) => ({
-      rect: {
-        x: xEquip + (i - (CAPACITE_PILE - 1) / 2) * pasCharge,
-        y: yActionObjets,
-        l: pasCharge - coupe,
-        h: hAction,
-      },
-      slot: { ou: 'pile', rang: i } as Slot,
-    })),
-    ...menu,
   }
-}
-
-/**
- * LA PLACE D'UNE CASE DANS LA GRILLE DU MENU — et son inverse, juste dessous.
- *
- * Même forme que `placeCase` et `caseSousLePoint`, sur une autre grille : *deux
- * calculs qui se répondent se lisent l'un sous l'autre*, sinon le premier
- * réglage de pas les désaccorde.
- */
-export function placeCaseMenu(
-  plan: PlanArmurerie,
-  rang: number,
-  decalage = 0,
-): [number, number, number] {
-  const colonne = rang % plan.menuColonnes
-  const ligne = Math.floor(rang / plan.menuColonnes)
-  const x0 = plan.menuGrille.x - (plan.menuColonnes * plan.menuPasX) / 2 + plan.menuPasX / 2
-  const y0 = plan.menuGrille.y + plan.menuGrille.h / 2 - plan.menuPasY / 2
-  return [x0 + colonne * plan.menuPasX, y0 - ligne * plan.menuPasY + decalage, Z_MENU]
 }
 
 /**
@@ -851,38 +678,4 @@ export function contenuDuCoffre(
     pieces: empiler(pieces, (o) => signature(pieceAPeindre(o))),
     tresors: empiler(tresors, (t) => signature(aPeindre(t))),
   }
-}
-
-/**
- * CE QU'ON PEUT METTRE DANS CE SLOT — **et c'est la RÈGLE qui répond**.
- *
- * `accepteDepuis` refait le raisonnement complet de `deplacerPiece` — prendre,
- * puis juger — donc on ne recopie rien : *une règle recopiée dans le rendu est
- * une règle qui divergera.* C'est la même fonction qui allume les slots pendant
- * un glisser, et il le faut : **le choix doit proposer exactement ce que le
- * dépôt accepterait**, sinon il offre une pièce qu'on ne peut pas poser.
- *
- * Les doublons s'empilent, comme au coffre : cinq potions ne sont pas cinq
- * décisions, c'en est une avec un compte.
- */
-export function candidatsPourSlot(hub: Hub, slot: Slot): Pile<Objet>[] {
-  const prennent = hub.reserve.filter((o) => accepteDepuis(hub, { ou: 'reserve' }, slot, o.id))
-  return empiler(prennent, (o) => signature(pieceAPeindre(o)))
-}
-
-/**
- * CE QUE LE SLOT TIENT DÉJÀ, s'il tient quelque chose.
- *
- * Elle vit ici et non dans l'écran du choix parce que **deux endroits la
- * lisent** : le choix, pour savoir s'il doit proposer « Retirer », et la page,
- * pour placer son titre au-dessus du bon nombre de cases. *Une règle écrite
- * deux fois se désaccorde au premier réglage.*
- */
-export function pieceDuSlot(hub: Hub, slot: Slot): Objet | null {
-  if (slot.ou === 'armure') return hub.chargement.armure
-  if (slot.ou === 'main') return hub.chargement.mains[slot.rang]
-  if (slot.ou === 'pile') {
-    return slot.rang === undefined ? null : (hub.chargement.pile[slot.rang] ?? null)
-  }
-  return null
 }
