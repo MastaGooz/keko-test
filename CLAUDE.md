@@ -3230,6 +3230,11 @@ téléphone couché), puisque l'enseigne prend plus de hauteur de ligne. C'est
 l'échange que Keko a demandé — *ce qu'on lit d'abord sur une place, c'est
 l'enseigne, pas le visage.*
 
+**Et le blason est passé à 2,1em**, demandé par Keko. *Sa borne est la largeur
+de la plaque* : le couple tient le blason, l'écart, le remplissage et le mot —
+10em en tout à cette valeur, pour une plaque de 1,45 buste et un mot à 0,14.
+Au-delà il pousserait « Armurerie » hors de son enseigne.
+
 **Le plafond du nom a été relâché deux fois** (0,95 → 1,25 → 1,8rem) : il
 mordait dès 1366 px de large, donc l'enseigne cessait de grandir avec sa
 boutique alors que la place, elle, continuait. *Un plafond absolu dans une mise
@@ -3289,8 +3294,8 @@ d'une run ramène sur la PLACE**, pas dans l'armurerie : *le jeu s'ouvre là, il
 y retombe.*
 
 Mesuré à 844x390, 667x320, 932x430, 1366x700, 1920x1080 et 2560x1215 : aucun
-débordement, aucun nom coupé. Le nom va de 10,8 px sur un iPhone SE couché à
-43 sur un grand écran, et le blason de 18 à 73.
+débordement, aucun nom coupé. Le nom va de 10,4 px sur un iPhone SE couché à
+43 sur un grand écran, et le blason de 22 à 91.
 
 **Ce qui reste à juger** : les PNJ flottent — il n'y a pas de sol sous eux,
 alors que la règle des créatures dit que *c'est l'ombre sous les pattes qui

@@ -5404,7 +5404,7 @@ body {
   /* LA LARGEUR D'UN PNJ SE DEDUIT DE LA PLACE, jamais l'inverse -- la lecon de
      `--piece-equip` a l'armurerie. Deux contraintes, la plus dure gagne :
      quatre colonnes en largeur, et deux lignes en hauteur. Une ligne fait
-     1,41 fois la largeur d'un PNJ : 1 pour le buste (carre), 0,34 pour
+     1,47 fois la largeur d'un PNJ : 1 pour le buste (carre), 0,40 pour
      l'enseigne et 0,07 pour l'ecart entre les deux.
 
      LE BUSTE PAIE LE TEXTE. A l'image entiere (0,68) une ligne faisait 1,71,
@@ -5415,7 +5415,7 @@ body {
      metier.* */
   --pnj: min(
     calc((min(100vw, 120rem) - 2rem - (var(--pnj-cols) - 1) * var(--hub-ecart)) / var(--pnj-cols)),
-    calc((100vh * (1 - var(--pnj-bande)) - 2.5rem - var(--hub-ecart)) / 2.83)
+    calc((100vh * (1 - var(--pnj-bande)) - 2.5rem - var(--hub-ecart)) / 2.94)
   );
 }
 
@@ -5519,9 +5519,14 @@ body {
 }
 
 /* SA HAUTEUR SE MESURE SUR LE TEXTE (em), pas sur la fenetre : il grandit donc
-   avec le nom, et un seul reglage suffit. Meme regle qu'au bandeau. */
+   avec le nom, et un seul reglage suffit. Meme regle qu'au bandeau.
+
+   IL PASSE A 2,1em, demande par Keko. *Sa borne est la largeur de la plaque* :
+   le couple tient le blason, l'ecart, le remplissage et le mot -- 10em en tout
+   a cette valeur, pour une plaque de 1,45 buste et un mot a 0,14. Au-dela il
+   pousserait « Armurerie » hors de son enseigne. */
 .hub-blason {
-  height: 1.7em;
+  height: 2.1em;
   width: auto;
   flex: none;
   filter: drop-shadow(0 1px 3px #000000aa);
