@@ -142,6 +142,26 @@ const INCLINAISON_REFLET = 0.34
 const AVANCEE_REFLET = 0.05
 
 /**
+ * ET SUR LE ZOOM, ELLE TOURNE ASSEZ POUR MONTRER SON DOS.
+ *
+ * Keko : « vu qu'en théorie on gère la 3D, on peut faire tourner un peu les
+ * cartes quand on les fait bouger (zoom uniquement) pour permettre de voir le
+ * dos ? » *C'est l'endroit du jeu fait pour ça* — le zoom ne sert qu'à
+ * REGARDER une carte, donc c'est le seul écran où l'on peut manipuler l'objet
+ * plutôt que le lire.
+ *
+ * **La course n'est pas linéaire, et c'est ce qui la rend jouable.** À
+ * répartition égale, la face ne serait lisible qu'au milieu du parcours : ici
+ * le carré de l'écart laisse la carte presque droite sur toute la partie
+ * centrale — 4° au dixième, 27° à mi-chemin — et ne bascule que sur le dernier
+ * quart. *On lit la carte sans y penser, et on la retourne quand on le veut.*
+ *
+ * 112° au bord : il en faut plus de 90 pour voir le dos, et la marge fait que
+ * ça n'arrive pas par mégarde.
+ */
+const TOUR_INSPECTION = 1.95
+
+/**
  * LA CARTE EST FAITE DE DEUX PIÈCES, et c'est ce qui donne les coins ronds.
  *
  * Une forme 2D aux coins arrondis, EXTRUDÉE de l'épaisseur, porte le laiton —
@@ -316,6 +336,14 @@ type Props = {
    */
   reflet?: boolean
   /**
+   * ELLE SE RETOURNE SOUS LE CURSEUR — le zoom, et lui seul.
+   *
+   * Ailleurs le pointeur sert à PRENDRE une carte, pas à l'examiner : une
+   * carte de coffre qui pivoterait pendant qu'on vise son slot mentirait sur
+   * ce qu'on est en train de faire. Voir `TOUR_INSPECTION`.
+   */
+  tourne?: boolean
+  /**
    * LE REFLET RÉPOND AUSSI AU DOIGT, tant que celui-ci est POSÉ dessus.
    *
    * Demandé par Keko : « sur tél, quand on zoome sur une des cartes ajoutées,
@@ -426,6 +454,7 @@ export function Carte3D({
   apparue = null,
   reflet = false,
   refletAuDoigt = false,
+  tourne = false,
   culbute = null,
   onFixee,
   onArrivee,
@@ -896,9 +925,30 @@ ${nuanceur.fragmentShader}`
    */
   const curseur = curseurPartage ?? propre.current
 
+  /**
+   * LE REPÈRE QUI MESURE LE CURSEUR NE DOIT PAS TOURNER AVEC LA CARTE.
+   *
+   * Tant que l'inclinaison valait dix degrés, lire le point dans le repère de
+   * la carte marchait : à cette amplitude elle ne se dérobe pas. À 112°, si :
+   * *la carte tourne, donc elle se raccourcit à l'écran, donc le curseur qui
+   * était sur son bord passe à côté* — le rayon ne la touche plus, le survol
+   * s'éteint, elle revient de face, repasse sous le curseur et repart. Mesuré :
+   * elle pompait entre 0 et 35° à deux pixels près.
+   *
+   * D'où un CAPTEUR : un plan invisible à la taille de la carte, posé derrière
+   * elle dans un groupe qui ne prend QUE sa place et sa taille. R3F prévient
+   * tous les objets que le rayon traverse, donc il reçoit le pointeur même
+   * quand la carte s'est effacée devant lui. *Un repère qui fuit le doigt ne
+   * peut pas servir à le mesurer.*
+   */
+  const capteur = useRef<THREE.Mesh>(null)
+
   const suivreLeCurseur = (e: ThreeEvent<PointerEvent>): void => {
     if (!reflet) return
     if (e.pointerType !== 'mouse' && !refletAuDoigt) return
+    // Quand la carte se retourne, c'est le capteur qui mesure : son handler
+    // fait le travail et celui du corps n'aurait qu'un repère faux à donner.
+    if (tourne) return
     const g = groupe.current
     if (g === null) return
     // ON LIT LE POINT DANS LE REPÈRE DE LA CARTE : sa matrice monde porte
@@ -928,7 +978,9 @@ ${nuanceur.fragmentShader}`
   // même cache partagé que les faces, donc la première la paie et les
   // suivantes la retrouvent prête.
   useEffect(() => {
-    if (culbute === null || culbute === undefined || verso.map !== null) return
+    // Elle arrive aussi dès qu'on peut RETOURNER la carte : sans dos, la moitié
+    // du geste ne montrerait rien du tout.
+    if (((culbute === null || culbute === undefined) && !tourne) || verso.map !== null) return
     let vivant = true
     void textureDuDos()
       .then((texture) => {
@@ -941,7 +993,18 @@ ${nuanceur.fragmentShader}`
     return () => {
       vivant = false
     }
-  }, [culbute, verso])
+  }, [culbute, tourne, verso])
+
+  const suivreSurCapteur = (e: ThreeEvent<PointerEvent>): void => {
+    if (!reflet) return
+    if (e.pointerType !== 'mouse' && !refletAuDoigt) return
+    const c = capteur.current
+    if (c === null) return
+    const local = c.worldToLocal(e.point.clone())
+    curseur.dessus = true
+    curseur.x = THREE.MathUtils.clamp(local.x / LARGE, -0.5, 0.5)
+    curseur.y = THREE.MathUtils.clamp(local.y / HAUT, -0.5, 0.5)
+  }
 
   const jeton = useRef(saut)
 
@@ -1087,12 +1150,28 @@ ${nuanceur.fragmentShader}`
       l.p.y + Math.cos(t * 29) * amp,
       l.p.z + l.brille * AVANCEE_REFLET * l.t,
     )
+    // Le tour d'inspection ne remplace pas l'inclinaison, il la REMPLACE EN
+    // AMPLITUDE sur le seul axe vertical : basculer aussi le haut et le bas de
+    // 112° rendrait la carte illisible sans rien montrer de plus — *on
+    // retourne un objet autour de sa hauteur, pas autour de sa largeur.*
+    const tourY = tourne
+      ? Math.sign(l.vx) * Math.min(1, (Math.abs(l.vx) * 2) ** 2) * TOUR_INSPECTION
+      : l.vx * INCLINAISON_REFLET
     g.rotation.set(
       l.r.x - l.vy * INCLINAISON_REFLET,
-      l.r.y + l.vx * INCLINAISON_REFLET,
+      l.r.y + tourY,
       l.r.z + (engagee ? Math.sin(t * 23) * l.feu * 0.018 : 0),
     )
     g.scale.setScalar(l.t)
+
+    // LE CAPTEUR SUIT LA PLACE ET LA TAILLE, JAMAIS LA ROTATION. Il se tient
+    // un cheveu derrière la carte : le rayon la traverse d'abord, mais R3F
+    // prévient les deux.
+    const c = capteur.current
+    if (c !== null) {
+      c.position.set(l.p.x, l.p.y, l.p.z - EPAISSEUR)
+      c.scale.setScalar(l.t)
+    }
 
     // ET LE CONTOUR S'ALLUME. **Rien ne touche plus à la carte elle-même** :
     // une émission, même faible, lave l'illustration au moment précis où l'on
@@ -1192,7 +1271,24 @@ ${nuanceur.fragmentShader}`
   })
 
   return (
-    <group ref={groupe} position={position}>
+    <group>
+      {/* LE CAPTEUR DU SURVOL, quand la carte peut se retourner. Invisible,
+          mais bien rendu : un objet à `visible={false}` est sauté par le
+          lancer de rayon. Il n'arrête pas la propagation — le voile du zoom
+          doit toujours recevoir la tape qui referme. */}
+      {tourne && (
+        <mesh
+          ref={capteur}
+          onPointerMove={suivreSurCapteur}
+          onPointerOut={() => {
+            curseur.dessus = false
+          }}
+        >
+          <planeGeometry args={[LARGE, HAUT]} />
+          <meshBasicMaterial transparent opacity={0} depthWrite={false} colorWrite={false} />
+        </mesh>
+      )}
+      <group ref={groupe} position={position}>
       {/* LE CONTOUR, derrière la carte : un plan plus grand qu'elle, qui porte
           la texture de lueur. Seul ce qui dépasse se voit — le centre est
           masqué par la carte. Il ne capte pas le pointeur : sans `raycast`
@@ -1284,7 +1380,10 @@ ${nuanceur.fragmentShader}`
           onPointerOver?.(e)
         }}
         onPointerOut={(e) => {
-          curseur.dessus = false
+          // Quand la carte se retourne, c'est le capteur qui dit quand on la
+          // quitte : le corps, lui, se dérobe sous le curseur en tournant, et
+          // *un objet qui s'échappe n'est pas un objet qu'on a quitté.*
+          if (!tourne) curseur.dessus = false
           onPointerOut?.(e)
         }}
       >
@@ -1293,7 +1392,7 @@ ${nuanceur.fragmentShader}`
         <mesh geometry={GEOMETRIE_FACE} material={face} position={[0, 0, EPAISSEUR / 2 + 0.001]} raycast={() => null} />
         {/* LE VERSO, le temps de la culbute : sans lui, la carte disparaît un
             demi-tour sur deux et le geste ne se lit plus. */}
-        {culbute !== null && culbute !== undefined && (
+        {(tourne || (culbute !== null && culbute !== undefined)) && (
           <mesh
             geometry={GEOMETRIE_FACE}
             material={verso}
@@ -1302,7 +1401,8 @@ ${nuanceur.fragmentShader}`
             raycast={() => null}
           />
         )}
-      </mesh>
+        </mesh>
+      </group>
     </group>
   )
 }

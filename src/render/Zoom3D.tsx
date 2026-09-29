@@ -285,6 +285,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
                 ressort={14}
                 reflet
                 refletAuDoigt={grossie}
+                tourne
                 // LE NOMBRE D'EXEMPLAIRES EST SUR LA CARTE, en bas à droite,
                 // dans sa case de laiton. Keko : « on fait pareil pour les
                 // chiffres qui indiquent le nombre de cartes de chaque
@@ -348,6 +349,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
         ombre={false}
         reflet
         refletAuDoigt={loupe === carte.id}
+        tourne
         onPeinte={onPeinte}
         onPointerDown={(e) => {
           e.stopPropagation()
