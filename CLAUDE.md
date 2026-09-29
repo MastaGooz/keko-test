@@ -3603,6 +3603,25 @@ Quatre choses à ne pas défaire :
   geste cesse d'en distinguer un.** Les deux sons et l'effet des stats suivent
   la culbute — ils disent le même moment, ils ne peuvent pas partir sans elle.
 
+**LA CULBUTE COURT-CIRCUITE LE PLACEMENT, PAS LA MATIÈRE.** Son bloc se termine
+par un `return` — *pendant qu'elle se joue, la carte n'est plus un objet qui
+rejoint sa place, elle est une mise en scène.* Mais le réglage du liseré vivait
+à la FIN de la même boucle, donc derrière ce `return` : son opacité restait
+figée à la valeur du lâcher, c'est-à-dire **allumée**, puisqu'on lâche
+précisément au-dessus d'un slot qui accepte.
+
+Or le plan du contour est DERRIÈRE la carte — « seul ce qui dépasse se voit, le
+centre est masqué par la carte ». **À mi-tour il passe DEVANT**, et comme il est
+additif il délavait ce qu'il recouvrait. Keko : « durant son animation de
+rotation, j'ai l'impression qu'elle devient transparente, ou que certaines
+parties le sont » — et c'était vrai, par bandes, là où la texture du contour est
+la plus lumineuse.
+
+*Ce qui ne dépend que de l'état ne doit pas vivre derrière un `return` qui, lui,
+ne parle que de placement.* `l.feu` retombait bien à zéro ; c'est la matière qui
+ne le lisait plus. **Toute matière posée après ce `return` est figée pendant la
+culbute** — à relire si on en ajoute une.
+
 **C'EST UN JETON QUI LA DÉCLENCHE, PAS UN INSTANT, et ça a coûté une fausse
 piste.** `lireHorloge()` peut être en retard de plusieurs secondes sur
 `clock.elapsedTime` — mesuré : 7,4 contre 24,1, l'écart d'un module rechargé à

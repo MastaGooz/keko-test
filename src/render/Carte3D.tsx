@@ -967,9 +967,35 @@ ${nuanceur.fragmentShader}`
     // LE FRÉMISSEMENT : court, rapide, et de deux fréquences qui ne retombent
     // jamais en phase — sinon il se lit comme un balancement régulier, donc
     // comme une animation, et non comme une carte qui vibre d'impatience.
+    const t = etat.clock.elapsedTime
     const feuVise = engagee || peril ? 1 : 0
     l.feu += (feuVise - l.feu) * (1 - Math.exp(-12 * delta))
-    const t = etat.clock.elapsedTime
+
+    /**
+     * **LE LISERÉ SE RÈGLE AVANT LE PLACEMENT, et c'est un correctif.**
+     *
+     * Il respire à peine — c'est ce qui le fait lire comme une lumière et non
+     * comme un trait peint, sur la même horloge que le frémissement mais bien
+     * plus lente : *deux battements rapides se liraient comme un clignotement
+     * d'alerte.*
+     *
+     * Il vivait à la FIN de cette boucle, donc **après le `return` de la
+     * culbute** : son opacité restait figée à la valeur qu'elle avait au
+     * lâcher, c'est-à-dire allumée, puisqu'on lâche précisément au-dessus d'un
+     * slot qui accepte. Or le plan du contour est DERRIÈRE la carte : à
+     * mi-tour il passe DEVANT, et comme il est additif il délavait ce qu'il
+     * recouvrait. Keko : « durant son animation de rotation, j'ai l'impression
+     * qu'elle devient transparente, ou que certaines parties le sont » — et
+     * c'était vrai, par bandes, là où la texture du contour est la plus
+     * lumineuse.
+     *
+     * *Ce qui ne dépend que de l'état ne doit pas vivre derrière un `return`
+     * qui, lui, ne parle que de placement.* `l.feu` retombait bien à zéro ;
+     * c'est la matière qui ne le lisait plus.
+     */
+    halo.color.set(peril ? '#ff6a52' : '#ffe6ab')
+    halo.opacity = l.feu * (0.88 + Math.sin(t * 6) * 0.12)
+
     // **LE FRÉMISSEMENT SUIT `engagee`, LA COULEUR SUIT `peril`**, et les deux
     // se cumulent. Le péril coupait le tremblement, ce qui était juste pour
     // une carte POSÉE dans le rebut — elle n'est plus dans un geste — mais
@@ -1180,12 +1206,6 @@ ${nuanceur.fragmentShader}`
       if (poserLOnde(t - l.debutOnde, vague.current, matiereOnde, poussiere)) l.debutOnde = null
     }
 
-    // LE LISERÉ RESPIRE, à peine : c'est ce qui le fait lire comme une lumière
-    // et non comme un trait peint. Sur la même horloge que le frémissement,
-    // mais bien plus lente — deux battements rapides se liraient comme un
-    // clignotement d'alerte.
-    halo.color.set(peril ? '#ff6a52' : '#ffe6ab')
-    halo.opacity = l.feu * (0.88 + Math.sin(t * 6) * 0.12)
   })
 
   return (
