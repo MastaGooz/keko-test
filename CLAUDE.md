@@ -4808,11 +4808,25 @@ PIÈCE de la CARTE qu'elle produit. *Elles ne se regardent côte à côte qu'au 
 d'une pièce* — mais c'est là que la confusion se paie, puisque c'est là qu'on
 compare.
 
-| | `cadre=` | ce que ça dit | lisibilité en petit |
+| | `cadre=` | ce que ça dit | où ça se voit |
 |---|---|---|---|
-| **franc** | `1` | la carte est une IMAGE, pas un objet : plus de silhouette | faible — presque invisible à 100 px |
-| **encoché** | `2` | une plaque qu'on CLIPSE : deux entailles à mi-hauteur | **la meilleure** |
-| **crans** | `3` | une fiche qu'on TIRE : deux crans hauts | moyenne |
+| **franc** | `1` | la carte est une IMAGE, pas un objet : plus de silhouette | partout, mais faiblement |
+| **encoché** | `2` | une plaque qu'on CLIPSE : deux entailles à mi-hauteur | l'entaille gauche seule, en main |
+| **crans** | `3` | une fiche qu'on TIRE : deux crans hauts | bande haute |
+| **corné** | `4` | *la pièce est une plaque, la carte est une FEUILLE* : le coin haut-droit se relève | bande haute |
+| **perforé** | `5` | *une carte n'existe jamais seule* : deux trous de reliure, donc un paquet | bande haute |
+| **ajouré** | `6` | *ce qui a été arraché laisse un trou* : une fente dans le montant droit | **presque jamais** en main |
+
+**LE CRITÈRE QUI TRANCHE N'EST PAS LA BEAUTÉ, C'EST LA BANDE HAUT-GAUCHE.** Le
+recouvrement de l'éventail mange la droite, la ligne de flottaison mange le
+bas : *un signe posé sur le montant droit ou sur le bord bas n'existe pas en
+combat.* C'est ce qui condamne l'ajour et affaiblit l'encoche, et ce qui donne
+l'avantage au corné et au perforé.
+
+**Les trois dernières GARDENT la coque déchirée** et ajoutent un signe, au lieu
+d'inventer une quatrième silhouette : *toutes les cartes du jeu portent cette
+déchirure — c'est la signature du gabarit* — et **un dessin tient mieux par ce
+qu'il partage que par ce qu'il découpe.**
 
 **La pièce garde la coque déchirée**, et c'est voulu : *elle est le métal brut
 dont les cartes sont arrachées*, donc c'est elle qui doit porter la déchirure.

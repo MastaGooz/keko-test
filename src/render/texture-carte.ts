@@ -222,16 +222,82 @@ const CADRE_CRANS: readonly [number, number][] = [
 ]
 
 /**
- * Le cadre à l'essai, lu UNE fois : c'est un réglage de session, donc il ne
+ * LE COIN CORNÉ : la coque DÉCHIRÉE, moins son coin haut-droit.
+ *
+ * *La pièce est une plaque, la carte est une feuille* — et rien ne dit
+ * « feuille » comme un coin qui se relève. C'est le seul signe de cette liste
+ * qui ne parle pas de ferronnerie, et c'est précisément ce qui le rend lisible :
+ * il change la NATURE de l'objet, pas sa découpe.
+ *
+ * Le coin haut-DROIT, jamais le gauche : l'orbe du coût vit dans celui-là sur
+ * toute carte du jeu, et *un rabat qui mange un chiffre de coût ne serait pas
+ * un cadre, ce serait un défaut.*
+ */
+const CORNE = 17
+const CADRE_CORNE: readonly [number, number][] = [
+  [4, 0], [91 - CORNE, 1.2], [91, CORNE / 1.4], [98, 92], [93, 98],
+  [55, 99], [50, 100], [44, 99], [3, 97], [0, 88], [1, 5],
+]
+
+/** Le rabat lui-même : le triangle qu'on vient de retirer, replié sur la face. */
+const RABAT: readonly [number, number][] = [
+  [91 - CORNE, 1.2], [91, CORNE / 1.4], [91 - CORNE * 0.42, CORNE / 1.4 + 1.5],
+]
+
+/**
+ * LES PERFORATIONS : deux trous de reliure dans la bande haute.
+ *
+ * *Une carte de deck n'existe jamais seule* — elle vient en trois exemplaires,
+ * elle se pioche, elle se défausse, elle se remélange. Deux trous disent
+ * « fiche enfilée sur un anneau », donc « appartient à un paquet », ce qu'aucune
+ * pièce d'équipement n'est.
+ *
+ * Ils vivent à DROITE de l'orbe, dans la bande qu'on voit encore quand la carte
+ * est recouverte aux trois quarts par sa voisine.
+ */
+const PERFORATIONS: readonly (readonly [number, number, number])[] = [
+  [62, 5.2, 2.5],
+  [76, 5.2, 2.5],
+]
+
+/**
+ * L'AJOUR : une fente traversante dans le montant droit.
+ *
+ * *Ce qui a été arraché laisse un trou.* La carte de deck est découpée DANS la
+ * pièce — la note le dit déjà : « un trésor est sorti du donjon entier, là où
+ * les cartes que fabrique l'équipement en sont arrachées » — et c'est la seule
+ * piste qui le rende visible sur l'objet lui-même.
+ *
+ * Elle est verticale et longue, donc elle se lit même réduite : *une fente fine
+ * survit à la réduction là où un motif s'empâte.*
+ */
+const AJOUR: readonly [number, number, number, number] = [96.4, 30, 1.8, 26]
+
+export type PisteCadre = 'franc' | 'encoche' | 'crans' | 'corne' | 'perfore' | 'ajour'
+
+/**
+ * La piste à l'essai, lue UNE fois : c'est un réglage de session, donc il ne
  * change jamais en cours de route et n'a pas à entrer dans `signature()`.
  */
-const CADRE_DECK: readonly [number, number][] | null = (() => {
+const PISTE_CADRE: PisteCadre | null = (() => {
   const demande = new URLSearchParams(location.search).get('cadre')
-  if (demande === '1') return CADRE_FRANC
-  if (demande === '2') return CADRE_ENCOCHE
-  if (demande === '3') return CADRE_CRANS
-  return null
+  const pistes: Record<string, PisteCadre> = {
+    '1': 'franc',
+    '2': 'encoche',
+    '3': 'crans',
+    '4': 'corne',
+    '5': 'perfore',
+    '6': 'ajour',
+  }
+  return demande === null ? null : (pistes[demande] ?? null)
 })()
+
+const SILHOUETTES: Partial<Record<PisteCadre, readonly [number, number][]>> = {
+  franc: CADRE_FRANC,
+  encoche: CADRE_ENCOCHE,
+  crans: CADRE_CRANS,
+  corne: CADRE_CORNE,
+}
 
 /**
  * LA PLACE DE L'ORBE DU COÛT, en un seul endroit.
@@ -248,6 +314,80 @@ const ORBE_CY = 0.006 * HAUT + ORBE_L / 2
 const ECUSSON: readonly [number, number][] = [
   [0, 0], [98, 5], [90, 68], [50, 100], [10, 76],
 ]
+
+/**
+ * CE QUI MARQUE UNE CARTE DE DECK, une fois la coque et l'illustration posées.
+ *
+ * *Toutes les cartes du jeu portent la coque déchirée — c'est la signature du
+ * gabarit.* Trois de ces pistes la GARDENT donc et ajoutent un signe, plutôt
+ * que d'inventer une quatrième silhouette : **un dessin tient mieux par ce
+ * qu'il partage que par ce qu'il découpe.**
+ *
+ * Elle se pose APRÈS l'illustration et AVANT les textes, comme le second jonc
+ * du trésor : *un trou n'a jamais à traverser un nom.*
+ */
+function marquerLaCarte(
+  ctx: CanvasRenderingContext2D,
+  piste: PisteCadre,
+  rarete: string | undefined,
+): void {
+  // LE FOND QUI SE VOIT PAR LE TROU : le même laiton assombri que la plaque,
+  // donc ce qui est percé montre l'épaisseur de la carte et non du vide.
+  const fond = (): void => {
+    ctx.fillStyle = laiton(ctx, rarete)
+    ctx.fill()
+    ctx.fillStyle = '#000000b0'
+    ctx.fill()
+  }
+
+  if (piste === 'corne') {
+    // LE RABAT : le triangle qu'on vient de retirer, replié sur la face. Il
+    // prend le laiton en plus clair — *un pli montre l'envers, et l'envers
+    // reçoit la lumière autrement* — et il porte son ombre vers l'intérieur,
+    // sans quoi il se lirait comme un aplat collé.
+    ctx.save()
+    ctx.shadowColor = '#00000090'
+    ctx.shadowOffsetX = -0.9 * U
+    ctx.shadowOffsetY = 1.2 * U
+    ctx.shadowBlur = 1.4 * U
+    chemin(ctx, RABAT as readonly [number, number][], 0, 0, LARGE, HAUT)
+    const pli = ctx.createLinearGradient(0.74 * LARGE, 0, 0.93 * LARGE, 0.14 * HAUT)
+    pli.addColorStop(0, '#cbb98b')
+    pli.addColorStop(1, '#6d6144')
+    ctx.fillStyle = pli
+    ctx.fill()
+    ctx.restore()
+    return
+  }
+
+  if (piste === 'perfore') {
+    for (const [px, py, r] of PERFORATIONS) {
+      ctx.beginPath()
+      ctx.arc((px / 100) * LARGE, (py / 100) * HAUT, (r / 100) * LARGE, 0, Math.PI * 2)
+      fond()
+      // UN LISERÉ CLAIR EN BAS DU TROU : c'est ce qui lui donne son épaisseur.
+      // *Un rond sombre sans lumière est une tache, pas un perçage.*
+      ctx.strokeStyle = '#ffffff22'
+      ctx.lineWidth = 0.4 * U
+      ctx.stroke()
+    }
+    return
+  }
+
+  const [ax, ay, al, ah] = AJOUR
+  ctx.beginPath()
+  ctx.roundRect(
+    (ax / 100) * LARGE - ((al / 100) * LARGE) / 2,
+    (ay / 100) * HAUT,
+    (al / 100) * LARGE,
+    (ah / 100) * HAUT,
+    (al / 100) * LARGE * 0.5,
+  )
+  fond()
+  ctx.strokeStyle = '#ffffff26'
+  ctx.lineWidth = 0.35 * U
+  ctx.stroke()
+}
 
 function chemin(ctx: CanvasRenderingContext2D, points: readonly [number, number][], x: number, y: number, l: number, h: number): void {
   ctx.beginPath()
@@ -542,8 +682,9 @@ export async function peindreCarte(
   // d'équipement se reconnaît à son compteur : elle garde la déchirure, parce
   // que *c'est d'elle que les cartes sont arrachées.*
   const deDeck = carte.tresor !== true && carte.compteur === undefined
+  const piste = deDeck ? PISTE_CADRE : null
   const coque =
-    carte.tresor === true ? CADRE_TRESOR : deDeck && CADRE_DECK !== null ? CADRE_DECK : DECOUPE
+    carte.tresor === true ? CADRE_TRESOR : (piste !== null && SILHOUETTES[piste]) || DECOUPE
   ctx.save()
   chemin(ctx, coque, 0, 0, LARGE, HAUT)
   ctx.clip()
@@ -575,6 +716,11 @@ export async function peindreCarte(
   ctx.fillStyle = voile
   ctx.fillRect(0, HAUT * 0.5, LARGE, HAUT * 0.5)
   ctx.restore()
+
+  // LA MARQUE D'UNE CARTE DE DECK, quand une piste est à l'essai.
+  if (piste === 'corne' || piste === 'perfore' || piste === 'ajour') {
+    marquerLaCarte(ctx, piste, carte.rarete)
+  }
 
   // ET LE TRÉSOR PORTE UN SECOND JONC, en retrait du premier.
   //
