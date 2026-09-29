@@ -4910,33 +4910,6 @@ body {
   position: fixed;
 }
 
-/* LE BANDEAU NE DIT PLUS QUE LE LIEU. Le chargement, le deck et l'or en sont
-   partis : *ce qu'on lit sans decider dessus n'a rien a faire en tete de
-   page* -- ils vivent desormais dans l'etat du pied. */
-.arm-titre {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5em;
-  margin: 0;
-  color: #f0e0bd;
-  font-size: clamp(0.95rem, 3.1vh, 1.7rem);
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  text-shadow: 0 2px 5px #000, 0 0 1.4rem #e8ac5433;
-}
-
-/* L'EMBLEME DU LIEU : sa hauteur se mesure sur le TEXTE (em), pas sur la
-   fenetre -- il grandit donc avec le titre, et un seul reglage suffit. */
-.arm-embleme {
-  /* IL TIENT DANS LA BANDE DU TITRE : a 2,6em il faisait 40 px pour une bande
-     de 37 sur un telephone couche, donc il mordait le bord haut de l'ecran. */
-  height: 2.2em;
-  width: auto;
-  flex: none;
-  filter: drop-shadow(0 2px 6px #000000aa);
-}
-
 /* LE CADRE EST UN MEUBLE, pas une boite de dialogue : un filet de laiton, un
    fond a peine plus clair que la piece, et des coins coupes -- la meme
    ferronnerie que la barre de vie. */

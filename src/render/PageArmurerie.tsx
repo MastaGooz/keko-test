@@ -433,15 +433,6 @@ export function PageArmurerie({
   return (
     <>
       <div className="arm-fond">
-      {/* LE SYMBOLE DU LIEU, à gauche de son nom — fourni par Keko. Il se pose
-          DANS la ligne du titre et non au coin de l'écran : *une enseigne se
-          lit avec son mot*, et le titre est centré. Sa hauteur suit celle du
-          texte, donc il grandit avec la page sans réglage à part. */}
-      <p className="arm-titre" style={boite(plan.titre)}>
-        <img className="arm-embleme" src={urlDeLArmurerie()} alt="" />
-        Armurerie
-      </p>
-
       <div className="arm-cadre" style={boite(plan.coffre)} ref={cadreCoffre} />
       <span className="arm-nom" style={plaque(plan.coffre)}>
         Coffre

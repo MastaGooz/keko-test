@@ -3968,10 +3968,18 @@ se pose donc au milieu des deux autres (`2,4vh` entre 1,7 et 3,1). Mesuré à
 844x390 comme à 667x320 : 15,2 / 11,5 / 8,8 px, les plaques tiennent dans leurs
 cadres, zéro débordement.
 
-**LE BANDEAU NE DIT PLUS QUE LE LIEU.** Le chargement, le compte du deck et
-l'or en sont partis, demandé par Keko : *ce qu'on lit sans décider dessus n'a
-rien à faire en tête de page.* Le compte du deck n'a pas disparu pour autant —
-il est passé dans le pied, avec le reste.
+**ET LE BANDEAU A FINI PAR DISPARAÎTRE.** Le chargement, le compte du deck et
+l'or en étaient d'abord partis — *ce qu'on lit sans décider dessus n'a rien à
+faire en tête de page* — puis le nom du lieu avec, une fois le rail en place.
+Keko : « on peut enlever le titre armurerie en haut pour gagner de la place vu
+que c'est marqué déjà à gauche ». *Le rail nomme le lieu où l'on est*, son
+entrée ouverte le dit en clair et en permanence, donc le bandeau ne faisait que
+le répéter.
+
+**Une bande qui ne porte qu'un mot déjà écrit ailleurs coûte toute sa hauteur à
+ce qu'il y a en dessous** — c'est le raisonnement qui avait déjà fait
+disparaître le pied. Mesuré : le coffre passe de 4 à 5 rangées sur un téléphone
+couché.
 
 **UN SEUL CALCUL POUR LES DEUX MONDES** (`armurerie-plan.ts`). Les cartes
 vivent dans le canvas, les cadres et les onglets sont du HTML par-dessus : s'ils

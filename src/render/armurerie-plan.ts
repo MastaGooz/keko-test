@@ -80,8 +80,6 @@ export type Rect = {
 export type PlanArmurerie = {
   demiHaut: number
   demiLarge: number
-  /** Le bandeau du titre, en haut. */
-  titre: Rect
   /**
    * LE RAIL DES DESTINATIONS, sur le bord gauche — et il remplace l'écran de
    * place.
@@ -188,11 +186,20 @@ export function planArmurerie(
   // le champ fait la moitié de celui d'un écran de PC, et un bandeau en unités
   // fixes y mangerait tout.
   const marge = Math.min(demiLarge * 0.045, 0.5)
-  const hTitre = demiHaut * 0.19
   // LE PIED N'EST PLUS QU'UNE MARGE : ce qu'il portait vit dans la colonne de
   // droite, et sa hauteur est revenue aux panneaux.
   const hPied = demiHaut * 0.07
-  const hautPanneaux = demiHaut - hTitre - marge * 0.5
+  /**
+    * PLUS DE BANDEAU DE TITRE, et sa hauteur revient aux panneaux.
+    *
+    * Keko : « on peut enlever le titre armurerie en haut pour gagner de la
+    * place vu que c'est marqué déjà à gauche ». *Le rail nomme le lieu où
+    * l'on est* — son entrée ouverte le dit, en clair et en permanence — donc
+    * le bandeau ne faisait que le répéter. **Une bande qui ne porte qu'un mot
+    * déjà écrit ailleurs coûte toute sa hauteur à ce qu'il y a en dessous** :
+    * c'est le même raisonnement qui avait fait disparaître le pied.
+    */
+  const hautPanneaux = demiHaut - marge
   const basPanneaux = -demiHaut + hPied
   const hPanneaux = hautPanneaux - basPanneaux
   const yPanneaux = (hautPanneaux + basPanneaux) / 2
@@ -486,14 +493,6 @@ export function planArmurerie(
   return {
     demiHaut,
     demiLarge,
-    // LE TITRE SE CENTRE SUR CE QU'IL COIFFE, pas sur la fenêtre : le rail
-    // n'est pas de l'armurerie, c'est ce qui permet d'en sortir.
-    titre: {
-      x: (gauche + demiLarge) / 2,
-      y: demiHaut - hTitre / 2,
-      l: demiLarge - gauche,
-      h: hTitre,
-    },
     rail: { x: xRail, y: yPanneaux, l: lRail - marge, h: hPanneaux },
     railListe: {
       x: xRail,
