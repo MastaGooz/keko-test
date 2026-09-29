@@ -3215,6 +3215,18 @@ tiers : le nom passe de 7,8 à 10,7 px sur un téléphone couché, le blason de 
 l'horizontale se lit comme une image cassée, un fondu se lit comme l'ombre où
 le marchand se tient.
 
+**L'ENSEIGNE N'A PAS DE CADRE : un filet dessous, et rien d'autre.** Keko :
+« je trouve le cadre autour du texte et du symbole inutile, ça surcharge un
+peu, un simple trait dessous suffirait non ? » *C'est la même correction que le
+rail des stats*, où quatre cartouches empilés faisaient quatre objets là où un
+trait suffit : **ce qui est au-dessus d'un trait va ensemble.** Ici il n'y avait
+rien à séparer d'un voisin — l'écart des colonnes le fait déjà — donc le cadre
+n'enfermait que du vide.
+
+**Le filet s'éteint à ses deux bouts** : une arête franche redonnerait un bord,
+donc un cadre à une face. *Un trait qui s'éteint souligne, un trait qui
+s'arrête encadre.*
+
 **ET L'ENSEIGNE DÉBORDE LE BUSTE**, d'un facteur 1,45. Keko : « je trouve que
 le symbole d'armurerie et le texte à côté sont trop petits ». *La place perdue
 par le buste en hauteur se récupère en largeur* : c'est la hauteur qui borne le
@@ -3304,8 +3316,8 @@ d'une run ramène sur la PLACE**, pas dans l'armurerie : *le jeu s'ouvre là, il
 y retombe.*
 
 Mesuré à 844x390, 667x320, 932x430, 1366x700, 1920x1080 et 2560x1215 : aucun
-débordement, aucun nom coupé. Le nom va de 10,4 px sur un iPhone SE couché à
-27,6 sur un grand écran, et le blason de 22 à 58.
+débordement, aucun nom coupé. Le nom va de 10,9 px sur un iPhone SE couché à
+27,6 sur un grand écran, et le blason de 23 à 58.
 
 **Ce qui reste à juger** : les PNJ flottent — il n'y a pas de sol sous eux,
 alors que la règle des créatures dit que *c'est l'ombre sous les pattes qui
