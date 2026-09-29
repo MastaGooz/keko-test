@@ -4497,7 +4497,11 @@ Quatre choses qui la portent :
   ce sur quoi on décide dans la MAIN, et une valeur de butin n'en est pas.*
   Elle se cale sur le CENTRE de l'orbe et non sur le haut de la carte : les
   deux forment alors une ligne d'en-tête, là où deux hauteurs voisines mais
-  différentes se liraient comme un défaut d'alignement ;
+  différentes se liraient comme un défaut d'alignement. **Et elle remonte d'un
+  cheveu au-dessus de cette ligne** (Keko) : *un chiffre et un disque de
+  tailles différentes ne se centrent pas à l'oeil au même endroit* — le badge
+  fait la moitié de la hauteur de l'orbe, donc aligné au milieu mathématique il
+  paraît tomber ;
 - **le chiffre est À CÔTÉ du symbole, pas dedans**, et c'est la grammaire des
   MESURES — celle de la bande de stats de l'armurerie. L'orbe et la case en
   forme de carte mettent leur chiffre dedans parce qu'ils disent un COÛT et un

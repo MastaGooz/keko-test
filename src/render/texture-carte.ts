@@ -794,7 +794,11 @@ function peindreValeur(ctx: CanvasRenderingContext2D, valeur: number): void {
   ctx.font = `600 ${8.6 * U}px "Grenze Gotisch", Georgia, serif`
   const texte = String(valeur)
   const x = (LARGE - (l + ecart + ctx.measureText(texte).width)) / 2
-  const y = ORBE_CY - h / 2
+  // ELLE REMONTE D'UN CHEVEU au-dessus de la ligne de l'orbe (Keko). *Un
+  // chiffre et un disque de tailles différentes ne se centrent pas à l'oeil au
+  // même endroit* : le badge est deux fois moins haut, donc aligné au milieu
+  // mathématique il paraît tomber. Ça garde 1,9 % de hauteur avant le jonc.
+  const y = ORBE_CY - h / 2 - 0.012 * HAUT
 
   const dessus = y + h * 0.36
   ctx.beginPath()
