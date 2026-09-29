@@ -57,6 +57,13 @@ export type Entree = { carte: CarteAPeindre; nombre: number }
 const COLONNES_SET = 4
 /** Et sur combien de lignes au plus : c'est ce qui borne la taille d'une carte. */
 const LIGNES_SET = 2
+/**
+ * LE DECK EN TIENT PLUS PAR LIGNE, parce qu'il n'a pas de pièce à sa gauche :
+ * toute la largeur est à lui. *La grille de référence n'est pas la même, donc
+ * la taille d'une carte non plus* — et c'est ce qui la garde stable quel que
+ * soit le nombre de modèles.
+ */
+const COLONNES_DECK = 5
 
 /**
  * Ce qu'il faut maintenir le doigt pour qu'une carte du set grossisse.
@@ -138,22 +145,32 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
     window.addEventListener('pointercancel', fin, { signal: couper.signal })
   }
 
-  if (carte === null) return null
+  const modeles = set ?? []
+  if (carte === null && modeles.length === 0) return null
   const zCarte = zCamera(size.height) - RECUL_ZOOM
   const zVoile = zCamera(size.height) - RECUL_VOILE
 
   // Seule la carte, sans son set : elle occupe le centre, comme toujours.
-  const seule = set === undefined || set.length === 0
+  const seule = modeles.length === 0
+  /**
+   * **UN SET SANS PIÈCE : C'EST LE DECK.**
+   *
+   * Le zoom montrait les modèles d'une pièce ; consulter son deck, c'est la
+   * même page sans la pièce à gauche. *Ce sont les mêmes cartes, ce doit être
+   * le même écran* — la grille, les comptes, la loupe et la fermeture à la
+   * tape viennent avec, et il n'y a rien à réécrire à côté.
+   */
+  const sansPiece = carte === null
   const H = hauteurVisibleA(zCarte, size.height)
   const L = (H * size.width) / size.height
   const marge = L * 0.04
 
-  const colonnes = Math.min(COLONNES_SET, seule ? 1 : set.length)
-  const lignes = seule ? 1 : Math.ceil(set.length / colonnes)
+  const colonnes = Math.min(sansPiece ? COLONNES_DECK : COLONNES_SET, seule ? 1 : modeles.length)
+  const lignes = seule ? 1 : Math.ceil(modeles.length / colonnes)
   // La pièce cède de la place au set, mais reste la plus grande : c'est elle
   // qu'on regarde, le set n'est que ce qu'elle apporte.
-  const piece = seule ? H * 0.72 / 1.4 : Math.min((H * 0.8) / 1.4, L * 0.26)
-  const largeurSet = L - 3 * marge - piece
+  const piece = sansPiece ? 0 : seule ? H * 0.72 / 1.4 : Math.min((H * 0.8) / 1.4, L * 0.26)
+  const largeurSet = sansPiece ? L - 2 * marge : L - 3 * marge - piece
   /**
    * LA TAILLE D'UNE CARTE DU SET NE DÉPEND PAS DE LEUR NOMBRE.
    *
@@ -163,10 +180,14 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * c'est ce qui fait qu'une pièce riche et une pièce pauvre se lisent pareil.
    * La lisibilité, elle, vient de la loupe.
    */
+  const colonnesRef = sansPiece ? COLONNES_DECK : COLONNES_SET
+  // La grille de RÉFÉRENCE compte au moins deux lignes, et davantage s'il en
+  // faut : *un deck plus fourni ne doit pas déborder par le bas.*
+  const lignesRef = Math.max(LIGNES_SET, lignes)
   const uneCarte = Math.min(
-    piece * 0.62,
-    (H * 0.88) / (LIGNES_SET * 1.82),
-    largeurSet / (COLONNES_SET * 1.1),
+    sansPiece ? H * 0.5 : piece * 0.62,
+    (H * 0.88) / (lignesRef * 1.82),
+    largeurSet / (colonnesRef * 1.1),
   )
   /**
    * CE QU'UNE CARTE DU SET DEVIENT SOUS LA LOUPE — et le champ dans lequel
@@ -222,10 +243,10 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * modèles — et on centre la somme.
    */
   const pasXSet = uneCarte * 1.1
-  const largeurOccupee = Math.min(colonnes, seule ? 1 : set.length) * pasXSet
+  const largeurOccupee = Math.min(colonnes, seule ? 1 : modeles.length) * pasXSet
   const ensemble = seule ? piece : piece + marge + largeurOccupee
   const xPiece = seule ? 0 : -ensemble / 2 + piece / 2
-  const xSet = xPiece + piece / 2 + marge + largeurOccupee / 2
+  const xSet = sansPiece ? 0 : xPiece + piece / 2 + marge + largeurOccupee / 2
   const pasX = uneCarte * 1.1
   const pasY = uneCarte * 1.82
 
@@ -255,10 +276,10 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
       </mesh>
 
       {!seule &&
-        set.map((entree, i) => {
+        modeles.map((entree, i) => {
           const colonne = i % colonnes
           const ligne = Math.floor(i / colonnes)
-          const parLigne = Math.min(colonnes, set.length - ligne * colonnes)
+          const parLigne = Math.min(colonnes, modeles.length - ligne * colonnes)
           const x = xSet + (colonne - (parLigne - 1) / 2) * pasX
           const y = ((lignes - 1) / 2 - ligne) * pasY
           const grossie = loupe === entree.carte.id
@@ -339,6 +360,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           tap dessus ». Elle ne grossit pas — elle est déjà à sa taille de
           lecture — mais elle s'incline et son lustre la balaie : *le même geste
           doit donner la même réponse, quelle que soit la carte qu'il touche.* */}
+      {carte !== null && (
       <Carte3D
         carte={carte}
         taille={piece}
@@ -358,6 +380,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           maintenir(carte.id)
         }}
       />
+      )}
     </group>
   )
 }

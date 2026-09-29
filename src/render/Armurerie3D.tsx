@@ -45,9 +45,9 @@ import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import type { Carte } from '../logic/combat.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
-import { accepteDepuis, deuxMains, estTresor, peutDescendre } from '../logic/hub.ts'
+import { accepteDepuis, deckEmporte, deuxMains, estTresor, peutDescendre } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
-import { TEXTE_DESCENDRE, TEXTE_FORTUNE } from './armurerie-plan.ts'
+import { TEXTE_DECK, TEXTE_DESCENDRE, TEXTE_FORTUNE } from './armurerie-plan.ts'
 import type { PlanArmurerie } from './armurerie-plan.ts'
 import {
   caseSousLePoint,
@@ -183,6 +183,8 @@ type Props = {
   /** Un trésor se REGARDE et ne se glisse pas : il n'a aucun slot. */
   onRegarderTresor?: (tresor: Carte) => void
   onDescendre?: () => void
+  /** Consulter le deck que le chargement produit. */
+  onVoirDeck?: () => void
   /**
    * L'ARMURIER DONNE UN CHARGEMENT DE FORTUNE. *C'est une fabrication, pas une
    * fouille* : les exemplaires sont neufs, ils ne sortent pas du coffre.
@@ -276,6 +278,7 @@ export function Armurerie3D({
   onRegarder,
   onRegarderTresor,
   onDescendre,
+  onVoirDeck,
   onFourbir,
   onEquipee,
   onPoseCommence,
@@ -958,6 +961,21 @@ export function Armurerie3D({
         position={plan.bouton}
         eteint={tenue !== null || !peutDescendre(hub.chargement)}
         onCliquer={onDescendre}
+      />
+
+      {/* CONSULTER SON DECK, dans la bande réservée sous les mesures. *Il ne
+          décide de rien* — d'où le ton pierre et le format petit : il ouvre une
+          page qu'on referme, il ne quitte pas le hub. */}
+      <Bouton3D
+        texte={TEXTE_DECK}
+        ton="pierre"
+        petit
+        position={plan.boutonDeck}
+        // ET IL S'ÉTEINT QUAND IL N'Y A RIEN À MONTRER : chargement vide, deck
+        // vide. *Un bouton qui ouvre une page blanche se lit comme une panne* —
+        // c'est la règle de « Descendre » sans arme.
+        eteint={tenue !== null || deckEmporte(hub.chargement).length === 0}
+        onCliquer={onVoirDeck}
       />
 
       {/* L'AUTRE DÉPART, SOUS « DESCENDRE ». *Ce sont deux façons de partir*,

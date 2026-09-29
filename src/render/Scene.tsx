@@ -60,6 +60,7 @@ import {
   TAILLE_MAIN_URL,
   aPeindre,
   coffreDeTest,
+  deckAPeindre,
   pilesDeTest,
   raretesDeTest,
   setDeTest,
@@ -83,7 +84,7 @@ import {
   equipement,
   perdreLEquipement,
   peutDescendre,
-  rentrer, rentrerDeFortune, consommablesDeLaPile } from '../logic/hub.ts'
+  rentrer, rentrerDeFortune, consommablesDeLaPile, deckEmporte } from '../logic/hub.ts'
 import {
   REGLAGE_DEFAUT,
   commencerDescente,
@@ -271,6 +272,12 @@ export function Scene(): React.JSX.Element {
   const [zoomee, setZoomee] = useState<CarteAPeindre | null>(null)
   /** Le set de la pièce regardée, s'il s'agit d'une pièce d'équipement. */
   const [zoomSet, setZoomSet] = useState<Entree[]>([])
+  /**
+   * LE ZOOM EST OUVERT DÈS QU'IL A QUELQUE CHOSE À MONTRER — une carte, ou un
+   * set seul, qui est la page du deck. *Ce qui est sous le voile ne répond
+   * plus*, et ça ne dépend pas de laquelle des deux on regarde.
+   */
+  const zoomOuvert = zoomee !== null || zoomSet.length > 0
   /**
    * LA VISÉE EN COURS : une carte attend une cible, et voici le corps sous la
    * pointe de la flèche. Prévenu par `Main3D` quand la RÉPONSE change, pas à
@@ -1134,6 +1141,23 @@ export function Scene(): React.JSX.Element {
   }, [hub, partir])
 
   /**
+   * CONSULTER SON DECK : le zoom, mais SANS pièce à gauche.
+   *
+   * Demandé par Keko. *Ce sont les mêmes cartes, ce doit être le même écran* —
+   * la grille, les comptes, la loupe au maintien et la fermeture à la tape
+   * viennent avec, et il n'y a rien à réécrire à côté. C'est la règle qui avait
+   * déjà sorti le geste de la main pour en faire un module.
+   *
+   * Le deck vient de `deckEmporte`, donc **il dit exactement ce qu'on
+   * descendra** : les sets des pièces et les consommables de la pile, groupés
+   * par modèle.
+   */
+  const voirLeDeck = useCallback(() => {
+    setZoomee(null)
+    setZoomSet(deckAPeindre(deckEmporte(hub.chargement)))
+  }, [hub])
+
+  /**
    * FOURBIR : l'armurier donne un chargement et on PART DANS LA FOULÉE.
    *
    * Tranché par Keko — « le bouton fourbir doit lancer la partie avec un set de
@@ -1494,7 +1518,7 @@ export function Scene(): React.JSX.Element {
           // et perdre les onglets pendant un geste ne coûte rien — on est déjà
           // en train de faire autre chose.
           zIndex:
-            zoomee !== null
+            zoomOuvert
               ? 4
               : saisie && auHub
                 ? 6
@@ -1599,11 +1623,12 @@ export function Scene(): React.JSX.Element {
               setZoomSet([])
             }}
             onDescendre={descendreAuDonjon}
+            onVoirDeck={voirLeDeck}
             onFourbir={fourbirEtDescendre}
             onPoseCommence={() => setEquipements((n) => n + 1)}
             onEquipee={() => setFixations((n) => n + 1)}
             onSaisie={setSaisie}
-            sousLeZoom={zoomee !== null}
+            sousLeZoom={zoomOuvert}
             onPeinte={compter}
           />
         )}
@@ -1908,7 +1933,7 @@ export function Scene(): React.JSX.Element {
           tailleMain={combat.tailleMain}
           equipements={equipements}
           fixations={fixations}
-          zoomee={zoomee !== null}
+          zoomee={zoomOuvert}
         />
       )}
 

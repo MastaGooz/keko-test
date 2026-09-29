@@ -5406,6 +5406,51 @@ rapport 1,66 partout, et 2,9 / 1,4 / 0,6 px avant le titre — zéro débordemen
 donc elle voyait déjà la bonne hauteur. **Un défaut qui n'apparaît qu'en onglet
 est un défaut de hauteur visible, pas de plateforme.**
 
+**UN BOUTON « DECK » SOUS LES MESURES, POUR CONSULTER CE QU'ON DESCENDRA.**
+Demandé par Keko — « sous les stats, dans l'espace libre, mets un bouton deck
+pour permettre au joueur de consulter son deck actuel ». *La bande de mesures
+dit COMBIEN de cartes, elle ne dit pas lesquelles* — et c'est précisément la
+question que « partir léger ou partir couvert » pose.
+
+**C'EST LE ZOOM, SANS LA PIÈCE À GAUCHE.** Le zoom d'une pièce montrait déjà
+ses modèles en cartes, avec leur compte, la loupe au maintien et la fermeture à
+la tape ; *ce sont les mêmes cartes, ce doit être le même écran.* `Zoom3D`
+accepte donc une `carte` nulle : le set prend alors toute la largeur, sur une
+grille de référence à **cinq colonnes** au lieu de quatre. **Rien n'a été
+réécrit à côté** — c'est la règle qui avait déjà sorti le geste de la main pour
+en faire un module.
+
+Trois choses qui le portent :
+
+- **le deck vient de `deckEmporte`**, donc il dit exactement ce qu'on
+  descendra : les sets des pièces ET les consommables de la pile ;
+- **il est GROUPÉ PAR MODÈLE** (`deckAPeindre`), par la `signature()` de la
+  carte peinte — la même clé que le cache de textures et que les piles du
+  coffre. *Quatre Gardes côte à côte ne se lisent pas quatre fois mieux* ;
+- **la grille de référence ne dépend pas du nombre de modèles** : cinq colonnes
+  sur deux lignes, même à six modèles. *Une page qui montre le même objet ne le
+  montre pas à deux échelles selon ce qu'il y a à côté*, et la lisibilité vient
+  de la loupe.
+
+**IL PREND SA BANDE, il ne s'installe pas dans le jeu.** Il y avait bien du vide
+sous les mesures, mais c'était le JEU du bloc centré, pas une place : 45 px pour
+un bouton qui en demande 46 au plancher tactile. *Une bande réservée ne se
+partage pas* — sinon il mordrait le titre du premier groupe dès qu'un écran se
+resserre, ce que les noms de groupe avaient déjà coûté une fois. **Mesuré, le
+prix est nul sur téléphone** : à 844 x 390 comme à 667 x 320 c'est la LARGEUR
+qui borne les cartes du chargement, pas la hauteur — elles ne bougent pas d'un
+pixel. Seul un écran haut y perd quelques pixels de carte.
+
+**Il est PETIT et en pierre** : *on ne décide pas dessus*, on consulte. Il ne
+peut pas se lire au même rang que « Descendre ». Et **il s'éteint quand le
+chargement est vide** — un bouton qui ouvre une page blanche se lit comme une
+panne, la règle de « Descendre » sans arme.
+
+**Et ce qu'il recouvre s'efface comme pour le zoom d'une pièce** : les onglets
+du coffre et la barre de défilement sont du HTML par-dessus le canvas, donc
+`zoomOuvert` vaut pour les deux écrans — *un drapeau qui dit « le voile est
+posé » ne peut pas dépendre de ce qu'il y a dessous.*
+
 **CHAQUE STAT DIT SON NOM EN INFOBULLE** — « Points de vie », « Cartes dans le
 deck », « Taille de la main », « Points d'action » — au survol à la souris, à la tape au
 doigt. Demandé par Keko. *Un chiffre à côté d'un symbole se devine, il ne se

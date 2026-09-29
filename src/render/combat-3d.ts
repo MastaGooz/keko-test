@@ -25,6 +25,7 @@ import { estConsommable } from '../logic/armes.ts'
 import { tresorRecompense } from '../logic/cartes.ts'
 import { lignes, nature, rangDuTresor, sansBalises } from '../ui/texte-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
+import { signature } from './texture-carte.ts'
 
 /**
  * Une carte du modèle, telle qu'on la peint.
@@ -309,4 +310,33 @@ export function equipementPourTenir(pieces: Piece[], tailleMain: number): Piece[
   if (parTour === 0 || parTour > tailleMain) return pieces
   const fois = Math.ceil((tailleMain + 1) / parTour)
   return Array.from({ length: fois }, () => pieces).flat()
+}
+
+/**
+ * LE DECK EMPORTÉ, GROUPÉ PAR MODÈLE.
+ *
+ * *On ne montre pas dix cartes quand il n'y a que six choses à lire* : quatre
+ * Gardes côte à côte ne se lisent pas quatre fois mieux, c'est la leçon déjà
+ * payée sur les doublons du coffre. Le compte porte le nombre, et il est posé
+ * SUR la carte, jamais peint dedans — une Garde du deck et une Garde en main
+ * doivent partager leur dessin, donc leur texture.
+ *
+ * **Deux cartes sont « les mêmes » quand elles MONTRENT la même chose** — la
+ * `signature()` de la carte peinte, qui est déjà la clé du cache de textures.
+ * Pas leur identifiant, qui est unique par exemplaire.
+ */
+export function deckAPeindre(cartes: Carte[]): { carte: CarteAPeindre; nombre: number }[] {
+  const piles: { carte: CarteAPeindre; nombre: number }[] = []
+  const parCle = new Map<string, { carte: CarteAPeindre; nombre: number }>()
+  for (const carte of cartes) {
+    const peinte = aPeindre(carte)
+    const cle = signature(peinte)
+    const deja = parCle.get(cle)
+    if (deja === undefined) {
+      const pile = { carte: peinte, nombre: 1 }
+      parCle.set(cle, pile)
+      piles.push(pile)
+    } else deja.nombre += 1
+  }
+  return piles
 }

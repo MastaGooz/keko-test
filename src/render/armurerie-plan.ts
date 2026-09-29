@@ -45,6 +45,9 @@ export const Z_PLAN = Z_MAIN
 export const TEXTE_DESCENDRE = 'Descendre'
 export const TEXTE_FORTUNE = 'Équipement\ngratuit'
 
+/** Ce qu'on consulte sans rien décider : le deck que le chargement produit. */
+export const TEXTE_DECK = 'Deck'
+
 
 
 /**
@@ -165,6 +168,8 @@ export type PlanArmurerie = {
    * plutôt que de la partager.
    */
   boutonFortune: [number, number, number]
+  /** « Deck » : la bande réservée juste sous les mesures. */
+  boutonDeck: [number, number, number]
   /** Le rapport que les DEUX boutons de départ partagent. */
   rapportDepart: number
 }
@@ -412,7 +417,23 @@ export function planArmurerie(
 
   const COLONNES_EQUIP = 3
   const RANGEES_EQUIP = 2
-  const hDedans = hPanneaux - hEntete - hStats
+  /**
+   * LE BOUTON « DECK » PREND SA BANDE, il ne s'installe pas dans le jeu.
+   *
+   * Demandé par Keko — « sous les stats, dans l'espace libre, un bouton deck
+   * pour permettre au joueur de consulter son deck actuel ». Il y avait bien du
+   * vide sous la bande de mesures, mais c'était le JEU du bloc centré, pas une
+   * place : 45 px pour un bouton qui en demande 46 au plancher tactile. *Une
+   * bande réservée ne se partage pas* — sinon le bouton mordrait le titre du
+   * premier groupe dès qu'un écran se resserre, exactement ce que les noms de
+   * groupe avaient déjà coûté.
+   *
+   * Il est PETIT : *on ne décide pas dessus*, on consulte — il ne peut pas se
+   * lire au même rang que « Descendre ».
+   */
+  const hDeck = tailleBouton(TEXTE_DECK, 'pierre', true, Z_PLAN, hauteurFenetrePx).hauteur
+  const bandeDeck = hDeck + marge
+  const hDedans = hPanneaux - hEntete - hStats - bandeDeck
   // La bande d'un nom de groupe. Il y en a une par rangée, et elles entrent
   // dans le calcul de la taille : un titre pris sur la place des cartes les
   // ferait déborder du panneau, exactement ce qui est arrivé sur téléphone.
@@ -490,7 +511,7 @@ export function planArmurerie(
    * largeur (quatre colonnes) ou la hauteur (deux rangées), la plus dure
    * gagne, et jamais au-delà de 1.
    */
-  const yDedans = yPanneaux + hPanneaux / 2 - hEntete - hStats - hDedans / 2
+  const yDedans = yPanneaux + hPanneaux / 2 - hEntete - hStats - bandeDeck - hDedans / 2
   const taillePile = tailleCharge
   const pasCharge = tailleCharge * 1.12
   const pasRangee = tailleCharge * 1.4 * 1.12
@@ -587,6 +608,7 @@ export function planArmurerie(
     pnj: { x: xStats, y: yPanneaux, l: lStats, h: hPanneaux },
     bouton: [xRail, basPanneaux + 2 * marge + hBouton * 1.5, Z_PLAN],
     boutonFortune: [xRail, basPanneaux + marge + hBouton / 2, Z_PLAN],
+    boutonDeck: [xEquip, yPanneaux + hPanneaux / 2 - hEntete - hStats - bandeDeck / 2, Z_PLAN],
     rapportDepart,
   }
 }
