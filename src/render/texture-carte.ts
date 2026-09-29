@@ -800,35 +800,92 @@ function peindreValeur(ctx: CanvasRenderingContext2D, valeur: number): void {
   // mathématique il paraît tomber. Ça garde 1,9 % de hauteur avant le jonc.
   const y = ORBE_CY - h / 2 - 0.012 * HAUT
 
-  const dessus = y + h * 0.36
-  ctx.beginPath()
-  ctx.moveTo(x + l * 0.2, y)
-  ctx.lineTo(x + l * 0.8, y)
-  ctx.lineTo(x + l, dessus)
-  ctx.lineTo(x + l * 0.5, y + h)
-  ctx.lineTo(x, dessus)
-  ctx.closePath()
-  // Un cerne sombre AVANT le remplissage : la gemme se pose sur l'illustration,
-  // qui peut être claire. *Un symbole sans cerne disparaît sur son propre fond.*
-  ctx.strokeStyle = '#120d05'
-  ctx.lineWidth = 0.8 * U
+  const gy = y + h * 0.36
+  const cx = x + l / 2
+
+  // LA PIERRE RAYONNE AVANT D'ÊTRE DESSINÉE. Un halo chaud posé sous elle, et
+  // c'est ce qui la fait lire comme un objet ÉCLAIRÉ plutôt que comme un
+  // pictogramme. *Le flou est dans la matière* — la réponse déjà donnée au
+  // contour des cartes et au halo des créatures.
+  const rayon = l * 1.9
+  const lueur = ctx.createRadialGradient(cx, y + h * 0.45, 0, cx, y + h * 0.45, rayon)
+  lueur.addColorStop(0, '#ffcf6b7a')
+  lueur.addColorStop(0.4, '#ffc04a36')
+  lueur.addColorStop(1, '#ffb43000')
+  ctx.fillStyle = lueur
+  ctx.fillRect(cx - rayon, y + h * 0.45 - rayon, rayon * 2, rayon * 2)
+
+  const taille = (points: readonly (readonly [number, number])[]): void => {
+    ctx.beginPath()
+    points.forEach(([px, py], i) => {
+      if (i === 0) ctx.moveTo(x + px * l, y + py * h)
+      else ctx.lineTo(x + px * l, y + py * h)
+    })
+    ctx.closePath()
+  }
+
+  // LE CERNE D'ABORD, sous tout le reste : la gemme se pose sur
+  // l'illustration, qui peut être claire. *Un symbole sans cerne disparaît sur
+  // son propre fond.*
+  taille([[0.2, 0], [0.8, 0], [1, 0.36], [0.5, 1], [0, 0.36]])
+  ctx.strokeStyle = '#1a1204'
+  ctx.lineWidth = 0.85 * U
   ctx.lineJoin = 'round'
   ctx.stroke()
-  const pierre = ctx.createLinearGradient(x, y, x + l, y + h)
-  pierre.addColorStop(0, '#ffe9b0')
-  pierre.addColorStop(0.5, '#d8a63c')
-  pierre.addColorStop(1, '#8a5f14')
-  ctx.fillStyle = pierre
-  ctx.fill()
-  // LA TABLE, plus claire : c'est la seule chose qui dise « taillée » sans
-  // ajouter un trait.
+
+  // LA TAILLE EST FAITE D'APLATS, JAMAIS DE TRAITS. La gemme ne dépasse jamais
+  // une vingtaine de pixels à l'écran — 6 dans une case de coffre — et *un
+  // filet de facette y disparaît ou scintille, alors que deux tons voisins se
+  // moyennent proprement.* C'est la leçon de la tête de comète, où l'effilement
+  // a dû devenir géométrique plutôt que fait d'opacité.
+  //
+  // Cinq facettes pour quatre tons : la table, la couronne coupée en deux, la
+  // culasse coupée en deux. *C'est l'asymétrie gauche-droite qui dit
+  // « taillée »* — un dégradé seul ne dirait que « bombée ». La lumière vient
+  // du haut et de la gauche, comme le laiton du cadre.
+  const facettes: readonly (readonly [readonly (readonly [number, number])[], string])[] = [
+    [[[0, 0.36], [0.5, 0.36], [0.5, 1]], '#eab02e'],
+    [[[0.5, 0.36], [1, 0.36], [0.5, 1]], '#a5700f'],
+    [[[0.2, 0], [0.28, 0.36], [0, 0.36]], '#ffe081'],
+    [[[0.8, 0], [1, 0.36], [0.72, 0.36]], '#e7b235'],
+    [[[0.2, 0], [0.8, 0], [0.72, 0.36], [0.28, 0.36]], '#fff3c4'],
+  ]
+  for (const [points, ton] of facettes) {
+    taille(points)
+    ctx.fillStyle = ton
+    ctx.fill()
+  }
+
+  // LE RONDISTE prend la lumière : c'est la ligne la plus large d'une pierre
+  // taillée, donc celle qui accroche. Un seul trait, et il reste DANS la
+  // gemme — il ne la déborde pas.
   ctx.beginPath()
-  ctx.moveTo(x + l * 0.2, y)
-  ctx.lineTo(x + l * 0.8, y)
-  ctx.lineTo(x + l, dessus)
-  ctx.lineTo(x, dessus)
+  ctx.moveTo(x + l * 0.06, gy)
+  ctx.lineTo(x + l * 0.94, gy)
+  ctx.strokeStyle = '#fff6da'
+  ctx.globalAlpha = 0.55
+  ctx.lineWidth = 0.28 * U
+  ctx.stroke()
+  ctx.globalAlpha = 1
+
+  // ET UN ÉCLAT À QUATRE BRANCHES, à cheval sur l'arête. Le projet avait déjà
+  // tranché cette forme en cherchant le symbole du coût : *six branches égales
+  // font une étoile de David, quatre branches fines ne disent que la lumière.*
+  // Moitié dedans moitié dehors, parce qu'*un éclat contenu dans la pierre se
+  // lit comme une tache peinte, un éclat qui déborde se lit comme de la lumière
+  // qui accroche* — le raisonnement du chiffre des jauges, qui déborde sa barre
+  // plutôt que d'être contenu par elle.
+  const ex = x + l * 0.3
+  const ey = y + h * 0.1
+  const r = l * 0.42
+  ctx.beginPath()
+  ctx.moveTo(ex, ey - r)
+  ctx.quadraticCurveTo(ex, ey, ex + r * 0.7, ey)
+  ctx.quadraticCurveTo(ex, ey, ex, ey + r)
+  ctx.quadraticCurveTo(ex, ey, ex - r * 0.7, ey)
+  ctx.quadraticCurveTo(ex, ey, ex, ey - r)
   ctx.closePath()
-  ctx.fillStyle = '#fff3cd66'
+  ctx.fillStyle = '#fffdf2'
   ctx.fill()
 
   ctx.fillStyle = '#fff0cd'

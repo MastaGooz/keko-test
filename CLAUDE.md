@@ -4507,10 +4507,38 @@ Quatre choses qui la portent :
   forme de carte mettent leur chiffre dedans parce qu'ils disent un COÛT et un
   POIDS ; une valeur se mesure. *Trois grammaires pour trois choses, et aucune
   ne se confond avec une autre* ;
-- **la gemme n'a AUCUNE facette.** À 97 px de large — la case du coffre — elle
-  en fait six : un trait de plus y tournerait en bouillie, la leçon de la tête
-  de comète. Une silhouette pleine et une table plus claire suffisent à faire
-  lire une pierre taillée ;
+- **la gemme est TAILLÉE EN APLATS, jamais en traits.** Keko : « on peut
+  travailler un peu plus la gemme ? une couleur plus proche du doré ? un effet
+  visuel sympa ? » *Elle ne dépasse jamais une vingtaine de pixels à l'écran* —
+  six dans une case de coffre, et à peine vingt sur la carte zoomée, qui est sa
+  taille maximale dans tout le jeu. **Un filet de facette y disparaît ou
+  scintille, alors que deux tons voisins se moyennent proprement** : c'est la
+  leçon de la tête de comète, où l'effilement a dû devenir géométrique plutôt
+  que fait d'opacité.
+
+  Cinq facettes pour quatre tons — la table, la couronne coupée en deux, la
+  culasse coupée en deux. *C'est l'asymétrie gauche-droite qui dit
+  « taillée »* ; un dégradé seul ne dirait que « bombée ». La lumière vient du
+  haut et de la gauche, comme le laiton du cadre ;
+
+- **elle RAYONNE avant d'être dessinée** : un halo chaud posé sous elle, et
+  c'est ce qui la fait lire comme un objet éclairé plutôt que comme un
+  pictogramme. *Le flou est dans la matière* — la réponse déjà donnée au
+  contour des cartes et au halo des créatures ;
+
+- **et un ÉCLAT À QUATRE BRANCHES, à cheval sur l'arête.** Le projet avait déjà
+  tranché cette forme en cherchant le symbole du coût : *six branches égales
+  font une étoile de David, quatre branches fines ne disent que la lumière.* Il
+  déborde de la pierre, moitié dedans moitié dehors, parce qu'*un éclat contenu
+  se lit comme une tache peinte et un éclat qui déborde se lit comme de la
+  lumière qui accroche* — le raisonnement du chiffre des jauges, qui déborde sa
+  barre plutôt que d'être contenu par elle.
+
+  **Tout est PEINT, rien n'est animé**, et c'est un choix : la texture d'une
+  carte est partagée par tous ses exemplaires et mise en cache. Un scintillement
+  qui bouge demanderait de connaître la place de la gemme dans le nuanceur — la
+  position du couple dépend du nombre de chiffres — donc un uniforme de plus et
+  toute la plomberie qui va avec. *À rouvrir si le badge paraît mort* ;
 - **le mot suit l'affichage** : là où la carte ne parle plus d'or, brûler fait
   perdre « sa valeur » et non « son or ». *Une carte ne peut pas perdre un or
   qu'elle n'a jamais annoncé.*
