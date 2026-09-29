@@ -4979,16 +4979,31 @@ body {
    serre.
 
    Le coefficient est MESURE, et il vaut pour l'ENSEMBLE : les cinq mots, leurs
-   remplissages et leurs ecarts font 25 fois le corps du texte, donc on divise
-   par 27 pour garder de l'air. C'est pour ca que tout ce qui est dedans est en
-   `em` -- une marge en `rem` ne suivrait pas, et le compte tomberait faux. */
+   remplissages et leurs ecarts font 28 fois le corps du texte -- mesure en
+   coupant le retrecissement du flex -- donc on divise par 29 pour garder de
+   l'air. C'est pour ca que tout ce qui est dedans est en `em` : une marge en
+   `rem` ne suivrait pas, et le compte tomberait faux.
+
+   **ET C'EST CE COMPTE QUI CENTRE LES MOTS.** A 27 la bande tenait encore,
+   mais par le mauvais chemin : `flex` RETRECISSAIT les boutons sous la largeur
+   de leur texte, qui debordait alors de sa boite sans que rien ne le signale --
+   `scrollWidth` restait egal a `clientWidth`. Keko : « les noms des categories
+   ne sont pas centres dans le rectangle quand ils sont selectionnes ». *Un
+   texte plus large que sa boite ne peut pas y etre centre* : il n'etait pas
+   decale, il DEBORDAIT, et un debordement ne sort que d'un cote.
+
+   D'ou 31 et non 28 : le compte theorique ne suffit pas, parce que la largeur
+   intrinseque d'un bouton sous-estime son texte de deux pixels. *Un ecart qui
+   ne se voit qu'a la mesure se corrige a la mesure* -- verifie sur l'ecart
+   gauche/droite du mot dans son cadre, qui tombe sous le pixel aux trois
+   formats. */
 .arm-onglets {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.25em;
   padding: 0 0.6em;
-  font-size: min(0.9rem, calc(var(--onglets-l) / 27));
+  font-size: min(0.9rem, calc(var(--onglets-l) / 31));
 }
 
 /* UN ONGLET EST UN BOUTON PLAT QUI S'ALLUME, pas un bouton en relief : le
@@ -5373,12 +5388,24 @@ body {
      chiffre, c'est-a-dire sur telephone.
 
      Le plancher de la bande reste utile pour autre chose : il l'empeche
-     d'etre si courte que le disque ecraserait le titre du groupe dessous. */
-  height: max(76%, calc(1.125rem * 1.66));
+     d'etre si courte que le disque ecraserait le titre du groupe dessous.
+
+     **ET LE PLANCHER EST PASSE EN `em` AVEC SON CHIFFRE.** Keko : « la taille
+     du symbole energie et le chiffre dedans sont beaucoup trop gros, je te
+     rappelle que le chiffre dans le symbole energie doit faire la meme taille
+     que les chiffres des stats ». Le chiffre des mesures suit desormais la
+     LARGEUR de la bande ; celui-ci etait reste en `rem`, donc il ne bougeait
+     plus avec ses voisins -- 18 px contre 11, et un disque de 30 pour des
+     symboles de 17. *Une cicatrice de plus : un plancher pose quand le chiffre
+     etait en rem n'a plus de raison d'etre quand il ne l'est plus.* Le rapport
+     de 1,66, lui, ne change pas -- c'est lui qui tient les deux ensemble. */
+  height: max(76%, calc(1.125em * 1.66));
 }
 
+/* LE MEME CORPS QUE SES VOISINS, et c'est la regle : *quatre chiffres qui
+   disent la meme sorte de chose se lisent a la meme voix.* */
 .arm-orbe .orbe-chiffre {
-  font-size: 1.125rem;
+  font-size: 1.125em;
 }
 
 /* LA VIE EST UN COEUR, PAS UNE JAUGE. Demande par Keko, et c'est juste sur le

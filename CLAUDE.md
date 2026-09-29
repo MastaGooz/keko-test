@@ -3278,8 +3278,32 @@ donc elle tombait avec lui et les quatre symboles de la bande disparaissaient
 sans qu'aucune erreur ne le dise. *Une valeur qui vient d'un calcul se reprend
 au calcul, pas à ce qui l'a déjà mise en forme.*
 
-Mesuré à 844x390, 667x320 et 1366x700 : plus un seul débordement, ni des
-onglets, ni des stats, ni de la page.
+**ET DEUX CICATRICES DE PLUS SONT TOMBÉES AVEC.** Keko : « les noms des
+catégories ne sont pas centrés dans le rectangle quand ils sont sélectionnés,
+et la taille du symbole énergie et le chiffre dedans sont beaucoup trop gros —
+je te rappelle que le chiffre dans le symbole énergie doit faire la même taille
+que les chiffres des stats ».
+
+- **Le mot n'était pas décalé, il DÉBORDAIT.** À la première correction la bande
+  tenait, mais par le mauvais chemin : `flex` rétrécissait les boutons sous la
+  largeur de leur texte, qui sortait alors de sa boîte *sans que rien ne le
+  signale* — `scrollWidth` restait égal à `clientWidth`. **Un texte plus large
+  que sa boîte ne peut pas y être centré**, et un débordement ne sort que d'un
+  côté. Le compte théorique (28 corps) ne suffisait pas non plus : *la largeur
+  intrinsèque d'un bouton sous-estime son texte de deux pixels*, d'où 31.
+  Mesuré sur l'écart gauche/droite du mot dans son cadre : **zéro aux trois
+  formats** ;
+- **l'orbe avait gardé un plancher en `rem`** posé du temps où son chiffre
+  l'était aussi. Le chiffre des mesures suit désormais la largeur de la bande ;
+  celui-ci ne bougeait plus avec ses voisins — 18 px contre 11, pour un disque
+  de 30 là où les autres symboles font 17. *Un plancher posé quand le chiffre
+  était en rem n'a plus de raison d'être quand il ne l'est plus.* Le rapport de
+  1,66 entre le disque et son chiffre, lui, ne change pas : c'est lui qui tient
+  les deux ensemble.
+
+Mesuré à 844x390, 667x320 et 1366x700 : plus un seul débordement, le chiffre de
+l'orbe égale celui des mesures au centième près, et le mot de l'onglet est
+centré au pixel.
 
 **CE QUI RESTE À TRANCHER, et c'est mesuré :** à huit entrées, le rail prend
 **26 % de la largeur à 667x320** (20 % à 844x390), et chaque entrée n'y fait que
