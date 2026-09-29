@@ -498,7 +498,22 @@ export function PageArmurerie({
 
       {/* LES QUATRE MESURES EN BANDE, au-dessus de ce qu'on équipe : *ce qu'on
           emporte se mesure au-dessus de ce qu'on porte.* */}
-      <div className="arm-etat" style={boite(plan.stats)}>
+      {/* LA BANDE SE MESURE SUR SA LARGEUR AUTANT QUE SUR SA HAUTEUR : quatre
+          mesures dans un panneau étroit ne tiennent pas, et *la contrainte la
+          plus dure gagne.* */}
+      <div
+        className="arm-etat"
+        style={
+          {
+            ...boite(plan.stats),
+            // ON REPREND LA VALEUR AU PLAN, pas à `boite` : celle-ci rend déjà
+            // des chaînes en `px`, et la recoller donnait un « 182pxpx » que le
+            // navigateur jette EN SILENCE — la hauteur des symboles dépendait
+            // de ce `calc`, donc elle tombait avec lui et ils disparaissaient.
+            '--etat-l': `${enPixels(plan.stats, fenetre.h, fenetre.l).width}px`,
+          } as React.CSSProperties
+        }
+      >
         <span className="arm-mesure" ref={(el) => void (mesures.current[0] = el)}>
           <span className="arm-vif" ref={(el) => void (vifs.current[0] = el)}>
             <span className="arm-chiffre">{pvVu}</span>
@@ -546,7 +561,7 @@ export function PageArmurerie({
           ...boite(plan.railListe),
           // LA TAILLE DU TEXTE SUIT LA LARGEUR DU RAIL, pas la fenetre : il est
           // borne par la hauteur, donc sa largeur ne suit pas celle de l'ecran.
-          '--rail-l': `${boite(plan.railListe).width as number}px`,
+          '--rail-l': `${enPixels(plan.railListe, fenetre.h, fenetre.l).width}px`,
         } as React.CSSProperties}
       >
         {DESTINATIONS.map((d, i) => (
@@ -677,7 +692,18 @@ export function PageArmurerie({
         </svg>
       </button>
 
-      <div className="arm-onglets" style={boite(plan.onglets)}>
+      {/* LES ONGLETS SE MESURENT SUR LEUR BANDE : cinq mots dans un coffre
+          rétréci ne tiennent pas, et *un contenu qui ne suit qu'une dimension
+          déborde dès que l'autre se serre.* */}
+      <div
+        className="arm-onglets"
+        style={
+          {
+            ...boite(plan.onglets),
+            '--onglets-l': `${enPixels(plan.onglets, fenetre.h, fenetre.l).width}px`,
+          } as React.CSSProperties
+        }
+      >
         {ONGLETS.map((o) => (
           <button
             key={o}

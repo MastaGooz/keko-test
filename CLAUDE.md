@@ -3245,6 +3245,42 @@ les sept autres sont des places tenues, éteintes, qui disent ce que le hub aura
 sans rien promettre. *Sept métiers inventés pour juger une mise en page, ce
 serait trancher du design en passant.*
 
+**TROIS DÉBORDEMENTS SONT VENUS AVEC LE RAIL, et ils avaient tous la même
+racine.** Keko : « sur téléphone, dans l'armurerie, les stats dépassent
+désormais de leur cadre et les catégories du coffre sortent aussi ; je pense que
+le PNJ prend trop de place ».
+
+**Et il avait mis le doigt dessus.** La colonne de l'armurier avait un PLANCHER
+à la largeur du bouton « Descendre » — il vivait dedans, et *une colonne qui ne
+contient pas ce qu'on y met n'est pas une colonne.* Le bouton est parti dans le
+rail ; **le plancher est resté.** Sur un téléphone, où le rail a pris un
+cinquième de la largeur, c'est lui qui commandait : le portrait mangeait plus de
+place que le panneau d'équipement — 211 px contre 183 à 844 x 390 — et tout le
+reste se serrait derrière. *Une contrainte posée pour un contenu se relit quand
+ce contenu s'en va*, sinon elle reste comme une cicatrice, à tenir de la place
+pour quelque chose qui n'est plus là. Le portrait tombe à 86 px.
+
+**Les deux autres tenaient debout tant que la place était large.** La bande des
+stats et les onglets du coffre étaient en `rem` et en part de HAUTEUR : *rien
+dans leur taille ne savait que le meuble s'était serré.* **Un contenu qui ne
+suit qu'une dimension déborde dès que l'autre se resserre.** Les deux se
+mesurent désormais sur la LARGEUR de leur bande, le rem en plafond, et tout ce
+qu'ils contiennent est passé en `em` — *une marge en `rem` ne suivrait pas, et
+le compte tomberait faux.* Les coefficients sont mesurés : une mesure vaut son
+symbole plus 2,85 fois le corps du texte, donc quatre en demandent 18,2 ; les
+cinq onglets, leurs remplissages et leurs écarts font 25 fois le corps, divisé
+par 27 pour garder de l'air.
+
+**PIÈGE PAYÉ AU PASSAGE, ET IL REND L'ÉLÉMENT INVISIBLE : `boite()` rend déjà
+des chaînes en `px`.** Recoller `px` derrière donnait un « 182pxpx » que le
+navigateur jette EN SILENCE — la hauteur des symboles dépendait de ce `calc`,
+donc elle tombait avec lui et les quatre symboles de la bande disparaissaient
+sans qu'aucune erreur ne le dise. *Une valeur qui vient d'un calcul se reprend
+au calcul, pas à ce qui l'a déjà mise en forme.*
+
+Mesuré à 844x390, 667x320 et 1366x700 : plus un seul débordement, ni des
+onglets, ni des stats, ni de la page.
+
 **CE QUI RESTE À TRANCHER, et c'est mesuré :** à huit entrées, le rail prend
 **26 % de la largeur à 667x320** (20 % à 844x390), et chaque entrée n'y fait que
 **25 px de haut** — sous le plancher tactile de 48 px du projet. *Huit

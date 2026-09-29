@@ -4971,12 +4971,24 @@ body {
   overflow: hidden;
 }
 
+/* LEUR CORPS SUIT LA LARGEUR DE LA BANDE, pas la hauteur de la fenêtre.
+
+   Keko, apres l'arrivee du rail : « les categories du coffre sortent aussi ».
+   Le coffre a retreci d'un cinquieme, et les cinq mots etaient en `vh` avec
+   des marges en `rem` : rien dans leur taille ne savait que le meuble s'etait
+   serre.
+
+   Le coefficient est MESURE, et il vaut pour l'ENSEMBLE : les cinq mots, leurs
+   remplissages et leurs ecarts font 25 fois le corps du texte, donc on divise
+   par 27 pour garder de l'air. C'est pour ca que tout ce qui est dedans est en
+   `em` -- une marge en `rem` ne suivrait pas, et le compte tomberait faux. */
 .arm-onglets {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
-  padding: 0 0.6rem;
+  gap: 0.25em;
+  padding: 0 0.6em;
+  font-size: min(0.9rem, calc(var(--onglets-l) / 27));
 }
 
 /* UN ONGLET EST UN BOUTON PLAT QUI S'ALLUME, pas un bouton en relief : le
@@ -5063,13 +5075,14 @@ body {
 .arm-onglet {
   flex: 0 1 auto;
   min-width: 0;
-  padding: 0.22rem 0.5rem;
+  padding: 0.22em 0.5em;
   border: 1px solid transparent;
-  border-radius: 2px;
+  /* DES ANGLES DROITS, comme le reste de l'interface. */
+  border-radius: 0;
   background: none;
   color: #8f8674;
   font: inherit;
-  font-size: clamp(0.55rem, 1.7vh, 0.9rem);
+  font-size: 1em;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -5129,7 +5142,7 @@ body {
    ornements poses cote a cote. */
 .arm-chiffre {
   color: #f7ecd2;
-  font-size: 1.125rem;
+  font-size: 1.125em;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -5159,12 +5172,25 @@ body {
 /* LE RAIL EST COUCHE : quatre mesures sur UNE LIGNE, en haut de l'equipement.
    Il a ete une colonne a droite, et depuis que l'armurier la coiffe elles se
    lisaient comme ses statistiques. */
+/* ELLE SE MESURE SUR SA LARGEUR AUTANT QUE SUR SA HAUTEUR.
+
+   Keko, apres l'arrivee du rail : « sur telephone les stats depassent
+   desormais de leur cadre ». Le panneau d'equipement a retreci d'un cinquieme,
+   et la bande, elle, etait entierement en `rem` et en part de HAUTEUR : quatre
+   mesures y demandaient 227 px pour 182 de place. *Un contenu qui ne suit
+   qu'une dimension deborde des que l'autre se serre.*
+
+   Le coefficient est MESURE : une mesure vaut son symbole plus environ 2,85
+   fois le corps du texte (le chiffre, l'ecart et le remplissage), donc quatre
+   en demandent 18,2. Le rem reste le PLAFOND -- la fraction commande en
+   petit, le rem en grand, comme partout ici. */
 .arm-etat {
   display: flex;
   flex-direction: row;
   align-items: stretch;
   justify-content: space-evenly;
   gap: 0;
+  font-size: min(1rem, calc(var(--etat-l) / 18.2));
 }
 
 /* LA LIGNE DE LATENCE DU SON, derriere `?son` : ce que l'appareil avoue de son
@@ -5251,7 +5277,7 @@ body {
   flex: 1 1 0;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
+  gap: 0.45em;
   /* TOUTES LES LIGNES ONT LA MEME HAUTEUR. Demande par Keko : « c'est dommage
      que la ligne de l'energie soit plus haute que les autres ». Chaque symbole
      dictait la sienne, donc le rail avait des marches -- *un rail dont les
@@ -5260,7 +5286,7 @@ body {
   /* LA BANDE FIXE LA HAUTEUR, plus la ligne : couchee, c'est elle qui commande,
      et les symboles s'y inscrivent comme avant. */
   height: 100%;
-  padding: 0 0.4rem;
+  padding: 0 0.4em;
 }
 
 /* LE SEPARATEUR SUIT LE SENS DU RAIL : un filet vertical entre deux couches
@@ -5278,8 +5304,10 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.45rem;
-  height: 100%;
+  gap: 0.45em;
+  /* ET LES SYMBOLES SE BORNENT PAR LA LARGEUR AUSSI : ils sont carres, donc
+     une hauteur seule les laisse s'elargir jusqu'a pousser la bande dehors. */
+  height: min(100%, calc(var(--etat-l) / 10.7));
 }
 
 /* LE PAQUET GARDE SA TAILLE DE COMBAT, en plus petit : c'est le meme objet,

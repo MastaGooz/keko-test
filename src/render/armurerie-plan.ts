@@ -233,10 +233,22 @@ export function planArmurerie(
   // sur l'équipement — *une colonne qui ne contient pas ce qu'on y met n'est
   // pas une colonne.* C'est aussi ce qui permet de grossir le bouton sans
   // rouvrir la collision.
-  const lStats = Math.min(
-    Math.max(largeurUtile * 0.15, lBouton * 1.14),
-    largeurUtile * 0.3,
-  )
+  /**
+   * LA COLONNE DE L'ARMURIER N'EST PLUS TENUE PAR LE BOUTON.
+   *
+   * Elle avait un PLANCHER à la largeur de « Descendre » — il vivait dedans, et
+   * *une colonne qui ne contient pas ce qu'on y met n'est pas une colonne.* Le
+   * bouton est parti dans le rail, et le plancher est resté : sur un téléphone,
+   * où le rail a pris un cinquième de la largeur, c'est lui qui commandait, et
+   * le portrait mangeait plus de place que le panneau d'équipement (211 px
+   * contre 183 à 844 x 390). Les onglets et les stats débordaient de leurs
+   * cadres — Keko : « je pense que le PNJ prend trop de place ».
+   *
+   * **Une contrainte posée pour un contenu se relit quand ce contenu s'en
+   * va** — sinon elle reste comme une cicatrice, à tenir de la place pour
+   * quelque chose qui n'est plus là.
+   */
+  const lStats = largeurUtile * 0.15
   // LE COFFRE REND ENCORE UN PEU DE LARGEUR : l'équipement lui en demande,
   // maintenant que ses sept cartes sont à la même taille et tiennent sur
   // quatre colonnes.
