@@ -76,6 +76,20 @@ export type CarteAPeindre = {
    */
   tresor?: boolean
   /**
+   * LA VALEUR D'UN TRÉSOR, dite par un SYMBOLE et un chiffre — pas par une
+   * phrase du cartouche.
+   *
+   * Keko : « pour le gain en or on ne va pas l'afficher directement dans la
+   * description ; on va afficher une valeur de qualité avec un petit symbole,
+   * hors du champ de description — peut-être un symbole suivi de la valeur ? »
+   *
+   * *Et ça tombe juste sur l'économie*, qui n'est toujours pas tranchée : la
+   * carte cesse de promettre de l'OR et se contente de dire ce qu'elle VAUT.
+   * La note le demandait déjà — « ce qu'il faut montrer, c'est la valeur du
+   * butin au hub, quelle que soit sa forme finale ».
+   */
+  valeur?: number
+  /**
    * SA RARETÉ, si elle en a une — et c'est le CADRE qui la porte.
    *
    * Keko voulait « un code vert/bleu/violet/orange classique ». Le support est
@@ -501,6 +515,7 @@ export async function peindreCarte(
 
   if (carte.compteur === undefined) peindreCout(ctx, carte.cout, symbole)
   else peindreCompteur(ctx, carte.compteur)
+  if (carte.valeur !== undefined) peindreValeur(ctx, carte.valeur)
   peindreTextes(ctx, carte)
   return canvas
 }
@@ -705,6 +720,83 @@ function chiffre(ctx: CanvasRenderingContext2D, cout: number, cx: number, cy: nu
   ctx.shadowOffsetY = 0.872 * U
   ctx.fillText(String(cout), cx, cy)
   ctx.shadowColor = 'transparent'
+}
+
+/**
+ * LA VALEUR D'UN TRÉSOR : une gemme, puis le chiffre à sa droite.
+ *
+ * **Elle vit SOUS L'ORBE, sur la bande gauche** — la place que le gabarit
+ * réserve depuis le début à un compteur propre à la carte (c'est là que vivent
+ * les pastilles de charges). Deux raisons qui n'en font qu'une : *tout ce qui
+ * sert à décider vit sur la bande haut-gauche*, parce que le recouvrement de
+ * l'éventail mange la droite et que la ligne de flottaison mange le bas. Un
+ * trésor ne se lève jamais, donc ce qui passe sous cette ligne lui est perdu
+ * pour toujours.
+ *
+ * **Le chiffre est À CÔTÉ du symbole, pas dedans**, et c'est la grammaire des
+ * MESURES — celle de la bande de stats de l'armurerie. L'orbe et la case en
+ * forme de carte mettent leur chiffre dedans parce qu'ils disent un COÛT et un
+ * POIDS ; une valeur se mesure. *Trois grammaires pour trois choses, et aucune
+ * ne se confond avec une autre.*
+ *
+ * **La gemme n'a AUCUNE facette.** À 97 px de large — la case du coffre — elle
+ * en fait six : un trait de plus y tournerait en bouillie, la leçon de la tête
+ * de comète. Une silhouette pleine et une table plus claire suffisent à faire
+ * lire une pierre taillée.
+ *
+ * **Et elle n'est pas dorée par hasard** : l'or est déjà la couleur de tout ce
+ * qui a de la valeur ici. Ça ne la confond pas avec la rareté épique, qui vit
+ * sur le CADRE et nulle part ailleurs.
+ */
+function peindreValeur(ctx: CanvasRenderingContext2D, valeur: number): void {
+  const l = 6.2 * U
+  const h = l * 1.16
+  // Elle DÉGAGE LE SECOND JONC du cadre de trésor (posé à 3,2 %) : un badge
+  // posé dessus se lirait comme une pièce qui a glissé.
+  const x = 5.4 * U
+  const y = 0.183 * HAUT
+
+  const dessus = y + h * 0.36
+  ctx.beginPath()
+  ctx.moveTo(x + l * 0.2, y)
+  ctx.lineTo(x + l * 0.8, y)
+  ctx.lineTo(x + l, dessus)
+  ctx.lineTo(x + l * 0.5, y + h)
+  ctx.lineTo(x, dessus)
+  ctx.closePath()
+  // Un cerne sombre AVANT le remplissage : la gemme se pose sur l'illustration,
+  // qui peut être claire. *Un symbole sans cerne disparaît sur son propre fond.*
+  ctx.strokeStyle = '#120d05'
+  ctx.lineWidth = 0.8 * U
+  ctx.lineJoin = 'round'
+  ctx.stroke()
+  const pierre = ctx.createLinearGradient(x, y, x + l, y + h)
+  pierre.addColorStop(0, '#ffe9b0')
+  pierre.addColorStop(0.5, '#d8a63c')
+  pierre.addColorStop(1, '#8a5f14')
+  ctx.fillStyle = pierre
+  ctx.fill()
+  // LA TABLE, plus claire : c'est la seule chose qui dise « taillée » sans
+  // ajouter un trait.
+  ctx.beginPath()
+  ctx.moveTo(x + l * 0.2, y)
+  ctx.lineTo(x + l * 0.8, y)
+  ctx.lineTo(x + l, dessus)
+  ctx.lineTo(x, dessus)
+  ctx.closePath()
+  ctx.fillStyle = '#fff3cd66'
+  ctx.fill()
+
+  ctx.fillStyle = '#fff0cd'
+  ctx.font = `600 ${8.6 * U}px "Grenze Gotisch", Georgia, serif`
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'middle'
+  ctx.shadowColor = '#0d0a04'
+  ctx.shadowBlur = 1.6 * U
+  ctx.fillText(String(valeur), x + l + 1.7 * U, y + h * 0.52)
+  ctx.shadowBlur = 0
+  ctx.shadowColor = 'transparent'
+  ctx.textAlign = 'center'
 }
 
 function polygone(
@@ -1424,7 +1516,7 @@ const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
 export function signature(carte: CarteAPeindre): string {
   const compo = (carte.composition ?? []).map((e) => `${e.nombre}:${e.nom}`).join('~')
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.effet.join('~')}|${compo}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.valeur ?? ''}|${carte.effet.join('~')}|${compo}`
 }
 
 /**

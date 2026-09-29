@@ -4476,6 +4476,42 @@ pas.** C'est une porte qu'on n'a pas franchie : le jour où l'or reviendrait aux
 trésors, la forme suffirait déjà à les séparer d'une arme épique. À rouvrir
 avec Keko, et pas avant d'avoir vu si la forme porte assez toute seule.
 
+**ET SA VALEUR A QUITTÉ LE CARTOUCHE : une gemme, puis le chiffre.** Keko :
+« pour le gain en or des trésors on ne va pas l'afficher directement dans la
+description ; on va afficher une valeur de qualité avec un petit symbole, hors
+du champ de description — peut-être un symbole suivi de la valeur ? »
+
+*Et ça tombe juste sur l'économie*, qui n'est toujours pas tranchée : la carte
+cesse de promettre de l'OR et se contente de dire ce qu'elle VAUT. La note le
+demandait déjà — « ce qu'il faut montrer, c'est la valeur du butin au hub,
+quelle que soit sa forme finale ».
+
+Quatre choses qui la portent :
+
+- **elle vit SOUS L'ORBE, sur la bande gauche** — la place que le gabarit
+  réserve depuis le début à un compteur propre à la carte, celle des pastilles
+  de charges. *Tout ce qui sert à décider vit sur la bande haut-gauche*, parce
+  que le recouvrement de l'éventail mange la droite et la ligne de flottaison
+  le bas — et **un trésor ne se lève jamais**, donc ce qui passe sous cette
+  ligne lui est perdu pour toujours ;
+- **le chiffre est À CÔTÉ du symbole, pas dedans**, et c'est la grammaire des
+  MESURES — celle de la bande de stats de l'armurerie. L'orbe et la case en
+  forme de carte mettent leur chiffre dedans parce qu'ils disent un COÛT et un
+  POIDS ; une valeur se mesure. *Trois grammaires pour trois choses, et aucune
+  ne se confond avec une autre* ;
+- **la gemme n'a AUCUNE facette.** À 97 px de large — la case du coffre — elle
+  en fait six : un trait de plus y tournerait en bouillie, la leçon de la tête
+  de comète. Une silhouette pleine et une table plus claire suffisent à faire
+  lire une pierre taillée ;
+- **le mot suit l'affichage** : là où la carte ne parle plus d'or, brûler fait
+  perdre « sa valeur » et non « son or ». *Une carte ne peut pas perdre un or
+  qu'elle n'a jamais annoncé.*
+
+**Et le jeu 2D garde la phrase.** `lignes()` prend un `valeurAPart` que seul le
+moteur 3D passe : *un moteur qui ne sait pas montrer une chose ne doit pas
+cesser de la dire.* Le texte reste en un seul endroit, et c'est l'appelant qui
+dit ce qu'il sait peindre.
+
 **LES TRÉSORS RESTENT HORS DE L'ÉCHELLE DE RARETÉ.** Tranché par Keko : « le
 montant d'or parle par lui-même ». *Un trésor n'est pas un objet qu'on porte, c'est un butin qu'on
 compte.* En cherchant ce que ça déloge, on a d'ailleurs trouvé qu'il n'y avait

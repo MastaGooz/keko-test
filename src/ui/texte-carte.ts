@@ -17,10 +17,19 @@ import type { Carte } from '../logic/combat.ts'
  * Ce que fait la carte, en toutes lettres : une ligne par effet. Le chiffre
  * est dedans, en gras et en accent — c'est le seul endroit où il vit.
  */
-export function lignes(carte: Carte): string[] {
+export function lignes(carte: Carte, valeurAPart = false): string[] {
   const l: string[] = []
-  // L'or d'abord : c'est ce qu'un trésor EST, le reste est ce qu'il peut faire.
-  if (carte.type === 'tresor') l.push(`Vaut <b>${carte.valeur ?? 0}</b> or s'il ressort`)
+  // LA VALEUR D'UN TRÉSOR PEUT SE DIRE AILLEURS QUE DANS LE CARTOUCHE.
+  //
+  // Keko : « pour le gain en or des trésors on ne va pas l'afficher directement
+  // dans la description ; on va afficher une valeur de qualité avec un petit
+  // symbole, hors du champ de description ». Le moteur 3D la peint en badge et
+  // passe `valeurAPart` ; le jeu 2D, qui n'a pas ce badge, garde la phrase —
+  // *un moteur qui ne sait pas montrer une chose ne doit pas cesser de la
+  // dire.*
+  if (carte.type === 'tresor' && !valeurAPart) {
+    l.push(`Vaut <b>${carte.valeur ?? 0}</b> or s'il ressort`)
+  }
   if (carte.degats > 0) l.push(`Inflige <b>${carte.degats}</b> dégâts`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
@@ -29,7 +38,13 @@ export function lignes(carte: Carte): string[] {
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
-      if (carte.type === 'tresor') l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>et son or est perdu</small>`)
+      if (carte.type === 'tresor') {
+        // Le mot suit l'affichage : là où la carte ne parle plus d'or, elle
+        // dit sa VALEUR. *Une carte ne peut pas perdre un or qu'elle n'a
+        // jamais annoncé.*
+        const perte = valeurAPart ? 'et sa valeur est perdue' : 'et son or est perdu'
+        l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>${perte}</small>`)
+      }
       else {
         l.push(`Rend <b>${e.montant}</b> PV`)
         // Une carte à usages ne l'écrit pas : ses charges sont des pastilles.
