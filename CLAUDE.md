@@ -4383,6 +4383,31 @@ d'alliages, elle, **est déjà dans la matière** — la carte ne change pas de
 langue pour dire sa valeur, elle change d'alliage. *Le vocabulaire dit la
 règle*, comme « enchantement » plutôt que « maîtrise ».
 
+**ET UNE CARTE DE DECK PORTE LE MÉTAL DE LA PIÈCE QUI LA PRODUIT.** Demandé
+par Keko : « on peut faire en sorte que les cartes d'un équipement ou objet
+soient de la même rareté que la carte qui les génère ? »
+
+*Et ça dit une chose vraie du concept*, ce qui n'était pas mon avis au départ :
+j'avais déconseillé l'héritage en disant qu'en combat la provenance d'une carte
+n'est pas une décision. **C'était mal poser le problème.** La règle du jeu est
+« une arme = un set de cartes, et **la rareté fait la force du set** » : une
+carte d'arme rare EST plus forte qu'une carte d'arme commune. Son métal
+n'annonce donc pas une provenance, il annonce une PUISSANCE — et c'est
+exactement ce qu'une échelle doit dire.
+
+**Deux sources pour un même axe**, et elles ne se contredisent pas : un trésor
+tire son rang de sa VALEUR, une carte de deck du métal de sa PIÈCE. Ce sont
+deux façons de valoir — l'or qu'on rapporte, la force qu'on emporte.
+
+**Un consommable, lui, EST sa carte** : sa rareté passe sans intermédiaire. Une
+Super potion est rare, sa carte l'est aussi.
+
+`Carte` porte donc une `rarete`, et **aucune règle ne la lit** : c'est une
+étiquette qui traverse `logic/` sans rien y décider. D'où le type large, qui
+évite de faire dépendre le combat du catalogue d'équipement. La vitrine du zoom
+la porte aussi — *une carte qui change d'habit entre le zoom et la main n'est
+plus la même carte.*
+
 **LE LAITON A DISPARU, EN DEUX TEMPS.** Il a d'abord cessé d'être une rareté —
 Keko : « ça ajoute une rareté pour rien et c'est pas très lisible en
 comparaison à l'or » — *deux jaunes rompus voisins ne font pas deux crans*, et

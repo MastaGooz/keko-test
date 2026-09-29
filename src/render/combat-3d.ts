@@ -44,7 +44,10 @@ export function aPeindre(carte: Carte): CarteAPeindre {
     // d'oeil ce que le chiffre dit en clair. *Le joueur doit préférer peu de
     // gros trésors à beaucoup de petits*, encore faut-il voir lesquels sont
     // gros sans lire.
-    rarete: carte.type === 'tresor' ? rangDuTresor(carte.valeur ?? 0) : undefined,
+    // UN TRÉSOR TIRE SON RANG DE SA VALEUR, une carte de deck du MÉTAL DE SA
+    // PIÈCE. Deux sources pour un même axe, parce que ce sont deux façons de
+    // valoir : l'or qu'on rapporte, et la force qu'on emporte.
+    rarete: carte.type === 'tresor' ? rangDuTresor(carte.valeur ?? 0) : carte.rarete,
     // LA FAMILLE PASSE PAR UN DRAPEAU, pas par le mot du pied. Celui-ci est
     // du TEXTE AFFICHÉ — « Consommable » est déjà devenu « Objet » une fois —
     // et *un dessin ne se décide pas sur une étiquette qui peut changer.*
@@ -69,8 +72,11 @@ export function setAPeindre(objet: Objet): { carte: CarteAPeindre; nombre: numbe
   const set = estConsommable(objet) ? [{ modele: objet.modele, nombre: 1 }] : objet.set
   // Un modèle n'a pas d'identifiant d'exemplaire — on lui en donne un stable,
   // parce que React a besoin d'une clé et que l'INDEX N'EN EST PAS UNE.
+  // La vitrine montre les VRAIES cartes qu'on retrouvera en main, donc elles
+  // portent déjà le métal de leur pièce : *une carte qui change d'habit entre
+  // le zoom et la main n'est plus la même carte.*
   return set.map((e, i) => ({
-    carte: aPeindre({ ...e.modele, id: `${objet.id}-${i}` }),
+    carte: aPeindre({ ...e.modele, id: `${objet.id}-${i}`, rarete: objet.rarete }),
     nombre: e.nombre,
   }))
 }

@@ -51,6 +51,22 @@ export type Carte = {
   id: string
   nom: string
   /**
+   * LA RARETÉ DE CE QUI L'A PRODUITE — et c'est le CADRE qui la porte.
+   *
+   * Demandé par Keko : « on peut faire en sorte que les cartes d'un équipement
+   * ou objet soient de la même rareté que la carte qui les génère ? »
+   *
+   * *Et ça dit une chose vraie du concept* : « une arme = un set de cartes, la
+   * rareté fait la force du set ». Une carte d'arme rare EST plus forte qu'une
+   * carte d'arme commune — son métal n'annonce donc pas une provenance, il
+   * annonce une PUISSANCE, et c'est exactement ce qu'une échelle doit dire.
+   *
+   * **Aucune règle ne la lit** : c'est une étiquette, elle traverse `logic/`
+   * sans rien y décider. D'où le type large, qui évite de faire dépendre le
+   * combat du catalogue d'équipement.
+   */
+  rarete?: string
+  /**
    * Un trésor ne se joue que s'il porte des `effets` — et le jouer le DÉTRUIT.
    * C'est tout le pari du butin : il vaut de l'or s'il ressort, et il peut
    * sauver la run s'il est brûlé, jamais les deux.

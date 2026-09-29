@@ -16,16 +16,19 @@
 import type { Carte } from './combat.ts'
 
 /**
- * L'ÉCHELLE DE RARETÉ, en CINQ crans — le code couleur classique.
+ * L'ÉCHELLE DE RARETÉ, en QUATRE crans : bronze, argent, or, diamant.
  *
- * Tranché par Keko : « un code vert/bleu/violet/orange classique », et « les
- * cinq tout de suite ». Le jeu n'en emploie que deux pour l'instant (commune
- * et rare) ; les trois autres existent pour que le contenu à venir n'ait pas à
- * rouvrir le modèle, et parce qu'une échelle se dessine entière ou pas du tout.
+ * Elle a d'abord eu cinq barreaux, laiton compris ; Keko l'a raccourcie —
+ * « ça ajoute une rareté pour rien et c'est pas très lisible en comparaison à
+ * l'or ». *Deux jaunes rompus voisins ne font pas deux crans.* Le jeu n'en
+ * emploie que deux pour l'instant (commune et rare) ; les autres existent pour
+ * que le contenu à venir n'ait pas à rouvrir le modèle, et parce qu'une échelle
+ * se dessine entière ou pas du tout.
  *
- * **Elle ne vaut QUE pour ce qui s'équipe.** Les trésors en sont dehors —
- * tranché par Keko : « le montant d'or parle par lui-même ». *Un trésor n'est
- * pas un objet qu'on porte, c'est un butin qu'on compte.*
+ * **Elle ne dit pas d'où vient une carte, elle dit ce qu'elle VAUT.** Les
+ * trésors y sont entrés par leur valeur, et les cartes de deck héritent du
+ * métal de la pièce qui les produit — *la rareté fait la force du set*, donc
+ * une carte d'arme rare est vraiment plus forte.
  */
 export type Rarete = 'commune' | 'rare' | 'epique' | 'legendaire'
 
@@ -94,7 +97,9 @@ export function nomObjet(objet: Objet): string {
 
 /** La carte qu'un consommable met dans le deck. Elle porte SON identifiant. */
 export function carteDuConsommable(consommable: Consommable): Carte {
-  return { ...consommable.modele, id: consommable.id }
+  // Un consommable EST sa carte : sa rareté est donc celle de la carte, sans
+  // intermédiaire. Une Super potion est rare, sa carte l'est aussi.
+  return { ...consommable.modele, id: consommable.id, rarete: consommable.rarete }
 }
 
 const ESTOC: Modele = { nom: 'Estoc', type: 'combat', cout: 1, degats: 3 }
@@ -337,6 +342,10 @@ export function deckDeLEquipement(equipement: Piece[]): Carte[] {
       Array.from({ length: nombre }, (_, i) => ({
         ...modele,
         id: `${piece.id}-${modele.nom.toLowerCase().replace(/\s+/g, '-')}-${i + 1}`,
+        // ELLE HÉRITE DU MÉTAL DE SA PIÈCE. *La rareté fait la force du set*,
+        // donc une carte d'arme rare est vraiment plus forte : son cadre
+        // annonce une puissance, pas une provenance.
+        rarete: piece.rarete,
       })),
     ),
   )
