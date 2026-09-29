@@ -5219,15 +5219,24 @@ au bouton descendre, sauf qu'il génère un stuff de niveau minimal aléatoire �
 Le portrait lui cède donc sa bande basse plutôt que de la partager : *c'est
 l'armurier qui donne, le bouton se pose sous lui.*
 
-- **C'est une FABRICATION, pas une fouille** : les exemplaires sont neufs, ils
-  ne sortent pas du coffre. *L'armurier ne prête pas ce qu'on possède, il donne
-  ce qu'il a sous la main* — une arme et une armure tirées dans
-  `ARMES_COMMUNES` / `ARMURES_COMMUNES`, et de une à trois potions.
-- **Ce qui était équipé repart au coffre, sauf ce que ce bouton avait déjà
-  fabriqué**, qui disparaît. Sans ça, appuyer trois fois laisserait trois
-  Glaives de fortune derrière soi : *un chargement de fortune ne s'accumule
-  pas.* C'est le préfixe de l'identifiant qui le dit, et rien d'autre n'a à le
-  savoir.
+- **IL LANCE LA PARTIE DANS LA FOULÉE, il ne pose rien au hub.** Il a d'abord
+  équipé le chargement en laissant le joueur à l'armurerie ; Keko l'a repris
+  aussitôt : « le bouton fourbir doit lancer la partie avec un set de base
+  direct, pas donner le set sans lancer la partie — sinon on peut le vendre
+  direct ». *Un équipement qu'on peut poser est un équipement qu'on possède*,
+  donc une source infinie de matière à revendre. **Ce qui n'entre jamais dans le
+  coffre ne peut jamais en sortir** : c'est la garde de « un trésor rentré au hub
+  n'en ressort plus », prise par l'autre bout.
+- **C'est une FABRICATION, pas une fouille** : les exemplaires sont neufs.
+  *L'armurier ne prête pas ce qu'on possède, il donne ce qu'il a sous la main* —
+  une arme et une armure tirées dans `ARMES_COMMUNES` / `ARMURES_COMMUNES`, et
+  de une à trois potions.
+- **LE HUB N'A RIEN ENGAGÉ, donc le retour ne lui prend rien.** Deux
+  conséquences qu'il faut tenir ensemble (`deFortune`, dans `Scene`) : la mort
+  ne passe pas par `perdreLEquipement` — *on ne perd que ce qu'on a emporté* —
+  et `rentrer` reçoit TOUTE la pile du hub comme survivante, sinon il
+  l'amputerait de tout, puisque aucun identifiant emporté ne s'y trouve. L'or et
+  les trésors, eux, rentrent normalement.
 - **Son tirage a SON PROPRE RNG seedé**, à côté de celui de la descente : tout
   hasard du jeu passe par un RNG seedé — c'est la règle de pureté de `logic/` —
   mais consommer celui de la descente ferait qu'appuyer sur le bouton changerait

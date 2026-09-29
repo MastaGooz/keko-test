@@ -7,10 +7,12 @@
  */
 import type { Arme, Armure } from './armes.ts'
 import { carteTresor } from './cartes.ts'
+import { createRng } from './rng.ts'
 import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART, SUPER_POTIONS_DEPART, deckDeLEquipement } from './armes.ts'
 import {
   CAPACITE_PILE,
   consommablesDeLaPile,
+  chargementDeFortune,
   echangerDansCoffre,
   estTresor,
   rangerEnFinDeCoffre,
@@ -407,3 +409,29 @@ const COTTE: Armure = {
 
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)
 console.log('Tout passe.')
+
+// --- le chargement de fortune ------------------------------------------------
+
+{
+  // IL NE TOUCHE PAS AU HUB, et c'est tout le point : il rend un CHARGEMENT.
+  // Keko : « le bouton fourbir doit lancer la partie avec un set de base
+  // direct, pas donner le set sans lancer la partie, sinon on peut le vendre
+  // direct ». Ce qui n'entre jamais dans le coffre ne peut jamais en sortir.
+  const rng = createRng(7)
+  const c = chargementDeFortune(rng)
+  verifier('il donne une arme', c.mains[0] !== null && 'mains' in c.mains[0])
+  verifier('...et une armure', c.armure !== null)
+  verifier('...et au moins une potion', consommablesDeLaPile(c.pile).length >= 1)
+  verifier('la pile reste positionnelle', c.pile.length === CAPACITE_PILE)
+
+  // DES EXEMPLAIRES NEUFS, jamais ceux du coffre : deux appels ne partagent
+  // aucun identifiant, sinon deux pieces se deplaceraient ensemble.
+  const d = chargementDeFortune(rng)
+  verifier('chaque tirage a ses propres exemplaires', c.mains[0]!.id !== d.mains[0]!.id)
+
+  // ET LE MEME RNG REDONNE LE MEME CHARGEMENT : tout hasard du jeu est seede.
+  const rejoue = chargementDeFortune(createRng(7))
+  verifier('le tirage est reproductible',
+    rejoue.mains[0]!.id === c.mains[0]!.id &&
+      consommablesDeLaPile(rejoue.pile).length === consommablesDeLaPile(c.pile).length)
+}

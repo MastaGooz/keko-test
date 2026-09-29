@@ -72,12 +72,12 @@ import type { EtatCombat } from '../logic/combat.ts'
 import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
 import { createRng } from '../logic/rng.ts'
-import type { Hub, Slot } from '../logic/hub.ts'
+import type { Chargement, Hub, Slot } from '../logic/hub.ts'
 import {
   creerHub,
   deplacerPiece,
   echangerDansCoffre,
-  equipementDeFortune,
+  chargementDeFortune,
   rangerEnFinDeCoffre,
   trierLeCoffre,
   equipement,
@@ -1096,19 +1096,49 @@ export function Scene(): React.JSX.Element {
    * la règle du jeu — *le deck est la somme de ce qu'on porte* — et c'est
    * exactement ce que l'armurerie sert à décider.
    */
+  /**
+   * ON EST PARTI AVEC UN CHARGEMENT DE FORTUNE — donc le hub n'a rien engagé.
+   *
+   * Il faut le retenir pour le RETOUR : la mort ne doit pas prendre un
+   * équipement qu'on n'avait pas emporté, et l'extraction ne doit pas amputer
+   * une pile qui n'est jamais partie. *Ce qui n'a pas quitté le coffre ne peut
+   * pas s'y perdre.*
+   */
+  const [deFortune, setDeFortune] = useState(false)
+
+  const partir = useCallback(
+    (chargement: Chargement, fortune: boolean) => {
+      setDeFortune(fortune)
+      // LA MAIN DEMANDÉE PAR L'URL VAUT AUSSI POUR LES DESCENTES SUIVANTES :
+      // sinon `?main=20` ne tiendrait que jusqu'au premier retour au hub.
+      setDescente(
+        commencerDescente(
+          depart.rng,
+          { ...REGLAGE_DEFAUT, tailleMain: TAILLE_MAIN_URL() },
+          equipementPourTenir(equipement(chargement), TAILLE_MAIN_URL()),
+          consommablesDeLaPile(chargement.pile),
+        ),
+      )
+    },
+    [depart.rng],
+  )
+
   const descendreAuDonjon = useCallback(() => {
     if (!peutDescendre(hub.chargement)) return
-    // LA MAIN DEMANDÉE PAR L'URL VAUT AUSSI POUR LES DESCENTES SUIVANTES :
-    // sinon `?main=20` ne tiendrait que jusqu'au premier retour au hub.
-    setDescente(
-      commencerDescente(
-        depart.rng,
-        { ...REGLAGE_DEFAUT, tailleMain: TAILLE_MAIN_URL() },
-        equipementPourTenir(equipement(hub.chargement), TAILLE_MAIN_URL()),
-        consommablesDeLaPile(hub.chargement.pile),
-      ),
-    )
-  }, [depart.rng, hub])
+    partir(hub.chargement, false)
+  }, [hub, partir])
+
+  /**
+   * FOURBIR : l'armurier donne un chargement et on PART DANS LA FOULÉE.
+   *
+   * Tranché par Keko — « le bouton fourbir doit lancer la partie avec un set de
+   * base direct, pas donner le set sans lancer la partie, sinon on peut le
+   * vendre direct ». *Un équipement qu'on peut poser est un équipement qu'on
+   * possède* : il ne passe donc jamais par le coffre, et rien n'en revient.
+   */
+  const fourbirEtDescendre = useCallback(() => {
+    partir(chargementDeFortune(rngFortune), true)
+  }, [partir, rngFortune])
 
   /**
    * COMBIEN DE FOIS ON A ÉQUIPÉ, et jamais déséquipé.
@@ -1179,12 +1209,25 @@ export function Scene(): React.JSX.Element {
     (mort: boolean) => {
       setHub((h) =>
         mort
-          ? perdreLEquipement(h)
-          : rentrer(h, butinTransporte(enCours), consommablesSurvivants(enCours), tresorsTransportes(enCours)),
+          ? // UNE DESCENTE DE FORTUNE N'ENGAGEAIT RIEN : la mort ne peut donc
+            // rien prendre au coffre. *On ne perd que ce qu'on a emporté.*
+            deFortune
+            ? h
+            : perdreLEquipement(h)
+          : rentrer(
+              h,
+              butinTransporte(enCours),
+              // ET SES POTIONS N'ONT JAMAIS QUITTÉ LE COFFRE : on déclare donc
+              // survivante toute la pile du hub, sinon `rentrer` l'amputerait
+              // de tout — aucun identifiant emporté ne s'y trouve.
+              deFortune ? consommablesDeLaPile(h.chargement.pile) : consommablesSurvivants(enCours),
+              tresorsTransportes(enCours),
+            ),
       )
+      setDeFortune(false)
       setDescente(null)
     },
-    [enCours],
+    [enCours, deFortune],
   )
 
   const choisirRecompense = useCallback(
@@ -1553,7 +1596,7 @@ export function Scene(): React.JSX.Element {
               setZoomSet([])
             }}
             onDescendre={descendreAuDonjon}
-            onFourbir={() => setHub((h) => equipementDeFortune(h, rngFortune))}
+            onFourbir={fourbirEtDescendre}
             onPoseCommence={() => setEquipements((n) => n + 1)}
             onEquipee={() => setFixations((n) => n + 1)}
             onSaisie={setSaisie}

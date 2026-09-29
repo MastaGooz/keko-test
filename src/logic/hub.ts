@@ -583,23 +583,26 @@ export function perdreLEquipement(hub: Hub): Hub {
  * Demandé par Keko : un bouton sous l'armurier, « similaire au bouton
  * descendre, sauf qu'il génère un stuff de niveau minimal aléatoire ».
  *
- * *C'est une FABRICATION, pas une fouille* : les exemplaires sont neufs, ils ne
- * sortent pas du coffre. L'armurier ne prête pas ce qu'on possède, il donne ce
- * qu'il a sous la main.
+ * **IL NE TOUCHE PAS AU HUB, ET C'EST TOUT LE POINT.** Il a d'abord posé son
+ * équipement dans le chargement, laissant le joueur au hub ; Keko l'a repris
+ * aussitôt : « le bouton fourbir doit lancer la partie avec un set de base
+ * direct, pas donner le set sans lancer la partie — sinon on peut le vendre
+ * direct ». *Un équipement qu'on peut poser est un équipement qu'on possède*,
+ * donc une source infinie de matière à revendre.
  *
- * **Ce qui était équipé repart au coffre — sauf ce que ce bouton avait déjà
- * fabriqué, qui disparaît.** Sans ça, appuyer trois fois laisserait trois
- * Glaives de fortune derrière soi : *un chargement de fortune ne s'accumule
- * pas.* C'est le préfixe de l'identifiant qui le dit, et rien d'autre n'a à le
- * savoir.
+ * Il rend donc un `Chargement` et rien d'autre : **ce qui n'entre jamais dans
+ * le coffre ne peut jamais en sortir.** C'est la même garde que « un trésor
+ * rentré au hub n'en ressort plus », prise par l'autre bout.
  *
- * Le tirage passe par le RNG SEEDÉ, comme tout hasard du jeu — c'est la règle
+ * *C'est une FABRICATION, pas une fouille* : les exemplaires sont neufs.
+ * L'armurier ne prête pas ce qu'on possède, il donne ce qu'il a sous la main —
+ * le temps d'une descente.
+ *
+ * Le tirage passe par le RNG SEEDÉ, comme tout hasard du jeu : c'est la règle
  * de pureté de `logic/`, et elle vaut même pour un confort d'interface.
  */
-const MARQUE_FORTUNE = 'fortune-'
-
-export function equipementDeFortune(hub: Hub, rng: Rng): Hub {
-  const marque = `${MARQUE_FORTUNE}${rng.getState().toString(36)}`
+export function chargementDeFortune(rng: Rng): Chargement {
+  const marque = `fortune-${rng.getState().toString(36)}`
   const tire = <T,>(liste: readonly T[]): T =>
     liste[Math.min(liste.length - 1, Math.floor(rng.next() * liste.length))]!
 
@@ -611,17 +614,7 @@ export function equipementDeFortune(hub: Hub, rng: Rng): Hub {
   const pile = pileVide().map((_, i) =>
     i < combien ? { ...potion(0), id: `${marque}-p${i}` } : null,
   )
-
-  const rendu: Objet[] = [
-    ...equipement(hub.chargement),
-    ...consommablesDeLaPile(hub.chargement.pile),
-  ].filter((o) => !o.id.startsWith(MARQUE_FORTUNE))
-
-  return {
-    ...hub,
-    reserve: [...hub.reserve, ...rendu],
-    chargement: { mains: [arme, null], armure, pile },
-  }
+  return { mains: [arme, null], armure, pile }
 }
 
 /** Reste-t-il de la place pour un consommable ? */
