@@ -5380,3 +5380,155 @@ body {
 }
 
 
+
+/* ==========================================================================
+   LE HUB : la place et ses PNJ
+
+   Une RANGEE, pas une grille : en paysage c'est la hauteur qui manque, et
+   deux rangees mettraient le portrait a 90 px sur un telephone couche contre
+   138 en une seule. Une rue de boutiques se lit de gauche a droite.
+   ========================================================================== */
+.hub-page {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  /* LA LARGEUR D'UN PNJ SE DEDUIT DE LA PLACE, jamais l'inverse -- la lecon
+     de `--piece-equip` a l'armurerie. Deux contraintes, la plus dure gagne :
+     la largeur (huit colonnes et leurs ecarts) et la hauteur (le portrait
+     fait 1/0,68 de sa largeur, plus la bande de l'enseigne). */
+  --hub-ecart: min(1.1rem, 1.6vw);
+  --pnj: min(
+    calc((min(100vw, 120rem) - 2rem - (var(--pnj-n) - 1) * var(--hub-ecart)) / var(--pnj-n)),
+    calc((100vh - 6rem) * 0.68)
+  );
+}
+
+.hub-rue {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: var(--hub-ecart);
+}
+
+.hub-pnj {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+  width: var(--pnj);
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  /* TOUT CE QUI S'ECRIT ICI SUIT LA LARGEUR DU PORTRAIT : a huit, un nom en
+     rem deborderait sur son voisin -- la lecon du nom des creatures, qui suit
+     l'ecart du rang. */
+  /* LE COEFFICIENT EST MESURE, pas choisi : l'enseigne tient le blason
+     (1,7em), l'ecart (0,4em), son remplissage (0,6em) et le mot -- « Armurerie »
+     en fait 6,9 a cette graisse, soit 9,6em en tout. A 0,115 le nom etait COUPE
+     sur un telephone couche (71 px pour 60 de place, mesure) ; a 0,097 il reste
+     65 px de mot pour 70 de case a 667x320, le format le plus serre. */
+  font-size: min(0.78rem, calc(var(--pnj) * 0.097));
+  transition:
+    transform 180ms ease-out,
+    filter 180ms ease-out;
+}
+
+/* LE PORTRAIT EST POSE A MEME LA PLACE, sans cadre : c'est deja ce que fait
+   l'armurier dans sa colonne, et *un panneau autour d'un personnage
+   l'enferme dans une vignette au lieu de le poser dans un lieu.* */
+.hub-portrait {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1034 / 1521;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 14px #000000cc);
+  pointer-events: none;
+}
+
+/* L'ENSEIGNE : la ferronnerie des cadres, en petit -- un filet de laiton, un
+   fond a peine plus clair que la pierre, deux coins coupes. */
+.hub-enseigne {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+  width: 100%;
+  padding: 0.38em 0.3em;
+  border: 1px solid #6b5936;
+  background: linear-gradient(180deg, #17181f, #0e0f14);
+  box-shadow:
+    inset 0 1px 0 #ffffff12,
+    0 2px 8px #00000099;
+  clip-path: polygon(
+    0.45em 0,
+    100% 0,
+    100% calc(100% - 0.45em),
+    calc(100% - 0.45em) 100%,
+    0 100%,
+    0 0.45em
+  );
+}
+
+/* SA HAUTEUR SE MESURE SUR LE TEXTE (em), pas sur la fenetre : il grandit donc
+   avec le nom, et un seul reglage suffit. Meme regle qu'au bandeau. */
+.hub-blason {
+  height: 1.7em;
+  width: auto;
+  flex: none;
+  filter: drop-shadow(0 1px 3px #000000aa);
+}
+
+.hub-nom {
+  color: #f0e0bd;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 1em;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 3px #000;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* LE SURVOL N'EXISTE QU'A LA SOURIS : au doigt le `pointerout` n'arrive jamais
+   et le PNJ resterait allume apres la tape. La regle est ecrite dans ce projet
+   depuis la main du jeu 2D. */
+@media (hover: hover) and (pointer: fine) {
+  .hub-pnj:hover {
+    transform: translateY(-0.35em);
+    filter: brightness(1.14);
+  }
+}
+
+/* LE RETOUR A LA PLACE, au coin haut-gauche de l'armurerie. */
+/* IL PASSE SOUS LA DATE DE BUILD, il ne la recouvre pas : *c'est la seule
+   preuve visible qu'on ne regarde pas un cache*, et on la lit avant tout le
+   reste quand quelque chose cloche. */
+.arm-retour {
+  top: 1.6rem;
+  left: 0.6rem;
+  padding: 0.3em 0.75em;
+  border: 1px solid #6b5936;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #1b1c24, #101118);
+  color: #e6d2a4;
+  font-family: Cinzel, Georgia, serif;
+  font-size: clamp(0.62rem, 1.6vh, 0.85rem);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .arm-retour:hover {
+    border-color: #d8bb79;
+    color: #ffeec2;
+  }
+}

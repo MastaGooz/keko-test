@@ -48,6 +48,7 @@ import {
 import { Armurerie3D } from './Armurerie3D.tsx'
 import type { Onglet } from './armurerie-plan.ts'
 import { PageArmurerie } from './PageArmurerie.tsx'
+import { PageHub } from './PageHub.tsx'
 import { urlDuDecor } from '../ui/art.ts'
 import { Zoom3D } from './Zoom3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
@@ -228,7 +229,18 @@ export function Scene(): React.JSX.Element {
   const enCours = descente ?? depart.descente
   const combat = enCours.combat
   const phase = enCours.phase
+  /**
+   * OÙ L'ON SE TIENT QUAND ON N'EST PAS EN DESCENTE.
+   *
+   * Le jeu s'ouvre sur la PLACE (demandé par Keko), et l'armurerie n'en est
+   * plus qu'une porte. *Un seul booléen ne suffisait plus* : « au hub » disait
+   * à la fois « on ne joue pas » et « on est à l'armurerie », et ce sont deux
+   * faits différents depuis qu'il y a deux écrans.
+   */
+  const [lieu, setLieu] = useState<'place' | 'armurerie'>('place')
   const auHub = descente === null
+  const surLaPlace = auHub && lieu === 'place'
+  const aLArmurerie = auHub && lieu === 'armurerie'
   const enCombat = !auHub && phase.type === 'combat'
 
   /**
@@ -1162,7 +1174,10 @@ export function Scene(): React.JSX.Element {
           ? perdreLEquipement(h)
           : rentrer(h, butinTransporte(enCours), consommablesSurvivants(enCours), tresorsTransportes(enCours)),
       )
+      // ON REVIENT SUR LA PLACE, pas dans l'armurerie : *le jeu s'ouvre là, il
+      // y retombe.* L'armurerie est une porte de la place, pas son vestibule.
       setDescente(null)
+      setLieu('place')
     },
     [enCours],
   )
@@ -1516,7 +1531,7 @@ export function Scene(): React.JSX.Element {
         {/* L'ARMURERIE : le premier écran, et celui où l'on revient. C'est un
             LIEU — son fond est opaque — alors que les paliers sont des voiles
             sur le donjon. */}
-        {auHub && (
+        {aLArmurerie && (
           <Armurerie3D
             hub={hub}
             onglet={onglet}
@@ -1735,7 +1750,11 @@ export function Scene(): React.JSX.Element {
           bouton n'ont rien à gagner à être en volume, et ils restent nets à
           toute taille d'écran. C'est la 3D qui sert la scène, pas l'inverse. */}
       <p className="build-3d">{__BUILD_TIME__}</p>
-      {!pret && <p className="chargement-3d">Chargement…</p>}
+      {/* LA PLACE N'ATTEND RIEN : `pret` compte les cartes peintes, et il n'y en
+          a pas une seule sur cet écran. *Un écran sans carte ne peut pas
+          attendre qu'elles arrivent* — il resterait sur « Chargement… » pour
+          toujours. */}
+      {!pret && !surLaPlace && <p className="chargement-3d">Chargement…</p>}
 
       {latence !== '' && <p className="latence-son">{latence}</p>}
 
@@ -1821,11 +1840,14 @@ export function Scene(): React.JSX.Element {
       {/* LE PANNEAU DU PALIER : le titre en haut, les boutons en bas, et la
           rangée de cartes entre les deux — dans le canvas, donc sous ce
           panneau en HTML. Il ne recouvre jamais les cartes : il les encadre. */}
-      {pret && auHub && (
+      {surLaPlace && <PageHub onEntrer={() => setLieu('armurerie')} />}
+
+      {pret && aLArmurerie && (
         <PageArmurerie
           hub={hub}
           onglet={onglet}
           onTrier={rangerTout}
+          onRetour={() => setLieu('place')}
           onOnglet={(o) => {
             setOnglet(o)
             setDefilement(0)

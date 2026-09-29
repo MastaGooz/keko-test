@@ -72,6 +72,8 @@ type Props = {
   /** Ranger le coffre : par catégorie, puis par rareté. */
   onTrier?: () => void
   onOnglet: (o: Onglet) => void
+  /** Ressortir sur la place. Sans lui, l'armurerie serait un cul-de-sac. */
+  onRetour?: () => void
   defilement: number
   onDefilement: (n: number) => void
   pvMax: number
@@ -107,6 +109,7 @@ export function PageArmurerie({
   onglet,
   onTrier,
   onOnglet,
+  onRetour,
   defilement,
   onDefilement,
   pvMax,
@@ -514,6 +517,14 @@ export function PageArmurerie({
       </div>
 
       <div className="arm-commandes" style={zoomee ? { display: 'none' } : undefined}>
+      {/* LE RETOUR À LA PLACE. Il vit dans les COMMANDES et non dans le fond :
+          celui-ci est en `pointer-events: none` pour laisser prendre les
+          cartes, donc un bouton posé dedans ne répondrait pas. */}
+      {onRetour !== undefined && (
+        <button type="button" className="arm-retour" onClick={onRetour}>
+          ← Place
+        </button>
+      )}
       {/* LA BULLE VIT AU-DESSUS DU CANVAS, et il le faut : posée dans le calque
           du fond, elle passait DERRIÈRE les cartes de l'équipement — on n'en
           lisait que la moitié qui dépassait. Elle ne capte pas le pointeur,

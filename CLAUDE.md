@@ -3184,6 +3184,66 @@ Le bouton dit « Les ennemis frappent… » et la main reste verrouillée jusqu'
 ce que le dernier bond soit retombé. Mesuré dans la page (sonde à 40 ms) :
 impact à ~270 ms, main rendue à ~680 ms pour un frappeur.
 
+### LA PLACE : le jeu s'ouvre sur le HUB, l'armurerie n'en est qu'une porte
+
+`render/PageHub.tsx`. Demandé par Keko : « on peut ouvrir le jeu sur un nouvel
+écran hub où on aura tous les PNJ ? avec en affichage le PNJ de l'armurier,
+avec en dessous le blason et le texte armurerie, qu'on utilise en placeholder
+pour voir ce que ça donne si on avait 8 PNJ différents ? »
+
+**C'EST UN BANC D'ESSAI DE MISE EN PAGE, PAS DU CONTENU.** Les huit portent le
+même portrait et la même enseigne : ce qu'on juge est la RANGÉE — sa densité,
+la taille d'un visage, la lisibilité d'un nom à huit. *Inventer sept métiers
+pour en juger la place, ce serait trancher du design en passant.*
+
+**UNE RANGÉE, PAS UNE GRILLE.** Huit portraits en 4 x 2 demanderaient deux fois
+la hauteur d'un visage, et c'est la hauteur qui manque en paysage : le calcul
+le dit — sur un téléphone couché, deux rangées mettraient le portrait à 90 px
+de haut, une seule en donne 132. Et *une rue de boutiques se lit de gauche à
+droite* : le métier se voit à l'enseigne, pas à la position dans une grille.
+
+**Tout est du HTML.** Il n'y a pas une seule carte sur cet écran, donc rien à
+faire passer par le canvas — *un nom reste net à toute taille et n'a rien à
+gagner à devenir une texture.*
+
+Quatre choses à ne pas défaire :
+
+- **la largeur d'un PNJ se déduit de la PLACE**, jamais l'inverse : deux
+  contraintes, huit colonnes en largeur et le portrait plus son enseigne en
+  hauteur, la plus dure gagne. C'est la leçon de `--piece-equip` à l'armurerie ;
+- **le coefficient du nom est MESURÉ, pas choisi.** L'enseigne tient le blason
+  (1,7em), l'écart, son remplissage et le mot — « Armurerie » en fait 6,9 à
+  cette graisse, soit 9,6em en tout. À 0,115 le nom était **coupé** sur un
+  téléphone couché (71 px pour 60 de place, mesuré) ; à 0,097 il reste 65 px de
+  mot pour 70 de case à 667x320, le format le plus serré. *Un nom qui déborde
+  va chevaucher son voisin* — la leçon du nom des créatures ;
+- **le portrait est posé à même la place, sans cadre** : c'est déjà ce que fait
+  l'armurier dans sa colonne, et *un panneau autour d'un personnage l'enferme
+  dans une vignette au lieu de le poser dans un lieu* ;
+- **LA PLACE N'ATTEND RIEN.** `pret` compte les cartes peintes, et il n'y en a
+  pas une seule ici : gardé derrière lui, l'écran restait sur « Chargement… »
+  pour toujours. *Un écran sans carte ne peut pas attendre qu'elles arrivent.*
+
+**Et `auHub` ne suffisait plus** : il disait à la fois « on ne joue pas » et
+« on est à l'armurerie », deux faits différents depuis qu'il y a deux écrans.
+D'où `lieu`, et deux dérivés lisibles (`surLaPlace`, `aLArmurerie`). **La fin
+d'une run ramène sur la PLACE**, pas dans l'armurerie : *le jeu s'ouvre là, il
+y retombe.*
+
+Le retour se fait par un bouton au coin haut-gauche de l'armurerie — sans lui
+elle serait un cul-de-sac. Il vit dans les COMMANDES et non dans le fond, qui
+est en `pointer-events: none` pour laisser prendre les cartes, et il passe
+**sous la date de build** : *c'est la seule preuve visible qu'on ne regarde pas
+un cache.*
+
+Mesuré à 844x390, 667x320 et 1366x700 : aucun débordement, aucun nom coupé.
+
+**Ce qui reste à juger, et c'est le point de la manoeuvre** : à huit de front,
+le portrait ne prend que 38 % de la hauteur sur un écran de PC — la largeur
+borne tout. Trois leviers si c'est trop vide : moins de PNJ par rangée, un
+cadrage plus haut que large sur les portraits (une vitrine de boutique, donc un
+recadrage des images), ou un sol sous la rangée pour les asseoir.
+
 ### L'ARMURERIE EN 3D — jalon 7, et la boucle est fermée
 
 `render/Armurerie3D.tsx`. **C'est le premier écran et celui où l'on revient** :
