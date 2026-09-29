@@ -2064,54 +2064,6 @@ correctifs, parce qu'il y a deux causes** :
   une carte : le curseur est déjà dessus, et elle resterait penchée sans
   bouger. `Armurerie3D` reçoit donc `sousLeZoom` et éteint `reflet`.
 
-### SUR LE ZOOM, LA CARTE SE RETOURNE — et le repère qui la mesure ne tourne pas
-
-Keko : « vu qu'en théorie on gère la 3D, on peut faire tourner un peu les
-cartes quand on les fait bouger (zoom uniquement) pour permettre de voir le
-dos ? » *C'est l'endroit du jeu fait pour ça* — le zoom ne sert qu'à REGARDER
-une carte, donc c'est le seul écran où l'on manipule l'objet au lieu de le lire.
-Ailleurs le pointeur sert à PRENDRE, et une carte de coffre qui pivoterait
-pendant qu'on vise son slot mentirait sur ce qu'on est en train de faire.
-
-**La course n'est pas linéaire, et c'est ce qui la rend jouable.** À répartition
-égale, la face ne serait lisible qu'au milieu du parcours ; le carré de l'écart
-laisse la carte presque droite sur toute la partie centrale — 4° au dixième,
-27° à mi-chemin — et ne bascule que sur le dernier quart. *On lit la carte sans
-y penser, et on la retourne quand on le veut.* 112° au bord : il en faut plus
-de 90 pour voir le dos, et la marge fait que ça n'arrive pas par mégarde.
-
-**Seul l'axe VERTICAL prend cette amplitude.** Basculer aussi le haut et le bas
-de 112° rendrait la carte illisible sans rien montrer de plus : *on retourne un
-objet autour de sa hauteur, pas autour de sa largeur.*
-
-**LE PIÈGE, ET IL A COÛTÉ UNE PASSE : le repère qui mesure le curseur tournait
-avec la carte.** Tant que l'inclinaison valait dix degrés, lire le point dans
-le repère de la carte marchait — à cette amplitude elle ne se dérobe pas. À
-112°, si : *la carte tourne, donc elle se raccourcit à l'écran, donc le curseur
-qui était sur son bord passe à côté* — le rayon ne la touche plus, le survol
-s'éteint, elle revient de face, repasse sous le curseur et repart. **Mesuré :
-elle pompait entre 0 et 35° à deux pixels près.**
-
-D'où un **CAPTEUR** : un plan invisible à la taille de la carte, posé derrière
-elle dans un groupe qui ne prend QUE sa place et sa taille. R3F prévient tous
-les objets que le rayon traverse, donc il reçoit le pointeur même quand la
-carte s'est effacée devant lui. *Un repère qui fuit le doigt ne peut pas servir
-à le mesurer.*
-
-Trois choses à ne pas défaire :
-
-- **il est invisible mais bien RENDU** : un objet à `visible={false}` est sauté
-  par le lancer de rayon. C'est un matériau sans écriture de couleur, pas un
-  objet éteint ;
-- **il n'arrête pas la propagation** : le voile du zoom doit toujours recevoir
-  la tape qui referme ;
-- **le `pointerOut` du CORPS est neutralisé** pendant qu'elle tourne. C'est le
-  capteur qui dit quand on quitte la carte — *un objet qui s'échappe n'est pas
-  un objet qu'on a quitté.*
-
-Le dos existait déjà (`textureDuDos`, le plan monté pour la culbute) : il suffit
-de le monter aussi ici, *sans quoi la moitié du geste ne montrerait rien.*
-
 **LE LUSTRE EST DISCRET**, et il a été baissé deux fois — Keko : « je trouve la
 brillance un peu forte ». *Un lustre qui délave l'illustration cesse d'être une
 matière et devient un voile* : ce qu'on doit lire sur une carte regardée de
