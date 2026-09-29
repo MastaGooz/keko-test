@@ -4021,6 +4021,25 @@ menu les y remet, réduits à ce que le geste concerne** — un slot, une catég
   d'une colonne de slot et ne montre qu'une catégorie. À taille de coffre elle
   alignait onze cases minuscules pour deux armes — *une grille se règle sur ce
   qu'elle contient, pas sur celle d'à côté.* Cinq colonnes visées.
+- **AUCUN `position` SUR LE BOUTON.** `.arm-commandes > *` pose le `fixed` qui
+  porte les coordonnées du plan, et il a **exactement la même spécificité**
+  (0,1,0) : une règle écrite plus bas dans la feuille l'emporte. Un
+  `position: relative` posé pour ancrer le `::after` a donc renvoyé les six
+  boutons dans le flux — Keko : « les boutons armes et armures sont décalés et
+  j'ai pas de boutons pour les objets », ceux du bas étant simplement poussés
+  hors de l'écran. *Un élément `fixed` est déjà un bloc conteneur pour ses
+  enfants absolus : il n'y avait rien à ancrer.*
+
+  **Et je ne l'ai pas vu parce que je l'ai ajouté APRÈS mes captures.** La
+  règle du projet vaut ici : *une vérification faite avant la dernière
+  retouche ne vérifie pas la dernière retouche.*
+- **UN MINUTEUR POSÉ DANS UN EFFET MEURT AVEC LUI.** Au doigt la bulle se ferme
+  toute seule au bout de 2,6 s — mais son minuteur vit dans l'effet des
+  écouteurs, et cet effet se remonte quand le menu s'ouvre : le nettoyage
+  l'annulait, donc la bulle du bouton restait à l'écran pour toujours, jusque
+  dans le coffre. Keko : « quand je tape dessus sur tél, l'infobulle Changer
+  reste au milieu de l'écran coffre ». *Ce qu'un minuteur devait effacer doit
+  l'être aussi par le changement d'écran lui-même.*
 - **Le défilement est PARTAGÉ avec le coffre** : ils ne sont jamais à l'écran
   ensemble, donc un seul compteur suffit — remis à zéro en changeant de grille.
   Et la barre a son pouce, parce qu'*au doigt il n'y a pas de molette.*

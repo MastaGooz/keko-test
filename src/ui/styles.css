@@ -4964,8 +4964,14 @@ body {
    d'or feraient une rangee de boutons plutot qu'un chargement. Son corps suit
    la hauteur de sa bande, qui est elle-meme une fraction du panneau : *ce qui
    se serre avec le panneau doit se mesurer sur lui.* */
+/* PAS DE `position` ICI. `.arm-commandes > *` pose le `fixed` qui porte les
+   coordonnees du plan, et il a EXACTEMENT la meme specificite (0,1,0) : une
+   regle ecrite plus bas dans la feuille l'emporte. Un `position: relative` pose
+   pour ancrer le `::after` a donc renvoye les six boutons dans le flux --
+   decales, et la rangee des objets hors de l'ecran. *Un element `fixed` est
+   deja un bloc conteneur pour ses enfants absolus : il n'y avait rien a
+   ancrer.* */
 .arm-changer {
-  position: relative;
   display: grid;
   place-items: center;
   padding: 0;

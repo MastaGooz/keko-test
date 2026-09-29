@@ -351,6 +351,20 @@ export function PageArmurerie({
   const paVu = montrees[3] ?? energieMax
 
   const [bulle, setBulle] = useState<Bulle | null>(null)
+  /**
+   * **UNE BULLE NE SURVIT PAS À CE QU'ELLE ANNOTAIT.**
+   *
+   * Au doigt elle se ferme d'elle-même au bout de 2,6 s — mais son minuteur vit
+   * dans l'effet des écouteurs, et cet effet se remonte quand le menu s'ouvre :
+   * le nettoyage annulait le minuteur, donc la bulle du bouton « Changer »
+   * restait à l'écran pour toujours, jusque dans le coffre. Keko : « quand je
+   * tape dessus sur tél, l'infobulle Changer reste au milieu de l'écran
+   * coffre ».
+   *
+   * *Un minuteur posé dans un effet meurt avec lui* : ce qu'il devait effacer
+   * doit donc l'être aussi, et par le changement d'écran lui-même.
+   */
+  useEffect(() => setBulle(null), [lieu, menuOuvert])
 
   /**
    * ET LE BOUTON ÉTEINT DIT POURQUOI IL L'EST.
