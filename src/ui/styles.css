@@ -5461,11 +5461,16 @@ body {
      mot a d'autant plus de place : 0,097 devient 0,14 et tout grandit de 45 %.
      *La place perdue par le buste en hauteur se recupere en largeur.*
 
-     LE PLAFOND EN REM NE MORD QUE SUR GRAND ECRAN. A 0,95rem le nom plafonnait
-     des 1366 px de large, donc l'enseigne cessait de grandir avec sa boutique
-     alors que la place, elle, continuait. *Un plafond absolu dans une mise en
-     page proportionnelle finit par contredire la proportion.* */
-  font-size: min(1.8rem, calc(var(--pnj) * 0.14));
+     LE PLAFOND EN REM NE MORD QUE SUR GRAND ECRAN, et c'est LUI qui regle le
+     PC. Keko : « la taille est bien sur tel, mais sur PC c'est trop gros ».
+     *Une proportion seule ne borne rien* : a 0,14 du buste, l'enseigne suivait
+     un buste qui triple entre un telephone et un moniteur, donc elle triplait
+     avec lui. Le `min` des deux est la reponse deja donnee aux tas, aux jauges
+     et au disque du compte -- la fraction commande en petit, le rem en grand.
+
+     Il ne touche PAS au telephone : la fraction y vaut 13 px pour un rem de
+     16, donc tout plafond au-dessus de 0,82rem la laisse gagner. */
+  font-size: min(1.15rem, calc(var(--pnj) * 0.14));
   transition:
     transform 180ms ease-out,
     filter 180ms ease-out;

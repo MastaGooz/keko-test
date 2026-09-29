@@ -3235,10 +3235,20 @@ de la plaque* : le couple tient le blason, l'écart, le remplissage et le mot �
 10em en tout à cette valeur, pour une plaque de 1,45 buste et un mot à 0,14.
 Au-delà il pousserait « Armurerie » hors de son enseigne.
 
-**Le plafond du nom a été relâché deux fois** (0,95 → 1,25 → 1,8rem) : il
-mordait dès 1366 px de large, donc l'enseigne cessait de grandir avec sa
-boutique alors que la place, elle, continuait. *Un plafond absolu dans une mise
-en page proportionnelle finit par contredire la proportion.*
+**ET C'EST LE PLAFOND EN REM QUI RÈGLE LE PC.** Keko : « la taille est bien sur
+tél, mais sur PC c'est trop gros ». *Une proportion seule ne borne rien* : à
+0,14 du buste, l'enseigne suivait un buste qui triple entre un téléphone et un
+moniteur, donc elle triplait avec lui. Le `min(rem, fraction)` est la réponse
+déjà donnée aux tas, aux jauges et au disque du compte — **la fraction commande
+en petit, le rem en grand.**
+
+Il ne touche PAS au téléphone, et c'est ce qui rend le réglage sûr : la
+fraction y vaut 13 px pour un rem de 16, donc tout plafond au-dessus de 0,82rem
+la laisse gagner. Le plafond a donc pu bouger trois fois (0,95 → 1,25 → 1,8 →
+1,15rem) sans jamais déranger le format sur lequel Keko avait validé.
+
+Mesuré : le nom passe de 25 à 18 px à 1366, de 43 à 28 à 2560, et ne bouge pas
+d'un pixel sur un téléphone.
 
 **La grille prend toute la largeur, les PNJ se centrent dans leur case.** À
 colonnes de largeur fixe, le groupe se serrait au milieu avec une marge de
@@ -3295,7 +3305,7 @@ y retombe.*
 
 Mesuré à 844x390, 667x320, 932x430, 1366x700, 1920x1080 et 2560x1215 : aucun
 débordement, aucun nom coupé. Le nom va de 10,4 px sur un iPhone SE couché à
-43 sur un grand écran, et le blason de 22 à 91.
+27,6 sur un grand écran, et le blason de 22 à 58.
 
 **Ce qui reste à juger** : les PNJ flottent — il n'y a pas de sol sous eux,
 alors que la règle des créatures dit que *c'est l'ombre sous les pattes qui
