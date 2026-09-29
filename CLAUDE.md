@@ -3215,10 +3215,25 @@ tiers : le nom passe de 7,8 à 10,7 px sur un téléphone couché, le blason de 
 l'horizontale se lit comme une image cassée, un fondu se lit comme l'ombre où
 le marchand se tient.
 
-**Le plafond du nom a été relâché avec** (0,95 → 1,25rem) : il mordait dès
-1366 px de large, donc l'enseigne cessait de grandir avec sa boutique alors que
-la place, elle, continuait. *Un plafond absolu dans une mise en page
-proportionnelle finit par contredire la proportion.*
+**ET L'ENSEIGNE DÉBORDE LE BUSTE**, d'un facteur 1,45. Keko : « je trouve que
+le symbole d'armurerie et le texte à côté sont trop petits ». *La place perdue
+par le buste en hauteur se récupère en largeur* : c'est la hauteur qui borne le
+portrait, donc il reste de la largeur inutilisée dans la colonne, et c'est elle
+qui paie la plaque. Le coefficient du mot suit la largeur de l'ENSEIGNE et non
+celle du buste — 0,097 devient 0,14, et tout grandit encore de 27 %.
+
+*Et une enseigne de boutique est plus large que le marchand*, donc ça ne se lit
+pas comme un défaut.
+
+**Prix connu : le buste rétrécit d'autant** (97 px au lieu de 111 sur un
+téléphone couché), puisque l'enseigne prend plus de hauteur de ligne. C'est
+l'échange que Keko a demandé — *ce qu'on lit d'abord sur une place, c'est
+l'enseigne, pas le visage.*
+
+**Le plafond du nom a été relâché deux fois** (0,95 → 1,25 → 1,8rem) : il
+mordait dès 1366 px de large, donc l'enseigne cessait de grandir avec sa
+boutique alors que la place, elle, continuait. *Un plafond absolu dans une mise
+en page proportionnelle finit par contredire la proportion.*
 
 **La grille prend toute la largeur, les PNJ se centrent dans leur case.** À
 colonnes de largeur fixe, le groupe se serrait au milieu avec une marge de
@@ -3274,8 +3289,8 @@ d'une run ramène sur la PLACE**, pas dans l'armurerie : *le jeu s'ouvre là, il
 y retombe.*
 
 Mesuré à 844x390, 667x320, 932x430, 1366x700, 1920x1080 et 2560x1215 : aucun
-débordement, aucun nom coupé. Le nom va de 8,5 px sur un iPhone SE couché à
-30 sur un grand écran.
+débordement, aucun nom coupé. Le nom va de 10,8 px sur un iPhone SE couché à
+43 sur un grand écran, et le blason de 18 à 73.
 
 **Ce qui reste à juger** : les PNJ flottent — il n'y a pas de sol sous eux,
 alors que la règle des créatures dit que *c'est l'ombre sous les pattes qui

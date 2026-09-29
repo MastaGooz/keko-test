@@ -5404,8 +5404,8 @@ body {
   /* LA LARGEUR D'UN PNJ SE DEDUIT DE LA PLACE, jamais l'inverse -- la lecon de
      `--piece-equip` a l'armurerie. Deux contraintes, la plus dure gagne :
      quatre colonnes en largeur, et deux lignes en hauteur. Une ligne fait
-     1,24 fois la largeur d'un PNJ : 1 pour le buste (carre) et 0,24 pour
-     l'enseigne, qui se mesure sur son texte.
+     1,41 fois la largeur d'un PNJ : 1 pour le buste (carre), 0,34 pour
+     l'enseigne et 0,07 pour l'ecart entre les deux.
 
      LE BUSTE PAIE LE TEXTE. A l'image entiere (0,68) une ligne faisait 1,71,
      donc le PNJ etait plus etroit d'un bon tiers et son enseigne avec -- Keko :
@@ -5415,7 +5415,7 @@ body {
      metier.* */
   --pnj: min(
     calc((min(100vw, 120rem) - 2rem - (var(--pnj-cols) - 1) * var(--hub-ecart)) / var(--pnj-cols)),
-    calc((100vh * (1 - var(--pnj-bande)) - 2.5rem - var(--hub-ecart)) / 2.48)
+    calc((100vh * (1 - var(--pnj-bande)) - 2.5rem - var(--hub-ecart)) / 2.83)
   );
 }
 
@@ -5438,7 +5438,10 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.5em;
-  width: var(--pnj);
+  /* IL PREND TOUTE SA CASE, pas seulement la largeur du buste : c'est la
+     HAUTEUR qui borne le portrait, donc il reste de la largeur inutilisee dans
+     la colonne -- et c'est elle qui paie l'enseigne. */
+  width: 100%;
   padding: 0;
   border: 0;
   background: none;
@@ -5452,12 +5455,17 @@ body {
      en fait 6,9 a cette graisse, soit 9,6em en tout. A 0,115 le nom etait COUPE
      sur un telephone couche (71 px pour 60 de place, mesure).
 
-     LE PLAFOND EN REM NE MORD QUE SUR GRAND ECRAN, et il a ete relache : a
-     0,95rem le nom plafonnait des 1366 px de large, donc l'enseigne cessait de
-     grandir avec sa boutique alors que la place, elle, continuait. *Un plafond
-     absolu dans une mise en page proportionnelle finit par contredire la
-     proportion.* */
-  font-size: min(1.25rem, calc(var(--pnj) * 0.097));
+     LE COEFFICIENT SUIT LA LARGEUR DE L'ENSEIGNE, pas celle du buste. Keko :
+     « je trouve que le symbole d'armurerie et le texte a cote sont trop
+     petits ». La plaque deborde desormais le buste d'un facteur 1,45, donc le
+     mot a d'autant plus de place : 0,097 devient 0,14 et tout grandit de 45 %.
+     *La place perdue par le buste en hauteur se recupere en largeur.*
+
+     LE PLAFOND EN REM NE MORD QUE SUR GRAND ECRAN. A 0,95rem le nom plafonnait
+     des 1366 px de large, donc l'enseigne cessait de grandir avec sa boutique
+     alors que la place, elle, continuait. *Un plafond absolu dans une mise en
+     page proportionnelle finit par contredire la proportion.* */
+  font-size: min(1.8rem, calc(var(--pnj) * 0.14));
   transition:
     transform 180ms ease-out,
     filter 180ms ease-out;
@@ -5468,7 +5476,7 @@ body {
    l'enferme dans une vignette au lieu de le poser dans un lieu.* */
 .hub-portrait {
   display: block;
-  width: 100%;
+  width: var(--pnj);
   /* UN BUSTE, PAS UNE SILHOUETTE : la boite est carree et l'image la remplit
      par le HAUT. On garde donc les deux tiers superieurs du dessin -- la tete,
      les epaules, ce qu'il tient dans les mains -- et c'est tout ce qui nomme un
@@ -5490,7 +5498,10 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.4em;
-  width: 100%;
+  /* ELLE DEBORDE LE BUSTE, et c'est voulu : une enseigne de boutique est plus
+     large que le marchand. Le `min` la retient dans sa case sur les formats ou
+     la largeur redevient la contrainte. */
+  width: min(100%, calc(var(--pnj) * 1.45));
   padding: 0.38em 0.3em;
   border: 1px solid #6b5936;
   background: linear-gradient(180deg, #17181f, #0e0f14);
