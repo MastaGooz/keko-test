@@ -3906,6 +3906,22 @@ peut porter.* Un trésor s'y regarde et ne se glisse nulle part, ce qui est
 exactement ce que dit un objet qu'aucun slot n'accepte — et c'est le garde-fou
 du concept : **un trésor rentré au hub n'en ressort plus.**
 
+**MAIS L'ONGLET EST EN SURSIS — tranché par Keko.** « Je me rends compte qu'on
+ne peut pas équiper les trésors et que l'onglet trésors n'a rien à faire dans
+l'armurerie. On va le laisser pour le test mais faudra le virer plus tard. »
+*Il renverse sa propre décision*, et il a raison sur le fond : **l'armurerie
+est l'écran où l'on CHOISIT ce qu'on emporte**, et un objet qu'aucun slot
+n'accepte n'y décide de rien. Le coffre y montre ce qu'on possède parce que
+tout ce qu'on possède s'y équipe — sauf eux.
+
+**Ce qu'il faudra régler EN MÊME TEMPS, sinon on refait le bug qui les y avait
+mis** : les trésors doivent rester montrés QUELQUE PART, et en cartes. Ils
+n'étaient nulle part avant, la descente les convertissait en or et la carte
+disparaissait — *un total ne montre pas un butin*, c'est la raison qui avait
+déjà fait dessiner le loot en cartes. Leur place naturelle est **l'écran où ils
+se consomment**, marché ou craft, puisque c'est la seule chose qu'ils font au
+hub. Ne pas retirer l'onglet avant que cet écran existe.
+
 *Ça a demandé une place dans le modèle* : `hub.tresors`, rempli par `rentrer`.
 Ils n'étaient nulle part — la descente les convertissait en or et la carte
 disparaissait. **L'or continue de se compter à côté** : l'économie n'est
