@@ -958,12 +958,14 @@ export function Armurerie3D({
         onCliquer={onDescendre}
       />
 
-      {/* LE BOUTON DE L'ARMURIER, sous lui. *Il ne dit pas ce qu'on possède, il
-          dit ce qu'il donne* — un chargement de fortune tiré dans le commun,
-          fabriqué sur place. Il s'éteint pendant un glisser comme tous les
-          autres : on est déjà en train de faire autre chose. */}
+      {/* L'AUTRE DÉPART, SOUS « DESCENDRE ». *Ce sont deux façons de partir*,
+          donc elles se lisent au même endroit ; celle-ci est le repli, elle
+          vient dessous et en pierre plutôt qu'en or. Le libellé tient sur deux
+          lignes, faute de quoi il aurait élargi le rail de moitié. Il s'éteint
+          pendant un glisser comme tous les autres : on est déjà en train de
+          faire autre chose. */}
       <Bouton3D
-        texte="Fourbir"
+        texte={'Équipement\ngratuit'}
         ton="pierre"
         position={plan.boutonFortune}
         eteint={tenue !== null}

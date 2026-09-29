@@ -505,10 +505,19 @@ export function planArmurerie(
   const lArmes = (aDeuxMains ? 1 : 2) * pasCharge - coupe
   const xArmes = aDeuxMains ? place(0) : (place(0) + place(1)) / 2
 
-  // LE BOUTON VIT SOUS LES STATS, dans la même colonne : c'est ce qu'on fait
-  // une fois qu'on a lu ce qu'on emporte. Sa bande est réservée en haut de la
-  // colonne, sinon le dernier cartouche s'assoirait dessus.
-  const hBouton = Math.min(1, hPanneaux * 0.2)
+  // LES DEUX DÉPARTS SONT L'UN SOUS L'AUTRE, AU BAS DU RAIL. « Descendre »
+  // part avec ce qu'on a équipé, « Équipement gratuit » avec un chargement de
+  // fortune : *ce sont deux façons de faire la même chose*, donc elles se
+  // lisent au même endroit, et la seconde sous la première parce qu'elle est
+  // le repli. Demandé par Keko.
+  // ILS SE TOUCHENT PRESQUE, et c'est ce qui les fait lire comme UNE pile :
+  // on les écarte de la hauteur RÉELLE d'un bouton, pas d'une bande réservée
+  // deux fois plus haute — *deux boutons séparés d'un vide se lisent comme deux
+  // objets sans rapport.*
+  const hBouton = tailleBouton('Descendre', 'or', false, Z_PLAN, hauteurFenetrePx).hauteur
+  // La bande réservée en tient DEUX, plus l'air autour et entre eux : sans ça
+  // la liste des destinations s'assoirait sur le premier.
+  const bandeDepart = 2 * hBouton + 3 * marge
 
   return {
     demiHaut,
@@ -516,9 +525,9 @@ export function planArmurerie(
     rail: { x: xRail, y: yPanneaux, l: lRail - marge, h: hPanneaux },
     railListe: {
       x: xRail,
-      y: yPanneaux + (hBouton + marge) / 2,
+      y: yPanneaux + (bandeDepart + marge) / 2,
       l: lRail - marge,
-      h: hPanneaux - hBouton - marge,
+      h: hPanneaux - bandeDepart - marge,
     },
     coffre,
     onglets,
@@ -554,21 +563,13 @@ export function planArmurerie(
       l: lEquip - marge * 2,
       h: hStats,
     },
-    // L'ARMURIER PREND TOUTE SA COLONNE, le bouton excepté : c'est le premier
-    // visage du jeu, et il n'a plus rien à partager depuis que les mesures
-    // sont parties en bande.
-    // L'ARMURIER PREND TOUTE SA COLONNE depuis que le bouton est parti dans le
-    // rail : *le départ ne se décide pas dans l'armurerie, il se décide au
-    // hub.*
-    // L'ARMURIER REMONTE : il garde sa colonne, moins la bande de son bouton.
-    pnj: {
-      x: xStats,
-      y: yPanneaux + (hBouton + marge) / 2,
-      l: lStats,
-      h: hPanneaux - hBouton - marge,
-    },
-    bouton: [xRail, basPanneaux + hBouton / 2, Z_PLAN],
-    boutonFortune: [xStats, basPanneaux + hBouton / 2, Z_PLAN],
+    // L'ARMURIER REPREND TOUTE SA COLONNE, le bouton de fortune étant parti
+    // dans le rail. *Une contrainte posée pour un contenu se relit quand ce
+    // contenu s'en va* — sinon elle reste comme une cicatrice, à tenir de la
+    // place pour quelque chose qui n'est plus là.
+    pnj: { x: xStats, y: yPanneaux, l: lStats, h: hPanneaux },
+    bouton: [xRail, basPanneaux + 2 * marge + hBouton * 1.5, Z_PLAN],
+    boutonFortune: [xRail, basPanneaux + marge + hBouton / 2, Z_PLAN],
   }
 }
 

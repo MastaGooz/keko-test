@@ -5209,15 +5209,42 @@ plaque, posée à cheval sur le bord haut, s'y coupait en deux. Même famille qu
 le chiffre de la barre de vie, qui doit vivre hors du contenant qui rogne.
 
 **L'ARMURIER PREND TOUTE LA COLONNE DE DROITE** (`public/Armurier.png`, fourni
-par Keko) — le premier visage du jeu, du haut du panneau jusqu'au bouton. Son
+par Keko) — le premier visage du jeu, sur toute la hauteur du panneau. Son
 format est celui des illustrations de cartes (1034 x 1521, rapport 0,68) : *un
 seul gabarit d'image dans tout le projet.*
 
-**ET IL PORTE SON BOUTON : « FOURBIR ».** Demandé par Keko — « un bouton sous
-le PNJ armurier, qu'on va remonter en haut de sa colonne d'ailleurs ; similaire
-au bouton descendre, sauf qu'il génère un stuff de niveau minimal aléatoire ».
-Le portrait lui cède donc sa bande basse plutôt que de la partager : *c'est
-l'armurier qui donne, le bouton se pose sous lui.*
+**IL A PORTÉ UN BOUTON, PUIS IL L'A RENDU.** « Fourbir » a vécu sous lui deux
+commits, et sa colonne s'était raccourcie d'autant ; le bouton parti dans le
+rail, **le plancher est resté** — *une contrainte posée pour un contenu se
+relit quand ce contenu s'en va*, sinon elle tient de la place pour quelque
+chose qui n'est plus là. C'est mot pour mot la cicatrice déjà payée sur cette
+même colonne quand « Descendre » l'avait quittée.
+
+**LE DÉPART DE FORTUNE : « ÉQUIPEMENT GRATUIT », SOUS « DESCENDRE ».** Demandé
+par Keko — d'abord « un bouton sous le PNJ armurier, similaire au bouton
+descendre, sauf qu'il génère un stuff de niveau minimal aléatoire », puis « on
+va remplacer fourbir par "équipement gratuit" et placer le bouton sous le
+bouton descendre ».
+
+*Et c'est sa place* : **ce sont deux façons de partir**, donc elles se lisent
+au même endroit — le bas du rail, la seule bande du hub qui parle de quitter le
+hub. Celle-ci vient dessous et en pierre parce qu'elle est le repli.
+
+- **LE LIBELLÉ TIENT SUR DEUX LIGNES, et il le fallait.** « Équipement gratuit »
+  sur une seule a un rapport de 5,5 contre 2,97 pour « Descendre » : la largeur
+  du rail ne descend jamais sous celle de son bouton (*une colonne qui ne
+  contient pas ce qu'on y met n'est pas une colonne*), donc il aurait fait
+  passer le rail de 29 % à ~52 % de la largeur d'un téléphone couché. `plaque()`
+  sait donc couper sur `
+` : la largeur suit la plus longue ligne, la hauteur
+  le nombre de lignes, et le bloc se centre. La plaque étant rendue à hauteur
+  fixe, le texte s'y lit **plus petit** — ce qui est juste pour une action
+  secondaire.
+- **LES DEUX BOUTONS SE TOUCHENT PRESQUE**, écartés de la hauteur RÉELLE d'un
+  bouton et non d'une bande réservée deux fois plus haute : *deux boutons
+  séparés d'un vide se lisent comme deux objets sans rapport.* La bande du bas
+  en réserve donc deux, et la liste des destinations recule d'autant — c'est le
+  prix d'un second départ, et il est assumé.
 
 - **IL LANCE LA PARTIE DANS LA FOULÉE, il ne pose rien au hub.** Il a d'abord
   équipé le chargement en laissant le joueur à l'armurerie ; Keko l'a repris
@@ -5252,11 +5279,11 @@ l'armurier qui donne, le bouton se pose sous lui.*
 - **Son ton est la PIERRE, pas l'or.** *Deux boutons d'or côte à côte se
   disputent le regard* : « Descendre » est la seule action qui quitte le hub,
   celui-ci n'est qu'un confort, donc il prend la matière du lieu sans son accent.
-- **Le mot est à rejuger.** Keko : « je sais pas, il faudrait un truc en un seul
-  mot ». *Fourbir ses armes* est l'expression du métier et dit l'ensemble du
-  geste — préparer tout son équipement — là où « Équiper » dit ce que le glisser
-  fait déjà, pièce par pièce. Les autres candidats étaient « Armer » et
-  « Parer ».
+- **Le mot a été « Fourbir », et Keko l'a repris.** Il avait demandé « un truc
+  en un seul mot » ; *fourbir ses armes* est l'expression du métier, mais elle
+  ne dit pas ce qu'on reçoit. « Équipement gratuit » le dit en clair — et **le
+  mot juste vaut mieux que le mot court**, la mise en page suivant (deux lignes)
+  plutôt que l'inverse.
 
 **ET LES QUATRE MESURES SONT PASSÉES EN BANDE**, sur une ligne en haut de
 l'équipement. Elles coiffaient cette colonne, sous le portrait — et *elles se

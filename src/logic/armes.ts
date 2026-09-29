@@ -247,7 +247,7 @@ export const ARMURE_GRATUITE = PLASTRON
 /**
  * CE QU'UN ARMURIER A TOUJOURS EN RÉSERVE : le premier cran, et rien d'autre.
  *
- * C'est le catalogue dans lequel le bouton « Fourbir » puise — *un équipement
+ * C'est le catalogue dans lequel le bouton « Équipement gratuit » puise — *un équipement
  * de fortune ne peut être fait que de ce qui traîne*. Deux listes plutôt qu'un
  * filtre sur la rareté : le jour où une pièce commune ne devra pas s'y trouver,
  * on la retire d'ici sans toucher au reste.

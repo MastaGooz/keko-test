@@ -214,7 +214,7 @@ export function Scene(): React.JSX.Element {
    *
    * *Tout hasard du jeu passe par un RNG seedé* — c'est la règle de pureté de
    * `logic/` — mais celui-ci ne doit pas consommer le RNG de la descente, sinon
-   * appuyer sur « Fourbir » changerait la partie que la seed annonce. Il vit
+   * appuyer sur « Équipement gratuit » changerait la partie que la seed annonce. Il vit
    * donc à côté, seedé depuis la même graine, et il avance à chaque appui.
    */
   const rngFortune = useMemo(() => createRng(graine ^ 0x5f0132), [graine])

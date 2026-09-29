@@ -76,10 +76,10 @@ const TONS = {
   /**
    * LA PIERRE : le ton d'un bouton de CONFORT, pas d'une décision.
    *
-   * « Fourbir » remplit le chargement d'un coup ; il ne doit pas rivaliser avec
-   * « Descendre », qui est la seule action qui quitte le hub. *Deux boutons d'or
-   * côte à côte se disputent le regard* — celui-ci prend donc la matière du
-   * lieu, sans son accent.
+   * « Équipement gratuit » part avec un chargement de fortune ; il ne doit pas
+   * rivaliser avec « Descendre », qui est le départ ordinaire. *Deux boutons
+   * d'or l'un sous l'autre se disputent le regard* — celui-ci prend donc la
+   * matière du lieu, sans son accent.
    */
   pierre: { fond: ['#2b2a2c', '#171718'], trait: '#7d786a', encre: '#ddd5c2' },
 } as const
@@ -98,13 +98,26 @@ function plaque(texte: string, ton: TonBouton): { texture: THREE.CanvasTexture; 
   const connue = TEXTURES.get(cle)
   if (connue !== undefined) return connue
 
-  const h = 128
-  const police = `600 ${Math.round(h * 0.36)}px system-ui, -apple-system, "Segoe UI", sans-serif`
+  /**
+   * **UN LIBELLÉ PEUT TENIR SUR DEUX LIGNES**, et il le faut : « Équipement
+   * gratuit » sur une seule aurait un rapport de 5,5 contre 2,97 pour
+   * « Descendre », donc il aurait doublé la largeur du rail — *un bouton dans
+   * une colonne ne peut pas être plus large que sa colonne*, et l'y forcer
+   * aurait mangé la moitié de l'écran sur un téléphone.
+   *
+   * La hauteur de la plaque suit le nombre de lignes, la largeur la plus longue
+   * d'entre elles : la plaque reste compacte au lieu de s'étirer.
+   */
+  const lignes = texte.split('\n')
+  const corps = Math.round(128 * 0.36)
+  const interligne = Math.round(corps * 1.22)
+  const h = Math.max(128, interligne * lignes.length + Math.round(128 * 0.5))
+  const police = `600 ${corps}px system-ui, -apple-system, "Segoe UI", sans-serif`
   const mesure = document.createElement('canvas').getContext('2d')
   let large = h * 3
   if (mesure !== null) {
     mesure.font = police
-    large = Math.round(mesure.measureText(texte).width + h * 1.1)
+    large = Math.round(Math.max(...lignes.map((l) => mesure.measureText(l).width)) + 128 * 1.1)
   }
 
   const toile = document.createElement('canvas')
@@ -137,7 +150,10 @@ function plaque(texte: string, ton: TonBouton): { texture: THREE.CanvasTexture; 
   ctx.fillStyle = encre
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText(texte, large / 2, h * 0.53)
+  // LE BLOC SE CENTRE, pas chaque ligne : deux lignes posées l'une sous l'autre
+  // depuis le milieu pencheraient vers le bas.
+  const haut = h * 0.53 - ((lignes.length - 1) * interligne) / 2
+  lignes.forEach((ligne, i) => ctx.fillText(ligne, large / 2, haut + i * interligne))
   texture.needsUpdate = true
   return fait
 }
