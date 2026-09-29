@@ -4957,6 +4957,27 @@ body {
    meuble -- ce n'est pas un meuble, c'est un rayon. Un filet sous le mot, sur
    toute la largeur du groupe, qui dit jusqu'ou il porte : *un mot centre au-
    dessus de trois cases ne dit pas combien il en coiffe.* */
+/* LE TITRE DU CHOIX D'UN SLOT.
+
+   Les pieces proposees vivent dans le canvas, sous ce calque : il n'y a que le
+   mot ici. Il se pose EN HAUT de la zone — la grille est decalee vers le bas
+   pour lui — et il ne capte pas le pointeur, sinon il volerait la tape aux
+   cartes qu'il coiffe. */
+.arm-choix {
+  display: grid;
+  place-items: start center;
+  margin: 0;
+  padding-top: 0.2rem;
+  color: #e6d6ad;
+  font-family: Cinzel, Georgia, serif;
+  font-size: clamp(0.62rem, 2.1vh, 1.05rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 6px #000000cc;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 .arm-groupe {
   display: grid;
   place-items: end center;

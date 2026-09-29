@@ -48,6 +48,7 @@ import {
 import { Armurerie3D } from './Armurerie3D.tsx'
 import type { Onglet } from './armurerie-plan.ts'
 import { PageArmurerie } from './PageArmurerie.tsx'
+import type { Lieu } from './destinations.ts'
 import { urlDuDecor } from '../ui/art.ts'
 import { Zoom3D } from './Zoom3D.tsx'
 import { Tas3D } from './Tas3D.tsx'
@@ -304,6 +305,17 @@ export function Scene(): React.JSX.Element {
   /** Ce que le coffre montre, et depuis quelle ligne. */
   const [onglet, setOnglet] = useState<Onglet>('tout')
   const [defilement, setDefilement] = useState(0)
+  /**
+   * LE LIEU DU HUB OÙ L'ON EST : l'armurerie, ou le coffre.
+   *
+   * Tranché par Keko : « on a un onglet armurerie avec le panneau équipement, et
+   * un onglet coffre avec le coffre actuel ». *Deux meubles côte à côte, c'était
+   * deux moitiés d'écran et aucune des deux à sa taille* — et le rail des
+   * destinations existait déjà pour porter ce choix.
+   */
+  const [lieu, setLieu] = useState<Lieu>('armurerie')
+  /** Le slot dont on choisit le contenu, à l'armurerie. */
+  const [choix, setChoix] = useState<Slot | null>(null)
 
   /** La carte de garde en route vers le bouclier. */
   const [versArmure, setVersArmure] = useState<{
@@ -1528,6 +1540,9 @@ export function Scene(): React.JSX.Element {
         {auHub && (
           <Armurerie3D
             hub={hub}
+            lieu={lieu}
+            choix={choix}
+            onChoix={setChoix}
             onglet={onglet}
             defilement={defilement}
             onDeplacer={bougerPiece}
@@ -1837,6 +1852,12 @@ export function Scene(): React.JSX.Element {
       {pret && auHub && (
         <PageArmurerie
           hub={hub}
+          lieu={lieu}
+          onLieu={(l) => {
+            setLieu(l)
+            setChoix(null)
+          }}
+          choix={choix}
           onglet={onglet}
           onTrier={rangerTout}
           onOnglet={(o) => {

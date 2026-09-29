@@ -3947,7 +3947,84 @@ le compte passe de 10 à 13 cartes dont 6 qui frappent), zoomer une pièce,
 descendre, mourir — le hub rend le Glaive et le Plastron, et la potion
 emportée est perdue.
 
+### L'ARMURERIE ET LE COFFRE SONT DEUX LIEUX — et on n'équipe plus en glissant
+
+Keko : « l'armurerie sert à équiper, je pense qu'on se prend la tête à fusionner
+armurerie et coffre. On affiche uniquement le panneau équipement. Le joueur peut
+cliquer sur les slots d'équipement, ce qui affiche les cartes disponibles pour ce
+slot, et le joueur clique pour en choisir une. » Puis, en corrigeant ma
+proposition : « **attention : le coffre ne disparaît**, on a un onglet armurerie
+avec le panneau équipement, et un onglet coffre avec le coffre actuel ».
+
+*Deux meubles côte à côte, c'était deux moitiés d'écran et aucune des deux à sa
+taille.* Le chargement était borné par un panneau large d'un tiers d'écran, et le
+coffre n'en montrait que quinze cases. **Le rail des destinations existait déjà
+pour porter ce choix** : le coffre y prend son entrée à côté de l'armurerie, et
+chaque lieu prend toute la place à droite du rail.
+
+Ce que ça donne, mesuré : la carte du chargement passe de 38 à 60 px sur un
+téléphone couché (de 111 à 148 sur un portable), et le coffre de **15 à 27
+places** — 9 colonnes sur 3 rangées **à tous les formats**, avec des cases plus
+grandes qu'avant. *Les deux à la fois, parce que la place vient d'ailleurs.*
+
+**Et rien n'est mort** : les onglets du coffre, le bouton de rangement, la
+réorganisation par échange, les piles et leur compte sont exactement ceux
+d'avant. Ils ont simplement leur meuble pour eux.
+
+**LE GESTE CHANGE, ET C'EST LE COEUR DE LA DEMANDE.** Le glisser d'un meuble à
+l'autre ne pouvait plus exister — les deux ne sont plus à l'écran en même temps —
+donc **on tape un slot et on choisit**. Le glisser survit là où il a encore un
+sens : d'un slot à l'autre dans le chargement, et de case en case dans le coffre.
+
+- **Ce qu'on propose est exactement ce que le dépôt accepterait**
+  (`candidatsPourSlot`, qui appelle `accepteDepuis`). *Une règle recopiée dans le
+  rendu est une règle qui divergera*, et c'est déjà la fonction qui allume les
+  slots pendant un glisser : proposer une pièce impossible à poser serait pire
+  qu'un slot qui refuse en silence.
+- **Le vide est un choix.** Quand le slot tient quelque chose, la première case
+  est un pointillé qui dit « Retirer » : *une liste de ce qui peut être dans un
+  slot doit contenir « rien »*, sinon déséquiper n'a plus de porte du tout,
+  puisque le coffre n'est plus à côté.
+- **La tape choisit, le MAINTIEN regarde** (160 ms, le seuil de la prise en main
+  et de la loupe du zoom). La règle du projet veut que la tape regarde et que le
+  glisser déplace ; ici la tape est la seule action de l'écran, donc c'est elle
+  qui engage — et lire une carte revient au maintien. *Un appui long veut dire la
+  même chose partout dans ce jeu.* **Prix connu : on ne zoome plus une pièce
+  équipée d'une simple tape**, il faut passer par son choix, où elle figure.
+- **À l'armurerie, lâcher à côté ne fait plus rien.** Un lâcher hors du cadre
+  renvoyait la pièce au coffre — c'était la seule porte pour déséquiper tant que
+  les deux meubles se touchaient. *Une zone de dépôt qui n'a plus de meuble
+  derrière elle déséquiperait par mégarde.*
+- **La mise en scène de l'équipement est la même**, quel que soit le geste qui y
+  mène : les deux sons, la culbute, l'onde et l'effet sur les stats. D'où un
+  `Choix3D` rendu DANS `Armurerie3D` et non à côté — *ce qui joue la scène doit
+  pouvoir la déclencher.* Retirer, lui, est un rangement : pas de culbute.
+- **Le titre du choix sort de la MÊME fonction que la grille** (`grilleDuChoix`,
+  qui rend aussi la bande du titre). Accroché au bord du lieu, il flottait à un
+  demi-écran de la seule carte proposée — *ce qui nomme quelque chose se lit
+  contre ce qu'il nomme.*
+
+**Le plan calcule TOUJOURS les deux géométries**, c'est la vue qui décide
+laquelle se dessine : *un plan qui changerait de forme selon le lieu obligerait
+chaque lecteur à savoir où il est.* Et la HAUTEUR se calcule avant les largeurs,
+parce que c'est elle qui fixe la taille des cartes du chargement et que la
+largeur dont le panneau a besoin s'en déduit — *on part de la place, on en déduit
+la taille.*
+
+**L'armurier ne prend plus que son image** : sa colonne est bornée par
+`hauteur x 0,68`, le rapport de son fichier, parce qu'au-delà elle n'ajouterait
+que du vide de chaque côté du portrait. C'est la remarque de Keko — « je pense
+que le PNJ prend trop de place » — remise là où elle se règle.
+
+*Reste à faire, et Keko le verra tout de suite* : **les huit entrées du rail
+portent le même blason**, celui de l'armurerie. Le coffre en voudra un à lui.
+
 ### LA PAGE D'ARMURERIE : UN BANDEAU ET TROIS COLONNES
+
+*Ce qui suit décrit l'écran d'avant la séparation : il avait le coffre,
+l'équipement et les stats côte à côte. La disposition en colonnes vaut toujours
+pour ce qu'elle a appris, mais **il n'y a plus qu'un meuble par lieu.***
+
 
 Elle avait deux panneaux collés aux bords et un énorme vide au milieu — Keko :
 « c'est moche » — puis deux colonnes et un pied, et enfin trois colonnes :
