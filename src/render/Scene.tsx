@@ -1542,7 +1542,10 @@ export function Scene(): React.JSX.Element {
             hub={hub}
             lieu={lieu}
             choix={choix}
-            onChoix={setChoix}
+            onChoix={(slot) => {
+              setChoix(slot)
+              setDefilement(0)
+            }}
             onglet={onglet}
             defilement={defilement}
             onDeplacer={bougerPiece}
@@ -1858,6 +1861,13 @@ export function Scene(): React.JSX.Element {
             setChoix(null)
           }}
           choix={choix}
+          onChoix={(slot) => {
+            // LE DÉFILEMENT EST PARTAGÉ entre le coffre et le menu : ils ne
+            // sont jamais à l'écran ensemble, donc un seul compteur suffit —
+            // il faut seulement le remettre à zéro en changeant de grille.
+            setChoix(slot)
+            setDefilement(0)
+          }}
           onglet={onglet}
           onTrier={rangerTout}
           onOnglet={(o) => {

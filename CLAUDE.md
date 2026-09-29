@@ -3972,37 +3972,73 @@ réorganisation par échange, les piles et leur compte sont exactement ceux
 d'avant. Ils ont simplement leur meuble pour eux.
 
 **LE GESTE CHANGE, ET C'EST LE COEUR DE LA DEMANDE.** Le glisser d'un meuble à
-l'autre ne pouvait plus exister — les deux ne sont plus à l'écran en même temps —
-donc **on tape un slot et on choisit**. Le glisser survit là où il a encore un
-sens : d'un slot à l'autre dans le chargement, et de case en case dans le coffre.
+l'autre ne pouvait plus exister — les deux ne sont plus à l'écran en même temps.
+Il a d'abord été remplacé par une tape sur le slot qui ouvrait un choix ; Keko
+l'a repris aussitôt : « je voudrais garder le clic = zoom et affichage des
+cartes, le clic ne fait pas changer d'arme ; il faudrait un autre système pour
+changer un slot ». Et l'argument est décisif : **le joueur veut zoomer une carte
+PENDANT qu'il change d'arme** — si la tape sert à choisir, elle ne sert plus à
+lire, et c'est précisément le moment où lire compte.
 
-- **Ce qu'on propose est exactement ce que le dépôt accepterait**
-  (`candidatsPourSlot`, qui appelle `accepteDepuis`). *Une règle recopiée dans le
-  rendu est une règle qui divergera*, et c'est déjà la fonction qui allume les
-  slots pendant un glisser : proposer une pièce impossible à poser serait pire
-  qu'un slot qui refuse en silence.
-- **Le vide est un choix.** Quand le slot tient quelque chose, la première case
-  est un pointillé qui dit « Retirer » : *une liste de ce qui peut être dans un
-  slot doit contenir « rien »*, sinon déséquiper n'a plus de porte du tout,
-  puisque le coffre n'est plus à côté.
-- **La tape choisit, le MAINTIEN regarde** (160 ms, le seuil de la prise en main
-  et de la loupe du zoom). La règle du projet veut que la tape regarde et que le
-  glisser déplace ; ici la tape est la seule action de l'écran, donc c'est elle
-  qui engage — et lire une carte revient au maintien. *Un appui long veut dire la
-  même chose partout dans ce jeu.* **Prix connu : on ne zoome plus une pièce
-  équipée d'une simple tape**, il faut passer par son choix, où elle figure.
-- **À l'armurerie, lâcher à côté ne fait plus rien.** Un lâcher hors du cadre
-  renvoyait la pièce au coffre — c'était la seule porte pour déséquiper tant que
-  les deux meubles se touchaient. *Une zone de dépôt qui n'a plus de meuble
-  derrière elle déséquiperait par mégarde.*
-- **La mise en scène de l'équipement est la même**, quel que soit le geste qui y
-  mène : les deux sons, la culbute, l'onde et l'effet sur les stats. D'où un
-  `Choix3D` rendu DANS `Armurerie3D` et non à côté — *ce qui joue la scène doit
-  pouvoir la déclencher.* Retirer, lui, est un rangement : pas de culbute.
-- **Le titre du choix sort de la MÊME fonction que la grille** (`grilleDuChoix`,
-  qui rend aussi la bande du titre). Accroché au bord du lieu, il flottait à un
-  demi-écran de la seule carte proposée — *ce qui nomme quelque chose se lit
-  contre ce qu'il nomme.*
+**Le système est celui que Keko a dicté** : « un bouton changer sous chaque
+slot ; quand le joueur clique, on ouvre un menu avec à gauche le slot en
+question et à droite l'onglet du coffre correspondant — on retourne au système
+précédent de drag and drop ».
+
+*Et ça remet tout d'aplomb* : le glisser n'avait pas disparu parce qu'il était
+mauvais, mais parce que les deux meubles n'étaient plus à l'écran ensemble. **Ce
+menu les y remet, réduits à ce que le geste concerne** — un slot, une catégorie
+— et la tape redevient le zoom PARTOUT, menu compris.
+
+- **Une action qui n'est pas un geste a besoin d'un bouton**, et un bouton par
+  slot dit lequel il change sans qu'on ait à le désigner ensuite. Sa bande entre
+  dans le calcul de la taille des cartes, au même titre que les noms de groupe :
+  *une bande prise sur la place des slots les ferait déborder du panneau.*
+- **C'est un SYMBOLE, pas le mot.** Deux flèches opposées, et une bulle qui le
+  nomme au survol — celle du projet, pas un `title`. Une case de slot fait 40 px
+  de large sur un téléphone couché : « CHANGER » y tombait à huit pixels de corps
+  et les trois boutons se touchaient. *Un mot qui ne tient pas dans son bouton
+  n'est pas un libellé, c'est une tache.* C'est déjà le raisonnement du bouton de
+  rangement du coffre.
+- **Sa prise déborde vers le BAS seulement.** La bande ne fait que 25 px et *le
+  doigt ne rétrécit pas avec l'écran* ; mais au-dessus il y a la carte du slot,
+  et *une zone plus grande que son bouton vole le geste à sa voisine.*
+- **Le menu montre ce que la RÈGLE accepte** (`candidatsPourSlot`, qui appelle
+  `accepteDepuis`). Pour les trois familles de slots ça revient exactement à
+  l'onglet du coffre que Keko demande — et rien n'y est proposé qu'on ne puisse
+  poser.
+- **C'est le même geste qu'ailleurs, donc la même liste.** Les cartes du menu
+  entrent dans le tableau que `useGesteCarte` parcourt : prendre, promener,
+  lâcher, zoomer, la culbute, l'onde, les deux sons et l'effet sur les stats
+  marchent sans une ligne de plus. *Un second geste écrit à côté aurait divergé
+  du premier* — la faute des quatre fonctions qui dessinaient chacune leur carte
+  avant `corpsCarte`.
+- **Retirer, c'est glisser du slot vers la grille.** Le sens inverse du même
+  geste, dans le même écran : il n'y a plus de case « Retirer » à inventer.
+- **Le voile se tape pour fermer, et « Fermer » est là aussi** : *un calque plein
+  écran doit pouvoir se quitter sans viser.*
+- **Sa grille a SA taille de case**, pas celle du coffre : elle est plus étroite
+  d'une colonne de slot et ne montre qu'une catégorie. À taille de coffre elle
+  alignait onze cases minuscules pour deux armes — *une grille se règle sur ce
+  qu'elle contient, pas sur celle d'à côté.* Cinq colonnes visées.
+- **Le défilement est PARTAGÉ avec le coffre** : ils ne sont jamais à l'écran
+  ensemble, donc un seul compteur suffit — remis à zéro en changeant de grille.
+  Et la barre a son pouce, parce qu'*au doigt il n'y a pas de molette.*
+
+**ET LE COFFRE NE SUIT PLUS LA TAILLE DU CHARGEMENT.** Il en était encore borné
+par le haut (72 % d'une pièce), donc la bande des boutons « Changer » — qui a
+rétréci les pièces — a rétréci le coffre AVEC, dans un lieu où ces boutons
+n'existent même pas. *Une contrainte posée dans un écran ne doit pas voyager
+dans un autre* : son plafond est désormais un nombre à lui, et il retrouve ses
+9 colonnes.
+
+**ET LES TRÉSORS SE RANGENT COMME LE RESTE.** Keko : « dans le coffre, je ne
+peux pas réorganiser les trésors comme le reste des cartes ». La règle savait
+déjà le faire — `echangerDansCoffre` essaie les deux listes — mais le rendu
+exigeait une PIÈCE pour même y penser, et `rangerEnFinDeCoffre` ne connaissait
+que `reserve`. *Un trésor ne s'équipe pas ; ça ne veut pas dire qu'il ne se
+range pas.* Les deux listes restent étanches, et c'est la règle qui le garantit :
+aucune ne contient les deux blocs d'un échange mixte.
 
 **Le plan calcule TOUJOURS les deux géométries**, c'est la vue qui décide
 laquelle se dessine : *un plan qui changerait de forme selon le lieu obligerait

@@ -197,15 +197,26 @@ export function trierLeCoffre(hub: Hub): Hub {
 export function rangerEnFinDeCoffre(hub: Hub, ids: readonly string[]): Hub {
   if (ids.length === 0) return hub
   const dedans = new Set(ids)
-  const bloc = hub.reserve.filter((o) => dedans.has(o.id))
-  if (bloc.length !== dedans.size) return hub
-  const reste = hub.reserve.filter((o) => !dedans.has(o.id))
-  // DÉJÀ AU BOUT : on ne rend pas un hub neuf pour rien, sinon le rendu
-  // repart et la carte croit avoir bougé.
-  if (reste.length === hub.reserve.length - bloc.length && hub.reserve.at(-1) === bloc.at(-1)) {
-    return hub
+  /**
+   * **CHAQUE LISTE SE RANGE DANS LA SIENNE.** Les trésors ne sont pas des
+   * pièces — ils vivent dans `tresors`, et la grille ne les met à la suite que
+   * pour les montrer. On essaie donc les deux, exactement comme
+   * `echangerDansCoffre` : *ce qui vaut pour l'échange vaut pour le rangement.*
+   */
+  const auBout = <T extends { id: string }>(liste: T[]): T[] | null => {
+    const bloc = liste.filter((o) => dedans.has(o.id))
+    if (bloc.length !== dedans.size) return null
+    const reste = liste.filter((o) => !dedans.has(o.id))
+    // DÉJÀ AU BOUT : on ne rend pas un hub neuf pour rien, sinon le rendu
+    // repart et la carte croit avoir bougé.
+    if (liste.at(-1) === bloc.at(-1)) return null
+    return [...reste, ...bloc]
   }
-  return { ...hub, reserve: [...reste, ...bloc] }
+  const reserve = auBout(hub.reserve)
+  if (reserve !== null) return { ...hub, reserve }
+  const tresors = auBout(hub.tresors)
+  if (tresors !== null) return { ...hub, tresors }
+  return hub
 }
 
 /**

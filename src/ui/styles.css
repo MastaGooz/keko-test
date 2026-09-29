@@ -4957,25 +4957,118 @@ body {
    meuble -- ce n'est pas un meuble, c'est un rayon. Un filet sous le mot, sur
    toute la largeur du groupe, qui dit jusqu'ou il porte : *un mot centre au-
    dessus de trois cases ne dit pas combien il en coiffe.* */
-/* LE TITRE DU CHOIX D'UN SLOT.
+/* LE BOUTON « CHANGER », SOUS CHAQUE SLOT.
 
-   Les pieces proposees vivent dans le canvas, sous ce calque : il n'y a que le
-   mot ici. Il se pose EN HAUT de la zone — la grille est decalee vers le bas
-   pour lui — et il ne capte pas le pointeur, sinon il volerait la tape aux
-   cartes qu'il coiffe. */
-.arm-choix {
+   Tranche par Keko : la tape est prise par la lecture, donc l'action a son
+   bouton. Il est DISCRET -- il y en a jusqu'a six a l'ecran, et six plaques
+   d'or feraient une rangee de boutons plutot qu'un chargement. Son corps suit
+   la hauteur de sa bande, qui est elle-meme une fraction du panneau : *ce qui
+   se serre avec le panneau doit se mesurer sur lui.* */
+.arm-changer {
+  position: relative;
   display: grid;
-  place-items: start center;
-  margin: 0;
-  padding-top: 0.2rem;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #6b593677;
+  border-radius: 0;
+  background: #1a1913cc;
+  color: #c9b88e;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    border-color 120ms,
+    background 120ms,
+    color 120ms;
+}
+
+/* LE SYMBOLE SUIT LA BANDE, qui est elle-meme une fraction du panneau : *ce
+   qui se serre avec le panneau doit se mesurer sur lui.* */
+.arm-changer svg {
+  width: auto;
+  height: min(1.1rem, calc(var(--changer-h, 1rem) * 0.66));
+}
+
+/* SA PRISE DEBORDE SON DESSIN, vers le BAS seulement. La bande ne fait que
+   25 px sur un telephone couche et *le doigt ne retrecit pas avec l'ecran* ;
+   mais vers le haut il y a la carte du slot, et *une zone plus grande que son
+   bouton vole le geste a sa voisine.* */
+.arm-changer::after {
+  content: '';
+  position: absolute;
+  inset: -2px -1px -9px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .arm-changer:hover {
+    border-color: #d8bb79;
+    background: #342c1c;
+    color: #ffeec2;
+  }
+}
+
+/* LE MENU DE CHANGEMENT : un cadre SANS FOND.
+
+   Il vit au-dessus du canvas -- il faut qu'il reponde au doigt, et son voile
+   est dans la scene -- donc *un fond opaque cacherait les cartes qu'il
+   encadre.* Seule sa bordure parle. */
+.arm-menu-cadre {
+  border: 1px solid #6b5936;
+  clip-path: polygon(
+    0.55rem 0,
+    100% 0,
+    100% calc(100% - 0.55rem),
+    calc(100% - 0.55rem) 100%,
+    0 100%,
+    0 0.55rem
+  );
+  pointer-events: none;
+}
+
+.arm-menu-entete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.arm-menu-titre {
   color: #e6d6ad;
   font-family: Cinzel, Georgia, serif;
-  font-size: clamp(0.62rem, 2.1vh, 1.05rem);
-  letter-spacing: 0.14em;
+  font-size: min(1.05rem, 2.4vh);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   text-shadow: 0 2px 6px #000000cc;
   white-space: nowrap;
-  pointer-events: none;
+}
+
+/* FERMER AGIT, IL N'ATTEND PAS. Le voile se tape aussi pour refermer -- deux
+   portes, parce qu'un calque plein ecran doit pouvoir se quitter sans viser. */
+.arm-menu-fermer {
+  position: absolute;
+  right: 0;
+  padding: 0.5em 1.1em;
+  border: 1px solid #6b593677;
+  border-radius: 0;
+  background: #1a1913cc;
+  color: #c9b88e;
+  font-family: inherit;
+  font-size: min(0.8rem, 1.9vh);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    border-color 120ms,
+    background 120ms,
+    color 120ms;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .arm-menu-fermer:hover {
+    border-color: #d8bb79;
+    background: #342c1c;
+    color: #ffeec2;
+  }
 }
 
 .arm-groupe {

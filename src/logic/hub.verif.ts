@@ -308,6 +308,12 @@ const COTTE: Armure = {
   verifier('une piece ne s’echange pas avec un tresor', melange === avecTresor)
   const tresors = echangerDansCoffre(avecTresor, ['t-1'], ['t-2'])
   verifier('deux tresors s’echangent entre eux', tresors.tresors[0]!.id === 't-2')
+  // ET UN TRESOR SE RANGE EN FIN DE SA PROPRE LISTE. Keko : « dans le coffre,
+  // je ne peux pas reorganiser les tresors comme le reste des cartes ».
+  const tresorAuBout = rangerEnFinDeCoffre(avecTresor, ['t-1'])
+  verifier('un tresor va au bout des tresors', tresorAuBout.tresors.at(-1)!.id === 't-1')
+  verifier('...et la reserve n’a pas bouge',
+    tresorAuBout.reserve.map((o) => o.id).join() === avecTresor.reserve.map((o) => o.id).join())
 }
 
 // --- la pile des consommables -----------------------------------------------

@@ -25,11 +25,10 @@ import type { Onglet } from './armurerie-plan.ts'
 import {
   NOM_ONGLET,
   ONGLETS,
+  NOM_ONGLET as NOMS,
   candidatsPourSlot,
   contenuDuCoffre,
   enPixels,
-  grilleDuChoix,
-  pieceDuSlot,
   pixelsParUnite,
   planArmurerie,
 } from './armurerie-plan.ts'
@@ -90,6 +89,8 @@ type Props = {
    * les cartes vivent dans le canvas, comme partout ailleurs.
    */
   choix: Slot | null
+  /** Ouvrir — ou refermer — le menu de changement d'un slot. */
+  onChoix: (slot: Slot | null) => void
   onglet: Onglet
   /** Ranger le coffre : par catégorie, puis par rareté. */
   onTrier?: () => void
@@ -129,6 +130,7 @@ export function PageArmurerie({
   lieu,
   onLieu,
   choix,
+  onChoix,
   onglet,
   onTrier,
   onOnglet,
@@ -159,28 +161,24 @@ export function PageArmurerie({
    * tout le texte de cet écran. *Il nomme le slot et pas le meuble* : c'est
    * une décision, elle a un objet.
    */
-  const titreChoix =
-    choix === null
-      ? null
-      : choix.ou === 'armure'
-        ? 'Choisir une armure'
-        : choix.ou === 'pile'
-          ? 'Choisir un objet'
-          : 'Choisir une arme'
   /**
-   * SA PLACE SORT DE LA MÊME GRILLE QUE LES CARTES.
+   * CE QUE LE MENU MONTRE À DROITE : l'onglet du coffre correspondant.
    *
-   * On refait le calcul plutôt que de recevoir une position : il est pur et
-   * tient en dix lignes, et *ce qui doit coïncider se calcule à un seul
-   * endroit* — la fonction, pas la valeur.
+   * Dicté par Keko — « à gauche le slot en question et à droite l'onglet du
+   * coffre correspondant ». *C'est la catégorie du slot, donc elle se déduit
+   * de lui* et n'a pas à être choisie.
    */
-  const placeChoix =
+  const ongletDuMenu: Onglet =
+    choix === null ? 'tout' : choix.ou === 'armure' ? 'armures' : choix.ou === 'pile' ? 'consommables' : 'armes'
+  const menuOuvert = choix !== null && !auCoffre
+  const lignesMenu =
     choix === null
-      ? null
-      : grilleDuChoix(
-          plan,
-          candidatsPourSlot(hub, choix).length + (pieceDuSlot(hub, choix) === null ? 0 : 1),
-        ).titre
+      ? 1
+      : Math.max(
+          plan.menuLignes,
+          Math.ceil(candidatsPourSlot(hub, choix).length / plan.menuColonnes),
+        )
+  const maxMenu = Math.max(0, lignesMenu - plan.menuLignes)
   const boite = (r: Parameters<typeof enPixels>[0]): React.CSSProperties => {
     const p = enPixels(r, fenetre.h, fenetre.l)
     return { left: `${p.left}px`, top: `${p.top}px`, width: `${p.width}px`, height: `${p.height}px` }
@@ -218,9 +216,13 @@ export function PageArmurerie({
    * partout, et on n'agit que si le pointeur est DANS le coffre.
    */
   const cadreCoffre = useRef<HTMLDivElement>(null)
+  const cadreMenu = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const rouler = (e: WheelEvent): void => {
-      const r = cadreCoffre.current?.getBoundingClientRect()
+      // LE MENU PASSE DEVANT LE COFFRE : quand il est ouvert, c'est SA grille
+      // qu'on défile, et le coffre n'est même pas à l'écran.
+      const cadre = menuOuvert ? cadreMenu.current : cadreCoffre.current
+      const r = cadre?.getBoundingClientRect()
       if (r === undefined) return
       if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
         return
@@ -228,13 +230,14 @@ export function PageArmurerie({
       // EN CONTINU, PAS PAR LIGNES : on convertit les pixels de la molette en
       // lignes. Un cran ordinaire (~100 px) avance d'un peu plus d'une
       // demi-rangée, donc le coffre glisse au lieu de sauter.
-      const lignePx = plan.pasY * pixelsParUnite(fenetre.h)
+      const lignePx = (menuOuvert ? plan.menuPasY : plan.pasY) * pixelsParUnite(fenetre.h)
       const pas = lignePx > 0 ? e.deltaY / lignePx : 0
-      onDefilement(Math.max(0, Math.min(maxDefilement, defilement + pas)))
+      const borne = menuOuvert ? maxMenu : maxDefilement
+      onDefilement(Math.max(0, Math.min(borne, defilement + pas)))
     }
     window.addEventListener('wheel', rouler, { passive: true })
     return () => window.removeEventListener('wheel', rouler)
-  }, [defilement, maxDefilement, onDefilement])
+  }, [defilement, maxDefilement, maxMenu, menuOuvert, onDefilement])
 
   /**
    * CE QUE DIT CHAQUE STAT, en une infobulle. Demandé par Keko : « quand la
@@ -270,6 +273,8 @@ export function PageArmurerie({
    * d'écran, et il ne dessine rien.
    */
   const tri = useRef<HTMLButtonElement | null>(null)
+  /** Les boutons « Changer » : leur bulle les nomme, puisqu'ils n'ont qu'un symbole. */
+  const changers = useRef<(HTMLButtonElement | null)[]>([])
   /** Le couple chiffre + symbole de chaque mesure : c'est LUI qui s'anime. */
   const vifs = useRef<(HTMLSpanElement | null)[]>([])
 
@@ -409,6 +414,22 @@ export function PageArmurerie({
           }
         }
       }
+      // LES BOUTONS N'EXISTENT PAS QUAND LE MENU EST OUVERT : leurs `ref`s
+      // survivent au démontage, et une bulle posée sur un bouton disparu
+      // resterait à l'écran jusqu'au prochain mouvement.
+      for (const [i, el] of (menuOuvert ? [] : changers.current).entries()) {
+        if (el === null) continue
+        const r = el.getBoundingClientRect()
+        if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+          return {
+            cle: `changer-${i}`,
+            texte: 'Changer',
+            x: (r.left + r.right) / 2,
+            y: r.top,
+            place: 'dessus',
+          }
+        }
+      }
       const t = tri.current
       if (t !== null) {
         const r = t.getBoundingClientRect()
@@ -448,19 +469,31 @@ export function PageArmurerie({
     // Le rectangle du bouton se relit à chaque geste, donc il suit la fenêtre
     // tout seul ; seul l'état « bloqué » doit relancer l'écoute.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bloque])
+  }, [bloque, menuOuvert])
 
   /** Le pouce se traîne : sa place dans la piste dit la ligne du haut. */
   const piste = useRef<HTMLDivElement>(null)
-  const glisserPouce = (e: React.PointerEvent): void => {
+  const pisteMenu = useRef<HTMLDivElement>(null)
+  /**
+   * UN SEUL GESTE POUR LES DEUX BARRES — celle du coffre et celle du menu.
+   *
+   * *Au doigt il n'y a pas de molette* : sans ce pouce, la grille du menu
+   * serait impossible à défiler sur un téléphone. Le geste ne change pas d'une
+   * barre à l'autre, donc il ne s'écrit qu'une fois.
+   */
+  const glisserPouceDe = (
+    ref: React.RefObject<HTMLDivElement | null>,
+    max: number,
+    total: number,
+  ) => (e: React.PointerEvent): void => {
     e.preventDefault()
     const suivre = (ev: PointerEvent): void => {
-      const r = piste.current?.getBoundingClientRect()
+      const r = ref.current?.getBoundingClientRect()
       if (r === undefined || r.height === 0) return
       // Le pouce suit le doigt SANS s'arrêter aux lignes : c'est la même
       // grandeur continue que la molette.
       const part = (ev.clientY - r.top) / r.height
-      onDefilement(Math.max(0, Math.min(maxDefilement, part * lignesTotal)))
+      onDefilement(Math.max(0, Math.min(max, part * total)))
     }
     const finir = (): void => {
       window.removeEventListener('pointermove', suivre)
@@ -470,6 +503,8 @@ export function PageArmurerie({
     window.addEventListener('pointerup', finir)
     suivre(e.nativeEvent)
   }
+  const glisserPouce = glisserPouceDe(piste, maxDefilement, lignesTotal)
+  const glisserPouceMenu = glisserPouceDe(pisteMenu, maxMenu, lignesMenu)
 
 
   /**
@@ -816,14 +851,94 @@ export function PageArmurerie({
       </div>
       )}
 
-      {/* LE TITRE DU CHOIX. Les pièces proposées vivent dans le canvas, donc
-          sous ce calque : il n'y a que le mot ici, et il se pose en haut de la
-          zone, là où aucune carte ne monte. *Il nomme le slot, pas le meuble* —
-          c'est une décision, elle a un objet. */}
-      {titreChoix !== null && placeChoix !== null && (
-        <p className="arm-choix" style={boite(placeChoix)}>
-          {titreChoix}
-        </p>
+      {/* LE BOUTON « CHANGER », SOUS CHAQUE SLOT. Tranché par Keko : la tape
+          est prise par la lecture — *et elle doit l'être, puisqu'on veut lire
+          une pièce avant de la changer* — donc l'action a son bouton, et un
+          bouton par slot dit lequel il change sans qu'on ait à le désigner
+          ensuite.
+
+          Il vit dans les COMMANDES, au-dessus du canvas : pendant un glisser la
+          scène monte au-dessus de lui, donc la carte qu'on promène passe
+          devant. */}
+      {!auCoffre &&
+        !menuOuvert &&
+        [...plan.actionsPorte, ...plan.actionsPile].map((a, i) => (
+          <button
+            key={i}
+            type="button"
+            className="arm-changer"
+            style={
+              {
+                ...boite(a.rect),
+                // SON CORPS SUIT SA BANDE, pas la fenêtre : la bande est une
+                // fraction du panneau, donc elle se serre avec lui.
+                '--changer-h': `${enPixels(a.rect, fenetre.h, fenetre.l).height}px`,
+              } as React.CSSProperties
+            }
+            ref={(el) => void (changers.current[i] = el)}
+            onClick={(e) => {
+              // LE FOCUS N'EST PAS UN ÉTAT DU JEU : un bouton qui agit n'a pas
+              // d'état, il fait et il retombe.
+              if (e.detail > 0) e.currentTarget.blur()
+              onChoix(a.slot)
+            }}
+            aria-label="Changer"
+          >
+            {/* UN SYMBOLE, PAS LE MOT — et ce n'est pas un choix de style.
+                Une case de slot fait 40 px de large sur un téléphone couché :
+                « CHANGER » y tombait à huit pixels de corps et les trois
+                boutons se touchaient. *Un mot qui ne tient pas dans son bouton
+                n'est pas un libellé, c'est une tache.* Deux flèches opposées
+                disent l'échange, et la bulle le nomme au survol — exactement ce
+                que fait déjà le bouton de rangement du coffre. */}
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M3.5 8.5h13m0 0-3.2-3.2M16.5 8.5l-3.2 3.2M20.5 15.5h-13m0 0 3.2-3.2M7.5 15.5l3.2 3.2"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+        ))}
+
+      {/* LE MENU DE CHANGEMENT : son cadre, son titre, le nom de la colonne de
+          gauche et la barre de sa grille. Les cartes vivent dans le canvas,
+          sous ce calque — *le cadre n'a pas de fond*, sinon il les cacherait. */}
+      {menuOuvert && (
+        <>
+          <div className="arm-menu-cadre" style={boite(plan.menu)} ref={cadreMenu} />
+          <div className="arm-menu-entete" style={boite(plan.menuTitre)}>
+            <span className="arm-menu-titre">{NOMS[ongletDuMenu]}</span>
+            <button
+              type="button"
+              className="arm-menu-fermer"
+              onClick={(e) => {
+                if (e.detail > 0) e.currentTarget.blur()
+                onChoix(null)
+              }}
+            >
+              Fermer
+            </button>
+          </div>
+          {/* « ÉQUIPÉ » nomme la colonne de gauche : à gauche ce qu'on porte,
+              à droite ce qu'on possède. */}
+          <p className="arm-groupe" style={boite(plan.menuNom)}>
+            Équipé
+          </p>
+          <div className="arm-piste" style={boite(plan.menuBarre)} ref={pisteMenu}>
+            <span
+              className={`arm-pouce${maxMenu === 0 ? ' plein' : ''}`}
+              style={{
+                top: `${(defilement / lignesMenu) * 100}%`,
+                height: `${(plan.menuLignes / lignesMenu) * 100}%`,
+              }}
+              onPointerDown={glisserPouceMenu}
+            />
+          </div>
+        </>
       )}
 
       </div>

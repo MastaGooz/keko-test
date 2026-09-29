@@ -39,6 +39,16 @@ import { CAPACITE_PILE, accepteDepuis } from '../logic/hub.ts'
 
 export const Z_PLAN = Z_MAIN
 
+/**
+ * LE MENU DE CHANGEMENT SE POSE ENTRE L'ÉCRAN ET LA CARTE QU'ON TIENT.
+ *
+ * `Z_TENUE` vaut `Z_PLAN + 0,35` : le voile et les cartes du menu doivent donc
+ * rester EN DEÇÀ, sinon la carte qu'on promène passerait derrière la grille
+ * qu'elle survole. *Une carte tenue est devant tout ce qu'elle traverse.*
+ */
+export const Z_VOILE_MENU = Z_PLAN + 0.12
+export const Z_MENU = Z_PLAN + 0.2
+
 
 
 /**
@@ -150,18 +160,42 @@ export type PlanArmurerie = {
   /** Le bouton de départ, sous les stats. */
   bouton: [number, number, number]
   /**
-   * LE CHOIX D'UN SLOT : la zone où s'étalent les pièces qui lui vont.
+   * LE BOUTON « CHANGER » DE CHAQUE SLOT, sous lui.
    *
-   * Demandé par Keko : « le joueur peut cliquer sur les slots d'équipement, ce
-   * qui affiche les cartes disponibles pour ce slot, et le joueur clique pour en
-   * choisir une ». *C'est ce qui remplace le glisser d'un meuble à l'autre* —
-   * les deux meubles n'étant plus à l'écran en même temps, le geste ne peut plus
-   * les traverser.
+   * Tranché par Keko : « je voudrais garder le clic = zoom et affichage des
+   * cartes (le clic ne fait pas changer d'arme), il faudrait un autre système
+   * pour changer un slot. Je propose un bouton changer sous chaque slot. »
    *
-   * Il prend TOUT le lieu, pas le seul panneau : c'est une décision, et une
-   * décision prend l'écran. C'est déjà ce que fait le zoom.
+   * *La tape est déjà prise par la lecture* — et elle doit l'être, puisqu'on
+   * veut lire une pièce avant de la changer. **Une action qui n'est pas un
+   * geste a besoin d'un bouton**, et un bouton par slot dit lequel il change
+   * sans qu'on ait à le désigner ensuite.
    */
-  choix: Rect
+  actionsPorte: { rect: Rect; slot: Slot }[]
+  actionsPile: { rect: Rect; slot: Slot }[]
+  /**
+   * LE MENU DE CHANGEMENT : le slot à gauche, l'onglet du coffre à droite.
+   *
+   * Dicté par Keko : « on ouvre un menu avec à gauche le slot en question et à
+   * droite l'onglet du coffre correspondant (on retourne au système précédent
+   * de drag and drop) ». *Le glisser n'avait pas disparu parce qu'il était
+   * mauvais, mais parce que les deux meubles n'étaient plus à l'écran ensemble*
+   * — ce menu les y remet, réduits à ce que le geste concerne.
+   */
+  menu: Rect
+  menuTitre: Rect
+  /** Le slot lui-même, à gauche, et la bande qui le nomme. */
+  menuSlot: [number, number, number]
+  menuNom: Rect
+  /** La grille du coffre, à droite, filtrée sur ce qui va dans le slot. */
+  menuGrille: Rect
+  menuBarre: Rect
+  /** La taille d'une case du menu : la sienne, pas celle du coffre. */
+  menuTaille: number
+  menuColonnes: number
+  menuLignes: number
+  menuPasX: number
+  menuPasY: number
 }
 
 /** Combien de pixels vaut une unité de scène, à la profondeur du plan. */
@@ -288,10 +322,19 @@ export function planArmurerie(
   // dans le calcul de la taille : un titre pris sur la place des cartes les
   // ferait déborder du panneau, exactement ce qui est arrivé sur téléphone.
   const hNom = Math.min(hDedans * 0.1, 0.34)
+  /**
+   * LA BANDE DU BOUTON « CHANGER », sous chaque rangée de slots.
+   *
+   * Demandé par Keko : « je propose un bouton changer sous chaque slot ». Elle
+   * entre dans le calcul de la taille des cartes au même titre que les noms de
+   * groupe — *une bande prise sur la place des slots les ferait déborder du
+   * panneau*, le défaut déjà payé sur téléphone.
+   */
+  const hAction = Math.min(hDedans * 0.085, 0.3)
   /** Ce que la HAUTEUR du panneau permet à une carte du chargement. */
   const parHauteur = Math.min(
     1,
-    (hDedans * 0.96 - RANGEES_EQUIP * hNom) / (RANGEES_EQUIP * 1.4 * 1.12),
+    (hDedans * 0.96 - RANGEES_EQUIP * (hNom + hAction)) / (RANGEES_EQUIP * 1.4 * 1.12),
   )
 
   /**
@@ -420,8 +463,14 @@ export function planArmurerie(
    * Mesuré : la case passe de 36 à 53 px sur un téléphone couché, de 76 à
    * 106 px sur un écran de portable — **et le coffre de 15 à 27 places.** Les
    * deux à la fois, parce que la place vient d'ailleurs.
+   *
+   * **ET IL NE SUIT PLUS DU TOUT LE CHARGEMENT.** Il en était encore borné par
+   * le haut (72 % d'une pièce), donc la bande des boutons « Changer » — qui a
+   * rétréci les pièces — a rétréci le coffre AVEC, dans un lieu où ces boutons
+   * n'existent même pas. *Une contrainte posée dans un écran ne doit pas
+   * voyager dans un autre* : le plafond est désormais un nombre à lui.
    */
-  const tailleCoffre = Math.min(tailleCharge * 0.72, grille.l / (9 * 1.16))
+  const tailleCoffre = Math.min(0.62, grille.l / (9 * 1.16))
 
   // Une case, plus un cheveu : la grille doit respirer sans s'étaler.
   const pasX = tailleCoffre * 1.16
@@ -483,12 +532,16 @@ export function planArmurerie(
   // nom, rangée, nom, rangée. On empile depuis le haut du bloc, pas depuis le
   // bord du panneau — *un bloc plus court que sa boîte doit se centrer dedans,
   // sinon tout le jeu s'accumule d'un seul côté.*
-  const hBloc = 2 * hNom + 2 * pasRangee
+  // Chaque étage fait : nom, rangée, boutons. Deux étages, et le tout centré.
+  const hEtage = hNom + pasRangee + hAction
+  const hBloc = 2 * hEtage
   const yHautBloc = yDedans + hBloc / 2
   const yNomPorte = yHautBloc - hNom / 2
   const yPorte = yHautBloc - hNom - pasRangee / 2
-  const yNomObjets = yHautBloc - hNom - pasRangee - hNom / 2
-  const yObjets = yHautBloc - 2 * hNom - 2 * pasRangee + pasRangee / 2
+  const yActionPorte = yHautBloc - hNom - pasRangee - hAction / 2
+  const yNomObjets = yHautBloc - hEtage - hNom / 2
+  const yObjets = yHautBloc - hEtage - hNom - pasRangee / 2
+  const yActionObjets = yHautBloc - hEtage - hNom - pasRangee - hAction / 2
 
   // La rangée du haut se centre sur ce qu'elle porte : deux cartes si l'arme
   // prend les deux mains, trois sinon.
@@ -510,6 +563,81 @@ export function planArmurerie(
   // une fois qu'on a lu ce qu'on emporte. Sa bande est réservée en haut de la
   // colonne, sinon le dernier cartouche s'assoirait dessus.
   const hBouton = Math.min(1, hPanneaux * 0.2)
+
+  /**
+   * LE MENU DE CHANGEMENT — deux colonnes, comme l'armurerie l'était.
+   *
+   * À gauche le slot seul, à sa taille de main : *c'est ce qu'on remplit, il
+   * doit se lire comme il se lira.* À droite l'onglet du coffre correspondant,
+   * aux cases du coffre. Entre les deux, le geste d'avant.
+   *
+   * Il prend TOUT le lieu, pas le seul panneau : c'est une décision, et une
+   * décision prend l'écran. C'est déjà ce que fait le zoom.
+   */
+  const menuZone: Rect = {
+    x: gauche + marge + (dispo - 2 * marge) / 2,
+    y: yPanneaux,
+    l: dispo - 2 * marge,
+    h: hPanneaux,
+  }
+  const hMenuTitre = Math.min(menuZone.h * 0.1, 0.42)
+  const hMenuCorps = menuZone.h - hMenuTitre
+  const hautCorps = menuZone.y + menuZone.h / 2 - hMenuTitre
+  // La colonne du slot ne réclame que sa carte : le reste va à la grille, qui
+  // est ce qu'on fouille.
+  const lMenuSlot = Math.min(menuZone.l * 0.3, tailleCharge * 1.7)
+  const gouttiereMenu = Math.min(0.34, menuZone.l * 0.045)
+  const lMenuGrille = menuZone.l - lMenuSlot - marge - gouttiereMenu
+  const xMenuSlot = menuZone.x - menuZone.l / 2 + lMenuSlot / 2
+  const xMenuGrille = menuZone.x - menuZone.l / 2 + lMenuSlot + marge + lMenuGrille / 2
+  const hMenuNom = Math.min(hMenuCorps * 0.11, 0.34)
+  /**
+   * LA GRILLE DU MENU A SA PROPRE TAILLE DE CASE.
+   *
+   * Celle du coffre est réglée pour NEUF colonnes sur toute la largeur d'un
+   * lieu ; la grille du menu est plus étroite d'une colonne de slot, et elle ne
+   * montre qu'une catégorie. À taille de coffre elle alignait onze cases
+   * minuscules pour deux armes — *une grille se règle sur ce qu'elle contient,
+   * pas sur celle d'à côté.* Cinq colonnes, jamais plus grand qu'une carte du
+   * chargement.
+   */
+  const tailleMenuCase = Math.min(tailleCharge, lMenuGrille / (5 * 1.16))
+  const menuPasX = tailleMenuCase * 1.16
+  const menuPasY = tailleMenuCase * 1.4 * 1.12
+  // LE NOM COIFFE LES DEUX COLONNES, et la grille comme la carte du slot se
+  // calent sous lui : *deux colonnes d'un même écran commencent à la même
+  // hauteur.*
+  const hautContenu = hautCorps - hMenuNom
+  const basCorps = menuZone.y - menuZone.h / 2
+  const hGrilleMenu = hautContenu - basCorps
+  const yGrilleMenu = hautContenu - hGrilleMenu / 2
+  const menu = {
+    menu: menuZone,
+    menuTitre: {
+      x: menuZone.x,
+      y: menuZone.y + menuZone.h / 2 - hMenuTitre / 2,
+      l: menuZone.l,
+      h: hMenuTitre,
+    },
+    menuSlot: [xMenuSlot, hautContenu - (tailleCharge * 1.4) / 2, Z_MENU] as [
+      number,
+      number,
+      number,
+    ],
+    menuNom: { x: xMenuSlot, y: hautCorps - hMenuNom / 2, l: lMenuSlot, h: hMenuNom },
+    menuGrille: { x: xMenuGrille, y: yGrilleMenu, l: lMenuGrille, h: hGrilleMenu },
+    menuBarre: {
+      x: xMenuGrille + lMenuGrille / 2 + gouttiereMenu / 2,
+      y: yGrilleMenu,
+      l: gouttiereMenu * 0.44,
+      h: hGrilleMenu,
+    },
+    menuTaille: tailleMenuCase,
+    menuColonnes: Math.max(1, Math.floor(lMenuGrille / menuPasX)),
+    menuLignes: Math.max(1, Math.floor(hGrilleMenu / menuPasY)),
+    menuPasX,
+    menuPasY,
+  }
 
   return {
     demiHaut,
@@ -563,78 +691,43 @@ export function planArmurerie(
     // hub.*
     pnj: { x: xStats, y: yPanneaux, l: lStats, h: hPanneaux },
     bouton: [xRail, basPanneaux + hBouton / 2, Z_PLAN],
-    choix: {
-      x: gauche + marge + (dispo - 2 * marge) / 2,
-      y: yPanneaux,
-      l: dispo - 2 * marge,
-      h: hPanneaux,
-    },
+    // CHAQUE BOUTON PORTE SON SLOT, et c'est le plan qui le dit : la rangée
+    // du haut compte deux ou trois cases selon qu'une arme prend les deux
+    // mains, et *une règle recopiée dans le rendu est une règle qui divergera.*
+    actionsPorte: Array.from({ length: hautes }, (_, i) => ({
+      rect: { x: place(i), y: yActionPorte, l: pasCharge - coupe, h: hAction },
+      slot: (i === hautes - 1 ? { ou: 'armure' } : { ou: 'main', rang: i as 0 | 1 }) as Slot,
+    })),
+    actionsPile: Array.from({ length: CAPACITE_PILE }, (_, i) => ({
+      rect: {
+        x: xEquip + (i - (CAPACITE_PILE - 1) / 2) * pasCharge,
+        y: yActionObjets,
+        l: pasCharge - coupe,
+        h: hAction,
+      },
+      slot: { ou: 'pile', rang: i } as Slot,
+    })),
+    ...menu,
   }
 }
 
 /**
- * OÙ SE POSENT LES PIÈCES QU'ON PROPOSE POUR UN SLOT.
+ * LA PLACE D'UNE CASE DANS LA GRILLE DU MENU — et son inverse, juste dessous.
  *
- * La taille ne se CHOISIT pas, elle CÈDE jusqu'à ce que tout tienne — le même
- * garde-fou que `replier` sur le cartouche d'une carte : *un canvas écrit tout
- * droit et laisse déborder sans rien signaler*, et une grille fait pareil. On
- * part de la taille de la main, et on rétrécit tant qu'il faut une rangée de
- * trop.
- *
- * Elle ne dépasse jamais la taille du chargement : ce qu'on propose est ce
- * qu'on aura, donc ça se lit à la même échelle. **La même carte partout.**
+ * Même forme que `placeCase` et `caseSousLePoint`, sur une autre grille : *deux
+ * calculs qui se répondent se lisent l'un sous l'autre*, sinon le premier
+ * réglage de pas les désaccorde.
  */
-export function grilleDuChoix(
+export function placeCaseMenu(
   plan: PlanArmurerie,
-  nombre: number,
-): { taille: number; positions: [number, number, number][]; titre: Rect } {
-  // LE TITRE PREND SA BANDE EN HAUT : sans elle, la première rangée montait
-  // dessous et le mot se posait sur les cartes.
-  const hUtile = plan.choix.h * 0.8
-  let taille = plan.tailleCharge
-  let colonnes = 1
-  for (let essai = 0; essai < 16; essai += 1) {
-    colonnes = Math.max(1, Math.floor(plan.choix.l / (taille * 1.14)))
-    const rangees = Math.ceil(Math.max(1, nombre) / colonnes)
-    if (rangees * taille * 1.4 * 1.12 <= hUtile) break
-    taille *= 0.93
-  }
-  const pasX = taille * 1.14
-  const pasY = taille * 1.4 * 1.12
-  const rangees = Math.ceil(Math.max(1, nombre) / colonnes)
-  // LE BLOC SE CENTRE DANS SA BANDE, le titre déduit : *un bloc plus court que
-  // sa boîte doit se centrer dedans, sinon tout le jeu s'accumule d'un côté.*
-  const yCentre = plan.choix.y - plan.choix.h * 0.1
-  const y0 = yCentre + ((rangees - 1) * pasY) / 2
-  const positions: [number, number, number][] = []
-  for (let i = 0; i < nombre; i += 1) {
-    const ligne = Math.floor(i / colonnes)
-    // CHAQUE RANGÉE SE CENTRE SUR CE QU'ELLE PORTE : la dernière est souvent
-    // incomplète, et *un trou au bout d'une rangée se lit comme une case libre.*
-    const dedans = Math.min(colonnes, nombre - ligne * colonnes)
-    const colonne = i - ligne * colonnes
-    positions.push([
-      plan.choix.x + (colonne - (dedans - 1) / 2) * pasX,
-      y0 - ligne * pasY,
-      Z_PLAN + 0.5,
-    ])
-  }
-  /**
-   * LE TITRE SE POSE JUSTE AU-DESSUS DU BLOC, pas en haut de la zone.
-   *
-   * *Ce qui nomme quelque chose se lit contre ce qu'il nomme* : accroché au
-   * bord du lieu, il flottait à un demi-écran de la seule carte proposée. Il
-   * sort donc de la MÊME fonction que la grille — *deux calculs qui se
-   * répondent se désaccordent au premier réglage s'ils vivent ailleurs.*
-   */
-  const hTitre = Math.min(plan.choix.h * 0.1, 0.42)
-  const titre: Rect = {
-    x: plan.choix.x,
-    y: y0 + (taille * 1.4) / 2 + hTitre * 0.7,
-    l: plan.choix.l,
-    h: hTitre,
-  }
-  return { taille, positions, titre }
+  rang: number,
+  decalage = 0,
+): [number, number, number] {
+  const colonne = rang % plan.menuColonnes
+  const ligne = Math.floor(rang / plan.menuColonnes)
+  const x0 = plan.menuGrille.x - (plan.menuColonnes * plan.menuPasX) / 2 + plan.menuPasX / 2
+  const y0 = plan.menuGrille.y + plan.menuGrille.h / 2 - plan.menuPasY / 2
+  return [x0 + colonne * plan.menuPasX, y0 - ligne * plan.menuPasY + decalage, Z_MENU]
 }
 
 /**
