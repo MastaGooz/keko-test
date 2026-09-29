@@ -4811,7 +4811,7 @@ compare.
 | | `cadre=` | ce que ça dit | où ça se voit |
 |---|---|---|---|
 | **franc** | `1` | la carte est une IMAGE, pas un objet : plus de silhouette | partout, mais faiblement |
-| **encoché** | `2` | une plaque qu'on CLIPSE : deux entailles à mi-hauteur | l'entaille gauche seule, en main |
+| **encoché** | `2` | une plaque qu'on CLIPSE : deux entailles **à la hauteur du titre** | l'entaille gauche, dans la bande lue |
 | **crans** | `3` | une fiche qu'on TIRE : deux crans hauts | bande haute |
 | **corné** | `4` | *la pièce est une plaque, la carte est une FEUILLE* : le coin haut-droit se relève | bande haute |
 | **perforé** | `5` | *une carte n'existe jamais seule* : deux trous de reliure, donc un paquet | bande haute |
@@ -4822,6 +4822,15 @@ recouvrement de l'éventail mange la droite, la ligne de flottaison mange le
 bas : *un signe posé sur le montant droit ou sur le bord bas n'existe pas en
 combat.* C'est ce qui condamne l'ajour et affaiblit l'encoche, et ce qui donne
 l'avantage au corné et au perforé.
+
+**RETENU PAR KEKO : L'ENCOCHÉ, recalé par lui.** « J'aime bien les encoches
+mais je les voudrais au niveau du titre et avec la bordure un poil plus
+épaisse. » Les deux entailles se centrent donc sur `yNom` (66,5 % de la
+hauteur) — *elles cessent d'être un accident au milieu du montant pour devenir
+la ligne qui porte le nom* — et la marge de la coque passe de 1,163 à 1,85 U
+sur cette seule piste. **Un second signe qui va dans le sens du premier** : une
+carte de deck est cerclée plus franchement qu'une pièce, donc les deux se
+distinguent même là où l'encoche est cachée par la voisine.
 
 **Les trois dernières GARDENT la coque déchirée** et ajoutent un signe, au lieu
 d'inventer une quatrième silhouette : *toutes les cartes du jeu portent cette

@@ -211,9 +211,19 @@ const CADRE_FRANC: readonly [number, number][] = [
   [0, 0], [100, 0], [100, 100], [0, 100],
 ]
 
+/**
+ * LES ENCOCHES, À LA HAUTEUR DU TITRE — retenu par Keko, et recalé par lui :
+ * « j'aime bien les encoches mais je les voudrais au niveau du titre ».
+ *
+ * *Le nom est peint à 66,5 % de la hauteur* (`yNom`), donc les deux entailles
+ * s'y centrent : elles cessent d'être un accident au milieu du montant pour
+ * devenir la ligne qui porte le nom. **Les deux repères se calculent depuis la
+ * même constante**, sinon le premier réglage du gabarit les désaccorderait.
+ */
+const Y_ENCOCHE = 66.5
 const CADRE_ENCOCHE: readonly [number, number][] = [
-  [0, 0], [100, 0], [100, 43], [95.5, 50], [100, 57], [100, 100],
-  [0, 100], [0, 57], [4.5, 50], [0, 43],
+  [0, 0], [100, 0], [100, Y_ENCOCHE - 7], [95.5, Y_ENCOCHE], [100, Y_ENCOCHE + 7], [100, 100],
+  [0, 100], [0, Y_ENCOCHE + 7], [4.5, Y_ENCOCHE], [0, Y_ENCOCHE - 7],
 ]
 
 const CADRE_CRANS: readonly [number, number][] = [
@@ -694,7 +704,16 @@ export async function peindreCarte(
 
   // LA SURFACE ET L'ILLUSTRATION EN PLEIN FORMAT, un cheveu à l'intérieur de
   // la coque, à la même découpe.
-  const marge = 1.163 * U
+  /**
+   * LA BORDURE EST UN POIL PLUS ÉPAISSE SUR LA PISTE ENCOCHÉE — demandé par
+   * Keko en même temps que le recalage des entailles.
+   *
+   * *Elle n'a pas à être la même partout* : c'est un second signe, et il va
+   * dans le sens du premier — une carte de deck est cerclée plus franchement
+   * qu'une pièce, donc les deux se distinguent même là où l'encoche est cachée
+   * par la voisine.
+   */
+  const marge = (piste === 'encoche' ? 1.85 : 1.163) * U
   ctx.save()
   chemin(ctx, coque, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
   ctx.clip()
