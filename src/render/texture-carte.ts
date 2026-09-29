@@ -127,6 +127,25 @@ export type CarteAPeindre = {
 const LARGE = 768
 const HAUT = Math.round(LARGE * 1.4)
 
+/**
+ * LE RAYON DES COINS D'UNE CARTE, en fraction de sa LARGEUR.
+ *
+ * Il vivait en dur dans le `roundRect` de la face ; la case vide et le slot
+ * allumé doivent l'épouser, et *trois valeurs écrites chacune de leur côté se
+ * désaccordent au premier réglage* — c'est déjà ce qui les avait laissées à
+ * 5 % pour une carte à 3.
+ */
+export const RAYON_CARTE = 0.03
+
+/**
+ * CE QUE LA TOILE DU SLOT ALLUMÉ AJOUTE DE CHAQUE CÔTÉ, en fraction de la
+ * largeur d'une carte — la place de sa lueur. Le plan en grandit d'autant, et
+ * *le débord de la texture doit être EXACTEMENT celui du plan* : plus large
+ * dans la texture, le tracé passerait sous la carte. Règle du contour des
+ * cartes, repayée ici.
+ */
+export const DEBORD_SLOT = 0.08
+
 /** Un centième de la largeur : l'unité du gabarit (le `cqw` du CSS). */
 const U = LARGE / 100
 
@@ -453,7 +472,7 @@ export async function peindreCarte(
   // 2D. Le matériau coupe ces coins (`alphaTest`) et laisse voir le laiton
   // arrondi du corps de la carte.
   ctx.beginPath()
-  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * 0.03)
+  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * RAYON_CARTE)
   ctx.clip()
 
   // LA PLAQUE : le laiton, assombri d'un voile uniforme. C'est ce voile seul
@@ -1419,7 +1438,7 @@ async function peindreDos(embleme: Embleme = 'eclat'): Promise<HTMLCanvasElement
   const decor = await fond()
 
   ctx.beginPath()
-  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * 0.03)
+  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * RAYON_CARTE)
   ctx.clip()
 
   // LA PLAQUE ET LA COQUE, comme sur la face.
@@ -1715,12 +1734,28 @@ export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {
 
   const peindre = (): void => {
     ctx.clearRect(0, 0, l, h)
-    const marge = l * 0.03
+    /**
+     * LE POINTILLÉ ÉPOUSE LA CARTE, il ne se pose pas dedans.
+     *
+     * Keko : « les pointillés des slots sont un peu décalés par rapport aux
+     * cartes, l'idéal serait de les avoir pile poil autour de la taille de la
+     * carte ». Ils étaient rentrés de 3 % de la largeur, avec un arrondi de
+     * 5 % là où la carte en a 3 : *une case qui montre une forme plus petite
+     * que ce qu'elle reçoit ne montre pas la place, elle en montre une autre.*
+     *
+     * Le plan de la case fait EXACTEMENT la taille d'une carte, donc la marge
+     * est celle d'un `stroke` : un trait de canvas est CENTRÉ sur son tracé,
+     * donc il faut le rentrer d'une demi-épaisseur pour que son bord EXTÉRIEUR
+     * tombe sur le bord du plan. Et le rayon se compte sur ce bord extérieur —
+     * celui de la carte — donc le tracé porte ce rayon MOINS la demi-épaisseur.
+     */
+    const trait = l * 0.016
+    const marge = trait / 2
     ctx.strokeStyle = accent
-    ctx.lineWidth = l * 0.016
+    ctx.lineWidth = trait
     ctx.setLineDash([l * 0.07, l * 0.05])
     ctx.beginPath()
-    ctx.roundRect(marge, marge, l - marge * 2, h - marge * 2, l * 0.05)
+    ctx.roundRect(marge, marge, l - marge * 2, h - marge * 2, RAYON_CARTE * l - marge)
     ctx.stroke()
 
     if (nom !== '') {
@@ -2100,9 +2135,21 @@ export function textureSlotVif(): THREE.CanvasTexture {
 
   const l = 512
   const h = Math.round(l * 1.4)
+  /**
+   * SA TOILE DÉBORDE, parce que sa LUEUR déborde.
+   *
+   * Le tracé doit tomber au même endroit que celui de la case vide — sur le
+   * bord de la carte — mais ses trois passes de lueur s'étalent au-delà : à
+   * toile égale, elles seraient coupées net par le bord, et *une lueur qui se
+   * termine par une arête n'est pas une lueur.* On peint donc sur une toile
+   * plus grande et le plan grandit d'autant, exactement comme le contour des
+   * cartes. Le débord est le MÊME en pixels sur les deux axes, sinon la forme
+   * se déformerait.
+   */
+  const bord = Math.round(l * DEBORD_SLOT)
   const canvas = document.createElement('canvas')
-  canvas.width = l
-  canvas.height = h
+  canvas.width = l + bord * 2
+  canvas.height = h + bord * 2
   const ctx = canvas.getContext('2d')
   if (ctx === null) {
     slotVif = new THREE.CanvasTexture(canvas)
@@ -2111,10 +2158,11 @@ export function textureSlotVif(): THREE.CanvasTexture {
 
   // LE MÊME TRACÉ QUE LA CASE VIDE — même marge, même rayon, même cadence de
   // tirets : c'est ce qui fait que le pointillé s'ALLUME au lieu de s'ajouter.
-  const marge = l * 0.03
+  const trait = l * 0.018
+  const marge = bord + trait / 2
   const trace = (): void => {
     ctx.beginPath()
-    ctx.roundRect(marge, marge, l - marge * 2, h - marge * 2, l * 0.05)
+    ctx.roundRect(marge, marge, l - trait, h - trait, RAYON_CARTE * l - trait / 2)
   }
 
   // L'intérieur, à peine : une carte posée dessus doit rester lisible.
@@ -2125,7 +2173,7 @@ export function textureSlotVif(): THREE.CanvasTexture {
   // Le pointillé, en trois passes de lueur de plus en plus serrée : c'est
   // l'accumulation qui fait la lumière, comme le contour des cartes.
   ctx.setLineDash([l * 0.07, l * 0.05])
-  ctx.lineWidth = l * 0.018
+  ctx.lineWidth = trait
   ctx.strokeStyle = '#ffffff'
   ctx.shadowColor = 'rgba(255, 255, 255, 0.9)'
   for (const rayon of [l * 0.045, l * 0.022, 0]) {

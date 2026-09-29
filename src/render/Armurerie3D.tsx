@@ -39,7 +39,7 @@ import { Bouton3D } from './Bouton3D.tsx'
 import { Z_TENUE } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import { pieceAPeindre } from './combat-3d.ts'
-import { textureSlot, textureSlotVif } from './texture-carte.ts'
+import { DEBORD_SLOT, textureSlot, textureSlotVif } from './texture-carte.ts'
 import { SON_EQUIPER, SON_POSER, SON_TOURNER, jouerSon } from './sons.ts'
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
@@ -122,7 +122,10 @@ function SlotAccueille({
       raycast={() => null}
       material={materiau}
     >
-      <planeGeometry args={[taille, taille * 1.4]} />
+      {/* SON PLAN DÉBORDE d'autant que sa texture : le tracé tombe alors
+          exactement sur le bord de la carte, et la lueur a la place de
+          s'éteindre avant l'arête. */}
+      <planeGeometry args={[taille * (1 + DEBORD_SLOT * 2), taille * 1.4 + taille * DEBORD_SLOT * 2]} />
     </mesh>
   )
 }

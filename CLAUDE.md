@@ -3727,6 +3727,32 @@ mais il fallait déjà l'y avoir amenée. Keko : « il faudrait que quand je dra
 un truc, le slot d'équipement qui correspond se mette en surbrillance ». *Ce
 qui dit où l'on peut aller doit se voir AVANT d'y aller.*
 
+**LE POINTILLÉ ÉPOUSE LA CARTE, il ne se pose pas dedans.** Keko : « les
+pointillés des slots sont un peu décalés par rapport aux cartes, l'idéal serait
+de les avoir pile poil autour de la taille de la carte ». Ils étaient rentrés de
+3 % de la largeur, avec un arrondi de 5 % là où la carte en a 3 : *une case qui
+montre une forme plus petite que ce qu'elle reçoit ne montre pas la place, elle
+en montre une autre.*
+
+Le plan d'une case fait EXACTEMENT la taille d'une carte, donc deux choses
+suffisent, et aucune n'est un réglage :
+
+- **un `stroke` de canvas est CENTRÉ sur son tracé**, donc on le rentre d'une
+  DEMI-épaisseur pour que son bord extérieur tombe sur le bord du plan ;
+- **le rayon se compte sur ce bord extérieur** — celui de la carte — donc le
+  tracé porte ce rayon moins la demi-épaisseur. Et il vit désormais en un seul
+  endroit (`RAYON_CARTE`) : *trois valeurs écrites chacune de leur côté se
+  désaccordent au premier réglage*, et c'est exactement ce qui avait laissé les
+  cases à 5 % pour une carte à 3.
+
+**Le slot ALLUMÉ, lui, peint sur une toile qui déborde** (`DEBORD_SLOT`), et son
+plan grandit d'autant. Son tracé doit tomber au même endroit que celui de la
+case vide, mais ses trois passes de lueur s'étalent au-delà : à toile égale
+elles seraient coupées net, et *une lueur qui se termine par une arête n'est pas
+une lueur.* C'est la règle du contour des cartes, repayée ici — **le débord de
+la texture doit être exactement celui du plan**, sinon le tracé passerait sous
+la carte.
+
 **C'EST SON PROPRE POINTILLÉ QUI S'ALLUME**, en or, et rien n'est ajouté
 autour. Il a d'abord été le contour lumineux des cartes, teinté en bleu et posé
 DERRIÈRE la case — Keko : « je trouve l'effet un peu grossier : ça dépasse des
