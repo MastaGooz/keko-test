@@ -23,7 +23,7 @@ import {
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable } from '../logic/armes.ts'
 import { tresorRecompense } from '../logic/cartes.ts'
-import { lignes, nature, sansBalises } from '../ui/texte-carte.ts'
+import { lignes, nature, rangDuTresor, sansBalises } from '../ui/texte-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
 
 /**
@@ -40,6 +40,11 @@ export function aPeindre(carte: Carte): CarteAPeindre {
     effet: lignes(carte, true).map(sansBalises),
     type: nature(carte),
     valeur: carte.type === 'tresor' ? (carte.valeur ?? 0) : undefined,
+    // ET SON RANG VIENT DE SA VALEUR : la couleur du cadre redit en un coup
+    // d'oeil ce que le chiffre dit en clair. *Le joueur doit préférer peu de
+    // gros trésors à beaucoup de petits*, encore faut-il voir lesquels sont
+    // gros sans lire.
+    rarete: carte.type === 'tresor' ? rangDuTresor(carte.valeur ?? 0) : undefined,
     // LA FAMILLE PASSE PAR UN DRAPEAU, pas par le mot du pied. Celui-ci est
     // du TEXTE AFFICHÉ — « Consommable » est déjà devenu « Objet » une fois —
     // et *un dessin ne se décide pas sur une étiquette qui peut changer.*

@@ -219,21 +219,18 @@ function chemin(ctx: CanvasRenderingContext2D, points: readonly [number, number]
  * **plus clair que tout le reste**, presque blanc.
  */
 /**
- * LE LAITON N'EST PLUS UNE RARETÉ — c'est le métal de TOUT LE RESTE.
+ * LE LAITON A DISPARU DE L'ÉCHELLE, ET DES CARTES.
  *
- * Keko : « on va laisser tomber les équipements laiton, ça ajoute une rareté
- * pour rien et c'est pas très lisible en comparaison à l'or ; on va garder le
- * laiton pour les trésors. » *Deux jaunes rompus voisins ne font pas deux
- * crans* — et le bas de l'échelle ne doit pas se disputer la lecture avec son
- * haut.
+ * Il a d'abord cessé d'être une rareté — Keko : « ça ajoute une rareté pour
+ * rien et c'est pas très lisible en comparaison à l'or » — puis il a cessé
+ * d'être le métal par défaut, une fois les trésors entrés dans l'échelle :
+ * « on peut appliquer les couleurs de rareté aux trésors maintenant ? et on
+ * laisse tomber le laiton ? »
  *
- * Il reste donc le métal du gabarit, celui de ce qui n'a PAS de rareté : les
- * cartes de deck, les trésors, le dos. **L'échelle d'équipement commence au
- * bronze**, et une carte qui ne dit rien ne change pas d'alliage.
+ * **Le premier cran est donc le BRONZE, et il vaut pour tout ce qui ne dit
+ * rien** : les cartes de deck, le dos. *Un métal qui ne sert qu'à dire
+ * « aucun rang » est un cran de plus à distinguer pour rien.*
  */
-const LAITON: readonly [string, string, string, string, string] =
-  ['#f2ddaa', '#a88c5f', '#d2b787', '#695c45', '#e7cda0']
-
 const METAUX: Record<string, readonly [string, string, string, string, string]> = {
   commune: ['#eab98d', '#8a512c', '#bd7f52', '#432516', '#dda379'],
   rare: ['#f4f7fa', '#8a949e', '#ccd5dd', '#4a525b', '#e4eaf0'],
@@ -254,8 +251,7 @@ export const METAL_3D: Record<string, string> = {
   legendaire: '#cfe3ff',
 }
 
-/** Le laiton du corps : ce que porte une carte SANS rareté. */
-export const LAITON_3D = '#b79a6a'
+
 
 /**
  * LE DIAMANT EST IRISÉ, et c'est ce qui le sépare de l'argent.
@@ -292,9 +288,8 @@ function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient 
     for (const [ou, ton] of IRISATION) g.addColorStop(ou, ton)
     return g
   }
-  // Sans rareté, c'est le LAITON : une carte de deck, un trésor, le dos.
-  const [clair, sombre, moyen, nuit, bord] =
-    rarete === undefined ? LAITON : (METAUX[rarete] ?? LAITON)
+  // Sans rareté, c'est le premier cran : une carte de deck, le dos.
+  const [clair, sombre, moyen, nuit, bord] = METAUX[rarete ?? 'commune'] ?? METAUX.commune!
   g.addColorStop(0, clair)
   g.addColorStop(0.21, sombre)
   g.addColorStop(0.23, moyen)

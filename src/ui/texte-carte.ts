@@ -12,6 +12,33 @@
  * pas du rendu — le canvas le retire, le DOM l'affiche.
  */
 import type { Carte } from '../logic/combat.ts'
+import type { Rarete } from '../logic/armes.ts'
+
+/**
+ * LE RANG D'UN TRÉSOR, tiré de sa valeur — et il prend l'échelle d'alliages.
+ *
+ * Keko : « on peut appliquer les couleurs de rareté aux trésors maintenant ? »
+ * *Ce qui l'interdisait a été levé par la forme* : depuis que le trésor porte
+ * un cadre franc à coins coupés là où tout le reste porte la coque déchirée,
+ * la couleur n'a plus à dire la famille. **La forme dit la famille, la couleur
+ * dit l'échelle** — un trésor d'or ne se confond pas avec une arme épique,
+ * leurs silhouettes diffèrent.
+ *
+ * Les seuils coupent la table de butin en quatre parts ÉGALES, trois trésors
+ * par cran : *un rang qui ne tomberait pas juste sur la table donnerait des
+ * crans vides et des crans bondés.* Camée / Aiguière / Torque en bronze,
+ * Médaillon / Idole / Cassette en argent, Calice / Ostensoir / Reliquaire en
+ * or, Sceptre / Diadème / Couronne en diamant.
+ *
+ * Ça remplace les trois rangs de richesse du jeu 2D, qui n'avaient de nom que
+ * dans le code : `cossu` et `modeste` ne se voyaient nulle part.
+ */
+export function rangDuTresor(valeur: number): Rarete {
+  if (valeur >= 180) return 'legendaire'
+  if (valeur >= 115) return 'epique'
+  if (valeur >= 70) return 'rare'
+  return 'commune'
+}
 
 /**
  * Ce que fait la carte, en toutes lettres : une ligne par effet. Le chiffre

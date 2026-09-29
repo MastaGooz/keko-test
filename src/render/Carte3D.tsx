@@ -30,7 +30,6 @@ import {
   DEBORD_AUREOLE,
   DEBORD_CONTOUR,
   METAL_3D,
-  LAITON_3D,
   PART_DISQUE,
   textureNombre,
   signature,
@@ -448,7 +447,7 @@ export function Carte3D({
       // rareté ; si le corps restait laiton, l'épaisseur trahirait le métal
       // d'à côté dès que la carte s'incline — *un objet n'est pas fait de deux
       // matières sur deux millimètres.*
-      color: LAITON_3D,
+      color: METAL_3D.commune,
       metalness: 0.85,
       roughness: 0.38,
       emissive: '#ffcf7a',
@@ -724,9 +723,7 @@ ${nuanceur.fragmentShader}`
   // chaque changement de carte referait aussi son nuanceur, et la carte
   // repasserait par son état sombre.
   useEffect(() => {
-    laiton.color.set(
-      carte.rarete === undefined ? LAITON_3D : (METAL_3D[carte.rarete] ?? LAITON_3D),
-    )
+    laiton.color.set(METAL_3D[carte.rarete ?? 'commune'] ?? METAL_3D.commune!)
   }, [laiton, carte.rarete])
 
   /**

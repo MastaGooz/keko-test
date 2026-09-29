@@ -4282,17 +4282,19 @@ d'alliages, elle, **est déjà dans la matière** — la carte ne change pas de
 langue pour dire sa valeur, elle change d'alliage. *Le vocabulaire dit la
 règle*, comme « enchantement » plutôt que « maîtrise ».
 
-**LE LAITON N'EST PLUS UNE RARETÉ — c'est le métal de TOUT LE RESTE.** Keko :
-« on va laisser tomber les équipements laiton, ça ajoute une rareté pour rien
-et c'est pas très lisible en comparaison à l'or ; on va garder le laiton pour
-les trésors. » *Deux jaunes rompus voisins ne font pas deux crans*, et le bas
-d'une échelle ne doit pas se disputer la lecture avec son haut.
+**LE LAITON A DISPARU, EN DEUX TEMPS.** Il a d'abord cessé d'être une rareté —
+Keko : « ça ajoute une rareté pour rien et c'est pas très lisible en
+comparaison à l'or » — *deux jaunes rompus voisins ne font pas deux crans*, et
+le bas d'une échelle ne doit pas se disputer la lecture avec son haut. Il est
+resté le métal de ce qui n'a pas de rang, puis il est parti avec lui : « on
+peut appliquer les couleurs de rareté aux trésors maintenant ? et on laisse
+tomber le laiton ? »
 
-Il reste donc **le métal du gabarit, celui de ce qui n'a PAS de rareté** : les
-cartes de deck, les trésors, le dos. L'échelle d'équipement commence au bronze,
-et *une carte qui ne dit rien ne change pas d'alliage.* Le type le porte
-(`rarete?`) : `undefined` vaut laiton, ce n'est pas une valeur de plus à
-maintenir.
+**Le premier cran est donc le BRONZE, et il vaut pour tout ce qui ne dit
+rien** : les cartes de deck, le dos. *Un métal qui ne sert qu'à dire « aucun
+rang » est un cran de plus à distinguer pour rien.* Le type le porte
+(`rarete?`) : `undefined` vaut le premier cran, ce n'est pas une valeur de plus
+à maintenir.
 
 **Le danger qui restait est que deux crans sont jaunes.** Le bronze part donc
 dans le CUIVRE — plus rouge, plus sombre — et l'or est franchement saturé et
@@ -4471,10 +4473,15 @@ Quatre choses qui le portent :
   -ci est du texte affiché — « Consommable » est déjà devenu « Objet » une
   fois — et *un dessin ne se décide pas sur une étiquette qui peut changer.*
 
-**La couleur reste donc entièrement libre, et les quatre alliages ne bougent
-pas.** C'est une porte qu'on n'a pas franchie : le jour où l'or reviendrait aux
-trésors, la forme suffirait déjà à les séparer d'une arme épique. À rouvrir
-avec Keko, et pas avant d'avoir vu si la forme porte assez toute seule.
+**ET C'EST CE QUI A ROUVERT LA COULEUR AUX TRÉSORS.** La porte avait été
+laissée entrebâillée — « le jour où l'or reviendrait aux trésors, la forme
+suffirait déjà à les séparer d'une arme épique » — et Keko l'a franchie une
+fois la forme en place : « on peut appliquer les couleurs de rareté aux
+trésors maintenant ? »
+
+**La forme dit la famille, la couleur dit l'échelle**, et les deux axes ne se
+marchent plus dessus : un trésor d'or et une arme épique partagent leur métal
+et n'ont pas la même silhouette.
 
 **ET SA VALEUR A QUITTÉ LE CARTOUCHE : une gemme, puis le chiffre.** Keko :
 « pour le gain en or des trésors on ne va pas l'afficher directement dans la
@@ -4566,8 +4573,24 @@ moteur 3D passe : *un moteur qui ne sait pas montrer une chose ne doit pas
 cesser de la dire.* Le texte reste en un seul endroit, et c'est l'appelant qui
 dit ce qu'il sait peindre.
 
-**LES TRÉSORS RESTENT HORS DE L'ÉCHELLE DE RARETÉ.** Tranché par Keko : « le
-montant d'or parle par lui-même ». *Un trésor n'est pas un objet qu'on porte, c'est un butin qu'on
+**ET LE RANG D'UN TRÉSOR VIENT DE SA VALEUR** (`rangDuTresor`, dans le module
+partagé). Les seuils coupent la table de butin en quatre parts ÉGALES, trois
+trésors par cran — *un rang qui ne tomberait pas juste sur la table donnerait
+des crans vides et des crans bondés* : Camée / Aiguière / Torque en bronze,
+Médaillon / Idole / Cassette en argent, Calice / Ostensoir / Reliquaire en or,
+Sceptre / Diadème / Couronne en diamant.
+
+*Ça sert exactement la règle de contenu* : « le joueur doit préférer peu de gros
+trésors à beaucoup de petits », encore faut-il voir lesquels sont gros sans
+lire. La couleur redit d'un coup d'oeil ce que la gemme dit en clair. Et les
+trois diamants héritent au passage de l'auréole chromatique et du liseré qui en
+fait le tour — *le haut de l'échelle doit se voir de loin.*
+
+Ça remplace les trois rangs de richesse du jeu 2D, qui n'avaient de nom que
+dans le code : `cossu` et `modeste` ne se voyaient nulle part.
+
+**Ce qui tombe avec ça**, et il faut le savoir : Keko avait tranché l'inverse —
+« le montant d'or parle par lui-même ». *Un trésor n'est pas un objet qu'on porte, c'est un butin qu'on
 compte.* En cherchant ce que ça déloge, on a d'ailleurs trouvé qu'il n'y avait
 presque rien à déloger : les « trois rangs de richesse » n'existent qu'en 2D, et
 seul `fastueux` y porte une règle — **`cossu` et `modeste` ont un nom dans le
