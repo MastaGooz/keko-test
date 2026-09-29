@@ -26,6 +26,7 @@ import {
   peutDescendre,
   perdreLEquipement,
   rentrer,
+  rentrerDeFortune,
 } from './hub.ts'
 
 let echecs = 0
@@ -434,4 +435,38 @@ console.log('Tout passe.')
   verifier('le tirage est reproductible',
     rejoue.mains[0]!.id === c.mains[0]!.id &&
       consommablesDeLaPile(rejoue.pile).length === consommablesDeLaPile(c.pile).length)
+}
+
+// --- remonter d'une descente de fortune -------------------------------------
+
+{
+  // CE QU'ON A EMPORTE EST UN EQUIPEMENT, pas un deck : sortir vivant, c'est le
+  // GAGNER. Keko : « le loadout de base ne donne pas que des cartes mais bien
+  // l'equipement, donc si le joueur arrive a sortir il gagne cet equipement ».
+  const h = creerHub()
+  const emporte = chargementDeFortune(createRng(11))
+  const potions = consommablesDeLaPile(emporte.pile)
+  const bue = potions[0]!
+  const survivants = potions.slice(1)
+  const tresor = carteTresor('t-9', 'Calice', 120)
+  const apres = rentrerDeFortune(h, 55, survivants, [tresor], emporte)
+
+  verifier('l’arme de fortune entre au coffre',
+    apres.reserve.some((o) => o.id === emporte.mains[0]!.id))
+  verifier('...et son armure aussi',
+    apres.reserve.some((o) => o.id === emporte.armure!.id))
+  verifier('...et les potions non bues',
+    survivants.every((c) => apres.reserve.some((o) => o.id === c.id)))
+  verifier('mais pas celle qu’on a bue',
+    !apres.reserve.some((o) => o.id === bue.id))
+  verifier('l’or et le tresor rentrent aussi',
+    apres.or === h.or + 55 && apres.reserve.some((o) => o.id === 't-9'))
+
+  // LA PILE DU HUB N'A JAMAIS QUITTE LE COFFRE : on ne l'ampute pas. Sans ca,
+  // `rentrer` la viderait, faute d'y trouver un seul identifiant emporte.
+  verifier('la pile du hub est intacte',
+    consommablesDeLaPile(apres.chargement.pile).length ===
+      consommablesDeLaPile(h.chargement.pile).length)
+  verifier('...et le chargement du hub n’a pas bouge',
+    apres.chargement.mains[0]!.id === h.chargement.mains[0]!.id)
 }

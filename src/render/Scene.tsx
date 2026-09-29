@@ -83,7 +83,7 @@ import {
   equipement,
   perdreLEquipement,
   peutDescendre,
-  rentrer, consommablesDeLaPile } from '../logic/hub.ts'
+  rentrer, rentrerDeFortune, consommablesDeLaPile } from '../logic/hub.ts'
 import {
   REGLAGE_DEFAUT,
   commencerDescente,
@@ -1097,18 +1097,23 @@ export function Scene(): React.JSX.Element {
    * exactement ce que l'armurerie sert à décider.
    */
   /**
-   * ON EST PARTI AVEC UN CHARGEMENT DE FORTUNE — donc le hub n'a rien engagé.
+   * LE CHARGEMENT DE FORTUNE AVEC LEQUEL ON EST PARTI, ou `null`.
    *
-   * Il faut le retenir pour le RETOUR : la mort ne doit pas prendre un
-   * équipement qu'on n'avait pas emporté, et l'extraction ne doit pas amputer
-   * une pile qui n'est jamais partie. *Ce qui n'a pas quitté le coffre ne peut
-   * pas s'y perdre.*
+   * On le RETIENT, et pour deux raisons opposées : le hub n'a rien engagé —
+   * donc la mort ne peut rien lui prendre — mais **ce qu'on a emporté est un
+   * vrai ÉQUIPEMENT**, donc ressortir vivant le fait entrer au coffre. Keko :
+   * « le loadout de base ne donne pas que des cartes mais bien l'équipement,
+   * donc si le joueur arrive à sortir il gagne cet équipement ».
+   *
+   * *Sans le garder sous la main, il n'y aurait rien à faire rentrer* : il
+   * n'existe nulle part ailleurs, ni dans le hub ni dans la descente, qui ne
+   * connaît que des cartes.
    */
-  const [deFortune, setDeFortune] = useState(false)
+  const [fortune, setFortune] = useState<Chargement | null>(null)
 
   const partir = useCallback(
-    (chargement: Chargement, fortune: boolean) => {
-      setDeFortune(fortune)
+    (chargement: Chargement, deFortune: boolean) => {
+      setFortune(deFortune ? chargement : null)
       // LA MAIN DEMANDÉE PAR L'URL VAUT AUSSI POUR LES DESCENTES SUIVANTES :
       // sinon `?main=20` ne tiendrait que jusqu'au premier retour au hub.
       setDescente(
@@ -1207,27 +1212,25 @@ export function Scene(): React.JSX.Element {
    */
   const remonter = useCallback(
     (mort: boolean) => {
-      setHub((h) =>
-        mort
-          ? // UNE DESCENTE DE FORTUNE N'ENGAGEAIT RIEN : la mort ne peut donc
-            // rien prendre au coffre. *On ne perd que ce qu'on a emporté.*
-            deFortune
-            ? h
-            : perdreLEquipement(h)
-          : rentrer(
-              h,
-              butinTransporte(enCours),
-              // ET SES POTIONS N'ONT JAMAIS QUITTÉ LE COFFRE : on déclare donc
-              // survivante toute la pile du hub, sinon `rentrer` l'amputerait
-              // de tout — aucun identifiant emporté ne s'y trouve.
-              deFortune ? consommablesDeLaPile(h.chargement.pile) : consommablesSurvivants(enCours),
-              tresorsTransportes(enCours),
-            ),
-      )
-      setDeFortune(false)
+      setHub((h) => {
+        // UNE DESCENTE DE FORTUNE N'ENGAGEAIT RIEN : la mort ne peut donc rien
+        // prendre au coffre. *On ne perd que ce qu'on a emporté* — et ce qu'on
+        // avait emporté n'en venait pas.
+        if (mort) return fortune !== null ? h : perdreLEquipement(h)
+        const butin = butinTransporte(enCours)
+        const survivants = consommablesSurvivants(enCours)
+        const tresors = tresorsTransportes(enCours)
+        // LA RÈGLE DU RETOUR VIT DANS `logic/`, pas ici : *ce qui décide de ce
+        // qu'on gagne est une règle d'économie, pas un détail de rendu* — et
+        // c'est ce qui la rend vérifiable sans navigateur.
+        return fortune === null
+          ? rentrer(h, butin, survivants, tresors)
+          : rentrerDeFortune(h, butin, survivants, tresors, fortune)
+      })
+      setFortune(null)
       setDescente(null)
     },
-    [enCours, deFortune],
+    [enCours, fortune],
   )
 
   const choisirRecompense = useCallback(

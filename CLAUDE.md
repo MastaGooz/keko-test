@@ -5231,12 +5231,20 @@ l'armurier qui donne, le bouton se pose sous lui.*
   *L'armurier ne prête pas ce qu'on possède, il donne ce qu'il a sous la main* —
   une arme et une armure tirées dans `ARMES_COMMUNES` / `ARMURES_COMMUNES`, et
   de une à trois potions.
-- **LE HUB N'A RIEN ENGAGÉ, donc le retour ne lui prend rien.** Deux
-  conséquences qu'il faut tenir ensemble (`deFortune`, dans `Scene`) : la mort
-  ne passe pas par `perdreLEquipement` — *on ne perd que ce qu'on a emporté* —
-  et `rentrer` reçoit TOUTE la pile du hub comme survivante, sinon il
-  l'amputerait de tout, puisque aucun identifiant emporté ne s'y trouve. L'or et
-  les trésors, eux, rentrent normalement.
+- **ET CE QU'ON EMPORTE EST UN ÉQUIPEMENT, PAS UN DECK : sortir vivant, c'est
+  le GAGNER.** Tranché par Keko : « le loadout de base ne donne pas que des
+  cartes mais bien l'équipement, donc si le joueur arrive à sortir il gagne cet
+  équipement ». L'arme, l'armure et les potions non bues entrent au coffre à
+  l'extraction — *une potion bue s'est exilée du deck*, et c'est ce que
+  `consommablesSurvivants` lit déjà à l'état.
+- **LE HUB N'A RIEN ENGAGÉ, donc la mort ne lui prend rien.** Elle ne passe pas
+  par `perdreLEquipement` : *on ne perd que ce qu'on a emporté*, et ce qu'on
+  avait emporté n'appartenait pas encore au coffre.
+- **Et sa pile n'a jamais quitté le coffre**, donc on ne l'ampute pas : `rentrer`
+  le ferait, faute d'y trouver un seul identifiant emporté. D'où
+  `rentrerDeFortune`, qui vit dans `logic/` et non dans le rendu — *ce qui décide
+  de ce qu'on gagne est une règle d'économie, pas un détail d'écran*, et c'est
+  ce qui la rend vérifiable sans navigateur (sept vérifications).
 - **Son tirage a SON PROPRE RNG seedé**, à côté de celui de la descente : tout
   hasard du jeu passe par un RNG seedé — c'est la règle de pureté de `logic/` —
   mais consommer celui de la descente ferait qu'appuyer sur le bouton changerait

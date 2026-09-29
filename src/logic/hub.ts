@@ -617,6 +617,40 @@ export function chargementDeFortune(rng: Rng): Chargement {
   return { mains: [arme, null], armure, pile }
 }
 
+/**
+ * REMONTER D'UNE DESCENTE DE FORTUNE.
+ *
+ * **Ce qu'on a emporté est un ÉQUIPEMENT, pas un deck** — donc sortir vivant,
+ * c'est le GAGNER. Tranché par Keko : « le loadout de base ne donne pas que des
+ * cartes mais bien l'équipement, donc si le joueur arrive à sortir il gagne cet
+ * équipement. »
+ *
+ * Deux choses qui tiennent ensemble, et qui viennent du fait que **le hub n'a
+ * rien engagé** :
+ *
+ * - **sa pile n'a jamais quitté le coffre**, donc on ne l'ampute pas — c'est
+ *   `rentrer` qui le ferait, faute de trouver un seul identifiant emporté ;
+ * - **l'arme, l'armure et les potions non bues y entrent**, parce qu'elles
+ *   existaient pour de vrai. *Une potion bue s'est exilée du deck*, et c'est ce
+ *   que `consommablesSurvivants` lit déjà à l'état.
+ *
+ * À la MORT, en revanche, il n'y a rien à faire : *on ne perd que ce qu'on a
+ * emporté*, et ce qu'on avait emporté n'appartenait pas encore au coffre.
+ */
+export function rentrerDeFortune(
+  hub: Hub,
+  butin: number,
+  survivants: Consommable[],
+  tresors: Carte[],
+  emporte: Chargement,
+): Hub {
+  const rentre = rentrer(hub, butin, consommablesDeLaPile(hub.chargement.pile), tresors)
+  return {
+    ...rentre,
+    reserve: [...rentre.reserve, ...equipement(emporte), ...survivants],
+  }
+}
+
 /** Reste-t-il de la place pour un consommable ? */
 export function pilePleine(chargement: Chargement): boolean {
   return chargement.pile.every((c) => c !== null)
