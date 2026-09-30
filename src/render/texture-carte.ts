@@ -286,8 +286,18 @@ const AJOUR: readonly [number, number, number, number] = [96.4, 30, 1.8, 26]
 export type PisteCadre = 'franc' | 'encoche' | 'crans' | 'corne' | 'perfore' | 'ajour'
 
 /**
- * La piste à l'essai, lue UNE fois : c'est un réglage de session, donc il ne
- * change jamais en cours de route et n'a pas à entrer dans `signature()`.
+ * **L'ENCOCHÉ EST LE CADRE DES CARTES DE DECK, plus un essai.** Keko l'avait
+ * retenu — « j'aime bien les encoches mais je les voudrais au niveau du titre
+ * et avec la bordure un poil plus épaisse » — puis, en découvrant l'écran du
+ * deck : « pourquoi on n'a plus [le] design des cartes de deck ? » *Il était
+ * resté derrière son paramètre d'URL*, donc invisible dans le jeu.
+ *
+ * Les cinq autres pistes restent joignables pour comparer, et `?cadre=0` rend
+ * la coque déchirée nue : *ce qui a servi à choisir doit rester ouvrable*, même
+ * une fois le choix fait.
+ *
+ * Lue UNE fois : c'est un réglage de session, donc il ne change jamais en cours
+ * de route et n'a pas à entrer dans `signature()`.
  */
 const PISTE_CADRE: PisteCadre | null = (() => {
   const demande = new URLSearchParams(location.search).get('cadre')
@@ -299,7 +309,8 @@ const PISTE_CADRE: PisteCadre | null = (() => {
     '5': 'perfore',
     '6': 'ajour',
   }
-  return demande === null ? null : (pistes[demande] ?? null)
+  if (demande === null) return 'encoche'
+  return pistes[demande] ?? null
 })()
 
 const SILHOUETTES: Partial<Record<PisteCadre, readonly [number, number][]>> = {
@@ -705,10 +716,10 @@ export async function peindreCarte(
   ctx.fillStyle = '#00000030'
   ctx.fillRect(0, 0, LARGE, HAUT)
 
-  // LA COQUE, en laiton plein — déchirée, franche si c'est un trésor, et à
-  // l'essai si c'est une carte de DECK (`?r3f&cadre=1|2|3`). Une pièce
-  // d'équipement se reconnaît à son compteur : elle garde la déchirure, parce
-  // que *c'est d'elle que les cartes sont arrachées.*
+  // LA COQUE, en laiton plein — déchirée, franche si c'est un trésor, ENCOCHÉE
+  // si c'est une carte de DECK (les autres pistes restent sous `?cadre=`). Une
+  // pièce d'équipement se reconnaît à son compteur : elle garde la déchirure,
+  // parce que *c'est d'elle que les cartes sont arrachées.*
   const deDeck = carte.tresor !== true && carte.compteur === undefined
   const piste = deDeck ? PISTE_CADRE : null
   const coque =

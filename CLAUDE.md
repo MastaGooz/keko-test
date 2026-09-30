@@ -4811,7 +4811,7 @@ trésors maintenant ? »
 marchent plus dessus : un trésor d'or et une arme épique partagent leur métal
 et n'ont pas la même silhouette.
 
-**TROIS CADRES À L'ESSAI POUR LA CARTE DE DECK — `?r3f&cadre=1|2|3`.** Keko :
+**LE CADRE DE LA CARTE DE DECK : L'ENCOCHÉ — et six pistes ont été comparées.** Keko :
 « je voudrais que tu me proposes un nouveau cadre pour les cartes de deck
 (celles générées par l'équipement) afin de bien les distinguer. »
 
@@ -4837,7 +4837,15 @@ bas : *un signe posé sur le montant droit ou sur le bord bas n'existe pas en
 combat.* C'est ce qui condamne l'ajour et affaiblit l'encoche, et ce qui donne
 l'avantage au corné et au perforé.
 
-**RETENU PAR KEKO : L'ENCOCHÉ, recalé par lui.** « J'aime bien les encoches
+**RETENU PAR KEKO, ET C'EST LE DÉFAUT DEPUIS.** *Il est resté deux jours
+derrière son paramètre d'URL*, donc invisible dans le jeu — Keko, en découvrant
+l'écran du deck : « pourquoi on n'a plus [le] design des cartes de deck ? »
+**Un choix qui ne devient pas le défaut n'a pas été fait** : `PISTE_CADRE` vaut
+`encoche` sans paramètre, les cinq autres pistes restent joignables pour
+comparer, et `?cadre=0` rend la coque déchirée nue — *ce qui a servi à choisir
+doit rester ouvrable, même une fois le choix fait.*
+
+**L'ENCOCHÉ, recalé par Keko.** « J'aime bien les encoches
 mais je les voudrais au niveau du titre et avec la bordure un poil plus
 épaisse. » Les deux entailles se centrent donc sur `yNom` (66,5 % de la
 hauteur) — *elles cessent d'être un accident au milieu du montant pour devenir
