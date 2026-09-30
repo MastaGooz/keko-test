@@ -5451,11 +5451,35 @@ qu'une pièce riche se lise comme une pièce pauvre, or **il n'y a qu'un deck et
 on ne le compare à rien**. Le zoom d'une pièce, lui, garde ses quatre colonnes —
 vérifié inchangé au pixel.
 
-**25 est le plafond du catalogue** — deux armes à huit modèles, une armure à
-six, trois consommables distincts — et à 25 la carte fait encore 63 px sur un
-téléphone, plus qu'une case de coffre, avec la loupe pour lire. Au-delà elle
-continuerait de rétrécir : *c'est le jour où il faudra faire défiler, pas
-avant.*
+**À PARTIR DE COMBIEN ÇA COÛTE ? SEIZE MODÈLES — et c'est le nombre de MODÈLES,
+pas de cartes.** La grille groupe les doublons, donc un deck de trente cartes
+faites de six modèles occupe six cases. Mesuré à 844 x 390, en largeur apparente
+d'une carte :
+
+| modèles | au repos | sous la loupe |
+|---|---|---|
+| 6 | 118 px | 184 px |
+| 12 (le deck le plus long d'aujourd'hui) | 94 px | 184 px |
+| 16 | 88 px | 184 px |
+| 20 | 71 px | 160 px |
+| 25 | 63 px | 143 px |
+
+**Jusqu'à seize, la loupe RATTRAPE tout** : elle reste à son plafond — 47 % de
+la hauteur d'écran, soit 184 px sur un téléphone, la taille à laquelle une carte
+se lit sans effort (`CIBLE_LOUPE_PX`). *Le repos rétrécit, mais ce qu'on lit ne
+bouge pas.* Au-delà de seize, la grille devient si serrée que la loupe elle-même
+n'atteint plus son plafond : c'est **là** que ça commence à se payer, et c'est
+un seuil doux.
+
+Deux repères pour situer : au repos la carte reste plus grande qu'une case de
+coffre (46 px à ce format) **même à trente modèles**, et **25 est le plafond du
+catalogue** — deux armes à huit modèles, une armure à six, trois consommables
+distincts. *Le seuil est donc hors de portée du contenu qui existe*, et le deck
+le plus long qu'on sache produire aujourd'hui fait 23 cartes pour 12 modèles.
+
+S'il fallait un jour aller au-delà, le levier est dans cet ordre : lever le
+plafond de la loupe (le 0,66), puis faire défiler la grille comme le coffre.
+*Pas avant.*
 
 **ET LA CARTE GROSSIE GARDE UNE MARGE, en haut comme en bas.** Keko : « le zoom
 fait dépasser les cartes en haut ou en bas selon la ligne, donc un bout de la
