@@ -4091,6 +4091,34 @@ comme la largeur du rail suit celle de son bouton, elle tombe de 185 à **130 px
 — *55 px rendus aux meubles sur un téléphone*, un cinquième de la largeur au
 lieu d'un quart.
 
+**ET LE VRAI COUPABLE ÉTAIT LA POLICE.** Keko a reformulé : « la police du
+bouton deck est trop grosse par rapport aux autres polices de l'interface, on
+peut pas mettre la même police que celle des catégories du coffre et un bouton
+dans le même style graphique ? là ça dénote totalement, c'est super moche ».
+
+*Les boutons étaient peints en `system-ui`* — **le seul sans-serif système de
+tout l'écran**, en gras, plus gros que le reste. **Ce n'était pas une question
+de taille, c'était une question de FAMILLE** : un bouton qui parle une autre
+langue que la page dénote quel que soit son corps, et c'est pour ça que deux
+passes sur les dimensions n'avaient rien réglé.
+
+Même recette que les onglets du coffre : **Cinzel, capitales, `0,08em`
+d'approche**, et un corps du même ordre — 12,5 px sur un bouton de 48, 10,9 sur
+le petit, pour 8,8 px d'onglet et 13,6 px d'entrée de rail. *Il reste au-dessus
+de l'onglet parce qu'il agit* ; il n'a plus à crier pour le dire. La plaque, sa
+ferronnerie et ses angles droits ne bougent pas : ils parlaient déjà la langue
+du lieu.
+
+**ET LE TEXTE ENTRE DANS LA PLAQUE, ce n'est plus la plaque qui suit le texte.**
+Un canvas qui peint avant `document.fonts.ready` retombe SILENCIEUSEMENT sur
+Georgia, plus étroite — et la largeur mesurée est déjà partie dans le plan, qui
+en tire celle du rail. La deuxième passe en Cinzel déborderait donc de sa
+plaque. *Une valeur déjà consommée ailleurs ne peut plus changer, donc c'est le
+corps qui cède* — la règle du cartouche des cartes, appliquée ici.
+
+Le rail retombe à **149 px** (185 à l'origine), toujours sans tronquer aucune de
+ses huit entrées.
+
 **CE QUI A CASSÉ EN CHEMIN, ET C'ÉTAIT PRÉVISIBLE : le rail ne tenait plus son
 propre nom.** « ARMURERIE » y perdait ses trois dernières lettres. Le nom était
 en `min(0,85rem, rail x 0,15)`, et à 0,15 c'est le `rem` qui commandait seul :

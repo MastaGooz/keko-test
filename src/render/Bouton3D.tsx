@@ -132,31 +132,45 @@ function plaque(
    * réduite d'autant, et son texte avec. *Deux lignes se serrent dans la
    * hauteur, elles ne la repoussent pas.*
    */
-  const lignes = texte.split('\n')
+  const lignes = texte.split('\n').map((l) => l.toUpperCase())
   const h = 128
-  const corps = Math.round(h * 0.33)
-  const interligne = Math.round(corps * 1.22)
-  const police = `600 ${corps}px system-ui, -apple-system, "Segoe UI", sans-serif`
+  /**
+   * **LA LANGUE DES BOUTONS EST CELLE DU JEU : Cinzel, capitales, espacées.**
+   *
+   * Ils étaient peints en `system-ui` — *le seul sans-serif système de tout
+   * l'écran*, en gras et plus gros que le reste. Keko : « la police du bouton
+   * deck est trop grosse par rapport aux autres polices de l'interface, on peut
+   * pas mettre la même police que celle des catégories du coffre ? là ça dénote
+   * totalement ». **Ce n'était pas une question de taille, c'était une question
+   * de FAMILLE** : un bouton qui parle une autre langue que la page dénote quel
+   * que soit son corps.
+   *
+   * Même recette que les onglets du coffre : capitales, `0,08em` d'approche, et
+   * un corps du même ORDRE — 12,5 px sur un bouton de 48, 10,9 sur le petit,
+   * pour 8,8 px d'onglet et 13,6 px d'entrée de rail. *Il reste au-dessus de
+   * l'onglet parce qu'il agit* ; il n'a plus à crier pour le dire.
+   */
+  const APPROCHE = '0.08em'
+  const REMPLISSAGE = 0.62
+  const police = (corps: number): string => `600 ${corps}px Cinzel, Georgia, serif`
   const mesure = document.createElement('canvas').getContext('2d')
-  let large = h * 3
-  if (mesure !== null) {
-    mesure.font = police
-    /**
-     * **LA MASSE D'UN BOUTON EST DANS SA LARGEUR, pas dans sa hauteur.**
-     *
-     * La hauteur est bloquée au plancher tactile — 48 px, ce que le doigt
-     * demande — donc c'est le seul endroit où il restait du gras : le
-     * remplissage valait plus que la hauteur de la plaque (1,1 h), soit 37 %
-     * de la plaque pour du vide. *Un bouton reste tapable en étant moins
-     * large* ; il ne reste pas lisible en étant moins haut. Keko : « sur
-     * téléphone je trouve les boutons trop gros par rapport à l'échelle des
-     * autres éléments », puis « je ne vois pas de différence » quand seule la
-     * hauteur avait bougé — *six pixels ne se voient pas.*
-     *
-     * Mesuré à 48 px de haut : « Descendre » passe de 143 à 112 px de large.
-     */
-    large = Math.round(Math.max(...lignes.map((l) => mesure.measureText(l).width)) + h * 0.62)
+  const largeurTexte = (corps: number): number => {
+    if (mesure === null) return h * 2
+    mesure.font = police(corps)
+    mesure.letterSpacing = APPROCHE
+    return Math.max(...lignes.map((l) => mesure.measureText(l).width))
   }
+
+  /**
+   * **LA MASSE D'UN BOUTON EST DANS SA LARGEUR, pas dans sa hauteur.** La
+   * hauteur est bloquée au plancher tactile — 48 px, ce que le doigt demande —
+   * donc c'est le seul endroit où il restait du gras : le remplissage valait
+   * plus que la hauteur de la plaque (1,1 h), soit 37 % de la plaque pour du
+   * vide. *Un bouton reste tapable en étant moins large* ; il ne reste pas
+   * lisible en étant moins haut.
+   */
+  const corpsVise = Math.round(h * 0.26)
+  let large = Math.round(largeurTexte(corpsVise) + h * REMPLISSAGE)
   // **UN RAPPORT PLANCHER**, pour que deux boutons d'un même groupe aient la
   // même largeur : *deux actions de même rang ne peuvent pas avoir deux
   // tailles.* La plaque s'élargit, son texte reste centré.
@@ -176,27 +190,50 @@ function plaque(
   const { fond, trait, encre } = TONS[ton]
   const marge = h * 0.06
   const rayon = h * RAYON
-  const degrade = ctx.createLinearGradient(0, 0, 0, h)
-  degrade.addColorStop(0, fond[0])
-  degrade.addColorStop(1, fond[1])
 
-  ctx.beginPath()
-  ctx.roundRect(marge, marge, large - marge * 2, h - marge * 2, rayon)
-  ctx.fillStyle = degrade
-  ctx.fill()
-  ctx.strokeStyle = trait
-  ctx.lineWidth = Math.max(1, h * 0.018)
-  ctx.stroke()
+  const peindre = (): void => {
+    ctx.clearRect(0, 0, large, h)
+    const degrade = ctx.createLinearGradient(0, 0, 0, h)
+    degrade.addColorStop(0, fond[0])
+    degrade.addColorStop(1, fond[1])
 
-  ctx.font = police
-  ctx.fillStyle = encre
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  // LE BLOC SE CENTRE, pas chaque ligne : deux lignes posées l'une sous l'autre
-  // depuis le milieu pencheraient vers le bas.
-  const haut = h * 0.53 - ((lignes.length - 1) * interligne) / 2
-  lignes.forEach((ligne, i) => ctx.fillText(ligne, large / 2, haut + i * interligne))
-  texture.needsUpdate = true
+    ctx.beginPath()
+    ctx.roundRect(marge, marge, large - marge * 2, h - marge * 2, rayon)
+    ctx.fillStyle = degrade
+    ctx.fill()
+    ctx.strokeStyle = trait
+    ctx.lineWidth = Math.max(1, h * 0.018)
+    ctx.stroke()
+
+    /**
+     * **LE TEXTE ENTRE DANS LA PLAQUE, ce n'est plus la plaque qui suit le
+     * texte** — parce qu'elle a déjà été mesurée et que sa largeur est partie
+     * dans le plan. Un canvas qui peint avant `document.fonts.ready` retombe
+     * SILENCIEUSEMENT sur Georgia, plus étroite : la deuxième passe en Cinzel
+     * déborderait. *Une valeur déjà consommée ailleurs ne peut plus changer,
+     * donc c'est le corps qui cède* — la règle du cartouche des cartes.
+     */
+    const place = large - h * REMPLISSAGE
+    const corps = Math.max(1, Math.min(corpsVise, Math.floor((corpsVise * place) / largeurTexte(corpsVise))))
+    const interligne = Math.round(corps * 1.34)
+    ctx.font = police(corps)
+    ctx.letterSpacing = APPROCHE
+    ctx.fillStyle = encre
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    // LE BLOC SE CENTRE, pas chaque ligne : deux lignes posées l'une sous
+    // l'autre depuis le milieu pencheraient vers le bas. Et l'approche décale
+    // le dernier caractère, donc on recentre d'une demi-approche.
+    const haut = h * 0.53 - ((lignes.length - 1) * interligne) / 2
+    const centre = large / 2 - corps * 0.04
+    lignes.forEach((ligne, i) => ctx.fillText(ligne, centre, haut + i * interligne))
+    texture.needsUpdate = true
+  }
+
+  peindre()
+  // ET ON REPEINT QUAND LA POLICE ARRIVE : la règle est écrite pour les cartes
+  // et pour les slots, elle vaut pour tout ce qui peint.
+  if (document.fonts.status !== 'loaded') void document.fonts.ready.then(peindre)
   return fait
 }
 
