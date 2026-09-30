@@ -49,36 +49,32 @@ export const TEXTE_FORTUNE = 'Équipement\ngratuit'
 export const TEXTE_DECK = 'Deck'
 
 /**
- * CE QUE LA CASE DU COFFRE VAUT PAR RAPPORT À CELLE DU CHARGEMENT :
- * `?r3f&coffre-taille=1` la met à la même taille.
+ * **LE COFFRE A CINQ COLONNES, PARTOUT.** Tranché par Keko après comparaison :
+ * « je préfère 5 colonnes partout ».
  *
- * Demandé par Keko — « on peut faire un test avec les cartes du coffre à la même
- * taille que celles de l'équipement ? » *Un essai qui se juge doit pouvoir
- * s'ouvrir d'un lien*, comme les pistes de cadre et le banc du deck : il compare
- * les deux d'un aller-retour, sans attendre un déploiement entre les deux.
+ * *Avant, le compte était une CONSÉQUENCE* : la case tenait sa taille du
+ * chargement (0,68 de la sienne), et le nombre tombait de la largeur divisée par
+ * cette taille. Sur un écran haut ça donnait 5 ; sur un écran large et court —
+ * un téléphone en paysage avec la barre du navigateur — le chargement était
+ * borné par la HAUTEUR, donc la case rétrécissait et la largeur n'avait pas
+ * bougé : **7 colonnes de cartes minuscules.**
  *
- * Le défaut reste 0,68 tant qu'il n'a pas tranché.
+ * C'est donc l'inverse maintenant : **on fixe le compte et la case prend ce qui
+ * reste.** À 956 x 340 la carte passe de ~24 à ~33 px, et le coffre montre moins
+ * de rangées — *l'échange est réel, et c'est Keko qui l'a tranché.*
+ *
+ * `?r3f&colonnes=<n>` reste ouvrable pour en essayer un autre : *ce qui a servi
+ * à choisir doit rester ouvrable, même une fois le choix fait.*
  */
-/**
- * COMBIEN DE COLONNES LE COFFRE DOIT TENIR : `?r3f&colonnes=5`.
- *
- * Par défaut il n'en décide pas — *le nombre tombe de la taille des cases*, qui
- * est une fraction de celle du chargement. Avec ce paramètre, c'est l'inverse :
- * on fixe les colonnes et la case prend ce qui reste, donc elle GRANDIT sur un
- * écran large et court, et le coffre montre moins de rangées.
- *
- * Demandé par Keko — « ce serait mieux d'avoir 5 colonnes partout non ? » : le
- * banc existe pour que l'échange se juge sur l'écran, pas sur le principe.
- */
+const COLONNES_COFFRE = 5
+
 export function COLONNES_URL(): number {
   const demande = Number(new URLSearchParams(location.search).get('colonnes'))
-  return Number.isFinite(demande) && demande >= 2 ? Math.min(12, Math.round(demande)) : 0
+  return Number.isFinite(demande) && demande >= 2
+    ? Math.min(12, Math.round(demande))
+    : COLONNES_COFFRE
 }
 
-export function PART_COFFRE(): number {
-  const demande = Number(new URLSearchParams(location.search).get('coffre-taille'))
-  return Number.isFinite(demande) && demande > 0 ? Math.min(1, demande) : 0.68
-}
 
 
 
@@ -512,11 +508,10 @@ export function planArmurerie(
    * du chargement, et le coffre en est une fraction. Il n'y a toujours pas deux
    * chiffres à rejuger l'un contre l'autre.
    */
-  // À COLONNES IMPOSÉES, c'est la case qui cède : elle prend la largeur divisée
-  // par le compte demandé, au lieu de suivre celle du chargement.
+  // LA CASE CÈDE, LE COMPTE COMMANDE : elle prend la largeur divisée par le
+  // nombre de colonnes, au lieu que le nombre tombe de sa taille.
   const colonnesVoulues = COLONNES_URL()
-  const tailleCoffre =
-    colonnesVoulues > 0 ? grille.l / (colonnesVoulues * 1.16) : tailleCharge * PART_COFFRE()
+  const tailleCoffre = grille.l / (colonnesVoulues * 1.16)
 
   // Une case, plus un cheveu : la grille doit respirer sans s'étaler.
   const pasX = tailleCoffre * 1.16
@@ -527,7 +522,7 @@ export function planArmurerie(
     l: gouttiere * 0.44,
     h: grille.h,
   }
-  const colonnes = colonnesVoulues > 0 ? colonnesVoulues : Math.max(2, Math.floor(grille.l / pasX))
+  const colonnes = colonnesVoulues
   const lignes = Math.max(1, Math.floor(grille.h / pasY))
   // LES LIGNES S'ÉTIRENT UN PEU POUR REMPLIR, mais à peine : à pas fixe il
   // restait une fraction de rangée en bas du coffre, et à pas libre les deux

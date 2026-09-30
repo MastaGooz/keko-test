@@ -3936,6 +3936,26 @@ renderer. Trois choses à savoir :
 - **on ne coupe pas ce qu'on TIENT.** Une carte sortie du coffre traverse
   l'écran : le plan la trancherait au bord du meuble qu'elle vient de quitter.
 
+**ET TOUT CE QUI DÉBORDE DE LA CARTE DOIT ÊTRE COUPÉ AVEC ELLE.** Keko : « quand
+le coffre est rempli et qu'on doit scroller, les cartes affichées en bas sont
+coupées, mais l'effet holographique des cartes diamant ou le brillant des cartes
+or n'est pas coupé et continue dans l'image de la carte ». Deux objets y
+échappaient, pour deux raisons différentes :
+
+- **l'auréole du diamant est un `ShaderMaterial` écrit à la main**, donc elle
+  n'avait aucun des morceaux que three injecte d'office. Poser `clippingPlanes`
+  dessus ne faisait rien : il faut les quatre `#include <clipping_planes_*>` ET
+  `clipping: true`, qui est ce qui déclare `NUM_CLIPPING_PLANES` à la
+  compilation. *Un matériau écrit à la main ne bénéficie d'aucune des règles du
+  moteur qu'il ne demande pas* ;
+- **le disque du compte avait un matériau déclaré DANS le JSX**, donc rien à
+  quoi poser un plan. Il a le sien, mémorisé comme les cinq autres — *ce qui
+  doit se faire couper doit exister quelque part où on puisse le lui dire.*
+
+La règle générale : **la liste des matériaux à découper est la liste de TOUT ce
+que la carte dessine**, pas seulement de sa face. Un effet ajouté demain devra y
+entrer, sinon il traversera le meuble.
+
 La molette convertit ses pixels en lignes (un cran ordinaire vaut un peu plus
 d'une demi-rangée) et le pouce suit le doigt sans s'arrêter aux lignes : *la
 même grandeur continue pour les deux gestes.*
@@ -3945,6 +3965,24 @@ alors que seul le coffre défile. Donné aux seules cartes du coffre, il
 changerait à l'instant où l'une d'elles part dans un slot — et elle s'y
 téléporterait au lieu d'y atterrir, ce qui est précisément la correction que
 « la pièce tenue ne change jamais d'instance » avait coûté.
+
+**LE COFFRE A CINQ COLONNES, PARTOUT.** Tranché par Keko après comparaison :
+« je préfère 5 colonnes partout ».
+
+*Avant, le compte était une CONSÉQUENCE* : la case tenait sa taille du
+chargement (0,68 de la sienne) et le nombre tombait de la largeur divisée par
+cette taille. Sur un écran haut ça donnait cinq ; sur un écran large et court —
+un téléphone en paysage avec la barre du navigateur — le chargement était borné
+par la HAUTEUR, donc la case rétrécissait alors que la largeur n'avait pas
+bougé : **sept colonnes de cartes minuscules.** Le coffre ne se lisait pas de la
+même façon d'un appareil à l'autre, et *un meuble où l'on CHERCHE doit avoir la
+même grille partout.*
+
+C'est donc l'inverse : **on fixe le compte et la case prend ce qui reste.** À
+956 x 340 la carte passe de ~24 à ~33 px et le coffre montre une rangée de
+moins — l'échange est réel, et c'est celui que Keko a choisi. `?r3f&colonnes=<n>`
+reste ouvrable pour en essayer un autre : *ce qui a servi à choisir doit rester
+ouvrable, même une fois le choix fait.*
 
 **POUR ÉPROUVER LE DÉFILEMENT : `?r3f&coffre=40`.** Le coffre de départ ne
 contient que cinq objets — *on ne peut rien dire d'une barre de défilement
@@ -3962,6 +4000,13 @@ retenus :
 - **quatre modèles pour cinq colonnes**, pas cinq : à cinq, le motif retombait
   en phase d'une ligne à l'autre et toutes les lignes étaient identiques au
   pixel près — *on ne voyait pas que ça défilait.*
+
+**LIMITE CONNUE DEPUIS LES PILES : `?coffre=40` ne fait plus 40 CASES.** Le
+coffre regroupe par signature, donc les quarante copies retombent sur quatre
+piles, et il ne reste que treize cases en tout — à cinq colonnes, ça tient en
+trois rangées et *le coffre ne défile plus du tout*. Pour éprouver la coupe, on
+force donc la grille à s'allonger : **`?r3f&coffre=40&colonnes=3`**. Le jour où
+il y aura plus de modèles, le banc retrouvera son sens tout seul.
 
 **Le coffre s'est donc centré en largeur.** À grandes cartes il n'en tient plus
 que trois par ligne, et calées à gauche elles laissaient une colonne de vide

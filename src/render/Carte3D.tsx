@@ -441,6 +441,23 @@ export function Carte3D({
   const { size, viewport } = useThree()
   const dpr = viewport.dpr
 
+  /**
+   * LE DISQUE DU COMPTE A SON MATÉRIAU, et non plus un matériau en ligne : *il
+   * faut pouvoir lui poser les plans de découpe*, et un matériau déclaré dans le
+   * JSX se recrée sans qu'on puisse le recompiler. Il déborde du coin de la
+   * carte, donc il survivait à la coupe du coffre comme l'auréole.
+   */
+  const matCompte = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        transparent: true,
+        // IL N'ÉCRIT PAS DE PROFONDEUR : son plan déborde de la carte, et *ce
+        // qui est transparent ne doit rien cacher.*
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    [],
+  )
   const { face, laiton, halo, verso, aureole } = useMemo(() => {
     const laiton = new THREE.MeshStandardMaterial({
       // LA TRANCHE SUIT LE CADRE. La coque peinte prend la teinte de la
@@ -691,10 +708,28 @@ ${nuanceur.fragmentShader}`
         uArc: { value: 1 },
         uTon: { value: new THREE.Color('#ffb545') },
       },
+      /**
+       * **ELLE SE FAIT COUPER COMME LE RESTE — et un `ShaderMaterial` ne le
+       * sait pas tout seul.** Keko : « quand le coffre est rempli et qu'on
+       * scrolle, les cartes du bas sont coupées mais l'effet holographique des
+       * diamants ou le brillant des cartes or n'est pas coupé ».
+       *
+       * Les plans de découpe posés sur un matériau n'agissent que si son
+       * nuanceur porte les morceaux de three qui font le `discard` — les autres
+       * matériaux de la carte les ont d'office, celui-ci est écrit à la main.
+       * Il faut donc les quatre `#include` ET `clipping: true`, qui est ce qui
+       * déclare `NUM_CLIPPING_PLANES` au moment de la compilation. *Un matériau
+       * écrit à la main ne bénéficie d'aucune des règles du moteur qu'il ne
+       * demande pas.*
+       */
+      clipping: true,
       vertexShader: `varying vec2 vUvA;
+        #include <clipping_planes_pars_vertex>
         void main() {
           vUvA = uv;
-          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+          #include <clipping_planes_vertex>
         }`,
       fragmentShader: `uniform sampler2D uTexte;
         uniform float uTemps;
@@ -702,7 +737,9 @@ ${nuanceur.fragmentShader}`
         uniform float uArc;
         uniform vec3 uTon;
         varying vec2 vUvA;
+        #include <clipping_planes_pars_fragment>
         void main() {
+          #include <clipping_planes_fragment>
           float masque = texture2D(uTexte, vUvA).a;
           vec2 d = vUvA - 0.5;
           float angle = atan(d.y, d.x) / 6.28318;
@@ -914,12 +951,21 @@ ${nuanceur.fragmentShader}`
   // passer de « rien » à « deux plans » change le nuanceur, pas seulement une
   // valeur. Les matériaux sont propres à l'instance, donc on ne coupe jamais
   // la carte du voisin.
+  // LA TOILE DU COMPTE se choisit sur les pixels physiques qu'il couvre, et le
+  // dessin s'y peint à sa taille d'affichage : *réduire un bitmap n'est pas
+  // rendre du texte.*
   useEffect(() => {
-    for (const m of [face, laiton, halo, verso]) {
+    if (pile === undefined || pile <= 0) return
+    matCompte.map = textureNombre(pile, (largeurPx * pileTaille) / PART_DISQUE)
+    matCompte.needsUpdate = true
+  }, [matCompte, pile, largeurPx, pileTaille])
+
+  useEffect(() => {
+    for (const m of [face, laiton, halo, verso, aureole, matCompte]) {
       m.clippingPlanes = clipper
       m.needsUpdate = true
     }
-  }, [clipper, face, laiton, halo, verso])
+  }, [clipper, face, laiton, halo, verso, aureole, matCompte])
 
   // LA TEXTURE DU DOS N'ARRIVE QUE QUAND LA CULBUTE COMMENCE : elle sort du
   // même cache partagé que les faces, donc la première la paie et les
@@ -1267,17 +1313,10 @@ ${nuanceur.fragmentShader}`
         >
           {/* La toile est plus large que le disque : son ombre y loge. */}
           <planeGeometry args={[pileTaille / PART_DISQUE, pileTaille / PART_DISQUE]} />
-          <meshBasicMaterial
-            // LA TOILE SE CHOISIT SUR LES PIXELS PHYSIQUES qu'elle couvre, et
-            // le dessin s'y peint à sa taille d'affichage : *réduire un bitmap
-            // n'est pas rendre du texte.* La règle est celle des cartes.
-            map={textureNombre(pile, (largeurPx * pileTaille) / PART_DISQUE)}
-            transparent
-            // IL N'ÉCRIT PAS DE PROFONDEUR : son plan déborde de la carte, et
-            // *ce qui est transparent ne doit rien cacher.*
-            depthWrite={false}
-            toneMapped={false}
-          />
+          {/* LA TOILE SE CHOISIT SUR LES PIXELS PHYSIQUES qu'elle couvre, et le
+              dessin s'y peint à sa taille d'affichage : *réduire un bitmap n'est
+              pas rendre du texte.* La règle est celle des cartes. */}
+          <primitive object={matCompte} attach="material" />
         </mesh>
       )}
 
