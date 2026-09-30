@@ -916,7 +916,7 @@ export function PageArmurerie({
  */
 function CoeurIcone(): React.JSX.Element {
   return (
-    <svg className="arm-icone" viewBox="0 0 40 37" aria-hidden="true">
+    <svg className="arm-icone coeur" viewBox="0 0 40 37" aria-hidden="true">
       <defs>
         <linearGradient id="arm-coeur" x1="0" y1="0" x2="0.3" y2="1">
           <stop offset="0" stopColor="#e2565e" />

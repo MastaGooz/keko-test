@@ -5836,6 +5836,14 @@ ferronnerie que les cadres, en petit : un filet de laiton, deux coins coupés.
 L'énergie garde le cartouche pour rester de la famille, mais elle n'avait pas
 le problème : *son chiffre est DANS son symbole.*
 
+**ET LE COEUR EST UN CRAN PLUS PETIT QUE SES VOISINS** (75 % de la bande contre
+84). Keko : « je trouve le coeur des stats PV un peu gros par rapport à l'icône
+de la main ». *À hauteur égale, une masse pleine pèse plus lourd qu'un éventail
+de trois traits espacés* — ce qui se lit n'est pas la boîte du symbole, c'est
+l'encre qu'il y a dedans. C'est la même raison qui avait fait inscrire les
+symboles du rail dans leur ligne au lieu de leur donner la même taille :
+**deux dessins de densité différente ne se règlent pas au même chiffre.**
+
 **LA BANDE A GARDÉ LE BUDGET DE QUATRE MESURES ALORS QU'ELLE N'EN PORTE PLUS
 QUE TROIS.** Keko : « augmente la taille des stats pour matcher celle du symbole
 deck et de son chiffre ». *Un contenu dimensionné pour ce qu'il ne porte plus se

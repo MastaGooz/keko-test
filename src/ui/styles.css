@@ -5546,6 +5546,16 @@ body {
   filter: drop-shadow(0 1px 2px #000000a8);
 }
 
+/* LE COEUR DESCEND D'UN CRAN. Keko : « je trouve le coeur des stats PV un peu
+   gros par rapport a l'icone de la main ». *A hauteur egale, une masse pleine
+   pese plus lourd qu'un eventail de trois traits espaces* : ce n'est pas la
+   boite qui se lit, c'est l'encre qu'il y a dedans. C'est la meme raison qui a
+   fait inscrire les symboles du rail dans leur ligne au lieu de leur donner la
+   meme taille. */
+.arm-icone.coeur {
+  height: 75%;
+}
+
 
 
 /* ==========================================================================
