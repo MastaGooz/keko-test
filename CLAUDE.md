@@ -5241,12 +5241,21 @@ l'équipement qui fixe la taille — parce que c'est lui qui est CONTRAINT, ses
 sept slots devant tenir dans un panneau — et le coffre la reprend. Il n'y a
 plus de chiffre à rejuger.
 
-**POUR COMPARER LES DEUX : `?r3f&coffre-taille=1`.** Keko : « on peut faire un
-test avec les cartes du coffre à la même taille que celles de l'équipement ? »
-*Un essai qui se juge doit pouvoir s'ouvrir d'un lien* — il compare les deux d'un
-aller-retour, sans attendre un déploiement entre les deux. Le paramètre prend
-n'importe quelle fraction (`0,8`, `0,9`, `1`) ; le défaut reste 0,68 tant qu'il
-n'a pas tranché. Mesuré à 1 : le coffre passe de 5 x 3 cases à 3 x 3.
+**ET LA TAILLE ÉGALE A ÉTÉ ESSAYÉE PUIS ÉCARTÉE — ne pas la reproposer.**
+Keko a demandé à la voir — « on peut faire un test avec les cartes du coffre à la
+même taille que celles de l'équipement ? » — puis, l'ayant vue : **« finalement
+je suis pas fan du coffre à taille de l'équipement. »**
+
+*Le chiffre de 0,68 n'est donc plus seulement un arbitrage, c'est un A/B* : à
+taille égale le coffre tombe de 5 x 3 cases à **3 x 3**, et *un coffre est un
+endroit où l'on CHERCHE* — il lui faut du monde sous les yeux, là où le
+chargement montre ce qu'on emporte. Les deux meubles ne font pas le même
+travail, donc ils n'ont pas la même échelle ; **ce qui reste vrai, c'est qu'il
+n'y a qu'une taille de RÉFÉRENCE** et que le coffre en est une fraction.
+
+Le banc reste ouvrable : `?r3f&coffre-taille=<fraction>` (0,8, 0,9, 1…), parce
+que *ce qui a servi à choisir doit rester ouvrable, même une fois le choix
+fait.*
 
 **PUIS LE COFFRE EST REDESCENDU D'UN CRAN — à 68 % de cette taille.** Les noms
 de groupe ont fait passer l'équipement à deux rangées, donc ses cartes ont
