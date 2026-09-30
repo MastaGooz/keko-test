@@ -134,14 +134,28 @@ function plaque(
    */
   const lignes = texte.split('\n')
   const h = 128
-  const corps = Math.round(h * 0.36)
+  const corps = Math.round(h * 0.33)
   const interligne = Math.round(corps * 1.22)
   const police = `600 ${corps}px system-ui, -apple-system, "Segoe UI", sans-serif`
   const mesure = document.createElement('canvas').getContext('2d')
   let large = h * 3
   if (mesure !== null) {
     mesure.font = police
-    large = Math.round(Math.max(...lignes.map((l) => mesure.measureText(l).width)) + h * 1.1)
+    /**
+     * **LA MASSE D'UN BOUTON EST DANS SA LARGEUR, pas dans sa hauteur.**
+     *
+     * La hauteur est bloquée au plancher tactile — 48 px, ce que le doigt
+     * demande — donc c'est le seul endroit où il restait du gras : le
+     * remplissage valait plus que la hauteur de la plaque (1,1 h), soit 37 %
+     * de la plaque pour du vide. *Un bouton reste tapable en étant moins
+     * large* ; il ne reste pas lisible en étant moins haut. Keko : « sur
+     * téléphone je trouve les boutons trop gros par rapport à l'échelle des
+     * autres éléments », puis « je ne vois pas de différence » quand seule la
+     * hauteur avait bougé — *six pixels ne se voient pas.*
+     *
+     * Mesuré à 48 px de haut : « Descendre » passe de 143 à 112 px de large.
+     */
+    large = Math.round(Math.max(...lignes.map((l) => mesure.measureText(l).width)) + h * 0.62)
   }
   // **UN RAPPORT PLANCHER**, pour que deux boutons d'un même groupe aient la
   // même largeur : *deux actions de même rang ne peuvent pas avoir deux

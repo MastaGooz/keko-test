@@ -5454,7 +5454,13 @@ body {
   background: none;
   color: #c7b48c;
   font-family: Cinzel, Georgia, serif;
-  font-size: min(0.85rem, calc(var(--rail-l) * 0.15));
+  /* LE NOM SUIT LA LARGEUR DU RAIL, et le coefficient a du baisser quand le
+     rail a maigri avec son bouton : a 0,15 c'etait le `rem` qui commandait
+     seul, donc rien dans la taille du mot ne savait que la colonne s'etait
+     resserree -- et « ARMURERIE » y perdait ses trois dernieres lettres.
+     *Un contenu qui ne suit qu'une dimension deborde des que l'autre se
+     resserre*, la meme lecon que la bande de stats et les onglets du coffre. */
+  font-size: min(0.85rem, calc(var(--rail-l) * 0.09));
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-align: left;

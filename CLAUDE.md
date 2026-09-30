@@ -4078,9 +4078,27 @@ coffre qui vit déjà sous le plancher : *il se tape moins souvent et il n'engag
 rien.* Les plafonds ne bougent pas, donc **sur grand écran rien ne change** :
 c'est la part de hauteur qui y commande, et elle avait été réglée là.
 
-*Ce que ça rend, et ce n'était pas visé* : la largeur du rail suit celle de son
-bouton, donc elle tombe de 185 à 165 px — 20 px rendus aux meubles — et les
-entrées de destinations gagnent trois pixels de haut.
+**MAIS SIX PIXELS NE SE VOIENT PAS.** Keko, après cette première passe : « je
+ne vois pas de différence » — et il avait raison, 54 → 48 fait 11 %. *La
+hauteur ne pouvait pas donner plus, elle était déjà à sa limite ;* **la masse
+d'un bouton est dans sa LARGEUR.** Le remplissage horizontal valait plus que la
+hauteur de la plaque (1,1 h), soit 37 % de la plaque pour du vide — et *un
+bouton reste tapable en étant moins large, il ne reste pas lisible en étant
+moins haut.* Il tombe à 0,62 h, le corps du texte de 0,36 à 0,33.
+
+Mesuré à 48 px de haut : « Descendre » passe de 143 à **112 px de large**. Et
+comme la largeur du rail suit celle de son bouton, elle tombe de 185 à **130 px**
+— *55 px rendus aux meubles sur un téléphone*, un cinquième de la largeur au
+lieu d'un quart.
+
+**CE QUI A CASSÉ EN CHEMIN, ET C'ÉTAIT PRÉVISIBLE : le rail ne tenait plus son
+propre nom.** « ARMURERIE » y perdait ses trois dernières lettres. Le nom était
+en `min(0,85rem, rail x 0,15)`, et à 0,15 c'est le `rem` qui commandait seul :
+*rien dans la taille du mot ne savait que la colonne s'était resserrée.* Le
+coefficient tombe à 0,09 — **un contenu qui ne suit qu'une dimension déborde dès
+que l'autre se resserre**, la leçon déjà payée sur la bande de stats et les
+onglets du coffre. Vérifié : aucune des huit entrées ne tronque, à 844 x 390
+comme à 667 x 320.
 
 **Et la colonne fait au moins la largeur de son bouton.** Il vit dedans et sa
 largeur sort de son texte : trop étroite, la colonne le laissait déborder sur
