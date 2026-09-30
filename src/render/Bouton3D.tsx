@@ -53,7 +53,7 @@ export type CranBouton = 'ecran' | 'rail' | 'mineur'
 /** Part de hauteur d'écran, plancher, plafond — un rang par cran. */
 const CRANS: Record<CranBouton, { part: number; min: number; max: number }> = {
   ecran: { part: 0.09, min: 48, max: 76 },
-  rail: { part: 0.09, min: 38, max: 76 },
+  rail: { part: 0.09, min: 32, max: 76 },
   mineur: { part: 0.076, min: 42, max: 62 },
 }
 

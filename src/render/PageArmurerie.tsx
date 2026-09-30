@@ -38,7 +38,7 @@ import { deuxMains, peutDescendre } from '../logic/hub.ts'
 import { SON_POSER, jouerSon } from './sons.ts'
 import { tailleBouton } from './Bouton3D.tsx'
 import { Z_PLAN } from './armurerie-plan.ts'
-import { urlDeLArmurerie, urlDeLArmurier } from '../ui/art.ts'
+import { urlDeLArmurier } from '../ui/art.ts'
 import { DESTINATIONS } from './destinations.ts'
 
 /**
@@ -637,7 +637,13 @@ export function PageArmurerie({
             className={`arm-lieu${i === 0 ? ' actif' : ''}`}
             disabled={!d.ouvert}
           >
-            <img className="arm-lieu-blason" src={urlDeLArmurerie()} alt="" draggable={false} />
+            {/* PAS D'EMBLÈME SUR UNE ENTRÉE, et c'est ce qui rend son nom
+                lisible. Les huit portaient LE MÊME écu — celui de l'armurerie,
+                recyclé du bandeau disparu : *un symbole répété à l'identique
+                sur huit lignes ne distingue aucune ligne*, il prenait deux
+                caractères et demi de largeur au mot et débordait de la hauteur
+                de sa ligne (Keko : « les icônes dépassent des lignes »). Il
+                reviendra le jour où chaque destination aura le sien. */}
             <span className="arm-lieu-nom">{d.nom}</span>
           </button>
         ))}

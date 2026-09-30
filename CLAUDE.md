@@ -4240,6 +4240,32 @@ puisque la colonne ne descend jamais sous son bouton.* Zéro débordement, aucun
 entrée tronquée. **Sur grand écran rien ne bouge** : c'est le plafond qui y
 commande, et il n'a pas changé.
 
+**PUIS 32, ET L'EMBLÈME A QUITTÉ LES ENTRÉES.** Keko : « je trouve toujours les
+boutons trop [gros] et les onglets du hub illisibles — les icônes dépassent des
+lignes en plus ».
+
+**Les deux demandes se combattaient, et c'est ce qu'il fallait voir** : *la
+colonne ne descend jamais sous son bouton*, donc réduire le bouton rétrécit le
+rail — et le nom d'une entrée était borné par la largeur du rail. **Rendre les
+boutons plus petits rendait donc les onglets plus petits**, à l'exact opposé de
+ce qui était demandé.
+
+Ce qui a débloqué les deux : **l'écu.** Les huit entrées portaient LE MÊME —
+celui de l'armurerie, recyclé du bandeau disparu. *Un symbole répété à
+l'identique sur huit lignes ne distingue aucune ligne* : il ne disait rien, il
+prenait deux caractères et demi de largeur au mot, et à `1,9em` il **dépassait
+de la hauteur de sa ligne** dès que le rail se serrait — 20 px de dessin pour
+16 px de ligne à 667 x 320, donc il mordait le filet et sa voisine.
+
+Il est retiré, le mot récupère sa largeur, et le coefficient du nom passe de
+0,09 à 0,125. **Le bouton peut alors descendre sans emporter l'onglet avec
+lui.** L'écu reviendra le jour où chaque destination aura le sien.
+
+Mesuré, à 844 x 390 puis 667 x 320 : le nom passe de 10,6 px à **13,5 et
+12,4 px** (+27 % et +17 %), le bouton de 38 à **32 px** de haut, le rail de 118
+à **108 et 99 px** — rendus aux meubles. Zéro débordement, aucun nom tronqué, et
+plus rien ne dépasse d'une ligne.
+
 **CE QUI A CASSÉ EN CHEMIN, ET C'ÉTAIT PRÉVISIBLE : le rail ne tenait plus son
 propre nom.** « ARMURERIE » y perdait ses trois dernières lettres. Le nom était
 en `min(0,85rem, rail x 0,15)`, et à 0,15 c'est le `rem` qui commandait seul :

@@ -5586,7 +5586,7 @@ body {
      resserree -- et « ARMURERIE » y perdait ses trois dernieres lettres.
      *Un contenu qui ne suit qu'une dimension deborde des que l'autre se
      resserre*, la meme lecon que la bande de stats et les onglets du coffre. */
-  font-size: min(0.85rem, calc(var(--rail-l) * 0.09));
+  font-size: min(0.95rem, calc(var(--rail-l) * 0.125));
   letter-spacing: 0.08em;
   text-transform: uppercase;
   text-align: left;
@@ -5611,18 +5611,6 @@ body {
 .arm-lieu:disabled {
   color: #6f6550;
   cursor: default;
-}
-
-.arm-lieu-blason {
-  height: 1.9em;
-  width: auto;
-  flex: none;
-  filter: drop-shadow(0 1px 3px #000000aa);
-}
-
-.arm-lieu:disabled .arm-lieu-blason {
-  opacity: 0.22;
-  filter: grayscale(1);
 }
 
 .arm-lieu-nom {
