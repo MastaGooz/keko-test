@@ -62,6 +62,7 @@ import {
   chargementDeTest,
   coffreDeTest,
   deckAPeindre,
+  deckDeTest,
   pilesDeTest,
   raretesDeTest,
   setDeTest,
@@ -1155,7 +1156,7 @@ export function Scene(): React.JSX.Element {
    */
   const voirLeDeck = useCallback(() => {
     setZoomee(null)
-    setZoomSet(deckAPeindre(deckEmporte(hub.chargement)))
+    setZoomSet(deckDeTest(deckAPeindre(deckEmporte(hub.chargement))))
   }, [hub])
 
   /**

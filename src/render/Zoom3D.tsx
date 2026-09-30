@@ -257,7 +257,28 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * plafond de la main, appliquée à un geste.
    */
   const uneCartePx = (uneCarte * size.height) / H
-  const grossissement = Math.max(1.28, Math.min(1.95, CIBLE_LOUPE_PX / uneCartePx))
+  /**
+   * **LE DECK N'A PAS DE PLAFOND DE GROSSISSEMENT, et il ne peut pas en avoir.**
+   *
+   * Keko voulait savoir à partir de quand une grande grille pose problème, et
+   * la réponse était « seize modèles » : au-delà, la carte au repos devenait si
+   * petite que ×1,95 ne suffisait plus à la ramener à sa taille de lecture —
+   * *la loupe elle-même rétrécissait.*
+   *
+   * Or le plafond ne protégeait rien : il avait été posé contre un zoom « trop
+   * agressif » sur grand écran, où c'est le PLANCHER (×1,28) qui commande,
+   * puisque la carte y est déjà grande. **Il ne mordait que sur les cartes
+   * petites — exactement celles qu'il faut agrandir le plus.** Le résultat,
+   * lui, reste borné par la taille de lecture juste en dessous : *on borne ce
+   * qu'on obtient, pas le chemin pour y arriver.*
+   *
+   * La grille d'une pièce le garde : c'est un réglage validé, et il n'y mord
+   * jamais (à huit modèles, ×1,95 tombe déjà sur le plafond de taille).
+   */
+  const grossissement = Math.max(
+    1.28,
+    sansPiece ? CIBLE_LOUPE_PX / uneCartePx : Math.min(1.95, CIBLE_LOUPE_PX / uneCartePx),
+  )
   /**
    * **LA PIÈCE NE BORNE LA LOUPE QUE S'IL Y EN A UNE.** Sans elle `piece` vaut
    * zéro, donc `min` valait zéro : la carte maintenue RÉTRÉCISSAIT à rien au

@@ -383,3 +383,32 @@ export function chargementDeTest(hub: Hub, actif = DECK_URL()): Hub {
   }
   return { ...hub, chargement: { mains: [arme, null], armure, pile } }
 }
+
+/**
+ * COMBIEN DE CASES LE BANC DOIT MONTRER : `?r3f&deck=25`.
+ *
+ * Le catalogue ne sait produire que douze modèles distincts aujourd'hui, et
+ * *on ne peut rien dire d'une grille qu'on ne sait pas remplir.* Le banc répète
+ * donc les modèles du deck jusqu'au compte demandé : **les cases sont vraies,
+ * seul leur contenu se répète** — c'est la mise en page qu'on juge, pas le
+ * contenu, et les dessins restent ceux de vrais modèles.
+ */
+export function CASES_URL(): number {
+  const demande = Number(new URLSearchParams(location.search).get('deck'))
+  return Number.isFinite(demande) && demande > 0 ? Math.min(60, Math.round(demande)) : 0
+}
+
+export function deckDeTest(
+  entrees: { carte: CarteAPeindre; nombre: number }[],
+  combien = CASES_URL(),
+): { carte: CarteAPeindre; nombre: number }[] {
+  if (combien <= entrees.length || entrees.length === 0) return entrees
+  // Un identifiant par case : React a besoin d'une clé, et *l'index n'en est
+  // pas une* — c'est la leçon de la carte qui clignotait en noir.
+  return Array.from({ length: combien }, (_, i) => {
+    const source = entrees[i % entrees.length]!
+    return i < entrees.length
+      ? source
+      : { carte: { ...source.carte, id: `${source.carte.id}-banc${i}` }, nombre: source.nombre }
+  })
+}

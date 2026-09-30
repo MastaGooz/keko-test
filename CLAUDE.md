@@ -5451,35 +5451,49 @@ qu'une pièce riche se lise comme une pièce pauvre, or **il n'y a qu'un deck et
 on ne le compare à rien**. Le zoom d'une pièce, lui, garde ses quatre colonnes —
 vérifié inchangé au pixel.
 
-**À PARTIR DE COMBIEN ÇA COÛTE ? SEIZE MODÈLES — et c'est le nombre de MODÈLES,
-pas de cartes.** La grille groupe les doublons, donc un deck de trente cartes
-faites de six modèles occupe six cases. Mesuré à 844 x 390, en largeur apparente
-d'une carte :
+**À PARTIR DE COMBIEN ÇA POSE PROBLÈME ? PLUS À PARTIR DE RIEN — c'était seize
+modèles, le plafond est tombé.** Keko a demandé le seuil, puis : « je préfère
+résoudre le problème maintenant ».
+
+*Le compte qui décide est celui des MODÈLES, pas des cartes* : la grille groupe
+les doublons, donc un deck de trente cartes faites de six modèles occupe six
+cases.
+
+Le seuil venait du **plafond de grossissement de la loupe (x1,95)**. Au-delà de
+seize modèles, la carte au repos devenait si petite que x1,95 ne suffisait plus
+à la ramener à sa taille de lecture : *la loupe elle-même rétrécissait.* Or ce
+plafond ne protégeait rien — il avait été posé contre un zoom « trop agressif »
+sur grand écran, où c'est le PLANCHER (x1,28) qui commande, puisque la carte y
+est déjà grande. **Il ne mordait que sur les cartes petites, exactement celles
+qu'il faut agrandir le plus.**
+
+Il est donc retiré pour le deck, et le résultat reste borné par la taille de
+lecture juste en dessous : **on borne ce qu'on obtient, pas le chemin pour y
+arriver.** La grille d'une pièce le garde — c'est un réglage validé, et il n'y
+mord jamais.
+
+Ce que ça donne, en largeur apparente d'une carte à 844 x 390 :
 
 | modèles | au repos | sous la loupe |
 |---|---|---|
 | 6 | 118 px | 184 px |
 | 12 (le deck le plus long d'aujourd'hui) | 94 px | 184 px |
-| 16 | 88 px | 184 px |
-| 20 | 71 px | 160 px |
-| 25 | 63 px | 143 px |
+| 25 (le plafond du catalogue) | 63 px | 184 px |
+| 60 | 47 px | 184 px |
 
-**Jusqu'à seize, la loupe RATTRAPE tout** : elle reste à son plafond — 47 % de
-la hauteur d'écran, soit 184 px sur un téléphone, la taille à laquelle une carte
-se lit sans effort (`CIBLE_LOUPE_PX`). *Le repos rétrécit, mais ce qu'on lit ne
-bouge pas.* Au-delà de seize, la grille devient si serrée que la loupe elle-même
-n'atteint plus son plafond : c'est **là** que ça commence à se payer, et c'est
-un seuil doux.
+**La loupe atteint désormais son plafond quel que soit le nombre de cartes** —
+47 % de la hauteur d'écran, la taille à laquelle une carte se lit sans effort
+(`CIBLE_LOUPE_PX`). Et au repos la carte reste plus grande qu'une case de coffre
+(46 px à ce format) **même à soixante modèles**. *Il n'y a plus de seuil ; il
+n'y a qu'une vignette qui rétrécit et une loupe qui ne bouge pas.*
 
-Deux repères pour situer : au repos la carte reste plus grande qu'une case de
-coffre (46 px à ce format) **même à trente modèles**, et **25 est le plafond du
-catalogue** — deux armes à huit modèles, une armure à six, trois consommables
-distincts. *Le seuil est donc hors de portée du contenu qui existe*, et le deck
-le plus long qu'on sache produire aujourd'hui fait 23 cartes pour 12 modèles.
-
-S'il fallait un jour aller au-delà, le levier est dans cet ordre : lever le
-plafond de la loupe (le 0,66), puis faire défiler la grille comme le coffre.
-*Pas avant.*
+**POUR LE VOIR : `?r3f&deck=25`** (n'importe quel nombre jusqu'à 60). Le
+catalogue ne sait produire que douze modèles distincts, et *on ne peut rien dire
+d'une grille qu'on ne sait pas remplir* : le banc RÉPÈTE les modèles du deck
+jusqu'au compte demandé — **les cases sont vraies, seul leur contenu se
+répète**, et les dessins restent ceux de vrais modèles. Vérifié à 25 cases sur
+667 x 320 comme sur grand écran : 9 x 3, zéro débordement, et la carte
+maintenue se lit entièrement.
 
 **ET LA CARTE GROSSIE GARDE UNE MARGE, en haut comme en bas.** Keko : « le zoom
 fait dépasser les cartes en haut ou en bas selon la ligne, donc un bout de la
@@ -5503,12 +5517,11 @@ le `min` valait zéro, la carte disparaissait. *Une borne qui n'a plus d'objet n
 devient pas zéro, elle disparaît* — c'est la famille du plancher resté sur la
 colonne de l'armurier quand son bouton l'a quittée.
 
-**POUR LE VOIR : `?r3f&deck` (avec `&set=8` pour le maximum).** Le chargement de
-départ ne donne que six modèles — *on ne peut rien dire d'une grille avec six
-cases*, la leçon du coffre à cinq objets. Le banc équipe la pièce la plus riche
-du coffre, l'armure, et remplit la pile de consommables TOUS DIFFÉRENTS : douze
-modèles distincts, vérifiés à 667 x 320 en 6 x 2 sans un pixel de débordement.
-Il REPREND ce que le coffre contient plutôt que d'inventer des pièces.
+**LE BANC ÉQUIPE AUSSI LE CHARGEMENT : `?r3f&deck`** (avec `&set=8` pour la
+pièce la plus riche). Le chargement de départ ne donne que six modèles. Le banc
+équipe la pièce la plus fournie du coffre, l'armure, et remplit la pile de
+consommables TOUS DIFFÉRENTS : douze modèles distincts. Il REPREND ce que le
+coffre contient plutôt que d'inventer des pièces.
 
 **IL PREND SA BANDE, il ne s'installe pas dans le jeu.** Il y avait bien du vide
 sous les mesures, mais c'était le JEU du bloc centré, pas une place : 45 px pour
