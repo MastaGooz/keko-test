@@ -5197,7 +5197,7 @@ body {
      bande commandait, à 667 x 320 c'etait le `rem` du bouton. Elles n'en font
      donc plus qu'une, et sa propre hauteur ne reste qu'un GARDE-FOU -- le texte
      doit tenir dans la plaque. */
-  font-size: min(1rem, calc(var(--etat-l) / 13.65), calc(var(--deck-h) * 0.42));
+  font-size: min(1.15rem, calc(var(--etat-l) / 13.65), calc(var(--deck-h) * 0.42));
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -5307,7 +5307,12 @@ body {
      mesure vaut son symbole plus 2,85 fois le corps, soit 4,55 chacune : quatre
      en demandaient 18,2, trois en demandent 13,65. Keko : « augmente la taille
      des stats pour matcher celle du symbole deck et de son chiffre ». */
-  font-size: min(1rem, calc(var(--etat-l) / 13.65));
+  /* LE PLAFOND EN REM MONTE D'UN CRAN, et il ne commande QUE sur grand écran :
+     sur téléphone c'est la largeur de la bande qui borde. Demandé par Keko —
+     « sur PC on peut augmenter un petit peu la taille des stats et du bouton
+     deck ». *Un plafond qui ne mord que d'un côté ne se règle que pour ce
+     côté-là.* */
+  font-size: min(1.15rem, calc(var(--etat-l) / 13.65));
 }
 
 /* LA LIGNE DE LATENCE DU SON, derriere `?son` : ce que l'appareil avoue de son

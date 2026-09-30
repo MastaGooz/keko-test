@@ -5434,6 +5434,14 @@ soit 4,55 chacune — quatre en demandaient 18,2, trois en demandent 13,65, et l
 borne des symboles passe de 10,7 à 8,03. Mesuré à 844 x 390 : le chiffre monte
 de 11,8 à 15,8 px, le symbole de 12,9 à 20.
 
+**ET LE PLAFOND EN REM MONTE D'UN CRAN — sur grand écran seulement.** Keko :
+« sur PC on peut augmenter un petit peu la taille des stats et du bouton deck ».
+*Un plafond qui ne mord que d'un côté ne se règle que pour ce côté-là* : sur
+téléphone c'est la largeur de la bande qui borne, donc `1rem → 1,15rem` n'y
+change rien, et le facteur de hauteur du bouton (0,74 → 0,95) non plus. Mesuré à
+2560 x 1271 : le chiffre passe de 27 à 31 px, la plaque du deck de 125 x 64 à
+161 x 82, son paquet de 39 à 50 — et à 844 x 390, **pas un pixel ne bouge**.
+
 **ET LES DEUX PARTAGENT UNE SEULE RÈGLE, pas deux valeurs voisines.** Le bouton
 « Deck » avait la sienne (un `rem` et sa propre hauteur) : les deux se
 rejoignaient à 844 x 390 et divergeaient à 667 x 320, où c'était le `rem` du
@@ -5552,6 +5560,19 @@ plus grandes cartes. Mesuré, en largeur de carte à 844 x 390 :
 qu'une pièce riche se lise comme une pièce pauvre, or **il n'y a qu'un deck et
 on ne le compare à rien**. Le zoom d'une pièce, lui, garde ses quatre colonnes —
 vérifié inchangé au pixel.
+
+**ET UNE CARTE NE DÉPASSE JAMAIS CE QU'ELLE VAUT À SIX MODÈLES.** Keko : « quand
+on affiche le deck, on va mettre une taille max aux cartes (même quand y'en a 3)
+qui correspond à la taille actuelle quand on a 6 cartes différentes affichées ».
+*Sans plafond, un deck court se lisait comme une autre page* : à trois modèles la
+carte montait à la moitié de la hauteur d'écran, soit 60 % de plus qu'à six —
+**un deck n'est pas plus important parce qu'il est plus court.**
+
+Le plafond se CALCULE : c'est la grille à six, au format du moment, et non une
+fraction écrite à la main — *une taille de référence doit se dériver de ce à quoi
+elle fait référence*, sinon elle se désaccorde au premier réglage de la grille.
+118 px à 844 x 390, 93 à 667 x 320, 357 sur un écran de PC ; de 1 à 6 modèles la
+carte y reste collée, au-delà elle rétrécit comme avant.
 
 **À PARTIR DE COMBIEN ÇA POSE PROBLÈME ? PLUS À PARTIR DE RIEN — c'était seize
 modèles, le plafond est tombé.** Keko a demandé le seuil, puis : « je préfère

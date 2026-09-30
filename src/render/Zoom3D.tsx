@@ -202,8 +202,25 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
   // qu'on regarde, le set n'est que ce qu'elle apporte.
   const piece = sansPiece ? 0 : seule ? H * 0.72 / 1.4 : Math.min((H * 0.8) / 1.4, L * 0.26)
   const largeurSet = sansPiece ? L - 2 * marge : L - 3 * marge - piece
+  /**
+   * **LE PLAFOND D'UNE CARTE DU DECK EST CE QU'ELLE VAUT À SIX MODÈLES.**
+   * Demandé par Keko : « quand on affiche le deck, on va mettre une taille max
+   * aux cartes (même quand y'en a 3) qui correspond à la taille actuelle quand
+   * on a 6 cartes différentes affichées ».
+   *
+   * *Sans plafond, un deck court se lisait comme une autre page* : à trois
+   * modèles la carte montait à la moitié de la hauteur d'écran, soit 60 % de
+   * plus qu'à six. **Un deck n'est pas plus important parce qu'il est plus
+   * court.**
+   *
+   * Le plafond se CALCULE — c'est la grille à six, au format du moment — et non
+   * une fraction écrite à la main : *une taille de référence doit se dériver de
+   * ce à quoi elle fait référence*, sinon elle se désaccorde au premier réglage
+   * de la grille.
+   */
+  const plafondDeck = grilleDuDeck(6, largeurSet, H * 0.88, H * 0.5).taille
   const deck = sansPiece
-    ? grilleDuDeck(Math.max(1, modeles.length), largeurSet, H * 0.88, H * 0.5)
+    ? grilleDuDeck(Math.max(1, modeles.length), largeurSet, H * 0.88, plafondDeck)
     : null
   const colonnes = deck?.colonnes ?? Math.min(COLONNES_SET, seule ? 1 : modeles.length)
   const lignes = deck?.lignes ?? (seule ? 1 : Math.ceil(modeles.length / colonnes))

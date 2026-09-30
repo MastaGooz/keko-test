@@ -447,7 +447,10 @@ export function planArmurerie(
    * puisqu'ils partagent leur règle de taille ; la plaque n'ajoute que son air.
    */
   const contenuDeck = Math.min(
-    hauteurBoutonMonde(true, Z_PLAN, hauteurFenetrePx) * 0.74,
+    // **CE FACTEUR NE MORD QUE SUR GRAND ÉCRAN** : sur téléphone c'est la
+    // largeur de la bande qui borne, donc le monter n'y change rien. Keko :
+    // « sur PC on peut augmenter un petit peu la taille du bouton deck ».
+    hauteurBoutonMonde(true, Z_PLAN, hauteurFenetrePx) * 0.95,
     (lEquip - marge * 2) / 8.03,
   )
   const hDeck = contenuDeck * 1.4
