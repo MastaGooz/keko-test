@@ -18,16 +18,36 @@
  * le hub aura sans rien promettre. *Sept métiers inventés pour juger une mise
  * en page, ce serait trancher du design en passant.*
  */
+/**
+ * LES DEUX LIEUX QUI EXISTENT.
+ *
+ * **« Expédition » est né des boutons.** Ils vivaient au bas du rail, sous les
+ * destinations — Keko : « les boutons sont collés c'est moche et les catégories
+ * du hub sont toujours peu lisibles sur téléphone. Et si on faisait une
+ * catégorie expédition dans le hub qui permette de lancer la partie, où on
+ * mettrait les deux boutons ? Comme ça on garde la colonne des catégories
+ * uniquement pour les catégories. »
+ *
+ * *C'est la bonne réponse, et elle règle les trois griefs d'un coup* : deux
+ * boutons dans une bande de quatre-vingts pixels ne peuvent pas ne pas être
+ * collés, et la place qu'ils prenaient est exactement celle qui manquait aux
+ * huit entrées. **Une colonne de destinations ne porte que des destinations** —
+ * quitter le hub en est une, pas une exception posée en bas.
+ */
+export type LieuHub = 'armurerie' | 'expedition'
+
 export type Destination = {
   /** Ce qui s'affiche dans le rail. */
   nom: string
   /** Est-ce que ce lieu existe ? Les autres sont des places tenues. */
   ouvert: boolean
+  /** Le lieu qu'elle ouvre, quand elle en ouvre un. */
+  lieu?: LieuHub
 }
 
 export const DESTINATIONS: readonly Destination[] = [
-  { nom: 'Armurerie', ouvert: true },
-  { nom: 'Bientôt', ouvert: false },
+  { nom: 'Armurerie', ouvert: true, lieu: 'armurerie' },
+  { nom: 'Expédition', ouvert: true, lieu: 'expedition' },
   { nom: 'Bientôt', ouvert: false },
   { nom: 'Bientôt', ouvert: false },
   { nom: 'Bientôt', ouvert: false },

@@ -46,6 +46,7 @@ import {
   precharger,
 } from './sons.ts'
 import { Armurerie3D } from './Armurerie3D.tsx'
+import type { LieuHub } from './destinations.ts'
 import type { Onglet } from './armurerie-plan.ts'
 import { PageArmurerie } from './PageArmurerie.tsx'
 import { urlDuDecor } from '../ui/art.ts'
@@ -323,6 +324,12 @@ export function Scene(): React.JSX.Element {
   const [brasse, setBrasse] = useState(false)
   /** Ce que le coffre montre, et depuis quelle ligne. */
   const [onglet, setOnglet] = useState<Onglet>('tout')
+  /**
+   * LE LIEU OUVERT DANS LE RAIL. *Le hub n'est pas un écran, c'est une barre
+   * de destinations* — on arrive dans l'armurerie, et « Expédition » porte les
+   * deux façons de partir.
+   */
+  const [lieu, setLieu] = useState<LieuHub>('armurerie')
   const [defilement, setDefilement] = useState(0)
 
   /** La carte de garde en route vers le bouclier. */
@@ -1630,6 +1637,7 @@ export function Scene(): React.JSX.Element {
             onEquipee={() => setFixations((n) => n + 1)}
             onSaisie={setSaisie}
             sousLeZoom={zoomOuvert}
+            lieu={lieu}
             onPeinte={compter}
           />
         )}
@@ -1936,6 +1944,8 @@ export function Scene(): React.JSX.Element {
           fixations={fixations}
           zoomee={zoomOuvert}
           onVoirDeck={voirLeDeck}
+          lieu={lieu}
+          onLieu={setLieu}
         />
       )}
 

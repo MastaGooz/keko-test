@@ -36,6 +36,7 @@ import * as THREE from 'three'
 import { Carte3D, DUREE_CULBUTE } from './Carte3D.tsx'
 import { DUREE_ONDE } from './onde.tsx'
 import { Bouton3D } from './Bouton3D.tsx'
+import type { LieuHub } from './destinations.ts'
 import { Z_TENUE } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import { pieceAPeindre } from './combat-3d.ts'
@@ -212,6 +213,8 @@ type Props = {
    * une carte, donc le curseur est déjà dessus et elle resterait penchée.
    */
   sousLeZoom?: boolean
+  /** Le lieu ouvert dans le rail : le hub n'a pas qu'un écran. */
+  lieu: LieuHub
   onPeinte?: () => void
 }
 
@@ -281,6 +284,7 @@ export function Armurerie3D({
   onPoseCommence,
   onSaisie,
   sousLeZoom = false,
+  lieu,
   onPeinte,
 }: Props): React.JSX.Element {
   const { size } = useThree()
@@ -754,6 +758,12 @@ export function Armurerie3D({
    */
   return (
     <group>
+      {/* LE MEUBLE N'EXISTE QUE DANS SON LIEU. *Le rail change de lieu, pas
+          d'écran* : ce qui vit dans l'armurerie disparaît quand on ouvre
+          l'expédition, sinon on glisserait des cartes derrière un panneau qui
+          parle d'autre chose. */}
+      {lieu === 'armurerie' && (
+        <>
       {/* CE QUI PREND LA PIÈCE QU'ON TIENT S'ALLUME. */}
       {candidats.map(({ slot, position, taille }) => (
         <SlotAccueille
@@ -948,10 +958,21 @@ export function Armurerie3D({
           quand la culbute s'efface, l'onde a fini de jouer, mais elle ne doit
           pas sauter à l'origine pour autant. */}
 
-      {/* LE BOUTON DE DÉPART VIT AU BAS DU RAIL, détaché des destinations :
-          *c'est la seule action qui quitte le hub*, donc elle ne peut pas être
-          une entrée de la liste. Il s'éteint sans arme — il n'y a rien pour
-          frapper — et la bulle de la page dit pourquoi. */}
+        </>
+      )}
+
+      {/* LES DEUX DÉPARTS VIVENT DANS « EXPÉDITION », le lieu qu'ils ouvrent.
+          Ils étaient au bas du rail, sous les destinations — mais *une colonne
+          de destinations ne porte que des destinations*, et deux boutons dans
+          une bande de quatre-vingts pixels ne peuvent pas ne pas être collés.
+
+          Ici ils ont le centre de l'écran, leur taille d'écran et un bouton
+          d'écart : *ce qui engage une partie occupe le milieu du lieu.*
+
+          « Descendre » s'éteint sans arme — il n'y a rien pour frapper — et la
+          bulle de la page dit pourquoi. */}
+      {lieu === 'expedition' && (
+        <>
       <Bouton3D
         texte={TEXTE_DESCENDRE}
         rapportMin={plan.rapportDepart}
@@ -975,6 +996,8 @@ export function Armurerie3D({
         eteint={tenue !== null}
         onCliquer={onFourbir}
       />
+        </>
+      )}
     </group>
   )
 }

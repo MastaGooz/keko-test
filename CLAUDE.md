@@ -4288,6 +4288,52 @@ le bouton de 38 à **32 px** de haut, le rail de 118 à **108 et 99 px** — ren
 aux meubles. « ARMURERIE » garde 7 à 8 px de marge avant de tronquer, l'écu tient
 dans sa ligne, zéro débordement.
 
+**ET LES DEUX DÉPARTS ONT FINI PAR QUITTER LE RAIL : « EXPÉDITION » EST UNE
+DESTINATION.** Trois passes de réglage n'avaient pas suffi — Keko : « bon ça ne
+va pas, les boutons sont collés c'est moche et les catégories du hub sont
+toujours peu lisibles sur téléphone. Et si on faisait une catégorie expédition
+dans le hub qui permette de lancer la partie, où on mettrait les deux boutons ?
+Comme ça on garde la colonne des catégories uniquement pour les catégories. »
+
+*Et c'est la bonne réponse, parce que le problème n'était pas un chiffre* :
+**deux boutons dans une bande de quatre-vingts pixels ne peuvent pas ne pas
+être collés**, et la place qu'ils prenaient était exactement celle qui manquait
+aux huit entrées. Chaque passe rendait donc un grief en aggravant l'autre —
+*quand deux réglages se combattent, c'est qu'ils se disputent une place que
+l'un des deux ne devrait pas occuper.*
+
+**Une colonne de destinations ne porte que des destinations.** Quitter le hub
+en est une, pas une exception posée en bas de la liste.
+
+Ce que ça donne, et ce n'est pas qu'un rangement :
+
+- **la liste prend toute la colonne** : la ligne d'une entrée passe de 29,8 à
+  **44,7 px** à 844 x 390 et de 23,8 à **36,7 px** à 667 x 320 — *+50 %*, là où
+  trois passes de réglage en avaient gagné douze pour cent ;
+- **les boutons retrouvent leur taille d'écran** (48 px au plancher) et un
+  bouton entier d'écart : *ce qui engage une partie occupe le milieu du lieu* ;
+- **le rail garde un plancher de largeur, mais pour son TEXTE cette fois.** Il
+  était borné par son bouton ; le bouton parti, la borne est partie avec lui et
+  le rail est tombé de 99 à 85 px à 667 x 320 — où « Expédition » ne tenait
+  plus. *La règle n'a pas changé, son objet oui* : **une colonne qui ne contient
+  pas ce qu'on y met n'est pas une colonne**, et ce qu'on y met est maintenant
+  un mot de dix lettres. D'où un plancher en pixels d'écran et non en fraction
+  du champ — *un texte se mesure en pixels.*
+
+**Le lieu dit ce qu'on emporte** : « Tu descends avec 10 cartes, dont 3 qui
+frappent », posée au-dessus de « Descendre ». *On n'a plus le chargement sous
+les yeux*, et c'est le seul chiffre sur lequel les deux départs se comparent.
+Elle se place à partir de l'écart entre les deux boutons, jamais d'une hauteur
+écrite à la main.
+
+*Piège de vérification traversé au passage* : **une iframe de sonde finit par
+ne plus démarrer** quand on en a créé une dizaine dans le même onglet — chacune
+ouvre son contexte WebGL, et la scène reste sur « Chargement… » sans une erreur
+en console. La sortie : `planArmurerie` est **pure**, donc on l'importe à la
+volée (`import('/src/render/armurerie-plan.ts')`) et on l'appelle pour
+n'importe quel format. *Ce qui est pur se mesure sans navigateur, même quand
+c'est le navigateur qu'on veut mesurer.*
+
 **CE QUI A CASSÉ EN CHEMIN, ET C'ÉTAIT PRÉVISIBLE : le rail ne tenait plus son
 propre nom.** « ARMURERIE » y perdait ses trois dernières lettres. Le nom était
 en `min(0,85rem, rail x 0,15)`, et à 0,15 c'est le `rem` qui commandait seul :

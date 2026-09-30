@@ -5595,7 +5595,7 @@ body {
      resserree -- et « ARMURERIE » y perdait ses trois dernieres lettres.
      *Un contenu qui ne suit qu'une dimension deborde des que l'autre se
      resserre*, la meme lecon que la bande de stats et les onglets du coffre. */
-  font-size: min(0.95rem, calc(var(--rail-l) * 0.112));
+  font-size: min(0.95rem, calc(var(--rail-l) * 0.108));
   letter-spacing: 0.04em;
   text-transform: uppercase;
   text-align: left;
@@ -5604,6 +5604,23 @@ body {
   transition:
     color 160ms ease-out,
     background 160ms ease-out;
+}
+
+/* CE QU'ON EMPORTE, DIT DANS LE LIEU D'EXPÉDITION. C'est une MENTION, pas une
+   mesure : on ne décide pas dessus, on la lit avant de partir. Ni fond ni
+   bordure, la police du lieu, et l'ombre la détache sans lui donner de bord. */
+.arm-expe-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: #c7b48c;
+  font-family: Cinzel, Georgia, serif;
+  font-size: min(1rem, 2.6vh);
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-shadow: 0 1px 3px #000000cc;
+  pointer-events: none;
 }
 
 /* LE LIEU OU L'ON EST SE LIT AU FILET, pas a un fond plein : *un bandeau
@@ -5628,7 +5645,7 @@ body {
    *Un dessin posé dans une ligne ne peut pas se borner à ce qu'il y a à côté
    de lui* — la hauteur de la ligne vient du plan, qui la connaît. */
 .arm-lieu-blason {
-  height: min(1.9em, calc(var(--rail-ligne, 2rem) * 0.55));
+  height: min(1.35em, calc(var(--rail-ligne, 2rem) * 0.5));
   width: auto;
   flex: none;
   filter: drop-shadow(0 1px 3px #000000aa);

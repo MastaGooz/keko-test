@@ -39,6 +39,7 @@ import { SON_POSER, jouerSon } from './sons.ts'
 import { tailleBouton } from './Bouton3D.tsx'
 import { Z_PLAN } from './armurerie-plan.ts'
 import { urlDeLArmurerie, urlDeLArmurier } from '../ui/art.ts'
+import type { LieuHub } from './destinations.ts'
 import { DESTINATIONS } from './destinations.ts'
 
 /**
@@ -111,6 +112,9 @@ type Props = {
   zoomee?: boolean
   /** Consulter le deck que le chargement produit. */
   onVoirDeck?: () => void
+  /** Le lieu ouvert, et de quoi en changer : le rail EST le hub. */
+  lieu: LieuHub
+  onLieu: (lieu: LieuHub) => void
 }
 
 export function PageArmurerie({
@@ -127,6 +131,8 @@ export function PageArmurerie({
   fixations,
   zoomee = false,
   onVoirDeck,
+  lieu,
+  onLieu,
 }: Props): React.JSX.Element {
   const fenetre = useFenetre()
   const plan = planArmurerie(fenetre.h, fenetre.l, deuxMains(hub.chargement))
@@ -469,6 +475,42 @@ export function PageArmurerie({
           { '--onglets-l': `${enPixels(plan.onglets, fenetre.h, fenetre.l).width}px` } as React.CSSProperties
         }
       >
+      {/* CHAQUE LIEU A SON PANNEAU. Le rail ne change pas d'écran, il change
+          de LIEU : ce qui appartient à l'armurerie disparaît quand on ouvre
+          l'expédition, et réciproquement. */}
+      {lieu === 'expedition' && (
+        <>
+          <div className="arm-cadre" style={boite(plan.expedition)} />
+          <span className="arm-nom" style={plaque(plan.expedition)}>
+            Expédition
+          </span>
+          {/* CE QU'ON EMPORTE SE DIT ICI, parce qu'on n'a plus le chargement
+              sous les yeux : *avant de descendre, le joueur doit voir avec quoi
+              il descend* — et c'est le seul chiffre sur lequel les deux départs
+              se comparent. */}
+          <p
+            className="arm-expe-note"
+            style={boite({
+              x: plan.expedition.x,
+              // ELLE SE POSE AU-DESSUS DU PREMIER BOUTON, pas dans le haut du
+              // panneau : *une phrase qui explique un bouton se lit avec lui.*
+              // L'écart entre les deux départs vaut deux boutons, donc les
+              // trois quarts de cet écart placent la ligne à un bouton et demi
+              // au-dessus — sans écrire une seule hauteur à la main.
+              y: plan.bouton[1] + (plan.bouton[1] - plan.boutonFortune[1]) * 0.75,
+              l: plan.expedition.l,
+              h: plan.expedition.h * 0.12,
+            })}
+          >
+            {deck.total === 0
+              ? 'Aucun équipement : pars avec ce que l’armurier te donne.'
+              : `Tu descends avec ${deck.total} cartes, dont ${deck.frappent} qui frappent.`}
+          </p>
+        </>
+      )}
+
+      {lieu === 'armurerie' && (
+        <>
       <div className="arm-cadre" style={boite(plan.coffre)} ref={cadreCoffre} />
       <span className="arm-nom" style={plaque(plan.coffre)}>
         Coffre
@@ -568,10 +610,14 @@ export function PageArmurerie({
           </span>
         </span>
       </div>
+        </>
+      )}
 
       </div>
 
       <div className="arm-commandes" style={zoomee ? { display: 'none' } : undefined}>
+      {lieu === 'armurerie' && (
+        <>
       {/**
         * LE BOUTON « DECK » PORTE LE PAQUET ET SON COMPTE. Demandé par Keko :
         * « on va passer le symbole deck et son nombre de cartes dans le bouton
@@ -614,6 +660,9 @@ export function PageArmurerie({
           </span>
         </span>
       </button>
+        </>
+      )}
+
       {/* LE RAIL DES DESTINATIONS, sur le bord gauche. C'est lui le hub : on
           n'arrive plus sur une page qui ne sert qu'à choisir, on arrive DANS
           un lieu et le rail dit où l'on peut aller.
@@ -642,8 +691,9 @@ export function PageArmurerie({
           <button
             key={i}
             type="button"
-            className={`arm-lieu${i === 0 ? ' actif' : ''}`}
+            className={`arm-lieu${d.lieu === lieu ? ' actif' : ''}`}
             disabled={!d.ouvert}
+            onClick={() => d.lieu !== undefined && onLieu(d.lieu)}
           >
             {/* L'EMBLÈME RESTE, ET IL EST BORNÉ PAR SA LIGNE. Keko : « il faut
                 garder le symbole car plus tard on aura des symboles
@@ -674,6 +724,8 @@ export function PageArmurerie({
           {bulle.texte}
         </span>
       )}
+      {lieu === 'armurerie' && (
+        <>
       {/* LES ONGLETS : ce qu'on possède se range par nature, et les TRÉSORS y
           ont leur case bien qu'aucun slot ne les prenne. *Le coffre est ce
           qu'on possède, pas ce qu'on peut porter.* */}
@@ -810,6 +862,8 @@ export function PageArmurerie({
           onPointerDown={glisserPouce}
         />
       </div>
+        </>
+      )}
 
       </div>
     </>

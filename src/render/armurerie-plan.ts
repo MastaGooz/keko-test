@@ -138,6 +138,8 @@ export type PlanArmurerie = {
   rail: Rect
   /** La liste elle-même : le rail moins la bande du bouton, en bas. */
   railListe: Rect
+  /** Le panneau du lieu d'expédition : tout ce que le rail laisse. */
+  expedition: Rect
   /** Le cadre du coffre, bandeau d'onglets compris. */
   coffre: Rect
   /** La bande des onglets, dans le coffre. */
@@ -292,16 +294,33 @@ export function planArmurerie(
   // même rang, l'une sous l'autre, ne peuvent pas avoir deux tailles.* On prend
   // donc la plus large des deux et on la donne aux deux, la police étant déjà
   // commune depuis que la toile garde sa hauteur.
-  const bDescendre = tailleBouton(TEXTE_DESCENDRE, 'or', 'rail', Z_PLAN, hauteurFenetrePx)
-  const bFortune = tailleBouton(TEXTE_FORTUNE, 'pierre', 'rail', Z_PLAN, hauteurFenetrePx)
+  const bDescendre = tailleBouton(TEXTE_DESCENDRE, 'or', 'ecran', Z_PLAN, hauteurFenetrePx)
+  const bFortune = tailleBouton(TEXTE_FORTUNE, 'pierre', 'ecran', Z_PLAN, hauteurFenetrePx)
   const lBouton = Math.max(bDescendre.largeur, bFortune.largeur)
   const rapportDepart = lBouton / bDescendre.hauteur
-  // Le `+ marge` n'est pas décoratif : la bande RÉSERVÉE vaut `lRail`, mais le
-  // rail DESSINÉ en retranche sa marge, et c'est lui que le bouton doit tenir.
-  // Mesuré sans : le bouton dépassait de 3 px à 932x430.
-  const lRail = Math.max(Math.min(2 * demiLarge * 0.15, demiHaut * 0.66), lBouton * 1.12 + marge)
+  /**
+   * LA COLONNE NE SUIT PLUS SON BOUTON — mais elle suit toujours SON CONTENU.
+   *
+   * Elle était bornée par le plus large des deux départs : réduire un bouton
+   * la rétrécissait, et le nom des destinations avec. Les boutons partis, la
+   * borne est partie avec eux — et le rail est tombé de 99 à 85 px à
+   * 667 x 320, où « Expédition » ne tenait plus. *La règle n'a pas changé, son
+   * objet oui* : **une colonne qui ne contient pas ce qu'on y met n'est pas
+   * une colonne**, et ce qu'on y met est désormais un mot de dix lettres.
+   *
+   * D'où un plancher en pixels d'écran, pas en fraction du champ : c'est le
+   * texte qu'il doit tenir, et un texte se mesure en pixels.
+   */
+  const lRail = Math.max(
+    Math.min(2 * demiLarge * 0.15, demiHaut * 0.66),
+    (118 * hauteurVisibleA(Z_PLAN, hauteurFenetrePx)) / hauteurFenetrePx,
+  )
   const xRail = -demiLarge + marge + (lRail - marge) / 2
   const gauche = -demiLarge + lRail
+  // LE LIEU D'EXPÉDITION prend tout ce que le rail laisse, comme les trois
+  // meubles de l'armurerie réunis.
+  const lExpedition = demiLarge - gauche - 2 * marge
+  const xExpedition = gauche + marge + lExpedition / 2
 
   const largeurUtile = demiLarge - gauche - 2 * marge - 2 * marge
   // Les stats sont un rail de cartouches : leur largeur est celle de leur
@@ -628,32 +647,24 @@ export function planArmurerie(
   // objets sans rapport.*
   const hBouton = bDescendre.hauteur
   /**
-   * LA BANDE NE RÉSERVE QUE CE QU'ELLE PORTE. Keko : « il y a un espace vide
-   * entre les onglets et les boutons, on peut pas gagner là-dessus ? »
+   * LE RAIL NE PORTE PLUS DE BOUTON — ils sont partis dans « Expédition ».
    *
-   * Elle comptait TROIS marges pleines — une sous le bas, une entre les deux
-   * boutons, une au-dessus — et la liste s'en retranchait une QUATRIÈME. Deux
-   * marges pleines séparaient donc les destinations du premier bouton, contre
-   * une seule entre les deux boutons : *le plus grand blanc de la colonne
-   * tombait là où il n'y avait rien à séparer.*
+   * Ils ont vécu deux passes au bas de la colonne, et chacune a buté sur la
+   * même arithmétique : *deux boutons dans une bande de quatre-vingts pixels
+   * ne peuvent pas ne pas être collés*, et ce qu'ils prenaient était
+   * exactement ce qui manquait aux huit entrées. Les rendre plus petits ne
+   * faisait que déplacer le problème — et rétrécissait le rail avec eux,
+   * puisqu'*une colonne ne descend jamais sous son bouton.*
    *
-   * Il en reste une pleine en bas et une en haut — celle qui détache la pile
-   * de la liste — et **une demie entre les deux boutons**, qui sont censés se
-   * lire comme une pile. Mesuré à 844 x 390 : 31 px rendus aux huit entrées.
+   * **La liste prend donc toute la colonne**, et les deux départs vivent dans
+   * le lieu qu'ils ouvrent, où ils ont la place de respirer.
    */
-  const ecartPile = marge / 2
-  const bandeDepart = 2 * hBouton + 2 * marge + ecartPile
 
   return {
     demiHaut,
     demiLarge,
     rail: { x: xRail, y: yPanneaux, l: lRail - marge, h: hPanneaux },
-    railListe: {
-      x: xRail,
-      y: yPanneaux + bandeDepart / 2,
-      l: lRail - marge,
-      h: hPanneaux - bandeDepart,
-    },
+    railListe: { x: xRail, y: yPanneaux, l: lRail - marge, h: hPanneaux },
     coffre,
     onglets,
     tri,
@@ -694,8 +705,13 @@ export function planArmurerie(
     // contenu s'en va* — sinon elle reste comme une cicatrice, à tenir de la
     // place pour quelque chose qui n'est plus là.
     pnj: { x: xStats, y: yPanneaux, l: lStats, h: hPanneaux },
-    bouton: [xRail, basPanneaux + marge + ecartPile + hBouton * 1.5, Z_PLAN],
-    boutonFortune: [xRail, basPanneaux + marge + hBouton / 2, Z_PLAN],
+    // LES DEUX DÉPARTS SONT AU MILIEU DE LEUR LIEU, l'un sous l'autre et
+    // écartés d'un bouton : *ce qui engage une partie occupe le centre de
+    // l'écran*, et deux actions de même rang se lisent comme une pile sans se
+    // toucher. « Descendre » au-dessus, le repli en dessous.
+    bouton: [xExpedition, yPanneaux + hBouton, Z_PLAN],
+    boutonFortune: [xExpedition, yPanneaux - hBouton, Z_PLAN],
+    expedition: { x: xExpedition, y: yPanneaux, l: lExpedition, h: hPanneaux },
     // **IL A LA LARGEUR DE SON CONTENU, pas celle du panneau** : étiré sur toute
     // la bande il se lisait comme un bandeau, pas comme un bouton. *Ce qui
     // s'étire d'un bord à l'autre est un titre ; ce qui se tape est une pièce.*
