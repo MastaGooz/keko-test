@@ -5630,6 +5630,24 @@ La bande garde les trois qu'on ne fait que lire.
   réglage.* Il hérite au passage de la police du lieu, donc il ne peut plus en
   sortir, et il vit dans `.arm-commandes` : le canvas monte au-dessus pendant un
   glisser, donc une carte promenée lui passe devant.
+- **LA PLAQUE SERRE SON CONTENU.** Demandé par Keko — « réduis la taille du
+  bouton du deck, le padding pas le contenu ». Elle avait la hauteur d'un petit
+  bouton tactile, soit **42 px pour un couple de 24** : *un bouton qui tient
+  dans sa main a déjà la taille qu'il faut, c'est l'air autour qui le faisait
+  gros.* Sa hauteur est désormais son contenu × 1,4 et sa largeur × 1,95 de
+  cette hauteur — 65 x 33 px à 844 x 390 au lieu de 105 x 42, contenu inchangé.
+  Le contenu se borne EXACTEMENT comme les mesures de la bande, puisqu'ils
+  partagent leur règle.
+- **SA ZONE SENSIBLE DÉBORDE SON DESSIN**, comme celle du bouton de rangement :
+  *le doigt ne rétrécit pas avec l'écran.* Elle s'étend surtout vers le HAUT, où
+  il n'y a que l'air de la bande ; vers le bas à peine, parce que le titre du
+  premier groupe commence aussitôt et qu'*une zone plus grande que son bouton
+  vole le geste à sa voisine.* Mesuré : 75 x 44 px de prise pour 65 x 33 de
+  plaque à 844 x 390, 57 x 35 pour 47 x 24 à 667 x 320.
+- **ET SA BULLE DIT « DECK VIDE » quand il n'y a rien à montrer**, au lieu de
+  « Voir le deck ». Demandé par Keko. Le bouton s'éteint alors : *un refus muet
+  se lit comme une panne*, et *un bouton qui ouvre une page blanche en est un* —
+  c'est la règle de « Descendre » sans arme, avec son deuxième temps.
 - **Il a la largeur de son CONTENU, pas celle du panneau.** Étiré d'un bord à
   l'autre il se lisait comme un bandeau : *ce qui s'étire est un titre, ce qui se
   tape est une pièce.*

@@ -436,9 +436,21 @@ export function planArmurerie(
    * Il est PETIT : *on ne décide pas dessus*, on consulte — il ne peut pas se
    * lire au même rang que « Descendre ».
    */
-  // Sa hauteur est celle d'un petit bouton : *il se tape, donc il obéit au
-  // plancher tactile comme les autres.*
-  const hDeck = hauteurBoutonMonde(true, Z_PLAN, hauteurFenetrePx)
+  /**
+   * **LA PLAQUE SERRE SON CONTENU.** Demandé par Keko — « réduis la taille du
+   * bouton du deck, le padding pas le contenu ». Elle avait la hauteur d'un
+   * petit bouton tactile, soit 42 px pour un couple chiffre + symbole de 24 :
+   * **18 px d'air pour 24 de matière.** *Un bouton qui tient dans sa main a
+   * déjà la taille qu'il faut* — c'est l'air autour qui le faisait gros.
+   *
+   * Le contenu se borne EXACTEMENT comme les mesures de la bande (`/8.03`),
+   * puisqu'ils partagent leur règle de taille ; la plaque n'ajoute que son air.
+   */
+  const contenuDeck = Math.min(
+    hauteurBoutonMonde(true, Z_PLAN, hauteurFenetrePx) * 0.74,
+    (lEquip - marge * 2) / 8.03,
+  )
+  const hDeck = contenuDeck * 1.4
   const bandeDeck = hDeck + marge
   const hDedans = hPanneaux - hEntete - hStats - bandeDeck
   // La bande d'un nom de groupe. Il y en a une par rangée, et elles entrent
@@ -621,7 +633,7 @@ export function planArmurerie(
     deck: {
       x: xEquip,
       y: yPanneaux + hPanneaux / 2 - hEntete - hStats - bandeDeck / 2,
-      l: Math.min(lEquip - marge * 2, hDeck * 2.5),
+      l: Math.min(lEquip - marge * 2, hDeck * 1.95),
       h: hDeck,
     },
     rapportDepart,

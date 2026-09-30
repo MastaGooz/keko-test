@@ -5172,7 +5172,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 0.45em;
-  padding: 0 0.7em;
+  padding: 0 0.5em;
   border: 1px solid #6b5936;
   border-radius: 0;
   background: linear-gradient(180deg, #2b2a2c, #171718);
@@ -5196,9 +5196,29 @@ body {
   transition: color 0.12s, border-color 0.12s, background 0.12s;
 }
 
+/* SA ZONE SENSIBLE DEBORDE SON DESSIN, comme celle du bouton de rangement. La
+   plaque serre desormais son contenu -- 33 px de haut sur un telephone courant,
+   24 sur un SE couche -- et *le doigt ne retrecit pas avec l'ecran.* Elle
+   s'etend surtout vers le HAUT, ou il n'y a que l'air de la bande ; vers le bas
+   a peine, parce que le titre du premier groupe commence aussitot et qu'*une
+   zone plus grande que son bouton vole le geste a sa voisine.* */
+.arm-deck::after {
+  content: '';
+  position: absolute;
+  inset: -0.55rem -0.35rem -0.3rem;
+}
+
+/* UN DECK VIDE N'A RIEN A MONTRER : le bouton s'eteint, et c'est sa bulle qui
+   dit pourquoi -- « Deck vide ». *Un refus muet se lit comme une panne*, la
+   regle de « Descendre » sans arme. */
+.arm-deck:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
 /* MEME GARDE QUE LES ONGLETS : sur telephone un survol colle apres la tape. */
 @media (hover: hover) and (pointer: fine) {
-  .arm-deck:hover {
+  .arm-deck:not(:disabled):hover {
     border-color: #d8bb79;
     background: linear-gradient(180deg, #3a3830, #1f1e1a);
     color: #ffeec2;

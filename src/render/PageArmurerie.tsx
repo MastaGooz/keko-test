@@ -201,7 +201,6 @@ export function PageArmurerie({
    * des lignes — exactement ce que fait déjà la molette du coffre, et pour la
    * même raison.
    */
-  const LIBELLES = ['Points de vie', 'Voir le deck', 'Taille de la main', "Points d'action"]
   // HTMLElement et non HTMLSpanElement : le deck est un BOUTON depuis qu'il
   // porte son symbole.
   const mesures = useRef<(HTMLElement | null)[]>([])
@@ -240,6 +239,16 @@ export function PageArmurerie({
    * tenue par les tas.
    */
   const deck = compteDuDeck(hub)
+  // LE DECK VIDE LE DIT LUI-MÊME. Demandé par Keko : la bulle d'un bouton qui
+  // refuse doit dire POURQUOI il refuse — *un refus muet se lit comme une
+  // panne*, la règle de « Descendre » sans arme.
+  const deckVide = (deck.total ?? 0) === 0
+  const LIBELLES = [
+    'Points de vie',
+    deckVide ? 'Deck vide' : 'Voir le deck',
+    'Taille de la main',
+    "Points d'action",
+  ]
   const valeurs = [pvMax, deck.total, tailleMain, energieMax]
   const avant = useRef(valeurs)
   /**
@@ -571,6 +580,9 @@ export function PageArmurerie({
           } as React.CSSProperties
         }
         onClick={onVoirDeck}
+        // ET IL S'ÉTEINT QUAND IL N'Y A RIEN À MONTRER : *un bouton qui ouvre
+        // une page blanche se lit comme une panne.*
+        disabled={deckVide}
         ref={(el) => void (mesures.current[1] = el)}
       >
         <span className="arm-vif" ref={(el) => void (vifs.current[1] = el)}>
