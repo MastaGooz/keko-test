@@ -5559,7 +5559,11 @@ body {
 .arm-rail {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  /* AUCUN ÉCART ENTRE DEUX ENTRÉES : chacune porte déjà son filet, donc le
+     `gap` n'ajoutait que du blanc — et sept blancs dans une colonne de huit
+     lignes, c'est une ligne entière. Jointives, les filets se lisent comme une
+     liste réglée, ce qu'ils sont. */
+  gap: 0;
   padding: 0;
   pointer-events: auto;
 }
@@ -5569,9 +5573,14 @@ body {
   flex: 1 1 0;
   align-items: center;
   justify-content: flex-start;
-  gap: 0.5em;
+  /* CE QUI ENTOURE LE MOT CÈDE AVANT LE MOT. L'écu revenu, « ARMURERIE » ne
+     tenait plus : dans une colonne de cent pixels, un dessin, deux
+     remplissages, un écart et neuf capitales espacées ne tiennent pas tous à
+     leur aise. *Ce qui porte l'information est le mot* — donc c'est l'air
+     autour de lui qui recule, pas lui. */
+  gap: 0.25em;
   min-height: 0;
-  padding: 0 0.5em;
+  padding: 0 0.2em;
   border: 0;
   /* PAS DE CADRE, UN FILET SOUS CHACUN : la meme correction que l'enseigne du
      hub et que le rail des stats -- *ce qui est au-dessus d'un trait va
@@ -5586,8 +5595,8 @@ body {
      resserree -- et « ARMURERIE » y perdait ses trois dernieres lettres.
      *Un contenu qui ne suit qu'une dimension deborde des que l'autre se
      resserre*, la meme lecon que la bande de stats et les onglets du coffre. */
-  font-size: min(0.95rem, calc(var(--rail-l) * 0.125));
-  letter-spacing: 0.08em;
+  font-size: min(0.95rem, calc(var(--rail-l) * 0.112));
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   text-align: left;
   cursor: pointer;
@@ -5611,6 +5620,23 @@ body {
 .arm-lieu:disabled {
   color: #6f6550;
   cursor: default;
+}
+
+/* L'EMBLÈME SE MESURE SUR SA LIGNE, PAS SUR SON TEXTE. À `1,9em` seul il
+   faisait 20 px de dessin pour 16 px de ligne sur un petit téléphone : il
+   mordait le filet et sa voisine (Keko : « les icônes dépassent des lignes »).
+   *Un dessin posé dans une ligne ne peut pas se borner à ce qu'il y a à côté
+   de lui* — la hauteur de la ligne vient du plan, qui la connaît. */
+.arm-lieu-blason {
+  height: min(1.9em, calc(var(--rail-ligne, 2rem) * 0.55));
+  width: auto;
+  flex: none;
+  filter: drop-shadow(0 1px 3px #000000aa);
+}
+
+.arm-lieu:disabled .arm-lieu-blason {
+  opacity: 0.22;
+  filter: grayscale(1);
 }
 
 .arm-lieu-nom {

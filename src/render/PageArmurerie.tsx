@@ -38,7 +38,7 @@ import { deuxMains, peutDescendre } from '../logic/hub.ts'
 import { SON_POSER, jouerSon } from './sons.ts'
 import { tailleBouton } from './Bouton3D.tsx'
 import { Z_PLAN } from './armurerie-plan.ts'
-import { urlDeLArmurier } from '../ui/art.ts'
+import { urlDeLArmurerie, urlDeLArmurier } from '../ui/art.ts'
 import { DESTINATIONS } from './destinations.ts'
 
 /**
@@ -628,6 +628,14 @@ export function PageArmurerie({
           // LA TAILLE DU TEXTE SUIT LA LARGEUR DU RAIL, pas la fenetre : il est
           // borne par la hauteur, donc sa largeur ne suit pas celle de l'ecran.
           '--rail-l': `${enPixels(plan.railListe, fenetre.h, fenetre.l).width}px`,
+          // LA HAUTEUR D'UNE LIGNE, pour que l'emblème ne déborde pas de la
+          // sienne : les entrées se partagent la colonne à parts égales et
+          // n'ont plus d'écart entre elles, donc le compte est exact. *Un
+          // dessin borné par son texte ne sait pas ce que sa ligne mesure* —
+          // c'est ce qui le faisait mordre le filet et sa voisine.
+          '--rail-ligne': `${
+            enPixels(plan.railListe, fenetre.h, fenetre.l).height / DESTINATIONS.length
+          }px`,
         } as React.CSSProperties}
       >
         {DESTINATIONS.map((d, i) => (
@@ -637,13 +645,14 @@ export function PageArmurerie({
             className={`arm-lieu${i === 0 ? ' actif' : ''}`}
             disabled={!d.ouvert}
           >
-            {/* PAS D'EMBLÈME SUR UNE ENTRÉE, et c'est ce qui rend son nom
-                lisible. Les huit portaient LE MÊME écu — celui de l'armurerie,
-                recyclé du bandeau disparu : *un symbole répété à l'identique
-                sur huit lignes ne distingue aucune ligne*, il prenait deux
-                caractères et demi de largeur au mot et débordait de la hauteur
-                de sa ligne (Keko : « les icônes dépassent des lignes »). Il
-                reviendra le jour où chaque destination aura le sien. */}
+            {/* L'EMBLÈME RESTE, ET IL EST BORNÉ PAR SA LIGNE. Keko : « il faut
+                garder le symbole car plus tard on aura des symboles
+                différents ». Les huit portent aujourd'hui le même écu, faute
+                d'en avoir d'autres ; ce qui se corrigeait n'était pas sa
+                présence mais sa TAILLE — mesuré par son texte, il ignorait ce
+                que sa ligne mesure et mordait le filet dès que le rail se
+                serrait. */}
+            <img className="arm-lieu-blason" src={urlDeLArmurerie()} alt="" draggable={false} />
             <span className="arm-lieu-nom">{d.nom}</span>
           </button>
         ))}

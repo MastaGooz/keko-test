@@ -627,9 +627,22 @@ export function planArmurerie(
   // deux fois plus haute — *deux boutons séparés d'un vide se lisent comme deux
   // objets sans rapport.*
   const hBouton = bDescendre.hauteur
-  // La bande réservée en tient DEUX, plus l'air autour et entre eux : sans ça
-  // la liste des destinations s'assoirait sur le premier.
-  const bandeDepart = 2 * hBouton + 3 * marge
+  /**
+   * LA BANDE NE RÉSERVE QUE CE QU'ELLE PORTE. Keko : « il y a un espace vide
+   * entre les onglets et les boutons, on peut pas gagner là-dessus ? »
+   *
+   * Elle comptait TROIS marges pleines — une sous le bas, une entre les deux
+   * boutons, une au-dessus — et la liste s'en retranchait une QUATRIÈME. Deux
+   * marges pleines séparaient donc les destinations du premier bouton, contre
+   * une seule entre les deux boutons : *le plus grand blanc de la colonne
+   * tombait là où il n'y avait rien à séparer.*
+   *
+   * Il en reste une pleine en bas et une en haut — celle qui détache la pile
+   * de la liste — et **une demie entre les deux boutons**, qui sont censés se
+   * lire comme une pile. Mesuré à 844 x 390 : 31 px rendus aux huit entrées.
+   */
+  const ecartPile = marge / 2
+  const bandeDepart = 2 * hBouton + 2 * marge + ecartPile
 
   return {
     demiHaut,
@@ -637,9 +650,9 @@ export function planArmurerie(
     rail: { x: xRail, y: yPanneaux, l: lRail - marge, h: hPanneaux },
     railListe: {
       x: xRail,
-      y: yPanneaux + (bandeDepart + marge) / 2,
+      y: yPanneaux + bandeDepart / 2,
       l: lRail - marge,
-      h: hPanneaux - bandeDepart - marge,
+      h: hPanneaux - bandeDepart,
     },
     coffre,
     onglets,
@@ -681,7 +694,7 @@ export function planArmurerie(
     // contenu s'en va* — sinon elle reste comme une cicatrice, à tenir de la
     // place pour quelque chose qui n'est plus là.
     pnj: { x: xStats, y: yPanneaux, l: lStats, h: hPanneaux },
-    bouton: [xRail, basPanneaux + 2 * marge + hBouton * 1.5, Z_PLAN],
+    bouton: [xRail, basPanneaux + marge + ecartPile + hBouton * 1.5, Z_PLAN],
     boutonFortune: [xRail, basPanneaux + marge + hBouton / 2, Z_PLAN],
     // **IL A LA LARGEUR DE SON CONTENU, pas celle du panneau** : étiré sur toute
     // la bande il se lisait comme un bandeau, pas comme un bouton. *Ce qui

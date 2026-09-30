@@ -4250,21 +4250,43 @@ rail — et le nom d'une entrée était borné par la largeur du rail. **Rendre 
 boutons plus petits rendait donc les onglets plus petits**, à l'exact opposé de
 ce qui était demandé.
 
-Ce qui a débloqué les deux : **l'écu.** Les huit entrées portaient LE MÊME —
-celui de l'armurerie, recyclé du bandeau disparu. *Un symbole répété à
-l'identique sur huit lignes ne distingue aucune ligne* : il ne disait rien, il
-prenait deux caractères et demi de largeur au mot, et à `1,9em` il **dépassait
-de la hauteur de sa ligne** dès que le rail se serrait — 20 px de dessin pour
-16 px de ligne à 667 x 320, donc il mordait le filet et sa voisine.
+**L'ÉCU RESTE, ET IL SE MESURE SUR SA LIGNE.** Je l'avais d'abord retiré — les
+huit entrées portent LE MÊME, celui de l'armurerie recyclé du bandeau disparu,
+et *un symbole répété à l'identique sur huit lignes ne distingue aucune ligne.*
+Keko l'a repris : « il faut garder le symbole car plus tard on aura des symboles
+différents ». **Ce qui se corrigeait n'était pas sa présence, c'était sa
+taille** : mesuré en `em`, donc par son texte, il ignorait ce que sa ligne
+mesure — 20 px de dessin pour 16 px de ligne à 667 x 320, donc il mordait le
+filet et sa voisine. Sa hauteur vient maintenant du **plan**, qui connaît la
+ligne (`--rail-ligne`), et il en prend 55 %.
 
-Il est retiré, le mot récupère sa largeur, et le coefficient du nom passe de
-0,09 à 0,125. **Le bouton peut alors descendre sans emporter l'onglet avec
-lui.** L'écu reviendra le jour où chaque destination aura le sien.
+*Un dessin posé dans une ligne ne peut pas se borner à ce qu'il y a à côté de
+lui.*
 
-Mesuré, à 844 x 390 puis 667 x 320 : le nom passe de 10,6 px à **13,5 et
-12,4 px** (+27 % et +17 %), le bouton de 38 à **32 px** de haut, le rail de 118
-à **108 et 99 px** — rendus aux meubles. Zéro débordement, aucun nom tronqué, et
-plus rien ne dépasse d'une ligne.
+**LA PLACE SE PREND SUR LES BLANCS, PAS SUR LE MOT.** Keko : « il y a un espace
+vide entre les onglets et les boutons, on peut pas gagner là-dessus ? » Il y en
+avait **159 px sous la liste pour deux boutons de 32** à 844 x 390. Trois
+sources, et aucune ne portait d'information :
+
+- la bande des départs comptait **trois marges pleines** — sous le bas, entre
+  les deux boutons, au-dessus — et la liste s'en retranchait une QUATRIÈME.
+  Deux marges séparaient donc les destinations du premier bouton, contre une
+  seule entre deux boutons censés se lire comme une pile : *le plus grand blanc
+  de la colonne tombait là où il n'y avait rien à séparer.* Il en reste une en
+  bas, une en haut, et **une demie entre les deux boutons** ;
+- le rail avait un `gap` de 0,25rem entre ses entrées, **alors que chacune porte
+  déjà son filet**. Sept blancs dans une colonne de huit lignes font une ligne
+  entière. Jointives, les entrées se lisent comme une liste réglée — ce
+  qu'elles sont ;
+- et autour du mot, l'écu revenu, il fallait choisir : *ce qui porte
+  l'information est le mot*, donc c'est l'air autour de lui qui recule
+  (remplissage, écart à l'écu, approche des capitales), jamais lui.
+
+Mesuré, à 844 x 390 puis 667 x 320 : le nom passe de 10,6 px à **12,1 et
+11,1 px**, le pas d'une entrée de 26,7 à **29,8** et de 21,5 à **23,8** (+12 %),
+le bouton de 38 à **32 px** de haut, le rail de 118 à **108 et 99 px** — rendus
+aux meubles. « ARMURERIE » garde 7 à 8 px de marge avant de tronquer, l'écu tient
+dans sa ligne, zéro débordement.
 
 **CE QUI A CASSÉ EN CHEMIN, ET C'ÉTAIT PRÉVISIBLE : le rail ne tenait plus son
 propre nom.** « ARMURERIE » y perdait ses trois dernières lettres. Le nom était

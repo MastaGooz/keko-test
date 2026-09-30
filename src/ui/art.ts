@@ -99,10 +99,10 @@ export function urlDuFond(): string {
 /**
  * LE SYMBOLE DE L'ARMURERIE, fourni par Keko.
  *
- * **Plus rien ne l'appelle pour l'instant** : il coiffait le titre du lieu,
- * parti avec le bandeau, puis chaque entrée du rail — où il était le même écu
- * répété huit fois. Il attend que chaque destination ait le sien ; la fonction
- * reste, c'est une ligne à reposer.
+ * Il coiffait le titre du lieu, parti avec le bandeau ; il coiffe maintenant
+ * **chaque entrée du rail**. Les huit portent le même faute d'en avoir
+ * d'autres — Keko : « il faut garder le symbole car plus tard on aura des
+ * symboles différents ».
  *
  * Même piège de cache que les autres fichiers de `public/` : l'URL porte la
  * date du build, sinon le remplacer ne changerait rien à l'écran.
