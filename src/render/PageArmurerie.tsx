@@ -38,7 +38,7 @@ import { deuxMains, peutDescendre } from '../logic/hub.ts'
 import { SON_POSER, jouerSon } from './sons.ts'
 import { tailleBouton } from './Bouton3D.tsx'
 import { Z_PLAN } from './armurerie-plan.ts'
-import { urlDeLArmurerie, urlDeLArmurier } from '../ui/art.ts'
+import { urlDeLArmurier, urlDuSymbole } from '../ui/art.ts'
 import type { LieuHub } from './destinations.ts'
 import { DESTINATIONS } from './destinations.ts'
 
@@ -721,7 +721,19 @@ export function PageArmurerie({
                 présence mais sa TAILLE — mesuré par son texte, il ignorait ce
                 que sa ligne mesure et mordait le filet dès que le rail se
                 serrait. */}
-            <img className="arm-lieu-blason" src={urlDeLArmurerie()} alt="" draggable={false} />
+            {d.embleme === undefined ? (
+              /* UNE PLACE TENUE GARDE LA PLACE DU SYMBOLE, PAS LE SYMBOLE :
+                 les mots restent alignés, et rien ne donne un visage à un lieu
+                 qui n'existe pas encore. */
+              <span className="arm-lieu-blason" aria-hidden="true" />
+            ) : (
+              <img
+                className="arm-lieu-blason"
+                src={urlDuSymbole(d.embleme)}
+                alt=""
+                draggable={false}
+              />
+            )}
             <span className="arm-lieu-nom">{d.nom}</span>
           </button>
         ))}

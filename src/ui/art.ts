@@ -97,18 +97,21 @@ export function urlDuFond(): string {
 }
 
 /**
- * LE SYMBOLE DE L'ARMURERIE, fourni par Keko.
+ * L'EMBLÈME D'UN LIEU DU HUB, fourni par Keko — un fichier par destination.
  *
- * Il coiffait le titre du lieu, parti avec le bandeau ; il coiffe maintenant
- * **chaque entrée du rail**. Les huit portent le même faute d'en avoir
- * d'autres — Keko : « il faut garder le symbole car plus tard on aura des
- * symboles différents ».
+ * Il y en avait UN, celui de l'armurerie, porté par les huit entrées faute
+ * d'en avoir d'autres : Keko l'avait gardé « car plus tard on aura des symboles
+ * différents », et `Exploration.png` est le premier à arriver. *Une fonction
+ * par lieu aurait fait une ligne de code par dessin* — celle-ci prend le nom
+ * du fichier, et une destination nouvelle ne coûte qu'une entrée dans la
+ * liste.
  *
  * Même piège de cache que les autres fichiers de `public/` : l'URL porte la
- * date du build, sinon le remplacer ne changerait rien à l'écran.
+ * date du build, sinon le remplacer ne changerait rien à l'écran. Et **la
+ * casse du nom compte** : GitHub Pages sert depuis Linux.
  */
-export function urlDeLArmurerie(): string {
-  return `${import.meta.env.BASE_URL}Armurerie.png?v=${encodeURIComponent(__BUILD_TIME__)}`
+export function urlDuSymbole(nom: string): string {
+  return `${import.meta.env.BASE_URL}${nom}.png?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
 /**

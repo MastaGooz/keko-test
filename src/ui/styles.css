@@ -5688,6 +5688,10 @@ body {
      c'est le NOM : l'ecu lui prend sa largeur, et « Expedition » n'a que
      quelques pixels de marge avant de tronquer. */
   height: min(1.65em, calc(var(--rail-ligne, 2rem) * 0.65));
+  /* LES EMBLEMES SONT CARRES, et une place tenue n'a PAS d'image : sans rapport
+     declare, son bloc vide serait large de zero et les mots des places tenues
+     ne s'aligneraient plus sur ceux des lieux ouverts. */
+  aspect-ratio: 1;
   width: auto;
   flex: none;
   filter: drop-shadow(0 1px 3px #000000aa);

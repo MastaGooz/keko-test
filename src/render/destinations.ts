@@ -53,11 +53,20 @@ export type Destination = {
    * l'accent le confirme.
    */
   majeur?: boolean
+  /**
+   * LE FICHIER DE SON EMBLÈME, dans `public/`, sans extension.
+   *
+   * **Une place tenue n'en a pas**, et c'est délibéré : les six portaient l'écu
+   * de l'armurerie faute d'un autre dessin, ce qui *donnait un visage à des
+   * lieux qui n'existent pas.* Elles gardent la place du symbole — les mots
+   * restent alignés — et rien dedans.
+   */
+  embleme?: string
 }
 
 export const DESTINATIONS: readonly Destination[] = [
-  { nom: 'Expédition', ouvert: true, lieu: 'expedition', majeur: true },
-  { nom: 'Armurerie', ouvert: true, lieu: 'armurerie' },
+  { nom: 'Expédition', ouvert: true, lieu: 'expedition', majeur: true, embleme: 'Exploration' },
+  { nom: 'Armurerie', ouvert: true, lieu: 'armurerie', embleme: 'Armurerie' },
   { nom: 'Bientôt', ouvert: false },
   { nom: 'Bientôt', ouvert: false },
   { nom: 'Bientôt', ouvert: false },

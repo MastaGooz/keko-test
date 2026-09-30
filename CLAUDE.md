@@ -4250,6 +4250,20 @@ rail — et le nom d'une entrée était borné par la largeur du rail. **Rendre 
 boutons plus petits rendait donc les onglets plus petits**, à l'exact opposé de
 ce qui était demandé.
 
+**CHAQUE LIEU A SON EMBLÈME** (`urlDuSymbole`, un fichier par destination dans
+`public/`). Ils portaient tous le même — celui de l'armurerie — faute d'un autre
+dessin ; `Exploration.png` est le premier à arriver, au même gabarit
+(1254 x 1254). *Une fonction par lieu aurait fait une ligne de code par dessin* :
+celle-ci prend le nom du fichier, et une destination nouvelle ne coûte qu'une
+entrée dans la liste.
+
+**UNE PLACE TENUE N'EN A PAS**, et c'est délibéré : les six portaient l'écu de
+l'armurerie, ce qui *donnait un visage à des lieux qui n'existent pas.* Elles
+gardent la PLACE du symbole — les mots restent alignés sur ceux des lieux
+ouverts — et rien dedans. Ça demande un `aspect-ratio` sur le bloc : *un
+élément vide sans rapport déclaré est large de zéro*, et l'alignement tombait
+avec lui.
+
 **L'ÉCU RESTE, ET IL SE MESURE SUR SA LIGNE.** Je l'avais d'abord retiré — les
 huit entrées portent LE MÊME, celui de l'armurerie recyclé du bandeau disparu,
 et *un symbole répété à l'identique sur huit lignes ne distingue aucune ligne.*
