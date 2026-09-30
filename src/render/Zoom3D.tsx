@@ -258,7 +258,19 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    */
   const uneCartePx = (uneCarte * size.height) / H
   const grossissement = Math.max(1.28, Math.min(1.95, CIBLE_LOUPE_PX / uneCartePx))
-  const tailleLoupe = Math.min(piece * 0.95, (hLoupe * 0.66) / 1.4, uneCarte * grossissement)
+  /**
+   * **LA PIÈCE NE BORNE LA LOUPE QUE S'IL Y EN A UNE.** Sans elle `piece` vaut
+   * zéro, donc `min` valait zéro : la carte maintenue RÉTRÉCISSAIT à rien au
+   * lieu de grossir — Keko : « quand je maintiens le tap sur une des cartes du
+   * deck affiché, elle se réduit au lieu de zoomer ».
+   *
+   * *Une borne qui n'a plus d'objet ne devient pas zéro, elle disparaît* — et
+   * c'est la famille du plancher resté sur la colonne de l'armurier quand son
+   * bouton l'a quittée : **une contrainte posée pour un contenu se relit quand
+   * ce contenu s'en va.**
+   */
+  const plafondLoupe = sansPiece ? Infinity : piece * 0.95
+  const tailleLoupe = Math.min(plafondLoupe, (hLoupe * 0.66) / 1.4, uneCarte * grossissement)
   /**
    * LE COUPLE SE CENTRE, PAS LA PIÈCE SEULE.
    *

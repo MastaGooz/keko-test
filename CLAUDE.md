@@ -5457,6 +5457,13 @@ téléphone, plus qu'une case de coffre, avec la loupe pour lire. Au-delà elle
 continuerait de rétrécir : *c'est le jour où il faudra faire défiler, pas
 avant.*
 
+**ET LA LOUPE MARCHE, elle aussi** — Keko : « quand je maintiens le tap sur une
+des cartes du deck affiché, elle se réduit au lieu de zoomer ». La taille sous
+la loupe était bornée par `piece * 0,95`, or **sans pièce `piece` vaut zéro** :
+le `min` valait zéro, la carte disparaissait. *Une borne qui n'a plus d'objet ne
+devient pas zéro, elle disparaît* — c'est la famille du plancher resté sur la
+colonne de l'armurier quand son bouton l'a quittée.
+
 **POUR LE VOIR : `?r3f&deck` (avec `&set=8` pour le maximum).** Le chargement de
 départ ne donne que six modèles — *on ne peut rien dire d'une grille avec six
 cases*, la leçon du coffre à cinq objets. Le banc équipe la pièce la plus riche
