@@ -48,6 +48,22 @@ export const TEXTE_FORTUNE = 'Équipement\ngratuit'
 /** Ce qu'on consulte sans rien décider : le deck que le chargement produit. */
 export const TEXTE_DECK = 'Deck'
 
+/**
+ * CE QUE LA CASE DU COFFRE VAUT PAR RAPPORT À CELLE DU CHARGEMENT :
+ * `?r3f&coffre-taille=1` la met à la même taille.
+ *
+ * Demandé par Keko — « on peut faire un test avec les cartes du coffre à la même
+ * taille que celles de l'équipement ? » *Un essai qui se juge doit pouvoir
+ * s'ouvrir d'un lien*, comme les pistes de cadre et le banc du deck : il compare
+ * les deux d'un aller-retour, sans attendre un déploiement entre les deux.
+ *
+ * Le défaut reste 0,68 tant qu'il n'a pas tranché.
+ */
+export function PART_COFFRE(): number {
+  const demande = Number(new URLSearchParams(location.search).get('coffre-taille'))
+  return Number.isFinite(demande) && demande > 0 ? Math.min(1, demande) : 0.68
+}
+
 
 
 /**
@@ -480,7 +496,7 @@ export function planArmurerie(
    * du chargement, et le coffre en est une fraction. Il n'y a toujours pas deux
    * chiffres à rejuger l'un contre l'autre.
    */
-  const tailleCoffre = tailleCharge * 0.68
+  const tailleCoffre = tailleCharge * PART_COFFRE()
 
   // Une case, plus un cheveu : la grille doit respirer sans s'étaler.
   const pasX = tailleCoffre * 1.16

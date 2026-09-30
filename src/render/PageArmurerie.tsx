@@ -459,7 +459,16 @@ export function PageArmurerie({
    */
   return (
     <>
-      <div className="arm-fond">
+      {/* LA LARGEUR DE LA BANDE DES ONGLETS VIT SUR LE LIEU, pas sur elle seule :
+          les noms de groupe de l'équipement partagent leur règle de taille, et
+          ils habitent l'autre calque. *Une grandeur que deux endroits lisent se
+          pose là où les deux la voient.* */}
+      <div
+        className="arm-fond"
+        style={
+          { '--onglets-l': `${enPixels(plan.onglets, fenetre.h, fenetre.l).width}px` } as React.CSSProperties
+        }
+      >
       <div className="arm-cadre" style={boite(plan.coffre)} ref={cadreCoffre} />
       <span className="arm-nom" style={plaque(plan.coffre)}>
         Coffre

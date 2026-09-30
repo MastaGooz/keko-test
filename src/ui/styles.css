@@ -4974,7 +4974,23 @@ body {
   padding-bottom: 0.14rem;
   border-bottom: 1px solid #6b593677;
   color: #c9b88e;
-  font-size: clamp(0.5rem, 1.55vh, 0.8rem);
+  /* LA MÊME RÈGLE QUE LES ONGLETS DU COFFRE, pas une valeur voisine. Keko :
+     « sur PC le texte des types dans l'équipement est trop petit, il devrait
+     être de la même taille que le texte des catégories du coffre ».
+
+     *Ce sont deux repères du même rang* -- le cran de titre des onglets, entre
+     le nom du meuble et rien -- donc ils se lisent à la même voix. Ils étaient
+     en `vh` avec leur propre plafond : 19,2 px contre 21,6 sur un écran de PC,
+     et l'écart changeait avec le format. **Deux formules voisines divergent ;
+     une seule ne peut pas** -- la leçon déjà payée sur le bouton « Deck » et la
+     bande des mesures.
+
+     **ET SANS PLANCHER EN `rem`** : il en avait un (0,5rem), et à 667 x 320 il
+     commandait -- 8 px pour une bande qui n'en tenait que 6,7, donc « Armure »
+     y perdait sa dernière lettre. *Un plancher qui dépasse la place qu'il y a
+     n'est pas un plancher, c'est un débordement*, et le mot ne se coupe pas en
+     deux. Le défaut est antérieur à ce partage de règle ; il tombe avec. */
+  font-size: min(0.9rem, calc(var(--onglets-l) / 31));
   letter-spacing: 0.15em;
   text-transform: uppercase;
   white-space: nowrap;

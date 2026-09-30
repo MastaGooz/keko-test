@@ -3786,6 +3786,24 @@ reste quand une arme à deux mains masque l'autre slot. Un filet sous le mot dit
 jusqu'où il porte : *un mot centré au-dessus de trois cases ne dit pas combien
 il en coiffe.*
 
+**ET LE NOM D'UN GROUPE SE LIT À LA VOIX DES ONGLETS DU COFFRE.** Keko : « sur
+PC le texte des types dans l'équipement est trop petit, il devrait être de la
+même taille que le texte des catégories du coffre ». *Ce sont deux repères du
+même rang* — le cran de titre le plus bas, celui qui nomme sans rien engager —
+donc ils partagent leur règle au lieu d'en avoir deux voisines : 19,2 px contre
+21,6 sur un écran de PC, et l'écart changeait avec le format. **Deux formules
+voisines divergent ; une seule ne peut pas.** La largeur de la bande des onglets
+vit donc sur le LIEU et non sur elle seule : *une grandeur que deux endroits
+lisent se pose là où les deux la voient.*
+
+**Et son plancher en `rem` est tombé avec** : il valait 0,5rem, et à 667 x 320
+c'est lui qui commandait — 8 px pour une bande qui n'en tenait que 6,7, donc
+« Armure » y perdait sa dernière lettre. *Un plancher qui dépasse la place qu'il
+y a n'est pas un plancher, c'est un débordement.* Le défaut était antérieur ; il
+tombe avec le partage de règle. Mesuré : 21,6 px sur un écran de PC, 9,05 à
+844 x 390, 6,68 à 667 x 320 — identiques aux onglets partout, et plus rien ne
+tronque.
+
 **ET LES DEUX FILETS NE SE TOUCHENT PAS.** Bout à bout, ils faisaient UN trait
 continu sous les trois slots — donc plus rien ne disait où « Armes » s'arrête.
 Keko : « il faudrait que la ligne coupe entre arme et armure ». *Un séparateur
@@ -5222,6 +5240,13 @@ deux endroits n'a aucune raison de le montrer à deux échelles.** C'est donc
 l'équipement qui fixe la taille — parce que c'est lui qui est CONTRAINT, ses
 sept slots devant tenir dans un panneau — et le coffre la reprend. Il n'y a
 plus de chiffre à rejuger.
+
+**POUR COMPARER LES DEUX : `?r3f&coffre-taille=1`.** Keko : « on peut faire un
+test avec les cartes du coffre à la même taille que celles de l'équipement ? »
+*Un essai qui se juge doit pouvoir s'ouvrir d'un lien* — il compare les deux d'un
+aller-retour, sans attendre un déploiement entre les deux. Le paramètre prend
+n'importe quelle fraction (`0,8`, `0,9`, `1`) ; le défaut reste 0,68 tant qu'il
+n'a pas tranché. Mesuré à 1 : le coffre passe de 5 x 3 cases à 3 x 3.
 
 **PUIS LE COFFRE EST REDESCENDU D'UN CRAN — à 68 % de cette taille.** Les noms
 de groupe ont fait passer l'équipement à deux rangées, donc ses cartes ont
