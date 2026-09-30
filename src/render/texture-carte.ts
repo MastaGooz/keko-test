@@ -481,7 +481,9 @@ export const METAL_3D: Record<string, string> = {
   commune: '#9c6237',
   rare: '#c3ccd4',
   epique: '#f2b81a',
-  legendaire: '#cfe3ff',
+  // LA TRANCHE SUIT LE CADRE : bleutée comme lui, sinon l'épaisseur trahirait
+  // l'argent dès que la carte s'incline.
+  legendaire: '#a6d3ff',
 }
 
 
@@ -500,18 +502,35 @@ export const METAL_3D: Record<string, string> = {
  * palier prend une teinte différente du spectre. *Une irisation n'est pas une
  * couleur de plus, c'est un arc-en-ciel qui traverse la même lumière.*
  */
+/**
+ * **ET ELLE EST BLEUTÉE D'UN CRAN DE PLUS.** Keko : « on peut bleuter un peu
+ * plus le cadre des cartes diamant ? le cadre est encore un peu trop proche de
+ * l'argent ».
+ *
+ * *L'argent est un gris BLEUTÉ* (`#ccd5dd` au plateau), donc un diamant dont
+ * les paliers neutres restent proches du blanc lui ressemble par ses trois
+ * quarts — l'irisation ne le sépare que là où elle est franche. Chaque palier
+ * descend donc vers le cyan et le bleu, **et gagne en saturation** : *ce qui
+ * distingue deux métaux froids n'est pas leur clarté, c'est le pigment qu'il y
+ * a dedans.*
+ *
+ * **L'accent chaud reste**, un seul, et plus pâle qu'avant : un arc-en-ciel
+ * dont on retire le jaune n'est plus un arc-en-ciel, c'est un bleu. *C'est lui
+ * qui empêche l'irisation de se lire comme une teinte unique* — et il suffit
+ * qu'il passe une fois dans la course pour qu'on voie le spectre.
+ */
 const IRISATION: readonly (readonly [number, string])[] = [
-  [0, '#ffffff'],
-  [0.11, '#7fe4ff'],
-  [0.21, '#5f7fc4'],
-  [0.23, '#c2e2ff'],
-  [0.32, '#ffb0ec'],
-  [0.43, '#d6fdff'],
-  [0.53, '#ffec9a'],
-  [0.66, '#b49cff'],
-  [0.8, '#4e74a8'],
-  [0.9, '#b9ecff'],
-  [1, '#ffe4f6'],
+  [0, '#e4f4ff'],
+  [0.11, '#4fd3ff'],
+  [0.21, '#2f56b0'],
+  [0.23, '#8fcdff'],
+  [0.32, '#d98aff'],
+  [0.43, '#a8f2ff'],
+  [0.53, '#fff0b4'],
+  [0.66, '#7d7bff'],
+  [0.8, '#1f4c8c'],
+  [0.9, '#7ad8ff'],
+  [1, '#d2ecff'],
 ]
 
 /** Le laiton du cadre, en dégradé oblique comme dans le CSS. */

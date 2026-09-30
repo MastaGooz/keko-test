@@ -5076,6 +5076,23 @@ lumineuse, c'est un clignotant.*
 paliers de lumière, des teintes plus franches. *Le diamant ne se distingue pas
 de l'argent en étant plus clair*, il s'en distingue en ayant des couleurs.
 
+**PUIS BLEUTÉE D'UN CRAN DE PLUS.** Keko : « on peut bleuter un peu plus le
+cadre des cartes diamant ? le cadre est encore un peu trop proche de
+l'argent ». *L'argent est lui-même un gris BLEUTÉ* (`#ccd5dd` au plateau), donc
+un diamant dont les paliers neutres restaient proches du blanc lui ressemblait
+par ses trois quarts — l'irisation ne le séparait que là où elle est franche.
+
+Chaque palier descend donc vers le cyan et le bleu **et gagne en saturation** :
+au plateau, l'argent et le diamant ont désormais la même teinte à un degré près
+(208° contre 207°) et **cinq fois moins de pigment** pour le premier (20 %
+contre 100 % de saturation). *Ce qui distingue deux métaux froids n'est pas leur
+clarté, c'est le pigment qu'il y a dedans.*
+
+**L'accent chaud reste, un seul, et plus pâle** : un arc-en-ciel dont on retire
+le jaune n'est plus un arc-en-ciel, c'est un bleu — et il suffit qu'il passe
+une fois dans la course pour qu'on lise le spectre. La tranche 3D suit le
+cadre, sinon l'épaisseur trahirait l'argent dès que la carte s'incline.
+
 **ET UNE AURÉOLE CHROMATIQUE ANIMÉE FAIT LE TOUR DE LA CARTE.** Demandée par
 Keko. Elle garde **la silhouette de la carte** au lieu de l'entourer d'un rond,
 et sa couleur **tourne avec l'angle autour du centre** — *un arc-en-ciel qui
