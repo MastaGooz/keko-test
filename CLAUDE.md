@@ -4064,6 +4064,24 @@ une part de la hauteur d'écran (8,5 %), bornée en bas par le plancher tactile
 du projet — 48 px — et en haut à 72 pour qu'il ne devienne pas une enseigne.
 La règle vaut pour tous les boutons du moteur, pas seulement celui-ci.
 
+**ET SUR TÉLÉPHONE, SEULE LA BORNE BASSE COMMANDE.** 9 % de 390 px font 35,
+donc le bouton y vaut son plancher et rien d'autre — or il était à **54**,
+au-dessus du plancher tactile que le projet s'est fixé (48). *Un bouton qui
+dépasse le minimum qu'il devait tenir n'est plus un minimum, c'est un choix*, et
+Keko l'a repris : « sur téléphone je trouve les boutons deck, descendre et
+équipement gratuit trop gros par rapport à l'échelle des autres éléments ».
+
+Il tombe donc AU plancher, pas en dessous : **48 px est une limite, pas un
+réglage** — c'est ce que le doigt demande, et il ne rétrécit pas avec l'écran.
+Le petit garde son cran d'écart (46 → 42), comme le bouton de rangement du
+coffre qui vit déjà sous le plancher : *il se tape moins souvent et il n'engage
+rien.* Les plafonds ne bougent pas, donc **sur grand écran rien ne change** :
+c'est la part de hauteur qui y commande, et elle avait été réglée là.
+
+*Ce que ça rend, et ce n'était pas visé* : la largeur du rail suit celle de son
+bouton, donc elle tombe de 185 à 165 px — 20 px rendus aux meubles — et les
+entrées de destinations gagnent trois pixels de haut.
+
 **Et la colonne fait au moins la largeur de son bouton.** Il vit dedans et sa
 largeur sort de son texte : trop étroite, la colonne le laissait déborder sur
 l'équipement — *une colonne qui ne contient pas ce qu'on y met n'est pas une

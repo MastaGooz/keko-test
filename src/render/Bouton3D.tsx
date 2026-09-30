@@ -42,10 +42,27 @@ import { hauteurVisibleA } from './Cadrage.tsx'
  * haut pour qu'il ne devienne pas une enseigne.
  */
 function hauteurBoutonPx(hauteurFenetrePx: number, petit: boolean): number {
+  /**
+   * **SUR TÉLÉPHONE, SEULE LA BORNE BASSE COMMANDE** — 9 % de 390 px font 35,
+   * donc le bouton vaut son plancher et rien d'autre. Il était à 54, au-dessus
+   * du plancher tactile que le projet s'est fixé (48) : *un bouton qui dépasse
+   * le minimum qu'il devait tenir n'est plus un minimum, c'est un choix*, et
+   * Keko l'a repris — « sur téléphone je trouve les boutons deck, descendre et
+   * équipement gratuit trop gros par rapport à l'échelle des autres éléments ».
+   *
+   * Il tombe donc AU plancher, pas en dessous : **48 px est une limite, pas un
+   * réglage** — c'est ce que le doigt demande, et il ne rétrécit pas avec
+   * l'écran. Le petit garde son cran d'écart (42), comme le bouton de rangement
+   * du coffre qui vit déjà sous le plancher : *il se tape moins souvent et il
+   * n'engage rien.*
+   *
+   * Les plafonds ne bougent pas : sur un grand écran c'est la part de hauteur
+   * qui commande, et elle avait été réglée là.
+   */
   const part = hauteurFenetrePx * (petit ? 0.076 : 0.09)
   return petit
-    ? Math.max(46, Math.min(62, part))
-    : Math.max(54, Math.min(76, part))
+    ? Math.max(42, Math.min(62, part))
+    : Math.max(48, Math.min(76, part))
 }
 
 /** La hauteur d'un bouton en unités de scène, à cette profondeur. */
