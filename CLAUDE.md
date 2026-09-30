@@ -4379,6 +4379,18 @@ Mesuré à 2560 x 1271 : ligne 146 → **81,6 px**, texte 22,8 → **30**, écu 
 **40,8**, bord gauche 4,6 → **16,5**. À 844 x 390 et 667 x 320, **rien ne bouge
 de plus d'un pixel** — et aucun nom ne tronque nulle part.
 
+**PUIS L'ÉCU A ENCORE GROSSI D'UN CRAN** (1,5 → 1,65em, et 0,5 → 0,65 de
+ligne), demandé par Keko : « on peut grossir un peu les symboles dans les
+onglets du hub, sans toucher au reste ? » *Les deux bornes montent ensemble
+parce que chacune commande à un bout* — l'em sur téléphone, la ligne sur un
+grand écran : n'en lever qu'une ne se verrait que d'un côté. Mesuré : 40,8 →
+**49,5 px** sur un écran de PC (+21 %), 16,8 → **18,5** à 844 x 390 (+10 %).
+
+**Ce qui le plafonne, c'est le NOM.** L'écu lui prend sa largeur, et
+« Expédition » n'a plus que 2,9 px de marge avant de tronquer à 667 x 320 :
+*dans une colonne de cent pixels, un dessin et dix capitales se disputent la
+même place*, et on ne peut en grossir un qu'au détriment de l'autre.
+
 *Conséquence à connaître* : sur un grand écran les huit entrées ne remplissent
 plus la colonne (653 px sur 1169), et le reste est du vide en bas. **Une liste
 se lit du haut vers le bas** — elle ne flotte pas au milieu de sa colonne — donc

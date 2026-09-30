@@ -5681,7 +5681,13 @@ body {
    *Un dessin posé dans une ligne ne peut pas se borner à ce qu'il y a à côté
    de lui* — la hauteur de la ligne vient du plan, qui la connaît. */
 .arm-lieu-blason {
-  height: min(1.5em, calc(var(--rail-ligne, 2rem) * 0.5));
+  /* LES DEUX BORNES MONTENT ENSEMBLE. Demande par Keko : « on peut grossir un
+     peu les symboles dans les onglets du hub, sans toucher au reste ? » Chacune
+     commande a un bout -- l'em sur telephone, la ligne sur un grand ecran --
+     donc n'en lever qu'une ne se verrait que d'un cote. Ce qui les plafonne,
+     c'est le NOM : l'ecu lui prend sa largeur, et « Expedition » n'a que
+     quelques pixels de marge avant de tronquer. */
+  height: min(1.65em, calc(var(--rail-ligne, 2rem) * 0.65));
   width: auto;
   flex: none;
   filter: drop-shadow(0 1px 3px #000000aa);
