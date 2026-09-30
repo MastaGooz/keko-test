@@ -4348,6 +4348,43 @@ On arrive toujours dans l'ARMURERIE malgré tout : *c'est là qu'on prépare*, e
 un joueur qui débarque doit voir de quoi il dispose avant de voir comment
 partir.
 
+**ET SUR UN GRAND ÉCRAN, UNE ENTRÉE NE S'ÉTIRE PLUS SANS FIN.** Keko : « sur PC
+les onglets du hub rendent mal : ils sont trop épais, l'icône est trop petite,
+et la bordure gauche de chaque onglet est trop proche de l'icône. »
+
+*Les trois griefs avaient la même racine* : les huit entrées se partageaient
+toute la colonne, donc chacune faisait **146 px de haut** sur un écran de PC —
+pendant que son contenu restait plafonné en `rem` (texte 22,8 px, écu 30,8,
+remplissage 4,6). **Une ligne de liste vaut quelques fois son texte, pas six**,
+et ce qui était trop petit ne l'était que par rapport à la place qu'on lui
+donnait.
+
+Trois réglages, et chacun ne mord qu'à un bout :
+
+- **la hauteur d'une entrée est plafonnée** (3,4rem). Le plafond vit dans le
+  jeton `--rail-ligne` et non dans la feuille, parce que l'emblème s'y borne
+  aussi : *deux endroits qui décrivent la même hauteur se désaccordent au
+  premier réglage* ;
+- **le plafond de police monte** de 0,95 à 1,25rem — il avait été posé quand le
+  rail était étroit, et sur un écran de PC il commandait seul dans une colonne
+  de 326 px. *Un plafond posé pour un contenant étroit ne vaut plus quand il
+  s'élargit.* Le coefficient de largeur baisse d'un cheveu en échange (0,108 →
+  0,104) : c'est lui qui commande sur téléphone, et il paie l'air rendu au bord
+  gauche ;
+- **le remplissage est ASYMÉTRIQUE** (0,55em à gauche, 0,2em à droite) : le
+  bord gauche longe l'écu, le bord droit ne longe qu'un blanc de fin de mot.
+  *Un remplissage se règle sur ce qu'il sépare.*
+
+Mesuré à 2560 x 1271 : ligne 146 → **81,6 px**, texte 22,8 → **30**, écu 30,8 →
+**40,8**, bord gauche 4,6 → **16,5**. À 844 x 390 et 667 x 320, **rien ne bouge
+de plus d'un pixel** — et aucun nom ne tronque nulle part.
+
+*Conséquence à connaître* : sur un grand écran les huit entrées ne remplissent
+plus la colonne (653 px sur 1169), et le reste est du vide en bas. **Une liste
+se lit du haut vers le bas** — elle ne flotte pas au milieu de sa colonne — donc
+le vide se range sous la dernière entrée, là où il attend les destinations à
+venir.
+
 *Piège de vérification traversé au passage* : **une iframe de sonde finit par
 ne plus démarrer** quand on en a créé une dizaine dans le même onglet — chacune
 ouvre son contexte WebGL, et la scène reste sur « Chargement… » sans une erreur

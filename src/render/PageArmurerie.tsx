@@ -691,14 +691,19 @@ export function PageArmurerie({
           // LA TAILLE DU TEXTE SUIT LA LARGEUR DU RAIL, pas la fenetre : il est
           // borne par la hauteur, donc sa largeur ne suit pas celle de l'ecran.
           '--rail-l': `${enPixels(plan.railListe, fenetre.h, fenetre.l).width}px`,
-          // LA HAUTEUR D'UNE LIGNE, pour que l'emblème ne déborde pas de la
-          // sienne : les entrées se partagent la colonne à parts égales et
-          // n'ont plus d'écart entre elles, donc le compte est exact. *Un
-          // dessin borné par son texte ne sait pas ce que sa ligne mesure* —
-          // c'est ce qui le faisait mordre le filet et sa voisine.
-          '--rail-ligne': `${
-            enPixels(plan.railListe, fenetre.h, fenetre.l).height / DESTINATIONS.length
-          }px`,
+          // LA HAUTEUR D'UNE LIGNE, et c'est ELLE qui la donne — pas un flex
+          // qui étire. Les entrées se partagent la colonne, mais **plafonnées**
+          // : sur un écran de PC elles faisaient 146 px pour un texte de 23
+          // (Keko : « ils sont trop épais »). *Une ligne de liste vaut quelques
+          // fois son texte, pas six.*
+          //
+          // Le plafond vit ICI et pas dans la feuille, parce que l'emblème s'y
+          // borne aussi : *deux endroits qui décrivent la même hauteur se
+          // désaccordent au premier réglage.*
+          '--rail-ligne': `${Math.min(
+            enPixels(plan.railListe, fenetre.h, fenetre.l).height / DESTINATIONS.length,
+            3.4 * parseFloat(getComputedStyle(document.documentElement).fontSize),
+          )}px`,
         } as React.CSSProperties}
       >
         {DESTINATIONS.map((d, i) => (

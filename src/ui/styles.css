@@ -5559,6 +5559,10 @@ body {
 .arm-rail {
   display: flex;
   flex-direction: column;
+  /* LA LISTE COMMENCE EN HAUT. Ses entrees sont plafonnees en hauteur, donc
+     elles ne remplissent plus la colonne sur un grand ecran -- et *une liste
+     se lit du haut vers le bas*, elle ne flotte pas au milieu de sa colonne. */
+  justify-content: flex-start;
   /* AUCUN ÉCART ENTRE DEUX ENTRÉES : chacune porte déjà son filet, donc le
      `gap` n'ajoutait que du blanc — et sept blancs dans une colonne de huit
      lignes, c'est une ligne entière. Jointives, les filets se lisent comme une
@@ -5570,7 +5574,10 @@ body {
 
 .arm-lieu {
   display: flex;
-  flex: 1 1 0;
+  /* SA HAUTEUR VIENT DU JETON, pas d'un flex qui etire : c'est la meme grandeur
+     que l'emblem lit pour se borner, et elle porte deja son plafond. */
+  flex: 0 0 auto;
+  height: var(--rail-ligne, 2rem);
   align-items: center;
   justify-content: flex-start;
   /* CE QUI ENTOURE LE MOT CÈDE AVANT LE MOT. L'écu revenu, « ARMURERIE » ne
@@ -5578,9 +5585,13 @@ body {
      remplissages, un écart et neuf capitales espacées ne tiennent pas tous à
      leur aise. *Ce qui porte l'information est le mot* — donc c'est l'air
      autour de lui qui recule, pas lui. */
-  gap: 0.25em;
+  gap: 0.28em;
   min-height: 0;
-  padding: 0 0.2em;
+  /* ET PLUS D'AIR A GAUCHE QU'A DROITE : c'est le bord gauche qui longe l'ecu
+     (Keko : « la bordure gauche de chaque onglet est trop proche de l'icone »),
+     et le bord droit ne longe qu'un blanc de fin de mot. *Un remplissage se
+     regle sur ce qu'il separe.* */
+  padding: 0 0.2em 0 0.55em;
   border: 0;
   /* PAS DE CADRE, UN FILET SOUS CHACUN : la meme correction que l'enseigne du
      hub et que le rail des stats -- *ce qui est au-dessus d'un trait va
@@ -5595,7 +5606,13 @@ body {
      resserree -- et « ARMURERIE » y perdait ses trois dernieres lettres.
      *Un contenu qui ne suit qu'une dimension deborde des que l'autre se
      resserre*, la meme lecon que la bande de stats et les onglets du coffre. */
-  font-size: min(0.95rem, calc(var(--rail-l) * 0.108));
+  /* LE PLAFOND EN REM MONTE D'UN CRAN : il avait ete pose quand le rail etait
+     etroit, et sur un ecran de PC il commandait seul -- 22,8 px de texte dans
+     une colonne de 326. *Un plafond pose pour un contenant etroit ne vaut plus
+     quand il s'elargit.* Le coefficient de largeur, lui, baisse d'un cheveu :
+     c'est lui qui commande sur telephone, et il faut de quoi payer l'air
+     rendu au bord gauche. */
+  font-size: min(1.25rem, calc(var(--rail-l) * 0.104));
   letter-spacing: 0.04em;
   text-transform: uppercase;
   text-align: left;
@@ -5664,7 +5681,7 @@ body {
    *Un dessin posé dans une ligne ne peut pas se borner à ce qu'il y a à côté
    de lui* — la hauteur de la ligne vient du plan, qui la connaît. */
 .arm-lieu-blason {
-  height: min(1.35em, calc(var(--rail-ligne, 2rem) * 0.5));
+  height: min(1.5em, calc(var(--rail-ligne, 2rem) * 0.5));
   width: auto;
   flex: none;
   filter: drop-shadow(0 1px 3px #000000aa);
