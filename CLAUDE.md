@@ -5221,6 +5221,27 @@ vole le geste à sa voisine* — la leçon des slots du chargement. *Ça reste s
 le plancher tactile de 48 px du projet* : la bande ne le permet pas, et les
 onglets eux-mêmes sont logés à la même enseigne.
 
+**LE NOMBRE DE COLONNES EST UNE CONSÉQUENCE, PAS UNE DÉCISION — et ça se voit
+sur un écran large et court.** Keko : « pourquoi le coffre a 5 colonnes sur PC et
+beaucoup plus sur tél ? Ce serait mieux d'avoir 5 colonnes partout non ? »
+
+*La case tient sa taille du chargement* (0,68 de la sienne), et le compte tombe
+de la largeur disponible divisée par cette taille. Sur un écran HAUT, le
+chargement plafonne et la case est grande : **5 colonnes**. Sur un écran large et
+court — un téléphone en paysage avec la barre du navigateur — le chargement est
+borné par la HAUTEUR, donc la case rétrécit, et la largeur, elle, n'a pas bougé :
+**7 colonnes**. Mesuré : 5 à 2560 x 1271, 5 à 844 x 390, 5 à 932 x 430, **7 à
+956 x 340**.
+
+**L'ÉCHANGE EST RÉEL, ET C'EST À KEKO DE LE TRANCHER** : `?r3f&colonnes=5` fixe
+le compte et fait céder la case, qui prend alors la largeur divisée par cinq. À
+956 x 340 la carte passe de ~24 à ~33 px — *elle devient enfin lisible* — mais le
+coffre ne montre plus que **12 cases au lieu de 21**, et *un coffre est un endroit
+où l'on CHERCHE*. C'est exactement l'arbitrage qu'il avait déjà tranché deux fois
+en sens inverse (« on a du mal à lire les petites cartes », puis « 6 éléments par
+page c'est un peu limite »). Sur un écran normal l'échange est presque nul : à
+844 x 390 on reste à 5 colonnes, la carte gagne 1 px.
+
 **LE NOMBRE DE LIGNES SUIT LA HAUTEUR DE L'ÉCRAN** : la grille remplit son
 cadre au lieu de laisser un vide sous elle, et ce qui dépasse se défile.
 

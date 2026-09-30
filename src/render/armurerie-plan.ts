@@ -59,6 +59,22 @@ export const TEXTE_DECK = 'Deck'
  *
  * Le défaut reste 0,68 tant qu'il n'a pas tranché.
  */
+/**
+ * COMBIEN DE COLONNES LE COFFRE DOIT TENIR : `?r3f&colonnes=5`.
+ *
+ * Par défaut il n'en décide pas — *le nombre tombe de la taille des cases*, qui
+ * est une fraction de celle du chargement. Avec ce paramètre, c'est l'inverse :
+ * on fixe les colonnes et la case prend ce qui reste, donc elle GRANDIT sur un
+ * écran large et court, et le coffre montre moins de rangées.
+ *
+ * Demandé par Keko — « ce serait mieux d'avoir 5 colonnes partout non ? » : le
+ * banc existe pour que l'échange se juge sur l'écran, pas sur le principe.
+ */
+export function COLONNES_URL(): number {
+  const demande = Number(new URLSearchParams(location.search).get('colonnes'))
+  return Number.isFinite(demande) && demande >= 2 ? Math.min(12, Math.round(demande)) : 0
+}
+
 export function PART_COFFRE(): number {
   const demande = Number(new URLSearchParams(location.search).get('coffre-taille'))
   return Number.isFinite(demande) && demande > 0 ? Math.min(1, demande) : 0.68
@@ -496,7 +512,11 @@ export function planArmurerie(
    * du chargement, et le coffre en est une fraction. Il n'y a toujours pas deux
    * chiffres à rejuger l'un contre l'autre.
    */
-  const tailleCoffre = tailleCharge * PART_COFFRE()
+  // À COLONNES IMPOSÉES, c'est la case qui cède : elle prend la largeur divisée
+  // par le compte demandé, au lieu de suivre celle du chargement.
+  const colonnesVoulues = COLONNES_URL()
+  const tailleCoffre =
+    colonnesVoulues > 0 ? grille.l / (colonnesVoulues * 1.16) : tailleCharge * PART_COFFRE()
 
   // Une case, plus un cheveu : la grille doit respirer sans s'étaler.
   const pasX = tailleCoffre * 1.16
@@ -507,7 +527,7 @@ export function planArmurerie(
     l: gouttiere * 0.44,
     h: grille.h,
   }
-  const colonnes = Math.max(2, Math.floor(grille.l / pasX))
+  const colonnes = colonnesVoulues > 0 ? colonnesVoulues : Math.max(2, Math.floor(grille.l / pasX))
   const lignes = Math.max(1, Math.floor(grille.h / pasY))
   // LES LIGNES S'ÉTIRENT UN PEU POUR REMPLIR, mais à peine : à pas fixe il
   // restait une fraction de rangée en bas du coffre, et à pas libre les deux
