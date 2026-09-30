@@ -41,28 +41,48 @@ import { hauteurVisibleA } from './Cadrage.tsx'
  * de la hauteur d'écran, bornée en bas par le plancher tactile du projet et en
  * haut pour qu'il ne devienne pas une enseigne.
  */
-function hauteurBoutonPx(hauteurFenetrePx: number, petit: boolean): number {
+/**
+ * TROIS CRANS, PARCE QU'UN BOUTON SE JUGE PAR RAPPORT À SES VOISINS.
+ *
+ * - `ecran` : ce qui engage la page entière (« Prendre », « Terminer ») ;
+ * - `rail` : les deux départs, au bas de la colonne du hub ;
+ * - `mineur` : ce qu'on consulte ou ce qui décide d'une carte (« Jeter », « Reprendre »).
+ */
+export type CranBouton = 'ecran' | 'rail' | 'mineur'
+
+/** Part de hauteur d'écran, plancher, plafond — un rang par cran. */
+const CRANS: Record<CranBouton, { part: number; min: number; max: number }> = {
+  ecran: { part: 0.09, min: 48, max: 76 },
+  rail: { part: 0.09, min: 38, max: 76 },
+  mineur: { part: 0.076, min: 42, max: 62 },
+}
+
+function hauteurBoutonPx(hauteurFenetrePx: number, cran: CranBouton): number {
   /**
    * **SUR TÉLÉPHONE, SEULE LA BORNE BASSE COMMANDE** — 9 % de 390 px font 35,
-   * donc le bouton vaut son plancher et rien d'autre. Il était à 54, au-dessus
-   * du plancher tactile que le projet s'est fixé (48) : *un bouton qui dépasse
-   * le minimum qu'il devait tenir n'est plus un minimum, c'est un choix*, et
-   * Keko l'a repris — « sur téléphone je trouve les boutons deck, descendre et
-   * équipement gratuit trop gros par rapport à l'échelle des autres éléments ».
+   * donc le bouton vaut son plancher et rien d'autre. Les plafonds, eux, ne
+   * mordent que sur grand écran : *changer un plancher ne touche que le
+   * téléphone, changer un plafond ne touche que le PC.*
    *
-   * Il tombe donc AU plancher, pas en dessous : **48 px est une limite, pas un
-   * réglage** — c'est ce que le doigt demande, et il ne rétrécit pas avec
-   * l'écran. Le petit garde son cran d'écart (42), comme le bouton de rangement
-   * du coffre qui vit déjà sous le plancher : *il se tape moins souvent et il
-   * n'engage rien.*
+   * **ET LE RAIL A LE SIEN, PLUS BAS QUE LE PLANCHER TACTILE.** Keko : « je
+   * voudrais réduire la taille des boutons descendre et équipement gratuit
+   * (police et bouton) sur téléphone, car ils sont trop gros et les onglets du
+   * hub au-dessus sont compressés, c'est moche ».
    *
-   * Les plafonds ne bougent pas : sur un grand écran c'est la part de hauteur
-   * qui commande, et elle avait été réglée là.
+   * *Un bouton se juge par rapport à ses voisins* : au milieu de l'écran du
+   * butin, 48 px se lisent comme une action ; dans une colonne où huit
+   * destinations se partagent ce qui reste, les mêmes 48 px se lisent comme
+   * une enseigne. **Deux boutons qui prennent deux fois le plancher tactile
+   * dans une bande de 390 px en prennent le quart**, et c'est ce quart qui
+   * manquait au rail.
+   *
+   * La police suit sans réglage à part : la plaque est peinte à hauteur de
+   * toile fixe, donc son corps est une fraction de la hauteur rendue. *Réduire
+   * le bouton réduit son texte dans le même rapport* — les deux ne peuvent pas
+   * diverger.
    */
-  const part = hauteurFenetrePx * (petit ? 0.076 : 0.09)
-  return petit
-    ? Math.max(42, Math.min(62, part))
-    : Math.max(48, Math.min(76, part))
+  const { part, min, max } = CRANS[cran]
+  return Math.max(min, Math.min(max, hauteurFenetrePx * part))
 }
 
 /** La hauteur d'un bouton en unités de scène, à cette profondeur. */
@@ -358,8 +378,8 @@ type Props = {
   texte: string
   ton: TonBouton
   position: [number, number, number]
-  /** Un cran plus petit : les issues d'une carte, pas celles de l'écran. */
-  petit?: boolean
+  /** Ce que ce bouton engage — voir `CranBouton`. */
+  cran?: CranBouton
   /**
    * Éteint : il ne répond plus et **on voit à travers**. C'est ce qui permet à
    * la carte qu'on promène de rester lisible même quand elle le croise.
@@ -377,7 +397,7 @@ export function Bouton3D({
   texte,
   ton,
   position,
-  petit = false,
+  cran = 'ecran',
   eteint = false,
   rapportMin = 0,
   onCliquer,
@@ -464,7 +484,7 @@ export function Bouton3D({
     if (groupe.current !== null) groupe.current.scale.setScalar(1 + v * 0.035)
   })
 
-  const haut = hauteurMonde(hauteurBoutonPx(size.height, petit), position[2], size.height)
+  const haut = hauteurMonde(hauteurBoutonPx(size.height, cran), position[2], size.height)
   return (
     <group ref={groupe} position={position}>
       {/* LE HALO, DERRIÈRE : seul son débord se voit, la plaque masque le
@@ -504,11 +524,11 @@ export function Bouton3D({
  * tactile.* La règle vit ici, une seule fois.
  */
 export function hauteurBoutonMonde(
-  petit: boolean,
+  cran: CranBouton,
   z: number,
   hauteurFenetrePx: number,
 ): number {
-  return hauteurMonde(hauteurBoutonPx(hauteurFenetrePx, petit), z, hauteurFenetrePx)
+  return hauteurMonde(hauteurBoutonPx(hauteurFenetrePx, cran), z, hauteurFenetrePx)
 }
 
 /**
@@ -518,11 +538,11 @@ export function hauteurBoutonMonde(
 export function tailleBouton(
   texte: string,
   ton: TonBouton,
-  petit: boolean,
+  cran: CranBouton,
   z: number,
   hauteurFenetrePx: number,
   rapportMin = 0,
 ): { largeur: number; hauteur: number } {
-  const hauteur = hauteurMonde(hauteurBoutonPx(hauteurFenetrePx, petit), z, hauteurFenetrePx)
+  const hauteur = hauteurMonde(hauteurBoutonPx(hauteurFenetrePx, cran), z, hauteurFenetrePx)
   return { hauteur, largeur: hauteur * plaque(texte, ton, rapportMin).rapport }
 }

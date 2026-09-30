@@ -330,7 +330,7 @@ export function PageArmurerie({
    */
   const bloque = !peutDescendre(hub.chargement)
   const rectBouton = (): { left: number; right: number; top: number; bottom: number } => {
-    const b = tailleBouton('Descendre', 'or', false, Z_PLAN, fenetre.h)
+    const b = tailleBouton('Descendre', 'or', 'rail', Z_PLAN, fenetre.h)
     const p = enPixels(
       { x: plan.bouton[0], y: plan.bouton[1], l: b.largeur, h: b.hauteur },
       fenetre.h,

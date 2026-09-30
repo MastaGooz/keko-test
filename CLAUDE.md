@@ -4210,6 +4210,36 @@ corps qui cède* — la règle du cartouche des cartes, appliquée ici.
 Le rail retombe à **149 px** (185 à l'origine), toujours sans tronquer aucune de
 ses huit entrées.
 
+**ET LE RAIL A FINI PAR AVOIR SON PROPRE PLANCHER, SOUS LE PLANCHER TACTILE.**
+Keko : « je voudrais réduire la taille des boutons descendre et équipement
+gratuit (police et bouton) sur téléphone, car ils sont trop gros et les onglets
+du hub au-dessus sont compressés, c'est moche ».
+
+*Un bouton se juge par rapport à ses voisins*, et c'est ce que les deux passes
+précédentes n'avaient pas vu : au milieu de l'écran du butin, 48 px se lisent
+comme une action ; dans une colonne où **huit destinations se partagent ce qui
+reste**, les mêmes 48 px se lisent comme une enseigne. **Deux boutons qui
+prennent chacun le plancher tactile dans une bande de 390 px en prennent le
+quart** — et c'est ce quart qui manquait aux entrées.
+
+D'où **trois crans** (`CranBouton`), et non plus deux : `ecran` pour ce qui
+engage la page (48 px au plancher), `rail` pour les deux départs (38), `mineur`
+pour ce qu'on consulte ou ce qui décide d'une carte (42). *Un seul chiffre par
+cran, lu par le plan ET par le composant* — sinon la plaque et la place se
+désaccorderaient au premier réglage.
+
+**La police suit sans réglage à part** : la plaque est peinte sur une toile de
+hauteur fixe, donc son corps est une fraction de la hauteur rendue. *Réduire le
+bouton réduit son texte dans le même rapport*, et les deux ne peuvent pas
+diverger — c'est ce qui rend « police et bouton » une seule demande.
+
+Mesuré à 844 x 390 comme à 667 x 320 : le bouton passe de 48 à 38 px de haut et
+de ~112 à ~89 px de large, la bande du bas rend 20 px aux huit entrées (pas de
+26 px au lieu de ~23), et le rail rétrécit de ~26 px — *rendus aux meubles,
+puisque la colonne ne descend jamais sous son bouton.* Zéro débordement, aucune
+entrée tronquée. **Sur grand écran rien ne bouge** : c'est le plafond qui y
+commande, et il n'a pas changé.
+
 **CE QUI A CASSÉ EN CHEMIN, ET C'ÉTAIT PRÉVISIBLE : le rail ne tenait plus son
 propre nom.** « ARMURERIE » y perdait ses trois dernières lettres. Le nom était
 en `min(0,85rem, rail x 0,15)`, et à 0,15 c'est le `rem` qui commandait seul :

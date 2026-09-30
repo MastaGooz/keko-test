@@ -26,6 +26,7 @@
 import { useEffect, useMemo } from 'react'
 import { SON_POSER, jouerSon } from './sons.ts'
 import * as THREE from 'three'
+import type { CranBouton } from './Bouton3D.tsx'
 import { Bouton3D, tailleBouton } from './Bouton3D.tsx'
 import { Carte3D } from './Carte3D.tsx'
 import { Z_MAIN, hauteurVisibleA, surLePlan } from './Cadrage.tsx'
@@ -58,15 +59,15 @@ export const Z_SLOTS = Z_MAIN
  */
 /** Les deux issues du rebut, épaule contre épaule sous leur emplacement. */
 function ecartJeter(): number {
-  return tailleBouton('Reprendre', 'garder', true, Z_SLOTS, window.innerHeight).largeur / 2 + 0.03
+  return tailleBouton('Reprendre', 'garder', 'mineur', Z_SLOTS, window.innerHeight).largeur / 2 + 0.03
 }
 function ecartReprendre(): number {
-  return tailleBouton('Jeter', 'perdre', true, Z_SLOTS, window.innerHeight).largeur / 2 + 0.03
+  return tailleBouton('Jeter', 'perdre', 'mineur', Z_SLOTS, window.innerHeight).largeur / 2 + 0.03
 }
 
 /** De combien descendre le centre d'un bouton pour qu'il passe sous la carte. */
-function bas(petit: boolean, hauteurFenetrePx: number): number {
-  return tailleBouton('X', 'or', petit, Z_SLOTS, hauteurFenetrePx).hauteur / 2 + 0.06
+function bas(cran: CranBouton, hauteurFenetrePx: number): number {
+  return tailleBouton('X', 'or', cran, Z_SLOTS, hauteurFenetrePx).hauteur / 2 + 0.06
 }
 
 function places(): {
@@ -90,8 +91,8 @@ function places(): {
     yJeter,
     // Sous le bas de la carte, plus la demi-hauteur du bouton et un cheveu :
     // il se CENTRE sur son point, il n'y pend pas.
-    sousLoot: yLoot - 0.7 - bas(false, h),
-    sousJeter: yJeter - 0.7 - bas(true, h),
+    sousLoot: yLoot - 0.7 - bas('ecran', h),
+    sousJeter: yJeter - 0.7 - bas('mineur', h),
   }
 }
 
@@ -329,7 +330,7 @@ export function Butin3D({
           <Bouton3D
             texte="Jeter"
             ton="perdre"
-            petit
+            cran="mineur"
             position={[xJeter - ecartJeter(), sousJeter, Z_SLOTS]}
             eteint={tenue !== null || gestEnCours}
             onCliquer={onJeter}
@@ -337,7 +338,7 @@ export function Butin3D({
           <Bouton3D
             texte="Reprendre"
             ton="garder"
-            petit
+            cran="mineur"
             position={[xJeter + ecartReprendre(), sousJeter, Z_SLOTS]}
             eteint={tenue !== null || gestEnCours}
             onCliquer={onReprendre}

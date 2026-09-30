@@ -292,8 +292,8 @@ export function planArmurerie(
   // même rang, l'une sous l'autre, ne peuvent pas avoir deux tailles.* On prend
   // donc la plus large des deux et on la donne aux deux, la police étant déjà
   // commune depuis que la toile garde sa hauteur.
-  const bDescendre = tailleBouton(TEXTE_DESCENDRE, 'or', false, Z_PLAN, hauteurFenetrePx)
-  const bFortune = tailleBouton(TEXTE_FORTUNE, 'pierre', false, Z_PLAN, hauteurFenetrePx)
+  const bDescendre = tailleBouton(TEXTE_DESCENDRE, 'or', 'rail', Z_PLAN, hauteurFenetrePx)
+  const bFortune = tailleBouton(TEXTE_FORTUNE, 'pierre', 'rail', Z_PLAN, hauteurFenetrePx)
   const lBouton = Math.max(bDescendre.largeur, bFortune.largeur)
   const rapportDepart = lBouton / bDescendre.hauteur
   // Le `+ marge` n'est pas décoratif : la bande RÉSERVÉE vaut `lRail`, mais le
@@ -494,7 +494,7 @@ export function planArmurerie(
     // **CE FACTEUR NE MORD QUE SUR GRAND ÉCRAN** : sur téléphone c'est la
     // largeur de la bande qui borne, donc le monter n'y change rien. Keko :
     // « sur PC on peut augmenter un petit peu la taille du bouton deck ».
-    hauteurBoutonMonde(true, Z_PLAN, hauteurFenetrePx) * 0.95,
+    hauteurBoutonMonde('mineur', Z_PLAN, hauteurFenetrePx) * 0.95,
     (lEquip - marge * 2) / 8.03,
   )
   const hDeck = contenuDeck * 1.4
