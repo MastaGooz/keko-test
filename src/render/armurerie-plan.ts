@@ -28,7 +28,7 @@
  * au-dessus.*
  */
 import { Z_MAIN, hauteurVisibleA } from './Cadrage.tsx'
-import { tailleBouton } from './Bouton3D.tsx'
+import { hauteurBoutonMonde, tailleBouton } from './Bouton3D.tsx'
 import { estConsommable } from '../logic/armes.ts'
 import { aPeindre, pieceAPeindre } from './combat-3d.ts'
 import { signature } from './texture-carte.ts'
@@ -168,8 +168,13 @@ export type PlanArmurerie = {
    * plutôt que de la partager.
    */
   boutonFortune: [number, number, number]
-  /** « Deck » : la bande réservée juste sous les mesures. */
-  boutonDeck: [number, number, number]
+  /**
+   * « Deck » : la bande réservée juste sous les mesures. C'est un RECTANGLE et
+   * non une position de scène, parce que le bouton est du HTML — *il porte le
+   * symbole du paquet, qui est un SVG du jeu*, et le repeindre au canvas
+   * l'aurait dédoublé.
+   */
+  deck: Rect
   /** Le rapport que les DEUX boutons de départ partagent. */
   rapportDepart: number
 }
@@ -431,7 +436,9 @@ export function planArmurerie(
    * Il est PETIT : *on ne décide pas dessus*, on consulte — il ne peut pas se
    * lire au même rang que « Descendre ».
    */
-  const hDeck = tailleBouton(TEXTE_DECK, 'pierre', true, Z_PLAN, hauteurFenetrePx).hauteur
+  // Sa hauteur est celle d'un petit bouton : *il se tape, donc il obéit au
+  // plancher tactile comme les autres.*
+  const hDeck = hauteurBoutonMonde(true, Z_PLAN, hauteurFenetrePx)
   const bandeDeck = hDeck + marge
   const hDedans = hPanneaux - hEntete - hStats - bandeDeck
   // La bande d'un nom de groupe. Il y en a une par rangée, et elles entrent
@@ -608,7 +615,15 @@ export function planArmurerie(
     pnj: { x: xStats, y: yPanneaux, l: lStats, h: hPanneaux },
     bouton: [xRail, basPanneaux + 2 * marge + hBouton * 1.5, Z_PLAN],
     boutonFortune: [xRail, basPanneaux + marge + hBouton / 2, Z_PLAN],
-    boutonDeck: [xEquip, yPanneaux + hPanneaux / 2 - hEntete - hStats - bandeDeck / 2, Z_PLAN],
+    // **IL A LA LARGEUR DE SON CONTENU, pas celle du panneau** : étiré sur toute
+    // la bande il se lisait comme un bandeau, pas comme un bouton. *Ce qui
+    // s'étire d'un bord à l'autre est un titre ; ce qui se tape est une pièce.*
+    deck: {
+      x: xEquip,
+      y: yPanneaux + hPanneaux / 2 - hEntete - hStats - bandeDeck / 2,
+      l: Math.min(lEquip - marge * 2, hDeck * 2.5),
+      h: hDeck,
+    },
     rapportDepart,
   }
 }

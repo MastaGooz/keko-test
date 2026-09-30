@@ -5155,6 +5155,65 @@ body {
    l'energie ». *Quatre mesures du meme etat ne peuvent pas se lire a quatre
    voix* -- c'est ce qui les fait lire comme une rangee et non comme quatre
    ornements poses cote a cote. */
+/* LE BOUTON « DECK » : le paquet et son compte, dans une plaque qu'on tape.
+   Demande par Keko -- « on va passer le symbole deck et son nombre de cartes
+   dans le bouton deck et garder au-dessus juste pv / main / pa ».
+
+   *Le couple etait une MESURE parmi quatre ; il devient ce qu'on ouvre* -- et
+   c'est plus juste, parce que c'est la seule des quatre sur laquelle on peut
+   agir. Il est en HTML et non peint au canvas comme « Descendre » : le symbole
+   du paquet est un SVG du jeu, et le repeindre l'aurait dedouble. Il herite
+   donc de la police du lieu, et il ne peut plus en sortir.
+
+   Meme ferronnerie que les cadres, en petit : un filet de laiton, des angles
+   droits, un fond a peine plus clair que la piece. */
+.arm-deck {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45em;
+  padding: 0 0.7em;
+  border: 1px solid #6b5936;
+  border-radius: 0;
+  background: linear-gradient(180deg, #2b2a2c, #171718);
+  color: #ddd5c2;
+  font-family: inherit;
+  /* IL SE MESURE SUR SA PROPRE HAUTEUR, pas sur la bande des stats : il n'y est
+     plus. *Un contenu qui ne suit qu'une dimension deborde des que l'autre se
+     resserre*, et sa boite a la sienne. */
+  font-size: min(0.82rem, calc(var(--deck-h) * 0.42));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+/* MEME GARDE QUE LES ONGLETS : sur telephone un survol colle apres la tape. */
+@media (hover: hover) and (pointer: fine) {
+  .arm-deck:hover {
+    border-color: #d8bb79;
+    background: linear-gradient(180deg, #3a3830, #1f1e1a);
+    color: #ffeec2;
+  }
+}
+
+/* SON CHIFFRE N'EST PAS EN GRAS. Keko : « la police semble en gras pour le
+   bouton deck, tu peux normal ? » *Une mesure qu'on lit n'a pas besoin de
+   crier* -- et le gras de la bande servait a detacher un chiffre pose sur
+   rien, alors qu'ici il est dans une plaque. */
+.arm-deck .arm-chiffre {
+  font-weight: 500;
+}
+
+/* Le couple prend la hauteur de la plaque, moins son air : sans ce rappel il
+   lirait `--etat-l`, qui n'existe pas hors de la bande des stats. */
+.arm-deck .arm-vif {
+  height: 74%;
+  gap: 0.45em;
+}
+
 .arm-chiffre {
   color: #f7ecd2;
   font-size: 1.125em;

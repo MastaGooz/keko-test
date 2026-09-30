@@ -109,6 +109,8 @@ type Props = {
    * et pire : cliquables. Keko : « certains éléments de l'UI passent devant ».
    */
   zoomee?: boolean
+  /** Consulter le deck que le chargement produit. */
+  onVoirDeck?: () => void
 }
 
 export function PageArmurerie({
@@ -124,6 +126,7 @@ export function PageArmurerie({
   equipements,
   fixations,
   zoomee = false,
+  onVoirDeck,
 }: Props): React.JSX.Element {
   const fenetre = useFenetre()
   const plan = planArmurerie(fenetre.h, fenetre.l, deuxMains(hub.chargement))
@@ -198,8 +201,10 @@ export function PageArmurerie({
    * des lignes — exactement ce que fait déjà la molette du coffre, et pour la
    * même raison.
    */
-  const LIBELLES = ['Points de vie', 'Cartes dans le deck', 'Taille de la main', "Points d'action"]
-  const mesures = useRef<(HTMLSpanElement | null)[]>([])
+  const LIBELLES = ['Points de vie', 'Voir le deck', 'Taille de la main', "Points d'action"]
+  // HTMLElement et non HTMLSpanElement : le deck est un BOUTON depuis qu'il
+  // porte son symbole.
+  const mesures = useRef<(HTMLElement | null)[]>([])
   /**
    * LE BOUTON DE RANGEMENT A NOTRE BULLE, PLUS CELLE DU NAVIGATEUR.
    *
@@ -520,18 +525,6 @@ export function PageArmurerie({
             <CoeurIcone />
           </span>
         </span>
-        {/* LE COMPTE DU DECK EST À GAUCHE DU PAQUET, demandé par Keko. Au-dessus
-            — sa place en combat — il se lisait comme une étiquette du tas ;
-            ici c'est une MESURE de ce qu'on emporte, elle s'aligne avec les
-            trois autres. */}
-        <span className="arm-mesure" ref={(el) => void (mesures.current[1] = el)}>
-          <span className="arm-vif" ref={(el) => void (vifs.current[1] = el)}>
-            <span className="arm-chiffre">{deckVu}</span>
-            <span className="arm-tas">
-              <Tas3D nom="pioche" compte={deckVu ?? 0} />
-            </span>
-          </span>
-        </span>
         <span className="arm-mesure" ref={(el) => void (mesures.current[2] = el)}>
           <span className="arm-vif" ref={(el) => void (vifs.current[2] = el)}>
             <span className="arm-chiffre">{mainVu}</span>
@@ -548,6 +541,42 @@ export function PageArmurerie({
       </div>
 
       <div className="arm-commandes" style={zoomee ? { display: 'none' } : undefined}>
+      {/**
+        * LE BOUTON « DECK » PORTE LE PAQUET ET SON COMPTE. Demandé par Keko :
+        * « on va passer le symbole deck et son nombre de cartes dans le bouton
+        * deck et garder au-dessus juste pv / main / pa ».
+        *
+        * *Le couple était une MESURE parmi quatre ; il devient ce qu'on ouvre* —
+        * et c'est plus juste, parce que c'est la seule des quatre sur laquelle
+        * on peut agir. La bande garde les trois qu'on ne fait que lire.
+        *
+        * **Il est en HTML et non peint au canvas comme les autres boutons** :
+        * le symbole du paquet est un SVG du jeu, et le repeindre l'aurait
+        * dédoublé — *deux dessins qui décrivent la même chose divergent au
+        * premier réglage.* Il hérite au passage de la police du lieu, donc il
+        * ne peut plus en sortir.
+        */}
+      <button
+        type="button"
+        className="arm-deck"
+        style={
+          {
+            ...boite(plan.deck),
+            // SA PROPRE HAUTEUR, pour que son corps de texte la suive : il
+            // n'est plus dans la bande des stats, donc `--etat-l` n'y est pas.
+            '--deck-h': `${enPixels(plan.deck, fenetre.h, fenetre.l).height}px`,
+          } as React.CSSProperties
+        }
+        onClick={onVoirDeck}
+        ref={(el) => void (mesures.current[1] = el)}
+      >
+        <span className="arm-vif" ref={(el) => void (vifs.current[1] = el)}>
+          <span className="arm-chiffre">{deckVu}</span>
+          <span className="arm-tas">
+            <Tas3D nom="pioche" compte={deckVu ?? 0} />
+          </span>
+        </span>
+      </button>
       {/* LE RAIL DES DESTINATIONS, sur le bord gauche. C'est lui le hub : on
           n'arrive plus sur une page qui ne sert qu'à choisir, on arrive DANS
           un lieu et le rail dit où l'on peut aller.

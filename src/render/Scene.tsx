@@ -1625,7 +1625,6 @@ export function Scene(): React.JSX.Element {
               setZoomSet([])
             }}
             onDescendre={descendreAuDonjon}
-            onVoirDeck={voirLeDeck}
             onFourbir={fourbirEtDescendre}
             onPoseCommence={() => setEquipements((n) => n + 1)}
             onEquipee={() => setFixations((n) => n + 1)}
@@ -1936,6 +1935,7 @@ export function Scene(): React.JSX.Element {
           equipements={equipements}
           fixations={fixations}
           zoomee={zoomOuvert}
+          onVoirDeck={voirLeDeck}
         />
       )}
 

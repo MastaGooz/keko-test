@@ -497,6 +497,21 @@ export function Bouton3D({
 }
 
 /**
+ * LA HAUTEUR D'UN BOUTON EN UNITÉS DE SCÈNE, sans passer par sa plaque.
+ *
+ * Un bouton peut être du HTML — celui du deck l'est, pour porter le SVG du
+ * paquet — mais *il se tape comme les autres, donc il obéit au même plancher
+ * tactile.* La règle vit ici, une seule fois.
+ */
+export function hauteurBoutonMonde(
+  petit: boolean,
+  z: number,
+  hauteurFenetrePx: number,
+): number {
+  return hauteurMonde(hauteurBoutonPx(hauteurFenetrePx, petit), z, hauteurFenetrePx)
+}
+
+/**
  * Ce que ce bouton occupera dans la scène, pour poser deux voisins sans les
  * coller et pour le décaler sous une carte.
  */

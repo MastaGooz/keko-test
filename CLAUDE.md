@@ -5595,6 +5595,30 @@ pièce la plus riche). Le chargement de départ ne donne que six modèles. Le ba
 consommables TOUS DIFFÉRENTS : douze modèles distincts. Il REPREND ce que le
 coffre contient plutôt que d'inventer des pièces.
 
+**ET IL PORTE LE PAQUET ET SON COMPTE — la bande n'en garde que trois.**
+Demandé par Keko : « on va passer le symbole deck et son nombre de cartes dans
+le bouton deck et garder au-dessus juste pv / main / pa ».
+
+*Le couple était une MESURE parmi quatre ; il devient ce qu'on ouvre* — et c'est
+plus juste, parce que **c'est la seule des quatre sur laquelle on peut agir**.
+La bande garde les trois qu'on ne fait que lire.
+
+- **IL EST EN HTML, pas peint au canvas comme « Descendre ».** Le symbole du
+  paquet est un SVG du jeu (`Tas3D`), et le repeindre au canvas l'aurait
+  dédoublé — *deux dessins qui décrivent la même chose divergent au premier
+  réglage.* Il hérite au passage de la police du lieu, donc il ne peut plus en
+  sortir, et il vit dans `.arm-commandes` : le canvas monte au-dessus pendant un
+  glisser, donc une carte promenée lui passe devant.
+- **Il a la largeur de son CONTENU, pas celle du panneau.** Étiré d'un bord à
+  l'autre il se lisait comme un bandeau : *ce qui s'étire est un titre, ce qui se
+  tape est une pièce.*
+- **Son chiffre n'est pas en gras** — Keko : « la police semble en gras pour le
+  bouton deck, tu peux normal ? » Le gras de la bande servait à détacher un
+  chiffre posé sur rien ; *dans une plaque, il n'a plus rien à détacher.*
+- **L'animation d'équipement le suit** : c'est la mesure du deck qui bouge quand
+  on équipe, et elle est toujours à l'index 1 des valeurs — seul son élément a
+  changé de place.
+
 **IL PREND SA BANDE, il ne s'installe pas dans le jeu.** Il y avait bien du vide
 sous les mesures, mais c'était le JEU du bloc centré, pas une place : 45 px pour
 un bouton qui en demande 46 au plancher tactile. *Une bande réservée ne se
