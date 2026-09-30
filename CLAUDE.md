@@ -4324,7 +4324,29 @@ Ce que ça donne, et ce n'est pas qu'un rangement :
 frappent », posée au-dessus de « Descendre ». *On n'a plus le chargement sous
 les yeux*, et c'est le seul chiffre sur lequel les deux départs se comparent.
 Elle se place à partir de l'écart entre les deux boutons, jamais d'une hauteur
-écrite à la main.
+écrite à la main — **mais elle est BORNÉE par le haut du panneau**. Keko :
+« dans le menu expédition, le texte se superpose au titre en haut ». *Les
+boutons ont un plancher en pixels, donc ils occupent d'autant plus de panneau
+que l'écran est court* : sur un écran de 320 px la ligne rejoignait la plaque
+du lieu, qui est à cheval sur le bord haut du cadre. **Une hauteur dérivée d'un
+objet à plancher doit être bornée par son contenant**, sinon elle en sort là où
+il est le plus petit. Mesuré : la borne mord à 667 x 320 et 956 x 340, et laisse
+14 px sous le bord.
+
+**ET « EXPÉDITION » PASSE EN TÊTE, AVEC L'OR.** Keko : « il faudrait que
+l'onglet expédition soit le premier et qu'il ait un style légèrement différent
+pour que le joueur comprenne que c'est le plus important. »
+
+*Une liste sans hiérarchie se lit dans l'ordre où elle est écrite* — donc
+l'ordre le dit d'abord, et l'accent le confirme. **L'or est déjà la couleur de
+ce qui engage** : « Descendre » est le seul bouton d'or du hub. Le mot le prend,
+son filet aussi, et son écu cesse d'être en retrait. *Rien d'autre ne change* :
+ni fond plein, ni corps plus gros — **un bandeau coloré sous un mot se lit comme
+une sélection de menu**, et la sélection est déjà prise par le lieu ouvert.
+
+On arrive toujours dans l'ARMURERIE malgré tout : *c'est là qu'on prépare*, et
+un joueur qui débarque doit voir de quoi il dispose avant de voir comment
+partir.
 
 *Piège de vérification traversé au passage* : **une iframe de sonde finit par
 ne plus démarrer** quand on en a créé une dizaine dans le même onglet — chacune

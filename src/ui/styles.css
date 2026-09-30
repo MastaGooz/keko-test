@@ -5623,6 +5623,25 @@ body {
   pointer-events: none;
 }
 
+/* CE QUI COMPTE LE PLUS PORTE L'OR. Demande par Keko : « il faudrait que
+   l'onglet expedition soit le premier et qu'il ait un style legerement
+   different pour que le joueur comprenne que c'est le plus important. »
+
+   *L'or est deja la couleur de ce qui engage* -- « Descendre » est le seul
+   bouton d'or du hub, et le laiton celle de tout ce qui a de la valeur. Le mot
+   le prend, son filet aussi, et son ecu cesse d'etre en retrait. **Rien
+   d'autre ne change** : pas de fond plein, pas de corps plus gros. *Un
+   bandeau colore sous un mot se lit comme une selection de menu*, et la
+   selection est deja prise par le lieu ouvert. */
+.arm-lieu.majeur {
+  color: #f0cf8e;
+  border-bottom-color: #d8bb7988;
+}
+
+.arm-lieu.majeur .arm-lieu-blason {
+  filter: drop-shadow(0 1px 3px #000000aa) drop-shadow(0 0 4px #d8bb7955);
+}
+
 /* LE LIEU OU L'ON EST SE LIT AU FILET, pas a un fond plein : *un bandeau
    colore sous un mot se lit comme une selection de menu*, un filet vif se lit
    comme l'onglet ouvert. */

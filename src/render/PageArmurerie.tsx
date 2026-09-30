@@ -497,7 +497,21 @@ export function PageArmurerie({
               // L'écart entre les deux départs vaut deux boutons, donc les
               // trois quarts de cet écart placent la ligne à un bouton et demi
               // au-dessus — sans écrire une seule hauteur à la main.
-              y: plan.bouton[1] + (plan.bouton[1] - plan.boutonFortune[1]) * 0.75,
+              //
+              // **MAIS ELLE NE MONTE JAMAIS JUSQU'AU TITRE.** Les boutons ont
+              // un plancher en pixels, donc ils occupent d'autant plus de
+              // panneau que l'écran est court : sur un téléphone la ligne
+              // rejoignait la plaque du lieu, qui est à cheval sur le bord
+              // haut du cadre. *Une hauteur dérivée d'un objet à plancher doit
+              // être bornée par le contenant*, sinon elle en sort là où il est
+              // le plus petit.
+              y: Math.min(
+                plan.bouton[1] + (plan.bouton[1] - plan.boutonFortune[1]) * 0.75,
+                plan.expedition.y +
+                  plan.expedition.h / 2 -
+                  plan.demiHaut * 0.09 -
+                  plan.expedition.h * 0.06,
+              ),
               l: plan.expedition.l,
               h: plan.expedition.h * 0.12,
             })}
@@ -691,7 +705,7 @@ export function PageArmurerie({
           <button
             key={i}
             type="button"
-            className={`arm-lieu${d.lieu === lieu ? ' actif' : ''}`}
+            className={`arm-lieu${d.lieu === lieu ? ' actif' : ''}${d.majeur === true ? ' majeur' : ''}`}
             disabled={!d.ouvert}
             onClick={() => d.lieu !== undefined && onLieu(d.lieu)}
           >

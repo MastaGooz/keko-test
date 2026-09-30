@@ -43,11 +43,21 @@ export type Destination = {
   ouvert: boolean
   /** Le lieu qu'elle ouvre, quand elle en ouvre un. */
   lieu?: LieuHub
+  /**
+   * CE QUI COMPTE LE PLUS, et une seule entrée le porte.
+   *
+   * Demandé par Keko : « il faudrait que l'onglet expédition soit le premier
+   * et qu'il ait un style légèrement différent pour que le joueur comprenne
+   * que c'est le plus important. » *Une liste sans hiérarchie se lit de haut
+   * en bas dans l'ordre où elle est écrite* — donc l'ordre le dit d'abord, et
+   * l'accent le confirme.
+   */
+  majeur?: boolean
 }
 
 export const DESTINATIONS: readonly Destination[] = [
+  { nom: 'Expédition', ouvert: true, lieu: 'expedition', majeur: true },
   { nom: 'Armurerie', ouvert: true, lieu: 'armurerie' },
-  { nom: 'Expédition', ouvert: true, lieu: 'expedition' },
   { nom: 'Bientôt', ouvert: false },
   { nom: 'Bientôt', ouvert: false },
   { nom: 'Bientôt', ouvert: false },
