@@ -185,12 +185,23 @@ export function coffreDeTest(hub: Hub, combien = COFFRE_URL()): Hub {
   // ligne. À cinq modèles il retombait en phase et les colonnes devenaient
   // uniformes — on ne voyait toujours pas défiler.
   const modeles: Objet[] = [ESPADON, GLAIVE, PLASTRON, POTIONS_DEPART[0]!]
+  // LE COFFRE EMPILE LES DOUBLONS, donc quarante copies du même modèle ne font
+  // que quatre CASES — et le banc, qui existe pour éprouver le défilement, ne
+  // faisait plus défiler quoi que ce soit. *Un banc qui ne produit plus ce
+  // qu'on vient l'y chercher n'est plus un banc.*
+  //
+  // On fait donc varier la RARETÉ, qui entre dans `signature()` : chaque
+  // couple modèle + rareté est une pile à lui, donc une case de plus. Ça sert
+  // deux fins d'un coup — la grille se remplit, et l'échelle des métaux se
+  // voit sur un objet qu'on connaît.
+  const raretes: Rarete[] = ['commune', 'rare', 'epique', 'legendaire']
   const reserve = [...hub.reserve]
   for (let i = 0; reserve.length < combien; i += 1) {
     const modele = modeles[i % modeles.length]!
+    const rarete = raretes[Math.floor(i / modeles.length) % raretes.length]!
     // Un identifiant PROPRE à la copie : tout se désigne par id dans le hub,
     // et deux pièces qui partagent le leur se déplaceraient ensemble.
-    reserve.push({ ...modele, id: `${modele.id}-essai-${i}` })
+    reserve.push({ ...modele, id: `${modele.id}-essai-${i}`, rarete })
   }
   const rng = createRng(4242)
   const tresors = Array.from({ length: Math.max(6, Math.round(combien / 3)) }, (_, n) =>

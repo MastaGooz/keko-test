@@ -296,12 +296,13 @@ export function Armurerie3D({
    *
    * `defilement` compte toujours en lignes, mais il est FRACTIONNAIRE : sa
    * partie entière dit la première ligne tirée du coffre, son reste de combien
-   * la grille est remontée. On tire donc **une rangée de plus** que ce qui
-   * tient, et les deux rangées des bords sont à moitié sorties du meuble.
+   * la grille est remontée. On en tire **assez pour couvrir le meuble quel que
+   * soit ce reste** (`lignesTirees`), et les deux rangées des bords sont à
+   * moitié sorties.
    */
   const ligneBase = Math.floor(defilement)
   const reste = (defilement - ligneBase) * plan.pasY
-  const cases = plan.colonnes * (plan.lignes + 1)
+  const cases = plan.colonnes * plan.lignesTirees
 
   /**
    * CE QUI SORT DU MEUBLE EST COUPÉ, et c'est ce qui rend le continu possible :

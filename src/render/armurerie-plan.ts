@@ -150,6 +150,22 @@ export type PlanArmurerie = {
   barre: Rect
   colonnes: number
   lignes: number
+  /**
+   * COMBIEN DE RANGÉES ON DESSINE — et ce n'est pas `lignes + 1`.
+   *
+   * *L'étirement du pas est PLAFONNÉ à 8 %*, donc `lignes` rangées ne
+   * remplissent pas toujours le meuble : à 2,5 rangées de haut, on en tient
+   * deux et il reste une demi-rangée de vide. Tirer `lignes + 1` couvrait ce
+   * vide **au repos seulement** — dès qu'on défilait d'une demi-rangée, la
+   * couverture reculait d'autant et le bas du meuble se vidait. *La rangée
+   * suivante n'entrait donc pas coupée par le bas : elle surgissait entière
+   * quand le compteur de ligne basculait.*
+   *
+   * On compte donc les rangées qu'il faut pour couvrir la hauteur RÉELLE au
+   * pas RÉEL, plus une pour le décalage. **Ce qu'on dessine se déduit de ce
+   * qu'on couvre, jamais de ce qui tient.**
+   */
+  lignesTirees: number
   pasX: number
   pasY: number
   /** Le cadre de l'équipement. */
@@ -536,6 +552,9 @@ export function planArmurerie(
   // lit comme une case qu'on n'a pas dessinée.* Le compte de colonnes ne
   // dépend pas du contenu, donc rien ne saute quand une ligne s'ajoute.
   const pasXPlein = Math.min(grille.l / colonnes, pasX * 1.1)
+  // Assez de rangées pour couvrir le meuble quel que soit le décalage : ce
+  // qui monte par le haut doit être remplacé par le bas dans la même image.
+  const lignesTirees = Math.ceil(grille.h / pasYPlein) + 1
 
   /**
    * L'ÉQUIPEMENT : UNE RANGÉE DE CE QU'ON PORTE, UNE RANGÉE DE CE QU'ON BOIT.
@@ -629,6 +648,7 @@ export function planArmurerie(
     barre,
     colonnes,
     lignes,
+    lignesTirees,
     pasX: pasXPlein,
     pasY: pasYPlein,
     equipement: { x: xEquip, y: yPanneaux, l: lEquip, h: hPanneaux },
@@ -731,7 +751,7 @@ export function caseSousLePoint(
   if (colonne < 0 || colonne >= plan.colonnes) return null
   // Une rangée de plus que ce qui tient : le défilement continu en montre
   // toujours une à moitié sortie, et on doit pouvoir y déposer.
-  if (ligne < 0 || ligne > plan.lignes) return null
+  if (ligne < 0 || ligne >= plan.lignesTirees) return null
   // ON RESTE DANS LA CASE, pas seulement dans sa colonne : entre deux cases, le
   // dépôt ne vise personne, et *échanger avec un voisin qu'on n'a pas désigné
   // serait pire que ne rien faire.*

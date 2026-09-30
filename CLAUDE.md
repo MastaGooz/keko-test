@@ -3956,6 +3956,29 @@ La règle générale : **la liste des matériaux à découper est la liste de TO
 que la carte dessine**, pas seulement de sa face. Un effet ajouté demain devra y
 entrer, sinon il traversera le meuble.
 
+**MAIS ON NE VOYAIT PAS TOUJOURS LA COUPE — parce qu'il manquait une rangée.**
+Keko : « les cartes ne sont plus du tout coupées et s'affichent brutalement
+quand elles sont complètes à l'écran ».
+
+*Le défaut n'était pas dans la découpe, il était dans ce qu'on dessine.* Le pas
+des lignes s'étire pour remplir le meuble, **mais l'étirement est PLAFONNÉ à
+8 %** : à 2,3 rangées de hauteur on en tient deux, et il reste une fraction de
+vide en bas. Tirer `lignes + 1` rangées couvrait ce vide **au repos
+seulement** — dès qu'on défilait, la couverture reculait d'autant que la grille
+montait, et le bas du meuble se vidait. **La rangée suivante n'entrait donc pas
+coupée par le bas : elle surgissait entière** au moment où le compteur de ligne
+basculait.
+
+On compte donc les rangées qu'il faut pour couvrir la hauteur RÉELLE au pas
+RÉEL, plus une pour le décalage (`lignesTirees`). *Ce qu'on dessine se déduit de
+ce qu'on couvre, jamais de ce qui tient* — et `lignes`, qui dit ce qui TIENT,
+garde son rôle : le maximum de défilement et la taille du pouce de la barre.
+
+**Ça ne se voyait qu'à certains formats**, ce qui est la signature du défaut :
+quand `grille.h / pasY` tombe près d'un entier, l'étirement ne plafonne pas et
+`lignes + 1` suffisait. C'est à grandes cartes — peu de rangées, donc une
+fraction qui pèse lourd — que le trou s'ouvre.
+
 La molette convertit ses pixels en lignes (un cran ordinaire vaut un peu plus
 d'une demi-rangée) et le pouce suit le doigt sans s'arrêter aux lignes : *la
 même grandeur continue pour les deux gestes.*
@@ -4001,12 +4024,17 @@ retenus :
   en phase d'une ligne à l'autre et toutes les lignes étaient identiques au
   pixel près — *on ne voyait pas que ça défilait.*
 
-**LIMITE CONNUE DEPUIS LES PILES : `?coffre=40` ne fait plus 40 CASES.** Le
-coffre regroupe par signature, donc les quarante copies retombent sur quatre
-piles, et il ne reste que treize cases en tout — à cinq colonnes, ça tient en
-trois rangées et *le coffre ne défile plus du tout*. Pour éprouver la coupe, on
-force donc la grille à s'allonger : **`?r3f&coffre=40&colonnes=3`**. Le jour où
-il y aura plus de modèles, le banc retrouvera son sens tout seul.
+**ET IL FAIT VRAIMENT DES CASES, depuis que le coffre empile.** Les quarante
+copies retombaient sur quatre piles — treize cases en tout, trois rangées à
+cinq colonnes : **le banc du défilement ne faisait plus défiler.** *Un banc qui
+ne produit plus ce qu'on vient l'y chercher n'est plus un banc*, et il avait
+fallu détourner `?colonnes=3` pour voir la coupe — ce qui montrait des cartes
+énormes et trois colonnes, donc **tout sauf la version qu'on voulait juger**.
+
+On fait donc varier la RARETÉ des copies, qui entre dans `signature()` : chaque
+couple modèle + rareté est une pile à lui. Ça sert deux fins d'un coup — la
+grille se remplit, et l'échelle des métaux se voit sur des objets qu'on
+connaît.
 
 **Le coffre s'est donc centré en largeur.** À grandes cartes il n'en tient plus
 que trois par ligne, et calées à gauche elles laissaient une colonne de vide
