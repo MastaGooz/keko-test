@@ -5457,6 +5457,21 @@ téléphone, plus qu'une case de coffre, avec la loupe pour lire. Au-delà elle
 continuerait de rétrécir : *c'est le jour où il faudra faire défiler, pas
 avant.*
 
+**ET LA CARTE GROSSIE GARDE UNE MARGE, en haut comme en bas.** Keko : « le zoom
+fait dépasser les cartes en haut ou en bas selon la ligne, donc un bout de la
+carte n'est pas visible ». La borne HORIZONTALE gardait sa marge, la VERTICALE
+non : la carte s'arrêtait au bord exact du champ, c'est-à-dire au bord exact de
+l'écran. *Une carte collée à l'arête se lit comme une carte coupée*, même quand
+elle tient au pixel près.
+
+La marge se compte sur la HAUTEUR du champ et non sur sa largeur — celle en x
+vaut 4 % de la largeur, ce qui ferait 8,6 % de la hauteur sur un écran large :
+*une marge n'est pas un nombre, c'est une part de ce qu'elle borde.* Et si la
+place venait à manquer, la carte se CENTRE au lieu de choisir un bord — deux
+bornes croisées donneraient un résultat de travers. Mesuré : 25 px de dégagement
+en haut sur un écran de PC, la même part partout puisque tout est en fraction du
+champ. **Le zoom d'une pièce y gagne aussi** — il avait le même défaut.
+
 **ET LA LOUPE MARCHE, elle aussi** — Keko : « quand je maintiens le tap sur une
 des cartes du deck affiché, elle se réduit au lieu de zoomer ». La taille sous
 la loupe était bornée par `piece * 0,95`, or **sans pièce `piece` vaut zéro** :

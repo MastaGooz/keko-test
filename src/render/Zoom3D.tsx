@@ -291,6 +291,25 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
   const xSet = sansPiece ? 0 : xPiece + piece / 2 + marge + largeurOccupee / 2
   const pasX = uneCarte * 1.1
   const pasY = uneCarte * 1.82
+  /**
+   * **CE QUI RESTE AUTOUR D'UNE CARTE GROSSIE, en haut comme en bas.**
+   *
+   * La borne horizontale gardait déjà sa marge, la verticale non : la carte
+   * s'arrêtait donc au bord EXACT du champ, c'est-à-dire au bord exact de
+   * l'écran — Keko : « le zoom fait dépasser les cartes en haut ou en bas selon
+   * la ligne, donc un bout de la carte n'est pas visible ». *Une carte collée à
+   * l'arête se lit comme une carte coupée*, même quand elle tient au pixel près.
+   *
+   * Elle se compte sur la HAUTEUR du champ et non sur sa largeur : la marge en
+   * x vaut 4 % de la largeur, ce qui ferait 8,6 % de la hauteur sur un écran
+   * large — *une marge n'est pas un nombre, c'est une part de ce qu'elle
+   * borde.*
+   */
+  const margeY = H * 0.035
+  // Et si la place manque, la carte se CENTRE au lieu de choisir un bord :
+  // deux bornes croisées donneraient un résultat de travers.
+  const borner = (v: number, limite: number): number =>
+    limite <= 0 ? 0 : Math.min(Math.max(v, -limite), limite)
 
   return (
     <group>
@@ -331,12 +350,8 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           // ne voit qu'à moitié n'a pas été agrandie.*
           const demiL = t / 2
           const demiH = (t * 1.4) / 2
-          const xCarte = grossie
-            ? Math.min(Math.max(x, -lLoupe / 2 + demiL + marge), lLoupe / 2 - demiL - marge)
-            : x
-          const yCarte = grossie
-            ? Math.min(Math.max(y, -hLoupe / 2 + demiH), hLoupe / 2 - demiH)
-            : y + uneCarte * 0.16
+          const xCarte = grossie ? borner(x, lLoupe / 2 - demiL - marge) : x
+          const yCarte = grossie ? borner(y, hLoupe / 2 - demiH - margeY) : y + uneCarte * 0.16
           return (
             <group key={entree.carte.id}>
               <Carte3D
