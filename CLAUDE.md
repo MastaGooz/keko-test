@@ -5417,6 +5417,27 @@ ferronnerie que les cadres, en petit : un filet de laiton, deux coins coupés.
 L'énergie garde le cartouche pour rester de la famille, mais elle n'avait pas
 le problème : *son chiffre est DANS son symbole.*
 
+**LA BANDE A GARDÉ LE BUDGET DE QUATRE MESURES ALORS QU'ELLE N'EN PORTE PLUS
+QUE TROIS.** Keko : « augmente la taille des stats pour matcher celle du symbole
+deck et de son chiffre ». *Un contenu dimensionné pour ce qu'il ne porte plus se
+lit petit sans raison* : une mesure vaut son symbole plus 2,85 fois le corps,
+soit 4,55 chacune — quatre en demandaient 18,2, trois en demandent 13,65, et la
+borne des symboles passe de 10,7 à 8,03. Mesuré à 844 x 390 : le chiffre monte
+de 11,8 à 15,8 px, le symbole de 12,9 à 20.
+
+**ET LES DEUX PARTAGENT UNE SEULE RÈGLE, pas deux valeurs voisines.** Le bouton
+« Deck » avait la sienne (un `rem` et sa propre hauteur) : les deux se
+rejoignaient à 844 x 390 et divergeaient à 667 x 320, où c'était le `rem` du
+bouton qui commandait d'un côté et la largeur de la bande de l'autre. Ils lisent
+donc la MÊME grandeur (`--etat-l`), et la hauteur de la plaque ne reste qu'un
+garde-fou — *le texte doit tenir dedans.* Mesuré aux deux formats : chiffre et
+symbole identiques au centième, 15,8 / 20 px à 844 x 390 et 11,5 / 14,6 à
+667 x 320.
+
+*Deux repères qui disent la même sorte de chose se lisent à la même voix* —
+c'était déjà la règle des quatre mesures entre elles, elle s'étend au bouton qui
+en a emporté une.
+
 **ET C'EST LE SYMBOLE QUI GROSSIT, PAS LE CHIFFRE QUI RÉTRÉCIT.** Le chiffre
 était en `rem`, donc il ne suivait pas l'orbe — celui-ci prend la hauteur de la
 bande, une fraction du champ visible : sur téléphone il remplissait 72 % du

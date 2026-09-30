@@ -5178,10 +5178,16 @@ body {
   background: linear-gradient(180deg, #2b2a2c, #171718);
   color: #ddd5c2;
   font-family: inherit;
-  /* IL SE MESURE SUR SA PROPRE HAUTEUR, pas sur la bande des stats : il n'y est
-     plus. *Un contenu qui ne suit qu'une dimension deborde des que l'autre se
-     resserre*, et sa boite a la sienne. */
-  font-size: min(0.82rem, calc(var(--deck-h) * 0.42));
+  /* IL PARTAGE LA REGLE DE LA BANDE, pas une valeur voisine. Keko : « augmente
+     la taille des stats pour matcher celle du symbole deck et de son chiffre ».
+
+     *Deux repères qui disent la même sorte de chose se lisent à la même voix* —
+     c'est déjà la règle des quatre mesures entre elles. Deux formules voisines
+     se rejoignaient sur un format et divergeaient sur l'autre : à 844 x 390 la
+     bande commandait, à 667 x 320 c'etait le `rem` du bouton. Elles n'en font
+     donc plus qu'une, et sa propre hauteur ne reste qu'un GARDE-FOU -- le texte
+     doit tenir dans la plaque. */
+  font-size: min(1rem, calc(var(--etat-l) / 13.65), calc(var(--deck-h) * 0.42));
   letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
@@ -5207,10 +5213,11 @@ body {
   font-weight: 500;
 }
 
-/* Le couple prend la hauteur de la plaque, moins son air : sans ce rappel il
-   lirait `--etat-l`, qui n'existe pas hors de la bande des stats. */
+/* ET SON COUPLE SE BORNE COMME CEUX DE LA BANDE, sur la meme largeur : c'est
+   ce qui met le paquet du bouton et les symboles des mesures a la meme taille,
+   quel que soit le format. La hauteur de la plaque reste le garde-fou. */
 .arm-deck .arm-vif {
-  height: 74%;
+  height: min(74%, calc(var(--etat-l) / 8.03));
   gap: 0.45em;
 }
 
@@ -5264,7 +5271,13 @@ body {
   align-items: stretch;
   justify-content: space-evenly;
   gap: 0;
-  font-size: min(1rem, calc(var(--etat-l) / 18.2));
+  /* TROIS MESURES, PLUS QUATRE — et le budget doit suivre. Le deck est parti
+     dans son bouton, la bande a gardé la place de quatre : *un contenu
+     dimensionné pour ce qu'il ne porte plus se lit petit sans raison.* Une
+     mesure vaut son symbole plus 2,85 fois le corps, soit 4,55 chacune : quatre
+     en demandaient 18,2, trois en demandent 13,65. Keko : « augmente la taille
+     des stats pour matcher celle du symbole deck et de son chiffre ». */
+  font-size: min(1rem, calc(var(--etat-l) / 13.65));
 }
 
 /* LA LIGNE DE LATENCE DU SON, derriere `?son` : ce que l'appareil avoue de son
@@ -5381,7 +5394,7 @@ body {
   gap: 0.45em;
   /* ET LES SYMBOLES SE BORNENT PAR LA LARGEUR AUSSI : ils sont carres, donc
      une hauteur seule les laisse s'elargir jusqu'a pousser la bande dehors. */
-  height: min(100%, calc(var(--etat-l) / 10.7));
+  height: min(100%, calc(var(--etat-l) / 8.03));
 }
 
 /* LE PAQUET GARDE SA TAILLE DE COMBAT, en plus petit : c'est le meme objet,
@@ -5472,10 +5485,13 @@ body {
    l'armurerie il n'y a pas d'etat, rien n'a ete perdu. *Une barre toujours
    pleine ne mesure rien.* Le coeur dit une RESERVE, comme le paquet dit un
    nombre de cartes. La jauge et ses trois regles vivent dans `git log`. */
+/* LE SYMBOLE PREND LA MÊME PART QUE LE PAQUET DU BOUTON « DECK » (84 %) : les
+   quatre repères de ce qu'on emporte se lisent à une seule échelle, qu'ils
+   soient dans la bande ou dans le bouton. */
 .arm-icone {
   display: block;
   width: auto;
-  height: 72%;
+  height: 84%;
   filter: drop-shadow(0 1px 2px #000000a8);
 }
 

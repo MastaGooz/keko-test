@@ -562,9 +562,12 @@ export function PageArmurerie({
         style={
           {
             ...boite(plan.deck),
-            // SA PROPRE HAUTEUR, pour que son corps de texte la suive : il
-            // n'est plus dans la bande des stats, donc `--etat-l` n'y est pas.
+            // SA PROPRE HAUTEUR en garde-fou, ET LA LARGEUR DE LA BANDE :
+            // il partage la règle de taille des mesures, donc il lui faut la
+            // même grandeur de référence. *Deux formules voisines divergent ;
+            // une seule ne peut pas.*
             '--deck-h': `${enPixels(plan.deck, fenetre.h, fenetre.l).height}px`,
+            '--etat-l': `${enPixels(plan.stats, fenetre.h, fenetre.l).width}px`,
           } as React.CSSProperties
         }
         onClick={onVoirDeck}
