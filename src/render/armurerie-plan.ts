@@ -88,6 +88,17 @@ export function COLONNES_URL(): number {
 export const PILE = 0.5
 
 /**
+ * LE RAPPORT DU PORTRAIT DU PNJ — celui de son DESSIN, pas un idéal.
+ *
+ * `Armurier.png` fait 793 x 1983, sujet contre les quatre bords. *Sa colonne
+ * prend ce rapport* : c'est la seule façon qu'il la remplisse sans vide ni
+ * rognage. Le jour où un PNJ arrive dans un autre cadrage, c'est ce chiffre
+ * qu'on bouge — ou bien on redessine au rapport, mais les deux ne peuvent pas
+ * diverger.
+ */
+export const RAPPORT_PNJ = 0.4
+
+/**
  * LES ONGLETS DU COFFRE, dans l'ordre où on les lit.
  *
  * `tresors` n'est pas un type d'équipement : c'est ce qu'on rapporte et qui ne
@@ -358,11 +369,18 @@ export function planArmurerie(
    *
    * *Une colonne qui ne contient qu'une image doit avoir le rapport de cette
    * image*, sinon l'un des deux axes est perdu. On part donc de la HAUTEUR —
-   * c'est elle qui est donnée — et 0,28 est le rapport d'un personnage debout,
-   * bras le long du corps. Le plafond en part d'utile reste : sur un écran de
-   * PC, la hauteur est telle qu'un rapport seul mangerait le coffre.
+   * c'est elle qui est donnée — et **le rapport est celui du dessin**.
+   *
+   * Il a valu 0,28 le temps d'un commit, la valeur que j'avais conseillée pour
+   * un personnage debout ; Keko a redessiné l'armurier « pour bien occuper la
+   * colonne » et l'a cadré en **0,40**, sujet contre les quatre bords. *C'est
+   * le dessin qui décide, pas le conseil* : une colonne taillée pour un rapport
+   * que l'image n'a pas rouvre exactement le vide qu'on venait de fermer.
+   *
+   * Le plafond en part d'utile reste : sur un écran de PC, la hauteur est telle
+   * qu'un rapport seul mangerait le coffre.
    */
-  const lStats = Math.min(hPanneaux * 0.28, largeurUtile * 0.2)
+  const lStats = Math.min(hPanneaux * RAPPORT_PNJ, largeurUtile * 0.24)
   // LE COFFRE REND ENCORE UN PEU DE LARGEUR : l'équipement lui en demande,
   // maintenant que ses sept cartes sont à la même taille et tiennent sur
   // quatre colonnes.

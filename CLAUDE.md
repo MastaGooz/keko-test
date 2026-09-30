@@ -5625,35 +5625,43 @@ collé en bas, le reste en vide.
 
 **Une colonne qui ne contient qu'une image doit avoir le rapport de cette
 image**, sinon l'un des deux axes est perdu quoi qu'on fasse. On part donc de
-la hauteur — c'est elle qui est donnée — au rapport **0,28**, celui d'un
-personnage debout bras le long du corps, avec un plafond en part d'utile pour
-qu'un grand écran ne laisse pas le portrait manger le coffre. Mesuré : 0,28 à
-tous les formats, le plafond ne mord nulle part.
+la hauteur — c'est elle qui est donnée — et le rapport est **celui du dessin**
+(`RAPPORT_PNJ`), avec un plafond en part d'utile pour qu'un grand écran ne
+laisse pas le portrait manger le coffre.
+
+**ET C'EST LE DESSIN QUI DÉCIDE, PAS LE CONSEIL.** J'avais recommandé 0,28 —
+le rapport d'un personnage debout bras le long du corps — et Keko a redessiné
+l'armurier « pour bien occuper la colonne » en **793 x 1983, soit 0,40**, sujet
+contre les quatre bords. *Une colonne taillée pour un rapport que l'image n'a
+pas rouvre exactement le vide qu'on venait de fermer* : le chiffre suit donc le
+fichier. Mesuré après : il remplit **100 % de la hauteur** à tous les formats
+(97 % à 1366 x 700, où le plafond de largeur mord d'un cheveu).
 
 **LE FORMAT À DONNER POUR UN PNJ**, mesuré sur la colonne :
 
 | | |
 |---|---|
-| rapport | **0,28** (il remplit la hauteur, la largeur suit) |
-| taille | **560 x 2000** — la colonne fait au plus 327 x 1169 px sur un écran de PC, et ~2000 sur un 4K ou un portable haute densité |
+| rapport | **0,40** — celui de l'armurier. Un autre est possible, mais **il devient celui de tous** : la colonne n'en a qu'un |
+| taille | **~800 x 2000** — la colonne fait au plus 467 x 1169 px sur un écran de PC, et ~2000 de haut sur un 4K ou un portable haute densité |
 | fichier | PNG **à canal alpha**, sujet seul, dans `public/` |
 
 Trois contraintes de dessin, et les deux premières ont une raison mécanique :
 
-1. **en pied, du bord haut au bord bas.** C'est la hauteur qui commande : un
-   sujet qui laisse du ciel au-dessus de sa tête ramène exactement le vide
-   qu'on vient de retirer — *un repère calé sur la marge d'un dessin se déplace
-   avec le dessin*, la leçon déjà payée sur l'intention des créatures ;
-2. **cadré serré en largeur**, rien de décisif contre les bords : le rapport de
-   la colonne est fixe, mais ce qui dépasse ne se rogne pas — il rétrécit tout
-   le personnage ;
+1. **le sujet touche les quatre bords.** C'est ce que fait `Armurier.png`, et
+   c'est ce qui permet à la colonne de prendre le rapport de la toile : une
+   marge transparente au-dessus de la tête ramènerait exactement le vide qu'on
+   vient de retirer — *un repère calé sur la marge d'un dessin se déplace avec
+   le dessin*, la leçon déjà payée sur l'intention des créatures ;
+2. **rien ne se rogne** : le portrait est cadré sans rognage, donc un dessin
+   plus large que le rapport de la colonne ne déborde pas, il RÉTRÉCIT tout le
+   personnage ;
 3. fond transparent, et **la casse du nom compte** (`public/` est servi depuis
    Linux).
 
-*L'autre voie, si Keko préfère des BUSTES* : garder le rapport 0,68 impose une
-colonne de 243 px à 844 x 390, soit un quart de la largeur d'écran pour un
-portrait qui ne décide de rien. C'est ce que ça coûterait, et ça se prend sur
-les meubles.
+*Ce que le passage de 0,28 à 0,40 a coûté*, et c'est le prix d'un portrait qui
+remplit : la colonne passe de 100 à 143 px à 844 x 390, pris sur le coffre et
+l'équipement. Le coffre garde ses cinq colonnes à tous les formats, et sa case
+tombe à 40 px (30 à 667 x 320).
 
 **LE DÉPART DE FORTUNE : « ÉQUIPEMENT GRATUIT », SOUS « DESCENDRE ».** Demandé
 par Keko — d'abord « un bouton sous le PNJ armurier, similaire au bouton
