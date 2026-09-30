@@ -5575,6 +5575,49 @@ relit quand ce contenu s'en va*, sinon elle tient de la place pour quelque
 chose qui n'est plus là. C'est mot pour mot la cicatrice déjà payée sur cette
 même colonne quand « Descendre » l'avait quittée.
 
+**ET SA COLONNE A LE RAPPORT D'UN CORPS DEBOUT, PLUS UNE PART DE LARGEUR.**
+Keko : « je trouve le PNJ un peu moche, il est seul dans sa colonne tout en bas
+avec un espace vide au-dessus ».
+
+*Troisième fois que la même cicatrice se rouvre au même endroit* : la colonne
+valait 15 % de la largeur utile, une valeur posée du temps où elle portait les
+stats ET un bouton. Les deux partis, il n'y reste qu'un portrait — et une
+colonne de **96 x 357 px a un rapport de 0,27 pour un dessin qui en fait
+0,68** : cadré sans rognage, il ne pouvait remplir que **41 % de sa hauteur**,
+collé en bas, le reste en vide.
+
+**Une colonne qui ne contient qu'une image doit avoir le rapport de cette
+image**, sinon l'un des deux axes est perdu quoi qu'on fasse. On part donc de
+la hauteur — c'est elle qui est donnée — au rapport **0,28**, celui d'un
+personnage debout bras le long du corps, avec un plafond en part d'utile pour
+qu'un grand écran ne laisse pas le portrait manger le coffre. Mesuré : 0,28 à
+tous les formats, le plafond ne mord nulle part.
+
+**LE FORMAT À DONNER POUR UN PNJ**, mesuré sur la colonne :
+
+| | |
+|---|---|
+| rapport | **0,28** (il remplit la hauteur, la largeur suit) |
+| taille | **560 x 2000** — la colonne fait au plus 327 x 1169 px sur un écran de PC, et ~2000 sur un 4K ou un portable haute densité |
+| fichier | PNG **à canal alpha**, sujet seul, dans `public/` |
+
+Trois contraintes de dessin, et les deux premières ont une raison mécanique :
+
+1. **en pied, du bord haut au bord bas.** C'est la hauteur qui commande : un
+   sujet qui laisse du ciel au-dessus de sa tête ramène exactement le vide
+   qu'on vient de retirer — *un repère calé sur la marge d'un dessin se déplace
+   avec le dessin*, la leçon déjà payée sur l'intention des créatures ;
+2. **cadré serré en largeur**, rien de décisif contre les bords : le rapport de
+   la colonne est fixe, mais ce qui dépasse ne se rogne pas — il rétrécit tout
+   le personnage ;
+3. fond transparent, et **la casse du nom compte** (`public/` est servi depuis
+   Linux).
+
+*L'autre voie, si Keko préfère des BUSTES* : garder le rapport 0,68 impose une
+colonne de 243 px à 844 x 390, soit un quart de la largeur d'écran pour un
+portrait qui ne décide de rien. C'est ce que ça coûterait, et ça se prend sur
+les meubles.
+
 **LE DÉPART DE FORTUNE : « ÉQUIPEMENT GRATUIT », SOUS « DESCENDRE ».** Demandé
 par Keko — d'abord « un bouton sous le PNJ armurier, similaire au bouton
 descendre, sauf qu'il génère un stuff de niveau minimal aléatoire », puis « on

@@ -346,7 +346,23 @@ export function planArmurerie(
    * va** — sinon elle reste comme une cicatrice, à tenir de la place pour
    * quelque chose qui n'est plus là.
    */
-  const lStats = largeurUtile * 0.15
+  /**
+   * LA COLONNE DU PNJ A LE RAPPORT D'UN CORPS DEBOUT, pas une part de largeur.
+   *
+   * Elle en était une (15 % de l'utile), héritée du temps où elle portait les
+   * stats et un bouton. Ceux-ci partis, il n'y reste qu'un portrait — et une
+   * colonne de 96 x 357 px a un rapport de 0,27 pour un dessin qui en fait
+   * 0,68 : **il ne remplissait que 40 % de sa hauteur**, calé en bas, le reste
+   * en vide. Keko : « je trouve le PNJ un peu moche, il est seul dans sa
+   * colonne tout en bas avec un espace vide au-dessus ».
+   *
+   * *Une colonne qui ne contient qu'une image doit avoir le rapport de cette
+   * image*, sinon l'un des deux axes est perdu. On part donc de la HAUTEUR —
+   * c'est elle qui est donnée — et 0,28 est le rapport d'un personnage debout,
+   * bras le long du corps. Le plafond en part d'utile reste : sur un écran de
+   * PC, la hauteur est telle qu'un rapport seul mangerait le coffre.
+   */
+  const lStats = Math.min(hPanneaux * 0.28, largeurUtile * 0.2)
   // LE COFFRE REND ENCORE UN PEU DE LARGEUR : l'équipement lui en demande,
   // maintenant que ses sept cartes sont à la même taille et tiennent sur
   // quatre colonnes.
