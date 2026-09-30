@@ -721,19 +721,20 @@ export function PageArmurerie({
                 présence mais sa TAILLE — mesuré par son texte, il ignorait ce
                 que sa ligne mesure et mordait le filet dès que le rail se
                 serrait. */}
-            {d.embleme === undefined ? (
-              /* UNE PLACE TENUE GARDE LA PLACE DU SYMBOLE, PAS LE SYMBOLE :
-                 les mots restent alignés, et rien ne donne un visage à un lieu
-                 qui n'existe pas encore. */
-              <span className="arm-lieu-blason" aria-hidden="true" />
-            ) : (
-              <img
-                className="arm-lieu-blason"
-                src={urlDuSymbole(d.embleme)}
-                alt=""
-                draggable={false}
-              />
-            )}
+            {/* UN PLACEHOLDER SUR LES PLACES TENUES, LE TEMPS DE JUGER.
+                Demandé par Keko : « tu peux mettre l'armurerie dans tous les
+                onglets du hub en mode placeholder pour test ? »
+
+                *Elles n'en portaient aucun*, pour ne pas donner un visage à des
+                lieux qui n'existent pas — mais on ne juge pas un rail de huit
+                entrées sur deux symboles. **Le repli est une seule ligne** : il
+                tombe dès que chaque destination nomme le sien. */}
+            <img
+              className="arm-lieu-blason"
+              src={urlDuSymbole(d.embleme ?? 'Armurerie')}
+              alt=""
+              draggable={false}
+            />
             <span className="arm-lieu-nom">{d.nom}</span>
           </button>
         ))}

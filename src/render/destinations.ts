@@ -56,10 +56,11 @@ export type Destination = {
   /**
    * LE FICHIER DE SON EMBLÈME, dans `public/`, sans extension.
    *
-   * **Une place tenue n'en a pas**, et c'est délibéré : les six portaient l'écu
-   * de l'armurerie faute d'un autre dessin, ce qui *donnait un visage à des
-   * lieux qui n'existent pas.* Elles gardent la place du symbole — les mots
-   * restent alignés — et rien dedans.
+   * **Une place tenue n'en nomme pas**, et le rendu lui prête celui de
+   * l'armurerie le temps de juger — Keko : « mets l'armurerie dans tous les
+   * onglets en mode placeholder pour test ». *C'est un repli d'affichage, pas
+   * une donnée* : le jour où chaque destination a son dessin, il n'y a qu'une
+   * ligne à retirer, et rien à changer ici.
    */
   embleme?: string
 }

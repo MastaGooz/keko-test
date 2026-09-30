@@ -4257,12 +4257,17 @@ dessin ; `Exploration.png` est le premier à arriver, au même gabarit
 celle-ci prend le nom du fichier, et une destination nouvelle ne coûte qu'une
 entrée dans la liste.
 
-**UNE PLACE TENUE N'EN A PAS**, et c'est délibéré : les six portaient l'écu de
-l'armurerie, ce qui *donnait un visage à des lieux qui n'existent pas.* Elles
-gardent la PLACE du symbole — les mots restent alignés sur ceux des lieux
-ouverts — et rien dedans. Ça demande un `aspect-ratio` sur le bloc : *un
-élément vide sans rapport déclaré est large de zéro*, et l'alignement tombait
-avec lui.
+**UNE PLACE TENUE N'EN NOMME PAS**, et le rendu lui prête celui de l'armurerie
+**le temps de juger** — Keko : « tu peux mettre l'armurerie dans tous les
+onglets du hub en mode placeholder pour test ? » Elles n'en portaient aucune,
+pour ne pas donner un visage à des lieux qui n'existent pas ; *mais on ne juge
+pas un rail de huit entrées sur deux symboles.*
+
+**C'est un repli d'AFFICHAGE, pas une donnée** : `embleme` reste vide dans la
+liste, et il n'y a qu'un `?? 'Armurerie'` à retirer le jour où chaque
+destination a son dessin. Le bloc garde son `aspect-ratio` de toute façon : *un
+élément vide sans rapport déclaré est large de zéro*, et l'alignement des mots
+tombait avec lui.
 
 **L'ÉCU RESTE, ET IL SE MESURE SUR SA LIGNE.** Je l'avais d'abord retiré — les
 huit entrées portent LE MÊME, celui de l'armurerie recyclé du bandeau disparu,
