@@ -5638,6 +5638,16 @@ La bande garde les trois qu'on ne fait que lire.
   cette hauteur — 65 x 33 px à 844 x 390 au lieu de 105 x 42, contenu inchangé.
   Le contenu se borne EXACTEMENT comme les mesures de la bande, puisqu'ils
   partagent leur règle.
+- **IL SE CENTRE ENTRE SES VOISINS, pas dans la boîte qu'on lui a réservée.**
+  Keko : « on peut descendre un poil le bouton deck qu'il ne soit pas collé à la
+  ligne des stats ? » Mesuré, il avait **9,5 px au-dessus pour 21 en dessous** :
+  sa bande le centrait bien, mais *la bande n'est pas ce qui l'entoure à l'oeil*
+  — sous elle vient encore le jeu du bloc d'équipement, qui se centre dans ce
+  qui reste. **Un décalage fixe ne pouvait pas marcher** : ce jeu n'est pas une
+  fraction constante, il dépend du format (essayé, il donnait 15,8/15,0 à
+  844 x 390 et encore 12,5/21,2 à 667 x 320). On prend donc le milieu entre le
+  bas des mesures et le HAUT DU BLOC — ses deux vrais voisins — et l'équilibre
+  tient partout : 15,4/15,4 et 16,8/16,9, sans que rien d'autre ne bouge.
 - **SA ZONE SENSIBLE DÉBORDE SON DESSIN**, comme celle du bouton de rangement :
   *le doigt ne rétrécit pas avec l'écran.* Elle s'étend surtout vers le HAUT, où
   il n'y a que l'air de la bande ; vers le bas à peine, parce que le titre du

@@ -530,7 +530,9 @@ export function planArmurerie(
    * largeur (quatre colonnes) ou la hauteur (deux rangées), la plus dure
    * gagne, et jamais au-delà de 1.
    */
-  const yDedans = yPanneaux + hPanneaux / 2 - hEntete - hStats - bandeDeck - hDedans / 2
+  // Le bas de la bande des mesures : c'est le voisin du haut du bouton « Deck ».
+  const basStats = yPanneaux + hPanneaux / 2 - hEntete - hStats
+  const yDedans = basStats - bandeDeck - hDedans / 2
   const taillePile = tailleCharge
   const pasCharge = tailleCharge * 1.12
   const pasRangee = tailleCharge * 1.4 * 1.12
@@ -632,7 +634,20 @@ export function planArmurerie(
     // s'étire d'un bord à l'autre est un titre ; ce qui se tape est une pièce.*
     deck: {
       x: xEquip,
-      y: yPanneaux + hPanneaux / 2 - hEntete - hStats - bandeDeck / 2,
+      /**
+       * **IL SE CENTRE ENTRE SES VOISINS, pas dans la boîte qu'on lui a
+       * réservée.** Keko : « on peut descendre un poil le bouton deck qu'il ne
+       * soit pas collé à la ligne des stats ? » Mesuré, il avait **9,5 px
+       * au-dessus pour 21 en dessous** : sa bande le centrait bien, mais la
+       * bande n'est pas ce qui l'entoure à l'oeil — sous elle vient encore le
+       * jeu du bloc d'équipement, qui se centre dans ce qui reste.
+       *
+       * *Un décalage fixe ne pouvait pas marcher* : ce jeu n'est pas une
+       * fraction constante, il dépend du format. On prend donc le milieu entre
+       * le bas des mesures et le haut du bloc — **ses deux vrais voisins** — et
+       * l'équilibre tient partout sans que rien d'autre ne bouge.
+       */
+      y: (basStats + yHautBloc) / 2,
       l: Math.min(lEquip - marge * 2, hDeck * 1.95),
       h: hDeck,
     },
