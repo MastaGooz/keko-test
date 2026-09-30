@@ -4891,6 +4891,16 @@ body {
   inset: 0;
   pointer-events: none;
   font-family: var(--titre, 'Cinzel'), Georgia, serif;
+  /* AUCUN SURLIGNAGE DE TAPE DANS TOUT LE LIEU. Keko : « quand je clique sur
+     les catégories du coffre, elles s'éclairent en bleu sur le tap, je voudrais
+     pas ». C'est le surlignage du NAVIGATEUR, pas le nôtre -- et il parle sa
+     langue à lui, en plein milieu d'un écran qui parle la sienne.
+
+     *La propriété s'hérite*, donc elle se pose UNE fois sur les deux calques
+     plutôt qu'une par bouton : la règle vivait sur le rail, le rangement et le
+     deck, et elle manquait aux onglets. **Ce qui vaut pour tous les boutons
+     d'un lieu se pose sur le lieu.** */
+  -webkit-tap-highlight-color: transparent;
 }
 
 /* LE FOND EST LE LIEU : opaque, sous le canvas transparent. Il remplace le

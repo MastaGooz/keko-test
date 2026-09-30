@@ -4200,6 +4200,15 @@ au doigt, donc au-dessus. **Ce sont des FRÈRES, pas un parent et son enfant** :
 un `z-index` sur un parent enferme ses enfants — le piège déjà payé sur le
 bouton de fin de tour.
 
+**AUCUN SURLIGNAGE DE TAPE DANS TOUT LE LIEU.** Keko : « quand je clique sur les
+catégories du coffre, elles s'éclairent en bleu sur le tap, je voudrais pas ».
+C'est le surlignage du NAVIGATEUR, pas le nôtre — *et il parle sa langue à lui,
+en plein milieu d'un écran qui parle la sienne.* La propriété s'hérite, donc elle
+se pose UNE fois sur les deux calques (`.arm-fond`, `.arm-commandes`) plutôt
+qu'une par bouton : elle vivait sur le rail, sur le rangement et sur le deck, et
+elle manquait aux onglets. **Ce qui vaut pour tous les boutons d'un lieu se pose
+sur le lieu.**
+
 **UN CONSOMMABLE S'APPELLE UN OBJET, PARTOUT.** L'onglet du coffre disait
 « Objets », le groupe de slots « Consommables », et le pied des cartes
 « Consommable ». Keko a unifié sur le nom de la catégorie du coffre. *Une même
@@ -5654,6 +5663,20 @@ La bande garde les trois qu'on ne fait que lire.
   premier groupe commence aussitôt et qu'*une zone plus grande que son bouton
   vole le geste à sa voisine.* Mesuré : 75 x 44 px de prise pour 65 x 33 de
   plaque à 844 x 390, 57 x 35 pour 47 x 24 à 667 x 320.
+- **ET SES LIBELLÉS PASSENT PAR UNE RÉF, sinon l'écouteur en garde une version
+  périmée.** Keko : « quand le deck est vide et que je tape, ça met "voir le
+  deck" au lieu de "deck vide" ». L'écoute des infobulles est posée une fois sur
+  la FENÊTRE — elle ne dépend que de l'état « bloqué » — donc sa fermeture
+  capturait le tableau du rendu où elle avait été installée. *C'est la famille du
+  geste dont les écouteurs se retirent par référence* : **un écouteur qui survit
+  aux rendus ne doit lire l'état que par une réf.**
+
+  *Le scénario est instructif* : retirer l'arme change « bloqué », donc l'effet
+  se relançait et le libellé était juste ; c'est en retirant ENSUITE l'armure et
+  la potion — sans que « bloqué » rebouge — que le tableau périmé se voyait.
+  **Une dépendance qui couvre un cas sur deux ressemble à une dépendance
+  correcte.** Vérifié en vidant le chargement à la main : bouton éteint, bulle
+  « Deck vide ».
 - **ET SA BULLE DIT « DECK VIDE » quand il n'y a rien à montrer**, au lieu de
   « Voir le deck ». Demandé par Keko. Le bouton s'éteint alors : *un refus muet
   se lit comme une panne*, et *un bouton qui ouvre une page blanche en est un* —

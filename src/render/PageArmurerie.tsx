@@ -249,6 +249,19 @@ export function PageArmurerie({
     'Taille de la main',
     "Points d'action",
   ]
+  /**
+   * **LES LIBELLÉS PASSENT PAR UNE RÉF, sinon l'écouteur en garde une version
+   * périmée.** Keko : « quand le deck est vide et que je tape, ça met "voir le
+   * deck" au lieu de "deck vide" ».
+   *
+   * L'écoute est posée une fois pour toutes sur la FENÊTRE — elle ne dépend que
+   * de l'état « bloqué » — donc sa fermeture capture le tableau du rendu où
+   * elle a été installée. *C'est la famille du geste dont les écouteurs se
+   * retirent par référence* : **un écouteur qui survit aux rendus ne doit lire
+   * l'état que par une réf.**
+   */
+  const libelles = useRef(LIBELLES)
+  libelles.current = LIBELLES
   const valeurs = [pvMax, deck.total, tailleMain, energieMax]
   const avant = useRef(valeurs)
   /**
@@ -346,7 +359,7 @@ export function PageArmurerie({
           const droite = boites.length > 0 ? Math.max(...boites.map((b) => b.right)) : r.right
           return {
             cle: `stat-${i}`,
-            texte: LIBELLES[i] ?? '',
+            texte: libelles.current[i] ?? '',
             x: (gauche + droite) / 2,
             y: r.top,
             place: 'dessus',
