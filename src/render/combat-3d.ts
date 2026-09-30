@@ -10,8 +10,8 @@ import { createRng } from '../logic/rng.ts'
 import type { Descente } from '../logic/descente.ts'
 import { REGLAGE_DEFAUT, commencerDescente } from '../logic/descente.ts'
 import type { Hub } from '../logic/hub.ts'
-import { creerHub, equipement, consommablesDeLaPile, estTresor } from '../logic/hub.ts'
-import type { Piece, Rarete } from '../logic/armes.ts'
+import { creerHub, equipement, consommablesDeLaPile, estTresor, pileVide } from '../logic/hub.ts'
+import type { Arme, Armure, Consommable, Piece, Rarete } from '../logic/armes.ts'
 import {
   ESPADON,
   GLAIVE,
@@ -339,4 +339,47 @@ export function deckAPeindre(cartes: Carte[]): { carte: CarteAPeindre; nombre: n
     } else deja.nombre += 1
   }
   return piles
+}
+
+/**
+ * DE QUOI JUGER UN GROS DECK : `?r3f&deck` (avec `&set=8` pour le maximum).
+ *
+ * Keko : « ça se passe comment si le deck a un nombre de cartes qui ne loge pas
+ * à l'écran ? » Le chargement de départ n'en donne que six modèles — *on ne
+ * peut rien dire d'une grille avec six cases*, la leçon du coffre à cinq
+ * objets. Le banc équipe donc la pièce la plus riche du coffre, l'armure, et
+ * remplit la pile de consommables TOUS DIFFÉRENTS : avec `&set=8`, ça fait
+ * douze modèles distincts, le plafond de ce que le catalogue sait produire
+ * aujourd'hui.
+ *
+ * On REPREND ce que le coffre contient plutôt que d'inventer des pièces : *un
+ * banc d'essai qui montre des cartes cassées ne se juge pas.*
+ */
+export function DECK_URL(): boolean {
+  return new URLSearchParams(location.search).has('deck')
+}
+
+export function chargementDeTest(hub: Hub, actif = DECK_URL()): Hub {
+  if (!actif) return hub
+  const portables = hub.reserve.filter((o): o is Objet => !estTresor(o))
+  const armes = portables.filter((o): o is Arme => 'mains' in o)
+  const armures = portables.filter((o): o is Armure => !('mains' in o) && !estConsommable(o))
+  // La plus fournie d'abord : c'est elle qui fait le deck le plus long.
+  const combien = (o: Arme | Armure): number => o.set.reduce((n, e) => n + e.nombre, 0)
+  // On retombe sur ce qui est DÉJÀ équipé quand le coffre n'en a pas : le
+  // Plastron part au torse à la création, donc il n'est pas dans la réserve.
+  const arme = [...armes].sort((a, b) => combien(b) - combien(a))[0] ?? hub.chargement.mains[0]
+  const armure = armures[0] ?? hub.chargement.armure
+  // Des consommables TOUS DIFFÉRENTS : trois fois le même ne ferait qu'un
+  // modèle, et c'est le nombre de MODÈLES qui remplit la grille.
+  const vus = new Set<string>()
+  const pile: (Consommable | null)[] = pileVide()
+  let i = 0
+  for (const objet of portables) {
+    if (!estConsommable(objet) || vus.has(objet.modele.nom) || i >= pile.length) continue
+    vus.add(objet.modele.nom)
+    pile[i] = objet
+    i += 1
+  }
+  return { ...hub, chargement: { mains: [arme, null], armure, pile } }
 }

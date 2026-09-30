@@ -59,6 +59,7 @@ import type { Entree } from './Zoom3D.tsx'
 import {
   TAILLE_MAIN_URL,
   aPeindre,
+  chargementDeTest,
   coffreDeTest,
   deckAPeindre,
   pilesDeTest,
@@ -227,7 +228,7 @@ export function Scene(): React.JSX.Element {
    * `descente` n'est donc plus l'état racine, c'est ce que le hub produit
    * quand on descend, et ce qui lui revient quand on remonte.
    */
-  const [hub, setHub] = useState<Hub>(() => raretesDeTest(pilesDeTest(setDeTest(coffreDeTest(creerHub())))))
+  const [hub, setHub] = useState<Hub>(() => chargementDeTest(raretesDeTest(pilesDeTest(setDeTest(coffreDeTest(creerHub()))))))
   const [descente, setDescente] = useState<Descente | null>(null)
   /**
    * LA DESCENTE EN COURS, ou celle de départ tant qu'on est au hub.

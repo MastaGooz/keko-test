@@ -58,12 +58,45 @@ const COLONNES_SET = 4
 /** Et sur combien de lignes au plus : c'est ce qui borne la taille d'une carte. */
 const LIGNES_SET = 2
 /**
- * LE DECK EN TIENT PLUS PAR LIGNE, parce qu'il n'a pas de pièce à sa gauche :
- * toute la largeur est à lui. *La grille de référence n'est pas la même, donc
- * la taille d'une carte non plus* — et c'est ce qui la garde stable quel que
- * soit le nombre de modèles.
+ * LE DECK CHOISIT SES COLONNES — il n'en a pas un nombre écrit d'avance.
+ *
+ * Keko : « ça se passe comment si le deck a un nombre de cartes qui ne loge pas
+ * à l'écran ? » *Il ne déborde jamais* — la taille d'une carte se déduit de la
+ * place — **mais à colonnes fixes il rétrécissait pour rien** : à douze modèles
+ * sur cinq colonnes, trois lignes serrées alors que deux lignes de six tenaient
+ * largement en largeur.
+ *
+ * On essaie donc toutes les grilles et on garde celle qui fait les plus grandes
+ * cartes. Mesuré, en largeur de carte sur un téléphone couché (844 x 390) :
+ *
+ * | modèles | colonnes fixes | colonnes choisies |
+ * |---|---|---|
+ * | 6 | 94 px | **118 px** (6 x 1) |
+ * | 12 | 63 px | **94 px** (6 x 2) |
+ * | 25 | 38 px | **63 px** (9 x 3) |
+ *
+ * *La règle de la grille de référence stable ne vaut pas ici* : elle existe
+ * pour qu'une pièce riche se lise comme une pièce pauvre, or il n'y a qu'un
+ * deck et on ne le compare à rien.
+ *
+ * **25 est le plafond du catalogue** — deux armes à huit modèles, une armure à
+ * six, trois consommables distincts — et à 25 la carte fait encore 63 px, plus
+ * qu'une case de coffre. Au-delà elle continuerait de rétrécir : c'est le jour
+ * où il faudra faire défiler, pas avant.
  */
-const COLONNES_DECK = 5
+function grilleDuDeck(n: number, large: number, haut: number, plafond: number): {
+  colonnes: number
+  lignes: number
+  taille: number
+} {
+  let meilleure = { colonnes: 1, lignes: n, taille: 0 }
+  for (let colonnes = 1; colonnes <= n; colonnes += 1) {
+    const lignes = Math.ceil(n / colonnes)
+    const taille = Math.min(plafond, haut / (lignes * 1.82), large / (colonnes * 1.1))
+    if (taille > meilleure.taille) meilleure = { colonnes, lignes, taille }
+  }
+  return meilleure
+}
 
 /**
  * Ce qu'il faut maintenir le doigt pour qu'une carte du set grossisse.
@@ -165,12 +198,15 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
   const L = (H * size.width) / size.height
   const marge = L * 0.04
 
-  const colonnes = Math.min(sansPiece ? COLONNES_DECK : COLONNES_SET, seule ? 1 : modeles.length)
-  const lignes = seule ? 1 : Math.ceil(modeles.length / colonnes)
   // La pièce cède de la place au set, mais reste la plus grande : c'est elle
   // qu'on regarde, le set n'est que ce qu'elle apporte.
   const piece = sansPiece ? 0 : seule ? H * 0.72 / 1.4 : Math.min((H * 0.8) / 1.4, L * 0.26)
   const largeurSet = sansPiece ? L - 2 * marge : L - 3 * marge - piece
+  const deck = sansPiece
+    ? grilleDuDeck(Math.max(1, modeles.length), largeurSet, H * 0.88, H * 0.5)
+    : null
+  const colonnes = deck?.colonnes ?? Math.min(COLONNES_SET, seule ? 1 : modeles.length)
+  const lignes = deck?.lignes ?? (seule ? 1 : Math.ceil(modeles.length / colonnes))
   /**
    * LA TAILLE D'UNE CARTE DU SET NE DÉPEND PAS DE LEUR NOMBRE.
    *
@@ -180,15 +216,9 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * c'est ce qui fait qu'une pièce riche et une pièce pauvre se lisent pareil.
    * La lisibilité, elle, vient de la loupe.
    */
-  const colonnesRef = sansPiece ? COLONNES_DECK : COLONNES_SET
-  // La grille de RÉFÉRENCE compte au moins deux lignes, et davantage s'il en
-  // faut : *un deck plus fourni ne doit pas déborder par le bas.*
-  const lignesRef = Math.max(LIGNES_SET, lignes)
-  const uneCarte = Math.min(
-    sansPiece ? H * 0.5 : piece * 0.62,
-    (H * 0.88) / (lignesRef * 1.82),
-    largeurSet / (colonnesRef * 1.1),
-  )
+  const uneCarte =
+    deck?.taille ??
+    Math.min(piece * 0.62, (H * 0.88) / (LIGNES_SET * 1.82), largeurSet / (COLONNES_SET * 1.1))
   /**
    * CE QU'UNE CARTE DU SET DEVIENT SOUS LA LOUPE — et le champ dans lequel
    * elle doit tenir.

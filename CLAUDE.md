@@ -5432,6 +5432,38 @@ Trois choses qui le portent :
   montre pas à deux échelles selon ce qu'il y a à côté*, et la lisibilité vient
   de la loupe.
 
+**IL NE DÉBORDE JAMAIS : LA GRILLE CHOISIT SES COLONNES.** Keko : « ça se passe
+comment si le deck a un nombre de cartes qui ne loge pas à l'écran ? » *La
+taille d'une carte se déduit de la place*, donc la grille tient toujours —
+**mais à colonnes fixes elle rétrécissait pour rien** : à douze modèles sur cinq
+colonnes, trois lignes serrées alors que deux lignes de six tenaient largement
+en largeur. On essaie donc toutes les grilles et on garde celle qui fait les
+plus grandes cartes. Mesuré, en largeur de carte à 844 x 390 :
+
+| modèles | colonnes fixes | colonnes choisies |
+|---|---|---|
+| 6 | 94 px | **118 px** (6 x 1) |
+| 12 | 63 px | **94 px** (6 x 2) |
+| 25 | 38 px | **63 px** (9 x 3) |
+
+*La règle de la grille de référence stable ne vaut pas ici* : elle existe pour
+qu'une pièce riche se lise comme une pièce pauvre, or **il n'y a qu'un deck et
+on ne le compare à rien**. Le zoom d'une pièce, lui, garde ses quatre colonnes —
+vérifié inchangé au pixel.
+
+**25 est le plafond du catalogue** — deux armes à huit modèles, une armure à
+six, trois consommables distincts — et à 25 la carte fait encore 63 px sur un
+téléphone, plus qu'une case de coffre, avec la loupe pour lire. Au-delà elle
+continuerait de rétrécir : *c'est le jour où il faudra faire défiler, pas
+avant.*
+
+**POUR LE VOIR : `?r3f&deck` (avec `&set=8` pour le maximum).** Le chargement de
+départ ne donne que six modèles — *on ne peut rien dire d'une grille avec six
+cases*, la leçon du coffre à cinq objets. Le banc équipe la pièce la plus riche
+du coffre, l'armure, et remplit la pile de consommables TOUS DIFFÉRENTS : douze
+modèles distincts, vérifiés à 667 x 320 en 6 x 2 sans un pixel de débordement.
+Il REPREND ce que le coffre contient plutôt que d'inventer des pièces.
+
 **IL PREND SA BANDE, il ne s'installe pas dans le jeu.** Il y avait bien du vide
 sous les mesures, mais c'était le JEU du bloc centré, pas une place : 45 px pour
 un bouton qui en demande 46 au plancher tactile. *Une bande réservée ne se
