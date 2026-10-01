@@ -7551,43 +7551,51 @@ l'ajoute au canvas, et la carte 2D une couche de plus dans son
 fichiers de `public/` : **l'URL porte la date du build**, sinon le remplacer ne
 changerait rien à l'écran.
 
-**ET C'EST LE SUJET QUI ÉCLAIRE AUTOUR DE LUI.** Keko : « on peut éclaircir un
-peu le background des cartes ? je les trouve super foncé — ou bien éclaire la
-zone derrière l'illustration », puis, devant la première passe : « c'est un poil
-trop clair, surtout sur la périphérie — bien dans la zone proche de
-l'illustration. On peut pas éclairer comme la forme de l'arme éclairait
-autour ? »
+**FOND, PUIS LUMIÈRE, PUIS SUJET.** Keko : « on peut éclaircir un peu le
+background des cartes ? je les trouve super foncé — ou bien éclaire la zone
+derrière l'illustration », puis « on peut pas éclairer comme la forme de l'arme
+éclairait autour ? », puis **« on peut pas faire dans l'ordre background >
+éclairage > illustration ? »**
 
-*Un disque de lumière éclaire là où il n'y a rien* — c'est ce que faisaient le
-voile uniforme et la lueur radiale de la première passe. Ce qu'il décrit est un
-**BLOOM** : **ce qui est clair rayonne, ce qui est sombre n'ajoute rien.** La
-périphérie d'une carte est sombre, donc elle le reste, et la lame déborde de sa
-propre lumière.
+*Et c'est lui qui a trouvé l'ordre juste.* J'avais posé la lumière PAR-DESSUS
+l'illustration **en la supposant opaque** — elle ne l'est pas : ses images sont
+DÉTOURÉES (94 % de pixels non opaques pour le Glaive, 77 à 85 % pour les
+autres), donc le fond commun se voit dessous et la lumière a sa place entre les
+deux. **Une supposition sur un fichier se mesure en une ligne ; je ne l'avais
+pas fait**, et ça a coûté deux passes.
 
-Trois choses à ne pas défaire :
+Ce que l'ordre achète : **l'illustration n'est plus éclaircie du tout** — mesuré
+à +5 % de luminance sur la lame quand la lumière passait par-dessus, zéro
+maintenant. Elle se pose nette sur une lumière qui a déjà fait son travail.
 
-- **ça se pose PAR-DESSUS l'illustration, jamais dessous.** Une image de Keko
-  est OPAQUE : elle recouvre le fond commun de bout en bout, donc éclaircir le
-  décor ne changerait rien là où ça se voit. *Ce qu'on éclaire est ce qu'on
-  voit* ;
+**Et la lumière garde la FORME DE L'ARME** : on floute le SUJET — pas le fond,
+qui n'a pas de forme — et on l'ajoute au décor. *Ce qui rayonne, c'est l'objet ;
+ce qui reçoit, c'est le décor.* Un disque de lumière, lui, éclairait là où il
+n'y a rien : c'est ce que faisaient le voile uniforme et la lueur radiale des
+premières passes, et Keko l'a vu tout de suite — « c'est un poil trop clair,
+surtout sur la périphérie ».
+
+Deux choses à ne pas défaire :
+
 - **le flou se fait par RÉDUCTION puis agrandissement, pas par `ctx.filter`** :
   celui-ci demande Safari 16.4 quand la page vise 16.2, et un filtre ignoré
-  redessinerait l'image NETTE en double exposition. *Une dégradation silencieuse
+  redessinerait le sujet NET en double exposition. *Une dégradation silencieuse
   vaut moins qu'un chemin qui marche partout* — et l'interpolation d'un
-  agrandissement est exactement un flou ;
-- **on relit le CANVAS, pas l'image** : le décor commun, l'illustration et le
-  sceau de repli y sont déjà composés, donc le même code sert les trois sans
-  distinguer les cas. **Mais la source se lit en PIXELS DE LA TOILE, pas en
-  unités de carte** — `ctx.scale` met à l'échelle ce qu'on DESSINE, jamais la
-  région qu'on LIT. Sur une petite carte, peinte à 256 de large, la lecture
-  allait chercher trois fois au-delà du canvas et rendait un coin agrandi sur
-  toute la carte : Keko, « on dirait que je vois un truc bizarre en haut à
-  gauche des cartes (hors zoom) » — c'était le haut-gauche, la seule part de la
-  zone demandée qui existait vraiment. *Dès qu'un canvas se relit lui-même, ses
-  deux repères ne sont plus le même.*
+  agrandissement est exactement un flou. L'alpha du sujet traverse la
+  réduction, donc le halo épouse sa silhouette ;
+- **en mélange `lighter`, donc une ADDITION** : les noirs montent, les clairs
+  saturent à peine — *une lumière ajoutée ne délave pas, un voile blanc posé,
+  si.*
 
-Et toujours en mélange `lighter` : *une lumière ajoutée ne délave pas, un voile
-blanc posé, si.*
+*Une version intermédiaire relisait le CANVAS plutôt que l'image, pour bloomer
+le décor et le sujet d'un coup. Elle a laissé une leçon* : **la source d'un
+`drawImage` se lit en PIXELS DE LA TOILE, pas en unités de carte.** `ctx.scale`
+met à l'échelle ce qu'on DESSINE, jamais la région qu'on LIT — sur une petite
+carte, peinte à 256 de large, la lecture allait chercher trois fois au-delà du
+canvas et rendait un coin agrandi sur toute la carte. Keko : « on dirait que je
+vois un truc bizarre en haut à gauche des cartes (hors zoom) » — c'était le
+haut-gauche, la seule part de la zone demandée qui existait vraiment. *Dès qu'un
+canvas se relit lui-même, ses deux repères ne sont plus le même.*
 
 **LES 24 DESSINS ONT PERDU LEUR CIEL, et il le fallait.** Chacun peignait un
 `<rect>` plein format qui recouvrait entièrement le fond commun : *le poser
@@ -7605,10 +7613,10 @@ l'Espadon, bleu pour la défense, bordeaux pour les trésors. Le code couleur ne
 tient plus que par l'accent, qui teinte le corps de la carte et le liseré.
 Remettre un ciel est une ligne par dessin.
 
-**Une image de modèle n'a donc plus à porter son propre fond**, et il vaut
-mieux qu'elle n'en porte pas : `Glaive.png` est opaque et recouvre le fond
-commun de bout en bout. Les prochaines devraient être des PNG à canal alpha,
-sujet seul.
+**Une image de modèle n'a donc plus à porter son propre fond**, et **elle ne
+doit PAS en porter** : c'est désormais ce que Keko livre — des WebP à canal
+alpha, sujet détouré. *C'est ce qui permet de glisser la lumière entre le décor
+et le sujet*, et une image opaque le rendrait impossible.
 
 ### La pioche et la défausse, en SYMBOLE et non en tas de cartes
 

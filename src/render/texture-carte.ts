@@ -771,60 +771,49 @@ export async function peindreCarte(
   // qu'il montre. Le repli reste celui d'avant — sans fond, la surface sombre
   // suffit et rien ne casse.
   if (decor !== null) couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
-  if (image !== null) couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
 
   /**
-   * ET C'EST LE SUJET QUI ÉCLAIRE AUTOUR DE LUI.
+   * FOND, PUIS LUMIÈRE, PUIS SUJET — et c'est Keko qui a trouvé l'ordre : « on
+   * peut pas faire dans l'ordre background > éclairage > illustration ? »
    *
-   * Keko, après une première passe au voile et à la lueur radiale : « c'est un
-   * poil trop clair, surtout sur la périphérie — bien dans la zone proche de
-   * l'illustration. On peut pas éclairer comme la forme de l'arme éclairait
-   * autour ? »
+   * **Je le croyais impossible, et je me trompais sur un fait vérifiable** :
+   * j'avais posé la lumière PAR-DESSUS l'illustration en la supposant opaque.
+   * Elle ne l'est pas — *ses images sont détourées* (94 % de pixels non opaques
+   * pour le Glaive), donc le fond commun se voit dessous et la lumière a sa
+   * place entre les deux. **Une supposition sur un fichier se mesure en une
+   * ligne ; je ne l'avais pas fait.**
    *
-   * *Un disque de lumière éclaire là où il n'y a rien* ; ce qu'il décrit est un
-   * BLOOM — **ce qui est clair rayonne, ce qui est sombre n'ajoute rien.** La
-   * périphérie d'une carte est sombre, donc elle reste sombre, et la lame
-   * déborde de sa propre lumière.
+   * Ce que l'ordre achète : **l'illustration n'est plus éclaircie du tout.**
+   * Elle se pose nette sur une lumière qui, elle, a déjà fait son travail.
    *
-   * **Le flou se fait par RÉDUCTION puis agrandissement**, pas par
-   * `ctx.filter` : celui-ci demande Safari 16.4 quand la page vise 16.2, et un
-   * filtre ignoré redessinerait l'image NETTE en double exposition. *Une
-   * dégradation silencieuse vaut moins qu'un chemin qui marche partout* — et
-   * l'interpolation d'un agrandissement est exactement un flou.
+   * **Et la lumière garde la FORME DE L'ARME**, qui est tout ce que Keko
+   * demandait : on floute le SUJET — pas le fond, qui n'a pas de forme — et on
+   * l'ajoute au fond. *Ce qui rayonne, c'est l'objet ; ce qui reçoit, c'est le
+   * décor.*
    *
-   * On relit le CANVAS et non l'image : le décor commun, l'illustration et le
-   * repli y sont déjà composés, donc le bloom marche pour les trois sans
-   * distinguer les cas.
+   * Le flou se fait par réduction puis agrandissement, jamais par `ctx.filter`
+   * (Safari 16.4 contre une page qui vise 16.2, et un filtre ignoré
+   * redessinerait le sujet NET en double exposition). L'alpha du sujet
+   * traverse la réduction, donc le halo épouse sa silhouette.
    */
-  const petit = document.createElement('canvas')
-  const lArt = LARGE - marge * 2
-  const hArt = HAUT - marge * 2
-  petit.width = 44
-  petit.height = Math.max(1, Math.round((44 * hArt) / lArt))
-  const pctx = petit.getContext('2d')
-  if (pctx !== null) {
-    /**
-     * LA SOURCE SE LIT EN PIXELS DE LA TOILE, PAS EN UNITÉS DE CARTE.
-     *
-     * `ctx.scale` met à l'échelle ce qu'on DESSINE, jamais la région qu'on
-     * LIT : sur une petite carte, peinte à 256 de large, un `drawImage` qui
-     * lisait de 14 à 754 allait chercher trois fois au-delà du canvas et
-     * rendait un coin agrandi sur toute la carte. Keko : « on dirait que je
-     * vois un truc bizarre en haut à gauche des cartes (hors zoom) » — c'était
-     * le haut-gauche, la seule part de la zone demandée qui existait vraiment.
-     *
-     * **Dès qu'un canvas se relit lui-même, ses deux repères ne sont plus le
-     * même.**
-     */
-    const k = canvas.width / LARGE
-    pctx.imageSmoothingQuality = 'high'
-    pctx.drawImage(canvas, marge * k, marge * k, lArt * k, hArt * k, 0, 0, petit.width, petit.height)
-    ctx.save()
-    ctx.globalCompositeOperation = 'lighter'
-    ctx.globalAlpha = 0.34
-    ctx.imageSmoothingQuality = 'high'
-    ctx.drawImage(petit, marge, marge, lArt, hArt)
-    ctx.restore()
+  if (image !== null) {
+    const lArt = LARGE - marge * 2
+    const hArt = HAUT - marge * 2
+    const petit = document.createElement('canvas')
+    petit.width = 44
+    petit.height = Math.max(1, Math.round((44 * hArt) / lArt))
+    const pctx = petit.getContext('2d')
+    if (pctx !== null) {
+      pctx.imageSmoothingQuality = 'high'
+      couvrir(pctx, image, 0, 0, petit.width, petit.height)
+      ctx.save()
+      ctx.globalCompositeOperation = 'lighter'
+      ctx.globalAlpha = 0.34
+      ctx.imageSmoothingQuality = 'high'
+      ctx.drawImage(petit, marge, marge, lArt, hArt)
+      ctx.restore()
+    }
+    couvrir(ctx, image, marge, marge, lArt, hArt)
   }
 
   // LE VOILE SOUS LE TEXTE : le tiers du bas passe sous le nom et le
