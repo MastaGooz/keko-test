@@ -4113,7 +4113,14 @@ plus étroite des trois boîtes — celle de l'armure — qui borne les trois.
 des DEUX côtés**, donc `scrollWidth` reste égal à `clientWidth` — le piège déjà
 payé sur les onglets du coffre. On mesure l'encre avec un `Range` sur le
 contenu. Mesuré après correction : il reste 3,7 px à 667 x 320, 4,4 à
-956 x 340, 5,9 à 844 x 390, et la borne ne mord pas sur un écran de PC. Mesuré : 21,6 px sur un écran de PC, 9,05 à
+956 x 340, 5,9 à 844 x 390, et la borne ne mord pas sur un écran de PC.
+
+**ET LE CORPS SE CALCULE DANS LE PLAN, la feuille de style le lit.** Il vivait
+en `min()` de trois bornes dans le CSS ; le contour du prêt a eu besoin de
+savoir où le mot commence, et *une grandeur que deux endroits lisent se pose là
+où les deux la voient.* Le plan reçoit donc le `rem` courant, comme il reçoit
+déjà l'encoche — **ce qui vient du navigateur lui est injecté**, il reste pur et
+mesurable sans lui. Mesuré : 21,6 px sur un écran de PC, 9,05 à
 844 x 390, 6,68 à 667 x 320 — identiques aux onglets partout, et plus rien ne
 tronque.
 
@@ -6216,6 +6223,22 @@ seul chiffre.
 Mesuré à cinq formats, avec et sans arme à deux mains : air identique aux quatre
 côtés, 4 à 5 px entre les deux cadres sur les écrans courts, aucun titre coupé,
 et le bloc tient dans le cadre de l'équipement.
+
+**ET IL S'ARRÊTE SUR LE MOT, pas en haut de sa bande.** Keko : « sur PC le
+rectangle est redevenu trop haut — il doit englober les titres armes/armure mais
+pas être aussi haut, là il y a un espace vide dans le rectangle au-dessus des
+titres ». *Le mot est collé au BAS de sa bande*, le filet sous lui, et la bande
+est généreuse : **88 px sur un écran de PC pour un mot de 22**, contre 25 pour 8
+sur un téléphone. **Englober la bande entière, ce n'est pas englober le titre —
+c'est englober ce qui le sépare de la rangée du dessus.**
+
+*Le coefficient couvre la boîte de ligne ET l'air qu'il faut au-dessus de
+l'encre* : l'air du cadre suit l'écart des rangées, donc il est petit sur un
+téléphone et large sur un moniteur — à s'en tenir à la boîte, le trait venait à
+1 px des capitales sur téléphone pour 7 px sur un écran de PC. **Ce qui doit se
+ressembler d'un format à l'autre, c'est la distance au MOT, pas la distance à sa
+boîte.** Mesuré : 4 px au-dessus de l'encre à 844 x 390, 13 px sur un écran de
+PC, où le vide passe de 43 px à zéro.
 
 **Le point de lumière TOURNE**, comme celui du liseré du diamant : c'est le
 même mouvement, vu de l'extérieur. Avec **un fond constant en plus du point qui

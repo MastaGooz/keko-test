@@ -201,6 +201,13 @@ export type PlanArmurerie = {
   pretCase: Rect
   /** La zone des pièces portées : la rangée des armes et de l'armure, titres compris. */
   blocPorte: Rect
+  /**
+   * LE CORPS D'UN NOM DE GROUPE, en unités de scène.
+   *
+   * La feuille de style le lisait toute seule ; il se calcule ici depuis que le
+   * contour du prêt doit savoir où le mot commence.
+   */
+  corpsGroupe: number
   /** La barre de défilement, à droite de la grille. */
   barre: Rect
   colonnes: number
@@ -337,6 +344,24 @@ const PART_POUCE = 0.34
 let encocheMesuree: number | null = null
 let ecouteurPose = false
 
+/**
+ * LE REM COURANT, lu sur la racine.
+ *
+ * Il est **injecté** dans le plan comme l'encoche : `planArmurerie` reste pure,
+ * et ce qui vient du navigateur lui est passé. Il sert à calculer le corps d'un
+ * nom de groupe exactement comme la feuille de style le faisait — *une grandeur
+ * que deux endroits lisent se pose là où les deux la voient*, et c'est le plan
+ * qui la publie désormais.
+ *
+ * Pas de cache : le rem suit un `clamp` sur la fenêtre, donc il change avec
+ * elle, et `getComputedStyle` sur la racine ne coûte rien.
+ */
+export function remCourant(): number {
+  if (typeof document === 'undefined') return 16
+  const v = parseFloat(getComputedStyle(document.documentElement).fontSize)
+  return Number.isFinite(v) && v > 0 ? v : 16
+}
+
 export function encocheGauche(): number {
   if (encocheMesuree !== null) return encocheMesuree
   if (typeof document === 'undefined') return 0
@@ -381,6 +406,8 @@ export function planArmurerie(
    * bande réservée ne se partage pas.
    */
   avecPnj = false,
+  /** Le rem en pixels d'écran — voir `remCourant`. */
+  remPx = 16,
 ): PlanArmurerie {
   const demiHaut = hauteurVisibleA(Z_PLAN, hauteurFenetrePx) / 2
   const demiLarge = (demiHaut * largeurFenetrePx) / hauteurFenetrePx
@@ -866,8 +893,43 @@ export function planArmurerie(
   // font plus deux signaux* — et la place sous elle se resserre d'autant que
   // l'écran est court, donc la borne mord sur téléphone et pas sur un moniteur.
   const basPret = (basStats + yHautBloc) / 2 - (hDeck + ecartPret) / 2 - glissePret - hPret / 2
+  /**
+   * LE CORPS D'UN NOM DE GROUPE SE CALCULE ICI, et la feuille de style le lit.
+   *
+   * Il vivait dans le CSS, en `min()` de trois bornes ; le contour du prêt en a
+   * besoin pour savoir où le mot commence, et *une grandeur que deux endroits
+   * lisent se pose là où les deux la voient.* Les trois bornes sont les mêmes :
+   * le rem, la bande des onglets du coffre (même voix), et la plus étroite des
+   * trois boîtes — celle de l'armure, qui vaut `pasCharge` moins la coupure
+   * entre les deux filets.
+   */
+  const remU = (remPx * demiHaut * 2) / hauteurFenetrePx
+  const corpsNom = Math.min(0.9 * remU, onglets.l / 31, (pasCharge * 0.86) / 5.9)
+  /**
+   * ET LE CONTOUR S'ARRÊTE SUR LE MOT, pas en haut de sa bande.
+   *
+   * Keko : « sur PC le rectangle est redevenu trop haut — il doit englober les
+   * titres armes/armure mais pas être aussi haut, là il y a un espace vide
+   * au-dessus des titres. » *Le mot est collé au BAS de sa bande* (le filet est
+   * sous lui), et la bande est généreuse : 88 px sur un écran de PC pour un mot
+   * de 22, contre 25 pour 8 sur un téléphone. **Englober la bande entière, ce
+   * n'est pas englober le titre — c'est englober ce qui le sépare de la rangée
+   * du dessus.**
+   *
+   * Le `min` garde les deux autres bornes : la bande (sur un écran étroit, le
+   * mot la remplit presque) et la case du prêt.
+   */
+  //
+  // Le coefficient couvre la boîte de ligne ET l'air qu'il faut au-dessus de
+  // l'encre : *l'air du cadre est petit sur un téléphone et large sur un
+  // moniteur*, puisqu'il suit l'écart des rangées — sans ce supplément, le
+  // trait venait à 1 px des capitales sur téléphone pour 7 px sur un écran de
+  // PC. **Ce qui doit se ressembler d'un format à l'autre, c'est la distance au
+  // MOT, pas la distance à sa boîte.**
+  const hautTitre = corpsNom * 1.45 + 0.14 * remU
   const hautBlocPorte = Math.min(
     yNomPorte + hNom / 2 + airBlocPorte,
+    yNomPorte - hNom / 2 + hautTitre + airBlocPorte,
     basPret - airBlocPorte,
   )
   // « Armes » couvre les deux mains — ou la seule, quand une arme les prend
@@ -965,6 +1027,7 @@ export function planArmurerie(
       l: lBlocPorte,
       h: hautBlocPorte - basBlocPorte,
     },
+    corpsGroupe: corpsNom,
     nomArmes: { x: xArmes, y: yNomPorte, l: lArmes, h: hNom },
     nomArmure: { x: place(hautes - 1), y: yNomPorte, l: pasCharge - coupe, h: hNom },
     nomObjets: { x: xEquip, y: yNomObjets, l: CAPACITE_PILE * pasCharge, h: hNom },

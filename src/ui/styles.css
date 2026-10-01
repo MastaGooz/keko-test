@@ -4999,7 +4999,7 @@ body {
      corps cède au besoin, comme le cartouche d'une carte. Le coefficient est
      celui du mot le plus large pour sa case : six capitales espacées de
      0,15em. */
-  font-size: min(0.9rem, calc(var(--onglets-l) / 31), calc(var(--groupe-l) / 5.9));
+  font-size: var(--groupe-corps, 0.9rem);
   letter-spacing: 0.15em;
   text-transform: uppercase;
   white-space: nowrap;

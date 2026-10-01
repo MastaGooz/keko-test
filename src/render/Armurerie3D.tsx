@@ -55,6 +55,7 @@ import {
   caseSousLePoint,
   contenuDuCoffre,
   encocheGauche,
+  remCourant,
   pixelsParUnite,
   placeCase,
   planArmurerie,
@@ -291,6 +292,7 @@ export function Armurerie3D({
     aDeuxMains,
     encocheGauche(),
     pnjDuLieu(lieu) !== undefined,
+    remCourant(),
   )
   // LE DISQUE DU COMPTE SE MESURE EN REM, pas en part de carte : c'est un
   // repère d'interface, et une case du coffre fait trois fois plus de pixels

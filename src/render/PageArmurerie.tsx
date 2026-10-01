@@ -27,6 +27,7 @@ import {
   ONGLETS,
   contenuDuCoffre,
   encocheGauche,
+  remCourant,
   enPixels,
   pixelsParUnite,
   planArmurerie,
@@ -156,6 +157,7 @@ export function PageArmurerie({
     deuxMains(hub.chargement),
     encocheGauche(),
     pnjDuLieu(lieu) !== undefined,
+    remCourant(),
   )
   const boite = (r: Parameters<typeof enPixels>[0]): React.CSSProperties => {
     const p = enPixels(r, fenetre.h, fenetre.l)
@@ -608,7 +610,7 @@ export function PageArmurerie({
                téléphone ». **Une voix partagée ne dispense pas de tenir dans sa
                boîte** : c'est la plus étroite des trois, celle de l'armure, qui
                borne les trois. */
-            '--groupe-l': `${enPixels(plan.nomArmure, fenetre.h, fenetre.l).width}px`,
+            '--groupe-corps': `${enPixels({ x: 0, y: 0, l: plan.corpsGroupe, h: plan.corpsGroupe }, fenetre.h, fenetre.l).width}px`,
           } as React.CSSProperties
         }
       >
