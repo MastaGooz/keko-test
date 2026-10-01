@@ -6297,6 +6297,24 @@ LARGEUR qui borne les cartes du chargement, et il vaut 2 px sur les écrans
 courts. Après correction, il reste 3 à 9 px entre la case et le haut des
 titres selon le format, et 2,4 à 25 px entre les deux cadres.
 
+**ET ELLE PENCHE VERS L'ÉQUIPEMENT.** Keko : « on peut décaler sur PC
+uniquement la checkbox + texte du prêt un peu vers le bas, qu'elle soit plus
+proche de l'équipement que du deck ? » *Elle règle ce qu'on emporte, pas ce
+qu'on consulte* — donc elle appartient au bloc d'en dessous, et le blanc le plus
+large doit tomber entre elle et le bouton du deck.
+
+Elle se pose à **62 % de la place libre** sous le bouton, et **le réglage ne
+mord que là où il y a de la place** : sur un téléphone, 62 % d'un blanc de vingt
+pixels valent à peine plus que l'écart minimal — *une fraction d'une place vide
+ne vaut que ce que vaut la place.* Mesuré : sur un écran de PC elle passe de
+21 px du deck et 80 du bloc à **54 et 33** ; à 844 x 390 elle descend de 2,5 px,
+et à 870 x 320 comme à 956 x 340 **elle ne bouge pas d'un pixel**.
+
+*Et la place libre se compte jusqu'au CONTOUR, pas jusqu'au haut de la bande du
+titre* : le cadre s'arrête sur le mot, donc il reste du vide au-dessus de lui.
+La première version mesurait jusqu'à la bande et plaçait la case **plus près du
+deck qu'avant** — l'exact inverse de la demande.
+
 **La case vit SOUS LE BOUTON DU DECK**, tranché par Keko. Elle a d'abord été en
 en-tête du panneau, à la place symétrique du tri du coffre ; *elle se lit mieux
 avec ce qu'elle change* — le chargement — qu'en coiffe du meuble. **C'est le

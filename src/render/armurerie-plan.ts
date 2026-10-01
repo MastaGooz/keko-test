@@ -892,7 +892,6 @@ export function planArmurerie(
   // ET IL S'ARRÊTE SOUS LA CASE DU PRÊT. *Deux contours qui se chevauchent ne
   // font plus deux signaux* — et la place sous elle se resserre d'autant que
   // l'écran est court, donc la borne mord sur téléphone et pas sur un moniteur.
-  const basPret = (basStats + yHautBloc) / 2 - (hDeck + ecartPret) / 2 - glissePret - hPret / 2
   /**
    * LE CORPS D'UN NOM DE GROUPE SE CALCULE ICI, et la feuille de style le lit.
    *
@@ -927,11 +926,36 @@ export function planArmurerie(
   // PC. **Ce qui doit se ressembler d'un format à l'autre, c'est la distance au
   // MOT, pas la distance à sa boîte.**
   const hautTitre = corpsNom * 1.45 + 0.14 * remU
-  const hautBlocPorte = Math.min(
+  /**
+   * LA CASE DU PRÊT PENCHE VERS L'ÉQUIPEMENT, et c'est sur un grand écran que
+   * ça se voit.
+   *
+   * Keko : « on peut juste décaler sur PC uniquement la checkbox + texte du
+   * prêt un peu vers le bas, qu'elle soit plus proche de l'équipement que du
+   * deck ? » *Elle règle ce qu'on emporte, pas ce qu'on consulte* — donc elle
+   * appartient au bloc d'en dessous, et le blanc le plus large doit tomber
+   * entre elle et le bouton du deck.
+   *
+   * Elle se pose à **62 % de la place libre** sous le bouton, au lieu d'être
+   * collée à lui par `ecartPret`. **Le réglage ne mord que là où il y a de la
+   * place** : sur un téléphone, 62 % d'un blanc de vingt pixels valent à peine
+   * plus que l'écart minimal, donc rien n'y bouge ou presque — *une fraction
+   * d'une place vide ne vaut que ce que vaut la place.*
+   */
+  const yDeck = (basStats + yHautBloc) / 2 + (ecartPret + hPret) / 2 - glissePret
+  // *La place libre se compte jusqu'au CONTOUR, pas jusqu'au haut de la bande* :
+  // le cadre s'arrête sur le mot, donc il reste du vide au-dessus de lui que la
+  // case peut prendre. On prend sa hauteur SANS la contrainte de la case, sinon
+  // les deux se calculeraient l'un depuis l'autre.
+  const hautBlocSansPret = Math.min(
     yNomPorte + hNom / 2 + airBlocPorte,
     yNomPorte - hNom / 2 + hautTitre + airBlocPorte,
-    basPret - airBlocPorte,
   )
+  const libreSousDeck = yDeck - hDeck / 2 - hautBlocSansPret - hPret
+  const ecartSurPret = Math.max(ecartPret, libreSousDeck * 0.62)
+  const yPret = yDeck - hDeck / 2 - ecartSurPret - hPret / 2
+  const basPret = yPret - hPret / 2
+  const hautBlocPorte = Math.min(hautBlocSansPret, basPret - airBlocPorte)
   // « Armes » couvre les deux mains — ou la seule, quand une arme les prend
   // toutes les deux et que le second slot est masqué.
   //
@@ -1105,7 +1129,7 @@ export function planArmurerie(
      */
     pretCase: {
       x: xEquip,
-      y: (basStats + yHautBloc) / 2 - (hDeck + ecartPret) / 2 - glissePret,
+      y: yPret,
       l: Math.min(lEquip - 2 * marge, hPret * 7.6),
       h: hPret,
     },
