@@ -155,6 +155,14 @@ export type PlanArmurerie = {
   /** La liste elle-même : le rail moins la bande du bouton, en bas. */
   railListe: Rect
   /**
+   * LA BARRE DE DÉFILEMENT DU RAIL, à sa droite.
+   *
+   * Elle existe dès qu'il y a plus de destinations que de place — et elle
+   * reste visible même quand tout tient, comme celle du coffre : *un rail qui
+   * apparaît et disparaît fait sauter la liste d'une colonne.*
+   */
+  railBarre: Rect
+  /**
    * LE PANNEAU D'UN LIEU SANS MEUBLE : tout ce que le rail laisse.
    *
    * Il a été taillé pour l'expédition, et il sert à tous les lieux qui n'ont
@@ -464,6 +472,9 @@ export function planArmurerie(
   // LA BARRE DE DÉFILEMENT MANGE SA PLACE À DROITE : sinon elle passerait sur
   // la dernière colonne de cases.
   const gouttiere = Math.min(0.34, lCoffre * 0.05)
+  // LA BANDE DE LA BARRE DU RAIL, prise sur la liste. Même mesure que la
+  // gouttière du coffre : *deux barres du même écran ont la même épaisseur.*
+  const lRailBarre = gouttiere
   const padGrille = marge * 0.7
   const grille: Rect = {
     x: xCoffre - gouttiere / 2,
@@ -715,7 +726,20 @@ export function planArmurerie(
     demiHaut,
     demiLarge,
     rail: { x: xRail, y: yPanneaux, l: lRail - marge, h: hPanneaux },
-    railListe: { x: xRail, y: yPanneaux, l: lRail - marge, h: hPanneaux },
+    // LA LISTE REND SA BANDE À LA BARRE : elle ne se superpose pas, sinon le
+    // pouce passerait sur les noms les plus longs.
+    railListe: {
+      x: xRail - lRailBarre / 2,
+      y: yPanneaux,
+      l: lRail - marge - lRailBarre,
+      h: hPanneaux,
+    },
+    railBarre: {
+      x: xRail + (lRail - marge) / 2 - lRailBarre / 2,
+      y: yPanneaux,
+      l: lRailBarre * 0.44,
+      h: hPanneaux,
+    },
     coffre,
     onglets,
     tri,

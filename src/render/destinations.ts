@@ -43,6 +43,12 @@ export type LieuHub =
   | 'couturiere'
   | 'enchanteresse'
   | 'alchimiste'
+  | 'taverne'
+  | 'cartographe'
+  | 'infirmerie'
+  | 'chapelle'
+  | 'mercenaires'
+  | 'bibliotheque'
 
 export type Destination = {
   /** Ce qui s'affiche dans le rail. */
@@ -95,4 +101,20 @@ export const DESTINATIONS: readonly Destination[] = [
   { nom: 'Couturière', ouvert: true, lieu: 'couturiere' },
   { nom: 'Enchanteresse', ouvert: true, lieu: 'enchanteresse' },
   { nom: 'Alchimiste', ouvert: true, lieu: 'alchimiste' },
+  /**
+   * SIX DE PLUS, POUR QUE LA LISTE DÉBORDE. Demandé par Keko : « rajoute des
+   * onglets, nomme-les comme tu veux, et permets de scroller pour les faire
+   * défiler vu que ça va pas loger ».
+   *
+   * *Ce sont des noms de banc d'essai*, pas un catalogue de métiers : ils
+   * existent pour qu'il y ait plus d'entrées que de place, et c'est la seule
+   * chose qu'on éprouve ici. Le jour où le hub se décide pour de bon, ils se
+   * retirent ou se renomment sans que rien d'autre ne bouge.
+   */
+  { nom: 'Taverne', ouvert: true, lieu: 'taverne' },
+  { nom: 'Cartographe', ouvert: true, lieu: 'cartographe' },
+  { nom: 'Infirmerie', ouvert: true, lieu: 'infirmerie' },
+  { nom: 'Chapelle', ouvert: true, lieu: 'chapelle' },
+  { nom: 'Mercenaires', ouvert: true, lieu: 'mercenaires' },
+  { nom: 'Bibliothèque', ouvert: true, lieu: 'bibliotheque' },
 ]

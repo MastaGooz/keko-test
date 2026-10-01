@@ -3324,13 +3324,62 @@ Mesuré à 844x390, 667x320 et 1366x700 : plus un seul débordement, le chiffre 
 l'orbe égale celui des mesures au centième près, et le mot de l'onglet est
 centré au pixel.
 
-**CE QUI RESTE À TRANCHER, et c'est mesuré :** à huit entrées, le rail prend
-**26 % de la largeur à 667x320** (20 % à 844x390), et chaque entrée n'y fait que
-**25 px de haut** — sous le plancher tactile de 48 px du projet. *Huit
-destinations en colonne ne tiennent pas sur un petit téléphone en paysage*, et
-ce n'est pas un réglage : 8 x 48 px font 384, pour 202 de disponible. Deux
-sorties si ça gêne — une barre HORIZONTALE en haut sur les écrans courts (en
-paysage, c'est la largeur qu'on a), ou un rail réduit à ses emblèmes sans texte.
+**ET LE RAIL DÉFILE — c'est ce qui a réglé le plancher tactile.** Keko : « tu
+peux rajouter des onglets et permettre de scroller pour les faire défiler vu
+que ça va pas loger ? Sur PC on met une barre de scroll et molette, sur tél
+barre de scroll mais on permet aussi de scroller avec maintien du tap et
+défilement. »
+
+*Le défaut qui restait à trancher tombe avec lui*, et il faut comprendre
+pourquoi : tant que les huit entrées devaient TOUTES loger, la hauteur d'une
+ligne se divisait entre elles — **chaque destination ajoutée écrasait les
+autres**, jusqu'à 25 px sur un petit téléphone, très en dessous des 48 px du
+projet. C'est exactement ce que Keko lisait comme « les catégories du hub sont
+peu lisibles ». *Une liste qui défile n'a plus à faire tenir ce qu'elle
+montre* : la ligne reprend la hauteur que le doigt demande, et le reste se
+tire.
+
+Quatre choses qui le portent :
+
+- **le défilement est NATIF** (`overflow-y: auto`), pas recalculé à la main.
+  C'est lui qui donne d'un coup la molette sur PC, l'inertie au doigt, la
+  roulette d'un trackpad et les touches du clavier — *tout ce qu'on
+  réécrirait moins bien.* `touch-action: pan-y` autorise le pan vertical et
+  rien d'autre, et `overscroll-behavior: contain` empêche la page de partir
+  quand on arrive au bout ;
+- **la barre est la NÔTRE**, la barre système masquée. Elle est déjà dessinée
+  pour le coffre, et *deux barres du même écran ont la même épaisseur* : le
+  rail reprend la gouttière du coffre, au pixel. Elle reste visible même quand
+  tout tient — *un rail qui apparaît et disparaît fait sauter la liste d'une
+  colonne* — et son pouce se grise quand il n'y a rien à tirer ;
+- **sa prise déborde son dessin**, au rail seulement : le pouce fait six
+  pixels de large, et *le doigt ne rétrécit pas avec l'écran.* Vers la droite
+  surtout, où il n'y a que le bord du lieu ; à gauche à peine, parce que la
+  liste commence aussitôt et qu'*une zone plus grande que son bouton vole le
+  geste à sa voisine.* **Le coffre en est exclu** : sa gouttière longe la
+  dernière colonne de cases ;
+- **la liste rend sa bande à la barre**, elle ne se superpose pas — sinon le
+  pouce passerait sur les noms les plus longs.
+
+**Le pouce se CENTRE sous le doigt** quand on le saisit : sans ça, le prendre
+par son milieu ferait sauter la liste d'une demi-fenêtre au premier pixel.
+
+Mesuré, avec quatorze entrées : **48 px de ligne à 667x320** (6,1 visibles) et
+**51 px à 844x390** (7 visibles), aucun nom tronqué, zéro débordement. Le
+plafond de 3,4rem tient le grand écran.
+
+*Piège de vérification, et il est déjà écrit pour les scènes 3D* : **un
+`scrollTop` posé depuis `javascript_tool` n'émet aucun évènement `scroll`** —
+l'onglet n'est pas au premier plan, donc les `requestAnimationFrame` ne
+tournent pas et le pouce ne bouge jamais. Ça ressemble exactement à une
+synchronisation cassée. Seules la molette et le glisser RÉELS, suivis d'une
+capture, disent la vérité.
+
+**SIX DESTINATIONS DE PLUS, et ce sont des places tenues** — taverne,
+cartographe, infirmerie, chapelle, mercenaires, bibliothèque. Keko a autorisé
+d'en inventer les noms pour ce banc-là seulement : *on ne peut rien dire d'une
+barre de défilement avec une liste qui tient à l'écran.* Elles ouvrent toutes
+l'armurerie, comme les autres places tenues.
 
 ### L'ARMURERIE EN 3D — jalon 7, et la boucle est fermée
 

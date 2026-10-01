@@ -5168,6 +5168,19 @@ body {
   touch-action: none;
 }
 
+/* SA PRISE DEBORDE SON DESSIN, au rail seulement. Le pouce fait six pixels de
+   large : *le doigt ne retrecit pas avec l'ecran*, et c'est la regle deja tenue
+   par le bouton de rangement et par celui du deck. Il deborde surtout vers la
+   DROITE, ou il n'y a que le bord du lieu ; a gauche a peine, parce que la
+   liste commence aussitot et qu'*une zone plus grande que son bouton vole le
+   geste a sa voisine.* **Le coffre en est exclu** : sa gouttiere longe la
+   derniere colonne de cases, et un debord y prendrait le doigt aux cartes. */
+.arm-piste.rail .arm-pouce::after {
+  content: '';
+  position: absolute;
+  inset: -0.3rem -0.7rem -0.3rem -0.35rem;
+}
+
 /* Rien a faire glisser : le pouce remplit la piste et cesse d'etre une
    commande -- *un rail qu'on peut tirer sans rien deplacer ment.* */
 .arm-pouce.plein {
@@ -5569,6 +5582,17 @@ body {
 .arm-rail {
   display: flex;
   flex-direction: column;
+  /* IL DEFILE, ET C'EST LE NAVIGATEUR QUI LE FAIT : molette, glisser au doigt
+     et inertie viennent avec `overflow-y`. *On n'ecrit un geste que lorsque le
+     navigateur n'en a pas.* Sa barre native est masquee — elle ne parle pas la
+     langue du jeu — et c'est notre pouce qui la remplace, synchronise sur
+     `scrollTop`. */
+  overflow-y: auto;
+  scrollbar-width: none;
+  /* LE DOIGT PEUT LE TIRER : sans `pan-y`, le `manipulation` herite du body
+     laisse le navigateur prendre le geste pour autre chose. */
+  touch-action: pan-y;
+  overscroll-behavior: contain;
   /* LA LISTE COMMENCE EN HAUT. Ses entrees sont plafonnees en hauteur, donc
      elles ne remplissent plus la colonne sur un grand ecran -- et *une liste
      se lit du haut vers le bas*, elle ne flotte pas au milieu de sa colonne. */
@@ -5580,6 +5604,10 @@ body {
   gap: 0;
   padding: 0;
   pointer-events: auto;
+}
+
+.arm-rail::-webkit-scrollbar {
+  display: none;
 }
 
 .arm-lieu {

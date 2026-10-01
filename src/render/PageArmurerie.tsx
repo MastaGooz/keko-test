@@ -486,6 +486,8 @@ export function PageArmurerie({
 
   /** Le pouce se traîne : sa place dans la piste dit la ligne du haut. */
   const piste = useRef<HTMLDivElement>(null)
+  const pisteRail = useRef<HTMLDivElement | null>(null)
+
   const glisserPouce = (e: React.PointerEvent): void => {
     e.preventDefault()
     const suivre = (ev: PointerEvent): void => {
@@ -505,6 +507,53 @@ export function PageArmurerie({
     suivre(e.nativeEvent)
   }
 
+
+  /**
+   * LE RAIL DÉFILE, PARCE QU'IL Y A PLUS DE DESTINATIONS QUE DE PLACE.
+   *
+   * **Le défilement est celui du navigateur**, pas le nôtre : `overflow-y` sur
+   * la liste donne la molette, le glisser au doigt ET son inertie sans une
+   * ligne de code. *On n'écrit un geste que lorsque le navigateur n'en a pas* —
+   * le coffre, lui, n'avait pas le choix : ses cartes vivent dans le canvas.
+   *
+   * Ce qu'on écrit, c'est **le pouce**, parce que la barre native ne parle pas
+   * la langue du jeu. Il lit `scrollTop` à chaque défilement et l'écrit quand
+   * on le traîne : les deux sens passent par la même grandeur, donc ils ne
+   * peuvent pas diverger.
+   */
+  const liste = useRef<HTMLElement | null>(null)
+  const [railHaut, setRailHaut] = useState(0)
+  const [railTotal, setRailTotal] = useState(1)
+  const [railVu, setRailVu] = useState(1)
+  const mesurerRail = (): void => {
+    const el = liste.current
+    if (el === null) return
+    setRailHaut(el.scrollTop)
+    setRailTotal(el.scrollHeight)
+    setRailVu(el.clientHeight)
+  }
+  useEffect(mesurerRail, [fenetre.h, fenetre.l, polices])
+
+  const glisserRail = (e: React.PointerEvent): void => {
+    e.preventDefault()
+    const suivre = (ev: PointerEvent): void => {
+      const el = liste.current
+      const r = pisteRail.current?.getBoundingClientRect()
+      if (el === null || r === undefined || r.height === 0) return
+      // Le pouce se CENTRE sous le doigt : sans ça, le saisir par son milieu
+      // ferait sauter la liste d'une demi-fenêtre au premier pixel.
+      const part = (ev.clientY - r.top - (el.clientHeight / el.scrollHeight) * r.height / 2) /
+        (r.height * (1 - el.clientHeight / el.scrollHeight))
+      el.scrollTop = Math.max(0, Math.min(1, part)) * (el.scrollHeight - el.clientHeight)
+    }
+    const finir = (): void => {
+      window.removeEventListener('pointermove', suivre)
+      window.removeEventListener('pointerup', finir)
+    }
+    window.addEventListener('pointermove', suivre)
+    window.addEventListener('pointerup', finir)
+    suivre(e.nativeEvent)
+  }
 
   /**
    * DEUX CALQUES, ET C'EST LE CANVAS QUI PASSE ENTRE EUX.
@@ -748,6 +797,8 @@ export function PageArmurerie({
           bouton posé dedans ne répondrait pas. */}
       <nav
         className="arm-rail"
+        ref={liste}
+        onScroll={mesurerRail}
         style={{
           ...boite(plan.railListe),
           // LA TAILLE DU TEXTE SUIT LA LARGEUR DU RAIL, pas la fenetre : il est
@@ -779,9 +830,22 @@ export function PageArmurerie({
             1.25 * rem,
             enPixels(plan.railListe, fenetre.h, fenetre.l).width / (2.68 + partsNom),
           )}px`,
-          '--rail-ligne': `${Math.min(
-            enPixels(plan.railListe, fenetre.h, fenetre.l).height / DESTINATIONS.length,
-            3.4 * rem,
+          // LA HAUTEUR D'UNE LIGNE NE DÉPEND PLUS DU NOMBRE D'ENTRÉES, depuis
+          // qu'il y en a plus que de place : elle se divisait entre toutes, donc
+          // chaque destination ajoutée écrasait les autres. *Une liste qui
+          // défile a des lignes de taille fixe* — on en voit autant qu'il en
+          // tient, et le reste se tire. Sept au moins, pour qu'on voie qu'il y
+          // a une liste et pas une pile.
+          //
+          // ET LE DÉFILEMENT LUI REND SON PLANCHER TACTILE. Tant que les huit
+          // entrées devaient toutes loger, chacune tombait à 25 px sur un petit
+          // téléphone — très en dessous des 48 px du projet, et c'est ce que
+          // Keko lisait comme « des catégories illisibles ». *Une liste qui
+          // défile n'a plus à faire tenir ce qu'elle montre*, donc la ligne
+          // reprend la hauteur que le doigt demande, et le reste se tire.
+          '--rail-ligne': `${Math.max(
+            48,
+            Math.min(enPixels(plan.railListe, fenetre.h, fenetre.l).height / 7, 3.4 * rem),
           )}px`,
         } as React.CSSProperties}
       >
@@ -822,6 +886,21 @@ export function PageArmurerie({
           </button>
         ))}
       </nav>
+
+      {/* LA BARRE DU RAIL, à sa droite. Elle reste visible même quand tout
+          tient — *un rail qui apparaît et disparaît fait sauter la liste d'une
+          colonne* — et son pouce se grise quand il n'y a rien à tirer. */}
+      <div className="arm-piste rail" style={boite(plan.railBarre)} ref={pisteRail}>
+        <span
+          className={`arm-pouce${railTotal <= railVu ? ' plein' : ''}`}
+          style={{
+            top: `${(railHaut / railTotal) * 100}%`,
+            height: `${(railVu / railTotal) * 100}%`,
+          }}
+          onPointerDown={glisserRail}
+        />
+      </div>
+
       {/* LA BULLE VIT AU-DESSUS DU CANVAS, et il le faut : posée dans le calque
           du fond, elle passait DERRIÈRE les cartes de l'équipement — on n'en
           lisait que la moitié qui dépassait. Elle ne capte pas le pointeur,
