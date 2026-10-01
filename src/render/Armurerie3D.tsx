@@ -940,7 +940,12 @@ export function Armurerie3D({
             // posée, elle ne répond plus au doigt.
             // UNE DOUBLURE NE SE PREND PAS : c'est l'épaisseur de la
             // pile, et la carte du dessus est déjà l'exemplaire qu'on tire.
-            inerte={enVol === t.id || t.doublure === true}
+            // ET UNE PIÈCE PRÊTÉE EST VERROUILLÉE : on ne la prend pas, et
+            // son contour de laiton le dit avant qu'on essaie. *Un refus
+            // silencieux se lit comme une panne* — la règle des cartes
+            // injouables de la main, portée ici.
+            inerte={enVol === t.id || t.doublure === true || estPretee(t.objet)}
+            verrou={estPretee(t.objet)}
             pile={compte}
             pileTaille={tailleCompte}
             onPeinte={onPeinte}
@@ -991,6 +996,14 @@ export function Armurerie3D({
 }
 
 /** Ce que le chargement donnera : sa taille, et ce qui frappe dedans. */
+/**
+ * UNE PIÈCE PRÊTÉE SE RECONNAÎT À SON DRAPEAU — un consommable n'en a pas,
+ * puisque *les objets ne sont jamais prêtés.*
+ */
+function estPretee(o: Objet | null | undefined): boolean {
+  return o !== null && o !== undefined && 'pret' in o && o.pret === true
+}
+
 export function compteDuDeck(hub: Hub): { total: number; frappent: number } {
   const pieces = [
     ...hub.chargement.mains.filter((a) => a !== null),

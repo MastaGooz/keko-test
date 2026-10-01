@@ -453,6 +453,13 @@ function prendre(hub: Hub, slot: Slot, id?: string): { piece: Objet | null; hub:
   }
   if (slot.ou === 'armure') {
     const piece = hub.chargement.armure
+    // UNE PIÈCE PRÊTÉE NE SE PREND PAS : *elle est verrouillée.* Keko : « on ne
+    // peut pas prendre l'arme ou l'armure de prêt et la placer dans le
+    // coffre ». Le garde-fou vit ICI plutôt qu'à la destination, parce qu'il
+    // vaut pour TOUTES les destinations — *ce qui ne t'appartient pas ne se
+    // range pas, où que ce soit.* La seule façon de s'en défaire est de
+    // décocher la case, ou d'équiper une pièce à soi par-dessus.
+    if (piece?.pret === true) return { piece: null, hub }
     return { piece, hub: { ...hub, chargement: { ...hub.chargement, armure: null } } }
   }
   // LA PILE SE PREND PAR IDENTIFIANT, comme la réserve : elle en contient
@@ -469,6 +476,8 @@ function prendre(hub: Hub, slot: Slot, id?: string): { piece: Objet | null; hub:
   }
   const mains: [Arme | null, Arme | null] = [...hub.chargement.mains]
   const piece = mains[slot.rang]
+  // VERROUILLÉE, COMME L'ARMURE PRÊTÉE : voir le garde-fou du slot de torse.
+  if (piece?.pret === true) return { piece: null, hub }
   mains[slot.rang] = null
   return { piece: piece ?? null, hub: { ...hub, chargement: { ...hub.chargement, mains } } }
 }

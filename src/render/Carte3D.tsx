@@ -278,6 +278,20 @@ type Props = {
    */
   peril?: boolean
   /**
+   * EST-ELLE VERROUILLÉE ? Le prêt de l'armurier.
+   *
+   * Keko : « on ne peut pas prendre l'arme ou l'armure de prêt et la placer
+   * dans le coffre — on va mettre un effet visuel qui indique son
+   * verrouillage ». *Un refus silencieux se lit comme une panne*, et c'est la
+   * règle du projet depuis les cartes injouables de la main.
+   *
+   * **Un contour de laiton qui ne respire pas**, là où celui de l'engagement
+   * pulse : *un état qui dit « figé » ne peut pas scintiller.* Et le laiton
+   * plutôt que l'or franc — ce n'est pas une carte qui s'échauffe, c'est une
+   * carte qu'on ne peut pas prendre.
+   */
+  verrou?: boolean
+  /**
    * Elle montre son DOS et non sa face. Le dos est peint par le même module,
    * depuis la même anatomie : *c'est la même carte vue de l'autre côté*, pas
    * un second objet.
@@ -419,6 +433,7 @@ export function Carte3D({
   jouable = true,
   ombre = true,
   peril = false,
+  verrou = false,
   dos = false,
   saut = null,
   clipper = null,
@@ -1014,7 +1029,7 @@ ${nuanceur.fragmentShader}`
     // jamais en phase — sinon il se lit comme un balancement régulier, donc
     // comme une animation, et non comme une carte qui vibre d'impatience.
     const t = etat.clock.elapsedTime
-    const feuVise = engagee || peril ? 1 : 0
+    const feuVise = engagee || peril ? 1 : verrou ? 0.52 : 0
     l.feu += (feuVise - l.feu) * (1 - Math.exp(-12 * delta))
 
     /**
@@ -1039,8 +1054,11 @@ ${nuanceur.fragmentShader}`
      * qui, lui, ne parle que de placement.* `l.feu` retombait bien à zéro ;
      * c'est la matière qui ne le lisait plus.
      */
-    halo.color.set(peril ? '#ff6a52' : '#ffe6ab')
-    halo.opacity = l.feu * (0.88 + Math.sin(t * 6) * 0.12)
+    halo.color.set(peril ? '#ff6a52' : verrou && !engagee ? '#c8a765' : '#ffe6ab')
+    // LE VERROU NE RESPIRE PAS : *ce qui est figé ne scintille pas.* La
+    // pulsation reste à l'engagement, qui est un geste en cours.
+    halo.opacity =
+      verrou && !engagee && !peril ? l.feu : l.feu * (0.88 + Math.sin(t * 6) * 0.12)
 
     // **LE FRÉMISSEMENT SUIT `engagee`, LA COULEUR SUIT `peril`**, et les deux
     // se cumulent. Le péril coupait le tremblement, ce qui était juste pour

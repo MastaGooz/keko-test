@@ -488,3 +488,30 @@ console.log('Tout passe.')
   verifier('recocher ne verse pas l’ancien pret au coffre',
     !deux.reserve.some((o) => (o as Arme).pret === true))
 }
+
+{
+  // UNE PIECE PRETEE EST VERROUILLEE. Keko : « on ne peut pas prendre l'arme ou
+  // l'armure de pret et la placer dans le coffre ». Le garde-fou vit dans la
+  // PRISE et non a la destination, donc il vaut pour toutes les destinations.
+  const p = cocherPret(creerHub(), createRng(13))
+  const versCoffre = deplacerPiece(p, { ou: 'main', rang: 0 }, { ou: 'reserve' })
+  verifier('l’arme pretee ne part pas au coffre',
+    versCoffre.chargement.mains[0] !== null && versCoffre.reserve.length === p.reserve.length)
+  const armureAuCoffre = deplacerPiece(p, { ou: 'armure' }, { ou: 'reserve' })
+  verifier('...et l’armure pretee non plus',
+    armureAuCoffre.chargement.armure !== null)
+  // NI D'UN SLOT A L'AUTRE : verrouille veut dire verrouille.
+  const autreMain = deplacerPiece(p, { ou: 'main', rang: 0 }, { ou: 'main', rang: 1 })
+  verifier('...ni d’une main a l’autre',
+    autreMain.chargement.mains[0] !== null && autreMain.chargement.mains[1] === null)
+  // ET LE RENDU LE SAIT AVANT LE LACHER : un slot qui promet puis ne fait rien
+  // a l'air casse.
+  verifier('le rendu sait que la prise est refusee',
+    !accepteDepuis(p, { ou: 'main', rang: 0 }, { ou: 'reserve' }))
+
+  // MAIS EQUIPER UNE PIECE A SOI RESTE POSSIBLE : c'est la porte de sortie.
+  const espadon = p.reserve.find((o) => o.id === ESPADON_REEL.id)!
+  const rompu = deplacerPiece(p, { ou: 'reserve' }, { ou: 'main', rang: 0 }, espadon.id)
+  verifier('equiper une piece a soi reste possible',
+    rompu.chargement.mains[0]!.id === espadon.id)
+}

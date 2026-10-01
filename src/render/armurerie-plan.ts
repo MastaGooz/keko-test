@@ -563,28 +563,14 @@ export function planArmurerie(
   // tant que rien ne s'y dessine.*
   const ecartTri = Math.min(marge * 0.8, hEntete * 0.6)
   const cote = Math.min(hEntete * 0.95, hOnglets * 0.4)
+  // L'ÉCART ENTRE LE BOUTON DU DECK ET LA CASE DU PRÊT : *deux commandes en
+  // pile se touchent presque*, sinon elles se lisent comme deux objets sans
+  // rapport — la règle déjà tenue par les deux départs du rail.
+  const ecartPret = cote * 0.55
   const tri: Rect = {
     x: xCoffre - lCoffre / 2 + ecartTri + cote / 2,
     y: yPanneaux + hPanneaux / 2 - ecartTri - cote / 2,
     l: cote,
-    h: cote,
-  }
-
-  /**
-   * LA CASE DU PRÊT, en haut à gauche de l'ÉQUIPEMENT.
-   *
-   * *Elle est au panneau ce que le tri est au coffre* : en en-tête, au-dessus
-   * de tout — **un onglet dit ce qu'on regarde, ces deux-là disent ce qu'on
-   * fait au meuble entier.** Même bande, même marge, même hauteur : les deux
-   * se répondent d'un meuble à l'autre.
-   *
-   * Elle porte un libellé, donc elle prend de la largeur là où le tri n'est
-   * qu'un carré — bornée pour ne jamais déborder du panneau.
-   */
-  const pretCase: Rect = {
-    x: xEquip - lEquip / 2 + ecartTri + Math.min(lEquip - 2 * ecartTri, cote * 7.6) / 2,
-    y: yPanneaux + hPanneaux / 2 - ecartTri - cote / 2,
-    l: Math.min(lEquip - 2 * ecartTri, cote * 7.6),
     h: cote,
   }
 
@@ -887,7 +873,6 @@ export function planArmurerie(
     nomArmes: { x: xArmes, y: yNomPorte, l: lArmes, h: hNom },
     nomArmure: { x: place(hautes - 1), y: yNomPorte, l: pasCharge - coupe, h: hNom },
     nomObjets: { x: xEquip, y: yNomObjets, l: CAPACITE_PILE * pasCharge, h: hNom },
-    pretCase,
     stats: {
       x: xEquip,
       y: yPanneaux + hPanneaux / 2 - hEntete - hStats / 2,
@@ -941,9 +926,30 @@ export function planArmurerie(
        * le bas des mesures et le haut du bloc — **ses deux vrais voisins** — et
        * l'équilibre tient partout sans que rien d'autre ne bouge.
        */
-      y: (basStats + yHautBloc) / 2,
+      // ET ELLE PARTAGE SA PLACE AVEC LA CASE DU PRÊT, qui vient dessous.
+      // Keko : « on va mettre le bouton de prêt sous celui du deck ». *Deux
+      // commandes du même rang se lisent en pile*, et c'est le BLOC qui se
+      // centre entre ses deux voisins — pas chacune de son côté, sinon elles
+      // se chevaucheraient dès qu'un écran se resserre.
+      y: (basStats + yHautBloc) / 2 + (ecartPret + cote) / 2,
       l: Math.min(lEquip - marge * 2, hDeck * 1.95),
       h: hDeck,
+    },
+    /**
+     * LA CASE DU PRÊT, SOUS LE BOUTON DU DECK.
+     *
+     * Tranché par Keko : *l'équipement gratuit n'est plus un départ à part,
+     * c'est une OPTION de l'armurier* — et elle se lit avec ce qu'elle change,
+     * le chargement, plutôt qu'en en-tête du meuble.
+     *
+     * Elle est PETITE et sans plaque : *on ne décide pas d'une partie dessus*,
+     * on règle ce qu'on emporte.
+     */
+    pretCase: {
+      x: xEquip,
+      y: (basStats + yHautBloc) / 2 - (hDeck + ecartPret) / 2,
+      l: Math.min(lEquip - 2 * marge, cote * 7.6),
+      h: cote,
     },
     rapportDepart,
   }

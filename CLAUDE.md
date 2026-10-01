@@ -6102,9 +6102,27 @@ désaccorde de ce qu'elle marque.*
 le prête, tu le gagnes en le rapportant. Même raisonnement qu'« enchantement »
 plutôt que « maîtrise ».
 
-**La case est au panneau ce que le tri est au coffre** : en en-tête, même
-bande, même marge, même hauteur — *un onglet dit ce qu'on regarde, ces deux-là
-disent ce qu'on fait au meuble entier.*
+**ET LA PIÈCE PRÊTÉE EST VERROUILLÉE.** Keko : « attention, on ne peut pas
+prendre l'arme ou l'armure de prêt et la placer dans le coffre ! On va mettre
+un effet visuel qui indique son verrouillage ».
+
+Le garde-fou vit dans la PRISE et non à la destination : *ce qui ne
+t'appartient pas ne se range pas, où que ce soit* — ni au coffre, ni d'une main
+à l'autre. **Verrouillé veut dire verrouillé**, et il reste deux portes, celles
+que Keko a dictées : décocher, ou équiper une pièce à soi par-dessus.
+
+**L'effet est un contour de laiton QUI NE RESPIRE PAS**, là où celui de
+l'engagement pulse : *un état qui dit « figé » ne peut pas scintiller.* Et le
+laiton plutôt que l'or franc — ce n'est pas une carte qui s'échauffe, c'est une
+carte qu'on ne peut pas prendre. La carte est en plus `inerte` : *un refus
+silencieux se lit comme une panne*, donc elle ne se soulève même pas.
+
+**La case vit SOUS LE BOUTON DU DECK**, tranché par Keko. Elle a d'abord été en
+en-tête du panneau, à la place symétrique du tri du coffre ; *elle se lit mieux
+avec ce qu'elle change* — le chargement — qu'en coiffe du meuble. **C'est le
+BLOC qui se centre** entre ses deux voisins, pas chacune de son côté : sinon
+elles se chevaucheraient dès qu'un écran se resserre. Mesuré à 667 x 320 :
+23 px de bouton, 19 px de case, 10,7 px d'écart, zéro débordement.
 
 **CE QUI RESTE À TRANCHER, et c'est à Keko** : `perdreLEquipement` rend
 toujours une arme et une armure gratuites AU COFFRE à la mort, et le hub de
