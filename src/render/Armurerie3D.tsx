@@ -37,6 +37,7 @@ import { Carte3D, DUREE_CULBUTE } from './Carte3D.tsx'
 import { DUREE_ONDE } from './onde.tsx'
 import { Bouton3D } from './Bouton3D.tsx'
 import type { LieuHub } from './destinations.ts'
+import { pnjDuLieu } from './destinations.ts'
 import { Z_TENUE } from './Main3D.tsx'
 import { useGesteCarte } from './geste-carte.ts'
 import { pieceAPeindre } from './combat-3d.ts'
@@ -290,7 +291,13 @@ export function Armurerie3D({
 }: Props): React.JSX.Element {
   const { size } = useThree()
   const aDeuxMains = deuxMains(hub.chargement)
-  const plan = planArmurerie(size.height, size.width, aDeuxMains, encocheGauche())
+  const plan = planArmurerie(
+    size.height,
+    size.width,
+    aDeuxMains,
+    encocheGauche(),
+    pnjDuLieu(lieu) !== undefined,
+  )
   // LE DISQUE DU COMPTE SE MESURE EN REM, pas en part de carte : c'est un
   // repère d'interface, et une case du coffre fait trois fois plus de pixels
   // sur un écran de PC que sur un téléphone.

@@ -3434,6 +3434,22 @@ l'armurier tient la sienne** — même cadrage, hauteur donnée, rapport pris au
 dessin, et une part du panneau pour qu'un grand écran ne le laisse pas manger
 la place.
 
+**ET LE CADRE S'ARRÊTE AVANT LE PORTRAIT, il ne l'entoure pas.** Keko : « le
+cadre doit toujours s'arrêter avant le bandeau du PNJ, comme dans
+l'armurerie ». *Un portrait n'est pas un contenu du panneau, c'est son voisin*
+— exactement la disposition de l'armurerie, où le coffre et l'équipement
+s'arrêtent avant la colonne de l'armurier.
+
+**La bande du portrait se prend AVANT le cadre**, et elle vaut zéro quand le
+lieu n'a pas de PNJ : *un panneau sans voisin reprend toute sa place*, donc les
+boutons de l'expédition ne bougent pas d'un pixel. C'est un paramètre du plan,
+passé à l'identique par les deux mondes — *une grandeur que deux endroits
+lisent se pose là où les deux la voient.*
+
+Mesuré : la colonne du Charognard tombe **au pixel** sur celle de l'armurier
+(570 → 652 à 667 x 320, 2175 → 2502 sur un écran de PC), le cadre s'arrête 15 à
+58 px avant, zéro débordement.
+
 **Les deux PNJ passent par la MÊME porte** : chaque destination dit le nom de
 son fichier (`pnj`), et `urlDuSymbole` fait le reste. L'armurier avait sa
 propre fonction ; *une fonction par PNJ aurait fait une ligne de code par

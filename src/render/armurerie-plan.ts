@@ -349,6 +349,16 @@ export function planArmurerie(
   largeurFenetrePx: number,
   aDeuxMains: boolean,
   encochePx = 0,
+  /**
+   * Le lieu courant a-t-il un PNJ ? **Son cadre s'arrête alors avant la bande
+   * du portrait**, exactement comme les meubles de l'armurerie s'arrêtent avant
+   * celle de l'armurier. Tranché par Keko : « le cadre doit toujours s'arrêter
+   * avant le bandeau du PNJ, comme dans l'armurerie ».
+   *
+   * *Un portrait n'est pas un contenu du panneau, c'est son voisin* — et une
+   * bande réservée ne se partage pas.
+   */
+  avecPnj = false,
 ): PlanArmurerie {
   const demiHaut = hauteurVisibleA(Z_PLAN, hauteurFenetrePx) / 2
   const demiLarge = (demiHaut * largeurFenetrePx) / hauteurFenetrePx
@@ -428,6 +438,12 @@ export function planArmurerie(
   // meubles de l'armurerie réunis.
   const lExpedition = demiLarge - gauche - 2 * marge
   const xExpedition = gauche + marge + lExpedition / 2
+  // LA BANDE DU PORTRAIT SE PREND AVANT LE CADRE, et elle vaut zéro quand le
+  // lieu n'a pas de PNJ : *un panneau sans voisin reprend toute sa place.*
+  const lPnjLieu = avecPnj
+    ? Math.min(hPanneaux * RAPPORT_PNJ, lExpedition * 0.3) + marge
+    : 0
+  const lCadreLieu = lExpedition - lPnjLieu
 
   const largeurUtile = demiLarge - gauche - 2 * marge - 2 * marge
   // Les stats sont un rail de cartouches : leur largeur est celle de leur
@@ -857,16 +873,20 @@ export function planArmurerie(
     // toucher. « Descendre » au-dessus, le repli en dessous.
     bouton: [xExpedition, yPanneaux + hBouton, Z_PLAN],
     boutonFortune: [xExpedition, yPanneaux - hBouton, Z_PLAN],
-    panneauLieu: { x: xExpedition, y: yPanneaux, l: lExpedition, h: hPanneaux },
+    // LE CADRE S'ARRÊTE AVANT LE PORTRAIT, il ne l'entoure pas : *un PNJ n'est
+    // pas un contenu du panneau, c'est son voisin* — la disposition de
+    // l'armurerie, où les deux meubles s'arrêtent avant la colonne de
+    // l'armurier.
+    panneauLieu: { x: xExpedition - lPnjLieu / 2, y: yPanneaux, l: lCadreLieu, h: hPanneaux },
     // LE PNJ D'UN LIEU TIENT SA COLONNE DE DROITE, comme l'armurier tient la
     // sienne. *Un lieu habité n'est pas un lieu vide*, même quand il n'a encore
     // rien à faire -- et c'est la MÊME règle de cadrage : la hauteur est
     // donnée, le rapport vient du dessin, et une part du panneau le borne pour
     // qu'un grand écran ne le laisse pas manger la place.
     pnjLieu: {
-      x: xExpedition + lExpedition / 2 - marge - Math.min(hPanneaux * RAPPORT_PNJ, lExpedition * 0.3) / 2,
+      x: xExpedition + lExpedition / 2 - lPnjLieu / 2 + marge / 2,
       y: yPanneaux,
-      l: Math.min(hPanneaux * RAPPORT_PNJ, lExpedition * 0.3),
+      l: Math.max(0, lPnjLieu - marge),
       h: hPanneaux,
     },
     // **IL A LA LARGEUR DE SON CONTENU, pas celle du panneau** : étiré sur toute

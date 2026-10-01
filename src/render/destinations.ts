@@ -170,3 +170,8 @@ export function destinationsMontrees(): readonly Destination[] {
     typeof location !== 'undefined' && new URLSearchParams(location.search).has('lieux')
   return montreTout ? DESTINATIONS : DESTINATIONS.filter((d) => d.cachee !== true)
 }
+
+/** Le PNJ d'un lieu, s'il en a un — le nom de son fichier dans `public/`. */
+export function pnjDuLieu(lieu: LieuHub): string | undefined {
+  return DESTINATIONS.find((d) => d.lieu === lieu)?.pnj
+}
