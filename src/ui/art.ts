@@ -58,6 +58,12 @@ export function art(nom: string): string {
  */
 const IMAGES: Record<string, string> = {
   glaive: 'Glaive.webp',
+  // LE BOUCLIER ATTEND SA PIÈCE. Keko a dessiné l'illustration avant que
+  // l'objet existe — « une nouvelle arme à une main, qui est défensive en
+  // réalité » — et son set reste à trancher. *La ligne ne coûte rien et elle
+  // dit ce qui vient* ; le jour où `logic/armes.ts` nomme la pièce Bouclier,
+  // elle porte son dessin sans qu'on y revienne.
+  bouclier: 'Bouclier.webp',
 }
 
 /**
