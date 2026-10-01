@@ -285,10 +285,11 @@ type Props = {
    * verrouillage ». *Un refus silencieux se lit comme une panne*, et c'est la
    * règle du projet depuis les cartes injouables de la main.
    *
-   * **Un contour de laiton qui ne respire pas**, là où celui de l'engagement
-   * pulse : *un état qui dit « figé » ne peut pas scintiller.* Et le laiton
-   * plutôt que l'or franc — ce n'est pas une carte qui s'échauffe, c'est une
-   * carte qu'on ne peut pas prendre.
+   * **Un contour BLEU ARGENTÉ qui ne respire pas**, là où celui de
+   * l'engagement pulse en or : *un état qui dit « figé » ne peut pas
+   * scintiller*, et une couleur froide ne peut pas se confondre avec l'or de
+   * ce qui engage. Tranché par Keko — et **la case du prêt porte le même
+   * bleu**, pour que le bouton et l'équipement se répondent.
    */
   verrou?: boolean
   /**
@@ -1054,7 +1055,7 @@ ${nuanceur.fragmentShader}`
      * qui, lui, ne parle que de placement.* `l.feu` retombait bien à zéro ;
      * c'est la matière qui ne le lisait plus.
      */
-    halo.color.set(peril ? '#ff6a52' : verrou && !engagee ? '#c8a765' : '#ffe6ab')
+    halo.color.set(peril ? '#ff6a52' : verrou && !engagee ? '#a9c9e4' : '#ffe6ab')
     // LE VERROU NE RESPIRE PAS : *ce qui est figé ne scintille pas.* La
     // pulsation reste à l'engagement, qui est un geste en cours.
     halo.opacity =

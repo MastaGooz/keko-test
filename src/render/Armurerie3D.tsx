@@ -560,6 +560,11 @@ export function Armurerie3D({
 
   const { tenue, doigt, prendre } = useGesteCarte({
     z: Z_TENUE,
+    // UNE PIÈCE PRÊTÉE SE REGARDE MAIS NE SE DÉPLACE PAS. Keko : « le stuff
+    // prêté qui est verrouillé doit quand même pouvoir être zoomé, mais pas
+    // drag and drop ». *Le zoom n'est pas un déplacement*, et le verrou ne doit
+    // couper que ce qu'il protège.
+    peutPrendre: (i) => !estPretee(objets[i]?.objet),
     onTaper: (i) => {
       const t = objets[i]
       if (t === undefined) return
@@ -944,7 +949,7 @@ export function Armurerie3D({
             // son contour de laiton le dit avant qu'on essaie. *Un refus
             // silencieux se lit comme une panne* — la règle des cartes
             // injouables de la main, portée ici.
-            inerte={enVol === t.id || t.doublure === true || estPretee(t.objet)}
+            inerte={enVol === t.id || t.doublure === true}
             verrou={estPretee(t.objet)}
             pile={compte}
             pileTaille={tailleCompte}

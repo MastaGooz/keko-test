@@ -1062,7 +1062,20 @@ export function PageArmurerie({
       <button
         type="button"
         className={`arm-pret${pret ? ' coche' : ''}`}
-        style={boite(plan.pretCase)}
+        /* SA POLICE SUIT SA BOÎTE, qui suit le bouton du deck : *une commande
+           se mesure sur celle à qui elle se compare.* En `rem` seule, elle
+           restait minuscule sur un écran de PC — Keko : « grossis le bouton et
+           le texte du prêt sur PC, il est beaucoup trop petit ». */
+        style={{
+          ...boite(plan.pretCase),
+          // ET LE REM RESTE UN PLANCHER : sur un téléphone c'est lui qui
+          // commande — Keko : « sur tél c'est bon ». *Un plafond qui ne mord
+          // que d'un côté ne se règle que pour ce côté-là.*
+          fontSize: `${Math.max(
+            0.58 * rem,
+            enPixels(plan.pretCase, fenetre.h, fenetre.l).height * 0.38,
+          )}px`,
+        }}
         role="checkbox"
         aria-checked={pret}
         onClick={(e) => {

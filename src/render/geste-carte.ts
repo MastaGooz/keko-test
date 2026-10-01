@@ -67,6 +67,18 @@ type Options = {
   z: number
   /** Rien ne se prend pendant qu'une animation se joue. */
   verrou?: boolean
+  /**
+   * CETTE CARTE-LÀ SE PREND-ELLE ? Le verrou **par carte**, et il ne coupe que
+   * le DÉPLACEMENT.
+   *
+   * Keko, sur le prêt de l'armurier : « le stuff prêté qui est verrouillé doit
+   * quand même pouvoir être zoomé, mais pas drag and drop ». *Rendre la carte
+   * inerte coupait les deux* — le rayon ne la touchait plus du tout, donc la
+   * tape non plus. Ici le geste commence normalement, il ne PREND simplement
+   * jamais : la tape, qui se décide au relâchement sans déplacement, continue
+   * d'ouvrir le zoom.
+   */
+  peutPrendre?: (index: number) => boolean
   /** Reposée sans avoir bougé : on la regarde. */
   onTaper?: (index: number) => void
   /**
@@ -91,7 +103,14 @@ export type Geste = {
   prendre: (index: number) => (e: ThreeEvent<PointerEvent>) => void
 }
 
-export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: Options): Geste {
+export function useGesteCarte({
+  z,
+  verrou = false,
+  peutPrendre,
+  onTaper,
+  onLacher,
+  onFin,
+}: Options): Geste {
   const { camera } = useThree()
   const [tenue, setTenue] = useState<number | null>(null)
   const [doigt, setDoigt] = useState<THREE.Vector3 | null>(null)
@@ -233,13 +252,16 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
       if (Math.hypot(e.clientX - g.depart.x, e.clientY - g.depart.y) >= g.seuil) g.promene = true
       if (!g.prise) {
         if (!g.promene) return
+        // ELLE NE SE PREND PAS : on laisse le geste courir pour que la tape
+        // garde son sens, mais la carte ne quitte jamais sa place.
+        if (peutPrendre !== undefined && !peutPrendre(g.index)) return
         g.prise = true
         window.clearTimeout(g.minuteur)
         setTenue(g.index)
       }
       setDoigt(pointSousLeDoigt(e))
     },
-    [pointSousLeDoigt],
+    [pointSousLeDoigt, peutPrendre],
   )
 
   const prendre = useCallback(
@@ -280,6 +302,7 @@ export function useGesteCarte({ z, verrou = false, onTaper, onLacher, onFin }: O
       if (natif.pointerType !== 'mouse') {
         g.minuteur = window.setTimeout(() => {
           if (geste.current.index !== index) return
+          if (peutPrendre !== undefined && !peutPrendre(index)) return
           geste.current.prise = true
           setTenue(index)
         }, DELAI_PRISE)

@@ -6111,18 +6111,49 @@ t'appartient pas ne se range pas, où que ce soit* — ni au coffre, ni d'une ma
 à l'autre. **Verrouillé veut dire verrouillé**, et il reste deux portes, celles
 que Keko a dictées : décocher, ou équiper une pièce à soi par-dessus.
 
-**L'effet est un contour de laiton QUI NE RESPIRE PAS**, là où celui de
-l'engagement pulse : *un état qui dit « figé » ne peut pas scintiller.* Et le
-laiton plutôt que l'or franc — ce n'est pas une carte qui s'échauffe, c'est une
-carte qu'on ne peut pas prendre. La carte est en plus `inerte` : *un refus
-silencieux se lit comme une panne*, donc elle ne se soulève même pas.
+**L'effet est un contour BLEU ARGENTÉ QUI NE RESPIRE PAS**, là où celui de
+l'engagement pulse en or : *un état qui dit « figé » ne peut pas scintiller*, et
+une couleur froide ne peut pas se confondre avec l'or de ce qui engage. Tranché
+par Keko, qui a demandé le bleu après une première passe en laiton.
+
+**ET LA CASE PORTE LE MÊME BLEU** quand elle est cochée — le carré et le mot.
+Keko : « ce même effet devrait s'appliquer au bloc checkbox + texte du prêt,
+afin d'avoir la cohérence entre le bouton et l'équipement ». *Deux signaux qui
+disent le même fait portent la même couleur.*
+
+**MAIS ELLE SE ZOOME.** Keko : « le stuff prêté qui est verrouillé doit quand
+même pouvoir être zoomé, mais pas drag and drop ». *Rendre la carte `inerte`
+coupait les deux* — le rayon ne la touchait plus du tout, donc la tape non
+plus. Le geste porte donc un **verrou PAR CARTE** (`peutPrendre`, dans
+`geste-carte.ts`) qui ne coupe que la PRISE : le geste commence normalement, la
+carte ne quitte jamais sa place, et la tape — qui se décide au relâchement sans
+déplacement — continue d'ouvrir le zoom. **Un verrou ne doit couper que ce
+qu'il protège.**
 
 **La case vit SOUS LE BOUTON DU DECK**, tranché par Keko. Elle a d'abord été en
 en-tête du panneau, à la place symétrique du tri du coffre ; *elle se lit mieux
 avec ce qu'elle change* — le chargement — qu'en coiffe du meuble. **C'est le
 BLOC qui se centre** entre ses deux voisins, pas chacune de son côté : sinon
-elles se chevaucheraient dès qu'un écran se resserre. Mesuré à 667 x 320 :
-23 px de bouton, 19 px de case, 10,7 px d'écart, zéro débordement.
+elles se chevaucheraient dès qu'un écran se resserre.
+
+**ET ELLE SE MESURE SUR LE BOUTON DU DECK, pas sur l'en-tête du coffre.** Keko :
+« grossis le bouton et le texte du prêt sur PC — sur tél c'est bon — il est
+beaucoup trop petit ». Elle tenait sa taille de `cote`, la hauteur de l'en-tête
+du coffre : *une grandeur qui n'avait de sens que tant qu'elle y vivait.* Sous
+le bouton du deck, c'est LUI son voisin — **une commande se mesure sur celle à
+qui elle se compare** — et le `rem` ne reste qu'un plancher, qui ne commande
+que sur téléphone. Mesuré : police **13,9 → 19,4 px sur un écran de PC**,
+**9,28 px inchangés à 667 x 320**.
+
+**Elle se centre dans sa bande** (Keko) : sa boîte est large, puisqu'elle doit
+tenir le libellé le plus long, donc sans ça le couple case + mot se collait à
+gauche et ne tombait plus sous le bouton.
+
+**Et le bloc descend d'un cheveu.** Keko : « descends un poil le bouton du deck,
+il est collé aux stats ». *Un centrage mathématique ne suffit pas quand les deux
+voisins ne pèsent pas pareil* — la bande des mesures est un rail serré, le bloc
+d'équipement commence par un titre qui respire. Mesuré sur un écran de PC :
+**16,9 px au-dessus du bouton avant, 32,3 après**, pour 24,7 en dessous.
 
 **CE QUI RESTE À TRANCHER, et c'est à Keko** : `perdreLEquipement` rend
 toujours une arme et une armure gratuites AU COFFRE à la mort, et le hub de

@@ -563,10 +563,6 @@ export function planArmurerie(
   // tant que rien ne s'y dessine.*
   const ecartTri = Math.min(marge * 0.8, hEntete * 0.6)
   const cote = Math.min(hEntete * 0.95, hOnglets * 0.4)
-  // L'ÉCART ENTRE LE BOUTON DU DECK ET LA CASE DU PRÊT : *deux commandes en
-  // pile se touchent presque*, sinon elles se lisent comme deux objets sans
-  // rapport — la règle déjà tenue par les deux départs du rail.
-  const ecartPret = cote * 0.55
   const tri: Rect = {
     x: xCoffre - lCoffre / 2 + ecartTri + cote / 2,
     y: yPanneaux + hPanneaux / 2 - ecartTri - cote / 2,
@@ -684,6 +680,35 @@ export function planArmurerie(
     (lEquip - marge * 2) / 8.03,
   )
   const hDeck = contenuDeck * 1.4
+  /**
+   * LA CASE DU PRÊT SE MESURE SUR LE BOUTON DU DECK, pas sur l'en-tête du
+   * coffre.
+   *
+   * Keko : « grossis le bouton et le texte du prêt de l'armurier sur PC (sur
+   * tél c'est bon), il est beaucoup trop petit ». *Elle tenait sa taille de
+   * `cote`, la hauteur de l'en-tête du coffre* — une grandeur qui n'avait de
+   * sens que tant qu'elle y vivait. Sous le bouton du deck, c'est LUI son
+   * voisin : **une commande se mesure sur celle à qui elle se compare.**
+   *
+   * Et l'écart suit la même règle : *deux commandes en pile se touchent
+   * presque*, sinon elles se lisent comme deux objets sans rapport.
+   */
+  const hPret = Math.max(
+    hDeck * 0.62,
+    // UN PLANCHER EN PIXELS D'ÉCRAN, parce qu'elle porte un TEXTE : sur un
+    // téléphone le bouton du deck est si court que 62 % n'y logeaient plus le
+    // libellé. *Un texte se mesure en pixels.*
+    (20 * hauteurVisibleA(Z_PLAN, hauteurFenetrePx)) / hauteurFenetrePx,
+  )
+  const ecartPret = hDeck * 0.3
+  /**
+   * ET LE BLOC DESCEND D'UN CHEVEU. Keko : « descends un poil le bouton du
+   * deck, il est collé aux stats ». *Le bloc se centre bien entre ses deux
+   * voisins, mais ses deux voisins ne pèsent pas pareil* — la bande des
+   * mesures est un rail serré, le bloc d'équipement commence par un titre qui
+   * respire. Un centrage mathématique laissait 17 px en haut contre 33 en bas.
+   */
+  const glissePret = hDeck * 0.08
   const bandeDeck = hDeck + marge
   const hDedans = hPanneaux - hEntete - hStats - bandeDeck
   // La bande d'un nom de groupe. Il y en a une par rangée, et elles entrent
@@ -931,7 +956,7 @@ export function planArmurerie(
       // commandes du même rang se lisent en pile*, et c'est le BLOC qui se
       // centre entre ses deux voisins — pas chacune de son côté, sinon elles
       // se chevaucheraient dès qu'un écran se resserre.
-      y: (basStats + yHautBloc) / 2 + (ecartPret + cote) / 2,
+      y: (basStats + yHautBloc) / 2 + (ecartPret + hPret) / 2 - glissePret,
       l: Math.min(lEquip - marge * 2, hDeck * 1.95),
       h: hDeck,
     },
@@ -947,9 +972,9 @@ export function planArmurerie(
      */
     pretCase: {
       x: xEquip,
-      y: (basStats + yHautBloc) / 2 - (hDeck + ecartPret) / 2,
-      l: Math.min(lEquip - 2 * marge, cote * 7.6),
-      h: cote,
+      y: (basStats + yHautBloc) / 2 - (hDeck + ecartPret) / 2 - glissePret,
+      l: Math.min(lEquip - 2 * marge, hPret * 7.6),
+      h: hPret,
     },
     rapportDepart,
   }

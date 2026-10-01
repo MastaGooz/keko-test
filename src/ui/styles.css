@@ -5159,13 +5159,17 @@ body {
 .arm-pret {
   display: flex;
   align-items: center;
+  /* ELLE SE CENTRE DANS SA BANDE. Keko : « centre sur PC et tél le bouton du
+     prêt horizontalement ». Sa boîte est large -- elle doit tenir le libellé le
+     plus long -- donc sans ça le couple case + mot se collait à gauche et ne
+     tombait plus sous le bouton du deck. */
+  justify-content: center;
   gap: 0.5em;
   padding: 0;
   border: 0;
   background: none;
   color: #8d8167;
   font-family: Cinzel, Georgia, serif;
-  font-size: min(0.62rem, 58%);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -5206,18 +5210,24 @@ body {
   text-overflow: ellipsis;
 }
 
+/* COCHÉE, ELLE PASSE AU BLEU ARGENTÉ -- la couleur du VERROU, celle que porte
+   le contour des pièces prêtées. Keko : « ce même effet devrait s'appliquer au
+   bloc checkbox + texte du prêt, afin d'avoir la cohérence entre le bouton et
+   l'équipement ». *Deux signaux qui disent le même fait portent la même
+   couleur*, et le bleu froid ne se confond pas avec l'or de ce qui engage. */
 .arm-pret.coche {
-  color: #f0cf8e;
+  color: #cfe2f2;
+  text-shadow: 0 0 7px #a9c9e466;
 }
 
 /* ET LA MARQUE EST UN PLEIN, pas une coche dessinee : a douze pixels de cote,
    *un signe se bouche et un aplat se lit.* */
 .arm-pret.coche .arm-pret-case {
-  border-color: #d8bb79;
-  background: linear-gradient(135deg, #d8bb79, #8a7342);
+  border-color: #a9c9e4;
+  background: linear-gradient(135deg, #cfe2f2, #5d7e9b);
   box-shadow:
-    inset 0 1px 0 #ffffff33,
-    0 0 6px #d8bb7955;
+    inset 0 1px 0 #ffffff44,
+    0 0 7px #a9c9e477;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -5227,6 +5237,10 @@ body {
 
   .arm-pret:hover .arm-pret-case {
     border-color: #a98f5c;
+  }
+
+  .arm-pret.coche:hover .arm-pret-case {
+    border-color: #e4f1fb;
   }
 }
 
