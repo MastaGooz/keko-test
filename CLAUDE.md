@@ -1634,9 +1634,11 @@ séparément (2⚡ valent 7 dégâts OU 11 de bloc). **À calibrer par simulatio
 avant d'en faire un objet du jeu** : *le set du Glaive est 10 % plus faible que
 l'ancien deck de base, et ça avait fait tomber la survie au fond de 50 % à 4 %.*
 
-**Elle attend au coffre et elle est RARE, comme l'Espadon** : *le prêt de
-l'armurier ne tire que dans les communes*, et une arme qui ne frappe presque pas
-ferait un dépannage qui ne dépanne pas.
+**Elle est de BRONZE**, le premier cran — tranché par Keko. *Et ça ne la met pas
+dans le prêt de l'armurier* : celui-ci tire dans `ARMES_COMMUNES`, **une LISTE
+et non un filtre sur la rareté**, précisément pour que le jour où une pièce du
+premier cran ne doive pas s'y trouver, on la retire sans toucher au reste. Elle
+attend donc au coffre, comme l'Espadon.
 
 *Ce qu'elle rouvre, et qu'il faudra trancher* : « Explorer » exige une arme en
 supposant qu'une arme sert à tuer. Avec la Rondache seule, on part avec deux
