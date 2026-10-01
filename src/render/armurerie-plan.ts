@@ -190,8 +190,10 @@ export type PlanArmurerie = {
   tri: Rect
   /** La zone des cases, dans le coffre. */
   grille: Rect
-  /** La case « Prêt de l'armurier », en en-tête de l'équipement. */
+  /** La case « Prêt de l'armurier », sous le bouton du deck. */
   pretCase: Rect
+  /** La zone des pièces portées : armes et armure, noms compris. */
+  blocPorte: Rect
   /** La barre de défilement, à droite de la grille. */
   barre: Rect
   colonnes: number
@@ -895,6 +897,21 @@ export function planArmurerie(
       yObjets,
       Z_PLAN,
     ]),
+    /**
+     * LA ZONE DES PIÈCES PORTÉES — armes et armure, noms compris.
+     *
+     * Keko : « il faudrait que l'effet de contour s'applique non pas aux
+     * cartes mais à tout le bloc armes + armure, avec un effet qui brille en
+     * en faisant le tour de la zone ». *Ce qui est prêté n'est pas une carte,
+     * c'est un CHARGEMENT* — et un contour par carte le disait trois fois sans
+     * jamais dire qu'elles vont ensemble.
+     */
+    blocPorte: {
+      x: xEquip,
+      y: (yNomPorte + hNom / 2 + (yPorte - pasRangee / 2)) / 2,
+      l: hautes * pasCharge + pasCharge * 0.22,
+      h: hNom + pasRangee + pasRangee * 0.12,
+    },
     nomArmes: { x: xArmes, y: yNomPorte, l: lArmes, h: hNom },
     nomArmure: { x: place(hautes - 1), y: yNomPorte, l: pasCharge - coupe, h: hNom },
     nomObjets: { x: xEquip, y: yNomObjets, l: CAPACITE_PILE * pasCharge, h: hNom },

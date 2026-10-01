@@ -1089,7 +1089,23 @@ export function PageArmurerie({
       >
         <span className="arm-pret-case" aria-hidden="true" />
         <span className="arm-pret-nom">{TEXTE_PRET}</span>
+        {/* LE MÊME CONTOUR QUE CELUI DU BLOC PORTÉ, et c'est tout le point :
+            *deux signaux qui disent le même fait sont le même objet*, pas deux
+            dessins voisins qui se ressembleraient. */}
+        {pret && <span className="arm-verrou plein" aria-hidden="true" />}
       </button>
+
+      {/* LE CONTOUR DU VERROU, autour de ce qui est prêté ET autour de la case
+          qui l'a demandé. Keko : « l'effet de contour devrait s'appliquer non
+          pas aux cartes mais à tout le bloc armes + armure, avec un effet qui
+          brille en en faisant le tour de la zone », et le même sur le bloc
+          case + texte « afin d'avoir la cohérence entre le bouton et
+          l'équipement ».
+
+          *Ce qui est prêté n'est pas une carte, c'est un chargement* — et il
+          vit dans le calque du FOND, sous le canvas : une carte qu'on promène
+          doit lui passer devant. */}
+      {pret && <div className="arm-verrou" style={boite(plan.blocPorte)} />}
 
       {/* LES ONGLETS SE MESURENT SUR LEUR BANDE : cinq mots dans un coffre
           rétréci ne tiennent pas, et *un contenu qui ne suit qu'une dimension

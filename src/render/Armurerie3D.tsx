@@ -945,12 +945,7 @@ export function Armurerie3D({
             // posée, elle ne répond plus au doigt.
             // UNE DOUBLURE NE SE PREND PAS : c'est l'épaisseur de la
             // pile, et la carte du dessus est déjà l'exemplaire qu'on tire.
-            // ET UNE PIÈCE PRÊTÉE EST VERROUILLÉE : on ne la prend pas, et
-            // son contour de laiton le dit avant qu'on essaie. *Un refus
-            // silencieux se lit comme une panne* — la règle des cartes
-            // injouables de la main, portée ici.
             inerte={enVol === t.id || t.doublure === true}
-            verrou={estPretee(t.objet)}
             pile={compte}
             pileTaille={tailleCompte}
             onPeinte={onPeinte}

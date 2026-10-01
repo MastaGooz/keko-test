@@ -5182,6 +5182,84 @@ body {
   transition: color 160ms ease-out;
 }
 
+/* LE CONTOUR DU VERROU : une lumiere qui fait LE TOUR de la zone.
+
+   Keko : « l'effet de contour devrait s'appliquer non pas aux cartes mais a
+   tout le bloc armes + armure, avec un effet qui brille en en faisant le tour
+   de la zone » -- et le meme autour du bloc case + texte du pret, « afin
+   d'avoir la coherence entre le bouton et l'equipement ».
+
+   *Ce qui est prete n'est pas une carte, c'est un CHARGEMENT* : un contour par
+   carte le disait trois fois sans jamais dire qu'elles vont ensemble.
+
+   **Le point de lumiere TOURNE**, comme celui du lisere du diamant : c'est le
+   meme mouvement, vu de l'exterieur. Et il y a un fond CONSTANT en plus du
+   point qui passe -- *un liseré qui ne s'allume qu'au passage n'est pas une
+   bordure lumineuse, c'est un clignotant.*
+
+   Trois choses a ne pas defaire :
+
+   - **la lumiere tourne par un ENFANT carre**, pas par un angle anime : les
+     angles de degrade ne s'animent qu'avec `@property`, qui demande Safari
+     16.4 alors que la page vise 16.2. *Un enfant qui pivote marche partout.*
+     Il est large de 300 % pour couvrir la diagonale d'un bloc tres plat ;
+   - **le masque ne garde que la BORDURE** (`xor` des deux boites) : sans lui
+     le degradé remplirait la zone et noierait les cartes dessous ;
+   - **il ne capte pas le pointeur** -- c'est un ornement pose par-dessus des
+     slots qui, eux, recoivent le doigt. La regle du contour des cartes. */
+.arm-verrou {
+  position: absolute;
+  overflow: hidden;
+  border-radius: 2px;
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  padding: 1px;
+}
+
+/* POSÉ SUR SON PARENT plutôt qu'aux coordonnées du plan : la case est un
+   bouton, le bloc porté une zone de la scène. *Le même dessin, deux ancrages.* */
+.arm-verrou.plein {
+  inset: 0;
+}
+
+.arm-verrou::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 300%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: conic-gradient(
+    #a9c9e42e 0deg,
+    #a9c9e42e 250deg,
+    #cfe2f2 300deg,
+    #eaf5ff 318deg,
+    #cfe2f2 336deg,
+    #a9c9e42e 20deg
+  );
+  animation: verrou-tour 3.4s linear infinite;
+}
+
+@keyframes verrou-tour {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arm-verrou::before {
+    animation: none;
+  }
+}
+
 /* LE CARRE EST DE LA FERRONNERIE, pas une case de formulaire : un filet de
    laiton, deux coins coupes -- *un arrondi est une forme de gabarit, une arete
    franche est de la ferronnerie.* */
@@ -5210,24 +5288,22 @@ body {
   text-overflow: ellipsis;
 }
 
-/* COCHÉE, ELLE PASSE AU BLEU ARGENTÉ -- la couleur du VERROU, celle que porte
-   le contour des pièces prêtées. Keko : « ce même effet devrait s'appliquer au
-   bloc checkbox + texte du prêt, afin d'avoir la cohérence entre le bouton et
-   l'équipement ». *Deux signaux qui disent le même fait portent la même
-   couleur*, et le bleu froid ne se confond pas avec l'or de ce qui engage. */
+/* COCHEE, ELLE GARDE L'OR. Keko : « je ne voulais pas changer la couleur de la
+   checkbox et du texte, remets-les comme avant — je voulais appliquer l'effet de
+   CONTOUR également a la box + texte ». *Ce qui dit le verrou est le contour,
+   pas la teinte du mot* : deux signaux pour un seul fait en feraient deux. */
 .arm-pret.coche {
-  color: #cfe2f2;
-  text-shadow: 0 0 7px #a9c9e466;
+  color: #f0cf8e;
 }
 
 /* ET LA MARQUE EST UN PLEIN, pas une coche dessinee : a douze pixels de cote,
    *un signe se bouche et un aplat se lit.* */
 .arm-pret.coche .arm-pret-case {
-  border-color: #a9c9e4;
-  background: linear-gradient(135deg, #cfe2f2, #5d7e9b);
+  border-color: #d8bb79;
+  background: linear-gradient(135deg, #d8bb79, #8a7342);
   box-shadow:
-    inset 0 1px 0 #ffffff44,
-    0 0 7px #a9c9e477;
+    inset 0 1px 0 #ffffff33,
+    0 0 6px #d8bb7955;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -5239,9 +5315,6 @@ body {
     border-color: #a98f5c;
   }
 
-  .arm-pret.coche:hover .arm-pret-case {
-    border-color: #e4f1fb;
-  }
 }
 
 /* LA PISTE EST UN BORD DU COFFRE autant qu'une commande : elle reste la meme

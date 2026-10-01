@@ -231,7 +231,12 @@ export function useGesteCarte({
       // était bref. Un maintien n'est pas une tape — c'est la prise en main,
       // et la relâcher ne demande rien.
       if (!bouge) {
-        if (performance.now() - g.debut <= DUREE_CLIC) onTaper?.(index)
+        if (performance.now() - g.debut <= DUREE_CLIC) {
+          // LE SON D'UNE CARTE VERROUILLÉE PART ICI, puisqu'il n'est pas parti
+          // au contact : *elle n'a qu'une issue, et c'est celle-là.*
+          if (peutPrendre !== undefined && !peutPrendre(index)) jouerSon(SON_PRENDRE)
+          onTaper?.(index)
+        }
         return
       }
       if (point === null || ancre === null) return
@@ -239,7 +244,7 @@ export function useGesteCarte({
     },
     // `detacher` est stable ; le citer entre fonctions les recréerait en boucle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onTaper, onLacher, onFin, pointSousLeDoigt],
+    [onTaper, onLacher, onFin, pointSousLeDoigt, peutPrendre],
   )
 
   const bouger = useCallback(
@@ -279,8 +284,16 @@ export function useGesteCarte({
        * qui est aussi ce que Keko voulait étendre : **on le joue TOUJOURS
        * quand on zoome une carte** — et tous les zooms du jeu commencent ici,
        * puisque c'est le même geste qui regarde et qui prend.
+       *
+       * **SAUF POUR UNE CARTE VERROUILLÉE**, où il attend la tape. Keko :
+       * « quand j'essaie de drag l'équipement de prêt, le bruit se déclenche
+       * quand même — il faudrait qu'il se déclenche uniquement au zoom ». *Un
+       * son de contact promet une prise* : sur une carte qui ne se prend pas,
+       * il annonce un geste qui n'aura pas lieu. Elle n'a qu'une issue, le
+       * zoom, donc il se joue là — et c'est la seule carte du jeu pour
+       * laquelle les deux moments diffèrent.
        */
-      jouerSon(SON_PRENDRE)
+      if (peutPrendre === undefined || peutPrendre(index)) jouerSon(SON_PRENDRE)
       const natif = e.nativeEvent
       const g = geste.current
       // UN GESTE EN COURS EST SOLDÉ AVANT D'EN OUVRIR UN AUTRE. Si un

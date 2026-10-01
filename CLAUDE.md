@@ -6111,15 +6111,37 @@ t'appartient pas ne se range pas, où que ce soit* — ni au coffre, ni d'une ma
 à l'autre. **Verrouillé veut dire verrouillé**, et il reste deux portes, celles
 que Keko a dictées : décocher, ou équiper une pièce à soi par-dessus.
 
-**L'effet est un contour BLEU ARGENTÉ QUI NE RESPIRE PAS**, là où celui de
-l'engagement pulse en or : *un état qui dit « figé » ne peut pas scintiller*, et
-une couleur froide ne peut pas se confondre avec l'or de ce qui engage. Tranché
-par Keko, qui a demandé le bleu après une première passe en laiton.
+**L'EFFET ENTOURE LA ZONE, PAS LES CARTES.** Keko : « il faudrait que l'effet
+de contour s'applique non pas aux cartes mais à tout le bloc armes + armure,
+avec un effet qui brille en en faisant le tour de la zone » — et le même autour
+du bloc case + texte, « afin d'avoir la cohérence entre le bouton et
+l'équipement ».
 
-**ET LA CASE PORTE LE MÊME BLEU** quand elle est cochée — le carré et le mot.
-Keko : « ce même effet devrait s'appliquer au bloc checkbox + texte du prêt,
-afin d'avoir la cohérence entre le bouton et l'équipement ». *Deux signaux qui
-disent le même fait portent la même couleur.*
+*Ce qui est prêté n'est pas une carte, c'est un CHARGEMENT* : un contour par
+carte le disait trois fois sans jamais dire qu'elles vont ensemble. **Et c'est
+le MÊME objet aux deux endroits**, pas deux dessins qui se ressembleraient —
+*deux signaux qui disent le même fait sont le même objet.*
+
+**Le point de lumière TOURNE**, comme celui du liseré du diamant : c'est le
+même mouvement, vu de l'extérieur. Avec **un fond constant en plus du point qui
+passe** — *un liseré qui ne s'allume qu'au passage n'est pas une bordure
+lumineuse, c'est un clignotant.*
+
+Trois choses à ne pas défaire :
+
+- **la lumière tourne par un ENFANT carré**, pas par un angle animé : les
+  angles de dégradé ne s'animent qu'avec `@property`, qui demande Safari 16.4
+  alors que la page vise 16.2. *Un enfant qui pivote marche partout* — et il
+  est large de 300 % pour couvrir la diagonale d'un bloc très plat ;
+- **le masque ne garde que la BORDURE** : sans lui le dégradé remplirait la
+  zone et noierait les cartes dessous ;
+- **il ne capte pas le pointeur** — c'est un ornement posé sur des slots qui,
+  eux, reçoivent le doigt. La règle du contour des cartes.
+
+**LA CASE, ELLE, GARDE L'OR.** Keko : « je ne voulais pas changer la couleur de
+la checkbox et du texte, remets-les comme avant ». *Ce qui dit le verrou est le
+contour, pas la teinte du mot* — deux signaux pour un seul fait en feraient
+deux.
 
 **MAIS ELLE SE ZOOME.** Keko : « le stuff prêté qui est verrouillé doit quand
 même pouvoir être zoomé, mais pas drag and drop ». *Rendre la carte `inerte`
@@ -6129,6 +6151,14 @@ plus. Le geste porte donc un **verrou PAR CARTE** (`peutPrendre`, dans
 carte ne quitte jamais sa place, et la tape — qui se décide au relâchement sans
 déplacement — continue d'ouvrir le zoom. **Un verrou ne doit couper que ce
 qu'il protège.**
+
+**ET SON SON ATTEND LA TAPE.** Keko : « quand j'essaie de drag l'équipement de
+prêt, le bruit se déclenche quand même — il faudrait qu'il se déclenche
+uniquement au zoom ». Le son du contact part au `pointerdown` partout
+ailleurs ; *mais un son de contact promet une PRISE*, et sur une carte qui ne
+se prend pas il annonce un geste qui n'aura pas lieu. Elle n'a qu'une issue,
+donc il se joue là — **c'est la seule carte du jeu pour laquelle les deux
+moments diffèrent.**
 
 **La case vit SOUS LE BOUTON DU DECK**, tranché par Keko. Elle a d'abord été en
 en-tête du panneau, à la place symétrique du tri du coffre ; *elle se lit mieux
