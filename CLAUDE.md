@@ -4098,7 +4098,22 @@ lisent se pose là où les deux la voient.*
 c'est lui qui commandait — 8 px pour une bande qui n'en tenait que 6,7, donc
 « Armure » y perdait sa dernière lettre. *Un plancher qui dépasse la place qu'il
 y a n'est pas un plancher, c'est un débordement.* Le défaut était antérieur ; il
-tombe avec le partage de règle. Mesuré : 21,6 px sur un écran de PC, 9,05 à
+tombe avec le partage de règle.
+
+**MAIS IL DOIT AUSSI TENIR DANS SA BOÎTE, et ce n'est pas la même.** Keko : « le
+mot "armure" en titre au-dessus du slot d'armure est rogné à droite sur
+téléphone ». *Le corps se mesure sur la bande des onglets du COFFRE — deux
+repères du même rang se lisent à la même voix — mais le mot est posé au-dessus
+d'un slot de l'ÉQUIPEMENT*, et les deux largeurs ont divergé quand les cartes
+du chargement ont rétréci. **Une voix partagée ne dispense pas de tenir dans sa
+boîte** : le corps cède au besoin, comme le cartouche d'une carte, et c'est la
+plus étroite des trois boîtes — celle de l'armure — qui borne les trois.
+
+*Et ça ne se voit pas avec `scrollWidth`* : **un texte centré qui déborde sort
+des DEUX côtés**, donc `scrollWidth` reste égal à `clientWidth` — le piège déjà
+payé sur les onglets du coffre. On mesure l'encre avec un `Range` sur le
+contenu. Mesuré après correction : il reste 3,7 px à 667 x 320, 4,4 à
+956 x 340, 5,9 à 844 x 390, et la borne ne mord pas sur un écran de PC. Mesuré : 21,6 px sur un écran de PC, 9,05 à
 844 x 390, 6,68 à 667 x 320 — identiques aux onglets partout, et plus rien ne
 tronque.
 

@@ -4989,8 +4989,17 @@ body {
      commandait -- 8 px pour une bande qui n'en tenait que 6,7, donc « Armure »
      y perdait sa dernière lettre. *Un plancher qui dépasse la place qu'il y a
      n'est pas un plancher, c'est un débordement*, et le mot ne se coupe pas en
-     deux. Le défaut est antérieur à ce partage de règle ; il tombe avec. */
-  font-size: min(0.9rem, calc(var(--onglets-l) / 31));
+     deux. Le défaut est antérieur à ce partage de règle ; il tombe avec.
+
+     **ET IL TIENT DANS SA BOÎTE**, qui n'est pas celle sur laquelle il se
+     mesure : le corps vient de la bande des onglets du COFFRE, le mot est posé
+     au-dessus d'un slot de l'ÉQUIPEMENT. Les deux largeurs ont divergé quand
+     les cartes du chargement ont rétréci, et « ARMURE » s'est fait rogner --
+     Keko. *Une voix partagée ne dispense pas de tenir dans sa boîte*, donc le
+     corps cède au besoin, comme le cartouche d'une carte. Le coefficient est
+     celui du mot le plus large pour sa case : six capitales espacées de
+     0,15em. */
+  font-size: min(0.9rem, calc(var(--onglets-l) / 31), calc(var(--groupe-l) / 5.9));
   letter-spacing: 0.15em;
   text-transform: uppercase;
   white-space: nowrap;

@@ -598,7 +598,18 @@ export function PageArmurerie({
       <div
         className="arm-fond"
         style={
-          { '--onglets-l': `${enPixels(plan.onglets, fenetre.h, fenetre.l).width}px` } as React.CSSProperties
+          {
+            '--onglets-l': `${enPixels(plan.onglets, fenetre.h, fenetre.l).width}px`,
+            /* ET LA BOÎTE LA PLUS ÉTROITE QUI PORTE CETTE VOIX. Le corps d'un
+               nom de groupe se mesure sur la bande des onglets du coffre —
+               *deux repères du même rang se lisent à la même voix* — mais il
+               est POSÉ au-dessus d'un slot, dont la largeur n'a aucun rapport
+               avec elle. Keko : « le mot ARMURE est rogné à droite sur
+               téléphone ». **Une voix partagée ne dispense pas de tenir dans sa
+               boîte** : c'est la plus étroite des trois, celle de l'armure, qui
+               borne les trois. */
+            '--groupe-l': `${enPixels(plan.nomArmure, fenetre.h, fenetre.l).width}px`,
+          } as React.CSSProperties
         }
       >
       {/* CHAQUE LIEU A SON PANNEAU. Le rail ne change pas d'écran, il change
