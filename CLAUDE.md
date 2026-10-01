@@ -3434,6 +3434,33 @@ l'armurier tient la sienne** — même cadrage, hauteur donnée, rapport pris au
 dessin, et une part du panneau pour qu'un grand écran ne le laisse pas manger
 la place.
 
+**LES TROMBINES À LA PLACE DES ÉCUS : `?r3f&trombines`, à trancher.** Keko :
+« tu crois qu'à la place des symboles dans les catégories du hub, on pourrait
+afficher l'image des PNJ (réduite) ? »
+
+*Réduite telle quelle, non* : les dessins font 576 x 2064, donc un corps en
+pied — dans une ligne de 48 px il ferait 13 px de large et le visage sept. **Un
+portrait réduit n'est pas un symbole réduit** : un écu est un signe, fait pour
+tenir à vingt pixels ; un portrait est une image, qui veut de la surface.
+
+**Mais recadré sur la TÊTE, ça marche, et il n'y a rien à redessiner** : une
+vignette carrée en `cover`, le vocabulaire des jeux d'extraction. Elle est
+cerclée de laiton à coins coupés — *un avatar rond aurait parlé la langue d'une
+autre interface.*
+
+Deux choses à savoir avant de le rendre définitif :
+
+- **le cadrage dépend du dessin**, et c'est le réglage le plus fragile de
+  l'essai. Calé au bord haut, il tombait sur le crâne de l'armurier et sur la
+  touffe du charognard : *un repère calé sur la marge d'un dessin se déplace
+  avec le dessin*, et ces deux-là n'ont pas leur visage à la même hauteur. À
+  24 % la fenêtre couvre le visage et le buste des deux ; **un troisième PNJ
+  cadré autrement rouvrira la question** ;
+- **le rail chargerait TOUS les portraits**, là où il n'en charge qu'un
+  aujourd'hui — celui du lieu ouvert. Deux PNJ font déjà **2,4 Mo**, huit en
+  feraient dix. *Une vignette de trente pixels ne vaut pas un mégaoctet* : si
+  Keko garde l'idée, il faudra des miniatures à côté des portraits.
+
 **ET LE CADRE S'ARRÊTE AVANT LE PORTRAIT, il ne l'entoure pas.** Keko : « le
 cadre doit toujours s'arrêter avant le bandeau du PNJ, comme dans
 l'armurerie ». *Un portrait n'est pas un contenu du panneau, c'est son voisin*

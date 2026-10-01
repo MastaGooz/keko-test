@@ -41,7 +41,12 @@ import { tailleBouton } from './Bouton3D.tsx'
 import { Z_PLAN } from './armurerie-plan.ts'
 import { urlDuSymbole } from '../ui/art.ts'
 import type { LieuHub } from './destinations.ts'
-import { DESTINATIONS, destinationsMontrees, pnjDuLieu } from './destinations.ts'
+import {
+  DESTINATIONS,
+  destinationsMontrees,
+  pnjDuLieu,
+  trombinesAuRail,
+} from './destinations.ts'
 
 /**
  * Ce qu'une infobulle a besoin de savoir : son texte, son point d'ancrage, et
@@ -209,6 +214,7 @@ export function PageArmurerie({
    * fois.*
    */
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+  const trombines = trombinesAuRail()
 
   const plaque = (r: Parameters<typeof enPixels>[0]): React.CSSProperties => {
     const p = enPixels(r, fenetre.h, fenetre.l)
@@ -907,9 +913,18 @@ export function PageArmurerie({
                 lieux qui n'existent pas — mais on ne juge pas un rail de huit
                 entrées sur deux symboles. **Le repli est une seule ligne** : il
                 tombe dès que chaque destination nomme le sien. */}
+            {/* ET LA TROMBINE PEUT PRENDRE SA PLACE, le temps de juger
+                (`?r3f&trombines`). *Elle est RECADRÉE sur la tête* : le dessin
+                est un corps en pied, et réduit tel quel son visage ferait sept
+                pixels. Un lieu sans PNJ garde son écu — l'expédition n'est pas
+                un métier, elle n'a personne derrière son comptoir. */}
             <img
-              className="arm-lieu-blason"
-              src={urlDuSymbole(d.embleme ?? 'Armurerie')}
+              className={`arm-lieu-blason${trombines && d.pnj !== undefined ? ' trombine' : ''}`}
+              src={
+                trombines && d.pnj !== undefined
+                  ? urlDuSymbole(d.pnj)
+                  : urlDuSymbole(d.embleme ?? 'Armurerie')
+              }
               alt=""
               draggable={false}
             />

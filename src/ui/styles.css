@@ -5888,6 +5888,40 @@ body {
   filter: drop-shadow(0 1px 3px #000000aa);
 }
 
+/* LA TROMBINE EST UNE VIGNETTE CARREE, RECADREE SUR LA TETE.
+
+   *Un portrait reduit n'est pas un symbole reduit* : le dessin est un corps en
+   pied (576 x 2064), donc `contain` le rendrait large de treize pixels dans une
+   ligne de quarante-huit. `cover` + `object-position: top` ne garde que ce qui
+   se lit a cette taille -- le visage.
+
+   Et elle est CERCLEE de laiton, a coins coupes : *un arrondi est une forme de
+   gabarit, une arete franche est de la ferronnerie* -- c'est la meme vignette
+   que les cartouches du lieu, en petit. Un avatar rond aurait parle la langue
+   d'une autre interface. */
+.arm-lieu-blason.trombine {
+  aspect-ratio: 1;
+  object-fit: cover;
+  /* LE CADRAGE SE PREND SOUS LE HAUT DU DESSIN, pas a son bord. Cale a `top`,
+     la fenetre tombait sur le crane de l'armurier et sur la touffe du
+     charognard -- *un repere cale sur la marge d'un dessin se deplace avec le
+     dessin*, et ces deux-la n'ont pas leur visage a la meme hauteur. A 24 % la
+     fenetre couvre le visage et le buste des deux. **C'est le reglage le plus
+     fragile de l'essai** : un troisieme PNJ cadre autrement le rouvrira. */
+  object-position: center 24%;
+  border: 1px solid #6b5936;
+  background: #0d0e13;
+  clip-path: polygon(
+    0.18em 0,
+    100% 0,
+    100% calc(100% - 0.18em),
+    calc(100% - 0.18em) 100%,
+    0 100%,
+    0 0.18em
+  );
+  filter: drop-shadow(0 1px 3px #000000aa);
+}
+
 .arm-lieu:disabled .arm-lieu-blason {
   opacity: 0.22;
   filter: grayscale(1);

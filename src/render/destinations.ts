@@ -175,3 +175,22 @@ export function destinationsMontrees(): readonly Destination[] {
 export function pnjDuLieu(lieu: LieuHub): string | undefined {
   return DESTINATIONS.find((d) => d.lieu === lieu)?.pnj
 }
+
+/**
+ * LES TROMBINES À LA PLACE DES ÉCUS, le temps de juger (`?r3f&trombines`).
+ *
+ * Keko : « tu crois qu'à la place des symboles dans les catégories du hub, on
+ * pourrait afficher l'image des PNJ (réduite) ? »
+ *
+ * *Un portrait réduit n'est pas un symbole réduit* : les dessins font
+ * 576 x 2064, donc un corps en pied — dans une ligne de 48 px il ferait 13 px
+ * de large, et le visage sept. **Ce qui marche, c'est de RECADRER sur la
+ * tête** : une vignette carrée, le vocabulaire des jeux d'extraction, et il
+ * n'y a rien à redessiner.
+ *
+ * Derrière une URL parce que c'est Keko qui tranche, et *ce qui se teste doit
+ * pouvoir s'ouvrir d'un lien.*
+ */
+export function trombinesAuRail(): boolean {
+  return typeof location !== 'undefined' && new URLSearchParams(location.search).has('trombines')
+}
