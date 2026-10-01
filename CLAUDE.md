@@ -1622,6 +1622,29 @@ répétée par corps (`main.ts`, `cibler` avec `-1`). L'aperçu sur les jauges l
 `degatsTous` comme des dégâts. Et le compte « qui frappent » de l'armurerie
 compte les deux verbes.
 
+**LA TROISIÈME ARME : LA RONDACHE**, et son verbe est DÉFENSIF. Nommée et
+composée par Keko — « une nouvelle arme à une main, qui est défensive en
+réalité » — trois cartes : **Bloquer ×2 et Coup de bouclier ×1**.
+
+**LES CHIFFRES SONT PROVISOIRES**, et Keko l'a dit en les demandant : « on
+verra les effets après ». Ils reprennent le barème du jeu sans y ajouter de
+verbe neuf — Bloquer à 1⚡ pour 5 de bloc (le rendement d'une Garde), Coup de
+bouclier à 2⚡ pour 4 dégâts et 4 de bloc, soit sous les deux barèmes pris
+séparément (2⚡ valent 7 dégâts OU 11 de bloc). **À calibrer par simulation
+avant d'en faire un objet du jeu** : *le set du Glaive est 10 % plus faible que
+l'ancien deck de base, et ça avait fait tomber la survie au fond de 50 % à 4 %.*
+
+**Elle attend au coffre et elle est RARE, comme l'Espadon** : *le prêt de
+l'armurier ne tire que dans les communes*, et une arme qui ne frappe presque pas
+ferait un dépannage qui ne dépanne pas.
+
+*Ce qu'elle rouvre, et qu'il faudra trancher* : « Explorer » exige une arme en
+supposant qu'une arme sert à tuer. Avec la Rondache seule, on part avec deux
+cartes sur trois qui n'attaquent pas.
+
+**Ses deux modèles n'ont pas d'illustration** : ils sortent avec le sceau de
+repli (`defaut.svg`), ce qui est exactement ce que ce sceau est là pour dire.
+
 **LE CONSOMMABLE EXISTE : LA POTION** (`logic/armes.ts`, la **pile** du
 chargement dans `logic/hub.ts`). **Une carte, un soin, puis elle s'exile** :
 1⚡, rend 14 PV, détruite en se buvant. On en possède **cinq exemplaires** et

@@ -267,8 +267,15 @@ const COTTE: Armure = {
   const pile = echangerDansCoffre(h, [a!.id], potions)
   verifier('une pile entiere prend la place de l’objet vise',
     pile.reserve.slice(0, potions.length).every((o, i) => o.id === potions[i]))
+  // ON CALCULE LA PLACE ATTENDUE, on ne la suppose pas : la verification
+  // lisait l'index `potions.length`, ce qui tenait tant que la pile suivait
+  // immediatement le premier objet du coffre. *Une verification qui suppose
+  // une position se casse au premier contenu ajoute* -- la Rondache, glissee
+  // entre les deux, l'a fait tomber alors que la regle, elle, n'avait pas
+  // bouge.
+  const debutPile = h.reserve.findIndex((o) => o.id === potions[0])
   verifier('...et l’objet vise se retrouve la ou la pile etait',
-    pile.reserve[potions.length]!.id === a!.id)
+    pile.reserve[debutPile + potions.length - 1]!.id === a!.id)
   verifier('...sans rien perdre', pile.reserve.length === h.reserve.length)
   verifier('une pile incomplete ne fait rien',
     echangerDansCoffre(h, [a!.id], [potions[0]!, 'fantome']) === h)

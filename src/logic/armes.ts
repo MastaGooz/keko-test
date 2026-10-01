@@ -211,6 +211,60 @@ export const ESPADON: Arme = {
 }
 
 /* ---------------------------------------------------------------------- *
+ * LA RONDACHE : une arme à une main, et son verbe est DÉFENSIF.
+ *
+ * Nommée et composée par Keko — « une nouvelle arme à une main, qui est
+ * défensive en réalité », trois cartes : Bloquer ×2 et Coup de bouclier ×1.
+ *
+ * **LES CHIFFRES SONT PROVISOIRES** (Keko : « on verra les effets après »), et
+ * ils ne sortent pas de nulle part : ils reprennent le barème du jeu — *5 à
+ * 5,5 de bloc par énergie, 3 à 3,5 de dégâts* — sans y ajouter de verbe neuf.
+ * **À calibrer par simulation avant d'en faire un objet du jeu** : le set du
+ * Glaive est 10 % plus faible que l'ancien deck de base, et ça avait fait
+ * tomber la survie au fond de 50 % à 4 %.
+ * ---------------------------------------------------------------------- */
+
+const BLOQUER: Modele = {
+  nom: 'Bloquer',
+  type: 'combat',
+  cout: 1,
+  degats: 0,
+  effets: [{ type: 'bloc', montant: 5 }],
+}
+
+/**
+ * Elle frappe ET elle protège, à moitié de chaque.
+ *
+ * *C'est ce qu'un bouclier fait* — et c'est sous les deux barèmes pris
+ * séparément : 4 dégâts quand 2⚡ en valent 7, 4 de bloc quand 2⚡ en valent 11.
+ */
+const COUP_DE_BOUCLIER: Modele = {
+  nom: 'Coup de bouclier',
+  type: 'combat',
+  cout: 2,
+  degats: 4,
+  effets: [{ type: 'bloc', montant: 4 }],
+}
+
+/**
+ * La Rondache : trois cartes, dont deux qui n'attaquent pas.
+ *
+ * **Elle attend au coffre, comme l'Espadon**, et elle est rare pour la même
+ * raison : *le prêt de l'armurier ne tire que dans les communes*, et une arme
+ * qui ne frappe presque pas ferait un dépannage qui ne dépanne pas.
+ */
+export const RONDACHE: Arme = {
+  id: 'rondache',
+  nom: 'Rondache',
+  rarete: 'rare',
+  mains: 1,
+  set: [
+    { modele: BLOQUER, nombre: 2 },
+    { modele: COUP_DE_BOUCLIER, nombre: 1 },
+  ],
+}
+
+/* ---------------------------------------------------------------------- *
  * Les armures. Elles ne frappent pas : elles donnent du BLOC.
  * ---------------------------------------------------------------------- */
 

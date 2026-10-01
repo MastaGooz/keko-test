@@ -63,7 +63,7 @@ const IMAGES: Record<string, string> = {
   // réalité » — et son set reste à trancher. *La ligne ne coûte rien et elle
   // dit ce qui vient* ; le jour où `logic/armes.ts` nomme la pièce Bouclier,
   // elle porte son dessin sans qu'on y revienne.
-  bouclier: 'Bouclier.webp',
+  rondache: 'Bouclier.webp',
 }
 
 /**

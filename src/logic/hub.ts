@@ -24,6 +24,7 @@ import {
   ARMURE_GRATUITE,
   ARMURES_COMMUNES,
   ESPADON,
+  RONDACHE,
   POTIONS_DEPART,
   SUPER_POTIONS_DEPART,
   carteDuConsommable,
@@ -325,7 +326,7 @@ export function creerHub(): Hub {
     // au sens du garde-fou — mort avec, on le perd pour de bon.
     // CINQ POTIONS, dont une déjà dans la pile : on arrive équipé, donc on
     // découvre la carte en jouant plutôt qu'en lisant l'armurerie.
-    reserve: [ESPADON, ...POTIONS_DEPART.slice(1), ...SUPER_POTIONS_DEPART],
+    reserve: [ESPADON, RONDACHE, ...POTIONS_DEPART.slice(1), ...SUPER_POTIONS_DEPART],
     chargement: {
       mains: [ARME_GRATUITE, null],
       armure: ARMURE_GRATUITE,
