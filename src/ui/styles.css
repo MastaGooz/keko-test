@@ -5917,13 +5917,18 @@ body {
      remplissages, un écart et neuf capitales espacées ne tiennent pas tous à
      leur aise. *Ce qui porte l'information est le mot* — donc c'est l'air
      autour de lui qui recule, pas lui. */
-  gap: 0.28em;
+  /* ET LE BLANC PASSE ENTRE L'ÉCU ET LE MOT, plus entre l'écu et le bord.
+     Keko : « on peut décaler un poil les images sur la gauche de chaque case
+     pour les éloigner légèrement du texte ? » *Le total ne bouge pas* — on ne
+     fait que déplacer l'air d'un côté à l'autre du dessin, donc le nom n'y perd
+     pas un pixel. */
+  gap: 0.52em;
   min-height: 0;
   /* ET PLUS D'AIR A GAUCHE QU'A DROITE : c'est le bord gauche qui longe l'ecu
      (Keko : « la bordure gauche de chaque onglet est trop proche de l'icone »),
      et le bord droit ne longe qu'un blanc de fin de mot. *Un remplissage se
      regle sur ce qu'il separe.* */
-  padding: 0 0.2em 0 0.55em;
+  padding: 0 0.2em 0 0.3em;
   border: 0;
   /* PAS DE CADRE, UN FILET SOUS CHACUN : la meme correction que l'enseigne du
      hub et que le rail des stats -- *ce qui est au-dessus d'un trait va
@@ -6132,8 +6137,59 @@ body {
   text-overflow: ellipsis;
 }
 
+/* CE QUI RÉPOND AU SURVOL, et il n'y a pas de plaque à chauffer.
+   Keko : « ajouter des effets visuels sur le hover de chaque case ».
+
+   Le bouton « Descendre » a sa plaque qui s'éclaircit, son halo et son lustre ;
+   une entrée de rail n'a qu'un mot, un écu et un filet. Trois choses, donc, et
+   chacune fait un travail que les autres ne font pas :
+
+   - **un voile qui vient de la gauche**, comme le filet vif du lieu ouvert mais
+     plus discret : il dit que la ligne entière est la cible, pas seulement le
+     mot ;
+   - **le filet s'éclaire** — c'est la pièce qui dit déjà où l'on est, elle est
+     donc la bonne à faire répondre ;
+   - **le mot et l'écu AVANCENT d'un cheveu**, et c'est le seul mouvement. *Un
+     objet qui s'avance se propose*, la règle du bouton du butin.
+
+   Tout est sous `hover: hover` : au doigt le survol reste collé après la tape,
+   la règle est écrite dans le projet depuis la main du jeu 2D. */
+.arm-lieu {
+  transition:
+    color 140ms ease-out,
+    background-color 140ms ease-out,
+    border-color 140ms ease-out;
+}
+
+.arm-lieu-blason,
+.arm-lieu-nom {
+  transition: translate 140ms ease-out;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .arm-lieu:not(:disabled):hover {
     color: #ffeec2;
+    border-bottom-color: #d8bb79;
+    background-image: linear-gradient(90deg, #d8bb7922, #d8bb7900 72%);
+  }
+
+  .arm-lieu:not(:disabled):hover .arm-lieu-blason,
+  .arm-lieu:not(:disabled):hover .arm-lieu-nom {
+    translate: 0.12em 0;
+  }
+
+  /* L'ÉCU PREND LA LUMIÈRE au lieu d'avancer seul : il a déjà son ombre
+     portée, on ne fait qu'y ajouter la lueur dorée du lieu. */
+  .arm-lieu:not(:disabled):hover .arm-lieu-blason {
+    filter: drop-shadow(0 1px 3px #000000aa) drop-shadow(0 0 5px #d8bb7966);
+    border-color: #a98f52;
+  }
+
+  /* L'ENTRÉE MAJEURE A SA PLAQUE, donc elle chauffe comme un bouton plutôt que
+     de prendre un voile : *ce qui a une matière répond par sa matière.* */
+  .arm-lieu.majeur:not(:disabled):hover {
+    background-image: none;
+    background: linear-gradient(100deg, #3a2f1d, #241d12 62%, #1a150d);
+    border-color: #d8bb79;
   }
 }

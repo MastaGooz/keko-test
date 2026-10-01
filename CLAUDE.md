@@ -4616,6 +4616,29 @@ lit `lieu`, qui reste vide chez elles, et c'est lui qui dit où l'on est. Deux
 élément vide sans rapport déclaré est large de zéro*, et l'alignement des mots
 tombait avec lui.
 
+**ET L'AIR EST PASSÉ DE L'AUTRE CÔTÉ DE L'ÉCU.** Keko : « on peut décaler un
+poil les images sur la gauche de chaque case pour les éloigner légèrement du
+texte ? » Le remplissage gauche tombe de 0,55 à 0,3em et l'écart au mot monte de
+0,28 à 0,52em — *le total ne bouge pas*, donc le nom n'y perd pas un pixel.
+Mesuré à 667 x 320 : l'écu passe de 5,9 à 3,2 px du bord et de 3 à 5,5 px du
+mot, et aucune des vingt entrées du banc ne tronque.
+
+**ET CHAQUE ENTRÉE RÉPOND AU SURVOL**, demandé par Keko. *Il n'y a pas de plaque
+à chauffer* comme sur un bouton — une entrée n'a qu'un mot, un écu et un filet —
+donc trois choses, et chacune fait un travail que les autres ne font pas :
+
+- **un voile qui vient de la gauche**, plus discret que le filet vif du lieu
+  ouvert : il dit que c'est la LIGNE entière qui est la cible, pas le mot ;
+- **le filet s'éclaire** : c'est la pièce qui dit déjà où l'on est, donc la
+  bonne à faire répondre ;
+- **le mot et l'écu avancent d'un cheveu**, et c'est le seul mouvement — *un
+  objet qui s'avance se propose*, la règle du bouton du butin. L'écu y gagne
+  la lueur dorée du lieu plutôt qu'un déplacement à lui.
+
+**L'entrée majeure, elle, a sa plaque : elle chauffe comme un bouton** au lieu
+de prendre un voile — *ce qui a une matière répond par sa matière.* Et tout est
+sous `hover: hover` : au doigt le survol reste collé après la tape.
+
 **L'ÉCU RESTE, ET IL SE MESURE SUR SA LIGNE.** Je l'avais d'abord retiré — les
 huit entrées portent LE MÊME, celui de l'armurerie recyclé du bandeau disparu,
 et *un symbole répété à l'identique sur huit lignes ne distingue aucune ligne.*
