@@ -69,6 +69,21 @@ export type Destination = {
    * jugeait un rail à moitié mort plutôt que le hub qu'il sera.
    */
   ouvert: boolean
+  /**
+   * UNE PLACE QUI NE SE MONTRE QUE SUR DEMANDE.
+   *
+   * Keko : « tu peux enlever les onglets du hub à part expédition /
+   * armurerie ? cache les autres ». *Deux lieux existent, les autres sont des
+   * noms* — et un rail de vingt entrées dont dix-huit ne font rien se lit
+   * comme un menu en attente plutôt que comme un hub.
+   *
+   * **Elles restent dans la table, elles ne sont pas supprimées** : ce sont
+   * les six métiers que Keko a nommés et les six du banc de défilement, et
+   * `?r3f&lieux` les remontre toutes. *Ce qui a servi à choisir doit rester
+   * ouvrable, même une fois le choix fait* — et sans elles il n'y a plus rien
+   * à faire défiler.
+   */
+  cachee?: boolean
   /** Le lieu qu'elle ouvre, quand elle en ouvre un. */
   lieu?: LieuHub
   /**
@@ -101,12 +116,12 @@ export const DESTINATIONS: readonly Destination[] = [
   // encadré mais vide, pour tester la navigation ». *Un écran vide qui porte
   // son nom se navigue déjà*, et c'est tout ce qu'on cherche à éprouver. Ce
   // que chacun fera se tranchera quand on l'ouvrira.
-  { nom: 'Marché', ouvert: true, lieu: 'marche' },
-  { nom: 'Charognard', ouvert: true, lieu: 'charognard' },
-  { nom: 'Forgeron', ouvert: true, lieu: 'forgeron' },
-  { nom: 'Couturière', ouvert: true, lieu: 'couturiere' },
-  { nom: 'Enchanteresse', ouvert: true, lieu: 'enchanteresse' },
-  { nom: 'Alchimiste', ouvert: true, lieu: 'alchimiste' },
+  { nom: 'Marché', ouvert: true, lieu: 'marche', cachee: true },
+  { nom: 'Charognard', ouvert: true, lieu: 'charognard', cachee: true },
+  { nom: 'Forgeron', ouvert: true, lieu: 'forgeron', cachee: true },
+  { nom: 'Couturière', ouvert: true, lieu: 'couturiere', cachee: true },
+  { nom: 'Enchanteresse', ouvert: true, lieu: 'enchanteresse', cachee: true },
+  { nom: 'Alchimiste', ouvert: true, lieu: 'alchimiste', cachee: true },
   /**
    * SIX DE PLUS, POUR QUE LA LISTE DÉBORDE. Demandé par Keko : « rajoute des
    * onglets, nomme-les comme tu veux, et permets de scroller pour les faire
@@ -117,16 +132,28 @@ export const DESTINATIONS: readonly Destination[] = [
    * chose qu'on éprouve ici. Le jour où le hub se décide pour de bon, ils se
    * retirent ou se renomment sans que rien d'autre ne bouge.
    */
-  { nom: 'Taverne', ouvert: true, lieu: 'taverne' },
-  { nom: 'Cartographe', ouvert: true, lieu: 'cartographe' },
-  { nom: 'Infirmerie', ouvert: true, lieu: 'infirmerie' },
-  { nom: 'Chapelle', ouvert: true, lieu: 'chapelle' },
-  { nom: 'Mercenaires', ouvert: true, lieu: 'mercenaires' },
-  { nom: 'Bibliothèque', ouvert: true, lieu: 'bibliotheque' },
-  { nom: 'Écuries', ouvert: true, lieu: 'ecuries' },
-  { nom: 'Tanneur', ouvert: true, lieu: 'tanneur' },
-  { nom: 'Herboriste', ouvert: true, lieu: 'herboriste' },
-  { nom: 'Reliquaire', ouvert: true, lieu: 'reliquaire' },
-  { nom: 'Arène', ouvert: true, lieu: 'arene' },
-  { nom: 'Guilde', ouvert: true, lieu: 'guilde' },
+  { nom: 'Taverne', ouvert: true, lieu: 'taverne', cachee: true },
+  { nom: 'Cartographe', ouvert: true, lieu: 'cartographe', cachee: true },
+  { nom: 'Infirmerie', ouvert: true, lieu: 'infirmerie', cachee: true },
+  { nom: 'Chapelle', ouvert: true, lieu: 'chapelle', cachee: true },
+  { nom: 'Mercenaires', ouvert: true, lieu: 'mercenaires', cachee: true },
+  { nom: 'Bibliothèque', ouvert: true, lieu: 'bibliotheque', cachee: true },
+  { nom: 'Écuries', ouvert: true, lieu: 'ecuries', cachee: true },
+  { nom: 'Tanneur', ouvert: true, lieu: 'tanneur', cachee: true },
+  { nom: 'Herboriste', ouvert: true, lieu: 'herboriste', cachee: true },
+  { nom: 'Reliquaire', ouvert: true, lieu: 'reliquaire', cachee: true },
+  { nom: 'Arène', ouvert: true, lieu: 'arene', cachee: true },
+  { nom: 'Guilde', ouvert: true, lieu: 'guilde', cachee: true },
 ]
+
+/**
+ * CE QUE LE RAIL MONTRE : les deux lieux qui existent, et rien d'autre.
+ *
+ * `?r3f&lieux` les remontre toutes — c'est le banc du défilement, qui n'a plus
+ * d'objet avec deux entrées.
+ */
+export function destinationsMontrees(): readonly Destination[] {
+  const montreTout =
+    typeof location !== 'undefined' && new URLSearchParams(location.search).has('lieux')
+  return montreTout ? DESTINATIONS : DESTINATIONS.filter((d) => d.cachee !== true)
+}

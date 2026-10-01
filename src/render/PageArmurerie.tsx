@@ -41,7 +41,7 @@ import { tailleBouton } from './Bouton3D.tsx'
 import { Z_PLAN } from './armurerie-plan.ts'
 import { urlDeLArmurier, urlDuSymbole } from '../ui/art.ts'
 import type { LieuHub } from './destinations.ts'
-import { DESTINATIONS } from './destinations.ts'
+import { DESTINATIONS, destinationsMontrees } from './destinations.ts'
 
 /**
  * Ce qu'une infobulle a besoin de savoir : son texte, son point d'ancrage, et
@@ -168,7 +168,7 @@ export function PageArmurerie({
     const corps = 100
     ctx.font = `${corps}px Cinzel, Georgia, serif`
     let max = 0
-    for (const d of DESTINATIONS) {
+    for (const d of destinationsMontrees()) {
       const mot = d.nom.toUpperCase()
       const large = ctx.measureText(mot).width + 0.04 * corps * mot.length
       if (large > max) max = large
@@ -827,9 +827,16 @@ export function PageArmurerie({
           // Le reste de la ligne tient en `em` : deux remplissages (0,75), l'écart
           // à l'écu (0,28) et l'écu lui-même (1,65). *Tout se résout* — la
           // largeur vaut `P x (2,68 + parts)`, et `parts` est mesuré.
+          //
+          // ET LE CARTOUCHE D'EXPÉDITION PREND SES DEUX PIXELS AVANT LE CALCUL.
+          // Il porte un filet d'un pixel de chaque côté, qui n'est pas en `em`
+          // et n'entrait donc dans aucune des parts : le nom le plus long y
+          // perdait sa dernière lettre dès que c'était LUI le plus long. *Une
+          // bordure est une largeur comme une autre* — elle se retranche de la
+          // place avant qu'on la partage, pas après.
           '--rail-police': `${Math.min(
             1.25 * rem,
-            enPixels(plan.railListe, fenetre.h, fenetre.l).width / (2.68 + partsNom),
+            (enPixels(plan.railListe, fenetre.h, fenetre.l).width - 2) / (2.68 + partsNom),
           )}px`,
           // LA HAUTEUR D'UNE LIGNE NE DÉPEND PLUS DU NOMBRE D'ENTRÉES, depuis
           // qu'il y en a plus que de place : elle se divisait entre toutes, donc
@@ -850,7 +857,7 @@ export function PageArmurerie({
           )}px`,
         } as React.CSSProperties}
       >
-        {DESTINATIONS.map((d, i) => (
+        {destinationsMontrees().map((d, i) => (
           <button
             key={i}
             type="button"

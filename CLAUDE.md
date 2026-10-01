@@ -3422,6 +3422,37 @@ tournent pas et le pouce ne bouge jamais. Ça ressemble exactement à une
 synchronisation cassée. Seules la molette et le glisser RÉELS, suivis d'une
 capture, disent la vérité.
 
+**ET LE RAIL S'EST REFERMÉ SUR SES DEUX LIEUX.** Keko : « tu peux enlever les
+onglets du hub à part expédition / armurerie ? cache les autres ». *Un rail de
+vingt entrées dont dix-huit ne font rien se lit comme un menu en attente, pas
+comme un hub* — les places tenues avaient servi à juger la mise en page et le
+défilement, et elles l'avaient fait.
+
+**Elles sont CACHÉES, pas supprimées** (`cachee`), et **`?r3f&lieux` les
+remontre toutes** : ce sont les six métiers que Keko a nommés et les six du
+banc de défilement, et *ce qui a servi à choisir doit rester ouvrable, même une
+fois le choix fait.* Sans elles il n'y a plus rien à faire défiler, donc le
+banc du rail passe par là.
+
+**Le plus long nom se mesure sur ce qu'on MONTRE**, pas sur la table : à deux
+entrées c'est « Expédition » et non « Enchanteresse », donc la police du rail
+remonte de 10,7 à **13,4 px à 667 x 320**. *Un contenant se dimensionne sur son
+pire contenu, et son pire contenu est celui qu'il affiche.*
+
+**ET LE CARTOUCHE D'EXPÉDITION PREND SES DEUX PIXELS AVANT LE CALCUL.** Il
+porte un filet d'un pixel de chaque côté, qui n'est pas en `em` et n'entrait
+donc dans aucune des parts : le nom y perdait sa dernière lettre dès que
+c'était LUI le plus long — ce qui n'arrivait pas tant que les métiers étaient
+là. *Une bordure est une largeur comme une autre* : elle se retranche de la
+place avant qu'on la partage, pas après. **Un défaut qui n'apparaît qu'une fois
+le voisin parti était déjà là** ; c'est la cicatrice habituelle, prise dans
+l'autre sens.
+
+*Ce qui reste, et c'est à Keko* : le rail garde son plancher de 152 px, calé
+sur « Enchanteresse » qui ne s'affiche plus. **Une contrainte posée pour un
+contenu se relit quand ce contenu s'en va** — il y a de la largeur à rendre aux
+meubles le jour où le hub se fixe pour de bon.
+
 **DOUZE DESTINATIONS DE PLUS, et ce sont des places tenues** — taverne,
 cartographe, infirmerie, chapelle, mercenaires, bibliothèque, puis écuries,
 tanneur, herboriste, reliquaire, arène, guilde. Keko a autorisé d'en inventer
