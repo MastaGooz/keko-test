@@ -7545,24 +7545,36 @@ l'ajoute au canvas, et la carte 2D une couche de plus dans son
 fichiers de `public/` : **l'URL porte la date du build**, sinon le remplacer ne
 changerait rien à l'écran.
 
-**ET LA ZONE DU SUJET REÇOIT DE LA LUMIÈRE.** Keko : « on peut éclaircir un peu
-le background des cartes ? je les trouve super foncé — ou bien éclaire la zone
-derrière l'illustration ».
+**ET C'EST LE SUJET QUI ÉCLAIRE AUTOUR DE LUI.** Keko : « on peut éclaircir un
+peu le background des cartes ? je les trouve super foncé — ou bien éclaire la
+zone derrière l'illustration », puis, devant la première passe : « c'est un poil
+trop clair, surtout sur la périphérie — bien dans la zone proche de
+l'illustration. On peut pas éclairer comme la forme de l'arme éclairait
+autour ? »
 
-**Ça se pose PAR-DESSUS l'illustration, pas dessous**, et c'est tout le point :
-une image de Keko est OPAQUE, elle recouvre le fond commun de bout en bout —
-éclaircir le décor n'aurait rien changé là où ça se voit. *Ce qu'on éclaire est
-ce qu'on voit.*
+*Un disque de lumière éclaire là où il n'y a rien* — c'est ce que faisaient le
+voile uniforme et la lueur radiale de la première passe. Ce qu'il décrit est un
+**BLOOM** : **ce qui est clair rayonne, ce qui est sombre n'ajoute rien.** La
+périphérie d'une carte est sombre, donc elle le reste, et la lame déborde de sa
+propre lumière.
 
-Deux couches, et elles ne font pas le même travail : un voile UNIFORME très
-faible, qui relève la carte entière d'un cheveu, et une LUEUR radiale centrée
-sur les deux tiers du haut — là où vit le sujet. **Le bas n'en reçoit pas** :
-c'est la zone du texte, et le voile sombre qui suit la reprendrait de toute
-façon.
+Trois choses à ne pas défaire :
 
-**En mélange `lighter`, donc une ADDITION** : les noirs montent, les clairs
-saturent à peine — *une lumière ajoutée ne délave pas, un voile blanc posé,
-si.*
+- **ça se pose PAR-DESSUS l'illustration, jamais dessous.** Une image de Keko
+  est OPAQUE : elle recouvre le fond commun de bout en bout, donc éclaircir le
+  décor ne changerait rien là où ça se voit. *Ce qu'on éclaire est ce qu'on
+  voit* ;
+- **le flou se fait par RÉDUCTION puis agrandissement, pas par `ctx.filter`** :
+  celui-ci demande Safari 16.4 quand la page vise 16.2, et un filtre ignoré
+  redessinerait l'image NETTE en double exposition. *Une dégradation silencieuse
+  vaut moins qu'un chemin qui marche partout* — et l'interpolation d'un
+  agrandissement est exactement un flou ;
+- **on relit le CANVAS, pas l'image** : le décor commun, l'illustration et le
+  sceau de repli y sont déjà composés, donc le même code sert les trois sans
+  distinguer les cas.
+
+Et toujours en mélange `lighter` : *une lumière ajoutée ne délave pas, un voile
+blanc posé, si.*
 
 **LES 24 DESSINS ONT PERDU LEUR CIEL, et il le fallait.** Chacun peignait un
 `<rect>` plein format qui recouvrait entièrement le fond commun : *le poser

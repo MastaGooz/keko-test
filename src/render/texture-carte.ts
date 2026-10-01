@@ -774,43 +774,44 @@ export async function peindreCarte(
   if (image !== null) couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
 
   /**
-   * ET LA ZONE DU SUJET REÇOIT DE LA LUMIÈRE. Keko : « on peut éclaircir un peu
-   * le background des cartes ? je les trouve super foncé — ou bien éclaire la
-   * zone derrière l'illustration ».
+   * ET C'EST LE SUJET QUI ÉCLAIRE AUTOUR DE LUI.
    *
-   * **Ça se pose PAR-DESSUS l'illustration, pas dessous.** Une image de Keko
-   * est opaque : elle recouvre le fond commun de bout en bout, donc éclaircir
-   * le décor ne changerait rien là où il compte. *Ce qu'on éclaire est ce qu'on
-   * voit.*
+   * Keko, après une première passe au voile et à la lueur radiale : « c'est un
+   * poil trop clair, surtout sur la périphérie — bien dans la zone proche de
+   * l'illustration. On peut pas éclairer comme la forme de l'arme éclairait
+   * autour ? »
    *
-   * Deux couches, et elles ne font pas le même travail : un voile UNIFORME très
-   * faible, qui relève la carte entière d'un cheveu, et une LUEUR radiale
-   * centrée sur les deux tiers du haut — là où vit le sujet. *Le bas n'en reçoit
-   * pas* : c'est la zone du texte, et le voile sombre qui suit la reprendrait de
-   * toute façon.
+   * *Un disque de lumière éclaire là où il n'y a rien* ; ce qu'il décrit est un
+   * BLOOM — **ce qui est clair rayonne, ce qui est sombre n'ajoute rien.** La
+   * périphérie d'une carte est sombre, donc elle reste sombre, et la lame
+   * déborde de sa propre lumière.
    *
-   * En mélange `lighter`, donc une ADDITION : les noirs montent, les clairs
-   * saturent à peine — *une lumière ajoutée ne délave pas, un voile blanc
-   * posé, si.*
+   * **Le flou se fait par RÉDUCTION puis agrandissement**, pas par
+   * `ctx.filter` : celui-ci demande Safari 16.4 quand la page vise 16.2, et un
+   * filtre ignoré redessinerait l'image NETTE en double exposition. *Une
+   * dégradation silencieuse vaut moins qu'un chemin qui marche partout* — et
+   * l'interpolation d'un agrandissement est exactement un flou.
+   *
+   * On relit le CANVAS et non l'image : le décor commun, l'illustration et le
+   * repli y sont déjà composés, donc le bloom marche pour les trois sans
+   * distinguer les cas.
    */
-  ctx.save()
-  ctx.globalCompositeOperation = 'lighter'
-  ctx.fillStyle = '#ffffff0d'
-  ctx.fillRect(marge, marge, LARGE - marge * 2, HAUT - marge * 2)
-  const lueur = ctx.createRadialGradient(
-    LARGE / 2,
-    HAUT * 0.36,
-    0,
-    LARGE / 2,
-    HAUT * 0.36,
-    LARGE * 0.72,
-  )
-  lueur.addColorStop(0, '#fff6e61f')
-  lueur.addColorStop(0.55, '#fff6e60f')
-  lueur.addColorStop(1, '#fff6e600')
-  ctx.fillStyle = lueur
-  ctx.fillRect(marge, marge, LARGE - marge * 2, HAUT * 0.72)
-  ctx.restore()
+  const petit = document.createElement('canvas')
+  const lArt = LARGE - marge * 2
+  const hArt = HAUT - marge * 2
+  petit.width = 44
+  petit.height = Math.max(1, Math.round((44 * hArt) / lArt))
+  const pctx = petit.getContext('2d')
+  if (pctx !== null) {
+    pctx.imageSmoothingQuality = 'high'
+    pctx.drawImage(canvas, marge, marge, lArt, hArt, 0, 0, petit.width, petit.height)
+    ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
+    ctx.globalAlpha = 0.34
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(petit, marge, marge, lArt, hArt)
+    ctx.restore()
+  }
 
   // LE VOILE SOUS LE TEXTE : le tiers du bas passe sous le nom et le
   // cartouche, donc l'image doit s'y éteindre pour qu'ils se lisent.
