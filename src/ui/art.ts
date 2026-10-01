@@ -114,14 +114,12 @@ export function urlDuSymbole(nom: string): string {
   return `${import.meta.env.BASE_URL}${nom}.png?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
-/**
- * L'ARMURIER, le PNJ du lieu — fourni par Keko. Il coiffe la colonne des
- * stats. Même piège de cache que le reste de `public/` : l'URL porte la date
- * du build.
+/*
+ * LES PNJ PASSENT PAR `urlDuSymbole`, comme les emblèmes : *une fonction par
+ * dessin aurait fait une ligne de code par PNJ.* Chaque destination dit le nom
+ * de son fichier (`pnj`), et il n'y a plus qu'une table à tenir.
+ * `urlDeLArmurier` vivait ici ; elle a disparu avec le second portrait.
  */
-export function urlDeLArmurier(): string {
-  return `${import.meta.env.BASE_URL}Armurier.png?v=${encodeURIComponent(__BUILD_TIME__)}`
-}
 
 /**
  * LE SYMBOLE DU COÛT, fourni par Keko — il remplace le cercle dessiné.

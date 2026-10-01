@@ -84,6 +84,19 @@ export type Destination = {
    * à faire défiler.
    */
   cachee?: boolean
+  /**
+   * LE PNJ DU LIEU : le nom de son fichier dans `public/`, sans extension.
+   *
+   * *Un lieu habité n'est pas un lieu vide*, même quand il n'a encore rien à
+   * faire : le portrait lui donne un corps avant que son contenu existe. Il se
+   * pose dans la colonne de droite, exactement comme l'armurier dans
+   * l'armurerie — **même gabarit, 576 x 2064**, sujet contre les quatre bords.
+   *
+   * *Une seule table pour les deux* : l'armurier passait par sa propre
+   * fonction, et une fonction par PNJ aurait fait une ligne de code par
+   * dessin.
+   */
+  pnj?: string
   /** Le lieu qu'elle ouvre, quand elle en ouvre un. */
   lieu?: LieuHub
   /**
@@ -110,14 +123,14 @@ export type Destination = {
 
 export const DESTINATIONS: readonly Destination[] = [
   { nom: 'Expédition', ouvert: true, lieu: 'expedition', majeur: true, embleme: 'Exploration' },
-  { nom: 'Armurerie', ouvert: true, lieu: 'armurerie', embleme: 'Armurerie' },
+  { nom: 'Armurerie', ouvert: true, lieu: 'armurerie', embleme: 'Armurerie', pnj: 'Armurier' },
   // LES SIX MÉTIERS DU HUB, nommés par Keko. **Chacun a son lieu**, vide pour
   // l'instant : un panneau à son nom, et rien dedans — « juste le titre,
   // encadré mais vide, pour tester la navigation ». *Un écran vide qui porte
   // son nom se navigue déjà*, et c'est tout ce qu'on cherche à éprouver. Ce
   // que chacun fera se tranchera quand on l'ouvrira.
   { nom: 'Marché', ouvert: true, lieu: 'marche', cachee: true },
-  { nom: 'Charognard', ouvert: true, lieu: 'charognard', cachee: true },
+  { nom: 'Charognard', ouvert: true, lieu: 'charognard', pnj: 'Charognard' },
   { nom: 'Forgeron', ouvert: true, lieu: 'forgeron', cachee: true },
   { nom: 'Couturière', ouvert: true, lieu: 'couturiere', cachee: true },
   { nom: 'Enchanteresse', ouvert: true, lieu: 'enchanteresse', cachee: true },

@@ -3422,6 +3422,30 @@ tournent pas et le pouce ne bouge jamais. Ça ressemble exactement à une
 synchronisation cassée. Seules la molette et le glisser RÉELS, suivis d'une
 capture, disent la vérité.
 
+**ET LE CHAROGNARD EST REVENU AVEC SON PNJ.** Keko : « j'ai aussi ajouté
+l'image du charognard, tu peux remettre l'onglet et ajouter son image ». Son
+fichier fait **576 x 2064**, le gabarit d'un PNJ et non d'un emblème : *ce
+n'est pas son écu, c'est son portrait.*
+
+**Un lieu habité n'est pas un lieu vide**, même quand il n'a encore rien à
+faire : son panneau porte son nom, et le portrait lui donne un corps avant que
+son contenu existe. Il tient la colonne de droite, **exactement comme
+l'armurier tient la sienne** — même cadrage, hauteur donnée, rapport pris au
+dessin, et une part du panneau pour qu'un grand écran ne le laisse pas manger
+la place.
+
+**Les deux PNJ passent par la MÊME porte** : chaque destination dit le nom de
+son fichier (`pnj`), et `urlDuSymbole` fait le reste. L'armurier avait sa
+propre fonction ; *une fonction par PNJ aurait fait une ligne de code par
+dessin*, exactement ce que la table des emblèmes avait déjà évité.
+
+*Piège payé au passage, et c'est moi qui l'ai posé* : Keko avait déposé son
+nouvel armurier sous le nom de son export (`0_2.png`) et retiré l'ancien ; mon
+`git add -A` a emporté la substitution sans que je la voie, et **le portrait
+était en 404 en ligne pendant un commit**. Le fichier reprend le nom que le
+code attend. *Un `add -A` commite aussi ce qu'on n'a pas regardé* — un coup
+d'oeil au `status` avant de committer l'aurait dit.
+
 **ET LE RAIL S'EST REFERMÉ SUR SES DEUX LIEUX.** Keko : « tu peux enlever les
 onglets du hub à part expédition / armurerie ? cache les autres ». *Un rail de
 vingt entrées dont dix-huit ne font rien se lit comme un menu en attente, pas

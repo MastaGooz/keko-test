@@ -39,7 +39,7 @@ import { deuxMains, peutDescendre } from '../logic/hub.ts'
 import { SON_POSER, jouerSon } from './sons.ts'
 import { tailleBouton } from './Bouton3D.tsx'
 import { Z_PLAN } from './armurerie-plan.ts'
-import { urlDeLArmurier, urlDuSymbole } from '../ui/art.ts'
+import { urlDuSymbole } from '../ui/art.ts'
 import type { LieuHub } from './destinations.ts'
 import { DESTINATIONS, destinationsMontrees } from './destinations.ts'
 
@@ -593,6 +593,18 @@ export function PageArmurerie({
           <span className="arm-nom" style={plaque(plan.panneauLieu)}>
             {DESTINATIONS.find((d) => d.lieu === lieu)?.nom ?? ''}
           </span>
+          {/* ET LE LIEU MONTRE SON PNJ, quand il en a un. *Un lieu habité n'est
+              pas un lieu vide* : le portrait lui donne un corps avant que son
+              contenu existe, et il se pose dans la colonne de droite exactement
+              comme l'armurier dans l'armurerie. */}
+          {DESTINATIONS.find((d) => d.lieu === lieu)?.pnj !== undefined && (
+            <img
+              className="arm-pnj"
+              style={boite(plan.pnjLieu)}
+              src={urlDuSymbole(DESTINATIONS.find((d) => d.lieu === lieu)?.pnj ?? '')}
+              alt=""
+            />
+          )}
           {/* CE QU'ON EMPORTE SE DIT ICI, parce qu'on n'a plus le chargement
               sous les yeux : *avant de descendre, le joueur doit voir avec quoi
               il descend* — et c'est le seul chiffre sur lequel les deux départs
@@ -698,7 +710,12 @@ export function PageArmurerie({
           mesures, et *elles se lisaient alors comme LES SIENNES* — Keko : « on
           dirait que c'est les stats du PNJ maintenant ». Elles sont parties en
           bande au-dessus de l'équipement ; lui n'a plus rien à partager. */}
-      <img className="arm-pnj" style={boite(plan.pnj)} src={urlDeLArmurier()} alt="" />
+      <img
+        className="arm-pnj"
+        style={boite(plan.pnj)}
+        src={urlDuSymbole(DESTINATIONS.find((d) => d.lieu === 'armurerie')?.pnj ?? 'Armurier')}
+        alt=""
+      />
 
       {/* LES QUATRE MESURES EN BANDE, au-dessus de ce qu'on équipe : *ce qu'on
           emporte se mesure au-dessus de ce qu'on porte.* */}

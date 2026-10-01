@@ -232,6 +232,8 @@ export type PlanArmurerie = {
   stats: Rect
   /** La colonne de l'armurier, à droite, au-dessus du bouton. */
   pnj: Rect
+  /** Le portrait du lieu courant, dans son panneau — quand il en a un. */
+  pnjLieu: Rect
   /** Le bouton de départ, sous les stats. */
   bouton: [number, number, number]
   /**
@@ -856,6 +858,17 @@ export function planArmurerie(
     bouton: [xExpedition, yPanneaux + hBouton, Z_PLAN],
     boutonFortune: [xExpedition, yPanneaux - hBouton, Z_PLAN],
     panneauLieu: { x: xExpedition, y: yPanneaux, l: lExpedition, h: hPanneaux },
+    // LE PNJ D'UN LIEU TIENT SA COLONNE DE DROITE, comme l'armurier tient la
+    // sienne. *Un lieu habité n'est pas un lieu vide*, même quand il n'a encore
+    // rien à faire -- et c'est la MÊME règle de cadrage : la hauteur est
+    // donnée, le rapport vient du dessin, et une part du panneau le borne pour
+    // qu'un grand écran ne le laisse pas manger la place.
+    pnjLieu: {
+      x: xExpedition + lExpedition / 2 - marge - Math.min(hPanneaux * RAPPORT_PNJ, lExpedition * 0.3) / 2,
+      y: yPanneaux,
+      l: Math.min(hPanneaux * RAPPORT_PNJ, lExpedition * 0.3),
+      h: hPanneaux,
+    },
     // **IL A LA LARGEUR DE SON CONTENU, pas celle du panneau** : étiré sur toute
     // la bande il se lisait comme un bandeau, pas comme un bouton. *Ce qui
     // s'étire d'un bord à l'autre est un titre ; ce qui se tape est une pièce.*
