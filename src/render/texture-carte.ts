@@ -803,8 +803,22 @@ export async function peindreCarte(
   petit.height = Math.max(1, Math.round((44 * hArt) / lArt))
   const pctx = petit.getContext('2d')
   if (pctx !== null) {
+    /**
+     * LA SOURCE SE LIT EN PIXELS DE LA TOILE, PAS EN UNITÉS DE CARTE.
+     *
+     * `ctx.scale` met à l'échelle ce qu'on DESSINE, jamais la région qu'on
+     * LIT : sur une petite carte, peinte à 256 de large, un `drawImage` qui
+     * lisait de 14 à 754 allait chercher trois fois au-delà du canvas et
+     * rendait un coin agrandi sur toute la carte. Keko : « on dirait que je
+     * vois un truc bizarre en haut à gauche des cartes (hors zoom) » — c'était
+     * le haut-gauche, la seule part de la zone demandée qui existait vraiment.
+     *
+     * **Dès qu'un canvas se relit lui-même, ses deux repères ne sont plus le
+     * même.**
+     */
+    const k = canvas.width / LARGE
     pctx.imageSmoothingQuality = 'high'
-    pctx.drawImage(canvas, marge, marge, lArt, hArt, 0, 0, petit.width, petit.height)
+    pctx.drawImage(canvas, marge * k, marge * k, lArt * k, hArt * k, 0, 0, petit.width, petit.height)
     ctx.save()
     ctx.globalCompositeOperation = 'lighter'
     ctx.globalAlpha = 0.34

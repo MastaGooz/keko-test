@@ -64,6 +64,7 @@ const IMAGES: Record<string, string> = {
   // dit ce qui vient* ; le jour où `logic/armes.ts` nomme la pièce Bouclier,
   // elle porte son dessin sans qu'on y revienne.
   rondache: 'Bouclier.webp',
+  plastron: 'Armure de plate.webp',
 }
 
 /**

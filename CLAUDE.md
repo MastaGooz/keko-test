@@ -7571,7 +7571,14 @@ Trois choses à ne pas défaire :
   agrandissement est exactement un flou ;
 - **on relit le CANVAS, pas l'image** : le décor commun, l'illustration et le
   sceau de repli y sont déjà composés, donc le même code sert les trois sans
-  distinguer les cas.
+  distinguer les cas. **Mais la source se lit en PIXELS DE LA TOILE, pas en
+  unités de carte** — `ctx.scale` met à l'échelle ce qu'on DESSINE, jamais la
+  région qu'on LIT. Sur une petite carte, peinte à 256 de large, la lecture
+  allait chercher trois fois au-delà du canvas et rendait un coin agrandi sur
+  toute la carte : Keko, « on dirait que je vois un truc bizarre en haut à
+  gauche des cartes (hors zoom) » — c'était le haut-gauche, la seule part de la
+  zone demandée qui existait vraiment. *Dès qu'un canvas se relit lui-même, ses
+  deux repères ne sont plus le même.*
 
 Et toujours en mélange `lighter` : *une lumière ajoutée ne délave pas, un voile
 blanc posé, si.*
