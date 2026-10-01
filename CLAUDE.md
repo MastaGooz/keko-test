@@ -3474,6 +3474,23 @@ la demi-image (576 x 1032), en `cover` et calée en haut, montre exactement
 cette moitié** : il n'y a plus de nombre à régler, donc plus rien qui dépende
 du dessin.
 
+**MAIS LA FENÊTRE DESCEND SI LE DESSIN LE DIT** (`cadrage`). Keko : « le
+charognard est plus petit comme PNJ, du coup sur l'icône son visage n'est pas
+centré ; tu penses pouvoir descendre la partie sélectionnée ? »
+
+*Le format est exact, le cadrage ne l'est pas* : prendre la moitié supérieure
+règle le RAPPORT une fois pour toutes, mais **le visage n'est pas à la même
+hauteur d'un dessin à l'autre** — mesuré, les yeux de l'armurier tombent à
+~20 % de la hauteur, ceux du charognard à ~40 %, parce qu'il est plus petit et
+que ses cheveux montent.
+
+**C'est donc au dessin de le dire**, pas à la feuille de style de le deviner :
+chaque destination porte la hauteur de son visage, et la fenêtre se cale
+dessus. Non renseignée, elle reste en haut — *ce qui convient tant que le sujet
+est grand*, et c'est le cas de l'armurier. **C'est la troisième fois que cette
+règle se paie** (l'intention du Cultiste, les repères des gobelins, et ici) :
+*un repère calé sur la marge d'un dessin se déplace avec le dessin.*
+
 Elle est **plus haute que l'écu et plus étroite que lui** : c'est la hauteur
 qui la borne, donc elle ne prend que 0,47 de ligne en largeur contre 0,65 pour
 un carré — *le nom y gagne de la place au lieu d'en perdre*, et le calcul de la

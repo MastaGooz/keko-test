@@ -97,6 +97,23 @@ export type Destination = {
    * dessin.
    */
   pnj?: string
+  /**
+   * OÙ LE VISAGE TOMBE DANS LE DESSIN, en part de sa hauteur (0 = tout en
+   * haut).
+   *
+   * Keko : « le charognard est plus petit comme PNJ, du coup sur l'icône son
+   * visage n'est pas centré ; tu penses pouvoir descendre la partie
+   * sélectionnée ? » *Et c'est le piège qu'on avait nommé* : la vignette prend
+   * la moitié supérieure, ce qui est exact géométriquement — mais **le visage
+   * n'est pas à la même hauteur d'un dessin à l'autre.** Mesuré : les yeux de
+   * l'armurier tombent à ~20 % de la hauteur, ceux du charognard à ~40 %,
+   * parce qu'il est plus petit et que ses cheveux montent.
+   *
+   * *Un repère calé sur la marge d'un dessin se déplace avec le dessin*, donc
+   * c'est AU DESSIN de le dire. Non renseigné, la fenêtre reste calée en
+   * haut — ce qui convient tant que le sujet est grand.
+   */
+  cadrage?: number
   /** Le lieu qu'elle ouvre, quand elle en ouvre un. */
   lieu?: LieuHub
   /**
@@ -130,7 +147,7 @@ export const DESTINATIONS: readonly Destination[] = [
   // son nom se navigue déjà*, et c'est tout ce qu'on cherche à éprouver. Ce
   // que chacun fera se tranchera quand on l'ouvrira.
   { nom: 'Marché', ouvert: true, lieu: 'marche', cachee: true },
-  { nom: 'Charognard', ouvert: true, lieu: 'charognard', pnj: 'Charognard' },
+  { nom: 'Charognard', ouvert: true, lieu: 'charognard', pnj: 'Charognard', cadrage: 30 },
   { nom: 'Forgeron', ouvert: true, lieu: 'forgeron', cachee: true },
   { nom: 'Couturière', ouvert: true, lieu: 'couturiere', cachee: true },
   { nom: 'Enchanteresse', ouvert: true, lieu: 'enchanteresse', cachee: true },

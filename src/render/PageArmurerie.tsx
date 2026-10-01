@@ -925,6 +925,16 @@ export function PageArmurerie({
                   ? urlDuSymbole(d.pnj)
                   : urlDuSymbole(d.embleme ?? 'Armurerie')
               }
+              /* LA FENÊTRE DESCEND SI LE DESSIN LE DIT. *Le visage n'est pas à
+                 la même hauteur d'un PNJ à l'autre* — celui du charognard est
+                 plus bas, parce qu'il est plus petit et que ses cheveux
+                 montent. C'est au dessin de le dire, pas à la feuille de style
+                 de le deviner. */
+              style={
+                d.cadrage === undefined
+                  ? undefined
+                  : ({ '--trombine-y': `${d.cadrage}%` } as React.CSSProperties)
+              }
               alt=""
               draggable={false}
             />

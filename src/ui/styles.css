@@ -5919,7 +5919,7 @@ body {
      retouche. */
   height: min(2.95em, calc(var(--rail-ligne, 2rem) * 0.85));
   object-fit: cover;
-  object-position: center top;
+  object-position: center var(--trombine-y, 0%);
   border: 1px solid #6b5936;
   background: #0d0e13;
   clip-path: polygon(
