@@ -297,6 +297,19 @@ export function enPixels(
  * le cadre ne tomberait plus autour de sa grille. Et c'est l'appelant qui la
  * passe, pour que `planArmurerie` reste pure et appelable sans navigateur.
  */
+/**
+ * LA PART DE SA BANDE QUE LE POUCE DESSINE, pour les DEUX barres.
+ *
+ * Keko : « on peut rework le visuel des barres de scroll (hub et coffre) pour
+ * un truc un peu moins gros, stylisé et texturé ? » Elle valait 0,44 ; à 0,34
+ * le rail se lit comme un filet et non comme un bâton — *la bande réservée ne
+ * bouge pas*, c'est le trait dedans qui s'affine.
+ *
+ * **Un seul nombre**, parce que les deux barres le lisent : *deux valeurs
+ * écrites chacune de leur côté se désaccordent au premier réglage.*
+ */
+const PART_POUCE = 0.34
+
 let encocheMesuree: number | null = null
 let ecouteurPose = false
 
@@ -672,7 +685,7 @@ export function planArmurerie(
   const barre: Rect = {
     x: xCoffre + lCoffre / 2 - padGrille - gouttiere / 2,
     y: grille.y,
-    l: gouttiere * 0.44,
+    l: gouttiere * PART_POUCE,
     h: grille.h,
   }
   const colonnes = colonnesVoulues
@@ -793,7 +806,7 @@ export function planArmurerie(
     railBarre: {
       x: xRail + (lRail - marge) / 2 - lRailBarre / 2,
       y: yPanneaux,
-      l: lRailBarre * 0.44,
+      l: lRailBarre * PART_POUCE,
       h: hPanneaux,
     },
     coffre,

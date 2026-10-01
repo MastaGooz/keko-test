@@ -3364,6 +3364,40 @@ Quatre choses qui le portent :
 **Le pouce se CENTRE sous le doigt** quand on le saisit : sans ça, le prendre
 par son milieu ferait sauter la liste d'une demi-fenêtre au premier pixel.
 
+**ET LES DEUX BARRES SONT DE LA FERRONNERIE, PLUS DES CAPSULES.** Keko : « on
+peut rework le visuel des barres de scroll (hub et coffre) pour un truc un peu
+moins gros, stylisé et texturé ? » *C'étaient les derniers
+`border-radius: 999px` de l'interface* — la règle qui a ramené la barre de vie
+de la capsule au biseau, puis les infobulles à zéro, puis le bouton de
+rangement, et qui finit par tout rattraper.
+
+Quatre choses, et chacune répond à un mot de la demande :
+
+- **MOINS GROSSE, en deux temps.** Le pouce passe de 0,44 à 0,34 de sa bande —
+  *la bande réservée ne bouge pas, c'est le trait dedans qui s'affine* — et
+  surtout il est **plafonné en rem** : il se mesurait en part du champ, donc il
+  valait 15 px sur un écran de PC contre 5 sur un téléphone, pour un objet
+  qu'on saisit à la souris dans les deux cas. **Une barre de défilement
+  appartient à l'interface, pas à la scène** — la règle déjà tenue par le
+  disque du compte. Mesuré : 11 px sur un écran de PC (19 avant), 5 px à
+  844 x 390 (6,2 avant) ;
+- **LA PISTE EST UNE GORGE CREUSÉE**, et le creux se fait par la LUMIÈRE et non
+  par un fond plus noir : arête sombre à gauche et en haut, filet clair à
+  droite et en bas — *le raisonnement du jonc des cartes*, lumière du
+  haut-gauche partout ;
+- **LE POUCE EST UNE NAVETTE DE LAITON BROSSÉ** : deux bouts en pointe
+  (`clip-path`, bornés pour qu'un pouce court ne devienne pas un losange), de
+  fines stries horizontales — le vocabulaire déjà parlé par les feuillets des
+  tas et le grain des cartes, *un aplat de couleur n'est pas du métal* — et un
+  dégradé HORIZONTAL clair à gauche, sombre à droite : **sur un trait vertical,
+  c'est le seul axe où un dégradé raconte une épaisseur** ;
+- **le pas des stries tient 3 px**, pour qu'elles ne moirent jamais : la règle
+  du réseau du foil, qui s'efface dès qu'il devient plus fin que le pixel.
+
+**Un seul nombre pour les deux barres** (`PART_POUCE`), parce que les deux le
+lisent : *deux valeurs écrites chacune de leur côté se désaccordent au premier
+réglage* — et elles l'étaient.
+
 Mesuré, avec quatorze entrées : **48 px de ligne à 667x320** (6,1 visibles) et
 **51 px à 844x390** (7 visibles), aucun nom tronqué, zéro débordement. Le
 plafond de 3,4rem tient le grand écran.
