@@ -5900,15 +5900,26 @@ body {
    que les cartouches du lieu, en petit. Un avatar rond aurait parle la langue
    d'une autre interface. */
 .arm-lieu-blason.trombine {
-  aspect-ratio: 1;
+  /* LE RAPPORT EST CELUI DE LA DEMI-IMAGE, et c'est ce qui rend le cadrage
+     EXACT. Keko : « je voyais un format ou on affiche la partie superieure
+     (moitie superieure de l'image) a cote du texte, en reduit bien sur mais
+     pas en carre ».
+
+     *Le dessin fait 576 x 2064, donc sa moitie haute fait 576 x 1032* : une
+     boite a ce rapport, en `cover` et calee en haut, montre exactement cette
+     moitie -- il n'y a plus de pourcentage a regler a l'oeil, et donc **plus
+     rien qui depende du dessin**. C'etait le point fragile de la version
+     carree, ou la fenetre tombait sur le crane de l'un et la touffe de
+     l'autre. */
+  aspect-ratio: 576 / 1032;
+  /* ELLE EST PLUS HAUTE QUE L'ECU, ET PLUS ETROITE QUE LUI. Etroite parce que
+     c'est la HAUTEUR qui la borne -- a 0,85 de ligne elle ne prend que 0,47 de
+     ligne en largeur, contre 0,65 pour l'ecu carre : *le nom y gagne de la
+     place au lieu d'en perdre*, et le calcul de la police tient sans
+     retouche. */
+  height: min(2.95em, calc(var(--rail-ligne, 2rem) * 0.85));
   object-fit: cover;
-  /* LE CADRAGE SE PREND SOUS LE HAUT DU DESSIN, pas a son bord. Cale a `top`,
-     la fenetre tombait sur le crane de l'armurier et sur la touffe du
-     charognard -- *un repere cale sur la marge d'un dessin se deplace avec le
-     dessin*, et ces deux-la n'ont pas leur visage a la meme hauteur. A 24 % la
-     fenetre couvre le visage et le buste des deux. **C'est le reglage le plus
-     fragile de l'essai** : un troisieme PNJ cadre autrement le rouvrira. */
-  object-position: center 24%;
+  object-position: center top;
   border: 1px solid #6b5936;
   background: #0d0e13;
   clip-path: polygon(

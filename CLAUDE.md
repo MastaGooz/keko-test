@@ -3443,19 +3443,30 @@ pied — dans une ligne de 48 px il ferait 13 px de large et le visage sept. **U
 portrait réduit n'est pas un symbole réduit** : un écu est un signe, fait pour
 tenir à vingt pixels ; un portrait est une image, qui veut de la surface.
 
-**Mais recadré sur la TÊTE, ça marche, et il n'y a rien à redessiner** : une
-vignette carrée en `cover`, le vocabulaire des jeux d'extraction. Elle est
-cerclée de laiton à coins coupés — *un avatar rond aurait parlé la langue d'une
-autre interface.*
+**Mais recadré sur le HAUT du dessin, ça marche, et il n'y a rien à
+redessiner.** Elle est cerclée de laiton à coins coupés — *un avatar rond
+aurait parlé la langue d'une autre interface.*
 
-Deux choses à savoir avant de le rendre définitif :
+**ET CE N'EST PAS UN CARRÉ : C'EST LA MOITIÉ SUPÉRIEURE.** Keko : « je voyais
+un format où on affiche la partie supérieure (moitié supérieure de l'image) à
+côté du texte, en réduit bien sûr mais pas en carré ».
 
-- **le cadrage dépend du dessin**, et c'est le réglage le plus fragile de
-  l'essai. Calé au bord haut, il tombait sur le crâne de l'armurier et sur la
-  touffe du charognard : *un repère calé sur la marge d'un dessin se déplace
-  avec le dessin*, et ces deux-là n'ont pas leur visage à la même hauteur. À
-  24 % la fenêtre couvre le visage et le buste des deux ; **un troisième PNJ
-  cadré autrement rouvrira la question** ;
+*Et ça règle le point fragile de la version carrée.* Celle-ci demandait un
+pourcentage de cadrage trouvé à l'oeil — calé au bord haut, il tombait sur le
+crâne de l'armurier et sur la touffe du charognard, parce qu'*un repère calé
+sur la marge d'un dessin se déplace avec le dessin*. **Une boîte au rapport de
+la demi-image (576 x 1032), en `cover` et calée en haut, montre exactement
+cette moitié** : il n'y a plus de nombre à régler, donc plus rien qui dépende
+du dessin.
+
+Elle est **plus haute que l'écu et plus étroite que lui** : c'est la hauteur
+qui la borne, donc elle ne prend que 0,47 de ligne en largeur contre 0,65 pour
+un carré — *le nom y gagne de la place au lieu d'en perdre*, et le calcul de la
+police tient sans retouche. Mesuré : 17 x 31 px à 667 x 320 (l'écu fait 17 x
+17), 39 x 69 sur un écran de PC, aucun nom tronqué, zéro débordement.
+
+Ce qui reste à savoir avant d'en faire le défaut :
+
 - **le rail chargerait TOUS les portraits**, là où il n'en charge qu'un
   aujourd'hui — celui du lieu ouvert. Deux PNJ font déjà **2,4 Mo**, huit en
   feraient dix. *Une vignette de trente pixels ne vaut pas un mégaoctet* : si
