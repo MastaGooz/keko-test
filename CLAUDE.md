@@ -6122,19 +6122,33 @@ carte le disait trois fois sans jamais dire qu'elles vont ensemble. **Et c'est
 le MÊME objet aux deux endroits**, pas deux dessins qui se ressembleraient —
 *deux signaux qui disent le même fait sont le même objet.*
 
-**IL FAIT LA LARGEUR DES EMPLACEMENTS ET LA HAUTEUR D'UNE CARTE.** Il montait
-d'abord jusqu'au-dessus des titres de groupe — Keko : « il faudrait que le
-rectangle soit de la hauteur des cartes mais de la largeur des 3 emplacements,
-là ça prend en compte les titres armes et armure, je préfère pas ». *Ce qui est
-prêté, ce sont les pièces, pas les mots qui les coiffent.*
+**IL FAIT LA LARGEUR DES EMPLACEMENTS ET IL COIFFE LES TITRES.** Il s'est
+arrêté sous eux le temps d'un essai — Keko l'avait demandé, puis repris :
+« finalement, fais passer le rectangle au-dessus des titres arme/armure ». *Les
+deux mots nomment ce qui est prêté*, donc ils sont dedans ; et le cadre cesse de
+serrer les cartes de si près.
 
-**Son air est le même aux quatre côtés, et c'est le côté le plus contraint qui
-le fixe** : au-dessus des cartes il n'y a qu'un douzième de rangée avant le
-titre, donc c'est lui qui donne la mesure — et la largeur s'en déduit au lieu
-d'être écrite à part. *Un cadre plus serré en haut qu'à gauche se lit comme un
-cadre de travers.* Mesuré à quatre formats : air identique aux quatre côtés, le
-trait s'arrête avant le filet du titre, et le bloc tient dans le cadre de
-l'équipement.
+**Son air est le même aux quatre côtés** — *un cadre plus serré en haut qu'à
+gauche se lit comme un cadre de travers* — et il se mesure sur l'écart d'une
+rangée à l'autre, le seul blanc de ce panneau. La largeur s'en déduit au lieu
+d'être écrite à part.
+
+**MAIS IL S'ARRÊTE SOUS LA CASE DU PRÊT**, et cette borne n'est pas théorique :
+sur un écran court la case descend JUSQUE DANS la bande des titres — mesuré,
+3,5 px de recouvrement à 844 x 390 et 10 px à 956 x 340, invisibles parce que le
+mot se centre dans une bande plus haute que lui. Sans la borne, les deux cadres
+se chevauchaient, et *deux contours qui se chevauchent ne font plus deux
+signaux.*
+
+**ET LE TRAIT FAIT DEUX PIXELS, pas un.** Keko : « rends les rectangles armes /
+armure et checkbox + texte un peu plus épais (ainsi que l'effet), c'est un peu
+trop fin ». *C'est l'épaisseur qui porte la lumière* — le dégradé ne se voit que
+sur la bande que le masque laisse — donc le trait et l'effet se règlent d'un
+seul chiffre.
+
+Mesuré à cinq formats, avec et sans arme à deux mains : air identique aux quatre
+côtés, 4 à 5 px entre les deux cadres sur les écrans courts, aucun titre coupé,
+et le bloc tient dans le cadre de l'équipement.
 
 **Le point de lumière TOURNE**, comme celui du liseré du diamant : c'est le
 même mouvement, vu de l'extérieur. Avec **un fond constant en plus du point qui
