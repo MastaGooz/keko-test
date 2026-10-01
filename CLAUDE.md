@@ -3239,6 +3239,21 @@ Quatre choses qui le portent :
 - **le titre se centre sur ce qu'il coiffe**, pas sur la fenêtre : le rail
   n'est pas de l'armurerie, c'est ce qui permet d'en sortir.
 
+**L'ARMURERIE S'APPELLE « MAÎTRE D'ARMES » AU RAIL, à l'essai.** Keko : « on
+peut remplacer armurerie par "maître d'arme" pour tester ? » *Le rail nomme des
+GENS depuis qu'il porte leurs trombines* — Charognard est un métier, pas un
+lieu, et « Armurerie » était le seul nom de bâtiment de la liste.
+
+**Seul le nom d'affichage change** : `lieu` reste `'armurerie'`, c'est un
+identifiant interne qui ne se lit nulle part.
+
+*Prix mesuré, et il est connu* : « Maître d'armes » est plus large
+qu'« Expédition », donc **la police du rail tombe de 12,5 à 10,0 px à
+844 x 390** — le rail a son plancher de largeur, donc c'est le corps qui cède.
+*Le prix d'un nom long se paie quelque part* : en largeur de colonne quand elle
+peut grandir, en taille de police quand elle est au plancher. Rien ne tronque
+à 667 x 320 ni à 844 x 390, mais c'est juste au pixel.
+
 **HUIT DESTINATIONS, ET LES SIX MÉTIERS ONT LEUR NOM** — Expédition,
 Armurerie, puis Marché, Charognard, Forgeron, Couturière, Enchanteresse,
 Alchimiste. *Je ne les avais pas inventés, et c'était juste* : « sept métiers
