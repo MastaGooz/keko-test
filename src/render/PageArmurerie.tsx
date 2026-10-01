@@ -26,6 +26,7 @@ import {
   NOM_ONGLET,
   ONGLETS,
   contenuDuCoffre,
+  encocheGauche,
   enPixels,
   pixelsParUnite,
   planArmurerie,
@@ -135,7 +136,7 @@ export function PageArmurerie({
   onLieu,
 }: Props): React.JSX.Element {
   const fenetre = useFenetre()
-  const plan = planArmurerie(fenetre.h, fenetre.l, deuxMains(hub.chargement))
+  const plan = planArmurerie(fenetre.h, fenetre.l, deuxMains(hub.chargement), encocheGauche())
   const boite = (r: Parameters<typeof enPixels>[0]): React.CSSProperties => {
     const p = enPixels(r, fenetre.h, fenetre.l)
     return { left: `${p.left}px`, top: `${p.top}px`, width: `${p.width}px`, height: `${p.height}px` }

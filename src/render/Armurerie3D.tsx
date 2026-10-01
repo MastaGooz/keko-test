@@ -53,6 +53,7 @@ import type { PlanArmurerie } from './armurerie-plan.ts'
 import {
   caseSousLePoint,
   contenuDuCoffre,
+  encocheGauche,
   pixelsParUnite,
   placeCase,
   planArmurerie,
@@ -289,7 +290,7 @@ export function Armurerie3D({
 }: Props): React.JSX.Element {
   const { size } = useThree()
   const aDeuxMains = deuxMains(hub.chargement)
-  const plan = planArmurerie(size.height, size.width, aDeuxMains)
+  const plan = planArmurerie(size.height, size.width, aDeuxMains, encocheGauche())
   // LE DISQUE DU COMPTE SE MESURE EN REM, pas en part de carte : c'est un
   // repère d'interface, et une case du coffre fait trois fois plus de pixels
   // sur un écran de PC que sur un téléphone.

@@ -49,6 +49,12 @@ export type LieuHub =
   | 'chapelle'
   | 'mercenaires'
   | 'bibliotheque'
+  | 'ecuries'
+  | 'tanneur'
+  | 'herboriste'
+  | 'reliquaire'
+  | 'arene'
+  | 'guilde'
 
 export type Destination = {
   /** Ce qui s'affiche dans le rail. */
@@ -117,4 +123,10 @@ export const DESTINATIONS: readonly Destination[] = [
   { nom: 'Chapelle', ouvert: true, lieu: 'chapelle' },
   { nom: 'Mercenaires', ouvert: true, lieu: 'mercenaires' },
   { nom: 'Bibliothèque', ouvert: true, lieu: 'bibliotheque' },
+  { nom: 'Écuries', ouvert: true, lieu: 'ecuries' },
+  { nom: 'Tanneur', ouvert: true, lieu: 'tanneur' },
+  { nom: 'Herboriste', ouvert: true, lieu: 'herboriste' },
+  { nom: 'Reliquaire', ouvert: true, lieu: 'reliquaire' },
+  { nom: 'Arène', ouvert: true, lieu: 'arene' },
+  { nom: 'Guilde', ouvert: true, lieu: 'guilde' },
 ]

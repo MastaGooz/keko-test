@@ -278,10 +278,62 @@ export function enPixels(
   }
 }
 
+/**
+ * LA BANDE QUE L'APPAREIL NOUS PREND À GAUCHE, en pixels d'écran.
+ *
+ * Keko : « il faudrait décaler un peu les catégories du hub sur la droite, car
+ * elles tombent sur l'emplacement de la caméra du téléphone ». *Un téléphone
+ * couché met son encoche sur un des deux bords*, et le rail tient justement
+ * celui-là.
+ *
+ * On le demande au navigateur plutôt que de l'écrire à la main :
+ * `env(safe-area-inset-left)` dit la vraie valeur de l'appareil, et la page
+ * déclare déjà `viewport-fit=cover`. **Un plancher reste**, parce que cette
+ * valeur est NULLE en onglet ordinaire — le navigateur garde l'encoche pour
+ * lui — alors que « décaler un peu » vaut partout.
+ *
+ * **Elle se mesure UNE FOIS et se partage**, parce que les deux mondes lisent
+ * le même plan : si le HTML et le canvas la mesuraient chacun de leur côté,
+ * le cadre ne tomberait plus autour de sa grille. Et c'est l'appelant qui la
+ * passe, pour que `planArmurerie` reste pure et appelable sans navigateur.
+ */
+let encocheMesuree: number | null = null
+let ecouteurPose = false
+
+export function encocheGauche(): number {
+  if (encocheMesuree !== null) return encocheMesuree
+  if (typeof document === 'undefined') return 0
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+  let bord = 0
+  try {
+    const sonde = document.createElement('div')
+    sonde.style.cssText =
+      'position:fixed;left:0;top:0;width:0;height:0;padding-left:env(safe-area-inset-left,0px);visibility:hidden'
+    document.body.appendChild(sonde)
+    bord = parseFloat(getComputedStyle(sonde).paddingLeft) || 0
+    sonde.remove()
+  } catch {
+    bord = 0
+  }
+  encocheMesuree = Math.max(bord, 0.9 * rem)
+  // ELLE SE REMESURE SI L'APPAREIL TOURNE : un demi-tour en paysage fait
+  // passer l'encoche de gauche à droite, et la valeur gardée décalerait alors
+  // le rail pour rien. *Une mesure mémorisée doit mourir avec ce qui la
+  // produit.*
+  if (ecouteurPose === false) {
+    ecouteurPose = true
+    window.addEventListener('orientationchange', () => {
+      encocheMesuree = null
+    })
+  }
+  return encocheMesuree
+}
+
 export function planArmurerie(
   hauteurFenetrePx: number,
   largeurFenetrePx: number,
   aDeuxMains: boolean,
+  encochePx = 0,
 ): PlanArmurerie {
   const demiHaut = hauteurVisibleA(Z_PLAN, hauteurFenetrePx) / 2
   const demiLarge = (demiHaut * largeurFenetrePx) / hauteurFenetrePx
@@ -351,8 +403,12 @@ export function planArmurerie(
     Math.min(2 * demiLarge * 0.15, demiHaut * 0.66),
     (152 * hauteurVisibleA(Z_PLAN, hauteurFenetrePx)) / hauteurFenetrePx,
   )
-  const xRail = -demiLarge + marge + (lRail - marge) / 2
-  const gauche = -demiLarge + lRail
+  // L'ENCOCHE PREND SA BANDE AVANT LE RAIL, et le rail avant tout le reste :
+  // *une bande réservée ne se partage pas.* Les meubles cèdent d'autant, comme
+  // ils cèdent au rail lui-même.
+  const encoche = (encochePx * hauteurVisibleA(Z_PLAN, hauteurFenetrePx)) / hauteurFenetrePx
+  const xRail = -demiLarge + encoche + marge + (lRail - marge) / 2
+  const gauche = -demiLarge + encoche + lRail
   // LE LIEU D'EXPÉDITION prend tout ce que le rail laisse, comme les trois
   // meubles de l'armurerie réunis.
   const lExpedition = demiLarge - gauche - 2 * marge

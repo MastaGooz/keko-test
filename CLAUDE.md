@@ -3375,11 +3375,51 @@ tournent pas et le pouce ne bouge jamais. Ça ressemble exactement à une
 synchronisation cassée. Seules la molette et le glisser RÉELS, suivis d'une
 capture, disent la vérité.
 
-**SIX DESTINATIONS DE PLUS, et ce sont des places tenues** — taverne,
-cartographe, infirmerie, chapelle, mercenaires, bibliothèque. Keko a autorisé
-d'en inventer les noms pour ce banc-là seulement : *on ne peut rien dire d'une
-barre de défilement avec une liste qui tient à l'écran.* Elles ouvrent toutes
+**DOUZE DESTINATIONS DE PLUS, et ce sont des places tenues** — taverne,
+cartographe, infirmerie, chapelle, mercenaires, bibliothèque, puis écuries,
+tanneur, herboriste, reliquaire, arène, guilde. Keko a autorisé d'en inventer
+les noms pour ce banc-là seulement : *on ne peut rien dire d'une barre de
+défilement avec une liste qui tient à l'écran.* Elles ouvrent toutes
 l'armurerie, comme les autres places tenues.
+
+**Les six dernières sont venues pour le GRAND ÉCRAN.** Keko : « il n'y a pas
+assez de catégories pour pouvoir scroller sur PC ». À quatorze entrées la
+colonne débordait de 27 px sur un écran de PC — *un défilement de vingt-sept
+pixels ne se teste pas* — parce que la ligne y est plafonnée à 3,4rem et que la
+colonne fait 1169 px. À vingt, le contenu monte à 1632 px et le pouce tombe à
+72 % de sa piste. **Aucun nom ne dépasse « Enchanteresse »**, et c'est voulu :
+le plancher de largeur du rail se mesure sur le plus long, donc un nom plus
+large aurait rétréci la police de tous les autres.
+
+**ET LE RAIL CÈDE SA PLACE À L'ENCOCHE.** Keko : « il faudrait décaler un peu
+les catégories du hub sur la droite car elles tombent sur l'emplacement de la
+caméra du téléphone ». *Un téléphone couché met son encoche sur un des deux
+bords*, et le rail tient justement celui-là.
+
+Trois choses qui le portent :
+
+- **on demande la valeur à l'appareil** (`env(safe-area-inset-left)`, mesurée
+  sur une sonde) plutôt que de l'écrire à la main : la page déclare déjà
+  `viewport-fit=cover`, donc le navigateur la connaît. Un chiffre fixe aurait
+  été faux sur tous les téléphones sauf un ;
+- **un PLANCHER reste** (0,9rem), parce que cette valeur est NULLE en onglet
+  ordinaire — le navigateur garde l'encoche pour lui — alors que « décaler un
+  peu » vaut partout ;
+- **la bande se prend AVANT le rail**, qui se prend avant tout le reste :
+  *une bande réservée ne se partage pas.* Les meubles cèdent d'autant, comme
+  ils cèdent déjà au rail.
+
+**Elle se mesure une fois et se PARTAGE** : les deux mondes lisent le même
+plan, donc deux mesures séparées feraient tomber le cadre à côté de sa grille.
+Et c'est l'appelant qui la passe, pour que `planArmurerie` reste pure et
+appelable sans navigateur — *ce qui est pur se mesure sans navigateur, même
+quand c'est le navigateur qu'on veut mesurer.* Elle meurt à
+l'`orientationchange` : un demi-tour en paysage fait passer l'encoche à droite,
+et la valeur gardée décalerait le rail pour rien.
+
+Mesuré à vingt entrées : rail à **33 px du bord à 844 x 390** (21 avant),
+29 px à 667 x 320, 71 px sur un écran de PC ; ligne de 51 et 48 px, aucun nom
+tronqué, zéro débordement aux trois formats.
 
 ### L'ARMURERIE EN 3D — jalon 7, et la boucle est fermée
 
