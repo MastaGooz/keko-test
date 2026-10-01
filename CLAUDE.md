@@ -7587,6 +7587,22 @@ Deux choses à ne pas défaire :
   saturent à peine — *une lumière ajoutée ne délave pas, un voile blanc posé,
   si.*
 
+**ET ELLE SE RENFORCE QUAND LA CARTE EST PETITE.** Keko : « j'ai l'impression
+que la lumière du background se voit beaucoup moins sur les cartes quand elles
+sont réduites ».
+
+*La peinture, elle, est identique* — mesuré aux trois toiles (256, 512, 768) :
+25,3 de luminance près de la lame et 6,6 au coin, au dixième près, en proportion
+de la carte. **Ce qui change est ce que l'oeil en fait** : le halo occupe la
+même fraction de carte, mais cette fraction vaut 300 px au zoom et quatorze dans
+une case de coffre — *un dégradé doux étalé sur quatorze pixels ne se lit plus.*
+
+L'intensité suit donc la toile (`×(768/largeur)^0,34`). C'est la règle de la
+loupe du zoom prise par l'autre bout : **on vise le résultat perçu, pas le
+paramètre** — et l'exposant reste faible, il ne s'agit pas de rattraper le
+rapport des tailles (×6), seulement de rendre l'effet lisible en petit sans
+l'écraser en grand. Sur la grande carte, rien ne bouge.
+
 *Une version intermédiaire relisait le CANVAS plutôt que l'image, pour bloomer
 le décor et le sujet d'un coup. Elle a laissé une leçon* : **la source d'un
 `drawImage` se lit en PIXELS DE LA TOILE, pas en unités de carte.** `ctx.scale`

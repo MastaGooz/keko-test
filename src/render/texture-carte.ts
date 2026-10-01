@@ -808,7 +808,23 @@ export async function peindreCarte(
       couvrir(pctx, image, 0, 0, petit.width, petit.height)
       ctx.save()
       ctx.globalCompositeOperation = 'lighter'
-      ctx.globalAlpha = 0.34
+      /**
+       * ET ELLE SE RENFORCE QUAND LA CARTE EST PETITE. Keko : « j'ai
+       * l'impression que la lumière du background se voit beaucoup moins sur
+       * les cartes quand elles sont réduites ».
+       *
+       * *La peinture, elle, est identique* — mesuré à 256, 512 et 768 : même
+       * luminance au pixel près, en proportion de la carte. **Ce qui change
+       * est ce que l'oeil en fait** : le halo occupe la même fraction de carte,
+       * mais cette fraction vaut 300 px au zoom et quatorze dans une case de
+       * coffre, et un dégradé doux étalé sur quatorze pixels ne se lit plus.
+       *
+       * C'est la règle de la loupe du zoom, prise par l'autre bout : **on vise
+       * le résultat perçu, pas le paramètre.** L'exposant reste faible — il ne
+       * s'agit pas de rattraper le rapport des tailles (×6), seulement de
+       * rendre l'effet lisible en petit sans l'écraser en grand.
+       */
+      ctx.globalAlpha = 0.34 * Math.pow(LARGE / largeur, 0.34)
       ctx.imageSmoothingQuality = 'high'
       ctx.drawImage(petit, marge, marge, lArt, hArt)
       ctx.restore()
