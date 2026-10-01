@@ -144,7 +144,7 @@ export type Destination = {
 
 export const DESTINATIONS: readonly Destination[] = [
   { nom: 'Expédition', ouvert: true, lieu: 'expedition', majeur: true, embleme: 'Exploration' },
-  { nom: "Maître d'armes", ouvert: true, lieu: 'armurerie', embleme: 'Armurerie', pnj: 'Armurier' },
+  { nom: "Maître d'armes", ouvert: true, lieu: 'armurerie', embleme: 'Armurerie', pnj: 'Armurier.webp' },
   // LES SIX MÉTIERS DU HUB, nommés par Keko. **Chacun a son lieu**, vide pour
   // l'instant : un panneau à son nom, et rien dedans — « juste le titre,
   // encadré mais vide, pour tester la navigation ». *Un écran vide qui porte
@@ -155,7 +155,7 @@ export const DESTINATIONS: readonly Destination[] = [
   // et redessiné au gabarit du PNJ — 656 x 1824, le même rapport que
   // l'armurier. *Son cadrage tombe avec son ancien dessin* : la fenêtre de la
   // trombine se cale en haut, comme pour un sujet qui touche les quatre bords.
-  { nom: 'Fossoyeur', ouvert: true, lieu: 'fossoyeur', pnj: 'Fossoyeur' },
+  { nom: 'Fossoyeur', ouvert: true, lieu: 'fossoyeur', pnj: 'Fossoyeur.webp' },
   { nom: 'Forgeron', ouvert: true, lieu: 'forgeron', cachee: true },
   { nom: 'Couturière', ouvert: true, lieu: 'couturiere', cachee: true },
   { nom: 'Enchanteresse', ouvert: true, lieu: 'enchanteresse', cachee: true },

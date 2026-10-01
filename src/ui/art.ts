@@ -68,6 +68,17 @@ const IMAGES: Record<string, string> = {
   // `armure-de-plate`. *Elle suit le nom, pas l'identifiant* — c'est ce qui
   // permet à Keko de poser un fichier sans toucher au code des règles.
   'armure-de-plate': 'Armure de plate.webp',
+  'cotte-de-maille': 'Cotte de maille.webp',
+  'plastron-de-cuir': 'Plastron de cuir.webp',
+  robe: 'Robe.webp',
+  dague: 'Dague.webp',
+  hachette: 'Hachette.webp',
+  'hache-a-deux-mains': 'Hache à deux mains.webp',
+  // LE FICHIER S'APPELLE « Epée », SANS ACCENT SUR LE E. *La casse compte, et
+  // l'accent aussi* : le serveur de dev de Windows servait quand même l'image,
+  // mais `new Image()` la refusait et GitHub Pages, servi depuis Linux, aurait
+  // rendu un 404 franc. **On recopie le nom du fichier, on ne le réécrit pas.**
+  'epee-a-deux-mains': 'Epée à deux mains.webp',
 }
 
 /**
@@ -121,7 +132,12 @@ export function urlDuFond(): string {
  * casse du nom compte** : GitHub Pages sert depuis Linux.
  */
 export function urlDuSymbole(nom: string): string {
-  return `${import.meta.env.BASE_URL}${nom}.png?v=${encodeURIComponent(__BUILD_TIME__)}`
+  // L'EXTENSION EST DANS LE NOM quand ce n'est pas un PNG. Les portraits sont
+  // passés en WebP (45 Ko contre 1,3 Mo) pendant que les emblèmes sont restés
+  // en PNG : *une table qui colle une extension suppose qu'il n'y en a qu'une*,
+  // et il y en a deux depuis que Keko convertit.
+  const fichier = nom.includes('.') ? nom : `${nom}.png`
+  return `${import.meta.env.BASE_URL}${fichier}?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
 /*

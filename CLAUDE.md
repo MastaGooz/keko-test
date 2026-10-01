@@ -8664,9 +8664,17 @@ le navigateur. *Un essai abandonné redonne donc le dessin d'origine*, sans
 image cassée et sans une ligne de JavaScript. Pour ajouter une image : un
 fichier 680 x 1000 dans `public/`, une ligne dans `IMAGES`.
 
-**La casse du nom compte.** `public/` est copié tel quel et GitHub Pages sert
-depuis Linux : un `glaive.png` demandé pour un `Glaive.png` posé marcherait sur
-la machine de dev et ferait un 404 en ligne.
+**La casse du nom compte** — et l'ACCENT aussi. `public/` est copié tel quel et
+GitHub Pages sert depuis Linux : un `glaive.png` demandé pour un `Glaive.png`
+posé marcherait sur la machine de dev et ferait un 404 en ligne.
+
+*Et ça s'est produit*, sur un accent plutôt que sur une casse : le fichier
+s'appelle `Epée à deux mains.webp` (E sans accent), j'avais écrit `Épée`. **Le
+serveur de dev de Windows servait quand même l'image** — un `fetch` renvoyait
+200 — mais `new Image()` la refusait, et la carte sortait avec son sceau de
+repli. En ligne, ç'aurait été un 404 franc. *On recopie le nom du fichier, on ne
+le réécrit pas* : une entrée de la table se vérifie contre `ls public/`, pas
+contre l'orthographe qu'on croit juste.
 
 **ET ELLES SONT EN WEBP DEPUIS QUE LE FORMAT EST FIXÉ.** Une illustration de
 carte se dessine en **1024 x 1463 (rapport 7:10)** : c'est la surface d'art de

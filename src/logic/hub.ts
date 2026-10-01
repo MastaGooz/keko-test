@@ -23,7 +23,13 @@ import {
   ARMES_COMMUNES,
   ARMURE_GRATUITE,
   ARMURES_COMMUNES,
+  COTTE_DE_MAILLE,
+  DAGUE,
   ESPADON,
+  HACHETTE,
+  HACHE_DEUX_MAINS,
+  PLASTRON_DE_CUIR,
+  ROBE,
   RONDACHE,
   POTIONS_DEPART,
   SUPER_POTIONS_DEPART,
@@ -326,7 +332,21 @@ export function creerHub(): Hub {
     // au sens du garde-fou — mort avec, on le perd pour de bon.
     // CINQ POTIONS, dont une déjà dans la pile : on arrive équipé, donc on
     // découvre la carte en jouant plutôt qu'en lisant l'armurerie.
-    reserve: [ESPADON, RONDACHE, ...POTIONS_DEPART.slice(1), ...SUPER_POTIONS_DEPART],
+    // TOUT LE CATALOGUE DESSINÉ ATTEND AU RÂTELIER, en attendant un marché :
+    // *on ne juge pas une armurerie sur deux pièces*, et c'est là que Keko
+    // regarde ses illustrations.
+    reserve: [
+      ESPADON,
+      HACHE_DEUX_MAINS,
+      RONDACHE,
+      DAGUE,
+      HACHETTE,
+      COTTE_DE_MAILLE,
+      PLASTRON_DE_CUIR,
+      ROBE,
+      ...POTIONS_DEPART.slice(1),
+      ...SUPER_POTIONS_DEPART,
+    ],
     chargement: {
       mains: [ARME_GRATUITE, null],
       armure: ARMURE_GRATUITE,

@@ -200,7 +200,11 @@ const TORNADE: Modele = {
  */
 export const ESPADON: Arme = {
   id: 'espadon',
-  nom: 'Espadon',
+  // ELLE S'APPELLE « ÉPÉE À DEUX MAINS » depuis que Keko lui a dessiné la
+  // sienne — « qui remplace l'espadon ». *L'identifiant ne bouge pas* : il ne
+  // se lit nulle part à l'écran, et le renommer ne ferait que risquer une
+  // sauvegarde.
+  nom: 'Épée à deux mains',
   rarete: 'rare',
   mains: 2,
   set: [
@@ -317,6 +321,39 @@ export const PLASTRON: Armure = {
   ],
 }
 
+/** La plus légère — provisoire : beaucoup de petites gardes. */
+export const PLASTRON_DE_CUIR: Armure = {
+  id: 'plastron-de-cuir',
+  nom: 'Plastron de cuir',
+  rarete: 'commune',
+  set: [
+    { modele: GARDE, nombre: 5 },
+    { modele: REMPART, nombre: 1 },
+  ],
+}
+
+/** Entre le cuir et la plate — provisoire. */
+export const COTTE_DE_MAILLE: Armure = {
+  id: 'cotte-de-maille',
+  nom: 'Cotte de maille',
+  rarete: 'commune',
+  set: [
+    { modele: GARDE, nombre: 3 },
+    { modele: REMPART, nombre: 3 },
+  ],
+}
+
+/** Du tissu : peu de bloc, et son verbe reste à trouver — provisoire. */
+export const ROBE: Armure = {
+  id: 'robe',
+  nom: 'Robe',
+  rarete: 'commune',
+  set: [
+    { modele: GARDE, nombre: 2 },
+    { modele: REMPART, nombre: 1 },
+  ],
+}
+
 /** L'armure qu'on ne peut pas perdre, comme le Glaive. */
 export const ARMURE_GRATUITE = PLASTRON
 
@@ -328,6 +365,57 @@ export const ARMURE_GRATUITE = PLASTRON
  * filtre sur la rareté : le jour où une pièce commune ne devra pas s'y trouver,
  * on la retire d'ici sans toucher au reste.
  */
+/* ---------------------------------------------------------------------- *
+ * LE RESTE DU CATALOGUE, dessiné par Keko et pas encore réglé.
+ *
+ * **LEURS SETS SONT PROVISOIRES, et ils ne contiennent AUCUNE carte nouvelle** :
+ * ce sont les modèles qui existent déjà, en compositions différentes. *Inventer
+ * sept jeux de noms et de chiffres serait trancher du design en passant* — et
+ * un chiffre de carte ne se pose pas au jugé, le set du Glaive a fait tomber la
+ * survie au fond de 50 % à 4 % pour 10 % de puissance.
+ *
+ * Ce qui est vrai dès maintenant : les pièces existent, portent leur
+ * illustration, leur compteur et leur rareté, et se jouent. **À régler avec
+ * Keko, pièce par pièce**, puis à calibrer par simulation.
+ * ---------------------------------------------------------------------- */
+
+/** Rapide et bon marché — provisoire. */
+export const DAGUE: Arme = {
+  id: 'dague',
+  nom: 'Dague',
+  rarete: 'commune',
+  mains: 1,
+  set: [
+    { modele: ESTOC, nombre: 2 },
+    { modele: TAILLADE, nombre: 1 },
+  ],
+}
+
+/** Plus lourde que la dague, moins que le glaive — provisoire. */
+export const HACHETTE: Arme = {
+  id: 'hachette',
+  nom: 'Hachette',
+  rarete: 'commune',
+  mains: 1,
+  set: [
+    { modele: TAILLADE, nombre: 2 },
+    { modele: ESTOC, nombre: 1 },
+  ],
+}
+
+/** Le gros coup, à deux mains — provisoire. */
+export const HACHE_DEUX_MAINS: Arme = {
+  id: 'hache-deux-mains',
+  nom: 'Hache à deux mains',
+  rarete: 'commune',
+  mains: 2,
+  set: [
+    { modele: TAILLADE, nombre: 3 },
+    { modele: MOULINET, nombre: 2 },
+    { modele: FENDRE, nombre: 1 },
+  ],
+}
+
 export const ARMES_COMMUNES: readonly Arme[] = [GLAIVE]
 export const ARMURES_COMMUNES: readonly Armure[] = [PLASTRON]
 
