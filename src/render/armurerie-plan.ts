@@ -192,7 +192,7 @@ export type PlanArmurerie = {
   grille: Rect
   /** La case « Prêt de l'armurier », sous le bouton du deck. */
   pretCase: Rect
-  /** La zone des pièces portées : armes et armure, noms compris. */
+  /** La zone des pièces portées : la rangée des armes et de l'armure. */
   blocPorte: Rect
   /** La barre de défilement, à droite de la grille. */
   barre: Rect
@@ -818,6 +818,20 @@ export function planArmurerie(
   // prend les deux mains, trois sinon.
   const hautes = aDeuxMains ? 2 : 3
   const place = (rang: number): number => xEquip + (rang - (hautes - 1) / 2) * pasCharge
+
+  // LA ZONE DES PIÈCES PORTÉES fait la largeur des emplacements et la HAUTEUR
+  // D'UNE CARTE. Keko : « il faudrait que le rectangle de l'effet soit de la
+  // hauteur des cartes mais de la largeur des 3 emplacements — là ça prend en
+  // compte les titres armes et armure, je préfère pas. » *Ce qui est prêté, ce
+  // sont les pièces, pas les mots qui les coiffent.*
+  //
+  // Son air est LE MÊME AUX QUATRE CÔTÉS — sinon un cadre plus serré en haut
+  // qu'à gauche se lit comme un cadre de travers — et c'est donc le côté le
+  // plus contraint qui le fixe : *en haut, le titre du groupe attend juste
+  // au-dessus des cartes.* On prend l'écart qui les en sépare, moins un cheveu
+  // pour que le trait ne vienne pas mourir sur le mot.
+  const airBlocPorte = ((pasRangee - tailleCharge * 1.4) / 2) * 0.85
+  const lBlocPorte = (hautes - 1) * pasCharge + tailleCharge + airBlocPorte * 2
   // « Armes » couvre les deux mains — ou la seule, quand une arme les prend
   // toutes les deux et que le second slot est masqué.
   //
@@ -898,7 +912,7 @@ export function planArmurerie(
       Z_PLAN,
     ]),
     /**
-     * LA ZONE DES PIÈCES PORTÉES — armes et armure, noms compris.
+     * LA ZONE DES PIÈCES PORTÉES — la rangée des armes et de l'armure.
      *
      * Keko : « il faudrait que l'effet de contour s'applique non pas aux
      * cartes mais à tout le bloc armes + armure, avec un effet qui brille en
@@ -908,9 +922,9 @@ export function planArmurerie(
      */
     blocPorte: {
       x: xEquip,
-      y: (yNomPorte + hNom / 2 + (yPorte - pasRangee / 2)) / 2,
-      l: hautes * pasCharge + pasCharge * 0.22,
-      h: hNom + pasRangee + pasRangee * 0.12,
+      y: yPorte,
+      l: lBlocPorte,
+      h: tailleCharge * 1.4 + airBlocPorte * 2,
     },
     nomArmes: { x: xArmes, y: yNomPorte, l: lArmes, h: hNom },
     nomArmure: { x: place(hautes - 1), y: yNomPorte, l: pasCharge - coupe, h: hNom },

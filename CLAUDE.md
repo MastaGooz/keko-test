@@ -6122,6 +6122,20 @@ carte le disait trois fois sans jamais dire qu'elles vont ensemble. **Et c'est
 le MÊME objet aux deux endroits**, pas deux dessins qui se ressembleraient —
 *deux signaux qui disent le même fait sont le même objet.*
 
+**IL FAIT LA LARGEUR DES EMPLACEMENTS ET LA HAUTEUR D'UNE CARTE.** Il montait
+d'abord jusqu'au-dessus des titres de groupe — Keko : « il faudrait que le
+rectangle soit de la hauteur des cartes mais de la largeur des 3 emplacements,
+là ça prend en compte les titres armes et armure, je préfère pas ». *Ce qui est
+prêté, ce sont les pièces, pas les mots qui les coiffent.*
+
+**Son air est le même aux quatre côtés, et c'est le côté le plus contraint qui
+le fixe** : au-dessus des cartes il n'y a qu'un douzième de rangée avant le
+titre, donc c'est lui qui donne la mesure — et la largeur s'en déduit au lieu
+d'être écrite à part. *Un cadre plus serré en haut qu'à gauche se lit comme un
+cadre de travers.* Mesuré à quatre formats : air identique aux quatre côtés, le
+trait s'arrête avant le filet du titre, et le bloc tient dans le cadre de
+l'équipement.
+
 **Le point de lumière TOURNE**, comme celui du liseré du diamant : c'est le
 même mouvement, vu de l'extérieur. Avec **un fond constant en plus du point qui
 passe** — *un liseré qui ne s'allume qu'au passage n'est pas une bordure
