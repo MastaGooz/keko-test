@@ -770,7 +770,27 @@ export async function peindreCarte(
   // image de décor pour toutes les cartes, et le modèle ne porte plus que ce
   // qu'il montre. Le repli reste celui d'avant — sans fond, la surface sombre
   // suffit et rien ne casse.
-  if (decor !== null) couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+  if (decor !== null) {
+    couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+    /**
+     * ET SON EXPOSITION MONTE. Keko, deux passes plus tard : « je trouve le
+     * background toujours trop sombre (miniature et zoom) ».
+     *
+     * *Le bloom n'éclaire qu'AUTOUR du sujet* — c'est ce qu'il voulait, et ça
+     * ne dit rien des coins, qui restaient à 7 de luminance sur 255,
+     * c'est-à-dire noirs. **Ce qui manquait, c'était le décor lui-même.**
+     *
+     * On le REDESSINE en `lighter` plutôt que de poser un voile clair : *une
+     * addition de l'image sur elle-même garde son contraste et sa matière*, là
+     * où un voile uniforme écrase les deux en les noyant de gris. C'est une
+     * exposition qu'on monte, pas un rideau qu'on tire.
+     */
+    ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
+    ctx.globalAlpha = 0.9
+    couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+    ctx.restore()
+  }
 
   /**
    * FOND, PUIS LUMIÈRE, PUIS SUJET — et c'est Keko qui a trouvé l'ordre : « on

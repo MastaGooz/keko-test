@@ -7587,6 +7587,24 @@ Deux choses à ne pas défaire :
   saturent à peine — *une lumière ajoutée ne délave pas, un voile blanc posé,
   si.*
 
+**ET L'EXPOSITION DU DÉCOR MONTE, en plus de la lumière du sujet.** Keko, deux
+passes plus tard : « je trouve le background toujours trop sombre (miniature et
+zoom) ».
+
+*Le bloom n'éclaire qu'AUTOUR du sujet* — c'est ce qu'il voulait, et ça ne dit
+rien des coins, qui restaient à 7 de luminance sur 255, c'est-à-dire noirs.
+**Ce qui manquait, c'était le décor lui-même.**
+
+**On le REDESSINE en `lighter` plutôt que de poser un voile clair** : *une
+addition de l'image sur elle-même garde son contraste et sa matière*, là où un
+voile uniforme écrase les deux en les noyant de gris. C'est une exposition qu'on
+monte, pas un rideau qu'on tire — et le ciel étoilé du fond commun redevient
+visible.
+
+Mesuré : le haut de la carte passe de 7 à **52** de luminance, le milieu à 42,
+et la lame ne bouge pas (121). Le voile du bas, lui, reprend tout : le texte se
+lit comme avant.
+
 **ET ELLE SE RENFORCE QUAND LA CARTE EST PETITE.** Keko : « j'ai l'impression
 que la lumière du background se voit beaucoup moins sur les cartes quand elles
 sont réduites ».
