@@ -4265,7 +4265,15 @@ pas un rail de huit entrées sur deux symboles.*
 
 **C'est un repli d'AFFICHAGE, pas une donnée** : `embleme` reste vide dans la
 liste, et il n'y a qu'un `?? 'Armurerie'` à retirer le jour où chaque
-destination a son dessin. Le bloc garde son `aspect-ratio` de toute façon : *un
+destination a son dessin.
+
+**ET ELLES SONT TOUTES OUVERTES, POUR LA MÊME RAISON.** Keko : « tu peux mettre
+les onglets vides du hub en armurerie (placeholder) juste pour test ? » *Six
+entrées sur huit éteintes à 22 %, ça se juge mal* — on voit un rail à moitié
+mort plutôt que le hub qu'il sera. Elles ouvrent donc l'armurerie faute d'avoir
+leur lieu, **sans jamais s'allumer comme le lieu courant** : la marque `actif`
+lit `lieu`, qui reste vide chez elles, et c'est lui qui dit où l'on est. Deux
+`true` et un `?? 'armurerie'` à défaire le jour venu. Le bloc garde son `aspect-ratio` de toute façon : *un
 élément vide sans rapport déclaré est large de zéro*, et l'alignement des mots
 tombait avec lui.
 

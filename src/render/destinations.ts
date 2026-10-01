@@ -39,7 +39,18 @@ export type LieuHub = 'armurerie' | 'expedition'
 export type Destination = {
   /** Ce qui s'affiche dans le rail. */
   nom: string
-  /** Est-ce que ce lieu existe ? Les autres sont des places tenues. */
+  /**
+   * Est-ce que ce lieu existe ? Les autres sont des places tenues.
+   *
+   * **ELLES SONT TOUTES OUVERTES LE TEMPS D'UN TEST.** Keko : « tu peux mettre
+   * les onglets vides du hub en armurerie (placeholder) juste pour test ? »
+   * *Six entrées sur huit éteintes à 22 %, ça se juge mal* — on voit un rail à
+   * moitié mort plutôt que le hub qu'il sera. Elles ouvrent donc l'armurerie
+   * faute d'avoir leur lieu, **sans jamais s'allumer comme le lieu courant** :
+   * `lieu` reste vide, et c'est lui qui dit où l'on est.
+   *
+   * Deux `true` à repasser à `false` le jour où chaque destination existe.
+   */
   ouvert: boolean
   /** Le lieu qu'elle ouvre, quand elle en ouvre un. */
   lieu?: LieuHub
@@ -68,10 +79,10 @@ export type Destination = {
 export const DESTINATIONS: readonly Destination[] = [
   { nom: 'Expédition', ouvert: true, lieu: 'expedition', majeur: true, embleme: 'Exploration' },
   { nom: 'Armurerie', ouvert: true, lieu: 'armurerie', embleme: 'Armurerie' },
-  { nom: 'Bientôt', ouvert: false },
-  { nom: 'Bientôt', ouvert: false },
-  { nom: 'Bientôt', ouvert: false },
-  { nom: 'Bientôt', ouvert: false },
-  { nom: 'Bientôt', ouvert: false },
-  { nom: 'Bientôt', ouvert: false },
+  { nom: 'Bientôt', ouvert: true },
+  { nom: 'Bientôt', ouvert: true },
+  { nom: 'Bientôt', ouvert: true },
+  { nom: 'Bientôt', ouvert: true },
+  { nom: 'Bientôt', ouvert: true },
+  { nom: 'Bientôt', ouvert: true },
 ]

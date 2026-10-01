@@ -712,7 +712,11 @@ export function PageArmurerie({
             type="button"
             className={`arm-lieu${d.lieu === lieu ? ' actif' : ''}${d.majeur === true ? ' majeur' : ''}`}
             disabled={!d.ouvert}
-            onClick={() => d.lieu !== undefined && onLieu(d.lieu)}
+            /* UNE PLACE TENUE OUVRE L'ARMURERIE, faute d'avoir son lieu : c'est
+               le placeholder qui permet de juger un rail entier. Elle ne
+               s'allume pas pour autant — `actif` lit `d.lieu`, qui reste
+               vide. */
+            onClick={() => onLieu(d.lieu ?? 'armurerie')}
           >
             {/* L'EMBLÈME RESTE, ET IL EST BORNÉ PAR SA LIGNE. Keko : « il faut
                 garder le symbole car plus tard on aura des symboles
