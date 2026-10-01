@@ -4754,7 +4754,7 @@ body {
      jambages qu'un chiffre n'a pas : il parait donc toujours un peu haut, et
      Keko l'a repris a la taille de l'ecran de PC aussi. En `em`, donc la
      correction suit la taille du chiffre. Le telephone en remet, parce que le
-     disque de `Cost.png` y ajoute son propre decentrage. */
+     disque de `Cost.webp` y ajoute son propre decentrage. */
   translate: 0 0.06em;
 }
 
@@ -4763,7 +4763,7 @@ body {
    Keko : « ils etaient un peu haut dans la bulle ». Deux raisons se cumulent,
    et aucune ne se voit sur un grand ecran :
 
-   - `Cost.png` porte son disque 1,6 % plus bas que le centre de son cadre
+   - `Cost.webp` porte son disque 1,6 % plus bas que le centre de son cadre
      (9,7 % de vide en haut, 6,5 en bas), alors que le chiffre se centre sur le
      CADRE ;
    - un chiffre se centre sur sa BOITE DE LIGNE, dont le bas est reserve aux

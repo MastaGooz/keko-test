@@ -130,7 +130,7 @@ export function urlDuSymbole(nom: string): string {
  * build, sinon le remplacer ne changerait rien à l'écran.
  */
 export function urlDuCout(): string {
-  return `${import.meta.env.BASE_URL}Cost.png?v=${encodeURIComponent(__BUILD_TIME__)}`
+  return `${import.meta.env.BASE_URL}Cost.webp?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
 /**
