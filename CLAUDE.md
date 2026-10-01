@@ -4656,18 +4656,23 @@ Ce que ça donne, et ce n'est pas qu'un rangement :
   un mot de dix lettres. D'où un plancher en pixels d'écran et non en fraction
   du champ — *un texte se mesure en pixels.*
 
-**Le lieu dit ce qu'on emporte** : « Tu descends avec 10 cartes, dont 3 qui
-frappent », posée au-dessus de « Descendre ». *On n'a plus le chargement sous
-les yeux*, et c'est le seul chiffre sur lequel les deux départs se comparent.
-Elle se place à partir de l'écart entre les deux boutons, jamais d'une hauteur
-écrite à la main — **mais elle est BORNÉE par le haut du panneau**. Keko :
-« dans le menu expédition, le texte se superpose au titre en haut ». *Les
-boutons ont un plancher en pixels, donc ils occupent d'autant plus de panneau
-que l'écran est court* : sur un écran de 320 px la ligne rejoignait la plaque
-du lieu, qui est à cheval sur le bord haut du cadre. **Une hauteur dérivée d'un
-objet à plancher doit être bornée par son contenant**, sinon elle en sort là où
-il est le plus petit. Mesuré : la borne mord à 667 x 320 et 956 x 340, et laisse
-14 px sous le bord.
+**LE LIEU NE PORTE PLUS QUE SES DEUX DÉPARTS.** Il a dit un temps ce qu'on
+emporte — « Tu descends avec 10 cartes, dont 3 qui frappent », posée au-dessus
+de « Descendre » — et Keko l'a retirée : « on va supprimer le texte sur la
+composition du deck dans l'onglet exploration ».
+
+*Et le chiffre n'est pas perdu* : il vit dans la bande de mesures et dans le
+bouton « Deck », qui l'ouvre en cartes. **Une ligne qui répète ce qu'un écran
+voisin montre mieux est une ligne de trop** — le raisonnement qui avait déjà
+fait disparaître le bandeau de titre.
+
+*Ce qu'elle a coûté en chemin reste utile si une ligne revient là* : elle se
+plaçait depuis l'écart entre les deux boutons, jamais d'une hauteur écrite à la
+main, **et elle devait être bornée par le haut du panneau**. Les boutons ont un
+plancher en pixels, donc ils occupent d'autant plus de panneau que l'écran est
+court : sur un écran de 320 px la ligne rejoignait la plaque du lieu. **Une
+hauteur dérivée d'un objet à plancher doit être bornée par son contenant**,
+sinon elle en sort là où il est le plus petit.
 
 **ET « EXPÉDITION » PASSE EN TÊTE, AVEC L'OR.** Keko : « il faudrait que
 l'onglet expédition soit le premier et qu'il ait un style légèrement différent

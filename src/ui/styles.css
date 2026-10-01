@@ -5770,23 +5770,6 @@ body {
     background 160ms ease-out;
 }
 
-/* CE QU'ON EMPORTE, DIT DANS LE LIEU D'EXPÉDITION. C'est une MENTION, pas une
-   mesure : on ne décide pas dessus, on la lit avant de partir. Ni fond ni
-   bordure, la police du lieu, et l'ombre la détache sans lui donner de bord. */
-.arm-expe-note {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  color: #c7b48c;
-  font-family: Cinzel, Georgia, serif;
-  font-size: min(1rem, 2.6vh);
-  letter-spacing: 0.04em;
-  text-align: center;
-  text-shadow: 0 1px 3px #000000cc;
-  pointer-events: none;
-}
-
 /* CE QUI COMPTE LE PLUS PORTE L'OR. Demande par Keko : « il faudrait que
    l'onglet expedition soit le premier et qu'il ait un style legerement
    different pour que le joueur comprenne que c'est le plus important. »
