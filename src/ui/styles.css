@@ -6137,6 +6137,38 @@ body {
   text-overflow: ellipsis;
 }
 
+/* LE NOM SE REPLIE SUR UN ÉCRAN COURT, et le portrait prend ce qu'il rend.
+   Keko : « sur téléphone uniquement, on pourrait écrire maître d'armes sur deux
+   lignes — et pareil pour tous les textes de catégories longs — afin de gagner
+   de la place et grossir le mini portrait du PNJ ? On le rend sur quasi toute
+   la hauteur de la case, donc il gagne en largeur aussi. »
+
+   *Ce que la colonne doit contenir n'est plus le nom, c'est son plus long MOT*
+   — et c'est ce que mesure `partsDuPlusLongNom`. Deux lignes serrées tiennent
+   largement dans une ligne de rail, qui vaut le plancher tactile.
+
+   Plus d'`ellipsis` : *il ne coupe qu'une ligne*, et un nom replié qui ne tient
+   pas doit faire céder son corps, pas pousser des points de suspension. */
+.arm-rail.replie .arm-lieu-nom {
+  white-space: normal;
+  line-height: 1.06;
+  text-overflow: clip;
+}
+
+/* ET LE PORTRAIT PREND LA LIGNE, plus l'em. *Sa hauteur ne se borne plus à ce
+   que mesure son voisin de droite* : c'est la case qui la lui donne, et sa
+   largeur suit son rapport. */
+/* ET LA MAJEURE SERRE SON REMPLISSAGE QUAND LE RAIL SE REPLIE : son mot est le
+   seul qui ne se coupe pas — c'est un mot unique — donc c'est l'air autour de
+   lui qui doit reculer pour qu'il profite de la police remontée. */
+.arm-rail.replie .arm-lieu.majeur {
+  padding-inline: 0.25em;
+}
+
+.arm-rail.replie .arm-lieu-blason.trombine {
+  height: calc(var(--rail-ligne, 2rem) * 0.92);
+}
+
 /* CE QUI RÉPOND AU SURVOL, et il n'y a pas de plaque à chauffer.
    Keko : « ajouter des effets visuels sur le hover de chaque case ».
 

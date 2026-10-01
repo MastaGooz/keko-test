@@ -4616,6 +4616,40 @@ lit `lieu`, qui reste vide chez elles, et c'est lui qui dit où l'on est. Deux
 élément vide sans rapport déclaré est large de zéro*, et l'alignement des mots
 tombait avec lui.
 
+**ET SUR UN ÉCRAN COURT, LE NOM SE REPLIE POUR QUE LE PORTRAIT GROSSISSE.**
+Keko : « sur téléphone uniquement, on pourrait écrire maître d'armes sur deux
+lignes — et pareil pour tous les textes de catégories longs — afin de gagner de
+la place et grossir le mini portrait du PNJ ? On le rend sur quasi toute la
+hauteur de la case, donc il gagne en largeur aussi. »
+
+*Ce que la colonne doit contenir n'est plus le nom, c'est son plus long MOT* —
+c'est ce que mesure `partsDuPlusLongNom`, et c'est tout ce qui change dans le
+calcul. Le portrait prend alors **92 % de la ligne** au lieu de se borner à
+l'em, et sa largeur suit son rapport.
+
+**Sa place se retranche en PIXELS, avant le partage.** Sa hauteur vient de la
+ligne et non plus de la police, donc *une part en em qui dépend d'une grandeur
+en pixels tourne en rond* : on lui retire sa largeur d'abord, et le reste se
+partage entre les remplissages, l'air qui le sépare du mot, et le mot.
+
+**ET L'ENTRÉE MAJEURE A SA PROPRE BORNE**, parce qu'elle porte son mot à 1,18
+fois le corps commun et n'a plus d'écu. Une seule borne, calée sur les entrées
+ordinaires, la laissait déborder d'un pixel dès que le repli a fait monter la
+police — **ce qu'un contenant doit tenir, c'est son pire contenu, et il y en a
+deux sortes.** *Et son approche compte dans la mesure* : elle est à 0,18em là où
+les autres sont à 0,04, donc la mesurer comme les autres la sous-estimait d'un
+sixième — cinq pixels de débordement à la deuxième passe.
+
+Mesuré à 844 x 390 : « Maître d'armes » passe sur deux lignes, la police monte de
+9,05 à **11,4 px** (+26 %) et le portrait de 18 x 31 à **26 x 47** (+50 % de
+hauteur). À 667 x 320 : 11,1 → **12,2 px** et 17 x 31 → **25 x 44**. **Sur un
+écran de PC, pas un pixel ne bouge** — le palier est celui du projet, 430 px de
+haut.
+
+*Et le repli ne sert que s'il sert* : avec les vingt destinations du banc, c'est
+« Enchanteresse » qui commande, un seul mot qui ne se coupe pas, donc la police
+reste basse et rien ne se replie. **Un nom qui tient sur une ligne y reste.**
+
 **ET L'AIR EST PASSÉ DE L'AUTRE CÔTÉ DE L'ÉCU.** Keko : « on peut décaler un
 poil les images sur la gauche de chaque case pour les éloigner légèrement du
 texte ? » Le remplissage gauche tombe de 0,55 à 0,3em et l'écart au mot monte de

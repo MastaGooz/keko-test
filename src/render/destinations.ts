@@ -219,3 +219,15 @@ export function pnjDuLieu(lieu: LieuHub): string | undefined {
 export function trombinesAuRail(): boolean {
   return typeof location !== 'undefined' && new URLSearchParams(location.search).has('trombines')
 }
+
+/**
+ * LA PART DE LA LIGNE QUE PREND UN PORTRAIT REPLIÉ, et son rapport.
+ *
+ * Keko : « on le rend sur quasi toute la hauteur de la case, et donc il gagne
+ * en largeur aussi ». Les deux vivent ici parce que **le plan de la page et la
+ * feuille de style les lisent tous les deux** — *une grandeur que deux endroits
+ * lisent se pose là où les deux la voient.*
+ */
+export const PART_HAUTE_TROMBINE = 0.92
+/** La demi-image d'un PNJ : 656 x 1824, donc 656 / 912. */
+export const RAPPORT_TROMBINE = 656 / 912

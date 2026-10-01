@@ -47,6 +47,8 @@ import {
   destinationsMontrees,
   pnjDuLieu,
   trombinesAuRail,
+  PART_HAUTE_TROMBINE,
+  RAPPORT_TROMBINE,
 } from './destinations.ts'
 
 /**
@@ -184,18 +186,31 @@ export function PageArmurerie({
    * Le `letter-spacing` s'ajoute à la main : `measureText` ne le connaît pas,
    * et il vaut un cran par caractère.
    */
-  const partsDuPlusLongNom = (): number => {
+  /**
+   * @param parMot sur un écran court, un nom long tient sur DEUX LIGNES, donc
+   * ce que la colonne doit contenir n'est plus le nom mais son plus long MOT.
+   */
+  const partsDuPlusLongNom = (parMot: boolean): { ordinaire: number; majeur: number } => {
     const ctx = document.createElement('canvas').getContext('2d')
-    if (ctx === null) return 9.5
+    if (ctx === null) return { ordinaire: 9.5, majeur: 9.5 }
     const corps = 100
     ctx.font = `${corps}px Cinzel, Georgia, serif`
-    let max = 0
+    const parts = { ordinaire: 0, majeur: 0 }
     for (const d of destinationsMontrees()) {
-      const mot = d.nom.toUpperCase()
-      const large = ctx.measureText(mot).width + 0.04 * corps * mot.length
-      if (large > max) max = large
+      const cle = d.majeur === true ? 'majeur' : 'ordinaire'
+      /* L'APPROCHE N'EST PAS LA MÊME DES DEUX CÔTÉS. L'entrée majeure porte la
+         sienne à 0,18em — *c'est elle qui fait l'enseigne* — plus son retrait
+         de compensation. Mesurer tout le monde à 0,04 la sous-estimait d'un
+         sixième, et elle débordait de cinq pixels dès que le repli a fait
+         monter la police. */
+      const appro = cle === 'majeur' ? 0.18 : 0.04
+      for (const mot of parMot ? d.nom.toUpperCase().split(' ') : [d.nom.toUpperCase()]) {
+        const large =
+          ctx.measureText(mot).width + appro * corps * mot.length + (cle === 'majeur' ? appro * corps : 0)
+        if (large / corps > parts[cle]) parts[cle] = large / corps
+      }
     }
-    return max / corps
+    return parts
   }
 
   /**
@@ -216,7 +231,21 @@ export function PageArmurerie({
       vivant = false
     }
   }, [])
-  const partsNom = useMemo(partsDuPlusLongNom, [polices])
+  /**
+   * LE NOM PASSE À DEUX LIGNES SUR UN ÉCRAN COURT. Keko : « sur téléphone
+   * uniquement, on pourrait écrire maître d'armes sur deux lignes — et pareil
+   * pour tous les textes de catégories longs — afin de gagner de la place et
+   * grossir le mini portrait du PNJ ? »
+   *
+   * *Le rail ne descend jamais sous ce qu'il doit contenir* : tant que le nom
+   * tient sur une ligne, c'est le nom entier ; replié, c'est son plus long mot.
+   * **Ce qu'on gagne en largeur, le portrait et le mot se le partagent.**
+   *
+   * Le palier est celui du projet (430 px de haut) — *c'est la hauteur qui
+   * manque sur un téléphone, jamais la largeur.*
+   */
+  const deuxLignes = fenetre.h <= 430
+  const partsNom = useMemo(() => partsDuPlusLongNom(deuxLignes), [polices, deuxLignes])
 
   /**
    * LE REM COURANT, lu une fois par rendu. Il suit la fenêtre (son `clamp` est
@@ -226,6 +255,19 @@ export function PageArmurerie({
    */
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
   const trombines = trombinesAuRail()
+  /**
+   * LA HAUTEUR D'UNE LIGNE DU RAIL, calculée avant la police parce que celle-ci
+   * s'en sert : le portrait replié se mesure sur la ligne, et sa largeur se
+   * retranche de ce que le mot peut prendre.
+   *
+   * Elle ne dépend plus du nombre d'entrées depuis que la liste défile — *une
+   * liste qui défile a des lignes de taille fixe*, et la ligne reprend la
+   * hauteur que le doigt demande (48 px, le plancher tactile du projet).
+   */
+  const ligneRail = Math.max(
+    48,
+    Math.min(enPixels(plan.railListe, fenetre.h, fenetre.l).height / 7, 3.4 * rem),
+  )
 
   const plaque = (r: Parameters<typeof enPixels>[0]): React.CSSProperties => {
     const p = enPixels(r, fenetre.h, fenetre.l)
@@ -809,7 +851,7 @@ export function PageArmurerie({
           `pointer-events: none` pour laisser prendre les cartes, donc un
           bouton posé dedans ne répondrait pas. */}
       <nav
-        className="arm-rail"
+        className={`arm-rail${deuxLignes ? ' replie' : ''}`}
         ref={liste}
         onScroll={mesurerRail}
         style={{
@@ -846,9 +888,25 @@ export function PageArmurerie({
           // perdait sa dernière lettre dès que c'était LUI le plus long. *Une
           // bordure est une largeur comme une autre* — elle se retranche de la
           // place avant qu'on la partage, pas après.
+          /* ET QUAND LE NOM SE REPLIE, LE PORTRAIT SE RETRANCHE EN PIXELS.
+             Sa hauteur vient alors de la LIGNE et non plus de l'em, donc sa
+             largeur ne dépend plus de la police : *une part en em qui dépend
+             d'une grandeur en pixels tourne en rond.* On lui retire sa place
+             d'abord, et le reste se partage entre les deux remplissages, l'air
+             qui le sépare du mot, et le mot. */
+          /* ET L'ENTRÉE MAJEURE A SA PROPRE BORNE. Elle porte son mot à 1,18
+             fois le corps commun et n'a plus d'écu : *une seule borne, calée
+             sur les entrées ordinaires, la laissait déborder d'un pixel* dès
+             que le repli a fait monter la police. **Ce qu'un contenant doit
+             tenir, c'est son pire contenu — et il y en a deux sortes.** */
           '--rail-police': `${Math.min(
             1.25 * rem,
-            (enPixels(plan.railListe, fenetre.h, fenetre.l).width - 2) / (2.68 + partsNom),
+            (enPixels(plan.railListe, fenetre.h, fenetre.l).width -
+              2 -
+              (deuxLignes ? ligneRail * PART_HAUTE_TROMBINE * RAPPORT_TROMBINE : 0)) /
+              ((deuxLignes ? 1.02 : 2.68) + partsNom.ordinaire),
+            (enPixels(plan.railListe, fenetre.h, fenetre.l).width - 2) /
+              (1.18 * ((deuxLignes ? 0.5 : 0.9) + partsNom.majeur)),
           )}px`,
           // LA HAUTEUR D'UNE LIGNE NE DÉPEND PLUS DU NOMBRE D'ENTRÉES, depuis
           // qu'il y en a plus que de place : elle se divisait entre toutes, donc
@@ -863,10 +921,7 @@ export function PageArmurerie({
           // Keko lisait comme « des catégories illisibles ». *Une liste qui
           // défile n'a plus à faire tenir ce qu'elle montre*, donc la ligne
           // reprend la hauteur que le doigt demande, et le reste se tire.
-          '--rail-ligne': `${Math.max(
-            48,
-            Math.min(enPixels(plan.railListe, fenetre.h, fenetre.l).height / 7, 3.4 * rem),
-          )}px`,
+          '--rail-ligne': `${ligneRail}px`,
         } as React.CSSProperties}
       >
         {destinationsMontrees().map((d, i) => (
