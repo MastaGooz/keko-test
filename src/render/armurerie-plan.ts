@@ -326,10 +326,16 @@ export function planArmurerie(
    *
    * D'où un plancher en pixels d'écran, pas en fraction du champ : c'est le
    * texte qu'il doit tenir, et un texte se mesure en pixels.
+   *
+   * **Il a monté deux fois avec les noms** : 118 quand « Expédition » est
+   * arrivé, 152 quand les six métiers l'ont suivi — « Enchanteresse » est trois
+   * lettres plus long, et sans ça la police du rail tombait à 9,5 px sur un
+   * téléphone, en dessous de ce que Keko venait de faire remonter. *Le prix
+   * d'un nom long se paie en largeur de colonne, pas en lisibilité.*
    */
   const lRail = Math.max(
     Math.min(2 * demiLarge * 0.15, demiHaut * 0.66),
-    (118 * hauteurVisibleA(Z_PLAN, hauteurFenetrePx)) / hauteurFenetrePx,
+    (152 * hauteurVisibleA(Z_PLAN, hauteurFenetrePx)) / hauteurFenetrePx,
   )
   const xRail = -demiLarge + marge + (lRail - marge) / 2
   const gauche = -demiLarge + lRail

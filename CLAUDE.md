@@ -3239,11 +3239,30 @@ Quatre choses qui le portent :
 - **le titre se centre sur ce qu'il coiffe**, pas sur la fenêtre : le rail
   n'est pas de l'armurerie, c'est ce qui permet d'en sortir.
 
-**Huit entrées, une seule ouverte**, et c'est le banc d'essai que Keko voulait —
-« voir ce que ça donne si on avait 8 PNJ différents ». Le rail le rend gratuit :
-les sept autres sont des places tenues, éteintes, qui disent ce que le hub aura
-sans rien promettre. *Sept métiers inventés pour juger une mise en page, ce
-serait trancher du design en passant.*
+**HUIT DESTINATIONS, ET LES SIX MÉTIERS ONT LEUR NOM** — Expédition,
+Armurerie, puis Marché, Charognard, Forgeron, Couturière, Enchanteresse,
+Alchimiste. *Je ne les avais pas inventés, et c'était juste* : « sept métiers
+inventés pour juger une mise en page, ce serait trancher du design en passant ».
+**C'est Keko qui les a nommés** ; les six ouvrent l'armurerie et portent son écu
+le temps d'avoir les leurs. Ce que chacun fera se tranchera quand on l'ouvrira.
+
+**ET UN NOM LONG COÛTE DE LA LARGEUR DE COLONNE, pas de la lisibilité.**
+« Enchanteresse » fait trois lettres de plus qu'« Expédition », et à rail
+constant la police du rail tombait de 11,2 à **9,5 px** sur un téléphone — en
+dessous de ce que Keko venait de faire remonter. Le plancher du rail monte donc
+de 132 à **152 px**, et la police revient à 11,2. *Le prix se paie là où il se
+voit le moins* : la case du coffre perd 2 px (44 → 42 à 844 x 390), cinq
+colonnes partout.
+
+**LA TAILLE DU NOM SE MESURE, ELLE NE S'ESTIME PAS.** J'avais d'abord dérivé la
+police du NOMBRE de caractères — et la mesure dit que c'est faux :
+« Charognard » coûte **0,805 par lettre** (C, H, O, G, N, R sont larges) contre
+0,666 pour « Expédition ». Un coefficient moyen tenait l'un en tronquant
+l'autre, et le prochain nom rouvrirait le problème. On mesure donc le plus long
+au canvas, comme `plaque()` le fait pour les boutons — **et on remesure quand la
+police arrive** : un canvas qui mesure avant `document.fonts.ready` répond pour
+Georgia, plus étroite que Cinzel. *Une règle de peinture vaut pour tout ce qui
+peint, et mesurer est peindre à blanc.*
 
 **TROIS DÉBORDEMENTS SONT VENUS AVEC LE RAIL, et ils avaient tous la même
 racine.** Keko : « sur téléphone, dans l'armurerie, les stats dépassent

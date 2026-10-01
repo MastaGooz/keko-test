@@ -5616,13 +5616,12 @@ body {
      resserree -- et « ARMURERIE » y perdait ses trois dernieres lettres.
      *Un contenu qui ne suit qu'une dimension deborde des que l'autre se
      resserre*, la meme lecon que la bande de stats et les onglets du coffre. */
-  /* LE PLAFOND EN REM MONTE D'UN CRAN : il avait ete pose quand le rail etait
-     etroit, et sur un ecran de PC il commandait seul -- 22,8 px de texte dans
-     une colonne de 326. *Un plafond pose pour un contenant etroit ne vaut plus
-     quand il s'elargit.* Le coefficient de largeur, lui, baisse d'un cheveu :
-     c'est lui qui commande sur telephone, et il faut de quoi payer l'air
-     rendu au bord gauche. */
-  font-size: min(1.25rem, calc(var(--rail-l) * 0.104));
+  /* ELLE VIENT DU JETON, parce qu'elle se calcule sur le PLUS LONG NOM du rail
+     et pas sur sa largeur seule : « Enchanteresse » fait treize capitales
+     contre dix a « Expedition », et un coefficient fixe tenait l'une en
+     tronquant l'autre. *Ce qu'un contenant doit tenir, c'est son pire
+     contenu.* */
+  font-size: var(--rail-police, 0.9rem);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   text-align: left;

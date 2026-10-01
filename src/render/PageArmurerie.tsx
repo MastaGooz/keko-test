@@ -20,7 +20,7 @@
  * couvrent la moitié de l'écran : en `pointer-events: auto`, ils empêcheraient
  * de prendre une carte. Seuls les onglets et le pouce de la barre répondent.
  */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Onglet } from './armurerie-plan.ts'
 import {
   NOM_ONGLET,
@@ -148,6 +148,61 @@ export function PageArmurerie({
    * en deux. Même famille que le chiffre de la barre de vie, qui doit vivre
    * hors du contenant qui rogne les couleurs.
    */
+  /**
+   * LA LARGEUR DU PLUS LONG NOM DU RAIL, en parts de corps de police.
+   *
+   * *Estimer par le nombre de caractères est faux*, et la mesure le dit :
+   * « Charognard » coûte **0,805 par lettre** (C, H, O, G, N, R sont larges)
+   * contre 0,666 pour « Expédition ». Un coefficient moyen tenait l'un en
+   * tronquant l'autre, et le prochain nom que Keko ajoute rouvrirait le
+   * problème. **On mesure, on ne devine pas** — c'est ce que `plaque()` fait
+   * déjà pour les boutons.
+   *
+   * Le `letter-spacing` s'ajoute à la main : `measureText` ne le connaît pas,
+   * et il vaut un cran par caractère.
+   */
+  const partsDuPlusLongNom = (): number => {
+    const ctx = document.createElement('canvas').getContext('2d')
+    if (ctx === null) return 9.5
+    const corps = 100
+    ctx.font = `${corps}px Cinzel, Georgia, serif`
+    let max = 0
+    for (const d of DESTINATIONS) {
+      const mot = d.nom.toUpperCase()
+      const large = ctx.measureText(mot).width + 0.04 * corps * mot.length
+      if (large > max) max = large
+    }
+    return max / corps
+  }
+
+  /**
+   * **ET ON REMESURE QUAND LA POLICE ARRIVE.** Un canvas qui mesure avant
+   * `document.fonts.ready` répond pour Georgia, plus étroite que Cinzel — et
+   * le rail se serait dimensionné sur une police qu'il n'affiche pas. C'est la
+   * règle déjà payée sur `textureSlot` : *une règle de peinture vaut pour tout
+   * ce qui peint*, et mesurer est peindre à blanc.
+   */
+  const [polices, setPolices] = useState(0)
+  useEffect(() => {
+    if (document.fonts.status === 'loaded') return
+    let vivant = true
+    void document.fonts.ready.then(() => {
+      if (vivant) setPolices((n) => n + 1)
+    })
+    return () => {
+      vivant = false
+    }
+  }, [])
+  const partsNom = useMemo(partsDuPlusLongNom, [polices])
+
+  /**
+   * LE REM COURANT, lu une fois par rendu. Il suit la fenêtre (son `clamp` est
+   * en vw et vh), et deux jetons du rail s'y bornent : la hauteur d'une ligne
+   * et la taille du nom. *Une grandeur que deux endroits lisent se calcule une
+   * fois.*
+   */
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize)
+
   const plaque = (r: Parameters<typeof enPixels>[0]): React.CSSProperties => {
     const p = enPixels(r, fenetre.h, fenetre.l)
     return { left: `${p.left + p.width / 2}px`, top: `${p.top}px` }
@@ -700,9 +755,26 @@ export function PageArmurerie({
           // Le plafond vit ICI et pas dans la feuille, parce que l'emblème s'y
           // borne aussi : *deux endroits qui décrivent la même hauteur se
           // désaccordent au premier réglage.*
+          // LA POLICE SE CALCULE SUR LE PLUS LONG NOM, pas sur la largeur seule.
+          // « Enchanteresse » fait treize capitales contre dix à
+          // « Expédition » : à coefficient fixe, le rail tenait l'une et
+          // tronquait l'autre. *Ce qu'un contenant doit tenir, c'est son pire
+          // contenu* — et ici il est connu d'avance.
+          //
+          // Le reste de la ligne tient en `em` (deux remplissages, l'écart à
+          // l'écu, l'écu lui-même), donc tout se résout : la largeur vaut
+          // `P x (2,3 + 0,665 n)`, et le coefficient par caractère est mesuré
+          // sur Cinzel en capitales à 0,04em d'approche.
+          // Le reste de la ligne tient en `em` : deux remplissages (0,75), l'écart
+          // à l'écu (0,28) et l'écu lui-même (1,65). *Tout se résout* — la
+          // largeur vaut `P x (2,68 + parts)`, et `parts` est mesuré.
+          '--rail-police': `${Math.min(
+            1.25 * rem,
+            enPixels(plan.railListe, fenetre.h, fenetre.l).width / (2.68 + partsNom),
+          )}px`,
           '--rail-ligne': `${Math.min(
             enPixels(plan.railListe, fenetre.h, fenetre.l).height / DESTINATIONS.length,
-            3.4 * parseFloat(getComputedStyle(document.documentElement).fontSize),
+            3.4 * rem,
           )}px`,
         } as React.CSSProperties}
       >

@@ -79,10 +79,14 @@ export type Destination = {
 export const DESTINATIONS: readonly Destination[] = [
   { nom: 'Expédition', ouvert: true, lieu: 'expedition', majeur: true, embleme: 'Exploration' },
   { nom: 'Armurerie', ouvert: true, lieu: 'armurerie', embleme: 'Armurerie' },
-  { nom: 'Bientôt', ouvert: true },
-  { nom: 'Bientôt', ouvert: true },
-  { nom: 'Bientôt', ouvert: true },
-  { nom: 'Bientôt', ouvert: true },
-  { nom: 'Bientôt', ouvert: true },
-  { nom: 'Bientôt', ouvert: true },
+  // LES SIX MÉTIERS DU HUB, nommés par Keko. Aucun n'a encore son écran ni son
+  // dessin : ils ouvrent l'armurerie et portent son écu, le temps de juger un
+  // rail complet. *Ce sont des noms, pas des décisions de design* — ce que
+  // chacun fera se tranchera quand on l'ouvrira.
+  { nom: 'Marché', ouvert: true },
+  { nom: 'Charognard', ouvert: true },
+  { nom: 'Forgeron', ouvert: true },
+  { nom: 'Couturière', ouvert: true },
+  { nom: 'Enchanteresse', ouvert: true },
+  { nom: 'Alchimiste', ouvert: true },
 ]
