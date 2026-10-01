@@ -59,7 +59,6 @@ export type CarteAPeindre = {
    * le même symbole que le compteur du coin, donc la pièce répète en petit ce
    * qu'elle annonce en grand. Quand il est là, il remplace le cartouche.
    */
-  composition?: readonly { nombre: number; nom: string }[]
   /** Le type gravé au pied : « Attaque », « Trésor »… */
   type: string
   /**
@@ -839,10 +838,10 @@ export async function peindreCarte(
 /**
  * UNE CASE EN FORME DE CARTE, de fer sombre, avec son chiffre dedans.
  *
- * Elle sert au COMPTEUR du coin (ce que la pièce ajoute au deck) et à chaque
- * ligne de la composition (combien d'exemplaires d'un modèle) : *c'est le même
- * objet qui dit la même chose à deux échelles*, et les dessiner à deux
- * endroits garantirait qu'un jour ils divergent.
+ * Elle sert au COMPTEUR du coin : ce que la pièce ajoute au deck. Elle a servi
+ * aussi à chaque ligne de la composition, dans le cartouche, jusqu'à ce que
+ * celle-ci parte — *le zoom montre le set en vraies cartes, le cartouche le
+ * répétait en moins lisible.*
  */
 /**
  * LES CHIFFRES DE GRENZE GOTISCH SONT ELZÉVIRIENS, et c'est ce qui décentre.
@@ -863,17 +862,6 @@ function caseDeCarte(
   y: number,
   l: number,
   nombre: number,
-  /**
-   * Où poser le MILIEU du chiffre, en part de la hauteur de la case.
-   *
-   * **Sans elle, on reprend le réglage HISTORIQUE du compteur du coin**, au
-   * caractère près — Keko ne l'a pas jugé et le trouve déjà centré. *Une
-   * correction demandée sur un endroit ne se porte pas à l'autre par
-   * équivalence calculée* : j'avais cru les deux chemins identiques à 0,1 px,
-   * ils ne l'étaient pas, et `middle` ne se mesure pas partout sur la même
-   * boîte.
-   */
-  assiette?: number,
 ): void {
   const h = l * 1.4
   const coin = l * 0.105
@@ -902,35 +890,27 @@ function caseDeCarte(
   ctx.fillStyle = '#e8eef4'
   ctx.font = `600 ${police}px "Grenze Gotisch", Georgia, serif`
   ctx.textAlign = 'center'
-  if (assiette === undefined) {
-    /**
-     * SEUL, UN CHIFFRE SE CENTRE SUR SON PROPRE ENCRE.
-     *
-     * Keko : « pourquoi le 3 en haut à gauche n'est pas centré verticalement
-     * dans le symbole alors que pour le 6 c'est le cas ? » *Grenze Gotisch a
-     * des chiffres elzéviriens* : mesuré à 100 px, le 6 monte à 57 et
-     * s'arrête à 1 sous la ligne de base, le 3 monte à 48 et descend à 10.
-     * Posés sur la même boîte de police, leurs encres se retrouvent donc à
-     * onze points d'écart — le 6 tombait juste, le 3 pendait.
-     *
-     * **DANS UNE LISTE ON ALIGNE, SEUL ON CENTRE**, et c'est toute la
-     * différence avec la composition juste en dessous : là, plusieurs cases
-     * s'empilent et deux chiffres voisins ne peuvent pas être posés à deux
-     * hauteurs, donc ils partagent la boîte COMMUNE (`assiette`). Ici la case
-     * est seule sur sa carte : rien ne l'oblige à s'aligner sur personne, et
-     * ce qu'on veut est qu'elle soit centrée, quel que soit le chiffre.
-     */
-    ctx.textBaseline = 'middle'
-    const encre = ctx.measureText(String(nombre))
-    const milieu = (encre.actualBoundingBoxDescent - encre.actualBoundingBoxAscent) / 2
-    ctx.fillText(String(nombre), x + l / 2, y + h * 0.5 - milieu)
-    return
-  }
-  // ON POSE LA LIGNE DE BASE, pas une boîte de ligne. `middle` se mesure sur
-  // la boîte de POLICE — jambages compris, et un chiffre n'en a pas — donc il
-  // pose le chiffre trop bas de sa propre moitié de descente.
-  ctx.textBaseline = 'alphabetic'
-  ctx.fillText(String(nombre), x + l / 2, y + h * assiette + police * MILIEU_CHIFFRE)
+  /**
+   * UN CHIFFRE SE CENTRE SUR SON PROPRE ENCRE.
+   *
+   * Keko : « pourquoi le 3 en haut à gauche n'est pas centré verticalement
+   * dans le symbole alors que pour le 6 c'est le cas ? » *Grenze Gotisch a des
+   * chiffres elzéviriens* : mesuré à 100 px, le 6 monte à 57 et s'arrête à 1
+   * sous la ligne de base, le 3 monte à 48 et descend à 10. Posés sur la même
+   * boîte de police, leurs encres se retrouvent à onze points d'écart — le 6
+   * tombait juste, le 3 pendait.
+   *
+   * *La case est seule sur sa carte* : rien ne l'oblige à s'aligner sur
+   * personne, et ce qu'on veut est qu'elle soit centrée quel que soit le
+   * chiffre. (Elle a eu un second mode, à ligne de base commune, du temps où
+   * plusieurs cases s'empilaient dans le cartouche d'une pièce : *deux chiffres
+   * voisins ne peuvent pas être posés à deux hauteurs.* Il est parti avec la
+   * composition, et `git log` le garde.)
+   */
+  ctx.textBaseline = 'middle'
+  const encre = ctx.measureText(String(nombre))
+  const milieu = (encre.actualBoundingBoxDescent - encre.actualBoundingBoxAscent) / 2
+  ctx.fillText(String(nombre), x + l / 2, y + h * 0.5 - milieu)
 }
 
 /**
@@ -1409,110 +1389,6 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
   // taille à laquelle il a fallu l'écrire.
   ctx.fillRect(LARGE * 0.22, yNom + tailleNom * 0.68, LARGE * 0.56, Math.max(1, 0.25 * U))
 
-  /**
-   * LA COMPOSITION D'UNE PIÈCE : un modèle, sa petite carte, son nom. Demandé
-   * par Keko — « une icône de carte un peu comme en haut à gauche, avec un
-   * chiffre dedans, et le nom de la carte à sa droite, plutôt que "3×" ».
-   *
-   * *Le « × » disait un NOMBRE, la case dit ce qu'on COMPTE* — et c'est
-   * exactement le symbole du compteur du coin, donc la pièce répète en petit
-   * ce qu'elle annonce en grand. Les deux sortent de `caseDeCarte`, sans quoi
-   * ils divergeraient au premier réglage.
-   *
-   * **ÇA COULE : plusieurs modèles par ligne, à UNE condition — le couple
-   * case + nom ne se coupe jamais.** Tranché par Keko. Une entrée par ligne
-   * gâchait la largeur et poussait le bloc vers le bas ; deux colonnes fixes
-   * gâchaient l'inverse dès qu'un nom était court. *L'entrée est le mot
-   * insécable de ce texte-là*, et le reste se range comme une phrase.
-   *
-   * **Et l'écart ENTRE deux entrées est plus grand que celui qui sépare une
-   * case de son nom** (0,62 contre 0,26) : c'est la seule chose qui dise où
-   * un couple s'arrête, puisqu'il n'y a ni puce ni séparateur.
-   *
-   * **LE BLOC PEND SOUS LE NOM, il ne se centre plus dans la bande.** Centré,
-   * à trois lignes il finissait plus près du pied que du titre — Keko. Il part
-   * donc du même trait que le cartouche ordinaire (`0,752`) et descend : *ce
-   * qui suit un titre commence sous le titre.*
-   *
-   * **La taille cède jusqu'à ce que tout tienne**, en hauteur comme en
-   * largeur : même garde-fou que `replier` pour le cartouche — *un canvas
-   * écrit tout droit et laisse déborder sans rien signaler* — et on ne peut
-   * pas couper un nom de carte en deux.
-   */
-  if (carte.composition !== undefined && carte.composition.length > 0) {
-    const compo = carte.composition
-    // LA BANDE EST ÉQUILIBRÉE ENTRE SES DEUX VOISINS : le trait sous le nom
-    // tombe à 0,72 et le pied commence à 0,94, donc elle laisse le même air
-    // en haut et en bas. Elle descendait trop — à trois lignes le bloc
-    // touchait presque le type pendant qu'il restait du vide sous le titre.
-    // Keko : « les trois lignes de description sont mal centrées
-    // verticalement, plus proches du bas que du haut ». *Un bloc qui PEND doit
-    // pendre d'un crochet bien placé* : ce n'était pas le centrage qui était
-    // faux, c'étaient les bornes.
-    const haut = HAUT * 0.741
-    const bas = HAUT * 0.919
-    const large = LARGE * 0.88
-
-    /** Range les entrées au fil de l'eau, à cette taille de ligne. */
-    const composer = (ligne: number) => {
-      const caseL = ligne * 0.56
-      const ecart = ligne * 0.26
-      const entre = ligne * 0.62
-      ctx.font = `400 ${ligne * 0.62}px "Crimson Pro", Georgia, serif`
-      const larges = compo.map((e) => caseL + ecart + ctx.measureText(e.nom).width)
-      const rangs: number[][] = []
-      let courant: number[] = []
-      let x = 0
-      larges.forEach((l, i) => {
-        if (courant.length > 0 && x + entre + l > large) {
-          rangs.push(courant)
-          courant = []
-          x = 0
-        }
-        x += courant.length > 0 ? entre + l : l
-        courant.push(i)
-      })
-      if (courant.length > 0) rangs.push(courant)
-      return { caseL, ecart, entre, larges, rangs }
-    }
-
-    let ligne = 10 * U
-    let plan = composer(ligne)
-    while (
-      ligne > 3 * U &&
-      (Math.max(...plan.larges) > large || plan.rangs.length * ligne > bas - haut)
-    ) {
-      ligne *= 0.92
-      plan = composer(ligne)
-    }
-    const { caseL, ecart, entre, larges, rangs } = plan
-
-    // CHAQUE RANG SE CENTRE, comme le cartouche qu'il remplace.
-    rangs.forEach((rang, r) => {
-      const y = haut + ligne * (r + 0.5)
-      const total =
-        rang.reduce((somme, i) => somme + larges[i]!, 0) + entre * (rang.length - 1)
-      let x = (LARGE - total) / 2
-      rang.forEach((i) => {
-        const entree = compo[i]!
-        caseDeCarte(ctx, x, y - caseL * 0.7, caseL, entree.nombre, 0.5)
-        ctx.font = `400 ${ligne * 0.62}px "Crimson Pro", Georgia, serif`
-        ctx.textAlign = 'left'
-        ctx.textBaseline = 'middle'
-        ctx.fillStyle = '#f1e6cf'
-        ctx.shadowColor = '#000000aa'
-        ctx.shadowOffsetY = 0.4 * U
-        ctx.shadowBlur = 0.8 * U
-        ctx.fillText(entree.nom, x + caseL + ecart, y)
-        ctx.shadowColor = 'transparent'
-        x += larges[i]! + entre
-      })
-    })
-    ctx.textAlign = 'center'
-    peindrePied(ctx, carte)
-    return
-  }
-
   // LE CARTOUCHE : ce que fait la carte, centré, une ligne par entrée.
   //
   // **IL SE REPLIE.** En 2D c'est le navigateur qui coupe les lignes ; un
@@ -1918,8 +1794,7 @@ const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
 export function signature(carte: CarteAPeindre): string {
-  const compo = (carte.composition ?? []).map((e) => `${e.nombre}:${e.nom}`).join('~')
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.valeur ?? ''}|${carte.effet.join('~')}|${compo}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.valeur ?? ''}|${carte.effet.join('~')}`
 }
 
 /**

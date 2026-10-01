@@ -1123,14 +1123,12 @@ function cartePiece(piece: Piece): string {
     corpsCarte(
       piece.nom,
       `<span>${nb}</span>`,
-      // Sa composition, en UN texte qui coule : « 5× Estoc · 3× Taillade ·
-      // 2× Moulinet ». Une ligne par modèle plafonnait à cinq ; une arme en
-      // apportera jusqu'à huit. Le détail de chaque modèle — coût, dégâts —
-      // n'est plus ici : le zoom le montre en vraies cartes.
-      // L'objet liste ses cartes, TOUJOURS -- un consommable aussi : l'effet
-      // est sur la carte, pas sur l'objet (Keko : « on devrait différencier
-      // l'objet de la carte »).
-      [piece.set.map(({ modele, nombre }) => `<b>${nombre}×</b>&nbsp;${modele.nom}`).join(' · ')],
+      // SON CARTOUCHE EST VIDE, et la place est gardée. Keko : « on va
+      // supprimer les cartes générées de la description des cartes
+      // d'équipement, car le joueur peut l'avoir en cliquant dessus — en plus
+      // on va garder cet emplacement pour des effets spéciaux des armes ».
+      // *Le zoom montre déjà le set en vraies cartes.*
+      [],
       // La rareté ne s'écrit pas : elle se lit au cadre, code couleur classique
       // (`.piece-carte.rare`, `.epique`). Keko : « inutile d'afficher le niveau
       // de rareté, on le fera via un code couleur ».

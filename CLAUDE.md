@@ -3662,6 +3662,25 @@ la carte. `replier()` mesure mot à mot ; si le repli coûte une ligne de trop,
 la taille descend d'un cran, exactement ce que `cran` fait pour un effet long.
 Ça vaut pour toutes les cartes, pas seulement les pièces.
 
+**PUIS LE CARTOUCHE D'UNE PIÈCE S'EST VIDÉ, ET LA PLACE EST GARDÉE.** Keko :
+« on va supprimer les cartes générées de la description des cartes
+d'équipement, car le joueur peut l'avoir en cliquant dessus — en plus on va
+garder cet emplacement pour des effets spéciaux des armes ».
+
+*Le zoom montre déjà le set en VRAIES cartes*, donc le cartouche le répétait en
+moins lisible — et **une bande qui redit ce qu'un geste montre mieux est une
+bande de libre pour ce qui n'a nulle part où aller.** Les effets spéciaux d'arme
+viendront là.
+
+Ce qui tombe avec : la liste de cases dans le cartouche, le texte qui coulait en
+repli pour le 2D (vidé lui aussi — *la même carte partout*), la composition dans
+`signature()`, et le second mode de `caseDeCarte`, celui à ligne de base
+commune. **Le compteur du coin ne bouge pas** : c'est le POIDS de la pièce, et
+c'est la seule information qui rende « équiper plus dilue » lisible sur la pièce
+elle-même.
+
+*Ce qui suit est l'histoire de la bande disparue.*
+
 **CE QU'UNE PIÈCE APPORTE SE DESSINE, ça ne s'écrit plus.** Le cartouche
 alignait « 3× Fauchage · 2× Fendre · 1× Tornade » ; c'est désormais **une ligne
 par modèle, ouverte par la petite carte de son nombre** — la même case de fer

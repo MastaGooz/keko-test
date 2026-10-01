@@ -97,11 +97,16 @@ export function pieceAPeindre(objet: Objet): CarteAPeindre {
     nom: estConsommable(objet) ? objet.modele.nom : objet.nom,
     cout: 0,
     compteur: set.reduce((total, e) => total + e.nombre, 0),
-    // LE CARTOUCHE D'UNE PIÈCE EST UN DESSIN, pas une phrase : une petite
-    // carte par modèle, son nombre dedans, son nom à droite. Le texte reste
-    // en repli — il sert au 2D et à tout ce qui ne peint pas la composition.
-    effet: [set.map((e) => `${e.nombre}× ${e.modele.nom}`).join(' · ')],
-    composition: set.map((e) => ({ nombre: e.nombre, nom: e.modele.nom })),
+    // LE CARTOUCHE D'UNE PIÈCE EST VIDE, et la place est gardée.
+    //
+    // Keko : « on va supprimer les cartes générées de la description des
+    // cartes d'équipement, car le joueur peut l'avoir en cliquant dessus — en
+    // plus on va garder cet emplacement pour des effets spéciaux des armes ».
+    //
+    // *Le zoom montre déjà le set en vraies cartes*, donc le cartouche le
+    // répétait en moins lisible — et une bande qui redit ce qu'un geste montre
+    // mieux est une bande de libre pour ce qui n'a nulle part où aller.
+    effet: [],
     type: pied,
     // SA RARETÉ VA AU CADRE. Une carte de deck n'en a pas et n'en aura pas :
     // elle garde le laiton, qui est le commun.
