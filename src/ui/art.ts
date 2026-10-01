@@ -64,7 +64,10 @@ const IMAGES: Record<string, string> = {
   // dit ce qui vient* ; le jour où `logic/armes.ts` nomme la pièce Bouclier,
   // elle porte son dessin sans qu'on y revienne.
   rondache: 'Bouclier.webp',
-  plastron: 'Armure de plate.webp',
+  // LA CLÉ EST LE NOM AFFICHÉ, normalisé : « Armure de plate » devient
+  // `armure-de-plate`. *Elle suit le nom, pas l'identifiant* — c'est ce qui
+  // permet à Keko de poser un fichier sans toucher au code des règles.
+  'armure-de-plate': 'Armure de plate.webp',
 }
 
 /**

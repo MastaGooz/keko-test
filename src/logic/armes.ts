@@ -287,7 +287,8 @@ const REMPART: Modele = {
 }
 
 /**
- * Le Plastron : l'armure commune et gratuite, pendant du Glaive.
+ * L'Armure de plate : l'armure commune et gratuite, pendant du Glaive. Elle
+ * s'est appelée le Plastron jusqu'à ce que Keko lui dessine sa plate.
  *
  * **Le bloc est à la Slay the Spire** : il absorbe la salve de fin de tour,
  * puis il tombe. Ce n'est pas de la vie en réserve, c'est une décision qui ne
@@ -305,7 +306,10 @@ const REMPART: Modele = {
  */
 export const PLASTRON: Armure = {
   id: 'plastron',
-  nom: 'Plastron',
+  // ELLE S'APPELLE « ARMURE DE PLATE » depuis que Keko lui a dessiné sa plate.
+  // *L'identifiant, lui, ne bouge pas* : il ne se lit nulle part à l'écran, et
+  // le renommer ne ferait que risquer une sauvegarde.
+  nom: 'Armure de plate',
   rarete: 'commune',
   set: [
     { modele: GARDE, nombre: 4 },

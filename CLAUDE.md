@@ -1647,6 +1647,12 @@ cartes sur trois qui n'attaquent pas.
 **Ses deux modèles n'ont pas d'illustration** : ils sortent avec le sceau de
 repli (`defaut.svg`), ce qui est exactement ce que ce sceau est là pour dire.
 
+**L'ARMURE COMMUNE S'APPELLE « ARMURE DE PLATE »** depuis que Keko lui a dessiné
+sa plate (`Armure de plate.webp`). *Son identifiant ne bouge pas* : il ne se lit
+nulle part à l'écran, et le renommer ne ferait que risquer une sauvegarde. **La
+clé de son image, elle, suit le NOM** (`armure-de-plate`, le nom normalisé) —
+c'est ce qui permet de poser un fichier sans toucher au code des règles.
+
 **LE CONSOMMABLE EXISTE : LA POTION** (`logic/armes.ts`, la **pile** du
 chargement dans `logic/hub.ts`). **Une carte, un soin, puis elle s'exile** :
 1⚡, rend 14 PV, détruite en se buvant. On en possède **cinq exemplaires** et
