@@ -5220,7 +5220,11 @@ body {
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  padding: 1px;
+  /* L'ÉPAISSEUR DU TRAIT, et c'est elle qui porte la lumière : le dégradé ne
+     se voit que sur la bande que le masque laisse. Keko : « rends les
+     rectangles un peu plus épais (ainsi que l'effet), c'est un peu trop fin ».
+     *Un liseré d'un pixel se lit comme un bord, pas comme un verrou.* */
+  padding: 2px;
 }
 
 /* POSÉ SUR SON PARENT plutôt qu'aux coordonnées du plan : la case est un

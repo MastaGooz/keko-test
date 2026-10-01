@@ -192,7 +192,7 @@ export type PlanArmurerie = {
   grille: Rect
   /** La case « Prêt de l'armurier », sous le bouton du deck. */
   pretCase: Rect
-  /** La zone des pièces portées : la rangée des armes et de l'armure. */
+  /** La zone des pièces portées : la rangée des armes et de l'armure, titres compris. */
   blocPorte: Rect
   /** La barre de défilement, à droite de la grille. */
   barre: Rect
@@ -819,19 +819,26 @@ export function planArmurerie(
   const hautes = aDeuxMains ? 2 : 3
   const place = (rang: number): number => xEquip + (rang - (hautes - 1) / 2) * pasCharge
 
-  // LA ZONE DES PIÈCES PORTÉES fait la largeur des emplacements et la HAUTEUR
-  // D'UNE CARTE. Keko : « il faudrait que le rectangle de l'effet soit de la
-  // hauteur des cartes mais de la largeur des 3 emplacements — là ça prend en
-  // compte les titres armes et armure, je préfère pas. » *Ce qui est prêté, ce
-  // sont les pièces, pas les mots qui les coiffent.*
+  // LA ZONE DES PIÈCES PORTÉES COIFFE LES TITRES. Elle s'est arrêtée sous eux
+  // un temps — Keko, puis : « finalement, fais passer le rectangle au-dessus
+  // des titres arme/armure. » *Les deux mots nomment ce qui est prêté*, donc
+  // ils sont dedans ; et le cadre retrouve une hauteur qui ne serre plus les
+  // cartes de si près.
   //
-  // Son air est LE MÊME AUX QUATRE CÔTÉS — sinon un cadre plus serré en haut
-  // qu'à gauche se lit comme un cadre de travers — et c'est donc le côté le
-  // plus contraint qui le fixe : *en haut, le titre du groupe attend juste
-  // au-dessus des cartes.* On prend l'écart qui les en sépare, moins un cheveu
-  // pour que le trait ne vienne pas mourir sur le mot.
+  // Son air reste LE MÊME AUX QUATRE CÔTÉS — sinon un cadre plus serré en haut
+  // qu'à gauche se lit comme un cadre de travers — et il se mesure sur l'écart
+  // d'une rangée à l'autre, le seul blanc de ce panneau.
   const airBlocPorte = ((pasRangee - tailleCharge * 1.4) / 2) * 0.85
   const lBlocPorte = (hautes - 1) * pasCharge + tailleCharge + airBlocPorte * 2
+  const basBlocPorte = yPorte - tailleCharge * 1.4 / 2 - airBlocPorte
+  // ET IL S'ARRÊTE SOUS LA CASE DU PRÊT. *Deux contours qui se chevauchent ne
+  // font plus deux signaux* — et la place sous elle se resserre d'autant que
+  // l'écran est court, donc la borne mord sur téléphone et pas sur un moniteur.
+  const basPret = (basStats + yHautBloc) / 2 - (hDeck + ecartPret) / 2 - glissePret - hPret / 2
+  const hautBlocPorte = Math.min(
+    yNomPorte + hNom / 2 + airBlocPorte,
+    basPret - airBlocPorte,
+  )
   // « Armes » couvre les deux mains — ou la seule, quand une arme les prend
   // toutes les deux et que le second slot est masqué.
   //
@@ -912,7 +919,8 @@ export function planArmurerie(
       Z_PLAN,
     ]),
     /**
-     * LA ZONE DES PIÈCES PORTÉES — la rangée des armes et de l'armure.
+     * LA ZONE DES PIÈCES PORTÉES — la rangée des armes et de l'armure, avec
+     * les titres qui les nomment.
      *
      * Keko : « il faudrait que l'effet de contour s'applique non pas aux
      * cartes mais à tout le bloc armes + armure, avec un effet qui brille en
@@ -922,9 +930,9 @@ export function planArmurerie(
      */
     blocPorte: {
       x: xEquip,
-      y: yPorte,
+      y: (hautBlocPorte + basBlocPorte) / 2,
       l: lBlocPorte,
-      h: tailleCharge * 1.4 + airBlocPorte * 2,
+      h: hautBlocPorte - basBlocPorte,
     },
     nomArmes: { x: xArmes, y: yNomPorte, l: lArmes, h: hNom },
     nomArmure: { x: place(hautes - 1), y: yNomPorte, l: pasCharge - coupe, h: hNom },
