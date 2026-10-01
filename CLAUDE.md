@@ -6063,9 +6063,29 @@ contre les quatre bords de sa toile.
 
 | | |
 |---|---|
-| rapport | **0,28** — celui de l'armurier. Un autre est possible, mais **il devient celui de tous** : la colonne n'en a qu'un |
-| taille | **~576 x 2064** — la colonne fait au plus 327 x 1169 px sur un écran de PC, et ~2000 de haut sur un 4K ou un portable haute densité |
+| rapport | **0,36** — celui de l'armurier, et **le plus large possible** (voir ci-dessous). Il est **celui de TOUS** : la colonne n'en a qu'un |
+| taille | **~656 x 1824** — la colonne fait au plus 421 x 1169 px sur un écran de PC, et ~2000 de haut sur un 4K ou un portable haute densité |
 | fichier | PNG **à canal alpha**, sujet seul, dans `public/` |
+
+**0,36 EST UN MAXIMUM, PAS UN GOÛT.** Keko : « j'ai l'impression que les
+portraits sont un peu trop étroits, ce serait quoi le ratio idéal pour occuper
+toute la hauteur en occupant un peu plus de largeur ? » La colonne est plafonnée
+à **24 % de la largeur utile** pour qu'un grand écran ne laisse pas le portrait
+manger le coffre : au-delà de **0,372** ce plafond mord sur un iPhone SE couché
+(0,399 sur un écran de PC), et le portrait — cadré sans rognage — **rétrécirait
+en hauteur**, ramenant exactement le vide qu'on venait de fermer. 0,36 garde 3 %
+de marge sur le format le plus serré.
+
+*Ce que le passage de 0,28 à 0,36 a coûté, mesuré* : le portrait gagne **29 % de
+largeur** (100 → 129 px à 844 x 390, 327 → 421 sur un écran de PC), les cartes
+perdent **6 à 7 %** — et le coffre **gagne une rangée entière** à 844 x 390 comme
+à 932 x 430, parce que des cases un peu plus petites en font tenir une de plus.
+Cinq colonnes partout, zéro débordement.
+
+**ET LE CHAROGNARD EST RESTÉ À 0,279**, donc il remplit la hauteur mais laisse
+47 px de vide de chaque côté sur un écran de PC. *La colonne n'a qu'un rapport*,
+donc tout PNJ qui ne l'a pas est centré et plus étroit : il est à redessiner au
+même gabarit. Rien ne casse en attendant — c'est la hauteur qui commande.
 
 Trois contraintes de dessin, et les deux premières ont une raison mécanique :
 

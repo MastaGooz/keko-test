@@ -110,10 +110,17 @@ export const PILE = 0.5
  *
  * *Il a fait l'aller-retour* : 0,28 (le rapport conseillé), puis 0,40 quand
  * Keko a redessiné « pour bien occuper la colonne » sans l'avoir lu, puis 0,28
- * de nouveau une fois le dessin recadré. **Les deux fois, c'est le chiffre qui
+ * de nouveau une fois le dessin recadré. **Les trois fois, c'est le chiffre qui
  * a suivi le fichier** — jamais l'inverse.
+ *
+ * **IL VAUT 0,36 DEPUIS QUE KEKO A RÉÉLARGI L'ARMURIER** (656 x 1824), et ce
+ * chiffre n'est pas un goût : c'est **le plus large qui remplisse encore toute
+ * la hauteur sur tous les formats visés.** Au-delà, le plafond de largeur
+ * ci-dessous mord — à 0,372 sur un iPhone SE couché — et le portrait, cadré
+ * sans rognage, rétrécirait en hauteur : *exactement le vide qu'on venait de
+ * fermer.*
  */
-export const RAPPORT_PNJ = 0.28
+export const RAPPORT_PNJ = 0.36
 
 /**
  * LES ONGLETS DU COFFRE, dans l'ordre où on les lit.
