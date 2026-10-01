@@ -718,7 +718,31 @@ export function planArmurerie(
    * respire. Un centrage mathématique laissait 17 px en haut contre 33 en bas.
    */
   const glissePret = hDeck * 0.08
-  const bandeDeck = hDeck + marge
+  /**
+   * LA BANDE RÉSERVE LES DEUX COMMANDES, plus seulement le bouton du deck.
+   *
+   * Keko : « sur téléphone il faut réduire un poil la hauteur des stats / deck,
+   * car la checkbox + texte du prêt est trop basse et son effet de rectangle se
+   * superpose aux titres armes/armure ».
+   *
+   * *Et la cause n'était pas la hauteur des stats, c'était la bande* : elle
+   * valait `hDeck + marge` — ce que prenait le bouton du deck quand il y vivait
+   * seul. La case du prêt est venue dessous sans que la bande grandisse, donc
+   * le bloc débordait par le bas, de `ecartPret + hPret − marge` — mesuré,
+   * **3,5 px dans la bande des titres à 844 x 390 et 10 px à 956 x 340.**
+   *
+   * **Une bande réservée ne se partage pas** : c'est la règle que le bouton du
+   * deck avait lui-même payée en arrivant, et que j'ai enfreinte en ajoutant la
+   * case.
+   *
+   * **ET SON AIR TOMBE DE MOITIÉ, pour que le contenu n'y perde presque rien.**
+   * Réserver la case coûte sa hauteur aux cartes du chargement ; on la reprend
+   * sur le blanc qui suivait le bouton, qui ne séparait plus rien depuis que la
+   * case est venue dessous. *Le prix est nul sur un écran haut*, où c'est la
+   * LARGEUR qui borne les cartes — il se paie sur les écrans courts, et il y
+   * est de 2 px.
+   */
+  const bandeDeck = hDeck + ecartPret + hPret + marge * 0.5
   const hDedans = hPanneaux - hEntete - hStats - bandeDeck
   // La bande d'un nom de groupe. Il y en a une par rangée, et elles entrent
   // dans le calcul de la taille : un titre pris sur la place des cartes les

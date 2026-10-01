@@ -3241,7 +3241,7 @@ Quatre choses qui le portent :
 
 **L'ARMURERIE S'APPELLE « MAÎTRE D'ARMES » AU RAIL, à l'essai.** Keko : « on
 peut remplacer armurerie par "maître d'arme" pour tester ? » *Le rail nomme des
-GENS depuis qu'il porte leurs trombines* — Charognard est un métier, pas un
+GENS depuis qu'il porte leurs trombines* — Fossoyeur est un métier, pas un
 lieu, et « Armurerie » était le seul nom de bâtiment de la liste.
 
 **Seul le nom d'affichage change** : `lieu` reste `'armurerie'`, c'est un
@@ -3255,7 +3255,7 @@ peut grandir, en taille de police quand elle est au plancher. Rien ne tronque
 à 667 x 320 ni à 844 x 390, mais c'est juste au pixel.
 
 **HUIT DESTINATIONS, ET LES SIX MÉTIERS ONT LEUR NOM** — Expédition,
-Armurerie, puis Marché, Charognard, Forgeron, Couturière, Enchanteresse,
+Armurerie, puis Marché, Fossoyeur, Forgeron, Couturière, Enchanteresse,
 Alchimiste. *Je ne les avais pas inventés, et c'était juste* : « sept métiers
 inventés pour juger une mise en page, ce serait trancher du design en passant ».
 **C'est Keko qui les a nommés** ; les six ouvrent l'armurerie et portent son écu
@@ -3437,8 +3437,10 @@ tournent pas et le pouce ne bouge jamais. Ça ressemble exactement à une
 synchronisation cassée. Seules la molette et le glisser RÉELS, suivis d'une
 capture, disent la vérité.
 
-**ET LE CHAROGNARD EST REVENU AVEC SON PNJ.** Keko : « j'ai aussi ajouté
-l'image du charognard, tu peux remettre l'onglet et ajouter son image ». Son
+**ET LE FOSSOYEUR A SON PNJ.** Keko : « j'ai aussi ajouté l'image du
+charognard, tu peux remettre l'onglet et ajouter son image » — puis, une fois le
+dessin refait : « on va changer charognard pour fossoyeur ». *Le lieu a changé
+de nom avec son dessin*, et son fichier est au gabarit du PNJ (656 x 1824). Son
 fichier fait **576 x 2064**, le gabarit d'un PNJ et non d'un emblème : *ce
 n'est pas son écu, c'est son portrait.*
 
@@ -3516,7 +3518,7 @@ boutons de l'expédition ne bougent pas d'un pixel. C'est un paramètre du plan,
 passé à l'identique par les deux mondes — *une grandeur que deux endroits
 lisent se pose là où les deux la voient.*
 
-Mesuré : la colonne du Charognard tombe **au pixel** sur celle de l'armurier
+Mesuré : la colonne du Fossoyeur tombe **au pixel** sur celle de l'armurier
 (570 → 652 à 667 x 320, 2175 → 2502 sur un écran de PC), le cadre s'arrête 15 à
 58 px avant, zéro débordement.
 
@@ -4562,6 +4564,12 @@ pas un rail de huit entrées sur deux symboles.*
 **C'est un repli d'AFFICHAGE, pas une donnée** : `embleme` reste vide dans la
 liste, et il n'y a qu'un `?? 'Armurerie'` à retirer le jour où chaque
 destination a son dessin.
+
+**ET IL EST TOMBÉ**, parce que Keko a retiré `Armurerie.png` et
+`Exploration.png` de `public/` : *un repli vers un fichier absent est un 404,
+pas un repli.* Une destination sans dessin n'affiche donc plus rien —
+**l'entrée est le mot, l'écu ne faisait que l'accompagner**, et l'expédition
+s'en passe déjà très bien.
 
 **ET CHAQUE MÉTIER A SON LIEU, VIDE MAIS NOMMÉ.** Keko : « on peut mettre un
 écran placeholder pour chaque catégorie du hub (juste le titre, encadré mais
@@ -6082,10 +6090,10 @@ perdent **6 à 7 %** — et le coffre **gagne une rangée entière** à 844 x 39
 à 932 x 430, parce que des cases un peu plus petites en font tenir une de plus.
 Cinq colonnes partout, zéro débordement.
 
-**ET LE CHAROGNARD EST RESTÉ À 0,279**, donc il remplit la hauteur mais laisse
-47 px de vide de chaque côté sur un écran de PC. *La colonne n'a qu'un rapport*,
-donc tout PNJ qui ne l'a pas est centré et plus étroit : il est à redessiner au
-même gabarit. Rien ne casse en attendant — c'est la hauteur qui commande.
+**LES DEUX PNJ SONT AU MÊME GABARIT**, l'armurier et le fossoyeur : 656 x 1824.
+*La colonne n'a qu'un rapport*, donc tout PNJ qui ne l'aurait pas serait centré
+et plus étroit — rien ne casserait, c'est la hauteur qui commande, mais il
+laisserait du vide de chaque côté.
 
 Trois contraintes de dessin, et les deux premières ont une raison mécanique :
 
@@ -6231,6 +6239,25 @@ ailleurs ; *mais un son de contact promet une PRISE*, et sur une carte qui ne
 se prend pas il annonce un geste qui n'aura pas lieu. Elle n'a qu'une issue,
 donc il se joue là — **c'est la seule carte du jeu pour laquelle les deux
 moments diffèrent.**
+
+**ET LA BANDE RÉSERVE LES DEUX COMMANDES**, plus seulement le bouton du deck.
+Keko : « sur téléphone il faut réduire un poil la hauteur des stats / deck, car
+la checkbox + texte du prêt est trop basse et son effet de rectangle se
+superpose aux titres armes/armure ».
+
+*La cause n'était pas la hauteur des stats, c'était la bande* : elle valait
+`hDeck + marge` — ce que prenait le bouton du deck quand il y vivait seul. La
+case est venue dessous sans que la bande grandisse, donc le bloc débordait par
+le bas : **3,5 px dans la bande des titres à 844 x 390, 10 px à 956 x 340.**
+**Une bande réservée ne se partage pas** — c'est la règle que le bouton du deck
+avait lui-même payée en arrivant, et que j'ai enfreinte en ajoutant la case.
+
+**Son air tombe de moitié en échange**, pour que le contenu n'y perde presque
+rien : le blanc qui suivait le bouton ne séparait plus rien depuis que la case
+est venue dessous. Mesuré — *le prix est nul sur un écran haut*, où c'est la
+LARGEUR qui borne les cartes du chargement, et il vaut 2 px sur les écrans
+courts. Après correction, il reste 3 à 9 px entre la case et le haut des
+titres selon le format, et 2,4 à 25 px entre les deux cadres.
 
 **La case vit SOUS LE BOUTON DU DECK**, tranché par Keko. Elle a d'abord été en
 en-tête du panneau, à la place symétrique du tri du coffre ; *elle se lit mieux

@@ -38,7 +38,7 @@ export type LieuHub =
   | 'armurerie'
   | 'expedition'
   | 'marche'
-  | 'charognard'
+  | 'fossoyeur'
   | 'forgeron'
   | 'couturiere'
   | 'enchanteresse'
@@ -101,13 +101,17 @@ export type Destination = {
    * OÙ LE VISAGE TOMBE DANS LE DESSIN, en part de sa hauteur (0 = tout en
    * haut).
    *
-   * Keko : « le charognard est plus petit comme PNJ, du coup sur l'icône son
+   * Keko, du temps où le fossoyeur s'appelait le charognard et tenait dans un
+   * dessin plus étroit : « il est plus petit comme PNJ, du coup sur l'icône son
    * visage n'est pas centré ; tu penses pouvoir descendre la partie
    * sélectionnée ? » *Et c'est le piège qu'on avait nommé* : la vignette prend
    * la moitié supérieure, ce qui est exact géométriquement — mais **le visage
-   * n'est pas à la même hauteur d'un dessin à l'autre.** Mesuré : les yeux de
-   * l'armurier tombent à ~20 % de la hauteur, ceux du charognard à ~40 %,
-   * parce qu'il est plus petit et que ses cheveux montent.
+   * n'est pas à la même hauteur d'un dessin à l'autre.** Mesuré alors : les yeux
+   * de l'armurier tombaient à ~20 % de la hauteur, ceux du charognard à ~40 %.
+   *
+   * **Plus aucune destination ne s'en sert aujourd'hui**, les deux dessins
+   * étant au même gabarit — le réglage reste pour le prochain qui ne le sera
+   * pas.
    *
    * *Un repère calé sur la marge d'un dessin se déplace avec le dessin*, donc
    * c'est AU DESSIN de le dire. Non renseigné, la fenêtre reste calée en
@@ -147,7 +151,11 @@ export const DESTINATIONS: readonly Destination[] = [
   // son nom se navigue déjà*, et c'est tout ce qu'on cherche à éprouver. Ce
   // que chacun fera se tranchera quand on l'ouvrira.
   { nom: 'Marché', ouvert: true, lieu: 'marche', cachee: true },
-  { nom: 'Charognard', ouvert: true, lieu: 'charognard', pnj: 'Charognard', cadrage: 30 },
+  // LE FOSSOYEUR, renommé par Keko (« on va changer charognard pour fossoyeur »)
+  // et redessiné au gabarit du PNJ — 656 x 1824, le même rapport que
+  // l'armurier. *Son cadrage tombe avec son ancien dessin* : la fenêtre de la
+  // trombine se cale en haut, comme pour un sujet qui touche les quatre bords.
+  { nom: 'Fossoyeur', ouvert: true, lieu: 'fossoyeur', pnj: 'Fossoyeur' },
   { nom: 'Forgeron', ouvert: true, lieu: 'forgeron', cachee: true },
   { nom: 'Couturière', ouvert: true, lieu: 'couturiere', cachee: true },
   { nom: 'Enchanteresse', ouvert: true, lieu: 'enchanteresse', cachee: true },

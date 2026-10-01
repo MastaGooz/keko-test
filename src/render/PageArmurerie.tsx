@@ -894,16 +894,17 @@ export function PageArmurerie({
                 encadrée* — l'écu redisait un rang que le cartouche dit mieux,
                 et la place qu'il prenait revient au mot, qui est ce qui porte
                 l'information. */}
-            {d.majeur !== true && (
+            {d.majeur !== true && (trombines ? d.pnj !== undefined : d.embleme !== undefined) && (
             <img
               className={`arm-lieu-blason${trombines && d.pnj !== undefined ? ' trombine' : ''}`}
-              src={
-                trombines && d.pnj !== undefined
-                  ? urlDuSymbole(d.pnj)
-                  : urlDuSymbole(d.embleme ?? 'Armurerie')
-              }
+              /* PLUS DE REPLI VERS L'ÉCU DE L'ARMURERIE : Keko a retiré
+                 `Armurerie.png` et `Exploration.png` de `public/`, et *un repli
+                 vers un fichier absent est un 404, pas un repli.* Une
+                 destination qui n'a pas son dessin n'affiche donc rien —
+                 **l'entrée est le mot, l'écu ne faisait que l'accompagner.** */
+              src={trombines && d.pnj !== undefined ? urlDuSymbole(d.pnj) : urlDuSymbole(d.embleme ?? '')}
               /* LA FENÊTRE DESCEND SI LE DESSIN LE DIT. *Le visage n'est pas à
-                 la même hauteur d'un PNJ à l'autre* — celui du charognard est
+                 la même hauteur d'un PNJ à l'autre* — celui du fossoyeur etait
                  plus bas, parce qu'il est plus petit et que ses cheveux
                  montent. C'est au dessin de le dire, pas à la feuille de style
                  de le deviner. */
