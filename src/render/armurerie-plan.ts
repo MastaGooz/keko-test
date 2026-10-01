@@ -90,13 +90,18 @@ export const PILE = 0.5
 /**
  * LE RAPPORT DU PORTRAIT DU PNJ — celui de son DESSIN, pas un idéal.
  *
- * `Armurier.png` fait 793 x 1983, sujet contre les quatre bords. *Sa colonne
+ * `Armurier.png` fait 576 x 2064, sujet contre les quatre bords. *Sa colonne
  * prend ce rapport* : c'est la seule façon qu'il la remplisse sans vide ni
  * rognage. Le jour où un PNJ arrive dans un autre cadrage, c'est ce chiffre
  * qu'on bouge — ou bien on redessine au rapport, mais les deux ne peuvent pas
  * diverger.
+ *
+ * *Il a fait l'aller-retour* : 0,28 (le rapport conseillé), puis 0,40 quand
+ * Keko a redessiné « pour bien occuper la colonne » sans l'avoir lu, puis 0,28
+ * de nouveau une fois le dessin recadré. **Les deux fois, c'est le chiffre qui
+ * a suivi le fichier** — jamais l'inverse.
  */
-export const RAPPORT_PNJ = 0.4
+export const RAPPORT_PNJ = 0.28
 
 /**
  * LES ONGLETS DU COFFRE, dans l'ordre où on les lit.

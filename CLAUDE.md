@@ -5677,20 +5677,23 @@ la hauteur — c'est elle qui est donnée — et le rapport est **celui du dessi
 (`RAPPORT_PNJ`), avec un plafond en part d'utile pour qu'un grand écran ne
 laisse pas le portrait manger le coffre.
 
-**ET C'EST LE DESSIN QUI DÉCIDE, PAS LE CONSEIL.** J'avais recommandé 0,28 —
-le rapport d'un personnage debout bras le long du corps — et Keko a redessiné
-l'armurier « pour bien occuper la colonne » en **793 x 1983, soit 0,40**, sujet
-contre les quatre bords. *Une colonne taillée pour un rapport que l'image n'a
-pas rouvre exactement le vide qu'on venait de fermer* : le chiffre suit donc le
-fichier. Mesuré après : il remplit **100 % de la hauteur** à tous les formats
-(97 % à 1366 x 700, où le plafond de largeur mord d'un cheveu).
+**ET C'EST LE DESSIN QUI DÉCIDE, PAS LE CONSEIL — l'aller-retour le prouve.**
+J'avais recommandé 0,28, le rapport d'un personnage debout bras le long du
+corps ; Keko a d'abord redessiné « pour bien occuper la colonne » en **793 x
+1983, soit 0,40**, et le chiffre a suivi le fichier. Puis il l'a recadré au
+rapport conseillé — **576 x 2064, soit 0,279** — et le chiffre l'a suivi de
+nouveau. *Une colonne taillée pour un rapport que l'image n'a pas rouvre
+exactement le vide qu'on venait de fermer*, et c'est vrai dans les deux sens.
+
+Mesuré : le portrait remplit **100 % de la hauteur** à tous les formats, sujet
+contre les quatre bords de sa toile.
 
 **LE FORMAT À DONNER POUR UN PNJ**, mesuré sur la colonne :
 
 | | |
 |---|---|
-| rapport | **0,40** — celui de l'armurier. Un autre est possible, mais **il devient celui de tous** : la colonne n'en a qu'un |
-| taille | **~800 x 2000** — la colonne fait au plus 467 x 1169 px sur un écran de PC, et ~2000 de haut sur un 4K ou un portable haute densité |
+| rapport | **0,28** — celui de l'armurier. Un autre est possible, mais **il devient celui de tous** : la colonne n'en a qu'un |
+| taille | **~576 x 2064** — la colonne fait au plus 327 x 1169 px sur un écran de PC, et ~2000 de haut sur un 4K ou un portable haute densité |
 | fichier | PNG **à canal alpha**, sujet seul, dans `public/` |
 
 Trois contraintes de dessin, et les deux premières ont une raison mécanique :
@@ -5706,10 +5709,9 @@ Trois contraintes de dessin, et les deux premières ont une raison mécanique :
 3. fond transparent, et **la casse du nom compte** (`public/` est servi depuis
    Linux).
 
-*Ce que le passage de 0,28 à 0,40 a coûté*, et c'est le prix d'un portrait qui
-remplit : la colonne passe de 100 à 143 px à 844 x 390, pris sur le coffre et
-l'équipement. Le coffre garde ses cinq colonnes à tous les formats, et sa case
-tombe à 40 px (30 à 667 x 320).
+*Et le retour à 0,28 a rendu aux meubles ce que le 0,40 leur avait pris* : la
+colonne retombe de 143 à 100 px à 844 x 390, et la case du coffre remonte de 40
+à 44 px (33 à 667 x 320). Cinq colonnes partout, dans les deux cas.
 
 **LE DÉPART DE FORTUNE : « ÉQUIPEMENT GRATUIT », SOUS « DESCENDRE ».** Demandé
 par Keko — d'abord « un bouton sous le PNJ armurier, similaire au bouton
