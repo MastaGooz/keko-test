@@ -8538,6 +8538,22 @@ fichier 680 x 1000 dans `public/`, une ligne dans `IMAGES`.
 depuis Linux : un `glaive.png` demandé pour un `Glaive.png` posé marcherait sur
 la machine de dev et ferait un 404 en ligne.
 
+**ET ELLES SONT EN WEBP DEPUIS QUE LE FORMAT EST FIXÉ.** Une illustration de
+carte se dessine en **1024 x 1463 (rapport 7:10)** : c'est la surface d'art de
+la carte, bordure déduite — 96,3 x 136,3 unités, soit **0,707**, et le 7:10 n'en
+coûte que 7 px rognés en haut et en bas. *La toile de texture plafonne à 768 de
+large*, donc l'illustration n'est jamais peinte au-delà de 740 px : au-delà de
+1024 de large, c'est du poids pour rien.
+
+**Le sujet tient dans les 61 % du haut** — c'est là que commence le nom (897 px
+sur 1463), et le voile sombre mord dès la moitié. Tout ce qui est plus bas passe
+sous le texte.
+
+**Et le poids tombe d'un facteur 50 à 170** : `Background.png` faisait 1 577 Ko
+et `Glaive.png` 1 694 ; en WebP à 70 %, **9 Ko et 33 Ko**, sans un artefact
+visible au zoom. *À douze modèles, c'était vingt mégaoctets à charger sur un
+téléphone* — c'est désormais moins d'un demi-mégaoctet pour tout le catalogue.
+
 **Deux poses**, parce que le joueur est montré dans deux situations qui n'ont
 rien à voir : `public/joueur.png` au repos sur la scène et quand il encaisse,
 `public/attaque.png` lame tendue quand c'est lui qui frappe. *Le gros plan est

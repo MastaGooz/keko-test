@@ -57,7 +57,7 @@ export function art(nom: string): string {
  * invisible depuis la machine de dev, où le serveur invalide tout seul.
  */
 const IMAGES: Record<string, string> = {
-  glaive: 'Glaive.png',
+  glaive: 'Glaive.webp',
 }
 
 /**
@@ -93,7 +93,7 @@ export function imageDeKeko(nom: string): string {
  * du domaine au lieu de `/keko-test/`.
  */
 export function urlDuFond(): string {
-  return `${import.meta.env.BASE_URL}Background.png?v=${encodeURIComponent(__BUILD_TIME__)}`
+  return `${import.meta.env.BASE_URL}Background.webp?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
 /**
