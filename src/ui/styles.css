@@ -5180,7 +5180,11 @@ body {
   left: 50%;
   width: min(100%, var(--barre-l));
   transform: translateX(-50%);
-  background: linear-gradient(90deg, #00000073, #0000004d 55%, #00000033);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='u' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23u)' opacity='0.5'/%3E%3C/svg%3E"),
+    linear-gradient(90deg, #00000073, #0000004d 55%, #00000033);
+  background-size: 120px 120px, auto;
+  background-blend-mode: soft-light, normal;
   box-shadow:
     inset 1px 0 0 #000000a6,
     inset 0 1px 0 #00000099,
@@ -5211,14 +5215,52 @@ body {
   width: min(100%, var(--barre-l));
   transform: translateX(-50%);
   min-height: 1.2rem;
-  background:
+  /* LA MATIERE EST UN METAL USE, ET L'USURE EST IRREGULIERE. Keko : « il
+     faudrait lui donner une texture de metal use, avec une texture
+     irreguliere ». *Un brossage regulier se lit comme une trame imprimee* --
+     il disait « neuf » la ou on veut « ancien ».
+
+     Quatre couches, et aucune ne fait le travail d'une autre :
+
+     - le GRAIN (`feTurbulence`), le meme moteur que le grain des
+       illustrations, pose en `overlay` : c'est lui seul qui donne du hasard,
+       et un degrade n'en produit jamais ;
+     - deux rangs de RAYURES aux pas PREMIERS entre eux (3 px et 7 px) : leur
+       combinaison ne se repete qu'au bout de 21 px, donc l'oeil n'y trouve pas
+       de motif. *C'est la regle des periodes premieres de la respiration des
+       creatures*, appliquee a une matiere ;
+     - la PATINE, de longues zones ternies a intervalles irreguliers, en
+       PIXELS et non en pourcentage : le pouce change de hauteur quand on
+       defile, et une patine en % se dilaterait sous les yeux ;
+     - le VOLUME, seul a etre horizontal.
+
+     Le pas le plus fin tient 3 px pour ne jamais moirer -- la regle du reseau
+     du foil, qui s'efface des qu'il devient plus fin que le pixel. */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='u' x='0' y='0'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23u)' opacity='0.5'/%3E%3C/svg%3E"),
     repeating-linear-gradient(
       180deg,
-      #00000026 0 1px,
-      #ffffff12 1px 2px,
+      #0000002e 0 1px,
+      #ffffff0d 1px 2px,
       transparent 2px 3px
     ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 4px,
+      #00000026 4px 5px,
+      transparent 5px 7px
+    ),
+    repeating-linear-gradient(
+      180deg,
+      #00000000 0,
+      #00000038 37px,
+      #00000008 73px,
+      #0000002e 119px,
+      #00000000 190px
+    ),
     linear-gradient(90deg, #cbb079 0%, #a98f5c 36%, #7d6840 72%, #5a4b2d 100%);
+  background-size: 120px 120px, auto, auto, auto, auto;
+  background-blend-mode: overlay, normal, normal, normal, normal;
   box-shadow:
     inset 1px 0 0 #e8d3a040,
     inset -1px 0 0 #00000073;
@@ -5755,9 +5797,53 @@ body {
    d'autre ne change** : pas de fond plein, pas de corps plus gros. *Un
    bandeau colore sous un mot se lit comme une selection de menu*, et la
    selection est deja prise par le lieu ouvert. */
+/* EXPÉDITION PORTE UN CARTOUCHE, et c'est ce qui la sort de la liste.
+
+   Keko : « je trouve l'onglet expédition pas assez distingué des autres ».
+   L'or seul sur le mot ne suffisait pas : *dans une colonne où tout a la même
+   forme, une couleur se lit comme une nuance, pas comme un rang.*
+
+   Ce qu'on NE peut pas faire : un fond plein coloré -- *un bandeau coloré sous
+   un mot se lit comme une sélection de menu*, et la sélection est déjà prise
+   par le lieu ouvert. Ni un corps plus gros, qui casserait la régularité du
+   rail.
+
+   Ce qu'on fait : la FERRONNERIE du lieu, celle des cadres et des cartouches
+   de mesures -- un filet de laiton, deux coins coupés, une plaque de pierre.
+   *Ce qui est encadré n'est plus de la liste*, et ça se lit avant même de lire
+   le mot.
+
+   **Plus un ÉCART en dessous** : *un groupe se lit par ses blancs*, et le blanc
+   le plus large de la colonne doit tomber là où la nature change -- entre ce
+   qui quitte le hub et les métiers qui l'habitent. */
 .arm-lieu.majeur {
-  color: #f0cf8e;
-  border-bottom-color: #d8bb7988;
+  color: #ffdfa0;
+  border: 1px solid #8a7342;
+  background: linear-gradient(100deg, #241e14, #17130d 62%, #120f0a);
+  box-shadow:
+    inset 0 1px 0 #e8d3a022,
+    inset 0 0 1.2rem #00000066;
+  clip-path: polygon(
+    0.4em 0,
+    100% 0,
+    100% calc(100% - 0.4em),
+    calc(100% - 0.4em) 100%,
+    0 100%,
+    0 0.4em
+  );
+  margin-bottom: 0.5em;
+  text-shadow:
+    0 1px 2px #000000cc,
+    0 0 9px #d8bb7944;
+}
+
+/* ET QUAND C'EST AUSSI LE LIEU OUVERT, les deux se cumulent : le cartouche dit
+   sa NATURE, le filet vif dit où l'on est. *Deux faits, deux signaux* -- et
+   sans cette règle le fond de `.actif`, déclaré plus bas, écraserait la plaque
+   a sa seule place dans l'ordre. */
+.arm-lieu.majeur.actif {
+  border-color: #d8bb79;
+  background: linear-gradient(100deg, #332a1b, #201a11 62%, #17130c);
 }
 
 .arm-lieu.majeur .arm-lieu-blason {

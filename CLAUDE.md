@@ -3385,14 +3385,27 @@ Quatre choses, et chacune répond à un mot de la demande :
   par un fond plus noir : arête sombre à gauche et en haut, filet clair à
   droite et en bas — *le raisonnement du jonc des cartes*, lumière du
   haut-gauche partout ;
-- **LE POUCE EST UNE NAVETTE DE LAITON BROSSÉ** : deux bouts en pointe
-  (`clip-path`, bornés pour qu'un pouce court ne devienne pas un losange), de
-  fines stries horizontales — le vocabulaire déjà parlé par les feuillets des
-  tas et le grain des cartes, *un aplat de couleur n'est pas du métal* — et un
-  dégradé HORIZONTAL clair à gauche, sombre à droite : **sur un trait vertical,
+- **LE POUCE EST UNE NAVETTE DE MÉTAL USÉ** : deux bouts en pointe
+  (`clip-path`, bornés pour qu'un pouce court ne devienne pas un losange) et un
+  dégradé HORIZONTAL clair à gauche, sombre à droite — **sur un trait vertical,
   c'est le seul axe où un dégradé raconte une épaisseur** ;
-- **le pas des stries tient 3 px**, pour qu'elles ne moirent jamais : la règle
-  du réseau du foil, qui s'efface dès qu'il devient plus fin que le pixel.
+- **ET L'USURE EST IRRÉGULIÈRE.** Keko, sur la première passe : « il faudrait
+  lui donner une texture de métal usé, avec une texture irrégulière ». *Un
+  brossage régulier se lit comme une trame imprimée* — il disait « neuf » là où
+  on veut « ancien ». Quatre couches, et aucune ne fait le travail d'une
+  autre : le GRAIN (`feTurbulence`, le moteur du grain des illustrations) posé
+  en `overlay`, **seul à donner du hasard** — un dégradé n'en produit jamais ;
+  deux rangs de RAYURES aux pas PREMIERS entre eux (3 px et 7 px), dont la
+  combinaison ne se répète qu'au bout de 21 px, *la règle des périodes
+  premières de la respiration des créatures appliquée à une matière* ; la
+  PATINE, de longues zones ternies à intervalles irréguliers, **en pixels et
+  non en pourcentage** — le pouce change de hauteur quand on défile, et une
+  patine en % se dilaterait sous les yeux ; et le volume.
+
+  Le pas le plus fin tient 3 px pour ne jamais moirer : la règle du réseau du
+  foil, qui s'efface dès qu'il devient plus fin que le pixel. **La gorge prend
+  le même grain**, en `soft-light` et à peine — *c'est la même matière, usée
+  pareil.*
 
 **Un seul nombre pour les deux barres** (`PART_POUCE`), parce que les deux le
 lisent : *deux valeurs écrites chacune de leur côté se désaccordent au premier
@@ -4529,6 +4542,31 @@ une sélection de menu**, et la sélection est déjà prise par le lieu ouvert.
 On arrive toujours dans l'ARMURERIE malgré tout : *c'est là qu'on prépare*, et
 un joueur qui débarque doit voir de quoi il dispose avant de voir comment
 partir.
+
+**PUIS ELLE A PRIS UN CARTOUCHE, parce que l'or ne suffisait pas.** Keko : « je
+trouve l'onglet expédition pas assez distingué des autres ». *Dans une colonne
+où tout a la même forme, une couleur se lit comme une nuance et non comme un
+rang* — d'autant que le rail compte maintenant vingt entrées.
+
+Les deux sorties évidentes étaient fermées : **un fond plein coloré** se lit
+comme une sélection de menu, et la sélection est déjà prise par le lieu ouvert ;
+**un corps plus gros** casserait la régularité du rail, qui est ce qui en fait
+un rail.
+
+Reste la FERRONNERIE du lieu, celle des cadres et des cartouches de mesures :
+un filet de laiton, deux coins coupés, une plaque de pierre. *Ce qui est
+encadré n'est plus de la liste*, et ça se lit avant même de lire le mot —
+**sans toucher à la hauteur de ligne**, vérifié identique aux autres (51 px à
+844 x 390, 48 à 667 x 320).
+
+**Plus un ÉCART en dessous** : *un groupe se lit par ses blancs*, et le blanc le
+plus large de la colonne doit tomber là où la nature change — entre ce qui
+quitte le hub et les métiers qui l'habitent.
+
+**Et quand c'est aussi le lieu ouvert, les deux signaux se cumulent** : le
+cartouche dit sa NATURE, le filet vif dit où l'on est. *Deux faits, deux
+signaux* — avec une règle explicite pour les combiner, sans quoi le fond de
+`.actif`, déclaré plus bas, écraserait la plaque à sa seule place dans l'ordre.
 
 **ET SUR UN GRAND ÉCRAN, UNE ENTRÉE NE S'ÉTIRE PLUS SANS FIN.** Keko : « sur PC
 les onglets du hub rendent mal : ils sont trop épais, l'icône est trop petite,
