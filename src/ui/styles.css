@@ -5993,6 +5993,27 @@ body {
   text-shadow:
     0 1px 2px #000000cc,
     0 0 9px #d8bb7944;
+  /* SON MOT PREND LA PLACE DE L'ÉCU, et c'est tout ce qu'il lui fallait pour
+     se distinguer. Keko : « enlève le symbole expédition et travaille un peu
+     le texte pour le distinguer un peu plus ».
+
+     Trois choses, et aucune n'est un fond plein ni un corps deux fois plus
+     gros -- *un bandeau coloré se lit comme une sélection de menu, et un corps
+     hors norme casse la régularité qui fait un rail* :
+
+     - il se CENTRE, parce que rien ne longe plus le bord gauche. *Un mot calé
+       à gauche sur une ligne sans écu laisse un trou là où il y avait un
+       dessin* ;
+     - son APPROCHE double. C'est la différence entre un mot et une enseigne,
+       et elle ne coûte pas un pixel de hauteur ;
+     - son CORPS monte d'un cran, ce que la place rendue permet sans tronquer. */
+  justify-content: center;
+  padding-inline: 0.45em;
+  font-size: calc(var(--rail-police, 0.9rem) * 1.18);
+  /* L'approche ajoute son blanc APRÈS la dernière lettre, donc un mot centré
+     paraît poussé à gauche de la moitié : on le compense par le retrait. */
+  letter-spacing: 0.18em;
+  text-indent: 0.18em;
 }
 
 /* ET QUAND C'EST AUSSI LE LIEU OUVERT, les deux se cumulent : le cartouche dit

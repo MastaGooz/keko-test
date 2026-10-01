@@ -888,6 +888,13 @@ export function PageArmurerie({
                 est un corps en pied, et réduit tel quel son visage ferait sept
                 pixels. Un lieu sans PNJ garde son écu — l'expédition n'est pas
                 un métier, elle n'a personne derrière son comptoir. */}
+            {/* L'EXPÉDITION N'EN PORTE PLUS. Keko : « tu peux enlever le
+                symbole expédition et travailler un peu le texte pour le
+                distinguer un peu plus ? » *Elle est déjà la seule entrée
+                encadrée* — l'écu redisait un rang que le cartouche dit mieux,
+                et la place qu'il prenait revient au mot, qui est ce qui porte
+                l'information. */}
+            {d.majeur !== true && (
             <img
               className={`arm-lieu-blason${trombines && d.pnj !== undefined ? ' trombine' : ''}`}
               src={
@@ -908,6 +915,7 @@ export function PageArmurerie({
               alt=""
               draggable={false}
             />
+            )}
             <span className="arm-lieu-nom">{d.nom}</span>
           </button>
         ))}

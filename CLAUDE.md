@@ -4714,6 +4714,30 @@ cartouche dit sa NATURE, le filet vif dit où l'on est. *Deux faits, deux
 signaux* — avec une règle explicite pour les combiner, sans quoi le fond de
 `.actif`, déclaré plus bas, écraserait la plaque à sa seule place dans l'ordre.
 
+**ET SON ÉCU EST PARTI, SON MOT PRENANT LA PLACE.** Keko : « tu peux enlever le
+symbole expédition et travailler un peu le texte pour le distinguer un peu
+plus ? » *Elle est déjà la seule entrée encadrée* — l'écu redisait un rang que
+le cartouche dit mieux, et **ce qui porte l'information est le mot.**
+
+Trois choses, et aucune n'est un fond plein ni un corps hors norme — *un
+bandeau coloré se lit comme une sélection de menu, et un corps deux fois plus
+gros casse la régularité qui fait un rail* :
+
+- il se **CENTRE**, parce que rien ne longe plus le bord gauche : *un mot calé
+  à gauche sur une ligne sans écu laisse un trou là où il y avait un dessin* ;
+- son **APPROCHE** double (0,04 → 0,18em). C'est la différence entre un mot et
+  une enseigne, et elle ne coûte pas un pixel de hauteur. *Elle ajoute son
+  blanc APRÈS la dernière lettre*, donc un mot centré paraît poussé à gauche de
+  la moitié — d'où le retrait qui la compense ;
+- son **CORPS** monte d'un cran (×1,18), ce que la place rendue permet sans
+  tronquer.
+
+**La hauteur de ligne ne bouge pas** : c'est elle qui fait le rail. Mesuré à
+2560 x 1271, 844 x 390 et 667 x 320, **et avec les vingt destinations du banc** :
+rien ne tronque nulle part, et « Expédition » garde 23 px de marge au format le
+plus serré — devant « Enchanteresse », qui est pourtant le nom sur lequel la
+police du rail se calcule.
+
 **ET SUR UN GRAND ÉCRAN, UNE ENTRÉE NE S'ÉTIRE PLUS SANS FIN.** Keko : « sur PC
 les onglets du hub rendent mal : ils sont trop épais, l'icône est trop petite,
 et la bordure gauche de chaque onglet est trop proche de l'icône. »
