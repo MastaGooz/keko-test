@@ -34,7 +34,15 @@
  * huit entrées. **Une colonne de destinations ne porte que des destinations** —
  * quitter le hub en est une, pas une exception posée en bas.
  */
-export type LieuHub = 'armurerie' | 'expedition'
+export type LieuHub =
+  | 'armurerie'
+  | 'expedition'
+  | 'marche'
+  | 'charognard'
+  | 'forgeron'
+  | 'couturiere'
+  | 'enchanteresse'
+  | 'alchimiste'
 
 export type Destination = {
   /** Ce qui s'affiche dans le rail. */
@@ -42,14 +50,11 @@ export type Destination = {
   /**
    * Est-ce que ce lieu existe ? Les autres sont des places tenues.
    *
-   * **ELLES SONT TOUTES OUVERTES LE TEMPS D'UN TEST.** Keko : « tu peux mettre
-   * les onglets vides du hub en armurerie (placeholder) juste pour test ? »
-   * *Six entrées sur huit éteintes à 22 %, ça se juge mal* — on voit un rail à
-   * moitié mort plutôt que le hub qu'il sera. Elles ouvrent donc l'armurerie
-   * faute d'avoir leur lieu, **sans jamais s'allumer comme le lieu courant** :
-   * `lieu` reste vide, et c'est lui qui dit où l'on est.
-   *
-   * Deux `true` à repasser à `false` le jour où chaque destination existe.
+   * **ELLES SONT TOUTES OUVERTES**, et chacune mène à son propre lieu — vide,
+   * mais nommé et encadré. Keko : « on peut mettre un écran placeholder pour
+   * chaque catégorie du hub (juste le titre, encadré mais vide) pour tester la
+   * navigation ? » *Six entrées sur huit éteintes, ça ne se navigue pas* : on
+   * jugeait un rail à moitié mort plutôt que le hub qu'il sera.
    */
   ouvert: boolean
   /** Le lieu qu'elle ouvre, quand elle en ouvre un. */
@@ -79,14 +84,15 @@ export type Destination = {
 export const DESTINATIONS: readonly Destination[] = [
   { nom: 'Expédition', ouvert: true, lieu: 'expedition', majeur: true, embleme: 'Exploration' },
   { nom: 'Armurerie', ouvert: true, lieu: 'armurerie', embleme: 'Armurerie' },
-  // LES SIX MÉTIERS DU HUB, nommés par Keko. Aucun n'a encore son écran ni son
-  // dessin : ils ouvrent l'armurerie et portent son écu, le temps de juger un
-  // rail complet. *Ce sont des noms, pas des décisions de design* — ce que
-  // chacun fera se tranchera quand on l'ouvrira.
-  { nom: 'Marché', ouvert: true },
-  { nom: 'Charognard', ouvert: true },
-  { nom: 'Forgeron', ouvert: true },
-  { nom: 'Couturière', ouvert: true },
-  { nom: 'Enchanteresse', ouvert: true },
-  { nom: 'Alchimiste', ouvert: true },
+  // LES SIX MÉTIERS DU HUB, nommés par Keko. **Chacun a son lieu**, vide pour
+  // l'instant : un panneau à son nom, et rien dedans — « juste le titre,
+  // encadré mais vide, pour tester la navigation ». *Un écran vide qui porte
+  // son nom se navigue déjà*, et c'est tout ce qu'on cherche à éprouver. Ce
+  // que chacun fera se tranchera quand on l'ouvrira.
+  { nom: 'Marché', ouvert: true, lieu: 'marche' },
+  { nom: 'Charognard', ouvert: true, lieu: 'charognard' },
+  { nom: 'Forgeron', ouvert: true, lieu: 'forgeron' },
+  { nom: 'Couturière', ouvert: true, lieu: 'couturiere' },
+  { nom: 'Enchanteresse', ouvert: true, lieu: 'enchanteresse' },
+  { nom: 'Alchimiste', ouvert: true, lieu: 'alchimiste' },
 ]

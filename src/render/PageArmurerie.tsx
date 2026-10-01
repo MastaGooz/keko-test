@@ -533,20 +533,26 @@ export function PageArmurerie({
       {/* CHAQUE LIEU A SON PANNEAU. Le rail ne change pas d'écran, il change
           de LIEU : ce qui appartient à l'armurerie disparaît quand on ouvre
           l'expédition, et réciproquement. */}
-      {lieu === 'expedition' && (
+      {lieu !== 'armurerie' && (
         <>
-          <div className="arm-cadre" style={boite(plan.expedition)} />
-          <span className="arm-nom" style={plaque(plan.expedition)}>
-            Expédition
+          {/* TOUT LIEU SANS MEUBLE A LE MÊME PANNEAU, et il porte son NOM : le
+              rail dit où l'on va, le panneau confirme où l'on est. *Un écran
+              vide mais nommé se navigue déjà* — c'est ce qu'on éprouve tant
+              que les métiers n'ont pas leur contenu. */}
+          <div className="arm-cadre" style={boite(plan.panneauLieu)} />
+          <span className="arm-nom" style={plaque(plan.panneauLieu)}>
+            {DESTINATIONS.find((d) => d.lieu === lieu)?.nom ?? ''}
           </span>
           {/* CE QU'ON EMPORTE SE DIT ICI, parce qu'on n'a plus le chargement
               sous les yeux : *avant de descendre, le joueur doit voir avec quoi
               il descend* — et c'est le seul chiffre sur lequel les deux départs
-              se comparent. */}
+              se comparent. Les autres lieux n'ont rien à dire : leur panneau
+              porte son nom, et c'est tout ce qu'il y a à y lire. */}
+          {lieu === 'expedition' && (
           <p
             className="arm-expe-note"
             style={boite({
-              x: plan.expedition.x,
+              x: plan.panneauLieu.x,
               // ELLE SE POSE AU-DESSUS DU PREMIER BOUTON, pas dans le haut du
               // panneau : *une phrase qui explique un bouton se lit avec lui.*
               // L'écart entre les deux départs vaut deux boutons, donc les
@@ -562,19 +568,20 @@ export function PageArmurerie({
               // le plus petit.
               y: Math.min(
                 plan.bouton[1] + (plan.bouton[1] - plan.boutonFortune[1]) * 0.75,
-                plan.expedition.y +
-                  plan.expedition.h / 2 -
+                plan.panneauLieu.y +
+                  plan.panneauLieu.h / 2 -
                   plan.demiHaut * 0.09 -
-                  plan.expedition.h * 0.06,
+                  plan.panneauLieu.h * 0.06,
               ),
-              l: plan.expedition.l,
-              h: plan.expedition.h * 0.12,
+              l: plan.panneauLieu.l,
+              h: plan.panneauLieu.h * 0.12,
             })}
           >
             {deck.total === 0
               ? 'Aucun équipement : pars avec ce que l’armurier te donne.'
               : `Tu descends avec ${deck.total} cartes, dont ${deck.frappent} qui frappent.`}
           </p>
+          )}
         </>
       )}
 

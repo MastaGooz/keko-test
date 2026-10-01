@@ -4286,6 +4286,19 @@ pas un rail de huit entrées sur deux symboles.*
 liste, et il n'y a qu'un `?? 'Armurerie'` à retirer le jour où chaque
 destination a son dessin.
 
+**ET CHAQUE MÉTIER A SON LIEU, VIDE MAIS NOMMÉ.** Keko : « on peut mettre un
+écran placeholder pour chaque catégorie du hub (juste le titre, encadré mais
+vide) pour tester la navigation ? » *Un écran vide qui porte son nom se navigue
+déjà* — et c'est tout ce qu'on cherche à éprouver tant qu'aucun n'a de contenu.
+
+**Le panneau est celui de l'expédition, généralisé** (`panneauLieu`) : tout lieu
+sans meuble prend la place que le rail laisse, avec sa plaque au nom de la
+destination courante. *Le rail dit où l'on va, le panneau confirme où l'on est.*
+L'armurerie reste l'exception — c'est elle qui remplit la place de ses trois
+colonnes — et la ligne « Tu descends avec… » reste propre à l'expédition :
+**les autres n'ont rien à dire, et un panneau vide le dit mieux qu'une phrase
+inventée.**
+
 **ET ELLES SONT TOUTES OUVERTES, POUR LA MÊME RAISON.** Keko : « tu peux mettre
 les onglets vides du hub en armurerie (placeholder) juste pour test ? » *Six
 entrées sur huit éteintes à 22 %, ça se juge mal* — on voit un rail à moitié

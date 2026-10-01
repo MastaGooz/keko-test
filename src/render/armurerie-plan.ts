@@ -154,8 +154,14 @@ export type PlanArmurerie = {
   rail: Rect
   /** La liste elle-même : le rail moins la bande du bouton, en bas. */
   railListe: Rect
-  /** Le panneau du lieu d'expédition : tout ce que le rail laisse. */
-  expedition: Rect
+  /**
+   * LE PANNEAU D'UN LIEU SANS MEUBLE : tout ce que le rail laisse.
+   *
+   * Il a été taillé pour l'expédition, et il sert à tous les lieux qui n'ont
+   * pas encore leur contenu — *un panneau vide qui porte son nom se navigue
+   * déjà.* L'armurerie, elle, remplit la place de ses trois colonnes.
+   */
+  panneauLieu: Rect
   /** Le cadre du coffre, bandeau d'onglets compris. */
   coffre: Rect
   /** La bande des onglets, dans le coffre. */
@@ -756,7 +762,7 @@ export function planArmurerie(
     // toucher. « Descendre » au-dessus, le repli en dessous.
     bouton: [xExpedition, yPanneaux + hBouton, Z_PLAN],
     boutonFortune: [xExpedition, yPanneaux - hBouton, Z_PLAN],
-    expedition: { x: xExpedition, y: yPanneaux, l: lExpedition, h: hPanneaux },
+    panneauLieu: { x: xExpedition, y: yPanneaux, l: lExpedition, h: hPanneaux },
     // **IL A LA LARGEUR DE SON CONTENU, pas celle du panneau** : étiré sur toute
     // la bande il se lisait comme un bandeau, pas comme un bouton. *Ce qui
     // s'étire d'un bord à l'autre est un titre ; ce qui se tape est une pièce.*
