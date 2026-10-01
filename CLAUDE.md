@@ -6060,7 +6060,64 @@ Trois contraintes de dessin, et les deux premières ont une raison mécanique :
 colonne retombe de 143 à 100 px à 844 x 390, et la case du coffre remonte de 40
 à 44 px (33 à 667 x 320). Cinq colonnes partout, dans les deux cas.
 
-**LE DÉPART DE FORTUNE : « ÉQUIPEMENT GRATUIT », SOUS « DESCENDRE ».** Demandé
+**LE PRÊT DE L'ARMURIER : UNE CASE À COCHER, PLUS UN DÉPART.** Keko : « on peut
+rework les boutons descendre et équipement gratuit ? Je ne trouve pas les
+termes clairs. Déjà descendre, pas forcément, car il y aura plusieurs
+donjons… et l'équipement gratuit devrait peut-être être une option de
+l'armurier ? Un bouton "équipement gratuit" à cocher / décocher. »
+
+**« EXPLORER » remplace « DESCENDRE »** — *un verbe de direction présume d'une
+carte qui n'existe pas encore*, et celui-ci suit l'emblème « Exploration » que
+Keko a dessiné pour l'onglet : le lieu, son écu et son bouton disent le même
+mot. Tranché par lui.
+
+**Et le second départ a disparu**, remplacé par une case dans l'armurerie. *Ce
+que ça achète, et c'était invisible tant que c'était un bouton* : l'équipement
+de dépannage cesse d'être un DÉPART séparé pour devenir un CHARGEMENT comme un
+autre. On peut donc lui ajouter ses objets, le regarder, le comparer — et
+surtout **le refuser d'un clic**, ce qu'un bouton qui lance la partie ne
+permettait pas.
+
+La règle, telle que Keko l'a dictée, et elle vit dans `logic/hub.ts` :
+
+- **cocher** range ce qu'on portait au coffre et verrouille une arme et une
+  armure communes, tirées au RNG seedé ;
+- **les objets ne sont jamais prêtés** : la pile ne bouge pas, et le joueur
+  peut en ajouter à un chargement prêté ;
+- **équiper une pièce à soi rompt le prêt EN BLOC** — l'arme ET l'armure.
+  *On ne mélange pas* : un chargement est prêté ou il ne l'est pas, sinon le
+  prêt deviendrait un complément gratuit plutôt qu'un dépannage ;
+- **décocher le fait disparaître**, et il ne laisse rien au coffre : *il n'a
+  jamais appartenu à personne* — c'est exactement ce qui le distingue d'un
+  équipement qu'on retire ;
+- **il ne s'acquiert qu'en le RAMENANT.** Le drapeau tombe à l'extraction et la
+  pièce devient un bien ; mourir avec ne laisse rien.
+
+**Le drapeau vit sur la PIÈCE** (`pret`), pas dans une liste à côté : il voyage
+avec elle — en run, à la mort, au retour — et *une marque posée ailleurs se
+désaccorde de ce qu'elle marque.*
+
+**Le mot DIT la règle**, et c'est pour ça que « Prêt de l'armurier » a battu
+« Équipement gratuit » : *gratuit* dit le prix, *prêt* dit la condition — on te
+le prête, tu le gagnes en le rapportant. Même raisonnement qu'« enchantement »
+plutôt que « maîtrise ».
+
+**La case est au panneau ce que le tri est au coffre** : en en-tête, même
+bande, même marge, même hauteur — *un onglet dit ce qu'on regarde, ces deux-là
+disent ce qu'on fait au meuble entier.*
+
+**CE QUI RESTE À TRANCHER, et c'est à Keko** : `perdreLEquipement` rend
+toujours une arme et une armure gratuites AU COFFRE à la mort, et le hub de
+départ les donne déjà équipées. *Le joueur possède donc du gratuit sans l'avoir
+ramené*, ce qui frotte avec la règle neuve. Je ne l'ai pas défait : « mourir ne
+peut pas bloquer le jeu » est une décision acquise, et la case peut désormais
+porter ce garde-fou à sa place.
+
+*L'ancien départ de fortune est parti avec ses règles* (`chargementDeFortune`,
+`rentrerDeFortune`) et ses sept vérifications : **du code mort dans `logic/`
+ment sur ce que le jeu fait.** Ce qui suit est son histoire.
+
+**LE DÉPART DE FORTUNE : « ÉQUIPEMENT GRATUIT », SOUS « DESCENDRE » — HISTOIRE.** Demandé
 par Keko — d'abord « un bouton sous le PNJ armurier, similaire au bouton
 descendre, sauf qu'il génère un stuff de niveau minimal aléatoire », puis « on
 va remplacer fourbir par "équipement gratuit" et placer le bouton sous le

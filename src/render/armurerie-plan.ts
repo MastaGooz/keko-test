@@ -42,8 +42,20 @@ export const Z_PLAN = Z_MAIN
  * doit les mesurer pour dimensionner le rail : *ce qui décide d'une largeur ne
  * peut pas être écrit ailleurs que là où la largeur se calcule.*
  */
-export const TEXTE_DESCENDRE = 'Descendre'
-export const TEXTE_FORTUNE = 'Équipement\ngratuit'
+/**
+ * **« Explorer » et non « Descendre »** — tranché par Keko : « descendre, pas
+ * forcément, car il y aura plusieurs donjons ». *Un verbe de direction présume
+ * d'une carte qui n'existe pas encore* ; celui-ci suit l'emblème
+ * « Exploration » que Keko a dessiné pour l'onglet, donc le lieu, son écu et
+ * son bouton disent le même mot.
+ *
+ * Le second départ a disparu avec lui : **l'équipement gratuit est devenu une
+ * case à cocher de l'armurerie** (`pretActif`, dans `logic/hub.ts`).
+ */
+export const TEXTE_DESCENDRE = 'Explorer'
+
+/** La case de l'armurier, en en-tête de l'équipement. */
+export const TEXTE_PRET = 'Prêt de l’armurier'
 
 /** Ce qu'on consulte sans rien décider : le deck que le chargement produit. */
 export const TEXTE_DECK = 'Deck'
@@ -178,6 +190,8 @@ export type PlanArmurerie = {
   tri: Rect
   /** La zone des cases, dans le coffre. */
   grille: Rect
+  /** La case « Prêt de l'armurier », en en-tête de l'équipement. */
+  pretCase: Rect
   /** La barre de défilement, à droite de la grille. */
   barre: Rect
   colonnes: number
@@ -245,7 +259,6 @@ export type PlanArmurerie = {
    * donne*, donc il se pose sous lui — et le portrait lui cède sa bande basse
    * plutôt que de la partager.
    */
-  boutonFortune: [number, number, number]
   /**
    * « Deck » : la bande réservée juste sous les mesures. C'est un RECTANGLE et
    * non une position de scène, parce que le bouton est du HTML — *il porte le
@@ -402,9 +415,10 @@ export function planArmurerie(
   // donc la plus large des deux et on la donne aux deux, la police étant déjà
   // commune depuis que la toile garde sa hauteur.
   const bDescendre = tailleBouton(TEXTE_DESCENDRE, 'or', 'ecran', Z_PLAN, hauteurFenetrePx)
-  const bFortune = tailleBouton(TEXTE_FORTUNE, 'pierre', 'ecran', Z_PLAN, hauteurFenetrePx)
-  const lBouton = Math.max(bDescendre.largeur, bFortune.largeur)
-  const rapportDepart = lBouton / bDescendre.hauteur
+  // IL N'Y A PLUS QU'UN DÉPART, donc plus de plaque à égaliser : le rapport
+  // est simplement le sien. *Une règle posée pour accorder deux objets tombe
+  // avec le second.*
+  const rapportDepart = bDescendre.largeur / bDescendre.hauteur
   /**
    * LA COLONNE NE SUIT PLUS SON BOUTON — mais elle suit toujours SON CONTENU.
    *
@@ -553,6 +567,24 @@ export function planArmurerie(
     x: xCoffre - lCoffre / 2 + ecartTri + cote / 2,
     y: yPanneaux + hPanneaux / 2 - ecartTri - cote / 2,
     l: cote,
+    h: cote,
+  }
+
+  /**
+   * LA CASE DU PRÊT, en haut à gauche de l'ÉQUIPEMENT.
+   *
+   * *Elle est au panneau ce que le tri est au coffre* : en en-tête, au-dessus
+   * de tout — **un onglet dit ce qu'on regarde, ces deux-là disent ce qu'on
+   * fait au meuble entier.** Même bande, même marge, même hauteur : les deux
+   * se répondent d'un meuble à l'autre.
+   *
+   * Elle porte un libellé, donc elle prend de la largeur là où le tri n'est
+   * qu'un carré — bornée pour ne jamais déborder du panneau.
+   */
+  const pretCase: Rect = {
+    x: xEquip - lEquip / 2 + ecartTri + Math.min(lEquip - 2 * ecartTri, cote * 7.6) / 2,
+    y: yPanneaux + hPanneaux / 2 - ecartTri - cote / 2,
+    l: Math.min(lEquip - 2 * ecartTri, cote * 7.6),
     h: cote,
   }
 
@@ -794,7 +826,6 @@ export function planArmurerie(
   // on les écarte de la hauteur RÉELLE d'un bouton, pas d'une bande réservée
   // deux fois plus haute — *deux boutons séparés d'un vide se lisent comme deux
   // objets sans rapport.*
-  const hBouton = bDescendre.hauteur
   /**
    * LE RAIL NE PORTE PLUS DE BOUTON — ils sont partis dans « Expédition ».
    *
@@ -856,6 +887,7 @@ export function planArmurerie(
     nomArmes: { x: xArmes, y: yNomPorte, l: lArmes, h: hNom },
     nomArmure: { x: place(hautes - 1), y: yNomPorte, l: pasCharge - coupe, h: hNom },
     nomObjets: { x: xEquip, y: yNomObjets, l: CAPACITE_PILE * pasCharge, h: hNom },
+    pretCase,
     stats: {
       x: xEquip,
       y: yPanneaux + hPanneaux / 2 - hEntete - hStats / 2,
@@ -871,8 +903,10 @@ export function planArmurerie(
     // écartés d'un bouton : *ce qui engage une partie occupe le centre de
     // l'écran*, et deux actions de même rang se lisent comme une pile sans se
     // toucher. « Descendre » au-dessus, le repli en dessous.
-    bouton: [xExpedition, yPanneaux + hBouton, Z_PLAN],
-    boutonFortune: [xExpedition, yPanneaux - hBouton, Z_PLAN],
+    // LE DÉPART SE CENTRE DANS SON LIEU, maintenant qu'il y est seul : il
+    // était décalé d'un bouton pour laisser la place au repli, et *un
+    // décalage posé pour un voisin se relit quand le voisin s'en va.*
+    bouton: [xExpedition, yPanneaux, Z_PLAN],
     // LE CADRE S'ARRÊTE AVANT LE PORTRAIT, il ne l'entoure pas : *un PNJ n'est
     // pas un contenu du panneau, c'est son voisin* — la disposition de
     // l'armurerie, où les deux meubles s'arrêtent avant la colonne de

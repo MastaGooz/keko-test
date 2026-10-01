@@ -48,6 +48,22 @@ export type Piece = {
   rarete: Rarete
   /** Son set : le deck qu'elle apporte, modèle par modèle. */
   set: { modele: Modele; nombre: number }[]
+  /**
+   * EST-ELLE PRÊTÉE ? Le drapeau du « prêt de l'armurier ».
+   *
+   * Tranché par Keko : *l'équipement gratuit n'est plus un départ à part, c'est
+   * une OPTION de l'armurerie* — une case qu'on coche, qui verrouille une arme
+   * et une armure qu'on ne possède pas encore. **Elle ne s'acquiert qu'en la
+   * RAMENANT d'une run** : le drapeau tombe à l'extraction, et la pièce entre
+   * alors dans ce qu'on possède.
+   *
+   * *Le mot dit la règle*, comme « enchantement » plutôt que « maîtrise » : on
+   * te la prête, tu la gagnes en la rapportant. Un drapeau sur la PIÈCE plutôt
+   * qu'une liste à côté, parce qu'il voyage avec elle — en run, à la mort, au
+   * retour — et qu'*une marque posée ailleurs se désaccorde de ce qu'elle
+   * marque.*
+   */
+  pret?: boolean
 }
 
 export type Arme = Piece & {

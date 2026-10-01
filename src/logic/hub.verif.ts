@@ -12,21 +12,22 @@ import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART
 import {
   CAPACITE_PILE,
   consommablesDeLaPile,
-  chargementDeFortune,
   echangerDansCoffre,
   estTresor,
   rangerEnFinDeCoffre,
   trierLeCoffre,
   accepteDepuis,
+  cocherPret,
   creerHub,
   deckEmporte,
+  decocherPret,
+  pretActif,
   deplacerPiece,
   deuxMains,
   equipement,
   peutDescendre,
   perdreLEquipement,
   rentrer,
-  rentrerDeFortune,
 } from './hub.ts'
 
 let echecs = 0
@@ -411,62 +412,79 @@ const COTTE: Armure = {
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)
 console.log('Tout passe.')
 
-// --- le chargement de fortune ------------------------------------------------
-
 {
-  // IL NE TOUCHE PAS AU HUB, et c'est tout le point : il rend un CHARGEMENT.
-  // Keko : « le bouton fourbir doit lancer la partie avec un set de base
-  // direct, pas donner le set sans lancer la partie, sinon on peut le vendre
-  // direct ». Ce qui n'entre jamais dans le coffre ne peut jamais en sortir.
-  const rng = createRng(7)
-  const c = chargementDeFortune(rng)
-  verifier('il donne une arme', c.mains[0] !== null && 'mains' in c.mains[0])
-  verifier('...et une armure', c.armure !== null)
-  verifier('...et au moins une potion', consommablesDeLaPile(c.pile).length >= 1)
-  verifier('la pile reste positionnelle', c.pile.length === CAPACITE_PILE)
+  // LE PRET DE L'ARMURIER : une case a cocher, pas un depart a part.
+  // Keko : « quand on le coche, tout l'equipement actuel va au coffre et on
+  // verrouille un equipement aleatoire arme + armure ».
+  const h = creerHub()
+  const avant = h.chargement.mains[0]!.id
+  const pile = consommablesDeLaPile(h.chargement.pile).length
+  const p = cocherPret(h, createRng(7))
 
-  // DES EXEMPLAIRES NEUFS, jamais ceux du coffre : deux appels ne partagent
-  // aucun identifiant, sinon deux pieces se deplaceraient ensemble.
-  const d = chargementDeFortune(rng)
-  verifier('chaque tirage a ses propres exemplaires', c.mains[0]!.id !== d.mains[0]!.id)
+  verifier('cocher le pret equipe une arme pretee',
+    p.chargement.mains[0]!.pret === true)
+  verifier('...et une armure pretee',
+    p.chargement.armure!.pret === true)
+  verifier('...le pret est actif',
+    pretActif(p.chargement))
+  verifier('...ce qu’on portait rentre au coffre',
+    p.reserve.some((o) => o.id === avant))
+  // LES OBJETS NE SONT JAMAIS PRETES : la pile ne bouge pas.
+  verifier('...et la pile ne bouge pas',
+    consommablesDeLaPile(p.chargement.pile).length === pile)
 
-  // ET LE MEME RNG REDONNE LE MEME CHARGEMENT : tout hasard du jeu est seede.
-  const rejoue = chargementDeFortune(createRng(7))
-  verifier('le tirage est reproductible',
-    rejoue.mains[0]!.id === c.mains[0]!.id &&
-      consommablesDeLaPile(rejoue.pile).length === consommablesDeLaPile(c.pile).length)
+  // DECOCHER : le pret s'evapore, et il ne laisse RIEN -- il n'a jamais
+  // appartenu a personne, donc il ne rentre pas au coffre.
+  const d = decocherPret(p)
+  verifier('decocher vide les slots pretes',
+    d.chargement.mains[0] === null && d.chargement.armure === null)
+  verifier('...et ne laisse rien au coffre',
+    d.reserve.length === p.reserve.length)
+  verifier('...et garde les objets',
+    consommablesDeLaPile(d.chargement.pile).length === pile)
 }
 
-// --- remonter d'une descente de fortune -------------------------------------
+{
+  // LE PRET TOMBE EN BLOC des qu'on equipe une piece a soi. Keko : « si le
+  // joueur equipe une arme ou armure du coffre a nouveau, l'equipement gratuit
+  // disparait integralement ».
+  const p = cocherPret(creerHub(), createRng(3))
+  const espadon = p.reserve.find((o) => o.id === ESPADON_REEL.id)!
+  const apres = deplacerPiece(p, { ou: 'reserve' }, { ou: 'main', rang: 0 }, espadon.id)
+
+  verifier('equiper une arme a soi rompt le pret',
+    !pretActif(apres.chargement))
+  verifier('...l’arme pretee ne rentre pas au coffre',
+    !apres.reserve.some((o) => (o as Arme).pret === true))
+  verifier('...et l’ARMURE pretee tombe avec elle',
+    apres.chargement.armure === null)
+
+  // LES OBJETS, EUX, NE ROMPENT RIEN : « le joueur peut ajouter des objets a un
+  // free loadout ».
+  const potion = p.reserve.find((o) => o.id === POTIONS_DEPART[1]!.id)!
+  const avecObjet = deplacerPiece(p, { ou: 'reserve' }, { ou: 'pile' }, potion.id)
+  verifier('ajouter un objet laisse le pret en place',
+    pretActif(avecObjet.chargement))
+}
 
 {
-  // CE QU'ON A EMPORTE EST UN EQUIPEMENT, pas un deck : sortir vivant, c'est le
-  // GAGNER. Keko : « le loadout de base ne donne pas que des cartes mais bien
-  // l'equipement, donc si le joueur arrive a sortir il gagne cet equipement ».
-  const h = creerHub()
-  const emporte = chargementDeFortune(createRng(11))
-  const potions = consommablesDeLaPile(emporte.pile)
-  const bue = potions[0]!
-  const survivants = potions.slice(1)
-  const tresor = carteTresor('t-9', 'Calice', 120)
-  const apres = rentrerDeFortune(h, 55, survivants, [tresor], emporte)
+  // ET IL NE S'ACQUIERT QU'EN LE RAMENANT. Keko : « l'equipement gratuit ne
+  // pourra etre obtenu definitivement qu'apres que le joueur l'ait emmene en
+  // run et ramene ».
+  const p = cocherPret(creerHub(), createRng(5))
+  const rentre = rentrer(p, 40, consommablesDeLaPile(p.chargement.pile))
+  verifier('ramener le pret en fait un bien',
+    !pretActif(rentre.chargement) && rentre.chargement.mains[0] !== null)
 
-  verifier('l’arme de fortune entre au coffre',
-    apres.reserve.some((o) => o.id === emporte.mains[0]!.id))
-  verifier('...et son armure aussi',
-    apres.reserve.some((o) => o.id === emporte.armure!.id))
-  verifier('...et les potions non bues',
-    survivants.every((c) => apres.reserve.some((o) => o.id === c.id)))
-  verifier('mais pas celle qu’on a bue',
-    !apres.reserve.some((o) => o.id === bue.id))
-  verifier('l’or et le tresor rentrent aussi',
-    apres.or === h.or + 55 && apres.reserve.some((o) => o.id === 't-9'))
+  // MOURIR AVEC NE LAISSE RIEN : on ne perd que ce qu'on a emporte, et ca
+  // n'appartenait a personne.
+  const mort = perdreLEquipement(p)
+  verifier('mourir avec un pret ne le laisse pas au coffre',
+    !mort.reserve.some((o) => (o as Arme).pret === true))
 
-  // LA PILE DU HUB N'A JAMAIS QUITTE LE COFFRE : on ne l'ampute pas. Sans ca,
-  // `rentrer` la viderait, faute d'y trouver un seul identifiant emporte.
-  verifier('la pile du hub est intacte',
-    consommablesDeLaPile(apres.chargement.pile).length ===
-      consommablesDeLaPile(h.chargement.pile).length)
-  verifier('...et le chargement du hub n’a pas bouge',
-    apres.chargement.mains[0]!.id === h.chargement.mains[0]!.id)
+  // COCHER DEUX FOIS NE CUMULE RIEN : un pret qu'on remplace par un autre ne
+  // doit rien laisser derriere lui.
+  const deux = cocherPret(p, createRng(9))
+  verifier('recocher ne verse pas l’ancien pret au coffre',
+    !deux.reserve.some((o) => (o as Arme).pret === true))
 }

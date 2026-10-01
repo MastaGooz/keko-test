@@ -28,7 +28,6 @@ import {
   SUPER_POTIONS_DEPART,
   carteDuConsommable,
   deckDeLEquipement,
-  potion,
   estConsommable,
   nomObjet,
 } from './armes.ts'
@@ -376,7 +375,11 @@ function estArme(objet: Objet): objet is Arme {
  * de main, une arme dans le torse, un slot vide qu'on essaie de vider.
  */
 export function deplacerPiece(hub: Hub, source: Slot, cible: Slot, id?: string): Hub {
-  const prise = prendre(hub, source, id)
+  // LE PRÊT TOMBE AVANT LA POSE, jamais après : s'il tombait ensuite, la pièce
+  // prêtée que la destination déloge repartirait au coffre — et on POSSÈDERAIT
+  // ce qu'on n'a jamais rapporté.
+  const depart = equipeUnePieceAUeLui(hub, source, cible, id) ? romprLePret(hub) : hub
+  const prise = prendre(depart, source, id)
   if (prise.piece === null) return hub
   // On juge la destination SUR LE HUB D'APRÈS LA PRISE : sans ça, reposer une
   // potion sur une pile pleine se refusait elle-même, alors qu'elle venait
@@ -538,6 +541,11 @@ export function rentrer(
   // positionnelle, donc on ne la reconstruit pas — on l'ampute.
   const restants = new Set(survivants.map((c) => c.id))
   const pile = hub.chargement.pile.map((c) => (c !== null && restants.has(c.id) ? c : null))
+  // ET LE PRÊT DEVIENT UN BIEN. *Il ne s'acquiert qu'en le RAMENANT* — tranché
+  // par Keko : « l'équipement gratuit ne pourra être obtenu définitivement
+  // qu'après que le joueur l'ait emmené en run et ramené ». Il reste équipé :
+  // il perd son drapeau, c'est tout ce qui le séparait d'une pièce à soi.
+  const acquise = <T extends Piece>(p: T): T => (p.pret === true ? { ...p, pret: undefined } : p)
   return {
     ...hub,
     or: hub.or + butin,
@@ -546,7 +554,15 @@ export function rentrer(
     // marché existera — et ils entrent dans la MÊME liste que le reste, donc à
     // la suite de ce qu'on possède déjà.
     reserve: [...hub.reserve, ...tresors],
-    chargement: { ...hub.chargement, pile },
+    chargement: {
+      ...hub.chargement,
+      mains: hub.chargement.mains.map((a) => (a === null ? null : acquise(a))) as [
+        Arme | null,
+        Arme | null,
+      ],
+      armure: hub.chargement.armure === null ? null : acquise(hub.chargement.armure),
+      pile,
+    },
   }
 }
 
@@ -577,78 +593,102 @@ export function perdreLEquipement(hub: Hub): Hub {
   }
 }
 
-/**
- * UN CHARGEMENT DE FORTUNE, tiré au hasard dans ce qui est commun.
- *
- * Demandé par Keko : un bouton sous l'armurier, « similaire au bouton
- * descendre, sauf qu'il génère un stuff de niveau minimal aléatoire ».
- *
- * **IL NE TOUCHE PAS AU HUB, ET C'EST TOUT LE POINT.** Il a d'abord posé son
- * équipement dans le chargement, laissant le joueur au hub ; Keko l'a repris
- * aussitôt : « le bouton fourbir doit lancer la partie avec un set de base
- * direct, pas donner le set sans lancer la partie — sinon on peut le vendre
- * direct ». *Un équipement qu'on peut poser est un équipement qu'on possède*,
- * donc une source infinie de matière à revendre.
- *
- * Il rend donc un `Chargement` et rien d'autre : **ce qui n'entre jamais dans
- * le coffre ne peut jamais en sortir.** C'est la même garde que « un trésor
- * rentré au hub n'en ressort plus », prise par l'autre bout.
- *
- * *C'est une FABRICATION, pas une fouille* : les exemplaires sont neufs.
- * L'armurier ne prête pas ce qu'on possède, il donne ce qu'il a sous la main —
- * le temps d'une descente.
- *
- * Le tirage passe par le RNG SEEDÉ, comme tout hasard du jeu : c'est la règle
- * de pureté de `logic/`, et elle vaut même pour un confort d'interface.
- */
-export function chargementDeFortune(rng: Rng): Chargement {
-  const marque = `fortune-${rng.getState().toString(36)}`
-  const tire = <T,>(liste: readonly T[]): T =>
-    liste[Math.min(liste.length - 1, Math.floor(rng.next() * liste.length))]!
 
-  const arme: Arme = { ...tire(ARMES_COMMUNES), id: `${marque}-a` }
-  const armure: Armure = { ...tire(ARMURES_COMMUNES), id: `${marque}-b` }
-  // AU MOINS UNE POTION, jamais zéro : un chargement de fortune doit pouvoir
-  // descendre, et *une pile vide ne se distingue pas d'un oubli.*
-  const combien = 1 + Math.floor(rng.next() * CAPACITE_PILE)
-  const pile = pileVide().map((_, i) =>
-    i < combien ? { ...potion(0), id: `${marque}-p${i}` } : null,
-  )
-  return { mains: [arme, null], armure, pile }
+
+/**
+ * LE PRÊT DE L'ARMURIER : une case à cocher, pas un départ à part.
+ *
+ * Tranché par Keko : « l'équipement gratuit devrait être une option de
+ * l'armurier — un bouton à cocher / décocher. Quand on le coche, tout
+ * l'équipement actuel va au coffre et on verrouille un équipement aléatoire
+ * arme + armure. Si le joueur équipe une arme ou armure du coffre à nouveau,
+ * l'équipement gratuit disparaît intégralement. Les objets ne sont jamais
+ * gratuits. Et si le joueur décoche, il disparaît aussi. »
+ *
+ * **Ce que ça change de l'ancien bouton**, et c'est tout le gain : l'équipement
+ * de dépannage cesse d'être un DÉPART séparé pour devenir un CHARGEMENT comme
+ * un autre. On peut donc lui ajouter ses propres objets, le regarder, le
+ * comparer — et surtout *le refuser d'un clic*, ce qu'un bouton qui lance la
+ * partie ne permettait pas.
+ *
+ * **Il ne s'acquiert qu'en le RAMENANT.** Le drapeau tombe à l'extraction ;
+ * mourir avec ne laisse rien, puisqu'on ne perd que ce qu'on a emporté et que
+ * ça n'appartenait à personne.
+ */
+export function pretActif(chargement: Chargement): boolean {
+  return equipement(chargement).some((p) => p.pret === true)
 }
 
 /**
- * REMONTER D'UNE DESCENTE DE FORTUNE.
+ * COCHER : ce qu'on portait rentre au coffre, un prêt neuf prend sa place.
  *
- * **Ce qu'on a emporté est un ÉQUIPEMENT, pas un deck** — donc sortir vivant,
- * c'est le GAGNER. Tranché par Keko : « le loadout de base ne donne pas que des
- * cartes mais bien l'équipement, donc si le joueur arrive à sortir il gagne cet
- * équipement. »
+ * *Les objets ne sont jamais prêtés* — la pile ne bouge pas, et le joueur peut
+ * en ajouter au prêt comme à n'importe quel chargement.
  *
- * Deux choses qui tiennent ensemble, et qui viennent du fait que **le hub n'a
- * rien engagé** :
- *
- * - **sa pile n'a jamais quitté le coffre**, donc on ne l'ampute pas — c'est
- *   `rentrer` qui le ferait, faute de trouver un seul identifiant emporté ;
- * - **l'arme, l'armure et les potions non bues y entrent**, parce qu'elles
- *   existaient pour de vrai. *Une potion bue s'est exilée du deck*, et c'est ce
- *   que `consommablesSurvivants` lit déjà à l'état.
- *
- * À la MORT, en revanche, il n'y a rien à faire : *on ne perd que ce qu'on a
- * emporté*, et ce qu'on avait emporté n'appartenait pas encore au coffre.
+ * Le tirage passe par le RNG SEEDÉ, comme tout hasard du jeu, et par un RNG à
+ * LUI : consommer celui de la descente ferait que cocher la case changerait la
+ * partie que la seed annonce.
  */
-export function rentrerDeFortune(
-  hub: Hub,
-  butin: number,
-  survivants: Consommable[],
-  tresors: Carte[],
-  emporte: Chargement,
-): Hub {
-  const rentre = rentrer(hub, butin, consommablesDeLaPile(hub.chargement.pile), tresors)
+export function cocherPret(hub: Hub, rng: Rng): Hub {
+  const marque = `pret-${rng.getState().toString(36)}`
+  const tire = <T,>(liste: readonly T[]): T =>
+    liste[Math.min(liste.length - 1, Math.floor(rng.next() * liste.length))]!
+  const arme: Arme = { ...tire(ARMES_COMMUNES), id: `${marque}-a`, pret: true }
+  const armure: Armure = { ...tire(ARMURES_COMMUNES), id: `${marque}-b`, pret: true }
+  // CE QU'ON PORTAIT RENTRE AU COFFRE, et seulement ce qu'on POSSÈDE : un prêt
+  // qu'on remplace par un autre ne doit rien laisser derrière lui.
+  const rendu = equipement(hub.chargement).filter((p) => p.pret !== true)
   return {
-    ...rentre,
-    reserve: [...rentre.reserve, ...equipement(emporte), ...survivants],
+    ...hub,
+    reserve: [...hub.reserve, ...rendu],
+    chargement: { ...hub.chargement, mains: [arme, null], armure },
   }
+}
+
+/**
+ * DÉCOCHER : le prêt s'évapore, et il ne laisse rien.
+ *
+ * *Il n'a jamais appartenu à personne*, donc il ne rentre pas au coffre — c'est
+ * exactement ce qui le distingue d'un équipement qu'on retire. La pile reste :
+ * les objets sont au joueur.
+ */
+export function decocherPret(hub: Hub): Hub {
+  if (!pretActif(hub.chargement)) return hub
+  return {
+    ...hub,
+    chargement: {
+      ...hub.chargement,
+      mains: hub.chargement.mains.map((a) => (a?.pret === true ? null : a)) as [
+        Arme | null,
+        Arme | null,
+      ],
+      armure: hub.chargement.armure?.pret === true ? null : hub.chargement.armure,
+    },
+  }
+}
+
+/**
+ * LE PRÊT TOMBE EN BLOC dès qu'on équipe une pièce à soi.
+ *
+ * Keko : « si le joueur équipe une arme ou armure du coffre à nouveau,
+ * l'équipement gratuit disparaît intégralement ». *On ne mélange pas* : un
+ * chargement est prêté ou il ne l'est pas. Sans cette règle, on garderait
+ * l'armure prêtée en équipant sa propre arme — et le prêt deviendrait un
+ * complément gratuit plutôt qu'un dépannage.
+ */
+function romprLePret(hub: Hub): Hub {
+  return decocherPret(hub)
+}
+
+/** Ce geste équipe-t-il une pièce qu'on POSSÈDE, alors qu'un prêt est en cours ? */
+function equipeUnePieceAUeLui(hub: Hub, source: Slot, cible: Slot, id?: string): boolean {
+  if (source.ou !== 'reserve') return false
+  if (cible.ou !== 'main' && cible.ou !== 'armure') return false
+  if (!pretActif(hub.chargement)) return false
+  const { piece } = prendre(hub, source, id)
+  // *Les objets ne sont jamais prêtés*, donc en ajouter un ne rompt rien :
+  // Keko — « le joueur peut ajouter des objets à un free loadout ».
+  return piece !== null && !estConsommable(piece)
 }
 
 /** Reste-t-il de la place pour un consommable ? */

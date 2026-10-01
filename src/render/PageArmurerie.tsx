@@ -38,7 +38,7 @@ import type { Hub } from '../logic/hub.ts'
 import { deuxMains, peutDescendre } from '../logic/hub.ts'
 import { SON_POSER, jouerSon } from './sons.ts'
 import { tailleBouton } from './Bouton3D.tsx'
-import { Z_PLAN } from './armurerie-plan.ts'
+import { TEXTE_PRET, Z_PLAN } from './armurerie-plan.ts'
 import { urlDuSymbole } from '../ui/art.ts'
 import type { LieuHub } from './destinations.ts'
 import {
@@ -87,6 +87,13 @@ type Props = {
   onglet: Onglet
   /** Ranger le coffre : par catégorie, puis par rareté. */
   onTrier?: () => void
+  /**
+   * LE PRÊT DE L'ARMURIER : la case est-elle cochée, et que fait-on en la
+   * tapant ? *La règle vit dans `logic/hub.ts`* — l'écran ne fait que poser la
+   * question.
+   */
+  pret?: boolean
+  onPret?: () => void
   onOnglet: (o: Onglet) => void
   defilement: number
   onDefilement: (n: number) => void
@@ -127,6 +134,8 @@ export function PageArmurerie({
   hub,
   onglet,
   onTrier,
+  pret = false,
+  onPret,
   onOnglet,
   defilement,
   onDefilement,
@@ -1034,6 +1043,39 @@ export function PageArmurerie({
             strokeLinejoin="round"
           />
         </svg>
+      </button>
+
+      {/* LA CASE DU PRÊT, en en-tête de l'ÉQUIPEMENT.
+
+          Tranché par Keko : *l'équipement gratuit n'est plus un départ à part,
+          c'est une OPTION de l'armurier* — « un bouton à cocher / décocher.
+          Quand on le coche, tout l'équipement actuel va au coffre et on
+          verrouille un équipement aléatoire arme + armure. »
+
+          **Elle est au panneau ce que le tri est au coffre** : en en-tête,
+          au-dessus de tout — *un onglet dit ce qu'on regarde, ces deux-là
+          disent ce qu'on fait au meuble entier.* Même bande, même marge, même
+          hauteur, pour qu'ils se répondent d'un meuble à l'autre.
+
+          *Le mot DIT la règle* — on te le prête, tu le gagnes en le rapportant
+          — comme « enchantement » plutôt que « maîtrise ». */}
+      <button
+        type="button"
+        className={`arm-pret${pret ? ' coche' : ''}`}
+        style={boite(plan.pretCase)}
+        role="checkbox"
+        aria-checked={pret}
+        onClick={(e) => {
+          if (e.detail > 0) e.currentTarget.blur()
+          if (onPret === undefined) return
+          // LE SON DE LA POSE : cocher, c'est reposer ce qu'on portait au
+          // coffre et en prendre un autre — *un dépôt qui aboutit.*
+          jouerSon(SON_POSER)
+          onPret()
+        }}
+      >
+        <span className="arm-pret-case" aria-hidden="true" />
+        <span className="arm-pret-nom">{TEXTE_PRET}</span>
       </button>
 
       {/* LES ONGLETS SE MESURENT SUR LEUR BANDE : cinq mots dans un coffre

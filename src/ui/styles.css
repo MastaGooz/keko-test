@@ -5146,6 +5146,90 @@ body {
   color: #f2dfae;
 }
 
+/* LA CASE DU PRET, en en-tete de l'EQUIPEMENT.
+
+   Elle est au panneau ce que le bouton de tri est au coffre : meme bande, meme
+   marge, meme hauteur -- *un onglet dit ce qu'on regarde, ces deux-la disent ce
+   qu'on fait au meuble entier.* Elle parle la langue du lieu (Cinzel,
+   capitales, approche), comme les onglets et les noms de groupe.
+
+   **Cochee, elle prend l'or** : c'est deja la couleur de ce qui engage dans ce
+   hub. Decochee, elle se tait -- *une echelle dont le premier cran est le
+   silence se lit mieux qu'une echelle qui crie partout.* */
+.arm-pret {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #8d8167;
+  font-family: Cinzel, Georgia, serif;
+  font-size: min(0.62rem, 58%);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  /* LE CALQUE DES COMMANDES EST EN `pointer-events: none` -- sinon il volerait
+     le doigt aux cartes qui vivent dans le canvas dessous. *Un `auto` se porte
+     sur le sous-arbre qui en a besoin*, et c'est ici. */
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 160ms ease-out;
+}
+
+/* LE CARRE EST DE LA FERRONNERIE, pas une case de formulaire : un filet de
+   laiton, deux coins coupes -- *un arrondi est une forme de gabarit, une arete
+   franche est de la ferronnerie.* */
+.arm-pret-case {
+  flex: none;
+  width: 1.15em;
+  height: 1.15em;
+  border: 1px solid #6b5936;
+  background: #0d0e13;
+  box-shadow: inset 0 1px 0 #ffffff0f;
+  clip-path: polygon(
+    0.3em 0,
+    100% 0,
+    100% calc(100% - 0.3em),
+    calc(100% - 0.3em) 100%,
+    0 100%,
+    0 0.3em
+  );
+  transition:
+    background 160ms ease-out,
+    border-color 160ms ease-out;
+}
+
+.arm-pret-nom {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.arm-pret.coche {
+  color: #f0cf8e;
+}
+
+/* ET LA MARQUE EST UN PLEIN, pas une coche dessinee : a douze pixels de cote,
+   *un signe se bouche et un aplat se lit.* */
+.arm-pret.coche .arm-pret-case {
+  border-color: #d8bb79;
+  background: linear-gradient(135deg, #d8bb79, #8a7342);
+  box-shadow:
+    inset 0 1px 0 #ffffff33,
+    0 0 6px #d8bb7955;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .arm-pret:hover {
+    color: #ffeec2;
+  }
+
+  .arm-pret:hover .arm-pret-case {
+    border-color: #a98f5c;
+  }
+}
+
 /* LA PISTE EST UN BORD DU COFFRE autant qu'une commande : elle reste la meme
    quand tout tient, sinon la grille sauterait d'une colonne selon le
    remplissage.

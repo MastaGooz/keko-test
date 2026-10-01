@@ -81,13 +81,12 @@ import {
   creerHub,
   deplacerPiece,
   echangerDansCoffre,
-  chargementDeFortune,
   rangerEnFinDeCoffre,
   trierLeCoffre,
   equipement,
   perdreLEquipement,
   peutDescendre,
-  rentrer, rentrerDeFortune, consommablesDeLaPile, deckEmporte } from '../logic/hub.ts'
+  rentrer, consommablesDeLaPile, deckEmporte, cocherPret, decocherPret, pretActif } from '../logic/hub.ts'
 import {
   REGLAGE_DEFAUT,
   commencerDescente,
@@ -218,10 +217,10 @@ export function Scene(): React.JSX.Element {
    *
    * *Tout hasard du jeu passe par un RNG seedé* — c'est la règle de pureté de
    * `logic/` — mais celui-ci ne doit pas consommer le RNG de la descente, sinon
-   * appuyer sur « Équipement gratuit » changerait la partie que la seed annonce. Il vit
-   * donc à côté, seedé depuis la même graine, et il avance à chaque appui.
+   * cocher la case changerait la partie que la seed annonce. Il vit donc à
+   * côté, seedé depuis la même graine, et il avance à chaque coche.
    */
-  const rngFortune = useMemo(() => createRng(graine ^ 0x5f0132), [graine])
+  const rngPret = useMemo(() => createRng(graine ^ 0x5f0132), [graine])
   /**
    * L'ARMURERIE EST LE PREMIER ÉCRAN, et la descente vient d'elle.
    *
@@ -1112,24 +1111,8 @@ export function Scene(): React.JSX.Element {
    * la règle du jeu — *le deck est la somme de ce qu'on porte* — et c'est
    * exactement ce que l'armurerie sert à décider.
    */
-  /**
-   * LE CHARGEMENT DE FORTUNE AVEC LEQUEL ON EST PARTI, ou `null`.
-   *
-   * On le RETIENT, et pour deux raisons opposées : le hub n'a rien engagé —
-   * donc la mort ne peut rien lui prendre — mais **ce qu'on a emporté est un
-   * vrai ÉQUIPEMENT**, donc ressortir vivant le fait entrer au coffre. Keko :
-   * « le loadout de base ne donne pas que des cartes mais bien l'équipement,
-   * donc si le joueur arrive à sortir il gagne cet équipement ».
-   *
-   * *Sans le garder sous la main, il n'y aurait rien à faire rentrer* : il
-   * n'existe nulle part ailleurs, ni dans le hub ni dans la descente, qui ne
-   * connaît que des cartes.
-   */
-  const [fortune, setFortune] = useState<Chargement | null>(null)
-
   const partir = useCallback(
-    (chargement: Chargement, deFortune: boolean) => {
-      setFortune(deFortune ? chargement : null)
+    (chargement: Chargement) => {
       // LA MAIN DEMANDÉE PAR L'URL VAUT AUSSI POUR LES DESCENTES SUIVANTES :
       // sinon `?main=20` ne tiendrait que jusqu'au premier retour au hub.
       setDescente(
@@ -1144,9 +1127,21 @@ export function Scene(): React.JSX.Element {
     [depart.rng],
   )
 
+  /**
+   * LA CASE DU PRÊT : on coche, on décoche, et c'est tout.
+   *
+   * *La règle vit dans `logic/hub.ts`*, pas ici — cocher range ce qu'on portait
+   * au coffre et verrouille une arme et une armure qu'on ne possède pas encore,
+   * décocher les fait disparaître sans rien laisser. L'écran ne fait que poser
+   * la question.
+   */
+  const basculerPret = useCallback(() => {
+    setHub((h) => (pretActif(h.chargement) ? decocherPret(h) : cocherPret(h, rngPret)))
+  }, [rngPret])
+
   const descendreAuDonjon = useCallback(() => {
     if (!peutDescendre(hub.chargement)) return
-    partir(hub.chargement, false)
+    partir(hub.chargement)
   }, [hub, partir])
 
   /**
@@ -1165,18 +1160,6 @@ export function Scene(): React.JSX.Element {
     setZoomee(null)
     setZoomSet(deckDeTest(deckAPeindre(deckEmporte(hub.chargement))))
   }, [hub])
-
-  /**
-   * FOURBIR : l'armurier donne un chargement et on PART DANS LA FOULÉE.
-   *
-   * Tranché par Keko — « le bouton fourbir doit lancer la partie avec un set de
-   * base direct, pas donner le set sans lancer la partie, sinon on peut le
-   * vendre direct ». *Un équipement qu'on peut poser est un équipement qu'on
-   * possède* : il ne passe donc jamais par le coffre, et rien n'en revient.
-   */
-  const fourbirEtDescendre = useCallback(() => {
-    partir(chargementDeFortune(rngFortune), true)
-  }, [partir, rngFortune])
 
   /**
    * COMBIEN DE FOIS ON A ÉQUIPÉ, et jamais déséquipé.
@@ -1246,24 +1229,23 @@ export function Scene(): React.JSX.Element {
   const remonter = useCallback(
     (mort: boolean) => {
       setHub((h) => {
-        // UNE DESCENTE DE FORTUNE N'ENGAGEAIT RIEN : la mort ne peut donc rien
-        // prendre au coffre. *On ne perd que ce qu'on a emporté* — et ce qu'on
-        // avait emporté n'en venait pas.
-        if (mort) return fortune !== null ? h : perdreLEquipement(h)
+        // LA MORT PREND CE QU'ON A EMPORTÉ, prêt compris : il ne laisse rien,
+        // puisqu'il n'appartenait à personne. *On ne perd que ce qu'on a
+        // emporté* — et un prêt n'était pas à nous.
+        if (mort) return perdreLEquipement(h)
         const butin = butinTransporte(enCours)
         const survivants = consommablesSurvivants(enCours)
         const tresors = tresorsTransportes(enCours)
         // LA RÈGLE DU RETOUR VIT DANS `logic/`, pas ici : *ce qui décide de ce
         // qu'on gagne est une règle d'économie, pas un détail de rendu* — et
         // c'est ce qui la rend vérifiable sans navigateur.
-        return fortune === null
-          ? rentrer(h, butin, survivants, tresors)
-          : rentrerDeFortune(h, butin, survivants, tresors, fortune)
+        // ET LE PRÊT DEVIENT UN BIEN EN RENTRANT : `rentrer` lui retire son
+        // drapeau, c'est tout ce qui le séparait d'une pièce à soi.
+        return rentrer(h, butin, survivants, tresors)
       })
-      setFortune(null)
       setDescente(null)
     },
-    [enCours, fortune],
+    [enCours],
   )
 
   const choisirRecompense = useCallback(
@@ -1632,7 +1614,6 @@ export function Scene(): React.JSX.Element {
               setZoomSet([])
             }}
             onDescendre={descendreAuDonjon}
-            onFourbir={fourbirEtDescendre}
             onPoseCommence={() => setEquipements((n) => n + 1)}
             onEquipee={() => setFixations((n) => n + 1)}
             onSaisie={setSaisie}
@@ -1930,6 +1911,8 @@ export function Scene(): React.JSX.Element {
         <PageArmurerie
           hub={hub}
           onglet={onglet}
+          pret={pretActif(hub.chargement)}
+          onPret={basculerPret}
           onTrier={rangerTout}
           onOnglet={(o) => {
             setOnglet(o)

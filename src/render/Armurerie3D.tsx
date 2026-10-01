@@ -49,7 +49,7 @@ import type { Carte } from '../logic/combat.ts'
 import type { Hub, Slot } from '../logic/hub.ts'
 import { accepteDepuis, deuxMains, estTresor, peutDescendre } from '../logic/hub.ts'
 import type { Onglet } from './armurerie-plan.ts'
-import { TEXTE_DESCENDRE, TEXTE_FORTUNE } from './armurerie-plan.ts'
+import { TEXTE_DESCENDRE } from './armurerie-plan.ts'
 import type { PlanArmurerie } from './armurerie-plan.ts'
 import {
   caseSousLePoint,
@@ -187,11 +187,6 @@ type Props = {
   onRegarderTresor?: (tresor: Carte) => void
   onDescendre?: () => void
   /**
-   * L'ARMURIER DONNE UN CHARGEMENT DE FORTUNE. *C'est une fabrication, pas une
-   * fouille* : les exemplaires sont neufs, ils ne sortent pas du coffre.
-   */
-  onFourbir?: () => void
-  /**
    * Une pièce vient de SE FIXER dans un slot — pas d'être lâchée.
    *
    * *L'état du jeu change au lâcher, la mise en scène finit bien après* : ce
@@ -281,7 +276,6 @@ export function Armurerie3D({
   onRegarder,
   onRegarderTresor,
   onDescendre,
-  onFourbir,
   onEquipee,
   onPoseCommence,
   onSaisie,
@@ -990,20 +984,6 @@ export function Armurerie3D({
         onCliquer={onDescendre}
       />
 
-      {/* L'AUTRE DÉPART, SOUS « DESCENDRE ». *Ce sont deux façons de partir*,
-          donc elles se lisent au même endroit ; celle-ci est le repli, elle
-          vient dessous et en pierre plutôt qu'en or. Le libellé tient sur deux
-          lignes, faute de quoi il aurait élargi le rail de moitié. Il s'éteint
-          pendant un glisser comme tous les autres : on est déjà en train de
-          faire autre chose. */}
-      <Bouton3D
-        texte={TEXTE_FORTUNE}
-        rapportMin={plan.rapportDepart}
-        ton="pierre"
-        position={plan.boutonFortune}
-        eteint={tenue !== null}
-        onCliquer={onFourbir}
-      />
         </>
       )}
     </group>
