@@ -773,6 +773,45 @@ export async function peindreCarte(
   if (decor !== null) couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
   if (image !== null) couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
 
+  /**
+   * ET LA ZONE DU SUJET REÇOIT DE LA LUMIÈRE. Keko : « on peut éclaircir un peu
+   * le background des cartes ? je les trouve super foncé — ou bien éclaire la
+   * zone derrière l'illustration ».
+   *
+   * **Ça se pose PAR-DESSUS l'illustration, pas dessous.** Une image de Keko
+   * est opaque : elle recouvre le fond commun de bout en bout, donc éclaircir
+   * le décor ne changerait rien là où il compte. *Ce qu'on éclaire est ce qu'on
+   * voit.*
+   *
+   * Deux couches, et elles ne font pas le même travail : un voile UNIFORME très
+   * faible, qui relève la carte entière d'un cheveu, et une LUEUR radiale
+   * centrée sur les deux tiers du haut — là où vit le sujet. *Le bas n'en reçoit
+   * pas* : c'est la zone du texte, et le voile sombre qui suit la reprendrait de
+   * toute façon.
+   *
+   * En mélange `lighter`, donc une ADDITION : les noirs montent, les clairs
+   * saturent à peine — *une lumière ajoutée ne délave pas, un voile blanc
+   * posé, si.*
+   */
+  ctx.save()
+  ctx.globalCompositeOperation = 'lighter'
+  ctx.fillStyle = '#ffffff0d'
+  ctx.fillRect(marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+  const lueur = ctx.createRadialGradient(
+    LARGE / 2,
+    HAUT * 0.36,
+    0,
+    LARGE / 2,
+    HAUT * 0.36,
+    LARGE * 0.72,
+  )
+  lueur.addColorStop(0, '#fff6e61f')
+  lueur.addColorStop(0.55, '#fff6e60f')
+  lueur.addColorStop(1, '#fff6e600')
+  ctx.fillStyle = lueur
+  ctx.fillRect(marge, marge, LARGE - marge * 2, HAUT * 0.72)
+  ctx.restore()
+
   // LE VOILE SOUS LE TEXTE : le tiers du bas passe sous le nom et le
   // cartouche, donc l'image doit s'y éteindre pour qu'ils se lisent.
   const voile = ctx.createLinearGradient(0, HAUT * 0.5, 0, HAUT)

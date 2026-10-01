@@ -7545,6 +7545,25 @@ l'ajoute au canvas, et la carte 2D une couche de plus dans son
 fichiers de `public/` : **l'URL porte la date du build**, sinon le remplacer ne
 changerait rien à l'écran.
 
+**ET LA ZONE DU SUJET REÇOIT DE LA LUMIÈRE.** Keko : « on peut éclaircir un peu
+le background des cartes ? je les trouve super foncé — ou bien éclaire la zone
+derrière l'illustration ».
+
+**Ça se pose PAR-DESSUS l'illustration, pas dessous**, et c'est tout le point :
+une image de Keko est OPAQUE, elle recouvre le fond commun de bout en bout —
+éclaircir le décor n'aurait rien changé là où ça se voit. *Ce qu'on éclaire est
+ce qu'on voit.*
+
+Deux couches, et elles ne font pas le même travail : un voile UNIFORME très
+faible, qui relève la carte entière d'un cheveu, et une LUEUR radiale centrée
+sur les deux tiers du haut — là où vit le sujet. **Le bas n'en reçoit pas** :
+c'est la zone du texte, et le voile sombre qui suit la reprendrait de toute
+façon.
+
+**En mélange `lighter`, donc une ADDITION** : les noirs montent, les clairs
+saturent à peine — *une lumière ajoutée ne délave pas, un voile blanc posé,
+si.*
+
 **LES 24 DESSINS ONT PERDU LEUR CIEL, et il le fallait.** Chacun peignait un
 `<rect>` plein format qui recouvrait entièrement le fond commun : *le poser
 sous des illustrations opaques n'aurait rigoureusement rien changé.* Le retrait
