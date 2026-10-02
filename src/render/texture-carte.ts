@@ -822,6 +822,45 @@ function auCiel(image: HTMLImageElement, ciel: Ciel): HTMLCanvasElement | null {
  * résultat identique, et c'est exactement la raison qui mémorise déjà le décor
  * lui-même.
  */
+/**
+ * **LE DÉCOR EST PEINT, PAS CHARGÉ — et c'est un aplat pour commencer.**
+ *
+ * Keko : « le background est super moche en webp… sinon tu peux dessiner le
+ * fond via le code ? essaie de faire un fond uni simple pour commencer ».
+ *
+ * *Et ça règle le problème par sa racine* : l'image pesait 13 Ko pour 1,5
+ * mégapixel — **0,071 bit par pixel**, quatre fois sous ce qu'un dégradé
+ * demande pour ne pas bander. Une couleur peinte n'a ni compression, ni
+ * poids, ni palier de résolution : elle est nette à toutes les tailles de
+ * toile, et elle ne retarde plus le premier rendu puisqu'il n'y a plus rien à
+ * attendre.
+ *
+ * **`?fond=image` rend les fichiers** — *ce qui a servi à choisir doit rester
+ * ouvrable*, et c'est le seul moyen de comparer les deux d'un lien.
+ */
+const FOND_PEINT = new URLSearchParams(location.search).get('fond') !== 'image'
+
+/**
+ * LA COULEUR DE BASE : la moyenne MESURÉE du décor commun, déjà exposée.
+ *
+ * *On ne l'invente pas* — (1, 26, 36) est la moyenne du fichier bleu nuit, et
+ * l'exposition la portait à 2,6 fois. L'aplat part donc exactement là où
+ * l'image arrivait, et **il n'a pas besoin d'exposition** : multiplier une
+ * couleur unie ne fait que donner une autre couleur unie, autant poser la
+ * bonne du premier coup.
+ */
+const BASE_FOND: readonly [number, number, number] = [3, 68, 94]
+
+/** Cette même couleur, virée à la teinte d'une famille. */
+function couleurDuCiel(ciel: Ciel | undefined): string {
+  if (ciel === undefined) return `rgb(${BASE_FOND[0]}, ${BASE_FOND[1]}, ${BASE_FOND[2]})`
+  // On réemploie le virage du décor plutôt que d'écrire quatre couleurs à la
+  // main : *deux façons de dire la même teinte divergent au premier réglage.*
+  const px = new Uint8ClampedArray([...BASE_FOND, 255])
+  virerLeCiel(px, ciel)
+  return `rgb(${px[0]}, ${px[1]}, ${px[2]})`
+}
+
 const cieux = new Map<Ciel, Promise<HTMLImageElement | HTMLCanvasElement | null>>()
 
 function fondTeinte(ciel: Ciel): Promise<HTMLImageElement | HTMLCanvasElement | null> {
@@ -1158,7 +1197,7 @@ export async function peindreCarte(
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
     // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
     // de la famille. Une armure garde le bleu d'origine. Voir `fondTeinte`.
-    carte.ciel === undefined ? fond() : fondTeinte(carte.ciel),
+    FOND_PEINT ? null : carte.ciel === undefined ? fond() : fondTeinte(carte.ciel),
     coutPeint(),
     document.fonts.ready,
   ])
@@ -1211,7 +1250,7 @@ export async function peindreCarte(
   ctx.save()
   chemin(ctx, coque, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
   ctx.clip()
-  ctx.fillStyle = '#171b1d'
+  ctx.fillStyle = FOND_PEINT ? couleurDuCiel(carte.ciel) : '#171b1d'
   ctx.fillRect(0, 0, LARGE, HAUT)
   // LE FOND COMMUN D'ABORD, LE SUJET PAR-DESSUS. Demandé par Keko : une seule
   // image de décor pour toutes les cartes, et le modèle ne porte plus que ce

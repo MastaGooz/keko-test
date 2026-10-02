@@ -7975,6 +7975,47 @@ dessine ». *Ce qui se découvre pendant un chargement doit être le lieu où l'
 arrive, pas celui d'où l'on ne vient pas.* La couleur de `.fond-3d` est déjà
 celle de la pierre sombre, à un cheveu de celle du voile.
 
+### LE FOND DE CARTE EST PEINT, PLUS CHARGÉ — un aplat pour commencer
+
+Keko : « le background est super moche en webp… sinon tu peux dessiner le fond
+via le code ? essaie de faire un fond uni simple pour commencer ».
+
+**Et ça prend le problème par sa racine.** Le fichier pesait 13 Ko pour 1,5
+mégapixel, soit **0,071 bit par pixel** — quatre fois sous ce qu'un dégradé
+demande pour ne pas bander, d'où les aplats et les blocs. *Ce n'était pas le
+format, c'était le taux*, et c'est mon réglage d'origine (70 %) qui l'avait
+posé.
+
+Ce qu'une couleur peinte achète, et qu'aucun réglage d'encodage ne donnait :
+
+- **ni compression, ni palier de résolution** : elle est nette sur une toile de
+  256 comme de 768, là où l'image était rééchantillonnée à chaque palier ;
+- **plus rien à attendre avant le premier rendu.** `peindreCarte` attendait le
+  décor, donc aucune carte ne s'affichait avant qu'il soit arrivé — et c'était
+  l'image la plus lourde du jeu, sur le chemin critique ;
+- **une teinte par famille sans virage** : l'aplat EST déjà de sa couleur.
+
+**LA COULEUR DE BASE EST MESURÉE, PAS INVENTÉE** : `(1, 26, 36)` est la moyenne
+du fichier bleu nuit, et l'exposition la portait à 2,6 fois — d'où `(3, 68,
+94)`. *L'aplat part exactement là où l'image arrivait.* Et **il n'a pas besoin
+d'exposition** : multiplier une couleur unie ne fait que donner une autre
+couleur unie, autant poser la bonne du premier coup.
+
+Les trois autres familles réemploient `virerLeCiel` sur ce pixel plutôt que
+quatre couleurs écrites à la main : *deux façons de dire la même teinte
+divergent au premier réglage.*
+
+**Ce qui reste du décor peint par-dessus** : le bloom du sujet, qui fait tout le
+relief — *ce qui rayonne, c'est l'objet ; ce qui reçoit, c'est le décor* — et le
+voile sombre qui monte sous le texte.
+
+**`?fond=image` rend les fichiers**, et ils restent dans `public/` : *ce qui a
+servi à choisir doit rester ouvrable.* Le jeu 2D, lui, continue de poser
+`Background.webp` en couche de fond CSS — il ne peint rien au canvas.
+
+*Ce qui suit est l'histoire des fichiers, et elle vaut pour le jour où un vrai
+décor dessiné reviendra.*
+
 ### LE FOND DE CARTE EST COMMUN À TOUTES : `public/Background.png`
 
 Fourni par Keko — « à utiliser comme background de toutes les cartes, on
