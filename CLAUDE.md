@@ -7634,6 +7634,17 @@ Elle est passée de 1,9 à **2,6**. *Et c'est bien une exposition qu'on monte, p
 un rideau qu'on tire* : le pigment ne bouge pas, ce qui est exactement ce que
 Keko voulait garder — un voile clair, lui, aurait éclairci en délavant.
 
+**ET CHAQUE CIEL A LA SIENNE, parce que le bleu en demande plus.** Keko : « on
+peut éclaircir encore un poil le background bleu des armures ? » *Ce n'est pas
+un caprice, c'est de la colorimétrie* : le bleu ne pèse que 0,11 dans la
+luminance quand le vert en pèse 0,59 — **à exposition égale il paraît plus
+sombre, et il l'est vraiment pour l'oeil.** L'armure monte donc à 3,3 quand les
+trois autres restent à 2,6, et la table dit lequel a besoin de combien plutôt
+qu'un chiffre unique qui n'aurait raison que pour un seul.
+
+Mesuré sur la luminance moyenne de la bande haute : 69 pour une arme, **78**
+pour une armure, 68 pour un objet, 72 pour un butin.
+
 Mesuré : le haut de la carte passe de 7 à **52** de luminance, le milieu à 42,
 et la lame ne bouge pas (121). Le voile du bas, lui, reprend tout : le texte se
 lit comme avant.

@@ -687,7 +687,23 @@ const PIGMENT_CIEL = 0.5
  * **Ça ne pouvait plus passer par l'opacité** : elle plafonne à 1, donc au-delà
  * du double il faut une passe de plus. C'est le vrai nom de la grandeur, et
  * elle se lit comme telle.
+ *
+ * **ET LE BLEU EN DEMANDE PLUS QUE LES AUTRES.** Keko : « on peut éclaircir
+ * encore un poil le background bleu des armures ? » *Ce n'est pas un caprice,
+ * c'est de la colorimétrie* : le bleu ne pèse que 0,11 dans la luminance quand
+ * le vert en pèse 0,59 — donc à exposition égale il PARAÎT plus sombre, et il
+ * l'est vraiment pour l'oeil. **Chaque ciel a donc son exposition**, et la
+ * table dit lequel a besoin de combien plutôt qu'un chiffre unique qui aurait
+ * raison pour un seul d'entre eux.
  */
+const EXPO_CIEL: Record<Ciel, number> = {
+  arme: 2.6,
+  armure: 3.3,
+  objet: 2.6,
+  tresor: 2.6,
+}
+
+/** L'exposition d'un ciel sans famille — une carte de récompense, une planche. */
 const EXPO_DECOR = 2.6
 
 /**
@@ -997,7 +1013,8 @@ export async function peindreCarte(
     // nombre de fois, pas une transparence* — on ajoute l'image entière tant
     // qu'il reste de l'exposition à donner, et la dernière passe prend le
     // reste.
-    for (let reste = EXPO_DECOR - 1; reste > 0.001; reste -= 1) {
+    const expo = carte.ciel === undefined ? EXPO_DECOR : EXPO_CIEL[carte.ciel]
+    for (let reste = expo - 1; reste > 0.001; reste -= 1) {
       ctx.globalAlpha = Math.min(1, reste)
       couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
     }
