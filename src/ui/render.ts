@@ -22,7 +22,7 @@ import { creature, sceau, teteDeMort } from './illustrations.ts'
 import { art, dosDeCarte, imageDeKeko, urlDuFond } from './art.ts'
 // LE TEXTE D'UNE CARTE EST PARTAGÉ avec le moteur 3D : l'écrire deux fois,
 // c'est garantir qu'un jour les deux divergeront.
-import { famille, lignes, nature } from './texte-carte.ts'
+import { enClair, famille, lignes, nature } from './texte-carte.ts'
 
 const GLYPHE = { frappe: '✖', tresor: '▨', energie: '⚡', bloc: '⛉' }
 
@@ -508,7 +508,7 @@ function ligneCarte(
     corpsCarte(
       carte.nom,
       `<span>${carte.cout}</span>`,
-      lignes(carte),
+      lignes(carte).map(enClair),
       nature(carte),
       (acheve ? `<span class="marque">★</span>` : '') + charges(carte),
     ) +
@@ -558,7 +558,7 @@ function carteTresor(carte: Carte, place: string, enMain = true, abordable = tru
 
   return (
     `<div class="${classes.join(' ')}" ${place}>` +
-    corpsCarte(carte.nom, ecusson, lignes(carte), nature(carte)) +
+    corpsCarte(carte.nom, ecusson, lignes(carte).map(enClair), nature(carte)) +
     `</div>`
   )
 }
@@ -1178,7 +1178,7 @@ export function vitrine(carte: Carte, enMain = false): string {
   if (carte.type === 'tresor') return carteTresor(carte, 'style="--n:1"', enMain)
   return (
     `<div class="carte combat ${famille(carte)}" data-cout="${carte.cout}" style="--n:1">` +
-    corpsCarte(carte.nom, `<span>${carte.cout}</span>`, lignes(carte), nature(carte), charges(carte)) +
+    corpsCarte(carte.nom, `<span>${carte.cout}</span>`, lignes(carte).map(enClair), nature(carte), charges(carte)) +
     `</div>`
   )
 }

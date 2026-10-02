@@ -1705,6 +1705,44 @@ Quatre choses à ne pas défaire :
   égal à votre défense ». *Une carte dont l'effet dépend de l'état doit dire de
   quoi il dépend*, là où un zéro se lirait comme une carte inutile.
 
+### LES CHIFFRES D'UNE CARTE SE DESSINENT, ILS NE S'ÉCRIVENT PLUS
+
+Demandé par Keko : « pour l'Estoc, plutôt que "de 1 PA", on peut dessiner le
+symbole de PA avec 1 dedans ? Et pour les dégâts, "Inflige ⚔6" où ⚔ est un
+petit symbole d'épée rouge — et le chiffre rouge aussi. Et pour la défense,
+"Bloque 5" où 5 est dessiné dans le symbole de défense bleu qu'on utilise en
+combat. »
+
+*Et ça sert une règle que le projet tient déjà* : **le même symbole partout.**
+L'orbe est celle de la carte et celle du joueur ; **le bouclier est exactement
+celui de la barre de vie**, au tracé près — recopié, pas réinventé, parce que
+*deux dessins qui décrivent le même objet divergent au premier réglage.* Le
+cartouche cesse de DÉCRIRE ce que l'écran montre ailleurs : il le montre.
+
+Quatre choses qui le portent :
+
+- **le texte porte des JETONS** (`{pa:1}`, `{epee:6}`, `{bouclier:5}`), et *un
+  jeton est un mot comme un autre pour le repli* — donc il ne se coupe jamais
+  de son chiffre, et une ligne trop longue casse où il faut ;
+- **mais sa largeur n'est pas celle de son écriture** : le repli mesure le
+  DESSIN, sinon la ligne déborderait de la différence — et *le canvas ne
+  prévient jamais qu'il déborde* ;
+- **les mots de texte qui se suivent partent en un seul tracé.** Les découper
+  mot à mot casserait leur crénage, et ça se verrait sur une police à chasse
+  variable ;
+- **le chiffre rentre dans son symbole, quel qu'il soit.** Un « 11 » de Rempart
+  est deux fois plus large qu'un « 5 » : c'est la police qui cède, la règle du
+  disque du compte des piles.
+
+**L'ÉPÉE PORTE SON CHIFFRE À CÔTÉ, les deux autres le portent DEDANS.** Une
+lame est trop étroite pour loger un nombre — et c'est ce que Keko a demandé,
+« Inflige ⚔6 ». Elle est dessinée en trois traits (lame, garde, pommeau) :
+*à quinze pixels, un dessin détaillé tourne en bouillie.*
+
+**Et le jeu 2D garde le texte en clair** (`enClair`) : « Inflige 6 dégâts ». *Un
+moteur qui ne sait pas montrer une chose ne doit pas cesser de la dire* — la
+règle déjà tenue par la valeur d'un butin.
+
 **ET ON NE TUTOIE PAS LE JOUEUR.** Tranché par Keko, formulation de lui. *Une
 carte n'adresse pas la parole, elle énonce une règle* — et le vouvoiement tient
 cette distance sans rendre le texte impersonnel. La règle vaut pour TOUT ce qui

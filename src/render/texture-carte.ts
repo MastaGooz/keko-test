@@ -886,13 +886,17 @@ function replier(
   ctx: CanvasRenderingContext2D,
   entrees: readonly string[],
   max: number,
+  taille: number,
 ): string[] {
   const sorties: string[] = []
   for (const entree of entrees) {
     let courante = ''
     for (const mot of nu(entree).split(' ')) {
       const essai = courante === '' ? mot : `${courante} ${mot}`
-      if (courante !== '' && ctx.measureText(essai).width > max) {
+      // UN JETON EST UN MOT COMME UN AUTRE, mais sa largeur n'est pas celle de
+      // son écriture : on mesure le dessin, sinon la ligne déborderait de la
+      // différence — et *le canvas ne prévient jamais qu'il déborde.*
+      if (courante !== '' && largeurLigne(ctx, essai, taille) > max) {
         sorties.push(courante)
         courante = mot
       } else courante = essai
@@ -905,6 +909,232 @@ function replier(
 /** Retire le balisage des lignes d'effet : le canvas ne lit que du texte. */
 function nu(ligne: string): string {
   return ligne.replace(/<[^>]+>/g, '')
+}
+
+/**
+ * LES CHIFFRES D'UNE CARTE SE DESSINENT, ILS NE S'ÉCRIVENT PLUS.
+ *
+ * Demandé par Keko : « pour l'Estoc, plutôt que "de 1 PA", on peut dessiner le
+ * symbole de PA avec 1 dedans ? Et pour les dégâts, "Inflige ⚔6" où ⚔ est un
+ * petit symbole d'épée rouge — et le chiffre rouge aussi. Et pour la défense,
+ * "Bloque 5" où 5 est dessiné dans le symbole de défense bleu qu'on utilise en
+ * combat. »
+ *
+ * *Et ça tient une règle que le projet suit déjà* : **le même symbole partout.**
+ * L'orbe du coût est celle de la carte et celle du joueur ; le bouclier est
+ * exactement celui de la barre de vie, au tracé près. Le cartouche cesse de
+ * décrire ce que l'écran montre ailleurs — il le MONTRE.
+ *
+ * Le texte les porte sous forme de jetons (`{pa:1}`, `{epee:6}`,
+ * `{bouclier:5}`) : *un jeton est un mot comme un autre pour le repli*, donc
+ * il ne se coupe jamais de son chiffre, et le rendu 2D s'en sort avec un repli
+ * en clair.
+ */
+type Jeton = { type: 'pa' | 'epee' | 'bouclier'; valeur: number }
+
+function lireJeton(mot: string): Jeton | null {
+  const m = /^\{(pa|epee|bouclier):(\d+)\}$/.exec(mot)
+  if (m === null) return null
+  return { type: m[1] as Jeton['type'], valeur: Number(m[2]) }
+}
+
+/** Le rouge de ce qui frappe et le bleu de ce qui encaisse. */
+const SANG = '#f08a7d'
+const ACIER_CLAIR = '#6fa3e2'
+const ACIER_SOMBRE = '#264d80'
+const ACIER_BORD = '#cfe2fb'
+
+/** La hauteur d'un symbole, en part du corps du texte qui l'entoure. */
+const HAUT_JETON = 1.68
+
+/**
+ * LE BOUCLIER EST CELUI DU COMBAT, au tracé près — `BarreVie3D` dessine le
+ * même path. *Deux dessins qui décrivent le même objet divergent au premier
+ * réglage*, donc celui-ci est recopié, pas réinventé.
+ */
+const CHEMIN_BOUCLIER = 'M50 3 91 16v36c0 25-18 41-41 49C27 93 9 77 9 52V16Z'
+
+/**
+ * LE CHIFFRE RENTRE, QUEL QU'IL SOIT. Un « 11 » de Rempart est deux fois plus
+ * large qu'un « 5 » : *un contenant qui ne contient pas ment*, donc c'est la
+ * police qui cède — la règle déjà tenue par le disque du compte des piles.
+ */
+function dansLeDisque(
+  ctx: CanvasRenderingContext2D,
+  valeur: number,
+  corps: number,
+  tientDans: number,
+): string {
+  let c = corps
+  const police = (t: number): string => `600 ${t}px "Grenze Gotisch", Georgia, serif`
+  ctx.font = police(c)
+  while (ctx.measureText(String(valeur)).width > tientDans && c > corps * 0.5) {
+    c *= 0.93
+    ctx.font = police(c)
+  }
+  return police(c)
+}
+
+function largeurJeton(ctx: CanvasRenderingContext2D, jeton: Jeton, taille: number): number {
+  const h = taille * HAUT_JETON
+  if (jeton.type === 'epee') {
+    // L'épée porte son chiffre À CÔTÉ, pas dedans : une lame est trop étroite
+    // pour loger un nombre, et Keko l'a demandée ainsi — « Inflige ⚔6 ».
+    return h * 0.62 + ctx.measureText(String(jeton.valeur)).width + taille * 0.12
+  }
+  return h * (jeton.type === 'bouclier' ? 0.9 : 1)
+}
+
+/** Dessine le jeton, son bord gauche en `x`, centré sur la ligne de base `y`. */
+function peindreJeton(
+  ctx: CanvasRenderingContext2D,
+  jeton: Jeton,
+  x: number,
+  y: number,
+  taille: number,
+  symbole: HTMLImageElement | null,
+): void {
+  const h = taille * HAUT_JETON
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+
+  if (jeton.type === 'pa') {
+    // L'ORBE DU COÛT, EN PETIT : le même objet que le coin de la carte et que
+    // le coin de l'écran. Le disque peint reste le repli, parce qu'*un canvas
+    // ne dessine rien du tout si l'image manque*.
+    if (symbole !== null) ctx.drawImage(symbole, x, y - h / 2, h, h)
+    else {
+      ctx.beginPath()
+      ctx.arc(x + h / 2, y, h / 2, 0, Math.PI * 2)
+      ctx.fillStyle = '#1d1b17'
+      ctx.fill()
+      ctx.strokeStyle = '#f3e3c0'
+      ctx.lineWidth = Math.max(1, h * 0.07)
+      ctx.stroke()
+    }
+    ctx.fillStyle = '#f7ead0'
+    ctx.font = dansLeDisque(ctx, jeton.valeur, h * 0.56, h * 0.6)
+    ctx.fillText(String(jeton.valeur), x + h / 2, y + h * 0.02)
+  } else if (jeton.type === 'bouclier') {
+    const l = h * 0.9
+    ctx.translate(x, y - h / 2)
+    ctx.scale(l / 100, h / 104)
+    const forme = new Path2D(CHEMIN_BOUCLIER)
+    const acier = ctx.createLinearGradient(0, 0, 40, 104)
+    acier.addColorStop(0, ACIER_CLAIR)
+    acier.addColorStop(1, ACIER_SOMBRE)
+    ctx.fillStyle = acier
+    ctx.fill(forme)
+    ctx.strokeStyle = ACIER_BORD
+    ctx.lineWidth = 6
+    ctx.lineJoin = 'round'
+    ctx.stroke(forme)
+    ctx.restore()
+    ctx.save()
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = '#f2f7ff'
+    ctx.font = dansLeDisque(ctx, jeton.valeur, h * 0.5, l * 0.6)
+    // Le chiffre se pose un cheveu au-dessus du milieu : un écu descend en
+    // pointe, donc son centre OPTIQUE est plus haut que son centre géométrique.
+    ctx.fillText(String(jeton.valeur), x + l / 2, y - h * 0.04)
+  } else {
+    // L'ÉPÉE : lame, garde, pommeau — trois traits, parce qu'*à quinze pixels
+    // un dessin détaillé tourne en bouillie.* Pointe en haut, comme tout ce
+    // qui frappe dans ce jeu.
+    const l = h * 0.62
+    ctx.translate(x, y - h / 2)
+    ctx.scale(l / 100, h / 100)
+    ctx.fillStyle = SANG
+    ctx.beginPath()
+    // la lame
+    ctx.moveTo(50, 2)
+    ctx.lineTo(70, 26)
+    ctx.lineTo(62, 62)
+    ctx.lineTo(38, 62)
+    ctx.lineTo(30, 26)
+    ctx.closePath()
+    ctx.fill()
+    // la garde
+    ctx.fillRect(12, 62, 76, 13)
+    // la poignée et le pommeau
+    ctx.fillRect(42, 75, 16, 17)
+    ctx.beginPath()
+    ctx.arc(50, 95, 9, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
+    ctx.save()
+    ctx.textAlign = 'left'
+    ctx.textBaseline = 'middle'
+    ctx.fillStyle = SANG
+    ctx.font = `600 ${taille * 1.12}px "Grenze Gotisch", Georgia, serif`
+    ctx.fillText(String(jeton.valeur), x + l + taille * 0.12, y + taille * 0.02)
+  }
+  ctx.restore()
+}
+
+/** La largeur d'une ligne, jetons compris. */
+function largeurLigne(ctx: CanvasRenderingContext2D, ligne: string, taille: number): number {
+  let large = 0
+  const mots = ligne.split(' ')
+  mots.forEach((mot, i) => {
+    const jeton = lireJeton(mot)
+    large += jeton === null ? ctx.measureText(mot).width : largeurJeton(ctx, jeton, taille)
+    if (i < mots.length - 1) large += ctx.measureText(' ').width
+  })
+  return large
+}
+
+/**
+ * Écrit une ligne centrée sur `cx`, en dessinant ses jetons au passage.
+ *
+ * Les mots de texte qui se suivent partent dans un seul `fillText` : *couper un
+ * mot par caractère casserait son crénage*, et le résultat se verrait sur une
+ * police à chasse variable.
+ */
+function ecrireLigne(
+  ctx: CanvasRenderingContext2D,
+  ligne: string,
+  cx: number,
+  y: number,
+  taille: number,
+  symbole: HTMLImageElement | null,
+): void {
+  const mots = ligne.split(' ')
+  if (!mots.some((mot) => lireJeton(mot) !== null)) {
+    ctx.fillText(ligne, cx, y)
+    return
+  }
+
+  const couleur = ctx.fillStyle
+  let x = cx - largeurLigne(ctx, ligne, taille) / 2
+  const espace = ctx.measureText(' ').width
+  let groupe = ''
+  const vider = (): void => {
+    if (groupe === '') return
+    ctx.save()
+    ctx.textAlign = 'left'
+    ctx.fillStyle = couleur
+    ctx.fillText(groupe, x, y)
+    ctx.restore()
+    x += ctx.measureText(groupe).width
+    groupe = ''
+  }
+
+  mots.forEach((mot, i) => {
+    const jeton = lireJeton(mot)
+    if (jeton === null) {
+      groupe += groupe === '' ? mot : ` ${mot}`
+      if (i === mots.length - 1) vider()
+      return
+    }
+    vider()
+    peindreJeton(ctx, jeton, x, y, taille, symbole)
+    x += largeurJeton(ctx, jeton, taille)
+    if (i < mots.length - 1) x += espace
+  })
+  vider()
 }
 
 /**
@@ -1177,7 +1407,7 @@ export async function peindreCarte(
   if (carte.compteur === undefined) peindreCout(ctx, carte.cout, symbole)
   else peindreCompteur(ctx, carte.compteur)
   if (carte.valeur !== undefined) peindreValeur(ctx, carte.valeur)
-  peindreTextes(ctx, carte)
+  peindreTextes(ctx, carte, symbole)
   return canvas
 }
 
@@ -1690,7 +1920,11 @@ function peindreEcusson(ctx: CanvasRenderingContext2D, cout: number): void {
   ctx.shadowColor = 'transparent'
 }
 
-function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): void {
+function peindreTextes(
+  ctx: CanvasRenderingContext2D,
+  carte: CarteAPeindre,
+  symbole: HTMLImageElement | null,
+): void {
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
 
@@ -1744,18 +1978,18 @@ function peindreTextes(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): voi
   // d'un cran : c'est exactement ce que `cran` fait pour un effet long.
   let taille = cran(carte.effet)
   ctx.font = `400 ${taille}px "Crimson Pro", Georgia, serif`
-  let lignes = replier(ctx, carte.effet, LARGE * 0.86)
+  let lignes = replier(ctx, carte.effet, LARGE * 0.86, taille)
   if (lignes.length > carte.effet.length + 1) {
     taille *= 0.82
     ctx.font = `400 ${taille}px "Crimson Pro", Georgia, serif`
-    lignes = replier(ctx, carte.effet, LARGE * 0.86)
+    lignes = replier(ctx, carte.effet, LARGE * 0.86, taille)
   }
   ctx.fillStyle = '#f1e6cf'
   ctx.shadowColor = '#000000aa'
   ctx.shadowOffsetY = 0.4 * U
   ctx.shadowBlur = 0.8 * U
   lignes.forEach((ligne, i) => {
-    ctx.fillText(ligne, LARGE / 2, HAUT * 0.755 + i * taille * 1.25)
+    ecrireLigne(ctx, ligne, LARGE / 2, HAUT * 0.755 + i * taille * 1.25, taille, symbole)
   })
   ctx.shadowColor = 'transparent'
 
