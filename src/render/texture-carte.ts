@@ -2669,9 +2669,14 @@ export function textureGlossaire(
   ctx.lineTo(0, H100)
   ctx.lineTo(0, biseau)
   ctx.closePath()
+  // LA PIERRE EST OPAQUE. Keko : « le fond des encadrés explicatifs doit être
+  // en opacité 100 %, pas semi-transparent ». *Un encadré se pose SUR ce qu'il
+  // explique* — il recouvre une carte du set et le voile du zoom — et le peu de
+  // transparence qu'il gardait laissait passer ce qu'il y avait dessous : ça se
+  // lit comme un calque mal posé, pas comme une plaque.
   const pierre = ctx.createLinearGradient(0, 0, 0, H100)
-  pierre.addColorStop(0, 'rgba(27, 31, 34, 0.94)')
-  pierre.addColorStop(1, 'rgba(18, 22, 26, 0.94)')
+  pierre.addColorStop(0, '#1b1f22')
+  pierre.addColorStop(1, '#12161a')
   ctx.fillStyle = pierre
   ctx.fill()
   /**
@@ -2783,8 +2788,61 @@ export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {
       ctx.fillStyle = accent
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
-      ctx.font = `600 ${Math.round(l * 0.11)}px Cinzel, Georgia, serif`
-      ctx.fillText(nom.toUpperCase(), l / 2, h / 2)
+      /**
+       * **LE NOM SE REPLIE, il ne rétrécit pas.** Keko : « dans les slots
+       * d'armes il faudrait marquer main gauche / main droite (sur deux lignes
+       * pour loger) plutôt que juste gauche / droite ».
+       *
+       * *Une case a de la hauteur et pas de largeur* — c'est un rectangle de
+       * carte, une fois et demie plus haut que large — donc **c'est la ligne
+       * qui cède, pas le corps.** La règle est celle de l'encadré du
+       * glossaire, pour la même raison : *on replie là où il y a de la place,
+       * on rétrécit là où il n'y en a pas.*
+       *
+       * Le corps ne cède qu'en dernier recours, si un seul MOT ne tient pas :
+       * on ne peut pas couper un mot en deux, et *un canvas écrit tout droit et
+       * laisse déborder sans rien signaler.*
+       */
+      const place = l * 0.82
+      let corps = Math.round(l * 0.11)
+      const police = (t: number): string => `600 ${t}px Cinzel, Georgia, serif`
+      ctx.font = police(corps)
+      /**
+       * **LA COUPURE EST DÉCLARÉE, elle ne se déduit pas.** « Main droite »
+       * tient sur une ligne et « Main gauche » n'y tient pas : repliées à la
+       * mesure, les deux cases voisines se seraient lues l'une sur une ligne et
+       * l'autre sur deux. *Deux cases qui disent la même sorte de chose se
+       * lisent de la même façon* — c'est tout l'intérêt du mot sur une case
+       * vide, qui n'existe que parce que les deux voisines disent deux choses
+       * DIFFÉRENTES.
+       *
+       * Le saut de ligne vient donc de l'appelant, comme pour les plaques de bouton, et
+       * le repli à la mesure reste derrière : *un nom qu'on n'a pas pensé à
+       * couper ne doit pas déborder pour autant.*
+       */
+      const lignes: string[] = []
+      for (const bloc of nom.toUpperCase().split('\n')) {
+        let courante = ''
+        for (const mot of bloc.split(' ')) {
+          const essai = courante === '' ? mot : `${courante} ${mot}`
+          if (courante !== '' && ctx.measureText(essai).width > place) {
+            lignes.push(courante)
+            courante = mot
+          } else courante = essai
+        }
+        if (courante !== '') lignes.push(courante)
+      }
+      const large = Math.max(...lignes.map((ligne) => ctx.measureText(ligne).width))
+      if (large > place) {
+        corps = Math.round(corps * (place / large))
+        ctx.font = police(corps)
+      }
+      // Le bloc se CENTRE sur la case : une ligne de plus le fait grandir des
+      // deux côtés, elle ne le pousse pas vers le bas.
+      const pas = corps * 1.22
+      lignes.forEach((ligne, i) => {
+        ctx.fillText(ligne, l / 2, h / 2 + (i - (lignes.length - 1) / 2) * pas)
+      })
     }
     texture.needsUpdate = true
   }

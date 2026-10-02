@@ -450,8 +450,22 @@ const PROTECTION: Modele = {
   effets: [{ type: 'bloc', montant: 5 }],
 }
 
+/**
+ * **LA CARTE S'APPELLE AGILITÉ, L'ÉTAT QU'ELLE DONNE S'APPELLE ESQUIVE.**
+ * Renommée par Keko.
+ *
+ * *C'est le couple Projection / étourdissement, repris ici* : **la carte nomme
+ * le GESTE, le mot-clé nomme ce qu'on gagne.** Une carte qui portait le nom de
+ * son propre mot-clé le disait deux fois — « Esquive : gagne esquive » — et
+ * surtout elle brouillait la seule chose que le jaune du cartouche promet :
+ * *qu'il y a une définition à aller lire ailleurs.*
+ *
+ * Le type interne, lui, ne bouge pas (`esquive`) : il ne se lit nulle part à
+ * l'écran, et *un renommage traversant `logic/` pour un mot ne vaut pas son
+ * risque* — la règle déjà tenue par `energie` et `tresor`.
+ */
 const ESQUIVE: Modele = {
-  nom: 'Esquive',
+  nom: 'Agilité',
   type: 'combat',
   cout: 1,
   degats: 0,
