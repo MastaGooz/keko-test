@@ -1713,7 +1713,18 @@ l'état : un effet qui porte sur un corps a besoin de savoir lequel.
 
 **La riposte dit sa durée, le bloc non**, et ce n'est pas une incohérence :
 *le bloc tombe à chaque fin de tour, c'est une règle du jeu ; la riposte est
-une clause de CETTE carte* — sans « ce tour » on la croirait permanente.
+une clause de CETTE carte* — sans sa durée on la croirait permanente.
+
+**Et la formulation est de Keko** : « jusqu'au prochain tour, les ennemis qui
+vous attaquent subissent 4 dégâts ». *Elle met l'ENNEMI en sujet*, et c'est
+plus juste — la riposte n'est pas un coup qu'on porte, c'est un prix qu'il
+paie. « Jusqu'au prochain tour » dit aussi mieux la durée que « ce tour » :
+la carte se joue AVANT la salve, donc c'est elle qu'on couvre.
+
+**Son pied dit « Action », pas « Attaque »**, et c'est cohérent avec la règle :
+`frappe()` la laisse de côté, donc **elle n'escompte pas l'Estoc**. *Elle ne
+frappe pas au moment où on la joue* — elle pose un prix, et c'est l'ennemi qui
+le déclenche.
 
 **Et « Étourdit » est un mot-clé qui s'explique sur sa propre ligne** :
 « annule l'action en cours ». *Un mot-clé qu'on n'explique nulle part n'est pas

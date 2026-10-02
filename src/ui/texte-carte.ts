@@ -107,8 +107,13 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // LA RIPOSTE DIT SA DURÉE, là où le bloc ne la dit plus : *le bloc tombe à
     // chaque fin de tour, c'est une règle du jeu ; la riposte, elle, est une
     // clause de CETTE carte* — et sans elle on la croirait permanente.
+    // LA FORMULATION EST DE KEKO : « jusqu'au prochain tour, les ennemis qui
+    // vous attaquent subissent 4 dégâts ». *Elle met l'ENNEMI en sujet*, et
+    // c'est plus juste — la riposte n'est pas un coup qu'on porte, c'est un
+    // prix qu'il paie. « Jusqu'au prochain tour » dit la durée mieux que « ce
+    // tour » : la carte se joue AVANT la salve, donc c'est elle qu'on couvre.
     if (e.type === 'riposte')
-      l.push(`Inflige <b>${e.montant}</b> à chaque ennemi qui vous attaque ce tour`)
+      l.push(`Jusqu'au prochain tour, les ennemis qui vous attaquent subissent <b>${e.montant}</b> dégâts`)
     // L'ÉTOURDISSEMENT est un mot-clé : la carte le nomme, puis dit ce qu'il
     // fait sur la ligne de condition. *Un mot-clé qu'on n'explique nulle part
     // n'est pas un mot-clé, c'est du jargon.*
