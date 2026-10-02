@@ -1370,14 +1370,27 @@ export async function peindreCarte(
     couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
   }
 
-  // LE VOILE SOUS LE TEXTE : le tiers du bas passe sous le nom et le
-  // cartouche, donc l'image doit s'y éteindre pour qu'ils se lisent.
-  const voile = ctx.createLinearGradient(0, HAUT * 0.5, 0, HAUT)
+  /**
+   * LE VOILE SOUS LE TEXTE : le bas de la carte passe sous le nom et le
+   * cartouche, donc l'image doit s'y éteindre pour qu'ils se lisent.
+   *
+   * **Il part plus bas qu'avant** — Keko : « on peut baisser un peu le dégradé
+   * noir en dessous, je trouve qu'il monte un peu haut ». Il commençait à la
+   * moitié de la carte, donc il mordait sur le sujet, qui tient les deux tiers
+   * du haut.
+   *
+   * *Ce qui ne pouvait pas bouger, c'est où il est NOIR* : le nom est peint à
+   * 66,5 % de la hauteur et il lui faut déjà son fond. Le départ descend, donc
+   * la montée se raccourcit d'autant pour que le palier tombe au même endroit
+   * — **on décale le début, pas l'arrivée.**
+   */
+  const DEBUT_VOILE = 0.57
+  const voile = ctx.createLinearGradient(0, HAUT * DEBUT_VOILE, 0, HAUT)
   voile.addColorStop(0, '#00000000')
-  voile.addColorStop(0.35, '#000000a8')
+  voile.addColorStop(0.21, '#000000a8')
   voile.addColorStop(1, '#000000e0')
   ctx.fillStyle = voile
-  ctx.fillRect(0, HAUT * 0.5, LARGE, HAUT * 0.5)
+  ctx.fillRect(0, HAUT * DEBUT_VOILE, LARGE, HAUT * (1 - DEBUT_VOILE))
   ctx.restore()
 
   // LA MARQUE D'UNE CARTE DE DECK, quand une piste est à l'essai.

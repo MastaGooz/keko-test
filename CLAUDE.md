@@ -8009,6 +8009,15 @@ divergent au premier réglage.*
 relief — *ce qui rayonne, c'est l'objet ; ce qui reçoit, c'est le décor* — et le
 voile sombre qui monte sous le texte.
 
+**ET LE VOILE PART PLUS BAS** (57 % de la hauteur au lieu de 50). Keko : « on
+peut baisser un peu le dégradé noir en dessous, je trouve qu'il monte un peu
+haut ». Il mordait sur le sujet, qui tient les deux tiers du haut.
+
+*Ce qui ne pouvait pas bouger, c'est où il est NOIR* : le nom est peint à 66,5 %
+et il lui faut déjà son fond. Le départ descend, donc la montée se raccourcit
+d'autant (0,35 → 0,21 de sa course) pour que le palier tombe au même endroit —
+**on décale le début, pas l'arrivée.**
+
 **`?fond=image` rend les fichiers**, et ils restent dans `public/` : *ce qui a
 servi à choisir doit rester ouvrable.* Le jeu 2D, lui, continue de poser
 `Background.webp` en couche de fond CSS — il ne peint rien au canvas.
