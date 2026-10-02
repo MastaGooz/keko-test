@@ -853,6 +853,18 @@ const FOND_PEINT = new URLSearchParams(location.search).get('fond') !== 'image'
 const BASE_FOND: readonly [number, number, number] = [3, 68, 94]
 
 /**
+ * LA BASE DU DOS : la pierre du lieu, pas le ciel des faces.
+ *
+ * Keko, en voyant le dos sur le fond commun : « le background peut être plutôt
+ * noir ? ou gris foncé ? » *Un dos n'a pas de voile sous son texte — il n'a pas
+ * de texte* — donc son fond se voit en entier, et le bleu nuit des faces y
+ * paraissait deux fois plus clair qu'il ne l'est sur une carte. **Un gris
+ * sombre laisse l'or du cadre porter la carte**, ce qui est tout ce qu'un dos
+ * a à faire.
+ */
+const BASE_DOS: readonly [number, number, number] = [28, 30, 34]
+
+/**
  * L'AMPLITUDE DU GRAIN — celle d'un dither, pas celle d'une matière.
  *
  * `overlay` sur un fond sombre fait varier le résultat de ±0,25 à pleine
@@ -926,8 +938,13 @@ function grain(): HTMLCanvasElement {
  *   défaut qu'on fuyait en quittant l'image compressée, et le bruit est ce qui
  *   le dissout.
  */
-function peindreDecor(ctx: CanvasRenderingContext2D, ciel: Ciel | undefined, largeur: number): void {
-  const base = teinteDuCiel(ciel)
+function peindreDecor(
+  ctx: CanvasRenderingContext2D,
+  ciel: Ciel | undefined,
+  largeur: number,
+  impose?: readonly [number, number, number],
+): void {
+  const base = impose ?? teinteDuCiel(ciel)
   const ton = (k: number): string =>
     `rgb(${Math.round(Math.min(255, base[0] * k))}, ${Math.round(Math.min(255, base[1] * k))}, ${Math.round(Math.min(255, base[2] * k))})`
 
@@ -2284,7 +2301,7 @@ async function peindreDos(): Promise<HTMLCanvasElement> {
   ctx.roundRect(0, 0, LARGE, HAUT, LARGE * RAYON_CARTE)
   ctx.clip()
 
-  peindreDecor(ctx, undefined, LARGE)
+  peindreDecor(ctx, undefined, LARGE, BASE_DOS)
 
   if (dessin !== null) {
     mesurerBoite('dos-de-carte', dessin)

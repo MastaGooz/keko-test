@@ -8427,10 +8427,17 @@ plus tard ».
 carte.webp` — cadre et logo central, rien d'autre : « il va falloir que tu
 fasses le background du dos de carte »).
 
-*Le fond est le MÊME que celui de la face* — dégradé, vignettage, grain — à une
-chose près : **il n'a pas de ciel de famille.** Une carte retournée ne dit rien
+*Le fond est le MÊME que celui de la face* — dégradé, vignettage, grain — à deux
+choses près : **il n'a pas de ciel de famille** (une carte retournée ne dit rien
 de ce qu'elle est, la règle qui garde déjà le dos en laiton quand le cadre de la
-face change de métal.
+face change de métal), et **sa base est la PIERRE, pas le ciel** (`BASE_DOS`).
+
+Keko, en le voyant sur le fond commun : « le background peut être plutôt noir ?
+ou gris foncé ? » *Un dos n'a pas de voile sous son texte — il n'a pas de
+texte* — donc son fond se voit en entier, et le bleu nuit des faces y paraissait
+bien plus clair qu'il ne l'est sur une carte, où le voile en reprend la moitié.
+**Un gris sombre laisse l'or du cadre porter la carte**, ce qui est tout ce
+qu'un dos a à faire.
 
 **ET LE DESSIN SE CALE SUR SON SUJET, pas sur sa toile** : son cadre laisse une
 marge transparente, inégale en haut (12 px) et en bas (22). Étiré bêtement sur
