@@ -870,9 +870,14 @@ function couvrir(
  */
 function cran(lignes: readonly string[]): number {
   const n = lignes.join(' ').replace(/<[^>]+>/g, '').length
-  if (n <= 44) return 6 * U
-  if (n <= 100) return 5.8 * U
-  return 5 * U
+  // ET IL GROSSIT QUAND IL Y A LA PLACE. Keko : « je pense qu'on peut
+  // augmenter un peu la taille du texte des descriptions quand y'a la
+  // place ». *Les crans existent pour qu'un effet long descende plutôt que de
+  // déborder sur le pied* — rien n'obligeait le cran du haut à rester sage.
+  // Le symbole des PA suit, puisqu'il se mesure au corps du texte.
+  if (n <= 44) return 7 * U
+  if (n <= 100) return 6.4 * U
+  return 5.4 * U
 }
 
 /**
@@ -887,18 +892,18 @@ function replier(
   entrees: readonly string[],
   max: number,
   taille: number,
-): string[] {
-  const sorties: string[] = []
+): Mot[][] {
+  const sorties: Mot[][] = []
   for (const entree of entrees) {
-    let courante = ''
-    for (const mot of nu(entree).split(' ')) {
-      const essai = courante === '' ? mot : `${courante} ${mot}`
-      // UN JETON EST UN MOT COMME UN AUTRE, mais sa largeur n'est pas celle de
-      // son écriture : on mesure le dessin, sinon la ligne déborderait de la
-      // différence — et *le canvas ne prévient jamais qu'il déborde.*
-      if (courante !== '' && largeurLigne(ctx, essai, taille) > max) {
+    let courante: Mot[] = []
+    for (const mot of enMots(entree)) {
+      const essai = [...courante, mot]
+      // UN SYMBOLE EST UN MOT COMME UN AUTRE, mais sa largeur n'est pas celle
+      // de son écriture : on mesure le DESSIN, sinon la ligne déborderait de
+      // la différence — et *le canvas ne prévient jamais qu'il déborde.*
+      if (courante.length > 0 && largeurLigne(ctx, essai, taille) > max) {
         sorties.push(courante)
-        courante = mot
+        courante = [mot]
       } else courante = essai
     }
     sorties.push(courante)
@@ -906,10 +911,6 @@ function replier(
   return sorties
 }
 
-/** Retire le balisage des lignes d'effet : le canvas ne lit que du texte. */
-function nu(ligne: string): string {
-  return ligne.replace(/<[^>]+>/g, '')
-}
 
 /**
  * LES CHIFFRES D'UNE CARTE SE DESSINENT, ILS NE S'ÉCRIVENT PLUS.
@@ -1013,79 +1014,96 @@ function peindreJeton(
   ctx.restore()
 }
 
-/** La largeur d'une ligne, jetons compris. */
-function largeurLigne(ctx: CanvasRenderingContext2D, ligne: string, taille: number): number {
-  let large = 0
-  const mots = ligne.split(' ')
-  mots.forEach((mot, i) => {
-    const jeton = lireJeton(mot)
-    large += jeton === null ? ctx.measureText(mot).width : largeurJeton(ctx, jeton, taille)
-    if (i < mots.length - 1) large += ctx.measureText(' ').width
-  })
-  return large
+/**
+ * UN MOT DU CARTOUCHE : du texte avec sa graisse, ou un symbole.
+ *
+ * Keko : « on peut mettre tous les chiffres et mots clés en gras (attaque,
+ * bloquer) ». *Le canvas ne lit pas le balisage* — il retirait les `<b>` avec
+ * le reste, donc les chiffres étaient gras en 2D et plats en 3D. Il faut donc
+ * écrire une ligne en MORCEAUX, chacun avec sa police.
+ */
+type Mot = { texte: string; gras: boolean } | { jeton: Jeton }
+
+/** Découpe une entrée balisée en mots, chacun porteur de sa graisse. */
+function enMots(entree: string): Mot[] {
+  const mots: Mot[] = []
+  let gras = false
+  // On coupe sur les balises ET sur les espaces : une balise peut ouvrir au
+  // milieu d'une ligne, et un mot ne porte qu'une graisse.
+  for (const bout of entree.split(/(<\/?[^>]+>)/)) {
+    if (bout === '') continue
+    if (bout.startsWith('<')) {
+      if (bout === '<b>') gras = true
+      else if (bout === '</b>') gras = false
+      continue
+    }
+    for (const mot of bout.split(' ')) {
+      if (mot === '') continue
+      const jeton = lireJeton(mot)
+      mots.push(jeton === null ? { texte: mot, gras } : { jeton })
+    }
+  }
+  return mots
+}
+
+/** La police d'un mot : le gras est celui du cartouche, pas un second corps. */
+function policeMot(taille: number, gras: boolean): string {
+  return `${gras ? 700 : 400} ${taille}px "Crimson Pro", Georgia, serif`
+}
+
+function largeurMot(ctx: CanvasRenderingContext2D, mot: Mot, taille: number): number {
+  if ('jeton' in mot) return largeurJeton(ctx, mot.jeton, taille)
+  ctx.font = policeMot(taille, mot.gras)
+  return ctx.measureText(mot.texte).width
+}
+
+/** La largeur d'une ligne, symboles et graisses compris. */
+function largeurLigne(ctx: CanvasRenderingContext2D, mots: readonly Mot[], taille: number): number {
+  ctx.font = policeMot(taille, false)
+  const espace = ctx.measureText(' ').width
+  return mots.reduce(
+    (large, mot, i) => large + largeurMot(ctx, mot, taille) + (i > 0 ? espace : 0),
+    0,
+  )
 }
 
 /**
- * Écrit une ligne centrée sur `cx`, en dessinant ses jetons au passage.
+ * Écrit une ligne centrée sur `cx`, en dessinant ses symboles au passage.
  *
- * Les mots de texte qui se suivent partent dans un seul `fillText` : *couper un
- * mot par caractère casserait son crénage*, et le résultat se verrait sur une
- * police à chasse variable.
+ * **L'espace se porte en TÊTE de mot, jamais en queue.** Keko : « tu as mis un
+ * espace avant et après ou juste après ? » — *juste après* : le symbole se
+ * dessinait dès que le mot précédent était posé, donc il venait coller le mot
+ * d'à côté et l'espace partait de l'autre côté. **Un seul endroit décide de
+ * l'espace**, et c'est le mot qui arrive.
  */
 function ecrireLigne(
   ctx: CanvasRenderingContext2D,
-  ligne: string,
+  mots: readonly Mot[],
   cx: number,
   y: number,
   taille: number,
   symbole: HTMLImageElement | null,
 ): void {
-  const mots = ligne.split(' ')
-  if (!mots.some((mot) => lireJeton(mot) !== null)) {
-    ctx.fillText(ligne, cx, y)
-    return
-  }
-
   const couleur = ctx.fillStyle
-  let x = cx - largeurLigne(ctx, ligne, taille) / 2
+  ctx.font = policeMot(taille, false)
   const espace = ctx.measureText(' ').width
-  let groupe = ''
-  const vider = (): void => {
-    if (groupe === '') return
-    ctx.save()
-    ctx.textAlign = 'left'
-    ctx.fillStyle = couleur
-    ctx.fillText(groupe, x, y)
-    ctx.restore()
-    x += ctx.measureText(groupe).width
-    groupe = ''
-  }
+  let x = cx - largeurLigne(ctx, mots, taille) / 2
 
-  /**
-   * L'ESPACE SE PORTE EN TÊTE DE MOT, jamais en queue — et c'est ce qui a
-   * manqué. Keko : « c'est bizarre pour le symbole PA, tu as mis un espace
-   * avant et après ou juste après ? » *Juste après* : le jeton se dessinait
-   * dès que le groupe précédent était vidé, donc il venait coller le mot d'à
-   * côté, et l'espace partait de l'autre côté.
-   *
-   * **Un seul endroit décide de l'espace**, et c'est le mot qui arrive : tout
-   * ce qui n'ouvre pas la ligne en porte un devant lui. Deux règles — une pour
-   * le texte, une pour le jeton — se seraient désaccordées exactement comme
-   * ici.
-   */
+  ctx.save()
+  ctx.textAlign = 'left'
   mots.forEach((mot, i) => {
-    const jeton = lireJeton(mot)
-    if (jeton === null) {
-      groupe += groupe === '' && i === 0 ? mot : ` ${mot}`
-      if (i === mots.length - 1) vider()
+    if (i > 0) x += espace
+    if ('jeton' in mot) {
+      peindreJeton(ctx, mot.jeton, x, y, taille, symbole)
+      x += largeurJeton(ctx, mot.jeton, taille)
       return
     }
-    vider()
-    if (i > 0) x += espace
-    peindreJeton(ctx, jeton, x, y, taille, symbole)
-    x += largeurJeton(ctx, jeton, taille)
+    ctx.font = policeMot(taille, mot.gras)
+    ctx.fillStyle = couleur
+    ctx.fillText(mot.texte, x, y)
+    x += ctx.measureText(mot.texte).width
   })
-  vider()
+  ctx.restore()
 }
 
 /**

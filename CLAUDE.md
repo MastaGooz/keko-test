@@ -1752,6 +1752,24 @@ Quatre choses qui le portent :
   corps du texte**, pour que le symbole cesse de dominer la ligne qu'il
   annote.
 
+**ET LE CANVAS RESPECTE ENFIN LE GRAS.** Keko : « on peut mettre tous les
+chiffres et mots clés en gras (attaque, bloquer) ». *Il l'était déjà en 2D et
+pas en 3D* — le peintre retirait les `<b>` avec le reste du balisage, donc les
+chiffres y étaient plats depuis le début. Une ligne s'écrit désormais en
+MORCEAUX, chacun avec sa police (`Mot`), et le repli travaille sur ces morceaux
+plutôt que sur une chaîne.
+
+*Ce qu'on met en gras* : le verbe de l'effet et son chiffre — « **Inflige 6**
+dégâts », « **Bloque 5** dégâts » — plus les mots qui NOMMENT une règle,
+« **attaque** », « **défense** ». Le reste est de la phrase.
+
+**ET LE TEXTE A GROSSI D'UN CRAN** (7 / 6,4 / 5,4 U au lieu de 6 / 5,8 / 5).
+Keko : « on peut augmenter un peu la taille du texte des descriptions quand y'a
+la place ». *Les crans existent pour qu'un effet long descende plutôt que de
+déborder sur le pied* — rien n'obligeait le cran du haut à rester sage. **Le
+symbole des PA suit sans réglage** : il se mesure au corps du texte, ce qui est
+exactement ce que Keko demandait.
+
 **Et le jeu 2D garde le texte en clair** (`enClair`) : « Inflige 6 dégâts ». *Un
 moteur qui ne sait pas montrer une chose ne doit pas cesser de la dire* — la
 règle déjà tenue par la valeur d'un butin.
