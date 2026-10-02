@@ -218,19 +218,8 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
   const H = hauteurVisibleA(zCarte, size.height)
   const L = (H * size.width) / size.height
   const marge = L * 0.04
-  /**
-   * **LA BANDE DU GLOSSAIRE SE PREND AVANT LA GRILLE.**
-   *
-   * Calculée après, elle ne trouvait plus de place dès que le set tenait deux
-   * lignes — l'encadré tombait alors à une barre de quelques pixels, ou
-   * disparaissait. *Une bande réservée ne se partage pas* : c'est la règle que
-   * le bouton du deck avait déjà payée au hub, et la grille cède d'autant,
-   * exactement comme les meubles cèdent au rail.
-   */
   const ecartGloss = marge * 0.5
-  const bandeGloss =
-    motsZoom.length === 0 || modeles.length === 0 ? 0 : H * 0.135 * motsZoom.length + ecartGloss
-  const hautGrille = H * 0.88 - bandeGloss
+  const hautGrille = H * 0.88
 
   // La pièce cède de la place au set, mais reste la plus grande : c'est elle
   // qu'on regarde, le set n'est que ce qu'elle apporte.
@@ -385,76 +374,6 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * loger ; sous la grille, il se lit comme la note de bas de page de ce qu'on
    * vient de voir — ce qu'il est.
    */
-  const rapportGloss = rapportGlossaire(Math.max(1, motsZoom.length))
-  const hautSet = lignes * pasY
-  const glossaire =
-    motsZoom.length === 0
-      ? 0
-      : seule
-        ? piece * 1.05
-        : Math.min(
-            largeurOccupee,
-            // ET IL SE MESURE SUR LES CARTES, pas sur la largeur de la grille.
-            // *C'est une note de bas de page*, donc son texte n'a aucune raison
-            // d'être plus gros que le cartouche qu'il annote : étiré sur toute
-            // la rangée, il écrasait le set qu'il explique.
-            uneCarte * 2.1,
-            (bandeGloss - ecartGloss) / rapportGloss,
-          )
-  /**
-   * **ET IL SE LIE À LA CARTE QU'ON REGARDE DE PRÈS.** Demandé par Keko : « je
-   * voudrais que l'encadré apparaisse aussi dans le menu du hub quand on zoome
-   * la carte en hover / tap maintenu ».
-   *
-   * *En bas, il liste les mots de TOUT l'écran, donc il ne dit pas QUI les
-   * porte* — sur un deck de douze modèles, « étourdissement » ne désigne
-   * personne. Sous la loupe, il se recentre sur la carte grossie et ne garde
-   * que les siens : **il ne peut plus parler que d'elle.**
-   *
-   * *Un SECOND encadré posé à côté d'elle a été essayé, et il ne tenait pas* :
-   * la carte grossie déborde sur ses voisines, donc l'encadré tombait sur
-   * elles — à droite comme à gauche, il n'y a pas de place libre à côté d'une
-   * carte qu'on vient d'agrandir. **Un seul objet qui se déplace vaut mieux
-   * que deux qui se recouvrent.**
-   */
-  const carteDeLaLoupe = modeles.find((entree) => entree.carte.id === loupe)
-  const motsDeLaLoupe = (carteDeLaLoupe?.carte.motsCles ?? []).filter(
-    (mot) => GLOSSAIRE[mot] !== undefined,
-  )
-  const motsMontres = motsDeLaLoupe.length > 0 ? motsDeLaLoupe : motsZoom
-  const avecGlossaire = glossaire > 0.01
-  const sousLeSet = avecGlossaire && !seule
-  const hGloss = glossaire * rapportGloss
-  // Le bloc { grille, encadré } se centre ENSEMBLE : centrer la grille puis
-  // poser l'encadré dessous donnerait un bloc qui pend, la faute déjà payée
-  // sur le couple pièce + set.
-  const decalSet = sousLeSet ? (hGloss + ecartGloss) / 2 : 0
-  const yGloss = sousLeSet ? -(hautSet + ecartGloss) / 2 : 0
-  const totalGloss = piece + marge + glossaire
-  const aDroite = avecGlossaire && seule
-  const xPiece = aDroite ? -totalGloss / 2 + piece / 2 : seule ? 0 : -ensemble / 2 + piece / 2
-  const xSet = sansPiece ? 0 : xPiece + piece / 2 + marge + largeurOccupee / 2
-  /**
-   * LA PLACE DE LA CARTE SOUS LA LOUPE, calculée comme dans la boucle : elle
-   * est bornée à l'écran quand elle grossit, donc l'encadré doit la suivre
-   * jusque-là — *un encadré centré sur la case d'origine ne désignerait plus
-   * la carte, qui s'en est écartée.*
-   */
-  const iLoupe = carteDeLaLoupe === undefined ? -1 : modeles.indexOf(carteDeLaLoupe)
-  const parLigneLoupe =
-    iLoupe < 0 ? 0 : Math.min(colonnes, modeles.length - Math.floor(iLoupe / colonnes) * colonnes)
-  const xLoupe =
-    iLoupe < 0
-      ? xSet
-      : borner(
-          xSet + ((iLoupe % colonnes) - (parLigneLoupe - 1) / 2) * pasX,
-          lLoupe / 2 - tailleLoupe / 2 - marge,
-        )
-  const xGloss = aDroite
-    ? xPiece + piece / 2 + marge + glossaire / 2
-    : motsDeLaLoupe.length > 0
-      ? xLoupe
-      : xSet
   /**
    * **CE QUI RESTE AUTOUR D'UNE CARTE GROSSIE, en haut comme en bas.**
    *
@@ -470,6 +389,83 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * borde.*
    */
   const margeY = H * 0.035
+
+  /**
+   * **L'ENCADRÉ N'EXISTE QUE SOUS LA LOUPE.** Tranché par Keko : « il doit
+   * s'afficher uniquement au hover / tap maintenu sur la carte — le zoom sur
+   * la carte d'équipement qui génère la carte avec étourdissement, ou le zoom
+   * sur le deck ».
+   *
+   * *Posé en permanence, il listait les mots de TOUT l'écran, donc il ne
+   * disait pas QUI les porte* — sur un deck de douze modèles,
+   * « étourdissement » ne désigne personne. Et il coûtait une bande de hauteur
+   * à la grille pour un objet qu'on ne regarde qu'un instant : **une bande
+   * réservée se paie tout le temps, et celle-ci ne servait presque jamais.**
+   *
+   * Une carte zoomée SEULE garde le sien à côté d'elle, en permanence : il n'y
+   * a pas de loupe là, et le zoom ne parle que d'elle de toute façon.
+   */
+  const carteDeLaLoupe = modeles.find((entree) => entree.carte.id === loupe)
+  const motsDeLaLoupe = (carteDeLaLoupe?.carte.motsCles ?? []).filter(
+    (mot) => GLOSSAIRE[mot] !== undefined,
+  )
+  const motsMontres = seule ? motsZoom : motsDeLaLoupe
+  const iLoupe = carteDeLaLoupe === undefined ? -1 : modeles.indexOf(carteDeLaLoupe)
+  const demiLoupe = (tailleLoupe * 1.4) / 2
+  const yLoupe =
+    iLoupe < 0
+      ? 0
+      : borner(
+          ((lignes - 1) / 2 - Math.floor(iLoupe / colonnes)) * pasY,
+          hLoupe / 2 - demiLoupe - margeY,
+        )
+  /**
+   * **LA PLACE LIBRE AU-DESSUS ET EN DESSOUS DE LA CARTE GROSSIE**, et c'est
+   * elle qui borne l'encadré — jamais l'inverse.
+   *
+   * *Une carte sous la loupe occupe la moitié de la hauteur du champ*, donc ce
+   * qui reste d'un côté est mince : un encadré dimensionné sans le savoir
+   * sortait de l'écran par le haut, et on ne lisait plus que sa moitié basse.
+   */
+  const placeBas = yLoupe - demiLoupe - ecartGloss - (-hLoupe / 2 + margeY)
+  const placeHaut = hLoupe / 2 - margeY - (yLoupe + demiLoupe + ecartGloss)
+  const placeGloss = Math.max(placeBas, placeHaut)
+  const rapportGloss = rapportGlossaire(Math.max(1, motsMontres.length))
+  const glossaire =
+    motsMontres.length === 0
+      ? 0
+      : seule
+        ? piece * 1.05
+        : // IL SE MESURE SUR LES CARTES, pas sur la largeur de la grille.
+          // *C'est une note de bas de page*, donc son texte n'a aucune raison
+          // d'être plus gros que le cartouche qu'il annote.
+          Math.min(uneCarte * 1.6, lLoupe * 0.42, Math.max(0, placeGloss) / rapportGloss)
+  const avecGlossaire = glossaire > 0.01
+  const hGloss = glossaire * rapportGloss
+  const totalGloss = piece + marge + glossaire
+  const aDroite = avecGlossaire && seule
+  const xPiece = aDroite ? -totalGloss / 2 + piece / 2 : seule ? 0 : -ensemble / 2 + piece / 2
+  const xSet = sansPiece ? 0 : xPiece + piece / 2 + marge + largeurOccupee / 2
+  const parLigneLoupe =
+    iLoupe < 0 ? 0 : Math.min(colonnes, modeles.length - Math.floor(iLoupe / colonnes) * colonnes)
+  const xLoupe =
+    iLoupe < 0
+      ? xSet
+      : borner(
+          xSet + ((iLoupe % colonnes) - (parLigneLoupe - 1) / 2) * pasX,
+          lLoupe / 2 - tailleLoupe / 2 - marge,
+        )
+  /**
+   * IL PEND SOUS LA CARTE GROSSIE — et il passe AU-DESSUS d'elle s'il n'y a
+   * plus la place en bas. *Un encadré qui sort de l'écran n'explique rien*, et
+   * la carte du bas d'une grille de trois lignes n'a rien sous elle.
+   */
+  const yGloss = aDroite
+    ? 0
+    : placeBas >= placeHaut
+      ? yLoupe - demiLoupe - ecartGloss - hGloss / 2
+      : yLoupe + demiLoupe + ecartGloss + hGloss / 2
+  const xGloss = aDroite ? xPiece + piece / 2 + marge + glossaire / 2 : xLoupe
 
   return (
     <group>
@@ -502,7 +498,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           const ligne = Math.floor(i / colonnes)
           const parLigne = Math.min(colonnes, modeles.length - ligne * colonnes)
           const x = xSet + (colonne - (parLigne - 1) / 2) * pasX
-          const y = ((lignes - 1) / 2 - ligne) * pasY + decalSet
+          const y = ((lignes - 1) / 2 - ligne) * pasY
           const grossie = loupe === entree.carte.id
           const t = grossie ? tailleLoupe : uneCarte
           // ELLE GROSSIT SUR PLACE, mais ne sort pas de l'écran : bornée comme
@@ -578,7 +574,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           lecture — mais elle s'incline et son lustre la balaie : *le même geste
           doit donner la même réponse, quelle que soit la carte qu'il touche.* */}
       {avecGlossaire && (
-        <mesh position={[xGloss, yGloss, zCarte]}>
+        <mesh position={[xGloss, yGloss, aDroite ? zCarte : zLoupe]}>
           <planeGeometry args={[glossaire, hGloss]} />
           <meshBasicMaterial
             map={textureGlossaire(

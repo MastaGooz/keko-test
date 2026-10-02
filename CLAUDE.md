@@ -2416,15 +2416,31 @@ Trois choses qui le portent :
   poser l'encadré dessous donnerait un bloc qui pend, la faute déjà payée sur
   le couple pièce + set.
 
-**ET SOUS LA LOUPE, IL SE LIE À LA CARTE QU'ON REGARDE.** Keko : « je voudrais
-que l'encadré apparaisse aussi dans le menu du hub quand on zoome la carte en
-hover / tap maintenu ».
+**ET IL N'EXISTE QUE SOUS LA LOUPE.** Tranché par Keko, en deux temps : d'abord
+« je voudrais que l'encadré apparaisse aussi quand on zoome la carte en hover /
+tap maintenu », puis **« il doit s'afficher UNIQUEMENT au hover / tap maintenu
+sur la carte »** — le zoom d'une pièce, ou celui du deck.
 
-*En bas, il liste les mots de TOUT l'écran, donc il ne dit pas QUI les porte* —
-sur un deck de douze modèles, « étourdissement » ne désigne personne. Dès qu'une
-carte passe sous la loupe, il se recentre sur elle et ne garde que ses mots :
-**il ne peut plus parler que d'elle.** Une carte sans mot-clé le laisse à sa
-place, avec ceux de l'écran.
+*Posé en permanence, il listait les mots de TOUT l'écran, donc il ne disait pas
+QUI les porte* — sur un deck de douze modèles, « étourdissement » ne désigne
+personne. Et il coûtait une bande de hauteur à la grille pour un objet qu'on ne
+regarde qu'un instant : **une bande réservée se paie tout le temps, et celle-ci
+ne servait presque jamais.** Les cartes du set et du deck ont repris leur pleine
+taille en la rendant.
+
+Il **pend sous la carte grossie**, et **passe au-dessus d'elle quand il n'y a
+plus la place en bas** — la carte du bas d'une grille de trois lignes n'a rien
+sous elle. Il vit au z de la loupe, donc il recouvre ses voisines : *c'est un
+état transitoire, exactement comme la carte grossie qui les recouvre déjà.*
+
+**ET C'EST LA PLACE LIBRE QUI LE BORNE, jamais l'inverse.** *Une carte sous la
+loupe occupe la moitié de la hauteur du champ*, donc ce qui reste d'un côté est
+mince : dimensionné sans le savoir, il sortait de l'écran par le haut et on
+n'en lisait que la moitié basse. On mesure les deux côtés, on garde le plus
+grand, et sa largeur en découle.
+
+Une carte zoomée SEULE garde le sien à côté d'elle, en permanence : il n'y a pas
+de loupe là, et le zoom ne parle que d'elle de toute façon.
 
 *Un SECOND encadré posé à côté d'elle a été essayé, et il ne tenait pas* : la
 carte grossie déborde sur ses voisines, donc l'encadré tombait dessus — à droite
