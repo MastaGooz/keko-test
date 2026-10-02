@@ -72,7 +72,11 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
-    if (e.type === 'bloc') l.push(`Bloque <b>${e.montant}</b> dégâts`, `<small>ce tour seulement</small>`)
+    // ON NE REDIT PAS « CE TOUR SEULEMENT ». Tranché par Keko. *Le bloc tombe
+    // à la fin de chaque tour, sans exception* — c'est une règle du jeu, pas
+    // une clause de cette carte-ci, et une condition écrite sur toutes les
+    // cartes de défense cesse d'être une condition.
+    if (e.type === 'bloc') l.push(`Bloque <b>${e.montant}</b> dégâts`)
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.

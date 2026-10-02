@@ -1646,8 +1646,14 @@ prix de cette carte ? **Les deux lectures existent dans ce jeu**, puisqu'un
 trésor brûlé dépense bien de l'énergie. Le verbe tranche : ce qui coûte, c'est
 la carte.
 
-Deux lignes, comme « Bloque 5 dégâts / ce tour seulement » : le fait, puis la
-condition en retrait.
+Deux lignes : le fait, puis la condition en retrait.
+
+**ET LE BLOC N'A PLUS DE CONDITION ÉCRITE.** « Ce tour seulement » a disparu —
+tranché par Keko : « ne précise pas "ce tour uniquement" pour le blocage ». *Le
+bloc tombe à la fin de chaque tour, sans exception* : c'est une règle du jeu,
+pas une clause de cette carte-ci, et **une condition écrite sur toutes les
+cartes d'une famille cesse d'être une condition.** Elle y gagne une ligne de
+cartouche.
 
 Quatre choses à ne pas défaire :
 
