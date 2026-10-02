@@ -2464,9 +2464,17 @@ const GLOSSAIRES = new Map<string, THREE.CanvasTexture>()
 /** Le rapport hauteur/largeur de l'encadré, pour que le plan le suive. */
 // LA PLAQUE A LA HAUTEUR DE CE QU'ELLE PORTE : un rapport fixe laissait la
 // moitié basse vide sur un seul mot-clé, et *un encadré à moitié vide se lit
-// comme un encadré qu'on a oublié de remplir.*
+// comme un encadré qu'on a oublié de remplir.* Le pas a baissé avec l'écart
+// du titre au texte — *rapprocher deux lignes sans resserrer leur boîte
+// déplace le bloc vers le haut au lieu de le serrer.*
 const MARGE_GLOSSAIRE = 7
-const PAS_GLOSSAIRE = 20.5
+const PAS_GLOSSAIRE = 19
+
+/**
+ * L'ÉPAISSEUR DU FILET. Elle vaut ce qui RESTE une fois le tracé rogné à
+ * l'intérieur, donc le `stroke` en demande le double.
+ */
+const FILET_GLOSSAIRE = 1.1
 
 export function rapportGlossaire(entrees: number): number {
   return (2 * MARGE_GLOSSAIRE + PAS_GLOSSAIRE * entrees) / 100
@@ -2509,9 +2517,21 @@ export function textureGlossaire(
   pierre.addColorStop(1, 'rgba(18, 22, 26, 0.94)')
   ctx.fillStyle = pierre
   ctx.fill()
+  /**
+   * LE FILET EST PLUS ÉPAIS, ET IL EST ROGNÉ À L'INTÉRIEUR. Demandé par Keko.
+   *
+   * *Un `stroke` de canvas est CENTRÉ sur son tracé*, donc la moitié sortait
+   * du canvas et se perdait — l'épaissir n'aurait fait grossir que la part
+   * invisible. On clippe donc sur la MÊME forme et on double la largeur : il
+   * n'en reste que la moitié intérieure, exactement la règle déjà payée sur
+   * les cases vides du chargement.
+   */
+  ctx.save()
+  ctx.clip()
   ctx.strokeStyle = '#8d7a4e'
-  ctx.lineWidth = 0.75
+  ctx.lineWidth = FILET_GLOSSAIRE * 2
   ctx.stroke()
+  ctx.restore()
 
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
@@ -2535,7 +2555,7 @@ export function textureGlossaire(
       titre *= place / largeMot
       ctx.font = `600 ${titre}px Cinzel, Georgia, serif`
     }
-    ctx.fillText(mot, MARGE_GLOSSAIRE, haut + 6)
+    ctx.fillText(mot, MARGE_GLOSSAIRE, haut + 6.5)
     ctx.fillStyle = '#cfc6b4'
     // Le sens CÈDE s'il ne tient pas : un canvas écrit tout droit et laisse
     // déborder sans rien signaler.
@@ -2547,7 +2567,7 @@ export function textureGlossaire(
       corps *= place / large
       ctx.font = `400 ${corps}px "Crimson Pro", Georgia, serif`
     }
-    ctx.fillText(sens, MARGE_GLOSSAIRE, haut + 17)
+    ctx.fillText(sens, MARGE_GLOSSAIRE, haut + 15.5)
   })
 
   const texture = new THREE.CanvasTexture(canvas)

@@ -2364,6 +2364,16 @@ mot, lui, se lit d'un coup d'oeil une fois qu'on le connaît. **La carte dit ce
 qu'elle fait, l'encadré dit ce que le mot veut dire**, et il n'apparaît que
 lorsqu'on prend le temps de regarder.
 
+**SON FILET EST ROGNÉ À L'INTÉRIEUR, et c'est ce qui permet de l'épaissir.**
+Demandé par Keko, avec le resserrement du titre et du texte. *Un `stroke` de
+canvas est centré sur son tracé*, donc la moitié sortait du canvas et se
+perdait — l'épaissir n'aurait fait grossir que la part invisible. On clippe sur
+la MÊME forme et on double la largeur : il n'en reste que la moitié intérieure,
+la règle déjà payée sur les cases vides du chargement.
+
+**Et le PAS a baissé avec l'écart des deux lignes** : *rapprocher deux lignes
+sans resserrer leur boîte déplace le bloc vers le haut au lieu de le serrer.*
+
 **ET LE TITRE N'A PAS DE DEUX-POINTS, le sens prend une majuscule.** Tranché
 par Keko. *Un mot-clé est un nom, pas l'amorce d'une phrase* : les deux-points
 en faisaient une légende, alors que l'encadré est une entrée de glossaire — un
