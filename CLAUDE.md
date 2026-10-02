@@ -8005,6 +8005,37 @@ Les trois autres familles réemploient `virerLeCiel` sur ce pixel plutôt que
 quatre couleurs écrites à la main : *deux façons de dire la même teinte
 divergent au premier réglage.*
 
+**TROIS COUCHES, ET CHACUNE FAIT UN TRAVAIL QUE LES DEUX AUTRES NE FONT PAS** —
+demandées par Keko après l'aplat, « fais les 3 déjà, on verra le caractère
+après ». C'est la grammaire de la comète, où le ruban dit la forme et les
+esquilles la matière :
+
+- **le DÉGRADÉ donne le volume.** La lumière du jeu vient du haut, donc le fond
+  y est plus clair (×1,32 en haut, ×0,6 en bas) — *sans lui, la carte se lit
+  comme un rectangle de couleur et le sujet n'a pas d'air* ;
+- **le VIGNETTAGE donne le cadrage**, et **c'est une ELLIPSE, pas un disque** :
+  la carte est une fois et demie plus haute que large, donc un dégradé
+  circulaire mordrait sur les côtés avant d'atteindre le haut. On dessine un
+  disque dans un repère étiré — *une forme suit les proportions de ce qu'elle
+  borde* ;
+- **le GRAIN donne la matière, et il n'est pas décoratif.** *Un dégradé sombre
+  sur un canvas 8 bits BANDE par construction* : entre le haut du ciel et le
+  noir il n'y a qu'une centaine de niveaux pour mille pixels de hauteur, donc
+  des bandes de dix pixels. **C'est exactement le défaut qu'on fuyait en
+  quittant l'image compressée**, et le bruit est ce qui le dissout.
+
+**Le grain se peint en PIXELS DE LA TOILE, pas en unités de carte.** Tout le
+reste parle en unités de 768 et le contexte est mis à l'échelle ; un motif posé
+dans ce repère serait trois fois plus fin sur une toile de 256 que sur une de
+768, donc il moirerait sur la petite — *la règle du réseau du foil, qui
+s'efface dès qu'il passe sous le pixel.* On rend donc la transformation
+identité le temps de le poser ; le clip, lui, est déjà converti et tient.
+
+`overlay` est **neutre à 128** : un bruit centré sur ce gris ne déplace pas la
+couleur moyenne, il ne fait que l'agiter de quelques niveaux. Et la tuile est
+tirée d'un hachage de la position, donc identique à chaque peinture — *un semis
+qui se réarrange n'est plus une matière.*
+
 **Ce qui reste du décor peint par-dessus** : le bloom du sujet, qui fait tout le
 relief — *ce qui rayonne, c'est l'objet ; ce qui reçoit, c'est le décor* — et le
 voile sombre qui monte sous le texte.

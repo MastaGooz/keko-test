@@ -852,13 +852,122 @@ const FOND_PEINT = new URLSearchParams(location.search).get('fond') !== 'image'
 const BASE_FOND: readonly [number, number, number] = [3, 68, 94]
 
 /** Cette même couleur, virée à la teinte d'une famille. */
-function couleurDuCiel(ciel: Ciel | undefined): string {
-  if (ciel === undefined) return `rgb(${BASE_FOND[0]}, ${BASE_FOND[1]}, ${BASE_FOND[2]})`
+function teinteDuCiel(ciel: Ciel | undefined): [number, number, number] {
+  if (ciel === undefined) return [...BASE_FOND]
   // On réemploie le virage du décor plutôt que d'écrire quatre couleurs à la
   // main : *deux façons de dire la même teinte divergent au premier réglage.*
   const px = new Uint8ClampedArray([...BASE_FOND, 255])
   virerLeCiel(px, ciel)
-  return `rgb(${px[0]}, ${px[1]}, ${px[2]})`
+  return [px[0]!, px[1]!, px[2]!]
+}
+
+/**
+ * LA TUILE DE GRAIN, tirée une fois pour tout le jeu.
+ *
+ * *Un semis qui se réarrange d'une carte à l'autre n'est plus une matière* :
+ * le bruit sort d'un hachage de la position, donc il est le même à chaque
+ * peinture. C'est la règle déjà tenue par le semis de l'onde.
+ */
+let tuileGrain: HTMLCanvasElement | null = null
+
+function grain(): HTMLCanvasElement {
+  if (tuileGrain !== null) return tuileGrain
+  const t = document.createElement('canvas')
+  t.width = 128
+  t.height = 128
+  const c = t.getContext('2d')!
+  const champ = c.createImageData(128, 128)
+  for (let y = 0; y < 128; y += 1) {
+    for (let x = 0; x < 128; x += 1) {
+      // Un hachage entier : deux voisins n'ont aucune parenté, donc le motif
+      // ne dessine ni grille ni diagonale.
+      let h = Math.imul(x, 0x27d4eb2d) ^ Math.imul(y, 0x165667b1)
+      h = Math.imul(h ^ (h >>> 15), 0x2545f491)
+      const v = (h >>> 24) & 255
+      const i = (y * 128 + x) * 4
+      champ.data[i] = v
+      champ.data[i + 1] = v
+      champ.data[i + 2] = v
+      champ.data[i + 3] = 255
+    }
+  }
+  c.putImageData(champ, 0, 0)
+  tuileGrain = t
+  return t
+}
+
+/**
+ * **LE DÉCOR PEINT : un dégradé, un vignettage, un grain.** Demandé par Keko
+ * après l'aplat — « fais les 3 déjà, on verra le caractère après ».
+ *
+ * Chacun fait un travail que les deux autres ne font pas, comme le ruban et
+ * les esquilles de la comète :
+ *
+ * - **le DÉGRADÉ donne le volume.** La lumière du jeu vient du haut, donc le
+ *   fond y est plus clair — *sans lui, la carte se lit comme un rectangle de
+ *   couleur et le sujet n'a pas d'air* ;
+ * - **le VIGNETTAGE donne le cadrage** : les coins s'assombrissent et le
+ *   regard se referme sur le sujet. C'est le vocabulaire du gabarit 2D, dont
+ *   la matière en porte un ;
+ * - **le GRAIN donne la matière — et il n'est pas décoratif.** *Un dégradé
+ *   sombre sur un canvas 8 bits BANDE par construction* : entre le haut du
+ *   ciel et le noir il n'y a qu'une centaine de niveaux pour un millier de
+ *   pixels de hauteur, donc des bandes de dix pixels. C'est exactement le
+ *   défaut qu'on fuyait en quittant l'image compressée, et le bruit est ce qui
+ *   le dissout.
+ */
+function peindreDecor(ctx: CanvasRenderingContext2D, ciel: Ciel | undefined, largeur: number): void {
+  const base = teinteDuCiel(ciel)
+  const ton = (k: number): string =>
+    `rgb(${Math.round(Math.min(255, base[0] * k))}, ${Math.round(Math.min(255, base[1] * k))}, ${Math.round(Math.min(255, base[2] * k))})`
+
+  const vertical = ctx.createLinearGradient(0, 0, 0, HAUT)
+  vertical.addColorStop(0, ton(1.32))
+  vertical.addColorStop(0.45, ton(1))
+  vertical.addColorStop(1, ton(0.6))
+  ctx.fillStyle = vertical
+  ctx.fillRect(0, 0, LARGE, HAUT)
+
+  /**
+   * LE VIGNETTAGE EST UNE ELLIPSE, pas un disque : la carte est une fois et
+   * demie plus haute que large, donc un dégradé circulaire mordrait sur les
+   * côtés bien avant d'atteindre le haut. On dessine un disque dans un repère
+   * étiré — *une forme suit les proportions de ce qu'elle borde.*
+   */
+  ctx.save()
+  ctx.translate(LARGE / 2, HAUT / 2)
+  ctx.scale(1, HAUT / LARGE)
+  const vignette = ctx.createRadialGradient(0, 0, LARGE * 0.3, 0, 0, LARGE * 0.75)
+  vignette.addColorStop(0, '#00000000')
+  vignette.addColorStop(1, '#00000066')
+  ctx.fillStyle = vignette
+  ctx.fillRect(-LARGE, -LARGE, LARGE * 2, LARGE * 2)
+  ctx.restore()
+
+  /**
+   * **LE GRAIN SE PEINT EN PIXELS DE LA TOILE, pas en unités de carte.**
+   *
+   * Tout le dessin parle en unités de 768 et le contexte est mis à l'échelle ;
+   * un motif posé dans ce repère aurait un grain trois fois plus fin sur une
+   * toile de 256 que sur une de 768 — donc il moirerait sur la petite, comme
+   * le réseau du foil quand il passe sous le pixel. On rend donc la
+   * transformation identité le temps de le poser : le clip, lui, a déjà été
+   * converti, il tient.
+   *
+   * `overlay` est NEUTRE à 128 : un bruit centré sur ce gris ne change pas la
+   * couleur moyenne, il ne fait que l'agiter de quelques niveaux — ce qu'on
+   * demande à un dithering.
+   */
+  ctx.save()
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
+  const motif = ctx.createPattern(grain(), 'repeat')
+  if (motif !== null) {
+    ctx.globalCompositeOperation = 'overlay'
+    ctx.globalAlpha = 0.38
+    ctx.fillStyle = motif
+    ctx.fillRect(0, 0, largeur, Math.round(largeur * 1.4))
+  }
+  ctx.restore()
 }
 
 const cieux = new Map<Ciel, Promise<HTMLImageElement | HTMLCanvasElement | null>>()
@@ -1250,8 +1359,11 @@ export async function peindreCarte(
   ctx.save()
   chemin(ctx, coque, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
   ctx.clip()
-  ctx.fillStyle = FOND_PEINT ? couleurDuCiel(carte.ciel) : '#171b1d'
-  ctx.fillRect(0, 0, LARGE, HAUT)
+  if (FOND_PEINT) peindreDecor(ctx, carte.ciel, largeur)
+  else {
+    ctx.fillStyle = '#171b1d'
+    ctx.fillRect(0, 0, LARGE, HAUT)
+  }
   // LE FOND COMMUN D'ABORD, LE SUJET PAR-DESSUS. Demandé par Keko : une seule
   // image de décor pour toutes les cartes, et le modèle ne porte plus que ce
   // qu'il montre. Le repli reste celui d'avant — sans fond, la surface sombre
