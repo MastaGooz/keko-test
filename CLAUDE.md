@@ -7319,6 +7319,28 @@ seule.
 Le plancher de la bande reste utile pour autre chose : il l'empêche d'être si
 courte que le disque écraserait le titre du groupe dessous.
 
+**ET LES DEUX BORNES ONT MONTÉ D'UN CRAN** (76 → 85 %, 1,66 → 1,86). Keko : « on
+peut augmenter un peu la taille du symbole des PA dans les stats, le chiffre
+touche le rond ».
+
+*Ce qui a changé, c'est le CHIFFRE, pas le réglage* : le rapport de 1,66 avait
+été validé sur un « 5 », et le Plastron de cuir fait passer les PA à **6** —
+**Grenze Gotisch a des chiffres elzéviriens**, donc le 6 monte plus haut que le
+5 et vient toucher l'anneau. ***Un rapport réglé sur un chiffre ne vaut pas pour
+tous***, la leçon déjà payée sur le compteur du coin d'une carte.
+
+**Et son anneau est RENTRÉ dans son image**, là où le coeur et le paquet
+remplissent la leur : *à boîte égale, un dessin inscrit se lit plus petit que
+ses voisins*, donc il lui faut une boîte un peu plus grande pour se lire à la
+même échelle. Le chiffre, lui, ne bouge pas — quatre mesures se lisent à une
+seule voix.
+
+Mesuré aux cinq formats : **c'est le rem qui commande partout** (rapport 1,86 de
+667 x 320 à 1366 x 700), la part de bande ne mordant nulle part aujourd'hui.
+Elle monte quand même avec lui — *deux bornes qui décrivent la même taille se
+désaccordent au premier réglage si l'on n'en bouge qu'une.* Zéro débordement
+partout, et 61 px entre la bande et le bloc du prêt au format le plus court.
+
 **ET LA BANDE A UN PLANCHER, parce qu'elle porte un chiffre qui n'en a pas.**
 Keko : « on avait agrandi le symbole des PA pour que les bords du cercle ne
 touchent pas le chiffre ; mais quand j'ouvre la page web sur tél le cercle est

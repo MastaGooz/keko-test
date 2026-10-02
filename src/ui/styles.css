@@ -5828,8 +5828,31 @@ body {
      plus avec ses voisins -- 18 px contre 11, et un disque de 30 pour des
      symboles de 17. *Une cicatrice de plus : un plancher pose quand le chiffre
      etait en rem n'a plus de raison d'etre quand il ne l'est plus.* Le rapport
-     de 1,66, lui, ne change pas -- c'est lui qui tient les deux ensemble. */
-  height: max(76%, calc(1.125em * 1.66));
+     de 1,66, lui, ne change pas -- c'est lui qui tient les deux ensemble.
+
+     **ET LES DEUX BORNES ONT MONTE D'UN CRAN** (76 -> 85 %, 1,66 -> 1,86).
+     Keko : « on peut augmenter un peu la taille du symbole des PA dans les
+     stats, le chiffre touche le rond ».
+
+     *Ce qui a change, c'est le CHIFFRE, pas le reglage* : le rapport de 1,66
+     avait ete valide sur un « 5 », et le Plastron fait passer les PA a 6 --
+     **Grenze Gotisch a des chiffres elzeviriens**, donc le 6 monte plus haut
+     que le 5 et vient toucher l'anneau. *Un rapport regle sur un chiffre ne
+     vaut pas pour tous*, la lecon deja payee sur le compteur du coin d'une
+     carte.
+
+     **ET SON ANNEAU EST RENTRE DANS SON IMAGE**, la ou le coeur et le paquet
+     remplissent la leur : *a boite egale, un dessin inscrit se lit plus petit
+     que ses voisins*, donc il lui faut une boite un peu plus grande pour se
+     lire a la meme echelle. Le chiffre, lui, ne bouge pas -- quatre mesures se
+     lisent a une seule voix.
+
+     Mesure aux cinq formats : **c'est le rem qui commande partout** (rapport
+     1,86 de 667 x 320 a 1366 x 700), la part de bande ne mordant nulle part
+     aujourd'hui. Elle monte quand meme avec lui : *deux bornes qui decrivent la
+     meme taille se desaccordent au premier reglage si l'on n'en bouge qu'une*,
+     et celle-ci est le garde-fou du jour ou la bande sera plus haute. */
+  height: max(85%, calc(1.125em * 1.86));
 }
 
 /* LE MEME CORPS QUE SES VOISINS, et c'est la regle : *quatre chiffres qui
