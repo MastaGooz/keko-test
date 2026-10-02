@@ -21,7 +21,7 @@ import {
   deckDeLEquipement,
 } from '../logic/armes.ts'
 import type { Objet } from '../logic/armes.ts'
-import { estConsommable } from '../logic/armes.ts'
+import { estConsommable, nomObjet } from '../logic/armes.ts'
 import { tresorRecompense } from '../logic/cartes.ts'
 import { lignes, nature, rangDuTresor, sansBalises } from '../ui/texte-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
@@ -53,10 +53,11 @@ export function aPeindre(carte: Carte): CarteAPeindre {
     // du TEXTE AFFICHÉ — « Consommable » est déjà devenu « Objet » une fois —
     // et *un dessin ne se décide pas sur une étiquette qui peut changer.*
     tresor: carte.type === 'tresor',
-    // ET LE CIEL SUIT LA PIÈCE qui l'a produite : une carte d'arme porte le
-    // décor rouge. Même porte que la rareté — *la même carte partout*, du
-    // zoom de l'arme à la main de combat.
-    arme: carte.arme === true,
+    // ET LE CIEL SUIT LA PIÈCE qui l'a produite : rouge pour une arme, vert
+    // pour un objet, bleu pour une armure. Même porte que la rareté — *la même
+    // carte partout*, du zoom de l'arme à la main de combat. Un trésor, lui,
+    // dit sa famille par son type.
+    ciel: carte.type === 'tresor' ? 'tresor' : carte.famille,
   }
 }
 
@@ -85,7 +86,7 @@ export function setAPeindre(objet: Objet): { carte: CarteAPeindre; nombre: numbe
       ...e.modele,
       id: `${objet.id}-${i}`,
       rarete: objet.rarete,
-      arme: 'mains' in objet,
+      famille: 'mains' in objet ? ('arme' as const) : undefined,
     }),
     nombre: e.nombre,
   }))
@@ -117,10 +118,11 @@ export function pieceAPeindre(objet: Objet): CarteAPeindre {
     // mieux est une bande de libre pour ce qui n'a nulle part où aller.
     effet: [],
     type: pied,
-    // ET SON CIEL DIT SA FAMILLE : rouge pour une arme, par un DRAPEAU et non
-    // par le mot du pied — celui-ci est du texte affiché, et *un dessin ne se
-    // décide pas sur une étiquette qui peut changer*, la règle du trésor.
-    arme: !estConsommable(objet) && 'mains' in objet,
+    // ET SON CIEL DIT SA FAMILLE : rouge pour une arme, vert pour un objet,
+    // bleu pour une armure — par une ÉTIQUETTE et non par le mot du pied,
+    // celui-ci étant du texte affiché : *un dessin ne se décide pas sur une
+    // étiquette qui peut changer*, la règle du trésor.
+    ciel: estConsommable(objet) ? 'objet' : 'mains' in objet ? 'arme' : undefined,
     // SA RARETÉ VA AU CADRE. Une carte de deck n'en a pas et n'en aura pas :
     // elle garde le laiton, qui est le commun.
     rarete: objet.rarete,
@@ -277,11 +279,38 @@ export function RARETES_URL(): boolean {
 export function raretesDeTest(hub: Hub, actif = RARETES_URL()): Hub {
   if (!actif) return hub
   const echelle: Rarete[] = ['commune', 'rare', 'epique', 'legendaire']
-  const modeles: Objet[] = [GLAIVE, PLASTRON, POTIONS_DEPART[0]!]
-  const reserve = echelle.flatMap((rarete) =>
+  // TOUT CE QU'ON POSSÈDE, ÉQUIPÉ COMPRIS. Keko : « tu peux peupler le coffre
+  // de chaque élément en chaque version de rareté ? » — le banc n'en montrait
+  // que trois (un Glaive, un Plastron, une Potion), ce qui suffisait à juger
+  // les métaux et plus du tout à juger les CIELS, qui se lisent par famille.
+  // On collecte donc le coffre ET le chargement, et on déduplique par nom :
+  // *le banc montre le catalogue, pas l'état de la partie.*
+  const portees = [
+    ...hub.chargement.mains,
+    hub.chargement.armure,
+    ...consommablesDeLaPile(hub.chargement.pile),
+  ].filter((o): o is Objet => o !== null && o !== undefined)
+  const vus = new Set<string>()
+  const modeles: Objet[] = []
+  for (const objet of [...hub.reserve, ...portees]) {
+    if (estTresor(objet)) continue
+    const nom = nomObjet(objet)
+    if (vus.has(nom)) continue
+    vus.add(nom)
+    modeles.push(objet)
+  }
+  const pieces = echelle.flatMap((rarete) =>
     modeles.map((modele) => ({ ...modele, id: `${modele.id}-${rarete}`, rarete })),
   )
-  return { ...hub, reserve }
+  // ET LES TRÉSORS AVEC, puisqu'ils ont leur ciel à eux. *Leur rang vient de
+  // leur VALEUR et non d'une rareté*, donc on les tire à toutes les
+  // profondeurs plutôt qu'à tous les crans : la table monte avec la descente,
+  // et huit paliers couvrent l'échelle entière.
+  const rng = createRng(7)
+  const tresors = Array.from({ length: 16 }, (_, i) =>
+    tresorRecompense(1 + (i % 8), rng, `banc-${i}`),
+  )
+  return { ...hub, reserve: [...pieces, ...tresors] }
 }
 
 /**

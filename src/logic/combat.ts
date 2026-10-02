@@ -67,7 +67,8 @@ export type Carte = {
    */
   rarete?: string
   /**
-   * ELLE VIENT D'UNE ARME — et c'est le CIEL de la carte qui le porte.
+   * LA FAMILLE DE CE QUI L'A PRODUITE — et c'est le CIEL de la carte qui la
+   * porte : rouge pour une arme, vert pour un objet, bleu pour une armure.
    *
    * Keko, en voyant les cartes d'une arme rester bleues : « quand je zoom la
    * couleur rouge disparaît ». *Une carte de deck hérite déjà du métal de sa
@@ -75,9 +76,10 @@ export type Carte = {
    * comme un corps étranger à l'arme qui le produit.
    *
    * **Aucune règle ne la lit**, comme `rarete` : c'est une étiquette qui
-   * traverse `logic/` sans rien y décider.
+   * traverse `logic/` sans rien y décider. Un trésor n'en a pas besoin — son
+   * `type` le dit déjà.
    */
-  arme?: boolean
+  famille?: 'arme' | 'objet'
   /**
    * Un trésor ne se joue que s'il porte des `effets` — et le jouer le DÉTRUIT.
    * C'est tout le pari du butin : il vaut de l'or s'il ressort, et il peut

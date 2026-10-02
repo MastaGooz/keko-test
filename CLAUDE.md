@@ -5891,7 +5891,17 @@ chiffre les sépare.
 
 **POUR JUGER L'ÉCHELLE : `?r3f&raretes`.** Le jeu n'emploie que deux crans sur
 quatre, et *on ne juge pas une échelle sur deux barreaux* : le banc met une
-copie de chaque pièce à chaque rareté, dans l'ordre. Les deux crans neufs —
+copie de chaque pièce à chaque rareté, dans l'ordre.
+
+**IL MONTRE TOUT LE CATALOGUE, coffre ET chargement.** Keko : « tu peux
+peupler le coffre de chaque élément en chaque version de rareté ? » Il n'en
+prenait que trois — un Glaive, un Plastron, une Potion — ce qui suffisait à
+juger les métaux et plus du tout à juger les CIELS, qui se lisent par famille.
+Il collecte donc les deux meubles et déduplique par nom : *un banc montre le
+catalogue, pas l'état de la partie.* **Et les trésors avec**, tirés à toutes
+les profondeurs plutôt qu'à tous les crans — *leur rang vient de leur valeur*,
+donc c'est la table de butin qui les étale, et huit paliers la couvrent
+entière. Les deux crans neufs —
 épique, légendaire — n'ont encore aucun objet ; ils existent pour que le
 contenu à venir n'ait pas à rouvrir le modèle, *et parce qu'une échelle se
 dessine entière ou pas du tout.* (Aucune migration de sauvegarde : la
@@ -7652,10 +7662,19 @@ doit PAS en porter** : c'est désormais ce que Keko livre — des WebP à canal
 alpha, sujet détouré. *C'est ce qui permet de glisser la lumière entre le décor
 et le sujet*, et une image opaque le rendrait impossible.
 
-**ET LE DÉCOR D'UNE ARME VIRE AU ROUGE.** Demandé par Keko : « on peut mettre
-le background des armes en rouge au lieu du bleu ? » *Le fond de nuit propre à
-chaque famille, perdu quand les 24 dessins ont rendu leur ciel, revient donc
-par une autre porte* — et par le DÉCOR COMMUN, pas par une seconde image.
+**ET LE CIEL DIT LA FAMILLE : rouge pour une arme, vert pour un objet, or pour
+un trésor, le bleu d'origine pour une armure.** Demandé par Keko en deux fois :
+« on peut mettre le background des armes en rouge au lieu du bleu ? », puis
+« on peut utiliser le background en version verte pour les objets et jaune pour
+les trésors ? »
+
+*Le fond de nuit propre à chaque famille, perdu quand les 24 dessins ont rendu
+leur ciel, revient donc par une autre porte* — et par le DÉCOR COMMUN, pas par
+quatre images à maintenir.
+
+**L'ARMURE N'EST PAS DANS LA TABLE, et c'est elle qui tient l'échelle** : elle
+garde le bleu du fichier, donc *la couleur de référence reste celle qu'on a
+dessinée* et les trois autres s'en écartent.
 
 **Ça passe par la TEINTE, jamais par un voile** : on garde la saturation et la
 luminance de chaque pixel et on lui donne la teinte du rouge — *c'est le même

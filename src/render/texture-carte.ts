@@ -75,10 +75,11 @@ export type CarteAPeindre = {
    */
   tresor?: boolean
   /**
-   * ELLE VIENT D'UNE ARME — et c'est son DÉCOR qui le dit, pas son cadre.
-   * Une pièce d'arme le porte, et les cartes de son set en héritent.
+   * SA FAMILLE — et c'est son DÉCOR qui la dit, pas son cadre : rouge pour une
+   * arme, vert pour un objet, or pour un trésor, le bleu d'origine pour une
+   * armure. Une pièce la porte, et les cartes de son set en héritent.
    */
-  arme?: boolean
+  ciel?: Ciel
   /**
    * LA VALEUR D'UN TRÉSOR, dite par un SYMBOLE et un chiffre — pas par une
    * phrase du cartouche.
@@ -630,19 +631,65 @@ function fond(): Promise<HTMLImageElement | null> {
  * étoiles et le dégradé qui monte survivent, là où un rectangle rouge posé
  * dessus les aurait écrasés.
  */
-function virerAuRouge(pixels: Uint8ClampedArray): void {
+type Ciel = 'arme' | 'objet' | 'tresor'
+
+/**
+ * LA TEINTE DE CHAQUE FAMILLE. Tranché par Keko : « on peut utiliser le
+ * background en version verte pour les objets et jaune pour les trésors ? »
+ *
+ * **Une armure n'est pas dans la table, et c'est elle qui tient l'échelle** :
+ * elle garde le bleu nuit du fichier, donc *la couleur de référence reste
+ * celle qu'on a dessinée* et les trois autres s'en écartent.
+ *
+ * Chaque entrée est un vecteur de TEINTE déjà normalisé — son plus petit canal
+ * vaut 0, son plus grand 1 — parce que c'est exactement ce que la formule
+ * demande : la saturation vient du pixel, pas de la table.
+ */
+const CIELS: Record<Ciel, [number, number, number]> = {
+  arme: [1, 0, 0],
+  objet: [0, 1, 0.12],
+  tresor: [1, 0.74, 0],
+}
+
+/**
+ * LE CIEL D'UNE CARTE, VIRÉ À SA COULEUR — et viré PIXEL PAR PIXEL.
+ *
+ * Demandé par Keko : « on peut mettre le background des armes en rouge au lieu
+ * du bleu ? », puis « en version verte pour les objets et jaune pour les
+ * trésors ».
+ *
+ * **Le `globalCompositeOperation = 'hue'` ne tient pas**, et c'est la leçon de
+ * cette passe : il marchait sur la machine de dev et pas sur l'appareil de
+ * Keko — « ça n'a rien changé du tout ». `hue`, `saturation`, `color` et
+ * `luminosity` sont les modes NON SÉPARABLES du canvas, les moins bien tenus
+ * du lot : un navigateur qui ne les implémente pas ne lève rien, il **ignore
+ * l'opération**. *Une dégradation silencieuse vaut moins qu'un chemin qui
+ * marche partout* — exactement la raison qui avait déjà écarté `ctx.filter`.
+ *
+ * On refait donc ce que `hue` promettait, à la main : pour chaque pixel on
+ * GARDE sa saturation et sa luminance, et on lui donne la teinte voulue. C'est
+ * la formule de la spécification de composition, et elle n'a besoin que
+ * d'arithmétique — donc elle rend le même résultat sur tous les appareils.
+ *
+ * *Le ciel étoilé reste le même ciel, il change d'heure* : la matière, les
+ * étoiles et le dégradé qui monte survivent, là où un rectangle de couleur
+ * posé dessus les aurait écrasés.
+ */
+function virerLeCiel(pixels: Uint8ClampedArray, ciel: Ciel): void {
+  const [ur, uv, ub] = CIELS[ciel]
+  // La teinte portée à une saturation de 1 ; sa propre luminance sert à
+  // recaler le résultat sur celle du pixel.
+  const lumTeinte = 0.3 * ur + 0.59 * uv + 0.11 * ub
   for (let i = 0; i < pixels.length; i += 4) {
     const r = pixels[i]! / 255
     const v = pixels[i + 1]! / 255
     const b = pixels[i + 2]! / 255
-    // La saturation et la luminance du pixel, qu'on garde ; la teinte du rouge
-    // pur portée à cette saturation vaut (s, 0, 0).
     const sat = Math.max(r, v, b) - Math.min(r, v, b)
     const lum = 0.3 * r + 0.59 * v + 0.11 * b
-    const ecart = lum - 0.3 * sat
-    let cr = sat + ecart
-    let cv = ecart
-    let cb = ecart
+    const ecart = lum - sat * lumTeinte
+    let cr = ur * sat + ecart
+    let cv = uv * sat + ecart
+    let cb = ub * sat + ecart
     // ClipColor : une teinte portée à une luminance donnée peut sortir de
     // [0,1] — on ramène alors vers la luminance, qui est ce qu'on garde.
     const bas = Math.min(cr, cv, cb)
@@ -665,8 +712,8 @@ function virerAuRouge(pixels: Uint8ClampedArray): void {
   }
 }
 
-/** Une image virée au rouge, rendue dans un canvas de sa taille. */
-function auRouge(image: HTMLImageElement): HTMLCanvasElement | null {
+/** Une image virée à la couleur d'une famille, rendue dans un canvas. */
+function auCiel(image: HTMLImageElement, ciel: Ciel): HTMLCanvasElement | null {
   const toile = document.createElement('canvas')
   toile.width = image.naturalWidth
   toile.height = image.naturalHeight
@@ -675,7 +722,7 @@ function auRouge(image: HTMLImageElement): HTMLCanvasElement | null {
   ctx.drawImage(image, 0, 0)
   try {
     const champ = ctx.getImageData(0, 0, toile.width, toile.height)
-    virerAuRouge(champ.data)
+    virerLeCiel(champ.data, ciel)
     ctx.putImageData(champ, 0, 0)
   } catch {
     // UNE LECTURE DE PIXELS PEUT ÊTRE REFUSÉE si l'image vient d'une autre
@@ -688,19 +735,23 @@ function auRouge(image: HTMLImageElement): HTMLCanvasElement | null {
 }
 
 /**
- * LE CIEL ROUGE SE FABRIQUE UNE FOIS, pour toutes les cartes d'arme.
+ * LE CIEL D'UNE FAMILLE SE FABRIQUE UNE FOIS, pour toutes ses cartes.
  *
  * *Une passe par pixels sur un décor de 1024 px coûte quelques millisecondes* —
- * une fois. La refaire par carte la paierait vingt fois pour un résultat
- * identique, et c'est exactement la raison qui mémorise déjà le décor lui-même.
+ * une fois par famille. La refaire par carte la paierait vingt fois pour un
+ * résultat identique, et c'est exactement la raison qui mémorise déjà le décor
+ * lui-même.
  */
-let fondArmeCommun: Promise<HTMLImageElement | HTMLCanvasElement | null> | null = null
+const cieux = new Map<Ciel, Promise<HTMLImageElement | HTMLCanvasElement | null>>()
 
-function fondArme(): Promise<HTMLImageElement | HTMLCanvasElement | null> {
+function fondTeinte(ciel: Ciel): Promise<HTMLImageElement | HTMLCanvasElement | null> {
+  const deja = cieux.get(ciel)
+  if (deja !== undefined) return deja
   // Et si la teinte échoue, on rend le ciel BLEU plutôt que rien : *un décor
   // de la mauvaise couleur vaut mieux qu'une carte sans décor.*
-  fondArmeCommun ??= fond().then((image) => (image === null ? null : (auRouge(image) ?? image)))
-  return fondArmeCommun
+  const promesse = fond().then((image) => (image === null ? null : (auCiel(image, ciel) ?? image)))
+  cieux.set(ciel, promesse)
+  return promesse
 }
 
 /** Le symbole du coût, chargé une fois lui aussi. */
@@ -821,10 +872,10 @@ export async function peindreCarte(
 
   const [image, decor, symbole] = await Promise.all([
     illustration(carte.nom),
-    // LE CIEL D'UNE ARME EST ROUGE : ce n'est pas un voile posé sur le décor,
-    // c'est un AUTRE décor — le même fichier, viré au rouge une fois pour
-    // toutes. Voir `fondArme`.
-    carte.arme === true ? fondArme() : fond(),
+    // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
+    // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
+    // de la famille. Une armure garde le bleu d'origine. Voir `fondTeinte`.
+    carte.ciel === undefined ? fond() : fondTeinte(carte.ciel),
     coutPeint(),
     document.fonts.ready,
   ])
@@ -946,7 +997,7 @@ export async function peindreCarte(
        *
        * *Le bloom n'est pas le sujet, c'est de la lumière tombée sur le
        * décor* — une lame bleue ajoutée sur tout le champ repeignait le ciel
-       * rouge en bleu, d'autant plus que le sujet est large et clair. **Un
+       * teinté, d'autant plus que le sujet est large et clair. **Un
        * reflet prend la couleur de ce qu'il touche**, la règle déjà tenue par
        * le lustre de l'or.
        *
@@ -954,9 +1005,9 @@ export async function peindreCarte(
        * donc ça ne coûte rien, là où teinter la carte entière se paierait à
        * chaque peinture.
        */
-      if (carte.arme === true) {
+      if (carte.ciel !== undefined) {
         const flou = pctx.getImageData(0, 0, petit.width, petit.height)
-        virerAuRouge(flou.data)
+        virerLeCiel(flou.data, carte.ciel)
         pctx.putImageData(flou, 0, 0)
       }
       ctx.save()
@@ -2010,7 +2061,7 @@ const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
 export function signature(carte: CarteAPeindre): string {
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.valeur ?? ''}|${carte.arme === true ? 'a' : ''}|${carte.effet.join('~')}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.effet.join('~')}`
 }
 
 /**

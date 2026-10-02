@@ -115,7 +115,13 @@ export function nomObjet(objet: Objet): string {
 export function carteDuConsommable(consommable: Consommable): Carte {
   // Un consommable EST sa carte : sa rareté est donc celle de la carte, sans
   // intermédiaire. Une Super potion est rare, sa carte l'est aussi.
-  return { ...consommable.modele, id: consommable.id, rarete: consommable.rarete }
+  // ET SON CIEL EST CELUI D'UN OBJET : vert. Même porte que la rareté.
+  return {
+    ...consommable.modele,
+    id: consommable.id,
+    rarete: consommable.rarete,
+    famille: 'objet' as const,
+  }
 }
 
 const ESTOC: Modele = { nom: 'Estoc', type: 'combat', cout: 1, degats: 3 }
@@ -522,8 +528,9 @@ export function deckDeLEquipement(equipement: Piece[]): Carte[] {
         // annonce une puissance, pas une provenance.
         rarete: piece.rarete,
         // ET DU CIEL DE SA PIÈCE, par la même porte : une carte d'arme porte
-        // le décor rouge de l'arme. *Deux étiquettes, un seul héritage.*
-        arme: 'mains' in piece,
+        // le décor rouge de l'arme, une carte d'armure garde le bleu.
+        // *Deux étiquettes, un seul héritage.*
+        famille: 'mains' in piece ? ('arme' as const) : undefined,
       })),
     ),
   )
