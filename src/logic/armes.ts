@@ -124,7 +124,35 @@ export function carteDuConsommable(consommable: Consommable): Carte {
   }
 }
 
-const ESTOC: Modele = { nom: 'Estoc', type: 'combat', cout: 1, degats: 3 }
+/**
+ * LA TAILLE : le coup de base du Glaive, et la monnaie de l'Estoc.
+ *
+ * 4 dégâts pour 1 PA — composé par Keko. *C'est la carte qu'on joue sans y
+ * penser*, et c'est précisément ce qui donne son prix à celle qui compte les
+ * attaques derrière elle.
+ */
+const TAILLE: Modele = { nom: 'Taille', type: 'combat', cout: 1, degats: 4 }
+
+/**
+ * L'ESTOC : cher seul, donné après deux Tailles.
+ *
+ * 6 dégâts pour 3 PA, **moins 1 PA par attaque déjà portée ce tour** — composé
+ * par Keko. *C'est le premier effet du jeu qui fasse de l'ORDRE une décision* :
+ * jusqu'ici un tour était un sac, on y dépensait sa réserve sans que la suite
+ * compte. Ici, ouvrir par les petits coups change ce que le gros coûte.
+ *
+ * **Les chiffres sont de Keko et ne sont pas calibrés** : le set du Glaive est
+ * la référence à laquelle toutes les armes se comparent, et *le réglage d'un
+ * combat est un rasoir* — à repasser au balayage avant d'en faire un acquis.
+ */
+const ESTOC: Modele = {
+  nom: 'Estoc',
+  type: 'combat',
+  cout: 3,
+  degats: 6,
+  remiseParAttaque: 1,
+}
+
 const TAILLADE: Modele = { nom: 'Taillade', type: 'combat', cout: 2, degats: 6 }
 const MOULINET: Modele = { nom: 'Moulinet', type: 'combat', cout: 4, degats: 14 }
 
@@ -151,10 +179,14 @@ export const GLAIVE: Arme = {
   // mains en donne six ; l'armure six. Tranché par Keko. Conséquence voulue :
   // deux armes à une main font un BUILD, on compose deux verbes, là où dix
   // cartes par arme faisaient que la seconde noyait la première.
+  // DEUX MODÈLES, PAS TROIS — tranché par Keko : « 2× Taille, 1× Estoc (oui,
+  // deux cartes différentes seulement) ». *Le format des trois cartes
+  // différentes tombe ici*, et c'est cohérent avec ce qu'il avait acheté : une
+  // arme dont deux cartes sont pareilles n'en a qu'une et demie, sauf quand le
+  // doublon est justement ce qui alimente la troisième.
   set: [
+    { modele: TAILLE, nombre: 2 },
     { modele: ESTOC, nombre: 1 },
-    { modele: TAILLADE, nombre: 1 },
-    { modele: MOULINET, nombre: 1 },
   ],
 }
 

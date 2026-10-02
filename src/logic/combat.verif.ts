@@ -11,6 +11,7 @@ import { createRng } from './rng.ts'
 import type { Carte, ConfigCombat, Ennemi, EtatCombat } from './combat.ts'
 import {
   consequence,
+  coutDe,
   creerCombat,
   finDuTour,
   jouerCarte,
@@ -382,13 +383,17 @@ function ennemi(traits: {
   egal(gros.pv, base.pvMax, 'un bloc suffisant annule la frappe')
 }
 
-function cartes(nombre: number, modele: { nom: string; cout: number; degats: number }): Carte[] {
+function cartes(
+  nombre: number,
+  modele: { nom: string; cout: number; degats: number } & Partial<Carte>,
+): Carte[] {
+  // ON REPREND TOUT LE GABARIT, pas trois champs choisis : le jour où une carte
+  // porte un effet ou une remise, un fixture qui ne copie que `cout` et
+  // `degats` teste une AUTRE carte que celle qu'on croit — et il passe.
   return Array.from({ length: nombre }, (_, i) => ({
+    ...modele,
     id: `${modele.nom}-${i + 1}`,
-    nom: modele.nom,
     type: 'combat' as const,
-    cout: modele.cout,
-    degats: modele.degats,
   }))
 }
 
@@ -473,6 +478,68 @@ cas('aucune carte du jeu ne mélange une cible et le rang entier', () => {
     (m) => m.degats > 0 && (m.effets?.some((e) => e.type === 'degatsTous') ?? false),
   )
   egal(melangees.length, 0, 'sinon il faudrait un geste de visée rien que pour elle')
+})
+
+// --- la remise par attaque ---------------------------------------------------
+
+const ESTOC_REMISE = { nom: 'Estoc', cout: 3, degats: 6, remiseParAttaque: 1 }
+const GARDE_TEST = { nom: 'Garde', cout: 1, degats: 0, effets: [{ type: 'bloc' as const, montant: 5 }] }
+
+/** La main est MÉLANGÉE : on désigne par nom, jamais par index. */
+function ou(etat: EtatCombat, nom: string): number {
+  return etat.main.findIndex((c) => c.nom === nom)
+}
+
+function autreQue(etat: EtatCombat, nom: string): number {
+  return etat.main.findIndex((c) => c.nom !== nom)
+}
+
+cas('une carte a remise coute son prix plein tant qu’on n’a rien frappe', () => {
+  const etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  egal(coutDe(etat.main[ou(etat, 'Estoc')]!, etat), 3, 'rien n’a encore ete joue')
+})
+
+cas('chaque attaque portee lui retire un point d’action', () => {
+  const etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  egal(apres.attaquesCeTour, 1, 'la dague compte comme une attaque')
+  egal(coutDe(apres.main[ou(apres, 'Estoc')]!, apres), 2, 'donc l’estoc coute un de moins')
+  const encore = jouerCarte(apres, autreQue(apres, 'Estoc'), 0)
+  egal(coutDe(encore.main[ou(encore, 'Estoc')]!, encore), 1, 'et deux de moins apres la seconde')
+})
+
+cas('le plancher est zero, jamais un gain', () => {
+  let etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  for (let i = 0; i < 4; i += 1) etat = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  egal(coutDe(etat.main[ou(etat, 'Estoc')]!, etat), 0, 'quatre attaques pour une remise de trois')
+})
+
+cas('ce qui n’attaque pas n’escompte rien', () => {
+  const etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, GARDE_TEST)], ennemi({ pv: 100, degats: 5 }))
+  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  egal(apres.attaquesCeTour, 0, 'une garde ne frappe personne')
+  egal(coutDe(apres.main[ou(apres, 'Estoc')]!, apres), 3, 'donc le prix ne bouge pas')
+})
+
+cas('et elle paie vraiment le prix remis', () => {
+  const etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  const joue = jouerCarte(apres, ou(apres, 'Estoc'), 0)
+  egal(joue.energie, apres.energie - 2, 'deux points d’action, pas trois')
+})
+
+cas('la remise retombe a la fin du tour', () => {
+  const etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  const tourSuivant = finDuTour(apres, createRng(1))
+  egal(tourSuivant.attaquesCeTour, 0, 'un enchainement ne traverse pas le tour')
+})
+
+cas('une main n’est morte que si rien n’est payable AU PRIX REMIS', () => {
+  let etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  // Quatre dagues jouees : il reste 1 point d’action et l’estoc est a zero.
+  for (let i = 0; i < 4; i += 1) etat = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  verifie(!mainMorte(etat), 'l’estoc gratuit se joue encore')
 })
 
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)

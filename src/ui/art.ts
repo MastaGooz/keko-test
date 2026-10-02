@@ -35,9 +35,19 @@ function cle(nom: string): string {
     .replace(/\s+/g, '-')
 }
 
+/**
+ * CE QUI PARTAGE UN DESSIN. La Taille est un coup d'épée, la Taillade aussi :
+ * *deux noms pour un même geste n'ont pas à être dessinés deux fois*, et un
+ * banc qui montre une carte au sceau de repli ne se juge pas.
+ *
+ * À retirer le jour où la Taille a le sien.
+ */
+const ALIAS: Record<string, string> = { taille: 'taillade' }
+
 /** L'URL de l'illustration d'un modèle, ou celle du repli. */
 export function art(nom: string): string {
-  return ART[cle(nom)] ?? ART['defaut'] ?? ''
+  const k = cle(nom)
+  return ART[k] ?? ART[ALIAS[k] ?? ''] ?? ART['defaut'] ?? ''
 }
 
 /**

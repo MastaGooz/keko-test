@@ -88,6 +88,18 @@ export type Carte = {
   type: 'combat' | 'tresor'
   /** Énergie consommée. */
   cout: number
+  /**
+   * CE QUE CHAQUE ATTAQUE DÉJÀ JOUÉE CE TOUR RETIRE À SON COÛT.
+   *
+   * L'Estoc du Glaive coûte 3 PA et en rend 1 par attaque portée avant lui :
+   * seul il est cher, après deux Tailles il est donné. *C'est le premier effet
+   * du jeu qui fasse de l'ORDRE une décision* — jusqu'ici le tour était un
+   * sac, on dépensait sa réserve sans que la suite compte.
+   *
+   * **Le coût ne se lit donc plus sur la carte seule** : tout ce qui le
+   * demande passe par `coutDe`, jamais par `carte.cout`.
+   */
+  remiseParAttaque?: number
   degats: number
   /** Ce que la carte fait en plus de ses dégâts. */
   effets?: Effet[]
@@ -149,6 +161,13 @@ export type EtatCombat = {
   bloc: number
   tailleMain: number
   tour: number
+  /**
+   * COMBIEN D'ATTAQUES ON A DÉJÀ PORTÉES CE TOUR — la réserve dans laquelle
+   * puise `remiseParAttaque`. Elle retombe à zéro à la fin du tour, comme le
+   * bloc : *une remise qui s'accumulerait d'un tour à l'autre serait une
+   * épargne, pas un enchaînement.*
+   */
+  attaquesCeTour: number
   evenements: Evenement[]
   issue: Issue | null
 }
@@ -183,6 +202,7 @@ export function creerCombat(
     bloc: 0,
     tailleMain: config.tailleMain,
     tour: 1,
+    attaquesCeTour: 0,
     evenements: [{ tour: 1, type: 'debut', ennemis: ennemis.map((e) => e.nom) }],
     issue: null,
   }
@@ -202,14 +222,19 @@ export function jouerCarte(etat: EtatCombat, index: number, cible: number): Etat
 
   const carte = etat.main[index]
   if (carte === undefined || !jouable(carte)) return etat
-  if (carte.cout > etat.energie) return etat
+  const cout = coutDe(carte, etat)
+  if (cout > etat.energie) return etat
   // Une carte qui ne vise personne se joue sans cible valide : un trésor qui
   // soigne reste jouable quand le dernier corps vient de tomber.
   if (viseUneCible(carte) && !estVivant(etat, cible)) return etat
 
   const suivant = copier(etat)
   suivant.main.splice(index, 1)
-  suivant.energie -= carte.cout
+  suivant.energie -= cout
+  // ET ELLE COMPTE POUR LA SUIVANTE : c'est ce qui fait de l'ordre des coups
+  // une décision. On compte ce qui FRAPPE, cible unique ou rang entier — une
+  // garde n'escompte rien, elle n'attaque pas.
+  if (frappe(carte)) suivant.attaquesCeTour += 1
   resoudreCarte(suivant, carte, cible)
   return suivant
 }
@@ -259,6 +284,8 @@ export function finDuTour(etat: EtatCombat, rng: Rng): EtatCombat {
   // l'a posé. Sans ça, bloquer deviendrait épargner, et la décision du tour
   // deviendrait un investissement.
   suivant.bloc = 0
+  // ET LA REMISE AVEC LUI : elle ne vaut que pour l'enchaînement d'un tour.
+  suivant.attaquesCeTour = 0
   suivant.tour += 1
   suivant.energie = suivant.energieMax
   piocher(suivant, rng)
@@ -305,8 +332,8 @@ export function consequence(etat: EtatCombat, carte: Carte, cible: number): Cons
   const evite = tue && vise !== undefined && vise.compteur <= 1 ? vise.degats : 0
 
   return {
-    cout: carte.cout,
-    abordable: carte.cout <= etat.energie,
+    cout: coutDe(carte, etat),
+    abordable: coutDe(carte, etat) <= etat.energie,
     tue,
     gagne: tue && debout === 1,
     menaceApres: tue && debout === 1 ? 0 : menace - evite,
@@ -372,6 +399,29 @@ export function butin(etat: EtatCombat): number {
   )
 }
 
+/**
+ * CE QUE COÛTE CETTE CARTE MAINTENANT — et c'est la seule réponse qui vaille.
+ *
+ * Une carte à remise coûte moins cher à mesure que le tour avance, donc *son
+ * coût n'est plus une propriété de la carte, c'est une propriété du MOMENT.*
+ * Tout ce qui le demande passe par ici : la règle qui le prélève, l'aperçu qui
+ * l'annonce, la main qui grise ce qu'on ne peut pas payer, et l'orbe peinte
+ * sur la carte.
+ *
+ * **Le plancher est zéro** : une attaque gratuite est le bout de l'échelle,
+ * pas une erreur à corriger.
+ */
+export function coutDe(carte: Carte, etat: EtatCombat): number {
+  const remise = (carte.remiseParAttaque ?? 0) * etat.attaquesCeTour
+  return Math.max(0, carte.cout - remise)
+}
+
+/** Vrai si la carte porte un coup, à une cible ou à tout le rang. */
+export function frappe(carte: Carte): boolean {
+  if (carte.degats > 0) return true
+  return carte.effets?.some((effet) => effet.type === 'degatsTous') ?? false
+}
+
 /** Nombre de trésors qui encombrent la main. */
 export function tresorsEnMain(etat: EtatCombat): number {
   return etat.main.filter((carte) => carte.type === 'tresor').length
@@ -379,7 +429,7 @@ export function tresorsEnMain(etat: EtatCombat): number {
 
 /** Vrai si plus aucune carte de la main n'est jouable avec l'énergie restante. */
 export function mainMorte(etat: EtatCombat): boolean {
-  return etat.main.every((carte) => !jouable(carte) || carte.cout > etat.energie)
+  return etat.main.every((carte) => !jouable(carte) || coutDe(carte, etat) > etat.energie)
 }
 
 // --- interne : tout ce qui suit mute l'état reçu, déjà copié par l'appelant ---

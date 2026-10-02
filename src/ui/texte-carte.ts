@@ -85,6 +85,13 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> points d'action`)
     if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
   }
+  // LA REMISE SE DIT APRÈS LE COUP, parce qu'elle parle du COÛT et non de ce
+  // que la carte fait. Elle est en retrait comme les autres conditions : *ce
+  // qui modifie le prix n'est pas au même rang que ce qu'on achète.*
+  if ((carte.remiseParAttaque ?? 0) > 0) {
+    const pa = carte.remiseParAttaque ?? 0
+    l.push(`<small>−${pa} PA par attaque jouée ce tour</small>`)
+  }
   return l
 }
 

@@ -450,10 +450,9 @@ donjon. Ce qui tourne :
   ce qu'elles infligent** : un chiffre à zéro se lirait comme une carte inutile.
 
 - **le deck vient de l'équipement** (`logic/armes.ts`) : le **Glaive**, arme
-  commune et gratuite, donne un Estoc (1⚡/3), une Taillade (2⚡/6), un Moulinet
-  (4⚡/14) — trois cartes, toutes différentes. Délibérément compétente et sans
-  relief — c'est la référence à
-  laquelle les autres armes se compareront, et une arme de départ excitante
+  commune et gratuite, donne **deux Tailles (1⚡/4) et un Estoc (3⚡/6)**.
+  Composé par Keko. Délibérément compétente et sans relief — c'est la référence
+  à laquelle les autres armes se compareront, et une arme de départ excitante
   rendrait les suivantes fades ;
 - **la boucle de run** (`logic/descente.ts`, pur) : combat → choix d'une
   récompense → point de sortie → palier suivant. Les PV ne se rechargent pas
@@ -1621,6 +1620,59 @@ part, ceux qui tombent entrent en agonie — la séquence d'une frappe simple,
 répétée par corps (`main.ts`, `cibler` avec `-1`). L'aperçu sur les jauges lit
 `degatsTous` comme des dégâts. Et le compte « qui frappent » de l'armurerie
 compte les deux verbes.
+
+### LE PREMIER EFFET QUI FASSE DE L'ORDRE UNE DÉCISION : la remise par attaque
+
+**L'Estoc du Glaive coûte 3 PA, moins 1 par attaque déjà portée ce tour.**
+Composé par Keko : « Estoc : inflige 6 dégâts pour un coût de 3 PA mais diminue
+le coût en PA de 1 pour chaque carte d'attaque jouée ce tour ».
+
+*Et ça ouvre un axe que le jeu n'avait pas* : jusqu'ici **un tour était un
+sac** — on y dépensait cinq points d'action sans que l'ORDRE des coups change
+quoi que ce soit. Ici, ouvrir par les petits coups change ce que le gros coûte,
+donc la question « par quoi je commence ? » a enfin une réponse qui n'est pas
+« peu importe ».
+
+**LE GLAIVE N'A PLUS QUE DEUX MODÈLES**, et c'est Keko qui l'a tranché : « 2×
+Taille, 1× Estoc (oui, deux cartes différentes seulement) ». *Le format des
+trois cartes différentes tombe ici* — et ce n'est pas une entorse à ce qu'il
+avait acheté : une arme dont deux cartes sont pareilles n'en a qu'une et demie,
+**sauf quand le doublon est justement ce qui alimente la troisième.**
+
+Quatre choses à ne pas défaire :
+
+- **le coût n'est plus une propriété de la carte, c'est une propriété du
+  MOMENT** : tout ce qui le demande passe par `coutDe(carte, etat)` — la règle
+  qui le prélève, l'aperçu qui l'annonce, la main qui grise ce qu'on ne peut
+  pas payer, et **l'orbe peinte sur la carte**. *Une orbe qui dirait 3 quand on
+  paie 1 mentirait sur ce qu'on s'apprête à dépenser*, et c'est précisément le
+  mécanisme qu'on veut rendre lisible. `signature()` porte déjà le coût, donc
+  chaque valeur a sa texture et les quatre se mettent en cache une fois ;
+- **le plancher est zéro** : une attaque gratuite est le bout de l'échelle, pas
+  une erreur à corriger ;
+- **la remise retombe à la fin du tour**, comme le bloc : *une remise qui
+  s'accumulerait d'un tour à l'autre serait une épargne, pas un enchaînement* ;
+- **ce qui n'attaque pas n'escompte rien.** On compte ce qui FRAPPE, cible
+  unique ou rang entier (`frappe`) — une garde ne fait pas baisser le prix d'une
+  épée.
+
+**PIÈGE PAYÉ DANS LES VÉRIFICATIONS, et il passait inaperçu** : le fixture
+`cartes()` ne recopiait que `nom`, `cout` et `degats` d'un gabarit. *Un test sur
+une carte à effet testait donc une AUTRE carte que celle qu'on croyait — et il
+passait.* Il reprend tout le gabarit désormais. Sept vérifications tiennent la
+règle (215 au total).
+
+**LES CHIFFRES SONT DE KEKO ET NE SONT PAS CALIBRÉS.** Le set du Glaive est la
+référence à laquelle toutes les armes se comparent, et *le rasoir le plus
+tranchant du projet* dit qu'il est 10 % plus faible que l'ancien deck de base
+avait fait tomber la survie de 50 % à 4 %. **À repasser au balayage complet
+avant d'en faire un acquis** — et le barème change de nature, puisqu'une carte
+peut maintenant coûter zéro.
+
+**Et la Taille emprunte le dessin de la Taillade** (`ALIAS` dans `ui/art.ts`) :
+*deux noms pour un même geste n'ont pas à être dessinés deux fois*, et un banc
+qui montre une carte au sceau de repli ne se juge pas. À retirer le jour où
+elle a le sien.
 
 **LA TROISIÈME ARME : LA RONDACHE**, et son verbe est DÉFENSIF. Nommée et
 composée par Keko — « une nouvelle arme à une main, qui est défensive en

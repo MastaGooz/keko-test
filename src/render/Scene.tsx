@@ -73,7 +73,7 @@ import {
   setAPeindre,
 } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
-import { consequence, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
+import { consequence, coutDe, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
 import { createRng } from '../logic/rng.ts'
 import type { Chargement, Hub, Slot } from '../logic/hub.ts'
@@ -387,7 +387,19 @@ export function Scene(): React.JSX.Element {
   const compter = useCallback(() => setPeintes((n) => n + 1), [])
   const pret = peintes > 0
 
-  const main = useMemo(() => combat.main.map(aPeindre), [combat.main])
+  /**
+   * LA MAIN PEINT LE COÛT COURANT, pas celui du modèle.
+   *
+   * L'Estoc escompte une attaque déjà portée : *son coût est une propriété du
+   * MOMENT, pas de la carte.* Une orbe qui dirait 3 quand on paie 1 mentirait
+   * sur ce qu'on s'apprête à dépenser — et c'est précisément le mécanisme que
+   * Keko a écrit. `signature()` porte le coût, donc chaque valeur a sa texture
+   * et les quatre se mettent en cache une fois pour toutes.
+   */
+  const main = useMemo(
+    () => combat.main.map((c) => aPeindre({ ...c, cout: coutDe(c, combat) })),
+    [combat],
+  )
 
   /**
    * LES VOLS DE PIOCHE ET DE DÉFAUSSE.
@@ -685,7 +697,7 @@ export function Scene(): React.JSX.Element {
   // fini. Un trésor n'est jouable par personne — il ne fait qu'occuper une
   // place de main.
   const jouables = useMemo(
-    () => combat.main.map((c) => !fini && jouable(c) && c.cout <= combat.energie),
+    () => combat.main.map((c) => !fini && jouable(c) && coutDe(c, combat) <= combat.energie),
     [combat.main, combat.energie, fini],
   )
 
@@ -964,7 +976,7 @@ export function Scene(): React.JSX.Element {
       setZoomee(null)
       const carte = combat.main[index]
       if (carte === undefined || fini || verrou) return
-      if (carte.cout > combat.energie) return
+      if (coutDe(carte, combat) > combat.energie) return
 
       if (!viseUneCible(carte)) {
         // Une carte qui frappe TOUT LE RANG s'abat quand même : elle ne vise
