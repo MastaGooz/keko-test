@@ -1030,7 +1030,7 @@ function enMots(entree: string): Mot[] {
   let gras = false
   // On coupe sur les balises ET sur les espaces : une balise peut ouvrir au
   // milieu d'une ligne, et un mot ne porte qu'une graisse.
-  for (const bout of entree.split(/(<\/?[^>]+>)/)) {
+  for (const bout of entree.replace(/&nbsp;/g, ' ').split(/(<\/?[^>]+>)/)) {
     if (bout === '') continue
     if (bout.startsWith('<')) {
       if (bout === '<b>') gras = true

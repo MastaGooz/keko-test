@@ -1754,10 +1754,21 @@ Quatre choses qui le portent :
 
 **ET LE CANVAS RESPECTE ENFIN LE GRAS.** Keko : « on peut mettre tous les
 chiffres et mots clés en gras (attaque, bloquer) ». *Il l'était déjà en 2D et
-pas en 3D* — le peintre retirait les `<b>` avec le reste du balisage, donc les
-chiffres y étaient plats depuis le début. Une ligne s'écrit désormais en
-MORCEAUX, chacun avec sa police (`Mot`), et le repli travaille sur ces morceaux
-plutôt que sur une chaîne.
+pas en 3D* — les chiffres y étaient plats depuis le début. Une ligne s'écrit
+désormais en MORCEAUX, chacun avec sa police (`Mot`), et le repli travaille sur
+ces morceaux plutôt que sur une chaîne.
+
+**MAIS LE BALISAGE N'ARRIVAIT MÊME PAS JUSQU'AU PEINTRE, et ça a coûté une
+passe entière.** Keko, après la première : « je vois rien en gras » — et il
+avait raison : `aPeindre` appelait `sansBalises` AVANT de passer le texte, donc
+la carte peinte n'avait jamais vu un seul `<b>`. *Toute retouche du peintre
+était vaine par construction*, et elle ne pouvait pas se voir en lisant le
+peintre seul.
+
+**La leçon vaut au-delà d'ici : quand un rendu ignore une information, regarder
+d'abord si elle lui PARVIENT.** J'ai réglé la graisse, puis la police, puis
+mesuré les variantes chargées — trois vérifications sur le bout de la chaîne
+qui ne recevait rien.
 
 *Ce qu'on met en gras* : le verbe de l'effet et son chiffre — « **Inflige 6**
 dégâts », « **Bloque 5** dégâts » — plus les mots qui NOMMENT une règle,

@@ -23,7 +23,7 @@ import {
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable, nomObjet } from '../logic/armes.ts'
 import { tresorRecompense } from '../logic/cartes.ts'
-import { lignes, nature, rangDuTresor, sansBalises } from '../ui/texte-carte.ts'
+import { lignes, nature, rangDuTresor } from '../ui/texte-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
 import { signature } from './texture-carte.ts'
 
@@ -38,7 +38,11 @@ export function aPeindre(carte: Carte): CarteAPeindre {
     id: carte.id,
     nom: carte.nom,
     cout: carte.cout,
-    effet: lignes(carte, true).map(sansBalises),
+    // LE BALISAGE RESTE : le peintre le lit désormais pour écrire les mots
+    // clés en gras. *Il le retirait ici, donc le canvas n'en voyait jamais la
+    // couleur* — les chiffres étaient gras en 2D et plats en 3D, et aucune
+    // retouche du peintre ne pouvait y changer quoi que ce soit.
+    effet: lignes(carte, true),
     type: nature(carte),
     valeur: carte.type === 'tresor' ? (carte.valeur ?? 0) : undefined,
     // ET SON RANG VIENT DE SA VALEUR : la couleur du cadre redit en un coup
