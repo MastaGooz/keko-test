@@ -81,6 +81,11 @@ export type CarteAPeindre = {
    */
   ciel?: Ciel
   /**
+   * LES MOTS-CLÉS QU'ELLE EMPLOIE — pour l'encadré du zoom, jamais pour le
+   * cartouche. *La carte NOMME, le glossaire EXPLIQUE.*
+   */
+  motsCles?: readonly string[]
+  /**
    * LA VALEUR D'UN TRÉSOR, dite par un SYMBOLE et un chiffre — pas par une
    * phrase du cartouche.
    *
@@ -2426,6 +2431,105 @@ export function textureDeCarte(
  * présence de son voisin, est un emplacement qu'on rate au doigt. Il dit
  * aussi ce qu'il attend — sans son nom, c'est un pointillé muet.
  */
+/**
+ * L'ENCADRÉ DU GLOSSAIRE : ce que fait un mot-clé, dit une fois, au zoom.
+ *
+ * Keko : « on ne précise pas l'effet [sur la carte], et quand le joueur zoome
+ * on affiche un encadré à côté : Étourdissement : annule l'action en cours ».
+ *
+ * *La carte NOMME, l'encadré EXPLIQUE* — et ils ne vivent pas au même moment :
+ * le cartouche se lit d'un coup d'oeil dans la main, le glossaire se lit quand
+ * on a pris le temps d'ouvrir la carte.
+ *
+ * **Il parle la langue des meubles, pas celle des cartes** : plaque de pierre,
+ * filet de laiton, deux coins coupés. *Ce n'est pas un objet du jeu qu'on
+ * manipule, c'est de l'interface* — lui donner le laiton déchiré d'une carte en
+ * aurait fait une seconde carte posée à côté.
+ */
+const GLOSSAIRES = new Map<string, THREE.CanvasTexture>()
+
+/** Le rapport hauteur/largeur de l'encadré, pour que le plan le suive. */
+// LA PLAQUE A LA HAUTEUR DE CE QU'ELLE PORTE : un rapport fixe laissait la
+// moitié basse vide sur un seul mot-clé, et *un encadré à moitié vide se lit
+// comme un encadré qu'on a oublié de remplir.*
+const MARGE_GLOSSAIRE = 7
+const PAS_GLOSSAIRE = 20.5
+
+export function rapportGlossaire(entrees: number): number {
+  return (2 * MARGE_GLOSSAIRE + PAS_GLOSSAIRE * entrees) / 100
+}
+
+export function textureGlossaire(
+  entrees: readonly { mot: string; sens: string }[],
+  largeurPx: number,
+): THREE.CanvasTexture {
+  // ON PEINT À LA TAILLE D'AFFICHAGE : réduire un bitmap n'est pas rendre du
+  // texte, la leçon déjà payée sur les cartes et sur le disque du compte.
+  const L = Math.min(1024, Math.max(256, Math.round(largeurPx)))
+  const cle = `${entrees.map((e) => e.mot).join('~')}|${L}`
+  const deja = GLOSSAIRES.get(cle)
+  if (deja !== undefined) return deja
+
+  const rapport = rapportGlossaire(entrees.length)
+  const H = Math.round(L * rapport)
+  const canvas = document.createElement('canvas')
+  canvas.width = L
+  canvas.height = H
+  const ctx = canvas.getContext('2d')!
+  // Tout le dessin parle en unités de 100 de large, comme la carte.
+  ctx.scale(L / 100, L / 100)
+  const H100 = 100 * rapport
+  const biseau = 4.5
+
+  // LA PLAQUE : la pierre du lieu et deux coins coupés — de la ferronnerie,
+  // pas un gabarit. Les mêmes coins que les cartouches de l'armurerie.
+  ctx.beginPath()
+  ctx.moveTo(biseau, 0)
+  ctx.lineTo(100, 0)
+  ctx.lineTo(100, H100 - biseau)
+  ctx.lineTo(100 - biseau, H100)
+  ctx.lineTo(0, H100)
+  ctx.lineTo(0, biseau)
+  ctx.closePath()
+  const pierre = ctx.createLinearGradient(0, 0, 0, H100)
+  pierre.addColorStop(0, 'rgba(27, 31, 34, 0.94)')
+  pierre.addColorStop(1, 'rgba(18, 22, 26, 0.94)')
+  ctx.fillStyle = pierre
+  ctx.fill()
+  ctx.strokeStyle = '#8d7a4e'
+  ctx.lineWidth = 0.75
+  ctx.stroke()
+
+  ctx.textAlign = 'left'
+  ctx.textBaseline = 'alphabetic'
+  entrees.forEach((entree, i) => {
+    const haut = MARGE_GLOSSAIRE + PAS_GLOSSAIRE * i
+    // LE MOT-CLÉ EN CINZEL, SON SENS EN CRIMSON : la voix des noms et celle
+    // des effets, exactement comme sur une carte.
+    ctx.fillStyle = '#e9d9ae'
+    ctx.font = `600 ${6}px Cinzel, Georgia, serif`
+    ctx.fillText(`${entree.mot.toUpperCase()} :`, MARGE_GLOSSAIRE, haut + 6)
+    ctx.fillStyle = '#cfc6b4'
+    // Le sens CÈDE s'il ne tient pas : un canvas écrit tout droit et laisse
+    // déborder sans rien signaler.
+    let corps = 6.4
+    const place = 100 - 2 * MARGE_GLOSSAIRE
+    ctx.font = `400 ${corps}px "Crimson Pro", Georgia, serif`
+    const large = ctx.measureText(entree.sens).width
+    if (large > place) {
+      corps *= place / large
+      ctx.font = `400 ${corps}px "Crimson Pro", Georgia, serif`
+    }
+    ctx.fillText(entree.sens, MARGE_GLOSSAIRE, haut + 17)
+  })
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.anisotropy = 4
+  GLOSSAIRES.set(cle, texture)
+  return texture
+}
+
 const SLOTS = new Map<string, THREE.CanvasTexture>()
 
 export function textureSlot(nom: string, accent: string): THREE.CanvasTexture {

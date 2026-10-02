@@ -29,6 +29,9 @@ import { useThree } from '@react-three/fiber'
 import { Carte3D, tailleDuCompte } from './Carte3D.tsx'
 import { zCamera, hauteurVisibleA } from './Cadrage.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
+import { rapportGlossaire, textureGlossaire } from './texture-carte.ts'
+import { GLOSSAIRE } from '../ui/texte-carte.ts'
+import * as THREE from 'three'
 
 /**
  * Distances CAMÉRA → carte regardée, et caméra → voile : elles suivent le
@@ -120,7 +123,7 @@ type Props = {
 }
 
 export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Element | null {
-  const { size } = useThree()
+  const { size, viewport } = useThree()
 
   /**
    * LA CARTE DU SET QU'ON REGARDE DE PLUS PRÈS.
@@ -325,7 +328,24 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
   const pasXSet = uneCarte * 1.1
   const largeurOccupee = Math.min(colonnes, seule ? 1 : modeles.length) * pasXSet
   const ensemble = seule ? piece : piece + marge + largeurOccupee
-  const xPiece = seule ? 0 : -ensemble / 2 + piece / 2
+  /**
+   * L'ENCADRÉ DU GLOSSAIRE PREND LA DROITE, là où le set d'une pièce se pose.
+   *
+   * Keko : « quand le joueur zoome sur la carte on affiche un encadré à
+   * côté ». *Les deux ne se croisent jamais* — une pièce n'emploie pas de
+   * mot-clé, une carte de deck n'a pas de set — donc ils partagent la même
+   * bande sans qu'il y ait de cas à arbitrer.
+   *
+   * Et **l'ensemble se recentre**, carte comprise : centrer la carte puis
+   * poser l'encadré à côté d'elle donnerait un bloc qui penche, la faute déjà
+   * payée sur le couple pièce + set.
+   */
+  const motsDeLaCarte = (carte?.motsCles ?? []).filter((mot) => GLOSSAIRE[mot] !== undefined)
+  const glossaire = seule && motsDeLaCarte.length > 0 ? piece * 1.05 : 0
+  const avecGlossaire = glossaire > 0
+  const totalGloss = piece + marge + glossaire
+  const xPiece = avecGlossaire ? -totalGloss / 2 + piece / 2 : seule ? 0 : -ensemble / 2 + piece / 2
+  const xGloss = xPiece + piece / 2 + marge + glossaire / 2
   const xSet = sansPiece ? 0 : xPiece + piece / 2 + marge + largeurOccupee / 2
   const pasX = uneCarte * 1.1
   const pasY = uneCarte * 1.82
@@ -455,6 +475,21 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           tap dessus ». Elle ne grossit pas — elle est déjà à sa taille de
           lecture — mais elle s'incline et son lustre la balaie : *le même geste
           doit donner la même réponse, quelle que soit la carte qu'il touche.* */}
+      {avecGlossaire && (
+        <mesh position={[xGloss, 0, zCarte]}>
+          <planeGeometry args={[glossaire, glossaire * rapportGlossaire(motsDeLaCarte.length)]} />
+          <meshBasicMaterial
+            map={textureGlossaire(
+              motsDeLaCarte.map((mot) => ({ mot, sens: GLOSSAIRE[mot]! })),
+              (glossaire / hauteurVisibleA(zCarte, size.height)) * size.height * viewport.dpr,
+            )}
+            transparent
+            depthWrite={false}
+            toneMapped={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      )}
       {carte !== null && (
       <Carte3D
         carte={carte}

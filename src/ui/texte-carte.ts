@@ -57,7 +57,14 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   if (carte.type === 'tresor' && !valeurAPart) {
     l.push(`Vaut <b>${carte.valeur ?? 0}</b> or s'il ressort`)
   }
-  if (carte.degats > 0) l.push(`Inflige <b>${carte.degats}</b> dégâts`)
+  // L'ÉTOURDISSEMENT SE DIT DANS LA MÊME PHRASE QUE LE COUP. Keko : « Inflige
+  // 3 dégâts et étourdissement (on met étourdissement en gras) ; on ne précise
+  // pas l'effet ». *Un mot-clé est un nom, pas une phrase* — ce qu'il fait vit
+  // dans le glossaire, pas sur chaque carte qui le porte.
+  const etourdit = carte.effets?.some((e) => e.type === 'etourdit') === true
+  if (carte.degats > 0)
+    l.push(`Inflige <b>${carte.degats}</b> dégâts${etourdit ? ' et <b>étourdissement</b>' : ''}`)
+  else if (etourdit) l.push(`<b>Étourdissement</b>`)
   // SES DÉGÂTS SONT TA DÉFENSE : on ne peut pas écrire un chiffre, donc on
   // écrit la RÈGLE. *Une carte dont l'effet dépend de l'état doit dire de quoi
   // il dépend*, pas afficher un zéro qui se lirait comme une carte inutile.
@@ -114,10 +121,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // tour » : la carte se joue AVANT la salve, donc c'est elle qu'on couvre.
     if (e.type === 'riposte')
       l.push(`Jusqu'au prochain tour, les ennemis qui vous attaquent subissent <b>${e.montant}</b> dégâts`)
-    // L'ÉTOURDISSEMENT est un mot-clé : la carte le nomme, puis dit ce qu'il
-    // fait sur la ligne de condition. *Un mot-clé qu'on n'explique nulle part
-    // n'est pas un mot-clé, c'est du jargon.*
-    if (e.type === 'etourdit') l.push(`Étourdit`, `<small>annule l'action en cours</small>`)
+
   }
   // LA REMISE SE DIT APRÈS LE COUP, parce qu'elle parle du COÛT et non de ce
   // que la carte fait — et elle le dit avec un VERBE.
@@ -148,6 +152,28 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
  */
 export function enClair(ligne: string): string {
   return ligne.replace(/\{pa:(\d+)\}/g, '<b>$1</b> PA')
+}
+
+/**
+ * LE GLOSSAIRE : ce que fait un mot-clé, dit UNE FOIS.
+ *
+ * Keko : « on ne précise pas l'effet [sur la carte], et quand le joueur zoome
+ * on affiche un encadré à côté : Étourdissement : annule l'action en cours ».
+ *
+ * *Un mot-clé est un nom, pas une phrase* : écrit en entier sur chaque carte
+ * qui le porte, il mangerait le cartouche et se répéterait à l'identique. Mais
+ * **un mot-clé qu'on n'explique nulle part n'est pas un mot-clé, c'est du
+ * jargon** — d'où l'encadré, qui le dit là où l'on a le temps de lire.
+ */
+export const GLOSSAIRE: Record<string, string> = {
+  Étourdissement: "annule l'action en cours",
+}
+
+/** Les mots-clés qu'une carte emploie, pour l'encadré du zoom. */
+export function motsCles(carte: Carte): string[] {
+  const mots: string[] = []
+  if (carte.effets?.some((e) => e.type === 'etourdit') === true) mots.push('Étourdissement')
+  return mots
 }
 
 /** La famille d'une carte, pour la teinte de son écusson et de son chiffre. */

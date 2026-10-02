@@ -2350,6 +2350,44 @@ se referment dessus.
 **Le zoom vient de l'état**, jamais d'une marque posée sur la scène — même
 règle qu'en 2D, où le rendu se reconstruit à chaque geste.
 
+### UN MOT-CLÉ NE S'EXPLIQUE PAS SUR LA CARTE, IL S'EXPLIQUE À CÔTÉ
+
+Keko, pour Projection : « Inflige 3 dégâts et **étourdissement** (on met
+étourdissement en gras), on ne précise pas l'effet, et quand le joueur zoom sur
+la carte on affiche un encadré à côté : Étourdissement : annule l'action en
+cours. »
+
+*C'est la seule façon de faire tenir un verbe neuf sur une carte* : écrire
+« annule l'action en cours de l'ennemi » dans le cartouche faisait descendre le
+texte d'un cran de taille pour une phrase qu'on ne relit jamais — alors que le
+mot, lui, se lit d'un coup d'oeil une fois qu'on le connaît. **La carte dit ce
+qu'elle fait, l'encadré dit ce que le mot veut dire**, et il n'apparaît que
+lorsqu'on prend le temps de regarder.
+
+Quatre choses qui le portent :
+
+- **le glossaire vit dans `ui/texte-carte.ts`**, à côté des lignes d'effet :
+  c'est le même texte partagé par les deux moteurs, et *un mot-clé écrit à deux
+  endroits se désaccorderait de sa définition au premier réglage.* La carte ne
+  porte pas sa liste, on la DÉDUIT de ses effets (`motsCles`) — une carte qui
+  étourdit explique l'étourdissement, sans qu'on ait à le lui dire ;
+- **l'encadré prend la bande du SET**, à droite de la carte. *Les deux ne se
+  croisent jamais* — une pièce n'emploie pas de mot-clé, une carte de deck n'a
+  pas de set — donc ils partagent la place sans qu'il y ait de cas à arbitrer.
+  Et **l'ensemble se recentre, carte comprise** : centrer la carte puis poser
+  l'encadré à côté donnerait un bloc qui penche, la faute déjà payée sur le
+  couple pièce + set ;
+- **la plaque a la hauteur de ce qu'elle porte** (`rapportGlossaire(n)`), jamais
+  un rapport fixe : à un seul mot-clé, la moitié basse restait vide, et *un
+  encadré à moitié vide se lit comme un encadré qu'on a oublié de remplir* ;
+- **la pierre du lieu et deux coins coupés**, le mot-clé en Cinzel et son sens en
+  Crimson Pro — la voix des noms et celle des effets, exactement comme sur une
+  carte. *Un arrondi est une forme de gabarit, une arête franche est de la
+  ferronnerie*, et la règle finit par tout rattraper.
+
+Elle se peint **à sa taille d'affichage** et le sens **cède** s'il ne tient pas :
+un canvas écrit tout droit et laisse déborder sans rien signaler.
+
 ### LA CARTE REGARDÉE RÉPOND AU CURSEUR
 
 Keko : « on peut avoir un effet qui bouge les cartes en 3D quand elles sont

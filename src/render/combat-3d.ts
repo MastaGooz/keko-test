@@ -23,7 +23,7 @@ import {
 import type { Objet } from '../logic/armes.ts'
 import { estConsommable, nomObjet } from '../logic/armes.ts'
 import { tresorRecompense } from '../logic/cartes.ts'
-import { lignes, nature, rangDuTresor } from '../ui/texte-carte.ts'
+import { lignes, motsCles, nature, rangDuTresor } from '../ui/texte-carte.ts'
 import type { CarteAPeindre } from './texture-carte.ts'
 import { signature } from './texture-carte.ts'
 
@@ -62,6 +62,8 @@ export function aPeindre(carte: Carte): CarteAPeindre {
     // carte partout*, du zoom de l'arme à la main de combat. Un trésor, lui,
     // dit sa famille par son type.
     ciel: carte.type === 'tresor' ? 'tresor' : carte.famille,
+    // CE QU'ELLE NOMME SANS L'EXPLIQUER : le zoom s'en charge.
+    motsCles: motsCles(carte),
   }
 }
 
