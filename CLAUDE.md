@@ -1827,6 +1827,22 @@ elle a le sien.
 composée par Keko — « une nouvelle arme à une main, qui est défensive en
 réalité » — trois cartes : **Bloquer ×2 et Coup de bouclier ×1**.
 
+**BLOQUER VAUT 7, PAS 5** — tranché par Keko. *Ça ne touche pas qu'à la
+défense* : le Coup de bouclier frappe avec ce qu'on a bloqué, donc deux Bloquer
+valent désormais 14 de dégâts au lieu de 10. **Les deux cartes de la Rondache
+se règlent ensemble**, et c'est tout l'intérêt du verbe.
+
+**ET SON PIED DIT « ARME · MAIN GAUCHE ».** Tranché par Keko : « on va passer
+les armes à une main en "Arme · main droite" / "Arme · main gauche" — tout est
+en main droite, à part le bouclier qui est main gauche ». *Une arme et un
+bouclier ne se tiennent pas de la même main*, et le dire sur la carte prépare
+le jour où les deux slots cesseront d'être interchangeables.
+
+**Aucune règle ne lit encore cette main** (`main?: 'droite' | 'gauche'` sur
+`Arme`) : les deux slots acceptent toujours n'importe quelle arme à une main.
+*C'est une étiquette, comme la rareté l'a été avant d'avoir son cadre* — à
+Keko de dire si elle doit devenir une contrainte.
+
 **LES CHIFFRES SONT PROVISOIRES**, et Keko l'a dit en les demandant : « on
 verra les effets après ». Ils reprennent le barème du jeu sans y ajouter de
 verbe neuf — Bloquer à 1⚡ pour 5 de bloc (le rendement d'une Garde), Coup de

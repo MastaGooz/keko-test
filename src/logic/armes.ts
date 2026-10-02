@@ -69,6 +69,20 @@ export type Piece = {
 export type Arme = Piece & {
   /** Nombre de mains occupées. Une arme à deux mains prend les deux slots. */
   mains: 1 | 2
+  /**
+   * LA MAIN QU'ELLE OCCUPE, et c'est pour l'instant une ÉTIQUETTE : le pied de
+   * la carte dit « Arme · main droite » ou « main gauche ».
+   *
+   * Tranché par Keko : « tout est en main droite, à part le bouclier qui est
+   * main gauche ». *Une arme et un bouclier ne se tiennent pas de la même
+   * main*, et le dire sur la carte prépare le jour où les deux slots cesseront
+   * d'être interchangeables.
+   *
+   * **Aucune règle ne la lit encore** — les deux slots acceptent toujours
+   * n'importe quelle arme à une main. C'est à Keko de dire si elle doit
+   * devenir une contrainte.
+   */
+  main?: 'droite' | 'gauche'
 }
 
 export type Armure = Piece
@@ -271,7 +285,11 @@ const BLOQUER: Modele = {
   type: 'combat',
   cout: 1,
   degats: 0,
-  effets: [{ type: 'bloc', montant: 5 }],
+  // SEPT, PAS CINQ — tranché par Keko. *Ça ne touche pas qu'à la défense* :
+  // le Coup de bouclier frappe avec ce qu'on a bloqué, donc deux Bloquer
+  // valent désormais 14 de dégâts au lieu de 10. **Les deux cartes de la
+  // Rondache se règlent ensemble**, et c'est tout l'intérêt du verbe.
+  effets: [{ type: 'bloc', montant: 7 }],
 }
 
 /**
@@ -313,6 +331,9 @@ export const RONDACHE: Arme = {
   nom: 'Rondache',
   rarete: 'commune',
   mains: 1,
+  // LA SEULE DE MAIN GAUCHE : un bouclier se tient de l'autre main que ce
+  // qui frappe. Tranché par Keko.
+  main: 'gauche',
   set: [
     { modele: BLOQUER, nombre: 2 },
     { modele: COUP_DE_BOUCLIER, nombre: 1 },

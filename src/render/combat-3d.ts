@@ -100,12 +100,22 @@ export function setAPeindre(objet: Objet): { carte: CarteAPeindre; nombre: numbe
   }))
 }
 
+/** Ce que dit le pied d'une arme : deux mains, ou laquelle des deux. */
+function mainDe(arme: Arme): string {
+  if (arme.mains === 2) return 'deux mains'
+  return arme.main === 'gauche' ? 'main gauche' : 'main droite'
+}
+
 export function pieceAPeindre(objet: Objet): CarteAPeindre {
   const set = estConsommable(objet) ? [{ modele: objet.modele, nombre: 1 }] : objet.set
+  // LE PIED DIT LA MAIN, pas le compte. Tranché par Keko : « on va passer les
+  // armes à une main en "Arme · main droite" / "Arme · main gauche" ». *Deux
+  // slots qui portent le même nom ne se distinguent pas* — et une arme et un
+  // bouclier ne se tiennent pas de la même main.
   const pied = estConsommable(objet)
     ? 'Objet'
     : 'mains' in objet
-      ? `Arme · ${objet.mains === 2 ? 'deux mains' : 'une main'}`
+      ? `Arme · ${mainDe(objet as Arme)}`
       : 'Armure'
   // UN CONSOMMABLE N'A PAS DE NOM À LUI : il EST sa carte, et elle s'appelle
   // Potion. L'objet et la carte ont eu deux noms le temps qu'un intermédiaire
