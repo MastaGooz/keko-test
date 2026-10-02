@@ -1705,6 +1705,21 @@ dégradé : **le même fait se dit du même symbole partout.** Et le chiffre est
 CÔTÉ, pas dedans : *l'orbe des PA met le sien dans son disque parce qu'elle dit
 un COÛT ; le coeur dit une MESURE, et une mesure se lit à côté de son symbole.*
 
+**ET C'EST LE MÊME TRACÉ, PAS UN COEUR QUI LUI RESSEMBLE.** Keko : « j'ai
+l'impression que le logo de coeur n'est pas le même que dans les stats
+au-dessus » — et il ne l'était pas : j'en avais redessiné un en courbes de
+Bézier plutôt que de reprendre le sien. **Deux dessins qui décrivent la même
+chose divergent au premier réglage**, la règle déjà payée par le paquet des tas,
+qu'on n'a jamais repeint au canvas pour cette raison. Le chemin SVG de
+`CoeurIcone` se rejoue tel quel dans un `Path2D`, à l'échelle de son viewBox
+(40 x 37), avec son dégradé, son cerne et son reflet.
+
+*Ce qui a suivi, et qu'il fallait corriger avec* : **la place réservée à un
+jeton est celle de son DESSIN**, plus un carré pour tout le monde. Le coeur est
+8 % plus large que haut, donc à place carrée il débordait de 4 % de chaque côté
+et venait coller le mot d'à côté — *un contenant qui ne contient pas ment*, la
+règle du disque du compte des piles.
+
 **LES AUTRES ARMURES SONT RECOMPOSÉES À DEUX CARTES, et leurs profils sont de
 moi** — Armure de plate 2 Rempart, Cotte de maille 1 Garde + 1 Rempart, Robe
 2 Garde. *Keko a donné le format, pas les sets* : ils sont marqués provisoires

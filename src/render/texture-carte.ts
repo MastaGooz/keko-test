@@ -1182,8 +1182,14 @@ function dansLeDisque(
   return police(c)
 }
 
-function largeurJeton(_ctx: CanvasRenderingContext2D, _jeton: Jeton, taille: number): number {
-  return taille * HAUT_JETON
+/**
+ * LA PLACE RÉSERVÉE EST CELLE DU DESSIN, pas un carré pour tout le monde. Le
+ * coeur est plus large que haut (40 x 37, le viewBox des stats) : à place
+ * carrée il débordait de 4 % de chaque côté et venait coller le mot d'à côté.
+ */
+function largeurJeton(_ctx: CanvasRenderingContext2D, jeton: Jeton, taille: number): number {
+  const h = taille * HAUT_JETON
+  return jeton.type === 'coeur' ? h * (40 / 37) : h
 }
 
 /** Dessine le jeton, son bord gauche en `x`, centré sur la ligne de base `y`. */
@@ -1201,22 +1207,40 @@ function peindreJeton(
   ctx.textBaseline = 'middle'
 
   if (jeton.type === 'coeur') {
-    // LE COEUR DES POINTS DE VIE, celui de la bande de stats : même dégradé,
-    // même cerne sombre. *Le même fait se dit du même symbole partout.*
-    const c = ctx.createLinearGradient(x, y - h / 2, x + h * 0.3, y + h / 2)
+    /**
+     * **C'EST LE MÊME DESSIN QUE LE COEUR DES STATS, au tracé près.** Keko :
+     * « j'ai l'impression que le logo de coeur n'est pas le même que dans les
+     * stats au-dessus ».
+     *
+     * *Et il ne l'était pas* : j'en avais redessiné un en courbes de Bézier
+     * plutôt que de reprendre le sien. **Deux dessins qui décrivent la même
+     * chose divergent au premier réglage** — la règle déjà payée sur le paquet
+     * des tas, qu'on n'a pas repeint au canvas pour cette raison.
+     *
+     * Le chemin SVG se rejoue tel quel dans un `Path2D`, à l'échelle de son
+     * viewBox (40 x 37), avec son dégradé, son cerne et son reflet.
+     */
+    const e = h / 37
+    ctx.translate(x, y - h / 2)
+    ctx.scale(e, e)
+    const c = ctx.createLinearGradient(0, 0, 12, 37)
     c.addColorStop(0, '#e2565e')
     c.addColorStop(0.6, '#9d2330')
     c.addColorStop(1, '#5d121b')
-    ctx.beginPath()
-    ctx.moveTo(x + h / 2, y + h * 0.36)
-    ctx.bezierCurveTo(x + h * 1.04, y - h * 0.04, x + h * 0.76, y - h * 0.5, x + h / 2, y - h * 0.18)
-    ctx.bezierCurveTo(x + h * 0.24, y - h * 0.5, x - h * 0.04, y - h * 0.04, x + h / 2, y + h * 0.36)
-    ctx.closePath()
+    const forme = new Path2D(
+      'M20 34.5C20 34.5 2.8 22.6 2.8 12.6 2.8 6.6 7.4 2 13.2 2 16.6 2 19 4.1 20 6.3 21 4.1 23.4 2 26.8 2 32.6 2 37.2 6.6 37.2 12.6 37.2 22.6 20 34.5 20 34.5Z',
+    )
     ctx.fillStyle = c
-    ctx.fill()
+    ctx.fill(forme)
     ctx.strokeStyle = '#2a1013'
-    ctx.lineWidth = Math.max(0.6, h * 0.06)
-    ctx.stroke()
+    ctx.lineWidth = 2
+    ctx.lineJoin = 'round'
+    ctx.stroke(forme)
+    // La lumière vient du haut, comme partout : un reflet sur le lobe gauche.
+    const reflet = new Path2D('M9.5 9.5C10.6 7.4 12.6 6.2 14.6 6.4')
+    ctx.strokeStyle = '#ffffffaa'
+    ctx.lineCap = 'round'
+    ctx.stroke(reflet)
     ctx.restore()
     return
   }
