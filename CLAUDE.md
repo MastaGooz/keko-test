@@ -8036,6 +8036,17 @@ couleur moyenne, il ne fait que l'agiter de quelques niveaux. Et la tuile est
 tirée d'un hachage de la position, donc identique à chaque peinture — *un semis
 qui se réarrange n'est plus une matière.*
 
+**ET IL DOIT ÊTRE INVISIBLE.** Keko, sur la première passe : « la texture est
+très moche, on dirait le bruit parasite sur un vieil écran télé, il faut un truc
+plus minimaliste ». *C'était une faute de cadrage de ma part* : je l'avais réglé
+comme une MATIÈRE — 0,38 d'alpha, soit ±48 niveaux — alors qu'un dithering n'a
+besoin que de ±4 pour dissoudre une bande. **Un bruit blanc qu'on voit est de la
+neige ; un bruit blanc qu'on ne voit pas est un dither.** Il vaut 0,06
+(`ALPHA_GRAIN`).
+
+*La matière viendra du caractère* — étoiles ou métal brossé — et elle aura une
+FORME, ce qu'un bruit par pixel n'a pas.
+
 **Ce qui reste du décor peint par-dessus** : le bloom du sujet, qui fait tout le
 relief — *ce qui rayonne, c'est l'objet ; ce qui reçoit, c'est le décor* — et le
 voile sombre qui monte sous le texte.

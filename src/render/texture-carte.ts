@@ -851,6 +851,15 @@ const FOND_PEINT = new URLSearchParams(location.search).get('fond') !== 'image'
  */
 const BASE_FOND: readonly [number, number, number] = [3, 68, 94]
 
+/**
+ * L'AMPLITUDE DU GRAIN — celle d'un dither, pas celle d'une matière.
+ *
+ * `overlay` sur un fond sombre fait varier le résultat de ±0,25 à pleine
+ * opacité ; à 0,06 il ne reste qu'environ **±4 niveaux sur 255**, assez pour
+ * casser une bande de dégradé, trop peu pour qu'on distingue un grain.
+ */
+const ALPHA_GRAIN = 0.06
+
 /** Cette même couleur, virée à la teinte d'une famille. */
 function teinteDuCiel(ciel: Ciel | undefined): [number, number, number] {
   if (ciel === undefined) return [...BASE_FOND]
@@ -957,13 +966,24 @@ function peindreDecor(ctx: CanvasRenderingContext2D, ciel: Ciel | undefined, lar
    * `overlay` est NEUTRE à 128 : un bruit centré sur ce gris ne change pas la
    * couleur moyenne, il ne fait que l'agiter de quelques niveaux — ce qu'on
    * demande à un dithering.
+   *
+   * **ET IL DOIT ÊTRE INVISIBLE.** Keko, sur la première passe : « la texture
+   * est très moche, on dirait le bruit parasite sur un vieil écran télé, il
+   * faut un truc plus minimaliste ». *Et c'était ma faute de cadrage* : je
+   * l'avais réglé comme une MATIÈRE (0,38 d'alpha, soit ±48 niveaux), alors
+   * qu'un dithering n'a besoin que de ±3 pour dissoudre une bande. **Un bruit
+   * blanc qu'on voit est de la neige ; un bruit blanc qu'on ne voit pas est un
+   * dither.**
+   *
+   * La matière, elle, viendra du caractère — étoiles ou métal brossé — et elle
+   * aura une forme, ce qu'un bruit par pixel n'a pas.
    */
   ctx.save()
   ctx.setTransform(1, 0, 0, 1, 0, 0)
   const motif = ctx.createPattern(grain(), 'repeat')
   if (motif !== null) {
     ctx.globalCompositeOperation = 'overlay'
-    ctx.globalAlpha = 0.38
+    ctx.globalAlpha = ALPHA_GRAIN
     ctx.fillStyle = motif
     ctx.fillRect(0, 0, largeur, Math.round(largeur * 1.4))
   }
