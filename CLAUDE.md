@@ -7722,6 +7722,15 @@ un butin au ciel d'or dans un cadre de bronze disant deux métaux à la fois.
 déjà la famille : coque déchirée pour une pièce, encoche pour une carte de
 deck, coins coupés pour un butin.
 
+**ET LE BUTIN GARDE LE SIEN, quand les trois autres descendent encore d'un
+cran** (0,5 contre 0,37). Keko : « on peut diminuer un peu la saturation des
+backgrounds rouge bleu et vert, mais pas jaune ». *Ce n'est pas une exception
+arbitraire* : le jaune est la teinte dont la luminance est la plus proche de
+celle du blanc, donc **l'écart qu'on lui retire est le plus petit des quatre** —
+à pigment égal il s'efface le premier, et il vire au beige gris avant que les
+trois autres n'aient bougé. Mesuré sur la bande haute : 32 à 36 % de saturation
+pour l'arme, l'armure et l'objet, **44 % pour le butin**.
+
 **Trois issues étaient sur la table** — retirer l'or du butin, tout rendre au
 bleu, ou garder les quatre en les désaturant — et Keko a pris la troisième. Le
 ciel cesse alors d'être un CODE et redevient une AMBIANCE : il se lit du coin

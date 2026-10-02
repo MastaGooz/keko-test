@@ -662,7 +662,7 @@ const CIELS: Record<Ciel, [number, number, number]> = {
  *
  * **Et il avait raison sur un point précis** : la couleur est l'axe de la
  * RARETÉ — bronze, argent, or, diamant — et quatre ciels francs la lui
- * disputaient, jusqu'à la contredire (un trésor au ciel d'or dans un cadre de
+ * disputaient, jusqu'à la contredire (un butin au ciel d'or dans un cadre de
  * bronze disait deux métaux à la fois). *Une échelle se dit en couleur, une
  * famille se dit en forme*, et la forme dit déjà la famille : coque déchirée
  * pour une pièce, encoche pour une carte de deck, coins coupés pour un butin.
@@ -671,8 +671,21 @@ const CIELS: Record<Ciel, [number, number, number]> = {
  * alors d'être un code et redevient une AMBIANCE — il se lit du coin de l'oeil
  * dans une main où les familles se mélangent, et il ne rivalise plus avec le
  * métal du cadre, qui lui est franc.
+ *
+ * **ET LE BUTIN GARDE LE SIEN, quand les trois autres descendent encore d'un
+ * cran.** Keko : « on peut diminuer un peu la saturation des backgrounds rouge
+ * bleu et vert, mais pas jaune ». *Ce n'est pas une exception arbitraire* : le
+ * jaune est la teinte dont la luminance est la plus proche de celle du blanc,
+ * donc **l'écart qu'on lui retire est le plus petit des quatre** — à pigment
+ * égal il s'efface le premier, et il vire au beige gris avant que les trois
+ * autres n'aient bougé.
  */
-const PIGMENT_CIEL = 0.5
+const PIGMENT_CIEL: Record<Ciel, number> = {
+  arme: 0.37,
+  armure: 0.37,
+  objet: 0.37,
+  tresor: 0.5,
+}
 
 /**
  * COMBIEN DE FOIS LE DÉCOR S'AJOUTE À LUI-MÊME. Keko : « je trouve les
@@ -732,6 +745,7 @@ const EXPO_DECOR = 2.6
  */
 function virerLeCiel(pixels: Uint8ClampedArray, ciel: Ciel): void {
   const [ur, uv, ub] = CIELS[ciel]
+  const pigment = PIGMENT_CIEL[ciel]
   // La teinte portée à une saturation de 1 ; sa propre luminance sert à
   // recaler le résultat sur celle du pixel.
   const lumTeinte = 0.3 * ur + 0.59 * uv + 0.11 * ub
@@ -763,9 +777,9 @@ function virerLeCiel(pixels: Uint8ClampedArray, ciel: Ciel): void {
     }
     // ET ON EN REND LA MOITIÉ À SA LUMINANCE : le ciel garde sa teinte et perd
     // son pigment, donc il ne dispute plus la couleur au métal du cadre.
-    pixels[i] = (lum + (cr - lum) * PIGMENT_CIEL) * 255
-    pixels[i + 1] = (lum + (cv - lum) * PIGMENT_CIEL) * 255
-    pixels[i + 2] = (lum + (cb - lum) * PIGMENT_CIEL) * 255
+    pixels[i] = (lum + (cr - lum) * pigment) * 255
+    pixels[i + 1] = (lum + (cv - lum) * pigment) * 255
+    pixels[i + 2] = (lum + (cb - lum) * pigment) * 255
   }
 }
 
