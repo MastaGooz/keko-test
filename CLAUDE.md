@@ -1770,9 +1770,15 @@ d'abord si elle lui PARVIENT.** J'ai réglé la graisse, puis la police, puis
 mesuré les variantes chargées — trois vérifications sur le bout de la chaîne
 qui ne recevait rien.
 
-*Ce qu'on met en gras* : le verbe de l'effet et son chiffre — « **Inflige 6**
-dégâts », « **Bloque 5** dégâts » — plus les mots qui NOMMENT une règle,
-« **attaque** », « **défense** ». Le reste est de la phrase.
+*Ce qu'on met en gras, et rien d'autre* : **les chiffres, et le mot
+« attaque »**. Tranché par Keko après un essai plus large, qui prenait aussi
+les verbes et « défense » : « mets juste le terme attaque en gras ainsi que les
+chiffres, ne mets rien d'autre ».
+
+*Et c'est le bon découpage* : un chiffre est une valeur qu'on compare, et
+« attaque » est le seul mot de ces textes qui renvoie à une RÈGLE — ce qui
+compte pour la remise de l'Estoc. Les verbes, eux, sont de la phrase : les
+appuyer tous revenait à n'appuyer rien.
 
 **ET LE TEXTE A GROSSI D'UN CRAN** (7 / 6,4 / 5,4 U au lieu de 6 / 5,8 / 5).
 Keko : « on peut augmenter un peu la taille du texte des descriptions quand y'a

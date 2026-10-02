@@ -57,7 +57,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   if (carte.type === 'tresor' && !valeurAPart) {
     l.push(`Vaut <b>${carte.valeur ?? 0}</b> or s'il ressort`)
   }
-  if (carte.degats > 0) l.push(`<b>Inflige ${carte.degats}</b> dégâts`)
+  if (carte.degats > 0) l.push(`Inflige <b>${carte.degats}</b> dégâts`)
   // SES DÉGÂTS SONT TA DÉFENSE : on ne peut pas écrire un chiffre, donc on
   // écrit la RÈGLE. *Une carte dont l'effet dépend de l'état doit dire de quoi
   // il dépend*, pas afficher un zéro qui se lirait comme une carte inutile.
@@ -68,11 +68,11 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   //
   // Une seule entrée, donc une seule phrase : le repli la coupe où il faut,
   // là où deux lignes de tailles différentes la casseraient en son milieu.
-  if (carte.degatsDuBloc === true) l.push(`<b>Inflige</b> un nombre de dégâts égal à votre <b>défense</b>`)
+  if (carte.degatsDuBloc === true) l.push(`Inflige un nombre de dégâts égal à votre défense`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
-    if (e.type === 'bloc') l.push(`<b>Bloque ${e.montant}</b> dégâts`, `<small>ce tour seulement</small>`)
+    if (e.type === 'bloc') l.push(`Bloque <b>${e.montant}</b> dégâts`, `<small>ce tour seulement</small>`)
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
@@ -81,10 +81,10 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         // dit sa VALEUR. *Une carte ne peut pas perdre un or qu'elle n'a
         // jamais annoncé.*
         const perte = valeurAPart ? 'et sa valeur est perdue' : 'et son or est perdu'
-        l.push(`<b>Brûler : rend ${e.montant} PV</b>`, `<small>${perte}</small>`)
+        l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>${perte}</small>`)
       }
       else {
-        l.push(`<b>Rend ${e.montant} PV</b>`)
+        l.push(`Rend <b>${e.montant}</b> PV`)
         // Une carte à usages ne l'écrit pas : ses charges sont des pastilles.
         // Une carte qui s'exile dit qu'elle se détruit.
         if (carte.usages === undefined && carte.exil === true) l.push(`<small>se boit : détruite</small>`)
@@ -93,8 +93,8 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // POINTS D'ACTION, ET PAS « ÉNERGIE » : le mot renvoie au TEMPS, et c'est
     // ce que Keko veut dire — *plus une carte coûte, plus l'action est longue
     // et puissante.* Le code garde `energie` partout, c'est un nom interne.
-    if (e.type === 'energie') l.push(`<b>Donne +${e.montant}</b> points d'action`)
-    if (e.type === 'degatsTous') l.push(`<b>Inflige ${e.montant}</b> à chaque ennemi`)
+    if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> points d'action`)
+    if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
   }
   // LA REMISE SE DIT APRÈS LE COUP, parce qu'elle parle du COÛT et non de ce
   // que la carte fait — et elle le dit avec un VERBE.
@@ -111,7 +111,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   // que ce qu'on achète.*
   if ((carte.remiseParAttaque ?? 0) > 0) {
     const pa = carte.remiseParAttaque ?? 0
-    l.push(`<b>Coûte</b> {pa:${pa}} <b>de moins</b>`, `<small>par <b>attaque</b> jouée ce tour</small>`)
+    l.push(`Coûte {pa:${pa}} de moins`, `<small>par <b>attaque</b> jouée ce tour</small>`)
   }
   return l
 }
