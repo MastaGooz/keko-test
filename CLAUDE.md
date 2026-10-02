@@ -1789,6 +1789,18 @@ Trois choses à ne pas défaire :
 - **elle tombe en fin de tour**, au même endroit que le bloc et la riposte :
   *ce qui ne vaut que pour un tour se range au même endroit.*
 
+**ET SON PIED DIT « DÉFENSE », pas « Action ».** Tranché par Keko : « la carte
+esquive devrait être de type défense ».
+
+*Ce qui classe une carte est son VERBE* — et le verbe est le même que celui du
+bloc : **empêcher la salve d'arriver.** Le bloc l'absorbe, l'esquive l'évite ;
+ce sont deux façons de faire la seule chose que la famille promet. **La famille
+n'est pas « ce qui donne du bloc », c'est « ce qui protège »**, et s'en tenir au
+champ `bloc` confondait la règle avec son premier moyen.
+
+*La Riposte, elle, reste une Action* : elle ne protège de rien, elle pose un
+PRIX que l'ennemi paie en frappant.
+
 **Le hasard se vérifie avec un RNG TRUQUÉ** (`combat.verif.ts`) : on ne teste
 pas le tirage, on teste la règle, et chacune des deux issues se joue séparément.
 Cinq vérifications.

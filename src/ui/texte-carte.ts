@@ -255,7 +255,21 @@ export function nature(carte: Carte): string {
   if (carte.usages !== undefined || carte.exil === true) return 'Objet'
   if (carte.degats > 0 || carte.degatsDuBloc === true || carte.effets?.some((e) => e.type === 'degatsTous'))
     return 'Attaque'
-  if (carte.effets?.some((e) => e.type === 'bloc')) return 'Défense'
+  /**
+   * **L'ESQUIVE EST UNE DÉFENSE, pas une action.** Tranché par Keko : « la carte
+   * esquive devrait être de type défense ».
+   *
+   * *Ce qui classe une carte est son VERBE* — et le verbe est le même que celui
+   * du bloc : **empêcher la salve d'arriver.** Le bloc l'absorbe, l'esquive
+   * l'évite ; ce sont deux façons de faire la seule chose que la famille
+   * promet. **La famille n'est pas « ce qui donne du bloc », c'est « ce qui
+   * protège »**, et s'en tenir au champ `bloc` confondait la règle avec son
+   * premier moyen.
+   *
+   * *La Riposte, elle, reste une Action* : elle ne protège de rien, elle pose
+   * un PRIX que l'ennemi paie en frappant.
+   */
+  if (carte.effets?.some((e) => e.type === 'bloc' || e.type === 'esquive')) return 'Défense'
   return 'Action'
 }
 
