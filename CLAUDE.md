@@ -1707,9 +1707,14 @@ Quatre choses à ne pas défaire :
   ce qu'elle vaut à cet instant* : sans ça, son pied disait « Action », elle
   cessait de désigner un corps dès qu'on n'avait plus d'armure, et elle
   n'escomptait plus rien ;
-- **le texte dit la RÈGLE, pas un chiffre** : « Inflige un nombre de dégâts
-  égal à votre défense ». *Une carte dont l'effet dépend de l'état doit dire de
-  quoi il dépend*, là où un zéro se lirait comme une carte inutile.
+- **le texte dit la RÈGLE, pas un chiffre** : « Inflige **1** dégât pour chaque
+  blocage que vous avez ». *Une carte dont l'effet dépend de l'état doit dire
+  de quoi il dépend*, là où un zéro se lirait comme une carte inutile.
+
+  **La formulation est de Keko**, et elle a remplacé « égal à votre défense » :
+  *elle dit la même règle en COMPTANT plutôt qu'en comparant*, et un joueur qui
+  lit « 1 par blocage » sait quoi faire de sa prochaine carte, là où l'autre
+  tournure l'envoyait chercher un chiffre ailleurs sur l'écran.
 
 ### UN SEUL SYMBOLE DANS LE CARTOUCHE : L'ORBE DES PA
 

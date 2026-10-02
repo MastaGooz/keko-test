@@ -68,7 +68,12 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   //
   // Une seule entrée, donc une seule phrase : le repli la coupe où il faut,
   // là où deux lignes de tailles différentes la casseraient en son milieu.
-  if (carte.degatsDuBloc === true) l.push(`Inflige un nombre de dégâts égal à votre défense`)
+  // LA FORMULATION EST DE KEKO : « Inflige 1 dégât pour chaque blocage que vous
+  // avez ». *Elle dit la même règle en comptant plutôt qu'en comparant* — et
+  // un joueur qui lit « 1 par blocage » sait quoi faire de sa prochaine carte,
+  // là où « égal à votre défense » demandait d'aller chercher le chiffre.
+  if (carte.degatsDuBloc === true)
+    l.push(`Inflige <b>1</b> dégât pour chaque blocage que vous avez`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
