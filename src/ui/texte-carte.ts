@@ -130,12 +130,19 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // clause de CETTE carte* — et sans elle on la croirait permanente.
     // LA FORMULATION EST DE KEKO : « jusqu'au prochain tour, les ennemis qui
     // vous attaquent subissent 4 dégâts ». *Elle met l'ENNEMI en sujet*, et
+    // ET « ATTAQUENT » EST EN GRAS, demandé par Keko. *C'est la règle déjà
+    // tranchée* — « mets juste le terme attaque en gras ainsi que les chiffres,
+    // ne mets rien d'autre » — et elle vaut pour le mot CONJUGUÉ : ce qui le
+    // distingue des verbes de la phrase est qu'il renvoie à une RÈGLE, celle
+    // qui décide quand la riposte part. *Un mot-règle reste un mot-règle quand
+    // il change de personne.*
+    //
     // c'est plus juste — la riposte n'est pas un coup qu'on porte, c'est un
     // prix qu'il paie. « Jusqu'au prochain tour » dit la durée mieux que « ce
     // tour » : la carte se joue AVANT la salve, donc c'est elle qu'on couvre.
     if (e.type === 'riposte')
       l.push(
-        `Jusqu'au prochain tour, les ennemis qui vous attaquent subissent <b>${e.montant}</b> ${blessures(e.montant)}`,
+        `Jusqu'au prochain tour, les ennemis qui vous <b>attaquent</b> subissent <b>${e.montant}</b> ${blessures(e.montant)}`,
       )
 
   }

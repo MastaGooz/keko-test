@@ -1986,6 +1986,11 @@ chiffres, ne mets rien d'autre ».
 compte pour la remise de l'Estoc. Les verbes, eux, sont de la phrase : les
 appuyer tous revenait à n'appuyer rien.
 
+**ET LA RÈGLE VAUT POUR LE MOT CONJUGUÉ.** Keko : « dans Riposte, il faudrait
+mettre "attaquent" en gras ». *Un mot-règle reste un mot-règle quand il change
+de personne* — ce qui le distingue des verbes de la phrase n'est pas sa forme,
+c'est qu'il désigne le moment où la riposte part.
+
 **ET LE TEXTE A GROSSI D'UN CRAN** (7 / 6,4 / 5,4 U au lieu de 6 / 5,8 / 5).
 Keko : « on peut augmenter un peu la taille du texte des descriptions quand y'a
 la place ». *Les crans existent pour qu'un effet long descende plutôt que de
