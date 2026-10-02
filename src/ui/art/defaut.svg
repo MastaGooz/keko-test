@@ -21,7 +21,11 @@
       <feComponentTransfer><feFuncA type="linear" slope="0.12"/></feComponentTransfer>
     </filter>
   </defs>
-  <rect width="680" height="1000" fill="url(#ciel)"/>
+  <!-- PAS DE CIEL ICI : le fond commun est sous l'illustration, et il porte la
+       couleur de la famille. Un rectangle plein le masquerait, donc une carte
+       sans dessin perdrait le rouge de son arme — c'est exactement ce que Keko
+       a vu sur les cartes de la Rondache. Pour le rendre : remettre un
+       `<rect width="680" height="1000" fill="url(#ciel)"/>` ici. -->
   <g transform="translate(340 380)" fill="none" stroke="url(#or)" stroke-width="10">
     <path d="M0 -180 L156 -90 L156 90 L0 180 L-156 90 L-156 -90 Z"/>
     <path d="M0 -110 L95 -55 L95 55 L0 110 L-95 55 L-95 -55 Z" opacity="0.6"/>

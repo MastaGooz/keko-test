@@ -86,7 +86,11 @@ export function setAPeindre(objet: Objet): { carte: CarteAPeindre; nombre: numbe
       ...e.modele,
       id: `${objet.id}-${i}`,
       rarete: objet.rarete,
-      famille: 'mains' in objet ? ('arme' as const) : ('armure' as const),
+      // UN CONSOMMABLE EST SA CARTE, donc elle porte SON ciel : vert. Sans ce
+      // cas il tombait dans « ni arme ni armure » et la Potion montrait une
+      // carte bleue dans son propre zoom — Keko : « les cartes générées par
+      // les potions devraient être vertes comme la carte qui les génère ».
+      famille: estConsommable(objet) ? ('objet' as const) : 'mains' in objet ? ('arme' as const) : ('armure' as const),
     }),
     nombre: e.nombre,
   }))
