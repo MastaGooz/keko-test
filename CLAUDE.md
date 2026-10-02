@@ -7623,6 +7623,17 @@ voile uniforme écrase les deux en les noyant de gris. C'est une exposition qu'o
 monte, pas un rideau qu'on tire — et le ciel étoilé du fond commun redevient
 visible.
 
+**ET L'EXPOSITION SE COMPTE EN PASSES, PAS EN OPACITÉ** (`EXPO_DECOR`). Keko :
+« je trouve les backgrounds des cartes un poil sombres — saturation ok mais pas
+assez éclairé ». *Un `globalAlpha` plafonne à 1*, donc au-delà du double il faut
+REDESSINER : on ajoute l'image entière tant qu'il reste de l'exposition à
+donner, et la dernière passe prend le reste. **C'est le vrai nom de la
+grandeur**, et elle se règle d'un seul chiffre.
+
+Elle est passée de 1,9 à **2,6**. *Et c'est bien une exposition qu'on monte, pas
+un rideau qu'on tire* : le pigment ne bouge pas, ce qui est exactement ce que
+Keko voulait garder — un voile clair, lui, aurait éclairci en délavant.
+
 Mesuré : le haut de la carte passe de 7 à **52** de luminance, le milieu à 42,
 et la lame ne bouge pas (121). Le voile du bas, lui, reprend tout : le texte se
 lit comme avant.

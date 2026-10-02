@@ -675,6 +675,22 @@ const CIELS: Record<Ciel, [number, number, number]> = {
 const PIGMENT_CIEL = 0.5
 
 /**
+ * COMBIEN DE FOIS LE DÉCOR S'AJOUTE À LUI-MÊME. Keko : « je trouve les
+ * backgrounds des cartes un poil sombres (saturation ok mais pas assez
+ * éclairé) ».
+ *
+ * *On monte l'EXPOSITION, on ne tire pas un rideau clair* : une addition de
+ * l'image sur elle-même garde son contraste, sa matière et son pigment, là où
+ * un voile blanc écraserait les trois — et c'est justement la saturation que
+ * Keko voulait garder.
+ *
+ * **Ça ne pouvait plus passer par l'opacité** : elle plafonne à 1, donc au-delà
+ * du double il faut une passe de plus. C'est le vrai nom de la grandeur, et
+ * elle se lit comme telle.
+ */
+const EXPO_DECOR = 2.6
+
+/**
  * LE CIEL D'UNE CARTE, VIRÉ À SA COULEUR — et viré PIXEL PAR PIXEL.
  *
  * Demandé par Keko : « on peut mettre le background des armes en rouge au lieu
@@ -976,8 +992,15 @@ export async function peindreCarte(
      */
     ctx.save()
     ctx.globalCompositeOperation = 'lighter'
-    ctx.globalAlpha = 0.9
-    couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+    // ET ELLE SE COMPTE EN PASSES, pas en opacité : un `globalAlpha` plafonne
+    // à 1, donc au-delà du double il faut REDESSINER. *L'exposition est un
+    // nombre de fois, pas une transparence* — on ajoute l'image entière tant
+    // qu'il reste de l'exposition à donner, et la dernière passe prend le
+    // reste.
+    for (let reste = EXPO_DECOR - 1; reste > 0.001; reste -= 1) {
+      ctx.globalAlpha = Math.min(1, reste)
+      couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+    }
     ctx.restore()
   }
 
