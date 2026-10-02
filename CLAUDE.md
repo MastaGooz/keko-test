@@ -1720,6 +1720,14 @@ jeton est celle de son DESSIN**, plus un carré pour tout le monde. Le coeur est
 et venait coller le mot d'à côté — *un contenant qui ne contient pas ment*, la
 règle du disque du compte des piles.
 
+**ET IL DESCEND D'UN CRAN SOUS L'ORBE** (`PART_COEUR`, 75 / 84). Keko : « tu
+peux réduire un peu la taille du coeur dans la description des objets ? il est
+un peu gros par rapport au texte ». *À hauteur égale, une masse pleine pèse plus
+lourd qu'un disque cerclé* — ce qui se lit n'est pas la boîte du symbole, c'est
+l'encre qu'il y a dedans. **Le rapport n'est pas choisi** : c'est celui que Keko
+avait déjà validé sur la bande de stats, pour le même coeur à côté des mêmes
+voisins. *Le même couple se règle du même chiffre partout.*
+
 **LES AUTRES ARMURES SONT RECOMPOSÉES À DEUX CARTES, et leurs profils sont de
 moi** — Armure de plate 2 Rempart, Cotte de maille 1 Garde + 1 Rempart, Robe
 2 Garde. *Keko a donné le format, pas les sets* : ils sont marqués provisoires
@@ -9571,6 +9579,35 @@ serveur de dev de Windows servait quand même l'image** — un `fetch` renvoyait
 repli. En ligne, ç'aurait été un 404 franc. *On recopie le nom du fichier, on ne
 le réécrit pas* : une entrée de la table se vérifie contre `ls public/`, pas
 contre l'orthographe qu'on croit juste.
+
+**ET UN MODÈLE PEUT AVOIR UN DESSIN PAR RARETÉ : les trois tiers de la
+potion.** Keko a livré trois fioles de richesse croissante — `Potion de vie
+T1/T2/T3.webp` — « les trois tiers des potions sont pour bronze / argent / or /
+diamant ».
+
+*Et ça change ce que la rareté dit d'un objet* : jusqu'ici elle ne tenait qu'au
+MÉTAL DU CADRE, un habit posé autour d'un dessin unique. Ici **c'est l'objet
+lui-même qui monte** — du flacon nu au flacon serti d'or — et le cadre ne fait
+plus que le confirmer.
+
+Trois choses qui le portent :
+
+- **IL Y A TROIS DESSINS POUR QUATRE CRANS**, donc le plus riche couvre le haut
+  de l'échelle : bronze, argent, or, et le diamant reprend celui de l'or en
+  attendant un T4. *Une échelle qui manque de barreaux plafonne, elle ne retombe
+  pas en bas* — la règle du repli de la loupe, prise par le même bout. **Il
+  manque donc un T4**, et c'est à Keko ;
+- **les deux potions du catalogue PARTAGENT la table** (`POTIONS_DE_VIE`), parce
+  que ce qui décide du dessin est la RARETÉ et non le modèle : une Potion
+  commune sort en T1, une Super potion rare en T2. *Une table par modèle aurait
+  recopié les mêmes trois fichiers à chaque fiole nouvelle* ;
+- **sans rareté, c'est le premier cran.** Le jeu 2D ne la connaît pas et ne la
+  passe pas : *une carte sans rang vaut le bas de l'échelle*, exactement ce que
+  `rarete?` tient déjà sur le métal du cadre.
+
+La rareté entre déjà dans `signature()`, donc **deux crans du même modèle ont
+deux textures** sans rien ajouter — c'est ce qui fait que le coffre les empile
+séparément, et c'est précisément ce qu'on veut ici.
 
 **ET ELLES SONT EN WEBP DEPUIS QUE LE FORMAT EST FIXÉ.** Une illustration de
 carte se dessine en **1024 x 1463 (rapport 7:10)** : c'est la surface d'art de

@@ -587,9 +587,9 @@ function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient 
  * ignore tout seul une couche de fond qui échoue). Un canvas, lui, ne dessine
  * rien du tout : sans ce repli, une image retirée laisserait un trou noir.
  */
-async function illustration(nom: string): Promise<HTMLImageElement | null> {
+async function illustration(nom: string, rarete?: string): Promise<HTMLImageElement | null> {
   const dessin = art(nom)
-  const keko = urlImageDeKeko(nom)
+  const keko = urlImageDeKeko(nom, rarete)
   for (const url of [keko, dessin]) {
     if (url === null) continue
     const image = await charger(url)
@@ -1158,6 +1158,19 @@ function lireJeton(mot: string): Jeton | null {
  */
 const HAUT_JETON = 1.28
 
+/**
+ * LE COEUR DESCEND D'UN CRAN, comme dans la bande de stats. Keko : « tu peux
+ * réduire un peu la taille du coeur dans la description des objets ? il est un
+ * peu gros par rapport au texte ».
+ *
+ * *À hauteur égale, une masse pleine pèse plus lourd qu'un disque cerclé* : ce
+ * qui se lit n'est pas la boîte du symbole, c'est l'encre qu'il y a dedans. Le
+ * rapport est celui que Keko a déjà validé sur la bande de stats (75 % contre
+ * 84 %) — **deux dessins de densité différente ne se règlent pas au même
+ * chiffre**, et le même couple se règle du même rapport partout.
+ */
+const PART_COEUR = 75 / 84
+
 /** Le corps du chiffre posé dans l'orbe, en part du corps du texte. */
 const CHIFFRE_DANS_PA = 0.94
 
@@ -1189,7 +1202,7 @@ function dansLeDisque(
  */
 function largeurJeton(_ctx: CanvasRenderingContext2D, jeton: Jeton, taille: number): number {
   const h = taille * HAUT_JETON
-  return jeton.type === 'coeur' ? h * (40 / 37) : h
+  return jeton.type === 'coeur' ? h * PART_COEUR * (40 / 37) : h
 }
 
 /** Dessine le jeton, son bord gauche en `x`, centré sur la ligne de base `y`. */
@@ -1220,8 +1233,9 @@ function peindreJeton(
      * Le chemin SVG se rejoue tel quel dans un `Path2D`, à l'échelle de son
      * viewBox (40 x 37), avec son dégradé, son cerne et son reflet.
      */
-    const e = h / 37
-    ctx.translate(x, y - h / 2)
+    const hc = h * PART_COEUR
+    const e = hc / 37
+    ctx.translate(x, y - hc / 2)
     ctx.scale(e, e)
     const c = ctx.createLinearGradient(0, 0, 12, 37)
     c.addColorStop(0, '#e2565e')
@@ -1414,7 +1428,7 @@ export async function peindreCarte(
   if (largeur !== LARGE) ctx.scale(largeur / LARGE, largeur / LARGE)
 
   const [image, decor, symbole] = await Promise.all([
-    illustration(carte.nom),
+    illustration(carte.nom, carte.rarete),
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
     // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
     // de la famille. Une armure garde le bleu d'origine. Voir `fondTeinte`.

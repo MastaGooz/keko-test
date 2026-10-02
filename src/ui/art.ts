@@ -89,7 +89,37 @@ const IMAGES: Record<string, string> = {
   // mais `new Image()` la refusait et GitHub Pages, servi depuis Linux, aurait
   // rendu un 404 franc. **On recopie le nom du fichier, on ne le réécrit pas.**
   'epee-a-deux-mains': 'Epée à deux mains.webp',
-  potion: 'Potion.webp',
+}
+
+/**
+ * LES VARIANTES PAR RARETÉ — le dessin MONTE avec le métal du cadre.
+ *
+ * Keko a dessiné trois fioles de richesse croissante : « les trois tiers des
+ * potions sont pour bronze / argent / or / diamant ». *La rareté cesse d'être
+ * un cadre posé autour d'un dessin unique* — c'est l'objet lui-même qui change,
+ * du flacon nu à la fiole sertie d'or.
+ *
+ * **IL Y A TROIS DESSINS POUR QUATRE CRANS**, donc le plus riche couvre le
+ * haut de l'échelle : bronze, argent, or, et le diamant reprend celui de l'or
+ * en attendant un T4. *Une échelle qui manque de barreaux plafonne, elle ne
+ * retombe pas en bas* — c'est la règle du repli de la loupe, prise par le même
+ * bout.
+ *
+ * **Les deux potions du catalogue partagent la table**, parce que ce qui décide
+ * du dessin est la RARETÉ et non le modèle : une Potion commune sort en T1, une
+ * Super potion rare en T2. *Une table par modèle aurait recopié les mêmes trois
+ * fichiers à chaque fiole nouvelle.*
+ */
+const POTIONS_DE_VIE: Record<string, string> = {
+  commune: 'Potion de vie T1.webp',
+  rare: 'Potion de vie T2.webp',
+  epique: 'Potion de vie T3.webp',
+  legendaire: 'Potion de vie T3.webp',
+}
+
+const IMAGES_PAR_RARETE: Record<string, Record<string, string>> = {
+  potion: POTIONS_DE_VIE,
+  'super-potion': POTIONS_DE_VIE,
 }
 
 /**
@@ -230,8 +260,13 @@ export function urlDuDecor(decor: Decor): string {
  * La même URL, brute — ce qu'il faut pour charger l'image autrement que par le
  * CSS : le moteur 3D la peint dans un canvas pour en faire une texture.
  */
-export function urlImageDeKeko(nom: string): string | null {
-  const fichier = IMAGES[cle(nom)]
+export function urlImageDeKeko(nom: string, rarete?: string): string | null {
+  const k = cle(nom)
+  // LA TABLE PAR RARETÉ PASSE DEVANT, et sans rareté c'est le premier cran :
+  // le jeu 2D ne la connaît pas, et *une carte sans rang vaut le bas de
+  // l'échelle* — la règle que `rarete?` tient déjà sur le métal du cadre.
+  const tiers = IMAGES_PAR_RARETE[k]
+  const fichier = (tiers === undefined ? undefined : (tiers[rarete ?? 'commune'] ?? tiers['commune'])) ?? IMAGES[k]
   if (fichier === undefined) return null
   return `${import.meta.env.BASE_URL}${fichier}?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
