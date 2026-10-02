@@ -55,6 +55,20 @@ export type Effet =
    */
   | { type: 'riposte'; montant: number }
   /**
+   * **L'ESQUIVE : une chance sur deux d'éviter la PROCHAINE attaque subie.**
+   * Composée par Keko avec le Plastron de cuir.
+   *
+   * *C'est le premier effet du jeu qui tire au sort*, et il faut le dire :
+   * tout le reste est déterministe une fois la seed posée. Il passe donc par
+   * le RNG seedé comme le mélange du deck — **une partie rejouée à la même
+   * seed doit rendre les mêmes esquives.**
+   *
+   * Elle se consomme à la première attaque, réussie ou non — *c'est LA
+   * prochaine attaque, pas une protection qui dure* — et elle tombe à la fin
+   * du tour comme le bloc et la riposte.
+   */
+  | { type: 'esquive' }
+  /**
    * L'ÉTOURDISSEMENT : la cible perd l'action qu'elle préparait.
    *
    * Composé par Keko : « étourdissement = annule l'action en cours de
@@ -210,6 +224,9 @@ export type EtatCombat = {
    * bloc : *ce qui ne vaut que pour un tour se range au même endroit.*
    */
   riposte: number
+  /** Une esquive est armée : la prochaine attaque a une chance sur deux de
+   *  manquer. Elle se consomme à l'essai, et tombe en fin de tour. */
+  esquive: boolean
   evenements: Evenement[]
   issue: Issue | null
 }
@@ -246,6 +263,7 @@ export function creerCombat(
     tour: 1,
     attaquesCeTour: 0,
     riposte: 0,
+    esquive: false,
     evenements: [{ tour: 1, type: 'debut', ennemis: ennemis.map((e) => e.nom) }],
     issue: null,
   }
@@ -319,7 +337,7 @@ export function finDuTour(etat: EtatCombat, rng: Rng): EtatCombat {
     if (ennemi.pv === 0) continue
     ennemi.compteur -= 1
     if (ennemi.compteur > 0) continue
-    frapper(suivant, ennemi)
+    frapper(suivant, ennemi, rng)
     if (suivant.issue !== null) return suivant
   }
 
@@ -330,6 +348,7 @@ export function finDuTour(etat: EtatCombat, rng: Rng): EtatCombat {
   // ET LA REMISE AVEC LUI : elle ne vaut que pour l'enchaînement d'un tour.
   suivant.attaquesCeTour = 0
   suivant.riposte = 0
+  suivant.esquive = false
   suivant.tour += 1
   suivant.energie = suivant.energieMax
   piocher(suivant, rng)
@@ -543,6 +562,9 @@ function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number): void {
     case 'bloc':
       etat.bloc += effet.montant
       break
+    case 'esquive':
+      etat.esquive = true
+      break
     case 'riposte':
       etat.riposte += effet.montant
       break
@@ -572,7 +594,31 @@ function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number): void {
   }
 }
 
-function frapper(etat: EtatCombat, ennemi: Ennemi): void {
+function frapper(etat: EtatCombat, ennemi: Ennemi, rng: Rng): void {
+  /**
+   * **L'ESQUIVE SE JOUE AVANT LE BLOC, et elle se consomme dans tous les
+   * cas.** *C'est LA prochaine attaque qu'on esquive*, pas une protection qui
+   * attendrait de réussir : la garder après un échec en ferait une assurance
+   * illimitée, et le joueur ne saurait plus ce qu'il a acheté.
+   *
+   * Le tirage passe par le RNG seedé, comme le mélange du deck — **une partie
+   * rejouée à la même seed doit rendre les mêmes esquives.**
+   */
+  if (etat.esquive) {
+    etat.esquive = false
+    if (rng.next() < 0.5) {
+      ennemi.compteur = ennemi.periode
+      etat.evenements.push({
+        tour: etat.tour,
+        type: 'frappe',
+        nom: ennemi.nom,
+        degats: 0,
+        pvJoueur: etat.pv,
+      })
+      return
+    }
+  }
+
   // LE BLOC ENCAISSE EN PREMIER, et ce qui dépasse seulement passe aux PV.
   const absorbe = Math.min(etat.bloc, ennemi.degats)
   etat.bloc -= absorbe

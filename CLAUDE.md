@@ -1678,6 +1678,70 @@ une carte à effet testait donc une AUTRE carte que celle qu'on croyait — et i
 passait.* Il reprend tout le gabarit désormais. Sept vérifications tiennent la
 règle (215 au total).
 
+### L'ARMURE PASSE À DEUX CARTES, ET ELLE PORTE DES PV
+
+Tranché par Keko, d'un bloc : « on va mettre les armures à 2 cartes au lieu de
+6. Et on va mettre l'équipement de base : glaive / bouclier / plastron cuir. »
+
+**LE CHARGEMENT DE DÉPART A DEUX ARMES ET UNE ARMURE** — Glaive, Rondache,
+Plastron de cuir, soit **12 cartes** (5 + 5 + 2) plus la potion. *Les deux mains
+sont pleines dès le premier lancement*, là où le kit se contentait d'une arme :
+on arrive donc avec un build complet plutôt qu'avec un trou à combler, et
+l'armurerie se découvre en comparant, pas en bouchant.
+
+**LE PLASTRON DE CUIR EST LA PREMIÈRE PIÈCE À PORTER DES PV** (`pv` sur la
+`Piece`, +15) — *le premier effet d'équipement qui ne passe PAS par une carte*,
+l'exception que le bijou devait ouvrir, et elle arrive par l'armure.
+
+**Il monte le MAXIMUM, donc on part avec** : un bonus qui ne donnerait que des
+PV courants se perdrait au premier soin, alors qu'un maximum relevé est ce qu'on
+emporte. Il tient toute la descente, paliers suivants compris.
+
+**ET IL S'ÉCRIT « +15 ♥ », dans la bande que la composition a libérée.** Keko :
+« avec le symbole de coeur à la place de PV ». *C'est exactement ce que cette
+bande attendait* — « on va garder cet emplacement pour des effets spéciaux des
+armes », disait-il en la vidant. Le coeur est celui de la bande de stats, même
+dégradé : **le même fait se dit du même symbole partout.** Et le chiffre est À
+CÔTÉ, pas dedans : *l'orbe des PA met le sien dans son disque parce qu'elle dit
+un COÛT ; le coeur dit une MESURE, et une mesure se lit à côté de son symbole.*
+
+**LES AUTRES ARMURES SONT RECOMPOSÉES À DEUX CARTES, et leurs profils sont de
+moi** — Armure de plate 2 Rempart, Cotte de maille 1 Garde + 1 Rempart, Robe
+2 Garde. *Keko a donné le format, pas les sets* : ils sont marqués provisoires
+dans le code depuis le début, et **à rejuger**. Le Plastron de cuir, lui, est
+composé par lui.
+
+### L'ESQUIVE — le premier effet du jeu qui tire au sort
+
+Composée par Keko avec le Plastron de cuir : « Esquive : gagne esquive jusqu'à
+votre prochain tour », et l'encadré dit « vous avez 50 % de chance d'éviter la
+prochaine attaque subie ».
+
+*Et il faut le dire, parce que c'est une première* : **tout le reste du combat
+est déterministe une fois la seed posée.** Elle passe donc par le RNG seedé,
+comme le mélange du deck — une partie rejouée à la même seed doit rendre les
+mêmes esquives.
+
+Trois choses à ne pas défaire :
+
+- **elle se joue AVANT le bloc** : c'est l'attaque entière qu'on évite, pas ce
+  qui dépasse de l'armure ;
+- **elle se consomme à l'essai, réussi ou non.** *C'est LA prochaine attaque
+  qu'on esquive*, pas une protection qui attendrait de réussir — la garder
+  après un échec en ferait une assurance illimitée, et le joueur ne saurait
+  plus ce qu'il a acheté ;
+- **elle tombe en fin de tour**, au même endroit que le bloc et la riposte :
+  *ce qui ne vaut que pour un tour se range au même endroit.*
+
+**Le hasard se vérifie avec un RNG TRUQUÉ** (`combat.verif.ts`) : on ne teste
+pas le tirage, on teste la règle, et chacune des deux issues se joue séparément.
+Cinq vérifications.
+
+*Les coûts de Protection et d'Esquive sont des placeholders* (1 PA chacun) :
+Keko a donné les effets, pas les prix. **Et rien de tout ça n'est calibré** —
+le deck de départ passe de 11 à 13 cartes et l'armure de 6 à 2, ce qui déplace
+le rasoir le plus tranchant du projet. *Un balayage complet est dû.*
+
 ### LA RIPOSTE ET L'ÉTOURDISSEMENT — deux verbes sur le tour ADVERSE
 
 Composés par Keko, qui a porté les deux armes à cinq cartes : le Glaive donne

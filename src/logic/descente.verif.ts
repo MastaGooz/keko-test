@@ -9,7 +9,7 @@
  */
 import { createRng } from './rng.ts'
 import { carteTresor } from './cartes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, deckDeLEquipement, potion } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, RONDACHE, deckDeLEquipement, potion } from './armes.ts'
 import type { Descente, Lieu, Reglage } from './descente.ts'
 import {
   butinTransporte,
@@ -21,6 +21,7 @@ import {
   reordonnerTresors,
   terminerButin,
   validerJet,
+  pvDeLEquipement,
   resoudreCombat,
   tresorsAuDeck,
 } from './descente.ts'
@@ -28,7 +29,8 @@ import { CHOIX_PAR_PALIER, consommablesSurvivants } from './descente.ts'
 
 // La taille du deck de depart ne s'ecrit plus en dur : elle vient de
 // l'equipement, et une piece ajoutee la ferait mentir sans rien casser.
-const BASE = deckDeLEquipement([ARME_GRATUITE, ARMURE_GRATUITE]).length
+const BASE = deckDeLEquipement([ARME_GRATUITE, RONDACHE, ARMURE_GRATUITE]).length
+const PV_EQUIPEMENT = pvDeLEquipement([ARME_GRATUITE, RONDACHE, ARMURE_GRATUITE])
 
 const REGLAGE: Reglage = { pvMax: 100, soin: 20, menaceDepart: 0.45, profondeurMax: 4, tailleMain: 5 }
 
@@ -75,9 +77,12 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   verifier('une descente commence au premier palier, en combat', d.profondeur === 1 && d.phase.type === 'combat')
   verifier('on part avec le deck de base et rien de porté',
     d.deck.length === BASE && tresorsAuDeck(d) === 0)
-  verifier("le deck de depart vient bien de DEUX pieces d'equipement",
-    d.equipement.length === 2 && d.deck.some((c) => c.nom === 'Garde'))
-  verifier('on part à pleins PV', d.combat.pv === REGLAGE.pvMax)
+  verifier("le deck de depart vient bien de TROIS pieces d'equipement",
+    d.equipement.length === 3 && d.deck.some((c) => c.nom === 'Taille'))
+  // LES PV DE DEPART COMPTENT CEUX DE L'EQUIPEMENT : le Plastron de cuir en
+  // donne quinze, et *un maximum releve est ce qu'on emporte.*
+  verifier('on part à pleins PV, équipement compris',
+    d.combat.pv === REGLAGE.pvMax + PV_EQUIPEMENT && d.combat.pvMax === d.combat.pv)
   verifier('on tient cinq cartes', d.combat.main.length === REGLAGE.tailleMain)
 }
 
@@ -120,7 +125,9 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
     'on descend avec les PV qu\'il reste, pas avec la barre pleine',
     descendue.combat.pv === 40 + REGLAGE.soin && descendue.combat.pv < REGLAGE.pvMax,
   )
-  verifier('le soin ne dépasse jamais le maximum', jusquAuChoix(commencerDescente(rng, REGLAGE), rng, REGLAGE.pvMax).combat.pv === REGLAGE.pvMax)
+  const plein = REGLAGE.pvMax + PV_EQUIPEMENT
+  verifier('le soin ne dépasse jamais le maximum',
+    jusquAuChoix(commencerDescente(rng, REGLAGE), rng, plein).combat.pv === plein)
 }
 
 // --- le sac, et ce qui déborde ---------------------------------------------

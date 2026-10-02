@@ -64,6 +64,19 @@ export type Piece = {
    * marque.*
    */
   pret?: boolean
+  /**
+   * CE QU'ELLE AJOUTE AUX POINTS DE VIE, pour toute la descente.
+   *
+   * Demandé par Keko sur le Plastron de cuir : « +15 PV, avec le symbole de
+   * coeur à la place de PV ». *C'est le premier effet d'équipement qui ne
+   * passe PAS par une carte* — l'exception que le bijou devait ouvrir, et
+   * elle arrive par l'armure.
+   *
+   * **Elle monte le MAXIMUM, donc on part avec.** Un bonus qui ne donnerait
+   * que des PV courants se perdrait au premier soin ; un maximum relevé est ce
+   * qu'on emporte.
+   */
+  pv?: number
 }
 
 export type Arme = Piece & {
@@ -404,6 +417,32 @@ const REMPART: Modele = {
 }
 
 /**
+ * **PROTECTION ET ESQUIVE : le set du Plastron de cuir.** Composé par Keko.
+ *
+ * *Deux cartes, deux réponses à la salve* — l'une sûre et chiffrée, l'autre au
+ * hasard. La Protection reprend le barème de la Garde (1 PA pour 5 de bloc) ;
+ * l'Esquive, elle, n'a pas de chiffre : **elle ne se compare pas, elle se
+ * parie.**
+ *
+ * *Les coûts sont des placeholders* : Keko a donné les effets, pas les prix.
+ */
+const PROTECTION: Modele = {
+  nom: 'Protection',
+  type: 'combat',
+  cout: 1,
+  degats: 0,
+  effets: [{ type: 'bloc', montant: 5 }],
+}
+
+const ESQUIVE: Modele = {
+  nom: 'Esquive',
+  type: 'combat',
+  cout: 1,
+  degats: 0,
+  effets: [{ type: 'esquive' }],
+}
+
+/**
  * L'Armure de plate : l'armure commune et gratuite, pendant du Glaive. Elle
  * s'est appelée le Plastron jusqu'à ce que Keko lui dessine sa plate.
  *
@@ -428,20 +467,21 @@ export const PLASTRON: Armure = {
   // le renommer ne ferait que risquer une sauvegarde.
   nom: 'Armure de plate',
   rarete: 'commune',
-  set: [
-    { modele: GARDE, nombre: 4 },
-    { modele: REMPART, nombre: 2 },
-  ],
+  set: [{ modele: REMPART, nombre: 2 }],
 }
 
-/** La plus légère — provisoire : beaucoup de petites gardes. */
+/**
+ * **LE PLASTRON DE CUIR : l'armure de départ, et la première pièce à PORTER
+ * DES PV.** Composée par Keko : Protection, Esquive, et +15 points de vie.
+ */
 export const PLASTRON_DE_CUIR: Armure = {
   id: 'plastron-de-cuir',
   nom: 'Plastron de cuir',
   rarete: 'commune',
+  pv: 15,
   set: [
-    { modele: GARDE, nombre: 5 },
-    { modele: REMPART, nombre: 1 },
+    { modele: PROTECTION, nombre: 1 },
+    { modele: ESQUIVE, nombre: 1 },
   ],
 }
 
@@ -451,8 +491,8 @@ export const COTTE_DE_MAILLE: Armure = {
   nom: 'Cotte de maille',
   rarete: 'commune',
   set: [
-    { modele: GARDE, nombre: 3 },
-    { modele: REMPART, nombre: 3 },
+    { modele: GARDE, nombre: 1 },
+    { modele: REMPART, nombre: 1 },
   ],
 }
 
@@ -461,14 +501,16 @@ export const ROBE: Armure = {
   id: 'robe',
   nom: 'Robe',
   rarete: 'commune',
-  set: [
-    { modele: GARDE, nombre: 2 },
-    { modele: REMPART, nombre: 1 },
-  ],
+  set: [{ modele: GARDE, nombre: 2 }],
 }
 
 /** L'armure qu'on ne peut pas perdre, comme le Glaive. */
-export const ARMURE_GRATUITE = PLASTRON
+/**
+ * **L'ARMURE DE DÉPART EST LE PLASTRON DE CUIR**, plus l'Armure de plate.
+ * Tranché par Keko avec le reste du chargement : « on va mettre l'équipement
+ * de base : glaive / bouclier / plastron cuir ».
+ */
+export const ARMURE_GRATUITE = PLASTRON_DE_CUIR
 
 /**
  * CE QU'UN ARMURIER A TOUJOURS EN RÉSERVE : le premier cran, et rien d'autre.

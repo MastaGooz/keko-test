@@ -139,7 +139,17 @@ export function pieceAPeindre(objet: Objet): CarteAPeindre {
     // *Le zoom montre déjà le set en vraies cartes*, donc le cartouche le
     // répétait en moins lisible — et une bande qui redit ce qu'un geste montre
     // mieux est une bande de libre pour ce qui n'a nulle part où aller.
-    effet: [],
+    /**
+     * **CE QU'ELLE AJOUTE AUX POINTS DE VIE, dans la bande que la composition
+     * a libérée.** Keko : « dans la description du plastron on va mettre
+     * +15 PV, avec le symbole de coeur à la place de PV ».
+     *
+     * *C'est exactement ce que cette bande attendait* — « on va garder cet
+     * emplacement pour des effets spéciaux des armes », disait-il en la
+     * vidant. Le coeur est celui de la bande de stats : **le même fait se dit
+     * du même symbole partout.**
+     */
+    effet: 'pv' in objet && objet.pv !== undefined ? [`+<b>${objet.pv}</b> {coeur}`] : [],
     type: pied,
     // ET SON CIEL DIT SA FAMILLE : rouge pour une arme, vert pour un objet,
     // bleu pour une armure — par une ÉTIQUETTE et non par le mot du pied,

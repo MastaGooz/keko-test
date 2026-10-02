@@ -8,6 +8,7 @@
  * et l'énergie qui ne se reporte pas.
  */
 import { createRng } from './rng.ts'
+import type { Rng } from './rng.ts'
 import type { Carte, ConfigCombat, Ennemi, EtatCombat } from './combat.ts'
 import {
   consequence,
@@ -652,3 +653,36 @@ cas('...donc il ne frappe pas ce tour-ci', () => {
 
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)
 console.log('Tout passe.')
+
+// --- l'esquive : une chance sur deux d'eviter la prochaine attaque ----------
+
+{
+  // UN RNG TRUQUE : on ne verifie pas le hasard, on verifie la REGLE. Les deux
+  // issues doivent etre atteignables, et chacune se teste separement.
+  const toujours: Rng = { next: () => 0, getState: () => 0 }
+  const jamais: Rng = { next: () => 0.99, getState: () => 0 }
+
+  const deck = cartes(5, {
+    nom: 'Esquive',
+    cout: 1,
+    degats: 0,
+    effets: [{ type: 'esquive' }],
+  })
+  const frappeur = ennemi({ pv: 40, degats: 9 })
+
+  const pose = jouerCarte(combat(deck, frappeur), 0, 0)
+  verifie(pose.esquive, "l'esquive s'arme en jouant la carte")
+
+  const evite = finDuTour(pose, toujours)
+  verifie(evite.pv === pose.pv, 'une esquive reussie annule la frappe')
+  verifie(!evite.esquive, 'et elle est consommee')
+
+  const ratee = finDuTour(pose, jamais)
+  verifie(ratee.pv === pose.pv - 9, 'une esquive ratee laisse passer le coup')
+  verifie(!ratee.esquive, '...et elle est consommee aussi')
+
+  // SANS ESQUIVE ARMEE, le RNG ne change rien : la regle ne doit pas se
+  // declencher toute seule.
+  const nu = combat(deck, frappeur)
+  verifie(finDuTour(nu, toujours).pv === nu.pv - 9, 'sans esquive, le coup passe')
+}

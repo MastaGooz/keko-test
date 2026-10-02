@@ -91,6 +91,9 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // une clause de cette carte-ci, et une condition écrite sur toutes les
     // cartes de défense cesse d'être une condition.
     if (e.type === 'bloc') l.push(`Bloque <b>${e.montant}</b> ${blessures(e.montant)}`)
+    // L'ESQUIVE DIT SA DURÉE, comme la riposte : *c'est une clause de cette
+    // carte-ci, pas une règle du jeu* — sans elle on la croirait permanente.
+    if (e.type === 'esquive') l.push(`Gagne <k>esquive</k> jusqu'à votre prochain tour`)
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
@@ -201,12 +204,14 @@ function blessures(n: number): string {
 export const GLOSSAIRE: Record<string, string> = {
   Étourdissement: "annule l'action en cours",
   Consommable: "la carte est détruite quand elle est jouée",
+  Esquive: "vous avez 50 % de chance d'éviter la prochaine attaque subie",
 }
 
 /** Les mots-clés qu'une carte emploie, pour l'encadré du zoom. */
 export function motsCles(carte: Carte): string[] {
   const mots: string[] = []
   if (carte.effets?.some((e) => e.type === 'etourdit') === true) mots.push('Étourdissement')
+  if (carte.effets?.some((e) => e.type === 'esquive') === true) mots.push('Esquive')
   // LE MOT SUIT LA RÈGLE, pas le type affiché : *ce qui fait un consommable,
   // c'est qu'il s'exile* — un trésor brûlé s'exile aussi, mais il le dit déjà
   // en clair sur sa seconde ligne, et c'est le prix de son effet, pas une

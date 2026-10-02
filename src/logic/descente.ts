@@ -36,7 +36,7 @@ import {
   tresorRecompense,
 } from './cartes.ts'
 import type { Consommable, Piece } from './armes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, carteDuConsommable, deckDeLEquipement } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, RONDACHE, carteDuConsommable, deckDeLEquipement } from './armes.ts'
 
 /**
  * Les chiffres de la run, rassemblés et injectables — c'est ce qui permet de
@@ -176,12 +176,13 @@ function engager(
   pv: number,
   rng: Rng,
   reglage: Reglage,
+  pvMax: number,
 ): EtatCombat {
   const combat = creerCombat(
     deck,
     ennemisPourProfondeur(profondeur, reglage.profondeurMax, rng, reglage.menaceDepart),
     rng,
-    { ...CONFIG_DEFAUT, pvMax: reglage.pvMax, tailleMain: reglage.tailleMain },
+    { ...CONFIG_DEFAUT, pvMax, tailleMain: reglage.tailleMain },
   )
   // Les PV ne se rechargent pas d'un combat à l'autre : c'est ce qui rend le
   // point de sortie tendu. `creerCombat` repart du maximum, on le corrige ici
@@ -189,14 +190,19 @@ function engager(
   return { ...combat, pv }
 }
 
+/** Ce que les pièces portées ajoutent aux points de vie. */
+export function pvDeLEquipement(equipement: readonly Piece[]): number {
+  return equipement.reduce((total, piece) => total + (piece.pv ?? 0), 0)
+}
+
 export function commencerDescente(
   rng: Rng,
   reglage: Reglage = REGLAGE_DEFAUT,
-  // Une arme ET une armure, toutes deux gratuites : c'est le chargement de
-  // depart, et c'est deja un deck compose de DEUX pieces -- ce que le concept
-  // demande, et ce qui montre tout de suite ce que « equiper plus dilue » veut
-  // dire (10 cartes deviennent 14, donc le Moulinet sort moins souvent).
-  equipement: Piece[] = [ARME_GRATUITE, ARMURE_GRATUITE],
+  // LE CHARGEMENT DE BASE : deux armes et une armure, celles que l'armurerie
+  // donne deja equipees -- Glaive, Rondache, Plastron de cuir. *Le defaut doit
+  // dire ce avec quoi on part*, sinon un test sur « le deck de depart » mesure
+  // autre chose que le jeu.
+  equipement: Piece[] = [ARME_GRATUITE, RONDACHE, ARMURE_GRATUITE],
   // LA PILE : des cartes de deck qu'on emporte telles quelles, sans
   // intermédiaire. C'est la seule partie du chargement qui n'est pas générée.
   consommables: Consommable[] = [],
@@ -204,13 +210,24 @@ export function commencerDescente(
   // Le deck n'existe pas en soi : c'est la somme des sets de l'équipement,
   // plus les consommables, qui sont déjà des cartes.
   const deck = [...deckDeLEquipement(equipement), ...consommables.map(carteDuConsommable)]
+  /**
+   * **CE QUE L'ÉQUIPEMENT AJOUTE AUX POINTS DE VIE.** Le Plastron de cuir en
+   * donne quinze — *le premier effet d'équipement qui ne passe pas par une
+   * carte.*
+   *
+   * Il monte le MAXIMUM et on part avec : un bonus qui ne donnerait que des PV
+   * courants se perdrait au premier soin, alors qu'un maximum relevé est ce
+   * qu'on emporte. Il tient donc toute la descente, et les paliers suivants le
+   * relisent comme le reste du réglage.
+   */
+  const pvMax = reglage.pvMax + pvDeLEquipement(equipement)
   return {
     reglage,
     equipement,
     consommables,
     profondeur: 1,
     phase: { type: 'combat' },
-    combat: engager(1, deck, reglage.pvMax, rng, reglage),
+    combat: engager(1, deck, pvMax, rng, reglage, pvMax),
     deck,
   }
 }
@@ -404,7 +421,14 @@ export function descendre(descente: Descente, rng: Rng): Descente {
     ...descente,
     profondeur,
     phase: { type: 'combat' },
-    combat: engager(profondeur, descente.deck, descente.combat.pv, rng, descente.reglage),
+    combat: engager(
+      profondeur,
+      descente.deck,
+      descente.combat.pv,
+      rng,
+      descente.reglage,
+      descente.combat.pvMax,
+    ),
   }
 }
 

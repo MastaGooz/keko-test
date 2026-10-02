@@ -28,7 +28,7 @@ import {
   ESPADON,
   HACHETTE,
   HACHE_DEUX_MAINS,
-  PLASTRON_DE_CUIR,
+  PLASTRON,
   ROBE,
   RONDACHE,
   POTIONS_DEPART,
@@ -338,17 +338,23 @@ export function creerHub(): Hub {
     reserve: [
       ESPADON,
       HACHE_DEUX_MAINS,
-      RONDACHE,
       DAGUE,
       HACHETTE,
+      PLASTRON,
       COTTE_DE_MAILLE,
-      PLASTRON_DE_CUIR,
       ROBE,
       ...POTIONS_DEPART.slice(1),
       ...SUPER_POTIONS_DEPART,
     ],
+    /**
+     * **LE CHARGEMENT DE BASE : GLAIVE, RONDACHE, PLASTRON DE CUIR.** Tranché
+     * par Keko. *Les deux mains sont pleines dès le départ*, là où le kit se
+     * contentait d'une arme — on arrive donc avec un build complet plutôt
+     * qu'avec un trou à combler, et l'armurerie se découvre en comparant, pas
+     * en bouchant.
+     */
     chargement: {
-      mains: [ARME_GRATUITE, null],
+      mains: [ARME_GRATUITE, RONDACHE],
       armure: ARMURE_GRATUITE,
       pile: [POTIONS_DEPART[0]!, ...pileVide().slice(1)],
     },

@@ -67,11 +67,12 @@ const COTTE: Armure = {
   verifier("on arrive avec l'equipement gratuit DEJA equipe",
     h.chargement.mains[0] === ARME_GRATUITE && h.chargement.armure === ARMURE_GRATUITE)
   verifier('on peut donc descendre sans rien toucher', peutDescendre(h.chargement))
-  // Cinq cartes d'arme (3 Taille, 1 Estoc, 1 Riposte) et six d'armure. La
-  // potion s'y ajoute par la pile, qui n'est pas une piece.
-  verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 11)
+  // Cinq cartes par arme (Glaive et Rondache) et DEUX d'armure : le format
+  // des armures est passe a deux. La potion s'y ajoute par la pile, qui n'est
+  // pas une piece.
+  verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 12)
   verifier('une potion est deja sur la pile', consommablesDeLaPile(h.chargement.pile).length === 1)
-  verifier('elle ajoute sa carte au deck emporte', deckEmporte(h.chargement).length === 12)
+  verifier('elle ajoute sa carte au deck emporte', deckEmporte(h.chargement).length === 13)
   // En attendant un marché, l'Espadon attend au râtelier avec les potions
   // qu'on n'a pas prises : sans lui il n'y aurait rien à choisir.
   verifier('le ratelier tient l’Espadon au depart', h.reserve.includes(ESPADON_REEL))
@@ -94,11 +95,15 @@ const COTTE: Armure = {
   verifier("un identifiant inconnu ne deplace rien",
     deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, 'aucune') === h)
 
-  const seconde = deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, DAGUE.id)
+  // LA SECONDE MAIN EST PRISE AU DEPART par la Rondache : on la libere avant
+  // d'y poser autre chose, sinon le test mesure un echange et non un ajout.
+  const libre = deplacerPiece(h, { ou: 'main', rang: 1 }, { ou: 'reserve' }, RONDACHE.id)
+  const seconde = deplacerPiece(libre, { ou: 'reserve' }, { ou: 'main', rang: 1 }, DAGUE.id)
   verifier('une arme a une main va dans le second slot',
-    seconde.chargement.mains[1] === DAGUE && seconde.reserve.length === 1)
-  // Onze cartes de pieces (Glaive 5 + Plastron 6), plus les six de la Dague.
-  verifier('et elle donne ses cartes', deckDeLEquipement(equipement(seconde.chargement)).length === 11 + 6)
+    seconde.chargement.mains[1] === DAGUE)
+  // Sept cartes de pieces (Glaive 5 + Plastron de cuir 2), plus les six de la
+  // Dague.
+  verifier('et elle donne ses cartes', deckDeLEquipement(equipement(seconde.chargement)).length === 7 + 6)
 }
 
 // --- l'echange ne fait rien disparaitre -------------------------------------
@@ -364,7 +369,7 @@ const COTTE: Armure = {
   const deux = deplacerPiece(h, { ou: 'reserve' }, { ou: 'pile' }, p2!.id)
   const trois = deplacerPiece(deux, { ou: 'reserve' }, { ou: 'pile' }, p3!.id)
   verifier('on empile plusieurs exemplaires du meme modele', consommablesDeLaPile(trois.chargement.pile).length === 3)
-  verifier('et le deck grossit d’autant', deckEmporte(trois.chargement).length === 14)
+  verifier('et le deck grossit d’autant', deckEmporte(trois.chargement).length === 15)
   verifier('rien ne s’est perdu en chemin', trois.reserve.length + consommablesDeLaPile(trois.chargement.pile).length === h.reserve.length + 1)
 
   // ON EN REPREND UNE PRECISE : la pile se prend par identifiant, sinon on ne
@@ -406,8 +411,11 @@ const COTTE: Armure = {
     accepteDepuis(pleine, { ou: 'pile' }, { ou: 'pile' }, pleine.chargement.pile[0]!.id))
   // Une main vide ne tient rien, donc rien ne part de la : la piece tenue ne
   // peut pas grandir pour un deplacement qui n'existe pas.
+  // LES DEUX MAINS SONT PLEINES AU DEPART : on en vide une pour eprouver le
+  // slot vide, sinon le test parle d'un slot qui contient quelque chose.
+  const sansSeconde = deplacerPiece(h, { ou: 'main', rang: 1 }, { ou: 'reserve' }, RONDACHE.id)
   verifier('un slot vide n’offre rien',
-    !accepteDepuis(h, { ou: 'main', rang: 1 }, { ou: 'reserve' }))
+    !accepteDepuis(sansSeconde, { ou: 'main', rang: 1 }, { ou: 'reserve' }))
 
   // CE QU'ON A BU NE REVIENT PAS. `rentrer` recoit les survivantes, et la pile
   // devient exactement ca -- c'est la seule ressource du jeu qui s'epuise.
@@ -527,7 +535,9 @@ console.log('Tout passe.')
 // --- chaque main a la sienne -------------------------------------------------
 
 {
-  const h = creerHub()
+  // LA RONDACHE EST EQUIPEE AU DEPART : on la repose au ratelier pour eprouver
+  // ce qu'un slot ACCEPTE, sinon on ne mesure que des echanges.
+  const h = deplacerPiece(creerHub(), { ou: 'main', rang: 1 }, { ou: 'reserve' }, RONDACHE.id)
   const rondache = h.reserve.find((o) => o.id === RONDACHE.id)!
   const dague = h.reserve.find((o) => o.id === 'dague')!
   const glaive = h.chargement.mains[0]!

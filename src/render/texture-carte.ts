@@ -1134,12 +1134,17 @@ function replier(
  * il ne se coupe jamais de son chiffre, et le rendu 2D s'en sort avec un repli
  * en clair.
  */
-type Jeton = { type: 'pa'; valeur: number }
+type Jeton = { type: 'pa'; valeur: number } | { type: 'coeur' }
 
 function lireJeton(mot: string): Jeton | null {
+  // LE COEUR N'A PAS DE VALEUR : son chiffre est du TEXTE, écrit avant lui —
+  // « +15 ♥ ». *L'orbe des PA met son chiffre DEDANS parce qu'elle dit un
+  // coût ; le coeur dit une mesure, et une mesure se lit à côté de son
+  // symbole* — la grammaire de la bande de stats de l'armurerie.
+  if (mot === '{coeur}') return { type: 'coeur' }
   const m = /^\{(pa):(\d+)\}$/.exec(mot)
   if (m === null) return null
-  return { type: m[1] as Jeton['type'], valeur: Number(m[2]) }
+  return { type: 'pa', valeur: Number(m[2]) }
 }
 
 /**
@@ -1194,6 +1199,28 @@ function peindreJeton(
   ctx.save()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
+
+  if (jeton.type === 'coeur') {
+    // LE COEUR DES POINTS DE VIE, celui de la bande de stats : même dégradé,
+    // même cerne sombre. *Le même fait se dit du même symbole partout.*
+    const c = ctx.createLinearGradient(x, y - h / 2, x + h * 0.3, y + h / 2)
+    c.addColorStop(0, '#e2565e')
+    c.addColorStop(0.6, '#9d2330')
+    c.addColorStop(1, '#5d121b')
+    ctx.beginPath()
+    ctx.moveTo(x + h / 2, y + h * 0.36)
+    ctx.bezierCurveTo(x + h * 1.04, y - h * 0.04, x + h * 0.76, y - h * 0.5, x + h / 2, y - h * 0.18)
+    ctx.bezierCurveTo(x + h * 0.24, y - h * 0.5, x - h * 0.04, y - h * 0.04, x + h / 2, y + h * 0.36)
+    ctx.closePath()
+    ctx.fillStyle = c
+    ctx.fill()
+    ctx.strokeStyle = '#2a1013'
+    ctx.lineWidth = Math.max(0.6, h * 0.06)
+    ctx.stroke()
+    ctx.restore()
+    return
+  }
+
   // L'ORBE DU COÛT, EN PETIT : le même objet que le coin de la carte et que le
   // coin de l'écran. Le disque peint reste le repli, parce qu'*un canvas ne
   // dessine rien du tout si l'image manque*.
