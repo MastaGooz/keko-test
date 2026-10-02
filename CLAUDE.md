@@ -1832,16 +1832,36 @@ défense* : le Coup de bouclier frappe avec ce qu'on a bloqué, donc deux Bloque
 valent désormais 14 de dégâts au lieu de 10. **Les deux cartes de la Rondache
 se règlent ensemble**, et c'est tout l'intérêt du verbe.
 
-**ET SON PIED DIT « ARME · MAIN GAUCHE ».** Tranché par Keko : « on va passer
-les armes à une main en "Arme · main droite" / "Arme · main gauche" — tout est
-en main droite, à part le bouclier qui est main gauche ». *Une arme et un
-bouclier ne se tiennent pas de la même main*, et le dire sur la carte prépare
-le jour où les deux slots cesseront d'être interchangeables.
+### CHAQUE MAIN A LA SIENNE — et l'absence est le troisième cas
 
-**Aucune règle ne lit encore cette main** (`main?: 'droite' | 'gauche'` sur
-`Arme`) : les deux slots acceptent toujours n'importe quelle arme à une main.
-*C'est une étiquette, comme la rareté l'a été avant d'avoir son cadre* — à
-Keko de dire si elle doit devenir une contrainte.
+Tranché par Keko, en deux temps : d'abord le libellé (« on va passer les armes à
+une main en "Arme · main droite" / "Arme · main gauche" »), puis la règle : « le
+premier slot ne peut contenir que des armes main droite, le second que des armes
+main gauche ; on va aussi mettre des armes "une main" qui peuvent aller dans les
+deux ».
+
+*Ce que ça achète* : **deux slots qui ne sont plus interchangeables**, donc un
+chargement qui se COMPOSE au lieu de se remplir — on ne peut plus porter deux
+boucliers, et une arme de droite ne va pas à gauche.
+
+**L'ABSENCE PORTE LE PLUS DE SENS**, et c'est ce qui évite d'inventer un
+vocabulaire : `main?: 'droite' | 'gauche'`, et **sans main déclarée l'arme va
+partout**. Le Glaive — l'arme de référence, celle qu'on ne peut pas perdre — est
+justement de ce troisième genre : Keko, « on va laisser le bouclier en main
+gauche et le Glaive en une main ». *Un champ à deux valeurs plus l'absence dit
+trois choses.*
+
+**Une arme à deux mains passe toujours partout** : on la pose où l'on veut, elle
+prend les deux. C'est la règle d'avant, inchangée.
+
+Le pied de la carte dit lequel des trois : « Arme · main droite », « Arme · main
+gauche », « Arme · une main », « Arme · deux mains ». Douze vérifications
+tiennent la contrainte.
+
+**CE QUI RESTE À DÉCIDER, et c'est à Keko** : les deux cases vides sont coiffées
+d'un seul mot, « Armes », donc *rien ne dit à l'avance quelle main attend quoi*.
+Le refus se lit au glisser — un slot qui ne prend pas ne s'allume pas — mais il
+ne se lit qu'à ce moment-là.
 
 **LES CHIFFRES SONT PROVISOIRES**, et Keko l'a dit en les demandant : « on
 verra les effets après ». Ils reprennent le barème du jeu sans y ajouter de

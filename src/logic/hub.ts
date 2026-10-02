@@ -448,10 +448,23 @@ function accepte(slot: Slot, piece: Objet, hub: Hub): boolean {
     return hub.chargement.pile.some((c) => c === null)
   }
   if (slot.ou === 'armure') return !estArme(piece) && !estConsommable(piece)
-  // Une arme va dans l'une ou l'autre main. À deux mains aussi : on la pose où
-  // l'on veut, elle prend les deux -- Keko : « on doit pouvoir la poser dans
-  // n'importe lequel des deux slots ».
-  return estArme(piece)
+  if (!estArme(piece)) return false
+  /**
+   * CHAQUE MAIN A LA SIENNE. Tranché par Keko : « le premier slot ne peut
+   * contenir que des armes main droite, le second que des armes main gauche ;
+   * on va aussi mettre des armes "une main" qui peuvent aller dans les deux ».
+   *
+   * *Ce que ça achète* : deux slots qui ne sont plus interchangeables, donc un
+   * chargement qui se compose au lieu de se remplir — on ne peut pas porter
+   * deux boucliers, et une arme de droite ne va pas à gauche.
+   *
+   * **Une arme à deux mains passe partout**, et c'est la règle d'avant qu'on
+   * garde : *on la pose où l'on veut, elle prend les deux* — Keko, « on doit
+   * pouvoir la poser dans n'importe lequel des deux slots ».
+   */
+  if (piece.mains === 2) return true
+  if (piece.main === undefined) return true
+  return piece.main === (slot.rang === 0 ? 'droite' : 'gauche')
 }
 
 function prendre(hub: Hub, slot: Slot, id?: string): { piece: Objet | null; hub: Hub } {

@@ -70,17 +70,19 @@ export type Arme = Piece & {
   /** Nombre de mains occupées. Une arme à deux mains prend les deux slots. */
   mains: 1 | 2
   /**
-   * LA MAIN QU'ELLE OCCUPE, et c'est pour l'instant une ÉTIQUETTE : le pied de
-   * la carte dit « Arme · main droite » ou « main gauche ».
+   * LA MAIN QU'ELLE OCCUPE — et c'est une CONTRAINTE, pas une étiquette.
    *
-   * Tranché par Keko : « tout est en main droite, à part le bouclier qui est
-   * main gauche ». *Une arme et un bouclier ne se tiennent pas de la même
-   * main*, et le dire sur la carte prépare le jour où les deux slots cesseront
-   * d'être interchangeables.
+   * Tranché par Keko : « le premier slot ne peut contenir que des armes main
+   * droite, le second que des armes main gauche ; on va aussi mettre des armes
+   * "une main" qui peuvent aller dans les deux ».
    *
-   * **Aucune règle ne la lit encore** — les deux slots acceptent toujours
-   * n'importe quelle arme à une main. C'est à Keko de dire si elle doit
-   * devenir une contrainte.
+   * **L'absence est le troisième cas, et c'est celui qui porte le plus de
+   * sens** : une arme sans main déclarée va PARTOUT. *Un champ à deux valeurs
+   * plus l'absence dit trois choses sans inventer de vocabulaire* — et le
+   * Glaive, l'arme de référence, est justement de ce troisième genre.
+   *
+   * Une arme à deux mains n'en a pas non plus : elle prend les deux slots, la
+   * question ne se pose pas.
    */
   main?: 'droite' | 'gauche'
 }
@@ -455,6 +457,7 @@ export const DAGUE: Arme = {
   nom: 'Dague',
   rarete: 'commune',
   mains: 1,
+  main: 'droite',
   set: [
     { modele: ESTOC, nombre: 2 },
     { modele: TAILLADE, nombre: 1 },
@@ -467,6 +470,7 @@ export const HACHETTE: Arme = {
   nom: 'Hachette',
   rarete: 'commune',
   mains: 1,
+  main: 'droite',
   set: [
     { modele: TAILLADE, nombre: 2 },
     { modele: ESTOC, nombre: 1 },

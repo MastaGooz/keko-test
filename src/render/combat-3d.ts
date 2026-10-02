@@ -103,6 +103,9 @@ export function setAPeindre(objet: Objet): { carte: CarteAPeindre; nombre: numbe
 /** Ce que dit le pied d'une arme : deux mains, ou laquelle des deux. */
 function mainDe(arme: Arme): string {
   if (arme.mains === 2) return 'deux mains'
+  // SANS MAIN DÉCLARÉE, ELLE VA PARTOUT — et c'est le cas du Glaive, l'arme de
+  // référence. *L'absence est le troisième cas*, celui qui ne contraint rien.
+  if (arme.main === undefined) return 'une main'
   return arme.main === 'gauche' ? 'main gauche' : 'main droite'
 }
 

@@ -8,7 +8,7 @@
 import type { Arme, Armure } from './armes.ts'
 import { carteTresor } from './cartes.ts'
 import { createRng } from './rng.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART, SUPER_POTIONS_DEPART, deckDeLEquipement } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART, RONDACHE, SUPER_POTIONS_DEPART, deckDeLEquipement } from './armes.ts'
 import {
   CAPACITE_PILE,
   consommablesDeLaPile,
@@ -521,4 +521,35 @@ console.log('Tout passe.')
   const rompu = deplacerPiece(p, { ou: 'reserve' }, { ou: 'main', rang: 0 }, espadon.id)
   verifier('equiper une piece a soi reste possible',
     rompu.chargement.mains[0]!.id === espadon.id)
+}
+
+// --- chaque main a la sienne -------------------------------------------------
+
+{
+  const h = creerHub()
+  const rondache = h.reserve.find((o) => o.id === RONDACHE.id)!
+  const dague = h.reserve.find((o) => o.id === 'dague')!
+  const glaive = h.chargement.mains[0]!
+
+  verifier('une arme de main gauche va dans le second slot',
+    accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, rondache.id))
+  verifier('...et pas dans le premier',
+    !accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 0 }, rondache.id))
+  verifier('une arme de main droite va dans le premier',
+    accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 0 }, dague.id))
+  verifier('...et pas dans le second',
+    !accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, dague.id))
+
+  // Le Glaive n'a pas de main declaree : il va partout. On le repose d'abord
+  // au coffre, puisqu'il est equipe au depart.
+  const pose = deplacerPiece(h, { ou: 'main', rang: 0 }, { ou: 'reserve' }, glaive.id)
+  verifier('une arme sans main declaree va a droite',
+    accepteDepuis(pose, { ou: 'reserve' }, { ou: 'main', rang: 0 }, glaive.id))
+  verifier('...comme a gauche',
+    accepteDepuis(pose, { ou: 'reserve' }, { ou: 'main', rang: 1 }, glaive.id))
+
+  const espadon = h.reserve.find((o) => o.id === ESPADON_REEL.id)!
+  verifier('une arme a deux mains se pose dans l’un ou l’autre',
+    accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 0 }, espadon.id) &&
+      accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, espadon.id))
 }
