@@ -120,16 +120,21 @@ function mainDe(arme: Arme): string {
  * *C'est exactement ce que cette bande attendait* — « on va garder cet
  * emplacement pour des effets spéciaux des armes », disait-il en la vidant.
  *
- * **UNE MESURE PAR LIGNE, et son chiffre AVANT son symbole** : c'est la
- * grammaire de la bande de stats de l'armurerie, où l'on lit les mêmes
- * réserves — *le même fait se dit du même symbole partout.* Et l'orbe y est
- * NUE : son chiffre est dehors, parce qu'ici elle dit une mesure et non le
- * coût d'une carte.
+ * **UNE MESURE PAR LIGNE**, et chaque symbole porte son chiffre là où il l'a
+ * partout ailleurs : le coeur DEVANT lui — il n'a pas de dedans — et l'orbe
+ * DEDANS. *C'est la grammaire de la bande de stats de l'armurerie*, où l'on lit
+ * les mêmes réserves : le même fait se dit du même symbole, et de la même
+ * façon, partout.
+ *
+ * *L'orbe a eu une version nue le temps d'un essai*, son chiffre écrit devant
+ * elle comme celui du coeur ; Keko l'a reprise — « on peut mettre le 1 à
+ * l'intérieur du symbole ? » **Un contenant qui peut tenir son chiffre le
+ * tient.**
  */
 function mesuresDeLaPiece(objet: Objet): string[] {
   const lignes: string[] = []
   if ('pv' in objet && objet.pv !== undefined) lignes.push(`+<b>${objet.pv}</b> {coeur}`)
-  if ('pa' in objet && objet.pa !== undefined) lignes.push(`+<b>${objet.pa}</b> {pa}`)
+  if ('pa' in objet && objet.pa !== undefined) lignes.push(`+ {pa:${objet.pa}}`)
   return lignes
 }
 

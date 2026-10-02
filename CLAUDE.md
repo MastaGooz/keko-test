@@ -1745,12 +1745,16 @@ Il voyage dans le combat d'un palier à l'autre, comme `pvMax` — *il vient de
 l'équipement, qui ne change plus une fois descendu.* Deux vérifications le
 tiennent.
 
-**ET IL S'ÉCRIT « +1 ⬤ », avec l'orbe NUE.** Le chiffre est DEHORS, devant elle,
-exactement comme celui du coeur — *l'orbe met son chiffre dedans quand elle dit
-un COÛT, elle le laisse dehors quand elle dit une MESURE*, et c'est la grammaire
-de la bande de stats de l'armurerie. **Le même dessin sert les deux** (`{pa:3}`
-contre `{pa}`), et c'est voulu : un second symbole pour les points d'action en
-aurait fait deux choses.
+**ET IL S'ÉCRIT AVEC LE CHIFFRE DANS L'ORBE** — « + ⬤1 ». Il a eu une version
+NUE le temps d'un essai, le chiffre posé devant comme celui du coeur ; Keko l'a
+reprise : « on peut mettre le 1 à l'intérieur du symbole ? »
+
+*Et il a raison, parce que c'est le même objet partout* : l'orbe du coin de la
+carte et celle du coin de l'écran ont toujours porté leur chiffre dedans.
+**L'argument « un chiffre dedans dit un coût, un chiffre dehors dit une mesure »
+distinguait deux choses qui n'ont pas à l'être** — l'orbe est un contenant, le
+coeur n'en est pas un, et chacun porte son chiffre là où sa forme le permet.
+*Un contenant qui peut tenir son chiffre le tient.*
 
 **Une mesure par LIGNE** (`mesuresDeLaPiece`, dans `combat-3d.ts`) : la bande
 libérée par la composition les empile, et *une pièce qui en porterait quatre se

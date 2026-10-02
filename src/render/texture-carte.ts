@@ -1134,7 +1134,7 @@ function replier(
  * il ne se coupe jamais de son chiffre, et le rendu 2D s'en sort avec un repli
  * en clair.
  */
-type Jeton = { type: 'pa'; valeur?: number } | { type: 'coeur' }
+type Jeton = { type: 'pa'; valeur: number } | { type: 'coeur' }
 
 function lireJeton(mot: string): Jeton | null {
   // LE COEUR N'A PAS DE VALEUR : son chiffre est du TEXTE, écrit avant lui —
@@ -1142,17 +1142,12 @@ function lireJeton(mot: string): Jeton | null {
   // coût ; le coeur dit une mesure, et une mesure se lit à côté de son
   // symbole* — la grammaire de la bande de stats de l'armurerie.
   if (mot === '{coeur}') return { type: 'coeur' }
-  /**
-   * **ET L'ORBE NUE DIT UNE MESURE, pas un coût.** `{pa:3}` met son chiffre
-   * DEDANS — c'est ce que coûte la carte ; `{pa}` le laisse DEHORS, devant
-   * elle, comme le coeur.
-   *
-   * *C'est la même grammaire que la bande de stats* : un contenant qui porte
-   * son chiffre dit ce qu'il contient, un symbole posé à côté d'un chiffre dit
-   * ce qu'on compte. **Le même dessin sert les deux**, et c'est voulu — un
-   * second symbole pour les points d'action en aurait fait deux choses.
-   */
-  if (mot === '{pa}') return { type: 'pa' }
+  // L'ORBE, ELLE, PORTE TOUJOURS SON CHIFFRE — qu'elle dise un coût sur une
+  // carte de combat ou une mesure sur une pièce. *Elle a eu une version nue le
+  // temps d'un essai, le chiffre écrit devant comme pour le coeur* ; Keko l'a
+  // reprise : « on peut mettre le 1 à l'intérieur du symbole ? » **C'est le
+  // même objet qu'au coin de la carte et qu'au coin de l'écran, et celui-là a
+  // toujours eu son chiffre dedans.**
   const m = /^\{(pa):(\d+)\}$/.exec(mot)
   if (m === null) return null
   return { type: 'pa', valeur: Number(m[2]) }
@@ -1283,11 +1278,9 @@ function peindreJeton(
     ctx.lineWidth = Math.max(1, h * 0.07)
     ctx.stroke()
   }
-  if (jeton.valeur !== undefined) {
-    ctx.fillStyle = '#f7ead0'
-    ctx.font = dansLeDisque(ctx, jeton.valeur, taille * CHIFFRE_DANS_PA, h * 0.62)
-    ctx.fillText(String(jeton.valeur), x + h / 2, y + h * 0.02)
-  }
+  ctx.fillStyle = '#f7ead0'
+  ctx.font = dansLeDisque(ctx, jeton.valeur, taille * CHIFFRE_DANS_PA, h * 0.62)
+  ctx.fillText(String(jeton.valeur), x + h / 2, y + h * 0.02)
   ctx.restore()
 }
 
