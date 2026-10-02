@@ -169,6 +169,24 @@ const ESTOC: Modele = {
   remiseParAttaque: 1,
 }
 
+/**
+ * LA RIPOSTE : un piège posé sur le tour adverse.
+ *
+ * Composée par Keko : « durant 1 tour, inflige 4 à chaque fois qu'un ennemi
+ * vous attaque ». *Elle paie d'autant mieux qu'il y a de corps en face* — exact
+ * inverse d'une garde, qui vaut d'autant moins qu'on est entouré.
+ *
+ * **Son coût est à trancher** : 2 PA est un placeholder, posé pour qu'elle soit
+ * jouable à côté d'une Taille dans le même tour.
+ */
+const RIPOSTE: Modele = {
+  nom: 'Riposte',
+  type: 'combat',
+  cout: 2,
+  degats: 0,
+  effets: [{ type: 'riposte', montant: 4 }],
+}
+
 const TAILLADE: Modele = { nom: 'Taillade', type: 'combat', cout: 2, degats: 6 }
 const MOULINET: Modele = { nom: 'Moulinet', type: 'combat', cout: 4, degats: 14 }
 
@@ -200,9 +218,13 @@ export const GLAIVE: Arme = {
   // différentes tombe ici*, et c'est cohérent avec ce qu'il avait acheté : une
   // arme dont deux cartes sont pareilles n'en a qu'une et demie, sauf quand le
   // doublon est justement ce qui alimente la troisième.
+  // CINQ CARTES, TROIS MODÈLES — tranché par Keko : « 3 Taille, 1 Estoc,
+  // 1 Riposte ». Les Tailles alimentent l'Estoc ET sont ce qu'on joue en
+  // attendant ; la Riposte, elle, se joue quand on sait qu'on va encaisser.
   set: [
-    { modele: TAILLE, nombre: 2 },
+    { modele: TAILLE, nombre: 3 },
     { modele: ESTOC, nombre: 1 },
+    { modele: RIPOSTE, nombre: 1 },
   ],
 }
 
@@ -295,6 +317,24 @@ const BLOQUER: Modele = {
 }
 
 /**
+ * LA PROJECTION : elle frappe peu et vole une mise.
+ *
+ * Composée par Keko : « inflige 3 dégâts et étourdissement ; étourdissement =
+ * annule l'action en cours de l'ennemi ». *Elle vaut d'autant plus que la bête
+ * est lente* — contre un frappeur à `periode: 2` elle efface deux tours
+ * d'attente, contre un `periode: 1` elle n'en efface qu'un.
+ *
+ * **Son coût est à trancher** : 2 PA est un placeholder.
+ */
+const PROJECTION: Modele = {
+  nom: 'Projection',
+  type: 'combat',
+  cout: 2,
+  degats: 3,
+  effets: [{ type: 'etourdit' }],
+}
+
+/**
  * ELLE FRAPPE AVEC CE QU'ON A ENCAISSÉ : ses dégâts valent la défense du
  * moment. Composé par Keko.
  *
@@ -337,8 +377,9 @@ export const RONDACHE: Arme = {
   // qui frappe. Tranché par Keko.
   main: 'gauche',
   set: [
-    { modele: BLOQUER, nombre: 2 },
+    { modele: BLOQUER, nombre: 3 },
     { modele: COUP_DE_BOUCLIER, nombre: 1 },
+    { modele: PROJECTION, nombre: 1 },
   ],
 }
 

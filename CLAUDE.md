@@ -1678,6 +1678,50 @@ une carte à effet testait donc une AUTRE carte que celle qu'on croyait — et i
 passait.* Il reprend tout le gabarit désormais. Sept vérifications tiennent la
 règle (215 au total).
 
+### LA RIPOSTE ET L'ÉTOURDISSEMENT — deux verbes sur le tour ADVERSE
+
+Composés par Keko, qui a porté les deux armes à cinq cartes : le Glaive donne
+**3 Taille, 1 Estoc, 1 Riposte** ; la Rondache **3 Bloquer, 1 Coup de bouclier,
+1 Projection**.
+
+**LA RIPOSTE : « inflige 4 à chaque fois qu'un ennemi vous attaque », ce
+tour-ci.** *C'est le premier effet qui fasse du tour adverse un moment où l'on
+AGIT* — jusqu'ici la salve était subie, et le seul choix qu'on avait sur elle
+était de bloquer. Et **elle paie d'autant mieux qu'il y a de corps en face**,
+exact inverse d'une garde, qui vaut d'autant moins qu'on est entouré.
+
+Trois choses à ne pas défaire :
+
+- **elle tombe à la fin du tour, comme le bloc** : *une riposte qui durerait
+  serait une arme passive, pas une décision* — et elle se range au même endroit
+  que lui dans `finDuTour` ;
+- **elle part APRÈS le coup, jamais avant** : elle répond, elle ne prévient
+  pas. Un joueur qui tombe ne riposte plus, il est déjà parti quand le coup
+  arrive ;
+- **elle peut tuer**, et alors le corps meurt pour de bon — événement de mort,
+  et victoire si c'était le dernier.
+
+**L'ÉTOURDISSEMENT : la cible perd l'action qu'elle préparait.** Son compteur
+repart de sa période ENTIÈRE, donc *on ne lui vole pas un tour, on lui vole sa
+mise* — ce qu'elle avait déjà attendu. **Il vaut d'autant plus que la bête est
+lente** : contre un frappeur à `periode: 2` il efface deux tours d'attente,
+contre un `periode: 1` un seul. C'est ce qui en fait une réponse aux gros
+frappeurs plutôt qu'aux petits.
+
+*Ça a demandé de passer la CIBLE à `appliquerEffet`*, qui ne recevait que
+l'état : un effet qui porte sur un corps a besoin de savoir lequel.
+
+**La riposte dit sa durée, le bloc non**, et ce n'est pas une incohérence :
+*le bloc tombe à chaque fin de tour, c'est une règle du jeu ; la riposte est
+une clause de CETTE carte* — sans « ce tour » on la croirait permanente.
+
+**Et « Étourdit » est un mot-clé qui s'explique sur sa propre ligne** :
+« annule l'action en cours ». *Un mot-clé qu'on n'explique nulle part n'est pas
+un mot-clé, c'est du jargon.*
+
+**LES DEUX COÛTS SONT DES PLACEHOLDERS** (2 PA chacun) : Keko a donné les
+effets, pas les prix. Onze vérifications tiennent les deux verbes.
+
 ### LE PREMIER VERBE QUI FASSE DU BLOC UNE RESSOURCE OFFENSIVE
 
 **Le Coup de bouclier de la Rondache inflige des dégâts ÉGAUX À LA DÉFENSE.**

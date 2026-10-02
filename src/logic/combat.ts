@@ -41,6 +41,29 @@ export type Effet =
    * suivant. *Sans la remise à zéro, bloquer deviendrait épargner.*
    */
   | { type: 'bloc'; montant: number }
+  /**
+   * LA RIPOSTE : ce que prend un ennemi CHAQUE FOIS qu'il frappe, ce tour-ci.
+   *
+   * Composée par Keko : « durant 1 tour, inflige 4 à chaque fois qu'un ennemi
+   * vous attaque ». *C'est le premier effet qui fasse du tour ADVERSE un
+   * moment où l'on agit* — jusqu'ici la salve était subie, et le seul choix
+   * qu'on avait sur elle était de bloquer.
+   *
+   * Elle tombe à la fin du tour comme le bloc : *une riposte qui durerait
+   * serait une arme passive, pas une décision.* Et elle paie d'autant mieux
+   * qu'il y a de corps en face, ce qui en fait l'exact inverse d'une garde.
+   */
+  | { type: 'riposte'; montant: number }
+  /**
+   * L'ÉTOURDISSEMENT : la cible perd l'action qu'elle préparait.
+   *
+   * Composé par Keko : « étourdissement = annule l'action en cours de
+   * l'ennemi ». Son compteur repart de sa période entière, donc *on ne lui
+   * vole pas un tour, on lui vole sa mise* — ce qu'elle avait déjà attendu.
+   * Il vaut d'autant plus que la bête est lente, et c'est ce qui en fait une
+   * réponse aux gros frappeurs plutôt qu'aux petits.
+   */
+  | { type: 'etourdit' }
   /** Rend des PV au joueur, sans dépasser son maximum. */
   | { type: 'soin'; montant: number }
   /** Recharge de l'énergie tout de suite, dans la limite du maximum. */
@@ -182,6 +205,11 @@ export type EtatCombat = {
    * épargne, pas un enchaînement.*
    */
   attaquesCeTour: number
+  /**
+   * CE QUE PREND UN ENNEMI QUI FRAPPE, ce tour-ci. Retombe à zéro avec le
+   * bloc : *ce qui ne vaut que pour un tour se range au même endroit.*
+   */
+  riposte: number
   evenements: Evenement[]
   issue: Issue | null
 }
@@ -217,6 +245,7 @@ export function creerCombat(
     tailleMain: config.tailleMain,
     tour: 1,
     attaquesCeTour: 0,
+    riposte: 0,
     evenements: [{ tour: 1, type: 'debut', ennemis: ennemis.map((e) => e.nom) }],
     issue: null,
   }
@@ -300,6 +329,7 @@ export function finDuTour(etat: EtatCombat, rng: Rng): EtatCombat {
   suivant.bloc = 0
   // ET LA REMISE AVEC LUI : elle ne vaut que pour l'enchaînement d'un tour.
   suivant.attaquesCeTour = 0
+  suivant.riposte = 0
   suivant.tour += 1
   suivant.energie = suivant.energieMax
   piocher(suivant, rng)
@@ -481,7 +511,7 @@ function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number): void {
   // frappe avec la défense qu'on AVAIT en jouant la carte.*
   const degats = degatsDe(carte, etat)
 
-  for (const effet of carte.effets ?? []) appliquerEffet(etat, effet)
+  for (const effet of carte.effets ?? []) appliquerEffet(etat, effet, cible)
 
   const ennemi = etat.ennemis[cible]
   if (ennemi === undefined || ennemi.pv === 0) return
@@ -502,7 +532,7 @@ function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number): void {
   }
 }
 
-function appliquerEffet(etat: EtatCombat, effet: Effet): void {
+function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number): void {
   switch (effet.type) {
     case 'soin':
       etat.pv = Math.min(etat.pvMax, etat.pv + effet.montant)
@@ -513,6 +543,16 @@ function appliquerEffet(etat: EtatCombat, effet: Effet): void {
     case 'bloc':
       etat.bloc += effet.montant
       break
+    case 'riposte':
+      etat.riposte += effet.montant
+      break
+    case 'etourdit': {
+      // ON LUI REND SA PÉRIODE ENTIÈRE : *on ne lui vole pas un tour, on lui
+      // vole sa mise.* Un corps déjà tombé ne prépare plus rien.
+      const vise = etat.ennemis[cible]
+      if (vise !== undefined && vise.pv > 0) vise.compteur = vise.periode
+      break
+    }
     case 'degatsTous':
       for (const ennemi of etat.ennemis) {
         if (ennemi.pv === 0) continue
@@ -548,7 +588,29 @@ function frapper(etat: EtatCombat, ennemi: Ennemi): void {
     pvJoueur: etat.pv,
   })
 
-  if (etat.pv === 0) terminer(etat, 'defaite')
+  if (etat.pv === 0) {
+    terminer(etat, 'defaite')
+    return
+  }
+
+  // LA RIPOSTE PART APRÈS LE COUP, jamais avant : *elle répond, elle ne
+  // prévient pas.* Un joueur qui tombe ne riposte plus — il est déjà parti
+  // quand le coup arrive.
+  if (etat.riposte > 0) {
+    ennemi.pv = Math.max(0, ennemi.pv - etat.riposte)
+    etat.evenements.push({
+      tour: etat.tour,
+      type: 'carte',
+      nom: 'riposte',
+      cible: ennemi.nom,
+      degats: etat.riposte,
+      pvCible: ennemi.pv,
+    })
+    if (ennemi.pv === 0) {
+      etat.evenements.push({ tour: etat.tour, type: 'mort', nom: ennemi.nom })
+      if (etat.ennemis.every((autre) => autre.pv === 0)) terminer(etat, 'victoire')
+    }
+  }
 }
 
 function terminer(etat: EtatCombat, issue: Issue): void {

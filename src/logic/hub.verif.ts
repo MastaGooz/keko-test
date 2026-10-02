@@ -67,11 +67,11 @@ const COTTE: Armure = {
   verifier("on arrive avec l'equipement gratuit DEJA equipe",
     h.chargement.mains[0] === ARME_GRATUITE && h.chargement.armure === ARMURE_GRATUITE)
   verifier('on peut donc descendre sans rien toucher', peutDescendre(h.chargement))
-  // Trois cartes d'arme, six d'armure : le format des douze moins l'arme qui
-  // manque. La potion s'y ajoute par la pile, qui n'est pas une piece.
-  verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 9)
+  // Cinq cartes d'arme (3 Taille, 1 Estoc, 1 Riposte) et six d'armure. La
+  // potion s'y ajoute par la pile, qui n'est pas une piece.
+  verifier('et le deck en decoule', deckDeLEquipement(equipement(h.chargement)).length === 11)
   verifier('une potion est deja sur la pile', consommablesDeLaPile(h.chargement.pile).length === 1)
-  verifier('elle ajoute sa carte au deck emporte', deckEmporte(h.chargement).length === 10)
+  verifier('elle ajoute sa carte au deck emporte', deckEmporte(h.chargement).length === 12)
   // En attendant un marché, l'Espadon attend au râtelier avec les potions
   // qu'on n'a pas prises : sans lui il n'y aurait rien à choisir.
   verifier('le ratelier tient l’Espadon au depart', h.reserve.includes(ESPADON_REEL))
@@ -97,8 +97,8 @@ const COTTE: Armure = {
   const seconde = deplacerPiece(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, DAGUE.id)
   verifier('une arme a une main va dans le second slot',
     seconde.chargement.mains[1] === DAGUE && seconde.reserve.length === 1)
-  // Neuf cartes de pieces (Glaive 3 + Plastron 6), plus les six de la Dague.
-  verifier('et elle donne ses cartes', deckDeLEquipement(equipement(seconde.chargement)).length === 9 + 6)
+  // Onze cartes de pieces (Glaive 5 + Plastron 6), plus les six de la Dague.
+  verifier('et elle donne ses cartes', deckDeLEquipement(equipement(seconde.chargement)).length === 11 + 6)
 }
 
 // --- l'echange ne fait rien disparaitre -------------------------------------
@@ -364,7 +364,7 @@ const COTTE: Armure = {
   const deux = deplacerPiece(h, { ou: 'reserve' }, { ou: 'pile' }, p2!.id)
   const trois = deplacerPiece(deux, { ou: 'reserve' }, { ou: 'pile' }, p3!.id)
   verifier('on empile plusieurs exemplaires du meme modele', consommablesDeLaPile(trois.chargement.pile).length === 3)
-  verifier('et le deck grossit d’autant', deckEmporte(trois.chargement).length === 12)
+  verifier('et le deck grossit d’autant', deckEmporte(trois.chargement).length === 14)
   verifier('rien ne s’est perdu en chemin', trois.reserve.length + consommablesDeLaPile(trois.chargement.pile).length === h.reserve.length + 1)
 
   // ON EN REPREND UNE PRECISE : la pile se prend par identifiant, sinon on ne

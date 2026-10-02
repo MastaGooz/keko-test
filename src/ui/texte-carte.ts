@@ -104,6 +104,15 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // et puissante.* Le code garde `energie` partout, c'est un nom interne.
     if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> points d'action`)
     if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
+    // LA RIPOSTE DIT SA DURÉE, là où le bloc ne la dit plus : *le bloc tombe à
+    // chaque fin de tour, c'est une règle du jeu ; la riposte, elle, est une
+    // clause de CETTE carte* — et sans elle on la croirait permanente.
+    if (e.type === 'riposte')
+      l.push(`Inflige <b>${e.montant}</b> à chaque ennemi qui vous attaque ce tour`)
+    // L'ÉTOURDISSEMENT est un mot-clé : la carte le nomme, puis dit ce qu'il
+    // fait sur la ligne de condition. *Un mot-clé qu'on n'explique nulle part
+    // n'est pas un mot-clé, c'est du jargon.*
+    if (e.type === 'etourdit') l.push(`Étourdit`, `<small>annule l'action en cours</small>`)
   }
   // LA REMISE SE DIT APRÈS LE COUP, parce qu'elle parle du COÛT et non de ce
   // que la carte fait — et elle le dit avec un VERBE.

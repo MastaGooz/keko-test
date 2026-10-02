@@ -590,5 +590,65 @@ cas('et il compte comme une attaque pour la remise', () => {
   egal(coutDe(apres.main[ou(apres, 'Estoc')]!, apres), 2, 'donc l’estoc escompte')
 })
 
+// --- riposter, et etourdir ---------------------------------------------------
+
+const RIPOSTE_TEST = { nom: 'Riposte', cout: 2, degats: 0, effets: [{ type: 'riposte' as const, montant: 4 }] }
+const PROJECTION_TEST = { nom: 'Projection', cout: 2, degats: 3, effets: [{ type: 'etourdit' as const }] }
+
+cas('la riposte frappe celui qui vous attaque', () => {
+  const etat = combat([...cartes(1, RIPOSTE_TEST), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0)
+  const apres = finDuTour(posee, createRng(1))
+  egal(apres.ennemis[0]!.pv, 96, 'quatre points, rendus a celui qui a frappe')
+})
+
+cas('elle frappe CHAQUE assaillant, pas un seul', () => {
+  const etat = groupe([...cartes(1, RIPOSTE_TEST), ...cartes(4, DAGUE)], [
+    ennemi({ pv: 100, degats: 5 }),
+    ennemi({ pv: 100, degats: 5 }),
+  ])
+  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0)
+  const apres = finDuTour(posee, createRng(1))
+  verifie(apres.ennemis[0]!.pv === 96 && apres.ennemis[1]!.pv === 96, 'les deux ont paye leur coup')
+})
+
+cas('elle ne traverse pas le tour', () => {
+  const etat = combat([...cartes(1, RIPOSTE_TEST), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0)
+  const unTour = finDuTour(posee, createRng(1))
+  egal(unTour.riposte, 0, 'elle tombe avec le bloc')
+  const deuxTours = finDuTour(unTour, createRng(2))
+  egal(deuxTours.ennemis[0]!.pv, 96, 'le second coup ne coute plus rien')
+})
+
+cas('un ennemi tue par la riposte meurt pour de bon', () => {
+  const etat = combat([...cartes(1, RIPOSTE_TEST), ...cartes(4, DAGUE)], ennemi({ pv: 3, degats: 5 }))
+  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0)
+  const apres = finDuTour(posee, createRng(1))
+  egal(apres.ennemis[0]!.pv, 0, 'quatre points sur trois PV')
+  egal(apres.issue, 'victoire', 'et le dernier corps tombe gagne le combat')
+})
+
+cas('etourdir rend a l’ennemi sa periode entiere', () => {
+  const etat = combat(
+    [...cartes(1, PROJECTION_TEST), ...cartes(4, DAGUE)],
+    ennemi({ pv: 100, degats: 5, periode: 3, compteur: 1 }),
+  )
+  const apres = jouerCarte(etat, ou(etat, 'Projection'), 0)
+  egal(apres.ennemis[0]!.compteur, 3, 'il recommence a attendre')
+  egal(apres.ennemis[0]!.pv, 97, 'et il a quand meme pris ses degats')
+})
+
+cas('...donc il ne frappe pas ce tour-ci', () => {
+  const etat = combat(
+    [...cartes(1, PROJECTION_TEST), ...cartes(4, DAGUE)],
+    ennemi({ pv: 100, degats: 5, periode: 3, compteur: 1 }),
+  )
+  const sans = finDuTour(etat, createRng(1))
+  const avec = finDuTour(jouerCarte(etat, ou(etat, 'Projection'), 0), createRng(1))
+  egal(sans.pv, 25, 'sans projection, le coup passe')
+  egal(avec.pv, 30, 'avec, il est annule')
+})
+
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)
 console.log('Tout passe.')
