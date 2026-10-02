@@ -1061,17 +1061,29 @@ function ecrireLigne(
     groupe = ''
   }
 
+  /**
+   * L'ESPACE SE PORTE EN TÊTE DE MOT, jamais en queue — et c'est ce qui a
+   * manqué. Keko : « c'est bizarre pour le symbole PA, tu as mis un espace
+   * avant et après ou juste après ? » *Juste après* : le jeton se dessinait
+   * dès que le groupe précédent était vidé, donc il venait coller le mot d'à
+   * côté, et l'espace partait de l'autre côté.
+   *
+   * **Un seul endroit décide de l'espace**, et c'est le mot qui arrive : tout
+   * ce qui n'ouvre pas la ligne en porte un devant lui. Deux règles — une pour
+   * le texte, une pour le jeton — se seraient désaccordées exactement comme
+   * ici.
+   */
   mots.forEach((mot, i) => {
     const jeton = lireJeton(mot)
     if (jeton === null) {
-      groupe += groupe === '' ? mot : ` ${mot}`
+      groupe += groupe === '' && i === 0 ? mot : ` ${mot}`
       if (i === mots.length - 1) vider()
       return
     }
     vider()
+    if (i > 0) x += espace
     peindreJeton(ctx, jeton, x, y, taille, symbole)
     x += largeurJeton(ctx, jeton, taille)
-    if (i < mots.length - 1) x += espace
   })
   vider()
 }

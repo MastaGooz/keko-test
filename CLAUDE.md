@@ -1733,6 +1733,13 @@ Quatre choses qui le portent :
 - **les mots de texte qui se suivent partent en un seul tracé.** Les découper
   mot à mot casserait leur crénage, et ça se verrait sur une police à chasse
   variable ;
+- **l'espace se porte en TÊTE de mot, jamais en queue.** Keko : « c'est bizarre
+  pour le symbole PA, tu as mis un espace avant et après ou juste après ? » —
+  *juste après* : le jeton se dessinait dès que le groupe de texte précédent
+  était vidé, donc il venait coller le mot d'à côté et l'espace partait de
+  l'autre côté. **Un seul endroit décide de l'espace**, et c'est le mot qui
+  arrive : deux règles, une pour le texte et une pour le jeton, se seraient
+  désaccordées exactement comme ici ;
 - **le chiffre rentre dans son symbole, quel qu'il soit.** Un « 11 » de Rempart
   est deux fois plus large qu'un « 5 » : c'est la police qui cède, la règle du
   disque du compte des piles ;
