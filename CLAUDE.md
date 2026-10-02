@@ -7657,29 +7657,50 @@ le background des armes en rouge au lieu du bleu ? » *Le fond de nuit propre à
 chaque famille, perdu quand les 24 dessins ont rendu leur ciel, revient donc
 par une autre porte* — et par le DÉCOR COMMUN, pas par une seconde image.
 
-**Ça passe par la TEINTE, jamais par un voile** (`globalCompositeOperation =
-'hue'`) : `hue` remplace la couleur en gardant la luminance ET la saturation du
-décor — *c'est le même ciel, il change d'heure.* Un rectangle rouge posé dessus
-aurait écrasé sa matière, ses étoiles et le dégradé qui monte vers le haut ;
-et une seconde image aurait doublé le fichier à maintenir.
+**Ça passe par la TEINTE, jamais par un voile** : on garde la saturation et la
+luminance de chaque pixel et on lui donne la teinte du rouge — *c'est le même
+ciel, il change d'heure.* Un rectangle rouge posé dessus aurait écrasé sa
+matière, ses étoiles et le dégradé qui monte vers le haut ; et une seconde
+image aurait doublé le fichier à maintenir.
 
-**ET ELLE SE POSE APRÈS LA LUMIÈRE, PAS AVANT — c'est ce qui a coûté une
-passe.** Teintée juste après le décor, elle était ensuite recouverte par le
-BLOOM DU SUJET, qui ajoute la couleur de l'arme sur tout le champ : la lame
-bleue de l'Épée et de Fendre repeignait le ciel en bleu. Keko : « quand je zoom
-sur une arme, l'image affichée est bleue, et certaines des cartes générées
-aussi (ex : Fendre) ».
+**ET ELLE SE CALCULE À LA MAIN, PAS AVEC `globalCompositeOperation = 'hue'` —
+c'est la vraie leçon de cet épisode.** Deux passes ont été perdues à régler un
+effet qui MARCHAIT sur la machine de dev et pas chez Keko : « ça n'a rien
+changé du tout, c'est toujours le même problème ». *Mes captures montraient du
+rouge, les siennes du bleu, et aucune console ne disait rien* — `hue`,
+`saturation`, `color` et `luminosity` sont les modes NON SÉPARABLES du canvas,
+les moins bien tenus du lot, et un navigateur qui ne les implémente pas
+**ignore l'opération** au lieu de lever.
 
-*Et la correction est juste sur le fond* : **le bloom n'est pas le sujet, c'est
-de la lumière tombée sur le décor** — elle doit donc prendre la couleur du
-décor, comme tout reflet prend la couleur de ce qu'il touche. L'ordre de Keko
-tient toujours, avec un cran de plus : **fond, lumière, TEINTE, sujet.** Le
-sujet net se pose après et garde ses couleurs — *on teinte le ciel, pas
-l'arme*, donc la spirale blanche d'une Tornade reste blanche.
+*C'est exactement la raison qui avait déjà écarté `ctx.filter`* : **une
+dégradation silencieuse vaut moins qu'un chemin qui marche partout.** La
+formule de la spécification tient en vingt lignes d'arithmétique
+(`virerAuRouge`), et elle rend le même résultat sur tous les appareils.
 
-Mesuré sur la texture, à 256 comme à 768 : coin du ciel à `(78, 29, 25)` pour
-Fendre, Tornade et Fauchage — **le même rouge aux deux tailles**, là où le
-centre garde la couleur de ce qui est dessiné.
+**Et le coût est nul, parce qu'on teinte la SOURCE et non la carte** : le
+décor est viré une fois pour toutes (`fondArme`, mémorisé comme le décor
+lui-même), et le bloom se vire sur sa toile de quarante-quatre pixels. *Une
+passe par pixels sur chaque carte l'aurait payée vingt fois pour un résultat
+identique.* Si la lecture de pixels échouait, le ciel reste BLEU : un décor de
+la mauvaise couleur vaut mieux qu'une carte sans décor.
+
+**RÈGLE GÉNÉRALE, et elle vaut au-delà d'ici : quand Keko dit qu'un effet ne
+se produit pas alors qu'il se produit chez moi, la première hypothèse est une
+fonctionnalité de rendu que son appareil n'a pas** — pas un réglage à pousser.
+J'ai cherché deux fois du côté de l'intensité avant de regarder le support.
+
+**ET LA LUMIÈRE DU SUJET SE VIRE AUSSI.** Keko : « quand je zoom sur une arme,
+l'image affichée est bleue, et certaines des cartes générées aussi (ex :
+Fendre) ». Le bloom ajoute la couleur de l'arme sur TOUT le champ : une lame
+bleue repeignait le ciel rouge en bleu, d'autant plus que le sujet est large et
+clair — d'où le « certaines », le Glaive ayant une lame fine.
+
+*Le bloom n'est pas le sujet, c'est de la lumière tombée sur le décor* : il
+prend donc la couleur du décor, **un reflet prend la couleur de ce qu'il
+touche** — la règle déjà tenue par le lustre de l'or. L'ordre de Keko ne bouge
+pas : **fond, lumière, sujet**, le sujet net se posant en dernier avec ses
+couleurs à lui. *On teinte le ciel, pas l'arme* — la spirale blanche d'une
+Tornade reste blanche.
 
 **Ça ne marche pas sur l'axe des raretés**, et c'est ce qui permet d'y toucher :
 la rareté vit dans le MÉTAL DU CADRE, pas dans le fond. Une échelle se dit en

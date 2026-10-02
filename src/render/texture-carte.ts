@@ -607,6 +607,102 @@ function fond(): Promise<HTMLImageElement | null> {
   return fondCommun
 }
 
+/**
+ * LE CIEL D'UNE ARME, VIRÉ AU ROUGE — et viré PIXEL PAR PIXEL.
+ *
+ * Demandé par Keko : « on peut mettre le background des armes en rouge au lieu
+ * du bleu ? »
+ *
+ * **Le `globalCompositeOperation = 'hue'` ne tient pas**, et c'est la leçon de
+ * cette passe : il marchait sur la machine de dev et pas sur l'appareil de
+ * Keko — « ça n'a rien changé du tout ». `hue`, `saturation`, `color` et
+ * `luminosity` sont les modes NON SÉPARABLES du canvas, les moins bien tenus
+ * du lot : un navigateur qui ne les implémente pas ne lève rien, il **ignore
+ * l'opération**. *Une dégradation silencieuse vaut moins qu'un chemin qui
+ * marche partout* — exactement la raison qui avait déjà écarté `ctx.filter`.
+ *
+ * On refait donc ce que `hue` promettait, à la main : pour chaque pixel on
+ * GARDE sa saturation et sa luminance, et on lui donne la teinte du rouge.
+ * C'est la formule de la spécification de composition, et elle n'a besoin que
+ * d'arithmétique — donc elle rend le même résultat sur tous les appareils.
+ *
+ * *Le ciel étoilé reste le même ciel, il change d'heure* : la matière, les
+ * étoiles et le dégradé qui monte survivent, là où un rectangle rouge posé
+ * dessus les aurait écrasés.
+ */
+function virerAuRouge(pixels: Uint8ClampedArray): void {
+  for (let i = 0; i < pixels.length; i += 4) {
+    const r = pixels[i]! / 255
+    const v = pixels[i + 1]! / 255
+    const b = pixels[i + 2]! / 255
+    // La saturation et la luminance du pixel, qu'on garde ; la teinte du rouge
+    // pur portée à cette saturation vaut (s, 0, 0).
+    const sat = Math.max(r, v, b) - Math.min(r, v, b)
+    const lum = 0.3 * r + 0.59 * v + 0.11 * b
+    const ecart = lum - 0.3 * sat
+    let cr = sat + ecart
+    let cv = ecart
+    let cb = ecart
+    // ClipColor : une teinte portée à une luminance donnée peut sortir de
+    // [0,1] — on ramène alors vers la luminance, qui est ce qu'on garde.
+    const bas = Math.min(cr, cv, cb)
+    const haut = Math.max(cr, cv, cb)
+    if (bas < 0 && lum - bas > 1e-6) {
+      const k = lum / (lum - bas)
+      cr = lum + (cr - lum) * k
+      cv = lum + (cv - lum) * k
+      cb = lum + (cb - lum) * k
+    }
+    if (haut > 1 && haut - lum > 1e-6) {
+      const k = (1 - lum) / (haut - lum)
+      cr = lum + (cr - lum) * k
+      cv = lum + (cv - lum) * k
+      cb = lum + (cb - lum) * k
+    }
+    pixels[i] = cr * 255
+    pixels[i + 1] = cv * 255
+    pixels[i + 2] = cb * 255
+  }
+}
+
+/** Une image virée au rouge, rendue dans un canvas de sa taille. */
+function auRouge(image: HTMLImageElement): HTMLCanvasElement | null {
+  const toile = document.createElement('canvas')
+  toile.width = image.naturalWidth
+  toile.height = image.naturalHeight
+  const ctx = toile.getContext('2d', { willReadFrequently: true })
+  if (ctx === null) return null
+  ctx.drawImage(image, 0, 0)
+  try {
+    const champ = ctx.getImageData(0, 0, toile.width, toile.height)
+    virerAuRouge(champ.data)
+    ctx.putImageData(champ, 0, 0)
+  } catch {
+    // UNE LECTURE DE PIXELS PEUT ÊTRE REFUSÉE si l'image vient d'une autre
+    // origine. Elles viennent toutes de `public/`, donc ça n'arrive pas ici —
+    // mais *une teinte qui échoue doit rendre le ciel bleu, pas une carte
+    // noire.* C'est la règle du repli d'illustration.
+    return null
+  }
+  return toile
+}
+
+/**
+ * LE CIEL ROUGE SE FABRIQUE UNE FOIS, pour toutes les cartes d'arme.
+ *
+ * *Une passe par pixels sur un décor de 1024 px coûte quelques millisecondes* —
+ * une fois. La refaire par carte la paierait vingt fois pour un résultat
+ * identique, et c'est exactement la raison qui mémorise déjà le décor lui-même.
+ */
+let fondArmeCommun: Promise<HTMLImageElement | HTMLCanvasElement | null> | null = null
+
+function fondArme(): Promise<HTMLImageElement | HTMLCanvasElement | null> {
+  // Et si la teinte échoue, on rend le ciel BLEU plutôt que rien : *un décor
+  // de la mauvaise couleur vaut mieux qu'une carte sans décor.*
+  fondArmeCommun ??= fond().then((image) => (image === null ? null : (auRouge(image) ?? image)))
+  return fondArmeCommun
+}
+
 /** Le symbole du coût, chargé une fois lui aussi. */
 let symboleCout: Promise<HTMLImageElement | null> | null = null
 
@@ -630,7 +726,16 @@ function charger(url: string): Promise<HTMLImageElement | null> {
  * le plus long. Même cadrage que le `background-size: cover` de la carte 2D,
  * donc une image dessinée pour l'une va dans l'autre.
  */
-function couvrir(ctx: CanvasRenderingContext2D, image: HTMLImageElement, x: number, y: number, l: number, h: number): void {
+// Le décor d'une arme est un CANVAS (le fichier viré au rouge), pas une
+// image : les deux portent `width`/`height`, donc le cadrage ne change pas.
+function couvrir(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement | HTMLCanvasElement,
+  x: number,
+  y: number,
+  l: number,
+  h: number,
+): void {
   const echelle = Math.max(l / image.width, h / image.height)
   const il = image.width * echelle
   const ih = image.height * echelle
@@ -716,7 +821,10 @@ export async function peindreCarte(
 
   const [image, decor, symbole] = await Promise.all([
     illustration(carte.nom),
-    fond(),
+    // LE CIEL D'UNE ARME EST ROUGE : ce n'est pas un voile posé sur le décor,
+    // c'est un AUTRE décor — le même fichier, viré au rouge une fois pour
+    // toutes. Voir `fondArme`.
+    carte.arme === true ? fondArme() : fond(),
     coutPeint(),
     document.fonts.ready,
   ])
@@ -831,6 +939,26 @@ export async function peindreCarte(
     if (pctx !== null) {
       pctx.imageSmoothingQuality = 'high'
       couvrir(pctx, image, 0, 0, petit.width, petit.height)
+      /**
+       * ET LA LUMIÈRE PREND LA COULEUR DU CIEL. Keko : « quand je zoom sur une
+       * arme, l'image affichée est bleue, et certaines des cartes générées
+       * aussi (ex : Fendre) ».
+       *
+       * *Le bloom n'est pas le sujet, c'est de la lumière tombée sur le
+       * décor* — une lame bleue ajoutée sur tout le champ repeignait le ciel
+       * rouge en bleu, d'autant plus que le sujet est large et clair. **Un
+       * reflet prend la couleur de ce qu'il touche**, la règle déjà tenue par
+       * le lustre de l'or.
+       *
+       * Il se vire sur la petite toile — quarante-quatre pixels de large —
+       * donc ça ne coûte rien, là où teinter la carte entière se paierait à
+       * chaque peinture.
+       */
+      if (carte.arme === true) {
+        const flou = pctx.getImageData(0, 0, petit.width, petit.height)
+        virerAuRouge(flou.data)
+        pctx.putImageData(flou, 0, 0)
+      }
       ctx.save()
       ctx.globalCompositeOperation = 'lighter'
       /**
@@ -856,45 +984,6 @@ export async function peindreCarte(
     }
   }
 
-  /**
-   * ET LE CIEL D'UNE ARME EST ROUGE. Demandé par Keko : « on peut mettre le
-   * background des armes en rouge au lieu du bleu ? »
-   *
-   * **Par la TEINTE, pas par un voile** (`hue`) : elle remplace la couleur en
-   * gardant la luminance ET la saturation — *c'est le même ciel, il change
-   * d'heure.* Un rectangle rouge posé dessus aurait écrasé sa matière, ses
-   * étoiles et le dégradé qui monte.
-   *
-   * **ELLE SE POSE APRÈS LA LUMIÈRE, PAS AVANT**, et c'est ce qui a coûté une
-   * passe. Teintée juste après le décor, elle était ensuite recouverte par le
-   * BLOOM DU SUJET — une addition de la couleur de l'arme sur tout le champ :
-   * la lame bleue de l'Épée et de Fendre repeignait le ciel en bleu. Keko :
-   * « quand je zoom sur une arme, l'image affichée est bleue, et certaines des
-   * cartes générées aussi (ex : Fendre) ».
-   *
-   * *Et c'est juste sur le fond* : **le bloom n'est pas le sujet, c'est de la
-   * lumière tombée sur le décor** — elle doit donc prendre la couleur du
-   * décor, comme tout reflet prend la couleur de ce qu'il touche. Le sujet
-   * NET, lui, se pose après et garde ses couleurs : *on teinte le ciel, pas
-   * l'arme.*
-   *
-   * *Ça ne marche pas sur l'axe des raretés*, et c'est ce qui permet d'y
-   * toucher : la rareté vit dans le MÉTAL DU CADRE. Une échelle se dit en
-   * couleur, une famille se dit en forme — ici c'est une troisième surface,
-   * le décor, qui porte la famille sans prendre la place de personne.
-   *
-   * **Les cartes du set l'héritent**, comme elles héritent du métal
-   * (`deckDeLEquipement`), et c'est un DRAPEAU et non le mot du pied : celui-ci
-   * est du texte affiché — « Consommable » est déjà devenu « Objet » une fois —
-   * et *un dessin ne se décide pas sur une étiquette qui peut changer.*
-   */
-  if (carte.arme === true && decor !== null) {
-    ctx.save()
-    ctx.globalCompositeOperation = 'hue'
-    ctx.fillStyle = '#b02a1e'
-    ctx.fillRect(marge, marge, LARGE - marge * 2, HAUT - marge * 2)
-    ctx.restore()
-  }
 
   if (image !== null) {
     couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
