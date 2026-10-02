@@ -1645,7 +1645,8 @@ supposant qu'une arme sert à tuer. Avec la Rondache seule, on part avec deux
 cartes sur trois qui n'attaquent pas.
 
 **Ses deux modèles n'ont pas d'illustration** : ils sortent avec le sceau de
-repli (`defaut.svg`), ce qui est exactement ce que ce sceau est là pour dire.
+repli (`defaut.svg`), ce qui est exactement ce que ce sceau est là pour dire —
+mais sur le ciel rouge de leur arme, depuis que le repli a rendu son fond.
 
 **L'ARMURE COMMUNE S'APPELLE « ARMURE DE PLATE »** depuis que Keko lui a dessiné
 sa plate (`Armure de plate.webp`). *Son identifiant ne bouge pas* : il ne se lit
@@ -7647,6 +7648,12 @@ Elle est passée de 1,9 à **2,6**. *Et c'est bien une exposition qu'on monte, p
 un rideau qu'on tire* : le pigment ne bouge pas, ce qui est exactement ce que
 Keko voulait garder — un voile clair, lui, aurait éclairci en délavant.
 
+**ET UN CONSOMMABLE PORTE SON PROPRE CIEL DANS SON ZOOM.** Keko : « les cartes
+générées par les potions devraient être vertes comme la carte qui les
+génère ». La vitrine demandait « arme ou armure ? » — une question qui n'a pas
+de réponse pour un objet, donc il tombait sur le bleu. *Un consommable EST sa
+carte* : les deux ne peuvent pas avoir deux ciels.
+
 **ET CHAQUE CIEL A LA SIENNE, parce que le bleu en demande plus.** Keko : « on
 peut éclaircir encore un poil le background bleu des armures ? » *Ce n'est pas
 un caprice, c'est de la colorimétrie* : le bleu ne pèse que 0,11 dans la
@@ -7696,7 +7703,18 @@ dit comment la rendre. Les halos, disques et étoiles propres à chaque dessin
 RESTENT : ils deviennent des lueurs sur le fond commun, et c'est ce qui donne
 son relief à la carte.
 
-`dos.svg` et `defaut.svg` gardent le leur : ce ne sont pas des faces de carte.
+`dos.svg` garde le sien : ce n'est pas une face de carte.
+
+**MAIS `defaut.svg` A RENDU LE SIEN, et c'est Keko qui l'a vu** : « les cartes
+générées par le bouclier devraient utiliser le background rouge propre aux
+cartes d'arme ». Elles l'avaient — *c'est le SCEAU DE REPLI qui le masquait*,
+son rectangle plein recouvrant le décor commun. **Le repli est une face de
+carte comme une autre**, donc il n'a pas plus à porter son ciel que les
+vingt-quatre autres : il ne dessine plus que le sceau, et une carte sans
+illustration garde la couleur de sa famille.
+
+*Et ça rend le repli plus honnête* : il dit « il manque un dessin », il ne dit
+plus « cette carte n'appartient à personne ».
 
 **Ce que ça coûte, et c'est à rejuger par Keko :** le fond de nuit propre à
 chaque famille disparaît — vert-sarcelle pour le Glaive, ardoise pour
