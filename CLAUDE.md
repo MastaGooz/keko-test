@@ -7663,6 +7663,24 @@ décor — *c'est le même ciel, il change d'heure.* Un rectangle rouge posé de
 aurait écrasé sa matière, ses étoiles et le dégradé qui monte vers le haut ;
 et une seconde image aurait doublé le fichier à maintenir.
 
+**ET ELLE SE POSE APRÈS LA LUMIÈRE, PAS AVANT — c'est ce qui a coûté une
+passe.** Teintée juste après le décor, elle était ensuite recouverte par le
+BLOOM DU SUJET, qui ajoute la couleur de l'arme sur tout le champ : la lame
+bleue de l'Épée et de Fendre repeignait le ciel en bleu. Keko : « quand je zoom
+sur une arme, l'image affichée est bleue, et certaines des cartes générées
+aussi (ex : Fendre) ».
+
+*Et la correction est juste sur le fond* : **le bloom n'est pas le sujet, c'est
+de la lumière tombée sur le décor** — elle doit donc prendre la couleur du
+décor, comme tout reflet prend la couleur de ce qu'il touche. L'ordre de Keko
+tient toujours, avec un cran de plus : **fond, lumière, TEINTE, sujet.** Le
+sujet net se pose après et garde ses couleurs — *on teinte le ciel, pas
+l'arme*, donc la spirale blanche d'une Tornade reste blanche.
+
+Mesuré sur la texture, à 256 comme à 768 : coin du ciel à `(78, 29, 25)` pour
+Fendre, Tornade et Fauchage — **le même rouge aux deux tailles**, là où le
+centre garde la couleur de ce qui est dessiné.
+
 **Ça ne marche pas sur l'axe des raretés**, et c'est ce qui permet d'y toucher :
 la rareté vit dans le MÉTAL DU CADRE, pas dans le fond. Une échelle se dit en
 couleur, une famille se dit en forme — *ici c'est une troisième surface, le

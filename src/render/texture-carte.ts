@@ -795,39 +795,6 @@ export async function peindreCarte(
     ctx.globalAlpha = 0.9
     couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
     ctx.restore()
-
-    /**
-     * ET LE DÉCOR D'UNE ARME VIRE AU ROUGE. Demandé par Keko : « on peut mettre
-     * le background des armes en rouge au lieu du bleu ? »
-     *
-     * **Par la TEINTE, pas par un voile** : `hue` remplace la couleur en
-     * gardant la luminance et la saturation du décor — *le ciel étoilé reste le
-     * même ciel, il change d'heure.* Un rectangle rouge posé dessus, lui,
-     * aurait écrasé sa matière et ses étoiles.
-     *
-     * *Ça ne marche pas sur l'axe de la rareté* : celle-ci vit dans le MÉTAL du
-     * cadre, pas dans le fond. Une échelle se dit en couleur, une famille se
-     * dit en forme — et ici c'est une troisième chose, le DÉCOR, qui porte la
-     * famille sans prendre la place de personne.
-     *
-     * **ET LES CARTES DU SET L'HÉRITENT**, comme elles héritent du métal.
-     * Keko, en zoomant une arme : « quand je zoom la couleur rouge
-     * disparaît » — *une carte de deck qui garde le ciel bleu se lit comme
-     * étrangère à l'arme qui la produit.* Le drapeau descend donc de la pièce
-     * à son set (`deckDeLEquipement`), par la même porte que la rareté.
-     *
-     * **C'est un DRAPEAU, pas le mot du pied** : celui-ci est du texte
-     * affiché — « Consommable » est déjà devenu « Objet » une fois — et *un
-     * dessin ne se décide pas sur une étiquette qui peut changer.* C'est la
-     * règle déjà tenue par le trésor.
-     */
-    if (carte.arme === true) {
-      ctx.save()
-      ctx.globalCompositeOperation = 'hue'
-      ctx.fillStyle = '#b02a1e'
-      ctx.fillRect(marge, marge, LARGE - marge * 2, HAUT - marge * 2)
-      ctx.restore()
-    }
   }
 
   /**
@@ -887,7 +854,50 @@ export async function peindreCarte(
       ctx.drawImage(petit, marge, marge, lArt, hArt)
       ctx.restore()
     }
-    couvrir(ctx, image, marge, marge, lArt, hArt)
+  }
+
+  /**
+   * ET LE CIEL D'UNE ARME EST ROUGE. Demandé par Keko : « on peut mettre le
+   * background des armes en rouge au lieu du bleu ? »
+   *
+   * **Par la TEINTE, pas par un voile** (`hue`) : elle remplace la couleur en
+   * gardant la luminance ET la saturation — *c'est le même ciel, il change
+   * d'heure.* Un rectangle rouge posé dessus aurait écrasé sa matière, ses
+   * étoiles et le dégradé qui monte.
+   *
+   * **ELLE SE POSE APRÈS LA LUMIÈRE, PAS AVANT**, et c'est ce qui a coûté une
+   * passe. Teintée juste après le décor, elle était ensuite recouverte par le
+   * BLOOM DU SUJET — une addition de la couleur de l'arme sur tout le champ :
+   * la lame bleue de l'Épée et de Fendre repeignait le ciel en bleu. Keko :
+   * « quand je zoom sur une arme, l'image affichée est bleue, et certaines des
+   * cartes générées aussi (ex : Fendre) ».
+   *
+   * *Et c'est juste sur le fond* : **le bloom n'est pas le sujet, c'est de la
+   * lumière tombée sur le décor** — elle doit donc prendre la couleur du
+   * décor, comme tout reflet prend la couleur de ce qu'il touche. Le sujet
+   * NET, lui, se pose après et garde ses couleurs : *on teinte le ciel, pas
+   * l'arme.*
+   *
+   * *Ça ne marche pas sur l'axe des raretés*, et c'est ce qui permet d'y
+   * toucher : la rareté vit dans le MÉTAL DU CADRE. Une échelle se dit en
+   * couleur, une famille se dit en forme — ici c'est une troisième surface,
+   * le décor, qui porte la famille sans prendre la place de personne.
+   *
+   * **Les cartes du set l'héritent**, comme elles héritent du métal
+   * (`deckDeLEquipement`), et c'est un DRAPEAU et non le mot du pied : celui-ci
+   * est du texte affiché — « Consommable » est déjà devenu « Objet » une fois —
+   * et *un dessin ne se décide pas sur une étiquette qui peut changer.*
+   */
+  if (carte.arme === true && decor !== null) {
+    ctx.save()
+    ctx.globalCompositeOperation = 'hue'
+    ctx.fillStyle = '#b02a1e'
+    ctx.fillRect(marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+    ctx.restore()
+  }
+
+  if (image !== null) {
+    couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
   }
 
   // LE VOILE SOUS LE TEXTE : le tiers du bas passe sous le nom et le
