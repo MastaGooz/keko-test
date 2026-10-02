@@ -2416,6 +2416,26 @@ Trois choses qui le portent :
   poser l'encadré dessous donnerait un bloc qui pend, la faute déjà payée sur
   le couple pièce + set.
 
+**ET SOUS LA LOUPE, IL SE LIE À LA CARTE QU'ON REGARDE.** Keko : « je voudrais
+que l'encadré apparaisse aussi dans le menu du hub quand on zoome la carte en
+hover / tap maintenu ».
+
+*En bas, il liste les mots de TOUT l'écran, donc il ne dit pas QUI les porte* —
+sur un deck de douze modèles, « étourdissement » ne désigne personne. Dès qu'une
+carte passe sous la loupe, il se recentre sur elle et ne garde que ses mots :
+**il ne peut plus parler que d'elle.** Une carte sans mot-clé le laisse à sa
+place, avec ceux de l'écran.
+
+*Un SECOND encadré posé à côté d'elle a été essayé, et il ne tenait pas* : la
+carte grossie déborde sur ses voisines, donc l'encadré tombait dessus — à droite
+comme à gauche, **il n'y a pas de place libre à côté d'une carte qu'on vient
+d'agrandir.** Un seul objet qui se déplace vaut mieux que deux qui se
+recouvrent.
+
+**Sa place se calcule comme celle de la carte, BORNE COMPRISE** : une carte
+grossie contre le bord est ramenée dans l'écran, donc un encadré centré sur sa
+case d'origine ne la désignerait plus.
+
 Elle se peint **à sa taille d'affichage**, et **le mot comme son sens CÈDENT**
 s'ils ne tiennent pas : un canvas écrit tout droit et laisse déborder sans rien
 signaler.

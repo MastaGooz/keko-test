@@ -371,6 +371,10 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * poser l'encadré à côté d'elle donnerait un bloc qui penche, la faute déjà
    * payée sur le couple pièce + set.
    */
+  // Et si la place manque, la carte se CENTRE au lieu de choisir un bord :
+  // deux bornes croisées donneraient un résultat de travers.
+  const borner = (v: number, limite: number): number =>
+    limite <= 0 ? 0 : Math.min(Math.max(v, -limite), limite)
   const pasX = uneCarte * 1.1
   const pasY = uneCarte * 1.82
 
@@ -397,6 +401,27 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
             uneCarte * 2.1,
             (bandeGloss - ecartGloss) / rapportGloss,
           )
+  /**
+   * **ET IL SE LIE À LA CARTE QU'ON REGARDE DE PRÈS.** Demandé par Keko : « je
+   * voudrais que l'encadré apparaisse aussi dans le menu du hub quand on zoome
+   * la carte en hover / tap maintenu ».
+   *
+   * *En bas, il liste les mots de TOUT l'écran, donc il ne dit pas QUI les
+   * porte* — sur un deck de douze modèles, « étourdissement » ne désigne
+   * personne. Sous la loupe, il se recentre sur la carte grossie et ne garde
+   * que les siens : **il ne peut plus parler que d'elle.**
+   *
+   * *Un SECOND encadré posé à côté d'elle a été essayé, et il ne tenait pas* :
+   * la carte grossie déborde sur ses voisines, donc l'encadré tombait sur
+   * elles — à droite comme à gauche, il n'y a pas de place libre à côté d'une
+   * carte qu'on vient d'agrandir. **Un seul objet qui se déplace vaut mieux
+   * que deux qui se recouvrent.**
+   */
+  const carteDeLaLoupe = modeles.find((entree) => entree.carte.id === loupe)
+  const motsDeLaLoupe = (carteDeLaLoupe?.carte.motsCles ?? []).filter(
+    (mot) => GLOSSAIRE[mot] !== undefined,
+  )
+  const motsMontres = motsDeLaLoupe.length > 0 ? motsDeLaLoupe : motsZoom
   const avecGlossaire = glossaire > 0.01
   const sousLeSet = avecGlossaire && !seule
   const hGloss = glossaire * rapportGloss
@@ -409,7 +434,27 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
   const aDroite = avecGlossaire && seule
   const xPiece = aDroite ? -totalGloss / 2 + piece / 2 : seule ? 0 : -ensemble / 2 + piece / 2
   const xSet = sansPiece ? 0 : xPiece + piece / 2 + marge + largeurOccupee / 2
-  const xGloss = aDroite ? xPiece + piece / 2 + marge + glossaire / 2 : xSet
+  /**
+   * LA PLACE DE LA CARTE SOUS LA LOUPE, calculée comme dans la boucle : elle
+   * est bornée à l'écran quand elle grossit, donc l'encadré doit la suivre
+   * jusque-là — *un encadré centré sur la case d'origine ne désignerait plus
+   * la carte, qui s'en est écartée.*
+   */
+  const iLoupe = carteDeLaLoupe === undefined ? -1 : modeles.indexOf(carteDeLaLoupe)
+  const parLigneLoupe =
+    iLoupe < 0 ? 0 : Math.min(colonnes, modeles.length - Math.floor(iLoupe / colonnes) * colonnes)
+  const xLoupe =
+    iLoupe < 0
+      ? xSet
+      : borner(
+          xSet + ((iLoupe % colonnes) - (parLigneLoupe - 1) / 2) * pasX,
+          lLoupe / 2 - tailleLoupe / 2 - marge,
+        )
+  const xGloss = aDroite
+    ? xPiece + piece / 2 + marge + glossaire / 2
+    : motsDeLaLoupe.length > 0
+      ? xLoupe
+      : xSet
   /**
    * **CE QUI RESTE AUTOUR D'UNE CARTE GROSSIE, en haut comme en bas.**
    *
@@ -425,10 +470,6 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * borde.*
    */
   const margeY = H * 0.035
-  // Et si la place manque, la carte se CENTRE au lieu de choisir un bord :
-  // deux bornes croisées donneraient un résultat de travers.
-  const borner = (v: number, limite: number): number =>
-    limite <= 0 ? 0 : Math.min(Math.max(v, -limite), limite)
 
   return (
     <group>
@@ -541,7 +582,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           <planeGeometry args={[glossaire, hGloss]} />
           <meshBasicMaterial
             map={textureGlossaire(
-              motsZoom.map((mot) => ({ mot, sens: GLOSSAIRE[mot]! })),
+              motsMontres.map((mot) => ({ mot, sens: GLOSSAIRE[mot]! })),
               (glossaire / hauteurVisibleA(zCarte, size.height)) * size.height * viewport.dpr,
             )}
             transparent
