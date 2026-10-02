@@ -63,7 +63,9 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   // dans le glossaire, pas sur chaque carte qui le porte.
   const etourdit = carte.effets?.some((e) => e.type === 'etourdit') === true
   if (carte.degats > 0)
-    l.push(`Inflige <b>${carte.degats}</b> dégâts${etourdit ? ' et <b>étourdissement</b>' : ''}`)
+    l.push(
+        `Inflige <b>${carte.degats}</b> ${blessures(carte.degats)}${etourdit ? ' et <b>étourdissement</b>' : ''}`,
+      )
   else if (etourdit) l.push(`<b>Étourdissement</b>`)
   // SES DÉGÂTS SONT TA DÉFENSE : on ne peut pas écrire un chiffre, donc on
   // écrit la RÈGLE. *Une carte dont l'effet dépend de l'état doit dire de quoi
@@ -80,7 +82,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   // un joueur qui lit « 1 par blocage » sait quoi faire de sa prochaine carte,
   // là où « égal à votre défense » demandait d'aller chercher le chiffre.
   if (carte.degatsDuBloc === true)
-    l.push(`Inflige <b>1</b> dégât pour chaque blocage que vous avez`)
+    l.push(`Inflige <b>1</b> blessure pour chaque blocage que vous avez`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
@@ -88,7 +90,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // à la fin de chaque tour, sans exception* — c'est une règle du jeu, pas
     // une clause de cette carte-ci, et une condition écrite sur toutes les
     // cartes de défense cesse d'être une condition.
-    if (e.type === 'bloc') l.push(`Bloque <b>${e.montant}</b> dégâts`)
+    if (e.type === 'bloc') l.push(`Bloque <b>${e.montant}</b> ${blessures(e.montant)}`)
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
@@ -97,7 +99,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         // dit sa VALEUR. *Une carte ne peut pas perdre un or qu'elle n'a
         // jamais annoncé.*
         const perte = valeurAPart ? 'et sa valeur est perdue' : 'et son or est perdu'
-        l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>${perte}</small>`)
+        l.push(`Brûler : soigne <b>${e.montant}</b> ${blessures(e.montant)}`, `<small>${perte}</small>`)
       }
       else {
         /**
@@ -108,7 +110,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
          * de personnage, « blessure » est ce que le coup a fait. C'est la même
          * raison qui a fait des points d'action plutôt que de l'énergie.
          */
-        l.push(`Soigne <b>${e.montant}</b> blessures`)
+        l.push(`Soigne <b>${e.montant}</b> ${blessures(e.montant)}`)
         // Une carte à usages ne l'écrit pas : ses charges sont des pastilles.
         // Une carte qui s'exile porte le MOT-CLÉ, et l'encadré du zoom dit ce
         // qu'il veut dire — *un mot-clé est un nom, pas une phrase.*
@@ -129,7 +131,9 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // prix qu'il paie. « Jusqu'au prochain tour » dit la durée mieux que « ce
     // tour » : la carte se joue AVANT la salve, donc c'est elle qu'on couvre.
     if (e.type === 'riposte')
-      l.push(`Jusqu'au prochain tour, les ennemis qui vous attaquent subissent <b>${e.montant}</b> dégâts`)
+      l.push(
+        `Jusqu'au prochain tour, les ennemis qui vous attaquent subissent <b>${e.montant}</b> ${blessures(e.montant)}`,
+      )
 
   }
   // LA REMISE SE DIT APRÈS LE COUP, parce qu'elle parle du COÛT et non de ce
@@ -174,6 +178,22 @@ export function enClair(ligne: string): string {
  * **un mot-clé qu'on n'explique nulle part n'est pas un mot-clé, c'est du
  * jargon** — d'où l'encadré, qui le dit là où l'on a le temps de lire.
  */
+/**
+ * **ON PARLE DE BLESSURES, PLUS DE DÉGÂTS.** Tranché par Keko, à la suite de la
+ * Potion : « on peut remplacer dégâts par blessure dans toutes les cartes ».
+ *
+ * *Le vocabulaire dit la règle* : « dégât » est un mot de système, « blessure »
+ * est ce que le coup a fait — et c'est le même mot des deux côtés, puisqu'on
+ * les inflige et qu'on les soigne. C'est la raison qui a déjà fait des points
+ * d'action plutôt que de l'énergie.
+ *
+ * **L'accord se fait sur le chiffre** : une carte qui en inflige une seule le
+ * dit au singulier, et le Coup de bouclier ne l'écrit plus en dur.
+ */
+function blessures(n: number): string {
+  return n === 1 ? 'blessure' : 'blessures'
+}
+
 export const GLOSSAIRE: Record<string, string> = {
   Étourdissement: "annule l'action en cours",
   Consommable: "la carte est détruite quand elle est jouée",

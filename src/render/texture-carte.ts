@@ -2524,7 +2524,11 @@ export function textureGlossaire(
     // Le mot CÈDE lui aussi s'il ne tient pas : un canvas écrit tout droit et
     // laisse déborder sans rien signaler.
     let titre = 6
-    const mot = `${entree.mot.toUpperCase()} :`
+    // **LE TITRE N'A PAS DE DEUX-POINTS, et le sens prend une majuscule.**
+    // Tranché par Keko. *Un mot-clé est un nom, pas l'amorce d'une phrase* :
+    // les deux-points en faisaient une légende, alors que l'encadré est une
+    // entrée de glossaire — un titre, puis sa définition.
+    const mot = entree.mot.toUpperCase()
     ctx.font = `600 ${titre}px Cinzel, Georgia, serif`
     const largeMot = ctx.measureText(mot).width
     if (largeMot > place) {
@@ -2535,14 +2539,15 @@ export function textureGlossaire(
     ctx.fillStyle = '#cfc6b4'
     // Le sens CÈDE s'il ne tient pas : un canvas écrit tout droit et laisse
     // déborder sans rien signaler.
+    const sens = entree.sens.charAt(0).toUpperCase() + entree.sens.slice(1)
     let corps = 6.4
     ctx.font = `400 ${corps}px "Crimson Pro", Georgia, serif`
-    const large = ctx.measureText(entree.sens).width
+    const large = ctx.measureText(sens).width
     if (large > place) {
       corps *= place / large
       ctx.font = `400 ${corps}px "Crimson Pro", Georgia, serif`
     }
-    ctx.fillText(entree.sens, MARGE_GLOSSAIRE, haut + 17)
+    ctx.fillText(sens, MARGE_GLOSSAIRE, haut + 17)
   })
 
   const texture = new THREE.CanvasTexture(canvas)

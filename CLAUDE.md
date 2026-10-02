@@ -2364,13 +2364,29 @@ mot, lui, se lit d'un coup d'oeil une fois qu'on le connaît. **La carte dit ce
 qu'elle fait, l'encadré dit ce que le mot veut dire**, et il n'apparaît que
 lorsqu'on prend le temps de regarder.
 
+**ET LE TITRE N'A PAS DE DEUX-POINTS, le sens prend une majuscule.** Tranché
+par Keko. *Un mot-clé est un nom, pas l'amorce d'une phrase* : les deux-points
+en faisaient une légende, alors que l'encadré est une entrée de glossaire — un
+titre, puis sa définition. La majuscule se pose au RENDU et non dans la donnée,
+qui reste une phrase ordinaire.
+
 **ET LE SECOND MOT-CLÉ EST « CONSOMMABLE »** : « la carte est détruite quand
 elle est jouée ». Formulation de Keko, en même temps que celle de la Potion —
 « Soigne N blessures », puis le mot-clé en dessous.
 
-*Le vocabulaire dit la règle* : « PV » est une abréviation de fiche de
-personnage, « blessure » est ce que le coup a fait — la même raison qui a fait
-des points d'action plutôt que de l'énergie. Et la carte disait avant « se
+**ET TOUTES LES CARTES PARLENT DE BLESSURES, plus de dégâts.** Tranché par Keko
+dans la foulée : « on peut remplacer dégâts par blessure dans toutes les
+cartes ».
+
+*Le vocabulaire dit la règle* : « dégât » et « PV » sont des mots de système,
+« blessure » est ce que le coup a fait — et c'est **le même mot des deux
+côtés**, puisqu'on les inflige et qu'on les soigne. C'est la raison qui a fait
+des points d'action plutôt que de l'énergie.
+
+**L'accord se fait sur le chiffre** (`blessures(n)`) : une carte qui en inflige
+une seule le dit au singulier, et le Coup de bouclier ne l'écrit plus en dur.
+Le trésor brûlé suit — il disait « rend N PV », il dit « soigne N blessures » :
+*deux cartes qui font la même chose ne peuvent pas la dire de deux façons.* Et la carte disait avant « se
 boit : détruite », une phrase propre à la potion ; **le mot-clé vaut pour tout
 ce qui s'exile**, donc il se dit une fois et s'explique une fois.
 
