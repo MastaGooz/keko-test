@@ -2507,13 +2507,22 @@ export function textureGlossaire(
     // LE MOT-CLÉ EN CINZEL, SON SENS EN CRIMSON : la voix des noms et celle
     // des effets, exactement comme sur une carte.
     ctx.fillStyle = '#e9d9ae'
-    ctx.font = `600 ${6}px Cinzel, Georgia, serif`
-    ctx.fillText(`${entree.mot.toUpperCase()} :`, MARGE_GLOSSAIRE, haut + 6)
+    const place = 100 - 2 * MARGE_GLOSSAIRE
+    // Le mot CÈDE lui aussi s'il ne tient pas : un canvas écrit tout droit et
+    // laisse déborder sans rien signaler.
+    let titre = 6
+    const mot = `${entree.mot.toUpperCase()} :`
+    ctx.font = `600 ${titre}px Cinzel, Georgia, serif`
+    const largeMot = ctx.measureText(mot).width
+    if (largeMot > place) {
+      titre *= place / largeMot
+      ctx.font = `600 ${titre}px Cinzel, Georgia, serif`
+    }
+    ctx.fillText(mot, MARGE_GLOSSAIRE, haut + 6)
     ctx.fillStyle = '#cfc6b4'
     // Le sens CÈDE s'il ne tient pas : un canvas écrit tout droit et laisse
     // déborder sans rien signaler.
     let corps = 6.4
-    const place = 100 - 2 * MARGE_GLOSSAIRE
     ctx.font = `400 ${corps}px "Crimson Pro", Georgia, serif`
     const large = ctx.measureText(entree.sens).width
     if (large > place) {

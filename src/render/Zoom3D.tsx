@@ -197,9 +197,40 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * tape viennent avec, et il n'y a rien à réécrire à côté.
    */
   const sansPiece = carte === null
+  /**
+   * **LE GLOSSAIRE COUVRE TOUT CE QUE LE ZOOM MONTRE, pas la seule carte du
+   * milieu.** Keko, en zoomant la Rondache : « je ne vois pas l'encadré avec
+   * la description d'étourdissement ».
+   *
+   * *Et c'est l'écran où le mot se découvre* : une carte de deck ne se regarde
+   * seule qu'en combat, alors que le set d'une pièce et le bouton « Deck » la
+   * montrent AVANT d'avoir joué. **Un glossaire qui n'existe que là où l'on
+   * connaît déjà le mot n'explique rien.** On prend donc les mots-clés de la
+   * carte ET de ses modèles, dédupliqués.
+   */
+  const motsZoom = [
+    ...new Set([
+      ...(carte?.motsCles ?? []),
+      ...modeles.flatMap((entree) => entree.carte.motsCles ?? []),
+    ]),
+  ].filter((mot) => GLOSSAIRE[mot] !== undefined)
+
   const H = hauteurVisibleA(zCarte, size.height)
   const L = (H * size.width) / size.height
   const marge = L * 0.04
+  /**
+   * **LA BANDE DU GLOSSAIRE SE PREND AVANT LA GRILLE.**
+   *
+   * Calculée après, elle ne trouvait plus de place dès que le set tenait deux
+   * lignes — l'encadré tombait alors à une barre de quelques pixels, ou
+   * disparaissait. *Une bande réservée ne se partage pas* : c'est la règle que
+   * le bouton du deck avait déjà payée au hub, et la grille cède d'autant,
+   * exactement comme les meubles cèdent au rail.
+   */
+  const ecartGloss = marge * 0.5
+  const bandeGloss =
+    motsZoom.length === 0 || modeles.length === 0 ? 0 : H * 0.135 * motsZoom.length + ecartGloss
+  const hautGrille = H * 0.88 - bandeGloss
 
   // La pièce cède de la place au set, mais reste la plus grande : c'est elle
   // qu'on regarde, le set n'est que ce qu'elle apporte.
@@ -221,9 +252,9 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * ce à quoi elle fait référence*, sinon elle se désaccorde au premier réglage
    * de la grille.
    */
-  const plafondDeck = grilleDuDeck(6, largeurSet, H * 0.88, H * 0.5).taille
+  const plafondDeck = grilleDuDeck(6, largeurSet, hautGrille, H * 0.5).taille
   const deck = sansPiece
-    ? grilleDuDeck(Math.max(1, modeles.length), largeurSet, H * 0.88, plafondDeck)
+    ? grilleDuDeck(Math.max(1, modeles.length), largeurSet, hautGrille, plafondDeck)
     : null
   const colonnes = deck?.colonnes ?? Math.min(COLONNES_SET, seule ? 1 : modeles.length)
   const lignes = deck?.lignes ?? (seule ? 1 : Math.ceil(modeles.length / colonnes))
@@ -238,7 +269,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    */
   const uneCarte =
     deck?.taille ??
-    Math.min(piece * 0.62, (H * 0.88) / (LIGNES_SET * 1.82), largeurSet / (COLONNES_SET * 1.1))
+    Math.min(piece * 0.62, hautGrille / (LIGNES_SET * 1.82), largeurSet / (COLONNES_SET * 1.1))
   /**
    * CE QU'UNE CARTE DU SET DEVIENT SOUS LA LOUPE — et le champ dans lequel
    * elle doit tenir.
@@ -340,15 +371,45 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * poser l'encadré à côté d'elle donnerait un bloc qui penche, la faute déjà
    * payée sur le couple pièce + set.
    */
-  const motsDeLaCarte = (carte?.motsCles ?? []).filter((mot) => GLOSSAIRE[mot] !== undefined)
-  const glossaire = seule && motsDeLaCarte.length > 0 ? piece * 1.05 : 0
-  const avecGlossaire = glossaire > 0
-  const totalGloss = piece + marge + glossaire
-  const xPiece = avecGlossaire ? -totalGloss / 2 + piece / 2 : seule ? 0 : -ensemble / 2 + piece / 2
-  const xGloss = xPiece + piece / 2 + marge + glossaire / 2
-  const xSet = sansPiece ? 0 : xPiece + piece / 2 + marge + largeurOccupee / 2
   const pasX = uneCarte * 1.1
   const pasY = uneCarte * 1.82
+
+  /**
+   * **SEULE, LA CARTE LE MET À CÔTÉ ; AVEC UN SET, IL PASSE DESSOUS.**
+   *
+   * *La bande de droite est prise par le set*, donc l'encadré ne peut pas s'y
+   * loger ; sous la grille, il se lit comme la note de bas de page de ce qu'on
+   * vient de voir — ce qu'il est.
+   */
+  const rapportGloss = rapportGlossaire(Math.max(1, motsZoom.length))
+  const hautSet = lignes * pasY
+  const glossaire =
+    motsZoom.length === 0
+      ? 0
+      : seule
+        ? piece * 1.05
+        : Math.min(
+            largeurOccupee,
+            // ET IL SE MESURE SUR LES CARTES, pas sur la largeur de la grille.
+            // *C'est une note de bas de page*, donc son texte n'a aucune raison
+            // d'être plus gros que le cartouche qu'il annote : étiré sur toute
+            // la rangée, il écrasait le set qu'il explique.
+            uneCarte * 2.1,
+            (bandeGloss - ecartGloss) / rapportGloss,
+          )
+  const avecGlossaire = glossaire > 0.01
+  const sousLeSet = avecGlossaire && !seule
+  const hGloss = glossaire * rapportGloss
+  // Le bloc { grille, encadré } se centre ENSEMBLE : centrer la grille puis
+  // poser l'encadré dessous donnerait un bloc qui pend, la faute déjà payée
+  // sur le couple pièce + set.
+  const decalSet = sousLeSet ? (hGloss + ecartGloss) / 2 : 0
+  const yGloss = sousLeSet ? -(hautSet + ecartGloss) / 2 : 0
+  const totalGloss = piece + marge + glossaire
+  const aDroite = avecGlossaire && seule
+  const xPiece = aDroite ? -totalGloss / 2 + piece / 2 : seule ? 0 : -ensemble / 2 + piece / 2
+  const xSet = sansPiece ? 0 : xPiece + piece / 2 + marge + largeurOccupee / 2
+  const xGloss = aDroite ? xPiece + piece / 2 + marge + glossaire / 2 : xSet
   /**
    * **CE QUI RESTE AUTOUR D'UNE CARTE GROSSIE, en haut comme en bas.**
    *
@@ -400,7 +461,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           const ligne = Math.floor(i / colonnes)
           const parLigne = Math.min(colonnes, modeles.length - ligne * colonnes)
           const x = xSet + (colonne - (parLigne - 1) / 2) * pasX
-          const y = ((lignes - 1) / 2 - ligne) * pasY
+          const y = ((lignes - 1) / 2 - ligne) * pasY + decalSet
           const grossie = loupe === entree.carte.id
           const t = grossie ? tailleLoupe : uneCarte
           // ELLE GROSSIT SUR PLACE, mais ne sort pas de l'écran : bornée comme
@@ -476,11 +537,11 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           lecture — mais elle s'incline et son lustre la balaie : *le même geste
           doit donner la même réponse, quelle que soit la carte qu'il touche.* */}
       {avecGlossaire && (
-        <mesh position={[xGloss, 0, zCarte]}>
-          <planeGeometry args={[glossaire, glossaire * rapportGlossaire(motsDeLaCarte.length)]} />
+        <mesh position={[xGloss, yGloss, zCarte]}>
+          <planeGeometry args={[glossaire, hGloss]} />
           <meshBasicMaterial
             map={textureGlossaire(
-              motsDeLaCarte.map((mot) => ({ mot, sens: GLOSSAIRE[mot]! })),
+              motsZoom.map((mot) => ({ mot, sens: GLOSSAIRE[mot]! })),
               (glossaire / hauteurVisibleA(zCarte, size.height)) * size.height * viewport.dpr,
             )}
             transparent

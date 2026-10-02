@@ -2385,8 +2385,40 @@ Quatre choses qui le portent :
   carte. *Un arrondi est une forme de gabarit, une arête franche est de la
   ferronnerie*, et la règle finit par tout rattraper.
 
-Elle se peint **à sa taille d'affichage** et le sens **cède** s'il ne tient pas :
-un canvas écrit tout droit et laisse déborder sans rien signaler.
+**ET IL COUVRE TOUT CE QUE LE ZOOM MONTRE, pas la seule carte du milieu.**
+Keko, en zoomant la Rondache : « je ne vois pas l'encadré avec la description
+d'étourdissement ».
+
+*Et c'est l'écran où le mot se découvre* : une carte de deck ne se regarde SEULE
+qu'en combat, alors que le set d'une pièce et le bouton « Deck » la montrent
+avant même d'avoir joué. **Un glossaire qui n'existe que là où l'on connaît déjà
+le mot n'explique rien.** On prend donc les mots-clés de la carte ET de ses
+modèles, dédupliqués — et les deux chemins passaient déjà par `aPeindre`, donc
+il n'y avait rien à poser sur les modèles.
+
+**Seule, la carte le met à CÔTÉ ; avec un set, il passe DESSOUS**, centré sur la
+colonne du set — *la bande de droite est prise*, et sous la grille il se lit
+comme la note de bas de page de ce qu'on vient de voir.
+
+Trois choses qui le portent :
+
+- **sa bande se prend AVANT la grille.** Calculée après, elle ne trouvait plus
+  de place dès que le set tenait deux lignes : l'encadré tombait à une barre de
+  quelques pixels sur l'écran du deck, ou disparaissait. *Une bande réservée ne
+  se partage pas* — la règle que le bouton du deck avait déjà payée au hub, et
+  la grille cède d'autant. **Prix assumé** : une pièce à mot-clé montre des
+  cartes un cran plus petites qu'une pièce sans, parce que la place est prise ;
+- **il se mesure sur les CARTES, pas sur la largeur de la grille** (2,1 fois
+  une carte du set). Étiré sur toute la rangée, son texte devenait plus gros
+  que les cartouches qu'il explique — *une note de bas de page ne crie pas plus
+  fort que le texte* ;
+- **le bloc { grille, encadré } se centre ENSEMBLE.** Centrer la grille puis
+  poser l'encadré dessous donnerait un bloc qui pend, la faute déjà payée sur
+  le couple pièce + set.
+
+Elle se peint **à sa taille d'affichage**, et **le mot comme son sens CÈDENT**
+s'ils ne tiennent pas : un canvas écrit tout droit et laisse déborder sans rien
+signaler.
 
 ### LA CARTE REGARDÉE RÉPOND AU CURSEUR
 
