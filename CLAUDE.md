@@ -2364,6 +2364,21 @@ mot, lui, se lit d'un coup d'oeil une fois qu'on le connaît. **La carte dit ce
 qu'elle fait, l'encadré dit ce que le mot veut dire**, et il n'apparaît que
 lorsqu'on prend le temps de regarder.
 
+**ET LE SECOND MOT-CLÉ EST « CONSOMMABLE »** : « la carte est détruite quand
+elle est jouée ». Formulation de Keko, en même temps que celle de la Potion —
+« Soigne N blessures », puis le mot-clé en dessous.
+
+*Le vocabulaire dit la règle* : « PV » est une abréviation de fiche de
+personnage, « blessure » est ce que le coup a fait — la même raison qui a fait
+des points d'action plutôt que de l'énergie. Et la carte disait avant « se
+boit : détruite », une phrase propre à la potion ; **le mot-clé vaut pour tout
+ce qui s'exile**, donc il se dit une fois et s'explique une fois.
+
+**Il suit la RÈGLE, pas le type affiché** : ce qui fait un consommable, c'est
+qu'il s'exile. Un trésor brûlé s'exile aussi mais ne le porte pas — *il le dit
+déjà en clair sur sa seconde ligne, et c'est le prix de son effet, pas une
+propriété de la carte.*
+
 Quatre choses qui le portent :
 
 - **le glossaire vit dans `ui/texte-carte.ts`**, à côté des lignes d'effet :

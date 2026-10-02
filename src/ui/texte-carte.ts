@@ -100,10 +100,19 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         l.push(`Brûler : rend <b>${e.montant}</b> PV`, `<small>${perte}</small>`)
       }
       else {
-        l.push(`Rend <b>${e.montant}</b> PV`)
+        /**
+         * **ON SOIGNE DES BLESSURES, PAS DES PV.** Formulation de Keko : « pour
+         * la potion on va marquer *soigne N blessures* ».
+         *
+         * *Le vocabulaire dit la règle* — « PV » est une abréviation de fiche
+         * de personnage, « blessure » est ce que le coup a fait. C'est la même
+         * raison qui a fait des points d'action plutôt que de l'énergie.
+         */
+        l.push(`Soigne <b>${e.montant}</b> blessures`)
         // Une carte à usages ne l'écrit pas : ses charges sont des pastilles.
-        // Une carte qui s'exile dit qu'elle se détruit.
-        if (carte.usages === undefined && carte.exil === true) l.push(`<small>se boit : détruite</small>`)
+        // Une carte qui s'exile porte le MOT-CLÉ, et l'encadré du zoom dit ce
+        // qu'il veut dire — *un mot-clé est un nom, pas une phrase.*
+        if (carte.usages === undefined && carte.exil === true) l.push(`<b>Consommable</b>`)
       }
     }
     // POINTS D'ACTION, ET PAS « ÉNERGIE » : le mot renvoie au TEMPS, et c'est
@@ -167,12 +176,19 @@ export function enClair(ligne: string): string {
  */
 export const GLOSSAIRE: Record<string, string> = {
   Étourdissement: "annule l'action en cours",
+  Consommable: "la carte est détruite quand elle est jouée",
 }
 
 /** Les mots-clés qu'une carte emploie, pour l'encadré du zoom. */
 export function motsCles(carte: Carte): string[] {
   const mots: string[] = []
   if (carte.effets?.some((e) => e.type === 'etourdit') === true) mots.push('Étourdissement')
+  // LE MOT SUIT LA RÈGLE, pas le type affiché : *ce qui fait un consommable,
+  // c'est qu'il s'exile* — un trésor brûlé s'exile aussi, mais il le dit déjà
+  // en clair sur sa seconde ligne, et c'est le prix de son effet, pas une
+  // propriété de la carte.
+  if (carte.type !== 'tresor' && carte.usages === undefined && carte.exil === true)
+    mots.push('Consommable')
   return mots
 }
 
