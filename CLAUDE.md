@@ -7652,6 +7652,30 @@ doit PAS en porter** : c'est désormais ce que Keko livre — des WebP à canal
 alpha, sujet détouré. *C'est ce qui permet de glisser la lumière entre le décor
 et le sujet*, et une image opaque le rendrait impossible.
 
+**ET LE DÉCOR D'UNE ARME VIRE AU ROUGE.** Demandé par Keko : « on peut mettre
+le background des armes en rouge au lieu du bleu ? » *Le fond de nuit propre à
+chaque famille, perdu quand les 24 dessins ont rendu leur ciel, revient donc
+par une autre porte* — et par le DÉCOR COMMUN, pas par une seconde image.
+
+**Ça passe par la TEINTE, jamais par un voile** (`globalCompositeOperation =
+'hue'`) : `hue` remplace la couleur en gardant la luminance ET la saturation du
+décor — *c'est le même ciel, il change d'heure.* Un rectangle rouge posé dessus
+aurait écrasé sa matière, ses étoiles et le dégradé qui monte vers le haut ;
+et une seconde image aurait doublé le fichier à maintenir.
+
+**Ça ne marche pas sur l'axe des raretés**, et c'est ce qui permet d'y toucher :
+la rareté vit dans le MÉTAL DU CADRE, pas dans le fond. Une échelle se dit en
+couleur, une famille se dit en forme — *ici c'est une troisième surface, le
+décor, qui porte la famille sans prendre la place de personne.* Un Glaive
+commun et une Épée à deux mains rare ont le même ciel rouge et deux cadres
+différents.
+
+**Seule la PIÈCE d'arme est teintée, pas les cartes qu'elle produit.** Le test
+porte sur le pied de la carte (`type.startsWith('Arme ')`), donc il attrape
+« Arme · une main » et « Arme · deux mains » sans toucher à « Armure ». Les
+Estoc et Taillade de son set gardent le ciel bleu : *elles héritent déjà du
+métal de leur pièce*, et c'est à rejuger par Keko si le ciel doit suivre aussi.
+
 ### La pioche et la défausse, en SYMBOLE et non en tas de cartes
 
 `render/Tas3D.tsx`. Le jeu 2D en faisait de vraies piles de dos de carte,

@@ -790,6 +790,28 @@ export async function peindreCarte(
     ctx.globalAlpha = 0.9
     couvrir(ctx, decor, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
     ctx.restore()
+
+    /**
+     * ET LE DÉCOR D'UNE ARME VIRE AU ROUGE. Demandé par Keko : « on peut mettre
+     * le background des armes en rouge au lieu du bleu ? »
+     *
+     * **Par la TEINTE, pas par un voile** : `hue` remplace la couleur en
+     * gardant la luminance et la saturation du décor — *le ciel étoilé reste le
+     * même ciel, il change d'heure.* Un rectangle rouge posé dessus, lui,
+     * aurait écrasé sa matière et ses étoiles.
+     *
+     * *Ça ne marche pas sur l'axe de la rareté* : celle-ci vit dans le MÉTAL du
+     * cadre, pas dans le fond. Une échelle se dit en couleur, une famille se
+     * dit en forme — et ici c'est une troisième chose, le DÉCOR, qui porte la
+     * famille sans prendre la place de personne.
+     */
+    if (carte.type.startsWith('Arme ')) {
+      ctx.save()
+      ctx.globalCompositeOperation = 'hue'
+      ctx.fillStyle = '#b02a1e'
+      ctx.fillRect(marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+      ctx.restore()
+    }
   }
 
   /**
