@@ -8009,14 +8009,27 @@ divergent au premier réglage.*
 relief — *ce qui rayonne, c'est l'objet ; ce qui reçoit, c'est le décor* — et le
 voile sombre qui monte sous le texte.
 
-**ET LE VOILE PART PLUS BAS** (57 % de la hauteur au lieu de 50). Keko : « on
-peut baisser un peu le dégradé noir en dessous, je trouve qu'il monte un peu
-haut ». Il mordait sur le sujet, qui tient les deux tiers du haut.
+**ET LE VOILE MONTE EN COURBE, plus en deux segments.** Keko, en deux fois :
+« on peut baisser un peu le dégradé noir en dessous, je trouve qu'il monte un
+peu haut », puis « je trouve le dégradé noir trop abrupt, on peut le rendre plus
+progressif ? »
 
-*Ce qui ne pouvait pas bouger, c'est où il est NOIR* : le nom est peint à 66,5 %
-et il lui faut déjà son fond. Le départ descend, donc la montée se raccourcit
-d'autant (0,35 → 0,21 de sa course) pour que le palier tombe au même endroit —
-**on décale le début, pas l'arrivée.**
+*Les deux demandes se ressemblent et n'ont pas la même cause.* La première était
+une PLACE — il mordait sur le sujet, qui tient les deux tiers du haut. La
+seconde est une PENTE : à trois arrêts, il y avait une cassure à 66 % de la
+hauteur, où il montait d'un coup aux deux tiers d'opacité puis restait presque
+plat. **Ce n'est pas la vitesse qu'on voit, c'est la cassure** — une rampe sans
+dérivée nulle aux deux bouts se lit comme une arête.
+
+C'est donc une **smoothstep** en seize arrêts, de 42 % à 78 % de la hauteur.
+**Et le départ remonte sans contredire la première demande** : une courbe douce
+passe sous le seuil du visible pendant sa première moitié — à 50 % de la carte
+elle ne pèse que 10 % d'opacité, là où la version d'avant démarrait franchement
+à 57 %. *Elle commence plus haut et se voit plus bas.*
+
+*Ce qui ne pouvait pas bouger, c'est l'opacité AU NOM*, peint à 66,5 % : la
+courbe y vaut 0,67, exactement ce que l'ancien palier donnait. **On change la
+forme de la rampe, pas ce qu'elle vaut là où le texte se lit.**
 
 **`?fond=image` rend les fichiers**, et ils restent dans `public/` : *ce qui a
 servi à choisir doit rester ouvrable.* Le jeu 2D, lui, continue de poser

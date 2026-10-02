@@ -1374,21 +1374,40 @@ export async function peindreCarte(
    * LE VOILE SOUS LE TEXTE : le bas de la carte passe sous le nom et le
    * cartouche, donc l'image doit s'y éteindre pour qu'ils se lisent.
    *
-   * **Il part plus bas qu'avant** — Keko : « on peut baisser un peu le dégradé
-   * noir en dessous, je trouve qu'il monte un peu haut ». Il commençait à la
-   * moitié de la carte, donc il mordait sur le sujet, qui tient les deux tiers
-   * du haut.
+   * **IL MONTE EN COURBE, PLUS EN DEUX SEGMENTS.** Keko : « je trouve le
+   * dégradé noir trop abrupt, on peut le rendre plus progressif ? » Il avait
+   * trois arrêts, donc une CASSURE DE PENTE à 66 % de la hauteur : il montait
+   * d'un coup jusqu'aux deux tiers d'opacité puis restait presque plat. *Ce
+   * n'est pas la vitesse qu'on voit, c'est la cassure* — une rampe sans
+   * dérivée nulle aux deux bouts se lit comme une arête.
    *
-   * *Ce qui ne pouvait pas bouger, c'est où il est NOIR* : le nom est peint à
-   * 66,5 % de la hauteur et il lui faut déjà son fond. Le départ descend, donc
-   * la montée se raccourcit d'autant pour que le palier tombe au même endroit
-   * — **on décale le début, pas l'arrivée.**
+   * **Le départ remonte, et ce n'est pas un retour en arrière** : Keko avait
+   * fait baisser le voile parce qu'il devenait NOIR trop haut, pas parce qu'il
+   * commençait trop haut. Une courbe douce passe sous le seuil du visible
+   * pendant sa première moitié — à 50 % de la carte elle ne pèse que 10 %
+   * d'opacité, contre un départ franc à 57 % auparavant. *Elle commence plus
+   * haut et se voit plus bas.*
+   *
+   * Ce qui ne pouvait pas bouger, c'est l'opacité AU NOM, peint à 66,5 % : la
+   * courbe y vaut 0,67, soit exactement ce que l'ancien palier donnait.
    */
-  const DEBUT_VOILE = 0.57
+  const DEBUT_VOILE = 0.42
+  const PLEIN_VOILE = 0.78
+  const ALPHA_VOILE = 0.88
+  const noir = (a: number): string =>
+    `#000000${Math.round(a * 255)
+      .toString(16)
+      .padStart(2, '0')}`
   const voile = ctx.createLinearGradient(0, HAUT * DEBUT_VOILE, 0, HAUT)
-  voile.addColorStop(0, '#00000000')
-  voile.addColorStop(0.21, '#000000a8')
-  voile.addColorStop(1, '#000000e0')
+  // Une smoothstep : sa pente est nulle aux deux bouts, donc ni le haut ni le
+  // bas de la rampe ne laissent d'arête. Seize arrêts suffisent — au-delà, le
+  // pas est sous le quantum de l'alpha.
+  for (let i = 0; i <= 16; i += 1) {
+    const t = i / 16
+    const y = DEBUT_VOILE + t * (PLEIN_VOILE - DEBUT_VOILE)
+    voile.addColorStop((y - DEBUT_VOILE) / (1 - DEBUT_VOILE), noir(t * t * (3 - 2 * t) * ALPHA_VOILE))
+  }
+  voile.addColorStop(1, noir(ALPHA_VOILE))
   ctx.fillStyle = voile
   ctx.fillRect(0, HAUT * DEBUT_VOILE, LARGE, HAUT * (1 - DEBUT_VOILE))
   ctx.restore()
