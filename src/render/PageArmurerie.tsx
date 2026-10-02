@@ -39,7 +39,7 @@ import type { Hub } from '../logic/hub.ts'
 import { deuxMains, peutDescendre } from '../logic/hub.ts'
 import { SON_POSER, jouerSon } from './sons.ts'
 import { tailleBouton } from './Bouton3D.tsx'
-import { TEXTE_PRET, Z_PLAN } from './armurerie-plan.ts'
+import { TEXTE_DESCENDRE, TEXTE_PRET, Z_PLAN } from './armurerie-plan.ts'
 import { urlDuSymbole } from '../ui/art.ts'
 import type { LieuHub } from './destinations.ts'
 import {
@@ -416,6 +416,17 @@ export function PageArmurerie({
    */
   const libelles = useRef(LIBELLES)
   libelles.current = LIBELLES
+  /**
+   * **ET LE LIEU AUSSI PASSE PAR UNE RÉF**, pour exactement la même raison.
+   *
+   * L'écoute ne se relance que sur `bloque` : *changer de lieu ne la relance
+   * pas*, donc la fermeture garderait le lieu du rendu où elle a été posée — et
+   * la bulle du bouton, qui n'existe qu'à l'Expédition, se tromperait d'écran
+   * dans les deux sens. **Un écouteur qui survit aux rendus ne doit lire l'état
+   * que par une réf.**
+   */
+  const lieuVu = useRef(lieu)
+  lieuVu.current = lieu
   const valeurs = [pvMax, deck.total, tailleMain, energieMax]
   const avant = useRef(valeurs)
   /**
@@ -484,7 +495,12 @@ export function PageArmurerie({
    */
   const bloque = !peutDescendre(hub.chargement)
   const rectBouton = (): { left: number; right: number; top: number; bottom: number } => {
-    const b = tailleBouton('Descendre', 'or', 'rail', Z_PLAN, fenetre.h)
+    // LE RECTANGLE EST CELUI DU BOUTON, et il l'avait cessé : il gardait le
+    // libellé « Descendre » et le cran du RAIL, du temps où le bouton y vivait.
+    // *Deux valeurs périmées dans un calcul qui doit coïncider avec un objet
+    // réel*, et c'est la cicatrice habituelle — un réglage posé pour un endroit
+    // se relit quand l'objet déménage.
+    const b = tailleBouton(TEXTE_DESCENDRE, 'or', 'ecran', Z_PLAN, fenetre.h)
     const p = enPixels(
       { x: plan.bouton[0], y: plan.bouton[1], l: b.largeur, h: b.hauteur },
       fenetre.h,
@@ -520,9 +536,21 @@ export function PageArmurerie({
           }
         }
       }
-      // LE BOUTON N'A SA BULLE QUE QUAND IL REFUSE : *une explication qui
-      // s'affiche aussi quand tout va bien n'explique plus rien.*
-      if (bloque) {
+      /**
+       * LE BOUTON N'A SA BULLE QUE QUAND IL REFUSE : *une explication qui
+       * s'affiche aussi quand tout va bien n'explique plus rien.*
+       *
+       * **ET QUE LÀ OÙ IL EXISTE.** Keko : « quand je hover le slot d'arme de
+       * main droite vide, une infobulle apparaît et dit "aucune arme équipée",
+       * je voudrais pas d'infobulle ici ».
+       *
+       * *Le bouton a déménagé dans l'Expédition, son rectangle est resté* : il
+       * se calculait sans regarder le lieu, donc il tombait en plein milieu de
+       * l'armurerie — sur la case de la main droite. **Une zone sensible qui
+       * survit à l'objet qu'elle couvre devient un piège**, la règle déjà payée
+       * sur la zone de dépôt du slot masqué par une arme à deux mains.
+       */
+      if (bloque && lieuVu.current === 'expedition') {
         const b = rectBouton()
         if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) {
           // « AUCUNE ARME ÉQUIPÉE », tranché par Keko. Un CONSTAT plutôt

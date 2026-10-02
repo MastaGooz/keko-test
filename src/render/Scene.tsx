@@ -73,7 +73,7 @@ import {
   setAPeindre,
 } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
-import { consequence, coutDe, degatsDe, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
+import { CONFIG_DEFAUT, consequence, coutDe, degatsDe, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
 import { createRng } from '../logic/rng.ts'
 import type { Chargement, Hub, Slot } from '../logic/hub.ts'
@@ -91,6 +91,8 @@ import {
   REGLAGE_DEFAUT,
   commencerDescente,
   consommablesSurvivants,
+  paDeLEquipement,
+  pvDeLEquipement,
   tresorsTransportes,
 } from '../logic/descente.ts'
 import {
@@ -253,6 +255,34 @@ export function Scene(): React.JSX.Element {
    */
   const auHub = descente === null
   const enCombat = !auHub && phase.type === 'combat'
+
+  /**
+   * **LES MESURES DU HUB VIENNENT DU CHARGEMENT, pas du combat.** Keko : « les
+   * stats ne se mettent pas à jour quand je change d'équipement ».
+   *
+   * *Et c'est exactement ce qui se passait* : la bande lisait `combat.pvMax`,
+   * `combat.energieMax` et `combat.tailleMain` — les chiffres de la descente
+   * qu'on a LANCÉE, ou du repli quand il n'y en a pas eu. Seul le compte du
+   * deck se calculait depuis `hub`, et c'est pour ça qu'il était le seul à
+   * bouger.
+   *
+   * **Un écran qui sert à décider doit lire ce qu'on décide**, pas ce qu'on a
+   * décidé la dernière fois. Les quatre mesures partent donc toutes du
+   * chargement courant, et l'animation d'équipement les prend sans rien de
+   * plus : *elle ne regarde que des valeurs qui changent.*
+   *
+   * La taille de main n'a encore aucune source de bonus — elle vient du
+   * réglage, comme à la descente — mais elle passe par ici pour que le jour où
+   * un bijou dira « main de 6 », il n'y ait rien à rebrancher.
+   */
+  const mesuresDuHub = useMemo(() => {
+    const porte = equipement(hub.chargement)
+    return {
+      pvMax: REGLAGE_DEFAUT.pvMax + pvDeLEquipement(porte),
+      energieMax: CONFIG_DEFAUT.energieMax + paDeLEquipement(porte),
+      tailleMain: TAILLE_MAIN_URL(),
+    }
+  }, [hub.chargement])
 
   /**
    * Le combat est une PHASE de la descente, donc on ne le remplace jamais
@@ -1934,9 +1964,9 @@ export function Scene(): React.JSX.Element {
           }}
           defilement={defilement}
           onDefilement={setDefilement}
-          pvMax={combat.pvMax}
-          energieMax={combat.energieMax}
-          tailleMain={combat.tailleMain}
+          pvMax={mesuresDuHub.pvMax}
+          energieMax={mesuresDuHub.energieMax}
+          tailleMain={mesuresDuHub.tailleMain}
           equipements={equipements}
           fixations={fixations}
           zoomee={zoomOuvert}

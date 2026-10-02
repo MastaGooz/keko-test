@@ -157,8 +157,19 @@ const TEINTE: Record<string, string> = { reserve: '#3c3a35', pile: '#4a4a40' }
  * répétait « Objet » trois fois ; ici les deux cases voisines disent deux
  * choses DIFFÉRENTES, et c'est la seule raison qui justifie un mot par case.
  */
-function nomDeLaCase(slot: Slot): string {
+function nomDeLaCase(slot: Slot, aDeuxMains: boolean): string {
   if (slot.ou !== 'main') return ''
+  /**
+   * **LE SLOT FUSIONNÉ DIT « DEUX MAINS ».** Keko : « quand un équipement est
+   * dans l'emplacement unique "à deux mains" et qu'on le drag, on doit afficher
+   * DEUX MAINS au lieu de main droite ».
+   *
+   * *Le slot garde son rang 0 dans les règles, mais ce n'est plus la même
+   * case* : une arme à deux mains masque l'autre et centre celle qui reste —
+   * **ce qu'on a sous les yeux est une case, pas la première de deux.** Le mot
+   * suit donc ce qu'on VOIT, pas l'identifiant qui sert à ranger.
+   */
+  if (aDeuxMains) return 'Deux\nmains'
   // LE SAUT DE LIGNE EST DÉCLARÉ : « Main droite » tient sur une ligne et
   // « Main gauche » n'y tient pas, donc à repli libre les deux voisines se
   // liraient l'une sur une ligne et l'autre sur deux.
@@ -843,10 +854,18 @@ export function Armurerie3D({
           l'on cherche où poser — une fois la carte dedans, c'est son pied qui
           dit « main droite ». */}
       {hub.chargement.mains[0] === null && (
-        <CaseVide nom={'Main\ndroite'} position={plan.mains[0]} taille={plan.tailleCharge} />
+        <CaseVide
+          nom={nomDeLaCase({ ou: 'main', rang: 0 }, aDeuxMains)}
+          position={plan.mains[0]}
+          taille={plan.tailleCharge}
+        />
       )}
       {!aDeuxMains && hub.chargement.mains[1] === null && (
-        <CaseVide nom={'Main\ngauche'} position={plan.mains[1]} taille={plan.tailleCharge} />
+        <CaseVide
+          nom={nomDeLaCase({ ou: 'main', rang: 1 }, aDeuxMains)}
+          position={plan.mains[1]}
+          taille={plan.tailleCharge}
+        />
       )}
       {hub.chargement.armure === null && (
         <CaseVide nom="" position={plan.armure} taille={plan.tailleCharge} />
@@ -879,7 +898,7 @@ export function Armurerie3D({
           quelque chose.* */}
       {portee !== null && doigt !== null && (portee.pile ?? 1) < 2 && (
         <CaseVide
-          nom={nomDeLaCase(portee.slot)}
+          nom={nomDeLaCase(portee.slot, aDeuxMains)}
           position={portee.position}
           taille={portee.taille}
           accent={TEINTE[portee.slot.ou]}
@@ -895,7 +914,7 @@ export function Armurerie3D({
           if (vol === undefined) return null
           return (
             <CaseVide
-              nom={nomDeLaCase(vol.slot)}
+              nom={nomDeLaCase(vol.slot, aDeuxMains)}
               position={vol.position}
               taille={vol.taille}
               accent={TEINTE[vol.slot.ou]}

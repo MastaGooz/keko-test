@@ -93,7 +93,17 @@ export type Reglage = {
  * Toute retouche d'une carte oblige à refaire ce balayage.
  */
 export const REGLAGE_DEFAUT: Reglage = {
-  pvMax: 90,
+  /**
+   * **LA BASE EST DE 50, et c'est Keko qui la donne** : « base de PV = 50,
+   * main de base = 5 cartes, PA de base = 5 ».
+   *
+   * *C'est un chiffre de contenu, pas une mesure* — il descend de 90, et le
+   * Plastron de cuir en rend quinze, donc on part à 65 au lieu de 105. **Rien
+   * n'est recalibré** : les groupes d'ennemis ont été réglés sur 90, et *le
+   * réglage d'un combat est un rasoir* — un balayage complet est dû, comme
+   * pour les sets du Glaive et de la Rondache.
+   */
+  pvMax: 50,
   soin: 14,
   menaceDepart: 0.62,
   profondeurMax: 6,

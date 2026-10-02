@@ -2088,6 +2088,13 @@ choses différentes. Le saut de ligne vient donc de l'appelant, comme pour les
 plaques de bouton, **et le repli à la mesure reste derrière** : *un nom qu'on
 n'a pas pensé à couper ne doit pas déborder pour autant.*
 
+**ET LE SLOT FUSIONNÉ DIT « DEUX MAINS ».** Keko : « quand un équipement est
+dans l'emplacement unique "à deux mains" et qu'on le drag, on doit afficher DEUX
+MAINS au lieu de main droite ». *Le slot garde son rang 0 dans les règles, mais
+ce n'est plus la même case* : une arme à deux mains masque l'autre et centre
+celle qui reste — **ce qu'on a sous les yeux est une case, pas la première de
+deux.** Le mot suit donc ce qu'on VOIT, pas l'identifiant qui sert à ranger.
+
 **ET LE MOT VIENT DU SLOT, pas de l'endroit qui le dessine** (`nomDeLaCase`).
 Keko : « quand on drag un équipement depuis un slot d'arme, durant le drag le
 texte n'est pas visible ». *La règle était écrite — « la case d'où vient la pièce
@@ -7665,6 +7672,25 @@ Quatre choses, et trois sont des règles déjà écrites ailleurs :
   toucher et le `pointerout` n'arrive jamais : la bulle resterait ouverte. Une
   tape l'ouvre, une deuxième la referme, et *elle se referme toute seule au
   bout de 2,6 s* — au doigt il n'y a pas de « sortie » ;
+- **ET ELLE N'EXISTE QUE LÀ OÙ LE BOUTON EST.** Keko : « quand je hover le slot
+  d'arme de main droite vide, une infobulle apparaît et dit "aucune arme
+  équipée", je voudrais pas d'infobulle ici ». *Le bouton a déménagé dans
+  l'Expédition, son rectangle est resté* — il se calculait sans regarder le
+  lieu, donc il tombait en plein milieu de l'armurerie, sur la case de la main
+  droite. **Une zone sensible qui survit à l'objet qu'elle couvre devient un
+  piège**, la règle déjà payée sur la zone de dépôt du slot masqué par une arme
+  à deux mains.
+
+  *Et il ne décrivait plus le bouton non plus* : il gardait le libellé
+  « Descendre » et le cran du RAIL, du temps où celui-ci y vivait — **donc la
+  bulle ne s'ouvrait nulle part sur la bonne zone.** Deux cicatrices du même
+  déménagement, et la seconde ne se voyait pas puisque la première la masquait.
+
+  **ET LE LIEU PASSE PAR UNE RÉF.** L'écoute ne se relance que sur « bloqué » :
+  changer de lieu ne la relance pas, donc la fermeture gardait le lieu du rendu
+  où elle avait été posée. *C'est la troisième fois que ce piège se paie ici* —
+  **un écouteur qui survit aux rendus ne doit lire l'état que par une réf.**
+
 - **le bouton « Descendre » a la sienne quand il REFUSE** : « Aucune arme
   équipée ». Le griser disait qu'on ne peut pas partir, pas pourquoi —
   Keko : « pour que le joueur sache pourquoi il peut pas cliquer ». *Un refus
@@ -7686,6 +7712,27 @@ Quatre choses, et trois sont des règles déjà écrites ailleurs :
   le couple s'y centre — *une bulle désigne ce qu'on regarde, pas la boîte qui
   le contient.* Vérifié à 844 x 390 : elle tient entre le titre de la page et
   sa mesure.
+
+**LES QUATRE MESURES VIENNENT DU CHARGEMENT, pas du combat.** Keko : « les
+stats ne se mettent pas à jour quand je change d'équipement ».
+
+*Et c'est exactement ce qui se passait* : la bande lisait `combat.pvMax`,
+`combat.energieMax` et `combat.tailleMain` — les chiffres de la descente qu'on a
+LANCÉE, ou de son repli quand il n'y en a pas eu. **Seul le compte du deck se
+calculait depuis `hub`, et c'est pour ça qu'il était le seul à bouger.**
+
+**Un écran qui sert à décider doit lire ce qu'on décide**, pas ce qu'on a décidé
+la dernière fois. Les quatre partent donc du chargement courant (`mesuresDuHub`,
+dans `Scene.tsx`), et **l'animation d'équipement les prend sans rien de plus** :
+*elle ne regarde que des valeurs qui changent.* La taille de main n'a encore
+aucune source de bonus, mais elle passe par là pour que le jour où un bijou dira
+« main de 6 », il n'y ait rien à rebrancher.
+
+**ET LES BASES SONT CELLES DE KEKO** : « base de PV = 50, main de base = 5
+cartes, PA de base = 5 ». *Les PV descendent de 90* — avec le Plastron on part à
+65 au lieu de 105. **Rien n'est recalibré** : les groupes d'ennemis ont été
+réglés sur 90, et *le réglage d'un combat est un rasoir* — un balayage complet
+est dû, comme pour les sets du Glaive et de la Rondache.
 
 **L'ORDRE DU RAIL : VIE, DECK, MAIN, ÉNERGIE.** Tranché par Keko. Il va du
 plus durable au plus volatil — les PV traversent la descente, le deck la run,
