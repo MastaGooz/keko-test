@@ -61,7 +61,14 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   // SES DÉGÂTS SONT TA DÉFENSE : on ne peut pas écrire un chiffre, donc on
   // écrit la RÈGLE. *Une carte dont l'effet dépend de l'état doit dire de quoi
   // il dépend*, pas afficher un zéro qui se lirait comme une carte inutile.
-  if (carte.degatsDuBloc === true) l.push(`Inflige autant de dégâts`, `<small>que ta défense</small>`)
+  // ON NE TUTOIE PAS LE JOUEUR. Tranché par Keko, et la formulation est de
+  // lui : « inflige un nombre de dégâts égal à votre défense ». *Une carte
+  // n'adresse pas la parole*, elle énonce une règle — et le vouvoiement est
+  // ce qui tient cette distance sans la rendre impersonnelle.
+  //
+  // Une seule entrée, donc une seule phrase : le repli la coupe où il faut,
+  // là où deux lignes de tailles différentes la casseraient en son milieu.
+  if (carte.degatsDuBloc === true) l.push(`Inflige un nombre de dégâts égal à votre défense`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.

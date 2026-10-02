@@ -1701,9 +1701,16 @@ Quatre choses à ne pas défaire :
   ce qu'elle vaut à cet instant* : sans ça, son pied disait « Action », elle
   cessait de désigner un corps dès qu'on n'avait plus d'armure, et elle
   n'escomptait plus rien ;
-- **le texte dit la RÈGLE, pas un chiffre** : « Inflige autant de dégâts / que
-  ta défense ». *Une carte dont l'effet dépend de l'état doit dire de quoi il
-  dépend*, là où un zéro se lirait comme une carte inutile.
+- **le texte dit la RÈGLE, pas un chiffre** : « Inflige un nombre de dégâts
+  égal à votre défense ». *Une carte dont l'effet dépend de l'état doit dire de
+  quoi il dépend*, là où un zéro se lirait comme une carte inutile.
+
+**ET ON NE TUTOIE PAS LE JOUEUR.** Tranché par Keko, formulation de lui. *Une
+carte n'adresse pas la parole, elle énonce une règle* — et le vouvoiement tient
+cette distance sans rendre le texte impersonnel. La règle vaut pour TOUT ce qui
+s'affiche : « Vous portez 2 butins », « Vous rapportez 340 d'or », « Vous allez
+perdre Idole », « Vous tombez. » Les commentaires du code, eux, continuent de
+se parler à nous-mêmes.
 
 Cinq vérifications la tiennent (220 au total).
 

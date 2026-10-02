@@ -1965,7 +1965,7 @@ export function Scene(): React.JSX.Element {
                   appartient au trésor qu'on décide, et centré, ce texte
                   s'asseyait sur son bord haut. */}
               <p className="note-3d">
-                Tu portes {tresorsAuDeck(enCours)} butin ·{' '}
+                Vous portez {tresorsAuDeck(enCours)} butin ·{' '}
                 {butinTransporte(enCours)} d'or
               </p>
             </>
@@ -1996,7 +1996,7 @@ export function Scene(): React.JSX.Element {
                 <p className="titre-3d">{phase.issue === 'extrait' ? 'Extrait' : 'Mort'}</p>
                 <p className="sous-3d">
                   {phase.issue === 'extrait'
-                    ? `Tu rapportes ${butinTransporte(enCours)} d'or.`
+                    ? `Vous rapportez ${butinTransporte(enCours)} d'or.`
                     : 'Le butin et l\'équipement sont perdus.'}
                 </p>
               </div>

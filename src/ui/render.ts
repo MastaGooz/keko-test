@@ -646,7 +646,7 @@ function phrase(evenement: Evenement): string {
     case 'pioche':
       return `T${evenement.tour} — main : ${evenement.cartes} cartes, ${evenement.tresors} butin`
     case 'issue':
-      return evenement.issue === 'victoire' ? 'Plus rien ne bouge.' : 'Tu tombes.'
+      return evenement.issue === 'victoire' ? 'Plus rien ne bouge.' : 'Vous tombez.'
   }
 }
 
@@ -765,7 +765,7 @@ function butin(
 
     `<p class="note">` +
     (aJeter !== null
-      ? `Tu vas perdre ${aJeter.nom}${aJeter.valeur === undefined ? '' : ` — ${aJeter.valeur} d'or`}.`
+      ? `Vous allez perdre ${aJeter.nom}${aJeter.valeur === undefined ? '' : ` — ${aJeter.valeur} d'or`}.`
       : loot === null
         ? `Tout ce que tu portes pèse dans chaque main${
             portes.length === 0 ? '' : ` — ${portes.length} butin`
@@ -859,12 +859,12 @@ function sortie(descente: Descente): string {
     `<div class="voile">` +
     `<div class="feuille">` +
     `<p class="titre">Point de sortie</p>` +
-    `<p class="bilan">Tu portes <strong class="or">${butinTransporte(descente)}</strong> ` +
+    `<p class="bilan">Vous portez <strong class="or">${butinTransporte(descente)}</strong> ` +
     `et il te reste <strong class="${part < 40 ? 'perdu' : ''}">${pv}</strong> PV.</p>` +
     `<div class="offres">` +
     `<button class="issue-choix rentrer" type="button" data-action="extraire">` +
     `<span class="quoi">Rentrer</span>` +
-    `<span class="pourquoi">Tu gardes tout</span></button>` +
+    `<span class="pourquoi">Vous gardez tout</span></button>` +
     `<button class="issue-choix continuer" type="button" data-action="descendre">` +
     `<span class="quoi">Palier ${suivant}</span>` +
     `<span class="pourquoi">Plus dur, plus riche</span></button>` +
@@ -885,7 +885,7 @@ function fin(descente: Descente, issue: 'extrait' | 'mort'): string {
     `<p class="titre">${extrait ? 'EXTRAIT' : 'MORT'}</p>` +
     `<p class="bilan">` +
     (extrait
-      ? `Tu ressors du palier ${descente.profondeur} avec ` +
+      ? `Vous ressortez du palier ${descente.profondeur} avec ` +
         `<strong class="or">${valeur}</strong> de butin.`
       : `Palier ${descente.profondeur}. <strong class="perdu">${valeur}</strong> ` +
         `de butin restent au fond, avec toi.`) +
