@@ -1773,6 +1773,14 @@ Composée par Keko avec le Plastron de cuir : « Esquive : gagne esquive jusqu'�
 votre prochain tour », et l'encadré dit « vous avez 50 % de chance d'éviter la
 prochaine attaque subie ».
 
+**LA CARTE S'APPELLE AGILITÉ, L'ÉTAT QU'ELLE DONNE S'APPELLE ESQUIVE.** Renommée
+par Keko. *C'est le couple Projection / étourdissement, repris ici* : **la carte
+nomme le GESTE, le mot-clé nomme ce qu'on gagne.** Une carte qui portait le nom
+de son propre mot-clé le disait deux fois — « Esquive : gagne esquive » — et
+surtout elle brouillait la seule chose que le jaune du cartouche promet : *qu'il
+y a une définition à aller lire ailleurs.* Le type interne ne bouge pas
+(`esquive`) : il ne se lit nulle part à l'écran.
+
 *Et il faut le dire, parce que c'est une première* : **tout le reste du combat
 est déterministe une fois la seed posée.** Elle passe donc par le RNG seedé,
 comme le mélange du deck — une partie rejouée à la même seed doit rendre les
@@ -2053,9 +2061,11 @@ Le pied de la carte dit lequel des trois : « Arme · main droite », « Arme ·
 gauche », « Arme · une main », « Arme · deux mains ». Douze vérifications
 tiennent la contrainte.
 
-**ET CHAQUE CASE VIDE DIT LAQUELLE ELLE EST** — « Droite », « Gauche ». Keko :
-« il faudrait qu'on voie sur les slots le mot droite / gauche pour les mains…
-peut-être sous "Arme" ? Ça va pas tout casser ? »
+**ET CHAQUE CASE VIDE DIT LAQUELLE ELLE EST** — « Main droite », « Main
+gauche ». Keko : « il faudrait qu'on voie sur les slots le mot droite / gauche
+pour les mains… peut-être sous "Arme" ? Ça va pas tout casser ? », puis « il
+faudrait marquer main gauche / main droite (sur deux lignes pour loger) plutôt
+que juste gauche / droite ».
 
 *Non, et parce que le mot vit DANS la case* : **aucune bande en plus, donc
 aucune carte rétrécie** — une ligne sous le titre aurait coûté de la hauteur aux
@@ -2068,6 +2078,26 @@ cases voisines disent deux choses DIFFÉRENTES**, et c'est précisément ce qu'o
 veut lire. Il ne s'affiche que sur une case VIDE, c'est-à-dire au moment où
 l'on cherche où poser — une fois la carte dedans, c'est son pied qui dit « main
 droite ».
+
+**LA COUPURE EST DÉCLARÉE, elle ne se déduit pas.** « Main droite » tient sur une
+ligne et « Main gauche » n'y tient pas : repliées à la mesure, les deux cases
+voisines se seraient lues l'une sur une ligne et l'autre sur deux. *Deux cases
+qui disent la même sorte de chose se lisent de la même façon* — et c'est tout
+l'intérêt du mot ici, qui n'existe que parce que les deux voisines disent deux
+choses différentes. Le saut de ligne vient donc de l'appelant, comme pour les
+plaques de bouton, **et le repli à la mesure reste derrière** : *un nom qu'on
+n'a pas pensé à couper ne doit pas déborder pour autant.*
+
+**ET LE MOT VIENT DU SLOT, pas de l'endroit qui le dessine** (`nomDeLaCase`).
+Keko : « quand on drag un équipement depuis un slot d'arme, durant le drag le
+texte n'est pas visible ». *La règle était écrite — « la case d'où vient la pièce
+reprend l'habit d'une case vide, et elle dit toujours ce qu'elle attend » — et le
+portage 3D l'avait perdue* : les deux cases du glisser passaient un nom VIDE,
+donc un pointillé muet, exactement le défaut que l'armurerie 2D avait déjà payé.
+Les trois endroits — la case au repos, celle qu'on vient de quitter, celle où la
+pièce n'est pas encore arrivée — lisent la même fonction : *trois endroits qui
+écriraient le même mot chacun de leur côté se désaccorderaient au premier
+réglage.*
 
 **LES CHIFFRES SONT PROVISOIRES**, et Keko l'a dit en les demandant : « on
 verra les effets après ». Ils reprennent le barème du jeu sans y ajouter de
@@ -2675,9 +2705,13 @@ recouvrent.
 grossie contre le bord est ramenée dans l'écran, donc un encadré centré sur sa
 case d'origine ne la désignerait plus.
 
-Elle se peint **à sa taille d'affichage**, et **le mot comme son sens CÈDENT**
-s'ils ne tiennent pas : un canvas écrit tout droit et laisse déborder sans rien
-signaler.
+Elle se peint **à sa taille d'affichage**, et sa pierre est **OPAQUE**. Keko :
+« le fond des encadrés explicatifs doit être en opacité 100 %, pas
+semi-transparent ». *Un encadré se pose SUR ce qu'il explique* — il recouvre une
+carte du set et le voile du zoom — et le peu de transparence qu'il gardait
+laissait passer ce qu'il y avait dessous : **ça se lit comme un calque mal posé,
+pas comme une plaque.** Le MOT, lui, cède encore s'il ne tient pas : un canvas
+écrit tout droit et laisse déborder sans rien signaler.
 
 ### LA CARTE REGARDÉE RÉPOND AU CURSEUR
 
