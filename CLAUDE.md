@@ -6300,6 +6300,19 @@ La règle, telle que Keko l'a dictée, et elle vit dans `logic/hub.ts` :
 avec elle — en run, à la mort, au retour — et *une marque posée ailleurs se
 désaccorde de ce qu'elle marque.*
 
+**ET IL S'APPELLE « PRÊT DU MAÎTRE D'ARMES ».** Tranché par Keko : *le rail
+nomme le lieu « Maître d'armes », donc la case doit nommer la même personne que
+l'onglet qui l'ouvre* — deux noms pour un seul PNJ, c'en est un de trop.
+
+*Et le mot juste est plus long de quatre caractères* : mesuré avant correction,
+il débordait de 26 px à 667 x 320 et de 1 px à 844 x 390, donc l'ellipse
+l'aurait tronqué. **Le corps CÈDE pour tenir dans sa boîte** (`partDuPret`),
+comme le cartouche d'une carte et comme le nom d'un groupe de slots : *une
+taille partagée ne dispense pas de tenir dans sa boîte.* On mesure au canvas
+plutôt que d'estimer, et on remesure quand la police arrive. Mesuré après :
+7,7 px de corps à 667 x 320, 9,2 à 844 x 390, **inchangé sur grand écran** où
+c'est la hauteur qui commande.
+
 **Le mot DIT la règle**, et c'est pour ça que « Prêt de l'armurier » a battu
 « Équipement gratuit » : *gratuit* dit le prix, *prêt* dit la condition — on te
 le prête, tu le gagnes en le rapportant. Même raisonnement qu'« enchantement »

@@ -248,6 +248,33 @@ export function PageArmurerie({
   const partsNom = useMemo(() => partsDuPlusLongNom(deuxLignes), [polices, deuxLignes])
 
   /**
+   * CE QUE LA CASE DU PRÊT DOIT CONTENIR, en parts de son corps de texte.
+   *
+   * Keko a renommé le libellé : « il faut remplacer "prêt de l'armurier" par
+   * "prêt du maître d'armes" » — *et le mot le plus juste est plus long de
+   * quatre caractères.* Mesuré avant correction : il débordait de 26 px à
+   * 667 x 320 et de 1 px à 844 x 390, donc l'ellipse l'aurait tronqué.
+   *
+   * **Le corps CÈDE pour tenir dans sa boîte**, comme le cartouche d'une carte
+   * et comme le nom d'un groupe de slots : *une taille partagée ne dispense
+   * pas de tenir dans sa boîte.* On mesure plutôt que d'estimer, et on
+   * remesure quand la police arrive — un canvas qui mesure trop tôt répond
+   * pour Georgia, plus étroite que Cinzel.
+   *
+   * La case (1,15em) et l'écart qui la sépare du mot (0,5em) comptent dans la
+   * part : ils sont dans la même boîte.
+   */
+  const partDuPret = useMemo(() => {
+    const ctx = document.createElement('canvas').getContext('2d')
+    if (ctx === null) return 14
+    const corps = 100
+    ctx.font = `${corps}px Cinzel, Georgia, serif`
+    const mot = TEXTE_PRET.toUpperCase()
+    const large = ctx.measureText(mot).width + 0.08 * corps * mot.length
+    return large / corps + 1.15 + 0.5
+  }, [polices])
+
+  /**
    * LE REM COURANT, lu une fois par rendu. Il suit la fenêtre (son `clamp` est
    * en vw et vh), et deux jetons du rail s'y bornent : la hauteur d'une ligne
    * et la taille du nom. *Une grandeur que deux endroits lisent se calcule une
@@ -1148,9 +1175,12 @@ export function PageArmurerie({
           // ET LE REM RESTE UN PLANCHER : sur un téléphone c'est lui qui
           // commande — Keko : « sur tél c'est bon ». *Un plafond qui ne mord
           // que d'un côté ne se règle que pour ce côté-là.*
-          fontSize: `${Math.max(
-            0.58 * rem,
-            enPixels(plan.pretCase, fenetre.h, fenetre.l).height * 0.38,
+          fontSize: `${Math.min(
+            // ET IL TIENT DANS SA BOÎTE : le libellé est plus long depuis
+            // qu'il nomme le maître d'armes, donc le corps cède plutôt que de
+            // se faire tronquer par l'ellipse. Voir `partDuPret`.
+            enPixels(plan.pretCase, fenetre.h, fenetre.l).width / partDuPret,
+            Math.max(0.58 * rem, enPixels(plan.pretCase, fenetre.h, fenetre.l).height * 0.38),
           )}px`,
         }}
         role="checkbox"

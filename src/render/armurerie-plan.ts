@@ -54,8 +54,15 @@ export const Z_PLAN = Z_MAIN
  */
 export const TEXTE_DESCENDRE = 'Explorer'
 
-/** La case de l'armurier, en en-tête de l'équipement. */
-export const TEXTE_PRET = 'Prêt de l’armurier'
+/**
+ * LA CASE DU PRÊT, sous le bouton du deck.
+ *
+ * **« Prêt du maître d'armes », pas « de l'armurier »** — tranché par Keko :
+ * le rail nomme le lieu « Maître d'armes », donc *la case doit nommer la même
+ * personne que l'onglet qui l'ouvre.* Deux noms pour un seul PNJ, c'en est un
+ * de trop.
+ */
+export const TEXTE_PRET = 'Prêt du maître d’armes'
 
 /** Ce qu'on consulte sans rien décider : le deck que le chargement produit. */
 export const TEXTE_DECK = 'Deck'
@@ -197,7 +204,7 @@ export type PlanArmurerie = {
   tri: Rect
   /** La zone des cases, dans le coffre. */
   grille: Rect
-  /** La case « Prêt de l'armurier », sous le bouton du deck. */
+  /** La case « Prêt du maître d'armes », sous le bouton du deck. */
   pretCase: Rect
   /** La zone des pièces portées : la rangée des armes et de l'armure, titres compris. */
   blocPorte: Rect
