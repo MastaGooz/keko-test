@@ -89,6 +89,18 @@ const IMAGES: Record<string, string> = {
   // mais `new Image()` la refusait et GitHub Pages, servi depuis Linux, aurait
   // rendu un 404 franc. **On recopie le nom du fichier, on ne le réécrit pas.**
   'epee-a-deux-mains': 'Epée à deux mains.webp',
+  potion: 'Potion.webp',
+}
+
+/**
+ * LE DOS DE CARTE, dessiné par Keko — *cadre et logo central, rien d'autre.*
+ *
+ * Le fond, lui, est peint par le jeu : c'est le même décor que la face, donc
+ * les deux côtés d'une carte sont de la même matière. Même piège de cache que
+ * les autres fichiers de `public/`, d'où la date du build dans l'URL.
+ */
+export function urlDuDosDeCarte(): string {
+  return `${import.meta.env.BASE_URL}${encodeURIComponent('Dos de carte.webp')}?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
 /**

@@ -252,7 +252,7 @@ export function Tas3D({ nom, compte, brasse = false, choc = 0 }: Props): React.J
   const [dos, setDos] = useState<string | null>(null)
   useEffect(() => {
     let vivant = true
-    void urlDuDosPeint(nom === 'pioche' ? 'pioche' : 'defausse').then((url) => {
+    void urlDuDosPeint().then((url) => {
       if (vivant && url !== '') setDos(url)
     })
     return () => {

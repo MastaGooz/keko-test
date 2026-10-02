@@ -8423,13 +8423,33 @@ pavé ; le banc d'essai est retiré, le dos reste.* `textureDuDos` et la prop
 `dos` de `Carte3D` attendent une carte face cachée — Keko : « on le garde pour
 plus tard ».
 
-**ET LE COEUR DU MÉDAILLON DIT QUEL TAS C'EST** : un éventail de trois cartes
-pour la pioche, une carte barrée d'une croix pour la défausse (proposée par
-Keko). *Seul le coeur change* — matière, cadre, semis et rayons restent
-identiques, parce que ce sont les mêmes cartes et que seul ce qu'on en fait
-diffère. C'est le seul endroit où le paquet cesse de montrer exactement ce que
-montre une carte retournée, et c'est assumé : **une information de jeu prime sur
-la cohérence décorative.**
+**LE DOS EST DESSINÉ PAR KEKO, LE FOND EST PEINT PAR LE JEU** (`public/Dos de
+carte.webp` — cadre et logo central, rien d'autre : « il va falloir que tu
+fasses le background du dos de carte »).
+
+*Le fond est le MÊME que celui de la face* — dégradé, vignettage, grain — à une
+chose près : **il n'a pas de ciel de famille.** Une carte retournée ne dit rien
+de ce qu'elle est, la règle qui garde déjà le dos en laiton quand le cadre de la
+face change de métal.
+
+**ET LE DESSIN SE CALE SUR SON SUJET, pas sur sa toile** : son cadre laisse une
+marge transparente, inégale en haut (12 px) et en bas (22). Étiré bêtement sur
+la carte, il serait de travers. On mesure la boîte du sujet (`mesurerBoite`,
+celle des créatures) et c'est ELLE qu'on étire — *un repère calé sur la marge
+d'un dessin se déplace avec le dessin*, et c'est la quatrième fois que cette
+règle se paie.
+
+**ET LES DEUX TAS NE SE DISTINGUENT PLUS PAR LEUR COEUR.** Le dos peint en
+portait un — un éventail pour la pioche, une carte barrée pour la défausse —
+et posés sur le losange de Keko ils l'écrasaient : *un symbole ajouté au milieu
+d'un logo n'est pas une étiquette, c'est une rature.* Il reste leur PLACE,
+pioche à gauche et défausse à droite, la règle que le 2D tenait déjà.
+
+*Mais c'est désormais le SEUL signal*, et il faut le savoir : en 3D le tas ne
+porte que son compte, pas son nom. **À rouvrir avec Keko s'il veut que les deux
+se distinguent autrement qu'à leur coin.** Tout ce que le dos peint portait —
+semis de losanges, rayons, médaillon, joncs, `peindreEmbleme` — est tombé avec :
+*du code mort ment sur ce que le jeu fait.*
 
 **LE MÉDAILLON EST PLUS GRAND SUR UN TAS** (×1,55), et c'est une question
 d'ÉCHELLE DE LECTURE, pas de goût : le dos est dessiné pour une carte qui fait
