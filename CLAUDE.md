@@ -1705,19 +1705,22 @@ Quatre choses à ne pas défaire :
   égal à votre défense ». *Une carte dont l'effet dépend de l'état doit dire de
   quoi il dépend*, là où un zéro se lirait comme une carte inutile.
 
-### LES CHIFFRES D'UNE CARTE SE DESSINENT, ILS NE S'ÉCRIVENT PLUS
+### UN SEUL SYMBOLE DANS LE CARTOUCHE : L'ORBE DES PA
 
 Demandé par Keko : « pour l'Estoc, plutôt que "de 1 PA", on peut dessiner le
-symbole de PA avec 1 dedans ? Et pour les dégâts, "Inflige ⚔6" où ⚔ est un
-petit symbole d'épée rouge — et le chiffre rouge aussi. Et pour la défense,
-"Bloque 5" où 5 est dessiné dans le symbole de défense bleu qu'on utilise en
-combat. »
+symbole de PA avec 1 dedans ? » *C'est la règle du même symbole partout* —
+l'orbe du cartouche est celle du coin de la carte et celle du coin de l'écran.
 
-*Et ça sert une règle que le projet tient déjà* : **le même symbole partout.**
-L'orbe est celle de la carte et celle du joueur ; **le bouclier est exactement
-celui de la barre de vie**, au tracé près — recopié, pas réinventé, parce que
-*deux dessins qui décrivent le même objet divergent au premier réglage.* Le
-cartouche cesse de DÉCRIRE ce que l'écran montre ailleurs : il le montre.
+**IL EN A EU TROIS, ET IL N'EN RESTE QU'UN.** Une épée rouge pour les dégâts et
+le bouclier du combat pour le bloc ont vécu un essai, à la demande de Keko, qui
+les a retirés en les voyant : « c'est pas terrible en fait, on va supprimer les
+symboles à part celui des PA ».
+
+*Ce qui distingue celui qui reste, et qui n'était pas évident avant de voir les
+trois ensemble* : **« PA » n'est pas un mot, c'est déjà un symbole écrit en
+lettres** — le remplacer par un dessin ne retire rien au sens. « Dégâts » et
+« bloque », eux, ont un nom français que tout le monde lit d'un coup, et *un
+dessin qui redit un nom n'ajoute rien : il le répète en moins clair.*
 
 Quatre choses qui le portent :
 
@@ -1741,11 +1744,6 @@ Quatre choses qui le portent :
   avec lui — et il a fallu deux passes, de 1,68 à 1,45 puis à **1,28 fois le
   corps du texte**, pour que le symbole cesse de dominer la ligne qu'il
   annote.
-
-**L'ÉPÉE PORTE SON CHIFFRE À CÔTÉ, les deux autres le portent DEDANS.** Une
-lame est trop étroite pour loger un nombre — et c'est ce que Keko a demandé,
-« Inflige ⚔6 ». Elle est dessinée en trois traits (lame, garde, pommeau) :
-*à quinze pixels, un dessin détaillé tourne en bouillie.*
 
 **Et le jeu 2D garde le texte en clair** (`enClair`) : « Inflige 6 dégâts ». *Un
 moteur qui ne sait pas montrer une chose ne doit pas cesser de la dire* — la

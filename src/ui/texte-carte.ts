@@ -57,7 +57,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   if (carte.type === 'tresor' && !valeurAPart) {
     l.push(`Vaut <b>${carte.valeur ?? 0}</b> or s'il ressort`)
   }
-  if (carte.degats > 0) l.push(`Inflige {epee:${carte.degats}}`)
+  if (carte.degats > 0) l.push(`Inflige <b>${carte.degats}</b> dégâts`)
   // SES DÉGÂTS SONT TA DÉFENSE : on ne peut pas écrire un chiffre, donc on
   // écrit la RÈGLE. *Une carte dont l'effet dépend de l'état doit dire de quoi
   // il dépend*, pas afficher un zéro qui se lirait comme une carte inutile.
@@ -72,7 +72,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
-    if (e.type === 'bloc') l.push(`Bloque {bouclier:${e.montant}}`, `<small>ce tour seulement</small>`)
+    if (e.type === 'bloc') l.push(`Bloque <b>${e.montant}</b> dégâts`, `<small>ce tour seulement</small>`)
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
@@ -94,7 +94,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // ce que Keko veut dire — *plus une carte coûte, plus l'action est longue
     // et puissante.* Le code garde `energie` partout, c'est un nom interne.
     if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> points d'action`)
-    if (e.type === 'degatsTous') l.push(`Inflige {epee:${e.montant}} à chaque ennemi`)
+    if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
   }
   // LA REMISE SE DIT APRÈS LE COUP, parce qu'elle parle du COÛT et non de ce
   // que la carte fait — et elle le dit avec un VERBE.
@@ -119,15 +119,12 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
 /**
  * LE REPLI EN CLAIR, pour tout ce qui ne sait pas dessiner les jetons.
  *
- * Le moteur 3D peint `{epee:6}` en symbole ; le jeu 2D, lui, n'a que du texte,
+ * Le moteur 3D peint `{pa:1}` en symbole ; le jeu 2D, lui, n'a que du texte,
  * et *un moteur qui ne sait pas montrer une chose ne doit pas cesser de la
  * dire* — la règle déjà tenue par la valeur d'un butin.
  */
 export function enClair(ligne: string): string {
-  return ligne
-    .replace(/\{pa:(\d+)\}/g, '<b>$1</b> PA')
-    .replace(/\{epee:(\d+)\}/g, '<b>$1</b> dégâts')
-    .replace(/\{bouclier:(\d+)\}/g, '<b>$1</b> dégâts')
+  return ligne.replace(/\{pa:(\d+)\}/g, '<b>$1</b> PA')
 }
 
 /** La famille d'une carte, pour la teinte de son écusson et de son chiffre. */

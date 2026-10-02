@@ -915,10 +915,14 @@ function nu(ligne: string): string {
  * LES CHIFFRES D'UNE CARTE SE DESSINENT, ILS NE S'ÉCRIVENT PLUS.
  *
  * Demandé par Keko : « pour l'Estoc, plutôt que "de 1 PA", on peut dessiner le
- * symbole de PA avec 1 dedans ? Et pour les dégâts, "Inflige ⚔6" où ⚔ est un
- * petit symbole d'épée rouge — et le chiffre rouge aussi. Et pour la défense,
- * "Bloque 5" où 5 est dessiné dans le symbole de défense bleu qu'on utilise en
- * combat. »
+ * symbole de PA avec 1 dedans ? »
+ *
+ * **IL EN A EU TROIS, ET IL N'EN RESTE QU'UN.** Une épée rouge pour les dégâts
+ * et le bouclier du combat pour le bloc ont vécu un essai ; Keko : « c'est pas
+ * terrible en fait, on va supprimer les symboles à part celui des PA ». *Ce
+ * qui distingue celui-ci des deux autres, c'est qu'il ne remplace pas un mot :
+ * « PA » n'est pas un mot, c'est déjà un symbole écrit en lettres.* Les dégâts
+ * et le bloc, eux, ont un nom — et un dessin qui redit un nom n'ajoute rien.
  *
  * *Et ça tient une règle que le projet suit déjà* : **le même symbole partout.**
  * L'orbe du coût est celle de la carte et celle du joueur ; le bouclier est
@@ -930,19 +934,13 @@ function nu(ligne: string): string {
  * il ne se coupe jamais de son chiffre, et le rendu 2D s'en sort avec un repli
  * en clair.
  */
-type Jeton = { type: 'pa' | 'epee' | 'bouclier'; valeur: number }
+type Jeton = { type: 'pa'; valeur: number }
 
 function lireJeton(mot: string): Jeton | null {
-  const m = /^\{(pa|epee|bouclier):(\d+)\}$/.exec(mot)
+  const m = /^\{(pa):(\d+)\}$/.exec(mot)
   if (m === null) return null
   return { type: m[1] as Jeton['type'], valeur: Number(m[2]) }
 }
-
-/** Le rouge de ce qui frappe et le bleu de ce qui encaisse. */
-const SANG = '#f08a7d'
-const ACIER_CLAIR = '#6fa3e2'
-const ACIER_SOMBRE = '#264d80'
-const ACIER_BORD = '#cfe2fb'
 
 /**
  * LA HAUTEUR D'UN SYMBOLE, en part du corps du texte qui l'entoure.
@@ -955,21 +953,13 @@ const ACIER_BORD = '#cfe2fb'
  */
 const HAUT_JETON = 1.28
 
-/** Le corps des chiffres posés dans un symbole, en part du corps du texte. */
+/** Le corps du chiffre posé dans l'orbe, en part du corps du texte. */
 const CHIFFRE_DANS_PA = 0.94
-const CHIFFRE_DANS_BOUCLIER = 0.84
 
 /**
- * LE BOUCLIER EST CELUI DU COMBAT, au tracé près — `BarreVie3D` dessine le
- * même path. *Deux dessins qui décrivent le même objet divergent au premier
- * réglage*, donc celui-ci est recopié, pas réinventé.
- */
-const CHEMIN_BOUCLIER = 'M50 3 91 16v36c0 25-18 41-41 49C27 93 9 77 9 52V16Z'
-
-/**
- * LE CHIFFRE RENTRE, QUEL QU'IL SOIT. Un « 11 » de Rempart est deux fois plus
- * large qu'un « 5 » : *un contenant qui ne contient pas ment*, donc c'est la
- * police qui cède — la règle déjà tenue par le disque du compte des piles.
+ * LE CHIFFRE RENTRE, QUEL QU'IL SOIT. *Un contenant qui ne contient pas ment*,
+ * donc c'est la police qui cède — la règle déjà tenue par le disque du compte
+ * des piles.
  */
 function dansLeDisque(
   ctx: CanvasRenderingContext2D,
@@ -987,14 +977,8 @@ function dansLeDisque(
   return police(c)
 }
 
-function largeurJeton(ctx: CanvasRenderingContext2D, jeton: Jeton, taille: number): number {
-  const h = taille * HAUT_JETON
-  if (jeton.type === 'epee') {
-    // L'épée porte son chiffre À CÔTÉ, pas dedans : une lame est trop étroite
-    // pour loger un nombre, et Keko l'a demandée ainsi — « Inflige ⚔6 ».
-    return h * 0.62 + ctx.measureText(String(jeton.valeur)).width + taille * 0.12
-  }
-  return h * (jeton.type === 'bouclier' ? 0.9 : 1)
+function largeurJeton(_ctx: CanvasRenderingContext2D, _jeton: Jeton, taille: number): number {
+  return taille * HAUT_JETON
 }
 
 /** Dessine le jeton, son bord gauche en `x`, centré sur la ligne de base `y`. */
@@ -1010,79 +994,22 @@ function peindreJeton(
   ctx.save()
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-
-  if (jeton.type === 'pa') {
-    // L'ORBE DU COÛT, EN PETIT : le même objet que le coin de la carte et que
-    // le coin de l'écran. Le disque peint reste le repli, parce qu'*un canvas
-    // ne dessine rien du tout si l'image manque*.
-    if (symbole !== null) ctx.drawImage(symbole, x, y - h / 2, h, h)
-    else {
-      ctx.beginPath()
-      ctx.arc(x + h / 2, y, h / 2, 0, Math.PI * 2)
-      ctx.fillStyle = '#1d1b17'
-      ctx.fill()
-      ctx.strokeStyle = '#f3e3c0'
-      ctx.lineWidth = Math.max(1, h * 0.07)
-      ctx.stroke()
-    }
-    ctx.fillStyle = '#f7ead0'
-    ctx.font = dansLeDisque(ctx, jeton.valeur, taille * CHIFFRE_DANS_PA, h * 0.62)
-    ctx.fillText(String(jeton.valeur), x + h / 2, y + h * 0.02)
-  } else if (jeton.type === 'bouclier') {
-    const l = h * 0.9
-    ctx.translate(x, y - h / 2)
-    ctx.scale(l / 100, h / 104)
-    const forme = new Path2D(CHEMIN_BOUCLIER)
-    const acier = ctx.createLinearGradient(0, 0, 40, 104)
-    acier.addColorStop(0, ACIER_CLAIR)
-    acier.addColorStop(1, ACIER_SOMBRE)
-    ctx.fillStyle = acier
-    ctx.fill(forme)
-    ctx.strokeStyle = ACIER_BORD
-    ctx.lineWidth = 6
-    ctx.lineJoin = 'round'
-    ctx.stroke(forme)
-    ctx.restore()
-    ctx.save()
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillStyle = '#f2f7ff'
-    ctx.font = dansLeDisque(ctx, jeton.valeur, taille * CHIFFRE_DANS_BOUCLIER, l * 0.66)
-    // Le chiffre se pose un cheveu au-dessus du milieu : un écu descend en
-    // pointe, donc son centre OPTIQUE est plus haut que son centre géométrique.
-    ctx.fillText(String(jeton.valeur), x + l / 2, y - h * 0.04)
-  } else {
-    // L'ÉPÉE : lame, garde, pommeau — trois traits, parce qu'*à quinze pixels
-    // un dessin détaillé tourne en bouillie.* Pointe en haut, comme tout ce
-    // qui frappe dans ce jeu.
-    const l = h * 0.62
-    ctx.translate(x, y - h / 2)
-    ctx.scale(l / 100, h / 100)
-    ctx.fillStyle = SANG
+  // L'ORBE DU COÛT, EN PETIT : le même objet que le coin de la carte et que le
+  // coin de l'écran. Le disque peint reste le repli, parce qu'*un canvas ne
+  // dessine rien du tout si l'image manque*.
+  if (symbole !== null) ctx.drawImage(symbole, x, y - h / 2, h, h)
+  else {
     ctx.beginPath()
-    // la lame
-    ctx.moveTo(50, 2)
-    ctx.lineTo(70, 26)
-    ctx.lineTo(62, 62)
-    ctx.lineTo(38, 62)
-    ctx.lineTo(30, 26)
-    ctx.closePath()
+    ctx.arc(x + h / 2, y, h / 2, 0, Math.PI * 2)
+    ctx.fillStyle = '#1d1b17'
     ctx.fill()
-    // la garde
-    ctx.fillRect(12, 62, 76, 13)
-    // la poignée et le pommeau
-    ctx.fillRect(42, 75, 16, 17)
-    ctx.beginPath()
-    ctx.arc(50, 95, 9, 0, Math.PI * 2)
-    ctx.fill()
-    ctx.restore()
-    ctx.save()
-    ctx.textAlign = 'left'
-    ctx.textBaseline = 'middle'
-    ctx.fillStyle = SANG
-    ctx.font = `600 ${taille * 1.12}px "Grenze Gotisch", Georgia, serif`
-    ctx.fillText(String(jeton.valeur), x + l + taille * 0.12, y + taille * 0.02)
+    ctx.strokeStyle = '#f3e3c0'
+    ctx.lineWidth = Math.max(1, h * 0.07)
+    ctx.stroke()
   }
+  ctx.fillStyle = '#f7ead0'
+  ctx.font = dansLeDisque(ctx, jeton.valeur, taille * CHIFFRE_DANS_PA, h * 0.62)
+  ctx.fillText(String(jeton.valeur), x + h / 2, y + h * 0.02)
   ctx.restore()
 }
 
