@@ -111,6 +111,28 @@ function mainDe(arme: Arme): string {
   return arme.main === 'gauche' ? 'main gauche' : 'main droite'
 }
 
+/**
+ * CE QU'UNE PIÈCE APPORTE SANS PASSER PAR UNE CARTE, dans la bande que la
+ * composition a libérée. Keko : « dans la description du plastron on va mettre
+ * +15 PV, avec le symbole de coeur à la place de PV », puis « on va donner
+ * +1 PA au plastron de cuir aussi ».
+ *
+ * *C'est exactement ce que cette bande attendait* — « on va garder cet
+ * emplacement pour des effets spéciaux des armes », disait-il en la vidant.
+ *
+ * **UNE MESURE PAR LIGNE, et son chiffre AVANT son symbole** : c'est la
+ * grammaire de la bande de stats de l'armurerie, où l'on lit les mêmes
+ * réserves — *le même fait se dit du même symbole partout.* Et l'orbe y est
+ * NUE : son chiffre est dehors, parce qu'ici elle dit une mesure et non le
+ * coût d'une carte.
+ */
+function mesuresDeLaPiece(objet: Objet): string[] {
+  const lignes: string[] = []
+  if ('pv' in objet && objet.pv !== undefined) lignes.push(`+<b>${objet.pv}</b> {coeur}`)
+  if ('pa' in objet && objet.pa !== undefined) lignes.push(`+<b>${objet.pa}</b> {pa}`)
+  return lignes
+}
+
 export function pieceAPeindre(objet: Objet): CarteAPeindre {
   const set = estConsommable(objet) ? [{ modele: objet.modele, nombre: 1 }] : objet.set
   // LE PIED DIT LA MAIN, pas le compte. Tranché par Keko : « on va passer les
@@ -149,7 +171,7 @@ export function pieceAPeindre(objet: Objet): CarteAPeindre {
      * vidant. Le coeur est celui de la bande de stats : **le même fait se dit
      * du même symbole partout.**
      */
-    effet: 'pv' in objet && objet.pv !== undefined ? [`+<b>${objet.pv}</b> {coeur}`] : [],
+    effet: mesuresDeLaPiece(objet),
     type: pied,
     // ET SON CIEL DIT SA FAMILLE : rouge pour une arme, vert pour un objet,
     // bleu pour une armure — par une ÉTIQUETTE et non par le mot du pied,

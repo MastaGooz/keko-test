@@ -431,7 +431,12 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           ((lignes - 1) / 2 - Math.floor(iLoupe / colonnes)) * pasY,
           hLoupe / 2 - demiLoupe - margeY,
         )
-  const rapportGloss = rapportGlossaire(Math.max(1, motsMontres.length))
+  // LES ENTRÉES SE CONSTRUISENT UNE FOIS : la hauteur de la plaque dépend des
+  // lignes que chaque définition occupe, donc du TEXTE et plus seulement de son
+  // compte. *Deux endroits qui les reconstruiraient chacun de leur côté se
+  // désaccorderaient au premier réglage du repli.*
+  const entreesGloss = motsMontres.map((mot) => ({ mot, sens: GLOSSAIRE[mot]! }))
+  const rapportGloss = rapportGlossaire(entreesGloss)
   const totalGloss = piece + marge + LARGEUR_GLOSS_SEULE * piece
   const aDroite = motsMontres.length > 0 && seule
   const xPiece = aDroite ? -totalGloss / 2 + piece / 2 : seule ? 0 : -ensemble / 2 + piece / 2
@@ -604,7 +609,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           <planeGeometry args={[glossaire, hGloss]} />
           <meshBasicMaterial
             map={textureGlossaire(
-              motsMontres.map((mot) => ({ mot, sens: GLOSSAIRE[mot]! })),
+              entreesGloss,
               (glossaire / hauteurVisibleA(zCarte, size.height)) * size.height * viewport.dpr,
             )}
             transparent

@@ -1728,6 +1728,35 @@ l'encre qu'il y a dedans. **Le rapport n'est pas choisi** : c'est celui que Keko
 avait déjà validé sur la bande de stats, pour le même coeur à côté des mêmes
 voisins. *Le même couple se règle du même chiffre partout.*
 
+**ET IL DONNE AUSSI +1 POINT D'ACTION** (`pa` sur la `Piece`). Demandé par Keko
+dans la foulée : « on va donner +1 PA au plastron de cuir aussi ».
+
+*C'est d'une autre nature que les PV, et c'est ce qui le rend lourd* : quinze
+points de vie allongent la course, **un point d'action change ce qu'on peut
+faire d'un TOUR** — donc tout le deck se joue autrement, et une carte à 5 PA
+cesse d'occuper le tour entier. *Un sixième point est un levier bien plus violent
+que quinze PV*, et comme les sets du Glaive et de la Rondache, **il n'est pas
+calibré** : Keko a donné le chiffre, pas la mesure.
+
+Il passe par la même porte que les PV (`paDeLEquipement`, dans `descente.ts`) et
+**monte le MAXIMUM, pas la réserve du tour** : l'énergie se recharge à chaque
+tour, donc un bonus posé sur le courant serait perdu au premier passage de main.
+Il voyage dans le combat d'un palier à l'autre, comme `pvMax` — *il vient de
+l'équipement, qui ne change plus une fois descendu.* Deux vérifications le
+tiennent.
+
+**ET IL S'ÉCRIT « +1 ⬤ », avec l'orbe NUE.** Le chiffre est DEHORS, devant elle,
+exactement comme celui du coeur — *l'orbe met son chiffre dedans quand elle dit
+un COÛT, elle le laisse dehors quand elle dit une MESURE*, et c'est la grammaire
+de la bande de stats de l'armurerie. **Le même dessin sert les deux** (`{pa:3}`
+contre `{pa}`), et c'est voulu : un second symbole pour les points d'action en
+aurait fait deux choses.
+
+**Une mesure par LIGNE** (`mesuresDeLaPiece`, dans `combat-3d.ts`) : la bande
+libérée par la composition les empile, et *une pièce qui en porterait quatre se
+lirait toujours comme un petit bloc de mesures* — là où une phrase courante
+aurait demandé des séparateurs à inventer.
+
 **LES AUTRES ARMURES SONT RECOMPOSÉES À DEUX CARTES, et leurs profils sont de
 moi** — Armure de plate 2 Rempart, Cotte de maille 1 Garde + 1 Rempart, Robe
 2 Garde. *Keko a donné le format, pas les sets* : ils sont marqués provisoires
@@ -2460,6 +2489,34 @@ la règle déjà payée sur les cases vides du chargement.
 
 **Et le PAS a baissé avec l'écart des deux lignes** : *rapprocher deux lignes
 sans resserrer leur boîte déplace le bloc vers le haut au lieu de le serrer.*
+
+**ET LE CORPS DU SENS EST FIXE : C'EST LE TEXTE QUI VA À LA LIGNE.** Keko : « la
+taille du texte sous le titre est plus petite pour "esquive" que pour
+"étourdissement" ; je voudrais que la taille soit fixe (on va à la ligne si ça ne
+loge pas), garder la taille d'étourdissement comme référence ».
+
+*Et c'est le bon arbitrage ici, alors que c'est l'INVERSE sur une carte* : le
+cartouche d'une carte cède parce que sa bande est bornée — le pied est juste
+dessous, il n'y a nulle part où descendre. **L'encadré, lui, n'a pas de fond** :
+il grandit vers le haut et vers le bas, là où le champ est libre, et c'est
+exactement ce que Keko avait acheté en le posant à CÔTÉ de la carte plutôt qu'en
+dessous. *La place qu'on s'est donnée là, autant s'en servir.*
+
+**Ce qu'une taille qui cède coûtait** : deux définitions voisines se lisaient à
+deux voix, et **la plus longue — donc celle qu'on a le plus de mal à lire —
+était la plus petite.** C'est l'exact inverse de ce qu'il faut.
+
+Deux choses qui le portent :
+
+- **le repli se mesure dans le repère de la PLAQUE** (100 de large), donc il ne
+  dépend pas de sa taille à l'écran : *une plaque deux fois plus grande porte
+  exactement les mêmes lignes*. Sans ça le rapport dépendrait de la largeur, qui
+  se borne elle-même sur le rapport — et le calcul tournerait en rond ;
+- **la hauteur suit les LIGNES, plus le compte des entrées** : `rapportGlossaire`
+  prend les entrées et non leur nombre, et le nombre de lignes entre dans la clé
+  de la texture — *une mesure faite avant `document.fonts.ready` répond pour
+  Georgia*, et la plaque gardée serait alors d'une hauteur qui n'est plus la
+  bonne.
 
 **ET LE TITRE N'A PAS DE DEUX-POINTS, le sens prend une majuscule.** Tranché
 par Keko. *Un mot-clé est un nom, pas l'amorce d'une phrase* : les deux-points

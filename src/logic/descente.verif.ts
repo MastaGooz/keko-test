@@ -25,12 +25,13 @@ import {
   resoudreCombat,
   tresorsAuDeck,
 } from './descente.ts'
-import { CHOIX_PAR_PALIER, consommablesSurvivants } from './descente.ts'
+import { CHOIX_PAR_PALIER, consommablesSurvivants, paDeLEquipement } from './descente.ts'
 
 // La taille du deck de depart ne s'ecrit plus en dur : elle vient de
 // l'equipement, et une piece ajoutee la ferait mentir sans rien casser.
 const BASE = deckDeLEquipement([ARME_GRATUITE, RONDACHE, ARMURE_GRATUITE]).length
 const PV_EQUIPEMENT = pvDeLEquipement([ARME_GRATUITE, RONDACHE, ARMURE_GRATUITE])
+const PA_EQUIPEMENT = paDeLEquipement([ARME_GRATUITE, RONDACHE, ARMURE_GRATUITE])
 
 const REGLAGE: Reglage = { pvMax: 100, soin: 20, menaceDepart: 0.45, profondeurMax: 4, tailleMain: 5 }
 
@@ -84,6 +85,21 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
   verifier('on part à pleins PV, équipement compris',
     d.combat.pv === REGLAGE.pvMax + PV_EQUIPEMENT && d.combat.pvMax === d.combat.pv)
   verifier('on tient cinq cartes', d.combat.main.length === REGLAGE.tailleMain)
+  // ET LES POINTS D'ACTION AUSSI : le Plastron en donne un, et c'est le
+  // MAXIMUM qu'il monte -- la reserve repart dessus a chaque tour.
+  verifier("on part avec les PA de l'equipement",
+    PA_EQUIPEMENT === 1 && d.combat.energieMax === 5 + PA_EQUIPEMENT
+      && d.combat.energie === d.combat.energieMax)
+}
+
+{
+  // LE BONUS DE PA TIENT TOUTE LA DESCENTE, comme celui des PV : il vient de
+  // l'equipement, qui ne change plus une fois descendu. *Un bonus qui
+  // retomberait au palier suivant serait un bonus de premier combat.*
+  const depart = commencerDescente(createRng(11), REGLAGE)
+  const suivant = descendre(palier(depart, { ou: 'deck' }), createRng(11))
+  verifier('le palier suivant garde les PA de l’equipement',
+    suivant.combat.energieMax === depart.combat.energieMax && depart.combat.energieMax === 6)
 }
 
 {

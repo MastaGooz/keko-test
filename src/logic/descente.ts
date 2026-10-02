@@ -177,12 +177,13 @@ function engager(
   rng: Rng,
   reglage: Reglage,
   pvMax: number,
+  energieMax: number,
 ): EtatCombat {
   const combat = creerCombat(
     deck,
     ennemisPourProfondeur(profondeur, reglage.profondeurMax, rng, reglage.menaceDepart),
     rng,
-    { ...CONFIG_DEFAUT, pvMax, tailleMain: reglage.tailleMain },
+    { ...CONFIG_DEFAUT, pvMax, energieMax, tailleMain: reglage.tailleMain },
   )
   // Les PV ne se rechargent pas d'un combat à l'autre : c'est ce qui rend le
   // point de sortie tendu. `creerCombat` repart du maximum, on le corrige ici
@@ -193,6 +194,16 @@ function engager(
 /** Ce que les pièces portées ajoutent aux points de vie. */
 export function pvDeLEquipement(equipement: readonly Piece[]): number {
   return equipement.reduce((total, piece) => total + (piece.pv ?? 0), 0)
+}
+
+/**
+ * Ce que les pièces portées ajoutent aux points d'action.
+ *
+ * *Deux fonctions plutôt qu'une qui rendrait un couple* : chacune se lit où on
+ * la demande, et la bande de mesures en interroge une à la fois.
+ */
+export function paDeLEquipement(equipement: readonly Piece[]): number {
+  return equipement.reduce((total, piece) => total + (piece.pa ?? 0), 0)
 }
 
 export function commencerDescente(
@@ -221,13 +232,20 @@ export function commencerDescente(
    * relisent comme le reste du réglage.
    */
   const pvMax = reglage.pvMax + pvDeLEquipement(equipement)
+  /**
+   * **ET CE QU'IL AJOUTE AUX POINTS D'ACTION.** Même porte que les PV, et même
+   * raison : *c'est le MAXIMUM qu'on monte*, donc la réserve repart dessus à
+   * chaque tour. Un bonus posé sur le courant serait perdu au premier passage
+   * de main, puisque l'énergie se recharge.
+   */
+  const energieMax = CONFIG_DEFAUT.energieMax + paDeLEquipement(equipement)
   return {
     reglage,
     equipement,
     consommables,
     profondeur: 1,
     phase: { type: 'combat' },
-    combat: engager(1, deck, pvMax, rng, reglage, pvMax),
+    combat: engager(1, deck, pvMax, rng, reglage, pvMax, energieMax),
     deck,
   }
 }
@@ -428,6 +446,9 @@ export function descendre(descente: Descente, rng: Rng): Descente {
       rng,
       descente.reglage,
       descente.combat.pvMax,
+      // LE MAXIMUM D'ÉNERGIE VOYAGE DANS LE COMBAT, comme celui des PV : il
+      // vient de l'équipement, qui ne change plus une fois descendu.
+      descente.combat.energieMax,
     ),
   }
 }

@@ -77,6 +77,22 @@ export type Piece = {
    * qu'on emporte.
    */
   pv?: number
+  /**
+   * CE QU'ELLE AJOUTE AUX POINTS D'ACTION, pour toute la descente.
+   *
+   * Demandé par Keko sur le Plastron de cuir, en même temps que ses PV. *C'est
+   * la deuxième chose qu'une pièce fait sans passer par une carte*, et elle est
+   * d'une autre nature : les PV allongent la course, un point d'action change
+   * ce qu'on peut faire d'un TOUR — donc le deck entier se joue autrement.
+   *
+   * **Elle monte le MAXIMUM, pas la réserve du tour** : l'énergie se recharge
+   * à chaque tour, donc un bonus qui ne donnerait que du courant serait perdu
+   * au premier passage de main.
+   *
+   * *Pas calibré* : Keko a donné le chiffre, pas la mesure — et un sixième
+   * point d'action est un levier bien plus violent que quinze PV.
+   */
+  pa?: number
 }
 
 export type Arme = Piece & {
@@ -479,6 +495,7 @@ export const PLASTRON_DE_CUIR: Armure = {
   nom: 'Plastron de cuir',
   rarete: 'commune',
   pv: 15,
+  pa: 1,
   set: [
     { modele: PROTECTION, nombre: 1 },
     { modele: ESQUIVE, nombre: 1 },
