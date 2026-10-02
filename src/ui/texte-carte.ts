@@ -64,9 +64,9 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   const etourdit = carte.effets?.some((e) => e.type === 'etourdit') === true
   if (carte.degats > 0)
     l.push(
-        `Inflige <b>${carte.degats}</b> ${blessures(carte.degats)}${etourdit ? ' et <b>étourdissement</b>' : ''}`,
+        `Inflige <b>${carte.degats}</b> ${blessures(carte.degats)}${etourdit ? ' et <k>étourdissement</k>' : ''}`,
       )
-  else if (etourdit) l.push(`<b>Étourdissement</b>`)
+  else if (etourdit) l.push(`<k>Étourdissement</k>`)
   // SES DÉGÂTS SONT TA DÉFENSE : on ne peut pas écrire un chiffre, donc on
   // écrit la RÈGLE. *Une carte dont l'effet dépend de l'état doit dire de quoi
   // il dépend*, pas afficher un zéro qui se lirait comme une carte inutile.
@@ -114,7 +114,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         // Une carte à usages ne l'écrit pas : ses charges sont des pastilles.
         // Une carte qui s'exile porte le MOT-CLÉ, et l'encadré du zoom dit ce
         // qu'il veut dire — *un mot-clé est un nom, pas une phrase.*
-        if (carte.usages === undefined && carte.exil === true) l.push(`<b>Consommable</b>`)
+        if (carte.usages === undefined && carte.exil === true) l.push(`<k>Consommable</k>`)
       }
     }
     // POINTS D'ACTION, ET PAS « ÉNERGIE » : le mot renvoie au TEMPS, et c'est
@@ -164,6 +164,10 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
  * dire* — la règle déjà tenue par la valeur d'un butin.
  */
 export function enClair(ligne: string): string {
+  // `<k>` est la balise des MOTS-CLÉS, que seul le canvas sait colorer : en 2D
+  // elle retombe sur le gras. *Un moteur qui ne sait pas montrer une chose ne
+  // doit pas cesser de la dire.*
+  ligne = ligne.replace(/<\/?k>/g, (b) => (b === '<k>' ? '<b>' : '</b>'))
   return ligne.replace(/\{pa:(\d+)\}/g, '<b>$1</b> PA')
 }
 

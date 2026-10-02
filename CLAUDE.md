@@ -2380,6 +2380,17 @@ en faisaient une légende, alors que l'encadré est une entrée de glossaire —
 titre, puis sa définition. La majuscule se pose au RENDU et non dans la donnée,
 qui reste une phrase ordinaire.
 
+**ET UN MOT-CLÉ EST JAUNE DANS LE TEXTE DE LA CARTE**, de la couleur du titre
+de son encadré. Demandé par Keko. *Deux signaux pour un seul fait seraient un
+de trop* : le mot était déjà en gras comme les chiffres, donc rien ne le
+distinguait de « attaque », qui n'est pas un mot-clé et n'a pas de définition.
+**La couleur dit qu'il y a un encadré quelque part**, et c'est celle du titre
+qui le porte.
+
+Ça passe par une BALISE à lui (`<k>`), pas par une couleur écrite dans le
+texte : *c'est le rendu qui décide de ce qu'une balise vaut*, et le jeu 2D, qui
+ne sait pas colorer, la fait retomber sur le gras.
+
 **ET LE SECOND MOT-CLÉ EST « CONSOMMABLE »** : « la carte est détruite quand
 elle est jouée ». Formulation de Keko, en même temps que celle de la Potion —
 « Soigne N blessures », puis le mot-clé en dessous.

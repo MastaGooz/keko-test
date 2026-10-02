@@ -1221,12 +1221,25 @@ function peindreJeton(
  * le reste, donc les chiffres étaient gras en 2D et plats en 3D. Il faut donc
  * écrire une ligne en MORCEAUX, chacun avec sa police.
  */
-type Mot = { texte: string; gras: boolean } | { jeton: Jeton }
+/**
+ * **UN MOT-CLÉ EST JAUNE, et c'est la couleur du titre de son encadré.**
+ * Demandé par Keko : « on peut mettre en jaune les mots clés dans les textes
+ * des cartes ? on peut utiliser la même couleur du titre des encadrés ».
+ *
+ * *Deux signaux pour un seul fait seraient un de trop* : le mot est déjà en
+ * gras comme les chiffres, donc rien ne le distinguait de « attaque », qui
+ * n'est pas un mot-clé et n'a pas d'encadré. **La couleur dit qu'il y a une
+ * définition quelque part**, et c'est celle du titre qui la porte.
+ */
+const OR_MOT_CLE = '#e9d9ae'
+
+type Mot = { texte: string; gras: boolean; cle?: boolean } | { jeton: Jeton }
 
 /** Découpe une entrée balisée en mots, chacun porteur de sa graisse. */
 function enMots(entree: string): Mot[] {
   const mots: Mot[] = []
   let gras = false
+  let cle = false
   // On coupe sur les balises ET sur les espaces : une balise peut ouvrir au
   // milieu d'une ligne, et un mot ne porte qu'une graisse.
   for (const bout of entree.replace(/&nbsp;/g, ' ').split(/(<\/?[^>]+>)/)) {
@@ -1234,12 +1247,22 @@ function enMots(entree: string): Mot[] {
     if (bout.startsWith('<')) {
       if (bout === '<b>') gras = true
       else if (bout === '</b>') gras = false
+      // `<k>` : un MOT-CLÉ. Il est gras comme le reste, et il porte l'or de son
+      // encadré — une balise à lui plutôt qu'une couleur écrite dans le texte,
+      // *parce que c'est le rendu qui décide de ce qu'une balise vaut.*
+      else if (bout === '<k>') {
+        gras = true
+        cle = true
+      } else if (bout === '</k>') {
+        gras = false
+        cle = false
+      }
       continue
     }
     for (const mot of bout.split(' ')) {
       if (mot === '') continue
       const jeton = lireJeton(mot)
-      mots.push(jeton === null ? { texte: mot, gras } : { jeton })
+      mots.push(jeton === null ? { texte: mot, gras, cle } : { jeton })
     }
   }
   return mots
@@ -1298,7 +1321,7 @@ function ecrireLigne(
       return
     }
     ctx.font = policeMot(taille, mot.gras)
-    ctx.fillStyle = couleur
+    ctx.fillStyle = mot.cle === true ? OR_MOT_CLE : couleur
     ctx.fillText(mot.texte, x, y)
     x += ctx.measureText(mot.texte).width
   })
