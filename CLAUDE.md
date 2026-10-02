@@ -1858,10 +1858,21 @@ Le pied de la carte dit lequel des trois : « Arme · main droite », « Arme ·
 gauche », « Arme · une main », « Arme · deux mains ». Douze vérifications
 tiennent la contrainte.
 
-**CE QUI RESTE À DÉCIDER, et c'est à Keko** : les deux cases vides sont coiffées
-d'un seul mot, « Armes », donc *rien ne dit à l'avance quelle main attend quoi*.
-Le refus se lit au glisser — un slot qui ne prend pas ne s'allume pas — mais il
-ne se lit qu'à ce moment-là.
+**ET CHAQUE CASE VIDE DIT LAQUELLE ELLE EST** — « Droite », « Gauche ». Keko :
+« il faudrait qu'on voie sur les slots le mot droite / gauche pour les mains…
+peut-être sous "Arme" ? Ça va pas tout casser ? »
+
+*Non, et parce que le mot vit DANS la case* : **aucune bande en plus, donc
+aucune carte rétrécie** — une ligne sous le titre aurait coûté de la hauteur aux
+deux rangées, et c'est exactement ce que les noms de groupe avaient déjà pris
+une fois.
+
+**C'est aussi le seul endroit où un mot par case se justifie.** On l'avait
+retiré parce qu'il répétait « Objet » trois fois sur la pile ; ici **les deux
+cases voisines disent deux choses DIFFÉRENTES**, et c'est précisément ce qu'on
+veut lire. Il ne s'affiche que sur une case VIDE, c'est-à-dire au moment où
+l'on cherche où poser — une fois la carte dedans, c'est son pied qui dit « main
+droite ».
 
 **LES CHIFFRES SONT PROVISOIRES**, et Keko l'a dit en les demandant : « on
 verra les effets après ». Ils reprennent le barème du jeu sans y ajouter de

@@ -802,11 +802,24 @@ export function Armurerie3D({
           à la même taille. Une arme à deux mains masque le second slot au lieu
           de le barrer : *un slot qui reste rempli mais inutilisable mentirait
           sur ce qu'on emporte.* */}
+      {/* ET CHAQUE MAIN DIT LAQUELLE ELLE EST. Keko : « il faudrait qu'on voie
+          sur les slots le mot droite / gauche pour les mains… peut-être sous
+          "Arme" ? Ça va pas tout casser ? » — non, et parce que le mot vit
+          DANS la case : *aucune bande en plus, donc aucune carte rétrécie*,
+          là où une ligne sous le titre aurait coûté de la hauteur aux deux
+          rangées.
+
+          C'est aussi le seul endroit où un mot par case se justifie : on
+          l'avait retiré parce qu'il répétait « Objet » trois fois sur la pile,
+          **ici les deux cases voisines disent deux choses DIFFÉRENTES.** Et il
+          ne s'affiche que sur une case VIDE, c'est-à-dire au moment précis où
+          l'on cherche où poser — une fois la carte dedans, c'est son pied qui
+          dit « main droite ». */}
       {hub.chargement.mains[0] === null && (
-        <CaseVide nom="" position={plan.mains[0]} taille={plan.tailleCharge} />
+        <CaseVide nom="Droite" position={plan.mains[0]} taille={plan.tailleCharge} />
       )}
       {!aDeuxMains && hub.chargement.mains[1] === null && (
-        <CaseVide nom="" position={plan.mains[1]} taille={plan.tailleCharge} />
+        <CaseVide nom="Gauche" position={plan.mains[1]} taille={plan.tailleCharge} />
       )}
       {hub.chargement.armure === null && (
         <CaseVide nom="" position={plan.armure} taille={plan.tailleCharge} />
