@@ -1310,7 +1310,7 @@ function CoeurIcone(): React.JSX.Element {
  */
 function MainIcone(): React.JSX.Element {
   return (
-    <svg className="arm-icone" viewBox="0 0 40 34" aria-hidden="true">
+    <svg className="arm-icone main" viewBox="0 0 40 34" aria-hidden="true">
       {[-22, 0, 22].map((angle, i) => (
         <rect
           key={angle}

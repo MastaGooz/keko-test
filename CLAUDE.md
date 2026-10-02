@@ -7255,6 +7255,23 @@ l'encre qu'il y a dedans. C'est la même raison qui avait fait inscrire les
 symboles du rail dans leur ligne au lieu de leur donner la même taille :
 **deux dessins de densité différente ne se règlent pas au même chiffre.**
 
+**ET LA MAIN EST MONTÉE D'UN CRAN, pour la raison INVERSE** (93 %). Keko :
+« augmente légèrement la taille du symbole de la taille de la main ». *C'est
+exactement l'argument du coeur, pris par l'autre bout* : l'éventail est le plus
+clairsemé des trois, donc le plus léger à boîte égale. **Trois densités, trois
+chiffres** — 75, 84, 93 — et aucun n'est un réglage d'humeur.
+
+**ET LE CHIFFRE DES PA DESCEND D'UN CHEVEU DE PLUS QU'EN COMBAT** (0,13em contre
+0,06). Keko : « tu peux baisser un tout petit peu le chiffre des PA dans les
+stats ? il y a un petit symbole de sablier en haut, je voudrais pas qu'il touche
+le chiffre ».
+
+*Le sablier est DANS l'image*, au sommet du disque de `Cost.webp` : il mord sur
+la place du chiffre d'autant plus que celui-ci remplit son anneau. **La
+correction est scopée à la bande** et non posée sur `.orbe-chiffre` : en combat
+l'orbe porte `X/X`, donc son chiffre est plus petit et ne monte pas si haut —
+*un défaut qui n'apparaît qu'à un endroit se corrige à cet endroit-là.*
+
 **LA BANDE A GARDÉ LE BUDGET DE QUATRE MESURES ALORS QU'ELLE N'EN PORTE PLUS
 QUE TROIS.** Keko : « augmente la taille des stats pour matcher celle du symbole
 deck et de son chiffre ». *Un contenu dimensionné pour ce qu'il ne porte plus se

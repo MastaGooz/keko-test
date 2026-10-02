@@ -5856,9 +5856,28 @@ body {
 }
 
 /* LE MEME CORPS QUE SES VOISINS, et c'est la regle : *quatre chiffres qui
-   disent la meme sorte de chose se lisent a la meme voix.* */
+   disent la meme sorte de chose se lisent a la meme voix.*
+
+   **ET IL DESCEND D'UN CHEVEU DE PLUS QU'EN COMBAT.** Keko : « tu peux baisser
+   un tout petit peu le chiffre des PA dans les stats, il y a un petit symbole
+   de sablier en haut, je voudrais pas qu'il touche le chiffre ».
+
+   *Le sablier est dans l'image*, au sommet du disque de `Cost.webp` : il mord
+   sur la place du chiffre d'autant plus que celui-ci remplit son anneau. **La
+   correction est scopee a la bande**, pas posee sur `.orbe-chiffre` : en combat
+   l'orbe porte `X/X`, donc son chiffre est plus petit et ne monte pas si haut.
+   *Un defaut qui n'apparait qu'a un endroit se corrige a cet endroit-la.* */
 .arm-orbe .orbe-chiffre {
   font-size: 1.125em;
+  translate: 0 0.13em;
+}
+
+/* Le telephone garde son cheveu de plus, pour la raison ecrite sur
+   `.orbe-chiffre` : le disque de `Cost.webp` y ajoute son propre decentrage. */
+@media (max-height: 430px) {
+  .arm-orbe .orbe-chiffre {
+    translate: 0 0.15em;
+  }
 }
 
 /* LA VIE EST UN COEUR, PAS UNE JAUGE. Demande par Keko, et c'est juste sur le
@@ -5884,6 +5903,16 @@ body {
    meme taille. */
 .arm-icone.coeur {
   height: 75%;
+}
+
+/* ET LA MAIN MONTE D'UN CRAN, pour la raison INVERSE. Keko : « augmente
+   legerement la taille du symbole de la taille de la main ». *A hauteur egale,
+   un eventail de trois traits espaces pese moins lourd qu'une masse pleine* --
+   c'est exactement l'argument du coeur, pris par l'autre bout : ce qui se lit
+   n'est pas la boite du symbole, c'est l'encre qu'il y a dedans, et celui-ci en
+   a le moins des trois. */
+.arm-icone.main {
+  height: 93%;
 }
 
 
