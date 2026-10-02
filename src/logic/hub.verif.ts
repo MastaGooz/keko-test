@@ -6,6 +6,7 @@
  * mourir ne peut pas bloquer le jeu.
  */
 import type { Arme, Armure } from './armes.ts'
+import type { Hub } from './hub.ts'
 import { carteTresor } from './cartes.ts'
 import { createRng } from './rng.ts'
 import { ARME_GRATUITE, ARMURE_GRATUITE, ESPADON as ESPADON_REEL, POTIONS_DEPART, RONDACHE, SUPER_POTIONS_DEPART, deckDeLEquipement } from './armes.ts'
@@ -535,10 +536,20 @@ console.log('Tout passe.')
     accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, rondache.id))
   verifier('...et pas dans le premier',
     !accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 0 }, rondache.id))
+
+  // AUCUNE ARME DU CATALOGUE N'EST DE MAIN DROITE aujourd'hui -- Keko les a
+  // toutes repassees en « une main ». *Une regle sans contenu reste une regle*,
+  // donc on la verifie sur une piece fabriquee ici : le jour ou une arme de
+  // droite arrive, elle ne trouvera pas le chemin casse.
+  const brise: Arme = { ...(dague as Arme), id: 'droitiere', main: 'droite' }
+  const avecDroitiere: Hub = { ...h, reserve: [...h.reserve, brise] }
   verifier('une arme de main droite va dans le premier',
-    accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 0 }, dague.id))
+    accepteDepuis(avecDroitiere, { ou: 'reserve' }, { ou: 'main', rang: 0 }, brise.id))
   verifier('...et pas dans le second',
-    !accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, dague.id))
+    !accepteDepuis(avecDroitiere, { ou: 'reserve' }, { ou: 'main', rang: 1 }, brise.id))
+  verifier('une arme a une main va dans les deux',
+    accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 0 }, dague.id) &&
+      accepteDepuis(h, { ou: 'reserve' }, { ou: 'main', rang: 1 }, dague.id))
 
   // Le Glaive n'a pas de main declaree : il va partout. On le repose d'abord
   // au coffre, puisqu'il est equipe au depart.

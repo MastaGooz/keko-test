@@ -1846,10 +1846,18 @@ boucliers, et une arme de droite ne va pas à gauche.
 
 **L'ABSENCE PORTE LE PLUS DE SENS**, et c'est ce qui évite d'inventer un
 vocabulaire : `main?: 'droite' | 'gauche'`, et **sans main déclarée l'arme va
-partout**. Le Glaive — l'arme de référence, celle qu'on ne peut pas perdre — est
-justement de ce troisième genre : Keko, « on va laisser le bouclier en main
-gauche et le Glaive en une main ». *Un champ à deux valeurs plus l'absence dit
-trois choses.*
+partout**. *Un champ à deux valeurs plus l'absence dit trois choses.*
+
+**ET C'EST DEVENU LE CAS ORDINAIRE** : Keko a repassé toutes les armes à une
+main en « une main », **sauf le bouclier**. Le catalogue n'a donc aujourd'hui
+qu'une seule arme contrainte, la Rondache, et *c'est la bonne proportion* — la
+contrainte existe pour que le bouclier occupe VRAIMENT la main qui ne frappe
+pas, pas pour ranger tout l'arsenal.
+
+**Aucune arme de main DROITE n'existe plus, et la règle reste vérifiée** : une
+pièce fabriquée dans `hub.verif.ts` la couvre. *Une règle sans contenu reste une
+règle* — le jour où une arme de droite arrive, elle ne trouvera pas le chemin
+cassé.
 
 **Une arme à deux mains passe toujours partout** : on la pose où l'on veut, elle
 prend les deux. C'est la règle d'avant, inchangée.

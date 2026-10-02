@@ -457,7 +457,6 @@ export const DAGUE: Arme = {
   nom: 'Dague',
   rarete: 'commune',
   mains: 1,
-  main: 'droite',
   set: [
     { modele: ESTOC, nombre: 2 },
     { modele: TAILLADE, nombre: 1 },
@@ -470,7 +469,6 @@ export const HACHETTE: Arme = {
   nom: 'Hachette',
   rarete: 'commune',
   mains: 1,
-  main: 'droite',
   set: [
     { modele: TAILLADE, nombre: 2 },
     { modele: ESTOC, nombre: 1 },
