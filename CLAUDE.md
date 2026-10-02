@@ -2428,16 +2428,27 @@ regarde qu'un instant : **une bande réservée se paie tout le temps, et celle-c
 ne servait presque jamais.** Les cartes du set et du deck ont repris leur pleine
 taille en la rendant.
 
-Il **pend sous la carte grossie**, et **passe au-dessus d'elle quand il n'y a
-plus la place en bas** — la carte du bas d'une grille de trois lignes n'a rien
-sous elle. Il vit au z de la loupe, donc il recouvre ses voisines : *c'est un
-état transitoire, exactement comme la carte grossie qui les recouvre déjà.*
+**IL SE POSE À CÔTÉ DE LA CARTE, DU CÔTÉ OÙ IL Y A LA PLACE.** Tranché par
+Keko : « en dessous de la carte n'est pas la bonne solution, car certaines
+cartes auront plusieurs mots-clés à définir et vont devoir s'étendre en
+hauteur — donc à gauche ou à droite selon sa position à l'écran ».
 
-**ET C'EST LA PLACE LIBRE QUI LE BORNE, jamais l'inverse.** *Une carte sous la
-loupe occupe la moitié de la hauteur du champ*, donc ce qui reste d'un côté est
-mince : dimensionné sans le savoir, il sortait de l'écran par le haut et on
-n'en lisait que la moitié basse. On mesure les deux côtés, on garde le plus
-grand, et sa largeur en découle.
+*Et c'est la hauteur qui l'impose* : sous la carte, sa place est bornée et fixe,
+alors qu'il grandit avec le nombre de mots — il y a eu une version qui pendait
+dessous, et elle sortait déjà de l'écran à un seul mot-clé. À côté, il grandit
+vers le haut ET vers le bas, là où le champ est libre.
+
+Il vit au z de la loupe, donc **il recouvre ses voisines** : *c'est un état
+transitoire, exactement comme la carte grossie qui les recouvre déjà* — et c'est
+ce qui permet de ne compter que le bord de l'écran comme limite.
+
+**ET SA LARGEUR A UN PLANCHER EN PIXELS D'ÉCRAN** (`LISIBLE_GLOSS_PX`). Keko :
+« sur téléphone les encadrés sont très petits et illisibles ». *Mesuré sur les
+cartes, il suivait une carte du set* — 77 px de large à 667 x 320, donc un texte
+de six pixels. **Un encadré appartient à l'interface, pas à la scène** : c'est la
+règle du disque du compte et du plancher tactile des boutons. On prend le plus
+grand des deux règles, puis la place le borne. Mesuré en cadre à 844 x 390 :
+215 px de large, texte lisible, posé à gauche de la carte.
 
 Une carte zoomée SEULE garde le sien à côté d'elle, en permanence : il n'y a pas
 de loupe là, et le zoom ne parle que d'elle de toute façon.

@@ -57,6 +57,18 @@ const RECUL_VOILE = 3
  */
 export type Entree = { carte: CarteAPeindre; nombre: number }
 
+/** La largeur de l'encadré à côté d'une carte zoomée SEULE, en part de celle-ci. */
+const LARGEUR_GLOSS_SEULE = 1.05
+
+/**
+ * LA LARGEUR LISIBLE D'UN ENCADRÉ, en pixels d'écran.
+ *
+ * Son texte vaut 6,4 % de sa largeur, donc il lui faut environ deux cents
+ * pixels pour qu'une définition se lise sans effort — *un encadré appartient à
+ * l'interface, pas à la scène.*
+ */
+const LISIBLE_GLOSS_PX = 215
+
 const COLONNES_SET = 4
 /** Et sur combien de lignes au plus : c'est ce qui borne la taille d'une carte. */
 const LIGNES_SET = 2
@@ -419,31 +431,9 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           ((lignes - 1) / 2 - Math.floor(iLoupe / colonnes)) * pasY,
           hLoupe / 2 - demiLoupe - margeY,
         )
-  /**
-   * **LA PLACE LIBRE AU-DESSUS ET EN DESSOUS DE LA CARTE GROSSIE**, et c'est
-   * elle qui borne l'encadré — jamais l'inverse.
-   *
-   * *Une carte sous la loupe occupe la moitié de la hauteur du champ*, donc ce
-   * qui reste d'un côté est mince : un encadré dimensionné sans le savoir
-   * sortait de l'écran par le haut, et on ne lisait plus que sa moitié basse.
-   */
-  const placeBas = yLoupe - demiLoupe - ecartGloss - (-hLoupe / 2 + margeY)
-  const placeHaut = hLoupe / 2 - margeY - (yLoupe + demiLoupe + ecartGloss)
-  const placeGloss = Math.max(placeBas, placeHaut)
   const rapportGloss = rapportGlossaire(Math.max(1, motsMontres.length))
-  const glossaire =
-    motsMontres.length === 0
-      ? 0
-      : seule
-        ? piece * 1.05
-        : // IL SE MESURE SUR LES CARTES, pas sur la largeur de la grille.
-          // *C'est une note de bas de page*, donc son texte n'a aucune raison
-          // d'être plus gros que le cartouche qu'il annote.
-          Math.min(uneCarte * 1.6, lLoupe * 0.42, Math.max(0, placeGloss) / rapportGloss)
-  const avecGlossaire = glossaire > 0.01
-  const hGloss = glossaire * rapportGloss
-  const totalGloss = piece + marge + glossaire
-  const aDroite = avecGlossaire && seule
+  const totalGloss = piece + marge + LARGEUR_GLOSS_SEULE * piece
+  const aDroite = motsMontres.length > 0 && seule
   const xPiece = aDroite ? -totalGloss / 2 + piece / 2 : seule ? 0 : -ensemble / 2 + piece / 2
   const xSet = sansPiece ? 0 : xPiece + piece / 2 + marge + largeurOccupee / 2
   const parLigneLoupe =
@@ -456,16 +446,52 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           lLoupe / 2 - tailleLoupe / 2 - marge,
         )
   /**
-   * IL PEND SOUS LA CARTE GROSSIE — et il passe AU-DESSUS d'elle s'il n'y a
-   * plus la place en bas. *Un encadré qui sort de l'écran n'explique rien*, et
-   * la carte du bas d'une grille de trois lignes n'a rien sous elle.
+   * **IL SE POSE À CÔTÉ DE LA CARTE, DU CÔTÉ OÙ IL Y A LA PLACE.** Tranché par
+   * Keko : « en dessous de la carte n'est pas la bonne solution, car certaines
+   * cartes auront plusieurs mots-clés à définir et vont devoir s'étendre en
+   * hauteur — donc à gauche ou à droite selon sa position à l'écran ».
+   *
+   * *Et c'est ce que la hauteur impose* : un encadré qui pend sous la carte a
+   * une place bornée et fixe, alors qu'il grandit avec le nombre de mots. À
+   * côté, il grandit vers le haut et vers le bas, là où le champ est libre.
+   *
+   * Il passe DEVANT les cartes voisines, au z de la loupe — *c'est un état
+   * transitoire, exactement comme la carte grossie qui les recouvre déjà*, et
+   * c'est ce qui permet de ne compter que le bord de l'écran comme limite.
    */
-  const yGloss = aDroite
-    ? 0
-    : placeBas >= placeHaut
-      ? yLoupe - demiLoupe - ecartGloss - hGloss / 2
-      : yLoupe + demiLoupe + ecartGloss + hGloss / 2
-  const xGloss = aDroite ? xPiece + piece / 2 + marge + glossaire / 2 : xLoupe
+  const placeDroite = lLoupe / 2 - marge - (xLoupe + tailleLoupe / 2 + ecartGloss)
+  const placeGauche = xLoupe - tailleLoupe / 2 - ecartGloss - (-lLoupe / 2 + marge)
+  /**
+   * **ET SA LARGEUR A UN PLANCHER EN PIXELS D'ÉCRAN.** Keko : « sur téléphone
+   * les encadrés sont très petits et illisibles ».
+   *
+   * *Mesuré sur les cartes, il suivait une carte du set* — 77 px de large à
+   * 667 x 320, donc un texte de six pixels. **Un encadré appartient à
+   * l'interface, pas à la scène** : c'est la règle du disque du compte et du
+   * plancher tactile des boutons, et elle vaut ici au mot près. On prend le
+   * plus grand des deux règles, puis la place le borne.
+   */
+  const enUnites = lLoupe / size.width
+  const glossaire =
+    motsMontres.length === 0
+      ? 0
+      : seule
+        ? LARGEUR_GLOSS_SEULE * piece
+        : Math.min(
+            Math.max(LISIBLE_GLOSS_PX * enUnites, uneCarte * 1.35),
+            Math.max(placeDroite, placeGauche),
+            // Et il ne sort pas du champ par la hauteur : à plusieurs mots-clés
+            // c'est elle qui finit par commander.
+            (hLoupe - 2 * margeY) / rapportGloss,
+          )
+  const avecGlossaire = glossaire > 0.01
+  const hGloss = glossaire * rapportGloss
+  const yGloss = aDroite ? 0 : borner(yLoupe, hLoupe / 2 - hGloss / 2 - margeY)
+  const xGloss = aDroite
+    ? xPiece + piece / 2 + marge + glossaire / 2
+    : placeDroite >= placeGauche
+      ? xLoupe + tailleLoupe / 2 + ecartGloss + glossaire / 2
+      : xLoupe - tailleLoupe / 2 - ecartGloss - glossaire / 2
 
   return (
     <group>
