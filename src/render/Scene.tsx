@@ -73,7 +73,7 @@ import {
   setAPeindre,
 } from './combat-3d.ts'
 import type { EtatCombat } from '../logic/combat.ts'
-import { consequence, coutDe, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
+import { consequence, coutDe, degatsDe, finDuTour, jouable, jouerCarte, menaceDuTour, portee, viseUneCible, vivants } from '../logic/combat.ts'
 import type { Descente } from '../logic/descente.ts'
 import { createRng } from '../logic/rng.ts'
 import type { Chargement, Hub, Slot } from '../logic/hub.ts'
@@ -859,7 +859,9 @@ export function Scene(): React.JSX.Element {
         majCombat((c) => jouerCarte(c, index, cible))
         setTouches((t) => ({ ...t, [cible]: lireHorloge() }))
         secouer('normale')
-        setCoups((cs) => [...cs, { cle, cible, degats: carte.degats, tue: cons.tue }])
+        // CE QU'ELLE INFLIGE SE DEMANDE À LA RÈGLE : un Coup de bouclier vaut
+        // la défense du moment, pas le chiffre de son modèle.
+        setCoups((cs) => [...cs, { cle, cible, degats: degatsDe(carte, combat), tue: cons.tue }])
         // LE TAMPON TOMBE 90 ms APRÈS L'IMPACT : le coup d'abord, ce qu'il a
         // fait ensuite. L'ordre inverse ferait lire la mort comme la cause.
         if (cons.tue) window.setTimeout(() => setMorts((m) => ({ ...m, [cible]: lireHorloge() })), 90)

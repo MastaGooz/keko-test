@@ -1018,7 +1018,7 @@ export function compteDuDeck(hub: Hub): { total: number; frappent: number } {
       total += nombre
       // Les deux verbes comptent : frapper une cible, ou frapper tout le rang.
       const tous = modele.effets?.some((e) => e.type === 'degatsTous') ?? false
-      if (modele.degats > 0 || tous) frappent += nombre
+      if (modele.degats > 0 || tous || modele.degatsDuBloc === true) frappent += nombre
     }
   }
   return { total, frappent }

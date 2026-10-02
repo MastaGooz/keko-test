@@ -13,6 +13,7 @@ import {
   consequence,
   coutDe,
   creerCombat,
+  degatsDe,
   finDuTour,
   jouerCarte,
   mainMorte,
@@ -540,6 +541,53 @@ cas('une main n’est morte que si rien n’est payable AU PRIX REMIS', () => {
   // Quatre dagues jouees : il reste 1 point d’action et l’estoc est a zero.
   for (let i = 0; i < 4; i += 1) etat = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
   verifie(!mainMorte(etat), 'l’estoc gratuit se joue encore')
+})
+
+// --- frapper avec sa defense -------------------------------------------------
+
+const BLOQUER_TEST = { nom: 'Bloquer', cout: 1, degats: 0, effets: [{ type: 'bloc' as const, montant: 5 }] }
+const COUP_BOUCLIER = { nom: 'Coup de bouclier', cout: 2, degats: 0, degatsDuBloc: true }
+
+cas('sans defense, le coup de bouclier ne fait rien', () => {
+  const etat = combat([...cartes(1, COUP_BOUCLIER), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  egal(degatsDe(etat.main[ou(etat, 'Coup de bouclier')]!, etat), 0, 'on frappe avec ce qu’on a')
+})
+
+cas('il inflige exactement la defense posee', () => {
+  const etat = combat(
+    [...cartes(1, COUP_BOUCLIER), ...cartes(4, BLOQUER_TEST)],
+    ennemi({ pv: 100, degats: 5 }),
+  )
+  const garde = jouerCarte(etat, autreQue(etat, 'Coup de bouclier'), 0)
+  egal(garde.bloc, 5, 'une garde posee')
+  const frappe = jouerCarte(garde, ou(garde, 'Coup de bouclier'), 0)
+  egal(frappe.ennemis[0]!.pv, 95, 'cinq de defense, cinq de degats')
+})
+
+cas('deux gardes valent deux fois plus', () => {
+  const etat = combat(
+    [...cartes(1, COUP_BOUCLIER), ...cartes(4, BLOQUER_TEST)],
+    ennemi({ pv: 100, degats: 5 }),
+  )
+  let apres = jouerCarte(etat, autreQue(etat, 'Coup de bouclier'), 0)
+  apres = jouerCarte(apres, autreQue(apres, 'Coup de bouclier'), 0)
+  const frappe = jouerCarte(apres, ou(apres, 'Coup de bouclier'), 0)
+  egal(frappe.ennemis[0]!.pv, 90, 'dix de defense, dix de degats')
+})
+
+cas('il designe un corps meme quand il vaut zero', () => {
+  const etat = combat([...cartes(1, COUP_BOUCLIER), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
+  egal(portee(etat.main[ou(etat, 'Coup de bouclier')]!), 'une', 'la portee est une propriete du verbe')
+})
+
+cas('et il compte comme une attaque pour la remise', () => {
+  const etat = combat(
+    [...cartes(1, COUP_BOUCLIER), ...cartes(1, ESTOC_REMISE), ...cartes(3, DAGUE)],
+    ennemi({ pv: 100, degats: 5 }),
+  )
+  const apres = jouerCarte(etat, ou(etat, 'Coup de bouclier'), 0)
+  egal(apres.attaquesCeTour, 1, 'frapper a zero reste frapper')
+  egal(coutDe(apres.main[ou(apres, 'Estoc')]!, apres), 2, 'donc l’estoc escompte')
 })
 
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)

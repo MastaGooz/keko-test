@@ -127,16 +127,16 @@ export function carteDuConsommable(consommable: Consommable): Carte {
 /**
  * LA TAILLE : le coup de base du Glaive, et la monnaie de l'Estoc.
  *
- * 4 dégâts pour 1 PA — composé par Keko. *C'est la carte qu'on joue sans y
+ * 6 dégâts pour 1 PA — composé par Keko. *C'est la carte qu'on joue sans y
  * penser*, et c'est précisément ce qui donne son prix à celle qui compte les
  * attaques derrière elle.
  */
-const TAILLE: Modele = { nom: 'Taille', type: 'combat', cout: 1, degats: 4 }
+const TAILLE: Modele = { nom: 'Taille', type: 'combat', cout: 1, degats: 6 }
 
 /**
  * L'ESTOC : cher seul, donné après deux Tailles.
  *
- * 6 dégâts pour 3 PA, **moins 1 PA par attaque déjà portée ce tour** — composé
+ * 10 dégâts pour 3 PA, **moins 1 PA par attaque déjà portée ce tour** — composé
  * par Keko. *C'est le premier effet du jeu qui fasse de l'ORDRE une décision* :
  * jusqu'ici un tour était un sac, on y dépensait sa réserve sans que la suite
  * compte. Ici, ouvrir par les petits coups change ce que le gros coûte.
@@ -149,7 +149,7 @@ const ESTOC: Modele = {
   nom: 'Estoc',
   type: 'combat',
   cout: 3,
-  degats: 6,
+  degats: 10,
   remiseParAttaque: 1,
 }
 
@@ -275,17 +275,28 @@ const BLOQUER: Modele = {
 }
 
 /**
- * Elle frappe ET elle protège, à moitié de chaque.
+ * ELLE FRAPPE AVEC CE QU'ON A ENCAISSÉ : ses dégâts valent la défense du
+ * moment. Composé par Keko.
  *
- * *C'est ce qu'un bouclier fait* — et c'est sous les deux barèmes pris
- * séparément : 4 dégâts quand 2⚡ en valent 7, 4 de bloc quand 2⚡ en valent 11.
+ * *C'est le premier verbe qui fasse du BLOC une ressource offensive* —
+ * jusqu'ici bloquer était la seule chose qu'on faisait de son armure, et une
+ * garde posée n'avait plus rien à dire ensuite. Avec la Rondache, deux Bloquer
+ * valent dix de défense, et le Coup de bouclier les rend en dégâts.
+ *
+ * **Le prix est le TEMPO** : il faut deux cartes avant lui pour qu'il vaille
+ * quelque chose, et le bloc tombe à la fin du tour — donc il se joue dans le
+ * tour où l'on s'est protégé, pas dans celui d'après.
  */
 const COUP_DE_BOUCLIER: Modele = {
   nom: 'Coup de bouclier',
   type: 'combat',
   cout: 2,
-  degats: 4,
-  effets: [{ type: 'bloc', montant: 4 }],
+  degats: 0,
+  // SES DÉGÂTS SONT TA DÉFENSE. Composé par Keko : « le coup de bouclier
+  // inflige des dégâts égaux à la défense ». *Il ne donne plus de bloc à lui
+  // seul* — ce serait se demander si le chiffre annoncé compte celui qu'il
+  // vient d'ajouter, et la réponse n'a pas à être devinée.
+  degatsDuBloc: true,
 }
 
 /**

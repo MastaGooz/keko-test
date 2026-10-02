@@ -450,7 +450,7 @@ donjon. Ce qui tourne :
   ce qu'elles infligent** : un chiffre à zéro se lirait comme une carte inutile.
 
 - **le deck vient de l'équipement** (`logic/armes.ts`) : le **Glaive**, arme
-  commune et gratuite, donne **deux Tailles (1⚡/4) et un Estoc (3⚡/6)**.
+  commune et gratuite, donne **deux Tailles (1⚡/6) et un Estoc (3⚡/10)**.
   Composé par Keko. Délibérément compétente et sans relief — c'est la référence
   à laquelle les autres armes se compareront, et une arme de départ excitante
   rendrait les suivantes fades ;
@@ -1671,6 +1671,41 @@ Quatre choses à ne pas défaire :
 une carte à effet testait donc une AUTRE carte que celle qu'on croyait — et il
 passait.* Il reprend tout le gabarit désormais. Sept vérifications tiennent la
 règle (215 au total).
+
+### LE PREMIER VERBE QUI FASSE DU BLOC UNE RESSOURCE OFFENSIVE
+
+**Le Coup de bouclier de la Rondache inflige des dégâts ÉGAUX À LA DÉFENSE.**
+Composé par Keko : « le bouclier : 5 défense pour le blocage, et le coup de
+bouclier inflige des dégâts égaux à la défense ».
+
+*Jusqu'ici bloquer était la seule chose qu'on faisait de son armure*, et une
+garde posée n'avait plus rien à dire ensuite. Avec la Rondache, deux Bloquer
+valent dix de défense et le Coup de bouclier les rend en dégâts. **Le prix est
+le TEMPO** : il faut deux cartes avant lui pour qu'il vaille quelque chose, et
+*le bloc tombe à la fin du tour* — donc il se joue dans le tour où l'on s'est
+protégé, jamais dans celui d'après.
+
+Quatre choses à ne pas défaire :
+
+- **ses dégâts se demandent à la règle** (`degatsDe`), comme le coût d'une
+  carte à remise se demande à `coutDe` : *ce qu'elle inflige est une propriété
+  du MOMENT, pas de la carte.* Le chiffre qui saute au-dessus du corps touché
+  vient de là, et l'aperçu d'achèvement aussi ;
+- **elle se lit AVANT les effets de la carte.** Une carte qui frapperait du
+  bloc et en donnerait s'amplifierait elle-même, et le joueur ne saurait plus
+  si le chiffre annoncé compte celui qu'elle vient d'ajouter : *on frappe avec
+  la défense qu'on AVAIT en jouant la carte.* C'est pour la même raison que le
+  Coup de bouclier ne donne plus de bloc à lui seul ;
+- **elle reste une ATTAQUE à zéro de défense** — sa portée, son pied et son
+  compte dans la remise de l'Estoc. *Ce qui classe une carte est son verbe, pas
+  ce qu'elle vaut à cet instant* : sans ça, son pied disait « Action », elle
+  cessait de désigner un corps dès qu'on n'avait plus d'armure, et elle
+  n'escomptait plus rien ;
+- **le texte dit la RÈGLE, pas un chiffre** : « Inflige autant de dégâts / que
+  ta défense ». *Une carte dont l'effet dépend de l'état doit dire de quoi il
+  dépend*, là où un zéro se lirait comme une carte inutile.
+
+Cinq vérifications la tiennent (220 au total).
 
 **LES CHIFFRES SONT DE KEKO ET NE SONT PAS CALIBRÉS.** Le set du Glaive est la
 référence à laquelle toutes les armes se comparent, et *le rasoir le plus

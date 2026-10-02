@@ -101,6 +101,20 @@ export type Carte = {
    */
   remiseParAttaque?: number
   degats: number
+  /**
+   * SES DÉGÂTS SONT CEUX DE TA DÉFENSE — le bloc courant, pas un chiffre écrit
+   * sur la carte.
+   *
+   * Le Coup de bouclier de la Rondache, composé par Keko : « le coup de
+   * bouclier inflige des dégâts égaux à la défense ». *C'est le premier verbe
+   * qui fasse du BLOC une ressource offensive* — jusqu'ici bloquer était la
+   * seule chose qu'on faisait de son armure, et une garde posée n'avait plus
+   * rien à dire au tour suivant.
+   *
+   * Comme la remise, **ça n'est plus une propriété de la carte mais du
+   * MOMENT** : tout ce qui demande ses dégâts passe par `degatsDe`.
+   */
+  degatsDuBloc?: boolean
   /** Ce que la carte fait en plus de ses dégâts. */
   effets?: Effet[]
   /**
@@ -325,7 +339,7 @@ export type Consequence = {
 
 export function consequence(etat: EtatCombat, carte: Carte, cible: number): Consequence {
   const vise = etat.ennemis[cible]
-  const tue = vise !== undefined && vise.pv > 0 && carte.degats >= vise.pv
+  const tue = vise !== undefined && vise.pv > 0 && degatsDe(carte, etat) >= vise.pv
   const debout = etat.ennemis.filter((ennemi) => ennemi.pv > 0).length
 
   const menace = menaceDuTour(etat)
@@ -378,6 +392,10 @@ export type Portee = 'aucune' | 'une' | 'toutes'
 
 export function portee(carte: Carte): Portee {
   if (carte.effets?.some((effet) => effet.type === 'degatsTous') ?? false) return 'toutes'
+  // Un Coup de bouclier désigne un corps même quand il vaut zéro : *la portée
+  // est une propriété du verbe, pas du chiffre du moment.* Sans ça, il
+  // deviendrait une carte sans cible dès qu'on n'a plus d'armure.
+  if (carte.degatsDuBloc === true) return 'une'
   return carte.degats > 0 ? 'une' : 'aucune'
 }
 
@@ -416,9 +434,25 @@ export function coutDe(carte: Carte, etat: EtatCombat): number {
   return Math.max(0, carte.cout - remise)
 }
 
+/**
+ * CE QUE CETTE CARTE INFLIGE MAINTENANT.
+ *
+ * Un Coup de bouclier vaut la défense qu'on a sous la main : *ses dégâts sont
+ * une propriété du MOMENT*, comme le coût d'une carte à remise. Tout ce qui
+ * les demande passe par ici — la règle qui frappe, l'aperçu qui l'annonce, le
+ * chiffre qui saute au-dessus du corps touché.
+ */
+export function degatsDe(carte: Carte, etat: EtatCombat): number {
+  return carte.degatsDuBloc === true ? etat.bloc : carte.degats
+}
+
 /** Vrai si la carte porte un coup, à une cible ou à tout le rang. */
 export function frappe(carte: Carte): boolean {
   if (carte.degats > 0) return true
+  // ELLE FRAPPE MÊME À ZÉRO DE DÉFENSE : ce qui fait d'une carte une attaque,
+  // c'est son VERBE, pas ce qu'elle vaut à cet instant. Sans ça, un Coup de
+  // bouclier joué sans armure cesserait d'escompter l'Estoc.
+  if (carte.degatsDuBloc === true) return true
   return carte.effets?.some((effet) => effet.type === 'degatsTous') ?? false
 }
 
@@ -441,18 +475,24 @@ function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number): void {
   const restante = carte.usages === undefined ? carte : { ...carte, usages: carte.usages - 1 }
   if (carte.exil !== true && restante.usages !== 0) etat.defausse.push(restante)
 
+  // CE QU'ELLE INFLIGE SE LIT AVANT SES EFFETS. Une carte qui frapperait du
+  // bloc ET en donnerait s'amplifierait elle-même, et le joueur ne saurait
+  // plus si le chiffre annoncé compte le bloc qu'elle vient d'ajouter : *on
+  // frappe avec la défense qu'on AVAIT en jouant la carte.*
+  const degats = degatsDe(carte, etat)
+
   for (const effet of carte.effets ?? []) appliquerEffet(etat, effet)
 
   const ennemi = etat.ennemis[cible]
   if (ennemi === undefined || ennemi.pv === 0) return
 
-  ennemi.pv = Math.max(0, ennemi.pv - carte.degats)
+  ennemi.pv = Math.max(0, ennemi.pv - degats)
   etat.evenements.push({
     tour: etat.tour,
     type: 'carte',
     nom: carte.nom,
     cible: ennemi.nom,
-    degats: carte.degats,
+    degats,
     pvCible: ennemi.pv,
   })
 

@@ -58,6 +58,10 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     l.push(`Vaut <b>${carte.valeur ?? 0}</b> or s'il ressort`)
   }
   if (carte.degats > 0) l.push(`Inflige <b>${carte.degats}</b> dégâts`)
+  // SES DÉGÂTS SONT TA DÉFENSE : on ne peut pas écrire un chiffre, donc on
+  // écrit la RÈGLE. *Une carte dont l'effet dépend de l'état doit dire de quoi
+  // il dépend*, pas afficher un zéro qui se lirait comme une carte inutile.
+  if (carte.degatsDuBloc === true) l.push(`Inflige autant de dégâts`, `<small>que ta défense</small>`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
@@ -109,7 +113,12 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
 export function famille(carte: Carte): 'tresor' | 'consommable' | 'attaque' | 'defense' | 'action' {
   if (carte.type === 'tresor') return 'tresor'
   if (carte.usages !== undefined || carte.exil === true) return 'consommable'
-  if (carte.degats > 0 || carte.effets?.some((e) => e.type === 'degatsTous')) return 'attaque'
+  // UNE CARTE QUI FRAPPE EST UNE ATTAQUE, même quand son chiffre est à zéro :
+  // le Coup de bouclier vaut la défense du moment, et *ce qui classe une carte
+  // est son verbe, pas ce qu'elle vaut à cet instant.* Sans ça, son pied
+  // disait « Action ».
+  if (carte.degats > 0 || carte.degatsDuBloc === true || carte.effets?.some((e) => e.type === 'degatsTous'))
+    return 'attaque'
   if (carte.effets?.some((e) => e.type === 'bloc')) return 'defense'
   return 'action'
 }
@@ -132,7 +141,8 @@ export function nature(carte: Carte): string {
   // regarde.* Demandé par Keko. Le mot est aussi plus court, ce qui compte sur
   // un pied de carte enfoui aux trois quarts.
   if (carte.usages !== undefined || carte.exil === true) return 'Objet'
-  if (carte.degats > 0 || carte.effets?.some((e) => e.type === 'degatsTous')) return 'Attaque'
+  if (carte.degats > 0 || carte.degatsDuBloc === true || carte.effets?.some((e) => e.type === 'degatsTous'))
+    return 'Attaque'
   if (carte.effets?.some((e) => e.type === 'bloc')) return 'Défense'
   return 'Action'
 }
