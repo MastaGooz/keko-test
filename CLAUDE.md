@@ -1732,7 +1732,13 @@ Quatre choses qui le portent :
   variable ;
 - **le chiffre rentre dans son symbole, quel qu'il soit.** Un « 11 » de Rempart
   est deux fois plus large qu'un « 5 » : c'est la police qui cède, la règle du
-  disque du compte des piles.
+  disque du compte des piles ;
+- **et le SYMBOLE se règle à part du CHIFFRE qu'il contient.** Keko : « les
+  symboles sont un peu trop gros, mais la taille des chiffres dedans est
+  bien ». Le dessin suit `HAUT_JETON`, le chiffre suit le CORPS DU TEXTE —
+  *ce qui se lit comme un chiffre se mesure au texte qui l'entoure, pas au
+  cadre où il est posé.* Mêlés, réduire le symbole aurait emporté son chiffre
+  avec lui.
 
 **L'ÉPÉE PORTE SON CHIFFRE À CÔTÉ, les deux autres le portent DEDANS.** Une
 lame est trop étroite pour loger un nombre — et c'est ce que Keko a demandé,

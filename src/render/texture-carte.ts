@@ -944,8 +944,20 @@ const ACIER_CLAIR = '#6fa3e2'
 const ACIER_SOMBRE = '#264d80'
 const ACIER_BORD = '#cfe2fb'
 
-/** La hauteur d'un symbole, en part du corps du texte qui l'entoure. */
-const HAUT_JETON = 1.68
+/**
+ * LA HAUTEUR D'UN SYMBOLE, en part du corps du texte qui l'entoure.
+ *
+ * Keko : « les symboles sont un peu trop gros, mais la taille des chiffres
+ * dedans est bien ». **Les deux se règlent donc séparément** : le dessin suit
+ * ce nombre, le chiffre suit le CORPS DU TEXTE — *ce qui se lit comme un
+ * chiffre se mesure au texte qui l'entoure, pas au cadre où il est posé.*
+ * Mêlés, réduire le symbole aurait emporté son chiffre avec lui.
+ */
+const HAUT_JETON = 1.45
+
+/** Le corps des chiffres posés dans un symbole, en part du corps du texte. */
+const CHIFFRE_DANS_PA = 0.94
+const CHIFFRE_DANS_BOUCLIER = 0.84
 
 /**
  * LE BOUCLIER EST CELUI DU COMBAT, au tracé près — `BarreVie3D` dessine le
@@ -1014,7 +1026,7 @@ function peindreJeton(
       ctx.stroke()
     }
     ctx.fillStyle = '#f7ead0'
-    ctx.font = dansLeDisque(ctx, jeton.valeur, h * 0.56, h * 0.6)
+    ctx.font = dansLeDisque(ctx, jeton.valeur, taille * CHIFFRE_DANS_PA, h * 0.62)
     ctx.fillText(String(jeton.valeur), x + h / 2, y + h * 0.02)
   } else if (jeton.type === 'bouclier') {
     const l = h * 0.9
@@ -1035,7 +1047,7 @@ function peindreJeton(
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     ctx.fillStyle = '#f2f7ff'
-    ctx.font = dansLeDisque(ctx, jeton.valeur, h * 0.5, l * 0.6)
+    ctx.font = dansLeDisque(ctx, jeton.valeur, taille * CHIFFRE_DANS_BOUCLIER, l * 0.66)
     // Le chiffre se pose un cheveu au-dessus du milieu : un écu descend en
     // pointe, donc son centre OPTIQUE est plus haut que son centre géométrique.
     ctx.fillText(String(jeton.valeur), x + l / 2, y - h * 0.04)
