@@ -1738,7 +1738,9 @@ Quatre choses qui le portent :
   bien ». Le dessin suit `HAUT_JETON`, le chiffre suit le CORPS DU TEXTE —
   *ce qui se lit comme un chiffre se mesure au texte qui l'entoure, pas au
   cadre où il est posé.* Mêlés, réduire le symbole aurait emporté son chiffre
-  avec lui.
+  avec lui — et il a fallu deux passes, de 1,68 à 1,45 puis à **1,28 fois le
+  corps du texte**, pour que le symbole cesse de dominer la ligne qu'il
+  annote.
 
 **L'ÉPÉE PORTE SON CHIFFRE À CÔTÉ, les deux autres le portent DEDANS.** Une
 lame est trop étroite pour loger un nombre — et c'est ce que Keko a demandé,

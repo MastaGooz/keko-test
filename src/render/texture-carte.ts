@@ -953,7 +953,7 @@ const ACIER_BORD = '#cfe2fb'
  * chiffre se mesure au texte qui l'entoure, pas au cadre où il est posé.*
  * Mêlés, réduire le symbole aurait emporté son chiffre avec lui.
  */
-const HAUT_JETON = 1.45
+const HAUT_JETON = 1.28
 
 /** Le corps des chiffres posés dans un symbole, en part du corps du texte. */
 const CHIFFRE_DANS_PA = 0.94
