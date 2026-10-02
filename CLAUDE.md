@@ -1639,6 +1639,16 @@ trois cartes différentes tombe ici* — et ce n'est pas une entorse à ce qu'il
 avait acheté : une arme dont deux cartes sont pareilles n'en a qu'une et demie,
 **sauf quand le doublon est justement ce qui alimente la troisième.**
 
+**ET ELLE SE DIT AVEC UN VERBE : « Coûte 1 PA de moins ».** Keko : « c'est pas
+clair, on pourrait penser qu'on perd 1 PA par attaque jouée ». *Un « −1 PA »
+posé seul ne dit pas sur quoi il porte* — sur la réserve du tour, ou sur le
+prix de cette carte ? **Les deux lectures existent dans ce jeu**, puisqu'un
+trésor brûlé dépense bien de l'énergie. Le verbe tranche : ce qui coûte, c'est
+la carte.
+
+Deux lignes, comme « Bloque 5 dégâts / ce tour seulement » : le fait, puis la
+condition en retrait.
+
 Quatre choses à ne pas défaire :
 
 - **le coût n'est plus une propriété de la carte, c'est une propriété du

@@ -86,11 +86,21 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
   }
   // LA REMISE SE DIT APRÈS LE COUP, parce qu'elle parle du COÛT et non de ce
-  // que la carte fait. Elle est en retrait comme les autres conditions : *ce
-  // qui modifie le prix n'est pas au même rang que ce qu'on achète.*
+  // que la carte fait — et elle le dit avec un VERBE.
+  //
+  // Keko : « c'est pas clair, on pourrait penser qu'on perd 1 PA par attaque
+  // jouée ; il faudrait dire : coûte 1 PA de moins ». *Un « −1 PA » posé seul
+  // ne dit pas sur quoi il porte* : sur la réserve du tour, ou sur le prix de
+  // cette carte ? Les deux lectures existent dans ce jeu, puisqu'un trésor
+  // brûlé dépense bien de l'énergie. **Le verbe tranche** : ce qui coûte, c'est
+  // la carte.
+  //
+  // Deux lignes, comme « Bloque 5 dégâts / ce tour seulement » : le fait, puis
+  // la condition en retrait. *Ce qui modifie le prix n'est pas au même rang
+  // que ce qu'on achète.*
   if ((carte.remiseParAttaque ?? 0) > 0) {
     const pa = carte.remiseParAttaque ?? 0
-    l.push(`<small>−${pa} PA par attaque jouée ce tour</small>`)
+    l.push(`Coûte <b>${pa}</b> PA de moins`, `<small>par attaque jouée ce tour</small>`)
   }
   return l
 }
