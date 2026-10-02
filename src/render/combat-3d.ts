@@ -53,6 +53,10 @@ export function aPeindre(carte: Carte): CarteAPeindre {
     // du TEXTE AFFICHÉ — « Consommable » est déjà devenu « Objet » une fois —
     // et *un dessin ne se décide pas sur une étiquette qui peut changer.*
     tresor: carte.type === 'tresor',
+    // ET LE CIEL SUIT LA PIÈCE qui l'a produite : une carte d'arme porte le
+    // décor rouge. Même porte que la rareté — *la même carte partout*, du
+    // zoom de l'arme à la main de combat.
+    arme: carte.arme === true,
   }
 }
 
@@ -77,7 +81,12 @@ export function setAPeindre(objet: Objet): { carte: CarteAPeindre; nombre: numbe
   // portent déjà le métal de leur pièce : *une carte qui change d'habit entre
   // le zoom et la main n'est plus la même carte.*
   return set.map((e, i) => ({
-    carte: aPeindre({ ...e.modele, id: `${objet.id}-${i}`, rarete: objet.rarete }),
+    carte: aPeindre({
+      ...e.modele,
+      id: `${objet.id}-${i}`,
+      rarete: objet.rarete,
+      arme: 'mains' in objet,
+    }),
     nombre: e.nombre,
   }))
 }
@@ -108,6 +117,10 @@ export function pieceAPeindre(objet: Objet): CarteAPeindre {
     // mieux est une bande de libre pour ce qui n'a nulle part où aller.
     effet: [],
     type: pied,
+    // ET SON CIEL DIT SA FAMILLE : rouge pour une arme, par un DRAPEAU et non
+    // par le mot du pied — celui-ci est du texte affiché, et *un dessin ne se
+    // décide pas sur une étiquette qui peut changer*, la règle du trésor.
+    arme: !estConsommable(objet) && 'mains' in objet,
     // SA RARETÉ VA AU CADRE. Une carte de deck n'en a pas et n'en aura pas :
     // elle garde le laiton, qui est le commun.
     rarete: objet.rarete,

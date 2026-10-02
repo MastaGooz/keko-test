@@ -521,6 +521,9 @@ export function deckDeLEquipement(equipement: Piece[]): Carte[] {
         // donc une carte d'arme rare est vraiment plus forte : son cadre
         // annonce une puissance, pas une provenance.
         rarete: piece.rarete,
+        // ET DU CIEL DE SA PIÈCE, par la même porte : une carte d'arme porte
+        // le décor rouge de l'arme. *Deux étiquettes, un seul héritage.*
+        arme: 'mains' in piece,
       })),
     ),
   )

@@ -75,6 +75,11 @@ export type CarteAPeindre = {
    */
   tresor?: boolean
   /**
+   * ELLE VIENT D'UNE ARME — et c'est son DÉCOR qui le dit, pas son cadre.
+   * Une pièce d'arme le porte, et les cartes de son set en héritent.
+   */
+  arme?: boolean
+  /**
    * LA VALEUR D'UN TRÉSOR, dite par un SYMBOLE et un chiffre — pas par une
    * phrase du cartouche.
    *
@@ -804,8 +809,19 @@ export async function peindreCarte(
      * cadre, pas dans le fond. Une échelle se dit en couleur, une famille se
      * dit en forme — et ici c'est une troisième chose, le DÉCOR, qui porte la
      * famille sans prendre la place de personne.
+     *
+     * **ET LES CARTES DU SET L'HÉRITENT**, comme elles héritent du métal.
+     * Keko, en zoomant une arme : « quand je zoom la couleur rouge
+     * disparaît » — *une carte de deck qui garde le ciel bleu se lit comme
+     * étrangère à l'arme qui la produit.* Le drapeau descend donc de la pièce
+     * à son set (`deckDeLEquipement`), par la même porte que la rareté.
+     *
+     * **C'est un DRAPEAU, pas le mot du pied** : celui-ci est du texte
+     * affiché — « Consommable » est déjà devenu « Objet » une fois — et *un
+     * dessin ne se décide pas sur une étiquette qui peut changer.* C'est la
+     * règle déjà tenue par le trésor.
      */
-    if (carte.type.startsWith('Arme ')) {
+    if (carte.arme === true) {
       ctx.save()
       ctx.globalCompositeOperation = 'hue'
       ctx.fillStyle = '#b02a1e'
@@ -1895,7 +1911,7 @@ const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
 export function signature(carte: CarteAPeindre): string {
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.valeur ?? ''}|${carte.effet.join('~')}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.valeur ?? ''}|${carte.arme === true ? 'a' : ''}|${carte.effet.join('~')}`
 }
 
 /**

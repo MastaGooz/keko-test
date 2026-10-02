@@ -7670,11 +7670,24 @@ décor, qui porte la famille sans prendre la place de personne.* Un Glaive
 commun et une Épée à deux mains rare ont le même ciel rouge et deux cadres
 différents.
 
-**Seule la PIÈCE d'arme est teintée, pas les cartes qu'elle produit.** Le test
-porte sur le pied de la carte (`type.startsWith('Arme ')`), donc il attrape
-« Arme · une main » et « Arme · deux mains » sans toucher à « Armure ». Les
-Estoc et Taillade de son set gardent le ciel bleu : *elles héritent déjà du
-métal de leur pièce*, et c'est à rejuger par Keko si le ciel doit suivre aussi.
+**ET LES CARTES DU SET L'HÉRITENT, comme elles héritent du métal.** Keko, en
+zoomant une arme : « quand je zoom la couleur rouge disparaît ». *Une carte de
+deck qui garde le ciel bleu se lit comme étrangère à l'arme qui la produit* —
+et le zoom d'une pièce est précisément l'endroit où les deux se regardent côte
+à côte. Le drapeau descend donc de la pièce à son set
+(`deckDeLEquipement`), par la même porte que la rareté : **deux étiquettes, un
+seul héritage.**
+
+*Ce que ça donne au bouton « Deck »* : les cartes d'arme en rouge, celles de
+l'armure et les objets en bleu — **le deck se lit en familles**, ce qu'aucun
+autre signal ne disait.
+
+**C'est un DRAPEAU (`arme`), pas le mot du pied.** Le premier essai testait
+`type.startsWith('Arme ')` ; or le pied est du TEXTE AFFICHÉ — « Consommable »
+est déjà devenu « Objet » une fois — et *un dessin ne se décide pas sur une
+étiquette qui peut changer.* C'est la règle déjà tenue par le trésor. Le
+drapeau traverse `logic/` sans qu'aucune règle ne le lise, exactement comme
+`rarete`, et il entre dans `signature()`.
 
 ### La pioche et la défausse, en SYMBOLE et non en tas de cartes
 
