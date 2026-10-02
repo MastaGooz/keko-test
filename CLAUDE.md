@@ -5030,7 +5030,19 @@ et c'est le mot le plus court des trois, ce qui ne gâte rien sur un pied de
 carte enfoui aux trois quarts. Le TYPE du modèle (`Consommable`) ne bouge pas :
 c'est du code, il ne se lit nulle part à l'écran.
 
-**LE COFFRE A DES ONGLETS** — tout / armes / armures / objets / trésors — et
+**LE MOT EST « BUTIN », PAS « TRÉSOR », PARTOUT OÙ ÇA SE LIT.** Tranché par
+Keko. *Un trésor est un objet qu'on possède, un butin est ce qu'on RAPPORTE* —
+et c'est exactement ce que fait la carte : elle ne vaut que si elle ressort du
+donjon. Le vocabulaire dit la règle, comme « enchantement » plutôt que
+« maîtrise ». Le pied de la carte, l'onglet du coffre et la ligne de poids de
+l'écran de butin le disent.
+
+**Le code garde `tresor`** : c'est un nom interne qui ne se lit nulle part à
+l'écran, et *un renommage traversant `logic/` pour un mot ne vaut pas son
+risque* — la règle déjà tenue par `energie`. Les notes qui suivent gardent
+l'ancien mot pour la même raison.
+
+**LE COFFRE A DES ONGLETS** — tout / armes / armures / objets / butin — et
 **les trésors y sont** : Keko, « oui les trésors sont maintenant ici même s'ils
 ne peuvent pas être équipés ». *Le coffre est ce qu'on POSSÈDE, pas ce qu'on
 peut porter.* Un trésor s'y regarde et ne se glisse nulle part, ce qui est
@@ -7672,9 +7684,29 @@ les trésors ? »
 leur ciel, revient donc par une autre porte* — et par le DÉCOR COMMUN, pas par
 quatre images à maintenir.
 
-**L'ARMURE N'EST PAS DANS LA TABLE, et c'est elle qui tient l'échelle** : elle
-garde le bleu du fichier, donc *la couleur de référence reste celle qu'on a
-dessinée* et les trois autres s'en écartent.
+**LES QUATRE PASSENT PAR LA TABLE, l'armure comprise** — même quand sa teinte
+est celle du fichier. La laisser hors du virage l'aurait laissée seule à pleine
+saturation quand les trois autres ont été adoucis : *quatre repères du même
+rang se règlent au même endroit, sinon l'un d'eux dérive au premier réglage.*
+
+**ET LES QUATRE SONT DÉSATURÉS DE MOITIÉ** (`PIGMENT_CIEL`). Keko : « je me
+demande si on ne va pas un peu loin avec les couleurs, ça embrouille un peu les
+choses non ? »
+
+*Et il avait raison sur un point précis* : **la couleur est l'axe de la
+RARETÉ**, et quatre ciels francs la lui disputaient — jusqu'à la contredire,
+un butin au ciel d'or dans un cadre de bronze disant deux métaux à la fois.
+*Une échelle se dit en couleur, une famille se dit en forme*, et la forme dit
+déjà la famille : coque déchirée pour une pièce, encoche pour une carte de
+deck, coins coupés pour un butin.
+
+**Trois issues étaient sur la table** — retirer l'or du butin, tout rendre au
+bleu, ou garder les quatre en les désaturant — et Keko a pris la troisième. Le
+ciel cesse alors d'être un CODE et redevient une AMBIANCE : il se lit du coin
+de l'oeil dans une main où les familles se mélangent, et il ne rivalise plus
+avec le métal du cadre, qui lui reste franc. *Ce qu'on désature, c'est le
+pigment, jamais la teinte* : chaque couleur rend la moitié de son écart à sa
+luminance, donc elle reste reconnaissable sans crier.
 
 **Ça passe par la TEINTE, jamais par un voile** : on garde la saturation et la
 luminance de chaque pixel et on lui donne la teinte du rouge — *c'est le même

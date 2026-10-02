@@ -137,7 +137,7 @@ export const NOM_ONGLET: Record<Onglet, string> = {
   armes: 'Armes',
   armures: 'Armures',
   consommables: 'Objets',
-  tresors: 'Trésors',
+  tresors: 'Butin',
 }
 
 export type Rect = {

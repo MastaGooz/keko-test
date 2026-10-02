@@ -631,15 +631,19 @@ function fond(): Promise<HTMLImageElement | null> {
  * étoiles et le dégradé qui monte survivent, là où un rectangle rouge posé
  * dessus les aurait écrasés.
  */
-type Ciel = 'arme' | 'objet' | 'tresor'
+type Ciel = 'arme' | 'armure' | 'objet' | 'tresor'
 
 /**
  * LA TEINTE DE CHAQUE FAMILLE. Tranché par Keko : « on peut utiliser le
- * background en version verte pour les objets et jaune pour les trésors ? »
+ * background en version verte pour les objets et jaune pour les trésors ? »,
+ * puis « les cartes générées par les armes rouges, les armures bleues et les
+ * objets verts, comme la carte objet correspondante ».
  *
- * **Une armure n'est pas dans la table, et c'est elle qui tient l'échelle** :
- * elle garde le bleu nuit du fichier, donc *la couleur de référence reste
- * celle qu'on a dessinée* et les trois autres s'en écartent.
+ * **LES QUATRE PASSENT PAR LA TABLE, l'armure comprise** — même quand sa
+ * teinte est celle du fichier. Laisser le bleu d'origine hors du virage
+ * l'aurait laissé seul à pleine saturation quand les trois autres ont été
+ * adoucis : *quatre repères du même rang se règlent au même endroit, sinon
+ * l'un d'eux dérive au premier réglage.*
  *
  * Chaque entrée est un vecteur de TEINTE déjà normalisé — son plus petit canal
  * vaut 0, son plus grand 1 — parce que c'est exactement ce que la formule
@@ -647,9 +651,28 @@ type Ciel = 'arme' | 'objet' | 'tresor'
  */
 const CIELS: Record<Ciel, [number, number, number]> = {
   arme: [1, 0, 0],
+  armure: [0, 0.42, 1],
   objet: [0, 1, 0.12],
   tresor: [1, 0.74, 0],
 }
+
+/**
+ * CE QUI RESTE DU PIGMENT après le virage. Keko : « je me demande si on ne va
+ * pas un peu loin avec les couleurs, ça embrouille un peu les choses non ? »
+ *
+ * **Et il avait raison sur un point précis** : la couleur est l'axe de la
+ * RARETÉ — bronze, argent, or, diamant — et quatre ciels francs la lui
+ * disputaient, jusqu'à la contredire (un trésor au ciel d'or dans un cadre de
+ * bronze disait deux métaux à la fois). *Une échelle se dit en couleur, une
+ * famille se dit en forme*, et la forme dit déjà la famille : coque déchirée
+ * pour une pièce, encoche pour une carte de deck, coins coupés pour un butin.
+ *
+ * Tranché par Keko : **garder les quatre, mais les désaturer.** Le ciel cesse
+ * alors d'être un code et redevient une AMBIANCE — il se lit du coin de l'oeil
+ * dans une main où les familles se mélangent, et il ne rivalise plus avec le
+ * métal du cadre, qui lui est franc.
+ */
+const PIGMENT_CIEL = 0.5
 
 /**
  * LE CIEL D'UNE CARTE, VIRÉ À SA COULEUR — et viré PIXEL PAR PIXEL.
@@ -706,9 +729,11 @@ function virerLeCiel(pixels: Uint8ClampedArray, ciel: Ciel): void {
       cv = lum + (cv - lum) * k
       cb = lum + (cb - lum) * k
     }
-    pixels[i] = cr * 255
-    pixels[i + 1] = cv * 255
-    pixels[i + 2] = cb * 255
+    // ET ON EN REND LA MOITIÉ À SA LUMINANCE : le ciel garde sa teinte et perd
+    // son pigment, donc il ne dispute plus la couleur au métal du cadre.
+    pixels[i] = (lum + (cr - lum) * PIGMENT_CIEL) * 255
+    pixels[i + 1] = (lum + (cv - lum) * PIGMENT_CIEL) * 255
+    pixels[i + 2] = (lum + (cb - lum) * PIGMENT_CIEL) * 255
   }
 }
 

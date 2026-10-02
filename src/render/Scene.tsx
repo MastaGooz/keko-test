@@ -1951,7 +1951,7 @@ export function Scene(): React.JSX.Element {
                   appartient au trésor qu'on décide, et centré, ce texte
                   s'asseyait sur son bord haut. */}
               <p className="note-3d">
-                Tu portes {tresorsAuDeck(enCours)} trésor{tresorsAuDeck(enCours) > 1 ? 's' : ''} ·{' '}
+                Tu portes {tresorsAuDeck(enCours)} butin ·{' '}
                 {butinTransporte(enCours)} d'or
               </p>
             </>

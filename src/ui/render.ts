@@ -644,7 +644,7 @@ function phrase(evenement: Evenement): string {
     case 'frappe':
       return `T${evenement.tour} — ${evenement.nom} frappe (toi : ${evenement.pvJoueur} PV)`
     case 'pioche':
-      return `T${evenement.tour} — main : ${evenement.cartes} cartes, ${evenement.tresors} trésor(s)`
+      return `T${evenement.tour} — main : ${evenement.cartes} cartes, ${evenement.tresors} butin`
     case 'issue':
       return evenement.issue === 'victoire' ? 'Plus rien ne bouge.' : 'Tu tombes.'
   }
@@ -768,7 +768,7 @@ function butin(
       ? `Tu vas perdre ${aJeter.nom}${aJeter.valeur === undefined ? '' : ` — ${aJeter.valeur} d'or`}.`
       : loot === null
         ? `Tout ce que tu portes pèse dans chaque main${
-            portes.length === 0 ? '' : ` — ${portes.length} trésor${portes.length > 1 ? 's' : ''}`
+            portes.length === 0 ? '' : ` — ${portes.length} butin`
           }.`
         : 'Emporte-le dans ta main, ou jette-le.') +
     `</p>` +

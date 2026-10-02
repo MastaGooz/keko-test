@@ -530,7 +530,7 @@ export function deckDeLEquipement(equipement: Piece[]): Carte[] {
         // ET DU CIEL DE SA PIÈCE, par la même porte : une carte d'arme porte
         // le décor rouge de l'arme, une carte d'armure garde le bleu.
         // *Deux étiquettes, un seul héritage.*
-        famille: 'mains' in piece ? ('arme' as const) : undefined,
+        famille: 'mains' in piece ? ('arme' as const) : ('armure' as const),
       })),
     ),
   )

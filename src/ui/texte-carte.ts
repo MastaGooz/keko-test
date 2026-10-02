@@ -101,7 +101,15 @@ export function famille(carte: Carte): 'tresor' | 'consommable' | 'attaque' | 'd
 export function nature(carte: Carte): string {
   // Le rang de richesse ne s'écrit pas : il se lit au cadre, comme la rareté
   // d'une pièce. Keko : « inutile de spécifier la qualité modeste en bas ».
-  if (carte.type === 'tresor') return 'Trésor'
+  // LE MOT EST « BUTIN », PAS « TRÉSOR ». Tranché par Keko. *Un trésor est un
+  // objet qu'on possède, un butin est ce qu'on RAPPORTE* — et c'est bien ce
+  // que fait la carte : elle ne vaut que si elle ressort du donjon. Le
+  // vocabulaire dit la règle, comme « enchantement » plutôt que « maîtrise ».
+  //
+  // Le code, lui, garde `tresor` : c'est un nom interne qui ne se lit nulle
+  // part à l'écran, et *un renommage traversant `logic/` pour un mot ne vaut
+  // pas son risque* — la règle déjà tenue par `energie`.
+  if (carte.type === 'tresor') return 'Butin'
   // OBJET, ET PAS « CONSOMMABLE » : c'est le nom que porte l'onglet du coffre,
   // et *une même chose ne peut pas s'appeler autrement selon l'écran où on la
   // regarde.* Demandé par Keko. Le mot est aussi plus court, ce qui compte sur

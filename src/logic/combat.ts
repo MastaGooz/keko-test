@@ -79,7 +79,7 @@ export type Carte = {
    * traverse `logic/` sans rien y décider. Un trésor n'en a pas besoin — son
    * `type` le dit déjà.
    */
-  famille?: 'arme' | 'objet'
+  famille?: 'arme' | 'armure' | 'objet'
   /**
    * Un trésor ne se joue que s'il porte des `effets` — et le jouer le DÉTRUIT.
    * C'est tout le pari du butin : il vaut de l'or s'il ressort, et il peut

@@ -86,7 +86,7 @@ export function setAPeindre(objet: Objet): { carte: CarteAPeindre; nombre: numbe
       ...e.modele,
       id: `${objet.id}-${i}`,
       rarete: objet.rarete,
-      famille: 'mains' in objet ? ('arme' as const) : undefined,
+      famille: 'mains' in objet ? ('arme' as const) : ('armure' as const),
     }),
     nombre: e.nombre,
   }))
@@ -122,7 +122,7 @@ export function pieceAPeindre(objet: Objet): CarteAPeindre {
     // bleu pour une armure — par une ÉTIQUETTE et non par le mot du pied,
     // celui-ci étant du texte affiché : *un dessin ne se décide pas sur une
     // étiquette qui peut changer*, la règle du trésor.
-    ciel: estConsommable(objet) ? 'objet' : 'mains' in objet ? 'arme' : undefined,
+    ciel: estConsommable(objet) ? 'objet' : 'mains' in objet ? 'arme' : 'armure',
     // SA RARETÉ VA AU CADRE. Une carte de deck n'en a pas et n'en aura pas :
     // elle garde le laiton, qui est le commun.
     rarete: objet.rarete,
