@@ -23,7 +23,7 @@
  * carte 3D soit la MÊME carte, et pas une deuxième version qui dérivera.
  */
 import * as THREE from 'three'
-import { art, urlDuCout, urlDuFond, urlImageDeKeko } from '../ui/art.ts'
+import { art, fondPropre, urlDuCout, urlDuFond, urlImageDeKeko } from '../ui/art.ts'
 
 /** Ce qu'il faut savoir d'une carte pour la peindre. */
 export type CarteAPeindre = {
@@ -606,11 +606,15 @@ async function illustration(nom: string): Promise<HTMLImageElement | null> {
  * *Une ressource partagée se charge une fois, même si dix appelants la
  * demandent en même temps.*
  */
-let fondCommun: Promise<HTMLImageElement | null> | null = null
+const FONDS = new Map<string, Promise<HTMLImageElement | null>>()
 
-function fond(): Promise<HTMLImageElement | null> {
-  fondCommun ??= charger(urlDuFond())
-  return fondCommun
+function fond(famille?: string): Promise<HTMLImageElement | null> {
+  const cle = famille !== undefined && fondPropre(famille) ? famille : ''
+  const deja = FONDS.get(cle)
+  if (deja !== undefined) return deja
+  const promesse = charger(urlDuFond(cle === '' ? undefined : cle))
+  FONDS.set(cle, promesse)
+  return promesse
 }
 
 /**
@@ -823,9 +827,13 @@ const cieux = new Map<Ciel, Promise<HTMLImageElement | HTMLCanvasElement | null>
 function fondTeinte(ciel: Ciel): Promise<HTMLImageElement | HTMLCanvasElement | null> {
   const deja = cieux.get(ciel)
   if (deja !== undefined) return deja
-  // Et si la teinte échoue, on rend le ciel BLEU plutôt que rien : *un décor
-  // de la mauvaise couleur vaut mieux qu'une carte sans décor.*
-  const promesse = fond().then((image) => (image === null ? null : (auCiel(image, ciel) ?? image)))
+  // UNE FAMILLE QUI A SON PROPRE DÉCOR NE SE VIRE PAS : il est déjà de sa
+  // couleur, et *un virage posé dessus lui prendrait la sienne.*
+  const promesse = fondPropre(ciel)
+    ? fond(ciel)
+    : // Et si la teinte échoue, on rend le ciel BLEU plutôt que rien : *un
+      // décor de la mauvaise couleur vaut mieux qu'une carte sans décor.*
+      fond().then((image) => (image === null ? null : (auCiel(image, ciel) ?? image)))
   cieux.set(ciel, promesse)
   return promesse
 }

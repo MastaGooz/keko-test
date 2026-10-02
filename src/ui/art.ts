@@ -117,14 +117,28 @@ export function imageDeKeko(nom: string): string {
  * ciel — mais tant qu'elle en porte un, elle le recouvre, et le fond ne se
  * voit pas.
  *
+ * **ET UNE FAMILLE PEUT AVOIR LE SIEN.** Keko a dessiné `Background
+ * weapon.webp` pour les armes : *un décor peint vaut mieux qu'un décor viré*,
+ * puisqu'il choisit sa lumière et sa matière au lieu de les hériter du bleu.
+ * Les familles qui n'en ont pas gardent le virage de teinte, et il n'y a
+ * qu'une entrée à ajouter à la table le jour où elles en reçoivent un.
+ *
  * **Même piège de cache que les autres images de `public/`** : le fichier est
  * copié tel quel, sans empreinte de contenu dans son nom, donc son URL doit
  * porter la date du build — sans quoi le remplacer ne changerait rien à
  * l'écran. Et le chemin passe par `BASE_URL`, sinon il pointerait à la racine
  * du domaine au lieu de `/keko-test/`.
  */
-export function urlDuFond(): string {
-  return `${import.meta.env.BASE_URL}Background.webp?v=${encodeURIComponent(__BUILD_TIME__)}`
+const FONDS: Record<string, string> = { arme: 'Background weapon.webp' }
+
+/** Cette famille a-t-elle SON décor dessiné, plutôt qu'un virage du commun ? */
+export function fondPropre(famille: string): boolean {
+  return FONDS[famille] !== undefined
+}
+
+export function urlDuFond(famille?: string): string {
+  const fichier = (famille === undefined ? undefined : FONDS[famille]) ?? 'Background.webp'
+  return `${import.meta.env.BASE_URL}${encodeURIComponent(fichier)}?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
 /**

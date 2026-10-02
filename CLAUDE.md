@@ -8128,6 +8128,22 @@ doit PAS en porter** : c'est désormais ce que Keko livre — des WebP à canal
 alpha, sujet détouré. *C'est ce qui permet de glisser la lumière entre le décor
 et le sujet*, et une image opaque le rendrait impossible.
 
+**ET UNE FAMILLE PEUT AVOIR SON DÉCOR DESSINÉ** (`public/Background
+weapon.webp`, fourni par Keko pour les armes). *Un décor peint vaut mieux qu'un
+décor viré* : il choisit sa lumière et sa matière au lieu de les hériter du
+bleu — celui-ci est une roche grise, et les armes n'ont donc plus le rouge que
+le virage leur donnait. **C'est son dessin qui décide, pas la table.**
+
+Une seule entrée l'installe (`FONDS`, dans `ui/art.ts`), et **une famille qui a
+son décor ne se vire pas** : un virage posé dessus lui prendrait sa couleur. Les
+trois autres gardent le leur, décrit ci-dessous, et il n'y a qu'une ligne à
+ajouter le jour où elles reçoivent le leur.
+
+*Ce qui reste du virage pour les armes* : l'exposition s'applique toujours
+(`EXPO_CIEL`), et le bloom du sujet continue d'être viré — invisible sur une
+roche claire, vérifié, mais à relire si un décor dessiné arrive dans une teinte
+franche.
+
 **ET LE CIEL DIT LA FAMILLE : rouge pour une arme, vert pour un objet, or pour
 un trésor, le bleu d'origine pour une armure.** Demandé par Keko en deux fois :
 « on peut mettre le background des armes en rouge au lieu du bleu ? », puis
