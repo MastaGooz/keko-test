@@ -4537,9 +4537,29 @@ Trois choses à ne pas défaire :
   écran de PC. Or **le travail de la loupe n'est pas le même aux deux bouts** :
   en petit elle rend LISIBLE, en grand la carte l'est déjà et il ne lui reste
   qu'à DÉSIGNER celle qu'on regarde — *et une désignation n'a pas besoin de
-  doubler.* Le grossissement vise donc une taille absolue (190 px) et se borne
-  entre ×1,95 et ×1,28. C'est la règle du disque du compte et du plafond de la
-  main, appliquée à un geste ;
+  doubler.* Le grossissement vise donc une taille absolue et se borne entre
+  ×1,95 et le cran de la désignation. C'est la règle du disque du compte et du
+  plafond de la main, appliquée à un geste ;
+- **ET CE QU'ON RÈGLE EST DÉSORMAIS CE QU'ON VOIT.** Keko, une passe plus tard :
+  « je trouve le zoom au survol trop gros sur PC, sur les cartes du deck et sur
+  les cartes générées par une pièce ». *Les chiffres étaient des facteurs de
+  MONDE* — et la carte s'avance aussi de `AVANCEE_LOUPE` vers l'oeil, donc **la
+  perspective la grossissait une seconde fois**, de 1,163
+  (`RECUL_ZOOM / (RECUL_ZOOM − AVANCEE_LOUPE)`), ce que le réglage ignorait. Le
+  plancher annoncé ×1,28 se voyait ×1,49.
+
+  On retranche donc ce gain : *on borne ce qu'on obtient, pas le chemin pour y
+  arriver* — la règle déjà écrite quand le plafond de grossissement est tombé
+  pour le deck. **Les deux autres bornes sont reportées telles qu'elles se
+  VOYAIENT** (190 → 221 px, ×1,95 → ×2,27), donc **rien ne bouge là où elles
+  commandent, c'est-à-dire sur les petits écrans** — Keko avait dit « c'est bien
+  sur téléphone », et ça l'est au pixel près.
+
+  **Et le plancher vaut maintenant exactement le cran du survol du coffre**
+  (`GROSSIT_SURVOL`, ×1,14, partagé depuis `Carte3D`) : *deux gestes qui font le
+  même travail se règlent au même chiffre* — une carte déjà lisible n'a plus
+  rien à rendre lisible, il ne reste qu'à dire laquelle on regarde. Mesuré sur
+  un écran de PC, avant/après : ×1,49 → ×1,15 ;
 - **celle de devant prend le survol, et le GARDE.** Keko : « quand la souris se
   déplace sur la carte zoomée mais que sa position survole aussi la carte à
   côté, c'est la carte à côté qui se met à zoomer ; je voudrais que le zoom

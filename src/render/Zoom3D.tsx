@@ -26,7 +26,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { useThree } from '@react-three/fiber'
-import { Carte3D, tailleDuCompte } from './Carte3D.tsx'
+import { Carte3D, GROSSIT_SURVOL, tailleDuCompte } from './Carte3D.tsx'
 import { zCamera, hauteurVisibleA } from './Cadrage.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
 import { rapportGlossaire, textureGlossaire } from './texture-carte.ts'
@@ -121,8 +121,20 @@ function grilleDuDeck(n: number, large: number, haut: number, plafond: number): 
  * rien à distinguer.
  */
 const DELAI_LOUPE = 160
-/** La largeur à laquelle une carte du set se lit sans effort, en pixels. */
-const CIBLE_LOUPE_PX = 190
+/**
+ * La largeur APPARENTE à laquelle une carte du set se lit sans effort, en
+ * pixels — **une fois l'avancée vers l'oeil comptée.**
+ *
+ * *Elle valait 190 et c'était un chiffre de MONDE* : la carte s'avance aussi de
+ * `AVANCEE_LOUPE`, ce qui la grossit une seconde fois par la perspective, et le
+ * réglage ne le savait pas. Les deux bornes sont donc reportées telles qu'elles
+ * se VOYAIENT (×1,163, soit `RECUL_ZOOM / (RECUL_ZOOM - AVANCEE_LOUPE)`) —
+ * ainsi rien ne bouge sur les écrans où elles commandent, c'est-à-dire les
+ * petits, et seul le plancher change.
+ */
+const CIBLE_LOUPE_PX = 221
+/** Ce que la loupe d'une pièce ne dépasse jamais, en apparent. */
+const PLAFOND_LOUPE = 2.27
 
 /** De combien la carte regardée s'avance vers l'oeil. */
 const AVANCEE_LOUPE = 0.35
@@ -305,8 +317,19 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    *
    * Le grossissement vise donc une taille ABSOLUE — la taille à laquelle une
    * carte se lit — et se borne entre les deux : ×1,95 tant qu'on en a besoin,
-   * ×1,28 quand on ne l'a plus. C'est la règle du disque du compte et du
-   * plafond de la main, appliquée à un geste.
+   * et le cran de la DÉSIGNATION quand on ne l'a plus. C'est la règle du disque
+   * du compte et du plafond de la main, appliquée à un geste.
+   *
+   * **ET CE PLANCHER EST CELUI DU SURVOL DU COFFRE** (`GROSSIT_SURVOL`). Il
+   * valait ×1,28, et Keko l'a repris : « je trouve le zoom au survol trop gros
+   * sur PC, sur les cartes du deck et sur les cartes générées par une pièce ».
+   * *Sur un grand écran c'est lui qui commande* — la cible absolue y vaut déjà
+   * moins que 1 — donc c'est lui, et lui seul, qu'on lisait comme trop fort.
+   *
+   * **Deux gestes qui font le même travail se règlent au même chiffre** : la
+   * carte du coffre qui grossit sous le pointeur ne fait que dire laquelle on
+   * regarde, et une loupe posée sur une carte déjà lisible ne fait rien de
+   * plus.
    */
   const uneCartePx = (uneCarte * size.height) / H
   /**
@@ -327,10 +350,20 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * La grille d'une pièce le garde : c'est un réglage validé, et il n'y mord
    * jamais (à huit modèles, ×1,95 tombe déjà sur le plafond de taille).
    */
-  const grossissement = Math.max(
-    1.28,
-    sansPiece ? CIBLE_LOUPE_PX / uneCartePx : Math.min(1.95, CIBLE_LOUPE_PX / uneCartePx),
+  const apparent = Math.max(
+    GROSSIT_SURVOL,
+    sansPiece
+      ? CIBLE_LOUPE_PX / uneCartePx
+      : Math.min(PLAFOND_LOUPE, CIBLE_LOUPE_PX / uneCartePx),
   )
+  /**
+   * **CE QU'ON RÈGLE EST CE QU'ON VOIT.** La carte s'avance vers l'oeil, donc
+   * la perspective la grossit une seconde fois — un rapport de 1,163 que le
+   * chiffre réglé ignorait. On le retranche ici : *on borne ce qu'on obtient,
+   * pas le chemin pour y arriver*, et c'est ce qui permet au plancher de valoir
+   * exactement le cran du survol du coffre.
+   */
+  const grossissement = (apparent * hLoupe) / H
   /**
    * **LA PIÈCE NE BORNE LA LOUPE QUE S'IL Y EN A UNE.** Sans elle `piece` vaut
    * zéro, donc `min` valait zéro : la carte maintenue RÉTRÉCISSAIT à rien au

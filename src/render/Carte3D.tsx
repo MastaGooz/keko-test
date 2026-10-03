@@ -69,6 +69,21 @@ const CHIFFRE_PILE = 0.31
 const DEDANS_PILE = 0.55
 
 /**
+ * CE QUE VAUT UN SURVOL QUI NE FAIT QUE DÉSIGNER.
+ *
+ * *Deux gestes qui font le même travail se règlent au même chiffre* : la carte
+ * du coffre qui grossit sous le pointeur, et la loupe du zoom quand la carte
+ * est DÉJÀ lisible — sur un écran de PC, une carte du deck ou du set d'une
+ * pièce fait trois cents pixels, donc la loupe n'a plus rien à rendre lisible.
+ * **Il ne lui reste qu'à dire laquelle on regarde, et une désignation n'a pas
+ * besoin d'être un agrandissement.**
+ *
+ * Il vit ici parce que les deux écrans le lisent, et *une valeur écrite des
+ * deux côtés se désaccorde au premier réglage.*
+ */
+export const GROSSIT_SURVOL = 1.14
+
+/**
  * QUELLE PART DE LA CARTE LE DISQUE DOIT PRENDRE, sur un écran donné.
  *
  * *Le disque n'appartient pas à la carte, il appartient à l'interface* : c'est

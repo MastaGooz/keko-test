@@ -60,7 +60,7 @@ import {
   placeCase,
   planArmurerie,
 } from './armurerie-plan.ts'
-import { tailleDuCompte } from './Carte3D.tsx'
+import { GROSSIT_SURVOL, tailleDuCompte } from './Carte3D.tsx'
 import { aPeindre } from './combat-3d.ts'
 
 /**
@@ -84,8 +84,10 @@ import { aPeindre } from './combat-3d.ts'
  *
  * Elle grandit toujours au-dessus d'un slot qui la prend : ce signal-là parle
  * de la DESTINATION, pas de la carte.
+ *
+ * **Le chiffre vit dans `Carte3D`**, parce que la loupe du zoom le lit aussi :
+ * *deux gestes qui ne font que désigner se règlent au même cran.*
  */
-const GROSSIT_SURVOL = 1.14
 
 /**
  * LA TAILLE QU'UNE PIÈCE AURA UNE FOIS POSÉE LÀ.
