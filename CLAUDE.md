@@ -8858,6 +8858,24 @@ girouette**, et ce que j'avais cru corriger en la redressant : la bonne réponse
 n'était pas de retirer la rotation, c'était d'en prendre une qui laisse la figure
 symétrique.
 
+**ET SES ANGLES SONT ADOUCIS.** Demandé par Keko : « tu penses que c'est
+possible d'arrondir un peu les angles du paquet (léger) ? » *Une carte a les
+coins ronds — le gabarit le dit depuis le début* (3 % de sa largeur), et le
+paquet était le seul endroit du jeu où elle en avait de francs.
+
+**L'arrondi se pose sur la SILHOUETTE, pas sur chaque face.** Les deux flancs
+partagent l'arête du bas : arrondis chacun de son côté, ils creusaient une
+ENCOCHE au point le plus bas du paquet — *aucun des deux n'y possède les deux
+bords du vrai coin*, donc chacun coupait vers la couture. On dessine donc le
+contour du solide d'un seul trait et le flanc clair se pose dessus en étant
+ROGNÉ par lui : **la couture reste franche** — *c'est une arête, elle n'a pas à
+s'arrondir* — et seul le dehors est adouci.
+
+Chaque coin se remplace par une quadratique dont le point de contrôle est le
+coin lui-même, *donc la courbe reste tangente aux deux bords* ; le rayon se
+borne à la moitié du plus court, sinon deux coins voisins se mangeraient sur une
+arête courte.
+
 Le dessin étant symétrique, il survit au miroir de la défausse sans qu'on ait à
 s'en occuper. **Le dos plaqué et sa data URL disparaissent avec**, ainsi que la
 matrice de projection : *du code mort ment sur ce que le jeu fait*, et les deux

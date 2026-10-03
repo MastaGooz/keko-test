@@ -95,13 +95,69 @@ const GAUCHE = coin(-1, -1)
 const NEAR = coin(1, -1)
 const DROITE = coin(1, 1)
 
-function pt([x, y]: [number, number], e = 0): string {
-  return `${x.toFixed(2)},${(y + e).toFixed(2)}`
+/**
+ * LES ANGLES SONT ADOUCIS. Demandé par Keko : « tu penses que c'est possible
+ * d'arrondir un peu les angles du paquet (léger) ? »
+ *
+ * *Une carte a les coins ronds — le gabarit le dit depuis le début* (`RAYON_CARTE`,
+ * 3 % de la largeur), et le paquet était le seul endroit du jeu où elle en avait
+ * de francs. **L'arrondi se compte en unités du dessin et non en part de la
+ * carte** : il doit rester le MÊME sur le dessus et sur les deux flancs, alors
+ * que ceux-ci n'ont pas la même taille.
+ *
+ * Chaque coin se remplace par une quadratique dont le point de contrôle est le
+ * coin lui-même : *la courbe reste donc tangente aux deux bords*, et le rayon
+ * se borne à la moitié du plus court — sinon deux coins voisins se mangeraient
+ * sur une arête courte.
+ */
+const ARRONDI = 4
+
+function adouci(points: readonly [number, number][], r: number): string {
+  const n = points.length
+  const d: string[] = []
+  for (let i = 0; i < n; i += 1) {
+    const avant = points[(i - 1 + n) % n]!
+    const coinci = points[i]!
+    const apres = points[(i + 1) % n]!
+    const vers = (p: [number, number]): [number, number] => {
+      const dx = p[0] - coinci[0]
+      const dy = p[1] - coinci[1]
+      const l = Math.hypot(dx, dy) || 1
+      const k = Math.min(r, l / 2) / l
+      return [coinci[0] + dx * k, coinci[1] + dy * k]
+    }
+    const e = vers(avant)
+    const f = vers(apres)
+    d.push(`${i === 0 ? 'M' : 'L'}${e[0].toFixed(2)},${e[1].toFixed(2)}`)
+    d.push(`Q${coinci[0].toFixed(2)},${coinci[1].toFixed(2)} ${f[0].toFixed(2)},${f[1].toFixed(2)}`)
+  }
+  d.push('Z')
+  return d.join(' ')
 }
 
-const DESSUS = [LOIN, GAUCHE, NEAR, DROITE].map((c) => pt(c)).join(' ')
-const FLANC_GAUCHE = `${pt(GAUCHE)} ${pt(NEAR)} ${pt(NEAR, EPAISSEUR)} ${pt(GAUCHE, EPAISSEUR)}`
-const FLANC_DROIT = `${pt(NEAR)} ${pt(DROITE)} ${pt(DROITE, EPAISSEUR)} ${pt(NEAR, EPAISSEUR)}`
+/** Le même point, descendu de l'épaisseur du paquet. */
+function bas([x, y]: [number, number]): [number, number] {
+  return [x, y + EPAISSEUR]
+}
+
+const DESSUS = adouci([LOIN, GAUCHE, NEAR, DROITE], ARRONDI)
+
+/**
+ * **L'ARRONDI SE POSE SUR LA SILHOUETTE, pas sur chaque face.**
+ *
+ * Les deux flancs partagent l'arête du bas : arrondis chacun de son côté, ils
+ * creusaient une ENCOCHE au point le plus bas du paquet — *aucun des deux n'y
+ * possède les deux bords du vrai coin*, donc chacun coupait vers la couture.
+ *
+ * On dessine donc le contour du solide d'un seul trait, et le flanc clair se
+ * pose dessus en étant ROGNÉ par lui : la couture reste franche — *c'est une
+ * arête, elle n'a pas à s'arrondir* — et seul le dehors est adouci.
+ */
+const SILHOUETTE = adouci(
+  [LOIN, DROITE, bas(DROITE), bas(NEAR), bas(GAUCHE), GAUCHE],
+  ARRONDI,
+)
+const FLANC_DROIT = adouci([NEAR, DROITE, bas(DROITE), bas(NEAR)], 0)
 
 /**
  * L'ÉTOILE DU DESSUS. Keko : « le logo est trop petit, il faudrait une étoile
@@ -268,8 +324,11 @@ export function Tas3D({ nom, compte, brasse = false, choc = 0 }: Props): React.J
             presque noires, donc l'épaisseur — la seule chose qui distingue un
             paquet d'une carte posée à plat — se perdait dans l'ombre portée.
             *Ce qui dit le volume doit être ce qui se voit le mieux.* */}
-        <polygon points={FLANC_GAUCHE} fill="#d8bd7f" />
-        <polygon points={FLANC_DROIT} fill="#f2ddaa" />
+        <clipPath id={`${id}-silhouette`}>
+          <path d={SILHOUETTE} />
+        </clipPath>
+        <path d={SILHOUETTE} fill="#d8bd7f" />
+        <path d={FLANC_DROIT} fill="#f2ddaa" clipPath={`url(#${id}-silhouette)`} />
 
         {/* LES FEUILLETS SONT PARTIS. Keko : « inutile d'avoir les séparateurs
             qui montrent les tranches des cartes ». *Ils disaient le nombre de
@@ -289,10 +348,10 @@ export function Tas3D({ nom, compte, brasse = false, choc = 0 }: Props): React.J
             MÊME forme, ce qui ne laisse que la moitié intérieure. D'où la
             largeur doublée — on en perd la moitié. */}
         <clipPath id={`${id}-dessus-coupe`}>
-          <polygon points={DESSUS} />
+          <path d={DESSUS} />
         </clipPath>
-        <polygon
-          points={DESSUS}
+        <path
+          d={DESSUS}
           fill={`url(#${id}-dessus)`}
           stroke="#c9a95a"
           strokeWidth="4"
