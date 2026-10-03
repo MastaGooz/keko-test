@@ -365,6 +365,21 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    */
   const grossissement = (apparent * hLoupe) / H
   /**
+   * **ET LA PLACE SE CONVERTIT COMME LA TAILLE.**
+   *
+   * Keko : « sur PC le zoom est maintenant un décalage en diagonale bizarre au
+   * lieu d'un zoom centré ». *Une coordonnée de monde ne désigne pas le même
+   * point de l'écran à deux profondeurs* : en avançant vers l'oeil, une carte
+   * posée hors du centre s'en écarte d'autant — exactement le facteur qui la
+   * grossit. Elle dérivait donc en diagonale, vers le coin où elle était déjà.
+   *
+   * **Le défaut est ancien ; c'est son POIDS RELATIF qui a changé.** Tant que
+   * la loupe grossissait de moitié, la dérive passait pour une part du geste ;
+   * à ×1,15 elle vaut autant que le grossissement, et on ne lit plus qu'elle.
+   * *Un défaut noyé dans un effet plus fort réapparaît quand on calme l'effet.*
+   */
+  const vers = hLoupe / H
+  /**
    * **LA PIÈCE NE BORNE LA LOUPE QUE S'IL Y EN A UNE.** Sans elle `piece` vaut
    * zéro, donc `min` valait zéro : la carte maintenue RÉTRÉCISSAIT à rien au
    * lieu de grossir — Keko : « quand je maintiens le tap sur une des cartes du
@@ -461,7 +476,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
     iLoupe < 0
       ? 0
       : borner(
-          ((lignes - 1) / 2 - Math.floor(iLoupe / colonnes)) * pasY,
+          (((lignes - 1) / 2 - Math.floor(iLoupe / colonnes)) * pasY + uneCarte * 0.16) * vers,
           hLoupe / 2 - demiLoupe - margeY,
         )
   // LES ENTRÉES SE CONSTRUISENT UNE FOIS : la hauteur de la plaque dépend des
@@ -480,7 +495,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
     iLoupe < 0
       ? xSet
       : borner(
-          xSet + ((iLoupe % colonnes) - (parLigneLoupe - 1) / 2) * pasX,
+          (xSet + ((iLoupe % colonnes) - (parLigneLoupe - 1) / 2) * pasX) * vers,
           lLoupe / 2 - tailleLoupe / 2 - marge,
         )
   /**
@@ -570,8 +585,14 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
           // ne voit qu'à moitié n'a pas été agrandie.*
           const demiL = t / 2
           const demiH = (t * 1.4) / 2
-          const xCarte = grossie ? borner(x, lLoupe / 2 - demiL - marge) : x
-          const yCarte = grossie ? borner(y, hLoupe / 2 - demiH - margeY) : y + uneCarte * 0.16
+          // ET ELLE GROSSIT AUTOUR DE SA PLACE, pas autour de sa case : au
+          // repos la carte est remontée pour laisser le jour à sa pastille,
+          // et la loupe la recentrait sur la case — *une carte qui descend
+          // d'un dixième de sa hauteur au moment où elle grossit ne grossit
+          // pas sur place.* La pastille s'efface, la carte ne bouge plus.
+          const yRepos = y + uneCarte * 0.16
+          const xCarte = grossie ? borner(x * vers, lLoupe / 2 - demiL - marge) : x
+          const yCarte = grossie ? borner(yRepos * vers, hLoupe / 2 - demiH - margeY) : yRepos
           return (
             <group key={entree.carte.id}>
               <Carte3D

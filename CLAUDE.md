@@ -4560,6 +4560,24 @@ Trois choses à ne pas défaire :
   même travail se règlent au même chiffre* — une carte déjà lisible n'a plus
   rien à rendre lisible, il ne reste qu'à dire laquelle on regarde. Mesuré sur
   un écran de PC, avant/après : ×1,49 → ×1,15 ;
+- **ET LA PLACE SE CONVERTIT COMME LA TAILLE.** Keko, dans la foulée : « sur PC
+  le zoom est maintenant un décalage en diagonale bizarre au lieu d'un zoom
+  centré ». *Une coordonnée de monde ne désigne pas le même point de l'écran à
+  deux profondeurs* : en avançant vers l'oeil, une carte posée hors du centre
+  s'en écarte d'autant — **exactement le facteur qui la grossit**. Elle dérivait
+  donc en diagonale, vers le coin où elle était déjà.
+
+  **Le défaut est ancien ; c'est son POIDS RELATIF qui a changé.** Tant que la
+  loupe grossissait de moitié, la dérive passait pour une part du geste ; à
+  ×1,15 elle vaut autant que le grossissement, et on ne lit plus qu'elle. *Un
+  défaut noyé dans un effet plus fort réapparaît dès qu'on calme l'effet.*
+
+  **Et elle grossit autour de SA PLACE, pas autour de sa case** : au repos la
+  carte est remontée d'un dixième de sa hauteur pour laisser le jour à sa
+  pastille, et la loupe la recentrait sur la case — *une carte qui descend au
+  moment où elle grossit ne grossit pas sur place.* La pastille s'efface, la
+  carte ne bouge plus. L'encadré du glossaire suit la même conversion, puisqu'il
+  vit au z de la loupe ;
 - **celle de devant prend le survol, et le GARDE.** Keko : « quand la souris se
   déplace sur la carte zoomée mais que sa position survole aussi la carte à
   côté, c'est la carte à côté qui se met à zoomer ; je voudrais que le zoom
