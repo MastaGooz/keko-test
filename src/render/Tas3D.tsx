@@ -212,6 +212,49 @@ const ETOILE = Array.from({ length: BRANCHES * 2 }, (_, i) => {
 }).join(' ')
 
 /**
+ * **EN COMBAT, LES DEUX TAS PORTENT LEUR SYMBOLE, pas l'étoile.** Keko : « en
+ * combat il ne faut pas mettre l'étoile sur le paquet, on met les symboles
+ * pioche et défausse ».
+ *
+ * *L'étoile dit « des cartes »*, et c'est tout ce qu'on demande au bouton du
+ * deck, qui est seul de son espèce. **En combat il y en a DEUX côte à côte, et
+ * ce qu'on doit lire n'est plus ce qu'ils contiennent — c'est lequel est
+ * lequel.** Leur place le dit déjà (pioche à gauche, défausse à droite), mais
+ * *une place ne se lit qu'en comparant* : il faut regarder les deux pour savoir.
+ *
+ * **Deux flèches, et c'est le même objet dans les deux sens** : ce qui SORT du
+ * paquet, ce qui y ENTRE. *Le vocabulaire doit dire la règle* — un tas n'est pas
+ * un lieu, c'est un sens de circulation, et une paire opposée le dit sans
+ * légende. (Une carte barrée d'une croix avait été proposée pour la défausse ;
+ * elle dirait la destruction, et une carte défaussée revient au remélange.)
+ */
+const HAMPE = 7
+const TETE = 18
+const HAUT_TETE = 20
+
+function fleche(versLeHaut: boolean): string {
+  const sens = versLeHaut ? 1 : -1
+  const y = (v: number): number => (v * sens).toFixed(2) as unknown as number
+  return [
+    [0, y(-POINTE)],
+    [TETE, y(-POINTE + HAUT_TETE)],
+    [HAMPE, y(-POINTE + HAUT_TETE)],
+    [HAMPE, y(POINTE)],
+    [-HAMPE, y(POINTE)],
+    [-HAMPE, y(-POINTE + HAUT_TETE)],
+    [-TETE, y(-POINTE + HAUT_TETE)],
+  ]
+    .map(([x, yy]) => `${Number(x).toFixed(2)},${Number(yy).toFixed(2)}`)
+    .join(' ')
+}
+
+const EMBLEMES: Record<string, string> = {
+  etoile: ETOILE,
+  pioche: fleche(true),
+  defausse: fleche(false),
+}
+
+/**
  * LE CADRE COLLE AU DESSIN, épaisseur comprise. Un viewBox carré laissait un
  * tiers de vide et le paquet paraissait deux fois trop petit pour sa place.
  */
@@ -251,10 +294,25 @@ type Props = {
    * rapprochées doivent relancer le geste sans l'attendre.
    */
   choc?: number
+  /**
+   * CE QUE PORTE LE DESSUS. Par défaut, le symbole du tas.
+   *
+   * *Le bouton « Deck » du hub, lui, demande l'ÉTOILE* : il est seul de son
+   * espèce, donc il n'a personne à départager — ce qu'il dit est « des cartes »,
+   * pas « celui-ci plutôt que l'autre ».
+   */
+  embleme?: 'etoile' | 'pioche' | 'defausse'
 }
 
-export function Tas3D({ nom, compte, brasse = false, choc = 0 }: Props): React.JSX.Element {
+export function Tas3D({
+  nom,
+  compte,
+  brasse = false,
+  choc = 0,
+  embleme,
+}: Props): React.JSX.Element {
   const id = `tas-${nom}`
+  const marque = EMBLEMES[embleme ?? nom] ?? ETOILE
   const dessin = useRef<SVGSVGElement>(null)
 
   /**
@@ -372,12 +430,12 @@ export function Tas3D({ nom, compte, brasse = false, choc = 0 }: Props): React.J
           <rect x={-POINTE} y={-POINTE} width={POINTE} height={POINTE * 2} />
         </clipPath>
         <g transform={`translate(${CENTRE[0]} ${CENTRE[1]}) scale(1 ${ECRASEMENT})`}>
-          <polygon points={ETOILE} fill="#f0d9a2" />
+          <polygon points={marque} fill="#f0d9a2" />
           {/* LA MOITIÉ GAUCHE EST PLUS SOMBRE : la lumière vient du haut et de
               la droite, comme sur les flancs du paquet et sur l'icône de la
               main. *Un aplat unique se lirait comme une découpe, pas comme un
               objet posé.* */}
-          <polygon points={ETOILE} fill="#c8ab6d" clipPath={`url(#${id}-moitie)`} />
+          <polygon points={marque} fill="#c8ab6d" clipPath={`url(#${id}-moitie)`} />
         </g>
       </svg>
     </div>

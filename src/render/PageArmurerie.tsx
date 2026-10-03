@@ -891,7 +891,7 @@ export function PageArmurerie({
         <span className="arm-vif" ref={(el) => void (vifs.current[1] = el)}>
           <span className="arm-chiffre">{deckVu}</span>
           <span className="arm-tas">
-            <Tas3D nom="pioche" compte={deckVu ?? 0} />
+            <Tas3D nom="pioche" compte={deckVu ?? 0} embleme="etoile" />
           </span>
         </span>
       </button>

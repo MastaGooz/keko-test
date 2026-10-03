@@ -8790,8 +8790,8 @@ d'un logo n'est pas une étiquette, c'est une rature.* Il reste leur PLACE,
 pioche à gauche et défausse à droite, la règle que le 2D tenait déjà.
 
 *Mais c'est désormais le SEUL signal*, et il faut le savoir : en 3D le tas ne
-porte que son compte, pas son nom. **À rouvrir avec Keko s'il veut que les deux
-se distinguent autrement qu'à leur coin.** Tout ce que le dos peint portait —
+porte que son compte, pas son nom. **Rouvert et tranché depuis** — voir « les
+deux tas portent leur flèche », plus bas. Tout ce que le dos peint portait —
 semis de losanges, rayons, médaillon, joncs, `peindreEmbleme` — est tombé avec :
 *du code mort ment sur ce que le jeu fait.*
 
@@ -8880,6 +8880,26 @@ Le dessin étant symétrique, il survit au miroir de la défausse sans qu'on ait
 s'en occuper. **Le dos plaqué et sa data URL disparaissent avec**, ainsi que la
 matrice de projection : *du code mort ment sur ce que le jeu fait*, et les deux
 pièges SVG qu'elle avait coûtés restent dans `git log`.
+
+**MAIS EN COMBAT, LES DEUX TAS PORTENT LEUR FLÈCHE — l'étoile reste au bouton
+du deck.** Tranché par Keko : « par contre en combat il ne faut pas mettre
+l'étoile sur le paquet, on met les symboles pioche et défausse ».
+
+*Et ça rouvre, pour le fermer, le seul point que le paquet dessiné avait laissé
+en suspens* — « en 3D le tas ne porte que son compte, pas son nom ». **Les deux
+emblèmes ne répondent pas à la même question** : le bouton du deck est SEUL,
+donc tout ce qu'il a à dire est « des cartes », et l'étoile le dit ; en combat
+il y en a DEUX côte à côte, et ce qu'il faut lire est **lequel est lequel**.
+
+Deux flèches opposées disent le sens du flux — ce qui SORT, ce qui ENTRE — et
+c'est le seul signe qui n'ait besoin d'aucune légende. *Une carte barrée avait
+été envisagée pour la défausse : elle dirait la destruction, et une carte
+défaussée revient au remélange.*
+
+**L'emblème est un PARAMÈTRE, avec le nom du tas pour défaut** (`EMBLEMES`,
+dans `Tas3D.tsx`) : les deux tas du combat ne demandent rien, et seul le bouton
+du deck réclame l'étoile. *Ce qui est le cas ordinaire ne doit pas s'écrire à
+chaque appel.*
 
 **La projection du paquet est AFFINE**, donc exprimable en `matrix()` : `coin()`
 fait une rotation puis un écrasement vertical, deux opérations linéaires. SVG ne
