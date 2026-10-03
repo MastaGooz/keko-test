@@ -64,21 +64,26 @@ import { tailleDuCompte } from './Carte3D.tsx'
 import { aPeindre } from './combat-3d.ts'
 
 /**
- * UNE CARTE DU COFFRE GROSSIT SOUS LE POINTEUR, et c'est aussi la taille
- * qu'elle garde quand on la TIENT. Demandé par Keko : « ce serait cool que
- * dans le coffre, quand on survole une carte elle grossisse légèrement, et que
- * cette taille devienne la taille de la carte lors d'un drag, un peu plus
- * grosse que celle actuellement ».
+ * UNE CARTE DU COFFRE GROSSIT SOUS LE POINTEUR. Demandé par Keko : « ce serait
+ * cool que dans le coffre, quand on survole une carte elle grossisse
+ * légèrement ».
  *
- * *Les deux moitiés n'en font qu'une* : **une carte tenue est une carte qu'on
- * pointe.** C'est le même pointeur et le même objet désigné, donc ils n'ont
- * aucune raison de se lire à deux tailles — et l'aperçu du dépôt reste exact,
- * puisqu'une carte reposée au coffre y sera elle aussi sous le pointeur.
+ * *C'est là qu'on cherche*, donc là qu'une carte doit se détacher de ses
+ * voisines ; le chargement, lui, est déjà à sa taille de lecture. Un cran, pas
+ * une loupe — le zoom existe pour lire une carte, celui-ci ne fait que la
+ * désigner.
  *
- * **Légèrement, et c'est le mot qui compte** : la règle de Keko sur le fantôme
- * de l'armurerie 2D tient toujours — « il vaut mieux laisser la carte en mode
- * réduit pour le drag and drop » — *une grosse carte sous le doigt cache les
- * slots qu'on vise.* Un cran, pas une loupe.
+ * **ET IL S'ARRÊTE AU GESTE : la carte TENUE reprend sa taille au repos.**
+ * Keko : « finalement le petit grossissement est bien, mais quand on drag on
+ * remet la carte à sa taille normale ». *J'avais fait des deux une seule chose
+ * — une carte tenue est une carte qu'on pointe — et c'est l'inverse qui est
+ * vrai* : **survoler, c'est désigner ; tenir, c'est viser.** Dès que la carte
+ * quitte sa case, ce qu'on regarde n'est plus elle, ce sont les slots où la
+ * poser — et *une grosse carte sous le doigt cache ce qu'on vise*, la règle que
+ * Keko avait déjà tranchée sur le fantôme de l'armurerie 2D.
+ *
+ * Elle grandit toujours au-dessus d'un slot qui la prend : ce signal-là parle
+ * de la DESTINATION, pas de la carte.
  */
 const GROSSIT_SURVOL = 1.14
 
@@ -88,14 +93,9 @@ const GROSSIT_SURVOL = 1.14
  * Le chargement se lit à la taille de la main, la réserve en réduit. C'est
  * cette valeur que prend la pièce tenue quand elle survole un slot qui
  * l'accepte : *ce qu'on montre pendant le geste est ce qu'on aura après.*
- *
- * **La réserve rend la taille SURVOLÉE**, pas la taille au repos — sans quoi
- * la carte tenue se dégonflerait case après case en balayant le coffre, et se
- * regonflerait dans chaque interstice. *Un aperçu qui bat n'annonce rien*,
- * c'est la leçon de la pile d'origine qui clignotait quand on la traversait.
  */
 function tailleDuSlot(slot: Slot, plan: PlanArmurerie): number {
-  if (slot.ou === 'reserve') return plan.tailleCoffre * GROSSIT_SURVOL
+  if (slot.ou === 'reserve') return plan.tailleCoffre
   if (slot.ou === 'pile') return plan.taillePile
   return plan.tailleCharge
 }
@@ -761,9 +761,7 @@ export function Armurerie3D({
     sousLeDoigt !== null &&
     accepteDepuis(hub, portee.slot, sousLeDoigt, portee.objet.id)
   const tailleTenue =
-    accueille && sousLeDoigt !== null
-      ? tailleDuSlot(sousLeDoigt, plan)
-      : plan.tailleCoffre * GROSSIT_SURVOL
+    accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt, plan) : plan.tailleCoffre
 
   /**
    * ELLE NE FRÉMIT QU'AU-DESSUS D'UN SLOT DU CHARGEMENT QUI LA PREND.
@@ -998,9 +996,10 @@ export function Armurerie3D({
             carte={t.tresor === null ? pieceAPeindre(t.objet!) : aPeindre(t.tresor)}
             position={suitLeDoigt ? [doigt.x, doigt.y, Z_TENUE] : t.position}
             rotation={[0, 0, 0]}
-            // *Une carte tenue EST une carte survolée* : les deux se lisent à
-            // la même taille, et c'est ce qui fait que rien ne saute au
-            // moment où on la prend.
+            // ELLE GROSSIT AU SURVOL, PAS AU GESTE : `tenue === null` suffit
+            // à l'éteindre dès qu'on prend quoi que ce soit — *une carte
+            // tenue est le seul objet du geste*, et les autres cessent de
+            // répondre à un pointeur qui ne les regarde plus.
             taille={
               suitLeDoigt
                 ? tailleTenue

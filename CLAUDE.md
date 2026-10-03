@@ -4785,31 +4785,34 @@ un consommable n'avait aucun retour au-dessus de sa destination. Depuis que
 **toutes les cartes de l'équipement ont la même taille**, elle grandit comme les
 autres.
 
-**UNE CARTE DU COFFRE GROSSIT SOUS LE POINTEUR, et c'est aussi la taille qu'elle
-garde quand on la TIENT.** Demandé par Keko : « ce serait cool que dans le
-coffre, quand on survole une carte elle grossisse légèrement, et que cette
-taille devienne la taille de la carte lors d'un drag, un peu plus grosse que
-celle actuellement ».
+**UNE CARTE DU COFFRE GROSSIT SOUS LE POINTEUR** (×1,14). Demandé par Keko :
+« ce serait cool que dans le coffre, quand on survole une carte elle grossisse
+légèrement ». *C'est là qu'on cherche*, donc là qu'une carte doit se détacher de
+ses voisines — un cran, pas une loupe : **le zoom existe pour LIRE une carte,
+celui-ci ne fait que la DÉSIGNER.**
 
-*Les deux moitiés n'en font qu'une* : **une carte tenue est une carte qu'on
-pointe.** C'est le même pointeur et le même objet désigné, donc ils n'ont aucune
-raison de se lire à deux tailles — et rien ne saute au moment où on la prend.
+**ET IL S'ARRÊTE AU GESTE : la carte TENUE reprend sa taille au repos.** Keko
+avait d'abord demandé que ce soit aussi la taille du glisser — « un peu plus
+grosse que celle actuellement » — puis l'a repris en le voyant : « finalement le
+petit grossissement est bien, mais quand on drag on remet la carte à sa taille
+normale ».
 
-Quatre choses qui le portent :
+*J'avais fait des deux une seule chose* — une carte tenue est une carte qu'on
+pointe — **et c'est l'inverse qui est vrai : survoler, c'est DÉSIGNER ; tenir,
+c'est VISER.** Dès que la carte quitte sa case, ce qu'on regarde n'est plus
+elle, ce sont les slots où la poser — et *une grosse carte sous le doigt cache
+ce qu'on vise*, la règle que Keko avait déjà tranchée sur le fantôme de
+l'armurerie 2D. Elle grandit toujours au-dessus d'un slot qui la prend : **ce
+signal-là parle de la DESTINATION, pas de la carte.**
 
-- **« légèrement » est le mot qui compte** (×1,14). La règle de Keko sur le
-  fantôme de l'armurerie 2D tient toujours — « il vaut mieux laisser la carte en
-  mode réduit pour le drag and drop » — *une grosse carte sous le doigt cache
-  les slots qu'on vise.* Un cran, pas une loupe ;
-- **le coffre seulement.** *C'est là qu'on cherche*, donc là qu'une carte doit
-  se détacher de ses voisines ; le chargement est déjà à sa taille de lecture,
-  et la montrer plus grande que ce qu'elle sera ne dirait rien ;
-- **une case du coffre rend désormais la taille SURVOLÉE comme aperçu de
-  dépôt**, pas la taille au repos — sans quoi la carte tenue se dégonflerait
-  case après case en balayant le coffre et se regonflerait dans chaque
-  interstice. *Un aperçu qui bat n'annonce rien*, la leçon de la pile d'origine
-  qui clignotait quand on la traversait. L'aperçu reste exact : une carte
-  reposée au coffre y sera elle aussi sous le pointeur ;
+Trois choses qui le portent :
+
+- **le coffre seulement.** Le chargement est déjà à sa taille de lecture, et le
+  montrer plus grand que ce qu'il sera ne dirait rien ;
+- **ça s'éteint dès qu'on tient quoi que ce soit** (`tenue === null`) — *une
+  carte tenue est le seul objet du geste*, et les autres cessent de répondre à
+  un pointeur qui ne les regarde plus. C'est la règle déjà tenue par le reflet
+  de l'armurerie et par le survol de la main de combat ;
 - **une pile grossit D'UN BLOC**, comme elle s'incline d'un bloc : la doublure
   est l'épaisseur du tas, pas une carte de plus. Elle est `inerte`, donc c'est
   toujours la carte du dessus qui reçoit le pointeur — et les deux retiennent
