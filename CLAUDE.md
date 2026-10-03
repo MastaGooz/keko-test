@@ -9037,11 +9037,12 @@ Mesuré à l'écran, écrasement compris : l'éventail fait **29 x 26**, la cart
 barrée **30 x 25** — contre **36 x 32** pour les flèches qu'ils remplacent.
 *C'est la hauteur qui tombe*, et c'est elle que Keko lisait comme « trop gros ».
 
-**ET L'ÉTOILE A MAIGRI D'UN CRAN** (26 → 22,5). Keko : « réduis encore
-légèrement la taille de l'étoile sur le deck dans l'écran du maître d'armes ».
-*Elle est la seule à être posée sur un BOUTON*, donc la seule dont la face se
-lit à côté d'un chiffre et d'un mot — et **ce qui l'entoure décide de ce qu'elle
-doit peser, pas la face qui la porte.**
+**ET L'ÉTOILE A MAIGRI DEUX FOIS** (26 → 22,5 → 20). Keko : « réduis encore
+légèrement la taille de l'étoile sur le deck dans l'écran du maître d'armes »,
+puis « tu peux réduire encore un poil ? » *Elle est la seule à être posée sur un
+BOUTON*, donc la seule dont la face se lit à côté d'un chiffre et d'un mot — et
+**ce qui l'entoure décide de ce qu'elle doit peser, pas la face qui la
+porte.**
 
 **L'emblème est un PARAMÈTRE, avec le nom du tas pour défaut** (`Tas3D.tsx`) :
 les deux tas du combat ne demandent rien, et seul le bouton du deck réclame

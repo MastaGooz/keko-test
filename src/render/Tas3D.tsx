@@ -199,12 +199,13 @@ const FLANC_DROIT = adouci([NEAR, DROITE, bas(DROITE), bas(NEAR)], 0)
  * version comme une girouette.
  */
 const BRANCHES = 4
-// ET ELLE A ENCORE MAIGRI D'UN CRAN. Keko : « réduis encore légèrement la
-// taille de l'étoile sur le deck dans l'écran du maître d'armes ». *Elle est
-// la seule à être posée sur un BOUTON*, donc la seule dont la face se lit à
-// côté d'un chiffre et d'un mot — et ce qui l'entoure décide de ce qu'elle
-// doit peser, pas la face qui la porte.
-const POINTE = 22.5
+// ET ELLE A MAIGRI DEUX FOIS (26 → 22,5 → 20). Keko : « réduis encore
+// légèrement la taille de l'étoile sur le deck dans l'écran du maître
+// d'armes », puis « tu peux réduire encore un poil ? » *Elle est la seule à
+// être posée sur un BOUTON*, donc la seule dont la face se lit à côté d'un
+// chiffre et d'un mot — et **ce qui l'entoure décide de ce qu'elle doit peser,
+// pas la face qui la porte.**
+const POINTE = 20
 const CREUX = POINTE * 0.44
 
 const ETOILE_PATH = adouci(
