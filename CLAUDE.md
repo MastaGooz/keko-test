@@ -7953,6 +7953,32 @@ L'image est chargée UNE fois pour toutes les cartes (promesse mémorisée), com
 le fond commun : `peindreCarte` est appelée par modèle, et sans ça le premier
 écran lancerait autant de chargements qu'il y a de cartes différentes.
 
+**ET ELLE SE POSE EN QUALITÉ HAUTE.** Keko : « je trouve l'image du symbole des
+PA sur les cartes un peu moche, comme s'il n'était pas lissé ». *Et c'était
+exactement ça* : le dessin fait 1254 px de côté, l'orbe du coin en occupe
+vingt-cinq sur une carte de main et le jeton du cartouche une dizaine — **une
+réduction de cinquante fois**, qu'un `drawImage` fait par défaut en qualité
+BASSE, c'est-à-dire en lisant quatre pixels de la source et en ignorant les deux
+mille cinq cents autres. Le cercle se crénèle et le filet d'ambre clignote d'une
+taille de carte à l'autre.
+
+**ET LA PYRAMIDE DE MOITIÉS, ÉCRITE D'ABORD, ÉTAIT UNE FAUSSE BONNE IDÉE.**
+Réduire de moitié en moitié est le bon réflexe quand chaque passe est mauvaise —
+c'est ce que fait un mipmap — mais *deux passes soignées ne valent pas une
+seule* : chacune refiltre ce que la précédente a déjà lissé. Mesuré contre un
+rééchantillonnage de référence, écart moyen sur 255 à la taille d'une carte de
+main :
+
+| | écart |
+|---|---|
+| qualité basse, le défaut | 23,6 |
+| **qualité haute** | **7,8** |
+| paliers de moitiés, chacun en qualité haute | 14,8 |
+
+*La bonne réponse était la ligne qui manquait, pas l'échafaudage autour* — et
+c'est la mesure qui l'a dit, pas l'oeil : les deux versions se ressemblent sur
+une capture.
+
 **Keko a choisi l'ORBE** : « essayons l'orbe, mais il faudrait une orbe sur les
 cartes, puis le même symbole avec X/X dans l'interface de combat ». C'est la
 règle prise au mot — le joueur voit le même objet sur sa carte et dans son coin

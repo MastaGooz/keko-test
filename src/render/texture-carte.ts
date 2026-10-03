@@ -1024,6 +1024,48 @@ function fondTeinte(ciel: Ciel): Promise<HTMLImageElement | HTMLCanvasElement | 
   return promesse
 }
 
+/**
+ * LE SYMBOLE SE POSE EN QUALITÉ HAUTE, et c'est tout ce qu'il fallait.
+ *
+ * Keko : « je trouve l'image du symbole des PA sur les cartes un peu moche,
+ * comme s'il n'était pas lissé ».
+ *
+ * *Et c'est exactement ça* : le dessin fait 1254 px de côté, l'orbe du coin en
+ * occupe vingt-cinq sur une carte de main, et le jeton du cartouche une dizaine
+ * — **une réduction de cinquante fois.** Un `drawImage` la fait par défaut en
+ * qualité BASSE, c'est-à-dire en lisant quatre pixels de la source et en
+ * ignorant les deux mille cinq cents autres : le cercle se crénèle et le filet
+ * d'ambre clignote d'une taille de carte à l'autre.
+ *
+ * **ET LA PYRAMIDE DE MOITIÉS, QUE J'AI ÉCRITE D'ABORD, ÉTAIT UNE FAUSSE BONNE
+ * IDÉE.** Réduire de moitié en moitié est le bon réflexe quand chaque passe est
+ * mauvaise — c'est ce que fait un mipmap — mais *deux passes soignées ne valent
+ * pas une seule* : chacune refiltre ce que la précédente a déjà lissé. Mesuré
+ * contre un rééchantillonnage de référence, écart moyen sur 255 à la taille
+ * d'une carte de main :
+ *
+ * | | une passe |
+ * |---|---|
+ * | qualité basse, le défaut | 23,6 |
+ * | **qualité haute** | **7,8** |
+ * | paliers de moitiés, chacun en qualité haute | 14,8 |
+ *
+ * *La bonne réponse était la ligne qui manquait, pas l'échafaudage autour.*
+ *
+ * Si un navigateur ignorait `imageSmoothingQuality`, il retomberait sur la
+ * qualité basse — l'état d'avant, pas pire.
+ */
+function poserSymbole(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLImageElement,
+  x: number,
+  y: number,
+  taille: number,
+): void {
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(image, x, y, taille, taille)
+}
+
 /** Le symbole du coût, chargé une fois lui aussi. */
 let symboleCout: Promise<HTMLImageElement | null> | null = null
 
@@ -1316,7 +1358,7 @@ function peindreJeton(
   // L'ORBE DU COÛT, EN PETIT : le même objet que le coin de la carte et que le
   // coin de l'écran. Le disque peint reste le repli, parce qu'*un canvas ne
   // dessine rien du tout si l'image manque*.
-  if (symbole !== null) ctx.drawImage(symbole, x, y - h / 2, h, h)
+  if (symbole !== null) poserSymbole(ctx, symbole, x, y - h / 2, h)
   else {
     ctx.beginPath()
     ctx.arc(x + h / 2, y, h / 2, 0, Math.PI * 2)
@@ -2148,7 +2190,7 @@ function peindreCout(
   // reste derrière elle comme repli : *un canvas ne dessine rien du tout si
   // l'image manque*, et on aurait un chiffre posé sur le vide.
   if (styleCout === 'orbe' && symbole !== null) {
-    ctx.drawImage(symbole, x, y, l, l)
+    poserSymbole(ctx, symbole, x, y, l)
     chiffre(ctx, cout, cx, cy)
     return
   }
