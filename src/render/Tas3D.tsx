@@ -80,46 +80,15 @@ function coin(sx: number, sy: number): [number, number] {
   ]
 }
 
-/**
- * LA MÊME PROJECTION, EN MATRICE — pour y poser le dos de carte.
- *
- * `coin()` fait une rotation puis un écrasement vertical : deux opérations
- * LINÉAIRES, donc l'ensemble est affine, donc exprimable en `matrix()`. *C'est
- * ce qui permet de plaquer une image sur le dessus du paquet* — SVG ne sait pas
- * faire de projection perspective, et il n'en a pas besoin ici.
- *
- * Le repère source est celui d'une carte : 1 de large, `RAPPORT` de haut,
- * centrée sur zéro. Une image posée de (−0,5 ; −0,7) à (0,5 ; 0,7) tombe donc
- * exactement sur les quatre coins calculés ci-dessous.
+/*
+ * LA PROJECTION EN MATRICE A DISPARU AVEC LE DOS PLAQUÉ. Elle servait à poser
+ * une IMAGE sur le dessus du paquet — `coin()` étant une rotation suivie d'un
+ * écrasement, donc une affine, donc exprimable en `matrix()`. Son histoire, et
+ * les deux pièges SVG qu'elle a coûtés (une image rastérisée à sa taille LOCALE
+ * et non à sa taille projetée, un `clip-path` défini dans le repère de
+ * l'élément qui le porte), vivent dans `git log`. *Du code mort ment sur ce que
+ * le jeu fait.*
  */
-const DEMI_DIAGONALE = Math.hypot(1, RAPPORT) / 2
-const K = RAYON / DEMI_DIAGONALE
-
-/**
- * LE REPÈRE LOCAL DE L'IMAGE, ET IL NE PEUT PAS ÊTRE PETIT.
- *
- * Posée à sa taille naturelle dans ce repère — 1 sur 1,4 — l'image est
- * **rastérisée à un pixel** avant que la matrice ne l'agrandisse : le dessus du
- * paquet devenait une tache unie de la couleur moyenne du dos. *Un navigateur
- * rasterise une image à sa taille LOCALE, pas à celle qu'elle aura après
- * transformation.*
- *
- * On la pose donc à 100 de large et on divise la matrice d'autant : la
- * transformation finale est exactement la même, mais elle part d'une image
- * dessinée à sa vraie résolution.
- */
-const ECHELLE = 100
-
-const MATRICE = [
-  (K * COS) / ECHELLE,
-  (-K * ECRASEMENT * SIN) / ECHELLE,
-  (-K * SIN) / ECHELLE,
-  (-K * ECRASEMENT * COS) / ECHELLE,
-  CENTRE[0],
-  CENTRE[1],
-]
-  .map((v) => v.toFixed(6))
-  .join(' ')
 
 const LOIN = coin(-1, 1)
 const GAUCHE = coin(-1, -1)
@@ -135,27 +104,35 @@ const FLANC_GAUCHE = `${pt(GAUCHE)} ${pt(NEAR)} ${pt(NEAR, EPAISSEUR)} ${pt(GAUC
 const FLANC_DROIT = `${pt(NEAR)} ${pt(DROITE)} ${pt(DROITE, EPAISSEUR)} ${pt(NEAR, EPAISSEUR)}`
 
 /**
- * COMBIEN DE CARTES ON VOIT DANS LA TRANCHE.
+ * L'ÉTOILE DU DESSUS. Keko : « le logo est trop petit, il faudrait une étoile
+ * simplifiée, un peu dans le ton de l'icône de la main ».
  *
- * Il y en avait TROIS, et Keko : « les séparations entre les cartes ne sont pas
- * assez nombreuses, on dirait que les cartes sont super épaisses ». C'est
- * exactement ça : *le nombre de traits ne décore pas l'épaisseur, il la DIVISE*
- * — trois traits sur une tranche donnent quatre cartes de 4 unités chacune, et
- * une carte de 4 unités d'épaisseur n'est pas une carte, c'est une planche.
+ * **Elle est DROITE, et seulement écrasée.** Passée par `MATRICE` comme le dos
+ * qu'elle remplace, elle héritait aussi de la ROTATION de la carte : un paquet
+ * posé en losange tourne son dessin de 35°, et *une étoile penchée ne se lit
+ * pas comme une étoile, elle se lit comme un défaut.* Elle garde donc l'axe de
+ * l'écran et ne prend que l'écrasement de la vue de trois quarts — ce qui
+ * suffit à la poser SUR la face plutôt qu'à côté.
  *
- * À douze, chaque feuillet fait un peu plus d'une unité : l'épaisseur totale ne
- * change pas, mais elle se lit enfin comme un paquet.
+ * **Quatre branches, et c'est une forme déjà tranchée par le projet** : « six
+ * branches égales font une étoile de David, quatre branches fines ne disent
+ * que la lumière ». Ici elles sont ÉPAISSES (le creux vaut 44 % de la pointe) —
+ * *une étoile mince se lit comme un éclat, une étoile pleine se lit comme un
+ * emblème*, et c'est un emblème qu'on veut.
+ *
+ * **Son rayon se borne au cercle inscrit du losange**, pas à sa demi-diagonale :
+ * un losange se rétrécit vers ses pointes, donc une étoile calée sur la largeur
+ * sortirait par les côtés.
  */
-const FEUILLETS = 12
+const BRANCHES = 4
+const POINTE = 30
+const CREUX = POINTE * 0.44
 
-/** Le losange du dessus, rentré vers son centre : le jonc intérieur. */
-function jonc(part: number): string {
-  return [LOIN, GAUCHE, NEAR, DROITE]
-    .map(([x, y]) =>
-      pt([CENTRE[0] + (x - CENTRE[0]) * part, CENTRE[1] + (y - CENTRE[1]) * part]),
-    )
-    .join(' ')
-}
+const ETOILE = Array.from({ length: BRANCHES * 2 }, (_, i) => {
+  const a = (i * Math.PI) / BRANCHES - Math.PI / 2
+  const r = i % 2 === 0 ? POINTE : CREUX
+  return `${(Math.cos(a) * r).toFixed(2)},${(Math.sin(a) * r).toFixed(2)}`
+}).join(' ')
 
 /**
  * LE CADRE COLLE AU DESSIN, épaisseur comprise. Un viewBox carré laissait un
@@ -174,8 +151,7 @@ const CADRE = [
   .map((v) => v.toFixed(2))
   .join(' ')
 
-import { useEffect, useRef, useState } from 'react'
-import { urlDuDosPeint } from './texture-carte.ts'
+import { useEffect, useRef } from 'react'
 
 type Props = {
   /** Sert aussi d'identifiant de dégradé : deux SVG qui partagent un `id` font
@@ -233,33 +209,22 @@ export function Tas3D({ nom, compte, brasse = false, choc = 0 }: Props): React.J
   }, [choc])
 
   /**
-   * LE DESSUS DU PAQUET EST LE DOS DE CARTE, demandé par Keko.
+   * **LE DESSUS N'EST PLUS LE DOS DE CARTE, IL EST DESSINÉ.** Keko : « on peut
+   * avoir un truc plus stylisé ? ça fait trop réaliste ; inutile d'avoir les
+   * séparateurs qui montrent les tranches des cartes, et le logo est trop
+   * petit — il faudrait une étoile simplifiée, un peu dans le ton de l'icône de
+   * la main ».
    *
-   * *C'est la même carte* — la règle du dépôt, déjà payée sur les trésors
-   * (« la carte change quand je la ramasse ») : même matière, même cadre, même
-   * semis que ce que montrera une carte retournée.
+   * *C'était la règle inverse* — « le dessus du paquet est le dos de carte,
+   * c'est la même carte » — et elle tombe pour la raison qui a fait ce tas :
+   * **ce qu'on ne touche jamais n'a pas besoin d'être un objet.** Un dos de
+   * carte est dessiné pour 250 px ; dans un bouton il en fait 24, et son
+   * médaillon n'y est plus qu'une tache. *Un dessin fidèle réduit n'est pas un
+   * symbole, c'est une vignette illisible.*
    *
-   * **Seul le coeur du médaillon diffère**, et il porte le symbole du tas :
-   * Keko veut « un symbole qui permette au joueur d'identifier rapidement la
-   * pile pioche / défausse ». C'est le seul endroit où le paquet cesse d'être
-   * fidèle, et c'est assumé — *une information de jeu prime sur la cohérence
-   * décorative.*
-   *
-   * Il arrive en différé, parce qu'il charge le fond commun des cartes. Le
-   * losange peint reste dessous comme repli : *un dessus qui manquerait
-   * laisserait voir le décor à travers le paquet.*
+   * Ce qui le remplace parle la langue de l'icône de la main : **des aplats de
+   * laiton et un cerne sombre**, et rien d'autre.
    */
-  const [dos, setDos] = useState<string | null>(null)
-  useEffect(() => {
-    let vivant = true
-    void urlDuDosPeint().then((url) => {
-      if (vivant && url !== '') setDos(url)
-    })
-    return () => {
-      vivant = false
-    }
-  }, [nom])
-
   return (
     <div className={`tas-3d ${nom}${brasse ? ' brasse' : ''}`}>
       <span className="tas-compte">{compte}</span>
@@ -285,21 +250,11 @@ export function Tas3D({ nom, compte, brasse = false, choc = 0 }: Props): React.J
         <polygon points={FLANC_GAUCHE} fill="#d8bd7f" />
         <polygon points={FLANC_DROIT} fill="#f2ddaa" />
 
-        {/* LES FEUILLETS : ce sont des cartes empilées, pas un bloc. Sur une
-            tranche noire ils ne disaient rien ; sur du laiton, chaque trait est
-            une carte — *c'est la tranche claire qui les rend lisibles.* */}
-        {Array.from({ length: FEUILLETS - 1 }, (_, i) => (i + 1) / FEUILLETS).map((f) => (
-          <polyline
-            key={f}
-            points={`${pt(GAUCHE, EPAISSEUR * f)} ${pt(NEAR, EPAISSEUR * f)} ${pt(DROITE, EPAISSEUR * f)}`}
-            fill="none"
-            stroke="#8a6a2c"
-            strokeOpacity="0.5"
-            // Plus fin qu'avant : à trois traits on pouvait les appuyer, à
-            // douze un trait épais mangerait la carte qu'il sépare.
-            strokeWidth="0.55"
-          />
-        ))}
+        {/* LES FEUILLETS SONT PARTIS. Keko : « inutile d'avoir les séparateurs
+            qui montrent les tranches des cartes ». *Ils disaient le nombre de
+            cartes d'un vrai paquet* — c'est une information de matière, et ce
+            dessin a cessé d'être une matière : il ne reste que le VOLUME, qui
+            suffit à dire « un paquet ». La tranche claire le porte seule. */}
 
         {/* LE LISERÉ NE DÉBORDE PLUS DU PAQUET. Un `stroke` SVG est CENTRÉ sur
             le tracé, donc la moitié de sa largeur sort du polygone : le dessus
@@ -329,35 +284,21 @@ export function Tas3D({ nom, compte, brasse = false, choc = 0 }: Props): React.J
             cadres l'un sur l'autre ne font pas un cadre plus riche.* Rogné par
             la même forme, pour que ses coins arrondis ne laissent pas voir le
             décor au travers. */}
-        {dos !== null ? (
-          // LE ROGNAGE VIT SUR UN GROUPE, PAS SUR L'IMAGE. Un `clip-path` est
-          // défini dans le repère de l'élément qui le porte : posé sur l'image,
-          // il subissait la matrice avec elle et ne tombait plus sur le
-          // losange. Sur un groupe sans transformation, il reste dans le repère
-          // du viewBox, là où le polygone a été calculé.
-          <g clipPath={`url(#${id}-dessus-coupe)`}>
-            <image
-              href={dos}
-              x={-ECHELLE / 2}
-              y={(-ECHELLE * RAPPORT) / 2}
-              width={ECHELLE}
-              height={ECHELLE * RAPPORT}
-              preserveAspectRatio="none"
-              transform={`matrix(${MATRICE})`}
-            />
-          </g>
-        ) : (
-          <>
-            <polygon
-              points={jonc(0.62)}
-              fill="none"
-              stroke="#c9a95a"
-              strokeWidth="1.2"
-              opacity="0.5"
-            />
-            <polygon points={jonc(0.24)} fill="#c9a95a" opacity="0.22" />
-          </>
-        )}
+        {/* L'ÉTOILE, POSÉE À PLAT SUR LE DESSUS : droite, et écrasée de la même
+            fraction que le paquet. Deux aplats et rien d'autre, comme l'icône
+            de la main — *un emblème de vingt pixels n'a droit ni à un dégradé
+            ni à un filet.* */}
+        <clipPath id={`${id}-moitie`} clipPathUnits="userSpaceOnUse">
+          <rect x={-POINTE} y={-POINTE} width={POINTE} height={POINTE * 2} />
+        </clipPath>
+        <g transform={`translate(${CENTRE[0]} ${CENTRE[1]}) scale(1 ${ECRASEMENT})`}>
+          <polygon points={ETOILE} fill="#f0d9a2" />
+          {/* LA MOITIÉ GAUCHE EST PLUS SOMBRE : la lumière vient du haut et de
+              la droite, comme sur les flancs du paquet et sur l'icône de la
+              main. *Un aplat unique se lirait comme une découpe, pas comme un
+              objet posé.* */}
+          <polygon points={ETOILE} fill="#c8ab6d" clipPath={`url(#${id}-moitie)`} />
+        </g>
       </svg>
     </div>
   )
