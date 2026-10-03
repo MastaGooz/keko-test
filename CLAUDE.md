@@ -8804,11 +8804,45 @@ dessine, mais à celle où on le regarde.* C'est aussi ce que son rôle demande 
 sur une carte le médaillon est un ornement, sur un tas c'est une **étiquette**,
 qui doit se lire du coin de l'oeil.
 
-**LE DESSUS DU PAQUET EST LE DOS DE CARTE**, demandé par Keko. *C'est la même
-carte partout* — la règle déjà payée sur les trésors (« la carte change quand je
-la ramasse ») : le paquet montre exactement ce que montrera une carte retournée,
-pas un motif qui lui ressemble. Le dos étant symétrique par construction, il
-survit au miroir de la défausse sans qu'on ait à s'en occuper.
+**LE DESSUS N'EST PLUS LE DOS DE CARTE : IL EST DESSINÉ, ET IL PORTE UNE
+ÉTOILE.** Keko : « on peut avoir un truc plus stylisé ? ça fait trop réaliste ;
+inutile d'avoir les séparateurs qui montrent les tranches des cartes, et le logo
+est trop petit — il faudrait une étoile simplifiée, un peu dans le ton de
+l'icône de la main ».
+
+*C'était la règle inverse* — « le dessus du paquet est le dos de carte, c'est la
+même carte partout » — et elle tombe pour la raison qui avait fait ce tas :
+**ce qu'on ne touche jamais n'a pas besoin d'être un objet.** Un dos de carte est
+dessiné pour 250 px ; dans le bouton du deck il en fait vingt-quatre, et son
+médaillon n'y est plus qu'une tache. ***Un dessin fidèle réduit n'est pas un
+symbole, c'est une vignette illisible.***
+
+Trois choses qui le portent :
+
+- **les feuillets sont partis.** Ils disaient le nombre de cartes d'un vrai
+  paquet — *une information de MATIÈRE*, et ce dessin a cessé d'en être une. Il
+  ne reste que le VOLUME, qui suffit à dire « un paquet », et la tranche claire
+  le porte seule ;
+- **l'étoile est DROITE, et seulement écrasée.** Passée par la matrice du
+  paquet, elle héritait aussi de sa ROTATION : un paquet posé en losange tourne
+  son dessin de 35°, et *une étoile penchée ne se lit pas comme une étoile, elle
+  se lit comme un défaut.* Elle garde donc l'axe de l'écran et ne prend que
+  l'écrasement de la vue de trois quarts — ce qui suffit à la poser SUR la face ;
+- **deux aplats et rien d'autre**, la langue de l'icône de la main : la moitié
+  gauche plus sombre, parce que la lumière vient du haut et de la droite comme
+  sur les flancs. *Un emblème de vingt pixels n'a droit ni à un dégradé ni à un
+  filet.*
+
+Son rayon se borne au **cercle inscrit** du losange et non à sa demi-diagonale :
+*un losange se rétrécit vers ses pointes*, donc une étoile calée sur la largeur
+sortirait par les côtés. Quatre branches épaisses — la forme était déjà tranchée
+par le projet (« six branches égales font une étoile de David ») et *une étoile
+mince se lit comme un éclat, une étoile pleine comme un emblème.*
+
+Le dessin étant symétrique, il survit au miroir de la défausse sans qu'on ait à
+s'en occuper. **Le dos plaqué et sa data URL disparaissent avec**, ainsi que la
+matrice de projection : *du code mort ment sur ce que le jeu fait*, et les deux
+pièges SVG qu'elle avait coûtés restent dans `git log`.
 
 **La projection du paquet est AFFINE**, donc exprimable en `matrix()` : `coin()`
 fait une rotation puis un écrasement vertical, deux opérations linéaires. SVG ne
