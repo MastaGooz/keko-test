@@ -10096,6 +10096,32 @@ et `Glaive.png` 1 694 ; en WebP à 70 %, **9 Ko et 33 Ko**, sans un artefact
 visible au zoom. *À douze modèles, c'était vingt mégaoctets à charger sur un
 téléphone* — c'est désormais moins d'un demi-mégaoctet pour tout le catalogue.
 
+**ET IL FAUT QUE CE SOIT DU WEBP AVEC PERTE, pas du WebP sans perte.** Keko, en
+déposant une Riposte de 533 Ko : « je l'ai mis en webp qualité 100 % pour
+tester, c'est un souci si je fais ça avec toutes les cartes ? » *Ce n'était pas
+de la qualité 100 — c'était du SANS PERTE* (`VP8L`), ce que les exports
+proposent souvent sous le même bouton, et c'est une autre famille de codage :
+le même dessin réencodé avec perte à 100 ne fait que 65 Ko, à 90 que 45.
+
+**Ce que ça coûte, mesuré sur le catalogue complet** (37 dessins) :
+
+| | poids du catalogue |
+|---|---|
+| sans perte, comme la Riposte livrée | **19,3 Mo** |
+| avec perte, qualité 100 | 2,3 Mo |
+| qualité 90 | 1,6 Mo |
+| qualité 70, le reste du jeu | 1,1 Mo |
+
+**Et ce que ça achète : rien qu'on puisse voir.** *La toile d'une carte plafonne
+à 768 px de large*, donc l'illustration n'est jamais peinte au-delà de ~740 — et
+en jeu la carte en fait trois cents au zoom, cent vingt en main. Écart moyen à
+la qualité 70, sur 255 niveaux et hors transparent : **2,4 à 740 px, 1,8 à 300,
+1,1 à 120.** *Un niveau et demi sur deux cent cinquante-cinq ne se voit pas* ;
+dix-huit fois le poids, si, sur un téléphone.
+
+**La marge, s'il en faut, se prend entre 80 et 90** (+6 à +14 Ko par dessin,
+soit un demi-mégaoctet sur tout le catalogue) — pas dans le sans-perte.
+
 **Deux poses**, parce que le joueur est montré dans deux situations qui n'ont
 rien à voir : `public/joueur.png` au repos sur la scène et quand il encaisse,
 `public/attaque.png` lame tendue quand c'est lui qui frappe. *Le gros plan est

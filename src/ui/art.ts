@@ -95,6 +95,7 @@ const IMAGES: Record<string, string> = {
   // rendu un 404 franc. **On recopie le nom du fichier, on ne le réécrit pas.**
   'epee-a-deux-mains': 'Epée à deux mains.webp',
   estoc: 'Estoc.webp',
+  riposte: 'Riposte.webp',
   // LA TAILLE A ENFIN LE SIEN. Elle empruntait le dessin de la Taillade, le
   // temps qu'elle n'en ait pas — *un banc qui montre une carte au sceau de
   // repli ne se juge pas.* L'emprunt tombe avec l'arrivée du fichier.
