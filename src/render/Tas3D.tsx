@@ -123,13 +123,34 @@ const FLANC_DROIT = `${pt(NEAR)} ${pt(DROITE)} ${pt(DROITE, EPAISSEUR)} ${pt(NEA
  * **Son rayon se borne au cercle inscrit du losange**, pas à sa demi-diagonale :
  * un losange se rétrécit vers ses pointes, donc une étoile calée sur la largeur
  * sortirait par les côtés.
+ *
+ * **ET SES POINTES SUIVENT LES AXES DE LA CARTE, pas ceux de l'écran.** Keko :
+ * « ses pointes vont sur la gauche / droite / haut / bas, pas les diagonales
+ * comme là ».
+ *
+ * *Les deux repères sont à 45° l'un de l'autre, et c'est ce qui rendait la
+ * remarque surprenante* : le paquet est posé en LOSANGE, donc ses coins
+ * tombent sur les axes de l'écran et ses bords sur les diagonales. Une étoile
+ * calée sur l'écran pointait donc, sur la carte, vers ses QUATRE COINS — et
+ * c'est bien une étoile en diagonale qu'on lisait. **Un emblème imprimé sur une
+ * carte suit les axes de la carte**, donc les siennes visent le milieu de
+ * chaque bord.
+ *
+ * *Et ça reste symétrique*, ce que la matrice du paquet ne donnait pas : les
+ * quatre pointes sont à 45° de l'écran, donc **l'écrasement les raccourcit
+ * toutes de la même façon** — là où la rotation de 35° de la carte en
+ * déformait deux et pas les deux autres. C'est ce qui faisait lire la première
+ * version comme une girouette.
  */
 const BRANCHES = 4
-const POINTE = 30
+const POINTE = 26
 const CREUX = POINTE * 0.44
 
 const ETOILE = Array.from({ length: BRANCHES * 2 }, (_, i) => {
-  const a = (i * Math.PI) / BRANCHES - Math.PI / 2
+  // Le quart de tour met les POINTES sur les diagonales de l'écran, donc sur
+  // les axes de la carte — et les CREUX sur les axes de l'écran, donc dans les
+  // coins du losange, là où il n'y a de toute façon pas de place.
+  const a = (i * Math.PI) / BRANCHES - Math.PI / 2 + Math.PI / 4
   const r = i % 2 === 0 ? POINTE : CREUX
   return `${(Math.cos(a) * r).toFixed(2)},${(Math.sin(a) * r).toFixed(2)}`
 }).join(' ')

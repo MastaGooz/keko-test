@@ -8839,6 +8839,25 @@ sortirait par les côtés. Quatre branches épaisses — la forme était déjà 
 par le projet (« six branches égales font une étoile de David ») et *une étoile
 mince se lit comme un éclat, une étoile pleine comme un emblème.*
 
+**ET SES POINTES SUIVENT LES AXES DE LA CARTE, pas ceux de l'écran.** Keko :
+« ses pointes vont sur la gauche / droite / haut / bas, pas les diagonales comme
+là ».
+
+*Les deux repères sont à 45° l'un de l'autre, et c'est ce qui rendait la remarque
+surprenante* : le paquet est posé en LOSANGE, donc ses coins tombent sur les axes
+de l'écran et ses bords sur les diagonales. Une étoile calée sur l'écran pointait
+donc, **sur la carte**, vers ses quatre COINS — et c'est bien une étoile en
+diagonale qu'on lisait. *Un emblème imprimé sur une carte suit les axes de la
+carte* : les siennes visent désormais le milieu de chaque bord.
+
+**Et ça reste symétrique**, ce que la matrice du paquet ne donnait pas : les
+quatre pointes sont à 45° de l'écran, donc *l'écrasement les raccourcit toutes de
+la même façon* — là où la rotation de 35° de la carte en déformait deux et pas
+les deux autres. **C'est ce qui faisait lire la toute première version comme une
+girouette**, et ce que j'avais cru corriger en la redressant : la bonne réponse
+n'était pas de retirer la rotation, c'était d'en prendre une qui laisse la figure
+symétrique.
+
 Le dessin étant symétrique, il survit au miroir de la défausse sans qu'on ait à
 s'en occuper. **Le dos plaqué et sa data URL disparaissent avec**, ainsi que la
 matrice de projection : *du code mort ment sur ce que le jeu fait*, et les deux
