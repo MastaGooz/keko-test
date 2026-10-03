@@ -9037,20 +9037,47 @@ Mesuré à l'écran, écrasement compris : l'éventail fait **29 x 26**, la cart
 barrée **30 x 25** — contre **36 x 32** pour les flèches qu'ils remplacent.
 *C'est la hauteur qui tombe*, et c'est elle que Keko lisait comme « trop gros ».
 
-**ET L'ÉTOILE A MAIGRI DEUX FOIS, PUIS ELLE A DISPARU.** Keko l'a réduite deux
-fois (26 → 22,5 → 20), puis : « essaie d'enlever l'étoile pour voir ? » — et le
-paquet nu tient. *Trois crans de réduction disaient déjà où ça allait* : **ce
-qui l'entourait décidait de ce qu'elle devait peser, pas la face qui la
-portait**, et à ce rythme il ne restait plus qu'à constater qu'elle ne portait
-rien.
+**ET L'ÉTOILE A MAIGRI DEUX FOIS, PUIS ELLE A DISPARU, PUIS ELLE EST REVENUE EN
+REPRENANT LE LOGO DU DOS.** Keko l'a réduite deux fois (26 → 22,5 → 20), puis :
+« essaie d'enlever l'étoile pour voir ? », puis « remets l'étoile, mais tu peux
+la modifier pour qu'elle colle un peu plus au logo du dos de carte ? en gardant
+un truc minimaliste et simplifié ».
 
-*Le paquet dit « des cartes » par sa seule forme* — c'est pour ça qu'il a été
-dessiné — donc un emblème posé dessus ne faisait que le répéter. **Ce n'est pas
-vrai des deux tas du combat** : eux ont quelqu'un à départager, et leur emblème
-n'est pas un ornement mais la seule chose qui dise lequel est lequel.
+*L'aller-retour a servi à quelque chose, et c'est ce qui le rend lisible* :
+**trois crans de réduction disaient que le problème n'était pas sa taille.**
+Une étoile générique posée sur un paquet ne fait que répéter ce que le paquet
+dit déjà par sa forme — donc on la rapetisse sans fin, et le paquet nu tient
+très bien. *Ce qui lui manquait, c'était de dire quelque chose que le paquet ne
+dit pas* : à quel jeu ces cartes appartiennent.
 
-`etoile` reste une valeur de `Tas3D` : *ce qui a servi à choisir doit rester
-ouvrable*, et c'est un mot à changer pour la reposer.
+Le dessin de Keko est un losange à quatre pointes aux **bords creusés**,
+**percé d'un vide central** en losange, et tissé d'un entrelacs en moulin.
+**Les deux premiers traits se réduisent, le troisième non** : à vingt pixels un
+entrelacs tourne en bouillie, et *il n'y a pas de version simplifiée d'un
+tressage — on le garde ou on le perd.* Ce qui reste est ce qui survit à la
+réduction, la silhouette et le trou.
+
+Deux choses qui le portent :
+
+- **le creux fait la pointe.** Le point de contrôle de chaque bord se pose à
+  22 % du rayon ; posé à `cos 45°` (0,707) la quadratique passerait par la corde
+  et les bords seraient DROITS — c'est ce qu'ils étaient, et c'est ce qui la
+  faisait lire comme une étoile générique plutôt que comme cet emblème-ci ;
+- **le vide central est un second contour dans le MÊME chemin**, creusé par la
+  règle paire-impaire : ni masque, ni découpe. Ses coins visent les pointes,
+  comme sur le dos.
+
+**ET ELLE A REPRIS SES PROPORTIONS.** *Un emblème qui doit RESSEMBLER à un
+dessin ne peut pas être écrasé* : à 0,62 de hauteur, un losange conçu haut sort
+LARGE, ses pointes du bas se tassent et son vide devient un carré. Elle se
+compose donc dans le repère de l'écran et se pré-étire, comme les glyphes de
+carte des deux tas du combat. *L'écrasement ne vaut que pour une forme qui n'a
+rien à tenir* — et c'était le cas de l'ancienne.
+
+**Son ORIENTATION ne bouge pas** : les pointes continuent de viser les axes de
+la carte, le réglage que Keko avait demandé. *Sur le dos, le logo pointe vers le
+haut et les côtés* — le reposer ainsi est un terme à retirer, si c'est la
+ressemblance qu'on préfère à la règle.
 
 **L'emblème est un PARAMÈTRE, avec le nom du tas pour défaut** (`Tas3D.tsx`) :
 les deux tas du combat ne demandent rien, et seul le bouton du deck réclame

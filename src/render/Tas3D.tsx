@@ -170,11 +170,20 @@ const FLANC_DROIT = adouci([NEAR, DROITE, bas(DROITE), bas(NEAR)], 0)
  * l'écran et ne prend que l'écrasement de la vue de trois quarts — ce qui
  * suffit à la poser SUR la face plutôt qu'à côté.
  *
- * **Quatre branches, et c'est une forme déjà tranchée par le projet** : « six
- * branches égales font une étoile de David, quatre branches fines ne disent
- * que la lumière ». Ici elles sont ÉPAISSES (le creux vaut 44 % de la pointe) —
- * *une étoile mince se lit comme un éclat, une étoile pleine se lit comme un
- * emblème*, et c'est un emblème qu'on veut.
+ * **ELLE REPREND LE LOGO DU DOS DE CARTE, en deux traits.** Keko : « remets
+ * l'étoile, mais tu peux la modifier pour qu'elle colle un peu plus au logo du
+ * dos de carte ? en gardant un truc minimaliste et simplifié ».
+ *
+ * Le dessin de Keko est un losange à quatre pointes aux **bords creusés**,
+ * **percé d'un vide central** en losange, et tissé d'un entrelacs en moulin.
+ * *Les deux premiers traits se réduisent, le troisième non* : à vingt pixels
+ * un entrelacs tourne en bouillie, et il n'y a pas de version simplifiée d'un
+ * tressage — on le garde ou on le perd. **Ce qui reste est ce qui survit à la
+ * réduction**, c'est-à-dire la silhouette et le trou.
+ *
+ * *Elle était à bords DROITS et à branches épaisses*, et c'est ce qui la
+ * faisait lire comme une étoile générique plutôt que comme cet emblème-ci : le
+ * creux fait la pointe, et le dos tire les siennes très loin.
  *
  * **Son rayon se borne au cercle inscrit du losange**, pas à sa demi-diagonale :
  * un losange se rétrécit vers ses pointes, donc une étoile calée sur la largeur
@@ -199,26 +208,62 @@ const FLANC_DROIT = adouci([NEAR, DROITE, bas(DROITE), bas(NEAR)], 0)
  * version comme une girouette.
  */
 const BRANCHES = 4
-// ET ELLE A MAIGRI DEUX FOIS (26 → 22,5 → 20). Keko : « réduis encore
-// légèrement la taille de l'étoile sur le deck dans l'écran du maître
-// d'armes », puis « tu peux réduire encore un poil ? » *Elle est la seule à
-// être posée sur un BOUTON*, donc la seule dont la face se lit à côté d'un
-// chiffre et d'un mot — et **ce qui l'entoure décide de ce qu'elle doit peser,
-// pas la face qui la porte.**
+// ET ELLE A MAIGRI DEUX FOIS (26 → 22,5 → 20), puis elle est partie, puis Keko
+// l'a reposée. *Elle est la seule à être posée sur un BOUTON*, donc la seule
+// dont la face se lit à côté d'un chiffre et d'un mot — et **ce qui l'entoure
+// décide de ce qu'elle doit peser, pas la face qui la porte.**
 const POINTE = 20
-const CREUX = POINTE * 0.44
+/**
+ * **LE RAYON DU POINT DE CONTRÔLE, et c'est lui qui CREUSE les bords.**
+ *
+ * Posé à `POINTE × cos 45°` (0,707), la quadratique passe exactement par la
+ * corde et l'étoile a des bords DROITS — c'est ce qu'elle avait. En dessous,
+ * ils rentrent : *c'est le creux qui fait la pointe*, et le logo du dos tire
+ * les siens très loin.
+ */
+const CREUX = POINTE * 0.22
+/** La demi-diagonale du vide central. */
+const COEUR = POINTE * 0.32
 
-const ETOILE_PATH = adouci(
-  Array.from({ length: BRANCHES * 2 }, (_, i): [number, number] => {
-    // Le quart de tour met les POINTES sur les diagonales de l'écran, donc sur
-    // les axes de la carte — et les CREUX sur les axes de l'écran, donc dans
-    // les coins du losange, là où il n'y a de toute façon pas de place.
-    const a = (i * Math.PI) / BRANCHES - Math.PI / 2 + Math.PI / 4
-    const r = i % 2 === 0 ? POINTE : CREUX
-    return [Math.cos(a) * r, Math.sin(a) * r]
-  }),
-  0,
-)
+/**
+ * Un point polaire — composé dans le repère de l'ÉCRAN, puis pré-étiré.
+ *
+ * **Un emblème qui doit RESSEMBLER à un dessin garde ses proportions.**
+ * L'écrasement de la vue de trois quarts ne coûtait rien à une étoile
+ * générique, qui n'a pas de forme à tenir ; il en coûte à celle-ci, qui en a
+ * une : à 0,62 de hauteur, un losange dessiné haut sort LARGE, ses pointes du
+ * bas se tassent et son vide central devient un carré. *C'est la leçon des
+ * glyphes de carte des deux tas du combat, prise par le même bout.*
+ */
+function pôle(angle: number, r: number): string {
+  const x = Math.cos(angle) * r
+  const y = (Math.sin(angle) * r) / ECRASEMENT
+  return `${x.toFixed(2)},${y.toFixed(2)}`
+}
+
+// Le quart de tour met les POINTES sur les diagonales de l'écran, donc sur les
+// axes de la carte — et les creux sur les axes de l'écran, donc dans les coins
+// du losange, là où il n'y a de toute façon pas de place.
+function branche(i: number): number {
+  return (i * 2 * Math.PI) / BRANCHES - Math.PI / 2 + Math.PI / 4
+}
+
+const ETOILE_PATH = (() => {
+  const d = [`M${pôle(branche(0), POINTE)}`]
+  for (let i = 0; i < BRANCHES; i += 1) {
+    const a = branche(i)
+    const b = branche(i + 1)
+    d.push(`Q${pôle((a + b) / 2, CREUX)} ${pôle(b, POINTE)}`)
+  }
+  d.push('Z')
+  // LE VIDE CENTRAL est un second contour, dans le MÊME chemin : c'est la règle
+  // paire-impaire qui le creuse, et elle ne demande ni masque ni découpe. Ses
+  // coins visent les pointes, comme sur le dos.
+  d.push(`M${pôle(branche(0), COEUR)}`)
+  for (let i = 1; i < BRANCHES; i += 1) d.push(`L${pôle(branche(i), COEUR)}`)
+  d.push('Z')
+  return d.join(' ')
+})()
 
 /**
  * **EN COMBAT, LES DEUX TAS PORTENT DES CARTES, pas l'étoile.** Keko, en deux
@@ -558,7 +603,7 @@ export function Tas3D({
         <g transform={`translate(${CENTRE[0]} ${CENTRE[1]}) scale(1 ${ECRASEMENT})`}>
           {marque === 'etoile' && (
             <>
-              <path d={ETOILE_PATH} fill="#f0d9a2" />
+              <path d={ETOILE_PATH} fill="#f0d9a2" fillRule="evenodd" />
               {/* LA MOITIÉ GAUCHE EST PLUS SOMBRE : la lumière vient du haut et
                   de la droite, comme sur les flancs du paquet et sur l'icône de
                   la main. *Un aplat unique se lirait comme une découpe, pas
@@ -569,7 +614,7 @@ export function Tas3D({
                   coupure verticale en travers s'y lirait comme un pli. Leur
                   relief vient d'ailleurs — l'une est derrière l'autre dans
                   l'éventail, et la barre se détache par son jour. */}
-              <path d={ETOILE_PATH} fill="#c8ab6d" clipPath={`url(#${id}-moitie)`} />
+              <path d={ETOILE_PATH} fill="#c8ab6d" fillRule="evenodd" clipPath={`url(#${id}-moitie)`} />
             </>
           )}
           {marque === 'pioche' && (
