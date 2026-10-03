@@ -1064,19 +1064,67 @@ function couvrir(
 }
 
 /**
- * Le texte d'effet a trois crans de taille, comme en 2D : un effet long
- * descend d'un cran plutôt que de déborder sur le type.
+ * LES TROIS CRANS DU CARTOUCHE, du plus grand au plus petit — et **on prend le
+ * plus grand qui TIENT**, pas celui que le nombre de caractères annonce.
+ *
+ * Keko : « pourquoi le texte de description de Riposte est si petit, alors
+ * qu'il y a clairement la place sur 3 lignes ? on se limite à deux lignes et
+ * petite écriture ».
+ *
+ * *Deux règles se combattaient, et elles ont fait exactement l'inverse de ce
+ * qu'on voulait* : le cran se choisissait sur la LONGUEUR du texte, puis une
+ * seconde descendait encore d'un cran dès que le repli coûtait une ligne de
+ * plus. Un effet d'une seule phrase qui tombait sur trois lignes se faisait
+ * donc rapetisser **jusqu'à n'en plus tenir que deux** — alors que la bande
+ * en accepte trois sans discuter.
+ *
+ * **Compter les caractères, c'est deviner ; replier, c'est mesurer.** La bande
+ * a une hauteur, le repli donne un nombre de lignes, et le produit se compare :
+ * on essaie les crans dans l'ordre et on garde le premier qui rentre. *C'est la
+ * règle de la composition d'une pièce et du nom d'une carte — la taille cède
+ * jusqu'à ce que tout tienne* — simplement prise par l'autre bout, puisqu'ici
+ * c'est la place qui est large et le texte qui était trop petit.
+ *
+ * La règle des trois lignes n'était d'ailleurs pas une règle : elle valait pour
+ * la COMPOSITION d'une pièce, où une entrée par ligne est ce qu'on dessine, et
+ * elle avait suivi jusqu'au cartouche, où une phrase n'a aucune raison de
+ * compter ses lignes.
  */
-function cran(lignes: readonly string[]): number {
-  const n = lignes.join(' ').replace(/<[^>]+>/g, '').length
-  // ET IL GROSSIT QUAND IL Y A LA PLACE. Keko : « je pense qu'on peut
-  // augmenter un peu la taille du texte des descriptions quand y'a la
-  // place ». *Les crans existent pour qu'un effet long descende plutôt que de
-  // déborder sur le pied* — rien n'obligeait le cran du haut à rester sage.
-  // Le symbole des PA suit, puisqu'il se mesure au corps du texte.
-  if (n <= 44) return 7 * U
-  if (n <= 100) return 6.4 * U
-  return 5.4 * U
+const CRANS_EFFET = [7, 6.4, 5.4] as const
+/** Jusqu'où le cartouche peut descendre avant de mordre sur le pied. */
+const BAS_CARTOUCHE = 0.915
+/** D'où part sa première ligne. */
+const HAUT_CARTOUCHE = 0.755
+/** L'interligne, en part du corps. */
+const INTERLIGNE_EFFET = 1.25
+
+function corpsDuCartouche(
+  ctx: CanvasRenderingContext2D,
+  effet: readonly string[],
+  max: number,
+): { taille: number; lignes: Mot[][] } {
+  const place = HAUT * (BAS_CARTOUCHE - HAUT_CARTOUCHE)
+  const pose = (t: number): Mot[][] => {
+    ctx.font = `400 ${t}px "Crimson Pro", Georgia, serif`
+    return replier(ctx, effet, max, t)
+  }
+  const tient = (t: number, l: readonly Mot[][]): boolean =>
+    (l.length - 1) * t * INTERLIGNE_EFFET <= place
+  for (const c of CRANS_EFFET) {
+    const t = c * U
+    const l = pose(t)
+    if (tient(t, l)) return { taille: t, lignes: l }
+  }
+  // MÊME AU PLUS PETIT CRAN ÇA PEUT NE PAS TENIR : la taille cède alors d'elle-
+  // même. *Un canvas écrit tout droit et laisse déborder sans rien signaler*,
+  // donc il faut un fond à l'échelle, pas seulement trois marches.
+  let t = CRANS_EFFET[CRANS_EFFET.length - 1]! * U
+  let l = pose(t)
+  while (!tient(t, l) && t > 2 * U) {
+    t *= 0.92
+    l = pose(t)
+  }
+  return { taille: t, lignes: l }
 }
 
 /**
@@ -2273,20 +2321,20 @@ function peindreTextes(
   // la composition de l'Espadon sortait des deux côtés de la carte. Le repli
   // se fait à la taille choisie, et s'il coûte une ligne de trop on descend
   // d'un cran : c'est exactement ce que `cran` fait pour un effet long.
-  let taille = cran(carte.effet)
-  ctx.font = `400 ${taille}px "Crimson Pro", Georgia, serif`
-  let lignes = replier(ctx, carte.effet, LARGE * 0.86, taille)
-  if (lignes.length > carte.effet.length + 1) {
-    taille *= 0.82
-    ctx.font = `400 ${taille}px "Crimson Pro", Georgia, serif`
-    lignes = replier(ctx, carte.effet, LARGE * 0.86, taille)
-  }
+  const { taille, lignes } = corpsDuCartouche(ctx, carte.effet, LARGE * 0.86)
   ctx.fillStyle = '#f1e6cf'
   ctx.shadowColor = '#000000aa'
   ctx.shadowOffsetY = 0.4 * U
   ctx.shadowBlur = 0.8 * U
   lignes.forEach((ligne, i) => {
-    ecrireLigne(ctx, ligne, LARGE / 2, HAUT * 0.755 + i * taille * 1.25, taille, symbole)
+    ecrireLigne(
+      ctx,
+      ligne,
+      LARGE / 2,
+      HAUT * HAUT_CARTOUCHE + i * taille * INTERLIGNE_EFFET,
+      taille,
+      symbole,
+    )
   })
   ctx.shadowColor = 'transparent'
 

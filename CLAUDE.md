@@ -1998,6 +1998,35 @@ déborder sur le pied* — rien n'obligeait le cran du haut à rester sage. **Le
 symbole des PA suit sans réglage** : il se mesure au corps du texte, ce qui est
 exactement ce que Keko demandait.
 
+**ET ON PREND LE PLUS GRAND CRAN QUI TIENT, plus celui que la longueur
+annonce.** Keko : « pourquoi le texte de description de Riposte est si petit,
+alors qu'il y a clairement la place sur 3 lignes ? on se limite à deux lignes et
+petite écriture ».
+
+*Deux règles se combattaient, et elles faisaient exactement l'inverse de ce
+qu'on voulait* : le cran se choisissait sur le NOMBRE DE CARACTÈRES, puis une
+seconde descendait encore d'un cran dès que le repli coûtait une ligne de plus.
+Une phrase qui tombait sur trois lignes se faisait donc rapetisser **jusqu'à
+n'en plus tenir que deux.**
+
+**Compter les caractères, c'est deviner ; replier, c'est mesurer.** La bande a
+une hauteur, le repli donne un nombre de lignes, et le produit se compare : on
+essaie les crans dans l'ordre et on garde le premier qui rentre. *C'est la règle
+de la composition d'une pièce et du nom d'une carte — la taille cède jusqu'à ce
+que tout tienne* — prise par l'autre bout, puisqu'ici c'est la place qui était
+large et le texte qui était petit.
+
+**La règle des « trois lignes » n'en était pas une** : elle valait pour la
+COMPOSITION d'une pièce, où une entrée par ligne est ce qu'on dessine, et elle
+avait suivi jusqu'au cartouche — où *une phrase n'a aucune raison de compter ses
+lignes.*
+
+La bande va de 0,755 à 0,915 de la hauteur, soit 22,4 U : **trois lignes au
+grand cran y tiennent** (17,5), quatre non (26,3) — elles descendent alors au
+cran suivant, puis au dernier, et au-delà la taille cède d'elle-même. *Un canvas
+écrit tout droit et laisse déborder sans rien signaler*, donc il faut un fond à
+l'échelle et pas seulement trois marches.
+
 **Et le jeu 2D garde le texte en clair** (`enClair`) : « Inflige 6 dégâts ». *Un
 moteur qui ne sait pas montrer une chose ne doit pas cesser de la dire* — la
 règle déjà tenue par la valeur d'un butin.
