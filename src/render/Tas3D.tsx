@@ -418,11 +418,16 @@ type Props = {
   /**
    * CE QUE PORTE LE DESSUS. Par défaut, le symbole du tas.
    *
-   * *Le bouton « Deck » du hub, lui, demande l'ÉTOILE* : il est seul de son
-   * espèce, donc il n'a personne à départager — ce qu'il dit est « des cartes »,
-   * pas « celui-ci plutôt que l'autre ».
+   * *Le bouton « Deck » du hub, lui, ne porte RIEN* — à l'essai, demandé par
+   * Keko : « essaie d'enlever l'étoile pour voir ? » Il est seul de son espèce,
+   * donc il n'a personne à départager, et *le paquet dit déjà « des cartes »
+   * par sa seule forme* : l'étoile n'y ajoutait qu'un ornement.
+   *
+   * **`etoile` reste une valeur**, c'est un mot à changer pour la reposer —
+   * *ce qui a servi à choisir doit rester ouvrable, même une fois le choix
+   * fait.*
    */
-  embleme?: 'etoile' | 'pioche' | 'defausse'
+  embleme?: 'etoile' | 'pioche' | 'defausse' | 'aucun'
 }
 
 export function Tas3D({

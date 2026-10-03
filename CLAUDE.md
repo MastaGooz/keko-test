@@ -9037,12 +9037,20 @@ Mesuré à l'écran, écrasement compris : l'éventail fait **29 x 26**, la cart
 barrée **30 x 25** — contre **36 x 32** pour les flèches qu'ils remplacent.
 *C'est la hauteur qui tombe*, et c'est elle que Keko lisait comme « trop gros ».
 
-**ET L'ÉTOILE A MAIGRI DEUX FOIS** (26 → 22,5 → 20). Keko : « réduis encore
-légèrement la taille de l'étoile sur le deck dans l'écran du maître d'armes »,
-puis « tu peux réduire encore un poil ? » *Elle est la seule à être posée sur un
-BOUTON*, donc la seule dont la face se lit à côté d'un chiffre et d'un mot — et
-**ce qui l'entoure décide de ce qu'elle doit peser, pas la face qui la
-porte.**
+**ET L'ÉTOILE A MAIGRI DEUX FOIS, PUIS ELLE A DISPARU.** Keko l'a réduite deux
+fois (26 → 22,5 → 20), puis : « essaie d'enlever l'étoile pour voir ? » — et le
+paquet nu tient. *Trois crans de réduction disaient déjà où ça allait* : **ce
+qui l'entourait décidait de ce qu'elle devait peser, pas la face qui la
+portait**, et à ce rythme il ne restait plus qu'à constater qu'elle ne portait
+rien.
+
+*Le paquet dit « des cartes » par sa seule forme* — c'est pour ça qu'il a été
+dessiné — donc un emblème posé dessus ne faisait que le répéter. **Ce n'est pas
+vrai des deux tas du combat** : eux ont quelqu'un à départager, et leur emblème
+n'est pas un ornement mais la seule chose qui dise lequel est lequel.
+
+`etoile` reste une valeur de `Tas3D` : *ce qui a servi à choisir doit rester
+ouvrable*, et c'est un mot à changer pour la reposer.
 
 **L'emblème est un PARAMÈTRE, avec le nom du tas pour défaut** (`Tas3D.tsx`) :
 les deux tas du combat ne demandent rien, et seul le bouton du deck réclame
