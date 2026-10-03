@@ -96,6 +96,11 @@ const IMAGES: Record<string, string> = {
   'epee-a-deux-mains': 'Epée à deux mains.webp',
   estoc: 'Estoc.webp',
   riposte: 'Riposte.webp',
+  // LE NOM DU FICHIER N'EST PAS CELUI DU MODÈLE, et c'est à ça que sert cette
+  // table : la carte s'appelle « Bloquer », le dessin « Bloquage ». *La clé
+  // suit le jeu, la valeur suit le dossier* — comme la Rondache, qui porte un
+  // `Bouclier.webp`.
+  bloquer: 'Bloquage.webp',
   // LA TAILLE A ENFIN LE SIEN. Elle empruntait le dessin de la Taillade, le
   // temps qu'elle n'en ait pas — *un banc qui montre une carte au sceau de
   // repli ne se juge pas.* L'emprunt tombe avec l'arrivée du fichier.
