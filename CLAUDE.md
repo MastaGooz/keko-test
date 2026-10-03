@@ -4779,12 +4779,43 @@ seule : aucune animation à écrire. Mesuré à la sonde sur trois glissers rée
 Espadon vers une main 0,52 → 1 → 0,52, potion vers le torse 0,52 sans bouger
 (refus), potion vers la pile 0,52 → 0,5.
 
-**Limite connue, et elle est structurelle : la pile ne dit rien.** Ses cases
-font une demi-carte de main, donc presque exactement la taille réduite du
-râtelier — 4 % d'écart, invisible. Un consommable n'a donc aucun retour
-au-dessus de sa destination. *C'est l'arithmétique des cases qui l'impose*, pas
-un réglage : les agrandir obligerait à rétrécir les armes d'autant. S'il faut
-un signal là, il faudra allumer le SLOT et non la carte.
+*La limite qui pesait sur la pile est tombée d'elle-même* : ses cases faisaient
+une demi-carte de main, donc presque exactement la taille réduite du râtelier —
+un consommable n'avait aucun retour au-dessus de sa destination. Depuis que
+**toutes les cartes de l'équipement ont la même taille**, elle grandit comme les
+autres.
+
+**UNE CARTE DU COFFRE GROSSIT SOUS LE POINTEUR, et c'est aussi la taille qu'elle
+garde quand on la TIENT.** Demandé par Keko : « ce serait cool que dans le
+coffre, quand on survole une carte elle grossisse légèrement, et que cette
+taille devienne la taille de la carte lors d'un drag, un peu plus grosse que
+celle actuellement ».
+
+*Les deux moitiés n'en font qu'une* : **une carte tenue est une carte qu'on
+pointe.** C'est le même pointeur et le même objet désigné, donc ils n'ont aucune
+raison de se lire à deux tailles — et rien ne saute au moment où on la prend.
+
+Quatre choses qui le portent :
+
+- **« légèrement » est le mot qui compte** (×1,14). La règle de Keko sur le
+  fantôme de l'armurerie 2D tient toujours — « il vaut mieux laisser la carte en
+  mode réduit pour le drag and drop » — *une grosse carte sous le doigt cache
+  les slots qu'on vise.* Un cran, pas une loupe ;
+- **le coffre seulement.** *C'est là qu'on cherche*, donc là qu'une carte doit
+  se détacher de ses voisines ; le chargement est déjà à sa taille de lecture,
+  et la montrer plus grande que ce qu'elle sera ne dirait rien ;
+- **une case du coffre rend désormais la taille SURVOLÉE comme aperçu de
+  dépôt**, pas la taille au repos — sans quoi la carte tenue se dégonflerait
+  case après case en balayant le coffre et se regonflerait dans chaque
+  interstice. *Un aperçu qui bat n'annonce rien*, la leçon de la pile d'origine
+  qui clignotait quand on la traversait. L'aperçu reste exact : une carte
+  reposée au coffre y sera elle aussi sous le pointeur ;
+- **une pile grossit D'UN BLOC**, comme elle s'incline d'un bloc : la doublure
+  est l'épaisseur du tas, pas une carte de plus. Elle est `inerte`, donc c'est
+  toujours la carte du dessus qui reçoit le pointeur — et les deux retiennent
+  son identifiant à elle. **Souris seulement**, comme tout survol du projet : au
+  doigt le `pointerout` n'arrive jamais et la carte resterait gonflée après la
+  tape.
 
 **ET IL SE GRISE QUAND ON NE PEUT PAS PARTIR** — sans arme, il n'y a rien pour
 frapper (`peutDescendre`). La règle existait et `descendreAuDonjon` refusait

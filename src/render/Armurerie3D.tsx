@@ -64,16 +64,39 @@ import { tailleDuCompte } from './Carte3D.tsx'
 import { aPeindre } from './combat-3d.ts'
 
 /**
+ * UNE CARTE DU COFFRE GROSSIT SOUS LE POINTEUR, et c'est aussi la taille
+ * qu'elle garde quand on la TIENT. Demandé par Keko : « ce serait cool que
+ * dans le coffre, quand on survole une carte elle grossisse légèrement, et que
+ * cette taille devienne la taille de la carte lors d'un drag, un peu plus
+ * grosse que celle actuellement ».
+ *
+ * *Les deux moitiés n'en font qu'une* : **une carte tenue est une carte qu'on
+ * pointe.** C'est le même pointeur et le même objet désigné, donc ils n'ont
+ * aucune raison de se lire à deux tailles — et l'aperçu du dépôt reste exact,
+ * puisqu'une carte reposée au coffre y sera elle aussi sous le pointeur.
+ *
+ * **Légèrement, et c'est le mot qui compte** : la règle de Keko sur le fantôme
+ * de l'armurerie 2D tient toujours — « il vaut mieux laisser la carte en mode
+ * réduit pour le drag and drop » — *une grosse carte sous le doigt cache les
+ * slots qu'on vise.* Un cran, pas une loupe.
+ */
+const GROSSIT_SURVOL = 1.14
+
+/**
  * LA TAILLE QU'UNE PIÈCE AURA UNE FOIS POSÉE LÀ.
  *
- * Le chargement se lit à la taille de la main, la réserve et la pile en
- * réduit. C'est cette valeur que prend la pièce tenue quand elle survole un
- * slot qui l'accepte : *ce qu'on montre pendant le geste est ce qu'on aura
- * après.*
+ * Le chargement se lit à la taille de la main, la réserve en réduit. C'est
+ * cette valeur que prend la pièce tenue quand elle survole un slot qui
+ * l'accepte : *ce qu'on montre pendant le geste est ce qu'on aura après.*
+ *
+ * **La réserve rend la taille SURVOLÉE**, pas la taille au repos — sans quoi
+ * la carte tenue se dégonflerait case après case en balayant le coffre, et se
+ * regonflerait dans chaque interstice. *Un aperçu qui bat n'annonce rien*,
+ * c'est la leçon de la pile d'origine qui clignotait quand on la traversait.
  */
 function tailleDuSlot(slot: Slot, plan: PlanArmurerie): number {
+  if (slot.ou === 'reserve') return plan.tailleCoffre * GROSSIT_SURVOL
   if (slot.ou === 'pile') return plan.taillePile
-  if (slot.ou === 'reserve') return plan.tailleCoffre
   return plan.tailleCharge
 }
 
@@ -574,6 +597,19 @@ export function Armurerie3D({
   const [enVol, setEnVol] = useState<string | null>(null)
 
   /**
+   * LA CARTE DU COFFRE SOUS LE POINTEUR — par l'identifiant du CHEF de pile.
+   *
+   * *Une pile grossit d'un bloc*, comme elle s'incline d'un bloc : sa doublure
+   * est l'épaisseur du tas, pas une carte de plus. Elle est `inerte`, donc
+   * c'est toujours la carte du dessus qui reçoit le pointeur, et c'est son
+   * identifiant à elle que les deux retiennent.
+   *
+   * **Souris seulement**, comme tout survol du projet : au doigt le
+   * `pointerout` n'arrive jamais et la carte resterait gonflée après la tape.
+   */
+  const [survol, setSurvol] = useState<string | null>(null)
+
+  /**
    * UN GARDE-FOU : la case en attente ne peut pas rester là pour toujours.
    *
    * C'est la carte qui annonce son arrivée, et elle le fait sans faute — mais
@@ -725,7 +761,9 @@ export function Armurerie3D({
     sousLeDoigt !== null &&
     accepteDepuis(hub, portee.slot, sousLeDoigt, portee.objet.id)
   const tailleTenue =
-    accueille && sousLeDoigt !== null ? tailleDuSlot(sousLeDoigt, plan) : plan.tailleCoffre
+    accueille && sousLeDoigt !== null
+      ? tailleDuSlot(sousLeDoigt, plan)
+      : plan.tailleCoffre * GROSSIT_SURVOL
 
   /**
    * ELLE NE FRÉMIT QU'AU-DESSUS D'UN SLOT DU CHARGEMENT QUI LA PREND.
@@ -960,7 +998,16 @@ export function Armurerie3D({
             carte={t.tresor === null ? pieceAPeindre(t.objet!) : aPeindre(t.tresor)}
             position={suitLeDoigt ? [doigt.x, doigt.y, Z_TENUE] : t.position}
             rotation={[0, 0, 0]}
-            taille={suitLeDoigt ? tailleTenue : t.taille}
+            // *Une carte tenue EST une carte survolée* : les deux se lisent à
+            // la même taille, et c'est ce qui fait que rien ne saute au
+            // moment où on la prend.
+            taille={
+              suitLeDoigt
+                ? tailleTenue
+                : tenue === null && survol === (t.chef ?? t.id)
+                  ? t.taille * GROSSIT_SURVOL
+                  : t.taille
+            }
             ombre={false}
             ressort={suitLeDoigt ? 22 : 16}
             // LE COFFRE TOURNE UNE PAGE, IL NE FAIT PAS DE TRAVELLING : au
@@ -1011,6 +1058,22 @@ export function Armurerie3D({
             pileTaille={tailleCompte}
             onPeinte={onPeinte}
             onPointerDown={prendre(i)}
+            // ELLE GROSSIT SOUS LE POINTEUR, et seulement AU COFFRE : *c'est
+            // là qu'on cherche*, donc là qu'une carte doit se détacher de ses
+            // voisines. Le chargement, lui, est déjà à sa taille de lecture —
+            // et la montrer plus grande que ce qu'elle sera ne dirait rien.
+            onPointerOver={
+              t.slot.ou === 'reserve'
+                ? (e) => {
+                    if (e.pointerType === 'mouse') setSurvol(t.chef ?? t.id)
+                  }
+                : undefined
+            }
+            onPointerOut={
+              t.slot.ou === 'reserve'
+                ? () => setSurvol((v) => (v === (t.chef ?? t.id) ? null : v))
+                : undefined
+            }
           />
         )
       })}
