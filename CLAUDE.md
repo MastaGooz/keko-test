@@ -5806,6 +5806,45 @@ au doigt, donc au-dessus. **Ce sont des FRÈRES, pas un parent et son enfant** :
 un `z-index` sur un parent enferme ses enfants — le piège déjà payé sur le
 bouton de fin de tour.
 
+**LE CADRE D'UN MEUBLE A UNE ÉPAISSEUR, plus un filet.** Keko : « on pourrait
+rework les cadres du coffre et de l'équipement pour un truc un peu plus
+travaillé ? »
+
+*Ce qui stylise est la DÉCOUPE et le RELIEF, pas la matière qu'on ajoute* — la
+leçon de la barre de vie, « vraiment classique » puis « beaucoup trop chargée ».
+Rien n'est posé par-dessus : le filet d'un pixel devient une **moulure de
+laiton** qui porte la lumière du lieu — claire en haut à gauche, éteinte en bas à
+droite, comme le jonc des cartes et la gorge de la barre de défilement. *Un filet
+d'une seule couleur n'a pas d'épaisseur : c'est la variation qui fait le volume,
+pas la largeur.*
+
+**ET LE FILET FAIT ENFIN LE TOUR, BISEAUX COMPRIS.** Une `border` s'arrête au
+rectangle, donc le `clip-path` tranchait les deux coins coupés à vif — *un cadre
+dont la bordure disparaît sur deux de ses six arêtes se lit comme une forme
+découpée, pas comme un encadrement.* La moulure est un FOND peint dans la
+border-box et le panneau se pose dessus en content-box : le rognage les emporte
+tous les deux, donc le laiton suit la coupe. **Et l'ombre portée passe en
+`drop-shadow`** — un `box-shadow` se moule sur la boîte, donc il dépassait des
+deux coins coupés ; un `drop-shadow` prend la forme APRÈS le rognage.
+
+**LA MOULURE S'ÉPAISSIT AUX ANGLES, elle ne reçoit pas une pièce de plus.**
+C'est ce qui sépare un panneau d'un MEUBLE — un coffre a ses renforts là où le
+bois travaille — et ça ne coûte aucune matière ajoutée : c'est la même bande de
+laiton, plus large sur un empan. **Les deux angles coupés les reçoivent aussi**,
+et le `clip-path` les y tranche sur la diagonale : le renfort y devient un sabot
+triangulaire. *Ce n'est pas un défaut qu'on tolère, c'est la découpe qui se
+propage* — une ferrure posée sur un angle abattu est abattue avec lui.
+
+**LE GRAIN DU MÉTAL A ÉTÉ ESSAYÉ ET NE TIENT PAS ICI.** La navette de la barre de
+défilement le porte très bien, mais elle fait onze pixels de large ; sur une
+moulure de quatre, une trame à 1,25 px de période n'est plus une matière, c'est
+le bruit par pixel que Keko a déjà renvoyé sur le fond des cartes. **Un grain n'a
+de sens que sur une surface assez large pour qu'on en lise la trame.**
+
+Mesuré : moulure de 3,2 px et équerre de 16 px à 844 x 390 (6 % de la largeur du
+coffre), 4,8 et 22 px sur un écran de PC. `?meuble=0` rend le filet d'avant —
+*ce qui a servi à choisir doit rester ouvrable.*
+
 **AUCUN SURLIGNAGE DE TAPE DANS TOUT LE LIEU.** Keko : « quand je clique sur les
 catégories du coffre, elles s'éclairent en bleu sur le tap, je voudrais pas ».
 C'est le surlignage du NAVIGATEUR, pas le nôtre — *et il parle sa langue à lui,

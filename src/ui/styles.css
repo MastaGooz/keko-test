@@ -4941,6 +4941,98 @@ body {
   );
 }
 
+/* LE CADRE D'UN MEUBLE A UNE ÉPAISSEUR, pas un filet. Keko : « on pourrait
+   rework les cadres du coffre et de l'équipement pour un truc un peu plus
+   travaillé ? »
+
+   *Ce qui stylise, c'est la DÉCOUPE et le RELIEF, pas la matière qu'on ajoute*
+   — la leçon de la barre de vie, qui a reçu « vraiment classique » puis
+   « beaucoup trop chargée ». Rien n'est ajouté ici : le filet d'un pixel devient
+   une MOULURE de laiton, et c'est tout.
+
+   **ET ELLE PORTE LA LUMIÈRE DU LIEU** — claire en haut à gauche, éteinte en bas
+   à droite, comme le jonc des cartes et la gorge de la barre de défilement. Un
+   filet d'une seule couleur n'a pas d'épaisseur : *c'est la variation qui fait
+   le volume, pas la largeur.*
+
+   **LE FILET FAIT ENFIN LE TOUR, BISEAUX COMPRIS.** Une `border` s'arrête au
+   rectangle, donc le `clip-path` tranchait les deux coins coupés à vif — *un
+   cadre dont la bordure disparaît sur deux de ses six arêtes se lit comme une
+   forme découpée, pas comme un encadrement.* La moulure est un FOND peint dans
+   la border-box et le panneau se pose dessus en content-box : le rognage les
+   emporte tous les deux, donc le laiton suit la coupe.
+
+   `?meuble=0` rend le filet d'avant — *ce qui a servi à choisir doit rester
+   ouvrable.* */
+.arm-cadre.moulure {
+  --moulure: clamp(2.5px, 0.2rem, 5px);
+  border: 0;
+  padding: var(--moulure);
+  background:
+    linear-gradient(180deg, #14151b, #0d0e13) content-box,
+    linear-gradient(142deg, #a89060 0%, #6f5c38 34%, #54462a 64%, #352d1b 100%) border-box;
+  /* L'OMBRE PORTÉE SUIT LA SILHOUETTE, pas la boîte. Un `box-shadow` se moule
+     sur le border-box, donc il dépassait des deux coins coupés ; un
+     `drop-shadow` prend la forme APRÈS le rognage. */
+  box-shadow: none;
+  filter: drop-shadow(0 3px 8px #000000a6);
+}
+
+/* LA GORGE : le panneau est CREUSÉ dans la moulure. L'ombre tombe du côté de la
+   lumière — en haut à gauche — et un filet pâle relève le bord opposé : *c'est
+   le raisonnement de la piste de la barre de défilement*, où le creux se fait
+   par la lumière et non par un fond plus noir.
+
+   Le vignettage du fond vit ici aussi, et plus sur le cadre : posé là, il
+   assombrissait la moulure par ses bords au lieu du panneau. */
+.arm-cadre.moulure::before {
+  content: '';
+  position: absolute;
+  inset: var(--moulure);
+  box-shadow:
+    inset 1.5px 1.5px 3px #000000b3,
+    inset -1px -1px 0 #ffffff0d,
+    inset 0 0 2.5rem #00000080;
+  pointer-events: none;
+}
+
+/* LES ÉQUERRES : la moulure S'ÉPAISSIT aux angles, elle ne reçoit pas une pièce
+   de plus. C'est ce qui sépare un panneau d'un MEUBLE — un coffre a ses renforts
+   là où le bois travaille — et *ça ne coûte aucune matière ajoutée* : c'est la
+   même bande de laiton, plus large sur un empan.
+
+   **Le grain du métal a été essayé et ne tient pas ici.** La navette de la barre
+   de défilement le porte très bien, mais elle fait onze pixels de large ; sur une
+   moulure de quatre, une trame à 1,25 px de période n'est plus une matière, c'est
+   le bruit par pixel que Keko a déjà renvoyé sur le fond des cartes. *Un grain
+   n'a de sens que sur une surface assez large pour qu'on en lise la trame.*
+
+   **ET LES DEUX ANGLES COUPÉS LES REÇOIVENT AUSSI** : le `clip-path` du cadre
+   les tranche sur la diagonale, donc le renfort y devient un sabot triangulaire.
+   *Ce n'est pas un défaut qu'on tolère, c'est la découpe qui se propage* — une
+   ferrure posée sur un angle abattu est abattue avec lui. */
+.arm-cadre.moulure::after {
+  --equerre: clamp(9px, 1rem, 22px);
+  --bras: calc(var(--moulure) * 2);
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    /* haut-gauche */
+    linear-gradient(#c0a269, #8a7342) left top / var(--equerre) var(--bras) no-repeat,
+    linear-gradient(#c0a269, #8a7342) left top / var(--bras) var(--equerre) no-repeat,
+    /* haut-droit */
+    linear-gradient(#a08a52, #6b5936) right top / var(--equerre) var(--bras) no-repeat,
+    linear-gradient(#a08a52, #6b5936) right top / var(--bras) var(--equerre) no-repeat,
+    /* bas-gauche */
+    linear-gradient(#8a7342, #54462a) left bottom / var(--equerre) var(--bras) no-repeat,
+    linear-gradient(#8a7342, #54462a) left bottom / var(--bras) var(--equerre) no-repeat,
+    /* bas-droit, le plus loin de la lumière */
+    linear-gradient(#6b5936, #3a3120) right bottom / var(--equerre) var(--bras) no-repeat,
+    linear-gradient(#6b5936, #3a3120) right bottom / var(--bras) var(--equerre) no-repeat;
+  pointer-events: none;
+}
+
 /* LE NOM DU MEUBLE SE POSE SUR SON BORD HAUT, comme une plaque vissee -- et
    c'est un FRERE du cadre, pas son enfant : le cadre a les coins coupes, et un
    rognage emporte tout ce qu'il contient. */

@@ -52,6 +52,23 @@ import {
 } from './destinations.ts'
 
 /**
+ * **LE CADRE D'UN MEUBLE A UNE ÉPAISSEUR.** Demandé par Keko : « on pourrait
+ * rework les cadres du coffre et de l'équipement pour un truc un peu plus
+ * travaillé ? »
+ *
+ * *Ce qui stylise est la découpe et le relief, pas la matière ajoutée* — la
+ * leçon de la barre de vie, « vraiment classique » puis « beaucoup trop
+ * chargée ». Le filet d'un pixel devient une moulure de laiton qui porte la
+ * lumière du lieu, et rien ne s'ajoute autour. Le dessin vit dans `styles.css`.
+ *
+ * Lue UNE fois : c'est un réglage de session. `?meuble=0` rend le filet d'avant.
+ */
+const CADRE = new URLSearchParams(location.search).get('meuble') === '0'
+  ? 'arm-cadre'
+  : 'arm-cadre moulure'
+
+
+/**
  * Ce qu'une infobulle a besoin de savoir : son texte, son point d'ancrage, et
  * de quel côté elle s'ouvre. `cle` sert à la refermer d'une seconde tape.
  */
@@ -720,7 +737,7 @@ export function PageArmurerie({
               rail dit où l'on va, le panneau confirme où l'on est. *Un écran
               vide mais nommé se navigue déjà* — c'est ce qu'on éprouve tant
               que les métiers n'ont pas leur contenu. */}
-          <div className="arm-cadre" style={boite(plan.panneauLieu)} />
+          <div className={CADRE} style={boite(plan.panneauLieu)} />
           <span className="arm-nom" style={plaque(plan.panneauLieu)}>
             {DESTINATIONS.find((d) => d.lieu === lieu)?.nom ?? ''}
           </span>
@@ -741,12 +758,12 @@ export function PageArmurerie({
 
       {lieu === 'armurerie' && (
         <>
-      <div className="arm-cadre" style={boite(plan.coffre)} ref={cadreCoffre} />
+      <div className={CADRE} style={boite(plan.coffre)} ref={cadreCoffre} />
       <span className="arm-nom" style={plaque(plan.coffre)}>
         Coffre
       </span>
 
-      <div className="arm-cadre" style={boite(plan.equipement)} />
+      <div className={CADRE} style={boite(plan.equipement)} />
       <span className="arm-nom" style={plaque(plan.equipement)}>
         Équipement
       </span>
