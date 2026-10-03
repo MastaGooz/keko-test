@@ -199,7 +199,12 @@ const FLANC_DROIT = adouci([NEAR, DROITE, bas(DROITE), bas(NEAR)], 0)
  * version comme une girouette.
  */
 const BRANCHES = 4
-const POINTE = 26
+// ET ELLE A ENCORE MAIGRI D'UN CRAN. Keko : « réduis encore légèrement la
+// taille de l'étoile sur le deck dans l'écran du maître d'armes ». *Elle est
+// la seule à être posée sur un BOUTON*, donc la seule dont la face se lit à
+// côté d'un chiffre et d'un mot — et ce qui l'entoure décide de ce qu'elle
+// doit peser, pas la face qui la porte.
+const POINTE = 22.5
 const CREUX = POINTE * 0.44
 
 const ETOILE_PATH = adouci(
@@ -243,58 +248,83 @@ const ETOILE_PATH = adouci(
  */
 
 /**
- * LE GLYPHE EST UNE CARTE, au rapport du gabarit et aux coins ronds comme lui.
+ * **ILS SE PENCHENT DANS LE SENS DE LA PILE, ils ne se couchent pas dedans.**
+ * Keko : « il faudrait que les symboles soient orientés dans le sens de la pile
+ * (penchés) ».
  *
- * **Sa demi-hauteur est plus petite dans l'éventail**, parce que *deux cartes
- * pèsent plus qu'une* : ce qui doit se ressembler d'un tas à l'autre n'est pas
- * la taille d'une carte, c'est l'ENCRE totale de l'emblème — la règle du coeur
- * et de l'éventail de la bande de mesures, où trois densités ont donné trois
- * chiffres.
+ * *La version littérale a été essayée et ne tient pas* : projeter le glyphe
+ * dans le PLAN du paquet — la rotation de la carte, puis l'écrasement de la vue
+ * de trois quarts — le réduit au losange de la face elle-même. **Une carte
+ * posée à plat sur une face aussi raccourcie cesse d'être une carte** : les
+ * deux de l'éventail se recouvraient en une seule tache, et la carte barrée
+ * devenait un diamant rayé.
  *
- * Mesuré dans le repère du dessin, écrasement compris : l'éventail fait 32 x 19
- * à l'écran, la carte barrée 28 x 19 — contre 36 x 32 pour les flèches qu'ils
- * remplacent. *C'est la hauteur qui tombe*, et c'est elle que Keko lisait comme
- * « trop gros ».
+ * On ne prend donc de la pile que son ANGLE, et le glyphe garde ses
+ * proportions : il penche avec elle sans se coucher dedans. *C'est un symbole
+ * imprimé sur la face, pas un objet posé dessus* — et c'est aussi ce que
+ * l'étoile fait déjà, dont les pointes visent les axes de la carte sans rien
+ * perdre de leur longueur.
+ *
+ * **L'angle, lui, se prend à l'oeil, et il le fallait.** La carte du paquet
+ * penche de 49° à l'écran — c'est mesurable, et c'est trop : à cette valeur le
+ * glyphe se couche presque, et la barre de la défausse, qui suit la diagonale
+ * de sa carte, tombe EXACTEMENT à la verticale. *Un symbole n'a pas à être une
+ * projection* : on en garde le SENS (vers la droite, comme la pile) et pas la
+ * mesure.
  */
-const GLYPHE = 10.5
-const GLYPHE_PAIRE = 10
-const PENCHE = 20
-const ECART_PAIRE = 4.5
-const ARRONDI_GLYPHE = 0.18
+const PENCHE_PILE = 25
 
 /**
- * **IL SE DESSINE DANS LE REPÈRE DE L'ÉCRAN, puis se pré-étire.**
+ * DU REPÈRE DE L'ÉCRAN À CELUI DE L'EMBLÈME : le groupe écrase déjà de
+ * `ECRASEMENT`, donc on pré-étire d'autant.
  *
- * L'emblème est posé à plat sur la face du paquet, donc écrasé de `ECRASEMENT`
- * — ce qui ne coûtait rien à l'étoile, qui n'a pas de forme à tenir. *Une
- * carte, si* : à 0,62 de hauteur, un rectangle au rapport du gabarit sort plus
- * LARGE que haut, et on ne lit plus une carte mais une tuile. On compose donc
- * la figure telle qu'on veut la voir, et on divise sa hauteur par l'écrasement
- * que la scène lui rendra.
- *
- * **La rotation se fait AVANT**, dans le repère de l'écran : pencher puis
- * étirer n'est pas étirer puis pencher — le second donnerait un parallélogramme
- * là où on veut un rectangle incliné.
+ * *Sans quoi une carte au rapport du gabarit sort plus LARGE que haute*, et on
+ * ne lit plus une carte mais une tuile — l'étoile n'en souffrait pas, elle n'a
+ * pas de forme à tenir. **Et tout ce qui penche doit pencher AVANT** : tourner
+ * puis étirer n'est pas étirer puis tourner, le second donne un
+ * parallélogramme là où on veut un rectangle incliné.
  */
 function redresse(points: readonly [number, number][]): [number, number][] {
   return points.map(([x, y]) => [x, y / ECRASEMENT])
 }
 
-/** Une carte, penchée puis décalée — en unités d'ÉCRAN. */
-function carteGlyphe(h: number, penche: number, dx: number): string {
-  const l = h / RAPPORT
-  const a = (penche * Math.PI) / 180
+/** Une rotation dans le repère de l'écran, avant le pré-étirement. */
+function tourne(points: readonly [number, number][], deg: number): [number, number][] {
+  const a = (deg * Math.PI) / 180
   const cos = Math.cos(a)
   const sin = Math.sin(a)
-  const points = ([
+  return points.map(([x, y]) => [x * cos - y * sin, x * sin + y * cos])
+}
+
+/**
+ * LE GLYPHE EST UNE CARTE, au rapport du gabarit et aux coins ronds comme lui.
+ * Sa taille est sa DEMI-HAUTEUR à l'écran.
+ *
+ * **Celle de l'éventail est plus petite**, parce que *deux cartes pèsent plus
+ * qu'une* : ce qui doit se ressembler d'un tas à l'autre n'est pas la taille
+ * d'une carte, c'est l'ENCRE totale de l'emblème — la règle du coeur et de
+ * l'éventail de la bande de mesures, où trois densités ont donné trois
+ * chiffres.
+ */
+const GLYPHE = 10.5
+const GLYPHE_PAIRE = 9.5
+const PENCHE = 13
+const ECART_PAIRE = 5.6
+const ARRONDI_GLYPHE = 0.18
+
+/** Une carte, penchée puis décalée, puis couchée dans le sens de la pile. */
+function carteGlyphe(h: number, penche: number, dx: number): string {
+  const l = h / RAPPORT
+  const rect: [number, number][] = [
     [-l, -h],
     [l, -h],
     [l, h],
     [-l, h],
-  ] as [number, number][]).map(
-    ([x, y]) => [dx + x * cos - y * sin, x * sin + y * cos] as [number, number],
+  ]
+  const posee = tourne(rect, penche).map(
+    ([x, y]) => [x + dx, y] as [number, number],
   )
-  return adouci(redresse(points), h * ARRONDI_GLYPHE)
+  return adouci(redresse(tourne(posee, PENCHE_PILE)), h * ARRONDI_GLYPHE)
 }
 
 /**
@@ -305,42 +335,44 @@ function carteGlyphe(h: number, penche: number, dx: number): string {
  * celui du coin au coin — un trait qui coupe un rectangle de biais sans suivre
  * sa diagonale se lit comme un trait de travers.
  *
- * **Elle est isolée par un JOUR, pas par une couleur.** Peinte en sombre sur la
- * carte, elle ne sortirait pas de son cadre — au-delà de la carte il n'y a que
- * la face sombre du paquet, où un trait sombre n'existe pas. On creuse donc la
- * carte d'une bande un peu plus large et on pose la barre dedans : les deux
- * restent du même laiton, et c'est le vide qui les sépare. *C'est le
- * raisonnement du jonc qui s'interrompt autour de l'orbe du coût.*
+ * **ELLE SE POSE SUR LA CARTE, et le JOUR qui l'en isolait est tombé avec le
+ * changement de ton.** Tant que les deux étaient du même laiton clair, il
+ * fallait creuser la carte d'une bande un peu plus large pour que la barre
+ * passe par-dessus ; la carte étant devenue terne, la barre claire se détache
+ * d'elle-même — **et le jour, lui, la coupait en deux triangles.** *Une carte
+ * dont la silhouette est tranchée n'est plus une carte*, et c'est précisément
+ * ce qu'une diagonale de coin à coin fait quand elle creuse au lieu de
+ * recouvrir.
  */
-const BARRE_ANGLE = Math.atan2(GLYPHE, GLYPHE / RAPPORT)
-const BARRE_LONG = GLYPHE * 3.05
-const BARRE_EPAIS = 2.7
-const BARRE_JOUR = 1.7
+/**
+ * ELLE SUIT LA DIAGONALE QUI MONTE, pas celle qui descend. *Les deux coupent
+ * la carte de coin en coin* — mais la carte penche désormais vers la droite,
+ * donc l'une des deux se redresse à la verticale pendant que l'autre
+ * s'aplatit. **Une barre verticale ne raye rien**, elle partage.
+ */
+const BARRE_ANGLE = (-Math.atan2(GLYPHE, GLYPHE / RAPPORT) * 180) / Math.PI
+const BARRE_LONG = Math.hypot(GLYPHE / RAPPORT, GLYPHE) * 2 * 1.26
+const BARRE_EPAIS = 2.5
 
 function barreGlyphe(epaisseur: number): string {
-  const cos = Math.cos(BARRE_ANGLE)
-  const sin = Math.sin(BARRE_ANGLE)
   const dl = BARRE_LONG / 2
   const de = epaisseur / 2
-  const points = ([
+  const rect: [number, number][] = [
     [-dl, -de],
     [dl, -de],
     [dl, de],
     [-dl, de],
-  ] as [number, number][]).map(
-    ([x, y]) => [x * cos - y * sin, x * sin + y * cos] as [number, number],
-  )
+  ]
   // Tout l'emblème est en chemins : *deux façons de décrire la même sorte de
   // forme finiraient par diverger*, et `adouci` à zéro ne fait que fermer le
   // polygone.
-  return adouci(redresse(points), 0)
+  return adouci(redresse(tourne(rect, BARRE_ANGLE + PENCHE_PILE)), 0)
 }
 
 const PAIRE_ARRIERE = carteGlyphe(GLYPHE_PAIRE, -PENCHE, -ECART_PAIRE)
 const PAIRE_AVANT = carteGlyphe(GLYPHE_PAIRE, PENCHE, ECART_PAIRE)
 const CARTE_SEULE = carteGlyphe(GLYPHE, 0, 0)
 const BARRE = barreGlyphe(BARRE_EPAIS)
-const BARRE_ENTAILLE = barreGlyphe(BARRE_EPAIS + BARRE_JOUR * 2)
 
 /**
  * LE CADRE COLLE AU DESSIN, épaisseur comprise. Un viewBox carré laissait un
@@ -517,10 +549,6 @@ export function Tas3D({
         <clipPath id={`${id}-moitie`} clipPathUnits="userSpaceOnUse">
           <rect x={-POINTE} y={-POINTE} width={POINTE} height={POINTE * 2} />
         </clipPath>
-        <mask id={`${id}-entaille`} maskUnits="userSpaceOnUse" x={-50} y={-50} width={100} height={100}>
-          <rect x={-50} y={-50} width={100} height={100} fill="#fff" />
-          <path d={BARRE_ENTAILLE} fill="#000" />
-        </mask>
         <g transform={`translate(${CENTRE[0]} ${CENTRE[1]}) scale(1 ${ECRASEMENT})`}>
           {marque === 'etoile' && (
             <>
@@ -554,7 +582,12 @@ export function Tas3D({
           )}
           {marque === 'defausse' && (
             <>
-              <path d={CARTE_SEULE} fill="#f0d9a2" mask={`url(#${id}-entaille)`} />
+              {/* LA CARTE PREND LE TON DE CELLE DE DERRIÈRE DANS L'ÉVENTAIL.
+                  Demandé par Keko. *Et les deux emblèmes y gagnent la même
+                  grammaire* : dans les deux cas le laiton clair est au premier
+                  plan — l'une des deux cartes ici, la barre là — et le laiton
+                  terne est ce qu'il recouvre. */}
+              <path d={CARTE_SEULE} fill="#ab8c4e" />
               <path d={BARRE} fill="#f0d9a2" />
             </>
           )}

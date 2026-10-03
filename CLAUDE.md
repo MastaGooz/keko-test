@@ -8915,37 +8915,61 @@ de la brûler. Ce qui s'exile pour de bon, lui, ne rejoint aucun tas.
 Quatre choses qui les portent :
 
 - **le glyphe se dessine dans le repère de l'ÉCRAN, puis se PRÉ-ÉTIRE.**
-  L'emblème est posé à plat sur la face du paquet, donc écrasé de `ECRASEMENT` —
-  ce qui ne coûtait rien à l'étoile, qui n'a pas de forme à tenir. *Une carte,
-  si* : à 0,62 de hauteur, un rectangle au rapport du gabarit sort plus LARGE
-  que haut, et on ne lit plus une carte mais une tuile. On compose donc la
-  figure telle qu'on veut la voir et on divise sa hauteur par l'écrasement que
-  la scène lui rendra. **Et la rotation se fait AVANT** : pencher puis étirer
-  n'est pas étirer puis pencher — le second donne un parallélogramme là où on
+  L'emblème est posé sur la face du paquet, donc écrasé de `ECRASEMENT` — ce qui
+  ne coûtait rien à l'étoile, qui n'a pas de forme à tenir. *Une carte, si* : à
+  0,62 de hauteur, un rectangle au rapport du gabarit sort plus LARGE que haut,
+  et on ne lit plus une carte mais une tuile. On compose donc la figure telle
+  qu'on veut la voir et on divise sa hauteur par l'écrasement que la scène lui
+  rendra. **Et tout ce qui penche doit pencher AVANT** : tourner puis étirer
+  n'est pas étirer puis tourner — le second donne un parallélogramme là où on
   veut un rectangle incliné ;
-- **LA BARRE SUIT LA DIAGONALE DE LA CARTE, et elle la DÉPASSE des deux bouts.**
-  *Une barre contenue dans la carte se lit comme un motif imprimé dessus* ; ce
-  qui raye doit sortir du cadre. Son angle n'est pas choisi, c'est celui du coin
-  au coin — un trait qui coupe un rectangle de biais sans suivre sa diagonale se
-  lit comme un trait de travers ;
-- **elle est isolée par un JOUR, pas par une couleur.** Peinte en sombre, elle
-  ne sortirait pas de la carte : au-delà il n'y a que la face sombre du paquet,
-  où un trait sombre n'existe pas. On creuse donc la carte d'une bande un peu
-  plus large et on pose la barre dedans — les deux restent du même laiton, et
-  c'est le vide qui les sépare. *C'est le raisonnement du jonc qui s'interrompt
-  autour de l'orbe du coût* ;
+- **ILS PENCHENT DANS LE SENS DE LA PILE, ils ne se couchent pas dedans.**
+  Keko : « il faudrait que les symboles soient orientés dans le sens de la pile
+  (penchés) ». *La version littérale a été essayée et ne tient pas* : projeter
+  le glyphe dans le PLAN du paquet — la rotation de la carte, puis l'écrasement
+  — le réduit au losange de la face elle-même. **Une carte posée à plat sur une
+  face aussi raccourcie cesse d'être une carte** : les deux de l'éventail se
+  recouvraient en une seule tache, et la carte barrée devenait un diamant rayé.
+  On ne prend donc de la pile que son SENS, et le glyphe garde ses proportions —
+  *c'est un symbole imprimé sur la face, pas un objet posé dessus*, et c'est
+  déjà ce que fait l'étoile, dont les pointes visent les axes de la carte sans
+  rien perdre de leur longueur. **L'angle se prend à l'oeil, et il le fallait** :
+  la carte du paquet penche de 49° à l'écran, et à cette valeur le glyphe se
+  couche presque — *un symbole n'a pas à être une projection* ;
+- **LA BARRE SUIT LA DIAGONALE QUI MONTE, et elle DÉPASSE la carte des deux
+  bouts.** *Une barre contenue dans la carte se lit comme un motif imprimé
+  dessus* ; ce qui raye doit sortir du cadre. Les deux diagonales coupent la
+  carte de coin en coin — **mais la carte penche désormais, donc l'une des deux
+  se redresse à la verticale** pendant que l'autre s'aplatit, et *une barre
+  verticale ne raye rien, elle partage* ;
+- **ET LE JOUR QUI L'ISOLAIT EST TOMBÉ AVEC LE CHANGEMENT DE TON.** Keko :
+  « j'aime la couleur de la carte de derrière dans le symbole de pioche, ce
+  serait bien d'utiliser la même pour la carte derrière la barre dans la pile de
+  défausse ». Tant que les deux étaient du même laiton clair, il fallait creuser
+  la carte d'une bande un peu plus large pour que la barre passe par-dessus ; la
+  carte devenue terne, la barre claire se détache d'elle-même — **et le jour,
+  lui, la coupait en deux triangles.** *Une carte dont la silhouette est tranchée
+  n'est plus une carte*, et c'est précisément ce qu'une diagonale de coin à coin
+  fait quand elle creuse au lieu de recouvrir. **Les deux emblèmes y gagnent la
+  même grammaire** : le laiton clair est au premier plan — une des deux cartes
+  ici, la barre là — et le laiton terne est ce qu'il recouvre ;
 - **le partage gauche/droite ne vaut QUE pour l'étoile.** Les deux emblèmes de
   combat sont faits de cartes, et *une carte est un plan* : une coupure
   verticale en travers s'y lirait comme un pli. Leur relief vient d'ailleurs —
-  l'une est derrière l'autre dans l'éventail, la barre se détache par son jour.
-  Et le ton de la carte de derrière descend **plus bas** que la moitié sombre de
-  l'étoile : *celle-ci partage une MÊME surface, où l'oeil complète ce qu'il
-  voit ; ici il faut séparer DEUX objets*, et il n'y a que vingt pixels pour le
-  dire.
+  l'une est derrière l'autre dans l'éventail, la barre est posée sur la sienne.
+  Et le ton terne descend **plus bas** que la moitié sombre de l'étoile :
+  *celle-ci partage une MÊME surface, où l'oeil complète ce qu'il voit ; ici il
+  faut séparer DEUX objets*, et il n'y a que vingt pixels pour le dire.
 
-Mesuré à l'écran, écrasement compris : l'éventail fait **29 x 25**, la carte
-barrée **19 x 26** — contre **36 x 32** pour les flèches qu'ils remplacent.
+Mesuré à l'écran, écrasement compris : l'éventail fait **29 x 26**, la carte
+barrée **30 x 25** — contre **36 x 32** pour les flèches qu'ils remplacent.
 *C'est la hauteur qui tombe*, et c'est elle que Keko lisait comme « trop gros ».
+
+**ET L'ÉTOILE A MAIGRI D'UN CRAN** (26 → 22,5). Keko : « réduis encore
+légèrement la taille de l'étoile sur le deck dans l'écran du maître d'armes ».
+*Elle est la seule à être posée sur un BOUTON*, donc la seule dont la face se
+lit à côté d'un chiffre et d'un mot — et **ce qui l'entoure décide de ce qu'elle
+doit peser, pas la face qui la porte.**
 
 **L'emblème est un PARAMÈTRE, avec le nom du tas pour défaut** (`Tas3D.tsx`) :
 les deux tas du combat ne demandent rien, et seul le bouton du deck réclame
