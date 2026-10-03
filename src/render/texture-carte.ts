@@ -2466,11 +2466,17 @@ function dessinDuDos(): Promise<HTMLImageElement | null> {
  * ne porte que son compte, pas son nom. **À rouvrir avec Keko s'il veut que
  * les deux se distinguent autrement qu'à leur coin.**
  *
- * **ET LE DESSIN SE CALE SUR SON SUJET, pas sur sa toile.** Son cadre laisse
- * une marge transparente, inégale en haut et en bas : étiré bêtement sur la
- * carte, il serait décalé. On mesure la boîte du sujet et on l'étire, elle,
- * sur toute la carte — *un repère calé sur la marge d'un dessin se déplace
- * avec le dessin*, et c'est la troisième fois que cette règle se paie.
+ * **ET LE DESSIN SE CALE SUR SON SUJET, pas sur sa toile.** Le premier fichier
+ * laissait une marge transparente inégale en haut et en bas : étiré bêtement
+ * sur la carte, il serait parti de travers. On mesure donc la boîte du sujet et
+ * on l'étire, elle, sur toute la carte — *un repère calé sur la marge d'un
+ * dessin se déplace avec le dessin*, et c'est la troisième fois que cette règle
+ * se paie.
+ *
+ * **ET C'EST CE QUI REND UN REDESSIN GRATUIT.** Keko l'a repris au gabarit des
+ * illustrations (1024 x 1463), sujet à 1 % de chacun des quatre bords : *aucune
+ * ligne n'a bougé ici.* Un calage mesuré n'est pas une rustine pour un fichier,
+ * c'est ce qui permet d'en changer.
  */
 async function peindreDos(): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')

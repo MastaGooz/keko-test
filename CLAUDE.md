@@ -8908,12 +8908,20 @@ bien plus clair qu'il ne l'est sur une carte, où le voile en reprend la moitié
 **Un gris sombre laisse l'or du cadre porter la carte**, ce qui est tout ce
 qu'un dos a à faire.
 
-**ET LE DESSIN SE CALE SUR SON SUJET, pas sur sa toile** : son cadre laisse une
-marge transparente, inégale en haut (12 px) et en bas (22). Étiré bêtement sur
-la carte, il serait de travers. On mesure la boîte du sujet (`mesurerBoite`,
-celle des créatures) et c'est ELLE qu'on étire — *un repère calé sur la marge
-d'un dessin se déplace avec le dessin*, et c'est la quatrième fois que cette
-règle se paie.
+**ET LE DESSIN SE CALE SUR SON SUJET, pas sur sa toile.** Le premier fichier
+laissait une marge transparente inégale — 12 px en haut, 22 en bas — et étiré
+bêtement sur la carte il serait parti de travers. On mesure donc la boîte du
+sujet (`mesurerBoite`, celle des créatures) et c'est ELLE qu'on étire : *un
+repère calé sur la marge d'un dessin se déplace avec le dessin*, et c'est la
+quatrième fois que cette règle se paie.
+
+**ET C'EST CE QUI A RENDU LE REDESSIN GRATUIT.** Keko l'a repris au gabarit des
+illustrations — **1024 x 1463**, le logo simplifié en étoile à quatre pointes,
+le sujet à 1 % de chacun des quatre bords au lieu de ses marges inégales.
+*Aucune ligne n'a bougé* : la mesure absorbait déjà le cadrage, donc un dessin
+mieux cadré se pose exactement comme un dessin mal cadré. **Un calage mesuré
+n'est pas une rustine pour un fichier, c'est ce qui permet de changer de
+fichier.**
 
 **ET LES DEUX TAS NE SE DISTINGUENT PLUS PAR LEUR COEUR.** Le dos peint en
 portait un — un éventail pour la pioche, une carte barrée pour la défausse —
