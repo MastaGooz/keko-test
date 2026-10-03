@@ -202,57 +202,145 @@ const BRANCHES = 4
 const POINTE = 26
 const CREUX = POINTE * 0.44
 
-const ETOILE = Array.from({ length: BRANCHES * 2 }, (_, i) => {
-  // Le quart de tour met les POINTES sur les diagonales de l'écran, donc sur
-  // les axes de la carte — et les CREUX sur les axes de l'écran, donc dans les
-  // coins du losange, là où il n'y a de toute façon pas de place.
-  const a = (i * Math.PI) / BRANCHES - Math.PI / 2 + Math.PI / 4
-  const r = i % 2 === 0 ? POINTE : CREUX
-  return `${(Math.cos(a) * r).toFixed(2)},${(Math.sin(a) * r).toFixed(2)}`
-}).join(' ')
+const ETOILE_PATH = adouci(
+  Array.from({ length: BRANCHES * 2 }, (_, i): [number, number] => {
+    // Le quart de tour met les POINTES sur les diagonales de l'écran, donc sur
+    // les axes de la carte — et les CREUX sur les axes de l'écran, donc dans
+    // les coins du losange, là où il n'y a de toute façon pas de place.
+    const a = (i * Math.PI) / BRANCHES - Math.PI / 2 + Math.PI / 4
+    const r = i % 2 === 0 ? POINTE : CREUX
+    return [Math.cos(a) * r, Math.sin(a) * r]
+  }),
+  0,
+)
 
 /**
- * **EN COMBAT, LES DEUX TAS PORTENT LEUR SYMBOLE, pas l'étoile.** Keko : « en
- * combat il ne faut pas mettre l'étoile sur le paquet, on met les symboles
- * pioche et défausse ».
+ * **EN COMBAT, LES DEUX TAS PORTENT DES CARTES, pas l'étoile.** Keko, en deux
+ * temps : « en combat il ne faut pas mettre l'étoile sur le paquet, on met les
+ * symboles pioche et défausse », puis — en voyant les flèches qui avaient tenu
+ * ce rôle — « je les trouve trop gros et pas terrible ; pour la pioche il
+ * faudrait par exemple deux cartes en éventail, et pour la défausse une carte
+ * barrée ».
  *
  * *L'étoile dit « des cartes »*, et c'est tout ce qu'on demande au bouton du
  * deck, qui est seul de son espèce. **En combat il y en a DEUX côte à côte, et
  * ce qu'on doit lire n'est plus ce qu'ils contiennent — c'est lequel est
- * lequel.** Leur place le dit déjà (pioche à gauche, défausse à droite), mais
- * *une place ne se lit qu'en comparant* : il faut regarder les deux pour savoir.
+ * lequel.**
  *
- * **Deux flèches, et c'est le même objet dans les deux sens** : ce qui SORT du
- * paquet, ce qui y ENTRE. *Le vocabulaire doit dire la règle* — un tas n'est pas
- * un lieu, c'est un sens de circulation, et une paire opposée le dit sans
- * légende. (Une carte barrée d'une croix avait été proposée pour la défausse ;
- * elle dirait la destruction, et une carte défaussée revient au remélange.)
+ * **Et ce qui les sépare doit être un OBJET, pas une direction.** Une paire de
+ * flèches opposées disait le sens de circulation, ce qui est juste et ce qui ne
+ * se lit pas : *deux triangles ne se distinguent qu'en les comparant*, donc il
+ * fallait regarder les deux pour savoir lequel est lequel — exactement ce que
+ * leur PLACE faisait déjà. Un éventail et une carte barrée, eux, se
+ * reconnaissent chacun seul.
+ *
+ * *La carte barrée avait été écartée une fois* — « elle dirait la destruction,
+ * et une carte défaussée revient au remélange ». **Keko a tranché l'inverse, et
+ * il a raison sur le registre** : le barré ne dit pas ici « détruit », il dit
+ * « joué », « hors de la main » — c'est le geste de rayer une ligne d'une
+ * liste, pas celui de la brûler. Les cartes qui s'exilent pour de bon, elles,
+ * ne rejoignent aucun tas.
  */
-const HAMPE = 7
-const TETE = 18
-const HAUT_TETE = 20
 
-function fleche(versLeHaut: boolean): string {
-  const sens = versLeHaut ? 1 : -1
-  const y = (v: number): number => (v * sens).toFixed(2) as unknown as number
-  return [
-    [0, y(-POINTE)],
-    [TETE, y(-POINTE + HAUT_TETE)],
-    [HAMPE, y(-POINTE + HAUT_TETE)],
-    [HAMPE, y(POINTE)],
-    [-HAMPE, y(POINTE)],
-    [-HAMPE, y(-POINTE + HAUT_TETE)],
-    [-TETE, y(-POINTE + HAUT_TETE)],
-  ]
-    .map(([x, yy]) => `${Number(x).toFixed(2)},${Number(yy).toFixed(2)}`)
-    .join(' ')
+/**
+ * LE GLYPHE EST UNE CARTE, au rapport du gabarit et aux coins ronds comme lui.
+ *
+ * **Sa demi-hauteur est plus petite dans l'éventail**, parce que *deux cartes
+ * pèsent plus qu'une* : ce qui doit se ressembler d'un tas à l'autre n'est pas
+ * la taille d'une carte, c'est l'ENCRE totale de l'emblème — la règle du coeur
+ * et de l'éventail de la bande de mesures, où trois densités ont donné trois
+ * chiffres.
+ *
+ * Mesuré dans le repère du dessin, écrasement compris : l'éventail fait 32 x 19
+ * à l'écran, la carte barrée 28 x 19 — contre 36 x 32 pour les flèches qu'ils
+ * remplacent. *C'est la hauteur qui tombe*, et c'est elle que Keko lisait comme
+ * « trop gros ».
+ */
+const GLYPHE = 10.5
+const GLYPHE_PAIRE = 10
+const PENCHE = 20
+const ECART_PAIRE = 4.5
+const ARRONDI_GLYPHE = 0.18
+
+/**
+ * **IL SE DESSINE DANS LE REPÈRE DE L'ÉCRAN, puis se pré-étire.**
+ *
+ * L'emblème est posé à plat sur la face du paquet, donc écrasé de `ECRASEMENT`
+ * — ce qui ne coûtait rien à l'étoile, qui n'a pas de forme à tenir. *Une
+ * carte, si* : à 0,62 de hauteur, un rectangle au rapport du gabarit sort plus
+ * LARGE que haut, et on ne lit plus une carte mais une tuile. On compose donc
+ * la figure telle qu'on veut la voir, et on divise sa hauteur par l'écrasement
+ * que la scène lui rendra.
+ *
+ * **La rotation se fait AVANT**, dans le repère de l'écran : pencher puis
+ * étirer n'est pas étirer puis pencher — le second donnerait un parallélogramme
+ * là où on veut un rectangle incliné.
+ */
+function redresse(points: readonly [number, number][]): [number, number][] {
+  return points.map(([x, y]) => [x, y / ECRASEMENT])
 }
 
-const EMBLEMES: Record<string, string> = {
-  etoile: ETOILE,
-  pioche: fleche(true),
-  defausse: fleche(false),
+/** Une carte, penchée puis décalée — en unités d'ÉCRAN. */
+function carteGlyphe(h: number, penche: number, dx: number): string {
+  const l = h / RAPPORT
+  const a = (penche * Math.PI) / 180
+  const cos = Math.cos(a)
+  const sin = Math.sin(a)
+  const points = ([
+    [-l, -h],
+    [l, -h],
+    [l, h],
+    [-l, h],
+  ] as [number, number][]).map(
+    ([x, y]) => [dx + x * cos - y * sin, x * sin + y * cos] as [number, number],
+  )
+  return adouci(redresse(points), h * ARRONDI_GLYPHE)
 }
+
+/**
+ * LA BARRE SUIT LA DIAGONALE DE LA CARTE, et elle la DÉPASSE des deux bouts.
+ *
+ * *Une barre contenue dans la carte se lit comme un motif imprimé dessus* ; ce
+ * qui la raye doit sortir de son cadre. Son angle n'est pas choisi : c'est
+ * celui du coin au coin — un trait qui coupe un rectangle de biais sans suivre
+ * sa diagonale se lit comme un trait de travers.
+ *
+ * **Elle est isolée par un JOUR, pas par une couleur.** Peinte en sombre sur la
+ * carte, elle ne sortirait pas de son cadre — au-delà de la carte il n'y a que
+ * la face sombre du paquet, où un trait sombre n'existe pas. On creuse donc la
+ * carte d'une bande un peu plus large et on pose la barre dedans : les deux
+ * restent du même laiton, et c'est le vide qui les sépare. *C'est le
+ * raisonnement du jonc qui s'interrompt autour de l'orbe du coût.*
+ */
+const BARRE_ANGLE = Math.atan2(GLYPHE, GLYPHE / RAPPORT)
+const BARRE_LONG = GLYPHE * 3.05
+const BARRE_EPAIS = 2.7
+const BARRE_JOUR = 1.7
+
+function barreGlyphe(epaisseur: number): string {
+  const cos = Math.cos(BARRE_ANGLE)
+  const sin = Math.sin(BARRE_ANGLE)
+  const dl = BARRE_LONG / 2
+  const de = epaisseur / 2
+  const points = ([
+    [-dl, -de],
+    [dl, -de],
+    [dl, de],
+    [-dl, de],
+  ] as [number, number][]).map(
+    ([x, y]) => [x * cos - y * sin, x * sin + y * cos] as [number, number],
+  )
+  // Tout l'emblème est en chemins : *deux façons de décrire la même sorte de
+  // forme finiraient par diverger*, et `adouci` à zéro ne fait que fermer le
+  // polygone.
+  return adouci(redresse(points), 0)
+}
+
+const PAIRE_ARRIERE = carteGlyphe(GLYPHE_PAIRE, -PENCHE, -ECART_PAIRE)
+const PAIRE_AVANT = carteGlyphe(GLYPHE_PAIRE, PENCHE, ECART_PAIRE)
+const CARTE_SEULE = carteGlyphe(GLYPHE, 0, 0)
+const BARRE = barreGlyphe(BARRE_EPAIS)
+const BARRE_ENTAILLE = barreGlyphe(BARRE_EPAIS + BARRE_JOUR * 2)
 
 /**
  * LE CADRE COLLE AU DESSIN, épaisseur comprise. Un viewBox carré laissait un
@@ -312,7 +400,7 @@ export function Tas3D({
   embleme,
 }: Props): React.JSX.Element {
   const id = `tas-${nom}`
-  const marque = EMBLEMES[embleme ?? nom] ?? ETOILE
+  const marque = embleme ?? nom
   const dessin = useRef<SVGSVGElement>(null)
 
   /**
@@ -422,20 +510,54 @@ export function Tas3D({
             cadres l'un sur l'autre ne font pas un cadre plus riche.* Rogné par
             la même forme, pour que ses coins arrondis ne laissent pas voir le
             décor au travers. */}
-        {/* L'ÉTOILE, POSÉE À PLAT SUR LE DESSUS : droite, et écrasée de la même
+        {/* L'EMBLÈME, POSÉ À PLAT SUR LE DESSUS : droit, et écrasé de la même
             fraction que le paquet. Deux aplats et rien d'autre, comme l'icône
             de la main — *un emblème de vingt pixels n'a droit ni à un dégradé
             ni à un filet.* */}
         <clipPath id={`${id}-moitie`} clipPathUnits="userSpaceOnUse">
           <rect x={-POINTE} y={-POINTE} width={POINTE} height={POINTE * 2} />
         </clipPath>
+        <mask id={`${id}-entaille`} maskUnits="userSpaceOnUse" x={-50} y={-50} width={100} height={100}>
+          <rect x={-50} y={-50} width={100} height={100} fill="#fff" />
+          <path d={BARRE_ENTAILLE} fill="#000" />
+        </mask>
         <g transform={`translate(${CENTRE[0]} ${CENTRE[1]}) scale(1 ${ECRASEMENT})`}>
-          <polygon points={marque} fill="#f0d9a2" />
-          {/* LA MOITIÉ GAUCHE EST PLUS SOMBRE : la lumière vient du haut et de
-              la droite, comme sur les flancs du paquet et sur l'icône de la
-              main. *Un aplat unique se lirait comme une découpe, pas comme un
-              objet posé.* */}
-          <polygon points={marque} fill="#c8ab6d" clipPath={`url(#${id}-moitie)`} />
+          {marque === 'etoile' && (
+            <>
+              <path d={ETOILE_PATH} fill="#f0d9a2" />
+              {/* LA MOITIÉ GAUCHE EST PLUS SOMBRE : la lumière vient du haut et
+                  de la droite, comme sur les flancs du paquet et sur l'icône de
+                  la main. *Un aplat unique se lirait comme une découpe, pas
+                  comme un objet posé.*
+
+                  LE PARTAGE NE VAUT QUE POUR L'ÉTOILE. Les deux emblèmes de
+                  combat sont faits de CARTES, et *une carte est un plan* : une
+                  coupure verticale en travers s'y lirait comme un pli. Leur
+                  relief vient d'ailleurs — l'une est derrière l'autre dans
+                  l'éventail, et la barre se détache par son jour. */}
+              <path d={ETOILE_PATH} fill="#c8ab6d" clipPath={`url(#${id}-moitie)`} />
+            </>
+          )}
+          {marque === 'pioche' && (
+            <>
+              {/* CELLE DE DERRIÈRE EST DANS L'OMBRE DE L'AUTRE, et c'est tout
+                  ce qui fait l'éventail : à tons égaux, deux cartes qui se
+                  recouvrent ne font qu'une silhouette trouée.
+
+                  Son ton descend plus bas que la moitié sombre de l'étoile :
+                  *celle-ci partage une MÊME surface, où l'oeil complète ce
+                  qu'il voit ; ici il faut séparer DEUX objets*, et il n'y a que
+                  vingt pixels pour le dire. */}
+              <path d={PAIRE_ARRIERE} fill="#ab8c4e" />
+              <path d={PAIRE_AVANT} fill="#f0d9a2" />
+            </>
+          )}
+          {marque === 'defausse' && (
+            <>
+              <path d={CARTE_SEULE} fill="#f0d9a2" mask={`url(#${id}-entaille)`} />
+              <path d={BARRE} fill="#f0d9a2" />
+            </>
+          )}
         </g>
       </svg>
     </div>

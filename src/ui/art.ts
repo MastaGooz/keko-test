@@ -40,7 +40,12 @@ function cle(nom: string): string {
  * *deux noms pour un même geste n'ont pas à être dessinés deux fois*, et un
  * banc qui montre une carte au sceau de repli ne se juge pas.
  *
- * À retirer le jour où la Taille a le sien.
+ * **IL SURVIT À L'ARRIVÉE DE `Taille.webp`, et ce n'est pas un oubli** : ces
+ * deux tables ne jouent pas au même étage. L'image de Keko recouvre le SVG,
+ * donc le moteur 3D ne descend jamais jusqu'ici ; mais le jeu 2D EMPILE les
+ * deux couches, et une image détourée laisserait voir ce qu'il y a dessous.
+ * *Entre un coup d'épée et un sceau qui dit « il manque un fichier », c'est le
+ * coup d'épée qu'on veut derrière la lame.*
  */
 const ALIAS: Record<string, string> = { taille: 'taillade' }
 
@@ -89,6 +94,10 @@ const IMAGES: Record<string, string> = {
   // mais `new Image()` la refusait et GitHub Pages, servi depuis Linux, aurait
   // rendu un 404 franc. **On recopie le nom du fichier, on ne le réécrit pas.**
   'epee-a-deux-mains': 'Epée à deux mains.webp',
+  // LA TAILLE A ENFIN LE SIEN. Elle empruntait le dessin de la Taillade, le
+  // temps qu'elle n'en ait pas — *un banc qui montre une carte au sceau de
+  // repli ne se juge pas.* L'emprunt tombe avec l'arrivée du fichier.
+  taille: 'Taille.webp',
 }
 
 /**

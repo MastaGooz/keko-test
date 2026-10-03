@@ -2018,10 +2018,15 @@ avait fait tomber la survie de 50 % à 4 %. **À repasser au balayage complet
 avant d'en faire un acquis** — et le barème change de nature, puisqu'une carte
 peut maintenant coûter zéro.
 
-**Et la Taille emprunte le dessin de la Taillade** (`ALIAS` dans `ui/art.ts`) :
-*deux noms pour un même geste n'ont pas à être dessinés deux fois*, et un banc
-qui montre une carte au sceau de repli ne se juge pas. À retirer le jour où
-elle a le sien.
+**ET LA TAILLE A SON ILLUSTRATION** (`Taille.webp`, fournie par Keko, au
+gabarit exact — 1024 x 1463, rapport 0,700).
+
+*L'emprunt reste quand même* (`ALIAS` dans `ui/art.ts`), et ce n'est pas un
+oubli : **les deux tables ne jouent pas au même étage.** L'image de Keko
+recouvre le SVG, donc le moteur 3D ne descend jamais jusqu'au repli ; mais le
+jeu 2D EMPILE les deux couches, et *une image détourée laisse voir ce qu'il y a
+dessous*. Entre un coup d'épée et un sceau qui dit « il manque un fichier »,
+c'est le coup d'épée qu'on veut derrière la lame.
 
 **LA TROISIÈME ARME : LA RONDACHE**, et son verbe est DÉFENSIF. Nommée et
 composée par Keko — « une nouvelle arme à une main, qui est défensive en
@@ -8881,9 +8886,12 @@ s'en occuper. **Le dos plaqué et sa data URL disparaissent avec**, ainsi que la
 matrice de projection : *du code mort ment sur ce que le jeu fait*, et les deux
 pièges SVG qu'elle avait coûtés restent dans `git log`.
 
-**MAIS EN COMBAT, LES DEUX TAS PORTENT LEUR FLÈCHE — l'étoile reste au bouton
-du deck.** Tranché par Keko : « par contre en combat il ne faut pas mettre
-l'étoile sur le paquet, on met les symboles pioche et défausse ».
+**MAIS EN COMBAT, LES DEUX TAS PORTENT DES CARTES — l'étoile reste au bouton du
+deck.** Tranché par Keko en deux temps : « par contre en combat il ne faut pas
+mettre l'étoile sur le paquet, on met les symboles pioche et défausse », puis —
+en voyant la paire de flèches qui avait tenu ce rôle — « je les trouve trop gros
+et pas terrible ; pour la pioche il faudrait par exemple deux cartes en
+éventail, et pour la défausse une carte barrée ».
 
 *Et ça rouvre, pour le fermer, le seul point que le paquet dessiné avait laissé
 en suspens* — « en 3D le tas ne porte que son compte, pas son nom ». **Les deux
@@ -8891,15 +8899,57 @@ emblèmes ne répondent pas à la même question** : le bouton du deck est SEUL,
 donc tout ce qu'il a à dire est « des cartes », et l'étoile le dit ; en combat
 il y en a DEUX côte à côte, et ce qu'il faut lire est **lequel est lequel**.
 
-Deux flèches opposées disent le sens du flux — ce qui SORT, ce qui ENTRE — et
-c'est le seul signe qui n'ait besoin d'aucune légende. *Une carte barrée avait
-été envisagée pour la défausse : elle dirait la destruction, et une carte
-défaussée revient au remélange.*
+**ET CE QUI LES SÉPARE DOIT ÊTRE UN OBJET, PAS UNE DIRECTION.** Deux flèches
+opposées disaient le sens du flux — ce qui sort, ce qui entre — et c'est juste
+sur le fond ; *mais deux triangles ne se distinguent qu'en les comparant*, donc
+il fallait regarder les deux pour savoir lequel est lequel, exactement ce que
+leur PLACE faisait déjà. **Un éventail et une carte barrée se reconnaissent
+chacun seul**, et c'est tout ce qu'on demandait.
 
-**L'emblème est un PARAMÈTRE, avec le nom du tas pour défaut** (`EMBLEMES`,
-dans `Tas3D.tsx`) : les deux tas du combat ne demandent rien, et seul le bouton
-du deck réclame l'étoile. *Ce qui est le cas ordinaire ne doit pas s'écrire à
-chaque appel.*
+*La carte barrée avait été écartée une fois* — « elle dirait la destruction, et
+une carte défaussée revient au remélange ». **Keko a tranché l'inverse, et il a
+raison sur le registre** : le barré ne dit pas ici « détruit », il dit « joué »,
+« hors de la main » — c'est le geste de rayer une ligne d'une liste, pas celui
+de la brûler. Ce qui s'exile pour de bon, lui, ne rejoint aucun tas.
+
+Quatre choses qui les portent :
+
+- **le glyphe se dessine dans le repère de l'ÉCRAN, puis se PRÉ-ÉTIRE.**
+  L'emblème est posé à plat sur la face du paquet, donc écrasé de `ECRASEMENT` —
+  ce qui ne coûtait rien à l'étoile, qui n'a pas de forme à tenir. *Une carte,
+  si* : à 0,62 de hauteur, un rectangle au rapport du gabarit sort plus LARGE
+  que haut, et on ne lit plus une carte mais une tuile. On compose donc la
+  figure telle qu'on veut la voir et on divise sa hauteur par l'écrasement que
+  la scène lui rendra. **Et la rotation se fait AVANT** : pencher puis étirer
+  n'est pas étirer puis pencher — le second donne un parallélogramme là où on
+  veut un rectangle incliné ;
+- **LA BARRE SUIT LA DIAGONALE DE LA CARTE, et elle la DÉPASSE des deux bouts.**
+  *Une barre contenue dans la carte se lit comme un motif imprimé dessus* ; ce
+  qui raye doit sortir du cadre. Son angle n'est pas choisi, c'est celui du coin
+  au coin — un trait qui coupe un rectangle de biais sans suivre sa diagonale se
+  lit comme un trait de travers ;
+- **elle est isolée par un JOUR, pas par une couleur.** Peinte en sombre, elle
+  ne sortirait pas de la carte : au-delà il n'y a que la face sombre du paquet,
+  où un trait sombre n'existe pas. On creuse donc la carte d'une bande un peu
+  plus large et on pose la barre dedans — les deux restent du même laiton, et
+  c'est le vide qui les sépare. *C'est le raisonnement du jonc qui s'interrompt
+  autour de l'orbe du coût* ;
+- **le partage gauche/droite ne vaut QUE pour l'étoile.** Les deux emblèmes de
+  combat sont faits de cartes, et *une carte est un plan* : une coupure
+  verticale en travers s'y lirait comme un pli. Leur relief vient d'ailleurs —
+  l'une est derrière l'autre dans l'éventail, la barre se détache par son jour.
+  Et le ton de la carte de derrière descend **plus bas** que la moitié sombre de
+  l'étoile : *celle-ci partage une MÊME surface, où l'oeil complète ce qu'il
+  voit ; ici il faut séparer DEUX objets*, et il n'y a que vingt pixels pour le
+  dire.
+
+Mesuré à l'écran, écrasement compris : l'éventail fait **29 x 25**, la carte
+barrée **19 x 26** — contre **36 x 32** pour les flèches qu'ils remplacent.
+*C'est la hauteur qui tombe*, et c'est elle que Keko lisait comme « trop gros ».
+
+**L'emblème est un PARAMÈTRE, avec le nom du tas pour défaut** (`Tas3D.tsx`) :
+les deux tas du combat ne demandent rien, et seul le bouton du deck réclame
+l'étoile. *Ce qui est le cas ordinaire ne doit pas s'écrire à chaque appel.*
 
 **La projection du paquet est AFFINE**, donc exprimable en `matrix()` : `coin()`
 fait une rotation puis un écrasement vertical, deux opérations linéaires. SVG ne
