@@ -64,9 +64,9 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   const etourdit = carte.effets?.some((e) => e.type === 'etourdit') === true
   if (carte.degats > 0)
     l.push(
-        `Inflige <d>${carte.degats}</d> ${blessures(carte.degats)}${etourdit ? ' et&nbsp;<k>étourdissement</k>' : ''}`,
+        `<d>Inflige <b>${carte.degats}</b></d> ${blessures(carte.degats)}${etourdit ? ' et&nbsp;<k><b>étourdissement</b></k>' : ''}`,
       )
-  else if (etourdit) l.push(`<k>Étourdissement</k>`)
+  else if (etourdit) l.push(`<k><b>Étourdissement</b></k>`)
   // SES DÉGÂTS SONT TA DÉFENSE : on ne peut pas écrire un chiffre, donc on
   // écrit la RÈGLE. *Une carte dont l'effet dépend de l'état doit dire de quoi
   // il dépend*, pas afficher un zéro qui se lirait comme une carte inutile.
@@ -87,7 +87,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // renvoie à une RÈGLE* — « attaque » désigne ce que la remise de l'Estoc
     // compte, « blocage » ce que cette carte-ci compte. Les deux sont la chose
     // du jeu qu'on va chercher ailleurs sur l'écran.
-    l.push(`Inflige <d>1</d> blessure pour chaque <b>blocage</b> que vous avez`)
+    l.push(`<d>Inflige <b>1</b></d> blessure pour chaque <b>blocage</b> que vous avez`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
@@ -95,14 +95,14 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // à la fin de chaque tour, sans exception* — c'est une règle du jeu, pas
     // une clause de cette carte-ci, et une condition écrite sur toutes les
     // cartes de défense cesse d'être une condition.
-    if (e.type === 'bloc') l.push(`Bloque <p>${e.montant}</p> ${blessures(e.montant)}`)
+    if (e.type === 'bloc') l.push(`<p>Bloque <b>${e.montant}</b></p> ${blessures(e.montant)}`)
     // L'ESQUIVE DIT SA DURÉE, comme la riposte : *c'est une clause de cette
     // carte-ci, pas une règle du jeu* — sans elle on la croirait permanente.
         // « VOTRE » DESCEND AVEC CE QU'IL INTRODUIT. Keko : « on peut mettre le
     // "votre" en dessous ». *Un possessif seul au bout d'une ligne annonce un
     // groupe qui n'arrive qu'à la suivante* — même raison que le « et » de la
     // Projection, et l'insécable fait le lien.
-    if (e.type === 'esquive') l.push(`Gagne <k>esquive</k> jusqu'à votre&nbsp;prochain tour`)
+    if (e.type === 'esquive') l.push(`Gagne <k><b>esquive</b></k> jusqu'à votre&nbsp;prochain tour`)
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
@@ -111,7 +111,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         // dit sa VALEUR. *Une carte ne peut pas perdre un or qu'elle n'a
         // jamais annoncé.*
         const perte = valeurAPart ? 'et sa valeur est perdue' : 'et son or est perdu'
-        l.push(`Brûler : soigne <s>${e.montant}</s> ${blessures(e.montant)}`, `<small>${perte}</small>`)
+        l.push(`Brûler : <s>soigne <b>${e.montant}</b></s> ${blessures(e.montant)}`, `<small>${perte}</small>`)
       }
       else {
         /**
@@ -122,18 +122,18 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
          * de personnage, « blessure » est ce que le coup a fait. C'est la même
          * raison qui a fait des points d'action plutôt que de l'énergie.
          */
-        l.push(`Soigne <s>${e.montant}</s> ${blessures(e.montant)}`)
+        l.push(`<s>Soigne <b>${e.montant}</b></s> ${blessures(e.montant)}`)
         // Une carte à usages ne l'écrit pas : ses charges sont des pastilles.
         // Une carte qui s'exile porte le MOT-CLÉ, et l'encadré du zoom dit ce
         // qu'il veut dire — *un mot-clé est un nom, pas une phrase.*
-        if (carte.usages === undefined && carte.exil === true) l.push(`<k>Consommable</k>`)
+        if (carte.usages === undefined && carte.exil === true) l.push(`<k><b>Consommable</b></k>`)
       }
     }
     // POINTS D'ACTION, ET PAS « ÉNERGIE » : le mot renvoie au TEMPS, et c'est
     // ce que Keko veut dire — *plus une carte coûte, plus l'action est longue
     // et puissante.* Le code garde `energie` partout, c'est un nom interne.
     if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> points d'action`)
-    if (e.type === 'degatsTous') l.push(`Inflige <d>${e.montant}</d> à chaque ennemi`)
+    if (e.type === 'degatsTous') l.push(`<d>Inflige <b>${e.montant}</b></d> à chaque ennemi`)
     // LA RIPOSTE DIT SA DURÉE, là où le bloc ne la dit plus : *le bloc tombe à
     // chaque fin de tour, c'est une règle du jeu ; la riposte, elle, est une
     // clause de CETTE carte* — et sans elle on la croirait permanente.
@@ -159,7 +159,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // le joueur en a un, les ennemis frappent entre les deux.
     if (e.type === 'riposte')
       l.push(
-        `Jusqu'à votre prochain tour, les ennemis qui vous <b>attaquent</b> subissent <d>${e.montant}</d> ${blessures(e.montant)}`,
+        `Jusqu'à votre prochain tour, les ennemis qui vous <b>attaquent</b> subissent <d><b>${e.montant}</b></d> ${blessures(e.montant)}`,
       )
 
   }
@@ -191,18 +191,16 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
  * dire* — la règle déjà tenue par la valeur d'un butin.
  */
 export function enClair(ligne: string): string {
-  // `<k>` est la balise des MOTS-CLÉS, que seul le canvas sait colorer : en 2D
-  // elle retombe sur le gras. *Un moteur qui ne sait pas montrer une chose ne
-  // doit pas cesser de la dire.*
-  // `<d>` (dégâts), `<p>` (protection) et `<s>` (soin) de même : le canvas les
-  // colore en rouge, bleu et vert, le DOM n'a qu'un accent par carte et les
-  // rend en gras.
+  // LES QUATRE BALISES DE COULEUR DISPARAISSENT ICI, elles ne deviennent pas du
+  // gras : le DOM n'a qu'un accent par carte, et **le gras est déjà écrit dans
+  // le texte** depuis que les deux axes sont séparés. Les convertir mettrait
+  // « Inflige » en gras et en accent, alors qu'il n'est que coloré en 3D.
   //
-  // **ET CE REPLI N'EST PAS UN CONFORT POUR `<s>`** : c'est une vraie balise
+  // **ET CE RETRAIT N'EST PAS UN CONFORT POUR `<s>`** : c'est une vraie balise
   // HTML, celle du texte barré. *Les trois appels du DOM passent par ici* —
   // vérifié — mais un jour où l'un l'oublierait, un chiffre de soin sortirait
   // rayé. C'est le prix d'une balise à une lettre, et il est connu.
-  ligne = ligne.replace(/<\/?[kdps]>/g, (b) => (b.startsWith('</') ? '</b>' : '<b>'))
+  ligne = ligne.replace(/<\/?[kdps]>/g, '')
   return ligne.replace(/\{pa:(\d+)\}/g, '<b>$1</b> PA')
 }
 

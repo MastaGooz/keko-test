@@ -1526,10 +1526,19 @@ function enMots(entree: string): Mot[] {
   const mots: Mot[] = []
   let gras = false
   let teinte: Teinte | undefined
-  // TROIS BALISES COLORENT, et toutes les trois mettent en gras : `<k>` pour un
-  // MOT-CLÉ, `<d>` pour ce qu'on inflige, `<p>` pour ce qu'on encaisse. *C'est
-  // le rendu qui décide de ce qu'une balise vaut* — le jeu 2D, qui n'a qu'un
-  // accent par carte, les fait toutes retomber sur `<b>`.
+  // **UNE BALISE, UN AXE** : `<b>` porte la GRAISSE, les quatre autres la
+  // COULEUR — `<k>` pour un mot-clé, `<d>` pour ce qu'on inflige, `<p>` pour ce
+  // qu'on encaisse, `<s>` pour ce qu'on soigne.
+  //
+  // *Elles mettaient aussi en gras, et ça ne pouvait plus tenir* : Keko veut le
+  // VERBE de la couleur de son chiffre — « Inflige » en rouge, « Bloque » en
+  // bleu — mais le gras reste réservé aux chiffres et aux mots-règles. **Deux
+  // décisions qui ne portent pas sur les mêmes mots ne peuvent pas voyager dans
+  // la même balise**, et une couleur qui emporte une graisse avec elle oblige à
+  // choisir entre les deux.
+  //
+  // Les deux s'imbriquent donc librement : `<d>Inflige <b>6</b></d>` colore les
+  // deux mots et n'appuie que le chiffre.
   const COLORENT: Record<string, Teinte> = { '<k>': 'cle', '<d>': 'degats', '<p>': 'bloc', '<s>': 'soin' }
   // L'INSÉCABLE SURVIT AU DÉCOUPAGE, il n'est plus aplati en espace. C'est lui
   // qui porte le lien, et il valait un espace ordinaire jusqu'ici — donc le
@@ -1542,11 +1551,8 @@ function enMots(entree: string): Mot[] {
     if (bout.startsWith('<')) {
       if (bout === '<b>') gras = true
       else if (bout === '</b>') gras = false
-      else if (COLORENT[bout] !== undefined) {
-        gras = true
-        teinte = COLORENT[bout]
-      } else if (bout === '</k>' || bout === '</d>' || bout === '</p>' || bout === '</s>') {
-        gras = false
+      else if (COLORENT[bout] !== undefined) teinte = COLORENT[bout]
+      else if (bout === '</k>' || bout === '</d>' || bout === '</p>' || bout === '</s>') {
         teinte = undefined
       }
       continue
@@ -2935,8 +2941,21 @@ export function textureGlossaire(
   ctx.textBaseline = 'alphabetic'
   let haut = MARGE_GLOSSAIRE(corps)
   entrees.forEach((entree) => {
-    // LE MOT-CLÉ EN CINZEL, SON SENS EN CRIMSON : la voix des noms et celle
-    // des effets, exactement comme sur une carte.
+    // LE TITRE EST LE MOT DE LA CARTE, REPRIS TEL QUEL : même police, même
+    // casse, même couleur, même graisse. *L'encadré définit un mot qu'on vient
+    // de lire* — il n'a pas à le redessiner d'une autre main.
+    //
+    // **Il était en CINZEL, et c'est ce qui l'empêchait de passer en
+    // minuscules.** Keko : « passe les titres en minuscule, juste maj première
+    // lettre » — or *Cinzel n'a pas de bas-de-casse*, ses minuscules sont des
+    // PETITES CAPITALES : mesuré, un « x » y monte à 60 quand un « X » monte à
+    // 70. La casse ordinaire n'y aurait donné qu'un mot en petites capitales à
+    // initiale haute, pas des minuscules.
+    //
+    // *Et le commentaire d'avant disait faux* : il justifiait Cinzel par « la
+    // voix des noms, exactement comme sur une carte », alors que sur une carte
+    // le mot-clé vit dans le CARTOUCHE — donc en Crimson, comme tout le texte
+    // d'effet. L'encadré parlait d'une voix que la carte n'a jamais eue.
     // ET C'EST LA MÊME COULEUR QUE DANS LE TEXTE, lue au même endroit : *la
     // couleur dit qu'il y a une définition quelque part, et c'est celle du
     // titre qui la porte* — deux valeurs écrites chacune de leur côté se
@@ -2952,12 +2971,20 @@ export function textureGlossaire(
     // Tranché par Keko. *Un mot-clé est un nom, pas l'amorce d'une phrase* :
     // les deux-points en faisaient une légende, alors que l'encadré est une
     // entrée de glossaire — un titre, puis sa définition.
-    const mot = entree.mot.toUpperCase()
-    ctx.font = `600 ${titre}px Cinzel, Georgia, serif`
+    //
+    // **ET IL EST EN CASSE ORDINAIRE**, demandé par Keko : il a été en
+    // capitales le temps que l'encadré soit plus gros que la carte, et *des
+    // capitales sont une enseigne — elles disent un rang, pas un nom.* Il est à
+    // la taille du texte depuis, donc il n'a plus à crier pour s'en distinguer :
+    // sa police suffit, Cinzel contre Crimson, la voix des noms contre celle des
+    // effets. C'est exactement le raisonnement qui avait refusé Grenze Gotisch
+    // en capitales espacées sur le bandeau du hub.
+    const mot = entree.mot.charAt(0).toUpperCase() + entree.mot.slice(1)
+    ctx.font = `700 ${titre}px "Crimson Pro", Georgia, serif`
     const largeMot = ctx.measureText(mot).width
     if (largeMot > place) {
       titre *= place / largeMot
-      ctx.font = `600 ${titre}px Cinzel, Georgia, serif`
+      ctx.font = `700 ${titre}px "Crimson Pro", Georgia, serif`
     }
     ctx.fillText(mot, MARGE_GLOSSAIRE(corps), haut + corps * 1.016)
     ctx.fillStyle = '#cfc6b4'

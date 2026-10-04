@@ -2729,6 +2729,22 @@ en faisaient une légende, alors que l'encadré est une entrée de glossaire —
 titre, puis sa définition. La majuscule se pose au RENDU et non dans la donnée,
 qui reste une phrase ordinaire.
 
+**ET LE TITRE EST LE MOT DE LA CARTE, REPRIS TEL QUEL** : même police, même
+casse, même couleur, même graisse. Keko : « passe les titres des encadrés en
+minuscule, juste maj première lettre ». *L'encadré définit un mot qu'on vient de
+lire* — il n'a pas à le redessiner d'une autre main.
+
+**ET C'EST LA POLICE QUI L'EN EMPÊCHAIT, pas la casse.** Il était en Cinzel, et
+*Cinzel n'a pas de bas-de-casse* : ses minuscules sont des PETITES CAPITALES —
+mesuré, un « x » y monte à 60 quand un « X » monte à 70. Passer en casse
+ordinaire n'aurait donné qu'un mot en petites capitales à initiale haute. Il
+est donc en Crimson Pro, gras, comme le mot l'est dans le cartouche.
+
+*Et le commentaire qui justifiait Cinzel disait faux* : « la voix des noms,
+exactement comme sur une carte » — alors que sur une carte le mot-clé vit dans
+le CARTOUCHE, donc en Crimson comme tout le texte d'effet. **L'encadré parlait
+d'une voix que la carte n'a jamais eue.**
+
 **ET UN MOT-CLÉ EST JAUNE DANS LE TEXTE DE LA CARTE**, de la couleur du titre
 de son encadré. Demandé par Keko. *Deux signaux pour un seul fait seraient un
 de trop* : le mot était déjà en gras comme les chiffres, donc rien ne le
@@ -2773,6 +2789,25 @@ ne dit pas une couleur, elle dit un reflet.** Les trois valent aujourd'hui 148 �
 163 d'écart entre leur canal le plus fort et le plus faible : *deux teintes qui
 doivent se lire comme une paire ne peuvent pas avoir deux saturations*, sinon
 l'une crie et l'autre se fond.
+
+**ET LE VERBE PORTE LA COULEUR DE SON CHIFFRE.** Keko : « passe le mot
+"inflige" en rouge comme le chiffre, et pareil pour "bloque" en bleu ».
+*Un verbe et son chiffre disent une seule chose* — « Inflige 6 » est un bloc, et
+le couper en deux couleurs le faisait lire en deux temps. « Soigne » suit, par
+la même règle.
+
+**ET ÇA A DEMANDÉ DE SÉPARER LA COULEUR DE LA GRAISSE.** Les balises de teinte
+mettaient aussi en gras, ce qui allait tant qu'elles ne portaient que des
+chiffres ; **le gras, lui, reste réservé aux chiffres et aux mots-règles** —
+« attaque », « blocage ». *Deux décisions qui ne portent pas sur les mêmes mots
+ne peuvent pas voyager dans la même balise.* Désormais `<b>` porte la graisse,
+`<d>`, `<p>`, `<s>` et `<k>` la couleur, et les deux s'imbriquent :
+`<d>Inflige <b>6</b></d>` colore les deux mots et n'appuie que le chiffre.
+
+*Conséquence sur le jeu 2D* : `enClair` SUPPRIME les balises de couleur au lieu
+de les convertir en gras — le gras est maintenant écrit dans le texte, donc les
+convertir mettrait « Inflige » en gras et en accent de carte. Vérifié sur les
+sept modèles : le 2D rend exactement ce qu'il rendait avant.
 
 **ET LE SOIN EST VERT**, demandé par Keko dans la foulée — c'est le vert de la
 SÈVE, le voile qui illumine la barre de vie quand elle reçoit un soin,
