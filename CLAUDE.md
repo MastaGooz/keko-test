@@ -2850,6 +2850,18 @@ quelle ; mais le jour où l'un l'oublierait, un chiffre de soin sortirait rayé.
 elle est jouée ». Formulation de Keko, en même temps que celle de la Potion —
 « Soigne N blessures », puis le mot-clé en dessous.
 
+**PUIS LE MOT-CLÉ EST RENTRÉ DANS LA PHRASE** : « Consommable : soigne 14
+blessures ». Tranché par Keko. *Une ligne qui ne porte qu'un mot se lit comme
+une étiquette collée après coup* — alors que le mot-clé dit ce qu'EST la carte,
+donc il ouvre ce qu'elle fait. Elle y gagne une ligne de cartouche, et le jaune
+continue de dire qu'il y a une définition à aller lire.
+
+**L'espace du deux-points est INSÉCABLE**, comme le veut le français — et c'est
+ce qui a demandé que le lien se pose des DEUX CÔTÉS d'un mot dans `enMots` :
+l'espace vient AVANT le signe, donc il arrive en tête d'un bout juste après une
+balise fermante. *Un deux-points en fin de ligne n'est pas une coupure, c'est
+une faute de composition.*
+
 **ET TOUTES LES CARTES PARLENT DE BLESSURES, plus de dégâts.** Tranché par Keko
 dans la foulée : « on peut remplacer dégâts par blessure dans toutes les
 cartes ».

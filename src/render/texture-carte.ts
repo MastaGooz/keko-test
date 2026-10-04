@@ -1590,15 +1590,28 @@ function enMots(entree: string): Mot[] {
     }
     for (const brut of bout.split(' ')) {
       if (brut === '') continue
-      // UN INSÉCABLE EN FIN DE MOT LIE CE MOT AU SUIVANT, par-dessus la balise
-      // qui les sépare. *À l'intérieur d'un même mot, il n'y a rien à marquer* :
-      // les deux moitiés sont déjà inséparables et de la même couleur, il suffit
-      // de rendre l'espace à l'affichage.
-      const lie = brut.endsWith(' ')
-      const mot = (lie ? brut.slice(0, -1) : brut).replace(/ /g, ' ')
+      // UN INSÉCABLE LIE DEUX MOTS PAR-DESSUS LA BALISE QUI LES SÉPARE, et il
+      // compte des DEUX CÔTÉS : en fin de mot il retient le suivant, en tête il
+      // se rattache au précédent. *Le second cas est celui du deux-points
+      // français*, qui prend son espace insécable AVANT lui — et il arrive donc
+      // en tête de bout, juste après une balise fermante.
+      //
+      // *À l'intérieur d'un même mot, il n'y a rien à marquer* : les deux
+      // moitiés sont déjà inséparables et de la même couleur, il suffit de
+      // rendre l'espace à l'affichage.
+      const avant = brut.startsWith(' ')
+      const apres = brut.endsWith(' ')
+      const mot = brut.replace(/^ /, '').replace(/ $/, '').replace(/ /g, ' ')
+      // Un insécable SEUL entre deux balises ne porte pas de mot : il ne fait
+      // que passer le lien au suivant.
+      if (mot === '') {
+        colle = colle || avant || apres
+        continue
+      }
+      const lie = colle || avant
       const jeton = lireJeton(mot)
-      mots.push(jeton === null ? { texte: mot, gras, teinte, colle } : { jeton, colle })
-      colle = lie
+      mots.push(jeton === null ? { texte: mot, gras, teinte, colle: lie } : { jeton, colle: lie })
+      colle = apres
     }
   }
   return mots

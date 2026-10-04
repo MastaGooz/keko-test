@@ -122,11 +122,27 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
          * de personnage, « blessure » est ce que le coup a fait. C'est la même
          * raison qui a fait des points d'action plutôt que de l'énergie.
          */
-        l.push(`<s>Soigne <b>${e.montant}</b></s> ${blessures(e.montant)}`)
-        // Une carte à usages ne l'écrit pas : ses charges sont des pastilles.
-        // Une carte qui s'exile porte le MOT-CLÉ, et l'encadré du zoom dit ce
-        // qu'il veut dire — *un mot-clé est un nom, pas une phrase.*
-        if (carte.usages === undefined && carte.exil === true) l.push(`<k><b>Consommable</b></k>`)
+        /**
+         * **LE MOT-CLÉ PASSE EN TÊTE, et la phrase le suit.** Keko : « pour les
+         * potions on devrait mettre *Consommable : soigne 14 blessures* ».
+         *
+         * Il vivait sur sa propre ligne, sous l'effet. *Une ligne qui ne porte
+         * qu'un mot se lit comme une étiquette collée après coup* — alors que
+         * le mot dit ce que la carte EST, donc il ouvre la phrase plutôt que de
+         * la clore. Une carte à usages ne l'écrit toujours pas : ses charges
+         * sont des pastilles.
+         *
+         * **L'espace du deux-points est INSÉCABLE**, comme le veut la
+         * typographie française — et ça règle du même coup l'orphelin : sans
+         * elle, le « : » pouvait finir seul au bout de sa ligne, loin du mot
+         * qu'il annonce.
+         */
+        const exile = carte.usages === undefined && carte.exil === true
+        l.push(
+          exile
+            ? `<k><b>Consommable</b></k>&nbsp;: <s>soigne <b>${e.montant}</b></s> ${blessures(e.montant)}`
+            : `<s>Soigne <b>${e.montant}</b></s> ${blessures(e.montant)}`,
+        )
       }
     }
     // POINTS D'ACTION, ET PAS « ÉNERGIE » : le mot renvoie au TEMPS, et c'est
