@@ -2862,6 +2862,17 @@ l'espace vient AVANT le signe, donc il arrive en tête d'un bout juste après un
 balise fermante. *Un deux-points en fin de ligne n'est pas une coupure, c'est
 une faute de composition.*
 
+**PUIS LA COUPURE EST DEVENUE DÉCLARÉE : on va à la ligne après le `:`.**
+Tranché par Keko. Le repli la posait là où la mesure tombait — « soigne 14 »
+montait avec le mot-clé et « blessures » restait seul en dessous, donc *la
+coupure tombait au milieu de ce qu'elle annonce.* **Le deux-points, lui, EST
+une coupure** : l'énoncé d'un côté, ce qu'il énonce de l'autre.
+
+C'est la règle des noms de cases du chargement — *une coupure se déclare, elle
+ne se déduit pas* — et elle ne coûte rien à écrire : une ligne du cartouche est
+une entrée du tableau, et **chaque entrée se replie pour son compte** dans les
+deux moteurs (le canvas par `replier`, le DOM par `<br>`).
+
 **ET TOUTES LES CARTES PARLENT DE BLESSURES, plus de dégâts.** Tranché par Keko
 dans la foulée : « on peut remplacer dégâts par blessure dans toutes les
 cartes ».

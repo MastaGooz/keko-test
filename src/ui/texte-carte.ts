@@ -132,15 +132,26 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
          * la clore. Une carte à usages ne l'écrit toujours pas : ses charges
          * sont des pastilles.
          *
-         * **L'espace du deux-points est INSÉCABLE**, comme le veut la
-         * typographie française — et ça règle du même coup l'orphelin : sans
-         * elle, le « : » pouvait finir seul au bout de sa ligne, loin du mot
-         * qu'il annonce.
+         * **ET LA COUPURE EST DÉCLARÉE : on va à la ligne après le `:`.**
+         * Tranché par Keko. Le repli la posait où la mesure tombait — « soigne
+         * 14 » montait alors avec le mot-clé et « blessures » restait seul en
+         * dessous, donc *la coupure tombait au milieu de ce qu'elle annonce.*
+         * Le deux-points, lui, EST une coupure : l'énoncé d'un côté, ce qu'il
+         * énonce de l'autre.
+         *
+         * C'est la règle des noms de cases du chargement — *une coupure se
+         * déclare, elle ne se déduit pas* — et **le repli à la mesure reste
+         * derrière**, chaque ligne étant repliée pour son compte.
+         *
+         * *L'espace du deux-points reste insécable*, comme le veut la
+         * typographie française ; elle ne décide plus de la coupure, mais c'est
+         * la bonne espace.
          */
         const exile = carte.usages === undefined && carte.exil === true
+        if (exile) l.push('<k><b>Consommable</b></k>&nbsp;:')
         l.push(
           exile
-            ? `<k><b>Consommable</b></k>&nbsp;: <s>soigne <b>${e.montant}</b></s> ${blessures(e.montant)}`
+            ? `<s>soigne <b>${e.montant}</b></s> ${blessures(e.montant)}`
             : `<s>Soigne <b>${e.montant}</b></s> ${blessures(e.montant)}`,
         )
       }
