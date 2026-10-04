@@ -1802,6 +1802,12 @@ VRAIES cartes qu'on retrouvera en main*, donc elle doit porter **toutes** les
 étiquettes de la pièce : **une liste d'héritages est une liste qu'on oublie de
 compléter.**
 
+**ET L'AGILITÉ A LA SIENNE** (`Agilité.webp`), ce qui achève le deck de départ.
+*Le nom du fichier porte son accent*, et il est recopié depuis le disque plutôt
+que réécrit : `cle()` retire les diacritiques pour l'index (`agilite`), mais
+l'URL, elle, part telle quelle — et un accent deviné marche sur la machine de
+dev avant de faire un 404 en ligne. Vérifié octet pour octet, et en NFC.
+
 **L'ARMURE DE PLATE ATTEND, et son dessin avec.** Elle est la seule des quatre à
 n'avoir aucune Protection — elle ne donne que des Remparts — et lui en donner
 une changerait ses chiffres : 22 de bloc pour 4 PA contre 16 pour 3. *C'est du
@@ -2209,9 +2215,9 @@ attend donc au coffre, comme l'Espadon.
 supposant qu'une arme sert à tuer. Avec la Rondache seule, on part avec deux
 cartes sur trois qui n'attaquent pas.
 
-**Ses deux modèles n'ont pas d'illustration** : ils sortent avec le sceau de
-repli (`defaut.svg`), ce qui est exactement ce que ce sceau est là pour dire —
-mais sur le ciel rouge de leur arme, depuis que le repli a rendu son fond.
+**Ses deux modèles ont leur illustration** depuis que Keko les a dessinés
+(`Bloquage.webp`, `Coup de bouclier.webp`) — et avec l'Agilité, **tout le deck
+de départ est illustré** : il ne reste plus un seul sceau de repli en jeu.
 
 **L'ARMURE COMMUNE S'APPELLE « ARMURE DE PLATE »** depuis que Keko lui a dessiné
 sa plate (`Armure de plate.webp`). *Son identifiant ne bouge pas* : il ne se lit
