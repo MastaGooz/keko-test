@@ -1070,6 +1070,23 @@ function fondTeinte(ciel: Ciel): Promise<HTMLImageElement | HTMLCanvasElement | 
  *
  * Si un navigateur ignorait `imageSmoothingQuality`, il retomberait sur la
  * qualité basse — l'état d'avant, pas pire.
+ *
+ * **ET IL SE POSE EN `contain`, JAMAIS DANS UN CARRÉ IMPOSÉ.** Le fichier a
+ * d'abord été carré (1254 x 1254), donc l'étirer dans une boîte carrée ne se
+ * voyait pas ; la mise à jour de Keko fait 1226 x 1167, et le même code
+ * l'aurait **comprimée de 5 % en largeur** — le disque serait devenu un ovale,
+ * sans qu'aucune erreur ne le dise. *Une image dessinée par Keko se pose comme
+ * il l'a dessinée* : on lit le rapport de ce qu'on a vraiment chargé, la règle
+ * déjà payée sur les créatures et sur le dos de carte.
+ *
+ * **Et c'est EXACTEMENT ce que fait le `<img>` de l'orbe du joueur**
+ * (`object-fit: contain`), ce qui est tout l'intérêt : *un seul fichier, trois
+ * endroits, et ils ne peuvent pas se poser de trois façons.*
+ *
+ * *Ce que `contain` borne ici est la LARGEUR*, puisque le dessin est plus large
+ * que haut — donc **le diamètre du disque ne bouge pas** (80,7 % de la largeur
+ * contre 81,7 % avant, mesuré), et les réglages validés par Keko sur le chiffre
+ * qu'il contient tiennent sans retouche.
  */
 function poserSymbole(
   ctx: CanvasRenderingContext2D,
@@ -1079,7 +1096,10 @@ function poserSymbole(
   taille: number,
 ): void {
   ctx.imageSmoothingQuality = 'high'
-  ctx.drawImage(image, x, y, taille, taille)
+  const echelle = Math.min(taille / image.width, taille / image.height)
+  const l = image.width * echelle
+  const h = image.height * echelle
+  ctx.drawImage(image, x + (taille - l) / 2, y + (taille - h) / 2, l, h)
 }
 
 /** Le symbole du coût, chargé une fois lui aussi. */

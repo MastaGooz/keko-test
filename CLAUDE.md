@@ -8249,6 +8249,25 @@ main :
 c'est la mesure qui l'a dit, pas l'oeil : les deux versions se ressemblent sur
 une capture.
 
+**ET ELLE SE POSE EN `contain`, JAMAIS DANS UN CARRÉ IMPOSÉ.** Le fichier a
+d'abord été CARRÉ (1254 x 1254), donc l'étirer dans une boîte carrée ne se
+voyait pas ; la mise à jour de Keko fait **1226 x 1167**, et le même code
+l'aurait **comprimée de 5 % en largeur** — le disque serait devenu un ovale,
+*sans qu'aucune erreur ne le dise.* **Une supposition sur un fichier cesse
+d'être vraie le jour où le fichier change**, et c'est la cinquième fois que
+cette règle se paie (l'intention du Cultiste, les repères des gobelins, le
+cadrage du Fossoyeur, le dos de carte).
+
+**Et c'est exactement ce que fait déjà le `<img>` de l'orbe du joueur**
+(`object-fit: contain`) : *un seul fichier, trois endroits, et ils ne peuvent
+plus se poser de trois façons.*
+
+*Ce que `contain` borne ici est la LARGEUR*, puisque le dessin est plus large
+que haut — donc **le diamètre du disque ne bouge pas** : 80,7 % de la largeur
+contre 81,7 % avant, mesuré sur l'alpha. Les réglages validés par Keko sur le
+chiffre qu'il contient tiennent donc sans retouche, y compris le rapport de
+1,86 de la bande de stats et les deux corrections de centrage.
+
 **Keko a choisi l'ORBE** : « essayons l'orbe, mais il faudrait une orbe sur les
 cartes, puis le même symbole avec X/X dans l'interface de combat ». C'est la
 règle prise au mot — le joueur voit le même objet sur sa carte et dans son coin
