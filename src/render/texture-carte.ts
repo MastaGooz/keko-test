@@ -1408,15 +1408,73 @@ function peindreJeton(
  * n'est pas un mot-clé et n'a pas d'encadré. **La couleur dit qu'il y a une
  * définition quelque part**, et c'est celle du titre qui la porte.
  */
-const OR_MOT_CLE = '#e9d9ae'
+/**
+ * **UN MOT-CLÉ EST JAUNE, et c'est le jaune du JEU.** Il a d'abord été la crème
+ * du titre de son encadré (`#e9d9ae`) ; Keko : « on peut mettre les mots clés
+ * dans une couleur plus proche du jaune, plus visibles ? »
+ *
+ * *Une crème désaturée ne se distingue pas de l'ivoire du texte qu'elle
+ * traverse* — elle disait « un peu plus clair », pas « va lire ailleurs ».
+ * C'est l'ambre de l'énergie, la couleur que le jeu 2D porte depuis toujours
+ * sur `--energie`, donc **on n'invente rien** : le jaune de ce jeu existe déjà.
+ *
+ * **Et le titre de l'encadré la suit**, puisque c'est tout le principe : la
+ * couleur dit qu'il y a une définition quelque part, et c'est celle du titre
+ * qui la porte. Elle était écrite deux fois — *deux endroits qui décrivent la
+ * même couleur se désaccordent au premier réglage*, et c'est exactement ce qui
+ * serait arrivé ici.
+ */
+const OR_MOT_CLE = '#ffc65c'
 
-type Mot = { texte: string; gras: boolean; cle?: boolean } | { jeton: Jeton }
+/**
+ * **UN CHIFFRE PORTE LA COULEUR DE SA NATURE** : rouge ce qu'on inflige, bleu
+ * ce qu'on encaisse. Demandé par Keko.
+ *
+ * *C'est une règle du jeu 2D que le 3D n'avait pas portée* — « seul le chiffre
+ * DANS le texte garde la couleur de sa nature », écrit le jour où l'écusson du
+ * coût a cessé d'être coloré. Les deux teintes sont celles de la racine
+ * (`--ennemi`, et l'accent des cartes de défense) : **on ne colore pas, on
+ * reprend.**
+ *
+ * **Mais c'est par CHIFFRE et non par carte**, et c'est ce qui change du 2D :
+ * là-bas l'accent teinte tous les gras d'une même carte, donc le Coup de
+ * bouclier peignait en bleu le chiffre de ce qu'il INFLIGE. *Une carte peut
+ * dire les deux choses dans la même phrase* — la Riposte le fait — donc la
+ * nature se balise au chiffre, pas à la carte.
+ *
+ * **ET LES TROIS ONT LE MÊME ÉCART AU GRIS, sinon une seule se lit.** Le bleu
+ * a d'abord été l'accent pâle des cartes de défense (`#9fd0ff`) : il était
+ * bien peint — mesuré sur la texture, 271 pixels exactement à cette valeur —
+ * et il se lisait blanc. *Une couleur claire et peu saturée posée à côté d'un
+ * crème ne dit pas une couleur, elle dit un reflet.* Les trois valent
+ * aujourd'hui 148 à 163 d'écart entre leur canal le plus fort et le plus
+ * faible : **deux teintes qui doivent se lire comme une paire ne peuvent pas
+ * avoir deux saturations**, sinon l'une crie et l'autre se fond.
+ */
+const ROUGE_DEGATS = '#ff6b6b'
+const BLEU_BLOC = '#5cc8ff'
+
+/** Ce qu'un mot dit de lui-même, et qui décide de sa couleur. */
+type Teinte = 'cle' | 'degats' | 'bloc'
+
+const TEINTES: Record<Teinte, string> = {
+  cle: OR_MOT_CLE,
+  degats: ROUGE_DEGATS,
+  bloc: BLEU_BLOC,
+}
+
+type Mot = { texte: string; gras: boolean; teinte?: Teinte } | { jeton: Jeton }
 
 /** Découpe une entrée balisée en mots, chacun porteur de sa graisse. */
 function enMots(entree: string): Mot[] {
   const mots: Mot[] = []
   let gras = false
-  let cle = false
+  let teinte: Teinte | undefined
+  // TROIS BALISES COLORENT, et toutes les trois mettent en gras : `<k>` pour un
+  // MOT-CLÉ, `<d>` pour ce qu'on inflige, `<p>` pour ce qu'on encaisse. *C'est
+  // le rendu qui décide de ce qu'une balise vaut* — le jeu 2D, qui n'a qu'un
+  // accent par carte, les fait toutes retomber sur `<b>`.
+  const COLORENT: Record<string, Teinte> = { '<k>': 'cle', '<d>': 'degats', '<p>': 'bloc' }
   // On coupe sur les balises ET sur les espaces : une balise peut ouvrir au
   // milieu d'une ligne, et un mot ne porte qu'une graisse.
   for (const bout of entree.replace(/&nbsp;/g, ' ').split(/(<\/?[^>]+>)/)) {
@@ -1424,22 +1482,19 @@ function enMots(entree: string): Mot[] {
     if (bout.startsWith('<')) {
       if (bout === '<b>') gras = true
       else if (bout === '</b>') gras = false
-      // `<k>` : un MOT-CLÉ. Il est gras comme le reste, et il porte l'or de son
-      // encadré — une balise à lui plutôt qu'une couleur écrite dans le texte,
-      // *parce que c'est le rendu qui décide de ce qu'une balise vaut.*
-      else if (bout === '<k>') {
+      else if (COLORENT[bout] !== undefined) {
         gras = true
-        cle = true
-      } else if (bout === '</k>') {
+        teinte = COLORENT[bout]
+      } else if (bout === '</k>' || bout === '</d>' || bout === '</p>') {
         gras = false
-        cle = false
+        teinte = undefined
       }
       continue
     }
     for (const mot of bout.split(' ')) {
       if (mot === '') continue
       const jeton = lireJeton(mot)
-      mots.push(jeton === null ? { texte: mot, gras, cle } : { jeton })
+      mots.push(jeton === null ? { texte: mot, gras, teinte } : { jeton })
     }
   }
   return mots
@@ -1498,7 +1553,7 @@ function ecrireLigne(
       return
     }
     ctx.font = policeMot(taille, mot.gras)
-    ctx.fillStyle = mot.cle === true ? OR_MOT_CLE : couleur
+    ctx.fillStyle = mot.teinte === undefined ? couleur : TEINTES[mot.teinte]
     ctx.fillText(mot.texte, x, y)
     x += ctx.measureText(mot.texte).width
   })
@@ -2794,7 +2849,11 @@ export function textureGlossaire(
   entrees.forEach((entree) => {
     // LE MOT-CLÉ EN CINZEL, SON SENS EN CRIMSON : la voix des noms et celle
     // des effets, exactement comme sur une carte.
-    ctx.fillStyle = '#e9d9ae'
+    // ET C'EST LA MÊME COULEUR QUE DANS LE TEXTE, lue au même endroit : *la
+    // couleur dit qu'il y a une définition quelque part, et c'est celle du
+    // titre qui la porte* — deux valeurs écrites chacune de leur côté se
+    // seraient désaccordées au premier réglage, et ça a failli arriver.
+    ctx.fillStyle = OR_MOT_CLE
     const place = 100 - 2 * MARGE_GLOSSAIRE
     // Le mot CÈDE lui aussi s'il ne tient pas : un canvas écrit tout droit et
     // laisse déborder sans rien signaler.

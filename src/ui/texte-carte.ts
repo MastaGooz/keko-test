@@ -64,7 +64,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   const etourdit = carte.effets?.some((e) => e.type === 'etourdit') === true
   if (carte.degats > 0)
     l.push(
-        `Inflige <b>${carte.degats}</b> ${blessures(carte.degats)}${etourdit ? ' et <k>étourdissement</k>' : ''}`,
+        `Inflige <d>${carte.degats}</d> ${blessures(carte.degats)}${etourdit ? ' et <k>étourdissement</k>' : ''}`,
       )
   else if (etourdit) l.push(`<k>Étourdissement</k>`)
   // SES DÉGÂTS SONT TA DÉFENSE : on ne peut pas écrire un chiffre, donc on
@@ -82,7 +82,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   // un joueur qui lit « 1 par blocage » sait quoi faire de sa prochaine carte,
   // là où « égal à votre défense » demandait d'aller chercher le chiffre.
   if (carte.degatsDuBloc === true)
-    l.push(`Inflige <b>1</b> blessure pour chaque blocage que vous avez`)
+    l.push(`Inflige <d>1</d> blessure pour chaque blocage que vous avez`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
@@ -90,7 +90,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // à la fin de chaque tour, sans exception* — c'est une règle du jeu, pas
     // une clause de cette carte-ci, et une condition écrite sur toutes les
     // cartes de défense cesse d'être une condition.
-    if (e.type === 'bloc') l.push(`Bloque <b>${e.montant}</b> ${blessures(e.montant)}`)
+    if (e.type === 'bloc') l.push(`Bloque <p>${e.montant}</p> ${blessures(e.montant)}`)
     // L'ESQUIVE DIT SA DURÉE, comme la riposte : *c'est une clause de cette
     // carte-ci, pas une règle du jeu* — sans elle on la croirait permanente.
     if (e.type === 'esquive') l.push(`Gagne <k>esquive</k> jusqu'à votre prochain tour`)
@@ -124,7 +124,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // ce que Keko veut dire — *plus une carte coûte, plus l'action est longue
     // et puissante.* Le code garde `energie` partout, c'est un nom interne.
     if (e.type === 'energie') l.push(`Donne <b>+${e.montant}</b> points d'action`)
-    if (e.type === 'degatsTous') l.push(`Inflige <b>${e.montant}</b> à chaque ennemi`)
+    if (e.type === 'degatsTous') l.push(`Inflige <d>${e.montant}</d> à chaque ennemi`)
     // LA RIPOSTE DIT SA DURÉE, là où le bloc ne la dit plus : *le bloc tombe à
     // chaque fin de tour, c'est une règle du jeu ; la riposte, elle, est une
     // clause de CETTE carte* — et sans elle on la croirait permanente.
@@ -142,7 +142,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // tour » : la carte se joue AVANT la salve, donc c'est elle qu'on couvre.
     if (e.type === 'riposte')
       l.push(
-        `Jusqu'au prochain tour, les ennemis qui vous <b>attaquent</b> subissent <b>${e.montant}</b> ${blessures(e.montant)}`,
+        `Jusqu'au prochain tour, les ennemis qui vous <b>attaquent</b> subissent <d>${e.montant}</d> ${blessures(e.montant)}`,
       )
 
   }
@@ -177,7 +177,9 @@ export function enClair(ligne: string): string {
   // `<k>` est la balise des MOTS-CLÉS, que seul le canvas sait colorer : en 2D
   // elle retombe sur le gras. *Un moteur qui ne sait pas montrer une chose ne
   // doit pas cesser de la dire.*
-  ligne = ligne.replace(/<\/?k>/g, (b) => (b === '<k>' ? '<b>' : '</b>'))
+  // `<d>` (dégâts) et `<p>` (protection) de même : le canvas les colore en
+  // rouge et en bleu, le DOM n'a qu'un accent par carte et les rend en gras.
+  ligne = ligne.replace(/<\/?[kdp]>/g, (b) => (b.startsWith('</') ? '</b>' : '<b>'))
   return ligne.replace(/\{pa:(\d+)\}/g, '<b>$1</b> PA')
 }
 

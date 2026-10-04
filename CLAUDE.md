@@ -2679,6 +2679,43 @@ qui le porte.
 texte : *c'est le rendu qui décide de ce qu'une balise vaut*, et le jeu 2D, qui
 ne sait pas colorer, la fait retomber sur le gras.
 
+**ET C'EST LE JAUNE DU JEU, plus la crème du titre.** Keko : « on peut mettre
+les mots clés dans une couleur plus proche du jaune, plus visibles ? » *Une
+crème désaturée ne se distingue pas de l'ivoire du texte qu'elle traverse* —
+elle disait « un peu plus clair », pas « va lire ailleurs ». C'est l'ambre de
+l'énergie (`--energie`, `#ffc65c`), donc **on n'invente rien** : le jaune de ce
+jeu existe déjà. Le titre de l'encadré la suit, et **les deux la lisent au même
+endroit** : elle était écrite deux fois, et *deux endroits qui décrivent la même
+couleur se désaccordent au premier réglage.*
+
+**ET UN CHIFFRE PORTE LA COULEUR DE SA NATURE** : rouge ce qu'on inflige, bleu
+ce qu'on encaisse. Demandé par Keko dans la foulée.
+
+*C'est une règle du jeu 2D que le 3D n'avait pas portée* — « seul le chiffre
+DANS le texte garde la couleur de sa nature », écrit le jour où l'écusson du
+coût a cessé d'être coloré. Les deux teintes sont celles de la racine
+(`--ennemi`, et l'accent des cartes de défense) : **on ne colore pas, on
+reprend.**
+
+**Mais c'est par CHIFFRE et non par carte**, et c'est ce qui change du 2D : là
+-bas l'accent teinte tous les gras d'une même carte, donc le Coup de bouclier
+peignait en bleu le chiffre de ce qu'il INFLIGE. *Une carte peut dire les deux
+choses dans la même phrase* — la Riposte le fait — donc la nature se balise au
+chiffre : `<d>` pour les dégâts, `<p>` pour la protection, et le 2D les fait
+retomber sur le gras comme `<k>`.
+
+**ET LES TROIS COULEURS ONT LE MÊME ÉCART AU GRIS, sinon une seule se lit.** Le
+bleu a d'abord été l'accent pâle des cartes de défense (`#9fd0ff`) : il était
+bien peint — *mesuré sur la texture, 271 pixels exactement à cette valeur* — et
+il se lisait blanc. **Une couleur claire et peu saturée posée à côté d'un crème
+ne dit pas une couleur, elle dit un reflet.** Les trois valent aujourd'hui 148 à
+163 d'écart entre leur canal le plus fort et le plus faible : *deux teintes qui
+doivent se lire comme une paire ne peuvent pas avoir deux saturations*, sinon
+l'une crie et l'autre se fond.
+
+*Le soin reste en blanc* : Keko n'a nommé que les deux, et un chiffre de soin
+n'est ni l'un ni l'autre.
+
 **ET LE SECOND MOT-CLÉ EST « CONSOMMABLE »** : « la carte est détruite quand
 elle est jouée ». Formulation de Keko, en même temps que celle de la Potion —
 « Soigne N blessures », puis le mot-clé en dessous.
