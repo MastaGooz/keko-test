@@ -1149,6 +1149,25 @@ function couvrir(
  * compter ses lignes.
  */
 const CRANS_EFFET = [7, 6.4, 5.4] as const
+
+/**
+ * **LE CORPS QUE L'ENCADRÉ DOIT PRENDRE POUR PARLER À LA VOIX D'UNE CARTE.**
+ *
+ * Les deux textes sont écrits dans leur propre repère de 100 unités de large —
+ * la carte pour le cartouche, la plaque pour le glossaire — donc à l'écran leur
+ * corps est dans le rapport de leurs LARGEURS. *Deux repères qui s'ignorent
+ * donnent deux échelles*, et c'est ce que Keko lisait comme « trop gros sur
+ * PC » : la plaque a un plancher en pixels pour rester lisible sur téléphone,
+ * et sur un grand écran ce plancher ne mord plus.
+ *
+ * On prend le cran du HAUT, celui d'une description ordinaire. *Le cartouche
+ * d'une carte longue descend d'un cran, mais l'encadré ne peut pas le suivre* :
+ * il se montre à côté de plusieurs cartes, et **un encadré qui changerait de
+ * corps d'une carte à l'autre se lirait comme deux objets différents.**
+ */
+export function corpsGlossaire(largeurCarte: number, largeurPlaque: number): number {
+  return CRANS_EFFET[0] * (largeurCarte / largeurPlaque)
+}
 /** Jusqu'où le cartouche peut descendre avant de mordre sur le pied. */
 const BAS_CARTOUCHE = 0.915
 /** D'où part sa première ligne. */
@@ -1207,8 +1226,16 @@ function replier(
       // de son écriture : on mesure le DESSIN, sinon la ligne déborderait de
       // la différence — et *le canvas ne prévient jamais qu'il déborde.*
       if (courante.length > 0 && largeurLigne(ctx, essai, taille) > max) {
+        // ON NE COUPE PAS DEVANT UN MOT LIÉ : il repart avec celui qui le
+        // précède, et on recule tant que le premier de la nouvelle ligne en est
+        // un. *Jamais jusqu'à vider la ligne qu'on ferme* — une ligne vide ne
+        // ferait que reporter le problème d'un cran.
+        const report: Mot[] = [mot]
+        while (courante.length > 1 && report[0].colle === true) {
+          report.unshift(courante.pop() as Mot)
+        }
         sorties.push(courante)
-        courante = [mot]
+        courante = report
       } else courante = essai
     }
     sorties.push(courante)
@@ -1474,7 +1501,25 @@ const TEINTES: Record<Teinte, string> = {
   soin: VERT_SOIN,
 }
 
-type Mot = { texte: string; gras: boolean; teinte?: Teinte } | { jeton: Jeton }
+/**
+ * **UN MOT PEUT ÊTRE LIÉ À CELUI QUI LE PRÉCÈDE** (`colle`) : le repli ne
+ * coupera jamais devant lui.
+ *
+ * Keko, sur la Projection : « on devrait placer le "et" sur la deuxième ligne
+ * avec étourdissement non ? », puis sur l'Agilité : « pareil, on peut mettre le
+ * "votre" en dessous ». *Un mot-outil laissé seul au bout de sa ligne se lit
+ * comme une coupure ratée* — il annonce un mot qui n'arrive qu'à la ligne
+ * suivante.
+ *
+ * **L'insécable ne suffisait pas**, et c'est ce qui demande un drapeau : le
+ * texte porte `&nbsp;`, que le DOM 2D respecte tout seul, mais au canvas les
+ * deux mots sont séparés par une BALISE — « et » est ordinaire, le mot-clé est
+ * jaune. *Deux couleurs ne peuvent pas tenir dans un seul mot*, donc le lien se
+ * marque au lieu de se fondre.
+ */
+type Mot = ({ texte: string; gras: boolean; teinte?: Teinte } | { jeton: Jeton }) & {
+  colle?: boolean
+}
 
 /** Découpe une entrée balisée en mots, chacun porteur de sa graisse. */
 function enMots(entree: string): Mot[] {
@@ -1486,9 +1531,13 @@ function enMots(entree: string): Mot[] {
   // le rendu qui décide de ce qu'une balise vaut* — le jeu 2D, qui n'a qu'un
   // accent par carte, les fait toutes retomber sur `<b>`.
   const COLORENT: Record<string, Teinte> = { '<k>': 'cle', '<d>': 'degats', '<p>': 'bloc', '<s>': 'soin' }
+  // L'INSÉCABLE SURVIT AU DÉCOUPAGE, il n'est plus aplati en espace. C'est lui
+  // qui porte le lien, et il valait un espace ordinaire jusqu'ici — donc le
+  // `&nbsp;` du texte ne servait qu'au DOM.
+  let colle = false
   // On coupe sur les balises ET sur les espaces : une balise peut ouvrir au
   // milieu d'une ligne, et un mot ne porte qu'une graisse.
-  for (const bout of entree.replace(/&nbsp;/g, ' ').split(/(<\/?[^>]+>)/)) {
+  for (const bout of entree.replace(/&nbsp;/g, ' ').split(/(<\/?[^>]+>)/)) {
     if (bout === '') continue
     if (bout.startsWith('<')) {
       if (bout === '<b>') gras = true
@@ -1502,10 +1551,17 @@ function enMots(entree: string): Mot[] {
       }
       continue
     }
-    for (const mot of bout.split(' ')) {
-      if (mot === '') continue
+    for (const brut of bout.split(' ')) {
+      if (brut === '') continue
+      // UN INSÉCABLE EN FIN DE MOT LIE CE MOT AU SUIVANT, par-dessus la balise
+      // qui les sépare. *À l'intérieur d'un même mot, il n'y a rien à marquer* :
+      // les deux moitiés sont déjà inséparables et de la même couleur, il suffit
+      // de rendre l'espace à l'affichage.
+      const lie = brut.endsWith(' ')
+      const mot = (lie ? brut.slice(0, -1) : brut).replace(/ /g, ' ')
       const jeton = lireJeton(mot)
-      mots.push(jeton === null ? { texte: mot, gras, teinte } : { jeton })
+      mots.push(jeton === null ? { texte: mot, gras, teinte, colle } : { jeton, colle })
+      colle = lie
     }
   }
   return mots
@@ -2720,8 +2776,24 @@ const GLOSSAIRES = new Map<string, THREE.CanvasTexture>()
 // comme un encadré qu'on a oublié de remplir.* Le pas a baissé avec l'écart
 // du titre au texte — *rapprocher deux lignes sans resserrer leur boîte
 // déplace le bloc vers le haut au lieu de le serrer.*
-const MARGE_GLOSSAIRE = 7
-const PAS_GLOSSAIRE = 19
+/**
+ * **TOUT L'ENCADRÉ SE MESURE EN MULTIPLES DE SON CORPS.** Keko : « sur PC le
+ * texte des encadrés est trop gros, il devrait être de la même taille que la
+ * description de la carte — titre ET texte, avec le titre en majuscules ».
+ *
+ * Ses dimensions étaient écrites en unités de plaque, donc *l'encadré avait sa
+ * propre échelle* : la plaque a un plancher en pixels d'écran pour rester
+ * lisible sur téléphone, et sur un grand écran ce plancher ne mord plus — elle
+ * suit la carte, et son texte avec. **Un contenu qui ne connaît pas la taille
+ * de son voisin ne peut pas s'y accorder.**
+ *
+ * Les rapports sont ceux qu'avait le corps de 6,4 : la marge, le pas d'une
+ * entrée, l'interligne et les deux lignes de base. *Un seul chiffre les porte
+ * tous*, donc l'encadré garde exactement ses proportions à toute taille — et le
+ * titre, lui, passe de 0,94 à 1,0 fois le corps, puisque Keko les veut égaux.
+ */
+const MARGE_GLOSSAIRE = (corps: number) => corps * 1.094
+const PAS_GLOSSAIRE = (corps: number) => corps * 2.969
 
 /**
  * LE CORPS DU SENS EST FIXE, ET C'EST LE TEXTE QUI VA À LA LIGNE. Keko : « la
@@ -2740,10 +2812,11 @@ const PAS_GLOSSAIRE = 19
  * deux voix, et **la plus longue — donc celle qu'on a le plus de mal à lire —
  * était la plus petite.** C'est l'exact inverse de ce qu'il faut.
  */
+/** Le corps de REPLI, et celui qu'on garde quand la carte n'en impose pas. */
 const CORPS_GLOSSAIRE = 6.4
 
 /** L'interligne du sens, quand sa définition tient sur plusieurs lignes. */
-const INTERLIGNE_GLOSSAIRE = 7.4
+const INTERLIGNE_GLOSSAIRE = (corps: number) => corps * 1.156
 
 /**
  * LE REPLI SE MESURE DANS LE REPÈRE DE LA PLAQUE (100 de large), donc il ne
@@ -2754,11 +2827,11 @@ const INTERLIGNE_GLOSSAIRE = 7.4
  */
 let regle: CanvasRenderingContext2D | null = null
 
-function lignesDuSens(sens: string): string[] {
+function lignesDuSens(sens: string, corps: number): string[] {
   if (regle === null) regle = document.createElement('canvas').getContext('2d')
-  const place = 100 - 2 * MARGE_GLOSSAIRE
+  const place = 100 - 2 * MARGE_GLOSSAIRE(corps)
   if (regle === null) return [sens]
-  regle.font = `400 ${CORPS_GLOSSAIRE}px "Crimson Pro", Georgia, serif`
+  regle.font = `400 ${corps}px "Crimson Pro", Georgia, serif`
   const lignes: string[] = []
   let courante = ''
   for (const mot of sens.split(' ')) {
@@ -2773,8 +2846,8 @@ function lignesDuSens(sens: string): string[] {
 }
 
 /** Ce qu'une entrée occupe en hauteur : son pas, plus ses lignes en trop. */
-function hautEntree(sens: string): number {
-  return PAS_GLOSSAIRE + (lignesDuSens(sens).length - 1) * INTERLIGNE_GLOSSAIRE
+function hautEntree(sens: string, corps: number): number {
+  return PAS_GLOSSAIRE(corps) + (lignesDuSens(sens, corps).length - 1) * INTERLIGNE_GLOSSAIRE(corps)
 }
 
 /**
@@ -2783,28 +2856,32 @@ function hautEntree(sens: string): number {
  */
 const FILET_GLOSSAIRE = 1.1
 
-export function rapportGlossaire(entrees: readonly { mot: string; sens: string }[]): number {
+export function rapportGlossaire(
+  entrees: readonly { mot: string; sens: string }[],
+  corps = CORPS_GLOSSAIRE,
+): number {
   // Une plaque vide n'existe pas, mais le rapport sert de DIVISEUR en amont :
   // on rend celui d'une entrée plutôt que zéro.
-  if (entrees.length === 0) return (2 * MARGE_GLOSSAIRE + PAS_GLOSSAIRE) / 100
-  let h = 2 * MARGE_GLOSSAIRE
-  for (const entree of entrees) h += hautEntree(entree.sens)
+  if (entrees.length === 0) return (2 * MARGE_GLOSSAIRE(corps) + PAS_GLOSSAIRE(corps)) / 100
+  let h = 2 * MARGE_GLOSSAIRE(corps)
+  for (const entree of entrees) h += hautEntree(entree.sens, corps)
   return h / 100
 }
 
 export function textureGlossaire(
   entrees: readonly { mot: string; sens: string }[],
   largeurPx: number,
+  corps = CORPS_GLOSSAIRE,
 ): THREE.CanvasTexture {
   // ON PEINT À LA TAILLE D'AFFICHAGE : réduire un bitmap n'est pas rendre du
   // texte, la leçon déjà payée sur les cartes et sur le disque du compte.
   const L = Math.min(1024, Math.max(256, Math.round(largeurPx)))
-  const rapport = rapportGlossaire(entrees)
+  const rapport = rapportGlossaire(entrees, corps)
   // LE NOMBRE DE LIGNES ENTRE DANS LA CLÉ : il se mesure, donc il peut changer
   // quand la police arrive — *une mesure faite avant `document.fonts.ready`
   // répond pour Georgia*, et la texture gardée serait alors d'une hauteur qui
   // n'est plus la bonne.
-  const cle = `${entrees.map((e) => e.mot).join('~')}|${L}|${rapport.toFixed(4)}`
+  const cle = `${entrees.map((e) => e.mot).join('~')}|${L}|${corps.toFixed(3)}|${rapport.toFixed(4)}`
   const deja = GLOSSAIRES.get(cle)
   if (deja !== undefined) return deja
 
@@ -2856,7 +2933,7 @@ export function textureGlossaire(
 
   ctx.textAlign = 'left'
   ctx.textBaseline = 'alphabetic'
-  let haut = MARGE_GLOSSAIRE
+  let haut = MARGE_GLOSSAIRE(corps)
   entrees.forEach((entree) => {
     // LE MOT-CLÉ EN CINZEL, SON SENS EN CRIMSON : la voix des noms et celle
     // des effets, exactement comme sur une carte.
@@ -2865,10 +2942,12 @@ export function textureGlossaire(
     // titre qui la porte* — deux valeurs écrites chacune de leur côté se
     // seraient désaccordées au premier réglage, et ça a failli arriver.
     ctx.fillStyle = OR_MOT_CLE
-    const place = 100 - 2 * MARGE_GLOSSAIRE
-    // Le mot CÈDE lui aussi s'il ne tient pas : un canvas écrit tout droit et
-    // laisse déborder sans rien signaler.
-    let titre = 6
+    const place = 100 - 2 * MARGE_GLOSSAIRE(corps)
+    // LE TITRE A LE CORPS DU TEXTE, et il reste en capitales et en Cinzel :
+    // *la voix change, pas la taille.* Il CÈDE quand même s'il ne tient pas en
+    // largeur — un canvas écrit tout droit et laisse déborder sans rien
+    // signaler.
+    let titre = corps
     // **LE TITRE N'A PAS DE DEUX-POINTS, et le sens prend une majuscule.**
     // Tranché par Keko. *Un mot-clé est un nom, pas l'amorce d'une phrase* :
     // les deux-points en faisaient une légende, alors que l'encadré est une
@@ -2880,18 +2959,22 @@ export function textureGlossaire(
       titre *= place / largeMot
       ctx.font = `600 ${titre}px Cinzel, Georgia, serif`
     }
-    ctx.fillText(mot, MARGE_GLOSSAIRE, haut + 6.5)
+    ctx.fillText(mot, MARGE_GLOSSAIRE(corps), haut + corps * 1.016)
     ctx.fillStyle = '#cfc6b4'
     // LE SENS NE CÈDE PLUS : son corps est fixe et c'est la PHRASE qui se
     // replie. La majuscule se pose au rendu et non dans la donnée, qui reste
     // une phrase ordinaire.
     const sens = entree.sens.charAt(0).toUpperCase() + entree.sens.slice(1)
-    ctx.font = `400 ${CORPS_GLOSSAIRE}px "Crimson Pro", Georgia, serif`
-    const lignes = lignesDuSens(sens)
+    ctx.font = `400 ${corps}px "Crimson Pro", Georgia, serif`
+    const lignes = lignesDuSens(sens, corps)
     lignes.forEach((ligne, n) => {
-      ctx.fillText(ligne, MARGE_GLOSSAIRE, haut + 15.5 + n * INTERLIGNE_GLOSSAIRE)
+      ctx.fillText(
+        ligne,
+        MARGE_GLOSSAIRE(corps),
+        haut + corps * 2.422 + n * INTERLIGNE_GLOSSAIRE(corps),
+      )
     })
-    haut += PAS_GLOSSAIRE + (lignes.length - 1) * INTERLIGNE_GLOSSAIRE
+    haut += PAS_GLOSSAIRE(corps) + (lignes.length - 1) * INTERLIGNE_GLOSSAIRE(corps)
   })
 
   const texture = new THREE.CanvasTexture(canvas)

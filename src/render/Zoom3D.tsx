@@ -29,7 +29,7 @@ import { useThree } from '@react-three/fiber'
 import { Carte3D, GROSSIT_SURVOL, tailleDuCompte } from './Carte3D.tsx'
 import { zCamera, hauteurVisibleA } from './Cadrage.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
-import { rapportGlossaire, textureGlossaire } from './texture-carte.ts'
+import { corpsGlossaire, rapportGlossaire, textureGlossaire } from './texture-carte.ts'
 import { GLOSSAIRE } from '../ui/texte-carte.ts'
 import * as THREE from 'three'
 
@@ -484,7 +484,6 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
   // compte. *Deux endroits qui les reconstruiraient chacun de leur côté se
   // désaccorderaient au premier réglage du repli.*
   const entreesGloss = motsMontres.map((mot) => ({ mot, sens: GLOSSAIRE[mot]! }))
-  const rapportGloss = rapportGlossaire(entreesGloss)
   const totalGloss = piece + marge + LARGEUR_GLOSS_SEULE * piece
   const aDroite = motsMontres.length > 0 && seule
   const xPiece = aDroite ? -totalGloss / 2 + piece / 2 : seule ? 0 : -ensemble / 2 + piece / 2
@@ -525,7 +524,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
    * plus grand des deux règles, puis la place le borne.
    */
   const enUnites = lLoupe / size.width
-  const glossaire =
+  const largeurGloss = (rapport: number): number =>
     motsMontres.length === 0
       ? 0
       : seule
@@ -535,8 +534,23 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
             Math.max(placeDroite, placeGauche),
             // Et il ne sort pas du champ par la hauteur : à plusieurs mots-clés
             // c'est elle qui finit par commander.
-            (hLoupe - 2 * margeY) / rapportGloss,
+            (hLoupe - 2 * margeY) / rapport,
           )
+  /**
+   * **LE CORPS DE L'ENCADRÉ SE CALCULE EN DEUX PASSES, et il le faut.** Sa
+   * largeur se borne sur sa hauteur, sa hauteur dépend du nombre de lignes, et
+   * le nombre de lignes dépend du corps — *qui se déduit de la largeur.* Le
+   * calcul tourne en rond, donc on l'ouvre : une première largeur au corps de
+   * repli donne le corps, et le corps donne la hauteur définitive.
+   *
+   * *L'écart entre les deux passes est nul sauf quand la borne de hauteur mord*,
+   * c'est-à-dire à plusieurs mots-clés sur un écran court — et là elle mord un
+   * peu moins, puisque le texte a rapetissé.
+   */
+  const carteRef = seule ? piece : tailleLoupe
+  const corpsGloss = corpsGlossaire(carteRef, Math.max(largeurGloss(rapportGlossaire(entreesGloss)), 0.0001))
+  const rapportGloss = rapportGlossaire(entreesGloss, corpsGloss)
+  const glossaire = largeurGloss(rapportGloss)
   const avecGlossaire = glossaire > 0.01
   const hGloss = glossaire * rapportGloss
   const yGloss = aDroite ? 0 : borner(yLoupe, hLoupe / 2 - hGloss / 2 - margeY)
@@ -665,6 +679,7 @@ export function Zoom3D({ carte, set, onFermer, onPeinte }: Props): React.JSX.Ele
             map={textureGlossaire(
               entreesGloss,
               (glossaire / hauteurVisibleA(zCarte, size.height)) * size.height * viewport.dpr,
+              corpsGloss,
             )}
             transparent
             depthWrite={false}

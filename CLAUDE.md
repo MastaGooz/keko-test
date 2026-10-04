@@ -2050,6 +2050,24 @@ mettre "attaquent" en gras ». *Un mot-règle reste un mot-règle quand il chang
 de personne* — ce qui le distingue des verbes de la phrase n'est pas sa forme,
 c'est qu'il désigne le moment où la riposte part.
 
+**UN MOT-OUTIL NE RESTE PAS SEUL AU BOUT DE SA LIGNE.** Keko, sur la
+Projection : « on devrait placer le "et" sur la deuxième ligne avec
+étourdissement non ? », puis sur l'Agilité : « pareil, on peut mettre le "votre"
+en dessous ». *Un mot qui annonce le suivant et qu'on laisse orphelin se lit
+comme une coupure ratée.*
+
+**L'insécable ne suffisait pas**, et c'est ce qui a demandé un drapeau : le
+texte porte `&nbsp;`, que le DOM 2D respecte tout seul, mais au canvas les deux
+mots sont séparés par une BALISE — « et » est ordinaire, le mot-clé est jaune.
+*Deux couleurs ne peuvent pas tenir dans un seul mot*, donc le lien se MARQUE au
+lieu de se fondre : un mot lié ne peut pas commencer une ligne, et le repli
+recule d'un mot quand il tombe dessus. **Jamais jusqu'à vider la ligne qu'il
+ferme** — ce serait reporter le problème d'un cran.
+
+*À l'intérieur d'un même mot, il n'y a rien à marquer* : les deux moitiés sont
+déjà inséparables et de la même couleur, il suffit de rendre l'espace à
+l'affichage.
+
 **ET « BLOCAGE » EN EST UN AUSSI.** Keko : « dans Coup de bouclier, il faudrait
 mettre le mot blocage en gras ». *Ce n'est pas un verbe de la phrase, c'est le
 nom de ce que la carte COMPTE* — exactement ce que « attaque » est pour la
@@ -2647,6 +2665,35 @@ la règle déjà payée sur les cases vides du chargement.
 
 **Et le PAS a baissé avec l'écart des deux lignes** : *rapprocher deux lignes
 sans resserrer leur boîte déplace le bloc vers le haut au lieu de le serrer.*
+
+**ET IL PARLE À LA VOIX DE LA CARTE.** Keko : « sur PC le texte des encadrés est
+trop gros, il devrait être de la même taille que la description de la carte —
+titre ET texte, avec le titre en majuscules ».
+
+*Les deux textes sont écrits dans leur propre repère de 100 unités de large* —
+la carte pour le cartouche, la plaque pour le glossaire — **donc à l'écran leur
+corps est dans le rapport de leurs LARGEURS**, et rien ne les accordait. La
+plaque a un plancher en pixels pour rester lisible sur téléphone ; sur un grand
+écran ce plancher ne mord plus, et l'encadré gardait sa propre échelle. *Deux
+repères qui s'ignorent donnent deux échelles.*
+
+**Tout l'encadré se mesure donc en multiples de son CORPS** — la marge, le pas
+d'une entrée, l'interligne, les deux lignes de base : *un seul chiffre les porte
+tous*, donc il garde ses proportions à toute taille. Et le titre passe de 0,94 à
+1,0 fois le corps, puisque Keko les veut égaux ; il reste en capitales et en
+Cinzel, *la voix change, pas la taille.*
+
+**On prend le cran du HAUT de la carte, pas le sien.** Le cartouche d'une carte
+longue descend d'un cran, mais l'encadré se montre à côté de plusieurs cartes :
+*un encadré qui changerait de corps d'une carte à l'autre se lirait comme deux
+objets différents.*
+
+**ET LE CALCUL SE FAIT EN DEUX PASSES, parce qu'il tourne en rond.** La largeur
+de la plaque se borne sur sa hauteur, sa hauteur dépend du nombre de lignes, et
+le nombre de lignes dépend du corps — *qui se déduit de la largeur.* Une
+première largeur au corps de repli donne le corps, et le corps donne la hauteur
+définitive. L'écart entre les deux passes est nul sauf quand la borne de hauteur
+mord, et là elle mord un peu moins puisque le texte a rapetissé.
 
 **ET LE CORPS DU SENS EST FIXE : C'EST LE TEXTE QUI VA À LA LIGNE.** Keko : « la
 taille du texte sous le titre est plus petite pour "esquive" que pour

@@ -64,7 +64,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   const etourdit = carte.effets?.some((e) => e.type === 'etourdit') === true
   if (carte.degats > 0)
     l.push(
-        `Inflige <d>${carte.degats}</d> ${blessures(carte.degats)}${etourdit ? ' et <k>étourdissement</k>' : ''}`,
+        `Inflige <d>${carte.degats}</d> ${blessures(carte.degats)}${etourdit ? ' et&nbsp;<k>étourdissement</k>' : ''}`,
       )
   else if (etourdit) l.push(`<k>Étourdissement</k>`)
   // SES DÉGÂTS SONT TA DÉFENSE : on ne peut pas écrire un chiffre, donc on
@@ -98,7 +98,11 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     if (e.type === 'bloc') l.push(`Bloque <p>${e.montant}</p> ${blessures(e.montant)}`)
     // L'ESQUIVE DIT SA DURÉE, comme la riposte : *c'est une clause de cette
     // carte-ci, pas une règle du jeu* — sans elle on la croirait permanente.
-    if (e.type === 'esquive') l.push(`Gagne <k>esquive</k> jusqu'à votre prochain tour`)
+        // « VOTRE » DESCEND AVEC CE QU'IL INTRODUIT. Keko : « on peut mettre le
+    // "votre" en dessous ». *Un possessif seul au bout d'une ligne annonce un
+    // groupe qui n'arrive qu'à la suivante* — même raison que le « et » de la
+    // Projection, et l'insécable fait le lien.
+    if (e.type === 'esquive') l.push(`Gagne <k>esquive</k> jusqu'à votre&nbsp;prochain tour`)
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
