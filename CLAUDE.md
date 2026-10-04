@@ -8285,15 +8285,16 @@ gauche c'est le disque nu qui affleure. Posés à marge de toile égale, les deu
 dans l'autre sens : *une marge se mesure au bord qu'on VOIT.*
 
 Mesuré sur la texture, en unités de carte : le bord intérieur du cadre est à
-**1,823 des deux côtés**, le bord gauche du disque à 4,056 — donc un écart de
-**2,233** — et le coefficient est celui qui pose le sommet du sablier là aussi.
-Mesuré après : **2,233 à gauche contre 2,228 en haut.**
+**1,823 des deux côtés**, le bord gauche du sujet à 4,424 — donc un écart de
+**2,601** — et le coefficient est celui qui pose le sommet du sablier là aussi.
+Mesuré après : **2,601 à gauche contre 2,595 en haut.**
 
-**ET IL A DÉJÀ ÉTÉ REMESURÉ UNE FOIS**, Keko ayant redescendu le sablier dans
-la foulée : à une marge haute de 2,23 % de la toile le coefficient valait
-0,0246, à 4,03 % il vaut **0,0198**. *Les trois repères se relèvent en une
-sonde* — bord du cadre, bord gauche du disque, sommet du sablier — et rien
-d'autre ne bouge.
+**ET IL SE REMESURE À CHAQUE VERSION DU DESSIN**, Keko ayant repris le sablier
+deux fois de suite : marge haute de 2,23 % de la toile → 0,0246 ; 4,03 % →
+0,0198 ; 7,20 % → **0,018**. *Les trois repères se relèvent en une sonde* — le
+bord du cadre, le bord gauche du sujet, le sommet du sablier — et rien d'autre
+ne bouge. **C'est le prix d'une marge mesurée au bord qu'on voit**, et il est
+bien plus bas que celui d'un dessin rogné ou d'un symbole qui touche le cadre.
 
 **Le jonc du cadre de trésor et la valeur du butin descendent avec**, et c'est
 voulu : les deux lisent `ORBE_CY`, et *la valeur forme une ligne d'en-tête avec

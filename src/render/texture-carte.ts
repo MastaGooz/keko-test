@@ -363,19 +363,19 @@ const SILHOUETTES: Partial<Record<PisteCadre, readonly [number, number][]>> = {
  * qu'on VOIT.*
  *
  * Mesuré sur la texture, en unités de carte : le bord intérieur du cadre est à
- * 1,823 des deux côtés, le bord gauche du disque à **4,056** — donc un écart de
- * **2,233** — et le coefficient est celui qui pose le sommet du sablier là
+ * 1,823 des deux côtés, le bord gauche du disque à **4,424** — donc un écart de
+ * **2,601** — et le coefficient est celui qui pose le sommet du sablier là
  * aussi.
  *
- * *Il dépend donc du DESSIN, et il a déjà été remesuré une fois* : à la marge
- * haute de 2,23 % de la toile il valait 0,0246, à 4,03 % il vaut 0,0198. **Un
- * fichier qui rebouge le sablier le rouvre** — on remesure les trois repères,
- * le bord du cadre, le bord gauche du disque et le sommet du sablier, et rien
- * d'autre ne change.
+ * *Il dépend donc du DESSIN, et il se remesure à chaque version* : marge haute
+ * de 2,23 % de la toile → 0,0246 ; 4,03 % → 0,0198 ; 7,20 % → **0,018**. **Un
+ * fichier qui rebouge le sablier le rouvre** — on relève les trois repères (le
+ * bord du cadre, le bord gauche du sujet, le sommet du sablier) dans une sonde,
+ * et rien d'autre ne change.
  */
 const ORBE_L = 0.205 * LARGE
 const ORBE_CX = 0.022 * LARGE + ORBE_L / 2
-const ORBE_CY = 0.0198 * HAUT + ORBE_L / 2
+const ORBE_CY = 0.018 * HAUT + ORBE_L / 2
 
 /** L'écusson du coût : pointe en bas, comme sur toute carte qui coûte. */
 const ECUSSON: readonly [number, number][] = [
