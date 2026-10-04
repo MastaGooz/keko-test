@@ -163,10 +163,15 @@ const IMAGES_PAR_RARETE: Record<string, Record<string, string>> = {
  * L'entrée est là, prête — *une table qui connaît déjà le cas qui vient ne
  * coûte rien.*
  */
+/**
+ * *Il n'y a plus de maille*, depuis que Keko a resserré les armures en une
+ * triade : « sinon on dégage la maille et on garde la triade tissu / cuir /
+ * plate ? » Son dessin reste au dépôt — **il resservira le jour où une maille
+ * revient en variante rare**, et une entrée suffira à la reposer.
+ */
 const PROTECTIONS: Record<string, string> = {
   tissu: 'Protection tissu.webp',
   cuir: 'Protection cuir.webp',
-  maille: 'Protection maille.webp',
   plate: 'Protection plate.webp',
 }
 

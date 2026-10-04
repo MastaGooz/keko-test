@@ -9,7 +9,7 @@
  */
 import { createRng } from './rng.ts'
 import { carteTresor } from './cartes.ts'
-import { ARME_GRATUITE, ARMURE_GRATUITE, RONDACHE, deckDeLEquipement, potion } from './armes.ts'
+import { ARME_GRATUITE, ARMURE_GRATUITE, RONDACHE, ROBE, deckDeLEquipement, potion } from './armes.ts'
 import type { Descente, Lieu, Reglage } from './descente.ts'
 import {
   butinTransporte,
@@ -25,7 +25,7 @@ import {
   resoudreCombat,
   tresorsAuDeck,
 } from './descente.ts'
-import { CHOIX_PAR_PALIER, consommablesSurvivants, paDeLEquipement } from './descente.ts'
+import { CHOIX_PAR_PALIER, consommablesSurvivants, mainDeLEquipement, paDeLEquipement } from './descente.ts'
 
 // La taille du deck de depart ne s'ecrit plus en dur : elle vient de
 // l'equipement, et une piece ajoutee la ferait mentir sans rien casser.
@@ -363,3 +363,28 @@ function palier(descente: Descente, cible: Lieu, rng = createRng(1), pv = 40): D
 
 if (echecs > 0) throw new Error(`${echecs} vérification(s) en échec`)
 console.log('Tout passe.')
+
+/**
+ * **CE QU'UNE PIÈCE AJOUTE À LA MAIN, troisième porte après les PV et les PA.**
+ *
+ * La Robe est la première à l'emprunter. *Elle monte le MAXIMUM*, donc la main
+ * se reforme dessus à chaque tour — et elle voyage d'un palier à l'autre comme
+ * les deux autres : ce qui vient de l'équipement ne change plus une fois
+ * descendu.
+ */
+{
+  const nue = commencerDescente(createRng(5), REGLAGE, [ARME_GRATUITE])
+  const vetue = commencerDescente(createRng(5), REGLAGE, [ARME_GRATUITE, ROBE])
+  verifier('la Robe donne une carte en main',
+    vetue.combat.tailleMain === nue.combat.tailleMain + 1)
+  verifier('...et on en pioche une de plus',
+    vetue.combat.main.length === nue.combat.main.length + 1)
+  verifier('et la mesure la lit sur la piece', mainDeLEquipement([ROBE]) === 1)
+  verifier('une piece sans bonus ne donne rien', mainDeLEquipement([ARME_GRATUITE]) === 0)
+
+  // ELLE VOYAGE D'UN PALIER A L'AUTRE, comme les PV et les PA : ce qui vient de
+  // l'equipement ne change plus une fois descendu.
+  const bas = descendre(palier(vetue, { ou: 'deck' }), createRng(5))
+  verifier('et la main reste grande au palier suivant',
+    bas.combat.tailleMain === vetue.combat.tailleMain)
+}

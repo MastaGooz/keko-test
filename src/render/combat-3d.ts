@@ -143,6 +143,11 @@ function mesuresDeLaPiece(objet: Objet): string[] {
   const lignes: string[] = []
   if ('pv' in objet && objet.pv !== undefined) lignes.push(`+<b>${objet.pv}</b> {coeur}`)
   if ('pa' in objet && objet.pa !== undefined) lignes.push(`+ {pa:${objet.pa}}`)
+  // ET LA MAIN SE DIT COMME LES PV : le chiffre à CÔTÉ de son symbole. *L'orbe
+  // met le sien dedans parce qu'elle dit un coût ; une mesure se lit à côté.*
+  if ('cartesEnMain' in objet && objet.cartesEnMain !== undefined) {
+    lignes.push(`+<b>${objet.cartesEnMain}</b> {main}`)
+  }
   return lignes
 }
 

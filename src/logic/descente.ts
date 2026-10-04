@@ -188,12 +188,13 @@ function engager(
   reglage: Reglage,
   pvMax: number,
   energieMax: number,
+  tailleMain: number,
 ): EtatCombat {
   const combat = creerCombat(
     deck,
     ennemisPourProfondeur(profondeur, reglage.profondeurMax, rng, reglage.menaceDepart),
     rng,
-    { ...CONFIG_DEFAUT, pvMax, energieMax, tailleMain: reglage.tailleMain },
+    { ...CONFIG_DEFAUT, pvMax, energieMax, tailleMain },
   )
   // Les PV ne se rechargent pas d'un combat à l'autre : c'est ce qui rend le
   // point de sortie tendu. `creerCombat` repart du maximum, on le corrige ici
@@ -214,6 +215,18 @@ export function pvDeLEquipement(equipement: readonly Piece[]): number {
  */
 export function paDeLEquipement(equipement: readonly Piece[]): number {
   return equipement.reduce((total, piece) => total + (piece.pa ?? 0), 0)
+}
+
+/**
+ * Ce que les pièces portées ajoutent à la taille de la main.
+ *
+ * **Le verbe de la Robe**, et la troisième chose qu'une pièce fait sans passer
+ * par une carte. *Elle monte le maximum comme les deux autres* : la main se
+ * reforme à chaque tour, donc un bonus posé ailleurs serait perdu au premier
+ * passage.
+ */
+export function mainDeLEquipement(equipement: readonly Piece[]): number {
+  return equipement.reduce((total, piece) => total + (piece.cartesEnMain ?? 0), 0)
 }
 
 export function commencerDescente(
@@ -249,13 +262,15 @@ export function commencerDescente(
    * de main, puisque l'énergie se recharge.
    */
   const energieMax = CONFIG_DEFAUT.energieMax + paDeLEquipement(equipement)
+  /** ET CE QU'IL AJOUTE À LA MAIN — même porte, même raison que les deux autres. */
+  const tailleMain = reglage.tailleMain + mainDeLEquipement(equipement)
   return {
     reglage,
     equipement,
     consommables,
     profondeur: 1,
     phase: { type: 'combat' },
-    combat: engager(1, deck, pvMax, rng, reglage, pvMax, energieMax),
+    combat: engager(1, deck, pvMax, rng, reglage, pvMax, energieMax, tailleMain),
     deck,
   }
 }
@@ -459,6 +474,7 @@ export function descendre(descente: Descente, rng: Rng): Descente {
       // LE MAXIMUM D'ÉNERGIE VOYAGE DANS LE COMBAT, comme celui des PV : il
       // vient de l'équipement, qui ne change plus une fois descendu.
       descente.combat.energieMax,
+      descente.combat.tailleMain,
     ),
   }
 }

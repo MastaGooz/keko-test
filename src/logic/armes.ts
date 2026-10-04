@@ -94,6 +94,29 @@ export type Piece = {
    */
   pa?: number
   /**
+   * CE QU'ELLE AJOUTE À LA TAILLE DE LA MAIN, pour toute la descente.
+   *
+   * **Le verbe de la Robe**, défendu par Keko : « le +1 carte en main change
+   * vraiment le gameplay — oui ça dilue l'encombrement des trésors, mais tu as
+   * peu de PV et surtout très peu de blocage ! Ce n'est pas broken et ça colle
+   * bien au côté magie. »
+   *
+   * *J'avais alerté en regardant la stat seule* — une carte de main en plus
+   * compense très exactement un trésor porté, donc elle désamorce le dilemme
+   * central. **Le coût n'est pas dans la stat, il est dans le COUPLE stat +
+   * set** : l'armure qui la donne ne bloque presque rien et porte peu de PV.
+   * C'est un échange, et il se mesurera.
+   *
+   * Elle monte le maximum comme les PV et les PA : *ce qui vient de
+   * l'équipement ne change plus une fois descendu.*
+   *
+   * *Elle ne s'appelle pas `main`* : une ARME porte déjà ce champ pour dire
+   * quelle main elle occupe, et `Arme` est une intersection avec `Piece` — les
+   * deux types se seraient annulés en `never`, **sans qu'aucune ligne ne soit
+   * fausse à la lecture.**
+   */
+  cartesEnMain?: number
+  /**
    * SA MATIÈRE — elle ne décide de rien, elle choisit le DESSIN de ses cartes.
    *
    * Keko a dessiné quatre Protection : tissu, cuir, maille, plate. *Quatre
@@ -488,6 +511,31 @@ const ESQUIVE: Modele = {
 }
 
 /**
+ * **CONCENTRATION : le verbe de la Robe, et la seule carte du jeu qui pioche.**
+ *
+ * Keko, en posant la triade : « +carte main pour robe (magie avantage main) >
+ * carte pioche ». *C'est ce qui donne au tissu un axe et pas seulement une
+ * stat* — il ne protège presque pas, il fait VOIR plus de cartes, par la stat
+ * ET par le deck.
+ *
+ * **Elle se paie en dilution comme tout le reste** : c'est une carte de plus
+ * dans le deck, donc les bonnes sortent moins souvent. *Un avantage de main
+ * qui passe par le deck obéit à la règle du jeu*, là où la stat seule
+ * l'esquive.
+ *
+ * *Son chiffre n'est pas calibré* : deux cartes pour un point d'action est le
+ * rendement d'une Protection, pris dans une autre monnaie, et il n'a jamais
+ * été mesuré.
+ */
+const CONCENTRATION: Modele = {
+  nom: 'Concentration',
+  type: 'combat',
+  cout: 1,
+  degats: 0,
+  effets: [{ type: 'pioche', montant: 2 }],
+}
+
+/**
  * L'Armure de plate : l'armure commune et gratuite, pendant du Glaive. Elle
  * s'est appelée le Plastron jusqu'à ce que Keko lui dessine sa plate.
  *
@@ -512,13 +560,28 @@ export const PLASTRON: Armure = {
   // le renommer ne ferait que risquer une sauvegarde.
   nom: 'Armure de plate',
   rarete: 'commune',
-  // SA MATIÈRE EST LÀ, SON DESSIN ATTEND. `Protection plate.webp` existe, mais
-  // la plate ne donne que des Remparts : *elle est la seule des quatre à
-  // n'avoir aucune Protection*, et lui en donner une changerait ses chiffres —
-  // 22 de bloc pour 4 PA contre 16 pour 3. **C'est du réglage, donc c'est à
-  // Keko**, et le dessin l'attend sans rien casser.
   matiere: 'plate',
-  set: [{ modele: REMPART, nombre: 2 }],
+  // **ELLE NE CHANGE AUCUNE RÈGLE, et c'est son identité.** Les deux autres
+  // portent un verbe — voir plus, jouer plus ; la plate ne fait qu'encaisser,
+  // et c'est le rôle que tient le Glaive chez les armes : *une gamme a besoin
+  // d'un barreau plat pour que les autres se mesurent à lui.*
+  //
+  // J'avais proposé de lui faire PAYER quelque chose (−1 PA) pour qu'elle ait
+  // un axe à elle ; Keko l'a écarté : « −1 PA c'est très dur, et même avec plus
+  // de tankyness c'est pas vraiment fun ». **Un malus qui n'ouvre aucune
+  // décision n'est qu'une punition** — et partir couvert est déjà payé par la
+  // dilution, qui est le prix que le concept prévoit.
+  // **+22, ET C'EST LE BALAYAGE QUI L'A DIT.** À +30 elle dominait les deux
+  // autres sur les deux tableaux — 58 % de survie en prenant les trésors et
+  // 88 % en les refusant, contre 50 et 73 pour le cuir ; *une armure qui gagne
+  // partout n'est pas un choix.* Le chiffre est celui qui aligne les trois sans
+  // les rendre interchangeables, puisque leur tempo diffère (28 tours par run
+  // contre 24 pour le cuir).
+  pv: 22,
+  set: [
+    { modele: PROTECTION, nombre: 1 },
+    { modele: REMPART, nombre: 1 },
+  ],
 }
 
 /**
@@ -538,25 +601,26 @@ export const PLASTRON_DE_CUIR: Armure = {
   ],
 }
 
-/** Entre le cuir et la plate — provisoire. */
-export const COTTE_DE_MAILLE: Armure = {
-  id: 'cotte-de-maille',
-  nom: 'Cotte de maille',
-  rarete: 'commune',
-  matiere: 'maille',
-  set: [
-    { modele: PROTECTION, nombre: 1 },
-    { modele: REMPART, nombre: 1 },
-  ],
-}
-
-/** Du tissu : peu de bloc, et son verbe reste à trouver — provisoire. */
+/**
+ * **LA ROBE : voir plus, ne presque rien encaisser.** Tranchée par Keko avec la
+ * triade — « +carte main pour robe (magie avantage main) ».
+ *
+ * *Une carte de main de plus est le levier le plus violent des trois* : elle
+ * change ce qu'on peut faire d'un tour ET elle absorbe une part de
+ * l'encombrement. **Ce qui la paie, c'est son set** — une seule Protection, pas
+ * de Rempart, et cinq points de vie.
+ */
 export const ROBE: Armure = {
   id: 'robe',
   nom: 'Robe',
   rarete: 'commune',
   matiere: 'tissu',
-  set: [{ modele: PROTECTION, nombre: 2 }],
+  pv: 5,
+  cartesEnMain: 1,
+  set: [
+    { modele: PROTECTION, nombre: 1 },
+    { modele: CONCENTRATION, nombre: 1 },
+  ],
 }
 
 /** L'armure qu'on ne peut pas perdre, comme le Glaive. */

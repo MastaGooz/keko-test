@@ -156,6 +156,17 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         )
       }
     }
+    /**
+     * **PIOCHER : le verbe de la Robe, et il se dit en CARTES.**
+     *
+     * *Pas de teinte* : les trois couleurs disent ce qu'on inflige, ce qu'on
+     * encaisse et ce qu'on soigne — piocher n'est aucun des trois. **Une
+     * quatrième couleur pour un quatrième fait finirait par n'en distinguer
+     * aucun** ; le gras du chiffre suffit.
+     */
+    if (e.type === 'pioche') {
+      l.push(`Pioche <b>${e.montant}</b> carte${e.montant > 1 ? 's' : ''}`)
+    }
     // POINTS D'ACTION, ET PAS « ÉNERGIE » : le mot renvoie au TEMPS, et c'est
     // ce que Keko veut dire — *plus une carte coûte, plus l'action est longue
     // et puissante.* Le code garde `energie` partout, c'est un nom interne.

@@ -1783,16 +1783,164 @@ libérée par la composition les empile, et *une pièce qui en porterait quatre 
 lirait toujours comme un petit bloc de mesures* — là où une phrase courante
 aurait demandé des séparateurs à inventer.
 
-**LES AUTRES ARMURES SONT RECOMPOSÉES À DEUX CARTES, et leurs profils sont de
-moi** — Armure de plate 2 Rempart, Cotte de maille 1 Protection + 1 Rempart,
-Robe 2 Protection. *Keko a donné le format, pas les sets* : ils sont marqués
-provisoires dans le code depuis le début, et **à rejuger**. Le Plastron de cuir,
-lui, est composé par lui.
+### LA TRIADE DES ARMURES : tissu / cuir / plate
+
+Tranchée par Keko après discussion. **Trois armures, trois axes** — et chacune
+prend une ressource différente :
+
+| | stats | set | ce qu'on va y chercher |
+|---|---|---|---|
+| **Robe** (tissu) | +5 ♥, **+1 carte en main** | Protection + **Concentration** | **voir** plus |
+| **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Protection + **Agilité** | **jouer** plus |
+| **Armure de plate** | **+22 ♥** | Protection + **Rempart** | **encaisser** |
+
+**ET LA COTTE DE MAILLE A ÉTÉ SUPPRIMÉE.** Keko : « sinon on dégage la maille
+et on garde la triade tissu / cuir / plate ? »
+
+*C'est elle qui forçait à inventer.* À quatre, maille et plate étaient sur **le
+même axe** — encaisser, séparées par un chiffre — donc la plate dominait la
+maille, et comme il n'y a pas encore de marché, rien ne faisait payer cette
+domination. **Deux armures sur le même axe ne font pas deux builds, elles font
+une bonne et une moins bonne** ; c'est ce que le balayage des armes avait déjà
+dit (« à survie égalisée, c'est le profil qui discrimine, pas la quantité »).
+
+Et ça répond au « je sais pas quoi faire pour la plate » : **il n'y a rien à
+faire.** Sans maille, c'est elle la RÉFÉRENCE — celle qui ne change aucune
+règle et ne fait qu'encaisser, le rôle que tient le Glaive chez les armes. *Une
+gamme a besoin d'un barreau plat pour que les autres se mesurent à lui.*
+
+`Protection maille.webp` reste au dépôt : **il resservira le jour où une maille
+revient en variante rare**, et une entrée de table suffira à la reposer.
+
+**J'AVAIS PROPOSÉ UN MALUS À LA PLATE, ET KEKO L'A ÉCARTÉ** — « −1 PA c'est
+très dur, et même avec plus de tankyness c'est pas vraiment fun ». *Il a raison,
+et le critère tranche* : **un malus qui n'ouvre aucune décision n'est qu'une
+punition.** Je cherchais à faire payer « partir couvert » alors que **c'est déjà
+payé** — les deux cartes de l'armure diluent comme toutes les autres, et le
+concept dit que c'est ça, le prix.
+
+**ET J'AVAIS ALERTÉ SUR LE +1 CARTE EN MAIN, À TORT.** Mon objection : une carte
+de main en plus compense très exactement un trésor porté (la pollution se lit en
+options par tour), donc la Robe désamorcerait le dilemme central. Keko : « oui ça
+dilue l'encombrement des trésors, mais tu as peu de PV et surtout très peu de
+blocage ! Ce n'est pas broken et ça colle bien au côté magie. »
+
+*Je regardais la stat seule.* **Le coût n'est pas dans la stat, il est dans le
+COUPLE stat + set** : l'armure qui la donne porte cinq points de vie et une
+seule Protection. C'est un échange, et la mesure le confirme — la Robe survit
+comme les deux autres et **rapporte un tiers d'or en moins**, parce qu'avec si
+peu de PV elle brûle bien plus de trésors.
+
+#### CE QUE LE BALAYAGE A DIT, et ce qu'il a corrigé
+
+400 descentes au fond par ligne, même bot (brûler sous 30 PV, piocher, achever,
+bloquer, frapper), Glaive + Rondache + trois potions :
+
+| armure | survie, trésors PRIS | or | trésors REFUSÉS | ce que la cupidité coûte | tours/run |
+|---|---|---|---|---|---|
+| cuir (+15 ♥, +1 PA) | **50 %** | 171 | 75 % | −25 pts | 24,3 |
+| tissu (+5 ♥, +1 main) | **51 %** | 117 | 68 % | −17 pts | 25,1 |
+| plate (+22 ♥) | **50 %** | 157 | 76 % | −26 pts | 27,5 |
+| *sans armure* | 14 % | 34 | — | — | 20,0 |
+
+**Les trois sont alignées à un point près, et leurs tempos diffèrent** — c'est
+exactement ce qu'on cherchait, et c'est le même verdict que Glaive contre
+Espadon : *même survie, autre profil.*
+
+**LA PLATE EST PASSÉE DE +30 À +22, ET C'EST LA MESURE QUI L'A DIT.** À +30 elle
+gagnait sur les deux tableaux — 58 % en prenant les trésors et 88 % en les
+refusant, contre 50 et 73 pour le cuir. ***Une armure qui gagne partout n'est pas
+un choix.*** Le balayage par crans de 4 points donne 47 / 50 / 52 / 58 % : **le
+rasoir est bien là**, et +22 est le seul chiffre qui aligne les trois.
+
+**Et la cupidité coûte de nouveau 17 à 26 points**, ce qui remet le dilemme
+central dans le bon sens — il était inversé depuis que le soin des trésors payait
+plus que leur poids.
+
+**À NE PAS CONFONDRE AVEC LA TRIADE : la survie absolue est basse** (50 % au
+fond, contre 92 % mesurés autrefois). *Ce n'est pas elle qui l'a fait baisser* —
+les PV de base sont passés de 90 à 50 par décision de Keko, et **les groupes
+d'ennemis n'ont jamais été recalibrés dessus.** C'est un chantier à part.
+
+#### CE QUE LE PROFIL PAR TAILLE DE GROUPE N'A PAS DIT
+
+Mesuré aussi (1, 2 et 3 corps de 34 PV) : les trois armures abattent à la même
+vitesse, à un demi-tour près. **Ce critère ne discrimine pas des armures**, et
+c'était prévisible — *elles ne frappent pas.* Il avait séparé le Glaive de
+l'Espadon parce que ceux-là décident de l'ordre dans lequel les corps tombent ;
+pour une armure, les critères qui parlent sont **la survie au fond, ce que la
+cupidité coûte, et le tempo.**
+
+#### LA CONCENTRATION : la seule carte du jeu qui pioche
+
+**2 cartes pour 1 PA**, et c'est le verbe de la Robe. Keko : « +carte main pour
+robe (magie avantage main) > carte pioche ».
+
+*Elle donne au tissu un AXE et pas seulement une stat* : il ne protège presque
+pas, il fait voir plus de cartes — par la stat **et** par le deck. Et c'est le
+bon endroit pour cet avantage : **une carte se paie en dilution**, donc elle
+obéit à la règle du jeu, là où la stat seule l'esquive.
+
+*« La pioche comme action » était dans les « mis de côté »* — c'est Keko qui l'a
+rouverte en la proposant. **Son chiffre n'est pas calibré** : deux cartes pour un
+point d'action est le rendement d'une Protection pris dans une autre monnaie, et
+il n'a jamais été mesuré seul.
+
+**Son illustration manque**, donc elle sort avec le sceau de repli — ce qui est
+exactement ce que ce sceau est là pour dire.
+
+Trois choses à ne pas défaire :
+
+- **ELLE A FAIT PASSER LE RNG DANS `jouerCarte`.** Piocher peut remélanger, donc
+  ça consomme du hasard seedé — *une partie rejouée à la même seed doit rendre
+  les mêmes piochées.* L'esquive s'en tirait en posant un drapeau, le tirage
+  ayant lieu à la frappe où le RNG était déjà là ; **ici le hasard tombe au
+  moment où l'on joue**, et il n'y avait pas d'autre porte. Quarante et un
+  appels de vérification et six de rendu ont suivi la signature ;
+- **les deux pioches partagent la même porte** (`tirer`) : le remélange a lieu
+  AU MILIEU de la boucle, pas avant, donc le tas ne se retourne que quand il le
+  faut. *Deux façons de piocher se désaccorderaient au premier réglage* ;
+- **elle peut se repiocher elle-même** quand le deck est à sec, et c'est juste :
+  *la carte part à la défausse AVANT que son effet ne joue.* C'est ce que fait le
+  genre, et ça ne demande aucune exception — une vérification le verrouille.
+
+#### LE BONUS DE MAIN : troisième porte après les PV et les PA
+
+`cartesEnMain` sur la `Piece`, `mainDeLEquipement` dans `descente.ts`, et la
+bande de stats le lit. **Elle monte le MAXIMUM**, comme les deux autres : la main
+se reforme à chaque tour, donc un bonus posé ailleurs serait perdu au premier
+passage. Elle voyage d'un palier à l'autre — *ce qui vient de l'équipement ne
+change plus une fois descendu.*
+
+*Elle ne s'appelle pas `main`* : une ARME porte déjà ce champ pour dire quelle
+main elle occupe, et `Arme` est une intersection avec `Piece` — **les deux types
+se seraient annulés en `never`, sans qu'aucune ligne ne soit fausse à la
+lecture.**
+
+Le chemin était déjà posé : *« la taille de main passe par là pour que le jour où
+un bijou dira main de 6, il n'y ait rien à rebrancher »* — **c'est une armure qui
+l'a dit la première.**
+
+#### L'ÉVENTAIL DEVIENT UN JETON DE CARTOUCHE
+
+« +1 » suivi de l'éventail se lit sur la Robe comme « +15 ♥ » se lit sur le
+cuir : *une mesure se lit à côté de son symbole*, quelle que soit la mesure.
+
+**Sa géométrie vit en un seul endroit** (`MAIN_EVENTAIL`), lue par le SVG de la
+bande de stats ET par le canvas du cartouche — **deux dessins qui décrivent la
+même chose divergent au premier réglage**, la règle que le coeur avait déjà
+coûtée. Et il est un cran plus GRAND que le coeur (93 contre 75 % de la bande) :
+*à hauteur égale, trois traits espacés pèsent moins qu'une masse pleine* — les
+deux rapports que Keko avait déjà validés sur la bande de stats.
+
+**Sa largeur réservée est celle du DESSIN** (40 x 34), pas un carré : la règle du
+coeur, repayée ici.
 
 ### CHAQUE ARMURE A SA PROTECTION, et la GARDE était déjà elle
 
 Keko a dessiné quatre Protection — tissu, cuir, maille, plate — une par matière
-d'armure, et tranché : **chaque armure donne SA Protection.**
+d'armure, et tranché : **chaque armure donne SA Protection.** *(La maille a
+disparu depuis, avec la triade ; son dessin attend au dépôt.)*
 
 **ET ÇA N'A COÛTÉ AUCUN CHIFFRE, parce que la Garde et la Protection étaient la
 MÊME CARTE** : 1 PA pour 5 de bloc, toutes les deux. *Deux noms pour un seul
@@ -1801,10 +1949,9 @@ Protection reprend le barème de la Garde » sans voir que c'était littéraleme
 elle. **Un doublon ne se voit que le jour où l'on cherche à distinguer ce qu'il
 confond.**
 
-La Garde disparaît donc, la Protection prend sa place, et **la Robe comme la
-Cotte de maille reçoivent leur matière sans qu'on touche au réglage** — ce qui
-était exactement la condition pour le faire sans Keko : *le réglage d'un combat
-est un rasoir.*
+La Garde disparaît donc, la Protection prend sa place, et **les autres armures
+reçoivent leur matière sans qu'on touche au réglage** — ce qui était exactement
+la condition pour le faire sans Keko : *le réglage d'un combat est un rasoir.*
 
 **LA MATIÈRE DESCEND DE LA PIÈCE À SON SET**, par la porte qui portait déjà la
 rareté et le ciel (`deckDeLEquipement`) : *trois étiquettes, un seul héritage.*
@@ -1830,11 +1977,11 @@ que réécrit : `cle()` retire les diacritiques pour l'index (`agilite`), mais
 l'URL, elle, part telle quelle — et un accent deviné marche sur la machine de
 dev avant de faire un 404 en ligne. Vérifié octet pour octet, et en NFC.
 
-**L'ARMURE DE PLATE ATTEND, et son dessin avec.** Elle est la seule des quatre à
-n'avoir aucune Protection — elle ne donne que des Remparts — et lui en donner
-une changerait ses chiffres : 22 de bloc pour 4 PA contre 16 pour 3. *C'est du
-réglage, donc c'est à Keko* ; `Protection plate.webp` est dans le dépôt, l'entrée
-est dans la table, et il n'y a qu'un set à écrire le jour venu.
+**L'ARMURE DE PLATE A FINI PAR AVOIR LA SIENNE**, quand la triade lui a donné
+son set (Protection + Rempart). Elle est restée un temps la seule des quatre à
+n'en porter aucune — *elle ne donnait que des Remparts, et lui en donner une
+changeait ses chiffres* — donc son dessin a attendu que le réglage soit tranché.
+Il l'est : voir la triade, plus haut.
 
 **Et le repli SVG passe par un ALIAS** (`protection → garde`) : le dessin de la
 Garde sert à la Protection, *deux noms pour un même geste n'ayant pas à être

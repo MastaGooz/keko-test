@@ -46,6 +46,7 @@ import {
   COEUR_HAUT,
   COEUR_MI,
   COEUR_TRAIT,
+  MAIN_EVENTAIL,
 } from './texture-carte.ts'
 import { urlDuSymbole } from '../ui/art.ts'
 import type { LieuHub } from './destinations.ts'
@@ -1364,21 +1365,27 @@ function CoeurIcone(): React.JSX.Element {
  * dise « en main » et pas « en tas ». *Trois cartes qui s'ouvrent, c'est le
  * seul geste que le joueur fait avec les siennes.*
  */
+/**
+ * *Sa géométrie vit dans `texture-carte.ts`*, parce que la Robe la fait entrer
+ * dans un cartouche : **deux dessins qui décrivent la même chose divergent au
+ * premier réglage**, et le coeur l'avait déjà payé.
+ */
 function MainIcone(): React.JSX.Element {
+  const { boite, carte, pivot, angles, clair, terne, cerne, trait } = MAIN_EVENTAIL
   return (
-    <svg className="arm-icone main" viewBox="0 0 40 34" aria-hidden="true">
-      {[-22, 0, 22].map((angle, i) => (
+    <svg className="arm-icone main" viewBox={`0 0 ${boite[0]} ${boite[1]}`} aria-hidden="true">
+      {angles.map((angle, i) => (
         <rect
           key={angle}
-          x={13.5}
-          y={5}
-          width={13}
-          height={20}
-          rx={2}
-          transform={`rotate(${angle} 20 30)`}
-          fill={i === 1 ? '#f0d9a2' : '#c8ab6d'}
-          stroke="#2a2118"
-          strokeWidth={1.5}
+          x={carte.x}
+          y={carte.y}
+          width={carte.l}
+          height={carte.h}
+          rx={carte.r}
+          transform={`rotate(${angle} ${pivot[0]} ${pivot[1]})`}
+          fill={i === 1 ? clair : terne}
+          stroke={cerne}
+          strokeWidth={trait}
         />
       ))}
     </svg>

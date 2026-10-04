@@ -78,6 +78,23 @@ export type Effet =
    * réponse aux gros frappeurs plutôt qu'aux petits.
    */
   | { type: 'etourdit' }
+  /**
+   * **PIOCHER TOUT DE SUITE : le verbe de la Robe.**
+   *
+   * *C'est le premier effet qui touche au DECK au milieu d'un tour*, et c'est
+   * ce qui donne au tissu son axe : il ne protège presque pas, il fait VOIR
+   * plus de cartes. Keko : « +carte main pour robe (magie avantage main) ».
+   *
+   * **Il remélange si la pioche se vide**, exactement comme la fin de tour —
+   * donc il consomme le RNG seedé, et c'est pour lui que `jouerCarte` le
+   * reçoit. *Une partie rejouée à la même seed doit rendre les mêmes
+   * piochées.*
+   *
+   * Et il peut ne rien donner : deck épuisé, on ne pioche rien. **C'est une
+   * carte, pas une promesse** — la règle vaut déjà pour la pioche de fin de
+   * tour.
+   */
+  | { type: 'pioche'; montant: number }
   /** Rend des PV au joueur, sans dépasser son maximum. */
   | { type: 'soin'; montant: number }
   /** Recharge de l'énergie tout de suite, dans la limite du maximum. */
@@ -295,7 +312,12 @@ export function creerCombat(
  * Renvoie l'état inchangé si le coup est impossible (combat fini, trésor,
  * énergie insuffisante, cible déjà morte...).
  */
-export function jouerCarte(etat: EtatCombat, index: number, cible: number): EtatCombat {
+export function jouerCarte(
+  etat: EtatCombat,
+  index: number,
+  cible: number,
+  rng: Rng,
+): EtatCombat {
   if (etat.issue !== null) return etat
 
   const carte = etat.main[index]
@@ -313,7 +335,7 @@ export function jouerCarte(etat: EtatCombat, index: number, cible: number): Etat
   // une décision. On compte ce qui FRAPPE, cible unique ou rang entier — une
   // garde n'escompte rien, elle n'attaque pas.
   if (frappe(carte)) suivant.attaquesCeTour += 1
-  resoudreCarte(suivant, carte, cible)
+  resoudreCarte(suivant, carte, cible, rng)
   return suivant
 }
 
@@ -534,7 +556,7 @@ export function mainMorte(etat: EtatCombat): boolean {
 
 // --- interne : tout ce qui suit mute l'état reçu, déjà copié par l'appelant ---
 
-function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number): void {
+function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number, rng: Rng): void {
   // EXILÉE PLUTÔT QUE DÉFAUSSÉE : elle ne reviendra pas dans la pioche, et
   // `butin()` ne la compte plus — brûler un trésor, c'est perdre son or.
   // Une carte à usages en perd un ; à zéro, elle est exilée comme un trésor.
@@ -547,7 +569,7 @@ function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number): void {
   // frappe avec la défense qu'on AVAIT en jouant la carte.*
   const degats = degatsDe(carte, etat)
 
-  for (const effet of carte.effets ?? []) appliquerEffet(etat, effet, cible)
+  for (const effet of carte.effets ?? []) appliquerEffet(etat, effet, cible, rng)
 
   const ennemi = etat.ennemis[cible]
   if (ennemi === undefined || ennemi.pv === 0) return
@@ -568,7 +590,7 @@ function resoudreCarte(etat: EtatCombat, carte: Carte, cible: number): void {
   }
 }
 
-function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number): void {
+function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number, rng: Rng): void {
   switch (effet.type) {
     case 'soin':
       etat.pv = Math.min(etat.pvMax, etat.pv + effet.montant)
@@ -581,6 +603,11 @@ function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number): void {
       break
     case 'esquive':
       etat.esquive = true
+      break
+    case 'pioche':
+      // ON PASSE PAR LA MÊME PORTE QUE LA FIN DE TOUR : le remélange est seedé,
+      // et *deux façons de piocher se désaccorderaient au premier réglage.*
+      tirer(etat, effet.montant, rng)
       break
     case 'riposte':
       etat.riposte += effet.montant
@@ -686,14 +713,7 @@ function piocher(etat: EtatCombat, rng: Rng): void {
   etat.defausse.push(...etat.main)
   etat.main = []
 
-  while (etat.main.length < etat.tailleMain) {
-    if (etat.pioche.length === 0) {
-      if (etat.defausse.length === 0) break
-      etat.pioche = melanger(etat.defausse, rng)
-      etat.defausse = []
-    }
-    etat.main.push(etat.pioche.pop()!)
-  }
+  tirer(etat, etat.tailleMain, rng)
 
   etat.evenements.push({
     tour: etat.tour,
@@ -701,6 +721,27 @@ function piocher(etat: EtatCombat, rng: Rng): void {
     cartes: etat.main.length,
     tresors: etat.main.filter((carte) => carte.type === 'tresor').length,
   })
+}
+
+/**
+ * TIRE `combien` cartes sur le tas, en remélangeant la défausse s'il se vide.
+ *
+ * *Le remélange a lieu AU MILIEU de la boucle, pas avant* : on ne retourne le
+ * tas que quand on en a vraiment besoin, donc la pioche se fait en deux vagues
+ * quand il s'épuise — et c'est ce que la scène 3D met en scène.
+ *
+ * Partagé par la fin de tour et par l'effet `pioche` : *deux façons de piocher
+ * se désaccorderaient au premier réglage.*
+ */
+function tirer(etat: EtatCombat, combien: number, rng: Rng): void {
+  for (let i = 0; i < combien; i += 1) {
+    if (etat.pioche.length === 0) {
+      if (etat.defausse.length === 0) return
+      etat.pioche = melanger(etat.defausse, rng)
+      etat.defausse = []
+    }
+    etat.main.push(etat.pioche.pop()!)
+  }
 }
 
 /** Fisher-Yates seedé. Renvoie un nouveau tableau. */

@@ -92,6 +92,7 @@ import {
   commencerDescente,
   consommablesSurvivants,
   paDeLEquipement,
+  mainDeLEquipement,
   pvDeLEquipement,
   tresorsTransportes,
 } from '../logic/descente.ts'
@@ -280,7 +281,10 @@ export function Scene(): React.JSX.Element {
     return {
       pvMax: REGLAGE_DEFAUT.pvMax + pvDeLEquipement(porte),
       energieMax: CONFIG_DEFAUT.energieMax + paDeLEquipement(porte),
-      tailleMain: TAILLE_MAIN_URL(),
+      // ET LA MAIN A ENFIN SA SOURCE : la Robe. *Elle passait déjà par ici
+      // « pour que le jour où un bijou dira main de 6, il n'y ait rien à
+      // rebrancher »* — c'est une armure qui l'a dit la première.
+      tailleMain: TAILLE_MAIN_URL() + mainDeLEquipement(porte),
     }
   }, [hub.chargement])
 
@@ -769,7 +773,7 @@ export function Scene(): React.JSX.Element {
       if (carte === undefined) return
       const poser = (): void => {
         dejaJouee.current = { id: carte.id, finAnimation: 0 }
-        majCombat((c) => jouerCarte(c, index, -1))
+        majCombat((c) => jouerCarte(c, index, -1, depart.rng))
       }
       const vers = repereDe('.vie-barre')
       if (vers === null) {
@@ -821,7 +825,7 @@ export function Scene(): React.JSX.Element {
       const vers = repereDe('.vie-armure')
       const poser = (): void => {
         dejaJouee.current = { id: carte.id, finAnimation: 0 }
-        majCombat((c) => jouerCarte(c, index, -1))
+        majCombat((c) => jouerCarte(c, index, -1, depart.rng))
       }
       if (vers === null) {
         poser()
@@ -886,7 +890,7 @@ export function Scene(): React.JSX.Element {
         // LE TAS ENCAISSE QUAND LA CHUTE S'ACHÈVE, pas à l'impact : la carte
         // est encore à l'écran pendant tout ce temps-là.
         dejaJouee.current = { id: carte.id, finAnimation: TEMPS_FIN - TEMPS_IMPACT }
-        majCombat((c) => jouerCarte(c, index, cible))
+        majCombat((c) => jouerCarte(c, index, cible, depart.rng))
         setTouches((t) => ({ ...t, [cible]: lireHorloge() }))
         secouer('normale')
         // CE QU'ELLE INFLIGE SE DEMANDE À LA RÈGLE : un Coup de bouclier vaut
@@ -946,7 +950,7 @@ export function Scene(): React.JSX.Element {
 
       window.setTimeout(() => {
         dejaJouee.current = { id: carte.id, finAnimation: TEMPS_FIN - TEMPS_IMPACT }
-        majCombat((c) => jouerCarte(c, index, -1))
+        majCombat((c) => jouerCarte(c, index, -1, depart.rng))
         secouer('forte')
         const maintenant = lireHorloge()
         setTouches((t) => {
@@ -1022,7 +1026,7 @@ export function Scene(): React.JSX.Element {
           // Celle-ci n'a pas de scène à jouer : elle disparaît au lâcher, donc
           // le tas encaisse tout de suite.
           dejaJouee.current = { id: carte.id, finAnimation: 0 }
-          majCombat((c) => jouerCarte(c, index, -1))
+          majCombat((c) => jouerCarte(c, index, -1, depart.rng))
         }
         return
       }

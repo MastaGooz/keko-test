@@ -358,7 +358,7 @@ function dispatch(action: Action): void {
         const combat = descente.combat
         const debout = combat.ennemis[action.cible]?.pv ?? 0
         const carte = combat.main[selection]
-        const apres = jouerCarte(combat, selection, action.cible)
+        const apres = jouerCarte(combat, selection, action.cible, rng)
         descente = { ...descente, combat: apres }
 
         // BRÛLER UN TRÉSOR : le soin se voit sur le joueur, et la carte est

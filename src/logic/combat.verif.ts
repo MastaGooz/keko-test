@@ -68,7 +68,7 @@ cas('un rangement qui ne veut rien dire ne change rien', () => {
 
 cas('on ne range plus sa main une fois le combat fini', () => {
   const etat = combat(cartes(5, MOULINET), ennemi({ pv: 10, degats: 5 }))
-  const gagne = jouerCarte(etat, 0, 0)
+  const gagne = jouerCarte(etat, 0, 0, rng())
   egal(gagne.issue, 'victoire', 'le combat est bien fini')
   egal(reordonnerMain(gagne, 0, 2), gagne, 'etat inchange')
 })
@@ -77,7 +77,7 @@ cas('on ne range plus sa main une fois le combat fini', () => {
 
 cas('la carte résout tout de suite et consomme son énergie', () => {
   const etat = combat(cartes(6, MOULINET), ennemi({ pv: 100, degats: 5 }))
-  const apres = jouerCarte(etat, 0, 0)
+  const apres = jouerCarte(etat, 0, 0, rng())
 
   egal(apres.ennemis[0].pv, 84, 'dégâts appliqués')
   egal(apres.energie, 1, 'énergie restante')
@@ -87,8 +87,8 @@ cas('la carte résout tout de suite et consomme son énergie', () => {
 
 cas('une carte trop chère ne se joue pas', () => {
   const etat = combat(cartes(6, MOULINET), ennemi({ pv: 100, degats: 5 }))
-  const apres = jouerCarte(etat, 0, 0)
-  const refus = jouerCarte(apres, 0, 0)
+  const apres = jouerCarte(etat, 0, 0, rng())
+  const refus = jouerCarte(apres, 0, 0, rng())
 
   egal(apres.energie, 1, 'il reste 1 énergie')
   verifie(refus === apres, 'l\'état devrait être inchangé, à l\'identique')
@@ -127,7 +127,7 @@ cas('abattre une cible avant la fin du tour annule sa frappe', () => {
   ])
   egal(menaceDuTour(etat), 8, 'menace avant le coup')
 
-  const apres = jouerCarte(etat, 0, 0)
+  const apres = jouerCarte(etat, 0, 0, rng())
   egal(menaceDuTour(apres), 3, 'le mort ne frappe plus')
   egal(finDuTour(apres, rng()).pv, 27, 'seul le survivant a frappé')
 })
@@ -137,13 +137,13 @@ cas('la victoire demande que tous soient à terre', () => {
     ennemi({ pv: 16, degats: 1 }),
     ennemi({ pv: 16, degats: 1, nom: 'Second' }),
   ])
-  const un = jouerCarte(etat, 0, 0)
+  const un = jouerCarte(etat, 0, 0, rng())
   egal(un.issue, null, 'un mort ne suffit pas')
   egal(un.energie, 1, 'énergie dépensée')
 
   // Le second moulinet coûte 4 : il faut passer un tour pour le payer.
   const t2 = finDuTour(un, rng())
-  const deux = jouerCarte(t2, t2.main.findIndex((c) => c.type === 'combat'), 1)
+  const deux = jouerCarte(t2, t2.main.findIndex((c) => c.type === 'combat'), 1, rng())
   egal(deux.issue, 'victoire', 'les deux à terre')
 })
 
@@ -162,14 +162,14 @@ cas('la fin du tour renouvelle TOUTE la main', () => {
 
 cas('l\'énergie non dépensée est perdue', () => {
   const etat = combat(cartes(10, DAGUE), ennemi({ pv: 100, degats: 1 }))
-  const apres = finDuTour(jouerCarte(etat, 0, 0), rng())
+  const apres = finDuTour(jouerCarte(etat, 0, 0, rng()), rng())
 
   egal(apres.energie, 5, 'rechargée à plein, pas cumulée')
 })
 
 cas('un trésor ne se joue pas', () => {
   const etat = combat(tresors(10), ennemi({ pv: 100, degats: 1 }))
-  const apres = jouerCarte(etat, 0, 0)
+  const apres = jouerCarte(etat, 0, 0, rng())
 
   verifie(mainMorte(etat), 'la main devrait être morte')
   verifie(apres === etat, 'l\'état devrait être inchangé, à l\'identique')
@@ -190,7 +190,7 @@ cas('une main sans carte abordable est morte, même avec des cartes de combat', 
   const etat = combat(cartes(10, MOULINET), ennemi({ pv: 100, degats: 1 }))
   verifie(!mainMorte(etat), 'à 5 énergie le moulinet passe')
 
-  const apres = jouerCarte(etat, 0, 0)
+  const apres = jouerCarte(etat, 0, 0, rng())
   verifie(mainMorte(apres), 'à 1 énergie plus rien ne passe')
 })
 
@@ -220,7 +220,7 @@ cas('la mort interrompt la fin du tour', () => {
 cas('les transitions ne modifient pas l\'état reçu', () => {
   const etat = combat(cartes(6, DAGUE), ennemi({ pv: 100, degats: 5 }))
   const temoin = JSON.stringify(etat)
-  jouerCarte(etat, 0, 0)
+  jouerCarte(etat, 0, 0, rng())
   finDuTour(etat, rng())
 
   egal(JSON.stringify(etat), temoin, 'état d\'origine')
@@ -255,7 +255,7 @@ cas('la conséquence n\'évite rien sur une cible qui ne frappait pas ce tour', 
 
 cas('la conséquence sait ce qu\'on ne peut pas payer', () => {
   const etat = combat(cartes(6, MOULINET), ennemi({ pv: 100, degats: 5 }))
-  const apres = jouerCarte(etat, 0, 0)
+  const apres = jouerCarte(etat, 0, 0, rng())
 
   egal(consequence(etat, etat.main[0], 0).abordable, true, 'à 5 énergie')
   egal(consequence(apres, apres.main[0], 0).abordable, false, 'à 1 énergie')
@@ -268,7 +268,7 @@ cas('un coup ne touche que sa cible', () => {
     ennemi({ pv: 40, degats: 5 }),
     ennemi({ pv: 40, degats: 5, nom: 'Second' }),
   ])
-  const apres = jouerCarte(etat, 0, 1)
+  const apres = jouerCarte(etat, 0, 1, rng())
 
   egal(apres.ennemis[0].pv, 40, 'le premier est intact')
   egal(apres.ennemis[1].pv, 24, 'seul le visé encaisse')
@@ -279,7 +279,7 @@ cas('un mort ne frappe plus et quitte la liste des vivants', () => {
     ennemi({ pv: 16, degats: 5 }),
     ennemi({ pv: 100, degats: 5, nom: 'Second' }),
   ])
-  const apres = jouerCarte(etat, 0, 0)
+  const apres = jouerCarte(etat, 0, 0, rng())
 
   egal(vivants(apres).length, 1, 'un seul debout')
   egal(vivants(apres)[0].index, 1, 'les index de cible ne bougent pas')
@@ -360,9 +360,9 @@ function ennemi(traits: {
   // plus rien.
   const base = { ...brut, main: [garde, ...brut.main.slice(1)] }
 
-  egal(jouerCarte(base, 0, 0).bloc, 5, 'une carte de garde donne du bloc')
-  egal(jouerCarte(base, 0, 0).energie, base.energie - 1, 'et elle coute son energie')
-  egal(jouerCarte(base, 0, 0).ennemis[0]!.pv, 40, 'une garde ne frappe personne')
+  egal(jouerCarte(base, 0, 0, rng).bloc, 5, 'une carte de garde donne du bloc')
+  egal(jouerCarte(base, 0, 0, rng).energie, base.energie - 1, 'et elle coute son energie')
+  egal(jouerCarte(base, 0, 0, rng).ennemis[0]!.pv, 40, 'une garde ne frappe personne')
 
   // LA MENACE ANNONCEE TIENT COMPTE DU BLOC : c'est ce chiffre qui rend la
   // garde lisible -- la poser doit faire baisser ce qu'on va prendre, sous les
@@ -426,7 +426,7 @@ function tresors(nombre: number): Carte[] {
     { nom: 'Mort', pv: 0, pvMax: 10, degats: 3, periode: 1, compteur: 1 },
   ], createRng(7))
   const base = { ...brut, main: [fauchage, ...brut.main.slice(1)] }
-  const apres = jouerCarte(base, 0, -1)
+  const apres = jouerCarte(base, 0, -1, rng())
 
   egal(apres.ennemis[0]!.pv, 15, 'un fauchage frappe le premier corps')
   egal(apres.ennemis[1]!.pv, 0, 'et acheve le faible du meme coup')
@@ -441,11 +441,11 @@ cas('une carte à usages revient à la défausse avec un usage de moins, puis s�
   // C'est le consommable en une seule carte : trois gorgées, puis plus rien.
   const gorgee: Carte = { id: 'g', nom: 'Gorgée', type: 'combat', cout: 1, degats: 0, effets: [{ type: 'soin', montant: 10 }], usages: 2 }
   const etat: EtatCombat = { ...combat([gorgee], ennemi({ pv: 10, degats: 1 })), pv: 10, main: [gorgee], pioche: [], defausse: [] }
-  const une = jouerCarte(etat, 0, 0)
+  const une = jouerCarte(etat, 0, 0, rng())
   egal(une.pv, 20, 'la gorgée soigne')
   egal(une.defausse.length, 1, 'elle revient à la défausse')
   egal(une.defausse[0]!.usages, 1, 'avec un usage de moins')
-  const deux = jouerCarte({ ...une, main: [une.defausse[0]!], defausse: [], energie: 5 }, 0, 0)
+  const deux = jouerCarte({ ...une, main: [une.defausse[0]!], defausse: [], energie: 5 }, 0, 0, rng())
   egal(deux.pv, 30, 'la dernière gorgée soigne encore')
   egal(deux.defausse.length, 0, 'et la carte est exilée')
 })
@@ -503,36 +503,36 @@ cas('une carte a remise coute son prix plein tant qu’on n’a rien frappe', ()
 
 cas('chaque attaque portee lui retire un point d’action', () => {
   const etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
-  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0, rng())
   egal(apres.attaquesCeTour, 1, 'la dague compte comme une attaque')
   egal(coutDe(apres.main[ou(apres, 'Estoc')]!, apres), 2, 'donc l’estoc coute un de moins')
-  const encore = jouerCarte(apres, autreQue(apres, 'Estoc'), 0)
+  const encore = jouerCarte(apres, autreQue(apres, 'Estoc'), 0, rng())
   egal(coutDe(encore.main[ou(encore, 'Estoc')]!, encore), 1, 'et deux de moins apres la seconde')
 })
 
 cas('le plancher est zero, jamais un gain', () => {
   let etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
-  for (let i = 0; i < 4; i += 1) etat = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  for (let i = 0; i < 4; i += 1) etat = jouerCarte(etat, autreQue(etat, 'Estoc'), 0, rng())
   egal(coutDe(etat.main[ou(etat, 'Estoc')]!, etat), 0, 'quatre attaques pour une remise de trois')
 })
 
 cas('ce qui n’attaque pas n’escompte rien', () => {
   const etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, GARDE_TEST)], ennemi({ pv: 100, degats: 5 }))
-  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0, rng())
   egal(apres.attaquesCeTour, 0, 'une garde ne frappe personne')
   egal(coutDe(apres.main[ou(apres, 'Estoc')]!, apres), 3, 'donc le prix ne bouge pas')
 })
 
 cas('et elle paie vraiment le prix remis', () => {
   const etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
-  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
-  const joue = jouerCarte(apres, ou(apres, 'Estoc'), 0)
+  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0, rng())
+  const joue = jouerCarte(apres, ou(apres, 'Estoc'), 0, rng())
   egal(joue.energie, apres.energie - 2, 'deux points d’action, pas trois')
 })
 
 cas('la remise retombe a la fin du tour', () => {
   const etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
-  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  const apres = jouerCarte(etat, autreQue(etat, 'Estoc'), 0, rng())
   const tourSuivant = finDuTour(apres, createRng(1))
   egal(tourSuivant.attaquesCeTour, 0, 'un enchainement ne traverse pas le tour')
 })
@@ -540,7 +540,7 @@ cas('la remise retombe a la fin du tour', () => {
 cas('une main n’est morte que si rien n’est payable AU PRIX REMIS', () => {
   let etat = combat([...cartes(1, ESTOC_REMISE), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
   // Quatre dagues jouees : il reste 1 point d’action et l’estoc est a zero.
-  for (let i = 0; i < 4; i += 1) etat = jouerCarte(etat, autreQue(etat, 'Estoc'), 0)
+  for (let i = 0; i < 4; i += 1) etat = jouerCarte(etat, autreQue(etat, 'Estoc'), 0, rng())
   verifie(!mainMorte(etat), 'l’estoc gratuit se joue encore')
 })
 
@@ -559,9 +559,9 @@ cas('il inflige exactement la defense posee', () => {
     [...cartes(1, COUP_BOUCLIER), ...cartes(4, BLOQUER_TEST)],
     ennemi({ pv: 100, degats: 5 }),
   )
-  const garde = jouerCarte(etat, autreQue(etat, 'Coup de bouclier'), 0)
+  const garde = jouerCarte(etat, autreQue(etat, 'Coup de bouclier'), 0, rng())
   egal(garde.bloc, 5, 'une garde posee')
-  const frappe = jouerCarte(garde, ou(garde, 'Coup de bouclier'), 0)
+  const frappe = jouerCarte(garde, ou(garde, 'Coup de bouclier'), 0, rng())
   egal(frappe.ennemis[0]!.pv, 95, 'cinq de defense, cinq de degats')
 })
 
@@ -570,9 +570,9 @@ cas('deux gardes valent deux fois plus', () => {
     [...cartes(1, COUP_BOUCLIER), ...cartes(4, BLOQUER_TEST)],
     ennemi({ pv: 100, degats: 5 }),
   )
-  let apres = jouerCarte(etat, autreQue(etat, 'Coup de bouclier'), 0)
-  apres = jouerCarte(apres, autreQue(apres, 'Coup de bouclier'), 0)
-  const frappe = jouerCarte(apres, ou(apres, 'Coup de bouclier'), 0)
+  let apres = jouerCarte(etat, autreQue(etat, 'Coup de bouclier'), 0, rng())
+  apres = jouerCarte(apres, autreQue(apres, 'Coup de bouclier'), 0, rng())
+  const frappe = jouerCarte(apres, ou(apres, 'Coup de bouclier'), 0, rng())
   egal(frappe.ennemis[0]!.pv, 90, 'dix de defense, dix de degats')
 })
 
@@ -586,7 +586,7 @@ cas('et il compte comme une attaque pour la remise', () => {
     [...cartes(1, COUP_BOUCLIER), ...cartes(1, ESTOC_REMISE), ...cartes(3, DAGUE)],
     ennemi({ pv: 100, degats: 5 }),
   )
-  const apres = jouerCarte(etat, ou(etat, 'Coup de bouclier'), 0)
+  const apres = jouerCarte(etat, ou(etat, 'Coup de bouclier'), 0, rng())
   egal(apres.attaquesCeTour, 1, 'frapper a zero reste frapper')
   egal(coutDe(apres.main[ou(apres, 'Estoc')]!, apres), 2, 'donc l’estoc escompte')
 })
@@ -598,7 +598,7 @@ const PROJECTION_TEST = { nom: 'Projection', cout: 2, degats: 3, effets: [{ type
 
 cas('la riposte frappe celui qui vous attaque', () => {
   const etat = combat([...cartes(1, RIPOSTE_TEST), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
-  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0)
+  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0, rng())
   const apres = finDuTour(posee, createRng(1))
   egal(apres.ennemis[0]!.pv, 96, 'quatre points, rendus a celui qui a frappe')
 })
@@ -608,14 +608,14 @@ cas('elle frappe CHAQUE assaillant, pas un seul', () => {
     ennemi({ pv: 100, degats: 5 }),
     ennemi({ pv: 100, degats: 5 }),
   ])
-  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0)
+  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0, rng())
   const apres = finDuTour(posee, createRng(1))
   verifie(apres.ennemis[0]!.pv === 96 && apres.ennemis[1]!.pv === 96, 'les deux ont paye leur coup')
 })
 
 cas('elle ne traverse pas le tour', () => {
   const etat = combat([...cartes(1, RIPOSTE_TEST), ...cartes(4, DAGUE)], ennemi({ pv: 100, degats: 5 }))
-  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0)
+  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0, rng())
   const unTour = finDuTour(posee, createRng(1))
   egal(unTour.riposte, 0, 'elle tombe avec le bloc')
   const deuxTours = finDuTour(unTour, createRng(2))
@@ -624,7 +624,7 @@ cas('elle ne traverse pas le tour', () => {
 
 cas('un ennemi tue par la riposte meurt pour de bon', () => {
   const etat = combat([...cartes(1, RIPOSTE_TEST), ...cartes(4, DAGUE)], ennemi({ pv: 3, degats: 5 }))
-  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0)
+  const posee = jouerCarte(etat, ou(etat, 'Riposte'), 0, rng())
   const apres = finDuTour(posee, createRng(1))
   egal(apres.ennemis[0]!.pv, 0, 'quatre points sur trois PV')
   egal(apres.issue, 'victoire', 'et le dernier corps tombe gagne le combat')
@@ -635,7 +635,7 @@ cas('etourdir rend a l’ennemi sa periode entiere', () => {
     [...cartes(1, PROJECTION_TEST), ...cartes(4, DAGUE)],
     ennemi({ pv: 100, degats: 5, periode: 3, compteur: 1 }),
   )
-  const apres = jouerCarte(etat, ou(etat, 'Projection'), 0)
+  const apres = jouerCarte(etat, ou(etat, 'Projection'), 0, rng())
   egal(apres.ennemis[0]!.compteur, 3, 'il recommence a attendre')
   egal(apres.ennemis[0]!.pv, 97, 'et il a quand meme pris ses degats')
 })
@@ -646,7 +646,7 @@ cas('...donc il ne frappe pas ce tour-ci', () => {
     ennemi({ pv: 100, degats: 5, periode: 3, compteur: 1 }),
   )
   const sans = finDuTour(etat, createRng(1))
-  const avec = finDuTour(jouerCarte(etat, ou(etat, 'Projection'), 0), createRng(1))
+  const avec = finDuTour(jouerCarte(etat, ou(etat, 'Projection'), 0, rng()), createRng(1))
   egal(sans.pv, 25, 'sans projection, le coup passe')
   egal(avec.pv, 30, 'avec, il est annule')
 })
@@ -670,7 +670,7 @@ console.log('Tout passe.')
   })
   const frappeur = ennemi({ pv: 40, degats: 9 })
 
-  const pose = jouerCarte(combat(deck, frappeur), 0, 0)
+  const pose = jouerCarte(combat(deck, frappeur), 0, 0, rng())
   verifie(pose.esquive, "l'esquive s'arme en jouant la carte")
 
   const evite = finDuTour(pose, toujours)
@@ -685,4 +685,50 @@ console.log('Tout passe.')
   // declencher toute seule.
   const nu = combat(deck, frappeur)
   verifie(finDuTour(nu, toujours).pv === nu.pv - 9, 'sans esquive, le coup passe')
+}
+
+/**
+ * **PIOCHER : le verbe de la Robe.**
+ *
+ * *C'est le premier effet qui touche au deck au milieu d'un tour*, donc il
+ * consomme le RNG seedé — et c'est pour lui que `jouerCarte` le reçoit.
+ */
+{
+  const deck = cartes(8, {
+    nom: 'Concentration',
+    cout: 1,
+    degats: 0,
+    effets: [{ type: 'pioche', montant: 2 }],
+  })
+  const etat = combat(deck, ennemi({ pv: 40, degats: 8 }))
+
+  const apres = jouerCarte(etat, 0, 0, rng())
+  egal(apres.main.length, etat.main.length - 1 + 2, 'piocher remplit la main')
+  egal(apres.pioche.length, etat.pioche.length - 2, '...en prenant sur le tas')
+  egal(apres.ennemis[0]!.pv, 40, 'et elle ne frappe personne')
+
+  // LE TAS VIDE NE BLOQUE RIEN : on reverse la défausse, exactement comme la
+  // fin de tour. *Deux façons de piocher se désaccorderaient au premier
+  // réglage*, donc les deux passent par la même porte.
+  const sec = { ...etat, pioche: [], defausse: [...deck.slice(5)] }
+  const reverse = jouerCarte(sec, 0, 0, rng())
+  egal(reverse.main.length, sec.main.length - 1 + 2, 'le tas vide se remelange pour piocher')
+
+  // ELLE PEUT SE REPIOCHER ELLE-MÊME, et c'est juste : *la carte part à la
+  // défausse AVANT que son effet ne joue*, donc le remélange la retrouve. C'est
+  // ce que fait le genre, et ça ne demande aucune exception.
+  const vide = { ...etat, pioche: [], defausse: [] }
+  const seule = jouerCarte(vide, 0, 0, rng())
+  egal(seule.main.length, vide.main.length, 'a sec, la carte jouee se repioche')
+
+  // ET ON NE PIOCHE JAMAIS PLUS QUE CE QUI EXISTE : *c'est une carte, pas une
+  // promesse.* Un trésor s'exile, donc il ne revient pas alimenter le tas.
+  const exilee = { ...deck[0]!, exil: true }
+  const sansRetour = jouerCarte(
+    { ...etat, main: [exilee], pioche: [], defausse: [] },
+    0,
+    0,
+    rng(),
+  )
+  egal(sansRetour.main.length, 0, 'rien a piocher, rien ne vient')
 }

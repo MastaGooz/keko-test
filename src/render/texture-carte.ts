@@ -1310,7 +1310,7 @@ function replier(
  * il ne se coupe jamais de son chiffre, et le rendu 2D s'en sort avec un repli
  * en clair.
  */
-type Jeton = { type: 'pa'; valeur: number } | { type: 'coeur' }
+type Jeton = { type: 'pa'; valeur: number } | { type: 'coeur' } | { type: 'main' }
 
 function lireJeton(mot: string): Jeton | null {
   // LE COEUR N'A PAS DE VALEUR : son chiffre est du TEXTE, écrit avant lui —
@@ -1318,6 +1318,9 @@ function lireJeton(mot: string): Jeton | null {
   // coût ; le coeur dit une mesure, et une mesure se lit à côté de son
   // symbole* — la grammaire de la bande de stats de l'armurerie.
   if (mot === '{coeur}') return { type: 'coeur' }
+  // L'ÉVENTAIL NON PLUS : « +1 🖐 » se lit comme « +15 ♥ », et c'est voulu —
+  // *une mesure se lit à côté de son symbole*, quelle que soit la mesure.
+  if (mot === '{main}') return { type: 'main' }
   // L'ORBE, ELLE, PORTE TOUJOURS SON CHIFFRE — qu'elle dise un coût sur une
   // carte de combat ou une mesure sur une pièce. *Elle a eu une version nue le
   // temps d'un essai, le chiffre écrit devant comme pour le coeur* ; Keko l'a
@@ -1352,6 +1355,40 @@ const HAUT_JETON = 1.28
  * chiffre**, et le même couple se règle du même rapport partout.
  */
 const PART_COEUR = 75 / 84
+
+/**
+ * L'ÉVENTAIL DE LA MAIN, en un seul endroit — *deux dessins qui décrivent la
+ * même chose divergent au premier réglage.*
+ *
+ * Il vit dans la bande de stats de l'armurerie depuis que les mesures y sont
+ * passées ; la Robe le fait entrer dans un cartouche, et `MainIcone` le lit
+ * désormais ici plutôt que de porter ses propres nombres. C'est la règle déjà
+ * payée par le coeur, qu'il avait fallu rejouer au `Path2D` pour la même
+ * raison.
+ */
+export const MAIN_EVENTAIL = {
+  /** Le viewBox d'origine : tout le reste est dans ce repère. */
+  boite: [40, 34] as const,
+  /** Une carte de l'éventail, et le pivot autour duquel les trois s'ouvrent. */
+  carte: { x: 13.5, y: 5, l: 13, h: 20, r: 2 },
+  pivot: [20, 30] as const,
+  angles: [-22, 0, 22] as const,
+  /** Celle du milieu est claire : c'est elle qu'on tient. */
+  clair: '#f0d9a2',
+  terne: '#c8ab6d',
+  cerne: '#2a2118',
+  trait: 1.5,
+}
+
+/**
+ * ET IL EST UN CRAN PLUS GRAND QUE LE COEUR, pour la raison inverse.
+ *
+ * *À hauteur égale, trois traits espacés pèsent moins qu'une masse pleine* —
+ * c'est exactement l'argument qui descend le coeur, pris par l'autre bout, et
+ * ce sont les deux rapports que Keko a déjà validés sur la bande de stats
+ * (75 et 93 contre 84 pour l'orbe).
+ */
+const PART_MAIN = 93 / 84
 
 /**
  * **LES COULEURS DU COEUR, ET ELLES SONT LUES AUX DEUX ENDROITS.** Keko : « tu
@@ -1415,7 +1452,12 @@ function dansLeDisque(
  */
 function largeurJeton(_ctx: CanvasRenderingContext2D, jeton: Jeton, taille: number): number {
   const h = taille * HAUT_JETON
-  return jeton.type === 'coeur' ? h * PART_COEUR * (40 / 37) : h
+  if (jeton.type === 'coeur') return h * PART_COEUR * (40 / 37)
+  // L'ÉVENTAIL EST PLUS LARGE QUE HAUT (40 x 34) : *la place réservée est celle
+  // du dessin*, plus un carré pour tout le monde — la règle que le coeur avait
+  // déjà coûtée.
+  if (jeton.type === 'main') return h * PART_MAIN * (40 / 34)
+  return h
 }
 
 /** Dessine le jeton, son bord gauche en `x`, centré sur la ligne de base `y`. */
@@ -1468,6 +1510,34 @@ function peindreJeton(
     ctx.strokeStyle = '#ffffffaa'
     ctx.lineCap = 'round'
     ctx.stroke(reflet)
+    ctx.restore()
+    return
+  }
+
+  if (jeton.type === 'main') {
+    // L'ÉVENTAIL, REJOUÉ TEL QUEL depuis sa géométrie partagée : trois cartes
+    // qui s'ouvrent, la claire au milieu. *Le paquet de pioche dit déjà « des
+    // cartes » ; celui-ci dit « en main ».*
+    const hm = h * PART_MAIN
+    const e = hm / MAIN_EVENTAIL.boite[1]
+    ctx.translate(x, y - hm / 2)
+    ctx.scale(e, e)
+    ctx.lineWidth = MAIN_EVENTAIL.trait
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = MAIN_EVENTAIL.cerne
+    const { carte: k, pivot } = MAIN_EVENTAIL
+    MAIN_EVENTAIL.angles.forEach((angle, i) => {
+      ctx.save()
+      ctx.translate(pivot[0], pivot[1])
+      ctx.rotate((angle * Math.PI) / 180)
+      ctx.translate(-pivot[0], -pivot[1])
+      ctx.beginPath()
+      ctx.roundRect(k.x, k.y, k.l, k.h, k.r)
+      ctx.fillStyle = i === 1 ? MAIN_EVENTAIL.clair : MAIN_EVENTAIL.terne
+      ctx.fill()
+      ctx.stroke()
+      ctx.restore()
+    })
     ctx.restore()
     return
   }
