@@ -8274,13 +8274,31 @@ le sablier de 26 px sur la toile, sans toucher ni au cadrage ni au disque
 une rustine pour un fichier, c'est ce qui permet de changer de fichier* — la
 leçon du dos de carte, repayée ici.
 
-**LIMITE À CONNAÎTRE : le sablier affleure désormais le cadre.** Mesuré sur la
-texture, le long de la colonne centrale de l'orbe : la bande de laiton va
-jusqu'à 1,56 U, la surface sombre commence à 1,95 U, et **le sablier commence à
-1,95 U** — il était à 2,20 U avant. *Il ne mord pas sur le laiton, mais il n'y
-a plus de marge* : un dessin qui le remonterait encore le ferait passer sur le
-cadre, et il faudrait alors descendre l'orbe (`ORBE_CY`) plutôt que de rogner
-le dessin.
+**ET L'ORBE A DÛ DESCENDRE, parce que sa marge haute se mesure au SOMMET DU
+SABLIER.** Keko : « avec le nouveau il touche le haut de la carte, je voudrais
+le même écart qu'avec la gauche ».
+
+*Le dessin déborde du disque par le haut* — le petit sablier — alors qu'à
+gauche c'est le disque nu qui affleure. Posés à marge de toile égale, les deux
+écarts n'étaient donc pas les mêmes à l'oeil, et le sablier passait carrément
+**sur** le laiton du cadre. C'est le raisonnement du compteur des pièces, pris
+dans l'autre sens : *une marge se mesure au bord qu'on VOIT.*
+
+Mesuré sur la texture, en unités de carte : le bord intérieur du cadre est à
+**1,823 des deux côtés**, le bord gauche du disque à 4,374 — donc un écart de
+**2,551** — et le sommet du sablier tombait à 1,768, c'est-à-dire **0,055
+au-dessus du cadre**. `ORBE_CY` passe de `0,006 × HAUT` à `0,0246 × HAUT`, ce
+qui pose ce sommet à 4,374 : mesuré après, **2,551 à gauche contre 2,549 en
+haut.**
+
+**Le jonc du cadre de trésor et la valeur du butin descendent avec**, et c'est
+voulu : les deux lisent `ORBE_CY`, et *la valeur forme une ligne d'en-tête avec
+l'orbe* — c'est tout l'intérêt de n'avoir qu'une constante. Le compteur des
+pièces, lui, a les siennes et ne bouge pas.
+
+*Le coefficient dépend donc du DESSIN* : un fichier qui change la marge haute
+de son sujet le rouvre, et il se remesure de la même façon — bord du cadre,
+bord gauche du disque, sommet du sablier.
 
 **Keko a choisi l'ORBE** : « essayons l'orbe, mais il faudrait une orbe sur les
 cartes, puis le même symbole avec X/X dans l'interface de combat ». C'est la

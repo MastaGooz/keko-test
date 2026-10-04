@@ -348,11 +348,31 @@ const SILHOUETTES: Partial<Record<PisteCadre, readonly [number, number][]>> = {
  *
  * Elle servait à `peindreCout` seule ; le jonc du cadre de trésor doit
  * maintenant s'écarter d'elle, et *deux endroits qui décrivent la même place
- * se désaccordent au premier réglage.*
+ * se désaccordent au premier réglage.* La valeur d'un butin s'y cale aussi,
+ * puisque les deux forment une ligne d'en-tête : **elle descend donc avec.**
+ *
+ * **ET SA MARGE HAUTE SE MESURE AU SOMMET DU SABLIER, pas au bord de la
+ * toile.** Keko, après avoir redessiné `Cost.webp` : « avec le nouveau il
+ * touche le haut de la carte, je voudrais le même écart qu'avec la gauche ».
+ *
+ * *Le dessin déborde du disque par le haut* — le petit sablier — alors qu'à
+ * gauche c'est le disque nu qui affleure. Posés à marge de toile égale, les
+ * deux écarts n'étaient donc pas les mêmes à l'oeil, et le sablier passait
+ * carrément **sur** le laiton du cadre. C'est le même raisonnement que le
+ * compteur des pièces, pris dans l'autre sens : *une marge se mesure au bord
+ * qu'on VOIT.*
+ *
+ * Mesuré sur la texture, en unités de carte : le bord intérieur du cadre est à
+ * 1,823 des deux côtés, le bord gauche du disque à 4,374 — donc **un écart de
+ * 2,551** — et le sommet du sablier tombait à 1,768, c'est-à-dire 0,055
+ * AU-DESSUS du cadre. Le coefficient est celui qui pose ce sommet à 4,374.
+ *
+ * *Il dépend donc du DESSIN* : un fichier qui change la marge haute de son
+ * sujet le rouvre, et c'est à remesurer de la même façon.
  */
 const ORBE_L = 0.205 * LARGE
 const ORBE_CX = 0.022 * LARGE + ORBE_L / 2
-const ORBE_CY = 0.006 * HAUT + ORBE_L / 2
+const ORBE_CY = 0.0246 * HAUT + ORBE_L / 2
 
 /** L'écusson du coût : pointe en bas, comme sur toute carte qui coûte. */
 const ECUSSON: readonly [number, number][] = [
