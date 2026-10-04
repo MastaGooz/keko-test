@@ -1907,11 +1907,18 @@ l'état : un effet qui porte sur un corps a besoin de savoir lequel.
 *le bloc tombe à chaque fin de tour, c'est une règle du jeu ; la riposte est
 une clause de CETTE carte* — sans sa durée on la croirait permanente.
 
-**Et la formulation est de Keko** : « jusqu'au prochain tour, les ennemis qui
-vous attaquent subissent 4 dégâts ». *Elle met l'ENNEMI en sujet*, et c'est
+**Et la formulation est de Keko** : « jusqu'à votre prochain tour, les ennemis
+qui vous attaquent subissent 4 dégâts ». *Elle met l'ENNEMI en sujet*, et c'est
 plus juste — la riposte n'est pas un coup qu'on porte, c'est un prix qu'il
-paie. « Jusqu'au prochain tour » dit aussi mieux la durée que « ce tour » :
+paie. « Jusqu'à votre prochain tour » dit aussi mieux la durée que « ce tour » :
 la carte se joue AVANT la salve, donc c'est elle qu'on couvre.
+
+**ET C'EST MOT POUR MOT LA DURÉE DE L'AGILITÉ.** Elle disait « jusqu'au » quand
+l'Agilité disait déjà « jusqu'à votre » ; Keko l'a repris. *Deux cartes qui
+durent le même temps ne peuvent pas le dire de deux façons* — la règle qui a
+déjà fait parler toutes les cartes de blessures, et aligné le trésor brûlé sur
+la potion. Et le possessif dit de QUI est le tour : le joueur en a un, les
+ennemis frappent entre les deux.
 
 **Son pied dit « Action », pas « Attaque »**, et c'est cohérent avec la règle :
 `frappe()` la laisse de côté, donc **elle n'escompte pas l'Estoc**. *Elle ne
@@ -2042,6 +2049,13 @@ appuyer tous revenait à n'appuyer rien.
 mettre "attaquent" en gras ». *Un mot-règle reste un mot-règle quand il change
 de personne* — ce qui le distingue des verbes de la phrase n'est pas sa forme,
 c'est qu'il désigne le moment où la riposte part.
+
+**ET « BLOCAGE » EN EST UN AUSSI.** Keko : « dans Coup de bouclier, il faudrait
+mettre le mot blocage en gras ». *Ce n'est pas un verbe de la phrase, c'est le
+nom de ce que la carte COMPTE* — exactement ce que « attaque » est pour la
+remise de l'Estoc. **Un mot-règle est celui qu'on va chercher ailleurs sur
+l'écran** : le compte des blocages vit sur le bouclier, à côté de la barre de
+vie.
 
 **ET LE TEXTE A GROSSI D'UN CRAN** (7 / 6,4 / 5,4 U au lieu de 6 / 5,8 / 5).
 Keko : « on peut augmenter un peu la taille du texte des descriptions quand y'a

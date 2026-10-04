@@ -82,7 +82,12 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   // un joueur qui lit « 1 par blocage » sait quoi faire de sa prochaine carte,
   // là où « égal à votre défense » demandait d'aller chercher le chiffre.
   if (carte.degatsDuBloc === true)
-    l.push(`Inflige <d>1</d> blessure pour chaque blocage que vous avez`)
+    // ET « BLOCAGE » EST EN GRAS, comme « attaque ». Demandé par Keko.
+    // *Ce qui s'appuie n'est pas un verbe de la phrase, c'est un mot qui
+    // renvoie à une RÈGLE* — « attaque » désigne ce que la remise de l'Estoc
+    // compte, « blocage » ce que cette carte-ci compte. Les deux sont la chose
+    // du jeu qu'on va chercher ailleurs sur l'écran.
+    l.push(`Inflige <d>1</d> blessure pour chaque <b>blocage</b> que vous avez`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
@@ -138,11 +143,19 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // il change de personne.*
     //
     // c'est plus juste — la riposte n'est pas un coup qu'on porte, c'est un
-    // prix qu'il paie. « Jusqu'au prochain tour » dit la durée mieux que « ce
-    // tour » : la carte se joue AVANT la salve, donc c'est elle qu'on couvre.
+    // prix qu'il paie. « Jusqu'à votre prochain tour » dit la durée mieux que
+    // « ce tour » : la carte se joue AVANT la salve, donc c'est elle qu'on
+    // couvre.
+    //
+    // **ET C'EST MOT POUR MOT LA DURÉE DE L'AGILITÉ**, qui dit déjà « jusqu'à
+    // votre prochain tour ». Elle disait « jusqu'au » ; Keko l'a repris. *Deux
+    // cartes qui durent le même temps ne peuvent pas le dire de deux façons* —
+    // la règle qui a déjà fait parler toutes les cartes de blessures, et aligné
+    // le trésor brûlé sur la potion. Et le possessif dit de QUI est le tour :
+    // le joueur en a un, les ennemis frappent entre les deux.
     if (e.type === 'riposte')
       l.push(
-        `Jusqu'au prochain tour, les ennemis qui vous <b>attaquent</b> subissent <d>${e.montant}</d> ${blessures(e.montant)}`,
+        `Jusqu'à votre prochain tour, les ennemis qui vous <b>attaquent</b> subissent <d>${e.montant}</d> ${blessures(e.montant)}`,
       )
 
   }
