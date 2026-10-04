@@ -1310,6 +1310,37 @@ const HAUT_JETON = 1.28
  */
 const PART_COEUR = 75 / 84
 
+/**
+ * **LES COULEURS DU COEUR, ET ELLES SONT LUES AUX DEUX ENDROITS.** Keko : « tu
+ * peux rendre le coeur dans le texte des armures un peu plus flashy ? il est
+ * trop sombre ».
+ *
+ * *Il était écrit deux fois* — une fois dans le dégradé SVG de la bande de
+ * stats, une fois ici au canvas — et **deux endroits qui décrivent la même
+ * couleur se désaccordent au premier réglage.** Celui-ci allait justement les
+ * séparer : c'est le même symbole, il n'a pas à changer de teinte selon
+ * l'écran où on le regarde.
+ *
+ * Ce qui a bougé, et pourquoi il paraissait sombre sur une carte :
+ *
+ * - **le bas du dégradé remonte** de 35 à 52 de luminance. *Un dégradé qui
+ *   finit presque noir se moyenne en gris dès que la figure est petite* — sur
+ *   une carte le coeur fait la taille du corps du texte, dix fois moins que
+ *   dans la bande ;
+ * - **le cerne s'allège**, de `#2a1013` à `#5c1b24` et de 2 à 1,6 d'épaisseur.
+ *   Il sert à détacher la figure d'un fond CLAIR ; sur le voile sombre d'un
+ *   cartouche il ne détache rien, il ne fait que manger le remplissage — et à
+ *   cette taille, 5 % de la hauteur de chaque côté, c'est un tiers de la
+ *   figure.
+ *
+ * La luminance moyenne passe de 70 à 96.
+ */
+export const COEUR_HAUT = '#ff7b82'
+export const COEUR_MI = '#d33244'
+export const COEUR_BAS = '#8e1a26'
+export const COEUR_CERNE = '#5c1b24'
+export const COEUR_TRAIT = 1.6
+
 /** Le corps du chiffre posé dans l'orbe, en part du corps du texte. */
 const CHIFFRE_DANS_PA = 0.94
 
@@ -1377,16 +1408,16 @@ function peindreJeton(
     ctx.translate(x, y - hc / 2)
     ctx.scale(e, e)
     const c = ctx.createLinearGradient(0, 0, 12, 37)
-    c.addColorStop(0, '#e2565e')
-    c.addColorStop(0.6, '#9d2330')
-    c.addColorStop(1, '#5d121b')
+    c.addColorStop(0, COEUR_HAUT)
+    c.addColorStop(0.6, COEUR_MI)
+    c.addColorStop(1, COEUR_BAS)
     const forme = new Path2D(
       'M20 34.5C20 34.5 2.8 22.6 2.8 12.6 2.8 6.6 7.4 2 13.2 2 16.6 2 19 4.1 20 6.3 21 4.1 23.4 2 26.8 2 32.6 2 37.2 6.6 37.2 12.6 37.2 22.6 20 34.5 20 34.5Z',
     )
     ctx.fillStyle = c
     ctx.fill(forme)
-    ctx.strokeStyle = '#2a1013'
-    ctx.lineWidth = 2
+    ctx.strokeStyle = COEUR_CERNE
+    ctx.lineWidth = COEUR_TRAIT
     ctx.lineJoin = 'round'
     ctx.stroke(forme)
     // La lumière vient du haut, comme partout : un reflet sur le lobe gauche.

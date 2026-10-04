@@ -1714,6 +1714,28 @@ qu'on n'a jamais repeint au canvas pour cette raison. Le chemin SVG de
 `CoeurIcone` se rejoue tel quel dans un `Path2D`, à l'échelle de son viewBox
 (40 x 37), avec son dégradé, son cerne et son reflet.
 
+**ET LES COULEURS AUSSI SE PARTAGENT, depuis qu'il a fallu les éclaircir.**
+Keko : « tu peux rendre le coeur dans le texte des armures un peu plus flashy ?
+il est trop sombre ». *Le tracé était commun, le dégradé ne l'était pas* — il
+vivait en double, une fois dans le SVG de la bande de stats et une fois au
+canvas, et le toucher allait les séparer. **C'est le même symbole, il n'a pas à
+changer de teinte selon l'écran où on le regarde.**
+
+Deux choses expliquent pourquoi il paraissait sombre SUR UNE CARTE, et les deux
+tiennent à sa taille — il y fait le corps du texte, dix fois moins que dans la
+bande :
+
+- **le bas du dégradé finissait presque noir** (35 de luminance). *Un dégradé
+  qui s'éteint se moyenne en gris dès que la figure est petite* ; il remonte à
+  52 ;
+- **le cerne mangeait le remplissage.** Il sert à détacher d'un fond CLAIR ;
+  sur le voile sombre d'un cartouche il ne détache rien, et à 5 % de la hauteur
+  de chaque côté c'est un tiers de la figure qui s'assombrit. Il s'allège, de
+  `#2a1013` à `#5c1b24`, et passe de 2 à 1,6 d'épaisseur.
+
+La luminance moyenne passe de 70 à 96. *Le coeur des stats y gagne aussi* — il
+n'a pas été réglé pour être terne, il l'était par héritage.
+
 *Ce qui a suivi, et qu'il fallait corriger avec* : **la place réservée à un
 jeton est celle de son DESSIN**, plus un carré pour tout le monde. Le coeur est
 8 % plus large que haut, donc à place carrée il débordait de 4 % de chaque côté

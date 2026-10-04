@@ -40,6 +40,13 @@ import { deuxMains, peutDescendre } from '../logic/hub.ts'
 import { SON_POSER, jouerSon } from './sons.ts'
 import { tailleBouton } from './Bouton3D.tsx'
 import { TEXTE_DESCENDRE, TEXTE_PRET, Z_PLAN } from './armurerie-plan.ts'
+import {
+  COEUR_BAS,
+  COEUR_CERNE,
+  COEUR_HAUT,
+  COEUR_MI,
+  COEUR_TRAIT,
+} from './texture-carte.ts'
 import { urlDuSymbole } from '../ui/art.ts'
 import type { LieuHub } from './destinations.ts'
 import {
@@ -1321,16 +1328,20 @@ function CoeurIcone(): React.JSX.Element {
     <svg className="arm-icone coeur" viewBox="0 0 40 37" aria-hidden="true">
       <defs>
         <linearGradient id="arm-coeur" x1="0" y1="0" x2="0.3" y2="1">
-          <stop offset="0" stopColor="#e2565e" />
-          <stop offset="0.6" stopColor="#9d2330" />
-          <stop offset="1" stopColor="#5d121b" />
+          <stop offset="0" stopColor={COEUR_HAUT} />
+          <stop offset="0.6" stopColor={COEUR_MI} />
+          <stop offset="1" stopColor={COEUR_BAS} />
         </linearGradient>
       </defs>
       <path
         d="M20 34.5C20 34.5 2.8 22.6 2.8 12.6 2.8 6.6 7.4 2 13.2 2 16.6 2 19 4.1 20 6.3 21 4.1 23.4 2 26.8 2 32.6 2 37.2 6.6 37.2 12.6 37.2 22.6 20 34.5 20 34.5Z"
         fill="url(#arm-coeur)"
-        stroke="#2a1013"
-        strokeWidth={2}
+        // LES COULEURS VIENNENT DU CANVAS, qui peint le même coeur sur les
+        // cartes : *un symbole qui vit à deux endroits n'a qu'un jeu de
+        // couleurs*, sinon les deux divergent au premier réglage — et c'est
+        // exactement ce qui a failli arriver en l'éclaircissant.
+        stroke={COEUR_CERNE}
+        strokeWidth={COEUR_TRAIT}
         strokeLinejoin="round"
       />
       {/* La lumiere vient du haut, comme partout : un reflet sur le lobe
