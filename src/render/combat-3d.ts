@@ -53,6 +53,9 @@ export function aPeindre(carte: Carte): CarteAPeindre {
     // PIÈCE. Deux sources pour un même axe, parce que ce sont deux façons de
     // valoir : l'or qu'on rapporte, et la force qu'on emporte.
     rarete: carte.type === 'tresor' ? rangDuTresor(carte.valeur ?? 0) : carte.rarete,
+    // ET SA MATIÈRE PAR LA MÊME PORTE : quatre armures donnent la même
+    // Protection, et c'est la matière qui dit laquelle des quatre on dessine.
+    matiere: carte.matiere,
     // LA FAMILLE PASSE PAR UN DRAPEAU, pas par le mot du pied. Celui-ci est
     // du TEXTE AFFICHÉ — « Consommable » est déjà devenu « Objet » une fois —
     // et *un dessin ne se décide pas sur une étiquette qui peut changer.*
@@ -97,6 +100,11 @@ export function setAPeindre(objet: Objet): { carte: CarteAPeindre; nombre: numbe
       // carte bleue dans son propre zoom — Keko : « les cartes générées par
       // les potions devraient être vertes comme la carte qui les génère ».
       famille: estConsommable(objet) ? ('objet' as const) : 'mains' in objet ? ('arme' as const) : ('armure' as const),
+      // ET SA MATIÈRE, par la même porte. *La vitrine montre les VRAIES cartes
+      // qu'on retrouvera en main*, donc elle doit porter TOUTES les étiquettes
+      // de la pièce — la rareté et le ciel y étaient, la matière manquait, et
+      // les quatre Protection sortaient toutes dans la même matière.
+      matiere: estConsommable(objet) ? undefined : objet.matiere,
     }),
     nombre: e.nombre,
   }))

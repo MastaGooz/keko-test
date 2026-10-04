@@ -47,7 +47,12 @@ function cle(nom: string): string {
  * *Entre un coup d'épée et un sceau qui dit « il manque un fichier », c'est le
  * coup d'épée qu'on veut derrière la lame.*
  */
-const ALIAS: Record<string, string> = { taille: 'taillade' }
+// L'ALIAS DU REPLI SVG — *deux noms pour un même geste n'ont pas à être dessinés
+// deux fois.* La Taille emprunte le dessin de la Taillade ; la Protection celui
+// de la Garde, qu'elle a absorbée (elles étaient la même carte, 1 PA pour 5 de
+// bloc). Ça ne sert qu'au jeu 2D et au fond du 3D : l'image de Keko recouvre le
+// SVG partout ailleurs.
+const ALIAS: Record<string, string> = { taille: 'taillade', protection: 'garde' }
 
 /** L'URL de l'illustration d'un modèle, ou celle du repli. */
 export function art(nom: string): string {
@@ -103,7 +108,6 @@ const IMAGES: Record<string, string> = {
   bloquer: 'Bloquage.webp',
   'coup-de-bouclier': 'Coup de bouclier.webp',
   projection: 'Projection.webp',
-  protection: 'Protection cuir.webp',
   // LA TAILLE A ENFIN LE SIEN. Elle empruntait le dessin de la Taillade, le
   // temps qu'elle n'en ait pas — *un banc qui montre une carte au sceau de
   // repli ne se juge pas.* L'emprunt tombe avec l'arrivée du fichier.
@@ -139,6 +143,34 @@ const POTIONS_DE_VIE: Record<string, string> = {
 const IMAGES_PAR_RARETE: Record<string, Record<string, string>> = {
   potion: POTIONS_DE_VIE,
   'super-potion': POTIONS_DE_VIE,
+}
+
+/**
+ * LES VARIANTES PAR MATIÈRE — le dessin suit la PIÈCE, pas le modèle.
+ *
+ * Keko a dessiné quatre Protection : tissu, cuir, maille, plate. *Quatre
+ * armures donnent la même carte, et elle n'est pas dessinée quatre fois pour
+ * rien* — c'est le même geste dans quatre matériaux.
+ *
+ * **C'est le motif des trois tiers de la potion, avec une autre variante** :
+ * là c'est la rareté qui choisit le fichier, ici la matière de l'armure qui
+ * produit la carte. Dans les deux cas *une table par modèle aurait recopié les
+ * mêmes fichiers à chaque pièce nouvelle.*
+ *
+ * **Et la plate n'a pas encore de carte à habiller** : elle ne donne que des
+ * Remparts, donc `Protection plate.webp` attend que Keko décide de son set.
+ * L'entrée est là, prête — *une table qui connaît déjà le cas qui vient ne
+ * coûte rien.*
+ */
+const PROTECTIONS: Record<string, string> = {
+  tissu: 'Protection tissu.webp',
+  cuir: 'Protection cuir.webp',
+  maille: 'Protection maille.webp',
+  plate: 'Protection plate.webp',
+}
+
+const IMAGES_PAR_MATIERE: Record<string, Record<string, string>> = {
+  protection: PROTECTIONS,
 }
 
 /**
@@ -279,13 +311,20 @@ export function urlDuDecor(decor: Decor): string {
  * La même URL, brute — ce qu'il faut pour charger l'image autrement que par le
  * CSS : le moteur 3D la peint dans un canvas pour en faire une texture.
  */
-export function urlImageDeKeko(nom: string, rarete?: string): string | null {
+export function urlImageDeKeko(nom: string, rarete?: string, matiere?: string): string | null {
   const k = cle(nom)
   // LA TABLE PAR RARETÉ PASSE DEVANT, et sans rareté c'est le premier cran :
   // le jeu 2D ne la connaît pas, et *une carte sans rang vaut le bas de
   // l'échelle* — la règle que `rarete?` tient déjà sur le métal du cadre.
   const tiers = IMAGES_PAR_RARETE[k]
-  const fichier = (tiers === undefined ? undefined : (tiers[rarete ?? 'commune'] ?? tiers['commune'])) ?? IMAGES[k]
+  // ET LA TABLE PAR MATIÈRE DE MÊME. *Sans matière, pas de repli* : un modèle
+  // qui n'existe qu'en quatre matériaux n'a pas de version neutre à montrer, et
+  // le sceau dit alors ce qu'il est là pour dire — il manque un dessin.
+  const matieres = IMAGES_PAR_MATIERE[k]
+  const fichier =
+    (tiers === undefined ? undefined : (tiers[rarete ?? 'commune'] ?? tiers['commune'])) ??
+    (matieres === undefined || matiere === undefined ? undefined : matieres[matiere]) ??
+    IMAGES[k]
   if (fichier === undefined) return null
   return `${import.meta.env.BASE_URL}${fichier}?v=${encodeURIComponent(__BUILD_TIME__)}`
 }

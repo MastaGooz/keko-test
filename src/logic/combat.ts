@@ -118,6 +118,23 @@ export type Carte = {
    */
   famille?: 'arme' | 'armure' | 'objet'
   /**
+   * LA MATIÈRE DE LA PIÈCE QUI L'A PRODUITE — et c'est son DESSIN qui la porte.
+   *
+   * Keko a dessiné quatre Protection, une par matière d'armure : tissu, cuir,
+   * maille, plate. *Quatre armures donnent la même carte, et elle n'est pas
+   * dessinée quatre fois pour rien* — c'est le même objet dans quatre
+   * matériaux, comme les trois tiers de la potion le sont dans trois richesses.
+   *
+   * **La variante n'est donc plus la rareté, c'est la PIÈCE** : une Protection
+   * de Robe sort en tissu et une Protection de Cotte de maille en maille, à
+   * rareté et à chiffres identiques. La table vit dans `ui/art.ts`, et un
+   * modèle qui n'y est pas garde son dessin unique.
+   *
+   * **Aucune règle ne la lit**, comme `rarete` et `famille` : c'est une
+   * étiquette qui traverse `logic/` sans rien y décider.
+   */
+  matiere?: string
+  /**
    * Un trésor ne se joue que s'il porte des `effets` — et le jouer le DÉTRUIT.
    * C'est tout le pari du butin : il vaut de l'or s'il ressort, et il peut
    * sauver la run s'il est brûlé, jamais les deux.

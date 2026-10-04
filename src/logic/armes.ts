@@ -93,6 +93,19 @@ export type Piece = {
    * point d'action est un levier bien plus violent que quinze PV.
    */
   pa?: number
+  /**
+   * SA MATIÈRE — elle ne décide de rien, elle choisit le DESSIN de ses cartes.
+   *
+   * Keko a dessiné quatre Protection : tissu, cuir, maille, plate. *Quatre
+   * armures donnent la même carte, et elle n'est pas dessinée quatre fois pour
+   * rien* — c'est le même geste dans quatre matériaux. La matière descend donc
+   * de la pièce à son set, comme la rareté et la famille, et `ui/art.ts` en
+   * tire le fichier.
+   *
+   * **Aucune règle ne la lit.** Une pièce sans matière garde le dessin unique
+   * de ses modèles, ce qui est le cas de toutes les armes.
+   */
+  matiere?: string
 }
 
 export type Arme = Piece & {
@@ -416,14 +429,6 @@ export const RONDACHE: Arme = {
  * Les armures. Elles ne frappent pas : elles donnent du BLOC.
  * ---------------------------------------------------------------------- */
 
-const GARDE: Modele = {
-  nom: 'Garde',
-  type: 'combat',
-  cout: 1,
-  degats: 0,
-  effets: [{ type: 'bloc', montant: 5 }],
-}
-
 const REMPART: Modele = {
   nom: 'Rempart',
   type: 'combat',
@@ -436,9 +441,19 @@ const REMPART: Modele = {
  * **PROTECTION ET ESQUIVE : le set du Plastron de cuir.** Composé par Keko.
  *
  * *Deux cartes, deux réponses à la salve* — l'une sûre et chiffrée, l'autre au
- * hasard. La Protection reprend le barème de la Garde (1 PA pour 5 de bloc) ;
- * l'Esquive, elle, n'a pas de chiffre : **elle ne se compare pas, elle se
+ * hasard. L'Esquive n'a pas de chiffre : **elle ne se compare pas, elle se
  * parie.**
+ *
+ * **ET ELLE A ABSORBÉ LA GARDE, qui était la MÊME CARTE.** Toutes deux
+ * coûtaient 1 PA pour 5 de bloc : *deux noms pour un seul objet*, et je ne
+ * l'avais pas vu en composant celle-ci — j'avais écrit « la Protection reprend
+ * le barème de la Garde » sans voir que c'était littéralement elle.
+ *
+ * Ça s'est découvert en câblant les quatre dessins de Keko, et c'est ce qui
+ * les rend gratuits : **remplacer la Garde par la Protection ne bouge pas un
+ * chiffre**, donc trois armures sur quatre reçoivent leur matière sans qu'on
+ * touche au réglage. *Un doublon ne se voit que le jour où l'on cherche à
+ * distinguer ce qu'il confond.*
  *
  * *Les coûts sont des placeholders* : Keko a donné les effets, pas les prix.
  */
@@ -497,6 +512,12 @@ export const PLASTRON: Armure = {
   // le renommer ne ferait que risquer une sauvegarde.
   nom: 'Armure de plate',
   rarete: 'commune',
+  // SA MATIÈRE EST LÀ, SON DESSIN ATTEND. `Protection plate.webp` existe, mais
+  // la plate ne donne que des Remparts : *elle est la seule des quatre à
+  // n'avoir aucune Protection*, et lui en donner une changerait ses chiffres —
+  // 22 de bloc pour 4 PA contre 16 pour 3. **C'est du réglage, donc c'est à
+  // Keko**, et le dessin l'attend sans rien casser.
+  matiere: 'plate',
   set: [{ modele: REMPART, nombre: 2 }],
 }
 
@@ -508,6 +529,7 @@ export const PLASTRON_DE_CUIR: Armure = {
   id: 'plastron-de-cuir',
   nom: 'Plastron de cuir',
   rarete: 'commune',
+  matiere: 'cuir',
   pv: 15,
   pa: 1,
   set: [
@@ -521,8 +543,9 @@ export const COTTE_DE_MAILLE: Armure = {
   id: 'cotte-de-maille',
   nom: 'Cotte de maille',
   rarete: 'commune',
+  matiere: 'maille',
   set: [
-    { modele: GARDE, nombre: 1 },
+    { modele: PROTECTION, nombre: 1 },
     { modele: REMPART, nombre: 1 },
   ],
 }
@@ -532,7 +555,8 @@ export const ROBE: Armure = {
   id: 'robe',
   nom: 'Robe',
   rarete: 'commune',
-  set: [{ modele: GARDE, nombre: 2 }],
+  matiere: 'tissu',
+  set: [{ modele: PROTECTION, nombre: 2 }],
 }
 
 /** L'armure qu'on ne peut pas perdre, comme le Glaive. */
@@ -711,6 +735,10 @@ export function deckDeLEquipement(equipement: Piece[]): Carte[] {
         // le décor rouge de l'arme, une carte d'armure garde le bleu.
         // *Deux étiquettes, un seul héritage.*
         famille: 'mains' in piece ? ('arme' as const) : ('armure' as const),
+        // ET DE SA MATIÈRE, par la même porte encore : quatre armures donnent
+        // la même Protection, et c'est la matière qui dit laquelle des quatre
+        // on dessine. *Trois étiquettes, un seul héritage.*
+        matiere: piece.matiere,
       })),
     ),
   )

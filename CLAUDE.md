@@ -1762,10 +1762,56 @@ lirait toujours comme un petit bloc de mesures* — là où une phrase courante
 aurait demandé des séparateurs à inventer.
 
 **LES AUTRES ARMURES SONT RECOMPOSÉES À DEUX CARTES, et leurs profils sont de
-moi** — Armure de plate 2 Rempart, Cotte de maille 1 Garde + 1 Rempart, Robe
-2 Garde. *Keko a donné le format, pas les sets* : ils sont marqués provisoires
-dans le code depuis le début, et **à rejuger**. Le Plastron de cuir, lui, est
-composé par lui.
+moi** — Armure de plate 2 Rempart, Cotte de maille 1 Protection + 1 Rempart,
+Robe 2 Protection. *Keko a donné le format, pas les sets* : ils sont marqués
+provisoires dans le code depuis le début, et **à rejuger**. Le Plastron de cuir,
+lui, est composé par lui.
+
+### CHAQUE ARMURE A SA PROTECTION, et la GARDE était déjà elle
+
+Keko a dessiné quatre Protection — tissu, cuir, maille, plate — une par matière
+d'armure, et tranché : **chaque armure donne SA Protection.**
+
+**ET ÇA N'A COÛTÉ AUCUN CHIFFRE, parce que la Garde et la Protection étaient la
+MÊME CARTE** : 1 PA pour 5 de bloc, toutes les deux. *Deux noms pour un seul
+objet* — et je ne l'avais pas vu en composant la seconde, j'avais écrit « la
+Protection reprend le barème de la Garde » sans voir que c'était littéralement
+elle. **Un doublon ne se voit que le jour où l'on cherche à distinguer ce qu'il
+confond.**
+
+La Garde disparaît donc, la Protection prend sa place, et **la Robe comme la
+Cotte de maille reçoivent leur matière sans qu'on touche au réglage** — ce qui
+était exactement la condition pour le faire sans Keko : *le réglage d'un combat
+est un rasoir.*
+
+**LA MATIÈRE DESCEND DE LA PIÈCE À SON SET**, par la porte qui portait déjà la
+rareté et le ciel (`deckDeLEquipement`) : *trois étiquettes, un seul héritage.*
+Elle ne décide de rien — c'est une étiquette qui traverse `logic/` sans rien y
+lire, comme `rarete` et `famille` — et elle entre dans `signature()`, sans quoi
+les quatre Protection partageraient une texture et l'on n'en verrait qu'une.
+
+*C'est le motif des trois tiers de la potion, avec une autre variante* : là
+c'est la rareté qui choisit le fichier, ici la matière. Dans les deux cas **une
+table par modèle aurait recopié les mêmes fichiers à chaque pièce nouvelle.**
+
+**ET LA VITRINE DU ZOOM A DÛ SUIVRE, ce qui n'était pas gratuit.**
+`setAPeindre` construit ses cartes depuis le MODÈLE et leur posait la rareté et
+le ciel de la pièce — pas la matière. Les quatre Protection y sortaient donc
+toutes dans la même, et ça se voyait d'un zoom à l'autre. *La vitrine montre les
+VRAIES cartes qu'on retrouvera en main*, donc elle doit porter **toutes** les
+étiquettes de la pièce : **une liste d'héritages est une liste qu'on oublie de
+compléter.**
+
+**L'ARMURE DE PLATE ATTEND, et son dessin avec.** Elle est la seule des quatre à
+n'avoir aucune Protection — elle ne donne que des Remparts — et lui en donner
+une changerait ses chiffres : 22 de bloc pour 4 PA contre 16 pour 3. *C'est du
+réglage, donc c'est à Keko* ; `Protection plate.webp` est dans le dépôt, l'entrée
+est dans la table, et il n'y a qu'un set à écrire le jour venu.
+
+**Et le repli SVG passe par un ALIAS** (`protection → garde`) : le dessin de la
+Garde sert à la Protection, *deux noms pour un même geste n'ayant pas à être
+dessinés deux fois.* Il ne sert qu'au jeu 2D et au fond du 3D — l'image de Keko
+recouvre le SVG partout ailleurs.
 
 ### L'ESQUIVE — le premier effet du jeu qui tire au sort
 

@@ -118,6 +118,18 @@ export type CarteAPeindre = {
    * et deux codes couleur sur un même objet n'en laissent lire aucun.
    */
   rarete?: string
+  /**
+   * LA MATIÈRE DE LA PIÈCE QUI L'A PRODUITE — elle choisit le DESSIN.
+   *
+   * Quatre armures donnent la même Protection, et Keko en a dessiné quatre :
+   * tissu, cuir, maille, plate. *C'est le motif des trois tiers de la potion,
+   * avec une autre variante* — là c'est la rareté qui choisit le fichier, ici
+   * la matière.
+   *
+   * **Elle entre dans `signature()`**, sans quoi les quatre partageraient une
+   * texture et l'on n'en verrait qu'une.
+   */
+  matiere?: string
 }
 
 /**
@@ -587,9 +599,13 @@ function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient 
  * ignore tout seul une couche de fond qui échoue). Un canvas, lui, ne dessine
  * rien du tout : sans ce repli, une image retirée laisserait un trou noir.
  */
-async function illustration(nom: string, rarete?: string): Promise<HTMLImageElement | null> {
+async function illustration(
+  nom: string,
+  rarete?: string,
+  matiere?: string,
+): Promise<HTMLImageElement | null> {
   const dessin = art(nom)
-  const keko = urlImageDeKeko(nom, rarete)
+  const keko = urlImageDeKeko(nom, rarete, matiere)
   for (const url of [keko, dessin]) {
     if (url === null) continue
     const image = await charger(url)
@@ -1524,7 +1540,7 @@ export async function peindreCarte(
   if (largeur !== LARGE) ctx.scale(largeur / LARGE, largeur / LARGE)
 
   const [image, decor, symbole] = await Promise.all([
-    illustration(carte.nom, carte.rarete),
+    illustration(carte.nom, carte.rarete, carte.matiere),
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
     // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
     // de la famille. Une armure garde le bleu d'origine. Voir `fondTeinte`.
@@ -2532,7 +2548,7 @@ const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
 export function signature(carte: CarteAPeindre): string {
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.effet.join('~')}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.effet.join('~')}`
 }
 
 /**
