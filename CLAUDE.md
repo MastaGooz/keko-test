@@ -8268,6 +8268,20 @@ contre 81,7 % avant, mesuré sur l'alpha. Les réglages validés par Keko sur le
 chiffre qu'il contient tiennent donc sans retouche, y compris le rapport de
 1,86 de la bande de stats et les deux corrections de centrage.
 
+**ET C'EST CE QUI A RENDU GRATUITE LA MISE À JOUR SUIVANTE** : Keko a remonté
+le sablier de 26 px sur la toile, sans toucher ni au cadrage ni au disque
+(toile, diamètre et centre identiques au centième). *Un calage mesuré n'est pas
+une rustine pour un fichier, c'est ce qui permet de changer de fichier* — la
+leçon du dos de carte, repayée ici.
+
+**LIMITE À CONNAÎTRE : le sablier affleure désormais le cadre.** Mesuré sur la
+texture, le long de la colonne centrale de l'orbe : la bande de laiton va
+jusqu'à 1,56 U, la surface sombre commence à 1,95 U, et **le sablier commence à
+1,95 U** — il était à 2,20 U avant. *Il ne mord pas sur le laiton, mais il n'y
+a plus de marge* : un dessin qui le remonterait encore le ferait passer sur le
+cadre, et il faudrait alors descendre l'orbe (`ORBE_CY`) plutôt que de rogner
+le dessin.
+
 **Keko a choisi l'ORBE** : « essayons l'orbe, mais il faudrait une orbe sur les
 cartes, puis le même symbole avec X/X dans l'interface de combat ». C'est la
 règle prise au mot — le joueur voit le même objet sur sa carte et dans son coin
