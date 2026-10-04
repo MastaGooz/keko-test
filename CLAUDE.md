@@ -2713,8 +2713,20 @@ ne dit pas une couleur, elle dit un reflet.** Les trois valent aujourd'hui 148 �
 doivent se lire comme une paire ne peuvent pas avoir deux saturations*, sinon
 l'une crie et l'autre se fond.
 
-*Le soin reste en blanc* : Keko n'a nommé que les deux, et un chiffre de soin
-n'est ni l'un ni l'autre.
+**ET LE SOIN EST VERT**, demandé par Keko dans la foulée — c'est le vert de la
+SÈVE, le voile qui illumine la barre de vie quand elle reçoit un soin,
+éclairci jusqu'à l'écart au gris des trois autres. *On reprend la teinte du
+jeu, on n'en invente pas une.*
+
+**Les DEUX chemins du soin la portent** : la potion et le trésor brûlé.
+*Deux cartes qui font la même chose ne peuvent pas la dire de deux façons* —
+c'est la règle qui avait déjà fait passer le trésor de « rend N PV » à
+« soigne N blessures ».
+
+**ET `<s>` EST UNE VRAIE BALISE HTML**, celle du texte barré. Les trois appels
+du DOM passent par `enClair` — vérifié — donc elle n'y arrive jamais telle
+quelle ; mais le jour où l'un l'oublierait, un chiffre de soin sortirait rayé.
+*C'est le prix d'une balise à une lettre, et il est connu.*
 
 **ET LE SECOND MOT-CLÉ EST « CONSOMMABLE »** : « la carte est détruite quand
 elle est jouée ». Formulation de Keko, en même temps que celle de la Potion —

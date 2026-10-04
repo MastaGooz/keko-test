@@ -102,7 +102,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         // dit sa VALEUR. *Une carte ne peut pas perdre un or qu'elle n'a
         // jamais annoncé.*
         const perte = valeurAPart ? 'et sa valeur est perdue' : 'et son or est perdu'
-        l.push(`Brûler : soigne <b>${e.montant}</b> ${blessures(e.montant)}`, `<small>${perte}</small>`)
+        l.push(`Brûler : soigne <s>${e.montant}</s> ${blessures(e.montant)}`, `<small>${perte}</small>`)
       }
       else {
         /**
@@ -113,7 +113,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
          * de personnage, « blessure » est ce que le coup a fait. C'est la même
          * raison qui a fait des points d'action plutôt que de l'énergie.
          */
-        l.push(`Soigne <b>${e.montant}</b> ${blessures(e.montant)}`)
+        l.push(`Soigne <s>${e.montant}</s> ${blessures(e.montant)}`)
         // Une carte à usages ne l'écrit pas : ses charges sont des pastilles.
         // Une carte qui s'exile porte le MOT-CLÉ, et l'encadré du zoom dit ce
         // qu'il veut dire — *un mot-clé est un nom, pas une phrase.*
@@ -177,9 +177,15 @@ export function enClair(ligne: string): string {
   // `<k>` est la balise des MOTS-CLÉS, que seul le canvas sait colorer : en 2D
   // elle retombe sur le gras. *Un moteur qui ne sait pas montrer une chose ne
   // doit pas cesser de la dire.*
-  // `<d>` (dégâts) et `<p>` (protection) de même : le canvas les colore en
-  // rouge et en bleu, le DOM n'a qu'un accent par carte et les rend en gras.
-  ligne = ligne.replace(/<\/?[kdp]>/g, (b) => (b.startsWith('</') ? '</b>' : '<b>'))
+  // `<d>` (dégâts), `<p>` (protection) et `<s>` (soin) de même : le canvas les
+  // colore en rouge, bleu et vert, le DOM n'a qu'un accent par carte et les
+  // rend en gras.
+  //
+  // **ET CE REPLI N'EST PAS UN CONFORT POUR `<s>`** : c'est une vraie balise
+  // HTML, celle du texte barré. *Les trois appels du DOM passent par ici* —
+  // vérifié — mais un jour où l'un l'oublierait, un chiffre de soin sortirait
+  // rayé. C'est le prix d'une balise à une lettre, et il est connu.
+  ligne = ligne.replace(/<\/?[kdps]>/g, (b) => (b.startsWith('</') ? '</b>' : '<b>'))
   return ligne.replace(/\{pa:(\d+)\}/g, '<b>$1</b> PA')
 }
 

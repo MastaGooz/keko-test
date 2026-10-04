@@ -1454,13 +1454,24 @@ const OR_MOT_CLE = '#ffc65c'
 const ROUGE_DEGATS = '#ff6b6b'
 const BLEU_BLOC = '#5cc8ff'
 
+/**
+ * **ET LE SOIN EST VERT**, demandé par Keko dans la foulée des deux autres.
+ *
+ * C'est le vert de la SÈVE — le voile qui illumine la barre de vie quand elle
+ * reçoit un soin — éclairci jusqu'à l'écart au gris des trois autres : *on
+ * reprend la teinte du jeu, on n'en invente pas une.* Le médian de la sève
+ * (`#4fc985`) n'avait que 122 d'écart, et la leçon du bleu pâle vaut ici aussi.
+ */
+const VERT_SOIN = '#50e88c'
+
 /** Ce qu'un mot dit de lui-même, et qui décide de sa couleur. */
-type Teinte = 'cle' | 'degats' | 'bloc'
+type Teinte = 'cle' | 'degats' | 'bloc' | 'soin'
 
 const TEINTES: Record<Teinte, string> = {
   cle: OR_MOT_CLE,
   degats: ROUGE_DEGATS,
   bloc: BLEU_BLOC,
+  soin: VERT_SOIN,
 }
 
 type Mot = { texte: string; gras: boolean; teinte?: Teinte } | { jeton: Jeton }
@@ -1474,7 +1485,7 @@ function enMots(entree: string): Mot[] {
   // MOT-CLÉ, `<d>` pour ce qu'on inflige, `<p>` pour ce qu'on encaisse. *C'est
   // le rendu qui décide de ce qu'une balise vaut* — le jeu 2D, qui n'a qu'un
   // accent par carte, les fait toutes retomber sur `<b>`.
-  const COLORENT: Record<string, Teinte> = { '<k>': 'cle', '<d>': 'degats', '<p>': 'bloc' }
+  const COLORENT: Record<string, Teinte> = { '<k>': 'cle', '<d>': 'degats', '<p>': 'bloc', '<s>': 'soin' }
   // On coupe sur les balises ET sur les espaces : une balise peut ouvrir au
   // milieu d'une ligne, et un mot ne porte qu'une graisse.
   for (const bout of entree.replace(/&nbsp;/g, ' ').split(/(<\/?[^>]+>)/)) {
@@ -1485,7 +1496,7 @@ function enMots(entree: string): Mot[] {
       else if (COLORENT[bout] !== undefined) {
         gras = true
         teinte = COLORENT[bout]
-      } else if (bout === '</k>' || bout === '</d>' || bout === '</p>') {
+      } else if (bout === '</k>' || bout === '</d>' || bout === '</p>' || bout === '</s>') {
         gras = false
         teinte = undefined
       }
