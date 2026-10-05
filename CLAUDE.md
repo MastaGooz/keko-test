@@ -3101,19 +3101,35 @@ ne dit pas une couleur, elle dit un reflet.** Les trois valent aujourd'hui 148 �
 doivent se lire comme une paire ne peuvent pas avoir deux saturations*, sinon
 l'une crie et l'autre se fond.
 
-**ET LE VERBE PORTE LA COULEUR DE SON CHIFFRE.** Keko : « passe le mot
-"inflige" en rouge comme le chiffre, et pareil pour "bloque" en bleu ».
-*Un verbe et son chiffre disent une seule chose* — « Inflige 6 » est un bloc, et
-le couper en deux couleurs le faisait lire en deux temps. « Soigne » suit, par
-la même règle.
+**LE VERBE A PORTÉ LA COULEUR DE SON CHIFFRE, PUIS IL L'A RENDUE.** Keko l'avait
+demandé — « passe le mot "inflige" en rouge comme le chiffre, et pareil pour
+"bloque" en bleu » — puis repris en le voyant : **« on va enlever la couleur sur
+"infligez" "bloquez" et "soignez", on le garde uniquement pour les chiffres ».**
 
-**ET ÇA A DEMANDÉ DE SÉPARER LA COULEUR DE LA GRAISSE.** Les balises de teinte
+*L'argument d'alors tenait pourtant* : un verbe et son chiffre disent une seule
+chose, et le couper en deux couleurs le fait lire en deux temps. **Ce qui a
+changé, c'est la quantité.** Quand les verbes sont passés au vouvoiement, ils ont
+gagné une syllabe — « Infligez », « Bloquez », « Soignez » — et sur un cartouche
+de deux lignes, **colorer deux mots sur cinq ne souligne plus, ça repeint.** La
+couleur cesse alors de désigner le chiffre, qui est pourtant la seule chose qu'on
+compare d'une carte à l'autre.
+
+*Et c'est la règle générale du projet, prise une fois de plus* : **un signal
+dilué n'est plus un signal.** Le rouge, le bleu et le vert ne portent donc que
+les chiffres ; le jaune, lui, garde ses mots-clés, parce qu'il ne dit pas une
+nature mais qu'il y a une définition à aller lire.
+
+**ET LA SÉPARATION DE LA COULEUR ET DE LA GRAISSE RESTE**, c'est même elle qui a
+rendu ce retour gratuit : la balise de teinte ne fait que glisser autour du
+chiffre, et le gras ne bouge pas.
+
+*Comment ça s'est fait :* Les balises de teinte
 mettaient aussi en gras, ce qui allait tant qu'elles ne portaient que des
 chiffres ; **le gras, lui, reste réservé aux chiffres et aux mots-règles** —
 « attaque », « blocage ». *Deux décisions qui ne portent pas sur les mêmes mots
 ne peuvent pas voyager dans la même balise.* Désormais `<b>` porte la graisse,
 `<d>`, `<p>`, `<s>` et `<k>` la couleur, et les deux s'imbriquent :
-`<d>Inflige <b>6</b></d>` colore les deux mots et n'appuie que le chiffre.
+`Infligez <d><b>6</b></d>` ne colore que le chiffre et n'appuie que lui.
 
 *Conséquence sur le jeu 2D* : `enClair` SUPPRIME les balises de couleur au lieu
 de les convertir en gras — le gras est maintenant écrit dans le texte, donc les

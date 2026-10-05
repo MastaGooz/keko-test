@@ -64,7 +64,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   const etourdit = carte.effets?.some((e) => e.type === 'etourdit') === true
   if (carte.degats > 0)
     l.push(
-        `<d>Infligez <b>${carte.degats}</b></d> ${blessures(carte.degats)}${etourdit ? ' et&nbsp;<k><b>étourdissement</b></k>' : ''}`,
+        `Infligez <d><b>${carte.degats}</b></d> ${blessures(carte.degats)}${etourdit ? ' et&nbsp;<k><b>étourdissement</b></k>' : ''}`,
       )
   else if (etourdit) l.push(`<k><b>Étourdissement</b></k>`)
   // SES DÉGÂTS SONT VOTRE DÉFENSE : on ne peut pas écrire un chiffre, donc on
@@ -98,7 +98,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // renvoie à une RÈGLE* — « attaque » désigne ce que la remise de l'Estoc
     // compte, « blocage » ce que cette carte-ci compte. Les deux sont la chose
     // du jeu qu'on va chercher ailleurs sur l'écran.
-    l.push(`<d>Infligez <b>1</b></d> blessure pour chaque <b>blocage</b> que vous avez`)
+    l.push(`Infligez <d><b>1</b></d> blessure pour chaque <b>blocage</b> que vous avez`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
@@ -106,7 +106,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // à la fin de chaque tour, sans exception* — c'est une règle du jeu, pas
     // une clause de cette carte-ci, et une condition écrite sur toutes les
     // cartes de défense cesse d'être une condition.
-    if (e.type === 'bloc') l.push(`<p>Bloquez <b>${e.montant}</b></p> ${blessures(e.montant)}`)
+    if (e.type === 'bloc') l.push(`Bloquez <p><b>${e.montant}</b></p> ${blessures(e.montant)}`)
     // L'ESQUIVE DIT SA DURÉE, comme la riposte : *c'est une clause de cette
     // carte-ci, pas une règle du jeu* — sans elle on la croirait permanente.
         // « VOTRE » DESCEND AVEC CE QU'IL INTRODUIT. Keko : « on peut mettre le
@@ -122,7 +122,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         // dit sa VALEUR. *Une carte ne peut pas perdre un or qu'elle n'a
         // jamais annoncé.*
         const perte = valeurAPart ? 'et sa valeur est perdue' : 'et son or est perdu'
-        l.push(`Brûler : <s>soignez <b>${e.montant}</b></s> ${blessures(e.montant)}`, `<small>${perte}</small>`)
+        l.push(`Brûler : soignez <s><b>${e.montant}</b></s> ${blessures(e.montant)}`, `<small>${perte}</small>`)
       }
       else {
         /**
@@ -162,8 +162,8 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         if (exile) l.push('<k><b>Consommable</b></k>&nbsp;:')
         l.push(
           exile
-            ? `<s>soignez <b>${e.montant}</b></s> ${blessures(e.montant)}`
-            : `<s>Soignez <b>${e.montant}</b></s> ${blessures(e.montant)}`,
+            ? `soignez <s><b>${e.montant}</b></s> ${blessures(e.montant)}`
+            : `Soignez <s><b>${e.montant}</b></s> ${blessures(e.montant)}`,
         )
       }
     }
@@ -182,7 +182,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // ce que Keko veut dire — *plus une carte coûte, plus l'action est longue
     // et puissante.* Le code garde `energie` partout, c'est un nom interne.
     if (e.type === 'energie') l.push(`Gagnez <b>+${e.montant}</b> points d'action`)
-    if (e.type === 'degatsTous') l.push(`<d>Infligez <b>${e.montant}</b></d> à chaque ennemi`)
+    if (e.type === 'degatsTous') l.push(`Infligez <d><b>${e.montant}</b></d> à chaque ennemi`)
     // LA RIPOSTE DIT SA DURÉE, là où le bloc ne la dit plus : *le bloc tombe à
     // chaque fin de tour, c'est une règle du jeu ; la riposte, elle, est une
     // clause de CETTE carte* — et sans elle on la croirait permanente.
