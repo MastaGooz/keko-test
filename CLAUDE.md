@@ -1887,6 +1887,68 @@ l'Espadon parce que ceux-là décident de l'ordre dans lequel les corps tombent 
 pour une armure, les critères qui parlent sont **la survie au fond, ce que la
 cupidité coûte, et le tempo.**
 
+#### +1 PA CONTRE +1 CARTE EN MAIN : aucun des deux, ça dépend du DECK
+
+Keko : « j'ai du mal à évaluer si +1 PA c'est plus fort que +1 carte en main ».
+*C'est mesurable*, et la réponse n'est pas un classement.
+
+**Banc : une armure TÉMOIN identique** — même set (2 Protection), zéro PV, seule
+la stat change. *On ne compare deux leviers qu'en ne laissant varier qu'eux.*
+
+| avec le deck de base (Glaive + Rondache) | trésors pris | trésors refusés |
+|---|---|---|
+| rien | 16 % | 26 % |
+| +1 PA | 42 % | 62 % |
+| **+1 carte en main** | **61 %** | **75 %** |
+
+**Sur le jeu tel qu'il est, la main vaut nettement plus** — dix-neuf points de
+survie d'écart. Mais ce n'est pas une propriété des deux stats : **c'est une
+propriété du deck.**
+
+**CE QUI L'EXPLIQUE : lequel des deux est le GOULOT.** Mesuré sur 200 combats à
+deux corps, cartes jouées par tour et points d'action gâchés :
+
+| deck de base (coûts 1 à 3) | cartes jouées / tour | PA gâchés / tour |
+|---|---|---|
+| rien | 2,98 | **1,07** |
+| +1 PA | 3,18 (+0,20) | **1,71** |
+| +1 carte en main | **3,26 (+0,28)** | **0,69** |
+
+*On gâche déjà plus d'un point d'action par tour* : l'énergie n'est pas ce qui
+manque, **la bonne carte l'est.** Donner un PA de plus augmente le gâchis ;
+donner une carte de plus permet de dépenser celui qu'on avait déjà.
+
+**ET ÇA S'INVERSE AVEC UN DECK CHER** (l'Espadon : 2 / 3 / 5 PA) :
+
+| deck cher | cartes jouées / tour | PA gâchés / tour |
+|---|---|---|
+| rien | 2,13 | 0,82 |
+| **+1 PA** | **2,47 (+0,34)** | 0,97 |
+| +1 carte en main | 2,20 (+0,07) | 0,74 |
+
+**Le levier qui gagne est celui qui débloque le goulot**, et le goulot est le
+coût moyen des cartes : *bon marché, c'est la main ; cher, c'est l'énergie.*
+
+#### CE QUE ÇA OUVRE, ET PERSONNE NE L'AVAIT VISÉ : l'armure se choisit selon l'arme
+
+| survie au fond, trésors pris | cuir (+1 PA) | tissu (+1 main) |
+|---|---|---|
+| Glaive + Rondache (bon marché) | 50 % | **50 %** |
+| Espadon (cher) | **19 %** | 0 % |
+
+*Les deux armures sont interchangeables sur le deck de base et ne le sont plus
+du tout sur un deck cher.* **Le chargement cesse d'être deux décisions séparées
+— arme, puis armure — pour devenir une seule**, et c'est exactement ce que
+« partir léger ou partir couvert » promettait sans encore le tenir.
+
+**À surveiller** : c'est aussi une raison de ne pas rendre toutes les armes bon
+marché. *Le jour où plus aucune arme ne coûte cher, le +1 PA cesse d'avoir un
+emploi* — et une des trois armures perd son axe.
+
+*(Les chiffres de l'Espadon sont bas en absolu — 19 % et 0 % — parce qu'une
+arme à deux mains part sans seconde arme. C'est le RAPPORT entre les deux
+colonnes qui est lisible, pas leur niveau.)*
+
 #### LA CONCENTRATION : la seule carte du jeu qui pioche
 
 **3 cartes pour 1 PA**, et c'est le verbe de la Robe. Keko : « +carte main pour
