@@ -64,27 +64,44 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   const etourdit = carte.effets?.some((e) => e.type === 'etourdit') === true
   if (carte.degats > 0)
     l.push(
-        `Infligez <d><b>${carte.degats}</b></d> ${degats(carte.degats)}${etourdit ? ' et&nbsp;<k><b>étourdissement</b></k>' : ''}`,
+        `Inflige <d><b>${carte.degats}</b></d> ${degats(carte.degats)}${etourdit ? ' et&nbsp;<k><b>étourdissement</b></k>' : ''}`,
       )
   else if (etourdit) l.push(`<k><b>Étourdissement</b></k>`)
   // SES DÉGÂTS SONT VOTRE DÉFENSE : on ne peut pas écrire un chiffre, donc on
   // écrit la RÈGLE. *Une carte dont l'effet dépend de l'état doit dire de quoi
   // il dépend*, pas afficher un zéro qui se lirait comme une carte inutile.
   //
-  // ON NE TUTOIE PAS LE JOUEUR, ET ÇA VAUT POUR LES VERBES. Tranché par Keko
-  // deux fois : d'abord sur les possessifs (« inflige un nombre de dégâts égal
-  // à VOTRE défense »), puis sur les verbes eux-mêmes — « attention tu utilises
-  // "tu" dans les cartes : il faut vouvoyer le joueur. "Piochez" "Gagnez" ».
+  // ON NE TUTOIE PAS LE JOUEUR, ET LES VERBES N'ONT PAS DE SUJET.
   //
-  // *Un verbe nu à l'indicatif se lit comme un impératif tutoyé* — et c'était
-  // franchement bancal là où les deux voix se croisaient dans la même phrase :
-  // « Gagne esquive jusqu'à VOTRE prochain tour ». **Tous les verbes qui
-  // s'adressent au joueur sont donc à la deuxième personne du pluriel** :
-  // Infligez, Bloquez, Soignez, Piochez, Gagnez.
+  // Keko a tranché en trois temps : les possessifs d'abord (« inflige un nombre
+  // de dégâts égal à VOTRE défense »), puis les verbes au vouvoiement —
+  // « attention tu utilises "tu" dans les cartes : il faut vouvoyer le joueur.
+  // "Piochez" "Gagnez" » — puis les verbes SEULS en arrière : « on peut dire
+  // "gagne / inflige / soigne" plutôt que gagnez ? »
   //
-  // *Ce qui n'est pas adressé ne bouge pas* : « Coûte 1 PA de moins » parle de
-  // la CARTE, « annule l'action en cours » parle du mot-clé, et « les ennemis
-  // qui vous attaquent subissent » a déjà son sujet.
+  // *Et les deux derniers ne se contredisent pas, parce qu'ils ne portent pas
+  // sur la même chose* : ce qu'il refusait était le TUTOIEMENT, et un verbe nu
+  // se lit comme un impératif tutoyé TANT QUE LA PHRASE N'A PAS DE SUJET
+  // ailleurs. **Ce qui a changé entre les deux, c'est tout le reste du
+  // cartouche** — le « vous » des compléments y est désormais partout, donc
+  // « Inflige » se lit à la troisième personne : c'est l'EFFET qui parle, et
+  // non quelqu'un qui s'adresse au joueur.
+  //
+  // *Une carte n'adresse pas la parole, elle énonce une règle* — ce que le
+  // projet voulait depuis le début, et que le vouvoiement des verbes avait
+  // cessé de faire en lui donnant une voix.
+  //
+  // **Les compléments ne bougent pas** : « pour chaque blocage que vous avez »,
+  // « jusqu'à votre prochain tour », « les ennemis qui vous attaquent ». Ce sont
+  // les seuls endroits où le joueur est NOMMÉ — et ce sont eux qui donnent au
+  // verbe son sujet implicite, donc les retirer ramènerait l'ambiguïté.
+  //
+  // **Et les quatre verbes suivent ensemble** : Inflige, Gagne, Soigne, Pioche.
+  // *Quatre verbes du même rang se lisent à la même voix* — en garder un au
+  // vouvoiement serait pire que l'un ou l'autre des deux états cohérents.
+  //
+  // *Ce qui n'est pas adressé n'a jamais bougé* : « Coûte 1 PA de moins » parle
+  // de la CARTE, « annule l'action en cours » parle du mot-clé.
   //
   // Une seule entrée, donc une seule phrase : le repli la coupe où il faut,
   // là où deux lignes de tailles différentes la casseraient en son milieu.
@@ -98,7 +115,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // renvoie à une RÈGLE* — « attaque » désigne ce que la remise de l'Estoc
     // compte, « blocage » ce que cette carte-ci compte. Les deux sont la chose
     // du jeu qu'on va chercher ailleurs sur l'écran.
-    l.push(`Infligez <d><b>1</b></d> dégât pour chaque <b>blocage</b> que vous avez`)
+    l.push(`Inflige <d><b>1</b></d> dégât pour chaque <b>blocage</b> que vous avez`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
@@ -116,15 +133,15 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // nommer la même ressource**, sinon rien ne dit qu'elles se répondent.
     //
     // Et le verbe rejoint les deux autres acquisitions, l'esquive et les points
-    // d'action : *tout ce qu'on acquiert se dit « Gagnez ».*
-    if (e.type === 'bloc') l.push(`Gagnez <p><b>${e.montant}</b></p> ${blocages(e.montant)}`)
+    // d'action : *tout ce qu'on acquiert se dit « Gagne ».*
+    if (e.type === 'bloc') l.push(`Gagne <p><b>${e.montant}</b></p> ${blocages(e.montant)}`)
     // L'ESQUIVE DIT SA DURÉE, comme la riposte : *c'est une clause de cette
     // carte-ci, pas une règle du jeu* — sans elle on la croirait permanente.
         // « VOTRE » DESCEND AVEC CE QU'IL INTRODUIT. Keko : « on peut mettre le
     // "votre" en dessous ». *Un possessif seul au bout d'une ligne annonce un
     // groupe qui n'arrive qu'à la suivante* — même raison que le « et » de la
     // Projection, et l'insécable fait le lien.
-    if (e.type === 'esquive') l.push(`Gagnez <k><b>esquive</b></k> jusqu'à votre&nbsp;prochain tour`)
+    if (e.type === 'esquive') l.push(`Gagne <k><b>esquive</b></k> jusqu'à votre&nbsp;prochain tour`)
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
@@ -133,7 +150,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         // dit sa VALEUR. *Une carte ne peut pas perdre un or qu'elle n'a
         // jamais annoncé.*
         const perte = valeurAPart ? 'et sa valeur est perdue' : 'et son or est perdu'
-        l.push(`Brûler : soignez <s><b>${e.montant}</b></s> {coeur}`, `<small>${perte}</small>`)
+        l.push(`Brûler : soigne <s><b>${e.montant}</b></s> {coeur}`, `<small>${perte}</small>`)
       }
       else {
         /**
@@ -159,7 +176,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
          */
         const exile = carte.usages === undefined && carte.exil === true
         if (exile) l.push('<k><b>Consommable</b></k>')
-        l.push(`Soignez <s><b>${e.montant}</b></s> {coeur}`)
+        l.push(`Soigne <s><b>${e.montant}</b></s> {coeur}`)
       }
     }
     /**
@@ -171,13 +188,13 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
      * aucun** ; le gras du chiffre suffit.
      */
     if (e.type === 'pioche') {
-      l.push(`Piochez <b>${e.montant}</b> carte${e.montant > 1 ? 's' : ''}`)
+      l.push(`Pioche <b>${e.montant}</b> carte${e.montant > 1 ? 's' : ''}`)
     }
     // POINTS D'ACTION, ET PAS « ÉNERGIE » : le mot renvoie au TEMPS, et c'est
     // ce que Keko veut dire — *plus une carte coûte, plus l'action est longue
     // et puissante.* Le code garde `energie` partout, c'est un nom interne.
-    if (e.type === 'energie') l.push(`Gagnez <b>+${e.montant}</b> points d'action`)
-    if (e.type === 'degatsTous') l.push(`Infligez <d><b>${e.montant}</b></d> à chaque ennemi`)
+    if (e.type === 'energie') l.push(`Gagne <b>+${e.montant}</b> points d'action`)
+    if (e.type === 'degatsTous') l.push(`Inflige <d><b>${e.montant}</b></d> à chaque ennemi`)
     // LA RIPOSTE DIT SA DURÉE, là où le bloc ne la dit plus : *le bloc tombe à
     // chaque fin de tour, c'est une règle du jeu ; la riposte, elle, est une
     // clause de CETTE carte* — et sans elle on la croirait permanente.

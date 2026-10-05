@@ -2433,20 +2433,32 @@ s'affiche : « Vous portez 2 butins », « Vous rapportez 340 d'or », « Vous a
 perdre Idole », « Vous tombez. » Les commentaires du code, eux, continuent de
 se parler à nous-mêmes.
 
-**ET ÇA VAUT POUR LES VERBES, pas seulement pour les possessifs.** Keko, une
-fois les cartes relues : « attention tu utilises "tu" dans les cartes : il faut
-vouvoyer le joueur. "Piochez" "Gagnez" ».
+**MAIS LES VERBES D'UNE CARTE N'ONT PAS DE SUJET : « Inflige », « Gagne »,
+« Soigne », « Pioche ».** Keko a d'abord étendu le vouvoiement aux verbes —
+« attention tu utilises "tu" dans les cartes : il faut vouvoyer le joueur.
+"Piochez" "Gagnez" » — puis les a repris seuls : « on peut dire gagne / inflige
+/ soigne plutôt que gagnez ? »
 
-*Un verbe nu à l'indicatif se lit comme un impératif tutoyé* — et c'était
-franchement bancal là où les deux voix se croisaient dans la même phrase :
-**« Gagne esquive jusqu'à VOTRE prochain tour ».** Tous les verbes qui
-s'adressent au joueur sont donc à la deuxième personne du pluriel : **Infligez,
-Bloquez, Soignez, Piochez, Gagnez.**
+*Et les deux demandes ne se contredisent pas, parce qu'elles ne portent pas sur
+la même chose* : ce qu'il refusait était le TUTOIEMENT, et **un verbe nu se lit
+comme un impératif tutoyé tant que la phrase n'a pas de sujet ailleurs.** C'est
+tout le reste du cartouche qui a changé entre les deux — le « vous » des
+compléments y est désormais partout, donc « Inflige » se lit à la troisième
+personne : *c'est l'EFFET qui parle, et non quelqu'un qui s'adresse au joueur.*
 
-*Ce qui n'est pas adressé ne bouge pas*, et la liste est courte : « Coûte 1 PA
-de moins » parle de la CARTE, « annule l'action en cours » parle du mot-clé, et
-« les ennemis qui vous attaquent subissent » a déjà son sujet. **La question à
-se poser est QUI agit**, pas quel verbe c'est.
+**Les compléments, eux, ne bougent pas** : « pour chaque blocage que vous
+avez », « jusqu'à votre prochain tour », « les ennemis qui vous attaquent ».
+Ce sont les seuls endroits où le joueur est NOMMÉ, et **ce sont eux qui donnent
+au verbe son sujet implicite** — les retirer ramènerait l'ambiguïté que le
+vouvoiement avait corrigée.
+
+**Et les quatre verbes suivent ensemble**, « Pioche » compris bien que Keko
+n'en nomme que trois : *quatre verbes du même rang se lisent à la même voix*, et
+en garder un au vouvoiement serait pire que l'un ou l'autre des deux états
+cohérents.
+
+*Le reste du jeu continue de vouvoyer* : « Vous portez 2 butins », « Vous
+tombez. » **Une phrase qui s'adresse au joueur n'est pas une ligne de règle.**
 
 Cinq vérifications la tiennent (220 au total).
 
