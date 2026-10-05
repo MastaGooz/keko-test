@@ -1790,7 +1790,7 @@ prend une ressource différente :
 
 | | stats | set | ce qu'on va y chercher |
 |---|---|---|---|
-| **Robe** (tissu) | **+1 carte en main** | Protection + **Concentration** | **voir** plus |
+| **Robe** (tissu) | **+1 carte en main** | **Concentration** + Agilité | **voir** plus |
 | **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Protection + **Agilité** | **jouer** plus |
 | **Armure de plate** | **+30 ♥** | Protection + **Rempart** | **encaisser** |
 
@@ -1849,14 +1849,19 @@ bloquer, frapper), Glaive + Rondache + trois potions :
 
 | armure | survie, trésors PRIS | or | trésors REFUSÉS | ce que la cupidité coûte | tours/run |
 |---|---|---|---|---|---|
-| cuir (+15 ♥, +1 PA) | **50 %** | 171 | 75 % | **−25 pts** | 24,3 |
-| tissu (0 ♥, +1 main) | **50 %** | 110 | 59 % | **−9 pts** | 24,7 |
-| plate (+30 ♥) | **56 %** | 199 | 85 % | **−29 pts** | 27,9 |
+| cuir (+15 ♥, +1 PA) | 50 % | 171 | 75 % | **−25 pts** | 24,3 |
+| tissu (0 ♥, +1 main) | **61 %** | 150 | 72 % | **−11 pts** | 23,5 |
+| plate (+30 ♥) | 56 % | 199 | **85 %** | **−29 pts** | 27,9 |
 | *sans armure* | 14 % | 34 | — | — | 20,0 |
 
-**Les deux premières sont au même point, la plate six au-dessus** — c'est le prix
-assumé de l'échelle régulière, et elle le paie en tempo (28 tours par run contre
-24).
+**Aucune ne gagne sur les deux tableaux, et c'est ce qu'on cherchait** : le tissu
+est le meilleur quand on prend les trésors, la plate quand on les refuse — et en
+or ESPÉRÉ (survie × butin) la plate repasse devant (111 contre 91 et 86).
+
+*Le cuir est le plus plat des trois sur ce chargement*, et ce n'est pas un
+défaut : **son +1 PA ne vaut presque rien sur un deck bon marché** — voir la
+mesure juste au-dessus. Il reprend l'avantage dès qu'une arme chère entre dans
+le deck, et c'est exactement l'appariement arme × armure.
 
 **ET LA MESURE A TROUVÉ UN TROISIÈME PROFIL QUE PERSONNE N'AVAIT VISÉ : la Robe
 est l'armure du joueur CUPIDE.** La cupidité ne lui coûte que **9 points** contre
@@ -1951,8 +1956,9 @@ colonnes qui est lisible, pas leur niveau.)*
 
 #### LA CONCENTRATION : la seule carte du jeu qui pioche
 
-**3 cartes pour 1 PA**, et c'est le verbe de la Robe. Keko : « +carte main pour
-robe (magie avantage main) > carte pioche ».
+**2 cartes, GRATUITE**, et c'est le verbe de la Robe. Keko : « +carte main pour
+robe (magie avantage main) > carte pioche », puis « pour Concentration on va
+plutôt piocher 2 cartes ».
 
 *Elle donne au tissu un AXE et pas seulement une stat* : il ne protège presque
 pas, il fait voir plus de cartes — par la stat **et** par le deck. Et c'est le
@@ -1962,27 +1968,50 @@ obéit à la règle du jeu, là où la stat seule l'esquive.
 *« La pioche comme action » était dans les « mis de côté »* — c'est Keko qui l'a
 rouverte en la proposant.
 
-**ELLE EST PASSÉE DE DEUX À TROIS CARTES, et c'est le balayage qui l'a dit.** À
-deux, *piocher ne faisait que rendre ce qu'il coûtait* — un point d'action contre
-deux cartes — là où l'Agilité évite une attaque entière et le Rempart en bloque
-onze. Le set du tissu valait donc moins que les deux autres, et la Robe tombait à
-45 % de survie contre 50 et 56 **en rapportant moitié moins d'or** : elle perdait
-sur les deux tableaux, *l'exact miroir du défaut de la plate à +30.*
+**LE NOMBRE EST DE KEKO, LE COÛT EST LE LEVIER.** À deux cartes pour un point
+d'action, *piocher ne fait que rendre ce qu'il coûte* — là où l'Agilité évite une
+attaque entière et le Rempart en bloque onze. Le set du tissu valait donc moins
+que les deux autres : 43 à 45 % de survie contre 50 et 56, quel que soit sa
+seconde carte. **Le nombre étant tranché, c'est le prix qui devait céder.**
 
-**Et c'est là qu'il fallait réparer, pas sur ses PV** : l'identité de la Robe est
-de ne pas protéger, donc **on renforce son verbe, pas sa chair.** Le balayage des
-quatre réglages possibles :
+**Le plancher est zéro, et le projet l'avait déjà écrit** pour la remise de
+l'Estoc : *une carte gratuite est le bout de l'échelle, pas une erreur à
+corriger.*
 
-| Concentration | survie, trésors pris | trésors refusés |
+*Et elle garde un prix, le seul qui compte ici* : **sa place dans le deck.** Sauf
+qu'une Concentration gratuite **se REMPLACE par deux cartes au lieu de diluer** —
+c'est un cyclage, donc le tissu joue de fait un deck plus court que les deux
+autres. **C'est son avantage de main, dit par le deck** : les deux moitiés de son
+identité disent la même chose.
+
+#### ET LE TISSU NE BLOQUE PLUS RIEN DU TOUT
+
+Keko : « est-ce qu'on ne mettrait pas autre chose qu'une carte Protection pour le
+tissu ? ça protège que dal c'est bizarre ». *Cinq points de bloc contre des
+salves de quatorze, c'est un geste à moitié* — **mieux vaut assumer.**
+
+**L'Agilité est la seule défense du jeu qui ne soit pas du bloc** : on n'arrête
+pas le coup, on l'évite. *C'est exactement ce qu'il faut à une armure qui ne
+protège pas* — et c'est ce que Keko demandait dès sa première proposition
+(« carte pioche et esquive ») ; c'est moi qui l'avais retirée pour distinguer les
+deux armures légères.
+
+Elle la partage donc avec le cuir, **et ce n'est pas un doublon** : leurs
+secondes cartes diffèrent, et le bloc va désormais en gamme continue — **tissu 0,
+cuir 5, plate 16.**
+
+*Les quatre sets mesurés, Concentration à 2 cartes payantes* :
+
+| set du tissu | trésors pris | refusés |
 |---|---|---|
-| 2 cartes pour 1 PA | 44 % | 55 % |
-| **3 cartes pour 1 PA** | **50 %** | 59 % |
-| 2 cartes pour 0 PA | 64 % | 80 % |
-| 3 cartes pour 0 PA | 69 % | 85 % |
+| Protection + Concentration | 45 % | 54 % |
+| **Concentration ×2** | **25 %** | **24 %** |
+| Concentration + Agilité | 43 % | 47 % |
+| Agilité ×2 | 46 % | 52 % |
 
-*Gratuite, elle passait au-dessus des deux autres* — un cantrip n'a plus de prix,
-donc il n'y a plus de décision. **Trois cartes payantes alignent le cas qui
-compte** (celui où l'on prend les trésors) et gardent le choix entier.
+**Concentration ×2 s'effondre**, et c'est la réponse à « deux cartes
+Concentration ? » : *une armure sans aucune réponse à la salve n'est pas une
+armure*, elle rend le joueur entièrement dépendant de ses armes pour bloquer.
 
 **Son illustration manque**, donc elle sort avec le sceau de repli — ce qui est
 exactement ce que ce sceau est là pour dire.

@@ -523,22 +523,26 @@ const ESQUIVE: Modele = {
  * qui passe par le deck obéit à la règle du jeu*, là où la stat seule
  * l'esquive.
  *
- * **TROIS CARTES, ET C'EST LE BALAYAGE QUI L'A DIT.** À deux, le set du tissu
- * valait moins que les deux autres — *l'Agilité évite une attaque entière, le
- * Rempart en bloque onze, et piocher deux cartes pour un point d'action ne fait
- * que rendre ce qu'il coûte.* La Robe tombait alors à 45 % de survie contre 50
- * et 56, **en rapportant moitié moins d'or** : elle perdait sur les deux
- * tableaux, ce qui est l'exact miroir du défaut de la plate à +30.
+ * **DEUX CARTES, ET GRATUITE.** Keko a tranché le nombre — « pour Concentration
+ * on va plutôt piocher 2 cartes » — et *c'est le coût qui est devenu le levier*,
+ * parce qu'à deux cartes pour un point d'action elle ne fait que rendre ce
+ * qu'elle coûte : la Robe tombait à 43 % de survie contre 50 et 56.
  *
- * *Et c'est là qu'il fallait réparer, pas sur ses PV* : son identité est de ne
- * pas protéger, donc **on renforce son verbe, pas sa chair.**
+ * **Le plancher est zéro, et le projet l'avait déjà écrit** pour la remise de
+ * l'Estoc : *une carte gratuite est le bout de l'échelle, pas une erreur à
+ * corriger.*
+ *
+ * *Et elle garde un prix, le seul qui compte ici* : **sa place dans le deck.**
+ * Sauf qu'une Concentration gratuite se REMPLACE par deux cartes au lieu de
+ * diluer — c'est un cyclage, donc le tissu joue de fait un deck plus court que
+ * les deux autres. **C'est son avantage de main, dit par le deck.**
  */
 const CONCENTRATION: Modele = {
   nom: 'Concentration',
   type: 'combat',
-  cout: 1,
+  cout: 0,
   degats: 0,
-  effets: [{ type: 'pioche', montant: 3 }],
+  effets: [{ type: 'pioche', montant: 2 }],
 }
 
 /**
@@ -624,9 +628,23 @@ export const ROBE: Armure = {
   // *Une armure qui ne donne aucun point de vie dit ce qu'elle est* — elle ne
   // protège pas, elle fait autre chose — là où cinq points disaient « un peu ».
   cartesEnMain: 1,
+  // **ELLE NE BLOQUE RIEN DU TOUT, et c'est Keko qui l'a demandé** : « est-ce
+  // qu'on ne mettrait pas autre chose qu'une carte Protection pour le tissu ?
+  // ça protège que dal c'est bizarre ». *Cinq points de bloc contre des salves
+  // de quatorze, c'est un geste à moitié* — mieux vaut assumer que le tissu ne
+  // pare pas.
+  //
+  // **L'Agilité est la seule défense du jeu qui ne soit pas du bloc** : on
+  // n'arrête pas le coup, on l'évite. *C'est exactement ce qu'il faut à une
+  // armure qui ne protège pas*, et c'est ce que Keko demandait dès sa première
+  // proposition — « carte pioche et esquive ».
+  //
+  // Elle la partage avec le cuir, et ce n'est pas un doublon : leurs secondes
+  // cartes diffèrent, et le bloc va en gamme continue — **tissu 0, cuir 5,
+  // plate 16.**
   set: [
-    { modele: PROTECTION, nombre: 1 },
     { modele: CONCENTRATION, nombre: 1 },
+    { modele: ESQUIVE, nombre: 1 },
   ],
 }
 
