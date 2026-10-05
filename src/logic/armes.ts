@@ -523,16 +523,22 @@ const ESQUIVE: Modele = {
  * qui passe par le deck obéit à la règle du jeu*, là où la stat seule
  * l'esquive.
  *
- * *Son chiffre n'est pas calibré* : deux cartes pour un point d'action est le
- * rendement d'une Protection, pris dans une autre monnaie, et il n'a jamais
- * été mesuré.
+ * **TROIS CARTES, ET C'EST LE BALAYAGE QUI L'A DIT.** À deux, le set du tissu
+ * valait moins que les deux autres — *l'Agilité évite une attaque entière, le
+ * Rempart en bloque onze, et piocher deux cartes pour un point d'action ne fait
+ * que rendre ce qu'il coûte.* La Robe tombait alors à 45 % de survie contre 50
+ * et 56, **en rapportant moitié moins d'or** : elle perdait sur les deux
+ * tableaux, ce qui est l'exact miroir du défaut de la plate à +30.
+ *
+ * *Et c'est là qu'il fallait réparer, pas sur ses PV* : son identité est de ne
+ * pas protéger, donc **on renforce son verbe, pas sa chair.**
  */
 const CONCENTRATION: Modele = {
   nom: 'Concentration',
   type: 'combat',
   cout: 1,
   degats: 0,
-  effets: [{ type: 'pioche', montant: 2 }],
+  effets: [{ type: 'pioche', montant: 3 }],
 }
 
 /**
@@ -571,13 +577,12 @@ export const PLASTRON: Armure = {
   // de tankyness c'est pas vraiment fun ». **Un malus qui n'ouvre aucune
   // décision n'est qu'une punition** — et partir couvert est déjà payé par la
   // dilution, qui est le prix que le concept prévoit.
-  // **+22, ET C'EST LE BALAYAGE QUI L'A DIT.** À +30 elle dominait les deux
-  // autres sur les deux tableaux — 58 % de survie en prenant les trésors et
-  // 88 % en les refusant, contre 50 et 73 pour le cuir ; *une armure qui gagne
-  // partout n'est pas un choix.* Le chiffre est celui qui aligne les trois sans
-  // les rendre interchangeables, puisque leur tempo diffère (28 tours par run
-  // contre 24 pour le cuir).
-  pv: 22,
+  // **+30, ET L'ÉCHELLE EST DE KEKO : 0 / 15 / 30.** Mon balayage avait posé
+  // +22, le chiffre qui alignait les trois survies — mais *un pas constant se
+  // lit comme une gamme*, là où 5 / 15 / 22 n'était qu'un réglage de bot.
+  // **L'écart de survie que ça rouvre se paie ailleurs**, pas sur les PV : voir
+  // la mesure dans CLAUDE.md.
+  pv: 30,
   set: [
     { modele: PROTECTION, nombre: 1 },
     { modele: REMPART, nombre: 1 },
@@ -615,7 +620,9 @@ export const ROBE: Armure = {
   nom: 'Robe',
   rarete: 'commune',
   matiere: 'tissu',
-  pv: 5,
+  // **ZÉRO, ET C'EST SON IDENTITÉ.** Tranché par Keko avec l'échelle des trois.
+  // *Une armure qui ne donne aucun point de vie dit ce qu'elle est* — elle ne
+  // protège pas, elle fait autre chose — là où cinq points disaient « un peu ».
   cartesEnMain: 1,
   set: [
     { modele: PROTECTION, nombre: 1 },

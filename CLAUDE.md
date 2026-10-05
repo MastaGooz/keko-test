@@ -1790,9 +1790,20 @@ prend une ressource différente :
 
 | | stats | set | ce qu'on va y chercher |
 |---|---|---|---|
-| **Robe** (tissu) | +5 ♥, **+1 carte en main** | Protection + **Concentration** | **voir** plus |
+| **Robe** (tissu) | **+1 carte en main** | Protection + **Concentration** | **voir** plus |
 | **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Protection + **Agilité** | **jouer** plus |
-| **Armure de plate** | **+22 ♥** | Protection + **Rempart** | **encaisser** |
+| **Armure de plate** | **+30 ♥** | Protection + **Rempart** | **encaisser** |
+
+**L'ÉCHELLE DES PV EST 0 / 15 / 30, et elle est de Keko.** Mon balayage avait
+posé 5 / 15 / 22 — les chiffres qui alignaient les trois survies — et il l'a
+reprise : « niveau PV le mieux c'est rien pour le tissu, +15 pour cuir et +30
+pour plate ». *Un pas constant se lit comme une gamme*, là où trois chiffres
+réglés un par un ne sont qu'un réglage de bot. **Et zéro dit ce que la Robe
+est** : elle ne protège pas, elle fait autre chose — cinq points disaient « un
+peu ».
+
+*Ce que ça a rouvert s'est réparé ailleurs qu'aux PV*, et c'était le bon
+endroit : voir la Concentration, plus bas.
 
 **ET LA COTTE DE MAILLE A ÉTÉ SUPPRIMÉE.** Keko : « sinon on dégage la maille
 et on garde la triade tissu / cuir / plate ? »
@@ -1838,24 +1849,29 @@ bloquer, frapper), Glaive + Rondache + trois potions :
 
 | armure | survie, trésors PRIS | or | trésors REFUSÉS | ce que la cupidité coûte | tours/run |
 |---|---|---|---|---|---|
-| cuir (+15 ♥, +1 PA) | **50 %** | 171 | 75 % | −25 pts | 24,3 |
-| tissu (+5 ♥, +1 main) | **51 %** | 117 | 68 % | −17 pts | 25,1 |
-| plate (+22 ♥) | **50 %** | 157 | 76 % | −26 pts | 27,5 |
+| cuir (+15 ♥, +1 PA) | **50 %** | 171 | 75 % | **−25 pts** | 24,3 |
+| tissu (0 ♥, +1 main) | **50 %** | 110 | 59 % | **−9 pts** | 24,7 |
+| plate (+30 ♥) | **56 %** | 199 | 85 % | **−29 pts** | 27,9 |
 | *sans armure* | 14 % | 34 | — | — | 20,0 |
 
-**Les trois sont alignées à un point près, et leurs tempos diffèrent** — c'est
-exactement ce qu'on cherchait, et c'est le même verdict que Glaive contre
-Espadon : *même survie, autre profil.*
+**Les deux premières sont au même point, la plate six au-dessus** — c'est le prix
+assumé de l'échelle régulière, et elle le paie en tempo (28 tours par run contre
+24).
 
-**LA PLATE EST PASSÉE DE +30 À +22, ET C'EST LA MESURE QUI L'A DIT.** À +30 elle
-gagnait sur les deux tableaux — 58 % en prenant les trésors et 88 % en les
-refusant, contre 50 et 73 pour le cuir. ***Une armure qui gagne partout n'est pas
-un choix.*** Le balayage par crans de 4 points donne 47 / 50 / 52 / 58 % : **le
-rasoir est bien là**, et +22 est le seul chiffre qui aligne les trois.
+**ET LA MESURE A TROUVÉ UN TROISIÈME PROFIL QUE PERSONNE N'AVAIT VISÉ : la Robe
+est l'armure du joueur CUPIDE.** La cupidité ne lui coûte que **9 points** contre
+25 et 29 aux deux autres — *parce qu'elle pioche, donc la dilution la gêne moins
+qu'elle ne gêne les autres.* Les trois armures n'ont plus seulement trois
+manières de survivre, elles ont **trois rapports au dilemme central du jeu**.
 
-**Et la cupidité coûte de nouveau 17 à 26 points**, ce qui remet le dilemme
-central dans le bon sens — il était inversé depuis que le soin des trésors payait
-plus que leur poids.
+**Et la cupidité coûte de nouveau 9 à 29 points**, ce qui remet ce dilemme dans
+le bon sens — il était inversé depuis que le soin des trésors payait plus que
+leur poids.
+
+*Pour mémoire, le chemin* : à +22 la plate alignait les trois survies (50 / 51 /
+50) ; le balayage par crans de 4 points donnait 47 / 50 / 52 / 58 %, et **le
+rasoir est bien là.** C'est l'échelle de Keko qui a été préférée, l'écart se
+payant sur le set plutôt que sur les PV.
 
 **À NE PAS CONFONDRE AVEC LA TRIADE : la survie absolue est basse** (50 % au
 fond, contre 92 % mesurés autrefois). *Ce n'est pas elle qui l'a fait baisser* —
@@ -1873,7 +1889,7 @@ cupidité coûte, et le tempo.**
 
 #### LA CONCENTRATION : la seule carte du jeu qui pioche
 
-**2 cartes pour 1 PA**, et c'est le verbe de la Robe. Keko : « +carte main pour
+**3 cartes pour 1 PA**, et c'est le verbe de la Robe. Keko : « +carte main pour
 robe (magie avantage main) > carte pioche ».
 
 *Elle donne au tissu un AXE et pas seulement une stat* : il ne protège presque
@@ -1882,9 +1898,29 @@ bon endroit pour cet avantage : **une carte se paie en dilution**, donc elle
 obéit à la règle du jeu, là où la stat seule l'esquive.
 
 *« La pioche comme action » était dans les « mis de côté »* — c'est Keko qui l'a
-rouverte en la proposant. **Son chiffre n'est pas calibré** : deux cartes pour un
-point d'action est le rendement d'une Protection pris dans une autre monnaie, et
-il n'a jamais été mesuré seul.
+rouverte en la proposant.
+
+**ELLE EST PASSÉE DE DEUX À TROIS CARTES, et c'est le balayage qui l'a dit.** À
+deux, *piocher ne faisait que rendre ce qu'il coûtait* — un point d'action contre
+deux cartes — là où l'Agilité évite une attaque entière et le Rempart en bloque
+onze. Le set du tissu valait donc moins que les deux autres, et la Robe tombait à
+45 % de survie contre 50 et 56 **en rapportant moitié moins d'or** : elle perdait
+sur les deux tableaux, *l'exact miroir du défaut de la plate à +30.*
+
+**Et c'est là qu'il fallait réparer, pas sur ses PV** : l'identité de la Robe est
+de ne pas protéger, donc **on renforce son verbe, pas sa chair.** Le balayage des
+quatre réglages possibles :
+
+| Concentration | survie, trésors pris | trésors refusés |
+|---|---|---|
+| 2 cartes pour 1 PA | 44 % | 55 % |
+| **3 cartes pour 1 PA** | **50 %** | 59 % |
+| 2 cartes pour 0 PA | 64 % | 80 % |
+| 3 cartes pour 0 PA | 69 % | 85 % |
+
+*Gratuite, elle passait au-dessus des deux autres* — un cantrip n'a plus de prix,
+donc il n'y a plus de décision. **Trois cartes payantes alignent le cas qui
+compte** (celui où l'on prend les trésors) et gardent le choix entier.
 
 **Son illustration manque**, donc elle sort avec le sceau de repli — ce qui est
 exactement ce que ce sceau est là pour dire.
