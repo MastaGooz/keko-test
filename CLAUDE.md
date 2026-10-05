@@ -1655,6 +1655,21 @@ pas une clause de cette carte-ci, et **une condition écrite sur toutes les
 cartes d'une famille cesse d'être une condition.** Elle y gagne une ligne de
 cartouche.
 
+**ET ON GAGNE DES BLOCAGES, on ne bloque pas des blessures.** Tranché par
+Keko : « pour le blocage, on va plutôt dire "gagnez X blocages" ».
+
+*C'est le Coup de bouclier qui l'imposait* — il dit « Infligez 1 blessure pour
+chaque **blocage** que vous avez », donc le blocage est une CHOSE qu'on accumule
+et qu'on compte. Une carte qui en donne ne pouvait pas en parler comme d'un
+geste : **la carte qui produit et la carte qui consomme doivent nommer la même
+ressource**, sinon rien ne dit qu'elles se répondent.
+
+Et le verbe rejoint les deux autres acquisitions — l'esquive et les points
+d'action : ***tout ce qu'on acquiert se dit « Gagnez ».*** Le cartouche n'a plus
+que quatre verbes, un par sorte d'effet : **Infligez** ce qu'on donne,
+**Gagnez** ce qu'on prend, **Soignez** ce qu'on répare, **Piochez** ce qu'on
+tire.
+
 Quatre choses à ne pas défaire :
 
 - **le coût n'est plus une propriété de la carte, c'est une propriété du

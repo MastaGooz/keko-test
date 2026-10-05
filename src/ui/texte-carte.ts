@@ -106,7 +106,18 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // à la fin de chaque tour, sans exception* — c'est une règle du jeu, pas
     // une clause de cette carte-ci, et une condition écrite sur toutes les
     // cartes de défense cesse d'être une condition.
-    if (e.type === 'bloc') l.push(`Bloquez <p><b>${e.montant}</b></p> ${blessures(e.montant)}`)
+    // **ON GAGNE DES BLOCAGES, on ne bloque pas des blessures.** Tranché par
+    // Keko : « pour le blocage, on va plutôt dire "gagnez X blocages" ».
+    //
+    // *C'est le Coup de bouclier qui l'imposait* — il dit « pour chaque
+    // **blocage** que vous avez », donc le blocage est une CHOSE qu'on accumule
+    // et qu'on compte. Une carte qui en donne ne pouvait pas en parler comme
+    // d'un geste : **la carte qui produit et la carte qui consomme doivent
+    // nommer la même ressource**, sinon rien ne dit qu'elles se répondent.
+    //
+    // Et le verbe rejoint les deux autres acquisitions, l'esquive et les points
+    // d'action : *tout ce qu'on acquiert se dit « Gagnez ».*
+    if (e.type === 'bloc') l.push(`Gagnez <p><b>${e.montant}</b></p> ${blocages(e.montant)}`)
     // L'ESQUIVE DIT SA DURÉE, comme la riposte : *c'est une clause de cette
     // carte-ci, pas une règle du jeu* — sans elle on la croirait permanente.
         // « VOTRE » DESCEND AVEC CE QU'IL INTRODUIT. Keko : « on peut mettre le
@@ -276,6 +287,11 @@ export function enClair(ligne: string): string {
  * **L'accord se fait sur le chiffre** : une carte qui en inflige une seule le
  * dit au singulier, et le Coup de bouclier ne l'écrit plus en dur.
  */
+/** L'accord d'un blocage, par la même porte que celui d'une blessure. */
+function blocages(n: number): string {
+  return n === 1 ? 'blocage' : 'blocages'
+}
+
 function blessures(n: number): string {
   return n === 1 ? 'blessure' : 'blessures'
 }
