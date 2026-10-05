@@ -1655,10 +1655,10 @@ pas une clause de cette carte-ci, et **une condition écrite sur toutes les
 cartes d'une famille cesse d'être une condition.** Elle y gagne une ligne de
 cartouche.
 
-**ET ON GAGNE DES BLOCAGES, on ne bloque pas des blessures.** Tranché par
+**ET ON GAGNE DES BLOCAGES, on ne bloque pas des dégâts.** Tranché par
 Keko : « pour le blocage, on va plutôt dire "gagnez X blocages" ».
 
-*C'est le Coup de bouclier qui l'imposait* — il dit « Infligez 1 blessure pour
+*C'est le Coup de bouclier qui l'imposait* — il dit « Infligez 1 dégât pour
 chaque **blocage** que vous avez », donc le blocage est une CHOSE qu'on accumule
 et qu'on compte. Une carte qui en donne ne pouvait pas en parler comme d'un
 geste : **la carte qui produit et la carte qui consomme doivent nommer la même
@@ -2227,7 +2227,7 @@ la carte se joue AVANT la salve, donc c'est elle qu'on couvre.
 **ET C'EST MOT POUR MOT LA DURÉE DE L'AGILITÉ.** Elle disait « jusqu'au » quand
 l'Agilité disait déjà « jusqu'à votre » ; Keko l'a repris. *Deux cartes qui
 durent le même temps ne peuvent pas le dire de deux façons* — la règle qui a
-déjà fait parler toutes les cartes de blessures, et aligné le trésor brûlé sur
+déjà fait parler toutes les cartes de dégâts, et aligné le trésor brûlé sur
 la potion. Et le possessif dit de QUI est le tour : le joueur en a un, les
 ennemis frappent entre les deux.
 
@@ -3158,8 +3158,8 @@ jeu, on n'en invente pas une.*
 
 **Les DEUX chemins du soin la portent** : la potion et le trésor brûlé.
 *Deux cartes qui font la même chose ne peuvent pas la dire de deux façons* —
-c'est la règle qui avait déjà fait passer le trésor de « rend N PV » à
-« soigne N blessures ».
+c'est la règle qui avait déjà fait passer le trésor de « rend N PV » au
+même coeur que la potion.
 
 **ET `<s>` EST UNE VRAIE BALISE HTML**, celle du texte barré. Les trois appels
 du DOM passent par `enClair` — vérifié — donc elle n'y arrive jamais telle
@@ -3168,7 +3168,8 @@ quelle ; mais le jour où l'un l'oublierait, un chiffre de soin sortirait rayé.
 
 **ET LE SECOND MOT-CLÉ EST « CONSOMMABLE »** : « la carte est détruite quand
 elle est jouée ». Formulation de Keko, en même temps que celle de la Potion —
-« Soigne N blessures », puis le mot-clé en dessous.
+« Soigne N blessures », puis le mot-clé en dessous (les deux ont bougé depuis,
+voir plus bas).
 
 **PUIS LE MOT-CLÉ EST RENTRÉ DANS LA PHRASE** : « Consommable : soigne 14
 blessures ». Tranché par Keko. *Une ligne qui ne porte qu'un mot se lit comme
@@ -3193,19 +3194,46 @@ ne se déduit pas* — et elle ne coûte rien à écrire : une ligne du cartouch
 une entrée du tableau, et **chaque entrée se replie pour son compte** dans les
 deux moteurs (le canvas par `replier`, le DOM par `<br>`).
 
-**ET TOUTES LES CARTES PARLENT DE BLESSURES, plus de dégâts.** Tranché par Keko
-dans la foulée : « on peut remplacer dégâts par blessure dans toutes les
-cartes ».
+**ET LE DEUX-POINTS EST TOMBÉ AVEC : DEUX PHRASES.** Keko : « on va faire deux
+phrases pour les potions : Consommable / Soigne 14 "symbole de coeur" ».
 
-*Le vocabulaire dit la règle* : « dégât » et « PV » sont des mots de système,
-« blessure » est ce que le coup a fait — et c'est **le même mot des deux
-côtés**, puisqu'on les inflige et qu'on les soigne. C'est la raison qui a fait
-des points d'action plutôt que de l'énergie.
+*Le mot-clé n'introduit plus rien, il CLASSE.* Rentré dans la phrase, il en
+devenait l'amorce — « Consommable : » annonçait le soin, comme si le soin
+expliquait le mot. **Deux phrases disent deux faits** : ce que la carte EST, ce
+qu'elle fait. C'est mot pour mot la correction que Keko avait déjà faite au
+titre des encadrés du glossaire, à qui il a retiré ses deux-points pour la même
+raison — *un mot-clé est un nom, pas l'amorce d'une phrase.*
 
-**L'accord se fait sur le chiffre** (`blessures(n)`) : une carte qui en inflige
-une seule le dit au singulier, et le Coup de bouclier ne l'écrit plus en dur.
-Le trésor brûlé suit — il disait « rend N PV », il dit « soigne N blessures » :
-*deux cartes qui font la même chose ne peuvent pas la dire de deux façons.* Et la carte disait avant « se
+**ET LE SOIN SE DIT AU COEUR, PLUS EN MOTS.** Le symbole est celui de la bande
+de stats et des mesures d'armure : *le même fait se dit du même symbole
+partout.* Il remplace un mot de huit lettres, donc la ligne tient d'un coup
+d'oeil — et il dit ce qu'aucun mot ne disait, que c'est la MÊME réserve que la
+barre de vie. Vérifié à l'écran : une Potion zoomée porte exactement le coeur
+que le Plastron de cuir porte à côté d'elle.
+
+**Le trésor brûlé le porte aussi** — *deux cartes qui font la même chose ne
+peuvent pas la dire de deux façons.*
+
+**Et le jeu 2D le rend en caractère** (`♥`, dans `enClair`) : il ne peint aucun
+jeton, mais la police a le signe. *Un moteur qui ne sait pas montrer une chose
+ne doit pas cesser de la dire* — la règle déjà tenue par la valeur d'un butin.
+
+**ET ON REVIENT AUX DÉGÂTS : « blessure » a vécu une passe.** Keko l'avait
+demandé — « on peut remplacer dégâts par blessure dans toutes les cartes » —
+puis repris : « on va remplacer blessures par dégâts finalement ».
+
+*Ce que le détour a appris, et c'est ce qui le rend lisible* : le mot avait été
+choisi pour être **le même des deux côtés**, puisqu'on inflige et qu'on soigne.
+**Il n'y a plus deux côtés** — le soin se dit au coeur depuis que la potion
+parle en deux phrases, donc le mot ne sert plus qu'à ce qu'on inflige, et là
+« dégâts » est ce que tout le monde lit sans traduire.
+
+***Un mot choisi pour unifier deux emplois perd sa raison quand il n'en garde
+qu'un.***
+
+**L'accord se fait sur le chiffre** (`degats(n)`) : une carte qui en inflige un
+seul le dit au singulier, et le Coup de bouclier ne l'écrit plus en dur. Et la
+carte disait avant « se
 boit : détruite », une phrase propre à la potion ; **le mot-clé vaut pour tout
 ce qui s'exile**, donc il se dit une fois et s'explique une fois.
 

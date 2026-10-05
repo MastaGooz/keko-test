@@ -64,7 +64,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   const etourdit = carte.effets?.some((e) => e.type === 'etourdit') === true
   if (carte.degats > 0)
     l.push(
-        `Infligez <d><b>${carte.degats}</b></d> ${blessures(carte.degats)}${etourdit ? ' et&nbsp;<k><b>étourdissement</b></k>' : ''}`,
+        `Infligez <d><b>${carte.degats}</b></d> ${degats(carte.degats)}${etourdit ? ' et&nbsp;<k><b>étourdissement</b></k>' : ''}`,
       )
   else if (etourdit) l.push(`<k><b>Étourdissement</b></k>`)
   // SES DÉGÂTS SONT VOTRE DÉFENSE : on ne peut pas écrire un chiffre, donc on
@@ -98,7 +98,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // renvoie à une RÈGLE* — « attaque » désigne ce que la remise de l'Estoc
     // compte, « blocage » ce que cette carte-ci compte. Les deux sont la chose
     // du jeu qu'on va chercher ailleurs sur l'écran.
-    l.push(`Infligez <d><b>1</b></d> blessure pour chaque <b>blocage</b> que vous avez`)
+    l.push(`Infligez <d><b>1</b></d> dégât pour chaque <b>blocage</b> que vous avez`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
@@ -133,49 +133,33 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
         // dit sa VALEUR. *Une carte ne peut pas perdre un or qu'elle n'a
         // jamais annoncé.*
         const perte = valeurAPart ? 'et sa valeur est perdue' : 'et son or est perdu'
-        l.push(`Brûler : soignez <s><b>${e.montant}</b></s> ${blessures(e.montant)}`, `<small>${perte}</small>`)
+        l.push(`Brûler : soignez <s><b>${e.montant}</b></s> {coeur}`, `<small>${perte}</small>`)
       }
       else {
         /**
-         * **ON SOIGNE DES BLESSURES, PAS DES PV.** Formulation de Keko : « pour
-         * la potion on va marquer *soigne N blessures* ».
+         * **LE SOIN SE DIT AU COEUR, et la potion parle en DEUX PHRASES.**
+         * Keko : « on va faire deux phrases pour les potions : Consommable /
+         * Soigne 14 "symbole de coeur" ».
          *
-         * *Le vocabulaire dit la règle* — « PV » est une abréviation de fiche
-         * de personnage, « blessure » est ce que le coup a fait. C'est la même
-         * raison qui a fait des points d'action plutôt que de l'énergie.
-         */
-        /**
-         * **LE MOT-CLÉ PASSE EN TÊTE, et la phrase le suit.** Keko : « pour les
-         * potions on devrait mettre *Consommable : soigne 14 blessures* ».
+         * *Le mot-clé n'introduit plus rien, il CLASSE* — « Consommable » dit ce
+         * que la carte EST, et le deux-points en faisait l'amorce d'une phrase
+         * dont le soin n'était que la suite. Deux phrases disent deux faits :
+         * ce qu'elle est, ce qu'elle fait. **C'est la même correction que le
+         * titre des encadrés**, à qui Keko avait retiré ses deux-points pour la
+         * même raison.
          *
-         * Il vivait sur sa propre ligne, sous l'effet. *Une ligne qui ne porte
-         * qu'un mot se lit comme une étiquette collée après coup* — alors que
-         * le mot dit ce que la carte EST, donc il ouvre la phrase plutôt que de
-         * la clore. Une carte à usages ne l'écrit toujours pas : ses charges
-         * sont des pastilles.
+         * **ET LE MOT CÈDE AU SYMBOLE** : le coeur est celui de la bande de
+         * stats et des mesures d'armure — *le même fait se dit du même symbole
+         * partout.* Il remplace un mot de huit lettres, donc la ligne tient
+         * d'un coup d'oeil, et il dit ce qu'aucun mot ne disait : que c'est la
+         * MÊME réserve que la barre de vie.
          *
-         * **ET LA COUPURE EST DÉCLARÉE : on va à la ligne après le `:`.**
-         * Tranché par Keko. Le repli la posait où la mesure tombait — « soigne
-         * 14 » montait alors avec le mot-clé et « blessures » restait seul en
-         * dessous, donc *la coupure tombait au milieu de ce qu'elle annonce.*
-         * Le deux-points, lui, EST une coupure : l'énoncé d'un côté, ce qu'il
-         * énonce de l'autre.
-         *
-         * C'est la règle des noms de cases du chargement — *une coupure se
-         * déclare, elle ne se déduit pas* — et **le repli à la mesure reste
-         * derrière**, chaque ligne étant repliée pour son compte.
-         *
-         * *L'espace du deux-points reste insécable*, comme le veut la
-         * typographie française ; elle ne décide plus de la coupure, mais c'est
-         * la bonne espace.
+         * *Le trésor brûlé le porte aussi* — **deux cartes qui font la même
+         * chose ne peuvent pas la dire de deux façons.**
          */
         const exile = carte.usages === undefined && carte.exil === true
-        if (exile) l.push('<k><b>Consommable</b></k>&nbsp;:')
-        l.push(
-          exile
-            ? `soignez <s><b>${e.montant}</b></s> ${blessures(e.montant)}`
-            : `Soignez <s><b>${e.montant}</b></s> ${blessures(e.montant)}`,
-        )
+        if (exile) l.push('<k><b>Consommable</b></k>')
+        l.push(`Soignez <s><b>${e.montant}</b></s> {coeur}`)
       }
     }
     /**
@@ -214,12 +198,12 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // **ET C'EST MOT POUR MOT LA DURÉE DE L'AGILITÉ**, qui dit déjà « jusqu'à
     // votre prochain tour ». Elle disait « jusqu'au » ; Keko l'a repris. *Deux
     // cartes qui durent le même temps ne peuvent pas le dire de deux façons* —
-    // la règle qui a déjà fait parler toutes les cartes de blessures, et aligné
+    // la règle qui a déjà fait parler toutes les cartes de dégâts, et aligné
     // le trésor brûlé sur la potion. Et le possessif dit de QUI est le tour :
     // le joueur en a un, les ennemis frappent entre les deux.
     if (e.type === 'riposte')
       l.push(
-        `Jusqu'à votre prochain tour, les ennemis qui vous <b>attaquent</b> subissent <d><b>${e.montant}</b></d> ${blessures(e.montant)}`,
+        `Jusqu'à votre prochain tour, les ennemis qui vous <b>attaquent</b> subissent <d><b>${e.montant}</b></d> ${degats(e.montant)}`,
       )
 
   }
@@ -261,6 +245,10 @@ export function enClair(ligne: string): string {
   // vérifié — mais un jour où l'un l'oublierait, un chiffre de soin sortirait
   // rayé. C'est le prix d'une balise à une lettre, et il est connu.
   ligne = ligne.replace(/<\/?[kdps]>/g, '')
+  // ET LE COEUR DEVIENT SON CARACTÈRE. *Un moteur qui ne sait pas montrer une
+  // chose ne doit pas cesser de la dire* — la règle déjà tenue par la valeur
+  // d'un butin. Le 2D ne peint pas de jeton, mais la police a le signe.
+  ligne = ligne.replace(/\{coeur\}/g, '♥')
   return ligne.replace(/\{pa:(\d+)\}/g, '<b>$1</b> PA')
 }
 
@@ -276,24 +264,29 @@ export function enClair(ligne: string): string {
  * jargon** — d'où l'encadré, qui le dit là où l'on a le temps de lire.
  */
 /**
- * **ON PARLE DE BLESSURES, PLUS DE DÉGÂTS.** Tranché par Keko, à la suite de la
- * Potion : « on peut remplacer dégâts par blessure dans toutes les cartes ».
+ * **ON PARLE DE DÉGÂTS — « blessure » a vécu une passe.** Keko l'avait demandé
+ * — « on peut remplacer dégâts par blessure dans toutes les cartes » — puis
+ * repris : « on va remplacer blessures par dégâts finalement ».
  *
- * *Le vocabulaire dit la règle* : « dégât » est un mot de système, « blessure »
- * est ce que le coup a fait — et c'est le même mot des deux côtés, puisqu'on
- * les inflige et qu'on les soigne. C'est la raison qui a déjà fait des points
- * d'action plutôt que de l'énergie.
+ * *Ce que le détour a appris, et c'est ce qui le rend lisible* : le mot avait
+ * été choisi pour être **le même des deux côtés**, puisqu'on inflige et qu'on
+ * soigne. **Il n'y a plus deux côtés** — le soin se dit au coeur depuis que
+ * la potion parle en deux phrases, donc le mot ne sert plus qu'à ce qu'on
+ * inflige, et là « dégâts » est ce que tout le monde lit sans traduire.
  *
- * **L'accord se fait sur le chiffre** : une carte qui en inflige une seule le
- * dit au singulier, et le Coup de bouclier ne l'écrit plus en dur.
+ * *Un mot choisi pour unifier deux emplois perd sa raison quand il n'en garde
+ * qu'un.*
+ *
+ * **L'accord se fait sur le chiffre** : une carte qui en inflige un seul le dit
+ * au singulier, et le Coup de bouclier ne l'écrit plus en dur.
  */
-/** L'accord d'un blocage, par la même porte que celui d'une blessure. */
+/** L'accord d'un blocage, par la même porte que celui d'un dégât. */
 function blocages(n: number): string {
   return n === 1 ? 'blocage' : 'blocages'
 }
 
-function blessures(n: number): string {
-  return n === 1 ? 'blessure' : 'blessures'
+function degats(n: number): string {
+  return n === 1 ? 'dégât' : 'dégâts'
 }
 
 export const GLOSSAIRE: Record<string, string> = {
