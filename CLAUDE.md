@@ -2418,6 +2418,21 @@ s'affiche : « Vous portez 2 butins », « Vous rapportez 340 d'or », « Vous a
 perdre Idole », « Vous tombez. » Les commentaires du code, eux, continuent de
 se parler à nous-mêmes.
 
+**ET ÇA VAUT POUR LES VERBES, pas seulement pour les possessifs.** Keko, une
+fois les cartes relues : « attention tu utilises "tu" dans les cartes : il faut
+vouvoyer le joueur. "Piochez" "Gagnez" ».
+
+*Un verbe nu à l'indicatif se lit comme un impératif tutoyé* — et c'était
+franchement bancal là où les deux voix se croisaient dans la même phrase :
+**« Gagne esquive jusqu'à VOTRE prochain tour ».** Tous les verbes qui
+s'adressent au joueur sont donc à la deuxième personne du pluriel : **Infligez,
+Bloquez, Soignez, Piochez, Gagnez.**
+
+*Ce qui n'est pas adressé ne bouge pas*, et la liste est courte : « Coûte 1 PA
+de moins » parle de la CARTE, « annule l'action en cours » parle du mot-clé, et
+« les ennemis qui vous attaquent subissent » a déjà son sujet. **La question à
+se poser est QUI agit**, pas quel verbe c'est.
+
 Cinq vérifications la tiennent (220 au total).
 
 **LES CHIFFRES SONT DE KEKO ET NE SONT PAS CALIBRÉS.** Le set du Glaive est la
