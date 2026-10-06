@@ -109,6 +109,7 @@ const IMAGES: Record<string, string> = {
   'coup-de-bouclier': 'Coup de bouclier.webp',
   projection: 'Projection.webp',
   agilite: 'Agilité.webp',
+  concentration: 'Concentration.webp',
   // LA TAILLE A ENFIN LE SIEN. Elle empruntait le dessin de la Taillade, le
   // temps qu'elle n'en ait pas — *un banc qui montre une carte au sceau de
   // repli ne se juge pas.* L'emprunt tombe avec l'arrivée du fichier.

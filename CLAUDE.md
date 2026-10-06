@@ -2028,8 +2028,10 @@ cuir 5, plate 16.**
 Concentration ? » : *une armure sans aucune réponse à la salve n'est pas une
 armure*, elle rend le joueur entièrement dépendant de ses armes pour bloquer.
 
-**Son illustration manque**, donc elle sort avec le sceau de repli — ce qui est
-exactement ce que ce sceau est là pour dire.
+**Elle a son illustration** (`Concentration.webp`, fournie par Keko au gabarit
+exact — 1024 x 1463, rapport 0,700, WebP à canal alpha). Elle a vécu quelques
+jours avec le sceau de repli, *ce qui est exactement ce que ce sceau est là pour
+dire* — et une entrée dans `IMAGES` a suffi à le lever.
 
 Trois choses à ne pas défaire :
 
