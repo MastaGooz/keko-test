@@ -2174,11 +2174,21 @@ points près — et **chacune garde son profil** : le tissu reste l'armure du
 joueur CUPIDE, à qui la cupidité coûte deux à trois fois moins qu'aux autres,
 parce qu'il pioche et que la dilution le gêne moins.
 
-**Elle a son illustration** (`Barrière.webp`, fournie par Keko au gabarit exact —
-1024 x 1463, alpha). *Le nom du fichier porte son accent*, et il est recopié
-depuis le disque plutôt que réécrit : la clé de la table retire les diacritiques
-(`barriere`), l'URL non — **et un accent deviné marche sur la machine de dev
-avant de faire un 404 en ligne.** Vérifié octet pour octet, et en NFC.
+**Elle a son illustration** (`Barriere.webp`, fournie par Keko au gabarit exact —
+1024 x 1463, alpha).
+
+**ET SON NOM A PERDU SON ACCENT À LA DEUXIÈME LIVRAISON** : le premier fichier
+s'appelait `Barrière.webp`, le second `Barriere.webp`. *Rien ne le signale* — la
+clé de la table, elle, n'a jamais eu d'accent (`barriere`), donc le code
+compilait et la carte se dessinait encore depuis le cache du navigateur. **En
+ligne, ç'aurait été un 404 franc.**
+
+*C'est le piège de l'Épée à deux mains pris par l'autre bout* : là j'avais
+AJOUTÉ un accent que le fichier n'avait pas, ici c'est le fichier qui en a perdu
+un. **Une entrée de la table se relit contre `ls public/` À CHAQUE LIVRAISON**,
+et pas seulement le jour où on l'écrit — un dessin remis à jour peut changer de
+nom sans que personne ne le dise. Le nom est recopié depuis le disque, jamais
+retapé ; vérifié octet pour octet.
 
 **ET SON PIED DISAIT « ACTION », ce qui était un défaut de moi.** La liste qui
 décide du type ne connaissait que `bloc` et `esquive` : *du bloc qui ne s'appelle

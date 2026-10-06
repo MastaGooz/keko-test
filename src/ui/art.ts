@@ -110,7 +110,7 @@ const IMAGES: Record<string, string> = {
   projection: 'Projection.webp',
   agilite: 'Agilité.webp',
   concentration: 'Concentration.webp',
-  barriere: 'Barrière.webp',
+  barriere: 'Barriere.webp',
   // LA TAILLE A ENFIN LE SIEN. Elle empruntait le dessin de la Taillade, le
   // temps qu'elle n'en ait pas — *un banc qui montre une carte au sceau de
   // repli ne se juge pas.* L'emprunt tombe avec l'arrivée du fichier.
