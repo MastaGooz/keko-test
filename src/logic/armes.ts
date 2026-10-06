@@ -538,25 +538,28 @@ const ESQUIVE: Modele = {
  * les deux autres. **C'est son avantage de main, dit par le deck.**
  */
 /**
- * LA VIGILANCE : le second verbe du tissu, et il se compte sur la main.
+ * LA BARRIÈRE : le second verbe du tissu, et il se compte sur la main.
  *
- * **Elle s'est appelée « Trame » le temps d'un commit**, et Keko l'a reprise :
- * « trame ? ça signifie quoi ? je comprends pas le concept ». *Une trame est le
- * fil horizontal d'un tissage* — le mot disait la matière de l'armure et le
- * fait qu'elle est faite de plusieurs fils, mais **il fallait le savoir pour
- * l'entendre**, et un nom qui demande une note n'est pas un nom.
+ * **Nommée par Keko, après deux essais à moi qui cherchaient au mauvais
+ * endroit.** « Trame » voulait dire la matière de l'armure — le fil horizontal
+ * d'un tissage — et « Vigilance » voulait dire sa règle, *plus on tient de
+ * cartes plus on est prêt.* Keko les a écartés l'un après l'autre : « trame ?
+ * ça signifie quoi ? » puis « ça renvoie plutôt au build ruse / voleur /
+ * chasseur, il faut un truc plutôt magicien ».
  *
- * *Celui-ci fait PAIRE avec la Concentration* : deux états de l'esprit, et
- * c'est l'identité de cette armure — elle ne pare pas avec de la matière, elle
- * pare avec ce qu'elle a en tête. Plus on tient de cartes, plus on est prêt.
+ * **Et le critère qu'il désigne n'est aucun des deux miens : un nom de carte
+ * dit à quel BUILD elle appartient.** Aucune carte du jeu ne porte son
+ * mécanisme dans son nom — « Estoc » ne dit pas la remise, « Projection » ne
+ * dit pas l'étourdissement — parce que *c'est le cartouche qui dit la règle, et
+ * le nom qui dit de quel côté du râtelier on est.*
  *
  * **Elle remplace l'Agilité, que Keko a rendue au cuir** : « ça me gêne un peu
  * d'avoir agilité sur la robe, ça devrait être propre au cuir ». *Deux armures
  * sur le même verbe ne font pas deux builds*, et l'esquive est le geste de
  * celui qui bouge, pas de celui qui tisse.
  */
-const VIGILANCE: Modele = {
-  nom: 'Vigilance',
+const BARRIERE: Modele = {
+  nom: 'Barrière',
   type: 'combat',
   cout: 1,
   degats: 0,
@@ -668,12 +671,12 @@ export const ROBE: Armure = {
   // builds, elles font une bonne et une moins bonne** : c'est ce qui avait
   // coûté la cotte de maille.
   //
-  // La Vigilance n'est donc pas un retour au bloc : son montant dépend de ce qu'on
+  // La Barrière n'est donc pas un retour au bloc : son montant dépend de ce qu'on
   // n'a pas encore joué, donc *elle fait de l'ordre des coups une décision* au
   // lieu d'un chiffre fixe — et elle dit la même chose que la stat du tissu.
   set: [
     { modele: CONCENTRATION, nombre: 1 },
-    { modele: VIGILANCE, nombre: 1 },
+    { modele: BARRIERE, nombre: 1 },
   ],
 }
 

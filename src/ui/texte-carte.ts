@@ -115,7 +115,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // renvoie à une RÈGLE* — « attaque » désigne ce que la remise de l'Estoc
     // compte, « blocage » ce que cette carte-ci compte. Les deux sont la chose
     // du jeu qu'on va chercher ailleurs sur l'écran.
-    l.push(`Inflige <d><b>1</b></d> dégât pour chaque <b>blocage</b> que vous avez`)
+    l.push(`Inflige <d><b>1</b></d> dégât pour chaque blocage que vous avez`)
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
@@ -135,7 +135,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // Et le verbe rejoint les deux autres acquisitions, l'esquive et les points
     // d'action : *tout ce qu'on acquiert se dit « Gagne ».*
     if (e.type === 'bloc') l.push(`Gagne <p><b>${e.montant}</b></p> ${blocages(e.montant)}`)
-    // LA VIGILANCE DIT LA RÈGLE, PAS UN CHIFFRE — même tournure que le Coup de
+    // LA BARRIÈRE DIT LA RÈGLE, PAS UN CHIFFRE — même tournure que le Coup de
     // bouclier : *elle COMPTE plutôt qu'elle ne compare*, et un joueur qui lit
     // « 1 par carte » sait quoi faire de son tour. La formulation est de Keko.
     if (e.type === 'blocParCarte')

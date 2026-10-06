@@ -1805,7 +1805,7 @@ prend une ressource différente :
 
 | | stats | set | ce qu'on va y chercher |
 |---|---|---|---|
-| **Robe** (tissu) | **+1 carte en main** | **Concentration** + **Vigilance** | **voir** plus |
+| **Robe** (tissu) | **+1 carte en main** | **Concentration** + **Barrière** | **voir** plus |
 | **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Protection + **Agilité** | **jouer** plus |
 | **Armure de plate** | **+30 ♥** | Protection + **Rempart** | **encaisser** |
 
@@ -2080,7 +2080,7 @@ deux rapports que Keko avait déjà validés sur la bande de stats.
 **Sa largeur réservée est celle du DESSIN** (40 x 34), pas un carré : la règle du
 coeur, repayée ici.
 
-#### LA VIGILANCE : le second verbe du tissu, et il se compte sur la MAIN
+#### LA BARRIÈRE : le second verbe du tissu, et il se compte sur la MAIN
 
 **L'Agilité est rendue au cuir.** Keko : « ça me gêne un peu d'avoir agilité sur
 la robe, ça devrait être propre au cuir ». *Et il a raison sur les deux
@@ -2101,13 +2101,13 @@ Ce que ça achète, et c'est ce que mon objection ne voyait pas :
 
 - **elle fait de l'ORDRE DES COUPS une décision**, le second effet du jeu à le
   faire après la remise de l'Estoc — **et il tire dans l'autre sens.** L'Estoc
-  veut qu'on frappe d'abord, la Vigilance qu'on se couvre d'abord : *les deux
+  veut qu'on frappe d'abord, la Barrière qu'on se couvre d'abord : *les deux
   jouent sur le même tour, et c'est ça qui fait un choix* ;
 - **la stat et le set du tissu disent enfin la même chose** : une carte de main
   en plus EST un point de bloc en plus. C'est ce qui avait déjà rendu la
   Concentration juste ;
 - **aucune autre armure ne peut l'emprunter** — le cuir et la plate n'ont pas
-  de cartes en trop, donc la Vigilance y vaudrait moins. *Un verbe qui ne rend que
+  de cartes en trop, donc la Barrière y vaudrait moins. *Un verbe qui ne rend que
   sur une seule pièce est le contraire d'un doublon.*
 
 **ELLE NE SE COMPTE PAS ELLE-MÊME.** `jouerCarte` retire la carte de la main
@@ -2115,19 +2115,28 @@ avant de résoudre, donc elle compte ce qui RESTE — *c'est la lecture naturell
 du texte*, et c'est la même mécanique que la Concentration, qui peut se
 repiocher parce qu'elle est déjà partie.
 
-**ELLE S'EST APPELÉE « TRAME », ET LE NOM N'A PAS TENU UN COMMIT.** Keko :
-« trame ? ça signifie quoi ? je comprends pas le concept ». *Une trame est le
-fil horizontal d'un tissage* — le mot disait la matière de l'armure ET le fait
-qu'elle est faite de plusieurs fils, donc il disait la règle… **à condition de
-le savoir déjà.** *Un nom qui demande une note n'est pas un nom*, et c'est la
-limite de la règle « le vocabulaire doit dire la règle » : elle ne vaut que
-pour des mots que tout le monde a.
+**ELLE A PORTÉ DEUX AUTRES NOMS, ET LES DEUX CHERCHAIENT AU MAUVAIS ENDROIT.**
 
-**« Vigilance » fait PAIRE avec « Concentration »**, et c'est ce qui l'emporte :
-deux états de l'esprit, *et c'est l'identité de cette armure* — elle ne pare pas
-avec de la matière, elle pare avec ce qu'elle a en tête. Plus on tient de
-cartes, plus on est prêt. Les deux noms se lisent alors comme un set et non
-comme deux cartes rangées ensemble.
+« **Trame** » visait la MATIÈRE — le fil horizontal d'un tissage, donc une
+armure faite de plusieurs fils. Keko : « trame ? ça signifie quoi ? je comprends
+pas le concept ». *Le mot disait bien la règle… à condition de la savoir déjà*,
+et **un nom qui demande une note n'est pas un nom** : c'est la limite de « le
+vocabulaire doit dire la règle », qui ne vaut que pour des mots que tout le
+monde a.
+
+« **Vigilance** » visait la RÈGLE autrement — plus on tient de cartes, plus on
+est prêt — et faisait paire avec « Concentration ». Keko : « ça renvoie plutôt
+au build ruse / voleur / chasseur, il faut un truc plutôt magicien ».
+
+**ET C'EST LUI QUI DONNE LE CRITÈRE, qui n'est aucun des deux miens : un nom de
+carte dit à quel BUILD elle appartient.** Aucune carte du jeu ne porte son
+mécanisme dans son nom — *« Estoc » ne dit pas la remise, « Projection » ne dit
+pas l'étourdissement* — parce que **le cartouche dit la règle, et le nom dit de
+quel côté du râtelier on est.** Une « Barrière » est magique avant d'être quoi
+que ce soit d'autre, et c'est tout ce qu'on lui demande.
+
+*Deux passes perdues à chercher un nom qui EXPLIQUE, là où il fallait un nom qui
+SITUE.*
 
 Son texte reprend mot pour mot la tournure du Coup de bouclier —
 « Gagne 1 blocage pour chaque carte dans votre main » — *elle COMPTE plutôt
@@ -2142,10 +2151,10 @@ bot qui brûle sous 30 PV, pioche, achève, bloque, frappe) :
 | set de la Robe | trésors pris | refusés |
 |---|---|---|
 | Concentration + Agilité (avant) | 62 % | 69 % |
-| **Concentration + Vigilance, 1 PA pour 1 par carte** | **63 %** | 75 % |
-| Concentration + Vigilance, 0 PA pour 1 | 75 % | 88 % |
-| Concentration + Vigilance, 1 PA pour 2 | 82 % | 94 % |
-| Concentration + Vigilance, 2 PA pour 2 | 74 % | 86 % |
+| **Concentration + Barrière, 1 PA pour 1 par carte** | **63 %** | 75 % |
+| Concentration + Barrière, 0 PA pour 1 | 75 % | 88 % |
+| Concentration + Barrière, 1 PA pour 2 | 82 % | 94 % |
+| Concentration + Barrière, 2 PA pour 2 | 74 % | 86 % |
 
 **Le réglage retenu tombe PILE sur l'Agilité** — 63 contre 62 : *le verbe change,
 la force non*, ce qui est exactement ce qu'on demande à un remplacement. Les
@@ -2436,24 +2445,29 @@ d'abord si elle lui PARVIENT.** J'ai réglé la graisse, puis la police, puis
 mesuré les variantes chargées — trois vérifications sur le bout de la chaîne
 qui ne recevait rien.
 
-*Ce qu'on met en gras* : **les chiffres**, et le nom de ce qu'une carte COMPTE.
-Tranché par Keko en trois temps — d'abord un essai large qui prenait les verbes
-et « défense », rejeté (« mets juste le terme attaque en gras ainsi que les
-chiffres ») ; puis « attaque » étendu à sa forme conjuguée, « attaquent » ; puis
-**« attaque » retiré** : « on peut enlever le gras des mots attaque dans les
-descriptions ».
+**LE GRAS NE PORTE QUE LES CHIFFRES.** Il a mis quatre passes à y arriver, et
+chacune a retiré un mot : un essai large qui prenait les verbes et « défense »,
+rejeté par Keko (« mets juste le terme attaque en gras ainsi que les
+chiffres ») ; puis « attaque » étendu à sa forme conjuguée ; puis **« attaque »
+retiré** (« on peut enlever le gras des mots attaque dans les descriptions ») ;
+puis **« blocage »** (« on peut enlever le gras de blocage aussi »).
 
-*Un chiffre est une valeur qu'on compare*, et c'est la seule chose que le joueur
-lit d'une carte à l'autre — tout mot appuyé à côté lui dispute le regard. **Un
-signal dilué n'est plus un signal**, et c'est la raison qui avait déjà fait
-retirer la couleur des verbes.
+*Un chiffre est une valeur qu'on COMPARE*, et c'est la seule chose que le joueur
+lise d'une carte à l'autre — tout mot appuyé à côté lui dispute le regard. **Un
+signal dilué n'est plus un signal**, la raison qui avait déjà fait retirer la
+couleur des verbes.
 
-**Ce qui reste en gras à côté des chiffres : « blocage », dans le Coup de
-bouclier.** Il avait été mis là pour la même raison qu'« attaque » — *le nom de
-ce que la carte compte* — mais les deux ne sont pas dans le même cas : le
-blocage est **une ressource qu'on va chercher ailleurs sur l'écran**, sur le
-bouclier à côté de la barre de vie, là où « attaque » ne désignait qu'un
-évènement du tour. *À relire si Keko le retire aussi.*
+*Ce qui a résisté le plus longtemps, et l'argument qui ne tenait pas* : j'avais
+gardé « blocage » en disant que **c'est une ressource qu'on va chercher ailleurs
+sur l'écran**, sur le bouclier à côté de la barre de vie, là où « attaque » ne
+désigne qu'un moment du tour. *C'est vrai, et ça ne suffit pas* : savoir où
+regarder n'est pas ce qu'on fait en lisant une carte — on y compare un chiffre,
+et rien d'autre.
+
+**Les mots-clés gardent le leur**, et ce n'est pas une exception : ils portent
+AUSSI le jaune, et les deux disent deux choses différentes — *le jaune dit qu'il
+y a une définition à aller lire, le gras dit que c'est un terme et non un mot de
+la phrase.*
 
 **UN MOT-OUTIL NE RESTE PAS SEUL AU BOUT DE SA LIGNE.** Keko, sur la
 Projection : « on devrait placer le "et" sur la deuxième ligne avec

@@ -688,7 +688,7 @@ console.log('Tout passe.')
 }
 
 /**
- * LA VIGILANCE : du bloc qui se compte sur ce qu'on N'A PAS ENCORE JOUÉ.
+ * LA BARRIÈRE : du bloc qui se compte sur ce qu'on N'A PAS ENCORE JOUÉ.
  *
  * Proposée par Keko — « bloque 1 pour chaque carte dans votre main, au moment
  * où est jouée la carte ». *C'est ce qui en fait autre chose qu'une
@@ -697,7 +697,7 @@ console.log('Tout passe.')
  */
 {
   const deck = cartes(10, {
-    nom: 'Vigilance',
+    nom: 'Barrière',
     cout: 1,
     degats: 0,
     effets: [{ type: 'blocParCarte', montant: 1 }],
@@ -707,7 +707,7 @@ console.log('Tout passe.')
   // ELLE NE SE COMPTE PAS ELLE-MÊME : `jouerCarte` la retire de la main avant
   // de résoudre, donc ce qu'elle compte est bien ce qui RESTE.
   const premiere = jouerCarte(etat, 0, 0, rng())
-  egal(premiere.bloc, etat.main.length - 1, 'la Vigilance bloque une fois par carte restante')
+  egal(premiere.bloc, etat.main.length - 1, 'la Barriere bloque une fois par carte restante')
 
   // L'ORDRE DÉCIDE, et c'est tout son intérêt : jouée en second, elle vaut un
   // point de moins. *Une Protection, elle, vaudrait la même chose.*
@@ -720,7 +720,7 @@ console.log('Tout passe.')
   egal(jouerCarte(seule, 0, 0, rng()).bloc, 0, 'derniere carte en main : elle ne bloque rien')
 
   // ELLE NE DÉSIGNE PERSONNE — c'est du bloc, donc sa portée est « aucune ».
-  verifie(!viseUneCible(etat.main[0]!), 'la Vigilance ne vise aucun corps')
+  verifie(!viseUneCible(etat.main[0]!), 'la Barriere ne vise aucun corps')
 }
 
 /**
