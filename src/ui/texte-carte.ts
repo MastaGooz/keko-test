@@ -135,6 +135,11 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // Et le verbe rejoint les deux autres acquisitions, l'esquive et les points
     // d'action : *tout ce qu'on acquiert se dit « Gagne ».*
     if (e.type === 'bloc') l.push(`Gagne <p><b>${e.montant}</b></p> ${blocages(e.montant)}`)
+    // LA TRAME DIT LA RÈGLE, PAS UN CHIFFRE — même tournure que le Coup de
+    // bouclier : *elle COMPTE plutôt qu'elle ne compare*, et un joueur qui lit
+    // « 1 par carte » sait quoi faire de son tour. La formulation est de Keko.
+    if (e.type === 'blocParCarte')
+      l.push(`Gagne <p><b>${e.montant}</b></p> blocage pour chaque carte dans votre main`)
     // L'ESQUIVE DIT SA DURÉE, comme la riposte : *c'est une clause de cette
     // carte-ci, pas une règle du jeu* — sans elle on la croirait permanente.
         // « VOTRE » DESCEND AVEC CE QU'IL INTRODUIT. Keko : « on peut mettre le

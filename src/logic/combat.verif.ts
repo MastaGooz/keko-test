@@ -688,6 +688,42 @@ console.log('Tout passe.')
 }
 
 /**
+ * LA TRAME : du bloc qui se compte sur ce qu'on N'A PAS ENCORE JOUÉ.
+ *
+ * Proposée par Keko — « bloque 1 pour chaque carte dans votre main, au moment
+ * où est jouée la carte ». *C'est ce qui en fait autre chose qu'une
+ * Protection* : son montant dépend de l'ordre des coups, donc elle récompense
+ * de se couvrir d'abord — l'exact inverse de la remise de l'Estoc.
+ */
+{
+  const deck = cartes(10, {
+    nom: 'Trame',
+    cout: 1,
+    degats: 0,
+    effets: [{ type: 'blocParCarte', montant: 1 }],
+  })
+  const etat = combat(deck, ennemi({ pv: 40, degats: 8 }))
+
+  // ELLE NE SE COMPTE PAS ELLE-MÊME : `jouerCarte` la retire de la main avant
+  // de résoudre, donc ce qu'elle compte est bien ce qui RESTE.
+  const premiere = jouerCarte(etat, 0, 0, rng())
+  egal(premiere.bloc, etat.main.length - 1, 'la Trame bloque une fois par carte restante')
+
+  // L'ORDRE DÉCIDE, et c'est tout son intérêt : jouée en second, elle vaut un
+  // point de moins. *Une Protection, elle, vaudrait la même chose.*
+  const seconde = jouerCarte(premiere, 0, 0, rng())
+  egal(seconde.bloc - premiere.bloc, premiere.main.length - 1, '...une de moins au coup suivant')
+  verifie(seconde.bloc - premiere.bloc < premiere.bloc, 'donc se couvrir tot rapporte plus')
+
+  // MAIN VIDE, BLOC NUL : le bout de l'échelle, pas une erreur à corriger.
+  const seule = { ...etat, main: [etat.main[0]!] }
+  egal(jouerCarte(seule, 0, 0, rng()).bloc, 0, 'derniere carte en main : elle ne bloque rien')
+
+  // ELLE NE DÉSIGNE PERSONNE — c'est du bloc, donc sa portée est « aucune ».
+  verifie(!viseUneCible(etat.main[0]!), 'la Trame ne vise aucun corps')
+}
+
+/**
  * **PIOCHER : le verbe de la Robe.**
  *
  * *C'est le premier effet qui touche au deck au milieu d'un tour*, donc il

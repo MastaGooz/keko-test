@@ -537,6 +537,26 @@ const ESQUIVE: Modele = {
  * diluer — c'est un cyclage, donc le tissu joue de fait un deck plus court que
  * les deux autres. **C'est son avantage de main, dit par le deck.**
  */
+/**
+ * LA TRAME : le second verbe du tissu, et il se compte sur la main.
+ *
+ * *Un tissu est fait de fils* — plus il y en a, plus il tient. Le nom dit donc
+ * à la fois la matière de l'armure et sa règle, comme « enchantement » disait
+ * la sienne.
+ *
+ * **Elle remplace l'Agilité, que Keko a rendue au cuir** : « ça me gêne un peu
+ * d'avoir agilité sur la robe, ça devrait être propre au cuir ». *Deux armures
+ * sur le même verbe ne font pas deux builds*, et l'esquive est le geste de
+ * celui qui bouge, pas de celui qui tisse.
+ */
+const TRAME: Modele = {
+  nom: 'Trame',
+  type: 'combat',
+  cout: 1,
+  degats: 0,
+  effets: [{ type: 'blocParCarte', montant: 1 }],
+}
+
 const CONCENTRATION: Modele = {
   nom: 'Concentration',
   type: 'combat',
@@ -634,17 +654,20 @@ export const ROBE: Armure = {
   // de quatorze, c'est un geste à moitié* — mieux vaut assumer que le tissu ne
   // pare pas.
   //
-  // **L'Agilité est la seule défense du jeu qui ne soit pas du bloc** : on
-  // n'arrête pas le coup, on l'évite. *C'est exactement ce qu'il faut à une
-  // armure qui ne protège pas*, et c'est ce que Keko demandait dès sa première
-  // proposition — « carte pioche et esquive ».
+  // **ELLE BLOQUE SUR SA MAIN, et c'est son propre verbe.** Elle a porté
+  // l'Agilité le temps de quelques commits, puis Keko l'a rendue au cuir :
+  // « ça me gêne un peu d'avoir agilité sur la robe, ça devrait être propre au
+  // cuir ». *Et il a raison sur les deux tableaux* — l'esquive est le geste de
+  // celui qui bouge, et **deux armures sur le même verbe ne font pas deux
+  // builds, elles font une bonne et une moins bonne** : c'est ce qui avait
+  // coûté la cotte de maille.
   //
-  // Elle la partage avec le cuir, et ce n'est pas un doublon : leurs secondes
-  // cartes diffèrent, et le bloc va en gamme continue — **tissu 0, cuir 5,
-  // plate 16.**
+  // La Trame n'est donc pas un retour au bloc : son montant dépend de ce qu'on
+  // n'a pas encore joué, donc *elle fait de l'ordre des coups une décision* au
+  // lieu d'un chiffre fixe — et elle dit la même chose que la stat du tissu.
   set: [
     { modele: CONCENTRATION, nombre: 1 },
-    { modele: ESQUIVE, nombre: 1 },
+    { modele: TRAME, nombre: 1 },
   ],
 }
 

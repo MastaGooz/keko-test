@@ -42,6 +42,23 @@ export type Effet =
    */
   | { type: 'bloc'; montant: number }
   /**
+   * DU BLOC QUI SE COMPTE SUR LA MAIN — le verbe du TISSU.
+   *
+   * Proposé par Keko : « bloque 1 pour chaque carte dans votre main, au moment
+   * où est jouée la carte ».
+   *
+   * *Ce n'est pas la Protection avec un autre chiffre* : son montant dépend de
+   * ce qu'on n'a PAS ENCORE joué, donc **il fait de l'ordre des coups une
+   * décision** — exactement comme la remise de l'Estoc, et en sens inverse.
+   * L'Estoc veut qu'on frappe d'abord, celui-ci qu'on se couvre d'abord : *les
+   * deux tirent sur le même tour, et c'est ça qui fait un choix.*
+   *
+   * Et il dit la même chose que la stat du tissu : une carte de main en plus
+   * est un point de bloc en plus. **L'armure dont le set et la stat parlent
+   * d'une seule voix.**
+   */
+  | { type: 'blocParCarte'; montant: number }
+  /**
    * LA RIPOSTE : ce que prend un ennemi CHAQUE FOIS qu'il frappe, ce tour-ci.
    *
    * Composée par Keko : « durant 1 tour, inflige 4 à chaque fois qu'un ennemi
@@ -600,6 +617,13 @@ function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number, rng: Rng)
       break
     case 'bloc':
       etat.bloc += effet.montant
+      break
+    case 'blocParCarte':
+      // ELLE NE SE COMPTE PAS ELLE-MÊME : `jouerCarte` l'a retirée de la main
+      // avant de résoudre, donc `main` est bien ce qui RESTE. *C'est la lecture
+      // naturelle du texte*, et c'est la même mécanique que la Concentration,
+      // qui peut se repiocher parce qu'elle est déjà partie.
+      etat.bloc += effet.montant * etat.main.length
       break
     case 'esquive':
       etat.esquive = true

@@ -1805,7 +1805,7 @@ prend une ressource différente :
 
 | | stats | set | ce qu'on va y chercher |
 |---|---|---|---|
-| **Robe** (tissu) | **+1 carte en main** | **Concentration** + Agilité | **voir** plus |
+| **Robe** (tissu) | **+1 carte en main** | **Concentration** + **Trame** | **voir** plus |
 | **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Protection + **Agilité** | **jouer** plus |
 | **Armure de plate** | **+30 ♥** | Protection + **Rempart** | **encaisser** |
 
@@ -2079,6 +2079,83 @@ deux rapports que Keko avait déjà validés sur la bande de stats.
 
 **Sa largeur réservée est celle du DESSIN** (40 x 34), pas un carré : la règle du
 coeur, repayée ici.
+
+#### LA TRAME : le second verbe du tissu, et il se compte sur la MAIN
+
+**L'Agilité est rendue au cuir.** Keko : « ça me gêne un peu d'avoir agilité sur
+la robe, ça devrait être propre au cuir ». *Et il a raison sur les deux
+tableaux* — l'esquive est le geste de celui qui BOUGE, pas de celui qui tisse,
+et **deux armures sur le même verbe ne font pas deux builds, elles font une
+bonne et une moins bonne** : c'est exactement ce qui avait coûté la cotte de
+maille.
+
+**Le mécanisme est de Keko** : « bloque 1 pour chaque carte dans votre main, au
+moment où est jouée la carte ».
+
+**J'avais mis cette piste en SECOND et je me trompais.** Mon objection était
+« ça reste du bloc, donc le tissu protège moins bien au lieu de protéger
+autrement » — *elle ne tient pas, parce que ce n'est pas le même bloc* : son
+montant dépend de ce qu'on n'a PAS ENCORE joué.
+
+Ce que ça achète, et c'est ce que mon objection ne voyait pas :
+
+- **elle fait de l'ORDRE DES COUPS une décision**, le second effet du jeu à le
+  faire après la remise de l'Estoc — **et il tire dans l'autre sens.** L'Estoc
+  veut qu'on frappe d'abord, la Trame qu'on se couvre d'abord : *les deux
+  jouent sur le même tour, et c'est ça qui fait un choix* ;
+- **la stat et le set du tissu disent enfin la même chose** : une carte de main
+  en plus EST un point de bloc en plus. C'est ce qui avait déjà rendu la
+  Concentration juste ;
+- **aucune autre armure ne peut l'emprunter** — le cuir et la plate n'ont pas
+  de cartes en trop, donc la Trame y vaudrait moins. *Un verbe qui ne rend que
+  sur une seule pièce est le contraire d'un doublon.*
+
+**ELLE NE SE COMPTE PAS ELLE-MÊME.** `jouerCarte` retire la carte de la main
+avant de résoudre, donc elle compte ce qui RESTE — *c'est la lecture naturelle
+du texte*, et c'est la même mécanique que la Concentration, qui peut se
+repiocher parce qu'elle est déjà partie.
+
+**ET LE NOM DIT LA MATIÈRE EN MÊME TEMPS QUE LA RÈGLE.** *Un tissu est fait de
+fils* — plus il y en a, plus il tient. Le projet cherche ça depuis
+« enchantement » plutôt que « maîtrise » : **le vocabulaire doit dire la
+règle.** Son texte reprend mot pour mot la tournure du Coup de bouclier —
+« Gagne 1 blocage pour chaque carte dans votre main » — *elle COMPTE plutôt
+qu'elle ne compare*, et un joueur qui lit « 1 par carte » sait quoi faire de son
+tour.
+
+#### 1 PA POUR 1 PAR CARTE : le chiffre est MESURÉ, pas choisi
+
+A/B dans le même banc (400 descentes au fond, Glaive + Rondache + 3 potions,
+bot qui brûle sous 30 PV, pioche, achève, bloque, frappe) :
+
+| set de la Robe | trésors pris | refusés |
+|---|---|---|
+| Concentration + Agilité (avant) | 62 % | 69 % |
+| **Concentration + Trame, 1 PA pour 1 par carte** | **63 %** | 75 % |
+| Concentration + Trame, 0 PA pour 1 | 75 % | 88 % |
+| Concentration + Trame, 1 PA pour 2 | 82 % | 94 % |
+| Concentration + Trame, 2 PA pour 2 | 74 % | 86 % |
+
+**Le réglage retenu tombe PILE sur l'Agilité** — 63 contre 62 : *le verbe change,
+la force non*, ce qui est exactement ce qu'on demande à un remplacement. Les
+trois autres crans sont très au-dessus, et le rasoir habituel est bien là : un
+point d'action de moins vaut douze points de survie.
+
+**Et la triade tient**, mesurée dans le même banc :
+
+| armure | pris | or | refusés | la cupidité coûte | **or espéré** |
+|---|---|---|---|---|---|
+| cuir (+15 ♥, +1 PA) | 54 % | 183 | 77 % | −23 pts | **99** |
+| tissu (+1 main) | 63 % | 159 | 75 % | −12 pts | **100** |
+| plate (+30 ♥) | 54 % | 192 | 85 % | −31 pts | **104** |
+
+*Les trois sont à égalité sur le critère qui compte* — survie × butin, à cinq
+points près — et **chacune garde son profil** : le tissu reste l'armure du
+joueur CUPIDE, à qui la cupidité coûte deux à trois fois moins qu'aux autres,
+parce qu'il pioche et que la dilution le gêne moins.
+
+*Son illustration manque*, donc elle sort avec le sceau de repli — ce qui est
+exactement ce que ce sceau est là pour dire.
 
 ### CHAQUE ARMURE A SA PROTECTION, et la GARDE était déjà elle
 
