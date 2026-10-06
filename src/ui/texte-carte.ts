@@ -378,8 +378,15 @@ export function nature(carte: Carte): string {
    *
    * *La Riposte, elle, reste une Action* : elle ne protège de rien, elle pose
    * un PRIX que l'ennemi paie en frappant.
+   *
+   * **ET LA LISTE SE RELIT À CHAQUE VERBE NEUF.** La Barrière est arrivée avec
+   * son propre effet et son pied disait « Action » — *du bloc qui ne s'appelle
+   * pas `bloc` n'était plus reconnu*, exactement le défaut que l'esquive avait
+   * déjà coûté. **Une liste de cas est une liste qu'on oublie de compléter**,
+   * la règle déjà payée sur les étiquettes de la vitrine du zoom.
    */
-  if (carte.effets?.some((e) => e.type === 'bloc' || e.type === 'esquive')) return 'Défense'
+  if (carte.effets?.some((e) => e.type === 'bloc' || e.type === 'blocParCarte' || e.type === 'esquive'))
+    return 'Défense'
   return 'Action'
 }
 
