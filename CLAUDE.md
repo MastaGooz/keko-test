@@ -1805,7 +1805,7 @@ prend une ressource différente :
 
 | | stats | set | ce qu'on va y chercher |
 |---|---|---|---|
-| **Robe** (tissu) | **+1 carte en main** | **Concentration** + **Trame** | **voir** plus |
+| **Robe** (tissu) | **+1 carte en main** | **Concentration** + **Vigilance** | **voir** plus |
 | **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Protection + **Agilité** | **jouer** plus |
 | **Armure de plate** | **+30 ♥** | Protection + **Rempart** | **encaisser** |
 
@@ -2080,7 +2080,7 @@ deux rapports que Keko avait déjà validés sur la bande de stats.
 **Sa largeur réservée est celle du DESSIN** (40 x 34), pas un carré : la règle du
 coeur, repayée ici.
 
-#### LA TRAME : le second verbe du tissu, et il se compte sur la MAIN
+#### LA VIGILANCE : le second verbe du tissu, et il se compte sur la MAIN
 
 **L'Agilité est rendue au cuir.** Keko : « ça me gêne un peu d'avoir agilité sur
 la robe, ça devrait être propre au cuir ». *Et il a raison sur les deux
@@ -2101,13 +2101,13 @@ Ce que ça achète, et c'est ce que mon objection ne voyait pas :
 
 - **elle fait de l'ORDRE DES COUPS une décision**, le second effet du jeu à le
   faire après la remise de l'Estoc — **et il tire dans l'autre sens.** L'Estoc
-  veut qu'on frappe d'abord, la Trame qu'on se couvre d'abord : *les deux
+  veut qu'on frappe d'abord, la Vigilance qu'on se couvre d'abord : *les deux
   jouent sur le même tour, et c'est ça qui fait un choix* ;
 - **la stat et le set du tissu disent enfin la même chose** : une carte de main
   en plus EST un point de bloc en plus. C'est ce qui avait déjà rendu la
   Concentration juste ;
 - **aucune autre armure ne peut l'emprunter** — le cuir et la plate n'ont pas
-  de cartes en trop, donc la Trame y vaudrait moins. *Un verbe qui ne rend que
+  de cartes en trop, donc la Vigilance y vaudrait moins. *Un verbe qui ne rend que
   sur une seule pièce est le contraire d'un doublon.*
 
 **ELLE NE SE COMPTE PAS ELLE-MÊME.** `jouerCarte` retire la carte de la main
@@ -2115,10 +2115,21 @@ avant de résoudre, donc elle compte ce qui RESTE — *c'est la lecture naturell
 du texte*, et c'est la même mécanique que la Concentration, qui peut se
 repiocher parce qu'elle est déjà partie.
 
-**ET LE NOM DIT LA MATIÈRE EN MÊME TEMPS QUE LA RÈGLE.** *Un tissu est fait de
-fils* — plus il y en a, plus il tient. Le projet cherche ça depuis
-« enchantement » plutôt que « maîtrise » : **le vocabulaire doit dire la
-règle.** Son texte reprend mot pour mot la tournure du Coup de bouclier —
+**ELLE S'EST APPELÉE « TRAME », ET LE NOM N'A PAS TENU UN COMMIT.** Keko :
+« trame ? ça signifie quoi ? je comprends pas le concept ». *Une trame est le
+fil horizontal d'un tissage* — le mot disait la matière de l'armure ET le fait
+qu'elle est faite de plusieurs fils, donc il disait la règle… **à condition de
+le savoir déjà.** *Un nom qui demande une note n'est pas un nom*, et c'est la
+limite de la règle « le vocabulaire doit dire la règle » : elle ne vaut que
+pour des mots que tout le monde a.
+
+**« Vigilance » fait PAIRE avec « Concentration »**, et c'est ce qui l'emporte :
+deux états de l'esprit, *et c'est l'identité de cette armure* — elle ne pare pas
+avec de la matière, elle pare avec ce qu'elle a en tête. Plus on tient de
+cartes, plus on est prêt. Les deux noms se lisent alors comme un set et non
+comme deux cartes rangées ensemble.
+
+Son texte reprend mot pour mot la tournure du Coup de bouclier —
 « Gagne 1 blocage pour chaque carte dans votre main » — *elle COMPTE plutôt
 qu'elle ne compare*, et un joueur qui lit « 1 par carte » sait quoi faire de son
 tour.
@@ -2131,10 +2142,10 @@ bot qui brûle sous 30 PV, pioche, achève, bloque, frappe) :
 | set de la Robe | trésors pris | refusés |
 |---|---|---|
 | Concentration + Agilité (avant) | 62 % | 69 % |
-| **Concentration + Trame, 1 PA pour 1 par carte** | **63 %** | 75 % |
-| Concentration + Trame, 0 PA pour 1 | 75 % | 88 % |
-| Concentration + Trame, 1 PA pour 2 | 82 % | 94 % |
-| Concentration + Trame, 2 PA pour 2 | 74 % | 86 % |
+| **Concentration + Vigilance, 1 PA pour 1 par carte** | **63 %** | 75 % |
+| Concentration + Vigilance, 0 PA pour 1 | 75 % | 88 % |
+| Concentration + Vigilance, 1 PA pour 2 | 82 % | 94 % |
+| Concentration + Vigilance, 2 PA pour 2 | 74 % | 86 % |
 
 **Le réglage retenu tombe PILE sur l'Agilité** — 63 contre 62 : *le verbe change,
 la force non*, ce qui est exactement ce qu'on demande à un remplacement. Les
@@ -2425,20 +2436,24 @@ d'abord si elle lui PARVIENT.** J'ai réglé la graisse, puis la police, puis
 mesuré les variantes chargées — trois vérifications sur le bout de la chaîne
 qui ne recevait rien.
 
-*Ce qu'on met en gras, et rien d'autre* : **les chiffres, et le mot
-« attaque »**. Tranché par Keko après un essai plus large, qui prenait aussi
-les verbes et « défense » : « mets juste le terme attaque en gras ainsi que les
-chiffres, ne mets rien d'autre ».
+*Ce qu'on met en gras* : **les chiffres**, et le nom de ce qu'une carte COMPTE.
+Tranché par Keko en trois temps — d'abord un essai large qui prenait les verbes
+et « défense », rejeté (« mets juste le terme attaque en gras ainsi que les
+chiffres ») ; puis « attaque » étendu à sa forme conjuguée, « attaquent » ; puis
+**« attaque » retiré** : « on peut enlever le gras des mots attaque dans les
+descriptions ».
 
-*Et c'est le bon découpage* : un chiffre est une valeur qu'on compare, et
-« attaque » est le seul mot de ces textes qui renvoie à une RÈGLE — ce qui
-compte pour la remise de l'Estoc. Les verbes, eux, sont de la phrase : les
-appuyer tous revenait à n'appuyer rien.
+*Un chiffre est une valeur qu'on compare*, et c'est la seule chose que le joueur
+lit d'une carte à l'autre — tout mot appuyé à côté lui dispute le regard. **Un
+signal dilué n'est plus un signal**, et c'est la raison qui avait déjà fait
+retirer la couleur des verbes.
 
-**ET LA RÈGLE VAUT POUR LE MOT CONJUGUÉ.** Keko : « dans Riposte, il faudrait
-mettre "attaquent" en gras ». *Un mot-règle reste un mot-règle quand il change
-de personne* — ce qui le distingue des verbes de la phrase n'est pas sa forme,
-c'est qu'il désigne le moment où la riposte part.
+**Ce qui reste en gras à côté des chiffres : « blocage », dans le Coup de
+bouclier.** Il avait été mis là pour la même raison qu'« attaque » — *le nom de
+ce que la carte compte* — mais les deux ne sont pas dans le même cas : le
+blocage est **une ressource qu'on va chercher ailleurs sur l'écran**, sur le
+bouclier à côté de la barre de vie, là où « attaque » ne désignait qu'un
+évènement du tour. *À relire si Keko le retire aussi.*
 
 **UN MOT-OUTIL NE RESTE PAS SEUL AU BOUT DE SA LIGNE.** Keko, sur la
 Projection : « on devrait placer le "et" sur la deuxième ligne avec

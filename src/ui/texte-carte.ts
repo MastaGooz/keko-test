@@ -135,7 +135,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // Et le verbe rejoint les deux autres acquisitions, l'esquive et les points
     // d'action : *tout ce qu'on acquiert se dit « Gagne ».*
     if (e.type === 'bloc') l.push(`Gagne <p><b>${e.montant}</b></p> ${blocages(e.montant)}`)
-    // LA TRAME DIT LA RÈGLE, PAS UN CHIFFRE — même tournure que le Coup de
+    // LA VIGILANCE DIT LA RÈGLE, PAS UN CHIFFRE — même tournure que le Coup de
     // bouclier : *elle COMPTE plutôt qu'elle ne compare*, et un joueur qui lit
     // « 1 par carte » sait quoi faire de son tour. La formulation est de Keko.
     if (e.type === 'blocParCarte')
@@ -225,7 +225,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // le joueur en a un, les ennemis frappent entre les deux.
     if (e.type === 'riposte')
       l.push(
-        `Jusqu'à votre prochain tour, les ennemis qui vous <b>attaquent</b> subissent <d><b>${e.montant}</b></d> ${degats(e.montant)}`,
+        `Jusqu'à votre prochain tour, les ennemis qui vous attaquent subissent <d><b>${e.montant}</b></d> ${degats(e.montant)}`,
       )
 
   }
@@ -244,7 +244,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   // que ce qu'on achète.*
   if ((carte.remiseParAttaque ?? 0) > 0) {
     const pa = carte.remiseParAttaque ?? 0
-    l.push(`Coûte {pa:${pa}} de moins`, `<small>par <b>attaque</b> jouée ce tour</small>`)
+    l.push(`Coûte {pa:${pa}} de moins`, `<small>par attaque jouée ce tour</small>`)
   }
   return l
 }
