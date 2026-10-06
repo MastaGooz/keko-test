@@ -111,6 +111,10 @@ const IMAGES: Record<string, string> = {
   agilite: 'Agilité.webp',
   concentration: 'Concentration.webp',
   barriere: 'Barriere.webp',
+  // LE BLINDAGE GARDE LE DESSIN DE LA PROTECTION DE PLATE : *le nom du fichier
+  // suit le dossier, la clé suit le jeu* — c'est à ça que sert cette table, et
+  // renommer le fichier aurait coûté un risque pour rien.
+  blindage: 'Protection plate.webp',
   // LA TAILLE A ENFIN LE SIEN. Elle empruntait le dessin de la Taillade, le
   // temps qu'elle n'en ait pas — *un banc qui montre une carte au sceau de
   // repli ne se juge pas.* L'emprunt tombe avec l'arrivée du fichier.

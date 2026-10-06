@@ -1807,7 +1807,7 @@ prend une ressource différente :
 |---|---|---|---|
 | **Robe** (tissu) | **+1 carte en main** | **Concentration** + **Barrière** | **voir** plus |
 | **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Protection + **Agilité** | **jouer** plus |
-| **Armure de plate** | **+30 ♥** | Protection + **Rempart** | **encaisser** |
+| **Armure de plate** | **+30 ♥** | **Blindage** + **Rempart** | **encaisser** |
 
 **L'ÉCHELLE DES PV EST 0 / 15 / 30, et elle est de Keko.** Mon balayage avait
 posé 5 / 15 / 22 — les chiffres qui alignaient les trois survies — et il l'a
@@ -2234,6 +2234,34 @@ toutes dans la même, et ça se voyait d'un zoom à l'autre. *La vitrine montre 
 VRAIES cartes qu'on retrouvera en main*, donc elle doit porter **toutes** les
 étiquettes de la pièce : **une liste d'héritages est une liste qu'on oublie de
 compléter.**
+
+**ET LA PLATE A FINI PAR AVOIR SON PROPRE NOM : le BLINDAGE.** Keko : « ce
+serait cool de renommer "protection" de l'armure de plate en "blindage" ou un
+truc du genre, pour bien différencier les deux cartes ».
+
+*Et c'est l'écran du deck qui l'imposait* : la grille groupe les modèles par ce
+qu'ils MONTRENT, donc deux Protection de matières différentes y faisaient **deux
+cases du même nom** — et *deux cartes qui portent le même nom côte à côte se
+lisent comme un bug*, pas comme deux objets.
+
+Il fait paire avec le Rempart, l'autre carte de la plate : **deux mots de
+fortification lourde**, là où le cuir garde « Protection », le mot neutre de
+l'armure de départ. **Le dessin, lui, ne bouge pas** (`Protection plate.webp`) :
+*le nom du fichier suit le dossier, la clé suit le jeu* — c'est à ça que sert la
+table, et renommer le fichier aurait coûté un risque pour rien.
+
+**TENSION CONNUE, ET ELLE EST À KEKO** : les deux cartes ont désormais deux noms
+pour un seul barème (1 PA, 5 de bloc). *C'est exactement ce qui avait fait
+fusionner la Garde et la Protection* — « un doublon ne se voit que le jour où
+l'on cherche à distinguer ce qu'il confond ». **La différence est que celui-ci
+est VOULU** : elles ont déjà deux dessins et deux matières, et c'est le nom qui
+manquait. Mais si la plate doit vraiment encaisser plus que le cuir, c'est ici
+que ça s'écrira — et il n'y aura rien à renommer ce jour-là.
+
+*Conséquence à connaître* : la table par matière de la Protection ne sert plus
+qu'au CUIR. Les trois autres dessins (tissu, maille, plate) attendent au dépôt,
+et le mécanisme reste — **une armure nouvelle qui redonne une Protection
+retrouvera son dessin sans qu'on touche au code.**
 
 **ET L'AGILITÉ A LA SIENNE** (`Agilité.webp`), ce qui achève le deck de départ.
 *Le nom du fichier porte son accent*, et il est recopié depuis le disque plutôt

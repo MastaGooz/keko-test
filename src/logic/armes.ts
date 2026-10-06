@@ -489,6 +489,37 @@ const PROTECTION: Modele = {
 }
 
 /**
+ * LE BLINDAGE : la Protection de la PLATE, sous son propre nom.
+ *
+ * Demandé par Keko : « ce serait cool de renommer "protection" de l'armure de
+ * plate en "blindage" ou un truc du genre, pour bien différencier les deux
+ * cartes ».
+ *
+ * *Et c'est l'écran du deck qui l'imposait* : la grille groupe les modèles par
+ * ce qu'ils MONTRENT, donc deux Protection de matières différentes y faisaient
+ * **deux cases du même nom** — et *deux cartes qui portent le même nom côte à
+ * côte se lisent comme un bug*, pas comme deux objets.
+ *
+ * Il fait paire avec le Rempart, l'autre carte de la plate : **deux mots de
+ * fortification lourde**, là où le cuir garde « Protection », le mot neutre de
+ * l'armure de départ.
+ *
+ * **TENSION CONNUE, et elle est à Keko** : les deux cartes ont désormais deux
+ * noms pour un seul barème (1 PA, 5 de bloc). *C'est exactement ce qui avait
+ * fait fusionner la Garde et la Protection* — « un doublon ne se voit que le
+ * jour où l'on cherche à distinguer ce qu'il confond ». La différence est que
+ * celui-ci est VOULU : elles ont déjà deux dessins et deux matières. Mais si la
+ * plate doit vraiment encaisser plus que le cuir, c'est ici que ça s'écrira.
+ */
+const BLINDAGE: Modele = {
+  nom: 'Blindage',
+  type: 'combat',
+  cout: 1,
+  degats: 0,
+  effets: [{ type: 'bloc', montant: 5 }],
+}
+
+/**
  * **LA CARTE S'APPELLE AGILITÉ, L'ÉTAT QU'ELLE DONNE S'APPELLE ESQUIVE.**
  * Renommée par Keko.
  *
@@ -617,7 +648,7 @@ export const PLASTRON: Armure = {
   // la mesure dans CLAUDE.md.
   pv: 30,
   set: [
-    { modele: PROTECTION, nombre: 1 },
+    { modele: BLINDAGE, nombre: 1 },
     { modele: REMPART, nombre: 1 },
   ],
 }
