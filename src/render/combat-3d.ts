@@ -33,7 +33,7 @@ import { signature } from './texture-carte.ts'
  * Le texte vient du module partagé (`ui/texte-carte.ts`) : c'est le même que
  * celui de la carte 2D, aux balises près — un canvas ne sait pas les lire.
  */
-export function aPeindre(carte: Carte): CarteAPeindre {
+export function aPeindre(carte: Carte, armure?: number): CarteAPeindre {
   return {
     id: carte.id,
     nom: carte.nom,
@@ -42,7 +42,11 @@ export function aPeindre(carte: Carte): CarteAPeindre {
     // clés en gras. *Il le retirait ici, donc le canvas n'en voyait jamais la
     // couleur* — les chiffres étaient gras en 2D et plats en 3D, et aucune
     // retouche du peintre ne pouvait y changer quoi que ce soit.
-    effet: lignes(carte, true),
+    // L'ARMURE DU MOMENT VOYAGE AVEC LA CARTE, et le cache suit tout seul :
+    // *`signature()` porte déjà les lignes d'effet*, donc une carte dont le
+    // texte change a une texture à elle sans qu'on ajoute un champ. C'est le
+    // chemin que le coût de l'Estoc avait ouvert.
+    effet: lignes(carte, true, armure),
     type: nature(carte),
     valeur: carte.type === 'tresor' ? (carte.valeur ?? 0) : undefined,
     // ET SON RANG VIENT DE SA VALEUR : la couleur du cadre redit en un coup

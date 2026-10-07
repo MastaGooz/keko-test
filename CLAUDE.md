@@ -1655,8 +1655,16 @@ pas une clause de cette carte-ci, et **une condition écrite sur toutes les
 cartes d'une famille cesse d'être une condition.** Elle y gagne une ligne de
 cartouche.
 
-**ET ON GAGNE DES BLOCAGES, on ne bloque pas des dégâts.** Tranché par
-Keko : « pour le blocage, on va plutôt dire "gagnez X blocages" ».
+**ET LE MOT EST « ARMURE », PAS « BLOCAGE ».** Tranché par Keko en deux temps :
+d'abord « pour le blocage, on va plutôt dire "gagnez X blocages" », puis « on va
+aussi remplacer blocage par armure ».
+
+*Un blocage se comptait, une armure se MESURE* — « Gagne 7 d'armure », et le
+pluriel disparaît avec le mot. **C'est ce que le Coup de bouclier appelait déjà
+"votre niveau d'armure"** : le même fait se dit du même mot partout, et la carte
+qui PRODUIT et celle qui CONSOMME nomment enfin la même chose sans détour.
+
+*Ce qui suit est l'étape d'avant, et son raisonnement tient toujours.*
 
 *C'est le Coup de bouclier qui l'imposait* — il dit « Infligez 1 dégât pour
 chaque **blocage** que vous avez », donc le blocage est une CHOSE qu'on accumule
@@ -2534,14 +2542,26 @@ Quatre choses à ne pas défaire :
   ce qu'elle vaut à cet instant* : sans ça, son pied disait « Action », elle
   cessait de désigner un corps dès qu'on n'avait plus d'armure, et elle
   n'escomptait plus rien ;
-- **le texte dit la RÈGLE, pas un chiffre** : « Inflige **1** dégât pour chaque
-  blocage que vous avez ». *Une carte dont l'effet dépend de l'état doit dire
-  de quoi il dépend*, là où un zéro se lirait comme une carte inutile.
+- **le texte dit la RÈGLE, et le CHIFFRE quand il existe** : « Inflige un montant
+  de dégâts égal à votre niveau d'armure **(12)** ». *Une carte dont l'effet
+  dépend de l'état doit dire de quoi il dépend*, là où un zéro se lirait comme
+  une carte inutile.
 
-  **La formulation est de Keko**, et elle a remplacé « égal à votre défense » :
-  *elle dit la même règle en COMPTANT plutôt qu'en comparant*, et un joueur qui
-  lit « 1 par blocage » sait quoi faire de sa prochaine carte, là où l'autre
-  tournure l'envoyait chercher un chiffre ailleurs sur l'écran.
+  **La formulation est de Keko, et c'est sa TROISIÈME.** « Égal à votre
+  défense » d'abord ; puis « 1 dégât pour chaque blocage », *parce que la
+  tournure qui compare envoyait chercher un chiffre ailleurs sur l'écran* ; puis
+  le retour à la comparaison, **avec le montant entre parenthèses** : « quand le
+  joueur est en jeu on spécifie le montant ».
+
+  ***Ce qui condamnait la comparaison n'était pas la comparaison, c'était
+  l'absence du chiffre comparé.*** Il est désormais dans la phrase, et seulement
+  là où il existe : **la parenthèse ne s'écrit qu'en COMBAT**, parce qu'au
+  coffre, au deck et au butin il n'y a pas d'armure à lire.
+
+  **Et le cache des textures suit tout seul** : `signature()` porte déjà les
+  lignes d'effet, donc une carte dont le texte change a une texture à elle sans
+  qu'on ajoute un champ — *le chemin que le coût de l'Estoc avait ouvert.* La
+  main peinte dépend de `combat` entier, donc poser une armure la repeint.
 
 ### UN SEUL SYMBOLE DANS LE CARTOUCHE : L'ORBE DES PA
 

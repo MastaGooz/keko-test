@@ -401,7 +401,7 @@ export function Scene(): React.JSX.Element {
    * fois partie, l'état ne la porte plus, et on ne peut plus la dessiner.
    */
   const mainCartes = useRef(new Map<string, CarteAPeindre>())
-  for (const c of combat.main) mainCartes.current.set(c.id, aPeindre(c))
+  for (const c of combat.main) mainCartes.current.set(c.id, aPeindre(c, combat.bloc))
   const [coups, setCoups] = useState<Coup[]>([])
   const [touches, setTouches] = useState<Record<number, number>>({})
   const [morts, setMorts] = useState<Record<number, number>>({})
@@ -431,7 +431,7 @@ export function Scene(): React.JSX.Element {
    * et les quatre se mettent en cache une fois pour toutes.
    */
   const main = useMemo(
-    () => combat.main.map((c) => aPeindre({ ...c, cout: coutDe(c, combat) })),
+    () => combat.main.map((c) => aPeindre({ ...c, cout: coutDe(c, combat) }, combat.bloc)),
     [combat],
   )
 

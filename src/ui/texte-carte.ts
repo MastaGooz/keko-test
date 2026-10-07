@@ -45,7 +45,15 @@ export function rangDuTresor(valeur: number): Rarete {
  * Ce que fait la carte, en toutes lettres : une ligne par effet. Le chiffre
  * est dedans, en gras et en accent — c'est le seul endroit où il vit.
  */
-export function lignes(carte: Carte, valeurAPart = false): string[] {
+/**
+ * CE QUE DIT UNE CARTE — et `armure` est **l'armure du MOMENT**.
+ *
+ * Elle n'est passée qu'en combat, où l'état existe : ailleurs (le coffre, le
+ * deck, le butin) la carte dit sa règle sans chiffre. *C'est le motif du coût
+ * de l'Estoc*, qui se demande déjà à `coutDe` avant d'être peint — **ce qu'une
+ * carte vaut est une propriété du moment, pas de la carte.**
+ */
+export function lignes(carte: Carte, valeurAPart = false, armure?: number): string[] {
   const l: string[] = []
   // LA VALEUR D'UN TRÉSOR PEUT SE DIRE AILLEURS QUE DANS LE CARTOUCHE.
   //
@@ -119,7 +127,20 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // renvoie à une RÈGLE* — « attaque » désigne ce que la remise de l'Estoc
     // compte, « blocage » ce que cette carte-ci compte. Les deux sont la chose
     // du jeu qu'on va chercher ailleurs sur l'écran.
-    l.push(`Inflige <d><b>1</b></d> dégât pour chaque blocage que vous avez`)
+    // ELLE COMPARE DE NOUVEAU, PARCE QUE LE CHIFFRE EST LÀ. Formulation de
+    // Keko : « Inflige un montant de dégâts égal à votre niveau d'armure. Et
+    // quand le joueur est en jeu on spécifie le montant : (X). »
+    //
+    // *On était passé de « égal à votre défense » à « 1 pour chaque blocage »
+    // pour une raison précise* — **la tournure qui compare envoyait chercher un
+    // chiffre ailleurs sur l'écran.** Elle tombe ici : *le chiffre est dans la
+    // phrase*, et seulement là où il existe. **Ce qui condamnait la comparaison
+    // n'était pas la comparaison, c'était l'absence du chiffre comparé.**
+    l.push(
+      `Inflige un montant de dégâts égal à votre niveau d'armure${
+        armure === undefined ? '' : ` (<d><b>${armure}</b></d>)`
+      }`,
+    )
   for (const e of carte.effets ?? []) {
     // La condition sur une seconde ligne, en retrait : « ce tour » et « l'or
     // est perdu » coupaient au milieu quand ils suivaient sur la même ligne.
@@ -138,12 +159,12 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     //
     // Et le verbe rejoint les deux autres acquisitions, l'esquive et les points
     // d'action : *tout ce qu'on acquiert se dit « Gagne ».*
-    if (e.type === 'bloc') l.push(`Gagne <p><b>${e.montant}</b></p> ${blocages(e.montant)}`)
+    if (e.type === 'bloc') l.push(`Gagne <p><b>${e.montant}</b></p> d'armure`)
     // LA BARRIÈRE DIT LA RÈGLE, PAS UN CHIFFRE — même tournure que le Coup de
     // bouclier : *elle COMPTE plutôt qu'elle ne compare*, et un joueur qui lit
     // « 1 par carte » sait quoi faire de son tour. La formulation est de Keko.
     if (e.type === 'blocParCarte')
-      l.push(`Gagne <p><b>${e.montant}</b></p> blocage pour chaque carte dans votre main`)
+      l.push(`Gagne <p><b>${e.montant}</b></p> d'armure pour chaque carte dans votre main`)
     // L'ESQUIVE DIT SA DURÉE, comme la riposte : *c'est une clause de cette
     // carte-ci, pas une règle du jeu* — sans elle on la croirait permanente.
         // « VOTRE » DESCEND AVEC CE QU'IL INTRODUIT. Keko : « on peut mettre le
@@ -326,10 +347,15 @@ export function enClair(ligne: string): string {
  * **L'accord se fait sur le chiffre** : une carte qui en inflige un seul le dit
  * au singulier, et le Coup de bouclier ne l'écrit plus en dur.
  */
-/** L'accord d'un blocage, par la même porte que celui d'un dégât. */
-function blocages(n: number): string {
-  return n === 1 ? 'blocage' : 'blocages'
-}
+/*
+ * LE MOT EST « ARMURE », ET IL N'A PLUS D'ACCORD À FAIRE. Tranché par Keko :
+ * « on va aussi remplacer blocage par armure ».
+ *
+ * *Un blocage se comptait, une armure se MESURE* — on n'en gagne pas sept, on
+ * en gagne sept POINTS, donc le pluriel disparaît avec le mot. Et c'est ce
+ * qu'il appelle déjà « votre niveau d'armure » sur le Coup de bouclier : **le
+ * même fait se dit du même mot partout.**
+ */
 
 function degats(n: number): string {
   return n === 1 ? 'dégât' : 'dégâts'
@@ -338,7 +364,9 @@ function degats(n: number): string {
 export const GLOSSAIRE: Record<string, string> = {
   Étourdissement: "annule l'action en cours",
   Consommable: "la carte est détruite quand elle est jouée",
-  Esquive: "vous avez 50 % de chance d'éviter la prochaine attaque subie",
+  // « QUI VOUS CIBLE », pas « subie » — formulation de Keko. *Une attaque subie
+  // est déjà arrivée* ; celle qu'on esquive est celle qui arrive.
+  Esquive: "vous avez 50 % de chance d'éviter la prochaine attaque qui vous cible",
   // LE POURCENTAGE VIT DANS LA DÉFINITION, PAS DANS LA CARTE. Tranché par
   // Keko : « on ne précise pas le % dans la description, c'est toujours 30 %
   // (comme esquive toujours 50 %) ».
