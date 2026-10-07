@@ -1807,7 +1807,7 @@ prend une ressource différente :
 |---|---|---|---|
 | **Robe** (tissu) | **+1 carte en main** | **Concentration** + **Barrière** | **voir** plus |
 | **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Protection + **Agilité** | **jouer** plus |
-| **Armure de plate** | **+30 ♥** | **Blindage** + **Cuirasse** | **encaisser** |
+| **Armure de plate** | **+30 ♥** | **Cuirasse** + **Blindage** | **encaisser** |
 
 **L'ÉCHELLE DES PV EST 0 / 15 / 30, et elle est de Keko.** Mon balayage avait
 posé 5 / 15 / 22 — les chiffres qui alignaient les trois survies — et il l'a
@@ -2201,7 +2201,7 @@ payée sur les étiquettes de la vitrine du zoom. À relire au prochain verbe
 défensif.
 
 
-#### LA CUIRASSE : le troisième profil défensif, et c'est une RÉSISTANCE
+#### LE BLINDAGE : le troisième profil défensif, et c'est une RÉSISTANCE
 
 **Le Rempart a disparu, et Keko a eu raison de l'écarter** : « je ne suis pas
 fan de la carte rempart, il faudrait trouver un truc plus unique à l'armure de
@@ -2235,16 +2235,25 @@ fait une réserve qui suit sa main**, **la plate amoindrit tout ce qui arrive.**
 
 C'était le nom proposé, et c'est la seule objection qui a tenu : **« Défense »
 est déjà le TYPE écrit au pied de ces cartes-là** — la Protection, l'Agilité, la
-Barrière et la Cuirasse le portent toutes. Le joueur lirait le même mot au pied
+Barrière, la Cuirasse et le Blindage le portent toutes. Le joueur lirait le même mot au pied
 et en jaune dans le texte, pour deux choses différentes. *Le jaune promet une
 définition à aller chercher, et un mot qui nomme aussi une famille entière ne
 peut pas la tenir.*
 
-Le mot-clé est donc **« résistance »**, et **son chiffre vit dans la CARTE, pas
-dans la définition** : *deux cartes de résistance n'auront pas la même part*, et
-une définition qui porterait un pourcentage mentirait sur l'une des deux. Elle
-dit la règle — « chaque attaque subie inflige une part de dégâts en moins » —
-exactement comme « étourdissement » ne dit pas quelle période il efface.
+Le mot-clé est donc **« résistance »**.
+
+**ET SON CHIFFRE VIT DANS LA DÉFINITION, PAS SUR LA CARTE.** Tranché par Keko :
+« on ne précise pas le % dans la description, c'est toujours 30 % (comme esquive
+toujours 50 %) ». *J'avais écrit l'inverse* — « deux cartes de résistance
+n'auront pas la même part » — **et c'est une règle inventée pour un cas qui
+n'existe pas.** Un mot-clé nomme une RÈGLE : s'il fallait lire son chiffre sur
+chaque carte, ce ne serait plus un mot-clé mais une abréviation. *L'esquive le
+disait depuis le début*, et sa définition porte bien ses 50 %.
+
+**La part vit donc en un seul endroit** (`PART_RESISTANCE`, dans `logic/`), lue
+par la règle ET par le glossaire — *deux endroits qui décrivent la même valeur se
+désaccordent au premier réglage* — et l'effet n'a plus de paramètre du tout,
+exactement comme `{ type: 'esquive' }`.
 
 Trois choses à ne pas défaire :
 
@@ -2259,30 +2268,41 @@ Trois choses à ne pas défaire :
   ne tombe pas se lit comme un bug**, et c'est précisément ce que la menace doit
   rendre lisible.
 
-#### 30 %, ET LE BLINDAGE À 7 : les deux chiffres se règlent ENSEMBLE
+#### LES DEUX NOMS ONT ÉCHANGÉ
+
+Keko : « on va renommer la carte blindage, et changer la carte qui donne de
+l'armure pour cuirasse ». **La carte de BLOC s'appelle donc Cuirasse, et la
+RÉSISTANCE s'appelle Blindage** — l'inverse de ce que j'avais posé.
+
+*Et c'est plus juste dans les deux sens* : **une cuirasse est une plaque qu'on
+endosse**, donc une réserve qui encaisse et qui s'use ; **un blindage amortit
+chaque coup**, ce qui est exactement ce que fait une résistance. Le mot disait la
+mauvaise moitié de la pièce.
+
+#### 30 %, ET LA CUIRASSE À 7 : les deux chiffres se règlent ENSEMBLE
 
 400 descentes au fond, Glaive + Rondache + 3 potions, même bot :
 
 | set de la plate | trésors pris | refusés | or espéré |
 |---|---|---|---|
-| Blindage 5 + Rempart (avant) | 54 % | 85 % | 104 |
-| Blindage 7 + Rempart | 68 % | 92 % | 173 |
-| Blindage 7 + Cuirasse 20 % | 47 % | 80 % | 80 |
-| Blindage 7 + Cuirasse 25 % | 50 % | 83 % | 91 |
-| **Blindage 7 + Cuirasse 30 %** | **55 %** | 86 % | **113** |
-| Blindage 7 + Cuirasse 40 % | 61 % | 89 % | 141 |
+| bloc 5 + Rempart (avant) | 54 % | 85 % | 104 |
+| bloc 7 + Rempart | 68 % | 92 % | 173 |
+| bloc 7 + résistance 20 % | 47 % | 80 % | 80 |
+| bloc 7 + résistance 25 % | 50 % | 83 % | 91 |
+| **bloc 7 + résistance 30 %** | **55 %** | 86 % | **113** |
+| bloc 7 + résistance 40 % | 61 % | 89 % | 141 |
 
 *Voisines dans le même banc* : cuir **54 %** (or espéré 99), tissu **63 %** (100).
 
 **LES DEUX CHANGEMENTS SE COMPENSENT EXACTEMENT, et c'est ce qui les rend
-possibles ensemble** : le Blindage à 7 vaut +14 points, la Cuirasse en rend 13
+possibles ensemble** : la Cuirasse à 7 vaut +14 points, le Blindage en rend 13
 par rapport au Rempart. La plate passe de 54 à 55 % — *elle garde sa force, elle
 change de verbe.* C'est tout ce qu'on demande à un remplacement, et c'est la
 même conclusion que la Barrière (62 → 63 %).
 
 **PIÈGE DE MESURE, et il a failli faire conclure l'inverse : le bot ne jouait
 pas la carte.** Sa liste de cartes défensives connaissait `bloc`,
-`blocParCarte` et `esquive`, donc la Cuirasse n'y entrait pas — **les cinq
+`blocParCarte` et `esquive`, donc la résistance n'y entrait pas — **les cinq
 pourcentages rendaient exactement 34 %**, le chiffre d'une plate avec une carte
 morte. *Une liste de cas est une liste qu'on oublie de compléter*, et celle du
 BOT se relit comme celle du rendu. C'est la leçon déjà écrite — « un bot qui ne

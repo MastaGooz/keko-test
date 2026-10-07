@@ -11,6 +11,7 @@
  * chaîne de HTML. Le balisage qu'il produit (`<b>`, `<small>`) est du contenu,
  * pas du rendu — le canvas le retire, le DOM l'affiche.
  */
+import { PART_RESISTANCE } from '../logic/combat.ts'
 import type { Carte } from '../logic/combat.ts'
 import type { Rarete } from '../logic/armes.ts'
 
@@ -153,7 +154,7 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // choses différentes. **Le jaune promet une définition à aller chercher, et
     // un mot qui nomme aussi une famille entière ne peut pas la tenir.**
     if (e.type === 'resistance')
-      l.push(`Gagne <k><b>résistance ${Math.round(e.part * 100)}&nbsp;%</b></k> jusqu'à votre&nbsp;prochain tour`)
+      l.push(`Gagne <k><b>résistance</b></k> jusqu'à votre&nbsp;prochain tour`)
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
@@ -322,11 +323,19 @@ export const GLOSSAIRE: Record<string, string> = {
   Étourdissement: "annule l'action en cours",
   Consommable: "la carte est détruite quand elle est jouée",
   Esquive: "vous avez 50 % de chance d'éviter la prochaine attaque subie",
-  // LE POURCENTAGE VIT DANS LA CARTE, pas dans la définition : *deux cartes de
-  // résistance n'auront pas la même part*, et une définition qui porterait un
-  // chiffre mentirait sur l'une des deux. Elle dit la RÈGLE, la carte dit le
-  // combien — exactement comme « étourdissement » ne dit pas quelle période.
-  Résistance: 'chaque attaque subie inflige une part de dégâts en moins',
+  // LE POURCENTAGE VIT DANS LA DÉFINITION, PAS DANS LA CARTE. Tranché par
+  // Keko : « on ne précise pas le % dans la description, c'est toujours 30 %
+  // (comme esquive toujours 50 %) ».
+  //
+  // *J'avais écrit l'inverse* — « deux cartes de résistance n'auront pas la
+  // même part » — et c'est une règle inventée pour un cas qui n'existe pas.
+  // **Un mot-clé nomme une RÈGLE** : s'il fallait lire son chiffre sur chaque
+  // carte, ce ne serait plus un mot-clé mais une abréviation. L'esquive le dit
+  // depuis le début, et sa définition porte bien ses 50 %.
+  //
+  // Le chiffre se lit sur la CONSTANTE DU JEU, jamais écrit ici : *deux
+  // endroits qui décrivent la même valeur se désaccordent au premier réglage.*
+  Résistance: `chaque attaque subie inflige ${Math.round(PART_RESISTANCE * 100)} % de dégâts en moins`,
 }
 
 /** Les mots-clés qu'une carte emploie, pour l'encadré du zoom. */

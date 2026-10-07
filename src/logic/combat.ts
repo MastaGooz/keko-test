@@ -101,8 +101,14 @@ export type Effet =
    * *Et elle a bien un profil*, lui aussi : en points absorbés, **une part paie
    * d'autant plus que la frappe est GROSSE** — là où un chiffre fixe paierait
    * d'autant plus qu'il y a de petits coups.
+   *
+   * **ELLE N'A PAS DE CHIFFRE : c'est toujours la même part**, comme l'esquive
+   * est toujours à une chance sur deux. Tranché par Keko : « on ne précise pas
+   * le % dans la description, c'est toujours 30 % (comme esquive toujours
+   * 50 %) ». *Un mot-clé nomme une RÈGLE* — s'il fallait lire son chiffre sur
+   * chaque carte, ce ne serait plus un mot-clé mais une abréviation.
    */
-  | { type: 'resistance'; part: number }
+  | { type: 'resistance' }
   /**
    * L'ÉTOURDISSEMENT : la cible perd l'action qu'elle préparait.
    *
@@ -662,7 +668,7 @@ function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number, rng: Rng)
       // passer 0,7 x 0,7, soit 51 % — *deux filtres l'un derrière l'autre.* Les
       // additionner atteindrait 100 % à la troisième, et une immunité n'est pas
       // le bout de cette échelle.
-      etat.resistance = 1 - (1 - etat.resistance) * (1 - effet.part)
+      etat.resistance = 1 - (1 - etat.resistance) * (1 - PART_RESISTANCE)
       break
     case 'pioche':
       // ON PASSE PAR LA MÊME PORTE QUE LA FIN DE TOUR : le remélange est seedé,
@@ -706,6 +712,15 @@ function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number, rng: Rng)
  * pas se lit comme un bug**, et c'est précisément ce que la menace doit rendre
  * lisible.
  */
+/**
+ * LA PART QUE LA RÉSISTANCE RETRANCHE, et elle vit en UN SEUL endroit.
+ *
+ * *Le texte de la carte ne la dit pas, le glossaire si* — donc deux endroits la
+ * lisent, et **deux endroits qui décrivent la même valeur se désaccordent au
+ * premier réglage.** C'est la place qu'occupe déjà le `0.5` de l'esquive.
+ */
+export const PART_RESISTANCE = 0.3
+
 function recu(degats: number, resistance: number): number {
   return Math.floor(degats * (1 - resistance))
 }

@@ -694,13 +694,13 @@ console.log('Tout passe.')
  * attaques subies jusqu'au prochain tour, un peu comme esquive ».
  */
 {
-  const CUIRASSE = {
-    nom: 'Cuirasse',
+  const BLINDAGE = {
+    nom: 'Blindage',
     cout: 1,
     degats: 0,
-    effets: [{ type: 'resistance' as const, part: 0.3 }],
+    effets: [{ type: 'resistance' as const }],
   }
-  const deck = cartes(10, CUIRASSE)
+  const deck = cartes(10, BLINDAGE)
   const frappeur = ennemi({ pv: 100, degats: 10, periode: 1 })
   const etat = combat(deck, frappeur)
 
@@ -728,7 +728,7 @@ console.log('Tout passe.')
   egal(finDuTour(avecBloc, rng()).pv, avecBloc.pv - 2, 'la resistance passe avant le bloc')
 
   // ELLE NE DÉSIGNE PERSONNE, et son pied dit « Défense ».
-  verifie(!viseUneCible(etat.main[0]!), 'la Cuirasse ne vise aucun corps')
+  verifie(!viseUneCible(etat.main[0]!), 'le Blindage ne vise aucun corps')
 }
 
 /**

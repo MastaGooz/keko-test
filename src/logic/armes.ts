@@ -505,9 +505,13 @@ const PROTECTION: Modele = {
  * **deux cases du même nom** — et *deux cartes qui portent le même nom côte à
  * côte se lisent comme un bug*, pas comme deux objets.
  *
- * Il fait paire avec la Cuirasse, l'autre carte de la plate : **deux mots de
- * ferraille lourde**, là où le cuir garde « Protection », le mot neutre de
- * l'armure de départ.
+ * **ET LE NOM A FINI SUR LA CARTE DE BLOC.** Keko, une passe plus tard : « on
+ * va renommer la carte blindage, et changer la carte qui donne de l'armure pour
+ * cuirasse ». *Les deux ont donc échangé* — et c'est plus juste dans les deux
+ * sens : **une cuirasse est une plaque qu'on endosse**, donc une réserve qui
+ * encaisse, là où **un blindage amortit chaque coup**, ce que fait la
+ * résistance. Le cuir garde « Protection », le mot neutre de l'armure de
+ * départ.
  *
  * **TENSION CONNUE, et elle est à Keko** : les deux cartes ont désormais deux
  * noms pour un seul barème (1 PA, 5 de bloc). *C'est exactement ce qui avait
@@ -516,8 +520,8 @@ const PROTECTION: Modele = {
  * celui-ci est VOULU : elles ont déjà deux dessins et deux matières. Mais si la
  * plate doit vraiment encaisser plus que le cuir, c'est ici que ça s'écrira.
  */
-const BLINDAGE: Modele = {
-  nom: 'Blindage',
+const CUIRASSE: Modele = {
+  nom: 'Cuirasse',
   type: 'combat',
   cout: 1,
   degats: 0,
@@ -529,7 +533,7 @@ const BLINDAGE: Modele = {
 }
 
 /**
- * LA CUIRASSE : le verbe propre à la PLATE, et c'est une RÉSISTANCE.
+ * LE BLINDAGE : le verbe propre à la PLATE, et c'est une RÉSISTANCE.
  *
  * Elle remplace le Rempart, que Keko a écarté — « je ne suis pas fan de la
  * carte rempart, il faudrait trouver un truc plus unique à l'armure de
@@ -538,6 +542,10 @@ const BLINDAGE: Modele = {
  *
  * **Le mécanisme est de lui** : « une carte qui diminue de X % tous les dégâts
  * des attaques subies jusqu'au prochain tour, un peu comme esquive ».
+ *
+ * *Il s'est appelé « Cuirasse » le temps d'un commit*, et les deux cartes ont
+ * échangé leur nom : **ce qui amortit chaque coup est un blindage, ce qu'on
+ * endosse est une cuirasse.**
  *
  * **J'avais objecté que c'était des PV déguisés, et l'objection était
  * fausse** — réduire de 25 %, c'est bien multiplier ses PV par 1,33, *mais ce
@@ -550,12 +558,12 @@ const BLINDAGE: Modele = {
  * le troisième profil défensif du jeu — **le cuir évite une attaque, le tissu
  * se fait une réserve, la plate amoindrit tout ce qui arrive.**
  */
-const CUIRASSE: Modele = {
-  nom: 'Cuirasse',
+const BLINDAGE: Modele = {
+  nom: 'Blindage',
   type: 'combat',
   cout: 1,
   degats: 0,
-  effets: [{ type: 'resistance', part: 0.3 }],
+  effets: [{ type: 'resistance' }],
 }
 
 /**
@@ -687,8 +695,8 @@ export const PLASTRON: Armure = {
   // la mesure dans CLAUDE.md.
   pv: 30,
   set: [
-    { modele: BLINDAGE, nombre: 1 },
     { modele: CUIRASSE, nombre: 1 },
+    { modele: BLINDAGE, nombre: 1 },
   ],
 }
 
