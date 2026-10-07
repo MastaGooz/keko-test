@@ -10757,6 +10757,262 @@ Les trois branches de `entree.ts` sont des imports **dynamiques** : React et
 three ne sont téléchargés que si l'on demande `?r3f`. Tant que le jeu 2D est la
 page par défaut, il garde son poids.
 
+## LE TROISIÈME MODE : des cartes-personnages engendrées depuis Wikidata
+
+Demandé par Keko : « un jeu de cartes à collectionner dont les cartes sont des
+personnages (historiques et fictifs) générés automatiquement depuis
+Wikidata/Wikipédia, à la manière de WikiMasters mais limité aux personnages ».
+
+**AUCUNE CARTE N'EST ÉCRITE EN DUR**, et c'est la contrainte qui porte tout le
+mode. Le catalogue vit dans `public/data/characters.json`, produit hors ligne
+par `scripts/generate-characters.ts` — donc *enrichir le jeu ne demande pas
+d'écrire du code*, seulement de relancer le script ou d'élargir sa table de
+métiers.
+
+**Les deux autres modes ne sont pas touchés.** Rien de ce qui suit n'entre dans
+`logic/combat.ts`, `logic/descente.ts` ni `logic/hub.ts`.
+
+### Où ça vit, et pourquoi là
+
+```
+scripts/generate-characters.ts     le pipeline, HORS du build Vite
+scripts/.cache/                    le cache des requêtes (gitignoré)
+src/logic/characters/types.ts      le type CharacterCard + la validation
+src/logic/characters/formules.ts   LES FORMULES, en un seul endroit
+src/logic/characters/formules.verif.ts
+src/ui/personnages.ts              loadCharacters() — le fetch
+public/data/characters.json        le catalogue
+public/data/stats-summary.txt      la distribution, pour juger l'équilibrage
+```
+
+**`loadCharacters()` EST DANS `ui/`, PAS DANS `logic/`, et c'est la règle de
+pureté du projet qui le dit** : un `fetch` est une entrée-sortie, et ce dont
+`logic/` a besoin du monde extérieur lui est **injecté** — le motif du
+`StoragePort`. `logic/` porte donc le type et `parsePersonnages` (pur, qui prend
+le texte), `ui/` va chercher le texte. *Les deux consignes s'accordent : la
+fonction existe sous son nom, elle vit du bon côté de la frontière.*
+
+**Aucune dépendance n'a été ajoutée.** Node 24 exécute TypeScript tel quel —
+`npm run verif` le prouvait déjà — et `fetch` est natif. Le script se lance par
+`npm run personnages`.
+
+**`tsconfig.json` ne couvre que `src`**, donc `npm run build` ne type-vérifie
+pas `scripts/`. C'est voulu (le pipeline est hors du build), et **le prix s'est
+payé tout de suite** : une signature laissée à `Ligne[]` après être passée à
+`string[][]` n'a été vue que par un `tsc` lancé à la main.
+
+**ET `node --check` NE SUFFIT PAS À LE RATTRAPER.** Avec
+`--experimental-strip-types`, il a laissé passer **une chaîne non terminée** —
+un `'
+'` dé-échappé en vrai retour à la ligne au milieu d'un littéral. *Un
+contrôle qui passe sur du code invalide est pire qu'aucun contrôle*, parce qu'on
+s'y fie.
+
+Pour vérifier le script, un `tsconfig` à part qui l'inclut (scratchpad, non
+commité) suffit : seules les erreurs d'imports Node restent, et tout le code
+métier est couvert. **Le propre serait `@types/node` en devDependency** — ce
+sont des types, pas une librairie à l'exécution — mais c'est une dépendance,
+donc c'est à Keko.
+
+### LES FORMULES SONT DANS `logic/`, ET LE SCRIPT LES APPLIQUE
+
+`statsDerivees` est la seule porte : rareté, attaque, défense et domaine en
+sortent tous. *Deux endroits qui décrivent le même calcul se désaccordent au
+premier réglage* — et surtout, **les formules étant pures, tout l'équilibrage se
+rejoue sur le JSON déjà téléchargé**, sans rien redemander à Wikidata.
+
+- **la rareté** suit un score de notoriété : nombre de Wikipédia qui ont
+  l'article (0,6) et vues sur 30 jours (0,4), puis quatre seuils ;
+- **l'attaque** suit les vues — *ce qu'on regarde aujourd'hui frappe fort* ;
+- **la défense** suit la taille de l'article — *ce qui est longuement écrit
+  encaisse* ;
+- **le domaine** se déduit des métiers (P106).
+
+**LES ÉCHELLES SONT LOGARITHMIQUES, et ce n'est pas un détail.** La notoriété
+suit une loi de puissance : en échelle linéaire, Napoléon écrase tout le monde
+et quatre-vingt-quinze pour cent des cartes valent 1.
+
+**LE DOMAINE SE LIT SUR LE LIBELLÉ DU MÉTIER, PAS SUR SON IDENTIFIANT.**
+Wikidata compte des centaines de métiers ; une table de Q-ids en oublierait la
+moitié et demanderait une ligne par métier nouveau. Un mot suffit, et les deux
+côtés passent par `cle()` — donc on l'écrit **une fois, sans accent**, et il
+couvre les doublets de Wikidata (« écrivain ou écrivaine ») comme les composés
+(« homme politique »). **L'ORDRE DE LA LISTE DÉCIDE** : un roi qui a mené des
+guerres est l'un et l'autre, et c'est la liste qui tranche.
+
+### CE QUE LE ENDPOINT IMPOSE, et il impose tout le découpage
+
+**Mesuré, et aucune de ces trois mesures ne se devinait :**
+
+| requête | réponse |
+|---|---|
+| humains + article FR, triés par notoriété | **504 au bout de 65 s** |
+| le seul filtre `sitelinks >= 150`, sans rien d'autre | **504 au bout de 65 s** |
+| une SEULE année de décès + article FR | **502** |
+| peintres morts + article FR + `sitelinks >= 25` | **1,6 s, 1209 lignes** |
+| monarques / militaires / officiers, allégés | 2,5 s / 38,5 s / 6,3 s |
+| « homme politique », « écrivain » | **réponse TRONQUÉE** (voir plus bas) |
+
+**`wdt:P31 wd:Q5` porte onze millions d'items, et une requête qui part de là
+pour trier par notoriété ne revient jamais** — 504 à chaque essai, à toute
+heure. **On ne peut donc pas demander « les trois mille personnages les plus
+connus » :** il faut un point d'entrée sélectif, et un métier en est un.
+
+D'où les trois temps, et ils ne sont pas un choix d'architecture :
+
+1. **DÉCOUVRIR par métier, le plus légèrement possible** — juste le Q-id, le
+   titre de l'article et le nombre de langues ;
+2. **ENRICHIR les seuls candidats retenus**, par paquets de cinquante dans un
+   `VALUES` ;
+3. **MESURER les articles** sur Wikipédia FR, cinquante titres par appel.
+
+### LE ENDPOINT LÂCHE LE FLUX QU'IL A COMMENCÉ — et j'ai conclu quatre fois de travers
+
+**Le symptôme ne ressemble à rien de connu.** Sur un métier massif, le serveur
+ne renvoie pas d'erreur : il commence à répondre — quatre-vingt-douze mille
+lignes — puis **coupe au milieu d'une chaîne**. On reçoit un `SyntaxError` de
+`JSON.parse` à une position qui tombe sur une frontière de tampon :
+
+```
+Bad control character in string literal in JSON at position 2564119
+Expected double-quoted property name in JSON at position 196608   (= 192 Ko pile)
+```
+
+*Ça ressemble à un bug de parseur*, alors que le JSON reçu est simplement
+incomplet — et il n'y a pas de fin à lire. **La position de la coupure est le
+seul indice**, et c'est elle qui a fini par donner la cause.
+
+**Les quatre diagnostics successifs, et pourquoi aucun ne tenait :**
+
+1. *« le filtre de notoriété n'est pas indexé, donc le découpage ne peut pas
+   converger »* — bâti sur trois troncatures de suite. J'ai conçu **trois axes
+   de repli** dessus ;
+2. *« un index de plage demande deux bornes »* — `>= 100` répondait en 1 s quand
+   `>= 54` tronquait. Mesuré juste après : `[18, 1000)` **échoue** à l'instant
+   où `[18, ∞)` vient de réussir ;
+3. *« c'est la charge du service »* — vrai en partie, et c'est ce qui rendait le
+   diagnostic si glissant : la charge explique qu'une même requête passe puis
+   échoue, pas que le CSV passe là où le JSON ne passe jamais ;
+4. *« c'est le poids de la réponse »* — les coupures tombaient toutes vers
+   2,97 Mo, et le CSV les a fait disparaître. Mais pré-découpé en trois, « homme
+   politique » casse **encore**, et sur sa tranche la plus basse.
+
+***Une mesure qui varie n'est pas forcément du bruit : elle peut être au bord
+d'un seuil.*** Et ***quand plusieurs explications se succèdent sans tenir au
+test suivant, c'est qu'on lit le mauvais chiffre*** — il y en avait trois en
+jeu : le temps serveur (~60 s), le poids de la réponse, et le coût du parcours.
+
+**CE QUI EST ÉTABLI, et qui porte tout le code :**
+
+- **le format JSON de SPARQL pèse neuf fois le CSV sur la même donnée.** Il
+  enveloppe chaque valeur dans un objet à deux champs —
+  `{"type":"uri","value":"http://www.wikidata.org/entity/Q42"}` pour dire `Q42`.
+  Mesuré : la même requête rend 3 Mo en JSON (tronquée) et **0,32 Mo en CSV, en
+  13,6 s** ;
+- **le POIDS DES CHAMPS décide, pas le nombre de lignes.** La requête de
+  peintres passe de **38,8 s à 1,6 s** en retirant les libellés, les `OPTIONAL`
+  et le `GROUP_CONCAT` — pour *quatre fois plus de lignes* ;
+- **une requête à qui on donne ses items est instantanée** : les six `OPTIONAL`
+  et le `GROUP_CONCAT` coûtent **0,5 s** sur cinquante items nommés ;
+- **pour un métier à un million et demi d'items, c'est le PARCOURS qui
+  domine** : les tranches réduisent la sortie, pas le scan, donc « homme
+  politique » casse quelle que soit la tranche ;
+- **sans point d'entrée sélectif, rien ne passe** : `wdt:P31 wd:Q5` et le filtre
+  de notoriété nu rendent 504 à chaque essai, à toute heure.
+
+**CE QUE LE CODE FAIT, et chaque pièce répond à un de ces faits :**
+
+- **la découverte est en CSV et ne SELECTionne que deux colonnes**, le Q-id et le
+  nombre de langues. Le titre d'article reste dans le `WHERE` — on filtre bien
+  sur son existence — mais il arrive avec les détails, où il ne coûte rien.
+  L'enrichissement garde le JSON : il rapporte des libellés, qui demandent un
+  format qui échappe ;
+- **elle part d'emblée en TROIS TRANCHES de notoriété** (`TRANCHES_LANGUES`),
+  resserrées en bas parce que la notoriété décroît vite. ***Mieux vaut trois
+  petites requêtes sûres qu'une grosse à rattraper*** : un rattrapage qui coûte
+  soixante secondes par tentative n'en est pas un ;
+- **une troncature ne se réessaie QU'UNE FOIS** (`ESSAIS_TRONQUEE`). Réessayer
+  ne change pas la taille de la réponse, redécouper la divise par deux — *le
+  redécoupage attaque la cause, le réessai un symptôme.* Et surtout, les deux
+  puisaient dans le même budget : à trois essais, le lot racine le consommait
+  seul et ses moitiés étaient abandonnées « hors budget » **sans avoir été
+  essayées**. ***Deux mécanismes de secours qui partagent une ressource ne sont
+  pas deux secours : le premier affame le second*** ;
+- **on ne passe aux axes de secours que si le métier n'a RIEN rendu.** Ce qui
+  casse sur un métier massif est la tranche basse — la plus peuplée — et le tri
+  final ne garde que les plus notoires : *ces personnages seraient jetés de
+  toute façon.* ***Un rattrapage ne vaut que ce que vaut ce qu'il rattrape*** ;
+- **les trois axes de repli restent** — notoriété, période, puis descente dans
+  les sous-classes (`wdt:P279`) — mais comme **filets pour l'imprévu**, pas
+  comme mécanisme normal. Ils ne coûtent rien quand tout passe ;
+- **un budget de temps borne chaque TRANCHE** (`BUDGET_TRANCHE`, et un global
+  pour la taxonomie) : *une récursion qui ne sait pas quand s'arrêter n'a pas de
+  pire cas.* **Par tranche et non par métier** — posé avant la boucle, la
+  première tranche le consommait seule et les deux suivantes étaient abandonnées
+  sans être tentées, alors que ce sont elles qui passent. *C'est la même faute
+  que les essais affamant le redécoupage, un cran plus haut* : ***un budget posé
+  avant une boucle est dépensé par son premier tour*** ;
+- **`terminated` est une troncature**, pas une erreur à part : c'est le corps
+  coupé pendant la lecture, la même panne vue un cran plus tôt ;
+- **un CSV coupé se lit SANS erreur**, là où un JSON coupé lève — il n'a pas de
+  marqueur de fin. On vérifie donc l'en-tête et le compte de colonnes de chaque
+  ligne : *sinon une troncature passerait pour un lot complet*, ce qui est bien
+  pire qu'un échec ;
+- **un Q-id faux ne lève pas non plus, il rend zéro.** La requête est valide, le
+  métier n'existe simplement pas — donc le seul signe est un lot vide, et le
+  journal le signale. *Une table de trente-sept identifiants recopiés à la main
+  en porte forcément un de travers.*
+
+**`PLAFOND_LANGUES` n'a rien à voir avec la performance**, contrairement à ce que
+le diagnostic n° 2 faisait croire : il **ferme la récursion** du redécoupage, qui
+n'a plus de cas `null` à porter. Aucun item n'approche mille Wikipédia — le
+record tourne autour de trois cent trente — donc il ne retire personne.
+
+### LE CACHE EST PAR REQUÊTE, PAS PAR ÉTAPE
+
+`scripts/.cache/`, gitignoré, une entrée par requête (nom + empreinte du corps).
+C'est ce qui permet de relancer après un lot perdu sans redemander les trente
+qui avaient abouti — *et le endpoint public coupe assez souvent pour que ça
+compte.* Il ne retient **que les succès** : une réponse vide gardée
+condamnerait le lot jusqu'au prochain `--frais`. C'est la leçon des textures de
+cartes, repayée ici.
+
+**Un lot perdu ne fait pas tomber la génération** : il coûte sa part du
+catalogue, et la relance le redemandera puisque rien n'a été mis en cache.
+
+### LE PRIX À CONNAÎTRE : la sélection suit la table des métiers
+
+**Un métier absent de `METIERS` n'a aucune carte.** C'est la conséquence directe
+de la contrainte du endpoint, et c'est le premier endroit à élargir si le
+catalogue paraît troué. La table couvre aujourd'hui les huit domaines.
+
+**La fiction, elle, tient en quelques requêtes** : `wdt:P31/wdt:P279* wd:Q95074`
+répond en quelques secondes parce que l'ensemble est petit à l'échelle de
+Wikidata — mesuré, **7 473 personnages de fiction ont un article FR**, tous
+crans confondus. Le découpage par tranche de notoriété n'y est qu'un garde-fou
+de volume.
+
+### CE QUI RESTE À TRANCHER PAR KEKO
+
+- **les seuils de rareté et les bornes des échelles** : ce sont des
+  placeholders, à relire sur `stats-summary.txt` — *c'est la distribution qui
+  dit s'ils tombent juste, pas l'intuition* ;
+- **les cinq crans de rareté** s'appellent `commun / peu-commun / rare / epique
+  / legendaire`. Le mode descente, lui, a une **échelle d'alliages** (bronze,
+  argent, or, diamant) — *une échelle se dit en couleur, une famille se dit en
+  forme* — et il faudra décider si les deux modes partagent ce vocabulaire ;
+- **les images sont des URL Wikimedia Commons**, donc une ressource extérieure.
+  Le projet n'en dépend que pour les deux polices. À décider : les servir
+  directement, ou les rapatrier ;
+- **le poids du catalogue** : un millier de cartes pèse quelques centaines de
+  kilooctets, et `public/` est servi tel quel. Si ça pèse trop, le premier gain
+  est de ne garder que le nom du fichier Commons plutôt que son URL complète ;
+- **`@types/node` en devDependency**, pour que `scripts/` soit type-vérifié.
+  Ce sont des types, pas une librairie à l'exécution — mais c'est une
+  dépendance, donc c'est son appel ;
+- **la table des métiers**, qui décide de ce que le catalogue contient : trente
+  -sept entrées aujourd'hui, et c'est le seul endroit à élargir.
+
 ## Architecture — la règle à ne pas casser
 
 ```
@@ -10766,6 +11022,9 @@ src/
     state.ts     # GameState + transitions pures (état immuable : on retourne un nouvel objet)
     hub.ts       # l'armurerie : la réserve, le chargement, ce que la mort coûte
     storage.ts   # (dé)sérialisation + interface StoragePort
+    characters/  # LE TROISIÈME MODE : le type des cartes-personnages et ses formules
+      types.ts      # CharacterCard + la validation du JSON engendré
+      formules.ts   # rareté, attaque, défense, domaine — UN SEUL endroit
   render/  # LE MOTEUR 3D (React + R3F), derrière `?r3f` -- en construction
     texture-carte.ts # la carte peinte au canvas, pour servir de texture
     Carte3D.tsx      # le pavé, ses matériaux, sa place amortie
@@ -10779,8 +11038,12 @@ src/
     glisser-main.ts # les gestes de la main : sortir = jouer, taper = regarder
     input.ts     # événements -> actions
     storage.ts   # implémentation localStorage du StoragePort
+    personnages.ts  # loadCharacters() : le fetch du catalogue (logic/ est pur)
     styles.css
   main.ts  # câblage logic <-> ui ; seul endroit qui connaît les deux
+scripts/   # HORS du build Vite : lancé par `node`, pas couvert par tsconfig
+  generate-characters.ts  # le pipeline Wikidata -> public/data/characters.json
+  .cache/                 # le cache des requêtes, gitignoré
 ```
 
 `logic/` doit rester testable sans navigateur. Ce dont il a besoin du monde
@@ -11109,7 +11372,13 @@ npm run dev          # dev local
 npm run dev:mobile   # vite --host -> tester sur le téléphone via l'adresse Network
 npm run build        # tsc (types) puis vite build ; doit passer sans erreur
 npm run verif        # vérifications des règles, sans navigateur
+npm run personnages  # (re)engendre public/data/characters.json depuis Wikidata
 ```
+
+`npm run personnages` tourne **hors du build** et peut durer de longues minutes
+— il profite du cache de `scripts/.cache/`, donc une relance ne redemande que
+ce qui avait échoué. `--frais` l'ignore, `--cible=<n>` change le nombre de
+cartes.
 
 ## Déploiement — workflow attendu par Keko
 

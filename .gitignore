@@ -25,3 +25,7 @@ dist-ssr
 
 # Raccourci Windows local, pas du code
 Claude code.lnk
+
+# Cache des requetes Wikidata / Wikipedia : relancer le script sans tout
+# retelecharger, mais ca ne regarde personne d'autre que la machine qui genere
+scripts/.cache/
