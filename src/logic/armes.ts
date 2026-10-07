@@ -486,7 +486,7 @@ export const RONDACHE: Arme = {
  * *Les coûts sont des placeholders* : Keko a donné les effets, pas les prix.
  */
 const PROTECTION: Modele = {
-  nom: 'Protection',
+  nom: 'Armure légère',
   type: 'combat',
   cout: 1,
   degats: 0,
@@ -520,8 +520,22 @@ const PROTECTION: Modele = {
  * celui-ci est VOULU : elles ont déjà deux dessins et deux matières. Mais si la
  * plate doit vraiment encaisser plus que le cuir, c'est ici que ça s'écrira.
  */
+/**
+ * **LES DEUX CARTES DE BLOC SE NOMMENT PAR LEUR POIDS.** Tranché par Keko : « on
+ * va renommer protection : armure légère, cuirasse : armure lourde ».
+ *
+ * *Un nom de carte dit à quel BUILD elle appartient* — la règle qu'il avait
+ * donnée pour la Barrière — et ces deux-là appartenaient au même mot. **Légère
+ * et lourde se lisent comme une GAMME**, là où « Protection » et « Cuirasse »
+ * étaient deux objets sans rapport l'un avec l'autre, dont il fallait savoir
+ * lequel protégeait le plus.
+ *
+ * *Et c'est le troisième jeu de noms pour cette paire* : Protection / Blindage,
+ * puis Protection / Cuirasse, puis celui-ci. **Ce qui a fini par trancher n'est
+ * pas le mot juste pour chacune, c'est le RAPPORT entre les deux.**
+ */
 const CUIRASSE: Modele = {
-  nom: 'Cuirasse',
+  nom: 'Armure lourde',
   type: 'combat',
   cout: 1,
   degats: 0,

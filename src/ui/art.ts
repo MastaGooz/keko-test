@@ -52,7 +52,7 @@ function cle(nom: string): string {
 // de la Garde, qu'elle a absorbée (elles étaient la même carte, 1 PA pour 5 de
 // bloc). Ça ne sert qu'au jeu 2D et au fond du 3D : l'image de Keko recouvre le
 // SVG partout ailleurs.
-const ALIAS: Record<string, string> = { taille: 'taillade', protection: 'garde' }
+const ALIAS: Record<string, string> = { taille: 'taillade', 'armure-legere': 'garde' }
 
 /** L'URL de l'illustration d'un modèle, ou celle du repli. */
 export function art(nom: string): string {
@@ -111,10 +111,16 @@ const IMAGES: Record<string, string> = {
   agilite: 'Agilité.webp',
   concentration: 'Concentration.webp',
   barriere: 'Barriere.webp',
-  // LE BLINDAGE GARDE LE DESSIN DE LA PROTECTION DE PLATE : *le nom du fichier
-  // suit le dossier, la clé suit le jeu* — c'est à ça que sert cette table, et
-  // renommer le fichier aurait coûté un risque pour rien.
-  blindage: 'Protection plate.webp',
+  // L'ARMURE LOURDE PORTE LE DESSIN DE LA PROTECTION DE PLATE : *le nom du
+  // fichier suit le dossier, la clé suit le jeu* — c'est à ça que sert cette
+  // table, et renommer le fichier aurait coûté un risque pour rien.
+  //
+  // **IL A SUIVI LE MAUVAIS NOM PENDANT UN COMMIT.** Quand les deux cartes de
+  // la plate ont échangé leur nom, l'entrée est restée sur `blindage` — qui
+  // désignait désormais la RÉSISTANCE, pas le bloc. Keko : « on va remettre
+  // protection plate.webp sur armure lourde ». *Une table indexée par nom suit
+  // le nom, pas la carte* : **tout renommage doit la relire.**
+  'armure-lourde': 'Protection plate.webp',
   // LA TAILLE A ENFIN LE SIEN. Elle empruntait le dessin de la Taillade, le
   // temps qu'elle n'en ait pas — *un banc qui montre une carte au sceau de
   // repli ne se juge pas.* L'emprunt tombe avec l'arrivée du fichier.
@@ -182,7 +188,7 @@ const PROTECTIONS: Record<string, string> = {
 }
 
 const IMAGES_PAR_MATIERE: Record<string, Record<string, string>> = {
-  protection: PROTECTIONS,
+  'armure-legere': PROTECTIONS,
 }
 
 /**

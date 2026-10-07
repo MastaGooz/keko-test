@@ -1814,8 +1814,8 @@ prend une ressource différente :
 | | stats | set | ce qu'on va y chercher |
 |---|---|---|---|
 | **Robe** (tissu) | **+1 carte en main** | **Concentration** + **Barrière** | **voir** plus |
-| **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Protection + **Agilité** | **jouer** plus |
-| **Armure de plate** | **+30 ♥** | **Cuirasse** + **Blindage** | **encaisser** |
+| **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Armure légère + **Agilité** | **jouer** plus |
+| **Armure de plate** | **+30 ♥** | **Armure lourde** + **Blindage** | **encaisser** |
 
 **L'ÉCHELLE DES PV EST 0 / 15 / 30, et elle est de Keko.** Mon balayage avait
 posé 5 / 15 / 22 — les chiffres qui alignaient les trois survies — et il l'a
@@ -2276,7 +2276,29 @@ Trois choses à ne pas défaire :
   ne tombe pas se lit comme un bug**, et c'est précisément ce que la menace doit
   rendre lisible.
 
-#### LES DEUX NOMS ONT ÉCHANGÉ
+#### LES DEUX CARTES DE BLOC SE NOMMENT PAR LEUR POIDS
+
+Tranché par Keko : « on va renommer protection : armure légère, cuirasse : armure
+lourde ». *Un nom de carte dit à quel BUILD elle appartient* — la règle qu'il
+avait donnée pour la Barrière — **et ces deux-là appartenaient au même mot.**
+
+**« Légère » et « lourde » se lisent comme une GAMME**, là où « Protection » et
+« Cuirasse » étaient deux objets sans rapport l'un avec l'autre, dont il fallait
+savoir lequel protégeait le plus. *Et c'est le troisième jeu de noms pour cette
+paire* — Protection / Blindage, puis Protection / Cuirasse, puis celui-ci :
+**ce qui a fini par trancher n'est pas le mot juste pour chacune, c'est le
+RAPPORT entre les deux.**
+
+**ET LE DESSIN A SUIVI LE MAUVAIS NOM PENDANT UN COMMIT.** Quand les deux cartes
+de la plate ont échangé leur nom, l'entrée `Protection plate.webp` est restée sur
+`blindage` — qui désignait désormais la RÉSISTANCE, pas le bloc. Keko : « on va
+remettre protection plate.webp sur armure lourde ».
+
+***Une table indexée par nom suit le nom, pas la carte*** : tout renommage doit
+la relire, et il y en a trois à relire ensemble — les images, les variantes par
+matière, et les alias du repli SVG.
+
+#### LES DEUX NOMS DE LA PLATE AVAIENT DÉJÀ ÉCHANGÉ
 
 Keko : « on va renommer la carte blindage, et changer la carte qui donne de
 l'armure pour cuirasse ». **La carte de BLOC s'appelle donc Cuirasse, et la
