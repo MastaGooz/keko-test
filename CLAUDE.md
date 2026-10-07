@@ -1807,7 +1807,7 @@ prend une ressource différente :
 |---|---|---|---|
 | **Robe** (tissu) | **+1 carte en main** | **Concentration** + **Barrière** | **voir** plus |
 | **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Protection + **Agilité** | **jouer** plus |
-| **Armure de plate** | **+30 ♥** | **Blindage** + **Rempart** | **encaisser** |
+| **Armure de plate** | **+30 ♥** | **Blindage** + **Cuirasse** | **encaisser** |
 
 **L'ÉCHELLE DES PV EST 0 / 15 / 30, et elle est de Keko.** Mon balayage avait
 posé 5 / 15 / 22 — les chiffres qui alignaient les trois survies — et il l'a
@@ -2199,6 +2199,98 @@ celui de la Barrière est celui du bloc : empêcher la salve d'arriver.
 **Une liste de cas est une liste qu'on oublie de compléter** — la règle déjà
 payée sur les étiquettes de la vitrine du zoom. À relire au prochain verbe
 défensif.
+
+
+#### LA CUIRASSE : le troisième profil défensif, et c'est une RÉSISTANCE
+
+**Le Rempart a disparu, et Keko a eu raison de l'écarter** : « je ne suis pas
+fan de la carte rempart, il faudrait trouver un truc plus unique à l'armure de
+plate ». *Il valait 11 de bloc pour 2 PA, donc une Protection plus grosse et
+rien d'autre* — **la plate n'avait aucun verbe à elle, seulement des chiffres** :
+deux cartes de bloc et trente points de vie, c'est-à-dire la même chose dite
+trois fois.
+
+**Le mécanisme est de lui** : « une carte qui diminue de X % tous les dégâts des
+attaques subies jusqu'au prochain tour, un peu comme esquive ».
+
+**ET MON OBJECTION ÉTAIT FAUSSE, c'est lui qui l'a démontée.** J'avais écrit
+qu'un pourcentage est des PV déguisés — réduire de 30 %, c'est multiplier ses PV
+par 1,43 — donc que la carte redirait ce que la stat de la plate dit déjà.
+Keko : « ce n'est pas pareil que les PV car tu n'as pas toujours la carte en
+main, et sur une attaque énorme ou petite le rendu est différent ».
+
+*Mon calcul supposait une réduction PERMANENTE*, et c'est toute la différence :
+**une carte n'est pas une stat.** Il faut la tirer, la payer et la jouer AU BON
+TOUR — donc c'est une décision, exactement l'argument que le projet applique
+déjà au bloc (*« un point de bloc ne vaut un point de vie que si la salve
+arrive »*). Et elle a bien un profil : **en points absorbés, une part paie
+d'autant plus que la frappe est grosse**, là où un chiffre fixe paierait
+d'autant plus qu'il y a de petits coups.
+
+*Les trois armures ont donc enfin trois profils défensifs distincts* : **le cuir
+évite une attaque** (bon contre un gros frappeur, mais au hasard), **le tissu se
+fait une réserve qui suit sa main**, **la plate amoindrit tout ce qui arrive.**
+
+#### LE MOT-CLÉ NE PEUT PAS S'APPELER « DÉFENSE »
+
+C'était le nom proposé, et c'est la seule objection qui a tenu : **« Défense »
+est déjà le TYPE écrit au pied de ces cartes-là** — la Protection, l'Agilité, la
+Barrière et la Cuirasse le portent toutes. Le joueur lirait le même mot au pied
+et en jaune dans le texte, pour deux choses différentes. *Le jaune promet une
+définition à aller chercher, et un mot qui nomme aussi une famille entière ne
+peut pas la tenir.*
+
+Le mot-clé est donc **« résistance »**, et **son chiffre vit dans la CARTE, pas
+dans la définition** : *deux cartes de résistance n'auront pas la même part*, et
+une définition qui porterait un pourcentage mentirait sur l'une des deux. Elle
+dit la règle — « chaque attaque subie inflige une part de dégâts en moins » —
+exactement comme « étourdissement » ne dit pas quelle période il efface.
+
+Trois choses à ne pas défaire :
+
+- **elle se lit AVANT le bloc**, à la place de l'esquive : *c'est l'attaque
+  qu'elle amoindrit*, pas ce qui dépasse de l'armure. Dans l'autre sens, 10
+  moins 5 de bloc puis −30 % donnerait 3 au lieu de 2 ;
+- **elle se COMPOSE, elle ne s'additionne pas** : deux cartes à 30 % laissent
+  passer 0,7 × 0,7, soit 51 %. *Les additionner atteindrait 100 % à la
+  troisième, et une immunité n'est pas le bout de cette échelle* ;
+- **l'arrondi va au joueur et vit en UN SEUL endroit** (`recu`), parce que deux
+  le lisent : le coup qui tombe, et la menace annoncée. **Un chiffre promis qui
+  ne tombe pas se lit comme un bug**, et c'est précisément ce que la menace doit
+  rendre lisible.
+
+#### 30 %, ET LE BLINDAGE À 7 : les deux chiffres se règlent ENSEMBLE
+
+400 descentes au fond, Glaive + Rondache + 3 potions, même bot :
+
+| set de la plate | trésors pris | refusés | or espéré |
+|---|---|---|---|
+| Blindage 5 + Rempart (avant) | 54 % | 85 % | 104 |
+| Blindage 7 + Rempart | 68 % | 92 % | 173 |
+| Blindage 7 + Cuirasse 20 % | 47 % | 80 % | 80 |
+| Blindage 7 + Cuirasse 25 % | 50 % | 83 % | 91 |
+| **Blindage 7 + Cuirasse 30 %** | **55 %** | 86 % | **113** |
+| Blindage 7 + Cuirasse 40 % | 61 % | 89 % | 141 |
+
+*Voisines dans le même banc* : cuir **54 %** (or espéré 99), tissu **63 %** (100).
+
+**LES DEUX CHANGEMENTS SE COMPENSENT EXACTEMENT, et c'est ce qui les rend
+possibles ensemble** : le Blindage à 7 vaut +14 points, la Cuirasse en rend 13
+par rapport au Rempart. La plate passe de 54 à 55 % — *elle garde sa force, elle
+change de verbe.* C'est tout ce qu'on demande à un remplacement, et c'est la
+même conclusion que la Barrière (62 → 63 %).
+
+**PIÈGE DE MESURE, et il a failli faire conclure l'inverse : le bot ne jouait
+pas la carte.** Sa liste de cartes défensives connaissait `bloc`,
+`blocParCarte` et `esquive`, donc la Cuirasse n'y entrait pas — **les cinq
+pourcentages rendaient exactement 34 %**, le chiffre d'une plate avec une carte
+morte. *Une liste de cas est une liste qu'on oublie de compléter*, et celle du
+BOT se relit comme celle du rendu. C'est la leçon déjà écrite — « un bot qui ne
+bloque pas avant de frapper ne mesure rien » — retrouvée par l'autre bout : **un
+résultat IDENTIQUE sur toute une échelle veut dire qu'on ne mesure pas ce qu'on
+croit.**
+
+*Son illustration manque*, donc elle sort avec le sceau de repli.
 
 ### CHAQUE ARMURE A SA PROTECTION, et la GARDE était déjà elle
 

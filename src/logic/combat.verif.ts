@@ -688,6 +688,50 @@ console.log('Tout passe.')
 }
 
 /**
+ * LA RÉSISTANCE : chaque attaque subie perd une PART, jusqu'au prochain tour.
+ *
+ * Proposée par Keko — « une carte qui diminue de X % tous les dégâts des
+ * attaques subies jusqu'au prochain tour, un peu comme esquive ».
+ */
+{
+  const CUIRASSE = {
+    nom: 'Cuirasse',
+    cout: 1,
+    degats: 0,
+    effets: [{ type: 'resistance' as const, part: 0.3 }],
+  }
+  const deck = cartes(10, CUIRASSE)
+  const frappeur = ennemi({ pv: 100, degats: 10, periode: 1 })
+  const etat = combat(deck, frappeur)
+
+  // L'ARRONDI VA AU JOUEUR : 10 moins 30 %, c'est 7 — pas 7,5 ni 8.
+  const pose = jouerCarte(etat, 0, 0, rng())
+  egal(finDuTour(pose, rng()).pv, pose.pv - 7, 'la resistance retranche une part, arrondie au joueur')
+
+  // ELLE SE COMPOSE, ELLE NE S'ADDITIONNE PAS : deux fois 30 % laissent passer
+  // 49 %, jamais 40. *Une immunité n'est pas le bout de cette échelle.*
+  const deux = jouerCarte(pose, 0, 0, rng())
+  egal(Math.round(deux.resistance * 100), 51, 'deux cartes composent leurs parts')
+  egal(finDuTour(deux, rng()).pv, deux.pv - 4, '...donc le coup passe de 10 a 4')
+
+  // ELLE TOMBE EN FIN DE TOUR, au même endroit que le bloc et l'esquive.
+  egal(finDuTour(pose, rng()).resistance, 0, 'la resistance tombe en fin de tour')
+
+  // ET LA MENACE ANNONCÉE LA DÉDUIT — *un chiffre promis qui ne tombe pas se
+  // lit comme un bug*, et c'est lui qui rend la carte lisible.
+  egal(menaceDuTour(etat), 10, 'sans resistance, la menace est entiere')
+  egal(menaceDuTour(pose), 7, '...et elle baisse des qu on la pose')
+
+  // ELLE SE LIT AVANT LE BLOC : l'attaque est amoindrie, PUIS l'armure encaisse
+  // ce qui reste. Dans l'autre sens, 10 - 5 de bloc puis -30 % donnerait 3.
+  const avecBloc = { ...pose, bloc: 5 }
+  egal(finDuTour(avecBloc, rng()).pv, avecBloc.pv - 2, 'la resistance passe avant le bloc')
+
+  // ELLE NE DÉSIGNE PERSONNE, et son pied dit « Défense ».
+  verifie(!viseUneCible(etat.main[0]!), 'la Cuirasse ne vise aucun corps')
+}
+
+/**
  * LA BARRIÈRE : du bloc qui se compte sur ce qu'on N'A PAS ENCORE JOUÉ.
  *
  * Proposée par Keko — « bloque 1 pour chaque carte dans votre main, au moment

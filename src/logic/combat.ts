@@ -86,6 +86,24 @@ export type Effet =
    */
   | { type: 'esquive' }
   /**
+   * LA RÉSISTANCE : chaque attaque subie perd une PART de ses dégâts, jusqu'au
+   * prochain tour. Proposée par Keko — « une carte qui diminue de X % tous les
+   * dégâts des attaques subies jusqu'au prochain tour, un peu comme esquive ».
+   *
+   * **ET CE N'EST PAS DES PV DÉGUISÉS, contrairement à ce que j'avais
+   * objecté.** Mon calcul — réduire de 30 %, c'est multiplier ses PV par 1,43 —
+   * *suppose une réduction PERMANENTE.* Keko : « tu n'as pas toujours la carte
+   * en main ». **Une carte n'est pas une stat** : il faut la tirer, la payer et
+   * la jouer AU BON TOUR, donc c'est une décision — exactement l'argument que
+   * le projet applique déjà au bloc, *« un point de bloc ne vaut un point de
+   * vie que si la salve arrive ».*
+   *
+   * *Et elle a bien un profil*, lui aussi : en points absorbés, **une part paie
+   * d'autant plus que la frappe est GROSSE** — là où un chiffre fixe paierait
+   * d'autant plus qu'il y a de petits coups.
+   */
+  | { type: 'resistance'; part: number }
+  /**
    * L'ÉTOURDISSEMENT : la cible perd l'action qu'elle préparait.
    *
    * Composé par Keko : « étourdissement = annule l'action en cours de
@@ -278,6 +296,12 @@ export type EtatCombat = {
   /** Une esquive est armée : la prochaine attaque a une chance sur deux de
    *  manquer. Elle se consomme à l'essai, et tombe en fin de tour. */
   esquive: boolean
+  /**
+   * La part des dégâts que chaque attaque perd, de 0 à 1. **Elle tombe à la fin
+   * du tour**, au même endroit que le bloc, l'esquive et la riposte : *ce qui
+   * ne vaut que pour un tour se range au même endroit.*
+   */
+  resistance: number
   evenements: Evenement[]
   issue: Issue | null
 }
@@ -315,6 +339,7 @@ export function creerCombat(
     attaquesCeTour: 0,
     riposte: 0,
     esquive: false,
+    resistance: 0,
     evenements: [{ tour: 1, type: 'debut', ennemis: ennemis.map((e) => e.nom) }],
     issue: null,
   }
@@ -405,6 +430,7 @@ export function finDuTour(etat: EtatCombat, rng: Rng): EtatCombat {
   suivant.attaquesCeTour = 0
   suivant.riposte = 0
   suivant.esquive = false
+  suivant.resistance = 0
   suivant.tour += 1
   suivant.energie = suivant.energieMax
   piocher(suivant, rng)
@@ -413,12 +439,15 @@ export function finDuTour(etat: EtatCombat, rng: Rng): EtatCombat {
 
 /** Dégâts encaissés à la fin de ce tour si rien ne change. */
 export function menaceDuTour(etat: EtatCombat): number {
+  // LA RÉSISTANCE SE DÉDUIT PAR ATTAQUE, pas sur le total : c'est ainsi qu'elle
+  // s'applique, et *l'arrondi de chaque coup n'est pas celui de leur somme.*
   const brute = etat.ennemis
     .filter((ennemi) => ennemi.pv > 0 && ennemi.compteur <= 1)
-    .reduce((total, ennemi) => total + ennemi.degats, 0)
+    .reduce((total, ennemi) => total + recu(ennemi.degats, etat.resistance), 0)
   // CE QU'ON VA VRAIMENT PRENDRE, bloc déduit. C'est ce chiffre qui rend le
   // bloc lisible : poser une carte de garde doit faire baisser la menace sous
-  // les yeux du joueur, sinon il ne sait pas ce qu'elle lui a acheté.
+  // les yeux du joueur, sinon il ne sait pas ce qu'elle lui a acheté — et ça
+  // vaut pour la résistance, qui doit le faire baisser de la même façon.
   return Math.max(0, brute - etat.bloc)
 }
 
@@ -448,7 +477,7 @@ export function consequence(etat: EtatCombat, carte: Carte, cible: number): Cons
   const debout = etat.ennemis.filter((ennemi) => ennemi.pv > 0).length
 
   const menace = menaceDuTour(etat)
-  const evite = tue && vise !== undefined && vise.compteur <= 1 ? vise.degats : 0
+  const evite = tue && vise !== undefined && vise.compteur <= 1 ? recu(vise.degats, etat.resistance) : 0
 
   return {
     cout: coutDe(carte, etat),
@@ -628,6 +657,13 @@ function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number, rng: Rng)
     case 'esquive':
       etat.esquive = true
       break
+    case 'resistance':
+      // ELLE NE S'ADDITIONNE PAS, ELLE SE COMPOSE : deux cartes à 30 % laissent
+      // passer 0,7 x 0,7, soit 51 % — *deux filtres l'un derrière l'autre.* Les
+      // additionner atteindrait 100 % à la troisième, et une immunité n'est pas
+      // le bout de cette échelle.
+      etat.resistance = 1 - (1 - etat.resistance) * (1 - effet.part)
+      break
     case 'pioche':
       // ON PASSE PAR LA MÊME PORTE QUE LA FIN DE TOUR : le remélange est seedé,
       // et *deux façons de piocher se désaccorderaient au premier réglage.*
@@ -662,6 +698,18 @@ function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number, rng: Rng)
   }
 }
 
+/**
+ * CE QU'UNE ATTAQUE INFLIGE UNE FOIS LA RÉSISTANCE PASSÉE.
+ *
+ * *Un seul endroit décide de l'arrondi*, parce que deux le liraient : le coup
+ * qui tombe, et la menace annoncée au joueur. **Un chiffre promis qui ne tombe
+ * pas se lit comme un bug**, et c'est précisément ce que la menace doit rendre
+ * lisible.
+ */
+function recu(degats: number, resistance: number): number {
+  return Math.floor(degats * (1 - resistance))
+}
+
 function frapper(etat: EtatCombat, ennemi: Ennemi, rng: Rng): void {
   /**
    * **L'ESQUIVE SE JOUE AVANT LE BLOC, et elle se consomme dans tous les
@@ -687,10 +735,16 @@ function frapper(etat: EtatCombat, ennemi: Ennemi, rng: Rng): void {
     }
   }
 
-  // LE BLOC ENCAISSE EN PREMIER, et ce qui dépasse seulement passe aux PV.
-  const absorbe = Math.min(etat.bloc, ennemi.degats)
+  // LA RÉSISTANCE SE LIT AVANT LE BLOC : *c'est l'attaque qu'elle amoindrit*,
+  // pas ce qui dépasse de l'armure — la place de l'esquive, qui évite l'attaque
+  // entière. Et **l'arrondi va au joueur** : il n'y a qu'une règle, les dégâts
+  // restants tombent à l'entier inférieur.
+  const brut = recu(ennemi.degats, etat.resistance)
+
+  // LE BLOC ENCAISSE ENSUITE, et ce qui dépasse seulement passe aux PV.
+  const absorbe = Math.min(etat.bloc, brut)
   etat.bloc -= absorbe
-  etat.pv = Math.max(0, etat.pv - (ennemi.degats - absorbe))
+  etat.pv = Math.max(0, etat.pv - (brut - absorbe))
   ennemi.compteur = ennemi.periode
   etat.evenements.push({
     tour: etat.tour,
@@ -698,7 +752,7 @@ function frapper(etat: EtatCombat, ennemi: Ennemi, rng: Rng): void {
     nom: ennemi.nom,
     // Ce que le joueur ENCAISSE VRAIMENT : le récit et les marques visuelles
     // doivent dire ce qui lui est arrivé, pas ce qui lui était destiné.
-    degats: ennemi.degats - absorbe,
+    degats: brut - absorbe,
     pvJoueur: etat.pv,
   })
 

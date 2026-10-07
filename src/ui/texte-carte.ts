@@ -147,6 +147,13 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
     // groupe qui n'arrive qu'à la suivante* — même raison que le « et » de la
     // Projection, et l'insécable fait le lien.
     if (e.type === 'esquive') l.push(`Gagne <k><b>esquive</b></k> jusqu'à votre&nbsp;prochain tour`)
+    // LE MOT-CLÉ NE PEUT PAS S'APPELER « DÉFENSE », et c'était la seule
+    // objection qui tenait : *c'est déjà le TYPE écrit au pied de ces cartes* —
+    // le joueur lirait le même mot au pied et en jaune dans le texte, pour deux
+    // choses différentes. **Le jaune promet une définition à aller chercher, et
+    // un mot qui nomme aussi une famille entière ne peut pas la tenir.**
+    if (e.type === 'resistance')
+      l.push(`Gagne <k><b>résistance ${Math.round(e.part * 100)}&nbsp;%</b></k> jusqu'à votre&nbsp;prochain tour`)
     if (e.type === 'soin') {
       // Un trésor ne soigne qu'en se détruisant : la carte doit dire les deux,
       // le gain et le prix, sinon elle ment sur ce qu'on joue.
@@ -315,6 +322,11 @@ export const GLOSSAIRE: Record<string, string> = {
   Étourdissement: "annule l'action en cours",
   Consommable: "la carte est détruite quand elle est jouée",
   Esquive: "vous avez 50 % de chance d'éviter la prochaine attaque subie",
+  // LE POURCENTAGE VIT DANS LA CARTE, pas dans la définition : *deux cartes de
+  // résistance n'auront pas la même part*, et une définition qui porterait un
+  // chiffre mentirait sur l'une des deux. Elle dit la RÈGLE, la carte dit le
+  // combien — exactement comme « étourdissement » ne dit pas quelle période.
+  Résistance: 'chaque attaque subie inflige une part de dégâts en moins',
 }
 
 /** Les mots-clés qu'une carte emploie, pour l'encadré du zoom. */
@@ -322,6 +334,7 @@ export function motsCles(carte: Carte): string[] {
   const mots: string[] = []
   if (carte.effets?.some((e) => e.type === 'etourdit') === true) mots.push('Étourdissement')
   if (carte.effets?.some((e) => e.type === 'esquive') === true) mots.push('Esquive')
+  if (carte.effets?.some((e) => e.type === 'resistance') === true) mots.push('Résistance')
   // LE MOT SUIT LA RÈGLE, pas le type affiché : *ce qui fait un consommable,
   // c'est qu'il s'exile* — un trésor brûlé s'exile aussi, mais il le dit déjà
   // en clair sur sa seconde ligne, et c'est le prix de son effet, pas une
@@ -385,7 +398,12 @@ export function nature(carte: Carte): string {
    * déjà coûté. **Une liste de cas est une liste qu'on oublie de compléter**,
    * la règle déjà payée sur les étiquettes de la vitrine du zoom.
    */
-  if (carte.effets?.some((e) => e.type === 'bloc' || e.type === 'blocParCarte' || e.type === 'esquive'))
+  if (
+    carte.effets?.some(
+      (e) =>
+        e.type === 'bloc' || e.type === 'blocParCarte' || e.type === 'esquive' || e.type === 'resistance',
+    )
+  )
     return 'Défense'
   return 'Action'
 }

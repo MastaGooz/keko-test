@@ -452,13 +452,18 @@ export const RONDACHE: Arme = {
  * Les armures. Elles ne frappent pas : elles donnent du BLOC.
  * ---------------------------------------------------------------------- */
 
-const REMPART: Modele = {
-  nom: 'Rempart',
-  type: 'combat',
-  cout: 2,
-  degats: 0,
-  effets: [{ type: 'bloc', montant: 11 }],
-}
+/*
+ * LE REMPART A DISPARU, et il faut savoir pourquoi pour ne pas le remettre.
+ *
+ * Il valait 11 de bloc pour 2 PA — *donc une Protection plus grosse, et rien
+ * d'autre.* Keko : « je ne suis pas fan de la carte rempart, il faudrait
+ * trouver un truc plus unique à l'armure de plate ». **La plate n'avait aucun
+ * verbe à elle, seulement des chiffres** : deux cartes de bloc et trente points
+ * de vie, c'est-à-dire la même chose dite trois fois.
+ *
+ * Il reste dans `git log` et son dessin (`art/rempart.svg`) au dépôt : *le jour
+ * où une armure voudra du gros bloc brut, il n'y aura qu'à le reposer.*
+ */
 
 /**
  * **PROTECTION ET ESQUIVE : le set du Plastron de cuir.** Composé par Keko.
@@ -500,8 +505,8 @@ const PROTECTION: Modele = {
  * **deux cases du même nom** — et *deux cartes qui portent le même nom côte à
  * côte se lisent comme un bug*, pas comme deux objets.
  *
- * Il fait paire avec le Rempart, l'autre carte de la plate : **deux mots de
- * fortification lourde**, là où le cuir garde « Protection », le mot neutre de
+ * Il fait paire avec la Cuirasse, l'autre carte de la plate : **deux mots de
+ * ferraille lourde**, là où le cuir garde « Protection », le mot neutre de
  * l'armure de départ.
  *
  * **TENSION CONNUE, et elle est à Keko** : les deux cartes ont désormais deux
@@ -516,7 +521,41 @@ const BLINDAGE: Modele = {
   type: 'combat',
   cout: 1,
   degats: 0,
-  effets: [{ type: 'bloc', montant: 5 }],
+  // **SEPT, PAS CINQ** — tranché par Keko : « je pense qu'on peut mettre
+  // blindage à 7 ». *Le nom différent appelait un barème différent*, et c'est
+  // ce que la note d'à côté annonçait comme la suite : « si la plate doit
+  // vraiment encaisser plus que le cuir, c'est ici que ça s'écrira ».
+  effets: [{ type: 'bloc', montant: 7 }],
+}
+
+/**
+ * LA CUIRASSE : le verbe propre à la PLATE, et c'est une RÉSISTANCE.
+ *
+ * Elle remplace le Rempart, que Keko a écarté — « je ne suis pas fan de la
+ * carte rempart, il faudrait trouver un truc plus unique à l'armure de
+ * plate ». *Et il avait raison* : un Rempart n'est qu'une Protection plus
+ * grosse, donc la plate n'avait aucun verbe à elle, seulement des chiffres.
+ *
+ * **Le mécanisme est de lui** : « une carte qui diminue de X % tous les dégâts
+ * des attaques subies jusqu'au prochain tour, un peu comme esquive ».
+ *
+ * **J'avais objecté que c'était des PV déguisés, et l'objection était
+ * fausse** — réduire de 25 %, c'est bien multiplier ses PV par 1,33, *mais ce
+ * calcul suppose une réduction PERMANENTE.* Keko : « tu n'as pas toujours la
+ * carte en main ». **Une carte n'est pas une stat** : il faut la tirer, la
+ * payer et la jouer au bon tour.
+ *
+ * *Son profil est l'inverse de celui du bloc* : une part paie d'autant plus que
+ * la frappe est GROSSE, là où un chiffre fixe se fait user par une meute. C'est
+ * le troisième profil défensif du jeu — **le cuir évite une attaque, le tissu
+ * se fait une réserve, la plate amoindrit tout ce qui arrive.**
+ */
+const CUIRASSE: Modele = {
+  nom: 'Cuirasse',
+  type: 'combat',
+  cout: 1,
+  degats: 0,
+  effets: [{ type: 'resistance', part: 0.3 }],
 }
 
 /**
@@ -649,7 +688,7 @@ export const PLASTRON: Armure = {
   pv: 30,
   set: [
     { modele: BLINDAGE, nombre: 1 },
-    { modele: REMPART, nombre: 1 },
+    { modele: CUIRASSE, nombre: 1 },
   ],
 }
 
@@ -676,8 +715,8 @@ export const PLASTRON_DE_CUIR: Armure = {
  *
  * *Une carte de main de plus est le levier le plus violent des trois* : elle
  * change ce qu'on peut faire d'un tour ET elle absorbe une part de
- * l'encombrement. **Ce qui la paie, c'est son set** — une seule Protection, pas
- * de Rempart, et cinq points de vie.
+ * l'encombrement. **Ce qui la paie, c'est son set** — aucune carte de bloc
+ * franc, et zéro point de vie.
  */
 export const ROBE: Armure = {
   id: 'robe',
