@@ -2814,42 +2814,29 @@ s'affiche : « Vous portez 2 butins », « Vous rapportez 340 d'or », « Vous a
 perdre Idole », « Vous tombez. » Les commentaires du code, eux, continuent de
 se parler à nous-mêmes.
 
-**MAIS LES VERBES D'UNE CARTE N'ONT PAS DE SUJET : « Inflige », « Gagne »,
-« Soigne », « Pioche ».** Keko a d'abord étendu le vouvoiement aux verbes —
-« attention tu utilises "tu" dans les cartes : il faut vouvoyer le joueur.
-"Piochez" "Gagnez" » — puis les a repris seuls : « on peut dire gagne / inflige
-/ soigne plutôt que gagnez ? »
+**ET ÇA VAUT POUR LES VERBES, SANS EXCEPTION : Infligez, Gagnez, Soignez,
+Piochez.** Tranché par Keko, après un aller-retour qu'il a fini par clore :
+« mets gagnez et pas gagne, faut vraiment toujours utiliser "vous" systématique,
+faut arrêter le tutoiement ».
 
-*Et les deux demandes ne se contredisent pas, parce qu'elles ne portent pas sur
-la même chose* : ce qu'il refusait était le TUTOIEMENT, et **un verbe nu se lit
-comme un impératif tutoyé tant que la phrase n'a pas de sujet ailleurs.** C'est
-tout le reste du cartouche qui a changé entre les deux — le « vous » des
-compléments y est désormais partout, donc « Inflige » se lit à la troisième
-personne : *c'est l'EFFET qui parle, et non quelqu'un qui s'adresse au joueur.*
+*Les verbes sont passés à l'impersonnel le temps de quelques commits* — « on peut
+dire gagne / inflige / soigne plutôt que gagnez ? » — **sur un argument qui
+tenait pourtant** : un verbe nu se lit à la troisième personne dès que la phrase
+porte un sujet ailleurs, donc c'était l'EFFET qui parlait et non quelqu'un
+s'adressant au joueur.
 
-**Les compléments, eux, ne bougent pas** : « pour chaque blocage que vous
-avez », « jusqu'à votre prochain tour », « les ennemis qui vous attaquent ».
-Ce sont les seuls endroits où le joueur est NOMMÉ, et **ce sont eux qui donnent
-au verbe son sujet implicite** — les retirer ramènerait l'ambiguïté que le
-vouvoiement avait corrigée.
+**Et c'est précisément ce qui le condamnait : la règle était trop fine.** Elle
+demandait, à chaque carte neuve, de vérifier si la phrase portait ailleurs un
+« vous » qui désambiguïse — donc de rouvrir le débat à chaque fois.
+***Une règle de langue doit s'appliquer sans réfléchir***, sinon ce n'est pas une
+règle, c'est un jugement à refaire. Et c'est aussi ce qui fait tomber l'exception
+de « Piochez », qui n'a plus à se justifier.
 
-**Et les verbes suivent ensemble** : *des verbes du même rang se lisent à la même
-voix*, et en garder un au vouvoiement sans raison serait pire que l'un ou l'autre
-des deux états cohérents.
-
-**« PIOCHEZ » EST LA SEULE EXCEPTION, ET ELLE A SA RAISON.** Keko : « on peut
-dire "piochez 2 cartes" plutôt pour concentration ? » — *et il rompt bien
-l'uniformité des quatre, à juste titre* : **« pioche » est le seul d'entre eux
-qui soit AUSSI un nom du jeu**, le tas des coins s'appelant comme ça.
-« Pioche 2 cartes » se lit donc aussi bien *« [la] pioche [a] 2 cartes »*, et
-**une phrase qui a deux lectures n'en a aucune.** Les trois autres — infliger,
-gagner, soigner — n'ont pas d'homonyme ici, donc rien ne les force à céder.
-
-***La désambiguïsation passe avant l'uniformité***, et c'est à peu près la seule
-chose qui puisse lui passer devant.
-
-*Le reste du jeu continue de vouvoyer* : « Vous portez 2 butins », « Vous
-tombez. » **Une phrase qui s'adresse au joueur n'est pas une ligne de règle.**
+*Ce qui n'est pas adressé ne bouge pas* : « Coûte 1 PA de moins » parle de la
+CARTE, « les ennemis qui vous attaquent subissent » a déjà son sujet, et les
+définitions du glossaire parlent de l'effet — « annule l'action en cours »,
+« chaque attaque subie inflige… ». **Le critère reste QUI agit**, et c'est le
+seul qui ait jamais été nécessaire.
 
 Cinq vérifications la tiennent (220 au total).
 
