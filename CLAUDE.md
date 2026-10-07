@@ -2723,10 +2723,20 @@ Ce sont les seuls endroits où le joueur est NOMMÉ, et **ce sont eux qui donnen
 au verbe son sujet implicite** — les retirer ramènerait l'ambiguïté que le
 vouvoiement avait corrigée.
 
-**Et les quatre verbes suivent ensemble**, « Pioche » compris bien que Keko
-n'en nomme que trois : *quatre verbes du même rang se lisent à la même voix*, et
-en garder un au vouvoiement serait pire que l'un ou l'autre des deux états
-cohérents.
+**Et les verbes suivent ensemble** : *des verbes du même rang se lisent à la même
+voix*, et en garder un au vouvoiement sans raison serait pire que l'un ou l'autre
+des deux états cohérents.
+
+**« PIOCHEZ » EST LA SEULE EXCEPTION, ET ELLE A SA RAISON.** Keko : « on peut
+dire "piochez 2 cartes" plutôt pour concentration ? » — *et il rompt bien
+l'uniformité des quatre, à juste titre* : **« pioche » est le seul d'entre eux
+qui soit AUSSI un nom du jeu**, le tas des coins s'appelant comme ça.
+« Pioche 2 cartes » se lit donc aussi bien *« [la] pioche [a] 2 cartes »*, et
+**une phrase qui a deux lectures n'en a aucune.** Les trois autres — infliger,
+gagner, soigner — n'ont pas d'homonyme ici, donc rien ne les force à céder.
+
+***La désambiguïsation passe avant l'uniformité***, et c'est à peu près la seule
+chose qui puisse lui passer devant.
 
 *Le reste du jeu continue de vouvoyer* : « Vous portez 2 butins », « Vous
 tombez. » **Une phrase qui s'adresse au joueur n'est pas une ligne de règle.**

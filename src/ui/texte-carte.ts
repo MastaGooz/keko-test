@@ -97,9 +97,12 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
   // les seuls endroits où le joueur est NOMMÉ — et ce sont eux qui donnent au
   // verbe son sujet implicite, donc les retirer ramènerait l'ambiguïté.
   //
-  // **Et les quatre verbes suivent ensemble** : Inflige, Gagne, Soigne, Pioche.
-  // *Quatre verbes du même rang se lisent à la même voix* — en garder un au
-  // vouvoiement serait pire que l'un ou l'autre des deux états cohérents.
+  // **Et les verbes suivent ensemble** : Inflige, Gagne, Soigne. *Des verbes du
+  // même rang se lisent à la même voix* — en garder un au vouvoiement sans
+  // raison serait pire que l'un ou l'autre des deux états cohérents.
+  //
+  // **« Piochez » est l'exception, et elle a sa raison** : c'est le seul verbe
+  // du lot qui soit aussi un NOM du jeu, le tas des coins. Voir sa ligne.
   //
   // *Ce qui n'est pas adressé n'a jamais bougé* : « Coûte 1 PA de moins » parle
   // de la CARTE, « annule l'action en cours » parle du mot-clé.
@@ -199,9 +202,22 @@ export function lignes(carte: Carte, valeurAPart = false): string[] {
      * encaisse et ce qu'on soigne — piocher n'est aucun des trois. **Une
      * quatrième couleur pour un quatrième fait finirait par n'en distinguer
      * aucun** ; le gras du chiffre suffit.
+     *
+     * **ET C'EST LE SEUL VERBE QUI RESTE AU VOUVOIEMENT.** Demandé par Keko :
+     * « on peut dire "piochez 2 cartes" plutôt pour concentration ? »
+     *
+     * *Il rompt bien l'uniformité des quatre, et c'est justifié* : **« pioche »
+     * est le seul d'entre eux qui soit AUSSI un nom du jeu** — le tas des
+     * coins s'appelle comme ça. « Pioche 2 cartes » se lit donc aussi bien
+     * « [la] pioche [a] 2 cartes », et *une phrase qui a deux lectures n'en a
+     * aucune.* Les trois autres — infliger, gagner, soigner — n'ont pas
+     * d'homonyme dans ce jeu, donc rien ne les force à céder.
+     *
+     * **La désambiguïsation passe avant l'uniformité**, et c'est la seule
+     * raison qui peut lui passer devant.
      */
     if (e.type === 'pioche') {
-      l.push(`Pioche <b>${e.montant}</b> carte${e.montant > 1 ? 's' : ''}`)
+      l.push(`Piochez <b>${e.montant}</b> carte${e.montant > 1 ? 's' : ''}`)
     }
     // POINTS D'ACTION, ET PAS « ÉNERGIE » : le mot renvoie au TEMPS, et c'est
     // ce que Keko veut dire — *plus une carte coûte, plus l'action est longue
