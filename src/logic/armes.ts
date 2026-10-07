@@ -465,36 +465,24 @@ export const RONDACHE: Arme = {
  * où une armure voudra du gros bloc brut, il n'y aura qu'à le reposer.*
  */
 
-/**
- * **PROTECTION ET ESQUIVE : le set du Plastron de cuir.** Composé par Keko.
+/*
+ * L'ARMURE LÉGÈRE A DISPARU, et il faut savoir pourquoi pour ne pas la
+ * remettre. Keko : « on va supprimer armure légère ».
  *
- * *Deux cartes, deux réponses à la salve* — l'une sûre et chiffrée, l'autre au
- * hasard. L'Esquive n'a pas de chiffre : **elle ne se compare pas, elle se
- * parie.**
+ * Elle valait 5 de bloc pour 1 PA — *le barème de référence du jeu* — et c'est
+ * ce qui la condamnait : **elle ne disait rien du cuir.** Une armure dont la
+ * stat parle de points d'action n'a pas besoin d'une carte qui parle de bloc,
+ * et c'est la même raison qui avait fait retirer la Protection au tissu : *« ça
+ * protège que dal c'est bizarre »*, puis la Barrière à sa place.
  *
- * **ET ELLE A ABSORBÉ LA GARDE, qui était la MÊME CARTE.** Toutes deux
- * coûtaient 1 PA pour 5 de bloc : *deux noms pour un seul objet*, et je ne
- * l'avais pas vu en composant celle-ci — j'avais écrit « la Protection reprend
- * le barème de la Garde » sans voir que c'était littéralement elle.
- *
- * Ça s'est découvert en câblant les quatre dessins de Keko, et c'est ce qui
- * les rend gratuits : **remplacer la Garde par la Protection ne bouge pas un
- * chiffre**, donc trois armures sur quatre reçoivent leur matière sans qu'on
- * touche au réglage. *Un doublon ne se voit que le jour où l'on cherche à
- * distinguer ce qu'il confond.*
- *
- * *Les coûts sont des placeholders* : Keko a donné les effets, pas les prix.
+ * Ses quatre dessins par matière restent au dépôt (`Protection tissu / cuir /
+ * plate.webp`), et le mécanisme d'héritage de matière avec eux : **le jour où
+ * une armure redonnera du bloc par matière, il n'y aura qu'une entrée de table
+ * à reposer.**
  */
-const PROTECTION: Modele = {
-  nom: 'Armure légère',
-  type: 'combat',
-  cout: 1,
-  degats: 0,
-  effets: [{ type: 'bloc', montant: 5 }],
-}
 
 /**
- * LE BLINDAGE : la Protection de la PLATE, sous son propre nom.
+ * L'ARMURE LOURDE : le bloc de la PLATE, sous son propre nom.
  *
  * Demandé par Keko : « ce serait cool de renommer "protection" de l'armure de
  * plate en "blindage" ou un truc du genre, pour bien différencier les deux
@@ -581,25 +569,53 @@ const BLINDAGE: Modele = {
 }
 
 /**
- * **LA CARTE S'APPELLE AGILITÉ, L'ÉTAT QU'ELLE DONNE S'APPELLE ESQUIVE.**
- * Renommée par Keko.
+ * **LA CARTE REPREND LE NOM DE SON MOT-CLÉ, et c'est un retour en arrière
+ * assumé.** Keko : « Esquive : remplace agilité actuelle ».
  *
- * *C'est le couple Projection / étourdissement, repris ici* : **la carte nomme
- * le GESTE, le mot-clé nomme ce qu'on gagne.** Une carte qui portait le nom de
- * son propre mot-clé le disait deux fois — « Esquive : gagne esquive » — et
- * surtout elle brouillait la seule chose que le jaune du cartouche promet :
- * *qu'il y a une définition à aller lire ailleurs.*
+ * *Le projet avait tranché l'inverse* — « la carte nomme le GESTE, le mot-clé
+ * nomme ce qu'on gagne », le couple Projection / étourdissement — et
+ * l'objection d'alors était qu'une carte portant le nom de son mot-clé le dit
+ * deux fois : « Esquive / Gagne esquive ».
  *
- * Le type interne, lui, ne bouge pas (`esquive`) : il ne se lit nulle part à
+ * **Ce qui a changé, c'est que « Agilité » est désormais pris** par la carte de
+ * point d'action, et *un nom ne peut pas désigner deux cartes du même set.*
+ * Entre une répétition et une collision, la répétition se lit ; la collision,
+ * non.
+ *
+ * Le type interne ne bouge pas (`esquive`) : il ne se lit nulle part à
  * l'écran, et *un renommage traversant `logic/` pour un mot ne vaut pas son
  * risque* — la règle déjà tenue par `energie` et `tresor`.
  */
 const ESQUIVE: Modele = {
-  nom: 'Agilité',
+  nom: 'Esquive',
   type: 'combat',
   cout: 1,
   degats: 0,
   effets: [{ type: 'esquive' }],
+}
+
+/**
+ * L'AGILITÉ : UN POINT D'ACTION, POUR RIEN.
+ *
+ * Composée par Keko avec le set du cuir : « Agilité : coûte 0, gagnez 1 PA ».
+ *
+ * *C'est la stat du cuir dite par le deck* — l'armure qui donne +1 PA donne
+ * aussi une carte qui en rend un. **Les deux moitiés de son identité disent la
+ * même chose**, exactement comme la Robe, dont la Barrière compte la main que
+ * sa stat agrandit.
+ *
+ * **ELLE EST GRATUITE, DONC ELLE NE DILUE PRESQUE PAS** : jouée, elle rend le
+ * point qu'elle n'a pas coûté — *ce qu'elle prend vraiment, c'est une place de
+ * main*, et c'est le seul prix que le concept lui réclame.
+ *
+ * **Son chiffre n'est pas calibré** : Keko a donné l'effet, pas le barème.
+ */
+const AGILITE: Modele = {
+  nom: 'Agilité',
+  type: 'combat',
+  cout: 0,
+  degats: 0,
+  effets: [{ type: 'energie', montant: 1 }],
 }
 
 /**
@@ -725,8 +741,16 @@ export const PLASTRON_DE_CUIR: Armure = {
   matiere: 'cuir',
   pv: 15,
   pa: 1,
+  // **L'ARMURE LÉGÈRE EST PARTIE, et le cuir ne bloque plus du tout.** Tranché
+  // par Keko : « on va supprimer armure légère ; l'armure de cuir donne
+  // désormais Agilité (coûte 0, gagnez 1 PA) et Esquive ».
+  //
+  // *Elle rejoint le tissu sur ce point* — plus aucune carte de bloc franc —
+  // mais par l'autre bout : **le tissu voit plus, le cuir JOUE plus.** Les deux
+  // moitiés du cuir disent désormais la même chose que sa stat, un point
+  // d'action de plus, là où une Protection à cinq ne disait rien de lui.
   set: [
-    { modele: PROTECTION, nombre: 1 },
+    { modele: AGILITE, nombre: 1 },
     { modele: ESQUIVE, nombre: 1 },
   ],
 }

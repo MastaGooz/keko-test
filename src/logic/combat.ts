@@ -648,7 +648,16 @@ function appliquerEffet(etat: EtatCombat, effet: Effet, cible: number, rng: Rng)
       etat.pv = Math.min(etat.pvMax, etat.pv + effet.montant)
       break
     case 'energie':
-      etat.energie = Math.min(etat.energieMax, etat.energie + effet.montant)
+      // **ELLE N'EST PAS PLAFONNÉE PAR LE MAXIMUM**, et c'est l'Agilité qui l'a
+      // montré : première carte du jeu à employer cet effet, elle ne donnait
+      // RIEN quand on la jouait avec la réserve pleine — *donc toujours, un bot
+      // comme un joueur la jouant en premier.* **Une carte qui dit « gagne 1 PA »
+      // doit donner 1 PA**, sinon elle ment.
+      //
+      // *Le maximum dit ce que le TOUR rend* ; une carte qui en donne en plus
+      // est précisément une exception au tour. Et le plafond ne protégeait rien :
+      // **l'énergie non dépensée est perdue à la fin du tour de toute façon.**
+      etat.energie += effet.montant
       break
     case 'bloc':
       etat.bloc += effet.montant

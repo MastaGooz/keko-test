@@ -243,7 +243,16 @@ export function lignes(carte: Carte, valeurAPart = false, armure?: number): stri
     // POINTS D'ACTION, ET PAS « ÉNERGIE » : le mot renvoie au TEMPS, et c'est
     // ce que Keko veut dire — *plus une carte coûte, plus l'action est longue
     // et puissante.* Le code garde `energie` partout, c'est un nom interne.
-    if (e.type === 'energie') l.push(`Gagne <b>+${e.montant}</b> points d'action`)
+    //
+    // **ET IL S'ÉCRIT AVEC L'ORBE**, comme la remise de l'Estoc : *le même
+    // symbole partout*, celui du coin de la carte et du coin de l'écran. Keko
+    // l'a demandé en composant l'Agilité : « Gagnez 1 PA » — et **« PA » n'est
+    // pas un mot, c'est déjà un symbole écrit en lettres**, donc le dessin ne
+    // retire rien au sens.
+    //
+    // *Ça corrige un accord faux au passage* : la ligne disait « +1 pointS
+    // d'action ». **Un jeton n'a pas de pluriel à accorder.**
+    if (e.type === 'energie') l.push(`Gagne {pa:${e.montant}}`)
     if (e.type === 'degatsTous') l.push(`Inflige <d><b>${e.montant}</b></d> à chaque ennemi`)
     // LA RIPOSTE DIT SA DURÉE, là où le bloc ne la dit plus : *le bloc tombe à
     // chaque fin de tour, c'est une règle du jeu ; la riposte, elle, est une

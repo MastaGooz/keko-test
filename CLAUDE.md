@@ -1814,7 +1814,7 @@ prend une ressource différente :
 | | stats | set | ce qu'on va y chercher |
 |---|---|---|---|
 | **Robe** (tissu) | **+1 carte en main** | **Concentration** + **Barrière** | **voir** plus |
-| **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | Armure légère + **Agilité** | **jouer** plus |
+| **Plastron de cuir** (départ) | +15 ♥, **+1 PA** | **Agilité** + Esquive | **jouer** plus |
 | **Armure de plate** | **+30 ♥** | **Armure lourde** + **Blindage** | **encaisser** |
 
 **L'ÉCHELLE DES PV EST 0 / 15 / 30, et elle est de Keko.** Mon balayage avait
@@ -2208,6 +2208,74 @@ celui de la Barrière est celui du bloc : empêcher la salve d'arriver.
 payée sur les étiquettes de la vitrine du zoom. À relire au prochain verbe
 défensif.
 
+
+
+#### LE CUIR NE BLOQUE PLUS : Agilité + Esquive
+
+Tranché par Keko : « on va supprimer armure légère ; l'armure de cuir donne
+désormais Agilité (coûte 0, gagnez 1 PA) et Esquive (remplace agilité
+actuelle) ».
+
+*Les deux moitiés du cuir disent enfin la même chose que sa stat* — un point
+d'action — là où une Armure légère à cinq de bloc ne disait rien de lui. **Il
+rejoint le tissu sur ce point, par l'autre bout** : le tissu voit plus, le cuir
+JOUE plus, et aucun des deux ne pare.
+
+**LA CARTE D'ESQUIVE REPREND LE NOM DE SON MOT-CLÉ, et c'est un retour en
+arrière assumé.** Le projet avait tranché l'inverse — « la carte nomme le GESTE,
+le mot-clé nomme ce qu'on gagne », le couple Projection / étourdissement — et
+l'objection d'alors tient toujours : une carte qui porte le nom de son mot-clé
+le dit deux fois, « Esquive / Gagne esquive ». *Ce qui a changé, c'est que
+« Agilité » est maintenant PRIS*, et **un nom ne peut pas désigner deux cartes
+du même set** : entre une répétition et une collision, la répétition se lit.
+
+**ET LE GAIN DE PA N'ÉTAIT PAS PLAFONNÉ COMME IL FAUT.** L'Agilité est la
+PREMIÈRE carte du jeu à employer l'effet `energie`, et il bornait au maximum du
+tour : jouée réserve pleine — *donc toujours, par un bot comme par un joueur qui
+la joue en premier* — **elle ne donnait rien du tout.** Une carte qui dit
+« gagne 1 PA » doit donner 1 PA, sinon elle ment. *Le maximum dit ce que le TOUR
+rend* ; une carte qui en donne en plus est précisément une exception au tour, et
+le plafond ne protégeait rien puisque **l'énergie non dépensée est perdue de
+toute façon.**
+
+**Elle s'écrit avec l'ORBE** — « Gagne ⬤1 » — comme la remise de l'Estoc : *le
+même symbole partout*. Ça corrige un accord faux au passage, la ligne disant
+« +1 pointS d'action ».
+
+#### CE QUE LA MESURE DIT, ET C'EST SÉVÈRE
+
+400 descentes au fond, trésors pris, même bot :
+
+| set du cuir | Glaive + Rondache (bon marché) | Espadon (cher) |
+|---|---|---|
+| Armure légère + Esquive (avant) | **54 %** | 18 % |
+| Agilité +1 PA + Esquive | 38 % | 14 % |
+| Agilité +2 PA + Esquive | 38 % | **23 %** |
+
+*Voisines* : tissu 63 %, plate 55 %.
+
+**LE SET COÛTE SEIZE POINTS DE SURVIE SUR LE DECK DE DÉPART**, et le chiffre de
+l'Agilité n'y est pour rien : **une sonde à +20 PA par carte donne exactement le
+même résultat.** *L'énergie n'est pas le goulot de ce deck* — la main se vide
+avant la réserve, et c'est précisément ce que la mesure « +1 PA contre +1 carte
+en main » avait établi : **bon marché, c'est la main ; cher, c'est l'énergie.**
+
+**Sur un deck CHER, elle reprend sa place** : à +2 PA elle dépasse l'Armure
+légère (23 % contre 18). *C'est exactement l'appariement arme × armure* que le
+projet cherche — mais il faut savoir qu'il se paie sur le chargement de départ,
+qui est celui que tout le monde voit en premier.
+
+**Le chiffre reste celui de Keko (+1)**, qui a donné l'effet et non le barème.
+*À rouvrir* : +2 au minimum pour que la carte existe, et il restera à décider si
+le cuir a le droit d'être l'armure qu'on ne prend qu'avec une arme chère.
+
+**ET LE BOT A ENCORE MASQUÉ LA MESURE UNE FOIS.** Sa liste de priorités ne
+connaissait pas `energie`, donc les trois variantes rendaient le même chiffre —
+*le même piège que la Cuirasse deux commits plus tôt.* **Une liste de cas est
+une liste qu'on oublie de compléter**, et celle d'un bot de mesure se relit à
+chaque verbe neuf. Ce qui a permis de trancher ensuite entre « bot aveugle » et
+« vrai résultat » : **une sonde à valeur absurde** (+20 PA). Si rien ne bouge
+encore, ce n'est plus le bot.
 
 #### LE BLINDAGE : le troisième profil défensif, et c'est une RÉSISTANCE
 

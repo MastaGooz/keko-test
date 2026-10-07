@@ -52,7 +52,7 @@ function cle(nom: string): string {
 // de la Garde, qu'elle a absorbée (elles étaient la même carte, 1 PA pour 5 de
 // bloc). Ça ne sert qu'au jeu 2D et au fond du 3D : l'image de Keko recouvre le
 // SVG partout ailleurs.
-const ALIAS: Record<string, string> = { taille: 'taillade', 'armure-legere': 'garde' }
+const ALIAS: Record<string, string> = { taille: 'taillade' }
 
 /** L'URL de l'illustration d'un modèle, ou celle du repli. */
 export function art(nom: string): string {
@@ -109,6 +109,7 @@ const IMAGES: Record<string, string> = {
   'coup-de-bouclier': 'Coup de bouclier.webp',
   projection: 'Projection.webp',
   agilite: 'Agilité.webp',
+  esquive: 'Esquive.webp',
   concentration: 'Concentration.webp',
   barriere: 'Barriere.webp',
   // L'ARMURE LOURDE PORTE LE DESSIN DE LA PROTECTION DE PLATE : *le nom du
@@ -181,15 +182,7 @@ const IMAGES_PAR_RARETE: Record<string, Record<string, string>> = {
  * plate ? » Son dessin reste au dépôt — **il resservira le jour où une maille
  * revient en variante rare**, et une entrée suffira à la reposer.
  */
-const PROTECTIONS: Record<string, string> = {
-  tissu: 'Protection tissu.webp',
-  cuir: 'Protection cuir.webp',
-  plate: 'Protection plate.webp',
-}
-
-const IMAGES_PAR_MATIERE: Record<string, Record<string, string>> = {
-  'armure-legere': PROTECTIONS,
-}
+const IMAGES_PAR_MATIERE: Record<string, Record<string, string>> = {}
 
 /**
  * LE DOS DE CARTE, dessiné par Keko — *cadre et logo central, rien d'autre.*
