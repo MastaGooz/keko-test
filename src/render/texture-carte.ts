@@ -1188,10 +1188,51 @@ function charger(url: string): Promise<HTMLImageElement | null> {
 }
 
 /**
- * Peint l'illustration en `cover` : elle remplit la boîte et déborde du côté
- * le plus long. Même cadrage que le `background-size: cover` de la carte 2D,
- * donc une image dessinée pour l'une va dans l'autre.
+ * LE ROGNAGE SE PLAFONNE : une image trop loin du rapport de la carte RENTRE
+ * au lieu de se faire couper.
+ *
+ * `cover` remplit toujours la boîte, donc il rogne autant qu'il faut — ce qui
+ * va très bien tant que l'image est à peu près au gabarit, et détruit celles
+ * qui ne le sont pas. Keko, sur le chat de Schrödinger (960 x 511, rapport
+ * 1,88) : « l'image est centrée mais le dessin de wiki montre le chat sur la
+ * gauche ». En `cover` on lui coupait **63 % de sa largeur.**
+ *
+ * **MESURÉ SUR 500 IMAGES DU CATALOGUE**, et c'est la mesure qui fixe le
+ * chiffre : le rognage médian vaut **8 %** — donc l'immense majorité sont des
+ * portraits verticaux qu'il ne faut surtout pas toucher — et seules **5,4 %**
+ * dépassent le quart. À ce plafond, **aucune image ne couvre moins de 70 % de
+ * la boîte** : *elle reste grande, elle n'est plus amputée.*
+ *
+ * | plafond | cartes touchées | couverture la plus basse |
+ * |---|---|---|
+ * | 10 % | 43 % | 58 % |
+ * | 20 % | 8,0 % | 66 % |
+ * | **25 %** | **5,4 %** | **70 %** |
+ * | 35 % | 1,4 % | 81 % |
+ *
+ * **ET ON NE DÉCALE PAS**, ce qui était l'autre piste : il faudrait savoir OÙ
+ * est le sujet, et **2 754 des 2 973 images sont des JPEG**, donc sans canal
+ * alpha à mesurer. *Un mécanisme qui ne vaudrait que pour les douze SVG du
+ * catalogue n'est pas une règle, c'est une exception* — et sur une photo,
+ * deviner le sujet revient à le couper une fois sur deux. La règle du projet
+ * est écrite dans l'autre sens : **un repère calé sur la marge d'un dessin se
+ * déplace avec le dessin**, et ici il n'y a aucune marge fiable.
+ *
+ * **ET CE QUI NE REMPLIT PAS LA HAUTEUR SE CALE EN HAUT, pas au centre.** Le
+ * bas de la carte passe sous le voile du texte (plein à 78 %) et sous le nom
+ * (peint à 66,5 %), donc *une bande centrée mettrait la moitié du sujet sous
+ * le texte.* C'est la règle du portrait des PNJ au rail, reprise ici.
+ *
+ * Ce qui reste découvert laisse voir le **fond peint** — dégradé, vignettage,
+ * grain — qui est déjà là et n'a rien à apprendre.
+ *
+ * **Sans plafond, le cadrage est celui d'avant au pixel** : c'est l'absence du
+ * paramètre qui dit « ne rien changer ici », comme `caseDeCarte` sans
+ * assiette. Le DÉCOR ne le passe donc pas — il est au gabarit, et le rogner
+ * moins laisserait un trou dans le fond de la carte.
  */
+const PLAFOND_ROGNAGE = 0.25
+
 // Le décor d'une arme est un CANVAS (le fichier viré au rouge), pas une
 // image : les deux portent `width`/`height`, donc le cadrage ne change pas.
 function couvrir(
@@ -1201,11 +1242,16 @@ function couvrir(
   y: number,
   l: number,
   h: number,
+  plafond?: number,
 ): void {
-  const echelle = Math.max(l / image.width, h / image.height)
+  const pleine = Math.max(l / image.width, h / image.height)
+  const rentre = Math.min(l / image.width, h / image.height)
+  const echelle = plafond === undefined ? pleine : Math.min(pleine, rentre / (1 - plafond))
   const il = image.width * echelle
   const ih = image.height * echelle
-  ctx.drawImage(image, x + (l - il) / 2, y + (h - ih) / 2, il, ih)
+  // Calé en haut s'il reste du jeu vertical, centré sinon : `ih < h` ne peut
+  // arriver QUE sous plafond, donc le cas sans plafond garde son centrage.
+  ctx.drawImage(image, x + (l - il) / 2, ih < h ? y : y + (h - ih) / 2, il, ih)
 }
 
 /**
@@ -1998,7 +2044,7 @@ export async function peindreCarte(
     const pctx = petit.getContext('2d')
     if (pctx !== null) {
       pctx.imageSmoothingQuality = 'high'
-      couvrir(pctx, image, 0, 0, petit.width, petit.height)
+      couvrir(pctx, image, 0, 0, petit.width, petit.height, PLAFOND_ROGNAGE)
       /**
        * ET LA LUMIÈRE PREND LA COULEUR DU CIEL. Keko : « quand je zoom sur une
        * arme, l'image affichée est bleue, et certaines des cartes générées
@@ -2046,7 +2092,7 @@ export async function peindreCarte(
 
 
   if (image !== null) {
-    couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+    couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2, PLAFOND_ROGNAGE)
   }
 
   /**
