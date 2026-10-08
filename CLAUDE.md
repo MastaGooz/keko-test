@@ -11339,6 +11339,43 @@ peut, par construction, attraper que ce qui a un métier.
   pas un défaut technique, c'est un autre jeu* — et c'est **une décision de
   design, elle revient à Keko.**
 
+#### COMBIEN DE PERSONNAGES EXISTENT — le plafond est a 400 000, pas a 3 000
+
+Mesure, parce que la question se posera a chaque fois qu'on voudra elargir.
+**CirrusSearch de Wikidata repond en un quart de seconde** la ou le Query
+Service rend 504 : `haswbstatement:P31=Q5` est indexe, un `COUNT` SPARQL ne
+l'est pas. *Quand un compte est impossible a calculer, il est peut-etre deja
+compte ailleurs.*
+
+| | |
+|---|---|
+| humains dans Wikidata | **13 730 437** |
+| dont avec un metier declare | 10 124 413 (74 %) |
+| dont avec une date de naissance | 8 050 910 |
+| dont **avec un portrait** | **1 418 591 (10 %)** |
+| personnages non humains (fiction P31 direct, dieux, creatures, legendes) | ~8 600 |
+
+**Mais le chiffre qui compte est celui de fr.wikipedia**, puisqu'un item sans
+article n'a ni taille, ni vues, ni portrait a montrer. Echantillon de **495
+articles tires au hasard** (`list=random`), nature lue dans Wikidata :
+
+| | |
+|---|---|
+| articles de fr.wikipedia | 2 783 654 |
+| dont **personnages** | **26,9 % -> ~748 000** |
+| dont avec un portrait | 56 % |
+| dont article >= 1 200 caracteres | 95 % |
+| **dont les deux -> le plafond jouable** | **54 % -> ~405 000** |
+
+*Marge de l'echantillon : +/- 4 points.*
+
+**ET C'EST LA CIBLE QUI COUPE, pas les filtres.** On garde 3 000 cartes sur
+~405 000 jouables, soit **0,7 %** — le metier, le seuil de langues et le
+portrait ne font que decider QUI entre dans ces trois mille. *Le catalogue
+n'est pas limite par ce que Wikipedia contient, il est limite par un nombre
+qu'on a choisi.*
+
+
 #### COMMENT FAIT WIKIMASTERS : il ne sélectionne rien
 
 **2 782 075 cartes**, soit exactement le nombre de pages de Wikipédia en
