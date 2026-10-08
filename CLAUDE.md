@@ -11446,150 +11446,147 @@ personnages par des animaux ». Le pipeline, le format et tout ce qui suppose
 **mammifères**, et la structure doit accueillir les autres vertébrés sans
 réécriture — *d'où `animals.json` et non `mammals.json`, et le champ `groupe`.*
 
-### LA RÈGLE QUI PORTE TOUT : une carte est un NOEUD, pas un rang
+### LA RÈGLE : UNE CARTE EST UNE ESPÈCE, et la collection est entière
 
-Posée par Keko, et c'est la seule décision de fond du mode : **une carte n'est
-pas un rang taxonomique fixe, c'est un noeud de l'arbre du vivant, à n'importe
-quel rang — choisi par ce que le grand public sait nommer.**
+Tranché par Keko après avoir vu la première coupe de l'arbre : **« je préfère
+la liste plate, on abandonne l'arbre »**, et **« 200 cartes c'est trop peu, il
+faut la collection de tous les mammifères »**.
 
-- « chauve-souris » est un ORDRE de 1800 espèces et fait **une** carte ;
-- « lion » et « tigre » sont deux ESPÈCES d'un même genre et font **deux**
-  cartes ;
-- « rongeurs » doit se découper en « rat », « écureuil », « castor »,
-  « capybara »… mais pas en 2500 espèces.
+**C'est LUI qui a posé la question qui a tout retourné** : *« pourquoi on
+n'utilise pas direct la liste des mammifères (donc espèces) pour le premier
+build ? »* — et la réponse honnête était qu'on pouvait, que c'était bien plus
+simple, et que ça ne coûtait qu'une chose.
 
-**L'INVARIANT : une espèce réelle tombe dans exactement une carte.** Il se
-vérifie en fin de course et il se dit en tête de la revue — *une coupe qui perd
-des espèces en silence ne se verrait jamais.* Une carte couvre son sous-arbre
-MOINS ce que ses cartes filles couvrent : sans la soustraction, une espèce
-serait comptée à chaque étage et la somme vaudrait plusieurs fois le total.
+#### Ce que ça achète, mesuré
 
-### LA COUPE À PROFONDEUR VARIABLE
-
-On descend depuis Mammalia : un noeud devient une carte s'il **dépasse le seuil
-de notoriété ET porte un nom français**, et on examine alors ses enfants.
-Celui qui ne passe pas est absorbé par la carte au-dessus de lui.
-
-*C'est ce qui donne « chauve-souris » en une carte et « lion » et « tigre » en
-deux* : les enfants de Chiroptera ne passent pas le seuil, ceux de Panthera le
-passent. Le seuil est un paramètre (`--seuil=`), avec trois sorties à comparer.
-
-**LES RESTES DE LA RACINE ont deux issues**, et c'est `--restes=` qui tranche :
-les ordres qui ne passent pas le seuil n'ont aucun parent pour les absorber,
-donc soit leurs espèces se répartissent sur les cartes du premier étage
-(`absorbe`, le défaut), soit elles forment une carte « Autres mammifères »
-(`carte`). *Sans l'un des deux, elles disparaissent — et c'est l'invariant qui
-le dirait.*
-
-### CE QUE CHAQUE SOURCE SAIT FAIRE, ET CE QU'ELLE NE PEUT PAS
-
-Trois API, et le découpage n'est pas un choix d'architecture : il est imposé par
-ce que chacune accepte.
-
-| | ce qu'on y prend | la contrainte qui décide |
-|---|---|---|
-| **GBIF** | l'arbre et les rangs (`species/{key}/children`) | **paginé** : un seul appel sur un grand genre ne rend que les premiers, et `endOfRecords` est le seul signe |
-| **GBIF** | le compte d'espèces (`species/search?…&limit=0`) | *parcourir* le sous-arbre de Rodentia coûterait des milliers d'appels pour un nombre que l'index connaît déjà |
-| **Wikidata** | nom, article, image, UICN, masse | **60 noeuds par requête**, donc c'est là qu'on élague |
-| **Wikipédia** | les redirections de l'article français | 50 titres par appel |
-| **REST pageviews** | 12 mois de vues, fr et en | **UN article par appel** — c'est le poste de coût, et il décide de l'ordre des étapes |
-
-**D'où l'ordre : Wikidata EN MASSE d'abord, les vues ensuite et seulement sur
-les survivants.** Un noeud sans article n'a pas de vues à demander, son score
-est nul, il est absorbé — *c'est le seul élagage qui rende le coût tenable*,
-puisqu'un ordre porte des milliers de genres obscurs.
-
-**DEUX PIÈGES DE LA REQUÊTE WIKIDATA, et les deux sont mesurés :**
-
-- **P2067 (la masse) rend plusieurs lignes par taxon** — une par source, une par
-  sexe — donc sans `GROUP BY` un seul noeud en occupe douze et le lot de soixante
-  en rend sept cents. `SAMPLE` suffit : *on veut un ordre de grandeur, pas la
-  masse d'un individu* ;
-- **la masse passe par `psn:`**, la valeur NORMALISÉE. Wikidata écrit les souris
-  en grammes et les baleines en tonnes ; `psn:` les ramène au kilogramme. *Lire
-  `wdt:P2067` directement rendrait « 20 » pour une souris de vingt grammes.*
-
-### LE NOM FRANÇAIS : les REDIRECTIONS sont la seule source qui tienne
-
-**C'est le point le plus coûteux du mode, et l'exemple fondateur de Keko y
-serait passé à la trappe.** Un noeud ne devient une carte que s'il porte un nom
-français — et pour Chiroptera, les trois sources évidentes échouent :
-
-| source | ce qu'elle rend pour Chiroptera |
+| | |
 |---|---|
-| libellé français de Wikidata | littéralement **« Chiroptera »** |
-| P1843 (nom vernaculaire) | **vide** |
-| `vernacularNames` de GBIF | **aucun français** — et BRUITÉ : « Hamster de Roborovski » pour le capybara |
-| **redirections de l'article fr** | **« Chauve-souris »**, en première position |
+| espèces de mammifères **vivantes** (GBIF) | **6 318** |
+| avec une page française | **3 635** |
+| avec page française **et** une image | **2 620** |
 
-Mesuré sur les six ordres les plus connus, c'est toujours le nom commun qui
-ouvre la liste des redirections : Rodentia → « Rongeur », Cetacea →
-« Cétacés », Artiodactyla → « Artiodactyle », Primates → « Primate ».
+**Et surtout : les six défauts que l'arbre a coûtés venaient TOUS des rangs
+au-dessus de l'espèce.** « Lynx dans la culture », « Castor (genre) »,
+« Vulpes littoralis », les genres latins sans nom, les doublons groupe/animal,
+le bestiaire entier qui manquait — *une espèce, elle, a presque toujours un nom
+français net* : `Canis lupus` s'intitule « Loup », `Vulpes vulpes » « Renard
+roux ». Rien à deviner.
 
-**D'où une cascade, et l'ordre compte** : P1843, puis le libellé français *s'il
-n'est pas le nom scientifique* — le piège d'un libellé qui n'est que son propre
-identifiant, déjà payé ailleurs dans ce projet — puis la première redirection
-non savante, puis le titre de l'article, **signalé** dans la revue. Ce qui finit
-en `-idae`, `-inae`, `-us`, `-ae`… est écarté : *ce qui se termine comme un nom
-de taxon n'est pas un nom commun.*
+S'ajoutent : plus de hiérarchie à tenir, plus d'invariant, plus de parent, et
+deux fois plus rapide.
 
-**Et les redirections ne se demandent QUE pour les noeuds dont le libellé ne
-suffit pas** : c'est un appel par cinquante, autant ne pas le gâcher.
+#### Ce que ça coûte, et c'est une seule chose
 
-### LA RARETÉ VIENT DE LA NOTORIÉTÉ — tranché par Keko
+**Il n'y a plus de carte « chauve-souris ».** C'est un ORDRE : la liste des
+espèces donne « Grand rhinolophe », « Pipistrelle commune », « Murin de
+Daubenton » — et jamais le mot que tout le monde emploie. Même perte pour
+**rongeur, singe, dauphin, baleine, musaraigne, écureuil**.
 
-**Et elle se dit en QUANTILES, pas en seuils fixes.** C'est la conséquence
-directe de sa décision : le score qui décide de la rareté est celui qui a décidé
-de la coupe, donc *un seuil fixe vivrait au-dessus du seuil de coupe, qui est un
-paramètre* — à coupe serrée, toutes les cartes seraient légendaires.
+*C'était exactement ce que la règle de l'arbre promettait*, et Keko l'a échangé
+sciemment contre une collection complète.
 
-Les parts sont celles du mode personnages (70 / 20 / 7,5 / 2,5 %), donc la
-pyramide tient quelle que soit la coupe, et **le script imprime les frontières
-de score obtenues** : c'est ce qu'il faudra figer le jour où le catalogue se
-stabilise.
+#### LES GROUPES REVIENNENT PAR UNE AUTRE PORTE : les rayons
 
-**L'échelle est LOGARITHMIQUE** (`log10` des vues fr + la moitié des anglaises),
-comme pour les personnages et pour la même raison : la notoriété suit une loi de
-puissance, et en linéaire le lion écrase tout le monde.
+**L'ordre et la famille de chaque espèce viennent GRATUITEMENT dans la réponse
+GBIF** qui liste les espèces, et le nom français de l'ordre s'engendre par la
+cascade qui servait à l'arbre — il n'y en a que vingt-sept.
 
-**Les vues portent sur DOUZE MOIS.** L'API REST ne prend qu'un article par
-appel, là où `prop=pageviews` en prend cinquante — mais celle-ci ne remonte qu'à
-soixante jours. *Douze mois valent le coût* : une saison de documentaires ne
-doit pas décider qu'un animal est légendaire.
+*C'est le seul héritage de l'arbre, et c'est le bon* : « Carnivores »,
+« Primates », « Chauve-souris », « Rongeurs » ne sont plus des cartes, ils sont
+les **RAYONS** de la collection (`parOrdre`, dans `logic/animals/types.ts`).
+**Un classeur ne se collectionne pas, il range** — et un catalogue de deux
+mille cinq cents cartes ne se montre pas en une liste.
 
-### DEUX POINTS TRANCHÉS PAR KEKO — les éteints et le pluriel
+**Les redirections Wikipédia gardent donc leur emploi**, et c'est là qu'elles
+sont irremplaçables : pour Chiroptera, le libellé français de Wikidata est
+littéralement « Chiroptera », P1843 est vide, et seules les redirections de
+l'article rendent **« Chauve-souris »**, en première position. Mesuré aussi sur
+Rodentia → « Rongeur », Cetacea → « Cétacés », Primates → « Primate ».
 
-**LES ESPÈCES ÉTEINTES RESTENT.** Keko : « pour l'instant on laisse les éteints ».
+#### IL N'Y A PLUS DE SEUIL DE NOTORIÉTÉ
 
-*Le référentiel GBIF compte **21 100 espèces de mammifères** acceptées contre
-~6 400 vivantes* — il porte les fossiles, et des ordres éteints entiers
-remontent dans l'arbre : Oréodontes, Entélodontes, Hypertragulidés,
-Andrewsarchus. **Ce n'est pas un défaut de l'invariant** : la somme des parties
-égale le tout dans le même référentiel, et c'est tout ce que l'invariant demande.
+On prend **tout ce qui est nommable et illustrable** ; le score ne sert plus
+qu'à la rareté. *Une collection se collectionne entière, sinon ce n'est pas une
+collection.*
 
-*Ce qu'on garde en le gardant* : **le mammouth, le smilodon, le mastodonte** —
-exactement les cartes qu'un jeu de collection veut. Le prix est le bas de
-table : des taxons que personne ne sait nommer. **Mais le seuil de notoriété les
-élimine déjà** — un ordre éteint obscur n'a ni article ni vues, donc son score est
-nul et il se fait absorber. *Le filtre qu'on allait écrire existait déjà sous un
-autre nom.*
+Deux conditions, donc, et elles sont les seules :
 
-**ET LES NOMS RESTENT AU PLURIEL.** Keko : « on peut laisser les noms au
-pluriel ». Wikidata rend « félins », « cervidés », « carnivores »,
-« muridé » — *et un ordre de mille espèces EST un pluriel*, donc le mot dit la
-vérité de la carte : elle couvre une famille, pas un individu.
+- **un nom français**, par la cascade P1843 → titre de l'article → libellé.
+  **Le titre d'article passe AVANT le libellé**, à l'inverse de ce que faisait
+  l'arbre : *le libellé Wikidata d'une espèce est souvent le binôme latin, le
+  titre d'article presque jamais.* Et **le genre seul ne nomme pas une
+  espèce** — `Felis margarita` intitulé « Felis » dirait « un chat » là où la
+  carte est le chat des sables ;
+- **une image sur Commons**, P18 ou, à défaut, l'image d'en-tête de l'article.
 
-**La majuscule, elle, se pose au RENDU** et non dans la donnée — la règle est
-déjà écrite pour les personnages (`enTitre`), et *une donnée engendrée n'a pas
-à porter une convention d'affichage.*
+**ET LE REPLI D'IMAGE EST SÛR ICI**, là où il ne l'était pas pour les
+personnages : *une photo d'en-tête d'article d'espèce animale EST une photo de
+l'animal.* Le mode personnages avait dû le refuser parce que Wikipédia
+illustrait Thanos par un cosplayeur et Mario par un train décoré — un animal
+n'a pas ce problème. **Le repli décide de l'ordre de mille cartes.**
 
-### CE QUI RESTE À TRANCHER PAR KEKO — les animaux
+#### ON NE GARDE QUE LE VIVANT — et c'est un revirement de Keko
 
-- **le seuil de coupe**, à choisir sur les trois sorties ;
-- **`--restes=absorbe` ou `carte`** : répartir les orphelines, ou faire une
-  carte « Autres mammifères » ;
-- **les cartes nommées par le titre de l'article** faute de nom vernaculaire :
-  elles sont listées dans la revue, c'est la passe à la main.
+D'abord « pour l'instant on laisse les éteints », puis **« on va mettre de côté
+les espèces éteintes »** une fois le dégât vu : *le référentiel porte 12 917
+espèces éteintes pour 6 323 vivantes*, donc les deux tiers de l'arbre sont des
+fossiles — et c'est eux qui avaient fait exploser la descente, mille branches de
+dauphins éteints en file pour un gigaoctet de mémoire.
+
+**Le filtre tient en `&isExtinct=false`** sur la recherche GBIF, mesuré sur
+l'endpoint. Prix connu et assumé : **le mammouth et le smilodon sortent du
+catalogue.** Les remettre un jour demandera une liste nommée, pas la réouverture
+du filtre — *on ne rouvre pas douze mille fossiles pour en gagner trois.*
+
+#### CE QUE L'ARBRE A APPRIS, ET QU'IL NE FAUT PAS REPAYER
+
+*L'arbre est abandonné ; ses leçons ne le sont pas.* Six défauts, et chacun a
+sa règle :
+
+1. **UN NOM DÉSIGNE UNE CARTE, PAS DEUX.** Un genre qui ne porte qu'une espèce
+   connue partage son article avec elle, donc « Dama » et « Dama dama »
+   rendaient tous deux « Daim » — vingt doublons, dont « Raton laveur »,
+   « Chimpanzé » et « Éléphant d'Afrique ». *La revue le signale encore*, parce
+   que deux espèces sœurs peuvent partager une redirection ;
+2. **UNE REDIRECTION PEUT ÊTRE UN SOUS-SUJET.** Le genre Lynx sortait nommé
+   « Lynx dans la culture » — une vraie page, mais qui parle des légendes.
+   *Un nom d'animal ne porte pas de mot-outil* : « dans », « selon », « liste » ;
+3. **UNE PARENTHÈSE DE DÉSAMBIGUÏSATION N'EST PAS UN NOM.** « Castor (genre) »,
+   « Puma (genre) », « Lama (genre) » — *ce qui précède la parenthèse EST le
+   nom* ;
+4. **UN SYNONYME LATIN N'EST PAS UN NOM FRANÇAIS.** `Urocyon littoralis`
+   sortait nommé « Vulpes littoralis ». Reconnaissable : la redirection finit
+   par le même mot que le nom scientifique ;
+5. **EXPLORER ET DEVENIR UNE CARTE SONT DEUX QUESTIONS.** Les confondre coûtait
+   *tout le bestiaire connu* — le loup, l'ours, le guépard, le zèbre, la girafe,
+   le kangourou et le panda étaient ABSENTS, parce que leur genre porte un nom
+   latin et que la descente s'arrêtait sur ce nom manquant sans jamais regarder
+   dessous ;
+6. **UNE ABSENCE DE MESURE N'EST PAS UNE MESURE BASSE.** `Vulpes` et `Giraffa`
+   n'ont d'article dans aucune langue, donc un score nul — *non pas parce qu'ils
+   sont obscurs, mais parce qu'on n'a rien pu peser.* Et la correction a demandé
+   sa borne dans la seconde qui a suivi : traverser TOUT ce qu'on ne mesure pas
+   ouvrait l'arbre fossile entier. ***Un rattrapage sans borne est un second
+   bug.***
+
+**La leçon qui les coiffe toutes** : *les cinq premiers défauts étaient des
+problèmes de NOM, et aucun n'existe au rang de l'espèce.* C'est ce qui a rendu
+la question de Keko si juste.
+
+#### CE QUI RESTE À TRANCHER PAR KEKO — les animaux
+
+- **une carte sans image est-elle une carte ?** La règle des personnages dit
+  non, et elle coûte ici de l'ordre de mille espèces. Le pipeline applique
+  « pas d'image, pas de carte » ;
+- **le pluriel et la casse des noms** : Keko a tranché « on peut laisser les
+  noms au pluriel », et la majuscule se pose au RENDU (`enTitre`) — *une donnée
+  engendrée n'a pas à porter une convention d'affichage* ;
+- **les deux mesures du pied d'une carte.** `carte-personnage.ts` affiche une
+  attaque et une défense ; un animal a une masse, un statut UICN, un nombre de
+  vues. **C'est une décision de design, elle revient à Keko** ;
+- **le poids du catalogue et des images** : deux mille cinq cents URL Commons,
+  donc une ressource extérieure. À décider : les servir directement ou les
+  rapatrier.
 
 ### CE QUI CASSERA QUAND LE FORMAT CHANGERA — l'inventaire
 

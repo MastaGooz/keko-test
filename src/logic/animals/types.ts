@@ -2,18 +2,19 @@
  * LE FORMAT D'UNE CARTE-ANIMAL — et c'est le format du mode, pas des
  * mammifères.
  *
- * **UNE CARTE N'EST PAS UN RANG TAXONOMIQUE, C'EST UN NOEUD DE L'ARBRE DU
- * VIVANT, à n'importe quel rang.** Posé par Keko, et c'est la règle qui porte
- * tout : « Chauve-souris » est un ORDRE de 1400 espèces et fait UNE carte,
- * « lion » et « tigre » sont deux espèces d'un même genre et font DEUX cartes.
- * Ce qui décide n'est pas la systématique, c'est **ce que le grand public sait
- * nommer**.
+ * **UNE CARTE EST UNE ESPÈCE.** Tranché par Keko : « je préfère la liste plate,
+ * on abandonne l'arbre » et « il faut la collection de tous les mammifères ».
  *
- * *D'où `rang` et `nb_especes_absorbees`* : le premier dit ce que le noeud EST
- * pour la science, le second ce que la carte COUVRE dans ma coupe. Les deux
- * sont nécessaires — un ordre qui fait une carte absorbe son sous-arbre, et
- * c'est la seule façon de garantir **qu'une espèce réelle tombe dans
- * exactement une carte.**
+ * *Ce que ça remplace* : une coupe à profondeur variable dans l'arbre du
+ * vivant, où une carte pouvait être un ordre entier (« chauve-souris ») ou une
+ * espèce (« lion ») selon ce que le public sait nommer. **L'histoire de cet
+ * abandon est dans `CLAUDE.md`**, et elle valait d'être vécue : les six défauts
+ * qu'elle a coûtés venaient TOUS des rangs au-dessus de l'espèce.
+ *
+ * *Ce qu'on perd, et c'est une seule chose* : il n'y a plus de carte
+ * « chauve-souris », « rongeur » ni « dauphin ». **Les groupes reviennent par
+ * une autre porte** — `ordre` et `famille` classent la collection sans être des
+ * cartes.
  *
  * `groupe` existe pour que le fichier accueille les autres vertébrés sans
  * changer de forme : aujourd'hui « mammifères », demain « oiseaux ». *C'est
@@ -27,28 +28,36 @@ export type RareteAnimal = (typeof RARETES_ANIMAL)[number]
 /**
  * LE STATUT UICN, tel que Wikidata le code (P141).
  *
- * `null` quand l'espèce n'est pas évaluée — ce qui est le cas de la plupart des
- * noeuds au-dessus de l'espèce, puisqu'on n'évalue pas un ordre. *Une carte qui
- * couvre 1400 espèces n'a pas de statut, et c'est juste.*
+ * `null` quand l'espèce n'est pas évaluée — et c'est le cas de beaucoup de
+ * petits mammifères. *Une absence de statut n'est pas un statut rassurant* : le
+ * rendu devra le dire autrement qu'en affichant « LC ».
  */
 export const STATUTS_UICN = ['EX', 'EW', 'CR', 'EN', 'VU', 'NT', 'LC', 'DD'] as const
 export type StatutUicn = (typeof STATUTS_UICN)[number]
 
 export type CarteAnimal = {
-  /** La clé GBIF du noeud, qui est son identité dans l'arbre. */
+  /** La clé GBIF de l'espèce, qui est son identité dans le référentiel. */
   readonly id: string
   /** Le groupe du mode : « mammifères » aujourd'hui, d'autres demain. */
   readonly groupe: string
   /** Le nom que le public emploie. C'est le titre de la carte. */
   readonly nom_fr: string
   readonly nom_scientifique: string
-  /** Le rang RÉEL du noeud (`ORDER`, `GENUS`, `SPECIES`…), pas celui de ma coupe. */
-  readonly rang: string
-  /** La carte parente DANS MA COUPE, ou `null` à la racine du groupe. */
-  readonly parent_id: string | null
-  /** Combien d'espèces réelles cette carte couvre, son propre cas compris. */
-  readonly nb_especes_absorbees: number
-  /** La notoriété, de 0 à 1 : c'est elle qui a fait la coupe ET la rareté. */
+  /**
+   * L'ORDRE ET LA FAMILLE, EN SCIENTIFIQUE ET EN FRANÇAIS.
+   *
+   * **C'est ce qui remplace l'arbre**, et c'est son seul héritage utile : les
+   * groupes que le public nomme — carnivores, primates, chauves-souris — ne
+   * sont plus des cartes mais les RAYONS de la collection. *Un classeur ne se
+   * collectionne pas, il range.*
+   *
+   * Le nom français d'un ordre est engendré comme celui d'une espèce, par la
+   * même cascade : il y en a vingt-sept, donc ça ne coûte rien.
+   */
+  readonly ordre: string
+  readonly ordre_fr: string
+  readonly famille: string
+  /** La notoriété, de 0 à 1, dont la rareté se déduit. */
   readonly score: number
   readonly rarete: RareteAnimal
   readonly statut_uicn: StatutUicn | null
@@ -63,7 +72,6 @@ export type CarteAnimal = {
 export type CatalogueAnimal = {
   readonly genere: string
   readonly groupe: string
-  readonly seuil: number
   readonly cartes: readonly CarteAnimal[]
 }
 
@@ -90,8 +98,11 @@ export function parseCarteAnimal(v: unknown): CarteAnimal | null {
   const groupe = texte(o.groupe)
   const nom_fr = texte(o.nom_fr)
   const nom_scientifique = texte(o.nom_scientifique)
-  const rang = texte(o.rang)
-  if (id === null || groupe === null || nom_fr === null || nom_scientifique === null || rang === null) return null
+  const ordre = texte(o.ordre)
+  const ordre_fr = texte(o.ordre_fr)
+  const famille = texte(o.famille)
+  if (id === null || groupe === null || nom_fr === null || nom_scientifique === null) return null
+  if (ordre === null || ordre_fr === null || famille === null) return null
 
   const rarete = texte(o.rarete)
   if (rarete === null || !(RARETES_ANIMAL as readonly string[]).includes(rarete)) return null
@@ -99,19 +110,18 @@ export function parseCarteAnimal(v: unknown): CarteAnimal | null {
   const statut = texte(o.statut_uicn)
   if (statut !== null && !(STATUTS_UICN as readonly string[]).includes(statut)) return null
 
-  const especes = nombre(o.nb_especes_absorbees)
   const score = nombre(o.score)
   const vues = nombre(o.vues)
-  if (especes === null || score === null || vues === null) return null
+  if (score === null || vues === null) return null
 
   return {
     id,
     groupe,
     nom_fr,
     nom_scientifique,
-    rang,
-    parent_id: texte(o.parent_id),
-    nb_especes_absorbees: especes,
+    ordre,
+    ordre_fr,
+    famille,
     score,
     rarete: rarete as RareteAnimal,
     statut_uicn: statut as StatutUicn | null,
@@ -133,7 +143,7 @@ export function parseAnimaux(json: string): CarteAnimal[] {
   const liste = Array.isArray(brut)
     ? brut
     : typeof brut === 'object' && brut !== null && Array.isArray((brut as { cartes?: unknown }).cartes)
-      ? ((brut as { cartes: unknown[] }).cartes)
+      ? (brut as { cartes: unknown[] }).cartes
       : []
   const cartes: CarteAnimal[] = []
   for (const v of liste) {
@@ -141,4 +151,26 @@ export function parseAnimaux(json: string): CarteAnimal[] {
     if (c !== null) cartes.push(c)
   }
   return cartes
+}
+
+/**
+ * LA COLLECTION SE RANGE PAR ORDRE, et c'est pur exprès.
+ *
+ * *Un catalogue de deux mille cinq cents cartes ne se montre pas en une liste* :
+ * il lui faut des rayons, et les rayons sont les ordres. La fonction vit ici
+ * plutôt que dans le rendu parce qu'elle ne touche à rien du navigateur — et
+ * parce que *deux écrans qui grouperaient chacun de leur côté divergeraient au
+ * premier réglage.*
+ */
+export function parOrdre(cartes: readonly CarteAnimal[]): Map<string, CarteAnimal[]> {
+  const rayons = new Map<string, CarteAnimal[]>()
+  for (const c of cartes) {
+    const lot = rayons.get(c.ordre_fr)
+    if (lot === undefined) rayons.set(c.ordre_fr, [c])
+    else lot.push(c)
+  }
+  // Le plus gros rayon d'abord : *on cherche d'abord là où il y a le plus à
+  // trouver*, et ça met les rongeurs et les chauves-souris en tête, ce qui est
+  // la vérité du groupe.
+  return new Map([...rayons.entries()].sort((a, b) => b[1].length - a[1].length))
 }
