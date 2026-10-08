@@ -6369,3 +6369,48 @@ body {
     border-color: #d8bb79;
   }
 }
+
+/* ===================================================================
+   L'OUVERTURE D'UN PAQUET -- le troisieme mode, derriere `?paquet`.
+
+   Le canvas est transparent comme celui du jeu, donc le fond vit DERRIERE
+   lui : c'est la meme separation que `.fond-3d`, et pour la meme raison --
+   un plan opaque dans la scene cacherait ce qu'on met dessous.
+
+   La pierre sombre du lieu, sans image : *ce qui se decouvre pendant un
+   chargement doit etre le lieu ou l'on arrive.* La lueur chaude au centre
+   dit ou le paquet va s'ouvrir.
+   =================================================================== */
+.paquet-3d {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+
+.paquet-fond {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-color: #0d0c11;
+  background-image: radial-gradient(
+    ellipse 70% 55% at 50% 46%,
+    #241d2e 0%,
+    #15121c 55%,
+    #0b0a0e 100%
+  );
+}
+
+/* LE MOT D'ATTENTE : une mention, pas un titre. On ne decide pas dessus, donc
+   il ne porte ni plaque ni bordure -- la regle de l'etiquette des tas. */
+.paquet-mot {
+  position: fixed;
+  inset: auto 0 1.4rem;
+  z-index: 3;
+  margin: 0;
+  color: #9c927f;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}

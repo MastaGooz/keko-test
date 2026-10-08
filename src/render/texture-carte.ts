@@ -37,7 +37,16 @@ export type CarteAPeindre = {
    */
   id: string
   nom: string
-  cout: number
+  /**
+   * Son coût en points d'action — et `null` quand elle N'EN A PAS.
+   *
+   * Le projet veut « le même écusson sur toute carte qui coûte de l'énergie »,
+   * et c'est précisément pour ça qu'il faut pouvoir n'en poser aucun : *une
+   * orbe de PA sur une carte qui ne se joue pas mentirait sur ce qu'elle est.*
+   * Une carte-personnage du troisième mode n'a pas de coût, donc son coin
+   * haut-gauche reste nu.
+   */
+  cout: number | null
   /**
    * LE COMPTE DE CARTES d'une pièce d'équipement, s'il s'agit d'une pièce.
    *
@@ -130,6 +139,38 @@ export type CarteAPeindre = {
    * texture et l'on n'en verrait qu'une.
    */
   matiere?: string
+  /**
+   * SON ILLUSTRATION DONNÉE PAR URL, au lieu d'être cherchée par nom.
+   *
+   * Tout le jeu cherche son dessin dans une TABLE indexée par nom de modèle —
+   * ce qui suppose un catalogue fermé, écrit à la main. *Le troisième mode
+   * engendre ses cartes depuis Wikidata*, donc son illustration est une URL
+   * qu'il découvre : il n'y a pas de table à écrire, et il ne faut pas qu'il y
+   * en ait une.
+   *
+   * Elle prend la main sur les deux autres chemins, le repli SVG reste
+   * derrière : *un canvas ne dessine rien du tout si l'image manque*, et une
+   * carte sans dessin doit quand même sortir.
+   */
+  illustration?: string
+  /**
+   * SES DEUX MESURES DE COMBAT, aux deux bouts du pied — l'attaque à gauche,
+   * la défense à droite, le type gravé entre elles.
+   *
+   * **ELLES NE PORTENT PAS DE SYMBOLE, elles portent leur COULEUR.** Keko
+   * avait essayé une épée et un bouclier dans le cartouche, puis les a
+   * retirés : « c'est pas terrible, on va supprimer les symboles à part celui
+   * des PA ». *Un dessin qui redit un nom ne l'ajoute pas, il le répète en
+   * moins clair* — et ici il n'y a pas de nom à redire, seulement un chiffre.
+   *
+   * Or le projet a déjà la règle qu'il faut : **un chiffre porte la couleur de
+   * sa nature**, rouge ce qu'on inflige et bleu ce qu'on encaisse. Les deux
+   * teintes sont celles du cartouche, au pixel — *on ne colore pas, on
+   * reprend* — et la position fait le reste, comme sur toute carte de combat
+   * du genre.
+   */
+  attaque?: number
+  defense?: number
 }
 
 /**
@@ -626,10 +667,13 @@ async function illustration(
   nom: string,
   rarete?: string,
   matiere?: string,
+  directe?: string,
 ): Promise<HTMLImageElement | null> {
   const dessin = art(nom)
   const keko = urlImageDeKeko(nom, rarete, matiere)
-  for (const url of [keko, dessin]) {
+  // UNE URL DONNÉE PASSE DEVANT LA TABLE : le troisième mode découvre ses
+  // illustrations, il n'en tient pas la liste. Le repli reste derrière.
+  for (const url of [directe ?? null, keko, dessin]) {
     if (url === null) continue
     const image = await charger(url)
     if (image !== null) return image
@@ -1825,7 +1869,7 @@ export async function peindreCarte(
   if (largeur !== LARGE) ctx.scale(largeur / LARGE, largeur / LARGE)
 
   const [image, decor, symbole] = await Promise.all([
-    illustration(carte.nom, carte.rarete, carte.matiere),
+    illustration(carte.nom, carte.rarete, carte.matiere, carte.illustration),
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
     // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
     // de la famille. Une armure garde le bleu d'origine. Voir `fondTeinte`.
@@ -2092,8 +2136,10 @@ export async function peindreCarte(
     ctx.restore()
   }
 
-  if (carte.compteur === undefined) peindreCout(ctx, carte.cout, symbole)
-  else peindreCompteur(ctx, carte.compteur)
+  // TROIS CAS, PAS DEUX : l'orbe d'un coût, la case d'un compteur de cartes,
+  // ou RIEN du tout. *Un coin nu vaut mieux qu'un symbole qui ment.*
+  if (carte.compteur !== undefined) peindreCompteur(ctx, carte.compteur)
+  else if (carte.cout !== null) peindreCout(ctx, carte.cout, symbole)
   if (carte.valeur !== undefined) peindreValeur(ctx, carte.valeur)
   peindreTextes(ctx, carte, symbole)
   return canvas
@@ -2686,13 +2732,38 @@ function peindreTextes(
 
 /** LE PIED : sa nature gravée, en petites capitales espacées. */
 function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): void {
+  const y = HAUT * 0.955
   ctx.font = `600 ${4.6 * U}px "Barlow Condensed", "Arial Narrow", sans-serif`
   ctx.fillStyle = '#c9b892'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.letterSpacing = `${1.2 * U}px`
-  ctx.fillText(carte.type.toUpperCase(), LARGE / 2, HAUT * 0.955)
+  ctx.fillText(carte.type.toUpperCase(), LARGE / 2, y)
   ctx.letterSpacing = '0px'
+
+  // LES DEUX MESURES ENCADRENT LE TYPE, et leur couleur dit laquelle est
+  // laquelle. Elles sont EN DEHORS du centrage du type : il garde sa place au
+  // milieu de la carte, quels que soient les deux chiffres.
+  if (carte.attaque === undefined && carte.defense === undefined) return
+  ctx.font = `600 ${7.4 * U}px "Grenze Gotisch", Georgia, serif`
+  // LE CERNE SÉPARE PAR LA PROFONDEUR, PAS PAR LA COULEUR : le pied passe sur
+  // le laiton sombre de la coque, donc un chiffre nu s'y noierait — la règle
+  // déjà tenue par le chiffre des jauges.
+  ctx.shadowColor = 'rgba(0,0,0,0.85)'
+  ctx.shadowBlur = 2.2 * U
+  const marge = LARGE * 0.115
+  if (carte.attaque !== undefined) {
+    ctx.fillStyle = ROUGE_DEGATS
+    ctx.textAlign = 'left'
+    ctx.fillText(String(carte.attaque), marge, y)
+  }
+  if (carte.defense !== undefined) {
+    ctx.fillStyle = BLEU_BLOC
+    ctx.textAlign = 'right'
+    ctx.fillText(String(carte.defense), LARGE - marge, y)
+  }
+  ctx.shadowBlur = 0
+  ctx.textAlign = 'center'
 }
 
 /**
@@ -2833,7 +2904,10 @@ const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()
 
 /** Ce qui distingue deux dessins de carte. L'exemplaire n'y entre pas. */
 export function signature(carte: CarteAPeindre): string {
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.effet.join('~')}`
+  // L'ILLUSTRATION ENTRE DANS LA CLÉ : deux personnages peuvent partager un
+  // nom, et c'est leur portrait qui les sépare. *Deux cartes qui ne montrent
+  // pas la même chose ne peuvent pas partager une texture.*
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}`
 }
 
 /**

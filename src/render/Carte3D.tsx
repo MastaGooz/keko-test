@@ -791,8 +791,13 @@ ${nuanceur.fragmentShader}`
   // chaque changement de carte referait aussi son nuanceur, et la carte
   // repasserait par son état sombre.
   useEffect(() => {
-    laiton.color.set(METAL_3D[carte.rarete ?? 'commune'] ?? METAL_3D.commune!)
-  }, [laiton, carte.rarete])
+    // UNE CARTE FACE CACHÉE REPREND LE LAITON COMMUN. *Le dos ne dit rien de ce
+    // qu'il y a dessous* — et c'est le CORPS qu'on voit sur ses bords, donc le
+    // teinter par la rareté annonçait le métal avant le retournement. La règle
+    // était déjà écrite pour la face peinte du dos ; elle manquait au volume.
+    const cran = dos === true ? 'commune' : (carte.rarete ?? 'commune')
+    laiton.color.set(METAL_3D[cran] ?? METAL_3D.commune!)
+  }, [laiton, carte.rarete, dos])
 
   /**
    * UNE PETITE CARTE PREND UNE PETITE TEXTURE.
@@ -1241,18 +1246,37 @@ ${nuanceur.fragmentShader}`
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
       // rareté compilerait son nuanceur.
-      nuanceur.uniforms.uIris!.value = carte.rarete === 'legendaire' ? 1 : 0
+      //
+      // **ET LE MÉTAL S'ÉTEINT AVEC LA FACE.** Quand la carte est face cachée,
+      // c'est CETTE surface qui porte le dos — le `verso` n'existe que le temps
+      // d'une culbute. Le foil continuait donc de courir sur le dos, et à
+      // l'ouverture d'un paquet le diamant se signalait **avant d'être
+      // retourné** : il n'y avait plus rien à révéler. *Le dos ne dit rien de
+      // ce qu'il y a dessous*, c'est déjà la règle qui le garde en laiton.
+      const montre = dos !== true
+      nuanceur.uniforms.uIris!.value = montre && carte.rarete === 'legendaire' ? 1 : 0
       // LE TOUR DE LUMIÈRE EST AU DIAMANT SEUL, et il s'éteint avec la carte :
       // une pièce hors jeu ne rayonne pas.
       nuanceur.uniforms.uTemps!.value = t
-      nuanceur.uniforms.uBordure!.value = carte.rarete === 'legendaire' ? l.vif : 0
-      nuanceur.uniforms.uOr!.value = carte.rarete === 'epique' ? 1 : 0
+      nuanceur.uniforms.uBordure!.value = montre && carte.rarete === 'legendaire' ? l.vif : 0
+      nuanceur.uniforms.uOr!.value = montre && carte.rarete === 'epique' ? 1 : 0
     }
 
     // L'AURÉOLE TOURNE ET RESPIRE. Deux fréquences qui ne retombent jamais en
     // phase, comme le frémissement : *un battement régulier se lit comme un
     // clignotement d'alerte.*
-    const precieux = carte.rarete === 'legendaire' || carte.rarete === 'epique'
+    /**
+     * UNE CARTE FACE CACHÉE NE RAYONNE PAS, SI PRÉCIEUSE SOIT-ELLE.
+     *
+     * *Le dos ne dit rien de ce qu'il y a dessous* — c'est déjà la règle qui le
+     * garde en laiton quand le cadre de la face change de métal. L'auréole, elle,
+     * vit DERRIÈRE la carte, donc elle débordait du dos : à l'ouverture d'un
+     * paquet, le légendaire se signalait **avant même d'être retourné**, et il
+     * n'y avait plus rien à révéler.
+     *
+     * Elle s'allume donc au retournement, ce qui est exactement son moment.
+     */
+    const precieux = (carte.rarete === 'legendaire' || carte.rarete === 'epique') && dos !== true
     if (precieux) {
       const chromatique = carte.rarete === 'legendaire'
       aureole.uniforms.uTemps!.value = t
@@ -1265,6 +1289,11 @@ ${nuanceur.fragmentShader}`
         ((chromatique ? 1.05 : 0.78) +
           Math.sin(t * 1.7) * 0.16 +
           Math.sin(t * 2.6) * 0.09)
+    } else {
+      // ON L'ÉTEINT EXPLICITEMENT : un uniforme garde sa dernière valeur, donc
+      // une carte qui CESSE d'être précieuse — ou qui se retourne — resterait
+      // allumée. *Ce qui ne se remet pas à zéro ne s'éteint jamais.*
+      aureole.uniforms.uForce!.value = 0
     }
 
     // L'APPARITION : la carte s'allume, puis la lumière tombe et l'image

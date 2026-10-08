@@ -11042,6 +11042,155 @@ Wikidata — mesuré, **7 473 personnages de fiction ont un article FR**, tous
 crans confondus. Le découpage par tranche de notoriété n'y est qu'un garde-fou
 de volume.
 
+### L'OUVERTURE D'UN PAQUET — le premier écran, derrière `?paquet`
+
+`render/Paquet3D.tsx`. Cinq cartes face cachée ; on en tape une, elle culbute
+et se révèle. **Choisi par Keko parmi trois écrans** — la collection en grille,
+un plateau d'affrontement, l'ouverture d'un paquet — et c'est celui qui exerce
+le plus de ce qui existe : *le dos de carte, les quatre métaux, l'auréole du
+diamant, la culbute face/dos et son onde.*
+
+**RIEN N'EST RÉÉCRIT : `Carte3D` savait déjà tout faire.** `dos` montre le
+verso, `culbute` fait tourner la carte et part l'onde, `onFixee` dit quand elle
+se pose. L'écran ne fait que le lui demander — *un écran décide de ce que les
+choses VEULENT DIRE, les objets savent comment elles se dessinent.*
+
+**ET LA CARTE-PERSONNAGE EST LA MÊME CARTE** (`render/carte-personnage.ts`) :
+elle se convertit en `CarteAPeindre` et c'est `peindreCarte` qui s'en charge.
+*Un second gabarit aurait dérivé du premier au premier réglage*, la leçon des
+quatre fonctions qui peignaient chacune leur carte avant `corpsCarte`.
+
+Quatre choses ont dû s'ouvrir dans le gabarit, et chacune était fermée pour une
+raison qui ne vaut plus ici :
+
+- **l'illustration par URL** (`illustration?`). Tout le jeu cherche son dessin
+  dans une table indexée par nom de modèle — ce qui suppose un catalogue fermé.
+  *Le troisième mode DÉCOUVRE ses images*, donc il n'y a pas de table à écrire
+  et il ne faut pas qu'il y en ait une ;
+- **le coût devient `number | null`.** Le projet veut « le même écusson sur
+  toute carte qui coûte de l'énergie », et c'est précisément pour ça qu'il faut
+  pouvoir n'en poser aucun : *une orbe de PA sur une carte qui ne se joue pas
+  mentirait sur ce qu'elle est.* Le coin haut-gauche reste donc nu ;
+- **deux mesures au pied** (`attaque`, `defense`), l'attaque à gauche et la
+  défense à droite, le type gravé entre elles. **Elles ne portent pas de
+  symbole, elles portent leur COULEUR** : Keko avait essayé une épée et un
+  bouclier dans le cartouche et les a retirés — *un dessin qui redit un nom le
+  répète en moins clair.* Or le projet a déjà la règle qu'il faut, **un chiffre
+  porte la couleur de sa nature**, et les deux teintes sont celles du cartouche
+  au pixel ;
+- **pas de ciel de famille.** Les quatre ciels ont déjà été désaturés de moitié
+  pour ne pas disputer l'axe de la rareté ; dix domaines en réclameraient dix,
+  ce que le projet a refusé. Le domaine se lit au pied, le portrait occupe la
+  carte.
+
+#### LE DOS NE DIT RIEN DE CE QU'IL Y A DESSOUS — et il le disait trois fois
+
+**Le défaut le plus intéressant de l'étape, et il tuait l'écran** : à
+l'ouverture, le légendaire **rayonnait avant d'être retourné**. Il n'y avait
+plus rien à révéler.
+
+La règle était pourtant déjà écrite — *« le DOS reste laiton : une carte
+retournée ne dit rien de ce qu'elle est »* — mais elle ne portait que sur la
+TEXTURE du dos, qui est bien un singleton sans rareté. **Trois autres chemins
+la contournaient**, et aucun ne se voyait tant qu'aucune carte n'était jouée
+face cachée :
+
+1. **l'auréole chromatique**, posée derrière la carte, donc visible tout autour
+   du dos ;
+2. **le corps extrudé** (`METAL_3D`), qui déborde d'un cheveu : c'est lui qu'on
+   voit sur les bords, et il était teinté par la rareté ;
+3. **le foil du nuanceur** (`uIris`, `uBordure`, `uOr`) — et c'est le plus
+   retors : **le `verso` n'existe QUE pendant une culbute**, donc le reste du
+   temps c'est la FACE qui porte la texture du dos. L'irisation du diamant
+   courait donc dessus.
+
+***Une règle écrite pour une surface ne couvre pas les trois autres qui la
+recouvrent.*** Les trois s'éteignent désormais sur `dos`, et l'auréole se
+remet explicitement à zéro — *un uniforme garde sa dernière valeur, donc ce
+qui ne se remet pas à zéro ne s'éteint jamais.*
+
+#### L'IMAGE COMMONS : ce que `Special:FilePath` ne peut pas faire
+
+**Wikidata rend une URL `Special:FilePath`, et elle est INUTILISABLE dans un
+canvas.** Elle répond par une **redirection 302 qui ne porte aucun en-tête
+CORS**, donc une image chargée en `crossOrigin="anonymous"` — ce qu'il faut
+pour qu'un canvas ne soit pas taché — échoue à la première étape.
+
+**Et ma première mesure disait l'inverse** : `fetch` suit la redirection et
+rend les en-têtes de la réponse FINALE, qui porte bien `ACAO: *`. J'ai donc
+écrit « CORS en `*`, une image Commons entre bien dans un canvas » avant de
+découvrir que non.
+
+***Une mesure prise à l'arrivée ne dit rien des étapes du chemin*** — et pour
+une requête CORS, c'est chaque étape qui compte.
+
+Trois faits mesurés qui portent le correctif :
+
+- **l'URL finale se CALCULE** : MediaWiki range ses fichiers sous les deux
+  premiers caractères du MD5 de leur nom, espaces changés en soulignés. C'est
+  le PIPELINE qui l'écrit (`vignetteCommons`), parce qu'il a `crypto` et que
+  *le catalogue sert le jeu, il ne lui laisse pas une adresse à réparer* ;
+- **les largeurs ne sont plus libres.** Une taille hors de la liste de
+  Wikimedia rend un **400** dont le corps dit « Use thumbnail sizes listed
+  on… ». Mesuré : seules passent **120, 250, 500, 960, 1280**. On prend 960 —
+  la toile d'une carte plafonne à 768 et l'illustration y est peinte en
+  `cover`, donc 500 serait interpolé sur la carte qu'on regarde de près. Elle
+  pèse ~250 Ko contre 2,2 Mo pour l'original ;
+- **le catalogue écrivait du `http://`**, ce que Wikidata rend. Une page servie
+  en https par GitHub Pages **bloque le contenu mixte** : les portraits
+  auraient tous été absents en ligne et tous présents sur la machine de dev, où
+  le serveur de développement parle http. *Un défaut qui ne se voit que déployé
+  se corrige à la source.*
+
+Un `.svg`, un `.tif` ou un `.djvu` se vignette en PNG (et un fichier à pages
+prend un préfixe `page1-`) — vérifié sur le catalogue réel, y compris les
+accents, les parenthèses et l'arabe.
+
+#### LE TIRAGE EST UNE RÈGLE, PAS UN RENDU
+
+`logic/characters/paquet.ts`, pur et seedé : `?paquet=43` rejoue exactement le
+même paquet, comme `?seed=42` rejoue une descente. **Cinq cartes, sans
+doublon, dont au moins une au cran garanti** — *un paquet sans garantie n'est
+pas un paquet, c'est cinq tirages*, et le genre entier repose là-dessus.
+
+**La table des chances n'est PAS la distribution du catalogue, et c'est tout
+l'intérêt.** Le catalogue est ce que Wikidata contient ; un paquet est ce qu'on
+DONNE. *À tirage uniforme, un légendaire sortirait une fois sur cent vingt
+paquets et personne ne les verrait jamais.* Mesuré sur 400 paquets avec la
+table actuelle : commun 46,6 %, peu-commun 22,4 %, rare 27,4 %, épique 3 %,
+légendaire 0,7 %.
+
+**La garantie est tirée en DERNIER**, donc il y a toujours quelque chose au
+bout — mais ce n'est pas forcément la meilleure : les quatre premières peuvent
+tirer plus haut, et *un paquet dont on saurait que le bouquet final est à
+droite se lirait à l'envers.*
+
+**CARTES_PAR_PAQUET, CRAN_GARANTI et CHANCES sont des PLACEHOLDERS** : c'est la
+première chose à régler quand Keko voudra doser l'envie d'en ouvrir un autre.
+
+#### LES CINQ CRANS RETOMBENT SUR QUATRE MÉTAUX — à trancher
+
+L'échelle des alliages a été réglée et mesurée, et le projet a **supprimé** un
+cinquième cran (le laiton) parce que *deux jaunes rompus voisins ne font pas
+deux crans*. **Quatre est donc ce que le dessin peut porter**, alors que les
+cinq crans du mode personnage sont un placeholder que j'ai écrit sans le
+demander.
+
+`commun` et `peu-commun` partagent donc le bronze, et ça tombe juste : ils font
+74 % du catalogue, pour 19,5 % d'argent, 5,8 % d'or et 0,8 % de diamant —
+*exactement la pyramide qu'on attend d'un jeu de collection.* **Si Keko veut
+cinq crans distincts, il faudra un cinquième métal** ; sinon on ramène les
+formules à quatre.
+
+#### Mesuré
+
+Rangée à **90 % de la largeur à tous les formats** du projet (667 x 320 à
+2560 x 1271), 64 à 265 px de marge en haut, 58 à 240 px entre le bas des cartes
+et le bouton. Zéro débordement. La carte fait 110 px à 667 x 320, 139 à
+844 x 390, 420 sur un écran de PC — **au-dessus du plafond de 370 px du jeu**,
+et c'est assumé : *ici on REGARDE les cartes*, là où le plafond vaut pour une
+main de combat.
+
 ### CE QUI RESTE À TRANCHER PAR KEKO
 
 - **les seuils de rareté et les bornes des échelles** : ce sont des

@@ -796,6 +796,55 @@ interface Details {
   metiers: string[]
 }
 
+/**
+ * LA LARGEUR DE VIGNETTE, ET ELLE N'EST PAS LIBRE.
+ *
+ * Wikimedia a fermé les largeurs arbitraires : une taille hors de sa liste
+ * rend un **400** dont le corps dit « Use thumbnail sizes listed on… ».
+ * Mesuré sur un vrai fichier, seules passent : **120, 250, 500, 960, 1280**.
+ *
+ * 960 parce que la toile d'une carte plafonne à 768 de large et que
+ * l'illustration y est peinte en `cover` : à 500 elle serait interpolée sur la
+ * carte qu'on regarde de près. Elle pèse ~250 Ko, contre 2,2 Mo pour
+ * l'original. *Une grille de collection, elle, prendra 250.*
+ */
+const LARGEUR_VIGNETTE = 960
+
+/** Ce que Wikimedia rend en PNG plutôt que dans son format d'origine. */
+const RENDUS_EN_PNG = /\.(svg|tif|tiff|djvu|pdf)$/i
+
+/**
+ * L'URL DIRECTE D'UNE VIGNETTE COMMONS — et c'est le pipeline qui la calcule,
+ * pas le navigateur.
+ *
+ * **Wikidata rend une URL `Special:FilePath`, et elle est INUTILISABLE dans un
+ * canvas.** Elle répond par une redirection 302 qui ne porte AUCUN en-tête
+ * CORS : une image chargée en `crossOrigin="anonymous"` — ce qu'il faut pour
+ * qu'un canvas ne soit pas taché — échoue donc à la première étape. *Et ça ne
+ * se voit pas en la mesurant* : `fetch` suit la redirection et rend les
+ * en-têtes de la réponse FINALE, qui, elle, porte bien `ACAO: *`.
+ *
+ * ***Une mesure prise à l'arrivée ne dit rien des étapes du chemin.***
+ *
+ * L'URL finale se calcule : MediaWiki range ses fichiers sous les deux
+ * premiers caractères du MD5 de leur nom, espaces changés en soulignés. On
+ * l'écrit donc ici, en https — *le catalogue sert le jeu, il ne lui laisse pas
+ * une adresse à réparer.*
+ */
+function vignetteCommons(url: string | undefined): string | null {
+  if (!url) return null
+  const apres = url.split('/Special:FilePath/')[1]
+  if (apres === undefined) return null
+  const fichier = decodeURIComponent(apres).replace(/ /g, '_')
+  if (fichier === '') return null
+  const h = createHash('md5').update(fichier).digest('hex')
+  const e = encodeURIComponent(fichier)
+  const sortie = RENDUS_EN_PNG.test(fichier) ? `${e}.png` : e
+  // Un fichier à PAGES se vignette page par page.
+  const page = /\.(djvu|pdf)$/i.test(fichier) ? 'page1-' : ''
+  return `https://upload.wikimedia.org/wikipedia/commons/thumb/${h[0]!}/${h[0]!}${h[1]!}/${e}/${page}${LARGEUR_VIGNETTE}px-${sortie}`
+}
+
 function annee(iso: string | undefined): number | null {
   if (!iso) return null
   // Wikidata ecrit les dates d'avant notre ere avec un signe : « -0044-03-15T... ».
@@ -855,7 +904,7 @@ GROUP BY ?item`
         nom,
         article,
         description: lire(l, 'description') ?? '',
-        image: lire(l, 'image') ?? null,
+        image: vignetteCommons(lire(l, 'image')),
         naissance: annee(lire(l, 'naissance')),
         mort: annee(lire(l, 'mort')),
         origine: lire(l, 'citoyennete') ?? lire(l, 'oeuvre') ?? null,

@@ -23,7 +23,14 @@ import { verifierVersion } from './ui/version.ts'
 // dise. *Tout ce qui vaut pour une entrée du jeu vaut pour les trois.*
 void verifierVersion(__BUILD_TIME__)
 
-if (new URLSearchParams(location.search).has('r3f')) {
+if (new URLSearchParams(location.search).has('paquet')) {
+  // LE TROISIÈME MODE SE CONSTRUIT À CÔTÉ, PAS À LA PLACE — même motif que
+  // `?r3f` : tant qu'il n'est pas un jeu, la page par défaut reste jouable.
+  void import('./render/monter-paquet.tsx').then(({ monterPaquet }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) monterPaquet(racine)
+  })
+} else if (new URLSearchParams(location.search).has('r3f')) {
   void import('./render/monter.tsx').then(({ monter3d }) => {
     const racine = document.getElementById('app')
     if (racine !== null) monter3d(racine)
