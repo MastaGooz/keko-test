@@ -10968,6 +10968,56 @@ le diagnostic n° 2 faisait croire : il **ferme la récursion** du redécoupage,
 n'a plus de cas `null` à porter. Aucun item n'approche mille Wikipédia — le
 record tourne autour de trois cent trente — donc il ne retire personne.
 
+### LES VUES SONT PAGINÉES, ET UNE RÉPONSE BIEN FORMÉE PEUT ÊTRE VIDE
+
+**Deux défauts l'un derrière l'autre, et aucun des deux ne lève quoi que ce
+soit.** Le premier a mis **2 342 cartes sur 3 000 à zéro vue** — Napoléon,
+Newton, Platon, Confucius — donc à une attaque de 1 : le résumé annonçait un jeu
+uniformément terne et rien ne disait pourquoi.
+
+**1. `prop=pageviews` EST PAGINÉ**, parce que c'est une propriété coûteuse :
+l'API n'en traite qu'une partie des titres par appel et renvoie
+`continue: { pvipcontinue: "Honorius_III" }` pour dire où reprendre. *Rien
+d'autre ne le signale* — pas d'erreur, pas de `warnings`, et les pages rendues
+sont parfaitement formées ; celles qui n'ont pas été traitées n'ont simplement
+pas de champ `pageviews`. ***Une réponse d'API qui porte un `continue` n'est pas
+une réponse, c'est sa première page.***
+
+*Ce qui a mis sur la voie, c'est une ASYMÉTRIE* : la taille était complète sur
+les 4 421 articles et les vues sur 1 081. Les deux viennent du même appel, donc
+ce n'était ni le réseau ni les titres — c'était la propriété. **Deux champs du
+même appel qui n'ont pas le même taux de remplissage désignent le champ, pas
+l'appel.**
+
+**2. LE CHAMP PEUT ÊTRE LÀ ET NE RIEN DIRE.** Quand le service de vues échoue
+sur un titre, l'API rend `pageviews: { "2026-09-08": null, … }` — trente `null`.
+Le champ est donc **présent**, et le garde-fou que je venais d'écrire cherchait
+son *absence* : il annonçait « 0 article sans vues » pendant que cinq cartes
+portaient un zéro faux.
+
+***On ne vérifie pas qu'un champ existe, on vérifie qu'il porte un nombre.***
+J'avais codé la sonde contre le symptôme que je venais de voir plutôt que contre
+le fait dont j'avais besoin — c'est la même faute que le bot de simulation qui
+ne connaissait pas `energie`, et **un garde-fou qui répond « tout va bien » est
+pire que pas de garde-fou.**
+
+Trois choses à ne pas défaire :
+
+- **un lot troué n'est PAS mis en cache.** Le service bloque ses propres
+  réessais trente minutes après un échec (`pvi-cached-error-title`, qui vide la
+  réponse de son `query` entier), donc rappuyer dans la seconde ne sert à rien ;
+  mais garder le lot **gèlerait le trou** jusqu'au prochain `--frais`. *Un cache
+  ne retient que les succès*, et `garder` est ce qui dit lequel. Vérifié : le
+  blocage se lève tout seul, deux des cinq titres rendaient déjà leurs chiffres
+  vingt minutes plus tard ;
+- **la fusion ne remplace jamais des vues utilisables** par une absence ni par
+  trente `null` : chaque tour rend les MÊMES pages en ne complétant que
+  celles qu'il a traitées ;
+- **une carte sans vues mesurables est ÉCARTÉE**, comme une carte sans article
+  mesuré — la marge de candidats (1,5×) est là pour ça. ***Un zéro qu'on sait
+  faux est pire qu'une carte en moins***, parce qu'il traverse les formules sans
+  bruit et ressort en statistique.
+
 ### LE CACHE EST PAR REQUÊTE, PAS PAR ÉTAPE
 
 `scripts/.cache/`, gitignoré, une entrée par requête (nom + empreinte du corps).

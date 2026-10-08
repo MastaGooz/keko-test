@@ -174,9 +174,15 @@ function empreinte(s: string): string {
  * endpoint public coupe assez souvent pour que ca compte.
  *
  * Il ne retient QUE les succes : une reponse vide gardee condamnerait le lot
- * jusqu'au prochain `--frais`.
+ * jusqu'au prochain `--frais`. `garder` dit ce qu'est un succes -- et une
+ * reponse peut etre parfaitement formee sans en etre un (voir `mediawiki`).
  */
-async function cache<T>(nom: string, charge: string, produire: () => Promise<T>): Promise<T> {
+async function cache<T>(
+  nom: string,
+  charge: string,
+  produire: () => Promise<T>,
+  garder?: (v: T) => boolean,
+): Promise<T> {
   const sain = nom.replace(/[^a-zA-Z0-9_-]+/g, '_').slice(0, 60)
   const chemin = new URL(`${sain}.${empreinte(charge)}.json`, CACHE)
   if (!frais && existsSync(chemin)) {
@@ -187,7 +193,7 @@ async function cache<T>(nom: string, charge: string, produire: () => Promise<T>)
     }
   }
   const valeur = await produire()
-  writeFileSync(chemin, JSON.stringify(valeur), 'utf8')
+  if (!garder || garder(valeur)) writeFileSync(chemin, JSON.stringify(valeur), 'utf8')
   return valeur
 }
 
@@ -333,26 +339,116 @@ async function sparqlSouple(nom: string, requete: string): Promise<Ligne[]> {
   }
 }
 
-async function mediawiki<T>(nom: string, params: Record<string, string>): Promise<T | null> {
-  const url = `${WIKI}?${new URLSearchParams({ ...params, format: 'json', formatversion: '2' })}`
-  return cache(`wiki-${nom}`, url, async () => {
-    for (let essai = 1; essai <= ESSAIS; essai++) {
-      try {
-        const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(30_000) })
-        if (!r.ok) throw new Error(`HTTP ${r.status}`)
-        const d = (await r.json()) as T
-        await dors(PAUSE.wiki)
-        return d
-      } catch (e) {
-        if (essai === ESSAIS) {
-          journal(`  wiki ${nom} : abandonne (${e instanceof Error ? e.message : e})`)
-          return null
+/** Une page telle que l'API MediaWiki la rend. */
+interface PageWiki {
+  title?: string
+  length?: number
+  missing?: boolean
+  pageviews?: Record<string, number | null>
+}
+
+interface ReponseWiki {
+  query?: { pages?: PageWiki[]; normalized?: { from: string; to: string }[] }
+  continue?: Record<string, string>
+  error?: { code?: string; info?: string }
+}
+
+/**
+ * LE CHAMP PEUT ETRE LA ET NE RIEN DIRE : quand le service de vues echoue sur
+ * un titre, l'API rend `pageviews: { "2026-09-08": null, ... }` -- trente
+ * `null`. Le champ est donc PRESENT, et une sonde qui teste son absence
+ * repond « tout va bien ».
+ *
+ * ***Ce qu'on verifie n'est pas qu'un champ existe, c'est qu'il porte un
+ * nombre.*** Le premier garde-fou de cette etape cherchait le symptome qu'on
+ * venait de voir -- le champ manquant -- plutot que le fait dont on a besoin.
+ */
+function vuesUtilisables(p: PageWiki): boolean {
+  if (p.missing) return true // Un article disparu n'a rien a mesurer : ce n'est pas un trou.
+  const v = p.pageviews
+  return v !== undefined && Object.values(v).some((n) => typeof n === 'number')
+}
+
+/**
+ * ON SUIT LE `continue` DE L'API, ET C'EST OBLIGATOIRE — pas une optimisation.
+ *
+ * `prop=pageviews` est une propriete COUTEUSE : l'API n'en traite qu'une partie
+ * des titres par appel et renvoie `continue: { pvipcontinue: "…" }` pour dire ou
+ * reprendre. **Rien d'autre ne le signale** : pas d'erreur, pas de `warnings`,
+ * et les pages rendues sont parfaitement formees -- celles qui n'ont pas ete
+ * traitees n'ont simplement pas de champ `pageviews`.
+ *
+ * Mesure du run qui l'a revele : la TAILLE (`prop=info`, bon marche) etait
+ * complete sur 4 421 articles, les VUES ne l'etaient que pour 1 081 sur 5 271 —
+ * et deux mille trois cents cartes se retrouvaient a zero vue, donc a une
+ * attaque de 1. *Napoleon a 72 676 vues par mois ; le catalogue en annoncait
+ * zero.*
+ *
+ * ***Une reponse d'API qui porte un `continue` n'est pas une reponse, c'est sa
+ * premiere page.***
+ *
+ * ET UN LOT TROUE N'EST PAS MIS EN CACHE. Le service de vues bloque ses propres
+ * reessais trente minutes apres un echec (`pvi-cached-error-title`), donc rien
+ * ne sert de rappuyer dans la seconde ; mais garder le lot gelerait le trou
+ * jusqu'au prochain `--frais`. *Un cache ne retient que les succes*, et un lot
+ * dont il manque les vues n'en est pas un : la relance suivante le reprendra.
+ */
+async function mediawiki(nom: string, params: Record<string, string>): Promise<ReponseWiki | null> {
+  const base = { ...params, format: 'json', formatversion: '2' }
+  const complet = (d: ReponseWiki | null) => d !== null && (d.query?.pages ?? []).every(vuesUtilisables)
+  return cache(`wiki3-${nom}`, `${WIKI}?${new URLSearchParams(base)}`, async () => {
+    const pages = new Map<string, PageWiki>()
+    const normalized: { from: string; to: string }[] = []
+    let suite: Record<string, string> = {}
+
+    // Borne de securite : l'API devrait converger en quelques tours, mais une
+    // boucle qui depend d'un jeton distant ne doit pas pouvoir tourner sans fin.
+    for (let tour = 0; tour < 12; tour++) {
+      const url = `${WIKI}?${new URLSearchParams({ ...base, ...suite })}`
+      let d: ReponseWiki | null = null
+      for (let essai = 1; essai <= ESSAIS; essai++) {
+        try {
+          const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(30_000) })
+          if (!r.ok) throw new Error(`HTTP ${r.status}`)
+          d = (await r.json()) as ReponseWiki
+          await dors(PAUSE.wiki)
+          break
+        } catch (e) {
+          if (essai === ESSAIS) {
+            journal(`  wiki ${nom} : abandonne (${e instanceof Error ? e.message : e})`)
+            return null
+          }
+          await dors(PAUSE.wiki * essai * 6)
         }
-        await dors(PAUSE.wiki * essai * 6)
       }
+      if (d === null) return null
+      // Le service de vues refuse un titre : la reponse n'a plus de `query` du
+      // tout, donc le lot s'arrete ici avec ce qu'il a. On le DIT, sinon la
+      // seule trace serait des cartes a zero vue.
+      if (d.error) journal(`  wiki ${nom} : ${d.error.code ?? 'erreur'} -- ${d.error.info ?? ''}`.trimEnd())
+
+      // ON FUSIONNE PAR TITRE : chaque tour rend les MEMES pages, en completant
+      // seulement celles qu'il a traitees. Remplacer effacerait ce que le tour
+      // d'avant avait obtenu -- et on ne remplace des vues utilisables ni par
+      // une absence ni par trente `null`.
+      for (const p of d.query?.pages ?? []) {
+        if (!p.title) continue
+        const deja = pages.get(p.title)
+        if (!deja) {
+          pages.set(p.title, p)
+          continue
+        }
+        const garde = vuesUtilisables(p) || !vuesUtilisables(deja)
+        pages.set(p.title, { ...deja, ...p, pageviews: garde ? p.pageviews : deja.pageviews })
+      }
+      for (const n of d.query?.normalized ?? []) normalized.push(n)
+
+      if (!d.continue) return { query: { pages: [...pages.values()], normalized } }
+      suite = d.continue
     }
-    return null
-  })
+    journal(`  wiki ${nom} : continuation trop longue, lot incomplet`)
+    return { query: { pages: [...pages.values()], normalized } }
+  }, complet)
 }
 
 function paquets<T>(xs: T[], taille: number): T[][] {
@@ -794,14 +890,9 @@ async function mesurerArticles(titres: string[]): Promise<Map<string, Mesure>> {
   journal(`Mesure des articles FR : ${titres.length} titres en ${lots.length} paquets`)
   const mesures = new Map<string, Mesure>()
   let fait = 0
+  let manquantes = 0
   for (const lot of lots) {
-    type Reponse = {
-      query?: {
-        pages?: { title?: string; length?: number; missing?: boolean; pageviews?: Record<string, number | null> }[]
-        normalized?: { from: string; to: string }[]
-      }
-    }
-    const d = await mediawiki<Reponse>(`info-${empreinte(lot.join('|'))}`, {
+    const d = await mediawiki(`info-${empreinte(lot.join('|'))}`, {
       action: 'query',
       prop: 'info|pageviews',
       pvipdays: '30',
@@ -814,6 +905,14 @@ async function mesurerArticles(titres: string[]): Promise<Map<string, Mesure>> {
     for (const { from, to } of d?.query?.normalized ?? []) versDemande.set(to, from)
     for (const p of d?.query?.pages ?? []) {
       if (!p.title || p.missing) continue
+      // UNE CARTE SANS VUES MESURABLES N'EST PAS UNE CARTE A ZERO VUE : on ne
+      // l'enregistre pas, et elle sera ecartee comme un article non mesure. La
+      // marge de candidats est la pour ca. *Un zero qu'on sait faux est pire
+      // qu'une carte en moins*, parce qu'il traverse les formules sans bruit.
+      if (!vuesUtilisables(p)) {
+        manquantes++
+        continue
+      }
       const vues = Object.values(p.pageviews ?? {}).reduce<number>((s, v) => s + (v ?? 0), 0)
       const m = { taille: p.length ?? 0, vues }
       mesures.set(p.title, m)
@@ -823,6 +922,9 @@ async function mesurerArticles(titres: string[]): Promise<Map<string, Mesure>> {
     fait += lot.length
     if (fait % 1000 < 50) journal(`  ${fait}/${titres.length}`)
   }
+  // UN CATALOGUE A ZERO VUE NE SE VOIT PAS DANS LE RESUME : l'attaque tombe a 1
+  // et tout paraît simplement terne. On le dit donc ici, en clair.
+  if (manquantes > 0) journal(`  ${manquantes} article(s) sans vues mesurables, ecarte(s) -- relancer les recuperera`)
   return mesures
 }
 
