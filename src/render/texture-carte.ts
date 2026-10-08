@@ -1218,10 +1218,39 @@ function charger(url: string): Promise<HTMLImageElement | null> {
  * est écrite dans l'autre sens : **un repère calé sur la marge d'un dessin se
  * déplace avec le dessin**, et ici il n'y a aucune marge fiable.
  *
- * **ET CE QUI NE REMPLIT PAS LA HAUTEUR SE CALE EN HAUT, pas au centre.** Le
- * bas de la carte passe sous le voile du texte (plein à 78 %) et sous le nom
- * (peint à 66,5 %), donc *une bande centrée mettrait la moitié du sujet sous
- * le texte.* C'est la règle du portrait des PNJ au rail, reprise ici.
+ * **ET TOUT SE CALE EN HAUT — ce qui déborde comme ce qui manque.** Keko :
+ * « parfois l'image est coupée en hauteur, tu crois qu'on pourrait adapter la
+ * hauteur/largeur d'une manière plus adéquate ? »
+ *
+ * *Les deux cas tombent sous la même raison* : **le bas de la carte passe sous
+ * le voile du texte** (plein à 78 %) **et sous le nom** (peint à 66,5 %). Ce
+ * qui manque en bas ne se voit pas ; ce qu'on y coupe ne se perd pas.
+ *
+ * **Ce que le centrage coûtait, mesuré sur 85 portraits** : 19 % sont plus
+ * hauts que le gabarit, donc rognés en hauteur — et centrés, **ils perdaient
+ * la MOITIÉ de ce rognage par le HAUT, c'est-à-dire la tête.**
+ *
+ * | | rapport | coupé | dont EN HAUT |
+ * |---|---|---|---|
+ * | Hokusai | 0,48 | 25 % | **13 %** |
+ * | Mourad II | 0,57 | 19 % | **9 %** |
+ * | Hannibal Barca | 0,64 | 10 % | **5 %** |
+ *
+ * *Sur un portrait, le visage est en haut* — c'est vrai d'une photo
+ * d'identité, d'un buste peint et d'une estampe en pied. **Caler en haut ne
+ * perd donc jamais le sujet, et ce qu'il sacrifie était déjà sous le texte.**
+ *
+ * **ET ON NE DÉCALE PAS AU JUGÉ**, ce qui était l'autre piste : il faudrait
+ * savoir OÙ est le sujet, et **2 754 des 2 973 images sont des JPEG**, donc
+ * sans canal alpha à mesurer. *Un mécanisme qui ne vaudrait que pour les douze
+ * SVG du catalogue n'est pas une règle, c'est une exception* — et sur une
+ * photo, deviner le sujet revient à le couper une fois sur deux. La règle du
+ * projet est écrite dans l'autre sens : **un repère calé sur la marge d'un
+ * dessin se déplace avec le dessin**, et ici il n'y a aucune marge fiable.
+ * *Le haut, lui, n'est pas une devinette : c'est une propriété du genre.*
+ *
+ * Ce qui reste découvert laisse voir le **fond peint** — dégradé, vignettage,
+ * grain — qui est déjà là et n'a rien à apprendre.
  *
  * Ce qui reste découvert laisse voir le **fond peint** — dégradé, vignettage,
  * grain — qui est déjà là et n'a rien à apprendre.
@@ -1249,9 +1278,11 @@ function couvrir(
   const echelle = plafond === undefined ? pleine : Math.min(pleine, rentre / (1 - plafond))
   const il = image.width * echelle
   const ih = image.height * echelle
-  // Calé en haut s'il reste du jeu vertical, centré sinon : `ih < h` ne peut
-  // arriver QUE sous plafond, donc le cas sans plafond garde son centrage.
-  ctx.drawImage(image, x + (l - il) / 2, ih < h ? y : y + (h - ih) / 2, il, ih)
+  // CALÉ EN HAUT DÈS QU'IL Y A UN PLAFOND, qu'il reste du jeu ou qu'on
+  // déborde : *ce qui sort de la carte sort par le bas, là où le texte est*.
+  // Sans plafond, le `cover` remplit exactement et il n'y a rien à décider —
+  // c'est le décor, et l'absence du paramètre dit « ne rien changer ici ».
+  ctx.drawImage(image, x + (l - il) / 2, plafond === undefined ? y + (h - ih) / 2 : y, il, ih)
 }
 
 /**
