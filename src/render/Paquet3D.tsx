@@ -17,10 +17,33 @@ import { Bouton3D } from './Bouton3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import { carteDeLAnimal } from './carte-animal.ts'
+import { carteDuPersonnage } from './carte-personnage.ts'
 import { chargerAnimaux } from '../ui/animaux.ts'
+import { loadCharacters } from '../ui/personnages.ts'
 import { createRng } from '../logic/rng.ts'
 import { CARTES_PAR_PAQUET, ouvrirPaquet, parCran } from '../logic/paquet.ts'
 import type { CarteAnimal } from '../logic/animals/types.ts'
+import type { CharacterCard } from '../logic/characters/types.ts'
+
+/**
+ * LES DEUX CATALOGUES COHABITENT, LE TEMPS QUE KEKO TRANCHE.
+ *
+ * Les animaux REMPLACENT les personnages — c'est sa décision — mais *le
+ * pipeline des personnages ne se supprime pas avant validation*, et le reste
+ * est intact : le catalogue, le type, les formules et le convertisseur de
+ * carte. **Il ne manquait donc qu'une porte pour les revoir**, et elle coûte
+ * quatre lignes.
+ *
+ * `?paquet&perso` rouvre l'ancien mode. Même motif que `?sillage=`, `?cadre=`
+ * et `?fond=image` : *ce qui a servi à choisir doit rester ouvrable, même une
+ * fois le choix fait.* Le jour où les personnages partent pour de bon, c'est
+ * ce drapeau qui tombe en premier.
+ *
+ * **Les deux passent par le MÊME tirage** (`logic/paquet.ts`), qui ne demande
+ * à une carte que son identité et son cran : c'est précisément pour ça qu'il a
+ * quitté le dossier des personnages.
+ */
+type CarteDuMode = CarteAnimal | CharacterCard
 
 /**
  * LA RANGÉE SE DIMENSIONNE SUR LA PLACE, jamais à une taille écrite à la main.
@@ -38,7 +61,9 @@ function tailleDeLaRangee(largeurVisible: number, hauteurVisible: number): numbe
 }
 
 export function Paquet3D(): React.ReactElement {
-  const [catalogue, setCatalogue] = useState<CarteAnimal[] | null>(null)
+  /** `?paquet&perso` rejoue l'ancien catalogue — voir `CarteDuMode`. */
+  const personnages = new URLSearchParams(location.search).has('perso')
+  const [catalogue, setCatalogue] = useState<CarteDuMode[] | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   /** Le numéro du paquet : il change à chaque ouverture, et il seede le tirage. */
   const [numero, setNumero] = useState(0)
@@ -54,7 +79,7 @@ export function Paquet3D(): React.ReactElement {
 
   useEffect(() => {
     let vivant = true
-    void chargerAnimaux().then((cartes) => {
+    void (personnages ? loadCharacters() : chargerAnimaux()).then((cartes: CarteDuMode[]) => {
       if (!vivant) return
       if (cartes.length === 0) setErreur('Catalogue vide ou introuvable.')
       else setCatalogue(cartes)
@@ -62,7 +87,7 @@ export function Paquet3D(): React.ReactElement {
     return () => {
       vivant = false
     }
-  }, [])
+  }, [personnages])
 
   useEffect(() => {
     const suivre = () => setFenetre({ l: window.innerWidth, h: window.innerHeight })
@@ -98,7 +123,10 @@ export function Paquet3D(): React.ReactElement {
    * sans une seule erreur en console. *C'est le défaut le plus coûteux de tout
    * ce moteur, et il ne dit rien du tout.*
    */
-  const aPeindre = useMemo(() => paquet.map(carteDeLAnimal), [paquet])
+  const aPeindre = useMemo(
+    () => paquet.map((c) => ('groupe' in c ? carteDeLAnimal(c) : carteDuPersonnage(c))),
+    [paquet],
+  )
 
   const toutRevele = paquet.length > 0 && paquet.every((c) => revelees.has(c.id))
 
