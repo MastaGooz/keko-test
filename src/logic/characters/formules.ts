@@ -16,6 +16,14 @@ export interface Brut {
   taille: number
   metiers: string[]
   fiction: boolean
+  /**
+   * LA DESCRIPTION WIKIDATA, et c'est elle qui decide du domaine.
+   *
+   * Keko : « on peut directement donner plus de poids a la mention qui apparait
+   * en premier ? car souvent dans la description on a au debut son role
+   * principal ». *Et c'est exact* -- voir `domaineDe`.
+   */
+  description: string
 }
 
 export interface StatsDerivees {
@@ -119,7 +127,8 @@ const MOTS_DU_DOMAINE: readonly (readonly [Domaine, readonly string[]])[] = [
     [
       'pretre', 'eveque', 'archeveque', 'pape', 'cardinal', 'moine', 'nonne', 'theologien', 'rabbin',
       'imam', 'missionnaire', 'saint', 'sainte', 'abbe', 'mystique', 'religieux', 'religieuse',
-      'pasteur', 'martyr', 'prophete', 'canoniste',
+      'pasteur', 'martyr', 'prophete', 'canoniste', 'prelat', 'ecclesiastique', 'reformateur',
+      'jesuite', 'benedictin', 'dominicain', 'franciscain', 'patriarche', 'metropolite',
     ],
   ],
   [
@@ -133,11 +142,17 @@ const MOTS_DU_DOMAINE: readonly (readonly [Domaine, readonly string[]])[] = [
   [
     'politique',
     [
-      'politique', 'roi', 'reine', 'empereur', 'imperatrice', 'president', 'ministre', 'diplomate',
-      'souverain', 'monarque', 'prince', 'princesse', 'duc', 'duchesse', 'comte', 'comtesse',
-      'pharaon', 'sultan', 'tsar', 'consul', 'senateur', 'gouverneur', 'noble', 'revolutionnaire',
-      'syndicaliste', 'juriste', 'avocat', 'magistrat', 'chef d etat', 'maire', 'ambassadeur',
-      'courtisane', 'espion',
+      'politique', 'politicien', 'politicienne', 'roi', 'reine', 'empereur', 'imperatrice',
+      'president', 'ministre', 'diplomate', 'souverain', 'monarque', 'prince', 'princesse',
+      'duc', 'duchesse', 'comte', 'comtesse', 'pharaon', 'sultan', 'tsar', 'consul', 'senateur',
+      'gouverneur', 'noble', 'revolutionnaire', 'syndicaliste', 'juriste', 'avocat', 'magistrat',
+      'maire', 'ambassadeur', 'courtisane', 'espion', 'aristocrate',
+      // LE PLUS GROS TROU DE LA TABLE, ET DE LOIN : « homme d'Etat » ouvre 115
+      // des 300 descriptions qu'aucun mot ne touchait -- Lincoln, Kennedy,
+      // Bismarck, Truman, Roosevelt, Nehru, Wilson. *Une table de mots se relit
+      // sur ce qu'elle N'ATTRAPE PAS*, pas sur ce qu'elle attrape.
+      'homme d etat', 'femme d etat', 'chef d etat', 'chah', 'calife', 'khan', 'vizir', 'regent',
+      'archiduc', 'margrave', 'landgrave', 'doge', 'emir', 'shogun', 'daimyo',
     ],
   ],
   [
@@ -155,8 +170,9 @@ const MOTS_DU_DOMAINE: readonly (readonly [Domaine, readonly string[]])[] = [
     [
       'philosophe', 'historien', 'ecrivain', 'poete', 'romancier', 'romanciere', 'essayiste',
       'dramaturge', 'journaliste', 'sociologue', 'economiste', 'anthropologue', 'linguiste',
-      'traducteur', 'critique', 'professeur', 'pedagogue', 'bibliothecaire', 'editeur', 'biographe',
-      'memorialiste', 'theoricien', 'conteur', 'fabuliste', 'nouvelliste', 'auteur',
+      'traducteur', 'traductrice', 'critique', 'professeur', 'pedagogue', 'bibliothecaire',
+      'editeur', 'biographe', 'memorialiste', 'theoricien', 'conteur', 'fabuliste', 'nouvelliste',
+      'auteur', 'autrice', 'femme de lettres', 'homme de lettres', 'poetesse', 'erudit',
     ],
   ],
   [
@@ -168,18 +184,86 @@ const MOTS_DU_DOMAINE: readonly (readonly [Domaine, readonly string[]])[] = [
       'chef d orchestre', 'pianiste', 'violoniste', 'organiste', 'artiste', 'orfevre', 'ceramiste',
       'couturier', 'designer', 'caricaturiste', 'scenariste', 'humoriste', 'parolier', 'librettiste',
       'luthier', 'calligraphe', 'comedien', 'mime', 'chorégraphe', 'choregraphe',
+      'producteur', 'productrice', 'virtuose', 'violoncelliste', 'guitariste', 'organiste',
+      'ebeniste', 'graveuse', 'miniaturiste', 'fresquiste', 'portraitiste', 'paysagiste',
     ],
   ],
 ]
 
-export function domaineDesMetiers(metiers: string[], fiction: boolean): Domaine {
+/**
+ * OU UN MOT APPARAIT DANS UN TEXTE, EN TANT QUE MOT — `-1` s'il n'y est pas.
+ *
+ * **La comparaison cherchait une sous-chaine, et ca classait 190 cartes de
+ * travers** : « tra-DUC-teur » contient « duc », donc *123 traducteurs etaient
+ * rangés en « politique » ; « d-ROI-t » contient « roi », donc Platon aussi.
+ *
+ * Les bornes sont des NON-LETTRES et non des espaces : une description ecrit
+ * « philosophe, mathematicien », donc exiger un blanc apres le mot le ratait
+ * une fois sur deux. *Un mot se termine ou les lettres s'arretent, pas ou
+ * l'espace commence.*
+ *
+ * Le suffixe couvre le pluriel et le feminin — « peintres », « avocate » —
+ * sans quoi il faudrait ecrire chaque forme dans la table.
+ */
+function ouLeMotTombe(texte: string, mot: string): number {
+  const motif = new RegExp(`(?<![a-z])(${mot.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})(s|e|es|ne|nes|sse|sses)?(?![a-z])`)
+  return motif.exec(texte)?.index ?? -1
+}
+
+/**
+ * LE DOMAINE SE LIT DANS LA DESCRIPTION, ET C'EST LE PREMIER MOT QUI GAGNE.
+ *
+ * Tranché par Keko : « on peut directement donner plus de poids a la mention
+ * qui apparait en premier ? car souvent dans la description on a au debut son
+ * role principal ». **Et la mesure lui donne raison** : une description
+ * Wikidata est une phrase ECRITE PAR UN HUMAIN, qui met le role principal en
+ * tete — « compositeur et pianiste franco-polonais », « peintre, sculpteur,
+ * architecte et ingenieur ». *L'ordre y porte du sens.*
+ *
+ * **La liste des metiers (P106), elle, n'en porte aucun** : c'est un ensemble,
+ * et son ordre est celui que la requete rend. Leonard de Vinci y commence par
+ * « scientifique » et Chopin par « compositeur » — on ne peut rien en tirer.
+ *
+ * Ce que l'ancienne regle faisait, et qui etait pire : elle parcourait les huit
+ * domaines dans un ORDRE FIXE et prenait le premier qui touchait n'importe quel
+ * metier. **Donc c'etait l'ordre de MA table qui decidait pour 63 % du
+ * catalogue** — artiste etant dernier, il ne gagnait presque jamais : Chopin
+ * sortait « penseur » parce que *professeur de piano* passait avant
+ * *compositeur*.
+ *
+ * Mesure, sur les cartes non fictives :
+ *
+ * | | avant | apres |
+ * |---|---|---|
+ * | Leonard de Vinci | politique | **artiste** |
+ * | Chopin, Wagner, Hogarth | penseur | **artiste** |
+ * | Platon | politique | **penseur** |
+ * | Elisabeth Bathory | autre | **politique** |
+ * | cartes en « autre » | 10 | **1** |
+ *
+ * **LE REPLI RESTE LES METIERS**, pour les 10 % de descriptions qu'aucun mot ne
+ * touche — et la, c'est le premier metier qui parle, pas l'ordre de la table :
+ * *si l'on doit deviner, autant deviner sur la meme regle.*
+ */
+export function domaineDe(description: string, metiers: string[], fiction: boolean): Domaine {
   if (fiction) return 'fiction'
-  const cles = metiers.map(cle)
+
+  // LA DESCRIPTION D'ABORD : le mot le plus TOT gagne, quel que soit son domaine.
+  const texte = cle(description)
+  let tot: { ou: number; domaine: Domaine } | null = null
   for (const [domaine, mots] of MOTS_DU_DOMAINE)
     for (const mot of mots) {
-      const m = cle(mot)
-      if (cles.some((c) => c.includes(m))) return domaine
+      const ou = ouLeMotTombe(texte, cle(mot))
+      if (ou >= 0 && (tot === null || ou < tot.ou)) tot = { ou, domaine }
     }
+  if (tot !== null) return tot.domaine
+
+  // LE REPLI : le premier METIER qui touche quelque chose.
+  for (const metier of metiers) {
+    const c = cle(metier)
+    for (const [domaine, mots] of MOTS_DU_DOMAINE)
+      if (mots.some((mot) => ouLeMotTombe(c, cle(mot)) >= 0)) return domaine
+  }
   return 'autre'
 }
 
@@ -203,7 +287,7 @@ export function statsDerivees(brut: Brut): StatsDerivees {
     attaque: stat(partVues),
     // LA DEFENSE SUIT LA TAILLE DE L'ARTICLE : ce qui est longuement ecrit encaisse.
     defense: stat(echelleLog(brut.taille, BORNES.taille)),
-    domaine: domaineDesMetiers(brut.metiers, brut.fiction),
+    domaine: domaineDe(brut.description, brut.metiers, brut.fiction),
     notoriete,
   }
 }

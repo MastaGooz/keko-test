@@ -7,7 +7,7 @@
 // meme porte que le `StoragePort` — ce dont `logic/` a besoin du monde
 // exterieur lui est INJECTE.
 
-/** Le domaine d'un personnage, deduit de ses metiers (P106). */
+/** Le domaine d'un personnage, lu dans sa description (voir `domaineDe`). */
 export type Domaine =
   | 'militaire'
   | 'politique'

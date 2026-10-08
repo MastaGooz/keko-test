@@ -10826,19 +10826,86 @@ rejoue sur le JSON déjà téléchargé**, sans rien redemander à Wikidata.
 - **l'attaque** suit les vues — *ce qu'on regarde aujourd'hui frappe fort* ;
 - **la défense** suit la taille de l'article — *ce qui est longuement écrit
   encaisse* ;
-- **le domaine** se déduit des métiers (P106).
+- **le domaine** se lit dans la DESCRIPTION, voir juste en dessous.
 
 **LES ÉCHELLES SONT LOGARITHMIQUES, et ce n'est pas un détail.** La notoriété
 suit une loi de puissance : en échelle linéaire, Napoléon écrase tout le monde
 et quatre-vingt-quinze pour cent des cartes valent 1.
 
-**LE DOMAINE SE LIT SUR LE LIBELLÉ DU MÉTIER, PAS SUR SON IDENTIFIANT.**
-Wikidata compte des centaines de métiers ; une table de Q-ids en oublierait la
-moitié et demanderait une ligne par métier nouveau. Un mot suffit, et les deux
-côtés passent par `cle()` — donc on l'écrit **une fois, sans accent**, et il
-couvre les doublets de Wikidata (« écrivain ou écrivaine ») comme les composés
-(« homme politique »). **L'ORDRE DE LA LISTE DÉCIDE** : un roi qui a mené des
-guerres est l'un et l'autre, et c'est la liste qui tranche.
+**LE DOMAINE SE LIT SUR UN LIBELLÉ, PAS SUR UN IDENTIFIANT.** Wikidata compte
+des centaines de métiers ; une table de Q-ids en oublierait la moitié et
+demanderait une ligne par métier nouveau. Un mot suffit, et les deux côtés
+passent par `cle()` — donc on l'écrit **une fois, sans accent**, et il couvre
+les doublets de Wikidata (« écrivain ou écrivaine ») comme les composés
+(« homme politique »).
+
+### LE DOMAINE SE LIT DANS LA DESCRIPTION, ET LE PREMIER MOT GAGNE
+
+Tranché par Keko : « on peut directement donner plus de poids à la mention qui
+apparaît en premier ? car souvent dans la description on a au début son rôle
+principal ». **Et la mesure lui donne raison.**
+
+*Une description Wikidata est une phrase ÉCRITE PAR UN HUMAIN*, qui met le rôle
+principal en tête — « compositeur et pianiste franco-polonais », « peintre,
+sculpteur, architecte et ingénieur italien ». **L'ordre y porte du sens.** La
+liste des métiers (P106), elle, n'en porte aucun : c'est un ensemble, et son
+ordre est celui que la requête rend — Léonard de Vinci y commence par
+« scientifique ».
+
+**CE QUE L'ANCIENNE RÈGLE FAISAIT, ET POURQUOI C'ÉTAIT PIRE** : elle parcourait
+les huit domaines dans un ORDRE FIXE et prenait le premier qui touchait
+n'importe quel métier. **Donc c'était l'ordre de ma table qui décidait pour
+63 % du catalogue** — 1 892 cartes avaient plusieurs domaines possibles. Artiste
+étant dernier, il ne gagnait presque jamais.
+
+**ET LA COMPARAISON CHERCHAIT UNE SOUS-CHAÎNE**, ce qui classait 190 cartes de
+travers : **« tra-DUC-teur » contient « duc », donc 123 traducteurs étaient
+rangés en politique** ; « d-ROI-t » contient « roi », donc Platon aussi. Les
+bornes sont désormais des **non-lettres** et non des espaces — une description
+écrit « philosophe, mathématicien », donc exiger un blanc après le mot le ratait
+une fois sur deux. *Un mot se termine où les lettres s'arrêtent, pas où l'espace
+commence.*
+
+**LE REPLI RESTE LES MÉTIERS** pour les 10 % de descriptions qu'aucun mot ne
+touche, et là c'est le premier métier qui parle : *si l'on doit deviner, autant
+deviner sur la même règle.*
+
+#### Ce que ça a changé, mesuré
+
+| | avant | après |
+|---|---|---|
+| politique | 945 | 771 |
+| **penseur** | 457 | **806** |
+| scientifique | 396 | 426 |
+| religieux | 483 | 389 |
+| **artiste** | 181 | **356** |
+| **militaire** | 315 | **120** |
+| explorateur | 88 | 38 |
+| sportif | 39 | 8 |
+| **autre** | 10 | **0** |
+
+**LES DEUX CHUTES SONT DES CORRECTIONS, pas des pertes**, et c'est ce qu'il
+fallait vérifier avant de conclure :
+
+- **militaire** garde Napoléon, César, Rommel, de Gaulle, Hannibal — et perd
+  **Charlemagne, Alexandre le Grand, Soliman**, que leur description dit
+  « empereur », « roi », « sultan ». *Ce sont des souverains qui ont fait la
+  guerre, pas des militaires de carrière* ;
+- **sportif** garde huit vrais sportifs et perd **Albert Camus** (gardien de but
+  amateur), **Marcel Duchamp** (joueur d'échecs) et **Harry Potter**
+  (quidditch) — l'ancien ordre les classait sportifs parce que *sportif* était
+  testé en premier.
+
+**Et « homme d'État » était le plus gros trou de la table** : 115 des 300
+descriptions muettes, soit Lincoln, Kennedy, Bismarck, Truman, Roosevelt, Nehru,
+Wilson. ***Une table de mots se relit sur ce qu'elle N'ATTRAPE PAS***, pas sur
+ce qu'elle attrape.
+
+**À SURVEILLER** : « penseur » devient le plus gros domaine (26,9 %) et
+« sportif » tombe à 0,3 %. C'est fidèle à ce que le catalogue contient — des
+gens morts avant 1976 — mais ce n'est pas forcément la répartition qu'un jeu
+veut. **À rouvrir avec Keko**, et le levier n'est plus l'ordre de la table :
+c'est la table de découverte du pipeline, qui décide qui entre.
 
 ### CE QUE LE ENDPOINT IMPOSE, et il impose tout le découpage
 

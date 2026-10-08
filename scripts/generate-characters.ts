@@ -1141,6 +1141,8 @@ async function main(): Promise<void> {
       taille: m.taille,
       metiers: d.metiers,
       fiction: c.fiction,
+      // LE DOMAINE SE LIT DANS LA DESCRIPTION : voir `domaineDe`.
+      description: d.description,
     })
     cartes.push({
       id: c.id,
