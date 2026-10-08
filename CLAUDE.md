@@ -11557,21 +11557,37 @@ appel, là où `prop=pageviews` en prend cinquante — mais celle-ci ne remonte 
 soixante jours. *Douze mois valent le coût* : une saison de documentaires ne
 doit pas décider qu'un animal est légendaire.
 
+### DEUX POINTS TRANCHÉS PAR KEKO — les éteints et le pluriel
+
+**LES ESPÈCES ÉTEINTES RESTENT.** Keko : « pour l'instant on laisse les éteints ».
+
+*Le référentiel GBIF compte **21 100 espèces de mammifères** acceptées contre
+~6 400 vivantes* — il porte les fossiles, et des ordres éteints entiers
+remontent dans l'arbre : Oréodontes, Entélodontes, Hypertragulidés,
+Andrewsarchus. **Ce n'est pas un défaut de l'invariant** : la somme des parties
+égale le tout dans le même référentiel, et c'est tout ce que l'invariant demande.
+
+*Ce qu'on garde en le gardant* : **le mammouth, le smilodon, le mastodonte** —
+exactement les cartes qu'un jeu de collection veut. Le prix est le bas de
+table : des taxons que personne ne sait nommer. **Mais le seuil de notoriété les
+élimine déjà** — un ordre éteint obscur n'a ni article ni vues, donc son score est
+nul et il se fait absorber. *Le filtre qu'on allait écrire existait déjà sous un
+autre nom.*
+
+**ET LES NOMS RESTENT AU PLURIEL.** Keko : « on peut laisser les noms au
+pluriel ». Wikidata rend « félins », « cervidés », « carnivores »,
+« muridé » — *et un ordre de mille espèces EST un pluriel*, donc le mot dit la
+vérité de la carte : elle couvre une famille, pas un individu.
+
+**La majuscule, elle, se pose au RENDU** et non dans la donnée — la règle est
+déjà écrite pour les personnages (`enTitre`), et *une donnée engendrée n'a pas
+à porter une convention d'affichage.*
+
 ### CE QUI RESTE À TRANCHER PAR KEKO — les animaux
 
-- **LES FOSSILES.** Le référentiel GBIF compte **21 100 espèces de mammifères**
-  acceptées, contre ~6 400 vivantes : il porte les fossiles, et des ordres
-  éteints entiers remontent dans l'arbre (Oréodontes, Entélodontes,
-  Hypertragulidés). *Ce n'est pas un défaut de l'invariant* — la somme des
-  parties égale le tout dans le même référentiel — mais c'est une décision de
-  contenu : **un mammouth est une carte désirable, un Andrewsarchus
-  probablement pas.** Rien n'est filtré aujourd'hui ;
 - **le seuil de coupe**, à choisir sur les trois sorties ;
 - **`--restes=absorbe` ou `carte`** : répartir les orphelines, ou faire une
   carte « Autres mammifères » ;
-- **le pluriel et la casse des noms vernaculaires** : Wikidata rend « félins »,
-  « cervidés », « carnivores » — au pluriel et en bas de casse. *La majuscule se
-  pose au rendu* (la règle est déjà écrite pour les personnages), le pluriel non ;
 - **les cartes nommées par le titre de l'article** faute de nom vernaculaire :
   elles sont listées dans la revue, c'est la passe à la main.
 
