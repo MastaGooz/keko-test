@@ -1,18 +1,22 @@
 /**
- * L'entrée : le jeu par défaut, le prototype de carte derrière `?proto`, et
- * **le moteur 3D derrière `?r3f`**.
+ * L'ENTRÉE DU JEU.
  *
- * Le gabarit « Serment de cendre » est porté dans le jeu ; la planche du
- * prototype reste accessible pour juger une retouche de carte à part, sans
- * gagner un combat pour la voir.
+ * **LE MOTEUR 3D EST LA PAGE PAR DÉFAUT, et le jeu 2D n'existe plus.** Tranché
+ * par Keko : « supprime complètement tout ce qui se rapporte au jeu 2D, on
+ * garde l'extraction ».
  *
- * LE MOTEUR 3D SE CONSTRUIT À CÔTÉ, PAS À LA PLACE. Tant qu'il n'a pas
- * rattrapé ce qui se joue aujourd'hui, la page par défaut reste le jeu
- * jouable : Keko teste depuis son téléphone, et une réécriture qui commence
- * par casser la page le laisse sans rien pendant des semaines.
+ * *C'était la condition écrite depuis le début de la réécriture* — « le moteur
+ * 3D se construit derrière `?r3f`, PAS à la place du jeu : tant qu'il n'a pas
+ * rattrapé ce qui se joue, la page par défaut reste la version jouable ». Il
+ * l'a rattrapée : armurerie, descente entière, butin, mort et retour au hub.
+ * **Le garde-fou tombe quand ce qu'il protégeait est arrivé.**
  *
- * Les trois branches sont des imports DYNAMIQUES : React et three ne sont
- * téléchargés que si on demande `?r3f`. La page par défaut garde son poids.
+ * `?r3f` reste accepté et ne fait plus rien : *tous les liens déjà donnés à
+ * Keko le portent*, et une adresse qu'on a distribuée ne doit pas cesser de
+ * marcher le jour où elle devient inutile.
+ *
+ * Les imports sont DYNAMIQUES : React et three pèsent 311 Ko gzip, et la
+ * branche `?paquet` n'a aucune raison de charger la descente — ni l'inverse.
  */
 import './ui/styles.css'
 import { verifierVersion } from './ui/version.ts'
@@ -23,28 +27,26 @@ import { verifierVersion } from './ui/version.ts'
 // dise. *Tout ce qui vaut pour une entrée du jeu vaut pour les trois.*
 void verifierVersion(__BUILD_TIME__)
 
-if (new URLSearchParams(location.search).has('paquet')) {
-  // LE TROISIÈME MODE SE CONSTRUIT À CÔTÉ, PAS À LA PLACE — même motif que
-  // `?r3f` : tant qu'il n'est pas un jeu, la page par défaut reste jouable.
+const parametres = new URLSearchParams(location.search)
+
+if (parametres.has('paquet')) {
+  // LE TROISIÈME MODE — les paquets d'animaux, et `&perso` rejoue l'ancien
+  // catalogue de personnages. Il reste à côté du jeu plutôt que dedans : tant
+  // qu'il n'est pas un jeu, il ne prend pas la page.
   void import('./render/monter-paquet.tsx').then(({ monterPaquet }) => {
     const racine = document.getElementById('app')
     if (racine !== null) monterPaquet(racine)
   })
-} else if (new URLSearchParams(location.search).has('r3f')) {
-  void import('./render/monter.tsx').then(({ monter3d }) => {
-    const racine = document.getElementById('app')
-    if (racine !== null) monter3d(racine)
-  })
-} else if (new URLSearchParams(location.search).has('ecusson')) {
+} else if (parametres.has('ecusson')) {
+  // La planche des symboles de coût : *ce qui a servi à choisir doit rester
+  // ouvrable, même une fois le choix fait.*
   void import('./render/planche-ecusson.ts').then(({ montrerPlancheEcusson }) => {
     const racine = document.getElementById('app')
     if (racine !== null) void montrerPlancheEcusson(racine, __BUILD_TIME__)
   })
-} else if (new URLSearchParams(location.search).has('proto')) {
-  void import('./ui/proto.ts').then(({ montrerProto }) => {
-    const racine = document.getElementById('app')
-    if (racine !== null) montrerProto(racine, __BUILD_TIME__)
-  })
 } else {
-  void import('./main.ts')
+  void import('./render/monter.tsx').then(({ monter3d }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) monter3d(racine)
+  })
 }

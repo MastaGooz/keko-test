@@ -291,30 +291,16 @@ export function lignes(carte: Carte, valeurAPart = false, armure?: number): stri
   return l
 }
 
-/**
- * LE REPLI EN CLAIR, pour tout ce qui ne sait pas dessiner les jetons.
+/*
+ * `enClair` A DISPARU AVEC LE JEU 2D. C'était le repli qui rendait `{pa:1}` en
+ * « 1 PA » et `{coeur}` en « ♥ » pour un moteur qui ne peint pas de jeton —
+ * *un moteur qui ne sait pas montrer une chose ne doit pas cesser de la dire*.
  *
- * Le moteur 3D peint `{pa:1}` en symbole ; le jeu 2D, lui, n'a que du texte,
- * et *un moteur qui ne sait pas montrer une chose ne doit pas cesser de la
- * dire* — la règle déjà tenue par la valeur d'un butin.
+ * **Il n'y a plus qu'un moteur, et il les peint tous.** La règle, elle, reste
+ * vraie : le jour où un second rendu arrive — une infobulle, un export, un
+ * écran de texte — c'est elle qu'il faudra reposer, et `git log` en garde la
+ * forme exacte.
  */
-export function enClair(ligne: string): string {
-  // LES QUATRE BALISES DE COULEUR DISPARAISSENT ICI, elles ne deviennent pas du
-  // gras : le DOM n'a qu'un accent par carte, et **le gras est déjà écrit dans
-  // le texte** depuis que les deux axes sont séparés. Les convertir mettrait
-  // « Inflige » en gras et en accent, alors qu'il n'est que coloré en 3D.
-  //
-  // **ET CE RETRAIT N'EST PAS UN CONFORT POUR `<s>`** : c'est une vraie balise
-  // HTML, celle du texte barré. *Les trois appels du DOM passent par ici* —
-  // vérifié — mais un jour où l'un l'oublierait, un chiffre de soin sortirait
-  // rayé. C'est le prix d'une balise à une lettre, et il est connu.
-  ligne = ligne.replace(/<\/?[kdps]>/g, '')
-  // ET LE COEUR DEVIENT SON CARACTÈRE. *Un moteur qui ne sait pas montrer une
-  // chose ne doit pas cesser de la dire* — la règle déjà tenue par la valeur
-  // d'un butin. Le 2D ne peint pas de jeton, mais la police a le signe.
-  ligne = ligne.replace(/\{coeur\}/g, '♥')
-  return ligne.replace(/\{pa:(\d+)\}/g, '<b>$1</b> PA')
-}
 
 /**
  * LE GLOSSAIRE : ce que fait un mot-clé, dit UNE FOIS.

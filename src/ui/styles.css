@@ -1,4 +1,3 @@
-@import './carte.css';
 
 /* Prototype jetable. Le style ne sert qu'à deux choses : rendre le système
    lisible au doigt, et tenir l'écran court. Chaque couleur porte une
@@ -436,16 +435,6 @@ body {
   box-shadow: inset 0 1px 0 #ffffff40;
 }
 
-.plaquette {
-  /* Le chiffre de la jauge deborde vers le bas de 4 a 5 px : on lui laisse
-     passer, sinon il vient s'asseoir sur le nom. */
-  margin-top: 0.3125rem;
-  display: flex;
-  align-items: baseline;
-  gap: 0.3125rem;
-  max-width: 100%;
-}
-
 .creature .nom {
   font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
   font-size: 0.75rem;
@@ -534,8 +523,6 @@ body {
   text-align: center;
 }
 
-
-
 /* Le gabarit commun : tout tient sur une ligne, la jauge absorbe le reste.
    La bordure et la hauteur sont réservées en permanence — sans ça, viser une
    carte fait grandir les lignes et tout l'écran saute sous le doigt. */
@@ -553,28 +540,6 @@ body {
   color: inherit;
   font: inherit;
   text-align: left;
-}
-
-/* Un jeton carré plutôt qu'un chiffre nu : le combattant a un corps à l'écran,
-   et la tape a de quoi se poser. */
-.ordinal {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border: 1px solid var(--trait);
-  border-radius: 6px;
-  background: #1e1e26;
-  color: var(--ennemi);
-  font-size: 0.8125rem;
-}
-
-.sigil {
-  width: 1.125rem;
-  height: 1.125rem;
-  display: block;
 }
 
 .rangs:last-of-type .ordinal {
@@ -598,38 +563,6 @@ body {
   border-radius: 999px;
   background: #2a2a33;
   overflow: visible;
-}
-
-/* Le chiffre se pose PAR-DESSUS le remplissage, en position absolue : il ne
-   doit ni pousser la barre ni etre coupe par elle quand elle se vide. Et il est
-   plus HAUT qu'elle -- c'est voulu, il deborde de part et d'autre. */
-.chiffre-pv {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
-  font-size: 0.75rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-  color: var(--fg);
-  /* Le contour sombre : le chiffre passe sur du rouge vif comme sur du fond
-     noir, il doit se lire sur les deux. */
-  /* Trois ombres et non deux : le chiffre deborde desormais sur le corps de la
-     creature et sur le fond, en plus du rouge de la jauge. Il lui faut un
-     cerne franc pour tenir sur les trois. */
-  text-shadow:
-    0 0 2px #000,
-    0 0 4px #000,
-    0 1px 2px #000;
-  pointer-events: none;
-}
-
-.sur-pv {
-  opacity: 0.6;
-  font-weight: 600;
 }
 
 .remplissage {
@@ -669,12 +602,6 @@ body {
   background: #3a1d1d;
   color: var(--ennemi);
   font-weight: 700;
-}
-
-/* Dans combien de tours, quand ce n'est pas pour maintenant. */
-.delai {
-  font-size: 0.625rem;
-  opacity: 0.75;
 }
 
 /* Une carte est visée : les ennemis deviennent touchables. */
@@ -1032,22 +959,8 @@ body {
   flex: 1 1 auto;
 }
 
-.finTour {
-  border-left-color: var(--trait);
-}
-
 .finTour .cout {
   color: var(--ennemi);
-}
-
-.encombrement {
-  margin: 0;
-  font-size: 0.6875rem;
-  color: var(--muted);
-}
-
-.encombrement strong {
-  color: var(--fg);
 }
 
 /* --- fin de combat -------------------------------------------------------- */
@@ -1062,45 +975,6 @@ body {
 .reprise {
   display: flex;
   gap: 0.5rem;
-}
-
-.secondaire {
-  min-height: 2.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  border-left-width: 1px;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.8125rem;
-}
-
-.journal {
-  margin-top: 0;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--trait);
-  color: var(--muted);
-  font-size: 0.6875rem;
-}
-
-.journal p {
-  margin: 0 0 0.125rem;
-}
-
-/* --- le curseur de l'expérience ------------------------------------------ */
-
-/* Pas une mécanique de jeu : le réglage qui rend l'hypothèse testable. */
-.cupidite {
-  display: flex;
-  align-items: center;
-  gap: 0.375rem;
-  flex-wrap: wrap;
-}
-
-.etiquette {
-  font-size: 0.6875rem;
-  color: var(--muted);
 }
 
 .pastille {
@@ -1133,25 +1007,6 @@ body {
 .perdu {
   color: var(--ennemi);
   font-variant-numeric: tabular-nums;
-}
-
-/* --- le coup se voit ------------------------------------------------------ */
-
-/* Le chiffre saute au-dessus du corps touche puis s'efface. Il est FIXE sur
-   la page et non pose dans le corps : la chute declenche un nouveau rendu, qui
-   l'effacerait en plein vol. */
-/* LA CARTE JOUEE S'ABAT SUR SA CIBLE. Elle quitte la main au lacher, puis se
-   remontre la ou elle agit : le coup avait un depart et une consequence, il lui
-   manquait un trajet.
-
-   Posee sur la RACINE, comme le chiffre de degats : un rendu la balaierait en
-   plein vol, et le coup en declenche un. */
-.carte-abattue {
-  position: fixed;
-  z-index: 34;
-  translate: -50% -50%;
-  pointer-events: none;
-  animation: abattue 0.43s linear forwards;
 }
 
 /* Bornee par le CORPS et non par la main : c'est un element de la scene. Elle
@@ -1216,19 +1071,6 @@ body {
   text-shadow: 0 2px 6px #000, 0 0 0.75rem #3ddc7a66;
 }
 
-.degats-voles {
-  position: fixed;
-  z-index: 35;
-  transform: translateX(-50%);
-  pointer-events: none;
-  font-size: 1.125rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--fg);
-  text-shadow: 0 2px 6px #000c;
-  animation: envol 0.42s ease-out forwards;
-}
-
 .rang {
   position: relative;
 }
@@ -1285,29 +1127,6 @@ body {
   background-attachment: fixed;
 }
 
-/* --- l'entete et le panneau de reglages ----------------------------------- */
-
-.entete {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.reglages {
-  flex: none;
-  min-height: 2rem;
-  padding: 0 0.625rem;
-  border: 1px solid var(--trait);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-size: 0.6875rem;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
 /* Les commandes de test vivent HORS DU FLUX. En portrait sur un telephone
    elles poussaient le combat sous le bord de l'ecran : le joueur devait
    scroller pour jouer, ce qui suffit a fausser un test de sensation. */
@@ -1358,17 +1177,7 @@ body {
   padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
 }
 
-/* L'entete est de la plomberie : elle ne doit pas manger l'ecran de jeu. */
-.entete {
-  margin-bottom: -0.125rem;
-}
-
 .build {
-  font-size: 0.5625rem;
-}
-
-.reglages {
-  min-height: 1.5rem;
   font-size: 0.5625rem;
 }
 
@@ -1425,56 +1234,6 @@ body {
   gap: 0.25rem;
 }
 
-/* Le chiffre, a la meme echelle que l'orbe : c'est une reserve, pas un decor. */
-.pv-chiffre {
-  min-width: 2.75rem;
-  padding: 0.125rem 0.4375rem;
-  border: 1px solid #3f86b8;
-  border-radius: 999px;
-  background: #101a22;
-  color: #cfe9ff;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  font-size: 0.875rem;
-  text-align: center;
-  white-space: nowrap;
-}
-
-/* LE BLOC, a cote des PV et dans la meme forme : c'est une reserve lui aussi.
-   Il n'a PAS de place reservee -- il ne dure qu'un tour, et une case vide en
-   permanence dirait qu'il manque quelque chose. */
-.bloc-chiffre {
-  padding: 0.125rem 0.4375rem;
-  border: 1px solid #6f7f93;
-  border-radius: 999px;
-  background: #171d26;
-  color: #d6e2f0;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  font-size: 0.8125rem;
-  white-space: nowrap;
-}
-
-/* Le maximum en retrait : on lit d'abord ce qu'il RESTE. */
-.pv-max {
-  color: #6f8ea6;
-  font-weight: 400;
-  font-size: 0.75rem;
-}
-
-/* Ce qu'on encaissera a la fin du tour. Il n'apparait que s'il y a une menace :
-   une place vide se lit mieux qu'un tiret qu'il faut interpreter. */
-.menace-pv {
-  padding: 0.0625rem 0.3125rem;
-  border: 1px solid #7a3a3a;
-  border-radius: 999px;
-  background: #2a1414;
-  color: #f0b9b9;
-  font-size: 0.75rem;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
 /* Rien ne le menace ce tour-ci : l'intention s'eteint sans disparaitre, pour
    que la place ne bouge pas. */
 .intention.calme {
@@ -1498,10 +1257,6 @@ body {
 .cartes {
   padding-top: var(--degagement);
   min-height: calc(var(--emerge) + var(--degagement));
-}
-
-.journal {
-  display: none;
 }
 
 /* --- les paliers : recompense, sortie, fin --------------------------------- */
@@ -1624,25 +1379,6 @@ body {
   color: #e8a05c;
 }
 
-/* Les deux boutons du point de sortie : la seule question du jeu. */
-.issue-choix {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.1875rem;
-  flex: 1 1 0;
-  min-width: 0;
-  min-height: 3.75rem;
-  padding: 0.75rem 0.5rem;
-  border: 1px solid var(--trait);
-  border-radius: 12px;
-  background: #ffffff08;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
 .issue-choix .quoi {
   font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
   font-size: 1rem;
@@ -1664,10 +1400,6 @@ body {
   background: linear-gradient(#32211e, #221816);
 }
 
-.issue-choix:active {
-  transform: scale(0.99);
-}
-
 .feuille.extrait .titre {
   color: #8fd8a8;
 }
@@ -1686,13 +1418,6 @@ body {
   max-width: 34rem;
 }
 
-/* La piece a ranger : elle se glisse, donc le navigateur ne doit pas
-   interpreter le geste comme un defilement. */
-.butin-piece {
-  touch-action: none;
-  cursor: grab;
-}
-
 .butin-piece .carte {
   width: 7rem;
   max-width: 7rem;
@@ -1700,24 +1425,6 @@ body {
 
 .butin-piece.saisie {
   opacity: 0.35;
-}
-
-/* Le fantome qui suit le doigt pendant le glisser. */
-/* Le fantome qui suit le doigt ne capte JAMAIS le pointeur, lui ni rien de ce
-   qu'il contient : c'est sous lui qu'on cherche la case visee. Le `*` n'est pas
-   une precaution de style -- sans lui, la carte clonee redemande `auto` et le
-   depot devient introuvable. */
-.fantome,
-.fantome * {
-  pointer-events: none;
-}
-
-.fantome {
-  position: fixed;
-  z-index: 60;
-  opacity: 0.92;
-  transform: translate(-50%, -50%) rotate(-4deg) scale(1.05);
-  filter: drop-shadow(0 12px 24px #000c);
 }
 
 .sac {
@@ -1825,25 +1532,12 @@ body {
   }
 }
 
-.survole-refus {
-  border-style: solid;
-  border-color: #ff5a4a;
-  background: #ff3b2a1f;
-  box-shadow: 0 0 0 1px #ff5a4a, 0 0 1rem #ff3b2a55;
-}
-
 /* Le slot vide allume aussi sa carte fantome, sinon seul le bouton (invisible)
    change et rien ne se voit. */
 .slot-equip.survole .carte-fantome,
 .slot-pile.survole .carte-fantome {
   border-color: var(--joueur);
   background: #5cc8ff24;
-}
-
-.slot-equip.survole-refus .carte-fantome,
-.slot-pile.survole-refus .carte-fantome {
-  border-color: #ff5a4a;
-  background: #ff3b2a1f;
 }
 
 /* CE QU'ON TIENT N'EST PLUS A SA PLACE. Dans l'armurerie, la piece saisie
@@ -1914,10 +1608,6 @@ body {
   cursor: inherit;
 }
 
-.butin-piece {
-  width: 6.5rem;
-}
-
 .emplacement .piece.saisie {
   opacity: 0.3;
 }
@@ -1940,14 +1630,6 @@ body {
   .butin-piece {
     width: 5rem;
   }
-}
-
-/* --- ce qu'on tient domine ce qui le recoit ------------------------------- */
-
-/* La piece en main est la piece qui compte : elle doit etre plus grande que
-   les emplacements, pas l'inverse. */
-.butin-piece {
-  width: 8rem;
 }
 
 .destinations {
@@ -1978,12 +1660,6 @@ body {
   background: linear-gradient(#32211e, #221816);
 }
 
-.etiquette-slot {
-  font-family: Georgia, "Palatino Linotype", "Book Antiqua", serif;
-  font-size: 0.8125rem;
-  font-weight: 700;
-}
-
 .poids {
   font-size: 0.625rem;
   color: var(--muted);
@@ -1999,16 +1675,6 @@ body {
   .butin-piece {
     width: 6rem;
   }
-}
-
-/* --- les trois contenants du rangement ------------------------------------ */
-
-/* L'emplacement de loot est une case comme les autres, simplement plus grande :
-   ce qu'on vient de trouver doit dominer ce qui le recoit. */
-.rangee-loot {
-  display: flex;
-  justify-content: center;
-  width: 100%;
 }
 
 .emplacement.loot {
@@ -2052,15 +1718,6 @@ body {
   margin: 0;
   max-width: 28rem;
   text-align: center;
-}
-
-/* Les deux slots, cote a cote et A LA TAILLE D'UNE CARTE : ce qui arrive et ce
-   qu'on jette recoivent une carte, ils en ont donc la forme. */
-.slots-butin {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 1rem;
 }
 
 /* UN SLOT A LA FORME D'UNE CARTE, ET IL LA GARDE. Il s'etirait sur la hauteur
@@ -2108,45 +1765,6 @@ body {
     0 0.5rem 1rem #000c;
 }
 
-/* Le slot et son bouton forment un bloc : le bouton se pose SOUS le slot, pas
-   a cote, pour qu'on lise « cette carte-la » et pas « jeter quelque chose ». */
-.pile-jeter {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.375rem;
-}
-
-/* LE DEUXIEME GESTE. Il n'apparait qu'une fois la carte posee : avant, il n'y
-   aurait rien a valider, et un bouton toujours la se presse par habitude --
-   c'est exactement la fausse manip qu'on veut empecher. */
-.choix-jet {
-  display: flex;
-  gap: 0.375rem;
-  animation: valider-jet-entree 0.14s ease-out;
-}
-
-.valider-jet,
-.reprendre-jet {
-  padding: 0.3125rem 0.875rem;
-  border: 1px solid #7a3a3a;
-  border-radius: 999px;
-  background: #2a1414;
-  color: #f0b9b9;
-  font: inherit;
-  font-size: 0.8125rem;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Reprendre, en vert : l'autre issue, a cote de la rouge. */
-.reprendre-jet {
-  border-color: #2f6b45;
-  background: #12261a;
-  color: #a9e6bd;
-}
-
 @keyframes valider-jet-entree {
   from {
     opacity: 0;
@@ -2163,21 +1781,6 @@ body {
     border-color: #a84f4f;
     background: #3a1a1a;
   }
-}
-
-/* Ce qui est DEJA jete n'est pas perdu non plus : on le dit par le compte. */
-.compte-jete {
-  position: absolute;
-  top: -0.4rem;
-  right: -0.4rem;
-  min-width: 1.25rem;
-  padding: 0.0625rem 0.3125rem;
-  border: 1px solid var(--trait);
-  border-radius: 999px;
-  background: #1b1b23;
-  color: var(--muted);
-  font-size: 0.6875rem;
-  text-align: center;
 }
 
 /* LA MAIN DES TRESORS PORTES. Elle reprend `.cartes` telle quelle -- l'eventail
@@ -2285,66 +1888,6 @@ body {
   transition: filter 0.15s ease-out;
 }
 
-/* Le bouton porte le tour de qui c'est : une salve d'une seconde et demie sans
-   rien dire ressemble a un jeu qui a plante. */
-.finTour[disabled] {
-  opacity: 0.75;
-}
-
-/* --- la pioche et la defausse --------------------------------------------- */
-
-/* Un tas : la pile, puis son nom. Etroit, pour ne rien prendre au bouton. */
-.tas-jeu {
-  flex: 0 0 auto;
-  width: var(--large);
-}
-
-/* L'epaisseur de la pile dit s'il reste de quoi piocher, sans lire le compte. */
-.pile-cartes {
-  /* `block` explicite : c'est un `span`, et il ne tenait sa taille que parce
-     que `.tas-jeu` etait un conteneur flex qui le blocifiait. Une largeur sur
-     un element inline ne fait rien, en silence. */
-  display: block;
-  position: relative;
-  width: var(--large);
-  height: var(--haut);
-}
-
-/* Un dos de carte, a la taille exacte de celles de la main -- et enfoui comme
-   elles, donc on n'en voit que le haut. Un tas de cartes doit etre fait des
-   memes cartes que la main, sinon c'est une icone de tas, pas un tas. */
-.feuillet {
-  position: absolute;
-  inset: 0;
-  border: 1px solid #4a3d28;
-  border-radius: calc(var(--large) * 0.03);
-  /* Le dos : `art/dos.svg`, posé par le rendu (`--dos`) -- un médaillon d'or
-     sur la nuit, un semis de losanges. Il n'a rien a montrer, seulement une
-     matiere ; il porte le meme laiton que la face. */
-  background:
-    var(--dos) center / cover no-repeat,
-    linear-gradient(168deg, #35353f 0%, #26262f 46%, #191920 100%);
-  box-shadow:
-    -4px 3px 12px #000a,
-    inset 0 1px 0 #ffffff1c,
-    inset 0 -2px 6px #00000070,
-    inset 0 0 0 1px #00000060;
-  /* Chaque feuillet se decale vers le haut : on voit l'epaisseur du tas. Le
-     decalage suit la carte -- en pixels fixes il disparaissait sur un grand
-     ecran. Vertical seulement : un tas de coin decale lateralement sort de
-     l'ecran. */
-  transform: translateY(calc(var(--f) * var(--large) * -0.03));
-}
-
-/* Le jonc interieur, comme sur la face : c'est ce qui donne l'epaisseur. */
-.feuillet::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  box-shadow: inset 0 0 0 2px #a88c5f66, inset 0 1px 0 #ffffff22;
-}
-
 .pile-cartes.vide .feuillet {
   display: none;
 }
@@ -2357,43 +1900,6 @@ body {
   border: 1px dashed var(--trait);
   border-radius: 12px;
   opacity: 0.5;
-}
-
-/* UNE MENTION, PAS UN COMPTEUR. « Pioche (7) » sur une ligne, JUSTE AU-DESSUS
-   du tas -- ni pastille, ni fond, ni bordure. Ce chiffre a ete un gros nombre
-   d'or serti sur le dos : il avait le poids d'une valeur de jeu alors qu'on ne
-   decide pas dessus. Keko : « plus discret, c'est pas une info capitale ».
-
-   Au-dessus et non plus SUR le dos : rien ne recouvre plus le medaillon, et le
-   probleme qui avait fait monter l'etiquette en haut du dos disparait de
-   lui-meme. Le cerne remplace le fond -- elle passe sur la scene, donc sur du
-   noir comme sur un corps. */
-.etiquette-tas {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  translate: -50% 0;
-  margin-bottom: 0.2rem;
-  font-size: 0.625rem;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-  white-space: nowrap;
-  text-shadow: 0 1px 2px #000, 0 0 3px #000;
-}
-
-/* --- les arches de visee --------------------------------------------------- */
-
-/* Une nappe posee par-dessus tout le jeu, en coordonnees d'ecran. Sans
-   viewBox, une unite SVG vaut un pixel : on peut y jeter directement les
-   `getBoundingClientRect` des elements. */
-.visees {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 30;
-  pointer-events: none;
-  overflow: visible;
 }
 
 .arche {
@@ -2680,23 +2186,6 @@ body {
   z-index: 25;
 }
 
-/* Les tas plongent sous le bord bas exactement comme la main. Le `max(...)`
-   reprend le remplissage bas de `.app` : sans lui les tas s'enfonceraient de
-   ce remplissage en plus, et leur ligne de flottaison ne serait plus celle des
-   cartes qu'on tient. */
-.tas-jeu.coin-gauche,
-.tas-jeu.coin-droit {
-  bottom: calc(max(0.25rem, env(safe-area-inset-bottom)) - var(--enfoui));
-}
-
-.tas-jeu.coin-gauche {
-  left: 0;
-}
-
-.tas-jeu.coin-droit {
-  right: 0;
-}
-
 /* L'orbe A COTE de la pioche, a mi-hauteur de sa bande emergee. Elle etait
    au-dessus ; les dos de carte ayant pris la taille de la main, "au-dessus"
    voulait dire tout en haut de l'ecran, loin de tout.
@@ -2716,26 +2205,6 @@ body {
   z-index: 26;
 }
 
-/* Au bord droit, a mi-hauteur : la ou le pouce droit tombe naturellement
-   quand on tient l'appareil a deux mains. */
-.finTour {
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.0625rem;
-  width: 5.25rem;
-  min-height: 3.25rem;
-  padding: 0.5rem 0.375rem;
-  border-left-width: 1px;
-  border-radius: 10px;
-  text-align: center;
-  line-height: 1.15;
-}
-
 .finTour .nom {
   font-size: 0.75rem;
   font-weight: 600;
@@ -2746,16 +2215,6 @@ body {
   font-size: 1.125rem;
   font-weight: 700;
   color: var(--muted);
-}
-
-.finTour:active {
-  transform: translateY(-50%) scale(0.98);
-}
-
-/* L'info de run passe en haut : elle se consulte, elle ne se joue pas. */
-.encombrement {
-  order: -1;
-  text-align: center;
 }
 
 /* --- la mort, sur la scene -------------------------------------------------- */
@@ -2832,7 +2291,6 @@ body {
 }
 
 /* --- la tete de mort ------------------------------------------------------- */
-
 
 /* La tete de mort : posee au centre du corps, invisible tant qu'il vit. */
 .tete-de-mort {
@@ -2928,18 +2386,6 @@ body {
   text-align: center;
 }
 
-.etals {
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
-  gap: 0.75rem;
-  width: 100%;
-  /* 64rem et non 52 : le chargement a pris la taille de la main, et la grille
-     du ratelier a besoin de ce qui reste pour montrer ses douze cases. */
-  max-width: 64rem;
-  min-height: 0;
-}
-
 .etal {
   display: flex;
   flex-direction: column;
@@ -2957,15 +2403,6 @@ body {
 .etal.porte {
   border-color: #6b4030;
   background: linear-gradient(#32211e, #221816);
-}
-
-.etal-titre {
-  margin: 0;
-  color: var(--muted);
-  font-family: system-ui, sans-serif;
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
 }
 
 /* LE RATELIER EST UNE GRILLE DE CARTES REDUITES : on y cherche une piece, on
@@ -3008,27 +2445,6 @@ body {
   flex: 0 0 auto;
 }
 
-/* Une piece, au ratelier ou dans un slot : la carte, et sa legende dessous.
-   Meme objet, meme forme -- ce qui change est OU elle est. */
-.piece-equip,
-.slot-equip {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  flex: 0 0 auto;
-  width: var(--piece);
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: center;
-  cursor: grab;
-  touch-action: none;
-  -webkit-tap-highlight-color: transparent;
-}
-
 /* La carte d'une piece prend la largeur qu'on lui donne, comme dans tout
    contenant : sans ca elle garde `--large`, la mesure de la main. */
 .piece-equip .carte,
@@ -3047,29 +2463,6 @@ body {
 .voile.armurerie {
   --piece: min(6rem, calc(var(--large) * 0.85));
   --piece-equip: min(var(--large), calc((100vh - 11rem) / 2.8));
-}
-
-.slot-equip {
-  width: var(--piece-equip);
-}
-
-/* Le slot VIDE a la forme de la carte qu'il attend : c'est une place, pas un
-   objet. Pointille comme l'emplacement de loot, pour la meme raison. */
-.slot-equip .carte-fantome,
-.slot-pile .carte-fantome {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  aspect-ratio: 5 / 7;
-  padding: 0.375rem;
-  border: 1px dashed var(--trait);
-  border-radius: 12px;
-  background: #00000040;
-  color: var(--muted);
-  font-family: system-ui, sans-serif;
-  font-size: 0.75rem;
-  cursor: pointer;
 }
 
 /* Condamne par une arme a deux mains : sa contrepartie doit SE VOIR, sinon
@@ -3094,64 +2487,8 @@ body {
   box-shadow: 0 0 0 1px #7a5a9e, 0 0 0.75rem #7a5a9e66, 0 0.5rem 1rem #000c;
 }
 
-.piece-detail {
-  color: var(--muted);
-  font-family: system-ui, sans-serif;
-  font-size: 0.625rem;
-  line-height: 1.3;
-}
-
 .piece-detail .mini {
   opacity: 0.75;
-}
-
-/* LA PILE DES CONSOMMABLES : UNE GRILLE DE QUATRE CASES REDUITES, a cote de
-   l'armure.
-
-   Elle a d'abord ete un tas sans plafond, dont les cartes se recouvraient ;
-   Keko l'a repris -- « on ne peut pas donner des slots illimites, il faudrait
-   une limite ». Quatre cases QU'ON VOIT, occupees ou non, comme le ratelier
-   montre les siennes.
-
-   LA MESURE EST CELLE D'UN SLOT, ET ON NE PEUT PAS FAIRE PLUS GRAND. Deux
-   lignes de cases tiennent exactement dans la hauteur d'un slot, donc la ligne
-   du torse ne depasse pas celle des armes -- et c'est ce calage-la qui donne
-   sa taille a `--piece-equip` (la hauteur de l'ecran divisee par deux cartes).
-
-   Essayee a 1,5 slot pour que les cases soient plus lisibles, la grille faisait
-   2,05 slots de haut : la ligne du torse passait SOUS la note et la derniere
-   ligne de cases etait recouverte. *Rien ne le signalait* -- le voile est en
-   `overflow: hidden`, donc le debordement etait masque et le bouton restait
-   visible. Verifier une feuille, c'est verifier qu'elle ne deborde pas, pas
-   que le bouton se voit.
-
-   L'arithmetique ne laisse pas le choix : a cases de largeur c, le bloc fait
-   1,4 P + 2,8 c de haut, et le calage vaut 2,8 P -- donc c = P / 2 exactement.
-   Agrandir les cases oblige a retrecir les armes d'autant, et les armes sont
-   la piece maitresse de l'ecran. */
-.grille-pile {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.25rem;
-  flex: 0 0 auto;
-  /* Deux colonnes et un intervalle dans la largeur d'un slot. */
-  width: var(--piece-equip);
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-}
-
-.case-pile {
-  display: block;
-  width: 100%;
-  aspect-ratio: 5 / 7;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: grab;
-  touch-action: none;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .case-pile .carte {
@@ -3191,25 +2528,8 @@ body {
   box-shadow: 0 0 0 1px var(--joueur), 0 0 0.75rem #5cc8ff55;
 }
 
-.grille-pile.survole-refus {
-  border-radius: 10px;
-  background: #ff3b2a1f;
-  box-shadow: 0 0 0 1px #ff5a4a, 0 0 1rem #ff3b2a55;
-}
-
 .grille-pile.accueille {
   border-radius: 10px;
-}
-
-/* Une case vide du ratelier : la forme d'une carte, en pointille, comme un
-   slot qui attend. C'est ce qui fait voir la grille quand elle est vide. */
-.case-ratelier {
-  display: block;
-  width: var(--piece);
-  aspect-ratio: 5 / 7;
-  border: 1px dashed color-mix(in srgb, var(--trait) 80%, transparent);
-  border-radius: 10px;
-  background: #00000040;
 }
 
 .bouton.descendre {
@@ -3253,40 +2573,6 @@ body {
   pointer-events: none;
 }
 
-/* Le fantome suit le doigt. Il est CENTRE sur lui et legerement penche : sans
-   inclinaison il se lit comme une image collee au curseur, avec, comme une
-   carte tenue. */
-.fantome-carte,
-.fantome-carte * {
-  pointer-events: none;
-}
-
-.fantome-carte {
-  position: fixed;
-  z-index: 70;
-  margin: 0;
-  transform: translate(-50%, -52%) rotate(-3deg) scale(1.06);
-  transform-origin: 50% 50%;
-  transition: none;
-  pointer-events: none;
-  box-shadow: 0 1.25rem 2.5rem #000c;
-}
-
-/* PRETE A PARTIR. Hors de la main, lacher declenche le coup -- le fantome doit
-   le dire tout seul, parce qu'il n'y a pas d'autre repere : la zone de jeu est
-   tout l'ecran au-dessus de la main, elle n'a pas de bord a surligner.
-
-   Le tremblement passe par `translate` : `transform` porte deja le centrage sur
-   le doigt et l'inclinaison, et l'animer voudrait dire les restituer a chaque
-   image. */
-.fantome-carte.prete {
-  animation: fremir 0.1s linear infinite;
-  box-shadow:
-    0 0 0 2px #ffffffd9,
-    0 0 1.5rem #ffffff73,
-    0 1.25rem 2.5rem #000c;
-}
-
 @keyframes fremir {
   0% { translate: -1px 0; }
   25% { translate: 1px -1px; }
@@ -3317,18 +2603,6 @@ body {
   translate: calc(var(--large) * 0.22) 0;
 }
 
-/* Le doigt est sorti de la main : le terrain s'allume, la main s'efface un
-   peu. C'est le seul retour qui dit « lache maintenant et ca part ». */
-.main-sortie #ennemis {
-  filter: brightness(1.12) saturate(1.1);
-  transition: filter 0.12s ease-out;
-}
-
-.main-sortie #cartes {
-  filter: brightness(0.8);
-  transition: filter 0.12s ease-out;
-}
-
 /* --- la carte qu'on regarde de pres --------------------------------------- */
 
 /* Une tape ne joue plus, elle MONTRE. C'est ce que la main en eventail avait
@@ -3347,24 +2621,6 @@ body {
   display: flex;
 }
 
-/* Le fond est un BOUTON plein ecran : taper n'importe ou referme. Il n'y a
-   rien d'autre a faire ici, donc il n'y a rien d'autre a viser. */
-.zoom-fond {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  padding: 0;
-  background: #000000cc;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.zoom-carte {
-  position: relative;
-  pointer-events: none;
-  animation: zoom-entree 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.1);
-}
-
 /* Bornee par la HAUTEUR : c'est elle qui manque en paysage, et une carte zoomee
    doit tenir en entier -- c'est tout son objet. */
 .zoom-carte .carte {
@@ -3373,33 +2629,6 @@ body {
   margin: 0;
   transform: none;
   box-shadow: 0 1.5rem 3rem #000e, 0 0 0 1px #ffffff1f;
-}
-
-/* UNE PIECE ZOOMEE MONTRE SON SET : la piece a gauche, et a sa droite les
-   cartes qu'elle apporte, plus petites, chacune avec son nombre. Bornees par
-   la hauteur comme la piece, pour que la rangee tienne en paysage. */
-/* PREVU POUR HUIT MODELES, PAS TROIS. Une arme en apportera entre trois et
-   huit : la rangee replie a QUATRE par ligne, donc deux lignes au plus, et la
-   taille d'une carte du set est bornee pour que deux lignes tiennent dans la
-   hauteur ET que quatre tiennent dans la largeur a cote de la piece.
-   Mesure : 8 modeles tiennent a 667x320. */
-.zoom-carte.zoom-piece {
-  /* Les 2 x 1.75rem : les pastilles de nombre sous chaque ligne. */
-  --set: min(9.5rem, calc((100vh - 3.5rem - 3.5rem) / 2.8), calc((100vw - 16rem - 6rem) / 4));
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  max-width: calc(100vw - 2rem);
-}
-
-.set-piece {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  flex-wrap: wrap;
-  justify-content: center;
-  /* Quatre cartes et trois intervalles : le point de repli. */
-  max-width: calc(4 * var(--set) + 3 * 0.625rem);
 }
 
 .modele {
@@ -3432,7 +2661,6 @@ body {
   box-shadow: 0 1px 3px #000c, inset 0 1px 0 #ffffff1f;
 }
 
-
 @keyframes zoom-entree {
   from {
     opacity: 0;
@@ -3450,27 +2678,6 @@ body {
   }
 }
 
-/* --- l'apercu des degats sur la jauge -------------------------------------- */
-
-/* La part que la carte du moment emporterait, en jaune, sur la DROITE du
-   remplissage : c'est par la que la jauge se vide, donc c'est la que le joueur
-   cherche ce qu'il va prendre. Posee a gauche, elle se lirait comme ce qui
-   reste.
-
-   Elle est peinte par `ui/apercu.ts` apres chaque rendu -- largeur nulle tant
-   qu'aucune carte n'est sous le doigt ni tenue. */
-.apercu {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 0;
-  border-radius: 999px;
-  background: linear-gradient(180deg, #ffe16b, #f0b429);
-  box-shadow: 0 0 0.4rem #ffc93c80;
-  transition: width 0.1s ease-out, left 0.1s ease-out;
-  pointer-events: none;
-}
-
 /* Le coup ACHEVE : la bande couvre tout le remplissage, ce qui est vrai aussi
    d'un corps deja tres bas. Il faut donc autre chose pour le dire -- la jauge
    entiere se cercle. */
@@ -3486,7 +2693,6 @@ body {
     transition: none;
   }
 }
-
 
 /* --- la carte engagee, sur le joueur --------------------------------------- */
 
@@ -3532,17 +2738,6 @@ body {
      plus haut, il vaut ici aussi. */
   padding-top: calc(var(--large) * 0.55);
   pointer-events: none;
-}
-
-/* ELLE FREMIT, comme le fantome juste avant qu'on le lache : c'est la meme
-   carte, dans le meme etat -- engagee, en attente de sa cible. Lui donner deux
-   apparences pour un seul moment du geste serait mentir sur ce qui se passe. */
-.carte-engagee {
-  display: block;
-  rotate: -5deg;
-  animation:
-    carte-engagee-entree 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.15),
-    fremir 0.1s linear 0.16s infinite;
 }
 
 .carte-engagee .carte {
@@ -3680,53 +2875,12 @@ body {
   font-family: system-ui, sans-serif;
 }
 
-.etat-3d {
-  position: fixed;
-  /* LES DEUX RÉSERVES DU JOUEUR SE DÉCALENT POUR LE TAS. Comme en 2D, la
-     pioche tient le coin et l'orbe se pose à sa droite : tout ce qui est au
-     joueur reste sur la bande gauche. */
-  inset: auto auto 1rem 5.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.25rem;
-}
-
-.pv-3d,
-.bloc-3d,
-.menace-3d {
-  padding: 0.125rem 0.5rem;
-  border-radius: 999px;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.pv-3d {
-  border: 1px solid #a33a3a;
-  background: #2a1114;
-  color: #ffd9d3;
-}
-
-.bloc-3d {
-  border: 1px solid #5cc8ff66;
-  background: #0d1f2a;
-  color: #bfe6ff;
-}
-
-.menace-3d {
-  border: 1px solid #ff5a4a;
-  background: #2a0f0c;
-  color: #ffb1a5;
-}
-
 .orbe-chiffre small,
 .pv-3d small {
   opacity: 0.6;
   font-size: 0.75em;
   font-weight: 400;
 }
-
 
 .fin-3d {
   position: absolute;
@@ -4087,12 +3241,6 @@ body {
   background-size: cover;
 }
 
-/* CE QUE LA CARTE A LE DROIT DE RECOUVRIR : l'energie et les PV du joueur.
-   La carte qu'on tient monte le canvas au-dessus d'eux. */
-.etat-3d {
-  z-index: 1;
-}
-
 /* LES ETIQUETTES DES CREATURES PASSENT DEVANT LEUR PROPRE CORPS.
 
    L'ombre au sol est dessinee DANS le canvas, sous les pattes : a z-index 1
@@ -4181,12 +3329,6 @@ body {
   0% { scale: 3.2; opacity: 0.15; }
   70% { scale: 1.18; opacity: 1; }
   100% { scale: 1; opacity: 1; }
-}
-
-/* LE JOUEUR ENCAISSE. Il n'a pas de corps : c'est son compteur de PV qui
-   tressaille, et le chiffre saute a cote, comme au-dessus d'une creature. */
-.pv-3d {
-  position: relative;
 }
 
 .pv-3d.encaisse {
@@ -4328,7 +3470,6 @@ body {
 
    Il ne reste en CSS que les boutons des ecrans ou rien ne se manipule --
    point de sortie, fin de descente. */
-
 
 /* --- la vie du joueur : une barre, comme celle des creatures --------------- */
 
@@ -6006,8 +5147,6 @@ body {
 .arm-icone.main {
   height: 93%;
 }
-
-
 
 /* ==========================================================================
    LE RAIL DES DESTINATIONS

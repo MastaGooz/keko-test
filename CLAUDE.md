@@ -3205,11 +3205,17 @@ aujourd'hui**, et zéro avancée de design pendant ce temps.
 
 ### Les deux règles de la transition
 
+*La transition est FINIE : le jeu 2D est supprimé et le moteur 3D est la page
+par défaut — voir la section qui porte ce titre, plus bas. Les deux règles
+restent écrites parce qu'elles valent pour la prochaine réécriture.*
+
 1. **LE MOTEUR 3D SE CONSTRUIT DERRIÈRE `?r3f`, PAS À LA PLACE DU JEU.** Tant
    qu'il n'a pas rattrapé ce qui se joue, la page par défaut reste la version
    jouable. Keko teste depuis son téléphone et un PC distant : une réécriture
    qui commence par casser la page le laisse sans rien pendant des semaines.
-   Même motif que `?proto`.
+   Même motif que `?proto`. **Le garde-fou n'est tombé que le jour où le moteur
+   a rattrapé le jeu**, et c'est ça la règle : *ce n'est pas une date qui lève
+   une protection, c'est l'arrivée de ce qu'elle protégeait.*
 2. **`src/logic/` SE TRANSPLANTE TEL QUEL.** 2 875 lignes de règles calibrées
    par simulation, sans un accès au DOM — c'est la règle de pureté tenue depuis
    le début, et c'est elle qui fait qu'un changement de moteur ne coûte pas le
@@ -11625,36 +11631,137 @@ Le jour où il part, le module reste.
 par Keko : « supprime le script personnages et ses données une fois le nouveau
 pipeline validé, pas avant. »
 
+## LE JEU 2D EST SUPPRIMÉ — le moteur 3D est le jeu
+
+Tranché par Keko : **« supprime complètement tout ce qui se rapporte au jeu 2D,
+on garde l'extraction »**.
+
+*C'était la condition posée au premier jour de la réécriture* — « le moteur 3D
+se construit derrière `?r3f`, PAS à la place du jeu : tant qu'il n'a pas
+rattrapé ce qui se joue, la page par défaut reste la version jouable, parce
+qu'une réécriture qui commence par casser la page laisse Keko sans rien pendant
+des semaines ». **Il l'a rattrapée** : armurerie, descente entière, butin, mort
+et retour au hub. ***Un garde-fou tombe quand ce qu'il protégeait est arrivé.***
+
+**LA RACINE NUE OUVRE DONC L'EXTRACTION**, et `?r3f` est accepté sans rien
+faire : *tous les liens déjà donnés à Keko le portent*, et une adresse qu'on a
+distribuée ne doit pas cesser de marcher le jour où elle devient inutile.
+
+### Ce qui est parti, et ce qui est resté
+
+**Dix-huit fichiers**, dont `src/main.ts` — le câblage `logic` ↔ `ui` — et tout
+`ui/` qui dessinait : `render.ts`, `input.ts`, `effets.ts`, `apercu.ts`,
+`visees.ts`, les deux `glisser*.ts`, `plein-ecran.ts`, `carte.css`, et la
+planche `?proto` avec ses trois fichiers.
+
+**ET DEUX MODULES DE `logic/` SONT PARTIS AVEC**, parce qu'ils ne servaient
+qu'à lui : `state.ts` (`GameState`, déjà importé par personne) et `storage.ts`
+(la sauvegarde et son `StoragePort`). *Du code mort dans `logic/` ment sur ce
+que le jeu fait* — et **le moteur 3D n'a jamais eu de sauvegarde** : elle ne
+portait que la seed et les taps, et plus rien ne la lisait. La règle du port
+injecté reste écrite ici, elle n'a simplement plus d'objet.
+
+**CE QUI RESTE DANS `ui/` N'EST PAS DU 2D, C'EST DU PARTAGÉ** — et c'est ce que
+la cartographie des imports a montré AVANT de couper :
+
+| | ce que la 3D y lit |
+|---|---|
+| `texte-carte.ts` | le texte d'une carte, sans DOM — *l'écrire deux fois, c'était garantir que les deux divergent* |
+| `art.ts` + `art/` | les illustrations et leur table |
+| `illustrations.ts` | les silhouettes SVG, repli des créatures |
+| `sons.ts` | **six fichiers de `render/` l'importent** |
+| `styles.css` | tout le chrome HTML du moteur |
+| `version.ts` | le garde-fou anti-cache |
+| `animaux.ts`, `personnages.ts` | les catalogues du troisième mode |
+
+***Un dossier ne se supprime pas sur son nom.*** `ui/sons.ts` aurait été la
+perte la plus bête de l'opération : il porte tous les sons synthétisés, et
+`render/sons.ts` ne fait que lui ajouter les fichiers de Keko.
+
+### `enClair` a disparu, et sa règle reste
+
+C'était le repli qui rendait `{pa:1}` en « 1 PA » et `{coeur}` en « ♥ » pour un
+moteur qui ne peint pas de jeton. **Il n'y a plus qu'un moteur, et il les peint
+tous.** *La règle, elle, ne change pas* — « un moteur qui ne sait pas montrer
+une chose ne doit pas cesser de la dire » — et le jour où un second rendu
+arrive, une infobulle ou un export, c'est elle qu'il faudra reposer. `git log`
+en garde la forme exacte.
+
+### Le CSS se coupe à la MESURE, jamais à la lecture
+
+`styles.css` fait six mille lignes et **la 3D en lit 217 classes sur 293** : le
+chrome du moteur — la barre de vie, les tas, les ancres, l'armurerie entière —
+vit dedans. *Le couper à vue aurait emporté la moitié du jeu.*
+
+On liste donc les classes du CSS, on cherche chacune dans `render/`, `ui/` et
+`index.html`, et **on ne jette un bloc que si TOUS ses sélecteurs portent une
+classe et qu'aucune n'est nommée nulle part** — un sélecteur sans classe
+(`body`, `:root`, un élément) se garde par principe, puisque rien ne prouve
+qu'il est mort.
+
+Mesuré : **83 blocs sur 519**, le fichier passe de 6 415 à 5 555 lignes et le
+CSS livré de **71 à 56 Ko**. *Les media queries gardent leurs règles mortes* —
+descendre dedans demandait un vrai analyseur pour une dizaine de kilo-octets, et
+**un nettoyage qui casse un palier de téléphone coûte plus qu'il ne rend.**
+
+### Ce que ça pèse
+
+| | avant | après |
+|---|---|---|
+| CSS livré | 71 Ko | **56 Ko** (12,9 gzip) |
+| l'entrée | 3,9 Ko | **3,3 Ko** |
+| fichiers de `src/` | 18 de plus | — |
+
+*Le gros du bundle ne bouge pas* : c'est React et three, et ils étaient déjà
+derrière un import dynamique.
+
+### ET LES NOTES QUI SUIVENT PARLENT ENCORE DU JEU 2D — c'est voulu
+
+**Elles ne décrivent pas un moteur, elles décrivent des DÉCISIONS.** La carte
+qui plonge sous le bord, la bande haut-gauche, le recouvrement de l'éventail,
+les trois niveaux de ciblage, le bond des créatures : *tout ça a été réglé en
+2D, validé par Keko en 2D, et porté tel quel en 3D* — et la moitié des sections
+de ce fichier y renvoient (« la règle déjà payée sur… », « reste dans
+`git log` »).
+
+***Supprimer l'histoire d'une décision ne supprime pas la décision, ça supprime
+la raison de s'y tenir.*** Ce qui est parti, c'est le code ; ce qui reste, c'est
+pourquoi le jeu est ce qu'il est.
+
 ## Architecture — la règle à ne pas casser
 
 ```
 src/
-  logic/   # PUR : aucun accès au DOM, à localStorage, à Date.now() ou au hasard non seedé
+  logic/   # PUR : aucun accès au DOM, à Date.now() ou au hasard non seedé
     rng.ts       # mulberry32 seedé — tout aléatoire du jeu passe par là
-    state.ts     # GameState + transitions pures (état immuable : on retourne un nouvel objet)
+    combat.ts    # le tour par tour, les cartes, les effets
+    descente.ts  # la boucle de run : combat, palier, butin, extraction
     hub.ts       # l'armurerie : la réserve, le chargement, ce que la mort coûte
-    storage.ts   # (dé)sérialisation + interface StoragePort
+    armes.ts     # le catalogue des pièces et de leurs sets
+    cartes.ts    # les groupes d'ennemis, la table de butin
+    paquet.ts    # le tirage d'un paquet — générique, les deux catalogues l'emploient
     characters/  # L'ANCIEN TROISIÈME MODE — remplacé par les animaux, à retirer
       types.ts      # CharacterCard + la validation du JSON engendré
       formules.ts   # rareté, attaque, défense, domaine — UN SEUL endroit
-    animals/     # LE TROISIÈME MODE : une carte = un NOEUD de l'arbre du vivant
+    animals/     # LE TROISIÈME MODE : une carte = une ESPÈCE
       types.ts      # CarteAnimal + la validation du JSON engendré
-  render/  # LE MOTEUR 3D (React + R3F), derrière `?r3f` -- en construction
+  render/  # LE MOTEUR DU JEU (React + R3F) — c'est la page par défaut
     texture-carte.ts # la carte peinte au canvas, pour servir de texture
     Carte3D.tsx      # le pavé, ses matériaux, sa place amortie
     Main3D.tsx       # l'éventail et le geste : sortir pour jouer, taper pour voir
-    Scene.tsx        # le canvas R3F, les lumières
-  ui/      # TOUT ce qui touche au navigateur (le jeu 2D, encore la référence)
-    render.ts    # mount() construit le DOM une fois, render() le met à jour
-    effets.ts    # marques décoratives posées après un rendu (coup, secousse)
-    duel.ts      # le gros plan d'attaque — décoratif lui aussi, supprimable
-    glisser.ts      # le glisser-déposer du butin (la tape reste souveraine)
-    glisser-main.ts # les gestes de la main : sortir = jouer, taper = regarder
-    input.ts     # événements -> actions
-    storage.ts   # implémentation localStorage du StoragePort
-    personnages.ts  # loadCharacters() : le fetch du catalogue (logic/ est pur)
-    styles.css
-  main.ts  # câblage logic <-> ui ; seul endroit qui connaît les deux
+    Scene.tsx        # la descente entière : combat, paliers, butin, hub
+    Armurerie3D.tsx  # le coffre et le chargement
+    Paquet3D.tsx     # le troisième mode, derrière `?paquet`
+  ui/      # CE QUE LES DEUX MONDES PARTAGENT — plus le jeu 2D, il n'existe plus
+    texte-carte.ts  # le texte d'une carte, sans DOM
+    art.ts + art/   # les illustrations et leur table
+    illustrations.ts # les silhouettes SVG, repli des créatures
+    sons.ts         # les sons synthétisés — `render/sons.ts` y ajoute les fichiers
+    animaux.ts      # chargerAnimaux() : le fetch du catalogue (logic/ est pur)
+    personnages.ts  # loadCharacters() : l'ancien catalogue
+    version.ts      # le garde-fou anti-cache
+    styles.css      # tout le chrome HTML du moteur
+  entree.ts  # l'aiguillage : la descente par défaut, `?paquet`, `?ecusson`
 scripts/   # HORS du build Vite : lancé par `node`, pas couvert par tsconfig
   outils.ts               # cache par requête, lots, journal — partagé
   generate-animals.ts     # GBIF + Wikidata -> public/data/animals.json
@@ -11663,16 +11770,17 @@ scripts/   # HORS du build Vite : lancé par `node`, pas couvert par tsconfig
 ```
 
 `logic/` doit rester testable sans navigateur. Ce dont il a besoin du monde
-extérieur (persistance, horloge, seed) lui est **injecté** depuis `ui/` ou
-`main.ts` — d'où le `StoragePort`. Ne pas importer `ui/` depuis `logic/`.
+extérieur (horloge, seed, catalogue) lui est **injecté** depuis `ui/` ou le
+rendu. **Ne pas importer `ui/` ni `render/` depuis `logic/`.**
 
-Toute la logique de jeu (combat, deck, sac, trésors, encombrement) va dans
+Toute la logique de jeu (combat, deck, trésors, encombrement) va dans
 `src/logic/` et doit être jouable sans DOM. Tout tirage aléatoire passe par le
 RNG seedé.
 
-Les sauvegardes portent un `version` (`STATE_VERSION`) ; `deserialize` renvoie
-`null` si la version ne correspond pas. En faisant évoluer `GameState`,
-incrémenter la version (ou écrire une migration).
+**IL N'Y A PLUS DE SAUVEGARDE.** `STATE_VERSION`, `GameState` et le
+`StoragePort` sont partis avec le jeu 2D — le moteur repart de zéro à chaque
+chargement. *Le jour où la persistance revient, c'est par la même porte* : un
+port injecté depuis `ui/`, jamais un `localStorage` lu depuis `logic/`.
 
 ## Contraintes mobile — et l'échelle
 
@@ -11984,7 +12092,7 @@ et faire croire à un bug. Neutraliser la transition avant de mesurer.
 ## Commandes
 
 ```bash
-npm run dev          # dev local
+npm run dev          # dev local -- la racine ouvre le jeu
 npm run dev:mobile   # vite --host -> tester sur le téléphone via l'adresse Network
 npm run build        # tsc (types) puis vite build ; doit passer sans erreur
 npm run verif        # vérifications des règles, sans navigateur
@@ -12017,22 +12125,27 @@ Cycle : `npm run build` -> commit -> push -> attendre la fin du workflow ->
 dire à Keko d'aller tester. Lui rappeler de vérifier la **date de build affichée
 sur la page** pour être sûr qu'il ne voit pas une version en cache.
 
-**TERMINER CHAQUE RÉPONSE PAR LE LIEN DE CE QU'ON VIENT DE FAIRE**, et tant que
-le moteur 3D est en construction c'est <https://mastagooz.github.io/keko-test/?r3f>
-— **avec le `?r3f`**. Keko teste depuis son téléphone et un PC distant : le lien
-doit être sous son pouce, pas à retrouver dans l'historique.
+**TERMINER CHAQUE RÉPONSE PAR LE LIEN DE CE QU'ON VIENT DE FAIRE.** Keko teste
+depuis son téléphone et un PC distant : le lien doit être sous son pouce, pas à
+retrouver dans l'historique. Il l'a demandé — « tu peux me remettre le lien à
+chaque fois ? de la version nouvelle ».
 
-*La racine nue ouvre le jeu 2D*, donc elle ne montre RIEN de ce qu'on vient de
-changer, et Keko devait ajouter le paramètre à la main à chaque fois. Il l'a
-demandé : « tu peux me remettre le lien à chaque fois ? de la version nouvelle ».
-Le jour où la 3D deviendra la page par défaut, le `?r3f` tombera tout seul.
+**LE `?r3f` EST TOMBÉ AVEC LE JEU 2D** : la racine nue ouvre le jeu, donc c'est
+elle qu'on donne. Le paramètre reste accepté et ne fait plus rien, parce que
+*tous les liens déjà envoyés le portent.*
 
-**Y ACCROCHER LE HASH DU COMMIT** (`&v=<sha court>`) : l'URL change donc à chaque
+| | |
+|---|---|
+| le jeu | `https://mastagooz.github.io/keko-test/?v=<sha>` |
+| les paquets d'animaux | `…/?paquet&v=<sha>` |
+| les paquets de personnages | `…/?paquet&perso&v=<sha>` |
+
+**Y ACCROCHER LE HASH DU COMMIT** (`?v=<sha court>`) : l'URL change donc à chaque
 déploiement, et le navigateur ne peut pas resservir un vieux bundle. Le
 garde-fou `verifierVersion` et la date de build affichée restent les filets —
 mais *un garde-fou ajouté ne corrige pas rétroactivement un cache déjà posé*,
-alors qu'une URL neuve, si. Le paramètre est ignoré par `entree.ts`, qui ne fait
-qu'un `has('r3f')`.
+alors qu'une URL neuve, si. Le paramètre est ignoré par `entree.ts`, qui ne lit
+que `paquet` et `ecusson`.
 
 **Attendre le bon run, pas le dernier.** Comparer le `headSha` du run au `HEAD`
 local avant de conclure : juste après un push, `gh run list --limit 1` renvoie
