@@ -14,26 +14,25 @@ import type { CarteAPeindre } from './texture-carte.ts'
 import type { CharacterCard, Rarete } from '../logic/characters/types.ts'
 
 /**
- * LES CINQ CRANS DU CATALOGUE RETOMBENT SUR LES QUATRE MÉTAUX DU JEU.
+ * UN CRAN, UN MÉTAL — la correspondance est devenue directe.
  *
- * **C'est à trancher par Keko, et voilà le choix par défaut.** L'échelle des
- * alliages — bronze, argent, or, diamant — a été réglée et mesurée : le projet
- * a même SUPPRIMÉ un cinquième cran (le laiton) parce que *deux jaunes rompus
- * voisins ne font pas deux crans*. **Quatre est donc ce que le dessin peut
- * porter**, et les cinq crans du mode personnage sont, eux, un placeholder que
- * j'ai écrit sans le lui demander.
+ * Tranché par Keko : « on va diviser en 4 rareté (bronze, argent, or, diamant)
+ * plutôt pour respecter les métaux ». Le mode personnage en avait CINQ, dont
+ * deux retombaient sur le bronze : **le modèle disait cinq choses là où l'écran
+ * en disait quatre**, et c'est le modèle qui avait tort.
  *
- * `commun` et `peu-commun` partagent donc le bronze, et ça tombe juste : ils
- * font 74 % du catalogue, pour 19,5 % d'argent, 5,8 % d'or et 0,8 % de
- * diamant — *exactement la pyramide qu'on attend d'un jeu de collection.*
+ * L'échelle des alliages a été réglée et mesurée dans le mode descente, qui a
+ * même SUPPRIMÉ un cinquième cran (le laiton) parce que *deux jaunes rompus
+ * voisins ne font pas deux crans.* **Quatre est ce que le dessin peut porter**,
+ * donc c'est lui qui donne le compte.
  *
- * Les clés de droite sont celles de `METAUX`, qui ne sont PAS les mêmes mots
- * (`commune` et non `commun`) : c'est le vocabulaire du mode descente, et il
- * reste chez lui.
+ * *Il reste une table plutôt qu'un passe-plat* pour une seule raison : le mode
+ * descente dit `commune` là où un personnage est `commun`. **Deux vocabulaires
+ * qui se ressemblent à une lettre près sont précisément ceux qu'il ne faut pas
+ * confondre en silence** — la table le dit à voix haute.
  */
 const METAL: Readonly<Record<Rarete, string>> = {
   commun: 'commune',
-  'peu-commun': 'commune',
   rare: 'rare',
   epique: 'epique',
   legendaire: 'legendaire',

@@ -10822,7 +10822,8 @@ premier réglage* — et surtout, **les formules étant pures, tout l'équilibra
 rejoue sur le JSON déjà téléchargé**, sans rien redemander à Wikidata.
 
 - **la rareté** suit un score de notoriété : nombre de Wikipédia qui ont
-  l'article (0,6) et vues sur 30 jours (0,4), puis quatre seuils ;
+  l'article (0,6) et vues sur 30 jours (0,4), puis **trois seuils pour quatre
+  crans** — un par métal ;
 - **l'attaque** suit les vues — *ce qu'on regarde aujourd'hui frappe fort* ;
 - **la défense** suit la taille de l'article — *ce qui est longuement écrit
   encaisse* ;
@@ -10831,6 +10832,129 @@ rejoue sur le JSON déjà téléchargé**, sans rien redemander à Wikidata.
 **LES ÉCHELLES SONT LOGARITHMIQUES, et ce n'est pas un détail.** La notoriété
 suit une loi de puissance : en échelle linéaire, Napoléon écrase tout le monde
 et quatre-vingt-quinze pour cent des cartes valent 1.
+
+#### LES VUES SE SOMMENT SUR PLUSIEURS LANGUES, pas seulement le français
+
+Tranché par Keko : « la fréquentation de page devrait prendre en compte toutes
+les langues non ? pour une somme ? » — **et la mesure lui donne largement
+raison.**
+
+*On mesurait la notoriété FRANCOPHONE et on l'appelait notoriété.* Mesuré sur
+un échantillon de dix figures, le français ne pèse que **1 à 38 %** des vues, et
+**huit rangs sur dix changent** quand on somme :
+
+| | vues FR | somme | part du FR |
+|---|---|---|---|
+| Napoléon | 148 690 | 1 346 355 | 11 % |
+| Jules César | 59 540 | 723 930 | 8 % |
+| Sun Yat-sen | 6 499 | 261 130 | **2 %** |
+| Qu Yuan | 358 | 24 797 | **1 %** |
+| Molière | 48 498 | 128 361 | **38 %** |
+
+Un poète chinois ou un réformateur turc valait une carte commune **parce que
+personne ne lit sa page en français** — ce qui ne dit rien de lui.
+
+**LA LISTE DES LANGUES EST FINIE, ET C'EST UN COMPROMIS ASSUMÉ**
+(`LANGUES_VUES`, quinze wikis). *Aucun endpoint n'agrège les vues d'un article
+toutes langues confondues* : il faut une requête par (langue, lot de cinquante
+titres), donc quinze langues coûtent déjà ~1 350 appels sur les candidats et
+trois cents seraient inatteignables. On prend les quinze plus grosses
+Wikipédia — et **le nombre de langues, qui pèse 60 % du score, corrige ce que
+la liste laisse passer.**
+
+*Le français n'y figure pas* : il est déjà mesuré à part, avec la taille de
+l'article, et **une langue comptée deux fois vaudrait double.**
+
+Trois choses à ne pas défaire :
+
+- **le titre vient des SITELINKS de Wikidata**, pas d'une devinette : « Mustafa
+  Kemal Atatürk » s'écrit « 穆斯塔法·凯末尔·阿塔图尔克 » en chinois. `sitefilter`
+  est ce qui rend l'étape tenable — sans lui chaque entité rapporterait ses
+  trois cents sitelinks dont on jetterait les deux cent quatre-vingt-cinq qu'on
+  ne mesure pas. *Le poids des champs décide, pas le nombre de lignes* ;
+- **une langue manquante retire sa part, et rien de plus.** C'est une somme,
+  donc elle n'écarte personne — *à la différence des vues FR, où un trou
+  faussait tout le score et faisait jeter la carte* ;
+- **on ne demande les vues étrangères que pour ce qui survivra** : un candidat
+  sans mesure FR est déjà écarté, et chaque identifiant coûte quinze requêtes
+  de plus. *On ne paie pas pour des cartes qu'on jette.*
+
+#### UNE CARTE SANS PORTRAIT N'EST PAS UNE CARTE
+
+Tranché par Keko, après mesure : **27 cartes sur 3 000** sortaient avec le sceau
+de repli. *Or ce sceau est là pour dire « il manque un fichier qu'on devrait
+fournir »* — et ce n'était pas le cas : Wikidata n'a simplement aucune image
+libre pour elles.
+
+**Le repli vient de Wikipédia, et il ne coûte aucune requête** : `pageimages`
+voyage dans l'appel qui rapporte déjà la taille et les vues. Quatorze des
+vingt-sept avaient une image d'en-tête que Wikidata ignore.
+
+**MAIS IL NE VAUT QUE POUR LES PERSONNAGES RÉELS**, et c'est la mesure qui
+l'impose :
+
+| | ce que Wikipédia propose |
+|---|---|
+| Al-Kindi | un portrait |
+| Níkos Kazantzákis | une photographie de 1904 |
+| Abdullah ibn az-Zubayr | une pièce de monnaie à son nom |
+| **Thanos** | `THANOS-Cosplay.jpg` |
+| **Wolverine** | une photo prise au Comic-Con |
+| **Mario** | un train JR-West décoré |
+
+***C'est précisément pour ça que Wikidata ne les référence pas*** : ce ne sont
+pas des portraits du personnage, ce sont des photos libres faute de mieux. Une
+carte illustrée par un cosplayeur est pire qu'un sceau.
+
+**Ce qui reste sans rien sort du catalogue** (60 cartes à la dernière
+génération), et le candidat suivant prend la place — *la marge de 1,5× sert
+exactement à ça.* Résultat : **zéro carte sans illustration.**
+
+Prix assumé, et il est connu : **les super-héros ont disparu du jeu.** Le seul
+moyen de les y remettre est de leur dessiner une illustration à la main.
+
+Deux garde-fous :
+
+- **on refuse tout ce qui n'est pas sur Commons.** Une image hébergée
+  localement par un Wikipédia l'est au titre de l'usage encyclopédique, et *ce
+  jeu n'est pas une encyclopédie* — vérifié sur les trois formes d'URL ;
+- **les deux chemins passent par la même fabrique d'adresse** : Wikidata rend
+  un `Special:FilePath`, Wikipédia une URL directe, et *deux façons de
+  construire la même adresse divergeraient au premier réglage.*
+
+#### TROIS DÉFAUTS DU PIPELINE, TROUVÉS EN LANÇANT LA COLLECTE
+
+Aucun ne levait d'erreur, et c'est ce qui les rend instructifs.
+
+**1. Le journal annonçait au lieu de constater.** Il nomme une langue AVANT de
+la traiter, donc le dernier nom affiché n'était pas la dernière finie mais
+**celle qui bloquait**. Le néerlandais a tourné deux heures sans que rien ne le
+dise, et je lisais « nl fait, id en cours » — l'inverse exact.
+
+**2. Aucun budget de temps sur la collecte des vues** (`BUDGET_LANGUE`, six
+minutes). *La leçon était déjà écrite pour SPARQL* — « une boucle qui ne sait
+pas quand s'arrêter n'a pas de pire cas » — et je ne l'avais pas portée ici.
+Les treize langues mesurées prennent de 1,5 à 8 minutes, donc le budget laisse
+passer ce qui va bien et coupe ce qui part en vrille. **Une langue coupée
+retire sa part et rien de plus** : c'est une somme, elle n'écarte personne.
+
+**3. Un garde-fou calibré sur le français, appliqué à tort ailleurs.** Un lot
+n'est mis en cache que s'il est « complet », c'est-à-dire si tous ses articles
+ont des vues. *Sur le Wikipédia français un trou veut dire « mesure ratée » ;
+sur un petit wiki, un article peu consulté rend trente `null` — et c'est un
+vrai zéro.* Le néerlandais n'avait donc gardé que **52 lots sur 87**, et chaque
+relance les refaisait. L'exigence ne vaut plus que pour le français.
+
+***Un garde-fou calibré sur une source n'est pas valide sur une autre*** —
+même famille que le champ `pageviews` présent mais plein de `null`.
+
+**4. La valeur calculée et la valeur enregistrée avaient divergé.** La somme
+multilingue servait bien à `statsDerivees` — donc la rareté et l'attaque
+étaient justes — pendant que la carte enregistrait `m.vues`, le chiffre
+français. **Le fichier disait autre chose que ce qui avait servi à le
+calculer**, et le tri final reclassait sur le mauvais chiffre. *Rien ne
+l'aurait signalé : les deux valeurs sont plausibles.* Elle se calcule
+désormais une fois et sert aux deux.
 
 **LE DOMAINE SE LIT SUR UN LIBELLÉ, PAS SUR UN IDENTIFIANT.** Wikidata compte
 des centaines de métiers ; une table de Q-ids en oublierait la moitié et
@@ -11260,19 +11384,30 @@ droite se lirait à l'envers.*
 **CARTES_PAR_PAQUET, CRAN_GARANTI et CHANCES sont des PLACEHOLDERS** : c'est la
 première chose à régler quand Keko voudra doser l'envie d'en ouvrir un autre.
 
-#### LES CINQ CRANS RETOMBENT SUR QUATRE MÉTAUX — à trancher
+#### QUATRE CRANS, PARCE QUE LE DESSIN EN PORTE QUATRE
 
-L'échelle des alliages a été réglée et mesurée, et le projet a **supprimé** un
-cinquième cran (le laiton) parce que *deux jaunes rompus voisins ne font pas
-deux crans*. **Quatre est donc ce que le dessin peut porter**, alors que les
-cinq crans du mode personnage sont un placeholder que j'ai écrit sans le
-demander.
+Tranché par Keko : « on va diviser en 4 rareté (bronze, argent, or, diamant)
+plutôt pour respecter les métaux ».
 
-`commun` et `peu-commun` partagent donc le bronze, et ça tombe juste : ils font
-74 % du catalogue, pour 19,5 % d'argent, 5,8 % d'or et 0,8 % de diamant —
-*exactement la pyramide qu'on attend d'un jeu de collection.* **Si Keko veut
-cinq crans distincts, il faudra un cinquième métal** ; sinon on ramène les
-formules à quatre.
+*Le mode personnage en avait CINQ*, dont deux retombaient sur le bronze :
+**le modèle disait cinq choses là où l'écran en disait quatre**, et c'est le
+modèle qui avait tort. L'échelle des alliages, elle, a été réglée et mesurée —
+le projet a même SUPPRIMÉ un cinquième cran (le laiton) parce que *deux jaunes
+rompus voisins ne font pas deux crans.*
+
+**ET ÇA N'A CHANGÉ AUCUN CADRE.** Le seuil qui disparaît (0,42) est exactement
+celui que le métal ne voyait pas ; les trois autres ne bougent pas. *Une carte
+qui était bronze l'est restée* — c'est ce qui a rendu le passage gratuit, et
+c'est le genre de changement qu'il faut faire au moment où il ne coûte rien.
+
+Ce qui tombe avec : la moitié de la table `METAL`, et une entrée de
+`CHANCES` — **le commun a repris la part du peu-commun**, les deux partageant
+déjà le bronze.
+
+*Il reste une table plutôt qu'un passe-plat*, pour une seule raison : le mode
+descente dit `commune` là où un personnage est `commun`. **Deux vocabulaires
+qui se ressemblent à une lettre près sont précisément ceux qu'il ne faut pas
+confondre en silence.**
 
 #### Mesuré
 
@@ -11285,19 +11420,18 @@ main de combat.
 
 ### CE QUI RESTE À TRANCHER PAR KEKO
 
-- **les seuils de rareté et les bornes des échelles** : ce sont des
-  placeholders, à relire sur `stats-summary.txt` — *c'est la distribution qui
-  dit s'ils tombent juste, pas l'intuition* ;
-- **les cinq crans de rareté** s'appellent `commun / peu-commun / rare / epique
-  / legendaire`. Le mode descente, lui, a une **échelle d'alliages** (bronze,
-  argent, or, diamant) — *une échelle se dit en couleur, une famille se dit en
-  forme* — et il faudra décider si les deux modes partagent ce vocabulaire ;
+- **les seuils de rareté et les bornes des échelles** sont désormais MESURÉS,
+  plus devinés : bornes `[400, 900_000]` sur les vues sommées, seuils
+  `0,64 / 0,76 / 0,875`, ce qui donne **69,2 / 20,0 / 8,2 / 2,5 %**. *À relire
+  sur `stats-summary.txt` dès que la formule bouge* ;
+- **les quatre crans de rareté** s'appellent `commun / rare / epique /
+  legendaire`, un par métal — tranché par Keko, voir plus haut ;
 - **les images sont des URL Wikimedia Commons**, donc une ressource extérieure.
   Le projet n'en dépend que pour les deux polices. À décider : les servir
   directement, ou les rapatrier ;
-- **le poids du catalogue** : un millier de cartes pèse quelques centaines de
-  kilooctets, et `public/` est servi tel quel. Si ça pèse trop, le premier gain
-  est de ne garder que le nom du fichier Commons plutôt que son URL complète ;
+- **le poids du catalogue** : trois mille cartes pèsent **1,7 Mo**, et
+  `public/` est servi tel quel. Si ça pèse trop, le premier gain est de ne
+  garder que le nom du fichier Commons plutôt que son URL complète ;
 - **`@types/node` en devDependency**, pour que `scripts/` soit type-vérifié.
   Ce sont des types, pas une librairie à l'exécution — mais c'est une
   dépendance, donc c'est son appel ;

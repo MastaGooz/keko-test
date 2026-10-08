@@ -41,12 +41,23 @@ export interface StatsDerivees {
  * LES BORNES SONT LOGARITHMIQUES, ET CE N'EST PAS UN DETAIL. La notoriete suit
  * une loi de puissance : en echelle lineaire, Napoleon ecrase tout le monde et
  * quatre-vingt-quinze pour cent des cartes valent 1.
+ *
+ * **LES BORNES DECRIVENT LES DONNEES, LES SEUILS DECRIVENT LE JEU**, et cette
+ * separation a ete payee : les bornes servent a DEUX choses -- l'attaque, qui
+ * les lit directement, et la rarete, qui les lit a travers le score. *Les
+ * regler pour l'une desequilibre l'autre*, donc on les cale sur la plage
+ * REELLE des vues et on laisse les seuils porter la pyramide.
+ *
+ * Mesure sur les trois mille cartes, vues sommees sur quinze langues : min 431,
+ * mediane 23 658, max 892 866. D'ou `[400, 900_000]`, qui epouse exactement
+ * cette plage -- **les dix valeurs d'attaque servent**, pour une moyenne de 5,7
+ * et des extremes symetriques (7 cartes a 1, 6 a 10).
  */
 const BORNES = {
   /** Nombre de Wikipedia qui ont l'article. */
   langues: [10, 250] as const,
-  /** Vues de l'article FR sur 30 jours. */
-  vues: [200, 400_000] as const,
+  /** Vues sur 30 jours, SOMMEES sur le francais et les quinze langues mesurees. */
+  vues: [400, 900_000] as const,
   /** Octets de l'article FR. */
   taille: [3_000, 250_000] as const,
 }
@@ -55,13 +66,35 @@ const BORNES = {
 const POIDS = { langues: 0.6, vues: 0.4 }
 
 /**
- * Les seuils de rarete, sur le score de notoriete. Quatre seuils, cinq crans.
- * A relire sur `stats-summary.txt` : c'est la distribution qui dit s'ils
- * tombent juste, pas l'intuition.
+ * QUATRE CRANS, PARCE QUE LE DESSIN EN PORTE QUATRE. Tranche par Keko : « on va
+ * diviser en 4 rarete (bronze, argent, or, diamant) plutot pour respecter les
+ * metaux ».
+ *
+ * *Et ca n'a change aucun cadre* : la carte n'a jamais montre que quatre
+ * metaux, et `commun` et `peu-commun` partageaient deja le bronze. **Le modele
+ * disait cinq choses la ou l'ecran en disait quatre** -- c'est le modele qui
+ * avait tort.
+ *
+ * LES SEUILS PORTENT LA PYRAMIDE, et ils ont ete remontes quand les vues sont
+ * passees a la somme multilingue : tout le monde avait grimpe d'un cran, au
+ * point qu'il y avait **deux fois plus de rares que de communs** (49,6 %
+ * contre 24,8). *Une pyramide qui ne decroit pas n'est pas une pyramide.*
+ *
+ * Mesure sur les trois mille cartes, et c'est la mesure qui fixe les chiffres :
+ *
+ * | seuils | commun | rare | epique | legendaire |
+ * |---|---|---|---|---|
+ * | 0,56 / 0,70 / 0,84 | 46,5 % | 36,4 % | 13,5 % | 3,6 % |
+ * | 0,60 / 0,73 / 0,86 | 57,2 % | 28,5 % | 11,3 % | 3,0 % |
+ * | **0,64 / 0,76 / 0,875** | **69,2 %** | **20,0 %** | **8,2 %** | **2,5 %** |
+ * | 0,65 / 0,77 / 0,88 | 72,0 % | 18,6 % | 7,1 % | 2,3 % |
+ *
+ * A relire sur `stats-summary.txt` des que la formule bouge : *c'est la
+ * distribution qui dit si les seuils tombent juste, pas l'intuition.*
  */
-const SEUILS_RARETE = [0.42, 0.56, 0.7, 0.84] as const
+const SEUILS_RARETE = [0.64, 0.76, 0.875] as const
 
-const CRANS: readonly Rarete[] = ['commun', 'peu-commun', 'rare', 'epique', 'legendaire']
+const CRANS: readonly Rarete[] = ['commun', 'rare', 'epique', 'legendaire']
 
 /** L'echelle des deux stats de combat. */
 const STAT = { min: 1, max: 10 } as const

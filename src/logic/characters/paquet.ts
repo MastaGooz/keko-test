@@ -37,23 +37,26 @@ export const CRAN_GARANTI: Rarete = 'rare'
  * CE QUE CHAQUE CRAN A DE CHANCES DE SORTIR, par carte tirée.
  *
  * **Ce n'est PAS la distribution du catalogue, et c'est tout l'intérêt.** Le
- * catalogue est ce que Wikidata contient — 30 % de communs, 44 % de
- * peu-communs — alors qu'un paquet est ce qu'on DONNE. *La table du catalogue
- * décrit le monde, celle-ci décrit un cadeau* : si l'on tirait uniformément,
- * un légendaire sortirait une fois sur cent vingt paquets et personne ne les
+ * catalogue est ce que Wikidata contient — les trois quarts y sont communs —
+ * alors qu'un paquet est ce qu'on DONNE. *La table du catalogue décrit le
+ * monde, celle-ci décrit un cadeau* : si l'on tirait uniformément, un
+ * légendaire sortirait une fois sur cent vingt paquets et personne ne les
  * verrait jamais.
  *
- * Les cinq valeurs somment à 1. À régler avec Keko — voir `CRAN_GARANTI`.
+ * **Le commun a repris la part du peu-commun** quand le modèle est passé à
+ * quatre crans : les deux partageaient déjà le bronze, donc *fondre leurs
+ * chances ne change rien à ce que le joueur voit sortir.*
+ *
+ * Les quatre valeurs somment à 1. À régler avec Keko — voir `CRAN_GARANTI`.
  */
 export const CHANCES: Readonly<Record<Rarete, number>> = {
-  commun: 0.58,
-  'peu-commun': 0.27,
+  commun: 0.85,
   rare: 0.11,
   epique: 0.032,
   legendaire: 0.008,
 }
 
-/** Le rang d'un cran, du plus commun (0) au plus rare (4). */
+/** Le rang d'un cran, du plus commun (0) au plus rare (3). */
 export function rangDeRarete(r: Rarete): number {
   return RARETES.indexOf(r)
 }

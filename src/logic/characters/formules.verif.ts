@@ -3,7 +3,7 @@
  *
  * Ce qu'on vérifie ici, ce n'est pas l'équilibrage — il se juge sur
  * `stats-summary.txt` — ce sont les propriétés qui doivent tenir quels que
- * soient les réglages : l'échelle est monotone, elle est bornée, les cinq crans
+ * soient les réglages : l'échelle est monotone, elle est bornée, les quatre crans
  * de rareté sont atteignables, et le domaine se déduit d'un libellé de métier
  * tel que Wikidata l'écrit (« écrivain ou écrivaine », « homme politique »).
  */
@@ -63,7 +63,7 @@ console.log('\nL’ÉCHELLE')
   verifier('la notoriété croît avec le nombre de langues', monotone)
 }
 
-// LES CINQ CRANS SONT ATTEIGNABLES. Un cran que rien ne peut remplir est un
+// LES QUATRE CRANS SONT ATTEIGNABLES. Un cran que rien ne peut remplir est un
 // cran mort, et le résumé le dirait — mais autant le savoir sans télécharger
 // trois mille personnages.
 {

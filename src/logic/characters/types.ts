@@ -34,9 +34,9 @@ export const DOMAINES: readonly Domaine[] = [
 ]
 
 /** Les crans de rarete, du plus commun au plus rare. */
-export type Rarete = 'commun' | 'peu-commun' | 'rare' | 'epique' | 'legendaire'
+export type Rarete = 'commun' | 'rare' | 'epique' | 'legendaire'
 
-export const RARETES: readonly Rarete[] = ['commun', 'peu-commun', 'rare', 'epique', 'legendaire']
+export const RARETES: readonly Rarete[] = ['commun', 'rare', 'epique', 'legendaire']
 
 /**
  * Une carte-personnage. Les cinq derniers champs sont DERIVES : ils sortent de

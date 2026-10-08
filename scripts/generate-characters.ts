@@ -46,6 +46,64 @@ const UA = 'keko-test/0.1 (https://github.com/MastaGooz/keko-test; mastagooz@gma
 const SPARQL = 'https://query.wikidata.org/sparql'
 const WIKI = 'https://fr.wikipedia.org/w/api.php'
 
+/** L'API de Wikidata, pour les titres d'article dans les autres langues. */
+const WIKIDATA_API = 'https://www.wikidata.org/w/api.php'
+
+/**
+ * LES VUES SE SOMMENT SUR PLUSIEURS LANGUES, PAS SEULEMENT LE FRANCAIS.
+ *
+ * Tranche par Keko : « la frequentation de page devrait prendre en compte
+ * toutes les langues non ? pour une somme ? » **Et la mesure lui donne
+ * largement raison** -- le francais ne pese que 1 a 38 % des vues d'un
+ * personnage, et sur un echantillon de dix figures **huit rangs sur dix
+ * changent** quand on somme :
+ *
+ * | | vues FR | somme | part du FR |
+ * |---|---|---|---|
+ * | Napoleon | 148 690 | 1 346 355 | 11 % |
+ * | Sun Yat-sen | 6 499 | 261 130 | 2 % |
+ * | Qu Yuan | 358 | 24 797 | 1 % |
+ * | Moliere | 48 498 | 128 361 | 38 % |
+ *
+ * *On mesurait la notoriete FRANCOPHONE et on l'appelait notoriete.* Un poete
+ * chinois ou un reformateur turc valait une carte commune parce que personne
+ * ne lit sa page en francais.
+ *
+ * **LA LISTE EST FINIE, ET C'EST UN COMPROMIS ASSUME.** Il n'existe aucun
+ * endpoint qui agrege les vues d'un article toutes langues confondues : il
+ * faut une requete par (langue, lot de cinquante titres). A quinze langues
+ * c'est deja ~1 350 appels sur les candidats ; a trois cents ce serait
+ * inatteignable. On prend donc **les quinze plus grosses Wikipedia**, qui
+ * portent la grande majorite du trafic — et *le nombre de langues, qui pese
+ * 60 % du score, corrige ce que cette liste laisse passer.*
+ *
+ * Le francais n'y est PAS : il est deja mesure a part, avec la taille de
+ * l'article, et *une langue comptee deux fois vaudrait double.*
+ */
+/**
+ * LE TEMPS QU'UNE LANGUE A LE DROIT DE PRENDRE.
+ *
+ * *Sans lui, une seule langue peut manger la generation entiere* : le
+ * neerlandais a tourne DEUX HEURES sur ses trente-cinq derniers paquets, et
+ * rien ne l'a arrete -- ni le journal, qui nomme la langue AVANT de la
+ * traiter, donc le dernier nom affiche est celui qui bloque et non celui qui
+ * vient de finir.
+ *
+ * **La lecon etait deja ecrite pour SPARQL** (`BUDGET_TRANCHE`) : *une boucle
+ * qui ne sait pas quand s'arreter n'a pas de pire cas.* Elle valait pour les
+ * vues etrangeres aussi, et je ne l'y avais pas portee.
+ *
+ * Six minutes : les treize langues mesurees ont pris de 1,5 a 8 minutes
+ * chacune, donc le budget laisse passer tout ce qui se comporte normalement et
+ * coupe ce qui part en vrille. **Une langue coupee retire sa part et rien de
+ * plus** -- c'est une somme, elle n'ecarte personne.
+ */
+const BUDGET_LANGUE = 6 * 60_000
+
+const LANGUES_VUES = [
+  'en', 'es', 'de', 'ru', 'ja', 'zh', 'it', 'pt', 'fa', 'pl', 'ar', 'tr', 'nl', 'id', 'ko',
+] as const
+
 const CACHE = new URL('./.cache/', import.meta.url)
 const SORTIE = new URL('../public/data/', import.meta.url)
 
@@ -345,6 +403,8 @@ interface PageWiki {
   length?: number
   missing?: boolean
   pageviews?: Record<string, number | null>
+  /** L'image d'en-tete, rendue par `prop=pageimages&piprop=original`. */
+  original?: { source?: string }
 }
 
 interface ReponseWiki {
@@ -393,10 +453,22 @@ function vuesUtilisables(p: PageWiki): boolean {
  * jusqu'au prochain `--frais`. *Un cache ne retient que les succes*, et un lot
  * dont il manque les vues n'en est pas un : la relance suivante le reprendra.
  */
-async function mediawiki(nom: string, params: Record<string, string>): Promise<ReponseWiki | null> {
+async function mediawiki(
+  nom: string,
+  params: Record<string, string>,
+  wiki: string = WIKI,
+  exigeComplet = true,
+): Promise<ReponseWiki | null> {
   const base = { ...params, format: 'json', formatversion: '2' }
-  const complet = (d: ReponseWiki | null) => d !== null && (d.query?.pages ?? []).every(vuesUtilisables)
-  return cache(`wiki3-${nom}`, `${WIKI}?${new URLSearchParams(base)}`, async () => {
+  // UN LOT TROUE NE SE MET PAS EN CACHE -- mais SEULEMENT la ou un trou coute
+  // une carte, c'est-a-dire en francais. Sur un petit wiki, un article peu
+  // consulte rend trente `null` : *c'est un vrai zero, pas une mesure
+  // manquante*, et l'exiger complet empechait tout lot de se cacher. Le
+  // neerlandais n'en a garde que 52 sur 87 -- donc chaque relance les refaisait.
+  // **Un garde-fou calibre sur une source n'est pas valide sur une autre.**
+  const complet = (d: ReponseWiki | null) =>
+    d !== null && (!exigeComplet || (d.query?.pages ?? []).every(vuesUtilisables))
+  return cache(`wiki3-${nom}`, `${wiki}?${new URLSearchParams(base)}`, async () => {
     const pages = new Map<string, PageWiki>()
     const normalized: { from: string; to: string }[] = []
     let suite: Record<string, string> = {}
@@ -404,7 +476,7 @@ async function mediawiki(nom: string, params: Record<string, string>): Promise<R
     // Borne de securite : l'API devrait converger en quelques tours, mais une
     // boucle qui depend d'un jeton distant ne doit pas pouvoir tourner sans fin.
     for (let tour = 0; tour < 12; tour++) {
-      const url = `${WIKI}?${new URLSearchParams({ ...base, ...suite })}`
+      const url = `${wiki}?${new URLSearchParams({ ...base, ...suite })}`
       let d: ReponseWiki | null = null
       for (let essai = 1; essai <= ESSAIS; essai++) {
         try {
@@ -835,7 +907,34 @@ function vignetteCommons(url: string | undefined): string | null {
   if (!url) return null
   const apres = url.split('/Special:FilePath/')[1]
   if (apres === undefined) return null
-  const fichier = decodeURIComponent(apres).replace(/ /g, '_')
+  return vignetteDuFichier(decodeURIComponent(apres))
+}
+
+/**
+ * L'IMAGE D'EN-TETE DE L'ARTICLE, quand Wikidata n'en declare aucune.
+ *
+ * `pageimages` rend une URL DIRECTE vers le fichier d'origine
+ * (`.../commons/9/91/Nom.jpg`), la ou Wikidata rend un `Special:FilePath` : on
+ * en retire le nom de fichier et on repasse par la meme fabrique. *Deux
+ * chemins qui construiraient l'URL chacun de leur cote divergeraient au
+ * premier reglage.*
+ *
+ * **ON REFUSE TOUT CE QUI N'EST PAS SUR COMMONS.** Une image hebergee
+ * localement par un Wikipedia l'est au titre de l'usage encyclopedique, et
+ * *ce jeu n'est pas une encyclopedie* : elle n'a rien a faire ici, meme si
+ * l'URL repond. (`pilicense` vaut `free` par defaut, donc l'API ne devrait
+ * deja rien rendre de tel -- ce test est la ceinture.)
+ */
+function vignetteDeLArticle(source: string | undefined): string | null {
+  if (!source) return null
+  const m = /\/wikipedia\/commons\/[0-9a-f]\/[0-9a-f]{2}\/([^/?]+)/.exec(source)
+  if (!m) return null
+  return vignetteDuFichier(decodeURIComponent(m[1]!))
+}
+
+/** L'URL de vignette d'un fichier Commons, a partir de son seul nom. */
+function vignetteDuFichier(nom: string): string | null {
+  const fichier = nom.replace(/ /g, '_')
   if (fichier === '') return null
   const h = createHash('md5').update(fichier).digest('hex')
   const e = encodeURIComponent(fichier)
@@ -922,6 +1021,8 @@ GROUP BY ?item`
 interface Mesure {
   taille: number
   vues: number
+  /** L'image d'en-tete de l'article FR, si Wikipedia en declare une. */
+  image?: string
 }
 
 /**
@@ -943,7 +1044,11 @@ async function mesurerArticles(titres: string[]): Promise<Map<string, Mesure>> {
   for (const lot of lots) {
     const d = await mediawiki(`info-${empreinte(lot.join('|'))}`, {
       action: 'query',
-      prop: 'info|pageviews',
+      // `pageimages` voyage avec `info` et `pageviews` : **aucune requete de
+      // plus**, c'est ce qui rend le repli d'illustration gratuit. `pilicense`
+      // vaut `free` par defaut, donc on ne recoit que des images libres.
+      prop: 'info|pageviews|pageimages',
+      piprop: 'original',
       pvipdays: '30',
       titles: lot.join('|'),
     })
@@ -963,7 +1068,7 @@ async function mesurerArticles(titres: string[]): Promise<Map<string, Mesure>> {
         continue
       }
       const vues = Object.values(p.pageviews ?? {}).reduce<number>((s, v) => s + (v ?? 0), 0)
-      const m = { taille: p.length ?? 0, vues }
+      const m: Mesure = { taille: p.length ?? 0, vues, image: p.original?.source }
       mesures.set(p.title, m)
       const demande = versDemande.get(p.title)
       if (demande) mesures.set(demande, m)
@@ -975,6 +1080,135 @@ async function mesurerArticles(titres: string[]): Promise<Map<string, Mesure>> {
   // et tout paraît simplement terne. On le dit donc ici, en clair.
   if (manquantes > 0) journal(`  ${manquantes} article(s) sans vues mesurables, ecarte(s) -- relancer les recuperera`)
   return mesures
+}
+
+/** Un appel JSON a une API MediaWiki, avec cache et reessais. */
+async function jsonApi<T>(nom: string, base: string, params: Record<string, string>): Promise<T | null> {
+  const url = `${base}?${new URLSearchParams({ ...params, format: 'json' })}`
+  return cache<T | null>(
+    nom,
+    url,
+    async () => {
+      for (let essai = 1; essai <= ESSAIS; essai++) {
+        try {
+          const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(30_000) })
+          if (!r.ok) throw new Error(`HTTP ${r.status}`)
+          const d = (await r.json()) as T
+          await dors(PAUSE.wiki)
+          return d
+        } catch (e) {
+          if (essai === ESSAIS) {
+            journal(`  ${nom} : abandonne (${e instanceof Error ? e.message : e})`)
+            return null
+          }
+          await dors(PAUSE.wiki * essai * 6)
+        }
+      }
+      return null
+    },
+    // UN ECHEC NE SE MET PAS EN CACHE : une promesse rejetee gardee
+    // condamnerait le lot jusqu'au prochain `--frais`.
+    (v) => v !== null,
+  )
+}
+
+/**
+ * LE TITRE DE L'ARTICLE DANS CHAQUE LANGUE, pris aux sitelinks de Wikidata.
+ *
+ * Un meme personnage ne s'appelle pas pareil d'un wiki a l'autre, et on ne peut
+ * pas le deviner : « Mustafa Kemal Ataturk » est « 穆斯塔法·凯末尔·阿塔图尔克 » en
+ * chinois. **Wikidata est precisement l'endroit qui tient ces correspondances**,
+ * et `wbgetentities` en rend cinquante par appel.
+ *
+ * `sitefilter` est ce qui rend l'etape tenable : sans lui chaque entite
+ * rapporterait ses trois cents sitelinks, dont on jetterait les deux cent
+ * quatre-vingt-cinq qu'on ne mesure pas. *Le poids des champs decide, pas le
+ * nombre de lignes* — la lecon deja payee sur SPARQL.
+ */
+async function titresParLangue(ids: string[]): Promise<Map<string, Map<string, string>>> {
+  const lots = paquets(ids, 50)
+  journal(`Titres etrangers : ${ids.length} personnages en ${lots.length} paquets`)
+  const out = new Map<string, Map<string, string>>()
+  for (const lot of lots) {
+    const d = await jsonApi<{ entities?: Record<string, { sitelinks?: Record<string, { title?: string }> }> }>(
+      `sitelinks-${empreinte(lot.join('|'))}`,
+      WIKIDATA_API,
+      {
+        action: 'wbgetentities',
+        props: 'sitelinks',
+        sitefilter: LANGUES_VUES.map((l) => `${l}wiki`).join('|'),
+        ids: lot.join('|'),
+      },
+    )
+    for (const id of lot) {
+      const sl = d?.entities?.[id]?.sitelinks ?? {}
+      const m = new Map<string, string>()
+      for (const l of LANGUES_VUES) {
+        const t = sl[`${l}wiki`]?.title
+        if (t) m.set(l, t)
+      }
+      out.set(id, m)
+    }
+  }
+  return out
+}
+
+/**
+ * LA SOMME DES VUES SUR LES AUTRES LANGUES, par personnage.
+ *
+ * Une requete par (langue, lot de cinquante titres) : c'est le prix d'un
+ * chiffre qu'aucun endpoint n'agrege. On ne demande QUE les articles qui
+ * existent dans la langue, donc les lots retrecissent vite au-dela des quatre
+ * ou cinq plus grandes Wikipedia.
+ *
+ * **Un titre qu'on ne retrouve pas vaut zero pour cette langue, pas pour le
+ * personnage** : c'est une somme, donc une langue manquante en retire sa part
+ * et rien de plus. *C'est la difference avec les vues FR, ou un trou faussait
+ * tout le score* — et c'est pour ca que celles-ci n'ecartent personne.
+ */
+async function vuesEtrangeres(ids: string[]): Promise<Map<string, number>> {
+  const titres = await titresParLangue(ids)
+  const somme = new Map<string, number>(ids.map((i) => [i, 0]))
+  for (const langue of LANGUES_VUES) {
+    const debutLangue = Date.now()
+    const parTitre = new Map<string, string>()
+    for (const id of ids) {
+      const t = titres.get(id)?.get(langue)
+      if (t) parTitre.set(t, id)
+    }
+    if (parTitre.size === 0) continue
+    const lots = paquets([...parTitre.keys()], 50)
+    journal(`  ${langue} : ${parTitre.size} articles en ${lots.length} paquets`)
+    let coupee = 0
+    for (const lot of lots) {
+      if (Date.now() - debutLangue > BUDGET_LANGUE) {
+        coupee++
+        continue
+      }
+      const d = await mediawiki(
+        `vues-${langue}-${empreinte(lot.join('|'))}`,
+        { action: 'query', prop: 'pageviews', pvipdays: '30', titles: lot.join('|') },
+        `https://${langue}.wikipedia.org/w/api.php`,
+        false,
+      )
+      // L'API NORMALISE LES TITRES et rend les pages sous leur forme
+      // normalisee : sans cette table, un titre a souligne ou a majuscule
+      // differente ne se retrouverait pas. Meme piege qu'en francais.
+      const versDemande = new Map<string, string>()
+      for (const { from, to } of d?.query?.normalized ?? []) versDemande.set(to, from)
+      for (const p of d?.query?.pages ?? []) {
+        if (!p.title || p.missing) continue
+        const id = parTitre.get(versDemande.get(p.title) ?? p.title) ?? parTitre.get(p.title)
+        if (!id) continue
+        const v = Object.values(p.pageviews ?? {}).reduce<number>((t, x) => t + (x ?? 0), 0)
+        somme.set(id, (somme.get(id) ?? 0) + v)
+      }
+    }
+    // ON LE DIT : sans ca, une langue a moitie mesuree ne laisserait aucune
+    // trace, et le score baisserait sans qu'on sache pourquoi.
+    if (coupee > 0) journal(`  ${langue} : hors budget, ${coupee} paquet(s) non mesure(s) -- relancer les recuperera`)
+  }
+  return somme
 }
 
 // --------------------------------------------------------------------- le resume
@@ -1110,9 +1344,16 @@ async function main(): Promise<void> {
   // candidat sans libelle FR n'aura pas de carte de toute facon.
   const mesures = await mesurerArticles([...details.values()].map((d) => d.article))
 
+  // LES VUES ETRANGERES NE SE DEMANDENT QUE POUR CE QUI SURVIVRA : un candidat
+  // sans mesure FR est deja ecarte, et chaque id coute quinze requetes de plus
+  // a l'echelle du lot. *On ne paie pas pour des cartes qu'on jette.*
+  const mesurables = [...details.entries()].filter(([, d]) => mesures.has(d.article)).map(([id]) => id)
+  const etrangeres = await vuesEtrangeres(mesurables)
+
   let sansDetail = 0
   let sansArticle = 0
   let ebauche = 0
+  let sansImage = 0
   const cartes: CharacterCard[] = []
   for (const c of candidats) {
     const d = details.get(c.id)
@@ -1135,9 +1376,40 @@ async function main(): Promise<void> {
       ebauche++
       continue
     }
+    // UNE CARTE SANS PORTRAIT N'EST PAS UNE CARTE. Tranche par Keko. Le sceau
+    // de repli est la pour dire « il manque un fichier qu'on devrait fournir »,
+    // et ce n'est pas le cas ici : Wikidata n'a simplement pas d'image libre.
+    // *La marge de candidats sert exactement a ca* -- la suivante prend la
+    // place, et l'ecran ne montre jamais un cadre vide.
+    //
+    // LE REPLI NE VAUT QUE POUR LES PERSONNAGES REELS, et c'est la mesure qui
+    // l'impose. Wikipedia affiche une image d'en-tete meme quand Wikidata n'en
+    // declare aucune, et pour un personnage reel elle est bonne -- une
+    // photographie, une piece de monnaie, une calligraphie, soit exactement ce
+    // que portent deja les cartes antiques. **Pour la fiction moderne, ce sont
+    // des COSPLAYS** : Thanos y gagnait une photo de Comic-Con et Mario un
+    // train decore. *C'est precisement pour ca que Wikidata ne les met pas*,
+    // et une carte illustree par un cosplayeur est pire qu'un sceau.
+    const image = d.image ?? (c.fiction ? null : vignetteDeLArticle(m.image))
+    if (image === null) {
+      sansImage++
+      continue
+    }
+    // LES VUES SONT LA SOMME DE TOUTES LES LANGUES MESUREES, francais compris
+    // (voir `LANGUES_VUES`) : *le francais ne pese que 1 a 38 % du total*, donc
+    // le prendre seul mesurait la notoriete francophone.
+    //
+    // ELLE SE CALCULE UNE FOIS ET SERT AUX DEUX. Elle a d'abord ete sommee dans
+    // l'appel a `statsDerivees` pendant que la carte enregistrait `m.vues` --
+    // donc la rarete et l'attaque etaient justes, mais **le fichier disait
+    // autre chose que ce qui avait servi a les calculer**, et le tri final
+    // reclassait sur le chiffre francais. *Une valeur qu'on calcule et une
+    // valeur qu'on enregistre ne peuvent pas diverger sans que le fichier
+    // mente* -- et rien ne l'aurait signale, puisque les deux sont plausibles.
+    const vues = m.vues + (etrangeres.get(c.id) ?? 0)
     const stats = statsDerivees({
       langues: c.langues,
-      vues: m.vues,
+      vues,
       taille: m.taille,
       metiers: d.metiers,
       fiction: c.fiction,
@@ -1149,7 +1421,7 @@ async function main(): Promise<void> {
       nom: d.nom,
       description: d.description,
       article: d.article,
-      image: d.image,
+      image,
       naissance: d.naissance,
       mort: d.mort,
       fiction: c.fiction,
@@ -1158,13 +1430,15 @@ async function main(): Promise<void> {
       domaine: stats.domaine,
       langues: c.langues,
       taille: m.taille,
-      vues: m.vues,
+      vues,
       rarete: stats.rarete,
       attaque: stats.attaque,
       defense: stats.defense,
     })
   }
-  journal(`Ecartes : ${sansDetail} sans libelle FR, ${sansArticle} sans article mesure, ${ebauche} ebauches`)
+  journal(
+    `Ecartes : ${sansDetail} sans libelle FR, ${sansArticle} sans article mesure, ${ebauche} ebauches, ${sansImage} sans portrait`,
+  )
 
   // Triees par notoriete decroissante : le fichier se lit de haut en bas.
   cartes.sort((a, b) => b.langues - a.langues || b.vues - a.vues || a.id.localeCompare(b.id))
