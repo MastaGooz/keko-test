@@ -86,6 +86,28 @@ function sansLesDates(texte: string): string {
   return texte.replace(/\s*\((?:v\.\s*)?-?\d{1,4}\s*[-–—]\s*-?\d{1,4}\)\s*$/, '').trim()
 }
 
+/**
+ * LA MAJUSCULE SE POSE AU RENDU, PAS DANS LA DONNÉE.
+ *
+ * Wikidata écrit ses libellés comme des entrées de dictionnaire, donc sept
+ * personnages du catalogue arrivent en minuscule — « chat de Schrödinger »,
+ * « père Noël », « roi Arthur », « golem ». Ce sont des noms COMMUNS employés
+ * comme noms propres, et *un nom de carte commence par une majuscule* : c'est
+ * vrai de tout le reste du jeu.
+ *
+ * Elle se pose ICI et non dans le pipeline, exactement comme le titre des
+ * encadrés du glossaire : *le catalogue garde ce que Wikidata dit*, donc le
+ * jour où l'on change d'avis il n'y a pas trois mille cartes à réengendrer.
+ *
+ * Et le découpage se fait par POINT DE CODE (`[...texte]`) : un `charAt(0)`
+ * coupe en deux un caractère hors BMP et laisse une moitié de paire
+ * orpheline.
+ */
+function enTitre(texte: string): string {
+  const [premier, ...reste] = [...texte]
+  return premier === undefined ? texte : premier.toUpperCase() + reste.join('')
+}
+
 /** Les dates, telles qu'on les lit sur la carte : « 1769 – 1821 », « -384 – -322 ». */
 function dates(c: CharacterCard): string | null {
   if (c.naissance === null && c.mort === null) return null
@@ -124,7 +146,7 @@ export function carteDuPersonnage(c: CharacterCard): CarteAPeindre {
 
   return {
     id: c.id,
-    nom: c.nom,
+    nom: enTitre(c.nom),
     // ELLE NE COÛTE RIEN : son coin haut-gauche reste nu, voir `CarteAPeindre`.
     cout: null,
     effet: lignes,
