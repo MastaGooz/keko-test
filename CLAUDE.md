@@ -11109,6 +11109,31 @@ recouvrent.*** Les trois s'éteignent désormais sur `dos`, et l'auréole se
 remet explicitement à zéro — *un uniforme garde sa dernière valeur, donc ce
 qui ne se remet pas à zéro ne s'éteint jamais.*
 
+#### UNE CARTE FACE CACHÉE PEINT QUAND MÊME SA FACE
+
+Keko : « parfois quand j'ouvre une carte, le dos de carte reste et je vois
+rien. »
+
+**La face ne chargeait sa texture qu'à l'instant où `dos` devenait faux.** D'ici
+qu'elle arrive, elle gardait celle du dos — donc la carte culbutait et
+**retombait en montrant encore le dos**.
+
+***Le « parfois » était la mesure du problème.*** La culbute dure **660 ms**, et
+un portrait Commons met de **57 à 759 ms** à arriver (mesuré sur six cartes,
+cache vide). Ça passait ou non selon le portrait et le réseau — donc jamais sur
+un téléphone en 4G.
+
+On chauffe donc le cache pendant qu'on montre le dos : *le temps de regarder un
+dos est exactement le temps qu'il faut pour peindre la face.* La promesse est
+mémorisée par `textureDeCarte`, donc le second appel — au retournement — la
+retrouve résolue et la pose dans la même image.
+
+**Vérifié par les requêtes réseau, pas à l'oeil** : les cinq portraits partent
+AVANT tout clic, et le plus lent du lot mettait 824 ms — c'était précisément la
+carte qui serait retombée sur son dos. *Un bug intermittent se prouve en
+mesurant ce qui le rend intermittent*, pas en recliquant jusqu'à ce qu'il ne se
+reproduise plus.
+
 #### L'IMAGE COMMONS : ce que `Special:FilePath` ne peut pas faire
 
 **Wikidata rend une URL `Special:FilePath`, et elle est INUTILISABLE dans un

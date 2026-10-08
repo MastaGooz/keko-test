@@ -827,6 +827,25 @@ ${nuanceur.fragmentShader}`
 
   useEffect(() => {
     let vivant = true
+    /**
+     * UNE CARTE FACE CACHÉE PEINT QUAND MÊME SA FACE.
+     *
+     * **Sans ça, elle se retourne sur son propre dos.** La face ne chargeait sa
+     * texture qu'à l'instant où `dos` devenait faux ; d'ici qu'elle arrive, elle
+     * gardait celle du dos — donc la carte culbutait et retombait **en montrant
+     * encore le dos**. Keko : « parfois quand j'ouvre une carte, le dos reste et
+     * je vois rien ».
+     *
+     * *Le « parfois » était la mesure du problème* : la culbute dure 660 ms, et
+     * un portrait Commons met de 57 à 759 ms à arriver. Ça passait ou non selon
+     * le portrait et le réseau — donc jamais sur un téléphone.
+     *
+     * On chauffe donc le cache pendant qu'on montre le dos : *le temps de
+     * regarder un dos est exactement le temps qu'il faut pour peindre la face.*
+     * La promesse est mémorisée par `textureDeCarte`, donc le second appel — au
+     * retournement — la retrouve déjà résolue et la pose dans la même image.
+     */
+    if (dos) void textureDeCarte(carte, largeurPx).catch(() => {})
     // LA TEXTURE VIENT D'UN CACHE PARTAGÉ : deux cartes du même modèle se la
     // prêtent, et une carte remontée la retrouve déjà prête — donc elle ne
     // repasse jamais par son état sombre. Rien n'est libéré ici pour la même
