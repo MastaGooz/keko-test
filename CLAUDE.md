@@ -11438,6 +11438,180 @@ main de combat.
 - **la table des métiers**, qui décide de ce que le catalogue contient : trente
   -sept entrées aujourd'hui, et c'est le seul endroit à élargir.
 
+## LE TROISIÈME MODE DEVIENT DES ANIMAUX — décision de Keko
+
+**Les personnages sont remplacés, pas complétés.** Keko : « on remplace les
+personnages par des animaux ». Le pipeline, le format et tout ce qui suppose
+« une personne » sont à repenser pour « un animal » ; on commence par les
+**mammifères**, et la structure doit accueillir les autres vertébrés sans
+réécriture — *d'où `animals.json` et non `mammals.json`, et le champ `groupe`.*
+
+### LA RÈGLE QUI PORTE TOUT : une carte est un NOEUD, pas un rang
+
+Posée par Keko, et c'est la seule décision de fond du mode : **une carte n'est
+pas un rang taxonomique fixe, c'est un noeud de l'arbre du vivant, à n'importe
+quel rang — choisi par ce que le grand public sait nommer.**
+
+- « chauve-souris » est un ORDRE de 1800 espèces et fait **une** carte ;
+- « lion » et « tigre » sont deux ESPÈCES d'un même genre et font **deux**
+  cartes ;
+- « rongeurs » doit se découper en « rat », « écureuil », « castor »,
+  « capybara »… mais pas en 2500 espèces.
+
+**L'INVARIANT : une espèce réelle tombe dans exactement une carte.** Il se
+vérifie en fin de course et il se dit en tête de la revue — *une coupe qui perd
+des espèces en silence ne se verrait jamais.* Une carte couvre son sous-arbre
+MOINS ce que ses cartes filles couvrent : sans la soustraction, une espèce
+serait comptée à chaque étage et la somme vaudrait plusieurs fois le total.
+
+### LA COUPE À PROFONDEUR VARIABLE
+
+On descend depuis Mammalia : un noeud devient une carte s'il **dépasse le seuil
+de notoriété ET porte un nom français**, et on examine alors ses enfants.
+Celui qui ne passe pas est absorbé par la carte au-dessus de lui.
+
+*C'est ce qui donne « chauve-souris » en une carte et « lion » et « tigre » en
+deux* : les enfants de Chiroptera ne passent pas le seuil, ceux de Panthera le
+passent. Le seuil est un paramètre (`--seuil=`), avec trois sorties à comparer.
+
+**LES RESTES DE LA RACINE ont deux issues**, et c'est `--restes=` qui tranche :
+les ordres qui ne passent pas le seuil n'ont aucun parent pour les absorber,
+donc soit leurs espèces se répartissent sur les cartes du premier étage
+(`absorbe`, le défaut), soit elles forment une carte « Autres mammifères »
+(`carte`). *Sans l'un des deux, elles disparaissent — et c'est l'invariant qui
+le dirait.*
+
+### CE QUE CHAQUE SOURCE SAIT FAIRE, ET CE QU'ELLE NE PEUT PAS
+
+Trois API, et le découpage n'est pas un choix d'architecture : il est imposé par
+ce que chacune accepte.
+
+| | ce qu'on y prend | la contrainte qui décide |
+|---|---|---|
+| **GBIF** | l'arbre et les rangs (`species/{key}/children`) | **paginé** : un seul appel sur un grand genre ne rend que les premiers, et `endOfRecords` est le seul signe |
+| **GBIF** | le compte d'espèces (`species/search?…&limit=0`) | *parcourir* le sous-arbre de Rodentia coûterait des milliers d'appels pour un nombre que l'index connaît déjà |
+| **Wikidata** | nom, article, image, UICN, masse | **60 noeuds par requête**, donc c'est là qu'on élague |
+| **Wikipédia** | les redirections de l'article français | 50 titres par appel |
+| **REST pageviews** | 12 mois de vues, fr et en | **UN article par appel** — c'est le poste de coût, et il décide de l'ordre des étapes |
+
+**D'où l'ordre : Wikidata EN MASSE d'abord, les vues ensuite et seulement sur
+les survivants.** Un noeud sans article n'a pas de vues à demander, son score
+est nul, il est absorbé — *c'est le seul élagage qui rende le coût tenable*,
+puisqu'un ordre porte des milliers de genres obscurs.
+
+**DEUX PIÈGES DE LA REQUÊTE WIKIDATA, et les deux sont mesurés :**
+
+- **P2067 (la masse) rend plusieurs lignes par taxon** — une par source, une par
+  sexe — donc sans `GROUP BY` un seul noeud en occupe douze et le lot de soixante
+  en rend sept cents. `SAMPLE` suffit : *on veut un ordre de grandeur, pas la
+  masse d'un individu* ;
+- **la masse passe par `psn:`**, la valeur NORMALISÉE. Wikidata écrit les souris
+  en grammes et les baleines en tonnes ; `psn:` les ramène au kilogramme. *Lire
+  `wdt:P2067` directement rendrait « 20 » pour une souris de vingt grammes.*
+
+### LE NOM FRANÇAIS : les REDIRECTIONS sont la seule source qui tienne
+
+**C'est le point le plus coûteux du mode, et l'exemple fondateur de Keko y
+serait passé à la trappe.** Un noeud ne devient une carte que s'il porte un nom
+français — et pour Chiroptera, les trois sources évidentes échouent :
+
+| source | ce qu'elle rend pour Chiroptera |
+|---|---|
+| libellé français de Wikidata | littéralement **« Chiroptera »** |
+| P1843 (nom vernaculaire) | **vide** |
+| `vernacularNames` de GBIF | **aucun français** — et BRUITÉ : « Hamster de Roborovski » pour le capybara |
+| **redirections de l'article fr** | **« Chauve-souris »**, en première position |
+
+Mesuré sur les six ordres les plus connus, c'est toujours le nom commun qui
+ouvre la liste des redirections : Rodentia → « Rongeur », Cetacea →
+« Cétacés », Artiodactyla → « Artiodactyle », Primates → « Primate ».
+
+**D'où une cascade, et l'ordre compte** : P1843, puis le libellé français *s'il
+n'est pas le nom scientifique* — le piège d'un libellé qui n'est que son propre
+identifiant, déjà payé ailleurs dans ce projet — puis la première redirection
+non savante, puis le titre de l'article, **signalé** dans la revue. Ce qui finit
+en `-idae`, `-inae`, `-us`, `-ae`… est écarté : *ce qui se termine comme un nom
+de taxon n'est pas un nom commun.*
+
+**Et les redirections ne se demandent QUE pour les noeuds dont le libellé ne
+suffit pas** : c'est un appel par cinquante, autant ne pas le gâcher.
+
+### LA RARETÉ VIENT DE LA NOTORIÉTÉ — tranché par Keko
+
+**Et elle se dit en QUANTILES, pas en seuils fixes.** C'est la conséquence
+directe de sa décision : le score qui décide de la rareté est celui qui a décidé
+de la coupe, donc *un seuil fixe vivrait au-dessus du seuil de coupe, qui est un
+paramètre* — à coupe serrée, toutes les cartes seraient légendaires.
+
+Les parts sont celles du mode personnages (70 / 20 / 7,5 / 2,5 %), donc la
+pyramide tient quelle que soit la coupe, et **le script imprime les frontières
+de score obtenues** : c'est ce qu'il faudra figer le jour où le catalogue se
+stabilise.
+
+**L'échelle est LOGARITHMIQUE** (`log10` des vues fr + la moitié des anglaises),
+comme pour les personnages et pour la même raison : la notoriété suit une loi de
+puissance, et en linéaire le lion écrase tout le monde.
+
+**Les vues portent sur DOUZE MOIS.** L'API REST ne prend qu'un article par
+appel, là où `prop=pageviews` en prend cinquante — mais celle-ci ne remonte qu'à
+soixante jours. *Douze mois valent le coût* : une saison de documentaires ne
+doit pas décider qu'un animal est légendaire.
+
+### CE QUI RESTE À TRANCHER PAR KEKO — les animaux
+
+- **LES FOSSILES.** Le référentiel GBIF compte **21 100 espèces de mammifères**
+  acceptées, contre ~6 400 vivantes : il porte les fossiles, et des ordres
+  éteints entiers remontent dans l'arbre (Oréodontes, Entélodontes,
+  Hypertragulidés). *Ce n'est pas un défaut de l'invariant* — la somme des
+  parties égale le tout dans le même référentiel — mais c'est une décision de
+  contenu : **un mammouth est une carte désirable, un Andrewsarchus
+  probablement pas.** Rien n'est filtré aujourd'hui ;
+- **le seuil de coupe**, à choisir sur les trois sorties ;
+- **`--restes=absorbe` ou `carte`** : répartir les orphelines, ou faire une
+  carte « Autres mammifères » ;
+- **le pluriel et la casse des noms vernaculaires** : Wikidata rend « félins »,
+  « cervidés », « carnivores » — au pluriel et en bas de casse. *La majuscule se
+  pose au rendu* (la règle est déjà écrite pour les personnages), le pluriel non ;
+- **les cartes nommées par le titre de l'article** faute de nom vernaculaire :
+  elles sont listées dans la revue, c'est la passe à la main.
+
+### CE QUI CASSERA QUAND LE FORMAT CHANGERA — l'inventaire
+
+**Cinq fichiers seulement importent le format des personnages**, et c'est ce que
+la règle de pureté achète : le reste du jeu ne le connaît pas.
+
+| fichier | ce qu'il fait | ce qu'il devient |
+|---|---|---|
+| `src/logic/characters/types.ts` | `CharacterCard`, la validation | **remplacé** par `src/logic/animals/types.ts` |
+| `src/logic/characters/formules.ts` | rareté, attaque, défense, domaine | **absorbé par le pipeline** : les formules des animaux vivent dans `scripts/generate-animals.ts`, puisque la rareté sort d'un quantile sur le catalogue entier et ne peut pas se calculer carte par carte |
+| `src/logic/characters/formules.verif.ts` | ses vérifications | **remplacé** par `src/logic/animals/types.verif.ts` |
+| `src/logic/characters/paquet.ts` | le tirage d'un paquet, seedé | **à reporter** : rien n'y est propre aux personnages sauf le type — `CARTES_PAR_PAQUET`, `CRAN_GARANTI` et `CHANCES` restent justes |
+| `src/render/carte-personnage.ts` | `CharacterCard` → `CarteAPeindre` | **à réécrire** : le domaine devient le groupe ou le rang, et les deux mesures du pied devront venir d'ailleurs (masse ? UICN ? espèces absorbées ?) — **c'est une décision de design, elle revient à Keko** |
+| `src/render/Paquet3D.tsx` | l'écran d'ouverture | **trois imports à changer**, rien d'autre : le geste, la culbute et l'onde ne savent rien du contenu |
+| `src/ui/personnages.ts` | le `fetch` du catalogue | **renommé**, 44 lignes |
+| `src/entree.ts` | la route `?paquet` | une ligne |
+| `package.json` | `personnages`, la chaîne `verif` | deux lignes |
+| `public/data/characters.json` + `stats-summary.txt` | 1,7 Mo de données | **à supprimer** une fois le nouveau pipeline validé |
+| `scripts/generate-characters.ts` | 1455 lignes | **à supprimer** une fois validé |
+
+**CE QUI NE CASSE PAS, et il faut le savoir** : les quatre ouvertures du gabarit
+que la carte-personnage avait demandées restent exactement ce qu'il faut à un
+animal — **l'illustration par URL** (le mode DÉCOUVRE ses images, il n'y a pas
+de table à écrire), **le coût `null`** (une carte qui ne se joue pas ne porte
+pas d'orbe de PA), **les deux mesures au pied** avec leur couleur de nature, et
+**l'absence de ciel de famille**. *Une ouverture faite pour une bonne raison
+sert au cas suivant.*
+
+**Et `scripts/outils.ts` est neuf exprès.** Les briques partagées — cache par
+requête, lots, journal, pause — y sont recopiées plutôt que factorisées depuis
+`generate-characters.ts` : *toucher à un script qu'on va retirer pour le
+factoriser avec celui qui le remplace ne gagne rien et risque quelque chose.*
+Le jour où il part, le module reste.
+
+**LE PIPELINE DES PERSONNAGES NE SE SUPPRIME PAS AVANT VALIDATION.** Tranché
+par Keko : « supprime le script personnages et ses données une fois le nouveau
+pipeline validé, pas avant. »
+
 ## Architecture — la règle à ne pas casser
 
 ```
@@ -11447,9 +11621,11 @@ src/
     state.ts     # GameState + transitions pures (état immuable : on retourne un nouvel objet)
     hub.ts       # l'armurerie : la réserve, le chargement, ce que la mort coûte
     storage.ts   # (dé)sérialisation + interface StoragePort
-    characters/  # LE TROISIÈME MODE : le type des cartes-personnages et ses formules
+    characters/  # L'ANCIEN TROISIÈME MODE — remplacé par les animaux, à retirer
       types.ts      # CharacterCard + la validation du JSON engendré
       formules.ts   # rareté, attaque, défense, domaine — UN SEUL endroit
+    animals/     # LE TROISIÈME MODE : une carte = un NOEUD de l'arbre du vivant
+      types.ts      # CarteAnimal + la validation du JSON engendré
   render/  # LE MOTEUR 3D (React + R3F), derrière `?r3f` -- en construction
     texture-carte.ts # la carte peinte au canvas, pour servir de texture
     Carte3D.tsx      # le pavé, ses matériaux, sa place amortie
@@ -11467,7 +11643,9 @@ src/
     styles.css
   main.ts  # câblage logic <-> ui ; seul endroit qui connaît les deux
 scripts/   # HORS du build Vite : lancé par `node`, pas couvert par tsconfig
-  generate-characters.ts  # le pipeline Wikidata -> public/data/characters.json
+  outils.ts               # cache par requête, lots, journal — partagé
+  generate-animals.ts     # GBIF + Wikidata -> public/data/animals.json
+  generate-characters.ts  # l'ancien pipeline, à retirer après validation
   .cache/                 # le cache des requêtes, gitignoré
 ```
 
@@ -11798,7 +11976,13 @@ npm run dev:mobile   # vite --host -> tester sur le téléphone via l'adresse Ne
 npm run build        # tsc (types) puis vite build ; doit passer sans erreur
 npm run verif        # vérifications des règles, sans navigateur
 npm run personnages  # (re)engendre public/data/characters.json depuis Wikidata
+npm run gen:animals  # (re)engendre public/data/animals.json depuis GBIF + Wikidata
 ```
+
+`npm run gen:animals` accepte `--seuil=<0..1>` (la coupe), `--restes=absorbe|carte`
+(le sort des ordres qui ne passent pas), `--sortie=<nom>` (pour comparer plusieurs
+coupes côte à côte) et `--frais` (ignorer le cache). Il écrit toujours DEUX
+fichiers : le catalogue et `*_review.md`, la liste à relire par ordre.
 
 `npm run personnages` tourne **hors du build** et peut durer de longues minutes
 — il profite du cache de `scripts/.cache/`, donc une relance ne redemande que
