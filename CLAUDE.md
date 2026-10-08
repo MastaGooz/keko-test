@@ -11239,6 +11239,124 @@ Wikidata — mesuré, **7 473 personnages de fiction ont un article FR**, tous
 crans confondus. Le découpage par tranche de notoriété n'y est qu'un garde-fou
 de volume.
 
+#### LES DEUX FILTRES SONT TOMBÉS : plus d'article FR exigé, plus de limite de 50 ans
+
+Tranché par Keko : « on supprime le filtre "articles en français" et mort depuis
+50 ans ».
+
+**Ce que chacun coûtait, mesuré avant de les retirer** — et les deux chiffres
+n'ont rien à voir :
+
+| | ce que le filtre écartait |
+|---|---|
+| article français | **0,4 à 1 %** des candidats, et 100 % d'entre eux avaient quand même un libellé FR |
+| mort depuis 50 ans | **30 à 74 %** du bassin — peintres ×1,4, physiciens ×1,9, compositeurs ×3,8 |
+
+*Le premier ne protégeait donc rien*, et il coûtait du TEMPS : une requête de
+peintres passe de 25 à 6 secondes sans lui, parce que le `schema:about` est le
+poste le plus cher. **Un filtre qui ne filtre qu'un pour cent et qui quadruple
+le temps n'est pas un filtre, c'est un péage.**
+
+**`wdt:P570` N'EST PLUS DEMANDÉ DU TOUT**, et c'est ce qui ouvre vraiment la
+porte : retirer le seul `FILTER` aurait gardé l'exigence d'une date de décès,
+donc exclu les vivants — *une propriété demandée dans le WHERE est un filtre qui
+ne dit pas son nom.*
+
+**ET IL A FALLU UN REPLI ANGLAIS, sinon la suppression était cosmétique.** La
+découverte acceptait les candidats sans article FR, et **la mesure les rejetait
+trois étapes plus loin** : `mesurerArticles` ne sait lire que les articles qu'on
+lui nomme. Le titre anglais ne coûte rien à trouver — *les sitelinks sont déjà
+demandés pour les vues étrangères* — donc leur taille et leurs vues de base
+viennent de `en.wikipedia`. **Aucune carte ne porte un nom anglais** : 100 %
+d'entre eux ont un libellé français.
+
+*Ce qui a été relancé derrière* : 1h27, 74 071 personnes distinctes découvertes,
+4 500 candidats au seuil de **66 langues** (contre 18 avant — le bassin a
+quadruplé, donc le seuil monte tout seul).
+
+**Ce que ça a changé, mesuré sur le catalogue** :
+
+| | |
+|---|---|
+| cartes qui n'existaient pas avant | **1 476 / 3 000, soit 49 %** |
+| dont sans année de mort (vivants) | 852 |
+| dont morts après 1976 | 624 |
+
+Et le haut de l'échelle a changé de tête : **Michael Jackson est la carte la
+plus notoire du jeu** (322 langues, 1,3 M de vues), David Bowie est l'exemple
+épique. *La rareté se lisant aux vues, le haut devient contemporain* — c'est une
+conséquence, pas un effet de bord, et elle est assumée.
+
+#### LA PORTE INVERSE : partir des VUES, pas des métiers — mesurée, pas faite
+
+**La table des métiers est le seul point d'entrée indexé qu'on ait**, et
+`wdt:P31 wd:Q5` rend 504 à chaque essai. *Mais la question n'est pas « les
+humains »* — Keko : « nous on ne veut pas forcément des humains, mais des
+personnages ! »
+
+**Et c'est juste : les personnages NON humains sont PETITS, donc déjà
+atteignables** — mesuré :
+
+| | avec article FR |
+|---|---|
+| divinités (Q178885) | 2 258 en 22 s |
+| créatures mythologiques (Q2239243) | 1 457 en 12 s |
+| personnages légendaires (Q13002315) | 1 067 en 13 s |
+| personnages de fiction (Q95074) | ~7 500 (504 ce jour-là — le service varie) |
+
+*Le seul ensemble ingérable est celui des humains*, et c'est le seul pour lequel
+la table de métiers existe.
+
+**ET LA PORTE INVERSE MARCHE. Mesurée :**
+
+| | |
+|---|---|
+| les 1 000 pages les plus lues de fr.wikipedia (un mois) | **989 articles en 0,26 s**, une requête |
+| 50 titres → leur Q-id ET leur nature (P31), en une requête SPARQL | **0,9 s, 49/50 résolus, 21 Ko** |
+| part de PERSONNAGES dans ce top | **66 % (651 sur 985)** |
+
+**Ça retourne le problème** : on ne demande plus à Wikidata de trier onze
+millions d'humains par notoriété — on lui DONNE des titres et on filtre sur ce
+qu'il répond. *Par titre, c'est indexé.* Plus de table de métiers, plus de
+seuil de langues, et **le classement par notoriété devient la donnée de départ**
+au lieu d'être ce qu'on n'arrive pas à calculer.
+
+**ET ÇA PREND TOUT CE QUI EST UN PERSONNAGE**, humain ou pas : le filtre se fait
+sur le `P31` reçu. *Un dieu, un héros de légende et un personnage de roman
+entrent par la même porte qu'un homme d'État* — là où la table de métiers ne
+peut, par construction, attraper que ce qui a un métier.
+
+**Deux choses à savoir avant de s'y lancer :**
+
+- **le top-pageviews plafonne à 1 000 articles par mois**, donc ~650 personnages
+  par passe. Pour aller au-delà, il faut le **dump mensuel complet**
+  (`pageviews-202609-user.bz2`, vérifié présent) qui porte TOUTES les pages avec
+  leurs vues — c'est ainsi que WikiMasters tient ses 2,78 millions de cartes :
+  *on ne construit pas un catalogue de cette taille en interrogeant une API, on
+  télécharge un dump* ;
+- **le catalogue deviendrait CONTEMPORAIN et FRANCOPHONE.** Le top du mois
+  dernier donne Messi, Mélenchon, Adèle Exarchopoulos, Fred Chichin. *Ce n'est
+  pas un défaut technique, c'est un autre jeu* — et c'est **une décision de
+  design, elle revient à Keko.**
+
+#### COMMENT FAIT WIKIMASTERS : il ne sélectionne rien
+
+**2 782 075 cartes**, soit exactement le nombre de pages de Wikipédia en
+français : n'importe quelle page fait une carte — un personnage, un aliment, une
+commune. *Il n'a donc jamais eu notre problème* — il ne l'a pas résolu, il ne
+l'a pas.
+
+**Et ses formules sont presque les nôtres** : rareté = fréquentation de
+l'article, attaque = longueur, défense = qualité, cinq crans de rareté. Les deux
+grandeurs que Wikipédia offre gratuitement — ce qu'on lit et ce qui est écrit —
+sont les seules sur lesquelles on puisse bâtir ; nous les avons réparties un
+cran différemment. Boosters de cinq cartes toutes les dix minutes.
+
+Sources : [Next.ink](https://next.ink/258293/wikimasters-le-jeu-qui-voulait-changer-wikipedia-en-cartes-a-collectionner/),
+[Outils Tice](https://outilstice.com/wikimasters-jeu-cartes-wikipedia/),
+[Echoes of Geeks](https://echoesofgeeks.fr/2026/test-wikimasters-cartes-wikipedia/).
+
+
 ### L'OUVERTURE D'UN PAQUET — le premier écran, derrière `?paquet`
 
 `render/Paquet3D.tsx`. Cinq cartes face cachée ; on en tape une, elle culbute

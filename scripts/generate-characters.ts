@@ -126,8 +126,34 @@ const ESSAIS = 3
  */
 const ESSAIS_TRONQUEE = 1
 
-/** Les morts de moins de cinquante ans sont ecartes -- regle de Keko. */
-const ANNEE_LIMITE = new Date().getUTCFullYear() - 50
+/**
+ * LA LIMITE DES CINQUANTE ANS EST TOMBEE, et celle de l'article francais avec.
+ * Keko : « on supprime le filtre "articles en francais" et mort depuis 50 ans ».
+ *
+ * **Ce que chacun coutait, mesure avant de les retirer** -- et les deux chiffres
+ * n'ont rien a voir :
+ *
+ * | | ce que le filtre ecartait |
+ * |---|---|
+ * | article francais | **0,4 a 1 %** des candidats, et 100 % d'entre eux avaient quand meme un libelle FR |
+ * | mort depuis 50 ans | **30 a 74 %** du bassin -- peintres x1,4, physiciens x1,9, compositeurs x3,8 |
+ *
+ * *Le premier ne protegeait donc rien* : il ne retirait personne qu'on ne
+ * pouvait pas nommer, et il coutait du TEMPS -- une requete de peintres passe
+ * de 25 a 6 secondes sans lui, parce que le `schema:about` est le poste le plus
+ * cher de la requete. **Un filtre qui ne filtre qu'un pour cent et qui
+ * quadruple le temps n'est pas un filtre, c'est un peage.**
+ *
+ * Le second, lui, change le catalogue en profondeur : les VIVANTS entrent, et
+ * ils sont bien plus consultes que les morts. *La rarete se lisant aux vues,
+ * le haut de l'echelle va devenir contemporain* -- c'est une consequence, pas
+ * un effet de bord, et elle est assumee.
+ *
+ * **`wdt:P570` N'EST PLUS DEMANDE DU TOUT**, et c'est ce qui ouvre vraiment la
+ * porte : retirer le seul `FILTER` aurait garde l'exigence d'une date de
+ * deces, donc exclu les vivants -- *une propriete demandee dans le WHERE est un
+ * filtre qui ne dit pas son nom.*
+ */
 
 /**
  * Le plancher de notoriete de la decouverte. Il n'est pas la pour selectionner
@@ -628,7 +654,10 @@ const PERIODES: readonly (readonly [number, number])[] = [
   [1890, 1920],
   [1920, 1945],
   [1945, 1960],
-  [1960, ANNEE_LIMITE],
+  // LA DERNIERE PERIODE VA JUSQU'A AUJOURD'HUI depuis que la limite des
+  // cinquante ans est tombee. *Un axe de secours qui s'arreterait avant le
+  // present ne rattraperait pas ce que le premier axe vient d'ouvrir.*
+  [1960, new Date().getUTCFullYear() + 1],
 ]
 
 /** Toujours DEUX bornes, pour la raison expliquee sur `PLAFOND_LANGUES`. */
@@ -720,7 +749,7 @@ async function sousClasses(qid: string): Promise<string[]> {
 }
 
 async function decouvrirHumains(): Promise<Candidat[]> {
-  journal(`Decouverte des humains : ${METIERS.length} metiers, morts avant ${ANNEE_LIMITE}, >= ${LANGUES_MINIMUM.humain} langues`)
+  journal(`Decouverte des humains : ${METIERS.length} metiers, vivants compris, >= ${LANGUES_MINIMUM.humain} langues`)
   const out: Candidat[] = []
   for (const [nom, qid] of METIERS) {
     let n = 0
@@ -749,10 +778,8 @@ async function decouvrirHumains(): Promise<Candidat[]> {
 async function decouvrirMetier(nom: string, qid: string, profondeur = 0): Promise<string[][]> {
   const parNotoriete = (bas: number, haut: number | null) => `
 SELECT ?item ?langues WHERE {
-  ?item wdt:P106 wd:${qid} ; wikibase:sitelinks ?langues ; wdt:P570 ?mort .
+  ?item wdt:P106 wd:${qid} ; wikibase:sitelinks ?langues .
   FILTER(?langues >= ${bas}${haut === null ? '' : ` && ?langues < ${haut}`})
-  FILTER(YEAR(?mort) < ${ANNEE_LIMITE})
-  ?article schema:about ?item ; schema:isPartOf <https://fr.wikipedia.org/> .
 }`
   const lignesNotoriete: string[][] = []
   let perdusNotoriete = 0
@@ -788,7 +815,6 @@ SELECT ?item ?langues WHERE {
   ?item wdt:P106 wd:${qid} ; wikibase:sitelinks ?langues ; wdt:P570 ?mort .
   ${bornesDeDate(debut, fin)}
   FILTER(?langues >= ${bas}${haut === null ? '' : ` && ?langues < ${haut}`})
-  ?article schema:about ?item ; schema:isPartOf <https://fr.wikipedia.org/> .
 }`
     for (const [bas, haut] of TRANCHES_LANGUES) {
       echeance = Date.now() + BUDGET_TRANCHE
@@ -836,7 +862,6 @@ async function decouvrirFiction(): Promise<Candidat[]> {
 SELECT ?item ?langues WHERE {
   ?item wdt:P31/wdt:P279* wd:Q95074 ; wikibase:sitelinks ?langues .
   FILTER(?langues >= ${bas}${haut === null ? '' : ` && ?langues < ${haut}`})
-  ?article schema:about ?item ; schema:isPartOf <https://fr.wikipedia.org/> .
 }`
   const tranches: readonly (readonly [number, number | null])[] = [
     [40, PLAFOND_LANGUES],
@@ -859,7 +884,7 @@ SELECT ?item ?langues WHERE {
 interface Details {
   nom: string
   /** Le titre de l'article FR. Il vient d'ici et non de la decouverte. */
-  article: string
+  article: string | null
   description: string
   image: string | null
   naissance: number | null
@@ -982,7 +1007,11 @@ SELECT ?item
   (GROUP_CONCAT(DISTINCT ?met ; separator="|") AS ?metiers)
 WHERE {
   VALUES ?item { ${lot.map((c) => `wd:${c.id}`).join(' ')} }
-  ?art schema:about ?item ; schema:isPartOf <https://fr.wikipedia.org/> .
+  # L'ARTICLE FRANCAIS EST FACULTATIF DEPUIS QUE LE FILTRE EST TOMBE. Exige
+  # ici, il aurait rejete en silence ce que la decouverte venait d'accepter --
+  # *un filtre retire en amont et garde en aval ne se voit pas, il se compte en
+  # cartes manquantes.*
+  OPTIONAL { ?art schema:about ?item ; schema:isPartOf <https://fr.wikipedia.org/> }
   ?item rdfs:label ?lab . FILTER(LANG(?lab) = "fr")
   OPTIONAL { ?item schema:description ?desc . FILTER(LANG(?desc) = "fr") }
   OPTIONAL { ?item wdt:P18 ?img }
@@ -997,8 +1026,8 @@ GROUP BY ?item`
       const id = lire(l, 'item')?.split('/').pop()
       const nom = lire(l, 'nom')
       if (!id || !nom) continue
+      // Plus de `continue` : une carte sans article FR se mesure en anglais.
       const article = titreDeLArticle(lire(l, 'article'))
-      if (!article) continue
       details.set(id, {
         nom,
         article,
@@ -1035,14 +1064,18 @@ interface Mesure {
  * `pageviews` rend jusqu'aux soixante derniers jours ; `pvipdays=30` n'en
  * demande que trente, comme voulu.
  */
-async function mesurerArticles(titres: string[]): Promise<Map<string, Mesure>> {
+async function mesurerArticles(
+  titres: string[],
+  api: string = WIKI,
+  etiquette = 'FR',
+): Promise<Map<string, Mesure>> {
   const lots = paquets(titres, 50)
-  journal(`Mesure des articles FR : ${titres.length} titres en ${lots.length} paquets`)
+  journal(`Mesure des articles ${etiquette} : ${titres.length} titres en ${lots.length} paquets`)
   const mesures = new Map<string, Mesure>()
   let fait = 0
   let manquantes = 0
   for (const lot of lots) {
-    const d = await mediawiki(`info-${empreinte(lot.join('|'))}`, {
+    const d = await mediawiki(`info-${etiquette}-${empreinte(lot.join('|'))}`, {
       action: 'query',
       // `pageimages` voyage avec `info` et `pageviews` : **aucune requete de
       // plus**, c'est ce qui rend le repli d'illustration gratuit. `pilicense`
@@ -1051,7 +1084,7 @@ async function mesurerArticles(titres: string[]): Promise<Map<string, Mesure>> {
       piprop: 'original',
       pvipdays: '30',
       titles: lot.join('|'),
-    })
+    }, api)
     // L'API NORMALISE LES TITRES QU'ON LUI DONNE, et elle rend les pages sous
     // leur titre normalise : sans cette table, un titre a souligne ou a
     // majuscule initiale differente ne se retrouverait pas.
@@ -1342,12 +1375,55 @@ async function main(): Promise<void> {
   const details = await enrichir(candidats)
   // LES TITRES VIENNENT DES DETAILS, donc on ne mesure que ce qui en a : un
   // candidat sans libelle FR n'aura pas de carte de toute facon.
-  const mesures = await mesurerArticles([...details.values()].map((d) => d.article))
+  const mesures = await mesurerArticles(
+    [...details.values()].map((d) => d.article).filter((a): a is string => a !== null),
+  )
+
+  // CE QUI N'A PAS D'ARTICLE FRANCAIS SE MESURE EN ANGLAIS, et c'est ce qui
+  // rend le retrait du filtre effectif. *Le laisser tomber ici aurait rendu la
+  // suppression cosmetique* : la decouverte acceptait ces candidats, et la
+  // mesure les rejetait trois etapes plus loin, sans qu'une ligne ne le dise.
+  //
+  // **Le titre anglais ne coute RIEN a trouver** : les sitelinks sont deja
+  // demandes pour les vues etrangeres, et `enwiki` en fait partie. *Un repli
+  // qui reutilise une requete existante n'est pas un repli, c'est un
+  // branchement.*
+  //
+  // Mesure avant de le construire : **0,4 a 1 % des candidats** sont dans ce
+  // cas, et 100 % d'entre eux ont un libelle francais -- donc **aucune carte
+  // ne porte un nom anglais**, seule sa TAILLE d'article et ses vues de base
+  // viennent de l'anglais. Et la taille ne sert qu'a la defense, qui est une
+  // mesure de longueur, pas de langue.
+  const orphelins = [...details.entries()].filter(([, d]) => d.article === null).map(([id]) => id)
+  const titresEn = orphelins.length > 0 ? await titresParLangue(orphelins) : new Map()
+  const parEn = new Map<string, string>()
+  for (const id of orphelins) {
+    const t = titresEn.get(id)?.get('en')
+    if (t) parEn.set(id, t)
+  }
+  if (parEn.size > 0) {
+    journal(`${orphelins.length} sans article FR, dont ${parEn.size} mesurables en anglais`)
+    const enAnglais = await mesurerArticles(
+      [...parEn.values()],
+      'https://en.wikipedia.org/w/api.php',
+      'EN',
+    )
+    // On les range sous l'IDENTIFIANT et non sous le titre : le reste du flux
+    // cherche par `d.article`, qui est `null` pour eux.
+    for (const [id, titre] of parEn) {
+      const m = enAnglais.get(titre)
+      if (m) mesures.set(`#${id}`, m)
+    }
+  }
+
+  // LA MESURE D'UN PERSONNAGE, quel que soit le wiki qui l'a fournie.
+  const mesureDe = (id: string, d: Details): Mesure | undefined =>
+    d.article === null ? mesures.get(`#${id}`) : mesures.get(d.article)
 
   // LES VUES ETRANGERES NE SE DEMANDENT QUE POUR CE QUI SURVIVRA : un candidat
-  // sans mesure FR est deja ecarte, et chaque id coute quinze requetes de plus
+  // sans mesure est deja ecarte, et chaque id coute quinze requetes de plus
   // a l'echelle du lot. *On ne paie pas pour des cartes qu'on jette.*
-  const mesurables = [...details.entries()].filter(([, d]) => mesures.has(d.article)).map(([id]) => id)
+  const mesurables = [...details.entries()].filter(([id, d]) => mesureDe(id, d)).map(([id]) => id)
   const etrangeres = await vuesEtrangeres(mesurables)
 
   let sansDetail = 0
@@ -1367,7 +1443,7 @@ async function main(): Promise<void> {
       sansDetail++
       continue
     }
-    const m = mesures.get(d.article)
+    const m = mesureDe(c.id, d)
     if (!m) {
       sansArticle++
       continue
@@ -1420,7 +1496,7 @@ async function main(): Promise<void> {
       id: c.id,
       nom: d.nom,
       description: d.description,
-      article: d.article,
+      article: d.article ?? '',
       image,
       naissance: d.naissance,
       mort: d.mort,
