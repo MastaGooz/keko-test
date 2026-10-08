@@ -112,16 +112,27 @@ const IMAGES: Record<string, string> = {
   esquive: 'Esquive.webp',
   concentration: 'Concentration.webp',
   barriere: 'Barriere.webp',
-  // L'ARMURE LOURDE PORTE LE DESSIN DE LA PROTECTION DE PLATE : *le nom du
-  // fichier suit le dossier, la clé suit le jeu* — c'est à ça que sert cette
-  // table, et renommer le fichier aurait coûté un risque pour rien.
+  // L'ARMURE LOURDE A SON PROPRE DESSIN. Keko : « j'ai mis à jour armure
+  // lourde.webp ». Elle empruntait celui de la Protection de plate, faute du
+  // sien — *un emprunt tombe le jour où le fichier arrive*, comme celui de la
+  // Taille juste en dessous.
   //
-  // **IL A SUIVI LE MAUVAIS NOM PENDANT UN COMMIT.** Quand les deux cartes de
-  // la plate ont échangé leur nom, l'entrée est restée sur `blindage` — qui
-  // désignait désormais la RÉSISTANCE, pas le bloc. Keko : « on va remettre
-  // protection plate.webp sur armure lourde ». *Une table indexée par nom suit
-  // le nom, pas la carte* : **tout renommage doit la relire.**
-  'armure-lourde': 'Protection plate.webp',
+  // `Protection plate.webp` rejoint donc le dépôt, avec les Protection de
+  // tissu et de maille : **une armure nouvelle qui redonne une Protection
+  // retrouvera son dessin sans qu'on touche au code.**
+  //
+  // **ET L'ENTRÉE A SUIVI LE MAUVAIS NOM PENDANT UN COMMIT, une fois.** Quand
+  // les deux cartes de la plate ont échangé leur nom, elle est restée sur
+  // `blindage` — qui désignait désormais la RÉSISTANCE, pas le bloc. Keko :
+  // « on va remettre protection plate.webp sur armure lourde ». *Une table
+  // indexée par nom suit le nom, pas la carte* : **tout renommage doit la
+  // relire**, et il y en a trois (les images, les variantes par matière, les
+  // alias du repli SVG).
+  //
+  // *Le nom est recopié du disque, jamais retapé* : 1024 x 1463, alpha, sans
+  // accent, vérifié en NFC — la règle que l'Épée à deux mains et la Barrière
+  // ont déjà coûtée, une fois dans chaque sens.
+  'armure-lourde': 'Armure lourde.webp',
   // LA TAILLE A ENFIN LE SIEN. Elle empruntait le dessin de la Taillade, le
   // temps qu'elle n'en ait pas — *un banc qui montre une carte au sceau de
   // repli ne se juge pas.* L'emprunt tombe avec l'arrivée du fichier.
