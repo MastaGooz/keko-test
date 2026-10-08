@@ -16,11 +16,11 @@ import { Carte3D } from './Carte3D.tsx'
 import { Bouton3D } from './Bouton3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
-import { carteDuPersonnage } from './carte-personnage.ts'
-import { loadCharacters } from '../ui/personnages.ts'
+import { carteDeLAnimal } from './carte-animal.ts'
+import { chargerAnimaux } from '../ui/animaux.ts'
 import { createRng } from '../logic/rng.ts'
-import { CARTES_PAR_PAQUET, ouvrirPaquet, parCran } from '../logic/characters/paquet.ts'
-import type { CharacterCard } from '../logic/characters/types.ts'
+import { CARTES_PAR_PAQUET, ouvrirPaquet, parCran } from '../logic/paquet.ts'
+import type { CarteAnimal } from '../logic/animals/types.ts'
 
 /**
  * LA RANGÉE SE DIMENSIONNE SUR LA PLACE, jamais à une taille écrite à la main.
@@ -38,7 +38,7 @@ function tailleDeLaRangee(largeurVisible: number, hauteurVisible: number): numbe
 }
 
 export function Paquet3D(): React.ReactElement {
-  const [catalogue, setCatalogue] = useState<CharacterCard[] | null>(null)
+  const [catalogue, setCatalogue] = useState<CarteAnimal[] | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   /** Le numéro du paquet : il change à chaque ouverture, et il seede le tirage. */
   const [numero, setNumero] = useState(0)
@@ -54,7 +54,7 @@ export function Paquet3D(): React.ReactElement {
 
   useEffect(() => {
     let vivant = true
-    void loadCharacters().then((cartes) => {
+    void chargerAnimaux().then((cartes) => {
       if (!vivant) return
       if (cartes.length === 0) setErreur('Catalogue vide ou introuvable.')
       else setCatalogue(cartes)
@@ -98,7 +98,7 @@ export function Paquet3D(): React.ReactElement {
    * sans une seule erreur en console. *C'est le défaut le plus coûteux de tout
    * ce moteur, et il ne dit rien du tout.*
    */
-  const aPeindre = useMemo(() => paquet.map(carteDuPersonnage), [paquet])
+  const aPeindre = useMemo(() => paquet.map(carteDeLAnimal), [paquet])
 
   const toutRevele = paquet.length > 0 && paquet.every((c) => revelees.has(c.id))
 
