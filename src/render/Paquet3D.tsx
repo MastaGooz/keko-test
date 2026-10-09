@@ -60,6 +60,38 @@ function tailleDeLaRangee(largeurVisible: number, hauteurVisible: number): numbe
   return Math.min(parLargeur, parHauteur)
 }
 
+/**
+ * LA GRAINE DE LA SESSION, TIREE AU CHARGEMENT. Keko : « on peut randomiser les
+ * personnages ? j'ai toujours la meme seed je crois ».
+ *
+ * *Le tirage etait bien seede, et c'est la BASE qui ne bougeait pas* : elle
+ * valait 1 sans parametre, donc le premier paquet de chaque rechargement etait
+ * toujours le meme. Le numero, lui, avancait bien a chaque ouverture — **le
+ * defaut ne se voyait donc qu'en relancant la page**, et jamais en enchainant
+ * les paquets.
+ *
+ * **`?paquet=43` rejoue toujours un tirage precis**, exactement comme
+ * `?seed=42` rejoue une descente : *ce qui a servi a signaler un cas doit
+ * rester ouvrable.* Sans parametre, on tire.
+ *
+ * Deux sources melees, parce qu'elles ne ratent pas les memes cas : l'horloge
+ * seule donne des graines voisines quand on recharge vite, le hasard du
+ * navigateur seul n'est pas garanti distinct d'un onglet a l'autre.
+ *
+ * Elle vit au niveau du MODULE et non dans un etat : *une graine qui se
+ * retirerait a un rendu changerait le paquet sous les yeux*, et React double
+ * les initialiseurs en mode strict.
+ */
+const GRAINE = (() => {
+  const demandee = new URLSearchParams(location.search).get('paquet')
+  if (demandee !== null && demandee !== '' && !Number.isNaN(Number(demandee))) return Number(demandee)
+  const tiree = (Date.now() ^ (Math.random() * 2 ** 32)) >>> 0
+  // ON LA DIT, sinon un tirage interessant est perdu : il n'y a pas de place a
+  // l'ecran pour l'afficher, et `?paquet=<n>` le rejoue a l'identique.
+  console.info(`paquet : graine ${tiree} — ?paquet=${tiree} rejoue cette serie`)
+  return tiree
+})()
+
 export function Paquet3D(): React.ReactElement {
   /** `?paquet&perso` rejoue l'ancien catalogue — voir `CarteDuMode`. */
   const personnages = new URLSearchParams(location.search).has('perso')
@@ -109,9 +141,7 @@ export function Paquet3D(): React.ReactElement {
    */
   const paquet = useMemo(() => {
     if (tas === null) return []
-    const graine = new URLSearchParams(location.search).get('paquet')
-    const base = graine !== null && graine !== '' && !Number.isNaN(Number(graine)) ? Number(graine) : 1
-    return ouvrirPaquet(tas, createRng((base + numero * 7919) >>> 0))
+    return ouvrirPaquet(tas, createRng((GRAINE + numero * 7919) >>> 0))
   }, [tas, numero])
 
   /**

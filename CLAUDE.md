@@ -11727,6 +11727,40 @@ droite se lirait à l'envers.*
 **CARTES_PAR_PAQUET, CRAN_GARANTI et CHANCES sont des PLACEHOLDERS** : c'est la
 première chose à régler quand Keko voudra doser l'envie d'en ouvrir un autre.
 
+**ET LA GRAINE SE TIRE AU CHARGEMENT, elle ne vaut plus 1.** Keko : « on peut
+randomiser les personnages ? j'ai toujours la même seed je crois ».
+
+*Le tirage était bien seedé, et c'est la BASE qui ne bougeait pas* : le numéro
+avançait à chaque ouverture, donc **le défaut ne se voyait qu'en relançant la
+page** — et jamais en enchaînant les paquets. Mesuré : trois chargements
+rendaient trois fois « Bjørnstjerne Bjørnson, Irénée de Lyon, Marlon Brando,
+Carlos Fuentes, Boadicée ».
+
+***Un hasard seedé dont la graine est une constante n'est pas un hasard, c'est
+une liste.*** Et le piège tient à ce qui le masquait : la mécanique d'avancement
+marchait, donc tout semblait aléatoire tant qu'on restait sur la page.
+
+Trois choses qui le portent :
+
+- **`?paquet=43` rejoue toujours un tirage précis**, exactement comme `?seed=42`
+  rejoue une descente — *ce qui a servi à signaler un cas doit rester
+  ouvrable* ;
+- **deux sources mêlées** (`Date.now()` et `Math.random()`) : l'horloge seule
+  donne des graines voisines quand on recharge vite, le hasard du navigateur
+  seul n'est pas garanti distinct d'un onglet à l'autre ;
+- **elle vit au niveau du MODULE**, pas dans un état : *une graine qui se
+  retirerait à un rendu changerait le paquet sous les yeux*, et React double les
+  initialiseurs en mode strict. C'est la place qu'a déjà `SEED` dans `Scene.tsx`.
+
+**La graine tirée s'écrit en console** et non dans l'URL : *l'y écrire la ferait
+rejouer au rechargement suivant*, soit exactement le défaut qu'on vient de
+retirer. `?paquet=<n>` reste là pour celui qui veut la reprendre.
+
+**ET LA DESCENTE A LE MÊME DÉFAUT, non corrigé** : `SEED` vaut 1789 sans
+paramètre, donc chaque rechargement rejoue la même run. *Ce n'est pas forcément
+un bug là-bas* — une partie reproductible aide à juger un combat — **mais c'est
+une décision, pas un acquis**, et elle revient à Keko.
+
 #### QUATRE CRANS, PARCE QUE LE DESSIN EN PORTE QUATRE
 
 Tranché par Keko : « on va diviser en 4 rareté (bronze, argent, or, diamant)
