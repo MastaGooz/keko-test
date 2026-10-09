@@ -219,6 +219,13 @@ const MOTS_DU_DOMAINE: readonly (readonly [Domaine, readonly string[]])[] = [
       'luthier', 'calligraphe', 'comedien', 'mime', 'chorégraphe', 'choregraphe',
       'producteur', 'productrice', 'virtuose', 'violoncelliste', 'guitariste', 'organiste',
       'ebeniste', 'graveuse', 'miniaturiste', 'fresquiste', 'portraitiste', 'paysagiste',
+      // LES COMPOSES DE LA CHANSON, et ils ne sont pas decoratifs : seuls, ils
+      // battent « auteur » a la meme position grace a la regle du plus long.
+      // *Sans eux, la regle n'aurait rien a quoi gagner.* `cle()` change les
+      // traits d'union en espaces, donc une seule forme couvre
+      // « auteur-compositeur » comme « auteur-compositeur-interprete ».
+      'auteur compositeur', 'autrice compositrice', 'auteure compositrice',
+      'auteur interprete', 'autrice interprete', 'auteure interprete',
     ],
   ],
 ]
@@ -282,12 +289,27 @@ export function domaineDe(description: string, metiers: string[], fiction: boole
   if (fiction) return 'fiction'
 
   // LA DESCRIPTION D'ABORD : le mot le plus TOT gagne, quel que soit son domaine.
+  //
+  // **ET A POSITION EGALE, LE PLUS LONG GAGNE** -- ce qui a coute Michael
+  // Jackson. Sa description est « auteur-compositeur-interprete et danseur
+  // americain » : le mot « auteur » (penseur) tombe a zero, « compositeur »
+  // (artiste) a sept, donc le plus tot gagnait et **les seize plus grands noms
+  // de la musique sortaient en PENSEUR** -- Lennon, Dylan, Mercury, McCartney,
+  // Madonna, Bowie, Cohen, Springsteen. Keko : « comment Michael Jackson ne
+  // peut pas etre artiste mdr ? »
+  //
+  // *Un mot plus long a la meme position est un mot plus SPECIFIQUE* : « auteur
+  // compositeur » dit la chanson la ou « auteur » dit le livre. La regle est
+  // generale, elle ne nomme personne -- et c'est ce qui la rend sure.
   const texte = cle(description)
-  let tot: { ou: number; domaine: Domaine } | null = null
+  let tot: { ou: number; taille: number; domaine: Domaine } | null = null
   for (const [domaine, mots] of MOTS_DU_DOMAINE)
     for (const mot of mots) {
-      const ou = ouLeMotTombe(texte, cle(mot))
-      if (ou >= 0 && (tot === null || ou < tot.ou)) tot = { ou, domaine }
+      const m = cle(mot)
+      const ou = ouLeMotTombe(texte, m)
+      if (ou < 0) continue
+      if (tot === null || ou < tot.ou || (ou === tot.ou && m.length > tot.taille))
+        tot = { ou, taille: m.length, domaine }
     }
   if (tot !== null) return tot.domaine
 

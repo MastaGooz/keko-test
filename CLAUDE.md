@@ -11318,6 +11318,96 @@ ailleurs.*
 concepts, des metiers historiques sans personne ou des doublons. *« 500 » n'est
 donc pas un objectif, c'est a peu pres ce qui reste quand on jette le vide.*
 
+#### A POSITION EGALE, LE MOT LE PLUS LONG GAGNE -- 16 geants de la musique etaient « penseurs »
+
+Keko : « comment Michael Jackson ne peut pas etre artiste mdr ? »
+
+Sa description Wikidata est **« auteur-compositeur-interprete et danseur
+americain »**. Le mot « **auteur** » appartient a *penseur* et tombe a la
+position ZERO ; « compositeur », qui appartient a *artiste*, tombe a sept. La
+regle etant « le mot le plus TOT gagne », **tout le pantheon de la chanson
+sortait en penseur** : Lennon, Dylan, Mercury, McCartney, Madonna, Bowie,
+Cohen, Springsteen, Billie Eilish, Katy Perry, Lana Del Rey.
+
+***Un mot plus long a la meme position est un mot plus SPECIFIQUE*** -- « auteur
+compositeur » dit la chanson la ou « auteur » dit le livre. La regle est donc
+generale et ne nomme personne, et six formes composees entrent dans la liste
+d'`artiste` pour avoir de quoi gagner (`cle()` changeant les traits d'union en
+espaces, une seule forme couvre « auteur-compositeur » et
+« auteur-compositeur-interprete »).
+
+**23 cartes corrigees, et RIEN d'autre n'a bouge** : ni rarete, ni attaque, ni
+defense -- verifie carte par carte. Les cas legitimes tiennent : Vargas Llosa
+reste penseur (« ecrivain »), Moliere aussi (« dramaturge »), Chopin reste
+artiste.
+
+**ET LE CATALOGUE S'EST RECALCULE SANS RIEN RETELECHARGER.** *C'est exactement
+ce que la purete de `logic/` achete* : les descriptions sont dans le JSON, donc
+`statsDerivees` se rejoue dessus en une seconde. **Trois heures quarante de
+collecte, zero seconde pour corriger la regle.**
+
+#### CE QUE LE COMPTE DE FICTION CACHAIT -- il y en a bien plus que 17
+
+Keko : « comment on peut avoir si peu de personnage de fiction ?? c'est super
+connu genre superman, goku, mickey.. ? »
+
+**Le « 17 » est faux**, et pour une raison qui vaut d'etre retenue : le drapeau
+`fiction` dit **par quelle PORTE la carte est entree**, pas ce qu'elle EST.
+Spider-Man, Hulk, Superman, Batman, Harry Potter, Hermione sont deja dans le
+jeu -- entres par la porte des METIERS, parce que Wikidata leur en donne un.
+
+***Une etiquette qui enregistre une provenance ne peut pas servir de
+categorie.***
+
+**ET LA DECOUVERTE DE LA FICTION REND ZERO LIGNE.** `wdt:P31/wdt:P279* wd:Q95074`
+est la requete mesuree a **504** : elle echoue en silence, et tous les fictifs
+du catalogue y sont arrives par accident. C'est ce qui explique **James Bond
+(101 langues) et Tintin (96)** : portrait, assez de langues, et absents --
+personne ne les a jamais decouverts.
+
+**Quatre causes, mesurees separement** :
+
+| | |
+|---|---|
+| l'etiquette `fiction` est une provenance | Spider-Man, Batman, Mario comptes comme reels |
+| la decouverte echoue (504) | James Bond et Tintin jamais vus |
+| **la coupe a 78 langues** | Dark Vador 85, Bugs Bunny 69, Luke Skywalker 65, Naruto 62, Frodon 58, **Goku 56**, Link 35 |
+| **pas de portrait libre** | **199 fictifs sur 4 999** en ont un -- Dark Vador, Naruto, Link, Asterix non |
+
+***UN PERSONNAGE DE FICTION EST MOINS MULTILINGUE QU'UN POLITICIEN OBSCUR.***
+Wikipedia a une page sur chaque depute de chaque pays, pas sur chaque heros de
+manga -- donc **avec un tri commun par langues, la fiction perdra toujours.**
+
+**La porte de secours est mesuree et prete** : CirrusSearch est indexe et compte
+4 999 personnages de fiction, 1 270 de manga, 7 633 de film, 7 757 de BD, en
+250 ms chacun.
+
+*Ce qui reste a trancher, et c'est a Keko* : **un quota pour la fiction** (sans
+lui elle restera marginale quoi qu'on fasse), et **le portrait obligatoire**
+(199 sur 4 999 le passent).
+
+#### ET « FICTION » N'EST PAS UNE CATEGORIE, C'EST UNE NATURE
+
+Les neuf autres disent un METIER, celle-la dit « n'existe pas ». *Les deux axes
+se telescopent*, et ca produit des classements absurdes des qu'un fictif entre
+par un metier :
+
+| | domaine attribue |
+|---|---|
+| Spider-Man, Hulk | **scientifique** |
+| Batman | **militaire** |
+| Harry Potter | **sportif** (le quidditch) |
+| Hermione | **politique** |
+
+*Chacun est defendable a la lettre* -- Peter Parker est biochimiste, Hermione
+est ministre a la fin de la serie -- **mais aucun ne se lit comme ce que le
+personnage est.** Il faudrait DEUX champs : la nature (reel / fictif) et le
+domaine. **A trancher avec Keko**, en meme temps que les noms des categories :
+« penseur » est un fourre-tout a 23 % dont l'exemple le plus notoire etait
+Michael Jackson, et « autre » ramasse Anne Frank, dont le metier declare est
+« diariste ».
+
+
 #### CE QUE LES 634 TIROIRS DE PLUS ONT RAPPORTE -- et ce n'est pas ou je le croyais
 
 Passe complete : **3 h 40**, 701 metiers.
