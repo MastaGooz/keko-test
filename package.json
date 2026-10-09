@@ -10,7 +10,8 @@
     "verif": "node src/logic/combat.verif.ts && node src/logic/descente.verif.ts && node src/logic/hub.verif.ts && node src/logic/characters/formules.verif.ts && node src/logic/animals/types.verif.ts",
     "gen:animals": "node scripts/generate-animals.ts",
     "personnages": "node scripts/generate-characters.ts",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "metiers": "node scripts/trouver-metiers.ts"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

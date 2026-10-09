@@ -11287,6 +11287,98 @@ plus notoire du jeu** (322 langues, 1,3 M de vues), David Bowie est l'exemple
 épique. *La rareté se lisant aux vues, le haut devient contemporain* — c'est une
 conséquence, pas un effet de bord, et elle est assumée.
 
+#### LA LISTE DES METIERS SE MESURE : 701 tiroirs, et Napoleon manquait
+
+Keko : « et si on elargit a 500 metiers ? » -- et la bonne reponse n'etait pas
+d'en choisir cinq cents, c'est **`scripts/trouver-metiers.ts`** : demander la
+liste a Wikidata, compter chaque tiroir, jeter le vide. `npm run metiers`.
+
+**IL A FALLU DEUX SOURCES, et la premiere avait un trou que je n'avais pas
+prevu :**
+
+| source | ce qu'elle rend |
+|---|---|
+| la **taxonomie** (sous-classes de « profession », Q28640) | 6 851 tiroirs -> **322** retenus |
+| **les lecteurs** (metiers des pages les plus lues de fr.wikipedia) | 450 metiers, dont **391 inconnus de la taxonomie** |
+| union, apres un seuil de 100 personnes | **694 mesures + 67 ecrits = 701** |
+
+***UNE RACINE DE TAXONOMIE NE COUVRE PAS SA PROPRE NOTION.*** Mesure :
+**« pianiste » n'est PAS une sous-classe de « profession »** -- il est sous
+« clavieriste », qui remonte ailleurs. Idem pour dessinateur, acteur de cinema,
+auteur-compositeur-interprete, guitariste, chef d'orchestre, romancier, avocat.
+**La taxonomie ratait 87 % des metiers reellement portes par les gens notoires**,
+et les autres racines candidates (`Q1914636`, `Q4897819`) expirent a 45 s.
+
+**ET LE COMPTE SE DEMANDE A CIRRUSSEARCH** : `haswbstatement:P106=Q937857`
+repond en **198 ms**, le meme `COUNT` en SPARQL rend 504 sur les gros tiroirs.
+*Quand un compte est impossible a calculer, il est peut-etre deja compte
+ailleurs.*
+
+**La mediane d'un tiroir est a ZERO** : deux tiers de la liste sont des
+concepts, des metiers historiques sans personne ou des doublons. *« 500 » n'est
+donc pas un objectif, c'est a peu pres ce qui reste quand on jette le vide.*
+
+#### CE QUE LES 634 TIROIRS DE PLUS ONT RAPPORTE -- et ce n'est pas ou je le croyais
+
+Passe complete : **3 h 40**, 701 metiers.
+
+| | 37 metiers | 67 | **701** |
+|---|---|---|---|
+| couverture des personnages les plus LUS | 77 % | 93 % | — |
+| personnes decouvertes | 74 071 | 103 791 | **111 674** |
+| coupe de notoriete | 66 lg | 68 | **69** |
+| coupe du catalogue final | 76 lg | — | **78** |
+
+**J'avais annonce que le catalogue ressemblerait au precedent, et c'etait trop
+pessimiste.** Le bassin ne gagne que 8 % -- *la decouverte filtre deja a >= 18
+langues, donc les multilingues sont presque tous attrapes par les gros metiers*
+-- mais **280 cartes changent (9 %), et ce sont precisement les figures qui
+manquaient** :
+
+| neuf | langues |
+|---|---|
+| **Jesus-Christ** | **346 -- la carte la plus notoire du jeu** |
+| Vladimir Poutine | 315 |
+| Lenine, Nelson Mandela | 295 |
+| Mahomet | 290 |
+| **Napoleon Ier** | **287** |
+| Roosevelt, Bill Gates, Jimmy Wales | 237-246 |
+| Moise, Abraham, Alan Turing, Mohamed Ali | 183-203 |
+
+*Et le domaine « sportif » triple* (50 -> 159), les religieux majeurs entrent,
+« autre » cesse d'etre vide.
+
+***Un bassin qui ne grandit pas de 8 % peut changer un catalogue de 9 % par le
+HAUT.*** Le volume de la decouverte ne dit rien de ce qu'elle rapporte.
+
+#### TROIS DEFAUTS PAYES DANS CETTE PASSE
+
+- **le script n'ecrivait rien avant la fin.** Une coupure perdait 23 minutes de
+  mesures. *La regle « le cache est par requete, pas par etape » etait ecrite
+  dans le projet et je ne l'avais pas suivie la* -- chaque tiroir passe
+  desormais par le cache, donc une relance reprend ou elle s'est arretee.
+  **Un travail de vingt minutes qui n'ecrit rien avant la fin est un travail
+  qu'on recommence** ;
+- **un `'
+'` de-echappe** en vrai retour a la ligne dans un litteral, le piege
+  deja documente plus haut pour ce meme fichier. Repaye ;
+- **`--frais` vide le cache** : je l'ai passe pour forcer la reecriture du
+  fichier de sortie, et j'ai reperdu les 6 851 mesures. *Pour refaire une
+  SORTIE, on supprime la sortie ; `--frais` refait les ENTREES.*
+
+#### ET LE VRAI COUPABLE DES TROIS COUPURES : quatre serveurs Vite oublies
+
+Trois taches de fond tuees « faute de memoire », et ce n'etait aucun de mes
+scripts : **quatre `npm run dev` lances la veille et jamais arretes**, qui
+retenaient **2,7 Go**. Memoire libre avant / apres : **480 Mo -> 3 152 Mo**.
+
+*Detail qui a coute trois tentatives* : `taskkill` repondait « aucune instance
+en cours » et `Win32_Process` continuait de les lister avec leur memoire. **Ils
+etaient deja morts** -- c'est la vue WMI qui etait perimee.
+***Verifier un arret de processus avec `Get-Process`, jamais avec
+`Win32_Process`.***
+
+
 #### LA PORTE INVERSE : partir des VUES, pas des métiers — mesurée, pas faite
 
 **La table des métiers est le seul point d'entrée indexé qu'on ait**, et

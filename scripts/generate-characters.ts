@@ -34,7 +34,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { statsDerivees, siecle } from '../src/logic/characters/formules.ts'
+import { statsDerivees, siecle, cle } from '../src/logic/characters/formules.ts'
 import type { CharacterCard } from '../src/logic/characters/types.ts'
 import { DOMAINES, RARETES } from '../src/logic/characters/types.ts'
 
@@ -216,8 +216,21 @@ const BUDGET_TRANCHE = 120_000
 /** Le budget GLOBAL de la descente dans les sous-classes d'un seul metier. */
 const BUDGET_TAXONOMIE = 300_000
 
-/** Un article trop court n'est pas un personnage, c'est une ebauche. */
-const TAILLE_MINIMALE = 1200
+/**
+ * LE PORTRAIT EST LE SEUL FILTRE DE CONTENU. Keko : « on s'en fout s'il n'y a
+ * pas de date de naissance, pas de metier, on veut juste portrait ».
+ *
+ * L'ebauche en etait un : un article de moins de 1 200 caracteres etait ecarte.
+ * Mesure, il n'ecartait que **3 cartes sur 4 500** -- la taille sert de toute
+ * facon a la DEFENSE, donc un article court fait une carte faible et c'est tout
+ * ce qu'on lui demande. *Un filtre qui retire trois cartes sur quatre mille
+ * cinq cents n'est pas un filtre, c'est une ligne de code.*
+ *
+ * **Ce qui reste, et pourquoi ce ne sont pas des choix** : un nom (sans quoi la
+ * carte s'appelle `Q12345`), une mesure d'article (sans quoi elle n'a ni attaque
+ * ni defense), et le portrait.
+ */
+const TAILLE_MINIMALE = 0
 
 /** Combien de personnages on garde, les plus notoires d'abord. */
 let cible = 3000
@@ -674,8 +687,27 @@ function bornesDeDate(debut: number, fin: number): string {
  * Le prix a connaitre : *la selection suit cette liste.* Un metier absent n'a
  * aucune carte -- c'est pour ca qu'elle couvre les huit domaines, et c'est le
  * premier endroit a elargir si le catalogue parait troue.
+ *
+ * **ET LE TROU ETAIT ENORME, mesure** : sur les 300 pages les plus lues de
+ * fr.wikipedia, 180 sont des personnages a portrait et **seulement 19 %
+ * etaient dans le catalogue**. Manquaient Mbappe, Messi, Zidane, Ronaldo,
+ * Melenchon, Bardella, Adele Exarchopoulos.
+ *
+ * *Ce n'etait pas le seuil de notoriete* : **Zidane a 146 langues** quand la
+ * coupe est a 66. C'etait son METIER -- « footballeur », qui n'etait pas dans
+ * la liste, parce que la requete demande `wdt:P106 wd:<Q>` **sans descendre
+ * dans les sous-classes** : un footballeur n'est donc pas un « sportif ».
+ *
+ * **ET ON NE PEUT PAS DESCENDRE** : `wdt:P106/wdt:P279* wd:Q2066131` rend 504
+ * (mesure), la ou le metier direct repond en 4,8 s. *La hierarchie des metiers
+ * de Wikidata n'est pas parcourable a cette echelle* -- il faut donc nommer
+ * chaque metier, et c'est ce que fait la seconde moitie de la liste.
+ *
+ * Trente entrees de plus, chacune mesuree a >= 66 langues avant d'etre ajoutee
+ * (footballeur 281 personnes, mannequin 193, economiste 185, entrepreneur 151,
+ * humoriste 112, danseur 100, producteur de musique 100...).
  */
-const METIERS: readonly (readonly [string, string])[] = [
+const METIERS_ECRITS: readonly (readonly [string, string])[] = [
   // politique et pouvoir
   ['politicien', 'Q82955'],
   ['monarque', 'Q116'],
@@ -720,7 +752,75 @@ const METIERS: readonly (readonly [string, string])[] = [
   ['sportif', 'Q2066131'],
   ['explorateur', 'Q11900058'],
   ['aviateur', 'Q2095549'],
+  // LES SPORTS SE NOMMENT UN PAR UN : « sportif » ne couvre aucun d'entre eux,
+  // puisqu'on ne descend pas dans les sous-classes.
+  ['footballeur', 'Q937857'],
+  ['joueur-de-tennis', 'Q10833314'],
+  ['pilote-de-formule-1', 'Q10841764'],
+  ['basketteur', 'Q3665646'],
+  ['joueur-de-hockey', 'Q11774891'],
+  ['boxeur', 'Q11338576'],
+  ['cycliste', 'Q2309784'],
+  ['nageur', 'Q10843402'],
+  ['athlete', 'Q11513337'],
+  ['golfeur', 'Q11303721'],
+  ['joueur-de-cricket', 'Q12299841'],
+  ['joueur-de-baseball', 'Q10871364'],
+  ['joueur-de-rugby', 'Q14089670'],
+  ['pilote-automobile', 'Q378622'],
+  // LE SPECTACLE ET LA MUSIQUE D'AUJOURD'HUI, que « chanteur » et « acteur »
+  // ne ramassent pas.
+  ['rappeur', 'Q2252262'],
+  ['producteur-de-musique', 'Q183945'],
+  ['danseur', 'Q5716684'],
+  ['humoriste', 'Q245068'],
+  ['presentateur', 'Q947873'],
+  ['mannequin', 'Q4610556'],
+  ['youtubeur', 'Q17125263'],
+  ['scenariste', 'Q28389'],
+  ['chef-cuisinier', 'Q3499072'],
+  // LE RESTE DU SAVOIR ET DE LA VIE PUBLIQUE.
+  ['economiste', 'Q188094'],
+  ['psychologue', 'Q212980'],
+  ['archeologue', 'Q3621491'],
+  ['linguiste', 'Q14467526'],
+  ['astronaute', 'Q11631'],
+  ['entrepreneur', 'Q131524'],
+  ['militant', 'Q15253558'],
 ]
+
+/**
+ * ET LA VRAIE LISTE VIENT DE `scripts/metiers.json`, QUI EST MESURE.
+ * `npm run metiers` demande a Wikidata ses 6 851 sous-classes de « profession »,
+ * compte les humains de chacune (CirrusSearch, 200 ms par tiroir) et garde
+ * celles qui en ont assez. *La mediane est a ZERO* : les deux tiers de la liste
+ * sont des concepts ou des metiers historiques sans personne.
+ *
+ * **La table ci-dessus reste comme REPLI**, et ce n'est pas une precaution de
+ * style : sans fichier, le pipeline doit tourner quand meme -- *un script qui
+ * exige qu'un autre soit passe avant n'est pas un script, c'est une etape.*
+ *
+ * **L'UNION, PAS LE REMPLACEMENT.** Les 67 ecrits ont tous ete mesures a la
+ * main et rendent quelque chose ; un seuil en PERSONNES pourrait en ecarter un
+ * qui rend peu de monde mais du monde notoire. *On n'enleve pas ce qu'on a
+ * verifie parce qu'une mesure automatique ne l'a pas reconnu.*
+ */
+function tousLesMetiers(): readonly (readonly [string, string])[] {
+  const par = new Map<string, string>(METIERS_ECRITS.map(([n, q]) => [q, n]))
+  try {
+    const lu = JSON.parse(readFileSync('scripts/metiers.json', 'utf8')) as {
+      metiers?: { id: string; nom: string }[]
+    }
+    for (const m of lu.metiers ?? []) if (!par.has(m.id)) par.set(m.id, cle(m.nom))
+    journal(`${par.size} metiers (${METIERS_ECRITS.length} ecrits + le fichier mesure)`)
+  } catch {
+    // PAS DE FICHIER, PAS D'ERREUR : on tourne sur les ecrits.
+    journal(`${par.size} metiers (scripts/metiers.json absent, table ecrite seule)`)
+  }
+  return [...par].map(([q, n]) => [n, q] as const)
+}
+
+const METIERS = tousLesMetiers()
 
 /**
  * LE TROISIEME AXE EST LA TAXONOMIE, et c'est le dernier filet. Une SOUS-CLASSE
@@ -1448,6 +1548,7 @@ async function main(): Promise<void> {
       sansArticle++
       continue
     }
+    // Garde-fou neutralise (`TAILLE_MINIMALE` vaut 0) : voir sa definition.
     if (m.taille < TAILLE_MINIMALE) {
       ebauche++
       continue
