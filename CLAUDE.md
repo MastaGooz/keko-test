@@ -11761,6 +11761,152 @@ et le bouton. Zéro débordement. La carte fait 110 px à 667 x 320, 139 à
 et c'est assumé : *ici on REGARDE les cartes*, là où le plafond vaut pour une
 main de combat.
 
+### LA PORTE D'ENTREE EST LA FREQUENTATION, PLUS LES METIERS
+
+Tranche par Keko, en une phrase qui portait deux demandes : **« je veux qu'on
+supprime le filtre "pas de nom en francais" et surtout je trouve que le critere
+de popularite ne devrait pas etre les langues : plutot la frequentation de la
+page (ex sur un an) »**.
+
+*Les deux tiennent ensemble*, et la seconde refait tout le pipeline — parce
+qu'**on ne peut pas trier par frequentation ce qu'on a decouvert autrement.**
+
+#### POURQUOI LE TRI PAR VUES OBLIGE A CHANGER DE PORTE
+
+La porte par metiers rendait ~405 000 personnes. Pour les classer par vues, il
+faudrait mesurer les vues des 405 000 — a cinquante titres par requete, des
+jours. **C'est exactement pour ca que le pre-tri se faisait sur le nombre de
+langues** : *c'etait le seul signal qu'on ait AVANT Wikipedia.*
+
+La sortie est de prendre le probleme par l'autre bout : **on part de ce que les
+gens lisent** (le top des pages de chaque Wikipedia) et on demande ensuite
+« lequel de ces titres est un personnage ? ». La question est alors indexee, et
+**les vues arrivent AVEC la decouverte** — il n'y a plus d'etape pour les
+obtenir.
+
+*Le pre-tri et le tri final sont donc le meme tri*, ce qui n'avait jamais ete le
+cas.
+
+#### TROIS ETAPES, ET CHACUNE EST MESUREE
+
+| | |
+|---|---|
+| 16 langues x 12 mois de tops (API REST) | **192 requetes, ~1 min** -> ~74 000 titres |
+| titre -> Q-id (`prop=pageprops`, par wiki) | **~1 min par langue**, ~16 min |
+| Q-id distincts -> P31 (SPARQL, par 200) | ~10 min |
+
+**UN AN ET PAS UN MOIS** (`MOIS_DE_VUES = 12`) : le top d'un seul mois est de
+l'ACTUALITE — qui vient de mourir, qui sort un film. Douze mois lissent le pic
+et laissent remonter ce qu'on consulte toute l'annee.
+
+**ET LE RISQUE A ETE MESURE AVANT, PAS APRES.** La question qui pouvait tuer
+l'idee etait : *les figures antiques survivent-elles a un classement par
+frequentation ?* Sur deux langues, **Aristote, Platon et Confucius etaient
+ABSENTS.** Sur seize, ils y sont — Aristote 370e en espagnol, Platon 657e,
+Confucius 464e en chinois. ***C'est le nombre de langues qui les sauve, pas le
+nombre de mois.***
+
+**LE PLAFOND DE 1 000 PAR LANGUE-MOIS EST LA LIMITE CONNUE** : quelqu'un qui
+serait 1 200e partout et chaque mois ne serait jamais vu. *Le dump complet des
+vues le leverait* (6 Go par mois, tous projets, le serveur accepte les plages
+d'octets) — a rouvrir si un manque se fait sentir.
+
+#### TITRE -> Q-ID SE DEMANDE A WIKIPEDIA, PAS A WIKIDATA
+
+**Mesure, sur les lots reels : 0,3 s contre 8 s.** La premiere version resolvait
+par SPARQL (`?a schema:name ?t ; schema:about ?i`) et la generation annoncait
+**trois heures** pour cette seule etape ; `prop=pageprops&ppprop=wikibase_item`
+la fait en sept minutes.
+
+*SPARQL sait relier un titre a une entite, il ne sait pas le faire vite* : un
+lot de cinquante litteraux a langue est un PARCOURS, la ou `pageprops` est un
+acces par cle. **C'est la meme lecon que la decouverte par metiers** — « le poids
+des champs decide, pas le nombre de lignes » — prise par un autre bout : *ici
+c'est le MOTIF qui decide, et il n'y a pas d'index pour celui-la.*
+
+Trois choses a ne pas defaire :
+
+- **`redirects=1`, et il le faut** : les vues comptent le titre DEMANDE, donc
+  « Zidane » et « Zinedine Zidane » arrivent tous deux et un seul est un
+  article. On remonte la chaine `normalized` puis `redirects` pour rendre a
+  chaque article les vues de tous les titres qui y menent. *Sans ca, chaque
+  redirection est une carte qui perd ses vues sans qu'on le voie* ;
+- **les natures se demandent par Q-ID DEDUPLIQUE**, pas par titre : Napoleon
+  arrive seize fois et ne compte qu'une. 74 000 titres font ~50 000 entites, et
+  c'est ce qui rend l'etape courte ;
+- **le lot de nature exige P31**, il ne le prend pas en `OPTIONAL` : on ne
+  cherche pas a savoir qui n'a pas de nature, seulement qui en a une qui nous
+  interesse.
+
+#### LE DRAPEAU `fiction` DIT ENFIN LA NATURE
+
+*Il disait la PORTE.* Il y avait deux decouvertes — humains, puis fiction — et
+le drapeau enregistrait laquelle avait rendu le personnage : **dix-sept cartes
+seulement sortaient en fiction** alors que la porte par metiers en rendait des
+milliers. Ici il n'y a qu'une porte, donc il se lit sur P31 : *n'est pas humain
+ce qui n'a pas Q5 parmi ses natures.*
+
+#### LE SCORE DE NOTORIETE EST A 100 % LES VUES
+
+`POIDS = { langues: 0, vues: 1 }`. Les langues pesaient **0,6 contre 0,4**, et
+c'etait defendable tant qu'on ne pouvait mesurer les vues que de ce qu'on avait
+deja choisi.
+
+**Et il mesurait autre chose.** Un article existe dans beaucoup de langues quand
+un bot l'a cree partout — *un botaniste du XIXe siecle a cent cinquante
+Wikipedia et personne ne les lit.* **Le nombre de langues mesure la plomberie,
+la frequentation mesure l'interet.** Le champ reste dans le fichier comme
+information ; il ne decide plus de rien, et une verification le tient (*un
+critere retire doit l'etre pour de bon, sinon il revient par un poids qu'on
+avait oublie de mettre a zero*).
+
+**LES BORNES DES VUES N'ONT PAS BOUGE, ET C'EST VOLONTAIRE** : elles decrivent
+le catalogue EN PLACE, mesure sur trente jours (min 431, mediane 23 658, max
+892 866). *Les bornes decrivent les donnees* — les porter d'avance a douze mois
+aurait mis les trois mille cartes actuelles au premier cran.
+
+**A RECALIBRER DES QUE LA GENERATION PAR VUES AURA TOURNE** : la plage monte
+d'un facteur dix. C'est `stats-summary.txt` qui dira ou les mettre, et le
+recalcul est instantane puisque les formules sont pures.
+
+*Ce que le changement de poids donne sur le catalogue actuel*, mesure : la
+pyramide se redresse — commun 29 → **45 %**, rare 48 → 28 %, epique 19 → 20 %,
+legendaire 4 → **7 %**. **Rien ne change a l'ecran pour autant** : le JSON porte
+sa `rarete` deja calculee, donc le nouveau poids ne s'appliquera qu'au prochain
+catalogue.
+
+**ET LE BALAYAGE DES CRANS EST DEVENU MULTIPLICATIF.** Cinq valeurs de vues
+choisies a la main sautaient la bande de l'epique, et la verification declarait
+le cran mort — *un cran qu'on declare mort parce qu'on ne l'a pas vise n'est pas
+une mesure.* L'echelle est logarithmique, le balayage doit l'etre.
+
+#### LE FILTRE « PAS DE NOM EN FRANCAIS » TOMBE, ET IL ETAIT DANS UN `WHERE`
+
+`?item rdfs:label ?lab . FILTER(LANG(?lab) = "fr")` etait **obligatoire** dans
+la requete d'enrichissement : un personnage sans libelle francais ne sortait
+meme pas de la reponse. ***Un filtre ne se voit pas quand il est ecrit dans un
+WHERE*** — il ne se compte qu'en cartes manquantes, et il y en avait 252.
+
+Le libelle est donc `OPTIONAL`, **avec l'anglais en repli** et pas le Q-id :
+« Q12345 » n'est pas un nom de carte. Une carte peut s'appeler « Bodhidharma »
+sans qu'un francais l'ait jamais nommee, et c'est mieux que de ne pas exister.
+
+*Le garde qui restait en aval est parti avec* (`if (d.nom === c.id)`) :
+**un filtre retire en amont et garde en aval ne se voit pas**, c'est la lecon
+deja payee sur l'article francais.
+
+#### DETTE ASSUMEE : LES DEUX ANCIENNES PORTES SONT ENCORE DANS LE FICHIER
+
+`decouvrirHumains`, `decouvrirMetier`, `decouvrirFiction`, la table des 701
+metiers, les tranches de notoriete, les trois axes de repli, les budgets de
+temps et `vuesEtrangeres` — **plus rien ne les appelle.**
+
+*Du code mort ment sur ce que le pipeline fait*, et il faudra les retirer avec
+`scripts/trouver-metiers.ts` et `scripts/metiers.json`. **Mais pas avant que
+Keko ait vu le catalogue qu'elles remplacent** : la generation dure une heure,
+et c'est la regle qu'il a posee lui-meme pour le pipeline des personnages face a
+celui des animaux — *on supprime une fois valide, pas avant.*
+
 ### CE QUI RESTE À TRANCHER PAR KEKO
 
 - **les seuils de rareté et les bornes des échelles** sont désormais MESURÉS,

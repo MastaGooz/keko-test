@@ -53,14 +53,25 @@ console.log('\nL’ÉCHELLE')
   }
   verifier('l’attaque croît avec les vues', croissante)
 
+  // LA NOTORIÉTÉ SUIT LES VUES, et plus le nombre de langues : voir `POIDS`.
+  // *La vérification a changé de variable, pas de forme* — c'est ce qu'on
+  // demande à une mesure quand un critère est remplacé par un autre.
   let notoriete = -1
   let monotone = true
-  for (const langues of [1, 10, 40, 80, 150, 300]) {
-    const n = statsDerivees(brut({ langues })).notoriete
+  for (const vues of [0, 1_000, 50_000, 500_000, 5_000_000, 50_000_000]) {
+    const n = statsDerivees(brut({ vues })).notoriete
     if (n < notoriete) monotone = false
     notoriete = n
   }
-  verifier('la notoriété croît avec le nombre de langues', monotone)
+  verifier('la notoriété croît avec les vues', monotone)
+
+  // ET ELLE NE SUIT PLUS LES LANGUES : le champ reste dans le fichier, il ne
+  // décide plus de rien. *Un critère retiré doit être retiré pour de bon*,
+  // sinon il revient par un poids qu'on avait oublié de mettre à zéro.
+  verifier(
+    'le nombre de langues ne change plus la notoriété',
+    statsDerivees(brut({ langues: 1 })).notoriete === statsDerivees(brut({ langues: 300 })).notoriete,
+  )
 }
 
 // LES QUATRE CRANS SONT ATTEIGNABLES. Un cran que rien ne peut remplir est un
@@ -68,8 +79,11 @@ console.log('\nL’ÉCHELLE')
 // trois mille personnages.
 {
   const atteints = new Set<string>()
-  for (let langues = 1; langues <= 320; langues += 1)
-    for (const vues of [0, 500, 5_000, 50_000, 500_000])
+  // LE BALAYAGE DES VUES EST MULTIPLICATIF, parce que l'echelle l'est. *Cinq
+  // valeurs choisies a la main sautaient la bande de l'epique* -- et un cran
+  // qu'on declare mort parce qu'on ne l'a pas vise n'est pas une mesure.
+  for (let langues = 1; langues <= 320; langues += 40)
+    for (let vues = 1; vues < 100_000_000; vues = Math.ceil(vues * 1.2))
       atteints.add(statsDerivees(brut({ langues, vues })).rarete)
   for (const r of RARETES) verifier(`le cran « ${r} » est atteignable`, atteints.has(r))
 }

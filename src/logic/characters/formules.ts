@@ -56,14 +56,40 @@ export interface StatsDerivees {
 const BORNES = {
   /** Nombre de Wikipedia qui ont l'article. */
   langues: [10, 250] as const,
-  /** Vues sur 30 jours, SOMMEES sur le francais et les quinze langues mesurees. */
+  /**
+   * Vues SOMMEES sur le francais et les quinze langues mesurees.
+   *
+   * **ELLES DECRIVENT LE CATALOGUE EN PLACE, pas celui qu'on vise.** Mesure sur
+   * les trois mille cartes actuelles, vues sur trente jours : min 431, mediane
+   * 23 658, max 892 866.
+   *
+   * **A RECALIBRER DES QUE LA GENERATION PAR VUES AURA TOURNE** : elle somme sur
+   * DOUZE MOIS, donc la plage monte d'un facteur dix. *Les bornes decrivent les
+   * donnees* -- les changer avant d'avoir les donnees mettrait tout le catalogue
+   * actuel au premier cran.
+   */
   vues: [400, 900_000] as const,
   /** Octets de l'article FR. */
   taille: [3_000, 250_000] as const,
 }
 
-/** Ce que pesent les deux signaux dans le score de notoriete. */
-const POIDS = { langues: 0.6, vues: 0.4 }
+/**
+ * LA NOTORIETE EST LA FREQUENTATION, ET RIEN D'AUTRE. Tranche par Keko : « je
+ * trouve que le critere de popularite ne devrait pas etre les langues, plutot la
+ * frequentation de la page (ex sur un an) ».
+ *
+ * *Les langues pesaient 0,6 contre 0,4 aux vues*, et c'etait defendable tant
+ * qu'on ne pouvait mesurer les vues que de ce qu'on avait deja choisi : le
+ * nombre de langues etait **le seul signal disponible avant Wikipedia**. Depuis
+ * que la porte d'entree est le top des pages lues, les vues arrivent les
+ * premieres -- donc le signal de secours n'a plus de raison d'etre le principal.
+ *
+ * **Et il mesurait autre chose.** Un article existe dans beaucoup de langues
+ * quand un bot l'a cree partout -- un botaniste du XIXe siecle a cent cinquante
+ * Wikipedia et personne ne les lit. *Le nombre de langues mesure la plomberie,
+ * la frequentation mesure l'interet.*
+ */
+const POIDS = { langues: 0, vues: 1 }
 
 /**
  * QUATRE CRANS, PARCE QUE LE DESSIN EN PORTE QUATRE. Tranche par Keko : « on va

@@ -101,8 +101,19 @@ const WIKIDATA_API = 'https://www.wikidata.org/w/api.php'
 const BUDGET_LANGUE = 6 * 60_000
 
 const LANGUES_VUES = [
-  'en', 'es', 'de', 'ru', 'ja', 'zh', 'it', 'pt', 'fa', 'pl', 'ar', 'tr', 'nl', 'id', 'ko',
+  'fr', 'en', 'es', 'de', 'ru', 'ja', 'zh', 'it', 'pt', 'fa', 'pl', 'ar', 'tr', 'nl', 'id', 'ko',
 ] as const
+
+/**
+ * SUR COMBIEN DE MOIS ON SOMME LES VUES. Keko : « le critere de popularite ne
+ * devrait pas etre les langues, plutot la frequentation de la page (ex sur un
+ * an) ».
+ *
+ * *Un an et pas un mois*, et ce n'est pas un detail : le top d'un seul mois est
+ * de l'ACTUALITE -- qui vient de mourir, qui sort un film. Douze mois lissent
+ * le pic et laissent remonter ce qu'on consulte toute l'annee.
+ */
+const MOIS_DE_VUES = 12
 
 const CACHE = new URL('./.cache/', import.meta.url)
 const SORTIE = new URL('../public/data/', import.meta.url)
@@ -439,6 +450,8 @@ async function sparqlSouple(nom: string, requete: string): Promise<Ligne[]> {
 /** Une page telle que l'API MediaWiki la rend. */
 interface PageWiki {
   title?: string
+  /** `prop=pageprops&ppprop=wikibase_item` : le Q-id de l'article. */
+  pageprops?: { wikibase_item?: string }
   length?: number
   missing?: boolean
   pageviews?: Record<string, number | null>
@@ -447,7 +460,12 @@ interface PageWiki {
 }
 
 interface ReponseWiki {
-  query?: { pages?: PageWiki[]; normalized?: { from: string; to: string }[] }
+  query?: {
+    pages?: PageWiki[]
+    normalized?: { from: string; to: string }[]
+    /** `redirects=1` : le titre demande et celui ou il mene. */
+    redirects?: { from: string; to: string }[]
+  }
   continue?: Record<string, string>
   error?: { code?: string; info?: string }
 }
@@ -510,6 +528,7 @@ async function mediawiki(
   return cache(`wiki3-${nom}`, `${wiki}?${new URLSearchParams(base)}`, async () => {
     const pages = new Map<string, PageWiki>()
     const normalized: { from: string; to: string }[] = []
+    const redirects: { from: string; to: string }[] = []
     let suite: Record<string, string> = {}
 
     // Borne de securite : l'API devrait converger en quelques tours, mais une
@@ -553,12 +572,13 @@ async function mediawiki(
         pages.set(p.title, { ...deja, ...p, pageviews: garde ? p.pageviews : deja.pageviews })
       }
       for (const n of d.query?.normalized ?? []) normalized.push(n)
+      for (const r of d.query?.redirects ?? []) redirects.push(r)
 
-      if (!d.continue) return { query: { pages: [...pages.values()], normalized } }
+      if (!d.continue) return { query: { pages: [...pages.values()], normalized, redirects } }
       suite = d.continue
     }
     journal(`  wiki ${nom} : continuation trop longue, lot incomplet`)
-    return { query: { pages: [...pages.values()], normalized } }
+    return { query: { pages: [...pages.values()], normalized, redirects } }
   }, complet)
 }
 
@@ -580,7 +600,17 @@ function paquets<T>(xs: T[], taille: number): T[][] {
  */
 interface Candidat {
   id: string
-  langues: number
+  /**
+   * LES VUES SONT LE CRITERE DE POPULARITE, PLUS LES LANGUES. Tranche par Keko :
+   * « je trouve que le critere de popularite ne devrait pas etre les langues,
+   * plutot la frequentation de la page (ex sur un an) ».
+   *
+   * Elles arrivent **avec la decouverte** -- sommees sur seize langues et douze
+   * mois -- donc il n'y a plus d'etape pour les obtenir. Le nombre de langues,
+   * lui, descend d'un rang : il reste dans le fichier comme information, il ne
+   * decide plus de rien.
+   */
+  vues: number
   fiction: boolean
 }
 
@@ -595,7 +625,7 @@ function versCandidat(cellules: string[], fiction: boolean): Candidat | null {
   const id = cellules[0]?.split('/').pop()
   const langues = Number(cellules[1])
   if (!id || !/^Q\d+$/.test(id) || !Number.isFinite(langues)) return null
-  return { id, langues, fiction }
+  return { id, vues: 0, fiction }
 }
 
 /**
@@ -848,6 +878,225 @@ async function sousClasses(qid: string): Promise<string[]> {
   }
 }
 
+/**
+ * LA PORTE D'ENTREE EST LA FREQUENTATION, PLUS LES METIERS. Tranche par Keko.
+ *
+ * **Pourquoi ca change tout** : on ne demande plus a Wikidata « qui sont les
+ * humains ? » (11 millions, 504 garanti), on part de **ce que les gens lisent**
+ * et on demande ensuite « lequel de ces titres est un personnage ? ». *Par
+ * titre, c'est indexe.*
+ *
+ * Ce que ca supprime, et ce n'est pas rien : la table de 701 metiers, les
+ * tranches de notoriete, les trois axes de repli, les budgets de temps, et
+ * `vuesEtrangeres` -- **les vues ARRIVENT avec la decouverte** au lieu de
+ * demander quinze requetes par lot trois etapes plus loin.
+ *
+ * **Tout est mesure avant d'etre ecrit :**
+ *
+ * | | |
+ * |---|---|
+ * | 16 langues x 12 mois de tops | **192 requetes, ~1 min** -> ~105 000 titres |
+ * | resolution titre -> Q-id + P31, par 50 | **1,1 s par lot** -> ~40 min |
+ * | part d'HUMAINS dans ces titres | **52 %** -> ~54 000 personnes pour 4 500 places |
+ *
+ * **ET LE RISQUE A ETE MESURE AVANT, PAS APRES.** Un top mensuel favorise
+ * l'actualite, donc la question etait : *les figures antiques survivent-elles ?*
+ * Sur deux langues, **Aristote, Platon et Confucius etaient ABSENTS** -- de quoi
+ * tuer l'idee. Sur seize, ils y sont : Aristote 370e en espagnol, Platon 657e,
+ * Confucius 464e en chinois. **C'est le nombre de langues qui les sauve, pas le
+ * nombre de mois.**
+ *
+ * *Napoleon est 107e en francais, Shakespeare 172e, Cleopatre 73e en anglais.*
+ *
+ * **LE PLAFOND DE 1 000 PAR LANGUE-MOIS EST LA LIMITE CONNUE** : quelqu'un qui
+ * serait 1 200e partout et chaque mois ne serait jamais vu. *Le dump complet des
+ * vues le leverait* (6 Go par mois, tous projets) -- a rouvrir si un manque se
+ * fait sentir.
+ */
+async function decouvrirParVues(): Promise<Candidat[]> {
+  // 1. LES TOPS. Une requete par (langue, mois), toutes en cache.
+  const maintenant = new Date()
+  const mois: [number, number][] = []
+  for (let i = 1; i <= MOIS_DE_VUES; i++) {
+    const d = new Date(Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth() - i, 1))
+    mois.push([d.getUTCFullYear(), d.getUTCMonth() + 1])
+  }
+  journal(
+    `Decouverte par les VUES : ${LANGUES_VUES.length} langues x ${MOIS_DE_VUES} mois ` +
+      `(${mois.at(-1)?.[0]}-${mois.at(-1)?.[1]} a ${mois[0][0]}-${mois[0][1]})`,
+  )
+
+  // 'langue' -> 'Titre' -> vues cumulees sur l'annee
+  const parLangue = new Map<string, Map<string, number>>()
+  for (const langue of LANGUES_VUES) {
+    const titres = new Map<string, number>()
+    for (const [an, m] of mois) {
+      const chemin =
+        `${langue}.wikipedia/all-access/${an}/${String(m).padStart(2, '0')}/all-days`
+      const r = await topDesVues(chemin)
+      for (const a of r) if (!HORS_SUJET.test(a.article)) {
+        const t = a.article.replace(/_/g, ' ')
+        titres.set(t, (titres.get(t) ?? 0) + a.views)
+      }
+    }
+    parLangue.set(langue, titres)
+    journal(`  ${langue} : ${titres.size} titres distincts sur l'annee`)
+  }
+
+  // 2. TITRE -> Q-ID, PAR L'API DE CHAQUE WIKI ET NON PAR SPARQL. Mesure sur
+  // les lots reels : **0,3 s contre 8 s** -- trois heures de resolution contre
+  // sept minutes. *SPARQL sait relier un titre a une entite, il ne sait pas le
+  // faire vite* : chaque lot de cinquante litteraux a langue est un parcours,
+  // la ou `prop=pageprops` est un acces par cle.
+  //
+  // `redirects=1` suit les redirections, et il le faut : les vues comptent le
+  // titre DEMANDE, donc "Zidane" et "Zinedine Zidane" arrivent tous deux et
+  // seul le second est un article.
+  const vues = new Map<string, number>()
+  const tous = new Set<string>()
+  for (const [langue, titres] of parLangue) {
+    const api = `https://${langue}.wikipedia.org/w/api.php`
+    const lots = paquets([...titres.keys()], 50)
+    let trouves = 0
+    for (const lot of lots) {
+      const d = await mediawiki(
+        `qid-${langue}-${empreinte(lot.join('|'))}`,
+        {
+          action: 'query',
+          prop: 'pageprops',
+          ppprop: 'wikibase_item',
+          redirects: '1',
+          titles: lot.join('|'),
+        },
+        api,
+        false, // Rien a voir avec les vues : ce lot n'en demande pas.
+      )
+      // LE TITRE FINAL N'EST PAS LE TITRE DEMANDE : on remonte la chaine des
+      // normalisations et des redirections pour rendre a chaque article les
+      // vues de tous les titres qui y menent.
+      const versFinal = new Map<string, string>()
+      for (const n of d?.query?.normalized ?? []) versFinal.set(n.from, n.to)
+      for (const r of d?.query?.redirects ?? []) versFinal.set(r.from, r.to)
+      const vuesDuFinal = new Map<string, number>()
+      for (const t of lot) {
+        let f = t
+        for (let i = 0; i < 4 && versFinal.has(f); i++) f = versFinal.get(f) as string
+        vuesDuFinal.set(f, (vuesDuFinal.get(f) ?? 0) + (titres.get(t) ?? 0))
+      }
+      for (const page of d?.query?.pages ?? []) {
+        const id = page.pageprops?.wikibase_item
+        if (!id || !page.title) continue
+        trouves++
+        tous.add(id)
+        vues.set(id, (vues.get(id) ?? 0) + (vuesDuFinal.get(page.title) ?? 0))
+      }
+    }
+    journal(`  ${langue} : ${trouves} titres resolus, ${tous.size} entites au total`)
+  }
+
+  // 3. QUI EST UN PERSONNAGE ? Par Q-id, et ils sont **dedupliques entre les
+  // seize langues** -- Napoleon arrive seize fois et ne compte qu'une. C'est ce
+  // qui rend cette etape courte : on ne demande P31 que des entites distinctes,
+  // par lots de deux cents.
+  const estPerso = new Set<string>()
+  const fictifs = new Set<string>()
+  const lots = paquets([...tous], 200)
+  journal(`  ${tous.size} entites distinctes, nature demandee en ${lots.length} paquets`)
+  let fait = 0
+  for (const lot of lots) {
+    const requete = `SELECT ?i ?nat WHERE {
+  VALUES ?i { ${lot.map((i) => 'wd:' + i).join(' ')} }
+  ?i wdt:P31 ?nat .
+}`
+    const lignes = await sparql(`nature-${empreinte(lot.join('|'))}`, requete)
+    const dansLeLot = new Set<string>()
+    const humain = new Set<string>()
+    for (const l of lignes) {
+      const id = qid(lire(l, 'i'))
+      const nat = qid(lire(l, 'nat'))
+      if (!id || !nat) continue
+      if (NATURES_PERSO.has(nat)) {
+        estPerso.add(id)
+        dansLeLot.add(id)
+      }
+      if (nat === 'Q5') humain.add(id)
+    }
+    // LE DRAPEAU DIT LA NATURE, PLUS LA PORTE PAR LAQUELLE IL EST ENTRE. Il y
+    // avait deux decouvertes, donc il enregistrait laquelle avait rendu le
+    // personnage -- et **dix-sept cartes seulement sortaient en fiction** alors
+    // que la decouverte par metiers en rendait des milliers. *Ici il n'y a
+    // qu'une porte* : la nature se lit sur P31.
+    for (const id of dansLeLot) if (!humain.has(id)) fictifs.add(id)
+    fait += lot.length
+    if (fait % 2000 < 200) journal(`  ${fait}/${tous.size} natures`)
+    await dors(PAUSE.sparql)
+  }
+
+  journal(`  ${estPerso.size} personnages, dont ${fictifs.size} non humains`)
+  return [...estPerso].map((id) => ({
+    id,
+    vues: vues.get(id) ?? 0,
+    fiction: fictifs.has(id),
+  }))
+}
+
+/**
+ * UN TOP DE VUES, EN CACHE. *L'API REST de Wikimedia n'est pas l'API MediaWiki*,
+ * donc `mediawiki()` ne sert pas ici : ni `action`, ni `format`, ni pagination.
+ */
+async function topDesVues(chemin: string): Promise<{ article: string; views: number }[]> {
+  return cache(
+    `top-${chemin.replace(/[^a-z0-9]+/gi, '-')}`,
+    chemin,
+    async () => {
+      try {
+        const r = await fetch(`https://wikimedia.org/api/rest_v1/metrics/pageviews/top/${chemin}`, {
+          headers: { 'User-Agent': UA },
+          signal: AbortSignal.timeout(40000),
+        })
+        if (!r.ok) return []
+        const d = (await r.json()) as {
+          items?: { articles?: { article: string; views: number }[] }[]
+        }
+        return d.items?.[0]?.articles ?? []
+      } catch {
+        return []
+      }
+    },
+    (v) => v.length > 0,
+  )
+}
+
+/** Le Q-id au bout d'une URL d'entite. */
+function qid(url: string | undefined): string | undefined {
+  return /(Q\d+)$/.exec(url ?? '')?.[1]
+}
+
+/**
+ * CE QUI COMPTE COMME UN PERSONNAGE. *Humain, mais pas seulement* -- Keko : « on
+ * ne veut pas forcement des humains, mais des personnages ! » Les quatre autres
+ * natures sont petites (2 258 divinites, 1 457 creatures, 1 067 legendes,
+ * ~5 000 fictifs) et n'auraient aucune porte a elles.
+ */
+const NATURES_PERSO = new Set([
+  'Q5', // etre humain
+  'Q95074', // personnage de fiction
+  'Q15632617', // personnage humain de fiction
+  'Q15773317', // personnage de serie
+  'Q15711870', // personnage de film
+  'Q1114461', // personnage de bande dessinee
+  'Q21070568', // personnage de manga
+  'Q3658341', // personnage litteraire
+  'Q178885', // divinite
+  'Q2239243', // creature mythologique
+  'Q13002315', // personnage legendaire
+  'Q188784', // super-heros
+])
+
+/** Les pages qui ne sont pas des articles. */
+const HORS_SUJET =
+  /^(Sp[eé]cial|Special|Wikip[eé]dia|Wikipedia|Portail|Portal|Cat[eé]gorie|Category|Fichier|File|Aide|Help|Discussion|Talk|Mod[eè]le|Template|Utilisateur|User|Main[_ ]Page|Accueil)[:_]|^Main[_ ]Page$|^Accueil/
+
 async function decouvrirHumains(): Promise<Candidat[]> {
   journal(`Decouverte des humains : ${METIERS.length} metiers, vivants compris, >= ${LANGUES_MINIMUM.humain} langues`)
   const out: Candidat[] = []
@@ -983,6 +1232,8 @@ SELECT ?item ?langues WHERE {
 
 interface Details {
   nom: string
+  /** Le nombre de Wikipedia qui ont l'article. Information, plus un critere. */
+  langues: number
   /** Le titre de l'article FR. Il vient d'ici et non de la decouverte. */
   article: string | null
   description: string
@@ -1100,7 +1351,8 @@ async function enrichir(candidats: Candidat[]): Promise<Map<string, Details>> {
   for (const lot of lots) {
     const requete = `
 SELECT ?item
-  (SAMPLE(?lab) AS ?nom) (SAMPLE(?desc) AS ?description) (SAMPLE(?img) AS ?image)
+  (SAMPLE(?labFr) AS ?nomFr) (SAMPLE(?labEn) AS ?nomEn) (SAMPLE(?liens) AS ?langues)
+  (SAMPLE(?desc) AS ?description) (SAMPLE(?img) AS ?image)
   (SAMPLE(?nais) AS ?naissance) (SAMPLE(?dec) AS ?mort)
   (SAMPLE(?pays) AS ?citoyennete) (SAMPLE(?oeuvre) AS ?oeuvre)
   (SAMPLE(?art) AS ?article)
@@ -1112,7 +1364,22 @@ WHERE {
   # *un filtre retire en amont et garde en aval ne se voit pas, il se compte en
   # cartes manquantes.*
   OPTIONAL { ?art schema:about ?item ; schema:isPartOf <https://fr.wikipedia.org/> }
-  ?item rdfs:label ?lab . FILTER(LANG(?lab) = "fr")
+  # LE LIBELLE FRANCAIS EST FACULTATIF. Tranche par Keko, qui a demande la
+  # suppression du filtre « pas de nom en francais ». Il etait OBLIGATOIRE ici,
+  # donc un personnage sans libelle FR ne sortait meme pas de la requete --
+  # *un filtre ne se voit pas quand il est ecrit dans un WHERE*, il se compte
+  # en cartes manquantes.
+  #
+  # **LE REPLI EST LE LIBELLE ANGLAIS**, et pas le Q-id : « Q12345 » n'est pas
+  # un nom de carte. Une carte peut donc s'appeler « Bodhidharma » ou
+  # « Jalal ad-Din Rumi » sans accent francais, et c'est mieux que de ne pas
+  # exister.
+  OPTIONAL { ?item rdfs:label ?labFr . FILTER(LANG(?labFr) = "fr") }
+  OPTIONAL { ?item rdfs:label ?labEn . FILTER(LANG(?labEn) = "en") }
+  # LE NOMBRE DE LANGUES DESCEND D'UN RANG : il ne decide plus de la rarete,
+  # mais il reste dans le fichier. *Il ne coute rien ici* -- une colonne de
+  # plus dans une requete qui en rapporte dix.
+  OPTIONAL { ?item wikibase:sitelinks ?liens }
   OPTIONAL { ?item schema:description ?desc . FILTER(LANG(?desc) = "fr") }
   OPTIONAL { ?item wdt:P18 ?img }
   OPTIONAL { ?item wdt:P569 ?nais }
@@ -1124,12 +1391,14 @@ WHERE {
 GROUP BY ?item`
     for (const l of await sparqlSouple(`details-${empreinte(lot.map((c) => c.id).join(','))}`, requete)) {
       const id = lire(l, 'item')?.split('/').pop()
-      const nom = lire(l, 'nom')
+      // LE FRANCAIS D'ABORD, L'ANGLAIS A DEFAUT, et rien ne passe sans nom.
+      const nom = lire(l, 'nomFr') ?? lire(l, 'nomEn')
       if (!id || !nom) continue
       // Plus de `continue` : une carte sans article FR se mesure en anglais.
       const article = titreDeLArticle(lire(l, 'article'))
       details.set(id, {
         nom,
+        langues: Number(lire(l, 'langues') ?? 0) || 0,
         article,
         description: lire(l, 'description') ?? '',
         image: vignetteCommons(lire(l, 'image')),
@@ -1450,7 +1719,16 @@ async function main(): Promise<void> {
   const debut = Date.now()
   journal(`Cible : ${cible} personnages${frais ? ' (cache ignore)' : ''}`)
 
-  const bruts = [...(await decouvrirHumains()), ...(await decouvrirFiction())]
+  // LA PORTE EST LA FREQUENTATION : voir `decouvrirParVues`.
+  //
+  // **LES DEUX ANCIENNES PORTES RESTENT DANS LE FICHIER** -- `decouvrirHumains`
+  // et `decouvrirFiction`, avec la table des 701 metiers, les tranches de
+  // notoriete, les trois axes de repli et `vuesEtrangeres`. *Elles ne sont plus
+  // appelees*, et c'est de la dette assumee : la generation dure une heure, donc
+  // on ne retire pas six cents lignes avant d'avoir vu le catalogue qu'elles
+  // remplacent. **A supprimer une fois valide par Keko**, avec
+  // `scripts/trouver-metiers.ts` et `scripts/metiers.json`.
+  const bruts = await decouvrirParVues()
   journal(`${bruts.length} lignes decouvertes`)
 
   // Un personnage sort de plusieurs lots -- un peintre qui est aussi
@@ -1459,18 +1737,23 @@ async function main(): Promise<void> {
   for (const c of bruts) if (!parId.has(c.id)) parId.set(c.id, c)
   journal(`${parId.size} personnages distincts`)
 
-  // ON N'ENRICHIT ET ON NE MESURE QUE LES PLUS NOTOIRES. Chaque etape coute une
+  // ON N'ENRICHIT ET ON NE MESURE QUE LES PLUS LUS. Chaque etape coute une
   // requete par cinquante personnages : les faire toutes sur l'ensemble decouvert
-  // couterait des heures pour des cartes qu'on jettera. Le nombre de langues
-  // suffit a pre-trier -- c'est le seul signal qu'on ait avant Wikipedia.
-  // LE DEPARTAGE SE FAIT SUR LE Q-ID, et ce n'est pas cosmetique : des
-  // centaines de personnages partagent le meme nombre de langues, donc sans
-  // second critere l'ordre suivrait celui des lots -- qui depend de ce que le
-  // cache contenait. *Deux generations devraient rendre le meme catalogue.*
+  // couterait des heures pour des cartes qu'on jettera.
+  //
+  // **ET LE CRITERE EST DESORMAIS LE BON DES L'ENTREE.** Il fallait pre-trier
+  // sur le nombre de langues parce que c'etait *le seul signal qu'on ait avant
+  // Wikipedia* -- la porte par metiers rendait quatre cents mille personnes dont
+  // on ne pouvait pas mesurer les vues. Ici les vues sont la des la decouverte,
+  // donc **le pre-tri et le tri final sont le meme tri.**
+  //
+  // LE DEPARTAGE SE FAIT SUR LE Q-ID : sans second critere l'ordre suivrait
+  // celui des lots, qui depend de ce que le cache contenait. *Deux generations
+  // doivent rendre le meme catalogue.*
   const candidats = [...parId.values()]
-    .sort((a, b) => b.langues - a.langues || a.id.localeCompare(b.id))
+    .sort((a, b) => b.vues - a.vues || a.id.localeCompare(b.id))
     .slice(0, Math.ceil(cible * MARGE_CANDIDATS))
-  journal(`${candidats.length} candidats retenus (>= ${candidats.at(-1)?.langues ?? 0} langues)`)
+  journal(`${candidats.length} candidats retenus (>= ${candidats.at(-1)?.vues ?? 0} vues)`)
 
   const details = await enrichir(candidats)
   // LES TITRES VIENNENT DES DETAILS, donc on ne mesure que ce qui en a : un
@@ -1520,11 +1803,10 @@ async function main(): Promise<void> {
   const mesureDe = (id: string, d: Details): Mesure | undefined =>
     d.article === null ? mesures.get(`#${id}`) : mesures.get(d.article)
 
-  // LES VUES ETRANGERES NE SE DEMANDENT QUE POUR CE QUI SURVIVRA : un candidat
-  // sans mesure est deja ecarte, et chaque id coute quinze requetes de plus
-  // a l'echelle du lot. *On ne paie pas pour des cartes qu'on jette.*
-  const mesurables = [...details.entries()].filter(([id, d]) => mesureDe(id, d)).map(([id]) => id)
-  const etrangeres = await vuesEtrangeres(mesurables)
+  // IL N'Y A PLUS D'ETAPE DE VUES ETRANGERES : elles arrivent avec la
+  // decouverte, sommees sur seize langues et douze mois. *Quinze requetes par
+  // lot de cinquante, c'est ce que cette etape coutait* -- environ deux heures
+  // sur la derniere generation.
 
   let sansDetail = 0
   let sansArticle = 0
@@ -1534,12 +1816,6 @@ async function main(): Promise<void> {
   for (const c of candidats) {
     const d = details.get(c.id)
     if (!d) {
-      sansDetail++
-      continue
-    }
-    // UN LIBELLE QUI N'EST QUE SON Q-ID VEUT DIRE QU'IL N'Y A PAS DE LIBELLE FR.
-    // Une carte qui s'appellerait « Q12345 » n'est pas une carte.
-    if (d.nom === c.id) {
       sansDetail++
       continue
     }
@@ -1572,20 +1848,14 @@ async function main(): Promise<void> {
       sansImage++
       continue
     }
-    // LES VUES SONT LA SOMME DE TOUTES LES LANGUES MESUREES, francais compris
-    // (voir `LANGUES_VUES`) : *le francais ne pese que 1 a 38 % du total*, donc
-    // le prendre seul mesurait la notoriete francophone.
-    //
-    // ELLE SE CALCULE UNE FOIS ET SERT AUX DEUX. Elle a d'abord ete sommee dans
-    // l'appel a `statsDerivees` pendant que la carte enregistrait `m.vues` --
-    // donc la rarete et l'attaque etaient justes, mais **le fichier disait
-    // autre chose que ce qui avait servi a les calculer**, et le tri final
-    // reclassait sur le chiffre francais. *Une valeur qu'on calcule et une
-    // valeur qu'on enregistre ne peuvent pas diverger sans que le fichier
-    // mente* -- et rien ne l'aurait signale, puisque les deux sont plausibles.
-    const vues = m.vues + (etrangeres.get(c.id) ?? 0)
+    // LES VUES SONT CELLES DE LA DECOUVERTE : seize langues, douze mois. Elles
+    // ne se recalculent nulle part -- *une valeur qu'on calcule et une valeur
+    // qu'on enregistre ne peuvent pas diverger sans que le fichier mente*, et
+    // c'est exactement ce qui est arrive quand la somme vivait dans l'appel a
+    // `statsDerivees` pendant que la carte enregistrait le chiffre francais.
+    const vues = c.vues
     const stats = statsDerivees({
-      langues: c.langues,
+      langues: d.langues,
       vues,
       taille: m.taille,
       metiers: d.metiers,
@@ -1605,7 +1875,7 @@ async function main(): Promise<void> {
       origine: d.origine,
       metiers: d.metiers,
       domaine: stats.domaine,
-      langues: c.langues,
+      langues: d.langues,
       taille: m.taille,
       vues,
       rarete: stats.rarete,
@@ -1617,8 +1887,8 @@ async function main(): Promise<void> {
     `Ecartes : ${sansDetail} sans libelle FR, ${sansArticle} sans article mesure, ${ebauche} ebauches, ${sansImage} sans portrait`,
   )
 
-  // Triees par notoriete decroissante : le fichier se lit de haut en bas.
-  cartes.sort((a, b) => b.langues - a.langues || b.vues - a.vues || a.id.localeCompare(b.id))
+  // Triees par FREQUENTATION decroissante : le fichier se lit de haut en bas.
+  cartes.sort((a, b) => b.vues - a.vues || a.id.localeCompare(b.id))
   const gardees = cartes.slice(0, cible)
 
   const json = JSON.stringify({ genere: new Date().toISOString(), cartes: gardees })
