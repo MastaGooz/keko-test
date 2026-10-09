@@ -57,18 +57,20 @@ const BORNES = {
   /** Nombre de Wikipedia qui ont l'article. */
   langues: [10, 250] as const,
   /**
-   * Vues SOMMEES sur le francais et les quinze langues mesurees.
+   * Vues SOMMEES sur seize langues et douze mois, telles que la porte d'entree
+   * les rapporte.
    *
-   * **ELLES DECRIVENT LE CATALOGUE EN PLACE, pas celui qu'on vise.** Mesure sur
-   * les trois mille cartes actuelles, vues sur trente jours : min 431, mediane
-   * 23 658, max 892 866.
+   * **RECALIBREES SUR LA DISTRIBUTION REELLE** (3 000 cartes) : min 342 881,
+   * p10 382 023, mediane 730 027, p90 3 337 541, p99 10 940 332, max 53 946 755.
+   * *Les bornes epousent la plage, les seuils portent la pyramide.*
    *
-   * **A RECALIBRER DES QUE LA GENERATION PAR VUES AURA TOURNE** : elle somme sur
-   * DOUZE MOIS, donc la plage monte d'un facteur dix. *Les bornes decrivent les
-   * donnees* -- les changer avant d'avoir les donnees mettrait tout le catalogue
-   * actuel au premier cran.
+   * **ET LA PLAGE EST TRONQUEE PAR LE BAS**, ce qui est nouveau : on ne voit que
+   * des articles entres dans un top mensuel, donc **aucune carte n'est sous les
+   * trois cent quarante mille vues**. La distribution n'est plus centree dans sa
+   * plage logarithmique — sa mediane tombe a 15 % — et c'est ce qui tasse
+   * l'attaque vers le bas (voir `statsDerivees`).
    */
-  vues: [400, 900_000] as const,
+  vues: [340_000, 54_000_000] as const,
   /** Octets de l'article FR. */
   taille: [3_000, 250_000] as const,
 }
@@ -118,7 +120,7 @@ const POIDS = { langues: 0, vues: 1 }
  * A relire sur `stats-summary.txt` des que la formule bouge : *c'est la
  * distribution qui dit si les seuils tombent juste, pas l'intuition.*
  */
-const SEUILS_RARETE = [0.64, 0.76, 0.875] as const
+const SEUILS_RARETE = [0.245, 0.44, 0.603] as const
 
 const CRANS: readonly Rarete[] = ['commun', 'rare', 'epique', 'legendaire']
 

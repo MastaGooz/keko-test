@@ -7,11 +7,12 @@
     "dev": "vite",
     "dev:mobile": "vite --host",
     "build": "tsc && vite build",
-    "verif": "node src/logic/combat.verif.ts && node src/logic/descente.verif.ts && node src/logic/hub.verif.ts && node src/logic/characters/formules.verif.ts && node src/logic/animals/types.verif.ts",
+    "verif": "node src/logic/combat.verif.ts && node src/logic/descente.verif.ts && node src/logic/hub.verif.ts && node src/logic/characters/formules.verif.ts && node src/logic/animals/types.verif.ts && node src/logic/board/plateau.verif.ts",
     "gen:animals": "node scripts/generate-animals.ts",
     "personnages": "node scripts/generate-characters.ts",
     "preview": "vite preview",
-    "metiers": "node scripts/trouver-metiers.ts"
+    "metiers": "node scripts/trouver-metiers.ts",
+    "liens": "node scripts/generate-links.ts"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",

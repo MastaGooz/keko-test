@@ -11894,20 +11894,51 @@ information ; il ne decide plus de rien, et une verification le tient (*un
 critere retire doit l'etre pour de bon, sinon il revient par un poids qu'on
 avait oublie de mettre a zero*).
 
-**LES BORNES DES VUES N'ONT PAS BOUGE, ET C'EST VOLONTAIRE** : elles decrivent
-le catalogue EN PLACE, mesure sur trente jours (min 431, mediane 23 658, max
-892 866). *Les bornes decrivent les donnees* — les porter d'avance a douze mois
-aurait mis les trois mille cartes actuelles au premier cran.
+#### LA GENERATION A TOURNE, ET LES BORNES ONT ETE RECALIBREES DESSUS
 
-**A RECALIBRER DES QUE LA GENERATION PAR VUES AURA TOURNE** : la plage monte
-d'un facteur dix. C'est `stats-summary.txt` qui dira ou les mettre, et le
-recalcul est instantane puisque les formules sont pures.
+**59 minutes**, 3 000 cartes neuves. Et **elle a abouti alors que j'annoncais
+l'inverse** : le shell de fond a ete tue APRES l'ecriture du fichier, et j'ai
+lu la notification comme un echec. ***Une tache tuee n'est pas une tache qui
+n'a rien fait*** — le journal disait « Fini en 58,9 min » cinq heures avant que
+je le regarde.
 
-*Ce que le changement de poids donne sur le catalogue actuel*, mesure : la
-pyramide se redresse — commun 29 → **45 %**, rare 48 → 28 %, epique 19 → 20 %,
-legendaire 4 → **7 %**. **Rien ne change a l'ecran pour autant** : le JSON porte
-sa `rarete` deja calculee, donc le nouveau poids ne s'appliquera qu'au prochain
-catalogue.
+**ET LE CATALOGUE EST SORTI A 93,8 % COMMUN**, parce que les bornes decrivaient
+encore les vues sur trente jours. *Les porter d'avance aurait casse le catalogue
+d'alors* ; ne pas les porter apres a casse le neuf. **Une borne qui decrit des
+donnees se relit le jour ou les donnees changent, pas avant et pas apres.**
+
+La distribution reelle, mesuree sur les 3 000 : min **342 881**, p10 382 023,
+mediane **730 027**, p90 3 337 541, p99 10 940 332, max **53 946 755**. D'ou
+`[340 000, 54 000 000]`, et des seuils `0,245 / 0,44 / 0,603` qui **retrouvent
+exactement la pyramide d'avant** (69,1 / 20,1 / 8,2 / 2,6 %) : *un changement a
+la fois — la porte change, la distribution de rarete non.*
+
+**LE RECALCUL N'A RIEN RETELECHARGE : 6,2 minutes sur le cache.** C'est la
+troisieme fois que la purete de `logic/` rend ce qu'elle coute.
+
+**ET LA PLAGE EST DESORMAIS TRONQUEE PAR LE BAS**, ce qui est nouveau et change
+une chose : on ne voit que des articles entres dans un top mensuel, donc
+**aucune carte n'est sous 342 881 vues**. La distribution n'est plus centree
+dans sa plage logarithmique — sa mediane tombe a 15 % — et **l'ATTAQUE s'en
+trouve tassee vers le bas** : 659 cartes a 1, deux a 10, la ou l'ancien
+catalogue employait ses dix valeurs autour d'une moyenne de 5,7.
+
+*C'est exactement l'arbitrage que la note des bornes decrit* — « les regler pour
+l'une desequilibre l'autre » — et **il revient a Keko** : centrer l'attaque
+demanderait une borne haute vers 1,5 M, ce qui mettrait un quart du catalogue a
+10.
+
+**ET LE HAUT DU CATALOGUE EST TRES CONTEMPORAIN**, plus encore que prevu :
+Jeffrey Epstein, **Ed Gein**, Donald Trump, Michael Jackson, Cristiano Ronaldo.
+*Douze mois ne suffisent pas a lisser une serie Netflix* — Ed Gein est deuxieme
+du jeu parce qu'une saison est sortie sur lui. **A trancher** : c'est la
+consequence assumee du tri par frequentation, ou un signe qu'il faut ponderer
+par l'anciennete.
+
+**Et la fiction tombe a 12 cartes** (contre 17) : le drapeau dit maintenant la
+NATURE, et la porte unique ne ramene presque aucun fictif — *Wikipedia a une
+page sur chaque depute, pas sur chaque heros de manga.* Le quota reste a
+trancher.
 
 **ET LE BALAYAGE DES CRANS EST DEVENU MULTIPLICATIF.** Cinq valeurs de vues
 choisies a la main sautaient la bande de l'epique, et la verification declarait
@@ -12148,6 +12179,141 @@ Le jour où il part, le module reste.
 par Keko : « supprime le script personnages et ses données une fois le nouveau
 pipeline validé, pas avant. »
 
+## LE PLATEAU — un prototype pour une seule question
+
+Idee de Keko, cadree par lui en regles precises : une grille 4x4, une carte
+posee produit +1 par tick, **deux cartes adjacentes dont les articles Wikipedia
+sont lies produisent +1 de plus chacune**. Tick a 5 s. Rien d'autre — « pas de
+marche, pas de guildes, pas de quetes, pas d'effets visuels. Du jouable, moche,
+rapide. »
+
+**Il vit derriere `?board`**, a cote du jeu comme les paquets : *tant qu'il
+n'est pas un jeu, il ne prend pas la page.* Tout est dans `BOARD.md` — les
+regles, les gestes, les constantes, comment regenerer le graphe.
+
+### LE GRAPHE SE COLLECTE UNE FOIS ET SE COMMITE
+
+`scripts/generate-links.ts` (`npm run liens`) interroge `prop=links` sur
+fr.wikipedia, ne garde que les liens qui tombent sur une autre carte du pool, et
+symetrise. Sortie : `public/data/links.json`, **570 Ko**. *Le jeu n'appelle
+jamais l'API* — c'est la regle du catalogue, reprise ici.
+
+Mesure : **910 585 liens parcourus, 15 minutes, aucune troncature.**
+
+**DEUX DEFAUTS PAYES EN L'ECRIVANT, et le second etait grave :**
+
+- **LA BORNE DE PAGINATION TRONQUAIT LE GRAPHE EN SILENCE.** `pllimit=max` rend
+  cinq cents liens par appel **tous titres confondus**, et un lot de cinquante
+  articles en porte ~32 000 : mon premier essai s'est arrete **pile sur ma borne
+  de quarante pages** (20 000 liens, le compte exact). Le graphe sortait deux
+  fois trop pauvre — 65 aretes contre 110 sur les memes cinquante cartes — et
+  ***rien ne le disait***. La borne est a 150, et une troncature se journalise
+  desormais. *J'avais meme publie un chiffre faux entre-temps* (3,95 % de
+  densite sur le top 300, mesure tronquee) ;
+- **LES REDIRECTIONS DES CIBLES DOIVENT ETRE RESOLUES.** `redirects=1` ne resout
+  que les titres qu'on DEMANDE, pas les cibles des liens : un article qui pointe
+  vers « Napoleon Bonaparte » — une redirection — ne serait jamais relie a la
+  carte « Napoleon Ier ». Mesure : **4 712 alias**, soit 61 % de titres
+  reconnaissables en plus, pour soixante requetes.
+
+### CE QUE LE POOL VAUT — et c'est ce qui decide si le jeu existe
+
+Keko voulait les chiffres pour juger. **Le graphe complet** : 27 452 aretes,
+degre moyen **18,3**, mediane **9**, 274 cartes sans aucun lien (9 %), densite
+**0,61 %**.
+
+**Mais la densite seule condamnait la regle 1**, et c'est le sous-pool qui la
+sauve — mesure sur 3 000 mains simulees par ligne :
+
+| `sousPool` | densite | paires liees par main | mains steriles | mains a 3 paires ou + |
+|---|---|---|---|---|
+| 100 | 6,55 % | 2,93 | **9 %** | **51 %** |
+| 200 | 5,03 % | 2,30 | 15 % | 39 % |
+| **300 (defaut)** | **3,96 %** | **1,77** | **23 %** | **26 %** |
+| 1 000 | 1,65 % | 0,73 | 52 % | 5 % |
+| 3 000 | 0,61 % | 0,27 | **77 %** | 1 % |
+
+***Sur le pool entier, trois mains sur quatre n'ont aucune synergie possible***
+— donc l'arrangement ne changerait jamais le score, et **le proto ne pourrait
+pas repondre a la question qu'il pose.** Le graphe est porte par les notoires :
+Donald Trump a 321 voisins, Obama 212, Meryl Streep 169 ; un obscur en a zero a
+quatre. Le catalogue etant trie par notoriete, prendre les N premiers suffit.
+
+**Keko n'avait pas de preference sur N**, donc : 300 par defaut et
+`?board&pool=N` pour en essayer un autre, avec les stats affichees a l'ecran.
+*Ce qui a servi a choisir doit rester ouvrable.*
+
+### « LIEES » ET « RELIEES » NE SONT PAS LA MEME CHOSE
+
+Keko : « donc y'a aucun chemin possible entre la majorite des cartes ? » —
+**non, et la distinction porte tout le reste.**
+
+*La densite dit si deux cartes se pointent DIRECTEMENT*, et c'est elle qui
+decide du jeu, puisque la synergie demande l'adjacence sur la grille. **La
+connexite dit s'il existe un CHEMIN**, et un degre moyen de dix-huit relie
+presque tout le monde. Mesure sur **1,2 million de paires** (400 departs x 2 999
+cibles) :
+
+| distance | noeuds entre les deux | part des paires |
+|---|---|---|
+| 1 saut | 0 (lien direct) | 0,9 % |
+| 2 sauts | 1 | 11,3 % |
+| **3 sauts** | **2** | **36,0 %** |
+| **4 sauts** | **3** | **34,5 %** |
+| 5 sauts | 4 | 13,0 % |
+| 6 sauts et + | 5 a 11 | 4,2 % |
+
+**2,62 noeuds intermediaires en moyenne**, et sept paires sur dix a deux ou
+trois. C'est l'effet petit monde : *un graphe de 3 000 noeuds a dix-huit voisins
+chacun tient dans un diametre de trois ou quatre.* Le plus long chemin trouve
+fait douze sauts, entre deux acteurs japonais.
+
+**ET LE CHIFFRE QUE LA MOYENNE CACHAIT : 20,8 % des paires ne sont PAS
+joignables du tout.** Pas « loin » — *sans aucun chemin.* Il y a **289
+composantes** : une geante de 2 694 cartes (89,8 %) et 288 miettes, dont 274
+cartes completement isolees. Un depart tire au hasard tombe hors de la geante
+une fois sur dix, et alors presque rien ne lui est accessible.
+
+### LE JOUEUR NE CONNAIT PAS LE GRAPHE DE WIKIPEDIA
+
+**C'est le point de regle que j'ai signale a Keko**, et il ne se voit pas en
+lisant les regles : poser a l'aveugle, le joueur **decouvre** les synergies
+apres coup. Ce serait du hasard, pas une decision — et c'est la decision qu'on
+veut eprouver.
+
+Chaque carte de la main porte donc **un « +N » qui compte ses voisins deja
+poses**. *C'est de l'AFFICHAGE, pas une regle* — aucun calcul n'a bouge — et
+`BOARD.md` dit ou le retirer pour juger a l'aveugle.
+
+### LE GESTE EST SELECTION PUIS DEPOT, pas un glisser
+
+On clique la carte, on clique la case. *Le glisser du jeu a coute trois
+allers-retours a regler au doigt* ; sur un proto qu'on va jeter, il n'y a rien a
+gagner a le refaire. **La zone de la main est une destination comme une autre** :
+une carte de la grille qu'on y envoie revient en main — c'est le modele `Lieu`,
+ou « tout deplacement est prendre ici, poser la ».
+
+Et **poser sur une case occupee ECHANGE** : ce que la destination deloge repart
+d'ou vient la carte. *Sans ca, chaque nouveau contenant multiplierait les cas* —
+la regle du sac, du chargement et du coffre, reprise telle quelle.
+
+### CE QUE LES VERIFICATIONS TIENNENT
+
+`src/logic/board/plateau.verif.ts`, **42 verifications** : la carte seule, deux
+liees adjacentes, deux liees NON adjacentes, trois en ligne dont deux paires
+(celle du milieu touche les deux, donc elle prend deux fois le bonus), et quatre
+proprietes qui ne se devinent pas :
+
+- **vingt-quatre couples sur une grille 4x4, pas quarante-huit.** On ne regarde
+  que le voisin de DROITE et celui du BAS : *parcourir les quatre voisins
+  compterait chaque couple deux fois*, et la synergie serait doublee sans qu'une
+  ligne ne le dise ;
+- **les bords ne se rejoignent pas** : la case 3 finit sa ligne, la 4 ouvre la
+  suivante. *Un index qui ne regarde que « i + 1 » les croirait voisines* ;
+- **aucune diagonale** : 0 et 5 se touchent par le coin et ne comptent pas ;
+- **poser, deplacer et retirer ne perdent ni ne dupliquent jamais une carte**,
+  quel que soit le chemin — y compris en posant sur une case occupee.
+
 ## LE JEU 2D EST SUPPRIMÉ — le moteur 3D est le jeu
 
 Tranché par Keko : **« supprime complètement tout ce qui se rapporte au jeu 2D,
@@ -12262,6 +12428,8 @@ src/
       formules.ts   # rareté, attaque, défense, domaine — UN SEUL endroit
     animals/     # LE TROISIÈME MODE : une carte = une ESPÈCE
       types.ts      # CarteAnimal + la validation du JSON engendré
+    board/       # LE PROTOTYPE DE PLATEAU — voir BOARD.md
+      plateau.ts    # la grille, la production, REGLAGE : un seul endroit à régler
   render/  # LE MOTEUR DU JEU (React + R3F) — c'est la page par défaut
     texture-carte.ts # la carte peinte au canvas, pour servir de texture
     Carte3D.tsx      # le pavé, ses matériaux, sa place amortie
@@ -12269,6 +12437,7 @@ src/
     Scene.tsx        # la descente entière : combat, paliers, butin, hub
     Armurerie3D.tsx  # le coffre et le chargement
     Paquet3D.tsx     # le troisième mode, derrière `?paquet`
+    board.ts         # le plateau, derrière `?board` — DOM nu, pas de Three.js
   ui/      # CE QUE LES DEUX MONDES PARTAGENT — plus le jeu 2D, il n'existe plus
     texte-carte.ts  # le texte d'une carte, sans DOM
     art.ts + art/   # les illustrations et leur table
@@ -12282,6 +12451,7 @@ src/
 scripts/   # HORS du build Vite : lancé par `node`, pas couvert par tsconfig
   outils.ts               # cache par requête, lots, journal — partagé
   generate-animals.ts     # GBIF + Wikidata -> public/data/animals.json
+  generate-links.ts       # fr.wikipedia -> public/data/links.json (le graphe du plateau)
   generate-characters.ts  # l'ancien pipeline, à retirer après validation
   .cache/                 # le cache des requêtes, gitignoré
 ```
@@ -12615,6 +12785,7 @@ npm run build        # tsc (types) puis vite build ; doit passer sans erreur
 npm run verif        # vérifications des règles, sans navigateur
 npm run personnages  # (re)engendre public/data/characters.json depuis Wikidata
 npm run gen:animals  # (re)engendre public/data/animals.json depuis GBIF + Wikidata
+npm run liens        # (re)engendre public/data/links.json — le graphe du plateau
 ```
 
 `npm run gen:animals` accepte `--seuil=<0..1>` (la coupe), `--restes=absorbe|carte`

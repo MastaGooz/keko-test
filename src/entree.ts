@@ -37,6 +37,14 @@ if (parametres.has('paquet')) {
     const racine = document.getElementById('app')
     if (racine !== null) monterPaquet(racine)
   })
+} else if (parametres.has('board')) {
+  // LE PROTOTYPE DE PLATEAU — il ne prend pas la page, comme les paquets : tant
+  // qu'il n'est pas un jeu, il vit à côté. `?board&pool=N` change le sous-pool,
+  // `?board&seed=7` rejoue une partie.
+  void import('./render/board.ts').then(({ montrerPlateau }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) void montrerPlateau(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('ecusson')) {
   // La planche des symboles de coût : *ce qui a servi à choisir doit rester
   // ouvrable, même une fois le choix fait.*
