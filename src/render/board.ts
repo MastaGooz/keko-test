@@ -244,10 +244,13 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
         // LE SURVOL DECOMPOSE LE CALCUL : *un chiffre seul ne dit pas d'ou il
         // vient*, et c'est tout ce qu'on cherche a rendre lisible ici.
         const bonus = (par[i] ?? 0) - reglage.base
+        const k = bonus / reglage.synergie
         b.title =
           `${j.nom} — ${par[i] ?? 0} par tick` +
           ` = ${reglage.base} de base` +
-          (bonus > 0 ? ` + ${bonus} (${bonus / reglage.synergie} voisin(s) lie(s))` : ' (aucun voisin lie)')
+          (bonus > 0
+            ? ` + ${bonus} (${k} carte${k > 1 ? 's' : ''} à côté dont l’article est lié au sien)`
+            : ' (aucune carte liée à côté)')
       }
       b.addEventListener('click', () => {
         if (choix === null) {
@@ -290,7 +293,9 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
         const amis = document.createElement('div')
         amis.className = 'bd-amis'
         amis.textContent = `+${k}`
-        amis.title = `${k} carte(s) posée(s) liée(s) à ${j.nom}`
+        amis.title =
+          `${k} carte${k > 1 ? 's' : ''} déjà posée${k > 1 ? 's' : ''} dont l’article Wikipédia ` +
+          `est lié à « ${j.nom} » — mets-la À CÔTÉ de l’une d’elles pour la synergie`
         b.append(amis)
       }
       b.addEventListener('click', () => {
@@ -326,10 +331,14 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     const aide = document.createElement('div')
     aide.className = 'bd-note'
     aide.innerHTML =
-      `<b>Le chiffre JAUNE en haut d’une case</b> = ce que cette carte produit : ` +
-      `${reglage.base} de base, +${reglage.synergie} par voisin adjacent dont l’article Wikipédia est lié au sien ` +
-      `(les deux cartes du couple le gagnent). Le liseré vert marque une case qui en profite.<br>` +
-      `<b>Le badge VERT sur une carte en main</b> = combien de ses voisins sont déjà posés — où la mettre.<br>` +
+      `<b>Une synergie demande DEUX choses à la fois.</b> Les cartes doivent être ` +
+      `<b>À CÔTÉ</b> sur la grille (haut, bas, gauche, droite — jamais en diagonale) ` +
+      `<b>ET LIÉES</b> sur Wikipédia : l’article de l’une pointe vers l’autre, dans un sens ou l’autre.<br>` +
+      `<b>Chiffre JAUNE en haut d’une case</b> = ce que cette carte produit : ${reglage.base} de base, ` +
+      `+${reglage.synergie} par carte liée posée juste à côté. <b>Les deux cartes du couple le gagnent.</b> ` +
+      `Le liseré vert marque une case qui en profite.<br>` +
+      `<b>Badge VERT en bas d’une carte en main</b> = combien de cartes déjà posées sont liées à elle. ` +
+      `Il ne dit pas OÙ : à toi de la mettre à côté de l’une d’elles.<br>` +
       `Clique une carte puis une case pour la poser. Clique une case posée puis une autre pour déplacer, ` +
       `ou le cadre de la main pour la reprendre.`
     boutons.append(bBooster, bNeuf)

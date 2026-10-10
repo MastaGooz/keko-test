@@ -30,6 +30,43 @@ voir plus bas.
 - **tick toutes les 5 s**, calculé sur l'état du plateau à cet instant ;
 - on déplace et on reprend librement.
 
+## « À côté » et « liées » sont DEUX conditions
+
+Keko : « comment calcule-t-on si deux cartes sont voisines ? » — *et le mot
+« voisin » était le problème* : je l'employais pour les deux, donc il ne disait
+plus rien. **Le vocabulaire est désormais « à côté » pour la grille et « lié »
+pour Wikipédia**, et une synergie exige les deux.
+
+**1. À CÔTÉ — purement géométrique**, et ça ne touche jamais aux données. La
+grille est un tableau plat ; la case `i` est à côté de `i + 1` (même ligne) et de
+`i + cote` (colonne d'en dessous). `couples()` ne regarde que **la droite et le
+bas** : *parcourir les quatre directions compterait chaque couple deux fois*, et
+la synergie serait doublée en silence. Vingt-quatre couples sur une grille 4×4,
+aucune diagonale, et les bords ne se rejoignent pas — la case 3 finit sa ligne,
+la 4 ouvre la suivante.
+
+**2. LIÉES — lu dans `links.json`**, jamais calculé en jeu :
+
+```ts
+lies(graphe, a, b) = graphe[a].includes(b) || graphe[b].includes(a)
+```
+
+Le fichier donne, pour chaque carte, la liste de celles auxquelles elle est
+liée. Il a été construit en demandant à l'API de Wikipédia **les liens sortants
+de chaque article** (`prop=links`) — c'est-à-dire tous les articles que son
+texte cite — puis en ne gardant que ceux qui sont une autre carte du pool.
+
+**LE GRAPHE EST NON ORIENTÉ, et ça change beaucoup.** Le `||` du code dit que
+l'un OU l'autre suffit. Arithmétique sur les chiffres de la collecte — 43 547
+arcs orientés pour 27 452 arêtes — **16 095 couples sont réciproques et 11 357 ne
+vont que dans un sens**. *Exiger la réciprocité ferait perdre 41 % du graphe*, et
+ce n'est pas ce qu'on veut dire : « l'article de Trump cite Washington » suffit à
+raconter qu'il y a un rapport entre les deux.
+
+Exemple réel : Trump est lié à **321** cartes du pool, Washington à **31**, et ils
+se citent mutuellement. Washington est aussi lié à Hamilton, Bill Clinton,
+George W. Bush, Tchang Kaï-chek, Édouard VII.
+
 ## Les gestes
 
 Sélection puis dépôt, pas de glisser.
