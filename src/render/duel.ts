@@ -26,6 +26,7 @@
 import { loadCharacters } from '../ui/personnages.ts'
 import { CSS, sousPoolDemande, tailleDeCase, vignette } from './board.ts'
 import {
+  baseDeLaCarte,
   campDuTour,
   coupDuBot,
   duelVide,
@@ -41,6 +42,7 @@ import {
   type Gain,
   type Mixte,
   type Ordre,
+  type Valeur,
 } from '../logic/board/duel.ts'
 import { symetrique, tirer, type Distances, type Graphe, type Jeton } from '../logic/board/plateau.ts'
 import { createRng } from '../logic/rng.ts'
@@ -126,6 +128,18 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
   // `?duel&portee=4` fait tomber cet avantage a 45 %, `3` a 21 %. En dessous le
   // jeu meurt : a portee 2, 5 % des couples paient et bien jouer ne rapporte
   // plus rien.
+  // CE QUE LA TAILLE DE L'ARTICLE FAIT AU SCORE. Keko : « taille = on prend
+  // comme valeur » -- donc `taille` est le defaut, la taille EST la base.
+  //
+  // **MAIS LE CHIFFRE QUI SUIT EST MESURE, et il faut le savoir** : on pose
+  // toute sa main, donc la somme des bases est fixee au tirage. Sous `taille`,
+  // **65 % des parties sont gagnees par celui qui a tire la plus grosse main**
+  // (34 % a base fixe). `?duel&valeur=bonus` met la taille dans le BONUS du
+  // couple : ce chiffre retombe a 36 % et la page compte quand meme, puisqu'une
+  // grosse carte mal placee devient un gachis. `?duel&valeur=un` rend la base
+  // fixe d'avant.
+  const quoiV = new URLSearchParams(location.search).get('valeur')
+  const valeur: Valeur = quoiV === 'bonus' ? 'bonus' : quoiV === 'un' ? 'un' : REGLAGE_DUEL.valeur
   const demandee2 = Number(new URLSearchParams(location.search).get('portee') ?? '')
   const portee =
     Number.isInteger(demandee2) && demandee2 >= 2 && demandee2 <= 9
@@ -136,6 +150,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     ordre,
     mixte,
     portee,
+    valeur,
     sousPool: sousPoolDemande(REGLAGE_DUEL.sousPool),
   }
 
@@ -143,6 +158,11 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
   const pool: readonly Jeton[] = cartes.slice(0, reglage.sousPool).map((c) => ({
     id: c.id,
     nom: c.nom,
+    // LA VALEUR EST LA TAILLE DE L'ARTICLE, en 1 a 10 : c'est le champ
+    // `defense` du catalogue, deja calcule dessus. *On ne recalcule pas une
+    // echelle qui existe* — et mesuree sur le pool elle est bien etalee
+    // (min 1, mediane 7, max 10), la ou les vues s'y tassent en haut.
+    valeur: c.defense,
     // `image` est `string | null` AU TYPE — *un type qui autorise le vide
     // finira par le rencontrer.*
     image: c.image ?? '',
@@ -192,7 +212,11 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     const [sMoi, sLui] = scoresDuel(d, graphe, cache)
     const aMoi = campDuTour(d) === MOI && !attente && !fini(d)
     // CE QUE LA CARTE CHOISIE RAPPORTERAIT, CASE PAR CASE — aux DEUX camps.
-    const vu = choix === null || !aMoi ? null : gainsDuel(d, graphe, choix, MOI, cache)
+    // **L'APERÇU A BESOIN DU JETON, pas de son identifiant** : depuis que la
+    // carte porte une valeur, un aperçu qui l'ignorerait annoncerait un chiffre
+    // que le score ne rendrait pas.
+    const choisi = choix === null ? null : (d.mains[MOI].find((j) => j.id === choix) ?? null)
+    const vu = choisi === null || !aMoi ? null : gainsDuel(d, graphe, choisi, MOI, cache)
     // LE MEILLEUR COUP SE JUGE SUR L'ECART, pas sur mon seul score. Keko :
     // « pourquoi +7 est considere meilleur que +3 et -4 ? » — *il ne l'est
     // pas* : gagner 3 en l'amputant de 4 deplace l'ecart de 7, autant que
@@ -273,9 +297,9 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
         nom.textContent = j.nom
         const base = document.createElement('div')
         base.className = 'bd-base'
-        base.textContent = String(reglage.base)
+        base.textContent = String(baseDeLaCarte(reglage, j))
         b.append(img, nom, base)
-        const gain = (par[i] ?? 0) - reglage.base
+        const gain = (par[i] ?? 0) - baseDeLaCarte(reglage, j)
         if (gain > 0) {
           const bonus = document.createElement('div')
           bonus.className = 'bd-bonus'
@@ -293,7 +317,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       // **Rien sur une case qui ne rapporte que la base** : *un chiffre sur les
       // seize cases ne designe aucune case*, et c'est la regle du solo, ou
       // l'apercu se taît a zero.
-      if (g !== null && (g.moi !== reglage.base || g.lui !== 0)) {
+      if (g !== null && (choisi === null || g.moi !== baseDeLaCarte(reglage, choisi) || g.lui !== 0)) {
         const promesse = document.createElement('div')
         promesse.className = 'bd-apercu'
         promesse.textContent = signe(g.moi)
@@ -340,9 +364,9 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       // pretendent dire la meme chose doivent passer par le meme calcul*, et ce
       // qu'on compare d'une carte a l'autre est ce qu'elle deplace.
       let max: number | null = null
-      for (const g of gainsDuel(d, graphe, j.id, MOI, cache))
+      for (const g of gainsDuel(d, graphe, j, MOI, cache))
         if (g !== null && (max === null || ecartDe(g) > max)) max = ecartDe(g)
-      if (max !== null && max !== reglage.base) {
+      if (max !== null && max !== baseDeLaCarte(reglage, j)) {
         const amis = document.createElement('div')
         amis.className = 'bd-amis'
         amis.textContent = signe(max)

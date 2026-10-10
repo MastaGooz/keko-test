@@ -948,6 +948,115 @@ Streep → acteur »*, *« Zidane + Mohamed Salah → footballeur »*. **Un joue
 connaît pas le graphe de Wikipédia », donc l'écran doit tout lui dire. **Un métier
 partagé contourne entièrement le problème.**
 
+#### LA QUALITE EXISTE, J'AVAIS MESURE LA MAUVAISE PORTE — et elle redit la taille
+
+Keko : « dans wikimasters, la qualité est utilisée pour une stat non ? y'a deux
+stats : longueur et qualité apparemment ».
+
+**Il a raison sur WikiMasters, et j'avais tort sur la disponibilite.** J'avais
+ecrit « la qualite n'existe pas » sur la seule mesure de `pageassessments` —
+**2 articles sur 8.** Les quatre portes, mesurees :
+
+| porte | repond | cout |
+|---|---|---|
+| `prop=pageassessments` sur l'article | **2 / 8** | par lot |
+| les categories VISIBLES de l'article | 0 / 8 | par lot |
+| les categories de la page de **DISCUSSION** | **8 / 8** | **par lot — 2 appels, 2 s pour 50** |
+| le **modele automatique** (Lift Wing `articlequality`) | **8 / 8** | un appel par carte — **28 min pour 3 000** |
+
+***`pageassessments` n'est pas indexe sur fr.wikipedia*** : l'information vit sur
+la page de discussion, sous forme de categorie (« Article d'avancement A »), et
+le modele de Wikimedia la predit pour TOUT article — en classe (adq / ba / a / b
+/ bd / e) ou en **score continu 0–1**.
+
+**MAIS LE CRITERE DU PROJET LA RECALE : elle redit la taille.** Mesure sur
+50 cartes du pool :
+
+| | correle a la taille | correle aux vues | etalement |
+|---|---|---|---|
+| **score continu** (automatique) | **0,83** | 0,27 | 0,176 a 1,000, **50 valeurs** |
+| **avancement humain** (discussion) | **0,70** | 0,08 | *la moitie du pool en « B »* |
+| *taille (reference)* | — | 0,26 | — |
+
+***Et c'est mecanique*** : un article d'ebauche est court par definition, donc
+« longueur » et « qualite » — les deux stats de WikiMasters — sont **deux mesures
+de la meme chose a 70-83 %.** L'avancement a en plus un etalement mediocre :
+24 cartes sur 47 dans le seul cran « B ».
+
+**Donc le plan de Keko — taille en base, vues en rarete — prend DEJA les deux
+seuls axes independants**, et il est meilleur que celui de WikiMasters sur ce
+critere. *Ajouter la qualite ne donnerait pas un troisieme axe, elle doublerait
+le premier.*
+
+*Ce qu'elle aurait pour elle, si le sujet revient* : c'est un **jugement**, pas
+une quantite — et le score continu est le mieux etale de tout ce qu'on a mesure
+(50 valeurs distinctes sur 50 cartes). **A rouvrir seulement si une troisieme
+stat devient necessaire**, et alors pour ce qu'elle dit, pas pour son
+independance.
+
+### LA TAILLE DE L'ARTICLE DEVIENT LA VALEUR DE LA CARTE — et la FORME est a trancher
+
+Tranche par Keko : « taille = on prend comme valeur / vues = on va l'utiliser
+pour la rarete ». *La seconde moitie etait deja faite* — le catalogue calcule la
+rarete sur les vues seules (`POIDS = { langues: 0, vues: 1 }`) — donc ce qui est
+neuf est la premiere.
+
+**ELLE PASSE PAR LE JETON, PAS PAR LE REGLAGE** (`Jeton.valeur`, dans
+`plateau.ts`), et le champ est **facultatif a dessein** : le solo n'en pose pas,
+donc `valeurDe` rend la base du reglage et *rien ne change pour lui.* **Un champ
+optionnel dit « ce mode ne s'en sert pas » mieux qu'un 1 ecrit partout.**
+
+**ET C'EST `defense`, le champ qui existe deja** : la taille en 1 a 10, calculee
+par le pipeline. *On ne recalcule pas une echelle qui existe* — et mesuree sur le
+sous-pool elle est bien etalee (min 1, mediane 7, max 10, moyenne 7,11), la ou
+les vues s'y tassent en haut.
+
+#### LA BASE ADDITIVE FAIT TIRER LA PARTIE — mesure avec le vrai code
+
+400 parties, portee 5, `mixte=moins`, le bot du jeu :
+
+| `?duel&valeur=` | part des bases dans le score | **la plus grosse main gagne** | ce que coute de jouer au hasard |
+|---|---|---|---|
+| `un` (base fixe, le mode d'avant) | 23 % | **23 %** | 14,3 |
+| **`taille`** (le defaut, la demande) | **70 %** | **73 %** | 13,4 |
+| **`bonus`** | 21 % | **29 %** | **17,2** |
+
+***Sous `taille`, presque trois parties sur quatre sont gagnees par celui qui a
+tire la plus grosse main.*** On pose toute sa main — huit cartes, huit coups —
+donc **la somme des bases est fixee au tirage**, et cette part du score ne se
+joue pas.
+
+**ET C'EST PIRE QU'AVEC LES VUES** (73 % contre 65 % mesures la veille), pour une
+raison nette : *la taille est mieux etalee, donc l'ecart entre deux mains pese
+plus.* **Une mesure faite sur une valeur ne vaut pas pour une autre valeur** — la
+regle du projet, repayee ici.
+
+**`bonus` MET LA TAILLE DANS LE COUPLE**, base a 1 : une grosse carte bien placee
+rapporte plus, une grosse carte isolee ne rapporte rien. *Le tirage cesse de
+decider* (29 %) **et la decision AUGMENTE** — 17,2 contre 14,3 a la reference,
+donc jouer bien paie davantage qu'avant. Le multiplicateur pivote sur
+`VALEUR_PIVOT = 7`, **la mediane mesuree du pool**, pour qu'un couple moyen garde
+son bonus nominal.
+
+**Les deux sont ouvrables** : `?duel&valeur=bonus` et `?duel&valeur=un`. *Le
+defaut est `taille`, la demande litterale de Keko* — **mais le chiffre est la, et
+c'est a lui de dire s'il le garde.**
+
+Trois choses qui portent l'implementation :
+
+- **`baseDeLaCarte` est une REGLE, pas un calcul du rendu** : l'ecran l'affiche
+  sur la carte et s'en sert pour decider si une case « ne rapporte que la
+  base ». *Deux endroits qui calculeraient le meme chiffre se desaccorderaient au
+  premier reglage* ;
+- **`gainsDuel` prend le JETON, plus son seul identifiant.** Le commentaire
+  disait « seul l'identifiant compte » — ***ca a cesse d'etre vrai le jour ou la
+  carte porte une valeur*** : un aperçu qui l'ignorerait annoncerait un chiffre
+  que le score ne rendrait pas, et c'est tout ce qu'on demande a un aperçu. Une
+  verification le tient, sur les trois modes ;
+- **le solo est intact**, et c'est verifie plutot que suppose : il ne pose aucune
+  valeur, donc `valeurDe` rend 1 partout et son affichage ne bouge pas.
+
+Dix-sept verifications tiennent la valeur (59 au total pour le duel).
 ### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
@@ -996,10 +1105,12 @@ lien*, donc aucun bonus, donc aucune décision.
 ### Où changer les constantes
 
 `REGLAGE_DUEL`, en haut de `src/logic/board/duel.ts` : `cote`, `base`, `portee`,
-`ordre`, `mixte`, `sousPool`. **`parJoueur` s'en déduit** et ne se règle pas.
+`ordre`, `mixte`, `valeur`, `sousPool`. **`parJoueur` s'en déduit** et ne se
+règle pas ; `VALEUR_PIVOT` est la médiane mesurée du pool.
 
-`?duel&portee=N`, `?duel&mixte=plus|plancher`, `?duel&ordre=serpent`,
-`?duel&seed=N` et `?duel&pool=N` ouvrent chacun une variante.
+`?duel&portee=N`, `?duel&mixte=plus|plancher`, `?duel&valeur=bonus|un`,
+`?duel&ordre=serpent`, `?duel&seed=N` et `?duel&pool=N` ouvrent chacun une
+variante.
 
 ## Tests
 

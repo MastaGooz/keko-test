@@ -53,6 +53,7 @@
 import {
   bonusDuCouple,
   couples,
+  valeurDe,
   type Distances,
   type Graphe,
   type Jeton,
@@ -94,10 +95,41 @@ export interface ReglageDuel {
   readonly mixte: Mixte
   /** Dans combien de cartes du pool les mains se tirent. */
   readonly sousPool: number
+  /**
+   * **CE QUE LA TAILLE DE L'ARTICLE FAIT AU SCORE.** Tranche par Keko : « taille
+   * = on prend comme valeur ».
+   *
+   * - `un` : rien, chaque carte vaut la base. C'est le mode d'avant.
+   * - `taille` : **la taille EST le score de base** — la demande litterale.
+   * - `bonus` : la taille MULTIPLIE le bonus du couple, la base reste a 1.
+   *
+   * **ET LE CHOIX N'EST PAS NEUTRE, c'est mesure** : on pose toute sa main,
+   * donc *la somme des bases est fixee au tirage.* Sous `taille`, 75 % du score
+   * cesse de se jouer et **deux parties sur trois sont gagnees par celui qui a
+   * tire la plus grosse main** (65 %, contre 34 % a base fixe). Sous `bonus`,
+   * ce chiffre retombe a 36 % — le niveau de la reference — *et la page compte
+   * quand meme, puisqu'une grosse carte mal placee devient un gachis.*
+   */
+  readonly valeur: Valeur
 }
 
 /** Ce qu'un couple mixte fait au score. Voir `ReglageDuel.mixte`. */
 export type Mixte = 'plus' | 'moins' | 'plancher'
+
+/** Ce que la taille de l'article fait au score. Voir `ReglageDuel.valeur`. */
+export type Valeur = 'un' | 'taille' | 'bonus'
+
+/**
+ * LA VALEUR D'UN COUPLE MOYEN, pour que le mode `bonus` ne deplace pas l'echelle.
+ *
+ * **Mesure, pas choisie** : la mediane de `defense` sur le sous-pool de 300 vaut
+ * 7 (moyenne 7,11). *Un couple moyen garde donc son bonus nominal*, et seuls les
+ * extremes s'ecartent — ce qui est exactement ce qu'on veut d'un multiplicateur.
+ *
+ * *A relire si le sous-pool change de taille* : la distribution de `defense` n'est
+ * pas la meme sur le catalogue entier que sur ses 300 plus notoires.
+ */
+export const VALEUR_PIVOT = 7
 
 export const REGLAGE_DUEL: ReglageDuel = {
   cote: 4,
@@ -106,6 +138,7 @@ export const REGLAGE_DUEL: ReglageDuel = {
   ordre: 'alterne',
   mixte: 'moins',
   sousPool: 300,
+  valeur: 'taille',
 }
 
 /**
@@ -192,13 +225,34 @@ export function poserDuel(d: Duel, idMain: string, case_: number): Duel {
  * *On rend le détail et pas seulement les deux totaux* : c'est ce chiffre que
  * l'écran pose sur la carte, exactement comme en solo.
  */
+/**
+ * CE QU'UNE CARTE VAUT SEULE, SELON LE MODE — et c'est une REGLE.
+ *
+ * Sous `taille` la base EST la valeur de la carte ; sous `bonus` et `un` elle
+ * reste la base du reglage, et c'est le couple qui porte la valeur.
+ *
+ * *Elle vit ici et non dans l'ecran* parce que l'ecran l'affiche sur la carte et
+ * s'en sert pour decider si une case « ne rapporte que la base » : **deux
+ * endroits qui calculeraient le meme chiffre se desaccorderaient au premier
+ * reglage.**
+ */
+export function baseDeLaCarte(r: ReglageDuel, j: Jeton): number {
+  return r.valeur === 'taille' ? valeurDe(j, r.base) : r.base
+}
+
 export function pointsParCase(d: Duel, graphe: Graphe, cache?: Distances): readonly number[] {
-  const par = d.grille.map((j) => (j === null ? 0 : d.reglage.base))
+  const { base, valeur } = d.reglage
+  const par = d.grille.map((j) => (j === null ? 0 : baseDeLaCarte(d.reglage, j)))
   for (const [i, k] of couples(d.reglage.cote)) {
     const a = d.grille[i]
     const b = d.grille[k]
     if (a == null || b == null) continue
-    const gain = bonusDuCouple(bareme(d.reglage), graphe, a.id, b.id, cache)
+    let gain = bonusDuCouple(bareme(d.reglage), graphe, a.id, b.id, cache)
+    // SOUS `bonus`, LE COUPLE PAIE AU PRORATA DES DEUX CARTES : une grosse carte
+    // bien placee rapporte plus, une grosse carte isolee ne rapporte rien.
+    // *C'est ce qui fait compter la page SANS que le tirage decide la partie.*
+    if (valeur === 'bonus')
+      gain = Math.round((gain * (valeurDe(a, base) + valeurDe(b, base))) / 2 / VALEUR_PIVOT)
     if (gain === 0) continue
     // UN COUPLE MIXTE RETIRE, un couple propre ajoute — et dans les deux cas
     // il porte sur SES DEUX CARTES. *Le faire porter sur une seule demanderait
@@ -261,15 +315,15 @@ export interface Gain {
 export function gainsDuel(
   d: Duel,
   graphe: Graphe,
-  idMain: string,
+  pose: Jeton,
   camp: Camp,
   cache?: Distances,
 ): readonly (Gain | null)[] {
   const avant = scoresDuel(d, graphe, cache)
-  // SEUL L'IDENTIFIANT COMPTE pour le calcul : on fabrique le jeton plutôt que
-  // de le chercher dans une main, puisque l'appelant peut demander l'aperçu
-  // d'une carte du camp d'en face.
-  const pose: Jeton = { id: idMain, nom: idMain, image: '', rarete: 'commun' }
+  // **ON PREND LE JETON ENTIER, PLUS SON SEUL IDENTIFIANT.** *« Seul
+  // l'identifiant compte » a cesse d'etre vrai le jour ou la carte porte une
+  // VALEUR* : un aperçu qui l'ignorerait annoncerait un chiffre que le score ne
+  // rendrait pas — et c'est tout ce qu'on demande a un aperçu.
   return d.grille.map((occupant, case_) => {
     if (occupant !== null) return null
     const grille = d.grille.slice()
@@ -314,7 +368,7 @@ export function coupDuBot(
   const camp = campDuTour(d)
   let best: { id: string; case: number; note: number } | null = null
   for (const j of d.mains[camp]) {
-    const g = gainsDuel(d, graphe, j.id, camp, cache)
+    const g = gainsDuel(d, graphe, j, camp, cache)
     for (let i = 0; i < g.length; i++) {
       const v = g[i]
       if (v == null) continue

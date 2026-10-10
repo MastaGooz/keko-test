@@ -7,6 +7,7 @@
  * paie les deux camps, et aucun coup ne perd ni ne duplique une carte.
  */
 import {
+  baseDeLaCarte,
   campDuTour,
   coupDuBot,
   duelVide,
@@ -18,6 +19,7 @@ import {
   poserDuel,
   REGLAGE_DUEL,
   scoresDuel,
+  VALEUR_PIVOT,
   type Duel,
   type Gain,
   type Ordre,
@@ -195,7 +197,7 @@ console.log('\nL’APERCU DES DEUX GAINS')
   d = poserDuel(d, 'A', 0) // J1 pose A en 0
   // C'est au tour de J2 : ce que SA carte B gagnerait a cote de A, et ce que
   // ca donnerait a J1.
-  const g = gainsDuel(d, GRAPHE, 'B', 1)
+  const g = gainsDuel(d, GRAPHE, jeton('B'), 1)
   egal(g[1]?.moi, -3, 'B a cote de A : 1 de base - 4')
   egal(g[1]?.lui, -4, 'et A, qui est a J1, perd 4 aussi')
   egal(g[0], null, 'la case occupee ne promet rien')
@@ -203,17 +205,17 @@ console.log('\nL’APERCU DES DEUX GAINS')
   egal(g[5]?.lui, 0, 'et rien pour l’adversaire')
 
   // LE MEME COUP SOUS LE BAREME D'ORIGINE : il paie les deux.
-  const avant = gainsDuel(jouer(duel('A B C D', 'x y z w', PLUS), [['A', 0]]), GRAPHE, 'B', 1)
+  const avant = gainsDuel(jouer(duel('A B C D', 'x y z w', PLUS), [['A', 0]]), GRAPHE, jeton('B'), 1)
   egal(avant[1]?.moi, 5, 'en `plus`, B a cote de A vaut 1 + 4')
   egal(avant[1]?.lui, 4, 'et A encaisse 4')
 
   // LE MEME COUP POUR LE CAMP QUI POSSEDE A : il encaisse DEUX FOIS.
-  const sien = gainsDuel(d, GRAPHE, 'B', 0)
+  const sien = gainsDuel(d, GRAPHE, jeton('B'), 0)
   egal(sien[1]?.moi, 9, 'si A est a moi, B a cote vaut 1 + 4 + 4')
   egal(sien[1]?.lui, 0, 'et l’adversaire n’a rien')
 
   // UNE CARTE INJOIGNABLE NE PROMET QUE SA BASE.
-  egal(gainsDuel(d, GRAPHE, 'D', 1)[1]?.moi, 1, 'D, injoignable depuis A : 1')
+  egal(gainsDuel(d, GRAPHE, jeton('D'), 1)[1]?.moi, 1, 'D, injoignable depuis A : 1')
 }
 
 console.log('\nLE BOT')
@@ -235,7 +237,7 @@ console.log('\nLE BOT')
     ['plus', PLUS],
   ] as const) {
     const x = jouer(duel('A D', 'B z', reg), [['A', 0]])
-    const g = gainsDuel(x, GRAPHE, 'B', 1)
+    const g = gainsDuel(x, GRAPHE, jeton('B'), 1)
     egal(ec(g[1]), ec(g[5]), `en \`${nom}\`, le couple mixte vaut une case isolee`)
   }
 
@@ -246,7 +248,7 @@ console.log('\nLE BOT')
     ['z', 15],
     ['C', 1],
   ])
-  const gp = gainsDuel(vise, GRAPHE, 'B', 1)
+  const gp = gainsDuel(vise, GRAPHE, jeton('B'), 1)
   verifier(
     `en \`plancher\`, amputer vaut mieux qu'une case isolee (${ec(gp[2])} contre ${ec(gp[6])})`,
     ec(gp[2]) > ec(gp[6]),
@@ -258,7 +260,7 @@ console.log('\nLE BOT')
     ['z', 15],
     ['C', 1],
   ])
-  const gm = gainsDuel(plat, GRAPHE, 'B', 1)
+  const gm = gainsDuel(plat, GRAPHE, jeton('B'), 1)
   egal(ec(gm[2]), ec(gm[6]), 'en `moins`, la meme pose ne deplace rien')
 
   // IL PREFERE SON PROPRE GROUPE : a cote de SA carte, le couple paie deux
@@ -297,6 +299,81 @@ console.log('\nLE BOT')
   egal(new Set(partie.grille.map((j) => j?.id)).size, 16, 'et aucune carte n’est en double')
   egal(partie.camps.filter((c) => c === 0).length, 8, 'huit cases a J1')
   egal(partie.camps.filter((c) => c === 1).length, 8, 'huit a J2')
+}
+
+console.log()
+console.log('LA VALEUR DE LA CARTE')
+{
+  // UN JETON QUI PORTE SA VALEUR, et un graphe ou A-B sont lies (bonus 4 a
+  // portee 5). *Les trois modes se mesurent sur le MEME placement* : seul le
+  // reglage change.
+  const gros = (id: string, v: number): Jeton => ({ ...jeton(id), valeur: v })
+  const pose = (reg: ReglageDuel, a: Jeton, b: Jeton, cases: readonly [number, number]): Duel =>
+    jouer(duelVide(reg, [a], [b]), [
+      [a.id, cases[0]],
+      [b.id, cases[1]],
+    ])
+
+  const UN: ReglageDuel = { ...PLUS, valeur: 'un' }
+  const TAILLE: ReglageDuel = { ...PLUS, valeur: 'taille' }
+  const BONUS: ReglageDuel = { ...PLUS, valeur: 'bonus' }
+
+  // UNE VALEUR ABSENTE VAUT LA BASE : c'est ce qui laisse le solo intact.
+  egal(baseDeLaCarte(TAILLE, jeton('A')), 1, 'sans valeur, la base du reglage')
+  egal(baseDeLaCarte(TAILLE, gros('A', 9)), 9, 'sous taille, la base EST la valeur')
+  egal(baseDeLaCarte(BONUS, gros('A', 9)), 1, 'sous bonus, la base reste celle du reglage')
+  egal(baseDeLaCarte(UN, gros('A', 9)), 1, 'sous un, la valeur est ignoree')
+
+  // **LE MODE `un` NE DOIT RIEN CHANGER**, meme sur des cartes qui portent une
+  // valeur : *un mode qui dit « rien » doit dire rien.*
+  {
+    const p = pointsParCase(pose(UN, gros('A', 9), gros('B', 9), [0, 1]), GRAPHE)
+    egal(p[0], 5, 'un : 1 de base + 4 de couple')
+    egal(p[1], 5, 'et son voisin pareil')
+  }
+
+  // SOUS `taille`, LA BASE MONTE ET LE BONUS NE BOUGE PAS.
+  {
+    const p = pointsParCase(pose(TAILLE, gros('A', 9), gros('B', 3), [0, 1]), GRAPHE)
+    egal(p[0], 13, 'taille : 9 de base + 4 de couple')
+    egal(p[1], 7, 'et 3 + 4 pour la petite')
+  }
+
+  // SOUS `bonus`, C'EST L'INVERSE : la base ne bouge pas, et le couple paie au
+  // prorata des DEUX cartes, pivote sur la mediane du pool.
+  {
+    const moyen = pose(BONUS, gros('A', VALEUR_PIVOT), gros('B', VALEUR_PIVOT), [0, 1])
+    const pp = pointsParCase(moyen, GRAPHE)
+    egal(pp[0], 5, 'bonus : un couple moyen garde son bonus nominal (1 + 4)')
+    const petit = pose(BONUS, gros('A', 1), gros('B', 1), [0, 1])
+    egal(pointsParCase(petit, GRAPHE)[0], 2, 'deux petites cartes : 1 + 1')
+    const riche = pointsParCase(pose(BONUS, gros('A', 10), gros('B', 10), [0, 1]), GRAPHE)
+    verifier('deux grosses cartes paient plus que deux moyennes', (riche[0] ?? 0) > (pp[0] ?? 0))
+  }
+
+  // **ET LE COUPLE DOIT ETRE ADJACENT, quel que soit le mode** : la valeur ne
+  // cree aucun lien a distance.
+  {
+    const p = pointsParCase(pose(TAILLE, gros('A', 9), gros('B', 3), [0, 2]), GRAPHE)
+    egal(p[0], 9, 'non adjacentes : la base seule')
+    egal(p[2], 3, 'et la base seule pour l autre')
+  }
+
+  // L APERCU DIT EXACTEMENT CE QUE LE SCORE FERA, valeur comprise. *C'est la
+  // seule propriete qui compte : le joueur croit ce chiffre.*
+  for (const reg of [UN, TAILLE, BONUS]) {
+    // **DEUX COUPS POUR QUE CE SOIT DE NOUVEAU LE TOUR DE J1** : `poserDuel`
+    // lit le camp du TOUR, donc un seul coup aurait fait poser C par J2 — et
+    // l'ecart se serait mesure sur l'autre camp.
+    const d = jouer(duelVide(reg, [gros('A', 9), gros('C', 2)], [gros('B', 6)]), [
+      ['A', 0],
+      ['B', 15],
+    ])
+    const avant = scoresDuel(d, GRAPHE)
+    const vu = gainsDuel(d, GRAPHE, gros('C', 2), 0)
+    const apres = scoresDuel(poserDuel(d, 'C', 1), GRAPHE)
+    egal(vu[1]?.moi, (apres[0] ?? 0) - (avant[0] ?? 0), reg.valeur + ' : l apercu annonce ce que le score rend')
+  }
 }
 
 console.log(echecs === 0 ? '\nTout passe.' : `\n${echecs} ECHEC(S)`)

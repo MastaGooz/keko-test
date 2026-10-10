@@ -89,6 +89,25 @@ export interface Jeton {
   readonly nom: string
   readonly image: string
   readonly rarete: string
+  /**
+   * CE QUE LA CARTE VAUT SEULE — la taille de son article, en 1 a 10.
+   *
+   * **Facultatif a dessein** : le solo n'en pose pas, donc `valeurDe` rend la
+   * base du reglage et rien ne change pour lui. *Un champ optionnel dit « ce
+   * mode ne s'en sert pas » mieux qu'un 1 ecrit partout.*
+   */
+  readonly valeur?: number
+}
+
+/**
+ * CE QU'UNE CARTE VAUT, base du reglage a defaut.
+ *
+ * *Deux endroits qui liraient `j.valeur ?? base` chacun de leur cote se
+ * desaccorderaient au premier reglage* — et il y en a cinq, entre les regles et
+ * les deux ecrans.
+ */
+export function valeurDe(j: Jeton, base: number): number {
+  return j.valeur ?? base
 }
 
 /**
@@ -277,7 +296,7 @@ export function productionParCase(
   cache?: Distances,
 ): readonly number[] {
   const { base, cote } = p.reglage
-  const par = p.grille.map((j) => (j === null ? 0 : base))
+  const par = p.grille.map((j) => (j === null ? 0 : valeurDe(j, base)))
   for (const [i, k] of couples(cote)) {
     const a = p.grille[i]
     const b = p.grille[k]
