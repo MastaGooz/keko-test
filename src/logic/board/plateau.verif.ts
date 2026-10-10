@@ -11,6 +11,7 @@ import {
   booster,
   couples,
   deplacer,
+  apercuSurCase,
   bonusDuCouple,
   couplesQuiPaient,
   distance,
@@ -191,6 +192,35 @@ console.log('\nLA DISTANCE')
   const deux = couplesQuiPaient(avec('A C'), GRAPHE)
   egal(deux.map((c) => `${c.sauts}:${c.gain}`).join(''), '2:3', 'A et C cote a cote : 2 sauts pour 3')
   egal(couplesQuiPaient(avec('A D'), GRAPHE).length, 0, 'un couple injoignable ne figure pas')
+}
+
+console.log('\nL’APERCU PAR CASE')
+{
+  // CE QUE LA CARTE GAGNERAIT, pas ce que le couple rapporte : on compte UNE
+  // fois par voisin, et c'est ce que le joueur compare d'une case a l'autre.
+  const g = avec('. A')
+  egal(apercuSurCase(g, GRAPHE, 'B', 0), 4, 'B a cote de A (1 saut) : 4')
+  egal(apercuSurCase(g, GRAPHE, 'C', 0), 3, 'C a cote de A (2 sauts) : 3')
+  egal(apercuSurCase(g, GRAPHE, 'D', 0), 0, 'D, injoignable depuis A : 0')
+  egal(apercuSurCase(g, GRAPHE, 'B', 15), 0, 'loin de tout : 0')
+
+  // DEUX VOISINS S'ADDITIONNENT : B entre A et C touche les deux.
+  const deux = avec('A . C')
+  egal(apercuSurCase(deux, GRAPHE, 'B', 1), 8, 'B entre A et C : 4 + 4 = 8')
+
+  // LA CARTE DE LA CASE VISEE NE COMPTE PAS — poser dessus l'echange, donc
+  // elle repart en main et cesse d'etre voisine.
+  const occupee = avec('A B')
+  egal(apercuSurCase(occupee, GRAPHE, 'C', 1), 3, 'C sur la case de B ne voit que A')
+
+  // ET LE RESULTAT EST CELUI DE LA REGLE, pas une copie : a portee 2, deux
+  // sauts ne paient plus.
+  const court = { ...g, reglage: { ...REG, portee: 2 } }
+  egal(apercuSurCase(court, GRAPHE, 'C', 0), 0, 'a portee 2, C ne gagne rien')
+  egal(apercuSurCase(court, GRAPHE, 'B', 0), 1, 'et B gagne 1')
+
+  // UNE GRILLE VIDE NE PROMET RIEN.
+  egal(apercuSurCase(plateauVide(REG, []), GRAPHE, 'A', 0), 0, 'grille vide : 0')
 }
 
 console.log('\nLE TICK')

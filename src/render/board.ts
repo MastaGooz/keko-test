@@ -17,6 +17,7 @@
 
 import { loadCharacters } from '../ui/personnages.ts'
 import {
+  apercuSurCase,
   booster,
   couples,
   couplesQuiPaient,
@@ -62,8 +63,28 @@ const CSS = `
   .bd-nom { position: absolute; left: 0; right: 0; bottom: 0; padding: 2px 3px;
             font-size: 10px; line-height: 1.15; background: rgba(0,0,0,.72);
             overflow: hidden; }
-  .bd-prod { position: absolute; top: 2px; right: 3px; font-weight: 700;
-             font-size: 13px; color: #ffc65c; text-shadow: 0 0 3px #000, 0 0 3px #000; }
+  /* DEUX CHIFFRES, DEUX COINS. Demandé par Keko : la base en haut à gauche,
+     le bonus en « +X » en haut à droite. *Un total ne dit pas d'où il vient*, et
+     maintenant qu'un couple peut valoir 4, 3, 2 ou 1, le dire d'un seul chiffre
+     oblige à soustraire de tête. */
+  .bd-base { position: absolute; top: 2px; left: 3px; font-weight: 700;
+             font-size: 12px; color: #d8d2c4; text-shadow: 0 0 3px #000, 0 0 3px #000; }
+  .bd-bonus { position: absolute; top: 2px; right: 3px; font-weight: 700;
+              font-size: 13px; color: #ffc65c; text-shadow: 0 0 3px #000, 0 0 3px #000; }
+  /* L'APERÇU : ce que la carte CHOISIE gagnerait ici. Au CENTRE, parce que les
+     deux coins du haut disent déjà ce que la case produit — *trois chiffres au
+     même endroit ne se lisent pas, ils se confondent*, la leçon des deux badges
+     que Keko avait déjà signalée. */
+  .bd-apercu { position: absolute; inset: 0; display: grid; place-items: center;
+               font-weight: 700; font-size: 20px; color: #6ddf8f;
+               text-shadow: 0 0 4px #000, 0 0 4px #000, 0 0 4px #000;
+               pointer-events: none; }
+  /* ET LA MEILLEURE SE DÉSIGNE : *seize chiffres se comparent, un liseré se
+     voit* — et c'est exactement ce que Keko demande, « savoir où est la case la
+     plus intéressante ». */
+  .bd-case.vise { border-color: #6ddf8f; box-shadow: 0 0 0 2px #6ddf8f inset,
+                  0 0 8px rgba(109,223,143,.55); }
+  .bd-case.vise .bd-apercu { color: #bdffd2; font-size: 24px; }
   .bd-main { display: flex; gap: 4px; flex-wrap: wrap; align-content: flex-start;
              padding: 6px; border: 1px dashed #4a4a58; border-radius: 4px;
              min-height: 80px; flex: 1 1 320px; }
@@ -216,8 +237,30 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     return `${sauts - 1} intermédiaire${sauts > 2 ? 's' : ''}`
   }
 
+  /**
+   * CE QUE LA CARTE CHOISIE GAGNERAIT, CASE PAR CASE — et `null` si rien n'est
+   * choisi.
+   *
+   * **Un déplacement compte comme un dépôt** : on retire d'abord la carte de sa
+   * case, sinon *elle se verrait elle-même comme voisine* depuis les cases
+   * adjacentes à celle qu'elle occupe. `retirer` est pur, donc ça ne coûte
+   * qu'une copie de grille.
+   */
+  function apercus(): readonly number[] | null {
+    if (choix === null) return null
+    const [base, id] =
+      choix.ou === 'main'
+        ? [p, choix.id]
+        : [retirer(p, choix.case), (p.grille[choix.case] as Jeton).id]
+    return base.grille.map((_, i) => apercuSurCase(base, graphe, id, i, cache))
+  }
+
   function dessiner(): void {
     const par = productionParCase(p, graphe, cache)
+    const vu = apercus()
+    // LE MAXIMUM, et il peut y avoir EGALITE : on marque toutes les cases qui
+    // le valent — *designer une seule case parmi deux equivalentes mentirait.*
+    const sommet = vu === null ? 0 : Math.max(0, ...vu)
     const cote = reglage.cote
     const taille = Math.max(64, Math.min(120, Math.floor((Math.min(window.innerHeight - 260, 520)) / cote)))
     racine.replaceChildren()
@@ -277,6 +320,7 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
       // LE LISERE VERT DIT LA SYNERGIE : *un chiffre seul ne dit pas d'ou il
       // vient*, et c'est l'arrangement qu'on veut rendre lisible.
       if (j !== null && (par[i] ?? 0) > reglage.base) b.classList.add('synergie')
+      if (vu !== null && sommet > 0 && (vu[i] ?? 0) === sommet) b.classList.add('vise')
       if (j !== null) {
         const img = document.createElement('img')
         img.src = vignette(j.image)
@@ -285,10 +329,17 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
         const nom = document.createElement('div')
         nom.className = 'bd-nom'
         nom.textContent = j.nom
-        const chiffre = document.createElement('div')
-        chiffre.className = 'bd-prod'
-        chiffre.textContent = String(par[i] ?? 0)
-        b.append(img, nom, chiffre)
+        const base = document.createElement('div')
+        base.className = 'bd-base'
+        base.textContent = String(reglage.base)
+        b.append(img, nom, base)
+        const gain = (par[i] ?? 0) - reglage.base
+        if (gain > 0) {
+          const bonus = document.createElement('div')
+          bonus.className = 'bd-bonus'
+          bonus.textContent = `+${gain}`
+          b.append(bonus)
+        }
         // LE SURVOL DECOMPOSE LE CALCUL, VOISIN PAR VOISIN ET AVEC SA DISTANCE :
         // *un chiffre seul ne dit pas d'ou il vient*, et maintenant qu'un couple
         // peut valoir 4, 3, 2 ou 1, le dire globalement ne suffit plus.
@@ -310,6 +361,16 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
         b.title =
           `${j.nom} — ${par[i] ?? 0} par tick = ${reglage.base} de base` +
           (parts.length > 0 ? ` ${parts.join(' ')}` : ' (aucune carte joignable à côté)')
+      }
+      if (vu !== null && (vu[i] ?? 0) > 0) {
+        b.title =
+          `${b.title ? b.title + ' — ' : ''}ici, la carte choisie gagnerait +${vu[i] ?? 0}` +
+          ((vu[i] ?? 0) === sommet ? ' (le meilleur de la grille)' : '')
+        // L'APERCU DE LA CARTE CHOISIE, sur toute case qui rapporterait.
+        const promesse = document.createElement('div')
+        promesse.className = 'bd-apercu'
+        promesse.textContent = `+${vu[i] ?? 0}`
+        b.append(promesse)
       }
       b.addEventListener('click', () => {
         if (choix === null) {
@@ -396,11 +457,12 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
         .map((k) => `<b>${k + 1} saut = +${reglage.portee - k - 1}</b>`)
         .join(', ') +
       `, rien au-delà ni si elles ne se joignent pas. <b>Les deux cartes du couple le gagnent.</b><br>` +
-      `<b>Chiffre JAUNE en haut d’une case</b> = ce que cette carte produit (${reglage.base} de base + ses couples). ` +
+      `Sur une case posée : <b>la base en haut à GAUCHE</b>, <b>le bonus en « +X » en haut à DROITE</b>. ` +
       `Survole-la pour voir le détail. Liseré <span style="color:#ffd98a">clair</span> = un lien direct, ` +
       `<span style="color:#6ddf8f">vert</span> = un voisinage plus lointain.<br>` +
-      `<b>Badge VERT sur une carte en main</b> = le MIEUX qu’elle puisse prendre vu ce qui est déjà posé. ` +
-      `Il ne dit pas OÙ : survole-le.<br>` +
+      `<b>Clique une carte</b> et chaque case affiche en <span style="color:#6ddf8f">vert</span> ce qu’elle ` +
+      `y gagnerait ; <b>les meilleures s’entourent de vert</b>.<br>` +
+      `<b>Badge VERT sur une carte en main</b> = le MIEUX qu’elle puisse prendre, où que ce soit.<br>` +
       `Clique une carte puis une case pour la poser. Clique une case posée puis une autre pour déplacer, ` +
       `ou le cadre de la main pour la reprendre.`
     boutons.append(bBooster, bNeuf)

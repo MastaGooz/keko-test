@@ -12286,6 +12286,54 @@ donne la composition de l'arrangement (« 2 x lien direct · 7 x 1 intermediaire
 parce que *le total ne dit pas si l'arrangement tient a deux liens directs ou a
 dix voisinages lointains.*
 
+#### LA BASE ET LE BONUS SONT DEUX CHIFFRES, DANS DEUX COINS
+
+Tranché par Keko : « on devrait afficher le score de base en haut à gauche, puis
+le bonus sous la forme +X en haut à droite ».
+
+*Un total ne dit pas d'où il vient*, et depuis que la distance fait varier le
+bonus — 4, 3, 2 ou 1 — lire « 9 » oblige à soustraire la base de tête pour savoir
+ce que l'arrangement a rapporté. **Deux coins, deux faits** : ce que la carte
+vaut seule, ce que ses voisins lui ajoutent. La base reste discrète (crème), le
+bonus porte l'ambre — *c'est lui qui bouge quand on déplace une carte.*
+
+**Et le bonus ne s'écrit que s'il existe** : un « +0 » se lirait comme une case
+qui a échoué, là où l'absence dit simplement qu'elle n'a pas de voisin joignable.
+
+#### CLIQUER UNE CARTE MONTRE CE QU'ELLE VAUDRAIT SUR CHAQUE CASE
+
+Demandé par Keko : « quand on clique sur une carte de la collection il faudrait
+afficher sur le grid les +X pour que le joueur sache où est la case la plus
+intéressante ».
+
+**C'est ce qui rend l'arrangement DÉCIDABLE**, et c'est le prolongement exact du
+badge vert de la main : celui-ci dit *combien* on peut gagner au mieux, l'aperçu
+dit *où*. Sans lui le joueur ne connaît pas le graphe de Wikipédia et pose au
+hasard — *il n'y aurait aucune décision à éprouver*, qui est la seule question
+que ce proto pose.
+
+Quatre choses qui le portent :
+
+- **le chiffre vit AU CENTRE de la case**, parce que les deux coins du haut sont
+  pris. *Trois chiffres au même endroit ne se lisent pas, ils se confondent* —
+  la leçon que Keko avait déjà signalée sur les deux premiers badges ;
+- **les MEILLEURES cases s'entourent de vert**, et toutes celles qui valent le
+  maximum, pas une seule. *Seize chiffres se comparent, un liseré se voit* — et
+  *désigner une case parmi deux équivalentes mentirait* ;
+- **un DÉPLACEMENT compte comme un dépôt.** Sélectionner une carte déjà posée
+  montre aussi les aperçus : c'est la même décision. La carte est **retirée de
+  sa case** avant le calcul, sinon *elle se verrait elle-même comme voisine*
+  depuis les cases adjacentes à celle qu'elle occupe ;
+- **le calcul DEMANDE la règle, il ne la recopie pas** (`apercuSurCase`, dans
+  `logic/board/plateau.ts`). *Deux endroits qui calculeraient le même bonus se
+  désaccorderaient au premier réglage* — et c'est précisément ce chiffre que le
+  joueur va croire. Neuf vérifications le tiennent.
+
+**On ne compte QUE ce que la carte gagne, pas ce que le couple rapporte.** Un
+couple paie ses deux cartes, donc le total du plateau monte du double de ce que
+l'aperçu annonce ; *mais ce que le joueur compare, c'est ce que SA carte vaut
+selon où il la pose*, et doubler chaque chiffre ne changerait pas le classement.
+
 **Il vit derriere `?board`**, a cote du jeu comme les paquets : *tant qu'il
 n'est pas un jeu, il ne prend pas la page.* Tout est dans `BOARD.md` — les
 regles, les gestes, les constantes, comment regenerer le graphe.

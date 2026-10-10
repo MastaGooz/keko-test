@@ -295,6 +295,46 @@ export function production(p: Plateau, graphe: Graphe, cache?: Distances): numbe
   return productionParCase(p, graphe, cache).reduce((a, b) => a + b, 0)
 }
 
+/**
+ * CE QU'UNE CARTE DE LA MAIN GAGNERAIT SUR UNE CASE DONNÉE.
+ *
+ * **C'est de l'AFFICHAGE, pas une règle** — aucun calcul du jeu ne l'appelle —
+ * mais il vit ici parce qu'il **DEMANDE la règle au lieu de la recopier** :
+ * *deux endroits qui calculeraient le même bonus se désaccorderaient au premier
+ * réglage*, et c'est précisément ce chiffre que le joueur va croire.
+ *
+ * Sans lui, le joueur ne connaît pas le graphe de Wikipédia et pose au hasard —
+ * *il n'y aurait aucune décision à éprouver*, qui est la seule question que ce
+ * proto pose. Keko : « quand on clique sur une carte de la collection il
+ * faudrait afficher sur le grid les +X pour que le joueur sache où est la case
+ * la plus intéressante ».
+ *
+ * **On ne compte QUE ce que la carte gagne, pas ce que le couple rapporte.**
+ * Un couple paie ses deux cartes, donc le total du plateau monterait du double ;
+ * *mais ce que le joueur compare, c'est ce que SA carte vaut selon où il la
+ * pose*, et doubler chaque chiffre ne changerait pas le classement.
+ *
+ * **La carte qui occupe déjà la case ne compte pas** : poser dessus l'échange,
+ * donc elle repart en main et cesse d'être voisine.
+ */
+export function apercuSurCase(
+  p: Plateau,
+  graphe: Graphe,
+  idMain: string,
+  case_: number,
+  cache?: Distances,
+): number {
+  let total = 0
+  for (const [i, k] of couples(p.reglage.cote)) {
+    const autre = i === case_ ? k : k === case_ ? i : -1
+    if (autre < 0) continue
+    const v = p.grille[autre] ?? null
+    if (v === null) continue
+    total += bonusDuCouple(p.reglage, graphe, idMain, v.id, cache)
+  }
+  return total
+}
+
 /** Un couple de la grille qui rapporte, avec sa distance. */
 export interface CouplePayant {
   readonly cases: readonly [number, number]
