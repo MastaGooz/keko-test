@@ -12903,6 +12903,67 @@ la personne : Marie Curie 27, Platon 9), **l'âge de l'article**, et les
 **identifiants externes**. *Trois mesures de notoriété VÉCUE plutôt que de
 quantité écrite.*
 
+##### LE BON CRITERE N'EST PAS L'ETALEMENT, C'EST LA CORRELATION A LA TAILLE
+
+Keko : « donc niveau stats génériques, on a que la longueur de l'article et sa
+qualité si on veut faire du quantitatif ? et le nombre d'images va être trop
+discret comme chiffre et pas utilisable correctement. Je me trompe ? »
+
+**Oui, sur deux points — et il a raison sur le troisième par une autre raison
+que celle qu'il donne.** Collecté sur 50 cartes du pool, en échantillon
+régulier (19 appels, 24 s — donc ~25 min pour les 3 000) :
+
+| mesure | min / médiane / max | valeurs distinctes | crans sur 10 | **corrélé à la taille** |
+|---|---|---|---|---|
+| taille de l'article | 10 566 / 73 083 / 294 586 | 50 | 10 | — |
+| **vues** | 3,4 M / 5,2 M / 53,9 M | 50 | 8 | **0,26** |
+| noms (redirections) | 0 / 2 / 22 | **13** | 9 | 0,61 |
+| degré dans le pool | 0 / 13 / 61 | 25 | 9 | 0,69 |
+| catégories | 4 / 19 / 59 | 30 | 10 | 0,72 |
+| langues | 19 / 111 / 340 | 44 | 9 | 0,78 |
+| **images** | 7 / 24 / 100 | 31 | **10** | **0,86** |
+| **liens externes** | 4 / 119 / 583 | 45 | 8 | **0,96** |
+
+***Tout est étalé. Presque tout redit la taille.*** Un article long a plus
+d'images, plus de sources, plus de catégories et plus de langues — donc **le
+critère utile n'est pas « est-ce que ça varie », c'est « est-ce que ça dit autre
+chose ».**
+
+**LES VUES SONT LE SEUL AXE INDÉPENDANT** (0,26). Tout le reste est une
+re-mesure de la longueur, à des degrés divers. Donc *si l'on veut deux
+statistiques qui disent deux choses*, ce sont **la taille et les vues** — et
+elles sont déjà dans le catalogue, sous les noms `defense` et `attaque`.
+
+Les trois corrections à sa phrase :
+
+- **LA « QUALITÉ » N'EXISTE PAS.** `pageassessments` ne répond que pour deux
+  articles sur huit. *Sa liste de deux se réduit donc à une* — et c'est pour ça
+  que les vues comptent ;
+- **LE NOMBRE D'IMAGES N'EST PAS DISCRET** : 7 à 100, trente-et-une valeurs,
+  **dix crans sur dix** — c'est l'une des mieux étalées. **Mais elle corrèle à
+  0,86 avec la taille**, donc elle n'apporte aucun axe neuf. *La conclusion est
+  la même, la raison n'est pas celle-là* ;
+- **CE QUI EST VRAIMENT TROP DISCRET, CE SONT LES NOMS** : treize valeurs
+  distinctes et **onze cartes à zéro sur cinquante.** C'était ma suggestion, et
+  la mesure la retire.
+
+**ET LES VUES DISCRIMINENT MAL AUJOURD'HUI POUR UNE RAISON RÉGLABLE** : les
+bornes de `attaque` sont calées sur le catalogue ENTIER (340 000 à 54 M), donc
+le pool des 300 plus notoires se tasse dans le haut de l'échelle — 5 et 6
+portent 75 % du pool. *Recalculer les bornes sur le pool rendrait les dix crans.*
+C'est un réglage, pas une limite de la donnée.
+
+##### POUR LES BONUS THÉMATIQUES, le catalogue suffit déjà
+
+Keko : « les catégories pourront être exploitées autrement je pense, style :
+bonus pour les personnages du XVe siècle ».
+
+*L'idée est bonne et elle ne demande aucune collecte* : le siècle sort de
+`naissance`, le métier de `metiers`, le pays d'`origine` — tous déjà dans le
+catalogue. **Les catégories n'apporteraient que des traits que le catalogue n'a
+pas** (« Lauréat du prix Nobel », « mort assassiné »), au prix d'un tri dans
+dix-neuf catégories médianes dont une bonne part est du bruit.
+
 ##### LES CATÉGORIES SONT TROP FINES — et ce qu'elles désignent est déjà dans le catalogue
 
 Keko : « catégories c'est quoi ? » — *les étiquettes en bas d'un article.*
