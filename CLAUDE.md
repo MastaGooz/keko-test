@@ -12903,6 +12903,59 @@ la personne : Marie Curie 27, Platon 9), **l'âge de l'article**, et les
 **identifiants externes**. *Trois mesures de notoriété VÉCUE plutôt que de
 quantité écrite.*
 
+##### LES CATÉGORIES SONT TROP FINES — et ce qu'elles désignent est déjà dans le catalogue
+
+Keko : « catégories c'est quoi ? » — *les étiquettes en bas d'un article.*
+Napoléon en porte **51 visibles** : « Artilleur », « Empereur des Français »,
+« Décès en mai 1821 », « Décès à 51 ans », « Coprince d'Andorre du XIXe siècle ».
+Entre 15 et 60 par personnage.
+
+**Plus 120 CACHÉES, qui sont de la maintenance** — « Article avec une section
+vide », « Article contenant un appel à traduction en allemand ». *Elles ne disent
+rien du sujet* : `clshow=!hidden` les écarte.
+
+**L'intérêt théorique est réel** : une catégorie partagée est un lien que le
+joueur COMPREND, là où un lien d'article est opaque. Marie Curie et Einstein
+partagent quatre catégories — « Lauréat du prix Nobel de physique », « Histoire
+du nucléaire », « Docteur honoris causa de l'Université de Genève ».
+
+**MAIS MESURÉES, ELLES NE REGROUPENT PAS.** Sur douze paires de notoires :
+
+- **sept ne partagent que « Éponyme d'un objet céleste »** — un astéroïde porte
+  leur nom. *Vrai, et ça ne dit rien d'eux* ;
+- **Napoléon ne partage RIEN** avec les sept autres : ses catégories sont trop
+  spécifiques pour rencontrer qui que ce soit ;
+- « Décès à 51 ans » et « Décès à 39 ans » sont deux catégories distinctes alors
+  qu'elles disent la même chose.
+
+***Une catégorie Wikipédia est faite pour naviguer, pas pour regrouper.***
+
+##### CE QU'ELLES DÉSIGNENT, ET QUI NE COÛTE AUCUNE COLLECTE
+
+Ce qu'on veut, ce sont des **traits larges** — et le catalogue les porte déjà.
+Sur les 44 850 paires du pool de 300 :
+
+| trait partagé | part des paires |
+|---|---|
+| un **MÉTIER** commun | **27,9 %** |
+| le domaine (dix valeurs) | 28,8 % |
+| l'origine (le pays) | 29,6 % |
+| métier **et** siècle | 24,5 % |
+| métier **et** origine | 12,3 % |
+| le siècle de naissance seul | 72,8 % — *trop fréquent* |
+| *un lien d'article direct (référence)* | *4,0 %* |
+
+**Le métier commun est SEPT FOIS plus fréquent qu'un lien direct** — assez pour
+qu'un couple existe souvent, pas assez pour que tout paie. *Le siècle seul, lui,
+refait le piège de la portée 5* : à 73 %, presque tout paierait et plus rien ne
+déciderait.
+
+Et les exemples disent pourquoi c'est la bonne piste : *« Heath Ledger + Meryl
+Streep → acteur »*, *« Zidane + Mohamed Salah → footballeur »*. **Un joueur voit
+ça sans aperçu.** C'est la réponse au défaut noté depuis le début — « le joueur ne
+connaît pas le graphe de Wikipédia », donc l'écran doit tout lui dire. **Un métier
+partagé contourne entièrement le problème.**
+
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
