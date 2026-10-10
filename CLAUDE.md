@@ -13508,6 +13508,46 @@ SILENCE, faute d'assertion — le journal annonçait encore l'ancien titre et j'
 lu les mauvaises lignes du tableau. **Une sonde jetable se vérifie comme un
 patch : chaque remplacement s'assure d'avoir trouvé sa cible.**
 
+##### LE SCORE D'UNE CARTE, EN CLAIR : c'est sa PLACE, pas son chiffre
+
+Keko : **« comment le score d'une carte est calculé je comprends rien »** — et la
+réponse tient en trois phrases.
+
+1. on prend **le nombre de versions linguistiques de sa page Wikipédia** (Trump
+   334, Mbappé 141, Ed Gein 40) ;
+2. on **classe les 300 cartes du pool** de la moins à la plus multilingue et on
+   coupe en **dix paquets de trente** ;
+3. **le score est le numéro du paquet.** Les trente moins multilingues valent 1,
+   les trente plus multilingues valent 10.
+
+***Ce n'est donc pas un nombre de langues, c'est un RANG*** : un 10 veut dire
+« dans les 10 % les plus multilingues du pool », pas « 340 langues ».
+
+| score | langues | exemples (les plus lus de leur cran) |
+|---|---|---|
+| 1 | 8–35 | Lizzie Borden, Carolyn Bessette-Kennedy |
+| 2 | 36–48 | **Ed Gein**, Ghislaine Maxwell |
+| 3 | 49–57 | Eric Dane, Pete Hegseth |
+| 4 | 58–72 | Hayden Panettiere, Ansel Adams |
+| 5 | 73–86 | **Sydney Sweeney**, Timothée Chalamet |
+| 6 | 87–107 | **Jeffrey Epstein**, Haaland, Lamine Yamal |
+| 7 | 109–124 | **Jeff Bezos**, Göring, LeBron James |
+| 8 | 125–151 | **Mbappé**, Maduro, DiCaprio |
+| 9 | 152–201 | Khamenei, Bruce Lee, **Elon Musk** |
+| 10 | 208–346 | **Trump, Michael Jackson, Ronaldo** |
+
+**POURQUOI PAR RANGS ET PAS DIRECTEMENT** : les langues sont tassées — il y a
+trente cartes entre 125 et 151, et une seule à 346. *Sur une échelle directe,
+presque tout le pool aurait la même note et deux ou trois cartes auraient 10.*
+Les paquets égaux garantissent **dix crans habités**, quelle que soit la forme de
+la mesure.
+
+**ET IL NE FAUT PAS LE CONFONDRE AVEC LA RARETÉ**, qui est l'autre chiffre du
+jeu : *le score vient des LANGUES, le métal du cadre vient des VUES.* C'est
+précisément pour ça qu'ils ont été choisis là — **ce sont les deux seules mesures
+de Wikipédia qui ne se répètent pas** (0,27 de corrélation, contre 0,86 à 0,97
+pour tout le reste).
+
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
