@@ -12641,6 +12641,46 @@ s'entouraient TOUTES de vert**, puisqu'elles étaient à égalité.
 solo, où l'aperçu se tait à zéro, et elle vaut dès qu'un affichage prétend
 montrer où aller.
 
+#### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
+
+Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
+offset x et y qui décale leur position visuellement (mais leur place est
+considérée comme valable et fonctionne au niveau points) ».
+
+**`styles.css` définit `.moi`** — le compteur de PV du joueur en combat — et il
+vaut `position: absolute` avec ses propres `left`, `bottom` et `z-index`. Mes
+cases portaient la classe `moi` nue : elles étaient donc **arrachées de la
+grille et empilées en bas à gauche de l'écran**, pendant que la règle, elle, les
+comptait à la bonne place.
+
+***C'est l'asymétrie qui désignait la cause*** : `.lui` n'existe nulle part
+ailleurs, donc les cases du bot ne bougeaient pas. *Un défaut qui ne touche
+qu'un camp sur deux ne peut pas venir du code qui les dessine tous les deux* —
+et les deux boucles étaient identiques au caractère près.
+
+**Tout ce que le plateau pose se préfixe `bd-`**, et c'est précisément pourquoi
+le préfixe existe : la feuille du jeu fait cinq mille cinq cents lignes et vit
+sur la même page. *La règle était déjà écrite pour les cartes 2D* — « les
+classes de la carte ont des noms à elles parce que les évidents étaient pris
+ailleurs », payée sur `.titre`, `.entete` et `.effet` — **et je l'ai enfreinte
+sur les deux seuls mots que j'ai écrits nus.**
+
+Les autres classes nues du plateau ont été vérifiées : `vide`, `choisie`,
+`synergie`, `direct`, `vise` et `cible` n'apparaissent dans `styles.css` que
+collées à une classe que le plateau ne porte pas (`.creature`, `.rang`,
+`.emplacement`, `.pile-cartes`, `.case-pile`). *Une classe descendante ne peut
+pas atteindre ce qui n'a pas l'ancêtre* — il n'y avait qu'une collision, et
+c'était celle-là.
+
+#### UN BACKTICK DANS UN COMMENTAIRE DU CSS TERMINE LA CHAÎNE
+
+Le CSS de ces écrans vit dans un template literal, donc **un commentaire qui
+cite du code entre backticks coupe la chaîne en plein milieu** — et l'erreur qui
+suit parle de virgules attendues trente lignes plus bas, jamais du backtick.
+
+*Payé deux fois dans la même heure*, sur les deux commentaires de ce fichier. Les
+commentaires du CSS citent donc le code **sans backticks**.
+
 #### Le catalogue est celui des PERSONNAGES, et il n'y a pas le choix
 
 `links.json` est le graphe de LEURS articles. *Un duel d'animaux n'aurait aucun

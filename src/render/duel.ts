@@ -47,8 +47,18 @@ import { createRng } from '../logic/rng.ts'
 const CSS_DUEL = `
   /* LE CAMP SE LIT AU LISERE : *c'est la seule chose qu'on cherche d'un coup
      d'oeil sur une grille pleine*, et un chiffre par case ne le dirait pas. */
-  .bd-case.moi { border-color: #6fa8ff; box-shadow: 0 0 0 2px #6fa8ff inset; }
-  .bd-case.lui { border-color: #ff8a6f; box-shadow: 0 0 0 2px #ff8a6f inset; }
+  /* LES DEUX CLASSES SONT PREFIXEES, et il le fallait : styles.css -- tout le
+     chrome du moteur -- definit deja un .moi pour le compteur de PV du joueur,
+     en position: absolute avec ses propres left et bottom. Mes cases s'en
+     trouvaient ARRACHEES de la grille et empilees en bas a gauche, pendant que
+     la regle, elle, les comptait a la bonne place. *Les cases du bot n'avaient
+     rien, puisque .lui n'existe nulle part ailleurs.*
+
+     Keko : « les cartes ennemis sont bien placees, mais mes cartes semblent
+     avoir un offset x et y qui decale leur position visuellement (mais leur
+     place est consideree comme valable et fonctionne au niveau points) ». */
+  .bd-case.bd-camp-moi { border-color: #6fa8ff; box-shadow: 0 0 0 2px #6fa8ff inset; }
+  .bd-case.bd-camp-lui { border-color: #ff8a6f; box-shadow: 0 0 0 2px #ff8a6f inset; }
   /* CE QUE LA CASE DONNE A L'ADVERSAIRE, sous ce qu'elle te rapporte.
      *Deux chiffres parce que le couple paie ses deux cartes* — c'est le
      dilemme, et un seul des deux le cacherait. */
@@ -202,7 +212,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       const b = document.createElement('button')
       b.className = 'bd-case'
       if (j === null) b.classList.add('vide')
-      else b.classList.add(d.camps[i] === MOI ? 'moi' : 'lui')
+      else b.classList.add(d.camps[i] === MOI ? 'bd-camp-moi' : 'bd-camp-lui')
       const g = vu === null ? null : (vu[i] ?? null)
       if (g !== null && sommet > 0 && g.moi === sommet) b.classList.add('vise')
       if (j !== null) {
