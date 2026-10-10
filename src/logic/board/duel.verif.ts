@@ -19,6 +19,7 @@ import {
   REGLAGE_DUEL,
   scoresDuel,
   type Duel,
+  type Gain,
   type Ordre,
   type ReglageDuel,
 } from './duel.ts'
@@ -220,21 +221,45 @@ console.log('\nLE BOT')
   // ATTENTION : apres le coup de J1, LE BOT JOUE POUR J2 — donc la carte liee
   // doit etre dans SA main. *Mon premier essai la mettait dans celle de J1, et
   // le bot posait sa premiere carte au hasard en ayant parfaitement raison.*
-  // SOUS LE MALUS, LE BOT FUIT LA CARTE LIEE ADVERSE : poser B contre A lui
-  // coute 3 au lieu de lui rapporter 5. *Maximiser son score et eviter
-  // l'adversaire deviennent le meme calcul* — c'est tout ce que la regle de
-  // Keko achete.
-  let d = duel('A D', 'B z')
-  d = poserDuel(d, 'A', 0)
-  const c = coupDuBot(d, GRAPHE)
-  verifier('le bot ne pose pas a cote de la carte adverse liee', c?.case !== 1)
+  // UN COUPLE MIXTE EST NEUTRE SUR L'ECART, et c'est LA propriete du mode.
+  // Keko : « pourquoi +7 est considere meilleur que +3 et -4 ? » — il ne l'est
+  // pas. Gagner 3 en amputant l'autre de 4 deplace l'ecart de 7, autant que
+  // gagner 7 sans rien lui faire.
+  //
+  // *Donc poser contre une carte adverse vaut exactement une case isolee*, sous
+  // les DEUX baremes symetriques. On le verifie sur l'ecart, pas sur le choix
+  // du bot : a egalite, son choix ne dit rien.
+  const ec = (g: Gain | null | undefined): number => (g == null ? NaN : g.moi - g.lui)
+  for (const [nom, reg] of [
+    ['moins', REG],
+    ['plus', PLUS],
+  ] as const) {
+    const x = jouer(duel('A D', 'B z', reg), [['A', 0]])
+    const g = gainsDuel(x, GRAPHE, 'B', 1)
+    egal(ec(g[1]), ec(g[5]), `en \`${nom}\`, le couple mixte vaut une case isolee`)
+  }
 
-  // ET SOUS LE BAREME D'ORIGINE, il y court.
-  let p = duel('A D', 'B z', PLUS)
-  p = poserDuel(p, 'A', 0)
-  const cp = coupDuBot(p, GRAPHE)
-  egal(cp?.id, 'B', 'en `plus`, le bot joue la carte liee')
-  egal(cp?.case, 1, 'et il la met a cote')
+  // SOUS LE PLANCHER, IL CESSE DE L'ETRE : la carte qu'on ampute a beaucoup a
+  // perdre, la sienne n'a qu'un point. *C'est la borne qui cree l'attaque.*
+  const vise = jouer(duel('A C w', 'B z v', PLANCHER), [
+    ['A', 0],
+    ['z', 15],
+    ['C', 1],
+  ])
+  const gp = gainsDuel(vise, GRAPHE, 'B', 1)
+  verifier(
+    `en \`plancher\`, amputer vaut mieux qu'une case isolee (${ec(gp[2])} contre ${ec(gp[6])})`,
+    ec(gp[2]) > ec(gp[6]),
+  )
+
+  // ET SANS LE PLANCHER, LA MEME POSE EST NEUTRE.
+  const plat = jouer(duel('A C w', 'B z v'), [
+    ['A', 0],
+    ['z', 15],
+    ['C', 1],
+  ])
+  const gm = gainsDuel(plat, GRAPHE, 'B', 1)
+  egal(ec(gm[2]), ec(gm[6]), 'en `moins`, la meme pose ne deplace rien')
 
   // IL PREFERE SON PROPRE GROUPE : a cote de SA carte, le couple paie deux
   // fois. *C'est ce qui le fait battre un bot defensif.*
@@ -243,16 +268,18 @@ console.log('\nLE BOT')
   groupe = poserDuel(groupe, 'B', 0) // J2 pose B dans un coin
   groupe = poserDuel(groupe, 'w', 10) // J1 encore
   egal(coupDuBot(groupe, GRAPHE)?.case, 1, 'J2 colle C contre son propre B')
+  // *Et c'est le seul coup qui deplace vraiment l'ecart* : un couple propre
+  // monte MON score sans toucher au sien.
 
   // IL NE REND RIEN SUR UNE GRILLE PLEINE.
-  const plein: Duel = { ...d, poses: 16 }
+  const plein: Duel = { ...groupe, poses: 16 }
   egal(coupDuBot(plein, GRAPHE), null, 'grille pleine : aucun coup')
   verifier('et fini() le dit', fini(plein))
 
   // IL EST DETERMINISTE : *le meme duel rejoue rend le meme coup.*
   egal(
-    JSON.stringify(coupDuBot(d, GRAPHE)),
-    JSON.stringify(coupDuBot(d, GRAPHE)),
+    JSON.stringify(coupDuBot(groupe, GRAPHE)),
+    JSON.stringify(coupDuBot(groupe, GRAPHE)),
     'deux appels rendent le meme coup',
   )
 

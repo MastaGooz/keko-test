@@ -12668,32 +12668,57 @@ disait « c'est tout le dilemme du mode » à propos du barème `plus` — *c'é
 faux*, et la proposition de Keko est ce qui a obligé à le mesurer. Une
 vérification le verrouille désormais.
 
-##### MAIS ELLE CHANGE LE JEU, ET DE DEUX FAÇONS QUI N'ÉTAIENT PAS VISÉES
+##### ET C'EST KEKO QUI A TROUVÉ LE RESTE : « pourquoi +7 est meilleur que +3 et −4 ? »
 
-400 parties, mêmes bots gloutons, pool de 300 :
+**Il ne l'est pas.** Gagner 3 en amputant l'autre de 4 déplace l'écart de 7,
+exactement comme gagner 7 sans rien lui faire. *Le liseré, le badge de la main
+et le bot jugeaient sur MON score*, donc sur un critère qui n'est pas celui du
+jeu. Les trois jugent désormais sur `moi − lui`.
 
-| | `plus` | `moins` |
-|---|---|---|
-| contacts mixtes payants sur la grille finale | **9,4** | **3,7** |
-| J1 gagne | 15 % | **42 %** |
-| le bot glouton bat le hasard | 85 % | 68 % |
+**ET ÇA FAIT TOMBER DEUX CONCLUSIONS QUE J'AVAIS ÉCRITES.** Je les avais
+mesurées avec un bot qui maximise son propre score — *donc avec un bot qui joue
+faux sous le malus*, puisqu'il fuyait un contact neutre.
 
-- **LES DEUX CAMPS SE SÉPARENT EN TERRITOIRES.** Les contacts mixtes tombent de
-  moitié et plus : chacun groupe ses cartes et fuit celles d'en face. *Le jeu
-  cesse d'être deux solitaires sur un même damier* — il y a désormais une
-  géométrie à tenir, et c'est le vrai gain ;
-- **L'AVANTAGE STRUCTUREL DU SECOND JOUEUR S'EFFACE PRESQUE** — 15 % → 42 %, et
-  *personne ne l'avait cherché.* Il venait de l'information : le second voit
-  toujours un coup de plus. **Sous le malus, ce coup d'avance sert surtout à
-  éviter**, donc il paie beaucoup moins. *Le `serpent` existait pour corriger ça
-  et devient presque inutile* ;
-- **ET ELLE REND L'AFFICHAGE HONNÊTE.** L'écran annonçait « +4 pour toi, +4 pour
-  le bot » comme si c'était un arbitrage ; il dit maintenant « −4 / −4 », ce qui
-  se lit comme ce que c'est : *un terrain à éviter.*
+Refait avec le bon critère, 300 parties :
+
+| | `plus` | `moins` | `plancher` |
+|---|---|---|---|
+| suites de coups identiques à `plus` | — | **200/200** | **18/200** |
+| J1 gagne | 66 % | 66 % | **51 %** |
+| écart moyen | 9,0 | 9,0 | **7,2** |
+| contacts mixtes payants | 6,6 | 6,6 | 6,9 |
+
+***`plus` ET `moins` SONT LE MÊME JEU.*** Pas « équivalents » : **les mêmes
+coups, dans le même ordre, 200 fois sur 200.** Seuls les totaux affichés
+diffèrent — 66/66 d'un côté, 50/50 de l'autre. *Le classement des coups par
+écart est identique sous les deux barèmes*, donc un joueur qui joue pour gagner
+ne voit aucune différence.
+
+Les deux conclusions fausses, et pourquoi :
+
+- **« les camps se séparent en territoires »** (9,4 → 3,7 contacts mixtes) :
+  c'était le bot qui fuyait, pas la règle. Avec le bon critère, les contacts
+  mixtes sont **identiques** sous les deux barèmes (6,6) ;
+- **« l'avantage du second joueur s'efface »** (15 % → 42 %) : même cause.
+  *C'est le bot qui jouait mal sous `moins`, pas le second joueur qui perdait son
+  avantage* — et avec le bon critère J1 gagne 66 % sous les deux.
+
+**CE QUE `moins` APPORTE RÉELLEMENT, c'est donc l'AFFICHAGE, et seulement lui.**
+L'écran annonçait « +4 pour toi, +4 pour le bot » comme si c'était un
+arbitrage ; il dit « −4 / −4 », ce qui se lit comme ce que c'est — un terrain
+sans intérêt. *Ce n'est pas rien* : une règle qui ment sur ce qu'elle fait est
+pire qu'une règle neutre qui le dit. **Mais ce n'est pas un changement de jeu.**
 
 **Prix connu et assumé : les scores deviennent négatifs** (mesuré jusqu'à −22).
 C'est lisible — un total négatif dit qu'on s'est fait coincer — mais c'est à
 Keko de dire s'il le garde.
+
+***ET LA LEÇON GÉNÉRALE, qui vaut au-delà d'ici : un bot de mesure juge sur un
+critère, et si ce critère n'est pas le but du jeu, il ne mesure pas le jeu.*** Le
+projet l'avait déjà payé trois fois — « un bot qui ne bloque pas avant de frapper
+ne mesure rien », la liste de cas qui ignorait `energie`, celle qui ignorait la
+résistance. **C'est la même faute par le quatrième bout** : ici le bot
+connaissait tous les effets, et c'est son OBJECTIF qui était faux.
 
 ##### LE PLANCHER À ZÉRO EST LA SEULE DES TROIS QUI CRÉE UNE ATTAQUE
 

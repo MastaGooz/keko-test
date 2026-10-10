@@ -295,6 +295,16 @@ export function gainsDuel(
  * Départage par la case la plus tôt dans l'ordre de lecture, pour que *le même
  * duel rejoué rende le même coup* : rien ici ne tire au sort.
  */
+/**
+ * **LE BOT JUGE SUR L'ÉCART, pas sur son propre score.** Keko : « pourquoi +7
+ * est considéré meilleur que +3 et −4 ? » — *il ne l'est pas* : gagner 3 en
+ * amputant l'autre de 4 déplace l'écart de 7, exactement comme gagner 7.
+ *
+ * Et **c'est l'écart qui désigne le vainqueur**, donc c'est lui qu'on maximise.
+ * Mesuré : avec son score brut pour critère, le bot se fait battre à **65 %**
+ * sous le barème par défaut — *il fuyait l'adversaire, ce qui est neutre, et se
+ * privait au passage des cases centrales.*
+ */
 export function coupDuBot(
   d: Duel,
   graphe: Graphe,
@@ -308,7 +318,8 @@ export function coupDuBot(
     for (let i = 0; i < g.length; i++) {
       const v = g[i]
       if (v == null) continue
-      if (best === null || v.moi > best.note) best = { id: j.id, case: i, note: v.moi }
+      const note = v.moi - v.lui
+      if (best === null || note > best.note) best = { id: j.id, case: i, note }
     }
   }
   return best === null ? null : { id: best.id, case: best.case }

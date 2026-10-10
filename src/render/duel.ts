@@ -38,6 +38,7 @@ import {
   scoresDuel,
   type Camp,
   type Duel,
+  type Gain,
   type Mixte,
   type Ordre,
 } from '../logic/board/duel.ts'
@@ -177,20 +178,26 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     const aMoi = campDuTour(d) === MOI && !attente && !fini(d)
     // CE QUE LA CARTE CHOISIE RAPPORTERAIT, CASE PAR CASE — aux DEUX camps.
     const vu = choix === null || !aMoi ? null : gainsDuel(d, graphe, choix, MOI, cache)
-    // LE SOMMET EST LE MEILLEUR COUP, ET IL PEUT ETRE UN MOINDRE MAL. Sous le
-    // malus, toutes les cases peuvent couter : le meilleur est alors celui qui
-    // coute le moins, et c'est bien lui qu'il faut designer.
+    // LE MEILLEUR COUP SE JUGE SUR L'ECART, pas sur mon seul score. Keko :
+    // « pourquoi +7 est considere meilleur que +3 et -4 ? » — *il ne l'est
+    // pas* : gagner 3 en l'amputant de 4 deplace l'ecart de 7, autant que
+    // gagner 7. Et c'est l'ecart qui designe le vainqueur.
+    //
+    // *Il peut etre un moindre mal* : sous le malus toutes les cases peuvent
+    // couter, et le meilleur est alors celui qui coute le moins.
     //
     // *Mais on ne designe rien quand tout est a egalite* — sur une grille vide
     // les seize cases valent la base, et seize liseres verts ne designent
     // aucune case.
+    const ecartDe = (g: Gain): number => g.moi - g.lui
     let sommet: number | null = null
     let creux: number | null = null
     if (vu !== null)
       for (const g of vu) {
         if (g === null) continue
-        if (sommet === null || g.moi > sommet) sommet = g.moi
-        if (creux === null || g.moi < creux) creux = g.moi
+        const e = ecartDe(g)
+        if (sommet === null || e > sommet) sommet = e
+        if (creux === null || e < creux) creux = e
       }
     if (sommet === creux) sommet = null
 
@@ -240,7 +247,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       if (j === null) b.classList.add('vide')
       else b.classList.add(d.camps[i] === MOI ? 'bd-camp-moi' : 'bd-camp-lui')
       const g = vu === null ? null : (vu[i] ?? null)
-      if (g !== null && sommet !== null && g.moi === sommet) b.classList.add('vise')
+      if (g !== null && sommet !== null && ecartDe(g) === sommet) b.classList.add('vise')
       if (j !== null) {
         const img = document.createElement('img')
         img.src = vignette(j.image)
@@ -285,7 +292,8 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
         b.title =
           `Ici ta carte ferait ${signe(g.moi)}` +
           (g.lui !== 0 ? `, et le bot ${signe(g.lui)}` : ', et le bot rien') +
-          (g.moi === sommet ? ' (ton meilleur coup)' : '')
+          ` — soit ${signe(ecartDe(g))} d’écart` +
+          (ecartDe(g) === sommet ? ' (ton meilleur coup)' : '')
       }
       b.addEventListener('click', () => {
         if (!aMoi || choix === null || d.grille[i] !== null) return
@@ -313,14 +321,17 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       b.append(img, nom)
       // LE MEME CALCUL QUE L'APERCU, donc le meme chiffre : *deux affichages
       // qui pretendent dire la meme chose doivent passer par le meme calcul.*
+      // LE BADGE DIT LE MEILLEUR ECART, comme le lisere : *deux affichages qui
+      // pretendent dire la meme chose doivent passer par le meme calcul*, et ce
+      // qu'on compare d'une carte a l'autre est ce qu'elle deplace.
       let max: number | null = null
       for (const g of gainsDuel(d, graphe, j.id, MOI, cache))
-        if (g !== null && (max === null || g.moi > max)) max = g.moi
+        if (g !== null && (max === null || ecartDe(g) > max)) max = ecartDe(g)
       if (max !== null && max !== reglage.base) {
         const amis = document.createElement('div')
         amis.className = 'bd-amis'
         amis.textContent = signe(max)
-        amis.title = `Au mieux, « ${j.nom} » ferait ${signe(max)}. Clique-la pour voir OÙ.`
+        amis.title = `Au mieux, « ${j.nom} » déplacerait l’écart de ${signe(max)}. Clique-la pour voir OÙ.`
         b.append(amis)
       }
       b.addEventListener('click', () => {
