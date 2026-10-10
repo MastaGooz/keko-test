@@ -13769,6 +13769,79 @@ signé comme défaut structurel et jamais traité*** — pas le réglage suivant
    lisibilité du loot est cool ». **Un prototype qui dit non est un prototype qui
    a servi.**
 
+##### KEKO GARDE LE PROTO : « c'est le gameplay qui est mauvais »
+
+**« Je veux pas arrêter ce proto. On a tout ce qu'il faut : le score par carte, la
+rareté, les noeuds pour la mécanique. C'est le gameplay qui est mauvais, il faut
+un autre système qui exploite bien ces caractéristiques. »**
+
+*Et le diagnostic dit la même chose par l'autre bout* : les trois ingrédients
+existent, mais **deux des trois ne travaillent presque pas.**
+
+| ingrédient | ce qu'il fait aujourd'hui |
+|---|---|
+| les **noeuds** | un bonus de 0 à 3 à lire dans un badge — *et 88 % des couples en donnent un* |
+| le **score** | une base qu'on additionne, donc un chiffre abstrait |
+| la **rareté** | **rien du tout** : un cadre, aucun effet de jeu |
+
+##### FAISABILITÉ MESURÉE AVANT DE PROPOSER
+
+*Un système dont le geste central n'arrive jamais est mort avant le réglage* —
+donc on mesure l'OCCASION, pas encore la profondeur. 300 parties par ligne :
+
+| définition du lien | paires liées | une main de 8 porte un lien | la CHAÎNE peut continuer | occasions de CAPTURE par partie |
+|---|---|---|---|---|
+| **lien direct (1 saut)** | 5,7 % | 62 % | **28 %** | 4,8 |
+| jusqu'à 2 sauts | 41,9 % | 100 % | 85 % | 29,9 |
+| **métier partagé** | 26,5 % | **100 %** | **80 %** | **24,3** |
+| métier ou domaine | 35,6 % | 100 % | 87 % | 29,6 |
+
+***Le lien direct est trop rare pour porter un système*** : une chaîne ne pourrait
+continuer que 28 % du temps, donc on serait bloqué trois tours sur quatre. **Le
+métier partagé, lui, marche pour les deux** — toute main porte un lien, la chaîne
+casse une fois sur cinq (*ce qui est exactement la tension qu'on veut*), et il y a
+vingt-quatre occasions de capture par partie.
+
+*Piège de sonde payé ici* : mon cache de distance oubliait la BORNE, donc
+« jusqu'à 2 sauts » rendait la réponse de « 1 saut » et les deux lignes étaient
+identiques. **Un cache qui oublie un paramètre rend la réponse d'un autre
+appel** — et ça se voit à deux lignes trop semblables, jamais à une erreur.
+
+##### DEUX SYSTÈMES PROPOSÉS, et chacun donne un rôle aux TROIS
+
+**1. LA CAPTURE** *(ma recommandation)*. Poser une carte **liée** à une carte
+adverse voisine la **retourne**, si mon score est le plus grand. Le total, c'est
+la somme des scores de ses cartes sur la grille.
+
+- les **noeuds** deviennent la CONDITION d'attaque — *lié ou pas, donc plus aucun
+  chiffre à lire* ;
+- le **score** devient une FORCE qu'on compare : *deux chiffres côte à côte, c'est
+  le travail le plus immédiat qu'on puisse donner à une note de 1 à 10* ;
+- la **rareté** devient une ARMURE : un diamant ne se capture pas, ou demande deux
+  attaques. *Elle cesse d'être un cadre.*
+
+Et ça apporte ce qui manque le plus : **des retournements.** On reprend ce qu'on a
+perdu, donc le dernier coup compte — *là où le score monte aujourd'hui en ligne
+droite.*
+
+**2. LA CHAÎNE.** Chaque carte posée doit toucher une des tiennes **et lui être
+liée**. Ta chaîne grandit, et sa valeur monte plus vite que sa longueur ; si tu ne
+peux pas continuer, tu en commences une seconde, plus courte donc moins payante.
+
+- les **noeuds** deviennent la RÈGLE et non un bonus — *on ne lit plus un chiffre,
+  on cherche si ça colle* ;
+- le **score** fait les points ;
+- la **rareté** fait le JOKER : une carte d'or se relie à n'importe quoi.
+
+*Son défaut connu* : **une chaîne est solitaire.** En duel, deux chaînes qui ne se
+touchent pas sont deux solos côte à côte — il faudrait leur donner une façon de se
+gêner, et c'est ce qui reste à trouver.
+
+**Dans les deux cas le lien doit devenir un TRAIT PARTAGÉ** : la mesure ci-dessus
+le dit, et *c'est aussi ce qui le rend devinable* — « Zidane et Salah sont
+footballeurs » se voit sans aperçu, là où « leurs pages se citent » ne se devine
+jamais.
+
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
