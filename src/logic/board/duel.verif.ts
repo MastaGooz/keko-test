@@ -20,6 +20,7 @@ import {
   poserDuel,
   REGLAGE_DUEL,
   scoresDuel,
+  taillesDeGrappe,
   VALEUR_PIVOT,
   type Duel,
   type Gain,
@@ -38,7 +39,11 @@ function egal(obtenu: unknown, attendu: unknown, quoi: string): void {
   verifier(`${quoi} (${String(obtenu)} attendu ${String(attendu)})`, obtenu === attendu)
 }
 
-const REG: ReglageDuel = { ...REGLAGE_DUEL, ordre: 'alterne' }
+// **LES BLOCS QUI SUIVENT TESTENT LE BAREME DE DISTANCE**, donc ils le
+// demandent explicitement : le defaut est passe au RESEAU, et *un bloc qui
+// heriterait du defaut cesserait de tester ce qu'il nomme le jour ou le defaut
+// change* -- ce qui vient d'arriver, vingt verifications d'un coup.
+const REG: ReglageDuel = { ...REGLAGE_DUEL, ordre: 'alterne', systeme: 'distance' }
 /** Le barème d'origine : un couple mixte PAIE ses deux cartes. */
 const PLUS: ReglageDuel = { ...REG, mixte: 'plus' }
 /** Le malus, borné à zéro par carte — la seule des trois qui déplace l'écart. */
@@ -418,6 +423,134 @@ console.log('\nLES DEUX MAINS SONT APPARIEES')
   }
   verifier(`l ecart apparie reste petit (${pire})`, pire <= 10)
   verifier(`la ou un tirage libre monte bien plus haut (${libre})`, libre > pire)
+}
+
+// --------------------------------------------------------------- LE RESEAU
+//
+// **UNE CARTE VAUT SON SCORE x LA TAILLE DE SA GRAPPE**, une grappe etant ce qui
+// se touche ET se relie dans le MEME camp.
+{
+  console.log('\n' + 'LE RESEAU : la grappe multiplie le score')
+  const R: ReglageDuel = { ...REG, systeme: 'reseau' }
+  const v = (id: string, n: number): Jeton => ({ ...jeton(id), valeur: n })
+
+  // UNE CARTE SEULE VAUT SON SCORE, et rien de plus : *une grappe de un est une
+  // grappe.*
+  {
+    let d = duelVide(R, [v('A', 5)], [v('Z', 3)])
+    d = poserDuel(d, 'A', 0)
+    const par = pointsParCase(d, GRAPHE)
+    egal(par[0], 5, 'seule, A vaut son score')
+  }
+
+  // DEUX CARTES LIEES ET ADJACENTES : chacune double.
+  {
+    let d = duelVide(R, [v('A', 5), v('B', 3)], [v('Z', 1), v('Y', 1)])
+    d = poserDuel(d, 'A', 0)
+    d = poserDuel(d, 'Z', 15)
+    d = poserDuel(d, 'B', 1)
+    const par = pointsParCase(d, GRAPHE)
+    egal(par[0], 10, 'A dans une grappe de 2 : 5 x 2')
+    egal(par[1], 6, 'et B : 3 x 2')
+    egal(taillesDeGrappe(d, GRAPHE)[0], 2, 'la grappe fait 2')
+  }
+
+  // **IL FAUT LES DEUX : L'ADJACENCE ET LE LIEN.** *Le lien seul se passerait de
+  // grille, l'adjacence seule est le defaut qu'on vient de mesurer.*
+  {
+    let d = duelVide(R, [v('A', 5), v('B', 3)], [v('Z', 1), v('Y', 1)])
+    d = poserDuel(d, 'A', 0)
+    d = poserDuel(d, 'Z', 15)
+    d = poserDuel(d, 'B', 2) // liees, mais pas adjacentes
+    const par = pointsParCase(d, GRAPHE)
+    egal(par[0], 5, 'liees mais eloignees : A reste seule')
+    egal(par[2], 3, 'et B aussi')
+  }
+  {
+    let d = duelVide(R, [v('A', 5), v('D', 3)], [v('Z', 1), v('Y', 1)])
+    d = poserDuel(d, 'A', 0)
+    d = poserDuel(d, 'Z', 15)
+    d = poserDuel(d, 'D', 1) // adjacentes, mais pas liees
+    const par = pointsParCase(d, GRAPHE)
+    egal(par[0], 5, 'adjacentes mais sans lien : A reste seule')
+    egal(par[1], 3, 'et D aussi')
+  }
+
+  // UNE GRAPPE EST D'UN SEUL CAMP : une carte adverse liee et collee ne compte
+  // pas. *C'est ce qui fait qu'il n'y a plus de couple mixte sous ce systeme.*
+  {
+    let d = duelVide(R, [v('A', 5), v('C', 9)], [v('B', 3), v('Y', 1)])
+    d = poserDuel(d, 'A', 0)
+    d = poserDuel(d, 'B', 1)
+    const par = pointsParCase(d, GRAPHE)
+    egal(par[0], 5, 'A ne grappe pas avec la carte du bot')
+    egal(par[1], 3, 'et B non plus')
+  }
+
+  // **LE PONT : RELIER DEUX GRAPPES MULTIPLIE TOUT.** A-B et B-C sont liees,
+  // donc poser B entre les deux fait une grappe de trois d'un coup -- 3 x 3 = 9
+  // de multiplicateur la ou deux solitaires n'en valaient que 2.
+  {
+    let d = duelVide(R, [v('A', 2), v('C', 2), v('B', 2)], [v('Z', 1), v('Y', 1), v('X', 1)])
+    d = poserDuel(d, 'A', 0)
+    d = poserDuel(d, 'Z', 15)
+    d = poserDuel(d, 'C', 2)
+    d = poserDuel(d, 'Y', 14)
+    const avant = scoresDuel(d, GRAPHE)[0]
+    egal(avant, 4, 'A et C separees : 2 + 2')
+    d = poserDuel(d, 'B', 1)
+    const apres = scoresDuel(d, GRAPHE)[0]
+    egal(apres, 18, 'le pont fait 3 x (2 x 3)')
+    verifier(`et il vaut plus que la somme des deux (${apres} contre ${avant})`, apres > 2 * avant)
+  }
+
+  // L'APERCU DIT EXACTEMENT CE QUE LE SCORE FERA, pont compris : *il se calcule
+  // par difference de scores, il ne refait pas la regle.*
+  {
+    let d = duelVide(R, [v('A', 2), v('C', 2), v('B', 2)], [v('Z', 1), v('Y', 1), v('X', 1)])
+    d = poserDuel(d, 'A', 0)
+    d = poserDuel(d, 'Z', 15)
+    d = poserDuel(d, 'C', 2)
+    d = poserDuel(d, 'Y', 14)
+    const g = gainsDuel(d, GRAPHE, v('B', 2), 0)
+    egal((g[1] as Gain).moi, 14, 'l apercu annonce le pont (18 - 4)')
+    egal((g[5] as Gain).moi, 2, 'et une case isolee ne vaut que le score')
+  }
+
+  // LA RARETE COMME JOKER : une carte d'or se relie a tout ce qu'elle touche.
+  {
+    const or = (id: string, n: number): Jeton => ({ ...v(id, n), rarete: 'legendaire' })
+    const J: ReglageDuel = { ...R, joker: true }
+    let d = duelVide(J, [or('A', 4), v('D', 4)], [v('Z', 1), v('Y', 1)])
+    d = poserDuel(d, 'A', 0)
+    d = poserDuel(d, 'Z', 15)
+    d = poserDuel(d, 'D', 1)
+    egal(pointsParCase(d, GRAPHE)[1], 8, 'le joker relie une carte non liee')
+    // ET SANS LE DRAPEAU, RIEN : *le joker est hors mesure, donc il ne doit pas
+    // s'appliquer tant qu'on ne le demande pas.*
+    let e = duelVide(R, [or('A', 4), v('D', 4)], [v('Z', 1), v('Y', 1)])
+    e = poserDuel(e, 'A', 0)
+    e = poserDuel(e, 'Z', 15)
+    e = poserDuel(e, 'D', 1)
+    egal(pointsParCase(e, GRAPHE)[1], 4, 'sans le drapeau il ne relie rien')
+  }
+
+  // LES BORDS NE SE REJOIGNENT PAS, et aucune diagonale : *la case 3 finit sa
+  // ligne, la 4 ouvre la suivante.*
+  {
+    let d = duelVide(R, [v('A', 5), v('B', 3)], [v('Z', 1), v('Y', 1)])
+    d = poserDuel(d, 'A', 3)
+    d = poserDuel(d, 'Z', 15)
+    d = poserDuel(d, 'B', 4)
+    egal(pointsParCase(d, GRAPHE)[3], 5, 'la case 3 ne touche pas la 4')
+  }
+  {
+    let d = duelVide(R, [v('A', 5), v('B', 3)], [v('Z', 1), v('Y', 1)])
+    d = poserDuel(d, 'A', 0)
+    d = poserDuel(d, 'Z', 15)
+    d = poserDuel(d, 'B', 5)
+    egal(pointsParCase(d, GRAPHE)[0], 5, 'la diagonale ne touche pas')
+  }
 }
 
 console.log(echecs === 0 ? '\nTout passe.' : `\n${echecs} ECHEC(S)`)

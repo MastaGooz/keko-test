@@ -13969,16 +13969,88 @@ des deux grappes montent d'un coup.**
 *Plus d'aperçu à lire, plus de badge de main à calculer* : la question se voit sur
 le plateau.
 
-##### CE QUI RESTE À TRANCHER : le rôle de la RARETÉ
+##### LE RÉSEAU EST CÂBLÉ, ET LA MESURE SE REFAIT AVEC LE VRAI CODE
 
-Elle ne fait toujours rien, et le système lui offre la place évidente :
-**une carte rare se relie à TOUT.** *Donc c'est elle qui fait les ponts
-impossibles* — elle exploite la mécanique centrale au lieu d'ajouter une
-arithmétique à côté.
+Keko : **« On va tester »**. Il est le défaut (`systeme: 'reseau'`), et
+`?duel&systeme=distance` rend le barème d'avant — *ce qui a servi à choisir doit
+rester ouvrable, même une fois le choix fait.*
 
-Et le couple est beau, parce que **rareté et score sont indépendants** (0,27) :
-une carte diamant à score 3 ne vaut presque rien seule, mais elle peut doubler
-tout un réseau. *À mesurer dès que Keko tranche.*
+**Les chiffres annoncés venaient d'une sonde autonome ; ils ont été refaits avec
+le code qui tourne** — *une mesure se refait avec ce qui joue, sinon on valide un
+jumeau.* 200 parties, mains appariées, graine fixe :
+
+| système | J1 gagne | ce que coûte le hasard | le géomètre bat l'optimisé | score moyen | plus grosse grappe |
+|---|---|---|---|---|---|
+| **distance** (le barème d'avant) | 64 % | **18 %** | **61 %** | 60 | 2,1 |
+| réseau, lien d'article | 45 % | 23 % | 30 % | 64 | 2,2 |
+| **réseau, métier partagé** | **51 %** | **49 %** | **24 %** | 156 | **5,2** |
+| réseau, métier + **joker** | 38 % | 26 % | **100 %** | 358 | 8,0 |
+
+*La sonde annonçait 52 / 53 / 20 ; le vrai code donne 51 / 49 / 24.* **Les trois
+conclusions tiennent** : la décision triple, la géométrie cesse de dominer, et
+l'équité est parfaite sans rien régler.
+
+##### LE JOKER EST MESURÉ, ET IL TUE LA MÉCANIQUE — ne pas le mettre par défaut
+
+C'était l'emploi évident de la rareté — *« une carte rare se relie à TOUT »* —
+et il est **catastrophique** : le géomètre, qui prend le centre avec des cartes
+au hasard, bat le bot qui optimise **100 %** du temps.
+
+***La cause se lit sur une seule colonne*** : la plus grosse grappe passe de 5,2
+à **8,0 sur 8 cartes.** Une carte épique ou légendaire sort dans une main sur
+deux, elle recolle tout ce qu'elle touche, donc **il n'y a plus qu'une grappe et
+le lien ne décide plus rien** — il ne reste que la place.
+
+*C'est exactement le défaut qu'on venait de retirer*, retrouvé par l'autre bout :
+**la portée 5 payait 91 % des couples, le joker relie 100 % des voisins.** Dans
+les deux cas, *un lien qui vaut presque toujours cesse d'être un lien.*
+
+Il reste joignable par `?duel&joker` — *ce qui a servi à écarter une idée doit
+rester ouvrable* — et **la rareté est donc toujours sans emploi dans la
+mécanique.** Si elle doit en avoir un, ce ne sera pas « se relier à tout ».
+
+##### CE QUI RELIE EST UN MÉTIER PARTAGÉ, et le rendu le construit
+
+**`logic/` ne sait pas ce qu'est un métier** : il reçoit un `Graphe` — `id → ids`
+— et c'est tout. *C'est ce qui permet d'essayer un autre critère sans toucher à
+une ligne de règle*, et c'est la porte qui portait déjà le graphe des articles.
+`?duel&lien=article` rend celui-ci.
+
+Le graphe des métiers se construit **une fois au chargement** : 12 529 arêtes sur
+300 cartes, quelques millisecondes. Les libellés se comparent **sans accent ni
+casse** — Wikidata écrit des doublets (« écrivain ou écrivaine ») et des
+composés, et *deux libellés qui désignent le même métier ne peuvent pas faire
+deux groupes.*
+
+##### TROIS CHOSES QUE LES VÉRIFICATIONS TIENNENT
+
+- **il faut l'adjacence ET le lien.** *Le lien seul se passerait de grille —
+  autant jouer sans plateau — et l'adjacence seule est le défaut qu'on vient de
+  mesurer*, où seule la place compte. Deux cartes liées mais éloignées restent
+  deux solitaires, deux cartes collées mais sans lien aussi ;
+- **une grappe est d'un seul camp**, donc **il n'y a plus de couple mixte** :
+  `portee`, `mixte` et `valeur` ne font plus rien sous ce système. *Ils restent
+  parce que `distance` les lit encore* ;
+- **l'aperçu dit exactement ce que le score fera, pont compris** : il se calcule
+  par différence de scores et ne refait pas la règle. Vérifié sur un pont —
+  annoncé `+14`, rendu `18 − 4`.
+
+**Et la taille de grappe passe par la MÊME fonction que le score**
+(`taillesDeGrappe`) : la bulle d'une case ne peut pas dire autre chose que ce que
+la case produit. *Deux endroits qui compteraient la même grappe se
+désaccorderaient au premier réglage* — c'est le défaut que le badge et l'aperçu
+avaient déjà coûté.
+
+##### UN BLOC DE VÉRIFICATIONS NE DOIT PAS HÉRITER DU DÉFAUT
+
+Passer `systeme: 'reseau'` en défaut a fait tomber **vingt vérifications d'un
+coup** : le fixture `REG` partait de `REGLAGE_DUEL`, donc tous les blocs qui
+testaient le barème de distance s'étaient mis à tester le réseau.
+
+***Un bloc qui hérite du défaut cesse de tester ce qu'il nomme le jour où le
+défaut change.*** Il demande donc `systeme: 'distance'` explicitement, et le
+réseau a son propre bloc. *Vingt échecs d'un coup est le bon symptôme* — c'est un
+échec par cas qu'il aurait fallu craindre.
 
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
@@ -14027,13 +14099,19 @@ lien*, donc aucun bonus, donc aucune décision.
 
 #### Où changer les constantes
 
-`REGLAGE_DUEL`, en haut de `src/logic/board/duel.ts` : `cote`, `base`, `portee`,
-`ordre`, `mixte`, `valeur`, `sousPool`. **`parJoueur` s'en déduit** et ne se
-règle pas ; `VALEUR_PIVOT` est la médiane mesurée du pool.
+`REGLAGE_DUEL`, en haut de `src/logic/board/duel.ts` : `cote`, `base`, `systeme`,
+`joker`, `portee`, `ordre`, `mixte`, `valeur`, `sousPool`. **`parJoueur` s'en
+déduit** et ne se règle pas ; `VALEUR_PIVOT` est la médiane mesurée du pool.
 
-`?duel&portee=N`, `?duel&mixte=plus|plancher`, `?duel&valeur=un|bonus`,
-`?duel&score=taille`, `?duel&ordre=serpent`, `?duel&seed=N` et `?duel&pool=N`
-ouvrent chacun une variante.
+**Sous `systeme: 'reseau'` — le défaut — `portee`, `mixte` et `valeur` ne font
+plus rien** : il n'y a pas de couple mixte, et le score ne multiplie plus un
+bonus, il EST ce qu'on multiplie.
+
+`?duel&systeme=distance` rend le barème d'avant, `?duel&lien=article` le graphe
+des articles à la place des métiers, `?duel&joker` la rareté qui relie tout
+(**mesurée, elle tue la mécanique**). Puis `?duel&portee=N`,
+`?duel&mixte=plus|plancher`, `?duel&valeur=un|bonus`, `?duel&score=taille`,
+`?duel&ordre=serpent`, `?duel&seed=N` et `?duel&pool=N`.
 
 **Le SCORE d'une carte se choisit dans `render/duel.ts`** (`scoreDe`), pas dans
 le reglage : c'est un champ du CATALOGUE, donc `logic/` ne le connait pas — il

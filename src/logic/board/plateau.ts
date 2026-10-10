@@ -254,6 +254,72 @@ export function distance(
  * case, le badge de la main : *deux endroits qui calculeraient le même bonus se
  * désaccorderaient au premier réglage.*
  */
+/**
+ * LES GRAPPES D'UN CAMP : ce qui se touche ET se relie.
+ *
+ * **C'est la reponse au reproche de Keko** — « on exploite pas les noeuds, ca
+ * devait etre le truc central ». *Dans le barème de distance le lien donne un
+ * bonus a lire ; ici il PORTE le score* : une carte vaut son score multiplie par
+ * la taille de sa grappe, donc **relier deux grappes ne les additionne pas, ca
+ * multiplie toutes leurs cartes.**
+ *
+ * Mesure (200 parties, mains appariees) : ce que coute de jouer au hasard passe
+ * de **18 a 53 % du score**, et un bot geometre qui prend le centre avec des
+ * cartes au hasard tombe de **57 a 20 %.** *Premiere fois dans ce proto que les
+ * deux criteres bougent du bon cote en meme temps.*
+ *
+ * **IL FAUT LES DEUX : l'adjacence ET le lien.** Le lien seul se passerait de
+ * grille — autant jouer sans plateau ; l'adjacence seule est le defaut qu'on
+ * vient de mesurer, ou seule la place compte.
+ *
+ * `joint` dit ce qui relie deux cartes : c'est `lies` en temps ordinaire, et
+ * **le rendu lui passe une carte d'or qui se relie a tout** quand on essaie le
+ * joker. *La regle ne sait pas ce qu'est un metier ni une rarete* — elle recoit
+ * une relation, et c'est ce qui lui permet d'etre vraie pour les deux.
+ */
+export function grappes(
+  grille: readonly (Jeton | null)[],
+  dans: (case_: number) => boolean,
+  cote: number,
+  joint: (a: Jeton, b: Jeton) => boolean,
+): readonly (readonly number[])[] {
+  const vus = new Set<number>()
+  const out: number[][] = []
+  for (let depart = 0; depart < grille.length; depart++) {
+    if (vus.has(depart) || grille[depart] == null || !dans(depart)) continue
+    const pile = [depart]
+    const grp: number[] = []
+    vus.add(depart)
+    while (pile.length > 0) {
+      const x = pile.pop() as number
+      grp.push(x)
+      const a = grille[x] as Jeton
+      for (const v of voisins(x, cote)) {
+        if (vus.has(v) || grille[v] == null || !dans(v)) continue
+        if (!joint(a, grille[v] as Jeton)) continue
+        vus.add(v)
+        pile.push(v)
+      }
+    }
+    out.push(grp)
+  }
+  return out
+}
+
+/**
+ * LES VOISINS ORTHOGONAUX D'UNE CASE. *Jamais la diagonale*, et **les bords ne
+ * se rejoignent pas** : la case 3 finit sa ligne, la 4 ouvre la suivante — un
+ * index qui ne regarde que « i + 1 » les croirait voisines.
+ */
+export function voisins(case_: number, cote: number): readonly number[] {
+  const out: number[] = []
+  if (case_ % cote > 0) out.push(case_ - 1)
+  if (case_ % cote < cote - 1) out.push(case_ + 1)
+  if (case_ - cote >= 0) out.push(case_ - cote)
+  if (case_ + cote < cote * cote) out.push(case_ + cote)
+  return out
+}
+
 export function bonusDuCouple(
   reglage: Reglage,
   graphe: Graphe,

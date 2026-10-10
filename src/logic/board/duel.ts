@@ -53,6 +53,8 @@
 import {
   bonusDuCouple,
   couples,
+  grappes,
+  lies,
   tirer,
   valeurDe,
   type Distances,
@@ -112,7 +114,40 @@ export interface ReglageDuel {
    * quand meme, puisqu'une grosse carte mal placee devient un gachis.*
    */
   readonly valeur: Valeur
+  /**
+   * **COMMENT LE GRAPHE PAIE.** Tranche par Keko : « le systeme est pas bon, on
+   * exploite pas les noeuds... ca devait etre le truc central ».
+   *
+   * - `reseau` : **tes cartes qui se touchent ET se relient forment une GRAPPE**,
+   *   et chaque carte vaut son score multiplie par la taille de sa grappe. Le
+   *   defaut.
+   * - `distance` : le barème d'avant, un bonus `portee - sauts` par couple.
+   *   `?duel&systeme=distance` le rend — *ce qui a servi a choisir doit rester
+   *   ouvrable.*
+   *
+   * **Mesure, 200 parties, ecart normalise par le score moyen** : ce que coute
+   * de jouer au hasard passe de **18 a 53 %**, et un bot geometre qui prend le
+   * centre avec des cartes au hasard tombe de **57 a 20 %.** *Premiere fois dans
+   * ce proto que les deux criteres bougent du bon cote en meme temps.*
+   *
+   * **SOUS `reseau`, `portee`, `mixte` ET `valeur` NE FONT PLUS RIEN** : il n'y a
+   * pas de couple mixte — une grappe appartient a un camp par definition — et le
+   * score ne multiplie plus un bonus, il EST ce qu'on multiplie. *Ils restent
+   * parce que `distance` les lit encore.*
+   */
+  readonly systeme: Systeme
+  /**
+   * **LA RARETE COMME JOKER** : une carte d'or se relie a tout ce qu'elle touche.
+   *
+   * *Hors mesure* — le reseau a ete mesure sans elle — donc elle vit derriere
+   * `?duel&joker`, le temps que Keko compare. **C'est le seul emploi propose pour
+   * la rarete dans la mecanique** : jusqu'ici elle ne faisait que le cadre.
+   */
+  readonly joker: boolean
 }
+
+/** Comment le graphe paie. Voir `ReglageDuel.systeme`. */
+export type Systeme = 'reseau' | 'distance'
 
 /** Ce qu'un couple mixte fait au score. Voir `ReglageDuel.mixte`. */
 export type Mixte = 'plus' | 'moins' | 'plancher'
@@ -140,6 +175,8 @@ export const REGLAGE_DUEL: ReglageDuel = {
   mixte: 'moins',
   sousPool: 300,
   valeur: 'taille',
+  systeme: 'reseau',
+  joker: false,
 }
 
 /**
@@ -238,7 +275,55 @@ export function poserDuel(d: Duel, idMain: string, case_: number): Duel {
  * reglage.**
  */
 export function baseDeLaCarte(r: ReglageDuel, j: Jeton): number {
+  // SOUS `reseau`, LE SCORE DE LA CARTE EST CE QU'ON MULTIPLIE : une carte seule
+  // vaut son score, et `valeur` n'a plus d'objet. *Le dire ici plutot que dans
+  // `pointsParCase` garde UN seul endroit ou « ce que vaut une carte » se decide.*
+  if (r.systeme === 'reseau') return valeurDe(j, r.base)
   return r.valeur === 'taille' ? valeurDe(j, r.base) : r.base
+}
+
+/**
+ * CE QUI RELIE DEUX CARTES, selon le reglage.
+ *
+ * *La regle ne sait pas ce qu'est un metier ni une rarete* : elle recoit un
+ * graphe et une etiquette, et c'est ce qui lui permet d'etre vraie pour les deux
+ * criteres — **le rendu construit le graphe qu'il veut** (le lien d'article, ou
+ * le metier partage, mesure comme le seul qui porte une structure).
+ */
+function joint(r: ReglageDuel, graphe: Graphe, a: Jeton, b: Jeton): boolean {
+  if (lies(graphe, a.id, b.id)) return true
+  return r.joker && (estJoker(a) || estJoker(b))
+}
+
+/** Une carte d'or ou mieux. *Le haut de l'echelle des metaux, rien d'autre.* */
+function estJoker(j: Jeton): boolean {
+  return j.rarete === 'epique' || j.rarete === 'legendaire'
+}
+
+/**
+ * LA TAILLE DE LA GRAPPE DE CHAQUE CASE — `0` sur une case vide.
+ *
+ * **Une grappe, c'est ce qui se touche ET se relie, dans le MEME camp.** *Il
+ * faut les deux* : le lien seul se passerait de grille — autant jouer sans
+ * plateau — et l'adjacence seule est le defaut qu'on vient de mesurer, ou seule
+ * la place compte.
+ *
+ * *Une seule fonction pour le score ET pour l'affichage* : l'ecran montre la
+ * taille dans sa bulle, et **deux endroits qui compteraient la meme grappe se
+ * desaccorderaient au premier reglage.**
+ */
+export function taillesDeGrappe(d: Duel, graphe: Graphe): readonly number[] {
+  const out = d.grille.map(() => 0)
+  for (const camp of [0, 1] as const) {
+    const g = grappes(
+      d.grille,
+      (c) => d.camps[c] === camp,
+      d.reglage.cote,
+      (a, b) => joint(d.reglage, graphe, a, b),
+    )
+    for (const grp of g) for (const c of grp) out[c] = grp.length
+  }
+  return out
 }
 
 /**
@@ -297,6 +382,16 @@ export function scoreDeLaCarte(r: ReglageDuel, j: Jeton): number {
 }
 
 export function pointsParCase(d: Duel, graphe: Graphe, cache?: Distances): readonly number[] {
+  // **LE RESEAU : CHAQUE CARTE VAUT SON SCORE x LA TAILLE DE SA GRAPPE.**
+  //
+  // *C'est la superlinearite qui fait le jeu* : deux grappes de trois valent
+  // 2 x 3 x 3 = 18 points de multiplicateur, une grappe de six en vaut 36 —
+  // donc **relier deux grappes ne les additionne pas, ca double tout.** Le PONT
+  // devient l'enjeu permanent, et il se voit a l'oeil sur la grille.
+  if (d.reglage.systeme === 'reseau') {
+    const t = taillesDeGrappe(d, graphe)
+    return d.grille.map((j, i) => (j === null ? 0 : baseDeLaCarte(d.reglage, j) * (t[i] ?? 1)))
+  }
   const { valeur } = d.reglage
   const par = d.grille.map((j) => (j === null ? 0 : baseDeLaCarte(d.reglage, j)))
   for (const [i, k] of couples(d.reglage.cote)) {

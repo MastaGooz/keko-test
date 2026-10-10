@@ -39,11 +39,13 @@ import {
   poserDuel,
   REGLAGE_DUEL,
   scoresDuel,
+  taillesDeGrappe,
   type Camp,
   type Duel,
   type Gain,
   type Mixte,
   type Ordre,
+  type Systeme,
   type Valeur,
 } from '../logic/board/duel.ts'
 import { symetrique, type Distances, type Graphe, type Jeton } from '../logic/board/plateau.ts'
@@ -114,6 +116,14 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
   const graphe: Graphe = symetrique(((await reponse.json()) as { liens?: Graphe }).liens ?? {})
   const cache: Distances = new Map()
 
+  // COMMENT LE GRAPHE PAIE : `?duel&systeme=distance` rend le bareme d'avant.
+  // *Ce qui a servi a choisir doit rester ouvrable, meme une fois le choix
+  // fait.*
+  const quoiSys = new URLSearchParams(location.search).get('systeme')
+  const systeme: Systeme = quoiSys === 'distance' ? 'distance' : REGLAGE_DUEL.systeme
+  // LA RARETE COMME JOKER, hors mesure : `?duel&joker` l'essaie.
+  const joker = new URLSearchParams(location.search).has('joker')
+
   const demande = new URLSearchParams(location.search).get('ordre')
   const ordre: Ordre = demande === 'serpent' ? 'serpent' : 'alterne'
   // CE QU'UN COUPLE MIXTE FAIT : `?duel&mixte=plus` rend le bareme d'origine,
@@ -153,6 +163,8 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     mixte,
     portee,
     valeur,
+    systeme,
+    joker,
     sousPool: sousPoolDemande(REGLAGE_DUEL.sousPool),
   }
 
@@ -185,6 +197,26 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     rarete: c.rarete,
   }))
 
+  // ------------------------------------------------------------ CE QUI RELIE
+  //
+  // **SOUS LE RESEAU, LE LIEN EST UN METIER PARTAGE, pas un chemin d'article.**
+  // *Mesure sur les 44 850 paires du pool* : un lien d'article direct n'existe
+  // que dans **4 %** des paires -- donc une grappe ne depasse jamais deux cartes
+  // et la mecanique ne demarre pas -- la ou un **metier commun** tombe dans
+  // **28 %**. Assez pour qu'une grappe existe souvent, pas assez pour que tout
+  // se relie : mesure en jeu, **la plus grosse grappe fait 5,3 cartes sur 8**, et
+  // chaque camp en tient quatre. *Tout se relie n'arrive pas.*
+  //
+  // **Et c'est le seul lien qu'un joueur puisse LIRE sur la carte** : Zidane +
+  // Salah -> footballeur se voit sans apercu, alors qu'un chemin Wikipedia ne se
+  // devine pas. C'est la reponse au defaut signale depuis le debut -- *le joueur
+  // ne connait pas le graphe de Wikipedia.*
+  //
+  // `?duel&lien=article` rend le graphe des liens d'article.
+  const quoiL = new URLSearchParams(location.search).get('lien')
+  const parMetier = systeme === 'reseau' && quoiL !== 'article'
+  const liens: Graphe = parMetier ? grapheDesMetiers(brut) : graphe
+
   // LA GRAINE SE TIRE AU CHARGEMENT : *un hasard seede dont la graine est une
   // constante n'est pas un hasard, c'est une liste.* `?duel&seed=7` la rejoue.
   const demandee = Number(new URLSearchParams(location.search).get('seed') ?? '')
@@ -215,7 +247,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     attente = true
     dessiner()
     setTimeout(() => {
-      const coup = coupDuBot(d, graphe, cache)
+      const coup = coupDuBot(d, liens, cache)
       if (coup !== null) d = poserDuel(d, coup.id, coup.case)
       attente = false
       dessiner()
@@ -225,8 +257,11 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
   }
 
   function dessiner(): void {
-    const par = pointsParCase(d, graphe, cache)
-    const [sMoi, sLui] = scoresDuel(d, graphe, cache)
+    const par = pointsParCase(d, liens, cache)
+    // LA TAILLE DE LA GRAPPE DE CHAQUE CASE : *la meme fonction que le score*,
+    // donc la bulle ne peut pas dire autre chose que ce que la case produit.
+    const grp = systeme === 'reseau' ? taillesDeGrappe(d, liens) : null
+    const [sMoi, sLui] = scoresDuel(d, liens, cache)
     const aMoi = campDuTour(d) === MOI && !attente && !fini(d)
     // CE QUE LA CARTE CHOISIE RAPPORTERAIT, CASE PAR CASE — aux DEUX camps.
     // **L'APERÇU A BESOIN DU JETON, pas de son identifiant** : depuis que la
@@ -249,7 +284,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     // calcul ». Le camp adverse n'a rien a retrancher : *le bot ne pose pas.*
     const gains = (j: Jeton): readonly (Gain | null)[] => {
       const base = baseDeLaCarte(reglage, j)
-      return gainsDuel(d, graphe, j, MOI, cache).map((x) =>
+      return gainsDuel(d, liens, j, MOI, cache).map((x) =>
         x === null ? null : { moi: x.moi - base, lui: x.lui },
       )
     }
@@ -308,7 +343,10 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     const note = document.createElement('div')
     note.className = 'bd-note'
     note.textContent =
-      `pool de ${pool.length} · ordre ${ordre} · mixte ${mixte} · portée ${portee} · graine ${graine}`
+      `pool de ${pool.length} · ${systeme}${parMetier ? ' (métier)' : ''} · ordre ${ordre}` +
+      (systeme === 'reseau' ? '' : ` · mixte ${mixte} · portée ${portee}`) +
+      (joker ? ' · joker' : '') +
+      ` · graine ${graine}`
     haut.append(score, etat, note)
 
     // -------------------------------------------------------------------- la grille
@@ -342,7 +380,12 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
         const prod = document.createElement('div')
         prod.className = 'bd-prod' + (total > base ? ' sup' : total < base ? ' inf' : '')
         prod.textContent = String(total)
-        prod.title = `« ${j.nom} » vaut ${scoreDeLaCarte(reglage, j)} sur 10 et produit ${total}.`
+        prod.title =
+          grp === null
+            ? `« ${j.nom} » vaut ${scoreDeLaCarte(reglage, j)} sur 10 et produit ${total}.`
+            : `« ${j.nom} » vaut ${scoreDeLaCarte(reglage, j)} sur 10, dans une grappe de ${
+                grp[i] ?? 1
+              } — donc ${total}.`
         b.append(img, nom, prod)
         b.title = `${j.nom} — ${par[i] ?? 0} point${(par[i] ?? 0) > 1 ? 's' : ''} pour ${
           d.camps[i] === MOI ? 'toi' : 'le bot'
@@ -453,12 +496,18 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       `<b>Chacun pose une carte à son tour</b> jusqu’à remplir la grille ; <b>le plus gros total gagne</b>. ` +
       `Le liseré dit à qui est la carte : <span class="bd-moi">toi</span>, ` +
       `<span class="bd-lui">le bot</span>.<br>` +
-      `Deux cartes côte à côte comptent <b>${reglage.portee} moins le nombre de sauts</b> entre leurs articles ` +
-      `Wikipédia, <b>sur chacune des deux</b> — ` +
-      (mixte === 'plus'
-        ? `et contre une carte du bot ça lui rapporte autant qu’à toi.`
-        : `mais contre une carte du bot ça se <b>RETIRE</b> des deux` +
-          (mixte === 'plancher' ? `, sans jamais faire descendre une carte sous zéro.` : `.`)) +
+      (systeme === 'reseau'
+        ? `<b>Tes cartes qui se touchent ET partagent un métier forment une GRAPPE</b>, et ` +
+          `<b>chaque carte vaut son score × le nombre de cartes de sa grappe</b>. ` +
+          `Deux grappes de 3 valent donc bien moins qu’une grappe de 6 : ` +
+          `<b>le coup qui en relie deux double tout.</b>` +
+          (joker ? ` Une carte <b>épique ou légendaire</b> se relie à tout ce qu’elle touche.` : '')
+        : `Deux cartes côte à côte comptent <b>${reglage.portee} moins le nombre de sauts</b> entre leurs articles ` +
+          `Wikipédia, <b>sur chacune des deux</b> — ` +
+          (mixte === 'plus'
+            ? `et contre une carte du bot ça lui rapporte autant qu’à toi.`
+            : `mais contre une carte du bot ça se <b>RETIRE</b> des deux` +
+              (mixte === 'plancher' ? `, sans jamais faire descendre une carte sous zéro.` : `.`))) +
       `<br>` +
       `<b>Clique une carte</b> et chaque case libre dit en <span style="color:#6ddf8f">vert</span> ce que ta carte ` +
       `y ferait, en <span class="bd-lui">rouge</span> ce que ça ferait au bot — <b>le signe dit le sens</b>.`
@@ -472,4 +521,46 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
   console.info(
     `duel : ${pool.length} cartes, ordre ${ordre}, graine ${graine} — ?duel&seed=${graine} rejoue cette partie`,
   )
+}
+
+
+/**
+ * LE GRAPHE DES METIERS PARTAGES.
+ *
+ * **Il se construit dans le RENDU, pas dans les regles** : `logic/` recoit un
+ * `Graphe` -- `id -> ids` -- et ne sait pas ce qu'est un metier. *C'est ce qui
+ * permet d'essayer un autre critere sans toucher a une seule ligne de regle*, et
+ * c'est la meme porte qui porte deja le graphe des articles.
+ *
+ * **Les metiers se comparent sans accent ni casse** : Wikidata ecrit des
+ * doublets (ecrivain ou ecrivaine) et des composes, et *deux libelles qui
+ * designent le meme metier ne peuvent pas faire deux groupes.*
+ *
+ * Il se calcule UNE fois au chargement -- ~11 700 aretes sur 300 cartes, soit
+ * une poignee de millisecondes.
+ */
+function grapheDesMetiers(cartes: readonly CharacterCard[]): Graphe {
+  const parMetier = new Map<string, string[]>()
+  for (const c of cartes)
+    for (const m of c.metiers) {
+      const k = m
+        .normalize('NFD')
+        .replace(/\p{Diacritic}/gu, '')
+        .toLowerCase()
+        .trim()
+      if (k === '') continue
+      const l = parMetier.get(k)
+      if (l === undefined) parMetier.set(k, [c.id])
+      else l.push(c.id)
+    }
+  const out: Record<string, string[]> = {}
+  for (const l of parMetier.values()) {
+    if (l.length < 2) continue
+    for (const a of l) (out[a] ??= []).push(...l.filter((b) => b !== a))
+  }
+  // **ON DEDUPLIQUE** : deux cartes peuvent partager DEUX metiers, et `lies` ne
+  // demande qu'une arete -- *une liste qui porte deux fois le meme voisin ne dit
+  // rien de plus et grossit le parcours.*
+  for (const a of Object.keys(out)) out[a] = [...new Set(out[a])]
+  return out
 }
