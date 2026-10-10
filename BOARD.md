@@ -1157,6 +1157,108 @@ Trois choses qui portent l'implementation :
   valeur, donc `valeurDe` rend 1 partout et son affichage ne bouge pas.
 
 Dix-sept verifications tiennent la valeur (59 au total pour le duel).
+#### LA MATRICE DE REFERENCE : quinze criteres, UN seul echantillon
+
+Demande par Keko : « fais moi un tableau croise avec les correlations de tout ce
+qu'on peut utiliser comme criteres (cherche sur le net la liste la plus
+complete) ».
+
+***Mes chiffres precedents n'etaient pas comparables entre eux*** — ils venaient
+d'echantillons de 50, 60, 99 et 3 000 cartes. **Une matrice se lit sur un seul
+echantillon, sinon chaque case a son propre bruit.** Celle-ci porte sur les 99
+memes cartes du pool, et le cache des sondes est dans le scratchpad.
+
+**LA LISTE COMPLETE VIENT DE WIKIMEDIA**, pas de mon imagination : la
+documentation du modele de qualite « language-agnostic » (V2) donne ses six
+mesures et leurs poids — **longueur de page 0,395**, references 0,181, sections
+0,123, wikiliens 0,115, media 0,114, categories 0,070 — et *les cinq dernieres
+sont divisees par la longueur normalisee.*
+
+***Ça explique mecaniquement le 0,86 entre qualite et taille*** : la qualite
+n'est pas correlee a la taille par accident, **elle est de la taille
+recalculee.** Quatre mesures me manquaient (references, sections, wikiliens,
+mots) et un seul passage sur le wikitexte les donne toutes.
+
+| critere | vs vues | vs taille | plus gros tas | a zero | cout |
+|---|---|---|---|---|---|
+| noms | **0,14** | 0,57 | **53 %** | **29** | gratuit — *inutilisable* |
+| **identifiants** | **0,19** | **0,66** | 29 % | 1 | ~15 min |
+| **langues** | **0,27** | 0,81 | **23 %** | 0 | **gratuit** |
+| categories | 0,27 | 0,74 | 29 % | 0 | ~2 min |
+| wikiliens | 0,32 | 0,91 | 31 % | 0 | ~2 min |
+| sections | 0,35 | 0,93 | 28 % | 0 | ~2 min |
+| mots | 0,35 | **0,97** | 23 % | 0 | ~2 min |
+| *degre* | *0,35* | *0,72* | *20 %* | *2* | *exclu, voir plus bas* |
+| qualite | 0,36 | 0,86 | **45 %** | 0 | ~28 min |
+| images | 0,37 | 0,88 | 20 % | 0 | ~2 min |
+| sources | 0,37 | **0,95** | 24 % | 0 | ~2 min |
+| taille | 0,38 | — | 27 % | 0 | gratuit |
+| modifications | 0,38 | 0,88 | 20 % | 0 | ~20 min |
+| references | 0,42 | 0,90 | 23 % | 2 | ~2 min |
+
+**UNE COLONNE DECROCHE ET QUATORZE FORMENT UN BLOC** : les vues sont entre 0,14
+et 0,42 avec tout le reste, et tout le reste est entre **0,45 et 0,97** les uns
+des autres. ***Il n'y a donc pas quatorze criteres, il y en a deux*** — « ce qui
+est lu » et « l'ampleur de l'article », vue de quatorze cotes.
+
+*Et c'est structurel* : tout ce qu'on peut compter sur une page mesure **combien
+de travail a ete investi dessus.** Plus de texte, plus de notes, plus de
+sections, plus de traductions, plus de modifications : un seul phenomene.
+
+**TROIS CRITERES SONT DISQUALIFIES POUR UNE RAISON QUI N'EST PAS UNE
+CORRELATION :**
+
+- **le DEGRE est deja dans la mecanique.** Tranche par Keko : « le degre ne peut
+  pas etre utilise, deja actif via l'activation dans le grid ». *Une carte tres
+  connectee trouve un voisin partout, donc elle est deja avantagee* — lui donner
+  en plus une grosse valeur doublerait le meme avantage. **28 cartes du pool ont
+  zero voisin**, elles seraient collees au plancher deux fois ;
+- **les NOMS sont trop grossiers** : 29 cartes sur 99 a zero, 16 valeurs
+  distinctes, 53 % dans un seul cran. *Le critere le plus independant des vues
+  est aussi le seul qu'on ne puisse pas employer* ;
+- **l'EPOQUE a un ordre mais pas de SENS.** Elle etait l'independance parfaite
+  (0,04 avec les vues, le meilleur chiffre de toute la campagne), et Keko l'a
+  ecartee d'une phrase juste : « c'est qualitatif pas quantitatif, on veut
+  quelque chose qui marque un axe du petit au grand ». ***1400 n'est pas « plus »
+  que 1990*** — une valeur de carte doit porter une force, donc il lui faut un
+  ordre ORIENTE.
+
+#### CE QUE SONT LES IDENTIFIANTS, ET POURQUOI ILS PERDENT QUAND MEME
+
+Wikidata stocke, pour chaque personne, **les numeros de fiche que lui donnent
+les institutions** : Bibliotheque nationale de France, Bibliotheque du Congres,
+GND allemande, IdRef, VIAF, ISNI, bibliotheques nationales d'Israel, du
+Portugal, du Japon, Bibliotheque apostolique vaticane — plus les bases
+specialisees, IMDb, AlloCine, MusicBrainz, AllMusic. **Le compte dit donc
+combien d'institutions au monde ont une fiche sur cette personne.**
+
+*C'etait le meilleur candidat de la matrice* — le plus independant des vues
+(0,19) **et** le moins lie a la taille (0,66), et pour une raison lisible :
+**il ne decrit pas l'article, il decrit ce que les institutions ont fiche.**
+C'est le seul du bloc a ne pas etre un sous-produit de l'ecriture.
+
+**Et il perd sur deux defauts que seule la distribution montre :**
+
+| | |
+|---|---|
+| min 0, p10 26, **mediane 164**, p90 334, max 539 | |
+| en dix crans log | `1:1 2:0 3:0 4:2 5:6 6:15 7:16 8:23 `**`9:33`**` 10:4` |
+
+- **c'est tasse en haut et les crans 2-3 sont VIDES** : la moitie du pool a plus
+  de 164 identifiants, et 33 % tombent dans le seul cran 9 ;
+- **le biais est « a-t-elle produit des oeuvres cataloguees ».** Ce sont surtout
+  des BIBLIOTHEQUES, donc un auteur, un musicien ou un acteur est fiche partout
+  quand un sportif ne l'est presque pas. Le haut est **Madonna 539, Shakespeare
+  481, Michael Jackson 434, Jennifer Lopez 413, Mozart 379, Hitler 372** — *une
+  echelle ou Jennifer Lopez passe devant Mozart mesure les disques, pas la
+  stature.*
+
+**CONCLUSION : LES LANGUES.** Troisieme sur l'independance aux vues (0,27),
+**premiere sur la repartition** (23 %, aucune carte a zero, dix crans habites),
+**gratuite** puisque le champ est deja dans le catalogue — et le haut de tableau
+le plus defendable de tous les candidats : *Jesus-Christ 346, Obama 340,
+Shakespeare 336, Trump 334, Hitler 328.*
+
 ### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
