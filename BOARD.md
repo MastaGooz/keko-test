@@ -67,6 +67,38 @@ Exemple réel : Trump est lié à **321** cartes du pool, Washington à **31**, 
 se citent mutuellement. Washington est aussi lié à Hamilton, Bill Clinton,
 George W. Bush, Tchang Kaï-chek, Édouard VII.
 
+### UN LIEN VIENT DE DEUX ENDROITS, et je ne l'avais pas vérifié
+
+Keko : « mais comment tu détermines si deux cartes sont liées ? » — la réponse
+courte est « un lien hypertexte dans l'article », et `prop=links` rend **tous
+les liens de la page telle qu'elle s'affiche**. *Donc il mélange deux natures
+que rien ne distingue dans la réponse :*
+
+| | d'où ça vient | mesuré |
+|---|---|---|
+| **le texte** | une phrase cite l'autre personne | Washington 73 %, Trump 79 % |
+| **les bandeaux** | les deux figurent dans la même liste en bas de page | Washington 27 %, Trump 21 %, **Marie Curie 70 %** |
+
+*Un bandeau crée un lien vers chaque membre de sa liste, d'un coup* : Marie
+Curie a 1 282 liens dont **898 hors de son texte**, parce qu'elle est dans le
+bandeau des prix Nobel.
+
+**CE QUE ÇA FAIT AU JEU**, mesuré sur les 60 cartes les plus notoires et leurs
+133 arêtes internes (comparaison `prop=links` contre les `[[…]]` du wikitexte) :
+
+- **73 % des synergies sont RACONTÉES** — le texte de l'un cite l'autre :
+  Epstein–Trump, Epstein–Ghislaine Maxwell, Ed Gein–Lizzie Borden ;
+- **27 % ne viennent QUE d'un bandeau** — les deux sont dans la même liste sans
+  que leurs articles se parlent : Trump–Élisabeth II, Trump–Taylor Swift,
+  Haaland–Lamine Yamal.
+
+**À TRANCHER PAR KEKO**, et c'est faisable : ne garder que les liens du
+wikitexte rendrait **toutes** les synergies racontables, au prix de 27 % du
+graphe (donc plus de mains stériles) et d'une collecte plus lourde — il faut
+télécharger le wikitexte de chaque article, pas seulement ses liens. *L'inverse
+se défend* : « deux prix Nobel côte à côte » est un rapport lisible pour un
+joueur, peut-être plus qu'un lien perdu dans un paragraphe.
+
 ## Les gestes
 
 Sélection puis dépôt, pas de glisser.
