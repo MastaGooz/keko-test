@@ -13910,6 +13910,76 @@ dans le même ordre et **aucune capture ne pouvait plus arriver.** ***Un bot qui
 n'a aucune raison de préférer un coup joue toujours le même, et un placement
 dégénéré ne mesure pas un jeu.***
 
+##### LE RÉSEAU : le graphe ne donne plus un bonus, il PORTE le score
+
+Keko : **« le système est pas bon, on exploite pas les noeuds… ça devait être le
+truc central »** — *et c'est exact des deux systèmes précédents.* Dans l'actuel le
+lien donne un bonus à lire ; dans la capture il n'est qu'un **verrou**, et c'est
+le score qui tranche. **Dans les deux cas on pourrait retirer le graphe et
+remplacer le lien par un dé : le jeu tiendrait encore.**
+
+**LA RÈGLE, EN UNE PHRASE** : *tes cartes qui se touchent ET se relient forment
+une GRAPPE ; chaque carte vaut son score × le nombre de cartes de sa grappe.*
+
+Donc une carte seule vaut son score, et **une carte dans une grappe de quatre
+vaut quatre fois son score.** Le total, c'est la somme.
+
+***Et c'est le coup de PONT qui devient l'enjeu permanent*** : fusionner une
+grappe de trois et une de deux ne les additionne pas, **ça multiplie les cinq
+cartes par cinq.** *C'est une question de graphe et de rien d'autre* — « où
+est-ce que je relie mes deux groupes ? »
+
+##### CE QUE LA MESURE DIT, et c'est le meilleur résultat du proto
+
+200 parties par ligne, mêmes mains appariées, même bot. **Le coût du hasard est
+normalisé par le score moyen** — *un coût en points absolus n'est pas comparable
+entre deux barèmes qui ne comptent pas à la même échelle, et le nôtre vient de
+changer d'un facteur huit.*
+
+| système | J1 gagne | ce que coûte le hasard | le géomètre bat l'optimisé | ponts/partie |
+|---|---|---|---|---|
+| **l'actuel (distance 4 − sauts)** | 64 % | **18 % du score** | **57 %** | — |
+| réseau, lien direct | 38 % | 23 % | 23 % | 1,9 |
+| **réseau, métier partagé** | **52 %** | **53 %** | **20 %** | **8,1** |
+| réseau, métier + domaine | 56 % | 54 % | 22 % | 9,8 |
+
+***La décision triple*** (53 % contre 18) **et la géométrie cesse de dominer**
+(20 % contre 57). *C'est la première fois dans ce proto que les deux critères
+bougent dans le bon sens en même temps.*
+
+Et **J1 à 52 %** : l'équité est parfaite, sans rien régler — *l'appariement des
+mains y suffit.*
+
+**L'INQUIÉTUDE « TOUT VA SE CONNECTER » NE SE RÉALISE PAS** : la plus grande grappe
+fait **5,3 cartes sur 8**, et il reste **4 grappes par camp.** Donc il y a
+toujours quelque chose à relier, et jamais tout.
+
+*Le lien direct, lui, est trop rare* (1,9 pont par partie, grappes de 2,2) : on
+joue des paires isolées, donc la mécanique n'a pas la place d'exister. **La
+mesure redit ce qu'elle disait pour la chaîne** — *le chemin Wikipédia est trop
+clairsemé pour porter une structure.*
+
+##### ET ÇA RÈGLE L'AFFICHAGE PAR LA MÊME PORTE
+
+Chaque case porte **un seul chiffre** : `score × taille de sa grappe`. *C'est
+exactement le chiffre unique coloré que Keko avait demandé*, mais il dit
+maintenant quelque chose de vivant — **quand tu poses le pont, tous les chiffres
+des deux grappes montent d'un coup.**
+
+*Plus d'aperçu à lire, plus de badge de main à calculer* : la question se voit sur
+le plateau.
+
+##### CE QUI RESTE À TRANCHER : le rôle de la RARETÉ
+
+Elle ne fait toujours rien, et le système lui offre la place évidente :
+**une carte rare se relie à TOUT.** *Donc c'est elle qui fait les ponts
+impossibles* — elle exploite la mécanique centrale au lieu d'ajouter une
+arithmétique à côté.
+
+Et le couple est beau, parce que **rareté et score sont indépendants** (0,27) :
+une carte diamant à score 3 ne vaut presque rien seule, mais elle peut doubler
+tout un réseau. *À mesurer dès que Keko tranche.*
+
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
