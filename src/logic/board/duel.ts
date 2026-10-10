@@ -53,6 +53,7 @@
 import {
   bonusDuCouple,
   couples,
+  tirer,
   valeurDe,
   type Distances,
   type Graphe,
@@ -138,7 +139,7 @@ export const REGLAGE_DUEL: ReglageDuel = {
   ordre: 'alterne',
   mixte: 'moins',
   sousPool: 300,
-  valeur: 'bonus',
+  valeur: 'taille',
 }
 
 /**
@@ -251,6 +252,46 @@ export function baseDeLaCarte(r: ReglageDuel, j: Jeton): number {
  * Sous `un` et `taille`, la base EST ce que la carte vaut : il n'y a qu'un
  * chiffre, et c'est celui-la.
  */
+/**
+ * LES DEUX MAINS ONT LA MEME SOMME DE SCORES, A UN POINT PRES.
+ *
+ * Keko : « ce score ne sert a rien si quand on pose la carte elle vaut 1 ? » —
+ * **et c'est le tirage LIBRE qui l'empechait de servir**, pas le score en base.
+ *
+ * *Mesure* : a mains libres, celui qui tire les plus gros scores gagne **85 %**
+ * des parties ; a mains appariees, **52 %** — c'est-a-dire le hasard pur, donc
+ * plus aucun avantage de tirage. ***Le defaut n'etait pas « le score donne des
+ * points », c'etait « les deux joueurs ne recoivent pas la meme chose ».***
+ *
+ * On tire 2N cartes, on les classe par score et **on distribue par PAIRES** : le
+ * plus fort de chaque paire va alternativement a l'un puis a l'autre. *Un serpent
+ * sur toute la liste equilibrerait aussi les sommes, mais ne garantirait pas N
+ * cartes chacun quand 2N n'est pas multiple de quatre.*
+ */
+export function distribuer(
+  reglage: ReglageDuel,
+  pool: readonly Jeton[],
+  rng: () => number,
+): readonly [readonly Jeton[], readonly Jeton[]] {
+  const n = parJoueur(reglage)
+  const t = [...tirer(pool, 2 * n, rng)].sort(
+    (a, b) => valeurDe(b, reglage.base) - valeurDe(a, reglage.base),
+  )
+  const m0: Jeton[] = []
+  const m1: Jeton[] = []
+  for (let k = 0; k * 2 + 1 < t.length; k++) {
+    const [fort, faible] = [t[k * 2] as Jeton, t[k * 2 + 1] as Jeton]
+    if (k % 2 === 0) {
+      m0.push(fort)
+      m1.push(faible)
+    } else {
+      m1.push(fort)
+      m0.push(faible)
+    }
+  }
+  return [m0, m1]
+}
+
 export function scoreDeLaCarte(r: ReglageDuel, j: Jeton): number {
   return r.valeur === 'bonus' ? valeurDe(j, VALEUR_PIVOT) : baseDeLaCarte(r, j)
 }

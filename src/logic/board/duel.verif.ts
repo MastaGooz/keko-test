@@ -10,6 +10,7 @@ import {
   baseDeLaCarte,
   campDuTour,
   coupDuBot,
+  distribuer,
   duelVide,
   enJeuDuel,
   fini,
@@ -374,6 +375,49 @@ console.log('LA VALEUR DE LA CARTE')
     const apres = scoresDuel(poserDuel(d, 'C', 1), GRAPHE)
     egal(vu[1]?.moi, (apres[0] ?? 0) - (avant[0] ?? 0), reg.valeur + ' : l apercu annonce ce que le score rend')
   }
+}
+
+// ---------------------------------------------------------------- la distribution
+console.log('\nLES DEUX MAINS SONT APPARIEES')
+{
+  const gros = (id: string, v: number): Jeton => ({ ...jeton(id), valeur: v })
+  // Un pool ou les scores vont de 1 a 16 : *les deux mains doivent se partager
+  // les gros ET les petits*, pas se les laisser au hasard.
+  const pool = Array.from({ length: 16 }, (_, i) => gros('P' + i, i + 1))
+  // RNG DETERMINISTE : on verifie le PARTAGE, pas le tirage.
+  let graine = 7
+  const rng = (): number => {
+    graine = (graine * 1103515245 + 12345) % 2147483648
+    return graine / 2147483648
+  }
+  const somme = (m: readonly Jeton[]): number => m.reduce((a, j) => a + (j.valeur ?? 0), 0)
+  const [m0, m1] = distribuer(REG, pool, rng)
+
+  egal(m0.length, 8, 'huit cartes a J1')
+  egal(m1.length, 8, 'huit cartes a J2')
+
+  // AUCUNE CARTE EN DOUBLE, ni dans une main ni entre les deux : *un pool se
+  // partage, il ne se duplique pas.*
+  egal(new Set([...m0, ...m1].map((j) => j.id)).size, 16, 'seize cartes distinctes')
+
+  // LE PARTAGE EST EQUITABLE, et c'est toute la raison de la fonction : a
+  // scores 1..16, chaque main doit valoir 68 — la moitie de 136.
+  egal(somme(m0), 68, 'J1 totalise la moitie des scores')
+  egal(somme(m1), 68, 'et J2 l autre moitie')
+
+  // **ET C'EST VRAI SUR UN POOL QUELCONQUE, a quelques points pres.** *Le
+  // serpent par PAIRES borne l'ecart a la somme des differences internes*, la ou
+  // deux tirages libres de huit cartes s'ecartent sans limite.
+  let pire = 0
+  let libre = 0
+  for (let essai = 0; essai < 200; essai++) {
+    const p = Array.from({ length: 16 }, (_, i) => gros('Q' + i, 1 + Math.floor(rng() * 10)))
+    const [a, b] = distribuer(REG, p, rng)
+    pire = Math.max(pire, Math.abs(somme(a) - somme(b)))
+    libre = Math.max(libre, Math.abs(somme(p.slice(0, 8)) - somme(p.slice(8))))
+  }
+  verifier(`l ecart apparie reste petit (${pire})`, pire <= 10)
+  verifier(`la ou un tirage libre monte bien plus haut (${libre})`, libre > pire)
 }
 
 console.log(echecs === 0 ? '\nTout passe.' : `\n${echecs} ECHEC(S)`)

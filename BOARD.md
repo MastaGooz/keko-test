@@ -1479,6 +1479,58 @@ précisément pour ça qu'ils ont été choisis là — **ce sont les deux seule
 de Wikipédia qui ne se répètent pas** (0,27 de corrélation, contre 0,86 à 0,97
 pour tout le reste).
 
+#### LE SCORE DONNE DES POINTS, ET LES DEUX MAINS SONT APPARIÉES
+
+Keko : **« oui mais ce score ne sert à rien si quand on pose la carte elle vaut
+1 ? »** — *et il a raison sur l'essentiel, mais la cause n'était pas celle qu'on
+croyait.*
+
+**CE QUI ÉTAIT VRAI DANS LE MODE PRÉCÉDENT** : le score servait, mais seulement dans
+les couples. Un lien direct entre deux cartes de score 10 payait **4**, entre
+deux cartes de score 1 il payait **0** — *donc une carte faible ne rapportait
+jamais rien, même parfaitement placée*, et le score ne se voyait nulle part sur
+la grille. **Un chiffre qu'on peint sur une carte doit valoir quelque chose quand
+on la pose.**
+
+**ET LE COUPABLE ÉTAIT LE TIRAGE LIBRE, pas le score en base.** Mesuré avec le
+vrai code, 400 parties par ligne, portée 4 + plancher :
+
+| | la plus grosse main gagne | ce que coûte le hasard |
+|---|---|---|
+| le score est la base, **mains libres** | **85 %** | 10,7 |
+| le score est la base, **mains appariées** | **52 %** | **11,1** |
+| le score multiplie les couples, appariées | 44 % | 7,8 |
+
+***52 %, c'est le hasard pur*** — donc plus aucun avantage de tirage, **et le
+coût du hasard est le meilleur des trois.** Le défaut n'était donc jamais « le
+score donne des points », c'était **« les deux joueurs ne reçoivent pas la même
+chose »**.
+
+*Et ça ferme proprement les deux portes mesurées juste avant* : la main plus
+grande concentrait l'écart au lieu de le diluer, le dosage le ramenait dès deux
+valeurs distinctes — **les deux cherchaient à effacer un écart qu'il suffisait de
+ne pas créer.**
+
+#### LE PARTAGE SE FAIT PAR PAIRES, DANS `logic/`
+
+`distribuer` : on tire 2N cartes, on les classe par score et **le plus fort de
+chaque paire va alternativement à l'un puis à l'autre.**
+
+- **par PAIRES et non en serpent sur toute la liste** : le serpent équilibre
+  aussi les sommes, mais *il ne garantit pas N cartes chacun quand 2N n'est pas
+  multiple de quatre* ;
+- **c'est une RÈGLE, pas un détail de rendu** : elle décide ce que chaque joueur
+  reçoit, donc elle vit dans `logic/` et se vérifie sans navigateur. Sept
+  vérifications, dont **la borne de l'écart mesurée contre un tirage libre** —
+  6 points au pire contre 32 sur 200 tirages ;
+- **le RNG reste celui du duel** : `?duel&seed=N` rejoue donc la même
+  distribution, exactement comme il rejouait le même tirage.
+
+**Ce que la case affiche redevient donc ce que Keko décrivait** : une carte de
+score 8 posée seule affiche **8 en jaune**, et ses voisins la font monter en vert
+ou descendre en rouge. *Le chiffre unique coloré et le score en base sont la même
+décision, prise en deux fois.*
+
 ### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
@@ -1530,7 +1582,7 @@ lien*, donc aucun bonus, donc aucune décision.
 `ordre`, `mixte`, `valeur`, `sousPool`. **`parJoueur` s'en déduit** et ne se
 règle pas ; `VALEUR_PIVOT` est la médiane mesurée du pool.
 
-`?duel&portee=N`, `?duel&mixte=plus|plancher`, `?duel&valeur=un|taille`,
+`?duel&portee=N`, `?duel&mixte=plus|plancher`, `?duel&valeur=un|bonus`,
 `?duel&score=taille`, `?duel&ordre=serpent`, `?duel&seed=N` et `?duel&pool=N`
 ouvrent chacun une variante.
 

@@ -31,10 +31,10 @@ import {
   scoreDeLaCarte,
   campDuTour,
   coupDuBot,
+  distribuer,
   duelVide,
   fini,
   gainsDuel,
-  parJoueur,
   pointsParCase,
   poserDuel,
   REGLAGE_DUEL,
@@ -46,7 +46,7 @@ import {
   type Ordre,
   type Valeur,
 } from '../logic/board/duel.ts'
-import { symetrique, tirer, type Distances, type Graphe, type Jeton } from '../logic/board/plateau.ts'
+import { symetrique, type Distances, type Graphe, type Jeton } from '../logic/board/plateau.ts'
 import { createRng } from '../logic/rng.ts'
 
 /** Ce que le duel ajoute au dessin du plateau. */
@@ -196,9 +196,10 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
   const rng = (): number => alea.next()
 
   function neuf(): Duel {
-    const n = parJoueur(reglage)
-    const a = tirer(pool, n, rng)
-    const b = tirer(pool, n, rng, new Set(a.map((j) => j.id)))
+    // LES DEUX MAINS SONT APPARIEES : meme somme de scores a un point pres.
+    // *C'est ce qui permet au score de donner des POINTS sans que le tirage
+    // decide la partie* — 52 % contre 85 % a mains libres.
+    const [a, b] = distribuer(reglage, pool, rng)
     return duelVide(reglage, a, b)
   }
 
