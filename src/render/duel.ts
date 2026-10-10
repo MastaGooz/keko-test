@@ -24,7 +24,7 @@
  */
 
 import { loadCharacters } from '../ui/personnages.ts'
-import { CSS, sousPoolDemande, vignette } from './board.ts'
+import { CSS, sousPoolDemande, tailleDeCase, vignette } from './board.ts'
 import {
   campDuTour,
   coupDuBot,
@@ -151,14 +151,18 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     const aMoi = campDuTour(d) === MOI && !attente && !fini(d)
     // CE QUE LA CARTE CHOISIE RAPPORTERAIT, CASE PAR CASE — aux DEUX camps.
     const vu = choix === null || !aMoi ? null : gainsDuel(d, graphe, choix, MOI, cache)
+    // LE SOMMET NE COMPTE QUE CE QUI DEPASSE LA BASE. *Toute case libre
+    // rapporte au moins la base*, donc sans ce garde les seize cases etaient a
+    // egalite sur une grille vide et s'entouraient TOUTES de vert.
     let sommet = 0
-    if (vu !== null) for (const g of vu) if (g !== null && g.moi > sommet) sommet = g.moi
+    if (vu !== null)
+      for (const g of vu) if (g !== null && g.moi > reglage.base && g.moi > sommet) sommet = g.moi
 
     const cote = reglage.cote
-    const taille = Math.max(
-      64,
-      Math.min(120, Math.floor(Math.min(window.innerHeight - 260, 520) / cote)),
-    )
+    // LA MEME TAILLE QUE LE PLATEAU, par la meme fonction : *deux ecrans qui
+    // dessinent la meme grille ne peuvent pas la dimensionner chacun de leur
+    // cote.*
+    const taille = tailleDeCase(cote)
     racine.replaceChildren()
 
     // ------------------------------------------------------------------ l'en-tete
@@ -224,8 +228,11 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
           d.camps[i] === MOI ? 'toi' : 'le bot'
         }`
       }
-      // L'APERCU : ce que ça TE rapporte, et ce que ça LUI donne.
-      if (g !== null) {
+      // L'APERCU : ce que ça TE rapporte, et ce que ça LUI donne. **Rien sur une
+      // case qui ne rapporte que la base** : *un chiffre sur les seize cases ne
+      // designe aucune case*, et c'est la regle du solo, ou l'apercu se taît a
+      // zero.
+      if (g !== null && (g.moi > reglage.base || g.lui > 0)) {
         const promesse = document.createElement('div')
         promesse.className = 'bd-apercu'
         promesse.textContent = `+${g.moi}`

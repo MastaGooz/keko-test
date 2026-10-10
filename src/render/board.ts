@@ -41,8 +41,17 @@ import {
 import { createRng } from '../logic/rng.ts'
 
 export const CSS = `
+  /* CET ECRAN DEFILE, et c'est la seule page du projet qui en ait le droit.
+     Le jeu l'interdit (overflow: hidden sur body) pour une raison precise --
+     *les cartes de l'eventail depassent de quelques pixels, assez pour rendre
+     la page defilable et faire sauter la main sous le doigt* -- et cette raison
+     ne vaut pas ici : pas d'eventail, pas de glisser, et un plateau qui demande
+     419 px de haut n'a aucune chance de tenir dans un telephone couche.
+     *Mesure : il debordait de 29 a 149 px, et overflow: hidden coupait ce qui
+     depassait sans rien dire.* pan-y laisse le doigt le faire defiler. */
   .bd { font: 14px/1.4 system-ui, sans-serif; color: #e8e2d4; background: #16161a;
-        min-height: 100vh; padding: 10px; box-sizing: border-box; }
+        height: 100vh; overflow-y: auto; overscroll-behavior: contain;
+        touch-action: pan-y; padding: 10px; box-sizing: border-box; }
   .bd * { box-sizing: border-box; }
   .bd-haut { display: flex; gap: 18px; flex-wrap: wrap; align-items: baseline;
              margin-bottom: 10px; }
@@ -125,6 +134,22 @@ export function sousPoolDemande(defaut: number): number {
  * (mesuré : hors de la liste, elle rend un 400). **Si le motif n'est pas là, on
  * garde l'URL telle quelle** : une image lourde vaut mieux qu'une case vide.
  */
+/**
+ * La taille d'une case, en pixels.
+ *
+ * **LE BUDGET EST MESURE, PAS DEVINE** : l'en-tete, les boutons, l'aide et les
+ * remplissages prennent ~160 px -- c'etait 260, qui ne correspondait a rien.
+ *
+ * **ET LE PLANCHER EST CELUI DU PROJET (48 px), PAS 64.** *Un plancher qui
+ * depasse la place qu'il y a n'est pas un plancher, c'est un debordement* -- la
+ * regle deja payee sur la bande des onglets du coffre. 48 px est la limite
+ * tactile du projet, et elle ne se negocie pas ; au-dela, c'est la page qui
+ * defile.
+ */
+export function tailleDeCase(cote: number): number {
+  return Math.max(48, Math.min(120, Math.floor(Math.min(window.innerHeight - 160, 520) / cote)))
+}
+
 export function vignette(url: string): string {
   return url.replace('/960px-', '/250px-')
 }
@@ -264,7 +289,7 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     // le valent — *designer une seule case parmi deux equivalentes mentirait.*
     const sommet = vu === null ? 0 : sommetDe(vu)
     const cote = reglage.cote
-    const taille = Math.max(64, Math.min(120, Math.floor((Math.min(window.innerHeight - 260, 520)) / cote)))
+    const taille = tailleDeCase(cote)
     racine.replaceChildren()
 
     // ------------------------------------------------------------------ l'en-tete

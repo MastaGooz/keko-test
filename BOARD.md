@@ -517,6 +517,61 @@ Et le liseré d'une case posée dit à qui elle est — **bleu pour toi, rouge p
 bot** : *c'est la seule chose qu'on cherche d'un coup d'oeil sur une grille
 pleine*, et un chiffre par case ne le dirait pas.
 
+### LA PAGE DU PLATEAU DÉFILE — et c'est la seule du projet qui en ait le droit
+
+Keko, sur le duel : « y'a un souci car quand je pose, mes cartes sont au mauvais
+endroit et pas sur la grille ».
+
+**Je n'ai pas pu reproduire le symptôme** — l'extension du navigateur n'était pas
+connectée — **mais la mesure a trouvé un défaut certain au même endroit** : la
+page demandait **419 px de haut** pour une grille 4x4, et `body` interdit le
+défilement. *Tout ce qui dépassait était simplement coupé, sans rien dire.*
+
+| format | la page demandait | l'écran offrait | |
+|---|---|---|---|
+| téléphone courant (844 x 390) | 419 px | 390 | **déborde de 29** |
+| avec la barre du navigateur (340) | 419 px | 340 | **déborde de 79** |
+| iPhone SE couché (667 x 320) | 419 px | 320 | **déborde de 99** |
+| avec la barre (270) | 419 px | 270 | **déborde de 149** |
+
+**Deux coupables, et le second annulait le premier :**
+
+- **le budget de 260 px était faux.** L'en-tête, les boutons, l'aide et les
+  remplissages prennent **160 px**, pas 260 ;
+- **le plancher de 64 px par case ignorait la place qu'il y a.** La formule
+  calculait 32 px à 390 de haut, le plancher la remontait à 64 — *un plancher
+  qui dépasse la place qu'il y a n'est pas un plancher, c'est un débordement*,
+  la règle déjà payée sur la bande des onglets du coffre. Il descend au
+  **plancher tactile du projet, 48 px** : *48 est une limite, pas un réglage.*
+
+**Et surtout, `.bd` DÉFILE** (`height: 100vh`, `overflow-y: auto`,
+`touch-action: pan-y`). *L'interdiction du défilement vaut pour le JEU*, et pour
+une raison précise — « les cartes de l'éventail dépassent de quelques pixels,
+assez pour rendre la page défilable et faire sauter la main sous le doigt ».
+**Cette raison ne vaut pas ici** : pas d'éventail, pas de glisser, et une grille
+qui demande 419 px n'a aucune chance de tenir dans un téléphone couché.
+
+Mesuré après : **1 px de débordement** au format courant (844 x 390), 15 à 85 px
+sur les écrans les plus courts — et ce qui dépasse se défile au lieu de
+disparaître. Les deux écrans partagent la formule (`tailleDeCase`) : *deux
+écrans qui dessinent la même grille ne peuvent pas la dimensionner chacun de
+leur côté.*
+
+**Si ce n'était pas ça**, les trois symptômes possibles ne pointent pas la même
+cause : la carte arrive dans une **autre case** que celle qu'on a cliquée (un
+index faux), elle apparaît **hors de la grille** (une mise en page), ou elle
+**n'apparaît pas** (un refus silencieux de la règle).
+
+### UN APERÇU SE TAIT SUR UNE CASE QUI NE RAPPORTE QUE LA BASE
+
+`gainsDuel` compte la base dans `moi`, là où l'aperçu du solo ne compte que le
+bonus. **Résultat : sur une grille vide, les seize cases affichaient `+1` et
+s'entouraient TOUTES de vert**, puisqu'elles étaient à égalité.
+
+*Un chiffre sur les seize cases ne désigne aucune case* — c'est la règle du
+solo, où l'aperçu se tait à zéro, et elle vaut dès qu'un affichage prétend
+montrer où aller.
+
 ### Le catalogue est celui des PERSONNAGES, et il n'y a pas le choix
 
 `links.json` est le graphe de LEURS articles. *Un duel d'animaux n'aurait aucun
