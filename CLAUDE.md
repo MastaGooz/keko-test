@@ -13407,6 +13407,40 @@ l'aperçu. `scoreDeLaCarte` décide quoi montrer selon la forme, et **la carte d
 la main porte le même badge au même coin** : c'est ce qu'on compare d'une carte
 à l'autre.
 
+##### UN SEUL CHIFFRE SUR LA CASE, ET LA COULEUR DIT LE SENS
+
+Tranché par Keko : **« on devrait afficher un seul chiffre : celui de base en
+jaune, et s'il est réduit il passe en rouge, s'il est augmenté en vert »**.
+
+*Ils étaient DEUX, et c'est lui qui les avait demandés* — la base à gauche, le
+bonus en « +X » à droite — **sur un argument qui tenait** : « un total ne dit pas
+d'où il vient ». **Ce qui a changé, c'est que la provenance a trouvé une
+meilleure place** : le survol décompose le calcul voisin par voisin, avec la
+distance de chacun, là où un « +4 » ne disait de toute façon pas *lequel* des
+voisins payait.
+
+**Ce qu'on compare d'une case à l'autre est ce qu'elle PRODUIT**, et *une couleur
+dit un sens sans prendre de place* — là où un second chiffre en prenait autant
+que le premier, dans un coin de quarante pixels.
+
+Trois choses qui le portent :
+
+- **la base de comparaison est celle de la RÈGLE** (`baseDeLaCarte`), pas le
+  score peint sur la carte : *sous `bonus` toute carte a une base de 1*, et c'est
+  bien par rapport à 1 qu'elle est augmentée ou réduite. Les confondre ferait
+  passer en rouge une carte de score 7 qui produit 5 alors qu'elle a GAGNÉ 4 ;
+- **le jaune est celui de l'énergie** (`#ffc65c`), le vert celui de l'aperçu, le
+  rouge celui du camp adverse — *on reprend les trois teintes du projet, on n'en
+  invente pas* ;
+- **le score d'une carte de la MAIN reste crème** : *ce n'est pas une production,
+  c'est un poids*, et rien ne l'a ni augmenté ni réduit. Deux faits, deux
+  apparences.
+
+**Le solo le prend aussi, bien que rien n'y retire jamais** — donc le rouge ne
+sort pas de cet écran. *Deux écrans qui dessinent la même grille ne peuvent pas
+l'afficher chacun de leur côté* : la règle du `tailleDeCase` partagé, reprise
+ici.
+
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un

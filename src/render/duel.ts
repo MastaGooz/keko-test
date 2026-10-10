@@ -311,17 +311,18 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
         const nom = document.createElement('div')
         nom.className = 'bd-nom'
         nom.textContent = j.nom
-        const base = document.createElement('div')
-        base.className = 'bd-base'
-        base.textContent = String(scoreDeLaCarte(reglage, j))
-        b.append(img, nom, base)
-        const gain = (par[i] ?? 0) - baseDeLaCarte(reglage, j)
-        if (gain > 0) {
-          const bonus = document.createElement('div')
-          bonus.className = 'bd-bonus'
-          bonus.textContent = `+${gain}`
-          b.append(bonus)
-        }
+        // UN SEUL CHIFFRE : ce que la case PRODUIT, colore par ce que les
+        // voisins en ont fait. **La base de comparaison est celle de la REGLE**
+        // (`baseDeLaCarte`), pas le score affiche sur la carte : sous `bonus`
+        // toute carte a une base de 1, et c'est bien par rapport a 1 qu'elle est
+        // augmentee ou reduite.
+        const base = baseDeLaCarte(reglage, j)
+        const total = par[i] ?? 0
+        const prod = document.createElement('div')
+        prod.className = 'bd-prod' + (total > base ? ' sup' : total < base ? ' inf' : '')
+        prod.textContent = String(total)
+        prod.title = `« ${j.nom} » vaut ${scoreDeLaCarte(reglage, j)} sur 10 et produit ${total}.`
+        b.append(img, nom, prod)
         b.title = `${j.nom} — ${par[i] ?? 0} point${(par[i] ?? 0) > 1 ? 's' : ''} pour ${
           d.camps[i] === MOI ? 'toi' : 'le bot'
         }`

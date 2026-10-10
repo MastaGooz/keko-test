@@ -72,17 +72,26 @@ export const CSS = `
   .bd-nom { position: absolute; left: 0; right: 0; bottom: 0; padding: 2px 3px;
             font-size: 10px; line-height: 1.15; background: rgba(0,0,0,.72);
             overflow: hidden; }
-  /* DEUX CHIFFRES, DEUX COINS. Demandé par Keko : la base en haut à gauche,
-     le bonus en « +X » en haut à droite. *Un total ne dit pas d'où il vient*, et
-     maintenant qu'un couple peut valoir 4, 3, 2 ou 1, le dire d'un seul chiffre
-     oblige à soustraire de tête. */
+  /* UN SEUL CHIFFRE, ET LA COULEUR DIT CE QUE LES VOISINS EN ONT FAIT.
+     Tranche par Keko : « un seul chiffre, celui de base en jaune ; reduit il
+     passe en rouge, augmente en vert ».
+
+     *Ils etaient DEUX* — la base a gauche, le bonus en « +X » a droite — pour
+     que le total ne cache pas d'ou il vient. **Mais ce qu'on compare d'une case
+     a l'autre est ce qu'elle PRODUIT**, et la provenance se lit au survol, qui
+     la decompose voisin par voisin. *Une couleur dit un SENS sans prendre de
+     place*, la ou un second chiffre en prenait autant que le premier. */
+  .bd-prod { position: absolute; top: 2px; left: 3px; font-weight: 700;
+             font-size: 14px; color: #ffc65c; text-shadow: 0 0 3px #000, 0 0 3px #000; }
+  .bd-prod.sup { color: #6ddf8f; }
+  .bd-prod.inf { color: #ff8a6f; }
+  /* LE SCORE D'UNE CARTE DE LA MAIN, lui, reste CREME : *ce n'est pas une
+     production, c'est un poids* — et rien ne l'a ni augmente ni reduit. */
   .bd-base { position: absolute; top: 2px; left: 3px; font-weight: 700;
              font-size: 12px; color: #d8d2c4; text-shadow: 0 0 3px #000, 0 0 3px #000; }
-  .bd-bonus { position: absolute; top: 2px; right: 3px; font-weight: 700;
-              font-size: 13px; color: #ffc65c; text-shadow: 0 0 3px #000, 0 0 3px #000; }
   /* L'APERÇU : ce que la carte CHOISIE gagnerait ici. Au CENTRE, parce que les
-     deux coins du haut disent déjà ce que la case produit — *trois chiffres au
-     même endroit ne se lisent pas, ils se confondent*, la leçon des deux badges
+     le coin haut-gauche dit déjà ce que la case produit — *deux chiffres au
+     même endroit ne se lisent pas, ils se confondent*, la leçon des badges
      que Keko avait déjà signalée. */
   .bd-apercu { position: absolute; inset: 0; display: grid; place-items: center;
                font-weight: 700; font-size: 20px; color: #6ddf8f;
@@ -389,17 +398,17 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
         const nom = document.createElement('div')
         nom.className = 'bd-nom'
         nom.textContent = j.nom
-        const base = document.createElement('div')
-        base.className = 'bd-base'
-        base.textContent = String(reglage.base)
-        b.append(img, nom, base)
-        const gain = (par[i] ?? 0) - reglage.base
-        if (gain > 0) {
-          const bonus = document.createElement('div')
-          bonus.className = 'bd-bonus'
-          bonus.textContent = `+${gain}`
-          b.append(bonus)
-        }
+        // UN SEUL CHIFFRE : ce que la case PRODUIT, et sa couleur dit si les
+        // voisins l'ont augmente (vert) ou reduit (rouge). *En solo rien ne
+        // retire*, donc le rouge ne sort jamais ici — la regle est quand meme la
+        // meme qu'au duel : **deux ecrans qui dessinent la meme grille ne
+        // peuvent pas l'afficher chacun de leur cote.**
+        const total = par[i] ?? 0
+        const prod = document.createElement('div')
+        prod.className =
+          'bd-prod' + (total > reglage.base ? ' sup' : total < reglage.base ? ' inf' : '')
+        prod.textContent = String(total)
+        b.append(img, nom, prod)
         // LE SURVOL DECOMPOSE LE CALCUL, VOISIN PAR VOISIN ET AVEC SA DISTANCE :
         // *un chiffre seul ne dit pas d'ou il vient*, et maintenant qu'un couple
         // peut valoir 4, 3, 2 ou 1, le dire globalement ne suffit plus.
