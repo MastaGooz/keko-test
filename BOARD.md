@@ -686,6 +686,72 @@ elle change la nature du mode : on peut jouer pour détruire.
   vide les seize cases valent la base, et seize liserés ne désignent aucune
   case.
 
+### CE QUE LE JEU EST VRAIMENT : un jeu de GÉOMÉTRIE, pas de liens
+
+Keko : « actuellement, le principe consiste à placer la carte au meilleur
+endroit finalement… après il y a une dimension stratégique spatialement
+(prendre le centre etc). Tu en penses quoi ? »
+
+**Son diagnostic est exact, et il est pire que ce qu'il dit.** Mesuré : un bot
+qui prend **le centre d'abord, avec une carte tirée AU HASARD**, sans jamais
+regarder un seul lien, **bat le bot qui optimise tout — 72 %.**
+
+***Donc le graphe Wikipédia, qui est l'idée du jeu, ne décide presque rien.***
+
+#### LA CAUSE EST LA PORTÉE, et elle se mesure
+
+À portée 5, **91 % des couples paient quelque chose** : un voisin vaut donc
+presque toujours, et **le NOMBRE de voisins devient le seul facteur** — quatre
+au centre, deux dans un coin. *C'est la portée longue, choisie dans le solo
+pour que l'arrangement compte, qui a eu l'effet inverse en duel.*
+
+| portée | couples qui paient | le géomètre bat le glouton | anticiper paie (`plancher`) | bien jouer paie |
+|---|---|---|---|---|
+| **5** (défaut) | 91 % | **72 %** | 81 % | 85 % |
+| **4** | 77 % | **45 %** | 69 % | 85 % |
+| **3** | 35 % | **21 %** | 56 % | 82 % |
+| 2 | 5 % | 18 % | 35 % | **49 %** |
+
+*Le pivot est net* : à 4 l'avantage de la géométrie disparaît, à 3 elle devient
+nettement insuffisante — **et bien jouer paie toujours autant** (82 %). À 2 le
+jeu meurt : il n'y a plus assez de liens pour qu'un choix existe.
+
+`?duel&portee=4` et `?duel&portee=3` sont ouvrables.
+
+#### ET LE PLANCHER EST CE QUI CRÉE LA PROFONDEUR
+
+Un bot qui regarde **un coup de plus** (minimax à deux demi-coups) contre le
+bot glouton :
+
+| | `moins` | `plancher` |
+|---|---|---|
+| portée 5 | **51 %** | **81 %** |
+| portée 4 | 54 % | **69 %** |
+| portée 3 | 55 % | 56 % |
+
+***Sans le plancher, le jeu est glouton par construction*** : regarder plus loin
+ne rapporte rien, parce qu'un couple est encaissé une fois pour toutes et que
+rien ne peut le défaire. **Le plancher rend un couple MENAÇABLE**, donc un coup
+a enfin un avenir.
+
+*Et la profondeur retombe quand les liens se raréfient* (56 % à portée 3) : s'il
+n'y a qu'une occasion, il n'y a rien à préparer. **Les deux réglages tirent donc
+en sens contraire**, et le compromis mesuré est **portée 4 + plancher** — la
+géométrie ne domine plus (45 %), le graphe compte, et anticiper paie 69 %.
+
+#### CE QUI NE DÉCIDE RIEN AUJOURD'HUI, et qui pourrait
+
+- **la CARTE qu'on choisit pèse autant que la CASE, et pas plus** : un bot qui
+  tire sa carte au hasard mais choisit bien sa case, et un bot qui fait
+  l'inverse, sont à égalité (48 % / 52 %). *La main n'est donc qu'un sac de
+  nœuds du graphe* ;
+- **rien de ce qu'une carte PORTE ne joue** — ni rareté, ni attaque, ni défense,
+  ni domaine. Elles sont interchangeables à leurs liens près. *C'est le premier
+  endroit où chercher si la portée et le plancher ne suffisent pas* ;
+- **on pose toute sa main** : huit cartes, huit coups. Donc *il n'y a jamais à
+  choisir ce qu'on garde*. Une main plus grande que le nombre de coups
+  ouvrirait cette décision sans toucher au barème.
+
 ### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
@@ -735,6 +801,9 @@ lien*, donc aucun bonus, donc aucune décision.
 
 `REGLAGE_DUEL`, en haut de `src/logic/board/duel.ts` : `cote`, `base`, `portee`,
 `ordre`, `mixte`, `sousPool`. **`parJoueur` s'en déduit** et ne se règle pas.
+
+`?duel&portee=N`, `?duel&mixte=plus|plancher`, `?duel&ordre=serpent`,
+`?duel&seed=N` et `?duel&pool=N` ouvrent chacun une variante.
 
 ## Tests
 

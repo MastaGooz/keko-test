@@ -117,10 +117,25 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
   // rester ouvrable, meme une fois le choix fait.*
   const quoi = new URLSearchParams(location.search).get('mixte')
   const mixte: Mixte = quoi === 'plus' ? 'plus' : quoi === 'plancher' ? 'plancher' : 'moins'
+  // LA PORTEE DECIDE SI LE GRAPHE COMPTE, et c'est mesure : a 5 (le defaut)
+  // 91 % des couples paient quelque chose, donc un voisin vaut presque
+  // toujours -- et le NOMBRE de voisins devient le seul facteur. Un bot qui
+  // prend le centre avec une carte AU HASARD bat alors le bot qui optimise
+  // tout, a 72 %.
+  //
+  // `?duel&portee=4` fait tomber cet avantage a 45 %, `3` a 21 %. En dessous le
+  // jeu meurt : a portee 2, 5 % des couples paient et bien jouer ne rapporte
+  // plus rien.
+  const demandee2 = Number(new URLSearchParams(location.search).get('portee') ?? '')
+  const portee =
+    Number.isInteger(demandee2) && demandee2 >= 2 && demandee2 <= 9
+      ? demandee2
+      : REGLAGE_DUEL.portee
   const reglage = {
     ...REGLAGE_DUEL,
     ordre,
     mixte,
+    portee,
     sousPool: sousPoolDemande(REGLAGE_DUEL.sousPool),
   }
 
@@ -232,7 +247,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     const note = document.createElement('div')
     note.className = 'bd-note'
     note.textContent =
-      `pool de ${pool.length} · ordre ${ordre} · mixte ${mixte} · graine ${graine}`
+      `pool de ${pool.length} · ordre ${ordre} · mixte ${mixte} · portée ${portee} · graine ${graine}`
     haut.append(score, etat, note)
 
     // -------------------------------------------------------------------- la grille
