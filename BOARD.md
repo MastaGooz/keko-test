@@ -1584,6 +1584,45 @@ optimise tout, 72 % du temps.* À 4, la géométrie ne domine plus (45 %).
 libre, et survoler une case posée décompose son total voisin par voisin, avec la
 distance de chacun.
 
+#### L'APERÇU DIT L'APPORT, PAS LE SCORE DE LA CARTE
+
+Keko : **« quand on a le +X marqué en vert sur les cartes de la collection, il
+faudrait que le score de base de la carte ne soit pas inclus dans le X »**.
+
+*`gainsDuel` dit la vérité sur le SCORE* — ce que poser la carte rapporte, base
+comprise — **mais ce qu'on compare d'une case à l'autre est ce que l'ARRANGEMENT
+apporte**, et le score, lui, est le même partout. Sur une grille vide, une carte
+de score 8 annonçait « +8 » sur les seize cases : ***un chiffre identique partout
+ne désigne aucune case*** — exactement le défaut que les deux badges avaient déjà
+coûté.
+
+**ET LE SOLO LE FAISAIT DÉJÀ BIEN** : `apercuSurCase` ne somme que les couples,
+jamais la base. *C'est le duel qui avait pris une autre route* — il calcule par
+différence de scores, ce qui est nécessaire depuis le plancher (une borne par
+carte ne se lit pas sur une somme) **et qui ramenait la base avec**. La
+correction aligne donc le duel sur le solo, elle n'invente rien.
+
+Trois choses qui le portent :
+
+- **UNE SEULE PORTE pour les deux affichages** (`gains`, dans `render/duel.ts`) :
+  l'aperçu des cases ET le badge de la main la traversent. *Ils avaient déjà
+  divergé une fois* — « deux affichages qui prétendent dire la même chose doivent
+  passer par le même calcul » — et retirer la base à un seul des deux aurait
+  refait la faute ;
+- **le camp adverse n'a rien à retrancher** : *le bot ne pose pas*, donc son gain
+  est déjà un pur apport ;
+- **ils se taisent à ZERO**, et c'est devenu la condition naturelle : *« ne
+  rapporter que la base » et « ne rien apporter » sont désormais le même fait*,
+  là où il fallait comparer le gain à `baseDeLaCarte` à deux endroits.
+
+**Conséquence à connaître** : sur une grille vide, cliquer une carte n'écrit plus
+rien et aucune case ne se ceint de vert. *C'est juste* — aucune case n'y est
+meilleure qu'une autre, et le liseré se taisait déjà quand tout était à égalité.
+
+Et l'infobulle d'une case le dit en mots : « ici **le voisinage** lui ferait +3 »,
+plus « ta carte ferait +11 ». *Le chiffre a changé de sujet, la phrase devait
+suivre.*
+
 ### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un

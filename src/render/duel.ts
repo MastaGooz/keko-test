@@ -233,7 +233,27 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     // carte porte une valeur, un aperçu qui l'ignorerait annoncerait un chiffre
     // que le score ne rendrait pas.
     const choisi = choix === null ? null : (d.mains[MOI].find((j) => j.id === choix) ?? null)
-    const vu = choisi === null || !aMoi ? null : gainsDuel(d, graphe, choisi, MOI, cache)
+
+    // L'APPORT, C'EST LE GAIN MOINS LE SCORE DE LA CARTE. Keko : « il faudrait
+    // que le score de base de la carte ne soit pas inclus dans le +X ».
+    //
+    // *`gainsDuel` dit la verite sur le SCORE* -- ce que poser la rapporte, base
+    // comprise -- mais **ce qu'on compare d'une case a l'autre est ce que
+    // l'ARRANGEMENT apporte**, et le score, lui, est le meme partout. Sur une
+    // grille vide, une carte de score 8 annoncait « +8 » sur les seize cases :
+    // *un chiffre identique partout ne designe aucune case.*
+    //
+    // **Une seule porte pour les deux affichages** -- l'apercu des cases et le
+    // badge de la main -- parce qu'ils ont deja diverge une fois : « deux
+    // affichages qui pretendent dire la meme chose doivent passer par le meme
+    // calcul ». Le camp adverse n'a rien a retrancher : *le bot ne pose pas.*
+    const gains = (j: Jeton): readonly (Gain | null)[] => {
+      const base = baseDeLaCarte(reglage, j)
+      return gainsDuel(d, graphe, j, MOI, cache).map((x) =>
+        x === null ? null : { moi: x.moi - base, lui: x.lui },
+      )
+    }
+    const vu = choisi === null || !aMoi ? null : gains(choisi)
     // LE MEILLEUR COUP SE JUGE SUR L'ECART, pas sur mon seul score. Keko :
     // « pourquoi +7 est considere meilleur que +3 et -4 ? » — *il ne l'est
     // pas* : gagner 3 en l'amputant de 4 deplace l'ecart de 7, autant que
@@ -332,10 +352,11 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       // rouge pour le bot — et un `-3` en vert se lit « ta carte perd 3 ».
       // *Deux conventions pour deux faits*, donc aucune n'a besoin de l'autre.
       //
-      // **Rien sur une case qui ne rapporte que la base** : *un chiffre sur les
-      // seize cases ne designe aucune case*, et c'est la regle du solo, ou
-      // l'apercu se taît a zero.
-      if (g !== null && (choisi === null || g.moi !== baseDeLaCarte(reglage, choisi) || g.lui !== 0)) {
+      // **Rien sur une case qui n'apporte rien** : *un chiffre sur les seize
+      // cases ne designe aucune case*, et c'est la regle du solo, ou l'apercu
+      // se taît a zero. Depuis que le score de la carte en est retire, « ne
+      // rapporter que la base » et « ne rien apporter » sont le meme fait.
+      if (g !== null && (g.moi !== 0 || g.lui !== 0)) {
         const promesse = document.createElement('div')
         promesse.className = 'bd-apercu'
         promesse.textContent = signe(g.moi)
@@ -347,7 +368,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
           b.append(cadeau)
         }
         b.title =
-          `Ici ta carte ferait ${signe(g.moi)}` +
+          `Ici le voisinage lui ferait ${signe(g.moi)}` +
           (g.lui !== 0 ? `, et le bot ${signe(g.lui)}` : ', et le bot rien') +
           ` — soit ${signe(ecartDe(g))} d’écart` +
           (ecartDe(g) === sommet ? ' (ton meilleur coup)' : '')
@@ -390,9 +411,11 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       // pretendent dire la meme chose doivent passer par le meme calcul*, et ce
       // qu'on compare d'une carte a l'autre est ce qu'elle deplace.
       let max: number | null = null
-      for (const g of gainsDuel(d, graphe, j, MOI, cache))
+      for (const g of gains(j))
         if (g !== null && (max === null || ecartDe(g) > max)) max = ecartDe(g)
-      if (max !== null && max !== baseDeLaCarte(reglage, j)) {
+      // **IL SE TAIT A ZERO**, et c'est devenu la condition naturelle : une
+      // carte qui n'apporte rien n'a pas de « +0 » a montrer.
+      if (max !== null && max !== 0) {
         const amis = document.createElement('div')
         amis.className = 'bd-amis'
         amis.textContent = signe(max)
