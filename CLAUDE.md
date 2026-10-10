@@ -13842,6 +13842,30 @@ le dit, et *c'est aussi ce qui le rend devinable* — « Zidane et Salah sont
 footballeurs » se voit sans aperçu, là où « leurs pages se citent » ne se devine
 jamais.
 
+##### MESURÉ EN PASSANT : « le bonus seulement à la carte qu'on pose » coûte cher
+
+*Keko l'a proposé puis retiré dans la même minute* — la mesure était lancée, on
+la garde pour ne pas refaire le tour. 300 parties, portée 4 :
+
+| | J1 gagne | ce que coûte le hasard | le géomètre bat l'optimisé | l'ORDRE compte |
+|---|---|---|---|---|
+| **le couple paie ses deux cartes** (aujourd'hui) | 64 % | **10,4** | 57 % | −0,4 |
+| **seul le poseur encaisse, une fois** | 58 % | **4,9** | **63 %** | +0,1 |
+
+**Ça divise la décision par deux** (4,9 contre 10,4) *et* la géométrie domine
+davantage. La raison est lisible : **une carte ne capte que les voisins DÉJÀ là**,
+donc les premiers coups ne rapportent rien et les derniers ramassent tout — *le
+jeu se décide à la fin, et avant ça on pose dans le vide.*
+
+*Et le gain espéré n'est pas venu* : je pensais que l'ordre de pose deviendrait
+une décision — **il ne l'est pas** (+0,1, soit rien), parce qu'avec huit coups
+chacun tout le monde finit par poser dans le même remplissage moyen.
+
+*Ce qui restait vrai de l'objection d'origine* : le score ne se lit plus sur la
+grille, il s'accumule. **Ce qui n'est PLUS vrai** : « incompatible avec ce que
+Keko demande » — il a levé cette contrainte lui-même en rouvrant le gameplay.
+*Une objection conditionnelle tombe avec sa condition.*
+
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
