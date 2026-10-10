@@ -12182,10 +12182,109 @@ pipeline validé, pas avant. »
 ## LE PLATEAU — un prototype pour une seule question
 
 Idee de Keko, cadree par lui en regles precises : une grille 4x4, une carte
-posee produit +1 par tick, **deux cartes adjacentes dont les articles Wikipedia
-sont lies produisent +1 de plus chacune**. Tick a 5 s. Rien d'autre — « pas de
+posee produit +1 par tick, et **deux cartes cote a cote se paient selon la
+DISTANCE entre leurs articles Wikipedia**. Tick a 5 s. Rien d'autre — « pas de
 marche, pas de guildes, pas de quetes, pas d'effets visuels. Du jouable, moche,
 rapide. »
+
+### LE BONUS DECROIT AVEC LA DISTANCE — `portee - sauts`
+
+Tranche par Keko, en une formule : **« bonus = 5 - nombre de sauts (0 si pas
+joignable) »**. A portee 5 : lien direct +4, un intermediaire +3, deux +2, trois
++1, rien au-dela. *Les deux cartes du couple le gagnent*, comme avant.
+
+*Elle remplace la premiere regle*, qui ne payait que le lien direct — et c'est
+mesure, sur le critere du projet : **ce que coute de jouer au hasard**, le score
+du meilleur arrangement trouve contre un placement aleatoire, sur 300 mains.
+
+| bareme | cout du hasard |
+|---|---|
+| **l'ancien** (lien direct, +1) | **19 %** |
+| `3 - sauts` | 46 % |
+| `4 - sauts` | 44 % |
+| **`5 - sauts`** | **42 %** |
+| `6 - sauts` | 39 % |
+| table `[4, 2]` | 55 % |
+
+**LA FORMULE DOUBLE LA DECISION** — 42 % contre 19 %. *Avant, trois mains sur
+quatre ne pouvaient presque rien faire de leur arrangement.*
+
+**Et ce qui coute, c'est la longueur de la QUEUE** : a portee 5 on paie jusqu'a
+quatre sauts, donc **92 % des couples rapportent quelque chose** et le bonus
+devient un plancher. C'est pour ca qu'une table courte fait mieux (`[4, 2]` :
+55 %) — et **la formule a quand meme ete preferee**, sur le seul argument qui
+comptait : ***une regle qu'un joueur peut refaire dans sa tete est jouable, une
+table qu'il doit apprendre ne l'est pas.*** Treize points contre une phrase.
+
+**Un seul chiffre la regle** (`portee`), donc raccourcir la queue ne demande pas
+de toucher au code.
+
+#### ET ELLE A RENDU LE SOUS-POOL INUTILE — le gain n'etait pas vise
+
+`sousPool` existait pour une raison mesuree : sur les trois mille cartes, deux
+prises au hasard n'etaient liees que dans 0,25 % des cas, donc **77 % des mains
+etaient steriles** et l'arrangement ne changeait jamais le score. Refait avec la
+distance :
+
+| `sousPool` | cout du hasard | mains steriles | couples payants |
+|---|---|---|---|
+| 300 (defaut) | 42 % | **0 %** | 92 % |
+| 1 000 | 43 % | **0 %** | 80 % |
+| **3 000 (tout)** | **45 %** | **0 %** | **65 %** |
+
+**Plus une seule main sterile, a aucune taille** — *la connexite du graphe etait
+la depuis le debut (89,8 % des cartes dans une seule composante, 3,13 sauts en
+moyenne), c'est la regle qui ne s'en servait pas.* Et le pool ENTIER est le
+meilleur sur le critere, pour une raison lisible : **moins de liens directs, donc
+moins de plancher.**
+
+**Il reste un argument, et il est de DESIGN** : a 300 on joue des visages qu'on
+connait, a 3 000 la moitie du pool est obscure. *Le plaisir de reconnaitre
+quelqu'un ne se mesure pas* — le defaut reste a 300, et c'est a Keko de trancher.
+
+#### UN PARCOURS NE PEUT PAS LIRE UN GRAPHE A MOITIE ORIENTE
+
+`lies()` regarde les deux sens a la demande ; **un parcours ne peut pas.** Il
+avance de voisin en voisin, donc une arete ecrite dans un seul sens est un
+cul-de-sac : avec `{ B: ['C'] }`, partir de C ne mene nulle part et la distance
+C-B sortirait infinie alors qu'elles sont liees.
+
+*Le fichier du script est deja symetrise, donc ca ne changeait rien en jeu* —
+mais **une fonction qui rend un resultat faux sur une entree legale est une
+fonction fausse.** D'ou `symetrique()`, appele **une fois** au chargement
+(13 ms), et le graphe de test ecrit a moitie oriente expres.
+
+#### LE PARCOURS EST BORNE, BIDIRECTIONNEL ET MEMOISE
+
+Les trois, et chacun divise le travail d'un facteur qui compte :
+
+- **borne** a `portee - 1` sauts : *ce qui est au-dela ne rapporte rien de toute
+  facon*, donc la borne ne perd aucune information ;
+- **par les deux bouts** : a dix-huit voisins par carte, quatre sauts d'un seul
+  cote visitent cent mille noeuds, deux fois deux sauts en visitent six cents ;
+- **memoise**, parce que la grille ne bouge pas entre deux gestes et que le rendu
+  recommence a chaque image.
+
+Mesure : **0,03 ms par paire a froid, 1 ms pour une grille pleine.**
+
+#### LE BADGE DE LA MAIN EST DEVENU UN MAXIMUM, PLUS UN COMPTE
+
+Il disait « combien de cartes liees sont deja posees ». *Tant que seul le lien
+direct payait, ca disait quelque chose ; depuis que tout ce qui est joignable
+rapporte, presque chaque carte en main est joignable depuis presque toute la
+grille* — un compte afficherait « 10 » partout, donc rien.
+
+Il dit donc **le mieux que la carte puisse prendre**, et le survol dit a cote de
+qui. **Un changement de regle peut vider un affichage de son sens sans qu'une
+seule ligne ne devienne fausse.**
+
+Et le chiffre d'une case se decompose desormais **voisin par voisin, avec la
+distance** — « +4 avec Josephine (lien direct) +3 avec Talleyrand (1
+intermediaire) » : *un total ne dit pas d'ou il vient, et maintenant qu'un couple
+peut valoir 4, 3, 2 ou 1, le dire globalement ne suffit plus.* Une ligne de plus
+donne la composition de l'arrangement (« 2 x lien direct · 7 x 1 intermediaire »),
+parce que *le total ne dit pas si l'arrangement tient a deux liens directs ou a
+dix voisinages lointains.*
 
 **Il vit derriere `?board`**, a cote du jeu comme les paquets : *tant qu'il
 n'est pas un jeu, il ne prend pas la page.* Tout est dans `BOARD.md` — les

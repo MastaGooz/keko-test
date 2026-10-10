@@ -18,18 +18,21 @@
 import { loadCharacters } from '../ui/personnages.ts'
 import {
   booster,
+  couples,
+  couplesQuiPaient,
   enJeu,
   deplacer,
-  lies,
-  paquesLiees,
+  distance,
   plateauVide,
   poser,
   production,
   productionParCase,
   retirer,
   REGLAGE,
+  symetrique,
   tic,
   tirer,
+  type Distances,
   type Graphe,
   type Jeton,
   type Plateau,
@@ -50,6 +53,9 @@ const CSS = `
              border-radius: 3px; overflow: hidden; cursor: pointer; padding: 0; }
   .bd-case.vide:hover { background: #2b2b36; }
   .bd-case.synergie { border-color: #6ddf8f; box-shadow: 0 0 0 1px #6ddf8f inset; }
+  /* LE LISERE EST PLUS VIF QUAND LE COUPLE EST UN LIEN DIRECT : *une gamme de
+     bonus doit se lire sur la grille*, pas seulement dans une infobulle. */
+  .bd-case.direct { border-color: #ffd98a; box-shadow: 0 0 0 2px #ffd98a inset; }
   .bd-case.choisie { border-color: #ffc65c; box-shadow: 0 0 0 2px #ffc65c inset; }
   .bd-case img { width: 100%; height: 100%; object-fit: cover; display: block;
                  filter: brightness(0.72); }
@@ -143,7 +149,13 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     racine.textContent = 'data/links.json introuvable — lance `npm run liens` d’abord.'
     return
   }
-  const graphe: Graphe = ((await reponse.json()) as { liens?: Graphe }).liens ?? {}
+  // LE GRAPHE SE REFERME DANS LES DEUX SENS, UNE FOIS. Le fichier est deja
+  // symetrise, mais *un parcours ne peut pas lire un graphe a moitie oriente* —
+  // et une passe sur vingt-sept mille aretes ne coute rien.
+  const graphe: Graphe = symetrique(((await reponse.json()) as { liens?: Graphe }).liens ?? {})
+  // LE CACHE DES DISTANCES VIT AVEC LE GRAPHE : la grille ne bouge pas entre
+  // deux gestes, donc sans lui la meme paire se redemanderait a chaque image.
+  const cache: Distances = new Map()
 
   const reglage = { ...REGLAGE, sousPool: sousPoolDemande(REGLAGE.sousPool) }
   // LE CATALOGUE EST TRIE PAR NOTORIETE : les N premiers sont le sous-pool.
@@ -176,15 +188,36 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     dessiner()
   }
 
-  /** Les voisins d'une carte DÉJÀ POSÉS : sans ça, le joueur ne peut pas décider. */
-  function amisPoses(id: string): number {
-    let k = 0
-    for (const j of p.grille) if (j !== null && lies(graphe, id, j.id)) k++
-    return k
+  /**
+   * LE MEILLEUR BONUS QU'UNE CARTE DE LA MAIN POURRAIT PRENDRE, et à côté de qui.
+   *
+   * **C'est le MAXIMUM et plus un compte.** Tant que seul un lien direct payait,
+   * compter les cartes liées déjà posées disait quelque chose ; *depuis que tout
+   * ce qui est joignable rapporte, presque chaque carte en main est liée à
+   * presque toute la grille* — un compte dirait « 10 » partout, donc rien.
+   *
+   * Ce que le joueur doit savoir, c'est **combien vaut son meilleur placement**.
+   */
+  function meilleur(id: string): { gain: number; qui: string; sauts: number } | null {
+    let out: { gain: number; qui: string; sauts: number } | null = null
+    for (const j of p.grille) {
+      if (j === null) continue
+      const sauts = distance(graphe, id, j.id, reglage.portee - 1, cache)
+      if (sauts === Infinity || sauts < 1) continue
+      const gain = Math.max(0, reglage.portee - sauts)
+      if (gain > 0 && (out === null || gain > out.gain)) out = { gain, qui: j.nom, sauts }
+    }
+    return out
+  }
+
+  /** Le mot de la distance. *Un nombre de sauts ne se lit pas, un mot si.* */
+  function mot(sauts: number): string {
+    if (sauts === 1) return 'lien direct'
+    return `${sauts - 1} intermédiaire${sauts > 2 ? 's' : ''}`
   }
 
   function dessiner(): void {
-    const par = productionParCase(p, graphe)
+    const par = productionParCase(p, graphe, cache)
     const cote = reglage.cote
     const taille = Math.max(64, Math.min(120, Math.floor((Math.min(window.innerHeight - 260, 520)) / cote)))
     racine.replaceChildren()
@@ -198,13 +231,28 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     // joueur voit un chiffre monter sans savoir ce que son arrangement lui a
     // rapporte* — et c'est precisement la question que ce proto pose.
     const posees = p.grille.filter((j) => j !== null).length
-    const paires = paquesLiees(p, graphe).length
+    const payants = couplesQuiPaient(p, graphe, cache)
+    const duBonus = payants.reduce((t, c) => t + 2 * c.gain, 0)
     const prod = document.createElement('div')
     prod.innerHTML =
-      `<span class="bd-gros">+${production(p, graphe)}</span> / tick` +
+      `<span class="bd-gros">+${production(p, graphe, cache)}</span> / tick` +
       ` <span class="bd-note">= ${posees} carte${posees > 1 ? 's' : ''} (+${posees * reglage.base})` +
-      ` + ${paires} paire${paires > 1 ? 's' : ''} liee${paires > 1 ? 's' : ''} ` +
-      `(+${2 * paires * reglage.synergie})</span>`
+      ` + ${payants.length} couple${payants.length > 1 ? 's' : ''} (+${duBonus})</span>`
+
+    // DE QUOI LES COUPLES SONT FAITS : *le total ne dit pas si l'arrangement
+    // tient a deux liens directs ou a dix voisinages lointains*, et c'est
+    // precisement ce que le joueur cherche a ameliorer.
+    const parSaut = new Map<number, number>()
+    for (const c of payants) parSaut.set(c.sauts, (parSaut.get(c.sauts) ?? 0) + 1)
+    const detail = document.createElement('div')
+    detail.className = 'bd-note'
+    detail.textContent =
+      payants.length === 0
+        ? 'aucun couple ne rapporte encore'
+        : [...parSaut.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([sauts, n]) => `${n} × ${mot(sauts)} (+${reglage.portee - sauts} chacune)`)
+            .join(' · ')
     const compte = document.createElement('div')
     compte.className = 'bd-note'
     compte.textContent = `prochain tick dans ${Math.max(0, Math.ceil((prochain - Date.now()) / 1000))} s · ${p.ticks} ticks`
@@ -213,7 +261,7 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     g.textContent =
       `pool de ${pool.length} · ${mesure.aretes} arêtes · degré moyen ${mesure.degre.toFixed(1)} · ` +
       `${mesure.isoles} sans lien · densité ${(100 * mesure.p).toFixed(2)} % · graine ${graine}`
-    haut.append(total, prod, compte, g)
+    haut.append(total, prod, detail, compte, g)
 
     // -------------------------------------------------------------------- la grille
     const grille = document.createElement('div')
@@ -241,16 +289,27 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
         chiffre.className = 'bd-prod'
         chiffre.textContent = String(par[i] ?? 0)
         b.append(img, nom, chiffre)
-        // LE SURVOL DECOMPOSE LE CALCUL : *un chiffre seul ne dit pas d'ou il
-        // vient*, et c'est tout ce qu'on cherche a rendre lisible ici.
-        const bonus = (par[i] ?? 0) - reglage.base
-        const k = bonus / reglage.synergie
+        // LE SURVOL DECOMPOSE LE CALCUL, VOISIN PAR VOISIN ET AVEC SA DISTANCE :
+        // *un chiffre seul ne dit pas d'ou il vient*, et maintenant qu'un couple
+        // peut valoir 4, 3, 2 ou 1, le dire globalement ne suffit plus.
+        const parts: string[] = []
+        let direct = false
+        for (const [x, y] of couples(cote)) {
+          const autre = x === i ? y : y === i ? x : -1
+          if (autre < 0) continue
+          const v = p.grille[autre] ?? null
+          if (v === null) continue
+          const sauts = distance(graphe, j.id, v.id, reglage.portee - 1, cache)
+          if (sauts === Infinity || sauts < 1) continue
+          const gain = Math.max(0, reglage.portee - sauts)
+          if (gain === 0) continue
+          if (sauts === 1) direct = true
+          parts.push(`+${gain} avec ${v.nom} (${mot(sauts)})`)
+        }
+        if (direct) b.classList.add('direct')
         b.title =
-          `${j.nom} — ${par[i] ?? 0} par tick` +
-          ` = ${reglage.base} de base` +
-          (bonus > 0
-            ? ` + ${bonus} (${k} carte${k > 1 ? 's' : ''} à côté dont l’article est lié au sien)`
-            : ' (aucune carte liée à côté)')
+          `${j.nom} — ${par[i] ?? 0} par tick = ${reglage.base} de base` +
+          (parts.length > 0 ? ` ${parts.join(' ')}` : ' (aucune carte joignable à côté)')
       }
       b.addEventListener('click', () => {
         if (choix === null) {
@@ -288,14 +347,14 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
       // pas une regle** — mais sans lui le joueur ne connait pas le graphe de
       // Wikipedia et poserait au hasard : *il n'y aurait aucune decision a
       // eprouver.* A retirer si Keko veut juger le jeu a l'aveugle.
-      const k = amisPoses(j.id)
-      if (k > 0) {
+      const m = meilleur(j.id)
+      if (m !== null) {
         const amis = document.createElement('div')
         amis.className = 'bd-amis'
-        amis.textContent = `+${k}`
+        amis.textContent = `+${m.gain}`
         amis.title =
-          `${k} carte${k > 1 ? 's' : ''} déjà posée${k > 1 ? 's' : ''} dont l’article Wikipédia ` +
-          `est lié à « ${j.nom} » — mets-la À CÔTÉ de l’une d’elles pour la synergie`
+          `Le mieux que « ${j.nom} » puisse prendre : +${m.gain}, à côté de ` +
+          `« ${m.qui} » (${mot(m.sauts)}). C’est un MAXIMUM, pas un total.`
         b.append(amis)
       }
       b.addEventListener('click', () => {
@@ -331,14 +390,17 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     const aide = document.createElement('div')
     aide.className = 'bd-note'
     aide.innerHTML =
-      `<b>Une synergie demande DEUX choses à la fois.</b> Les cartes doivent être ` +
-      `<b>À CÔTÉ</b> sur la grille (haut, bas, gauche, droite — jamais en diagonale) ` +
-      `<b>ET LIÉES</b> sur Wikipédia : l’article de l’une pointe vers l’autre, dans un sens ou l’autre.<br>` +
-      `<b>Chiffre JAUNE en haut d’une case</b> = ce que cette carte produit : ${reglage.base} de base, ` +
-      `+${reglage.synergie} par carte liée posée juste à côté. <b>Les deux cartes du couple le gagnent.</b> ` +
-      `Le liseré vert marque une case qui en profite.<br>` +
-      `<b>Badge VERT en bas d’une carte en main</b> = combien de cartes déjà posées sont liées à elle. ` +
-      `Il ne dit pas OÙ : à toi de la mettre à côté de l’une d’elles.<br>` +
+      `<b>Deux cartes CÔTE À CÔTE sur la grille</b> (haut, bas, gauche, droite — jamais en diagonale) ` +
+      `<b>se paient ${reglage.portee} moins le nombre de sauts</b> qui séparent leurs articles sur Wikipédia : ` +
+      [...Array(reglage.portee - 1).keys()]
+        .map((k) => `<b>${k + 1} saut = +${reglage.portee - k - 1}</b>`)
+        .join(', ') +
+      `, rien au-delà ni si elles ne se joignent pas. <b>Les deux cartes du couple le gagnent.</b><br>` +
+      `<b>Chiffre JAUNE en haut d’une case</b> = ce que cette carte produit (${reglage.base} de base + ses couples). ` +
+      `Survole-la pour voir le détail. Liseré <span style="color:#ffd98a">clair</span> = un lien direct, ` +
+      `<span style="color:#6ddf8f">vert</span> = un voisinage plus lointain.<br>` +
+      `<b>Badge VERT sur une carte en main</b> = le MIEUX qu’elle puisse prendre vu ce qui est déjà posé. ` +
+      `Il ne dit pas OÙ : survole-le.<br>` +
       `Clique une carte puis une case pour la poser. Clique une case posée puis une autre pour déplacer, ` +
       `ou le cadre de la main pour la reprendre.`
     boutons.append(bBooster, bNeuf)
@@ -351,7 +413,7 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
   // chaque seconde. *La production se calcule sur l'etat AU MOMENT du tick.*
   setInterval(() => {
     if (Date.now() >= prochain) {
-      p = tic(p, graphe)
+      p = tic(p, graphe, cache)
       prochain = Date.now() + reglage.tick
     }
     dessiner()

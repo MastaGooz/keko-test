@@ -11,9 +11,13 @@ import {
   booster,
   couples,
   deplacer,
+  bonusDuCouple,
+  couplesQuiPaient,
+  distance,
   enJeu,
   lies,
   plateauVide,
+  symetrique,
   poser,
   production,
   productionParCase,
@@ -39,15 +43,22 @@ const REG: Reglage = {
   cote: 4,
   tick: 5000,
   base: 1,
-  synergie: 1,
+  portee: 5,
   main: 10,
   booster: 5,
   sousPool: 300,
 }
 
-/** Des jetons de test : A..F, et un graphe ou A-B, B-C et D-E sont lies. */
+/**
+ * Des jetons de test : A..F, et un graphe ou A-B, B-C et D-E sont lies.
+ *
+ * Les distances qui en decoulent : A-B 1, B-C 1, **A-C 2** (par B), D-E 1, et
+ * A-D injoignable. *Le graphe de test est ecrit a moitie oriente expres* — c'est
+ * `symetrique()` qui le referme, et c'est justement ce qu'on veut verifier.
+ */
 const jeton = (id: string): Jeton => ({ id, nom: id, image: '', rarete: 'commun' })
-const GRAPHE: Graphe = { A: ['B'], B: ['C'], D: ['E'] }
+const BRUT: Graphe = { A: ['B'], B: ['C'], D: ['E'] }
+const GRAPHE: Graphe = symetrique(BRUT)
 
 /** Une grille de 4x4 depuis une liste de cases, `.` pour une case vide. */
 function grille(cases: string): (Jeton | null)[] {
@@ -83,15 +94,17 @@ console.log('\nLA PRODUCTION')
   // 1. UNE CARTE SEULE : sa base, rien de plus.
   egal(production(avec('A'), GRAPHE), 1, 'une carte seule produit 1')
 
-  // 2. DEUX CARTES LIEES ET ADJACENTES : +1 a CHACUNE.
-  egal(production(avec('A B'), GRAPHE), 4, 'A et B liees et adjacentes produisent 4')
+  // 2. DEUX CARTES LIEES ET ADJACENTES : le bonus MAXIMUM a CHACUNE.
+  //    A portee 5, un lien direct vaut 5 - 1 = 4.
+  egal(production(avec('A B'), GRAPHE), 10, 'A et B liees et adjacentes produisent 10')
   egal(
     productionParCase(avec('A B'), GRAPHE).slice(0, 2).join(','),
-    '2,2',
-    'et chacune affiche 2',
+    '5,5',
+    'et chacune affiche 5',
   )
 
-  // 3. DEUX CARTES LIEES MAIS NON ADJACENTES : aucune synergie.
+  // 3. DEUX CARTES LIEES MAIS NON ADJACENTES : rien. *La grille et le graphe
+  //    sont deux conditions, et il faut les deux.*
   egal(production(avec('A . B'), GRAPHE), 2, 'A et B liees mais eloignees produisent 2')
   egal(
     production({ ...plateauVide(REG, []), grille: grille('A . . . . . . . . . . . . . . B') }, GRAPHE),
@@ -99,17 +112,23 @@ console.log('\nLA PRODUCTION')
     'A en haut a gauche et B en bas a droite : aucune synergie',
   )
 
-  // 4. TROIS CARTES EN LIGNE DONT DEUX PAIRES LIEES : A-B et B-C.
-  //    B touche les deux, donc elle prend deux fois le bonus.
-  egal(production(avec('A B C'), GRAPHE), 7, 'A B C en ligne : 3 bases + 2 paires x 2 = 7')
+  // 4. TROIS CARTES EN LIGNE DONT DEUX PAIRES LIEES : A-B et B-C a 1 saut.
+  //    B touche les deux, donc elle prend deux fois le bonus. A et C ne sont
+  //    PAS cote a cote sur la grille, donc leur distance de 2 ne paie pas.
+  egal(production(avec('A B C'), GRAPHE), 19, 'A B C en ligne : 3 bases + 2 couples a 4 x 2 = 19')
   egal(
     productionParCase(avec('A B C'), GRAPHE).slice(0, 3).join(','),
-    '2,3,2',
-    'et B, qui touche les deux, affiche 3',
+    '5,9,5',
+    'et B, qui touche les deux, affiche 9',
   )
 
-  // DEUX CARTES ADJACENTES NON LIEES ne produisent que leurs bases.
-  egal(production(avec('A C'), GRAPHE), 2, 'A et C adjacentes mais non liees produisent 2')
+  // DEUX CARTES A DEUX SAUTS, COTE A COTE : le bonus DIMINUE, il ne tombe pas.
+  // *C'est toute la regle de Keko* — et avant elle, ce couple ne rapportait rien.
+  egal(production(avec('A C'), GRAPHE), 8, 'A et C a 2 sauts, cote a cote : 2 + 3 x 2 = 8')
+  egal(productionParCase(avec('A C'), GRAPHE).slice(0, 2).join(','), '4,4', 'et chacune affiche 4')
+
+  // DEUX CARTES INJOIGNABLES ne produisent que leurs bases.
+  egal(production(avec('A D'), GRAPHE), 2, 'A et D injoignables produisent 2')
 
   // LE LIEN EST NON ORIENTE : le graphe ne porte que A -> B.
   verifier('A-B est lu dans les deux sens', lies(GRAPHE, 'B', 'A'))
@@ -119,19 +138,67 @@ console.log('\nLA PRODUCTION')
   // point parce qu'une case existe.*
   egal(production(plateauVide(REG, []), GRAPHE), 0, 'une grille vide produit 0')
 
-  // LA SYNERGIE SUIT SON REGLAGE, elle n'est pas ecrite en dur.
-  const fort = { ...avec('A B'), reglage: { ...REG, synergie: 5 } }
-  egal(production(fort, GRAPHE), 12, 'a synergie 5, A et B produisent 12')
-  const nul = { ...avec('A B'), reglage: { ...REG, synergie: 0 } }
-  egal(production(nul, GRAPHE), 2, 'a synergie 0, l’arrangement ne change rien')
+  // LA PORTEE SUIT SON REGLAGE, elle n'est pas ecrite en dur.
+  const court = { ...avec('A C'), reglage: { ...REG, portee: 2 } }
+  egal(production(court, GRAPHE), 2, 'a portee 2, deux sauts ne paient plus')
+  const direct = { ...avec('A B'), reglage: { ...REG, portee: 2 } }
+  egal(production(direct, GRAPHE), 4, 'a portee 2, un lien direct vaut encore 1')
+  const nul = { ...avec('A B'), reglage: { ...REG, portee: 1 } }
+  egal(production(nul, GRAPHE), 2, 'a portee 1, l’arrangement ne change plus rien')
+  const large = { ...avec('A C'), reglage: { ...REG, portee: 9 } }
+  egal(production(large, GRAPHE), 16, 'a portee 9, deux sauts valent 7 chacune')
+}
+
+console.log('\nLA DISTANCE')
+{
+  // CE QUE LA FORMULE DE KEKO DEMANDE : le nombre de sauts, pas le fait d'etre lie.
+  egal(distance(GRAPHE, 'A', 'A', 4), 0, 'une carte est a 0 saut d’elle-meme')
+  egal(distance(GRAPHE, 'A', 'B', 4), 1, 'A et B sont a 1 saut')
+  egal(distance(GRAPHE, 'A', 'C', 4), 2, 'A et C sont a 2 sauts, par B')
+  egal(distance(GRAPHE, 'A', 'D', 4), Infinity, 'A et D ne se joignent pas')
+  egal(distance(GRAPHE, 'A', 'Z', 4), Infinity, 'une carte hors du graphe ne se joint pas')
+
+  // ELLE SE LIT DANS LES DEUX SENS, et c'est `symetrique()` qui le garantit :
+  // le graphe brut ne porte que B -> C, donc un parcours parti de C sur lui
+  // n'irait nulle part. *Un parcours ne peut pas lire un graphe a moitie oriente.*
+  egal(distance(GRAPHE, 'C', 'A', 4), 2, 'C et A sont a 2 sauts, dans ce sens aussi')
+  egal(distance(GRAPHE, 'C', 'B', 4), 1, 'C et B sont a 1 saut, dans ce sens aussi')
+  egal(distance(BRUT, 'C', 'B', 4), Infinity, 'et le graphe BRUT, lui, ne le voit pas')
+
+  // LA BORNE COUPE, et c'est elle qui rend la regle tenable a l'ecran.
+  egal(distance(GRAPHE, 'A', 'C', 1), Infinity, 'bornee a 1 saut, A-C sort du champ')
+  egal(distance(GRAPHE, 'A', 'B', 1), 1, 'bornee a 1 saut, A-B tient encore')
+  egal(distance(GRAPHE, 'A', 'B', 0), Infinity, 'bornee a 0, plus rien ne se joint')
+
+  // LE CACHE NE CHANGE PAS LE RESULTAT — il ne fait que l'eviter.
+  const cache = new Map<string, number>()
+  egal(distance(GRAPHE, 'A', 'C', 4, cache), 2, 'avec cache, A-C vaut 2')
+  egal(distance(GRAPHE, 'A', 'C', 4, cache), 2, 'et la seconde fois aussi')
+  egal(distance(GRAPHE, 'C', 'A', 4, cache), 2, 'la cle est la meme dans les deux sens')
+  egal(cache.size, 1, 'donc le cache ne retient qu’une entree')
+
+  // LE BONUS EST `portee - sauts`, ET IL NE DESCEND PAS SOUS ZERO.
+  egal(bonusDuCouple(REG, GRAPHE, 'A', 'B'), 4, 'a portee 5, un lien direct vaut 4')
+  egal(bonusDuCouple(REG, GRAPHE, 'A', 'C'), 3, 'a deux sauts, 3')
+  egal(bonusDuCouple(REG, GRAPHE, 'A', 'D'), 0, 'injoignable, 0')
+  egal(bonusDuCouple(REG, GRAPHE, 'A', 'A'), 0, 'une carte ne se paie pas elle-meme')
+
+  // LES COUPLES QUI PAIENT PORTENT LEUR DISTANCE : *c'est elle que le joueur
+  // doit lire pour comprendre pourquoi un couple rapporte 4 et son voisin 3.*
+  const trois = couplesQuiPaient(avec('A B C'), GRAPHE)
+  egal(trois.length, 2, 'A B C en ligne : deux couples paient')
+  egal(trois.map((c) => `${c.cases.join('-')}@${c.sauts}:${c.gain}`).join(' '), '0-1@1:4 1-2@1:4', 'et chacun dit sa distance')
+  const deux = couplesQuiPaient(avec('A C'), GRAPHE)
+  egal(deux.map((c) => `${c.sauts}:${c.gain}`).join(''), '2:3', 'A et C cote a cote : 2 sauts pour 3')
+  egal(couplesQuiPaient(avec('A D'), GRAPHE).length, 0, 'un couple injoignable ne figure pas')
 }
 
 console.log('\nLE TICK')
 {
   const p = tic(avec('A B'), GRAPHE)
-  egal(p.ressource, 4, 'un tick ajoute la production')
+  egal(p.ressource, 10, 'un tick ajoute la production')
   egal(p.ticks, 1, 'et compte le tick')
-  egal(tic(tic(avec('A B'), GRAPHE), GRAPHE).ressource, 8, 'deux ticks doublent')
+  egal(tic(tic(avec('A B'), GRAPHE), GRAPHE).ressource, 20, 'deux ticks doublent')
   // LE TICK EST PUR : le meme plateau rend toujours le meme resultat.
   const base = avec('A B C')
   egal(tic(base, GRAPHE).ressource, tic(base, GRAPHE).ressource, 'le tick est deterministe')

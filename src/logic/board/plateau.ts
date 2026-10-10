@@ -20,8 +20,36 @@ export interface Reglage {
   readonly tick: number
   /** Ce qu'une carte posée produit, seule. */
   readonly base: number
-  /** Ce que chaque paire liée ajoute, **à chacune des deux cartes**. */
-  readonly synergie: number
+  /**
+   * LA PORTÉE DU BONUS DE VOISINAGE : `portee - sauts`.
+   *
+   * Formule de Keko : « bonus = 5 - nombre de sauts (0 si pas joignable) ». À
+   * `portee: 5`, un lien direct vaut 4, un intermédiaire 3, deux 2, trois 1, et
+   * rien au-delà. **Les DEUX cartes du couple le gagnent.**
+   *
+   * *Elle se calcule de tête*, et c'est ce qui l'a fait préférer à une table de
+   * valeurs : **une règle qu'un joueur peut refaire dans sa tête est jouable,
+   * une table qu'il doit apprendre ne l'est pas.**
+   *
+   * **UN SEUL CHIFFRE LA RÈGLE, ET IL EST MESURÉ** (300 mains, le score d'un
+   * arrangement optimisé contre un placement au hasard) :
+   *
+   * | portée | ce que coûte de jouer au hasard |
+   * |---|---|
+   * | 3 (4, 2) | 46 % |
+   * | 4 (3, 2, 1) | 44 % |
+   * | **5 (4, 3, 2, 1)** | **42 %** |
+   * | 6 (5, 4, 3, 2, 1) | 39 % |
+   *
+   * *Ce qui coûte, c'est la longueur de la queue* : à portée 5 on paie jusqu'à
+   * quatre sauts, donc **92 % des couples rapportent quelque chose** et le bonus
+   * devient un plancher. La règle d'avant — lien direct seulement, +1 — ne
+   * coûtait que **19 %** : la formule vaut deux fois mieux quoi qu'il arrive.
+   *
+   * Une table non linéaire ferait un peu mieux (`[4, 2]` : 55 %) ; elle a été
+   * écartée parce qu'elle ne se dit pas en une phrase.
+   */
+  readonly portee: number
   /** Cartes de la main de départ. */
   readonly main: number
   /** Cartes qu'un booster ajoute. */
@@ -49,7 +77,7 @@ export const REGLAGE: Reglage = {
   cote: 4,
   tick: 5000,
   base: 1,
-  synergie: 1,
+  portee: 5,
   main: 10,
   booster: 5,
   sousPool: 300,
@@ -92,9 +120,130 @@ export function plateauVide(reglage: Reglage, main: readonly Jeton[]): Plateau {
   }
 }
 
-/** Deux cartes sont liées si l'une pointe vers l'autre. */
+/** Deux cartes sont liées si l'une pointe vers l'autre — la distance vaut 1. */
 export function lies(graphe: Graphe, a: string, b: string): boolean {
   return (graphe[a]?.includes(b) ?? false) || (graphe[b]?.includes(a) ?? false)
+}
+
+/** De quoi retenir les distances déjà cherchées. *Le cache vit avec le graphe.* */
+export type Distances = Map<string, number>
+
+/**
+ * LE GRAPHE REFERMÉ DANS LES DEUX SENS — **à appeler une fois, au chargement.**
+ *
+ * `lies()` peut se permettre de regarder les deux sens à la demande ; **un
+ * PARCOURS ne peut pas.** Il avance de voisin en voisin, donc une arête écrite
+ * dans un seul sens est un cul-de-sac : avec `{ B: ['C'] }`, partir de C ne mène
+ * nulle part, et la distance C–B sortirait infinie alors qu'elles sont liées.
+ *
+ * *Le fichier du script est déjà symétrisé*, donc ça ne change rien en jeu —
+ * mais **une fonction qui rend un résultat faux sur une entrée légale est une
+ * fonction fausse**, et une passe sur vingt-sept mille arêtes ne coûte rien.
+ */
+export function symetrique(graphe: Graphe): Graphe {
+  const out = new Map<string, Set<string>>()
+  const ajoute = (a: string, b: string): void => {
+    const s = out.get(a)
+    if (s === undefined) out.set(a, new Set([b]))
+    else s.add(b)
+  }
+  for (const [a, vs] of Object.entries(graphe))
+    for (const b of vs) {
+      ajoute(a, b)
+      ajoute(b, a)
+    }
+  const plat: Record<string, readonly string[]> = {}
+  for (const [a, s] of out) plat[a] = [...s]
+  return plat
+}
+
+/**
+ * LA DISTANCE ENTRE DEUX CARTES, EN SAUTS. `Infinity` au-delà de `max`.
+ *
+ * **Bornée, parce qu'un parcours complet coûte trop cher pour un rendu** :
+ * vingt-quatre couples sur vingt-sept mille arêtes, et le rendu recommence à
+ * chaque geste. On ne cherche que jusqu'à `max` — et *ce qui est au-delà ne
+ * rapporte rien de toute façon*, donc la borne ne perd aucune information.
+ *
+ * **Et par les DEUX bouts à la fois.** À dix-huit voisins par carte, quatre
+ * sauts d'un seul côté visitent cent mille noeuds ; deux fois deux sauts en
+ * visitent six cents. *La borne divise le travail, la bidirection le divise
+ * encore* — et c'est ce qui rend la règle tenable à chaque image.
+ *
+ * **Mémoïsée** parce que la grille ne bouge pas entre deux gestes : sans cache,
+ * la même paire se redemanderait indéfiniment.
+ *
+ * **LE GRAPHE DOIT ÊTRE SYMÉTRIQUE** — voir `symetrique()`.
+ */
+export function distance(
+  graphe: Graphe,
+  a: string,
+  b: string,
+  max: number,
+  cache?: Distances,
+): number {
+  if (a === b) return 0
+  if (max < 1) return Infinity
+  const cle = a < b ? `${a}|${b}` : `${b}|${a}`
+  const garde = cache?.get(cle)
+  if (garde !== undefined) return garde
+
+  // Deux fronts qui avancent l'un vers l'autre. Chacun retient la distance a
+  // SON depart, donc une rencontre donne la somme des deux.
+  const deA = new Map<string, number>([[a, 0]])
+  const deB = new Map<string, number>([[b, 0]])
+  let frontA: string[] = [a]
+  let frontB: string[] = [b]
+  let profA = 0
+  let profB = 0
+  let k = Infinity
+  // Tant qu'une rencontre reste possible SOUS la borne.
+  while (k === Infinity && frontA.length > 0 && frontB.length > 0 && profA + profB < max) {
+    // ON ÉTEND LE PLUS PETIT DES DEUX : c'est tout l'intérêt de la bidirection.
+    const aGauche = frontA.length <= frontB.length
+    const vus = aGauche ? deA : deB
+    const autre = aGauche ? deB : deA
+    const front = aGauche ? frontA : frontB
+    const pas = (aGauche ? profA : profB) + 1
+    const suivant: string[] = []
+    for (const id of front)
+      for (const v of graphe[id] ?? []) {
+        if (vus.has(v)) continue
+        vus.set(v, pas)
+        const croise = autre.get(v)
+        if (croise !== undefined && pas + croise < k) k = pas + croise
+        suivant.push(v)
+      }
+    if (aGauche) {
+      frontA = suivant
+      profA = pas
+    } else {
+      frontB = suivant
+      profB = pas
+    }
+  }
+
+  const out = k > max ? Infinity : k
+  cache?.set(cle, out)
+  return out
+}
+
+/**
+ * CE QU'UN COUPLE CÔTE À CÔTE S'AJOUTE : `portee - sauts`, zéro au-delà.
+ *
+ * **C'est la seule porte**, et tout y passe — la production, le chiffre de la
+ * case, le badge de la main : *deux endroits qui calculeraient le même bonus se
+ * désaccorderaient au premier réglage.*
+ */
+export function bonusDuCouple(
+  reglage: Reglage,
+  graphe: Graphe,
+  a: string,
+  b: string,
+  cache?: Distances,
+): number {
+  const k = distance(graphe, a, b, reglage.portee - 1, cache)
+  return k === Infinity || k < 1 ? 0 : Math.max(0, reglage.portee - k)
 }
 
 /**
@@ -122,32 +271,59 @@ export function couples(cote: number): readonly (readonly [number, number])[] {
  * rapporté*, et c'est précisément la question du proto : il doit voir le
  * chiffre monter sur la carte qu'il vient de poser.
  */
-export function productionParCase(p: Plateau, graphe: Graphe): readonly number[] {
-  const { base, synergie, cote } = p.reglage
+export function productionParCase(
+  p: Plateau,
+  graphe: Graphe,
+  cache?: Distances,
+): readonly number[] {
+  const { base, cote } = p.reglage
   const par = p.grille.map((j) => (j === null ? 0 : base))
   for (const [i, k] of couples(cote)) {
     const a = p.grille[i]
     const b = p.grille[k]
     if (a === null || b === null || a === undefined || b === undefined) continue
-    if (!lies(graphe, a.id, b.id)) continue
-    par[i] = (par[i] ?? 0) + synergie
-    par[k] = (par[k] ?? 0) + synergie
+    const gain = bonusDuCouple(p.reglage, graphe, a.id, b.id, cache)
+    if (gain === 0) continue
+    par[i] = (par[i] ?? 0) + gain
+    par[k] = (par[k] ?? 0) + gain
   }
   return par
 }
 
 /** La production d'un tick. */
-export function production(p: Plateau, graphe: Graphe): number {
-  return productionParCase(p, graphe).reduce((a, b) => a + b, 0)
+export function production(p: Plateau, graphe: Graphe, cache?: Distances): number {
+  return productionParCase(p, graphe, cache).reduce((a, b) => a + b, 0)
 }
 
-/** Les couples liés actuellement sur la grille — pour les montrer à l'écran. */
-export function paquesLiees(p: Plateau, graphe: Graphe): readonly (readonly [number, number])[] {
-  return couples(p.reglage.cote).filter(([i, k]) => {
+/** Un couple de la grille qui rapporte, avec sa distance. */
+export interface CouplePayant {
+  readonly cases: readonly [number, number]
+  readonly sauts: number
+  readonly gain: number
+}
+
+/**
+ * LES COUPLES QUI PAIENT, AVEC LEUR DISTANCE — pour les montrer à l'écran.
+ *
+ * *On rend la distance et pas seulement le fait* : c'est elle que le joueur doit
+ * lire pour comprendre pourquoi un couple rapporte quatre et son voisin deux.
+ */
+export function couplesQuiPaient(
+  p: Plateau,
+  graphe: Graphe,
+  cache?: Distances,
+): readonly CouplePayant[] {
+  const out: CouplePayant[] = []
+  for (const [i, k] of couples(p.reglage.cote)) {
     const a = p.grille[i]
     const b = p.grille[k]
-    return a != null && b != null && lies(graphe, a.id, b.id)
-  })
+    if (a == null || b == null) continue
+    const sauts = distance(graphe, a.id, b.id, p.reglage.portee - 1, cache)
+    if (sauts === Infinity || sauts < 1) continue
+    const gain = Math.max(0, p.reglage.portee - sauts)
+    if (gain > 0) out.push({ cases: [i, k], sauts, gain })
+  }
+  return out
 }
 
 /**
@@ -157,8 +333,8 @@ export function paquesLiees(p: Plateau, graphe: Graphe): readonly (readonly [num
  * règle que Keko a posée, et elle rend la fonction pure : *un même plateau rend
  * toujours le même tick.*
  */
-export function tic(p: Plateau, graphe: Graphe): Plateau {
-  return { ...p, ressource: p.ressource + production(p, graphe), ticks: p.ticks + 1 }
+export function tic(p: Plateau, graphe: Graphe, cache?: Distances): Plateau {
+  return { ...p, ressource: p.ressource + production(p, graphe, cache), ticks: p.ticks + 1 }
 }
 
 /**
