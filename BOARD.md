@@ -1531,6 +1531,59 @@ score 8 posée seule affiche **8 en jaune**, et ses voisins la font monter en ve
 ou descendre en rouge. *Le chiffre unique coloré et le score en base sont la même
 décision, prise en deux fois.*
 
+#### LE BONUS DE LIEN, EN CLAIR : quatre moins le nombre de sauts
+
+Keko : **« concernant le score de lien, ça marche comment ? »**
+
+**Trois règles, et c'est tout.**
+
+1. deux cartes **côte à côte** forment un couple — haut, bas, gauche, droite,
+   *jamais en diagonale* ;
+2. le couple vaut **la portée moins le nombre de SAUTS** entre leurs deux pages
+   Wikipédia. À portée 4 : lien direct **+3**, un intermédiaire **+2**, deux
+   **+1**, au-delà **rien** ;
+3. **les DEUX cartes le gagnent** — et si elles sont de camps différents, elles
+   le **perdent** toutes les deux, sans descendre sous zéro.
+
+**« Un saut » veut dire « la page de l'une cite l'autre ».** Mesuré sur le vrai
+graphe du jeu :
+
+| couple | sauts | vaut |
+|---|---|---|
+| Trump + Elon Musk | 1 | **+3** |
+| Mbappé + Ronaldo | 1 | **+3** |
+| Michael Jackson + Elvis | 1 | **+3** |
+| Ed Gein + Lizzie Borden | 1 | **+3** |
+| Mbappé + Trump | 2 | **+2** |
+| Ed Gein + Epstein | 2 | **+2** |
+| Jeff Bezos + Khamenei | 2 | **+2** |
+| Mbappé + Bruce Lee | 3 | **+1** |
+
+**UN EXEMPLE DE CASE COMPLÈTE.** Mbappé (score **8**) posé entre Ronaldo (1 saut)
+et Bruce Lee (3 sauts), tous les trois à moi :
+
+```
+8  (son score)  +3 (Ronaldo)  +1 (Bruce Lee)  =  12, en VERT
+```
+
+*Et Ronaldo encaisse le même +3 de son côté* — il affiche donc 13 (10 + 3).
+**Si Ronaldo était au bot, les deux perdraient 3** : Mbappé tomberait à 6.
+
+**POURQUOI « 4 MOINS LES SAUTS » ET PAS « LIÉ OU PAS »** : la première règle ne
+payait que le lien direct, et *trois mains sur quatre ne pouvaient alors presque
+rien faire de leur arrangement* — mesuré, le hasard ne coûtait que 19 %, contre
+42 % avec la distance. **La formule double la décision**, et elle se refait de
+tête, ce qu'une table de valeurs ne permet pas.
+
+**ET LA PORTÉE EST À 4, PAS À 5**, parce qu'à 5 **91 % des couples payaient quelque
+chose** : un voisin valait alors presque toujours, donc seul leur NOMBRE comptait
+et *un bot qui prend le centre avec des cartes au hasard battait le bot qui
+optimise tout, 72 % du temps.* À 4, la géométrie ne domine plus (45 %).
+
+*Le joueur n'a rien à calculer* : cliquer une carte écrit le gain sur chaque case
+libre, et survoler une case posée décompose son total voisin par voisin, avec la
+distance de chacun.
+
 ### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
