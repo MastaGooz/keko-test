@@ -138,7 +138,7 @@ export const REGLAGE_DUEL: ReglageDuel = {
   ordre: 'alterne',
   mixte: 'moins',
   sousPool: 300,
-  valeur: 'taille',
+  valeur: 'bonus',
 }
 
 /**
@@ -240,8 +240,23 @@ export function baseDeLaCarte(r: ReglageDuel, j: Jeton): number {
   return r.valeur === 'taille' ? valeurDe(j, r.base) : r.base
 }
 
+/**
+ * CE QUE LA CARTE VAUT, TEL QU'ON L'AFFICHE.
+ *
+ * **Sous `bonus`, la base ne varie plus** — toutes les cartes valent 1 — donc
+ * le coin haut-gauche ne dirait plus rien, et le score qui porte desormais
+ * toute la decision n'apparaitrait nulle part. *Un chiffre identique sur les
+ * seize cases ne designe aucune case*, la regle de l'apercu.
+ *
+ * Sous `un` et `taille`, la base EST ce que la carte vaut : il n'y a qu'un
+ * chiffre, et c'est celui-la.
+ */
+export function scoreDeLaCarte(r: ReglageDuel, j: Jeton): number {
+  return r.valeur === 'bonus' ? valeurDe(j, VALEUR_PIVOT) : baseDeLaCarte(r, j)
+}
+
 export function pointsParCase(d: Duel, graphe: Graphe, cache?: Distances): readonly number[] {
-  const { base, valeur } = d.reglage
+  const { valeur } = d.reglage
   const par = d.grille.map((j) => (j === null ? 0 : baseDeLaCarte(d.reglage, j)))
   for (const [i, k] of couples(d.reglage.cote)) {
     const a = d.grille[i]
@@ -251,8 +266,15 @@ export function pointsParCase(d: Duel, graphe: Graphe, cache?: Distances): reado
     // SOUS `bonus`, LE COUPLE PAIE AU PRORATA DES DEUX CARTES : une grosse carte
     // bien placee rapporte plus, une grosse carte isolee ne rapporte rien.
     // *C'est ce qui fait compter la page SANS que le tirage decide la partie.*
+    //
+    // **UNE CARTE SANS VALEUR VAUT LE PIVOT ICI, PAS LA BASE** : le
+    // multiplicateur doit alors etre NEUTRE. *Pose a la base, il valait 1/7 et
+    // le mode effacait le bonus de toute carte qui n'en portait pas* -- donc un
+    // mode qui ne devait que ponderer supprimait la mecanique.
     if (valeur === 'bonus')
-      gain = Math.round((gain * (valeurDe(a, base) + valeurDe(b, base))) / 2 / VALEUR_PIVOT)
+      gain = Math.round(
+        (gain * (valeurDe(a, VALEUR_PIVOT) + valeurDe(b, VALEUR_PIVOT))) / 2 / VALEUR_PIVOT,
+      )
     if (gain === 0) continue
     // UN COUPLE MIXTE RETIRE, un couple propre ajoute — et dans les deux cas
     // il porte sur SES DEUX CARTES. *Le faire porter sur une seule demanderait

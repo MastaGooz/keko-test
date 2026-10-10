@@ -13328,6 +13328,85 @@ C'est le seul du bloc a ne pas etre un sous-produit de l'ecriture.
 le plus defendable de tous les candidats : *Jesus-Christ 346, Obama 340,
 Shakespeare 336, Trump 334, Hitler 328.*
 
+##### UN SEUL SCORE PAR CARTE, ET IL MULTIPLIE LE BONUS
+
+Tranché par Keko : **« on garde uniquement un seul score par carte et on a pas
+besoin de deux ? on a deja les noeuds + le score »**.
+
+*Et c'est exactement ça* : le jeu lit déjà **la position dans le graphe**, qui
+fait le bonus, et **un score par carte**. Un troisième chiffre n'ajouterait pas
+un axe — la matrice le dit, il n'y a que deux axes et le second est pris.
+
+Trois décisions, et chacune vient d'une mesure déjà faite :
+
+- **la RARETÉ, c'est les VUES** (le cadre, déjà en place) ;
+- **le SCORE, c'est le NOMBRE DE LANGUES**, découpé en dix groupes égaux ;
+- **le score MULTIPLIE le bonus**, il n'est pas la base (`valeur: 'bonus'`,
+  désormais le défaut).
+
+##### LA FORME COMPTE PLUS QUE LE CRITÈRE — remesuré avec les langues
+
+400 parties par ligne, vrai code, bot glouton des deux côtés :
+
+| | part des bases | la plus grosse main gagne | ce que coûte le hasard |
+|---|---|---|---|
+| **rien** (base 1, la référence) | 23 % | **23 %** | 14,3 |
+| le score EST la base | 65 % | **82 %** | 13,4 |
+| **le score multiplie le bonus** | 25 % | **33 %** | 14,3 |
+| *rien, portée 4 + plancher* | *33 %* | *33 %* | *9,4* |
+| *base, portée 4 + plancher* | *76 %* | *85 %* | *10,7* |
+| ***bonus, portée 4 + plancher*** | *34 %* | ***38 %*** | *9,9* |
+
+***Une base additive fait gagner la partie à celui qui a tiré la plus grosse
+main, quatre fois sur cinq.*** On pose toute sa main — huit cartes, huit coups —
+donc **la somme des bases est fixée au tirage** et les trois quarts du score
+cessent de se jouer. En multiplicateur, le tirage retombe au niveau de la
+référence : *une grosse carte mal placée devient un gâchis*, et c'est
+exactement la décision spatiale qu'on cherchait.
+
+**ET LE CHOIX DU CRITÈRE NE CHANGE PAS LE JEU** — mesuré, langues contre
+taille, même banc : 33 % / 38 % contre 35 % / 43 %. *Il change ce que le haut de
+l'échelle DÉSIGNE*, pas la mécanique. C'est pour ça que la décision s'est prise
+sur la distribution et sur le haut de tableau, et non sur une simulation.
+
+##### LE DÉCOUPAGE EST PAR QUANTILES, ET IL SE CALCULE SUR LE POOL
+
+`cransDuPool`, dans `render/board.ts` — partagé par les deux écrans.
+
+- **dix groupes ÉGAUX, pas dix tranches de valeur.** Les identifiants externes
+  mettaient 33 % du pool dans un seul cran et laissaient les crans 2 et 3 à
+  zéro ; *dix groupes de même taille donnent dix crans habités quelle que soit
+  la forme de la mesure* ;
+- **et ça ne change aucun classement** : un découpage par quantiles préserve
+  l'ordre, donc toutes les corrélations de rang mesurées restent vraies — **ce
+  qui a été vérifié plutôt que supposé** (0,361 contre 0,355 avant et après) ;
+- **sur le POOL, pas sur le catalogue.** *Une échelle calée sur les 3 000 se
+  tasse en haut dès qu'on n'en tire que les 300 plus notoires* — c'est le défaut
+  mesuré sur `attaque`, où 5 et 6 portent 75 % du pool ;
+- **les ex aequo partagent leur cran** : *deux cartes de même valeur ne peuvent
+  pas valoir deux chiffres différents.*
+
+`?duel&score=taille` rend la taille de l'article, qui était le défaut d'avant ;
+`?duel&valeur=un|taille` rend les deux autres formes.
+
+##### DEUX DÉFAUTS QUE LE CHANGEMENT DE DÉFAUT A RÉVÉLÉS
+
+**1. UNE CARTE SANS VALEUR VAUT LE PIVOT, PAS LA BASE.** Le multiplicateur
+vaut `(valeur A + valeur B) / 2 / pivot`, le pivot étant la médiane du pool
+(7) : posé à la base, une carte sans valeur valait 1, donc le facteur tombait à
+1/7 et **le mode effaçait le bonus de toute carte qui n'en portait pas.** *Un
+mode qui ne devait que pondérer supprimait la mécanique* — et ça s'est vu d'un
+coup, huit vérifications du barème du couple tombant à zéro. **Sans valeur, le
+multiplicateur doit être NEUTRE.**
+
+**2. LE SCORE N'ÉTAIT AFFICHÉ NULLE PART.** Sous `bonus` la base ne varie plus
+— toutes les cartes valent 1 — donc le coin haut-gauche disait « 1 » seize fois
+et le chiffre qui porte désormais toute la décision était invisible.
+*Un chiffre identique sur les seize cases ne désigne aucune case*, la règle de
+l'aperçu. `scoreDeLaCarte` décide quoi montrer selon la forme, et **la carte de
+la main porte le même badge au même coin** : c'est ce qu'on compare d'une carte
+à l'autre.
+
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
@@ -13379,9 +13458,13 @@ lien*, donc aucun bonus, donc aucune décision.
 `ordre`, `mixte`, `valeur`, `sousPool`. **`parJoueur` s'en déduit** et ne se
 règle pas ; `VALEUR_PIVOT` est la médiane mesurée du pool.
 
-`?duel&portee=N`, `?duel&mixte=plus|plancher`, `?duel&valeur=bonus|un`,
-`?duel&ordre=serpent`, `?duel&seed=N` et `?duel&pool=N` ouvrent chacun une
-variante.
+`?duel&portee=N`, `?duel&mixte=plus|plancher`, `?duel&valeur=un|taille`,
+`?duel&score=taille`, `?duel&ordre=serpent`, `?duel&seed=N` et `?duel&pool=N`
+ouvrent chacun une variante.
+
+**Le SCORE d'une carte se choisit dans `render/duel.ts`** (`scoreDe`), pas dans
+le reglage : c'est un champ du CATALOGUE, donc `logic/` ne le connait pas — il
+ne voit qu'un nombre de 1 a 10 porte par le jeton.
 
 ## LE JEU 2D EST SUPPRIMÉ — le moteur 3D est le jeu
 

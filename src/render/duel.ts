@@ -24,9 +24,11 @@
  */
 
 import { loadCharacters } from '../ui/personnages.ts'
-import { CSS, sousPoolDemande, tailleDeCase, vignette } from './board.ts'
+import type { CharacterCard } from '../logic/characters/types.ts'
+import { cransDuPool, CSS, sousPoolDemande, tailleDeCase, vignette } from './board.ts'
 import {
   baseDeLaCarte,
+  scoreDeLaCarte,
   campDuTour,
   coupDuBot,
   duelVide,
@@ -155,14 +157,28 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
   }
 
   // LE CATALOGUE EST TRIE PAR NOTORIETE : les N premiers sont le sous-pool.
-  const pool: readonly Jeton[] = cartes.slice(0, reglage.sousPool).map((c) => ({
+  const brut = cartes.slice(0, reglage.sousPool)
+
+  // **UN SEUL SCORE PAR CARTE**, tranche par Keko : « on garde uniquement un
+  // seul score par carte et on a pas besoin de deux ? on a deja les noeuds +
+  // le score ». *Le jeu lit deja la position dans le graphe, qui fait le
+  // bonus* — un second chiffre n'ajouterait pas un axe, il en repeterait un.
+  //
+  // ET C'EST LE NOMBRE DE LANGUES. Mesure sur quinze criteres, tous sur les
+  // memes cartes : il est le 3e plus independant des vues (0,27) mais le 1er
+  // sur la REPARTITION (23 % au plus gros tas, aucune carte a zero, dix crans
+  // habites), et il ne coute aucune collecte. `?duel&score=taille` rend la
+  // taille de l'article, qui etait le defaut d'avant.
+  const quoiS = new URLSearchParams(location.search).get('score')
+  const scoreDe = quoiS === 'taille' ? (c: CharacterCard) => c.taille : (c: CharacterCard) => c.langues
+  // LES CRANS SE CALCULENT SUR LE POOL, pas sur le catalogue : *une echelle
+  // calee sur les 3 000 se tasse en haut des qu'on n'en tire que les 300 plus
+  // notoires*, le defaut mesure sur `attaque` ou 5 et 6 portent 75 % du pool.
+  const crans = cransDuPool(brut, scoreDe)
+  const pool: readonly Jeton[] = brut.map((c, i) => ({
     id: c.id,
     nom: c.nom,
-    // LA VALEUR EST LA TAILLE DE L'ARTICLE, en 1 a 10 : c'est le champ
-    // `defense` du catalogue, deja calcule dessus. *On ne recalcule pas une
-    // echelle qui existe* — et mesuree sur le pool elle est bien etalee
-    // (min 1, mediane 7, max 10), la ou les vues s'y tassent en haut.
-    valeur: c.defense,
+    valeur: crans[i] ?? 1,
     // `image` est `string | null` AU TYPE — *un type qui autorise le vide
     // finira par le rencontrer.*
     image: c.image ?? '',
@@ -297,7 +313,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
         nom.textContent = j.nom
         const base = document.createElement('div')
         base.className = 'bd-base'
-        base.textContent = String(baseDeLaCarte(reglage, j))
+        base.textContent = String(scoreDeLaCarte(reglage, j))
         b.append(img, nom, base)
         const gain = (par[i] ?? 0) - baseDeLaCarte(reglage, j)
         if (gain > 0) {
@@ -358,6 +374,14 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       const nom = document.createElement('span')
       nom.textContent = j.nom
       b.append(img, nom)
+      // LE SCORE DE LA CARTE, au meme coin que sur la grille : *c'est ce qu'on
+      // compare d'une carte de la main a l'autre*, et sous `bonus` c'est lui
+      // qui multiplie ce que la carte prendra.
+      const sc = document.createElement('div')
+      sc.className = 'bd-base'
+      sc.textContent = String(scoreDeLaCarte(reglage, j))
+      sc.title = `« ${j.nom} » vaut ${scoreDeLaCarte(reglage, j)} sur 10.`
+      b.append(sc)
       // LE MEME CALCUL QUE L'APERCU, donc le meme chiffre : *deux affichages
       // qui pretendent dire la meme chose doivent passer par le meme calcul.*
       // LE BADGE DIT LE MEILLEUR ECART, comme le lisere : *deux affichages qui
