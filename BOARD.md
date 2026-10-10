@@ -994,6 +994,106 @@ une quantite — et le score continu est le mieux etale de tout ce qu'on a mesur
 stat devient necessaire**, et alors pour ce qu'elle dit, pas pour son
 independance.
 
+#### TAILLE ET VUES : 0,27 SUR LES TROIS MILLE — le chiffre ferme
+
+Keko : « et la correlation entre vues et longueur ? » — *la bonne question,
+puisque c'est elle qui justifie tout le plan.* Elle se mesure **sans un seul
+appel**, les deux champs etant dans le catalogue :
+
+| | |
+|---|---|
+| le catalogue entier (3 000) | **0,268** |
+| le pool du plateau (300) | 0,289 |
+| **telles que le JEU les lit** (`defense` contre `attaque`, en crans) | **0,262** |
+| les 100 plus notoires | 0,169 |
+| la queue (2000-3000) | 0,061 |
+
+**ET ÇA CORRIGE UN CHIFFRE QUE J'AI DONNE : 0,379.** Il venait d'un echantillon
+de 99 cartes, et le vrai est 0,27. ***Une correlation mesuree sur cent cartes a
+du bruit ; quand la donnee est deja sur le disque, il n'y a aucune raison de ne
+pas prendre les trois mille.***
+
+**C'est de loin le couple le plus independant qu'on ait trouve** — contre 0,86
+pour la qualite, 0,86 pour les images, 0,96 pour les liens externes, et 0,69
+entre la taille et le nombre de langues.
+
+Et ca se voit sur des cartes : **Marine Le Pen** a 418 Ko d'article (10/10 en
+taille) pour 0,70 M de vues (2/10) ; **Valentino Rossi** 406 Ko et 0,37 M ;
+**Jaafar Jackson** l'inverse, 11 Ko (4/10) pour 10,1 M de vues (7/10).
+*Trente-six cartes du catalogue sont a 10/10 d'un cote et 2/10 de l'autre.*
+
+#### CE QUE LA QUALITE DONNE VRAIMENT : elle efface les ARTISTES
+
+*Et ça renverse ce que j'avais recommande au tour d'avant, sur un top 8 non
+representatif* (« Elisabeth II / Staline / Gengis Khan »). Sur un **top 25**, les
+memes 99 cartes :
+
+| | artistes | politiques | sportifs |
+|---|---|---|---|
+| **taille** | **11** | 8 | 6 |
+| **qualite** | **2** | 11 | 10 |
+| *le pool* | *49* | *19* | *18* |
+
+**La taille respecte a peu pres la composition du pool ; la qualite jette les
+artistes.** Ils sont la MOITIE du catalogue et il n'en reste que deux sur
+vingt-cinq — donc ***la moitie des cartes ne pourrait jamais etre forte.***
+
+Ce que chaque mesure recompense, et c'est lisible sur les cartes :
+
+- **la taille = un article BAVARD**, et ce qui gonfle un article est une LISTE —
+  filmographie, discographie, palmares. Brigitte Bardot 313 Ko, Clint Eastwood
+  287, Madonna 251 ;
+- **la qualite = un article SOURCE et structure** : des politiciens et des
+  footballeurs, dont chaque phrase porte une reference de presse. Clinton,
+  Kennedy, Khamenei, Maradona, Beckham — tous entre 78 et 121 Ko, donc **deux a
+  trois fois plus courts que Bardot et bien mieux notes.**
+
+**ET MON « MIEUX ETALEE » ETAIT FAUX AUSSI.** J'avais lu « 50 notes differentes
+sur 50 cartes » comme un bon etalement : ***des valeurs distinctes ne sont pas
+une repartition.*** Ramenees a dix crans, la qualite met **31 % des cartes dans
+le seul cran 8**, contre 21 % pour le plus gros tas de la taille.
+
+*Deux fois dans le meme episode, un echantillon trop petit m'a fait conclure a
+l'envers* — huit cartes pour le classement, cinquante pour l'etalement. **Quand
+une mesure est gratuite, la prendre sur tout est moins cher que de se tromper.**
+
+#### UN INDICE QUI MELANGE LES DEUX NE FAIT PAS UN COMPROMIS, IL DEPLACE UN CURSEUR
+
+Propose par Keko : « et si on faisait un indice qui prend en compte les deux
+valeurs ? » **Balaye sur sept dosages**, en melangeant des RANGS et non des
+valeurs — *des octets et une note de 0 a 1 ne sont pas sur la meme echelle, donc
+une moyenne brute donnerait tout le poids aux octets.*
+
+| part de taille | artistes dans le top 25 | ce qui change vs la taille seule |
+|---|---|---|
+| **100 %** | **11** | — |
+| 75 % | 10 | **1 / 25** |
+| 60 % | 9 | 2 / 25 |
+| 50 % | **5** | 6 / 25 |
+| 25 % | 3 | 8 / 25 |
+| 0 % | **2** | 11 / 25 |
+
+***Il n'existe aucun dosage utile.*** A dose douce, le resultat est celui de la
+taille seule — **vingt-huit minutes de collecte pour une carte sur vingt-cinq.**
+Des que ca se voit, les artistes ont deja perdu la moitie de leur place, donc on
+a repris le defaut de la qualite sans l'avoir choisi.
+
+**La cause est le 0,86** : *deux mesures qui disent presque la meme chose ne se
+completent pas* — leur moyenne reste sur le meme axe et ne fait que glisser d'un
+bout a l'autre. La correlation aux vues, elle, ne bouge pas sur tout le balayage
+(0,363 a 0,397), donc ce n'etait pas la le probleme.
+
+**CONCLUSION : ON GARDE LA TAILLE.** Zero collecte, aucune dependance de plus,
+et elle respecte la composition du pool. *La qualite reste mesuree et documentee
+ici* — elle resservira le jour ou une stat de PLUS sera necessaire, pas pour
+remplacer celle-la.
+
+*Et si le haut de tableau devait vraiment etre plus varie, l'outil n'est aucun
+des trois* : il faudrait **noter chaque carte DANS son domaine**, pour que le
+meilleur acteur vaille 10 comme le meilleur politique. **Ça change ce que le
+chiffre veut dire** — « bon dans sa categorie » et non « bon » — donc c'est une
+decision de design, et elle revient a Keko.
+
 ### LA TAILLE DE L'ARTICLE DEVIENT LA VALEUR DE LA CARTE — et la FORME est a trancher
 
 Tranche par Keko : « taille = on prend comme valeur / vues = on va l'utiliser
