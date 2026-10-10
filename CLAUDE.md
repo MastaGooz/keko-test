@@ -11795,6 +11795,197 @@ et le bouton. Zéro débordement. La carte fait 110 px à 667 x 320, 139 à
 et c'est assumé : *ici on REGARDE les cartes*, là où le plafond vaut pour une
 main de combat.
 
+### CE QUE LEXICODEX A APPRIS À L'OUVERTURE — quatre emprunts, et un refus
+
+Keko : « tu peux ouvrir [lexicodex.app] pour regarder l'ouverture d'un booster
+et voir comment ils font le rendu, et t'inspirer ? », puis — sur les quatre
+pistes que j'en ai tirées — **« je veux tout »**.
+
+*Ce qu'il faut savoir avant de lire la suite* : **leur architecture est la
+nôtre.** Leur `card-texture` est un canvas 2D et leur `card-material` un
+nuanceur GLSL ; leurs commentaires français embarqués portent nos propres
+leçons (« Tramage : pas de banding », « Éclat qui balaie la carte à sa
+révélation »). *Il n'y avait donc rien à porter d'une autre technique — il n'y
+avait que des DÉCISIONS à reprendre.*
+
+Leur séquence : carrousel → le sachet **brûle** → un dos attend une tape → la
+carte se **développe** → **la rareté teinte toute la scène** → « DERNIÈRE
+CARTE » en or → **un compteur qui défile** révèle sa rareté → récapitulatif.
+
+**CE QUI N'A PAS ÉTÉ REPRIS, et c'est volontaire** : ils montrent **une carte à
+la fois**, nous montrons **la rangée**. Leur choix donne un plein écran par
+carte ; le nôtre laisse comparer les cinq d'un coup d'oeil, ce qui est tout
+l'intérêt d'un paquet. *Toute la transposition découle de là* — voir
+l'ambiance, plus bas.
+
+#### LA RARETÉ TEINTE LA SCÈNE, et elle suit la MEILLEURE révélée
+
+`AMBIANCE`, dans `texture-carte.ts`, plus `.paquet-lueur` et `.paquet-eclat`.
+Un halo de la couleur du métal monte derrière la rangée, et **un éclat frappe à
+chaque carte retournée**.
+
+*Un cadre se regarde, une pièce entière se ressent* — et c'est la seule chose
+du reveal qui se lise sans rien lire.
+
+**ELLE SUIT LA PLUS RARE RÉVÉLÉE JUSQU'ICI, pas la dernière.** Chez eux la
+question ne se pose pas, puisqu'il n'y a qu'une carte à l'écran ; chez nous il
+y en a cinq, donc « la carte courante » ne désigne personne. *L'ambiance d'un
+paquet MONTE à mesure qu'on trouve mieux* — elle raconte l'ouverture entière,
+et elle construit vers la dernière.
+
+**`AMBIANCE` EST UNE TABLE À PART DE `METAL_3D`, et il le faut** : une tranche
+de carte fait deux millimètres, un halo couvre l'écran. *L'argent et le diamant
+sont indiscernables une fois diffusés* — le halo leur donne donc plus d'écart
+que le métal. Les deux tables vivent côte à côte pour qu'on ne puisse pas
+régler l'une sans voir l'autre.
+
+**L'éclat est REMONTÉ À NEUF par une clé React** : *une classe qu'on retire et
+qu'on repose ne redémarre pas une animation sans un reflow forcé* — la règle du
+gonflement des tas.
+
+#### LE COMPTEUR QUI DÉFILE : la dernière carte se révèle par son CHIFFRE
+
+Quand il ne reste qu'une carte, **« Dernière carte » s'écrit en or** ; la
+retourner lance un compteur qui monte vers ses vues, et **la couleur remonte
+l'échelle des métaux avec lui** pour s'arrêter sur le bon barreau.
+
+***C'est la seule façon honnête de faire monter la couleur*** : notre rareté
+DÉRIVE des vues, donc un chiffre qui grimpe et une teinte qui grimpe disent la
+même chose. Une interpolation vers la couleur finale l'aurait annoncée dès la
+première image. Et les crans se PASSENT dans l'ordre : *une couleur qui saute à
+la bonne ne révèle rien.*
+
+Trois choses à ne pas défaire :
+
+- **le chiffre s'écrit DIRECTEMENT DANS LE DOM, par une ref dans une boucle
+  `requestAnimationFrame`** — jamais par l'état. *Une valeur qui change à chaque
+  image déclencherait un rendu par image*, et ce rendu reconstruirait cinq
+  cartes à nuanceur. C'est le chemin de `Projeter`, pour la même raison ;
+- **il DÉCÉLÈRE en arrivant** : *un compteur qui s'arrête net se lit comme une
+  coupure, un compteur qui ralentit se lit comme une arrivée* ;
+- **« Tout révéler » saute la montée** : *un joueur qui demande tout ne demande
+  pas de suspense*, et le compteur en est un.
+
+**IL COIFFE LA RANGÉE, il ne pend pas sous elle.** Mesuré : posé en bas, il
+tombait PILE sur le bouton — *une bande réservée ne se partage pas.* Et
+**tout s'y borne par la HAUTEUR** : à 844 x 390 la bande libre au-dessus de la
+rangée ne fait que 62 px pour un bloc qui en demandait 78, donc il mordait le
+haut des cartes. *Un contenu qui ne suit qu'une dimension déborde dès que
+l'autre se resserre* — la leçon de la bande de stats, repayée ici. Mesuré après
+correction : 7 à 55 px à 844 x 390, 7 à 51 px à 667 x 320, aucun recouvrement.
+
+#### LE DÉVELOPPEMENT REMPLACE LA CULBUTE — le nom AVANT l'image
+
+`uDevelop` et `uNom`, dans le nuanceur de la face ; `developpe` sur `Carte3D`.
+La carte arrive **à plat et désaturée**, son nom **pavé en grand** par-dessus,
+et le dessin remonte dessous à mesure que les lettres s'érodent et dérivent
+vers le haut.
+
+*Une carte qui se révèle en tournant ne dit rien de ce qu'elle est* : on voit un
+dos, puis une face, et entre les deux il n'y a que du mouvement. **C'est
+précisément ce qu'on cherche à l'ouverture d'un paquet**, où la question est
+« qui est-ce ? » et non « est-ce que ça tourne bien ? »
+
+`?paquet&culbute` rend la culbute — *ce qui a servi à choisir doit rester
+ouvrable.* **Elle garde tout son emploi à l'armurerie**, où l'on POSE une
+pièce : là, il n'y a rien à lire, il y a un geste à voir.
+
+Quatre choses qui le portent :
+
+- **LE PAVÉ EST PÉRIODIQUE EN Y**, parce que le nuanceur le fait DÉFILER :
+  sans raccord, la couture traverserait la carte en plein geste. D'où des rangs
+  à pas constant dont la hauteur de toile est un multiple exact, et un décalage
+  alterné d'un rang sur deux — *un appareillage de brique est périodique sur
+  deux rangs, pas sur un.* **Et il ne tourne pas** : *une grille inclinée n'est
+  périodique que le long de son propre axe* ;
+- **LA PLAQUE EST SOMBRE, pas délavée en blanc.** *Des lettres claires ne se
+  lisent pas sur du blanc* — et la pierre sombre est déjà la matière de ce jeu,
+  donc la carte se développe depuis son propre fond au lieu de venir d'ailleurs ;
+- **L'ÉROSION EST PAR TACHES**, tirée d'un hachage de la place : *un fondu
+  global ferait pâlir le mot d'un bloc, alors qu'il doit se défaire* ;
+- **LE NOM TIENT D'ABORD, ET SEULEMENT APRÈS IL S'EN VA.** Mesuré à l'écran : à
+  courbe « part vite, s'achève lentement » — celle du reste du jeu — le pavé
+  était déjà à moitié parti au bout de trois dixièmes, et **on n'avait pas le
+  temps de lire le nom**. ***C'était reprendre la règle d'un GESTE pour une
+  LECTURE*** : un geste doit se sentir dès le premier instant, un mot doit
+  rester assez longtemps pour être lu. D'où un palier de 30 %, puis une
+  descente en `smoothstep`.
+
+**LE PIÈGE QUI A COÛTÉ LE PLUS, et il ne dit rien du tout : le pavé se chargeait
+AVANT que le matériau soit compilé.** `onBeforeCompile` ne tourne qu'au PREMIER
+RENDU, et la promesse de la texture se résout avant lui —
+`face.userData.nuanceur` était donc encore `undefined`, l'affectation tombait
+dans le vide **sans une seule erreur**, et la carte se développait sans son nom.
+*C'est la famille des cibles de `Projeter`, qui ne sont remplies qu'après le
+rendu* : **ce qui dépend d'un objet construit par le rendu se pose dans la
+boucle d'image, pas dans l'effet qui l'a demandé.**
+
+*Et il a d'abord été pris pour une latence d'outil* — mes captures arrivaient
+toutes après la fin de l'animation. **Allonger la durée à sept secondes le temps
+d'une capture a tranché en une mesure** : à sept secondes aussi, rien. *Quand on
+ne sait pas si l'on mesure l'effet ou l'outil, on change l'effet d'un facteur
+cinq.*
+
+#### LA DÉCHIRURE BRÛLANTE DU SACHET
+
+`render/Sachet3D.tsx`. Le paquet s'ouvre sur **une pochette de laiton qui
+respire** ; on la touche, un front incandescent la traverse de haut en bas en
+laissant une bande de charbon et des étincelles, puis les cinq dos paraissent.
+
+*Un paquet qui montre ses cinq dos d'emblée n'est pas un paquet, c'est une main
+face cachée* : rien n'est fermé, donc il n'y a rien à ouvrir.
+
+**IL N'EST PAS AU FORMAT D'UNE CARTE** (1 : 1,25 au lieu de 1 : 1,4) : *une
+pochette au format d'une carte se lit comme une carte géante*, donc comme un dos
+de plus, et on ne comprend pas qu'il y a quelque chose dedans. Il est aussi plus
+grand qu'une carte — **il en contient cinq.**
+
+**TOUT EST DANS UN SEUL NUANCEUR : la déchirure, la braise et les étincelles.**
+Trois plans superposés auraient demandé trois alphas et trois réglages, alors que
+*les trois décrivent le même front* — et deux valeurs qui décrivent la même chose
+se désaccordent au premier réglage. Il n'y en a qu'une : `uBrulure`.
+
+Cinq choses qui le portent :
+
+- **le front part AU-DESSUS du bord haut et finit EN DESSOUS du bord bas** :
+  *une déchirure qui commence pile sur le bord se lit comme un bord qui
+  s'efface*, et une qui s'arrête pile en bas laisse un liseré de braise posé là
+  pour toujours ;
+- **il n'est pas droit, et c'est une somme de sinus** : *un bruit par pixel donne
+  une dentelure, une somme de sinus donne une déchirure* ;
+- **la matière NOIRCIT avant de partir** : sans la bande de charbon, le sachet se
+  coupe net, et *une coupe nette n'est pas une brûlure* ;
+- **la braise va de l'or au blanc en son coeur** : *un feu n'a pas une couleur,
+  il a un dégradé de température* ;
+- **tout s'éteint ensemble sur la fin** : *une lueur qui se termine par une arête
+  n'est pas une lueur.*
+
+**IL ACCÉLÈRE, à l'inverse de tout le reste du jeu.** C'est ce que fait un feu —
+il prend, puis il court — là où un geste part vite et s'achève lentement.
+
+**IL RESPIRE TANT QU'ON NE L'A PAS TOUCHÉ** : *un objet qui attend une tape doit
+dire qu'il attend*, le vocabulaire des créatures et des slots qui accueillent. Et
+il est **monté à neuf à chaque paquet** (clé React), parce que son horloge et son
+« c'est fini » vivent dans des refs — *et une ref ne se remet pas à zéro parce
+qu'une prop a changé.*
+
+**`?paquet&nu` le saute** : *juger une carte ne doit pas coûter une déchirure à
+chaque fois* — quand c'est le DESSIN qu'on regarde, le sachet est un péage.
+
+#### À TRANCHER PAR KEKO : l'apostrophe se perd sur les noms de cartes
+
+Trouvé en vérifiant le pavé : la carte affiche **« Crocidure dArabie »**.
+
+*Ce n'est pas la donnée* — 312 noms sur 4 464 portent bien l'apostrophe droite
+(U+0027) — **et ce n'est pas un glyphe manquant** : mesuré sur l'encre, il en
+reste 332 pixels à 120 px de corps, contre 1 296 pour un « i ». **Elle est
+simplement trop fine pour survivre à la taille d'un titre de carte.**
+
+L'apostrophe typographique (U+2019) porte **24 % d'encre de plus en Grenze
+Gotisch et 75 % de plus en Cinzel**, et elle est la forme correcte en français.
+*Mais c'est une décision de typographie sur TOUS les noms du jeu*, pas un défaut
+de ces quatre chantiers — elle revient à Keko.
+
 ### LA PORTE D'ENTREE EST LA FREQUENTATION, PLUS LES METIERS
 
 Tranche par Keko, en une phrase qui portait deux demandes : **« je veux qu'on
@@ -14241,6 +14432,7 @@ src/
     Scene.tsx        # la descente entière : combat, paliers, butin, hub
     Armurerie3D.tsx  # le coffre et le chargement
     Paquet3D.tsx     # le troisième mode, derrière `?paquet`
+    Sachet3D.tsx     # la pochette qui se déchire en brûlant, avant la rangée
     board.ts         # le plateau, derrière `?board` — DOM nu, pas de Three.js
     duel.ts          # le duel, derrière `?duel` — il réutilise le dessin du plateau
   ui/      # CE QUE LES DEUX MONDES PARTAGENT — plus le jeu 2D, il n'existe plus

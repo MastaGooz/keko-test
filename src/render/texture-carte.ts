@@ -563,6 +563,41 @@ const METAUX: Record<string, readonly [string, string, string, string, string]> 
   legendaire: ['#ffffff', '#a9c8e0', '#e6f3fd', '#7192aa', '#f6fcff'],
 }
 
+/**
+ * L'ÉCHELLE DES MÉTAUX, DU BAS VERS LE HAUT.
+ *
+ * *Elle existe parce qu'un reveal la REMONTE* : le compteur de la dernière
+ * carte fait défiler les crans dans l'ordre et s'arrête sur le bon. **Une
+ * échelle qu'on parcourt a besoin d'être écrite comme une échelle**, pas comme
+ * une table indexée par nom.
+ */
+export const ECHELLE_METAL = ['commune', 'rare', 'epique', 'legendaire'] as const
+
+/**
+ * LA LUEUR D'AMBIANCE D'UNE RARETÉ — de quoi un reveal teinte TOUT L'ÉCRAN.
+ *
+ * *C'est une table à part de `METAL_3D`, et il le faut* : celle-là peint une
+ * tranche de deux millimètres sur une carte éclairée, celle-ci doit se lire en
+ * halo sur une pierre presque noire. **À la même valeur, l'argent du cadre et
+ * le diamant du cadre sont indiscernables en halo** — ils ne sont séparés que
+ * par leur pigment, et un pigment ne survit pas à la diffusion.
+ *
+ * Elles vivent donc côte à côte, pour qu'on ne puisse pas en régler une en
+ * oubliant l'autre : *deux endroits qui décrivent la même rareté se
+ * désaccordent au premier réglage.*
+ */
+export const AMBIANCE: Record<string, string> = {
+  // Le cuivre du bronze, assez chaud pour ne pas se lire comme un brun sale.
+  commune: '#c97b3c',
+  // L'argent perd son bleu ici : en halo il virerait au diamant.
+  rare: '#aab8c4',
+  epique: '#ffc61f',
+  // LE DIAMANT EST FRANCHEMENT CYAN, là où son cadre n'est qu'un blanc bleuté.
+  // *Le haut d'une échelle doit se voir de loin*, et c'est le seul cran dont
+  // l'arrivée doit faire lever la tête.
+  legendaire: '#6fe9ff',
+}
+
 /** La couleur du CORPS en 3D — la tranche et le cheveu de cadre qui déborde. */
 export const METAL_3D: Record<string, string> = {
   commune: '#9c6237',
@@ -2975,6 +3010,265 @@ export function textureDuDos(): Promise<THREE.CanvasTexture> {
     return texture
   })
   return DOS
+}
+
+/**
+ * LE SACHET — ce qu'on dechire pour ouvrir un paquet.
+ *
+ * **IL N'EST PAS AU FORMAT D'UNE CARTE** (1 : 1,25 au lieu de 1 : 1,4), et
+ * c'est le seul moyen de le dire : *une pochette au format d'une carte se lit
+ * comme une carte geante*, donc comme un dos de plus, et on ne comprend pas
+ * qu'il y a quelque chose dedans.
+ *
+ * Il parle la matiere du jeu et rien d'autre : pierre sombre, moulure de
+ * laiton, equerres aux angles, coins coupes, grain. *Ce qui stylise est la
+ * DECOUPE et le RELIEF, pas la matiere qu'on ajoute* — la lecon de la barre de
+ * vie, « vraiment classique » puis « beaucoup trop chargee ».
+ */
+const SACHET_LARGE = 640
+const SACHET_HAUT = 800
+/** Le biseau des angles, en parts de la LARGEUR — la ferronnerie du lieu. */
+const SACHET_BISEAU = 0.075
+
+let SACHET: Promise<THREE.CanvasTexture> | null = null
+
+/** Le contour du sachet : un rectangle a quatre angles abattus. */
+function cheminDuSachet(ctx: CanvasRenderingContext2D, l: number, h: number, c: number): void {
+  ctx.beginPath()
+  ctx.moveTo(c, 0)
+  ctx.lineTo(l - c, 0)
+  ctx.lineTo(l, c)
+  ctx.lineTo(l, h - c)
+  ctx.lineTo(l - c, h)
+  ctx.lineTo(c, h)
+  ctx.lineTo(0, h - c)
+  ctx.lineTo(0, c)
+  ctx.closePath()
+}
+
+/**
+ * L'EMBLEME DU SACHET : le losange a quatre pointes du dos de carte.
+ *
+ * *Un sachet qui porte un autre signe que les cartes qu'il contient ne dit pas
+ * qu'il les contient.* Les bords sont CREUSES — le point de controle de chaque
+ * quadratique tombe pres du centre — et il est perce d'un vide : pose a la
+ * corde, les bords seraient droits et on lirait une etoile generique.
+ */
+function peindreEmblemeDuSachet(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+): void {
+  const CREUX = 0.22
+  const pointe = (i: number): [number, number] => {
+    const a = (i * Math.PI) / 2 - Math.PI / 2
+    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]
+  }
+  ctx.beginPath()
+  ctx.moveTo(...pointe(0))
+  for (let i = 0; i < 4; i++) {
+    const a = (i * Math.PI) / 2 - Math.PI / 2 + Math.PI / 4
+    ctx.quadraticCurveTo(cx + Math.cos(a) * r * CREUX, cy + Math.sin(a) * r * CREUX, ...pointe(i + 1))
+  }
+  ctx.closePath()
+  // LE VIDE CENTRAL est un SECOND contour dans le MEME chemin, creuse par la
+  // regle paire-impaire : ni masque, ni decoupe.
+  const v = r * 0.3
+  ctx.moveTo(cx, cy - v)
+  ctx.lineTo(cx + v, cy)
+  ctx.lineTo(cx, cy + v)
+  ctx.lineTo(cx - v, cy)
+  ctx.closePath()
+}
+
+function peindreLeSachet(): HTMLCanvasElement {
+  const l = SACHET_LARGE
+  const h = SACHET_HAUT
+  const c = l * SACHET_BISEAU
+  const canvas = document.createElement('canvas')
+  canvas.width = l
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) return canvas
+
+  ctx.save()
+  cheminDuSachet(ctx, l, h, c)
+  ctx.clip()
+
+  // LA PIERRE : la lumiere vient du haut, comme partout dans ce jeu.
+  const pierre = ctx.createLinearGradient(0, 0, l * 0.35, h)
+  pierre.addColorStop(0, '#3c414d')
+  pierre.addColorStop(0.5, '#272b34')
+  pierre.addColorStop(1, '#191b21')
+  ctx.fillStyle = pierre
+  ctx.fillRect(0, 0, l, h)
+
+  // UN VIGNETTAGE ELLIPTIQUE, aux proportions du sachet : *une forme suit les
+  // proportions de ce qu'elle borde* — un disque mordrait les cotes avant
+  // d'atteindre le haut.
+  ctx.save()
+  ctx.translate(l / 2, h / 2)
+  ctx.scale(1, h / l)
+  const voile = ctx.createRadialGradient(0, 0, l * 0.18, 0, 0, l * 0.74)
+  voile.addColorStop(0, '#0000')
+  voile.addColorStop(1, '#00000078')
+  ctx.fillStyle = voile
+  ctx.fillRect(-l, -l, l * 2, l * 2)
+  ctx.restore()
+
+  // L'EMBLEME, en laiton, au centre.
+  const or = ctx.createLinearGradient(l * 0.3, h * 0.34, l * 0.7, h * 0.66)
+  or.addColorStop(0, '#e8c179')
+  or.addColorStop(0.5, '#9c7638')
+  or.addColorStop(1, '#6d4c1d')
+  peindreEmblemeDuSachet(ctx, l / 2, h / 2, l * 0.2)
+  ctx.fillStyle = or
+  ctx.fill('evenodd')
+
+  // LA MOULURE : un filet de laiton qui porte la lumiere du haut-gauche.
+  // *Un filet d'une seule couleur n'a pas d'epaisseur : c'est la variation qui
+  // fait le volume, pas la largeur.*
+  const metal = ctx.createLinearGradient(0, 0, l, h)
+  metal.addColorStop(0, '#f0d49b')
+  metal.addColorStop(0.42, '#a67f3c')
+  metal.addColorStop(1, '#7a5726')
+  ctx.strokeStyle = metal
+  // UN `stroke` EST CENTRE SUR SON TRACE, donc la moitie sortirait de la
+  // toile : on clippe sur la MEME forme et on double la largeur.
+  ctx.lineWidth = l * 0.03
+  cheminDuSachet(ctx, l, h, c)
+  ctx.stroke()
+
+  // LES EQUERRES : la moulure S'EPAISSIT aux angles, elle ne recoit pas une
+  // piece de plus. *C'est ce qui separe un panneau d'un meuble* — et le biseau
+  // les abat avec lui, puisque le clip porte la decoupe.
+  const e = l * 0.17
+  ctx.lineWidth = l * 0.055
+  for (const [x0, y0, x1, y1] of [
+    [c, 0, c + e, 0],
+    [l - c - e, 0, l - c, 0],
+    [c, h, c + e, h],
+    [l - c - e, h, l - c, h],
+    [0, c, 0, c + e],
+    [0, h - c - e, 0, h - c],
+    [l, c, l, c + e],
+    [l, h - c - e, l, h - c],
+  ] as const) {
+    ctx.beginPath()
+    ctx.moveTo(x0, y0)
+    ctx.lineTo(x1, y1)
+    ctx.stroke()
+  }
+
+  // LE GRAIN, en pixels de la toile : il dissout le degrade, qui banderait
+  // sans lui sur huit bits.
+  ctx.globalAlpha = ALPHA_GRAIN
+  ctx.globalCompositeOperation = 'overlay'
+  const tuile = ctx.createPattern(grain(), 'repeat')
+  if (tuile !== null) {
+    ctx.fillStyle = tuile
+    ctx.fillRect(0, 0, l, h)
+  }
+  ctx.restore()
+  return canvas
+}
+
+/** Le rapport du sachet, pour que le plan qui le porte l'ait aussi. */
+export const RAPPORT_SACHET = SACHET_HAUT / SACHET_LARGE
+
+export function textureDuSachet(): Promise<THREE.CanvasTexture> {
+  SACHET ??= Promise.resolve(peindreLeSachet()).then((canvas) => {
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.anisotropy = 8
+    texture.colorSpace = THREE.SRGBColorSpace
+    return texture
+  })
+  return SACHET
+}
+
+/**
+ * LE PAVE DU NOM — ce que le DEVELOPPEMENT fait monter sur la carte.
+ *
+ * *Une carte qui se revele en tournant ne dit rien de ce qu'elle est* : la
+ * culbute montre un dos, puis une face, et entre les deux il n'y a que du
+ * mouvement. Le developpement, lui, **annonce le nom avant l'image** — la
+ * carte arrive a plat, son nom en grand par-dessus, et le dessin remonte
+ * dessous a mesure que les lettres s'erodent.
+ *
+ * **IL EST PERIODIQUE EN Y, et c'est ce qui decide de sa forme.** Le nuanceur
+ * le fait DEFILER pendant que les lettres s'en vont ; sans raccord, la couture
+ * traverserait la carte en plein geste. D'ou des rangs a pas CONSTANT dont la
+ * hauteur de toile est un multiple exact, et un decalage alterne d'un rang sur
+ * deux — *un motif de brique est periodique sur deux rangs, pas sur un.*
+ *
+ * **ET IL NE TOURNE PAS**, pour la meme raison : *une grille inclinee n'est
+ * periodique que le long de son propre axe*, donc une rotation, meme de dix
+ * degres, interdit le raccord vertical.
+ */
+const NOMS = new Map<string, Promise<THREE.CanvasTexture>>()
+
+/** Combien de rangs de nom couvrent la carte. Un PAIR, pour le pas de brique. */
+const RANGS_NOM = 6
+
+async function peindreLeNom(nom: string): Promise<HTMLCanvasElement> {
+  // UN CANVAS QUI PEINT AVANT `document.fonts.ready` RETOMBE SILENCIEUSEMENT
+  // SUR LA POLICE PAR DEFAUT — la regle du projet, et elle vaut pour tout ce
+  // qui peint.
+  await document.fonts.ready
+  const l = 512
+  const h = l * 1.4
+  const canvas = document.createElement('canvas')
+  canvas.width = l
+  canvas.height = Math.round(h)
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) return canvas
+
+  const mot = nom.toLocaleUpperCase('fr-FR')
+  ctx.font = '700 100px Cinzel, Georgia, serif'
+  const a100 = ctx.measureText(mot).width || 100
+  // LE NOM VISE LES TROIS QUARTS DE LA LARGEUR, et la taille CEDE aux deux
+  // bouts : *un nom de trois lettres ne doit pas devenir une enseigne, un nom
+  // de vingt ne doit pas devenir illisible.*
+  const taille = Math.max(l * 0.1, Math.min(l * 0.26, (l * 0.78 * 100) / a100))
+  ctx.font = `700 ${taille}px Cinzel, Georgia, serif`
+  const large = ctx.measureText(mot).width
+  // Le pas horizontal suit le mot : sans ca, un nom long se recouvrirait
+  // lui-meme et on ne lirait plus des lettres mais une trame.
+  const pasX = Math.max(l, large * 1.26)
+  const pasY = canvas.height / RANGS_NOM
+
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = '#fff3dc'
+  ctx.letterSpacing = `${taille * 0.08}px`
+  for (let r = 0; r < RANGS_NOM; r++) {
+    // UN RANG SUR DEUX SE DECALE D'UN DEMI-PAS : *des colonnes alignees se
+    // lisent comme un tableau, un appareillage se lit comme une matiere.*
+    const decale = (r % 2) * (pasX / 2)
+    const y = (r + 0.5) * pasY
+    for (let x = -pasX + decale; x < l + pasX; x += pasX) ctx.fillText(mot, x + pasX / 2, y)
+  }
+  return canvas
+}
+
+export function textureDuNom(nom: string): Promise<THREE.CanvasTexture> {
+  const prete = NOMS.get(nom)
+  if (prete !== undefined) return prete
+  const neuve = peindreLeNom(nom).then((canvas) => {
+    const texture = new THREE.CanvasTexture(canvas)
+    // IL SE REPETE EN Y, puisque c'est ce que le nuanceur fait defiler.
+    texture.wrapS = THREE.ClampToEdgeWrapping
+    texture.wrapT = THREE.RepeatWrapping
+    texture.anisotropy = 4
+    texture.colorSpace = THREE.SRGBColorSpace
+    return texture
+  })
+  // *UN CACHE NE RETIENT QUE LES SUCCES* : une promesse rejetee gardee
+  // condamnerait ce nom pour toute la session.
+  void neuve.catch(() => NOMS.delete(nom))
+  NOMS.set(nom, neuve)
+  return neuve
 }
 
 const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()

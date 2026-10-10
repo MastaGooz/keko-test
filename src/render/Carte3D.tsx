@@ -37,6 +37,7 @@ import {
   textureContour,
   textureDeCarte,
   textureDuDos,
+  textureDuNom,
   tailleQuIlFaut,
 } from './texture-carte.ts'
 
@@ -126,6 +127,49 @@ export const RAYON_COIN = 0.03
  * pas pareil — la chute fait un tiers du temps pour la moitié du trajet.
  */
 export const DUREE_CULBUTE = 0.66
+
+/**
+ * LE DEVELOPPEMENT : ce que fait une carte qu'on vient de retourner.
+ *
+ * *Elle arrive a plat, son nom en grand par-dessus, et le dessin remonte
+ * dessous a mesure que les lettres s'erodent* — comme un papier
+ * photographique. C'est l'autre facon de reveler une carte, et elle dit
+ * quelque chose que la culbute ne dit pas : **le nom AVANT l'image.**
+ *
+ * Elle dure plus longtemps qu'une culbute, et c'est le point : *une culbute
+ * est un geste, un developpement est une lecture* — il faut le temps de lire
+ * le nom avant que le dessin ne le remplace.
+ */
+export const DUREE_DEVELOP = 1.35
+
+/**
+ * LE NOM TIENT D'ABORD, ET SEULEMENT APRES IL S'EN VA.
+ *
+ * *Mesure a l'ecran* : a courbe « part vite, s'acheve lentement » — celle du
+ * reste du jeu — le pave etait deja a moitie parti au bout de trois
+ * dixiemes, et **on n'avait pas le temps de lire le nom**. C'etait reprendre
+ * la regle d'un GESTE pour une LECTURE : *un geste doit se sentir des le
+ * premier instant, un mot doit rester assez longtemps pour etre lu.*
+ *
+ * D'ou un palier, puis une descente : le nom a pleine force pendant cette
+ * part de la sequence, et le dessin remonte ensuite d'un coup.
+ */
+const TENUE_NOM = 0.3
+
+/**
+ * UNE TEXTURE VIDE POUR LE SECOND ECHANTILLONNEUR.
+ *
+ * Un `sampler2D` dont la valeur est `null` n'a rien de garanti : le pilote
+ * lie ce qu'il veut a l'unite de texture, et *une lecture indefinie se voit
+ * sur certaines machines et pas sur la machine de dev.* Un pixel transparent
+ * coute quatre octets et rend la lecture inoffensive tant que rien n'est
+ * charge.
+ */
+const PAVE_VIDE = (() => {
+  const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1)
+  t.needsUpdate = true
+  return t
+})()
 /** La part du temps passée à monter et à tourner ; le reste est la chute. */
 const PART_MONTEE = 0.64
 /** De combien elle s'approche de la caméra, en part de sa propre largeur. */
@@ -373,6 +417,15 @@ type Props = {
    */
   culbute?: unknown
   /**
+   * SON DEVELOPPEMENT : le meme jeton, pour l'autre facon de se reveler.
+   *
+   * **La prop ABSENTE veut dire « pas de developpement »**, et c'est elle qui
+   * decide si le pave du nom se charge : *le temps de regarder un dos est
+   * exactement le temps qu'il faut pour peindre ce qui vient dessus* — la
+   * lecon de la carte face cachee qui peignait sa face trop tard.
+   */
+  developpe?: unknown
+  /**
    * Sa culbute vient de finir : elle est fixée, et l'onde part.
    *
    * **Elle dit ce qui se passe, pas ce que ça veut dire.** Le son de
@@ -457,6 +510,7 @@ export function Carte3D({
   reflet = false,
   refletAuDoigt = false,
   culbute = null,
+  developpe,
   onFixee,
   onArrivee,
   inerte = false,
@@ -555,6 +609,8 @@ export function Carte3D({
       nuanceur.uniforms.uOr = { value: 0 }
       nuanceur.uniforms.uBordure = { value: 0 }
       nuanceur.uniforms.uTemps = { value: 0 }
+      nuanceur.uniforms.uDevelop = { value: 0 }
+      nuanceur.uniforms.uNom = { value: PAVE_VIDE }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -651,7 +707,36 @@ ${nuanceur.vertexShader}`.replace(
          // s'allume qu'au passage n'est pas une bordure lumineuse, c'est un
          // clignotant.*
          diffuseColor.rgb +=
-           mix(vec3(1.0), arc, 0.55) * uBordure * cadre * (0.2 + pointe * 2.0);`,
+           mix(vec3(1.0), arc, 0.55) * uBordure * cadre * (0.2 + pointe * 2.0);
+
+         // LE DEVELOPPEMENT, et il se joue en DERNIER : il recouvre tout le
+         // reste, lustre et foil compris. *Une carte qui n'est pas encore
+         // revelee ne peut pas deja briller de ce qu'elle est* — c'est la
+         // regle qui garde le dos en laiton, prise un cran plus loin.
+         if (uDevelop > 0.0) {
+           // LA PLAQUE : la carte arrive PLATE et SOMBRE, pas delavee en
+           // blanc. *Des lettres claires ne se lisent pas sur du blanc* — et
+           // la pierre sombre est deja la matiere de ce jeu, donc la carte se
+           // developpe depuis son propre fond au lieu de venir d'ailleurs.
+           float lumD = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(lumD * 0.34 + 0.045), uDevelop);
+
+           // LE PAVE DEFILE VERS LE HAUT en s'en allant : *des lettres qui
+           // s'effacent sur place se lisent comme un fondu, des lettres qui
+           // derivent se lisent comme un depart.* Il est periodique en y,
+           // donc le defilement ne montre aucune couture.
+           vec2 uvN = vec2(vLustreUv.x, vLustreUv.y + uDevelop * 0.3);
+           vec4 pave = texture2D(uNom, uvN);
+
+           // L'EROSION EST PAR TACHES, jamais uniforme : un fondu global
+           // ferait pâlir le mot d'un bloc, alors qu'il doit se defaire. La
+           // cellule est tiree d'un hachage de sa place — *un semis qui se
+           // rearrange a chaque image n'est plus une matiere.*
+           vec2 maille = floor(vLustreUv * vec2(40.0, 56.0));
+           float des = fract(sin(dot(maille, vec2(12.9898, 78.233))) * 43758.5453);
+           float reste = smoothstep(des * 0.58, des * 0.58 + 0.42, uDevelop);
+           diffuseColor.rgb += pave.rgb * pave.a * reste * (0.75 + reste * 0.55);
+         }`,
       )
       nuanceur.fragmentShader = `uniform float uGris;
 uniform float uLustre;
@@ -660,6 +745,8 @@ uniform float uIris;
 uniform float uOr;
 uniform float uBordure;
 uniform float uTemps;
+uniform float uDevelop;
+uniform sampler2D uNom;
 varying vec2 vLustreUv;
 ${nuanceur.fragmentShader}`
     }
@@ -676,7 +763,8 @@ ${nuanceur.fragmentShader}`
      *
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
-    face.customProgramCacheKey = () => 'carte-face-desaturable-lustree-irisee-doree-bordee'
+    face.customProgramCacheKey = () =>
+      'carte-face-desaturable-lustree-irisee-doree-bordee-developpee'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -907,6 +995,8 @@ ${nuanceur.fragmentShader}`
     departT: 1,
     /** Quand elle a commencé, en secondes d'horloge de scène ; `null` sinon. */
     debutCulbute: null as number | null,
+    /** Quand son developpement a commence ; `null` sinon. */
+    debutDevelop: null as number | null,
     /** Quand l'onde s'échappe du slot — à la fin de la culbute. */
     debutOnde: null as number | null,
     /** Elle est à sa place : on ne le signale qu'au moment où ça CHANGE. */
@@ -942,6 +1032,7 @@ ${nuanceur.fragmentShader}`
 
   /** Le jeton vu au dernier tour, pour savoir qu'il vient de changer. */
   const jetonCulbute = useRef(culbute)
+  const jetonDevelop = useRef(developpe)
 
   /**
    * ON COUPE LE RAYON À LA SOURCE plutôt que de retirer les écouteurs.
@@ -1021,6 +1112,40 @@ ${nuanceur.fragmentShader}`
       m.needsUpdate = true
     }
   }, [clipper, face, laiton, halo, verso, aureole, matCompte])
+
+  /**
+   * LE PAVE DU NOM SE CHARGE AU MONTAGE, pas au premier developpement.
+   *
+   * *Le temps de regarder un dos est exactement le temps qu'il faut pour
+   * peindre ce qui viendra dessus* — la lecon de la carte face cachee, dont la
+   * face n'etait demandee qu'au retournement et arrivait apres lui. Ici le
+   * pave doit etre la a la premiere image du developpement, sinon la carte se
+   * developpe sans son nom.
+   *
+   * Il ne se charge que si l'ecran demande ce mode : *une carte qui ne se
+   * developpe jamais n'a pas de pave a peindre.*
+   *
+   * **ET IL SE POSE DEPUIS LA BOUCLE D'IMAGE, pas depuis l'effet.** Mesure :
+   * `onBeforeCompile` ne tourne qu'au PREMIER RENDU du materiau, et la
+   * promesse de la texture se resout avant lui — `face.userData.nuanceur`
+   * etait donc encore `undefined`, l'affectation tombait dans le vide **sans
+   * une seule erreur**, et la carte se developpait sans son nom. *C'est la
+   * famille des cibles de `Projeter`, qui ne sont remplies qu'apres le
+   * rendu* : ce qui depend d'un objet construit par le rendu se pose dans la
+   * boucle, pas dans l'effet qui l'a demande.
+   */
+  const paveDuNom = useRef<THREE.Texture | null>(null)
+  useEffect(() => {
+    if (developpe === undefined || developpe === null) return
+    let vivant = true
+    void textureDuNom(carte.nom).then((pave) => {
+      if (vivant) paveDuNom.current = pave
+    })
+    return () => {
+      vivant = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carte.nom, developpe === undefined || developpe === null])
 
   // LA TEXTURE DU DOS N'ARRIVE QUE QUAND LA CULBUTE COMMENCE : elle sort du
   // même cache partagé que les faces, donc la première la paie et les
@@ -1132,6 +1257,10 @@ ${nuanceur.fragmentShader}`
      * est une mise en scène. L'amortissement reprend à la fin, remis à la
      * cible pour qu'il n'ait rien à rattraper.
      */
+    if (jetonDevelop.current !== developpe) {
+      jetonDevelop.current = developpe
+      if (developpe !== null && developpe !== undefined) l.debutDevelop = t
+    }
     if (jetonCulbute.current !== culbute) {
       jetonCulbute.current = culbute
       if (culbute !== null && culbute !== undefined) {
@@ -1248,7 +1377,7 @@ ${nuanceur.fragmentShader}`
     // ses couleurs d'un seul mouvement.
     const gris = (1 - l.vif) / (1 - 0.52)
     const nuanceur = face.userData.nuanceur as
-      | { uniforms: Record<string, { value: number }> }
+      | { uniforms: Record<string, { value: number | THREE.Texture }> }
       | undefined
     if (nuanceur !== undefined) {
       nuanceur.uniforms.uGris!.value = gris
@@ -1279,6 +1408,33 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uTemps!.value = t
       nuanceur.uniforms.uBordure!.value = montre && carte.rarete === 'legendaire' ? l.vif : 0
       nuanceur.uniforms.uOr!.value = montre && carte.rarete === 'epique' ? 1 : 0
+      // LE PAVE SE POSE DES QU'IL EST LA — voir l'effet qui le charge.
+      if (paveDuNom.current !== null && nuanceur.uniforms.uNom!.value !== paveDuNom.current)
+        nuanceur.uniforms.uNom!.value = paveDuNom.current
+
+      // LE DEVELOPPEMENT SE PILOTE ICI, et pas dans le bloc de la culbute :
+      // *toute matiere posee apres le `return` de la culbute est figee pendant
+      // qu'elle se joue* — la regle deja payee par le liseré du contour. Les
+      // deux ne se jouent jamais ensemble, mais on ne pose pas une valeur
+      // derriere une porte qui peut se fermer.
+      if (l.debutDevelop !== null) {
+        const dv = (t - l.debutDevelop) / DUREE_DEVELOP
+        if (dv >= 1) {
+          l.debutDevelop = null
+          nuanceur.uniforms.uDevelop!.value = 0
+          // ELLE S'EST REVELEE, et c'est le meme message que « elle s'est
+          // fixee » : *la carte dit ce qui lui arrive, l'ecran decide de ce
+          // que ca veut dire.*
+          onFixee?.()
+        } else {
+          // LE PALIER, PUIS LA DESCENTE — voir `TENUE_NOM`. La descente est en
+          // `smoothstep` et non lineaire : *un effacement a vitesse constante
+          // se lit comme un store qu'on baisse*, et il faut que le dessin
+          // arrive sans que son arrivee ait un debut net.
+          const q = Math.max(0, (dv - TENUE_NOM) / (1 - TENUE_NOM))
+          nuanceur.uniforms.uDevelop!.value = 1 - q * q * (3 - 2 * q)
+        }
+      }
     }
 
     // L'AURÉOLE TOURNE ET RESPIRE. Deux fréquences qui ne retombent jamais en

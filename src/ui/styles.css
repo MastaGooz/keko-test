@@ -5539,6 +5539,151 @@ body {
   );
 }
 
+/* LA RARETE TEINTE TOUTE LA SCENE, pas seulement le cadre de la carte.
+
+   *Un cadre se regarde, une piece entiere se ressent* -- et c'est la seule
+   chose du reveal qui se lise sans rien lire. La teinte suit la PLUS RARE
+   revelee jusqu'ici : l'ambiance d'un paquet MONTE a mesure qu'on trouve
+   mieux, donc elle raconte l'ouverture et pas seulement la derniere carte.
+
+   Elle vit sur son propre calque et non sur `.paquet-fond` : un fond porte
+   deja son degrade, et *deux degrades sur une meme boite ne se melangent pas,
+   le second remplace le premier*. */
+.paquet-lueur {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    ellipse 62% 52% at 50% 44%,
+    var(--lueur, #c97b3c) 0%,
+    transparent 72%
+  );
+  opacity: var(--lueur-force, 0);
+  /* Elle monte vite et descend lentement -- le contraste de vitesse du bond
+     des creatures : une teinte qui s'installe au meme rythme qu'elle s'en va
+     se lit comme une respiration, pas comme une arrivee. */
+  transition:
+    opacity 0.9s cubic-bezier(0, 0, 0.2, 1),
+    background-image 0.6s linear;
+  mix-blend-mode: screen;
+}
+
+/* L'ECLAT D'UN REVEAL : le meme halo, mais il frappe et retombe.
+
+   Il est MONTE A NEUF a chaque carte (cle React), parce qu'*une classe qu'on
+   retire et qu'on repose ne redemarre pas une animation sans un reflow force*
+   -- la regle deja payee par le gonflement des tas. */
+.paquet-eclat {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    ellipse 48% 42% at 50% 44%,
+    var(--lueur, #c97b3c) 0%,
+    transparent 70%
+  );
+  mix-blend-mode: screen;
+  animation: paquet-eclat 0.85s cubic-bezier(0, 0, 0.2, 1) forwards;
+}
+
+@keyframes paquet-eclat {
+  0% {
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.55;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* LA DERNIERE CARTE S'ANNONCE AVANT DE SE RETOURNER.
+
+   *Une serie qui s'arrete sans le dire n'a pas de fin, elle a un dernier
+   element* -- et c'est le seul moment de l'ouverture ou l'on sait qu'il ne
+   reste qu'une chance. Le mot est en or : l'or est deja la couleur de ce qui
+   engage, partout dans ce jeu. */
+.paquet-dernier {
+  position: fixed;
+  /* ELLE COIFFE LA RANGEE, elle ne pend pas sous elle. Mesure : posee en bas,
+     elle tombait PILE sur le bouton « Tout reveler » — *une bande reservee ne
+     se partage pas*, et le bas de cet ecran est deja au bouton. Au-dessus, la
+     place est libre a tous les formats, puisque la rangee se centre. */
+  inset: 0.45rem 0 auto;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+  pointer-events: none;
+  text-align: center;
+}
+
+.paquet-dernier__mot {
+  margin: 0;
+  color: #ffe58f;
+  font-family: Cinzel, Georgia, serif;
+  /* TOUT SE BORNE PAR LA HAUTEUR, pas seulement par le rem. Mesure a
+     844 x 390 : la bande libre au-dessus de la rangee n'y fait que 62 px, et
+     le bloc en demandait 78 — il mordait le haut des cartes. *Un contenu qui
+     ne suit qu'une dimension deborde des que l'autre se resserre*, la lecon
+     deja payee par la bande de stats et les onglets du coffre. */
+  font-size: clamp(0.6rem, 1.9vh, 0.84rem);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  text-shadow:
+    0 2px 12px #000a,
+    0 0 18px #ffd26e80;
+  /* L'APPROCHE SE RESSERRE EN ARRIVANT : les lettres se rassemblent au lieu
+     d'apparaitre ensemble. *Un mot qui se rassemble se lit comme une annonce*,
+     la ou un fondu se lit comme un element de plus. */
+  animation: paquet-dernier-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes paquet-dernier-in {
+  0% {
+    opacity: 0;
+    letter-spacing: 0.5em;
+    transform: scale(0.86);
+  }
+}
+
+/* LE COMPTEUR QUI DEFILE : c'est lui qui REVELE la rarete.
+
+   *Le suspense est fabrique avec le chiffre lui-meme* -- pas avec un effet
+   pose a cote. Il monte vers les vues de la carte, et comme notre rarete
+   DERIVE des vues, la couleur qui monte avec lui dit la verite.
+
+   Il est en Grenze Gotisch comme les chiffres des cartes, et assez gros pour
+   qu'on le regarde : c'est la seule chose a lire a cet instant. */
+.paquet-compteur {
+  margin: 0;
+  color: #fff6e2;
+  font-family: 'Grenze Gotisch', Cinzel, Georgia, serif;
+  font-size: clamp(1.05rem, min(5vw, 5.4vh), 2.3rem);
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    0 2px 10px #000c,
+    0 0 22px var(--lueur, #c97b3c);
+}
+
+/* L'UNITE NE DEFILE PAS, elle attend. *Un mot qui change de taille a chaque
+   image est illisible*, et ce qu'on compare ici est le chiffre. */
+.paquet-compteur__unite {
+  margin: 0;
+  color: #9c927f;
+  font-family: Cinzel, Georgia, serif;
+  font-size: clamp(0.46rem, 1.5vh, 0.66rem);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 /* LE MOT D'ATTENTE : une mention, pas un titre. On ne decide pas dessus, donc
    il ne porte ni plaque ni bordure -- la regle de l'etiquette des tas. */
 .paquet-mot {

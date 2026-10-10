@@ -10,12 +10,14 @@
  * *C'est la règle du projet depuis le début* : un écran décide de ce que les
  * choses VEULENT DIRE, les objets savent comment elles se dessinent.
  */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Carte3D } from './Carte3D.tsx'
 import { Bouton3D } from './Bouton3D.tsx'
+import { Sachet3D } from './Sachet3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
+import { AMBIANCE, ECHELLE_METAL, RAPPORT_SACHET } from './texture-carte.ts'
 import { carteDeLAnimal } from './carte-animal.ts'
 import { carteDuPersonnage } from './carte-personnage.ts'
 import { chargerAnimaux } from '../ui/animaux.ts'
@@ -61,6 +63,18 @@ function tailleDeLaRangee(largeurVisible: number, hauteurVisible: number): numbe
 }
 
 /**
+ * LE SACHET EST PLUS GRAND QU'UNE CARTE, et il doit l'être : *il en contient
+ * cinq.* Un sachet à la taille d'une carte se lirait comme une sixième carte
+ * posée au milieu, et on ne comprendrait pas qu'il y a quelque chose dedans.
+ *
+ * Il se dimensionne sur la place, comme tout ici — la hauteur borne sur un
+ * téléphone, la largeur sur un écran de PC.
+ */
+function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number {
+  return Math.min(largeurVisible * 0.42, (hauteurVisible * 0.68) / RAPPORT_SACHET)
+}
+
+/**
  * LA GRAINE DE LA SESSION, TIREE AU CHARGEMENT. Keko : « on peut randomiser les
  * personnages ? j'ai toujours la meme seed je crois ».
  *
@@ -92,9 +106,51 @@ const GRAINE = (() => {
   return tiree
 })()
 
+/**
+ * CE QUE DURE LA MONTEE DU COMPTEUR DE LA DERNIERE CARTE.
+ *
+ * Il DECELERE en arrivant : *un compteur qui s'arrete net se lit comme une
+ * coupure, un compteur qui ralentit se lit comme une arrivee.* C'est le
+ * contraste de vitesse du bond des creatures, pris par l'autre bout.
+ */
+const MONTEE = 1300
+
+/** Le rang d'un metal dans l'echelle. `-1` pour ce qui n'en porte pas. */
+function rangMetal(rarete: string | undefined): number {
+  return (ECHELLE_METAL as readonly string[]).indexOf(rarete ?? 'commune')
+}
+
+/** La lueur d'un metal, avec le bronze pour repli. */
+function lueurDe(rang: number): string {
+  return AMBIANCE[ECHELLE_METAL[Math.max(0, rang)] ?? 'commune'] ?? AMBIANCE.commune!
+}
+
 export function Paquet3D(): React.ReactElement {
   /** `?paquet&perso` rejoue l'ancien catalogue — voir `CarteDuMode`. */
   const personnages = new URLSearchParams(location.search).has('perso')
+  /**
+   * `?paquet&culbute` REND LA CULBUTE, et le développement est le défaut.
+   *
+   * *Une carte qui se révèle en tournant ne dit rien de ce qu'elle est* : on
+   * voit un dos, puis une face, et entre les deux il n'y a que du mouvement.
+   * Le développement annonce **le nom avant l'image** — et c'est précisément
+   * ce qu'on cherche à l'ouverture d'un paquet, où la question est « qui
+   * est-ce ? » et non « est-ce que ça tourne bien ? »
+   *
+   * La culbute reste ouvrable : *ce qui a servi à choisir doit rester
+   * ouvrable, même une fois le choix fait.* Elle garde tout son emploi à
+   * l'armurerie, où l'on POSE une pièce — là, il n'y a rien à lire, il y a un
+   * geste à voir.
+   */
+  const culbuter = new URLSearchParams(location.search).has('culbute')
+  /**
+   * `?paquet&nu` SAUTE LE SACHET et ouvre directement sur les cinq dos.
+   *
+   * *Ce qui a servi à choisir doit rester ouvrable* — et surtout, juger une
+   * carte ne doit pas coûter une déchirure à chaque fois : quand c'est le
+   * DESSIN qu'on regarde, le sachet est un péage.
+   */
+  const nu = new URLSearchParams(location.search).has('nu')
   const [catalogue, setCatalogue] = useState<CarteDuMode[] | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   /** Le numéro du paquet : il change à chaque ouverture, et il seede le tirage. */
@@ -108,6 +164,29 @@ export function Paquet3D(): React.ReactElement {
    */
   const [jetons, setJetons] = useState<Readonly<Record<string, number>>>({})
   const [fenetre, setFenetre] = useState({ l: window.innerWidth, h: window.innerHeight })
+  /**
+   * LE RANG DE LA PLUS RARE REVELEE — c'est lui qui teinte la scene.
+   *
+   * *L'ambiance d'un paquet MONTE a mesure qu'on trouve mieux*, donc elle
+   * raconte l'ouverture entiere et pas seulement la derniere carte. `-1` tant
+   * qu'on n'a rien retourne : la pierre reste nue.
+   */
+  const [sommet, setSommet] = useState(-1)
+  /**
+   * L'ECLAT DU REVEAL COURANT. Il porte une CLE, parce que c'est elle qui le
+   * remonte a neuf : *une classe qu'on retire et qu'on repose ne redemarre pas
+   * une animation sans un reflow force* — la regle du gonflement des tas.
+   */
+  const [eclat, setEclat] = useState<{ readonly cle: number; readonly ton: string } | null>(null)
+  /** Vrai pendant que le compteur de la derniere carte defile. */
+  const [monte, setMonte] = useState(false)
+  /** Le sachet est consumé : c'est ce qui laisse voir les cartes. */
+  const [ouvert, setOuvert] = useState(nu)
+  /** Il brûle : la tape est passée, et il n'y a plus à y revenir. */
+  const [brule, setBrule] = useState(false)
+  const racine = useRef<HTMLDivElement>(null)
+  const refChiffre = useRef<HTMLParagraphElement>(null)
+  const image = useRef(0)
 
   useEffect(() => {
     let vivant = true
@@ -130,6 +209,10 @@ export function Paquet3D(): React.ReactElement {
       window.removeEventListener('orientationchange', suivre)
     }
   }, [])
+
+  // UNE BOUCLE D'ANIMATION SE COUPE AU DEMONTAGE, sinon elle ecrit dans un
+  // noeud qui n'existe plus — et React ne dit rien, il laisse faire.
+  useEffect(() => () => cancelAnimationFrame(image.current), [])
 
   // Le catalogue rangé par cran, une fois pour toutes : un écran qui ouvre dix
   // paquets ne doit pas reparcourir trois mille cartes dix fois.
@@ -160,13 +243,74 @@ export function Paquet3D(): React.ReactElement {
 
   const toutRevele = paquet.length > 0 && paquet.every((c) => revelees.has(c.id))
 
+  /** Les vues de la carte brute : c'est le chiffre dont la rarete DERIVE. */
+  function vuesDe(id: string): number {
+    const brute = paquet.find((c) => c.id === id)
+    return brute === undefined ? 0 : brute.vues
+  }
+
+  function rangDe(id: string): number {
+    return rangMetal(aPeindre.find((c) => c.id === id)?.rarete)
+  }
+
+  /**
+   * LE COMPTEUR DE LA DERNIERE CARTE : il monte vers les vues, et **la couleur
+   * REMONTE L'ECHELLE avec lui** pour s'arreter sur le bon barreau.
+   *
+   * *C'est la seule facon honnete de faire monter la couleur* : notre rarete
+   * derive des vues, donc un chiffre qui grimpe et une teinte qui grimpe avec
+   * lui disent la meme chose. Une interpolation vers la couleur finale, elle,
+   * l'aurait annoncee des la premiere image.
+   *
+   * **Tout s'ecrit dans le DOM, jamais dans l'etat** : une valeur qui change a
+   * chaque image declencherait un rendu par image — et ce rendu reconstruirait
+   * cinq cartes a nuanceur. C'est le chemin de `Projeter`, pour la meme raison.
+   */
+  function monterLeCompteur(id: string): void {
+    const cible = vuesDe(id)
+    const rangFinal = Math.max(0, rangDe(id))
+    const depart = performance.now()
+    setMonte(true)
+    const pas = (): void => {
+      const p = Math.min(1, (performance.now() - depart) / MONTEE)
+      // Une deceleration cubique : vive au depart, posee a l'arrivee.
+      const avance = 1 - Math.pow(1 - p, 3)
+      if (refChiffre.current !== null)
+        refChiffre.current.textContent = Math.round(cible * avance).toLocaleString('fr-FR')
+      // L'ECHELLE SE REMONTE EN PROPORTION, et elle s'arrete au bon cran :
+      // *les couleurs PASSENT dans l'ordre*, elles ne sautent pas a la bonne.
+      const rang = Math.min(rangFinal, Math.floor(avance * (rangFinal + 1)))
+      racine.current?.style.setProperty('--lueur', lueurDe(rang))
+      racine.current?.style.setProperty('--lueur-force', String(0.1 + avance * 0.5))
+      if (p < 1) image.current = requestAnimationFrame(pas)
+      else setSommet((h) => Math.max(h, rangFinal))
+    }
+    image.current = requestAnimationFrame(pas)
+  }
+
   function reveler(id: string): void {
     if (revelees.has(id)) return
+    const restantes = paquet.filter((c) => !revelees.has(c.id))
     setRevelees((d) => new Set(d).add(id))
     setJetons((j) => ({ ...j, [id]: (j[id] ?? 0) + 1 }))
+    setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDe(rangDe(id)) }))
+    // LA DERNIERE SE REVELE AU COMPTEUR, les autres d'un coup : *ce qui
+    // distingue un moment est qu'il ne se produit qu'une fois.*
+    if (restantes.length === 1) monterLeCompteur(id)
+    else setSommet((h) => Math.max(h, rangDe(id)))
   }
 
   function toutReveler(): void {
+    // ON SAUTE LA MONTEE : *un joueur qui demande tout ne demande pas de
+    // suspense*, et le compteur en est un.
+    cancelAnimationFrame(image.current)
+    setMonte(false)
+    const nonVues = paquet.filter((c) => !revelees.has(c.id))
+    if (nonVues.length > 0) {
+      const haut = Math.max(...nonVues.map((c) => rangDe(c.id)))
+      setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDe(haut) }))
+      setSommet((h) => Math.max(h, haut))
+    }
     setRevelees(new Set(paquet.map((c) => c.id)))
     setJetons((j) => {
       const suite = { ...j }
@@ -176,7 +320,15 @@ export function Paquet3D(): React.ReactElement {
   }
 
   function ouvrirUnAutre(): void {
+    cancelAnimationFrame(image.current)
+    setOuvert(nu)
+    setBrule(false)
     setRevelees(new Set())
+    setSommet(-1)
+    setEclat(null)
+    setMonte(false)
+    racine.current?.style.removeProperty('--lueur')
+    racine.current?.style.removeProperty('--lueur-force')
     setNumero((n) => n + 1)
   }
 
@@ -186,9 +338,34 @@ export function Paquet3D(): React.ReactElement {
   const pas = taille * 1.12
   const y = hVisible * 0.06
 
+  /**
+   * LA DERNIERE CARTE, tant qu'elle n'est pas retournee. *Elle ne s'annonce
+   * que s'il y en a eu d'autres avant* : sur un paquet d'une seule carte, « la
+   * derniere » ne dirait rien.
+   */
+  const restantes = paquet.filter((c) => !revelees.has(c.id))
+  const derniere = restantes.length === 1 && paquet.length > 1 ? restantes[0]! : null
+
   return (
-    <div className="paquet-3d">
+    <div
+      className="paquet-3d"
+      ref={racine}
+      style={
+        {
+          '--lueur': lueurDe(sommet),
+          '--lueur-force': sommet < 0 ? 0 : 0.18 + sommet * 0.1,
+        } as React.CSSProperties
+      }
+    >
       <div className="paquet-fond" />
+      <div className="paquet-lueur" />
+      {eclat !== null && (
+        <div
+          key={eclat.cle}
+          className="paquet-eclat"
+          style={{ '--lueur': eclat.ton } as React.CSSProperties}
+        />
+      )}
       <Canvas
         shadows
         dpr={[1, 2]}
@@ -208,7 +385,26 @@ export function Paquet3D(): React.ReactElement {
         />
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
 
-        {aPeindre.map((carte, i) => {
+        {/*
+          LE SACHET TIENT LA SCÈNE SEUL, et il n'y a rien d'autre à l'écran :
+          *un paquet fermé ne montre pas ce qu'il contient.* Il est MONTÉ À
+          NEUF à chaque ouverture (clé), parce que son horloge et son « c'est
+          fini » vivent dans des refs — et une ref ne se remet pas à zéro parce
+          qu'une prop a changé.
+        */}
+        {!ouvert && paquet.length > 0 && (
+          <Sachet3D
+            key={numero}
+            taille={tailleDuSachet(lVisible, hVisible)}
+            position={[0, 0, Z_MAIN]}
+            ouvre={brule}
+            onCliquer={() => setBrule(true)}
+            onOuvert={() => setOuvert(true)}
+          />
+        )}
+
+        {ouvert &&
+          aPeindre.map((carte, i) => {
           const vue = revelees.has(carte.id)
           return (
             <Carte3D
@@ -217,7 +413,12 @@ export function Paquet3D(): React.ReactElement {
               // LE DOS TANT QU'ELLE N'EST PAS RETOURNÉE : c'est la même carte
               // vue de l'autre côté, pas un second objet.
               dos={!vue}
-              culbute={jetons[carte.id] ?? 0}
+              // LES DEUX RÉVÉLATIONS PASSENT PAR LE MÊME JETON : *c'est le
+              // même évènement*, seule la mise en scène change. Passer
+              // `undefined` rend la prop absente, donc `Carte3D` ne charge pas
+              // le pavé du nom quand il ne servirait pas.
+              culbute={culbuter ? (jetons[carte.id] ?? 0) : undefined}
+              developpe={culbuter ? undefined : (jetons[carte.id] ?? 0)}
               position={[(i - (aPeindre.length - 1) / 2) * pas, y, Z_MAIN]}
               taille={taille}
               // ELLE RÉPOND AU CURSEUR une fois révélée, et pas avant : *un dos
@@ -232,7 +433,7 @@ export function Paquet3D(): React.ReactElement {
           )
         })}
 
-        {paquet.length > 0 && (
+        {ouvert && paquet.length > 0 && (
           <Bouton3D
             texte={toutRevele ? 'Ouvrir un autre paquet' : 'Tout révéler'}
             ton={toutRevele ? 'or' : 'pierre'}
@@ -242,6 +443,20 @@ export function Paquet3D(): React.ReactElement {
           />
         )}
       </Canvas>
+
+      {ouvert && (derniere !== null || monte) && (
+        <div className="paquet-dernier">
+          <p className="paquet-dernier__mot">Dernière carte</p>
+          {monte && (
+            <>
+              <p className="paquet-compteur" ref={refChiffre}>
+                0
+              </p>
+              <p className="paquet-compteur__unite">vues par mois</p>
+            </>
+          )}
+        </div>
+      )}
 
       {catalogue === null && erreur === null && <p className="paquet-mot">Ouverture du paquet…</p>}
       {erreur !== null && <p className="paquet-mot">{erreur}</p>}
