@@ -39,10 +39,39 @@ Sélection puis dépôt, pas de glisser.
   occupée **échange**, rien ne disparaît) ;
 - clic sur une case posée, puis sur le cadre de la main → elle revient en main ;
 - **liseré vert** = cette carte a au moins une synergie ;
-- **« +N » sur une carte en main** = N de ses voisins sont déjà posés. *C'est de
-  l'affichage, pas une règle* — mais sans lui le joueur ne connaît pas le graphe
-  de Wikipédia et poserait au hasard. À retirer dans `board.ts` (chercher
-  `bd-amis`) pour juger le jeu à l'aveugle.
+- **badge vert en bas d'une carte en main** = N de ses voisins sont déjà posés.
+  *C'est de l'affichage, pas une règle* — mais sans lui le joueur ne connaît pas
+  le graphe de Wikipédia et poserait au hasard. À retirer dans `board.ts`
+  (chercher `bd-amis`) pour juger le jeu à l'aveugle.
+
+### Les deux chiffres, et ils étaient confondus
+
+Keko : « je comprends pas comment fonctionne le système de chiffre des cartes
+quand je les pose ». **Les deux badges étaient au même coin** — `top: 2px;
+right: 3px` pour les deux — l'un jaune sur la grille, l'autre vert dans la main.
+*Deux chiffres différents à la même place ne se lisent pas, ils se confondent.*
+
+| où | couleur | ce que ça dit |
+|---|---|---|
+| **en haut d'une case** | jaune | ce que **cette carte** produit : `base` + `synergie` × voisins liés adjacents |
+| **en bas d'une carte en main** | vert sur fond | combien de ses **voisins sont déjà posés** |
+
+Trois corrections : le badge de la main est descendu **en bas à gauche** sur un
+fond plein, le total se **décompose** (« +7 / tick = 3 cartes (+3) + 2 paires
+liées (+4) »), et le survol d'une case détaille son calcul.
+
+Vérifié sur un vrai trio du pool — Donald Trump, George Washington et Theodore
+Roosevelt sont liés deux à deux :
+
+| disposition | chiffres | total |
+|---|---|---|
+| une carte seule | `1` | +1 |
+| deux liées côte à côte | `2` et `2` | +4 |
+| trois en **L**, celle du milieu touchant les deux autres | `2`, **`3`**, `2` | +7 |
+| les trois éloignées | `1`, `1`, `1` | +3 |
+
+*Le pool en compte 4 606 triangles dans le top 300*, donc l'arrangement a de
+quoi payer.
 
 ## Où changer les constantes
 

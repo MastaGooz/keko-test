@@ -21,6 +21,7 @@ import {
   enJeu,
   deplacer,
   lies,
+  paquesLiees,
   plateauVide,
   poser,
   production,
@@ -69,8 +70,13 @@ const CSS = `
                   filter: brightness(0.78); }
   .bd-carte span { display: block; padding: 2px 3px; font-size: 10px;
                    line-height: 1.15; height: 26px; overflow: hidden; }
-  .bd-amis { position: absolute; top: 2px; right: 3px; font-size: 11px;
-             font-weight: 700; color: #6ddf8f; text-shadow: 0 0 3px #000, 0 0 3px #000; }
+  /* EN BAS A GAUCHE, ET AVEC SON MOT. Il etait au meme coin que le chiffre de
+     production de la grille — *deux chiffres differents a la meme place ne se
+     lisent pas, ils se confondent*, et Keko : « je comprends pas comment
+     fonctionne le systeme de chiffre des cartes quand je les pose ». */
+  .bd-amis { position: absolute; bottom: 28px; left: 3px; font-size: 10px;
+             font-weight: 700; color: #16161a; background: #6ddf8f;
+             border-radius: 2px; padding: 0 3px; }
   .bd-boutons { display: flex; gap: 8px; margin: 10px 0 4px; flex-wrap: wrap; }
   .bd-boutons button { font: inherit; padding: 7px 12px; cursor: pointer;
                        background: #2b2b36; color: #e8e2d4; border: 1px solid #4a4a58;
@@ -188,8 +194,17 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     haut.className = 'bd-haut'
     const total = document.createElement('div')
     total.innerHTML = `<span class="bd-gros">${p.ressource}</span> ressource`
+    // LE TOTAL SE DECOMPOSE : « 7 cartes (+7) · 3 paires (+6) ». *Sans ca, le
+    // joueur voit un chiffre monter sans savoir ce que son arrangement lui a
+    // rapporte* — et c'est precisement la question que ce proto pose.
+    const posees = p.grille.filter((j) => j !== null).length
+    const paires = paquesLiees(p, graphe).length
     const prod = document.createElement('div')
-    prod.innerHTML = `<span class="bd-gros">+${production(p, graphe)}</span> / tick`
+    prod.innerHTML =
+      `<span class="bd-gros">+${production(p, graphe)}</span> / tick` +
+      ` <span class="bd-note">= ${posees} carte${posees > 1 ? 's' : ''} (+${posees * reglage.base})` +
+      ` + ${paires} paire${paires > 1 ? 's' : ''} liee${paires > 1 ? 's' : ''} ` +
+      `(+${2 * paires * reglage.synergie})</span>`
     const compte = document.createElement('div')
     compte.className = 'bd-note'
     compte.textContent = `prochain tick dans ${Math.max(0, Math.ceil((prochain - Date.now()) / 1000))} s · ${p.ticks} ticks`
@@ -226,7 +241,13 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
         chiffre.className = 'bd-prod'
         chiffre.textContent = String(par[i] ?? 0)
         b.append(img, nom, chiffre)
-        b.title = `${j.nom} — ${par[i] ?? 0} par tick`
+        // LE SURVOL DECOMPOSE LE CALCUL : *un chiffre seul ne dit pas d'ou il
+        // vient*, et c'est tout ce qu'on cherche a rendre lisible ici.
+        const bonus = (par[i] ?? 0) - reglage.base
+        b.title =
+          `${j.nom} — ${par[i] ?? 0} par tick` +
+          ` = ${reglage.base} de base` +
+          (bonus > 0 ? ` + ${bonus} (${bonus / reglage.synergie} voisin(s) lie(s))` : ' (aucun voisin lie)')
       }
       b.addEventListener('click', () => {
         if (choix === null) {
@@ -304,10 +325,13 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     bNeuf.addEventListener('click', nouvelle)
     const aide = document.createElement('div')
     aide.className = 'bd-note'
-    aide.textContent =
-      'Clique une carte puis une case pour la poser. Clique une case posée puis une autre pour déplacer, ' +
-      'ou le cadre de la main pour la reprendre. Le liseré vert marque une synergie, le « +N » d’une carte en ' +
-      'main compte ses voisins déjà posés.'
+    aide.innerHTML =
+      `<b>Le chiffre JAUNE en haut d’une case</b> = ce que cette carte produit : ` +
+      `${reglage.base} de base, +${reglage.synergie} par voisin adjacent dont l’article Wikipédia est lié au sien ` +
+      `(les deux cartes du couple le gagnent). Le liseré vert marque une case qui en profite.<br>` +
+      `<b>Le badge VERT sur une carte en main</b> = combien de ses voisins sont déjà posés — où la mettre.<br>` +
+      `Clique une carte puis une case pour la poser. Clique une case posée puis une autre pour déplacer, ` +
+      `ou le cadre de la main pour la reprendre.`
     boutons.append(bBooster, bNeuf)
 
     racine.append(haut, corps, boutons, aide)
