@@ -12506,6 +12506,96 @@ proprietes qui ne se devinent pas :
 - **poser, deplacer et retirer ne perdent ni ne dupliquent jamais une carte**,
   quel que soit le chemin — y compris en posant sur une case occupee.
 
+### LE DUEL — `?duel`
+
+Demandé par Keko : « chaque joueur pose un perso à tour de rôle, et plutôt qu'un
+score au tick, chaque perso marque des points et le total quand la grid est
+pleine donne le vainqueur ».
+
+- grille **4×4**, donc **huit cartes chacun** — *ce n'est pas un réglage, c'est
+  la moitié des cases* : sinon la grille ne se remplit pas exactement, et « le
+  total quand elle est pleine » cesse d'avoir un sens ;
+- on pose **à tour de rôle**, et **il n'y a ni déplacement ni reprise** : *un
+  coup qu'on peut défaire n'est pas un coup*, et le dernier à jouer pourrait
+  refaire toute la grille ;
+- **plus de tick** : le score se lit sur la grille, en permanence, et il est
+  définitif quand elle est pleine ;
+- **le barème est celui du solo** (`portee - sauts`), et il vient de
+  `plateau.ts` — *deux modes qui paieraient différemment le même couple
+  divergeraient au premier réglage.*
+
+#### LE COUPLE PAIE SES DEUX CARTES, ET C'EST TOUT LE DILEMME
+
+Poser contre une carte adverse **la fait marquer autant que soi**. La meilleure
+case pour toi peut donc être un cadeau, et c'est la seule décision que ce mode
+ajoute au solo.
+
+**L'autre règle imaginable — « celui qui pose encaisse tout le couple » — est
+INCOMPATIBLE avec ce que Keko demande** : elle a besoin de savoir qui a posé en
+dernier, donc le score ne se lit plus sur la grille, il s'accumule. *Et mesurée,
+elle supprimait le dilemme* : l'adversaire ne gagnant jamais rien, un bot qui
+maximise son score et un bot qui cherche à le priver rendaient **exactement les
+mêmes chiffres**, à la décimale.
+
+#### CE QUE LA MESURE DIT — 400 parties, bots gloutons
+
+| | J1 gagne | nuls | matchs serrés | écart moyen |
+|---|---|---|---|---|
+| **alterné** (1-1-1…) | **15 %** | 7 % | 41 % | 9,8 |
+| **serpent** (1-2-2…) | **30 %** | 6 % | 48 % | 8,5 |
+
+**LE SECOND JOUEUR EST FAVORISÉ, ET C'EST STRUCTUREL.** *L'ordre de pose ne
+change pourtant rien au total* — chaque couple est compté une fois, où qu'il
+arrive — donc **l'avantage est d'INFORMATION** : il voit toujours un coup de
+plus, et sur huit coups ça s'accumule.
+
+Le **serpent** le réduit de moitié sans rien changer d'autre : chacun pose
+toujours huit cartes, mais les coups se répondent par paires. *À trancher par
+Keko* — il a demandé « à tour de rôle », donc l'alterné est le défaut, et
+`?duel&ordre=serpent` essaie l'autre.
+
+**Et jouer bien compte** : le bot glouton bat le hasard **84 à 86 %** du temps,
+pour douze points d'écart.
+
+#### CHERCHER À PRIVER L'ADVERSAIRE FAIT PERDRE
+
+**Mesuré, et contre-intuitif** : un bot qui maximise `son gain − le gain qu'il
+concède` se fait battre **76 %** du temps par un bot qui maximise simplement son
+propre gain.
+
+*En évitant les cartes adverses, on se prive des positions où ses PROPRES cartes
+se groupent* — et une carte posée entre deux des siennes encaisse le couple deux
+fois, donc le double. **Le jeu n'est pas à somme nulle, et le réflexe défensif le
+traite comme s'il l'était.**
+
+C'est le bot du jeu, pour cette raison exactement.
+
+#### L'ADVERSAIRE EST UN BOT
+
+Keko teste seul, depuis son téléphone : *un hot-seat ne se juge pas quand on joue
+les deux camps.* Il pose après un temps mort de 420 ms — **assez pour qu'on le
+VOIE poser**, trop court pour qu'on attende.
+
+#### L'APERÇU PORTE LES DEUX CHIFFRES
+
+Clique une carte : chaque case libre dit **en vert ce qu'elle te rapporte** et
+**en rouge ce qu'elle donne au bot**. *N'afficher que son propre gain cacherait
+précisément ce qu'il y a à décider.*
+
+Et le liseré d'une case posée dit à qui elle est — **bleu pour toi, rouge pour le
+bot** : *c'est la seule chose qu'on cherche d'un coup d'oeil sur une grille
+pleine*, et un chiffre par case ne le dirait pas.
+
+#### Le catalogue est celui des PERSONNAGES, et il n'y a pas le choix
+
+`links.json` est le graphe de LEURS articles. *Un duel d'animaux n'aurait aucun
+lien*, donc aucun bonus, donc aucune décision.
+
+#### Où changer les constantes
+
+`REGLAGE_DUEL`, en haut de `src/logic/board/duel.ts` : `cote`, `base`, `portee`,
+`ordre`, `sousPool`. **`parJoueur` s'en déduit** et ne se règle pas.
+
 ## LE JEU 2D EST SUPPRIMÉ — le moteur 3D est le jeu
 
 Tranché par Keko : **« supprime complètement tout ce qui se rapporte au jeu 2D,
@@ -12622,6 +12712,7 @@ src/
       types.ts      # CarteAnimal + la validation du JSON engendré
     board/       # LE PROTOTYPE DE PLATEAU — voir BOARD.md
       plateau.ts    # la grille, la production, REGLAGE : un seul endroit à régler
+      duel.ts       # le mode a deux : tour par tour, le total sur la grille pleine
   render/  # LE MOTEUR DU JEU (React + R3F) — c'est la page par défaut
     texture-carte.ts # la carte peinte au canvas, pour servir de texture
     Carte3D.tsx      # le pavé, ses matériaux, sa place amortie
@@ -12630,6 +12721,7 @@ src/
     Armurerie3D.tsx  # le coffre et le chargement
     Paquet3D.tsx     # le troisième mode, derrière `?paquet`
     board.ts         # le plateau, derrière `?board` — DOM nu, pas de Three.js
+    duel.ts          # le duel, derrière `?duel` — il réutilise le dessin du plateau
   ui/      # CE QUE LES DEUX MONDES PARTAGENT — plus le jeu 2D, il n'existe plus
     texte-carte.ts  # le texte d'une carte, sans DOM
     art.ts + art/   # les illustrations et leur table

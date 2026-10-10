@@ -45,6 +45,14 @@ if (parametres.has('paquet')) {
     const racine = document.getElementById('app')
     if (racine !== null) void montrerPlateau(racine, __BUILD_TIME__)
   })
+} else if (parametres.has('duel')) {
+  // LE DUEL — deux joueurs posent a tour de role, le total sur la grille pleine
+  // designe le vainqueur. `?duel&ordre=serpent` change le tour de jeu,
+  // `?duel&seed=7` rejoue une partie, `?duel&pool=N` change le sous-pool.
+  void import('./render/duel.ts').then(({ montrerDuel }) => {
+    const racine = document.getElementById('app')
+    if (racine !== null) void montrerDuel(racine, __BUILD_TIME__)
+  })
 } else if (parametres.has('ecusson')) {
   // La planche des symboles de coût : *ce qui a servi à choisir doit rester
   // ouvrable, même une fois le choix fait.*

@@ -40,7 +40,7 @@ import {
 } from '../logic/board/plateau.ts'
 import { createRng } from '../logic/rng.ts'
 
-const CSS = `
+export const CSS = `
   .bd { font: 14px/1.4 system-ui, sans-serif; color: #e8e2d4; background: #16161a;
         min-height: 100vh; padding: 10px; box-sizing: border-box; }
   .bd * { box-sizing: border-box; }
@@ -112,7 +112,7 @@ const CSS = `
 `
 
 /** `?board&pool=N` — voir `Reglage.sousPool`. */
-function sousPoolDemande(defaut: number): number {
+export function sousPoolDemande(defaut: number): number {
   const v = Number(new URLSearchParams(location.search).get('pool') ?? '')
   return Number.isFinite(v) && v > 1 ? Math.floor(v) : defaut
 }
@@ -125,7 +125,7 @@ function sousPoolDemande(defaut: number): number {
  * (mesuré : hors de la liste, elle rend un 400). **Si le motif n'est pas là, on
  * garde l'URL telle quelle** : une image lourde vaut mieux qu'une case vide.
  */
-function vignette(url: string): string {
+export function vignette(url: string): string {
   return url.replace('/960px-', '/250px-')
 }
 

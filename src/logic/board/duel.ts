@@ -1,0 +1,298 @@
+/**
+ * LE DUEL — deux joueurs posent à tour de rôle, le total sur la grille PLEINE
+ * désigne le vainqueur.
+ *
+ * Demandé par Keko : « chaque joueur pose un perso à tour de rôle, et plutôt
+ * qu'un score au tick, chaque perso marque des points et le total quand la grid
+ * est pleine donne le vainqueur ».
+ *
+ * **CE MODULE EST PUR**, comme tout `logic/` : pas de DOM, pas d'horloge, et le
+ * graphe de liens lui est **injecté**. Il réutilise `plateau.ts` pour tout ce
+ * qui ne change pas — l'adjacence, la distance, le barème — parce que *deux
+ * endroits qui calculeraient le même bonus se désaccorderaient au premier
+ * réglage.*
+ *
+ * ### LE SCORE SE LIT SUR LA GRILLE FINALE, ET C'EST CE QUI FERME UNE QUESTION
+ *
+ * Un couple côte à côte paie **ses deux cartes**, donc poser contre une carte
+ * adverse **la fait marquer autant que soi** — et c'est tout le dilemme du mode.
+ *
+ * *L'autre règle imaginable — « celui qui pose encaisse tout le couple » —
+ * est INCOMPATIBLE avec ce que Keko demande* : elle a besoin de savoir qui a
+ * posé en dernier, donc le score ne se lit plus sur la grille, il s'accumule.
+ * **Mesuré, elle supprimait aussi le dilemme** : l'adversaire ne gagnant jamais
+ * rien, un bot qui maximise son score et un bot qui cherche à le priver
+ * devenaient le MÊME bot, au chiffre près.
+ *
+ * ### CE QUE LA MESURE DIT DU MODE (400 parties, bots gloutons)
+ *
+ * | | J1 gagne | nuls | matchs serrés |
+ * |---|---|---|---|
+ * | **alterné** (1-1-1…) | **15 %** | 7 % | 41 % |
+ * | **serpent** (1-2-2…) | **30 %** | 6 % | 48 % |
+ *
+ * **LE SECOND JOUEUR EST FAVORISÉ, ET C'EST STRUCTUREL** : il voit toujours un
+ * coup de plus, et sur huit coups ça s'accumule. *L'ordre de pose ne change
+ * pourtant rien au total* — chaque couple est compté une fois, où qu'il
+ * arrive — donc **l'avantage est d'INFORMATION, pas de score.**
+ *
+ * Le serpent le réduit de moitié sans rien changer d'autre : chacun pose
+ * toujours huit cartes, mais les coups se répondent par paires. *À rouvrir avec
+ * Keko* — il a demandé « à tour de rôle », donc l'alterné est le défaut.
+ *
+ * **Et jouer bien compte** : un bot glouton bat le hasard 84 à 86 % du temps,
+ * pour douze points d'écart.
+ *
+ * **MAIS CHERCHER À PRIVER L'ADVERSAIRE FAIT PERDRE** — mesuré, un bot qui
+ * maximise `son gain − le gain qu'il concède` se fait battre 76 % du temps par
+ * un bot qui maximise simplement son propre gain. *En évitant les cartes
+ * adverses, on se prive des positions où ses PROPRES cartes se groupent* — et
+ * une carte entre deux des siennes encaisse le couple deux fois.
+ */
+
+import {
+  bonusDuCouple,
+  couples,
+  type Distances,
+  type Graphe,
+  type Jeton,
+  type Reglage,
+} from './plateau.ts'
+
+/** Qui joue. `-1` sur une case vide. */
+export type Camp = 0 | 1
+
+/** Dans quel ordre les tours se distribuent. */
+export type Ordre = 'alterne' | 'serpent'
+
+export interface ReglageDuel {
+  /** Côté de la grille. 4 fait seize cases, donc huit cartes par joueur. */
+  readonly cote: number
+  /** Ce qu'une carte posée vaut, seule. */
+  readonly base: number
+  /** Le bonus d'un couple vaut `portee - sauts`. Voir `plateau.ts`. */
+  readonly portee: number
+  /**
+   * **L'ORDRE DES TOURS, et c'est le seul correctif de l'avantage du second.**
+   * `alterne` est la demande littérale de Keko ; `serpent` fait tomber son
+   * avantage de 85 % à 70 % en laissant chacun poser huit cartes.
+   */
+  readonly ordre: Ordre
+  /** Dans combien de cartes du pool les mains se tirent. */
+  readonly sousPool: number
+}
+
+export const REGLAGE_DUEL: ReglageDuel = {
+  cote: 4,
+  base: 1,
+  portee: 5,
+  ordre: 'alterne',
+  sousPool: 300,
+}
+
+/**
+ * **LE NOMBRE DE CARTES PAR JOUEUR N'EST PAS UN RÉGLAGE**, c'est la moitié des
+ * cases : *sinon la grille ne se remplit pas exactement, et « le total quand la
+ * grille est pleine » cesse d'avoir un sens.*
+ */
+export function parJoueur(r: ReglageDuel): number {
+  return (r.cote * r.cote) / 2
+}
+
+export interface Duel {
+  readonly reglage: ReglageDuel
+  /** `cote * cote` cases, dans l'ordre des lignes. */
+  readonly grille: readonly (Jeton | null)[]
+  /** À qui est la carte de chaque case. `-1` si la case est vide. */
+  readonly camps: readonly (Camp | -1)[]
+  readonly mains: readonly [readonly Jeton[], readonly Jeton[]]
+  /** Combien de cartes ont été posées. C'est lui qui dit à qui est le tour. */
+  readonly poses: number
+}
+
+export function duelVide(
+  reglage: ReglageDuel,
+  main0: readonly Jeton[],
+  main1: readonly Jeton[],
+): Duel {
+  const n = reglage.cote * reglage.cote
+  return {
+    reglage,
+    grille: Array.from({ length: n }, () => null),
+    camps: Array.from({ length: n }, () => -1 as const),
+    mains: [main0, main1],
+    poses: 0,
+  }
+}
+
+/**
+ * À QUI EST LE TOUR.
+ *
+ * Le serpent donne `0, 1, 1, 0, 0, 1, 1, 0, …` — *une seule formule, pas une
+ * table* : c'est le quart de tour qui change de camp, donc `((n + 1) >> 1) & 1`.
+ * Vérifié : les deux ordres donnent exactement la moitié des coups à chacun.
+ */
+export function campDuTour(d: Duel): Camp {
+  if (d.reglage.ordre === 'serpent') return (((d.poses + 1) >> 1) & 1) as Camp
+  return (d.poses & 1) as Camp
+}
+
+/** La grille est pleine : plus rien à poser, le score est définitif. */
+export function fini(d: Duel): boolean {
+  return d.poses >= d.grille.length
+}
+
+/**
+ * POSER UNE CARTE DU CAMP DONT C'EST LE TOUR SUR UNE CASE LIBRE.
+ *
+ * **Il n'y a ni déplacement ni reprise**, à la différence du plateau solo : *un
+ * coup qu'on peut défaire n'est pas un coup*, et le dernier à jouer pourrait
+ * refaire toute la grille. Un dépôt impossible rend l'état inchangé.
+ */
+export function poserDuel(d: Duel, idMain: string, case_: number): Duel {
+  if (fini(d)) return d
+  if (case_ < 0 || case_ >= d.grille.length) return d
+  if (d.grille[case_] !== null) return d
+  const camp = campDuTour(d)
+  const main = d.mains[camp]
+  const i = main.findIndex((j) => j.id === idMain)
+  if (i < 0) return d
+  const grille = [...d.grille]
+  grille[case_] = main[i] as Jeton
+  const camps = [...d.camps]
+  camps[case_] = camp
+  const restante = [...main]
+  restante.splice(i, 1)
+  const mains: [readonly Jeton[], readonly Jeton[]] =
+    camp === 0 ? [restante, d.mains[1]] : [d.mains[0], restante]
+  return { ...d, grille, camps, mains, poses: d.poses + 1 }
+}
+
+/**
+ * CE QUE CHAQUE CARTE RAPPORTE À SON CAMP — case par case.
+ *
+ * *On rend le détail et pas seulement les deux totaux* : c'est ce chiffre que
+ * l'écran pose sur la carte, exactement comme en solo.
+ */
+export function pointsParCase(d: Duel, graphe: Graphe, cache?: Distances): readonly number[] {
+  const par = d.grille.map((j) => (j === null ? 0 : d.reglage.base))
+  for (const [i, k] of couples(d.reglage.cote)) {
+    const a = d.grille[i]
+    const b = d.grille[k]
+    if (a == null || b == null) continue
+    const gain = bonusDuCouple(bareme(d.reglage), graphe, a.id, b.id, cache)
+    if (gain === 0) continue
+    par[i] = (par[i] ?? 0) + gain
+    par[k] = (par[k] ?? 0) + gain
+  }
+  return par
+}
+
+/** Le total de chaque camp, lu sur la grille. */
+export function scoresDuel(
+  d: Duel,
+  graphe: Graphe,
+  cache?: Distances,
+): readonly [number, number] {
+  const par = pointsParCase(d, graphe, cache)
+  const out: [number, number] = [0, 0]
+  for (let i = 0; i < d.grille.length; i++) {
+    const c = d.camps[i]
+    if (c === 0 || c === 1) out[c] += par[i] ?? 0
+  }
+  return out
+}
+
+/** Ce qu'un coup rapporterait : à soi, et à l'adversaire. */
+export interface Gain {
+  readonly moi: number
+  readonly lui: number
+}
+
+/**
+ * CE QU'UNE CARTE RAPPORTERAIT SUR CHAQUE CASE, **aux DEUX camps.**
+ *
+ * `null` sur une case occupée — *on n'y pose pas, donc il n'y a rien à
+ * promettre* ; c'est la règle que Keko a déjà tranchée en solo.
+ *
+ * **C'est le dilemme du mode, et il faut les deux chiffres pour le voir** : une
+ * case peut être la meilleure pour soi ET la plus généreuse pour l'adversaire.
+ * *N'afficher que son propre gain cacherait précisément ce qu'il y a à décider.*
+ */
+export function gainsDuel(
+  d: Duel,
+  graphe: Graphe,
+  idMain: string,
+  camp: Camp,
+  cache?: Distances,
+): readonly (Gain | null)[] {
+  const r = bareme(d.reglage)
+  return d.grille.map((occupant, case_) => {
+    if (occupant !== null) return null
+    let moi = d.reglage.base
+    let lui = 0
+    for (const [i, k] of couples(d.reglage.cote)) {
+      const autre = i === case_ ? k : k === case_ ? i : -1
+      if (autre < 0) continue
+      const v = d.grille[autre] ?? null
+      if (v === null) continue
+      const gain = bonusDuCouple(r, graphe, idMain, v.id, cache)
+      if (gain === 0) continue
+      // LE COUPLE PAIE SES DEUX CARTES : la mienne, et celle d'en face — à
+      // qui qu'elle soit.
+      moi += gain
+      if (d.camps[autre] === camp) moi += gain
+      else lui += gain
+    }
+    return { moi, lui }
+  })
+}
+
+/**
+ * LE COUP DU BOT : **il maximise son propre gain, et rien d'autre.**
+ *
+ * *C'est contre-intuitif et c'est mesuré* : un bot qui retranche ce qu'il
+ * concède à l'adversaire se fait battre 76 % du temps. **En évitant les cartes
+ * adverses, on se prive des positions où ses propres cartes se groupent** — et
+ * une carte posée entre deux des siennes encaisse le couple deux fois.
+ *
+ * Départage par la case la plus tôt dans l'ordre de lecture, pour que *le même
+ * duel rejoué rende le même coup* : rien ici ne tire au sort.
+ */
+export function coupDuBot(
+  d: Duel,
+  graphe: Graphe,
+  cache?: Distances,
+): { readonly id: string; readonly case: number } | null {
+  if (fini(d)) return null
+  const camp = campDuTour(d)
+  let best: { id: string; case: number; note: number } | null = null
+  for (const j of d.mains[camp]) {
+    const g = gainsDuel(d, graphe, j.id, camp, cache)
+    for (let i = 0; i < g.length; i++) {
+      const v = g[i]
+      if (v == null) continue
+      if (best === null || v.moi > best.note) best = { id: j.id, case: i, note: v.moi }
+    }
+  }
+  return best === null ? null : { id: best.id, case: best.case }
+}
+
+/** Les identifiants déjà distribués — pour qu'un tirage n'en double aucun. */
+export function enJeuDuel(d: Duel): ReadonlySet<string> {
+  const s = new Set<string>()
+  for (const main of d.mains) for (const j of main) s.add(j.id)
+  for (const j of d.grille) if (j !== null) s.add(j.id)
+  return s
+}
+
+/**
+ * LE BARÈME SE PRÊTE À `plateau.ts` SANS LE RECOPIER.
+ *
+ * `bonusDuCouple` demande un `Reglage` complet, dont il ne lit que `portee` ;
+ * *lui passer un objet construit ici garde UNE seule définition du bonus*, et
+ * c'est tout ce qu'on cherche — les deux modes doivent payer pareil.
+ */
+function bareme(r: ReglageDuel): Reglage {
+  return { cote: r.cote, tick: 0, base: r.base, portee: r.portee, main: 0, booster: 0, sousPool: r.sousPool }
+}
