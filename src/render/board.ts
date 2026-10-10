@@ -210,25 +210,33 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
   }
 
   /**
-   * LE MEILLEUR BONUS QU'UNE CARTE DE LA MAIN POURRAIT PRENDRE, et à côté de qui.
+   * CE QU'UNE CARTE GAGNERAIT, CASE PAR CASE — **et `null` sur une case OCCUPÉE.**
    *
-   * **C'est le MAXIMUM et plus un compte.** Tant que seul un lien direct payait,
-   * compter les cartes liées déjà posées disait quelque chose ; *depuis que tout
-   * ce qui est joignable rapporte, presque chaque carte en main est liée à
-   * presque toute la grille* — un compte dirait « 10 » partout, donc rien.
+   * Keko : « il ne faut pas afficher les bonus sur les cases du grid déjà
+   * occupées ». *Poser dessus échange, donc c'est un placement légal* — mais ce
+   * n'est pas le geste qu'on cherche, et seize chiffres dont la moitié annonce
+   * un échange ne se lisent plus.
    *
-   * Ce que le joueur doit savoir, c'est **combien vaut son meilleur placement**.
+   * **C'EST LA SEULE PORTE, et c'est ce qui corrige le décalage que Keko a vu** :
+   * « parfois le bonus affiché dans la collection ne match pas le bonus réel max
+   * du grid ». Le badge de la main comptait **le meilleur bonus avec UNE carte
+   * posée**, l'aperçu additionne **tous les voisins d'une case** — donc une case
+   * entre deux cartes valait 8 pendant que le badge annonçait 4.
+   *
+   * ***Deux affichages qui prétendent dire la même chose doivent passer par le
+   * même calcul.*** Le badge n'est plus qu'un `max` de ce tableau.
    */
-  function meilleur(id: string): { gain: number; qui: string; sauts: number } | null {
-    let out: { gain: number; qui: string; sauts: number } | null = null
-    for (const j of p.grille) {
-      if (j === null) continue
-      const sauts = distance(graphe, id, j.id, reglage.portee - 1, cache)
-      if (sauts === Infinity || sauts < 1) continue
-      const gain = Math.max(0, reglage.portee - sauts)
-      if (gain > 0 && (out === null || gain > out.gain)) out = { gain, qui: j.nom, sauts }
-    }
-    return out
+  function gains(socle: Plateau, id: string): readonly (number | null)[] {
+    return socle.grille.map((c, i) =>
+      c === null ? apercuSurCase(socle, graphe, id, i, cache) : null,
+    )
+  }
+
+  /** Le meilleur placement, **sur les cases qu'on montre**. Zéro si aucune. */
+  function sommetDe(liste: readonly (number | null)[]): number {
+    let max = 0
+    for (const v of liste) if (v !== null && v > max) max = v
+    return max
   }
 
   /** Le mot de la distance. *Un nombre de sauts ne se lit pas, un mot si.* */
@@ -237,30 +245,24 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
     return `${sauts - 1} intermédiaire${sauts > 2 ? 's' : ''}`
   }
 
-  /**
-   * CE QUE LA CARTE CHOISIE GAGNERAIT, CASE PAR CASE — et `null` si rien n'est
-   * choisi.
-   *
-   * **Un déplacement compte comme un dépôt** : on retire d'abord la carte de sa
-   * case, sinon *elle se verrait elle-même comme voisine* depuis les cases
-   * adjacentes à celle qu'elle occupe. `retirer` est pur, donc ça ne coûte
-   * qu'une copie de grille.
-   */
-  function apercus(): readonly number[] | null {
-    if (choix === null) return null
-    const [base, id] =
-      choix.ou === 'main'
-        ? [p, choix.id]
-        : [retirer(p, choix.case), (p.grille[choix.case] as Jeton).id]
-    return base.grille.map((_, i) => apercuSurCase(base, graphe, id, i, cache))
-  }
-
   function dessiner(): void {
     const par = productionParCase(p, graphe, cache)
-    const vu = apercus()
+
+    // LE SOCLE DE TOUT APERCU. **Un deplacement compte comme un depot** : on
+    // retire d'abord la carte de sa case, sinon *elle se verrait elle-meme
+    // comme voisine* depuis les cases adjacentes a celle qu'elle occupe.
+    // `retirer` est pur, donc ca ne coute qu'une copie de grille.
+    //
+    // **ET LES BADGES DE LA MAIN LE PARTAGENT** : deux referentiels differents
+    // sur un meme ecran, c'est exactement le decalage qu'on vient de corriger.
+    const socle = choix?.ou === 'grille' ? retirer(p, choix.case) : p
+    const vu =
+      choix === null
+        ? null
+        : gains(socle, choix.ou === 'main' ? choix.id : (p.grille[choix.case] as Jeton).id)
     // LE MAXIMUM, et il peut y avoir EGALITE : on marque toutes les cases qui
     // le valent — *designer une seule case parmi deux equivalentes mentirait.*
-    const sommet = vu === null ? 0 : Math.max(0, ...vu)
+    const sommet = vu === null ? 0 : sommetDe(vu)
     const cote = reglage.cote
     const taille = Math.max(64, Math.min(120, Math.floor((Math.min(window.innerHeight - 260, 520)) / cote)))
     racine.replaceChildren()
@@ -408,14 +410,16 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
       // pas une regle** — mais sans lui le joueur ne connait pas le graphe de
       // Wikipedia et poserait au hasard : *il n'y aurait aucune decision a
       // eprouver.* A retirer si Keko veut juger le jeu a l'aveugle.
-      const m = meilleur(j.id)
-      if (m !== null) {
+      // LE MEME CALCUL QUE L'APERCU, donc le meme chiffre : c'est le `max` des
+      // cases libres, et plus « le meilleur bonus avec une carte ».
+      const max = sommetDe(gains(socle, j.id))
+      if (max > 0) {
         const amis = document.createElement('div')
         amis.className = 'bd-amis'
-        amis.textContent = `+${m.gain}`
+        amis.textContent = `+${max}`
         amis.title =
-          `Le mieux que « ${j.nom} » puisse prendre : +${m.gain}, à côté de ` +
-          `« ${m.qui} » (${mot(m.sauts)}). C’est un MAXIMUM, pas un total.`
+          `Le mieux que « ${j.nom} » puisse prendre : +${max}, sur la meilleure ` +
+          `case libre. Clique-la pour voir OÙ.`
         b.append(amis)
       }
       b.addEventListener('click', () => {
@@ -460,9 +464,10 @@ export async function montrerPlateau(racine: HTMLElement, buildTime: string): Pr
       `Sur une case posée : <b>la base en haut à GAUCHE</b>, <b>le bonus en « +X » en haut à DROITE</b>. ` +
       `Survole-la pour voir le détail. Liseré <span style="color:#ffd98a">clair</span> = un lien direct, ` +
       `<span style="color:#6ddf8f">vert</span> = un voisinage plus lointain.<br>` +
-      `<b>Clique une carte</b> et chaque case affiche en <span style="color:#6ddf8f">vert</span> ce qu’elle ` +
-      `y gagnerait ; <b>les meilleures s’entourent de vert</b>.<br>` +
-      `<b>Badge VERT sur une carte en main</b> = le MIEUX qu’elle puisse prendre, où que ce soit.<br>` +
+      `<b>Clique une carte</b> et chaque case LIBRE affiche en <span style="color:#6ddf8f">vert</span> ce ` +
+      `qu’elle y gagnerait ; <b>les meilleures s’entourent de vert</b>.<br>` +
+      `<b>Badge VERT sur une carte en main</b> = ce même chiffre, à son maximum : le mieux qu’elle ` +
+      `puisse prendre sur une case libre.<br>` +
       `Clique une carte puis une case pour la poser. Clique une case posée puis une autre pour déplacer, ` +
       `ou le cadre de la main pour la reprendre.`
     boutons.append(bBooster, bNeuf)

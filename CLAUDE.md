@@ -12334,6 +12334,51 @@ couple paie ses deux cartes, donc le total du plateau monte du double de ce que
 l'aperçu annonce ; *mais ce que le joueur compare, c'est ce que SA carte vaut
 selon où il la pose*, et doubler chaque chiffre ne changerait pas le classement.
 
+
+#### LE BADGE ET L'APERÇU PASSAIENT PAR DEUX CALCULS — c'était le même chiffre
+
+Keko : « parfois le bonus affiché dans la collection ne match pas le bonus réel
+max du grid ».
+
+**Et il avait exactement raison, pour une raison nette** : le badge comptait
+**le meilleur bonus avec UNE carte posée**, l'aperçu additionne **tous les
+voisins d'une case**. Une case entre deux cartes liées vaut donc 8 pendant que
+le badge annonçait 4 — *et le décalage grandissait avec la grille*, puisqu'une
+case centrale a quatre voisins.
+
+***Deux affichages qui prétendent dire la même chose doivent passer par le même
+calcul.*** Le badge n'est plus qu'un `max` du tableau d'aperçus
+(`sommetDe(gains(...))`), donc il ne peut plus en diverger — *c'est la règle du
+projet, « deux endroits qui décrivent la même valeur se désaccordent au premier
+réglage », et ici ils s'étaient désaccordés d'emblée.*
+
+**ET LES DEUX PARTAGENT AUSSI LEUR SOCLE.** Quand on tient une carte de la
+grille, les aperçus se calculent sur le plateau *sans elle* ; les badges de la
+main se calculaient sur le plateau courant. *Deux référentiels différents sur un
+même écran, c'est le même défaut un cran plus loin* — ils lisent désormais le
+même `socle`.
+
+#### L'APERÇU NE S'AFFICHE QUE SUR LES CASES LIBRES
+
+Tranché par Keko : « il ne faut pas afficher les bonus sur les cases du grid
+déjà occupées ».
+
+*Poser sur une case occupée ÉCHANGE, donc c'est un placement légal* — mais ce
+n'est pas le geste qu'on cherche, et **seize chiffres dont la moitié annonce un
+échange ne se lisent plus.** Une case occupée porte déjà ses deux badges de
+production ; lui en ajouter un troisième, c'est exactement la confusion que les
+deux coins venaient de résoudre.
+
+**Et le badge de la main suit**, puisqu'il est le `max` du même tableau : il
+annonce le meilleur placement **parmi les cases qu'on montre**. *Sinon il
+promettrait un chiffre qu'aucune case affichée ne porte* — le premier défaut,
+repris par l'autre bout.
+
+**Le coût reste négligeable** : le badge se recalcule pour toute la main à
+chaque rendu, soit dix cartes × seize cases — mesuré **5,7 ms au premier rendu
+et 0,25 ms ensuite**, parce que le cache des distances ne retient que quatre-
+vingts paires.
+
 **Il vit derriere `?board`**, a cote du jeu comme les paquets : *tant qu'il
 n'est pas un jeu, il ne prend pas la page.* Tout est dans `BOARD.md` — les
 regles, les gestes, les constantes, comment regenerer le graphe.
