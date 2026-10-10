@@ -752,6 +752,88 @@ géométrie ne domine plus (45 %), le graphe compte, et anticiper paie 69 %.
   choisir ce qu'on garde*. Une main plus grande que le nombre de coups
   ouvrirait cette décision sans toucher au barème.
 
+### UNE VALEUR DE PAGE EN GUISE DE BASE : ce qu'on peut extraire, et la forme qui marche
+
+Keko : « et si maintenant, au lieu de 1 en score de base, une valeur liée à la
+page wiki ? comme longueur, qualité etc. Déjà quelles sont les différentes
+options ? on peut "extraire" quoi comme valeur d'une page autre que sa taille ou
+qualité ? »
+
+#### L'INVENTAIRE, mesuré sur huit articles réels
+
+**Ce qui répond PAR LOT** (50 titres par appel, 200 à 550 ms — donc ~1 min pour
+3 000 cartes) :
+
+| | exemple (Napoléon / Platon / Marie Curie / Qu Yuan) |
+|---|---|
+| taille en octets | *déjà dans le catalogue* |
+| **catégories** | 108 / 66 / 171 / — |
+| **noms (redirections vers l'article)** | 3 / 9 / 27 / 8 |
+| images | 37 / 16 / 147 / 82 |
+| liens externes (les sources) | 49 / 32 / 76 / 119 |
+| liens sortants | 500+ |
+
+**MAIS TOUS CES COMPTEURS SE PAGINENT**, et c'est le piège déjà payé sur
+`links.json` : `cllimit=max` rend **500 éléments pour tout le lot**, donc la
+première page prend le quota et *les dernières sortent à zéro sans que rien ne le
+dise.* Mesuré : les liens sortants rendent `500 / 0 / 0 / 0…`
+
+**Ce qui ne répond qu'une page à la fois** (~200 à 430 ms, donc ~15 min) :
+
+- **les liens ENTRANTS** — la vraie centralité, et tronqués à 500 pour Napoléon ;
+- les **contributeurs** (500 inscrits + 498 anonymes pour Napoléon) ;
+- la **date de création** de l'article (Napoléon : 2003-01-17) — *l'ancienneté*.
+
+**Wikidata, par lot mais LENT** (7,6 s pour cinq entités, donc ~75 min pour
+3 000) : le nombre de **déclarations** (430 à 638) et surtout le nombre
+d'**identifiants externes** — 195 à 434 — *la reconnaissance institutionnelle.*
+
+**ET LA « QUALITÉ » DÉCLARÉE EST INUTILISABLE** : `pageassessments` ne répond que
+pour **deux articles sur huit** (Napoléon A/maximum, Jésus-Christ BD/faible).
+*Une valeur qui manque trois fois sur quatre n'est pas une valeur.*
+
+#### LE PIÈGE, ET IL EST MESURÉ : une base additive fait TIRER la partie
+
+*On pose toute sa main — huit cartes, huit coups* — donc **la somme des bases est
+fixée au tirage.** Cette part du score ne se joue pas.
+
+400 parties, portée 4, plancher, la valeur étant les vues en échelle log :
+
+| forme | part du score qui vient des bases | la plus grosse main gagne | écart moyen |
+|---|---|---|---|
+| base 1 (référence) | 34 % | **34 %** | 6,0 |
+| **A — base = valeur** | **75 %** | **65 %** | 8,2 |
+| **B — la valeur MULTIPLIE le bonus** | 32 % | **36 %** | 7,1 |
+| C — les deux | 74 % | 69 % | 9,7 |
+
+***Sous la forme A, deux parties sur trois sont gagnées par celui qui a tiré la
+plus grosse main.*** Les trois quarts du score cessent de se jouer.
+
+**LA FORME B N'A PAS CE DÉFAUT** — 36 %, soit le niveau de la référence, donc
+*aucune corrélation entre le tirage et la victoire* — et elle fait quand même
+compter la page : **une grosse carte mal placée devient un gâchis.** C'est
+exactement la décision spatiale qui manque au mode.
+
+#### ET LE CHOIX DE LA VALEUR SE MESURE AUSSI
+
+Sur le sous-pool de 300, en dix crans :
+
+| | distribution |
+|---|---|
+| **vues** (le champ `attaque`) | 5 et 6 portent **75 % du pool** — *ça ne discrimine presque pas* |
+| **taille de l'article** (`defense`) | étalée de 1 à 10, mode à 7-8 — **la meilleure des deux** |
+| **degré dans le pool** | 0 / médiane 9 / max 80 — énorme, mais *redondant avec le bonus* |
+
+*Les vues ne séparent pas, et c'est logique* : les trois cents plus notoires sont
+tous très lus. **La taille, elle, est bien étalée** — et c'est celle que Keko
+nommait en premier.
+
+**Ce qui vaudrait d'être essayé au-delà de la taille**, parce que ça dit autre
+chose qu'un volume de texte : **les noms** (combien de façons les gens appellent
+la personne : Marie Curie 27, Platon 9), **l'âge de l'article**, et les
+**identifiants externes**. *Trois mesures de notoriété VÉCUE plutôt que de
+quantité écrite.*
+
 ### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
