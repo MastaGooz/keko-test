@@ -13866,6 +13866,50 @@ grille, il s'accumule. **Ce qui n'est PLUS vrai** : « incompatible avec ce que
 Keko demande » — il a levé cette contrainte lui-même en rouvrant le gameplay.
 *Une objection conditionnelle tombe avec sa condition.*
 
+##### « ON VA FORCÉMENT TROUVER UN LIEN SI C'EST BINAIRE » — mesuré, et non
+
+Keko, sur la capture : **« dans ce système on va forcément trouver un lien si
+c'est binaire »**. *L'inquiétude est la bonne* — c'est exactement le défaut qu'on
+vient de diagnostiquer, un voisin qui paie presque toujours — **mais le chiffre
+dit l'inverse.** 400 parties, grille pleine à chaque fois :
+
+| règle de capture | tours où une capture est POSSIBLE | cibles par tour | captures par partie |
+|---|---|---|---|
+| **métier, score supérieur** | **31 %** | 1,1 | **4,6** |
+| métier, supérieur **de 3** | 19 % | 0,6 | 2,8 |
+| métier, supérieur **de 5** | 10 % | 0,3 | 1,5 |
+| lien direct, score supérieur | 6 % | 0,1 | 0,9 |
+
+***Deux tours sur trois, il n'y a rien à prendre.*** Le lien seul est fréquent
+(26 % des paires), mais **la capture demande TROIS conditions à la fois** :
+
+1. une carte adverse **adjacente à une case libre** — pas toutes les cases en
+   offrent ;
+2. **liée** à une carte de ma main ;
+3. et **plus faible** — or *les mains sont appariées par score*, donc « plus
+   fort » est à peu près une chance sur deux.
+
+**Les trois ensemble font 31 %**, et 4,6 captures sur seize coups : *assez pour
+exister, pas assez pour être banal.* C'est le niveau qu'on cherchait.
+
+**Et l'appariement des mains, posé pour une tout autre raison, est ce qui rend le
+score contraignant ici** — sans lui, un joueur chanceux aurait des cartes
+systématiquement plus fortes et capturerait sans arbitrage. *Les deux mécaniques
+se renforcent sans avoir été conçues ensemble.*
+
+**LE LEVIER N'EST DONC PAS LE LIEN, C'EST LA MARGE DE SCORE** : si la capture
+devait être plus rare, on exige « nettement plus fort » (19 % à +3, 10 % à +5)
+plutôt que de rendre le lien obscur. *Un réglage lisible — « il faut être bien
+plus fort » — vaut mieux qu'un lien que le joueur ne peut pas deviner.*
+
+*Piège de sonde, et c'est la quatrième fois que ce projet le paie* : ma première
+mesure annonçait **4 %**, parce que mon bot partait d'un meilleur score à `-1` —
+donc *faute de capture possible il jouait toujours le premier coup testé*, sa
+plus grosse carte sur la case 0. Les deux camps alignaient alors leurs scores
+dans le même ordre et **aucune capture ne pouvait plus arriver.** ***Un bot qui
+n'a aucune raison de préférer un coup joue toujours le même, et un placement
+dégénéré ne mesure pas un jeu.***
+
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
