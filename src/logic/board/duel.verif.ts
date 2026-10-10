@@ -35,19 +35,30 @@ function egal(obtenu: unknown, attendu: unknown, quoi: string): void {
 }
 
 const REG: ReglageDuel = { ...REGLAGE_DUEL, ordre: 'alterne' }
+/** Le barème d'origine : un couple mixte PAIE ses deux cartes. */
+const PLUS: ReglageDuel = { ...REG, mixte: 'plus' }
+/** Le malus, borné à zéro par carte — la seule des trois qui déplace l'écart. */
+const PLANCHER: ReglageDuel = { ...REG, mixte: 'plancher' }
 
 /** A-B et B-C liés, D-E liés : A-C vaut 2 sauts, A-D est injoignable. */
 const jeton = (id: string): Jeton => ({ id, nom: id, image: '', rarete: 'commun' })
 const GRAPHE: Graphe = symetrique({ A: ['B'], B: ['C'], D: ['E'] })
 
 /** Un duel dont les deux mains sont données par leurs lettres. */
-function duel(m0: string, m1: string, ordre: Ordre = 'alterne'): Duel {
+function duel(m0: string, m1: string, reg: ReglageDuel = REG): Duel {
   const lettres = (s: string): Jeton[] =>
     s
       .split(/\s+/)
       .filter((x) => x !== '')
       .map(jeton)
-  return duelVide({ ...REG, ordre }, lettres(m0), lettres(m1))
+  return duelVide(reg, lettres(m0), lettres(m1))
+}
+
+/** Pose la suite de coups donnée, en alternant les camps. */
+function jouer(d: Duel, coups: readonly (readonly [string, number])[]): Duel {
+  let x = d
+  for (const [id, c] of coups) x = poserDuel(x, id, c)
+  return x
 }
 
 console.log('LES TOURS')
@@ -119,23 +130,48 @@ console.log('\nLE SCORE SE LIT SUR LA GRILLE')
   egal(scoresDuel(mien, GRAPHE)[0], 10, 'A et B a moi, liees : 2 bases + 2 x 4 = 10')
   egal(scoresDuel(mien, GRAPHE)[1], 2, 'et l’adversaire n’a que ses deux bases')
 
-  // UN COUPLE MIXTE PAIE LES DEUX CAMPS, et c'est tout le dilemme du mode.
-  let mixte = duel('A x', 'B y')
-  mixte = poserDuel(mixte, 'A', 0)
-  mixte = poserDuel(mixte, 'B', 1)
-  mixte = poserDuel(mixte, 'x', 15)
-  mixte = poserDuel(mixte, 'y', 14)
-  egal(scoresDuel(mixte, GRAPHE)[0], 6, 'A a moi, B a lui : 2 bases + 4')
-  egal(scoresDuel(mixte, GRAPHE)[1], 6, 'et lui aussi — le couple paie les deux')
+  // UN COUPLE MIXTE RETIRE A SES DEUX CARTES — la regle de Keko, et le defaut.
+  const coups = [
+    ['A', 0],
+    ['B', 1],
+    ['x', 15],
+    ['y', 14],
+  ] as const
+  const mixte = jouer(duel('A x', 'B y'), coups)
+  egal(scoresDuel(mixte, GRAPHE)[0], -2, 'A a moi, B a lui : 2 bases - 4')
+  egal(scoresDuel(mixte, GRAPHE)[1], -2, 'et lui aussi — le couple retire aux deux')
+
+  // LE BAREME D'ORIGINE RESTE JOIGNABLE, et il paie les deux.
+  const avecPlus = jouer(duel('A x', 'B y', PLUS), coups)
+  egal(scoresDuel(avecPlus, GRAPHE).join('/'), '6/6', 'en `plus`, le couple paie les deux')
+
+  // L'ECART EST LE MEME SOUS LES DEUX BAREMES, et c'est de l'arithmetique :
+  // *un couple symetrique deplace les deux scores de la meme quantite.* Mesure
+  // sur 300 grilles : identique au point pres, 300 fois sur 300.
+  const ecart = (x: Duel): number => {
+    const s = scoresDuel(x, GRAPHE)
+    return (s[0] ?? 0) - (s[1] ?? 0)
+  }
+  egal(ecart(mixte), ecart(avecPlus), 'le malus ne deplace pas l’ecart')
+
+  // LE PLANCHER, LUI, LE DEPLACE : une carte ne descend jamais sous zero, donc
+  // la carte qui avait le moins a perdre perd moins. *C'est la seule des trois
+  // regles qui cree une attaque.*
+  const avecPlancher = jouer(duel('A x', 'B y', PLANCHER), coups)
+  egal(scoresDuel(avecPlancher, GRAPHE).join('/'), '1/1', 'en `plancher`, rien ne passe sous zero')
+  for (const v of pointsParCase(avecPlancher, GRAPHE))
+    if (v < 0) verifier('aucune case ne descend sous zero', false)
+  verifier('aucune case ne descend sous zero', true)
 
   // L'ORDRE DE POSE NE CHANGE PAS LE TOTAL : chaque couple compte une fois, ou
   // qu'il arrive. *C'est ce qui rend « le total a la fin » possible.*
-  let envers = duel('A x', 'B y')
-  envers = poserDuel(envers, 'A', 15)
-  envers = poserDuel(envers, 'B', 14)
-  envers = poserDuel(envers, 'x', 0)
-  envers = poserDuel(envers, 'y', 1)
-  egal(scoresDuel(envers, GRAPHE).join('/'), '6/6', 'pose a l’autre bout : meme total')
+  const envers = jouer(duel('A x', 'B y'), [
+    ['A', 15],
+    ['B', 14],
+    ['x', 0],
+    ['y', 1],
+  ])
+  egal(scoresDuel(envers, GRAPHE).join('/'), '-2/-2', 'pose a l’autre bout : meme total')
 
   // UNE CARTE ENTRE DEUX DES SIENNES ENCAISSE LES DEUX COUPLES.
   let trois = duel('A B C', 'x y z')
@@ -159,11 +195,16 @@ console.log('\nL’APERCU DES DEUX GAINS')
   // C'est au tour de J2 : ce que SA carte B gagnerait a cote de A, et ce que
   // ca donnerait a J1.
   const g = gainsDuel(d, GRAPHE, 'B', 1)
-  egal(g[1]?.moi, 5, 'B a cote de A : 1 de base + 4')
-  egal(g[1]?.lui, 4, 'et A, qui est a J1, encaisse 4 aussi')
+  egal(g[1]?.moi, -3, 'B a cote de A : 1 de base - 4')
+  egal(g[1]?.lui, -4, 'et A, qui est a J1, perd 4 aussi')
   egal(g[0], null, 'la case occupee ne promet rien')
   egal(g[5]?.moi, 1, 'loin de tout : la base seule')
   egal(g[5]?.lui, 0, 'et rien pour l’adversaire')
+
+  // LE MEME COUP SOUS LE BAREME D'ORIGINE : il paie les deux.
+  const avant = gainsDuel(jouer(duel('A B C D', 'x y z w', PLUS), [['A', 0]]), GRAPHE, 'B', 1)
+  egal(avant[1]?.moi, 5, 'en `plus`, B a cote de A vaut 1 + 4')
+  egal(avant[1]?.lui, 4, 'et A encaisse 4')
 
   // LE MEME COUP POUR LE CAMP QUI POSSEDE A : il encaisse DEUX FOIS.
   const sien = gainsDuel(d, GRAPHE, 'B', 0)
@@ -179,11 +220,21 @@ console.log('\nLE BOT')
   // ATTENTION : apres le coup de J1, LE BOT JOUE POUR J2 — donc la carte liee
   // doit etre dans SA main. *Mon premier essai la mettait dans celle de J1, et
   // le bot posait sa premiere carte au hasard en ayant parfaitement raison.*
+  // SOUS LE MALUS, LE BOT FUIT LA CARTE LIEE ADVERSE : poser B contre A lui
+  // coute 3 au lieu de lui rapporter 5. *Maximiser son score et eviter
+  // l'adversaire deviennent le meme calcul* — c'est tout ce que la regle de
+  // Keko achete.
   let d = duel('A D', 'B z')
   d = poserDuel(d, 'A', 0)
   const c = coupDuBot(d, GRAPHE)
-  egal(c?.id, 'B', 'le bot joue la carte liee')
-  egal(c?.case, 1, 'et il la met a cote')
+  verifier('le bot ne pose pas a cote de la carte adverse liee', c?.case !== 1)
+
+  // ET SOUS LE BAREME D'ORIGINE, il y court.
+  let p = duel('A D', 'B z', PLUS)
+  p = poserDuel(p, 'A', 0)
+  const cp = coupDuBot(p, GRAPHE)
+  egal(cp?.id, 'B', 'en `plus`, le bot joue la carte liee')
+  egal(cp?.case, 1, 'et il la met a cote')
 
   // IL PREFERE SON PROPRE GROUPE : a cote de SA carte, le couple paie deux
   // fois. *C'est ce qui le fait battre un bot defensif.*

@@ -572,6 +572,95 @@ s'entouraient TOUTES de vert**, puisqu'elles étaient à égalité.
 solo, où l'aperçu se tait à zéro, et elle vaut dès qu'un affichage prétend
 montrer où aller.
 
+### UN COUPLE MIXTE RETIRE AU LIEU D'AJOUTER — et il ne change pas qui gagne
+
+Proposé par Keko : « et si les liens avec les cartes ennemies diminuaient le
+score au lieu de s'ajouter ? par ex si je pose une carte à côté d'une carte
+ennemie, au lieu de lui donner +2 la carte perd 2 ».
+
+**C'est le défaut depuis** (`mixte: 'moins'`), et `?duel&mixte=plus` rend le
+barème d'origine.
+
+#### LA MESURE DIT D'ABORD UNE CHOSE QU'IL FAUT SAVOIR : l'écart ne bouge pas
+
+*Un couple symétrique déplace les deux scores de la même quantité*, donc il est
+**neutre sur l'écart** — et c'est l'écart qui désigne le vainqueur. Mesuré sur
+300 grilles tirées au hasard : **l'écart est identique au point près, 300 fois
+sur 300.**
+
+| la même grille | `plus` | `moins` |
+|---|---|---|
+| | 48 / 60 → **−12** | 8 / 20 → **−12** |
+| | 49 / 33 → **+16** | 7 / −9 → **+16** |
+| | 60 / 68 → **−8** | −16 / −8 → **−8** |
+
+**Donc ce n'était pas un dilemme avant, et ça n'en devient pas un.** La note
+disait « c'est tout le dilemme du mode » à propos du barème `plus` — *c'était
+faux*, et la proposition de Keko est ce qui a obligé à le mesurer. Une
+vérification le verrouille désormais.
+
+#### MAIS ELLE CHANGE LE JEU, ET DE DEUX FAÇONS QUI N'ÉTAIENT PAS VISÉES
+
+400 parties, mêmes bots gloutons, pool de 300 :
+
+| | `plus` | `moins` |
+|---|---|---|
+| contacts mixtes payants sur la grille finale | **9,4** | **3,7** |
+| J1 gagne | 15 % | **42 %** |
+| le bot glouton bat le hasard | 85 % | 68 % |
+
+- **LES DEUX CAMPS SE SÉPARENT EN TERRITOIRES.** Les contacts mixtes tombent de
+  moitié et plus : chacun groupe ses cartes et fuit celles d'en face. *Le jeu
+  cesse d'être deux solitaires sur un même damier* — il y a désormais une
+  géométrie à tenir, et c'est le vrai gain ;
+- **L'AVANTAGE STRUCTUREL DU SECOND JOUEUR S'EFFACE PRESQUE** — 15 % → 42 %, et
+  *personne ne l'avait cherché.* Il venait de l'information : le second voit
+  toujours un coup de plus. **Sous le malus, ce coup d'avance sert surtout à
+  éviter**, donc il paie beaucoup moins. *Le `serpent` existait pour corriger ça
+  et devient presque inutile* ;
+- **ET ELLE REND L'AFFICHAGE HONNÊTE.** L'écran annonçait « +4 pour toi, +4 pour
+  le bot » comme si c'était un arbitrage ; il dit maintenant « −4 / −4 », ce qui
+  se lit comme ce que c'est : *un terrain à éviter.*
+
+**Prix connu et assumé : les scores deviennent négatifs** (mesuré jusqu'à −22).
+C'est lisible — un total négatif dit qu'on s'est fait coincer — mais c'est à
+Keko de dire s'il le garde.
+
+#### LE PLANCHER À ZÉRO EST LA SEULE DES TROIS QUI CRÉE UNE ATTAQUE
+
+`?duel&mixte=plancher` : le malus s'applique, **mais une carte ne descend jamais
+sous zéro.**
+
+*C'est la borne qui casse la symétrie* : une carte isolée n'a qu'un point à
+perdre, une carte bien placée en a neuf. **Sacrifier une carte faible pour
+amputer une carte forte devient donc un coup**, et l'écart bouge enfin — mesuré,
+**65 grilles sur 300 changent de vainqueur** entre `plus` et `plancher`, contre
+zéro entre `plus` et `moins`.
+
+Et le bot qui cherche à priver l'adversaire **devient le meilleur** : il gagne
+69 % contre le bot qui maximise son seul score, là où il perdait sous les deux
+autres barèmes. *C'est le signe qu'un vrai dilemme existe* — le critère du
+projet, pris par l'autre bout.
+
+**C'est une décision de design, elle revient à Keko.** La règle coûte une ligne
+et se lit en une phrase (« une carte ne rapporte jamais moins de zéro »), mais
+elle change la nature du mode : on peut jouer pour détruire.
+
+#### TROIS CHOSES QUI PORTENT L'IMPLÉMENTATION
+
+- **l'aperçu se calcule par DIFFÉRENCE DE SCORES**, il ne refait plus la somme
+  des couples. *Le plancher est une borne par CARTE*, donc poser peut remonter
+  une carte voisine déjà tombée à zéro — une somme ne peut pas le voir. Et ça
+  garantit ce qui compte : **l'aperçu dit exactement ce que le score fera** ;
+- **la couleur dit À QUI, le signe dit QUOI.** Vert pour toi, rouge pour le bot,
+  et un `−3` en vert se lit « ta carte perd 3 ». *Deux conventions pour deux
+  faits, donc aucune n'a besoin de l'autre* ;
+- **le liseré du meilleur coup peut désigner un MOINDRE MAL.** Sous le malus
+  toutes les cases peuvent coûter, et le meilleur est alors celui qui coûte le
+  moins. *Mais on ne désigne rien quand tout est à égalité* — sur une grille
+  vide les seize cases valent la base, et seize liserés ne désignent aucune
+  case.
+
 ### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
@@ -620,7 +709,7 @@ lien*, donc aucun bonus, donc aucune décision.
 ### Où changer les constantes
 
 `REGLAGE_DUEL`, en haut de `src/logic/board/duel.ts` : `cote`, `base`, `portee`,
-`ordre`, `sousPool`. **`parJoueur` s'en déduit** et ne se règle pas.
+`ordre`, `mixte`, `sousPool`. **`parJoueur` s'en déduit** et ne se règle pas.
 
 ## Tests
 

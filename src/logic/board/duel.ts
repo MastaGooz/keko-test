@@ -78,15 +78,33 @@ export interface ReglageDuel {
    * avantage de 85 % à 70 % en laissant chacun poser huit cartes.
    */
   readonly ordre: Ordre
+  /**
+   * **CE QU'UN COUPLE MIXTE FAIT.** Tranché par Keko : « et si les liens avec
+   * les cartes ennemies diminuaient le score au lieu de s'ajouter ? »
+   *
+   * - `plus` : il PAIE ses deux cartes (la règle d'origine) ;
+   * - `moins` : il RETIRE à ses deux cartes — le défaut ;
+   * - `plancher` : il retire, **mais une carte ne descend jamais sous zéro.**
+   *
+   * *Les deux premières sont symétriques, donc neutres sur l'ÉCART* : mesuré
+   * sur 300 grilles, `plus` et `moins` donnent le même écart au point près.
+   * **Seul `plancher` casse la symétrie** et fait changer le vainqueur — 65
+   * grilles sur 300.
+   */
+  readonly mixte: Mixte
   /** Dans combien de cartes du pool les mains se tirent. */
   readonly sousPool: number
 }
+
+/** Ce qu'un couple mixte fait au score. Voir `ReglageDuel.mixte`. */
+export type Mixte = 'plus' | 'moins' | 'plancher'
 
 export const REGLAGE_DUEL: ReglageDuel = {
   cote: 4,
   base: 1,
   portee: 5,
   ordre: 'alterne',
+  mixte: 'moins',
   sousPool: 300,
 }
 
@@ -182,9 +200,19 @@ export function pointsParCase(d: Duel, graphe: Graphe, cache?: Distances): reado
     if (a == null || b == null) continue
     const gain = bonusDuCouple(bareme(d.reglage), graphe, a.id, b.id, cache)
     if (gain === 0) continue
-    par[i] = (par[i] ?? 0) + gain
-    par[k] = (par[k] ?? 0) + gain
+    // UN COUPLE MIXTE RETIRE, un couple propre ajoute — et dans les deux cas
+    // il porte sur SES DEUX CARTES. *Le faire porter sur une seule demanderait
+    // de savoir qui a posé en dernier*, donc le score ne se lirait plus sur la
+    // grille.
+    const signe = d.camps[i] === d.camps[k] ? 1 : d.reglage.mixte === 'plus' ? 1 : -1
+    par[i] = (par[i] ?? 0) + gain * signe
+    par[k] = (par[k] ?? 0) + gain * signe
   }
+  // LE PLANCHER EST CE QUI CASSE LA SYMÉTRIE : une carte isolée ne perd rien,
+  // une carte bien placée perd tout — donc amputer l'adversaire devient un
+  // coup. *C'est la seule des trois règles qui déplace l'écart.*
+  if (d.reglage.mixte === 'plancher')
+    for (let i = 0; i < par.length; i++) if ((par[i] ?? 0) < 0) par[i] = 0
   return par
 }
 
@@ -219,6 +247,17 @@ export interface Gain {
  * case peut être la meilleure pour soi ET la plus généreuse pour l'adversaire.
  * *N'afficher que son propre gain cacherait précisément ce qu'il y a à décider.*
  */
+/**
+ * **L'APERÇU SE CALCULE PAR DIFFÉRENCE DE SCORES, il ne refait pas la règle.**
+ *
+ * C'était une somme de couples, ce qui était juste tant que le barème était
+ * additif — *le plancher, lui, est une borne par CARTE*, donc poser peut
+ * remonter une carte voisine déjà tombée à zéro. Une somme ne peut pas le voir.
+ *
+ * Et ça garantit ce qui compte : **l'aperçu dit exactement ce que le score
+ * fera.** C'est la règle du projet — *le rendu demande la règle, il ne la
+ * recopie pas.*
+ */
 export function gainsDuel(
   d: Duel,
   graphe: Graphe,
@@ -226,25 +265,22 @@ export function gainsDuel(
   camp: Camp,
   cache?: Distances,
 ): readonly (Gain | null)[] {
-  const r = bareme(d.reglage)
+  const avant = scoresDuel(d, graphe, cache)
+  // SEUL L'IDENTIFIANT COMPTE pour le calcul : on fabrique le jeton plutôt que
+  // de le chercher dans une main, puisque l'appelant peut demander l'aperçu
+  // d'une carte du camp d'en face.
+  const pose: Jeton = { id: idMain, nom: idMain, image: '', rarete: 'commun' }
   return d.grille.map((occupant, case_) => {
     if (occupant !== null) return null
-    let moi = d.reglage.base
-    let lui = 0
-    for (const [i, k] of couples(d.reglage.cote)) {
-      const autre = i === case_ ? k : k === case_ ? i : -1
-      if (autre < 0) continue
-      const v = d.grille[autre] ?? null
-      if (v === null) continue
-      const gain = bonusDuCouple(r, graphe, idMain, v.id, cache)
-      if (gain === 0) continue
-      // LE COUPLE PAIE SES DEUX CARTES : la mienne, et celle d'en face — à
-      // qui qu'elle soit.
-      moi += gain
-      if (d.camps[autre] === camp) moi += gain
-      else lui += gain
+    const grille = d.grille.slice()
+    const camps = d.camps.slice()
+    grille[case_] = pose
+    camps[case_] = camp
+    const apres = scoresDuel({ ...d, grille, camps }, graphe, cache)
+    return {
+      moi: (apres[camp] ?? 0) - (avant[camp] ?? 0),
+      lui: (apres[1 - camp] ?? 0) - (avant[1 - camp] ?? 0),
     }
-    return { moi, lui }
   })
 }
 

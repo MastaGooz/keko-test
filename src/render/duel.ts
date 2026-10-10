@@ -38,6 +38,7 @@ import {
   scoresDuel,
   type Camp,
   type Duel,
+  type Mixte,
   type Ordre,
 } from '../logic/board/duel.ts'
 import { symetrique, tirer, type Distances, type Graphe, type Jeton } from '../logic/board/plateau.ts'
@@ -76,6 +77,11 @@ const CSS_DUEL = `
 /** Le camp du joueur. L'autre est le bot. */
 const MOI: Camp = 0
 
+/** `+4`, `-3`, `0` — *un chiffre d'ecart se lit par son signe, toujours ecrit.* */
+function signe(n: number): string {
+  return n > 0 ? `+${n}` : String(n)
+}
+
 export async function montrerDuel(racine: HTMLElement, buildTime: string): Promise<void> {
   const style = document.createElement('style')
   style.textContent = CSS + CSS_DUEL
@@ -105,7 +111,17 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
 
   const demande = new URLSearchParams(location.search).get('ordre')
   const ordre: Ordre = demande === 'serpent' ? 'serpent' : 'alterne'
-  const reglage = { ...REGLAGE_DUEL, ordre, sousPool: sousPoolDemande(REGLAGE_DUEL.sousPool) }
+  // CE QU'UN COUPLE MIXTE FAIT : `?duel&mixte=plus` rend le bareme d'origine,
+  // `plancher` borne le malus a zero par carte. *Ce qui a servi a choisir doit
+  // rester ouvrable, meme une fois le choix fait.*
+  const quoi = new URLSearchParams(location.search).get('mixte')
+  const mixte: Mixte = quoi === 'plus' ? 'plus' : quoi === 'plancher' ? 'plancher' : 'moins'
+  const reglage = {
+    ...REGLAGE_DUEL,
+    ordre,
+    mixte,
+    sousPool: sousPoolDemande(REGLAGE_DUEL.sousPool),
+  }
 
   // LE CATALOGUE EST TRIE PAR NOTORIETE : les N premiers sont le sous-pool.
   const pool: readonly Jeton[] = cartes.slice(0, reglage.sousPool).map((c) => ({
@@ -161,12 +177,22 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     const aMoi = campDuTour(d) === MOI && !attente && !fini(d)
     // CE QUE LA CARTE CHOISIE RAPPORTERAIT, CASE PAR CASE — aux DEUX camps.
     const vu = choix === null || !aMoi ? null : gainsDuel(d, graphe, choix, MOI, cache)
-    // LE SOMMET NE COMPTE QUE CE QUI DEPASSE LA BASE. *Toute case libre
-    // rapporte au moins la base*, donc sans ce garde les seize cases etaient a
-    // egalite sur une grille vide et s'entouraient TOUTES de vert.
-    let sommet = 0
+    // LE SOMMET EST LE MEILLEUR COUP, ET IL PEUT ETRE UN MOINDRE MAL. Sous le
+    // malus, toutes les cases peuvent couter : le meilleur est alors celui qui
+    // coute le moins, et c'est bien lui qu'il faut designer.
+    //
+    // *Mais on ne designe rien quand tout est a egalite* — sur une grille vide
+    // les seize cases valent la base, et seize liseres verts ne designent
+    // aucune case.
+    let sommet: number | null = null
+    let creux: number | null = null
     if (vu !== null)
-      for (const g of vu) if (g !== null && g.moi > reglage.base && g.moi > sommet) sommet = g.moi
+      for (const g of vu) {
+        if (g === null) continue
+        if (sommet === null || g.moi > sommet) sommet = g.moi
+        if (creux === null || g.moi < creux) creux = g.moi
+      }
+    if (sommet === creux) sommet = null
 
     const cote = reglage.cote
     // LA MEME TAILLE QUE LE PLATEAU, par la meme fonction : *deux ecrans qui
@@ -199,7 +225,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
     const note = document.createElement('div')
     note.className = 'bd-note'
     note.textContent =
-      `pool de ${pool.length} · ordre ${ordre} · graine ${graine}`
+      `pool de ${pool.length} · ordre ${ordre} · mixte ${mixte} · graine ${graine}`
     haut.append(score, etat, note)
 
     // -------------------------------------------------------------------- la grille
@@ -214,7 +240,7 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       if (j === null) b.classList.add('vide')
       else b.classList.add(d.camps[i] === MOI ? 'bd-camp-moi' : 'bd-camp-lui')
       const g = vu === null ? null : (vu[i] ?? null)
-      if (g !== null && sommet > 0 && g.moi === sommet) b.classList.add('vise')
+      if (g !== null && sommet !== null && g.moi === sommet) b.classList.add('vise')
       if (j !== null) {
         const img = document.createElement('img')
         img.src = vignette(j.image)
@@ -238,24 +264,27 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
           d.camps[i] === MOI ? 'toi' : 'le bot'
         }`
       }
-      // L'APERCU : ce que ça TE rapporte, et ce que ça LUI donne. **Rien sur une
-      // case qui ne rapporte que la base** : *un chiffre sur les seize cases ne
-      // designe aucune case*, et c'est la regle du solo, ou l'apercu se taît a
-      // zero.
-      if (g !== null && (g.moi > reglage.base || g.lui > 0)) {
+      // L'APERCU : **LA COULEUR DIT A QUI, LE SIGNE DIT QUOI.** Vert pour toi,
+      // rouge pour le bot — et un `-3` en vert se lit « ta carte perd 3 ».
+      // *Deux conventions pour deux faits*, donc aucune n'a besoin de l'autre.
+      //
+      // **Rien sur une case qui ne rapporte que la base** : *un chiffre sur les
+      // seize cases ne designe aucune case*, et c'est la regle du solo, ou
+      // l'apercu se taît a zero.
+      if (g !== null && (g.moi !== reglage.base || g.lui !== 0)) {
         const promesse = document.createElement('div')
         promesse.className = 'bd-apercu'
-        promesse.textContent = `+${g.moi}`
+        promesse.textContent = signe(g.moi)
         b.append(promesse)
-        if (g.lui > 0) {
+        if (g.lui !== 0) {
           const cadeau = document.createElement('div')
           cadeau.className = 'bd-cadeau'
-          cadeau.textContent = `+${g.lui}`
+          cadeau.textContent = signe(g.lui)
           b.append(cadeau)
         }
         b.title =
-          `Ici tu gagnerais +${g.moi}` +
-          (g.lui > 0 ? `, et le bot +${g.lui}` : ', et le bot rien') +
+          `Ici ta carte ferait ${signe(g.moi)}` +
+          (g.lui !== 0 ? `, et le bot ${signe(g.lui)}` : ', et le bot rien') +
           (g.moi === sommet ? ' (ton meilleur coup)' : '')
       }
       b.addEventListener('click', () => {
@@ -284,13 +313,14 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       b.append(img, nom)
       // LE MEME CALCUL QUE L'APERCU, donc le meme chiffre : *deux affichages
       // qui pretendent dire la meme chose doivent passer par le meme calcul.*
-      let max = 0
-      for (const g of gainsDuel(d, graphe, j.id, MOI, cache)) if (g !== null && g.moi > max) max = g.moi
-      if (max > reglage.base) {
+      let max: number | null = null
+      for (const g of gainsDuel(d, graphe, j.id, MOI, cache))
+        if (g !== null && (max === null || g.moi > max)) max = g.moi
+      if (max !== null && max !== reglage.base) {
         const amis = document.createElement('div')
         amis.className = 'bd-amis'
-        amis.textContent = `+${max}`
-        amis.title = `Au mieux, « ${j.nom} » te rapporterait ${max}. Clique-la pour voir OÙ.`
+        amis.textContent = signe(max)
+        amis.title = `Au mieux, « ${j.nom} » ferait ${signe(max)}. Clique-la pour voir OÙ.`
         b.append(amis)
       }
       b.addEventListener('click', () => {
@@ -324,11 +354,15 @@ export async function montrerDuel(racine: HTMLElement, buildTime: string): Promi
       `<b>Chacun pose une carte à son tour</b> jusqu’à remplir la grille ; <b>le plus gros total gagne</b>. ` +
       `Le liseré dit à qui est la carte : <span class="bd-moi">toi</span>, ` +
       `<span class="bd-lui">le bot</span>.<br>` +
-      `Deux cartes côte à côte se paient <b>${reglage.portee} moins le nombre de sauts</b> entre leurs articles ` +
-      `Wikipédia — et <b>le couple paie SES DEUX CARTES</b>. Contre une carte du bot, il marque donc autant que toi : ` +
-      `c’est tout le dilemme.<br>` +
-      `<b>Clique une carte</b> et chaque case libre dit en <span style="color:#6ddf8f">vert</span> ce que tu y ` +
-      `gagnerais, en <span class="bd-lui">rouge</span> ce que le bot y gagnerait.`
+      `Deux cartes côte à côte comptent <b>${reglage.portee} moins le nombre de sauts</b> entre leurs articles ` +
+      `Wikipédia, <b>sur chacune des deux</b> — ` +
+      (mixte === 'plus'
+        ? `et contre une carte du bot ça lui rapporte autant qu’à toi.`
+        : `mais contre une carte du bot ça se <b>RETIRE</b> des deux` +
+          (mixte === 'plancher' ? `, sans jamais faire descendre une carte sous zéro.` : `.`)) +
+      `<br>` +
+      `<b>Clique une carte</b> et chaque case libre dit en <span style="color:#6ddf8f">vert</span> ce que ta carte ` +
+      `y ferait, en <span class="bd-lui">rouge</span> ce que ça ferait au bot — <b>le signe dit le sens</b>.`
     racine.append(haut, corps, boutons, aide)
   }
 
