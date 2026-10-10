@@ -13692,6 +13692,83 @@ Et l'infobulle d'une case le dit en mots : « ici **le voisinage** lui ferait +3
 plus « ta carte ferait +11 ». *Le chiffre a changé de sujet, la phrase devait
 suivre.*
 
+##### VERDICT DE KEKO : « pas assez intuitif et fun » — et la mesure dit pourquoi
+
+**« Je trouve pas le jeu super… le système est pas assez intuitif et fun. »**
+
+*C'est un résultat, pas un échec* — ce proto existait pour une question, et il y
+a répondu. **Mais la mesure qui suit dit que je me suis trompé de chantier**, et
+elle le dit avec le critère du projet.
+
+##### LE JEU ACTUEL EST TOUJOURS UN JEU DE GÉOMÉTRIE
+
+Mesuré à la portée 4, qui était censée régler ça :
+
+| barème | couples payants | ce que coûte le hasard | le géomètre bat l'optimisé |
+|---|---|---|---|
+| **chemin Wikipédia (aujourd'hui)** | **88,3 %** | 10,4 | **57 %** |
+| **métier partagé** | 26,3 % | **14,2** | **25 %** |
+| domaine partagé | 26,9 % | 11,9 | 21 % |
+| origine partagée | 27,6 % | 9,7 | 41 % |
+| *métier OU siècle* | *72,5 %* | *16,0* | *66 %* |
+
+***Un bot qui prend le centre avec des cartes tirées au hasard gagne encore
+57 %*** contre un bot qui optimise tout. Le passage de la portée 5 à 4 avait fait
+tomber ce chiffre de 72 à 45 % sur mon banc d'alors ; sur celui-ci, avec les
+scores et l'appariement, **il est remonté à 57 %.** La cause est dans la première
+colonne : à 88 % de couples payants, *un voisin vaut presque toujours, donc seul
+leur NOMBRE compte* — quatre au centre, deux dans un coin.
+
+**LE MÉTIER GAGNE SUR LES DEUX CRITÈRES À LA FOIS** : la décision monte (14,2
+contre 10,4) **et** la géométrie cesse de dominer (25 % contre 57 %).
+
+*Et « métier OU siècle » confirme la règle par l'absurde* : à 72,5 % de couples
+payants, le géomètre remonte à 66 %. **Ce qui tue ce jeu n'est pas le barème,
+c'est qu'un voisin paie trop souvent.**
+
+##### MAIS LE VRAI DÉFAUT N'EST PAS CHIFFRABLE, ET IL ÉTAIT ÉCRIT DEPUIS LE DÉBUT
+
+*« Le joueur ne connaît pas le graphe de Wikipédia »* — je l'ai signé dès le
+premier jour du proto, et **j'ai répondu par un badge.** Chaque carte annonce ce
+qu'elle rapporterait, chaque case écrit son gain, le survol décompose.
+
+***Un jeu où l'écran te dit le bon coup n'est pas un jeu de décision, c'est un jeu
+de lecture.*** C'est exactement « pas intuitif » : l'information n'est jamais dans
+la tête du joueur, elle est dans un chiffre qu'il obéit.
+
+**Et le lien ne RACONTE rien.** « Trump et Musk sont liés » parce qu'une page cite
+l'autre : ça ne se devine pas, ça ne se ressent pas, et ça ne se retient pas.
+*« Zidane et Salah sont tous deux footballeurs » se voit sans aperçu* — et c'est
+mesuré : un métier commun relie **26 %** des paires, contre **4 %** pour un lien
+direct.
+
+##### MON ERREUR DE PRIORITÉ, et elle a coûté une dizaine de passes
+
+J'ai réglé **la portée, le plancher, le couple mixte, la forme de la valeur, le
+critère du score, l'appariement des mains, les badges, les couleurs** — et
+*aucun de ces réglages ne pouvait corriger le défaut central*, qui était écrit
+dans mes propres notes avant le premier d'entre eux.
+
+***Quand un prototype ne prend pas, le premier endroit à regarder est ce qu'on a
+signé comme défaut structurel et jamais traité*** — pas le réglage suivant.
+
+##### LES TROIS SORTIES, ET LE CHOIX EST À KEKO
+
+1. **LE TRAIT PARTAGÉ À LA PLACE DU CHEMIN.** Deux cartes vont ensemble si elles
+   partagent un métier. *Le joueur lit « footballeur » sur la carte*, donc les
+   badges, l'aperçu et le survol deviennent inutiles — **et la mesure dit que le
+   jeu y gagne sur ses deux critères.** Coût : rien à collecter, le champ est
+   dans le catalogue ;
+2. **CE QU'UNE CARTE PORTE DOIT JOUER.** Aujourd'hui *rien* n'intervient sauf les
+   liens et le score — ni domaine, ni époque, ni pays. **Les cartes sont donc
+   interchangeables**, et aucune n'a de personnalité. C'est le premier endroit où
+   chercher du « fun » : des cartes qui font des choses différentes ;
+3. **ON ARRÊTE CE PROTO.** Il a répondu à sa question — *l'arrangement compte
+   (42 % de coût du hasard), mais il n'est ni lisible ni plaisant* — et le jeu
+   d'extraction, lui, a reçu « je meurs par le greed quand je pousse exprès, la
+   lisibilité du loot est cool ». **Un prototype qui dit non est un prototype qui
+   a servi.**
+
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
