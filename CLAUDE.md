@@ -13441,6 +13441,73 @@ sort pas de cet écran. *Deux écrans qui dessinent la même grille ne peuvent p
 l'afficher chacun de leur côté* : la règle du `tailleDeCase` partagé, reprise
 ici.
 
+##### POURQUOI UNE CARTE SEULE VAUT 1 — et les deux portes mesurées
+
+Keko : **« pourquoi quand je pose un perso avec un score X son score passe à 1
+affiché dans le grid ? même seul sans interaction avec les autres »**
+
+*C'est le mode que j'ai posé par défaut, et il contredit ce qu'il attendait à
+l'écran.* Sous `bonus`, **le score ne compte que dans les COUPLES** : une carte
+posée seule produit la base, soit 1, quel que soit son score — son score ne fait
+que multiplier ce que ses voisins lui rapportent.
+
+**ET SA DEMANDE D'AVANT SUPPOSAIT L'INVERSE.** « Le chiffre de base, réduit ou
+augmenté » n'a de sens que si **le score EST la base** — et j'ai lu ce chiffre
+comme la production, donc j'ai câblé la moitié qui ne répondait pas à la
+question. *Deux lectures existaient, j'ai pris la mauvaise sans le dire.*
+
+##### NI LA MAIN PLUS GRANDE NI UN DOSAGE NE SAUVENT LE SCORE EN BASE
+
+*J'avais noté le levier moi-même* — « on pose toute sa main, donc il n'y a jamais
+à choisir ce qu'on garde ; une main plus grande ouvrirait cette décision ».
+**Mesuré, ça ne marche pas** (400 parties par ligne, portée 4 + plancher) :
+
+| main | la plus grosse main gagne (`taille`) | ce que coûte le hasard |
+|---|---|---|
+| 8 cartes pour 8 coups | **85 %** | 10,7 |
+| 10 | **83 %** | 22,2 |
+| 12 | **85 %** | 29,8 |
+
+*Les deux joueurs gardent leurs huit meilleures*, donc une main plus large **ne
+dilue pas l'écart de tirage, elle le concentre.** Elle ajoute en revanche une
+vraie décision — le coût du hasard TRIPLE — mais c'est un autre sujet.
+
+**ET LE DOSAGE NON PLUS.** Le score replié sur une plage plus courte, pour que la
+base en porte un peu sans que le tirage domine :
+
+| base | part du score qui vient des bases | la plus grosse main gagne |
+|---|---|---|
+| **1..1** (toutes égales) | 33 % | **33 %** |
+| 1..2 | 44 % | **68 %** |
+| 1..3 | 53 % | 71 % |
+| 1..4 | 58 % | 75 % |
+| 1..6 | 66 % | 77 % |
+| 1..10 (le score brut) | 76 % | **85 %** |
+
+***Dès que la base porte DEUX valeurs distinctes, le tirage reprend la main***
+(68 %). Il n'y a pas de cran intermédiaire utile — *la même forme de résultat que
+le mélange taille / qualité, et pour une raison structurelle* : **on pose toute
+sa main, donc toute différence de base est un écart acquis au tirage et non au
+jeu.** Le seul chiffre qui ne décide pas est « toutes les bases égales ».
+
+##### LA QUESTION EST DONC BINAIRE, ET ELLE EST À KEKO
+
+| | ce qu'on lit sur la case | ce que ça coûte |
+|---|---|---|
+| **le score EST la base** (`?duel&valeur=taille`) | le score, réduit ou augmenté par les voisins — *exactement ce qu'il décrivait* | **85 %** des parties au plus gros tirage |
+| **le score multiplie les couples** (`bonus`, le défaut) | la production, donc 1 pour une carte isolée | le score disparaît de la grille |
+
+*Il n'y a pas de troisième voie de RÈGLE* — les deux balayages ci-dessus la
+ferment. **Il reste une troisième voie d'AFFICHAGE** : garder `bonus` et peindre
+le SCORE coloré plutôt que la production. Elle dit littéralement ce que Keko
+demandait, et elle a un prix à connaître — *la case afficherait 7 là où elle
+marque 5*, donc le total ne se lirait plus que dans le score global.
+
+*Piège de mesure payé au passage* : trois remplacements d'une sonde ont échoué en
+SILENCE, faute d'assertion — le journal annonçait encore l'ancien titre et j'ai
+lu les mauvaises lignes du tableau. **Une sonde jetable se vérifie comme un
+patch : chaque remplacement s'assure d'avoir trouvé sa cible.**
+
 #### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
 
 Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
