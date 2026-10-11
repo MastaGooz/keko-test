@@ -12864,6 +12864,49 @@ avec le 19ᵉ à 949 cartes et le 16ᵉ à 580.
   mauvaise n'est pas un filtre.***
 - **317 cartes sans genre** (11 %), qui sortent avec « Peinture » au pied.
 
+#### LE TITRE NE DÉBORDE PLUS — trois termes se cumulaient
+
+Keko : « le texte du titre peut déborder sur les côtés de la carte (et se
+superposer aux encoches du cadre) quand il est trop long ».
+
+**Le nom est peint à `Y_ENCOCHE`, donc il tombe exactement dans la partie la
+plus étroite du cadre** — ce n'est pas un hasard, c'est le réglage que Keko
+avait lui-même demandé (« je les voudrais au niveau du titre »). Ce qui reste
+à cette hauteur :
+
+| | |
+|---|---|
+| l'encoche mord | 4,5 % de chaque côté |
+| la marge de la coque | 1,85 % |
+| **l'ombre portée du texte** (`shadowBlur`) | **3 % au-delà de l'encre** |
+
+*Le troisième était invisible* : le texte RAYONNE plus loin qu'il n'écrit, donc
+une borne posée sur l'encre laisse l'ombre mordre le laiton. La borne passe de
+84 % à **78 %**, et **on prend le pire cas, celui de la piste encochée** — *une
+borne qui dépend d'un paramètre d'essai se désaccorderait le jour où le défaut
+change.*
+
+**MAIS LA CAUSE PRINCIPALE ÉTAIT AILLEURS : un plancher de taille n'est pas une
+garantie de tenue.** La boucle de rétrécissement s'arrête à 6 U, et le plus long
+nom du catalogue fait **cent caractères** — « L'Ange exterminateur et les démons
+maléfiques interrompant les orgies des vicieux et des insatiables ». *Aucune
+taille lisible ne les fait tenir sur une ligne*, donc le nom débordait de trois
+fois la carte **sans que rien ne le signale.**
+
+**Le nom se COUPE donc, en dernier recours.** Le repli sur deux lignes n'a pas
+la place — entre le nom (66,5 %) et le cartouche (75,5 %) il n'y a que neuf pour
+cent de hauteur — et *ce qui sert à RECONNAÎTRE une carte, ce sont ses premiers
+mots.* Le nom entier reste dans le catalogue pour les écrans qui ont la place.
+
+**Ça valait pour les TROIS modes**, pas seulement les peintures : le plus long
+nom d'animal fait 73 caractères (« Polatouche du Japon / Polatouche momonga /
+Écureuil volant nain… »), celui d'un personnage 43. *Un défaut trouvé dans un
+mode se corrige là où le dessin vit, pas dans le mode qui l'a révélé.*
+
+Mesuré sur le catalogue : **21 % des noms dépassent 30 caractères**, 7,6 % les
+quarante, 3 % les cinquante. Les noms courts ne bougent pas d'un pixel — ils ne
+touchent pas la borne.
+
 ### CE QUI RESTE À TRANCHER PAR KEKO — les peintures
 
 - **est-ce que ça remplace les animaux ou s'y ajoute** ;

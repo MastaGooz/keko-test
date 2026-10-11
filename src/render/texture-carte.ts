@@ -2817,18 +2817,69 @@ function peindreTextes(
    * cartouche de l'Espadon. Le canvas ne prévient jamais qu'il déborde.
    */
   let tailleNom = 10.5 * U
-  const tientDans = LARGE * 0.84
+  /**
+   * LA LARGEUR UTILE EST CELLE DU CADRE À LA HAUTEUR DU TITRE, pas celle de la
+   * carte — et elle se CALCULE, elle ne se devine pas.
+   *
+   * Keko : « le texte du titre peut déborder sur les côtés de la carte (et se
+   * superposer aux encoches du cadre) quand il est trop long ». **Trois termes
+   * se cumulaient, et le troisième était invisible** :
+   *
+   * | | |
+   * |---|---|
+   * | l'encoche mord PILE à cette hauteur | 4,5 % de chaque côté |
+   * | la marge de la coque | 1,85 % |
+   * | **l'ombre portée du texte** (`shadowBlur`) | **3 % de plus que l'encre** |
+   *
+   * *Le nom est peint à `Y_ENCOCHE`, donc il tombe exactement dans la partie
+   * la plus étroite du cadre* — ce n'est pas un hasard, c'est le réglage que
+   * Keko avait demandé. Il reste 87,3 % entre les deux entailles, moins
+   * l'ombre : **81,3 %**, et on garde un peu d'air.
+   *
+   * **ON PREND LE PIRE CAS, celui de la piste encochée**, et pas la largeur de
+   * la piste courante : *une borne qui dépend d'un paramètre d'essai se
+   * désaccorderait le jour où le défaut change.* Les autres pistes y perdent
+   * trois pour cent sur les seuls noms longs.
+   */
+  const tientDans = LARGE * 0.78
   ctx.font = `700 ${tailleNom}px "Grenze Gotisch", Georgia, serif`
   while (ctx.measureText(carte.nom).width > tientDans && tailleNom > 6 * U) {
     tailleNom *= 0.94
     ctx.font = `700 ${tailleNom}px "Grenze Gotisch", Georgia, serif`
+  }
+  /**
+   * ET SI LA TAILLE NE SUFFIT PLUS, ON COUPE.
+   *
+   * ***Un plancher de taille n'est pas une garantie de tenue*** : la boucle
+   * s'arrête à 6 U, et le plus long nom du catalogue des peintures fait **cent
+   * caractères** — « L'Ange exterminateur et les démons maléfiques
+   * interrompant les orgies des vicieux et des insatiables ». Aucune taille
+   * lisible ne les fait tenir sur une ligne, donc le nom débordait de trois
+   * fois la carte, *sans que rien ne le signale.*
+   *
+   * **Le repli sur deux lignes n'a pas la place** : entre le nom (66,5 %) et
+   * le cartouche (75,5 %) il n'y a que neuf pour cent de hauteur, soit une
+   * ligne. *Et ce qui sert à RECONNAÎTRE une carte, ce sont ses premiers
+   * mots* — le nom entier reste dans le catalogue pour les écrans qui ont la
+   * place de l'écrire.
+   *
+   * On coupe par POINT DE CODE : un `slice` tranche en deux un caractère hors
+   * BMP et laisse une moitié de paire orpheline.
+   */
+  let nom = carte.nom
+  if (ctx.measureText(nom).width > tientDans) {
+    const lettres = [...nom]
+    while (lettres.length > 1 && ctx.measureText(`${lettres.join('')}…`).width > tientDans) {
+      lettres.pop()
+    }
+    nom = `${lettres.join('').trimEnd()}…`
   }
   ctx.fillStyle = '#f7ead0'
   ctx.shadowColor = '#14181a'
   ctx.shadowOffsetY = 0.5 * U
   ctx.shadowBlur = 3 * U
   const yNom = HAUT * 0.665
-  ctx.fillText(carte.nom, LARGE / 2, yNom)
+  ctx.fillText(nom, LARGE / 2, yNom)
   ctx.shadowColor = 'transparent'
   ctx.shadowOffsetY = 0
   ctx.shadowBlur = 0
