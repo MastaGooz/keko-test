@@ -79,7 +79,12 @@ function anneeEnClair(annee: number): string {
  */
 export function carteDeLaPeinture(c: CartePeinture): CarteAPeindre {
   const quand = anneeEnClair(c.annee)
-  const lignes = [c.peintre ?? 'Anonyme']
+  // **ON N'ÉCRIT PAS « Anonyme » quand le peintre manque**, et ce n'est pas un
+  // détail : *Guernica n'a aucun créateur déclaré dans Wikidata* — comme 3 %
+  // du catalogue — et elle n'est pas anonyme pour autant. **Une absence se lit
+  // mieux qu'une affirmation fausse**, la règle du badge de menace qui
+  // n'apparaît que s'il y a une menace. La carte garde alors une seule ligne.
+  const lignes = c.peintre === null ? [] : [c.peintre]
   lignes.push(c.musee === null ? quand : `${quand} · ${c.musee}`)
 
   return {

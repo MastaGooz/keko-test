@@ -12819,6 +12819,51 @@ désaccordent au premier réglage***, et je viens de le prouver sur le commit m�
 qui l'écrivait. Le pipeline l'importe désormais depuis `logic/`, qui est pur et
 qu'un script hors build peut lire sans rien emporter du navigateur.
 
+### CE QUE LE CATALOGUE A DONNÉ — 2 840 cartes
+
+Engendré en **4,1 minutes** (le cache portait la découverte), 1,4 Mo.
+
+| | |
+|---|---|
+| cartes | **2 840** |
+| raretés | commun 1 965 (69 %) · rare 568 (20 %) · épique 236 (8 %) · légendaire 71 (3 %) |
+| couverture | peintre **97 %** · genre 89 % · musée 90 % |
+| articles sans taille mesurée | **0** |
+
+**La pyramide tombe exactement sur celle des deux autres modes**, ce qui était
+le but : *un changement à la fois* — la porte d'entrée change, la distribution
+de rareté non.
+
+Le haut : **La Joconde · La Ronde de nuit · La Jeune Fille à la perle · Le
+Jardin des délices · La Liberté guidant le peuple · Les Ménines · La Cène · La
+Laitière · La Naissance de Vénus · L'École d'Athènes · L'Origine du monde · Le
+Printemps · Le Radeau de la Méduse · L'Agneau mystique · Guernica.**
+
+Les siècles vont du **130ᵉ avant notre ère** (une peinture rupestre) au 21ᵉ,
+avec le 19ᵉ à 949 cartes et le 16ᵉ à 580.
+
+#### TROIS DÉFAUTS CONNUS, et aucun ne vaut sa correction
+
+- **GUERNICA N'A AUCUN CRÉATEUR DÉCLARÉ dans Wikidata**, comme 3 % du
+  catalogue. *La carte n'écrit donc PAS « Anonyme »* — elle n'écrirait pas une
+  absence, elle écrirait une erreur — et garde une seule ligne de cartouche.
+  **Une absence se lit mieux qu'une affirmation fausse**, la règle du badge de
+  menace qui n'apparaît que s'il y a une menace ;
+- **QUATRE FAUX POSITIFS sur 2 840** (0,14 %) : Miniatur-Wunderland, le Musée
+  du livre miniature de Bakou, et les panoramas de Sébastopol et de la Guerre
+  des paysans. La clôture transitive les attrape parce que Wikidata range
+  « musée des miniatures » sous une chaîne qui remonte à « peinture ».
+
+  **LES DEUX FILTRES ESSAYÉS COÛTENT PLUS QU'ILS NE RAPPORTENT, et c'est
+  mesuré** : écarter ce qui a des COORDONNÉES jetterait **La Cène**, qui est in
+  situ ; écarter ce qui est un **lieu géographique** jetterait **13 chefs-
+  d'œuvre** (Botticelli, Cimabue, Fra Angelico) pour un seul faux positif ; et
+  écarter ce qui est un **musée** prend 2 faux pour 2 vraies — les panoramas
+  SONT de vraies peintures monumentales, exposées dans un bâtiment qui porte
+  leur nom. ***Un filtre qui jette treize bonnes cartes pour en retirer une
+  mauvaise n'est pas un filtre.***
+- **317 cartes sans genre** (11 %), qui sortent avec « Peinture » au pied.
+
 ### CE QUI RESTE À TRANCHER PAR KEKO — les peintures
 
 - **est-ce que ça remplace les animaux ou s'y ajoute** ;
