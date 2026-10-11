@@ -7,7 +7,30 @@
 // meme porte que le `StoragePort` — ce dont `logic/` a besoin du monde
 // exterieur lui est INJECTE.
 
-/** Le domaine d'un personnage, lu dans sa description (voir `domaineDe`). */
+/**
+ * LES DIX DOMAINES, lus dans la description (voir `domaineDe`).
+ *
+ * **`business` et `criminel` sont neufs**, tranches par Keko : « on peut faire
+ * scientifique, sportif, artiste, politique, buisness, penseur, religieux,
+ * militaire, explorateur, criminel ? »
+ *
+ * *Les deux manquaient vraiment, et la mesure l'a montre autrement qu'en les
+ * comptant* :
+ *
+ * - **les entrepreneurs n'etaient pas absents, ils etaient EPARPILLES** -- Musk
+ *   en politique, Gates, Bezos, Jobs et Arnault en scientifique, et **Warren
+ *   Buffett en MILITAIRE, parce qu'il est directeur GENERAL.** 227 cartes
+ *   declaraient un metier d'affaires, reparties dans six domaines : *ce n'etait
+ *   pas une categorie qui manquait, c'etait une categorie dissoute dans les
+ *   autres* ;
+ * - **le crime porte des cartes parmi les plus lues du monde** -- Ed Gein etait
+ *   la 2e du catalogue, Epstein la 1re -- et elles tombaient en « autre » ou en
+ *   « scientifique » (Ben Laden est ingenieur).
+ *
+ * **`fiction` n'est PAS un domaine, c'est une NATURE**, et le mode animaux a
+ * deja fait cette distinction. Elle reste ici le temps que le second champ
+ * existe : *le pere Noel, Spider-Man et Achille n'ont pas de metier.*
+ */
 export type Domaine =
   | 'militaire'
   | 'politique'
@@ -17,8 +40,31 @@ export type Domaine =
   | 'religieux'
   | 'sportif'
   | 'explorateur'
+  | 'business'
+  | 'criminel'
   | 'fiction'
   | 'autre'
+
+/**
+ * LES DIX DOMAINES SOUMIS AU QUOTA — ceux que Keko a nommes.
+ *
+ * `fiction` et `autre` n'en sont pas : *l'un est une NATURE et l'autre un
+ * repli*, et ni l'un ni l'autre ne se collectionne. Ils gardent les cartes
+ * qu'aucun des dix ne reclame, et leur nombre dit la sante de la table de
+ * mots — **une table de mots se relit sur ce qu'elle N'ATTRAPE PAS.**
+ */
+export const DOMAINES_QUOTA: readonly Domaine[] = [
+  'militaire',
+  'politique',
+  'artiste',
+  'scientifique',
+  'penseur',
+  'religieux',
+  'business',
+  'criminel',
+  'sportif',
+  'explorateur',
+]
 
 export const DOMAINES: readonly Domaine[] = [
   'militaire',
@@ -27,6 +73,8 @@ export const DOMAINES: readonly Domaine[] = [
   'scientifique',
   'penseur',
   'religieux',
+  'business',
+  'criminel',
   'sportif',
   'explorateur',
   'fiction',

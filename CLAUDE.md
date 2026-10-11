@@ -12326,6 +12326,169 @@ Keko ait vu le catalogue qu'elles remplacent** : la generation dure une heure,
 et c'est la regle qu'il a posee lui-meme pour le pipeline des personnages face a
 celui des animaux — *on supprime une fois valide, pas avant.*
 
+### DIX DOMAINES, ET UNE RÉPARTITION ÉQUITABLE
+
+Tranché par Keko en deux temps : « on peut faire scientifique, sportif,
+artiste, politique, buisness, penseur, religieux, militaire, explorateur,
+criminel ? », puis **« je voudrais qu'on ait une répartition équitable entre
+les différentes catégories »**.
+
+#### LES DEUX DOMAINES NEUFS, et la mesure dit pourquoi ils manquaient
+
+- **LES ENTREPRENEURS N'ÉTAIENT PAS ABSENTS, ILS ÉTAIENT ÉPARPILLÉS.** Musk en
+  politique, Gates, Bezos, Jobs et Arnault en scientifique, Coco Chanel en
+  artiste — et **Warren Buffett en MILITAIRE, parce qu'il est directeur
+  GÉNÉRAL.** 227 cartes déclaraient un métier d'affaires, réparties dans six
+  domaines : *ce n'était pas une catégorie qui manquait, c'était une catégorie
+  dissoute dans les autres.*
+
+  **Le composé « directeur général » est donc obligatoire dans la table, pas
+  décoratif** : il commence un mot plus tôt que « général », donc il gagne par
+  la règle du plus précoce. ***Un mot d'une table peut en cacher un autre.***
+
+- **LE CRIME PORTE DES CARTES PARMI LES PLUS LUES DU MONDE** — Ed Gein était la
+  2ᵉ du catalogue, Epstein la 1ʳᵉ — et elles tombaient en « autre », ou en
+  « scientifique » pour Ben Laden, qui est ingénieur.
+
+**`fiction` n'est PAS un domaine, c'est une NATURE**, et le mode animaux a déjà
+fait cette distinction. Elle reste le temps que le second champ existe : *le
+père Noël, Spider-Man et Achille n'ont pas de métier.*
+
+#### CE QUE LA TABLE N'ATTRAPAIT PAS — « autre » tombe de 147 à 30
+
+*Une table de mots se relit sur ce qu'elle N'ATTRAPE PAS*, et la relire a coûté
+trois familles de trous :
+
+| | ce qui manquait | qui ça laissait dehors |
+|---|---|---|
+| sportif | **« pilote automobile »** — seul « pilote de course » y était | **Ayrton Senna**, qui tombait sur le repli par métiers où « entrepreneur » gagnait |
+| politique | « fondateur de l'Empire », « chef du gouvernement » | Gengis Khan, Cyrus II, Tokugawa, Andropov |
+| artiste | « ténor », « cantatrice », « personnalité médiatique » | Bocelli, Callas, Kardashian |
+
+**Et le recalcul n'a rien retéléchargé** : les descriptions sont dans le
+catalogue, `domaineDe` est pur, donc les 3 000 cartes se reclassent en une
+seconde. *C'est la quatrième fois que la pureté de `logic/` rend ce qu'elle
+coûte.*
+
+#### L'ÉQUITÉ NE COÛTE PAS DE NOTORIÉTÉ, ELLE EN GAGNE
+
+**C'était le résultat décisif, et il est contre-intuitif.** Mesuré sur Wikidata,
+le nombre de personnes à ≥ 20 langues par domaine : artiste 20 919, sportif
+19 160, penseur ~19 000, scientifique **6 300**, politique 4 407, militaire
+3 745, religieux 2 429, business 2 362, explorateur 1 400, **criminel 540**.
+
+*Toutes dépassent largement 300.* Et à quel niveau tombe la 300ᵉ carte de
+chaque rayon :
+
+| rayon | 1ᵉʳ | 100ᵉ | **300ᵉ** |
+|---|---|---|---|
+| artiste | 336 lg | 144 | **106** |
+| scientifique | 321 | 130 | **89** |
+| business | 334 | 101 | **64** |
+| explorateur | 279 | 60 | **39** |
+| **criminel** | 262 | 51 | **28** |
+
+**La carte la plus faible du catalogue par fréquentation avait 2 langues ; avec
+le quota elle en a 28.** *Le pool par fréquentation raclait le fond d'une seule
+catégorie au lieu de prendre le haut de dix.*
+
+#### LA PORTE REDEVIENT LES MÉTIERS, ET CE N'EST PAS UN RETOUR EN ARRIÈRE
+
+***Explorer et devenir une carte sont deux questions*** — la leçon de l'arbre
+du vivant, reprise ici. La porte par métiers avait été abandonnée comme MESURE
+de notoriété (« les langues mesurent la plomberie, la fréquentation mesure
+l'intérêt ») ; **elle revient comme moyen de DÉCOUVRIR**, et le score reste la
+fréquentation, mesurée article par article. *C'est exactement ce que le mode
+peintures fait depuis le début.*
+
+Trois choses qui le portent :
+
+- **le candidat porte la PORTE par laquelle il est entré**, et ce n'est pas son
+  domaine final : *le vrai domaine ne se lit que sur la description, qui
+  n'arrive qu'à l'enrichissement* — donc sans la porte, on ne saurait pas
+  combien de scientifiques pré-trier ;
+- **le métier se classe avec la MÊME table que les cartes** : `domaineDe` prend
+  une description, et un libellé de métier en est une. *Deux tables de mots se
+  désaccorderaient au premier réglage* ;
+- **le pré-tri se fait par porte, pas globalement** : *un tri global sur les
+  langues redonnerait un catalogue d'artistes*, puisqu'ils sont vingt fois plus
+  nombreux.
+
+**Et ce qui déborde d'un rayon n'est pas repris par un autre** : *un quota qui
+se rattrape n'en est pas un*, et un rayon pauvre doit rester visible pour qu'on
+sache qu'il l'est.
+
+#### LE DÉFAUT QUE LE QUOTA A RÉVÉLÉ : Einstein n'avait pas de nom
+
+Keko : « c'est quoi notre population du coup ? » — et c'est en vérifiant que
+j'ai vu que **Albert Einstein, Newton, Marie Curie, Léonard de Vinci, Galilée,
+Tesla, Napoléon, Jésus, Mahomet, Bill Gates et Christophe Colomb étaient tous
+ABSENTS du catalogue.**
+
+***ALBERT EINSTEIN N'A AUCUN LIBELLÉ FRANÇAIS DANS WIKIDATA.*** Ni les dix
+autres. Le pipeline lisait `rdfs:label` en français, ne trouvait rien, et les
+écartait — « 128 sans libellé FR » dans le journal, **et personne ne lisait
+cette ligne comme « Einstein manque ».**
+
+*Leur ARTICLE, lui, s'appelle bien « Albert Einstein » et « Marie Curie »* : le
+libellé d'une entité est une donnée qu'un contributeur saisit, le titre d'un
+article en est une que des milliers de gens ont validée. **Il ne peut pas
+manquer**, puisqu'on exige l'article pour mesurer les vues.
+
+***Le nom d'une carte est donc le titre de son article, pas le libellé de son
+entité*** — c'est la leçon du mode animaux, où le titre passait déjà avant le
+libellé parce que « le libellé Wikidata d'une espèce est souvent le binôme
+latin ». **Ici c'est pire : il est parfois ABSENT.**
+
+**ET MON PREMIER DIAGNOSTIC ÉTAIT FAUX.** J'avais conclu à une explosion
+combinatoire du `GROUP BY` sur douze `OPTIONAL` — la ligne d'Einstein portait
+bien `description`, `image` et `oeuvre` mais aucun nom, et 40 lignes sur 50
+avaient leur libellé. L'explication tenait par la forme du résultat. **Une
+requête minimale, sans aucun croisement, a rendu exactement la même chose** —
+et c'est elle qui a montré que la donnée n'existait pas.
+
+***Quand une explication tient par la forme du résultat, il reste à vérifier
+qu'elle tient encore une fois la cause supposée retirée.***
+
+*Le rattrapage écrit pour la mauvaise cause reste*, parce que l'autre cas
+existe : **une requête trop riche peut rendre des colonnes vides sans lever.**
+Il ne coûte rien quand il n'y a personne à rattraper.
+
+#### ET LE SECOND DÉFAUT, LE PLUS COÛTEUX : toutes les cartes à zéro vue
+
+Une fois les noms réparés, **Einstein était dans `cartes` — nommé, illustré,
+bien classé — et il sortait quand même.** Napoléon était PREMIER des militaires
+et sortait aussi.
+
+***Les 2 931 cartes avaient toutes ZÉRO vue***, donc le quota les triait par
+ordre alphabétique de Q-id.
+
+`c.vues` est le champ du CANDIDAT, rempli par `decouvrirParVues` quand la porte
+était la fréquentation. **En rebranchant la porte par métiers, j'ai coupé la
+seule source qui le remplissait** — et `m.vues`, la mesure article par article,
+était là depuis le début sans que personne ne la lise.
+
+***Quand on change la porte d'entrée, tout ce qui entrait avec elle doit être
+rebranché.*** J'avais même écrit, dans le commentaire du commit : « le score
+reste la fréquentation, mesurée article par article ». *C'était vrai de la
+MESURE et faux du RACCORDEMENT* — je l'avais déduit d'une ligne de calcul sans
+vérifier qui la consommait.
+
+**Et rien ne le signalait** : zéro est une valeur valide, le tri départage sur
+le Q-id, et *un catalogue trié par Q-id ressemble à un catalogue.*
+
+Ce que la correction a rendu, mesuré : vues min **37** au lieu de 0, médiane
+**4 370**, max 704 380 — et la médiane des langues monte de 60 à **78**.
+
+#### « AFFAIRES » À L'ÉCRAN, `business` DANS LE CODE
+
+Le jeu est entièrement en français, et le pied d'une carte porte déjà
+« Attaque », « Trésor », « Objet » — *le vocabulaire doit dire la règle*, comme
+« enchantement » plutôt que « maîtrise ». L'identifiant interne ne se lit nulle
+part, et *un renommage traversant le catalogue pour un mot ne vaut pas son
+risque* : la règle déjà tenue par `energie` et par `tresor`.
+
+
 ### CE QUI RESTE À TRANCHER PAR KEKO
 
 - **les seuils de rareté et les bornes des échelles** sont désormais MESURÉS,

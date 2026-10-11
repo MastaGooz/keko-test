@@ -48,6 +48,13 @@ const DOMAINE_AFFICHE: Readonly<Record<string, string>> = {
   religieux: 'Religieux',
   sportif: 'Sportif',
   explorateur: 'Explorateur',
+  // **« AFFAIRES » ET NON « BUSINESS »** : le jeu est entièrement en français,
+  // et le pied d'une carte porte déjà « Attaque », « Trésor », « Objet ». *Le
+  // vocabulaire doit dire la règle*, comme « enchantement » plutôt que
+  // « maîtrise ». L'identifiant interne reste `business` — il ne se lit nulle
+  // part à l'écran, et le renommer ne ferait que risquer une régénération.
+  business: 'Affaires',
+  criminel: 'Criminel',
   fiction: 'Fiction',
   autre: 'Personnage',
 }

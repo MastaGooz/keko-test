@@ -36,7 +36,10 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 import { statsDerivees, siecle, cle } from '../src/logic/characters/formules.ts'
 import type { CharacterCard } from '../src/logic/characters/types.ts'
-import { DOMAINES, RARETES } from '../src/logic/characters/types.ts'
+import { DOMAINES, DOMAINES_QUOTA, RARETES, type Domaine } from '../src/logic/characters/types.ts'
+// LA PORTE SE LIT AVEC LA MEME TABLE QUE LES CARTES : *deux tables de mots se
+// desaccorderaient au premier reglage.*
+import { domaineDe } from '../src/logic/characters/formules.ts'
 
 // ----------------------------------------------------------------- les reglages
 
@@ -612,6 +615,26 @@ interface Candidat {
    */
   vues: number
   fiction: boolean
+  /**
+   * LE NOMBRE DE LANGUES, qui redevient utile avec le quota.
+   *
+   * *Il avait ete descendu au rang d'information* quand la porte est devenue la
+   * frequentation -- « les vues arrivent AVEC la decouverte, donc le pre-tri et
+   * le tri final sont le meme tri ». **La porte par metiers ne donne pas de
+   * vues**, donc le pre-tri doit retrouver un signal, et c'est le seul qu'on ait
+   * avant Wikipedia.
+   */
+  langues: number
+  /**
+   * LE DOMAINE DU METIER QUI L'A DECOUVERT, et ce n'est pas son domaine final.
+   *
+   * ***Explorer et devenir une carte sont deux questions*** -- la lecon de
+   * l'arbre du vivant, reprise ici. La porte sert a GARANTIR le quota : sans
+   * elle, on ne saurait pas combien de scientifiques pre-trier, puisque le vrai
+   * domaine ne se lit que sur la description, qui n'arrive qu'a
+   * l'enrichissement. *Le classement final, lui, reste `domaineDe`.*
+   */
+  porte: Domaine | null
 }
 
 function titreDeLArticle(url: string | undefined): string {
@@ -621,11 +644,11 @@ function titreDeLArticle(url: string | undefined): string {
 }
 
 /** Une ligne de CSV : `item,langues`. */
-function versCandidat(cellules: string[], fiction: boolean): Candidat | null {
+function versCandidat(cellules: string[], fiction: boolean, porte: Domaine | null = null): Candidat | null {
   const id = cellules[0]?.split('/').pop()
   const langues = Number(cellules[1])
   if (!id || !/^Q\d+$/.test(id) || !Number.isFinite(langues)) return null
-  return { id, vues: 0, fiction }
+  return { id, vues: 0, fiction, langues, porte }
 }
 
 /**
@@ -1036,6 +1059,8 @@ async function decouvrirParVues(): Promise<Candidat[]> {
   return [...estPerso].map((id) => ({
     id,
     vues: vues.get(id) ?? 0,
+    langues: 0,
+    porte: null,
     fiction: fictifs.has(id),
   }))
 }
@@ -1098,12 +1123,16 @@ const HORS_SUJET =
   /^(Sp[eé]cial|Special|Wikip[eé]dia|Wikipedia|Portail|Portal|Cat[eé]gorie|Category|Fichier|File|Aide|Help|Discussion|Talk|Mod[eè]le|Template|Utilisateur|User|Main[_ ]Page|Accueil)[:_]|^Main[_ ]Page$|^Accueil/
 
 async function decouvrirHumains(): Promise<Candidat[]> {
-  journal(`Decouverte des humains : ${METIERS.length} metiers, vivants compris, >= ${LANGUES_MINIMUM.humain} langues`)
+  journal(`Decouverte par metier : ${METIERS.length} metiers, >= ${LANGUES_MINIMUM.humain} langues`)
   const out: Candidat[] = []
   for (const [nom, qid] of METIERS) {
+    // **LA PORTE SE LIT SUR LE LIBELLE DU METIER, avec la MEME table que les
+    // cartes.** `domaineDe` prend une description, et un libelle de metier en
+    // est une : *deux tables de mots se desaccorderaient au premier reglage.*
+    const porte = domaineDe(nom, [nom], false)
     let n = 0
     for (const l of await decouvrirMetier(nom, qid)) {
-      const c = versCandidat(l, false)
+      const c = versCandidat(l, false, porte)
       if (c) {
         out.push(c)
         n++
@@ -1115,6 +1144,58 @@ async function decouvrirHumains(): Promise<Candidat[]> {
     // identifiants recopies a la main en porte forcement un de travers.*
     if (n === 0) journal(`  ${nom} (wd:${qid}) : AUCUN personnage -- identifiant a verifier ?`)
   }
+  out.push(...(await decouvrirCriminels()))
+  return out
+}
+
+/**
+ * ***ETRE CRIMINEL N'EST PAS UN METIER***, et c'est pour ca que ce domaine
+ * avait besoin de sa propre porte.
+ *
+ * Keko : « pourquoi y'a si peu de criminel ? » -- 169 candidats contre 900 pour
+ * les autres. **Deux causes, et la seconde est de fond** :
+ *
+ * 1. la table des 694 metiers n'en connait que CINQ (« criminel », « tueur en
+ *    serie », « trafiquant de drogue », « terroriste », « criminel de
+ *    guerre ») : gangster, mafieux, pirate, escroc, bandit et faussaire n'y
+ *    sont pas, parce que `trouver-metiers.ts` part de la taxonomie des
+ *    PROFESSIONS et qu'aucun de ceux-la n'en est une ;
+ * 2. **Wikidata declare le metier CIVIL** : Ben Laden est ingenieur, Epstein
+ *    financier, Ted Bundy psychologue. *Le crime n'est pas une profession
+ *    qu'on exerce, c'est un acte qu'on commet* -- donc `P106` ne peut pas
+ *    suffire, quelle que soit la table.
+ *
+ * Mesure, a vingt langues ou plus :
+ *
+ * | porte | personnes |
+ * |---|---|
+ * | les 5 metiers de la table | **250** |
+ * | `P106/P279*` sous « criminel » | 786 |
+ * | **`P1399` « condamne pour »** | **1 106** |
+ * | **les deux reunies** | **1 714** |
+ *
+ * On prend donc les deux : la CLOTURE du metier (qui ramasse gangster et
+ * mafieux sans les nommer) **et** la CONDAMNATION, qui est la seule propriete
+ * qui dise ce qu'on cherche. *Et on ne generalise pas la cloture aux autres
+ * domaines* : ils ont tous plus de neuf cents candidats, donc elle leur
+ * couterait du temps pour rien.
+ */
+async function decouvrirCriminels(): Promise<Candidat[]> {
+  journal('Decouverte des criminels : la condamnation, pas le metier')
+  const requete = (bas: number, haut: number | null) => `
+SELECT ?item ?langues WHERE {
+  { ?item wdt:P1399 ?crime } UNION { ?item wdt:P106/wdt:P279* wd:Q2159907 }
+  ?item wikibase:sitelinks ?langues .
+  FILTER(?langues >= ${Math.max(bas, LANGUES_MINIMUM.humain)}${haut === null ? '' : ` && ?langues < ${haut}`})
+}`
+  echeance = Date.now() + BUDGET_TRANCHE * 2
+  const lot = await lotRedecoupable('crime', requete, LANGUES_MINIMUM.humain, null)
+  const out: Candidat[] = []
+  for (const l of lot.lignes) {
+    const c = versCandidat(l, false, 'criminel')
+    if (c) out.push(c)
+  }
+  journal(`  ${out.length} criminels decouverts${lot.perdus > 0 ? ` (${lot.perdus} tranche(s) perdue(s))` : ''}`)
   return out
 }
 
@@ -1391,11 +1472,9 @@ WHERE {
 GROUP BY ?item`
     for (const l of await sparqlSouple(`details-${empreinte(lot.map((c) => c.id).join(','))}`, requete)) {
       const id = lire(l, 'item')?.split('/').pop()
-      // LE FRANCAIS D'ABORD, L'ANGLAIS A DEFAUT, et rien ne passe sans nom.
-      const nom = lire(l, 'nomFr') ?? lire(l, 'nomEn')
-      if (!id || !nom) continue
-      // Plus de `continue` : une carte sans article FR se mesure en anglais.
       const article = titreDeLArticle(lire(l, 'article'))
+      const nom = nomDuPersonnage(l, article)
+      if (!id || !nom) continue
       details.set(id, {
         nom,
         langues: Number(lire(l, 'langues') ?? 0) || 0,
@@ -1411,7 +1490,104 @@ GROUP BY ?item`
     fait += lot.length
     if (lots.length > 10 && fait % 500 < 50) journal(`  ${fait}/${candidats.length}`)
   }
+  await rattraperLesNoms(candidats, details)
   return details
+}
+
+/**
+ * LE RATTRAPAGE DES NOMS — et il repare le defaut le plus couteux du pipeline.
+ *
+ * **ALBERT EINSTEIN SORTAIT SANS LIBELLE**, donc sans carte. Newton, Marie
+ * Curie, Leonard de Vinci, Galilee, Napoleon, Jesus, Mahomet et Bill Gates
+ * aussi : *les figures les PLUS notoires du monde manquaient toutes.*
+ *
+ * **LA CAUSE PRINCIPALE EST LE LIBELLE MANQUANT** -- voir `nomDuPersonnage`,
+ * qui la corrige en repliant sur le titre de l'article.
+ *
+ * Ce rattrapage reste pour l'autre cas : **une requete trop riche peut rendre
+ * des colonnes VIDES sans lever**, le `GROUP BY` sur douze `OPTIONAL`
+ * multipliant les lignes intermediaires. Il demande le strict minimum, sans
+ * `GROUP_CONCAT` : *rien ne peut exploser dans une requete qui ne croise
+ * rien.* Il ne coute rien quand il n'y a personne a rattraper.
+ */
+/**
+ * LE NOM D'UNE CARTE : le libelle francais, PUIS LE TITRE DE SON ARTICLE,
+ * puis l'anglais.
+ *
+ * ***ALBERT EINSTEIN N'A AUCUN LIBELLE FRANCAIS DANS WIKIDATA.*** Ni Marie
+ * Curie, ni Leonard de Vinci, ni Galilee, ni Napoleon, ni Jesus, ni Mahomet,
+ * ni Bill Gates, ni Christophe Colomb. **Les figures les plus notoires du
+ * monde sortaient donc sans nom, et le pipeline les ecartait** -- « 128 sans
+ * libelle FR » dans le journal, et personne ne lisait cette ligne comme
+ * « Einstein manque ».
+ *
+ * *Leur ARTICLE, lui, s'appelle bien « Albert Einstein » et « Marie Curie »* :
+ * le libelle d'une entite est une donnee qu'un contributeur saisit, le titre
+ * d'un article en est une que des milliers de gens ont validee. **Il ne peut
+ * pas manquer**, puisqu'on exige l'article pour mesurer les vues.
+ *
+ * ***Le nom d'une carte est donc le titre de son article, pas le libelle de
+ * son entite*** -- c'est la lecon du mode animaux, ou le titre passait deja
+ * avant le libelle parce que « le libelle Wikidata d'une espece est souvent le
+ * binome latin ». **Ici c'est pire : il est parfois ABSENT.**
+ *
+ * *Premier diagnostic, et il etait faux* : j'avais cru a une explosion
+ * combinatoire du `GROUP BY` sur douze `OPTIONAL`, parce que la ligne
+ * d'Einstein portait bien `description`, `image` et `oeuvre` mais aucun nom.
+ * **Une requete minimale, sans aucun croisement, a rendu exactement la meme
+ * chose** -- et c'est elle qui a montre que la donnee n'existait pas. *Quand
+ * une explication tient par la forme du resultat, il reste a verifier qu'elle
+ * tient aussi quand on retire la cause supposee.*
+ */
+function nomDuPersonnage(l: Ligne, article: string): string | undefined {
+  return lire(l, 'nomFr') ?? (article !== '' ? article : undefined) ?? lire(l, 'nomEn')
+}
+
+async function rattraperLesNoms(
+  candidats: Candidat[],
+  details: Map<string, Details>,
+): Promise<void> {
+  const sansNom = candidats.filter((c) => !details.has(c.id))
+  if (sansNom.length === 0) return
+  journal(`Rattrapage des noms : ${sansNom.length} sans libelle`)
+  let repares = 0
+  for (const lot of paquets(sansNom, 50)) {
+    const requete = `
+SELECT ?item ?nomFr ?nomEn ?langues ?description ?image ?naissance ?mort ?article WHERE {
+  VALUES ?item { ${lot.map((c) => `wd:${c.id}`).join(' ')} }
+  OPTIONAL { ?item rdfs:label ?nomFr . FILTER(LANG(?nomFr) = "fr") }
+  OPTIONAL { ?item rdfs:label ?nomEn . FILTER(LANG(?nomEn) = "en") }
+  OPTIONAL { ?item wikibase:sitelinks ?langues }
+  OPTIONAL { ?item schema:description ?description . FILTER(LANG(?description) = "fr") }
+  OPTIONAL { ?item wdt:P18 ?image }
+  OPTIONAL { ?item wdt:P569 ?naissance }
+  OPTIONAL { ?item wdt:P570 ?mort }
+  OPTIONAL { ?article schema:about ?item ; schema:isPartOf <https://fr.wikipedia.org/> }
+}`
+    for (const l of await sparqlSouple(`noms-${empreinte(lot.map((c) => c.id).join(','))}`, requete)) {
+      const id = lire(l, 'item')?.split('/').pop()
+      const article = titreDeLArticle(lire(l, 'article'))
+      const nom = nomDuPersonnage(l, article)
+      if (!id || !nom || details.has(id)) continue
+      details.set(id, {
+        nom,
+        langues: Number(lire(l, 'langues') ?? 0) || 0,
+        article,
+        description: lire(l, 'description') ?? '',
+        image: vignetteCommons(lire(l, 'image')),
+        naissance: annee(lire(l, 'naissance')),
+        mort: annee(lire(l, 'mort')),
+        origine: null,
+        // LES METIERS NE SONT PAS RATTRAPES : c'est le `GROUP_CONCAT` qui fait
+        // exploser la requete, donc le redemander la referait echouer. *La
+        // description suffit a classer* -- elle est le critere principal, et
+        // les metiers ne servent que de repli.
+        metiers: [],
+      })
+      repares++
+    }
+  }
+  journal(`  ${repares} noms recuperes`)
 }
 
 // ------------------------------------------------------------------ Wikipedia FR
@@ -1728,7 +1904,27 @@ async function main(): Promise<void> {
   // on ne retire pas six cents lignes avant d'avoir vu le catalogue qu'elles
   // remplacent. **A supprimer une fois valide par Keko**, avec
   // `scripts/trouver-metiers.ts` et `scripts/metiers.json`.
-  const bruts = await decouvrirParVues()
+  /**
+   * LA PORTE EST REDEVENUE LES METIERS, ET C'EST LE QUOTA QUI L'IMPOSE.
+   *
+   * Keko : « je voudrais qu'on ait une repartition equitable entre les
+   * differentes categories ». *La frequentation donne un catalogue a 45 %
+   * d'artistes et 0,7 % de scientifiques* -- c'est fidele a ce qu'on lit, et
+   * ca ne fait pas dix rayons collectionnables.
+   *
+   * ***Ce n'est pas un retour en arriere, c'est un changement d'usage*** : la
+   * porte par metiers avait ete abandonnee comme MESURE de notoriete (« les
+   * langues mesurent la plomberie »), elle revient comme moyen de DECOUVRIR.
+   * **Le score, lui, reste la frequentation**, mesuree article par article --
+   * c'est exactement ce que le mode peintures fait depuis le debut.
+   *
+   * **ET L'EQUITE NE COUTE PAS DE NOTORIETE, ELLE EN GAGNE.** Mesure : la carte
+   * la plus faible du catalogue actuel a **2 langues** ; avec 300 par domaine
+   * elle en aurait **28** -- le 300e criminel, qui est le rayon le plus pauvre.
+   * *Le pool par frequentation raclait le fond d'une seule categorie au lieu de
+   * prendre le haut de dix.*
+   */
+  const bruts = [...(await decouvrirHumains()), ...(await decouvrirFiction())]
   journal(`${bruts.length} lignes decouvertes`)
 
   // Un personnage sort de plusieurs lots -- un peintre qui est aussi
@@ -1750,10 +1946,32 @@ async function main(): Promise<void> {
   // LE DEPARTAGE SE FAIT SUR LE Q-ID : sans second critere l'ordre suivrait
   // celui des lots, qui depend de ce que le cache contenait. *Deux generations
   // doivent rendre le meme catalogue.*
-  const candidats = [...parId.values()]
-    .sort((a, b) => b.vues - a.vues || a.id.localeCompare(b.id))
-    .slice(0, Math.ceil(cible * MARGE_CANDIDATS))
-  journal(`${candidats.length} candidats retenus (>= ${candidats.at(-1)?.vues ?? 0} vues)`)
+  /**
+   * LE PRE-TRI SE FAIT PAR PORTE, et il le faut : *un tri global sur les
+   * langues redonnerait un catalogue d'artistes*, puisqu'ils sont vingt fois
+   * plus nombreux. On garde donc les meilleurs de CHAQUE domaine.
+   *
+   * **La marge est plus large qu'avant** (x2) parce que les pertes se comptent
+   * par domaine : un rayon qui perd la moitie de ses candidats sans portrait
+   * ne peut pas emprunter a son voisin.
+   */
+  const parPorte = new Map<string, Candidat[]>()
+  for (const c of parId.values()) {
+    const k = c.porte ?? (c.fiction ? 'fiction' : 'autre')
+    const lot = parPorte.get(k) ?? []
+    lot.push(c)
+    parPorte.set(k, lot)
+  }
+  const parDomaine = Math.ceil(cible / DOMAINES_QUOTA.length)
+  const candidats: Candidat[] = []
+  for (const [porte, lot] of parPorte) {
+    const garde = lot
+      .sort((a, b) => b.langues - a.langues || a.id.localeCompare(b.id))
+      .slice(0, Math.ceil(parDomaine * MARGE_CANDIDATS * 2))
+    candidats.push(...garde)
+    journal(`  ${porte.padEnd(13)} ${String(garde.length).padStart(4)} / ${lot.length} candidats (>= ${garde.at(-1)?.langues ?? 0} langues)`)
+  }
+  journal(`${candidats.length} candidats retenus, ${parDomaine} vises par domaine`)
 
   const details = await enrichir(candidats)
   // LES TITRES VIENNENT DES DETAILS, donc on ne mesure que ce qui en a : un
@@ -1853,7 +2071,32 @@ async function main(): Promise<void> {
     // qu'on enregistre ne peuvent pas diverger sans que le fichier mente*, et
     // c'est exactement ce qui est arrive quand la somme vivait dans l'appel a
     // `statsDerivees` pendant que la carte enregistrait le chiffre francais.
-    const vues = c.vues
+    /**
+     * LES VUES VIENNENT DE LA MESURE PAR ARTICLE, PAS DE LA DECOUVERTE.
+     *
+     * ***C'est le defaut qui a coute le plus cher de tout ce chantier*** :
+     * Einstein, Newton, Marie Curie, Vinci, Napoleon et Picasso etaient dans
+     * `cartes`, nommes, illustres, bien classes -- et **toutes les cartes
+     * avaient ZERO vue**, donc le quota les triait par ordre alphabetique de
+     * Q-id. Napoleon etait premier des militaires et sortait quand meme.
+     *
+     * `c.vues` est le champ du CANDIDAT, rempli par `decouvrirParVues` quand la
+     * porte etait la frequentation. **En rebranchant la porte par metiers, j'ai
+     * coupe la seule source qui le remplissait** -- et `m.vues`, la mesure
+     * article par article, etait la depuis le debut sans que personne ne la
+     * lise.
+     *
+     * ***Quand on change la porte d'entree, tout ce qui entrait avec elle doit
+     * etre rebranche.*** J'avais meme ecrit « le score reste la frequentation,
+     * mesuree article par article » : c'etait vrai de la MESURE et faux du
+     * RACCORDEMENT, et je l'avais deduit d'une ligne de calcul sans verifier
+     * qui la consommait.
+     *
+     * *Et rien ne le signalait* : zero vue est une valeur valide, le tri
+     * departage sur le Q-id, et un catalogue trie par Q-id ressemble a un
+     * catalogue.
+     */
+    const vues = m.vues
     const stats = statsDerivees({
       langues: d.langues,
       vues,
@@ -1887,9 +2130,33 @@ async function main(): Promise<void> {
     `Ecartes : ${sansDetail} sans libelle FR, ${sansArticle} sans article mesure, ${ebauche} ebauches, ${sansImage} sans portrait`,
   )
 
-  // Triees par FREQUENTATION decroissante : le fichier se lit de haut en bas.
+  // Triees par FREQUENTATION decroissante : le fichier se lit de haut en bas,
+  // et c'est ce tri qui decide QUI entre dans chaque rayon.
   cartes.sort((a, b) => b.vues - a.vues || a.id.localeCompare(b.id))
-  const gardees = cartes.slice(0, cible)
+
+  /**
+   * LE QUOTA : les N plus frequentees de CHAQUE domaine.
+   *
+   * *Le tri reste la frequentation* -- la porte a change, pas le score. Et ce
+   * qui deborde d'un rayon n'est pas repris par un autre : **un quota qui se
+   * rattrape n'en est pas un**, et le rayon pauvre doit rester visible pour
+   * qu'on sache qu'il l'est.
+   *
+   * `fiction` et `autre` ne sont pas soumis au quota : ils ramassent ce
+   * qu'aucun domaine ne reclame, et leur nombre dit la sante de la table.
+   */
+  const pris = new Map<string, number>()
+  const gardees = cartes.filter((c) => {
+    if (!DOMAINES_QUOTA.includes(c.domaine)) return false
+    const n = pris.get(c.domaine) ?? 0
+    if (n >= parDomaine) return false
+    pris.set(c.domaine, n + 1)
+    return true
+  })
+  for (const d of DOMAINES_QUOTA) {
+    const n = pris.get(d) ?? 0
+    if (n < parDomaine) journal(`  ${d} : ${n} seulement sur ${parDomaine} -- rayon incomplet`)
+  }
 
   const json = JSON.stringify({ genere: new Date().toISOString(), cartes: gardees })
   writeFileSync(new URL('characters.json', SORTIE), json, 'utf8')

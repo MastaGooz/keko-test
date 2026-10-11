@@ -177,6 +177,17 @@ const MOTS_DU_DOMAINE: readonly (readonly [Domaine, readonly string[]])[] = [
       'sportif', 'sportive', 'footballeur', 'cycliste', 'boxeur', 'athlete', 'joueur', 'joueuse',
       'nageur', 'escrimeur', 'rameur', 'lutteur', 'gymnaste', 'tennis', 'alpiniste', 'patineur',
       'coureur', 'cavalier', 'tireur', 'pilote de course',
+      // **CE QUE LA TABLE N'ATTRAPAIT PAS**, releve sur les descriptions
+      // restees sans domaine : « pilote automobile » n'y etait pas -- seul
+      // « pilote de course » l'etait -- donc Ayrton Senna tombait sur le repli
+      // par metiers, ou « entrepreneur » gagnait. *Une table de mots se relit
+      // sur ce qu'elle N'ATTRAPE PAS.*
+      'pilote automobile', 'pilote de formule 1', 'pilote de moto', 'pilote de rallye',
+      'patineuse', 'patineur artistique', 'arts martiaux', 'basketteur', 'basketteuse',
+      'handballeur', 'volleyeur', 'rugbyman', 'skieur', 'skieuse', 'snowboardeur',
+      'judoka', 'karateka', 'catcheur', 'catcheuse', 'golfeur', 'golfeuse',
+      'haltérophile', 'halterophile', 'archer', 'biathlete', 'triathlete', 'marathonien',
+      'entraineur', 'entraineuse', 'footballeuse', 'surfeur', 'planchiste',
     ],
   ],
   [
@@ -214,6 +225,14 @@ const MOTS_DU_DOMAINE: readonly (readonly [Domaine, readonly string[]])[] = [
       // sur ce qu'elle N'ATTRAPE PAS*, pas sur ce qu'elle attrape.
       'homme d etat', 'femme d etat', 'chef d etat', 'chah', 'calife', 'khan', 'vizir', 'regent',
       'archiduc', 'margrave', 'landgrave', 'doge', 'emir', 'shogun', 'daimyo',
+      // **« FONDATEUR DE L'EMPIRE » etait le second gros trou** : Gengis Khan,
+      // Cyrus II, Tokugawa Ieyasu et Abdelaziz ibn Saoud n'avaient AUCUN
+      // domaine. Et « chef du gouvernement » laissait Andropov dehors.
+      'fondateur de l empire', 'fondatrice de l empire', 'chef du gouvernement',
+      'chef de gouvernement', 'premiere dame', 'pere fondateur', 'mere fondatrice',
+      'militant', 'militante', 'activiste', 'suffragette', 'abolitionniste',
+      'dirigeant', 'dirigeante', 'leader', 'secretaire general', 'chancelier',
+      'chanceliere', 'vice president', 'vice presidente', 'conseiller d etat',
     ],
   ],
   [
@@ -254,6 +273,49 @@ const MOTS_DU_DOMAINE: readonly (readonly [Domaine, readonly string[]])[] = [
       // « auteur-compositeur » comme « auteur-compositeur-interprete ».
       'auteur compositeur', 'autrice compositrice', 'auteure compositrice',
       'auteur interprete', 'autrice interprete', 'auteure interprete',
+      // L'OPERA ET LES MEDIAS, releves sur les descriptions sans domaine :
+      // Bocelli (« tenor »), Callas (« cantatrice »), Kardashian
+      // (« personnalite mediatique »), Elliot Page (« personnalite du cinema »).
+      'tenor', 'cantatrice', 'cantateur', 'soprano', 'baryton', 'basse chantante',
+      'personnalite mediatique', 'personnalite de la television', 'personnalite du cinema',
+      'animateur', 'animatrice', 'presentateur', 'presentatrice', 'youtubeur',
+      'youtubeuse', 'influenceur', 'influenceuse', 'videaste', 'streameur', 'streameuse',
+      'mannequin', 'top modele', 'styliste', 'modeliste', 'rappeur', 'rappeuse',
+      'disc jockey', 'batteur', 'bassiste', 'saxophoniste', 'trompettiste',
+      'dessinatrice', 'mangaka', 'scenographe', 'costumier', 'costumiere',
+    ],
+  ],
+  [
+    'business',
+    [
+      // **LE COMPOSE EST OBLIGATOIRE, PAS DECORATIF** : « directeur general »
+      // contient « general », qui est un mot MILITAIRE -- et c'est ainsi que
+      // **Warren Buffett etait classe militaire.** Le compose commence un mot
+      // plus tot, donc il gagne par la regle du plus precoce ; sans lui, le
+      // sous-mot l'emporterait. *Un mot d'une table peut en cacher un autre.*
+      'directeur general', 'directrice generale', 'president directeur general',
+      'entrepreneur', 'entrepreneuse', 'homme d affaires', 'femme d affaires',
+      'chef d entreprise', 'cheffe d entreprise', 'industriel', 'industrielle',
+      'banquier', 'banquiere', 'investisseur', 'investisseuse', 'milliardaire',
+      'magnat', 'financier', 'financiere', 'armateur', 'negociant', 'commercant',
+      'marchand', 'marchande', 'affairiste', 'oligarque', 'patron', 'patronne',
+      'fondateur d entreprise', 'cofondateur', 'hotelier', 'restaurateur',
+      'imprimeur', 'libraire', 'cadre dirigeant',
+      'personnalite du monde des affaires', 'monde des affaires',
+    ],
+  ],
+  [
+    'criminel',
+    [
+      // **LE CRIME PORTE DES CARTES PARMI LES PLUS LUES DU MONDE** -- Ed Gein
+      // etait la 2e du catalogue, Epstein la 1re -- et elles tombaient en
+      // « autre », ou en « scientifique » pour Ben Laden, qui est ingenieur.
+      'tueur en serie', 'tueuse en serie', 'criminel', 'criminelle', 'gangster',
+      'mafieux', 'mafieuse', 'trafiquant', 'trafiquante', 'terroriste', 'meurtrier',
+      'meurtriere', 'escroc', 'braqueur', 'assassin', 'bandit', 'hors la loi',
+      'voleur', 'voleuse', 'contrebandier', 'faussaire', 'empoisonneur', 'empoisonneuse',
+      'parrain de la mafia', 'chef de gang', 'baron de la drogue', 'narcotrafiquant',
+      'kidnappeur', 'ravisseur', 'delinquant', 'malfaiteur',
     ],
   ],
 ]
