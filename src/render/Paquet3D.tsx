@@ -180,10 +180,27 @@ export function Paquet3D(): React.ReactElement {
   const [eclat, setEclat] = useState<{ readonly cle: number; readonly ton: string } | null>(null)
   /** Vrai pendant que le compteur de la derniere carte defile. */
   const [monte, setMonte] = useState(false)
-  /** Le sachet est consumé : c'est ce qui laisse voir les cartes. */
+  /** Le sachet est parti : c'est ce qui met les cartes en rangée. */
   const [ouvert, setOuvert] = useState(nu)
   /** Il brûle : la tape est passée, et il n'y a plus à y revenir. */
   const [brule, setBrule] = useState(false)
+  /**
+   * OÙ EN SONT LES CARTES DANS LEUR SORTIE : 0 dedans, 1 nées au fond du
+   * sachet, 2 montées hors de la fente.
+   *
+   * **C'est ce qui leur donne une PROVENANCE.** Elles apparaissaient en rangée
+   * d'un seul coup, donc le sachet ne servait à rien : *on l'ouvrait, et les
+   * cartes venaient d'ailleurs.* Elles naissent maintenant DERRIÈRE le corps
+   * du sachet et montent par la fente — c'est l'amortissement de `Carte3D`
+   * qui fait le trajet, il n'y a aucune animation à écrire.
+   *
+   * **Il lui faut trois crans et pas deux** : une carte naît à la position
+   * qu'on lui donne, donc tant qu'on ne la change pas elle ne bouge pas. Le
+   * premier cran la pose au fond, le second lui donne sa cible.
+   */
+  const [sortie, setSortie] = useState(nu ? 2 : 0)
+  /** La clé du flash de l'arrachement — *une animation se remonte à neuf.* */
+  const [flash, setFlash] = useState(0)
   const racine = useRef<HTMLDivElement>(null)
   const refChiffre = useRef<HTMLParagraphElement>(null)
   const image = useRef(0)
@@ -323,6 +340,7 @@ export function Paquet3D(): React.ReactElement {
     cancelAnimationFrame(image.current)
     setOuvert(nu)
     setBrule(false)
+    setSortie(nu ? 2 : 0)
     setRevelees(new Set())
     setSommet(-1)
     setEclat(null)
@@ -337,6 +355,24 @@ export function Paquet3D(): React.ReactElement {
   const taille = tailleDeLaRangee(lVisible, hVisible)
   const pas = taille * 1.12
   const y = hVisible * 0.06
+  /** La largeur du sachet : c'est elle qui place la fente et borne ce qui en sort. */
+  const lSachet = tailleDuSachet(lVisible, hVisible)
+  const hSachet = lSachet * RAPPORT_SACHET
+  /**
+   * UNE CARTE QUI SORT D'UNE POCHETTE NE PEUT PAS ETRE PLUS GRANDE QU'ELLE.
+   *
+   * Les deux tailles se calculent sur la place et *la plus dure gagne* : sur
+   * un ecran court c'est la HAUTEUR qui borne les deux, et la carte de rangee
+   * y devient plus large que le sachet (0,44 de la hauteur visible contre
+   * 0,36). Elle ne se lisait donc pas comme ce qu'on tire du paquet, mais
+   * comme une carte posee derriere lui.
+   *
+   * Elle est bornee a une part du sachet le temps d'y etre, et elle enfle en
+   * rejoignant la rangee : **`Carte3D` amortit sa taille**, donc il n'y a
+   * aucune animation a ecrire -- le chemin deja pris par la piece qu'on
+   * equipe a l'armurerie.
+   */
+  const tailleDedans = Math.min(taille, lSachet * 0.6)
 
   /**
    * LA DERNIERE CARTE, tant qu'elle n'est pas retournee. *Elle ne s'annonce
@@ -366,6 +402,14 @@ export function Paquet3D(): React.ReactElement {
           style={{ '--lueur': eclat.ton } as React.CSSProperties}
         />
       )}
+      {/*
+        LE FLASH DE L'ARRACHEMENT : un blanc plein écran, très court. *C'est
+        ce qui fait que la bande ne se « détache » pas, elle s'ARRACHE* — un
+        geste qui coûte quelque chose aveugle une image. Il est monté à neuf
+        par sa clé, pour la raison habituelle : une classe qu'on retire et
+        qu'on repose ne redémarre pas sans un reflow forcé.
+      */}
+      {flash > 0 && <div key={`fl${flash}`} className="paquet-flash" />}
       <Canvas
         shadows
         dpr={[1, 2]}
@@ -395,15 +439,24 @@ export function Paquet3D(): React.ReactElement {
         {!ouvert && paquet.length > 0 && (
           <Sachet3D
             key={numero}
-            taille={tailleDuSachet(lVisible, hVisible)}
+            taille={lSachet}
             position={[0, 0, Z_MAIN]}
             ouvre={brule}
             onCliquer={() => setBrule(true)}
+            onDechire={() => {
+              // L'ARRACHEMENT : le flash, puis les cartes naissent au fond du
+              // sachet. *Ce qui sort doit être là avant de sortir* — une image
+              // les pose, la suivante leur donne leur cible, et
+              // l'amortissement fait le trajet.
+              setFlash((f) => f + 1)
+              setSortie(1)
+              setTimeout(() => setSortie(2), 40)
+            }}
             onOuvert={() => setOuvert(true)}
           />
         )}
 
-        {ouvert &&
+        {sortie > 0 &&
           aPeindre.map((carte, i) => {
           const vue = revelees.has(carte.id)
           return (
@@ -419,15 +472,28 @@ export function Paquet3D(): React.ReactElement {
               // le pavé du nom quand il ne servirait pas.
               culbute={culbuter ? (jetons[carte.id] ?? 0) : undefined}
               developpe={culbuter ? undefined : (jetons[carte.id] ?? 0)}
-              position={[(i - (aPeindre.length - 1) / 2) * pas, y, Z_MAIN]}
-              taille={taille}
+              // ELLE SORT DU SACHET AVANT DE REJOINDRE SA PLACE. *Derrière le
+              // corps en z*, donc on la voit émerger par la fente plutôt
+              // qu'apparaître devant la pochette — et les cinq sont
+              // superposées, ce qui est exactement ce qu'elles sont : une
+              // pile qu'on tire.
+              position={
+                ouvert
+                  ? [(i - (aPeindre.length - 1) / 2) * pas, y, Z_MAIN]
+                  : [0, hSachet * (sortie > 1 ? 0.3 : -0.12), Z_MAIN - 0.06]
+              }
+              taille={ouvert ? taille : tailleDedans}
               // ELLE RÉPOND AU CURSEUR une fois révélée, et pas avant : *un dos
               // n'a rien à montrer*, donc rien à faire briller.
               reflet={vue}
               ombre
               onPointerDown={(e) => {
                 e.stopPropagation()
-                reveler(carte.id)
+                // ON NE RETOURNE RIEN QUI SOIT ENCORE DANS LE SACHET : les
+                // cinq y sont superposées, donc une tape en retournerait une
+                // au hasard — *et on ne révèle pas ce qu'on n'a pas encore
+                // sorti.*
+                if (ouvert) reveler(carte.id)
               }}
             />
           )

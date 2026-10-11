@@ -3013,26 +3013,46 @@ export function textureDuDos(): Promise<THREE.CanvasTexture> {
 }
 
 /**
- * LE SACHET — ce qu'on dechire pour ouvrir un paquet.
+ * LE SACHET — ce qu'on déchire pour ouvrir un paquet.
  *
- * **IL N'EST PAS AU FORMAT D'UNE CARTE** (1 : 1,25 au lieu de 1 : 1,4), et
- * c'est le seul moyen de le dire : *une pochette au format d'une carte se lit
- * comme une carte geante*, donc comme un dos de plus, et on ne comprend pas
- * qu'il y a quelque chose dedans.
+ * **C'EST UN OBJET DU COMMERCE, PAS UNE DALLE**, et c'est tout ce que la
+ * première version avait manqué : elle parlait la pierre sombre du lieu, donc
+ * elle se lisait comme un panneau de l'armurerie posé debout. *Un sachet de
+ * booster est imprimé pour ATTIRER* — il a une marque, une illustration, une
+ * mention de contenu, et il le dit en couleur.
  *
- * Il parle la matiere du jeu et rien d'autre : pierre sombre, moulure de
- * laiton, equerres aux angles, coins coupes, grain. *Ce qui stylise est la
- * DECOUPE et le RELIEF, pas la matiere qu'on ajoute* — la lecon de la barre de
- * vie, « vraiment classique » puis « beaucoup trop chargee ».
+ * Quatre traits le font lire comme un sachet, et aucun n'est décoratif :
+ *
+ * - **LES DEUX BANDES THERMOSOUDÉES**, en haut et en bas, striées et dentelées.
+ *   *C'est la seule chose qu'aucun autre objet du jeu ne porte* — une carte, un
+ *   cadre et un panneau ont des bords francs ; un emballage a des soudures ;
+ * - **LA LIGNE POINTILLÉE « OUVRIR ICI »**, juste sous la bande du haut. Elle
+ *   dit où ça se déchire AVANT qu'on y touche, donc elle annonce le geste ;
+ * - **LE FORMAT EST HAUT ET ÉTROIT** (1 : 1,9). *Une pochette au format d'une
+ *   carte se lit comme une carte géante*, donc comme un dos de plus, et on ne
+ *   comprend pas qu'il y a quelque chose dedans ;
+ * - **LE SOLEIL DE RAYONS** derrière l'illustration : c'est lui qui fait
+ *   l'imprimé. *Un aplat, même chaud, reste un fond.*
  */
-const SACHET_LARGE = 640
-const SACHET_HAUT = 800
+const SACHET_LARGE = 520
+const SACHET_HAUT = 988
 /** Le biseau des angles, en parts de la LARGEUR — la ferronnerie du lieu. */
-const SACHET_BISEAU = 0.075
+const SACHET_BISEAU = 0.055
+
+/**
+ * OÙ LE SACHET SE DÉCHIRE, en part de sa hauteur depuis le haut.
+ *
+ * **C'EST UN CONTRAT PARTAGÉ**, pas un réglage du dessin : la texture pose la
+ * ligne pointillée à cette hauteur, et `Sachet3D` y coupe ses deux plans —
+ * celui qui reste, et la bande qui s'envole. *Deux valeurs qui décrivent la
+ * même ligne se désaccordent au premier réglage*, et le raccord est
+ * précisément ce qui ne doit jamais se voir.
+ */
+export const LIGNE_DECHIRURE = 0.145
 
 let SACHET: Promise<THREE.CanvasTexture> | null = null
 
-/** Le contour du sachet : un rectangle a quatre angles abattus. */
+/** Le contour du sachet : un rectangle à quatre angles abattus. */
 function cheminDuSachet(ctx: CanvasRenderingContext2D, l: number, h: number, c: number): void {
   ctx.beginPath()
   ctx.moveTo(c, 0)
@@ -3047,12 +3067,61 @@ function cheminDuSachet(ctx: CanvasRenderingContext2D, l: number, h: number, c: 
 }
 
 /**
- * L'EMBLEME DU SACHET : le losange a quatre pointes du dos de carte.
+ * UNE BANDE THERMOSOUDÉE : du film aluminisé, strié et DENTELÉ.
+ *
+ * *La dent est du côté de l'INTÉRIEUR* — c'est la découpe de l'emballeuse, et
+ * elle ne mord jamais le bord extérieur du sachet, qui reste franc.
+ */
+function peindreSoudure(
+  ctx: CanvasRenderingContext2D,
+  l: number,
+  y0: number,
+  ep: number,
+  versLeBas: boolean,
+): void {
+  const dent = l / 26
+  const pointe = versLeBas ? y0 + ep : y0 - ep
+  const dehors = versLeBas ? y0 - ep * 2.6 : y0 + ep * 2.6
+  ctx.save()
+  ctx.beginPath()
+  ctx.moveTo(0, dehors)
+  ctx.lineTo(l, dehors)
+  // LA DENTELURE : un zigzag régulier, refermé sur le bord opposé.
+  for (let x = l; x > 0; x -= dent) {
+    ctx.lineTo(x - dent / 2, pointe)
+    ctx.lineTo(x - dent, y0)
+  }
+  ctx.closePath()
+  ctx.clip()
+
+  const alu = ctx.createLinearGradient(0, dehors, 0, pointe)
+  alu.addColorStop(0, '#d7dee5')
+  alu.addColorStop(0.45, '#9aa4ae')
+  alu.addColorStop(1, '#707a84')
+  ctx.fillStyle = alu
+  ctx.fillRect(0, Math.min(dehors, pointe) - 2, l, Math.abs(pointe - dehors) + 4)
+
+  // LE GAUFRAGE : des stries VERTICALES, parce que c'est ainsi qu'une soudure
+  // se presse. *Un aplat clair ne dit pas une soudure, il dit une marge.*
+  ctx.globalAlpha = 0.45
+  ctx.strokeStyle = '#59636c'
+  ctx.lineWidth = Math.max(1, l * 0.004)
+  for (let x = dent / 4; x < l; x += dent / 2) {
+    ctx.beginPath()
+    ctx.moveTo(x, Math.min(dehors, pointe) - 2)
+    ctx.lineTo(x, Math.max(dehors, pointe) + 2)
+    ctx.stroke()
+  }
+  ctx.restore()
+}
+
+/**
+ * L'EMBLÈME DU SACHET : le losange à quatre pointes du dos de carte.
  *
  * *Un sachet qui porte un autre signe que les cartes qu'il contient ne dit pas
- * qu'il les contient.* Les bords sont CREUSES — le point de controle de chaque
- * quadratique tombe pres du centre — et il est perce d'un vide : pose a la
- * corde, les bords seraient droits et on lirait une etoile generique.
+ * qu'il les contient.* Les bords sont CREUSÉS — le point de contrôle de chaque
+ * quadratique tombe près du centre — et il est percé d'un vide : posé à la
+ * corde, les bords seraient droits et on lirait une étoile générique.
  */
 function peindreEmblemeDuSachet(
   ctx: CanvasRenderingContext2D,
@@ -3069,17 +3138,89 @@ function peindreEmblemeDuSachet(
   ctx.moveTo(...pointe(0))
   for (let i = 0; i < 4; i++) {
     const a = (i * Math.PI) / 2 - Math.PI / 2 + Math.PI / 4
-    ctx.quadraticCurveTo(cx + Math.cos(a) * r * CREUX, cy + Math.sin(a) * r * CREUX, ...pointe(i + 1))
+    ctx.quadraticCurveTo(
+      cx + Math.cos(a) * r * CREUX,
+      cy + Math.sin(a) * r * CREUX,
+      ...pointe(i + 1),
+    )
   }
   ctx.closePath()
-  // LE VIDE CENTRAL est un SECOND contour dans le MEME chemin, creuse par la
-  // regle paire-impaire : ni masque, ni decoupe.
+  // LE VIDE CENTRAL est un SECOND contour dans le MÊME chemin, creusé par la
+  // règle paire-impaire : ni masque, ni découpe.
   const v = r * 0.3
   ctx.moveTo(cx, cy - v)
   ctx.lineTo(cx + v, cy)
   ctx.lineTo(cx, cy + v)
   ctx.lineTo(cx - v, cy)
   ctx.closePath()
+}
+
+/** Un petit losange de rareté, du métal qu'on lui donne. */
+function peindreLosange(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  r: number,
+  haut: string,
+  bas: string,
+): void {
+  const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r)
+  g.addColorStop(0, haut)
+  g.addColorStop(1, bas)
+  ctx.beginPath()
+  ctx.moveTo(cx, cy - r)
+  ctx.lineTo(cx + r * 0.72, cy)
+  ctx.lineTo(cx, cy + r)
+  ctx.lineTo(cx - r * 0.72, cy)
+  ctx.closePath()
+  ctx.fillStyle = g
+  ctx.fill()
+  ctx.strokeStyle = '#00000055'
+  ctx.lineWidth = Math.max(1, r * 0.1)
+  ctx.stroke()
+}
+
+/**
+ * LES TROIS CARTES EN ÉVENTAIL : ce qu'il y a DEDANS, montré sur l'emballage.
+ *
+ * *Un emballage dit toujours ce qu'il contient* — et c'est ce qui manquait le
+ * plus à la dalle : elle ne promettait rien.
+ */
+function peindreEventail(ctx: CanvasRenderingContext2D, cx: number, cy: number, l: number): void {
+  const w = l * 0.3
+  const h = w * 1.4
+  for (const [dx, a, teinte] of [
+    [-w * 0.5, -0.2, 0.78],
+    [w * 0.5, 0.2, 0.78],
+    [0, 0, 1],
+  ] as const) {
+    ctx.save()
+    ctx.translate(cx + dx, cy + (teinte === 1 ? 0 : h * 0.06))
+    ctx.rotate(a)
+    ctx.beginPath()
+    ctx.roundRect(-w / 2, -h / 2, w, h, w * 0.08)
+    // ELLES SONT CLAIRES SUR LE CHAUD, et il le faut : *une illustration qui
+    // se fond dans son fond ne promet rien* — et c'est ce que promet un
+    // emballage. Le bleu d'ardoise est déjà celui du dos des cartes.
+    const dos = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2)
+    dos.addColorStop(0, `rgba(118,139,158,${teinte})`)
+    dos.addColorStop(1, `rgba(52,66,82,${teinte})`)
+    ctx.fillStyle = dos
+    ctx.fill()
+    ctx.strokeStyle = `rgba(243,228,194,${teinte * 0.9})`
+    ctx.lineWidth = Math.max(1.5, w * 0.035)
+    ctx.stroke()
+    if (teinte === 1) {
+      peindreEmblemeDuSachet(ctx, 0, 0, w * 0.27)
+      const or = ctx.createLinearGradient(-w * 0.27, -w * 0.27, w * 0.27, w * 0.27)
+      or.addColorStop(0, '#f6e1b0')
+      or.addColorStop(0.55, '#c99a4c')
+      or.addColorStop(1, '#8a6224')
+      ctx.fillStyle = or
+      ctx.fill('evenodd')
+    }
+    ctx.restore()
+  }
 }
 
 function peindreLeSachet(): HTMLCanvasElement {
@@ -3092,76 +3233,152 @@ function peindreLeSachet(): HTMLCanvasElement {
   const ctx = canvas.getContext('2d')
   if (ctx === null) return canvas
 
+  const or = (y0: number, y1: number): CanvasGradient => {
+    const g = ctx.createLinearGradient(0, y0, l, y1)
+    g.addColorStop(0, '#fbeec4')
+    g.addColorStop(0.42, '#d9ae5c')
+    g.addColorStop(1, '#8a6224')
+    return g
+  }
+
   ctx.save()
   cheminDuSachet(ctx, l, h, c)
   ctx.clip()
 
-  // LA PIERRE : la lumiere vient du haut, comme partout dans ce jeu.
-  const pierre = ctx.createLinearGradient(0, 0, l * 0.35, h)
-  pierre.addColorStop(0, '#3c414d')
-  pierre.addColorStop(0.5, '#272b34')
-  pierre.addColorStop(1, '#191b21')
-  ctx.fillStyle = pierre
+  // LE FOND EST CHAUD, et c'est le coeur de la correction : *un emballage qui
+  // parle la pierre du lieu se lit comme un morceau du lieu.* L'ambre est déjà
+  // la couleur de tout ce qui a de la valeur ici — il n'y a rien à inventer,
+  // il faut seulement cesser d'être sobre.
+  const fond = ctx.createLinearGradient(0, 0, l * 0.4, h)
+  fond.addColorStop(0, '#8d4b15')
+  fond.addColorStop(0.45, '#b56810')
+  fond.addColorStop(1, '#6b330f')
+  ctx.fillStyle = fond
   ctx.fillRect(0, 0, l, h)
 
+  // LE SOLEIL DE RAYONS : c'est LUI qui fait l'imprimé. *Un aplat, même chaud,
+  // reste un fond* — un éventail de rayons est une impression.
+  const cyR = h * 0.44
+  const R = Math.hypot(l, h)
+  ctx.save()
+  ctx.globalAlpha = 0.2
+  ctx.fillStyle = '#ffd089'
+  for (let i = 0; i < 18; i++) {
+    const a0 = (i / 9) * Math.PI
+    ctx.beginPath()
+    ctx.moveTo(l / 2, cyR)
+    ctx.arc(l / 2, cyR, R, a0, a0 + Math.PI / 18)
+    ctx.closePath()
+    ctx.fill()
+  }
+  ctx.restore()
+
   // UN VIGNETTAGE ELLIPTIQUE, aux proportions du sachet : *une forme suit les
-  // proportions de ce qu'elle borde* — un disque mordrait les cotes avant
+  // proportions de ce qu'elle borde* — un disque mordrait les côtés avant
   // d'atteindre le haut.
   ctx.save()
   ctx.translate(l / 2, h / 2)
   ctx.scale(1, h / l)
-  const voile = ctx.createRadialGradient(0, 0, l * 0.18, 0, 0, l * 0.74)
+  const voile = ctx.createRadialGradient(0, 0, l * 0.2, 0, 0, l * 0.8)
   voile.addColorStop(0, '#0000')
-  voile.addColorStop(1, '#00000078')
+  voile.addColorStop(1, '#2a0f0098')
   ctx.fillStyle = voile
   ctx.fillRect(-l, -l, l * 2, l * 2)
   ctx.restore()
 
-  // L'EMBLEME, en laiton, au centre.
-  const or = ctx.createLinearGradient(l * 0.3, h * 0.34, l * 0.7, h * 0.66)
-  or.addColorStop(0, '#e8c179')
-  or.addColorStop(0.5, '#9c7638')
-  or.addColorStop(1, '#6d4c1d')
-  peindreEmblemeDuSachet(ctx, l / 2, h / 2, l * 0.2)
-  ctx.fillStyle = or
+  // LA LIGNE POINTILLÉE « OUVRIR ICI » : elle dit où ça se déchire AVANT qu'on
+  // y touche. *Un objet qui attend un geste doit dire lequel.*
+  const yL = h * LIGNE_DECHIRURE
+  ctx.save()
+  ctx.strokeStyle = '#ffeccaaa'
+  ctx.lineWidth = Math.max(1.5, l * 0.006)
+  ctx.setLineDash([l * 0.03, l * 0.024])
+  ctx.beginPath()
+  ctx.moveTo(l * 0.06, yL)
+  ctx.lineTo(l * 0.94, yL)
+  ctx.stroke()
+  ctx.restore()
+
+  ctx.textAlign = 'center'
+  ctx.fillStyle = '#ffeccadd'
+  ctx.font = `600 ${l * 0.04}px Cinzel, Georgia, serif`
+  ctx.letterSpacing = `${l * 0.014}px`
+  ctx.fillText('◂  OUVRIR ICI  ▸', l / 2, yL - l * 0.03)
+
+  // L'EMBLÈME, en grand : c'est la MARQUE du paquet. *Le projet n'a pas de nom
+  // affiché, donc on n'en invente pas un* — l'emblème du dos dit déjà à quel
+  // jeu ces cartes appartiennent.
+  peindreEmblemeDuSachet(ctx, l / 2, h * 0.255, l * 0.13)
+  ctx.fillStyle = or(h * 0.14, h * 0.36)
   ctx.fill('evenodd')
 
-  // LA MOULURE : un filet de laiton qui porte la lumiere du haut-gauche.
-  // *Un filet d'une seule couleur n'a pas d'epaisseur : c'est la variation qui
+  peindreEventail(ctx, l / 2, h * 0.49, l)
+
+  // LE CARTOUCHE DE CONTENU : la ferronnerie du lieu, en petit.
+  const cw = l * 0.72
+  const chh = h * 0.058
+  const cx0 = (l - cw) / 2
+  const cy0 = h * 0.672
+  const bis = chh * 0.42
+  ctx.beginPath()
+  ctx.moveTo(cx0 + bis, cy0)
+  ctx.lineTo(cx0 + cw - bis, cy0)
+  ctx.lineTo(cx0 + cw, cy0 + bis)
+  ctx.lineTo(cx0 + cw, cy0 + chh - bis)
+  ctx.lineTo(cx0 + cw - bis, cy0 + chh)
+  ctx.lineTo(cx0 + bis, cy0 + chh)
+  ctx.lineTo(cx0, cy0 + chh - bis)
+  ctx.lineTo(cx0, cy0 + bis)
+  ctx.closePath()
+  ctx.fillStyle = '#1e212880'
+  ctx.fill()
+  ctx.strokeStyle = or(cy0, cy0 + chh)
+  ctx.lineWidth = Math.max(2, l * 0.009)
+  ctx.stroke()
+
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = '#f6e9cd'
+  ctx.font = `600 ${chh * 0.5}px Cinzel, Georgia, serif`
+  ctx.letterSpacing = `${l * 0.018}px`
+  ctx.fillText('PAQUET', l / 2, cy0 + chh * 0.54)
+
+  ctx.font = `600 ${l * 0.044}px Cinzel, Georgia, serif`
+  ctx.fillStyle = '#ffe9bedd'
+  ctx.fillText('5 CARTES', l / 2, h * 0.762)
+  ctx.letterSpacing = '0px'
+  ctx.textBaseline = 'alphabetic'
+
+  // LES QUATRE MÉTAUX, en petits losanges : *ce qu'on peut y trouver*, dit par
+  // l'échelle du jeu plutôt que par une phrase.
+  const rl = l * 0.03
+  const pas = l * 0.105
+  for (const [i, [haut, bas]] of (
+    [
+      ['#d08a4e', '#7a4418'],
+      ['#e8eef4', '#8d99a6'],
+      ['#ffdf86', '#b07f1f'],
+      ['#dff3ff', '#7fb6d8'],
+    ] as const
+  ).entries()) {
+    peindreLosange(ctx, l / 2 + (i - 1.5) * pas, h * 0.822, rl, haut, bas)
+  }
+
+  // LES DEUX SOUDURES, en dernier : elles se posent SUR l'imprimé, parce que
+  // c'est ainsi qu'un sachet se ferme — on imprime le film, puis on le soude.
+  peindreSoudure(ctx, l, h * 0.042, h * 0.014, true)
+  peindreSoudure(ctx, l, h * 0.958, h * 0.014, false)
+
+  // LA MOULURE : un filet de laiton qui porte la lumière du haut-gauche.
+  // *Un filet d'une seule couleur n'a pas d'épaisseur : c'est la variation qui
   // fait le volume, pas la largeur.*
-  const metal = ctx.createLinearGradient(0, 0, l, h)
-  metal.addColorStop(0, '#f0d49b')
-  metal.addColorStop(0.42, '#a67f3c')
-  metal.addColorStop(1, '#7a5726')
-  ctx.strokeStyle = metal
-  // UN `stroke` EST CENTRE SUR SON TRACE, donc la moitie sortirait de la
-  // toile : on clippe sur la MEME forme et on double la largeur.
-  ctx.lineWidth = l * 0.03
+  ctx.strokeStyle = or(0, h)
+  // UN `stroke` EST CENTRÉ SUR SON TRACÉ, donc la moitié sortirait de la
+  // toile : on clippe sur la MÊME forme et on double la largeur.
+  ctx.lineWidth = l * 0.026
   cheminDuSachet(ctx, l, h, c)
   ctx.stroke()
 
-  // LES EQUERRES : la moulure S'EPAISSIT aux angles, elle ne recoit pas une
-  // piece de plus. *C'est ce qui separe un panneau d'un meuble* — et le biseau
-  // les abat avec lui, puisque le clip porte la decoupe.
-  const e = l * 0.17
-  ctx.lineWidth = l * 0.055
-  for (const [x0, y0, x1, y1] of [
-    [c, 0, c + e, 0],
-    [l - c - e, 0, l - c, 0],
-    [c, h, c + e, h],
-    [l - c - e, h, l - c, h],
-    [0, c, 0, c + e],
-    [0, h - c - e, 0, h - c],
-    [l, c, l, c + e],
-    [l, h - c - e, l, h - c],
-  ] as const) {
-    ctx.beginPath()
-    ctx.moveTo(x0, y0)
-    ctx.lineTo(x1, y1)
-    ctx.stroke()
-  }
-
-  // LE GRAIN, en pixels de la toile : il dissout le degrade, qui banderait
+  // LE GRAIN, en pixels de la toile : il dissout le dégradé, qui banderait
   // sans lui sur huit bits.
   ctx.globalAlpha = ALPHA_GRAIN
   ctx.globalCompositeOperation = 'overlay'
@@ -3177,98 +3394,21 @@ function peindreLeSachet(): HTMLCanvasElement {
 /** Le rapport du sachet, pour que le plan qui le porte l'ait aussi. */
 export const RAPPORT_SACHET = SACHET_HAUT / SACHET_LARGE
 
+/**
+ * IL ATTEND LA POLICE, comme tout ce qui peint du texte dans ce projet.
+ *
+ * *Un canvas qui dessine avant `document.fonts.ready` retombe SILENCIEUSEMENT
+ * sur la police par défaut*, et la texture part en cache telle quelle — la
+ * règle déjà payée par les cartes, puis par les cases du chargement.
+ */
 export function textureDuSachet(): Promise<THREE.CanvasTexture> {
-  SACHET ??= Promise.resolve(peindreLeSachet()).then((canvas) => {
-    const texture = new THREE.CanvasTexture(canvas)
+  SACHET ??= document.fonts.ready.then(() => {
+    const texture = new THREE.CanvasTexture(peindreLeSachet())
     texture.anisotropy = 8
     texture.colorSpace = THREE.SRGBColorSpace
     return texture
   })
   return SACHET
-}
-
-/**
- * LE PAVE DU NOM — ce que le DEVELOPPEMENT fait monter sur la carte.
- *
- * *Une carte qui se revele en tournant ne dit rien de ce qu'elle est* : la
- * culbute montre un dos, puis une face, et entre les deux il n'y a que du
- * mouvement. Le developpement, lui, **annonce le nom avant l'image** — la
- * carte arrive a plat, son nom en grand par-dessus, et le dessin remonte
- * dessous a mesure que les lettres s'erodent.
- *
- * **IL EST PERIODIQUE EN Y, et c'est ce qui decide de sa forme.** Le nuanceur
- * le fait DEFILER pendant que les lettres s'en vont ; sans raccord, la couture
- * traverserait la carte en plein geste. D'ou des rangs a pas CONSTANT dont la
- * hauteur de toile est un multiple exact, et un decalage alterne d'un rang sur
- * deux — *un motif de brique est periodique sur deux rangs, pas sur un.*
- *
- * **ET IL NE TOURNE PAS**, pour la meme raison : *une grille inclinee n'est
- * periodique que le long de son propre axe*, donc une rotation, meme de dix
- * degres, interdit le raccord vertical.
- */
-const NOMS = new Map<string, Promise<THREE.CanvasTexture>>()
-
-/** Combien de rangs de nom couvrent la carte. Un PAIR, pour le pas de brique. */
-const RANGS_NOM = 6
-
-async function peindreLeNom(nom: string): Promise<HTMLCanvasElement> {
-  // UN CANVAS QUI PEINT AVANT `document.fonts.ready` RETOMBE SILENCIEUSEMENT
-  // SUR LA POLICE PAR DEFAUT — la regle du projet, et elle vaut pour tout ce
-  // qui peint.
-  await document.fonts.ready
-  const l = 512
-  const h = l * 1.4
-  const canvas = document.createElement('canvas')
-  canvas.width = l
-  canvas.height = Math.round(h)
-  const ctx = canvas.getContext('2d')
-  if (ctx === null) return canvas
-
-  const mot = nom.toLocaleUpperCase('fr-FR')
-  ctx.font = '700 100px Cinzel, Georgia, serif'
-  const a100 = ctx.measureText(mot).width || 100
-  // LE NOM VISE LES TROIS QUARTS DE LA LARGEUR, et la taille CEDE aux deux
-  // bouts : *un nom de trois lettres ne doit pas devenir une enseigne, un nom
-  // de vingt ne doit pas devenir illisible.*
-  const taille = Math.max(l * 0.1, Math.min(l * 0.26, (l * 0.78 * 100) / a100))
-  ctx.font = `700 ${taille}px Cinzel, Georgia, serif`
-  const large = ctx.measureText(mot).width
-  // Le pas horizontal suit le mot : sans ca, un nom long se recouvrirait
-  // lui-meme et on ne lirait plus des lettres mais une trame.
-  const pasX = Math.max(l, large * 1.26)
-  const pasY = canvas.height / RANGS_NOM
-
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.fillStyle = '#fff3dc'
-  ctx.letterSpacing = `${taille * 0.08}px`
-  for (let r = 0; r < RANGS_NOM; r++) {
-    // UN RANG SUR DEUX SE DECALE D'UN DEMI-PAS : *des colonnes alignees se
-    // lisent comme un tableau, un appareillage se lit comme une matiere.*
-    const decale = (r % 2) * (pasX / 2)
-    const y = (r + 0.5) * pasY
-    for (let x = -pasX + decale; x < l + pasX; x += pasX) ctx.fillText(mot, x + pasX / 2, y)
-  }
-  return canvas
-}
-
-export function textureDuNom(nom: string): Promise<THREE.CanvasTexture> {
-  const prete = NOMS.get(nom)
-  if (prete !== undefined) return prete
-  const neuve = peindreLeNom(nom).then((canvas) => {
-    const texture = new THREE.CanvasTexture(canvas)
-    // IL SE REPETE EN Y, puisque c'est ce que le nuanceur fait defiler.
-    texture.wrapS = THREE.ClampToEdgeWrapping
-    texture.wrapT = THREE.RepeatWrapping
-    texture.anisotropy = 4
-    texture.colorSpace = THREE.SRGBColorSpace
-    return texture
-  })
-  // *UN CACHE NE RETIENT QUE LES SUCCES* : une promesse rejetee gardee
-  // condamnerait ce nom pour toute la session.
-  void neuve.catch(() => NOMS.delete(nom))
-  NOMS.set(nom, neuve)
-  return neuve
 }
 
 const TEXTURES = new Map<string, Promise<THREE.CanvasTexture>>()

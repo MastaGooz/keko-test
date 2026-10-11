@@ -5600,6 +5600,37 @@ body {
   }
 }
 
+/* LE FLASH DE L'ARRACHEMENT.
+
+   *Un geste qui coute quelque chose aveugle une image* -- c'est ce qui separe
+   une bande qui se DETACHE d'une bande qu'on ARRACHE, et c'est le seul endroit
+   de l'ouverture ou l'ecran entier repond.
+
+   Il est TRES court (260 ms) et il ne monte qu'a 0,62 : *un blanc plein ecran
+   qui dure se lit comme une page qui charge*, et un blanc a 1 efface la scene
+   au lieu de la frapper. Il part VITE et s'acheve lentement -- le contraste de
+   vitesse du bond des creatures, pris sur la lumiere. */
+.paquet-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: #fff;
+  animation: paquet-flash 0.26s cubic-bezier(0, 0, 0.3, 1) forwards;
+}
+
+@keyframes paquet-flash {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.62;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
 /* LA DERNIERE CARTE S'ANNONCE AVANT DE SE RETOURNER.
 
    *Une serie qui s'arrete sans le dire n'a pas de fin, elle a un dernier

@@ -37,7 +37,6 @@ import {
   textureContour,
   textureDeCarte,
   textureDuDos,
-  textureDuNom,
   tailleQuIlFaut,
 } from './texture-carte.ts'
 
@@ -131,45 +130,18 @@ export const DUREE_CULBUTE = 0.66
 /**
  * LE DEVELOPPEMENT : ce que fait une carte qu'on vient de retourner.
  *
- * *Elle arrive a plat, son nom en grand par-dessus, et le dessin remonte
- * dessous a mesure que les lettres s'erodent* — comme un papier
- * photographique. C'est l'autre facon de reveler une carte, et elle dit
- * quelque chose que la culbute ne dit pas : **le nom AVANT l'image.**
+ * **C'EST UN TIRAGE PHOTOGRAPHIQUE** : elle arrive SUREXPOSEE, et l'image
+ * remonte a mesure que la lumiere se resorbe par flaques. C'est l'autre facon
+ * de reveler une carte, et elle dit quelque chose que la culbute ne dit pas :
+ * *une culbute montre un dos puis une face, et entre les deux il n'y a que du
+ * mouvement* — un developpement montre la carte qui ARRIVE.
  *
  * Elle dure plus longtemps qu'une culbute, et c'est le point : *une culbute
- * est un geste, un developpement est une lecture* — il faut le temps de lire
- * le nom avant que le dessin ne le remplace.
+ * est un geste, un developpement est une lecture* — il faut le temps de voir
+ * l'image monter.
  */
-export const DUREE_DEVELOP = 1.35
+export const DUREE_DEVELOP = 1.5
 
-/**
- * LE NOM TIENT D'ABORD, ET SEULEMENT APRES IL S'EN VA.
- *
- * *Mesure a l'ecran* : a courbe « part vite, s'acheve lentement » — celle du
- * reste du jeu — le pave etait deja a moitie parti au bout de trois
- * dixiemes, et **on n'avait pas le temps de lire le nom**. C'etait reprendre
- * la regle d'un GESTE pour une LECTURE : *un geste doit se sentir des le
- * premier instant, un mot doit rester assez longtemps pour etre lu.*
- *
- * D'ou un palier, puis une descente : le nom a pleine force pendant cette
- * part de la sequence, et le dessin remonte ensuite d'un coup.
- */
-const TENUE_NOM = 0.3
-
-/**
- * UNE TEXTURE VIDE POUR LE SECOND ECHANTILLONNEUR.
- *
- * Un `sampler2D` dont la valeur est `null` n'a rien de garanti : le pilote
- * lie ce qu'il veut a l'unite de texture, et *une lecture indefinie se voit
- * sur certaines machines et pas sur la machine de dev.* Un pixel transparent
- * coute quatre octets et rend la lecture inoffensive tant que rien n'est
- * charge.
- */
-const PAVE_VIDE = (() => {
-  const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1)
-  t.needsUpdate = true
-  return t
-})()
 /** La part du temps passée à monter et à tourner ; le reste est la chute. */
 const PART_MONTEE = 0.64
 /** De combien elle s'approche de la caméra, en part de sa propre largeur. */
@@ -610,7 +582,6 @@ export function Carte3D({
       nuanceur.uniforms.uBordure = { value: 0 }
       nuanceur.uniforms.uTemps = { value: 0 }
       nuanceur.uniforms.uDevelop = { value: 0 }
-      nuanceur.uniforms.uNom = { value: PAVE_VIDE }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -714,28 +685,39 @@ ${nuanceur.vertexShader}`.replace(
          // revelee ne peut pas deja briller de ce qu'elle est* — c'est la
          // regle qui garde le dos en laiton, prise un cran plus loin.
          if (uDevelop > 0.0) {
-           // LA PLAQUE : la carte arrive PLATE et SOMBRE, pas delavee en
-           // blanc. *Des lettres claires ne se lisent pas sur du blanc* — et
-           // la pierre sombre est deja la matiere de ce jeu, donc la carte se
-           // developpe depuis son propre fond au lieu de venir d'ailleurs.
-           float lumD = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(lumD * 0.34 + 0.045), uDevelop);
+           // C'EST UN TIRAGE PHOTOGRAPHIQUE : la carte arrive SUREXPOSEE, et
+           // l'image remonte a mesure que la lumiere se resorbe.
+           //
+           // *Le nom, le cadre et le texte sont lisibles des la premiere
+           // image* — ce ne sont pas eux qui se developpent, c'est le bain
+           // qui s'eclaircit. La premiere version faisait l'inverse : elle
+           // posait un pave du NOM par-dessus une carte eteinte, donc elle
+           // racontait une mosaique typographique et non une revelation.
+           float voile = uDevelop * uDevelop * 0.82;
 
-           // LE PAVE DEFILE VERS LE HAUT en s'en allant : *des lettres qui
-           // s'effacent sur place se lisent comme un fondu, des lettres qui
-           // derivent se lisent comme un depart.* Il est periodique en y,
-           // donc le defilement ne montre aucune couture.
-           vec2 uvN = vec2(vLustreUv.x, vLustreUv.y + uDevelop * 0.3);
-           vec4 pave = texture2D(uNom, uvN);
+           // LES FLAQUES : des taches de lumiere qui SE CONTRACTENT vers leur
+           // centre. *Un voile uniforme qui s'eclaircit se lit comme une
+           // opacite qu'on baisse* — ce qui fait le bain, ce sont des zones
+           // qui s'en vont a des vitesses differentes.
+           for (int i = 0; i < 8; i++) {
+             float fi = float(i);
+             vec2 c = vec2(hDev(fi * 1.7), hDev(fi * 1.7 + 11.3));
+             float R = (0.17 + hDev(fi * 1.7 + 23.9) * 0.23) * uDevelop;
+             // LA DISTANCE SE MESURE A L'ECRAN, pas en uv : la carte fait une
+             // fois et demie sa largeur en hauteur, donc une flaque ronde en
+             // uv serait un ovale sur la carte.
+             float d = length((vLustreUv - c) * vec2(1.0, 1.4));
+             voile += smoothstep(R, R * 0.22, d) * (0.45 + hDev(fi * 1.7 + 5.1) * 0.55);
+           }
 
-           // L'EROSION EST PAR TACHES, jamais uniforme : un fondu global
-           // ferait pâlir le mot d'un bloc, alors qu'il doit se defaire. La
-           // cellule est tiree d'un hachage de sa place — *un semis qui se
-           // rearrange a chaque image n'est plus une matiere.*
-           vec2 maille = floor(vLustreUv * vec2(40.0, 56.0));
-           float des = fract(sin(dot(maille, vec2(12.9898, 78.233))) * 43758.5453);
-           float reste = smoothstep(des * 0.58, des * 0.58 + 0.42, uDevelop);
-           diffuseColor.rgb += pave.rgb * pave.a * reste * (0.75 + reste * 0.55);
+           // LE GRAIN D'EMULSION : il casse la rondeur des flaques. *Trois
+           // disques parfaits se lisent comme trois disques*, pas comme un
+           // bain.
+           voile *= 0.86 + 0.14 * hDev(floor(vLustreUv.x * 90.0) + floor(vLustreUv.y * 126.0) * 97.0);
+
+           // AU-DELA DE BLANC, la lumiere DEBORDE : une surexposition n'est
+           // pas un voile a 100 %, elle brule.
+           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.12), clamp(voile, 0.0, 1.0));
          }`,
       )
       nuanceur.fragmentShader = `uniform float uGris;
@@ -746,8 +728,11 @@ uniform float uOr;
 uniform float uBordure;
 uniform float uTemps;
 uniform float uDevelop;
-uniform sampler2D uNom;
 varying vec2 vLustreUv;
+// LE HACHAGE DES FLAQUES : il leur donne une place FIXE. *Un semis qui se
+// retire a chaque image n'est plus une matiere, c'est du bruit* — et ici il
+// ferait grouiller la surexposition au lieu de la faire se resorber.
+float hDev(float n) { return fract(sin(n * 43.317) * 43758.5453); }
 ${nuanceur.fragmentShader}`
     }
     /**
@@ -764,7 +749,7 @@ ${nuanceur.fragmentShader}`
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
     face.customProgramCacheKey = () =>
-      'carte-face-desaturable-lustree-irisee-doree-bordee-developpee'
+      'carte-face-desaturable-lustree-irisee-doree-bordee-developpee2'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -1113,40 +1098,6 @@ ${nuanceur.fragmentShader}`
     }
   }, [clipper, face, laiton, halo, verso, aureole, matCompte])
 
-  /**
-   * LE PAVE DU NOM SE CHARGE AU MONTAGE, pas au premier developpement.
-   *
-   * *Le temps de regarder un dos est exactement le temps qu'il faut pour
-   * peindre ce qui viendra dessus* — la lecon de la carte face cachee, dont la
-   * face n'etait demandee qu'au retournement et arrivait apres lui. Ici le
-   * pave doit etre la a la premiere image du developpement, sinon la carte se
-   * developpe sans son nom.
-   *
-   * Il ne se charge que si l'ecran demande ce mode : *une carte qui ne se
-   * developpe jamais n'a pas de pave a peindre.*
-   *
-   * **ET IL SE POSE DEPUIS LA BOUCLE D'IMAGE, pas depuis l'effet.** Mesure :
-   * `onBeforeCompile` ne tourne qu'au PREMIER RENDU du materiau, et la
-   * promesse de la texture se resout avant lui — `face.userData.nuanceur`
-   * etait donc encore `undefined`, l'affectation tombait dans le vide **sans
-   * une seule erreur**, et la carte se developpait sans son nom. *C'est la
-   * famille des cibles de `Projeter`, qui ne sont remplies qu'apres le
-   * rendu* : ce qui depend d'un objet construit par le rendu se pose dans la
-   * boucle, pas dans l'effet qui l'a demande.
-   */
-  const paveDuNom = useRef<THREE.Texture | null>(null)
-  useEffect(() => {
-    if (developpe === undefined || developpe === null) return
-    let vivant = true
-    void textureDuNom(carte.nom).then((pave) => {
-      if (vivant) paveDuNom.current = pave
-    })
-    return () => {
-      vivant = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [carte.nom, developpe === undefined || developpe === null])
-
   // LA TEXTURE DU DOS N'ARRIVE QUE QUAND LA CULBUTE COMMENCE : elle sort du
   // même cache partagé que les faces, donc la première la paie et les
   // suivantes la retrouvent prête.
@@ -1409,9 +1360,6 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uBordure!.value = montre && carte.rarete === 'legendaire' ? l.vif : 0
       nuanceur.uniforms.uOr!.value = montre && carte.rarete === 'epique' ? 1 : 0
       // LE PAVE SE POSE DES QU'IL EST LA — voir l'effet qui le charge.
-      if (paveDuNom.current !== null && nuanceur.uniforms.uNom!.value !== paveDuNom.current)
-        nuanceur.uniforms.uNom!.value = paveDuNom.current
-
       // LE DEVELOPPEMENT SE PILOTE ICI, et pas dans le bloc de la culbute :
       // *toute matiere posee apres le `return` de la culbute est figee pendant
       // qu'elle se joue* — la regle deja payee par le liseré du contour. Les
@@ -1427,12 +1375,11 @@ ${nuanceur.fragmentShader}`
           // que ca veut dire.*
           onFixee?.()
         } else {
-          // LE PALIER, PUIS LA DESCENTE — voir `TENUE_NOM`. La descente est en
-          // `smoothstep` et non lineaire : *un effacement a vitesse constante
-          // se lit comme un store qu'on baisse*, et il faut que le dessin
-          // arrive sans que son arrivee ait un debut net.
-          const q = Math.max(0, (dv - TENUE_NOM) / (1 - TENUE_NOM))
-          nuanceur.uniforms.uDevelop!.value = 1 - q * q * (3 - 2 * q)
+          // LA LUMIERE SE RETIRE REGULIEREMENT, et c'est le SHADER qui donne
+          // sa forme au geste : le voile global tombe au carre, les flaques
+          // tiennent jusqu'au bout. *Deux vitesses dans un seul chiffre* — une
+          // courbe de plus ici ne ferait que les confondre.
+          nuanceur.uniforms.uDevelop!.value = Math.pow(1 - dv, 1.15)
         }
       }
     }

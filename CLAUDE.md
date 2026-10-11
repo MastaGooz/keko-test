@@ -11874,103 +11874,198 @@ haut des cartes. *Un contenu qui ne suit qu'une dimension déborde dès que
 l'autre se resserre* — la leçon de la bande de stats, repayée ici. Mesuré après
 correction : 7 à 55 px à 844 x 390, 7 à 51 px à 667 x 320, aucun recouvrement.
 
-#### LE DÉVELOPPEMENT REMPLACE LA CULBUTE — le nom AVANT l'image
+#### « C'EST PAS DU TOUT LE MÊME EFFET » — ce que la comparaison a corrigé
 
-`uDevelop` et `uNom`, dans le nuanceur de la face ; `developpe` sur `Carte3D`.
-La carte arrive **à plat et désaturée**, son nom **pavé en grand** par-dessus,
-et le dessin remonte dessous à mesure que les lettres s'érodent et dérivent
-vers le haut.
+Keko, après la première livraison de l'ouverture : **« c'est pas du tout le même
+effet ni les mêmes révélations de carte »**. Il avait dit « je veux tout » en
+me montrant lexicodex.app ; j'avais livré autre chose.
 
-*Une carte qui se révèle en tournant ne dit rien de ce qu'elle est* : on voit un
-dos, puis une face, et entre les deux il n'y a que du mouvement. **C'est
-précisément ce qu'on cherche à l'ouverture d'un paquet**, où la question est
-« qui est-ce ? » et non « est-ce que ça tourne bien ? »
+**J'AI ROUVERT LEUR OUVERTURE ET JE L'AI CAPTURÉE IMAGE PAR IMAGE** plutôt que
+de deviner laquelle des deux moitiés divergeait. *Une impression d'écart ne se
+discute pas, elle se mesure* — et la mesure a séparé **quatre défauts
+d'exécution**, qui étaient les miens, d'**un arbitrage de design**, qui est à
+Keko (voir plus bas).
 
-`?paquet&culbute` rend la culbute — *ce qui a servi à choisir doit rester
-ouvrable.* **Elle garde tout son emploi à l'armurerie**, où l'on POSE une
-pièce : là, il n'y a rien à lire, il y a un geste à voir.
+Les quatre, et aucun ne se voyait en lisant le code :
 
-Quatre choses qui le portent :
+1. **le sachet n'était pas un sachet.** C'était une dalle de pierre sombre aux
+   couleurs du jeu, donc *un panneau d'armurerie posé debout* — il lui manquait
+   tout ce qui fait lire un objet de commerce ;
+2. **le front traversait tout le sachet de haut en bas**, donc ça se lisait
+   comme **brûler** et non comme **ouvrir** — et il ne restait rien d'où les
+   cartes puissent sortir ;
+3. **les cartes n'avaient pas de provenance** : elles apparaissaient en rangée
+   d'un seul coup, donc le sachet ne servait à rien ;
+4. **la révélation était un pavé de noms en mosaïque**, qui n'a aucun rapport
+   avec l'épreuve photographique de Lexicodex.
 
-- **LE PAVÉ EST PÉRIODIQUE EN Y**, parce que le nuanceur le fait DÉFILER :
-  sans raccord, la couture traverserait la carte en plein geste. D'où des rangs
-  à pas constant dont la hauteur de toile est un multiple exact, et un décalage
-  alterné d'un rang sur deux — *un appareillage de brique est périodique sur
-  deux rangs, pas sur un.* **Et il ne tourne pas** : *une grille inclinée n'est
-  périodique que le long de son propre axe* ;
-- **LA PLAQUE EST SOMBRE, pas délavée en blanc.** *Des lettres claires ne se
-  lisent pas sur du blanc* — et la pierre sombre est déjà la matière de ce jeu,
-  donc la carte se développe depuis son propre fond au lieu de venir d'ailleurs ;
-- **L'ÉROSION EST PAR TACHES**, tirée d'un hachage de la place : *un fondu
-  global ferait pâlir le mot d'un bloc, alors qu'il doit se défaire* ;
-- **LE NOM TIENT D'ABORD, ET SEULEMENT APRÈS IL S'EN VA.** Mesuré à l'écran : à
-  courbe « part vite, s'achève lentement » — celle du reste du jeu — le pavé
-  était déjà à moitié parti au bout de trois dixièmes, et **on n'avait pas le
-  temps de lire le nom**. ***C'était reprendre la règle d'un GESTE pour une
-  LECTURE*** : un geste doit se sentir dès le premier instant, un mot doit
-  rester assez longtemps pour être lu. D'où un palier de 30 %, puis une
-  descente en `smoothstep`.
+#### LE SACHET EST UN OBJET DE COMMERCE, PAS UNE PLAQUE DU JEU
 
-**LE PIÈGE QUI A COÛTÉ LE PLUS, et il ne dit rien du tout : le pavé se chargeait
-AVANT que le matériau soit compilé.** `onBeforeCompile` ne tourne qu'au PREMIER
-RENDU, et la promesse de la texture se résout avant lui —
-`face.userData.nuanceur` était donc encore `undefined`, l'affectation tombait
-dans le vide **sans une seule erreur**, et la carte se développait sans son nom.
-*C'est la famille des cibles de `Projeter`, qui ne sont remplies qu'après le
-rendu* : **ce qui dépend d'un objet construit par le rendu se pose dans la
-boucle d'image, pas dans l'effet qui l'a demandé.**
+`render/texture-carte.ts`, `peindreLeSachet()`. Ce qui fait lire une pochette de
+cartes, et chaque pièce manquait :
 
-*Et il a d'abord été pris pour une latence d'outil* — mes captures arrivaient
-toutes après la fin de l'animation. **Allonger la durée à sept secondes le temps
-d'une capture a tranché en une mesure** : à sept secondes aussi, rien. *Quand on
-ne sait pas si l'on mesure l'effet ou l'outil, on change l'effet d'un facteur
-cinq.*
+- **DEUX SOUDURES THERMIQUES**, en haut et en bas : un film aluminisé froid,
+  strié verticalement, dont le bord intérieur est un zigzag de dents. *C'est la
+  seule chose de tout le dessin qui ne soit pas du jeu* — elle vient de
+  l'emballage, et c'est pour ça qu'elle le dit ;
+- **UNE LIGNE DE DÉCHIRURE POINTILLÉE**, avec « ◂ OUVRIR ICI ▸ », à 14,5 % du
+  haut. Elle ne décore pas : **c'est le contrat de l'ouverture**, et le
+  nuanceur la lit (`LIGNE_DECHIRURE`, exportée) ;
+- **DU PAPIER IMPRIMÉ CHAUD**, pas de la pierre : un fond ambre-brique, un
+  soleil à dix-huit rayons, un vignettage. *Un emballage crie, un meuble se
+  tait* ;
+- **CE QU'IL Y A DEDANS, DESSINÉ DESSUS** — trois dos en éventail — et **ce
+  qu'il y a dedans, ÉCRIT** : « PAQUET » en cartouche, « 5 CARTES » en dessous,
+  et quatre losanges aux quatre métaux. *Un paquet annonce son contenu ; c'est
+  ce qui le distingue d'une carte géante.*
 
-#### LA DÉCHIRURE BRÛLANTE DU SACHET
+**IL EST HAUT ET ÉTROIT** (1 : 1,9), là où une carte est en 1 : 1,4 : *une
+pochette au format d'une carte se lit comme une sixième carte posée au milieu.*
 
-`render/Sachet3D.tsx`. Le paquet s'ouvre sur **une pochette de laiton qui
-respire** ; on la touche, un front incandescent la traverse de haut en bas en
-laissant une bande de charbon et des étincelles, puis les cinq dos paraissent.
+**IL ATTEND LA POLICE AVANT DE SE PEINDRE.** Un canvas qui dessine avant
+`document.fonts.ready` retombe SILENCIEUSEMENT sur Georgia — la règle était déjà
+écrite pour les cartes, et *une règle de peinture vaut pour tout ce qui peint.*
 
-*Un paquet qui montre ses cinq dos d'emblée n'est pas un paquet, c'est une main
-face cachée* : rien n'est fermé, donc il n'y a rien à ouvrir.
+#### UN SACHET SE DÉCHIRE OÙ IL EST FAIT POUR ÇA
 
-**IL N'EST PAS AU FORMAT D'UNE CARTE** (1 : 1,25 au lieu de 1 : 1,4) : *une
-pochette au format d'une carte se lit comme une carte géante*, donc comme un dos
-de plus, et on ne comprend pas qu'il y a quelque chose dedans. Il est aussi plus
-grand qu'une carte — **il en contient cinq.**
+`render/Sachet3D.tsx`. Le front court **HORIZONTALEMENT, le long de la ligne
+pointillée**, de gauche à droite ; puis **la bande du haut s'arrache**, tournoie
+et retombe hors de l'écran, pendant que le corps garde tout ce qu'il contient.
 
-**TOUT EST DANS UN SEUL NUANCEUR : la déchirure, la braise et les étincelles.**
-Trois plans superposés auraient demandé trois alphas et trois réglages, alors que
-*les trois décrivent le même front* — et deux valeurs qui décrivent la même chose
-se désaccordent au premier réglage. Il n'y en a qu'une : `uBrulure`.
+*C'était le grief le plus net* : un front qui consomme la pochette entière ne
+l'ouvre pas, il la détruit — et il ne reste alors rien d'où tirer les cartes.
+
+**DEUX MORCEAUX, UNE SEULE TEXTURE.** Le corps lit `[0, 1 − L]` du canvas, la
+bande `[1 − L, 1]`, et les deux portent le MÊME bord déchiré. *Deux nuanceurs
+qui décriraient la même déchirure se désaccorderaient au premier réglage*, et le
+raccord est précisément ce qui ne doit pas se voir.
 
 Cinq choses qui le portent :
 
-- **le front part AU-DESSUS du bord haut et finit EN DESSOUS du bord bas** :
-  *une déchirure qui commence pile sur le bord se lit comme un bord qui
-  s'efface*, et une qui s'arrête pile en bas laisse un liseré de braise posé là
-  pour toujours ;
-- **il n'est pas droit, et c'est une somme de sinus** : *un bruit par pixel donne
-  une dentelure, une somme de sinus donne une déchirure* ;
-- **la matière NOIRCIT avant de partir** : sans la bande de charbon, le sachet se
-  coupe net, et *une coupe nette n'est pas une brûlure* ;
-- **la braise va de l'or au blanc en son coeur** : *un feu n'a pas une couleur,
-  il a un dégradé de température* ;
-- **tout s'éteint ensemble sur la fin** : *une lueur qui se termine par une arête
-  n'est pas une lueur.*
+- **LE PARAMÈTRE S'APPELLE `estLeCorps`, PAS `haut`**, et ça m'a coûté une
+  passe entière : le morceau du HAUT est la bande, mais c'est le CORPS qui porte
+  son bord déchiré en haut. ***Un paramètre qui nomme la place dit l'inverse de
+  ce dont on se sert***, et je l'ai lu à l'envers en croyant corriger un bug ;
+- **CE QUI SE MESURE LE LONG DU BORD SE COMPTE EN PARTS DU SACHET, PAS DU
+  MORCEAU.** La bande n'en fait que 0,145 : à amplitude égale en UV, son
+  ondulation et son charbon seraient six fois plus fins que ceux du corps —
+  *donc les deux bords cesseraient d'être le même trait*, et personne ne le
+  verrait en lisant le code. Trois constantes (`AMPLI`, `CHARBON`, `BRAISE`), et
+  le nuanceur les convertit dans le repère de chacun ;
+- **LES DEUX ONDULENT EN SENS OPPOSÉ** dans leur propre repère : c'est ce qu'il
+  faut pour qu'ils décrivent la même ligne du canvas une fois chacun dans sa
+  tranche ;
+- **LE FRONT SORT DES DEUX BORDS** (−0,06 à 1,06) et part de **−1 au repos** :
+  une gaussienne centrée sur zéro rayonne déjà contre le bord gauche, donc *un
+  sachet fermé avait une braise allumée*, et il a fallu une capture pour le
+  voir ;
+- **LE CORPS S'EFFACE PENDANT QUE LES CARTES MONTENT**, sur le dernier quart.
+  Il restait entier jusqu'au démontage du composant : *un sachet qui disparaît
+  d'un coup se lit comme un bug de rendu.*
 
-**IL ACCÉLÈRE, à l'inverse de tout le reste du jeu.** C'est ce que fait un feu —
-il prend, puis il court — là où un geste part vite et s'achève lentement.
+**LES BORNES D'UN `smoothstep` NE S'INVERSENT PAS.** La spécification GLSL
+laisse le résultat **indéfini** quand `edge0 >= edge1` — j'en avais un pour
+faire un seuil décroissant, et il marchait sur cette machine. On prend le
+complément plutôt que de compter sur un pilote clément.
 
-**IL RESPIRE TANT QU'ON NE L'A PAS TOUCHÉ** : *un objet qui attend une tape doit
-dire qu'il attend*, le vocabulaire des créatures et des slots qui accueillent. Et
-il est **monté à neuf à chaque paquet** (clé React), parce que son horloge et son
-« c'est fini » vivent dans des refs — *et une ref ne se remet pas à zéro parce
-qu'une prop a changé.*
+**IL ACCÉLÈRE, à l'inverse de tout le reste du jeu** : c'est ce que fait une
+déchirure — elle amorce, puis elle file — là où un geste part vite et s'achève
+lentement. **Et il RESPIRE tant qu'on ne l'a pas touché**, le vocabulaire des
+créatures et des slots qui accueillent.
 
-**`?paquet&nu` le saute** : *juger une carte ne doit pas coûter une déchirure à
-chaque fois* — quand c'est le DESSIN qu'on regarde, le sachet est un péage.
+**UN FLASH BLANC AU MOMENT DE L'ARRACHEMENT** (260 ms, 0,62 d'opacité au pic).
+*Un geste qui coûte quelque chose aveugle une image* — c'est ce qui sépare une
+bande qui se DÉTACHE d'une bande qu'on ARRACHE, et c'est le seul moment où
+l'écran entier répond.
+
+**`?paquet&nu` saute le sachet** : *juger une carte ne doit pas coûter une
+déchirure à chaque fois.*
+
+#### LES CARTES SORTENT DU SACHET — et une carte ne peut pas être plus grande que lui
+
+`sortie` dans `Paquet3D`, **trois crans et pas deux** : 0 dedans, 1 nées au fond
+du sachet, 2 montées hors de la fente. *Une carte naît à la position qu'on lui
+donne, donc tant qu'on ne la change pas elle ne bouge pas* — le premier cran la
+pose, le second lui donne sa cible, et **l'amortissement de `Carte3D` fait le
+trajet** : il n'y a aucune animation à écrire.
+
+Elles naissent **derrière le corps en z**, donc on les voit émerger par la fente
+plutôt qu'apparaître devant la pochette, et les cinq sont superposées — *ce qui
+est exactement ce qu'elles sont : une pile qu'on tire.*
+
+**UNE CARTE QUI SORT D'UNE POCHETTE NE PEUT PAS ÊTRE PLUS GRANDE QU'ELLE**, et
+c'est arrivé : les deux tailles se calculent sur la place et la plus dure gagne,
+donc **sur un écran court c'est la HAUTEUR qui borne les deux** et la carte de
+rangée y devient plus large que le sachet (0,44 de la hauteur visible contre
+0,36). Elle ne se lisait plus comme ce qu'on tire du paquet, mais comme une
+carte posée derrière lui. Elle est bornée à 0,6 du sachet le temps d'y être et
+**enfle en rejoignant la rangée** — `Carte3D` amortit sa taille, le chemin déjà
+pris par la pièce qu'on équipe à l'armurerie.
+
+**ON NE RETOURNE RIEN QUI SOIT ENCORE DANS LE SACHET** : les cinq y sont
+superposées, donc une tape en retournerait une au hasard.
+
+#### LA RÉVÉLATION EST UNE ÉPREUVE PHOTOGRAPHIQUE
+
+`uDevelop` dans le nuanceur de la face ; `developpe` sur `Carte3D`. La carte
+arrive **surexposée en blanc**, par **flaques de lumière** qui se contractent et
+se résorbent — et **le nom, le cadre et le texte sont lisibles dès la première
+image**.
+
+*Une carte qui se révèle en tournant ne dit rien de ce qu'elle est* : on voit un
+dos, puis une face, et entre les deux il n'y a que du mouvement. **C'est
+précisément la question d'une ouverture de paquet** — « qui est-ce ? » et non
+« est-ce que ça tourne bien ? »
+
+**CE QUI A ÉTÉ JETÉ, ET IL FAUT SAVOIR POURQUOI** : la carte arrivait d'abord
+sous un **pavé de son nom en mosaïque**, qui s'érodait pour laisser monter le
+dessin. C'était soigné — un pavage périodique, une érosion par taches, un palier
+de lecture — et **ça n'a aucun rapport avec ce que Keko avait approuvé.** *Un
+effet réussi qui n'est pas l'effet demandé reste un effet raté.* Il est dans
+`git log` avec ses trois pièges (la périodicité en Y, la plaque sombre, le
+palier avant la descente).
+
+**LES FLAQUES SONT DES DISQUES ALLONGÉS, pas un fondu global.** Huit, tirées
+d'un hachage de leur index, qui rétrécissent avec le temps : *un voile uniforme
+qui s'éclaircit se lit comme une opacité qu'on baisse*, pas comme un bain qui
+révèle. Elles sont étirées en Y (× 1,4), parce qu'une carte l'est.
+
+**LE BLANC EST AU-DESSUS DE 1** (`vec3(1.12)`) : en mélange ordinaire une
+couleur à 1 plafonne et la surexposition ne se voit pas.
+
+`?paquet&culbute` rend la culbute — *ce qui a servi à choisir doit rester
+ouvrable.* **Elle garde tout son emploi à l'armurerie**, où l'on POSE une
+pièce : là il n'y a rien à lire, il y a un geste à voir.
+
+#### LE SEUL ARBITRAGE QUE JE N'AI PAS PRIS — et il est à Keko
+
+**Lexicodex montre UNE CARTE À LA FOIS, en plein écran** ; nous montrons **la
+rangée des cinq**. C'est la dernière divergence, et c'est la seule qui ne soit
+pas un défaut d'exécution :
+
+| | ce que ça donne | ce que ça coûte |
+|---|---|---|
+| **une à la fois** (Lexicodex) | chaque carte a tout l'écran, donc la révélation pèse | on ne compare rien, et il faut un écran de récapitulatif à la fin |
+| **la rangée** (nous) | les cinq se comparent d'un coup d'oeil | chaque révélation est cinq fois plus petite |
+
+*Tout le reste de la transposition découle de ce choix* — le compteur qui coiffe
+la rangée, l'ambiance qui suit la meilleure carte révélée et non la dernière, le
+flash qui porte sur l'écran entier. **Le changer est une décision de design**,
+pas un réglage.
+
+#### TROIS PIÈGES D'OUTIL PAYÉS DANS CETTE PASSE
+
+- **l'outil Bash enveloppe la commande dans `bash -c '...'`**, donc une
+  apostrophe française dans un heredoc casse la citation et l'erreur parle d'un
+  `EOF` inattendu. On écrit le contenu avec l'outil d'écriture et on l'insère en
+  Python ;
+- **une capture d'écran prend plus d'une seconde**, donc on ne saisit pas une
+  animation d'une seconde et demie image par image. On la ralentit d'un facteur
+  cinq le temps de la mesurer — *et on la remet avant de committer* ;
+- **une iframe de sonde ne fait pas tourner ses `requestAnimationFrame`**, donc
+  son canvas reste à 300 x 150 et la scène ne démarre jamais. Elle dit quand
+  même ce qu'on lui demande ici — *le débordement, qui est du DOM* — mais jamais
+  ce que la scène rend.
 
 #### À TRANCHER PAR KEKO : l'apostrophe se perd sur les noms de cartes
 
