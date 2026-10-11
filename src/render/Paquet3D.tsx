@@ -442,7 +442,7 @@ export function Paquet3D(): React.ReactElement {
             taille={lSachet}
             position={[0, 0, Z_MAIN]}
             ouvre={brule}
-            onCliquer={() => setBrule(true)}
+            onOuvrir={() => setBrule(true)}
             onDechire={() => {
               // L'ARRACHEMENT : le flash, puis les cartes naissent au fond du
               // sachet. *Ce qui sort doit être là avant de sortir* — une image

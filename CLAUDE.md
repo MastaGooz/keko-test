@@ -11908,9 +11908,12 @@ cartes, et chaque pièce manquait :
   strié verticalement, dont le bord intérieur est un zigzag de dents. *C'est la
   seule chose de tout le dessin qui ne soit pas du jeu* — elle vient de
   l'emballage, et c'est pour ça qu'elle le dit ;
-- **UNE LIGNE DE DÉCHIRURE POINTILLÉE**, avec « ◂ OUVRIR ICI ▸ », à 14,5 % du
+- **UNE LIGNE DE DÉCHIRURE POINTILLÉE**, avec « OUVRIR ICI ▸▸▸ », à 14,5 % du
   haut. Elle ne décore pas : **c'est le contrat de l'ouverture**, et le
-  nuanceur la lit (`LIGNE_DECHIRURE`, exportée) ;
+  nuanceur la lit (`LIGNE_DECHIRURE`, exportée). Elle a porté deux flèches
+  OPPOSÉES tant qu'on ouvrait à la tape ; depuis qu'on tire, *deux flèches
+  opposées disent « ça s'ouvre », une seule direction dit « tire par ici »* —
+  et c'est le seul endroit qui apprenne le geste ;
 - **DU PAPIER IMPRIMÉ CHAUD**, pas de la pierre : un fond ambre-brique, un
   soleil à dix-huit rayons, un vignettage. *Un emballage crie, un meuble se
   tait* ;
@@ -11977,6 +11980,71 @@ créatures et des slots qui accueillent.
 *Un geste qui coûte quelque chose aveugle une image* — c'est ce qui sépare une
 bande qui se DÉTACHE d'une bande qu'on ARRACHE, et c'est le seul moment où
 l'écran entier répond.
+
+#### ON L'OUVRE EN TIRANT VERS LA DROITE — le front suit le doigt
+
+Keko : « pour ouvrir le booster il faudrait slider vers la droite tu vois ? »
+
+*Et c'est ce que la ligne pointillée promettait déjà* : elle dit où ça s'ouvre
+depuis le premier jour, et une tape ne s'en servait pas. **Le geste devient ce
+que le dessin annonce** — on prend la pochette, on tire, la déchirure court sous
+le doigt, et la bande ne part qu'au lâcher.
+
+Cinq choses qui le portent :
+
+- **UN SEUL NOMBRE, TROIS ÉTATS.** `p` est posé par le doigt pendant qu'on tire,
+  avancé par l'horloge une fois le geste acquis, et il REDESCEND tout seul quand
+  on abandonne (`RETOUR`, 0,28 s). *Deux variables pour la même course se
+  désaccorderaient au premier réglage*, et c'est ce nombre-là que le nuanceur
+  lit ;
+- **UN GESTE PRÉPARE, LE RELÂCHEMENT CONCLUT.** Le doigt ne peut pas dépasser
+  `TIRE_MAX` (0,9) : *sans cette borne, tirer loin arracherait la bande au
+  milieu du mouvement*, donc sans décision. Au-delà de `SEUIL_TIRE` — la moitié
+  de la largeur du sachet — lâcher ouvre ; en deçà, la pochette se referme.
+  **Un sachet qu'on effleure ne s'ouvre pas**, et c'est ce qui permet de le
+  prendre en main sans l'engager ;
+- **LE GESTE SE COMPTE EN PIXELS, LA DÉCHIRURE EN PARTS DU SACHET.** La
+  conversion passe par la hauteur visible à la profondeur du sachet
+  (`hauteurVisibleA`), donc *elle suit le recul de la caméra sans qu'on s'en
+  occupe* : tirer la moitié de la pochette vaut la moitié partout — **70 px au
+  doigt sur un téléphone couché, 227 sur un écran de PC** ;
+- **LES ÉCOUTEURS SE RETIRENT PAR SIGNAL**, jamais par référence, et ils vivent
+  sur la FENÊTRE : *le doigt sort forcément du sachet — sortir EST le geste.*
+  Un `AbortController` coupe ce que CE geste a posé, la règle déjà payée sur la
+  main de combat ;
+- **`pointercancel` N'EST PAS UN LÂCHER** : c'est le système qui reprend le
+  geste. Il referme la pochette au lieu de l'ouvrir — *une annulation repose,
+  elle ne conclut pas.*
+
+#### ET LE SACHET RÉPOND AU CURSEUR
+
+Keko : « le booster devrait avoir un effet un peu 3d quand on le survol
+souris ». Il **s'incline sous le pointeur**, **s'avance d'un cheveu** et **un
+lustre chaud le balaie là où le curseur se pose** — exactement ce que fait une
+carte regardée de près, *et c'est voulu : ce sont les deux seuls objets qu'on
+prend en main dans ce jeu.*
+
+**L'avancée n'est pas un ornement** : sans elle, l'inclinaison se lit comme une
+image qui gondole ; avec elle, comme un objet qu'on tourne vers soi. C'est la
+règle de la carte zoomée, reprise telle quelle.
+
+Quatre choses à ne pas défaire :
+
+- **LE RELIEF A SON PROPRE GROUPE.** Le groupe extérieur porte la place du
+  sachet et sa respiration : *deux sources qui écriraient la même
+  transformation se battraient à chaque image* — c'est le raisonnement de
+  l'inclinaison posée PAR-DESSUS la rotation lissée, repayé ici ;
+- **LE LUSTRE VIT DANS LE NUANCEUR, et il se mesure sur le SACHET.** Les deux
+  morceaux ne couvrent pas la même tranche du canvas, donc un reflet calculé
+  dans le repère de chacun se décalerait au raccord ; `mix(uV0, uV1, vUv.y)`
+  donne déjà la coordonnée du sachet entier. Et il est **discret** : *un lustre
+  qui délave son dessin cesse d'être une matière et devient un voile* ;
+- **LA GERBE D'ÉTINCELLES RESTE HORS DU GROUPE** : elle appartient à la
+  déchirure, pas à la pochette — *des étincelles ne s'inclinent pas avec
+  l'objet qu'elles quittent* ;
+- **SOURIS SEULEMENT**, comme tout survol du projet, et le relief s'éteint dès
+  que le sachet brûle : au doigt le `pointerout` n'arrive jamais, et un objet
+  qui reste penché après la tape se lit comme un bug.
 
 **`?paquet&nu` saute le sachet** : *juger une carte ne doit pas coûter une
 déchirure à chaque fois.*

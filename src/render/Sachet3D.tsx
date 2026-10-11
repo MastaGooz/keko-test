@@ -32,8 +32,9 @@
  * et il s'en va.
  */
 import { useEffect, useMemo, useRef } from 'react'
-import { useFrame, type ThreeEvent } from '@react-three/fiber'
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
+import { hauteurVisibleA } from './Cadrage.tsx'
 import { LIGNE_DECHIRURE, RAPPORT_SACHET, textureDuSachet } from './texture-carte.ts'
 
 /**
@@ -82,6 +83,29 @@ function lissage(e0: number, e1: number, x: number): number {
   const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)))
   return t * t * (3 - 2 * t)
 }
+
+/**
+ * JUSQU'OÙ LE DOIGT PEUT TIRER, en part de la course du front.
+ *
+ * *Un geste prépare, le relâchement conclut* : sans cette borne, tirer très
+ * loin arracherait la bande au milieu du mouvement — donc sans décision.
+ */
+const TIRE_MAX = 0.9
+
+/**
+ * À PARTIR D'OÙ LE GESTE EST ACQUIS.
+ *
+ * En dessous, le sachet se referme. *Un sachet qu'on effleure ne s'ouvre pas*,
+ * et c'est ce qui permet de le prendre en main sans l'engager.
+ */
+const SEUIL_TIRE = 0.5
+
+/** Ce que met un geste abandonné à se refermer, en secondes. */
+const RETOUR = 0.28
+
+/** Ce que le survol penche et avance : *un objet qu'on tourne vers soi.* */
+const PENCHE = 0.26
+const AVANCEE = 0.1
 
 /** Une texture d'un pixel transparent, le temps que le sachet soit peint. */
 const VIDE = (() => {
@@ -136,6 +160,11 @@ function matiereDuMorceau(estLeCorps: boolean): THREE.ShaderMaterial {
       uFront: { value: -1 },
       uTemps: { value: 0 },
       uFondu: { value: 1 },
+      // LE LUSTRE DU SURVOL : où le curseur se pose sur la DIAGONALE du
+      // sachet, et combien il éclaire. *Deux morceaux qui calculeraient
+      // chacun la leur montreraient deux reflets décalés au raccord.*
+      uCurseur: { value: 0 },
+      uSurvol: { value: 0 },
     },
     vertexShader: `varying vec2 vUv;
 void main() {
@@ -148,6 +177,8 @@ uniform float uV1;
 uniform float uFront;
 uniform float uTemps;
 uniform float uFondu;
+uniform float uCurseur;
+uniform float uSurvol;
 varying vec2 vUv;
 ${DECHIRURE}
 
@@ -181,6 +212,14 @@ void main() {
   // coupe net, et une coupe nette n'est pas une déchirure.*
   float charbon = (1.0 - smoothstep(0.0, ${CHARBON} * ech, dedans)) * passe;
   vec3 corps = mix(tex.rgb, tex.rgb * 0.12, charbon);
+
+  // LE LUSTRE : une bande claire posée SOUS le curseur, le long de la
+  // diagonale — c'est ce qui fait lire du FILM plutôt qu'une image plate dès
+  // que le sachet s'incline. Il se mesure dans le repère du SACHET, que
+  // \`mix(uV0, uV1, vUv.y)\` donne déjà. *Discret* : un lustre qui délave son
+  // dessin cesse d'être une matière et devient un voile.
+  float diag = (vUv.x + mix(uV0, uV1, vUv.y)) * 0.5;
+  corps += vec3(1.0, 0.94, 0.80) * exp(-pow((diag - uCurseur) / 0.11, 2.0)) * uSurvol * 0.2;
 
   // LA BRAISE : une bande étroite au front, qui CLIGNOTE. Elle est en or
   // chaud puis blanche en son coeur — *un feu n'a pas une couleur, il a un
@@ -259,32 +298,54 @@ export function Sachet3D({
   ouvre = false,
   onOuvert,
   onDechire,
-  onCliquer,
+  onOuvrir,
 }: {
   /** Sa largeur en unités de scène ; sa hauteur suit son rapport. */
   readonly taille: number
   readonly position: readonly [number, number, number]
-  /** Vrai dès qu'il doit s'ouvrir. Il ne se referme pas. */
+  /** Vrai dès qu'il doit s'ouvrir sans geste. Il ne se referme pas. */
   readonly ouvre?: boolean
   /** La bande vient d'être arrachée — *c'est l'instant du flash.* */
   readonly onDechire?: () => void
   /** Tout est fini : *c'est l'écran qui décide de la suite.* */
   readonly onOuvert?: () => void
-  readonly onCliquer?: () => void
+  /** Le geste est acquis : la déchirure part toute seule. */
+  readonly onOuvrir?: () => void
 }): React.ReactElement {
   const groupe = useRef<THREE.Group>(null)
+  const relief = useRef<THREE.Group>(null)
   const bande = useRef<THREE.Group>(null)
   const corps = useMemo(() => matiereDuMorceau(true), [])
   const bandeMat = useMemo(() => matiereDuMorceau(false), [])
   const gerbe = useMemo(() => matiereDeLaGerbe(), [])
-  /** Quand l'ouverture a commencé, en secondes d'horloge de scène. */
-  const debut = useRef<number | null>(null)
+  const { size } = useThree()
+
+  /** Où en est l'ouverture, de 0 à 1 — tirée à la main, puis filée seule. */
+  const p = useRef(0)
+  /** Le geste en cours : d'où le doigt est parti, et d'où l'ouverture l'était. */
+  const tire = useRef<{ x0: number; p0: number } | null>(null)
+  /** Vrai une fois le geste acquis : plus rien ne le retient. */
+  const file = useRef(false)
+  const avant = useRef<number | null>(null)
   const dit = useRef(false)
   const ditDechire = useRef(false)
+  /** Où le curseur touche le sachet, en parts de sa largeur et de sa hauteur. */
+  const curseur = useRef({ x: 0, y: 0 })
+  const survol = useRef(false)
+  const feu = useRef(0)
 
   const H = taille * RAPPORT_SACHET
   const hBande = H * LIGNE_DECHIRURE
   const hCorps = H - hBande
+  /**
+   * CE QUE LE SACHET MESURE À L'ÉCRAN, en pixels.
+   *
+   * *Un geste se compte en pixels*, et la déchirure se compte en parts de
+   * sachet : il faut donc la conversion, qui suit le recul de la caméra sans
+   * qu'on s'en occupe. **Tirer sur toute sa largeur ouvre tout** — le chemin
+   * du doigt et le chemin du front sont le même chemin.
+   */
+  const largePx = taille * (size.height / hauteurVisibleA(position[2], size.height))
 
   useEffect(() => {
     let vivant = true
@@ -308,34 +369,74 @@ export function Sachet3D({
   }, [corps, bandeMat])
 
   // LES MATIÈRES SE JETTENT AVEC LE COMPOSANT : un `ShaderMaterial` garde son
-  // programme compilé, et l'écran en monte trois par paquet ouvert.
+  // programme compilé, et l'écran en monte trois par paquet ouvert. Le curseur
+  // se rend avec elles — *un objet qui disparaît sous la souris laisserait une
+  // main posée sur la page.*
   useEffect(
     () => () => {
       corps.dispose()
       bandeMat.dispose()
       gerbe.dispose()
+      document.body.style.cursor = ''
     },
     [corps, bandeMat, gerbe],
   )
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime
+    const dt = avant.current === null ? 0 : Math.min(0.1, t - avant.current)
+    avant.current = t
     corps.uniforms.uTemps!.value = t
     bandeMat.uniforms.uTemps!.value = t
     gerbe.uniforms.uTemps!.value = t
 
-    if (ouvre && debut.current === null) debut.current = t
-    if (debut.current === null) {
-      // IL RESPIRE TANT QU'ON NE L'A PAS TOUCHÉ. *Un objet qui attend une tape
+    if (ouvre) file.current = true
+
+    // TROIS ÉTATS, ET UN SEUL CHIFFRE LES PORTE. Le doigt pose `p` lui-même ;
+    // une fois le geste acquis l'horloge prend le relais DEPUIS LÀ — *on ne
+    // rejoue pas le chemin déjà fait* — et un geste abandonné le rend.
+    if (file.current) p.current = Math.min(1, p.current + dt / DUREE_BRULURE)
+    else if (tire.current === null && p.current > 0)
+      p.current = Math.max(0, p.current - dt / RETOUR)
+
+    // LE RELIEF DU SURVOL : il s'incline vers le curseur et s'avance d'un
+    // cheveu. *Sans l'avancée, une inclinaison se lit comme une image qui
+    // gondole ; avec elle, comme un objet qu'on tourne vers soi* — la règle
+    // déjà payée sur la carte regardée de près. Il s'éteint dès que la
+    // déchirure file : à ce moment-là il n'y a plus rien à proposer.
+    const vu = survol.current && !file.current
+    const k = 1 - Math.pow(0.0015, dt)
+    feu.current += ((vu ? 1 : 0) - feu.current) * k
+    const r = relief.current
+    if (r !== null) {
+      const cibleX = vu ? -curseur.current.y * PENCHE : 0
+      const cibleY = vu ? curseur.current.x * PENCHE * 1.3 : 0
+      r.rotation.x += (cibleX - r.rotation.x) * k
+      r.rotation.y += (cibleY - r.rotation.y) * k
+      r.position.z += (taille * AVANCEE * feu.current - r.position.z) * k
+    }
+    // LE LUSTRE SE POSE SOUS LE CURSEUR, dans le repère du SACHET — la
+    // diagonale `(x + y) / 2`, exactement comme sur une carte.
+    const diag = 0.5 * (curseur.current.x + 0.5) + 0.5 * (curseur.current.y + 0.5)
+    corps.uniforms.uCurseur!.value = diag
+    bandeMat.uniforms.uCurseur!.value = diag
+    corps.uniforms.uSurvol!.value = feu.current
+    bandeMat.uniforms.uSurvol!.value = feu.current
+
+    if (p.current <= 0 && !file.current) {
+      // IL RESPIRE TANT QU'ON NE L'A PAS TOUCHÉ. *Un objet qui attend un geste
       // doit dire qu'il attend* — et c'est le vocabulaire du jeu, celui des
       // créatures et des slots qui accueillent.
       groupe.current?.scale.setScalar(1 + Math.sin(t * 1.7) * 0.013)
+      corps.uniforms.uFront!.value = -1
+      bandeMat.uniforms.uFront!.value = -1
+      gerbe.uniforms.uForce!.value = 0
       return
     }
     groupe.current?.scale.setScalar(1)
 
-    const p = Math.min(1, (t - debut.current) / DUREE_BRULURE)
-    const pf = Math.min(1, p / PART_FRONT)
+    const pp = p.current
+    const pf = Math.min(1, pp / PART_FRONT)
     // IL SORT DES DEUX BORDS : *une déchirure qui commence pile sur le bord se
     // lit comme un bord qui s'efface*, et une qui s'arrête pile à droite y
     // laisse un point de braise posé là pour toujours.
@@ -347,7 +448,8 @@ export function Sachet3D({
     // LA GERBE monte dès que la fente s'ouvre, culmine à l'arrachement, puis
     // retombe lentement : *une gerbe qui s'arrêterait net se lirait comme une
     // coupure de courant.*
-    gerbe.uniforms.uForce!.value = pf * (p < PART_FRONT ? 1 : Math.max(0, 1 - (p - PART_FRONT) / 0.5))
+    gerbe.uniforms.uForce!.value =
+      pf * (pp < PART_FRONT ? 1 : Math.max(0, 1 - (pp - PART_FRONT) / 0.5))
 
     if (pf >= 1 && !ditDechire.current) {
       ditDechire.current = true
@@ -358,7 +460,7 @@ export function Sachet3D({
     // droite et RETOMBE — *ce qu'on arrache est emporté puis lâché* — en
     // tournoyant sur elle-même, parce qu'un morceau de film n'a aucune raison
     // de rester à plat.
-    const pv = Math.max(0, (p - PART_FRONT) / (1 - PART_FRONT))
+    const pv = Math.max(0, (pp - PART_FRONT) / (1 - PART_FRONT))
     if (bande.current !== null) {
       const b = bande.current
       b.position.x = taille * 1.15 * pv * pv
@@ -373,43 +475,120 @@ export function Sachet3D({
     // qui disparait d'un coup se lit comme un bug de rendu.* Il part sur le
     // dernier quart, donc apres l'arrachement et pendant la sortie -- ce
     // qu'on a vide n'a plus a rester.
-    corps.uniforms.uFondu!.value = 1 - lissage(0.74, 1, p)
+    corps.uniforms.uFondu!.value = 1 - lissage(0.74, 1, pp)
 
-    if (p >= 1 && !dit.current) {
+    if (pp >= 1 && !dit.current) {
       dit.current = true
       onOuvert?.()
     }
   })
 
-  const toucher = (e: ThreeEvent<PointerEvent>): void => {
+  /**
+   * ON TIRE LA LANGUETTE VERS LA DROITE, et le front suit le doigt.
+   *
+   * Demandé par Keko : « pour ouvrir le booster il faudrait slider vers la
+   * droite ». *C'est le geste de l'objet* — on ne tape pas un sachet, on
+   * l'ouvre en tirant — et il rend au joueur ce qu'une tape lui prenait :
+   * **la déchirure est à sa main, pas à une animation qui se déroule.**
+   *
+   * **LE DOIGT NE PEUT PAS ALLER JUSQU'À L'ARRACHEMENT** (`TIRE_MAX`) : *un
+   * geste prépare, le relâchement conclut.* Sans cette borne, tirer très loin
+   * ferait partir la bande au milieu du mouvement, donc sans qu'on l'ait
+   * décidé.
+   *
+   * **LE SUIVI EST POSÉ SUR LA FENÊTRE**, et retiré par SIGNAL : le doigt sort
+   * forcément du sachet — sortir *est* le geste — et *un écouteur retiré par
+   * référence retire celui d'un autre rendu.*
+   */
+  const prendre = (e: ThreeEvent<PointerEvent>): void => {
+    if (file.current || tire.current !== null) return
     e.stopPropagation()
-    onCliquer?.()
+    tire.current = { x0: e.clientX, p0: p.current }
+    const ctrl = new AbortController()
+    const bouger = (ev: PointerEvent): void => {
+      const g = tire.current
+      if (g === null) return
+      const part = g.p0 / PART_FRONT + (ev.clientX - g.x0) / largePx
+      p.current = Math.min(TIRE_MAX, Math.max(0, part)) * PART_FRONT
+    }
+    const lacher = (): void => {
+      ctrl.abort()
+      const acquis = tire.current !== null && p.current / PART_FRONT >= SEUIL_TIRE
+      tire.current = null
+      if (!acquis) return
+      file.current = true
+      onOuvrir?.()
+    }
+    // UNE ANNULATION N'EST PAS UN LÂCHER : c'est le système qui reprend le
+    // geste, donc le sachet se referme au lieu de s'ouvrir.
+    const annuler = (): void => {
+      ctrl.abort()
+      tire.current = null
+    }
+    window.addEventListener('pointermove', bouger, { signal: ctrl.signal })
+    window.addEventListener('pointerup', lacher, { signal: ctrl.signal })
+    window.addEventListener('pointercancel', annuler, { signal: ctrl.signal })
+  }
+
+  /**
+   * LE RELIEF EST RÉSERVÉ À LA SOURIS, comme tout survol du projet : au doigt
+   * le `pointerout` n'arrive jamais, et le sachet resterait penché.
+   */
+  const viser = (e: ThreeEvent<PointerEvent>): void => {
+    if (e.pointerType !== 'mouse') return
+    e.stopPropagation()
+    curseur.current = {
+      x: (e.point.x - position[0]) / taille,
+      y: (e.point.y - position[1]) / H,
+    }
+    if (!survol.current && !file.current) {
+      survol.current = true
+      document.body.style.cursor = 'grab'
+    }
+  }
+
+  const quitter = (): void => {
+    survol.current = false
+    document.body.style.cursor = ''
   }
 
   return (
     <group ref={groupe} position={position as unknown as THREE.Vector3Tuple}>
       {/* LA GERBE, DERRIÈRE le sachet et bien plus haute que lui : elle part
-          de la fente et monte au-delà du bord. */}
+          de la fente et monte au-delà du bord. Elle vit HORS du groupe du
+          relief — *une gerbe d'étincelles ne s'incline pas avec la pochette*,
+          elle monte dans l'axe de l'écran. */}
       <mesh position={[0, hCorps / 2 - hBande / 2 + taille * 0.62, -0.02]} raycast={() => null}>
         <planeGeometry args={[taille * 1.5, taille * 1.3]} />
         <primitive object={gerbe} attach="material" />
       </mesh>
 
-      {/* LE CORPS : il reste, et c'est de lui que les cartes sortiront. */}
-      <mesh position={[0, -hBande / 2, 0]} onPointerDown={toucher}>
-        <planeGeometry args={[taille, hCorps]} />
-        <primitive object={corps} attach="material" />
-      </mesh>
-
-      {/* LA BANDE : son GROUPE porte le vol, son plan porte le dessin — et le
-          plan est à l'origine du groupe, sinon la rotation la ferait tourner
-          autour du centre du SACHET et l'enverrait décrire un cercle. *Un
-          objet tournoie sur lui-même, donc son pivot est son centre.* */}
-      <group ref={bande} position={[0, hCorps / 2, 0]}>
-        <mesh onPointerDown={toucher}>
-          <planeGeometry args={[taille, hBande]} />
-          <primitive object={bandeMat} attach="material" />
+      {/* LE RELIEF porte l'inclinaison et l'avancée. Il lui faut son propre
+          groupe : le groupe du dessus tient la place et la respiration, et
+          *deux sources qui écriraient la même transformation se battraient à
+          chaque image.* */}
+      <group ref={relief}>
+        {/* LE CORPS : il reste, et c'est de lui que les cartes sortiront. */}
+        <mesh
+          position={[0, -hBande / 2, 0]}
+          onPointerDown={prendre}
+          onPointerMove={viser}
+          onPointerOut={quitter}
+        >
+          <planeGeometry args={[taille, hCorps]} />
+          <primitive object={corps} attach="material" />
         </mesh>
+
+        {/* LA BANDE : son GROUPE porte le vol, son plan porte le dessin — et le
+            plan est à l'origine du groupe, sinon la rotation la ferait tourner
+            autour du centre du SACHET et l'enverrait décrire un cercle. *Un
+            objet tournoie sur lui-même, donc son pivot est son centre.* */}
+        <group ref={bande} position={[0, hCorps / 2, 0]}>
+          <mesh onPointerDown={prendre} onPointerMove={viser} onPointerOut={quitter}>
+            <planeGeometry args={[taille, hBande]} />
+            <primitive object={bandeMat} attach="material" />
+          </mesh>
+        </group>
       </group>
     </group>
   )

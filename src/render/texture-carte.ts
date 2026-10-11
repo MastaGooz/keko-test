@@ -3288,6 +3288,10 @@ function peindreLeSachet(): HTMLCanvasElement {
 
   // LA LIGNE POINTILLÉE « OUVRIR ICI » : elle dit où ça se déchire AVANT qu'on
   // y touche. *Un objet qui attend un geste doit dire lequel.*
+  //
+  // **SES FLÈCHES NE VONT QUE VERS LA DROITE**, depuis qu'on ouvre en tirant.
+  // Elles ont pointé des deux côtés le temps d'une tape : *deux flèches
+  // opposées disent « ça s'ouvre », une seule direction dit « tire par ici ».*
   const yL = h * LIGNE_DECHIRURE
   ctx.save()
   ctx.strokeStyle = '#ffeccaaa'
@@ -3303,7 +3307,7 @@ function peindreLeSachet(): HTMLCanvasElement {
   ctx.fillStyle = '#ffeccadd'
   ctx.font = `600 ${l * 0.04}px Cinzel, Georgia, serif`
   ctx.letterSpacing = `${l * 0.014}px`
-  ctx.fillText('◂  OUVRIR ICI  ▸', l / 2, yL - l * 0.03)
+  ctx.fillText('OUVRIR ICI  ▸▸▸', l / 2, yL - l * 0.03)
 
   // L'EMBLÈME, en grand : c'est la MARQUE du paquet. *Le projet n'a pas de nom
   // affiché, donc on n'en invente pas un* — l'emblème du dos dit déjà à quel
