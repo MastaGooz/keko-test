@@ -12533,6 +12533,307 @@ Le jour où il part, le module reste.
 par Keko : « supprime le script personnages et ses données une fois le nouveau
 pipeline validé, pas avant. »
 
+## LE QUATRIÈME MODE : UNE COLLECTION DE PEINTURES — `?paquet&art`
+
+Idée de Keko : « et si on faisait une collection d'œuvre d'art ? » Puis, après
+mesure : **« il vaut mieux partir sur Wikipédia »**, et enfin **« je voudrais me
+focaliser uniquement sur les peintures/tableaux »**.
+
+Il vit **à côté** des animaux, pas à leur place : *ce qui se teste doit pouvoir
+s'ouvrir d'un lien*, et Keko tranchera en voyant les deux.
+
+### POURQUOI WIKIPÉDIA ET PAS LE MET — mesuré, et les deux ne mesurent pas la même chose
+
+Le Met publie **un dump CSV de 318 Mo** (`MetObjects.csv`, 11 s à télécharger) et
+marque 2 294 œuvres comme « highlights ». *Un dump bat une API pour un
+catalogue* — l'alternative était 500 000 appels par objet, et le `/search` v1 a
+été retiré le 1ᵉʳ octobre 2026.
+
+**Trois mesures l'ont écarté, et la troisième est rédhibitoire :**
+
+| | |
+|---|---|
+| **68 % des « highlights » du Met n'ont AUCUN article Wikipédia** | leur « importance » est le jugement d'un conservateur, pas la célébrité |
+| la notoriété se lit sur l'ARTISTE, pas sur l'œuvre | 98 % contre 4 % : les Q-ids d'objets du Met sont des entités créées en masse, qui portent une image mais pas d'article |
+| **le Met ne sert AUCUN en-tête CORS sur ses images** | elles ne peuvent pas entrer dans un canvas — *tout doit passer par Commons de toute façon* |
+
+Keko a donc choisi la célébrité contre le jugement institutionnel. **Les deux
+sources convergent sur ~2 500 œuvres vraiment connues**, ce qui est exactement
+la taille d'un catalogue.
+
+### LE POOL : 9 797 PEINTURES, et « peinture » n'est pas la classe `peinture`
+
+`P31/P279* Q3305213` — la classe ou **n'importe laquelle de ses sous-classes**.
+Mesuré : **9 797 œuvres distinctes contre 9 395** avec la seule classe. Les 402
+récupérées sont les fresques, les triptyques, les retables, les aquarelles.
+
+***Sans la hiérarchie, on perd Michel-Ange et Raphaël pour une question de
+nomenclature*** : La Création d'Adam, L'École d'Athènes et Le Jugement dernier
+sont rangés sous `fresque`. Vérifié dans les deux sens — les sculptures restent
+dehors.
+
+**Trois filtres, les trois de Keko** : une page en français, une image libre,
+une date de création. *L'approximation ne sert à rien* — mesuré, les quatre
+propriétés d'approximation (`P1319`, `P1326`, `P2031`, `P585`) n'ajoutent que
+**deux œuvres**.
+
+### CE QUE LA SPÉCIALISATION COÛTE, et il faut le savoir
+
+La part des non-peintures **monte avec la notoriété** :
+
+| seuil | total | peintures | autres | part des autres |
+|---|---|---|---|---|
+| ≥ 1 langue | 11 253 | 9 395 | 1 858 | 16,5 % |
+| ≥ 10 | 1 969 | 1 535 | 434 | 22 % |
+| ≥ 30 | 165 | 106 | 59 | 36 % |
+| **≥ 50** | 32 | 15 | 17 | **53 %** |
+| ≥ 80 | 5 | 1 | 4 | **80 %** |
+
+**L'œuvre d'art la plus connue au monde n'est pas une peinture** : la statue de
+la Liberté fait 158 langues, La Joconde 146. Sortent aussi le Christ Rédempteur,
+La Petite Sirène, le David, la Vénus de Milo, l'Homme de Vitruve, La Pietà, la
+Victoire de Samothrace — et toute la photographie iconique (le portrait du Che,
+Iwo Jima, la première photo de l'histoire).
+
+**Ce que ça achète en échange est un FORMAT VISUEL UNIQUE**, et c'est
+l'argument qui n'est pas dans les chiffres : une peinture est une image
+rectangulaire plate, une sculpture est un objet photographié sur fond de musée,
+une photographie du XXᵉ est en noir et blanc. *Mélanger les trois donne trois
+esthétiques sur la même grille.*
+
+**La sortie médiane était « peinture + sculpture »** — les deux seules familles
+qui pèsent, 83 % et 14 %, les 3 % restants étant du bruit. Keko a préféré le
+format unique. *Si le haut du catalogue paraît maigre un jour, c'est là qu'il
+faut rouvrir* : il suffit d'ajouter les classes de sculpture au socle du
+pipeline.
+
+### LA FORMULE DE NOTORIÉTÉ : langues ×3 + taille d'article + déclarations
+
+Keko : « une valeur = rareté (indice de popularité : fréquentation, nombre de
+langues, et autre : on tente de créer une formule qui rende parfaitement compte
+de la notoriété) ». Mesurée sur **644 œuvres**, 585 avec tous les signaux.
+
+#### LA DÉCOUVERTE QUI RENVERSE L'INTUITION
+
+| | corrélation de rang |
+|---|---|
+| **nombre de langues ↔ vues étrangères** | **0,899** |
+| vues françaises ↔ vues étrangères | 0,729 |
+
+**Le nombre de langues prédit les vues mondiales mieux que les vues
+françaises** — et le français ne pèse que **17 %** du total (de 2 % à 96 % selon
+l'œuvre).
+
+***C'est l'inverse exact du mode personnages***, où les langues avaient été
+mises à poids ZÉRO parce qu'« un botaniste du XIXᵉ a cent cinquante Wikipédia
+créées par bot et personne ne les lit ». **Il n'y a pas de bots qui écrivent des
+articles de peintures** : un article n'existe que si quelqu'un l'a écrit.
+*Un signal change de nature avec son domaine*, et une décision mesurée sur un
+mode ne se reporte pas sur un autre sans la refaire.
+
+#### MAIS LES LANGUES SEULES NE PEUVENT PAS ÊTRE LA FORMULE
+
+| formule | valeurs distinctes sur 585 | plus gros paquet d'ex aequo | crans vides |
+|---|---|---|---|
+| **langues seules** | **56** | **100 œuvres** | **1** |
+| langues + vues multilingues | 496 | 4 | 0 |
+| **langues ×3 + taille + déclarations** | **569** | 3 | 0 |
+
+**46 % du pool tient sur trois valeurs** (1, 2 ou 3 langues) : dans la queue,
+elles ne distinguent rien. *Un paquet de cent œuvres indiscernables, et un cran
+d'échelle vide.*
+
+C'est la règle du projet prise par l'autre bout — « des valeurs distinctes ne
+sont pas une répartition » devient ici ***une répartition a besoin de valeurs
+distinctes.***
+
+#### LA FORMULE EST STABLE, ET C'EST LE CRITÈRE QUI COMPTE
+
+*Une formule qu'un signal gouverne seul n'est pas une formule, c'est ce signal.*
+
+| en retirant | le classement change de |
+|---|---|
+| les langues | **0,883** ← c'est le cœur |
+| la taille d'article | 0,983 |
+| les déclarations | 0,987 |
+
+**Les langues font le haut, les deux autres départagent la queue.** Accord avec
+les langues seules : **0,971** — l'ordre canonique est préservé, avec dix fois
+plus de granularité.
+
+**Et elle vaut la formule coûteuse** : accord de **0,956** avec « langues + vues
+multilingues ». *Les vues n'apportent que 0,04 et coûtent des heures* — une
+collecte sur quinze langues a calé à six en vingt-cinq minutes, rate-limitée.
+Les trois signaux retenus : deux viennent de Wikidata en une requête, la taille
+d'article d'un appel par lot de cinquante.
+
+Le poids 3 est mesuré : à ×1 l'accord avec les langues seules tombe à 0,902 (la
+taille se met à peser sur le haut), à ×6 on ne gagne plus rien.
+
+#### DEUX SIGNAUX ÉCARTÉS, ET LA MESURE DIT POURQUOI
+
+- **la notoriété du PEINTRE** (corrélation 0,52, donc un vrai demi-axe) :
+  ajoutée, elle fait remonter *« Sainte Anne, la Vierge et l'Enfant Jésus »* — un
+  carton de Vinci — en **8ᵉ position**. ***Un grand maître ne rend pas célèbre
+  chacune de ses œuvres*** ;
+- **le MUSÉE** : corrélé à **0,18** avec tout le reste, donc le plus indépendant
+  de tous les signaux mesurés, et pourtant inutilisable — *il mesure le prestige
+  de l'institution, pas la notoriété de l'œuvre.* Une toile obscure peut être au
+  Louvre. Il fait un bon **rayon**, pas un terme de formule.
+
+**Les vues seules** sont bruitées : elles font sortir La Nuit étoilée et Guernica
+du top 15, et remonter *Ivan le Terrible tue son fils* en 15ᵉ.
+
+**Et les sept formules candidates s'accordent à 0,87-0,99** : *le choix ne change
+presque rien au classement* — il change la GRANULARITÉ, et c'est pour ça qu'il
+s'est tranché là-dessus.
+
+### LE SEUIL EST NÉCESSAIRE : le pool entier mesure le CATALOGAGE
+
+| seuil | œuvres | les premiers peintres | les 25 premiers portent |
+|---|---|---|---|
+| tout | 9 797 | Goya, Matisse, **Delobbe**, Renoir, Gérôme | 34 % |
+| **≥ 7 langues** | **2 929** | Raphaël, Goya, Titien, Rembrandt, Van Gogh | 49 % |
+| ≥ 20 | 344 | Raphaël, Caravage, Van Gogh, Vermeer, Vinci | **75 %** |
+
+Le 3ᵉ peintre le plus présent du pool entier est **François-Alfred Delobbe**
+(207 œuvres), un académique mineur dont Wikipédia en français a catalogué toute
+la production. *Il disparaît dès 5 langues.*
+
+**Trop haut, le pool se concentre** — à 20 langues cent peintres se partagent
+tout, et l'axe du peintre perd sa variété. **7 est le point d'équilibre**, et il
+tombe sur la taille d'un catalogue de jeu. `--seuil=N` le change.
+
+### LES QUATRE RAYONS, tous mesurés et tous exploitables
+
+| rayon | couverture | valeurs | plus gros tas |
+|---|---|---|---|
+| **peintre** (`P170`) | **96 %** | 1 343 | Goya 2,8 % |
+| musée (`P276`) | 91 % | 1 521 | Orsay 4,0 % · Prado 3,7 % · **le Met 3,5 %** |
+| siècle | **100 %** | 9 utiles | 19ᵉ 35,5 % |
+| genre (`P136`) | 86 % | 95 | art religieux 25 % |
+
+**Le peintre est le meilleur** : médiane de deux œuvres, aucun au-dessus de 3 %,
+et c'est le seul axe qu'un joueur comprend sans rien lire — *« j'ai trois Van
+Gogh »*. Le genre monte à **86 % sur les peintures seules** (contre 82 % toutes
+natures) et se regroupe en sept rayons habités : art religieux 25 %, portrait
+22 %, scène de genre 10 %, paysage 8 %, nu 5,5 %, mythologie 5,4 %, histoire 4 %,
+nature morte 3 %.
+
+Le **mouvement** (`P135`) est inutilisable : **74 % des œuvres n'en déclarent
+aucun.**
+
+*Le Met revient donc par la porte de Wikipédia*, et c'est le troisième musée du
+catalogue.
+
+### LE CADRAGE : L'ŒUVRE RENTRE ENTIÈRE
+
+Tranché par Keko : « si portrait, hauteur de l'image = hauteur de la zone
+d'illustration (bandes noires sur les côtés) et inversement ? ainsi on garantit
+la totalité de l'œuvre ».
+
+**Et il fallait le faire.** Mesuré sur 313 images, dimensions lues sur Commons :
+
+| | |
+|---|---|
+| **portrait** (plus haut que large) | 52 % |
+| **paysage** | **43 %** |
+| carré | 5 % |
+
+Rapport largeur/hauteur : médiane **0,89**, p10 0,63, p90 1,68, max 30,5 (une
+frise). **Le gabarit attend 0,70 — seules 21 % des images y tiennent**, et un
+`cover` rognerait de plus de moitié **22 %** des œuvres : La Cène deviendrait un
+fragment.
+
+**Ça n'a coûté qu'un chiffre, parce que le mécanisme existait déjà** : `couvrir`
+prend un `PLAFOND_ROGNAGE`, réglé à 25 % pour les animaux dont *le rognage
+médian vaut 8 %*. Ici il vaut **zéro** (`illustrationEntiere` sur la carte), et
+ce qui reste découvert laisse voir le **fond peint** de la carte — qui est déjà
+là et fait le passe-partout. *C'est exactement ce qu'une peinture EST : une
+toile dans un cadre.*
+
+**Le bloom le lit AUSSI**, et il le faut : *le bloom n'est pas le sujet, c'est de
+la lumière tombée sur le décor* — cadré autrement que l'image, il remplirait de
+lumière les bandes où il n'y a rien.
+
+### CE QUE LA CARTE PORTE
+
+- **le nom, désambiguïsation retirée** : « La Cène (Léonard de Vinci) » devient
+  « La Cène ». *Ce qui précède la parenthèse EST le nom*, la règle déjà payée sur
+  « Castor (genre) » dans le mode animaux ;
+- **le cartouche porte deux lignes : qui, puis quand et où.** Le peintre tient sa
+  ligne à lui parce que c'est le fait principal ; l'année et le musée se
+  partagent la seconde. **Deux lignes tiennent au grand cran du cartouche**, là
+  où trois le font descendre ;
+- **le pied porte le GENRE**, là où une carte de jeu porte son type et un
+  personnage son domaine. *« Peinture » ne dirait rien* : toutes les cartes du
+  mode en sont une ;
+- **aucun chiffre au pied.** Keko : « on va faire une valeur = rareté pour
+  commencer » — la notoriété se lit au métal du cadre. *Un chiffre posé là
+  devrait dire quelque chose*, et il n'y a rien de plus à dire aujourd'hui ;
+- **pas de ciel de famille** : le mode descente en a quatre, déjà désaturés de
+  moitié pour ne pas disputer l'axe de la rareté ; quatre-vingt-quinze genres en
+  réclameraient autant — *une échelle se dit en couleur, une famille se dit en
+  forme* ;
+- **le compteur de la dernière carte fait défiler les LANGUES**, pas les vues.
+  *Un chiffre qui grimpe et une teinte qui grimpe avec lui ne disent la même
+  chose que s'ils mesurent la même chose* — et c'est le nombre de langues qui
+  pèse trois cinquièmes de la formule.
+
+### CE QUE LE PIPELINE A COÛTÉ — cinq pièges, tous déjà écrits ailleurs
+
+1. **UN CSV COUPÉ SE LIT SANS ERREUR.** Le endpoint lâche le flux qu'il a
+   commencé ; en JSON ça lève un `SyntaxError` à une position absurde, en CSV ça
+   passe pour un lot complet. On vérifie l'en-tête, **la fin du flux** et le
+   compte de colonnes de chaque ligne — *et mon premier test de colonnes ne
+   l'attrapait pas*, parce que la coupure tombait après la dernière virgule ;
+2. **`terminated` EST UNE TRONCATURE, PAS UNE PANNE À PART.** La règle était
+   écrite et je ne l'avais pas portée : un lot perdu était abandonné au lieu
+   d'être **redécoupé**. *Le redécoupage attaque la cause, le réessai un
+   symptôme* — et `brut` a déjà réessayé trois fois pour rien ;
+3. **UN NOM DE FICHIER COMMONS PEUT PORTER UN `%` LITTÉRAL**, que
+   `decodeURIComponent` refuse — et ça faisait tomber tout le pipeline. *La bonne
+   lecture est alors le nom TEL QUEL* : s'il n'est pas une séquence
+   d'échappement valide, c'est qu'il n'en est pas une ;
+4. **`redirects=1`, ET IL LE FAUT.** Wikidata pointe parfois vers un titre devenu
+   une redirection : sans lui, « La Nuit étoilée » rendait **31 octets**, le
+   poids d'un `#REDIRECT` ;
+5. **LE DÉBIT DE L'API SE SIGNALE EN TEXTE BRUT**, pas en JSON d'erreur : un
+   `except: continue` l'avale sans rien dire, et les libellés manquent en
+   silence. *Une sonde qui échoue sans le dire est pire qu'une sonde qui lève.*
+
+Et **un sixième, qui n'est pas du réseau** : `stat.py` est un module de la
+bibliothèque standard de Python. Une sonde qui porte ce nom importe l'autre.
+
+### CE QUE LES VÉRIFICATIONS ONT TROUVÉ : le siècle avant notre ère
+
+**Le 1ᵉʳ siècle avant notre ère va de −100 à −1**, exactement comme le 1ᵉʳ siècle
+va de 1 à 100. Ma formule décalait tout d'un cran, **et mon test aussi** — il
+affirmait que −100 était au 2ᵉ. *L'erreur n'était pas dans le calcul seul, mais
+dans ce que je croyais de la convention*, et c'est la vérification qui a forcé à
+aller la lire.
+
+**Et `siecleDe` vivait en DEUX endroits** — le type et le pipeline — donc j'ai
+corrigé un seul des deux. ***Deux endroits qui décrivent le même calcul se
+désaccordent au premier réglage***, et je viens de le prouver sur le commit même
+qui l'écrivait. Le pipeline l'importe désormais depuis `logic/`, qui est pur et
+qu'un script hors build peut lire sans rien emporter du navigateur.
+
+### CE QUI RESTE À TRANCHER PAR KEKO — les peintures
+
+- **est-ce que ça remplace les animaux ou s'y ajoute** ;
+- **les rayons de la collection** : peintre, musée, siècle, genre — ou plusieurs,
+  et dans quel ordre. L'écran de collection n'existe pas encore ;
+- **le seuil**, s'il faut un catalogue plus large ou plus serré (`--seuil=N`) ;
+- **la seconde mesure au pied de la carte**, si elle doit exister un jour : *les
+  deux axes indépendants mesurés chez les personnages n'existent pas ici* — tous
+  les signaux d'une peinture corrèlent entre 0,43 et 0,83, et le seul vraiment
+  indépendant (le musée) ne mesure pas la notoriété ;
+- **l'apostrophe des noms de cartes** : `L'Origine du monde` porte l'apostrophe
+  droite, qui est trop fine pour survivre à la taille d'un titre de carte. Le
+  même défaut que sur `Crocidure dArabie` dans le mode animaux, et c'est une
+  décision de typographie sur TOUS les noms du jeu.
+
 ## LE PLATEAU — un prototype pour une seule question
 
 Idee de Keko, cadree par lui en regles precises : une grille 4x4, une carte
@@ -14585,6 +14886,8 @@ src/
       formules.ts   # rareté, attaque, défense, domaine — UN SEUL endroit
     animals/     # LE TROISIÈME MODE : une carte = une ESPÈCE
       types.ts      # CarteAnimal + la validation du JSON engendré
+    paintings/   # LE QUATRIÈME MODE : une carte = une PEINTURE
+      types.ts      # CartePeinture, la validation, le siècle, les rayons
     board/       # LE PROTOTYPE DE PLATEAU — voir BOARD.md
       plateau.ts    # la grille, la production, REGLAGE : un seul endroit à régler
       duel.ts       # le mode a deux : tour par tour, le total sur la grille pleine
@@ -14594,7 +14897,7 @@ src/
     Main3D.tsx       # l'éventail et le geste : sortir pour jouer, taper pour voir
     Scene.tsx        # la descente entière : combat, paliers, butin, hub
     Armurerie3D.tsx  # le coffre et le chargement
-    Paquet3D.tsx     # le troisième mode, derrière `?paquet`
+    Paquet3D.tsx     # les paquets : animaux, `&art` peintures, `&perso` personnages
     Sachet3D.tsx     # la pochette qui se déchire en brûlant, avant la rangée
     board.ts         # le plateau, derrière `?board` — DOM nu, pas de Three.js
     duel.ts          # le duel, derrière `?duel` — il réutilise le dessin du plateau
@@ -14604,13 +14907,17 @@ src/
     illustrations.ts # les silhouettes SVG, repli des créatures
     sons.ts         # les sons synthétisés — `render/sons.ts` y ajoute les fichiers
     animaux.ts      # chargerAnimaux() : le fetch du catalogue (logic/ est pur)
+    peintures.ts    # chargerPeintures() : le catalogue des peintures
     personnages.ts  # loadCharacters() : l'ancien catalogue
     version.ts      # le garde-fou anti-cache
     styles.css      # tout le chrome HTML du moteur
   entree.ts  # l'aiguillage : la descente par défaut, `?paquet`, `?ecusson`
 scripts/   # HORS du build Vite : lancé par `node`, pas couvert par tsconfig
   outils.ts               # cache par requête, lots, journal — partagé
+  sparql.ts               # le Query Service en CSV, par tranches, troncature détectée
+  commons.ts              # la fabrique d'URL de vignette, et l'année d'une date
   generate-animals.ts     # GBIF + Wikidata -> public/data/animals.json
+  generate-paintings.ts   # Wikidata + Wikipedia -> public/data/paintings.json
   generate-links.ts       # fr.wikipedia -> public/data/links.json (le graphe du plateau)
   generate-characters.ts  # l'ancien pipeline, à retirer après validation
   .cache/                 # le cache des requêtes, gitignoré
@@ -14945,6 +15252,7 @@ npm run build        # tsc (types) puis vite build ; doit passer sans erreur
 npm run verif        # vérifications des règles, sans navigateur
 npm run personnages  # (re)engendre public/data/characters.json depuis Wikidata
 npm run gen:animals  # (re)engendre public/data/animals.json depuis GBIF + Wikidata
+npm run peintures    # (re)engendre public/data/paintings.json depuis Wikidata + Wikipedia
 npm run liens        # (re)engendre public/data/links.json — le graphe du plateau
 ```
 
@@ -14986,6 +15294,7 @@ elle qu'on donne. Le paramètre reste accepté et ne fait plus rien, parce que
 |---|---|
 | le jeu | `https://mastagooz.github.io/keko-test/?v=<sha>` |
 | les paquets d'animaux | `…/?paquet&v=<sha>` |
+| **les paquets de peintures** | `…/?paquet&art&v=<sha>` |
 | les paquets de personnages | `…/?paquet&perso&v=<sha>` |
 
 **Y ACCROCHER LE HASH DU COMMIT** (`?v=<sha court>`) : l'URL change donc à chaque

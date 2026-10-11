@@ -17,15 +17,18 @@ import { Bouton3D } from './Bouton3D.tsx'
 import { Sachet3D } from './Sachet3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
-import { AMBIANCE, ECHELLE_METAL, RAPPORT_SACHET } from './texture-carte.ts'
+import { AMBIANCE, ECHELLE_METAL, RAPPORT_SACHET, type CarteAPeindre } from './texture-carte.ts'
 import { carteDeLAnimal } from './carte-animal.ts'
+import { carteDeLaPeinture } from './carte-peinture.ts'
 import { carteDuPersonnage } from './carte-personnage.ts'
 import { chargerAnimaux } from '../ui/animaux.ts'
+import { chargerPeintures } from '../ui/peintures.ts'
 import { loadCharacters } from '../ui/personnages.ts'
 import { createRng } from '../logic/rng.ts'
 import { CARTES_PAR_PAQUET, ouvrirPaquet, parCran } from '../logic/paquet.ts'
 import type { CarteAnimal } from '../logic/animals/types.ts'
 import type { CharacterCard } from '../logic/characters/types.ts'
+import type { CartePeinture } from '../logic/paintings/types.ts'
 
 /**
  * LES DEUX CATALOGUES COHABITENT, LE TEMPS QUE KEKO TRANCHE.
@@ -45,7 +48,36 @@ import type { CharacterCard } from '../logic/characters/types.ts'
  * à une carte que son identité et son cran : c'est précisément pour ça qu'il a
  * quitté le dossier des personnages.
  */
-type CarteDuMode = CarteAnimal | CharacterCard
+type CarteDuMode = CarteAnimal | CharacterCard | CartePeinture
+
+/**
+ * LES TROIS CATALOGUES PASSENT PAR LE MEME TIRAGE, et c'est tout l'interet de
+ * `logic/paquet.ts` : il ne demande a une carte que son IDENTITE et son CRAN.
+ * *C'est precisement pour ca qu'il a quitte le dossier des personnages.*
+ *
+ * Le discriminant est STRUCTUREL — `siecle` n'existe que sur une peinture,
+ * `groupe` que sur un animal : *un drapeau de mode pose a cote se
+ * desaccorderait de la carte qu'il decrit.*
+ */
+function carteAPeindreDuMode(c: CarteDuMode): CarteAPeindre {
+  if ('siecle' in c) return carteDeLaPeinture(c)
+  if ('groupe' in c) return carteDeLAnimal(c)
+  return carteDuPersonnage(c)
+}
+
+/**
+ * LE CHIFFRE QUE LA DERNIERE CARTE FAIT DEFILER, et son unite.
+ *
+ * **Il doit etre celui dont la rarete DERIVE** : *un chiffre qui grimpe et une
+ * teinte qui grimpe avec lui ne disent la meme chose que s'ils mesurent la
+ * meme chose.* Pour un animal et un personnage c'est la frequentation ; **pour
+ * une peinture c'est le nombre de VERSIONS LINGUISTIQUES**, qui pese trois
+ * cinquiemes de sa formule et s'accorde a 0,971 avec elle.
+ */
+function compteurDuMode(c: CarteDuMode): { valeur: number; unite: string } {
+  if ('siecle' in c) return { valeur: c.langues, unite: 'langues sur Wikipédia' }
+  return { valeur: c.vues, unite: 'vues par mois' }
+}
 
 /**
  * LA RANGÉE SE DIMENSIONNE SUR LA PLACE, jamais à une taille écrite à la main.
@@ -126,8 +158,18 @@ function lueurDe(rang: number): string {
 }
 
 export function Paquet3D(): React.ReactElement {
-  /** `?paquet&perso` rejoue l'ancien catalogue — voir `CarteDuMode`. */
-  const personnages = new URLSearchParams(location.search).has('perso')
+  /**
+   * QUEL CATALOGUE — les animaux par defaut, `&art` les peintures, `&perso`
+   * l'ancien jeu de personnages.
+   *
+   * **Les peintures vivent derriere un parametre, a cote des animaux plutot
+   * qu'a leur place** : *ce qui se teste doit pouvoir s'ouvrir d'un lien*, et
+   * Keko tranchera en voyant les deux. Meme motif que `?sillage=`, `?cadre=`
+   * et `?fond=image`.
+   */
+  const params = new URLSearchParams(location.search)
+  const personnages = params.has('perso')
+  const peintures = params.has('art')
   /**
    * `?paquet&culbute` REND LA CULBUTE, et le développement est le défaut.
    *
@@ -207,7 +249,12 @@ export function Paquet3D(): React.ReactElement {
 
   useEffect(() => {
     let vivant = true
-    void (personnages ? loadCharacters() : chargerAnimaux()).then((cartes: CarteDuMode[]) => {
+    const charger = peintures
+      ? chargerPeintures()
+      : personnages
+        ? loadCharacters()
+        : chargerAnimaux()
+    void charger.then((cartes: CarteDuMode[]) => {
       if (!vivant) return
       if (cartes.length === 0) setErreur('Catalogue vide ou introuvable.')
       else setCatalogue(cartes)
@@ -215,7 +262,7 @@ export function Paquet3D(): React.ReactElement {
     return () => {
       vivant = false
     }
-  }, [personnages])
+  }, [personnages, peintures])
 
   useEffect(() => {
     const suivre = () => setFenetre({ l: window.innerWidth, h: window.innerHeight })
@@ -254,16 +301,16 @@ export function Paquet3D(): React.ReactElement {
    * ce moteur, et il ne dit rien du tout.*
    */
   const aPeindre = useMemo(
-    () => paquet.map((c) => ('groupe' in c ? carteDeLAnimal(c) : carteDuPersonnage(c))),
+    () => paquet.map(carteAPeindreDuMode),
     [paquet],
   )
 
   const toutRevele = paquet.length > 0 && paquet.every((c) => revelees.has(c.id))
 
-  /** Les vues de la carte brute : c'est le chiffre dont la rarete DERIVE. */
-  function vuesDe(id: string): number {
+  /** Le chiffre de la carte brute : celui dont la rarete DERIVE. */
+  function compteurDe(id: string): { valeur: number; unite: string } {
     const brute = paquet.find((c) => c.id === id)
-    return brute === undefined ? 0 : brute.vues
+    return brute === undefined ? { valeur: 0, unite: '' } : compteurDuMode(brute)
   }
 
   function rangDe(id: string): number {
@@ -284,7 +331,7 @@ export function Paquet3D(): React.ReactElement {
    * cinq cartes a nuanceur. C'est le chemin de `Projeter`, pour la meme raison.
    */
   function monterLeCompteur(id: string): void {
-    const cible = vuesDe(id)
+    const cible = compteurDe(id).valeur
     const rangFinal = Math.max(0, rangDe(id))
     const depart = performance.now()
     setMonte(true)
@@ -381,6 +428,14 @@ export function Paquet3D(): React.ReactElement {
    */
   const restantes = paquet.filter((c) => !revelees.has(c.id))
   const derniere = restantes.length === 1 && paquet.length > 1 ? restantes[0]! : null
+
+  /**
+   * L'UNITE DU COMPTEUR est une propriete du MODE, pas d'une carte : on la lit
+   * sur la premiere du paquet, qui existe toujours. *`derniere` retombe a
+   * `null` des qu'elle est revelee* — c'est `monte` qui tient l'affichage
+   * ensuite — donc la lire sur elle la ferait disparaitre en pleine montee.
+   */
+  const unite = paquet.length > 0 ? compteurDuMode(paquet[0]!).unite : ''
 
   return (
     <div
@@ -518,7 +573,7 @@ export function Paquet3D(): React.ReactElement {
               <p className="paquet-compteur" ref={refChiffre}>
                 0
               </p>
-              <p className="paquet-compteur__unite">vues par mois</p>
+              <p className="paquet-compteur__unite">{unite}</p>
             </>
           )}
         </div>

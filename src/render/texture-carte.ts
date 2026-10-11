@@ -154,6 +154,26 @@ export type CarteAPeindre = {
    */
   illustration?: string
   /**
+   * SON ILLUSTRATION RENTRE ENTIÈRE, au lieu de se faire rogner.
+   *
+   * Tranché par Keko pour le mode peintures : « si portrait, hauteur de l'image
+   * = hauteur de la zone d'illustration (bandes noires sur les côtés) et
+   * inversement ? ainsi on garantit la totalité de l'œuvre ».
+   *
+   * *Et il fallait le faire* : mesuré sur 313 images de peintures, **52 % sont
+   * en portrait et 43 % en paysage**, rapport médian 0,89 — là où le gabarit
+   * attend 0,70. **Seules 21 % y tiennent**, et un `cover` rognerait de plus de
+   * moitié 22 % des œuvres : La Cène deviendrait un fragment.
+   *
+   * Ça ne coûte rien, parce que le mécanisme existait déjà : `couvrir` prend un
+   * `PLAFOND_ROGNAGE`, réglé à 25 % pour les animaux dont *le rognage médian
+   * vaut 8 %*. **Ici le plafond vaut ZÉRO**, et ce qui reste découvert laisse
+   * voir le fond peint de la carte — qui est déjà là et fait le passe-partout.
+   *
+   * *C'est exactement ce qu'une peinture EST* : une toile dans un cadre.
+   */
+  illustrationEntiere?: boolean
+  /**
    * SES DEUX MESURES DE COMBAT, aux deux bouts du pied — l'attaque à gauche,
    * la défense à droite, le type gravé entre elles.
    *
@@ -2035,6 +2055,14 @@ export async function peindreCarte(
    * par la voisine.
    */
   const marge = (piste === 'encoche' ? 1.85 : 1.163) * U
+  /**
+   * LE ROGNAGE DE CETTE CARTE-CI : zéro quand l'œuvre doit rentrer entière.
+   *
+   * **Le bloom le lit AUSSI**, et il le faut : *le bloom n'est pas le sujet,
+   * c'est de la lumière tombée sur le décor* — cadré autrement que l'image, il
+   * remplirait de lumière les bandes où il n'y a rien.
+   */
+  const rognage = carte.illustrationEntiere === true ? 0 : PLAFOND_ROGNAGE
   ctx.save()
   chemin(ctx, coque, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
   ctx.clip()
@@ -2110,7 +2138,7 @@ export async function peindreCarte(
     const pctx = petit.getContext('2d')
     if (pctx !== null) {
       pctx.imageSmoothingQuality = 'high'
-      couvrir(pctx, image, 0, 0, petit.width, petit.height, PLAFOND_ROGNAGE)
+      couvrir(pctx, image, 0, 0, petit.width, petit.height, rognage)
       /**
        * ET LA LUMIÈRE PREND LA COULEUR DU CIEL. Keko : « quand je zoom sur une
        * arme, l'image affichée est bleue, et certaines des cartes générées
@@ -2158,7 +2186,7 @@ export async function peindreCarte(
 
 
   if (image !== null) {
-    couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2, PLAFOND_ROGNAGE)
+    couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2, rognage)
   }
 
   /**
@@ -3422,7 +3450,10 @@ export function signature(carte: CarteAPeindre): string {
   // L'ILLUSTRATION ENTRE DANS LA CLÉ : deux personnages peuvent partager un
   // nom, et c'est leur portrait qui les sépare. *Deux cartes qui ne montrent
   // pas la même chose ne peuvent pas partager une texture.*
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}`
+  // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
+  // peuvent pas partager une texture*, et une image rognée n'est pas la même
+  // image que la même rentrée entière.
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}`
 }
 
 /**
