@@ -2710,24 +2710,6 @@ const PART_MAIN = 93 / 84
  *
  * La luminance moyenne passe de 70 à 96.
  */
-/**
- * LE TRACÉ DU COEUR, DANS SON VIEWBOX DE 40 x 37 — **et il n'y en a qu'un.**
- *
- * Il était écrit en dur dans `peindreJeton`, ce qui allait tant qu'un seul
- * endroit le dessinait ; **le dos de la collection en demande un second**, et
- * *deux dessins qui décrivent la même chose divergent au premier réglage* — la
- * règle que ce coeur-là a déjà coûtée une fois, le jour où j'en avais redessiné
- * un en courbes de Bézier plutôt que de reprendre celui de Keko.
- *
- * ***Le TRACÉ se partage, l'HABIT non*** : le jeton du cartouche le peint en
- * rouge sombre cerné de brun parce qu'il vit dans du texte, le dos le peint en
- * rouge vif cerné de crème parce qu'il y est un sticker. C'est la même
- * séparation que la tranche 3D, qui suit le métal du cadre sans en être.
- */
-export const CHEMIN_COEUR =
-  'M20 34.5C20 34.5 2.8 22.6 2.8 12.6 2.8 6.6 7.4 2 13.2 2 16.6 2 19 4.1 20 6.3 21 4.1 23.4 2 26.8 2 32.6 2 37.2 6.6 37.2 12.6 37.2 22.6 20 34.5 20 34.5Z'
-export const COEUR_BOITE: readonly [number, number] = [40, 37]
-
 export const COEUR_HAUT = '#ff7b82'
 export const COEUR_MI = '#d33244'
 export const COEUR_BAS = '#8e1a26'
@@ -2809,7 +2791,9 @@ function peindreJeton(
     c.addColorStop(0, COEUR_HAUT)
     c.addColorStop(0.6, COEUR_MI)
     c.addColorStop(1, COEUR_BAS)
-    const forme = new Path2D(CHEMIN_COEUR)
+    const forme = new Path2D(
+      'M20 34.5C20 34.5 2.8 22.6 2.8 12.6 2.8 6.6 7.4 2 13.2 2 16.6 2 19 4.1 20 6.3 21 4.1 23.4 2 26.8 2 32.6 2 37.2 6.6 37.2 12.6 37.2 22.6 20 34.5 20 34.5Z',
+    )
     ctx.fillStyle = c
     ctx.fill(forme)
     ctx.strokeStyle = COEUR_CERNE
@@ -4571,9 +4555,6 @@ const DOS_BLEU: readonly [number, number, number] = [44, 96, 214]
 /** Le crème du liseré et du découpage — celui des textes du gabarit. */
 const DOS_CREME = '#fffaf0'
 
-/** L'encre d'un trait d'emoji : du brun très sombre, jamais du noir. */
-const ENCRE_EMOJI = '#43301a'
-
 /**
  * LA MARGE DE DÉCOUPE D'UN STICKER, en centièmes de largeur.
  *
@@ -4583,8 +4564,7 @@ const ENCRE_EMOJI = '#43301a'
  * propre repère de 40 x 37, où une épaisseur en unités de carte ne veut plus
  * rien dire.
  */
-const DOS_CERNE = 2.4
-let cerneCourant = DOS_CERNE * U
+const DOS_CERNE = 1.5
 
 /**
  * LE PAS DU MOTIF, en centièmes de largeur — **et c'est un CLAVIER.**
@@ -4635,7 +4615,7 @@ const DOS_TOUCHE = 7.2
  * tous deux des emoji — exactement comme une pokéball ne dit pas quel Pokémon
  * est sous la carte.
  */
-function peindreDosEmoji(rayon: number): HTMLCanvasElement {
+async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
   canvas.width = LARGE
   canvas.height = HAUT
@@ -4680,9 +4660,9 @@ function peindreDosEmoji(rayon: number): HTMLCanvasElement {
   halo.addColorStop(1, '#ffffff00')
   ctx.fillStyle = halo
   ctx.fillRect(0, 0, LARGE, HAUT)
-  ctx.restore()
 
-  peindreBouquet(ctx, cx, cy)
+  await peindreBouquet(ctx, cx, cy)
+  ctx.restore()
   return canvas
 }
 
@@ -4729,196 +4709,159 @@ function peindreTouches(ctx: CanvasRenderingContext2D): void {
 }
 
 /**
- * **LE BOUQUET : TROIS STICKERS, PAS UN.**
+ * **LE BOUQUET : UN TAS DE VRAIS EMOJI, DÉCOUPÉS ET ENTASSÉS.**
  *
- * Keko : « je trouve l'icône de smiley un peu simplette... tu crois qu'on
- * pourrait faire un bouquet d'emoji (coeur, visage, un genre de mixte) en
- * logo ? »
+ * Keko, en deux fois : « je trouve l'icône de smiley un peu simplette... tu
+ * crois qu'on pourrait faire un bouquet d'emoji (coeur, visage, un genre de
+ * mixte) en logo ? », puis **« je voyais un bouquet plus chargé et chaotique,
+ * utilisant de vrais emoji de notre pool »**.
  *
- * *Un smiley seul dit « un emoji », un groupe dit « une COLLECTION »* — et
- * c'est ce que la carte est. C'est aussi ce que le motif et les confettis
- * disaient déjà autour, sans que le centre le reprenne.
+ * ***ET C'EST LA SECONDE MOITIÉ QUI COMPTE : des formes que JE dessine ne
+ * seront jamais des emoji.*** Un disque jaune à deux yeux, un coeur et une
+ * étoile peints à la main sont une IMITATION — soignée, mais une imitation — là
+ * où le catalogue est fait de glyphes qui existent. *Le logo d'une collection
+ * se compose de ce qu'elle contient*, et la carte sait déjà peindre un emoji :
+ * c'est `imageDeLEmoji`, le même chemin que l'illustration de la face.
  *
- * ***LES TROIS NE SONT PAS CHOISIS, ILS SONT PRIS EN TÊTE DU CLASSEMENT.***
- * Le visage et le coeur sont **les deux premiers emoji du monde** — 😂 puis
- * ❤️ au classement d'usage d'Unicode, celui-là même qui décide des raretés du
- * catalogue. *Le logo d'une collection se compose de ce qu'elle a de plus
- * employé*, pas de ce qui tombe bien dans le dessin.
+ * **UN PAR RAYON, OU PRESQUE** — visages, symboles, gens, ciel, activités,
+ * animaux, nourriture, voyage, objets, drapeaux. *Ils sont de partout, donc ils
+ * ne disent rien d'une carte en particulier* : c'est l'argument des cinq
+ * couleurs du motif, pris une seconde fois. **Et les deux premiers sont les
+ * deux premiers du MONDE** — 😂 puis ❤️ au classement d'usage d'Unicode, celui
+ * -là même qui décide des raretés du catalogue.
  *
- * **L'ÉTOILE EST LE SEUL ÉLÉMENT DE GOÛT**, et elle répond à un besoin de
- * FORME : deux silhouettes rondes se seraient confondues à vingt pixels, et il
- * fallait une troisième qui ne soit ni un disque ni un coeur. *Elle a cinq
- * branches et non quatre* : l'éclat à quatre branches est le vocabulaire de la
- * ferronnerie du jeu — le sachet, les tas, l'ancien dos — et c'est précisément
- * la langue dont ce dos sort. ⭐ en a cinq.
+ * **LE CHAOS SE COMPOSE, il ne se tire pas.** Les douze places sont écrites à
+ * la main : *un tas tiré au hasard produit des trous et des collisions*, et
+ * celui-ci doit tenir dans sa carte, laisser le motif respirer autour, et
+ * garder son gros au centre. Trois anneaux — un gros, quatre moyens, sept
+ * petits — et chacun penche d'un angle à lui, parce que *douze stickers droits
+ * se lisent comme une grille.*
  *
- * **LA DÉCOUPE EST À MARGE CONSTANTE** (`DOS_CERNE`), pas proportionnelle à
- * chaque forme : *une planche de stickers se découpe avec la même marge pour
- * tous*, donc le petit en porte proportionnellement plus — et c'est exactement
- * ce qui le fait lire comme un autocollant plutôt que comme un dessin.
- *
- * **ET CHACUN PENCHE D'UN ANGLE DIFFÉRENT.** Trois stickers parfaitement
- * droits se lisent comme un gabarit ; collés de travers, comme une main qui les
- * a posés. Le visage, lui, reste droit : *c'est le sujet, et un visage penché
- * devient une expression.*
- *
- * Le groupe tient la DIAGONALE — le coeur en haut à droite, l'étoile en bas à
- * gauche — donc il reste équilibré par rotation, et le visage passe DEVANT les
- * deux autres : *il est le plus grand, il doit rester entier.*
+ * **L'ORDRE DE LA LISTE EST L'ORDRE DE PEINTURE**, et il n'est pas trié par
+ * taille : trois petits de la périphérie sont posés EN DERNIER, donc ils
+ * passent devant leurs voisins. *Un tas dont tout le petit est dessous est un
+ * tas rangé.*
  */
-function peindreBouquet(ctx: CanvasRenderingContext2D, cx: number, cy: number): void {
-  peindreEtoile(ctx, cx - 22 * U, cy + 13.5 * U, 14 * U, -0.3)
-  peindreCoeur(ctx, cx + 21 * U, cy - 15 * U, 23 * U, 0.22)
-  peindreVisage(ctx, cx, cy + 2 * U, 17.5 * U)
-}
+const BOUQUET: readonly { emoji: string; x: number; y: number; t: number; a: number }[] = [
+  { emoji: '⭐', x: 2, y: -30, t: 16, a: 0.18 },
+  { emoji: '🐱', x: -30, y: -14, t: 17, a: -0.4 },
+  { emoji: '🍕', x: 30, y: -4, t: 17, a: 0.4 },
+  { emoji: '⚽', x: -16, y: 27, t: 15, a: 0.3 },
+  { emoji: '🚀', x: -6, y: 24, t: 18, a: -0.5 },
+  { emoji: '🔥', x: -17, y: -20, t: 21, a: -0.22 },
+  { emoji: '❤️', x: 16, y: -19, t: 22, a: 0.28 },
+  { emoji: '👍', x: -20, y: 5, t: 21, a: 0.3 },
+  { emoji: '🎉', x: 19, y: 10, t: 22, a: -0.33 },
+  // LE GROS AU CENTRE, posé une fois ses voisins en place : *il est le sujet,
+  // il doit rester entier.*
+  { emoji: '😂', x: 0, y: -2, t: 29, a: -0.06 },
+  // ET QUATRE PAR-DESSUS, tous en périphérie : ils ne cachent rien du centre et
+  // ils cassent l'empilement régulier.
+  { emoji: '🌈', x: -31, y: 12, t: 15, a: -0.3 },
+  { emoji: '🏁', x: 30, y: -24, t: 15, a: 0.5 },
+  { emoji: '💎', x: 7, y: 23, t: 16, a: 0.25 },
+  { emoji: '🎁', x: 25, y: 24, t: 15, a: -0.25 },
+]
 
-/**
- * LA DÉCOUPE D'UN STICKER : son ombre, puis son cerne.
- *
- * *Ce qui fait le sticker est le cerne et l'ombre portée* — sans eux, la même
- * forme se lit comme un trou dans le fond. **C'est la règle de la plaque
- * claire, prise par le même bout** : elle porte son ombre pour dire qu'elle est
- * POSÉE sur l'image et non découpée dedans.
- *
- * **L'OMBRE SE POSE SUR LE REMPLISSAGE SEUL, pas sur le cerne.** Les deux la
- * porteraient chacun la leur, et deux ombres superposées font une tache deux
- * fois plus dense qu'un seul objet n'en projette. *Ce que le remplissage perd
- * en largeur — l'épaisseur du cerne — se noie dans le flou.*
- */
-function decouper(ctx: CanvasRenderingContext2D, forme: Path2D): void {
-  ctx.save()
-  ctx.shadowColor = '#00000059'
-  ctx.shadowOffsetY = 1.4 * U
-  ctx.shadowBlur = 3.6 * U
-  ctx.fillStyle = DOS_CREME
-  ctx.fill(forme)
-  ctx.restore()
-  ctx.fillStyle = DOS_CREME
-  ctx.strokeStyle = DOS_CREME
-  ctx.lineWidth = cerneCourant * 2
-  ctx.lineJoin = 'round'
-  ctx.stroke(forme)
-  ctx.fill(forme)
-}
+/** Combien de passes font le tour d'un cerne — assez pour qu'il soit continu. */
+const PASSES_CERNE = 16
 
-/**
- * LE VISAGE, en aplats nets : *un emoji n'accroche pas la lumière*, et à la
- * taille d'une carte de paquet un détail de plus tourne en bouillie. La seule
- * lumière est celle du haut-gauche, que tout le jeu respecte.
- */
-function peindreVisage(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
-  const disque = new Path2D()
-  disque.arc(cx, cy, r, 0, Math.PI * 2)
-  decouper(ctx, disque)
-
-  const jaune = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.45, r * 0.1, cx, cy, r * 1.15)
-  jaune.addColorStop(0, '#ffe878')
-  jaune.addColorStop(0.55, '#ffc63f')
-  jaune.addColorStop(1, '#f09a1e')
-  ctx.fillStyle = jaune
-  ctx.fill(disque)
-
-  // LE REFLET, une ellipse inclinée en haut à gauche : *une bille de lumière
-  // dit la rondeur mieux qu'un dégradé seul.*
-  ctx.save()
-  ctx.translate(cx - r * 0.38, cy - r * 0.48)
-  ctx.rotate(-0.5)
-  ctx.fillStyle = '#ffffff3d'
-  ctx.beginPath()
-  ctx.ellipse(0, 0, r * 0.38, r * 0.2, 0, 0, Math.PI * 2)
-  ctx.fill()
-  ctx.restore()
-
-  ctx.fillStyle = ENCRE_EMOJI
-  for (const s of [-1, 1]) {
-    ctx.beginPath()
-    ctx.ellipse(cx + s * r * 0.36, cy - r * 0.22, r * 0.115, r * 0.17, 0, 0, Math.PI * 2)
-    ctx.fill()
-  }
-  ctx.strokeStyle = ENCRE_EMOJI
-  ctx.lineWidth = r * 0.13
-  ctx.lineCap = 'round'
-  ctx.beginPath()
-  ctx.arc(cx, cy + r * 0.04, r * 0.52, Math.PI * 0.18, Math.PI * 0.82)
-  ctx.stroke()
-}
-
-/**
- * LE COEUR — **le tracé de la bande de stats, rejoué tel quel.**
- *
- * *Deux dessins qui décrivent la même chose divergent au premier réglage*, et
- * celui-ci l'a déjà coûté une fois. Seul l'habit change : rouge vif et cerne
- * crème ici, rouge sombre et cerne brun dans un cartouche — **un sticker et une
- * lettre ne se peignent pas pareil.**
- */
-function peindreCoeur(
+async function peindreBouquet(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
-  haut: number,
+): Promise<void> {
+  // ON ATTEND LA POLICE POUR CHAQUE CARACTÈRE, et les douze ENSEMBLE : *une
+  // toile peinte avant que le glyphe soit là part en cache telle quelle*, donc
+  // le défaut survivrait au chargement. La règle est déjà payée sur la face.
+  await Promise.all(BOUQUET.map((p) => policeDeLEmoji(p.emoji)))
+  for (const p of BOUQUET) {
+    const image = imageDeLEmoji(p.emoji)
+    // UN GLYPHE QUI MANQUE SE SAUTE, il ne laisse pas de trou carré : *le dos
+    // doit sortir même si une police n'arrive pas.*
+    if (image === null) continue
+    collerSticker(ctx, image, cx + p.x * U, cy + p.y * U, p.t * U, p.a)
+  }
+}
+
+/**
+ * LA SILHOUETTE D'UN EMOJI, en crème — ce qui lui fait son cerne.
+ *
+ * **Un glyphe n'a pas de chemin qu'on puisse `stroke`** : on n'a que ses
+ * pixels. `source-in` remplace donc sa couleur par la nôtre en gardant son
+ * alpha, ce qui donne exactement sa découpe.
+ *
+ * Elle est mémorisée par toile, comme l'emoji lui-même : *douze silhouettes
+ * pour tout le jeu*, et le dos n'est peint qu'une fois par rayon.
+ */
+const SILHOUETTES_EMOJI = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
+
+function silhouetteDe(image: HTMLCanvasElement): HTMLCanvasElement {
+  const garde = SILHOUETTES_EMOJI.get(image)
+  if (garde !== undefined) return garde
+  const toile = document.createElement('canvas')
+  toile.width = image.width
+  toile.height = image.height
+  const ctx = toile.getContext('2d')
+  if (ctx !== null) {
+    ctx.drawImage(image, 0, 0)
+    ctx.globalCompositeOperation = 'source-in'
+    ctx.fillStyle = DOS_CREME
+    ctx.fillRect(0, 0, toile.width, toile.height)
+  }
+  SILHOUETTES_EMOJI.set(image, toile)
+  return toile
+}
+
+/**
+ * COLLER UN STICKER : son ombre, son cerne, puis le glyphe.
+ *
+ * *Ce qui fait le sticker est le cerne et l'ombre portée* — sans eux, douze
+ * emoji entassés se lisent comme une bouillie, parce que **rien ne dit où l'un
+ * s'arrête et où l'autre commence.** C'est la règle de la plaque claire, prise
+ * par le même bout : elle porte son ombre pour dire qu'elle est POSÉE sur
+ * l'image et non découpée dedans.
+ *
+ * **LE CERNE EST LA SILHOUETTE RÉPÉTÉE SUR UN CERCLE**, et il n'y a pas d'autre
+ * moyen : un `stroke` demande un chemin, et un glyphe n'en a pas. Seize passes
+ * suffisent à le rendre continu à cette épaisseur — *en dessous, il se
+ * festonne entre les passes.*
+ *
+ * **ET L'OMBRE SE POSE SUR LA SILHOUETTE, pas sur chaque passe** : seize ombres
+ * superposées feraient une tache seize fois plus dense qu'un seul objet n'en
+ * projette.
+ */
+function collerSticker(
+  ctx: CanvasRenderingContext2D,
+  image: HTMLCanvasElement,
+  x: number,
+  y: number,
+  taille: number,
   angle: number,
 ): void {
-  const e = haut / COEUR_BOITE[1]
+  const decoupe = silhouetteDe(image)
+  const d = taille
   ctx.save()
-  ctx.translate(cx, cy)
+  ctx.translate(x, y)
   ctx.rotate(angle)
-  ctx.scale(e, e)
-  // LE CERNE SE DESSINE DANS LE REPÈRE DU TRACÉ, donc son épaisseur suit
-  // l'échelle : on la divise d'autant pour que la marge reste celle de la
-  // découpe. *Une marge constante est une marge en unités de CARTE.*
-  const avant = DOS_CERNE * U
-  cerneCourant = avant / e
-  ctx.translate(-COEUR_BOITE[0] / 2, -COEUR_BOITE[1] / 2)
-  const forme = new Path2D(CHEMIN_COEUR)
-  decouper(ctx, forme)
-  cerneCourant = avant
-  const rouge = ctx.createLinearGradient(0, 0, 12, 37)
-  rouge.addColorStop(0, '#ff6b7e')
-  rouge.addColorStop(0.6, '#ef2a44')
-  rouge.addColorStop(1, '#c01228')
-  ctx.fillStyle = rouge
-  ctx.fill(forme)
-  // La lumière vient du haut, comme partout : un reflet sur le lobe gauche.
-  ctx.strokeStyle = '#ffffffaa'
-  ctx.lineWidth = 2
-  ctx.lineCap = 'round'
-  ctx.stroke(new Path2D('M9.5 9.5C10.6 7.4 12.6 6.2 14.6 6.4'))
+  ctx.save()
+  ctx.shadowColor = '#00000055'
+  ctx.shadowOffsetY = 1.1 * U
+  ctx.shadowBlur = 2.6 * U
+  ctx.drawImage(decoupe, -d / 2, -d / 2, d, d)
   ctx.restore()
-}
-
-/**
- * L'ÉTOILE À CINQ BRANCHES, et ses pointes sont ARRONDIES par son cerne.
- *
- * *Une étoile à pointes vives est un ornement de ferronnerie* — c'est l'éclat
- * du sachet et des tas. Le `lineJoin` arrondi de la découpe lui donne la pointe
- * molle d'un autocollant, et c'est tout ce qui sépare les deux.
- */
-function peindreEtoile(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  r: number,
-  angle: number,
-): void {
-  const forme = new Path2D()
-  for (let i = 0; i < 10; i++) {
-    // Une pointe sur deux au rayon du creux : 0,42 est le rapport d'une étoile
-    // à cinq branches dont les côtés sont alignés deux à deux.
-    const rayon = i % 2 === 0 ? r : r * 0.45
-    const a = angle - Math.PI / 2 + (i * Math.PI) / 5
-    const x = cx + Math.cos(a) * rayon
-    const y = cy + Math.sin(a) * rayon
-    if (i === 0) forme.moveTo(x, y)
-    else forme.lineTo(x, y)
+  for (let i = 0; i < PASSES_CERNE; i++) {
+    const a = (i / PASSES_CERNE) * Math.PI * 2
+    ctx.drawImage(
+      decoupe,
+      -d / 2 + Math.cos(a) * DOS_CERNE * U,
+      -d / 2 + Math.sin(a) * DOS_CERNE * U,
+      d,
+      d,
+    )
   }
-  forme.closePath()
-  decouper(ctx, forme)
-  const or = ctx.createLinearGradient(cx - r, cy - r, cx + r * 0.6, cy + r)
-  or.addColorStop(0, '#ffe16a')
-  or.addColorStop(0.6, '#fdb92c')
-  or.addColorStop(1, '#e08a0d')
-  ctx.fillStyle = or
-  ctx.fill(forme)
+  ctx.drawImage(image, -d / 2, -d / 2, d, d)
+  ctx.restore()
 }
 
 async function peindreDos(rayon: number): Promise<HTMLCanvasElement> {
@@ -4981,7 +4924,7 @@ export function textureDuDos(
   const cle = `${piste}|${rayon}`
   let dos = DOS.get(cle)
   if (dos === undefined) {
-    dos = (piste === 'emoji' ? Promise.resolve(peindreDosEmoji(rayon)) : peindreDos(rayon)).then(
+    dos = (piste === 'emoji' ? peindreDosEmoji(rayon) : peindreDos(rayon)).then(
       (canvas) => {
         const texture = new THREE.CanvasTexture(canvas)
         texture.anisotropy = 8

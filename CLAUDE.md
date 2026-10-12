@@ -1211,12 +1211,13 @@ Il est **peint au canvas**, comme tout ce que Keko n'a pas dessiné.
 
 #### QUATRE CHOSES LE PORTENT, ET AUCUNE NE DOUBLE UNE AUTRE
 
-- **LE BOUQUET**, au centre : trois stickers découpés et collés de travers,
-  avec leur ombre. ***C'est le DÉCOUPAGE qui fait le sticker***, pas le dessin
-  dedans — sans le cerne et l'ombre, les mêmes formes se lisent comme des trous
-  dans le fond. C'est la règle de la plaque claire, prise par le même bout :
-  *elle porte son ombre pour dire qu'elle est POSÉE sur l'image et non découpée
-  dedans.* Et un sticker est ce qu'un emoji EST sur un téléphone ;
+- **LE BOUQUET**, au centre : quatorze emoji du catalogue, découpés et
+  entassés. ***C'est le DÉCOUPAGE qui fait le sticker***, pas le glyphe —
+  sans le cerne et l'ombre, quatorze emoji superposés se lisent comme une
+  bouillie, parce que **rien ne dit où l'un s'arrête et où l'autre commence.**
+  C'est la règle de la plaque claire, prise par le même bout : *elle porte son
+  ombre pour dire qu'elle est POSÉE sur l'image et non découpée dedans.* Et un
+  sticker est ce qu'un emoji EST sur un téléphone ;
 - **LE MOTIF DE TOUCHES** : des carrés très arrondis en quinconce, à peine plus
   clairs que le fond. **Un emoji vient d'un CLAVIER** — c'est l'argument qui a
   donné sa plaque claire à la carte et sa pastille au type — et le dos le dit
@@ -1258,60 +1259,73 @@ c'est ce que Keko a demandé ; la symétrie gauche-droite, qui est celle qu'on
 lit, est tenue.
 
 ***LE LOGO DIT LE GENRE ET NON LE CONTENU*** — un drapeau et un visage sont
-tous deux des emoji — exactement comme une pokéball ne dit pas quel Pokémon est
-sous la carte.
+tous deux des emoji, et les deux sont dans le tas — exactement comme une
+pokéball ne dit pas quel Pokémon est sous la carte.
 
-#### UN SMILEY SEUL ÉTAIT « SIMPLETTE » : IL EN FAUT TROIS
+#### UN SMILEY SEUL ÉTAIT « SIMPLETTE », ET MES FORMES À MOI NE VALAIENT PAS MIEUX
 
-Keko, en le voyant : **« je trouve l'icône de smiley un peu simplette... tu
-crois qu'on pourrait faire un bouquet d'emoji (coeur, visage, un genre de mixte)
-en logo ? »**
+Keko, en deux fois : « je trouve l'icône de smiley un peu simplette... tu crois
+qu'on pourrait faire un bouquet d'emoji (coeur, visage, un genre de mixte) en
+logo ? », puis — devant les trois formes que j'avais dessinées — **« je voyais
+un bouquet plus chargé et chaotique, utilisant de vrais emoji de notre pool »**.
 
 *Un smiley seul dit « un emoji », un groupe dit « une COLLECTION »* — et c'est
 ce que la carte est. **Le motif et les confettis le disaient déjà autour**, sans
 que le centre le reprenne.
 
-***LES DEUX PREMIERS NE SONT PAS CHOISIS, ILS SONT PRIS EN TÊTE DU
-CLASSEMENT.*** Le visage et le coeur sont **les deux premiers emoji du monde** —
-😂 puis ❤️ au classement d'usage d'Unicode, *celui-là même qui décide des
-raretés du catalogue.* Le logo d'une collection se compose de ce qu'elle a de
-plus employé, pas de ce qui tombe bien dans le dessin.
+***MAIS C'EST LA SECONDE MOITIÉ QUI COMPTE : des formes que JE dessine ne seront
+jamais des emoji.*** Un disque jaune à deux yeux, un coeur et une étoile peints
+à la main sont une IMITATION — soignée, mais une imitation — là où le catalogue
+est fait de glyphes qui existent. *Le logo d'une collection se compose de ce
+qu'elle CONTIENT*, et la carte savait déjà peindre un emoji : c'est
+`imageDeLEmoji`, le même chemin que l'illustration de la face. **Je suis passé à
+côté parce que je cherchais à dessiner un logo, pas à en composer un.**
 
-**L'ÉTOILE EST LE SEUL ÉLÉMENT DE GOÛT, et elle répond à un besoin de FORME** :
-*deux silhouettes rondes se confondent à vingt pixels*, et il fallait une
-troisième qui ne soit ni un disque ni un coeur. **Elle a CINQ branches et non
-quatre** : l'éclat à quatre branches est le vocabulaire de la ferronnerie du
-jeu — le sachet, les tas, l'ancien dos — et c'est précisément la langue dont ce
-dos sort.
+#### UN PAR RAYON, ET LES DEUX PREMIERS SONT CEUX DU MONDE
 
-Trois choses à ne pas défaire :
+Quatorze emoji — visages, symboles, gens, ciel, activités, animaux, nourriture,
+voyage, objets, drapeaux. *Ils sont de partout, donc ils ne disent rien d'une
+carte en particulier* : **c'est l'argument des cinq couleurs du motif, pris une
+seconde fois.** Et les deux plus gros sont **les deux premiers emoji du
+monde** — 😂 puis ❤️ au classement d'usage d'Unicode, celui-là même qui décide
+des raretés du catalogue.
 
-- **LE COEUR EST CELUI DE LA BANDE DE STATS, rejoué tel quel** (`CHEMIN_COEUR`).
-  Il était écrit en dur dans `peindreJeton` ; il vit maintenant en constante,
-  parce que *deux dessins qui décrivent la même chose divergent au premier
-  réglage* — **la règle que ce coeur-là a DÉJÀ coûtée une fois**, le jour où
-  j'en avais redessiné un en Bézier plutôt que de reprendre celui de Keko.
-  ***Le tracé se partage, l'habit non*** : rouge vif et cerne crème sur un dos,
-  rouge sombre et cerne brun dans un cartouche — un sticker et une lettre ne se
-  peignent pas pareil ;
-- **LA DÉCOUPE EST À MARGE CONSTANTE** (`DOS_CERNE`), pas proportionnelle à
-  chaque forme : *une découpeuse ne change pas de réglage entre deux
-  autocollants*, donc le petit en porte proportionnellement plus — et c'est
-  exactement ce qui le fait lire comme un autocollant plutôt que comme un
-  dessin. **Elle voyage dans une variable de module** parce que le coeur se
-  peint dans son propre repère de 40 x 37, où une épaisseur en unités de carte
-  ne veut plus rien dire ;
-- **L'OMBRE SE POSE SUR LE REMPLISSAGE SEUL, pas sur le cerne.** Les deux la
-  porteraient chacun la leur, et *deux ombres superposées font une tache deux
-  fois plus dense qu'un seul objet n'en projette.* Ce que le remplissage perd en
-  largeur se noie dans le flou.
+**LE CHAOS SE COMPOSE, IL NE SE TIRE PAS.** Les quatorze places sont écrites à
+la main : *un tas tiré au hasard produit des trous et des collisions*, et
+celui-ci doit tenir dans sa carte, laisser le motif respirer autour et garder
+son gros au centre. Trois anneaux — un gros, quatre moyens, neuf petits — et
+chacun penche d'un angle à lui, parce que **quatorze stickers droits se lisent
+comme une grille.**
 
-**ET C'EST L'ÉCART QUI A DEMANDÉ DEUX PASSES, pas le dessin.** Au premier essai
-l'étoile passait presque entièrement sous le visage et se lisait comme une
-flèche : *la part visible d'une forme placée derrière une autre n'est pas ce que
-la distance entre leurs centres laisse croire* — une étoile a peu de matière
-près de son bord. Il a fallu l'éloigner d'un quart de sa taille, et la mesurer à
-l'écran plutôt qu'au calcul.
+**L'ORDRE DE LA LISTE EST L'ORDRE DE PEINTURE**, et il n'est pas trié par
+taille : quatre petits de la périphérie sont posés EN DERNIER, donc ils passent
+devant leurs voisins. *Un tas dont tout le petit est dessous est un tas rangé.*
+
+#### LE CERNE EST LA SILHOUETTE RÉPÉTÉE SUR UN CERCLE
+
+**Un glyphe n'a pas de chemin qu'on puisse `stroke`** : on n'a que ses pixels.
+`source-in` donne sa silhouette — sa couleur remplacée, son alpha gardé — et
+seize passes sur un cercle en font le tour. *En dessous, le cerne se festonne
+entre les passes.*
+
+**ET L'OMBRE SE POSE SUR LA SILHOUETTE, pas sur chaque passe** : seize ombres
+superposées feraient une tache seize fois plus dense qu'un seul objet n'en
+projette.
+
+**ON ATTEND LA POLICE POUR CHAQUE CARACTÈRE, et les quatorze ensemble** : *une
+toile peinte avant que le glyphe soit là part en cache telle quelle*, donc le
+défaut survivrait au chargement — la règle déjà payée sur la face. Un glyphe
+qui manque se saute : **le dos doit sortir même si une police n'arrive pas.**
+
+Mesuré : **7 ms** pour la première peinture, zéro ensuite — le dos est mis en
+cache par rayon et par piste.
+
+**ET LES DEUX RETOUCHES ONT PORTÉ SUR L'ÉCART, pas sur le dessin.** *Un glyphe
+n'occupe que 80 % de sa toile* — c'est la marge que `imageDeLEmoji` laisse pour
+les emoji hauts — donc un tas calé sur les toiles paraît troué là où le calcul
+le disait serré. Les tailles ont monté de 15 % et le cadeau est passé en
+dernier, parce qu'il disparaissait sous ses deux voisins. **Ça se mesure à
+l'écran, pas au calcul.**
 
 #### LE MODE EMOJI SEULEMENT, et c'est le CONTOUR qui le dit
 
@@ -1341,8 +1355,7 @@ premier mode chargé imposerait son dos à l'autre.*
   petites capitales — *c'est le même reproche que le dos venait de recevoir*,
   sur le seul objet du mode qui n'a pas changé de langue. Il n'est pas touché
   parce que Keko n'en a pas parlé, et c'est l'écran qu'on voit en PREMIER ;
-- **le dos** : le bleu, la composition du bouquet (quels emoji, dans quel
-  ordre), la finesse du motif et la force des confettis. *Un dos ne se juge
+- **le dos** : le bleu, les quatorze emoji du bouquet et leurs places, la finesse du motif et la force des confettis. *Un dos ne se juge
   qu'en ouvrant un paquet* ;
 - **le nom long se tronque** : « Volume des enceintes élevé » ne tient pas sur
   une carte. *C'est le comportement de tous les modes* — la taille cède, puis le
