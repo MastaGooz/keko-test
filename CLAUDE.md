@@ -14578,31 +14578,48 @@ saturation commune en ferait un bleu pâle*, qui entrerait en collision avec le
 cran `bleu`. À pigment relatif il reste un gris, ce qui est exactement ce que
 « blanc » doit dire.
 
-#### LE PIGMENT A DOUBLÉ APRÈS LA PREMIÈRE CAPTURE
+#### LE PIGMENT A TRIPLÉ EN DEUX PASSES À L'ÉCRAN
 
 Le premier réglage (0,45) donnait des chiffres impeccables et **on ne voyait
 rien** : le haut du dégradé restait quasi blanc, donc l'oeil moyennait et lisait
-« blanc » sur les cinq crans. ***Un pastel qui ne se voit pas ne dit pas son
-cran*** — il faut que le HAUT porte déjà sa couleur, pas seulement le bas.
+« blanc » sur les cinq crans. Au deuxième (0,85), Keko les trouvait **« toujours
+un peu pâles »**. ***Un pastel qui ne se voit pas ne dit pas son cran*** — il
+faut que le HAUT porte déjà sa couleur, pas seulement le bas.
 
-*C'est la contrainte du texte qui bornait, et elle avait de la marge* : le nom
-est à 11,5 de contraste quand 4,5 suffit. **Le vrai plancher était le
-SOUS-TEXTE**, gris clair par choix — il fonce donc d'un cran, et il y gagne.
+***ET C'EST LE MOT DU TYPE QUI BORNE, PAS LE CARTOUCHE.*** J'avais écrit
+l'inverse — « le vrai plancher était le sous-texte » — et la mesure dit autre
+chose : **à 0,85 le type n'était qu'à 4,08 de contraste**, donc déjà sous le
+plancher de 4,5, pendant que le cartouche tenait 5,59. Et *il tombe deux fois
+plus vite* : 0,2 par cran de pigment contre 0,1.
+
+**Donc renforcer la teinte demande de foncer les DEUX textes**, et c'est ce qui
+rend le réglage gratuit — les deux finissent mieux lotis qu'avant :
+
+| | pigment | cartouche | type | saturation du bas |
+|---|---|---|---|---|
+| première passe | 0,45 | — | — | *invisible* |
+| deuxième | 0,85 / 1,00 | 5,59 | **4,08** | 0,242 |
+| **troisième** | **1,40 / 1,70** | **6,41** | **4,77** | **0,355** |
+
+*La couleur gagne 47 % et le texte gagne 0,8 de contraste* — c'est l'argument
+qui a porté les deux passes précédentes, et il tient une troisième fois.
+
+**LE PIGMENT PEUT DÉPASSER 1, LA SATURATION NON.** Au-delà, la teinte sortirait
+de [0,1] AVANT le ClipColor, qui la ramènerait **en la déformant** : un orange
+sursaturé virerait de teinte au lieu de saturer. La borne ne mord que sur les
+deux crans les plus francs — l'orange et l'épique — et *elle les protège sans
+toucher aux sept autres.*
 
 Mesuré sur la texture peinte, les cinq crans du mode emoji :
 
 | cran | haut | bas | pastille | nom | cartouche | type |
 |---|---|---|---|---|---|---|
-| blanc | `#e9eef3` | `#dae0e5` | `#cad0d6` | 11,8 | 6,0 | 4,2 |
-| vert | `#cfffdd` | `#aefdc5` | `#98f1b2` | 13,2 | 6,8 | 4,9 |
-| bleu | `#e0f0ff` | `#c8e4ff` | `#aed8ff` | 12,0 | 6,1 | 4,4 |
-| violet | `#f1e7ff` | `#e6d5ff` | `#dac1ff` | 11,5 | 5,9 | 4,1 |
-| orange | `#ffe8cf` | `#ffd8ab` | `#ffc583` | 11,8 | 6,0 | 4,2 |
-| *(sans rang)* | `#fdfefe` | `#eff2f6` | `#dde4ec` | 14,0 | 7,2 | 5,1 |
-
-**Les trois textes sont mieux lotis qu'avant sur les cinq crans** : le cartouche
-passe de 4,50 — le plancher exact du WCAG — à 5,9 au pire, et le type de 3,4
-à 4,1.
+| blanc | `#dde6ee` | `#c2cdd7` | `#b7c2cc` | 9,7 | 6,70 | 5,01 |
+| vert | `#b8ffcd` | `#75ff9d` | `#62f98e` | 12,4 | 8,53 | 6,68 |
+| bleu | `#d1e9ff` | `#a6d4ff` | `#93cbff` | 10,1 | 6,94 | 5,27 |
+| violet | `#eadcff` | `#d7bbff` | `#ceadff` | 9,3 | 6,41 | 4,77 |
+| orange | `#ffdfb9` | `#ffc077` | `#ffb35a` | 9,8 | 6,72 | 5,11 |
+| *(sans rang)* | `#fdfefe` | `#eaeef4` | `#dde4ec` | 13,5 | 9,30 | 7,08 |
 
 #### LA PASTILLE EST DE LA PLAQUE, PAS UNE PIÈCE POSÉE DESSUS
 
@@ -14637,10 +14654,11 @@ part parce qu'une couleur peinte et la lumière qu'elle renvoie sont deux faits.
   la proportion d'une carte de collection moderne, et elle se règle d'un chiffre ;
 - **le rayon des coins** (5,5 %), **l'épaisseur du cadre** (2,7 U) et **l'air
   autour de l'emoji** (7 U), qui décide aussi de sa taille ;
-- **la force de la teinte** (`PIGMENT_PLAQUE`, 0,85 en haut et 1 en bas) et sa
-  clarté (`LUM_PLAQUE`, 0,93 / 0,855 / 0,813) : *un seul couple de chiffres les
-  porte tous les neuf crans*, et le texte a encore de la marge si Keko veut plus
-  franc ;
+- **la force de la teinte** (`PIGMENT_PLAQUE`, 1,4 / 1,7) et sa clarté
+  (`LUM_PLAQUE`, 0,895 / 0,795 / 0,752) : *un seul couple de chiffres les porte
+  tous les neuf crans*. **Il reste de la marge, mais elle se paie désormais sur
+  le texte** : le type est à 4,77 et chaque cran de pigment lui coûte 0,2, donc
+  au-delà il faudrait le foncer une troisième fois ;
 - `?texte=sombre` rend le dégradé noir — *ce qui a servi à choisir doit rester
   ouvrable.*
 

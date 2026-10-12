@@ -866,12 +866,20 @@ export function tonDuLustre(rarete: string | undefined): readonly [number, numbe
  * entre 5,9 et 6,8 — *contre 4,5 sur le blanc d'avant, qui était déjà au
  * plancher.*
  *
- * **ET LE PIGMENT A DOUBLÉ APRÈS LA PREMIÈRE MESURE À L'ÉCRAN.** À 0,45 les
- * chiffres étaient impeccables et *on ne voyait rien* : le haut du dégradé
- * restait quasi blanc, donc l'oeil moyennait et lisait « blanc » sur les cinq
- * crans. ***Un pastel qui ne se voit pas ne dit pas son cran*** — et c'est ce
- * que Keko demandait. Il faut donc que le HAUT porte déjà sa couleur, pas
+ * **ET LE PIGMENT A TRIPLÉ EN DEUX PASSES À L'ÉCRAN.** À 0,45 les chiffres
+ * étaient impeccables et *on ne voyait rien* : le haut du dégradé restait quasi
+ * blanc, donc l'oeil moyennait et lisait « blanc » sur les cinq crans. À 0,85
+ * Keko les trouvait « toujours un peu pâles ». ***Un pastel qui ne se voit pas
+ * ne dit pas son cran*** — il faut que le HAUT porte déjà sa couleur, pas
  * seulement le bas.
+ *
+ * ***ET C'EST LE MOT DU TYPE QUI BORNE, PAS LE CARTOUCHE.*** Mesuré sur les cinq
+ * crans : à 0,85 il n'était qu'à **4,08** de contraste, donc déjà sous le
+ * plancher de 4,5, et il perd 0,2 à chaque cran de pigment — *il tombe deux
+ * fois plus vite que le cartouche.* **Renforcer la teinte demande donc de
+ * foncer les deux textes**, et c'est ce qui rend le réglage gratuit : à 1,40 le
+ * cartouche passe de 5,59 à **6,41** et le type de 4,08 à **4,77**, pour
+ * **47 % de pigment en plus.** *La couleur se renforce et le texte y gagne.*
  *
  * **ET LE PIGMENT SUIT LA SATURATION DU MÉTAL, il ne la force pas.** Le cran du
  * bas est un gris à peine bleuté — 0,047 d'écart au gris — donc *le forcer à
@@ -884,8 +892,8 @@ export function tonDuLustre(rarete: string | undefined): readonly [number, numbe
  * de plaque aujourd'hui* — mais le jour où elle y arrive, c'est le bas de
  * l'échelle qui ne doit pas se mettre à parler.
  */
-const PIGMENT_PLAQUE = [0.85, 1, 1] as const
-const LUM_PLAQUE = [0.93, 0.855, 0.813] as const
+const PIGMENT_PLAQUE = [1.4, 1.7, 1.7] as const
+const LUM_PLAQUE = [0.895, 0.795, 0.752] as const
 const PLAQUE_CLAIRE = ['#fdfefe', '#eaeef4', '#dde4ec'] as const
 
 /**
@@ -903,7 +911,11 @@ function tonDeLaPlaque(metal: string, pigment: number, cible: number): string {
   const haut = Math.max(...c)
   // La teinte PURE du métal — sa saturation portée à 1 — puis dosée.
   const u = haut > bas ? c.map((x) => (x - bas) / (haut - bas)) : [0.5, 0.5, 0.5]
-  const sat = (haut - bas) * pigment
+  // **LE PIGMENT PEUT DEPASSER 1, LA SATURATION NON.** Au-dela, la teinte
+  // sortirait de [0,1] AVANT le ClipColor, qui la ramenerait en la deformant :
+  // un orange sursature virerait de teinte au lieu de saturer. *Une borne qui
+  // ne mord que sur les crans les plus francs les protege tous.*
+  const sat = Math.min(1, (haut - bas) * pigment)
   const lumDe = (t: number[]): number => 0.3 * t[0]! + 0.59 * t[1]! + 0.11 * t[2]!
   const ecart = cible - sat * lumDe(u)
   let t = u.map((x) => x * sat + ecart)
@@ -4078,12 +4090,12 @@ function peindreTextes(
   // se fait à la taille choisie, et s'il coûte une ligne de trop on descend
   // d'un cran : c'est exactement ce que `cran` fait pour un effet long.
   const { taille, lignes } = corpsDuCartouche(ctx, carte.effet, LARGE * 0.86, famille)
-  // LE SOUS-TEXTE FONCE DEPUIS QUE LA PLAQUE EST TEINTÉE. Elle descend de
-  // 0,93 à 0,855 de luminance pour que le pigment existe, et à `#5d6e80` le
-  // cartouche serait tombé à 3,5 de contraste sur le pire cran — *sous le
+  // LE SOUS-TEXTE FONCE AVEC CHAQUE CRAN DE PIGMENT. La plaque descend de 0,93
+  // à 0,795 de luminance pour que la couleur se voie, et à `#5d6e80` le
+  // cartouche serait tombé à 3,1 de contraste sur le pire cran — *sous le
   // plancher de 4,5 que le gris d'avant tenait tout juste.* Il remonte à
-  // **5,9 au pire**, donc mieux qu'avant partout.
-  ctx.fillStyle = bulle ? '#415263' : '#f1e6cf'
+  // **6,4 au pire**, donc mieux qu'avant partout.
+  ctx.fillStyle = bulle ? '#2f3f4d' : '#f1e6cf'
   ctx.shadowColor = bulle ? 'transparent' : '#000000aa'
   ctx.shadowOffsetY = bulle ? 0 : 0.4 * U
   ctx.shadowBlur = bulle ? 0 : 0.8 * U
@@ -4155,11 +4167,12 @@ function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre, bulle 
     ctx.beginPath()
     ctx.roundRect(LARGE / 2 - l / 2, y - h / 2, l, h, h / 2)
     ctx.fill()
-    // LE MOT FONCE AVEC ELLE. Il n'avait que 3,4 de contraste sur le gris
-    // d'avant — déjà sous le plancher — et une pastille teintée l'aurait fait
-    // tomber à 2,5 sur le pire cran. Il remonte à **4,1 au pire et 4,9 au
-    // mieux**, donc mieux qu'avant sur les cinq crans.
-    ctx.fillStyle = '#4e5f71'
+    // LE MOT FONCE AVEC ELLE, ET C'EST LUI QUI BORNE LA TEINTE. Il n'avait que
+    // 3,4 de contraste sur le gris d'avant — déjà sous le plancher — et c'est
+    // le texte qui tombe le plus vite quand le pigment monte : *0,2 par cran,
+    // deux fois le cartouche.* Il remonte à **4,8 au pire et 5,9 au mieux**,
+    // donc mieux qu'avant sur les cinq crans.
+    ctx.fillStyle = '#3b4a5a'
     ctx.textAlign = 'left'
     ctx.fillText(mot, LARGE / 2 - encre / 2, y)
     ctx.textAlign = 'center'
