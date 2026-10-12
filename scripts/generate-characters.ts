@@ -174,7 +174,7 @@ const ESSAIS_TRONQUEE = 1
  * -- le tri final le fait -- mais pour que chaque lot reste sous les soixante
  * secondes du endpoint. Le baisser rouvre les timeouts.
  */
-const LANGUES_MINIMUM = { humain: 18, fiction: 5 }
+const LANGUES_MINIMUM = { humain: 18, fiction: 10 }
 
 /**
  * LE PLAFOND N'EST PAS UNE SELECTION, c'est ce qui FERME la recursion du
@@ -615,8 +615,13 @@ interface Candidat {
    *
    * ***Un champ mort qui porte un nom juste est pire qu'un champ absent*** : il
    * se relit comme une source, et rien ne dit qu'il ne l'est plus.
+   *
+   * **ET `fiction` EST PARTI PAR LA MEME PORTE, pour la meme raison.** Il disait
+   * par quelle DECOUVERTE la carte etait entree ; la porte de la fiction ayant
+   * disparu avec celle de la frequentation, il valait `false` pour tout le monde
+   * -- donc **Batman sortait « affaires » et Spider-Man « scientifique »**. La
+   * nature se lit maintenant sur P31, a l'enrichissement : voir `nonHumains`.
    */
-  fiction: boolean
   /**
    * LE NOMBRE DE LANGUES, qui redevient utile avec le quota.
    *
@@ -646,11 +651,11 @@ function titreDeLArticle(url: string | undefined): string {
 }
 
 /** Une ligne de CSV : `item,langues`. */
-function versCandidat(cellules: string[], fiction: boolean, porte: Domaine | null = null): Candidat | null {
+function versCandidat(cellules: string[], porte: Domaine | null = null): Candidat | null {
   const id = cellules[0]?.split('/').pop()
   const langues = Number(cellules[1])
   if (!id || !/^Q\d+$/.test(id) || !Number.isFinite(langues)) return null
-  return { id, fiction, langues, porte }
+  return { id, langues, porte }
 }
 
 /**
@@ -1105,20 +1110,43 @@ function qid(url: string | undefined): string | undefined {
  * natures sont petites (2 258 divinites, 1 457 creatures, 1 067 legendes,
  * ~5 000 fictifs) et n'auraient aucune porte a elles.
  */
-const NATURES_PERSO = new Set([
-  'Q5', // etre humain
+/**
+ * LES NATURES DE LA FICTION, ET IL FAUT LES ENUMERER PAR MEDIA.
+ *
+ * ***UNE RACINE DE TAXONOMIE NE CONTIENT PRESQUE RIEN EN DIRECT.*** Mesure :
+ * `wdt:P31 wd:Q95074` -- « personnage de fiction » -- ne rend que **DEUX**
+ * entites avec un portrait et un article FR. Tout vit dans les feuilles :
+ * **Superman est declare personnage de bande dessinee, litteraire, d'animation,
+ * de serie televisee et de cinema, et AUCUNE de ses natures n'est Q95074** ;
+ * Harry Potter et Hermione sont « personnage litteraire » et « de cinema ».
+ *
+ * *C'est la lecon des metiers prise par l'autre bout* : la, une racine ne
+ * couvrait pas sa propre notion ; ici elle ne couvre que sa propre notion.
+ *
+ * **ET LA CLOTURE TRANSITIVE EST LA SEULE CHOSE QU'ON NE PEUT PAS FAIRE** :
+ * `wdt:P31/wdt:P279*` sur ces natures rend **504 au bout de 65 secondes**,
+ * mesure, alors que les quatorze natures prises UNE A UNE repondent en 0,5 a
+ * 8,7 secondes chacune. *Le poids d'une requete tient a son PARCOURS, pas a son
+ * nombre de lignes* -- la regle deja payee sur la decouverte par metiers.
+ */
+const NATURES_FICTION: readonly string[] = [
   'Q95074', // personnage de fiction
   'Q15632617', // personnage humain de fiction
-  'Q15773317', // personnage de serie
-  'Q15711870', // personnage de film
-  'Q1114461', // personnage de bande dessinee
-  'Q21070568', // personnage de manga
   'Q3658341', // personnage litteraire
+  'Q15773347', // personnage de cinema
+  'Q15773317', // personnage de serie televisee
+  'Q1114461', // personnage de bande dessinee
+  'Q15711870', // personnage d'animation
+  'Q21070568', // personnage de manga
+  'Q3375722', // personnage de theatre
+  'Q188784', // super-heros
   'Q178885', // divinite
   'Q2239243', // creature mythologique
   'Q13002315', // personnage legendaire
-  'Q188784', // super-heros
-])
+  'Q3010369', // personnage biblique
+]
+
+const NATURES_PERSO = new Set(['Q5', ...NATURES_FICTION])
 
 /** Les pages qui ne sont pas des articles. */
 const HORS_SUJET =
@@ -1134,7 +1162,7 @@ async function decouvrirHumains(): Promise<Candidat[]> {
     const porte = domaineDe(nom, [nom], false)
     let n = 0
     for (const l of await decouvrirMetier(nom, qid)) {
-      const c = versCandidat(l, false, porte)
+      const c = versCandidat(l, porte)
       if (c) {
         out.push(c)
         n++
@@ -1194,7 +1222,7 @@ SELECT ?item ?langues WHERE {
   const lot = await lotRedecoupable('crime', requete, LANGUES_MINIMUM.humain, null)
   const out: Candidat[] = []
   for (const l of lot.lignes) {
-    const c = versCandidat(l, false, 'criminel')
+    const c = versCandidat(l, 'criminel')
     if (c) out.push(c)
   }
   journal(`  ${out.length} criminels decouverts${lot.perdus > 0 ? ` (${lot.perdus} tranche(s) perdue(s))` : ''}`)
@@ -1281,32 +1309,55 @@ SELECT ?item ?langues WHERE {
 }
 
 /**
- * LA FICTION TIENT EN QUELQUES REQUETES : `wdt:P31/wdt:P279* wd:Q95074` repond
- * en quelques secondes, parce que l'ensemble est petit a l'echelle de Wikidata
- * -- mesure : sept mille quatre cent soixante-treize personnages de fiction ont
- * un article FR, tous crans confondus. On decoupe par tranche de notoriete pour
- * rester a l'abri du timeout, pas pour selectionner.
+ * LA FICTION SE DECOUVRE NATURE PAR NATURE, ET ELLE EXIGE UN PORTRAIT.
+ *
+ * *Elle ne rendait plus rien* : `wdt:P31/wdt:P279* wd:Q95074` est la requete
+ * mesuree a 504, donc **les fictifs du catalogue n'y sont arrives que par
+ * accident**, a travers leurs metiers -- d'ou Batman aux affaires. Les quatorze
+ * natures prises une a une repondent en 0,5 a 8,7 secondes : voir
+ * `NATURES_FICTION`.
+ *
+ * **ELLE DEMANDE P18, ET LA PORTE DES HUMAINS NE LE FAIT PAS.** Ce n'est pas une
+ * asymetrie, c'est le filtre juste des deux cotes : *un humain sans image
+ * Wikidata garde le repli de l'image d'en-tete de Wikipedia, un fictif non* --
+ * pour lui ce repli ramene des cosplays. Donc le portrait est une condition
+ * NECESSAIRE pour un fictif, et exiger P18 ici ne retire rien qui aurait pu
+ * devenir une carte. **Chaque porte filtre ce qu'elle peut.**
+ *
+ * Mesure, avec P18 et >= 10 langues : 3 600 a 6 000 lignes par nature, et
+ * **1 275 entites distinctes** une fois l'article FR exige aussi -- largement
+ * de quoi remplir un rayon de 273.
  */
 async function decouvrirFiction(): Promise<Candidat[]> {
-  journal(`Decouverte de la fiction : >= ${LANGUES_MINIMUM.fiction} langues`)
+  journal(`Decouverte de la fiction : ${NATURES_FICTION.length} natures, >= ${LANGUES_MINIMUM.fiction} langues`)
   const out: Candidat[] = []
-  const requete = (bas: number, haut: number | null) => `
+  echeance = Infinity
+  for (const nature of NATURES_FICTION) {
+    const requete = (bas: number, haut: number | null) => `
 SELECT ?item ?langues WHERE {
-  ?item wdt:P31/wdt:P279* wd:Q95074 ; wikibase:sitelinks ?langues .
+  ?item wdt:P31 wd:${nature} ; wdt:P18 ?img ; wikibase:sitelinks ?langues .
   FILTER(?langues >= ${bas}${haut === null ? '' : ` && ?langues < ${haut}`})
 }`
-  const tranches: readonly (readonly [number, number | null])[] = [
-    [40, PLAFOND_LANGUES],
-    [20, 40],
-    [10, 20],
-    [LANGUES_MINIMUM.fiction, 10],
-  ]
-  echeance = Infinity
-  for (const [bas, haut] of tranches) {
-    for (const l of (await lotRedecoupable('fiction', requete, bas, haut)).lignes) {
-      const c = versCandidat(l, true)
-      if (c) out.push(c)
+    const lot = await lotRedecoupable(
+      `fiction-${nature}`,
+      requete,
+      LANGUES_MINIMUM.fiction,
+      PLAFOND_LANGUES,
+    )
+    let n = 0
+    for (const l of lot.lignes) {
+      // LA PORTE EST `fiction`, et le drapeau du candidat a disparu : *une porte
+      // dit par ou l'on entre, une nature dit ce qu'on est* -- et c'est P31 qui
+      // dira la seconde, a l'enrichissement.
+      const c = versCandidat(l, 'fiction')
+      if (c) {
+        out.push(c)
+        n++
+      }
     }
+    // UN Q-ID FAUX NE LEVE PAS, IL REND ZERO : le seul signe est un lot vide.
+    journal(`  ${nature.padEnd(12)} ${String(n).padStart(5)} lignes`)
+    await dors(PAUSE.sparql)
   }
   return out
 }
@@ -1922,6 +1973,62 @@ function resume(cartes: CharacterCard[]): string {
   return l.join('\n') + '\n'
 }
 
+/**
+ * QUI N'EST PAS UN ETRE HUMAIN -- la seule chose qui dise ce qu'une carte EST.
+ *
+ * Tranche par Keko : « les personnages de fiction sont mal categorises, je pense
+ * qu'on devrait faire une nouvelle categorie fiction ». **Et la mesure lui donne
+ * raison** : 188 cartes du catalogue ne sont pas humaines, et elles etaient
+ * rangees par leur METIER -- Batman aux affaires, Spider-Man chez les
+ * scientifiques, Robin des Bois chez les sportifs, et *un tiers du rayon
+ * criminel* en personnages de roman.
+ *
+ * **C'EST UNE REQUETE A PART, ET C'EST VOULU.** L'enrichissement porte deja
+ * douze `OPTIONAL`, et *une requete trop riche peut rendre des colonnes vides
+ * sans lever* -- la lecon qui a coute Einstein. Celle-ci est un acces par cle,
+ * donc rapide, et elle ne peut rien casser de ce qui marche. **Elle coute deux
+ * minutes sur un pipeline d'une heure.**
+ *
+ * *L'absence de Q5 est ce qui compte, pas la presence d'une nature de fiction* :
+ * un personnage biblique, une divinite, un heros de legende et Batman n'ont
+ * aucune nature commune -- **ils n'ont en commun que de n'avoir pas existe.**
+ */
+async function nonHumains(ids: readonly string[]): Promise<Set<string>> {
+  const lots = paquets([...ids], 200)
+  journal(`Natures : ${ids.length} personnages en ${lots.length} paquets`)
+  const humains = new Set<string>()
+  const vus = new Set<string>()
+  let fait = 0
+  for (const lot of lots) {
+    // `?item` ET NON `?i` : `sparqlCsv` reconnait une reponse coupee en
+    // verifiant que l'en-tete commence par `item`. *Un CSV coupe se lit sans
+    // erreur*, donc ce nom n'est pas decoratif.
+    const requete = `SELECT ?item WHERE {
+  VALUES ?item { ${lot.map((i) => 'wd:' + i).join(' ')} }
+  ?item wdt:P31 wd:Q5 .
+}`
+    try {
+      for (const l of await sparqlCsv(`humain-${empreinte(lot.join('|'))}`, requete)) {
+        const id = l[0]?.split('/').pop()
+        if (id) humains.add(id)
+      }
+      for (const i of lot) vus.add(i)
+    } catch {
+      // UN LOT PERDU NE REND PAS SES CARTES FICTIVES. *Une absence de mesure
+      // n'est pas une mesure* -- la lecon de l'arbre du vivant : sans reponse
+      // on ne sait pas, et supposer « non humain » renommerait tout un lot
+      // d'humains en fiction.
+      journal(`  un paquet perdu -- ${lot.length} natures inconnues, tenues pour humaines`)
+    }
+    fait += lot.length
+    if (fait % 2000 < 200) journal(`  ${fait}/${ids.length}`)
+    await dors(PAUSE.sparql)
+  }
+  const sortie = new Set(ids.filter((i) => vus.has(i) && !humains.has(i)))
+  journal(`  ${humains.size} humains, ${sortie.size} non humains`)
+  return sortie
+}
+
 // ---------------------------------------------------------------------- le corps
 
 /**
@@ -1938,19 +2045,30 @@ function resume(cartes: CharacterCard[]): string {
  * -- *c'est ce qui s'est passe quand la table de mots a ete relue*, et c'est
  * le comportement voulu.
  */
-function recalculer(): void {
+async function recalculer(): Promise<void> {
   const chemin = new URL('characters.json', SORTIE)
   const lu = JSON.parse(readFileSync(chemin, 'utf8')) as { cartes: CharacterCard[] }
+  /**
+   * LA NATURE SE REDEMANDE, parce qu'elle n'est pas une formule.
+   *
+   * *Le reste du recalcul ne coute rien* -- les formules sont pures et lisent le
+   * JSON -- mais `fiction` est une DONNEE, et celle du catalogue est fausse :
+   * elle disait la porte d'entree, donc elle vaut `false` pour tout le monde.
+   * **Quinze paquets et trente secondes valent mieux qu'une heure de pipeline**,
+   * et le cache les garde.
+   */
+  const fictifs = await nonHumains(lu.cartes.map((c) => c.id))
   const sans = lu.cartes.map((c) => {
+    const fiction = fictifs.has(c.id)
     const stats = statsDerivees({
       langues: c.langues,
       vues: c.vues,
       taille: c.taille,
       metiers: c.metiers,
-      fiction: c.fiction,
+      fiction,
       description: c.description,
     })
-    return { ...c, domaine: stats.domaine, attaque: stats.attaque, defense: stats.defense }
+    return { ...c, fiction, domaine: stats.domaine, attaque: stats.attaque, defense: stats.defense }
   })
   const crans = raretesParDomaine(sans)
   const cartes: CharacterCard[] = sans.map((c, i) => ({ ...c, rarete: crans[i]! }))
@@ -1959,11 +2077,17 @@ function recalculer(): void {
   writeFileSync(chemin, json, 'utf8')
   writeFileSync(new URL('stats-summary.txt', SORTIE), resume(cartes), 'utf8')
   journal(`Recalcule ${cartes.length} cartes -- ${(json.length / 1024).toFixed(0)} Ko`)
+  // LE QUOTA NE SE REJOUE PAS, donc les rayons sortent inegaux des qu'un
+  // domaine change : *c'est le prix d'un recalcul, et il se lit dans le resume.*
+  for (const d of DOMAINES_QUOTA) {
+    const n = cartes.filter((c) => c.domaine === d).length
+    if (n < Math.ceil(cible / DOMAINES_QUOTA.length)) journal(`  ${d} : ${n} apres recalcul -- rayon incomplet`)
+  }
 }
 
 async function main(): Promise<void> {
   if (args.includes('--recalcul')) {
-    recalculer()
+    await recalculer()
     return
   }
   const debut = Date.now()
@@ -2036,7 +2160,7 @@ async function main(): Promise<void> {
    */
   const parPorte = new Map<string, Candidat[]>()
   for (const c of parId.values()) {
-    const k = c.porte ?? (c.fiction ? 'fiction' : 'autre')
+    const k = c.porte ?? 'autre'
     const lot = parPorte.get(k) ?? []
     lot.push(c)
     parPorte.set(k, lot)
@@ -2114,8 +2238,18 @@ async function main(): Promise<void> {
    * entiers serait la payer trois fois pour rien. **Le filtre passe donc
    * avant, la somme apres.**
    */
-  type Retenu = { c: Candidat; d: Details; m: Mesure; image: string }
-  const retenus: Retenu[] = []
+  type Retenu = { c: Candidat; d: Details; m: Mesure; image: string; fiction: boolean }
+
+  /**
+   * LA NATURE SE LIT AVANT L'IMAGE, ET PAS APRES.
+   *
+   * *Elle decide du repli d'illustration* -- un humain garde l'image d'en-tete
+   * de Wikipedia, un fictif non, parce que pour lui ce repli ramene des
+   * cosplays. Donc on ne peut pas la demander sur les seuls retenus : **il
+   * faudrait deja savoir ce qu'on retient.** Le filtre se scinde en deux, et la
+   * nature se paie sur ce qui a passe les trois premiers.
+   */
+  const mesurables: { c: Candidat; d: Details; m: Mesure }[] = []
   for (const c of candidats) {
     const d = details.get(c.id)
     if (!d) {
@@ -2132,6 +2266,14 @@ async function main(): Promise<void> {
       ebauche++
       continue
     }
+    mesurables.push({ c, d, m })
+  }
+
+  const fictifs = await nonHumains(mesurables.map((x) => x.c.id))
+
+  const retenus: Retenu[] = []
+  for (const { c, d, m } of mesurables) {
+    const fiction = fictifs.has(c.id)
     // UNE CARTE SANS PORTRAIT N'EST PAS UNE CARTE. Tranche par Keko. Le sceau
     // de repli est la pour dire « il manque un fichier qu'on devrait fournir »,
     // et ce n'est pas le cas ici : Wikidata n'a simplement pas d'image libre.
@@ -2146,12 +2288,12 @@ async function main(): Promise<void> {
     // des COSPLAYS** : Thanos y gagnait une photo de Comic-Con et Mario un
     // train decore. *C'est precisement pour ca que Wikidata ne les met pas*,
     // et une carte illustree par un cosplayeur est pire qu'un sceau.
-    const image = d.image ?? (c.fiction ? null : vignetteDeLArticle(m.image))
+    const image = d.image ?? (fiction ? null : vignetteDeLArticle(m.image))
     if (image === null) {
       sansImage++
       continue
     }
-    retenus.push({ c, d, m, image })
+    retenus.push({ c, d, m, image, fiction })
   }
   journal(
     `Ecartes : ${sansDetail} sans libelle FR, ${sansArticle} sans article mesure, ${ebauche} ebauches, ${sansImage} sans portrait`,
@@ -2188,7 +2330,7 @@ async function main(): Promise<void> {
   // cran a prendre. *Un champ pose provisoirement a `commun` se lirait comme une
   // valeur*, et rien ne dirait qu'il attend d'etre rempli.
   const cartes: Omit<CharacterCard, 'rarete'>[] = []
-  for (const { c, d, m, image } of retenus) {
+  for (const { c, d, m, image, fiction } of retenus) {
     /**
      * LA SOMME VIT EN UN SEUL ENDROIT, et il a fallu le payer deux fois.
      *
@@ -2222,7 +2364,7 @@ async function main(): Promise<void> {
       vues,
       taille: m.taille,
       metiers: d.metiers,
-      fiction: c.fiction,
+      fiction,
       // LE DOMAINE SE LIT DANS LA DESCRIPTION : voir `domaineDe`.
       description: d.description,
     })
@@ -2234,7 +2376,7 @@ async function main(): Promise<void> {
       image,
       naissance: d.naissance,
       mort: d.mort,
-      fiction: c.fiction,
+      fiction,
       origine: d.origine,
       metiers: d.metiers,
       domaine: stats.domaine,

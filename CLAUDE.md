@@ -11386,7 +11386,12 @@ manga -- donc **avec un tri commun par langues, la fiction perdra toujours.**
 lui elle restera marginale quoi qu'on fasse), et **le portrait obligatoire**
 (199 sur 4 999 le passent).
 
-#### ET « FICTION » N'EST PAS UNE CATEGORIE, C'EST UNE NATURE
+#### ET « FICTION » N'EST PAS UNE CATEGORIE, C'EST UNE NATURE — *renversé depuis*
+
+**Keko a tranché l'inverse** (« on devrait faire une nouvelle catégorie
+fiction »), et la mesure lui donne raison : voir « LA FICTION EST UN RAYON »,
+plus bas. *Ce qui suit reste vrai du fond* — Peter Parker EST biochimiste — mais
+***un axe qu'on refuse de nommer se répartit quand même, et il le fait mal.***
 
 Les neuf autres disent un METIER, celle-la dit « n'existe pas ». *Les deux axes
 se telescopent*, et ca produit des classements absurdes des qu'un fictif entre
@@ -12577,6 +12582,119 @@ ce que le chiffre VEUT DIRE** : « attaque 10 » cesserait de dire « plus de ta
 de vues » pour dire « dans les 10 % les plus vus ». C'est une décision de
 design.
 
+### LA FICTION EST UN RAYON — et le drapeau ne disait rien
+
+Tranché par Keko : **« les personnages de fiction sont mal catégorisés, je pense
+qu'on devrait faire une nouvelle catégorie fiction »**.
+
+***J'avais écrit l'inverse*** — « `fiction` n'est PAS un domaine, c'est une
+NATURE, et les deux axes se télescopent » — et **la mesure lui donne raison** :
+**188 cartes du catalogue ne sont pas humaines**, et elles étaient toutes rangées
+par leur métier.
+
+| | sortait en |
+|---|---|
+| **Batman** | **affaires** (Bruce Wayne est chef d'entreprise) |
+| **Spider-Man** | **scientifique** (Peter Parker est biochimiste) |
+| **Wolverine** | **militaire** |
+| **Robin des Bois** | **sportif** (archer) |
+| Arsène Lupin, Hannibal Lecter, Zorro, Vito Corleone | criminel |
+| Moïse, Abraham, David, Salomon, roi Arthur | politique / religieux |
+
+Et le pire : **74 des 231 cartes du rayon criminel étaient des personnages de
+roman**, soit un tiers — ce qui explique aussi pourquoi c'est le seul rayon qui
+n'atteignait pas son quota.
+
+***Un axe qu'on refuse de nommer se répartit quand même, et il le fait mal.***
+Le second champ reste souhaitable — Peter Parker EST biochimiste — mais tant
+qu'il n'existe pas, **un onzième rayon dit la vérité là où neuf rayons
+mentaient.**
+
+#### LE DRAPEAU VALAIT `false` POUR TOUT LE MONDE
+
+Il disait **par quelle découverte** la carte était entrée. Il y avait deux
+portes — les métiers et la fiction — et quand la porte par fréquentation a
+remplacé les deux, *la porte de la fiction est partie avec*. Le champ est resté,
+rempli par un `versCandidat(l, false, porte)` qui ne regardait rien.
+
+***C'est le défaut du champ `vues`, repayé à l'identique dans le même fichier***
+— « un champ mort qui porte un nom juste est pire qu'un champ absent : il se
+relit comme une source, et rien ne dit qu'il ne l'est plus ». **Et il était écrit
+à deux lignes du champ coupable.**
+
+La nature se lit donc sur **P31**, par une requête à part : *l'enrichissement
+porte déjà douze `OPTIONAL`, et une requête trop riche peut rendre des colonnes
+vides sans lever* — la leçon qui a coûté Einstein. Celle-ci est un accès par
+clé, elle coûte **deux minutes sur un pipeline d'une heure**, et elle ne peut
+rien casser de ce qui marche.
+
+**ET C'EST L'ABSENCE DE Q5 QUI COMPTE, pas la présence d'une nature de fiction** :
+un personnage biblique, une divinité, un héros de légende et Batman n'ont aucune
+nature commune — *ils n'ont en commun que de n'avoir pas existé.*
+
+**La nature se lit AVANT l'image**, et il le faut : *elle décide du repli
+d'illustration* — un humain garde l'image d'en-tête de Wikipédia, un fictif non,
+parce que pour lui ce repli ramène des cosplays. On ne peut donc pas la demander
+sur les seuls retenus, **il faudrait déjà savoir ce qu'on retient.**
+
+#### UNE RACINE DE TAXONOMIE NE CONTIENT PRESQUE RIEN EN DIRECT
+
+La porte de la fiction ne rendait plus rien : `wdt:P31/wdt:P279* wd:Q95074` est
+la requête **mesurée à 504**, donc *les fictifs du catalogue n'y sont arrivés que
+par accident*, à travers leurs métiers.
+
+Et la réparation ne pouvait pas être « la même requête sans la clôture
+transitive », parce que **`wdt:P31 wd:Q95074` ne rend que DEUX entités** avec un
+portrait et un article français. Mesuré sur les natures déclarées :
+
+> **Superman** est *personnage de bande dessinée*, *littéraire*, *d'animation*,
+> *de série télévisée* et *de cinéma* — et **aucune de ses natures n'est
+> Q95074.** Harry Potter et Hermione sont *personnage littéraire* et *de
+> cinéma*.
+
+***C'est la leçon des métiers prise par l'autre bout*** : là, une racine ne
+couvrait pas sa propre notion ; ici elle ne couvre **que** sa propre notion.
+
+**On énumère donc les quatorze natures PAR MÉDIA, une par une** — et c'est aussi
+ce qui la rend rapide :
+
+| | temps | lignes |
+|---|---|---|
+| clôture transitive sur sept natures | **504 au bout de 65 s** | — |
+| les quatorze natures une à une | **0,5 à 8,7 s chacune** | 3 600 à 6 000 |
+
+*Le poids d'une requête tient à son PARCOURS, pas à son nombre de lignes* — la
+règle déjà payée sur la découverte par métiers.
+
+Potentiel mesuré, avec un portrait, un article français et ≥ 10 langues :
+**1 275 entités distinctes** — largement de quoi remplir un rayon de 273.
+
+#### ELLE EXIGE UN PORTRAIT, ET LA PORTE DES HUMAINS NE LE FAIT PAS
+
+*Ce n'est pas une asymétrie, c'est le filtre juste des deux côtés.* Un humain
+sans image Wikidata garde le repli de l'image d'en-tête ; un fictif non. Donc le
+portrait est une condition **nécessaire** pour un fictif, et l'exiger à la
+découverte ne retire rien qui aurait pu devenir une carte. **Chaque porte filtre
+ce qu'elle peut.**
+
+#### UN LOT DE NATURES PERDU REND SES CARTES HUMAINES, PAS FICTIVES
+
+*Une absence de mesure n'est pas une mesure* — la leçon de l'arbre du vivant.
+Sans réponse on ne sait pas, et supposer « non humain » renommerait tout un lot
+d'humains en fiction.
+
+#### CE QUI RESTE À SURVEILLER, ET C'EST WIKIDATA QUI LE DÉCIDE
+
+Le rayon ramasse **les figures bibliques et légendaires** en même temps que les
+super-héros : Moïse, Abraham, David, Salomon, le roi Arthur, Homère et Marie de
+Magdala y sont, parce que Wikidata ne les déclare pas `Q5`. *C'est défendable —
+leur existence n'est pas attestée* — **mais la cohérence vient de Wikidata et
+non de nous** : Lao Tseu, Pythagore et Confucius, dont l'existence est tout
+aussi discutée, y sont `Q5` et restent donc « penseurs ».
+
+**À trancher par Keko s'il veut séparer l'inventé du légendaire** : ce serait un
+douzième rayon, ou le second champ de nature.
+
 ### CE QUI RESTE À TRANCHER PAR KEKO
 
 - **la rareté ne se règle plus du tout** : elle se découpe en quantiles DANS
@@ -12601,7 +12719,11 @@ design.
   Ce sont des types, pas une librairie à l'exécution — mais c'est une
   dépendance, donc c'est son appel ;
 - **la table des métiers**, qui décide de ce que le catalogue contient : trente
-  -sept entrées aujourd'hui, et c'est le seul endroit à élargir.
+  -sept entrées aujourd'hui, et c'est le seul endroit à élargir ;
+- **séparer l'inventé du légendaire**, si le rayon fiction paraît mêler deux
+  choses : Moïse et Batman y sont ensemble parce que Wikidata ne les déclare ni
+  l'un ni l'autre `Q5`. Ce serait un douzième rayon, ou le second champ de
+  nature.
 
 ## LE TROISIÈME MODE DEVIENT DES ANIMAUX — décision de Keko
 

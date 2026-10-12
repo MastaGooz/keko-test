@@ -1,7 +1,7 @@
 RESUME DU JEU DE CARTES-PERSONNAGES
-engendre le 2026-10-12 07:46:35 UTC
+engendre le 2026-10-12 08:06:41 UTC
 
-2931 cartes : 2931 historiques, 0 de fiction
+2931 cartes : 2743 historiques, 188 de fiction
 2931 portent une image (100 %)
 
 PAR RARETE
@@ -13,32 +13,33 @@ PAR RARETE
 
 PAR DOMAINE
 -----------
-  militaire        300   10.2 %  ###.........................
-  politique        300   10.2 %  ###.........................
+  militaire        272    9.3 %  ###.........................
+  politique        295   10.1 %  ###.........................
   artiste          300   10.2 %  ###.........................
-  scientifique     300   10.2 %  ###.........................
-  penseur          300   10.2 %  ###.........................
-  religieux        300   10.2 %  ###.........................
-  business         300   10.2 %  ###.........................
-  criminel         231    7.9 %  ##..........................
-  sportif          300   10.2 %  ###.........................
-  explorateur      300   10.2 %  ###.........................
-  fiction            0    0.0 %  ............................
+  scientifique     294   10.0 %  ###.........................
+  penseur          297   10.1 %  ###.........................
+  religieux        273    9.3 %  ###.........................
+  business         284    9.7 %  ###.........................
+  criminel         157    5.4 %  #...........................
+  sportif          298   10.2 %  ###.........................
+  explorateur      273    9.3 %  ###.........................
+  fiction          188    6.4 %  ##..........................
   autre              0    0.0 %  ............................
 
 LA RARETE DANS CHAQUE DOMAINE
 -----------------------------
   domaine            n      commun      rare    epique    legend
-  militaire        300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
-  politique        300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+  militaire        272   188 (69%)  54 (20%)   23 (8%)    7 (3%)
+  politique        295   204 (69%)  59 (20%)   24 (8%)    8 (3%)
   artiste          300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
-  scientifique     300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
-  penseur          300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
-  religieux        300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
-  business         300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
-  criminel         231   160 (69%)  46 (20%)   19 (8%)    6 (3%)
-  sportif          300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
-  explorateur      300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+  scientifique     294   203 (69%)  59 (20%)   24 (8%)    8 (3%)
+  penseur          297   205 (69%)  59 (20%)   25 (8%)    8 (3%)
+  religieux        273   188 (69%)  55 (20%)   23 (8%)    7 (3%)
+  business         284   196 (69%)  57 (20%)   23 (8%)    8 (3%)
+  criminel         157   108 (69%)  32 (20%)   13 (8%)    4 (3%)
+  sportif          298   206 (69%)  59 (20%)   25 (8%)    8 (3%)
+  explorateur      273   188 (69%)  55 (20%)   23 (8%)    7 (3%)
+  fiction          188   130 (69%)  37 (20%)   16 (9%)    5 (3%)
 
 LE PLUS NOTOIRE DE CHAQUE DOMAINE
 ---------------------------------
@@ -52,6 +53,7 @@ LE PLUS NOTOIRE DE CHAQUE DOMAINE
   criminel       Aileen Wuornos               legendaire     262590 vues
   sportif        Lionel Messi                 legendaire     619345 vues
   explorateur    Christophe Colomb            legendaire      35177 vues
+  fiction        Homère                       legendaire      18218 vues
 
 PAR SIECLE (de la mort, sinon de la naissance)
 ----------------------------------------------
@@ -126,10 +128,10 @@ ATTAQUE ET DEFENSE
 LES SOURCES, EN MEDIANE ET PAR RARETE
 -------------------------------------
   rarete           n  langues  vues/30j   octets
-  commun        2023       69      1833    30253
-  rare           586       86      6002    55337
-  epique         244      106     19575    84971
-  legendaire      78      150     60477   116112
+  commun        2023       68      1833    29992
+  rare           586       87      6029    56787
+  epique         244      109     20154    84043
+  legendaire      78      146     60477   123110
 
 LES DIX PLUS NOTOIRES
 ---------------------
@@ -147,6 +149,6 @@ LES DIX PLUS NOTOIRES
 UN EXEMPLE PAR RARETE, PRIS AU MILIEU DE SON CRAN
 -------------------------------------------------
   commun       Lisa Su (35 langues, 1833 vues, A3/D2, scientifique)
-  rare         Maria Montessori (108 langues, 5991 vues, A4/D8, scientifique)
-  epique       Francisco Franco (134 langues, 18555 vues, A5/D10, militaire)
+  rare         Spartacus (92 langues, 6002 vues, A4/D6, militaire)
+  epique       Aristote (319 langues, 19882 vues, A5/D10, penseur)
   legendaire   Adolf Hitler (328 langues, 57760 vues, A6/D10, politique)

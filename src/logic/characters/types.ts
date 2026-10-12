@@ -27,9 +27,20 @@
  *   la 2e du catalogue, Epstein la 1re -- et elles tombaient en « autre » ou en
  *   « scientifique » (Ben Laden est ingenieur).
  *
- * **`fiction` n'est PAS un domaine, c'est une NATURE**, et le mode animaux a
- * deja fait cette distinction. Elle reste ici le temps que le second champ
- * existe : *le pere Noel, Spider-Man et Achille n'ont pas de metier.*
+ * **`fiction` EST UN DOMAINE, ET C'EST KEKO QUI L'A TRANCHE** : « les
+ * personnages de fiction sont mal categorises, je pense qu'on devrait faire une
+ * nouvelle categorie fiction ».
+ *
+ * *J'avais ecrit l'inverse ici meme* -- « ce n'est pas un domaine, c'est une
+ * nature, les deux axes se telescopent » -- et **la mesure lui donne raison** :
+ * 188 cartes du catalogue ne sont pas humaines, et elles etaient rangees par
+ * leur metier. Batman aux affaires, Spider-Man chez les scientifiques, Wolverine
+ * chez les militaires, Robin des Bois chez les sportifs, et **un tiers du rayon
+ * criminel** (74 sur 231) en personnages de roman.
+ *
+ * ***Un axe qu'on refuse de nommer se repartit quand meme, et il le fait mal.***
+ * Le second champ reste souhaitable -- Peter Parker EST biochimiste -- mais tant
+ * qu'il n'existe pas, un onzieme rayon dit la verite la ou neuf rayons mentaient.
  */
 export type Domaine =
   | 'militaire'
@@ -46,12 +57,11 @@ export type Domaine =
   | 'autre'
 
 /**
- * LES DIX DOMAINES SOUMIS AU QUOTA — ceux que Keko a nommes.
+ * LES ONZE DOMAINES SOUMIS AU QUOTA — les dix que Keko a nommes, plus la fiction.
  *
- * `fiction` et `autre` n'en sont pas : *l'un est une NATURE et l'autre un
- * repli*, et ni l'un ni l'autre ne se collectionne. Ils gardent les cartes
- * qu'aucun des dix ne reclame, et leur nombre dit la sante de la table de
- * mots — **une table de mots se relit sur ce qu'elle N'ATTRAPE PAS.**
+ * `autre` n'en est pas : c'est un REPLI, et il ne se collectionne pas. Il garde
+ * les cartes qu'aucun des onze ne reclame, et **son nombre dit la sante de la
+ * table de mots** — *une table de mots se relit sur ce qu'elle N'ATTRAPE PAS.*
  */
 export const DOMAINES_QUOTA: readonly Domaine[] = [
   'militaire',
@@ -64,6 +74,7 @@ export const DOMAINES_QUOTA: readonly Domaine[] = [
   'criminel',
   'sportif',
   'explorateur',
+  'fiction',
 ]
 
 export const DOMAINES: readonly Domaine[] = [
