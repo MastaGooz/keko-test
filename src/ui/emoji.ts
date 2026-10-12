@@ -13,11 +13,17 @@ import { parseEmojis, type CarteEmoji } from '../logic/emoji/types.ts'
  * son nom -- comme tout ce qui vit dans `public/`. Son URL porte donc la date
  * du build, sinon reengendrer le fichier ne changerait rien a l'ecran.
  */
-function urlDesEmojis(): string {
-  return `${import.meta.env.BASE_URL}data/emoji.json?v=${encodeURIComponent(__BUILD_TIME__)}`
+function urlDesEmojis(fichier: string): string {
+  return `${import.meta.env.BASE_URL}data/${fichier}.json?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
-let enCours: Promise<CarteEmoji[]> | null = null
+/**
+ * LE CACHE EST PAR FICHIER : `?paquet&emoji&peau` ouvre le banc des variantes
+ * a cote du catalogue. *Un cache a une seule place rendrait le premier
+ * catalogue charge a tous les suivants* -- et ca ne se verrait qu'en passant de
+ * l'un a l'autre sans recharger. La lecon du chargeur de personnages.
+ */
+const enCoursPar = new Map<string, Promise<CarteEmoji[]>>()
 
 /**
  * Charge les cartes-emoji. Mis en cache pour toute la session : le fichier ne
@@ -27,18 +33,19 @@ let enCours: Promise<CarteEmoji[]> | null = null
  * condamnerait les cartes jusqu'au rechargement, la lecon des textures de
  * cartes.
  */
-export function chargerEmojis(): Promise<CarteEmoji[]> {
-  if (enCours !== null) return enCours
+export function chargerEmojis(fichier = 'emoji'): Promise<CarteEmoji[]> {
+  const deja = enCoursPar.get(fichier)
+  if (deja !== undefined) return deja
   const p = (async () => {
-    const reponse = await fetch(urlDesEmojis())
-    if (!reponse.ok) throw new Error(`emoji.json : HTTP ${reponse.status}`)
+    const reponse = await fetch(urlDesEmojis(fichier))
+    if (!reponse.ok) throw new Error(`${fichier}.json : HTTP ${reponse.status}`)
     const cartes = parseEmojis(await reponse.text())
-    if (cartes.length === 0) throw new Error('emoji.json : aucune carte valide')
+    if (cartes.length === 0) throw new Error(`${fichier}.json : aucune carte valide`)
     return cartes
   })()
-  enCours = p
+  enCoursPar.set(fichier, p)
   p.catch(() => {
-    if (enCours === p) enCours = null
+    if (enCoursPar.get(fichier) === p) enCoursPar.delete(fichier)
   })
   return p
 }

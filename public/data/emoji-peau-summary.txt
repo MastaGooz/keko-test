@@ -1,0 +1,63 @@
+CATALOGUE DES EMOJI
+engendre le 2026-10-12 13:08:01 UTC
+
+3963 cartes, dont 884 animees
+
+au classement de frequence : 2326
+
+OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
+---------------------------------------------
+  groupe           n      commun      rare    epique    legend
+  visages        172    37 (22%)  24 (14%)  72 (42%)  39 (23%)
+  gens          2430  1860 (77%) 327 (13%)  189 (8%)   54 (2%)
+  animaux        161    69 (43%)  74 (46%)  16 (10%)    2 (1%)
+  nourriture     132    49 (37%)  76 (58%)    7 (5%)    0 (0%)
+  lieux          221   137 (62%)  70 (32%)   13 (6%)    1 (0%)
+  activites       85    42 (49%)  34 (40%)    6 (7%)    3 (4%)
+  objets         268   170 (63%)  84 (31%)   14 (5%)    0 (0%)
+  symboles       224   143 (64%)  68 (30%)   12 (5%)    1 (0%)
+  drapeaux       270   232 (86%)  36 (13%)    2 (1%)    0 (0%)
+
+PAR ANNEE
+---------
+  2010    858  #########
+  2015    771  ########
+  2016    755  ########
+  2017    239  ##
+  2018    157  ##
+  2019    398  ####
+  2020    117  #
+  2021    329  ###
+  2022     31  
+  2023    118  #
+  2024      8  
+  2025    163  ##
+  2026     19  
+
+LE HAUT DE CHAQUE GROUPE
+------------------------
+  visages      😂 visage riant aux larmes · ❤️ cœur rouge · 😍 visage souriant avec yeux en forme de cœur · 🤣 se rouler par terre de rire · 😊 visage souriant avec yeux rieurs · 💕 deux cœurs · 😭 visage qui pleure à chaudes larmes · 😘 visage envoyant un bisou
+  gens         🙏 mains en prière · 🙏🏻 mains en prière : peau claire · 🙏🏼 mains en prière : peau moyennement claire · 🙏🏽 mains en prière : peau légèrement mate · 🙏🏾 mains en prière : peau mate · 🙏🏿 mains en prière : peau foncée · 👍 pouce vers le haut · 👍🏻 pouce vers le haut : peau claire
+  animaux      🌹 rose · 🌸 fleur de cerisier · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 💐 bouquet · 🌺 hibiscus · 🌻 tournesol · 🌼 bourgeon
+  nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
+  lieux        🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🚨 gyrophare
+  activites    ♥️ cœur cartes · 🎉 cotillons · ✨ étincelles · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable
+  objets       🎶 notes de musique · 👑 couronne · 🎵 note de musique · 💰 sac plein d’argent · 💎 pierre précieuse · 💸 billet avec des ailes · 📌 punaise · ☎️ téléphone
+  symboles     ‼️ double point d’exclamation · ❗ point d’exclamation rouge · ✅ bouton coché · ✔️ coche · 🔴 disque rouge · ❌ croix · ▶️ bouton lecture · ➡️ flèche droite
+  drapeaux     🇺🇸 drapeau : États-Unis · 🇧🇷 drapeau : Brésil · 🚩 drapeau triangulaire · 🇲🇽 drapeau : Mexique · 🏁 drapeau à damier · 🇮🇳 drapeau : Inde · 🇹🇷 drapeau : Turquie · 🇮🇹 drapeau : Italie
+
+LE HAUT DU CLASSEMENT MONDIAL
+-----------------------------
+  😂 ❤️ 😍 🤣 😊 🙏 🙏🏻 🙏🏼 🙏🏽 🙏🏾 🙏🏿 💕 😭 😘 👍 👍🏻 👍🏼 👍🏽 👍🏾 👍🏿 😅 👏 👏🏻 👏🏼 👏🏽 👏🏾 👏🏿 😁 ♥️ 🔥
+  💔 💖 💙 😢 🤔 😆 🙄 💪 💪🏻 💪🏼 💪🏽 💪🏾 💪🏿 😉 ☺️ 👌 👌🏻 👌🏼 👌🏽 👌🏾 👌🏿 🤗 💜 😔 😎 😇 🌹 🤦 🤦🏻 🤦🏼
+
+LE BAS
+------
+  👩🏽‍🫯‍👩🏼 👩🏽‍🫯‍👩🏾 👩🏽‍🫯‍👩🏿 👩🏾‍🫯‍👩🏻 👩🏾‍🫯‍👩🏼 👩🏾‍🫯‍👩🏽 👩🏾‍🫯‍👩🏿 👩🏿‍🫯‍👩🏻 👩🏿‍🫯‍👩🏼 👩🏿‍🫯‍👩🏽 👩🏿‍🫯‍👩🏾 🫫 🫹 🫹🏻 🫹🏼 🫹🏽 🫹🏾 🫹🏿 🫺 🫺🏻 🫺🏼 🫺🏽 🫺🏾 🫺🏿 🫌 🫝 🛙 🪋 🪌 🪍
+
+UN EXEMPLE PAR RARETE
+---------------------
+  commun       🚣🏾‍♂️ rameur dans une barque : peau mate (gens, 2594e, non classe)
+  rare         🐜 fourmi (animaux, 828e, frequence 9, anime)
+  epique       🙆🏻 personne faisant un geste d’acceptation : peau claire (gens, 266e, frequence 6)
+  legendaire   👌🏿 ok : peau foncée (gens, 51e, frequence 3, anime)

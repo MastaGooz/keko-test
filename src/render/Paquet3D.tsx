@@ -207,6 +207,15 @@ export function Paquet3D(): React.ReactElement {
    */
   const emojis = params.has('emoji')
   /**
+   * `?paquet&emoji&peau` AJOUTE LES VARIANTES DE COULEUR DE PEAU.
+   *
+   * Keko : « il me semblait qu'on aurait plutot 3000+ emoji ». **Oui -- 3 963
+   * au lieu de 1 923**, et les 2 040 de plus sont toutes des variantes de peau.
+   * *Le banc se regarde a cote du catalogue plutot qu'a sa place*, parce que
+   * c'est une decision de design : voir `--peau` dans le pipeline.
+   */
+  const peau = params.has('peau')
+  /**
    * `?paquet&culbute` REND LA CULBUTE, et le développement est le défaut.
    *
    * *Une carte qui se révèle en tournant ne dit rien de ce qu'elle est* : on
@@ -286,7 +295,7 @@ export function Paquet3D(): React.ReactElement {
   useEffect(() => {
     let vivant = true
     const charger = emojis
-      ? chargerEmojis()
+      ? chargerEmojis(peau ? 'emoji-peau' : 'emoji')
       : peintures
         ? chargerPeintures()
         : personnages
@@ -300,7 +309,7 @@ export function Paquet3D(): React.ReactElement {
     return () => {
       vivant = false
     }
-  }, [personnages, peintures, fiction, emojis])
+  }, [personnages, peintures, fiction, emojis, peau])
 
   useEffect(() => {
     const suivre = () => setFenetre({ l: window.innerWidth, h: window.innerHeight })

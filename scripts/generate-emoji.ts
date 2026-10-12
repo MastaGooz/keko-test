@@ -19,6 +19,7 @@
  * service qui ne l'a pas reclamee.
  */
 import { writeFileSync, mkdirSync } from 'node:fs'
+import process from 'node:process'
 import { cache, journal, option } from './outils.ts'
 import { cransParGroupe, PYRAMIDE_QUATRE } from '../src/logic/quantiles.ts'
 import {
@@ -36,8 +37,39 @@ const ANIME = 'https://fonts.gstatic.com/s/e/notoemoji/latest'
 const FREQUENCE = 'https://home.unicode.org/emoji/emoji-frequency/'
 const SORTIE = new URL('../public/data/', import.meta.url)
 
-/** Les variantes de couleur de peau : c'est le MEME emoji, pas une carte de plus. */
+/**
+ * LES VARIANTES DE COULEUR DE PEAU — ecartees par defaut, `--peau` les garde.
+ *
+ * Keko : « il me semblait qu'on aurait plutot 3000+ emoji c'est bizarre, tu as
+ * peut-etre pas inclus les variations de couleurs ? » **Oui**, et le compte est
+ * net : 3 963 emoji au total, dont **2 040 variantes**, toutes dans « People &
+ * Body ».
+ *
+ * *Ce n'est pas cinq variantes partout* : 292 bases en ont cinq, onze en ont
+ * **vingt-cinq** (deux personnes, donc 5 x 5), et ***deux bases en ont CENT a
+ * elles seules*** -- « deux personnes se tenant la main » decline ses deux
+ * silhouettes sur tous les tons.
+ *
+ * **Et le classement d'Unicode les regroupe explicitement** en un item
+ * representatif : une variante n'a donc pas de rang a elle, elle herite de
+ * celui de sa base -- voir `baseSansPeau`. *Les cent « personnes se tenant la
+ * main » sortent donc toutes au meme cran, avec le meme dessin a deux tons
+ * pres.*
+ */
 const PEAU = /[\u{1F3FB}-\u{1F3FF}]/u
+const avecPeau = process.argv.includes('--peau')
+
+/**
+ * L'EMOJI SANS SES TONS DE PEAU — sa base au classement de frequence.
+ *
+ * *Unicode range les variantes sous un item representatif*, donc une variante
+ * n'a jamais de rang a elle. **Sans cet heritage, les 2 040 tomberaient toutes
+ * dans les non classees**, c'est-a-dire tout en bas du catalogue -- et un
+ * « pouce leve : peau mate » vaudrait moins qu'un drapeau obscur.
+ */
+function baseSansPeau(emoji: string): string {
+  return emoji.replace(/[\u{1F3FB}-\u{1F3FF}]/gu, '')
+}
 
 /**
  * LE GROUPE UNICODE VERS LE NOTRE. `Component` n'a pas d'entree : *ses membres
@@ -122,7 +154,7 @@ function lireUnicode(txt: string): Brut[] {
     const g = GROUPE[groupe]
     if (g === undefined) continue
     const emoji = m[2]!
-    if (PEAU.test(emoji)) continue
+    if (!avecPeau && PEAU.test(emoji)) continue
     out.push({
       id: m[1]!.trim().toLowerCase().replace(/ +/g, '-'),
       emoji,
@@ -394,10 +426,10 @@ function resume(cartes: readonly CarteEmoji[]): string {
 async function main(): Promise<void> {
   const debut = Date.now()
   mkdirSync(SORTIE, { recursive: true })
-  journal('Catalogue des emoji')
+  journal(`Catalogue des emoji${avecPeau ? ' (variantes de peau COMPRISES)' : ''}`)
 
   const bruts = lireUnicode(await texte('unicode', UNICODE))
-  journal(`${bruts.length} emoji (variantes de peau et composants ecartes)`)
+  journal(`${bruts.length} emoji${avecPeau ? '' : ' (variantes de peau ecartees)'}`)
 
   const noms = await nomsFrancais()
   const rangs = await classement()
@@ -418,7 +450,13 @@ async function main(): Promise<void> {
     const fr = noms.get(b.emoji) ?? noms.get(b.emoji.replace(/️/g, ''))
     if (fr === undefined) sansNom++
     const estAnime = anime.has(b.id)
-    const rang = rangs.get(b.emoji) ?? sansVS.get(b.emoji.replace(/️/g, ''))
+    // LA VARIANTE HERITE DU RANG DE SA BASE : voir `baseSansPeau`.
+    const nu = b.emoji.replace(/️/g, '')
+    const rang =
+      rangs.get(b.emoji) ??
+      sansVS.get(nu) ??
+      rangs.get(baseSansPeau(b.emoji)) ??
+      sansVS.get(baseSansPeau(nu))
     return {
       id: b.id,
       emoji: b.emoji,
@@ -469,8 +507,11 @@ async function main(): Promise<void> {
   }))
 
   const json = JSON.stringify({ genere: new Date().toISOString(), cartes })
-  writeFileSync(new URL(`${option('sortie') ?? 'emoji'}.json`, SORTIE), json, 'utf8')
-  writeFileSync(new URL('emoji-summary.txt', SORTIE), resume(cartes), 'utf8')
+  // *Le banc des variantes a son propre fichier* : il ne remplace pas le
+  // catalogue, il se regarde a cote -- `?paquet&emoji&peau`.
+  const nom = option('sortie') ?? (avecPeau ? 'emoji-peau' : 'emoji')
+  writeFileSync(new URL(`${nom}.json`, SORTIE), json, 'utf8')
+  writeFileSync(new URL(`${nom}-summary.txt`, SORTIE), resume(cartes), 'utf8')
   journal(`Ecrit ${cartes.length} cartes -- ${(json.length / 1024).toFixed(0)} Ko`)
   journal(`Fini en ${((Date.now() - debut) / 1000).toFixed(0)} s`)
 }

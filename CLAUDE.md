@@ -13443,8 +13443,8 @@ emoji : noto color emoji et noto animated emoji ». *Deux lectures menaient à d
 travaux très différents* — une collection d'emoji, ou des emoji en guise
 d'illustration des cartes existantes — et il a tranché : **une collection.**
 
-`npm run emoji` écrit `public/data/emoji.json` : **1 923 cartes, 393 Ko**, en
-100 secondes.
+`npm run emoji` écrit `public/data/emoji.json` : **1 923 cartes, 443 Ko**, en
+100 secondes. **Et `--peau` en écrit 3 963** — voir juste en dessous.
 
 ### DEUX SOURCES CANONIQUES, ET AUCUNE DÉPENDANCE
 
@@ -13453,10 +13453,10 @@ d'illustration des cartes existantes — et il a tranché : **une collection.**
 | **Unicode** (`emoji-test.txt`, 621 Ko) | le caractère, son groupe, sa VERSION d'introduction |
 | **CLDR** (deux fichiers) | son nom français et ses mots-clés |
 
-**Les variantes de couleur de peau sont écartées** — 3 963 entrées, 1 923 une
-fois retirées : *c'est le même emoji, pas une carte de plus.* Le groupe
-`Component` aussi : ses membres ne sont pas des emoji, ce sont des morceaux de
-séquence.
+**Les variantes de couleur de peau sont écartées par défaut** — 3 963 entrées,
+1 923 une fois retirées. *C'est une décision de design*, et elle est ouvrable :
+voir la sous-section qui suit. Le groupe `Component` est écarté sans appel : ses
+membres ne sont pas des emoji, ce sont des morceaux de séquence.
 
 **IL FAUT LES DEUX FICHIERS CLDR**, et ça ne se devine pas : `annotations` en
 porte 1 966 et **ignore les drapeaux**, qui vivent dans `annotationsDerived`.
@@ -13468,6 +13468,65 @@ figure sans lui — donc on essaie les deux formes. Résultat : **9 cartes sur
 parce que la politique de Wikimedia demande un contact ; *Unicode, GitHub et
 gstatic ne le demandent pas*, et on n'envoie pas l'adresse de quelqu'un à un
 service qui ne l'a pas réclamée.
+
+#### LES VARIANTES DE COULEUR DE PEAU — écartées, et `?paquet&emoji&peau` les rend
+
+Keko : « il me semblait qu'on aurait plutôt 3000+ emoji c'est bizarre, tu as
+peut-être pas inclus les variations de couleurs ? » **Oui, et le compte est
+net** :
+
+| | |
+|---|---|
+| emoji « fully-qualified » d'Unicode | **3 963** |
+| dont **variantes de couleur de peau** | **2 040**, toutes dans « People & Body » |
+| le catalogue par défaut | **1 923** |
+
+**CE N'EST PAS CINQ VARIANTES PARTOUT, et c'est ce qui décide** :
+
+| bases | variantes chacune | |
+|---|---|---|
+| 292 | 5 | les cinq tons habituels (👋🏻👋🏼👋🏽👋🏾👋🏿) |
+| 11 | **25** | deux personnes, donc 5 × 5 |
+| 3 | 35 | |
+| **2** | **100** | « deux personnes se tenant la main », deux silhouettes × tous les tons |
+
+***Deux bases produisent cent cartes à elles seules***, et le rayon « gens »
+passe de 390 à **2 430 cartes — 61 % du catalogue.**
+
+**Et le classement d'Unicode les regroupe explicitement** en un item
+représentatif : une variante n'a pas de rang à elle. Elle **hérite de celui de
+sa base** (`baseSansPeau`), sans quoi les 2 040 tomberaient toutes dans les non
+classées — *un « pouce levé : peau mate » vaudrait moins qu'un drapeau obscur.*
+Résultat : 🙏🏻🙏🏼🙏🏽🙏🏾🙏🏿 sont les premières variantes du catalogue, parce que 🙏
+est 6ᵉ au classement mondial.
+
+*Les noms français ne manquent pas* : CLDR les couvre à **100 %** — « signe de
+la main : peau claire », « peau légèrement mate ».
+
+**C'EST UNE DÉCISION DE DESIGN, DONC LE BANC EST À CÔTÉ DU CATALOGUE, PAS À SA
+PLACE.** `npm run emoji -- --peau` écrit `emoji-peau.json` (3 963 cartes,
+1 094 Ko) et `?paquet&emoji&peau` l'ouvre — *ce qui se teste doit pouvoir
+s'ouvrir d'un lien.*
+
+Ce que ça change, mesuré sur les deux catalogues :
+
+| | sans variantes | avec |
+|---|---|---|
+| cartes | 1 923 | **3 963** |
+| part du rayon « gens » | 20 % | **61 %** |
+| au classement de fréquence | 76 % | 59 % |
+| animées | 614 (32 %) | 884 (22 %) |
+| poids | 443 Ko | 1 094 Ko |
+
+*La part classée tombe parce que beaucoup de variantes dérivent de bases
+récentes* — les métiers genrés, les familles — **qui ne sont pas au classement
+non plus.**
+
+**ET UN CARACTÈRE INVISIBLE S'ÉTAIT ÉCRIT DANS TROIS REGEX.** Un patch avait
+dé-échappé `️` en le vrai caractère : *le code marchait* — une regex
+matche un caractère littéral comme son échappement — **mais un caractère
+invisible dans du code est un code qu'on ne peut pas relire.** Il est rétabli en
+échappement.
 
 ### LA NOTORIÉTÉ EST LA FRÉQUENCE D'USAGE RÉELLE — et le classement est GLOBAL
 
@@ -16071,6 +16130,7 @@ npm run gen:animals  # (re)engendre public/data/animals.json depuis GBIF + Wikid
 npm run peintures    # (re)engendre public/data/paintings.json depuis Wikidata + Wikipedia
 npm run liens        # (re)engendre public/data/links.json — le graphe du plateau
 npm run emoji        # (re)engendre public/data/emoji.json depuis Unicode + CLDR
+npm run emoji -- --peau   # le banc avec les variantes de peau -> emoji-peau.json
 ```
 
 `npm run gen:animals` accepte `--seuil=<0..1>` (la coupe), `--restes=absorbe|carte`
