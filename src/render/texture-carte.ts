@@ -900,13 +900,27 @@ export function tonDuLustre(rarete: string | undefined): readonly [number, numbe
  * c'est le seul qui garde sa couleur posé haut en clarté. **Le critère est donc
  * le C\*ab, pas l'écart au gris.**
  *
- * **D'OÙ LA DESCENTE : chaque teinte perd de la clarté jusqu'à ce que le clip
- * cesse de la ronger**, et pas plus bas que ce que le texte supporte. Le clip
- * mord tant que `L + hi > 1`, donc la cible est `1 − hi` — *une formule fermée,
- * aucune dichotomie.* Ce que ça rend, mesuré en C\*ab : **bleu +30 %, violet
- * +33 %, orange +34 %**, le blanc immobile (il ne sature pas, donc il n'a rien
- * à gagner — et *le bas d'une échelle ne doit pas parler*) et le vert d'un
- * cheveu (+8 %, il y était presque).
+ * **D'OÙ LA DESCENTE : chaque teinte perd de la clarté jusqu'à ce qu'elle
+ * ATTEIGNE LE NIVEAU DU VERT**, et pas plus bas que ce que le texte supporte.
+ *
+ * ***ET LA CIBLE A DÛ ÊTRE LE CHROMA, PAS LE CLIP.*** Une première passe
+ * descendait jusqu'à ce que le ClipColor cesse de ronger la teinte — `1 − hi`,
+ * une formule fermée — et Keko l'a reprise : « je trouve les couleurs des
+ * encadrés trop fades (sauf le vert qui est bien) ». **Il avait raison, et la
+ * mesure dit pourquoi** : au terme de cette descente le bleu n'était qu'à 34 de
+ * C\*ab contre 74 au vert — *le clip avait cessé de le ronger bien avant qu'il
+ * ait une couleur.* « Ne plus être écrasé » n'est pas « être coloré ».
+ *
+ * La cible est donc le chroma du vert, **le seul cran que Keko ait validé**, et
+ * ce qu'elle rend, mesuré : **bleu +84 %, violet +48 %, orange +16 %**, le
+ * blanc immobile au pixel (il ne sature pas, donc il n'a rien à gagner — et
+ * *le bas d'une échelle ne doit pas parler*) et le vert à un point de 255 près,
+ * puisqu'il y était déjà.
+ *
+ * **CE QUI RESTE UN MUR EST PHYSIQUE, et il ne concerne plus que le bleu** :
+ * même descendu à 0,31, il plafonne à 63 — au-delà, la clarté qu'on dépense ne
+ * rend plus de couleur du tout. *Une teinte qui pèse 0,11 dans la luminance ne
+ * peut pas être aussi colorée qu'un vert qui en pèse 0,59.*
  *
  * **ET LE PIGMENT SUIT LA SATURATION DU MÉTAL, il ne la force pas.** Le cran du
  * bas est un gris à peine bleuté — 0,047 d'écart au gris — donc *le forcer à
@@ -919,22 +933,124 @@ export function tonDuLustre(rarete: string | undefined): readonly [number, numbe
  * de plaque aujourd'hui* — mais le jour où elle y arrive, c'est le bas de
  * l'échelle qui ne doit pas se mettre à parler.
  */
+/**
+ * LES TROIS ENCRES DE LA PLAQUE — **et elles foncent chaque fois que la teinte
+ * se renforce.**
+ *
+ * *C'est la troisième passe*, et l'argument est le même que les deux
+ * précédentes : **le pigment se paie sur le texte, et il le paie bien.** Une
+ * plaque qui descend pour gagner de la couleur descend pour tous ses textes,
+ * donc ils foncent avec elle — et comme ils foncent plus vite que leur fond,
+ * *les trois finissent mieux lotis qu'avant sur les cinq crans*, de 10,2 à 13,7
+ * pour le nom là où il était à 9,8 au mieux.
+ *
+ * **ELLES VIVENT ICI PARCE QUE LA DESCENTE LES LIT.** Le plancher de
+ * `descenteDeLaPlaque` est le contraste du mot du type : *deux endroits qui
+ * décriraient la même encre se désaccorderaient au premier réglage* — et celui
+ * -là ne se verrait pas, il rendrait seulement la borne fausse.
+ *
+ * Mesuré sur le pire cran (le bleu, qui descend le plus) : **nom 5,6,
+ * cartouche 5,2, type 5,1.**
+ */
+const NOM_BULLE = '#111920'
+const CARTOUCHE_BULLE = '#16202a'
+const TYPE_BULLE = '#0d141b'
+
 const PIGMENT_PLAQUE = [1.4, 1.7, 1.7] as const
 const LUM_PLAQUE = [0.895, 0.795, 0.752] as const
 const PLAQUE_CLAIRE = ['#fdfefe', '#eaeef4', '#dde4ec'] as const
 /**
- * De combien une teinte peut perdre en clarté pour gagner en couleur, au plus.
+ * JUSQU'OÙ UNE PLAQUE PEUT S'ASSOMBRIR — **et c'est le TEXTE qui le dit, en
+ * contraste et pas en clarté.**
  *
- * **C'est le TEXTE qui le fixe, et le chiffre est mesuré** : à 0,065, le mot du
- * type garde **4,77** de contraste sur le pire cran — *exactement ce qu'il avait
- * avant la descente* — et le cartouche 6,09. Un cran de plus le ferait tomber
- * sous le plancher de 4,5.
+ * La descente était bornée par un chiffre de luminance (0,065), *donc par un
+ * proxy* : à teinte égale, deux plaques de même luminance de composition ne
+ * donnent pas le même contraste, puisque l'oeil ne pèse pas les trois canaux
+ * comme le ClipColor. **La borne est maintenant le contraste lui-même**, sur
+ * le couple le plus fragile : *le mot du type sur sa pastille*, qui est à la
+ * fois le plus petit texte de la carte et son fond le plus sombre.
+ *
+ * **5 et non 4,5**, qui est le plancher AA : le mot du type fait 4 U, et *un
+ * texte posé pile sur un plancher n'a aucune marge le jour où la police
+ * change.* Mesuré, il n'est de toute façon pas ce qui arrête les crans
+ * aujourd'hui — c'est le rendement, voir `GAIN_PLAQUE`.
  */
-const DESCENTE_PLAQUE = 0.065
+const PLANCHER_PLAQUE = 5
+
+/**
+ * LE NIVEAU DE COULEUR À ATTEINDRE, en C\*ab — **et il est MESURÉ SUR LE
+ * VERT.**
+ *
+ * Keko : « je trouve les couleurs des encadrés de textes trop fades (sauf le
+ * vert qui est bien) ». *Le vert est donc le seul cran validé*, et ce qu'il
+ * vaut est 74 de chroma : **la cible n'est pas choisie, elle est relevée.**
+ *
+ * *Elle est un PLAFOND et non un plancher* : un cran qui l'atteint s'arrête là
+ * — une plaque plus colorée que celle que Keko a validée sortirait du registre
+ * « zone de texte à fond clair » sans qu'il l'ait demandé. **À remesurer si le
+ * vert change** : c'est lui qui la porte.
+ */
+const CHROMA_PLAQUE = 74
+
+/**
+ * CE QU'UN PAS DE CLARTÉ DOIT RENDRE DE COULEUR POUR VALOIR LA PEINE.
+ *
+ * ***C'est ce qui arrête l'orange en haut de sa course et le blanc avant son
+ * premier pas.*** Au-delà d'un certain point, descendre ne rend plus rien —
+ * l'orange plafonne à 82 et REDESCEND, le gris du premier cran n'a jamais rien
+ * à gagner. *Une clarté qu'on dépense doit rendre de la couleur*, sinon on
+ * assombrit une plaque pour rien.
+ */
+const GAIN_PLAQUE = 0.15
 
 /** La luminance de COMPOSITION — celle du ClipColor, pas celle du WCAG. */
 function lumDeComposition(t: number[]): number {
   return 0.3 * t[0]! + 0.59 * t[1]! + 0.11 * t[2]!
+}
+
+/** Les trois canaux d'un `#rrggbb`, en [0,1]. */
+function canaux(c: string): number[] {
+  return [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16) / 255)
+}
+
+/** sRGB -> linéaire, le seul endroit où la courbe de l'écran compte. */
+function lineaire(x: number): number {
+  return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)
+}
+
+/**
+ * LA LUMINANCE RELATIVE — celle du contraste, et c'est elle qui borne.
+ *
+ * *À ne pas confondre avec la luminance de composition juste au-dessus* : la
+ * première dit ce que l'oeil reçoit (donc la lisibilité d'un texte), la seconde
+ * ce que le ClipColor conserve (donc la teinte). **Les deux sont nécessaires et
+ * aucune ne remplace l'autre.**
+ */
+function lumRelative(c: string): number {
+  const t = canaux(c).map(lineaire)
+  return 0.2126 * t[0]! + 0.7152 * t[1]! + 0.0722 * t[2]!
+}
+
+/**
+ * LE CHROMA CIELAB D'UNE COULEUR — **et c'est le seul critère qui dise ce que
+ * l'oeil lit.**
+ *
+ * Le chroma linéaire ne le dit pas : *le vert et l'orange ont le même écart au
+ * gris pour 30 % de couleur d'écart*, et le bleu en a plus que le violet tout
+ * en paraissant moins coloré. Le vert pèse 0,59 dans la luminance quand le bleu
+ * pèse 0,11, donc c'est le seul qui garde sa couleur posé haut en clarté.
+ *
+ * **Il se calcule à l'exécution, et ça ne coûte rien** : cinq crans, mémorisés
+ * dans `PLAQUES`, une poignée de pas chacun. *Un critère juste calculé cinq
+ * fois par session vaut mieux qu'un proxy qui tient dans une formule fermée.*
+ */
+function chromaDeLab(c: string): number {
+  const t = canaux(c).map(lineaire)
+  const f = (v: number): number => (v > 216 / 24389 ? Math.cbrt(v) : (841 / 108) * v + 4 / 29)
+  const x = f((0.4124 * t[0]! + 0.3576 * t[1]! + 0.1805 * t[2]!) / 0.95047)
+  const y = f(0.2126 * t[0]! + 0.7152 * t[1]! + 0.0722 * t[2]!)
+  const z = f((0.0193 * t[0]! + 0.1192 * t[1]! + 0.9505 * t[2]!) / 1.08883)
+  return Math.hypot(500 * (x - y), 200 * (y - z))
 }
 
 /**
@@ -962,16 +1078,54 @@ function teinteDuMetal(metal: string, pigment: number): { pur: number[]; sat: nu
 /**
  * DE COMBIEN CE CRAN DOIT DESCENDRE POUR QUE SA COULEUR SE VOIE.
  *
- * Le ClipColor écrase la teinte dès qu'un canal dépasse 1, c'est-à-dire tant
- * que `L + hi > 1` : la clarté juste suffisante est donc `1 − hi`, **et c'est
- * une formule fermée.** Un cran qui ne sature pas (le gris du premier barreau)
- * rend zéro — *il n'a rien à gagner* — et un cran qui en demanderait trop
- * s'arrête au plancher du texte.
+ * **DEUX DESCENTES, ET ELLES NE PAIENT PAS LA MÊME CHOSE.** La première retire
+ * ce que le ClipColor rongeait, la seconde ACHÈTE de la couleur :
+ *
+ * - *le clip écrase la teinte tant que `L + hi > 1`*, donc la clarté juste
+ *   suffisante est `1 − hi` — **une formule fermée**, et elle rend ZÉRO pour un
+ *   cran qui ne sature pas. **C'est elle qui tient le gris du premier barreau
+ *   immobile** : il ne sature pas, donc le clip ne le ronge pas, donc il n'a
+ *   rien à récupérer. *Le bas d'une échelle ne doit pas parler*, et c'est
+ *   l'arithmétique qui le dit, pas une exception écrite à la main ;
+ * - **au-delà, il n'y a plus de formule** : le chroma perçu ne se déduit pas de
+ *   la luminance, il se MESURE (`chromaDeLab`). On descend donc par petits pas,
+ *   et trois choses peuvent arrêter la course — *chacune pour sa raison* : la
+ *   cible du vert (`CHROMA_PLAQUE`), le rendement nul (`GAIN_PLAQUE`), et le
+ *   contraste du mot du type (`PLANCHER_PLAQUE`).
+ *
+ * ***C'EST LA SECONDE QUI RÉPOND À KEKO***, et la mesure dit pourquoi la
+ * première ne pouvait pas : à son terme, le bleu n'était qu'à 34 de C\*ab
+ * contre 74 au vert — *le clip avait cessé de le ronger bien avant qu'il ait
+ * une couleur.*
+ *
+ * **Le pas de 0,005 est un pas de MESURE**, pas un réglage : cinq crans fois
+ * une soixantaine de pas, mémorisés dans `PLAQUES`, et rien ne le refait de la
+ * session.
  */
 function descenteDeLaPlaque(metal: string): number {
   const { pur, sat } = teinteDuMetal(metal, PIGMENT_PLAQUE[1])
+  // CE CRAN SATURE-T-IL ? Le clip mord tant que `L + hi > 1`, donc un cran dont
+  // le `hi` ne porte même pas jusqu'à la luminance de la plaque n'est pas
+  // rongé : *il n'a rien à récupérer, et aucune clarté dépensée ne lui rendra
+  // de la couleur.* **C'est ce qui tient le gris du premier barreau immobile**,
+  // par l'arithmétique et non par une exception écrite à la main.
   const ecartHaut = (Math.max(...pur) - lumDeComposition(pur)) * sat
-  return Math.max(0, Math.min(DESCENTE_PLAQUE, LUM_PLAQUE[1] - (1 - ecartHaut)))
+  if (LUM_PLAQUE[1]! - (1 - ecartHaut) <= 0) return 0
+  // CE QUE LE TEXTE SUPPORTE, en luminance relative de la PASTILLE — le couple
+  // le plus fragile de la carte. *On compare des contrastes, donc on borne la
+  // grandeur qui les porte*, une fois pour toutes plutôt qu'à chaque pas.
+  const plancher = PLANCHER_PLAQUE * (lumRelative(TYPE_BULLE) + 0.05) - 0.05
+  let d = 0
+  let chroma = chromaDeLab(tonDeLaPlaque(metal, PIGMENT_PLAQUE[1], LUM_PLAQUE[1]!))
+  while (chroma < CHROMA_PLAQUE) {
+    const essai = d + 0.005
+    if (lumRelative(tonDeLaPlaque(metal, PIGMENT_PLAQUE[2]!, LUM_PLAQUE[2]! - essai)) < plancher) break
+    const rendu = chromaDeLab(tonDeLaPlaque(metal, PIGMENT_PLAQUE[1]!, LUM_PLAQUE[1]! - essai))
+    if (rendu - chroma < GAIN_PLAQUE) break
+    d = essai
+    chroma = rendu
+  }
+  return d
 }
 
 /**
@@ -4097,7 +4251,7 @@ function peindreTextes(
    * rien : il salit.** La règle est déjà écrite pour le coeur des armures, où
    * le cerne mangeait un tiers de la figure sans rien détacher.
    */
-  ctx.fillStyle = bulle ? '#19242e' : '#f7ead0'
+  ctx.fillStyle = bulle ? NOM_BULLE : '#f7ead0'
   ctx.shadowColor = bulle ? 'transparent' : '#14181a'
   ctx.shadowOffsetY = bulle ? 0 : 0.5 * U
   ctx.shadowBlur = bulle ? 0 : 3 * U
@@ -4163,12 +4317,12 @@ function peindreTextes(
   // se fait à la taille choisie, et s'il coûte une ligne de trop on descend
   // d'un cran : c'est exactement ce que `cran` fait pour un effet long.
   const { taille, lignes } = corpsDuCartouche(ctx, carte.effet, LARGE * 0.86, famille)
-  // LE SOUS-TEXTE FONCE AVEC CHAQUE CRAN DE COULEUR. La plaque descend de 0,93
-  // à 0,730 de luminance au plus bas pour que la teinte se voie, et à `#5d6e80`
-  // le cartouche serait tombé à 2,8 de contraste sur le pire cran — *sous le
-  // plancher de 4,5 que le gris d'avant tenait tout juste.* Il tient **6,1 au
-  // pire**, donc mieux qu'avant partout.
-  ctx.fillStyle = bulle ? '#283644' : '#f1e6cf'
+  // LE SOUS-TEXTE FONCE AVEC CHAQUE CRAN DE COULEUR, et c'est la troisième
+  // passe : la plaque descend maintenant jusqu'à 0,485 de luminance sur le bleu
+  // pour que la teinte se voie. Il tient **5,2 au pire** et 12,8 sur le vert,
+  // donc mieux qu'avant partout — *le pigment se paie sur le texte, et il le
+  // paie bien.*
+  ctx.fillStyle = bulle ? CARTOUCHE_BULLE : '#f1e6cf'
   ctx.shadowColor = bulle ? 'transparent' : '#000000aa'
   ctx.shadowOffsetY = bulle ? 0 : 0.4 * U
   ctx.shadowBlur = bulle ? 0 : 0.8 * U
@@ -4240,12 +4394,12 @@ function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre, bulle 
     ctx.beginPath()
     ctx.roundRect(LARGE / 2 - l / 2, y - h / 2, l, h, h / 2)
     ctx.fill()
-    // LE MOT FONCE AVEC ELLE, ET C'EST LUI QUI BORNE LA COULEUR. Il n'avait que
-    // 3,4 de contraste sur le gris d'avant — déjà sous le plancher — et c'est
-    // le texte qui tombe le plus vite quand la plaque s'assombrit : *c'est lui
-    // qui fixe `DESCENTE_PLAQUE`, pas le cartouche.* Il tient **4,77 au pire**,
-    // exactement ce qu'il avait avant la descente, et 7,7 sur le vert.
-    ctx.fillStyle = '#303e4c'
+    // LE MOT FONCE AVEC ELLE, ET C'EST LUI QUI BORNE LA COULEUR : il est le
+    // plus petit texte de la carte posé sur son fond le plus sombre, donc c'est
+    // le couple qui tombe le premier quand la plaque s'assombrit. *C'est lui
+    // que `PLANCHER_PLAQUE` protège, pas le cartouche.* Il tient **5,1 au
+    // pire** et 13,0 sur le vert.
+    ctx.fillStyle = TYPE_BULLE
     ctx.textAlign = 'left'
     ctx.fillText(mot, LARGE / 2 - encre / 2, y)
     ctx.textAlign = 'center'
@@ -4369,6 +4523,241 @@ function dessinDuDos(): Promise<HTMLImageElement | null> {
  * ligne n'a bougé ici.* Un calage mesuré n'est pas une rustine pour un fichier,
  * c'est ce qui permet d'en changer.
  */
+/**
+ * `?dos=gabarit` rend le dos du jeu d'extraction aux cartes d'emoji.
+ *
+ * *Ce qui a servi à choisir doit rester ouvrable, même une fois le choix fait* —
+ * et c'est le seul moyen de revoir côte à côte ce que le dos neuf remplace.
+ */
+const PISTE_DOS: 'emoji' | 'gabarit' =
+  new URLSearchParams(location.search).get('dos') === 'gabarit' ? 'gabarit' : 'emoji'
+
+/** Le dos que cette carte-ci porte — **le même critère que son contour.** */
+export function dosDe(carte: CarteAPeindre): 'emoji' | 'gabarit' {
+  return carte.contour === 'simple' && PISTE_DOS === 'emoji' ? 'emoji' : 'gabarit'
+}
+
+/**
+ * LE BLEU DU DOS, et c'est la seule couleur du jeu qui ne vienne de rien.
+ *
+ * *Les cinq crans sont pris par la rareté et les quatre ciels par la famille* —
+ * **or le dos ne dit ni l'une ni l'autre** : il lui fallait donc une teinte à
+ * lui, qui ne puisse se confondre avec aucun signal. Le bleu franc des
+ * applications est le seul endroit libre de l'écran, et c'est aussi celui que
+ * l'univers du mode réclame.
+ *
+ * Elle passe par `peindreDecor`, donc **elle hérite du dégradé, du vignettage
+ * et du dither de la face** : *le dos est la même carte vue de l'autre côté, il
+ * n'a pas à être fait d'une autre matière.*
+ */
+const DOS_BLEU: readonly [number, number, number] = [44, 96, 214]
+
+/** Le crème du liseré et du découpage — celui des textes du gabarit. */
+const DOS_CREME = '#fffaf0'
+
+/**
+ * LE PAS DU MOTIF, en centièmes de largeur — **et c'est un CLAVIER.**
+ *
+ * Un emoji vient d'un clavier : c'est l'argument qui a donné sa plaque claire à
+ * la carte et sa pastille au type, et le dos le dit par son motif. Des carrés
+ * très arrondis en quinconce, à peine plus clairs que le fond : *ça ne se
+ * regarde pas, ça se reconnaît* — et c'est tout ce qu'un fond de dos doit
+ * faire.
+ */
+const DOS_PAS = 11
+const DOS_TOUCHE = 7.2
+
+/**
+ * **LE DOS DE LA COLLECTION D'EMOJI.**
+ *
+ * Keko : « je voudrais que tu me fasses un dos de carte thématique (celui-là
+ * est obsolète et hors thème) ». *Et il l'était* : le dos du jeu d'extraction
+ * est une ferronnerie — cadre de laiton, losange gravé, pierre sombre —
+ * c'est-à-dire exactement ce que le contour simple et la plaque claire ont
+ * retiré de la face. **Une carte ne peut pas parler deux langues selon le côté
+ * qu'on regarde.**
+ *
+ * Quatre choses le portent, et chacune fait un travail que les autres ne font
+ * pas :
+ *
+ * - **LE STICKER**, au centre : un disque jaune cerné de crème épais, avec son
+ *   ombre portée. *C'est le découpage qui fait le sticker*, pas le dessin
+ *   dedans — et un sticker est ce qu'un emoji EST sur un téléphone ;
+ * - **LE MOTIF DE TOUCHES** (`DOS_PAS`), qui dit d'où la carte sort ;
+ * - **LES CINQ COULEURS DU JEU** semées dans ce motif, à peine. *Elles y sont
+ *   TOUTES, donc elles ne disent rien d'une carte en particulier* — et
+ *   ensemble elles disent la collection. On n'invente aucune teinte : ce sont
+ *   les tons moyens de `METAUX`, les mêmes que les cadres ;
+ * - **LE LISERÉ CRÈME**, à la même épaisseur que le contour de la face :
+ *   *c'est ce qui en fait le même objet vu de l'autre côté*, et la seule chose
+ *   que les deux faces partagent.
+ *
+ * ***ET IL N'EST PAS SYMÉTRIQUE À 180°, ce qui est une règle que le dos du
+ * gabarit tenait.*** Elle existait parce qu'« un dos qui aurait un haut et un
+ * bas se lirait à l'envers une fois sur deux » — *et rien dans ce jeu ne montre
+ * un dos à l'envers* : la culbute tourne sur l'axe vertical, le paquet pose ses
+ * cinq cartes droites. **Un dos qui ne dirait pas l'emoji ne serait pas
+ * thématique**, et c'est ce que Keko a demandé ; la symétrie gauche-droite, qui
+ * est celle qu'on lit, est tenue.
+ *
+ * *Un smiley dit le GENRE et non le contenu* — un drapeau et un visage sont
+ * tous deux des emoji — exactement comme une pokéball ne dit pas quel Pokémon
+ * est sous la carte.
+ */
+function peindreDosEmoji(rayon: number): HTMLCanvasElement {
+  const canvas = document.createElement('canvas')
+  canvas.width = LARGE
+  canvas.height = HAUT
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) return canvas
+
+  // LE LISERÉ D'ABORD, LE FOND DEDANS — la découpe de la face à l'identique :
+  // même rectangle, même rayon, et *le rayon se compte sur le bord EXTÉRIEUR*
+  // donc il décroît d'autant qu'on rentre.
+  ctx.beginPath()
+  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * rayon)
+  ctx.clip()
+  const bord = ctx.createLinearGradient(0, 0, LARGE * 0.5, HAUT)
+  bord.addColorStop(0, DOS_CREME)
+  bord.addColorStop(0.55, '#f0dfc0')
+  bord.addColorStop(1, '#dcc8a6')
+  ctx.fillStyle = bord
+  ctx.fillRect(0, 0, LARGE, HAUT)
+
+  const marge = CONTOURS[PISTE_CONTOUR] * U
+  ctx.save()
+  ctx.beginPath()
+  ctx.roundRect(
+    marge,
+    marge,
+    LARGE - marge * 2,
+    HAUT - marge * 2,
+    Math.max(0, LARGE * rayon - marge),
+  )
+  ctx.clip()
+  peindreDecor(ctx, undefined, LARGE, DOS_BLEU)
+  peindreTouches(ctx)
+
+  // LE HALO DU STICKER : de la lumière tombée sur le fond, qui le détache du
+  // motif sans lui donner de bord. *Le flou est dans la matière*, la règle du
+  // contour des cartes et du halo des créatures.
+  const cx = LARGE / 2
+  const cy = HAUT / 2
+  const r = 25 * U
+  const halo = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, r * 2.1)
+  halo.addColorStop(0, '#ffffff2e')
+  halo.addColorStop(1, '#ffffff00')
+  ctx.fillStyle = halo
+  ctx.fillRect(0, 0, LARGE, HAUT)
+  ctx.restore()
+
+  peindreSticker(ctx, cx, cy, r)
+  return canvas
+}
+
+/**
+ * LE MOTIF DE TOUCHES — une grille en quinconce, centrée sur la carte.
+ *
+ * **Elle se CENTRE au lieu de partir d'un coin** : une grille calée en haut à
+ * gauche laisse une rangée coupée d'un côté et pas de l'autre, *et ça se lit
+ * comme un motif mal posé.*
+ *
+ * **Et les cinq couleurs tombent par une fonction de la PLACE**, pas par un
+ * tirage : *un semis qui se réarrangerait d'une peinture à l'autre ne serait
+ * plus une matière.* Aucun hasard n'est consommé — il n'y a rien à rejouer.
+ */
+function peindreTouches(ctx: CanvasRenderingContext2D): void {
+  const pas = DOS_PAS * U
+  const cote = DOS_TOUCHE * U
+  const teintes = ['blanc', 'vert', 'bleu', 'violet', 'orange'].map((c) => METAUX[c]![2]!)
+  const colonnes = Math.ceil(LARGE / pas) + 2
+  const lignes = Math.ceil(HAUT / pas) + 2
+  for (let j = -1; j < lignes; j++) {
+    for (let i = -1; i < colonnes; i++) {
+      // LE QUINCONCE : une demi-case de décalage une ligne sur deux. *Une
+      // grille droite se lit comme un tableau, un quinconce comme un semis.*
+      const x = LARGE / 2 + (i - colonnes / 2 + (j % 2 === 0 ? 0 : 0.5)) * pas
+      const y = HAUT / 2 + (j - lignes / 2) * pas
+      const k = (i * 7 + j * 11 + 34) % 17
+      const teinte = k < 5 ? teintes[k] : undefined
+      // LES COULEURS S'AJOUTENT, ELLES NE SE POSENT PAS. En peinture normale,
+      // un vert à 16 % sur un bleu franc ne donne pas un vert : il donne un
+      // bleu sale — *une couleur peu opaque posée sur une autre se moyenne avec
+      // elle.* En `lighter` elle s'ajoute, donc elle ÉCLAIRE : c'est la
+      // différence entre une tache et un confetti.
+      ctx.globalCompositeOperation = teinte === undefined ? 'source-over' : 'lighter'
+      ctx.fillStyle = teinte ?? '#ffffff'
+      ctx.globalAlpha = teinte === undefined ? 0.055 : 0.3
+      ctx.beginPath()
+      ctx.roundRect(x - cote / 2, y - cote / 2, cote, cote, cote * 0.32)
+      ctx.fill()
+    }
+  }
+  ctx.globalAlpha = 1
+  ctx.globalCompositeOperation = 'source-over'
+}
+
+/**
+ * LE STICKER : un disque jaune DÉCOUPÉ, pas un disque posé.
+ *
+ * *Ce qui fait le sticker est le cerne crème et l'ombre portée* — sans eux, le
+ * même disque se lit comme un trou dans le fond. **C'est la règle de la plaque
+ * claire, prise par le même bout** : elle porte son ombre pour dire qu'elle est
+ * POSÉE sur l'image et non découpée dedans.
+ *
+ * Le visage est en aplats nets : *un emoji n'accroche pas la lumière*, et à la
+ * taille d'une carte de paquet un détail de plus tourne en bouillie. La seule
+ * lumière est celle du haut-gauche, que tout le jeu respecte.
+ */
+function peindreSticker(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number): void {
+  const cerne = 4.2 * U
+  ctx.save()
+  ctx.shadowColor = '#00000059'
+  ctx.shadowOffsetY = 1.4 * U
+  ctx.shadowBlur = 3.6 * U
+  ctx.fillStyle = DOS_CREME
+  ctx.beginPath()
+  ctx.arc(cx, cy, r + cerne, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // LE DISQUE : clair en haut à gauche, comme toute surface de ce jeu.
+  const jaune = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.45, r * 0.1, cx, cy, r * 1.15)
+  jaune.addColorStop(0, '#ffe878')
+  jaune.addColorStop(0.55, '#ffc63f')
+  jaune.addColorStop(1, '#f09a1e')
+  ctx.fillStyle = jaune
+  ctx.beginPath()
+  ctx.arc(cx, cy, r, 0, Math.PI * 2)
+  ctx.fill()
+
+  // LE REFLET, une ellipse inclinée en haut à gauche : *une bille de lumière
+  // dit la rondeur mieux qu'un dégradé seul.*
+  ctx.save()
+  ctx.translate(cx - r * 0.38, cy - r * 0.48)
+  ctx.rotate(-0.5)
+  ctx.fillStyle = '#ffffff3d'
+  ctx.beginPath()
+  ctx.ellipse(0, 0, r * 0.38, r * 0.2, 0, 0, Math.PI * 2)
+  ctx.fill()
+  ctx.restore()
+
+  // LE VISAGE : deux yeux et une bouche, et rien de plus.
+  const encre = '#43301a'
+  ctx.fillStyle = encre
+  for (const s of [-1, 1]) {
+    ctx.beginPath()
+    ctx.ellipse(cx + s * r * 0.36, cy - r * 0.22, r * 0.115, r * 0.17, 0, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  ctx.strokeStyle = encre
+  ctx.lineWidth = r * 0.13
+  ctx.lineCap = 'round'
+  ctx.beginPath()
+  ctx.arc(cx, cy + r * 0.04, r * 0.52, Math.PI * 0.18, Math.PI * 0.82)
+  ctx.stroke()
+}
+
 async function peindreDos(rayon: number): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
   canvas.width = LARGE
@@ -4408,25 +4797,36 @@ async function peindreDos(rayon: number): Promise<HTMLCanvasElement> {
  */
 
 /**
- * UN DOS PAR RAYON DE COIN, et il n'y en a que deux.
+ * UN DOS PAR RAYON DE COIN ET PAR PISTE, et il n'y en a que deux.
  *
  * *Le dos ne dit rien de ce qu'est la carte* — il ne porte ni rareté ni nom —
  * **mais il doit porter sa FORME** : un dos plus carré que son corps extrudé
- * dépasserait de sa silhouette aux coins. D'où la clé, qui est le rayon
- * lui-même.
+ * dépasserait de sa silhouette aux coins. D'où le rayon dans la clé.
+ *
+ * **ET LA PISTE AVEC, depuis qu'il y en a deux.** Les deux collections ne
+ * parlent pas la même langue — l'emoji a son sticker, le gabarit sa
+ * ferronnerie — et *sans elle, le premier mode chargé imposerait son dos à
+ * l'autre*, puisque les deux partagent le rayon dès qu'un mode change de
+ * contour.
  */
-const DOS = new Map<number, Promise<THREE.CanvasTexture>>()
+const DOS = new Map<string, Promise<THREE.CanvasTexture>>()
 
-export function textureDuDos(rayon = RAYON_CARTE): Promise<THREE.CanvasTexture> {
-  let dos = DOS.get(rayon)
+export function textureDuDos(
+  rayon = RAYON_CARTE,
+  piste: 'emoji' | 'gabarit' = 'gabarit',
+): Promise<THREE.CanvasTexture> {
+  const cle = `${piste}|${rayon}`
+  let dos = DOS.get(cle)
   if (dos === undefined) {
-    dos = peindreDos(rayon).then((canvas) => {
-      const texture = new THREE.CanvasTexture(canvas)
-      texture.anisotropy = 8
-      texture.colorSpace = THREE.SRGBColorSpace
-      return texture
-    })
-    DOS.set(rayon, dos)
+    dos = (piste === 'emoji' ? Promise.resolve(peindreDosEmoji(rayon)) : peindreDos(rayon)).then(
+      (canvas) => {
+        const texture = new THREE.CanvasTexture(canvas)
+        texture.anisotropy = 8
+        texture.colorSpace = THREE.SRGBColorSpace
+        return texture
+      },
+    )
+    DOS.set(cle, dos)
   }
   return dos
 }

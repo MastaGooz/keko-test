@@ -1051,11 +1051,92 @@ Trois choses à ne pas défaire :
   *deux endroits qui décriraient la même teinte se désaccorderaient au premier
   réglage.*
 
-**CE QUI RESTE UN MUR, ET IL EST PHYSIQUE** : même au plancher, le bleu reste à
-34 de C\*ab contre 68 au vert. Pour l'égaler il faudrait descendre à 0,48 de
-luminance — *une plaque bleu franc, qui n'est plus « une zone de texte à fond
-clair »* et sur laquelle aucun texte sombre ne passe. **Une teinte sombre ne
-peut pas être aussi colorée qu'un vert à clarté élevée.**
+**CE QUI RESTAIT UN MUR** : même au terme de cette descente, le bleu n'était
+qu'à 34 de C\*ab contre 74 au vert — et *c'est exactement ce que Keko a repris
+ensuite.* Voir la section qui suit : **le mur n'était pas où je le croyais.**
+
+#### LE CLIP N'EST PAS LA BONNE CIBLE : C'EST LE CHROMA DU VERT
+
+Keko, après la descente : **« je trouve les couleurs des encadrés de textes trop
+fades (sauf le vert qui est bien) »**.
+
+***ET IL AVAIT RAISON POUR UNE RAISON QUI CONDAMNE LA MÉTHODE ET PAS SON
+RÉGLAGE*** : descendre « jusqu'à ce que le clip cesse de ronger » répond à la
+question « qu'est-ce qui m'est repris ? », pas à « est-ce que c'est coloré ? ».
+**Le bleu en sortait à 34 de C\*ab contre 74 au vert** : *le clip avait cessé de
+le ronger bien avant qu'il ait une couleur.* « Ne plus être écrasé » n'est pas
+« être coloré ».
+
+**LA CIBLE EST DONC LE VERT LUI-MÊME**, parce que c'est le seul cran que Keko
+ait validé : chaque teinte descend jusqu'à **74 de C\*ab** (`CHROMA_PLAQUE`),
+mesuré sur lui. *On ne choisit pas un niveau, on relève celui qui a été
+accepté* — et c'est un PLAFOND : un cran qui l'atteint s'arrête là, une plaque
+plus colorée que celle qu'il a validée sortirait du registre sans qu'il l'ait
+demandé.
+
+**ET IL N'Y A PLUS DE FORMULE FERMÉE, parce que le chroma perçu ne se déduit pas
+de la luminance.** On descend par pas de 0,005 et on MESURE (`chromaDeLab`).
+*Un critère juste calculé cinq fois par session vaut mieux qu'un proxy qui tient
+dans une formule fermée* — c'est mémorisé par cran, donc rien ne le refait.
+
+**TROIS CHOSES ARRÊTENT LA COURSE, ET CHACUNE A SA RAISON** :
+
+| | ce qu'elle protège | qui elle arrête |
+|---|---|---|
+| **la cible** (`CHROMA_PLAQUE`) | le registre « fond clair » | le violet, l'orange, le vert |
+| **le rendement** (`GAIN_PLAQUE`) | la clarté qu'on dépense pour rien | **le bleu**, et le blanc avant son premier pas |
+| **le contraste** (`PLANCHER_PLAQUE`) | le mot du type | personne, aujourd'hui |
+
+Mesuré sur la texture peinte :
+
+| cran | descente | bas | C\*ab | avant | gain |
+|---|---|---|---|---|---|
+| blanc | 0,000 | `#c2cdd7` | 6,5 | 6,5 | **inchangé au pixel** |
+| vert | 0,020 | `#67ff94` | 74,1 | 74,0 | **inchangé** (1/255) |
+| orange | 0,110 | `#ff9e2e` | 74,1 | 63,8 | +16 % |
+| violet | 0,190 | `#b17cff` | 74,4 | 50,3 | **+48 %** |
+| bleu | 0,310 | `#1f92ff` | 63,1 | 34,3 | **+84 %** |
+
+**LE BLANC NE BOUGE PAS D'UN PIXEL, et toujours sans exception écrite à la
+main** : il ne sature pas, donc le clip ne le rongeait pas, donc la première
+condition le renvoie à zéro avant même d'essayer. *Le bas d'une échelle ne doit
+pas parler*, et c'est l'arithmétique qui le dit.
+
+**LE VERT NON PLUS**, à un point de 255 près : il atteint la cible au deuxième
+pas, puisque c'est lui qui la porte. *C'était la condition de la demande* — « le
+vert est bien ».
+
+#### LE PLANCHER EST UN CONTRASTE, PLUS UNE CLARTÉ
+
+`DESCENTE_PLAQUE` bornait la descente par un chiffre de luminance (0,065),
+*donc par un proxy* : à teinte égale, deux plaques de même luminance de
+composition ne donnent pas le même contraste, puisque l'oeil ne pèse pas les
+trois canaux comme le ClipColor. **La borne est maintenant le contraste
+lui-même** (`PLANCHER_PLAQUE`), sur le couple le plus fragile — *le mot du type
+sur sa pastille*, le plus petit texte de la carte posé sur son fond le plus
+sombre.
+
+**5 et non 4,5**, qui est le plancher AA : *un texte posé pile sur un plancher
+n'a aucune marge le jour où la police change.*
+
+**ET LES TROIS ENCRES FONCENT, pour la troisième fois.** C'est le prix annoncé —
+*renforcer la teinte demande de foncer les textes* — et il est gratuit pour la
+troisième fois : les trois finissent **mieux lotis qu'avant sur les cinq
+crans.**
+
+| | avant | après | au pire cran |
+|---|---|---|---|
+| le nom | `#19242e` | `#111920` | **5,6** (4,96) |
+| le cartouche | `#283644` | `#16202a` | **5,2** (3,89) |
+| le mot du type | `#303e4c` | `#0d141b` | **5,1** (4,54) |
+
+*(Entre parenthèses, ce que les encres d'avant auraient donné sur les plaques
+d'aujourd'hui : le cartouche serait tombé à 3,9, sous le plancher.)*
+
+**CE QUI RESTE UN MUR, ET IL EST PHYSIQUE : le bleu plafonne à 63.** Au-delà de
+0,31 de descente, la clarté qu'on dépense ne rend plus de couleur du tout —
+*c'est le rendement qui l'arrête, pas le texte.* **Une teinte qui pèse 0,11 dans
+la luminance ne peut pas être aussi colorée qu'un vert qui en pèse 0,59.**
 
 #### LA PASTILLE EST DE LA PLAQUE, PAS UNE PIÈCE POSÉE DESSUS
 
@@ -1090,13 +1171,16 @@ part parce qu'une couleur peinte et la lumière qu'elle renvoie sont deux faits.
   la proportion d'une carte de collection moderne, et elle se règle d'un chiffre ;
 - **le rayon des coins** (5,5 %), **l'épaisseur du cadre** (2,7 U) et **l'air
   autour de l'emoji** (7 U), qui décide aussi de sa taille ;
-- **la force de la teinte** (`PIGMENT_PLAQUE`, 1,4 / 1,7), sa clarté
-  (`LUM_PLAQUE`, 0,895 / 0,795 / 0,752) et surtout **la descente**
-  (`DESCENTE_PLAQUE`, 0,065) : *le pigment ne fait plus rien aux teintes qui
-  saturent*, donc **c'est la descente, et elle seule, qui donne de la couleur
-  au bleu, au violet et à l'orange.** Elle se paie sur le mot du type, qui est
-  à 4,77 pour un plancher de 4,5 — un cran de plus demanderait de foncer les
-  textes une quatrième fois ;
+- **le niveau de couleur** (`CHROMA_PLAQUE`, 74) : *c'est le chroma du VERT*,
+  le seul cran que Keko ait validé, et c'est lui qui décide de combien les
+  quatre autres descendent. **À remesurer si le vert change.** La force de la
+  teinte (`PIGMENT_PLAQUE`) et sa clarté (`LUM_PLAQUE`) ne font plus rien aux
+  teintes qui saturent : *c'est la descente, et elle seule, qui donne de la
+  couleur au bleu, au violet et à l'orange* ;
+- **le bleu est à 63 pour une cible à 74**, et aucun réglage ne l'y amènera :
+  descendre plus ne lui rend plus de couleur. *Le faire tomber au niveau du
+  vert demanderait une plaque bleu franc à 0,48 de clarté*, sur laquelle plus
+  aucun texte sombre ne passe ;
 - `?texte=sombre` rend le dégradé noir — *ce qui a servi à choisir doit rester
   ouvrable.*
 
@@ -1112,6 +1196,83 @@ part parce qu'une couleur peinte et la lumière qu'elle renvoie sont deux faits.
   mode emoji seulement ». *Rien n'empêche de les leur donner* : le drapeau vit
   sur `CarteAPeindre`, qui est commun aux cinq modes.
 
+### LE DOS DE CARTE : UN STICKER SUR UN CLAVIER
+
+Keko : **« je voudrais que tu me fasses un dos de carte thématique (celui-là est
+obsolète et hors thème) »**.
+
+*Et il l'était* : le dos du jeu d'extraction est une **ferronnerie** — cadre de
+laiton, losange gravé, pierre sombre — c'est-à-dire exactement ce que le contour
+simple et la plaque claire ont retiré de la face. **Une carte ne peut pas parler
+deux langues selon le côté qu'on regarde**, et c'est le dernier endroit du mode
+qui parlait encore l'autre.
+
+Il est **peint au canvas**, comme tout ce que Keko n'a pas dessiné.
+
+#### QUATRE CHOSES LE PORTENT, ET AUCUNE NE DOUBLE UNE AUTRE
+
+- **LE STICKER**, au centre : un disque jaune cerné de crème épais, avec son
+  ombre portée. ***C'est le DÉCOUPAGE qui fait le sticker***, pas le dessin
+  dedans — sans le cerne et l'ombre, le même disque se lit comme un trou dans le
+  fond. C'est la règle de la plaque claire, prise par le même bout : *elle porte
+  son ombre pour dire qu'elle est POSÉE sur l'image et non découpée dedans.* Et
+  un sticker est ce qu'un emoji EST sur un téléphone ;
+- **LE MOTIF DE TOUCHES** : des carrés très arrondis en quinconce, à peine plus
+  clairs que le fond. **Un emoji vient d'un CLAVIER** — c'est l'argument qui a
+  donné sa plaque claire à la carte et sa pastille au type — et le dos le dit
+  par son motif. *Ça ne se regarde pas, ça se reconnaît* ;
+- **LES CINQ COULEURS DU JEU** semées dedans. *Elles y sont TOUTES, donc elles
+  ne disent rien d'une carte en particulier* — et ensemble elles disent la
+  collection. On n'invente aucune teinte : ce sont les tons moyens de `METAUX`,
+  les mêmes que les cadres ;
+- **LE LISERÉ CRÈME**, à l'épaisseur exacte du contour de la face : *c'est ce
+  qui en fait le même objet vu de l'autre côté.*
+
+#### LE BLEU EST LA SEULE COULEUR DU JEU QUI NE VIENNE DE RIEN
+
+*Les cinq crans sont pris par la rareté et les quatre ciels par la famille* —
+**or le dos ne dit ni l'une ni l'autre.** Il lui fallait donc une teinte à lui,
+qui ne puisse se confondre avec aucun signal : le bleu franc des applications
+est le seul endroit libre de l'écran, et c'est aussi celui que l'univers du mode
+réclame.
+
+**Elle passe par `peindreDecor`**, donc elle hérite du dégradé, du vignettage et
+du dither de la face : *le dos est la même carte vue de l'autre côté, il n'a pas
+à être fait d'une autre matière.*
+
+#### LES COULEURS S'AJOUTENT, ELLES NE SE POSENT PAS
+
+Mesuré à l'écran, et c'est ce qui a demandé une seconde passe : **un vert à 16 %
+posé sur un bleu franc ne donne pas un vert, il donne un bleu sale** — *une
+couleur peu opaque posée sur une autre se moyenne avec elle.* En `lighter` elle
+s'AJOUTE, donc elle éclaire : **c'est la différence entre une tache et un
+confetti.**
+
+#### IL N'EST PAS SYMÉTRIQUE À 180°, ET C'ÉTAIT UNE RÈGLE
+
+Le dos du gabarit la tenait — « un dos qui aurait un haut et un bas se lirait à
+l'envers une fois sur deux » — et **rien dans ce jeu ne montre un dos à
+l'envers** : la culbute tourne sur l'axe vertical, le paquet pose ses cinq
+cartes droites. *Un dos qui ne dirait pas l'emoji ne serait pas thématique*, et
+c'est ce que Keko a demandé ; la symétrie gauche-droite, qui est celle qu'on
+lit, est tenue.
+
+***Un smiley dit le GENRE et non le contenu*** — un drapeau et un visage sont
+tous deux des emoji — exactement comme une pokéball ne dit pas quel Pokémon est
+sous la carte.
+
+#### LE MODE EMOJI SEULEMENT, et c'est le CONTOUR qui le dit
+
+`dosDe(carte)` lit `contour === 'simple'`, **le même critère que `rayonDe`** :
+*le dos et le contour sont deux surfaces de la même carte*, donc ils se décident
+ensemble — « une famille se dit en forme ». Vérifié à l'écran : un paquet de
+peintures garde son dos de laiton au pixel.
+
+**Et la piste entre dans la clé du cache**, à côté du rayon : *sans elle, le
+premier mode chargé imposerait son dos à l'autre.*
+
+`?dos=gabarit` rend l'ancien — *ce qui a servi à choisir doit rester ouvrable.*
+
 ### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
 
 - **les 270 drapeaux** sont un groupe à part — ce sont des pays, pas des objets.
@@ -1124,6 +1285,12 @@ part parce qu'une couleur peinte et la lumière qu'elle renvoie sont deux faits.
 - **l'animation est FAITE**, mais son poids est à juger : **411 Ko par emoji
   animé**, soit de l'ordre d'un mégaoctet pour un paquet qui en contient deux.
   *Le Lottie ferait onze kilo-octets*, au prix d'une dépendance ;
+- **LE SACHET PARLE ENCORE LA FERRONNERIE** : rayons orange, filets d'or,
+  petites capitales — *c'est le même reproche que le dos venait de recevoir*,
+  sur le seul objet du mode qui n'a pas changé de langue. Il n'est pas touché
+  parce que Keko n'en a pas parlé, et c'est l'écran qu'on voit en PREMIER ;
+- **le dos** : le bleu, la taille du sticker (50 % de la largeur), la finesse du
+  motif et la force des confettis. *Un dos ne se juge qu'en ouvrant un paquet* ;
 - **le nom long se tronque** : « Volume des enceintes élevé » ne tient pas sur
   une carte. *C'est le comportement de tous les modes* — la taille cède, puis le
   nom se coupe — mais les noms CLDR sont plus longs que des noms propres.
@@ -2099,7 +2266,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&art` | les peintures |
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
-| `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans` | les bancs du gabarit |
+| `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans`, `?dos=gabarit` | les bancs du gabarit |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 

@@ -39,6 +39,7 @@ import {
   textureContour,
   peindreCarte,
   textureDeCarte,
+  dosDe,
   textureDuDos,
   RAYON_CARTE,
   rayonDe,
@@ -1034,7 +1035,7 @@ ${nuanceur.fragmentShader}`
     // prêtent, et une carte remontée la retrouve déjà prête — donc elle ne
     // repasse jamais par son état sombre. Rien n'est libéré ici pour la même
     // raison : elle ne nous appartient pas.
-    void (dos ? textureDuDos(rayon) : textureDeCarte(carte, largeurPx))
+    void (dos ? textureDuDos(rayon, dosDe(carte)) : textureDeCarte(carte, largeurPx))
       .then((texture) => {
         if (!vivant) return
         face.map = texture
@@ -1288,7 +1289,7 @@ ${nuanceur.fragmentShader}`
   useEffect(() => {
     if (culbute === null || culbute === undefined || verso.map !== null) return
     let vivant = true
-    void textureDuDos(rayon)
+    void textureDuDos(rayon, dosDe(carte))
       .then((texture) => {
         if (!vivant) return
         verso.map = texture
