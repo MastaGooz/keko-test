@@ -12,20 +12,29 @@
  */
 import type { CarteAPeindre } from './texture-carte.ts'
 import { NOM_DU_GROUPE, type CarteEmoji, type RareteEmoji } from '../logic/emoji/types.ts'
+import type { Bonus } from '../logic/emoji/tirage.ts'
 
 /**
- * UN CRAN, UN MÉTAL.
+ * UN CRAN, UNE COULEUR — **et c'est la table que Keko a dictée.**
+ *
+ * « commun, peu commun, rare, épique, légendaire (blanc, vert, bleu, violet,
+ * orange) », puis « le mode emoji seulement ». *Les quatre autres modes gardent
+ * les métaux*, donc les deux échelles cohabitent dans `METAUX` — et c'est
+ * précisément pourquoi les couleurs y sont nommées par leur COULEUR : trois des
+ * cinq crans portent le même nom qu'un métal (`rare`, `epique`, `legendaire`),
+ * donc les nommer par leur cran les aurait fait se recouvrir en silence.
  *
  * *Il reste une table plutôt qu'un passe-plat* pour la raison déjà écrite dans
  * les deux modes précédents : le mode descente dit `commune` là où un emoji est
  * `commun`. **Deux vocabulaires qui se ressemblent à une lettre près sont
  * précisément ceux qu'il ne faut pas confondre en silence.**
  */
-const METAL: Readonly<Record<RareteEmoji, string>> = {
-  commun: 'commune',
-  rare: 'rare',
-  epique: 'epique',
-  legendaire: 'legendaire',
+const COULEUR: Readonly<Record<RareteEmoji, string>> = {
+  commun: 'blanc',
+  'peu-commun': 'vert',
+  rare: 'bleu',
+  epique: 'violet',
+  legendaire: 'orange',
 }
 
 /** La majuscule du nom se pose au RENDU : CLDR écrit en minuscules. */
@@ -51,7 +60,7 @@ function enTitre(texte: string): string {
  * dès qu'il s'allonge — *une liste qui déborde ne se lit pas mieux parce
  * qu'elle est complète.*
  */
-function mots(c: CarteEmoji): string[] {
+function mots(c: CarteEmoji, bonus?: Bonus): string[] {
   const nom = c.nom.toLowerCase()
   const utiles = c.mots.filter((m) => m.toLowerCase() !== nom && !nom.includes(m.toLowerCase()))
   const lignes: string[] = []
@@ -69,7 +78,21 @@ function mots(c: CarteEmoji): string[] {
    * sait d'eux.
    */
   const place = c.frequence === null ? `Unicode ${c.annee}` : `${c.rang}ᵉ au classement d’usage`
-  lignes.push(c.anime ? `${place} · animé` : place)
+  /**
+   * LES BONUS SE DISENT, parce qu'ils ne se devinent pas tous.
+   *
+   * *L'animé se voit* — la carte bouge — **mais l'holographique est un reflet,
+   * donc il dépend de l'angle** : sur un écran immobile, rien ne dit si c'est
+   * la carte qui irise ou la lumière qui passe. Le cartouche le nomme.
+   *
+   * **Et il ne dit plus « animé » quand il l'est seulement en PUISSANCE.** La
+   * carte annonçait son `animable`, donc un tiers du catalogue promettait un
+   * mouvement que l'exemplaire n'avait pas : *une carte ne dit que ce qu'elle
+   * est, jamais ce qu'elle aurait pu être.*
+   */
+  const bonus_ = [bonus?.holo === true ? 'holographique' : null, bonus?.anime === true ? 'animé' : null]
+    .filter((m): m is string => m !== null)
+  lignes.push(bonus_.length === 0 ? place : `${place} · ${bonus_.join(' · ')}`)
   return lignes
 }
 
@@ -94,19 +117,25 @@ function mots(c: CarteEmoji): string[] {
  * orbe de PA mentirait sur une carte qui ne se joue pas, et neuf ciels
  * disputeraient l'axe de la rareté.
  */
-export function carteDeLEmoji(c: CarteEmoji): CarteAPeindre {
+export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus): CarteAPeindre {
   return {
     id: c.id,
     nom: enTitre(c.nom),
     cout: null,
-    effet: mots(c),
+    effet: mots(c, bonus),
     type: NOM_DU_GROUPE[c.groupe],
-    rarete: METAL[c.rarete],
+    rarete: COULEUR[c.rarete],
+    holo: bonus?.holo,
     emoji: c.emoji,
     // L'ANIMATION EST DEMANDEE PAR LA CARTE, PAS PAR LE PEINTRE : voir
     // `emoji-anime.ts`. *Un emoji sans version animee n'en demande aucune*, et
     // la carte reste statique -- comme sur un navigateur sans `ImageDecoder`.
-    animation: c.anime ? c.id : undefined,
+    //
+    // **ET C'EST LE BONUS QUI DECIDE, plus le catalogue.** Le champ du
+    // catalogue ne dit que ce qui est POSSIBLE (`animable`) : *un emoji animable
+    // dont l'exemplaire n'a pas tire le bonus reste statique*, sinon le bonus
+    // n'en serait pas un -- un tiers du catalogue l'aurait eu d'office.
+    animation: bonus?.anime === true ? c.id : undefined,
     illustrationEntiere: true,
   }
 }

@@ -128,6 +128,26 @@ export type CarteAPeindre = {
    */
   rarete?: string
   /**
+   * HOLOGRAPHIQUE — **un bonus de l'EXEMPLAIRE, pas du modèle.**
+   *
+   * Tranché par Keko : « chaque carte peut également être holographique et/ou
+   * animé (deux bonus de rareté applicables à toutes les raretés) », et ils se
+   * tirent À L'OUVERTURE d'un paquet. *Deux exemplaires du même emoji peuvent
+   * donc différer*, ce qui est tout l'intérêt d'en ouvrir un de plus.
+   *
+   * **IL N'ENTRE PAS DANS LA PEINTURE, DONC PAS DANS `signature()`.** Le foil
+   * vit dans le NUANCEUR — c'est ce qui le rend indépendant de la teinte du
+   * cadre : *une couleur qui dépend de l'angle sous lequel on regarde ne peut
+   * pas être une image peinte*, et c'est la définition même d'un hologramme.
+   * Deux exemplaires, l'un holo et l'autre non, partagent donc leur texture :
+   * **le bonus est gratuit en mémoire.**
+   *
+   * *C'est la seule propriété de `CarteAPeindre` qui ne change rien à ce que
+   * le peintre dessine*, et elle y vit quand même parce que c'est cet objet
+   * qui voyage jusqu'à `Carte3D`.
+   */
+  holo?: boolean
+  /**
    * LA MATIÈRE DE LA PIÈCE QUI L'A PRODUITE — elle choisit le DESSIN.
    *
    * Quatre armures donnent la même Protection, et Keko en a dessiné quatre :
@@ -613,6 +633,79 @@ const METAUX: Record<string, readonly [string, string, string, string, string]> 
   // l'or l'aurait rapproché du laiton clair ; le saturer l'en éloigne.
   epique: ['#fff29a', '#b8820a', '#ffc61f', '#5c3a00', '#ffd45e'],
   legendaire: ['#ffffff', '#a9c8e0', '#e6f3fd', '#7192aa', '#f6fcff'],
+
+  /**
+   * LES CINQ COULEURS DU MODE EMOJI — **blanc, vert, bleu, violet, orange.**
+   *
+   * Tranché par Keko : « on va changer le système de rareté : commun, peu
+   * commun, rare, épique, légendaire (blanc, vert, bleu, violet, orange) »,
+   * puis « le mode emoji seulement » quand je lui ai demandé la portée.
+   *
+   * ***C'est l'échelle que le mode descente avait ÉCARTÉE***, et il faut le
+   * savoir : « je pense que c'est pas hyper cohérent d'utiliser les couleurs
+   * de rareté RPG classiques ». *L'argument d'alors tenait, et il ne porte pas
+   * ici* — une carte de combat EST une plaque de métal, donc un violet posé
+   * dessus restait une couleur de jeu vidéo plaquée sur un objet. **Une carte
+   * d'emoji n'est pas un objet du monde** : elle ne se joue pas, elle se
+   * collectionne, et le code couleur est la langue de ce genre-là.
+   *
+   * **LES CLÉS NOMMENT LA COULEUR, pas le cran**, à la différence des quatre
+   * métaux. *Deux échelles cohabitent dans cette table*, et trois de leurs
+   * crans portent le même nom (`rare`, `epique`, `legendaire`) : les nommer
+   * par leur cran les aurait fait se recouvrir en silence. C'est `carte-emoji`
+   * qui fait la table cran → couleur, telle que Keko l'a dictée.
+   *
+   * **Une seule structure de lumière pour cinq teintes**, comme pour les
+   * métaux : clair en haut à gauche, plateau moyen, nuit dans le coin
+   * bas-droit. *Le cadre garde son relief et son reflet oblique, il ne change
+   * que de couleur* — cinq dégradés écrits chacun de leur côté auraient
+   * divergé au premier réglage.
+   *
+   * Le BLANC est volontairement un gris clair et non un blanc pur : *le bas
+   * d'une échelle ne doit pas se lire comme un métal précieux*, et le blanc
+   * pur est déjà pris par le diamant de l'autre échelle.
+   */
+  blanc: ['#f2f4f6', '#878d94', '#c8ced4', '#42464b', '#e2e6ea'],
+  vert: ['#c9f0cf', '#2f7a42', '#68c182', '#11341c', '#a4e2b1'],
+  bleu: ['#c6e2ff', '#205b9e', '#5a9ede', '#0d2742', '#9fcdfa'],
+  violet: ['#e0ccff', '#5c2f9e', '#9a6ddb', '#2a1346', '#c7a7f5'],
+  orange: ['#ffe0b8', '#a85c12', '#ef9b3a', '#45220a', '#ffc277'],
+}
+
+/**
+ * CE QU'UNE RARETÉ FAIT RAYONNER — rien, l'or, ou l'arc-en-ciel.
+ *
+ * *Les trois comportements se lisaient sur une ÉGALITÉ DE CHAÎNE* —
+ * `rarete === 'legendaire'` pour l'irisation, `=== 'epique'` pour le lustre
+ * doré — et c'était tenable tant qu'il n'y avait qu'une échelle. **Avec les
+ * cinq couleurs, un `legendaire` orange se serait mis à irriser** et un
+ * `epique` violet à reluire comme de l'or, alors que Keko n'a demandé ni l'un
+ * ni l'autre : chez lui l'éclat est un BONUS, pas un cran.
+ *
+ * La table le dit donc à un seul endroit, et les cinq couleurs n'y ont aucune
+ * entrée : *ce qui ne rayonne pas n'a rien à déclarer.*
+ */
+export const ECLAT_DE_LA_RARETE: Readonly<Record<string, 'or' | 'iris'>> = {
+  epique: 'or',
+  legendaire: 'iris',
+}
+
+/**
+ * L'ÉCLAT D'UN EXEMPLAIRE : son bonus d'abord, sa rareté ensuite.
+ *
+ * **L'HOLOGRAPHIQUE EMPRUNTE LE FOIL DU DIAMANT**, et ce n'est pas un recyclage
+ * de commodité : *il existait déjà un arc-en-ciel qui dépend de l'angle de vue*,
+ * réglé et validé par Keko — « je voudrais un effet holographique aussi sur la
+ * carte, et notamment sur son effet de brillance quand on la fait bouger ».
+ * Lui en dessiner un second aurait garanti que les deux divergent.
+ *
+ * *Il PASSE DEVANT la rareté* : une carte holo de n'importe quel cran irise,
+ * et le lustre doré d'un épique lui cède la place — **deux éclats sur une même
+ * carte n'en laisseraient lire aucun.**
+ */
+export function eclatDe(rarete: string | undefined, holo?: boolean): 'or' | 'iris' | null {
+  if (holo === true) return 'iris'
+  return ECLAT_DE_LA_RARETE[rarete ?? ''] ?? null
 }
 
 /**
@@ -624,6 +717,9 @@ const METAUX: Record<string, readonly [string, string, string, string, string]> 
  * une table indexée par nom.
  */
 export const ECHELLE_METAL = ['commune', 'rare', 'epique', 'legendaire'] as const
+
+/** La même échelle, pour les cinq couleurs du mode emoji. */
+export const ECHELLE_COULEUR = ['blanc', 'vert', 'bleu', 'violet', 'orange'] as const
 
 /**
  * LA LUEUR D'AMBIANCE D'UNE RARETÉ — de quoi un reveal teinte TOUT L'ÉCRAN.
@@ -648,6 +744,14 @@ export const AMBIANCE: Record<string, string> = {
   // *Le haut d'une échelle doit se voir de loin*, et c'est le seul cran dont
   // l'arrivée doit faire lever la tête.
   legendaire: '#6fe9ff',
+
+  // LES CINQ COULEURS, saturées d'un cran : *un pigment ne survit pas à la
+  // diffusion*, donc un halo doit crier un peu plus que le cadre qu'il annonce.
+  blanc: '#dfe6ee',
+  vert: '#4fd97a',
+  bleu: '#4fa3ff',
+  violet: '#b36bff',
+  orange: '#ff9a2e',
 }
 
 /** La couleur du CORPS en 3D — la tranche et le cheveu de cadre qui déborde. */
@@ -658,6 +762,14 @@ export const METAL_3D: Record<string, string> = {
   // LA TRANCHE SUIT LE CADRE : bleutée comme lui, sinon l'épaisseur trahirait
   // l'argent dès que la carte s'incline.
   legendaire: '#a6d3ff',
+
+  // LA TRANCHE SUIT LE CADRE ici aussi : un cheveu plus sombre que le plateau,
+  // puisqu'elle est vue de côté.
+  blanc: '#cfd5db',
+  vert: '#4f9e63',
+  bleu: '#3f7fbf',
+  violet: '#7d4fb8',
+  orange: '#d8821f',
 }
 
 
@@ -710,7 +822,9 @@ const IRISATION: readonly (readonly [number, string])[] = [
 /** Le laiton du cadre, en dégradé oblique comme dans le CSS. */
 function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient {
   const g = ctx.createLinearGradient(0, 0, LARGE, HAUT)
-  if (rarete === 'legendaire') {
+  // ELLE PASSE PAR LA TABLE, plus par une égalité de chaîne : l'orange du
+  // mode emoji s'appelle aussi « légendaire », et il ne doit pas irriser.
+  if (ECLAT_DE_LA_RARETE[rarete ?? ''] === 'iris') {
     for (const [ou, ton] of IRISATION) g.addColorStop(ou, ton)
     return g
   }

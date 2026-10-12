@@ -30,10 +30,44 @@ import type { Rng } from './rng.ts'
 export const CRANS = ['commun', 'rare', 'epique', 'legendaire'] as const
 export type Cran = (typeof CRANS)[number]
 
+/**
+ * LES CINQ CRANS — le mode emoji, et lui seul.
+ *
+ * Tranché par Keko : « commun, peu commun, rare, épique, légendaire », puis
+ * « le mode emoji seulement » quand je lui ai demandé la portée. *Les quatre
+ * métaux restent l'échelle des autres modes*, et les deux cohabitent.
+ *
+ * **LE CRAN NEUF S'INSÈRE, il ne renomme rien** : « peu commun » se glisse
+ * entre le commun et le rare, donc une carte rare le reste. C'est ce qui a
+ * rendu le passage gratuit.
+ */
+export const CRANS_CINQ = ['commun', 'peu-commun', 'rare', 'epique', 'legendaire'] as const
+export type CranCinq = (typeof CRANS_CINQ)[number]
+
 /** Tout ce qu'un paquet demande à une carte : son identité et son cran. */
-export type Tirable = {
+export type Tirable<R extends string = Cran> = {
   readonly id: string
-  readonly rarete: Cran
+  readonly rarete: R
+}
+
+/**
+ * UNE ÉCHELLE DE RARETÉ — ses crans, leurs chances, et ce qu'elle garantit.
+ *
+ * ***C'EST CE QUI A EMPÊCHÉ UN DÉFAUT MUET.*** La liste des crans était une
+ * constante du module, donc `parCran` rangeait les cartes dans quatre cases
+ * nommées : **une carte « peu commune » ne tombait dans aucune et
+ * disparaissait du tirage**, sans une erreur — `tas.get(cran)?.push` ne dit
+ * rien quand la case n'existe pas. *Un cinquième du catalogue serait devenu
+ * intirable le jour où le cran neuf est arrivé.*
+ *
+ * Les trois grandeurs voyagent ENSEMBLE parce qu'elles se répondent : *une
+ * table de chances qui ne somme pas à un sur les crans qu'on tire ne dit plus
+ * ce qu'elle promet*, et une garantie doit nommer un cran qui existe.
+ */
+export interface Echelle<R extends string> {
+  readonly crans: readonly R[]
+  readonly chances: Readonly<Record<R, number>>
+  readonly garanti: R
 }
 
 /**
@@ -75,21 +109,58 @@ export const CHANCES: Readonly<Record<Cran, number>> = {
   legendaire: 0.008,
 }
 
-/** Le rang d'un cran, du plus commun (0) au plus rare (3). */
-export function rangDeRarete(r: Cran): number {
-  return CRANS.indexOf(r)
+/**
+ * LES CHANCES À CINQ CRANS — **et le haut de la table ne bouge pas.**
+ *
+ * *Le cran neuf prend sur le commun, pas sur les rares* : l'épique et le
+ * légendaire gardent exactement leurs chances d'avant, le rare les siennes à
+ * un cheveu près, et « peu commun » se taille sa part dans les quinze points
+ * que le commun rend. **Ce qu'on ouvre en haut d'un paquet est donc le même
+ * cadeau** ; seul le bas se détaille.
+ *
+ * Placeholders comme les quatre autres, et pour la même raison : *une
+ * fréquence d'apparition ne se juge qu'en ouvrant des paquets.*
+ */
+export const CHANCES_CINQ: Readonly<Record<CranCinq, number>> = {
+  commun: 0.7,
+  'peu-commun': 0.16,
+  rare: 0.1,
+  epique: 0.032,
+  legendaire: 0.008,
 }
 
-/** Tire un cran selon `CHANCES`. */
-function tirerCran(rng: Rng): Cran {
+/** Les quatre métaux : la descente, les animaux, les peintures, les personnages. */
+export const ECHELLE_QUATRE: Echelle<Cran> = {
+  crans: CRANS,
+  chances: CHANCES,
+  garanti: CRAN_GARANTI,
+}
+
+/** Les cinq couleurs : le mode emoji. */
+export const ECHELLE_CINQ: Echelle<CranCinq> = {
+  crans: CRANS_CINQ,
+  chances: CHANCES_CINQ,
+  // LA GARANTIE RESTE « RARE », donc elle vaut le troisième cran sur cinq là
+  // qu'elle valait le deuxième sur quatre : *une garantie nomme un NIVEAU, pas
+  // une place dans la liste* — et c'est bien le même niveau qu'avant.
+  garanti: 'rare',
+}
+
+/** Le rang d'un cran dans son échelle, du plus commun (0) au plus rare. */
+export function rangDeRarete<R extends string>(r: R, echelle: Echelle<R>): number {
+  return echelle.crans.indexOf(r)
+}
+
+/** Tire un cran selon les chances de l'échelle. */
+function tirerCran<R extends string>(rng: Rng, echelle: Echelle<R>): R {
   let reste = rng.next()
-  for (const r of CRANS) {
-    reste -= CHANCES[r]
+  for (const r of echelle.crans) {
+    reste -= echelle.chances[r]
     if (reste <= 0) return r
   }
   // Le reliquat d'arrondi revient au cran le plus commun : *un tirage ne doit
   // jamais pouvoir ne rien rendre.*
-  return 'commun'
+  return echelle.crans[0]!
 }
 
 /**
@@ -97,9 +168,12 @@ function tirerCran(rng: Rng): Cran {
  * chaque fois. Rendu séparément de `ouvrirPaquet` pour qu'un écran qui ouvre
  * dix paquets ne le refasse pas dix fois.
  */
-export function parCran<T extends Tirable>(cartes: readonly T[]): Map<Cran, T[]> {
-  const tas = new Map<Cran, T[]>()
-  for (const r of CRANS) tas.set(r, [])
+export function parCran<R extends string, T extends Tirable<R>>(
+  cartes: readonly T[],
+  echelle: Echelle<R>,
+): Map<R, T[]> {
+  const tas = new Map<R, T[]>()
+  for (const r of echelle.crans) tas.set(r, [])
   for (const c of cartes) tas.get(c.rarete)?.push(c)
   return tas
 }
@@ -112,21 +186,22 @@ export function parCran<T extends Tirable>(cartes: readonly T[]): Map<Cran, T[]>
  * n'en avoir aucune. *Un paquet doit toujours rendre cinq cartes*, donc un cran
  * introuvable retombe sur le cran d'en dessous plutôt que de laisser un trou.
  */
-function tirerDansLeCran<T extends Tirable>(
-  tas: Map<Cran, T[]>,
-  cran: Cran,
+function tirerDansLeCran<R extends string, T extends Tirable<R>>(
+  tas: Map<R, T[]>,
+  cran: R,
   rng: Rng,
   deja: ReadonlySet<string>,
+  echelle: Echelle<R>,
 ): T | null {
-  for (let i = rangDeRarete(cran); i >= 0; i--) {
-    const lot = (tas.get(CRANS[i]!) ?? []).filter((c) => !deja.has(c.id))
+  for (let i = rangDeRarete(cran, echelle); i >= 0; i--) {
+    const lot = (tas.get(echelle.crans[i]!) ?? []).filter((c) => !deja.has(c.id))
     if (lot.length === 0) continue
     return lot[Math.floor(rng.next() * lot.length)] ?? null
   }
   // Puis vers le haut, en dernier recours : mieux vaut une carte trop rare
   // qu'une case vide.
-  for (let i = rangDeRarete(cran) + 1; i < CRANS.length; i++) {
-    const lot = (tas.get(CRANS[i]!) ?? []).filter((c) => !deja.has(c.id))
+  for (let i = rangDeRarete(cran, echelle) + 1; i < echelle.crans.length; i++) {
+    const lot = (tas.get(echelle.crans[i]!) ?? []).filter((c) => !deja.has(c.id))
     if (lot.length === 0) continue
     return lot[Math.floor(rng.next() * lot.length)] ?? null
   }
@@ -146,12 +221,16 @@ function tirerDansLeCran<T extends Tirable>(
  * plus haut que la garantie, et c'est très bien — un paquet dont on saurait
  * que le bouquet final est à droite se lirait à l'envers.
  */
-export function ouvrirPaquet<T extends Tirable>(tas: Map<Cran, T[]>, rng: Rng): T[] {
+export function ouvrirPaquet<R extends string, T extends Tirable<R>>(
+  tas: Map<R, T[]>,
+  rng: Rng,
+  echelle: Echelle<R>,
+): T[] {
   const tirees: T[] = []
   const vues = new Set<string>()
 
   for (let i = 0; i < CARTES_PAR_PAQUET - 1; i++) {
-    const c = tirerDansLeCran(tas, tirerCran(rng), rng, vues)
+    const c = tirerDansLeCran(tas, tirerCran(rng, echelle), rng, vues, echelle)
     if (c === null) break
     tirees.push(c)
     vues.add(c.id)
@@ -160,9 +239,10 @@ export function ouvrirPaquet<T extends Tirable>(tas: Map<Cran, T[]>, rng: Rng): 
   // LA GARANTIE : le cran tiré, ou le cran garanti si le tirage est tombé plus
   // bas. *Une garantie qui se contente du minimum enlèverait tout le haut de
   // la table* — un paquet peut parfaitement finir sur un légendaire.
-  const cran = tirerCran(rng)
-  const retenu = rangDeRarete(cran) >= rangDeRarete(CRAN_GARANTI) ? cran : CRAN_GARANTI
-  const vedette = tirerDansLeCran(tas, retenu, rng, vues)
+  const cran = tirerCran(rng, echelle)
+  const retenu =
+    rangDeRarete(cran, echelle) >= rangDeRarete(echelle.garanti, echelle) ? cran : echelle.garanti
+  const vedette = tirerDansLeCran(tas, retenu, rng, vues, echelle)
   if (vedette !== null) tirees.push(vedette)
 
   return tirees

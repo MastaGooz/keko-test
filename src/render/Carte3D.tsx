@@ -30,6 +30,7 @@ import { animationDeLEmoji, urlAnimationEmoji, type Animation } from './emoji-an
 import {
   DEBORD_AUREOLE,
   DEBORD_CONTOUR,
+  eclatDe,
   METAL_3D,
   PART_DISQUE,
   textureNombre,
@@ -1428,12 +1429,16 @@ ${nuanceur.fragmentShader}`
       // retourné** : il n'y avait plus rien à révéler. *Le dos ne dit rien de
       // ce qu'il y a dessous*, c'est déjà la règle qui le garde en laiton.
       const montre = dos !== true
-      nuanceur.uniforms.uIris!.value = montre && carte.rarete === 'legendaire' ? 1 : 0
+      // L'ÉCLAT SE DEMANDE À LA TABLE, il ne se lit plus sur une égalité de
+      // chaîne : l'holographique le donne à n'importe quel cran, et l'orange
+      // du mode emoji s'appelle aussi « légendaire » sans rien devoir irriser.
+      const eclat = montre ? eclatDe(carte.rarete, carte.holo) : null
+      nuanceur.uniforms.uIris!.value = eclat === 'iris' ? 1 : 0
       // LE TOUR DE LUMIÈRE EST AU DIAMANT SEUL, et il s'éteint avec la carte :
       // une pièce hors jeu ne rayonne pas.
       nuanceur.uniforms.uTemps!.value = t
-      nuanceur.uniforms.uBordure!.value = montre && carte.rarete === 'legendaire' ? l.vif : 0
-      nuanceur.uniforms.uOr!.value = montre && carte.rarete === 'epique' ? 1 : 0
+      nuanceur.uniforms.uBordure!.value = eclat === 'iris' ? l.vif : 0
+      nuanceur.uniforms.uOr!.value = eclat === 'or' ? 1 : 0
       // LE PAVE SE POSE DES QU'IL EST LA — voir l'effet qui le charge.
       // LE DEVELOPPEMENT SE PILOTE ICI, et pas dans le bloc de la culbute :
       // *toute matiere posee apres le `return` de la culbute est figee pendant
@@ -1473,9 +1478,9 @@ ${nuanceur.fragmentShader}`
      *
      * Elle s'allume donc au retournement, ce qui est exactement son moment.
      */
-    const precieux = (carte.rarete === 'legendaire' || carte.rarete === 'epique') && dos !== true
-    if (precieux) {
-      const chromatique = carte.rarete === 'legendaire'
+    const parure = dos === true ? null : eclatDe(carte.rarete, carte.holo)
+    if (parure !== null) {
+      const chromatique = parure === 'iris'
       aureole.uniforms.uTemps!.value = t
       aureole.uniforms.uArc!.value = chromatique ? 1 : 0
       // L'OR RAYONNE PLUS SAGEMENT QUE LE DIAMANT : il n'a qu'une couleur,
@@ -1528,7 +1533,7 @@ ${nuanceur.fragmentShader}`
           ordinaire : quand une pièce est engagée, c'est l'or de l'engagement
           qu'on doit lire en premier — *un état du jeu passe devant une
           parure.* */}
-      {(carte.rarete === 'legendaire' || carte.rarete === 'epique') && (
+      {eclatDe(carte.rarete, carte.holo) !== null && (
         <mesh position={[0, 0, -EPAISSEUR * 1.2]} material={aureole} raycast={() => null}>
           <planeGeometry args={[LARGE + DEBORD_AUREOLE * 2, HAUT + DEBORD_AUREOLE * 2]} />
         </mesh>

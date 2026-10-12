@@ -57,9 +57,32 @@ export const NOM_DU_GROUPE: Readonly<Record<GroupeEmoji, string>> = {
   drapeaux: 'Drapeau',
 }
 
-export type RareteEmoji = 'commun' | 'rare' | 'epique' | 'legendaire'
+/**
+ * CINQ CRANS, ET LE CODE COULEUR CLASSIQUE. Tranché par Keko : « on va changer
+ * le système de rareté : commun, peu commun, rare, épique, légendaire (blanc,
+ * vert, bleu, violet, orange) ».
+ *
+ * ***C'est un retour en arrière assumé***, et il faut savoir sur quoi : le mode
+ * descente avait écarté ces couleurs — « je pense que c'est pas hyper cohérent
+ * d'utiliser les couleurs de rareté RPG classiques, on peut tenter laiton /
+ * bronze / argent / or / diamant ? » — **parce qu'une carte de jeu EST une
+ * plaque de métal**, et qu'un vert posé dessus restait une couleur de jeu vidéo
+ * plaquée sur un objet.
+ *
+ * *Une carte de COLLECTION n'a pas cette contrainte* : elle ne sort d'aucun
+ * donjon, elle n'est faite de rien. **Et les deux systèmes coexistent sans se
+ * gêner**, puisqu'on ne les regarde jamais côte à côte — Keko a tranché « le
+ * mode emoji seulement ».
+ */
+export type RareteEmoji = 'commun' | 'peu-commun' | 'rare' | 'epique' | 'legendaire'
 
-export const RARETES_EMOJI: readonly RareteEmoji[] = ['commun', 'rare', 'epique', 'legendaire']
+export const RARETES_EMOJI: readonly RareteEmoji[] = [
+  'commun',
+  'peu-commun',
+  'rare',
+  'epique',
+  'legendaire',
+]
 
 /** Une carte-emoji. Les deux derniers champs sont DÉRIVÉS. */
 export interface CarteEmoji {
@@ -81,8 +104,16 @@ export interface CarteEmoji {
   version: string
   /** L'année de cette version — voir `ANNEE_DE_VERSION` dans le pipeline. */
   annee: number
-  /** Google en publie une version animée (`fonts.gstatic.com/s/e/notoemoji`). */
-  anime: boolean
+/**
+   * GOOGLE EN PUBLIE UNE VERSION ANIMÉE — une POSSIBILITÉ, pas un état.
+   *
+   * ***Le champ s'appelait `anime`, et il devait changer de nom*** : depuis que
+   * les bonus se tirent à l'ouverture, « animé » dit qu'un EXEMPLAIRE l'est.
+   * *Deux choses qui portent le même mot finissent par se confondre* — celle-ci
+   * dit seulement qu'une animation existe, donc qu'un exemplaire PEUT en
+   * recevoir une.
+   */
+  animable: boolean
   /**
    * LE GROUPE DE FRÉQUENCE D'UNICODE — 0 pour les plus employés, `null` pour
    * ceux qui ne sont pas au classement.
@@ -129,7 +160,7 @@ export function parseEmoji(v: unknown): CarteEmoji | null {
   if (!estRarete(c.rarete)) return null
   if (typeof c.version !== 'string') return null
   if (typeof c.annee !== 'number' || !Number.isFinite(c.annee)) return null
-  if (typeof c.anime !== 'boolean') return null
+  if (typeof c.animable !== 'boolean') return null
   if (typeof c.rang !== 'number' || !Number.isFinite(c.rang)) return null
   const frequence = typeof c.frequence === 'number' && Number.isFinite(c.frequence) ? c.frequence : null
   const mots = Array.isArray(c.mots) && c.mots.every((m) => typeof m === 'string') ? (c.mots as string[]) : []
@@ -141,7 +172,7 @@ export function parseEmoji(v: unknown): CarteEmoji | null {
     mots,
     version: c.version,
     annee: c.annee,
-    anime: c.anime,
+    animable: c.animable,
     frequence,
     rang: c.rang,
     rarete: c.rarete,

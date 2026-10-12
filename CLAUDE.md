@@ -13515,7 +13515,7 @@ Ce que ça change, mesuré sur les deux catalogues :
 | cartes | 1 923 | **3 963** |
 | part du rayon « gens » | 20 % | **61 %** |
 | au classement de fréquence | 76 % | 59 % |
-| animées | 614 (32 %) | 884 (22 %) |
+| animables | 614 (32 %) | 884 (22 %) |
 | poids | 443 Ko | 1 094 Ko |
 
 *La part classée tombe parce que beaucoup de variantes dérivent de bases
@@ -13586,17 +13586,20 @@ drapeau, donc le rayon n'a plus rien à corriger.
 
 Ce que ça donne — chaque groupe tombe où son usage réel le met :
 
-| groupe | commun | rare | épique | **légendaire** |
-|---|---|---|---|---|
-| **visages** | 23 % | 16 % | **42 %** | **19 %** |
-| animaux | 53 % | 38 % | 8 % | 1 % |
-| nourriture | 47 % | 48 % | 5 % | **0** |
-| activités | 62 % | 27 % | 7 % | 4 % |
-| symboles | 73 % | 22 % | 5 % | 0 % |
-| lieux | 76 % | 18 % | 5 % | 0 % |
-| gens | 78 % | 12 % | 8 % | 2 % |
-| objets | 78 % | 19 % | 3 % | **0** |
-| **drapeaux** | **91 %** | 9 % | 0 % | **0** |
+| groupe | commun | peu commun | rare | épique | **légendaire** |
+|---|---|---|---|---|---|
+| **visages** | 20 % | 5 % | 17 % | **39 %** | **19 %** |
+| activités | 36 % | 36 % | 16 % | 7 % | 4 % |
+| gens | 68 % | 14 % | 9 % | 7 % | 2 % |
+| animaux | 31 % | 32 % | 29 % | 7 % | 1 % |
+| nourriture | 30 % | 30 % | 36 % | 4 % | **0** |
+| symboles | 49 % | 30 % | 16 % | 5 % | 0 % |
+| lieux | 44 % | 40 % | 11 % | 4 % | 0 % |
+| objets | 48 % | 34 % | 15 % | 3 % | **0** |
+| **drapeaux** | **76 %** | 18 % | 6 % | 0 % | **0** |
+
+*(Table refaite sur les cinq crans. Les quatre métaux d'avant sont dans
+`git log` : ils disaient exactement la même chose, en moins détaillé.)*
 
 *Les drapeaux perdaient leurs sept légendaires en passant au global, et c'est
 exactement ce qu'une popularité réelle doit produire* — ils sont tous dans le bas
@@ -13775,11 +13778,173 @@ de toutes : lister les cinq cartes du paquet.** Elles étaient toutes statiques.
 retirer une sonde a emporté tout le câblage de `Carte3D` avec elle.
 **Un `checkout` ne défait pas une sonde, il défait un fichier.**
 
+### CINQ CRANS ET DEUX BONUS — le mode emoji seulement
+
+Tranché par Keko, en une phrase qui portait trois décisions : « on va changer le
+système de rareté : commun, peu commun, rare, épique, légendaire (blanc, vert,
+bleu, violet, orange). Ensuite chaque carte peut également être holographique
+et/ou animé (deux bonus de rareté applicables à toutes les raretés, animé étant
+encore plus rare qu'holographique). »
+
+Deux questions portaient tout le reste, et il a répondu aux deux :
+
+| | sa réponse | ce que ça impose |
+|---|---|---|
+| quelle portée ? | **« le mode emoji seulement »** | les quatre métaux restent, les deux échelles cohabitent |
+| les bonus, propriété ou tirage ? | **« tirés à l'ouverture »** | *un exemplaire cesse d'être son modèle* |
+
+#### C'EST L'ÉCHELLE QUE LE MODE DESCENTE AVAIT ÉCARTÉE, ET C'EST COHÉRENT
+
+Keko avait lui-même refusé le code couleur RPG pour les cartes de jeu : « je
+pense que c'est pas hyper cohérent d'utiliser les couleurs de rareté classiques,
+on peut tenter laiton / bronze / argent / or / diamant ? » — *et l'argument
+d'alors tenait* : une carte de combat EST une plaque de métal, donc un violet
+posé dessus restait une couleur de jeu vidéo plaquée sur un objet.
+
+**Il ne porte pas ici.** Une carte d'emoji n'est pas un objet du monde : elle ne
+se joue pas, elle se collectionne, et *le code couleur est la langue de ce
+genre-là.* Les deux décisions sont justes chacune chez elle, et c'est pour ça
+qu'elles cohabitent au lieu de se remplacer.
+
+#### LE DÉFAUT MUET QUE LE CINQUIÈME CRAN AURAIT CAUSÉ
+
+`parCran` rangeait les cartes dans des cases nommées par une **constante du
+module** : `tas.get(c.rarete)?.push(c)`. **Une carte « peu commune » ne tombait
+dans aucune case et disparaissait du tirage**, sans une erreur — *un quart du
+catalogue serait devenu intirable*, et le seul symptôme aurait été un cran
+qu'on ne voit jamais sortir.
+
+`logic/paquet.ts` est donc générique sur son échelle (`Echelle<R>`), et les
+trois grandeurs voyagent ENSEMBLE : les crans, leurs chances, et ce qui est
+garanti. *Une table de chances qui ne somme pas à un sur les crans qu'on tire ne
+dit plus ce qu'elle promet*, et une garantie doit nommer un cran qui existe —
+deux vérifications le tiennent.
+
+**LE HAUT DE LA TABLE NE BOUGE PAS** : l'épique et le légendaire gardent
+exactement leurs chances d'avant (3,2 % et 0,8 %), le rare les siennes à un
+cheveu près, et « peu commun » se taille ses 16 % dans les quinze points que le
+commun rend. *Ce qu'on ouvre en haut d'un paquet est donc le même cadeau* ; seul
+le bas se détaille. **La garantie reste « rare »**, qui vaut le troisième cran
+sur cinq là qu'elle valait le deuxième sur quatre : *une garantie nomme un
+NIVEAU, pas une place dans la liste.*
+
+#### LA PYRAMIDE DU CATALOGUE DÉCROÎT DE MOITIÉ À CHAQUE CRAN
+
+`PYRAMIDE_CINQ` : **50 / 25 / 15 / 7,5 / 2,5 %**, mesuré sur le catalogue —
+961 / 481 / 288 / 144 / 49 cartes. ***Les parts sont de moi, pas de Keko*** : il
+a donné les crans, pas leur poids. *Une décroissance de moitié est la forme la
+plus lisible qu'on puisse donner à cinq niveaux*, et c'est à rejuger quand il
+aura ouvert des paquets.
+
+#### UNE ÉCHELLE SE DIT EN COULEUR, ET LES CLÉS LE DISENT AUSSI
+
+Les cinq entrées de `METAUX` sont nommées **par leur couleur** — `blanc`,
+`vert`, `bleu`, `violet`, `orange` — là où les quatre métaux sont nommés par
+leur cran. *Trois des cinq crans portent le même nom qu'un métal* (`rare`,
+`epique`, `legendaire`) : les nommer par leur cran les aurait fait se recouvrir
+en silence dans une table partagée. C'est `carte-emoji` qui fait la table
+cran → couleur, telle que Keko l'a dictée.
+
+**Une seule structure de lumière pour cinq teintes**, comme pour les métaux :
+clair en haut à gauche, plateau moyen, nuit dans le coin bas-droit. *Le cadre
+garde son relief et son reflet oblique, il ne change que de couleur.*
+
+Le **blanc est un gris clair et non un blanc pur** : *le bas d'une échelle ne
+doit pas se lire comme un métal précieux*, et le blanc pur est déjà le diamant
+de l'autre échelle.
+
+#### L'HOLOGRAPHIQUE EMPRUNTE LE FOIL DU DIAMANT, et c'est gratuit
+
+**Il n'y avait rien à dessiner.** Un arc-en-ciel qui dépend de l'angle de vue
+existait déjà, réglé et validé par Keko — « je voudrais un effet holographique
+aussi sur la carte, et notamment sur son effet de brillance quand on la fait
+bouger ». *Lui en dessiner un second aurait garanti que les deux divergent.*
+
+**IL NE CHANGE RIEN À LA PEINTURE, DONC RIEN À `signature()`.** Le foil vit dans
+le NUANCEUR — c'est ce qui le rend indépendant de la teinte du cadre — donc
+**deux exemplaires, l'un holo et l'autre non, partagent leur texture** : le
+bonus ne coûte pas un octet de mémoire. *C'est la seule propriété de
+`CarteAPeindre` qui ne change rien à ce que le peintre dessine*, et elle y vit
+quand même parce que c'est cet objet qui voyage jusqu'à `Carte3D`.
+
+**LES TROIS ÉCLATS PASSENT PAR UNE TABLE** (`ECLAT_DE_LA_RARETE`), plus par une
+égalité de chaîne. L'irisation du cadre, la bordure lumineuse et le lustre doré
+se lisaient sur `rarete === 'legendaire'` et `=== 'epique'` : **avec les cinq
+couleurs, un « légendaire » orange se serait mis à irriser** et un « épique »
+violet à reluire comme de l'or, alors que Keko n'a demandé ni l'un ni l'autre —
+chez lui l'éclat est un BONUS, pas un cran. Les cinq couleurs n'ont donc aucune
+entrée : *ce qui ne rayonne pas n'a rien à déclarer.*
+
+Et l'holo **passe devant** la rareté : une carte holo de n'importe quel cran
+irise, et le lustre doré d'un épique lui cède la place — *deux éclats sur une
+même carte n'en laisseraient lire aucun.*
+
+#### LE CATALOGUE DIT CE QUI EST POSSIBLE, L'EXEMPLAIRE CE QUI EST
+
+Le champ `anime` de la carte est devenu **`animable`**, et ce n'est pas
+cosmétique : *il dit une POSSIBILITÉ, pas un état* — **deux choses qui portent
+le même mot finissent par se confondre**, et c'est exactement ce qui serait
+arrivé le jour où un exemplaire a tiré le bonus.
+
+Conséquence directe : le cartouche **ne dit plus « animé » quand il l'est
+seulement en puissance**. Un tiers du catalogue promettait un mouvement que
+l'exemplaire n'avait pas — *une carte ne dit que ce qu'elle est, jamais ce
+qu'elle aurait pu être.*
+
+**L'ANIMÉ DEMANDE QUE L'EMOJI SOIT ANIMABLE**, et c'est une vraie contrainte :
+*on ne peut pas animer ce que Google n'a pas animé* — 614 emoji sur 1 923.
+**Le tirage a quand même lieu**, et c'est délibéré : sans ça le nombre d'appels
+au hasard dépendrait de la carte, et *deux paquets de même graine ne rendraient
+plus la même suite.*
+
+**LES CHANCES SONT DES PLACEHOLDERS** : 10 % pour l'holo, 3 % pour l'animé.
+*Keko a donné l'ordre, pas les chiffres.* Et **l'animé est deux fois plus rare
+qu'il n'en a l'air** — trois pour cent d'un tiers du catalogue font un pour
+cent, donc l'écart réel est de dix contre un.
+
+#### LES BONUS SE TIRENT APRÈS LES CARTES, AVEC LE MÊME RNG
+
+Dans `Paquet3D`, et pour le mode emoji seulement — *les autres modes
+n'appellent donc pas le hasard*, et leur suite de tirage ne bouge pas d'un cran.
+`?paquet=42` rejoue les cartes ET leurs bonus.
+
+**L'échelle se widenise en `Echelle<string>` à UN SEUL endroit** : le mode se
+décide à l'exécution, sur un paramètre d'URL, donc le type du cran ne peut pas
+être connu à la compilation. *Les deux tables, elles, restent typées chacune sur
+ses propres crans* — c'est là qu'une faute se verrait.
+
+#### CE QUI A ÉTÉ VU À L'ÉCRAN
+
+`?paquet=1314&emoji` montre **les cinq couleurs d'un coup**, `?paquet=20781&emoji`
+**trois holographiques et deux animés**. Les deux graines ont été trouvées en
+rejouant le tirage hors navigateur, contre les mêmes modules : *une mesure se
+fait avec ce qui joue, sinon on valide un jumeau.*
+
+**ET L'ANIMATION A ENFIN ÉTÉ OBSERVÉE EN TRAIN DE TOURNER** — deux captures du
+même emoji à une seconde d'écart, la carotte a bougé. *Elle n'avait jamais été
+vue* : la note d'alors disait « le câblage compile, mais la boucle de repeinture
+n'a pas été observée », faute d'avoir jamais tiré une carte animée. **Il
+suffisait d'une graine choisie** au lieu d'ouvrir des paquets au hasard.
+
+#### CE QUI RESTE À TRANCHER PAR KEKO — la rareté
+
+- **les parts de la pyramide** (50 / 25 / 15 / 7,5 / 2,5) et **les chances du
+  paquet** (70 / 16 / 10 / 3,2 / 0,8), qui sont de moi ;
+- **les deux chances de bonus** (10 % et 3 %) : *une fréquence d'apparition ne
+  se juge qu'en ouvrant des paquets* ;
+- **l'holo noie la couleur du cadre** : le foil court sur toute la carte, donc
+  une carte holographique lit mal son propre cran. *C'est ce qu'un holo EST dans
+  un vrai jeu de cartes* — à dire s'il le garde ;
+- **les quatre autres modes n'ont pas de bonus**, parce que la portée était « le
+  mode emoji seulement ». *Rien n'empêche de les leur donner* : le drapeau vit
+  sur `CarteAPeindre`, qui est commun aux cinq modes.
+
 ### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
 
 - **les 270 drapeaux** sont un groupe à part — ce sont des pays, pas des objets.
-  Les garder, ou en faire un mode à eux. *Ils sont désormais communs à 91 %*,
-  donc ils ne faussent plus l'échelle, mais ils occupent un septième des cartes ;
+  Les garder, ou en faire un mode à eux. *Ils tombent désormais à 94 % dans les
+  deux crans du bas*, donc ils ne faussent plus l'échelle, mais ils occupent un
+  septième des cartes ;
 - **les 24 % non classés** : ils sortent tous dans le bas, et l'ancienneté est
   tout ce qu'on sait d'eux. *Si un emoji de 2021 devient très employé, rien ne
   le dira* — le classement d'Unicode est arrêté à la version 12.0 ;

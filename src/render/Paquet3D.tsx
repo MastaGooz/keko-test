@@ -17,7 +17,13 @@ import { Bouton3D } from './Bouton3D.tsx'
 import { Sachet3D } from './Sachet3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
-import { AMBIANCE, ECHELLE_METAL, RAPPORT_SACHET, type CarteAPeindre } from './texture-carte.ts'
+import {
+  AMBIANCE,
+  ECHELLE_COULEUR,
+  ECHELLE_METAL,
+  RAPPORT_SACHET,
+  type CarteAPeindre,
+} from './texture-carte.ts'
 import { carteDeLAnimal } from './carte-animal.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { carteDeLaPeinture } from './carte-peinture.ts'
@@ -27,7 +33,15 @@ import { chargerEmojis } from '../ui/emoji.ts'
 import { chargerPeintures } from '../ui/peintures.ts'
 import { loadCharacters } from '../ui/personnages.ts'
 import { createRng } from '../logic/rng.ts'
-import { CARTES_PAR_PAQUET, ouvrirPaquet, parCran } from '../logic/paquet.ts'
+import {
+  CARTES_PAR_PAQUET,
+  ECHELLE_CINQ,
+  ECHELLE_QUATRE,
+  ouvrirPaquet,
+  parCran,
+  type Echelle,
+} from '../logic/paquet.ts'
+import { tirerBonus, type Bonus } from '../logic/emoji/tirage.ts'
 import type { CarteAnimal } from '../logic/animals/types.ts'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { CharacterCard } from '../logic/characters/types.ts'
@@ -62,12 +76,12 @@ type CarteDuMode = CarteAnimal | CharacterCard | CartePeinture | CarteEmoji
  * `groupe` que sur un animal : *un drapeau de mode pose a cote se
  * desaccorderait de la carte qu'il decrit.*
  */
-function carteAPeindreDuMode(c: CarteDuMode): CarteAPeindre {
+function carteAPeindreDuMode(c: CarteDuMode, bonus?: Bonus): CarteAPeindre {
   // **L'EMOJI SE TESTE EN PREMIER, et ce n'est pas un detail d'ordre** : une
   // carte-emoji porte `groupe` comme un animal. *Deux modes qui partagent un
   // champ ne peuvent pas se discriminer dessus*, donc on cherche le champ qui
   // n'existe que la -- et `emoji` est le seul.
-  if ('emoji' in c) return carteDeLEmoji(c)
+  if ('emoji' in c) return carteDeLEmoji(c, bonus)
   if ('siecle' in c) return carteDeLaPeinture(c)
   if ('groupe' in c) return carteDeLAnimal(c)
   return carteDuPersonnage(c)
@@ -160,14 +174,22 @@ const GRAINE = (() => {
  */
 const MONTEE = 1300
 
-/** Le rang d'un metal dans l'echelle. `-1` pour ce qui n'en porte pas. */
-function rangMetal(rarete: string | undefined): number {
-  return (ECHELLE_METAL as readonly string[]).indexOf(rarete ?? 'commune')
+/**
+ * Le rang d'une teinte dans son echelle. `-1` pour ce qui n'en porte pas.
+ *
+ * **L'ECHELLE EST CELLE DU MODE**, et il le faut depuis que le mode emoji
+ * compte cinq couleurs : *un nom de cran ne suffit pas a retrouver son rang*
+ * — `legendaire` est le quatrieme metal et la cinquieme couleur, et les deux
+ * tables se recouvrent sur trois noms.
+ */
+function rangDansLEchelle(rarete: string | undefined, echelle: readonly string[]): number {
+  return echelle.indexOf(rarete ?? echelle[0]!)
 }
 
-/** La lueur d'un metal, avec le bronze pour repli. */
-function lueurDe(rang: number): string {
-  return AMBIANCE[ECHELLE_METAL[Math.max(0, rang)] ?? 'commune'] ?? AMBIANCE.commune!
+/** La lueur d'une teinte, avec le premier cran pour repli. */
+function lueurDans(rang: number, echelle: readonly string[]): string {
+  const cran = echelle[Math.max(0, rang)] ?? echelle[0]!
+  return AMBIANCE[cran] ?? AMBIANCE[echelle[0]!]!
 }
 
 export function Paquet3D(): React.ReactElement {
@@ -325,18 +347,56 @@ export function Paquet3D(): React.ReactElement {
   // noeud qui n'existe plus — et React ne dit rien, il laisse faire.
   useEffect(() => () => cancelAnimationFrame(image.current), [])
 
+  /**
+   * L'ECHELLE DE RARETE DU MODE — cinq couleurs pour les emoji, quatre metaux
+   * pour les trois autres. Tranche par Keko : « le mode emoji seulement ».
+   *
+   * **ELLE SE WIDENISE EN `Echelle<string>`, et c'est le seul endroit du
+   * projet ou il le faut** : le mode se decide a l'EXECUTION, sur un parametre
+   * d'URL, donc le type du cran ne peut pas etre connu a la compilation. *Les
+   * deux tables, elles, restent typees chacune sur ses propres crans* — c'est
+   * la qu'une faute se verrait.
+   */
+  const echelle: Echelle<string> = emojis ? ECHELLE_CINQ : ECHELLE_QUATRE
+  /** Les teintes du cadre, dans l'ordre : c'est elle que le reveal remonte. */
+  const teintes: readonly string[] = emojis ? ECHELLE_COULEUR : ECHELLE_METAL
+
   // Le catalogue rangé par cran, une fois pour toutes : un écran qui ouvre dix
   // paquets ne doit pas reparcourir trois mille cartes dix fois.
-  const tas = useMemo(() => (catalogue === null ? null : parCran(catalogue)), [catalogue])
+  const tas = useMemo(
+    () => (catalogue === null ? null : parCran(catalogue, echelle)),
+    [catalogue, echelle],
+  )
 
   /**
    * LE PAQUET COURANT. Seedé sur son numéro, donc **rejouable** : Keko peut
    * signaler un tirage précis, exactement comme `?seed=42` rejoue une descente.
    */
-  const paquet = useMemo(() => {
-    if (tas === null) return []
-    return ouvrirPaquet(tas, createRng((GRAINE + numero * 7919) >>> 0))
-  }, [tas, numero])
+  const tirage = useMemo((): { cartes: CarteDuMode[]; bonus: Readonly<Record<string, Bonus>> } => {
+    if (tas === null) return { cartes: [], bonus: {} }
+    const rng = createRng((GRAINE + numero * 7919) >>> 0)
+    const cartes = ouvrirPaquet(tas, rng, echelle)
+    /**
+     * LES BONUS SE TIRENT ICI, APRES LES CARTES ET AVEC LE MEME RNG.
+     *
+     * Tranche par Keko : « tires a l'ouverture » plutot que « propriete de la
+     * carte ». ***Ca change ce qu'est un exemplaire*** : deux copies du meme
+     * emoji peuvent differer, et c'est exactement ce qui fait l'interet d'en
+     * ouvrir un de plus.
+     *
+     * **Ils ne concernent que le mode emoji**, parce que c'est la portee que
+     * Keko a donnee a tout le changement. *Les autres modes n'appellent donc
+     * pas le hasard*, et leur suite de tirage ne bouge pas d'un cran.
+     */
+    const bonus: Record<string, Bonus> = {}
+    if (emojis) {
+      for (const c of cartes) {
+        bonus[c.id] = tirerBonus('animable' in c && c.animable, () => rng.next())
+      }
+    }
+    return { cartes, bonus }
+  }, [tas, numero, echelle, emojis])
+  const paquet = tirage.cartes
 
   /**
    * LES CARTES À PEINDRE, MÉMORISÉES — et ce n'est pas une optimisation.
@@ -348,8 +408,8 @@ export function Paquet3D(): React.ReactElement {
    * ce moteur, et il ne dit rien du tout.*
    */
   const aPeindre = useMemo(
-    () => paquet.map(carteAPeindreDuMode),
-    [paquet],
+    () => paquet.map((c) => carteAPeindreDuMode(c, tirage.bonus[c.id])),
+    [paquet, tirage],
   )
 
   const toutRevele = paquet.length > 0 && paquet.every((c) => revelees.has(c.id))
@@ -361,7 +421,7 @@ export function Paquet3D(): React.ReactElement {
   }
 
   function rangDe(id: string): number {
-    return rangMetal(aPeindre.find((c) => c.id === id)?.rarete)
+    return rangDansLEchelle(aPeindre.find((c) => c.id === id)?.rarete, teintes)
   }
 
   /**
@@ -391,7 +451,7 @@ export function Paquet3D(): React.ReactElement {
       // L'ECHELLE SE REMONTE EN PROPORTION, et elle s'arrete au bon cran :
       // *les couleurs PASSENT dans l'ordre*, elles ne sautent pas a la bonne.
       const rang = Math.min(rangFinal, Math.floor(avance * (rangFinal + 1)))
-      racine.current?.style.setProperty('--lueur', lueurDe(rang))
+      racine.current?.style.setProperty('--lueur', lueurDans(rang, teintes))
       racine.current?.style.setProperty('--lueur-force', String(0.1 + avance * 0.5))
       if (p < 1) image.current = requestAnimationFrame(pas)
       else setSommet((h) => Math.max(h, rangFinal))
@@ -404,7 +464,7 @@ export function Paquet3D(): React.ReactElement {
     const restantes = paquet.filter((c) => !revelees.has(c.id))
     setRevelees((d) => new Set(d).add(id))
     setJetons((j) => ({ ...j, [id]: (j[id] ?? 0) + 1 }))
-    setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDe(rangDe(id)) }))
+    setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDans(rangDe(id), teintes) }))
     // LA DERNIERE SE REVELE AU COMPTEUR, les autres d'un coup : *ce qui
     // distingue un moment est qu'il ne se produit qu'une fois.*
     if (restantes.length === 1) monterLeCompteur(id)
@@ -419,7 +479,7 @@ export function Paquet3D(): React.ReactElement {
     const nonVues = paquet.filter((c) => !revelees.has(c.id))
     if (nonVues.length > 0) {
       const haut = Math.max(...nonVues.map((c) => rangDe(c.id)))
-      setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDe(haut) }))
+      setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDans(haut, teintes) }))
       setSommet((h) => Math.max(h, haut))
     }
     setRevelees(new Set(paquet.map((c) => c.id)))
@@ -490,7 +550,7 @@ export function Paquet3D(): React.ReactElement {
       ref={racine}
       style={
         {
-          '--lueur': lueurDe(sommet),
+          '--lueur': lueurDans(sommet, teintes),
           '--lueur-force': sommet < 0 ? 0 : 0.18 + sommet * 0.1,
         } as React.CSSProperties
       }

@@ -30,6 +30,26 @@ export const PYRAMIDE_QUATRE = [
 ] as const
 
 /**
+ * LA PYRAMIDE À CINQ CRANS — le mode emoji, et lui seul.
+ *
+ * Tranché par Keko : « commun, peu commun, rare, épique, légendaire ». *Les
+ * autres modes gardent les quatre métaux* — il a choisi « le mode emoji
+ * seulement ».
+ *
+ * **LES PARTS SONT DES PLACEHOLDERS**, et il faut le savoir : Keko a donné les
+ * CRANS, pas leur poids. *Elles décroissent de moitié à chaque palier*, ce qui
+ * est la forme la plus lisible qu'on puisse donner à cinq niveaux — **à juger
+ * sur `emoji-summary.txt` quand il aura ouvert des paquets.**
+ */
+export const PYRAMIDE_CINQ = [
+  { rarete: 'commun', jusqu: 0.5 },
+  { rarete: 'peu-commun', jusqu: 0.75 },
+  { rarete: 'rare', jusqu: 0.9 },
+  { rarete: 'epique', jusqu: 0.975 },
+  { rarete: 'legendaire', jusqu: 1 },
+] as const
+
+/**
  * Découpe chaque groupe en crans, du plus notoire au moins notoire.
  *
  * Trois choses à ne pas défaire :

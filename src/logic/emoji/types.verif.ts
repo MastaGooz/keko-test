@@ -7,7 +7,19 @@
  * pour soi, et les ex aequo partagent leur cran.
  */
 import { parseEmoji, parseEmojis, GROUPES_EMOJI, RARETES_EMOJI, parGroupe, NOM_DU_GROUPE } from './types.ts'
-import { cransParGroupe, PYRAMIDE_QUATRE } from '../quantiles.ts'
+import { cransParGroupe, PYRAMIDE_CINQ } from '../quantiles.ts'
+import { tirerBonus, CHANCES_BONUS } from './tirage.ts'
+import {
+  CARTES_PAR_PAQUET,
+  CHANCES,
+  CHANCES_CINQ,
+  CRANS_CINQ,
+  ECHELLE_CINQ,
+  ECHELLE_QUATRE,
+  ouvrirPaquet,
+  parCran,
+} from '../paquet.ts'
+import { createRng } from '../rng.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -32,7 +44,7 @@ const bonne = {
   mots: ['content', 'rire'],
   version: '1.0',
   annee: 2015,
-  anime: true,
+  animable: true,
   frequence: 0,
   rang: 1,
   rarete: 'legendaire',
@@ -43,7 +55,10 @@ verifier('un groupe inconnu est rejeté', parseEmoji({ ...bonne, groupe: 'vehicu
 verifier('une rareté inconnue est rejetée', parseEmoji({ ...bonne, rarete: 'mythique' }) === null)
 verifier('un emoji vide est rejeté', parseEmoji({ ...bonne, emoji: '' }) === null)
 verifier('une année non numérique est rejetée', parseEmoji({ ...bonne, annee: '2015' }) === null)
-verifier('un drapeau d’animation non booléen est rejeté', parseEmoji({ ...bonne, anime: 'oui' }) === null)
+verifier(
+  'un drapeau d’animabilité non booléen est rejeté',
+  parseEmoji({ ...bonne, animable: 'oui' }) === null,
+)
 verifier('un rang absent est rejeté', parseEmoji({ ...bonne, rang: undefined }) === null)
 // LA FREQUENCE EST FACULTATIVE : *24 % du catalogue n'est pas au classement
 // d'Unicode* -- ce sont les emoji posterieurs a la version 12.0 -- et ils
@@ -89,7 +104,7 @@ const rayon = (groupe: string, n: number, depart = 1_000_000) =>
   Array.from({ length: n }, (_, i) => ({ groupe, valeur: depart - i }))
 
 {
-  const crans = new Set(cransParGroupe(rayon('visages', 200), PYRAMIDE_QUATRE))
+  const crans = new Set(cransParGroupe(rayon('visages', 200), PYRAMIDE_CINQ))
   for (const r of RARETES_EMOJI) verifier(`le cran « ${r} » est atteignable`, crans.has(r))
 }
 
@@ -99,7 +114,7 @@ const rayon = (groupe: string, n: number, depart = 1_000_000) =>
 // seuil global ils rafleraient tout le haut de l'echelle.
 {
   const elements = [...rayon('visages', 200, 9_000_000), ...rayon('drapeaux', 200, 900)]
-  const crans = cransParGroupe(elements, PYRAMIDE_QUATRE)
+  const crans = cransParGroupe(elements, PYRAMIDE_CINQ)
   const part = (g: string, r: string) => {
     const idx = elements.map((e, i) => [e, i] as const).filter(([e]) => e.groupe === g)
     return idx.filter(([, i]) => crans[i] === r).length / idx.length
@@ -117,14 +132,14 @@ const rayon = (groupe: string, n: number, depart = 1_000_000) =>
 // pas valoir deux métaux différents.*
 {
   const elements = Array.from({ length: 100 }, (_, i) => ({ groupe: 'objets', valeur: i < 50 ? 10 : 1 }))
-  const crans = cransParGroupe(elements, PYRAMIDE_QUATRE)
+  const crans = cransParGroupe(elements, PYRAMIDE_CINQ)
   verifier('cinquante ex aequo ont tous le même cran', new Set(crans.slice(0, 50)).size === 1)
 }
 
 // UN RAYON N'INFLUENCE PAS UN AUTRE.
 {
-  const seul = cransParGroupe(rayon('objets', 100, 900), PYRAMIDE_QUATRE)
-  const melange = cransParGroupe([...rayon('visages', 300, 9_000_000), ...rayon('objets', 100, 900)], PYRAMIDE_QUATRE)
+  const seul = cransParGroupe(rayon('objets', 100, 900), PYRAMIDE_CINQ)
+  const melange = cransParGroupe([...rayon('visages', 300, 9_000_000), ...rayon('objets', 100, 900)], PYRAMIDE_CINQ)
   verifier(
     'les crans d’un rayon ne bougent pas quand un autre grandit',
     seul.every((r, i) => r === melange[300 + i]),
@@ -139,10 +154,112 @@ const rayon = (groupe: string, n: number, depart = 1_000_000) =>
     { groupe: 'b', valeur: 100 },
     { groupe: 'a', valeur: 50 },
   ]
-  const crans = cransParGroupe(elements, PYRAMIDE_QUATRE)
+  const crans = cransParGroupe(elements, PYRAMIDE_CINQ)
   egal(crans.length, 3, 'autant de crans que d’entrées')
   egal(crans[1], 'legendaire', 'le seul de son rayon est légendaire')
 }
+
+console.log('')
+console.log('LES CINQ CRANS ET LEUR TIRAGE')
+
+// *Les deux tables de chances décrivent un CADEAU*, donc elles doivent
+// distribuer exactement une carte : **une table qui ne somme pas à un ne dit
+// plus ce qu'elle promet**, et le reliquat partirait en silence au cran le plus
+// commun.
+const somme = (t: Readonly<Record<string, number>>) =>
+  Object.values(t).reduce((a, b) => a + b, 0)
+verifier(`les quatre chances somment à 1 (${somme(CHANCES).toFixed(3)})`, Math.abs(somme(CHANCES) - 1) < 1e-9)
+verifier(
+  `les cinq chances somment à 1 (${somme(CHANCES_CINQ).toFixed(3)})`,
+  Math.abs(somme(CHANCES_CINQ) - 1) < 1e-9,
+)
+
+// LES CRANS DU CATALOGUE SONT CEUX DU TIRAGE. *Une carte dont le cran n'a pas
+// de case disparaît du tirage sans une erreur* — c'est exactement ce qui
+// serait arrivé au « peu commun » le jour où il est né.
+verifier(
+  'les cinq raretés du catalogue sont des crans tirables',
+  RARETES_EMOJI.every((r) => (CRANS_CINQ as readonly string[]).includes(r)),
+)
+
+{
+  const cartes = RARETES_EMOJI.map((r) => ({ id: r, rarete: r }))
+  const tas = parCran(cartes, ECHELLE_CINQ)
+  egal(tas.size, 5, 'cinq tas, un par cran')
+  egal(tas.get('peu-commun')?.length, 1, 'la carte peu commune entre dans son tas')
+  // ET LA PREUVE DU DEFAUT QU'ON A EVITE : rangée sur l'échelle à quatre, la
+  // même carte n'a aucune case et se perd. *Le test le constate plutôt que de
+  // le supposer.*
+  const quatre = parCran(cartes as { id: string; rarete: never }[], ECHELLE_QUATRE)
+  egal(
+    [...quatre.values()].reduce((n, l) => n + l.length, 0),
+    4,
+    'rangée sur quatre crans, la peu commune se perdrait',
+  )
+}
+
+{
+  // UN PAQUET REND SES CINQ CARTES sur l'échelle à cinq crans, et toutes
+  // portent un cran de cette échelle : *un tirage qui retomberait sur un nom
+  // de l'autre échelle ne se verrait qu'à la couleur du cadre.*
+  const tas = parCran(
+    RARETES_EMOJI.flatMap((r) => Array.from({ length: 20 }, (_, i) => ({ id: `${r}-${i}`, rarete: r }))),
+    ECHELLE_CINQ,
+  )
+  const tire = ouvrirPaquet(tas, createRng(1789), ECHELLE_CINQ)
+  egal(tire.length, CARTES_PAR_PAQUET, 'un paquet rend cinq cartes')
+  verifier('aucun doublon dans un paquet', new Set(tire.map((c) => c.id)).size === tire.length)
+  verifier(
+    'tous les crans tirés sont de la bonne échelle',
+    tire.every((c) => (CRANS_CINQ as readonly string[]).includes(c.rarete)),
+  )
+  // LA GARANTIE : la dernière carte vaut le cran garanti ou mieux.
+  const derniere = tire[tire.length - 1]!
+  verifier(
+    `la vedette vaut « rare » ou mieux (${derniere.rarete})`,
+    CRANS_CINQ.indexOf(derniere.rarete) >= CRANS_CINQ.indexOf('rare'),
+  )
+}
+
+console.log('')
+console.log('LES DEUX BONUS DE L’EXEMPLAIRE')
+
+// L'ANIME DEMANDE QUE L'EMOJI SOIT ANIMABLE : *on ne peut pas animer ce que
+// Google n'a pas animé*, et un tiers du catalogue seulement a un fichier.
+verifier('un emoji non animable ne sort jamais animé', !tirerBonus(false, () => 0).anime)
+verifier('un emoji animable peut sortir animé', tirerBonus(true, () => 0).anime)
+
+// ILS SONT INDEPENDANTS : « et/ou », donc deux tirages séparés.
+{
+  const les_deux = tirerBonus(true, () => 0)
+  verifier('les deux bonus peuvent tomber ensemble', les_deux.holo && les_deux.anime)
+  const aucun = tirerBonus(true, () => 0.999)
+  verifier('les deux peuvent ne pas tomber', !aucun.holo && !aucun.anime)
+}
+
+// LE TIRAGE A LIEU MEME QUAND IL NE PEUT RIEN DONNER, et c'est délibéré :
+// *sans ça le nombre d'appels au hasard dépendrait de la carte*, et deux
+// paquets de même graine ne rendraient plus la même suite.
+{
+  let appels = 0
+  const compteur = () => {
+    appels += 1
+    return 0.5
+  }
+  tirerBonus(false, compteur)
+  const sansAnimation = appels
+  appels = 0
+  tirerBonus(true, compteur)
+  egal(appels, sansAnimation, 'animable ou non, le même nombre de tirages')
+  egal(appels, 2, 'deux tirages, un par bonus')
+}
+
+// L'ANIME EST PLUS RARE QUE L'HOLO — c'est l'ordre que Keko a donné, et le
+// seul fait que les chiffres doivent respecter.
+verifier(
+  `l’animé est plus rare que l’holographique (${CHANCES_BONUS.anime} < ${CHANCES_BONUS.holo})`,
+  CHANCES_BONUS.anime < CHANCES_BONUS.holo,
+)
 
 console.log('')
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)

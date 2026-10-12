@@ -21,7 +21,7 @@
 import { writeFileSync, mkdirSync } from 'node:fs'
 import process from 'node:process'
 import { cache, journal, option } from './outils.ts'
-import { cransParGroupe, PYRAMIDE_QUATRE } from '../src/logic/quantiles.ts'
+import { cransParGroupe, PYRAMIDE_CINQ } from '../src/logic/quantiles.ts'
 import {
   GROUPES_EMOJI,
   RARETES_EMOJI,
@@ -360,7 +360,7 @@ function resume(cartes: readonly CarteEmoji[]): string {
     `engendre le ${new Date().toISOString().slice(0, 19).replace('T', ' ')} UTC`,
     '',
   ]
-  l.push(`${cartes.length} cartes, dont ${cartes.filter((c) => c.anime).length} animees`)
+  l.push(`${cartes.length} cartes, dont ${cartes.filter((c) => c.animable).length} animables`)
   l.push('')
   l.push(`au classement de frequence : ${cartes.filter((c) => c.frequence !== null).length}`)
   l.push('')
@@ -417,7 +417,7 @@ function resume(cartes: readonly CarteEmoji[]): string {
     const m = gr[Math.floor(gr.length / 2)]!
     l.push(
       `  ${r.padEnd(12)} ${m.emoji} ${m.nom} (${m.groupe}, ${m.rang}e, ` +
-        `${m.frequence === null ? 'non classe' : 'frequence ' + m.frequence}${m.anime ? ', anime' : ''})`,
+        `${m.frequence === null ? 'non classe' : 'frequence ' + m.frequence}${m.animable ? ', animable' : ''})`,
     )
   }
   return l.join('\n') + '\n'
@@ -467,7 +467,7 @@ async function main(): Promise<void> {
       mots: fr?.mots ?? [],
       version: b.version,
       annee: ANNEE_DE_VERSION[b.version] ?? 2026,
-      anime: estAnime,
+      animable: estAnime,
       frequence: rang?.groupe ?? null,
       notoriete: notoriete(b, estAnime, bruts.length, rang),
     }
@@ -496,7 +496,7 @@ async function main(): Promise<void> {
    */
   const crans = cransParGroupe(
     sans.map((c) => ({ groupe: '', valeur: c.notoriete })),
-    PYRAMIDE_QUATRE,
+    PYRAMIDE_CINQ,
   ) as RareteEmoji[]
   const cartes: CarteEmoji[] = sans.map(({ notoriete: _n, ...c }, i) => ({
     ...c,
