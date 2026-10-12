@@ -14168,9 +14168,146 @@ différent partageraient leur texture.
   autant que celle de la texture* : les arrondir demanderait d'extruder un autre
   profil, sinon le laiton du corps dépasserait aux coins. **À rouvrir si Keko le
   demande**, en sachant que ça touche la géométrie et pas seulement le dessin ;
-- **la typographie** — le nom en gothique, le cartouche en Garamond, le pied en
-  petites capitales espacées. *Keko a réglé ces trois-là lui-même*, et il n'a
-  nommé que le contour.
+**ET LA TYPOGRAPHIE A ÉTÉ ROUVERTE LE LENDEMAIN.** J'avais écrit qu'elle ne
+bougeait pas, « Keko a réglé ces trois-là lui-même » — *et il n'avait réglé que
+le gabarit du jeu d'extraction* : voir la section qui suit.
+
+### LA PLAQUE CLAIRE : la zone de texte quitte le métal
+
+Keko, dans la foulée du contour : **« on peut peut-être diminuer un peu la taille
+de l'émoji et augmenter un poil l'épaisseur de la bordure. De plus la police et
+la zone de texte (dégradé noir) sont hors du thème : on veut une police et un
+style pour la zone de texte proche de l'univers smartphone / fun des emoji. »**
+
+*Le contour n'était que la moitié de « l'organisation des cartes »* — et la
+seconde moitié porte plus loin, parce qu'elle touche à ce que la carte DIT et pas
+seulement à sa découpe.
+
+#### LE VOILE ET LA PLAQUE FONT LE MÊME TRAVAIL, PAS DANS LA MÊME LANGUE
+
+Le gabarit **éteint son image sous un voile noir** et écrit dessus en clair :
+c'est la grammaire d'une plaque de métal gravée — l'image meurt dans le métal et
+la lettre s'y creuse. **Un emoji vient d'un clavier**, donc sa carte porte une
+**plaque CLAIRE posée sur l'image**, du texte sombre dessus, et le type en
+pastille.
+
+*C'est la même bascule que le contour, un cran plus loin* : **une échelle se dit
+en couleur, une famille se dit en forme** — la rareté ne bouge pas d'un ton, et
+tout ce qui change est la matière de ce qui porte le texte.
+
+Quatre choses la portent, et chacune fait un travail que les autres ne font pas :
+
+- **ELLE PORTE SON OMBRE VERS LE HAUT.** C'est la seule chose qui dise qu'elle
+  est POSÉE sur l'image et non découpée dedans — *une plaque sans ombre se lit
+  comme un trou dans le dessin* ;
+- **SES COINS DU BAS SONT CEUX DE LA CARTE**, rayon de la carte moins la marge :
+  elle s'arrête sur le cadre, donc elle doit l'épouser. La règle du tracé du
+  contour, repayée ici ;
+- **SON DÉGRADÉ EST À PEINE VISIBLE**, du plus clair en haut au plus gris en bas,
+  parce que la lumière du jeu vient du haut : *un aplat parfaitement uni se lit
+  comme un rectangle de couleur, pas comme une surface* ;
+- **ELLE EST OPAQUE.** Un reste de transparence laisserait voir l'emoji dessous,
+  et *ça se lit comme un calque mal posé* — la règle déjà tenue par la pierre des
+  encadrés du glossaire.
+
+**ET LE TRAIT SOUS LE NOM DISPARAÎT.** *Il structure une plaque gravée*, où le
+nom et l'effet sont deux inscriptions qu'il faut séparer ; **dans une
+application, un titre suivi d'un sous-texte gris n'a pas de séparateur** — la
+graisse et la couleur suffisent, et c'est ce qui fait lire les deux comme un bloc
+plutôt que comme deux champs.
+
+**ET LE CERNE DU TEXTE AUSSI.** *Il sépare par la PROFONDEUR* — il détache une
+lettre claire d'un fond sombre et mouvant — **et sur du blanc il ne détache plus
+rien : il salit.** La règle est déjà écrite pour le coeur des armures, où le
+cerne mangeait un tiers de la figure sans rien détacher.
+
+#### LA CAPSULE REVIENT, LÀ OÙ ELLE EST LA FORME JUSTE
+
+Le type passe en **PASTILLE arrondie**, gris clair, sous le cartouche. *Un mot
+gravé entre deux filets est de la ferronnerie* ; **une pastille est LE vocabulaire
+d'une app**, et c'est exactement ce que ce mot est — une étiquette de catégorie,
+pas une valeur de jeu.
+
+**Et c'est un `border-radius: 999px` assumé**, alors que le projet les a tous
+chassés : la barre de vie ramenée au biseau, les infobulles à zéro, le bouton de
+rangement à l'angle droit. ***La règle « un arrondi est une forme de gabarit, une
+arête franche est de la ferronnerie » ne vaut que là où le jeu parle
+ferronnerie.*** Ici il parle d'un clavier.
+
+**SA PLACE SE CALCULE CONTRE SES DEUX VOISINS**, et c'est la pastille qui le
+demande : *un mot gravé n'occupe que son encre, une pastille occupe une boîte.*
+Le pire cas du cartouche est un effet de **quatre lignes** — il descend alors au
+dernier cran et le bas de ses glyphes tombe à 91,4 % de la hauteur, la plaque
+s'arrêtant à 98,5 % sur la marge du cadre. Il reste 6,5 % pour la pastille, d'où
+7,4 U de haut posée à 94,8 %. *Mesuré avant correction* : à 8,2 U posée à 94,5 %,
+elle mordait sur la dernière ligne.
+
+#### UNE SEULE POLICE REMPLACE LES DEUX
+
+**Baloo 2**, en trois graisses : le nom en 800, le cartouche en 400, le type en
+700. *Le gabarit parle deux langues* — le gothique des noms, le serif des effets
+— **et les deux disent le métal** : sur une plaque claire elles se lisent comme
+un titre de parchemin collé sur un écran, la même faute que la coque déchirée
+autour d'un aplat net.
+
+**Une application n'a qu'une voix, elle la décline en graisses** — et Baloo 2 est
+arrondie comme un emoji tout en restant lisible en corps de texte, ce qu'une
+fantaisie plus marquée ne tient pas sur deux lignes de cartouche.
+
+**ELLE SE DEMANDE EXPLICITEMENT, et c'est le piège déjà payé sur Noto Color
+Emoji** : *une police Google n'est téléchargée que si le DOM l'emploie*, or ces
+cartes ne sont peintes que sur un canvas — donc `document.fonts.ready` se
+résoudrait sans elle et **la texture partirait en cache écrite en Trebuchet.**
+
+**LA FAMILLE TRAVERSE TOUTE LA CHAÎNE DU TEXTE**, mesure comprise — six
+signatures : *si le repli mesurait dans une police et l'écriture dans une autre,
+les lignes seraient coupées au mauvais endroit*, et le canvas ne prévient jamais
+qu'il déborde. Le serif reste le défaut de chaque paramètre, donc **les quatre
+autres modes ne changent pas d'un pixel** (vérifié à l'écran sur un paquet
+d'animaux).
+
+**ET LA BORNE DU NOM MONTE À 88 %.** Les 78 % sont la largeur du cadre ENTAILLÉ à
+la hauteur du titre, ombre portée comprise ; *une plaque claire n'a ni entaille ni
+ombre.* À 78 %, « Visage avec un léger sourire » se rétrécissait deux crans sous
+« Plus » — **deux noms de même rang qui se lisent à deux tailles donnent deux
+objets différents.**
+
+#### L'EMOJI RAPETISSE PARCE QUE SA FENÊTRE RAPETISSE
+
+*Il n'y avait rien à régler dans son dessin* : il est peint sur une toile carrée
+et posé en `contain` dans la fenêtre d'art, donc **c'est la fenêtre qui décide de
+sa taille** — et toucher au glyphe aurait de toute façon manqué les cartes
+ANIMÉES, qui ne passent pas par cette toile.
+
+Jusqu'ici la fenêtre valait toute la surface : l'emoji descendait à **98 % de la
+hauteur**, c'est-à-dire SOUS le nom, son tiers inférieur noyé dans le dégradé.
+Borné au-dessus de la plaque, il perd **19 %** et gagne une marge nette de tous
+les côtés.
+
+**ET LE BLOOM LIT LA MÊME BOÎTE**, comme il lit déjà le même rognage : *le bloom
+n'est pas le sujet, c'est de la lumière tombée sur le décor* — cadré autrement,
+il éclairerait sous la plaque.
+
+**La boîte du DÉCOR, elle, ne bouge pas** : il est le fond de la carte, et le
+rogner moins y laisserait un trou. *Sans plaque, la boîte du sujet vaut la surface
+entière au pixel* — c'est l'absence du thème qui dit « ne rien changer ici »,
+comme `caseDeCarte` sans assiette.
+
+#### LA BORDURE PASSE DE 1,6 À 2,1
+
+Un seul nombre, `CONTOURS.plaque`. Les deux autres épaisseurs ne bougent pas :
+`?contour=fin|large` les rend.
+
+#### CE QUI RESTE À TRANCHER PAR KEKO — la plaque
+
+- **la police** : Baloo 2 est mon choix, et une autre se pose en une ligne —
+  Nunito (plus sobre), Quicksand (plus iOS), Fredoka (plus cartoon, trop pour un
+  corps de texte) ;
+- **le départ de la plaque** (60,5 % de la hauteur, donc 38 % de la carte) : c'est
+  la proportion d'une carte de collection moderne, et elle se règle d'un chiffre ;
+- **le dégradé** (`#fdfefe` → `#eaeef4`) et l'air autour de l'emoji (2 U) ;
+- `?texte=sombre` rend le dégradé noir — *ce qui a servi à choisir doit rester
+  ouvrable.*
 
 #### CE QUI RESTE À TRANCHER PAR KEKO — la rareté
 

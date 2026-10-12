@@ -141,5 +141,9 @@ export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus): CarteAPeindre {
     // ton des emojis ». *La coque déchirée du gabarit parle la ferronnerie*, et
     // un emoji est un aplat net : voir `CarteAPeindre.contour`.
     contour: 'simple',
+    // ET SA ZONE DE TEXTE EST UNE BULLE. Keko : « la police et la zone de texte
+    // (dégradé noir) sont hors du thème ; on veut un style proche de l'univers
+    // smartphone / fun des emoji ». Voir `CarteAPeindre.texte`.
+    texte: 'bulle',
   }
 }

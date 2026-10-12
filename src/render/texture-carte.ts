@@ -107,6 +107,30 @@ export type CarteAPeindre = {
    */
   contour?: 'simple'
   /**
+   * SA ZONE DE TEXTE EST UNE BULLE — et sa police suit.
+   *
+   * Demandé par Keko pour le mode emoji : « la police et la zone de texte
+   * (dégradé noir) sont hors du thème ; on veut une police et un style pour la
+   * zone de texte proche de l'univers smartphone / fun des emoji ».
+   *
+   * *Le gabarit éteint son image sous un voile NOIR et écrit dessus en clair* —
+   * c'est la grammaire d'une plaque de métal gravée, et elle est juste là où
+   * elle est née. **Un emoji vient d'un clavier**, donc sa carte parle la langue
+   * d'une application : une plaque CLAIRE posée sur l'image, du texte sombre
+   * dessus, une police ronde et le type en pastille.
+   *
+   * **ET ÇA PORTE DEUX DÉCISIONS DANS UN SEUL CHAMP, à dessein** : la plaque et
+   * la police disent la même chose — *de quel univers cette carte parle* — et
+   * les séparer demanderait de pouvoir choisir une plaque claire avec un texte
+   * gothique, ce qui n'a pas de sens. C'est l'inverse du couple `<b>` / `<d>`,
+   * où **deux décisions qui ne portent pas sur les mêmes mots ne peuvent pas
+   * voyager dans la même balise.**
+   *
+   * `?texte=sombre` rend le dégradé noir — *ce qui a servi à choisir doit
+   * rester ouvrable, même une fois le choix fait.*
+   */
+  texte?: 'bulle'
+  /**
    * SA FAMILLE — et c'est son DÉCOR qui la dit, pas son cadre : rouge pour une
    * arme, vert pour un objet, or pour un trésor, le bleu d'origine pour une
    * armure. Une pièce la porte, et les cartes de son set en héritent.
@@ -483,11 +507,48 @@ const PISTE_CADRE: PisteCadre | null = (() => {
  * réglage de session, donc elle n'a pas à entrer dans `signature()`.
  */
 export type PisteContour = 'fin' | 'plaque' | 'large'
-const CONTOURS: Record<PisteContour, number> = { fin: 0.85, plaque: 1.6, large: 3.1 }
+const CONTOURS: Record<PisteContour, number> = { fin: 0.85, plaque: 2.1, large: 3.1 }
 const PISTE_CONTOUR: PisteContour = (() => {
   const demande = new URLSearchParams(location.search).get('contour')
   return demande === 'fin' || demande === 'large' ? demande : 'plaque'
 })()
+
+/**
+ * LA PLAQUE DE TEXTE : où elle commence, et l'air qu'elle laisse au sujet.
+ *
+ * **Elle part juste au-dessus du nom**, peint à 66,5 % : il reste de quoi loger
+ * ses capitales et un peu d'air. *Elle couvre donc les 38 % du bas* — la
+ * proportion d'une carte de collection moderne, et c'est ce qui en fait une
+ * carte plutôt qu'une image légendée.
+ *
+ * **L'AIR EST CE QUI RAPETISSE LE SUJET.** Keko : « on peut peut-être diminuer
+ * un peu la taille de l'émoji ». *Il n'y avait rien à régler dans son dessin* —
+ * l'emoji est peint sur une toile carrée et posé en `contain` dans la fenêtre
+ * d'art, donc **c'est la fenêtre qui décide de sa taille.** Jusqu'ici elle
+ * valait toute la surface : l'emoji descendait à 98 % de la hauteur, c'est-à-
+ * dire SOUS le nom, son tiers inférieur noyé dans le dégradé. Borné au-dessus
+ * de la plaque, il perd 19 % et gagne une marge nette de tous les côtés.
+ *
+ * *Et le BLOOM lit la même boîte*, comme il lit déjà le même rognage : **le
+ * bloom n'est pas le sujet, c'est de la lumière tombée sur le décor** — cadré
+ * autrement, il éclairerait sous la plaque.
+ */
+const HAUT_BULLE = 0.605
+const AIR_SUJET = 2
+
+/**
+ * `?texte=sombre` rend le dégradé noir du gabarit.
+ *
+ * *Ce qui a servi à choisir doit rester ouvrable, même une fois le choix fait* —
+ * et c'est aussi le seul moyen de revoir côte à côte ce que la plaque remplace.
+ */
+const PISTE_TEXTE: 'bulle' | 'sombre' =
+  new URLSearchParams(location.search).get('texte') === 'sombre' ? 'sombre' : 'bulle'
+
+/** Cette carte-ci porte-t-elle la plaque claire et la police ronde ? */
+function enBulle(carte: CarteAPeindre): boolean {
+  return carte.texte === 'bulle' && PISTE_TEXTE === 'bulle'
+}
 
 const SILHOUETTES: Partial<Record<PisteCadre, readonly [number, number][]>> = {
   franc: CADRE_FRANC,
@@ -1832,11 +1893,12 @@ function corpsDuCartouche(
   ctx: CanvasRenderingContext2D,
   effet: readonly string[],
   max: number,
+  famille = SERIF_EFFET,
 ): { taille: number; lignes: Mot[][] } {
   const place = HAUT * (BAS_CARTOUCHE - HAUT_CARTOUCHE)
   const pose = (t: number): Mot[][] => {
-    ctx.font = `400 ${t}px "Crimson Pro", Georgia, serif`
-    return replier(ctx, effet, max, t)
+    ctx.font = `400 ${t}px ${famille}`
+    return replier(ctx, effet, max, t, famille)
   }
   const tient = (t: number, l: readonly Mot[][]): boolean =>
     (l.length - 1) * t * INTERLIGNE_EFFET <= place
@@ -1869,6 +1931,7 @@ function replier(
   entrees: readonly string[],
   max: number,
   taille: number,
+  famille = SERIF_EFFET,
 ): Mot[][] {
   const sorties: Mot[][] = []
   for (const entree of entrees) {
@@ -1878,7 +1941,7 @@ function replier(
       // UN SYMBOLE EST UN MOT COMME UN AUTRE, mais sa largeur n'est pas celle
       // de son écriture : on mesure le DESSIN, sinon la ligne déborderait de
       // la différence — et *le canvas ne prévient jamais qu'il déborde.*
-      if (courante.length > 0 && largeurLigne(ctx, essai, taille) > max) {
+      if (courante.length > 0 && largeurLigne(ctx, essai, taille, famille) > max) {
         // ON NE COUPE PAS DEVANT UN MOT LIÉ : il repart avec celui qui le
         // précède, et on recule tant que le premier de la nouvelle ligne en est
         // un. *Jamais jusqu'à vider la ligne qu'on ferme* — une ligne vide ne
@@ -2340,23 +2403,67 @@ function enMots(entree: string): Mot[] {
   return mots
 }
 
-/** La police d'un mot : le gras est celui du cartouche, pas un second corps. */
-function policeMot(taille: number, gras: boolean): string {
-  return `${gras ? 700 : 400} ${taille}px "Crimson Pro", Georgia, serif`
+/**
+ * LES DEUX VOIX DU TEXTE D'UNE CARTE.
+ *
+ * Le SERIF est celle du gabarit — la voix des effets, face au Cinzel des noms.
+ * La RONDE est celle d'une carte qui parle la langue d'une application : *Baloo
+ * 2 est arrondie comme un emoji et lisible en corps de texte*, ce qu'une
+ * fantaisie plus marquée ne tient pas sur deux lignes de cartouche.
+ *
+ * **Elle se demande EXPLICITEMENT**, et c'est le piège déjà payé sur Noto Color
+ * Emoji : *une police Google n'est téléchargée que si le DOM l'emploie*, or ces
+ * cartes ne sont peintes que sur un canvas — donc `document.fonts.ready` peut se
+ * résoudre sans elle, et la texture partirait en cache écrite en Trebuchet.
+ */
+const SERIF_EFFET = '"Crimson Pro", Georgia, serif'
+const RONDE = 'Baloo 2'
+const FAMILLE_RONDE = `"${RONDE}", "Trebuchet MS", sans-serif`
+
+let RONDE_PRETE: Promise<unknown> | null = null
+function policeRonde(): Promise<unknown> {
+  RONDE_PRETE ??= Promise.all([
+    document.fonts.load(`400 64px "${RONDE}"`),
+    document.fonts.load(`700 64px "${RONDE}"`),
+    document.fonts.load(`800 64px "${RONDE}"`),
+  ]).catch(() => null)
+  return RONDE_PRETE
 }
 
-function largeurMot(ctx: CanvasRenderingContext2D, mot: Mot, taille: number): number {
+/**
+ * La police d'un mot : le gras est celui du cartouche, pas un second corps.
+ *
+ * **La famille traverse toute la chaîne du texte**, mesure comprise : *si le
+ * repli mesurait dans une police et l'écriture dans une autre, les lignes
+ * seraient coupées au mauvais endroit* — et le canvas ne prévient jamais qu'il
+ * déborde.
+ */
+function policeMot(taille: number, gras: boolean, famille = SERIF_EFFET): string {
+  return `${gras ? 700 : 400} ${taille}px ${famille}`
+}
+
+function largeurMot(
+  ctx: CanvasRenderingContext2D,
+  mot: Mot,
+  taille: number,
+  famille = SERIF_EFFET,
+): number {
   if ('jeton' in mot) return largeurJeton(ctx, mot.jeton, taille)
-  ctx.font = policeMot(taille, mot.gras)
+  ctx.font = policeMot(taille, mot.gras, famille)
   return ctx.measureText(mot.texte).width
 }
 
 /** La largeur d'une ligne, symboles et graisses compris. */
-function largeurLigne(ctx: CanvasRenderingContext2D, mots: readonly Mot[], taille: number): number {
-  ctx.font = policeMot(taille, false)
+function largeurLigne(
+  ctx: CanvasRenderingContext2D,
+  mots: readonly Mot[],
+  taille: number,
+  famille = SERIF_EFFET,
+): number {
+  ctx.font = policeMot(taille, false, famille)
   const espace = ctx.measureText(' ').width
   return mots.reduce(
-    (large, mot, i) => large + largeurMot(ctx, mot, taille) + (i > 0 ? espace : 0),
+    (large, mot, i) => large + largeurMot(ctx, mot, taille, famille) + (i > 0 ? espace : 0),
     0,
   )
 }
@@ -2377,11 +2484,12 @@ function ecrireLigne(
   y: number,
   taille: number,
   symbole: HTMLImageElement | null,
+  famille = SERIF_EFFET,
 ): void {
   const couleur = ctx.fillStyle
-  ctx.font = policeMot(taille, false)
+  ctx.font = policeMot(taille, false, famille)
   const espace = ctx.measureText(' ').width
-  let x = cx - largeurLigne(ctx, mots, taille) / 2
+  let x = cx - largeurLigne(ctx, mots, taille, famille) / 2
 
   ctx.save()
   ctx.textAlign = 'left'
@@ -2392,7 +2500,7 @@ function ecrireLigne(
       x += largeurJeton(ctx, mot.jeton, taille)
       return
     }
-    ctx.font = policeMot(taille, mot.gras)
+    ctx.font = policeMot(taille, mot.gras, famille)
     ctx.fillStyle = mot.teinte === undefined ? couleur : TEINTES[mot.teinte]
     ctx.fillText(mot.texte, x, y)
     x += ctx.measureText(mot.texte).width
@@ -2451,6 +2559,10 @@ export async function peindreCarte(
     FOND_PEINT ? null : carte.ciel === undefined ? fond() : fondTeinte(carte.ciel),
     coutPeint(),
     document.fonts.ready,
+    // ET LA RONDE SE DEMANDE EXPLICITEMENT : voir `policeRonde`. *Une police
+    // que seul le canvas emploie n'est jamais téléchargée*, donc
+    // `document.fonts.ready` se résoudrait sans elle.
+    carte.texte === 'bulle' ? policeRonde() : null,
   ])
 
   // LES COINS SONT RONDS, et c'est la texture qui les porte : tout ce qui
@@ -2526,6 +2638,19 @@ export async function peindreCarte(
    * remplirait de lumière les bandes où il n'y a rien.
    */
   const rognage = carte.illustrationEntiere === true ? 0 : PLAFOND_ROGNAGE
+  /**
+   * LA BOÎTE DU SUJET — et ce n'est pas celle du DÉCOR.
+   *
+   * Le décor est le fond de la carte : il couvre toute la surface, et le rogner
+   * moins y laisserait un trou. **Le sujet, lui, s'arrête au-dessus de la
+   * plaque de texte quand il y en a une** : voir `HAUT_BULLE`.
+   *
+   * *Sans plaque, elle vaut la surface entière au pixel* — c'est l'absence du
+   * thème qui dit « ne rien changer ici », comme `caseDeCarte` sans assiette.
+   */
+  const bulle = enBulle(carte)
+  const aY = bulle ? marge + AIR_SUJET * U : marge
+  const aH = (bulle ? HAUT * HAUT_BULLE - AIR_SUJET * U : HAUT - marge) - aY
   ctx.save()
   tracer(marge)
   ctx.clip()
@@ -2594,10 +2719,9 @@ export async function peindreCarte(
    */
   if (image !== null) {
     const lArt = LARGE - marge * 2
-    const hArt = HAUT - marge * 2
     const petit = document.createElement('canvas')
     petit.width = 44
-    petit.height = Math.max(1, Math.round((44 * hArt) / lArt))
+    petit.height = Math.max(1, Math.round((44 * aH) / lArt))
     // ON LA RELIT À CHAQUE PEINTURE depuis qu'on la floute — d'où le drapeau,
     // qui évite au navigateur de la garder sur le GPU pour rien.
     const pctx = petit.getContext('2d', { willReadFrequently: true })
@@ -2646,56 +2770,21 @@ export async function peindreCarte(
        */
       ctx.globalAlpha = 0.34 * Math.pow(LARGE / largeur, 0.34)
       ctx.imageSmoothingQuality = 'high'
-      ctx.drawImage(petit, marge, marge, lArt, hArt)
+      ctx.drawImage(petit, marge, aY, lArt, aH)
       ctx.restore()
     }
   }
 
 
   if (image !== null) {
-    couvrir(ctx, image, marge, marge, LARGE - marge * 2, HAUT - marge * 2, rognage)
+    couvrir(ctx, image, marge, aY, LARGE - marge * 2, aH, rognage)
   }
 
-  /**
-   * LE VOILE SOUS LE TEXTE : le bas de la carte passe sous le nom et le
-   * cartouche, donc l'image doit s'y éteindre pour qu'ils se lisent.
-   *
-   * **IL MONTE EN COURBE, PLUS EN DEUX SEGMENTS.** Keko : « je trouve le
-   * dégradé noir trop abrupt, on peut le rendre plus progressif ? » Il avait
-   * trois arrêts, donc une CASSURE DE PENTE à 66 % de la hauteur : il montait
-   * d'un coup jusqu'aux deux tiers d'opacité puis restait presque plat. *Ce
-   * n'est pas la vitesse qu'on voit, c'est la cassure* — une rampe sans
-   * dérivée nulle aux deux bouts se lit comme une arête.
-   *
-   * **Le départ remonte, et ce n'est pas un retour en arrière** : Keko avait
-   * fait baisser le voile parce qu'il devenait NOIR trop haut, pas parce qu'il
-   * commençait trop haut. Une courbe douce passe sous le seuil du visible
-   * pendant sa première moitié — à 50 % de la carte elle ne pèse que 10 %
-   * d'opacité, contre un départ franc à 57 % auparavant. *Elle commence plus
-   * haut et se voit plus bas.*
-   *
-   * Ce qui ne pouvait pas bouger, c'est l'opacité AU NOM, peint à 66,5 % : la
-   * courbe y vaut 0,67, soit exactement ce que l'ancien palier donnait.
-   */
-  const DEBUT_VOILE = 0.42
-  const PLEIN_VOILE = 0.78
-  const ALPHA_VOILE = 0.88
-  const noir = (a: number): string =>
-    `#000000${Math.round(a * 255)
-      .toString(16)
-      .padStart(2, '0')}`
-  const voile = ctx.createLinearGradient(0, HAUT * DEBUT_VOILE, 0, HAUT)
-  // Une smoothstep : sa pente est nulle aux deux bouts, donc ni le haut ni le
-  // bas de la rampe ne laissent d'arête. Seize arrêts suffisent — au-delà, le
-  // pas est sous le quantum de l'alpha.
-  for (let i = 0; i <= 16; i += 1) {
-    const t = i / 16
-    const y = DEBUT_VOILE + t * (PLEIN_VOILE - DEBUT_VOILE)
-    voile.addColorStop((y - DEBUT_VOILE) / (1 - DEBUT_VOILE), noir(t * t * (3 - 2 * t) * ALPHA_VOILE))
-  }
-  voile.addColorStop(1, noir(ALPHA_VOILE))
-  ctx.fillStyle = voile
-  ctx.fillRect(0, HAUT * DEBUT_VOILE, LARGE, HAUT * (1 - DEBUT_VOILE))
+  // CE QUI PORTE LE TEXTE : un voile qui éteint l'image, ou une plaque posée
+  // dessus. *Les deux font le même travail* — rendre le nom et le cartouche
+  // lisibles — et ils ne le font pas dans la même langue : voir `CarteAPeindre.texte`.
+  if (bulle) peindreBulle(ctx, marge)
+  else peindreVoile(ctx)
   ctx.restore()
 
   // LA MARQUE D'UNE CARTE DE DECK, quand une piste est à l'essai.
@@ -3261,11 +3350,120 @@ function peindreEcusson(ctx: CanvasRenderingContext2D, cout: number): void {
   ctx.shadowColor = 'transparent'
 }
 
+/**
+ * LE VOILE SOUS LE TEXTE : le bas de la carte passe sous le nom et le
+ * cartouche, donc l'image doit s'y éteindre pour qu'ils se lisent.
+ *
+ * **IL MONTE EN COURBE, PLUS EN DEUX SEGMENTS.** Keko : « je trouve le dégradé
+ * noir trop abrupt, on peut le rendre plus progressif ? » Il avait trois
+ * arrêts, donc une CASSURE DE PENTE à 66 % de la hauteur : il montait d'un coup
+ * jusqu'aux deux tiers d'opacité puis restait presque plat. *Ce n'est pas la
+ * vitesse qu'on voit, c'est la cassure* — une rampe sans dérivée nulle aux deux
+ * bouts se lit comme une arête.
+ *
+ * **Le départ remonte, et ce n'est pas un retour en arrière** : Keko avait fait
+ * baisser le voile parce qu'il devenait NOIR trop haut, pas parce qu'il
+ * commençait trop haut. Une courbe douce passe sous le seuil du visible pendant
+ * sa première moitié — à 50 % de la carte elle ne pèse que 10 % d'opacité,
+ * contre un départ franc à 57 % auparavant. *Elle commence plus haut et se voit
+ * plus bas.*
+ *
+ * Ce qui ne pouvait pas bouger, c'est l'opacité AU NOM, peint à 66,5 % : la
+ * courbe y vaut 0,67, soit exactement ce que l'ancien palier donnait.
+ */
+function peindreVoile(ctx: CanvasRenderingContext2D): void {
+  const DEBUT_VOILE = 0.42
+  const PLEIN_VOILE = 0.78
+  const ALPHA_VOILE = 0.88
+  const noir = (a: number): string =>
+    `#000000${Math.round(a * 255)
+      .toString(16)
+      .padStart(2, '0')}`
+  const voile = ctx.createLinearGradient(0, HAUT * DEBUT_VOILE, 0, HAUT)
+  // Une smoothstep : sa pente est nulle aux deux bouts, donc ni le haut ni le
+  // bas de la rampe ne laissent d'arête. Seize arrêts suffisent — au-delà, le
+  // pas est sous le quantum de l'alpha.
+  for (let i = 0; i <= 16; i += 1) {
+    const t = i / 16
+    const y = DEBUT_VOILE + t * (PLEIN_VOILE - DEBUT_VOILE)
+    voile.addColorStop((y - DEBUT_VOILE) / (1 - DEBUT_VOILE), noir(t * t * (3 - 2 * t) * ALPHA_VOILE))
+  }
+  voile.addColorStop(1, noir(ALPHA_VOILE))
+  ctx.fillStyle = voile
+  ctx.fillRect(0, HAUT * DEBUT_VOILE, LARGE, HAUT * (1 - DEBUT_VOILE))
+}
+
+/**
+ * LA PLAQUE CLAIRE : ce qui porte le texte d'une carte qui parle la langue
+ * d'une application.
+ *
+ * Keko : « la zone de texte (dégradé noir) est hors du thème ; on veut un style
+ * proche de l'univers smartphone / fun des emoji ».
+ *
+ * *Un voile qui s'éteint est le vocabulaire d'une plaque gravée* — l'image
+ * meurt dans le métal et la lettre s'y creuse. **Une plaque POSÉE dit l'inverse
+ * et c'est ce qu'on veut ici** : l'image reste entière au-dessus, et le texte
+ * vit sur une étiquette blanche, comme une légende sous une photo.
+ *
+ * Quatre choses la portent, et chacune fait un travail que les autres ne font
+ * pas :
+ *
+ * - **ELLE PORTE SON OMBRE VERS LE HAUT.** C'est la seule chose qui dise
+ *   qu'elle est POSÉE sur l'image et non découpée dedans — *une plaque sans
+ *   ombre se lit comme un trou dans le dessin* ;
+ * - **SES COINS DU BAS SONT CEUX DE LA CARTE**, rayon de la carte moins la
+ *   marge : elle s'arrête sur le cadre, donc elle doit l'épouser. La règle du
+ *   tracé du contour, repayée ici ;
+ * - **SON DÉGRADÉ EST À PEINE VISIBLE** (deux tons voisins, du plus clair en
+ *   haut au plus gris en bas) : la lumière du jeu vient du haut, et *un aplat
+ *   parfaitement uni se lit comme un rectangle de couleur, pas comme une
+ *   surface* ;
+ * - **ELLE EST OPAQUE.** Un reste de transparence laisserait voir l'emoji
+ *   dessous, et *ça se lit comme un calque mal posé* — la règle déjà tenue par
+ *   la pierre des encadrés du glossaire.
+ */
+function peindreBulle(ctx: CanvasRenderingContext2D, marge: number): void {
+  const y = HAUT * HAUT_BULLE
+  const l = LARGE - marge * 2
+  const h = HAUT - marge - y
+  const hautR = 5 * U
+  const basR = Math.max(0, LARGE * RAYON_CARTE - marge)
+  const fond = ctx.createLinearGradient(0, y, 0, HAUT)
+  fond.addColorStop(0, '#fdfefe')
+  fond.addColorStop(1, '#eaeef4')
+  ctx.save()
+  ctx.shadowColor = 'rgba(0,0,0,0.55)'
+  ctx.shadowOffsetY = -1.4 * U
+  ctx.shadowBlur = 4 * U
+  ctx.fillStyle = fond
+  ctx.beginPath()
+  ctx.roundRect(marge, y, l, h, [hautR, hautR, basR, basR])
+  ctx.fill()
+  ctx.restore()
+}
+
 function peindreTextes(
   ctx: CanvasRenderingContext2D,
   carte: CarteAPeindre,
   symbole: HTMLImageElement | null,
 ): void {
+  /**
+   * LA VOIX DE CETTE CARTE-CI.
+   *
+   * Keko : « la police est hors du thème ; on veut une police proche de
+   * l'univers smartphone / fun des emoji ».
+   *
+   * *Le gabarit parle deux langues* — le gothique des noms, le serif des effets
+   * — **et les deux disent le métal.** Sur une plaque claire elles se lisent
+   * comme un titre de parchemin collé sur un écran : c'est la même faute que la
+   * coque déchirée autour d'un aplat net, un cran plus loin.
+   *
+   * **Une seule famille remplace les deux**, et c'est juste ici : *une
+   * application n'a qu'une voix, elle la décline en graisses.* Le nom prend le
+   * 800, le cartouche le 400, le type le 700.
+   */
+  const bulle = enBulle(carte)
+  const famille = bulle ? FAMILLE_RONDE : SERIF_EFFET
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
 
@@ -3308,11 +3506,23 @@ function peindreTextes(
    * désaccorderait le jour où le défaut change.* Les autres pistes y perdent
    * trois pour cent sur les seuls noms longs.
    */
-  const tientDans = LARGE * 0.78
-  ctx.font = `700 ${tailleNom}px "Grenze Gotisch", Georgia, serif`
+  /**
+   * **ET LA PLAQUE N'A PAS D'ENCOCHE À ÉVITER.** Les 78 % sont la largeur du
+   * cadre ENTAILLÉ à la hauteur du titre, ombre portée comprise ; une plaque
+   * claire n'a ni entaille ni ombre, et son cadre ne mord que de sa marge.
+   *
+   * *À 78 %, les noms longs se rétrécissaient pour rien* — « Visage avec un
+   * léger sourire » sortait deux crans sous « Plus », et **deux noms de même
+   * rang qui se lisent à deux tailles donnent deux objets différents.** Il
+   * reste de quoi loger le dégagement de la plaque.
+   */
+  const tientDans = LARGE * (bulle ? 0.88 : 0.78)
+  const policeNom = (t: number): string =>
+    bulle ? `800 ${t}px ${FAMILLE_RONDE}` : `700 ${t}px "Grenze Gotisch", Georgia, serif`
+  ctx.font = policeNom(tailleNom)
   while (ctx.measureText(carte.nom).width > tientDans && tailleNom > 6 * U) {
     tailleNom *= 0.94
-    ctx.font = `700 ${tailleNom}px "Grenze Gotisch", Georgia, serif`
+    ctx.font = policeNom(tailleNom)
   }
   /**
    * ET SI LA TAILLE NE SUFFIT PLUS, ON COUPE.
@@ -3341,25 +3551,44 @@ function peindreTextes(
     }
     nom = `${lettres.join('').trimEnd()}…`
   }
-  ctx.fillStyle = '#f7ead0'
-  ctx.shadowColor = '#14181a'
-  ctx.shadowOffsetY = 0.5 * U
-  ctx.shadowBlur = 3 * U
+  /**
+   * ET SUR UNE PLAQUE CLAIRE, LE TEXTE EST SOMBRE ET SANS OMBRE.
+   *
+   * *Le cerne du gabarit sépare par la PROFONDEUR* — il détache une lettre
+   * claire d'un fond sombre et mouvant — **et sur du blanc il ne détache plus
+   * rien : il salit.** La règle est déjà écrite pour le coeur des armures, où
+   * le cerne mangeait un tiers de la figure sans rien détacher.
+   */
+  ctx.fillStyle = bulle ? '#19242e' : '#f7ead0'
+  ctx.shadowColor = bulle ? 'transparent' : '#14181a'
+  ctx.shadowOffsetY = bulle ? 0 : 0.5 * U
+  ctx.shadowBlur = bulle ? 0 : 3 * U
   const yNom = HAUT * 0.665
   ctx.fillText(nom, LARGE / 2, yNom)
   ctx.shadowColor = 'transparent'
   ctx.shadowOffsetY = 0
   ctx.shadowBlur = 0
 
-  const trait = ctx.createLinearGradient(LARGE * 0.22, 0, LARGE * 0.78, 0)
-  trait.addColorStop(0, '#f7ead000')
-  trait.addColorStop(0.2, '#f7ead099')
-  trait.addColorStop(0.8, '#f7ead099')
-  trait.addColorStop(1, '#f7ead000')
-  ctx.fillStyle = trait
-  // Le trait suit le nom : il se pose sous ses jambages, quelle que soit la
-  // taille à laquelle il a fallu l'écrire.
-  ctx.fillRect(LARGE * 0.22, yNom + tailleNom * 0.68, LARGE * 0.56, Math.max(1, 0.25 * U))
+  /**
+   * LE TRAIT SOUS LE NOM — et il n'existe pas sur une plaque claire.
+   *
+   * *Il structure une plaque gravée*, où le nom et l'effet sont deux
+   * inscriptions qu'il faut séparer. **Dans une application, un titre suivi
+   * d'un sous-texte gris n'a pas de séparateur** : la graisse et la couleur
+   * suffisent, et c'est ce qui fait lire les deux comme un bloc plutôt que
+   * comme deux champs.
+   */
+  if (!bulle) {
+    const trait = ctx.createLinearGradient(LARGE * 0.22, 0, LARGE * 0.78, 0)
+    trait.addColorStop(0, '#f7ead000')
+    trait.addColorStop(0.2, '#f7ead099')
+    trait.addColorStop(0.8, '#f7ead099')
+    trait.addColorStop(1, '#f7ead000')
+    ctx.fillStyle = trait
+    // Le trait suit le nom : il se pose sous ses jambages, quelle que soit la
+    // taille à laquelle il a fallu l'écrire.
+    ctx.fillRect(LARGE * 0.22, yNom + tailleNom * 0.68, LARGE * 0.56, Math.max(1, 0.25 * U))
+  }
 
   // LE CARTOUCHE : ce que fait la carte, centré, une ligne par entrée.
   //
@@ -3368,11 +3597,11 @@ function peindreTextes(
   // la composition de l'Espadon sortait des deux côtés de la carte. Le repli
   // se fait à la taille choisie, et s'il coûte une ligne de trop on descend
   // d'un cran : c'est exactement ce que `cran` fait pour un effet long.
-  const { taille, lignes } = corpsDuCartouche(ctx, carte.effet, LARGE * 0.86)
-  ctx.fillStyle = '#f1e6cf'
-  ctx.shadowColor = '#000000aa'
-  ctx.shadowOffsetY = 0.4 * U
-  ctx.shadowBlur = 0.8 * U
+  const { taille, lignes } = corpsDuCartouche(ctx, carte.effet, LARGE * 0.86, famille)
+  ctx.fillStyle = bulle ? '#5d6e80' : '#f1e6cf'
+  ctx.shadowColor = bulle ? 'transparent' : '#000000aa'
+  ctx.shadowOffsetY = bulle ? 0 : 0.4 * U
+  ctx.shadowBlur = bulle ? 0 : 0.8 * U
   lignes.forEach((ligne, i) => {
     ecrireLigne(
       ctx,
@@ -3381,29 +3610,86 @@ function peindreTextes(
       HAUT * HAUT_CARTOUCHE + i * taille * INTERLIGNE_EFFET,
       taille,
       symbole,
+      famille,
     )
   })
   ctx.shadowColor = 'transparent'
 
-  peindrePied(ctx, carte)
+  peindrePied(ctx, carte, bulle)
 }
 
-/** LE PIED : sa nature gravée, en petites capitales espacées. */
-function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre): void {
-  const y = HAUT * 0.955
-  ctx.font = `600 ${4.6 * U}px "Barlow Condensed", "Arial Narrow", sans-serif`
-  ctx.fillStyle = '#c9b892'
+/**
+ * LE PIED : sa nature gravée, en petites capitales espacées — ou en PASTILLE
+ * quand la carte parle la langue d'une application.
+ *
+ * *Un mot gravé entre deux filets est de la ferronnerie* ; **une pastille
+ * arrondie est LE vocabulaire d'une app**, et c'est exactement ce que ce mot
+ * est : une étiquette de catégorie, pas une valeur de jeu.
+ *
+ * **ET LA CAPSULE REVIENT ICI, alors que le projet l'a bannie partout
+ * ailleurs.** La règle était « un arrondi est une forme de gabarit, une arête
+ * franche est de la ferronnerie » — elle a ramené la barre de vie au biseau,
+ * les infobulles à zéro, le bouton de rangement à l'angle droit. *Elle ne vaut
+ * que là où le jeu parle ferronnerie* : ici il parle d'un clavier, et c'est la
+ * capsule qui est la forme juste.
+ */
+function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre, bulle = false): void {
+  /**
+   * SA PLACE SE CALCULE CONTRE LES DEUX VOISINS, et c'est la pastille qui le
+   * demande : *un mot gravé n'occupe que son encre, une pastille occupe une
+   * boîte.*
+   *
+   * **Le pire cas du cartouche est un effet de QUATRE lignes** : il descend
+   * alors au dernier cran (5,4 U), donc sa dernière ligne de base tombe à
+   * 90 % de la hauteur et le bas de ses glyphes à 91,4 %. En dessous, la
+   * plaque s'arrête sur la marge du cadre. **Il reste 6,5 % de hauteur pour
+   * une pastille** — d'où 7,4 U de haut, posée à 94,8 %, qui laisse un peu
+   * plus d'un pour cent de chaque côté.
+   *
+   * *Mesuré avant correction* : à 8,2 U posée à 94,5 %, elle mordait sur la
+   * dernière ligne d'un effet à quatre lignes.
+   */
+  const y = HAUT * (bulle ? 0.948 : 0.955)
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.letterSpacing = `${1.2 * U}px`
-  ctx.fillText(carte.type.toUpperCase(), LARGE / 2, y)
-  ctx.letterSpacing = '0px'
+  if (bulle) {
+    const mot = carte.type.toUpperCase()
+    const esp = 0.55 * U
+    ctx.font = `700 ${4 * U}px ${FAMILLE_RONDE}`
+    ctx.letterSpacing = `${esp}px`
+    /**
+     * L'APPROCHE AJOUTE SON BLANC APRÈS LA DERNIÈRE LETTRE, donc la mesure
+     * compte un espace qui n'existe pas à l'oeil : centrée dessus, la pastille
+     * paraîtrait poussée à gauche de la moitié. *On mesure l'encre et on pose
+     * le mot à gauche* — la règle déjà payée sur l'entrée majeure du rail.
+     */
+    const encre = ctx.measureText(mot).width - esp
+    const l = encre + 6.4 * U
+    const h = 7.4 * U
+    ctx.fillStyle = '#dde4ec'
+    ctx.beginPath()
+    ctx.roundRect(LARGE / 2 - l / 2, y - h / 2, l, h, h / 2)
+    ctx.fill()
+    ctx.fillStyle = '#6a7b8d'
+    ctx.textAlign = 'left'
+    ctx.fillText(mot, LARGE / 2 - encre / 2, y)
+    ctx.textAlign = 'center'
+    ctx.letterSpacing = '0px'
+  } else {
+    ctx.font = `600 ${4.6 * U}px "Barlow Condensed", "Arial Narrow", sans-serif`
+    ctx.fillStyle = '#c9b892'
+    ctx.letterSpacing = `${1.2 * U}px`
+    ctx.fillText(carte.type.toUpperCase(), LARGE / 2, y)
+    ctx.letterSpacing = '0px'
+  }
 
   // LES DEUX MESURES ENCADRENT LE TYPE, et leur couleur dit laquelle est
   // laquelle. Elles sont EN DEHORS du centrage du type : il garde sa place au
   // milieu de la carte, quels que soient les deux chiffres.
   if (carte.attaque === undefined && carte.defense === undefined) return
-  ctx.font = `600 ${7.4 * U}px "Grenze Gotisch", Georgia, serif`
+  ctx.font = bulle
+    ? `800 ${7.4 * U}px ${FAMILLE_RONDE}`
+    : `600 ${7.4 * U}px "Grenze Gotisch", Georgia, serif`
   // LE CERNE SÉPARE PAR LA PROFONDEUR, PAS PAR LA COULEUR : le pied passe sur
   // le laiton sombre de la coque, donc un chiffre nu s'y noierait — la règle
   // déjà tenue par le chiffre des jauges.
@@ -3971,7 +4257,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}`
 }
 
 /**
