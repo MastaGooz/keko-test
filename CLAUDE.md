@@ -13497,10 +13497,9 @@ maléfiques interrompant les orgies des vicieux et des insatiables ». *Aucune
 taille lisible ne les fait tenir sur une ligne*, donc le nom débordait de trois
 fois la carte **sans que rien ne le signale.**
 
-**Le nom se COUPE donc, en dernier recours.** Le repli sur deux lignes n'a pas
-la place — entre le nom (66,5 %) et le cartouche (75,5 %) il n'y a que neuf pour
-cent de hauteur — et *ce qui sert à RECONNAÎTRE une carte, ce sont ses premiers
-mots.* Le nom entier reste dans le catalogue pour les écrans qui ont la place.
+**Le nom se COUPE donc, en dernier recours** — et *ce qui sert à RECONNAÎTRE
+une carte, ce sont ses premiers mots.* Le nom entier reste dans le catalogue
+pour les écrans qui ont la place.
 
 **Ça valait pour les TROIS modes**, pas seulement les peintures : le plus long
 nom d'animal fait 73 caractères (« Polatouche du Japon / Polatouche momonga /
@@ -13508,8 +13507,99 @@ nom d'animal fait 73 caractères (« Polatouche du Japon / Polatouche momonga /
 mode se corrige là où le dessin vit, pas dans le mode qui l'a révélé.*
 
 Mesuré sur le catalogue : **21 % des noms dépassent 30 caractères**, 7,6 % les
-quarante, 3 % les cinquante. Les noms courts ne bougent pas d'un pixel — ils ne
-touchent pas la borne.
+quarante, 3 % les cinquante.
+
+**ET LA SECONDE MOITIÉ DE CE RAISONNEMENT ÉTAIT FAUSSE** : il disait que le
+repli sur deux lignes « n'a pas la place ». *Il y en a*, à condition de ne pas
+garder la taille pleine — voir la section qui suit.
+
+### LE TITRE PASSE À LA LIGNE AVANT DE RAPETISSER
+
+Keko : **« je trouve la police du titre trop grosse pour les mots courts et trop
+petite pour les mots longs, on peut pas faire 2 lignes de titre quand c'est trop
+long plutôt que réduire ? »**
+
+*Les deux moitiés de sa phrase disent la même chose* : ce qui gêne n'est aucune
+des deux tailles, c'est **l'ÉCART entre deux cartes voisines** — « Plus » en
+grand à côté de « Visage avec un léger sourire » en minuscule.
+
+**Mesuré sur les cinq catalogues**, la taille allait de **10,5 U à 5,66 U**,
+soit **1,86 fois**, et **848 cartes touchaient le plancher** — donc sortaient
+tronquées à l'ellipse. *C'était le prix d'un titre écrit d'un seul trait.*
+
+#### C'EST LA RÈGLE DU CARTOUCHE, PRISE PAR L'AUTRE BOUT
+
+« On prend le plus grand cran qui tient, plus celui que la longueur annonce » —
+et c'est aussi celle que Keko avait posée pour les encadrés du glossaire :
+*« je voudrais que la taille soit fixe, on va à la ligne si ça ne loge pas ».*
+**Le titre était le dernier texte de la carte à n'obéir ni à l'une ni à
+l'autre.**
+
+Deux crans, `[9.5, 7.3]`, et on garde le premier qui tient **en deux lignes au
+plus** :
+
+| | 9,5 U | 7,3 U | la taille cède |
+|---|---|---|---|
+| **emoji** | 74,4 % | 25,4 % | 0,3 % |
+| animaux | 62,0 % | 38,0 % | 0 % |
+| peintures | 46,6 % | 50,5 % | 2,9 % |
+| personnages | 89,5 % | 10,4 % | 0,1 % |
+| **le jeu** | **100 %** | — | — |
+
+**L'écart tombe de 86 % à 23 %, et plus une seule carte n'est tronquée.**
+
+#### LE 7,3 N'EST PAS CHOISI, C'EST LE PLUS GRAND QUI RENTRE
+
+**La bande du titre est courte**, et c'est ce que le raisonnement précédent
+avait raison de dire : elle va du haut de la plaque claire (60,5 %) à l'encre du
+cartouche, soit **15 U en mode emoji**. Deux lignes y demandent environ deux
+fois le corps, d'où 7,3.
+
+**ET CE QUI LA BORNE PAR LE BAS N'EST PAS LE CARTOUCHE, C'EST SON ENCRE.**
+`HAUT_CARTOUCHE` est le CENTRE de sa première ligne, donc ses capitales montent
+bien au-dessus — de son ascendante, 0,82 du corps au pire cas. ***Borner le
+titre à 105,7 U faisait tomber son trait de soulignement en plein dans le
+cartouche, et ça ne se voyait pas au calcul*** : *une ligne de base n'est pas un
+bord.* Il a fallu peindre la texture et scruter ses pixels pour le voir.
+
+**ET CE QUI LA BORNE PAR LE HAUT DÉPEND DU THÈME** : la plaque claire est une
+borne dure — le texte est sombre, il ne peut pas sortir du blanc — alors qu'en
+gabarit il n'y a rien de dur, le nom étant posé sur l'illustration et cerné de
+noir. Ce qui l'y borne est *que plus haut le voile sombre s'éteint et le texte
+cesse d'être net* : on s'arrête à 58 %, où il vaut encore 0,42.
+
+Quatre choses à ne pas défaire :
+
+- **une ligne reste EXACTEMENT à sa place** (66,5 %), parce qu'elle est calée
+  sur l'encoche du cadre — « je les voudrais au niveau du titre », Keko. **Un
+  bloc de deux lignes, lui, se centre dans la bande** : il n'a pas d'encoche
+  unique à viser, et centré sur ce point sa première ligne sortirait par le haut
+  de la plaque ;
+- **la boîte qui sert à mesurer la hauteur est COMMUNE à tous les titres**,
+  mesurée sur une chaîne de référence qui porte tous les extrêmes du français
+  (`ÉÀÇgjqyp`). *Mesurer l'encre du nom qu'on écrit donnerait deux tailles à
+  deux titres de deux lignes selon qu'ils portent un accent* — c'est exactement
+  l'écart qu'on vient de retirer. Et **la boîte de POLICE est trop généreuse**
+  (1,60 fois le corps contre 1,06 d'encre réelle) : à ce compte-là deux lignes
+  ne tiendraient jamais ;
+- **elle ne se met pas en cache** : une boîte mesurée avant que la police
+  n'arrive répondrait pour le repli, et *le cache la garderait pour toute la
+  session.* Un `measureText` coûte un microseconde contre 1,6 ms pour peindre
+  une carte ;
+- **le trait suit la DERNIÈRE ligne**, et il compte dans la place qu'il faut :
+  c'est lui qui coûte le plus cher en gabarit (0,68 du corps).
+
+#### CE QUI RESTE À TRANCHER PAR KEKO
+
+**Le cran unique s'ouvre d'un lien** : `?titre=unique` met TOUT à 7,3 U, donc
+**zéro écart**, au prix de 23 % sur les noms courts. *C'est l'arbitrage qu'il
+doit voir des deux côtés* — et il ne se juge pas sur une capture, il se juge en
+ouvrant des paquets.
+
+**Et les noms courts ont perdu 10 % au passage** (10,5 → 9,5 U), le jeu
+d'extraction compris, où aucun nom ne fait deux lignes. *C'est dans le sens de
+sa demande* — « trop grosse pour les mots courts » — mais c'est un chiffre, et
+il se change.
 
 ### CE QUI RESTE À TRANCHER PAR KEKO — les peintures
 

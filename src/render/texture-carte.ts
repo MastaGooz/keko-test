@@ -1912,6 +1912,191 @@ const HAUT_CARTOUCHE = 0.755
 /** L'interligne, en part du corps. */
 const INTERLIGNE_EFFET = 1.25
 
+/**
+ * LE TITRE A DEUX CRANS, ET IL PASSE À LA LIGNE AVANT DE RAPETISSER.
+ *
+ * Keko : « je trouve la police du titre trop grosse pour les mots courts et
+ * trop petite pour les mots longs, on peut pas faire 2 lignes de titre quand
+ * c'est trop long plutôt que réduire ? »
+ *
+ * *Les deux moitiés de sa phrase disent la même chose* : ce qui gêne n'est
+ * aucune des deux tailles, c'est l'ÉCART entre deux cartes voisines — « Plus »
+ * en grand à côté de « Visage avec un léger sourire » en minuscule. Mesuré sur
+ * les cinq catalogues, la taille allait de **10,5 U à 5,66 U** (soit 1,86 fois)
+ * et **848 cartes touchaient le plancher**, donc sortaient tronquées.
+ *
+ * **C'est la règle du cartouche, prise par l'autre bout** — « on prend le plus
+ * grand cran qui tient, plus celui que la longueur annonce » — et c'est aussi
+ * celle que Keko avait posée pour les encadrés du glossaire : *« je voudrais
+ * que la taille soit fixe, on va à la ligne si ça ne loge pas ».*
+ *
+ * Ce que ça donne, mesuré :
+ *
+ * **DEUX CRANS, ET LE SECOND EST CELUI QUI TIENT DEUX LIGNES.** La bande du
+ * titre est courte — voir `basDuNom` : à peine une quinzaine d'unités entre la
+ * plaque et l'encre du cartouche — donc deux lignes n'y tiennent qu'à 7,3 U.
+ * *Ce n'est pas un chiffre choisi, c'est le plus grand qui rentre*, mesuré
+ * dans les deux moteurs de carte.
+ *
+ * Ce que ça donne : **l'écart entre deux cartes voisines tombe de 86 % à
+ * 23 %**, et **plus une seule carte n'est tronquée** — contre 848 au plancher.
+ *
+ * | | 9,5 U | 7,3 U | la taille cède |
+ * |---|---|---|---|
+ * | **emoji** | 74,4 % | 25,4 % | 0,3 % |
+ * | animaux | 62,0 % | 38,0 % | 0 % |
+ * | peintures | 46,6 % | 50,5 % | 2,9 % |
+ * | personnages | 89,5 % | 10,4 % | 0,1 % |
+ * | le jeu | **100 %** | — | — |
+ *
+ * **ET LE CRAN UNIQUE S'OUVRE D'UN LIEN** : `?titre=unique` met TOUT à 7,3 U,
+ * donc zéro écart, au prix de 23 % sur les noms courts. *C'est l'arbitrage que
+ * Keko doit voir des deux côtés* — et il ne se juge pas sur une capture, il se
+ * juge en ouvrant des paquets.
+ */
+const CRANS_NOM: readonly number[] =
+  new URLSearchParams(location.search).get('titre') === 'unique' ? [7.3] : [9.5, 7.3]
+
+/** L'interligne du titre, en part du corps — serré, ce n'est pas un paragraphe. */
+const INTERLIGNE_NOM = 0.9
+
+/**
+ * CE QUI BORNE LE TITRE PAR LE HAUT : la plaque quand il y en a une, la montée
+ * du voile sinon.
+ *
+ * *Sur une plaque claire la borne est dure* — le texte est sombre, il ne peut
+ * pas sortir du blanc. **En gabarit il n'y a rien de dur** : le nom est posé
+ * sur l'illustration, cerné de noir, et ce qui le borne est que *plus haut le
+ * voile sombre s'éteint et le texte cesse d'être net.* À 58 % le voile vaut
+ * encore 0,42, ce qui suffit à un texte cerné ; c'est trois points sous la
+ * plaque, et ces trois points sont ce qui permet au gabarit de tenir un cran
+ * de plus.
+ */
+const HAUT_NOM_GABARIT = 0.58
+
+/**
+ * ET CE QUI LE BORNE PAR LE BAS N'EST PAS LE CARTOUCHE, C'EST SON ENCRE.
+ *
+ * `HAUT_CARTOUCHE` est le CENTRE de sa première ligne, donc ses capitales
+ * montent bien au-dessus — de son ascendante, soit 0,82 du corps au pire cas
+ * (une capitale accentuée en Baloo 2). **Borner le titre à 105,7 U faisait
+ * tomber son trait de soulignement en plein dans le cartouche**, et ça ne se
+ * voyait pas au calcul : *une ligne de base n'est pas un bord.*
+ *
+ * On prend le pire cas — le plus grand cran du cartouche, sa plus haute
+ * capitale — parce que *la taille du cartouche n'est pas encore connue quand
+ * on choisit celle du titre.*
+ */
+const basDuNom = (): number => HAUT_CARTOUCHE * HAUT - 0.82 * CRANS_EFFET[0] * U
+
+/**
+ * Le dégagement TOTAL, moitié en haut et moitié en bas : sans lui le bloc
+ * affleurerait la plaque et le cartouche, et *un contenant qui ne contient pas
+ * ment.*
+ *
+ * **Il est petit parce que la borne du bas est déjà PESSIMISTE** — elle réserve
+ * l'ascendante d'une capitale accentuée que la plupart des cartouches n'ont
+ * pas, donc il reste en pratique deux à trois unités de plus. *Un coussin
+ * posé par-dessus un pire cas se paie deux fois*, et ici il se paierait d'un
+ * cran de titre entier.
+ */
+const AIR_NOM = 0.5
+
+/**
+ * LA BOÎTE D'UN TITRE, et elle est COMMUNE à tous les titres.
+ *
+ * *On ne mesure pas l'encre du nom qu'on écrit* : un « É » monte plus haut
+ * qu'un « e », donc deux titres de deux lignes se verraient attribuer deux
+ * tailles — c'est exactement l'écart qu'on vient de retirer. **La boîte de
+ * POLICE, elle, est bien trop généreuse** (1,60 fois le corps pour Baloo 2,
+ * contre 1,06 d'encre réelle) : elle réserve la place d'accents et de
+ * jambages qu'un nom n'a pas tous à la fois, et à ce compte-là deux lignes ne
+ * tiendraient jamais.
+ *
+ * On prend donc l'encre d'une chaîne de RÉFÉRENCE qui porte tous les extrêmes
+ * du français — capitales accentuées et jambages — mesurée une fois par
+ * police. *C'est la règle des chiffres d'une liste, qui partagent la boîte
+ * commune pour ne pas sauter d'une ligne à l'autre.*
+ */
+const EXTREMES_NOM = 'ÉÀÇgjqyp'
+
+/**
+ * **ET ELLE NE SE MET PAS EN CACHE.** Une boîte mesurée avant que la police
+ * n'arrive répondrait pour la police de repli, et *le cache la garderait pour
+ * toute la session* — c'est le piège déjà payé sur les cases du chargement.
+ * Un `measureText` coûte un microseconde contre 1,6 ms pour peindre une
+ * carte : il n'y a rien à économiser ici.
+ */
+function boiteDuNom(ctx: CanvasRenderingContext2D, taille: number): { haut: number; bas: number } {
+  const m = ctx.measureText(EXTREMES_NOM)
+  return { haut: m.actualBoundingBoxAscent / taille, bas: m.actualBoundingBoxDescent / taille }
+}
+
+/**
+ * Coupe un titre pour qu'aucune de ses lignes ne dépasse `max`.
+ *
+ * **Un mot ne se coupe jamais** : un mot plus large que la carte reste seul
+ * sur sa ligne et c'est la taille qui cédera — *mieux vaut un mot qui déborde
+ * qu'un nom coupé en deux.* La règle de `replier`, en plus simple : un titre
+ * n'a ni jeton ni mot lié.
+ */
+function replierNom(ctx: CanvasRenderingContext2D, nom: string, max: number): string[] {
+  const lignes: string[] = []
+  let courante = ''
+  for (const mot of nom.split(' ')) {
+    const essai = courante === '' ? mot : `${courante} ${mot}`
+    if (courante !== '' && ctx.measureText(essai).width > max) {
+      lignes.push(courante)
+      courante = mot
+    } else courante = essai
+  }
+  if (courante !== '') lignes.push(courante)
+  return lignes
+}
+
+/**
+ * CHOISIT LE CRAN DU TITRE : le plus grand qui tienne en DEUX LIGNES au plus.
+ *
+ * `sous` est la place que le trait de soulignement réclame sous la dernière
+ * ligne — nulle sur une plaque claire, qui n'en a pas. **C'est lui qui décide
+ * tout en gabarit** : il coûte 0,68 du corps, donc deux lignes à 9,5 U y
+ * demandent 22,8 U pour 19,5 disponibles, et le titre descend d'un cran. *Sur
+ * la plaque, qui n'a pas de trait, le cran du haut tient les deux lignes.*
+ *
+ * **Et sous le dernier cran, la taille cède**, exactement comme pour le
+ * cartouche : *un canvas écrit tout droit et laisse déborder sans rien
+ * signaler*, donc il faut un fond à l'échelle et pas seulement deux marches.
+ */
+function corpsDuNom(
+  ctx: CanvasRenderingContext2D,
+  nom: string,
+  max: number,
+  police: (t: number) => string,
+  sous: number,
+  hautBande: number,
+): { taille: number; lignes: string[]; haut: number } {
+  const place = basDuNom() - hautBande - AIR_NOM * U
+  const essai = (t: number): { lignes: string[]; haut: number } => {
+    ctx.font = police(t)
+    const lignes = replierNom(ctx, nom, max)
+    const b = boiteDuNom(ctx, t)
+    const haut =
+      b.haut * t + (lignes.length - 1) * INTERLIGNE_NOM * t + Math.max(b.bas * t, sous * t)
+    return { lignes, haut }
+  }
+  for (const cran of CRANS_NOM) {
+    const r = essai(cran * U)
+    if (r.lignes.length <= 2 && r.haut <= place) return { taille: cran * U, ...r }
+  }
+  let t = (CRANS_NOM[CRANS_NOM.length - 1] as number) * U
+  let r = essai(t)
+  while ((r.lignes.length > 2 || r.haut > place) && t > 5 * U) {
+    t *= 0.95
+    r = essai(t)
+  }
+  return { taille: t, ...r }
+}
+
 function corpsDuCartouche(
   ctx: CanvasRenderingContext2D,
   effet: readonly string[],
@@ -3547,12 +3732,13 @@ function peindreTextes(
    * carte qu'on ne zoome pas : *ce qui sert à reconnaître doit être lisible à
    * la taille où l'on cherche*, et la composition, elle, se consulte au zoom.
    *
-   * **ET IL SE RÉTRÉCIT S'IL NE TIENT PAS.** Un nom est écrit d'un trait,
-   * sans repli — plus gros, « Reliquaire d'ossements » serait sorti des deux
-   * côtés de la carte *sans rien signaler*, exactement ce qui était arrivé au
-   * cartouche de l'Espadon. Le canvas ne prévient jamais qu'il déborde.
+   * **ET IL PASSE À LA LIGNE AVANT DE RAPETISSER** : voir `CRANS_NOM`. Il a
+   * longtemps été écrit d'un trait, la taille cédant jusqu'à ce qu'il tienne —
+   * donc les noms courts sortaient en grand et les longs en minuscule, ce que
+   * Keko a fini par signaler. *Le canvas ne prévient jamais qu'il déborde*,
+   * mais ce n'est pas une raison pour que ce soit toujours la taille qui
+   * paie.
    */
-  let tailleNom = 10.5 * U
   /**
    * LA LARGEUR UTILE EST CELLE DU CADRE À LA HAUTEUR DU TITRE, pas celle de la
    * carte — et elle se CALCULE, elle ne se devine pas.
@@ -3590,38 +3776,43 @@ function peindreTextes(
   const tientDans = LARGE * (bulle ? 0.88 : 0.78)
   const policeNom = (t: number): string =>
     bulle ? `800 ${t}px ${FAMILLE_RONDE}` : `700 ${t}px "Grenze Gotisch", Georgia, serif`
-  ctx.font = policeNom(tailleNom)
-  while (ctx.measureText(carte.nom).width > tientDans && tailleNom > 6 * U) {
-    tailleNom *= 0.94
-    ctx.font = policeNom(tailleNom)
-  }
   /**
-   * ET SI LA TAILLE NE SUFFIT PLUS, ON COUPE.
+   * LE TRAIT NE COMPTE QU'EN GABARIT, et c'est lui qui décide du cran.
+   *
+   * Il réclame sa place sous la dernière ligne ; une plaque claire n'en a pas,
+   * *la graisse et la couleur y suffisent à séparer le titre du sous-texte.*
+   */
+  const sousLeNom = bulle ? 0 : 0.68
+  const hautDuNom = HAUT * (bulle ? HAUT_BULLE : HAUT_NOM_GABARIT)
+  const nom = corpsDuNom(ctx, carte.nom, tientDans, policeNom, sousLeNom, hautDuNom)
+  const tailleNom = nom.taille
+  ctx.font = policeNom(tailleNom)
+  /**
+   * ET SI MÊME ÇA NE SUFFIT PLUS, ON COUPE.
    *
    * ***Un plancher de taille n'est pas une garantie de tenue*** : la boucle
-   * s'arrête à 6 U, et le plus long nom du catalogue des peintures fait **cent
+   * s'arrête à 5 U, et le plus long nom du catalogue des peintures fait **cent
    * caractères** — « L'Ange exterminateur et les démons maléfiques
-   * interrompant les orgies des vicieux et des insatiables ». Aucune taille
-   * lisible ne les fait tenir sur une ligne, donc le nom débordait de trois
-   * fois la carte, *sans que rien ne le signale.*
+   * interrompant les orgies des vicieux et des insatiables ». Deux lignes et
+   * deux crans n'en viennent pas toujours à bout, et *le canvas déborderait
+   * sans rien signaler.*
    *
-   * **Le repli sur deux lignes n'a pas la place** : entre le nom (66,5 %) et
-   * le cartouche (75,5 %) il n'y a que neuf pour cent de hauteur, soit une
-   * ligne. *Et ce qui sert à RECONNAÎTRE une carte, ce sont ses premiers
-   * mots* — le nom entier reste dans le catalogue pour les écrans qui ont la
-   * place de l'écrire.
+   * **Mais ça ne concerne plus que deux cartes sur douze mille**, contre 848
+   * qui touchaient le plancher du temps où le nom tenait sur une ligne. *Et ce
+   * qui sert à RECONNAÎTRE une carte, ce sont ses premiers mots* — le nom
+   * entier reste dans le catalogue pour les écrans qui ont la place.
    *
    * On coupe par POINT DE CODE : un `slice` tranche en deux un caractère hors
    * BMP et laisse une moitié de paire orpheline.
    */
-  let nom = carte.nom
-  if (ctx.measureText(nom).width > tientDans) {
-    const lettres = [...nom]
+  const lignesNom = nom.lignes.map((ligne) => {
+    if (ctx.measureText(ligne).width <= tientDans) return ligne
+    const lettres = [...ligne]
     while (lettres.length > 1 && ctx.measureText(`${lettres.join('')}…`).width > tientDans) {
       lettres.pop()
     }
-    nom = `${lettres.join('').trimEnd()}…`
-  }
+    return `${lettres.join('').trimEnd()}…`
+  })
   /**
    * ET SUR UNE PLAQUE CLAIRE, LE TEXTE EST SOMBRE ET SANS OMBRE.
    *
@@ -3634,8 +3825,30 @@ function peindreTextes(
   ctx.shadowColor = bulle ? 'transparent' : '#14181a'
   ctx.shadowOffsetY = bulle ? 0 : 0.5 * U
   ctx.shadowBlur = bulle ? 0 : 3 * U
+  /**
+   * UNE LIGNE RESTE À SA PLACE, DEUX LIGNES SE CENTRENT DANS LA BANDE.
+   *
+   * *Le nom d'une ligne est calé sur `Y_ENCOCHE`* — c'est le réglage que Keko
+   * avait demandé, « je les voudrais au niveau du titre » — donc il ne bouge
+   * pas d'un pixel. **Un bloc de deux lignes, lui, n'a pas d'encoche unique à
+   * viser** : il prend la place, et il n'y a d'ailleurs pas le choix, puisque
+   * centré sur ce point sa première ligne sortirait par le haut de la plaque.
+   *
+   * *Joli hasard de la plaque claire* : le bloc centré y pose sa première
+   * ligne à 93,2 U, soit exactement là où un titre d'une ligne se trouve.
+   */
   const yNom = HAUT * 0.665
-  ctx.fillText(nom, LARGE / 2, yNom)
+  const yPremiere =
+    lignesNom.length === 1
+      ? yNom
+      : hautDuNom +
+        (basDuNom() - hautDuNom - nom.haut) / 2 +
+        boiteDuNom(ctx, tailleNom).haut * tailleNom
+  const pasNom = INTERLIGNE_NOM * tailleNom
+  lignesNom.forEach((ligne, i) => {
+    ctx.fillText(ligne, LARGE / 2, yPremiere + i * pasNom)
+  })
+  const yDerniere = yPremiere + (lignesNom.length - 1) * pasNom
   ctx.shadowColor = 'transparent'
   ctx.shadowOffsetY = 0
   ctx.shadowBlur = 0
@@ -3656,9 +3869,10 @@ function peindreTextes(
     trait.addColorStop(0.8, '#f7ead099')
     trait.addColorStop(1, '#f7ead000')
     ctx.fillStyle = trait
-    // Le trait suit le nom : il se pose sous ses jambages, quelle que soit la
-    // taille à laquelle il a fallu l'écrire.
-    ctx.fillRect(LARGE * 0.22, yNom + tailleNom * 0.68, LARGE * 0.56, Math.max(1, 0.25 * U))
+    // Le trait suit la DERNIÈRE ligne du nom : il se pose sous ses jambages,
+    // quelle que soit la taille à laquelle il a fallu l'écrire — et il ne peut
+    // pas rester accroché à la première, *sinon il couperait le titre en deux.*
+    ctx.fillRect(LARGE * 0.22, yDerniere + tailleNom * sousLeNom, LARGE * 0.56, Math.max(1, 0.25 * U))
   }
 
   // LE CARTOUCHE : ce que fait la carte, centré, une ligne par entrée.
