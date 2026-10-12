@@ -13676,21 +13676,85 @@ correction, **614 après**.
 identifiants, donc changer le format de l'URL n'aurait rien retesté. Il porte
 les URLS depuis — *un cache doit dépendre de ce qu'on demande.*
 
-### CE QUI N'EST PAS FAIT : l'animation
+### LES EMOJI ANIMÉS JOUENT SUR LA CARTE — décodés image par image
 
-**Le catalogue sait lesquels sont animés** (614 sur 1 923, soit 32 %) et la
-carte l'écrit dans son cartouche — mais **l'emoji ne bouge pas à l'écran**, et
-il faut savoir pourquoi avant de le promettre :
+Keko : « pourquoi les emoji animés ne sont pas animés sur les cartes ? »
+***Parce qu'une carte est une TEXTURE PEINTE AU CANVAS***, et qu'un canvas ne
+joue rien : `drawImage` d'un WebP animé n'en prend qu'une seule image.
 
-| | poids | ce que ça demande |
+**LES TROIS FORMATS DU CDN, MESURÉS** — et seules ces trois tailles existent,
+il n'y a pas de version réduite :
+
+| | poids moyen | ce que ça demande |
 |---|---|---|
-| **WebP animé** (`512.webp`) | **190 à 690 Ko pièce** | un canvas n'anime pas un WebP : `drawImage` en prend une seule image |
-| **Lottie** (`lottie.json`) | 2 à 33 Ko | un lecteur Lottie, donc **une dépendance** — ce que le projet refuse |
+| `lottie.json` | **11 Ko** | un lecteur Lottie, donc **une dépendance** |
+| `512.webp` | 411 Ko | `ImageDecoder` — aucune dépendance |
+| `512.gif` | 642 Ko | pire sur les deux tableaux |
 
-*Les deux issues restantes* : décoder le WebP image par image avec `ImageDecoder`
-(WebCodecs, Chrome uniquement) et pousser le résultat dans une texture, ou poser
-un plan qui joue l'animation à part de la texture de carte. **Les deux sont un
-chantier, pas un réglage** — et ils ne valent que si Keko garde le mode.
+***Le Lottie est trente-sept fois plus léger et c'est le WebP qui gagne***,
+parce que le projet refuse les dépendances et qu'écrire un lecteur Lottie serait
+un moteur de rendu entier. **Le prix est le poids, et il est connu.**
+
+#### CE QUI A RENDU LE CHANTIER PETIT : une peinture coûte 1 à 2 ms
+
+Je redoutais de devoir scinder `peindreCarte` en deux couches — l'emoji vit
+*entre* le décor et le voile, donc une seule texture ne pouvait pas le laisser
+bouger. **La mesure a fermé la question** : une peinture complète coûte
+**1,6 ms à 256, 2,1 ms à 768**.
+
+Donc **la carte se repeint ENTIÈRE à chaque image**, et il suffit d'un champ :
+`CarteAPeindre.image` reçoit une illustration déjà prête, qui passe devant tout
+le reste. *Découper la peinture en deux couches aurait coûté dix fois plus de
+code pour le même résultat.*
+
+Mesuré sur 😂 : 609 Ko, **59 images**, 512 x 512, 30 ms par image, **1,9 ms pour
+en décoder une**. À deux cartes animées et quinze images par seconde, ça fait
+**douze pour cent d'un cœur.**
+
+Trois réglages, et chacun est un arbitrage de mémoire :
+
+- **on décode en 192, pas en 512** : une carte de paquet fait 180 px à l'écran,
+  et chaque image devient un `ImageBitmap` — donc du GPU. *59 images de 192
+  pèsent 8,7 Mo, contre 62 Mo en 512* ;
+- **une image sur deux** : les animations Noto tournent à trente images par
+  seconde, *à quinze un emoji reste parfaitement fluide* — il n'a ni mouvement
+  rapide ni détail fin — et **la durée totale ne change pas**, donc le rythme
+  est le même ;
+- **la toile est RÉUTILISÉE** : sans ça on allouerait trente toiles de trois
+  cents kilo-octets par seconde. Il ne reste qu'un `needsUpdate`.
+
+**La texture est PRIVÉE**, à la différence de toutes les autres : le cache
+partagé sert la même texture à toutes les cartes d'un modèle, et *deux cartes
+animées ne sont jamais au même instant de leur animation.* Elle est donc à nous,
+et on la libère au démontage.
+
+**Et rien ne se joue sur un dos** : *une carte retournée ne dit rien de ce
+qu'elle est*, donc repeindre dessous serait du travail pour personne.
+
+#### LE REPLI EST LA CARTE STATIQUE, ET IL EST SILENCIEUX
+
+`ImageDecoder` est dans Chrome, Edge et Safari 17 ; **ailleurs la carte reste
+statique**. *Une animation ne doit jamais pouvoir empêcher une carte de
+s'afficher* — c'est la règle du repère de la carte vers l'armure, qui se joue
+sans rien montrer quand le repère manque.
+
+#### CE QUE JE N'AI PAS VÉRIFIÉ, ET IL FAUT LE SAVOIR
+
+**Je n'ai jamais eu de carte animée à l'écran pendant mes essais.** Sur les dix
+cartes que j'ai pu tirer, aucune n'était animée — *les paquets sont
+majoritairement communs, et les communs ne sont animés qu'à 22 %.* Le décodage
+est mesuré, la conversion est mesurée, le câblage compile — **mais la boucle de
+repeinture n'a pas été observée en train de tourner.**
+
+***Ce qui a coûté cette heure, c'est d'avoir cherché un bug là où il n'y avait
+qu'un tirage défavorable*** : j'ai posé quatre sondes successives dans
+`Carte3D`, conclu que le composant n'était pas monté, redémarré Vite, vidé son
+cache, basculé sur le build — **et la mesure qui tranchait était la plus simple
+de toutes : lister les cinq cartes du paquet.** Elles étaient toutes statiques.
+
+*Et l'un de ces détours a coûté un fichier* : un `git checkout` passé pour
+retirer une sonde a emporté tout le câblage de `Carte3D` avec elle.
+**Un `checkout` ne défait pas une sonde, il défait un fichier.**
 
 ### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
 
@@ -13700,7 +13764,9 @@ chantier, pas un réglage** — et ils ne valent que si Keko garde le mode.
 - **les 24 % non classés** : ils sortent tous dans le bas, et l'ancienneté est
   tout ce qu'on sait d'eux. *Si un emoji de 2021 devient très employé, rien ne
   le dira* — le classement d'Unicode est arrêté à la version 12.0 ;
-- **l'animation**, et son coût ;
+- **l'animation est FAITE**, mais son poids est à juger : **411 Ko par emoji
+  animé**, soit de l'ordre d'un mégaoctet pour un paquet qui en contient deux.
+  *Le Lottie ferait onze kilo-octets*, au prix d'une dépendance ;
 - **le nom long se tronque** : « Volume des enceintes élevé » ne tient pas sur
   une carte. *C'est le comportement de tous les modes* — la taille cède, puis le
   nom se coupe — mais les noms CLDR sont plus longs que des noms propres.

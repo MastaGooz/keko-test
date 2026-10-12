@@ -26,6 +26,7 @@ import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
 import { geometrieDOnde, matiereDOnde, poserLOnde, poussiereDOnde } from './onde.tsx'
 import type { CarteAPeindre } from './texture-carte.ts'
+import { animationDeLEmoji, urlAnimationEmoji, type Animation } from './emoji-anime.ts'
 import {
   DEBORD_AUREOLE,
   DEBORD_CONTOUR,
@@ -35,6 +36,7 @@ import {
   signature,
   textureAureole,
   textureContour,
+  peindreCarte,
   textureDeCarte,
   textureDuDos,
   tailleQuIlFaut,
@@ -954,6 +956,79 @@ ${nuanceur.fragmentShader}`
     // pixel de redimensionnement et pendant qu'une carte grandit sous le
     // doigt, alors que la texture, elle, ne change qu'aux paliers.
   }, [signature(carte), face, dos, tailleQuIlFaut(largeurPx)])
+
+  /**
+   * L'EMOJI ANIMÉ — une texture PRIVÉE, repeinte image par image.
+   *
+   * Keko : « pourquoi les emoji animés ne sont pas animés sur les cartes ? »
+   * *Parce qu'un canvas ne joue rien* : voir `emoji-anime.ts` pour le décodage
+   * et pour les trois formats du CDN.
+   *
+   * **Elle ne peut pas venir du cache partagé** : celui-ci sert la même texture
+   * à toutes les cartes d'un modèle, et *deux cartes animées ne sont jamais au
+   * même instant de leur animation.* Elle est donc à nous, et on la libère.
+   *
+   * **Et la toile est RÉUTILISÉE** : sans ça on allouerait trente toiles de
+   * trois cents kilo-octets par seconde. Il ne reste qu'un `needsUpdate`.
+   */
+  const anim = useRef<Animation | null>(null)
+  const toile = useRef<HTMLCanvasElement | null>(null)
+  const texAnim = useRef<THREE.CanvasTexture | null>(null)
+  const derniere = useRef(-1)
+  const peintureEnCours = useRef(false)
+
+  useEffect(() => {
+    const id = carte.animation
+    if (id === undefined) return
+    let vivant = true
+    void animationDeLEmoji(urlAnimationEmoji(id)).then((a) => {
+      if (vivant) anim.current = a
+    })
+    return () => {
+      vivant = false
+      anim.current = null
+      derniere.current = -1
+      // *Ce qui est à nous se libère* — à la différence de la texture du cache
+      // partagé, qui sert encore à d'autres cartes.
+      texAnim.current?.dispose()
+      texAnim.current = null
+      toile.current = null
+    }
+  }, [carte.animation])
+
+  useFrame((etat) => {
+    const a = anim.current
+    // RIEN NE SE JOUE SUR UN DOS : *une carte retournée ne dit rien de ce
+    // qu'elle est*, et repeindre sous le dos serait du travail pour personne.
+    if (a === null || dos || peintureEnCours.current) return
+    const i = Math.min(
+      a.images.length - 1,
+      Math.floor(((etat.clock.elapsedTime * 1000) % a.duree) / (a.duree / a.images.length)),
+    )
+    // ON NE REPEINT QUE SI L'IMAGE A CHANGÉ : l'animation tourne à quinze
+    // images par seconde, l'écran à soixante.
+    if (i === derniere.current) return
+    derniere.current = i
+    peintureEnCours.current = true
+    void peindreCarte({ ...carte, image: a.images[i] }, tailleQuIlFaut(largeurPx), toile.current ?? undefined)
+      .then((canvas) => {
+        peintureEnCours.current = false
+        if (anim.current === null) return
+        toile.current = canvas
+        if (texAnim.current === null) {
+          const t = new THREE.CanvasTexture(canvas)
+          t.anisotropy = 8
+          t.colorSpace = THREE.SRGBColorSpace
+          texAnim.current = t
+          face.map = t
+        }
+        texAnim.current.needsUpdate = true
+        face.needsUpdate = true
+      })
+      .catch(() => {
+        peintureEnCours.current = false
+      })
+  })
 
   /**
    * La place LISSÉE, tenue à part de celle du groupe.

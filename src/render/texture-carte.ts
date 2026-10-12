@@ -165,6 +165,27 @@ export type CarteAPeindre = {
    */
   emoji?: string
   /**
+   * UNE ILLUSTRATION DEJA PRETE, qui passe devant tout le reste.
+   *
+   * *C'est ce qui rend l'emoji ANIME possible sans refondre le peintre* : une
+   * frame decodee est une image comme une autre, donc **la carte se repeint
+   * entiere a chaque image** -- mesure, 1 a 2 ms, soit douze pour cent d'un
+   * coeur pour deux cartes animees a trente images par seconde. *Decouper la
+   * peinture en deux couches aurait coute dix fois plus de code pour le meme
+   * resultat.*
+   */
+  image?: CanvasImageSource & { width: number; height: number }
+  /**
+   * L'IDENTIFIANT DE L'EMOJI ANIME, s'il en a un -- les points de code separes
+   * par des tirets.
+   *
+   * *Il ne sert pas a peindre* : il dit a `Carte3D` qu'il y a une animation a
+   * aller chercher. **Il n'entre donc PAS dans `signature()`**, parce que la
+   * carte animee ne passe pas par le cache partage -- *deux cartes animees ne
+   * sont jamais au meme instant de leur animation.*
+   */
+  animation?: string
+  /**
    * SON ILLUSTRATION RENTRE ENTIÈRE, au lieu de se faire rogner.
    *
    * Tranché par Keko pour le mode peintures : « si portrait, hauteur de l'image
@@ -793,7 +814,11 @@ async function illustration(
   matiere?: string,
   directe?: string,
   emoji?: string,
+  prete?: CanvasImageSource & { width: number; height: number },
 ): Promise<HTMLImageElement | HTMLCanvasElement | null> {
+  // UNE IMAGE DEJA PRETE PASSE DEVANT TOUT : c'est le chemin de l'emoji anime,
+  // et *elle n'a rien a charger*, donc rien a attendre.
+  if (prete !== undefined) return prete as HTMLCanvasElement
   if (emoji !== undefined && emoji !== '') {
     // ON ATTEND LA POLICE AVANT DE PEINDRE : sans ca la premiere carte sort
     // avec la police systeme, et *sa toile part en cache telle quelle* -- donc
@@ -2056,8 +2081,17 @@ function ecrireLigne(
 export async function peindreCarte(
   carte: CarteAPeindre,
   largeur = LARGE,
+  /**
+   * UNE TOILE A REUTILISER — pour l'emoji anime, et seulement pour lui.
+   *
+   * *Une carte animee se repeint trente fois par seconde* : sans ca on
+   * allouerait trente toiles de trois cents kilo-octets chaque seconde, et
+   * **la texture devrait changer d'image a chaque fois.** Avec une toile
+   * reutilisee, il ne reste qu'un `needsUpdate`.
+   */
+  toile?: HTMLCanvasElement,
 ): Promise<HTMLCanvasElement> {
-  const canvas = document.createElement('canvas')
+  const canvas = toile ?? document.createElement('canvas')
   canvas.width = Math.round(largeur)
   canvas.height = Math.round(largeur * 1.4)
   const ctx = canvas.getContext('2d')
@@ -2079,7 +2113,7 @@ export async function peindreCarte(
   if (largeur !== LARGE) ctx.scale(largeur / LARGE, largeur / LARGE)
 
   const [image, decor, symbole] = await Promise.all([
-    illustration(carte.nom, carte.rarete, carte.matiere, carte.illustration, carte.emoji),
+    illustration(carte.nom, carte.rarete, carte.matiere, carte.illustration, carte.emoji, carte.image),
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
     // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
     // de la famille. Une armure garde le bleu d'origine. Voir `fondTeinte`.

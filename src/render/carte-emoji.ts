@@ -103,6 +103,10 @@ export function carteDeLEmoji(c: CarteEmoji): CarteAPeindre {
     type: NOM_DU_GROUPE[c.groupe],
     rarete: METAL[c.rarete],
     emoji: c.emoji,
+    // L'ANIMATION EST DEMANDEE PAR LA CARTE, PAS PAR LE PEINTRE : voir
+    // `emoji-anime.ts`. *Un emoji sans version animee n'en demande aucune*, et
+    // la carte reste statique -- comme sur un navigateur sans `ImageDecoder`.
+    animation: c.anime ? c.id : undefined,
     illustrationEntiere: true,
   }
 }
