@@ -3819,11 +3819,47 @@ ne fait varier sa couleur, et *une lumière qui ne change pas doit être plus
 discrète, sinon elle devient un décor.*
 
 **Et la lumière qui passe SUR l'or est dorée** : le lustre du nuanceur vire de
-la crème chaude (`1,00 / 0,95 / 0,82`) à l'or franc (`1,50 / 1,06 / 0,42`) par
-un second uniforme (`uOr`), indépendant de `uIris` — *l'or prend la couleur du
-reflet sans emprunter la trame ni l'arc-en-ciel du diamant.* C'est ce qui
-sépare une plaque d'or d'une plaque claire : **un reflet prend la couleur de ce
-qu'il touche.**
+la crème chaude (`1,00 / 0,95 / 0,82`) à l'or franc (`1,50 / 1,06 / 0,42`) —
+*l'or prend la couleur du reflet sans emprunter la trame ni l'arc-en-ciel du
+diamant.* C'est ce qui sépare une plaque d'or d'une plaque claire : **un reflet
+prend la couleur de ce qu'il touche.**
+
+#### ET CE N'ÉTAIT QU'UN CAS : LE REFLET PREND LA COULEUR DU CRAN
+
+Demandé par Keko : « ce serait bien que le reflet de lumière soit de la couleur
+de la carte (blanc comme actuellement pour commun, vert pour uncommon etc) ».
+
+*La règle était écrite au-dessus depuis l'or* — **un reflet prend la couleur de
+ce qu'il touche** — et elle ne servait qu'à un métal sur neuf. Les cinq couleurs
+du mode emoji renvoyaient toutes le même crème chaud, donc **une plaque verte
+brillait comme une plaque claire.** Le `uOr` disparaît, absorbé par une table
+(`TON_LUSTRE`) : *un booléen pour une seule teinte était la version pauvre d'une
+table à neuf entrées.*
+
+**LES QUATRE TEINTES SONT DÉRIVÉES, PAS CHOISIES** : on prend le ton MOYEN du
+métal — son plateau, le plus saturé des cinq — et on le pousse à une énergie
+commune (1,05 de luminance, un cheveu au-dessus du crème). *Sans cette
+normalisation, un violet renverrait moins de lumière qu'un jaune à teinte
+égale*, puisqu'une couleur saturée est sombre par construction.
+
+***ET LA MÉTHODE SE VALIDE SUR L'OR.*** Appliquée à l'orange, elle rend
+`1,51 / 0,98 / 0,37` — soit **à deux centièmes près la lumière que Keko avait
+réglée à la main pour l'or**, trois commits plus tôt et sans aucun calcul. *Deux
+chemins indépendants qui tombent au même endroit disent que le chemin est bon.*
+
+**C'est une table À PART de `METAUX`, et ce n'est pas un doublon** : un métal et
+la lumière qu'il renvoie sont deux faits — le premier est peint dans la texture
+et plafonne à 1, le second est additif et monte au-delà.
+
+**LE CRÈME RESTE LE DÉFAUT**, et c'est ce qui rend le changement gratuit partout
+ailleurs : le bas des deux échelles ne bouge pas d'un pixel — *« blanc comme
+actuellement pour commun »* — le dos non plus, parce qu'*une carte retournée ne
+dit rien de ce qu'elle est*, et **l'or garde la valeur validée plutôt que sa
+dérivée.** L'argent et le diamant n'en ont pas besoin : le premier est déjà un
+gris, le second décompose le reflet en arc-en-ciel.
+
+*Et la carte holo passe toujours devant* : sa feuille décompose ce qui la
+traverse, donc elle ne peut pas renvoyer une couleur unique.
 
 **Souris seulement**, comme tout survol du projet : au doigt le `pointerout`
 n'arrive jamais et la carte resterait penchée après la tape.

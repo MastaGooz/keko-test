@@ -41,6 +41,8 @@ import {
   textureDeCarte,
   textureDuDos,
   tailleQuIlFaut,
+  tonDuLustre,
+  TON_CREME,
 } from './texture-carte.ts'
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
@@ -599,7 +601,9 @@ export function Carte3D({
       nuanceur.uniforms.uLustreForce = { value: 0 }
       nuanceur.uniforms.uIris = { value: 0 }
       nuanceur.uniforms.uHolo = { value: 0 }
-      nuanceur.uniforms.uOr = { value: 0 }
+      nuanceur.uniforms.uTonLustre = {
+        value: new THREE.Vector3(TON_CREME[0], TON_CREME[1], TON_CREME[2]),
+      }
       nuanceur.uniforms.uBordure = { value: 0 }
       nuanceur.uniforms.uTemps = { value: 0 }
       nuanceur.uniforms.uDevelop = { value: 0 }
@@ -672,11 +676,15 @@ ${nuanceur.vertexShader}`.replace(
          // quand on la fait bouger ». *Un foil n'a pas un reflet blanc* : ce
          // qui passe dessus se décompose.
          float ecart = bande - uLustre;
-         // ET LA LUMIÈRE QUI PASSE SUR L'OR EST DORÉE. Keko : « un effet qui
-         // rend la lumière un peu dorée quand on bouge la carte ». *Un reflet
-         // prend la couleur de ce qu'il touche* — c'est ce qui sépare une
-         // plaque d'or d'une plaque claire.
-         vec3 blanc = mix(vec3(1.0, 0.95, 0.82), vec3(1.5, 1.06, 0.42), uOr);
+         // ET IL PREND LA COULEUR DE LA CARTE. Keko : « ce serait bien que le
+         // reflet de lumière soit de la couleur de la carte (blanc comme
+         // actuellement pour commun, vert pour uncommon etc) ».
+         //
+         // *Un reflet prend la couleur de ce qu'il touche*, et le jeu le disait
+         // déjà de l'or — « un effet qui rend la lumière un peu dorée quand on
+         // bouge la carte ». **Ce n'était qu'un cas** : la teinte vient
+         // maintenant d'une table, et le crème n'est plus qu'un défaut.
+         vec3 blanc = uTonLustre;
          // ET LE REFLET SE DÉCOMPOSE SUR LES DEUX : *un foil n'a pas un reflet
          // blanc*, et une feuille holographique non plus. C'est la seule chose
          // que l'holo emprunte encore au diamant, et elle ne vaut QUE sous le
@@ -794,7 +802,7 @@ uniform float uLustre;
 uniform float uLustreForce;
 uniform float uIris;
 uniform float uHolo;
-uniform float uOr;
+uniform vec3 uTonLustre;
 uniform float uBordure;
 uniform float uTemps;
 uniform float uDevelop;
@@ -819,7 +827,7 @@ ${nuanceur.fragmentShader}`
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
     face.customProgramCacheKey = () =>
-      'carte-face-desaturable-lustree-irisee-doree-bordee-developpee2-holo'
+      'carte-face-desaturable-lustree-irisee-tintee-bordee-developpee2-holo'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -1471,7 +1479,7 @@ ${nuanceur.fragmentShader}`
     // ses couleurs d'un seul mouvement.
     const gris = (1 - l.vif) / (1 - 0.52)
     const nuanceur = face.userData.nuanceur as
-      | { uniforms: Record<string, { value: number | THREE.Texture }> }
+      | { uniforms: Record<string, { value: number | THREE.Texture | THREE.Vector3 }> }
       | undefined
     if (nuanceur !== undefined) {
       nuanceur.uniforms.uGris!.value = gris
@@ -1527,7 +1535,11 @@ ${nuanceur.fragmentShader}`
       // une pièce hors jeu ne rayonne pas.
       nuanceur.uniforms.uTemps!.value = t
       nuanceur.uniforms.uBordure!.value = eclat === 'iris' ? l.vif : 0
-      nuanceur.uniforms.uOr!.value = eclat === 'or' ? 1 : 0
+      // ET LE REFLET PREND LA COULEUR DU CRAN — le crème sur un dos, parce
+      // qu'*une carte retournée ne dit rien de ce qu'elle est.*
+      const ton = montre ? tonDuLustre(carte.rarete) : TON_CREME
+      const vTon = nuanceur.uniforms.uTonLustre!.value as THREE.Vector3
+      vTon.set(ton[0], ton[1], ton[2])
       // LE PAVE SE POSE DES QU'IL EST LA — voir l'effet qui le charge.
       // LE DEVELOPPEMENT SE PILOTE ICI, et pas dans le bloc de la culbute :
       // *toute matiere posee apres le `return` de la culbute est figee pendant

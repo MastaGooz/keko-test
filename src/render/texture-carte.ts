@@ -673,6 +673,56 @@ const METAUX: Record<string, readonly [string, string, string, string, string]> 
 }
 
 /**
+ * LA COULEUR DU REFLET, CRAN PAR CRAN — et le crème pour qui n'en a pas.
+ *
+ * Demandé par Keko : « ce serait bien que le reflet de lumière soit de la
+ * couleur de la carte (blanc comme actuellement pour commun, vert pour uncommon
+ * etc) ».
+ *
+ * ***Un reflet prend la couleur de ce qu'il touche***, et le jeu le disait déjà
+ * pour l'or — « un effet qui rend la lumière un peu dorée quand on bouge la
+ * carte ». Ce n'était qu'un cas : **c'est vrai de toute plaque colorée**, et
+ * c'est ce qui sépare une plaque verte d'une plaque claire.
+ *
+ * **LES QUATRE TEINTES SONT DÉRIVÉES, PAS CHOISIES** : on prend le ton MOYEN du
+ * métal — son plateau, le plus saturé des cinq — et on le pousse à une énergie
+ * commune (1,05 de luminance, un cheveu au-dessus du crème). *Sans cette
+ * normalisation un violet renverrait moins de lumière qu'un jaune à teinte
+ * égale*, parce qu'une couleur saturée est sombre par construction.
+ *
+ * **ET LA MÉTHODE SE VALIDE SUR L'OR.** Appliquée à l'orange, elle rend
+ * `(1,51 ; 0,98 ; 0,37)` — soit à deux centièmes près la lumière que Keko avait
+ * réglée à la main pour l'or. *Deux chemins indépendants qui tombent au même
+ * endroit disent que le chemin est bon.*
+ *
+ * **C'est une table À PART de `METAUX`, et ce n'est pas un doublon** : un métal
+ * et la lumière qu'il renvoie sont deux faits — le premier est peint dans la
+ * texture et plafonne à 1, le second est additif et monte au-delà. *Les lier
+ * demanderait de normaliser à chaque image ce qui se calcule une fois.*
+ *
+ * **LE CRÈME RESTE LE DÉFAUT**, donc trois choses ne bougent pas d'un pixel :
+ * le bas des deux échelles, le dos d'une carte — *une carte retournée ne dit
+ * rien de ce qu'elle est* — et l'or, qui garde la valeur validée par Keko plutôt
+ * que sa dérivée. **L'argent et le diamant n'en ont pas besoin** : le premier
+ * est déjà un gris, le second décompose le reflet en arc-en-ciel.
+ */
+const TON_LUSTRE: Record<string, readonly [number, number, number]> = {
+  epique: [1.5, 1.06, 0.42],
+  vert: [0.64, 1.2, 0.81],
+  bleu: [0.64, 1.12, 1.57],
+  violet: [1.28, 0.9, 1.82],
+  orange: [1.51, 0.98, 0.37],
+}
+
+/** Le crème chaud du lustre, pour tout ce qui n'a pas de teinte à renvoyer. */
+export const TON_CREME: readonly [number, number, number] = [1, 0.95, 0.82]
+
+/** La lumière qu'un cran renvoie. Voir {@link TON_LUSTRE}. */
+export function tonDuLustre(rarete: string | undefined): readonly [number, number, number] {
+  return TON_LUSTRE[rarete ?? ''] ?? TON_CREME
+}
+
+/**
  * CE QU'UNE RARETÉ FAIT RAYONNER — rien, l'or, ou l'arc-en-ciel.
  *
  * *Les trois comportements se lisaient sur une ÉGALITÉ DE CHAÎNE* —
