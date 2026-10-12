@@ -1201,6 +1201,106 @@ function virerLeCiel(pixels: Uint8ClampedArray, ciel: Ciel): void {
   }
 }
 
+/**
+ * LE RAYON DU FLOU DU BLOOM, en pixels de sa PETITE toile.
+ *
+ * Un pixel de cette toile vaut seize pixels de la carte peinte, donc un rayon
+ * de 2 étale la lumière sur 84 — **onze pour cent de la largeur**, ce qu'il
+ * faut pour qu'elle se lise comme une lueur et non comme un liseré.
+ */
+const RAYON_BLOOM = 2
+
+/**
+ * LE BLOOM SE FLOUTE VRAIMENT, il ne se contente plus d'être RÉDUIT.
+ *
+ * Keko : « y'a d'étranges taches sur le contour des emojis, c'est assez
+ * bizarre… c'est dû à la qualité basse des images qui sont zoomées trop ? »
+ *
+ * ***Il avait raison sur la cause, et ce n'était pas l'emoji*** : la basse
+ * résolution est celle de **la toile du bloom**, quarante-quatre pixels de
+ * large agrandis dix-sept fois. Chacun de ses pixels devient une plaque de
+ * seize pixels sur la carte — six à l'écran — et ces plaques ne suivent plus
+ * la silhouette qu'elles sont censées éclairer.
+ *
+ * **CE N'EST PAS UN DÉFAUT NEUF, C'EST UN DÉFAUT QUE L'EMOJI RÉVÈLE.** Une
+ * illustration de Keko est un sujet DÉTOURÉ aux bords doux qui couvre toute la
+ * fenêtre, donc son bloom est partout et se lit comme de l'ambiance ; un emoji
+ * est un **aplat net posé sur du vide**, donc son bloom est un CONTOUR — et un
+ * contour en marches de seize pixels se lit comme des taches.
+ *
+ * ***Un flou par réduction ne floute que ce qui est plus petit que le pas de
+ * réduction.*** Une lame fine fond dans le halo ; un aplat massif garde son
+ * bord, et l'agrandissement n'en fait qu'une rampe LINÉAIRE — donc une arête
+ * de dérivée aux deux bouts, exactement ce que le voile sous le texte avait
+ * déjà coûté : *ce n'est pas la vitesse qu'on voit, c'est la cassure.*
+ *
+ * **Le flou est dans la MATIÈRE, pas dans la géométrie** — la règle déjà payée
+ * sur le contour des cartes et sur le halo des créatures. Faute de
+ * `ctx.filter`, qui demande Safari 16.4 quand la page vise 16.2, c'est une
+ * moyenne glissante en deux passes séparées. Elle coûte deux mille sept cents
+ * pixels, soit rien, même répétée trente fois par seconde pour un emoji animé.
+ *
+ * **ET ELLE FLOUTE LE PRÉMULTIPLIÉ, puis rend la toile OPAQUE.** En mélange
+ * additif, ce qu'un pixel ajoute vaut `rgb × a` : c'est donc cette quantité-là
+ * qu'il faut moyenner. *Flouter un RGB non prémultiplié mêlerait la couleur de
+ * pixels transparents à celle des opaques* — la frange de bord classique, et
+ * la même famille que les grains noirs opaques de l'onde.
+ *
+ * Ce qui sort de la toile compte pour du noir : *une lumière se dilue au bord,
+ * elle n'y rebondit pas.*
+ */
+function adoucir(d: Uint8ClampedArray, l: number, h: number, r: number): void {
+  const n = l * h
+  const fenetre = r * 2 + 1
+  const src = new Float32Array(n * 3)
+  for (let i = 0; i < n; i++) {
+    const a = d[i * 4 + 3]! / 255
+    src[i * 3] = d[i * 4]! * a
+    src[i * 3 + 1] = d[i * 4 + 1]! * a
+    src[i * 3 + 2] = d[i * 4 + 2]! * a
+  }
+  const mi = new Float32Array(n * 3)
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < l; x++) {
+      let cr = 0
+      let cv = 0
+      let cb = 0
+      for (let k = -r; k <= r; k++) {
+        const xx = x + k
+        if (xx < 0 || xx >= l) continue
+        const j = (y * l + xx) * 3
+        cr += src[j]!
+        cv += src[j + 1]!
+        cb += src[j + 2]!
+      }
+      const j = (y * l + x) * 3
+      mi[j] = cr / fenetre
+      mi[j + 1] = cv / fenetre
+      mi[j + 2] = cb / fenetre
+    }
+  }
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < l; x++) {
+      let cr = 0
+      let cv = 0
+      let cb = 0
+      for (let k = -r; k <= r; k++) {
+        const yy = y + k
+        if (yy < 0 || yy >= h) continue
+        const j = (yy * l + x) * 3
+        cr += mi[j]!
+        cv += mi[j + 1]!
+        cb += mi[j + 2]!
+      }
+      const i = (y * l + x) * 4
+      d[i] = cr / fenetre
+      d[i + 1] = cv / fenetre
+      d[i + 2] = cb / fenetre
+      d[i + 3] = 255
+    }
+  }
+}
+
 /** Une image virée à la couleur d'une famille, rendue dans un canvas. */
 function auCiel(image: HTMLImageElement, ciel: Ciel): HTMLCanvasElement | null {
   const toile = document.createElement('canvas')
@@ -2414,7 +2514,9 @@ export async function peindreCarte(
     const petit = document.createElement('canvas')
     petit.width = 44
     petit.height = Math.max(1, Math.round((44 * hArt) / lArt))
-    const pctx = petit.getContext('2d')
+    // ON LA RELIT À CHAQUE PEINTURE depuis qu'on la floute — d'où le drapeau,
+    // qui évite au navigateur de la garder sur le GPU pour rien.
+    const pctx = petit.getContext('2d', { willReadFrequently: true })
     if (pctx !== null) {
       pctx.imageSmoothingQuality = 'high'
       couvrir(pctx, image, 0, 0, petit.width, petit.height, rognage)
@@ -2433,11 +2535,13 @@ export async function peindreCarte(
        * donc ça ne coûte rien, là où teinter la carte entière se paierait à
        * chaque peinture.
        */
-      if (carte.ciel !== undefined) {
-        const flou = pctx.getImageData(0, 0, petit.width, petit.height)
-        virerLeCiel(flou.data, carte.ciel)
-        pctx.putImageData(flou, 0, 0)
-      }
+      const flou = pctx.getImageData(0, 0, petit.width, petit.height)
+      if (carte.ciel !== undefined) virerLeCiel(flou.data, carte.ciel)
+      // ET ON LE FLOUTE POUR DE BON. Voir {@link adoucir} : la réduction seule
+      // laisse un aplat net avec son bord, donc un LISERÉ en marches plutôt
+      // qu'une lueur. Le virage passe avant, sur des couleurs encore franches.
+      adoucir(flou.data, petit.width, petit.height, RAYON_BLOOM)
+      pctx.putImageData(flou, 0, 0)
       ctx.save()
       ctx.globalCompositeOperation = 'lighter'
       /**

@@ -9732,15 +9732,69 @@ surtout sur la périphérie ».
 
 Deux choses à ne pas défaire :
 
-- **le flou se fait par RÉDUCTION puis agrandissement, pas par `ctx.filter`** :
-  celui-ci demande Safari 16.4 quand la page vise 16.2, et un filtre ignoré
-  redessinerait le sujet NET en double exposition. *Une dégradation silencieuse
-  vaut moins qu'un chemin qui marche partout* — et l'interpolation d'un
-  agrandissement est exactement un flou. L'alpha du sujet traverse la
-  réduction, donc le halo épouse sa silhouette ;
+- **le flou ne passe pas par `ctx.filter`** : celui-ci demande Safari 16.4
+  quand la page vise 16.2, et un filtre ignoré redessinerait le sujet NET en
+  double exposition. *Une dégradation silencieuse vaut moins qu'un chemin qui
+  marche partout.* Il se fait donc par RÉDUCTION, **puis par une vraie moyenne
+  glissante** — voir juste en dessous, la réduction seule ne suffisait pas ;
 - **en mélange `lighter`, donc une ADDITION** : les noirs montent, les clairs
   saturent à peine — *une lumière ajoutée ne délave pas, un voile blanc posé,
   si.*
+
+#### LE BLOOM SE FLOUTE VRAIMENT — un flou par réduction ne floute pas tout
+
+Keko : **« y'a d'étranges taches sur le contour des emojis, c'est assez
+bizarre… c'est dû à la qualité basse des images qui sont zoomées trop ? »**
+
+***Il avait raison sur la cause, et ce n'était pas l'emoji.*** La basse
+résolution est celle de **la toile du bloom** : quarante-quatre pixels de large,
+agrandis dix-sept fois. Chacun de ses pixels devient une plaque de **seize
+pixels** sur la carte peinte — six à l'écran — et ces plaques ne suivent plus la
+silhouette qu'elles sont censées éclairer. Sur un combiné téléphonique, on lisait
+trois taches bleues flottant à côté du dessin.
+
+**CE N'ÉTAIT PAS UN DÉFAUT NEUF, C'EST UN DÉFAUT QUE L'EMOJI RÉVÈLE.** Une
+illustration de Keko est un sujet DÉTOURÉ aux bords doux qui couvre toute la
+fenêtre, donc son bloom est partout et se lit comme de l'ambiance. **Un emoji est
+un aplat net posé sur du vide**, donc son bloom est un CONTOUR — et un contour en
+marches de seize pixels se lit comme des taches.
+
+***UN FLOU PAR RÉDUCTION NE FLOUTE QUE CE QUI EST PLUS PETIT QUE LE PAS DE
+RÉDUCTION.*** Une lame fine fond dans le halo ; un aplat massif garde son bord,
+et l'agrandissement n'en fait qu'une **rampe LINÉAIRE** — donc une arête de
+dérivée à ses deux bouts, exactement ce que le voile sous le texte avait déjà
+coûté : *ce n'est pas la vitesse qu'on voit, c'est la cassure.*
+
+**Le flou est dans la MATIÈRE, pas dans la géométrie** — la règle déjà payée sur
+le contour des cartes et sur le halo des créatures. La petite toile passe donc
+sous une moyenne glissante en deux passes séparées (`adoucir`, rayon 2), ce qui
+étale la lumière sur **onze pour cent de la largeur** au lieu d'un liseré.
+
+Mesuré sur le bord du disque d'un emoji, carte de 768 :
+
+| | avant | après |
+|---|---|---|
+| largeur de la transition | **12 px** | **48 px** |
+| pic de lumière au contact du sujet | 69 | 52 |
+| coût par carte peinte | — | **+0,27 ms** |
+
+*L'énergie est conservée* — c'est une moyenne — donc le halo ne s'affaiblit pas,
+il cesse de se concentrer sur une arête.
+
+Deux choses à ne pas défaire :
+
+- **ON FLOUTE LE PRÉMULTIPLIÉ, et la toile ressort OPAQUE.** En mélange additif,
+  ce qu'un pixel ajoute vaut `rgb × a` : c'est donc cette quantité-là qu'il faut
+  moyenner, et une toile opaque dont le RGB EST cette quantité rend exactement le
+  même résultat. *Flouter un RGB non prémultiplié mêlerait la couleur de pixels
+  transparents à celle des opaques* — la frange de bord classique, la même
+  famille que les grains noirs opaques de l'onde ;
+- **ce qui sort de la toile compte pour du noir** : *une lumière se dilue au
+  bord, elle n'y rebondit pas.*
+
+Vérifié sur les quatre familles de cartes — les pièces du jeu, les peintures, les
+animaux et les emoji : seuls les emoji changent à l'oeil, parce que ce sont les
+seuls dont le sujet soit un aplat net.
 
 **ET L'EXPOSITION DU DÉCOR MONTE, en plus de la lumière du sujet.** Keko, deux
 passes plus tard : « je trouve le background toujours trop sombre (miniature et
