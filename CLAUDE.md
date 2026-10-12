@@ -13731,6 +13731,25 @@ et on la libère au démontage.
 **Et rien ne se joue sur un dos** : *une carte retournée ne dit rien de ce
 qu'elle est*, donc repeindre dessous serait du travail pour personne.
 
+#### TOUS LES ANIMÉS ONT UNE VERSION STATIQUE — mesuré, et c'est structurel
+
+Keko : « est-ce que tous les animés ont une version normale ? » **Oui, et la
+raison vaut mieux que le compte** : *le statique ne vient pas du CDN, il vient de
+la POLICE* — Noto Color Emoji couvre tout Unicode, donc un emoji qui est dans le
+catalogue est forcément peignable. **L'animation est une couche de plus, jamais
+la seule.**
+
+Vérifié glyphe par glyphe sur les deux catalogues, en chargeant le sous-ensemble
+de police de chacun puis en comptant l'encre d'un rendu de 48 px :
+
+| | cartes | animées | **sans rendu statique** |
+|---|---|---|---|
+| le catalogue | 1 923 | 614 | **0** |
+| avec les variantes de peau | 3 963 | 884 | **0** |
+
+*Et aucun ne retombe sur la police système*, ce qui était l'autre façon
+d'échouer : les 614 sont tous rendus par Noto.
+
 #### LE REPLI EST LA CARTE STATIQUE, ET IL EST SILENCIEUX
 
 `ImageDecoder` est dans Chrome, Edge et Safari 17 ; **ailleurs la carte reste
