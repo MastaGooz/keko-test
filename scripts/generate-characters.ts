@@ -34,7 +34,7 @@
 
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { createHash } from 'node:crypto'
-import { statsDerivees, siecle, cle } from '../src/logic/characters/formules.ts'
+import { statsDerivees, raretesParDomaine, siecle, cle } from '../src/logic/characters/formules.ts'
 import type { CharacterCard } from '../src/logic/characters/types.ts'
 import { DOMAINES, DOMAINES_QUOTA, RARETES, type Domaine } from '../src/logic/characters/types.ts'
 // LA PORTE SE LIT AVEC LA MEME TABLE QUE LES CARTES : *deux tables de mots se
@@ -604,16 +604,18 @@ function paquets<T>(xs: T[], taille: number): T[][] {
 interface Candidat {
   id: string
   /**
-   * LES VUES SONT LE CRITERE DE POPULARITE, PLUS LES LANGUES. Tranche par Keko :
-   * « je trouve que le critere de popularite ne devrait pas etre les langues,
-   * plutot la frequentation de la page (ex sur un an) ».
+   * UN CANDIDAT NE PORTE PAS DE VUES, ET IL NE DOIT PAS EN PORTER.
    *
-   * Elles arrivent **avec la decouverte** -- sommees sur seize langues et douze
-   * mois -- donc il n'y a plus d'etape pour les obtenir. Le nombre de langues,
-   * lui, descend d'un rang : il reste dans le fichier comme information, il ne
-   * decide plus de rien.
+   * *Il en a porte, et le champ a coute le plus gros defaut de ce chantier* :
+   * la decouverte par frequentation les remplissait, la porte par metiers ne
+   * les remplit pas, et `vues: 0` est passe en silence jusqu'au catalogue --
+   * trie par Q-id faute de mieux. **Le critere de popularite reste la
+   * frequentation** (tranche par Keko), mais elle se mesure article par
+   * article, apres la decouverte.
+   *
+   * ***Un champ mort qui porte un nom juste est pire qu'un champ absent*** : il
+   * se relit comme une source, et rien ne dit qu'il ne l'est plus.
    */
-  vues: number
   fiction: boolean
   /**
    * LE NOMBRE DE LANGUES, qui redevient utile avec le quota.
@@ -648,7 +650,7 @@ function versCandidat(cellules: string[], fiction: boolean, porte: Domaine | nul
   const id = cellules[0]?.split('/').pop()
   const langues = Number(cellules[1])
   if (!id || !/^Q\d+$/.test(id) || !Number.isFinite(langues)) return null
-  return { id, vues: 0, fiction, langues, porte }
+  return { id, fiction, langues, porte }
 }
 
 /**
@@ -1744,9 +1746,9 @@ async function titresParLangue(ids: string[]): Promise<Map<string, Map<string, s
  * et rien de plus. *C'est la difference avec les vues FR, ou un trou faussait
  * tout le score* — et c'est pour ca que celles-ci n'ecartent personne.
  */
-async function vuesEtrangeres(ids: string[]): Promise<Map<string, number>> {
+async function vuesEtrangeres(ids: string[]): Promise<Map<string, Map<string, number>>> {
   const titres = await titresParLangue(ids)
-  const somme = new Map<string, number>(ids.map((i) => [i, 0]))
+  const somme = new Map<string, Map<string, number>>(ids.map((i) => [i, new Map()]))
   for (const langue of LANGUES_VUES) {
     const debutLangue = Date.now()
     const parTitre = new Map<string, string>()
@@ -1779,7 +1781,8 @@ async function vuesEtrangeres(ids: string[]): Promise<Map<string, number>> {
         const id = parTitre.get(versDemande.get(p.title) ?? p.title) ?? parTitre.get(p.title)
         if (!id) continue
         const v = Object.values(p.pageviews ?? {}).reduce<number>((t, x) => t + (x ?? 0), 0)
-        somme.set(id, (somme.get(id) ?? 0) + v)
+        const parLangue = somme.get(id)
+        if (parLangue) parLangue.set(langue, (parLangue.get(langue) ?? 0) + v)
       }
     }
     // ON LE DIT : sans ca, une langue a moitie mesuree ne laisserait aucune
@@ -1834,6 +1837,36 @@ function resume(cartes: CharacterCard[]): string {
   l.push(tableau('PAR RARETE', RARETES, comptes(cartes.map((c) => c.rarete)), cartes.length))
   l.push('')
   l.push(tableau('PAR DOMAINE', DOMAINES, comptes(cartes.map((c) => c.domaine)), cartes.length))
+  l.push('')
+
+  // LE TABLEAU CROISE EST LA SEULE CHOSE QUI DISE SI LE DECOUPAGE TOMBE JUSTE.
+  // A seuil global, *cinq rayons sur dix ne portaient aucun legendaire et les
+  // artistes n'avaient pas un seul commun* -- et rien dans le resume ne le
+  // disait, parce qu'aucun tableau ne croisait les deux axes.
+  l.push('LA RARETE DANS CHAQUE DOMAINE')
+  l.push('-----------------------------')
+  l.push(`  ${'domaine'.padEnd(14)} ${'n'.padStart(5)}  ` + RARETES.map((r) => r.slice(0, 6).padStart(7)).join(''))
+  for (const d of DOMAINES) {
+    const g = cartes.filter((c) => c.domaine === d)
+    if (g.length === 0) continue
+    l.push(
+      `  ${d.padEnd(14)} ${String(g.length).padStart(5)}  ` +
+        RARETES.map((r) => {
+          const k = g.filter((c) => c.rarete === r).length
+          return `${k} (${((100 * k) / g.length).toFixed(0)}%)`.padStart(7)
+        }).join(''),
+    )
+  }
+  l.push('')
+
+  l.push('LE PLUS NOTOIRE DE CHAQUE DOMAINE')
+  l.push('---------------------------------')
+  for (const d of DOMAINES) {
+    const g = cartes.filter((c) => c.domaine === d)
+    if (g.length === 0) continue
+    const t = g[0]!
+    l.push(`  ${d.padEnd(14)} ${t.nom.slice(0, 26).padEnd(28)} ${t.rarete.padEnd(12)} ${String(t.vues).padStart(8)} vues`)
+  }
   l.push('')
 
   const siecles = cartes.map((c) => siecle(c.mort ?? c.naissance)).filter((s): s is number => s !== null)
@@ -1895,15 +1928,20 @@ async function main(): Promise<void> {
   const debut = Date.now()
   journal(`Cible : ${cible} personnages${frais ? ' (cache ignore)' : ''}`)
 
-  // LA PORTE EST LA FREQUENTATION : voir `decouvrirParVues`.
+  // **LA PORTE EST LES METIERS**, et c'est le quota qui l'impose -- voir
+  // `decouvrirHumains` juste en dessous.
   //
-  // **LES DEUX ANCIENNES PORTES RESTENT DANS LE FICHIER** -- `decouvrirHumains`
-  // et `decouvrirFiction`, avec la table des 701 metiers, les tranches de
-  // notoriete, les trois axes de repli et `vuesEtrangeres`. *Elles ne sont plus
-  // appelees*, et c'est de la dette assumee : la generation dure une heure, donc
-  // on ne retire pas six cents lignes avant d'avoir vu le catalogue qu'elles
-  // remplacent. **A supprimer une fois valide par Keko**, avec
-  // `scripts/trouver-metiers.ts` et `scripts/metiers.json`.
+  // **`decouvrirParVues` RESTE DANS LE FICHIER ET N'EST PLUS APPELEE**, avec
+  // `MOIS_DE_VUES` et les tops par langue. *C'est de la dette assumee* : la
+  // generation dure une demi-heure, donc on ne retire pas la porte precedente
+  // avant d'avoir vu le catalogue qui la remplace. **A supprimer une fois
+  // valide par Keko.**
+  //
+  // ***Et son commentaire disait encore « la porte est la frequentation ».***
+  // C'est exactement le mensonge qui a coute les deux defauts de cette passe --
+  // `c.vues` lu d'une porte debranchee, puis la somme multilingue partie avec
+  // elle. **Du code mort ne mentirait pas s'il ne portait pas un commentaire
+  // qui parle au present.**
   /**
    * LA PORTE EST REDEVENUE LES METIERS, ET C'EST LE QUOTA QUI L'IMPOSE.
    *
@@ -2021,16 +2059,22 @@ async function main(): Promise<void> {
   const mesureDe = (id: string, d: Details): Mesure | undefined =>
     d.article === null ? mesures.get(`#${id}`) : mesures.get(d.article)
 
-  // IL N'Y A PLUS D'ETAPE DE VUES ETRANGERES : elles arrivent avec la
-  // decouverte, sommees sur seize langues et douze mois. *Quinze requetes par
-  // lot de cinquante, c'est ce que cette etape coutait* -- environ deux heures
-  // sur la derniere generation.
 
   let sansDetail = 0
   let sansArticle = 0
   let ebauche = 0
   let sansImage = 0
-  const cartes: CharacterCard[] = []
+  /**
+   * UN CANDIDAT QUI SERA UNE CARTE -- et c'est tout ce que cette passe sert a
+   * savoir.
+   *
+   * *On ne paie pas pour des cartes qu'on jette* : la somme etrangere coute
+   * quinze requetes par lot de cinquante, donc la faire sur les candidats
+   * entiers serait la payer trois fois pour rien. **Le filtre passe donc
+   * avant, la somme apres.**
+   */
+  type Retenu = { c: Candidat; d: Details; m: Mesure; image: string }
+  const retenus: Retenu[] = []
   for (const c of candidats) {
     const d = details.get(c.id)
     if (!d) {
@@ -2066,37 +2110,72 @@ async function main(): Promise<void> {
       sansImage++
       continue
     }
-    // LES VUES SONT CELLES DE LA DECOUVERTE : seize langues, douze mois. Elles
-    // ne se recalculent nulle part -- *une valeur qu'on calcule et une valeur
-    // qu'on enregistre ne peuvent pas diverger sans que le fichier mente*, et
-    // c'est exactement ce qui est arrive quand la somme vivait dans l'appel a
-    // `statsDerivees` pendant que la carte enregistrait le chiffre francais.
+    retenus.push({ c, d, m, image })
+  }
+  journal(
+    `Ecartes : ${sansDetail} sans libelle FR, ${sansArticle} sans article mesure, ${ebauche} ebauches, ${sansImage} sans portrait`,
+  )
+
+  /**
+   * LES VUES SE SOMMENT SUR PLUSIEURS LANGUES, ET C'ETAIT DEJA TRANCHE.
+   *
+   * Keko : « la frequentation de page devrait prendre en compte toutes les
+   * langues non ? pour une somme ? » -- et la mesure lui donnait largement
+   * raison : **le francais ne pese que 1 a 38 % des vues d'un personnage**, et
+   * huit rangs sur dix changent quand on somme. Un poete chinois valait une
+   * carte commune parce que personne ne lit sa page en francais.
+   *
+   * ***EN REBRANCHANT LA PORTE PAR METIERS, J'AI PERDU LA SOMME AVEC ELLE.***
+   * Elle voyageait avec la decouverte par frequentation ; la porte partie, il
+   * ne restait que `mesurerArticles`, qui ne mesure qu'un seul wiki. **Le
+   * catalogue est donc sorti avec des vues FRANCOPHONES appelees notoriete** --
+   * mediane 4 370 au lieu de 23 658, donc toutes les cartes sous la borne basse
+   * et un catalogue a 100 % commun.
+   *
+   * *C'est la MEME faute que `c.vues` deux commits plus tot*, et elle s'est
+   * jouee deux fois sur la meme porte : **quand on change la porte d'entree,
+   * tout ce qui entrait avec elle doit etre rebranche** -- et l'avoir rebranche
+   * une fois ne dit pas qu'on a tout rebranche.
+   *
+   * **Elle ne se paie que sur les RETENUS** : c'est exactement ce que la
+   * premiere passe a servi a savoir.
+   */
+  const etrangeres = await vuesEtrangeres(retenus.map((r) => r.c.id))
+
+  // **SANS RARETE A CE STADE, ET C'EST LE TYPE QUI LE DIT.** Un quantile se
+  // calcule sur le rayon entier et APRES le quota ; une carte ecartee n'a pas de
+  // cran a prendre. *Un champ pose provisoirement a `commun` se lirait comme une
+  // valeur*, et rien ne dirait qu'il attend d'etre rempli.
+  const cartes: Omit<CharacterCard, 'rarete'>[] = []
+  for (const { c, d, m, image } of retenus) {
     /**
-     * LES VUES VIENNENT DE LA MESURE PAR ARTICLE, PAS DE LA DECOUVERTE.
+     * LA SOMME VIT EN UN SEUL ENDROIT, et il a fallu le payer deux fois.
      *
-     * ***C'est le defaut qui a coute le plus cher de tout ce chantier*** :
-     * Einstein, Newton, Marie Curie, Vinci, Napoleon et Picasso etaient dans
-     * `cartes`, nommes, illustres, bien classes -- et **toutes les cartes
-     * avaient ZERO vue**, donc le quota les triait par ordre alphabetique de
-     * Q-id. Napoleon etait premier des militaires et sortait quand meme.
+     * `m.vues` est le wiki qui a fourni l'article -- le francais, ou l'anglais
+     * pour les quelques orphelins -- et `etrangeres` porte les quinze autres.
+     * *La somme se calcule ici et s'enregistre telle quelle* : **une valeur
+     * qu'on calcule et une valeur qu'on enregistre ne peuvent pas diverger
+     * sans que le fichier mente**, ce qui est exactement ce qui est arrive
+     * quand la carte gardait le chiffre francais.
      *
-     * `c.vues` est le champ du CANDIDAT, rempli par `decouvrirParVues` quand la
-     * porte etait la frequentation. **En rebranchant la porte par metiers, j'ai
-     * coupe la seule source qui le remplissait** -- et `m.vues`, la mesure
-     * article par article, etait la depuis le debut sans que personne ne la
-     * lise.
-     *
-     * ***Quand on change la porte d'entree, tout ce qui entrait avec elle doit
-     * etre rebranche.*** J'avais meme ecrit « le score reste la frequentation,
-     * mesuree article par article » : c'etait vrai de la MESURE et faux du
-     * RACCORDEMENT, et je l'avais deduit d'une ligne de calcul sans verifier
-     * qui la consommait.
-     *
-     * *Et rien ne le signalait* : zero vue est une valeur valide, le tri
-     * departage sur le Q-id, et un catalogue trie par Q-id ressemble a un
-     * catalogue.
+     * **Une langue manquante retire sa part, et rien de plus** : c'est une
+     * somme, donc elle n'ecarte personne -- a la difference des vues du wiki
+     * principal, ou un trou faussait tout le score et faisait jeter la carte.
      */
-    const vues = m.vues
+    // **LA LANGUE DU WIKI SOURCE SE RETIRE DE LA SOMME**, et il le faut : `fr`
+    // est dans `LANGUES_VUES` depuis que la porte lisait les tops de seize
+    // langues, donc la sommer entiere compterait le francais DEUX FOIS. *Une
+    // langue comptee deux fois vaut double*, et ca se voit d'autant moins que
+    // le doublon est la langue la mieux mesuree.
+    //
+    // **Et pour les orphelins c'est l'ANGLAIS qu'il faut retirer** : leur
+    // mesure vient de `en.wikipedia` faute d'article francais. *Le doublon
+    // n'est pas une langue, c'est la langue de la mesure* -- donc on la deduit
+    // de la provenance et non d'une constante.
+    const source = d.article === null ? 'en' : 'fr'
+    let etranger = 0
+    for (const [langue, v] of etrangeres.get(c.id) ?? []) if (langue !== source) etranger += v
+    const vues = m.vues + etranger
     const stats = statsDerivees({
       langues: d.langues,
       vues,
@@ -2121,14 +2200,10 @@ async function main(): Promise<void> {
       langues: d.langues,
       taille: m.taille,
       vues,
-      rarete: stats.rarete,
       attaque: stats.attaque,
       defense: stats.defense,
     })
   }
-  journal(
-    `Ecartes : ${sansDetail} sans libelle FR, ${sansArticle} sans article mesure, ${ebauche} ebauches, ${sansImage} sans portrait`,
-  )
 
   // Triees par FREQUENTATION decroissante : le fichier se lit de haut en bas,
   // et c'est ce tri qui decide QUI entre dans chaque rayon.
@@ -2158,11 +2233,23 @@ async function main(): Promise<void> {
     if (n < parDomaine) journal(`  ${d} : ${n} seulement sur ${parDomaine} -- rayon incomplet`)
   }
 
-  const json = JSON.stringify({ genere: new Date().toISOString(), cartes: gardees })
-  writeFileSync(new URL('characters.json', SORTIE), json, 'utf8')
-  writeFileSync(new URL('stats-summary.txt', SORTIE), resume(gardees), 'utf8')
+  /**
+   * LA RARETE SE POSE ICI, ET PAS AVANT.
+   *
+   * Tranche par Keko : « il faudrait que la rarete soit donnee en fonction de la
+   * distribution de la rarete dans une categorie et pas globale ». Le decoupage
+   * vit dans `logic/` -- il est pur, donc verifiable sans navigateur -- et il se
+   * fait **sur `gardees`** : *une carte que le quota a ecartee n'a pas de cran a
+   * prendre*, et la compter deplacerait les quantiles de tout son rayon.
+   */
+  const crans = raretesParDomaine(gardees)
+  const finales: CharacterCard[] = gardees.map((c, i) => ({ ...c, rarete: crans[i]! }))
 
-  journal(`Ecrit ${gardees.length} cartes -- ${(json.length / 1024).toFixed(0)} Ko`)
+  const json = JSON.stringify({ genere: new Date().toISOString(), cartes: finales })
+  writeFileSync(new URL('characters.json', SORTIE), json, 'utf8')
+  writeFileSync(new URL('stats-summary.txt', SORTIE), resume(finales), 'utf8')
+
+  journal(`Ecrit ${finales.length} cartes -- ${(json.length / 1024).toFixed(0)} Ko`)
   journal(`Fini en ${((Date.now() - debut) / 1000 / 60).toFixed(1)} min`)
 }
 

@@ -7,8 +7,8 @@
  * de rareté sont atteignables, et le domaine se déduit d'un libellé de métier
  * tel que Wikidata l'écrit (« écrivain ou écrivaine », « homme politique »).
  */
-import { domaineDe, siecle, statsDerivees, type Brut } from './formules.ts'
-import { parsePersonnage, parsePersonnages, RARETES } from './types.ts'
+import { domaineDe, raretesParDomaine, siecle, statsDerivees, type Brut } from './formules.ts'
+import { parsePersonnage, parsePersonnages, RARETES, type Domaine } from './types.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -74,18 +74,71 @@ console.log('\nL’ÉCHELLE')
   )
 }
 
-// LES QUATRE CRANS SONT ATTEIGNABLES. Un cran que rien ne peut remplir est un
-// cran mort, et le résumé le dirait — mais autant le savoir sans télécharger
-// trois mille personnages.
+console.log('')
+console.log('LA RARETÉ, PAR DOMAINE')
+
+// Un rayon de N cartes, de la plus notoire à la moins notoire.
+const rayon = (domaine: Domaine, n: number, depart = 1_000_000) =>
+  Array.from({ length: n }, (_, i) => ({ domaine, vues: depart - i }))
+
+// LES QUATRE CRANS SONT ATTEIGNABLES, et un cran que rien ne peut remplir est
+// un cran mort. *Il ne faut plus balayer une échelle pour le savoir* : un
+// quantile les remplit par construction dès que le rayon est assez grand.
 {
-  const atteints = new Set<string>()
-  // LE BALAYAGE DES VUES EST MULTIPLICATIF, parce que l'echelle l'est. *Cinq
-  // valeurs choisies a la main sautaient la bande de l'epique* -- et un cran
-  // qu'on declare mort parce qu'on ne l'a pas vise n'est pas une mesure.
-  for (let langues = 1; langues <= 320; langues += 40)
-    for (let vues = 1; vues < 100_000_000; vues = Math.ceil(vues * 1.2))
-      atteints.add(statsDerivees(brut({ langues, vues })).rarete)
-  for (const r of RARETES) verifier(`le cran « ${r} » est atteignable`, atteints.has(r))
+  const crans = new Set(raretesParDomaine(rayon('artiste', 300)))
+  for (const r of RARETES) verifier(`le cran « ${r} » est atteignable`, crans.has(r))
+}
+
+// LA PYRAMIDE EST LA MÊME DANS CHAQUE RAYON — c'est la demande de Keko, et
+// c'est la seule chose qu'un quantile par domaine garantit qu'un seuil global
+// ne garantissait pas.
+{
+  const cartes = [...rayon('artiste', 300, 50_000_000), ...rayon('criminel', 300, 900)]
+  const crans = raretesParDomaine(cartes)
+  const part = (d: Domaine, r: string) => {
+    const idx = cartes.map((c, i) => [c, i] as const).filter(([c]) => c.domaine === d)
+    return idx.filter(([, i]) => crans[i] === r).length / idx.length
+  }
+  for (const r of RARETES)
+    verifier(
+      `« ${r} » pèse la même part chez l’artiste et le criminel (${(100 * part('artiste', r)).toFixed(0)} %)`,
+      Math.abs(part('artiste', r) - part('criminel', r)) < 0.01,
+    )
+  // ET LE RAYON PAUVRE A SES LÉGENDAIRES : un criminel à 900 vues vaut
+  // légendaire chez lui, là qu'un seuil global l'aurait noyé — *Marie Curie
+  // sortait commune et une actrice de second plan sortait épique.*
+  egal(crans[cartes.findIndex((c) => c.domaine === 'criminel')], 'legendaire', 'le premier du rayon pauvre est légendaire')
+  egal(crans[0], 'legendaire', 'le premier du rayon riche est légendaire')
+  egal(crans[cartes.length - 1], 'commun', 'le dernier est commun')
+}
+
+// UN RAYON N'INFLUENCE PAS UN AUTRE. *C'est la propriété qui fait toute la
+// différence avec un seuil global* : ajouter trois cents artistes ne doit rien
+// changer aux criminels.
+{
+  const seul = raretesParDomaine(rayon('criminel', 300, 900))
+  const melange = raretesParDomaine([...rayon('artiste', 300, 50_000_000), ...rayon('criminel', 300, 900)])
+  verifier(
+    'les crans d’un rayon ne bougent pas quand un autre grandit',
+    seul.every((r, i) => r === melange[300 + i]),
+  )
+}
+
+// LES EX AEQUO PARTAGENT LEUR CRAN : *deux cartes de même notoriété ne peuvent
+// pas valoir deux métaux différents.*
+{
+  const cartes = Array.from({ length: 100 }, (_, i) => ({ domaine: 'penseur' as Domaine, vues: i < 50 ? 10 : 1 }))
+  const crans = raretesParDomaine(cartes)
+  verifier('cinquante ex aequo ont tous le même cran', new Set(crans.slice(0, 50)).size === 1)
+}
+
+// ET LE TRI NE PASSE PAS PAR LA NOTORIÉTÉ. Toutes ces vues sont très au-delà de
+// la borne haute, donc leur notoriété vaut 1 pour tout le monde : *si le
+// quantile lisait le score, il ne pourrait plus départager personne* — et c'est
+// littéralement le défaut qui a sorti un catalogue à 100 % commun.
+{
+  const crans = raretesParDomaine(rayon('politique', 200, 9_000_000_000))
+  verifier('des vues toutes hors borne se départagent quand même', new Set(crans).size === RARETES.length)
 }
 
 console.log('\nLE DOMAINE')

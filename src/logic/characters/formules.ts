@@ -4,6 +4,11 @@
 // generation les applique, il ne les recopie pas : *deux endroits qui
 // decrivent le meme calcul se desaccordent au premier reglage.*
 //
+// **DEUX PORTES, ET PAS UNE, parce que deux grandeurs ne se mesurent pas de la
+// meme facon** : `statsDerivees` voit UNE carte et en tire ce qui ne depend que
+// d'elle ; `raretesParDomaine` voit TOUT LE CATALOGUE, parce qu'un quantile n'a
+// aucun sens sur un element seul.
+//
 // Pur, donc mesurable sans navigateur -- et c'est ce qui permet de rejouer tout
 // l'equilibrage sur le JSON deja telecharge, sans rien redemander a Wikidata.
 
@@ -26,12 +31,23 @@ export interface Brut {
   description: string
 }
 
+/**
+ * LA RARETE N'EST PAS LA, ET C'EST STRUCTUREL.
+ *
+ * Tranche par Keko : « il faudrait que la rarete soit donnee en fonction de la
+ * distribution de la rarete dans une categorie et pas globale ». **Un quantile
+ * ne se calcule pas sur une carte seule** -- il faut tout le rayon sous les
+ * yeux -- donc la rarete sort par `raretesParDomaine`, qui prend la liste.
+ *
+ * *C'est ce qui ferme definitivement la classe de defaut qui s'est payee deux
+ * fois ici* : des bornes ecrites a la main ne peuvent pas decrire des donnees
+ * qui changent, un quantile ne decrit jamais que celles qu'il voit.
+ */
 export interface StatsDerivees {
-  rarete: Rarete
   attaque: number
   defense: number
   domaine: Domaine
-  /** Le score de notoriete, 0 a 1. Garde pour pouvoir juger les seuils. */
+  /** Le score de notoriete, 0 a 1. Garde pour pouvoir juger l'echelle. */
   notoriete: number
 }
 
@@ -42,35 +58,49 @@ export interface StatsDerivees {
  * une loi de puissance : en echelle lineaire, Napoleon ecrase tout le monde et
  * quatre-vingt-quinze pour cent des cartes valent 1.
  *
- * **LES BORNES DECRIVENT LES DONNEES, LES SEUILS DECRIVENT LE JEU**, et cette
- * separation a ete payee : les bornes servent a DEUX choses -- l'attaque, qui
- * les lit directement, et la rarete, qui les lit a travers le score. *Les
- * regler pour l'une desequilibre l'autre*, donc on les cale sur la plage
- * REELLE des vues et on laisse les seuils porter la pyramide.
+ * **ELLES NE PORTENT PLUS QUE L'ATTAQUE ET LA DEFENSE.** La rarete les lisait a
+ * travers le score, donc *les regler pour l'une desequilibrait l'autre* ; depuis
+ * qu'elle se decoupe en quantiles (voir `raretesParDomaine`), elle ne depend
+ * plus d'aucune borne et **c'est tout ce qui reste d'ecrit a la main dans ce
+ * mode.**
  *
- * Mesure sur les trois mille cartes, vues sommees sur quinze langues : min 431,
- * mediane 23 658, max 892 866. D'ou `[400, 900_000]`, qui epouse exactement
- * cette plage -- **les dix valeurs d'attaque servent**, pour une moyenne de 5,7
- * et des extremes symetriques (7 cartes a 1, 6 a 10).
+ * ***Donc c'est aussi le seul endroit qui puisse encore decrire la mauvaise
+ * donnee*** -- et il l'a fait deux fois. A relire sur `stats-summary.txt` apres
+ * chaque generation, et *le bon moment est juste apres* : les formules etant
+ * pures, le catalogue se recalcule sur le JSON deja telecharge en quelques
+ * minutes, sans rien redemander a Wikidata.
  */
 const BORNES = {
   /** Nombre de Wikipedia qui ont l'article. */
   langues: [10, 250] as const,
   /**
-   * Vues SOMMEES sur seize langues et douze mois, telles que la porte d'entree
-   * les rapporte.
+   * Vues SOMMEES sur quinze langues et trente jours, la langue du wiki source
+   * retiree pour ne pas la compter deux fois.
    *
-   * **RECALIBREES SUR LA DISTRIBUTION REELLE** (3 000 cartes) : min 342 881,
-   * p10 382 023, mediane 730 027, p90 3 337 541, p99 10 940 332, max 53 946 755.
-   * *Les bornes epousent la plage, les seuils portent la pyramide.*
+   * **ELLES ONT DECRIT DEUX FOIS LA MAUVAISE DONNEE, et c'est le meme defaut
+   * qui s'est joue aux deux bouts.** `[340_000, 54_000_000]` epousait les vues
+   * sommees sur SEIZE langues et DOUZE mois, telles que la porte par
+   * frequentation les rapportait ; la porte redevenue les metiers, la
+   * distribution a perdu trois ordres de grandeur et **tout le catalogue est
+   * tombe sous la borne basse** -- donc 100 % commun et 2 929 cartes sur 2 931
+   * a une attaque de 1.
    *
-   * **ET LA PLAGE EST TRONQUEE PAR LE BAS**, ce qui est nouveau : on ne voit que
-   * des articles entres dans un top mensuel, donc **aucune carte n'est sous les
-   * trois cent quarante mille vues**. La distribution n'est plus centree dans sa
-   * plage logarithmique — sa mediane tombe a 15 % — et c'est ce qui tasse
-   * l'attaque vers le bas (voir `statsDerivees`).
+   * ***Une borne qui decrit des donnees se relit le jour ou les donnees
+   * changent, pas avant et pas apres*** -- la regle etait ecrite ici meme, et
+   * c'est la deuxieme fois qu'elle se paie au meme endroit.
+   *
+   * **CELLES-CI SONT UNE ESTIMATION, ET IL FAUT LE SAVOIR.** La porte redevenue
+   * les metiers, personne n'a encore vu la distribution des vues SOMMEES sur
+   * trente jours : on la deduit des vues francaises du catalogue precedent
+   * (37 a 704 380, mediane 4 370) et de la part du francais dans le total,
+   * mesuree a 17 % en moyenne -- d'ou un facteur d'environ six.
+   *
+   * ***C'est tout ce qui reste d'ecrit a la main dans ce mode, donc tout ce qui
+   * peut encore etre faux*** : a relire sur `stats-summary.txt` des que la
+   * generation a tourne. *Le recalcul ne coute rien* -- les formules sont pures,
+   * donc le catalogue se refait sur le JSON deja telecharge.
    */
-  vues: [340_000, 54_000_000] as const,
+  vues: [300, 5_000_000] as const,
   /** Octets de l'article FR. */
   taille: [3_000, 250_000] as const,
 }
@@ -103,26 +133,16 @@ const POIDS = { langues: 0, vues: 1 }
  * disait cinq choses la ou l'ecran en disait quatre** -- c'est le modele qui
  * avait tort.
  *
- * LES SEUILS PORTENT LA PYRAMIDE, et ils ont ete remontes quand les vues sont
- * passees a la somme multilingue : tout le monde avait grimpe d'un cran, au
- * point qu'il y avait **deux fois plus de rares que de communs** (49,6 %
- * contre 24,8). *Une pyramide qui ne decroit pas n'est pas une pyramide.*
- *
- * Mesure sur les trois mille cartes, et c'est la mesure qui fixe les chiffres :
- *
- * | seuils | commun | rare | epique | legendaire |
- * |---|---|---|---|---|
- * | 0,56 / 0,70 / 0,84 | 46,5 % | 36,4 % | 13,5 % | 3,6 % |
- * | 0,60 / 0,73 / 0,86 | 57,2 % | 28,5 % | 11,3 % | 3,0 % |
- * | **0,64 / 0,76 / 0,875** | **69,2 %** | **20,0 %** | **8,2 %** | **2,5 %** |
- * | 0,65 / 0,77 / 0,88 | 72,0 % | 18,6 % | 7,1 % | 2,3 % |
- *
- * A relire sur `stats-summary.txt` des que la formule bouge : *c'est la
- * distribution qui dit si les seuils tombent juste, pas l'intuition.*
+ * LA PYRAMIDE EST EN PARTS CUMULEES, ET ELLE SE DECOUPE DANS CHAQUE DOMAINE.
+ * Les parts reprennent celles des deux autres modes (69 / 20 / 8 / 2,5 %) :
+ * *un changement a la fois* -- la forme du calcul change, la distribution non.
  */
-const SEUILS_RARETE = [0.245, 0.44, 0.603] as const
-
-const CRANS: readonly Rarete[] = ['commun', 'rare', 'epique', 'legendaire']
+const PYRAMIDE = [
+  { rarete: 'commun', jusqu: 0.692 },
+  { rarete: 'rare', jusqu: 0.892 },
+  { rarete: 'epique', jusqu: 0.975 },
+  { rarete: 'legendaire', jusqu: 1 },
+] as const satisfies readonly { rarete: Rarete; jusqu: number }[]
 
 /** L'echelle des deux stats de combat. */
 const STAT = { min: 1, max: 10 } as const
@@ -415,26 +435,86 @@ export function domaineDe(description: string, metiers: string[], fiction: boole
 // ------------------------------------------------------------------- le calcul
 
 /**
- * LA SEULE PORTE DES STATS DERIVEES. Tout ce qui se regle dans ce mode se regle
- * au-dessus : les bornes, les poids, les seuils, les mots du domaine.
+ * CE QUI SE DEDUIT D'UNE CARTE SEULE. Tout ce qui se regle ici se regle
+ * au-dessus : les bornes, les poids, les mots du domaine.
+ *
+ * *La rarete n'en fait pas partie* -- elle depend du rayon entier, voir
+ * `raretesParDomaine`.
  */
 export function statsDerivees(brut: Brut): StatsDerivees {
   const partLangues = echelleLog(brut.langues, BORNES.langues)
   const partVues = echelleLog(brut.vues, BORNES.vues)
-  const notoriete = POIDS.langues * partLangues + POIDS.vues * partVues
-
-  let rang = 0
-  while (rang < SEUILS_RARETE.length && notoriete >= SEUILS_RARETE[rang]) rang++
 
   return {
-    rarete: CRANS[rang],
     // L'ATTAQUE SUIT LES VUES : ce qu'on regarde aujourd'hui frappe fort.
     attaque: stat(partVues),
     // LA DEFENSE SUIT LA TAILLE DE L'ARTICLE : ce qui est longuement ecrit encaisse.
     defense: stat(echelleLog(brut.taille, BORNES.taille)),
     domaine: domaineDe(brut.description, brut.metiers, brut.fiction),
-    notoriete,
+    notoriete: POIDS.langues * partLangues + POIDS.vues * partVues,
   }
+}
+
+/**
+ * LA RARETE SE DECOUPE DANS LE DOMAINE, PAS SUR TOUT LE CATALOGUE.
+ *
+ * Tranche par Keko : « il faudrait que la rarete soit donnee en fonction de la
+ * distribution de la rarete dans une categorie et pas globale ». **Et la mesure
+ * lui donne raison de facon spectaculaire** : le quota donne trois cents cartes
+ * a chaque rayon, mais *les niveaux de notoriete n'ont rien de comparable d'un
+ * rayon a l'autre* -- la 300e artiste a 106 langues, la 300e criminelle en a 28.
+ *
+ * A seuil GLOBAL, le quota se defaisait donc par l'autre bout :
+ *
+ * | | commun | rare | epique | legendaire |
+ * |---|---|---|---|---|
+ * | artiste | **0 %** | 55 % | 37 % | 8 % |
+ * | explorateur | **97 %** | 2 % | **0 %** | **0 %** |
+ * | scientifique | 92 % | 7 % | 1 % | **0 %** |
+ * | business | 93 % | 5 % | 2 % | 1 % |
+ *
+ * ***Cinq rayons sur dix ne pouvaient porter aucun legendaire, et les artistes
+ * n'avaient pas un seul commun*** -- Marie Curie et Einstein sortaient communs
+ * pendant qu'une actrice de second plan sortait epique. **C'est exactement le
+ * defaut que le quota venait de corriger, revenu par la porte de la rarete.**
+ *
+ * Trois choses a ne pas defaire :
+ *
+ * - **ON TRIE SUR LES VUES BRUTES, jamais sur la notoriete.** Celle-ci passe
+ *   par une echelle log BORNEE : avec des bornes mal calees, elle vaut 0 pour
+ *   tout le monde et le tri devient degenere -- c'est litteralement le defaut
+ *   qui a sorti un catalogue a 100 % commun. ***Un quantile n'a besoin que d'un
+ *   ordre, et toute normalisation intermediaire ne peut que lui en perdre.***
+ * - **les ex aequo partagent leur cran**, par leur rang moyen : *deux cartes de
+ *   meme notoriete ne peuvent pas valoir deux metaux differents* ;
+ * - **ca se calcule sur ce qui RESTE**, apres le quota -- pas sur tout ce qu'on
+ *   a vu. Une carte ecartee n'a pas de cran a prendre.
+ */
+export function raretesParDomaine(cartes: readonly { domaine: Domaine; vues: number }[]): Rarete[] {
+  const rayons = new Map<Domaine, number[]>()
+  cartes.forEach((c, i) => {
+    const l = rayons.get(c.domaine)
+    if (l === undefined) rayons.set(c.domaine, [i])
+    else l.push(i)
+  })
+
+  const sortie = new Array<Rarete>(cartes.length)
+  for (const indices of rayons.values()) {
+    // Du plus notoire au moins notoire ; l'identite n'entre pas dans l'ordre,
+    // donc les ex aequo sont traites ensemble juste apres.
+    const ordre = [...indices].sort((a, b) => cartes[b]!.vues - cartes[a]!.vues)
+    const n = Math.max(1, ordre.length)
+    let i = 0
+    while (i < ordre.length) {
+      let j = i
+      while (j + 1 < ordre.length && cartes[ordre[j + 1]!]!.vues === cartes[ordre[i]!]!.vues) j++
+      const part = 1 - (i + j) / 2 / n
+      const cran = PYRAMIDE.find((p) => part <= p.jusqu) ?? PYRAMIDE[PYRAMIDE.length - 1]!
+      for (let k = i; k <= j; k++) sortie[ordre[k]!] = cran.rarete
+      i = j + 1
+    }
+  }
+  return sortie
 }
 
 /** Le siecle d'une annee. Negatif avant notre ere, `null` si l'annee manque. */

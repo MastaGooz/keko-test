@@ -12489,12 +12489,106 @@ part, et *un renommage traversant le catalogue pour un mot ne vaut pas son
 risque* : la règle déjà tenue par `energie` et par `tresor`.
 
 
+### LA RARETÉ SE DÉCOUPE DANS LE DOMAINE, PAS SUR TOUT LE CATALOGUE
+
+Tranché par Keko : **« il faudrait que la rareté soit donnée en fonction de la
+distribution de la rareté dans une catégorie et pas globale »**.
+
+**ET LA MESURE LUI DONNE RAISON DE FAÇON SPECTACULAIRE.** Le quota donne trois
+cents cartes à chaque rayon — mais *les niveaux de notoriété n'ont rien de
+comparable d'un rayon à l'autre* : la 300ᵉ artiste a 106 langues, la 300ᵉ
+criminelle en a 28. À seuil global, le quota se défaisait donc par l'autre bout :
+
+| | commun | rare | épique | légendaire |
+|---|---|---|---|---|
+| **artiste** | **0 %** | 55 % | 37 % | 8 % |
+| sportif | 42 % | 40 % | 12 % | 6 % |
+| politique | 40 % | 40 % | 16 % | 4 % |
+| penseur | 64 % | 29 % | 6 % | 1 % |
+| religieux | 88 % | 7 % | 3 % | 2 % |
+| criminel | 89 % | 6 % | 2 % | 3 % |
+| militaire | 92 % | 6 % | 2 % | 1 % |
+| **scientifique** | 92 % | 7 % | 1 % | **0 %** |
+| business | 93 % | 5 % | 2 % | 1 % |
+| **explorateur** | **97 %** | 2 % | **0 %** | **0 %** |
+
+***Cinq rayons sur dix ne pouvaient porter aucun légendaire, et les artistes
+n'avaient pas un seul commun.*** Marie Curie et Einstein sortaient communs
+pendant qu'une actrice de second plan sortait épique.
+
+**C'est exactement le défaut que le quota venait de corriger, revenu par la
+porte de la rareté** — *le quota égalise le NOMBRE de cartes, il n'égalise pas
+ce qu'elles valent.*
+
+#### CE QUE ÇA DONNE, ET LE TABLEAU CROISÉ EST CE QUI LE DIT
+
+Chaque rayon porte la même pyramide (69 / 20 / 8 / 2,5 %), donc **le meilleur
+criminel vaut légendaire comme le meilleur politique** :
+
+| rayon | ses légendaires |
+|---|---|
+| scientifique | Marie Curie, Albert Einstein |
+| explorateur | Christophe Colomb, Fernand de Magellan |
+| business | Bernard Arnault, Elon Musk |
+| criminel | Klaus Barbie, Ed Gein |
+
+*Et rien dans l'ancien résumé ne disait le problème*, parce qu'aucun tableau ne
+croisait les deux axes : il y avait « par rareté » et « par domaine », jamais
+les deux ensemble. **Un défaut qui tient au croisement de deux axes ne se voit
+sur aucun des deux.** Le résumé porte désormais le tableau croisé et le plus
+notoire de chaque rayon.
+
+#### CINQ CHOSES À NE PAS DÉFAIRE
+
+- **ON TRIE SUR LES VUES BRUTES, jamais sur la notoriété.** Celle-ci passe par
+  une échelle log BORNÉE : avec des bornes mal calées elle vaut zéro pour tout
+  le monde, et le tri devient dégénéré — *c'est littéralement le défaut qui a
+  sorti un catalogue à 100 % commun.* ***Un quantile n'a besoin que d'un ordre,
+  et toute normalisation intermédiaire ne peut que lui en perdre*** ;
+- **ça se calcule sur ce qui RESTE**, après le quota : une carte écartée n'a pas
+  de cran à prendre, et la compter déplacerait les quantiles de tout son rayon ;
+- **les ex aequo partagent leur cran**, par leur rang moyen — *deux cartes de
+  même notoriété ne peuvent pas valoir deux métaux différents*, la règle déjà
+  tenue par les crans du plateau ;
+- **un rayon n'influence pas un autre**, et c'est la propriété qui fait toute la
+  différence avec un seuil global : ajouter trois cents artistes ne change rien
+  aux criminels. Une vérification le tient ;
+- **la rareté a QUITTÉ `statsDerivees`**, et c'est structurel : *un quantile ne
+  se calcule pas sur une carte seule.* Deux portes, parce que deux grandeurs ne
+  se mesurent pas de la même façon — `statsDerivees` voit une carte, et
+  `raretesParDomaine` voit tout le catalogue.
+
+#### ET ÇA FERME LA CLASSE DE DÉFAUT QUI S'ÉTAIT PAYÉE DEUX FOIS
+
+Les personnages étaient **le seul des trois modes à bornes écrites à la main** —
+les animaux découpent par quantiles (`cranDe`), les peintures aussi
+(`rangsNormalises` + `PYRAMIDE`) — et le seul qui ait cassé, deux fois au même
+endroit. ***Une borne écrite à la main ne peut pas décrire des données qui
+changent ; un quantile ne décrit jamais que celles qu'il voit.***
+
+**IL RESTE L'ATTAQUE ET LA DÉFENSE, et c'est à Keko.** Elles lisent encore des
+bornes (`BORNES.vues`, `BORNES.taille`), donc ce sont les deux dernières choses
+qui puissent encore être fausses — et les bornes actuelles sont une **estimation**
+calculée depuis les vues françaises du catalogue précédent, à relire sur
+`stats-summary.txt` dès que la génération a tourné. *Le recalcul ne coûte rien*
+— les formules sont pures, donc le catalogue se refait sur le JSON déjà
+téléchargé. Les passer en quantiles les fermerait pour de bon, mais **ça change
+ce que le chiffre VEUT DIRE** : « attaque 10 » cesserait de dire « plus de tant
+de vues » pour dire « dans les 10 % les plus vus ». C'est une décision de
+design.
+
 ### CE QUI RESTE À TRANCHER PAR KEKO
 
-- **les seuils de rareté et les bornes des échelles** sont désormais MESURÉS,
-  plus devinés : bornes `[400, 900_000]` sur les vues sommées, seuils
-  `0,64 / 0,76 / 0,875`, ce qui donne **69,2 / 20,0 / 8,2 / 2,5 %**. *À relire
-  sur `stats-summary.txt` dès que la formule bouge* ;
+- **la rareté ne se règle plus du tout** : elle se découpe en quantiles DANS
+  chaque domaine, donc la pyramide est exacte par construction (69 / 20 / 8 /
+  2,5 %) et ne peut plus décrire la mauvaise donnée — voir la section qui
+  précède ;
+- **l'attaque et la défense**, en revanche, lisent encore des bornes écrites à
+  la main, et ce sont les deux dernières. Celles des vues sont une ESTIMATION
+  (`[300, 5_000_000]`) : *à relire sur `stats-summary.txt` dès que la génération
+  a tourné.* Les passer en quantiles les fermerait pour de bon, au prix d'un
+  changement de sens — « attaque 10 » dirait « dans les 10 % les plus vus » et
+  non « plus de tant de vues » ;
 - **les quatre crans de rareté** s'appellent `commun / rare / epique /
   legendaire`, un par métal — tranché par Keko, voir plus haut ;
 - **les images sont des URL Wikimedia Commons**, donc une ressource extérieure.
