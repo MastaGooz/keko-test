@@ -12669,6 +12669,62 @@ règle déjà payée sur la découverte par métiers.
 Potentiel mesuré, avec un portrait, un article français et ≥ 10 langues :
 **1 275 entités distinctes** — largement de quoi remplir un rayon de 273.
 
+#### LE POOL DE LA FICTION, MESURÉ : 2 160 cartes possibles
+
+Keko : « niveau fiction, on a un pool total de combien de personnages sur wiki
+(avec article fr, image) ». Les treize natures, article français exigé, pool
+dédupliqué :
+
+| | avec image P18 | sans exiger l'image |
+|---|---|---|
+| **tous crans** | **2 160** | 7 558 |
+| ≥ 5 langues | 1 848 | 4 750 |
+| **≥ 10 langues** (le seuil du pipeline) | **1 472** | 2 912 |
+| ≥ 20 langues | 782 | 1 261 |
+| ≥ 40 langues | 233 | 277 |
+| ≥ 80 langues | 34 | 36 |
+
+***L'IMAGE COÛTE 71 % DU POOL*** — 2 160 sur 7 558 — et c'est de loin le filtre
+le plus cher. *Pour un humain ce serait rattrapable par le repli de l'image
+d'en-tête de Wikipédia ; pour un fictif non*, puisque ce repli ramène des
+cosplays. **Le plafond de la fiction illustrée est donc 2 160, point.**
+
+Par nature, article français et image :
+
+| | cartes possibles | sur, sans l'image |
+|---|---|---|
+| personnage humain de fiction | 1 036 | 3 958 |
+| personnage littéraire | 628 | 1 623 |
+| personnage de série télévisée | 556 | 2 029 |
+| personnage de cinéma | 537 | 1 482 |
+| personnage d'animation | 319 | 957 |
+| personnage de bande dessinée | 295 | 1 471 |
+| personnage de manga | 285 | 445 |
+| divinité · personnage légendaire | 149 · 149 | 324 · 257 |
+| créature mythologique | 142 | 227 |
+| personnage de théâtre | 103 | 120 |
+| **personnage de fiction** (la racine) | **27** | **238** |
+| personnage biblique | 9 | 14 |
+
+*(La somme dépasse 2 160 : un personnage porte plusieurs natures — Superman en a
+cinq.)*
+
+**LA RACINE A 4 998 INSTANCES DIRECTES ET N'EN LAISSE QUE 27**, parce que presque
+aucune n'a d'article français. *Ce n'est pas la hiérarchie qui la vide, c'est le
+filtre d'article* — et ça confirme par un troisième chemin qu'on ne peut pas
+découvrir la fiction par sa racine.
+
+**« SUPER-HÉROS » (Q188784) A ÉTÉ RETIRÉ DE LA TABLE** : il n'a **qu'une seule
+instance directe** dans tout Wikidata. *C'est un concept, pas une classe
+d'instances* — Superman et Batman sont déclarés par leur MÉDIA, jamais par leur
+genre. Il rendait zéro ligne : ***un Q-id qui rend zéro ne lève pas, et une
+entrée morte dans une table est un mensonge.***
+
+**Ce que ça dit du quota** : le rayon en veut **273**, le pipeline en voit
+**1 472** et en garde 819 en candidats. *Le rayon se remplira, et il reste de la
+marge pour le durcir* — à ≥ 20 langues il y aurait encore 782 candidats, donc
+trois fois le quota.
+
 #### ELLE EXIGE UN PORTRAIT, ET LA PORTE DES HUMAINS NE LE FAIT PAS
 
 *Ce n'est pas une asymétrie, c'est le filtre juste des deux côtés.* Un humain

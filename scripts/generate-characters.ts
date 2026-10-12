@@ -1123,6 +1123,13 @@ function qid(url: string | undefined): string | undefined {
  * *C'est la lecon des metiers prise par l'autre bout* : la, une racine ne
  * couvrait pas sa propre notion ; ici elle ne couvre que sa propre notion.
  *
+ * **« SUPER-HEROS » (Q188784) N'EST PAS DANS LA LISTE, ET C'EST MESURE** : il
+ * n'a qu'**une seule instance directe** dans tout Wikidata. *C'est un concept,
+ * pas une classe d'instances* -- Superman et Batman sont declares par leur
+ * MEDIA, jamais par leur genre. Il y figurait et rendait zero ligne : ***un
+ * Q-id qui rend zero ne leve pas, et une entree morte dans une table est un
+ * mensonge.***
+ *
  * **ET LA CLOTURE TRANSITIVE EST LA SEULE CHOSE QU'ON NE PEUT PAS FAIRE** :
  * `wdt:P31/wdt:P279*` sur ces natures rend **504 au bout de 65 secondes**,
  * mesure, alors que les quatorze natures prises UNE A UNE repondent en 0,5 a
@@ -1139,7 +1146,6 @@ const NATURES_FICTION: readonly string[] = [
   'Q15711870', // personnage d'animation
   'Q21070568', // personnage de manga
   'Q3375722', // personnage de theatre
-  'Q188784', // super-heros
   'Q178885', // divinite
   'Q2239243', // creature mythologique
   'Q13002315', // personnage legendaire
