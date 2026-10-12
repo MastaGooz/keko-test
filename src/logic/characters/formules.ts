@@ -13,6 +13,7 @@
 // l'equilibrage sur le JSON deja telecharge, sans rien redemander a Wikidata.
 
 import type { Domaine, Rarete } from './types.ts'
+import { cransParGroupe, PYRAMIDE_QUATRE } from '../quantiles.ts'
 
 /** Ce que les sources donnent d'un personnage, avant tout calcul. */
 export interface Brut {
@@ -134,15 +135,11 @@ const POIDS = { langues: 0, vues: 1 }
  * avait tort.
  *
  * LA PYRAMIDE EST EN PARTS CUMULEES, ET ELLE SE DECOUPE DANS CHAQUE DOMAINE.
- * Les parts reprennent celles des deux autres modes (69 / 20 / 8 / 2,5 %) :
- * *un changement a la fois* -- la forme du calcul change, la distribution non.
+ * Elle vit dans `logic/quantiles.ts` depuis que le mode emoji la lit aussi :
+ * *deux endroits qui decrivent le meme calcul se desaccordent au premier
+ * reglage.*
  */
-const PYRAMIDE = [
-  { rarete: 'commun', jusqu: 0.692 },
-  { rarete: 'rare', jusqu: 0.892 },
-  { rarete: 'epique', jusqu: 0.975 },
-  { rarete: 'legendaire', jusqu: 1 },
-] as const satisfies readonly { rarete: Rarete; jusqu: number }[]
+const PYRAMIDE = PYRAMIDE_QUATRE satisfies readonly { rarete: Rarete; jusqu: number }[]
 
 /** L'echelle des deux stats de combat. */
 const STAT = { min: 1, max: 10 } as const
@@ -491,30 +488,10 @@ export function statsDerivees(brut: Brut): StatsDerivees {
  *   a vu. Une carte ecartee n'a pas de cran a prendre.
  */
 export function raretesParDomaine(cartes: readonly { domaine: Domaine; vues: number }[]): Rarete[] {
-  const rayons = new Map<Domaine, number[]>()
-  cartes.forEach((c, i) => {
-    const l = rayons.get(c.domaine)
-    if (l === undefined) rayons.set(c.domaine, [i])
-    else l.push(i)
-  })
-
-  const sortie = new Array<Rarete>(cartes.length)
-  for (const indices of rayons.values()) {
-    // Du plus notoire au moins notoire ; l'identite n'entre pas dans l'ordre,
-    // donc les ex aequo sont traites ensemble juste apres.
-    const ordre = [...indices].sort((a, b) => cartes[b]!.vues - cartes[a]!.vues)
-    const n = Math.max(1, ordre.length)
-    let i = 0
-    while (i < ordre.length) {
-      let j = i
-      while (j + 1 < ordre.length && cartes[ordre[j + 1]!]!.vues === cartes[ordre[i]!]!.vues) j++
-      const part = 1 - (i + j) / 2 / n
-      const cran = PYRAMIDE.find((p) => part <= p.jusqu) ?? PYRAMIDE[PYRAMIDE.length - 1]!
-      for (let k = i; k <= j; k++) sortie[ordre[k]!] = cran.rarete
-      i = j + 1
-    }
-  }
-  return sortie
+  return cransParGroupe(
+    cartes.map((c) => ({ groupe: c.domaine, valeur: c.vues })),
+    PYRAMIDE,
+  )
 }
 
 /** Le siecle d'une annee. Negatif avant notre ere, `null` si l'annee manque. */

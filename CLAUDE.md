@@ -13436,6 +13436,147 @@ touchent pas la borne.
   même défaut que sur `Crocidure dArabie` dans le mode animaux, et c'est une
   décision de typographie sur TOUS les noms du jeu.
 
+## LE CINQUIÈME MODE : UNE COLLECTION D'EMOJI — `?paquet&emoji`
+
+Demandé par Keko : « maintenant je voudrais un autre test : on utilise des
+emoji : noto color emoji et noto animated emoji ». *Deux lectures menaient à des
+travaux très différents* — une collection d'emoji, ou des emoji en guise
+d'illustration des cartes existantes — et il a tranché : **une collection.**
+
+`npm run emoji` écrit `public/data/emoji.json` : **1 923 cartes, 393 Ko**, en
+100 secondes.
+
+### DEUX SOURCES CANONIQUES, ET AUCUNE DÉPENDANCE
+
+| | ce qu'elle donne |
+|---|---|
+| **Unicode** (`emoji-test.txt`, 621 Ko) | le caractère, son groupe, sa VERSION d'introduction |
+| **CLDR** (deux fichiers) | son nom français et ses mots-clés |
+
+**Les variantes de couleur de peau sont écartées** — 3 963 entrées, 1 923 une
+fois retirées : *c'est le même emoji, pas une carte de plus.* Le groupe
+`Component` aussi : ses membres ne sont pas des emoji, ce sont des morceaux de
+séquence.
+
+**IL FAUT LES DEUX FICHIERS CLDR**, et ça ne se devine pas : `annotations` en
+porte 1 966 et **ignore les drapeaux**, qui vivent dans `annotationsDerived`.
+Et la clé peut être écrite **sans le sélecteur de variante** — le cœur rouge y
+figure sans lui — donc on essaie les deux formes. Résultat : **9 cartes sur
+1 923 sans nom français**, qui gardent leur nom anglais.
+
+**L'USER-AGENT NE PORTE PAS D'ADRESSE ICI.** Celui de `outils.ts` en a une
+parce que la politique de Wikimedia demande un contact ; *Unicode, GitHub et
+gstatic ne le demandent pas*, et on n'envoie pas l'adresse de quelqu'un à un
+service qui ne l'a pas réclamée.
+
+### LA NOTORIÉTÉ EST L'ANCIENNETÉ, ET C'EST UN PIS-ALLER ASSUMÉ
+
+**Aucun fichier de fréquence complet n'existe** : Unicode publie un top 100 en
+page web et rien de téléchargeable (`emoji-frequency.txt` rend 404). *Ce qui
+reste est défendable* — un emoji de 2010 est connu de tous, un de 2025 de
+presque personne — mais ***ce n'est pas une mesure d'usage, et il faut le savoir
+avant de régler quoi que ce soit dessus.***
+
+Deux départages, parce que **719 emoji sont en E0.6** et qu'un quantile ne peut
+pas couper dans un plateau de 37 % du catalogue :
+
+- **l'existence d'une version ANIMÉE** : Google n'a pas animé au hasard, donc
+  c'est un signal d'usage — mesuré, **13 des 14 champions mondiaux sont animés**,
+  et l'animation n'est pas corrélée à l'année (34 % des 2010, 38 % des 2022+),
+  donc c'est un axe **indépendant** ;
+- **le rang dans le fichier Unicode**, qui va du plus central au plus spécifique
+  dans chaque sous-groupe. *C'est faible, mais c'est un ordre*, et un quantile
+  n'a besoin de rien d'autre.
+
+**LE DÉFAUT QUE ÇA LAISSE, et il se voit** : 😂 sort épique et ❤️ commun, alors
+que ce sont les deux emoji les plus employés au monde. *L'ordre Unicode place
+les cœurs après les visages*, et rien ne le corrige. **À rouvrir si le classement
+paraît faux** : la seule sortie serait de coder le top Unicode à la main, ce qui
+est une donnée de référence et non un réglage — mais je n'en connais avec
+certitude que les dix premiers, et ***inventer un classement serait pire que
+l'ancienneté.***
+
+### LA RARETÉ SE DÉCOUPE DANS CHAQUE GROUPE, ET ICI C'EST INDISPENSABLE
+
+C'est la règle que Keko a tranchée sur les personnages, et le mode emoji est le
+second à la lire — d'où `logic/quantiles.ts`, qui porte désormais le découpage
+et la pyramide pour les deux : *deux endroits qui décrivent le même calcul se
+désaccordent au premier réglage.*
+
+***Les 270 drapeaux sont presque tous anciens***, donc à seuil global ils
+rafleraient tout le haut de l'échelle. Par groupe, chacun des neuf porte la même
+pyramide (69 / 20 / 8 / 3 %).
+
+### L'EMOJI EST PEINT AU CANVAS, ET IL ENTRE PAR LA PORTE D'UNE PHOTO
+
+`imageDeLEmoji` peint le caractère sur une toile carrée de 512, et le résultat
+va dans `illustration()` comme une image. **Donc le décor, le bloom, le rognage,
+le cadre et la rareté marchent sans une ligne de plus** — *un second chemin de
+peinture aurait dérivé du premier au premier réglage.*
+
+**L'emoji rentre ENTIER** (`illustrationEntiere`), comme une peinture : il est
+peint carré alors que la fenêtre d'art est plus haute que large, donc un `cover`
+lui couperait les flancs. Ce qui reste découvert laisse voir le fond peint de la
+carte, qui fait le passe-partout.
+
+#### LE PIÈGE QUI A FAILLI PASSER : Google Fonts découpe la police en ONZE
+
+`document.fonts.load('64px "Noto Color Emoji"')` **sans texte ne télécharge que
+quelques sous-ensembles** — mesuré, trois sur onze — et `document.fonts.check`
+répond quand même `true`. **Un emoji d'une plage non chargée retombe alors en
+silence sur la police système**, qui en rend bien un sur Windows et sur Mac, et
+rien du tout ailleurs.
+
+Mesuré avant correction, sur la vraie page : 😀 ❤️ 🫯 🧑‍🚀 en Noto, **🇫🇷 ♈ 🪾 en
+police système**. On demande donc la police **pour ce caractère-là**
+(`document.fonts.load(police, emoji)`), et on l'attend avant de peindre : *la
+toile part en cache, donc le défaut survivrait au chargement.*
+
+***C'est la règle du canvas qui peint avant `document.fonts.ready`, un cran plus
+fin : il ne suffit pas que la police soit là, il faut que le GLYPHE y soit.***
+
+#### ET LE CDN SÉPARE LES POINTS DE CODE PAR DES UNDERSCORES
+
+L'identifiant d'une carte est en tirets — c'est notre convention, lisible —
+et l'URL de Google en underscores. **Tout emoji à plusieurs points de code était
+donc déclaré non animé** : le cœur rouge sortait statique alors qu'il est le
+deuxième emoji le plus employé au monde, et *rien ne le signalait* — une URL
+fausse rend 404, et un 404 se lit ici comme « pas de version animée ».
+
+***Le format d'un identifiant n'est pas celui d'une URL.*** 541 animés avant
+correction, **614 après**.
+
+**Et le cache a failli masquer la correction** : son corps portait les
+identifiants, donc changer le format de l'URL n'aurait rien retesté. Il porte
+les URLS depuis — *un cache doit dépendre de ce qu'on demande.*
+
+### CE QUI N'EST PAS FAIT : l'animation
+
+**Le catalogue sait lesquels sont animés** (614 sur 1 923, soit 32 %) et la
+carte l'écrit dans son cartouche — mais **l'emoji ne bouge pas à l'écran**, et
+il faut savoir pourquoi avant de le promettre :
+
+| | poids | ce que ça demande |
+|---|---|---|
+| **WebP animé** (`512.webp`) | **190 à 690 Ko pièce** | un canvas n'anime pas un WebP : `drawImage` en prend une seule image |
+| **Lottie** (`lottie.json`) | 2 à 33 Ko | un lecteur Lottie, donc **une dépendance** — ce que le projet refuse |
+
+*Les deux issues restantes* : décoder le WebP image par image avec `ImageDecoder`
+(WebCodecs, Chrome uniquement) et pousser le résultat dans une texture, ou poser
+un plan qui joue l'animation à part de la texture de carte. **Les deux sont un
+chantier, pas un réglage** — et ils ne valent que si Keko garde le mode.
+
+### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
+
+- **le classement** : 😂 épique et ❤️ commun sont le prix de l'ancienneté, voir
+  plus haut ;
+- **les 270 drapeaux** sont un groupe à part — ce sont des pays, pas des objets.
+  Les garder, ou en faire un mode à eux ;
+- **l'animation**, et son coût ;
+- **le nom long se tronque** : « Volume des enceintes élevé » ne tient pas sur
+  une carte. *C'est le comportement de tous les modes* — la taille cède, puis le
+  nom se coupe — mais les noms CLDR sont plus longs que des noms propres.
+
 ## LE PLATEAU — un prototype pour une seule question
 
 Idee de Keko, cadree par lui en regles precises : une grille 4x4, une carte
@@ -15490,6 +15631,9 @@ src/
       types.ts      # CarteAnimal + la validation du JSON engendré
     paintings/   # LE QUATRIÈME MODE : une carte = une PEINTURE
       types.ts      # CartePeinture, la validation, le siècle, les rayons
+    emoji/       # LE CINQUIÈME MODE : une carte = un EMOJI
+      types.ts      # CarteEmoji, la validation, les neuf groupes
+    quantiles.ts # le découpage en crans PAR GROUPE — lu par deux modes
     board/       # LE PROTOTYPE DE PLATEAU — voir BOARD.md
       plateau.ts    # la grille, la production, REGLAGE : un seul endroit à régler
       duel.ts       # le mode a deux : tour par tour, le total sur la grille pleine
@@ -15499,7 +15643,7 @@ src/
     Main3D.tsx       # l'éventail et le geste : sortir pour jouer, taper pour voir
     Scene.tsx        # la descente entière : combat, paliers, butin, hub
     Armurerie3D.tsx  # le coffre et le chargement
-    Paquet3D.tsx     # les paquets : animaux, `&art` peintures, `&perso` personnages
+    Paquet3D.tsx     # les paquets : animaux, `&art`, `&perso`, `&fiction`, `&emoji`
     Sachet3D.tsx     # la pochette qui se déchire en brûlant, avant la rangée
     board.ts         # le plateau, derrière `?board` — DOM nu, pas de Three.js
     duel.ts          # le duel, derrière `?duel` — il réutilise le dessin du plateau
@@ -15520,6 +15664,7 @@ scripts/   # HORS du build Vite : lancé par `node`, pas couvert par tsconfig
   commons.ts              # la fabrique d'URL de vignette, et l'année d'une date
   generate-animals.ts     # GBIF + Wikidata -> public/data/animals.json
   generate-paintings.ts   # Wikidata + Wikipedia -> public/data/paintings.json
+  generate-emoji.ts       # Unicode + CLDR -> public/data/emoji.json
   generate-links.ts       # fr.wikipedia -> public/data/links.json (le graphe du plateau)
   generate-characters.ts  # l'ancien pipeline, à retirer après validation
   .cache/                 # le cache des requêtes, gitignoré
@@ -15856,6 +16001,7 @@ npm run personnages  # (re)engendre public/data/characters.json depuis Wikidata
 npm run gen:animals  # (re)engendre public/data/animals.json depuis GBIF + Wikidata
 npm run peintures    # (re)engendre public/data/paintings.json depuis Wikidata + Wikipedia
 npm run liens        # (re)engendre public/data/links.json — le graphe du plateau
+npm run emoji        # (re)engendre public/data/emoji.json depuis Unicode + CLDR
 ```
 
 `npm run gen:animals` accepte `--seuil=<0..1>` (la coupe), `--restes=absorbe|carte`

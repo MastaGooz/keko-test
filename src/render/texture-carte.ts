@@ -154,6 +154,17 @@ export type CarteAPeindre = {
    */
   illustration?: string
   /**
+   * UN EMOJI EN GUISE D'ILLUSTRATION — le cinquieme mode.
+   *
+   * Demande par Keko : « on utilise des emoji : noto color emoji et noto
+   * animated emoji ». *Il n'y a pas d'image a charger* : le caractere se peint
+   * au canvas avec la police, et le resultat entre dans le pipeline par la
+   * meme porte qu'une photo. **Donc le decor, le bloom, le rognage et le ciel
+   * marchent sans une ligne de plus** -- *un second chemin de peinture aurait
+   * derive du premier au premier reglage.*
+   */
+  emoji?: string
+  /**
    * SON ILLUSTRATION RENTRE ENTIÈRE, au lieu de se faire rogner.
    *
    * Tranché par Keko pour le mode peintures : « si portrait, hauteur de l'image
@@ -718,12 +729,79 @@ function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient 
  * ignore tout seul une couche de fond qui échoue). Un canvas, lui, ne dessine
  * rien du tout : sans ce repli, une image retirée laisserait un trou noir.
  */
+/**
+ * UN EMOJI PEINT SUR UNE TOILE CARREE, qui sert ensuite d'illustration.
+ *
+ * **IL FAUT DEMANDER LA POLICE EXPLICITEMENT.** `document.fonts.ready` ne
+ * promet que ce que la page UTILISE deja : une police Google Fonts qu'aucun
+ * element n'emploie n'est jamais telechargee, et *le canvas retombe alors en
+ * silence sur la police systeme* -- qui rend bien un emoji sur la plupart des
+ * machines, et rien du tout sur certaines. C'est la regle deja payee par le
+ * cartouche, en pire : ici le repli n'est pas une autre police, c'est un carre
+ * vide.
+ *
+ * La toile est CARREE et l'emoji centre dedans : *le cadrage se decide ensuite*
+ * -- `couvrir` le pose comme il poserait une photo.
+ */
+const TOILE_EMOJI = 512
+const EMOJIS = new Map<string, HTMLCanvasElement>()
+const POLICES_EMOJI = new Map<string, Promise<unknown>>()
+
+/**
+ * LA POLICE SE DEMANDE POUR CE CARACTERE-LA, pas « en general ».
+ *
+ * ***Google Fonts decoupe Noto Color Emoji en ONZE sous-ensembles*** par plage
+ * Unicode, et `document.fonts.load(police)` sans texte n'en telecharge que
+ * quelques-uns. **Un emoji d'une plage non chargee retombe alors en silence sur
+ * la police systeme** -- qui en rend bien un sur Windows et sur Mac, et rien du
+ * tout ailleurs. *Mesure : trois sous-ensembles sur onze etaient charges apres
+ * un appel nu, et `fonts.check` repondait quand meme `true`.*
+ *
+ * C'est la regle du canvas qui peint avant `document.fonts.ready`, un cran plus
+ * fin : **il ne suffit pas que la police soit la, il faut que le GLYPHE y
+ * soit.**
+ */
+function policeDeLEmoji(emoji: string): Promise<unknown> {
+  const deja = POLICES_EMOJI.get(emoji)
+  if (deja !== undefined) return deja
+  const p = document.fonts.load(`64px "Noto Color Emoji"`, emoji).catch(() => null)
+  POLICES_EMOJI.set(emoji, p)
+  return p
+}
+
+function imageDeLEmoji(emoji: string): HTMLCanvasElement | null {
+  const deja = EMOJIS.get(emoji)
+  if (deja !== undefined) return deja
+  const toile = document.createElement('canvas')
+  toile.width = TOILE_EMOJI
+  toile.height = TOILE_EMOJI
+  const ctx = toile.getContext('2d')
+  if (ctx === null) return null
+  // *Le glyphe ne remplit pas sa boite* : on le pose a 80 % de la toile, assez
+  // pour que les emoji hauts (une tour, un drapeau) ne touchent pas les bords.
+  ctx.font = `${Math.round(TOILE_EMOJI * 0.8)}px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText(emoji, TOILE_EMOJI / 2, TOILE_EMOJI / 2)
+  EMOJIS.set(emoji, toile)
+  return toile
+}
+
 async function illustration(
   nom: string,
   rarete?: string,
   matiere?: string,
   directe?: string,
-): Promise<HTMLImageElement | null> {
+  emoji?: string,
+): Promise<HTMLImageElement | HTMLCanvasElement | null> {
+  if (emoji !== undefined && emoji !== '') {
+    // ON ATTEND LA POLICE AVANT DE PEINDRE : sans ca la premiere carte sort
+    // avec la police systeme, et *sa toile part en cache telle quelle* -- donc
+    // le defaut survivrait au chargement.
+    await policeDeLEmoji(emoji)
+    const peint = imageDeLEmoji(emoji)
+    if (peint !== null) return peint
+  }
   const dessin = art(nom)
   const keko = urlImageDeKeko(nom, rarete, matiere)
   // UNE URL DONNÉE PASSE DEVANT LA TABLE : le troisième mode découvre ses
@@ -2001,7 +2079,7 @@ export async function peindreCarte(
   if (largeur !== LARGE) ctx.scale(largeur / LARGE, largeur / LARGE)
 
   const [image, decor, symbole] = await Promise.all([
-    illustration(carte.nom, carte.rarete, carte.matiere, carte.illustration),
+    illustration(carte.nom, carte.rarete, carte.matiere, carte.illustration, carte.emoji),
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
     // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
     // de la famille. Une armure garde le bleu d'origine. Voir `fondTeinte`.

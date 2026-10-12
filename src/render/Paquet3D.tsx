@@ -19,14 +19,17 @@ import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import { AMBIANCE, ECHELLE_METAL, RAPPORT_SACHET, type CarteAPeindre } from './texture-carte.ts'
 import { carteDeLAnimal } from './carte-animal.ts'
+import { carteDeLEmoji } from './carte-emoji.ts'
 import { carteDeLaPeinture } from './carte-peinture.ts'
 import { carteDuPersonnage } from './carte-personnage.ts'
 import { chargerAnimaux } from '../ui/animaux.ts'
+import { chargerEmojis } from '../ui/emoji.ts'
 import { chargerPeintures } from '../ui/peintures.ts'
 import { loadCharacters } from '../ui/personnages.ts'
 import { createRng } from '../logic/rng.ts'
 import { CARTES_PAR_PAQUET, ouvrirPaquet, parCran } from '../logic/paquet.ts'
 import type { CarteAnimal } from '../logic/animals/types.ts'
+import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { CharacterCard } from '../logic/characters/types.ts'
 import type { CartePeinture } from '../logic/paintings/types.ts'
 
@@ -48,7 +51,7 @@ import type { CartePeinture } from '../logic/paintings/types.ts'
  * à une carte que son identité et son cran : c'est précisément pour ça qu'il a
  * quitté le dossier des personnages.
  */
-type CarteDuMode = CarteAnimal | CharacterCard | CartePeinture
+type CarteDuMode = CarteAnimal | CharacterCard | CartePeinture | CarteEmoji
 
 /**
  * LES TROIS CATALOGUES PASSENT PAR LE MEME TIRAGE, et c'est tout l'interet de
@@ -60,6 +63,11 @@ type CarteDuMode = CarteAnimal | CharacterCard | CartePeinture
  * desaccorderait de la carte qu'il decrit.*
  */
 function carteAPeindreDuMode(c: CarteDuMode): CarteAPeindre {
+  // **L'EMOJI SE TESTE EN PREMIER, et ce n'est pas un detail d'ordre** : une
+  // carte-emoji porte `groupe` comme un animal. *Deux modes qui partagent un
+  // champ ne peuvent pas se discriminer dessus*, donc on cherche le champ qui
+  // n'existe que la -- et `emoji` est le seul.
+  if ('emoji' in c) return carteDeLEmoji(c)
   if ('siecle' in c) return carteDeLaPeinture(c)
   if ('groupe' in c) return carteDeLAnimal(c)
   return carteDuPersonnage(c)
@@ -75,6 +83,11 @@ function carteAPeindreDuMode(c: CarteDuMode): CarteAPeindre {
  * cinquiemes de sa formule et s'accorde a 0,971 avec elle.
  */
 function compteurDuMode(c: CarteDuMode): { valeur: number; unite: string } {
+  // POUR UN EMOJI C'EST SON AGE, et c'est bien le chiffre dont la rarete
+  // derive : *faute de fichier de frequence, la notoriete est l'anciennete* --
+  // un emoji de 2010 est connu de tous, un de 2025 de presque personne. Et il
+  // monte dans le bon sens : plus il est vieux, plus il est rare.
+  if ('emoji' in c) return { valeur: Math.max(0, new Date().getFullYear() - c.annee), unite: 'ans' }
   if ('siecle' in c) return { valeur: c.langues, unite: 'langues sur Wikipédia' }
   return { valeur: c.vues, unite: 'vues par mois' }
 }
@@ -185,6 +198,15 @@ export function Paquet3D(): React.ReactElement {
   const personnages = params.has('perso') || fiction
   const peintures = params.has('art')
   /**
+   * `?paquet&emoji` OUVRE LA COLLECTION D'EMOJI — le cinquieme mode.
+   *
+   * Demande par Keko : « on utilise des emoji : noto color emoji et noto
+   * animated emoji ». *Il reste a cote des quatre autres plutot qu'a leur
+   * place* : ce qui se teste doit pouvoir s'ouvrir d'un lien, et Keko tranchera
+   * en voyant les cinq.
+   */
+  const emojis = params.has('emoji')
+  /**
    * `?paquet&culbute` REND LA CULBUTE, et le développement est le défaut.
    *
    * *Une carte qui se révèle en tournant ne dit rien de ce qu'elle est* : on
@@ -263,11 +285,13 @@ export function Paquet3D(): React.ReactElement {
 
   useEffect(() => {
     let vivant = true
-    const charger = peintures
-      ? chargerPeintures()
-      : personnages
-        ? loadCharacters(fiction ? 'fiction' : 'characters')
-        : chargerAnimaux()
+    const charger = emojis
+      ? chargerEmojis()
+      : peintures
+        ? chargerPeintures()
+        : personnages
+          ? loadCharacters(fiction ? 'fiction' : 'characters')
+          : chargerAnimaux()
     void charger.then((cartes: CarteDuMode[]) => {
       if (!vivant) return
       if (cartes.length === 0) setErreur('Catalogue vide ou introuvable.')
@@ -276,7 +300,7 @@ export function Paquet3D(): React.ReactElement {
     return () => {
       vivant = false
     }
-  }, [personnages, peintures, fiction])
+  }, [personnages, peintures, fiction, emojis])
 
   useEffect(() => {
     const suivre = () => setFenetre({ l: window.innerWidth, h: window.innerHeight })
