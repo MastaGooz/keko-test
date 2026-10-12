@@ -33,6 +33,8 @@ const bonne = {
   version: '1.0',
   annee: 2015,
   anime: true,
+  frequence: 0,
+  rang: 1,
   rarete: 'legendaire',
 }
 
@@ -42,6 +44,12 @@ verifier('une rareté inconnue est rejetée', parseEmoji({ ...bonne, rarete: 'my
 verifier('un emoji vide est rejeté', parseEmoji({ ...bonne, emoji: '' }) === null)
 verifier('une année non numérique est rejetée', parseEmoji({ ...bonne, annee: '2015' }) === null)
 verifier('un drapeau d’animation non booléen est rejeté', parseEmoji({ ...bonne, anime: 'oui' }) === null)
+verifier('un rang absent est rejeté', parseEmoji({ ...bonne, rang: undefined }) === null)
+// LA FREQUENCE EST FACULTATIVE : *24 % du catalogue n'est pas au classement
+// d'Unicode* -- ce sont les emoji posterieurs a la version 12.0 -- et ils
+// gardent leur carte. **Une absence de mesure n'est pas une carte en moins.**
+egal(parseEmoji({ ...bonne, frequence: undefined })?.frequence, null, 'une fréquence absente vaut null')
+egal(parseEmoji({ ...bonne, frequence: 7 })?.frequence, 7, 'une fréquence connue se lit')
 // LES MOTS-CLES SONT FACULTATIFS : *un emoji sans nom francais n'en a pas*, et
 // il garde quand meme sa carte avec son nom anglais.
 verifier('des mots-clés absents ne rejettent pas la carte', parseEmoji({ ...bonne, mots: undefined })?.mots.length === 0)

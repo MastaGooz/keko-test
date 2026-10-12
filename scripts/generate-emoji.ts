@@ -33,6 +33,7 @@ const UA_NEUTRE = 'keko-test/0.1 (jeu de cartes, usage personnel)'
 const UNICODE = 'https://unicode.org/Public/emoji/latest/emoji-test.txt'
 const CLDR = 'https://raw.githubusercontent.com/unicode-org/cldr-json/main/cldr-json'
 const ANIME = 'https://fonts.gstatic.com/s/e/notoemoji/latest'
+const FREQUENCE = 'https://home.unicode.org/emoji/emoji-frequency/'
 const SORTIE = new URL('../public/data/', import.meta.url)
 
 /** Les variantes de couleur de peau : c'est le MEME emoji, pas une carte de plus. */
@@ -166,6 +167,63 @@ async function nomsFrancais(): Promise<Map<string, { nom: string; mots: string[]
 }
 
 /**
+ * LE CLASSEMENT DE FREQUENCE D'UNICODE — la vraie popularite, enfin.
+ *
+ * Demande par Keko : « je voudrais que la rarete soit lie a la popularite
+ * reelle de l'emoji. Y'a des stats qu'on peut choper quelque part sur ca ? »
+ * **Oui, et j'avais conclu trop vite le contraire** : `emoji-frequency.txt`
+ * rend 404, donc j'avais ecrit qu'aucun fichier n'existait -- *le classement
+ * est dans la PAGE*, et il est complet.
+ *
+ * ***Une ressource absente a l'adresse ou on l'attend n'est pas une ressource
+ * absente.***
+ *
+ * Sa forme est exactement celle qu'il faut : **dix-huit groupes, chacun valant
+ * la MOITIE du precedent en frequence d'usage.** Le groupe 0 ne contient que
+ * deux emoji, le 11 et au-dela sont sous la mediane. *C'est une echelle
+ * logarithmique de popularite reelle* -- et les emoji sont ranges par
+ * frequence decroissante DANS chaque groupe, ce qui donne un ordre total.
+ *
+ * **Il est arrete a Unicode 12.0**, donc il couvre 76 % du catalogue (1 466 sur
+ * 1 923) et **les 24 % restants sont les emoji RECENTS** -- ceux de 2016 et
+ * apres. *C'est la bonne forme du trou* : ce qui manque est ce qui est le moins
+ * employe, donc il va en bas, et l'anciennete suffit a l'y departager.
+ *
+ * **Si la page disparait, le repli est l'anciennete** : voir `notoriete`. La
+ * page est archivee par Unicode, donc elle ne bougera plus -- *mais une page
+ * archivee est une page qu'on peut retirer.*
+ */
+async function classement(): Promise<Map<string, { groupe: number; dans: number }>> {
+  const out = new Map<string, { groupe: number; dans: number }>()
+  let html: string
+  try {
+    html = await texte('frequence', FREQUENCE)
+  } catch {
+    journal('  classement de frequence INDISPONIBLE -- repli sur l anciennete')
+    return out
+  }
+  const debut = html.indexOf('<table')
+  const fin = html.indexOf('</table>')
+  if (debut < 0 || fin < 0) {
+    journal('  classement : tableau introuvable -- repli sur l anciennete')
+    return out
+  }
+  const table = html.slice(debut, fin)
+  for (const [groupe, ligne] of [...table.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)].entries()) {
+    const cellules = [...ligne[1]!.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((x) =>
+      x[1]!.replace(/<[^>]*>/g, '').trim(),
+    )
+    // La premiere cellule porte le numero du groupe, la seconde les emoji.
+    const items = [...(cellules[1] ?? '').matchAll(/\S+/gu)].map((m) => m[0])
+    items.forEach((e, dans) => {
+      if (!out.has(e)) out.set(e, { groupe, dans })
+    })
+  }
+  journal(`  classement : ${out.size} emoji ranges par frequence reelle`)
+  return out
+}
+
+/**
  * L'URL DU CDN SEPARE LES POINTS DE CODE PAR DES UNDERSCORES, pas par des
  * tirets.
  *
@@ -227,24 +285,37 @@ async function animes(ids: readonly string[]): Promise<Set<string>> {
 }
 
 /**
- * LA NOTORIETE D'UN EMOJI EST SON ANCIENNETE, ET C'EST UN PIS-ALLER ASSUME.
+ * LA NOTORIETE D'UN EMOJI EST SA FREQUENCE D'USAGE REELLE.
  *
- * **Aucun fichier de frequence complet n'existe** : Unicode publie un top 100
- * en page web et rien de telechargeable (`emoji-frequency.txt` rend 404).
- * *Ce qui reste est defendable* -- un emoji de 2010 est connu de tous, un de
- * 2025 de presque personne -- mais ***ce n'est pas une mesure d'usage, et il
- * faut le savoir avant de regler quoi que ce soit dessus.***
+ * Tranche par Keko : « je voudrais que la rarete soit lie a la popularite
+ * reelle de l'emoji ». **Elle vient du classement d'Unicode** -- dix-huit
+ * groupes, chacun valant la moitie du precedent -- et elle couvre 76 % du
+ * catalogue.
  *
- * Deux departages, parce que **719 emoji sont en E0.6** et qu'un quantile ne
- * peut pas couper dans un plateau de 37 % du catalogue :
+ * ***L'ANCIENNETE N'EST PLUS QU'UN REPLI***, pour les 24 % que le classement
+ * ignore : ce sont les emoji posterieurs a Unicode 12.0, donc les plus
+ * recents, donc les moins employes. *Le trou a la bonne forme* -- ils vont en
+ * bas, et l'anciennete puis l'animation suffisent a les departager entre eux.
  *
- * - **l'existence d'une version ANIMEE** : Google n'a pas anime au hasard, donc
- *   c'est un signal d'usage -- le seul qu'on ait ;
- * - **le rang dans le fichier Unicode**, qui va du plus central au plus
- *   specifique dans chaque sous-groupe. *C'est faible, mais c'est un ordre*, et
- *   un quantile n'a besoin de rien d'autre.
+ * **Les deux echelles ne se melangent pas** : tout ce qui est classe passe
+ * devant tout ce qui ne l'est pas. *Un emoji mesure et un emoji devine ne se
+ * comparent pas*, et les mettre sur la meme echelle reviendrait a inventer un
+ * rang pour le second.
+ *
+ * Ce que l'anciennete faisait de faux, et qui tombe : le visage riant aux
+ * larmes sortait epique et le coeur rouge commun, alors que ***ce sont les deux
+ * premiers du classement mondial.***
  */
-function notoriete(e: Brut, anime: boolean, total: number): number {
+function notoriete(
+  e: Brut,
+  anime: boolean,
+  total: number,
+  rang?: { groupe: number; dans: number },
+): number {
+  // CE QUI EST CLASSE PASSE DEVANT TOUT : le groupe 0 vaut le plus haut score,
+  // et le rang DANS le groupe departage -- *Unicode les range par frequence
+  // decroissante a l'interieur de chaque groupe.*
+  if (rang !== undefined) return 1_000_000_000 - rang.groupe * 1_000_000 - rang.dans * 100
   const annee = ANNEE_DE_VERSION[e.version] ?? 2026
   // Plus c'est vieux, plus c'est notoire : on compte les annees depuis 2030.
   return (2030 - annee) * 1_000_000 + (anime ? 500_000 : 0) + (total - e.rang)
@@ -259,8 +330,10 @@ function resume(cartes: readonly CarteEmoji[]): string {
   ]
   l.push(`${cartes.length} cartes, dont ${cartes.filter((c) => c.anime).length} animees`)
   l.push('')
-  l.push('LA RARETE DANS CHAQUE GROUPE')
-  l.push('----------------------------')
+  l.push(`au classement de frequence : ${cartes.filter((c) => c.frequence !== null).length}`)
+  l.push('')
+  l.push('OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE')
+  l.push('---------------------------------------------')
   l.push(
     `  ${'groupe'.padEnd(12)} ${'n'.padStart(5)}  ` +
       RARETES_EMOJI.map((r) => r.slice(0, 6).padStart(10)).join(''),
@@ -292,6 +365,15 @@ function resume(cartes: readonly CarteEmoji[]): string {
     l.push(`  ${g.padEnd(12)} ${gr.map((c) => `${c.emoji} ${c.nom}`).join(' · ')}`)
   }
   l.push('')
+  l.push('LE HAUT DU CLASSEMENT MONDIAL')
+  l.push('-----------------------------')
+  l.push('  ' + cartes.slice(0, 30).map((c) => c.emoji).join(' '))
+  l.push('  ' + cartes.slice(30, 60).map((c) => c.emoji).join(' '))
+  l.push('')
+  l.push('LE BAS')
+  l.push('------')
+  l.push('  ' + cartes.slice(-30).map((c) => c.emoji).join(' '))
+  l.push('')
   l.push('UN EXEMPLE PAR RARETE')
   l.push('---------------------')
   for (const r of RARETES_EMOJI) {
@@ -301,7 +383,10 @@ function resume(cartes: readonly CarteEmoji[]): string {
       continue
     }
     const m = gr[Math.floor(gr.length / 2)]!
-    l.push(`  ${r.padEnd(12)} ${m.emoji} ${m.nom} (${m.groupe}, ${m.annee}${m.anime ? ', anime' : ''})`)
+    l.push(
+      `  ${r.padEnd(12)} ${m.emoji} ${m.nom} (${m.groupe}, ${m.rang}e, ` +
+        `${m.frequence === null ? 'non classe' : 'frequence ' + m.frequence}${m.anime ? ', anime' : ''})`,
+    )
   }
   return l.join('\n') + '\n'
 }
@@ -315,7 +400,16 @@ async function main(): Promise<void> {
   journal(`${bruts.length} emoji (variantes de peau et composants ecartes)`)
 
   const noms = await nomsFrancais()
+  const rangs = await classement()
   const anime = await animes(bruts.map((b) => b.id))
+
+  // LA CLE DU CLASSEMENT PEUT PORTER OU NON LE SELECTEUR DE VARIANTE, comme
+  // celle de CLDR : on indexe les deux formes une fois pour toutes.
+  const sansVS = new Map<string, { groupe: number; dans: number }>()
+  for (const [e, v] of rangs) {
+    const nu = e.replace(/️/g, '')
+    if (!sansVS.has(nu)) sansVS.set(nu, v)
+  }
 
   let sansNom = 0
   const sans = bruts.map((b) => {
@@ -324,6 +418,7 @@ async function main(): Promise<void> {
     const fr = noms.get(b.emoji) ?? noms.get(b.emoji.replace(/️/g, ''))
     if (fr === undefined) sansNom++
     const estAnime = anime.has(b.id)
+    const rang = rangs.get(b.emoji) ?? sansVS.get(b.emoji.replace(/️/g, ''))
     return {
       id: b.id,
       emoji: b.emoji,
@@ -335,24 +430,41 @@ async function main(): Promise<void> {
       version: b.version,
       annee: ANNEE_DE_VERSION[b.version] ?? 2026,
       anime: estAnime,
-      notoriete: notoriete(b, estAnime, bruts.length),
+      frequence: rang?.groupe ?? null,
+      notoriete: notoriete(b, estAnime, bruts.length, rang),
     }
   })
   journal(`${sansNom} sans nom francais (nom anglais garde)`)
+  journal(`${sans.filter((c) => c.frequence !== null).length}/${sans.length} au classement de frequence`)
 
   // Triees par notoriete decroissante : le fichier se lit de haut en bas.
   sans.sort((a, b) => b.notoriete - a.notoriete || a.id.localeCompare(b.id))
 
-  // LA RARETE SE DECOUPE DANS CHAQUE GROUPE, et c'est la regle que Keko a
-  // tranchee sur les personnages. *Ici elle est indispensable* : les 270
-  // drapeaux sont presque tous anciens, donc a seuil global ils rafleraient
-  // tout le haut de l'echelle.
+  /**
+   * LE DECOUPAGE EST GLOBAL, PAS PAR GROUPE. Tranche par Keko : « je voudrais
+   * un classement global et pas par groupe ».
+   *
+   * *C'est l'inverse de ce qu'il a tranche pour les personnages*, et les deux
+   * sont justes pour la meme raison : **le decoupage par rayon existe pour
+   * corriger une echelle qui n'est pas comparable d'un rayon a l'autre.** Chez
+   * les personnages, la 300e artiste a 106 langues et la 300e criminelle 28 --
+   * il n'y a pas de mesure commune. **Ici il y en a une** : la frequence
+   * d'usage se compare entre un visage et un drapeau, donc le rayon n'a plus
+   * rien a corriger.
+   *
+   * *Ce que ca change* : les drapeaux, qui sont presque tous dans le bas du
+   * classement mondial, cessent d'avoir leurs sept legendaires -- et c'est
+   * exactement ce qu'une popularite reelle doit produire.
+   */
   const crans = cransParGroupe(
-    sans.map((c) => ({ groupe: c.groupe, valeur: c.notoriete })),
+    sans.map((c) => ({ groupe: '', valeur: c.notoriete })),
     PYRAMIDE_QUATRE,
   ) as RareteEmoji[]
   const cartes: CarteEmoji[] = sans.map(({ notoriete: _n, ...c }, i) => ({
     ...c,
+    // LE RANG EST LA PLACE DANS LE CATALOGUE, et la liste est deja triee : *le
+    // seul chiffre dont la rarete derive*, donc le seul que la carte affiche.
+    rang: i + 1,
     rarete: crans[i]!,
   }))
 

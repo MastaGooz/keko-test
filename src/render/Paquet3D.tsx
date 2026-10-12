@@ -82,12 +82,12 @@ function carteAPeindreDuMode(c: CarteDuMode): CarteAPeindre {
  * une peinture c'est le nombre de VERSIONS LINGUISTIQUES**, qui pese trois
  * cinquiemes de sa formule et s'accorde a 0,971 avec elle.
  */
-function compteurDuMode(c: CarteDuMode): { valeur: number; unite: string } {
-  // POUR UN EMOJI C'EST SON AGE, et c'est bien le chiffre dont la rarete
-  // derive : *faute de fichier de frequence, la notoriete est l'anciennete* --
-  // un emoji de 2010 est connu de tous, un de 2025 de presque personne. Et il
-  // monte dans le bon sens : plus il est vieux, plus il est rare.
-  if ('emoji' in c) return { valeur: Math.max(0, new Date().getFullYear() - c.annee), unite: 'ans' }
+function compteurDuMode(c: CarteDuMode, total = 0): { valeur: number; unite: string } {
+  // POUR UN EMOJI C'EST LE NOMBRE D'EMOJI QU'IL DEPASSE au classement d'usage
+  // d'Unicode. **Il fallait un chiffre qui MONTE avec la rarete** : le rang,
+  // lui, descend -- un compteur qui s'arreterait a « 3 » pour la carte la plus
+  // rare monterait vers le commun, et *la teinte monte avec le compteur.*
+  if ('emoji' in c) return { valeur: Math.max(0, total - c.rang), unite: 'emoji dépassés' }
   if ('siecle' in c) return { valeur: c.langues, unite: 'langues sur Wikipédia' }
   return { valeur: c.vues, unite: 'vues par mois' }
 }
@@ -348,7 +348,7 @@ export function Paquet3D(): React.ReactElement {
   /** Le chiffre de la carte brute : celui dont la rarete DERIVE. */
   function compteurDe(id: string): { valeur: number; unite: string } {
     const brute = paquet.find((c) => c.id === id)
-    return brute === undefined ? { valeur: 0, unite: '' } : compteurDuMode(brute)
+    return brute === undefined ? { valeur: 0, unite: '' } : compteurDuMode(brute, catalogue?.length ?? 0)
   }
 
   function rangDe(id: string): number {
@@ -473,7 +473,7 @@ export function Paquet3D(): React.ReactElement {
    * `null` des qu'elle est revelee* — c'est `monte` qui tient l'affichage
    * ensuite — donc la lire sur elle la ferait disparaitre en pleine montee.
    */
-  const unite = paquet.length > 0 ? compteurDuMode(paquet[0]!).unite : ''
+  const unite = paquet.length > 0 ? compteurDuMode(paquet[0]!, catalogue?.length ?? 0).unite : ''
 
   return (
     <div

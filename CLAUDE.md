@@ -13469,43 +13469,110 @@ parce que la politique de Wikimedia demande un contact ; *Unicode, GitHub et
 gstatic ne le demandent pas*, et on n'envoie pas l'adresse de quelqu'un à un
 service qui ne l'a pas réclamée.
 
-### LA NOTORIÉTÉ EST L'ANCIENNETÉ, ET C'EST UN PIS-ALLER ASSUMÉ
+### LA NOTORIÉTÉ EST LA FRÉQUENCE D'USAGE RÉELLE — et le classement est GLOBAL
 
-**Aucun fichier de fréquence complet n'existe** : Unicode publie un top 100 en
-page web et rien de téléchargeable (`emoji-frequency.txt` rend 404). *Ce qui
-reste est défendable* — un emoji de 2010 est connu de tous, un de 2025 de
-presque personne — mais ***ce n'est pas une mesure d'usage, et il faut le savoir
-avant de régler quoi que ce soit dessus.***
+Tranché par Keko, en deux demandes qui tiennent ensemble : **« je voudrais un
+classement global et pas par groupe »** et **« je voudrais que la rareté soit
+liée à la popularité réelle de l'emoji. Y'a des stats qu'on peut choper quelque
+part sur ça ? »**
 
-Deux départages, parce que **719 emoji sont en E0.6** et qu'un quantile ne peut
-pas couper dans un plateau de 37 % du catalogue :
+**Oui, et j'avais conclu trop vite le contraire.** J'avais écrit qu'« aucun
+fichier de fréquence complet n'existe » après avoir essayé
+`unicode.org/Public/emoji/latest/emoji-frequency.txt`, qui rend 404.
+***Le classement est dans la PAGE*** — `home.unicode.org/emoji/emoji-frequency/`
+— et il est complet.
 
-- **l'existence d'une version ANIMÉE** : Google n'a pas animé au hasard, donc
-  c'est un signal d'usage — mesuré, **13 des 14 champions mondiaux sont animés**,
-  et l'animation n'est pas corrélée à l'année (34 % des 2010, 38 % des 2022+),
-  donc c'est un axe **indépendant** ;
-- **le rang dans le fichier Unicode**, qui va du plus central au plus spécifique
-  dans chaque sous-groupe. *C'est faible, mais c'est un ordre*, et un quantile
-  n'a besoin de rien d'autre.
+***UNE RESSOURCE ABSENTE À L'ADRESSE OÙ ON L'ATTEND N'EST PAS UNE RESSOURCE
+ABSENTE.*** C'est la deuxième fois de la journée : la découverte de la fiction
+ne rendait rien par sa racine alors que tout vivait dans ses feuilles.
 
-**LE DÉFAUT QUE ÇA LAISSE, et il se voit** : 😂 sort épique et ❤️ commun, alors
-que ce sont les deux emoji les plus employés au monde. *L'ordre Unicode place
-les cœurs après les visages*, et rien ne le corrige. **À rouvrir si le classement
-paraît faux** : la seule sortie serait de coder le top Unicode à la main, ce qui
-est une donnée de référence et non un réglage — mais je n'en connais avec
-certitude que les dix premiers, et ***inventer un classement serait pire que
-l'ancienneté.***
+#### SA FORME EST EXACTEMENT CELLE QU'IL FAUT
 
-### LA RARETÉ SE DÉCOUPE DANS CHAQUE GROUPE, ET ICI C'EST INDISPENSABLE
+**Dix-huit groupes, chacun valant la MOITIÉ du précédent en fréquence d'usage**,
+et les emoji rangés par fréquence décroissante à l'intérieur de chaque groupe —
+donc un ordre total :
 
-C'est la règle que Keko a tranchée sur les personnages, et le mode emoji est le
-second à la lire — d'où `logic/quantiles.ts`, qui porte désormais le découpage
-et la pyramide pour les deux : *deux endroits qui décrivent le même calcul se
-désaccordent au premier réglage.*
+| groupe | emoji | les premiers |
+|---|---|---|
+| 0 | **2** | 😂 ❤️ |
+| 1 | 2 | 😍 🤣 |
+| 2 | 5 | 😊 🙏 💕 😭 😘 |
+| 3 | 18 | 👍 😅 👏 😁 ♥️ 🔥 … |
+| … | … | |
+| 11 et au-delà | — | *sous la médiane d'usage* |
+| 17+ | 14 | les drapeaux les plus obscurs |
 
-***Les 270 drapeaux sont presque tous anciens***, donc à seuil global ils
-rafleraient tout le haut de l'échelle. Par groupe, chacun des neuf porte la même
-pyramide (69 / 20 / 8 / 3 %).
+**1 468 emoji classés**, dont **1 466 retrouvés dans notre catalogue — 76 %.**
+
+**LE TROU A LA BONNE FORME.** Le classement est arrêté à Unicode 12.0, donc les
+24 % qui manquent sont **les emoji de 2016 et après** : ce qui n'est pas mesuré
+est précisément ce qui est le moins employé. Ils vont donc en bas, et
+l'ancienneté suffit à les départager entre eux.
+
+**LES DEUX ÉCHELLES NE SE MÉLANGENT PAS** : tout ce qui est classé passe devant
+tout ce qui ne l'est pas. *Un emoji mesuré et un emoji deviné ne se comparent
+pas*, et les mettre sur la même échelle reviendrait à inventer un rang pour le
+second.
+
+#### LE DÉCOUPAGE REDEVIENT GLOBAL, ET C'EST COHÉRENT AVEC LES PERSONNAGES
+
+*C'est l'inverse de ce que Keko a tranché pour les personnages*, et les deux
+sont justes pour la même raison : ***le découpage par rayon existe pour corriger
+une échelle qui n'est pas comparable d'un rayon à l'autre.***
+
+Chez les personnages, la 300ᵉ artiste a 106 langues et la 300ᵉ criminelle 28 —
+**il n'y a pas de mesure commune**, donc chaque rayon a besoin de la sienne.
+**Ici il y en a une** : la fréquence d'usage se compare entre un visage et un
+drapeau, donc le rayon n'a plus rien à corriger.
+
+Ce que ça donne — chaque groupe tombe où son usage réel le met :
+
+| groupe | commun | rare | épique | **légendaire** |
+|---|---|---|---|---|
+| **visages** | 23 % | 16 % | **42 %** | **19 %** |
+| animaux | 53 % | 38 % | 8 % | 1 % |
+| nourriture | 47 % | 48 % | 5 % | **0** |
+| activités | 62 % | 27 % | 7 % | 4 % |
+| symboles | 73 % | 22 % | 5 % | 0 % |
+| lieux | 76 % | 18 % | 5 % | 0 % |
+| gens | 78 % | 12 % | 8 % | 2 % |
+| objets | 78 % | 19 % | 3 % | **0** |
+| **drapeaux** | **91 %** | 9 % | 0 % | **0** |
+
+*Les drapeaux perdaient leurs sept légendaires en passant au global, et c'est
+exactement ce qu'une popularité réelle doit produire* — ils sont tous dans le bas
+du classement mondial.
+
+#### CE QUE L'ANCIENNETÉ FAISAIT DE FAUX, ET QUI TOMBE
+
+😂 sortait **épique** et ❤️ **commun**, alors que ce sont **les deux premiers du
+classement mondial** ; les légendaires des visages étaient 😃 😄 😁 😆 😅,
+c'est-à-dire *les cinq premiers du FICHIER Unicode*, pas les cinq plus utilisés.
+
+Le haut du catalogue est désormais : **😂 ❤️ 😍 🤣 😊 🙏 💕 😭 😘 👍 😅 👏 😁 ♥️ 🔥
+💔 💖 💙 😢 🤔 😆 🙄 💪 😉 ☺️ 👌 🤗 💜 😔 😎**
+
+**L'ANIMATION NE DÉCIDE PLUS DE RIEN pour les 76 % classés.** Elle était un
+départage faute de mieux ; elle ne sert plus qu'à trancher entre deux emoji que
+le classement ignore. *Un signal de secours cesse d'en être un le jour où la
+vraie mesure arrive.*
+
+#### LA CARTE DIT SA PLACE, ET LE COMPTEUR CE QU'ELLE DÉPASSE
+
+Le cartouche porte « **976ᵉ au classement d'usage** », ou « Unicode 2016 » pour
+les non classés : *si un chiffre décide du métal, il doit se lire sur la carte.*
+
+Et le compteur de la dernière carte affiche **le nombre d'emoji qu'elle
+dépasse**, pas son rang — **il fallait un chiffre qui MONTE avec la rareté** :
+le rang, lui, descend, donc un compteur qui s'arrêterait à « 3 » pour la carte
+la plus rare monterait vers le commun, *et la teinte monte avec le compteur.*
+
+#### LA PAGE EST ARCHIVÉE, ET LE REPLI EST ÉCRIT
+
+Unicode a archivé cette page : *elle ne bougera plus, mais une page archivée est
+une page qu'on peut retirer.* Si elle disparaît ou si son tableau change de
+forme, le pipeline le journalise et **retombe sur l'ancienneté** — le catalogue
+sort quand même, moins juste.
 
 ### L'EMOJI EST PEINT AU CANVAS, ET IL ENTRE PAR LA PORTE D'UNE PHOTO
 
@@ -13568,10 +13635,12 @@ chantier, pas un réglage** — et ils ne valent que si Keko garde le mode.
 
 ### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
 
-- **le classement** : 😂 épique et ❤️ commun sont le prix de l'ancienneté, voir
-  plus haut ;
 - **les 270 drapeaux** sont un groupe à part — ce sont des pays, pas des objets.
-  Les garder, ou en faire un mode à eux ;
+  Les garder, ou en faire un mode à eux. *Ils sont désormais communs à 91 %*,
+  donc ils ne faussent plus l'échelle, mais ils occupent un septième des cartes ;
+- **les 24 % non classés** : ils sortent tous dans le bas, et l'ancienneté est
+  tout ce qu'on sait d'eux. *Si un emoji de 2021 devient très employé, rien ne
+  le dira* — le classement d'Unicode est arrêté à la version 12.0 ;
 - **l'animation**, et son coût ;
 - **le nom long se tronque** : « Volume des enceintes élevé » ne tient pas sur
   une carte. *C'est le comportement de tous les modes* — la taille cède, puis le

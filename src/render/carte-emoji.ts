@@ -56,10 +56,20 @@ function mots(c: CarteEmoji): string[] {
   const utiles = c.mots.filter((m) => m.toLowerCase() !== nom && !nom.includes(m.toLowerCase()))
   const lignes: string[] = []
   if (utiles.length > 0) lignes.push(utiles.slice(0, 5).join(' · '))
-  // L'ANNÉE EST CE QUI PORTE LA RARETÉ : *si elle décide du métal, elle doit se
-  // lire sur la carte* — sinon le joueur ne sait pas pourquoi celle-ci vaut
-  // plus que sa voisine. Voir `notoriete` dans le pipeline.
-  lignes.push(c.anime ? `Unicode ${c.annee} · animé` : `Unicode ${c.annee}`)
+  /**
+   * LA PLACE AU CLASSEMENT D'USAGE, parce que c'est elle qui porte la rareté.
+   *
+   * *Si un chiffre décide du métal, il doit se lire sur la carte* — sinon le
+   * joueur ne sait pas pourquoi celle-ci vaut plus que sa voisine. **Et c'est
+   * la popularité RÉELLE** depuis que le classement d'Unicode est branché :
+   * voir `notoriete` dans le pipeline.
+   *
+   * Les 24 % que le classement ignore disent leur année à la place : *ce sont
+   * les emoji postérieurs à Unicode 12.0*, et l'ancienneté est tout ce qu'on
+   * sait d'eux.
+   */
+  const place = c.frequence === null ? `Unicode ${c.annee}` : `${c.rang}ᵉ au classement d’usage`
+  lignes.push(c.anime ? `${place} · animé` : place)
   return lignes
 }
 

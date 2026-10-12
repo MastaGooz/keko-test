@@ -83,6 +83,24 @@ export interface CarteEmoji {
   annee: number
   /** Google en publie une version animée (`fonts.gstatic.com/s/e/notoemoji`). */
   anime: boolean
+  /**
+   * LE GROUPE DE FRÉQUENCE D'UNICODE — 0 pour les plus employés, `null` pour
+   * ceux qui ne sont pas au classement.
+   *
+   * **Chaque groupe vaut la MOITIÉ du précédent en fréquence d'usage** : le 0
+   * ne contient que deux emoji, le 11 et au-delà sont sous la médiane. *C'est
+   * donc une échelle logarithmique de popularité réelle*, et c'est elle qui
+   * porte la rareté — voir le pipeline.
+   */
+  frequence: number | null
+  /**
+   * LA PLACE AU CLASSEMENT DU CATALOGUE, 1 pour le plus employé.
+   *
+   * *Elle n'est pas le rang d'Unicode* : elle range les 1 923 cartes, classées
+   * ou non, dans l'ordre exact qui décide des crans. **C'est donc le seul
+   * chiffre dont la rareté dérive**, et c'est lui que la carte affiche.
+   */
+  rang: number
   rarete: RareteEmoji
 }
 
@@ -112,6 +130,8 @@ export function parseEmoji(v: unknown): CarteEmoji | null {
   if (typeof c.version !== 'string') return null
   if (typeof c.annee !== 'number' || !Number.isFinite(c.annee)) return null
   if (typeof c.anime !== 'boolean') return null
+  if (typeof c.rang !== 'number' || !Number.isFinite(c.rang)) return null
+  const frequence = typeof c.frequence === 'number' && Number.isFinite(c.frequence) ? c.frequence : null
   const mots = Array.isArray(c.mots) && c.mots.every((m) => typeof m === 'string') ? (c.mots as string[]) : []
   return {
     id: c.id,
@@ -122,6 +142,8 @@ export function parseEmoji(v: unknown): CarteEmoji | null {
     version: c.version,
     annee: c.annee,
     anime: c.anime,
+    frequence,
+    rang: c.rang,
     rarete: c.rarete,
   }
 }
