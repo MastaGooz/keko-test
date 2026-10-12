@@ -175,6 +175,23 @@ const INCLINAISON_REFLET = 0.34
 const AVANCEE_REFLET = 0.05
 
 /**
+ * LA FEUILLE HOLOGRAPHIQUE : la force de la bande, et sa vitesse.
+ *
+ * **C'est le SEUL signal qui reste à une holo**, et c'est pour ça qu'elle est
+ * plus franche que le lustre du survol (0,13) : *le diamant, lui, a trois
+ * couches pour se dire* — son cadre irisé est peint dans la texture, son liseré
+ * s'allume, son auréole déborde — alors que le bonus n'a plus que celle-ci.
+ *
+ * Elle AVANCE AVEC LE TEMPS tant qu'on ne la promène pas, et c'est la seconde
+ * exception du jeu après l'auréole, pour la même raison : *une carte posée dans
+ * un paquet ne bouge pas*, donc rien d'autre ne pourrait faire jouer sa
+ * feuille. Au survol, c'est le curseur qui reprend la bande — **on la promène,
+ * exactement comme celle du lustre.**
+ */
+const FORCE_HOLO = 0.28
+const VITESSE_HOLO = 0.17
+
+/**
  * LA CARTE EST FAITE DE DEUX PIÈCES, et c'est ce qui donne les coins ronds.
  *
  * Une forme 2D aux coins arrondis, EXTRUDÉE de l'épaisseur, porte le laiton —
@@ -581,6 +598,7 @@ export function Carte3D({
       nuanceur.uniforms.uLustre = { value: 0.5 }
       nuanceur.uniforms.uLustreForce = { value: 0 }
       nuanceur.uniforms.uIris = { value: 0 }
+      nuanceur.uniforms.uHolo = { value: 0 }
       nuanceur.uniforms.uOr = { value: 0 }
       nuanceur.uniforms.uBordure = { value: 0 }
       nuanceur.uniforms.uTemps = { value: 0 }
@@ -641,6 +659,14 @@ ${nuanceur.vertexShader}`.replace(
          float prise = 0.06 + 0.94 * metal;
          diffuseColor.rgb += arc * uIris * prise * reseau * (0.11 + uLustreForce * 1.9);
 
+         // ET CE SOUFFLE EST AU DIAMANT SEUL, jamais à une holo.
+         //
+         // *C'est LUI qui repeignait le cadre* : constant sur toute la carte, il
+         // teintait le cran au lieu de passer dessus — une holo commune et une
+         // holo épique se lisaient du même arc-en-ciel. Le diamant peut se le
+         // permettre, **sa couleur EST l'arc-en-ciel** ; un bonus qui s'ajoute
+         // à un cran, non.
+
          // ET LA BANDE DE BRILLANCE PREND LES MÊMES COULEURS. Keko : « je
          // voudrais un effet holographique aussi sur son effet de brillance
          // quand on la fait bouger ». *Un foil n'a pas un reflet blanc* : ce
@@ -651,10 +677,50 @@ ${nuanceur.vertexShader}`.replace(
          // prend la couleur de ce qu'il touche* — c'est ce qui sépare une
          // plaque d'or d'une plaque claire.
          vec3 blanc = mix(vec3(1.0, 0.95, 0.82), vec3(1.5, 1.06, 0.42), uOr);
-         vec3 tonLustre = mix(blanc, arc * 1.5, uIris);
+         // ET LE REFLET SE DÉCOMPOSE SUR LES DEUX : *un foil n'a pas un reflet
+         // blanc*, et une feuille holographique non plus. C'est la seule chose
+         // que l'holo emprunte encore au diamant, et elle ne vaut QUE sous le
+         // doigt — donc elle ne teint rien au repos.
+         float irise = max(uIris, step(0.0001, uHolo));
+         vec3 tonLustre = mix(blanc, arc * 1.5, irise);
          diffuseColor.rgb += tonLustre
            * uLustreForce
            * (exp(-ecart * ecart * 95.0) + 0.5 * exp(-ecart * ecart * 480.0));
+
+         // ET LA FEUILLE HOLOGRAPHIQUE, QUI N'EST QU'UNE BANDE QUI PASSE.
+         //
+         // Keko : « holographique ne doit pas changer la couleur de la carte :
+         // on rajoute l'effet holographique par-dessus ».
+         //
+         // *Un voile irisé permanent REPEINT le cadre* — c'est là que le cran
+         // se lit — alors qu'une bande qui traverse ne fait que glisser dessus.
+         // D'où une force à elle, et non un emprunt à uLustreForce : celui-ci
+         // alimente AUSSI l'arc ambiant juste au-dessus, et les mêler aurait
+         // remis le voile qu'on vient de retirer.
+         //
+         // Elle prend l'arc-en-ciel tel quel : *une feuille holographique n'a
+         // pas de couleur à elle, elle décompose celle qui passe dessus.* Et
+         // elle couvre toute la carte, illustration comprise — un reflet ne
+         // s'arrête pas au cadre, à la différence du RÉSEAU de stries, qui lui
+         // se lirait comme une trame imprimée sur le dessin.
+         //
+         // ET ELLE A SON PROPRE SPECTRE, QUI TOURNE QUATRE FOIS PLUS VITE.
+         //
+         // *L'arc du foil ne fait qu'un tour sur toute la carte* : dans une
+         // bande d'un cinquième, il ne déroule que quarante degrés de teinte,
+         // donc **la feuille se lisait comme une nappe verte** et non comme un
+         // reflet irisé — soit exactement le défaut qu'on venait de retirer,
+         // repris par l'autre bout.
+         //
+         // **Une feuille holographique DÉCOMPOSE** : le long d'un même reflet on
+         // voit passer tout le spectre. Quatre tours le lui rendent sans
+         // moirer — on est deux ordres de grandeur au-dessus du RÉSEAU, qui en
+         // fait soixante-quatre et doit, lui, se fondre quand il passe sous le
+         // pixel.
+         float teinteH = fract(trame * 4.0 + incidence * 1.9 + uLustre * 0.4);
+         vec3 arcH = 0.5 + 0.5 * cos(6.28318 * (teinteH + vec3(0.0, 0.33, 0.67)));
+         diffuseColor.rgb += arcH * uHolo * reseau
+           * (exp(-ecart * ecart * 90.0) + 0.6 * exp(-ecart * ecart * 420.0));
 
          // ET LA BORDURE DU DIAMANT S'ALLUME, avec une lumière qui EN FAIT LE
          // TOUR. Keko : « on peut ajouter un effet de lumière qui shine la
@@ -727,6 +793,7 @@ ${nuanceur.vertexShader}`.replace(
 uniform float uLustre;
 uniform float uLustreForce;
 uniform float uIris;
+uniform float uHolo;
 uniform float uOr;
 uniform float uBordure;
 uniform float uTemps;
@@ -752,7 +819,7 @@ ${nuanceur.fragmentShader}`
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
     face.customProgramCacheKey = () =>
-      'carte-face-desaturable-lustree-irisee-doree-bordee-developpee2'
+      'carte-face-desaturable-lustree-irisee-doree-bordee-developpee2-holo'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -1408,16 +1475,6 @@ ${nuanceur.fragmentShader}`
       | undefined
     if (nuanceur !== undefined) {
       nuanceur.uniforms.uGris!.value = gris
-      // LA BANDE SE POSE SOUS LE CURSEUR, elle ne le fuit pas : la diagonale
-      // de la carte vaut `(u + v) / 2`, et le point visé y tombe exactement.
-      // *Un reflet qu'on ne peut pas promener n'est pas un reflet, c'est une
-      // animation.*
-      nuanceur.uniforms.uLustre!.value = 0.5 + (l.vx + l.vy) * 0.5
-      // Il RESPIRE à peine, sur l'horloge lente du liseré : c'est ce qui le
-      // fait lire comme de la lumière et non comme un aplat peint.
-      // ELLE EST DISCRÈTE. Keko l'a trouvée « un peu forte » : un lustre qui
-      // délave l'illustration cesse d'être une matière et devient un voile.
-      nuanceur.uniforms.uLustreForce!.value = l.brille * (0.13 + Math.sin(t * 3) * 0.03)
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
       // rareté compilerait son nuanceur.
@@ -1429,11 +1486,43 @@ ${nuanceur.fragmentShader}`
       // retourné** : il n'y avait plus rien à révéler. *Le dos ne dit rien de
       // ce qu'il y a dessous*, c'est déjà la règle qui le garde en laiton.
       const montre = dos !== true
+      // LA BANDE SE POSE SOUS LE CURSEUR, elle ne le fuit pas : la diagonale
+      // de la carte vaut `(u + v) / 2`, et le point visé y tombe exactement.
+      // *Un reflet qu'on ne peut pas promener n'est pas un reflet, c'est une
+      // animation.*
+      const sousLeDoigt = 0.5 + (l.vx + l.vy) * 0.5
+      // ET SUR UNE HOLO, ELLE SE PROMÈNE TOUTE SEULE tant que personne ne la
+      // tient. *Le passage est un MÉLANGE et non un test* : à seuil, la bande
+      // sauterait de sa course à la place du curseur dès qu'on approche.
+      const holo = montre && carte.holo === true
+      const seule = -0.3 + 1.6 * ((t * VITESSE_HOLO) % 1)
+      nuanceur.uniforms.uLustre!.value = holo
+        ? seule + (sousLeDoigt - seule) * l.brille
+        : sousLeDoigt
+      // Il RESPIRE à peine, sur l'horloge lente du liseré : c'est ce qui le
+      // fait lire comme de la lumière et non comme un aplat peint.
+      // ELLE EST DISCRÈTE. Keko l'a trouvée « un peu forte » : un lustre qui
+      // délave l'illustration cesse d'être une matière et devient un voile.
+      nuanceur.uniforms.uLustreForce!.value = l.brille * (0.13 + Math.sin(t * 3) * 0.03)
       // L'ÉCLAT SE DEMANDE À LA TABLE, il ne se lit plus sur une égalité de
-      // chaîne : l'holographique le donne à n'importe quel cran, et l'orange
-      // du mode emoji s'appelle aussi « légendaire » sans rien devoir irriser.
-      const eclat = montre ? eclatDe(carte.rarete, carte.holo) : null
+      // chaîne : l'orange du mode emoji s'appelle aussi « légendaire » sans
+      // rien devoir irriser.
+      const eclat = montre ? eclatDe(carte.rarete) : null
+      /**
+       * ET L'HOLOGRAPHIQUE SE CUMULE AU CRAN, il ne le remplace pas.
+       *
+       * Keko : « holographique ne doit pas changer la couleur de la carte : on
+       * rajoute l'effet holographique par-dessus ».
+       *
+       * *Et le foil lui-même ne s'emprunte pas tel quel* : il a un SOUFFLE
+       * permanent, qui teinte toute la carte et repeint donc le cran. L'holo
+       * n'en garde que la BANDE — celle qui traverse — et elle a son uniforme
+       * à elle. *Une feuille se pose dessus, un voile se substitue.*
+       */
       nuanceur.uniforms.uIris!.value = eclat === 'iris' ? 1 : 0
+      // ELLE S'ÉTEINT AVEC LA CARTE, comme tout le reste : *une pièce hors jeu
+      // ne rayonne pas*, et une carte face cachée ne dit pas ce qu'elle est.
+      nuanceur.uniforms.uHolo!.value = holo ? l.vif * FORCE_HOLO : 0
       // LE TOUR DE LUMIÈRE EST AU DIAMANT SEUL, et il s'éteint avec la carte :
       // une pièce hors jeu ne rayonne pas.
       nuanceur.uniforms.uTemps!.value = t
@@ -1478,7 +1567,7 @@ ${nuanceur.fragmentShader}`
      *
      * Elle s'allume donc au retournement, ce qui est exactement son moment.
      */
-    const parure = dos === true ? null : eclatDe(carte.rarete, carte.holo)
+    const parure = dos === true ? null : eclatDe(carte.rarete)
     if (parure !== null) {
       const chromatique = parure === 'iris'
       aureole.uniforms.uTemps!.value = t
@@ -1533,7 +1622,7 @@ ${nuanceur.fragmentShader}`
           ordinaire : quand une pièce est engagée, c'est l'or de l'engagement
           qu'on doit lire en premier — *un état du jeu passe devant une
           parure.* */}
-      {eclatDe(carte.rarete, carte.holo) !== null && (
+      {eclatDe(carte.rarete) !== null && (
         <mesh position={[0, 0, -EPAISSEUR * 1.2]} material={aureole} raycast={() => null}>
           <planeGeometry args={[LARGE + DEBORD_AUREOLE * 2, HAUT + DEBORD_AUREOLE * 2]} />
         </mesh>

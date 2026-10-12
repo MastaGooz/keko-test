@@ -13853,12 +13853,70 @@ Le **blanc est un gris clair et non un blanc pur** : *le bas d'une échelle ne
 doit pas se lire comme un métal précieux*, et le blanc pur est déjà le diamant
 de l'autre échelle.
 
-#### L'HOLOGRAPHIQUE EMPRUNTE LE FOIL DU DIAMANT, et c'est gratuit
+#### L'HOLOGRAPHIQUE SE POSE SUR LE CRAN, IL NE LE REPEINT PAS
 
-**Il n'y avait rien à dessiner.** Un arc-en-ciel qui dépend de l'angle de vue
-existait déjà, réglé et validé par Keko — « je voudrais un effet holographique
-aussi sur la carte, et notamment sur son effet de brillance quand on la fait
-bouger ». *Lui en dessiner un second aurait garanti que les deux divergent.*
+Tranché par Keko, en le voyant : « holographique ne doit pas changer la couleur
+de la carte : on rajoute l'effet holographique par-dessus. Et une carte animé
+c'est pareil. »
+
+***J'avais écrit l'inverse***, et le mot qui le disait était « emprunte » :
+`eclatDe(rarete, holo)` rendait `'iris'` pour n'importe quel holo, donc le bonus
+PRENAIT la place du cran au lieu de s'y ajouter.
+
+**ET UN ÉCLAT N'EST PAS UNE COUCHE, C'EN EST TROIS** — c'est ce qui rendait la
+faute invisible en lisant le code :
+
+| | où ça se peint | peut-on le poser « par-dessus » ? |
+|---|---|---|
+| le **foil** sur le métal | dans le nuanceur, par-dessus la texture | **oui** |
+| le **liseré** du cadre | sur le cadre | **non** — c'est là que le cran se lit |
+| l'**auréole** chromatique | tout autour de la carte | **non** |
+
+*Les deux dernières ne se posent pas sur la carte, elles PEIGNENT l'endroit même
+où la couleur du cran se lit* — donc une holo commune et une holo épique se
+retrouvaient cerclées du même arc-en-ciel, et **le bonus effaçait le cran qu'il
+était censé décorer.** Elles restent au cran, seul le foil se cumule.
+
+#### ET LE FOIL NON PLUS NE S'EMPRUNTE PAS TEL QUEL : il a un VOILE et une BANDE
+
+**Retirer le liseré et l'auréole ne suffisait pas**, et c'est la capture qui l'a
+dit : les trois cartes holo gardaient un cadre arc-en-ciel là où les deux animées
+avaient le leur, bleu franc. *Le coupable était le SOUFFLE permanent du foil* —
+`arc * uIris * prise * reseau * 0.11` — **constant sur toute la carte**, donc un
+voile et non un reflet.
+
+***Un voile irisé permanent REPEINT, une bande qui traverse ne fait que
+glisser.*** Le souffle revient donc au diamant seul : **sa couleur EST
+l'arc-en-ciel**, il peut se le permettre ; un bonus qui s'ajoute à un cran, non.
+L'holo n'en garde que la bande, et elle a son uniforme à elle (`uHolo`) — *pas un
+emprunt à `uLustreForce`, qui alimente AUSSI ce souffle et aurait remis le voile
+qu'on venait de retirer.*
+
+#### ET LA FEUILLE A SON PROPRE SPECTRE, QUI TOURNE QUATRE FOIS PLUS VITE
+
+**Deuxième chose que la capture a dite** : la bande se lisait comme **une nappe
+verte**, pas comme un reflet irisé — donc elle teintait encore la carte, le
+défaut repris par l'autre bout.
+
+*L'arc du foil ne fait qu'un tour sur toute la carte* : dans une bande d'un
+cinquième, il ne déroule que **quarante degrés de teinte**, soit à peu près une
+seule couleur. **Une feuille holographique DÉCOMPOSE** — le long d'un même reflet
+on voit passer tout le spectre — donc elle tourne quatre fois, ce qui lui rend
+son arc-en-ciel sans moirer : *on est deux ordres de grandeur au-dessus du
+RÉSEAU de stries, qui en fait soixante-quatre et doit, lui, se fondre quand il
+passe sous le pixel.*
+
+**ELLE AVANCE AVEC LE TEMPS tant qu'on ne la promène pas**, et c'est la seconde
+exception du jeu après l'auréole, pour la même raison : *une carte posée dans un
+paquet ne bouge pas*, donc rien d'autre ne pourrait faire jouer sa feuille. Au
+survol, le curseur reprend la bande — **par un MÉLANGE et non par un test** : à
+seuil, elle sauterait de sa course à la place du doigt dès qu'on approche.
+
+**ET UNE CARTE ANIMÉE N'AVAIT RIEN À CORRIGER**, ce qui se vérifie plutôt que de
+se supposer : elle repeint la même carte avec une autre illustration
+(`peindreCarte({ ...carte, image })`), donc son cadre garde la couleur de son
+cran — vu à l'écran sur la Carotte, bleu franc. *Le bonus ne touche que la
+fenêtre d'art.*
 
 **IL NE CHANGE RIEN À LA PEINTURE, DONC RIEN À `signature()`.** Le foil vit dans
 le NUANCEUR — c'est ce qui le rend indépendant de la teinte du cadre — donc
@@ -13866,6 +13924,19 @@ le NUANCEUR — c'est ce qui le rend indépendant de la teinte du cadre — donc
 bonus ne coûte pas un octet de mémoire. *C'est la seule propriété de
 `CarteAPeindre` qui ne change rien à ce que le peintre dessine*, et elle y vit
 quand même parce que c'est cet objet qui voyage jusqu'à `Carte3D`.
+
+#### CE QUI RESTE GRATUIT, ET C'ÉTAIT LE BON RÉFLEXE
+
+**Il n'y avait rien à dessiner.** Un arc-en-ciel qui dépend de l'angle de vue
+existait déjà, réglé et validé par Keko — « je voudrais un effet holographique
+aussi sur la carte, et notamment sur son effet de brillance quand on la fait
+bouger » — et le réflexe de ne pas en dessiner un second tient toujours. *Ce
+qu'il fallait découper, ce n'est pas le dessin, c'est lequel de ses TERMES se
+pose par-dessus et lequel se substitue.*
+
+**Et le reflet du survol se décompose sur les deux**, holo comme diamant : *un
+foil n'a pas un reflet blanc.* C'est la seule chose que l'holo emprunte encore,
+et elle ne vaut QUE sous le doigt — donc elle ne teint rien au repos.
 
 **LES TROIS ÉCLATS PASSENT PAR UNE TABLE** (`ECLAT_DE_LA_RARETE`), plus par une
 égalité de chaîne. L'irisation du cadre, la bordure lumineuse et le lustre doré
@@ -13875,9 +13946,9 @@ violet à reluire comme de l'or, alors que Keko n'a demandé ni l'un ni l'autre 
 chez lui l'éclat est un BONUS, pas un cran. Les cinq couleurs n'ont donc aucune
 entrée : *ce qui ne rayonne pas n'a rien à déclarer.*
 
-Et l'holo **passe devant** la rareté : une carte holo de n'importe quel cran
-irise, et le lustre doré d'un épique lui cède la place — *deux éclats sur une
-même carte n'en laisseraient lire aucun.*
+**La table ne porte donc que des CRANS**, et l'holo n'y entre pas : il se cumule
+dans `Carte3D`, qui allume son uniforme à côté de celui du cran. *Un bonus qui
+s'inscrirait dans la table des éclats serait un cran de plus, pas un bonus.*
 
 #### LE CATALOGUE DIT CE QUI EST POSSIBLE, L'EXEMPLAIRE CE QUI EST
 
@@ -13932,9 +14003,8 @@ suffisait d'une graine choisie** au lieu d'ouvrir des paquets au hasard.
   paquet** (70 / 16 / 10 / 3,2 / 0,8), qui sont de moi ;
 - **les deux chances de bonus** (10 % et 3 %) : *une fréquence d'apparition ne
   se juge qu'en ouvrant des paquets* ;
-- **l'holo noie la couleur du cadre** : le foil court sur toute la carte, donc
-  une carte holographique lit mal son propre cran. *C'est ce qu'un holo EST dans
-  un vrai jeu de cartes* — à dire s'il le garde ;
+- **la force et la vitesse de la feuille** (0,28 et un passage toutes les six
+  secondes) : *une bande qui traverse ne se juge qu'en la regardant passer* ;
 - **les quatre autres modes n'ont pas de bonus**, parce que la portée était « le
   mode emoji seulement ». *Rien n'empêche de les leur donner* : le drapeau vit
   sur `CarteAPeindre`, qui est commun aux cinq modes.

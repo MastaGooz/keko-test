@@ -691,20 +691,23 @@ export const ECLAT_DE_LA_RARETE: Readonly<Record<string, 'or' | 'iris'>> = {
 }
 
 /**
- * L'ÉCLAT D'UN EXEMPLAIRE : son bonus d'abord, sa rareté ensuite.
+ * L'ÉCLAT D'UN CRAN — et l'holographique n'en est pas un.
  *
- * **L'HOLOGRAPHIQUE EMPRUNTE LE FOIL DU DIAMANT**, et ce n'est pas un recyclage
- * de commodité : *il existait déjà un arc-en-ciel qui dépend de l'angle de vue*,
- * réglé et validé par Keko — « je voudrais un effet holographique aussi sur la
- * carte, et notamment sur son effet de brillance quand on la fait bouger ».
- * Lui en dessiner un second aurait garanti que les deux divergent.
+ * **IL NE LIT QUE LA RARETÉ.** Il a porté un drapeau `holo` le temps d'un
+ * commit, et c'est Keko qui l'a repris : « holographique ne doit pas changer la
+ * couleur de la carte, on rajoute l'effet holographique par-dessus ».
  *
- * *Il PASSE DEVANT la rareté* : une carte holo de n'importe quel cran irise,
- * et le lustre doré d'un épique lui cède la place — **deux éclats sur une même
- * carte n'en laisseraient lire aucun.**
+ * *Et il avait raison sur ce que ça coûtait, parce qu'un éclat n'est pas une
+ * couche mais TROIS* : le foil posé sur le métal, **le liseré du cadre** et
+ * **l'auréole**. Les deux dernières ne se posent pas par-dessus la carte, elles
+ * PEIGNENT l'endroit même où le cran se lit — donc une holo commune et une holo
+ * épique se retrouvaient cerclées du même arc-en-ciel, et **le bonus effaçait le
+ * cran qu'il était censé décorer.**
+ *
+ * L'holographique ne garde donc que le FOIL, la seule des trois qui soit
+ * vraiment une feuille posée dessus. C'est `Carte3D` qui cumule les deux.
  */
-export function eclatDe(rarete: string | undefined, holo?: boolean): 'or' | 'iris' | null {
-  if (holo === true) return 'iris'
+export function eclatDe(rarete: string | undefined): 'or' | 'iris' | null {
   return ECLAT_DE_LA_RARETE[rarete ?? ''] ?? null
 }
 
