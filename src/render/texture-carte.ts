@@ -847,6 +847,123 @@ export function tonDuLustre(rarete: string | undefined): readonly [number, numbe
 }
 
 /**
+ * LA PLAQUE CLAIRE PREND LA TEINTE DE SON CRAN — et les deux tons sont DÉRIVÉS.
+ *
+ * Keko : « je voudrais que l'encadré soit coloré en fonction de la rareté
+ * également (blanc, vert, bleu etc) au lieu d'être blanc partout ».
+ *
+ * *C'est la méthode de `TON_LUSTRE`, reprise à l'autre bout de l'échelle* — « on
+ * prend le ton MOYEN du métal, le plus saturé des cinq, et on le pousse à une
+ * énergie commune ». Ici on garde sa TEINTE, on ramène son pigment à une
+ * fraction, et **on recale sur une luminance commune.** Le calcul est celui de
+ * `virerLeCiel`, à un pixel près : saturation dosée, teinte imposée, ClipColor.
+ *
+ * ***LA NORMALISATION EST CE QUI PROTÈGE LE TEXTE.*** Il est SOMBRE sur cette
+ * plaque, donc son contraste dépend entièrement de la clarté du fond : sans
+ * elle, un jaune clair et un violet sombre à pigment égal donneraient deux
+ * lisibilités très différentes. Mesuré sur la texture peinte, le nom reste
+ * entre **11,5 et 13,2** de contraste sur les cinq crans, et le cartouche
+ * entre 5,9 et 6,8 — *contre 4,5 sur le blanc d'avant, qui était déjà au
+ * plancher.*
+ *
+ * **ET LE PIGMENT A DOUBLÉ APRÈS LA PREMIÈRE MESURE À L'ÉCRAN.** À 0,45 les
+ * chiffres étaient impeccables et *on ne voyait rien* : le haut du dégradé
+ * restait quasi blanc, donc l'oeil moyennait et lisait « blanc » sur les cinq
+ * crans. ***Un pastel qui ne se voit pas ne dit pas son cran*** — et c'est ce
+ * que Keko demandait. Il faut donc que le HAUT porte déjà sa couleur, pas
+ * seulement le bas.
+ *
+ * **ET LE PIGMENT SUIT LA SATURATION DU MÉTAL, il ne la force pas.** Le cran du
+ * bas est un gris à peine bleuté — 0,047 d'écart au gris — donc *le forcer à
+ * une saturation commune en ferait un bleu pâle*, qui entrerait en collision
+ * avec le cran `bleu`. À pigment relatif il reste un gris, ce qui est exactement
+ * ce que « blanc » doit dire.
+ *
+ * **LE DÉFAUT RESTE LA PLAQUE D'AVANT**, comme le crème pour le lustre : une
+ * carte sans rang ne bouge pas d'un pixel. *Les quatre autres modes n'ont pas
+ * de plaque aujourd'hui* — mais le jour où elle y arrive, c'est le bas de
+ * l'échelle qui ne doit pas se mettre à parler.
+ */
+const PIGMENT_PLAQUE = [0.85, 1, 1] as const
+const LUM_PLAQUE = [0.93, 0.855, 0.813] as const
+const PLAQUE_CLAIRE = ['#fdfefe', '#eaeef4', '#dde4ec'] as const
+
+/**
+ * Un ton de plaque : la teinte du métal, dosée, à la luminance voulue.
+ *
+ * La forme est celle de `virerLeCiel` — *même formule, un seul pixel* — donc
+ * **de l'arithmétique et rien d'autre** : les modes de fusion non séparables du
+ * canvas (`hue`, `saturation`, `color`) sont silencieusement ignorés sur
+ * certains appareils, et une dégradation muette vaut moins qu'un chemin qui
+ * marche partout.
+ */
+function tonDeLaPlaque(metal: string, pigment: number, cible: number): string {
+  const c = [1, 3, 5].map((i) => parseInt(metal.slice(i, i + 2), 16) / 255)
+  const bas = Math.min(...c)
+  const haut = Math.max(...c)
+  // La teinte PURE du métal — sa saturation portée à 1 — puis dosée.
+  const u = haut > bas ? c.map((x) => (x - bas) / (haut - bas)) : [0.5, 0.5, 0.5]
+  const sat = (haut - bas) * pigment
+  const lumDe = (t: number[]): number => 0.3 * t[0]! + 0.59 * t[1]! + 0.11 * t[2]!
+  const ecart = cible - sat * lumDe(u)
+  let t = u.map((x) => x * sat + ecart)
+  // ClipColor : une teinte portée à une luminance donnée peut sortir de [0,1].
+  // **Les deux passes sont nécessaires** — ramener les négatifs peut faire
+  // dépasser 1 — et on ramène vers la luminance, qui est ce qu'on garde.
+  const vers = (borne: number, val: number): void => {
+    const l = lumDe(t)
+    if (Math.abs(val - l) > 1e-6) {
+      const k = (borne - l) / (val - l)
+      t = t.map((x) => l + (x - l) * k)
+    }
+  }
+  if (Math.min(...t) < 0) vers(0, Math.min(...t))
+  if (Math.max(...t) > 1) vers(1, Math.max(...t))
+  return (
+    '#' +
+    t
+      .map((x) =>
+        Math.round(Math.max(0, Math.min(1, x)) * 255)
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')
+  )
+}
+
+/**
+ * Les trois tons de la plaque, mémorisés par cran : le haut du dégradé, son
+ * bas, et **la pastille du type**.
+ *
+ * ***LA PASTILLE EST DE LA PLAQUE, PAS UNE PIÈCE POSÉE DESSUS.*** Elle était
+ * d'un gris fixe, un cran sous le blanc — donc sur une plaque teintée elle
+ * ressortait **plus claire que son fond**, c'est-à-dire en relief là où elle
+ * doit être un creux, et grise au milieu d'un vert. *Un badge qui ne parle pas
+ * la langue de ce qui le porte se lit comme un calque mal posé*, la règle déjà
+ * tenue par l'opacité de cette même plaque.
+ *
+ * **Elle garde son écart de luminance** (0,042 sous le bas du dégradé), qui est
+ * exactement celui du gris d'avant : *ce qui la distingue est sa profondeur,
+ * pas sa couleur.*
+ */
+const PLAQUES = new Map<string, readonly [string, string, string]>()
+
+function tonsDeLaPlaque(rarete: string | undefined): readonly [string, string, string] {
+  const cran = rarete ?? ''
+  const metal = METAUX[cran]
+  if (metal === undefined) return PLAQUE_CLAIRE
+  const garde = PLAQUES.get(cran)
+  if (garde !== undefined) return garde
+  const tons: readonly [string, string, string] = [
+    tonDeLaPlaque(metal[2], PIGMENT_PLAQUE[0], LUM_PLAQUE[0]),
+    tonDeLaPlaque(metal[2], PIGMENT_PLAQUE[1], LUM_PLAQUE[1]),
+    tonDeLaPlaque(metal[2], PIGMENT_PLAQUE[2], LUM_PLAQUE[2]),
+  ]
+  PLAQUES.set(cran, tons)
+  return tons
+}
+
+/**
  * CE QU'UNE RARETÉ FAIT RAYONNER — rien, l'or, ou l'arc-en-ciel.
  *
  * *Les trois comportements se lisaient sur une ÉGALITÉ DE CHAÎNE* —
@@ -3097,7 +3214,7 @@ export async function peindreCarte(
   // CE QUI PORTE LE TEXTE : un voile qui éteint l'image, ou une plaque posée
   // dessus. *Les deux font le même travail* — rendre le nom et le cartouche
   // lisibles — et ils ne le font pas dans la même langue : voir `CarteAPeindre.texte`.
-  if (bulle) peindreBulle(ctx, marge, rayon)
+  if (bulle) peindreBulle(ctx, marge, rayon, carte.rarete)
   else peindreVoile(ctx)
   ctx.restore()
 
@@ -3729,22 +3846,30 @@ function peindreVoile(ctx: CanvasRenderingContext2D): void {
  *   marge : elle s'arrête sur le cadre, donc elle doit l'épouser. La règle du
  *   tracé du contour, repayée ici ;
  * - **SON DÉGRADÉ EST À PEINE VISIBLE** (deux tons voisins, du plus clair en
- *   haut au plus gris en bas) : la lumière du jeu vient du haut, et *un aplat
- *   parfaitement uni se lit comme un rectangle de couleur, pas comme une
- *   surface* ;
+ *   haut au plus pigmenté en bas) : la lumière du jeu vient du haut, et *un
+ *   aplat parfaitement uni se lit comme un rectangle de couleur, pas comme une
+ *   surface*. **C'est aussi lui qui porte la teinte du cran** — voir
+ *   `tonsDeLaPlaque` — et c'est le ton du BAS qui en porte le plus : *la part
+ *   ombrée d'une surface garde plus de couleur que la part éclairée* ;
  * - **ELLE EST OPAQUE.** Un reste de transparence laisserait voir l'emoji
  *   dessous, et *ça se lit comme un calque mal posé* — la règle déjà tenue par
  *   la pierre des encadrés du glossaire.
  */
-function peindreBulle(ctx: CanvasRenderingContext2D, marge: number, rayon: number): void {
+function peindreBulle(
+  ctx: CanvasRenderingContext2D,
+  marge: number,
+  rayon: number,
+  rarete: string | undefined,
+): void {
   const y = HAUT * HAUT_BULLE
   const l = LARGE - marge * 2
   const h = HAUT - marge - y
   const hautR = 5 * U
   const basR = Math.max(0, LARGE * rayon - marge)
+  const [clair, pigmente] = tonsDeLaPlaque(rarete)
   const fond = ctx.createLinearGradient(0, y, 0, HAUT)
-  fond.addColorStop(0, '#fdfefe')
-  fond.addColorStop(1, '#eaeef4')
+  fond.addColorStop(0, clair)
+  fond.addColorStop(1, pigmente)
   ctx.save()
   ctx.shadowColor = 'rgba(0,0,0,0.55)'
   ctx.shadowOffsetY = -1.4 * U
@@ -3953,7 +4078,12 @@ function peindreTextes(
   // se fait à la taille choisie, et s'il coûte une ligne de trop on descend
   // d'un cran : c'est exactement ce que `cran` fait pour un effet long.
   const { taille, lignes } = corpsDuCartouche(ctx, carte.effet, LARGE * 0.86, famille)
-  ctx.fillStyle = bulle ? '#5d6e80' : '#f1e6cf'
+  // LE SOUS-TEXTE FONCE DEPUIS QUE LA PLAQUE EST TEINTÉE. Elle descend de
+  // 0,93 à 0,855 de luminance pour que le pigment existe, et à `#5d6e80` le
+  // cartouche serait tombé à 3,5 de contraste sur le pire cran — *sous le
+  // plancher de 4,5 que le gris d'avant tenait tout juste.* Il remonte à
+  // **5,9 au pire**, donc mieux qu'avant partout.
+  ctx.fillStyle = bulle ? '#415263' : '#f1e6cf'
   ctx.shadowColor = bulle ? 'transparent' : '#000000aa'
   ctx.shadowOffsetY = bulle ? 0 : 0.4 * U
   ctx.shadowBlur = bulle ? 0 : 0.8 * U
@@ -4021,11 +4151,15 @@ function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre, bulle 
     const encre = ctx.measureText(mot).width - esp
     const l = encre + 6.4 * U
     const h = 7.4 * U
-    ctx.fillStyle = '#dde4ec'
+    ctx.fillStyle = tonsDeLaPlaque(carte.rarete)[2]
     ctx.beginPath()
     ctx.roundRect(LARGE / 2 - l / 2, y - h / 2, l, h, h / 2)
     ctx.fill()
-    ctx.fillStyle = '#6a7b8d'
+    // LE MOT FONCE AVEC ELLE. Il n'avait que 3,4 de contraste sur le gris
+    // d'avant — déjà sous le plancher — et une pastille teintée l'aurait fait
+    // tomber à 2,5 sur le pire cran. Il remonte à **4,1 au pire et 4,9 au
+    // mieux**, donc mieux qu'avant sur les cinq crans.
+    ctx.fillStyle = '#4e5f71'
     ctx.textAlign = 'left'
     ctx.fillText(mot, LARGE / 2 - encre / 2, y)
     ctx.textAlign = 'center'

@@ -14372,7 +14372,9 @@ Quatre choses la portent, et chacune fait un travail que les autres ne font pas 
   contour, repayée ici ;
 - **SON DÉGRADÉ EST À PEINE VISIBLE**, du plus clair en haut au plus gris en bas,
   parce que la lumière du jeu vient du haut : *un aplat parfaitement uni se lit
-  comme un rectangle de couleur, pas comme une surface* ;
+  comme un rectangle de couleur, pas comme une surface*. **C'est aussi lui qui
+  porte la teinte du cran**, et c'est le ton du BAS qui en porte le plus : *la
+  part ombrée d'une surface garde plus de couleur que la part éclairée* ;
 - **ELLE EST OPAQUE.** Un reste de transparence laisserait voir l'emoji dessous,
   et *ça se lit comme un calque mal posé* — la règle déjà tenue par la pierre des
   encadrés du glossaire.
@@ -14548,6 +14550,84 @@ chaque dans tout le jeu. Et le corps reste un **profil extrudé** : un
 `RoundedBoxGeometry` borne son rayon à la moitié de l'épaisseur, soit 0,006 sur
 une plaque de 0,012 — *il resterait carré*, le piège silencieux déjà payé.
 
+### LA PLAQUE PREND LA TEINTE DE SON CRAN — dérivée, pas choisie
+
+Keko : **« je voudrais que l'encadré soit coloré en fonction de la rareté
+également (blanc, vert, bleu etc) au lieu d'être blanc partout »**.
+
+*Et c'est la règle du projet prise au mot* — **une échelle se dit en couleur** —
+appliquée à la seule grande surface de la carte qui ne disait encore rien : le
+cadre portait déjà le cran, la plaque restait blanche sur les cinq.
+
+#### LA MÉTHODE EST CELLE DU LUSTRE, À L'AUTRE BOUT DE L'ÉCHELLE
+
+« On prend le ton MOYEN du métal, le plus saturé des cinq, et on le pousse à une
+énergie commune » : ici on garde sa TEINTE, on dose son pigment, et **on recale
+sur une luminance commune**. Le calcul est celui de `virerLeCiel` à un pixel
+près — *de l'arithmétique et rien d'autre*, puisque les modes de fusion non
+séparables du canvas sont silencieusement ignorés sur certains appareils.
+
+***LA NORMALISATION EST CE QUI PROTÈGE LE TEXTE.*** Il est SOMBRE sur cette
+plaque, donc son contraste ne dépend que de la clarté du fond : sans elle, un
+jaune clair et un violet sombre à pigment égal donneraient deux lisibilités très
+différentes.
+
+**ET LE PIGMENT SUIT LA SATURATION DU MÉTAL, il ne la force pas.** Le cran du
+bas est un gris à peine bleuté — 0,047 d'écart au gris — donc *le forcer à une
+saturation commune en ferait un bleu pâle*, qui entrerait en collision avec le
+cran `bleu`. À pigment relatif il reste un gris, ce qui est exactement ce que
+« blanc » doit dire.
+
+#### LE PIGMENT A DOUBLÉ APRÈS LA PREMIÈRE CAPTURE
+
+Le premier réglage (0,45) donnait des chiffres impeccables et **on ne voyait
+rien** : le haut du dégradé restait quasi blanc, donc l'oeil moyennait et lisait
+« blanc » sur les cinq crans. ***Un pastel qui ne se voit pas ne dit pas son
+cran*** — il faut que le HAUT porte déjà sa couleur, pas seulement le bas.
+
+*C'est la contrainte du texte qui bornait, et elle avait de la marge* : le nom
+est à 11,5 de contraste quand 4,5 suffit. **Le vrai plancher était le
+SOUS-TEXTE**, gris clair par choix — il fonce donc d'un cran, et il y gagne.
+
+Mesuré sur la texture peinte, les cinq crans du mode emoji :
+
+| cran | haut | bas | pastille | nom | cartouche | type |
+|---|---|---|---|---|---|---|
+| blanc | `#e9eef3` | `#dae0e5` | `#cad0d6` | 11,8 | 6,0 | 4,2 |
+| vert | `#cfffdd` | `#aefdc5` | `#98f1b2` | 13,2 | 6,8 | 4,9 |
+| bleu | `#e0f0ff` | `#c8e4ff` | `#aed8ff` | 12,0 | 6,1 | 4,4 |
+| violet | `#f1e7ff` | `#e6d5ff` | `#dac1ff` | 11,5 | 5,9 | 4,1 |
+| orange | `#ffe8cf` | `#ffd8ab` | `#ffc583` | 11,8 | 6,0 | 4,2 |
+| *(sans rang)* | `#fdfefe` | `#eff2f6` | `#dde4ec` | 14,0 | 7,2 | 5,1 |
+
+**Les trois textes sont mieux lotis qu'avant sur les cinq crans** : le cartouche
+passe de 4,50 — le plancher exact du WCAG — à 5,9 au pire, et le type de 3,4
+à 4,1.
+
+#### LA PASTILLE EST DE LA PLAQUE, PAS UNE PIÈCE POSÉE DESSUS
+
+Elle était d'un gris fixe un cran sous le blanc, donc sur une plaque teintée elle
+ressortait **plus claire que son fond** — c'est-à-dire en relief là où elle doit
+être un creux, et grise au milieu d'un vert. *Un badge qui ne parle pas la langue
+de ce qui le porte se lit comme un calque mal posé*, la règle déjà tenue par
+l'opacité de cette même plaque.
+
+**Elle garde son écart de luminance** (0,042 sous le bas du dégradé), qui est
+exactement celui du gris d'avant : *ce qui la distingue est sa profondeur, pas sa
+couleur.*
+
+#### LE DÉFAUT RESTE LA PLAQUE D'AVANT
+
+Comme le crème pour le lustre : **une carte sans rang ne bouge pas d'un pixel** —
+vérifié, `#fdfefe` et `#dde4ec` au pixel près. *Les quatre autres modes n'ont pas
+de plaque aujourd'hui*, mais le jour où elle y arrive, c'est le bas de l'échelle
+qui ne doit pas se mettre à parler.
+
+Et **la table se CALCULE depuis `METAUX`, elle ne se recopie pas** : *un métal et
+la plaque qu'il teinte sont le même fait*, donc une retouche de l'échelle doit
+suivre jusqu'ici. C'est ce qui sépare ce cas de `TON_LUSTRE`, qui est une table à
+part parce qu'une couleur peinte et la lumière qu'elle renvoie sont deux faits.
+
 #### CE QUI RESTE À TRANCHER PAR KEKO — la plaque
 
 - **la police** : Baloo 2 est mon choix, et une autre se pose en une ligne —
@@ -14557,7 +14637,10 @@ une plaque de 0,012 — *il resterait carré*, le piège silencieux déjà payé
   la proportion d'une carte de collection moderne, et elle se règle d'un chiffre ;
 - **le rayon des coins** (5,5 %), **l'épaisseur du cadre** (2,7 U) et **l'air
   autour de l'emoji** (7 U), qui décide aussi de sa taille ;
-- **le dégradé** (`#fdfefe` → `#eaeef4`) ;
+- **la force de la teinte** (`PIGMENT_PLAQUE`, 0,85 en haut et 1 en bas) et sa
+  clarté (`LUM_PLAQUE`, 0,93 / 0,855 / 0,813) : *un seul couple de chiffres les
+  porte tous les neuf crans*, et le texte a encore de la marge si Keko veut plus
+  franc ;
 - `?texte=sombre` rend le dégradé noir — *ce qui a servi à choisir doit rester
   ouvrable.*
 
