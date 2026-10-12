@@ -14621,6 +14621,89 @@ Mesuré sur la texture peinte, les cinq crans du mode emoji :
 | orange | `#ffdfb9` | `#ffc077` | `#ffb35a` | 9,8 | 6,72 | 5,11 |
 | *(sans rang)* | `#fdfefe` | `#eaeef4` | `#dde4ec` | 13,5 | 9,30 | 7,08 |
 
+#### CHAQUE TEINTE DESCEND JUSQU'À CE QUE LE CLIP CESSE DE LA RONGER
+
+Keko, après les 47 % de pigment : **« je trouve les encadrés verts sont bien
+mais les autres couleurs sont toujours fades »**.
+
+***ET IL AVAIT RAISON POUR UNE RAISON QUI CONDAMNE TOUTE NOUVELLE PASSE DE
+PIGMENT : ces 47 % n'avaient pas touché le bleu, le violet ni l'orange d'un
+centième.*** Le chroma qui sort vaut `(1 − L) × plein / hi`, et **le rapport
+`plein / hi` ne dépend que de la TEINTE** : tout ce qu'on ajoute au-delà du
+clip est repris par le ClipColor. Ce qui avait bougé, c'était la luminance
+(0,855 → 0,795), et elle profite à tous dans le même rapport — **donc l'écart
+entre le vert et les autres n'avait pas été réduit, il avait été creusé**, le
+vert gagnant EN PLUS sur le pigment parce qu'il ne saturait pas encore.
+
+#### ET LE CHROMA LINÉAIRE N'EST PAS CE QUE L'OEIL LIT
+
+C'est la mesure qui a renversé mon diagnostic. En CIELAB, sur le bas du
+dégradé :
+
+| cran | écart au gris | **C\*ab** |
+|---|---|---|
+| vert | 0,541 | **68,4** |
+| orange | 0,533 | **47,6** |
+| violet | 0,267 | **37,6** |
+| bleu | 0,349 | **26,3** |
+| blanc | 0,082 | 6,5 |
+
+**Le vert et l'orange ont le MÊME écart au gris pour 30 % de couleur d'écart**,
+et le bleu en a plus que le violet tout en paraissant moins coloré. *Le vert est
+la teinte la plus lumineuse du spectre* — il pèse 0,59 dans la luminance quand
+le bleu pèse 0,11 — **donc c'est le seul qui garde sa couleur posé haut en
+clarté.** Le critère est le C\*ab, pas l'écart au gris.
+
+*C'est la troisième fois que ce poids se paie* : les ciels des cartes ont déjà
+eu leur table par famille parce que « le bleu en demande plus », et c'est le même
+0,11 contre 0,59.
+
+#### D'OÙ LA DESCENTE, ET ELLE A UNE FORMULE FERMÉE
+
+Le clip mord tant que `L + hi > 1`, donc la clarté juste suffisante est
+**`1 − hi`** — *aucune dichotomie, aucun CIELAB à l'exécution.* Chaque cran
+descend jusque-là, et **jamais sous `DESCENTE_PLAQUE`** (0,065), qui est ce que
+le texte supporte.
+
+Mesuré sur la texture peinte :
+
+| cran | descente | bas | C\*ab | avant | gain |
+|---|---|---|---|---|---|
+| blanc | 0,000 | `#c2cdd7` | 6,4 | 6,4 | **inchangé** |
+| vert | 0,019 | `#68ff94` | 74,0 | 68,4 | +8 % |
+| bleu | 0,065 | `#8ac6ff` | 34,3 | 26,4 | **+30 %** |
+| violet | 0,065 | `#caa5ff` | 50,2 | 37,6 | **+33 %** |
+| orange | 0,065 | `#ffac4c` | 63,9 | 47,6 | **+34 %** |
+
+**ET LE BLANC NE DESCEND PAS, sans qu'on ait eu à l'excepter** : il ne sature
+pas, donc le clip ne le ronge pas, donc `1 − hi` est au-dessus de sa luminance
+nominale. *Le bas d'une échelle ne doit pas parler*, et c'est la formule qui le
+dit.
+
+**Vérifié sur les PIXELS de l'écran**, à graine égale (`?paquet=1314`), en
+comparant les deux captures : orange **+69 %** de chroma, violet **+44 %**, bleu
+**+39 %**, vert +9 %, **blanc 0 % — pas un pixel.**
+
+Trois choses à ne pas défaire :
+
+- **UN SEUL DÉCALAGE POUR LES TROIS NIVEAUX, et il se calcule sur celui du
+  BAS.** Appliqué niveau par niveau, chacun descendrait jusqu'à son propre
+  plancher et *le dégradé s'écraserait en un aplat* : ce qui doit se conserver,
+  c'est l'ÉCART entre les trois ;
+- **le plancher est fixé par le MOT DU TYPE**, et le chiffre est mesuré : à
+  0,065 il garde **4,77** de contraste sur le pire cran — *exactement ce qu'il
+  avait avant la descente* — et le cartouche 6,09. Les deux textes foncent d'un
+  cran pour le payer (`#283644` et `#303e4c`) ;
+- **la teinte et la descente lisent le même `hi`** (`teinteDuMetal`), parce que
+  *deux endroits qui décriraient la même teinte se désaccorderaient au premier
+  réglage.*
+
+**CE QUI RESTE UN MUR, ET IL EST PHYSIQUE** : même au plancher, le bleu reste à
+34 de C\*ab contre 68 au vert. Pour l'égaler il faudrait descendre à 0,48 de
+luminance — *une plaque bleu franc, qui n'est plus « une zone de texte à fond
+clair »* et sur laquelle aucun texte sombre ne passe. **Une teinte sombre ne
+peut pas être aussi colorée qu'un vert à clarté élevée.**
+
 #### LA PASTILLE EST DE LA PLAQUE, PAS UNE PIÈCE POSÉE DESSUS
 
 Elle était d'un gris fixe un cran sous le blanc, donc sur une plaque teintée elle
@@ -14654,11 +14737,13 @@ part parce qu'une couleur peinte et la lumière qu'elle renvoie sont deux faits.
   la proportion d'une carte de collection moderne, et elle se règle d'un chiffre ;
 - **le rayon des coins** (5,5 %), **l'épaisseur du cadre** (2,7 U) et **l'air
   autour de l'emoji** (7 U), qui décide aussi de sa taille ;
-- **la force de la teinte** (`PIGMENT_PLAQUE`, 1,4 / 1,7) et sa clarté
-  (`LUM_PLAQUE`, 0,895 / 0,795 / 0,752) : *un seul couple de chiffres les porte
-  tous les neuf crans*. **Il reste de la marge, mais elle se paie désormais sur
-  le texte** : le type est à 4,77 et chaque cran de pigment lui coûte 0,2, donc
-  au-delà il faudrait le foncer une troisième fois ;
+- **la force de la teinte** (`PIGMENT_PLAQUE`, 1,4 / 1,7), sa clarté
+  (`LUM_PLAQUE`, 0,895 / 0,795 / 0,752) et surtout **la descente**
+  (`DESCENTE_PLAQUE`, 0,065) : *le pigment ne fait plus rien aux teintes qui
+  saturent*, donc **c'est la descente, et elle seule, qui donne de la couleur
+  au bleu, au violet et à l'orange.** Elle se paie sur le mot du type, qui est
+  à 4,77 pour un plancher de 4,5 — un cran de plus demanderait de foncer les
+  textes une quatrième fois ;
 - `?texte=sombre` rend le dégradé noir — *ce qui a servi à choisir doit rester
   ouvrable.*
 

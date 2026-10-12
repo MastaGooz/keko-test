@@ -881,6 +881,33 @@ export function tonDuLustre(rarete: string | undefined): readonly [number, numbe
  * cartouche passe de 5,59 à **6,41** et le type de 4,08 à **4,77**, pour
  * **47 % de pigment en plus.** *La couleur se renforce et le texte y gagne.*
  *
+ * ***MAIS LE PIGMENT NE FAIT RIEN À UNE TEINTE QUI SATURE — C'EST LA LUMINANCE
+ * QUI COMMANDE.*** Keko, après ces 47 % : « les encadrés verts sont bien mais
+ * les autres couleurs sont toujours fades ». *Et c'est exact, parce que ces
+ * 47 % ne les avaient pas touchés d'un centième* : le chroma qui sort vaut
+ * `(1 − L) × plein / hi`, et **le rapport `plein / hi` ne dépend que de la
+ * TEINTE** — tout le pigment ajouté est mangé par le ClipColor. Ce qui avait
+ * bougé, c'était la luminance (0,855 → 0,795), et elle profite à tous dans le
+ * même rapport : **l'écart entre le vert et les autres n'avait donc pas été
+ * réduit, il avait été creusé**, le vert gagnant EN PLUS sur le pigment parce
+ * qu'il ne saturait pas encore.
+ *
+ * ***ET LE CHROMA LINÉAIRE N'EST PAS CE QUE L'OEIL LIT.*** Mesuré en CIELAB, le
+ * vert et l'orange ont le MÊME écart au gris (0,54) pour **68,4 contre 47,6 de
+ * C\*ab** ; le bleu en a plus que le violet (0,35 contre 0,27) et en paraît
+ * moins coloré (26,4 contre 37,6). *Le vert est la teinte la plus lumineuse du
+ * spectre* — il pèse 0,59 dans la luminance quand le bleu pèse 0,11 — donc
+ * c'est le seul qui garde sa couleur posé haut en clarté. **Le critère est donc
+ * le C\*ab, pas l'écart au gris.**
+ *
+ * **D'OÙ LA DESCENTE : chaque teinte perd de la clarté jusqu'à ce que le clip
+ * cesse de la ronger**, et pas plus bas que ce que le texte supporte. Le clip
+ * mord tant que `L + hi > 1`, donc la cible est `1 − hi` — *une formule fermée,
+ * aucune dichotomie.* Ce que ça rend, mesuré en C\*ab : **bleu +30 %, violet
+ * +33 %, orange +34 %**, le blanc immobile (il ne sature pas, donc il n'a rien
+ * à gagner — et *le bas d'une échelle ne doit pas parler*) et le vert d'un
+ * cheveu (+8 %, il y était presque).
+ *
  * **ET LE PIGMENT SUIT LA SATURATION DU MÉTAL, il ne la force pas.** Le cran du
  * bas est un gris à peine bleuté — 0,047 d'écart au gris — donc *le forcer à
  * une saturation commune en ferait un bleu pâle*, qui entrerait en collision
@@ -895,6 +922,57 @@ export function tonDuLustre(rarete: string | undefined): readonly [number, numbe
 const PIGMENT_PLAQUE = [1.4, 1.7, 1.7] as const
 const LUM_PLAQUE = [0.895, 0.795, 0.752] as const
 const PLAQUE_CLAIRE = ['#fdfefe', '#eaeef4', '#dde4ec'] as const
+/**
+ * De combien une teinte peut perdre en clarté pour gagner en couleur, au plus.
+ *
+ * **C'est le TEXTE qui le fixe, et le chiffre est mesuré** : à 0,065, le mot du
+ * type garde **4,77** de contraste sur le pire cran — *exactement ce qu'il avait
+ * avant la descente* — et le cartouche 6,09. Un cran de plus le ferait tomber
+ * sous le plancher de 4,5.
+ */
+const DESCENTE_PLAQUE = 0.065
+
+/** La luminance de COMPOSITION — celle du ClipColor, pas celle du WCAG. */
+function lumDeComposition(t: number[]): number {
+  return 0.3 * t[0]! + 0.59 * t[1]! + 0.11 * t[2]!
+}
+
+/**
+ * La teinte PURE d'un métal — sa saturation portée à 1 — et son pigment dosé.
+ *
+ * **LE PIGMENT PEUT DÉPASSER 1, LA SATURATION NON.** Au-delà, la teinte
+ * sortirait de [0,1] AVANT le ClipColor, qui la ramènerait **en la déformant** :
+ * un orange sursaturé virerait de teinte au lieu de saturer. *Une borne qui ne
+ * mord que sur les crans les plus francs les protège tous.*
+ *
+ * Elle est partagée par le ton et par la descente, parce que les deux lisent le
+ * même `hi` : *deux endroits qui décriraient la même teinte se désaccorderaient
+ * au premier réglage.*
+ */
+function teinteDuMetal(metal: string, pigment: number): { pur: number[]; sat: number } {
+  const c = [1, 3, 5].map((i) => parseInt(metal.slice(i, i + 2), 16) / 255)
+  const bas = Math.min(...c)
+  const haut = Math.max(...c)
+  return {
+    pur: haut > bas ? c.map((x) => (x - bas) / (haut - bas)) : [0.5, 0.5, 0.5],
+    sat: Math.min(1, (haut - bas) * pigment),
+  }
+}
+
+/**
+ * DE COMBIEN CE CRAN DOIT DESCENDRE POUR QUE SA COULEUR SE VOIE.
+ *
+ * Le ClipColor écrase la teinte dès qu'un canal dépasse 1, c'est-à-dire tant
+ * que `L + hi > 1` : la clarté juste suffisante est donc `1 − hi`, **et c'est
+ * une formule fermée.** Un cran qui ne sature pas (le gris du premier barreau)
+ * rend zéro — *il n'a rien à gagner* — et un cran qui en demanderait trop
+ * s'arrête au plancher du texte.
+ */
+function descenteDeLaPlaque(metal: string): number {
+  const { pur, sat } = teinteDuMetal(metal, PIGMENT_PLAQUE[1])
+  const ecartHaut = (Math.max(...pur) - lumDeComposition(pur)) * sat
+  return Math.max(0, Math.min(DESCENTE_PLAQUE, LUM_PLAQUE[1] - (1 - ecartHaut)))
+}
 
 /**
  * Un ton de plaque : la teinte du métal, dosée, à la luminance voulue.
@@ -906,24 +984,14 @@ const PLAQUE_CLAIRE = ['#fdfefe', '#eaeef4', '#dde4ec'] as const
  * marche partout.
  */
 function tonDeLaPlaque(metal: string, pigment: number, cible: number): string {
-  const c = [1, 3, 5].map((i) => parseInt(metal.slice(i, i + 2), 16) / 255)
-  const bas = Math.min(...c)
-  const haut = Math.max(...c)
-  // La teinte PURE du métal — sa saturation portée à 1 — puis dosée.
-  const u = haut > bas ? c.map((x) => (x - bas) / (haut - bas)) : [0.5, 0.5, 0.5]
-  // **LE PIGMENT PEUT DEPASSER 1, LA SATURATION NON.** Au-dela, la teinte
-  // sortirait de [0,1] AVANT le ClipColor, qui la ramenerait en la deformant :
-  // un orange sursature virerait de teinte au lieu de saturer. *Une borne qui
-  // ne mord que sur les crans les plus francs les protege tous.*
-  const sat = Math.min(1, (haut - bas) * pigment)
-  const lumDe = (t: number[]): number => 0.3 * t[0]! + 0.59 * t[1]! + 0.11 * t[2]!
-  const ecart = cible - sat * lumDe(u)
+  const { pur: u, sat } = teinteDuMetal(metal, pigment)
+  const ecart = cible - sat * lumDeComposition(u)
   let t = u.map((x) => x * sat + ecart)
   // ClipColor : une teinte portée à une luminance donnée peut sortir de [0,1].
   // **Les deux passes sont nécessaires** — ramener les négatifs peut faire
   // dépasser 1 — et on ramène vers la luminance, qui est ce qu'on garde.
   const vers = (borne: number, val: number): void => {
-    const l = lumDe(t)
+    const l = lumDeComposition(t)
     if (Math.abs(val - l) > 1e-6) {
       const k = (borne - l) / (val - l)
       t = t.map((x) => l + (x - l) * k)
@@ -966,10 +1034,15 @@ function tonsDeLaPlaque(rarete: string | undefined): readonly [string, string, s
   if (metal === undefined) return PLAQUE_CLAIRE
   const garde = PLAQUES.get(cran)
   if (garde !== undefined) return garde
+  // UN SEUL DÉCALAGE POUR LES TROIS NIVEAUX, et il se calcule sur celui du BAS.
+  // Appliqué niveau par niveau, chacun descendrait jusqu'à son propre plancher
+  // et le dégradé s'écraserait en un aplat : *ce qui doit se conserver, c'est
+  // l'écart entre les trois.*
+  const d = descenteDeLaPlaque(metal[2])
   const tons: readonly [string, string, string] = [
-    tonDeLaPlaque(metal[2], PIGMENT_PLAQUE[0], LUM_PLAQUE[0]),
-    tonDeLaPlaque(metal[2], PIGMENT_PLAQUE[1], LUM_PLAQUE[1]),
-    tonDeLaPlaque(metal[2], PIGMENT_PLAQUE[2], LUM_PLAQUE[2]),
+    tonDeLaPlaque(metal[2], PIGMENT_PLAQUE[0], LUM_PLAQUE[0] - d),
+    tonDeLaPlaque(metal[2], PIGMENT_PLAQUE[1], LUM_PLAQUE[1] - d),
+    tonDeLaPlaque(metal[2], PIGMENT_PLAQUE[2], LUM_PLAQUE[2] - d),
   ]
   PLAQUES.set(cran, tons)
   return tons
@@ -4090,12 +4163,12 @@ function peindreTextes(
   // se fait à la taille choisie, et s'il coûte une ligne de trop on descend
   // d'un cran : c'est exactement ce que `cran` fait pour un effet long.
   const { taille, lignes } = corpsDuCartouche(ctx, carte.effet, LARGE * 0.86, famille)
-  // LE SOUS-TEXTE FONCE AVEC CHAQUE CRAN DE PIGMENT. La plaque descend de 0,93
-  // à 0,795 de luminance pour que la couleur se voie, et à `#5d6e80` le
-  // cartouche serait tombé à 3,1 de contraste sur le pire cran — *sous le
-  // plancher de 4,5 que le gris d'avant tenait tout juste.* Il remonte à
-  // **6,4 au pire**, donc mieux qu'avant partout.
-  ctx.fillStyle = bulle ? '#2f3f4d' : '#f1e6cf'
+  // LE SOUS-TEXTE FONCE AVEC CHAQUE CRAN DE COULEUR. La plaque descend de 0,93
+  // à 0,730 de luminance au plus bas pour que la teinte se voie, et à `#5d6e80`
+  // le cartouche serait tombé à 2,8 de contraste sur le pire cran — *sous le
+  // plancher de 4,5 que le gris d'avant tenait tout juste.* Il tient **6,1 au
+  // pire**, donc mieux qu'avant partout.
+  ctx.fillStyle = bulle ? '#283644' : '#f1e6cf'
   ctx.shadowColor = bulle ? 'transparent' : '#000000aa'
   ctx.shadowOffsetY = bulle ? 0 : 0.4 * U
   ctx.shadowBlur = bulle ? 0 : 0.8 * U
@@ -4167,12 +4240,12 @@ function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre, bulle 
     ctx.beginPath()
     ctx.roundRect(LARGE / 2 - l / 2, y - h / 2, l, h, h / 2)
     ctx.fill()
-    // LE MOT FONCE AVEC ELLE, ET C'EST LUI QUI BORNE LA TEINTE. Il n'avait que
+    // LE MOT FONCE AVEC ELLE, ET C'EST LUI QUI BORNE LA COULEUR. Il n'avait que
     // 3,4 de contraste sur le gris d'avant — déjà sous le plancher — et c'est
-    // le texte qui tombe le plus vite quand le pigment monte : *0,2 par cran,
-    // deux fois le cartouche.* Il remonte à **4,8 au pire et 5,9 au mieux**,
-    // donc mieux qu'avant sur les cinq crans.
-    ctx.fillStyle = '#3b4a5a'
+    // le texte qui tombe le plus vite quand la plaque s'assombrit : *c'est lui
+    // qui fixe `DESCENTE_PLAQUE`, pas le cartouche.* Il tient **4,77 au pire**,
+    // exactement ce qu'il avait avant la descente, et 7,7 sur le vert.
+    ctx.fillStyle = '#303e4c'
     ctx.textAlign = 'left'
     ctx.fillText(mot, LARGE / 2 - encre / 2, y)
     ctx.textAlign = 'center'
