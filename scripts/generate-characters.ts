@@ -1845,7 +1845,7 @@ function resume(cartes: CharacterCard[]): string {
   // disait, parce qu'aucun tableau ne croisait les deux axes.
   l.push('LA RARETE DANS CHAQUE DOMAINE')
   l.push('-----------------------------')
-  l.push(`  ${'domaine'.padEnd(14)} ${'n'.padStart(5)}  ` + RARETES.map((r) => r.slice(0, 6).padStart(7)).join(''))
+  l.push(`  ${'domaine'.padEnd(14)} ${'n'.padStart(5)}  ` + RARETES.map((r) => r.slice(0, 6).padStart(10)).join(''))
   for (const d of DOMAINES) {
     const g = cartes.filter((c) => c.domaine === d)
     if (g.length === 0) continue
@@ -1853,7 +1853,7 @@ function resume(cartes: CharacterCard[]): string {
       `  ${d.padEnd(14)} ${String(g.length).padStart(5)}  ` +
         RARETES.map((r) => {
           const k = g.filter((c) => c.rarete === r).length
-          return `${k} (${((100 * k) / g.length).toFixed(0)}%)`.padStart(7)
+          return `${k} (${((100 * k) / g.length).toFixed(0)}%)`.padStart(10)
         }).join(''),
     )
   }
@@ -1924,7 +1924,48 @@ function resume(cartes: CharacterCard[]): string {
 
 // ---------------------------------------------------------------------- le corps
 
+/**
+ * `--recalcul` : REJOUER LES FORMULES SUR LE CATALOGUE DEJA ECRIT.
+ *
+ * *C'est ce que la purete de `logic/` achete, et ce n'etait pas praticable* :
+ * les notes disent depuis longtemps « le recalcul ne coute rien, le catalogue
+ * se refait sur le JSON deja telecharge » -- encore fallait-il une porte pour
+ * le faire. **Elle sert a chaque fois qu'on relit les bornes de l'attaque**, ce
+ * qui est precisement la derniere chose ecrite a la main dans ce mode.
+ *
+ * Le QUOTA ne se rejoue pas : les candidats ecartes ne sont plus la. Une carte
+ * dont le domaine change passe donc de rayon sans que son rayon se recomplete
+ * -- *c'est ce qui s'est passe quand la table de mots a ete relue*, et c'est
+ * le comportement voulu.
+ */
+function recalculer(): void {
+  const chemin = new URL('characters.json', SORTIE)
+  const lu = JSON.parse(readFileSync(chemin, 'utf8')) as { cartes: CharacterCard[] }
+  const sans = lu.cartes.map((c) => {
+    const stats = statsDerivees({
+      langues: c.langues,
+      vues: c.vues,
+      taille: c.taille,
+      metiers: c.metiers,
+      fiction: c.fiction,
+      description: c.description,
+    })
+    return { ...c, domaine: stats.domaine, attaque: stats.attaque, defense: stats.defense }
+  })
+  const crans = raretesParDomaine(sans)
+  const cartes: CharacterCard[] = sans.map((c, i) => ({ ...c, rarete: crans[i]! }))
+
+  const json = JSON.stringify({ genere: new Date().toISOString(), cartes })
+  writeFileSync(chemin, json, 'utf8')
+  writeFileSync(new URL('stats-summary.txt', SORTIE), resume(cartes), 'utf8')
+  journal(`Recalcule ${cartes.length} cartes -- ${(json.length / 1024).toFixed(0)} Ko`)
+}
+
 async function main(): Promise<void> {
+  if (args.includes('--recalcul')) {
+    recalculer()
+    return
+  }
   const debut = Date.now()
   journal(`Cible : ${cible} personnages${frais ? ' (cache ignore)' : ''}`)
 

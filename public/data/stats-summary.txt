@@ -1,15 +1,15 @@
 RESUME DU JEU DE CARTES-PERSONNAGES
-engendre le 2026-10-11 22:55:53 UTC
+engendre le 2026-10-12 07:46:35 UTC
 
 2931 cartes : 2931 historiques, 0 de fiction
 2931 portent une image (100 %)
 
 PAR RARETE
 ----------
-  commun          2931  100.0 %  ############################
-  rare               0    0.0 %  ............................
-  epique             0    0.0 %  ............................
-  legendaire         0    0.0 %  ............................
+  commun          2023   69.0 %  ###################.........
+  rare             586   20.0 %  ######......................
+  epique           244    8.3 %  ##..........................
+  legendaire        78    2.7 %  #...........................
 
 PAR DOMAINE
 -----------
@@ -25,6 +25,33 @@ PAR DOMAINE
   explorateur      300   10.2 %  ###.........................
   fiction            0    0.0 %  ............................
   autre              0    0.0 %  ............................
+
+LA RARETE DANS CHAQUE DOMAINE
+-----------------------------
+  domaine            n      commun      rare    epique    legend
+  militaire        300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+  politique        300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+  artiste          300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+  scientifique     300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+  penseur          300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+  religieux        300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+  business         300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+  criminel         231   160 (69%)  46 (20%)   19 (8%)    6 (3%)
+  sportif          300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+  explorateur      300   207 (69%)  60 (20%)   25 (8%)    8 (3%)
+
+LE PLUS NOTOIRE DE CHAQUE DOMAINE
+---------------------------------
+  militaire      Charles de Gaulle            legendaire      94483 vues
+  politique      Emmanuel Macron              legendaire     129184 vues
+  artiste        Céline Dion                  legendaire     339641 vues
+  scientifique   Marie Curie                  legendaire      50938 vues
+  penseur        Victor Hugo                  legendaire      60477 vues
+  religieux      Léon XIV                     legendaire     704380 vues
+  business       Bernard Arnault              legendaire      78938 vues
+  criminel       Aileen Wuornos               legendaire     262590 vues
+  sportif        Lionel Messi                 legendaire     619345 vues
+  explorateur    Christophe Colomb            legendaire      35177 vues
 
 PAR SIECLE (de la mort, sinon de la naissance)
 ----------------------------------------------
@@ -74,14 +101,14 @@ PAR SIECLE (de la mort, sinon de la naissance)
 ATTAQUE ET DEFENSE
 ------------------
   attaque :
-     1   2929  ####################
-     2      2  ....................
-     3      0  ....................
-     4      0  ....................
-     5      0  ....................
-     6      0  ....................
-     7      0  ....................
-     8      0  ....................
+     1    284  ##..................
+     2    663  #####...............
+     3    532  ####................
+     4    754  #####...............
+     5    577  ####................
+     6    107  #...................
+     7     11  ....................
+     8      3  ....................
      9      0  ....................
     10      0  ....................
   defense :
@@ -99,24 +126,27 @@ ATTAQUE ET DEFENSE
 LES SOURCES, EN MEDIANE ET PAR RARETE
 -------------------------------------
   rarete           n  langues  vues/30j   octets
-  commun        2931       78      4370    38373
+  commun        2023       69      1833    30253
+  rare           586       86      6002    55337
+  epique         244      106     19575    84971
+  legendaire      78      150     60477   116112
 
 LES DIX PLUS NOTOIRES
 ---------------------
-  Léon XIV                     commun        175 langues   704380 vues  A2/D10  religieux
-  Lionel Messi                 commun        225 langues   619345 vues  A2/D10  sportif
-  Céline Dion                  commun        161 langues   339641 vues  A1/D9  artiste
-  Aileen Wuornos               commun         44 langues   262590 vues  A1/D6  criminel
-  Zinedine Zidane              commun        146 langues   257738 vues  A1/D10  sportif
-  Michael Olise                commun         61 langues   231654 vues  A1/D7  sportif
-  Cristiano Ronaldo            commun        214 langues   191364 vues  A1/D10  sportif
-  Kylian Mbappé                commun        133 langues   165155 vues  A1/D10  sportif
-  Tony Parker                  commun         55 langues   152939 vues  A1/D9  sportif
-  Justin Bieber                commun        180 langues   133097 vues  A1/D9  artiste
+  Léon XIV                     legendaire    175 langues   704380 vues  A8/D10  religieux
+  Lionel Messi                 legendaire    225 langues   619345 vues  A8/D10  sportif
+  Céline Dion                  legendaire    161 langues   339641 vues  A8/D9  artiste
+  Aileen Wuornos               legendaire     44 langues   262590 vues  A7/D6  criminel
+  Zinedine Zidane              legendaire    146 langues   257738 vues  A7/D10  sportif
+  Michael Olise                legendaire     61 langues   231654 vues  A7/D7  sportif
+  Cristiano Ronaldo            legendaire    214 langues   191364 vues  A7/D10  sportif
+  Kylian Mbappé                legendaire    133 langues   165155 vues  A7/D10  sportif
+  Tony Parker                  legendaire     55 langues   152939 vues  A7/D9  sportif
+  Justin Bieber                legendaire    180 langues   133097 vues  A7/D9  artiste
 
 UN EXEMPLE PAR RARETE, PRIS AU MILIEU DE SON CRAN
 -------------------------------------------------
-  commun       Marc Ouellet (41 langues, 4370 vues, A1/D6, religieux)
-  rare         aucune carte -- SEUIL A REVOIR
-  epique       aucune carte -- SEUIL A REVOIR
-  legendaire   aucune carte -- SEUIL A REVOIR
+  commun       Lisa Su (35 langues, 1833 vues, A3/D2, scientifique)
+  rare         Maria Montessori (108 langues, 5991 vues, A4/D8, scientifique)
+  epique       Francisco Franco (134 langues, 18555 vues, A5/D10, militaire)
+  legendaire   Adolf Hitler (328 langues, 57760 vues, A6/D10, politique)
