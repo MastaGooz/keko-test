@@ -12669,7 +12669,12 @@ règle déjà payée sur la découverte par métiers.
 Potentiel mesuré, avec un portrait, un article français et ≥ 10 langues :
 **1 275 entités distinctes** — largement de quoi remplir un rayon de 273.
 
-#### LE POOL DE LA FICTION, MESURÉ : 2 160 cartes possibles
+#### LE POOL DE LA FICTION, MESURÉ : 2 160 cartes — *puis 4 183*
+
+**Les chiffres qui suivent sont ceux des treize natures EN DIRECT.** La clôture
+sur les tiroirs mythologiques a doublé le pool le jour même : voir « UN BANC QUI
+PREND TOUT LE POOL », juste en dessous. *Ils restent ici parce que la
+décomposition par nature, elle, ne bouge pas.*
 
 Keko : « niveau fiction, on a un pool total de combien de personnages sur wiki
 (avec article fr, image) ». Les treize natures, article français exigé, pool
@@ -12732,6 +12737,80 @@ sans image Wikidata garde le repli de l'image d'en-tête ; un fictif non. Donc l
 portrait est une condition **nécessaire** pour un fictif, et l'exiger à la
 découverte ne retire rien qui aurait pu devenir une carte. **Chaque porte filtre
 ce qu'elle peut.**
+
+#### UN BANC QUI PREND TOUT LE POOL : `?paquet&fiction`
+
+Demandé par Keko : « on peut faire un test avec un booster uniquement fiction où
+on a la totalité du pool dispo ? » *Le rayon du jeu en garde 273* — **un banc
+montre le catalogue, pas l'état de la partie**, la règle de `?r3f&raretes` et de
+`?board&pool=N`.
+
+`npm run personnages -- --fiction` écrit `public/data/fiction.json` :
+**4 183 cartes, toutes illustrées**, pyramide exacte (69,2 / 20,0 / 8,3 / 2,5 %).
+
+Trois différences avec le catalogue du jeu, et chacune découle du mot
+« totalité » :
+
+- **ni seuil de langues, ni pré-tri, ni quota** ;
+- **pas de somme multilingue** : elle coûte quinze requêtes par paquet de
+  cinquante, soit une demi-heure pour un fichier qu'on regarde une fois. *La
+  rareté est un QUANTILE, donc elle n'a besoin que d'un ordre* — les vues
+  françaises en donnent un ;
+- **les humains sont ÉCARTÉS et comptés** : un personnage peut être déclaré
+  « personnage de cinéma » tout en étant `Q5` — une personne réelle portée à
+  l'écran. **204 sur 9 026**, donc le pool est pur à 97,7 %.
+
+**ET LE POOL EST LE DOUBLE DE CE QUE J'AVAIS ANNONCÉ.** J'avais répondu
+**2 160** à Keko, mesuré avec les treize natures **en direct** ; la clôture sur
+les tiroirs mythologiques en ajoute autant. ***Une mesure écrite une fois ne
+reste pas vraie quand ce qui la produit a bougé*** — et ici c'est la table des
+natures qui a bougé le jour même.
+
+#### POURQUOI DARK VADOR MANQUE, ET POURQUOI ZEUS MANQUAIT
+
+Les deux absences avaient deux causes, et il a fallu les séparer :
+
+| | nature connue | image libre |
+|---|---|---|
+| **Dark Vador, Mario, Naruto** | **oui, les six** | **NON** |
+| **Zeus, Odin, Ulysse, Pikachu** | **aucune** | oui |
+
+- **le premier groupe est IRRÉPARABLE** : il n'existe aucune image libre de ces
+  personnages, et c'est exactement pour ça que Wikidata ne leur en déclare pas.
+  *Le filtre d'image coûte 71 % du pool, et il coûte précisément les
+  personnages récents sous licence* ;
+- **le second était une table incomplète**, et c'est ce qui a doublé le banc.
+
+**LES DIVINITÉS SONT DÉCLARÉES PAR PANTHÉON ET PAR FONCTION, jamais par
+« divinité »** : Zeus est *divinité grecque*, *divinité olympienne*, *roi des
+dieux* et *divinité du tonnerre* — **aucune de ces quatre natures n'est
+`Q178885`.** Ulysse est *personnage de la mythologie grecque*.
+
+#### LA CLÔTURE TRANSITIVE DÉPEND DU TIROIR, elle n'est pas interdite en soi
+
+C'est la nuance que la mesure a imposée, et elle corrige ce que j'avais écrit le
+matin même :
+
+| | en direct | en clôture |
+|---|---|---|
+| fiction moderne (`Q95074` et ses voisins) | 0,5 à 8,7 s | **504 au bout de 65 s** |
+| divinité | 149 | **1 192 en 4,6 s** |
+| créature mythologique | 142 | **855 en 9,4 s** |
+| personnage légendaire | 149 | **681 en 17,2 s** |
+
+*Le poids d'une requête tient à son PARCOURS* — la règle déjà payée sur la
+découverte par métiers — **et les tiroirs mythologiques sont petits**, donc on
+peut y descendre. La table porte donc un drapeau par nature : **en direct pour la
+fiction moderne, en clôture pour la mythologie.**
+
+Ce que ça rend : Zeus, Odin, Ulysse, Thor, Anubis, Osiris, Vishnou, Merlin,
+Pégase, Cerbère, le Minotaure — et **le catalogue du jeu en profitera à la
+prochaine génération**, puisque c'est la même table.
+
+**PRIX À CONNAÎTRE** : `fiction.json` pèse **1,8 Mo**, soit autant que le
+catalogue du jeu. *C'est un banc*, donc il ne se charge que derrière son
+paramètre — mais `public/` est servi tel quel, et le dépôt porte désormais 7,5 Mo
+de catalogues.
 
 #### UN LOT DE NATURES PERDU REND SES CARTES HUMAINES, PAS FICTIVES
 

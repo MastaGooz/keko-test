@@ -13,11 +13,17 @@ import { parsePersonnages, type CharacterCard } from '../logic/characters/types.
  * dans son nom -- comme tout ce qui vit dans `public/`. Son URL porte donc la
  * date du build, sinon regenerer le fichier ne changerait rien a l'ecran.
  */
-function urlDesCartes(): string {
-  return `${import.meta.env.BASE_URL}data/characters.json?v=${encodeURIComponent(__BUILD_TIME__)}`
+function urlDesCartes(fichier: string): string {
+  return `${import.meta.env.BASE_URL}data/${fichier}.json?v=${encodeURIComponent(__BUILD_TIME__)}`
 }
 
-let enCours: Promise<CharacterCard[]> | null = null
+/**
+ * LE CACHE EST PAR FICHIER, et il le faut : `?paquet&fiction` ouvre le banc du
+ * pool entier a cote du catalogue du jeu. *Un cache a une seule place rendrait
+ * le premier catalogue charge a tous les suivants* -- et ca ne se verrait qu'en
+ * passant d'un banc a l'autre sans recharger.
+ */
+const enCoursPar = new Map<string, Promise<CharacterCard[]>>()
 
 /**
  * Charge les cartes-personnages. Mis en cache pour toute la session : le
@@ -27,18 +33,19 @@ let enCours: Promise<CharacterCard[]> | null = null
  * condamnerait les cartes jusqu'au rechargement, la lecon des textures de
  * cartes.
  */
-export function loadCharacters(): Promise<CharacterCard[]> {
-  if (enCours !== null) return enCours
+export function loadCharacters(fichier = 'characters'): Promise<CharacterCard[]> {
+  const deja = enCoursPar.get(fichier)
+  if (deja !== undefined) return deja
   const p = (async () => {
-    const reponse = await fetch(urlDesCartes())
-    if (!reponse.ok) throw new Error(`characters.json : HTTP ${reponse.status}`)
+    const reponse = await fetch(urlDesCartes(fichier))
+    if (!reponse.ok) throw new Error(`${fichier}.json : HTTP ${reponse.status}`)
     const cartes = parsePersonnages(await reponse.text())
-    if (cartes.length === 0) throw new Error('characters.json : aucune carte valide')
+    if (cartes.length === 0) throw new Error(`${fichier}.json : aucune carte valide`)
     return cartes
   })()
-  enCours = p
+  enCoursPar.set(fichier, p)
   p.catch(() => {
-    if (enCours === p) enCours = null
+    if (enCoursPar.get(fichier) === p) enCoursPar.delete(fichier)
   })
   return p
 }

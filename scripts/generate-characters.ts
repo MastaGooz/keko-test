@@ -1130,29 +1130,47 @@ function qid(url: string | undefined): string | undefined {
  * Q-id qui rend zero ne leve pas, et une entree morte dans une table est un
  * mensonge.***
  *
- * **ET LA CLOTURE TRANSITIVE EST LA SEULE CHOSE QU'ON NE PEUT PAS FAIRE** :
- * `wdt:P31/wdt:P279*` sur ces natures rend **504 au bout de 65 secondes**,
- * mesure, alors que les quatorze natures prises UNE A UNE repondent en 0,5 a
- * 8,7 secondes chacune. *Le poids d'une requete tient a son PARCOURS, pas a son
- * nombre de lignes* -- la regle deja payee sur la decouverte par metiers.
+ * **ET LA CLOTURE TRANSITIVE DEPEND DU TIROIR, elle n'est pas interdite en
+ * soi** -- c'est la nuance, et elle a demande de la mesurer des deux cotes :
+ *
+ * | | en direct | en cloture |
+ * |---|---|---|
+ * | fiction moderne (`Q95074` et ses voisins) | 0,5 a 8,7 s | **504 au bout de 65 s** |
+ * | divinite | 149 | **1 192 en 4,6 s** |
+ * | creature mythologique | 142 | **855 en 9,4 s** |
+ * | personnage legendaire | 149 | **681 en 17,2 s** |
+ *
+ * *Le poids d'une requete tient a son PARCOURS* -- la regle deja payee sur la
+ * decouverte par metiers -- et **les tiroirs mythologiques sont petits**, donc
+ * on peut y descendre. ***C'EST LA SEULE FACON D'AVOIR ZEUS, ODIN ET
+ * ULYSSE*** : les divinites sont declarees par PANTHEON et par FONCTION, jamais
+ * par « divinite » -- Zeus est « divinite grecque », « divinite olympienne »,
+ * « roi des dieux » et « divinite du tonnerre », et aucune de ces quatre
+ * natures n'est `Q178885`.
  */
-const NATURES_FICTION: readonly string[] = [
-  'Q95074', // personnage de fiction
-  'Q15632617', // personnage humain de fiction
-  'Q3658341', // personnage litteraire
-  'Q15773347', // personnage de cinema
-  'Q15773317', // personnage de serie televisee
-  'Q1114461', // personnage de bande dessinee
-  'Q15711870', // personnage d'animation
-  'Q21070568', // personnage de manga
-  'Q3375722', // personnage de theatre
-  'Q178885', // divinite
-  'Q2239243', // creature mythologique
-  'Q13002315', // personnage legendaire
-  'Q3010369', // personnage biblique
+const NATURES_FICTION: readonly (readonly [string, boolean])[] = [
+  // LA FICTION MODERNE, EN DIRECT : ces tiroirs sont enormes et leurs
+  // sous-classes innombrables, donc la cloture y rend 504.
+  ['Q95074', false], // personnage de fiction
+  ['Q15632617', false], // personnage humain de fiction
+  ['Q3658341', false], // personnage litteraire
+  ['Q15773347', false], // personnage de cinema
+  ['Q15773317', false], // personnage de serie televisee
+  ['Q1114461', false], // personnage de bande dessinee
+  ['Q15711870', false], // personnage d'animation
+  ['Q21070568', false], // personnage de manga
+  ['Q3375722', false], // personnage de theatre
+  ['Q3010369', false], // personnage biblique
+  // LA MYTHOLOGIE, EN CLOTURE : voir juste au-dessus -- c'est la SEULE facon
+  // d'avoir Zeus, Odin et Ulysse, et elle passe parce que ces tiroirs sont
+  // petits.
+  ['Q178885', true], // divinite
+  ['Q2239243', true], // creature mythologique
+  ['Q13002315', true], // personnage legendaire
+  ['Q22988604', false], // personnage de la mythologie grecque
 ]
 
-const NATURES_PERSO = new Set(['Q5', ...NATURES_FICTION])
+const NATURES_PERSO = new Set(['Q5', ...NATURES_FICTION.map(([q]) => q)])
 
 /** Les pages qui ne sont pas des articles. */
 const HORS_SUJET =
@@ -1334,20 +1352,20 @@ SELECT ?item ?langues WHERE {
  * **1 275 entites distinctes** une fois l'article FR exige aussi -- largement
  * de quoi remplir un rayon de 273.
  */
-async function decouvrirFiction(): Promise<Candidat[]> {
-  journal(`Decouverte de la fiction : ${NATURES_FICTION.length} natures, >= ${LANGUES_MINIMUM.fiction} langues`)
+async function decouvrirFiction(seuil = LANGUES_MINIMUM.fiction): Promise<Candidat[]> {
+  journal(`Decouverte de la fiction : ${NATURES_FICTION.length} natures, >= ${seuil} langues`)
   const out: Candidat[] = []
   echeance = Infinity
-  for (const nature of NATURES_FICTION) {
+  for (const [nature, cloture] of NATURES_FICTION) {
     const requete = (bas: number, haut: number | null) => `
 SELECT ?item ?langues WHERE {
-  ?item wdt:P31 wd:${nature} ; wdt:P18 ?img ; wikibase:sitelinks ?langues .
+  ?item wdt:P31${cloture ? '/wdt:P279*' : ''} wd:${nature} ; wdt:P18 ?img ; wikibase:sitelinks ?langues .
   FILTER(?langues >= ${bas}${haut === null ? '' : ` && ?langues < ${haut}`})
 }`
     const lot = await lotRedecoupable(
-      `fiction-${nature}`,
+      `fiction-${nature}${cloture ? '-c' : ''}`,
       requete,
-      LANGUES_MINIMUM.fiction,
+      seuil,
       PLAFOND_LANGUES,
     )
     let n = 0
@@ -2035,6 +2053,116 @@ async function nonHumains(ids: readonly string[]): Promise<Set<string>> {
   return sortie
 }
 
+/**
+ * `--fiction` : UN BANC D'ESSAI QUI PREND TOUT LE POOL DE LA FICTION.
+ *
+ * Demande par Keko : « on peut faire un test avec un booster uniquement fiction
+ * ou on a la totalite du pool dispo ? » *Le rayon du jeu en garde 273 sur
+ * 1 472*, donc on ne peut rien dire du pool en ouvrant des paquets du catalogue
+ * ordinaire -- **un banc montre le catalogue, pas l'etat de la partie.** Meme
+ * motif que `?r3f&raretes` et `?board&pool=N`.
+ *
+ * Il ecrit `public/data/fiction.json`, que `?paquet&fiction` ouvre. Trois
+ * differences avec le catalogue du jeu, et chacune est une consequence du mot
+ * « totalite » :
+ *
+ * - **ni seuil de langues, ni pre-tri, ni quota** : on prend tout ce qui a un
+ *   article francais et un portrait, soit **2 160 cartes mesurees** ;
+ * - **pas de somme multilingue.** Elle coute quinze requetes par paquet de
+ *   cinquante, soit une demi-heure pour un fichier qu'on regarde une fois.
+ *   *La rarete est un QUANTILE, donc elle n'a besoin que d'un ordre* -- les vues
+ *   francaises en donnent un, et c'est deja celui du catalogue en ligne ;
+ * - **les humains sont ECARTES et comptes.** Un personnage peut etre declare
+ *   « personnage de cinema » tout en etant `Q5` -- une personne reelle portee a
+ *   l'ecran. *Pour un banc « uniquement fiction », il faut qu'il le soit*, et le
+ *   compte dit au passage la purete du pool.
+ */
+async function bancFiction(): Promise<void> {
+  const debut = Date.now()
+  journal('BANC DE LA FICTION : tout le pool, sans seuil ni quota')
+  const bruts = await decouvrirFiction(0)
+  const parId = new Map<string, Candidat>()
+  for (const c of bruts) if (!parId.has(c.id)) parId.set(c.id, c)
+  journal(`${bruts.length} lignes, ${parId.size} personnages distincts`)
+
+  const candidats = [...parId.values()]
+  const details = await enrichir(candidats)
+  const mesures = await mesurerArticles(
+    [...details.values()].map((d) => d.article).filter((a): a is string => a !== null),
+  )
+  const fictifs = await nonHumains(candidats.map((c) => c.id))
+
+  let sansDetail = 0
+  let sansArticle = 0
+  let humain = 0
+  let sansImage = 0
+  const sans: Omit<CharacterCard, 'rarete'>[] = []
+  for (const c of candidats) {
+    const d = details.get(c.id)
+    if (!d) {
+      sansDetail++
+      continue
+    }
+    // LE BANC EXIGE L'ARTICLE FRANCAIS, la ou le catalogue a un repli anglais :
+    // *c'est le pool que Keko a demande*, et c'est celui qu'on a mesure.
+    const m = d.article === null ? undefined : mesures.get(d.article)
+    if (!m) {
+      sansArticle++
+      continue
+    }
+    if (!fictifs.has(c.id)) {
+      humain++
+      continue
+    }
+    // *Le portrait vient de P18*, que la decouverte exige deja -- donc ce
+    // compteur doit rester a zero, et s'il monte c'est que P18 a disparu entre
+    // la decouverte et l'enrichissement.
+    if (d.image === null) {
+      sansImage++
+      continue
+    }
+    const stats = statsDerivees({
+      langues: d.langues,
+      vues: m.vues,
+      taille: m.taille,
+      metiers: d.metiers,
+      fiction: true,
+      description: d.description,
+    })
+    sans.push({
+      id: c.id,
+      nom: d.nom,
+      description: d.description,
+      article: d.article ?? '',
+      image: d.image,
+      naissance: d.naissance,
+      mort: d.mort,
+      fiction: true,
+      origine: d.origine,
+      metiers: d.metiers,
+      domaine: stats.domaine,
+      langues: d.langues,
+      taille: m.taille,
+      vues: m.vues,
+      attaque: stats.attaque,
+      defense: stats.defense,
+    })
+  }
+  journal(
+    `Ecartes : ${sansDetail} sans libelle, ${sansArticle} sans article mesure, ${humain} HUMAINS, ${sansImage} sans portrait`,
+  )
+
+  sans.sort((a, b) => b.vues - a.vues || a.id.localeCompare(b.id))
+  const crans = raretesParDomaine(sans)
+  const cartes: CharacterCard[] = sans.map((c, i) => ({ ...c, rarete: crans[i]! }))
+
+  const json = JSON.stringify({ genere: new Date().toISOString(), cartes })
+  writeFileSync(new URL('fiction.json', SORTIE), json, 'utf8')
+  writeFileSync(new URL('fiction-summary.txt', SORTIE), resume(cartes), 'utf8')
+  journal(`Ecrit ${cartes.length} cartes de fiction -- ${(json.length / 1024).toFixed(0)} Ko`)
+  journal(`Fini en ${((Date.now() - debut) / 1000 / 60).toFixed(1)} min`)
+}
+
 // ---------------------------------------------------------------------- le corps
 
 /**
@@ -2094,6 +2222,10 @@ async function recalculer(): Promise<void> {
 async function main(): Promise<void> {
   if (args.includes('--recalcul')) {
     await recalculer()
+    return
+  }
+  if (args.includes('--fiction')) {
+    await bancFiction()
     return
   }
   const debut = Date.now()

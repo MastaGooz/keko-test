@@ -168,7 +168,21 @@ export function Paquet3D(): React.ReactElement {
    * et `?fond=image`.
    */
   const params = new URLSearchParams(location.search)
-  const personnages = params.has('perso')
+  /**
+   * `?paquet&fiction` OUVRE LE BANC DU POOL ENTIER DE LA FICTION.
+   *
+   * Demande par Keko : « on peut faire un test avec un booster uniquement
+   * fiction ou on a la totalite du pool dispo ? » *Le rayon du jeu en garde 273
+   * sur 1 472*, donc on ne peut rien dire du pool en ouvrant des paquets du
+   * catalogue ordinaire -- **un banc montre le catalogue, pas l'etat de la
+   * partie.** Il lit `fiction.json`, qu'engendre `npm run personnages --
+   * --fiction`.
+   *
+   * Il IMPLIQUE le mode personnages : *une carte de fiction est une
+   * carte-personnage*, elle se dessine avec le meme gabarit.
+   */
+  const fiction = params.has('fiction')
+  const personnages = params.has('perso') || fiction
   const peintures = params.has('art')
   /**
    * `?paquet&culbute` REND LA CULBUTE, et le développement est le défaut.
@@ -252,7 +266,7 @@ export function Paquet3D(): React.ReactElement {
     const charger = peintures
       ? chargerPeintures()
       : personnages
-        ? loadCharacters()
+        ? loadCharacters(fiction ? 'fiction' : 'characters')
         : chargerAnimaux()
     void charger.then((cartes: CarteDuMode[]) => {
       if (!vivant) return
@@ -262,7 +276,7 @@ export function Paquet3D(): React.ReactElement {
     return () => {
       vivant = false
     }
-  }, [personnages, peintures])
+  }, [personnages, peintures, fiction])
 
   useEffect(() => {
     const suivre = () => setFenetre({ l: window.innerWidth, h: window.innerHeight })
