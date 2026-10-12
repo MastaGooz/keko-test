@@ -1,7 +1,7 @@
 {
   "name": "Keko test",
   "short_name": "Keko",
-  "description": "Prototype de deckbuilder d'extraction",
+  "description": "Une collection de cartes emoji",
   "start_url": ".",
   "scope": ".",
   "display": "fullscreen",

@@ -1,14 +1,2427 @@
 # keko-test
 
-Jeu web (Vite + TypeScript vanilla, sans framework), joué **au doigt sur
-téléphone, en paysage uniquement**.
+**LE PROJET PRINCIPAL EST LA COLLECTION D'EMOJI.** Tranché par Keko : « on
+laisse définitivement tomber les animaux et les personnages. On garde le projet
+emoji qui devient le principal. Le projet extraction on le garde en archive
+mais on ne travaille plus dessus. Focus sur le projet emoji. »
 
-*Le portrait a été abandonné le 19/09.* On s'est battu contre la hauteur toute
-une journée — trois paliers de resserrement, une mise en page à deux colonnes,
-des cartes plafonnées, un aperçu de PV retiré parce qu'il ajoutait une ligne.
-Un affrontement avec quatre corps, cinq cartes et deux piles veut de la
-largeur : aucun jeu du genre n'existe en portrait. Le prix assumé : **le jeu ne
-se joue plus à une main.**
+| | où | statut |
+|---|---|---|
+| **la collection d'EMOJI** | la racine, et `?paquet` | **le projet — tout le travail va là** |
+| les PEINTURES | `?paquet&art` | une seconde collection, gardée ouvrable |
+| le jeu d'EXTRACTION | `?extraction`, `?r3f`, `?jeu` | **archive** : il marche, on n'y touche plus |
+| les ANIMAUX, les PERSONNAGES, le PLATEAU | — | **supprimés** |
+
+**LA PAGE PAR DÉFAUT APPARTIENT À CE SUR QUOI ON TRAVAILLE**, et c'est le
+mouvement qui avait déjà donné la racine au moteur 3D le jour où il a rattrapé
+le jeu : *un projet principal s'ouvre sans paramètre, une archive s'ouvre par
+son nom.* L'extraction garde **trois** adresses parce que tous les liens déjà
+donnés à Keko passent par là — *une adresse qu'on a distribuée ne doit pas
+cesser de marcher le jour où elle change de rang.*
+
+**LE PLATEAU EST PARTI AVEC LES PERSONNAGES, et ce n'était pas un choix.** Ses
+deux prototypes (`?board`, `?duel`) lisaient le catalogue des personnages et le
+graphe de leurs articles Wikipédia : *sans eux, il n'a plus ni cartes ni
+liens.* Keko avait dit « je veux pas arrêter ce proto » — **c'est la donnée sur
+laquelle il était bâti qui a été abandonnée**, pas le proto lui-même, et tout
+ce qu'il a appris est dans `git log`.
+
+*Les leçons transverses des modes supprimés RESTENT écrites dans ce fichier* —
+le canvas qui peint à la taille d'affichage, la police qu'il faut attendre
+glyphe par glyphe, les quantiles plutôt que des bornes écrites à la main, « une
+mesure écrite une fois ne reste pas vraie quand ce qui la produit a bougé ».
+***Supprimer l'histoire d'une décision ne supprime pas la décision, ça supprime
+la raison de s'y tenir.***
+
+Les deux collections sont des jeux web (Vite + TypeScript, React + React Three
+Fiber pour le rendu des cartes), joués **au doigt sur téléphone, en paysage
+uniquement**.
+
+
+## LE PROJET : UNE COLLECTION D'EMOJI — la racine, et `?paquet`
+
+**C'est le projet principal depuis que Keko a rangé le reste** : « on garde le
+projet emoji qui devient le principal. Focus sur le projet emoji. » Il s'ouvre
+donc **sans paramètre**, `?paquet&emoji` continuant de marcher pour les liens
+déjà distribués.
+
+Demandé par Keko : « maintenant je voudrais un autre test : on utilise des
+emoji : noto color emoji et noto animated emoji ». *Deux lectures menaient à des
+travaux très différents* — une collection d'emoji, ou des emoji en guise
+d'illustration des cartes existantes — et il a tranché : **une collection.**
+
+*Il est né cinquième mode derrière un paramètre, à côté de quatre autres* ; des
+cinq, c'est le seul qui reste au travail.
+
+`npm run emoji` écrit `public/data/emoji.json` : **1 923 cartes, 443 Ko**, en
+100 secondes. **Et `--peau` en écrit 3 963** — voir juste en dessous.
+
+### DEUX SOURCES CANONIQUES, ET AUCUNE DÉPENDANCE
+
+| | ce qu'elle donne |
+|---|---|
+| **Unicode** (`emoji-test.txt`, 621 Ko) | le caractère, son groupe, sa VERSION d'introduction |
+| **CLDR** (deux fichiers) | son nom français et ses mots-clés |
+
+**Les variantes de couleur de peau sont écartées par défaut** — 3 963 entrées,
+1 923 une fois retirées. *C'est une décision de design*, et elle est ouvrable :
+voir la sous-section qui suit. Le groupe `Component` est écarté sans appel : ses
+membres ne sont pas des emoji, ce sont des morceaux de séquence.
+
+**IL FAUT LES DEUX FICHIERS CLDR**, et ça ne se devine pas : `annotations` en
+porte 1 966 et **ignore les drapeaux**, qui vivent dans `annotationsDerived`.
+Et la clé peut être écrite **sans le sélecteur de variante** — le cœur rouge y
+figure sans lui — donc on essaie les deux formes. Résultat : **9 cartes sur
+1 923 sans nom français**, qui gardent leur nom anglais.
+
+**L'USER-AGENT NE PORTE PAS D'ADRESSE ICI.** Celui de `outils.ts` en a une
+parce que la politique de Wikimedia demande un contact ; *Unicode, GitHub et
+gstatic ne le demandent pas*, et on n'envoie pas l'adresse de quelqu'un à un
+service qui ne l'a pas réclamée.
+
+#### LES VARIANTES DE COULEUR DE PEAU — écartées, et `?paquet&emoji&peau` les rend
+
+Keko : « il me semblait qu'on aurait plutôt 3000+ emoji c'est bizarre, tu as
+peut-être pas inclus les variations de couleurs ? » **Oui, et le compte est
+net** :
+
+| | |
+|---|---|
+| emoji « fully-qualified » d'Unicode | **3 963** |
+| dont **variantes de couleur de peau** | **2 040**, toutes dans « People & Body » |
+| le catalogue par défaut | **1 923** |
+
+**CE N'EST PAS CINQ VARIANTES PARTOUT, et c'est ce qui décide** :
+
+| bases | variantes chacune | |
+|---|---|---|
+| 292 | 5 | les cinq tons habituels (👋🏻👋🏼👋🏽👋🏾👋🏿) |
+| 11 | **25** | deux personnes, donc 5 × 5 |
+| 3 | 35 | |
+| **2** | **100** | « deux personnes se tenant la main », deux silhouettes × tous les tons |
+
+***Deux bases produisent cent cartes à elles seules***, et le rayon « gens »
+passe de 390 à **2 430 cartes — 61 % du catalogue.**
+
+**Et le classement d'Unicode les regroupe explicitement** en un item
+représentatif : une variante n'a pas de rang à elle. Elle **hérite de celui de
+sa base** (`baseSansPeau`), sans quoi les 2 040 tomberaient toutes dans les non
+classées — *un « pouce levé : peau mate » vaudrait moins qu'un drapeau obscur.*
+Résultat : 🙏🏻🙏🏼🙏🏽🙏🏾🙏🏿 sont les premières variantes du catalogue, parce que 🙏
+est 6ᵉ au classement mondial.
+
+*Les noms français ne manquent pas* : CLDR les couvre à **100 %** — « signe de
+la main : peau claire », « peau légèrement mate ».
+
+**C'EST UNE DÉCISION DE DESIGN, DONC LE BANC EST À CÔTÉ DU CATALOGUE, PAS À SA
+PLACE.** `npm run emoji -- --peau` écrit `emoji-peau.json` (3 963 cartes,
+1 094 Ko) et `?paquet&emoji&peau` l'ouvre — *ce qui se teste doit pouvoir
+s'ouvrir d'un lien.*
+
+Ce que ça change, mesuré sur les deux catalogues :
+
+| | sans variantes | avec |
+|---|---|---|
+| cartes | 1 923 | **3 963** |
+| part du rayon « gens » | 20 % | **61 %** |
+| au classement de fréquence | 76 % | 59 % |
+| animables | 614 (32 %) | 884 (22 %) |
+| poids | 443 Ko | 1 094 Ko |
+
+*La part classée tombe parce que beaucoup de variantes dérivent de bases
+récentes* — les métiers genrés, les familles — **qui ne sont pas au classement
+non plus.**
+
+**ET UN CARACTÈRE INVISIBLE S'ÉTAIT ÉCRIT DANS TROIS REGEX.** Un patch avait
+dé-échappé `️` en le vrai caractère : *le code marchait* — une regex
+matche un caractère littéral comme son échappement — **mais un caractère
+invisible dans du code est un code qu'on ne peut pas relire.** Il est rétabli en
+échappement.
+
+### LA NOTORIÉTÉ EST LA FRÉQUENCE D'USAGE RÉELLE — et le classement est GLOBAL
+
+Tranché par Keko, en deux demandes qui tiennent ensemble : **« je voudrais un
+classement global et pas par groupe »** et **« je voudrais que la rareté soit
+liée à la popularité réelle de l'emoji. Y'a des stats qu'on peut choper quelque
+part sur ça ? »**
+
+**Oui, et j'avais conclu trop vite le contraire.** J'avais écrit qu'« aucun
+fichier de fréquence complet n'existe » après avoir essayé
+`unicode.org/Public/emoji/latest/emoji-frequency.txt`, qui rend 404.
+***Le classement est dans la PAGE*** — `home.unicode.org/emoji/emoji-frequency/`
+— et il est complet.
+
+***UNE RESSOURCE ABSENTE À L'ADRESSE OÙ ON L'ATTEND N'EST PAS UNE RESSOURCE
+ABSENTE.*** C'est la deuxième fois de la journée : la découverte de la fiction
+ne rendait rien par sa racine alors que tout vivait dans ses feuilles.
+
+#### SA FORME EST EXACTEMENT CELLE QU'IL FAUT
+
+**Dix-huit groupes, chacun valant la MOITIÉ du précédent en fréquence d'usage**,
+et les emoji rangés par fréquence décroissante à l'intérieur de chaque groupe —
+donc un ordre total :
+
+| groupe | emoji | les premiers |
+|---|---|---|
+| 0 | **2** | 😂 ❤️ |
+| 1 | 2 | 😍 🤣 |
+| 2 | 5 | 😊 🙏 💕 😭 😘 |
+| 3 | 18 | 👍 😅 👏 😁 ♥️ 🔥 … |
+| … | … | |
+| 11 et au-delà | — | *sous la médiane d'usage* |
+| 17+ | 14 | les drapeaux les plus obscurs |
+
+**1 468 emoji classés**, dont **1 466 retrouvés dans notre catalogue — 76 %.**
+
+**LE TROU A LA BONNE FORME.** Le classement est arrêté à Unicode 12.0, donc les
+24 % qui manquent sont **les emoji de 2016 et après** : ce qui n'est pas mesuré
+est précisément ce qui est le moins employé. Ils vont donc en bas, et
+l'ancienneté suffit à les départager entre eux.
+
+**LES DEUX ÉCHELLES NE SE MÉLANGENT PAS** : tout ce qui est classé passe devant
+tout ce qui ne l'est pas. *Un emoji mesuré et un emoji deviné ne se comparent
+pas*, et les mettre sur la même échelle reviendrait à inventer un rang pour le
+second.
+
+#### LE DÉCOUPAGE REDEVIENT GLOBAL, ET C'EST COHÉRENT AVEC LES PERSONNAGES
+
+*C'est l'inverse de ce que Keko a tranché pour les personnages*, et les deux
+sont justes pour la même raison : ***le découpage par rayon existe pour corriger
+une échelle qui n'est pas comparable d'un rayon à l'autre.***
+
+Chez les personnages, la 300ᵉ artiste a 106 langues et la 300ᵉ criminelle 28 —
+**il n'y a pas de mesure commune**, donc chaque rayon a besoin de la sienne.
+**Ici il y en a une** : la fréquence d'usage se compare entre un visage et un
+drapeau, donc le rayon n'a plus rien à corriger.
+
+Ce que ça donne — chaque groupe tombe où son usage réel le met :
+
+| groupe | commun | peu commun | rare | épique | **légendaire** |
+|---|---|---|---|---|---|
+| **visages** | 20 % | 5 % | 17 % | **39 %** | **19 %** |
+| activités | 36 % | 36 % | 16 % | 7 % | 4 % |
+| gens | 68 % | 14 % | 9 % | 7 % | 2 % |
+| animaux | 31 % | 32 % | 29 % | 7 % | 1 % |
+| nourriture | 30 % | 30 % | 36 % | 4 % | **0** |
+| symboles | 49 % | 30 % | 16 % | 5 % | 0 % |
+| lieux | 44 % | 40 % | 11 % | 4 % | 0 % |
+| objets | 48 % | 34 % | 15 % | 3 % | **0** |
+| **drapeaux** | **76 %** | 18 % | 6 % | 0 % | **0** |
+
+*(Table refaite sur les cinq crans. Les quatre métaux d'avant sont dans
+`git log` : ils disaient exactement la même chose, en moins détaillé.)*
+
+*Les drapeaux perdaient leurs sept légendaires en passant au global, et c'est
+exactement ce qu'une popularité réelle doit produire* — ils sont tous dans le bas
+du classement mondial.
+
+#### CE QUE L'ANCIENNETÉ FAISAIT DE FAUX, ET QUI TOMBE
+
+😂 sortait **épique** et ❤️ **commun**, alors que ce sont **les deux premiers du
+classement mondial** ; les légendaires des visages étaient 😃 😄 😁 😆 😅,
+c'est-à-dire *les cinq premiers du FICHIER Unicode*, pas les cinq plus utilisés.
+
+Le haut du catalogue est désormais : **😂 ❤️ 😍 🤣 😊 🙏 💕 😭 😘 👍 😅 👏 😁 ♥️ 🔥
+💔 💖 💙 😢 🤔 😆 🙄 💪 😉 ☺️ 👌 🤗 💜 😔 😎**
+
+**L'ANIMATION NE DÉCIDE PLUS DE RIEN pour les 76 % classés.** Elle était un
+départage faute de mieux ; elle ne sert plus qu'à trancher entre deux emoji que
+le classement ignore. *Un signal de secours cesse d'en être un le jour où la
+vraie mesure arrive.*
+
+#### LA CARTE DIT SA PLACE, ET LE COMPTEUR CE QU'ELLE DÉPASSE
+
+Le cartouche porte « **976ᵉ au classement d'usage** », ou « Unicode 2016 » pour
+les non classés : *si un chiffre décide du métal, il doit se lire sur la carte.*
+
+Et le compteur de la dernière carte affiche **le nombre d'emoji qu'elle
+dépasse**, pas son rang — **il fallait un chiffre qui MONTE avec la rareté** :
+le rang, lui, descend, donc un compteur qui s'arrêterait à « 3 » pour la carte
+la plus rare monterait vers le commun, *et la teinte monte avec le compteur.*
+
+#### LA PAGE EST ARCHIVÉE, ET LE REPLI EST ÉCRIT
+
+Unicode a archivé cette page : *elle ne bougera plus, mais une page archivée est
+une page qu'on peut retirer.* Si elle disparaît ou si son tableau change de
+forme, le pipeline le journalise et **retombe sur l'ancienneté** — le catalogue
+sort quand même, moins juste.
+
+### L'EMOJI EST PEINT AU CANVAS, ET IL ENTRE PAR LA PORTE D'UNE PHOTO
+
+`imageDeLEmoji` peint le caractère sur une toile carrée de 512, et le résultat
+va dans `illustration()` comme une image. **Donc le décor, le bloom, le rognage,
+le cadre et la rareté marchent sans une ligne de plus** — *un second chemin de
+peinture aurait dérivé du premier au premier réglage.*
+
+**L'emoji rentre ENTIER** (`illustrationEntiere`), comme une peinture : il est
+peint carré alors que la fenêtre d'art est plus haute que large, donc un `cover`
+lui couperait les flancs. Ce qui reste découvert laisse voir le fond peint de la
+carte, qui fait le passe-partout.
+
+#### LE PIÈGE QUI A FAILLI PASSER : Google Fonts découpe la police en ONZE
+
+`document.fonts.load('64px "Noto Color Emoji"')` **sans texte ne télécharge que
+quelques sous-ensembles** — mesuré, trois sur onze — et `document.fonts.check`
+répond quand même `true`. **Un emoji d'une plage non chargée retombe alors en
+silence sur la police système**, qui en rend bien un sur Windows et sur Mac, et
+rien du tout ailleurs.
+
+Mesuré avant correction, sur la vraie page : 😀 ❤️ 🫯 🧑‍🚀 en Noto, **🇫🇷 ♈ 🪾 en
+police système**. On demande donc la police **pour ce caractère-là**
+(`document.fonts.load(police, emoji)`), et on l'attend avant de peindre : *la
+toile part en cache, donc le défaut survivrait au chargement.*
+
+***C'est la règle du canvas qui peint avant `document.fonts.ready`, un cran plus
+fin : il ne suffit pas que la police soit là, il faut que le GLYPHE y soit.***
+
+#### ET LE CDN SÉPARE LES POINTS DE CODE PAR DES UNDERSCORES
+
+L'identifiant d'une carte est en tirets — c'est notre convention, lisible —
+et l'URL de Google en underscores. **Tout emoji à plusieurs points de code était
+donc déclaré non animé** : le cœur rouge sortait statique alors qu'il est le
+deuxième emoji le plus employé au monde, et *rien ne le signalait* — une URL
+fausse rend 404, et un 404 se lit ici comme « pas de version animée ».
+
+***Le format d'un identifiant n'est pas celui d'une URL.*** 541 animés avant
+correction, **614 après**.
+
+**Et le cache a failli masquer la correction** : son corps portait les
+identifiants, donc changer le format de l'URL n'aurait rien retesté. Il porte
+les URLS depuis — *un cache doit dépendre de ce qu'on demande.*
+
+### LES EMOJI ANIMÉS JOUENT SUR LA CARTE — décodés image par image
+
+Keko : « pourquoi les emoji animés ne sont pas animés sur les cartes ? »
+***Parce qu'une carte est une TEXTURE PEINTE AU CANVAS***, et qu'un canvas ne
+joue rien : `drawImage` d'un WebP animé n'en prend qu'une seule image.
+
+**LES TROIS FORMATS DU CDN, MESURÉS** — et seules ces trois tailles existent,
+il n'y a pas de version réduite :
+
+| | poids moyen | ce que ça demande |
+|---|---|---|
+| `lottie.json` | **11 Ko** | un lecteur Lottie, donc **une dépendance** |
+| `512.webp` | 411 Ko | `ImageDecoder` — aucune dépendance |
+| `512.gif` | 642 Ko | pire sur les deux tableaux |
+
+***Le Lottie est trente-sept fois plus léger et c'est le WebP qui gagne***,
+parce que le projet refuse les dépendances et qu'écrire un lecteur Lottie serait
+un moteur de rendu entier. **Le prix est le poids, et il est connu.**
+
+#### CE QUI A RENDU LE CHANTIER PETIT : une peinture coûte 1 à 2 ms
+
+Je redoutais de devoir scinder `peindreCarte` en deux couches — l'emoji vit
+*entre* le décor et le voile, donc une seule texture ne pouvait pas le laisser
+bouger. **La mesure a fermé la question** : une peinture complète coûte
+**1,6 ms à 256, 2,1 ms à 768**.
+
+Donc **la carte se repeint ENTIÈRE à chaque image**, et il suffit d'un champ :
+`CarteAPeindre.image` reçoit une illustration déjà prête, qui passe devant tout
+le reste. *Découper la peinture en deux couches aurait coûté dix fois plus de
+code pour le même résultat.*
+
+Mesuré sur 😂 : 609 Ko, **59 images**, 512 x 512, 30 ms par image, **1,9 ms pour
+en décoder une**. À deux cartes animées et quinze images par seconde, ça fait
+**douze pour cent d'un cœur.**
+
+Trois réglages, et chacun est un arbitrage de mémoire :
+
+- **on décode en 192, pas en 512** : une carte de paquet fait 180 px à l'écran,
+  et chaque image devient un `ImageBitmap` — donc du GPU. *59 images de 192
+  pèsent 8,7 Mo, contre 62 Mo en 512* ;
+- **une image sur deux** : les animations Noto tournent à trente images par
+  seconde, *à quinze un emoji reste parfaitement fluide* — il n'a ni mouvement
+  rapide ni détail fin — et **la durée totale ne change pas**, donc le rythme
+  est le même ;
+- **la toile est RÉUTILISÉE** : sans ça on allouerait trente toiles de trois
+  cents kilo-octets par seconde. Il ne reste qu'un `needsUpdate`.
+
+**La texture est PRIVÉE**, à la différence de toutes les autres : le cache
+partagé sert la même texture à toutes les cartes d'un modèle, et *deux cartes
+animées ne sont jamais au même instant de leur animation.* Elle est donc à nous,
+et on la libère au démontage.
+
+**Et rien ne se joue sur un dos** : *une carte retournée ne dit rien de ce
+qu'elle est*, donc repeindre dessous serait du travail pour personne.
+
+#### TOUS LES ANIMÉS ONT UNE VERSION STATIQUE — mesuré, et c'est structurel
+
+Keko : « est-ce que tous les animés ont une version normale ? » **Oui, et la
+raison vaut mieux que le compte** : *le statique ne vient pas du CDN, il vient de
+la POLICE* — Noto Color Emoji couvre tout Unicode, donc un emoji qui est dans le
+catalogue est forcément peignable. **L'animation est une couche de plus, jamais
+la seule.**
+
+Vérifié glyphe par glyphe sur les deux catalogues, en chargeant le sous-ensemble
+de police de chacun puis en comptant l'encre d'un rendu de 48 px :
+
+| | cartes | animées | **sans rendu statique** |
+|---|---|---|---|
+| le catalogue | 1 923 | 614 | **0** |
+| avec les variantes de peau | 3 963 | 884 | **0** |
+
+*Et aucun ne retombe sur la police système*, ce qui était l'autre façon
+d'échouer : les 614 sont tous rendus par Noto.
+
+#### LE REPLI EST LA CARTE STATIQUE, ET IL EST SILENCIEUX
+
+`ImageDecoder` est dans Chrome, Edge et Safari 17 ; **ailleurs la carte reste
+statique**. *Une animation ne doit jamais pouvoir empêcher une carte de
+s'afficher* — c'est la règle du repère de la carte vers l'armure, qui se joue
+sans rien montrer quand le repère manque.
+
+#### CE QUE JE N'AI PAS VÉRIFIÉ, ET IL FAUT LE SAVOIR
+
+**Je n'ai jamais eu de carte animée à l'écran pendant mes essais.** Sur les dix
+cartes que j'ai pu tirer, aucune n'était animée — *les paquets sont
+majoritairement communs, et les communs ne sont animés qu'à 22 %.* Le décodage
+est mesuré, la conversion est mesurée, le câblage compile — **mais la boucle de
+repeinture n'a pas été observée en train de tourner.**
+
+***Ce qui a coûté cette heure, c'est d'avoir cherché un bug là où il n'y avait
+qu'un tirage défavorable*** : j'ai posé quatre sondes successives dans
+`Carte3D`, conclu que le composant n'était pas monté, redémarré Vite, vidé son
+cache, basculé sur le build — **et la mesure qui tranchait était la plus simple
+de toutes : lister les cinq cartes du paquet.** Elles étaient toutes statiques.
+
+*Et l'un de ces détours a coûté un fichier* : un `git checkout` passé pour
+retirer une sonde a emporté tout le câblage de `Carte3D` avec elle.
+**Un `checkout` ne défait pas une sonde, il défait un fichier.**
+
+### CINQ CRANS ET DEUX BONUS — le mode emoji seulement
+
+Tranché par Keko, en une phrase qui portait trois décisions : « on va changer le
+système de rareté : commun, peu commun, rare, épique, légendaire (blanc, vert,
+bleu, violet, orange). Ensuite chaque carte peut également être holographique
+et/ou animé (deux bonus de rareté applicables à toutes les raretés, animé étant
+encore plus rare qu'holographique). »
+
+Deux questions portaient tout le reste, et il a répondu aux deux :
+
+| | sa réponse | ce que ça impose |
+|---|---|---|
+| quelle portée ? | **« le mode emoji seulement »** | les quatre métaux restent, les deux échelles cohabitent |
+| les bonus, propriété ou tirage ? | **« tirés à l'ouverture »** | *un exemplaire cesse d'être son modèle* |
+
+#### C'EST L'ÉCHELLE QUE LE MODE DESCENTE AVAIT ÉCARTÉE, ET C'EST COHÉRENT
+
+Keko avait lui-même refusé le code couleur RPG pour les cartes de jeu : « je
+pense que c'est pas hyper cohérent d'utiliser les couleurs de rareté classiques,
+on peut tenter laiton / bronze / argent / or / diamant ? » — *et l'argument
+d'alors tenait* : une carte de combat EST une plaque de métal, donc un violet
+posé dessus restait une couleur de jeu vidéo plaquée sur un objet.
+
+**Il ne porte pas ici.** Une carte d'emoji n'est pas un objet du monde : elle ne
+se joue pas, elle se collectionne, et *le code couleur est la langue de ce
+genre-là.* Les deux décisions sont justes chacune chez elle, et c'est pour ça
+qu'elles cohabitent au lieu de se remplacer.
+
+#### LE DÉFAUT MUET QUE LE CINQUIÈME CRAN AURAIT CAUSÉ
+
+`parCran` rangeait les cartes dans des cases nommées par une **constante du
+module** : `tas.get(c.rarete)?.push(c)`. **Une carte « peu commune » ne tombait
+dans aucune case et disparaissait du tirage**, sans une erreur — *un quart du
+catalogue serait devenu intirable*, et le seul symptôme aurait été un cran
+qu'on ne voit jamais sortir.
+
+`logic/paquet.ts` est donc générique sur son échelle (`Echelle<R>`), et les
+trois grandeurs voyagent ENSEMBLE : les crans, leurs chances, et ce qui est
+garanti. *Une table de chances qui ne somme pas à un sur les crans qu'on tire ne
+dit plus ce qu'elle promet*, et une garantie doit nommer un cran qui existe —
+deux vérifications le tiennent.
+
+**LE HAUT DE LA TABLE NE BOUGE PAS** : l'épique et le légendaire gardent
+exactement leurs chances d'avant (3,2 % et 0,8 %), le rare les siennes à un
+cheveu près, et « peu commun » se taille ses 16 % dans les quinze points que le
+commun rend. *Ce qu'on ouvre en haut d'un paquet est donc le même cadeau* ; seul
+le bas se détaille. **La garantie reste « rare »**, qui vaut le troisième cran
+sur cinq là qu'elle valait le deuxième sur quatre : *une garantie nomme un
+NIVEAU, pas une place dans la liste.*
+
+#### LA PYRAMIDE DU CATALOGUE DÉCROÎT DE MOITIÉ À CHAQUE CRAN
+
+`PYRAMIDE_CINQ` : **50 / 25 / 15 / 7,5 / 2,5 %**, mesuré sur le catalogue —
+961 / 481 / 288 / 144 / 49 cartes. ***Les parts sont de moi, pas de Keko*** : il
+a donné les crans, pas leur poids. *Une décroissance de moitié est la forme la
+plus lisible qu'on puisse donner à cinq niveaux*, et c'est à rejuger quand il
+aura ouvert des paquets.
+
+#### UNE ÉCHELLE SE DIT EN COULEUR, ET LES CLÉS LE DISENT AUSSI
+
+Les cinq entrées de `METAUX` sont nommées **par leur couleur** — `blanc`,
+`vert`, `bleu`, `violet`, `orange` — là où les quatre métaux sont nommés par
+leur cran. *Trois des cinq crans portent le même nom qu'un métal* (`rare`,
+`epique`, `legendaire`) : les nommer par leur cran les aurait fait se recouvrir
+en silence dans une table partagée. C'est `carte-emoji` qui fait la table
+cran → couleur, telle que Keko l'a dictée.
+
+**Une seule structure de lumière pour cinq teintes**, comme pour les métaux :
+clair en haut à gauche, plateau moyen, nuit dans le coin bas-droit. *Le cadre
+garde son relief et son reflet oblique, il ne change que de couleur.*
+
+Le **blanc est un gris clair et non un blanc pur** : *le bas d'une échelle ne
+doit pas se lire comme un métal précieux*, et le blanc pur est déjà le diamant
+de l'autre échelle.
+
+#### L'HOLOGRAPHIQUE SE POSE SUR LE CRAN, IL NE LE REPEINT PAS
+
+Tranché par Keko, en le voyant : « holographique ne doit pas changer la couleur
+de la carte : on rajoute l'effet holographique par-dessus. Et une carte animé
+c'est pareil. »
+
+***J'avais écrit l'inverse***, et le mot qui le disait était « emprunte » :
+`eclatDe(rarete, holo)` rendait `'iris'` pour n'importe quel holo, donc le bonus
+PRENAIT la place du cran au lieu de s'y ajouter.
+
+**ET UN ÉCLAT N'EST PAS UNE COUCHE, C'EN EST TROIS** — c'est ce qui rendait la
+faute invisible en lisant le code :
+
+| | où ça se peint | peut-on le poser « par-dessus » ? |
+|---|---|---|
+| le **foil** sur le métal | dans le nuanceur, par-dessus la texture | **oui** |
+| le **liseré** du cadre | sur le cadre | **non** — c'est là que le cran se lit |
+| l'**auréole** chromatique | tout autour de la carte | **non** |
+
+*Les deux dernières ne se posent pas sur la carte, elles PEIGNENT l'endroit même
+où la couleur du cran se lit* — donc une holo commune et une holo épique se
+retrouvaient cerclées du même arc-en-ciel, et **le bonus effaçait le cran qu'il
+était censé décorer.** Elles restent au cran, seul le foil se cumule.
+
+#### ET LE FOIL NON PLUS NE S'EMPRUNTE PAS TEL QUEL : il a un VOILE et une BANDE
+
+**Retirer le liseré et l'auréole ne suffisait pas**, et c'est la capture qui l'a
+dit : les trois cartes holo gardaient un cadre arc-en-ciel là où les deux animées
+avaient le leur, bleu franc. *Le coupable était le SOUFFLE permanent du foil* —
+`arc * uIris * prise * reseau * 0.11` — **constant sur toute la carte**, donc un
+voile et non un reflet.
+
+***Un voile irisé permanent REPEINT, une bande qui traverse ne fait que
+glisser.*** Le souffle revient donc au diamant seul : **sa couleur EST
+l'arc-en-ciel**, il peut se le permettre ; un bonus qui s'ajoute à un cran, non.
+L'holo n'en garde que la bande, et elle a son uniforme à elle (`uHolo`) — *pas un
+emprunt à `uLustreForce`, qui alimente AUSSI ce souffle et aurait remis le voile
+qu'on venait de retirer.*
+
+#### ET LA FEUILLE A SON PROPRE SPECTRE, QUI TOURNE QUATRE FOIS PLUS VITE
+
+**Deuxième chose que la capture a dite** : la bande se lisait comme **une nappe
+verte**, pas comme un reflet irisé — donc elle teintait encore la carte, le
+défaut repris par l'autre bout.
+
+*L'arc du foil ne fait qu'un tour sur toute la carte* : dans une bande d'un
+cinquième, il ne déroule que **quarante degrés de teinte**, soit à peu près une
+seule couleur. **Une feuille holographique DÉCOMPOSE** — le long d'un même reflet
+on voit passer tout le spectre — donc elle tourne quatre fois, ce qui lui rend
+son arc-en-ciel sans moirer : *on est deux ordres de grandeur au-dessus du
+RÉSEAU de stries, qui en fait soixante-quatre et doit, lui, se fondre quand il
+passe sous le pixel.*
+
+**ELLE AVANCE AVEC LE TEMPS tant qu'on ne la promène pas**, et c'est la seconde
+exception du jeu après l'auréole, pour la même raison : *une carte posée dans un
+paquet ne bouge pas*, donc rien d'autre ne pourrait faire jouer sa feuille. Au
+survol, le curseur reprend la bande — **par un MÉLANGE et non par un test** : à
+seuil, elle sauterait de sa course à la place du doigt dès qu'on approche.
+
+**ET UNE CARTE ANIMÉE N'AVAIT RIEN À CORRIGER**, ce qui se vérifie plutôt que de
+se supposer : elle repeint la même carte avec une autre illustration
+(`peindreCarte({ ...carte, image })`), donc son cadre garde la couleur de son
+cran — vu à l'écran sur la Carotte, bleu franc. *Le bonus ne touche que la
+fenêtre d'art.*
+
+**IL NE CHANGE RIEN À LA PEINTURE, DONC RIEN À `signature()`.** Le foil vit dans
+le NUANCEUR — c'est ce qui le rend indépendant de la teinte du cadre — donc
+**deux exemplaires, l'un holo et l'autre non, partagent leur texture** : le
+bonus ne coûte pas un octet de mémoire. *C'est la seule propriété de
+`CarteAPeindre` qui ne change rien à ce que le peintre dessine*, et elle y vit
+quand même parce que c'est cet objet qui voyage jusqu'à `Carte3D`.
+
+#### CE QUI RESTE GRATUIT, ET C'ÉTAIT LE BON RÉFLEXE
+
+**Il n'y avait rien à dessiner.** Un arc-en-ciel qui dépend de l'angle de vue
+existait déjà, réglé et validé par Keko — « je voudrais un effet holographique
+aussi sur la carte, et notamment sur son effet de brillance quand on la fait
+bouger » — et le réflexe de ne pas en dessiner un second tient toujours. *Ce
+qu'il fallait découper, ce n'est pas le dessin, c'est lequel de ses TERMES se
+pose par-dessus et lequel se substitue.*
+
+**Et le reflet du survol se décompose sur les deux**, holo comme diamant : *un
+foil n'a pas un reflet blanc.* C'est la seule chose que l'holo emprunte encore,
+et elle ne vaut QUE sous le doigt — donc elle ne teint rien au repos.
+
+**LES TROIS ÉCLATS PASSENT PAR UNE TABLE** (`ECLAT_DE_LA_RARETE`), plus par une
+égalité de chaîne. L'irisation du cadre, la bordure lumineuse et le lustre doré
+se lisaient sur `rarete === 'legendaire'` et `=== 'epique'` : **avec les cinq
+couleurs, un « légendaire » orange se serait mis à irriser** et un « épique »
+violet à reluire comme de l'or, alors que Keko n'a demandé ni l'un ni l'autre —
+chez lui l'éclat est un BONUS, pas un cran. Les cinq couleurs n'ont donc aucune
+entrée : *ce qui ne rayonne pas n'a rien à déclarer.*
+
+**La table ne porte donc que des CRANS**, et l'holo n'y entre pas : il se cumule
+dans `Carte3D`, qui allume son uniforme à côté de celui du cran. *Un bonus qui
+s'inscrirait dans la table des éclats serait un cran de plus, pas un bonus.*
+
+#### LE CATALOGUE DIT CE QUI EST POSSIBLE, L'EXEMPLAIRE CE QUI EST
+
+Le champ `anime` de la carte est devenu **`animable`**, et ce n'est pas
+cosmétique : *il dit une POSSIBILITÉ, pas un état* — **deux choses qui portent
+le même mot finissent par se confondre**, et c'est exactement ce qui serait
+arrivé le jour où un exemplaire a tiré le bonus.
+
+Conséquence directe : le cartouche **ne dit plus « animé » quand il l'est
+seulement en puissance**. Un tiers du catalogue promettait un mouvement que
+l'exemplaire n'avait pas — *une carte ne dit que ce qu'elle est, jamais ce
+qu'elle aurait pu être.*
+
+**L'ANIMÉ DEMANDE QUE L'EMOJI SOIT ANIMABLE**, et c'est une vraie contrainte :
+*on ne peut pas animer ce que Google n'a pas animé* — 614 emoji sur 1 923.
+**Le tirage a quand même lieu**, et c'est délibéré : sans ça le nombre d'appels
+au hasard dépendrait de la carte, et *deux paquets de même graine ne rendraient
+plus la même suite.*
+
+**LES CHANCES SONT DES PLACEHOLDERS** : 10 % pour l'holo, 3 % pour l'animé.
+*Keko a donné l'ordre, pas les chiffres.* Et **l'animé est deux fois plus rare
+qu'il n'en a l'air** — trois pour cent d'un tiers du catalogue font un pour
+cent, donc l'écart réel est de dix contre un.
+
+#### LES BONUS SE TIRENT APRÈS LES CARTES, AVEC LE MÊME RNG
+
+Dans `Paquet3D`, et pour le mode emoji seulement — *les autres modes
+n'appellent donc pas le hasard*, et leur suite de tirage ne bouge pas d'un cran.
+`?paquet=42` rejoue les cartes ET leurs bonus.
+
+**L'échelle se widenise en `Echelle<string>` à UN SEUL endroit** : le mode se
+décide à l'exécution, sur un paramètre d'URL, donc le type du cran ne peut pas
+être connu à la compilation. *Les deux tables, elles, restent typées chacune sur
+ses propres crans* — c'est là qu'une faute se verrait.
+
+#### CE QUI A ÉTÉ VU À L'ÉCRAN
+
+`?paquet=1314&emoji` montre **les cinq couleurs d'un coup**, `?paquet=20781&emoji`
+**trois holographiques et deux animés**. Les deux graines ont été trouvées en
+rejouant le tirage hors navigateur, contre les mêmes modules : *une mesure se
+fait avec ce qui joue, sinon on valide un jumeau.*
+
+**ET L'ANIMATION A ENFIN ÉTÉ OBSERVÉE EN TRAIN DE TOURNER** — deux captures du
+même emoji à une seconde d'écart, la carotte a bougé. *Elle n'avait jamais été
+vue* : la note d'alors disait « le câblage compile, mais la boucle de repeinture
+n'a pas été observée », faute d'avoir jamais tiré une carte animée. **Il
+suffisait d'une graine choisie** au lieu d'ouvrir des paquets au hasard.
+
+### LE CONTOUR SIMPLE : la forme se tait là où il n'y a qu'une famille
+
+Demandé par Keko : **« je voudrais rework l'organisation des cartes : un contour
+plus simple, plus dans le ton des emojis »**.
+
+*Le gabarit « Serment de cendre » parle la FERRONNERIE* — une plaque de laiton,
+une coque DÉCHIRÉE posée dessus, deux encoches à la hauteur du titre, un dégradé
+oblique qui court du clair au presque noir d'un coin à l'autre. **Il est juste
+là où il est né** : une carte de combat EST une plaque de métal. Un emoji, non —
+c'est un aplat net aux formes franches, et un cadre arraché à côté de lui se lit
+comme la pièce d'un autre jeu.
+
+#### ET C'EST LA FORME QUI CÈDE, PAS LA COULEUR
+
+*Deux axes portent la carte* : **une échelle se dit en couleur, une famille se
+dit en forme.** La couleur est prise par la rareté — les cinq crans que Keko
+vient de trancher, et le reflet qui en reprend la teinte — donc **elle ne bouge
+pas d'un ton.**
+
+**La forme, elle, ne dit plus rien ici** : dans ce mode il n'y a qu'une famille.
+Pas de trésor à distinguer d'une carte de deck, pas de pièce d'équipement à
+distinguer de son set. *Une silhouette qui ne sépare rien n'est plus un signal,
+c'est un ornement* — et c'est ce qui rend la bascule sûre : **le seul axe que la
+carte porte reste intact.**
+
+Trois choses tombent, et chacune pour sa raison :
+
+- **les deux ENCOCHES.** C'est le signe « carte de deck » du jeu d'extraction,
+  recalé par Keko à la hauteur du titre pour qu'il se lise dans l'éventail. *Il
+  n'a aucun vis-à-vis dans un paquet d'emoji* ;
+- **la coque DÉCHIRÉE.** Elle dit qu'une carte est arrachée de la pièce qui la
+  produit — *il n'y a pas de pièce dans ce mode* ;
+- **le dégradé OBLIQUE à cinq paliers.** C'est lui qui fait « métal » : il
+  traverse le clair, le sombre, le plateau et la nuit, donc le cadre change
+  franchement de luminosité le long de son tour. **Un emoji n'accroche pas la
+  lumière**, il a un aplat et, au mieux, un peu de volume.
+
+Il reste un **liseré régulier**, qui épouse la carte au rayon près, rempli de
+trois tons voisins pris dans le MÊME métal — `bord`, `moyen`, `sombre`, sur la
+VERTICALE. *On n'invente aucune couleur* : c'est la teinte du cran, posée à plat
+avec la lumière du haut que tout le jeu respecte, et le ton `moyen` est déjà
+celui que `TON_LUSTRE` prend pour dire la couleur d'un cran.
+
+**LE RAYON SE COMPTE SUR LE BORD EXTÉRIEUR**, donc il décroît d'autant qu'on
+rentre : à rayon constant, les coins du cadre seraient plus épais que ses côtés.
+*Règle déjà payée sur les cases vides du chargement.*
+
+#### TROIS ÉPAISSEURS, ET C'EST TOUT CE QUI RESTE À DÉCIDER
+
+`?contour=fin|plaque|large` — **le défaut est `plaque`**, un cheveu plus fin que
+la coque encochée qu'il remplace (1,6 contre 1,85 centièmes de largeur).
+
+| | ce que ça donne |
+|---|---|
+| **fin** (0,85) | la carte est presque toute illustration — *mais le cran du bas disparaît*, un liseré gris clair sur fond sombre ne se voit plus |
+| **plaque** (1,6) | le défaut : la couleur se lit, l'image ne perd rien |
+| **large** (3,1) | une vraie bordure colorée, le vocabulaire des cartes de collection — *et elle mange un peu d'image* |
+
+*Effet de bord mesuré sur `large`* : la boîte du nom rétrécit avec la surface,
+donc le titre CÈDE d'un cran et **« Visage avec un léger sourire » cesse d'être
+tronqué.** Ce n'est pas un argument pour elle — c'est un signe que la troncature
+du nom se règle ailleurs, si elle gêne.
+
+#### LE MODE EMOJI SEULEMENT, comme les cinq crans
+
+C'est `carte-emoji.ts` qui pose le drapeau, et **le reste du jeu ne le voit
+jamais** : vérifié à l'écran, un paquet d'animaux garde sa coque encochée au
+pixel. *Les quatre autres modes peuvent le prendre en une ligne le jour où Keko
+le voudra*, et c'est exactement la portée qu'il avait donnée aux cinq crans — « le
+mode emoji seulement ».
+
+**Il entre dans `signature()`**, sans quoi deux cartes de même nom et de contour
+différent partageraient leur texture.
+
+#### CE QUI N'A PAS BOUGÉ, ET QU'IL FAUT SAVOIR
+
+- **le RAYON de la carte** (3 % de la largeur). Un emoji est un carré très
+  arrondi, donc la tentation est forte — *mais ce rayon est la forme du PAVÉ 3D
+  autant que celle de la texture* : les arrondir demanderait d'extruder un autre
+  profil, sinon le laiton du corps dépasserait aux coins. **À rouvrir si Keko le
+  demande**, en sachant que ça touche la géométrie et pas seulement le dessin ;
+**ET LA TYPOGRAPHIE A ÉTÉ ROUVERTE LE LENDEMAIN.** J'avais écrit qu'elle ne
+bougeait pas, « Keko a réglé ces trois-là lui-même » — *et il n'avait réglé que
+le gabarit du jeu d'extraction* : voir la section qui suit.
+
+### LA PLAQUE CLAIRE : la zone de texte quitte le métal
+
+Keko, dans la foulée du contour : **« on peut peut-être diminuer un peu la taille
+de l'émoji et augmenter un poil l'épaisseur de la bordure. De plus la police et
+la zone de texte (dégradé noir) sont hors du thème : on veut une police et un
+style pour la zone de texte proche de l'univers smartphone / fun des emoji. »**
+
+*Le contour n'était que la moitié de « l'organisation des cartes »* — et la
+seconde moitié porte plus loin, parce qu'elle touche à ce que la carte DIT et pas
+seulement à sa découpe.
+
+#### LE VOILE ET LA PLAQUE FONT LE MÊME TRAVAIL, PAS DANS LA MÊME LANGUE
+
+Le gabarit **éteint son image sous un voile noir** et écrit dessus en clair :
+c'est la grammaire d'une plaque de métal gravée — l'image meurt dans le métal et
+la lettre s'y creuse. **Un emoji vient d'un clavier**, donc sa carte porte une
+**plaque CLAIRE posée sur l'image**, du texte sombre dessus, et le type en
+pastille.
+
+*C'est la même bascule que le contour, un cran plus loin* : **une échelle se dit
+en couleur, une famille se dit en forme** — la rareté ne bouge pas d'un ton, et
+tout ce qui change est la matière de ce qui porte le texte.
+
+Quatre choses la portent, et chacune fait un travail que les autres ne font pas :
+
+- **ELLE PORTE SON OMBRE VERS LE HAUT.** C'est la seule chose qui dise qu'elle
+  est POSÉE sur l'image et non découpée dedans — *une plaque sans ombre se lit
+  comme un trou dans le dessin* ;
+- **SES COINS DU BAS SONT CEUX DE LA CARTE**, rayon de la carte moins la marge :
+  elle s'arrête sur le cadre, donc elle doit l'épouser. La règle du tracé du
+  contour, repayée ici ;
+- **SON DÉGRADÉ EST À PEINE VISIBLE**, du plus clair en haut au plus gris en bas,
+  parce que la lumière du jeu vient du haut : *un aplat parfaitement uni se lit
+  comme un rectangle de couleur, pas comme une surface*. **C'est aussi lui qui
+  porte la teinte du cran**, et c'est le ton du BAS qui en porte le plus : *la
+  part ombrée d'une surface garde plus de couleur que la part éclairée* ;
+- **ELLE EST OPAQUE.** Un reste de transparence laisserait voir l'emoji dessous,
+  et *ça se lit comme un calque mal posé* — la règle déjà tenue par la pierre des
+  encadrés du glossaire.
+
+**ET LE TRAIT SOUS LE NOM DISPARAÎT.** *Il structure une plaque gravée*, où le
+nom et l'effet sont deux inscriptions qu'il faut séparer ; **dans une
+application, un titre suivi d'un sous-texte gris n'a pas de séparateur** — la
+graisse et la couleur suffisent, et c'est ce qui fait lire les deux comme un bloc
+plutôt que comme deux champs.
+
+**ET LE CERNE DU TEXTE AUSSI.** *Il sépare par la PROFONDEUR* — il détache une
+lettre claire d'un fond sombre et mouvant — **et sur du blanc il ne détache plus
+rien : il salit.** La règle est déjà écrite pour le coeur des armures, où le
+cerne mangeait un tiers de la figure sans rien détacher.
+
+#### LA CAPSULE REVIENT, LÀ OÙ ELLE EST LA FORME JUSTE
+
+Le type passe en **PASTILLE arrondie**, gris clair, sous le cartouche. *Un mot
+gravé entre deux filets est de la ferronnerie* ; **une pastille est LE vocabulaire
+d'une app**, et c'est exactement ce que ce mot est — une étiquette de catégorie,
+pas une valeur de jeu.
+
+**Et c'est un `border-radius: 999px` assumé**, alors que le projet les a tous
+chassés : la barre de vie ramenée au biseau, les infobulles à zéro, le bouton de
+rangement à l'angle droit. ***La règle « un arrondi est une forme de gabarit, une
+arête franche est de la ferronnerie » ne vaut que là où le jeu parle
+ferronnerie.*** Ici il parle d'un clavier.
+
+**SA PLACE SE CALCULE CONTRE SES DEUX VOISINS**, et c'est la pastille qui le
+demande : *un mot gravé n'occupe que son encre, une pastille occupe une boîte.*
+Le pire cas du cartouche est un effet de **quatre lignes** — il descend alors au
+dernier cran et le bas de ses glyphes tombe à 91,4 % de la hauteur, la plaque
+s'arrêtant à 98,5 % sur la marge du cadre. Il reste 6,5 % pour la pastille, d'où
+7,4 U de haut posée à 94,8 %. *Mesuré avant correction* : à 8,2 U posée à 94,5 %,
+elle mordait sur la dernière ligne.
+
+#### UNE SEULE POLICE REMPLACE LES DEUX
+
+**Baloo 2**, en trois graisses : le nom en 800, le cartouche en 400, le type en
+700. *Le gabarit parle deux langues* — le gothique des noms, le serif des effets
+— **et les deux disent le métal** : sur une plaque claire elles se lisent comme
+un titre de parchemin collé sur un écran, la même faute que la coque déchirée
+autour d'un aplat net.
+
+**Une application n'a qu'une voix, elle la décline en graisses** — et Baloo 2 est
+arrondie comme un emoji tout en restant lisible en corps de texte, ce qu'une
+fantaisie plus marquée ne tient pas sur deux lignes de cartouche.
+
+**ELLE SE DEMANDE EXPLICITEMENT, et c'est le piège déjà payé sur Noto Color
+Emoji** : *une police Google n'est téléchargée que si le DOM l'emploie*, or ces
+cartes ne sont peintes que sur un canvas — donc `document.fonts.ready` se
+résoudrait sans elle et **la texture partirait en cache écrite en Trebuchet.**
+
+**LA FAMILLE TRAVERSE TOUTE LA CHAÎNE DU TEXTE**, mesure comprise — six
+signatures : *si le repli mesurait dans une police et l'écriture dans une autre,
+les lignes seraient coupées au mauvais endroit*, et le canvas ne prévient jamais
+qu'il déborde. Le serif reste le défaut de chaque paramètre, donc **les quatre
+autres modes ne changent pas d'un pixel** (vérifié à l'écran sur un paquet
+d'animaux).
+
+**ET LA BORNE DU NOM MONTE À 88 %.** Les 78 % sont la largeur du cadre ENTAILLÉ à
+la hauteur du titre, ombre portée comprise ; *une plaque claire n'a ni entaille ni
+ombre.* À 78 %, « Visage avec un léger sourire » se rétrécissait deux crans sous
+« Plus » — **deux noms de même rang qui se lisent à deux tailles donnent deux
+objets différents.**
+
+#### L'EMOJI RAPETISSE PARCE QUE SA FENÊTRE RAPETISSE
+
+*Il n'y avait rien à régler dans son dessin* : il est peint sur une toile carrée
+et posé en `contain` dans la fenêtre d'art, donc **c'est la fenêtre qui décide de
+sa taille** — et toucher au glyphe aurait de toute façon manqué les cartes
+ANIMÉES, qui ne passent pas par cette toile.
+
+Jusqu'ici la fenêtre valait toute la surface : l'emoji descendait à **98 % de la
+hauteur**, c'est-à-dire SOUS le nom, son tiers inférieur noyé dans le dégradé.
+Borné au-dessus de la plaque, il perd **19 %** et gagne une marge nette de tous
+les côtés.
+
+**ET LE BLOOM LIT LA MÊME BOÎTE**, comme il lit déjà le même rognage : *le bloom
+n'est pas le sujet, c'est de la lumière tombée sur le décor* — cadré autrement,
+il éclairerait sous la plaque.
+
+**La boîte du DÉCOR, elle, ne bouge pas** : il est le fond de la carte, et le
+rogner moins y laisserait un trou. *Sans plaque, la boîte du sujet vaut la surface
+entière au pixel* — c'est l'absence du thème qui dit « ne rien changer ici »,
+comme `caseDeCarte` sans assiette.
+
+#### LA BORDURE PASSE DE 1,6 À 2,1, PUIS À 2,7
+
+Un seul nombre, `CONTOURS.plaque`. Les deux autres épaisseurs ne bougent pas :
+`?contour=fin|large` les rend.
+
+### L'AURA S'ARRÊTAIT SUR UN MUR, ET LE MUR ÉTAIT LE BORD DE SA TOILE
+
+Keko, en même temps que trois réglages : **« j'ai remarqué un genre d'aura
+autour des emoji, c'est bien mais parfois (ex : visage avec un léger sourire)
+l'aura s'arrête net en haut comme si un mur invisible la bloquait et c'est
+moche »**.
+
+***Il n'y avait pas de mur invisible : il y avait le bord d'un canvas de
+quarante-quatre pixels.***
+
+#### LA CHAÎNE, et aucun de ses maillons n'était faux tout seul
+
+1. **la plaque a pris le bas de la carte**, donc la fenêtre du sujet est devenue
+   plus LARGE que haute — 95,8 U sur 78,6 ;
+2. **un emoji est CARRÉ**, et il rentre entier (`illustrationEntiere`), donc il
+   est borné par la hauteur et **la remplit exactement** ;
+3. **`couvrir` cale EN HAUT dès qu'il y a un plafond** — une règle écrite pour
+   les peintures — donc le dessin touchait le bord supérieur de sa boîte **par
+   construction** ;
+4. **le bloom est peint dans cette même boîte**, sur une toile de 44 px de
+   large, et `adoucir` y étale la lumière de deux pixels : *le flou était coupé
+   net par le bord de la toile.*
+
+**« Parfois » était la mesure du problème** : un glyphe qui laisse un peu de
+marge dans son carré a de quoi s'éteindre, un glyphe qui le remplit n'en a pas —
+et 🙂 est un disque plein qui va d'un bord à l'autre de son em-box.
+
+#### C'EST LA RÈGLE DU CONTOUR DES CARTES, PAYÉE UNE QUATRIÈME FOIS
+
+« Le débord de la texture doit être exactement celui du plan », et *une lueur
+qui se termine par une arête n'est pas une lueur* — déjà payé sur le contour des
+cartes, sur le halo des créatures et sur le slot allumé du chargement. **Ici le
+plan était la fenêtre d'art et la texture n'avait aucun débord du tout.**
+
+**LE SUJET EST DONC POSÉ EN RETRAIT DANS SA FENÊTRE.** Le bloom prend la fenêtre
+entière (`fY`, `fH`), le dessin s'y inscrit avec `AIR_SUJET` de chaque côté — et
+la lumière a enfin de quoi mourir : elle s'éteint sur le cadre en haut, et sous
+la plaque opaque en bas.
+
+***Et ça règle la troisième demande par la même porte*** — « diminuer un peu la
+taille des emoji encore un peu » : **l'air qu'on donne à la lueur, le sujet le
+rend.** L'air passe de 2 à 7 U, donc le sujet perd 13,5 % de hauteur.
+
+Mesuré sur la colonne centrale de la carte peinte, dans la bande qui va du cadre
+au haut du dessin : la luminance monte de **58 à 73 par pas de 7 au plus** —
+une rampe, plus une marche. Et la toile garde **3,3 px** au-delà du dessin pour
+un flou qui en demande 2.
+
+**Les quatre autres modes ne bougent pas d'un pixel**, et c'est algébrique :
+sans plaque `air` vaut zéro, donc les trois boîtes se confondent et la toile du
+bloom est celle d'avant. *C'est l'absence du thème qui dit « ne rien changer
+ici », comme `caseDeCarte` sans assiette.* Vérifié à l'écran sur un paquet
+d'animaux.
+
+### LES COINS S'ARRONDISSENT, ET TROIS SURFACES DOIVENT SUIVRE
+
+Keko : « on peut arrondir encore un peu les coins ». De 3 % à **5,5 %** de la
+largeur (`RAYON_SIMPLE`), mode emoji seulement — *un emoji est un carré très
+arrondi*, et 3 % est le `border-radius` du gabarit d'extraction, réglé et validé.
+
+**UNE CARTE EST FAITE DE TROIS SURFACES, et arrondir la face seule les
+désaccorde** :
+
+- la **face** peinte, dont `alphaTest` coupe les coins ;
+- le **corps extrudé**, qu'on voit dépasser d'un cheveu — *un corps plus carré
+  que sa face montre son laiton en angle*, exactement ce que Keko avait signalé
+  une fois : « derrière une autre forme dorée reste et est un angle droit » ;
+- le **dos**, qu'un paquet montre avant la révélation — *un dos plus carré que
+  son corps dépasserait de sa silhouette.*
+
+Les trois lisent donc `rayonDe(carte)`.
+
+**ET LE RAYON ÉTAIT ÉCRIT DEUX FOIS.** `RAYON_CARTE` dans la texture, `RAYON_COIN`
+dans `Carte3D`, deux `0.03` indépendants : ***le défaut que le projet se répète —
+deux endroits qui décrivent la même valeur se désaccordent au premier
+réglage*** — et **il a fallu qu'un mode demande des coins plus ronds pour qu'il
+morde.** `RAYON_COIN` vaut désormais `RAYON_CARTE`.
+
+**Le corps et le dos sont MÉMORISÉS par rayon**, donc il n'y en a que deux de
+chaque dans tout le jeu. Et le corps reste un **profil extrudé** : un
+`RoundedBoxGeometry` borne son rayon à la moitié de l'épaisseur, soit 0,006 sur
+une plaque de 0,012 — *il resterait carré*, le piège silencieux déjà payé.
+
+### LA PLAQUE PREND LA TEINTE DE SON CRAN — dérivée, pas choisie
+
+Keko : **« je voudrais que l'encadré soit coloré en fonction de la rareté
+également (blanc, vert, bleu etc) au lieu d'être blanc partout »**.
+
+*Et c'est la règle du projet prise au mot* — **une échelle se dit en couleur** —
+appliquée à la seule grande surface de la carte qui ne disait encore rien : le
+cadre portait déjà le cran, la plaque restait blanche sur les cinq.
+
+#### LA MÉTHODE EST CELLE DU LUSTRE, À L'AUTRE BOUT DE L'ÉCHELLE
+
+« On prend le ton MOYEN du métal, le plus saturé des cinq, et on le pousse à une
+énergie commune » : ici on garde sa TEINTE, on dose son pigment, et **on recale
+sur une luminance commune**. Le calcul est celui de `virerLeCiel` à un pixel
+près — *de l'arithmétique et rien d'autre*, puisque les modes de fusion non
+séparables du canvas sont silencieusement ignorés sur certains appareils.
+
+***LA NORMALISATION EST CE QUI PROTÈGE LE TEXTE.*** Il est SOMBRE sur cette
+plaque, donc son contraste ne dépend que de la clarté du fond : sans elle, un
+jaune clair et un violet sombre à pigment égal donneraient deux lisibilités très
+différentes.
+
+**ET LE PIGMENT SUIT LA SATURATION DU MÉTAL, il ne la force pas.** Le cran du
+bas est un gris à peine bleuté — 0,047 d'écart au gris — donc *le forcer à une
+saturation commune en ferait un bleu pâle*, qui entrerait en collision avec le
+cran `bleu`. À pigment relatif il reste un gris, ce qui est exactement ce que
+« blanc » doit dire.
+
+#### LE PIGMENT A TRIPLÉ EN DEUX PASSES À L'ÉCRAN
+
+Le premier réglage (0,45) donnait des chiffres impeccables et **on ne voyait
+rien** : le haut du dégradé restait quasi blanc, donc l'oeil moyennait et lisait
+« blanc » sur les cinq crans. Au deuxième (0,85), Keko les trouvait **« toujours
+un peu pâles »**. ***Un pastel qui ne se voit pas ne dit pas son cran*** — il
+faut que le HAUT porte déjà sa couleur, pas seulement le bas.
+
+***ET C'EST LE MOT DU TYPE QUI BORNE, PAS LE CARTOUCHE.*** J'avais écrit
+l'inverse — « le vrai plancher était le sous-texte » — et la mesure dit autre
+chose : **à 0,85 le type n'était qu'à 4,08 de contraste**, donc déjà sous le
+plancher de 4,5, pendant que le cartouche tenait 5,59. Et *il tombe deux fois
+plus vite* : 0,2 par cran de pigment contre 0,1.
+
+**Donc renforcer la teinte demande de foncer les DEUX textes**, et c'est ce qui
+rend le réglage gratuit — les deux finissent mieux lotis qu'avant :
+
+| | pigment | cartouche | type | saturation du bas |
+|---|---|---|---|---|
+| première passe | 0,45 | — | — | *invisible* |
+| deuxième | 0,85 / 1,00 | 5,59 | **4,08** | 0,242 |
+| **troisième** | **1,40 / 1,70** | **6,41** | **4,77** | **0,355** |
+
+*La couleur gagne 47 % et le texte gagne 0,8 de contraste* — c'est l'argument
+qui a porté les deux passes précédentes, et il tient une troisième fois.
+
+**LE PIGMENT PEUT DÉPASSER 1, LA SATURATION NON.** Au-delà, la teinte sortirait
+de [0,1] AVANT le ClipColor, qui la ramènerait **en la déformant** : un orange
+sursaturé virerait de teinte au lieu de saturer. La borne ne mord que sur les
+deux crans les plus francs — l'orange et l'épique — et *elle les protège sans
+toucher aux sept autres.*
+
+Mesuré sur la texture peinte, les cinq crans du mode emoji :
+
+| cran | haut | bas | pastille | nom | cartouche | type |
+|---|---|---|---|---|---|---|
+| blanc | `#dde6ee` | `#c2cdd7` | `#b7c2cc` | 9,7 | 6,70 | 5,01 |
+| vert | `#b8ffcd` | `#75ff9d` | `#62f98e` | 12,4 | 8,53 | 6,68 |
+| bleu | `#d1e9ff` | `#a6d4ff` | `#93cbff` | 10,1 | 6,94 | 5,27 |
+| violet | `#eadcff` | `#d7bbff` | `#ceadff` | 9,3 | 6,41 | 4,77 |
+| orange | `#ffdfb9` | `#ffc077` | `#ffb35a` | 9,8 | 6,72 | 5,11 |
+| *(sans rang)* | `#fdfefe` | `#eaeef4` | `#dde4ec` | 13,5 | 9,30 | 7,08 |
+
+#### CHAQUE TEINTE DESCEND JUSQU'À CE QUE LE CLIP CESSE DE LA RONGER
+
+Keko, après les 47 % de pigment : **« je trouve les encadrés verts sont bien
+mais les autres couleurs sont toujours fades »**.
+
+***ET IL AVAIT RAISON POUR UNE RAISON QUI CONDAMNE TOUTE NOUVELLE PASSE DE
+PIGMENT : ces 47 % n'avaient pas touché le bleu, le violet ni l'orange d'un
+centième.*** Le chroma qui sort vaut `(1 − L) × plein / hi`, et **le rapport
+`plein / hi` ne dépend que de la TEINTE** : tout ce qu'on ajoute au-delà du
+clip est repris par le ClipColor. Ce qui avait bougé, c'était la luminance
+(0,855 → 0,795), et elle profite à tous dans le même rapport — **donc l'écart
+entre le vert et les autres n'avait pas été réduit, il avait été creusé**, le
+vert gagnant EN PLUS sur le pigment parce qu'il ne saturait pas encore.
+
+#### ET LE CHROMA LINÉAIRE N'EST PAS CE QUE L'OEIL LIT
+
+C'est la mesure qui a renversé mon diagnostic. En CIELAB, sur le bas du
+dégradé :
+
+| cran | écart au gris | **C\*ab** |
+|---|---|---|
+| vert | 0,541 | **68,4** |
+| orange | 0,533 | **47,6** |
+| violet | 0,267 | **37,6** |
+| bleu | 0,349 | **26,3** |
+| blanc | 0,082 | 6,5 |
+
+**Le vert et l'orange ont le MÊME écart au gris pour 30 % de couleur d'écart**,
+et le bleu en a plus que le violet tout en paraissant moins coloré. *Le vert est
+la teinte la plus lumineuse du spectre* — il pèse 0,59 dans la luminance quand
+le bleu pèse 0,11 — **donc c'est le seul qui garde sa couleur posé haut en
+clarté.** Le critère est le C\*ab, pas l'écart au gris.
+
+*C'est la troisième fois que ce poids se paie* : les ciels des cartes ont déjà
+eu leur table par famille parce que « le bleu en demande plus », et c'est le même
+0,11 contre 0,59.
+
+#### D'OÙ LA DESCENTE, ET ELLE A UNE FORMULE FERMÉE
+
+Le clip mord tant que `L + hi > 1`, donc la clarté juste suffisante est
+**`1 − hi`** — *aucune dichotomie, aucun CIELAB à l'exécution.* Chaque cran
+descend jusque-là, et **jamais sous `DESCENTE_PLAQUE`** (0,065), qui est ce que
+le texte supporte.
+
+Mesuré sur la texture peinte :
+
+| cran | descente | bas | C\*ab | avant | gain |
+|---|---|---|---|---|---|
+| blanc | 0,000 | `#c2cdd7` | 6,4 | 6,4 | **inchangé** |
+| vert | 0,019 | `#68ff94` | 74,0 | 68,4 | +8 % |
+| bleu | 0,065 | `#8ac6ff` | 34,3 | 26,4 | **+30 %** |
+| violet | 0,065 | `#caa5ff` | 50,2 | 37,6 | **+33 %** |
+| orange | 0,065 | `#ffac4c` | 63,9 | 47,6 | **+34 %** |
+
+**ET LE BLANC NE DESCEND PAS, sans qu'on ait eu à l'excepter** : il ne sature
+pas, donc le clip ne le ronge pas, donc `1 − hi` est au-dessus de sa luminance
+nominale. *Le bas d'une échelle ne doit pas parler*, et c'est la formule qui le
+dit.
+
+**Vérifié sur les PIXELS de l'écran**, à graine égale (`?paquet=1314`), en
+comparant les deux captures : orange **+69 %** de chroma, violet **+44 %**, bleu
+**+39 %**, vert +9 %, **blanc 0 % — pas un pixel.**
+
+Trois choses à ne pas défaire :
+
+- **UN SEUL DÉCALAGE POUR LES TROIS NIVEAUX, et il se calcule sur celui du
+  BAS.** Appliqué niveau par niveau, chacun descendrait jusqu'à son propre
+  plancher et *le dégradé s'écraserait en un aplat* : ce qui doit se conserver,
+  c'est l'ÉCART entre les trois ;
+- **le plancher est fixé par le MOT DU TYPE**, et le chiffre est mesuré : à
+  0,065 il garde **4,77** de contraste sur le pire cran — *exactement ce qu'il
+  avait avant la descente* — et le cartouche 6,09. Les deux textes foncent d'un
+  cran pour le payer (`#283644` et `#303e4c`) ;
+- **la teinte et la descente lisent le même `hi`** (`teinteDuMetal`), parce que
+  *deux endroits qui décriraient la même teinte se désaccorderaient au premier
+  réglage.*
+
+**CE QUI RESTE UN MUR, ET IL EST PHYSIQUE** : même au plancher, le bleu reste à
+34 de C\*ab contre 68 au vert. Pour l'égaler il faudrait descendre à 0,48 de
+luminance — *une plaque bleu franc, qui n'est plus « une zone de texte à fond
+clair »* et sur laquelle aucun texte sombre ne passe. **Une teinte sombre ne
+peut pas être aussi colorée qu'un vert à clarté élevée.**
+
+#### LA PASTILLE EST DE LA PLAQUE, PAS UNE PIÈCE POSÉE DESSUS
+
+Elle était d'un gris fixe un cran sous le blanc, donc sur une plaque teintée elle
+ressortait **plus claire que son fond** — c'est-à-dire en relief là où elle doit
+être un creux, et grise au milieu d'un vert. *Un badge qui ne parle pas la langue
+de ce qui le porte se lit comme un calque mal posé*, la règle déjà tenue par
+l'opacité de cette même plaque.
+
+**Elle garde son écart de luminance** (0,042 sous le bas du dégradé), qui est
+exactement celui du gris d'avant : *ce qui la distingue est sa profondeur, pas sa
+couleur.*
+
+#### LE DÉFAUT RESTE LA PLAQUE D'AVANT
+
+Comme le crème pour le lustre : **une carte sans rang ne bouge pas d'un pixel** —
+vérifié, `#fdfefe` et `#dde4ec` au pixel près. *Les quatre autres modes n'ont pas
+de plaque aujourd'hui*, mais le jour où elle y arrive, c'est le bas de l'échelle
+qui ne doit pas se mettre à parler.
+
+Et **la table se CALCULE depuis `METAUX`, elle ne se recopie pas** : *un métal et
+la plaque qu'il teinte sont le même fait*, donc une retouche de l'échelle doit
+suivre jusqu'ici. C'est ce qui sépare ce cas de `TON_LUSTRE`, qui est une table à
+part parce qu'une couleur peinte et la lumière qu'elle renvoie sont deux faits.
+
+#### CE QUI RESTE À TRANCHER PAR KEKO — la plaque
+
+- **la police** : Baloo 2 est mon choix, et une autre se pose en une ligne —
+  Nunito (plus sobre), Quicksand (plus iOS), Fredoka (plus cartoon, trop pour un
+  corps de texte) ;
+- **le départ de la plaque** (60,5 % de la hauteur, donc 38 % de la carte) : c'est
+  la proportion d'une carte de collection moderne, et elle se règle d'un chiffre ;
+- **le rayon des coins** (5,5 %), **l'épaisseur du cadre** (2,7 U) et **l'air
+  autour de l'emoji** (7 U), qui décide aussi de sa taille ;
+- **la force de la teinte** (`PIGMENT_PLAQUE`, 1,4 / 1,7), sa clarté
+  (`LUM_PLAQUE`, 0,895 / 0,795 / 0,752) et surtout **la descente**
+  (`DESCENTE_PLAQUE`, 0,065) : *le pigment ne fait plus rien aux teintes qui
+  saturent*, donc **c'est la descente, et elle seule, qui donne de la couleur
+  au bleu, au violet et à l'orange.** Elle se paie sur le mot du type, qui est
+  à 4,77 pour un plancher de 4,5 — un cran de plus demanderait de foncer les
+  textes une quatrième fois ;
+- `?texte=sombre` rend le dégradé noir — *ce qui a servi à choisir doit rester
+  ouvrable.*
+
+#### CE QUI RESTE À TRANCHER PAR KEKO — la rareté
+
+- **les parts de la pyramide** (50 / 25 / 15 / 7,5 / 2,5) et **les chances du
+  paquet** (70 / 16 / 10 / 3,2 / 0,8), qui sont de moi ;
+- **les deux chances de bonus** (10 % et 3 %) : *une fréquence d'apparition ne
+  se juge qu'en ouvrant des paquets* ;
+- **la force et la vitesse de la feuille** (0,28 et un passage toutes les six
+  secondes) : *une bande qui traverse ne se juge qu'en la regardant passer* ;
+- **les quatre autres modes n'ont pas de bonus**, parce que la portée était « le
+  mode emoji seulement ». *Rien n'empêche de les leur donner* : le drapeau vit
+  sur `CarteAPeindre`, qui est commun aux cinq modes.
+
+### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
+
+- **les 270 drapeaux** sont un groupe à part — ce sont des pays, pas des objets.
+  Les garder, ou en faire un mode à eux. *Ils tombent désormais à 94 % dans les
+  deux crans du bas*, donc ils ne faussent plus l'échelle, mais ils occupent un
+  septième des cartes ;
+- **les 24 % non classés** : ils sortent tous dans le bas, et l'ancienneté est
+  tout ce qu'on sait d'eux. *Si un emoji de 2021 devient très employé, rien ne
+  le dira* — le classement d'Unicode est arrêté à la version 12.0 ;
+- **l'animation est FAITE**, mais son poids est à juger : **411 Ko par emoji
+  animé**, soit de l'ordre d'un mégaoctet pour un paquet qui en contient deux.
+  *Le Lottie ferait onze kilo-octets*, au prix d'une dépendance ;
+- **le nom long se tronque** : « Volume des enceintes élevé » ne tient pas sur
+  une carte. *C'est le comportement de tous les modes* — la taille cède, puis le
+  nom se coupe — mais les noms CLDR sont plus longs que des noms propres.
+
+## LA SECONDE COLLECTION : DES PEINTURES — `?paquet&art`
+
+Idée de Keko : « et si on faisait une collection d'œuvre d'art ? » Puis, après
+mesure : **« il vaut mieux partir sur Wikipédia »**, et enfin **« je voudrais me
+focaliser uniquement sur les peintures/tableaux »**.
+
+**ELLE A SURVÉCU AU RANGEMENT SANS ÊTRE NOMMÉE, et c'est pour ça qu'elle est
+gardée.** Keko a nommé ce qui tombe — les animaux, les personnages — et ce qui
+devient principal — l'emoji ; *les peintures ne sont dans aucun des deux camps.*
+**Supprimer ce qu'on n'a pas été chargé de supprimer est une décision qu'on
+prend à la place de Keko**, et celle-ci coûterait un pipeline de 18 Ko et un
+catalogue de 1,3 Mo. Elle reste donc ouvrable d'un lien, et ne coûte rien à qui
+n'ouvre pas le lien.
+
+*Tout ce qui suit a été mesuré avant le rangement et n'a pas été rejoué depuis.*
+
+### POURQUOI WIKIPÉDIA ET PAS LE MET — mesuré, et les deux ne mesurent pas la même chose
+
+Le Met publie **un dump CSV de 318 Mo** (`MetObjects.csv`, 11 s à télécharger) et
+marque 2 294 œuvres comme « highlights ». *Un dump bat une API pour un
+catalogue* — l'alternative était 500 000 appels par objet, et le `/search` v1 a
+été retiré le 1ᵉʳ octobre 2026.
+
+**Trois mesures l'ont écarté, et la troisième est rédhibitoire :**
+
+| | |
+|---|---|
+| **68 % des « highlights » du Met n'ont AUCUN article Wikipédia** | leur « importance » est le jugement d'un conservateur, pas la célébrité |
+| la notoriété se lit sur l'ARTISTE, pas sur l'œuvre | 98 % contre 4 % : les Q-ids d'objets du Met sont des entités créées en masse, qui portent une image mais pas d'article |
+| **le Met ne sert AUCUN en-tête CORS sur ses images** | elles ne peuvent pas entrer dans un canvas — *tout doit passer par Commons de toute façon* |
+
+Keko a donc choisi la célébrité contre le jugement institutionnel. **Les deux
+sources convergent sur ~2 500 œuvres vraiment connues**, ce qui est exactement
+la taille d'un catalogue.
+
+### LE POOL : 9 797 PEINTURES, et « peinture » n'est pas la classe `peinture`
+
+`P31/P279* Q3305213` — la classe ou **n'importe laquelle de ses sous-classes**.
+Mesuré : **9 797 œuvres distinctes contre 9 395** avec la seule classe. Les 402
+récupérées sont les fresques, les triptyques, les retables, les aquarelles.
+
+***Sans la hiérarchie, on perd Michel-Ange et Raphaël pour une question de
+nomenclature*** : La Création d'Adam, L'École d'Athènes et Le Jugement dernier
+sont rangés sous `fresque`. Vérifié dans les deux sens — les sculptures restent
+dehors.
+
+**Trois filtres, les trois de Keko** : une page en français, une image libre,
+une date de création. *L'approximation ne sert à rien* — mesuré, les quatre
+propriétés d'approximation (`P1319`, `P1326`, `P2031`, `P585`) n'ajoutent que
+**deux œuvres**.
+
+### CE QUE LA SPÉCIALISATION COÛTE, et il faut le savoir
+
+La part des non-peintures **monte avec la notoriété** :
+
+| seuil | total | peintures | autres | part des autres |
+|---|---|---|---|---|
+| ≥ 1 langue | 11 253 | 9 395 | 1 858 | 16,5 % |
+| ≥ 10 | 1 969 | 1 535 | 434 | 22 % |
+| ≥ 30 | 165 | 106 | 59 | 36 % |
+| **≥ 50** | 32 | 15 | 17 | **53 %** |
+| ≥ 80 | 5 | 1 | 4 | **80 %** |
+
+**L'œuvre d'art la plus connue au monde n'est pas une peinture** : la statue de
+la Liberté fait 158 langues, La Joconde 146. Sortent aussi le Christ Rédempteur,
+La Petite Sirène, le David, la Vénus de Milo, l'Homme de Vitruve, La Pietà, la
+Victoire de Samothrace — et toute la photographie iconique (le portrait du Che,
+Iwo Jima, la première photo de l'histoire).
+
+**Ce que ça achète en échange est un FORMAT VISUEL UNIQUE**, et c'est
+l'argument qui n'est pas dans les chiffres : une peinture est une image
+rectangulaire plate, une sculpture est un objet photographié sur fond de musée,
+une photographie du XXᵉ est en noir et blanc. *Mélanger les trois donne trois
+esthétiques sur la même grille.*
+
+**La sortie médiane était « peinture + sculpture »** — les deux seules familles
+qui pèsent, 83 % et 14 %, les 3 % restants étant du bruit. Keko a préféré le
+format unique. *Si le haut du catalogue paraît maigre un jour, c'est là qu'il
+faut rouvrir* : il suffit d'ajouter les classes de sculpture au socle du
+pipeline.
+
+### LA FORMULE DE NOTORIÉTÉ : langues ×3 + taille d'article + déclarations
+
+Keko : « une valeur = rareté (indice de popularité : fréquentation, nombre de
+langues, et autre : on tente de créer une formule qui rende parfaitement compte
+de la notoriété) ». Mesurée sur **644 œuvres**, 585 avec tous les signaux.
+
+#### LA DÉCOUVERTE QUI RENVERSE L'INTUITION
+
+| | corrélation de rang |
+|---|---|
+| **nombre de langues ↔ vues étrangères** | **0,899** |
+| vues françaises ↔ vues étrangères | 0,729 |
+
+**Le nombre de langues prédit les vues mondiales mieux que les vues
+françaises** — et le français ne pèse que **17 %** du total (de 2 % à 96 % selon
+l'œuvre).
+
+***C'est l'inverse exact du mode personnages***, où les langues avaient été
+mises à poids ZÉRO parce qu'« un botaniste du XIXᵉ a cent cinquante Wikipédia
+créées par bot et personne ne les lit ». **Il n'y a pas de bots qui écrivent des
+articles de peintures** : un article n'existe que si quelqu'un l'a écrit.
+*Un signal change de nature avec son domaine*, et une décision mesurée sur un
+mode ne se reporte pas sur un autre sans la refaire.
+
+#### MAIS LES LANGUES SEULES NE PEUVENT PAS ÊTRE LA FORMULE
+
+| formule | valeurs distinctes sur 585 | plus gros paquet d'ex aequo | crans vides |
+|---|---|---|---|
+| **langues seules** | **56** | **100 œuvres** | **1** |
+| langues + vues multilingues | 496 | 4 | 0 |
+| **langues ×3 + taille + déclarations** | **569** | 3 | 0 |
+
+**46 % du pool tient sur trois valeurs** (1, 2 ou 3 langues) : dans la queue,
+elles ne distinguent rien. *Un paquet de cent œuvres indiscernables, et un cran
+d'échelle vide.*
+
+C'est la règle du projet prise par l'autre bout — « des valeurs distinctes ne
+sont pas une répartition » devient ici ***une répartition a besoin de valeurs
+distinctes.***
+
+#### LA FORMULE EST STABLE, ET C'EST LE CRITÈRE QUI COMPTE
+
+*Une formule qu'un signal gouverne seul n'est pas une formule, c'est ce signal.*
+
+| en retirant | le classement change de |
+|---|---|
+| les langues | **0,883** ← c'est le cœur |
+| la taille d'article | 0,983 |
+| les déclarations | 0,987 |
+
+**Les langues font le haut, les deux autres départagent la queue.** Accord avec
+les langues seules : **0,971** — l'ordre canonique est préservé, avec dix fois
+plus de granularité.
+
+**Et elle vaut la formule coûteuse** : accord de **0,956** avec « langues + vues
+multilingues ». *Les vues n'apportent que 0,04 et coûtent des heures* — une
+collecte sur quinze langues a calé à six en vingt-cinq minutes, rate-limitée.
+Les trois signaux retenus : deux viennent de Wikidata en une requête, la taille
+d'article d'un appel par lot de cinquante.
+
+Le poids 3 est mesuré : à ×1 l'accord avec les langues seules tombe à 0,902 (la
+taille se met à peser sur le haut), à ×6 on ne gagne plus rien.
+
+#### DEUX SIGNAUX ÉCARTÉS, ET LA MESURE DIT POURQUOI
+
+- **la notoriété du PEINTRE** (corrélation 0,52, donc un vrai demi-axe) :
+  ajoutée, elle fait remonter *« Sainte Anne, la Vierge et l'Enfant Jésus »* — un
+  carton de Vinci — en **8ᵉ position**. ***Un grand maître ne rend pas célèbre
+  chacune de ses œuvres*** ;
+- **le MUSÉE** : corrélé à **0,18** avec tout le reste, donc le plus indépendant
+  de tous les signaux mesurés, et pourtant inutilisable — *il mesure le prestige
+  de l'institution, pas la notoriété de l'œuvre.* Une toile obscure peut être au
+  Louvre. Il fait un bon **rayon**, pas un terme de formule.
+
+**Les vues seules** sont bruitées : elles font sortir La Nuit étoilée et Guernica
+du top 15, et remonter *Ivan le Terrible tue son fils* en 15ᵉ.
+
+**Et les sept formules candidates s'accordent à 0,87-0,99** : *le choix ne change
+presque rien au classement* — il change la GRANULARITÉ, et c'est pour ça qu'il
+s'est tranché là-dessus.
+
+### LE SEUIL EST NÉCESSAIRE : le pool entier mesure le CATALOGAGE
+
+| seuil | œuvres | les premiers peintres | les 25 premiers portent |
+|---|---|---|---|
+| tout | 9 797 | Goya, Matisse, **Delobbe**, Renoir, Gérôme | 34 % |
+| **≥ 7 langues** | **2 929** | Raphaël, Goya, Titien, Rembrandt, Van Gogh | 49 % |
+| ≥ 20 | 344 | Raphaël, Caravage, Van Gogh, Vermeer, Vinci | **75 %** |
+
+Le 3ᵉ peintre le plus présent du pool entier est **François-Alfred Delobbe**
+(207 œuvres), un académique mineur dont Wikipédia en français a catalogué toute
+la production. *Il disparaît dès 5 langues.*
+
+**Trop haut, le pool se concentre** — à 20 langues cent peintres se partagent
+tout, et l'axe du peintre perd sa variété. **7 est le point d'équilibre**, et il
+tombe sur la taille d'un catalogue de jeu. `--seuil=N` le change.
+
+### LES QUATRE RAYONS, tous mesurés et tous exploitables
+
+| rayon | couverture | valeurs | plus gros tas |
+|---|---|---|---|
+| **peintre** (`P170`) | **96 %** | 1 343 | Goya 2,8 % |
+| musée (`P276`) | 91 % | 1 521 | Orsay 4,0 % · Prado 3,7 % · **le Met 3,5 %** |
+| siècle | **100 %** | 9 utiles | 19ᵉ 35,5 % |
+| genre (`P136`) | 86 % | 95 | art religieux 25 % |
+
+**Le peintre est le meilleur** : médiane de deux œuvres, aucun au-dessus de 3 %,
+et c'est le seul axe qu'un joueur comprend sans rien lire — *« j'ai trois Van
+Gogh »*. Le genre monte à **86 % sur les peintures seules** (contre 82 % toutes
+natures) et se regroupe en sept rayons habités : art religieux 25 %, portrait
+22 %, scène de genre 10 %, paysage 8 %, nu 5,5 %, mythologie 5,4 %, histoire 4 %,
+nature morte 3 %.
+
+Le **mouvement** (`P135`) est inutilisable : **74 % des œuvres n'en déclarent
+aucun.**
+
+*Le Met revient donc par la porte de Wikipédia*, et c'est le troisième musée du
+catalogue.
+
+### LE CADRAGE : L'ŒUVRE RENTRE ENTIÈRE
+
+Tranché par Keko : « si portrait, hauteur de l'image = hauteur de la zone
+d'illustration (bandes noires sur les côtés) et inversement ? ainsi on garantit
+la totalité de l'œuvre ».
+
+**Et il fallait le faire.** Mesuré sur 313 images, dimensions lues sur Commons :
+
+| | |
+|---|---|
+| **portrait** (plus haut que large) | 52 % |
+| **paysage** | **43 %** |
+| carré | 5 % |
+
+Rapport largeur/hauteur : médiane **0,89**, p10 0,63, p90 1,68, max 30,5 (une
+frise). **Le gabarit attend 0,70 — seules 21 % des images y tiennent**, et un
+`cover` rognerait de plus de moitié **22 %** des œuvres : La Cène deviendrait un
+fragment.
+
+**Ça n'a coûté qu'un chiffre, parce que le mécanisme existait déjà** : `couvrir`
+prend un `PLAFOND_ROGNAGE`, réglé à 25 % pour les animaux dont *le rognage
+médian vaut 8 %*. Ici il vaut **zéro** (`illustrationEntiere` sur la carte), et
+ce qui reste découvert laisse voir le **fond peint** de la carte — qui est déjà
+là et fait le passe-partout. *C'est exactement ce qu'une peinture EST : une
+toile dans un cadre.*
+
+**Le bloom le lit AUSSI**, et il le faut : *le bloom n'est pas le sujet, c'est de
+la lumière tombée sur le décor* — cadré autrement que l'image, il remplirait de
+lumière les bandes où il n'y a rien.
+
+### CE QUE LA CARTE PORTE
+
+- **le nom, désambiguïsation retirée** : « La Cène (Léonard de Vinci) » devient
+  « La Cène ». *Ce qui précède la parenthèse EST le nom*, la règle déjà payée sur
+  « Castor (genre) » dans le mode animaux ;
+- **le cartouche porte deux lignes : qui, puis quand et où.** Le peintre tient sa
+  ligne à lui parce que c'est le fait principal ; l'année et le musée se
+  partagent la seconde. **Deux lignes tiennent au grand cran du cartouche**, là
+  où trois le font descendre ;
+- **le pied porte le GENRE**, là où une carte de jeu porte son type et un
+  personnage son domaine. *« Peinture » ne dirait rien* : toutes les cartes du
+  mode en sont une ;
+- **aucun chiffre au pied.** Keko : « on va faire une valeur = rareté pour
+  commencer » — la notoriété se lit au métal du cadre. *Un chiffre posé là
+  devrait dire quelque chose*, et il n'y a rien de plus à dire aujourd'hui ;
+- **pas de ciel de famille** : le mode descente en a quatre, déjà désaturés de
+  moitié pour ne pas disputer l'axe de la rareté ; quatre-vingt-quinze genres en
+  réclameraient autant — *une échelle se dit en couleur, une famille se dit en
+  forme* ;
+- **le compteur de la dernière carte fait défiler les LANGUES**, pas les vues.
+  *Un chiffre qui grimpe et une teinte qui grimpe avec lui ne disent la même
+  chose que s'ils mesurent la même chose* — et c'est le nombre de langues qui
+  pèse trois cinquièmes de la formule.
+
+### CE QUE LE PIPELINE A COÛTÉ — cinq pièges, tous déjà écrits ailleurs
+
+1. **UN CSV COUPÉ SE LIT SANS ERREUR.** Le endpoint lâche le flux qu'il a
+   commencé ; en JSON ça lève un `SyntaxError` à une position absurde, en CSV ça
+   passe pour un lot complet. On vérifie l'en-tête, **la fin du flux** et le
+   compte de colonnes de chaque ligne — *et mon premier test de colonnes ne
+   l'attrapait pas*, parce que la coupure tombait après la dernière virgule ;
+2. **`terminated` EST UNE TRONCATURE, PAS UNE PANNE À PART.** La règle était
+   écrite et je ne l'avais pas portée : un lot perdu était abandonné au lieu
+   d'être **redécoupé**. *Le redécoupage attaque la cause, le réessai un
+   symptôme* — et `brut` a déjà réessayé trois fois pour rien ;
+3. **UN NOM DE FICHIER COMMONS PEUT PORTER UN `%` LITTÉRAL**, que
+   `decodeURIComponent` refuse — et ça faisait tomber tout le pipeline. *La bonne
+   lecture est alors le nom TEL QUEL* : s'il n'est pas une séquence
+   d'échappement valide, c'est qu'il n'en est pas une ;
+4. **`redirects=1`, ET IL LE FAUT.** Wikidata pointe parfois vers un titre devenu
+   une redirection : sans lui, « La Nuit étoilée » rendait **31 octets**, le
+   poids d'un `#REDIRECT` ;
+5. **LE DÉBIT DE L'API SE SIGNALE EN TEXTE BRUT**, pas en JSON d'erreur : un
+   `except: continue` l'avale sans rien dire, et les libellés manquent en
+   silence. *Une sonde qui échoue sans le dire est pire qu'une sonde qui lève.*
+
+Et **un sixième, qui n'est pas du réseau** : `stat.py` est un module de la
+bibliothèque standard de Python. Une sonde qui porte ce nom importe l'autre.
+
+### CE QUE LES VÉRIFICATIONS ONT TROUVÉ : le siècle avant notre ère
+
+**Le 1ᵉʳ siècle avant notre ère va de −100 à −1**, exactement comme le 1ᵉʳ siècle
+va de 1 à 100. Ma formule décalait tout d'un cran, **et mon test aussi** — il
+affirmait que −100 était au 2ᵉ. *L'erreur n'était pas dans le calcul seul, mais
+dans ce que je croyais de la convention*, et c'est la vérification qui a forcé à
+aller la lire.
+
+**Et `siecleDe` vivait en DEUX endroits** — le type et le pipeline — donc j'ai
+corrigé un seul des deux. ***Deux endroits qui décrivent le même calcul se
+désaccordent au premier réglage***, et je viens de le prouver sur le commit même
+qui l'écrivait. Le pipeline l'importe désormais depuis `logic/`, qui est pur et
+qu'un script hors build peut lire sans rien emporter du navigateur.
+
+### CE QUE LE CATALOGUE A DONNÉ — 2 840 cartes
+
+Engendré en **4,1 minutes** (le cache portait la découverte), 1,4 Mo.
+
+| | |
+|---|---|
+| cartes | **2 840** |
+| raretés | commun 1 965 (69 %) · rare 568 (20 %) · épique 236 (8 %) · légendaire 71 (3 %) |
+| couverture | peintre **97 %** · genre 89 % · musée 90 % |
+| articles sans taille mesurée | **0** |
+
+**La pyramide tombe exactement sur celle des deux autres modes**, ce qui était
+le but : *un changement à la fois* — la porte d'entrée change, la distribution
+de rareté non.
+
+Le haut : **La Joconde · La Ronde de nuit · La Jeune Fille à la perle · Le
+Jardin des délices · La Liberté guidant le peuple · Les Ménines · La Cène · La
+Laitière · La Naissance de Vénus · L'École d'Athènes · L'Origine du monde · Le
+Printemps · Le Radeau de la Méduse · L'Agneau mystique · Guernica.**
+
+Les siècles vont du **130ᵉ avant notre ère** (une peinture rupestre) au 21ᵉ,
+avec le 19ᵉ à 949 cartes et le 16ᵉ à 580.
+
+#### TROIS DÉFAUTS CONNUS, et aucun ne vaut sa correction
+
+- **GUERNICA N'A AUCUN CRÉATEUR DÉCLARÉ dans Wikidata**, comme 3 % du
+  catalogue. *La carte n'écrit donc PAS « Anonyme »* — elle n'écrirait pas une
+  absence, elle écrirait une erreur — et garde une seule ligne de cartouche.
+  **Une absence se lit mieux qu'une affirmation fausse**, la règle du badge de
+  menace qui n'apparaît que s'il y a une menace ;
+- **QUATRE FAUX POSITIFS sur 2 840** (0,14 %) : Miniatur-Wunderland, le Musée
+  du livre miniature de Bakou, et les panoramas de Sébastopol et de la Guerre
+  des paysans. La clôture transitive les attrape parce que Wikidata range
+  « musée des miniatures » sous une chaîne qui remonte à « peinture ».
+
+  **LES DEUX FILTRES ESSAYÉS COÛTENT PLUS QU'ILS NE RAPPORTENT, et c'est
+  mesuré** : écarter ce qui a des COORDONNÉES jetterait **La Cène**, qui est in
+  situ ; écarter ce qui est un **lieu géographique** jetterait **13 chefs-
+  d'œuvre** (Botticelli, Cimabue, Fra Angelico) pour un seul faux positif ; et
+  écarter ce qui est un **musée** prend 2 faux pour 2 vraies — les panoramas
+  SONT de vraies peintures monumentales, exposées dans un bâtiment qui porte
+  leur nom. ***Un filtre qui jette treize bonnes cartes pour en retirer une
+  mauvaise n'est pas un filtre.***
+- **317 cartes sans genre** (11 %), qui sortent avec « Peinture » au pied.
+
+#### LE TITRE NE DÉBORDE PLUS — trois termes se cumulaient
+
+Keko : « le texte du titre peut déborder sur les côtés de la carte (et se
+superposer aux encoches du cadre) quand il est trop long ».
+
+**Le nom est peint à `Y_ENCOCHE`, donc il tombe exactement dans la partie la
+plus étroite du cadre** — ce n'est pas un hasard, c'est le réglage que Keko
+avait lui-même demandé (« je les voudrais au niveau du titre »). Ce qui reste
+à cette hauteur :
+
+| | |
+|---|---|
+| l'encoche mord | 4,5 % de chaque côté |
+| la marge de la coque | 1,85 % |
+| **l'ombre portée du texte** (`shadowBlur`) | **3 % au-delà de l'encre** |
+
+*Le troisième était invisible* : le texte RAYONNE plus loin qu'il n'écrit, donc
+une borne posée sur l'encre laisse l'ombre mordre le laiton. La borne passe de
+84 % à **78 %**, et **on prend le pire cas, celui de la piste encochée** — *une
+borne qui dépend d'un paramètre d'essai se désaccorderait le jour où le défaut
+change.*
+
+**MAIS LA CAUSE PRINCIPALE ÉTAIT AILLEURS : un plancher de taille n'est pas une
+garantie de tenue.** La boucle de rétrécissement s'arrête à 6 U, et le plus long
+nom du catalogue fait **cent caractères** — « L'Ange exterminateur et les démons
+maléfiques interrompant les orgies des vicieux et des insatiables ». *Aucune
+taille lisible ne les fait tenir sur une ligne*, donc le nom débordait de trois
+fois la carte **sans que rien ne le signale.**
+
+**Le nom se COUPE donc, en dernier recours** — et *ce qui sert à RECONNAÎTRE
+une carte, ce sont ses premiers mots.* Le nom entier reste dans le catalogue
+pour les écrans qui ont la place.
+
+**Ça valait pour les TROIS modes**, pas seulement les peintures : le plus long
+nom d'animal fait 73 caractères (« Polatouche du Japon / Polatouche momonga /
+Écureuil volant nain… »), celui d'un personnage 43. *Un défaut trouvé dans un
+mode se corrige là où le dessin vit, pas dans le mode qui l'a révélé.*
+
+Mesuré sur le catalogue : **21 % des noms dépassent 30 caractères**, 7,6 % les
+quarante, 3 % les cinquante.
+
+**ET LA SECONDE MOITIÉ DE CE RAISONNEMENT ÉTAIT FAUSSE** : il disait que le
+repli sur deux lignes « n'a pas la place ». *Il y en a*, à condition de ne pas
+garder la taille pleine — voir la section qui suit.
+
+### LE TITRE PASSE À LA LIGNE AVANT DE RAPETISSER
+
+Keko : **« je trouve la police du titre trop grosse pour les mots courts et trop
+petite pour les mots longs, on peut pas faire 2 lignes de titre quand c'est trop
+long plutôt que réduire ? »**
+
+*Les deux moitiés de sa phrase disent la même chose* : ce qui gêne n'est aucune
+des deux tailles, c'est **l'ÉCART entre deux cartes voisines** — « Plus » en
+grand à côté de « Visage avec un léger sourire » en minuscule.
+
+**Mesuré sur les cinq catalogues**, la taille allait de **10,5 U à 5,66 U**,
+soit **1,86 fois**, et **848 cartes touchaient le plancher** — donc sortaient
+tronquées à l'ellipse. *C'était le prix d'un titre écrit d'un seul trait.*
+
+#### C'EST LA RÈGLE DU CARTOUCHE, PRISE PAR L'AUTRE BOUT
+
+« On prend le plus grand cran qui tient, plus celui que la longueur annonce » —
+et c'est aussi celle que Keko avait posée pour les encadrés du glossaire :
+*« je voudrais que la taille soit fixe, on va à la ligne si ça ne loge pas ».*
+**Le titre était le dernier texte de la carte à n'obéir ni à l'une ni à
+l'autre.**
+
+Deux crans, `[9.5, 7.3]`, et on garde le premier qui tient **en deux lignes au
+plus** :
+
+| | 9,5 U | 7,3 U | la taille cède |
+|---|---|---|---|
+| **emoji** | 74,4 % | 25,4 % | 0,3 % |
+| animaux | 62,0 % | 38,0 % | 0 % |
+| peintures | 46,6 % | 50,5 % | 2,9 % |
+| personnages | 89,5 % | 10,4 % | 0,1 % |
+| **le jeu** | **100 %** | — | — |
+
+**L'écart tombe de 86 % à 23 %, et plus une seule carte n'est tronquée.**
+
+#### LE 7,3 N'EST PAS CHOISI, C'EST LE PLUS GRAND QUI RENTRE
+
+**La bande du titre est courte**, et c'est ce que le raisonnement précédent
+avait raison de dire : elle va du haut de la plaque claire (60,5 %) à l'encre du
+cartouche, soit **15 U en mode emoji**. Deux lignes y demandent environ deux
+fois le corps, d'où 7,3.
+
+**ET CE QUI LA BORNE PAR LE BAS N'EST PAS LE CARTOUCHE, C'EST SON ENCRE.**
+`HAUT_CARTOUCHE` est le CENTRE de sa première ligne, donc ses capitales montent
+bien au-dessus — de son ascendante, 0,82 du corps au pire cas. ***Borner le
+titre à 105,7 U faisait tomber son trait de soulignement en plein dans le
+cartouche, et ça ne se voyait pas au calcul*** : *une ligne de base n'est pas un
+bord.* Il a fallu peindre la texture et scruter ses pixels pour le voir.
+
+**ET CE QUI LA BORNE PAR LE HAUT DÉPEND DU THÈME** : la plaque claire est une
+borne dure — le texte est sombre, il ne peut pas sortir du blanc — alors qu'en
+gabarit il n'y a rien de dur, le nom étant posé sur l'illustration et cerné de
+noir. Ce qui l'y borne est *que plus haut le voile sombre s'éteint et le texte
+cesse d'être net* : on s'arrête à 58 %, où il vaut encore 0,42.
+
+Quatre choses à ne pas défaire :
+
+- **en gabarit, une ligne reste EXACTEMENT à sa place** (66,5 %), parce qu'elle
+  est calée sur l'encoche du cadre — « je les voudrais au niveau du titre »,
+  Keko — et un bloc de deux lignes s'y centre, faute d'encoche unique à viser.
+  *Sur la plaque claire, le bloc pend par le haut* : voir la section qui suit ;
+- **la boîte qui sert à mesurer la hauteur est COMMUNE à tous les titres**,
+  mesurée sur une chaîne de référence qui porte tous les extrêmes du français
+  (`ÉÀÇgjqyp`). *Mesurer l'encre du nom qu'on écrit donnerait deux tailles à
+  deux titres de deux lignes selon qu'ils portent un accent* — c'est exactement
+  l'écart qu'on vient de retirer. Et **la boîte de POLICE est trop généreuse**
+  (1,60 fois le corps contre 1,06 d'encre réelle) : à ce compte-là deux lignes
+  ne tiendraient jamais ;
+- **elle ne se met pas en cache** : une boîte mesurée avant que la police
+  n'arrive répondrait pour le repli, et *le cache la garderait pour toute la
+  session.* Un `measureText` coûte un microseconde contre 1,6 ms pour peindre
+  une carte ;
+- **le trait suit la DERNIÈRE ligne**, et il compte dans la place qu'il faut :
+  c'est lui qui coûte le plus cher en gabarit (0,68 du corps).
+
+**Et les noms courts ont perdu 10 % au passage** (10,5 → 9,5 U), le jeu
+d'extraction compris, où aucun nom ne fait deux lignes. *C'est dans le sens de
+sa demande* — « trop grosse pour les mots courts » — mais c'est un chiffre, et
+il se change.
+
+### SUR LA PLAQUE, LE TITRE PEND PAR LE HAUT — et c'est ÇA qui fixe sa taille
+
+Keko, en répondant à l'arbitrage : **« je préfère taille fixe, par contre quand
+il y a deux lignes la distance par rapport au haut de la zone de texte à fond
+blanc est réduite : je voudrais qu'elle soit la même peu importe le nombre de
+lignes. »**
+
+*Deux décisions dans une phrase*, et la seconde a imposé la première.
+
+#### LE BLOC SE CENTRAIT, DONC IL MONTAIT EN GRANDISSANT
+
+**Un bloc dont la hauteur change doit s'accrocher par le bord qui ne bouge
+pas** — la règle déjà payée sur la colonne de boutons du butin — et ici ce bord
+est le haut de la plaque. Centré, un titre de deux lignes montait de la moitié
+de ce qu'il gagnait en hauteur.
+
+Mesuré sur la texture peinte, en taille fixe, l'air entre le haut de la plaque
+et le haut de l'encre :
+
+| | une ligne | deux lignes | écart |
+|---|---|---|---|
+| **avant** (bloc centré) | 4,72 U | **1,44 U** | **3,3 U** |
+| **après** (bloc pendu) | 2,84 U | 2,59 U | **0,25 U** |
+
+***L'écart est divisé par treize***, et les 0,25 U qui restent ne viennent pas
+du placement : ils viennent des GLYPHES — un titre qui commence par une
+capitale accentuée monte plus haut qu'un titre qui commence par un « P ». *La
+dispersion À L'INTÉRIEUR de chaque colonne (0,9 U) est d'ailleurs plus grande
+que l'écart entre elles*, ce qui le prouve. **La corriger demanderait de caler
+sur l'encre du nom qu'on écrit, et le projet le refuse déjà** : deux titres de
+même rang auraient alors deux tailles.
+
+#### ET C'EST L'AIR QUI DICTE LA TAILLE, au lieu qu'on la choisisse
+
+***Une taille fixe qui ne tient pas son pire cas n'est pas une taille fixe*** :
+la boucle de cession la rendrait variable au premier nom long, et l'écart qu'on
+vient de retirer reviendrait par cette porte.
+
+Avec un air constant en haut, le pire cas — deux lignes — doit donc tenir dans
+ce qui reste :
+
+```
+t = (bande − air haut − air bas) / (ascendante + interligne + descendante)
+```
+
+La bande fait **15,26 U**, l'air 1,8 en haut et 0,5 en bas, et Baloo 2 mesure
+0,846 d'ascendante pour 0,208 de descendante : **t = 6,63 U**. *Écrire 7,3 et
+poser l'air par-dessus ne laisserait que 0,8 U de dégagement* — un titre collé
+au bord.
+
+**Le prix est donc de 9 % sur la taille fixe** (7,3 → 6,63), et de 30 % sur les
+noms courts par rapport aux deux crans. *C'est ce que « taille fixe » coûte, et
+Keko l'a choisi en connaissant le premier chiffre.*
+
+Mesuré sur les 1 923 cartes : **90,1 % tiennent sur une ligne**, 9,8 % sur deux,
+**deux cartes en demandent trois** et cèdent alors à 6,30 et 5,98 U — « Drapeau :
+Saint-Vincent-et-les Grenadines » et « Drapeau : Géorgie du Sud-et-les Îles
+Sandwich du Sud », dont un seul mot fait vingt caractères. **Aucune n'est
+tronquée**, et il reste 3 U entre le bas du titre et l'encre du cartouche.
+
+#### LE GABARIT NE BOUGE PAS D'UN PIXEL, et c'est voulu
+
+*La « zone de texte à fond blanc » n'existe qu'en plaque*, donc la demande ne
+concerne qu'elle. Et en gabarit le titre est calé sur l'encoche du cadre, un
+réglage que Keko a validé : **le pendre par un air constant le décrocherait de
+quatre unités.** Il n'y a d'ailleurs aucun écart à y supprimer — 100 % des noms
+du jeu tiennent sur une ligne.
+
+Vérifié par EMPREINTE de pixels, six cartes animaux dont les deux plus longs
+noms, avant et après : **identiques.** *Un raisonnement sur une branche de code
+ne vaut pas une comparaison de pixels* — et c'est ce test qui a montré que la
+seule carte qui changeait (le Lion) ne changeait qu'à cause de son illustration
+chargée ou non.
+
+`?titre=crans` rend les deux crans à la plaque : *ce qui a servi à choisir doit
+rester ouvrable.*
+
+#### CE QUI RESTE À TRANCHER PAR KEKO
+
+- **l'air au-dessus du titre** (1,8 U, mesuré à 2,8 U d'encre sur un nom
+  ordinaire) : c'est lui qui décide de la taille, donc le rendre à 1,2 rendrait
+  2,5 % de corps. *Un seul chiffre les porte tous les deux* ;
+- **les deux cartes qui cèdent encore** (0,1 % du catalogue) : les faire tenir
+  demanderait de couper un mot, ce que le projet ne fait pas.
+
+### CE QUI RESTE À TRANCHER PAR KEKO — les peintures
+
+- **est-ce que ça remplace les animaux ou s'y ajoute** ;
+- **les rayons de la collection** : peintre, musée, siècle, genre — ou plusieurs,
+  et dans quel ordre. L'écran de collection n'existe pas encore ;
+- **le seuil**, s'il faut un catalogue plus large ou plus serré (`--seuil=N`) ;
+- **la seconde mesure au pied de la carte**, si elle doit exister un jour : *les
+  deux axes indépendants mesurés chez les personnages n'existent pas ici* — tous
+  les signaux d'une peinture corrèlent entre 0,43 et 0,83, et le seul vraiment
+  indépendant (le musée) ne mesure pas la notoriété ;
+- **l'apostrophe des noms de cartes** : `L'Origine du monde` porte l'apostrophe
+  droite, qui est trop fine pour survivre à la taille d'un titre de carte. Le
+  même défaut que sur `Crocidure dArabie` dans le mode animaux, et c'est une
+  décision de typographie sur TOUS les noms du jeu.
+
+## Architecture — la règle à ne pas casser
+
+```
+src/
+  logic/   # PUR : aucun accès au DOM, à Date.now() ou au hasard non seedé
+    rng.ts       # mulberry32 seedé — tout aléatoire passe par là
+    paquet.ts    # le tirage d'un paquet — générique sur l'échelle de rareté
+    quantiles.ts # le découpage en crans PAR GROUPE — les deux collections le lisent
+    emoji/       # LE PROJET : une carte = un EMOJI
+      types.ts      # CarteEmoji, la validation, les neuf groupes, les cinq crans
+      tirage.ts     # les deux bonus, holo et animé, tirés à l'ouverture
+    paintings/   # la seconde collection : une carte = une PEINTURE
+      types.ts      # CartePeinture, la validation, le siècle, les rayons
+    combat.ts    # ARCHIVE : le tour par tour, les cartes, les effets
+    descente.ts  # ARCHIVE : la boucle de run
+    hub.ts       # ARCHIVE : l'armurerie
+    armes.ts     # ARCHIVE : le catalogue des pièces et de leurs sets
+    cartes.ts    # ARCHIVE : les groupes d'ennemis, la table de butin
+  render/  # LE RENDU (React + R3F)
+    texture-carte.ts # LA CARTE peinte au canvas — le coeur des deux collections
+    Carte3D.tsx      # le pavé, ses matériaux, sa place amortie
+    Paquet3D.tsx     # l'ouverture d'un paquet : l'emoji par défaut, `&art` les peintures
+    Sachet3D.tsx     # la pochette qui se déchire en brûlant, avant la rangée
+    carte-emoji.ts   # CarteEmoji -> CarteAPeindre
+    carte-peinture.ts # CartePeinture -> CarteAPeindre
+    emoji-anime.ts   # le WebP animé décodé image par image
+    Scene.tsx        # ARCHIVE : la descente entière
+    Armurerie3D.tsx  # ARCHIVE : le coffre et le chargement
+    Main3D.tsx       # ARCHIVE : l'éventail et le geste de la main de combat
+  ui/      # CE QUI SORT DU PUR : les entrées-sorties et le chrome
+    emoji.ts        # chargerEmojis() : le fetch du catalogue (logic/ est pur)
+    peintures.ts    # chargerPeintures()
+    texte-carte.ts  # le texte d'une carte, sans DOM
+    art.ts + art/   # les illustrations et leur table
+    sons.ts         # les sons synthétisés
+    version.ts      # le garde-fou anti-cache
+    styles.css      # tout le chrome HTML
+  entree.ts  # l'aiguillage : l'emoji par défaut, `?extraction`, `?ecusson`
+scripts/   # HORS du build Vite : lancé par `node`, pas couvert par tsconfig
+  outils.ts               # cache par requête, lots, journal — partagé
+  generate-emoji.ts       # Unicode + CLDR -> public/data/emoji.json
+  sparql.ts               # le Query Service en CSV, par tranches, troncature détectée
+  commons.ts              # la fabrique d'URL de vignette, et l'année d'une date
+  generate-paintings.ts   # Wikidata + Wikipedia -> public/data/paintings.json
+  .cache/                 # le cache des requêtes, gitignoré
+```
+
+**CE QUI EST PARTI AU RANGEMENT**, et c'est `git log` qui le garde : les deux
+dossiers `logic/animals/` et `logic/characters/`, leurs convertisseurs de carte
+et leurs chargeurs, leurs deux pipelines (dont `generate-characters.ts`, 115 Ko
+de SPARQL et de CirrusSearch), la table des 701 métiers — et **tout `logic/board/`
+avec `render/board.ts`, `render/duel.ts` et `generate-links.ts`**, qui lisaient
+le catalogue des personnages et le graphe de leurs articles.
+
+*`scripts/sparql.ts` et `scripts/commons.ts` ne survivent que par les
+peintures* : le jour où elles tombent, ils tombent avec.
+
+`logic/` doit rester testable sans navigateur. Ce dont il a besoin du monde
+extérieur (horloge, seed, catalogue) lui est **injecté** depuis `ui/` ou le
+rendu. **Ne pas importer `ui/` ni `render/` depuis `logic/`.**
+
+Toute règle va dans `src/logic/` et doit être jouable sans DOM. Tout tirage
+aléatoire passe par le RNG seedé.
+
+**C'EST CETTE RÈGLE QUI A RENDU LE RANGEMENT POSSIBLE EN UN COMMIT.** Les
+formules de rareté, les quantiles et le tirage d'un paquet ne savent rien de
+leur catalogue — `logic/paquet.ts` ne demande à une carte que son identité et
+son cran — donc retirer deux modes sur quatre n'a touché ni le tirage, ni le
+peintre, ni le geste. *C'est la quatrième fois que la pureté rend ce qu'elle
+coûte*, après les deux changements de moteur et la suppression du jeu 2D.
+
+**IL N'Y A PLUS DE SAUVEGARDE.** `STATE_VERSION`, `GameState` et le
+`StoragePort` sont partis avec le jeu 2D — le moteur repart de zéro à chaque
+chargement. *Le jour où la persistance revient, c'est par la même porte* : un
+port injecté depuis `ui/`, jamais un `localStorage` lu depuis `logic/`.
+
+## Contraintes mobile — et l'échelle
+
+- Cibles tactiles **≥ 48 px** de haut (le bouton actuel fait 64).
+- Tester au doigt, pas seulement à la souris.
+- **Paysage uniquement.** En portrait, un écran demande de tourner l'appareil.
+
+**On ne peut pas forcer l'orientation depuis une page web** : le verrouillage
+exige le plein écran et n'existe pas sur iPhone. D'où l'écran de rotation — et
+il doit **dire de désactiver le verrouillage de rotation**, sinon les gens qui
+le laissent actif en permanence restent bloqués sans comprendre. L'application
+installée, elle, impose le paysage par son manifeste.
+
+**C'est la hauteur qui manque, jamais la largeur.** La scène et les cartes se
+calent donc en `vh`, pas en `rem` : `min(7rem, 22vh)` pour un corps, et pour
+une carte le jeu de variables porté par `.app` — **un seul endroit, lu par la
+main ET par les tas** :
+
+```css
+--large: min(11rem, 29vh, calc(0.17 * (min(100vw, 90rem) - 8.5rem)));
+--part-enfouie: 0.14;          /* 0,24 sous 430 px de haut */
+--haut:   calc(var(--large) * 1.4);
+--enfoui: calc(var(--haut) * var(--part-enfouie));
+--emerge: calc(var(--haut) - var(--enfoui));   /* la bande qu'on lit */
+--corps:  min(15rem, 27vh);    /* min(7rem, 22vh) sous 430 px, 19vh sous 360 */
+--degagement: 2.25rem;         /* 2,75rem sous 430 px, 2rem sous 360 */
+```
+
+Ils vivent sur **`:root`, pas sur `.app`** : ils ne dépendent que de la
+fenêtre, donc la racine est leur place naturelle — et surtout le calque du gros
+plan doit les lire alors qu'il vit **hors de `.app`**, puisqu'un transform sur
+`.app` (la secousse) en ferait le bloc conteneur de ses enfants en position
+fixe.
+
+**Deux pièges de positionnement, rencontrés sur la tête de mort**, et ils se
+ressemblent :
+
+- les `%` d'une **marge** se rapportent toujours à la **largeur** du bloc
+  conteneur, jamais à sa hauteur — un `top/left: 50%` + marges négatives posait
+  le crâne 6 px trop bas sur un corps plus large que haut ;
+- un `<svg>` à viewBox est un élément **remplacé**, donc porteur d'un rapport
+  intrinsèque. Les quatre décalages posés (`inset`), **son rapport l'emporte et
+  le `bottom` est ignoré** : il prenait sa hauteur de sa largeur et redescendait
+  de 5 px.
+
+La forme juste : la dimension qu'on veut contrôler est explicite, l'autre suit
+le rapport, et des marges automatiques centrent.
+
+**Aucun pourcentage là-dedans, et c'est délibéré** (voir la section sur ce
+piège) : la borne de colonne s'écrivait `26%` et changeait de sens selon la
+propriété qui la lisait. En `vw` elle veut dire la même chose pour tout le
+monde — c'est ce qui permet aux tas des coins de partager la mesure de la main
+et de plonger exactement comme elle. Deux paliers de resserrement
+supplémentaires, à 430 px et 360 px de haut, qui portent sur `.app`.
+
+**Toute l'interface est dimensionnée en `rem`, jamais en pixels figés** (sauf
+bordures, rayons et ombres). La racine grandit avec l'écran :
+
+```css
+html { font-size: clamp(16px, min(0.6vw + 13.4px, 2.4vh), 24px); }
+```
+
+16 px au doigt sur un téléphone, jusqu'à 24 px sur un grand écran — la carte
+passe de 144x202 à 216x302. Sans ça, le jeu restait une colonne minuscule
+perdue au milieu d'un écran de PC, et Keko teste aussi depuis un PC distant.
+
+**L'échelle suit la plus contraignante des deux dimensions.** La largeur seule
+ne suffit pas : sur un portable large mais peu haut, des cartes calibrées sur
+la largeur passeraient sous le bord de l'écran. Vérifié à 390x844, 1366x768,
+1920x1080 et 2560x1440 — le bouton de fin de tour reste visible sans scroller
+dans les quatre cas. **Revérifier ces quatre formats après toute modification
+de taille**, et se souvenir qu'une seule dimension ne suffit jamais à conclure.
+
+### Un `%` rangé dans une variable change de sens selon qui le lit
+
+**Piège coûteux, rencontré sur la main.** Une variable personnalisée se
+substitue en **jetons bruts** : le `26%` de `--large` est relu par chaque
+propriété avec SA propre référence. Dans `width` il vaut 26 % du conteneur ;
+dans `translateY` il vaut 26 % de la **hauteur de l'élément** ; dans `margin-*`
+et `padding-*` il vaut un pourcentage de la **largeur** du bloc conteneur. La
+carte visée ne remontait que de 45 px sur les 80 qu'elle avait d'enfouis — et
+ça passait inaperçu parce que ça restait dans le bon sens.
+
+Règle : **ne jamais faire transiter un pourcentage par une variable que
+plusieurs familles de propriétés vont lire.** Le `26%` a fini par être
+supprimé à la source, réécrit en `vw` — `0,26 x (conteneur - 14rem)` devenait
+`0,26 x (min(100vw, 90rem) - 14rem)`, exactement la même valeur, mais
+indépendante de qui la lit. `--enfoui` est depuis une longueur pure, et veut
+dire la même chose dans une marge, dans un `bottom` et dans un `translateY` —
+c'est ce qui a permis aux tas de plonger comme la main.
+
+**Corollaire, même famille de bug :** une largeur sur un `span` inline ne fait
+rien, en silence. `.pile-cartes` ne tenait sa taille que parce que son parent
+était un conteneur flex qui le blocifiait ; le parent a changé, le tas est
+passé à 0x0 sans une erreur.
+
+**Le format serré, c'est le 1366x768**, et c'est lui qui a fixé le coefficient
+`2vh`. L'arrivée de la scène des créatures a coûté ~120 px de hauteur et l'a
+fait déborder à `2.4vh`. Si la page grandit encore, c'est ce coefficient qu'il
+faut baisser en premier — pas la taille des cartes.
+
+### Le jeu ne doit jamais scroller
+
+**Un combat qui oblige à scroller est un combat qu'on ne peut pas juger.**
+
+Formats vérifiés, tous à zéro débordement : **667x320** (SE couché), **780x340**,
+**844x390**, **932x430**, **1366x700**, **1920x1080**. La carte va de 50 px sur
+le plus petit à 194 px sur grand écran. **Refaire ce balayage après toute
+modification de taille** — et se méfier des tailles d'écran annoncées : ce sont
+les *viewports* qui comptent, un téléphone mange souvent 190 px de chrome.
+
+**Pour mesurer un format sans redimensionner la fenêtre**, charger la page dans
+une `iframe` de la taille visée : les `vh` et les media queries s'y appliquent
+pour de vrai. Quatre pièges, tous rencontrés :
+
+- **dans un onglet en arrière-plan le navigateur gèle les transitions et bride
+  les minuteurs**, donc une valeur calculée peut rester bloquée à mi-course et
+  faire croire à un bug. Neutraliser la transition avant de mesurer, ou piloter
+  l'animation à la main via l'API Web Animations ;
+- **ajouter un `?cb=<aléa>` à l'URL de la sonde** : sans ça la CSS d'une sonde
+  précédente est resservie et les mesures se contredisent d'un format à
+  l'autre ;
+- **`offsetWidth` et `getBoundingClientRect()` ne mesurent pas la même chose**
+  sur une carte de l'éventail : la seconde inclut la rotation, donc elle est
+  plus large. 66 contre 74 px pour la même carte — de quoi croire à un bug qui
+  n'existe pas ;
+- **pas plus de trois sondes par appel** : le moteur de rendu se fige et
+  l'exécution part en dépassement de délai.
+
+### Récupérer la barre du navigateur
+
+**Une page web dans un onglet ne peut pas masquer la chrome du navigateur.**
+Deux sorties, complémentaires, toutes deux en place :
+
+1. **Installer sur l'écran d'accueil.** `public/manifest.webmanifest` déclare
+   `display: fullscreen` ; lancée depuis l'icône, la page s'ouvre sans aucune
+   barre. C'est la vraie réponse — dire à Keko « Ajouter à l'écran d'accueil »
+   avant de conclure qu'il manque de la place.
+2. **Le bouton « Plein écran »** du panneau de réglages, pour rester dans le
+   navigateur. Il se cache tout seul là où l'API n'existe pas : **l'iPhone ne
+   supporte pas `requestFullscreen`** (l'iPad si).
+
+L'icône est du SVG écrit à la main (`public/icone.svg`), conformément à la
+borne « pas de fichiers image ». Limite connue : **iOS ignore le SVG pour
+`apple-touch-icon`** et posera une capture de la page comme icône. Sans
+valeur pour un prototype ; il faudra un PNG le jour où ça compte.
+
+Le `theme-color` ne gagne pas de place mais teinte la barre aux couleurs du
+jeu tant qu'on reste dans un onglet — elle cesse au moins d'être un bandeau
+noir.
+
+### Le son
+
+Synthétisé au Web Audio, **aucun fichier** : même borne que les dessins. Deux
+règles tenues dans `ui/sons.ts` :
+
+1. **Le contexte audio ne naît que sur un geste** — les navigateurs refusent
+   de démarrer le son autrement. Tous les sons partent d'une tape, donc le
+   premier appel suffit à l'ouvrir.
+2. **Aucun son ne peut casser le jeu** : sans Web Audio, ça joue en silence.
+
+**Pour vérifier un son sans l'entendre** : compter les nœuds créés en
+instrumentant `AudioContext.prototype`, puis rejouer la même recette dans un
+`OfflineAudioContext` et mesurer l'amplitude — ça prouve que ce n'est pas du
+silence. Relevé au moment de l'écriture : Dague 0,14 de crête contre Moulinet
+0,21, la visée à 0,03. Aucune saturation.
+
+Piège à ne pas réapprendre : `exponentialRampToValueAtTime` **n'accepte pas
+zéro**. Les enveloppes partent et reviennent à 0,0001, jamais au silence exact.
+
+Sur iPhone, l'interrupteur silence coupe aussi le Web Audio — si Keko n'entend
+rien, vérifier ça avant de chercher un bug.
+
+### LES SONS DE KEKO : des FICHIERS, dans `public/`
+
+`render/sons.ts`. La borne « pas de son en fichier » tombe comme était tombée
+celle des images : *ce que Keko fabrique lui-même, le jeu le sert.* Le premier
+est `public/Take card.aac`.
+
+**Le format à lui donner** : `.m4a` (AAC) ou `.mp3` — les seuls lus partout,
+Safari/iOS compris ; `.wav` pour un effet très court, parce que MP3 et AAC
+ajoutent quelques millisecondes de silence à l'encodage, inaudibles sur une
+musique mais sensibles sur un son de 100 ms. Mono, 44,1 kHz. **La casse du nom
+compte**, et l'URL porte la date du build comme toutes les ressources de
+`public/` — sinon le remplacer ne changerait rien.
+
+**Le décodage a un REPLI**, et il le fallait : le fichier de Keko est de l'AAC
+BRUT (ADTS, sorti de ffmpeg), que Chrome et Safari décodent mais que Firefox
+peut refuser. Si `decodeAudioData` échoue, on garde un `<audio>` qu'on clone à
+chaque lecture — *un son qui ne se décode pas doit se jouer quand même, pas se
+taire en silence.* (Vérifié sur Chrome : c'est bien le chemin Web Audio qui
+sert, le repli n'est pas sollicité.)
+
+**DEUX GESTES, DEUX SONS** : `Take card.aac` quand on prend, `Card drop.aac`
+quand on pose. Le second a d'abord été le premier, faute d'avoir l'autre
+fichier — *prendre et poser ne peuvent pas sonner pareil.*
+
+**ET DEUX DE PLUS POUR LA CULBUTE**, tous deux fournis par Keko :
+`Card spin.aac` « dès que la carte commence à tourner avant de se fixer », et
+`Equip.aac` « au moment où la carte se fixe et déclenche l'onde ».
+
+Le premier part au LÂCHER, en même temps que la culbute — *elle tourne dès la
+première image, elle n'attend pas d'être montée* — et le second à la fin,
+exactement quand l'onde s'échappe. **Aucun des deux ne sonne pour un dépôt au
+coffre**, comme la culbute elle-même : reposer au coffre est un rangement, pas
+un équipement.
+
+*Quatre sons pour un seul geste, et aucun n'en double un autre* : on prend, on
+lâche, ça tourne, ça s'encastre.
+
+**LA CARTE DIT QU'ELLE S'EST FIXÉE ; CE QUE ÇA VEUT DIRE APPARTIENT À
+L'ÉCRAN.** `Carte3D` ne connaît pas les sons — elle appelle `onFixee` et
+l'armurerie décide. C'est le même partage que `geste-carte.ts`, où le hook
+annonce « tapée », « lâchée ici », et rien de plus : *c'est ce qui permet à la
+même carte de servir en combat, au butin et au hub sans rien savoir d'eux.*
+
+**LE SON DU CONTACT VIT DANS LE GESTE, pas dans les écrans** — `geste-carte.ts`
+est le seul endroit où l'on touche une carte, qu'elle vienne de la main, du
+butin ou du coffre. *Un geste unique n'a qu'un son, posé une fois.*
+
+**UN ALLER-RETOUR EST UN GESTE, pas une absence de geste.** Le hook décidait
+« tape ou lâcher » sur la distance entre le départ et le LÂCHER : reposer un
+objet sur la case d'où on venait de le prendre ramène le doigt à son point de
+départ, donc le geste ne faisait plus rien du tout — ni dépôt, ni son. Keko :
+« quand je drop dans son slot où il était au début du drag, ça ne produit pas
+de son ». Le geste retient désormais qu'il a été PROMENÉ (`promene`, posé à
+chaque mouvement qui dépasse le seuil), et c'est ça qu'on lui demande à la fin.
+
+*La règle du maintien survit* : appuyer sans bouger ne promène rien, donc ça ne
+fait toujours rien — vérifié, un seul son (le contact) et aucun dépôt.
+
+**ET IL PART AU CONTACT, PAS À LA PRISE.** Au doigt, une carte n'est prise
+qu'après un MAINTIEN de 160 ms : le son en héritait, et Keko l'entendait comme
+une latence. *Ce n'était pas le son qui était en retard, c'était la prise* —
+mesuré à la sonde, 0 ms au lâcher contre ~160 ms au contact, alors que
+l'appareil n'avouait que 40 ms de tampon.
+
+Il dit donc « j'ai touché cette carte » et non « je l'ai prise », et c'est aussi
+ce que Keko a voulu étendre : **on le joue TOUJOURS quand on zoome une carte.**
+Ça ne demande rien de plus — *tous les zooms du jeu commencent là*, puisque
+c'est le même geste qui regarde et qui prend. Vérifié : une tape sonne et ouvre
+le zoom, un glisser complet donne exactement deux sons, le contact puis la
+pose.
+
+**Et celui de la POSE ne se joue qu'où l'on RANGE** : l'armurerie et le butin,
+jamais en combat. Tranché par Keko, et c'est la même raison qui prive la carte
+jouée de sa comète : *une carte jouée a déjà toute une scène à son nom.* Il ne
+part que si le dépôt ABOUTIT — on demande la règle (`accepteDepuis`) plutôt que
+de la recopier, la même qui allume le slot : *un slot qui refuse ne doit pas
+sonner comme un slot qui prend.*
+
+**LE SON SE RÉVEILLE AU PREMIER CONTACT, pas au premier son.** Keko : « pourquoi
+sur téléphone y a une latence entre le moment où je drag/drop et le son ? » Un
+contexte audio créé hors d'un geste — ici par le préchargement — naît
+**suspendu**, et le reprendre coûte du temps : assez, sur un téléphone, pour
+que le premier son arrive après le geste qui l'a demandé. Un `pointerdown` posé
+`once` sur la fenêtre l'ouvre et y joue un tampon d'une image à volume nul :
+certains navigateurs ne le considèrent démarré qu'après une première lecture.
+Le contexte demande aussi `latencyHint: 'interactive'` — c'est le défaut de la
+spécification, mais *le tampon d'un contexte « balanced » s'entend sur un
+téléphone.*
+
+**ET L'APPAREIL DIT SA PROPRE LATENCE, derrière `?son`** : par quel chemin le
+son sort (Web Audio ou le repli `<audio>`), l'état du contexte, et ce que le
+navigateur avoue de son tampon. *Une impression de retard ne se discute pas,
+elle se mesure* — et je ne peux pas mesurer sur l'appareil de Keko. Même motif
+que la ligne des gros plans en 2D. Relevé sur la machine de dev : Web Audio,
+`base 10 ms`, `sortie 40 ms`.
+
+**Trois causes possibles, et la troisième n'est pas le son :** le repli
+`<audio>` (100 à 300 ms sur mobile) si le décodeur refuse l'AAC brut ; la
+latence de sortie de l'appareil, que la ligne affiche ; et surtout — **au
+doigt, la PRISE elle-même attend le maintien de 160 ms.** Le son part quand la
+carte est prise, donc il hérite de ce délai. *Ce n'est pas le son qui est en
+retard, c'est la prise* — et la pose, elle, part au lâcher.
+
+Deux règles tenues de `ui/sons.ts` : le contexte audio ne naît que sur un geste,
+et aucun son ne peut casser le jeu. Le cache ne retient que les succès — une
+promesse rejetée gardée condamnerait le son pour toute la session, la leçon des
+textures de cartes.
+
+### Les arches de visée
+
+Posées en **coordonnées d'écran** dans un SVG fixe sans `viewBox` (une unité
+= un pixel), donc à retracer après chaque rendu **et** à chaque changement de
+mise en page — `resize`, `orientationchange`. Ancrées sur `.chair` et non sur
+`.silhouette` : la silhouette respire, l'arche tremblerait avec elle.
+
+Piège : une courbe quadratique reste toujours **entre ses trois points de
+contrôle**, donc borner celui du haut suffit à garantir qu'elle ne sort pas
+par le plafond. Sans cette borne, en paysage, les longs trajets envoyaient le
+sommet à −125 px.
+
+**Le socle navigateur.** `vite.config.ts` fixe `cssTarget` : sans lui, le
+minifieur réécrit `max-height: 620px` en syntaxe d'intervalle (`height <=
+620px`), qui demande Chrome 104+ — sur un téléphone plus ancien la règle serait
+ignorée **sans erreur**, et le combat redéborderait sans que rien ne le dise.
+Il reste un plancher qu'on ne peut pas abaisser : `color-mix()` avec des
+`var()` ne se compile pas, donc la page demande **Chrome 111 / Safari 16.2**
+(2023). En dessous, les accents de couleur tombent et le rendu s'aplatit — ça
+reste jouable, mais silencieusement plus laid.
+
+**Pour mesurer un format sans redimensionner la fenêtre**, charger la page dans
+une `iframe` de la taille visée : les `vh` et les media queries s'y appliquent
+pour de vrai. Attention — **dans un onglet en arrière-plan le navigateur gèle
+les transitions CSS**, donc une valeur calculée peut rester bloquée à mi-course
+et faire croire à un bug. Neutraliser la transition avant de mesurer.
+
+## Commandes
+
+```bash
+npm run dev          # dev local -- la racine ouvre la collection d'emoji
+npm run dev:mobile   # vite --host -> tester sur le téléphone via l'adresse Network
+npm run build        # tsc (types) puis vite build ; doit passer sans erreur
+npm run verif        # vérifications des règles, sans navigateur
+npm run emoji        # (re)engendre public/data/emoji.json depuis Unicode + CLDR
+npm run emoji -- --peau   # le banc avec les variantes de peau -> emoji-peau.json
+npm run peintures    # (re)engendre public/data/paintings.json (la seconde collection)
+```
+
+Les deux pipelines tournent **hors du build** et profitent du cache de
+`scripts/.cache/`, donc une relance ne redemande que ce qui avait échoué ;
+`--frais` l'ignore.
+
+**LES ROUTES**, et toutes marchent :
+
+| | |
+|---|---|
+| la racine, `?paquet` | la collection d'emoji |
+| `&peau` | le banc avec les variantes de couleur de peau |
+| `&art` | les peintures |
+| `?paquet=<n>` | rejoue un tirage précis |
+| `&nu` | saute le sachet |
+| `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans` | les bancs du gabarit |
+| `?extraction`, `?r3f`, `?jeu` | l'archive |
+| `?ecusson` | la planche des symboles de coût |
+
+## Déploiement — workflow attendu par Keko
+
+**Pousser sur `main` après chaque modification**, sans attendre qu'il le
+demande. Keko teste depuis son téléphone et un PC distant, jamais sur la machine
+de dev : tant que ce n'est pas poussé, il voit une version périmée.
+
+Le push déclenche `.github/workflows/deploy.yml` (~1 min) qui publie sur
+<https://mastagooz.github.io/keko-test/> (base Vite `/keko-test/` au build,
+`/` en dev). GitHub Pages est déjà configuré sur "GitHub Actions" — ne plus y
+toucher.
+
+Cycle : `npm run build` -> commit -> push -> attendre la fin du workflow ->
+dire à Keko d'aller tester. Lui rappeler de vérifier la **date de build affichée
+sur la page** pour être sûr qu'il ne voit pas une version en cache.
+
+**TERMINER CHAQUE RÉPONSE PAR LE LIEN DE CE QU'ON VIENT DE FAIRE.** Keko teste
+depuis son téléphone et un PC distant : le lien doit être sous son pouce, pas à
+retrouver dans l'historique. Il l'a demandé — « tu peux me remettre le lien à
+chaque fois ? de la version nouvelle ».
+
+**LA RACINE OUVRE LA COLLECTION D'EMOJI**, puisque c'est le projet : c'est donc
+elle qu'on donne par défaut.
+
+| | |
+|---|---|
+| **la collection d'emoji** | `https://mastagooz.github.io/keko-test/?v=<sha>` |
+| un tirage précis | `…/?paquet=1314&v=<sha>` |
+| les peintures | `…/?paquet&art&v=<sha>` |
+| l'archive (le jeu d'extraction) | `…/?extraction&v=<sha>` |
+
+**Y ACCROCHER LE HASH DU COMMIT** (`?v=<sha court>`) : l'URL change donc à chaque
+déploiement, et le navigateur ne peut pas resservir un vieux bundle. Le
+garde-fou `verifierVersion` et la date de build affichée restent les filets —
+mais *un garde-fou ajouté ne corrige pas rétroactivement un cache déjà posé*,
+alors qu'une URL neuve, si. Le paramètre est ignoré par `entree.ts`, qui ne lit
+que `extraction` / `r3f` / `jeu` et `ecusson`.
+
+**Attendre le bon run, pas le dernier.** Comparer le `headSha` du run au `HEAD`
+local avant de conclure : juste après un push, `gh run list --limit 1` renvoie
+encore le run **précédent**, déjà terminé, et on annonce un déploiement qui n'a
+pas eu lieu. C'est arrivé.
+
+## Méthode de travail
+
+On avance **étape par étape**. À chaque étape : dire à Keko ce qui a été fait, et
+**commiter quand ça marche**. Ne pas écrire de code tant qu'une décision de
+design en attente n'est pas tranchée par Keko.
+
+**Ce que Keko doit juger doit être présentable.** Sa règle, et elle est vérifiée
+dans ce dépôt : *« tester avec un truc un minimum visuellement agréable aide
+beaucoup »*. Le mécanisme des trésors a reçu deux « chiant » sur une interface
+en lignes de texte, puis « ça va » une fois la main dessinée en cartes — pour un
+mécanisme identique. Une sensation ne se teste pas sur un tableur.
+
+La borne n'est pas « pas de dessins » — Keko l'a levée lui-même pour la main.
+Elle est : **pas d'assets, pas de fichiers image, pas de dépendance, pas de
+son.**
+
+**Une exception, ouverte par Keko : ses propres images.** Elle a d'abord servi
+aux portraits du joueur (`ui/portrait.ts`, parti avec le gros plan d'attaque —
+il reste dans `git log`), et elle sert maintenant aux **illustrations de
+cartes** : `IMAGES` dans `ui/art.ts` associe un modèle à un fichier de
+`public/`. La première est `Glaive.png`.
+
+**Le repli est porté par le CSS, pas par une vérification** : la carte empile
+l'image de Keko AU-DESSUS du dessin SVG (`--art-keko` puis `--art`, dans
+`.carte > .art`), et une couche de fond qui échoue est simplement ignorée par
+le navigateur. *Un essai abandonné redonne donc le dessin d'origine*, sans
+image cassée et sans une ligne de JavaScript. Pour ajouter une image : un
+fichier 680 x 1000 dans `public/`, une ligne dans `IMAGES`.
+
+**La casse du nom compte** — et l'ACCENT aussi. `public/` est copié tel quel et
+GitHub Pages sert depuis Linux : un `glaive.png` demandé pour un `Glaive.png`
+posé marcherait sur la machine de dev et ferait un 404 en ligne.
+
+*Et ça s'est produit*, sur un accent plutôt que sur une casse : le fichier
+s'appelle `Epée à deux mains.webp` (E sans accent), j'avais écrit `Épée`. **Le
+serveur de dev de Windows servait quand même l'image** — un `fetch` renvoyait
+200 — mais `new Image()` la refusait, et la carte sortait avec son sceau de
+repli. En ligne, ç'aurait été un 404 franc. *On recopie le nom du fichier, on ne
+le réécrit pas* : une entrée de la table se vérifie contre `ls public/`, pas
+contre l'orthographe qu'on croit juste.
+
+**ET UN MODÈLE PEUT AVOIR UN DESSIN PAR RARETÉ : les trois tiers de la
+potion.** Keko a livré trois fioles de richesse croissante — `Potion de vie
+T1/T2/T3.webp` — « les trois tiers des potions sont pour bronze / argent / or /
+diamant ».
+
+*Et ça change ce que la rareté dit d'un objet* : jusqu'ici elle ne tenait qu'au
+MÉTAL DU CADRE, un habit posé autour d'un dessin unique. Ici **c'est l'objet
+lui-même qui monte** — du flacon nu au flacon serti d'or — et le cadre ne fait
+plus que le confirmer.
+
+Trois choses qui le portent :
+
+- **IL Y A TROIS DESSINS POUR QUATRE CRANS**, donc le plus riche couvre le haut
+  de l'échelle : bronze, argent, or, et le diamant reprend celui de l'or en
+  attendant un T4. *Une échelle qui manque de barreaux plafonne, elle ne retombe
+  pas en bas* — la règle du repli de la loupe, prise par le même bout. **Il
+  manque donc un T4**, et c'est à Keko ;
+- **les deux potions du catalogue PARTAGENT la table** (`POTIONS_DE_VIE`), parce
+  que ce qui décide du dessin est la RARETÉ et non le modèle : une Potion
+  commune sort en T1, une Super potion rare en T2. *Une table par modèle aurait
+  recopié les mêmes trois fichiers à chaque fiole nouvelle* ;
+- **sans rareté, c'est le premier cran.** Le jeu 2D ne la connaît pas et ne la
+  passe pas : *une carte sans rang vaut le bas de l'échelle*, exactement ce que
+  `rarete?` tient déjà sur le métal du cadre.
+
+La rareté entre déjà dans `signature()`, donc **deux crans du même modèle ont
+deux textures** sans rien ajouter — c'est ce qui fait que le coffre les empile
+séparément, et c'est précisément ce qu'on veut ici.
+
+**ET ELLES SONT EN WEBP DEPUIS QUE LE FORMAT EST FIXÉ.** Une illustration de
+carte se dessine en **1024 x 1463 (rapport 7:10)** : c'est la surface d'art de
+la carte, bordure déduite — 96,3 x 136,3 unités, soit **0,707**, et le 7:10 n'en
+coûte que 7 px rognés en haut et en bas. *La toile de texture plafonne à 768 de
+large*, donc l'illustration n'est jamais peinte au-delà de 740 px : au-delà de
+1024 de large, c'est du poids pour rien.
+
+**Le sujet tient dans les 61 % du haut** — c'est là que commence le nom (897 px
+sur 1463), et le voile sombre mord dès la moitié. Tout ce qui est plus bas passe
+sous le texte.
+
+**Et le poids tombe d'un facteur 50 à 170** : `Background.png` faisait 1 577 Ko
+et `Glaive.png` 1 694 ; en WebP à 70 %, **9 Ko et 33 Ko**, sans un artefact
+visible au zoom. *À douze modèles, c'était vingt mégaoctets à charger sur un
+téléphone* — c'est désormais moins d'un demi-mégaoctet pour tout le catalogue.
+
+**ET IL FAUT QUE CE SOIT DU WEBP AVEC PERTE, pas du WebP sans perte.** Keko, en
+déposant une Riposte de 533 Ko : « je l'ai mis en webp qualité 100 % pour
+tester, c'est un souci si je fais ça avec toutes les cartes ? » *Ce n'était pas
+de la qualité 100 — c'était du SANS PERTE* (`VP8L`), ce que les exports
+proposent souvent sous le même bouton, et c'est une autre famille de codage :
+le même dessin réencodé avec perte à 100 ne fait que 65 Ko, à 90 que 45.
+
+**Ce que ça coûte, mesuré sur le catalogue complet** (37 dessins) :
+
+| | poids du catalogue |
+|---|---|
+| sans perte, comme la Riposte livrée | **19,3 Mo** |
+| avec perte, qualité 100 | 2,3 Mo |
+| qualité 90 | 1,6 Mo |
+| qualité 70, le reste du jeu | 1,1 Mo |
+
+**Et ce que ça achète : rien qu'on puisse voir.** *La toile d'une carte plafonne
+à 768 px de large*, donc l'illustration n'est jamais peinte au-delà de ~740 — et
+en jeu la carte en fait trois cents au zoom, cent vingt en main. Écart moyen à
+la qualité 70, sur 255 niveaux et hors transparent : **2,4 à 740 px, 1,8 à 300,
+1,1 à 120.** *Un niveau et demi sur deux cent cinquante-cinq ne se voit pas* ;
+dix-huit fois le poids, si, sur un téléphone.
+
+**La marge, s'il en faut, se prend entre 80 et 90** (+6 à +14 Ko par dessin,
+soit un demi-mégaoctet sur tout le catalogue) — pas dans le sans-perte.
+
+**Deux poses**, parce que le joueur est montré dans deux situations qui n'ont
+rien à voir : `public/joueur.png` au repos sur la scène et quand il encaisse,
+`public/attaque.png` lame tendue quand c'est lui qui frappe. *Le gros plan est
+le seul endroit du jeu où la différence se voit.*
+
+**Chaque pose est optionnelle, séparément** : sans `joueur.png` le jeu rend la
+silhouette SVG comme avant, et sans `attaque.png` il frappe avec la pose de
+repos. *Le repli n'est pas une précaution de style* — sans lui, un essai
+abandonné laisserait une image cassée sur la scène ET dans le gros plan, et un
+joueur qui disparaît au moment où il frappe serait pire que de frapper l'épée
+basse.
+
+**LEUR URL PORTE LA DATE DU BUILD** (`?v=...`), et ce n'est pas une précaution :
+sans elle, remplacer un PNG ne change rien à l'écran. Les fichiers de `public/`
+sont copiés tels quels, **sans empreinte de contenu dans leur nom** —
+contrairement à tout le reste du build, qui sort en `index-A1b2C3.js`. Leur URL
+ne bouge donc jamais et le navigateur ressert celle qu'il a en cache. Keko :
+« j'ai changé l'image d'attaque mais elle n'a pas changé quand je lance » —
+alors que le serveur envoyait bien la nouvelle, vérifié à l'octet près.
+
+*Le piège se retend à chaque image modifiée, et il est invisible depuis la
+machine de dev*, où le serveur de développement invalide tout seul. Toute
+ressource ajoutée dans `public/` et destinée à changer doit passer par la même
+version.
+
+**Les deux images sont préchargées au démarrage, et ça compte** : la pose
+d'attaque ne s'affiche qu'au premier coup porté et pèse près d'un mégaoctet —
+chargée à ce moment-là, elle arriverait *après* le gros plan qu'elle devait
+remplir.
+
+**PAS DE SOCLE SOUS UN PORTRAIT dans le cadre.** Le socle est l'ombre au sol,
+dessinée pour une silhouette SVG qui touche le bas de sa boîte ; une image a ses
+propres marges transparentes, donc l'ombre s'en détache et se lit comme un trait
+noir posé dessous — d'autant qu'à cette échelle elle fait 409 px de large. Keko :
+« je vois comme un trait noir sous le joueur durant l'anim ». **Même défaut que
+sur le corps en agonie, même cause** : deux fois de suite, ce qui reste visible
+quand le dessin change, c'est l'ombre qu'on avait faite pour l'ancien.
+
+Ce qu'il faut savoir pour la suite : l'image porte la **même classe
+`silhouette`** que le SVG, donc elle hérite de la respiration, du liseré de
+lumière, de l'extinction en noir à la mort et de la taille calée sur `--corps`.
+Lui donner une classe à elle aurait voulu dire porter chacune de ces règles en
+double. Il ne reste qu'`object-fit: contain` à ajouter : un SVG à viewBox se
+contente d'une hauteur et déduit sa largeur, une image non — sans ça elle serait
+étirée, et c'est le genre de défaut qu'on met sur le compte du dessin plutôt que
+sur celui du CSS. Le chemin passe par `BASE_URL`, sans quoi un `/joueur.png`
+absolu pointerait à la racine du domaine au lieu de `/keko-test/`. Tout est du CSS et du SVG écrits à la main (`ui/illustrations.ts`), et
+seulement sur ce qui est soumis au jugement. C'est peu risqué tant que `logic/`
+reste pur : tout l'habillage vit dans `ui/` et se jette sans rien casser.
+
+**L'ANATOMIE DE LA CARTE, en un seul endroit** (`corpsCarte`, dans
+`render.ts`). Quatre fonctions la dessinaient chacune à leur façon — combat,
+trésor, pièce, vitrine — et c'est ainsi que les proportions ont dérivé. Keko :
+« les cartes c'est une catastrophe, le nom en bas, l'échelle des différents
+éléments, ça ne va pas du tout ». Elle se lit désormais de haut en bas, comme
+une carte à jouer :
+
+- le **fronton** : le nom en Cinzel, calé à GAUCHE juste après la **gemme**
+  de coût — un petit disque sombre serti dans le coin, le chiffre en ivoire.
+  Elle a été un gros joyau jaune ; Keko : « trop grossier et trop gros ». Pas
+  centré : centré, la gemme mangeait les premières lettres d'un nom long, et
+  dans l'éventail c'est la bande gauche qu'on voit — un nom calé à gauche se
+  lit au repos, un nom centré se fait couper par la voisine ;
+- la **fenêtre d'art**, en arche cerclée d'or, presque la moitié de la carte ;
+- le **cartouche** : ce que fait la carte, en EB Garamond, centré — et c'est
+  LUI qui porte le chiffre, en accent et plus gros que le texte. Il y a eu un
+  écusson à part pour le chiffre, à cheval sur la fenêtre ; Keko : « déjà
+  indiqué dans la description, donc inutile — en plus on ne sait pas si c'est
+  attaque ou défense ». Le verbe et le chiffre ensemble disent les deux. Une
+  condition (« ce tour seulement », « et son or est perdu ») va sur une seconde
+  ligne en italique. Un trésor dit d'abord ce qu'il vaut, puis ce que rapporte
+  de le brûler ; une pièce y met sa composition, une ligne par modèle ;
+- le **pied** : sa nature gravée entre deux filets (« Attaque », « Défense »,
+  « Trésor », « Arme »). Ni la richesse d'un trésor ni la rareté d'une pièce
+  ne s'y écrivent : elles se lisent au cadre. Enfoui au repos, et c'est voulu ;
+- des **volutes** aux quatre coins : un seul SVG écrit à la main, dont le
+  viewBox a le rapport exact de la carte (100 × 140), donc `preserveAspectRatio:
+  none` ne déforme rien et une unité vaut 1cqw.
+
+**La matière** : du cuir, pas du carton — vignettage, deux grains croisés en
+`repeating-linear-gradient`, le corps teinté par l'accent, et un **filet doré**
+à 3cqw du bord (`--filet`, plus franc sur un trésor). Keko : « texture de la
+carte trop basique ».
+
+**Tout est en `cqw`** — la carte fait 100cqw de large et 140 de haut — donc les
+proportions sont identiques à 77 px et à 262. Ce qui doit rester au-dessus de
+la ligne de flottaison ET sur la bande gauche que l'éventail laisse voir : la
+gemme, le nom et la première ligne du cartouche.
+
+**Cinzel porte ses capitales HAUT dans sa boîte de ligne.** Centré par le
+flex, le nom paraissait collé en haut du fronton — Keko : « c'est collé en
+haut du rectangle ». Mesuré au canvas (`measureText`, boîtes réelles contre
+boîtes de police) : les glyphes étaient 0,13em au-dessus du centre. Correction
+de 0,12em, **en em pour suivre la taille de la carte**, aux trois endroits en
+Cinzel : `translate` sur le nom, `padding-top` sur la gemme (le chiffre est
+son contenu direct), et les filets du pied remontés vers les glyphes. Georgia
+en repli est presque centrée d'elle-même ; elle descend alors de 0,08em de
+trop, prix accepté.
+
+**Deux polices Google Fonts, Cinzel et EB Garamond — la seule ressource
+chargée depuis l'extérieur.** La borne était « aucune police téléchargée » ;
+Keko l'a levée lui-même (« police trop simple »), et un serif système n'existe
+pas sur Android — Georgia n'y est pas, on tombait sur un sans. Une ligne dans
+`index.html`, Georgia en repli sans réseau.
+
+**Les classes de la carte ont des noms à elles** (`fronton`, `cartouche`,
+`ecusson`, `pied`) parce que les évidents étaient pris ailleurs : `.titre` est
+le titre des feuilles, `.entete` l'en-tête de page, et `.effet` existait déjà
+pour les offres — la règle de la carte l'écrasait en `position: absolute`
+sans que rien ne le dise.
+
+**Pour juger une famille de cartes, une planche.** Une page servie par Vite
+qui importe `vitrine` et aligne toutes les variantes côte à côte à taille de
+zoom — c'est ce qui a permis de voir les huit cartes d'un coup, là où le jeu
+n'en montre qu'une à la fois et jamais un trésor sans gagner un combat. À
+refaire dans le scratchpad, pas à commiter.
+
+**Le vocabulaire visuel de la carte**, pour que les prochaines s'y conforment :
+lumière venue du haut (filet clair en haut du jonc intérieur, sombre en bas),
+fenêtre d'art **en arche** et non en rectangle, trait des dessins **lumineux**
+plutôt que filaire (`drop-shadow` de sa propre couleur), gemme **sertie**
+dans le coin, nom en **Cinzel** et texte en **EB Garamond** (Google Fonts, repli
+Georgia), et un lustre
+oblique qui balaie la carte au moment où on la lève. L'accent de la carte
+teinte le corps, le liseré de la fenêtre et la plaque : une Dague est froide
+jusque dans son carton, un Moulinet est chaud.
+
+**Les créatures** suivent le même vocabulaire : silhouettes **pleines**, jamais
+filaires — une masse sombre avec un œil qui brille se lit comme un corps, un
+contour se lit comme un schéma. Lumière du haut (liseré clair en filtre CSS),
+dégradé de volume du dos vers le ventre, ombre portée au sol. **Chaque
+silhouette a besoin d'un identifiant de dégradé unique** : deux SVG qui
+partagent un `id` font que le second emprunte la couleur du premier, et toute
+la meute vire à la même teinte.
+
+## Langue
+
+Keko écrit en français ; lui répondre en français. Commentaires de code et
+messages de commit en français également.
+
+## ========== ARCHIVE : LE JEU D'EXTRACTION ==========
+
+**TOUT CE QUI SUIT EST UNE ARCHIVE.** Tranché par Keko : « le projet extraction
+on le garde en archive mais on ne travaille plus dessus ». Il est **entier et
+jouable** — armurerie, descente de six paliers, butin, mort et retour au hub —
+derrière `?extraction`, `?r3f` ou `?jeu`.
+
+*On ne le modifie plus*, et surtout on ne le modifie pas « en passant » pour
+faire plaisir à un réglage de la collection d'emoji : **une archive qu'on
+retouche sans la rejouer est une archive qu'on casse.** Son réglage est un
+rasoir — le set du Glaive 10 % plus faible avait fait tomber la survie de 50 %
+à 4 % — et personne ne le rejoue aujourd'hui.
+
+**IL RESTE LA RÉFÉRENCE DE DEUX CHOSES, et c'est pour ça qu'il est gardé
+lisible** :
+
+- **le GABARIT DE CARTE**, que les deux collections emploient telle quelle —
+  la plaque de laiton, la coque déchirée, l'orbe du coût, les trois crans de
+  cartouche, le texte peint au canvas ;
+- **toutes les leçons de rendu, de geste et de mesure** auxquelles le reste du
+  fichier renvoie sans arrêt (« la règle déjà payée sur… »).
+
+`npm run verif` continue de le vérifier : *une archive doit rester juste, sinon
+ce n'est plus une archive, c'est une ruine.*
+
 
 ## Concept du jeu
 
@@ -2207,7 +4620,6 @@ celui de la Barrière est celui du bloc : empêcher la salve d'arriver.
 **Une liste de cas est une liste qu'on oublie de compléter** — la règle déjà
 payée sur les étiquettes de la vitrine du zoom. À relire au prochain verbe
 défensif.
-
 
 
 #### LE CUIR NE BLOQUE PLUS : Agilité + Esquive
@@ -10853,5866 +13265,6 @@ Les trois branches de `entree.ts` sont des imports **dynamiques** : React et
 three ne sont téléchargés que si l'on demande `?r3f`. Tant que le jeu 2D est la
 page par défaut, il garde son poids.
 
-## LE TROISIÈME MODE : des cartes-personnages engendrées depuis Wikidata
-
-Demandé par Keko : « un jeu de cartes à collectionner dont les cartes sont des
-personnages (historiques et fictifs) générés automatiquement depuis
-Wikidata/Wikipédia, à la manière de WikiMasters mais limité aux personnages ».
-
-**AUCUNE CARTE N'EST ÉCRITE EN DUR**, et c'est la contrainte qui porte tout le
-mode. Le catalogue vit dans `public/data/characters.json`, produit hors ligne
-par `scripts/generate-characters.ts` — donc *enrichir le jeu ne demande pas
-d'écrire du code*, seulement de relancer le script ou d'élargir sa table de
-métiers.
-
-**Les deux autres modes ne sont pas touchés.** Rien de ce qui suit n'entre dans
-`logic/combat.ts`, `logic/descente.ts` ni `logic/hub.ts`.
-
-### Où ça vit, et pourquoi là
-
-```
-scripts/generate-characters.ts     le pipeline, HORS du build Vite
-scripts/.cache/                    le cache des requêtes (gitignoré)
-src/logic/characters/types.ts      le type CharacterCard + la validation
-src/logic/characters/formules.ts   LES FORMULES, en un seul endroit
-src/logic/characters/formules.verif.ts
-src/ui/personnages.ts              loadCharacters() — le fetch
-public/data/characters.json        le catalogue
-public/data/stats-summary.txt      la distribution, pour juger l'équilibrage
-```
-
-**`loadCharacters()` EST DANS `ui/`, PAS DANS `logic/`, et c'est la règle de
-pureté du projet qui le dit** : un `fetch` est une entrée-sortie, et ce dont
-`logic/` a besoin du monde extérieur lui est **injecté** — le motif du
-`StoragePort`. `logic/` porte donc le type et `parsePersonnages` (pur, qui prend
-le texte), `ui/` va chercher le texte. *Les deux consignes s'accordent : la
-fonction existe sous son nom, elle vit du bon côté de la frontière.*
-
-**Aucune dépendance n'a été ajoutée.** Node 24 exécute TypeScript tel quel —
-`npm run verif` le prouvait déjà — et `fetch` est natif. Le script se lance par
-`npm run personnages`.
-
-**`tsconfig.json` ne couvre que `src`**, donc `npm run build` ne type-vérifie
-pas `scripts/`. C'est voulu (le pipeline est hors du build), et **le prix s'est
-payé tout de suite** : une signature laissée à `Ligne[]` après être passée à
-`string[][]` n'a été vue que par un `tsc` lancé à la main.
-
-**ET `node --check` NE SUFFIT PAS À LE RATTRAPER.** Avec
-`--experimental-strip-types`, il a laissé passer **une chaîne non terminée** —
-un `'
-'` dé-échappé en vrai retour à la ligne au milieu d'un littéral. *Un
-contrôle qui passe sur du code invalide est pire qu'aucun contrôle*, parce qu'on
-s'y fie.
-
-Pour vérifier le script, un `tsconfig` à part qui l'inclut (scratchpad, non
-commité) suffit : seules les erreurs d'imports Node restent, et tout le code
-métier est couvert. **Le propre serait `@types/node` en devDependency** — ce
-sont des types, pas une librairie à l'exécution — mais c'est une dépendance,
-donc c'est à Keko.
-
-### LES FORMULES SONT DANS `logic/`, ET LE SCRIPT LES APPLIQUE
-
-`statsDerivees` est la seule porte : rareté, attaque, défense et domaine en
-sortent tous. *Deux endroits qui décrivent le même calcul se désaccordent au
-premier réglage* — et surtout, **les formules étant pures, tout l'équilibrage se
-rejoue sur le JSON déjà téléchargé**, sans rien redemander à Wikidata.
-
-- **la rareté** suit un score de notoriété : nombre de Wikipédia qui ont
-  l'article (0,6) et vues sur 30 jours (0,4), puis **trois seuils pour quatre
-  crans** — un par métal ;
-- **l'attaque** suit les vues — *ce qu'on regarde aujourd'hui frappe fort* ;
-- **la défense** suit la taille de l'article — *ce qui est longuement écrit
-  encaisse* ;
-- **le domaine** se lit dans la DESCRIPTION, voir juste en dessous.
-
-**LES ÉCHELLES SONT LOGARITHMIQUES, et ce n'est pas un détail.** La notoriété
-suit une loi de puissance : en échelle linéaire, Napoléon écrase tout le monde
-et quatre-vingt-quinze pour cent des cartes valent 1.
-
-#### LES VUES SE SOMMENT SUR PLUSIEURS LANGUES, pas seulement le français
-
-Tranché par Keko : « la fréquentation de page devrait prendre en compte toutes
-les langues non ? pour une somme ? » — **et la mesure lui donne largement
-raison.**
-
-*On mesurait la notoriété FRANCOPHONE et on l'appelait notoriété.* Mesuré sur
-un échantillon de dix figures, le français ne pèse que **1 à 38 %** des vues, et
-**huit rangs sur dix changent** quand on somme :
-
-| | vues FR | somme | part du FR |
-|---|---|---|---|
-| Napoléon | 148 690 | 1 346 355 | 11 % |
-| Jules César | 59 540 | 723 930 | 8 % |
-| Sun Yat-sen | 6 499 | 261 130 | **2 %** |
-| Qu Yuan | 358 | 24 797 | **1 %** |
-| Molière | 48 498 | 128 361 | **38 %** |
-
-Un poète chinois ou un réformateur turc valait une carte commune **parce que
-personne ne lit sa page en français** — ce qui ne dit rien de lui.
-
-**LA LISTE DES LANGUES EST FINIE, ET C'EST UN COMPROMIS ASSUMÉ**
-(`LANGUES_VUES`, quinze wikis). *Aucun endpoint n'agrège les vues d'un article
-toutes langues confondues* : il faut une requête par (langue, lot de cinquante
-titres), donc quinze langues coûtent déjà ~1 350 appels sur les candidats et
-trois cents seraient inatteignables. On prend les quinze plus grosses
-Wikipédia — et **le nombre de langues, qui pèse 60 % du score, corrige ce que
-la liste laisse passer.**
-
-*Le français n'y figure pas* : il est déjà mesuré à part, avec la taille de
-l'article, et **une langue comptée deux fois vaudrait double.**
-
-Trois choses à ne pas défaire :
-
-- **le titre vient des SITELINKS de Wikidata**, pas d'une devinette : « Mustafa
-  Kemal Atatürk » s'écrit « 穆斯塔法·凯末尔·阿塔图尔克 » en chinois. `sitefilter`
-  est ce qui rend l'étape tenable — sans lui chaque entité rapporterait ses
-  trois cents sitelinks dont on jetterait les deux cent quatre-vingt-cinq qu'on
-  ne mesure pas. *Le poids des champs décide, pas le nombre de lignes* ;
-- **une langue manquante retire sa part, et rien de plus.** C'est une somme,
-  donc elle n'écarte personne — *à la différence des vues FR, où un trou
-  faussait tout le score et faisait jeter la carte* ;
-- **on ne demande les vues étrangères que pour ce qui survivra** : un candidat
-  sans mesure FR est déjà écarté, et chaque identifiant coûte quinze requêtes
-  de plus. *On ne paie pas pour des cartes qu'on jette.*
-
-#### UNE CARTE SANS PORTRAIT N'EST PAS UNE CARTE
-
-Tranché par Keko, après mesure : **27 cartes sur 3 000** sortaient avec le sceau
-de repli. *Or ce sceau est là pour dire « il manque un fichier qu'on devrait
-fournir »* — et ce n'était pas le cas : Wikidata n'a simplement aucune image
-libre pour elles.
-
-**Le repli vient de Wikipédia, et il ne coûte aucune requête** : `pageimages`
-voyage dans l'appel qui rapporte déjà la taille et les vues. Quatorze des
-vingt-sept avaient une image d'en-tête que Wikidata ignore.
-
-**MAIS IL NE VAUT QUE POUR LES PERSONNAGES RÉELS**, et c'est la mesure qui
-l'impose :
-
-| | ce que Wikipédia propose |
-|---|---|
-| Al-Kindi | un portrait |
-| Níkos Kazantzákis | une photographie de 1904 |
-| Abdullah ibn az-Zubayr | une pièce de monnaie à son nom |
-| **Thanos** | `THANOS-Cosplay.jpg` |
-| **Wolverine** | une photo prise au Comic-Con |
-| **Mario** | un train JR-West décoré |
-
-***C'est précisément pour ça que Wikidata ne les référence pas*** : ce ne sont
-pas des portraits du personnage, ce sont des photos libres faute de mieux. Une
-carte illustrée par un cosplayeur est pire qu'un sceau.
-
-**Ce qui reste sans rien sort du catalogue** (60 cartes à la dernière
-génération), et le candidat suivant prend la place — *la marge de 1,5× sert
-exactement à ça.* Résultat : **zéro carte sans illustration.**
-
-Prix assumé, et il est connu : **les super-héros ont disparu du jeu.** Le seul
-moyen de les y remettre est de leur dessiner une illustration à la main.
-
-Deux garde-fous :
-
-- **on refuse tout ce qui n'est pas sur Commons.** Une image hébergée
-  localement par un Wikipédia l'est au titre de l'usage encyclopédique, et *ce
-  jeu n'est pas une encyclopédie* — vérifié sur les trois formes d'URL ;
-- **les deux chemins passent par la même fabrique d'adresse** : Wikidata rend
-  un `Special:FilePath`, Wikipédia une URL directe, et *deux façons de
-  construire la même adresse divergeraient au premier réglage.*
-
-#### TROIS DÉFAUTS DU PIPELINE, TROUVÉS EN LANÇANT LA COLLECTE
-
-Aucun ne levait d'erreur, et c'est ce qui les rend instructifs.
-
-**1. Le journal annonçait au lieu de constater.** Il nomme une langue AVANT de
-la traiter, donc le dernier nom affiché n'était pas la dernière finie mais
-**celle qui bloquait**. Le néerlandais a tourné deux heures sans que rien ne le
-dise, et je lisais « nl fait, id en cours » — l'inverse exact.
-
-**2. Aucun budget de temps sur la collecte des vues** (`BUDGET_LANGUE`, six
-minutes). *La leçon était déjà écrite pour SPARQL* — « une boucle qui ne sait
-pas quand s'arrêter n'a pas de pire cas » — et je ne l'avais pas portée ici.
-Les treize langues mesurées prennent de 1,5 à 8 minutes, donc le budget laisse
-passer ce qui va bien et coupe ce qui part en vrille. **Une langue coupée
-retire sa part et rien de plus** : c'est une somme, elle n'écarte personne.
-
-**3. Un garde-fou calibré sur le français, appliqué à tort ailleurs.** Un lot
-n'est mis en cache que s'il est « complet », c'est-à-dire si tous ses articles
-ont des vues. *Sur le Wikipédia français un trou veut dire « mesure ratée » ;
-sur un petit wiki, un article peu consulté rend trente `null` — et c'est un
-vrai zéro.* Le néerlandais n'avait donc gardé que **52 lots sur 87**, et chaque
-relance les refaisait. L'exigence ne vaut plus que pour le français.
-
-***Un garde-fou calibré sur une source n'est pas valide sur une autre*** —
-même famille que le champ `pageviews` présent mais plein de `null`.
-
-**4. La valeur calculée et la valeur enregistrée avaient divergé.** La somme
-multilingue servait bien à `statsDerivees` — donc la rareté et l'attaque
-étaient justes — pendant que la carte enregistrait `m.vues`, le chiffre
-français. **Le fichier disait autre chose que ce qui avait servi à le
-calculer**, et le tri final reclassait sur le mauvais chiffre. *Rien ne
-l'aurait signalé : les deux valeurs sont plausibles.* Elle se calcule
-désormais une fois et sert aux deux.
-
-**LE DOMAINE SE LIT SUR UN LIBELLÉ, PAS SUR UN IDENTIFIANT.** Wikidata compte
-des centaines de métiers ; une table de Q-ids en oublierait la moitié et
-demanderait une ligne par métier nouveau. Un mot suffit, et les deux côtés
-passent par `cle()` — donc on l'écrit **une fois, sans accent**, et il couvre
-les doublets de Wikidata (« écrivain ou écrivaine ») comme les composés
-(« homme politique »).
-
-### LE DOMAINE SE LIT DANS LA DESCRIPTION, ET LE PREMIER MOT GAGNE
-
-Tranché par Keko : « on peut directement donner plus de poids à la mention qui
-apparaît en premier ? car souvent dans la description on a au début son rôle
-principal ». **Et la mesure lui donne raison.**
-
-*Une description Wikidata est une phrase ÉCRITE PAR UN HUMAIN*, qui met le rôle
-principal en tête — « compositeur et pianiste franco-polonais », « peintre,
-sculpteur, architecte et ingénieur italien ». **L'ordre y porte du sens.** La
-liste des métiers (P106), elle, n'en porte aucun : c'est un ensemble, et son
-ordre est celui que la requête rend — Léonard de Vinci y commence par
-« scientifique ».
-
-**CE QUE L'ANCIENNE RÈGLE FAISAIT, ET POURQUOI C'ÉTAIT PIRE** : elle parcourait
-les huit domaines dans un ORDRE FIXE et prenait le premier qui touchait
-n'importe quel métier. **Donc c'était l'ordre de ma table qui décidait pour
-63 % du catalogue** — 1 892 cartes avaient plusieurs domaines possibles. Artiste
-étant dernier, il ne gagnait presque jamais.
-
-**ET LA COMPARAISON CHERCHAIT UNE SOUS-CHAÎNE**, ce qui classait 190 cartes de
-travers : **« tra-DUC-teur » contient « duc », donc 123 traducteurs étaient
-rangés en politique** ; « d-ROI-t » contient « roi », donc Platon aussi. Les
-bornes sont désormais des **non-lettres** et non des espaces — une description
-écrit « philosophe, mathématicien », donc exiger un blanc après le mot le ratait
-une fois sur deux. *Un mot se termine où les lettres s'arrêtent, pas où l'espace
-commence.*
-
-**LE REPLI RESTE LES MÉTIERS** pour les 10 % de descriptions qu'aucun mot ne
-touche, et là c'est le premier métier qui parle : *si l'on doit deviner, autant
-deviner sur la même règle.*
-
-#### Ce que ça a changé, mesuré
-
-| | avant | après |
-|---|---|---|
-| politique | 945 | 771 |
-| **penseur** | 457 | **806** |
-| scientifique | 396 | 426 |
-| religieux | 483 | 389 |
-| **artiste** | 181 | **356** |
-| **militaire** | 315 | **120** |
-| explorateur | 88 | 38 |
-| sportif | 39 | 8 |
-| **autre** | 10 | **0** |
-
-**LES DEUX CHUTES SONT DES CORRECTIONS, pas des pertes**, et c'est ce qu'il
-fallait vérifier avant de conclure :
-
-- **militaire** garde Napoléon, César, Rommel, de Gaulle, Hannibal — et perd
-  **Charlemagne, Alexandre le Grand, Soliman**, que leur description dit
-  « empereur », « roi », « sultan ». *Ce sont des souverains qui ont fait la
-  guerre, pas des militaires de carrière* ;
-- **sportif** garde huit vrais sportifs et perd **Albert Camus** (gardien de but
-  amateur), **Marcel Duchamp** (joueur d'échecs) et **Harry Potter**
-  (quidditch) — l'ancien ordre les classait sportifs parce que *sportif* était
-  testé en premier.
-
-**Et « homme d'État » était le plus gros trou de la table** : 115 des 300
-descriptions muettes, soit Lincoln, Kennedy, Bismarck, Truman, Roosevelt, Nehru,
-Wilson. ***Une table de mots se relit sur ce qu'elle N'ATTRAPE PAS***, pas sur
-ce qu'elle attrape.
-
-**À SURVEILLER** : « penseur » devient le plus gros domaine (26,9 %) et
-« sportif » tombe à 0,3 %. C'est fidèle à ce que le catalogue contient — des
-gens morts avant 1976 — mais ce n'est pas forcément la répartition qu'un jeu
-veut. **À rouvrir avec Keko**, et le levier n'est plus l'ordre de la table :
-c'est la table de découverte du pipeline, qui décide qui entre.
-
-### CE QUE LE ENDPOINT IMPOSE, et il impose tout le découpage
-
-**Mesuré, et aucune de ces trois mesures ne se devinait :**
-
-| requête | réponse |
-|---|---|
-| humains + article FR, triés par notoriété | **504 au bout de 65 s** |
-| le seul filtre `sitelinks >= 150`, sans rien d'autre | **504 au bout de 65 s** |
-| une SEULE année de décès + article FR | **502** |
-| peintres morts + article FR + `sitelinks >= 25` | **1,6 s, 1209 lignes** |
-| monarques / militaires / officiers, allégés | 2,5 s / 38,5 s / 6,3 s |
-| « homme politique », « écrivain » | **réponse TRONQUÉE** (voir plus bas) |
-
-**`wdt:P31 wd:Q5` porte onze millions d'items, et une requête qui part de là
-pour trier par notoriété ne revient jamais** — 504 à chaque essai, à toute
-heure. **On ne peut donc pas demander « les trois mille personnages les plus
-connus » :** il faut un point d'entrée sélectif, et un métier en est un.
-
-D'où les trois temps, et ils ne sont pas un choix d'architecture :
-
-1. **DÉCOUVRIR par métier, le plus légèrement possible** — juste le Q-id, le
-   titre de l'article et le nombre de langues ;
-2. **ENRICHIR les seuls candidats retenus**, par paquets de cinquante dans un
-   `VALUES` ;
-3. **MESURER les articles** sur Wikipédia FR, cinquante titres par appel.
-
-### LE ENDPOINT LÂCHE LE FLUX QU'IL A COMMENCÉ — et j'ai conclu quatre fois de travers
-
-**Le symptôme ne ressemble à rien de connu.** Sur un métier massif, le serveur
-ne renvoie pas d'erreur : il commence à répondre — quatre-vingt-douze mille
-lignes — puis **coupe au milieu d'une chaîne**. On reçoit un `SyntaxError` de
-`JSON.parse` à une position qui tombe sur une frontière de tampon :
-
-```
-Bad control character in string literal in JSON at position 2564119
-Expected double-quoted property name in JSON at position 196608   (= 192 Ko pile)
-```
-
-*Ça ressemble à un bug de parseur*, alors que le JSON reçu est simplement
-incomplet — et il n'y a pas de fin à lire. **La position de la coupure est le
-seul indice**, et c'est elle qui a fini par donner la cause.
-
-**Les quatre diagnostics successifs, et pourquoi aucun ne tenait :**
-
-1. *« le filtre de notoriété n'est pas indexé, donc le découpage ne peut pas
-   converger »* — bâti sur trois troncatures de suite. J'ai conçu **trois axes
-   de repli** dessus ;
-2. *« un index de plage demande deux bornes »* — `>= 100` répondait en 1 s quand
-   `>= 54` tronquait. Mesuré juste après : `[18, 1000)` **échoue** à l'instant
-   où `[18, ∞)` vient de réussir ;
-3. *« c'est la charge du service »* — vrai en partie, et c'est ce qui rendait le
-   diagnostic si glissant : la charge explique qu'une même requête passe puis
-   échoue, pas que le CSV passe là où le JSON ne passe jamais ;
-4. *« c'est le poids de la réponse »* — les coupures tombaient toutes vers
-   2,97 Mo, et le CSV les a fait disparaître. Mais pré-découpé en trois, « homme
-   politique » casse **encore**, et sur sa tranche la plus basse.
-
-***Une mesure qui varie n'est pas forcément du bruit : elle peut être au bord
-d'un seuil.*** Et ***quand plusieurs explications se succèdent sans tenir au
-test suivant, c'est qu'on lit le mauvais chiffre*** — il y en avait trois en
-jeu : le temps serveur (~60 s), le poids de la réponse, et le coût du parcours.
-
-**CE QUI EST ÉTABLI, et qui porte tout le code :**
-
-- **le format JSON de SPARQL pèse neuf fois le CSV sur la même donnée.** Il
-  enveloppe chaque valeur dans un objet à deux champs —
-  `{"type":"uri","value":"http://www.wikidata.org/entity/Q42"}` pour dire `Q42`.
-  Mesuré : la même requête rend 3 Mo en JSON (tronquée) et **0,32 Mo en CSV, en
-  13,6 s** ;
-- **le POIDS DES CHAMPS décide, pas le nombre de lignes.** La requête de
-  peintres passe de **38,8 s à 1,6 s** en retirant les libellés, les `OPTIONAL`
-  et le `GROUP_CONCAT` — pour *quatre fois plus de lignes* ;
-- **une requête à qui on donne ses items est instantanée** : les six `OPTIONAL`
-  et le `GROUP_CONCAT` coûtent **0,5 s** sur cinquante items nommés ;
-- **pour un métier à un million et demi d'items, c'est le PARCOURS qui
-  domine** : les tranches réduisent la sortie, pas le scan, donc « homme
-  politique » casse quelle que soit la tranche ;
-- **sans point d'entrée sélectif, rien ne passe** : `wdt:P31 wd:Q5` et le filtre
-  de notoriété nu rendent 504 à chaque essai, à toute heure.
-
-**CE QUE LE CODE FAIT, et chaque pièce répond à un de ces faits :**
-
-- **la découverte est en CSV et ne SELECTionne que deux colonnes**, le Q-id et le
-  nombre de langues. Le titre d'article reste dans le `WHERE` — on filtre bien
-  sur son existence — mais il arrive avec les détails, où il ne coûte rien.
-  L'enrichissement garde le JSON : il rapporte des libellés, qui demandent un
-  format qui échappe ;
-- **elle part d'emblée en TROIS TRANCHES de notoriété** (`TRANCHES_LANGUES`),
-  resserrées en bas parce que la notoriété décroît vite. ***Mieux vaut trois
-  petites requêtes sûres qu'une grosse à rattraper*** : un rattrapage qui coûte
-  soixante secondes par tentative n'en est pas un ;
-- **une troncature ne se réessaie QU'UNE FOIS** (`ESSAIS_TRONQUEE`). Réessayer
-  ne change pas la taille de la réponse, redécouper la divise par deux — *le
-  redécoupage attaque la cause, le réessai un symptôme.* Et surtout, les deux
-  puisaient dans le même budget : à trois essais, le lot racine le consommait
-  seul et ses moitiés étaient abandonnées « hors budget » **sans avoir été
-  essayées**. ***Deux mécanismes de secours qui partagent une ressource ne sont
-  pas deux secours : le premier affame le second*** ;
-- **on ne passe aux axes de secours que si le métier n'a RIEN rendu.** Ce qui
-  casse sur un métier massif est la tranche basse — la plus peuplée — et le tri
-  final ne garde que les plus notoires : *ces personnages seraient jetés de
-  toute façon.* ***Un rattrapage ne vaut que ce que vaut ce qu'il rattrape*** ;
-- **les trois axes de repli restent** — notoriété, période, puis descente dans
-  les sous-classes (`wdt:P279`) — mais comme **filets pour l'imprévu**, pas
-  comme mécanisme normal. Ils ne coûtent rien quand tout passe ;
-- **un budget de temps borne chaque TRANCHE** (`BUDGET_TRANCHE`, et un global
-  pour la taxonomie) : *une récursion qui ne sait pas quand s'arrêter n'a pas de
-  pire cas.* **Par tranche et non par métier** — posé avant la boucle, la
-  première tranche le consommait seule et les deux suivantes étaient abandonnées
-  sans être tentées, alors que ce sont elles qui passent. *C'est la même faute
-  que les essais affamant le redécoupage, un cran plus haut* : ***un budget posé
-  avant une boucle est dépensé par son premier tour*** ;
-- **`terminated` est une troncature**, pas une erreur à part : c'est le corps
-  coupé pendant la lecture, la même panne vue un cran plus tôt ;
-- **un CSV coupé se lit SANS erreur**, là où un JSON coupé lève — il n'a pas de
-  marqueur de fin. On vérifie donc l'en-tête et le compte de colonnes de chaque
-  ligne : *sinon une troncature passerait pour un lot complet*, ce qui est bien
-  pire qu'un échec ;
-- **un Q-id faux ne lève pas non plus, il rend zéro.** La requête est valide, le
-  métier n'existe simplement pas — donc le seul signe est un lot vide, et le
-  journal le signale. *Une table de trente-sept identifiants recopiés à la main
-  en porte forcément un de travers.*
-
-**`PLAFOND_LANGUES` n'a rien à voir avec la performance**, contrairement à ce que
-le diagnostic n° 2 faisait croire : il **ferme la récursion** du redécoupage, qui
-n'a plus de cas `null` à porter. Aucun item n'approche mille Wikipédia — le
-record tourne autour de trois cent trente — donc il ne retire personne.
-
-### LES VUES SONT PAGINÉES, ET UNE RÉPONSE BIEN FORMÉE PEUT ÊTRE VIDE
-
-**Deux défauts l'un derrière l'autre, et aucun des deux ne lève quoi que ce
-soit.** Le premier a mis **2 342 cartes sur 3 000 à zéro vue** — Napoléon,
-Newton, Platon, Confucius — donc à une attaque de 1 : le résumé annonçait un jeu
-uniformément terne et rien ne disait pourquoi.
-
-**1. `prop=pageviews` EST PAGINÉ**, parce que c'est une propriété coûteuse :
-l'API n'en traite qu'une partie des titres par appel et renvoie
-`continue: { pvipcontinue: "Honorius_III" }` pour dire où reprendre. *Rien
-d'autre ne le signale* — pas d'erreur, pas de `warnings`, et les pages rendues
-sont parfaitement formées ; celles qui n'ont pas été traitées n'ont simplement
-pas de champ `pageviews`. ***Une réponse d'API qui porte un `continue` n'est pas
-une réponse, c'est sa première page.***
-
-*Ce qui a mis sur la voie, c'est une ASYMÉTRIE* : la taille était complète sur
-les 4 421 articles et les vues sur 1 081. Les deux viennent du même appel, donc
-ce n'était ni le réseau ni les titres — c'était la propriété. **Deux champs du
-même appel qui n'ont pas le même taux de remplissage désignent le champ, pas
-l'appel.**
-
-**2. LE CHAMP PEUT ÊTRE LÀ ET NE RIEN DIRE.** Quand le service de vues échoue
-sur un titre, l'API rend `pageviews: { "2026-09-08": null, … }` — trente `null`.
-Le champ est donc **présent**, et le garde-fou que je venais d'écrire cherchait
-son *absence* : il annonçait « 0 article sans vues » pendant que cinq cartes
-portaient un zéro faux.
-
-***On ne vérifie pas qu'un champ existe, on vérifie qu'il porte un nombre.***
-J'avais codé la sonde contre le symptôme que je venais de voir plutôt que contre
-le fait dont j'avais besoin — c'est la même faute que le bot de simulation qui
-ne connaissait pas `energie`, et **un garde-fou qui répond « tout va bien » est
-pire que pas de garde-fou.**
-
-Trois choses à ne pas défaire :
-
-- **un lot troué n'est PAS mis en cache.** Le service bloque ses propres
-  réessais trente minutes après un échec (`pvi-cached-error-title`, qui vide la
-  réponse de son `query` entier), donc rappuyer dans la seconde ne sert à rien ;
-  mais garder le lot **gèlerait le trou** jusqu'au prochain `--frais`. *Un cache
-  ne retient que les succès*, et `garder` est ce qui dit lequel. Vérifié : le
-  blocage se lève tout seul, deux des cinq titres rendaient déjà leurs chiffres
-  vingt minutes plus tard ;
-- **la fusion ne remplace jamais des vues utilisables** par une absence ni par
-  trente `null` : chaque tour rend les MÊMES pages en ne complétant que
-  celles qu'il a traitées ;
-- **une carte sans vues mesurables est ÉCARTÉE**, comme une carte sans article
-  mesuré — la marge de candidats (1,5×) est là pour ça. ***Un zéro qu'on sait
-  faux est pire qu'une carte en moins***, parce qu'il traverse les formules sans
-  bruit et ressort en statistique.
-
-### LE CACHE EST PAR REQUÊTE, PAS PAR ÉTAPE
-
-`scripts/.cache/`, gitignoré, une entrée par requête (nom + empreinte du corps).
-C'est ce qui permet de relancer après un lot perdu sans redemander les trente
-qui avaient abouti — *et le endpoint public coupe assez souvent pour que ça
-compte.* Il ne retient **que les succès** : une réponse vide gardée
-condamnerait le lot jusqu'au prochain `--frais`. C'est la leçon des textures de
-cartes, repayée ici.
-
-**Un lot perdu ne fait pas tomber la génération** : il coûte sa part du
-catalogue, et la relance le redemandera puisque rien n'a été mis en cache.
-
-### LE PRIX À CONNAÎTRE : la sélection suit la table des métiers
-
-**Un métier absent de `METIERS` n'a aucune carte.** C'est la conséquence directe
-de la contrainte du endpoint, et c'est le premier endroit à élargir si le
-catalogue paraît troué. La table couvre aujourd'hui les huit domaines.
-
-**La fiction, elle, tient en quelques requêtes** : `wdt:P31/wdt:P279* wd:Q95074`
-répond en quelques secondes parce que l'ensemble est petit à l'échelle de
-Wikidata — mesuré, **7 473 personnages de fiction ont un article FR**, tous
-crans confondus. Le découpage par tranche de notoriété n'y est qu'un garde-fou
-de volume.
-
-#### LES DEUX FILTRES SONT TOMBÉS : plus d'article FR exigé, plus de limite de 50 ans
-
-Tranché par Keko : « on supprime le filtre "articles en français" et mort depuis
-50 ans ».
-
-**Ce que chacun coûtait, mesuré avant de les retirer** — et les deux chiffres
-n'ont rien à voir :
-
-| | ce que le filtre écartait |
-|---|---|
-| article français | **0,4 à 1 %** des candidats, et 100 % d'entre eux avaient quand même un libellé FR |
-| mort depuis 50 ans | **30 à 74 %** du bassin — peintres ×1,4, physiciens ×1,9, compositeurs ×3,8 |
-
-*Le premier ne protégeait donc rien*, et il coûtait du TEMPS : une requête de
-peintres passe de 25 à 6 secondes sans lui, parce que le `schema:about` est le
-poste le plus cher. **Un filtre qui ne filtre qu'un pour cent et qui quadruple
-le temps n'est pas un filtre, c'est un péage.**
-
-**`wdt:P570` N'EST PLUS DEMANDÉ DU TOUT**, et c'est ce qui ouvre vraiment la
-porte : retirer le seul `FILTER` aurait gardé l'exigence d'une date de décès,
-donc exclu les vivants — *une propriété demandée dans le WHERE est un filtre qui
-ne dit pas son nom.*
-
-**ET IL A FALLU UN REPLI ANGLAIS, sinon la suppression était cosmétique.** La
-découverte acceptait les candidats sans article FR, et **la mesure les rejetait
-trois étapes plus loin** : `mesurerArticles` ne sait lire que les articles qu'on
-lui nomme. Le titre anglais ne coûte rien à trouver — *les sitelinks sont déjà
-demandés pour les vues étrangères* — donc leur taille et leurs vues de base
-viennent de `en.wikipedia`. **Aucune carte ne porte un nom anglais** : 100 %
-d'entre eux ont un libellé français.
-
-*Ce qui a été relancé derrière* : 1h27, 74 071 personnes distinctes découvertes,
-4 500 candidats au seuil de **66 langues** (contre 18 avant — le bassin a
-quadruplé, donc le seuil monte tout seul).
-
-**Ce que ça a changé, mesuré sur le catalogue** :
-
-| | |
-|---|---|
-| cartes qui n'existaient pas avant | **1 476 / 3 000, soit 49 %** |
-| dont sans année de mort (vivants) | 852 |
-| dont morts après 1976 | 624 |
-
-Et le haut de l'échelle a changé de tête : **Michael Jackson est la carte la
-plus notoire du jeu** (322 langues, 1,3 M de vues), David Bowie est l'exemple
-épique. *La rareté se lisant aux vues, le haut devient contemporain* — c'est une
-conséquence, pas un effet de bord, et elle est assumée.
-
-#### LA LISTE DES METIERS SE MESURE : 701 tiroirs, et Napoleon manquait
-
-Keko : « et si on elargit a 500 metiers ? » -- et la bonne reponse n'etait pas
-d'en choisir cinq cents, c'est **`scripts/trouver-metiers.ts`** : demander la
-liste a Wikidata, compter chaque tiroir, jeter le vide. `npm run metiers`.
-
-**IL A FALLU DEUX SOURCES, et la premiere avait un trou que je n'avais pas
-prevu :**
-
-| source | ce qu'elle rend |
-|---|---|
-| la **taxonomie** (sous-classes de « profession », Q28640) | 6 851 tiroirs -> **322** retenus |
-| **les lecteurs** (metiers des pages les plus lues de fr.wikipedia) | 450 metiers, dont **391 inconnus de la taxonomie** |
-| union, apres un seuil de 100 personnes | **694 mesures + 67 ecrits = 701** |
-
-***UNE RACINE DE TAXONOMIE NE COUVRE PAS SA PROPRE NOTION.*** Mesure :
-**« pianiste » n'est PAS une sous-classe de « profession »** -- il est sous
-« clavieriste », qui remonte ailleurs. Idem pour dessinateur, acteur de cinema,
-auteur-compositeur-interprete, guitariste, chef d'orchestre, romancier, avocat.
-**La taxonomie ratait 87 % des metiers reellement portes par les gens notoires**,
-et les autres racines candidates (`Q1914636`, `Q4897819`) expirent a 45 s.
-
-**ET LE COMPTE SE DEMANDE A CIRRUSSEARCH** : `haswbstatement:P106=Q937857`
-repond en **198 ms**, le meme `COUNT` en SPARQL rend 504 sur les gros tiroirs.
-*Quand un compte est impossible a calculer, il est peut-etre deja compte
-ailleurs.*
-
-**La mediane d'un tiroir est a ZERO** : deux tiers de la liste sont des
-concepts, des metiers historiques sans personne ou des doublons. *« 500 » n'est
-donc pas un objectif, c'est a peu pres ce qui reste quand on jette le vide.*
-
-#### A POSITION EGALE, LE MOT LE PLUS LONG GAGNE -- 16 geants de la musique etaient « penseurs »
-
-Keko : « comment Michael Jackson ne peut pas etre artiste mdr ? »
-
-Sa description Wikidata est **« auteur-compositeur-interprete et danseur
-americain »**. Le mot « **auteur** » appartient a *penseur* et tombe a la
-position ZERO ; « compositeur », qui appartient a *artiste*, tombe a sept. La
-regle etant « le mot le plus TOT gagne », **tout le pantheon de la chanson
-sortait en penseur** : Lennon, Dylan, Mercury, McCartney, Madonna, Bowie,
-Cohen, Springsteen, Billie Eilish, Katy Perry, Lana Del Rey.
-
-***Un mot plus long a la meme position est un mot plus SPECIFIQUE*** -- « auteur
-compositeur » dit la chanson la ou « auteur » dit le livre. La regle est donc
-generale et ne nomme personne, et six formes composees entrent dans la liste
-d'`artiste` pour avoir de quoi gagner (`cle()` changeant les traits d'union en
-espaces, une seule forme couvre « auteur-compositeur » et
-« auteur-compositeur-interprete »).
-
-**23 cartes corrigees, et RIEN d'autre n'a bouge** : ni rarete, ni attaque, ni
-defense -- verifie carte par carte. Les cas legitimes tiennent : Vargas Llosa
-reste penseur (« ecrivain »), Moliere aussi (« dramaturge »), Chopin reste
-artiste.
-
-**ET LE CATALOGUE S'EST RECALCULE SANS RIEN RETELECHARGER.** *C'est exactement
-ce que la purete de `logic/` achete* : les descriptions sont dans le JSON, donc
-`statsDerivees` se rejoue dessus en une seconde. **Trois heures quarante de
-collecte, zero seconde pour corriger la regle.**
-
-#### CE QUE LE COMPTE DE FICTION CACHAIT -- il y en a bien plus que 17
-
-Keko : « comment on peut avoir si peu de personnage de fiction ?? c'est super
-connu genre superman, goku, mickey.. ? »
-
-**Le « 17 » est faux**, et pour une raison qui vaut d'etre retenue : le drapeau
-`fiction` dit **par quelle PORTE la carte est entree**, pas ce qu'elle EST.
-Spider-Man, Hulk, Superman, Batman, Harry Potter, Hermione sont deja dans le
-jeu -- entres par la porte des METIERS, parce que Wikidata leur en donne un.
-
-***Une etiquette qui enregistre une provenance ne peut pas servir de
-categorie.***
-
-**ET LA DECOUVERTE DE LA FICTION REND ZERO LIGNE.** `wdt:P31/wdt:P279* wd:Q95074`
-est la requete mesuree a **504** : elle echoue en silence, et tous les fictifs
-du catalogue y sont arrives par accident. C'est ce qui explique **James Bond
-(101 langues) et Tintin (96)** : portrait, assez de langues, et absents --
-personne ne les a jamais decouverts.
-
-**Quatre causes, mesurees separement** :
-
-| | |
-|---|---|
-| l'etiquette `fiction` est une provenance | Spider-Man, Batman, Mario comptes comme reels |
-| la decouverte echoue (504) | James Bond et Tintin jamais vus |
-| **la coupe a 78 langues** | Dark Vador 85, Bugs Bunny 69, Luke Skywalker 65, Naruto 62, Frodon 58, **Goku 56**, Link 35 |
-| **pas de portrait libre** | **199 fictifs sur 4 999** en ont un -- Dark Vador, Naruto, Link, Asterix non |
-
-***UN PERSONNAGE DE FICTION EST MOINS MULTILINGUE QU'UN POLITICIEN OBSCUR.***
-Wikipedia a une page sur chaque depute de chaque pays, pas sur chaque heros de
-manga -- donc **avec un tri commun par langues, la fiction perdra toujours.**
-
-**La porte de secours est mesuree et prete** : CirrusSearch est indexe et compte
-4 999 personnages de fiction, 1 270 de manga, 7 633 de film, 7 757 de BD, en
-250 ms chacun.
-
-*Ce qui reste a trancher, et c'est a Keko* : **un quota pour la fiction** (sans
-lui elle restera marginale quoi qu'on fasse), et **le portrait obligatoire**
-(199 sur 4 999 le passent).
-
-#### ET « FICTION » N'EST PAS UNE CATEGORIE, C'EST UNE NATURE — *renversé depuis*
-
-**Keko a tranché l'inverse** (« on devrait faire une nouvelle catégorie
-fiction »), et la mesure lui donne raison : voir « LA FICTION EST UN RAYON »,
-plus bas. *Ce qui suit reste vrai du fond* — Peter Parker EST biochimiste — mais
-***un axe qu'on refuse de nommer se répartit quand même, et il le fait mal.***
-
-Les neuf autres disent un METIER, celle-la dit « n'existe pas ». *Les deux axes
-se telescopent*, et ca produit des classements absurdes des qu'un fictif entre
-par un metier :
-
-| | domaine attribue |
-|---|---|
-| Spider-Man, Hulk | **scientifique** |
-| Batman | **militaire** |
-| Harry Potter | **sportif** (le quidditch) |
-| Hermione | **politique** |
-
-*Chacun est defendable a la lettre* -- Peter Parker est biochimiste, Hermione
-est ministre a la fin de la serie -- **mais aucun ne se lit comme ce que le
-personnage est.** Il faudrait DEUX champs : la nature (reel / fictif) et le
-domaine. **A trancher avec Keko**, en meme temps que les noms des categories :
-« penseur » est un fourre-tout a 23 % dont l'exemple le plus notoire etait
-Michael Jackson, et « autre » ramasse Anne Frank, dont le metier declare est
-« diariste ».
-
-
-#### CE QUE LES 634 TIROIRS DE PLUS ONT RAPPORTE -- et ce n'est pas ou je le croyais
-
-Passe complete : **3 h 40**, 701 metiers.
-
-| | 37 metiers | 67 | **701** |
-|---|---|---|---|
-| couverture des personnages les plus LUS | 77 % | 93 % | — |
-| personnes decouvertes | 74 071 | 103 791 | **111 674** |
-| coupe de notoriete | 66 lg | 68 | **69** |
-| coupe du catalogue final | 76 lg | — | **78** |
-
-**J'avais annonce que le catalogue ressemblerait au precedent, et c'etait trop
-pessimiste.** Le bassin ne gagne que 8 % -- *la decouverte filtre deja a >= 18
-langues, donc les multilingues sont presque tous attrapes par les gros metiers*
--- mais **280 cartes changent (9 %), et ce sont precisement les figures qui
-manquaient** :
-
-| neuf | langues |
-|---|---|
-| **Jesus-Christ** | **346 -- la carte la plus notoire du jeu** |
-| Vladimir Poutine | 315 |
-| Lenine, Nelson Mandela | 295 |
-| Mahomet | 290 |
-| **Napoleon Ier** | **287** |
-| Roosevelt, Bill Gates, Jimmy Wales | 237-246 |
-| Moise, Abraham, Alan Turing, Mohamed Ali | 183-203 |
-
-*Et le domaine « sportif » triple* (50 -> 159), les religieux majeurs entrent,
-« autre » cesse d'etre vide.
-
-***Un bassin qui ne grandit pas de 8 % peut changer un catalogue de 9 % par le
-HAUT.*** Le volume de la decouverte ne dit rien de ce qu'elle rapporte.
-
-#### TROIS DEFAUTS PAYES DANS CETTE PASSE
-
-- **le script n'ecrivait rien avant la fin.** Une coupure perdait 23 minutes de
-  mesures. *La regle « le cache est par requete, pas par etape » etait ecrite
-  dans le projet et je ne l'avais pas suivie la* -- chaque tiroir passe
-  desormais par le cache, donc une relance reprend ou elle s'est arretee.
-  **Un travail de vingt minutes qui n'ecrit rien avant la fin est un travail
-  qu'on recommence** ;
-- **un `'
-'` de-echappe** en vrai retour a la ligne dans un litteral, le piege
-  deja documente plus haut pour ce meme fichier. Repaye ;
-- **`--frais` vide le cache** : je l'ai passe pour forcer la reecriture du
-  fichier de sortie, et j'ai reperdu les 6 851 mesures. *Pour refaire une
-  SORTIE, on supprime la sortie ; `--frais` refait les ENTREES.*
-
-#### ET LE VRAI COUPABLE DES TROIS COUPURES : quatre serveurs Vite oublies
-
-Trois taches de fond tuees « faute de memoire », et ce n'etait aucun de mes
-scripts : **quatre `npm run dev` lances la veille et jamais arretes**, qui
-retenaient **2,7 Go**. Memoire libre avant / apres : **480 Mo -> 3 152 Mo**.
-
-*Detail qui a coute trois tentatives* : `taskkill` repondait « aucune instance
-en cours » et `Win32_Process` continuait de les lister avec leur memoire. **Ils
-etaient deja morts** -- c'est la vue WMI qui etait perimee.
-***Verifier un arret de processus avec `Get-Process`, jamais avec
-`Win32_Process`.***
-
-
-#### LA PORTE INVERSE : partir des VUES, pas des métiers — mesurée, pas faite
-
-**La table des métiers est le seul point d'entrée indexé qu'on ait**, et
-`wdt:P31 wd:Q5` rend 504 à chaque essai. *Mais la question n'est pas « les
-humains »* — Keko : « nous on ne veut pas forcément des humains, mais des
-personnages ! »
-
-**Et c'est juste : les personnages NON humains sont PETITS, donc déjà
-atteignables** — mesuré :
-
-| | avec article FR |
-|---|---|
-| divinités (Q178885) | 2 258 en 22 s |
-| créatures mythologiques (Q2239243) | 1 457 en 12 s |
-| personnages légendaires (Q13002315) | 1 067 en 13 s |
-| personnages de fiction (Q95074) | ~7 500 (504 ce jour-là — le service varie) |
-
-*Le seul ensemble ingérable est celui des humains*, et c'est le seul pour lequel
-la table de métiers existe.
-
-**ET LA PORTE INVERSE MARCHE. Mesurée :**
-
-| | |
-|---|---|
-| les 1 000 pages les plus lues de fr.wikipedia (un mois) | **989 articles en 0,26 s**, une requête |
-| 50 titres → leur Q-id ET leur nature (P31), en une requête SPARQL | **0,9 s, 49/50 résolus, 21 Ko** |
-| part de PERSONNAGES dans ce top | **66 % (651 sur 985)** |
-
-**Ça retourne le problème** : on ne demande plus à Wikidata de trier onze
-millions d'humains par notoriété — on lui DONNE des titres et on filtre sur ce
-qu'il répond. *Par titre, c'est indexé.* Plus de table de métiers, plus de
-seuil de langues, et **le classement par notoriété devient la donnée de départ**
-au lieu d'être ce qu'on n'arrive pas à calculer.
-
-**ET ÇA PREND TOUT CE QUI EST UN PERSONNAGE**, humain ou pas : le filtre se fait
-sur le `P31` reçu. *Un dieu, un héros de légende et un personnage de roman
-entrent par la même porte qu'un homme d'État* — là où la table de métiers ne
-peut, par construction, attraper que ce qui a un métier.
-
-**Deux choses à savoir avant de s'y lancer :**
-
-- **le top-pageviews plafonne à 1 000 articles par mois**, donc ~650 personnages
-  par passe. Pour aller au-delà, il faut le **dump mensuel complet**
-  (`pageviews-202609-user.bz2`, vérifié présent) qui porte TOUTES les pages avec
-  leurs vues — c'est ainsi que WikiMasters tient ses 2,78 millions de cartes :
-  *on ne construit pas un catalogue de cette taille en interrogeant une API, on
-  télécharge un dump* ;
-- **le catalogue deviendrait CONTEMPORAIN et FRANCOPHONE.** Le top du mois
-  dernier donne Messi, Mélenchon, Adèle Exarchopoulos, Fred Chichin. *Ce n'est
-  pas un défaut technique, c'est un autre jeu* — et c'est **une décision de
-  design, elle revient à Keko.**
-
-#### COMBIEN DE PERSONNAGES EXISTENT — le plafond est a 400 000, pas a 3 000
-
-Mesure, parce que la question se posera a chaque fois qu'on voudra elargir.
-**CirrusSearch de Wikidata repond en un quart de seconde** la ou le Query
-Service rend 504 : `haswbstatement:P31=Q5` est indexe, un `COUNT` SPARQL ne
-l'est pas. *Quand un compte est impossible a calculer, il est peut-etre deja
-compte ailleurs.*
-
-| | |
-|---|---|
-| humains dans Wikidata | **13 730 437** |
-| dont avec un metier declare | 10 124 413 (74 %) |
-| dont avec une date de naissance | 8 050 910 |
-| dont **avec un portrait** | **1 418 591 (10 %)** |
-| personnages non humains (fiction P31 direct, dieux, creatures, legendes) | ~8 600 |
-
-**Mais le chiffre qui compte est celui de fr.wikipedia**, puisqu'un item sans
-article n'a ni taille, ni vues, ni portrait a montrer. Echantillon de **495
-articles tires au hasard** (`list=random`), nature lue dans Wikidata :
-
-| | |
-|---|---|
-| articles de fr.wikipedia | 2 783 654 |
-| dont **personnages** | **26,9 % -> ~748 000** |
-| dont avec un portrait | 56 % |
-| dont article >= 1 200 caracteres | 95 % |
-| **dont les deux -> le plafond jouable** | **54 % -> ~405 000** |
-
-*Marge de l'echantillon : +/- 4 points.*
-
-**ET C'EST LA CIBLE QUI COUPE, pas les filtres.** On garde 3 000 cartes sur
-~405 000 jouables, soit **0,7 %** — le metier, le seuil de langues et le
-portrait ne font que decider QUI entre dans ces trois mille. *Le catalogue
-n'est pas limite par ce que Wikipedia contient, il est limite par un nombre
-qu'on a choisi.*
-
-
-#### COMMENT FAIT WIKIMASTERS : il ne sélectionne rien
-
-**2 782 075 cartes**, soit exactement le nombre de pages de Wikipédia en
-français : n'importe quelle page fait une carte — un personnage, un aliment, une
-commune. *Il n'a donc jamais eu notre problème* — il ne l'a pas résolu, il ne
-l'a pas.
-
-**Et ses formules sont presque les nôtres** : rareté = fréquentation de
-l'article, attaque = longueur, défense = qualité, cinq crans de rareté. Les deux
-grandeurs que Wikipédia offre gratuitement — ce qu'on lit et ce qui est écrit —
-sont les seules sur lesquelles on puisse bâtir ; nous les avons réparties un
-cran différemment. Boosters de cinq cartes toutes les dix minutes.
-
-Sources : [Next.ink](https://next.ink/258293/wikimasters-le-jeu-qui-voulait-changer-wikipedia-en-cartes-a-collectionner/),
-[Outils Tice](https://outilstice.com/wikimasters-jeu-cartes-wikipedia/),
-[Echoes of Geeks](https://echoesofgeeks.fr/2026/test-wikimasters-cartes-wikipedia/).
-
-
-### L'OUVERTURE D'UN PAQUET — le premier écran, derrière `?paquet`
-
-`render/Paquet3D.tsx`. Cinq cartes face cachée ; on en tape une, elle culbute
-et se révèle. **Choisi par Keko parmi trois écrans** — la collection en grille,
-un plateau d'affrontement, l'ouverture d'un paquet — et c'est celui qui exerce
-le plus de ce qui existe : *le dos de carte, les quatre métaux, l'auréole du
-diamant, la culbute face/dos et son onde.*
-
-**RIEN N'EST RÉÉCRIT : `Carte3D` savait déjà tout faire.** `dos` montre le
-verso, `culbute` fait tourner la carte et part l'onde, `onFixee` dit quand elle
-se pose. L'écran ne fait que le lui demander — *un écran décide de ce que les
-choses VEULENT DIRE, les objets savent comment elles se dessinent.*
-
-**ET LA CARTE-PERSONNAGE EST LA MÊME CARTE** (`render/carte-personnage.ts`) :
-elle se convertit en `CarteAPeindre` et c'est `peindreCarte` qui s'en charge.
-*Un second gabarit aurait dérivé du premier au premier réglage*, la leçon des
-quatre fonctions qui peignaient chacune leur carte avant `corpsCarte`.
-
-Quatre choses ont dû s'ouvrir dans le gabarit, et chacune était fermée pour une
-raison qui ne vaut plus ici :
-
-- **l'illustration par URL** (`illustration?`). Tout le jeu cherche son dessin
-  dans une table indexée par nom de modèle — ce qui suppose un catalogue fermé.
-  *Le troisième mode DÉCOUVRE ses images*, donc il n'y a pas de table à écrire
-  et il ne faut pas qu'il y en ait une ;
-- **le coût devient `number | null`.** Le projet veut « le même écusson sur
-  toute carte qui coûte de l'énergie », et c'est précisément pour ça qu'il faut
-  pouvoir n'en poser aucun : *une orbe de PA sur une carte qui ne se joue pas
-  mentirait sur ce qu'elle est.* Le coin haut-gauche reste donc nu ;
-- **deux mesures au pied** (`attaque`, `defense`), l'attaque à gauche et la
-  défense à droite, le type gravé entre elles. **Elles ne portent pas de
-  symbole, elles portent leur COULEUR** : Keko avait essayé une épée et un
-  bouclier dans le cartouche et les a retirés — *un dessin qui redit un nom le
-  répète en moins clair.* Or le projet a déjà la règle qu'il faut, **un chiffre
-  porte la couleur de sa nature**, et les deux teintes sont celles du cartouche
-  au pixel ;
-- **pas de ciel de famille.** Les quatre ciels ont déjà été désaturés de moitié
-  pour ne pas disputer l'axe de la rareté ; dix domaines en réclameraient dix,
-  ce que le projet a refusé. Le domaine se lit au pied, le portrait occupe la
-  carte.
-
-#### LE DOS NE DIT RIEN DE CE QU'IL Y A DESSOUS — et il le disait trois fois
-
-**Le défaut le plus intéressant de l'étape, et il tuait l'écran** : à
-l'ouverture, le légendaire **rayonnait avant d'être retourné**. Il n'y avait
-plus rien à révéler.
-
-La règle était pourtant déjà écrite — *« le DOS reste laiton : une carte
-retournée ne dit rien de ce qu'elle est »* — mais elle ne portait que sur la
-TEXTURE du dos, qui est bien un singleton sans rareté. **Trois autres chemins
-la contournaient**, et aucun ne se voyait tant qu'aucune carte n'était jouée
-face cachée :
-
-1. **l'auréole chromatique**, posée derrière la carte, donc visible tout autour
-   du dos ;
-2. **le corps extrudé** (`METAL_3D`), qui déborde d'un cheveu : c'est lui qu'on
-   voit sur les bords, et il était teinté par la rareté ;
-3. **le foil du nuanceur** (`uIris`, `uBordure`, `uOr`) — et c'est le plus
-   retors : **le `verso` n'existe QUE pendant une culbute**, donc le reste du
-   temps c'est la FACE qui porte la texture du dos. L'irisation du diamant
-   courait donc dessus.
-
-***Une règle écrite pour une surface ne couvre pas les trois autres qui la
-recouvrent.*** Les trois s'éteignent désormais sur `dos`, et l'auréole se
-remet explicitement à zéro — *un uniforme garde sa dernière valeur, donc ce
-qui ne se remet pas à zéro ne s'éteint jamais.*
-
-#### UNE CARTE FACE CACHÉE PEINT QUAND MÊME SA FACE
-
-Keko : « parfois quand j'ouvre une carte, le dos de carte reste et je vois
-rien. »
-
-**La face ne chargeait sa texture qu'à l'instant où `dos` devenait faux.** D'ici
-qu'elle arrive, elle gardait celle du dos — donc la carte culbutait et
-**retombait en montrant encore le dos**.
-
-***Le « parfois » était la mesure du problème.*** La culbute dure **660 ms**, et
-un portrait Commons met de **57 à 759 ms** à arriver (mesuré sur six cartes,
-cache vide). Ça passait ou non selon le portrait et le réseau — donc jamais sur
-un téléphone en 4G.
-
-On chauffe donc le cache pendant qu'on montre le dos : *le temps de regarder un
-dos est exactement le temps qu'il faut pour peindre la face.* La promesse est
-mémorisée par `textureDeCarte`, donc le second appel — au retournement — la
-retrouve résolue et la pose dans la même image.
-
-**Vérifié par les requêtes réseau, pas à l'oeil** : les cinq portraits partent
-AVANT tout clic, et le plus lent du lot mettait 824 ms — c'était précisément la
-carte qui serait retombée sur son dos. *Un bug intermittent se prouve en
-mesurant ce qui le rend intermittent*, pas en recliquant jusqu'à ce qu'il ne se
-reproduise plus.
-
-#### L'IMAGE COMMONS : ce que `Special:FilePath` ne peut pas faire
-
-**Wikidata rend une URL `Special:FilePath`, et elle est INUTILISABLE dans un
-canvas.** Elle répond par une **redirection 302 qui ne porte aucun en-tête
-CORS**, donc une image chargée en `crossOrigin="anonymous"` — ce qu'il faut
-pour qu'un canvas ne soit pas taché — échoue à la première étape.
-
-**Et ma première mesure disait l'inverse** : `fetch` suit la redirection et
-rend les en-têtes de la réponse FINALE, qui porte bien `ACAO: *`. J'ai donc
-écrit « CORS en `*`, une image Commons entre bien dans un canvas » avant de
-découvrir que non.
-
-***Une mesure prise à l'arrivée ne dit rien des étapes du chemin*** — et pour
-une requête CORS, c'est chaque étape qui compte.
-
-Trois faits mesurés qui portent le correctif :
-
-- **l'URL finale se CALCULE** : MediaWiki range ses fichiers sous les deux
-  premiers caractères du MD5 de leur nom, espaces changés en soulignés. C'est
-  le PIPELINE qui l'écrit (`vignetteCommons`), parce qu'il a `crypto` et que
-  *le catalogue sert le jeu, il ne lui laisse pas une adresse à réparer* ;
-- **les largeurs ne sont plus libres.** Une taille hors de la liste de
-  Wikimedia rend un **400** dont le corps dit « Use thumbnail sizes listed
-  on… ». Mesuré : seules passent **120, 250, 500, 960, 1280**. On prend 960 —
-  la toile d'une carte plafonne à 768 et l'illustration y est peinte en
-  `cover`, donc 500 serait interpolé sur la carte qu'on regarde de près. Elle
-  pèse ~250 Ko contre 2,2 Mo pour l'original ;
-- **le catalogue écrivait du `http://`**, ce que Wikidata rend. Une page servie
-  en https par GitHub Pages **bloque le contenu mixte** : les portraits
-  auraient tous été absents en ligne et tous présents sur la machine de dev, où
-  le serveur de développement parle http. *Un défaut qui ne se voit que déployé
-  se corrige à la source.*
-
-Un `.svg`, un `.tif` ou un `.djvu` se vignette en PNG (et un fichier à pages
-prend un préfixe `page1-`) — vérifié sur le catalogue réel, y compris les
-accents, les parenthèses et l'arabe.
-
-#### LE TIRAGE EST UNE RÈGLE, PAS UN RENDU
-
-`logic/characters/paquet.ts`, pur et seedé : `?paquet=43` rejoue exactement le
-même paquet, comme `?seed=42` rejoue une descente. **Cinq cartes, sans
-doublon, dont au moins une au cran garanti** — *un paquet sans garantie n'est
-pas un paquet, c'est cinq tirages*, et le genre entier repose là-dessus.
-
-**La table des chances n'est PAS la distribution du catalogue, et c'est tout
-l'intérêt.** Le catalogue est ce que Wikidata contient ; un paquet est ce qu'on
-DONNE. *À tirage uniforme, un légendaire sortirait une fois sur cent vingt
-paquets et personne ne les verrait jamais.* Mesuré sur 400 paquets avec la
-table actuelle : commun 46,6 %, peu-commun 22,4 %, rare 27,4 %, épique 3 %,
-légendaire 0,7 %.
-
-**La garantie est tirée en DERNIER**, donc il y a toujours quelque chose au
-bout — mais ce n'est pas forcément la meilleure : les quatre premières peuvent
-tirer plus haut, et *un paquet dont on saurait que le bouquet final est à
-droite se lirait à l'envers.*
-
-**CARTES_PAR_PAQUET, CRAN_GARANTI et CHANCES sont des PLACEHOLDERS** : c'est la
-première chose à régler quand Keko voudra doser l'envie d'en ouvrir un autre.
-
-**ET LA GRAINE SE TIRE AU CHARGEMENT, elle ne vaut plus 1.** Keko : « on peut
-randomiser les personnages ? j'ai toujours la même seed je crois ».
-
-*Le tirage était bien seedé, et c'est la BASE qui ne bougeait pas* : le numéro
-avançait à chaque ouverture, donc **le défaut ne se voyait qu'en relançant la
-page** — et jamais en enchaînant les paquets. Mesuré : trois chargements
-rendaient trois fois « Bjørnstjerne Bjørnson, Irénée de Lyon, Marlon Brando,
-Carlos Fuentes, Boadicée ».
-
-***Un hasard seedé dont la graine est une constante n'est pas un hasard, c'est
-une liste.*** Et le piège tient à ce qui le masquait : la mécanique d'avancement
-marchait, donc tout semblait aléatoire tant qu'on restait sur la page.
-
-Trois choses qui le portent :
-
-- **`?paquet=43` rejoue toujours un tirage précis**, exactement comme `?seed=42`
-  rejoue une descente — *ce qui a servi à signaler un cas doit rester
-  ouvrable* ;
-- **deux sources mêlées** (`Date.now()` et `Math.random()`) : l'horloge seule
-  donne des graines voisines quand on recharge vite, le hasard du navigateur
-  seul n'est pas garanti distinct d'un onglet à l'autre ;
-- **elle vit au niveau du MODULE**, pas dans un état : *une graine qui se
-  retirerait à un rendu changerait le paquet sous les yeux*, et React double les
-  initialiseurs en mode strict. C'est la place qu'a déjà `SEED` dans `Scene.tsx`.
-
-**La graine tirée s'écrit en console** et non dans l'URL : *l'y écrire la ferait
-rejouer au rechargement suivant*, soit exactement le défaut qu'on vient de
-retirer. `?paquet=<n>` reste là pour celui qui veut la reprendre.
-
-**ET LA DESCENTE A LE MÊME DÉFAUT, non corrigé** : `SEED` vaut 1789 sans
-paramètre, donc chaque rechargement rejoue la même run. *Ce n'est pas forcément
-un bug là-bas* — une partie reproductible aide à juger un combat — **mais c'est
-une décision, pas un acquis**, et elle revient à Keko.
-
-#### QUATRE CRANS, PARCE QUE LE DESSIN EN PORTE QUATRE
-
-Tranché par Keko : « on va diviser en 4 rareté (bronze, argent, or, diamant)
-plutôt pour respecter les métaux ».
-
-*Le mode personnage en avait CINQ*, dont deux retombaient sur le bronze :
-**le modèle disait cinq choses là où l'écran en disait quatre**, et c'est le
-modèle qui avait tort. L'échelle des alliages, elle, a été réglée et mesurée —
-le projet a même SUPPRIMÉ un cinquième cran (le laiton) parce que *deux jaunes
-rompus voisins ne font pas deux crans.*
-
-**ET ÇA N'A CHANGÉ AUCUN CADRE.** Le seuil qui disparaît (0,42) est exactement
-celui que le métal ne voyait pas ; les trois autres ne bougent pas. *Une carte
-qui était bronze l'est restée* — c'est ce qui a rendu le passage gratuit, et
-c'est le genre de changement qu'il faut faire au moment où il ne coûte rien.
-
-Ce qui tombe avec : la moitié de la table `METAL`, et une entrée de
-`CHANCES` — **le commun a repris la part du peu-commun**, les deux partageant
-déjà le bronze.
-
-*Il reste une table plutôt qu'un passe-plat*, pour une seule raison : le mode
-descente dit `commune` là où un personnage est `commun`. **Deux vocabulaires
-qui se ressemblent à une lettre près sont précisément ceux qu'il ne faut pas
-confondre en silence.**
-
-#### Mesuré
-
-Rangée à **90 % de la largeur à tous les formats** du projet (667 x 320 à
-2560 x 1271), 64 à 265 px de marge en haut, 58 à 240 px entre le bas des cartes
-et le bouton. Zéro débordement. La carte fait 110 px à 667 x 320, 139 à
-844 x 390, 420 sur un écran de PC — **au-dessus du plafond de 370 px du jeu**,
-et c'est assumé : *ici on REGARDE les cartes*, là où le plafond vaut pour une
-main de combat.
-
-### CE QUE LEXICODEX A APPRIS À L'OUVERTURE — quatre emprunts, et un refus
-
-Keko : « tu peux ouvrir [lexicodex.app] pour regarder l'ouverture d'un booster
-et voir comment ils font le rendu, et t'inspirer ? », puis — sur les quatre
-pistes que j'en ai tirées — **« je veux tout »**.
-
-*Ce qu'il faut savoir avant de lire la suite* : **leur architecture est la
-nôtre.** Leur `card-texture` est un canvas 2D et leur `card-material` un
-nuanceur GLSL ; leurs commentaires français embarqués portent nos propres
-leçons (« Tramage : pas de banding », « Éclat qui balaie la carte à sa
-révélation »). *Il n'y avait donc rien à porter d'une autre technique — il n'y
-avait que des DÉCISIONS à reprendre.*
-
-Leur séquence : carrousel → le sachet **brûle** → un dos attend une tape → la
-carte se **développe** → **la rareté teinte toute la scène** → « DERNIÈRE
-CARTE » en or → **un compteur qui défile** révèle sa rareté → récapitulatif.
-
-**CE QUI N'A PAS ÉTÉ REPRIS, et c'est volontaire** : ils montrent **une carte à
-la fois**, nous montrons **la rangée**. Leur choix donne un plein écran par
-carte ; le nôtre laisse comparer les cinq d'un coup d'oeil, ce qui est tout
-l'intérêt d'un paquet. *Toute la transposition découle de là* — voir
-l'ambiance, plus bas.
-
-#### LA RARETÉ TEINTE LA SCÈNE, et elle suit la MEILLEURE révélée
-
-`AMBIANCE`, dans `texture-carte.ts`, plus `.paquet-lueur` et `.paquet-eclat`.
-Un halo de la couleur du métal monte derrière la rangée, et **un éclat frappe à
-chaque carte retournée**.
-
-*Un cadre se regarde, une pièce entière se ressent* — et c'est la seule chose
-du reveal qui se lise sans rien lire.
-
-**ELLE SUIT LA PLUS RARE RÉVÉLÉE JUSQU'ICI, pas la dernière.** Chez eux la
-question ne se pose pas, puisqu'il n'y a qu'une carte à l'écran ; chez nous il
-y en a cinq, donc « la carte courante » ne désigne personne. *L'ambiance d'un
-paquet MONTE à mesure qu'on trouve mieux* — elle raconte l'ouverture entière,
-et elle construit vers la dernière.
-
-**`AMBIANCE` EST UNE TABLE À PART DE `METAL_3D`, et il le faut** : une tranche
-de carte fait deux millimètres, un halo couvre l'écran. *L'argent et le diamant
-sont indiscernables une fois diffusés* — le halo leur donne donc plus d'écart
-que le métal. Les deux tables vivent côte à côte pour qu'on ne puisse pas
-régler l'une sans voir l'autre.
-
-**L'éclat est REMONTÉ À NEUF par une clé React** : *une classe qu'on retire et
-qu'on repose ne redémarre pas une animation sans un reflow forcé* — la règle du
-gonflement des tas.
-
-#### LE COMPTEUR QUI DÉFILE : la dernière carte se révèle par son CHIFFRE
-
-Quand il ne reste qu'une carte, **« Dernière carte » s'écrit en or** ; la
-retourner lance un compteur qui monte vers ses vues, et **la couleur remonte
-l'échelle des métaux avec lui** pour s'arrêter sur le bon barreau.
-
-***C'est la seule façon honnête de faire monter la couleur*** : notre rareté
-DÉRIVE des vues, donc un chiffre qui grimpe et une teinte qui grimpe disent la
-même chose. Une interpolation vers la couleur finale l'aurait annoncée dès la
-première image. Et les crans se PASSENT dans l'ordre : *une couleur qui saute à
-la bonne ne révèle rien.*
-
-Trois choses à ne pas défaire :
-
-- **le chiffre s'écrit DIRECTEMENT DANS LE DOM, par une ref dans une boucle
-  `requestAnimationFrame`** — jamais par l'état. *Une valeur qui change à chaque
-  image déclencherait un rendu par image*, et ce rendu reconstruirait cinq
-  cartes à nuanceur. C'est le chemin de `Projeter`, pour la même raison ;
-- **il DÉCÉLÈRE en arrivant** : *un compteur qui s'arrête net se lit comme une
-  coupure, un compteur qui ralentit se lit comme une arrivée* ;
-- **« Tout révéler » saute la montée** : *un joueur qui demande tout ne demande
-  pas de suspense*, et le compteur en est un.
-
-**IL COIFFE LA RANGÉE, il ne pend pas sous elle.** Mesuré : posé en bas, il
-tombait PILE sur le bouton — *une bande réservée ne se partage pas.* Et
-**tout s'y borne par la HAUTEUR** : à 844 x 390 la bande libre au-dessus de la
-rangée ne fait que 62 px pour un bloc qui en demandait 78, donc il mordait le
-haut des cartes. *Un contenu qui ne suit qu'une dimension déborde dès que
-l'autre se resserre* — la leçon de la bande de stats, repayée ici. Mesuré après
-correction : 7 à 55 px à 844 x 390, 7 à 51 px à 667 x 320, aucun recouvrement.
-
-#### « C'EST PAS DU TOUT LE MÊME EFFET » — ce que la comparaison a corrigé
-
-Keko, après la première livraison de l'ouverture : **« c'est pas du tout le même
-effet ni les mêmes révélations de carte »**. Il avait dit « je veux tout » en
-me montrant lexicodex.app ; j'avais livré autre chose.
-
-**J'AI ROUVERT LEUR OUVERTURE ET JE L'AI CAPTURÉE IMAGE PAR IMAGE** plutôt que
-de deviner laquelle des deux moitiés divergeait. *Une impression d'écart ne se
-discute pas, elle se mesure* — et la mesure a séparé **quatre défauts
-d'exécution**, qui étaient les miens, d'**un arbitrage de design**, qui est à
-Keko (voir plus bas).
-
-Les quatre, et aucun ne se voyait en lisant le code :
-
-1. **le sachet n'était pas un sachet.** C'était une dalle de pierre sombre aux
-   couleurs du jeu, donc *un panneau d'armurerie posé debout* — il lui manquait
-   tout ce qui fait lire un objet de commerce ;
-2. **le front traversait tout le sachet de haut en bas**, donc ça se lisait
-   comme **brûler** et non comme **ouvrir** — et il ne restait rien d'où les
-   cartes puissent sortir ;
-3. **les cartes n'avaient pas de provenance** : elles apparaissaient en rangée
-   d'un seul coup, donc le sachet ne servait à rien ;
-4. **la révélation était un pavé de noms en mosaïque**, qui n'a aucun rapport
-   avec l'épreuve photographique de Lexicodex.
-
-#### LE SACHET EST UN OBJET DE COMMERCE, PAS UNE PLAQUE DU JEU
-
-`render/texture-carte.ts`, `peindreLeSachet()`. Ce qui fait lire une pochette de
-cartes, et chaque pièce manquait :
-
-- **DEUX SOUDURES THERMIQUES**, en haut et en bas : un film aluminisé froid,
-  strié verticalement, dont le bord intérieur est un zigzag de dents. *C'est la
-  seule chose de tout le dessin qui ne soit pas du jeu* — elle vient de
-  l'emballage, et c'est pour ça qu'elle le dit ;
-- **UNE LIGNE DE DÉCHIRURE POINTILLÉE**, avec « OUVRIR ICI ▸▸▸ », à 14,5 % du
-  haut. Elle ne décore pas : **c'est le contrat de l'ouverture**, et le
-  nuanceur la lit (`LIGNE_DECHIRURE`, exportée). Elle a porté deux flèches
-  OPPOSÉES tant qu'on ouvrait à la tape ; depuis qu'on tire, *deux flèches
-  opposées disent « ça s'ouvre », une seule direction dit « tire par ici »* —
-  et c'est le seul endroit qui apprenne le geste ;
-- **DU PAPIER IMPRIMÉ CHAUD**, pas de la pierre : un fond ambre-brique, un
-  soleil à dix-huit rayons, un vignettage. *Un emballage crie, un meuble se
-  tait* ;
-- **CE QU'IL Y A DEDANS, DESSINÉ DESSUS** — trois dos en éventail — et **ce
-  qu'il y a dedans, ÉCRIT** : « PAQUET » en cartouche, « 5 CARTES » en dessous,
-  et quatre losanges aux quatre métaux. *Un paquet annonce son contenu ; c'est
-  ce qui le distingue d'une carte géante.*
-
-**IL EST HAUT ET ÉTROIT** (1 : 1,9), là où une carte est en 1 : 1,4 : *une
-pochette au format d'une carte se lit comme une sixième carte posée au milieu.*
-
-**IL ATTEND LA POLICE AVANT DE SE PEINDRE.** Un canvas qui dessine avant
-`document.fonts.ready` retombe SILENCIEUSEMENT sur Georgia — la règle était déjà
-écrite pour les cartes, et *une règle de peinture vaut pour tout ce qui peint.*
-
-#### UN SACHET SE DÉCHIRE OÙ IL EST FAIT POUR ÇA
-
-`render/Sachet3D.tsx`. Le front court **HORIZONTALEMENT, le long de la ligne
-pointillée**, de gauche à droite ; puis **la bande du haut s'arrache**, tournoie
-et retombe hors de l'écran, pendant que le corps garde tout ce qu'il contient.
-
-*C'était le grief le plus net* : un front qui consomme la pochette entière ne
-l'ouvre pas, il la détruit — et il ne reste alors rien d'où tirer les cartes.
-
-**DEUX MORCEAUX, UNE SEULE TEXTURE.** Le corps lit `[0, 1 − L]` du canvas, la
-bande `[1 − L, 1]`, et les deux portent le MÊME bord déchiré. *Deux nuanceurs
-qui décriraient la même déchirure se désaccorderaient au premier réglage*, et le
-raccord est précisément ce qui ne doit pas se voir.
-
-Cinq choses qui le portent :
-
-- **LE PARAMÈTRE S'APPELLE `estLeCorps`, PAS `haut`**, et ça m'a coûté une
-  passe entière : le morceau du HAUT est la bande, mais c'est le CORPS qui porte
-  son bord déchiré en haut. ***Un paramètre qui nomme la place dit l'inverse de
-  ce dont on se sert***, et je l'ai lu à l'envers en croyant corriger un bug ;
-- **CE QUI SE MESURE LE LONG DU BORD SE COMPTE EN PARTS DU SACHET, PAS DU
-  MORCEAU.** La bande n'en fait que 0,145 : à amplitude égale en UV, son
-  ondulation et son charbon seraient six fois plus fins que ceux du corps —
-  *donc les deux bords cesseraient d'être le même trait*, et personne ne le
-  verrait en lisant le code. Trois constantes (`AMPLI`, `CHARBON`, `BRAISE`), et
-  le nuanceur les convertit dans le repère de chacun ;
-- **LES DEUX ONDULENT EN SENS OPPOSÉ** dans leur propre repère : c'est ce qu'il
-  faut pour qu'ils décrivent la même ligne du canvas une fois chacun dans sa
-  tranche ;
-- **LE FRONT SORT DES DEUX BORDS** (−0,06 à 1,06) et part de **−1 au repos** :
-  une gaussienne centrée sur zéro rayonne déjà contre le bord gauche, donc *un
-  sachet fermé avait une braise allumée*, et il a fallu une capture pour le
-  voir ;
-- **LE CORPS S'EFFACE PENDANT QUE LES CARTES MONTENT**, sur le dernier quart.
-  Il restait entier jusqu'au démontage du composant : *un sachet qui disparaît
-  d'un coup se lit comme un bug de rendu.*
-
-**LES BORNES D'UN `smoothstep` NE S'INVERSENT PAS.** La spécification GLSL
-laisse le résultat **indéfini** quand `edge0 >= edge1` — j'en avais un pour
-faire un seuil décroissant, et il marchait sur cette machine. On prend le
-complément plutôt que de compter sur un pilote clément.
-
-**IL ACCÉLÈRE, à l'inverse de tout le reste du jeu** : c'est ce que fait une
-déchirure — elle amorce, puis elle file — là où un geste part vite et s'achève
-lentement. **Et il RESPIRE tant qu'on ne l'a pas touché**, le vocabulaire des
-créatures et des slots qui accueillent.
-
-**UN FLASH BLANC AU MOMENT DE L'ARRACHEMENT** (260 ms, 0,62 d'opacité au pic).
-*Un geste qui coûte quelque chose aveugle une image* — c'est ce qui sépare une
-bande qui se DÉTACHE d'une bande qu'on ARRACHE, et c'est le seul moment où
-l'écran entier répond.
-
-#### ON L'OUVRE EN TIRANT VERS LA DROITE — le front suit le doigt
-
-Keko : « pour ouvrir le booster il faudrait slider vers la droite tu vois ? »
-
-*Et c'est ce que la ligne pointillée promettait déjà* : elle dit où ça s'ouvre
-depuis le premier jour, et une tape ne s'en servait pas. **Le geste devient ce
-que le dessin annonce** — on prend la pochette, on tire, la déchirure court sous
-le doigt, et la bande ne part qu'au lâcher.
-
-Cinq choses qui le portent :
-
-- **UN SEUL NOMBRE, TROIS ÉTATS.** `p` est posé par le doigt pendant qu'on tire,
-  avancé par l'horloge une fois le geste acquis, et il REDESCEND tout seul quand
-  on abandonne (`RETOUR`, 0,28 s). *Deux variables pour la même course se
-  désaccorderaient au premier réglage*, et c'est ce nombre-là que le nuanceur
-  lit ;
-- **UN GESTE PRÉPARE, LE RELÂCHEMENT CONCLUT.** Le doigt ne peut pas dépasser
-  `TIRE_MAX` (0,9) : *sans cette borne, tirer loin arracherait la bande au
-  milieu du mouvement*, donc sans décision. Au-delà de `SEUIL_TIRE` — la moitié
-  de la largeur du sachet — lâcher ouvre ; en deçà, la pochette se referme.
-  **Un sachet qu'on effleure ne s'ouvre pas**, et c'est ce qui permet de le
-  prendre en main sans l'engager ;
-- **LE GESTE SE COMPTE EN PIXELS, LA DÉCHIRURE EN PARTS DU SACHET.** La
-  conversion passe par la hauteur visible à la profondeur du sachet
-  (`hauteurVisibleA`), donc *elle suit le recul de la caméra sans qu'on s'en
-  occupe* : tirer la moitié de la pochette vaut la moitié partout — **70 px au
-  doigt sur un téléphone couché, 227 sur un écran de PC** ;
-- **LES ÉCOUTEURS SE RETIRENT PAR SIGNAL**, jamais par référence, et ils vivent
-  sur la FENÊTRE : *le doigt sort forcément du sachet — sortir EST le geste.*
-  Un `AbortController` coupe ce que CE geste a posé, la règle déjà payée sur la
-  main de combat ;
-- **`pointercancel` N'EST PAS UN LÂCHER** : c'est le système qui reprend le
-  geste. Il referme la pochette au lieu de l'ouvrir — *une annulation repose,
-  elle ne conclut pas.*
-
-#### ET LE SACHET RÉPOND AU CURSEUR
-
-Keko : « le booster devrait avoir un effet un peu 3d quand on le survol
-souris ». Il **s'incline sous le pointeur**, **s'avance d'un cheveu** et **un
-lustre chaud le balaie là où le curseur se pose** — exactement ce que fait une
-carte regardée de près, *et c'est voulu : ce sont les deux seuls objets qu'on
-prend en main dans ce jeu.*
-
-**L'avancée n'est pas un ornement** : sans elle, l'inclinaison se lit comme une
-image qui gondole ; avec elle, comme un objet qu'on tourne vers soi. C'est la
-règle de la carte zoomée, reprise telle quelle.
-
-Quatre choses à ne pas défaire :
-
-- **LE RELIEF A SON PROPRE GROUPE.** Le groupe extérieur porte la place du
-  sachet et sa respiration : *deux sources qui écriraient la même
-  transformation se battraient à chaque image* — c'est le raisonnement de
-  l'inclinaison posée PAR-DESSUS la rotation lissée, repayé ici ;
-- **LE LUSTRE VIT DANS LE NUANCEUR, et il se mesure sur le SACHET.** Les deux
-  morceaux ne couvrent pas la même tranche du canvas, donc un reflet calculé
-  dans le repère de chacun se décalerait au raccord ; `mix(uV0, uV1, vUv.y)`
-  donne déjà la coordonnée du sachet entier. Et il est **discret** : *un lustre
-  qui délave son dessin cesse d'être une matière et devient un voile* ;
-- **LA GERBE D'ÉTINCELLES RESTE HORS DU GROUPE** : elle appartient à la
-  déchirure, pas à la pochette — *des étincelles ne s'inclinent pas avec
-  l'objet qu'elles quittent* ;
-- **SOURIS SEULEMENT**, comme tout survol du projet, et le relief s'éteint dès
-  que le sachet brûle : au doigt le `pointerout` n'arrive jamais, et un objet
-  qui reste penché après la tape se lit comme un bug.
-
-**`?paquet&nu` saute le sachet** : *juger une carte ne doit pas coûter une
-déchirure à chaque fois.*
-
-#### LES CARTES SORTENT DU SACHET — et une carte ne peut pas être plus grande que lui
-
-`sortie` dans `Paquet3D`, **trois crans et pas deux** : 0 dedans, 1 nées au fond
-du sachet, 2 montées hors de la fente. *Une carte naît à la position qu'on lui
-donne, donc tant qu'on ne la change pas elle ne bouge pas* — le premier cran la
-pose, le second lui donne sa cible, et **l'amortissement de `Carte3D` fait le
-trajet** : il n'y a aucune animation à écrire.
-
-Elles naissent **derrière le corps en z**, donc on les voit émerger par la fente
-plutôt qu'apparaître devant la pochette, et les cinq sont superposées — *ce qui
-est exactement ce qu'elles sont : une pile qu'on tire.*
-
-**UNE CARTE QUI SORT D'UNE POCHETTE NE PEUT PAS ÊTRE PLUS GRANDE QU'ELLE**, et
-c'est arrivé : les deux tailles se calculent sur la place et la plus dure gagne,
-donc **sur un écran court c'est la HAUTEUR qui borne les deux** et la carte de
-rangée y devient plus large que le sachet (0,44 de la hauteur visible contre
-0,36). Elle ne se lisait plus comme ce qu'on tire du paquet, mais comme une
-carte posée derrière lui. Elle est bornée à 0,6 du sachet le temps d'y être et
-**enfle en rejoignant la rangée** — `Carte3D` amortit sa taille, le chemin déjà
-pris par la pièce qu'on équipe à l'armurerie.
-
-**ON NE RETOURNE RIEN QUI SOIT ENCORE DANS LE SACHET** : les cinq y sont
-superposées, donc une tape en retournerait une au hasard.
-
-#### LA RÉVÉLATION EST UNE ÉPREUVE PHOTOGRAPHIQUE
-
-`uDevelop` dans le nuanceur de la face ; `developpe` sur `Carte3D`. La carte
-arrive **surexposée en blanc**, par **flaques de lumière** qui se contractent et
-se résorbent — et **le nom, le cadre et le texte sont lisibles dès la première
-image**.
-
-*Une carte qui se révèle en tournant ne dit rien de ce qu'elle est* : on voit un
-dos, puis une face, et entre les deux il n'y a que du mouvement. **C'est
-précisément la question d'une ouverture de paquet** — « qui est-ce ? » et non
-« est-ce que ça tourne bien ? »
-
-**CE QUI A ÉTÉ JETÉ, ET IL FAUT SAVOIR POURQUOI** : la carte arrivait d'abord
-sous un **pavé de son nom en mosaïque**, qui s'érodait pour laisser monter le
-dessin. C'était soigné — un pavage périodique, une érosion par taches, un palier
-de lecture — et **ça n'a aucun rapport avec ce que Keko avait approuvé.** *Un
-effet réussi qui n'est pas l'effet demandé reste un effet raté.* Il est dans
-`git log` avec ses trois pièges (la périodicité en Y, la plaque sombre, le
-palier avant la descente).
-
-**LES FLAQUES SONT DES DISQUES ALLONGÉS, pas un fondu global.** Huit, tirées
-d'un hachage de leur index, qui rétrécissent avec le temps : *un voile uniforme
-qui s'éclaircit se lit comme une opacité qu'on baisse*, pas comme un bain qui
-révèle. Elles sont étirées en Y (× 1,4), parce qu'une carte l'est.
-
-**LE BLANC EST AU-DESSUS DE 1** (`vec3(1.12)`) : en mélange ordinaire une
-couleur à 1 plafonne et la surexposition ne se voit pas.
-
-`?paquet&culbute` rend la culbute — *ce qui a servi à choisir doit rester
-ouvrable.* **Elle garde tout son emploi à l'armurerie**, où l'on POSE une
-pièce : là il n'y a rien à lire, il y a un geste à voir.
-
-#### LE SEUL ARBITRAGE QUE JE N'AI PAS PRIS — et il est à Keko
-
-**Lexicodex montre UNE CARTE À LA FOIS, en plein écran** ; nous montrons **la
-rangée des cinq**. C'est la dernière divergence, et c'est la seule qui ne soit
-pas un défaut d'exécution :
-
-| | ce que ça donne | ce que ça coûte |
-|---|---|---|
-| **une à la fois** (Lexicodex) | chaque carte a tout l'écran, donc la révélation pèse | on ne compare rien, et il faut un écran de récapitulatif à la fin |
-| **la rangée** (nous) | les cinq se comparent d'un coup d'oeil | chaque révélation est cinq fois plus petite |
-
-*Tout le reste de la transposition découle de ce choix* — le compteur qui coiffe
-la rangée, l'ambiance qui suit la meilleure carte révélée et non la dernière, le
-flash qui porte sur l'écran entier. **Le changer est une décision de design**,
-pas un réglage.
-
-#### TROIS PIÈGES D'OUTIL PAYÉS DANS CETTE PASSE
-
-- **l'outil Bash enveloppe la commande dans `bash -c '...'`**, donc une
-  apostrophe française dans un heredoc casse la citation et l'erreur parle d'un
-  `EOF` inattendu. On écrit le contenu avec l'outil d'écriture et on l'insère en
-  Python ;
-- **une capture d'écran prend plus d'une seconde**, donc on ne saisit pas une
-  animation d'une seconde et demie image par image. On la ralentit d'un facteur
-  cinq le temps de la mesurer — *et on la remet avant de committer* ;
-- **une iframe de sonde ne fait pas tourner ses `requestAnimationFrame`**, donc
-  son canvas reste à 300 x 150 et la scène ne démarre jamais. Elle dit quand
-  même ce qu'on lui demande ici — *le débordement, qui est du DOM* — mais jamais
-  ce que la scène rend.
-
-#### À TRANCHER PAR KEKO : l'apostrophe se perd sur les noms de cartes
-
-Trouvé en vérifiant le pavé : la carte affiche **« Crocidure dArabie »**.
-
-*Ce n'est pas la donnée* — 312 noms sur 4 464 portent bien l'apostrophe droite
-(U+0027) — **et ce n'est pas un glyphe manquant** : mesuré sur l'encre, il en
-reste 332 pixels à 120 px de corps, contre 1 296 pour un « i ». **Elle est
-simplement trop fine pour survivre à la taille d'un titre de carte.**
-
-L'apostrophe typographique (U+2019) porte **24 % d'encre de plus en Grenze
-Gotisch et 75 % de plus en Cinzel**, et elle est la forme correcte en français.
-*Mais c'est une décision de typographie sur TOUS les noms du jeu*, pas un défaut
-de ces quatre chantiers — elle revient à Keko.
-
-### LA PORTE D'ENTREE EST LA FREQUENTATION, PLUS LES METIERS
-
-Tranche par Keko, en une phrase qui portait deux demandes : **« je veux qu'on
-supprime le filtre "pas de nom en francais" et surtout je trouve que le critere
-de popularite ne devrait pas etre les langues : plutot la frequentation de la
-page (ex sur un an) »**.
-
-*Les deux tiennent ensemble*, et la seconde refait tout le pipeline — parce
-qu'**on ne peut pas trier par frequentation ce qu'on a decouvert autrement.**
-
-#### POURQUOI LE TRI PAR VUES OBLIGE A CHANGER DE PORTE
-
-La porte par metiers rendait ~405 000 personnes. Pour les classer par vues, il
-faudrait mesurer les vues des 405 000 — a cinquante titres par requete, des
-jours. **C'est exactement pour ca que le pre-tri se faisait sur le nombre de
-langues** : *c'etait le seul signal qu'on ait AVANT Wikipedia.*
-
-La sortie est de prendre le probleme par l'autre bout : **on part de ce que les
-gens lisent** (le top des pages de chaque Wikipedia) et on demande ensuite
-« lequel de ces titres est un personnage ? ». La question est alors indexee, et
-**les vues arrivent AVEC la decouverte** — il n'y a plus d'etape pour les
-obtenir.
-
-*Le pre-tri et le tri final sont donc le meme tri*, ce qui n'avait jamais ete le
-cas.
-
-#### TROIS ETAPES, ET CHACUNE EST MESUREE
-
-| | |
-|---|---|
-| 16 langues x 12 mois de tops (API REST) | **192 requetes, ~1 min** -> ~74 000 titres |
-| titre -> Q-id (`prop=pageprops`, par wiki) | **~1 min par langue**, ~16 min |
-| Q-id distincts -> P31 (SPARQL, par 200) | ~10 min |
-
-**UN AN ET PAS UN MOIS** (`MOIS_DE_VUES = 12`) : le top d'un seul mois est de
-l'ACTUALITE — qui vient de mourir, qui sort un film. Douze mois lissent le pic
-et laissent remonter ce qu'on consulte toute l'annee.
-
-**ET LE RISQUE A ETE MESURE AVANT, PAS APRES.** La question qui pouvait tuer
-l'idee etait : *les figures antiques survivent-elles a un classement par
-frequentation ?* Sur deux langues, **Aristote, Platon et Confucius etaient
-ABSENTS.** Sur seize, ils y sont — Aristote 370e en espagnol, Platon 657e,
-Confucius 464e en chinois. ***C'est le nombre de langues qui les sauve, pas le
-nombre de mois.***
-
-**LE PLAFOND DE 1 000 PAR LANGUE-MOIS EST LA LIMITE CONNUE** : quelqu'un qui
-serait 1 200e partout et chaque mois ne serait jamais vu. *Le dump complet des
-vues le leverait* (6 Go par mois, tous projets, le serveur accepte les plages
-d'octets) — a rouvrir si un manque se fait sentir.
-
-#### TITRE -> Q-ID SE DEMANDE A WIKIPEDIA, PAS A WIKIDATA
-
-**Mesure, sur les lots reels : 0,3 s contre 8 s.** La premiere version resolvait
-par SPARQL (`?a schema:name ?t ; schema:about ?i`) et la generation annoncait
-**trois heures** pour cette seule etape ; `prop=pageprops&ppprop=wikibase_item`
-la fait en sept minutes.
-
-*SPARQL sait relier un titre a une entite, il ne sait pas le faire vite* : un
-lot de cinquante litteraux a langue est un PARCOURS, la ou `pageprops` est un
-acces par cle. **C'est la meme lecon que la decouverte par metiers** — « le poids
-des champs decide, pas le nombre de lignes » — prise par un autre bout : *ici
-c'est le MOTIF qui decide, et il n'y a pas d'index pour celui-la.*
-
-Trois choses a ne pas defaire :
-
-- **`redirects=1`, et il le faut** : les vues comptent le titre DEMANDE, donc
-  « Zidane » et « Zinedine Zidane » arrivent tous deux et un seul est un
-  article. On remonte la chaine `normalized` puis `redirects` pour rendre a
-  chaque article les vues de tous les titres qui y menent. *Sans ca, chaque
-  redirection est une carte qui perd ses vues sans qu'on le voie* ;
-- **les natures se demandent par Q-ID DEDUPLIQUE**, pas par titre : Napoleon
-  arrive seize fois et ne compte qu'une. 74 000 titres font ~50 000 entites, et
-  c'est ce qui rend l'etape courte ;
-- **le lot de nature exige P31**, il ne le prend pas en `OPTIONAL` : on ne
-  cherche pas a savoir qui n'a pas de nature, seulement qui en a une qui nous
-  interesse.
-
-#### LE DRAPEAU `fiction` DIT ENFIN LA NATURE
-
-*Il disait la PORTE.* Il y avait deux decouvertes — humains, puis fiction — et
-le drapeau enregistrait laquelle avait rendu le personnage : **dix-sept cartes
-seulement sortaient en fiction** alors que la porte par metiers en rendait des
-milliers. Ici il n'y a qu'une porte, donc il se lit sur P31 : *n'est pas humain
-ce qui n'a pas Q5 parmi ses natures.*
-
-#### LE SCORE DE NOTORIETE EST A 100 % LES VUES
-
-`POIDS = { langues: 0, vues: 1 }`. Les langues pesaient **0,6 contre 0,4**, et
-c'etait defendable tant qu'on ne pouvait mesurer les vues que de ce qu'on avait
-deja choisi.
-
-**Et il mesurait autre chose.** Un article existe dans beaucoup de langues quand
-un bot l'a cree partout — *un botaniste du XIXe siecle a cent cinquante
-Wikipedia et personne ne les lit.* **Le nombre de langues mesure la plomberie,
-la frequentation mesure l'interet.** Le champ reste dans le fichier comme
-information ; il ne decide plus de rien, et une verification le tient (*un
-critere retire doit l'etre pour de bon, sinon il revient par un poids qu'on
-avait oublie de mettre a zero*).
-
-#### LA GENERATION A TOURNE, ET LES BORNES ONT ETE RECALIBREES DESSUS
-
-**59 minutes**, 3 000 cartes neuves. Et **elle a abouti alors que j'annoncais
-l'inverse** : le shell de fond a ete tue APRES l'ecriture du fichier, et j'ai
-lu la notification comme un echec. ***Une tache tuee n'est pas une tache qui
-n'a rien fait*** — le journal disait « Fini en 58,9 min » cinq heures avant que
-je le regarde.
-
-**ET LE CATALOGUE EST SORTI A 93,8 % COMMUN**, parce que les bornes decrivaient
-encore les vues sur trente jours. *Les porter d'avance aurait casse le catalogue
-d'alors* ; ne pas les porter apres a casse le neuf. **Une borne qui decrit des
-donnees se relit le jour ou les donnees changent, pas avant et pas apres.**
-
-La distribution reelle, mesuree sur les 3 000 : min **342 881**, p10 382 023,
-mediane **730 027**, p90 3 337 541, p99 10 940 332, max **53 946 755**. D'ou
-`[340 000, 54 000 000]`, et des seuils `0,245 / 0,44 / 0,603` qui **retrouvent
-exactement la pyramide d'avant** (69,1 / 20,1 / 8,2 / 2,6 %) : *un changement a
-la fois — la porte change, la distribution de rarete non.*
-
-**LE RECALCUL N'A RIEN RETELECHARGE : 6,2 minutes sur le cache.** C'est la
-troisieme fois que la purete de `logic/` rend ce qu'elle coute.
-
-**ET LA PLAGE EST DESORMAIS TRONQUEE PAR LE BAS**, ce qui est nouveau et change
-une chose : on ne voit que des articles entres dans un top mensuel, donc
-**aucune carte n'est sous 342 881 vues**. La distribution n'est plus centree
-dans sa plage logarithmique — sa mediane tombe a 15 % — et **l'ATTAQUE s'en
-trouve tassee vers le bas** : 659 cartes a 1, deux a 10, la ou l'ancien
-catalogue employait ses dix valeurs autour d'une moyenne de 5,7.
-
-*C'est exactement l'arbitrage que la note des bornes decrit* — « les regler pour
-l'une desequilibre l'autre » — et **il revient a Keko** : centrer l'attaque
-demanderait une borne haute vers 1,5 M, ce qui mettrait un quart du catalogue a
-10.
-
-**ET LE HAUT DU CATALOGUE EST TRES CONTEMPORAIN**, plus encore que prevu :
-Jeffrey Epstein, **Ed Gein**, Donald Trump, Michael Jackson, Cristiano Ronaldo.
-*Douze mois ne suffisent pas a lisser une serie Netflix* — Ed Gein est deuxieme
-du jeu parce qu'une saison est sortie sur lui. **A trancher** : c'est la
-consequence assumee du tri par frequentation, ou un signe qu'il faut ponderer
-par l'anciennete.
-
-**Et la fiction tombe a 12 cartes** (contre 17) : le drapeau dit maintenant la
-NATURE, et la porte unique ne ramene presque aucun fictif — *Wikipedia a une
-page sur chaque depute, pas sur chaque heros de manga.* Le quota reste a
-trancher.
-
-**ET LE BALAYAGE DES CRANS EST DEVENU MULTIPLICATIF.** Cinq valeurs de vues
-choisies a la main sautaient la bande de l'epique, et la verification declarait
-le cran mort — *un cran qu'on declare mort parce qu'on ne l'a pas vise n'est pas
-une mesure.* L'echelle est logarithmique, le balayage doit l'etre.
-
-#### LE FILTRE « PAS DE NOM EN FRANCAIS » TOMBE, ET IL ETAIT DANS UN `WHERE`
-
-`?item rdfs:label ?lab . FILTER(LANG(?lab) = "fr")` etait **obligatoire** dans
-la requete d'enrichissement : un personnage sans libelle francais ne sortait
-meme pas de la reponse. ***Un filtre ne se voit pas quand il est ecrit dans un
-WHERE*** — il ne se compte qu'en cartes manquantes, et il y en avait 252.
-
-Le libelle est donc `OPTIONAL`, **avec l'anglais en repli** et pas le Q-id :
-« Q12345 » n'est pas un nom de carte. Une carte peut s'appeler « Bodhidharma »
-sans qu'un francais l'ait jamais nommee, et c'est mieux que de ne pas exister.
-
-*Le garde qui restait en aval est parti avec* (`if (d.nom === c.id)`) :
-**un filtre retire en amont et garde en aval ne se voit pas**, c'est la lecon
-deja payee sur l'article francais.
-
-#### DETTE ASSUMEE : LES DEUX ANCIENNES PORTES SONT ENCORE DANS LE FICHIER
-
-`decouvrirHumains`, `decouvrirMetier`, `decouvrirFiction`, la table des 701
-metiers, les tranches de notoriete, les trois axes de repli, les budgets de
-temps et `vuesEtrangeres` — **plus rien ne les appelle.**
-
-*Du code mort ment sur ce que le pipeline fait*, et il faudra les retirer avec
-`scripts/trouver-metiers.ts` et `scripts/metiers.json`. **Mais pas avant que
-Keko ait vu le catalogue qu'elles remplacent** : la generation dure une heure,
-et c'est la regle qu'il a posee lui-meme pour le pipeline des personnages face a
-celui des animaux — *on supprime une fois valide, pas avant.*
-
-### DIX DOMAINES, ET UNE RÉPARTITION ÉQUITABLE
-
-Tranché par Keko en deux temps : « on peut faire scientifique, sportif,
-artiste, politique, buisness, penseur, religieux, militaire, explorateur,
-criminel ? », puis **« je voudrais qu'on ait une répartition équitable entre
-les différentes catégories »**.
-
-#### LES DEUX DOMAINES NEUFS, et la mesure dit pourquoi ils manquaient
-
-- **LES ENTREPRENEURS N'ÉTAIENT PAS ABSENTS, ILS ÉTAIENT ÉPARPILLÉS.** Musk en
-  politique, Gates, Bezos, Jobs et Arnault en scientifique, Coco Chanel en
-  artiste — et **Warren Buffett en MILITAIRE, parce qu'il est directeur
-  GÉNÉRAL.** 227 cartes déclaraient un métier d'affaires, réparties dans six
-  domaines : *ce n'était pas une catégorie qui manquait, c'était une catégorie
-  dissoute dans les autres.*
-
-  **Le composé « directeur général » est donc obligatoire dans la table, pas
-  décoratif** : il commence un mot plus tôt que « général », donc il gagne par
-  la règle du plus précoce. ***Un mot d'une table peut en cacher un autre.***
-
-- **LE CRIME PORTE DES CARTES PARMI LES PLUS LUES DU MONDE** — Ed Gein était la
-  2ᵉ du catalogue, Epstein la 1ʳᵉ — et elles tombaient en « autre », ou en
-  « scientifique » pour Ben Laden, qui est ingénieur.
-
-**`fiction` n'est PAS un domaine, c'est une NATURE**, et le mode animaux a déjà
-fait cette distinction. Elle reste le temps que le second champ existe : *le
-père Noël, Spider-Man et Achille n'ont pas de métier.*
-
-#### CE QUE LA TABLE N'ATTRAPAIT PAS — « autre » tombe de 147 à 30
-
-*Une table de mots se relit sur ce qu'elle N'ATTRAPE PAS*, et la relire a coûté
-trois familles de trous :
-
-| | ce qui manquait | qui ça laissait dehors |
-|---|---|---|
-| sportif | **« pilote automobile »** — seul « pilote de course » y était | **Ayrton Senna**, qui tombait sur le repli par métiers où « entrepreneur » gagnait |
-| politique | « fondateur de l'Empire », « chef du gouvernement » | Gengis Khan, Cyrus II, Tokugawa, Andropov |
-| artiste | « ténor », « cantatrice », « personnalité médiatique » | Bocelli, Callas, Kardashian |
-
-**Et le recalcul n'a rien retéléchargé** : les descriptions sont dans le
-catalogue, `domaineDe` est pur, donc les 3 000 cartes se reclassent en une
-seconde. *C'est la quatrième fois que la pureté de `logic/` rend ce qu'elle
-coûte.*
-
-#### L'ÉQUITÉ NE COÛTE PAS DE NOTORIÉTÉ, ELLE EN GAGNE
-
-**C'était le résultat décisif, et il est contre-intuitif.** Mesuré sur Wikidata,
-le nombre de personnes à ≥ 20 langues par domaine : artiste 20 919, sportif
-19 160, penseur ~19 000, scientifique **6 300**, politique 4 407, militaire
-3 745, religieux 2 429, business 2 362, explorateur 1 400, **criminel 540**.
-
-*Toutes dépassent largement 300.* Et à quel niveau tombe la 300ᵉ carte de
-chaque rayon :
-
-| rayon | 1ᵉʳ | 100ᵉ | **300ᵉ** |
-|---|---|---|---|
-| artiste | 336 lg | 144 | **106** |
-| scientifique | 321 | 130 | **89** |
-| business | 334 | 101 | **64** |
-| explorateur | 279 | 60 | **39** |
-| **criminel** | 262 | 51 | **28** |
-
-**La carte la plus faible du catalogue par fréquentation avait 2 langues ; avec
-le quota elle en a 28.** *Le pool par fréquentation raclait le fond d'une seule
-catégorie au lieu de prendre le haut de dix.*
-
-#### LA PORTE REDEVIENT LES MÉTIERS, ET CE N'EST PAS UN RETOUR EN ARRIÈRE
-
-***Explorer et devenir une carte sont deux questions*** — la leçon de l'arbre
-du vivant, reprise ici. La porte par métiers avait été abandonnée comme MESURE
-de notoriété (« les langues mesurent la plomberie, la fréquentation mesure
-l'intérêt ») ; **elle revient comme moyen de DÉCOUVRIR**, et le score reste la
-fréquentation, mesurée article par article. *C'est exactement ce que le mode
-peintures fait depuis le début.*
-
-Trois choses qui le portent :
-
-- **le candidat porte la PORTE par laquelle il est entré**, et ce n'est pas son
-  domaine final : *le vrai domaine ne se lit que sur la description, qui
-  n'arrive qu'à l'enrichissement* — donc sans la porte, on ne saurait pas
-  combien de scientifiques pré-trier ;
-- **le métier se classe avec la MÊME table que les cartes** : `domaineDe` prend
-  une description, et un libellé de métier en est une. *Deux tables de mots se
-  désaccorderaient au premier réglage* ;
-- **le pré-tri se fait par porte, pas globalement** : *un tri global sur les
-  langues redonnerait un catalogue d'artistes*, puisqu'ils sont vingt fois plus
-  nombreux.
-
-**Et ce qui déborde d'un rayon n'est pas repris par un autre** : *un quota qui
-se rattrape n'en est pas un*, et un rayon pauvre doit rester visible pour qu'on
-sache qu'il l'est.
-
-#### LE DÉFAUT QUE LE QUOTA A RÉVÉLÉ : Einstein n'avait pas de nom
-
-Keko : « c'est quoi notre population du coup ? » — et c'est en vérifiant que
-j'ai vu que **Albert Einstein, Newton, Marie Curie, Léonard de Vinci, Galilée,
-Tesla, Napoléon, Jésus, Mahomet, Bill Gates et Christophe Colomb étaient tous
-ABSENTS du catalogue.**
-
-***ALBERT EINSTEIN N'A AUCUN LIBELLÉ FRANÇAIS DANS WIKIDATA.*** Ni les dix
-autres. Le pipeline lisait `rdfs:label` en français, ne trouvait rien, et les
-écartait — « 128 sans libellé FR » dans le journal, **et personne ne lisait
-cette ligne comme « Einstein manque ».**
-
-*Leur ARTICLE, lui, s'appelle bien « Albert Einstein » et « Marie Curie »* : le
-libellé d'une entité est une donnée qu'un contributeur saisit, le titre d'un
-article en est une que des milliers de gens ont validée. **Il ne peut pas
-manquer**, puisqu'on exige l'article pour mesurer les vues.
-
-***Le nom d'une carte est donc le titre de son article, pas le libellé de son
-entité*** — c'est la leçon du mode animaux, où le titre passait déjà avant le
-libellé parce que « le libellé Wikidata d'une espèce est souvent le binôme
-latin ». **Ici c'est pire : il est parfois ABSENT.**
-
-**ET MON PREMIER DIAGNOSTIC ÉTAIT FAUX.** J'avais conclu à une explosion
-combinatoire du `GROUP BY` sur douze `OPTIONAL` — la ligne d'Einstein portait
-bien `description`, `image` et `oeuvre` mais aucun nom, et 40 lignes sur 50
-avaient leur libellé. L'explication tenait par la forme du résultat. **Une
-requête minimale, sans aucun croisement, a rendu exactement la même chose** —
-et c'est elle qui a montré que la donnée n'existait pas.
-
-***Quand une explication tient par la forme du résultat, il reste à vérifier
-qu'elle tient encore une fois la cause supposée retirée.***
-
-*Le rattrapage écrit pour la mauvaise cause reste*, parce que l'autre cas
-existe : **une requête trop riche peut rendre des colonnes vides sans lever.**
-Il ne coûte rien quand il n'y a personne à rattraper.
-
-#### ET LE SECOND DÉFAUT, LE PLUS COÛTEUX : toutes les cartes à zéro vue
-
-Une fois les noms réparés, **Einstein était dans `cartes` — nommé, illustré,
-bien classé — et il sortait quand même.** Napoléon était PREMIER des militaires
-et sortait aussi.
-
-***Les 2 931 cartes avaient toutes ZÉRO vue***, donc le quota les triait par
-ordre alphabétique de Q-id.
-
-`c.vues` est le champ du CANDIDAT, rempli par `decouvrirParVues` quand la porte
-était la fréquentation. **En rebranchant la porte par métiers, j'ai coupé la
-seule source qui le remplissait** — et `m.vues`, la mesure article par article,
-était là depuis le début sans que personne ne la lise.
-
-***Quand on change la porte d'entrée, tout ce qui entrait avec elle doit être
-rebranché.*** J'avais même écrit, dans le commentaire du commit : « le score
-reste la fréquentation, mesurée article par article ». *C'était vrai de la
-MESURE et faux du RACCORDEMENT* — je l'avais déduit d'une ligne de calcul sans
-vérifier qui la consommait.
-
-**Et rien ne le signalait** : zéro est une valeur valide, le tri départage sur
-le Q-id, et *un catalogue trié par Q-id ressemble à un catalogue.*
-
-Ce que la correction a rendu, mesuré : vues min **37** au lieu de 0, médiane
-**4 370**, max 704 380 — et la médiane des langues monte de 60 à **78**.
-
-#### « AFFAIRES » À L'ÉCRAN, `business` DANS LE CODE
-
-Le jeu est entièrement en français, et le pied d'une carte porte déjà
-« Attaque », « Trésor », « Objet » — *le vocabulaire doit dire la règle*, comme
-« enchantement » plutôt que « maîtrise ». L'identifiant interne ne se lit nulle
-part, et *un renommage traversant le catalogue pour un mot ne vaut pas son
-risque* : la règle déjà tenue par `energie` et par `tresor`.
-
-
-### LA RARETÉ SE DÉCOUPE DANS LE DOMAINE, PAS SUR TOUT LE CATALOGUE
-
-Tranché par Keko : **« il faudrait que la rareté soit donnée en fonction de la
-distribution de la rareté dans une catégorie et pas globale »**.
-
-**ET LA MESURE LUI DONNE RAISON DE FAÇON SPECTACULAIRE.** Le quota donne trois
-cents cartes à chaque rayon — mais *les niveaux de notoriété n'ont rien de
-comparable d'un rayon à l'autre* : la 300ᵉ artiste a 106 langues, la 300ᵉ
-criminelle en a 28. À seuil global, le quota se défaisait donc par l'autre bout :
-
-| | commun | rare | épique | légendaire |
-|---|---|---|---|---|
-| **artiste** | **0 %** | 55 % | 37 % | 8 % |
-| sportif | 42 % | 40 % | 12 % | 6 % |
-| politique | 40 % | 40 % | 16 % | 4 % |
-| penseur | 64 % | 29 % | 6 % | 1 % |
-| religieux | 88 % | 7 % | 3 % | 2 % |
-| criminel | 89 % | 6 % | 2 % | 3 % |
-| militaire | 92 % | 6 % | 2 % | 1 % |
-| **scientifique** | 92 % | 7 % | 1 % | **0 %** |
-| business | 93 % | 5 % | 2 % | 1 % |
-| **explorateur** | **97 %** | 2 % | **0 %** | **0 %** |
-
-***Cinq rayons sur dix ne pouvaient porter aucun légendaire, et les artistes
-n'avaient pas un seul commun.*** Marie Curie et Einstein sortaient communs
-pendant qu'une actrice de second plan sortait épique.
-
-**C'est exactement le défaut que le quota venait de corriger, revenu par la
-porte de la rareté** — *le quota égalise le NOMBRE de cartes, il n'égalise pas
-ce qu'elles valent.*
-
-#### CE QUE ÇA DONNE, ET LE TABLEAU CROISÉ EST CE QUI LE DIT
-
-Chaque rayon porte la même pyramide (69 / 20 / 8 / 2,5 %), donc **le meilleur
-criminel vaut légendaire comme le meilleur politique** :
-
-| rayon | ses légendaires |
-|---|---|
-| scientifique | Marie Curie, Albert Einstein |
-| explorateur | Christophe Colomb, Fernand de Magellan |
-| business | Bernard Arnault, Elon Musk |
-| criminel | Klaus Barbie, Ed Gein |
-
-*Et rien dans l'ancien résumé ne disait le problème*, parce qu'aucun tableau ne
-croisait les deux axes : il y avait « par rareté » et « par domaine », jamais
-les deux ensemble. **Un défaut qui tient au croisement de deux axes ne se voit
-sur aucun des deux.** Le résumé porte désormais le tableau croisé et le plus
-notoire de chaque rayon.
-
-#### CINQ CHOSES À NE PAS DÉFAIRE
-
-- **ON TRIE SUR LES VUES BRUTES, jamais sur la notoriété.** Celle-ci passe par
-  une échelle log BORNÉE : avec des bornes mal calées elle vaut zéro pour tout
-  le monde, et le tri devient dégénéré — *c'est littéralement le défaut qui a
-  sorti un catalogue à 100 % commun.* ***Un quantile n'a besoin que d'un ordre,
-  et toute normalisation intermédiaire ne peut que lui en perdre*** ;
-- **ça se calcule sur ce qui RESTE**, après le quota : une carte écartée n'a pas
-  de cran à prendre, et la compter déplacerait les quantiles de tout son rayon ;
-- **les ex aequo partagent leur cran**, par leur rang moyen — *deux cartes de
-  même notoriété ne peuvent pas valoir deux métaux différents*, la règle déjà
-  tenue par les crans du plateau ;
-- **un rayon n'influence pas un autre**, et c'est la propriété qui fait toute la
-  différence avec un seuil global : ajouter trois cents artistes ne change rien
-  aux criminels. Une vérification le tient ;
-- **la rareté a QUITTÉ `statsDerivees`**, et c'est structurel : *un quantile ne
-  se calcule pas sur une carte seule.* Deux portes, parce que deux grandeurs ne
-  se mesurent pas de la même façon — `statsDerivees` voit une carte, et
-  `raretesParDomaine` voit tout le catalogue.
-
-#### ET ÇA FERME LA CLASSE DE DÉFAUT QUI S'ÉTAIT PAYÉE DEUX FOIS
-
-Les personnages étaient **le seul des trois modes à bornes écrites à la main** —
-les animaux découpent par quantiles (`cranDe`), les peintures aussi
-(`rangsNormalises` + `PYRAMIDE`) — et le seul qui ait cassé, deux fois au même
-endroit. ***Une borne écrite à la main ne peut pas décrire des données qui
-changent ; un quantile ne décrit jamais que celles qu'il voit.***
-
-**IL RESTE L'ATTAQUE ET LA DÉFENSE, et c'est à Keko.** Elles lisent encore des
-bornes (`BORNES.vues`, `BORNES.taille`), donc ce sont les deux dernières choses
-qui puissent encore être fausses — et les bornes actuelles sont une **estimation**
-calculée depuis les vues françaises du catalogue précédent, à relire sur
-`stats-summary.txt` dès que la génération a tourné. *Le recalcul ne coûte rien*
-— les formules sont pures, donc le catalogue se refait sur le JSON déjà
-téléchargé. Les passer en quantiles les fermerait pour de bon, mais **ça change
-ce que le chiffre VEUT DIRE** : « attaque 10 » cesserait de dire « plus de tant
-de vues » pour dire « dans les 10 % les plus vus ». C'est une décision de
-design.
-
-### LA FICTION EST UN RAYON — et le drapeau ne disait rien
-
-Tranché par Keko : **« les personnages de fiction sont mal catégorisés, je pense
-qu'on devrait faire une nouvelle catégorie fiction »**.
-
-***J'avais écrit l'inverse*** — « `fiction` n'est PAS un domaine, c'est une
-NATURE, et les deux axes se télescopent » — et **la mesure lui donne raison** :
-**188 cartes du catalogue ne sont pas humaines**, et elles étaient toutes rangées
-par leur métier.
-
-| | sortait en |
-|---|---|
-| **Batman** | **affaires** (Bruce Wayne est chef d'entreprise) |
-| **Spider-Man** | **scientifique** (Peter Parker est biochimiste) |
-| **Wolverine** | **militaire** |
-| **Robin des Bois** | **sportif** (archer) |
-| Arsène Lupin, Hannibal Lecter, Zorro, Vito Corleone | criminel |
-| Moïse, Abraham, David, Salomon, roi Arthur | politique / religieux |
-
-Et le pire : **74 des 231 cartes du rayon criminel étaient des personnages de
-roman**, soit un tiers — ce qui explique aussi pourquoi c'est le seul rayon qui
-n'atteignait pas son quota.
-
-***Un axe qu'on refuse de nommer se répartit quand même, et il le fait mal.***
-Le second champ reste souhaitable — Peter Parker EST biochimiste — mais tant
-qu'il n'existe pas, **un onzième rayon dit la vérité là où neuf rayons
-mentaient.**
-
-#### LE DRAPEAU VALAIT `false` POUR TOUT LE MONDE
-
-Il disait **par quelle découverte** la carte était entrée. Il y avait deux
-portes — les métiers et la fiction — et quand la porte par fréquentation a
-remplacé les deux, *la porte de la fiction est partie avec*. Le champ est resté,
-rempli par un `versCandidat(l, false, porte)` qui ne regardait rien.
-
-***C'est le défaut du champ `vues`, repayé à l'identique dans le même fichier***
-— « un champ mort qui porte un nom juste est pire qu'un champ absent : il se
-relit comme une source, et rien ne dit qu'il ne l'est plus ». **Et il était écrit
-à deux lignes du champ coupable.**
-
-La nature se lit donc sur **P31**, par une requête à part : *l'enrichissement
-porte déjà douze `OPTIONAL`, et une requête trop riche peut rendre des colonnes
-vides sans lever* — la leçon qui a coûté Einstein. Celle-ci est un accès par
-clé, elle coûte **deux minutes sur un pipeline d'une heure**, et elle ne peut
-rien casser de ce qui marche.
-
-**ET C'EST L'ABSENCE DE Q5 QUI COMPTE, pas la présence d'une nature de fiction** :
-un personnage biblique, une divinité, un héros de légende et Batman n'ont aucune
-nature commune — *ils n'ont en commun que de n'avoir pas existé.*
-
-**La nature se lit AVANT l'image**, et il le faut : *elle décide du repli
-d'illustration* — un humain garde l'image d'en-tête de Wikipédia, un fictif non,
-parce que pour lui ce repli ramène des cosplays. On ne peut donc pas la demander
-sur les seuls retenus, **il faudrait déjà savoir ce qu'on retient.**
-
-#### UNE RACINE DE TAXONOMIE NE CONTIENT PRESQUE RIEN EN DIRECT
-
-La porte de la fiction ne rendait plus rien : `wdt:P31/wdt:P279* wd:Q95074` est
-la requête **mesurée à 504**, donc *les fictifs du catalogue n'y sont arrivés que
-par accident*, à travers leurs métiers.
-
-Et la réparation ne pouvait pas être « la même requête sans la clôture
-transitive », parce que **`wdt:P31 wd:Q95074` ne rend que DEUX entités** avec un
-portrait et un article français. Mesuré sur les natures déclarées :
-
-> **Superman** est *personnage de bande dessinée*, *littéraire*, *d'animation*,
-> *de série télévisée* et *de cinéma* — et **aucune de ses natures n'est
-> Q95074.** Harry Potter et Hermione sont *personnage littéraire* et *de
-> cinéma*.
-
-***C'est la leçon des métiers prise par l'autre bout*** : là, une racine ne
-couvrait pas sa propre notion ; ici elle ne couvre **que** sa propre notion.
-
-**On énumère donc les quatorze natures PAR MÉDIA, une par une** — et c'est aussi
-ce qui la rend rapide :
-
-| | temps | lignes |
-|---|---|---|
-| clôture transitive sur sept natures | **504 au bout de 65 s** | — |
-| les quatorze natures une à une | **0,5 à 8,7 s chacune** | 3 600 à 6 000 |
-
-*Le poids d'une requête tient à son PARCOURS, pas à son nombre de lignes* — la
-règle déjà payée sur la découverte par métiers.
-
-Potentiel mesuré, avec un portrait, un article français et ≥ 10 langues :
-**1 275 entités distinctes** — largement de quoi remplir un rayon de 273.
-
-#### LE POOL DE LA FICTION, MESURÉ : 2 160 cartes — *puis 4 183*
-
-**Les chiffres qui suivent sont ceux des treize natures EN DIRECT.** La clôture
-sur les tiroirs mythologiques a doublé le pool le jour même : voir « UN BANC QUI
-PREND TOUT LE POOL », juste en dessous. *Ils restent ici parce que la
-décomposition par nature, elle, ne bouge pas.*
-
-Keko : « niveau fiction, on a un pool total de combien de personnages sur wiki
-(avec article fr, image) ». Les treize natures, article français exigé, pool
-dédupliqué :
-
-| | avec image P18 | sans exiger l'image |
-|---|---|---|
-| **tous crans** | **2 160** | 7 558 |
-| ≥ 5 langues | 1 848 | 4 750 |
-| **≥ 10 langues** (le seuil du pipeline) | **1 472** | 2 912 |
-| ≥ 20 langues | 782 | 1 261 |
-| ≥ 40 langues | 233 | 277 |
-| ≥ 80 langues | 34 | 36 |
-
-***L'IMAGE COÛTE 71 % DU POOL*** — 2 160 sur 7 558 — et c'est de loin le filtre
-le plus cher. *Pour un humain ce serait rattrapable par le repli de l'image
-d'en-tête de Wikipédia ; pour un fictif non*, puisque ce repli ramène des
-cosplays. **Le plafond de la fiction illustrée est donc 2 160, point.**
-
-Par nature, article français et image :
-
-| | cartes possibles | sur, sans l'image |
-|---|---|---|
-| personnage humain de fiction | 1 036 | 3 958 |
-| personnage littéraire | 628 | 1 623 |
-| personnage de série télévisée | 556 | 2 029 |
-| personnage de cinéma | 537 | 1 482 |
-| personnage d'animation | 319 | 957 |
-| personnage de bande dessinée | 295 | 1 471 |
-| personnage de manga | 285 | 445 |
-| divinité · personnage légendaire | 149 · 149 | 324 · 257 |
-| créature mythologique | 142 | 227 |
-| personnage de théâtre | 103 | 120 |
-| **personnage de fiction** (la racine) | **27** | **238** |
-| personnage biblique | 9 | 14 |
-
-*(La somme dépasse 2 160 : un personnage porte plusieurs natures — Superman en a
-cinq.)*
-
-**LA RACINE A 4 998 INSTANCES DIRECTES ET N'EN LAISSE QUE 27**, parce que presque
-aucune n'a d'article français. *Ce n'est pas la hiérarchie qui la vide, c'est le
-filtre d'article* — et ça confirme par un troisième chemin qu'on ne peut pas
-découvrir la fiction par sa racine.
-
-**« SUPER-HÉROS » (Q188784) A ÉTÉ RETIRÉ DE LA TABLE** : il n'a **qu'une seule
-instance directe** dans tout Wikidata. *C'est un concept, pas une classe
-d'instances* — Superman et Batman sont déclarés par leur MÉDIA, jamais par leur
-genre. Il rendait zéro ligne : ***un Q-id qui rend zéro ne lève pas, et une
-entrée morte dans une table est un mensonge.***
-
-**Ce que ça dit du quota** : le rayon en veut **273**, le pipeline en voit
-**1 472** et en garde 819 en candidats. *Le rayon se remplira, et il reste de la
-marge pour le durcir* — à ≥ 20 langues il y aurait encore 782 candidats, donc
-trois fois le quota.
-
-#### ELLE EXIGE UN PORTRAIT, ET LA PORTE DES HUMAINS NE LE FAIT PAS
-
-*Ce n'est pas une asymétrie, c'est le filtre juste des deux côtés.* Un humain
-sans image Wikidata garde le repli de l'image d'en-tête ; un fictif non. Donc le
-portrait est une condition **nécessaire** pour un fictif, et l'exiger à la
-découverte ne retire rien qui aurait pu devenir une carte. **Chaque porte filtre
-ce qu'elle peut.**
-
-#### UN BANC QUI PREND TOUT LE POOL : `?paquet&fiction`
-
-Demandé par Keko : « on peut faire un test avec un booster uniquement fiction où
-on a la totalité du pool dispo ? » *Le rayon du jeu en garde 273* — **un banc
-montre le catalogue, pas l'état de la partie**, la règle de `?r3f&raretes` et de
-`?board&pool=N`.
-
-`npm run personnages -- --fiction` écrit `public/data/fiction.json` :
-**4 183 cartes, toutes illustrées**, pyramide exacte (69,2 / 20,0 / 8,3 / 2,5 %).
-
-Trois différences avec le catalogue du jeu, et chacune découle du mot
-« totalité » :
-
-- **ni seuil de langues, ni pré-tri, ni quota** ;
-- **pas de somme multilingue** : elle coûte quinze requêtes par paquet de
-  cinquante, soit une demi-heure pour un fichier qu'on regarde une fois. *La
-  rareté est un QUANTILE, donc elle n'a besoin que d'un ordre* — les vues
-  françaises en donnent un ;
-- **les humains sont ÉCARTÉS et comptés** : un personnage peut être déclaré
-  « personnage de cinéma » tout en étant `Q5` — une personne réelle portée à
-  l'écran. **204 sur 9 026**, donc le pool est pur à 97,7 %.
-
-**ET LE POOL EST LE DOUBLE DE CE QUE J'AVAIS ANNONCÉ.** J'avais répondu
-**2 160** à Keko, mesuré avec les treize natures **en direct** ; la clôture sur
-les tiroirs mythologiques en ajoute autant. ***Une mesure écrite une fois ne
-reste pas vraie quand ce qui la produit a bougé*** — et ici c'est la table des
-natures qui a bougé le jour même.
-
-#### POURQUOI DARK VADOR MANQUE, ET POURQUOI ZEUS MANQUAIT
-
-Les deux absences avaient deux causes, et il a fallu les séparer :
-
-| | nature connue | image libre |
-|---|---|---|
-| **Dark Vador, Mario, Naruto** | **oui, les six** | **NON** |
-| **Zeus, Odin, Ulysse, Pikachu** | **aucune** | oui |
-
-- **le premier groupe est IRRÉPARABLE** : il n'existe aucune image libre de ces
-  personnages, et c'est exactement pour ça que Wikidata ne leur en déclare pas.
-  *Le filtre d'image coûte 71 % du pool, et il coûte précisément les
-  personnages récents sous licence* ;
-- **le second était une table incomplète**, et c'est ce qui a doublé le banc.
-
-**LES DIVINITÉS SONT DÉCLARÉES PAR PANTHÉON ET PAR FONCTION, jamais par
-« divinité »** : Zeus est *divinité grecque*, *divinité olympienne*, *roi des
-dieux* et *divinité du tonnerre* — **aucune de ces quatre natures n'est
-`Q178885`.** Ulysse est *personnage de la mythologie grecque*.
-
-#### LA CLÔTURE TRANSITIVE DÉPEND DU TIROIR, elle n'est pas interdite en soi
-
-C'est la nuance que la mesure a imposée, et elle corrige ce que j'avais écrit le
-matin même :
-
-| | en direct | en clôture |
-|---|---|---|
-| fiction moderne (`Q95074` et ses voisins) | 0,5 à 8,7 s | **504 au bout de 65 s** |
-| divinité | 149 | **1 192 en 4,6 s** |
-| créature mythologique | 142 | **855 en 9,4 s** |
-| personnage légendaire | 149 | **681 en 17,2 s** |
-
-*Le poids d'une requête tient à son PARCOURS* — la règle déjà payée sur la
-découverte par métiers — **et les tiroirs mythologiques sont petits**, donc on
-peut y descendre. La table porte donc un drapeau par nature : **en direct pour la
-fiction moderne, en clôture pour la mythologie.**
-
-Ce que ça rend : Zeus, Odin, Ulysse, Thor, Anubis, Osiris, Vishnou, Merlin,
-Pégase, Cerbère, le Minotaure — et **le catalogue du jeu en profitera à la
-prochaine génération**, puisque c'est la même table.
-
-**PRIX À CONNAÎTRE** : `fiction.json` pèse **1,8 Mo**, soit autant que le
-catalogue du jeu. *C'est un banc*, donc il ne se charge que derrière son
-paramètre — mais `public/` est servi tel quel, et le dépôt porte désormais 7,5 Mo
-de catalogues.
-
-#### UN LOT DE NATURES PERDU REND SES CARTES HUMAINES, PAS FICTIVES
-
-*Une absence de mesure n'est pas une mesure* — la leçon de l'arbre du vivant.
-Sans réponse on ne sait pas, et supposer « non humain » renommerait tout un lot
-d'humains en fiction.
-
-#### CE QUI RESTE À SURVEILLER, ET C'EST WIKIDATA QUI LE DÉCIDE
-
-Le rayon ramasse **les figures bibliques et légendaires** en même temps que les
-super-héros : Moïse, Abraham, David, Salomon, le roi Arthur, Homère et Marie de
-Magdala y sont, parce que Wikidata ne les déclare pas `Q5`. *C'est défendable —
-leur existence n'est pas attestée* — **mais la cohérence vient de Wikidata et
-non de nous** : Lao Tseu, Pythagore et Confucius, dont l'existence est tout
-aussi discutée, y sont `Q5` et restent donc « penseurs ».
-
-**À trancher par Keko s'il veut séparer l'inventé du légendaire** : ce serait un
-douzième rayon, ou le second champ de nature.
-
-### CE QUI RESTE À TRANCHER PAR KEKO
-
-- **la rareté ne se règle plus du tout** : elle se découpe en quantiles DANS
-  chaque domaine, donc la pyramide est exacte par construction (69 / 20 / 8 /
-  2,5 %) et ne peut plus décrire la mauvaise donnée — voir la section qui
-  précède ;
-- **l'attaque et la défense**, en revanche, lisent encore des bornes écrites à
-  la main, et ce sont les deux dernières. Celles des vues sont une ESTIMATION
-  (`[300, 5_000_000]`) : *à relire sur `stats-summary.txt` dès que la génération
-  a tourné.* Les passer en quantiles les fermerait pour de bon, au prix d'un
-  changement de sens — « attaque 10 » dirait « dans les 10 % les plus vus » et
-  non « plus de tant de vues » ;
-- **les quatre crans de rareté** s'appellent `commun / rare / epique /
-  legendaire`, un par métal — tranché par Keko, voir plus haut ;
-- **les images sont des URL Wikimedia Commons**, donc une ressource extérieure.
-  Le projet n'en dépend que pour les deux polices. À décider : les servir
-  directement, ou les rapatrier ;
-- **le poids du catalogue** : trois mille cartes pèsent **1,7 Mo**, et
-  `public/` est servi tel quel. Si ça pèse trop, le premier gain est de ne
-  garder que le nom du fichier Commons plutôt que son URL complète ;
-- **`@types/node` en devDependency**, pour que `scripts/` soit type-vérifié.
-  Ce sont des types, pas une librairie à l'exécution — mais c'est une
-  dépendance, donc c'est son appel ;
-- **la table des métiers**, qui décide de ce que le catalogue contient : trente
-  -sept entrées aujourd'hui, et c'est le seul endroit à élargir ;
-- **séparer l'inventé du légendaire**, si le rayon fiction paraît mêler deux
-  choses : Moïse et Batman y sont ensemble parce que Wikidata ne les déclare ni
-  l'un ni l'autre `Q5`. Ce serait un douzième rayon, ou le second champ de
-  nature.
-
-## LE TROISIÈME MODE DEVIENT DES ANIMAUX — décision de Keko
-
-**Les personnages sont remplacés, pas complétés.** Keko : « on remplace les
-personnages par des animaux ». Le pipeline, le format et tout ce qui suppose
-« une personne » sont à repenser pour « un animal » ; on commence par les
-**mammifères**, et la structure doit accueillir les autres vertébrés sans
-réécriture — *d'où `animals.json` et non `mammals.json`, et le champ `groupe`.*
-
-### LA RÈGLE : UNE CARTE EST UNE ESPÈCE, et la collection est entière
-
-Tranché par Keko après avoir vu la première coupe de l'arbre : **« je préfère
-la liste plate, on abandonne l'arbre »**, et **« 200 cartes c'est trop peu, il
-faut la collection de tous les mammifères »**.
-
-**C'est LUI qui a posé la question qui a tout retourné** : *« pourquoi on
-n'utilise pas direct la liste des mammifères (donc espèces) pour le premier
-build ? »* — et la réponse honnête était qu'on pouvait, que c'était bien plus
-simple, et que ça ne coûtait qu'une chose.
-
-#### Ce que ça achète, mesuré
-
-| | |
-|---|---|
-| espèces de mammifères **vivantes** (GBIF) | **6 318** |
-| avec une page française | **3 635** |
-| avec page française **et** une image | **2 620** |
-
-**Et surtout : les six défauts que l'arbre a coûtés venaient TOUS des rangs
-au-dessus de l'espèce.** « Lynx dans la culture », « Castor (genre) »,
-« Vulpes littoralis », les genres latins sans nom, les doublons groupe/animal,
-le bestiaire entier qui manquait — *une espèce, elle, a presque toujours un nom
-français net* : `Canis lupus` s'intitule « Loup », `Vulpes vulpes » « Renard
-roux ». Rien à deviner.
-
-S'ajoutent : plus de hiérarchie à tenir, plus d'invariant, plus de parent, et
-deux fois plus rapide.
-
-#### Ce que ça coûte, et c'est une seule chose
-
-**Il n'y a plus de carte « chauve-souris ».** C'est un ORDRE : la liste des
-espèces donne « Grand rhinolophe », « Pipistrelle commune », « Murin de
-Daubenton » — et jamais le mot que tout le monde emploie. Même perte pour
-**rongeur, singe, dauphin, baleine, musaraigne, écureuil**.
-
-*C'était exactement ce que la règle de l'arbre promettait*, et Keko l'a échangé
-sciemment contre une collection complète.
-
-#### LES GROUPES REVIENNENT PAR UNE AUTRE PORTE : les rayons
-
-**L'ordre et la famille de chaque espèce viennent GRATUITEMENT dans la réponse
-GBIF** qui liste les espèces, et le nom français de l'ordre s'engendre par la
-cascade qui servait à l'arbre — il n'y en a que vingt-sept.
-
-*C'est le seul héritage de l'arbre, et c'est le bon* : « Carnivores »,
-« Primates », « Chauve-souris », « Rongeurs » ne sont plus des cartes, ils sont
-les **RAYONS** de la collection (`parOrdre`, dans `logic/animals/types.ts`).
-**Un classeur ne se collectionne pas, il range** — et un catalogue de deux
-mille cinq cents cartes ne se montre pas en une liste.
-
-**Les redirections Wikipédia gardent donc leur emploi**, et c'est là qu'elles
-sont irremplaçables : pour Chiroptera, le libellé français de Wikidata est
-littéralement « Chiroptera », P1843 est vide, et seules les redirections de
-l'article rendent **« Chauve-souris »**, en première position. Mesuré aussi sur
-Rodentia → « Rongeur », Cetacea → « Cétacés », Primates → « Primate ».
-
-#### IL N'Y A PLUS DE SEUIL DE NOTORIÉTÉ
-
-On prend **tout ce qui est nommable et illustrable** ; le score ne sert plus
-qu'à la rareté. *Une collection se collectionne entière, sinon ce n'est pas une
-collection.*
-
-Deux conditions, donc, et elles sont les seules :
-
-- **un nom français**, par la cascade P1843 → titre de l'article → libellé.
-  **Le titre d'article passe AVANT le libellé**, à l'inverse de ce que faisait
-  l'arbre : *le libellé Wikidata d'une espèce est souvent le binôme latin, le
-  titre d'article presque jamais.* Et **le genre seul ne nomme pas une
-  espèce** — `Felis margarita` intitulé « Felis » dirait « un chat » là où la
-  carte est le chat des sables ;
-- **une image sur Commons**, P18 ou, à défaut, l'image d'en-tête de l'article.
-
-**ET LE REPLI D'IMAGE EST SÛR ICI**, là où il ne l'était pas pour les
-personnages : *une photo d'en-tête d'article d'espèce animale EST une photo de
-l'animal.* Le mode personnages avait dû le refuser parce que Wikipédia
-illustrait Thanos par un cosplayeur et Mario par un train décoré — un animal
-n'a pas ce problème. **Le repli décide de l'ordre de mille cartes.**
-
-#### ON NE GARDE QUE LE VIVANT — et c'est un revirement de Keko
-
-D'abord « pour l'instant on laisse les éteints », puis **« on va mettre de côté
-les espèces éteintes »** une fois le dégât vu : *le référentiel porte 12 917
-espèces éteintes pour 6 323 vivantes*, donc les deux tiers de l'arbre sont des
-fossiles — et c'est eux qui avaient fait exploser la descente, mille branches de
-dauphins éteints en file pour un gigaoctet de mémoire.
-
-**Le filtre tient en `&isExtinct=false`** sur la recherche GBIF, mesuré sur
-l'endpoint. Prix connu et assumé : **le mammouth et le smilodon sortent du
-catalogue.** Les remettre un jour demandera une liste nommée, pas la réouverture
-du filtre — *on ne rouvre pas douze mille fossiles pour en gagner trois.*
-
-#### CE QUE L'ARBRE A APPRIS, ET QU'IL NE FAUT PAS REPAYER
-
-*L'arbre est abandonné ; ses leçons ne le sont pas.* Six défauts, et chacun a
-sa règle :
-
-1. **UN NOM DÉSIGNE UNE CARTE, PAS DEUX.** Un genre qui ne porte qu'une espèce
-   connue partage son article avec elle, donc « Dama » et « Dama dama »
-   rendaient tous deux « Daim » — vingt doublons, dont « Raton laveur »,
-   « Chimpanzé » et « Éléphant d'Afrique ». *La revue le signale encore*, parce
-   que deux espèces sœurs peuvent partager une redirection ;
-2. **UNE REDIRECTION PEUT ÊTRE UN SOUS-SUJET.** Le genre Lynx sortait nommé
-   « Lynx dans la culture » — une vraie page, mais qui parle des légendes.
-   *Un nom d'animal ne porte pas de mot-outil* : « dans », « selon », « liste » ;
-3. **UNE PARENTHÈSE DE DÉSAMBIGUÏSATION N'EST PAS UN NOM.** « Castor (genre) »,
-   « Puma (genre) », « Lama (genre) » — *ce qui précède la parenthèse EST le
-   nom* ;
-4. **UN SYNONYME LATIN N'EST PAS UN NOM FRANÇAIS.** `Urocyon littoralis`
-   sortait nommé « Vulpes littoralis ». Reconnaissable : la redirection finit
-   par le même mot que le nom scientifique ;
-5. **EXPLORER ET DEVENIR UNE CARTE SONT DEUX QUESTIONS.** Les confondre coûtait
-   *tout le bestiaire connu* — le loup, l'ours, le guépard, le zèbre, la girafe,
-   le kangourou et le panda étaient ABSENTS, parce que leur genre porte un nom
-   latin et que la descente s'arrêtait sur ce nom manquant sans jamais regarder
-   dessous ;
-6. **UNE ABSENCE DE MESURE N'EST PAS UNE MESURE BASSE.** `Vulpes` et `Giraffa`
-   n'ont d'article dans aucune langue, donc un score nul — *non pas parce qu'ils
-   sont obscurs, mais parce qu'on n'a rien pu peser.* Et la correction a demandé
-   sa borne dans la seconde qui a suivi : traverser TOUT ce qu'on ne mesure pas
-   ouvrait l'arbre fossile entier. ***Un rattrapage sans borne est un second
-   bug.***
-
-**La leçon qui les coiffe toutes** : *les cinq premiers défauts étaient des
-problèmes de NOM, et aucun n'existe au rang de l'espèce.* C'est ce qui a rendu
-la question de Keko si juste.
-
-#### CE QUI RESTE À TRANCHER PAR KEKO — les animaux
-
-- **une carte sans image est-elle une carte ?** La règle des personnages dit
-  non, et elle coûte ici de l'ordre de mille espèces. Le pipeline applique
-  « pas d'image, pas de carte » ;
-- **le pluriel et la casse des noms** : Keko a tranché « on peut laisser les
-  noms au pluriel », et la majuscule se pose au RENDU (`enTitre`) — *une donnée
-  engendrée n'a pas à porter une convention d'affichage* ;
-- **les deux mesures du pied d'une carte.** `carte-personnage.ts` affiche une
-  attaque et une défense ; un animal a une masse, un statut UICN, un nombre de
-  vues. **C'est une décision de design, elle revient à Keko** ;
-- **le poids du catalogue et des images** : deux mille cinq cents URL Commons,
-  donc une ressource extérieure. À décider : les servir directement ou les
-  rapatrier.
-
-### CE QUI CASSERA QUAND LE FORMAT CHANGERA — l'inventaire
-
-**Cinq fichiers seulement importent le format des personnages**, et c'est ce que
-la règle de pureté achète : le reste du jeu ne le connaît pas.
-
-| fichier | ce qu'il fait | ce qu'il devient |
-|---|---|---|
-| `src/logic/characters/types.ts` | `CharacterCard`, la validation | **remplacé** par `src/logic/animals/types.ts` |
-| `src/logic/characters/formules.ts` | rareté, attaque, défense, domaine | **absorbé par le pipeline** : les formules des animaux vivent dans `scripts/generate-animals.ts`, puisque la rareté sort d'un quantile sur le catalogue entier et ne peut pas se calculer carte par carte |
-| `src/logic/characters/formules.verif.ts` | ses vérifications | **remplacé** par `src/logic/animals/types.verif.ts` |
-| `src/logic/characters/paquet.ts` | le tirage d'un paquet, seedé | **à reporter** : rien n'y est propre aux personnages sauf le type — `CARTES_PAR_PAQUET`, `CRAN_GARANTI` et `CHANCES` restent justes |
-| `src/render/carte-personnage.ts` | `CharacterCard` → `CarteAPeindre` | **à réécrire** : le domaine devient le groupe ou le rang, et les deux mesures du pied devront venir d'ailleurs (masse ? UICN ? espèces absorbées ?) — **c'est une décision de design, elle revient à Keko** |
-| `src/render/Paquet3D.tsx` | l'écran d'ouverture | **trois imports à changer**, rien d'autre : le geste, la culbute et l'onde ne savent rien du contenu |
-| `src/ui/personnages.ts` | le `fetch` du catalogue | **renommé**, 44 lignes |
-| `src/entree.ts` | la route `?paquet` | une ligne |
-| `package.json` | `personnages`, la chaîne `verif` | deux lignes |
-| `public/data/characters.json` + `stats-summary.txt` | 1,7 Mo de données | **à supprimer** une fois le nouveau pipeline validé |
-| `scripts/generate-characters.ts` | 1455 lignes | **à supprimer** une fois validé |
-
-**CE QUI NE CASSE PAS, et il faut le savoir** : les quatre ouvertures du gabarit
-que la carte-personnage avait demandées restent exactement ce qu'il faut à un
-animal — **l'illustration par URL** (le mode DÉCOUVRE ses images, il n'y a pas
-de table à écrire), **le coût `null`** (une carte qui ne se joue pas ne porte
-pas d'orbe de PA), **les deux mesures au pied** avec leur couleur de nature, et
-**l'absence de ciel de famille**. *Une ouverture faite pour une bonne raison
-sert au cas suivant.*
-
-**Et `scripts/outils.ts` est neuf exprès.** Les briques partagées — cache par
-requête, lots, journal, pause — y sont recopiées plutôt que factorisées depuis
-`generate-characters.ts` : *toucher à un script qu'on va retirer pour le
-factoriser avec celui qui le remplace ne gagne rien et risque quelque chose.*
-Le jour où il part, le module reste.
-
-**LE PIPELINE DES PERSONNAGES NE SE SUPPRIME PAS AVANT VALIDATION.** Tranché
-par Keko : « supprime le script personnages et ses données une fois le nouveau
-pipeline validé, pas avant. »
-
-## LE QUATRIÈME MODE : UNE COLLECTION DE PEINTURES — `?paquet&art`
-
-Idée de Keko : « et si on faisait une collection d'œuvre d'art ? » Puis, après
-mesure : **« il vaut mieux partir sur Wikipédia »**, et enfin **« je voudrais me
-focaliser uniquement sur les peintures/tableaux »**.
-
-Il vit **à côté** des animaux, pas à leur place : *ce qui se teste doit pouvoir
-s'ouvrir d'un lien*, et Keko tranchera en voyant les deux.
-
-### POURQUOI WIKIPÉDIA ET PAS LE MET — mesuré, et les deux ne mesurent pas la même chose
-
-Le Met publie **un dump CSV de 318 Mo** (`MetObjects.csv`, 11 s à télécharger) et
-marque 2 294 œuvres comme « highlights ». *Un dump bat une API pour un
-catalogue* — l'alternative était 500 000 appels par objet, et le `/search` v1 a
-été retiré le 1ᵉʳ octobre 2026.
-
-**Trois mesures l'ont écarté, et la troisième est rédhibitoire :**
-
-| | |
-|---|---|
-| **68 % des « highlights » du Met n'ont AUCUN article Wikipédia** | leur « importance » est le jugement d'un conservateur, pas la célébrité |
-| la notoriété se lit sur l'ARTISTE, pas sur l'œuvre | 98 % contre 4 % : les Q-ids d'objets du Met sont des entités créées en masse, qui portent une image mais pas d'article |
-| **le Met ne sert AUCUN en-tête CORS sur ses images** | elles ne peuvent pas entrer dans un canvas — *tout doit passer par Commons de toute façon* |
-
-Keko a donc choisi la célébrité contre le jugement institutionnel. **Les deux
-sources convergent sur ~2 500 œuvres vraiment connues**, ce qui est exactement
-la taille d'un catalogue.
-
-### LE POOL : 9 797 PEINTURES, et « peinture » n'est pas la classe `peinture`
-
-`P31/P279* Q3305213` — la classe ou **n'importe laquelle de ses sous-classes**.
-Mesuré : **9 797 œuvres distinctes contre 9 395** avec la seule classe. Les 402
-récupérées sont les fresques, les triptyques, les retables, les aquarelles.
-
-***Sans la hiérarchie, on perd Michel-Ange et Raphaël pour une question de
-nomenclature*** : La Création d'Adam, L'École d'Athènes et Le Jugement dernier
-sont rangés sous `fresque`. Vérifié dans les deux sens — les sculptures restent
-dehors.
-
-**Trois filtres, les trois de Keko** : une page en français, une image libre,
-une date de création. *L'approximation ne sert à rien* — mesuré, les quatre
-propriétés d'approximation (`P1319`, `P1326`, `P2031`, `P585`) n'ajoutent que
-**deux œuvres**.
-
-### CE QUE LA SPÉCIALISATION COÛTE, et il faut le savoir
-
-La part des non-peintures **monte avec la notoriété** :
-
-| seuil | total | peintures | autres | part des autres |
-|---|---|---|---|---|
-| ≥ 1 langue | 11 253 | 9 395 | 1 858 | 16,5 % |
-| ≥ 10 | 1 969 | 1 535 | 434 | 22 % |
-| ≥ 30 | 165 | 106 | 59 | 36 % |
-| **≥ 50** | 32 | 15 | 17 | **53 %** |
-| ≥ 80 | 5 | 1 | 4 | **80 %** |
-
-**L'œuvre d'art la plus connue au monde n'est pas une peinture** : la statue de
-la Liberté fait 158 langues, La Joconde 146. Sortent aussi le Christ Rédempteur,
-La Petite Sirène, le David, la Vénus de Milo, l'Homme de Vitruve, La Pietà, la
-Victoire de Samothrace — et toute la photographie iconique (le portrait du Che,
-Iwo Jima, la première photo de l'histoire).
-
-**Ce que ça achète en échange est un FORMAT VISUEL UNIQUE**, et c'est
-l'argument qui n'est pas dans les chiffres : une peinture est une image
-rectangulaire plate, une sculpture est un objet photographié sur fond de musée,
-une photographie du XXᵉ est en noir et blanc. *Mélanger les trois donne trois
-esthétiques sur la même grille.*
-
-**La sortie médiane était « peinture + sculpture »** — les deux seules familles
-qui pèsent, 83 % et 14 %, les 3 % restants étant du bruit. Keko a préféré le
-format unique. *Si le haut du catalogue paraît maigre un jour, c'est là qu'il
-faut rouvrir* : il suffit d'ajouter les classes de sculpture au socle du
-pipeline.
-
-### LA FORMULE DE NOTORIÉTÉ : langues ×3 + taille d'article + déclarations
-
-Keko : « une valeur = rareté (indice de popularité : fréquentation, nombre de
-langues, et autre : on tente de créer une formule qui rende parfaitement compte
-de la notoriété) ». Mesurée sur **644 œuvres**, 585 avec tous les signaux.
-
-#### LA DÉCOUVERTE QUI RENVERSE L'INTUITION
-
-| | corrélation de rang |
-|---|---|
-| **nombre de langues ↔ vues étrangères** | **0,899** |
-| vues françaises ↔ vues étrangères | 0,729 |
-
-**Le nombre de langues prédit les vues mondiales mieux que les vues
-françaises** — et le français ne pèse que **17 %** du total (de 2 % à 96 % selon
-l'œuvre).
-
-***C'est l'inverse exact du mode personnages***, où les langues avaient été
-mises à poids ZÉRO parce qu'« un botaniste du XIXᵉ a cent cinquante Wikipédia
-créées par bot et personne ne les lit ». **Il n'y a pas de bots qui écrivent des
-articles de peintures** : un article n'existe que si quelqu'un l'a écrit.
-*Un signal change de nature avec son domaine*, et une décision mesurée sur un
-mode ne se reporte pas sur un autre sans la refaire.
-
-#### MAIS LES LANGUES SEULES NE PEUVENT PAS ÊTRE LA FORMULE
-
-| formule | valeurs distinctes sur 585 | plus gros paquet d'ex aequo | crans vides |
-|---|---|---|---|
-| **langues seules** | **56** | **100 œuvres** | **1** |
-| langues + vues multilingues | 496 | 4 | 0 |
-| **langues ×3 + taille + déclarations** | **569** | 3 | 0 |
-
-**46 % du pool tient sur trois valeurs** (1, 2 ou 3 langues) : dans la queue,
-elles ne distinguent rien. *Un paquet de cent œuvres indiscernables, et un cran
-d'échelle vide.*
-
-C'est la règle du projet prise par l'autre bout — « des valeurs distinctes ne
-sont pas une répartition » devient ici ***une répartition a besoin de valeurs
-distinctes.***
-
-#### LA FORMULE EST STABLE, ET C'EST LE CRITÈRE QUI COMPTE
-
-*Une formule qu'un signal gouverne seul n'est pas une formule, c'est ce signal.*
-
-| en retirant | le classement change de |
-|---|---|
-| les langues | **0,883** ← c'est le cœur |
-| la taille d'article | 0,983 |
-| les déclarations | 0,987 |
-
-**Les langues font le haut, les deux autres départagent la queue.** Accord avec
-les langues seules : **0,971** — l'ordre canonique est préservé, avec dix fois
-plus de granularité.
-
-**Et elle vaut la formule coûteuse** : accord de **0,956** avec « langues + vues
-multilingues ». *Les vues n'apportent que 0,04 et coûtent des heures* — une
-collecte sur quinze langues a calé à six en vingt-cinq minutes, rate-limitée.
-Les trois signaux retenus : deux viennent de Wikidata en une requête, la taille
-d'article d'un appel par lot de cinquante.
-
-Le poids 3 est mesuré : à ×1 l'accord avec les langues seules tombe à 0,902 (la
-taille se met à peser sur le haut), à ×6 on ne gagne plus rien.
-
-#### DEUX SIGNAUX ÉCARTÉS, ET LA MESURE DIT POURQUOI
-
-- **la notoriété du PEINTRE** (corrélation 0,52, donc un vrai demi-axe) :
-  ajoutée, elle fait remonter *« Sainte Anne, la Vierge et l'Enfant Jésus »* — un
-  carton de Vinci — en **8ᵉ position**. ***Un grand maître ne rend pas célèbre
-  chacune de ses œuvres*** ;
-- **le MUSÉE** : corrélé à **0,18** avec tout le reste, donc le plus indépendant
-  de tous les signaux mesurés, et pourtant inutilisable — *il mesure le prestige
-  de l'institution, pas la notoriété de l'œuvre.* Une toile obscure peut être au
-  Louvre. Il fait un bon **rayon**, pas un terme de formule.
-
-**Les vues seules** sont bruitées : elles font sortir La Nuit étoilée et Guernica
-du top 15, et remonter *Ivan le Terrible tue son fils* en 15ᵉ.
-
-**Et les sept formules candidates s'accordent à 0,87-0,99** : *le choix ne change
-presque rien au classement* — il change la GRANULARITÉ, et c'est pour ça qu'il
-s'est tranché là-dessus.
-
-### LE SEUIL EST NÉCESSAIRE : le pool entier mesure le CATALOGAGE
-
-| seuil | œuvres | les premiers peintres | les 25 premiers portent |
-|---|---|---|---|
-| tout | 9 797 | Goya, Matisse, **Delobbe**, Renoir, Gérôme | 34 % |
-| **≥ 7 langues** | **2 929** | Raphaël, Goya, Titien, Rembrandt, Van Gogh | 49 % |
-| ≥ 20 | 344 | Raphaël, Caravage, Van Gogh, Vermeer, Vinci | **75 %** |
-
-Le 3ᵉ peintre le plus présent du pool entier est **François-Alfred Delobbe**
-(207 œuvres), un académique mineur dont Wikipédia en français a catalogué toute
-la production. *Il disparaît dès 5 langues.*
-
-**Trop haut, le pool se concentre** — à 20 langues cent peintres se partagent
-tout, et l'axe du peintre perd sa variété. **7 est le point d'équilibre**, et il
-tombe sur la taille d'un catalogue de jeu. `--seuil=N` le change.
-
-### LES QUATRE RAYONS, tous mesurés et tous exploitables
-
-| rayon | couverture | valeurs | plus gros tas |
-|---|---|---|---|
-| **peintre** (`P170`) | **96 %** | 1 343 | Goya 2,8 % |
-| musée (`P276`) | 91 % | 1 521 | Orsay 4,0 % · Prado 3,7 % · **le Met 3,5 %** |
-| siècle | **100 %** | 9 utiles | 19ᵉ 35,5 % |
-| genre (`P136`) | 86 % | 95 | art religieux 25 % |
-
-**Le peintre est le meilleur** : médiane de deux œuvres, aucun au-dessus de 3 %,
-et c'est le seul axe qu'un joueur comprend sans rien lire — *« j'ai trois Van
-Gogh »*. Le genre monte à **86 % sur les peintures seules** (contre 82 % toutes
-natures) et se regroupe en sept rayons habités : art religieux 25 %, portrait
-22 %, scène de genre 10 %, paysage 8 %, nu 5,5 %, mythologie 5,4 %, histoire 4 %,
-nature morte 3 %.
-
-Le **mouvement** (`P135`) est inutilisable : **74 % des œuvres n'en déclarent
-aucun.**
-
-*Le Met revient donc par la porte de Wikipédia*, et c'est le troisième musée du
-catalogue.
-
-### LE CADRAGE : L'ŒUVRE RENTRE ENTIÈRE
-
-Tranché par Keko : « si portrait, hauteur de l'image = hauteur de la zone
-d'illustration (bandes noires sur les côtés) et inversement ? ainsi on garantit
-la totalité de l'œuvre ».
-
-**Et il fallait le faire.** Mesuré sur 313 images, dimensions lues sur Commons :
-
-| | |
-|---|---|
-| **portrait** (plus haut que large) | 52 % |
-| **paysage** | **43 %** |
-| carré | 5 % |
-
-Rapport largeur/hauteur : médiane **0,89**, p10 0,63, p90 1,68, max 30,5 (une
-frise). **Le gabarit attend 0,70 — seules 21 % des images y tiennent**, et un
-`cover` rognerait de plus de moitié **22 %** des œuvres : La Cène deviendrait un
-fragment.
-
-**Ça n'a coûté qu'un chiffre, parce que le mécanisme existait déjà** : `couvrir`
-prend un `PLAFOND_ROGNAGE`, réglé à 25 % pour les animaux dont *le rognage
-médian vaut 8 %*. Ici il vaut **zéro** (`illustrationEntiere` sur la carte), et
-ce qui reste découvert laisse voir le **fond peint** de la carte — qui est déjà
-là et fait le passe-partout. *C'est exactement ce qu'une peinture EST : une
-toile dans un cadre.*
-
-**Le bloom le lit AUSSI**, et il le faut : *le bloom n'est pas le sujet, c'est de
-la lumière tombée sur le décor* — cadré autrement que l'image, il remplirait de
-lumière les bandes où il n'y a rien.
-
-### CE QUE LA CARTE PORTE
-
-- **le nom, désambiguïsation retirée** : « La Cène (Léonard de Vinci) » devient
-  « La Cène ». *Ce qui précède la parenthèse EST le nom*, la règle déjà payée sur
-  « Castor (genre) » dans le mode animaux ;
-- **le cartouche porte deux lignes : qui, puis quand et où.** Le peintre tient sa
-  ligne à lui parce que c'est le fait principal ; l'année et le musée se
-  partagent la seconde. **Deux lignes tiennent au grand cran du cartouche**, là
-  où trois le font descendre ;
-- **le pied porte le GENRE**, là où une carte de jeu porte son type et un
-  personnage son domaine. *« Peinture » ne dirait rien* : toutes les cartes du
-  mode en sont une ;
-- **aucun chiffre au pied.** Keko : « on va faire une valeur = rareté pour
-  commencer » — la notoriété se lit au métal du cadre. *Un chiffre posé là
-  devrait dire quelque chose*, et il n'y a rien de plus à dire aujourd'hui ;
-- **pas de ciel de famille** : le mode descente en a quatre, déjà désaturés de
-  moitié pour ne pas disputer l'axe de la rareté ; quatre-vingt-quinze genres en
-  réclameraient autant — *une échelle se dit en couleur, une famille se dit en
-  forme* ;
-- **le compteur de la dernière carte fait défiler les LANGUES**, pas les vues.
-  *Un chiffre qui grimpe et une teinte qui grimpe avec lui ne disent la même
-  chose que s'ils mesurent la même chose* — et c'est le nombre de langues qui
-  pèse trois cinquièmes de la formule.
-
-### CE QUE LE PIPELINE A COÛTÉ — cinq pièges, tous déjà écrits ailleurs
-
-1. **UN CSV COUPÉ SE LIT SANS ERREUR.** Le endpoint lâche le flux qu'il a
-   commencé ; en JSON ça lève un `SyntaxError` à une position absurde, en CSV ça
-   passe pour un lot complet. On vérifie l'en-tête, **la fin du flux** et le
-   compte de colonnes de chaque ligne — *et mon premier test de colonnes ne
-   l'attrapait pas*, parce que la coupure tombait après la dernière virgule ;
-2. **`terminated` EST UNE TRONCATURE, PAS UNE PANNE À PART.** La règle était
-   écrite et je ne l'avais pas portée : un lot perdu était abandonné au lieu
-   d'être **redécoupé**. *Le redécoupage attaque la cause, le réessai un
-   symptôme* — et `brut` a déjà réessayé trois fois pour rien ;
-3. **UN NOM DE FICHIER COMMONS PEUT PORTER UN `%` LITTÉRAL**, que
-   `decodeURIComponent` refuse — et ça faisait tomber tout le pipeline. *La bonne
-   lecture est alors le nom TEL QUEL* : s'il n'est pas une séquence
-   d'échappement valide, c'est qu'il n'en est pas une ;
-4. **`redirects=1`, ET IL LE FAUT.** Wikidata pointe parfois vers un titre devenu
-   une redirection : sans lui, « La Nuit étoilée » rendait **31 octets**, le
-   poids d'un `#REDIRECT` ;
-5. **LE DÉBIT DE L'API SE SIGNALE EN TEXTE BRUT**, pas en JSON d'erreur : un
-   `except: continue` l'avale sans rien dire, et les libellés manquent en
-   silence. *Une sonde qui échoue sans le dire est pire qu'une sonde qui lève.*
-
-Et **un sixième, qui n'est pas du réseau** : `stat.py` est un module de la
-bibliothèque standard de Python. Une sonde qui porte ce nom importe l'autre.
-
-### CE QUE LES VÉRIFICATIONS ONT TROUVÉ : le siècle avant notre ère
-
-**Le 1ᵉʳ siècle avant notre ère va de −100 à −1**, exactement comme le 1ᵉʳ siècle
-va de 1 à 100. Ma formule décalait tout d'un cran, **et mon test aussi** — il
-affirmait que −100 était au 2ᵉ. *L'erreur n'était pas dans le calcul seul, mais
-dans ce que je croyais de la convention*, et c'est la vérification qui a forcé à
-aller la lire.
-
-**Et `siecleDe` vivait en DEUX endroits** — le type et le pipeline — donc j'ai
-corrigé un seul des deux. ***Deux endroits qui décrivent le même calcul se
-désaccordent au premier réglage***, et je viens de le prouver sur le commit même
-qui l'écrivait. Le pipeline l'importe désormais depuis `logic/`, qui est pur et
-qu'un script hors build peut lire sans rien emporter du navigateur.
-
-### CE QUE LE CATALOGUE A DONNÉ — 2 840 cartes
-
-Engendré en **4,1 minutes** (le cache portait la découverte), 1,4 Mo.
-
-| | |
-|---|---|
-| cartes | **2 840** |
-| raretés | commun 1 965 (69 %) · rare 568 (20 %) · épique 236 (8 %) · légendaire 71 (3 %) |
-| couverture | peintre **97 %** · genre 89 % · musée 90 % |
-| articles sans taille mesurée | **0** |
-
-**La pyramide tombe exactement sur celle des deux autres modes**, ce qui était
-le but : *un changement à la fois* — la porte d'entrée change, la distribution
-de rareté non.
-
-Le haut : **La Joconde · La Ronde de nuit · La Jeune Fille à la perle · Le
-Jardin des délices · La Liberté guidant le peuple · Les Ménines · La Cène · La
-Laitière · La Naissance de Vénus · L'École d'Athènes · L'Origine du monde · Le
-Printemps · Le Radeau de la Méduse · L'Agneau mystique · Guernica.**
-
-Les siècles vont du **130ᵉ avant notre ère** (une peinture rupestre) au 21ᵉ,
-avec le 19ᵉ à 949 cartes et le 16ᵉ à 580.
-
-#### TROIS DÉFAUTS CONNUS, et aucun ne vaut sa correction
-
-- **GUERNICA N'A AUCUN CRÉATEUR DÉCLARÉ dans Wikidata**, comme 3 % du
-  catalogue. *La carte n'écrit donc PAS « Anonyme »* — elle n'écrirait pas une
-  absence, elle écrirait une erreur — et garde une seule ligne de cartouche.
-  **Une absence se lit mieux qu'une affirmation fausse**, la règle du badge de
-  menace qui n'apparaît que s'il y a une menace ;
-- **QUATRE FAUX POSITIFS sur 2 840** (0,14 %) : Miniatur-Wunderland, le Musée
-  du livre miniature de Bakou, et les panoramas de Sébastopol et de la Guerre
-  des paysans. La clôture transitive les attrape parce que Wikidata range
-  « musée des miniatures » sous une chaîne qui remonte à « peinture ».
-
-  **LES DEUX FILTRES ESSAYÉS COÛTENT PLUS QU'ILS NE RAPPORTENT, et c'est
-  mesuré** : écarter ce qui a des COORDONNÉES jetterait **La Cène**, qui est in
-  situ ; écarter ce qui est un **lieu géographique** jetterait **13 chefs-
-  d'œuvre** (Botticelli, Cimabue, Fra Angelico) pour un seul faux positif ; et
-  écarter ce qui est un **musée** prend 2 faux pour 2 vraies — les panoramas
-  SONT de vraies peintures monumentales, exposées dans un bâtiment qui porte
-  leur nom. ***Un filtre qui jette treize bonnes cartes pour en retirer une
-  mauvaise n'est pas un filtre.***
-- **317 cartes sans genre** (11 %), qui sortent avec « Peinture » au pied.
-
-#### LE TITRE NE DÉBORDE PLUS — trois termes se cumulaient
-
-Keko : « le texte du titre peut déborder sur les côtés de la carte (et se
-superposer aux encoches du cadre) quand il est trop long ».
-
-**Le nom est peint à `Y_ENCOCHE`, donc il tombe exactement dans la partie la
-plus étroite du cadre** — ce n'est pas un hasard, c'est le réglage que Keko
-avait lui-même demandé (« je les voudrais au niveau du titre »). Ce qui reste
-à cette hauteur :
-
-| | |
-|---|---|
-| l'encoche mord | 4,5 % de chaque côté |
-| la marge de la coque | 1,85 % |
-| **l'ombre portée du texte** (`shadowBlur`) | **3 % au-delà de l'encre** |
-
-*Le troisième était invisible* : le texte RAYONNE plus loin qu'il n'écrit, donc
-une borne posée sur l'encre laisse l'ombre mordre le laiton. La borne passe de
-84 % à **78 %**, et **on prend le pire cas, celui de la piste encochée** — *une
-borne qui dépend d'un paramètre d'essai se désaccorderait le jour où le défaut
-change.*
-
-**MAIS LA CAUSE PRINCIPALE ÉTAIT AILLEURS : un plancher de taille n'est pas une
-garantie de tenue.** La boucle de rétrécissement s'arrête à 6 U, et le plus long
-nom du catalogue fait **cent caractères** — « L'Ange exterminateur et les démons
-maléfiques interrompant les orgies des vicieux et des insatiables ». *Aucune
-taille lisible ne les fait tenir sur une ligne*, donc le nom débordait de trois
-fois la carte **sans que rien ne le signale.**
-
-**Le nom se COUPE donc, en dernier recours** — et *ce qui sert à RECONNAÎTRE
-une carte, ce sont ses premiers mots.* Le nom entier reste dans le catalogue
-pour les écrans qui ont la place.
-
-**Ça valait pour les TROIS modes**, pas seulement les peintures : le plus long
-nom d'animal fait 73 caractères (« Polatouche du Japon / Polatouche momonga /
-Écureuil volant nain… »), celui d'un personnage 43. *Un défaut trouvé dans un
-mode se corrige là où le dessin vit, pas dans le mode qui l'a révélé.*
-
-Mesuré sur le catalogue : **21 % des noms dépassent 30 caractères**, 7,6 % les
-quarante, 3 % les cinquante.
-
-**ET LA SECONDE MOITIÉ DE CE RAISONNEMENT ÉTAIT FAUSSE** : il disait que le
-repli sur deux lignes « n'a pas la place ». *Il y en a*, à condition de ne pas
-garder la taille pleine — voir la section qui suit.
-
-### LE TITRE PASSE À LA LIGNE AVANT DE RAPETISSER
-
-Keko : **« je trouve la police du titre trop grosse pour les mots courts et trop
-petite pour les mots longs, on peut pas faire 2 lignes de titre quand c'est trop
-long plutôt que réduire ? »**
-
-*Les deux moitiés de sa phrase disent la même chose* : ce qui gêne n'est aucune
-des deux tailles, c'est **l'ÉCART entre deux cartes voisines** — « Plus » en
-grand à côté de « Visage avec un léger sourire » en minuscule.
-
-**Mesuré sur les cinq catalogues**, la taille allait de **10,5 U à 5,66 U**,
-soit **1,86 fois**, et **848 cartes touchaient le plancher** — donc sortaient
-tronquées à l'ellipse. *C'était le prix d'un titre écrit d'un seul trait.*
-
-#### C'EST LA RÈGLE DU CARTOUCHE, PRISE PAR L'AUTRE BOUT
-
-« On prend le plus grand cran qui tient, plus celui que la longueur annonce » —
-et c'est aussi celle que Keko avait posée pour les encadrés du glossaire :
-*« je voudrais que la taille soit fixe, on va à la ligne si ça ne loge pas ».*
-**Le titre était le dernier texte de la carte à n'obéir ni à l'une ni à
-l'autre.**
-
-Deux crans, `[9.5, 7.3]`, et on garde le premier qui tient **en deux lignes au
-plus** :
-
-| | 9,5 U | 7,3 U | la taille cède |
-|---|---|---|---|
-| **emoji** | 74,4 % | 25,4 % | 0,3 % |
-| animaux | 62,0 % | 38,0 % | 0 % |
-| peintures | 46,6 % | 50,5 % | 2,9 % |
-| personnages | 89,5 % | 10,4 % | 0,1 % |
-| **le jeu** | **100 %** | — | — |
-
-**L'écart tombe de 86 % à 23 %, et plus une seule carte n'est tronquée.**
-
-#### LE 7,3 N'EST PAS CHOISI, C'EST LE PLUS GRAND QUI RENTRE
-
-**La bande du titre est courte**, et c'est ce que le raisonnement précédent
-avait raison de dire : elle va du haut de la plaque claire (60,5 %) à l'encre du
-cartouche, soit **15 U en mode emoji**. Deux lignes y demandent environ deux
-fois le corps, d'où 7,3.
-
-**ET CE QUI LA BORNE PAR LE BAS N'EST PAS LE CARTOUCHE, C'EST SON ENCRE.**
-`HAUT_CARTOUCHE` est le CENTRE de sa première ligne, donc ses capitales montent
-bien au-dessus — de son ascendante, 0,82 du corps au pire cas. ***Borner le
-titre à 105,7 U faisait tomber son trait de soulignement en plein dans le
-cartouche, et ça ne se voyait pas au calcul*** : *une ligne de base n'est pas un
-bord.* Il a fallu peindre la texture et scruter ses pixels pour le voir.
-
-**ET CE QUI LA BORNE PAR LE HAUT DÉPEND DU THÈME** : la plaque claire est une
-borne dure — le texte est sombre, il ne peut pas sortir du blanc — alors qu'en
-gabarit il n'y a rien de dur, le nom étant posé sur l'illustration et cerné de
-noir. Ce qui l'y borne est *que plus haut le voile sombre s'éteint et le texte
-cesse d'être net* : on s'arrête à 58 %, où il vaut encore 0,42.
-
-Quatre choses à ne pas défaire :
-
-- **en gabarit, une ligne reste EXACTEMENT à sa place** (66,5 %), parce qu'elle
-  est calée sur l'encoche du cadre — « je les voudrais au niveau du titre »,
-  Keko — et un bloc de deux lignes s'y centre, faute d'encoche unique à viser.
-  *Sur la plaque claire, le bloc pend par le haut* : voir la section qui suit ;
-- **la boîte qui sert à mesurer la hauteur est COMMUNE à tous les titres**,
-  mesurée sur une chaîne de référence qui porte tous les extrêmes du français
-  (`ÉÀÇgjqyp`). *Mesurer l'encre du nom qu'on écrit donnerait deux tailles à
-  deux titres de deux lignes selon qu'ils portent un accent* — c'est exactement
-  l'écart qu'on vient de retirer. Et **la boîte de POLICE est trop généreuse**
-  (1,60 fois le corps contre 1,06 d'encre réelle) : à ce compte-là deux lignes
-  ne tiendraient jamais ;
-- **elle ne se met pas en cache** : une boîte mesurée avant que la police
-  n'arrive répondrait pour le repli, et *le cache la garderait pour toute la
-  session.* Un `measureText` coûte un microseconde contre 1,6 ms pour peindre
-  une carte ;
-- **le trait suit la DERNIÈRE ligne**, et il compte dans la place qu'il faut :
-  c'est lui qui coûte le plus cher en gabarit (0,68 du corps).
-
-**Et les noms courts ont perdu 10 % au passage** (10,5 → 9,5 U), le jeu
-d'extraction compris, où aucun nom ne fait deux lignes. *C'est dans le sens de
-sa demande* — « trop grosse pour les mots courts » — mais c'est un chiffre, et
-il se change.
-
-### SUR LA PLAQUE, LE TITRE PEND PAR LE HAUT — et c'est ÇA qui fixe sa taille
-
-Keko, en répondant à l'arbitrage : **« je préfère taille fixe, par contre quand
-il y a deux lignes la distance par rapport au haut de la zone de texte à fond
-blanc est réduite : je voudrais qu'elle soit la même peu importe le nombre de
-lignes. »**
-
-*Deux décisions dans une phrase*, et la seconde a imposé la première.
-
-#### LE BLOC SE CENTRAIT, DONC IL MONTAIT EN GRANDISSANT
-
-**Un bloc dont la hauteur change doit s'accrocher par le bord qui ne bouge
-pas** — la règle déjà payée sur la colonne de boutons du butin — et ici ce bord
-est le haut de la plaque. Centré, un titre de deux lignes montait de la moitié
-de ce qu'il gagnait en hauteur.
-
-Mesuré sur la texture peinte, en taille fixe, l'air entre le haut de la plaque
-et le haut de l'encre :
-
-| | une ligne | deux lignes | écart |
-|---|---|---|---|
-| **avant** (bloc centré) | 4,72 U | **1,44 U** | **3,3 U** |
-| **après** (bloc pendu) | 2,84 U | 2,59 U | **0,25 U** |
-
-***L'écart est divisé par treize***, et les 0,25 U qui restent ne viennent pas
-du placement : ils viennent des GLYPHES — un titre qui commence par une
-capitale accentuée monte plus haut qu'un titre qui commence par un « P ». *La
-dispersion À L'INTÉRIEUR de chaque colonne (0,9 U) est d'ailleurs plus grande
-que l'écart entre elles*, ce qui le prouve. **La corriger demanderait de caler
-sur l'encre du nom qu'on écrit, et le projet le refuse déjà** : deux titres de
-même rang auraient alors deux tailles.
-
-#### ET C'EST L'AIR QUI DICTE LA TAILLE, au lieu qu'on la choisisse
-
-***Une taille fixe qui ne tient pas son pire cas n'est pas une taille fixe*** :
-la boucle de cession la rendrait variable au premier nom long, et l'écart qu'on
-vient de retirer reviendrait par cette porte.
-
-Avec un air constant en haut, le pire cas — deux lignes — doit donc tenir dans
-ce qui reste :
-
-```
-t = (bande − air haut − air bas) / (ascendante + interligne + descendante)
-```
-
-La bande fait **15,26 U**, l'air 1,8 en haut et 0,5 en bas, et Baloo 2 mesure
-0,846 d'ascendante pour 0,208 de descendante : **t = 6,63 U**. *Écrire 7,3 et
-poser l'air par-dessus ne laisserait que 0,8 U de dégagement* — un titre collé
-au bord.
-
-**Le prix est donc de 9 % sur la taille fixe** (7,3 → 6,63), et de 30 % sur les
-noms courts par rapport aux deux crans. *C'est ce que « taille fixe » coûte, et
-Keko l'a choisi en connaissant le premier chiffre.*
-
-Mesuré sur les 1 923 cartes : **90,1 % tiennent sur une ligne**, 9,8 % sur deux,
-**deux cartes en demandent trois** et cèdent alors à 6,30 et 5,98 U — « Drapeau :
-Saint-Vincent-et-les Grenadines » et « Drapeau : Géorgie du Sud-et-les Îles
-Sandwich du Sud », dont un seul mot fait vingt caractères. **Aucune n'est
-tronquée**, et il reste 3 U entre le bas du titre et l'encre du cartouche.
-
-#### LE GABARIT NE BOUGE PAS D'UN PIXEL, et c'est voulu
-
-*La « zone de texte à fond blanc » n'existe qu'en plaque*, donc la demande ne
-concerne qu'elle. Et en gabarit le titre est calé sur l'encoche du cadre, un
-réglage que Keko a validé : **le pendre par un air constant le décrocherait de
-quatre unités.** Il n'y a d'ailleurs aucun écart à y supprimer — 100 % des noms
-du jeu tiennent sur une ligne.
-
-Vérifié par EMPREINTE de pixels, six cartes animaux dont les deux plus longs
-noms, avant et après : **identiques.** *Un raisonnement sur une branche de code
-ne vaut pas une comparaison de pixels* — et c'est ce test qui a montré que la
-seule carte qui changeait (le Lion) ne changeait qu'à cause de son illustration
-chargée ou non.
-
-`?titre=crans` rend les deux crans à la plaque : *ce qui a servi à choisir doit
-rester ouvrable.*
-
-#### CE QUI RESTE À TRANCHER PAR KEKO
-
-- **l'air au-dessus du titre** (1,8 U, mesuré à 2,8 U d'encre sur un nom
-  ordinaire) : c'est lui qui décide de la taille, donc le rendre à 1,2 rendrait
-  2,5 % de corps. *Un seul chiffre les porte tous les deux* ;
-- **les deux cartes qui cèdent encore** (0,1 % du catalogue) : les faire tenir
-  demanderait de couper un mot, ce que le projet ne fait pas.
-
-### CE QUI RESTE À TRANCHER PAR KEKO — les peintures
-
-- **est-ce que ça remplace les animaux ou s'y ajoute** ;
-- **les rayons de la collection** : peintre, musée, siècle, genre — ou plusieurs,
-  et dans quel ordre. L'écran de collection n'existe pas encore ;
-- **le seuil**, s'il faut un catalogue plus large ou plus serré (`--seuil=N`) ;
-- **la seconde mesure au pied de la carte**, si elle doit exister un jour : *les
-  deux axes indépendants mesurés chez les personnages n'existent pas ici* — tous
-  les signaux d'une peinture corrèlent entre 0,43 et 0,83, et le seul vraiment
-  indépendant (le musée) ne mesure pas la notoriété ;
-- **l'apostrophe des noms de cartes** : `L'Origine du monde` porte l'apostrophe
-  droite, qui est trop fine pour survivre à la taille d'un titre de carte. Le
-  même défaut que sur `Crocidure dArabie` dans le mode animaux, et c'est une
-  décision de typographie sur TOUS les noms du jeu.
-
-## LE CINQUIÈME MODE : UNE COLLECTION D'EMOJI — `?paquet&emoji`
-
-Demandé par Keko : « maintenant je voudrais un autre test : on utilise des
-emoji : noto color emoji et noto animated emoji ». *Deux lectures menaient à des
-travaux très différents* — une collection d'emoji, ou des emoji en guise
-d'illustration des cartes existantes — et il a tranché : **une collection.**
-
-`npm run emoji` écrit `public/data/emoji.json` : **1 923 cartes, 443 Ko**, en
-100 secondes. **Et `--peau` en écrit 3 963** — voir juste en dessous.
-
-### DEUX SOURCES CANONIQUES, ET AUCUNE DÉPENDANCE
-
-| | ce qu'elle donne |
-|---|---|
-| **Unicode** (`emoji-test.txt`, 621 Ko) | le caractère, son groupe, sa VERSION d'introduction |
-| **CLDR** (deux fichiers) | son nom français et ses mots-clés |
-
-**Les variantes de couleur de peau sont écartées par défaut** — 3 963 entrées,
-1 923 une fois retirées. *C'est une décision de design*, et elle est ouvrable :
-voir la sous-section qui suit. Le groupe `Component` est écarté sans appel : ses
-membres ne sont pas des emoji, ce sont des morceaux de séquence.
-
-**IL FAUT LES DEUX FICHIERS CLDR**, et ça ne se devine pas : `annotations` en
-porte 1 966 et **ignore les drapeaux**, qui vivent dans `annotationsDerived`.
-Et la clé peut être écrite **sans le sélecteur de variante** — le cœur rouge y
-figure sans lui — donc on essaie les deux formes. Résultat : **9 cartes sur
-1 923 sans nom français**, qui gardent leur nom anglais.
-
-**L'USER-AGENT NE PORTE PAS D'ADRESSE ICI.** Celui de `outils.ts` en a une
-parce que la politique de Wikimedia demande un contact ; *Unicode, GitHub et
-gstatic ne le demandent pas*, et on n'envoie pas l'adresse de quelqu'un à un
-service qui ne l'a pas réclamée.
-
-#### LES VARIANTES DE COULEUR DE PEAU — écartées, et `?paquet&emoji&peau` les rend
-
-Keko : « il me semblait qu'on aurait plutôt 3000+ emoji c'est bizarre, tu as
-peut-être pas inclus les variations de couleurs ? » **Oui, et le compte est
-net** :
-
-| | |
-|---|---|
-| emoji « fully-qualified » d'Unicode | **3 963** |
-| dont **variantes de couleur de peau** | **2 040**, toutes dans « People & Body » |
-| le catalogue par défaut | **1 923** |
-
-**CE N'EST PAS CINQ VARIANTES PARTOUT, et c'est ce qui décide** :
-
-| bases | variantes chacune | |
-|---|---|---|
-| 292 | 5 | les cinq tons habituels (👋🏻👋🏼👋🏽👋🏾👋🏿) |
-| 11 | **25** | deux personnes, donc 5 × 5 |
-| 3 | 35 | |
-| **2** | **100** | « deux personnes se tenant la main », deux silhouettes × tous les tons |
-
-***Deux bases produisent cent cartes à elles seules***, et le rayon « gens »
-passe de 390 à **2 430 cartes — 61 % du catalogue.**
-
-**Et le classement d'Unicode les regroupe explicitement** en un item
-représentatif : une variante n'a pas de rang à elle. Elle **hérite de celui de
-sa base** (`baseSansPeau`), sans quoi les 2 040 tomberaient toutes dans les non
-classées — *un « pouce levé : peau mate » vaudrait moins qu'un drapeau obscur.*
-Résultat : 🙏🏻🙏🏼🙏🏽🙏🏾🙏🏿 sont les premières variantes du catalogue, parce que 🙏
-est 6ᵉ au classement mondial.
-
-*Les noms français ne manquent pas* : CLDR les couvre à **100 %** — « signe de
-la main : peau claire », « peau légèrement mate ».
-
-**C'EST UNE DÉCISION DE DESIGN, DONC LE BANC EST À CÔTÉ DU CATALOGUE, PAS À SA
-PLACE.** `npm run emoji -- --peau` écrit `emoji-peau.json` (3 963 cartes,
-1 094 Ko) et `?paquet&emoji&peau` l'ouvre — *ce qui se teste doit pouvoir
-s'ouvrir d'un lien.*
-
-Ce que ça change, mesuré sur les deux catalogues :
-
-| | sans variantes | avec |
-|---|---|---|
-| cartes | 1 923 | **3 963** |
-| part du rayon « gens » | 20 % | **61 %** |
-| au classement de fréquence | 76 % | 59 % |
-| animables | 614 (32 %) | 884 (22 %) |
-| poids | 443 Ko | 1 094 Ko |
-
-*La part classée tombe parce que beaucoup de variantes dérivent de bases
-récentes* — les métiers genrés, les familles — **qui ne sont pas au classement
-non plus.**
-
-**ET UN CARACTÈRE INVISIBLE S'ÉTAIT ÉCRIT DANS TROIS REGEX.** Un patch avait
-dé-échappé `️` en le vrai caractère : *le code marchait* — une regex
-matche un caractère littéral comme son échappement — **mais un caractère
-invisible dans du code est un code qu'on ne peut pas relire.** Il est rétabli en
-échappement.
-
-### LA NOTORIÉTÉ EST LA FRÉQUENCE D'USAGE RÉELLE — et le classement est GLOBAL
-
-Tranché par Keko, en deux demandes qui tiennent ensemble : **« je voudrais un
-classement global et pas par groupe »** et **« je voudrais que la rareté soit
-liée à la popularité réelle de l'emoji. Y'a des stats qu'on peut choper quelque
-part sur ça ? »**
-
-**Oui, et j'avais conclu trop vite le contraire.** J'avais écrit qu'« aucun
-fichier de fréquence complet n'existe » après avoir essayé
-`unicode.org/Public/emoji/latest/emoji-frequency.txt`, qui rend 404.
-***Le classement est dans la PAGE*** — `home.unicode.org/emoji/emoji-frequency/`
-— et il est complet.
-
-***UNE RESSOURCE ABSENTE À L'ADRESSE OÙ ON L'ATTEND N'EST PAS UNE RESSOURCE
-ABSENTE.*** C'est la deuxième fois de la journée : la découverte de la fiction
-ne rendait rien par sa racine alors que tout vivait dans ses feuilles.
-
-#### SA FORME EST EXACTEMENT CELLE QU'IL FAUT
-
-**Dix-huit groupes, chacun valant la MOITIÉ du précédent en fréquence d'usage**,
-et les emoji rangés par fréquence décroissante à l'intérieur de chaque groupe —
-donc un ordre total :
-
-| groupe | emoji | les premiers |
-|---|---|---|
-| 0 | **2** | 😂 ❤️ |
-| 1 | 2 | 😍 🤣 |
-| 2 | 5 | 😊 🙏 💕 😭 😘 |
-| 3 | 18 | 👍 😅 👏 😁 ♥️ 🔥 … |
-| … | … | |
-| 11 et au-delà | — | *sous la médiane d'usage* |
-| 17+ | 14 | les drapeaux les plus obscurs |
-
-**1 468 emoji classés**, dont **1 466 retrouvés dans notre catalogue — 76 %.**
-
-**LE TROU A LA BONNE FORME.** Le classement est arrêté à Unicode 12.0, donc les
-24 % qui manquent sont **les emoji de 2016 et après** : ce qui n'est pas mesuré
-est précisément ce qui est le moins employé. Ils vont donc en bas, et
-l'ancienneté suffit à les départager entre eux.
-
-**LES DEUX ÉCHELLES NE SE MÉLANGENT PAS** : tout ce qui est classé passe devant
-tout ce qui ne l'est pas. *Un emoji mesuré et un emoji deviné ne se comparent
-pas*, et les mettre sur la même échelle reviendrait à inventer un rang pour le
-second.
-
-#### LE DÉCOUPAGE REDEVIENT GLOBAL, ET C'EST COHÉRENT AVEC LES PERSONNAGES
-
-*C'est l'inverse de ce que Keko a tranché pour les personnages*, et les deux
-sont justes pour la même raison : ***le découpage par rayon existe pour corriger
-une échelle qui n'est pas comparable d'un rayon à l'autre.***
-
-Chez les personnages, la 300ᵉ artiste a 106 langues et la 300ᵉ criminelle 28 —
-**il n'y a pas de mesure commune**, donc chaque rayon a besoin de la sienne.
-**Ici il y en a une** : la fréquence d'usage se compare entre un visage et un
-drapeau, donc le rayon n'a plus rien à corriger.
-
-Ce que ça donne — chaque groupe tombe où son usage réel le met :
-
-| groupe | commun | peu commun | rare | épique | **légendaire** |
-|---|---|---|---|---|---|
-| **visages** | 20 % | 5 % | 17 % | **39 %** | **19 %** |
-| activités | 36 % | 36 % | 16 % | 7 % | 4 % |
-| gens | 68 % | 14 % | 9 % | 7 % | 2 % |
-| animaux | 31 % | 32 % | 29 % | 7 % | 1 % |
-| nourriture | 30 % | 30 % | 36 % | 4 % | **0** |
-| symboles | 49 % | 30 % | 16 % | 5 % | 0 % |
-| lieux | 44 % | 40 % | 11 % | 4 % | 0 % |
-| objets | 48 % | 34 % | 15 % | 3 % | **0** |
-| **drapeaux** | **76 %** | 18 % | 6 % | 0 % | **0** |
-
-*(Table refaite sur les cinq crans. Les quatre métaux d'avant sont dans
-`git log` : ils disaient exactement la même chose, en moins détaillé.)*
-
-*Les drapeaux perdaient leurs sept légendaires en passant au global, et c'est
-exactement ce qu'une popularité réelle doit produire* — ils sont tous dans le bas
-du classement mondial.
-
-#### CE QUE L'ANCIENNETÉ FAISAIT DE FAUX, ET QUI TOMBE
-
-😂 sortait **épique** et ❤️ **commun**, alors que ce sont **les deux premiers du
-classement mondial** ; les légendaires des visages étaient 😃 😄 😁 😆 😅,
-c'est-à-dire *les cinq premiers du FICHIER Unicode*, pas les cinq plus utilisés.
-
-Le haut du catalogue est désormais : **😂 ❤️ 😍 🤣 😊 🙏 💕 😭 😘 👍 😅 👏 😁 ♥️ 🔥
-💔 💖 💙 😢 🤔 😆 🙄 💪 😉 ☺️ 👌 🤗 💜 😔 😎**
-
-**L'ANIMATION NE DÉCIDE PLUS DE RIEN pour les 76 % classés.** Elle était un
-départage faute de mieux ; elle ne sert plus qu'à trancher entre deux emoji que
-le classement ignore. *Un signal de secours cesse d'en être un le jour où la
-vraie mesure arrive.*
-
-#### LA CARTE DIT SA PLACE, ET LE COMPTEUR CE QU'ELLE DÉPASSE
-
-Le cartouche porte « **976ᵉ au classement d'usage** », ou « Unicode 2016 » pour
-les non classés : *si un chiffre décide du métal, il doit se lire sur la carte.*
-
-Et le compteur de la dernière carte affiche **le nombre d'emoji qu'elle
-dépasse**, pas son rang — **il fallait un chiffre qui MONTE avec la rareté** :
-le rang, lui, descend, donc un compteur qui s'arrêterait à « 3 » pour la carte
-la plus rare monterait vers le commun, *et la teinte monte avec le compteur.*
-
-#### LA PAGE EST ARCHIVÉE, ET LE REPLI EST ÉCRIT
-
-Unicode a archivé cette page : *elle ne bougera plus, mais une page archivée est
-une page qu'on peut retirer.* Si elle disparaît ou si son tableau change de
-forme, le pipeline le journalise et **retombe sur l'ancienneté** — le catalogue
-sort quand même, moins juste.
-
-### L'EMOJI EST PEINT AU CANVAS, ET IL ENTRE PAR LA PORTE D'UNE PHOTO
-
-`imageDeLEmoji` peint le caractère sur une toile carrée de 512, et le résultat
-va dans `illustration()` comme une image. **Donc le décor, le bloom, le rognage,
-le cadre et la rareté marchent sans une ligne de plus** — *un second chemin de
-peinture aurait dérivé du premier au premier réglage.*
-
-**L'emoji rentre ENTIER** (`illustrationEntiere`), comme une peinture : il est
-peint carré alors que la fenêtre d'art est plus haute que large, donc un `cover`
-lui couperait les flancs. Ce qui reste découvert laisse voir le fond peint de la
-carte, qui fait le passe-partout.
-
-#### LE PIÈGE QUI A FAILLI PASSER : Google Fonts découpe la police en ONZE
-
-`document.fonts.load('64px "Noto Color Emoji"')` **sans texte ne télécharge que
-quelques sous-ensembles** — mesuré, trois sur onze — et `document.fonts.check`
-répond quand même `true`. **Un emoji d'une plage non chargée retombe alors en
-silence sur la police système**, qui en rend bien un sur Windows et sur Mac, et
-rien du tout ailleurs.
-
-Mesuré avant correction, sur la vraie page : 😀 ❤️ 🫯 🧑‍🚀 en Noto, **🇫🇷 ♈ 🪾 en
-police système**. On demande donc la police **pour ce caractère-là**
-(`document.fonts.load(police, emoji)`), et on l'attend avant de peindre : *la
-toile part en cache, donc le défaut survivrait au chargement.*
-
-***C'est la règle du canvas qui peint avant `document.fonts.ready`, un cran plus
-fin : il ne suffit pas que la police soit là, il faut que le GLYPHE y soit.***
-
-#### ET LE CDN SÉPARE LES POINTS DE CODE PAR DES UNDERSCORES
-
-L'identifiant d'une carte est en tirets — c'est notre convention, lisible —
-et l'URL de Google en underscores. **Tout emoji à plusieurs points de code était
-donc déclaré non animé** : le cœur rouge sortait statique alors qu'il est le
-deuxième emoji le plus employé au monde, et *rien ne le signalait* — une URL
-fausse rend 404, et un 404 se lit ici comme « pas de version animée ».
-
-***Le format d'un identifiant n'est pas celui d'une URL.*** 541 animés avant
-correction, **614 après**.
-
-**Et le cache a failli masquer la correction** : son corps portait les
-identifiants, donc changer le format de l'URL n'aurait rien retesté. Il porte
-les URLS depuis — *un cache doit dépendre de ce qu'on demande.*
-
-### LES EMOJI ANIMÉS JOUENT SUR LA CARTE — décodés image par image
-
-Keko : « pourquoi les emoji animés ne sont pas animés sur les cartes ? »
-***Parce qu'une carte est une TEXTURE PEINTE AU CANVAS***, et qu'un canvas ne
-joue rien : `drawImage` d'un WebP animé n'en prend qu'une seule image.
-
-**LES TROIS FORMATS DU CDN, MESURÉS** — et seules ces trois tailles existent,
-il n'y a pas de version réduite :
-
-| | poids moyen | ce que ça demande |
-|---|---|---|
-| `lottie.json` | **11 Ko** | un lecteur Lottie, donc **une dépendance** |
-| `512.webp` | 411 Ko | `ImageDecoder` — aucune dépendance |
-| `512.gif` | 642 Ko | pire sur les deux tableaux |
-
-***Le Lottie est trente-sept fois plus léger et c'est le WebP qui gagne***,
-parce que le projet refuse les dépendances et qu'écrire un lecteur Lottie serait
-un moteur de rendu entier. **Le prix est le poids, et il est connu.**
-
-#### CE QUI A RENDU LE CHANTIER PETIT : une peinture coûte 1 à 2 ms
-
-Je redoutais de devoir scinder `peindreCarte` en deux couches — l'emoji vit
-*entre* le décor et le voile, donc une seule texture ne pouvait pas le laisser
-bouger. **La mesure a fermé la question** : une peinture complète coûte
-**1,6 ms à 256, 2,1 ms à 768**.
-
-Donc **la carte se repeint ENTIÈRE à chaque image**, et il suffit d'un champ :
-`CarteAPeindre.image` reçoit une illustration déjà prête, qui passe devant tout
-le reste. *Découper la peinture en deux couches aurait coûté dix fois plus de
-code pour le même résultat.*
-
-Mesuré sur 😂 : 609 Ko, **59 images**, 512 x 512, 30 ms par image, **1,9 ms pour
-en décoder une**. À deux cartes animées et quinze images par seconde, ça fait
-**douze pour cent d'un cœur.**
-
-Trois réglages, et chacun est un arbitrage de mémoire :
-
-- **on décode en 192, pas en 512** : une carte de paquet fait 180 px à l'écran,
-  et chaque image devient un `ImageBitmap` — donc du GPU. *59 images de 192
-  pèsent 8,7 Mo, contre 62 Mo en 512* ;
-- **une image sur deux** : les animations Noto tournent à trente images par
-  seconde, *à quinze un emoji reste parfaitement fluide* — il n'a ni mouvement
-  rapide ni détail fin — et **la durée totale ne change pas**, donc le rythme
-  est le même ;
-- **la toile est RÉUTILISÉE** : sans ça on allouerait trente toiles de trois
-  cents kilo-octets par seconde. Il ne reste qu'un `needsUpdate`.
-
-**La texture est PRIVÉE**, à la différence de toutes les autres : le cache
-partagé sert la même texture à toutes les cartes d'un modèle, et *deux cartes
-animées ne sont jamais au même instant de leur animation.* Elle est donc à nous,
-et on la libère au démontage.
-
-**Et rien ne se joue sur un dos** : *une carte retournée ne dit rien de ce
-qu'elle est*, donc repeindre dessous serait du travail pour personne.
-
-#### TOUS LES ANIMÉS ONT UNE VERSION STATIQUE — mesuré, et c'est structurel
-
-Keko : « est-ce que tous les animés ont une version normale ? » **Oui, et la
-raison vaut mieux que le compte** : *le statique ne vient pas du CDN, il vient de
-la POLICE* — Noto Color Emoji couvre tout Unicode, donc un emoji qui est dans le
-catalogue est forcément peignable. **L'animation est une couche de plus, jamais
-la seule.**
-
-Vérifié glyphe par glyphe sur les deux catalogues, en chargeant le sous-ensemble
-de police de chacun puis en comptant l'encre d'un rendu de 48 px :
-
-| | cartes | animées | **sans rendu statique** |
-|---|---|---|---|
-| le catalogue | 1 923 | 614 | **0** |
-| avec les variantes de peau | 3 963 | 884 | **0** |
-
-*Et aucun ne retombe sur la police système*, ce qui était l'autre façon
-d'échouer : les 614 sont tous rendus par Noto.
-
-#### LE REPLI EST LA CARTE STATIQUE, ET IL EST SILENCIEUX
-
-`ImageDecoder` est dans Chrome, Edge et Safari 17 ; **ailleurs la carte reste
-statique**. *Une animation ne doit jamais pouvoir empêcher une carte de
-s'afficher* — c'est la règle du repère de la carte vers l'armure, qui se joue
-sans rien montrer quand le repère manque.
-
-#### CE QUE JE N'AI PAS VÉRIFIÉ, ET IL FAUT LE SAVOIR
-
-**Je n'ai jamais eu de carte animée à l'écran pendant mes essais.** Sur les dix
-cartes que j'ai pu tirer, aucune n'était animée — *les paquets sont
-majoritairement communs, et les communs ne sont animés qu'à 22 %.* Le décodage
-est mesuré, la conversion est mesurée, le câblage compile — **mais la boucle de
-repeinture n'a pas été observée en train de tourner.**
-
-***Ce qui a coûté cette heure, c'est d'avoir cherché un bug là où il n'y avait
-qu'un tirage défavorable*** : j'ai posé quatre sondes successives dans
-`Carte3D`, conclu que le composant n'était pas monté, redémarré Vite, vidé son
-cache, basculé sur le build — **et la mesure qui tranchait était la plus simple
-de toutes : lister les cinq cartes du paquet.** Elles étaient toutes statiques.
-
-*Et l'un de ces détours a coûté un fichier* : un `git checkout` passé pour
-retirer une sonde a emporté tout le câblage de `Carte3D` avec elle.
-**Un `checkout` ne défait pas une sonde, il défait un fichier.**
-
-### CINQ CRANS ET DEUX BONUS — le mode emoji seulement
-
-Tranché par Keko, en une phrase qui portait trois décisions : « on va changer le
-système de rareté : commun, peu commun, rare, épique, légendaire (blanc, vert,
-bleu, violet, orange). Ensuite chaque carte peut également être holographique
-et/ou animé (deux bonus de rareté applicables à toutes les raretés, animé étant
-encore plus rare qu'holographique). »
-
-Deux questions portaient tout le reste, et il a répondu aux deux :
-
-| | sa réponse | ce que ça impose |
-|---|---|---|
-| quelle portée ? | **« le mode emoji seulement »** | les quatre métaux restent, les deux échelles cohabitent |
-| les bonus, propriété ou tirage ? | **« tirés à l'ouverture »** | *un exemplaire cesse d'être son modèle* |
-
-#### C'EST L'ÉCHELLE QUE LE MODE DESCENTE AVAIT ÉCARTÉE, ET C'EST COHÉRENT
-
-Keko avait lui-même refusé le code couleur RPG pour les cartes de jeu : « je
-pense que c'est pas hyper cohérent d'utiliser les couleurs de rareté classiques,
-on peut tenter laiton / bronze / argent / or / diamant ? » — *et l'argument
-d'alors tenait* : une carte de combat EST une plaque de métal, donc un violet
-posé dessus restait une couleur de jeu vidéo plaquée sur un objet.
-
-**Il ne porte pas ici.** Une carte d'emoji n'est pas un objet du monde : elle ne
-se joue pas, elle se collectionne, et *le code couleur est la langue de ce
-genre-là.* Les deux décisions sont justes chacune chez elle, et c'est pour ça
-qu'elles cohabitent au lieu de se remplacer.
-
-#### LE DÉFAUT MUET QUE LE CINQUIÈME CRAN AURAIT CAUSÉ
-
-`parCran` rangeait les cartes dans des cases nommées par une **constante du
-module** : `tas.get(c.rarete)?.push(c)`. **Une carte « peu commune » ne tombait
-dans aucune case et disparaissait du tirage**, sans une erreur — *un quart du
-catalogue serait devenu intirable*, et le seul symptôme aurait été un cran
-qu'on ne voit jamais sortir.
-
-`logic/paquet.ts` est donc générique sur son échelle (`Echelle<R>`), et les
-trois grandeurs voyagent ENSEMBLE : les crans, leurs chances, et ce qui est
-garanti. *Une table de chances qui ne somme pas à un sur les crans qu'on tire ne
-dit plus ce qu'elle promet*, et une garantie doit nommer un cran qui existe —
-deux vérifications le tiennent.
-
-**LE HAUT DE LA TABLE NE BOUGE PAS** : l'épique et le légendaire gardent
-exactement leurs chances d'avant (3,2 % et 0,8 %), le rare les siennes à un
-cheveu près, et « peu commun » se taille ses 16 % dans les quinze points que le
-commun rend. *Ce qu'on ouvre en haut d'un paquet est donc le même cadeau* ; seul
-le bas se détaille. **La garantie reste « rare »**, qui vaut le troisième cran
-sur cinq là qu'elle valait le deuxième sur quatre : *une garantie nomme un
-NIVEAU, pas une place dans la liste.*
-
-#### LA PYRAMIDE DU CATALOGUE DÉCROÎT DE MOITIÉ À CHAQUE CRAN
-
-`PYRAMIDE_CINQ` : **50 / 25 / 15 / 7,5 / 2,5 %**, mesuré sur le catalogue —
-961 / 481 / 288 / 144 / 49 cartes. ***Les parts sont de moi, pas de Keko*** : il
-a donné les crans, pas leur poids. *Une décroissance de moitié est la forme la
-plus lisible qu'on puisse donner à cinq niveaux*, et c'est à rejuger quand il
-aura ouvert des paquets.
-
-#### UNE ÉCHELLE SE DIT EN COULEUR, ET LES CLÉS LE DISENT AUSSI
-
-Les cinq entrées de `METAUX` sont nommées **par leur couleur** — `blanc`,
-`vert`, `bleu`, `violet`, `orange` — là où les quatre métaux sont nommés par
-leur cran. *Trois des cinq crans portent le même nom qu'un métal* (`rare`,
-`epique`, `legendaire`) : les nommer par leur cran les aurait fait se recouvrir
-en silence dans une table partagée. C'est `carte-emoji` qui fait la table
-cran → couleur, telle que Keko l'a dictée.
-
-**Une seule structure de lumière pour cinq teintes**, comme pour les métaux :
-clair en haut à gauche, plateau moyen, nuit dans le coin bas-droit. *Le cadre
-garde son relief et son reflet oblique, il ne change que de couleur.*
-
-Le **blanc est un gris clair et non un blanc pur** : *le bas d'une échelle ne
-doit pas se lire comme un métal précieux*, et le blanc pur est déjà le diamant
-de l'autre échelle.
-
-#### L'HOLOGRAPHIQUE SE POSE SUR LE CRAN, IL NE LE REPEINT PAS
-
-Tranché par Keko, en le voyant : « holographique ne doit pas changer la couleur
-de la carte : on rajoute l'effet holographique par-dessus. Et une carte animé
-c'est pareil. »
-
-***J'avais écrit l'inverse***, et le mot qui le disait était « emprunte » :
-`eclatDe(rarete, holo)` rendait `'iris'` pour n'importe quel holo, donc le bonus
-PRENAIT la place du cran au lieu de s'y ajouter.
-
-**ET UN ÉCLAT N'EST PAS UNE COUCHE, C'EN EST TROIS** — c'est ce qui rendait la
-faute invisible en lisant le code :
-
-| | où ça se peint | peut-on le poser « par-dessus » ? |
-|---|---|---|
-| le **foil** sur le métal | dans le nuanceur, par-dessus la texture | **oui** |
-| le **liseré** du cadre | sur le cadre | **non** — c'est là que le cran se lit |
-| l'**auréole** chromatique | tout autour de la carte | **non** |
-
-*Les deux dernières ne se posent pas sur la carte, elles PEIGNENT l'endroit même
-où la couleur du cran se lit* — donc une holo commune et une holo épique se
-retrouvaient cerclées du même arc-en-ciel, et **le bonus effaçait le cran qu'il
-était censé décorer.** Elles restent au cran, seul le foil se cumule.
-
-#### ET LE FOIL NON PLUS NE S'EMPRUNTE PAS TEL QUEL : il a un VOILE et une BANDE
-
-**Retirer le liseré et l'auréole ne suffisait pas**, et c'est la capture qui l'a
-dit : les trois cartes holo gardaient un cadre arc-en-ciel là où les deux animées
-avaient le leur, bleu franc. *Le coupable était le SOUFFLE permanent du foil* —
-`arc * uIris * prise * reseau * 0.11` — **constant sur toute la carte**, donc un
-voile et non un reflet.
-
-***Un voile irisé permanent REPEINT, une bande qui traverse ne fait que
-glisser.*** Le souffle revient donc au diamant seul : **sa couleur EST
-l'arc-en-ciel**, il peut se le permettre ; un bonus qui s'ajoute à un cran, non.
-L'holo n'en garde que la bande, et elle a son uniforme à elle (`uHolo`) — *pas un
-emprunt à `uLustreForce`, qui alimente AUSSI ce souffle et aurait remis le voile
-qu'on venait de retirer.*
-
-#### ET LA FEUILLE A SON PROPRE SPECTRE, QUI TOURNE QUATRE FOIS PLUS VITE
-
-**Deuxième chose que la capture a dite** : la bande se lisait comme **une nappe
-verte**, pas comme un reflet irisé — donc elle teintait encore la carte, le
-défaut repris par l'autre bout.
-
-*L'arc du foil ne fait qu'un tour sur toute la carte* : dans une bande d'un
-cinquième, il ne déroule que **quarante degrés de teinte**, soit à peu près une
-seule couleur. **Une feuille holographique DÉCOMPOSE** — le long d'un même reflet
-on voit passer tout le spectre — donc elle tourne quatre fois, ce qui lui rend
-son arc-en-ciel sans moirer : *on est deux ordres de grandeur au-dessus du
-RÉSEAU de stries, qui en fait soixante-quatre et doit, lui, se fondre quand il
-passe sous le pixel.*
-
-**ELLE AVANCE AVEC LE TEMPS tant qu'on ne la promène pas**, et c'est la seconde
-exception du jeu après l'auréole, pour la même raison : *une carte posée dans un
-paquet ne bouge pas*, donc rien d'autre ne pourrait faire jouer sa feuille. Au
-survol, le curseur reprend la bande — **par un MÉLANGE et non par un test** : à
-seuil, elle sauterait de sa course à la place du doigt dès qu'on approche.
-
-**ET UNE CARTE ANIMÉE N'AVAIT RIEN À CORRIGER**, ce qui se vérifie plutôt que de
-se supposer : elle repeint la même carte avec une autre illustration
-(`peindreCarte({ ...carte, image })`), donc son cadre garde la couleur de son
-cran — vu à l'écran sur la Carotte, bleu franc. *Le bonus ne touche que la
-fenêtre d'art.*
-
-**IL NE CHANGE RIEN À LA PEINTURE, DONC RIEN À `signature()`.** Le foil vit dans
-le NUANCEUR — c'est ce qui le rend indépendant de la teinte du cadre — donc
-**deux exemplaires, l'un holo et l'autre non, partagent leur texture** : le
-bonus ne coûte pas un octet de mémoire. *C'est la seule propriété de
-`CarteAPeindre` qui ne change rien à ce que le peintre dessine*, et elle y vit
-quand même parce que c'est cet objet qui voyage jusqu'à `Carte3D`.
-
-#### CE QUI RESTE GRATUIT, ET C'ÉTAIT LE BON RÉFLEXE
-
-**Il n'y avait rien à dessiner.** Un arc-en-ciel qui dépend de l'angle de vue
-existait déjà, réglé et validé par Keko — « je voudrais un effet holographique
-aussi sur la carte, et notamment sur son effet de brillance quand on la fait
-bouger » — et le réflexe de ne pas en dessiner un second tient toujours. *Ce
-qu'il fallait découper, ce n'est pas le dessin, c'est lequel de ses TERMES se
-pose par-dessus et lequel se substitue.*
-
-**Et le reflet du survol se décompose sur les deux**, holo comme diamant : *un
-foil n'a pas un reflet blanc.* C'est la seule chose que l'holo emprunte encore,
-et elle ne vaut QUE sous le doigt — donc elle ne teint rien au repos.
-
-**LES TROIS ÉCLATS PASSENT PAR UNE TABLE** (`ECLAT_DE_LA_RARETE`), plus par une
-égalité de chaîne. L'irisation du cadre, la bordure lumineuse et le lustre doré
-se lisaient sur `rarete === 'legendaire'` et `=== 'epique'` : **avec les cinq
-couleurs, un « légendaire » orange se serait mis à irriser** et un « épique »
-violet à reluire comme de l'or, alors que Keko n'a demandé ni l'un ni l'autre —
-chez lui l'éclat est un BONUS, pas un cran. Les cinq couleurs n'ont donc aucune
-entrée : *ce qui ne rayonne pas n'a rien à déclarer.*
-
-**La table ne porte donc que des CRANS**, et l'holo n'y entre pas : il se cumule
-dans `Carte3D`, qui allume son uniforme à côté de celui du cran. *Un bonus qui
-s'inscrirait dans la table des éclats serait un cran de plus, pas un bonus.*
-
-#### LE CATALOGUE DIT CE QUI EST POSSIBLE, L'EXEMPLAIRE CE QUI EST
-
-Le champ `anime` de la carte est devenu **`animable`**, et ce n'est pas
-cosmétique : *il dit une POSSIBILITÉ, pas un état* — **deux choses qui portent
-le même mot finissent par se confondre**, et c'est exactement ce qui serait
-arrivé le jour où un exemplaire a tiré le bonus.
-
-Conséquence directe : le cartouche **ne dit plus « animé » quand il l'est
-seulement en puissance**. Un tiers du catalogue promettait un mouvement que
-l'exemplaire n'avait pas — *une carte ne dit que ce qu'elle est, jamais ce
-qu'elle aurait pu être.*
-
-**L'ANIMÉ DEMANDE QUE L'EMOJI SOIT ANIMABLE**, et c'est une vraie contrainte :
-*on ne peut pas animer ce que Google n'a pas animé* — 614 emoji sur 1 923.
-**Le tirage a quand même lieu**, et c'est délibéré : sans ça le nombre d'appels
-au hasard dépendrait de la carte, et *deux paquets de même graine ne rendraient
-plus la même suite.*
-
-**LES CHANCES SONT DES PLACEHOLDERS** : 10 % pour l'holo, 3 % pour l'animé.
-*Keko a donné l'ordre, pas les chiffres.* Et **l'animé est deux fois plus rare
-qu'il n'en a l'air** — trois pour cent d'un tiers du catalogue font un pour
-cent, donc l'écart réel est de dix contre un.
-
-#### LES BONUS SE TIRENT APRÈS LES CARTES, AVEC LE MÊME RNG
-
-Dans `Paquet3D`, et pour le mode emoji seulement — *les autres modes
-n'appellent donc pas le hasard*, et leur suite de tirage ne bouge pas d'un cran.
-`?paquet=42` rejoue les cartes ET leurs bonus.
-
-**L'échelle se widenise en `Echelle<string>` à UN SEUL endroit** : le mode se
-décide à l'exécution, sur un paramètre d'URL, donc le type du cran ne peut pas
-être connu à la compilation. *Les deux tables, elles, restent typées chacune sur
-ses propres crans* — c'est là qu'une faute se verrait.
-
-#### CE QUI A ÉTÉ VU À L'ÉCRAN
-
-`?paquet=1314&emoji` montre **les cinq couleurs d'un coup**, `?paquet=20781&emoji`
-**trois holographiques et deux animés**. Les deux graines ont été trouvées en
-rejouant le tirage hors navigateur, contre les mêmes modules : *une mesure se
-fait avec ce qui joue, sinon on valide un jumeau.*
-
-**ET L'ANIMATION A ENFIN ÉTÉ OBSERVÉE EN TRAIN DE TOURNER** — deux captures du
-même emoji à une seconde d'écart, la carotte a bougé. *Elle n'avait jamais été
-vue* : la note d'alors disait « le câblage compile, mais la boucle de repeinture
-n'a pas été observée », faute d'avoir jamais tiré une carte animée. **Il
-suffisait d'une graine choisie** au lieu d'ouvrir des paquets au hasard.
-
-### LE CONTOUR SIMPLE : la forme se tait là où il n'y a qu'une famille
-
-Demandé par Keko : **« je voudrais rework l'organisation des cartes : un contour
-plus simple, plus dans le ton des emojis »**.
-
-*Le gabarit « Serment de cendre » parle la FERRONNERIE* — une plaque de laiton,
-une coque DÉCHIRÉE posée dessus, deux encoches à la hauteur du titre, un dégradé
-oblique qui court du clair au presque noir d'un coin à l'autre. **Il est juste
-là où il est né** : une carte de combat EST une plaque de métal. Un emoji, non —
-c'est un aplat net aux formes franches, et un cadre arraché à côté de lui se lit
-comme la pièce d'un autre jeu.
-
-#### ET C'EST LA FORME QUI CÈDE, PAS LA COULEUR
-
-*Deux axes portent la carte* : **une échelle se dit en couleur, une famille se
-dit en forme.** La couleur est prise par la rareté — les cinq crans que Keko
-vient de trancher, et le reflet qui en reprend la teinte — donc **elle ne bouge
-pas d'un ton.**
-
-**La forme, elle, ne dit plus rien ici** : dans ce mode il n'y a qu'une famille.
-Pas de trésor à distinguer d'une carte de deck, pas de pièce d'équipement à
-distinguer de son set. *Une silhouette qui ne sépare rien n'est plus un signal,
-c'est un ornement* — et c'est ce qui rend la bascule sûre : **le seul axe que la
-carte porte reste intact.**
-
-Trois choses tombent, et chacune pour sa raison :
-
-- **les deux ENCOCHES.** C'est le signe « carte de deck » du jeu d'extraction,
-  recalé par Keko à la hauteur du titre pour qu'il se lise dans l'éventail. *Il
-  n'a aucun vis-à-vis dans un paquet d'emoji* ;
-- **la coque DÉCHIRÉE.** Elle dit qu'une carte est arrachée de la pièce qui la
-  produit — *il n'y a pas de pièce dans ce mode* ;
-- **le dégradé OBLIQUE à cinq paliers.** C'est lui qui fait « métal » : il
-  traverse le clair, le sombre, le plateau et la nuit, donc le cadre change
-  franchement de luminosité le long de son tour. **Un emoji n'accroche pas la
-  lumière**, il a un aplat et, au mieux, un peu de volume.
-
-Il reste un **liseré régulier**, qui épouse la carte au rayon près, rempli de
-trois tons voisins pris dans le MÊME métal — `bord`, `moyen`, `sombre`, sur la
-VERTICALE. *On n'invente aucune couleur* : c'est la teinte du cran, posée à plat
-avec la lumière du haut que tout le jeu respecte, et le ton `moyen` est déjà
-celui que `TON_LUSTRE` prend pour dire la couleur d'un cran.
-
-**LE RAYON SE COMPTE SUR LE BORD EXTÉRIEUR**, donc il décroît d'autant qu'on
-rentre : à rayon constant, les coins du cadre seraient plus épais que ses côtés.
-*Règle déjà payée sur les cases vides du chargement.*
-
-#### TROIS ÉPAISSEURS, ET C'EST TOUT CE QUI RESTE À DÉCIDER
-
-`?contour=fin|plaque|large` — **le défaut est `plaque`**, un cheveu plus fin que
-la coque encochée qu'il remplace (1,6 contre 1,85 centièmes de largeur).
-
-| | ce que ça donne |
-|---|---|
-| **fin** (0,85) | la carte est presque toute illustration — *mais le cran du bas disparaît*, un liseré gris clair sur fond sombre ne se voit plus |
-| **plaque** (1,6) | le défaut : la couleur se lit, l'image ne perd rien |
-| **large** (3,1) | une vraie bordure colorée, le vocabulaire des cartes de collection — *et elle mange un peu d'image* |
-
-*Effet de bord mesuré sur `large`* : la boîte du nom rétrécit avec la surface,
-donc le titre CÈDE d'un cran et **« Visage avec un léger sourire » cesse d'être
-tronqué.** Ce n'est pas un argument pour elle — c'est un signe que la troncature
-du nom se règle ailleurs, si elle gêne.
-
-#### LE MODE EMOJI SEULEMENT, comme les cinq crans
-
-C'est `carte-emoji.ts` qui pose le drapeau, et **le reste du jeu ne le voit
-jamais** : vérifié à l'écran, un paquet d'animaux garde sa coque encochée au
-pixel. *Les quatre autres modes peuvent le prendre en une ligne le jour où Keko
-le voudra*, et c'est exactement la portée qu'il avait donnée aux cinq crans — « le
-mode emoji seulement ».
-
-**Il entre dans `signature()`**, sans quoi deux cartes de même nom et de contour
-différent partageraient leur texture.
-
-#### CE QUI N'A PAS BOUGÉ, ET QU'IL FAUT SAVOIR
-
-- **le RAYON de la carte** (3 % de la largeur). Un emoji est un carré très
-  arrondi, donc la tentation est forte — *mais ce rayon est la forme du PAVÉ 3D
-  autant que celle de la texture* : les arrondir demanderait d'extruder un autre
-  profil, sinon le laiton du corps dépasserait aux coins. **À rouvrir si Keko le
-  demande**, en sachant que ça touche la géométrie et pas seulement le dessin ;
-**ET LA TYPOGRAPHIE A ÉTÉ ROUVERTE LE LENDEMAIN.** J'avais écrit qu'elle ne
-bougeait pas, « Keko a réglé ces trois-là lui-même » — *et il n'avait réglé que
-le gabarit du jeu d'extraction* : voir la section qui suit.
-
-### LA PLAQUE CLAIRE : la zone de texte quitte le métal
-
-Keko, dans la foulée du contour : **« on peut peut-être diminuer un peu la taille
-de l'émoji et augmenter un poil l'épaisseur de la bordure. De plus la police et
-la zone de texte (dégradé noir) sont hors du thème : on veut une police et un
-style pour la zone de texte proche de l'univers smartphone / fun des emoji. »**
-
-*Le contour n'était que la moitié de « l'organisation des cartes »* — et la
-seconde moitié porte plus loin, parce qu'elle touche à ce que la carte DIT et pas
-seulement à sa découpe.
-
-#### LE VOILE ET LA PLAQUE FONT LE MÊME TRAVAIL, PAS DANS LA MÊME LANGUE
-
-Le gabarit **éteint son image sous un voile noir** et écrit dessus en clair :
-c'est la grammaire d'une plaque de métal gravée — l'image meurt dans le métal et
-la lettre s'y creuse. **Un emoji vient d'un clavier**, donc sa carte porte une
-**plaque CLAIRE posée sur l'image**, du texte sombre dessus, et le type en
-pastille.
-
-*C'est la même bascule que le contour, un cran plus loin* : **une échelle se dit
-en couleur, une famille se dit en forme** — la rareté ne bouge pas d'un ton, et
-tout ce qui change est la matière de ce qui porte le texte.
-
-Quatre choses la portent, et chacune fait un travail que les autres ne font pas :
-
-- **ELLE PORTE SON OMBRE VERS LE HAUT.** C'est la seule chose qui dise qu'elle
-  est POSÉE sur l'image et non découpée dedans — *une plaque sans ombre se lit
-  comme un trou dans le dessin* ;
-- **SES COINS DU BAS SONT CEUX DE LA CARTE**, rayon de la carte moins la marge :
-  elle s'arrête sur le cadre, donc elle doit l'épouser. La règle du tracé du
-  contour, repayée ici ;
-- **SON DÉGRADÉ EST À PEINE VISIBLE**, du plus clair en haut au plus gris en bas,
-  parce que la lumière du jeu vient du haut : *un aplat parfaitement uni se lit
-  comme un rectangle de couleur, pas comme une surface*. **C'est aussi lui qui
-  porte la teinte du cran**, et c'est le ton du BAS qui en porte le plus : *la
-  part ombrée d'une surface garde plus de couleur que la part éclairée* ;
-- **ELLE EST OPAQUE.** Un reste de transparence laisserait voir l'emoji dessous,
-  et *ça se lit comme un calque mal posé* — la règle déjà tenue par la pierre des
-  encadrés du glossaire.
-
-**ET LE TRAIT SOUS LE NOM DISPARAÎT.** *Il structure une plaque gravée*, où le
-nom et l'effet sont deux inscriptions qu'il faut séparer ; **dans une
-application, un titre suivi d'un sous-texte gris n'a pas de séparateur** — la
-graisse et la couleur suffisent, et c'est ce qui fait lire les deux comme un bloc
-plutôt que comme deux champs.
-
-**ET LE CERNE DU TEXTE AUSSI.** *Il sépare par la PROFONDEUR* — il détache une
-lettre claire d'un fond sombre et mouvant — **et sur du blanc il ne détache plus
-rien : il salit.** La règle est déjà écrite pour le coeur des armures, où le
-cerne mangeait un tiers de la figure sans rien détacher.
-
-#### LA CAPSULE REVIENT, LÀ OÙ ELLE EST LA FORME JUSTE
-
-Le type passe en **PASTILLE arrondie**, gris clair, sous le cartouche. *Un mot
-gravé entre deux filets est de la ferronnerie* ; **une pastille est LE vocabulaire
-d'une app**, et c'est exactement ce que ce mot est — une étiquette de catégorie,
-pas une valeur de jeu.
-
-**Et c'est un `border-radius: 999px` assumé**, alors que le projet les a tous
-chassés : la barre de vie ramenée au biseau, les infobulles à zéro, le bouton de
-rangement à l'angle droit. ***La règle « un arrondi est une forme de gabarit, une
-arête franche est de la ferronnerie » ne vaut que là où le jeu parle
-ferronnerie.*** Ici il parle d'un clavier.
-
-**SA PLACE SE CALCULE CONTRE SES DEUX VOISINS**, et c'est la pastille qui le
-demande : *un mot gravé n'occupe que son encre, une pastille occupe une boîte.*
-Le pire cas du cartouche est un effet de **quatre lignes** — il descend alors au
-dernier cran et le bas de ses glyphes tombe à 91,4 % de la hauteur, la plaque
-s'arrêtant à 98,5 % sur la marge du cadre. Il reste 6,5 % pour la pastille, d'où
-7,4 U de haut posée à 94,8 %. *Mesuré avant correction* : à 8,2 U posée à 94,5 %,
-elle mordait sur la dernière ligne.
-
-#### UNE SEULE POLICE REMPLACE LES DEUX
-
-**Baloo 2**, en trois graisses : le nom en 800, le cartouche en 400, le type en
-700. *Le gabarit parle deux langues* — le gothique des noms, le serif des effets
-— **et les deux disent le métal** : sur une plaque claire elles se lisent comme
-un titre de parchemin collé sur un écran, la même faute que la coque déchirée
-autour d'un aplat net.
-
-**Une application n'a qu'une voix, elle la décline en graisses** — et Baloo 2 est
-arrondie comme un emoji tout en restant lisible en corps de texte, ce qu'une
-fantaisie plus marquée ne tient pas sur deux lignes de cartouche.
-
-**ELLE SE DEMANDE EXPLICITEMENT, et c'est le piège déjà payé sur Noto Color
-Emoji** : *une police Google n'est téléchargée que si le DOM l'emploie*, or ces
-cartes ne sont peintes que sur un canvas — donc `document.fonts.ready` se
-résoudrait sans elle et **la texture partirait en cache écrite en Trebuchet.**
-
-**LA FAMILLE TRAVERSE TOUTE LA CHAÎNE DU TEXTE**, mesure comprise — six
-signatures : *si le repli mesurait dans une police et l'écriture dans une autre,
-les lignes seraient coupées au mauvais endroit*, et le canvas ne prévient jamais
-qu'il déborde. Le serif reste le défaut de chaque paramètre, donc **les quatre
-autres modes ne changent pas d'un pixel** (vérifié à l'écran sur un paquet
-d'animaux).
-
-**ET LA BORNE DU NOM MONTE À 88 %.** Les 78 % sont la largeur du cadre ENTAILLÉ à
-la hauteur du titre, ombre portée comprise ; *une plaque claire n'a ni entaille ni
-ombre.* À 78 %, « Visage avec un léger sourire » se rétrécissait deux crans sous
-« Plus » — **deux noms de même rang qui se lisent à deux tailles donnent deux
-objets différents.**
-
-#### L'EMOJI RAPETISSE PARCE QUE SA FENÊTRE RAPETISSE
-
-*Il n'y avait rien à régler dans son dessin* : il est peint sur une toile carrée
-et posé en `contain` dans la fenêtre d'art, donc **c'est la fenêtre qui décide de
-sa taille** — et toucher au glyphe aurait de toute façon manqué les cartes
-ANIMÉES, qui ne passent pas par cette toile.
-
-Jusqu'ici la fenêtre valait toute la surface : l'emoji descendait à **98 % de la
-hauteur**, c'est-à-dire SOUS le nom, son tiers inférieur noyé dans le dégradé.
-Borné au-dessus de la plaque, il perd **19 %** et gagne une marge nette de tous
-les côtés.
-
-**ET LE BLOOM LIT LA MÊME BOÎTE**, comme il lit déjà le même rognage : *le bloom
-n'est pas le sujet, c'est de la lumière tombée sur le décor* — cadré autrement,
-il éclairerait sous la plaque.
-
-**La boîte du DÉCOR, elle, ne bouge pas** : il est le fond de la carte, et le
-rogner moins y laisserait un trou. *Sans plaque, la boîte du sujet vaut la surface
-entière au pixel* — c'est l'absence du thème qui dit « ne rien changer ici »,
-comme `caseDeCarte` sans assiette.
-
-#### LA BORDURE PASSE DE 1,6 À 2,1, PUIS À 2,7
-
-Un seul nombre, `CONTOURS.plaque`. Les deux autres épaisseurs ne bougent pas :
-`?contour=fin|large` les rend.
-
-### L'AURA S'ARRÊTAIT SUR UN MUR, ET LE MUR ÉTAIT LE BORD DE SA TOILE
-
-Keko, en même temps que trois réglages : **« j'ai remarqué un genre d'aura
-autour des emoji, c'est bien mais parfois (ex : visage avec un léger sourire)
-l'aura s'arrête net en haut comme si un mur invisible la bloquait et c'est
-moche »**.
-
-***Il n'y avait pas de mur invisible : il y avait le bord d'un canvas de
-quarante-quatre pixels.***
-
-#### LA CHAÎNE, et aucun de ses maillons n'était faux tout seul
-
-1. **la plaque a pris le bas de la carte**, donc la fenêtre du sujet est devenue
-   plus LARGE que haute — 95,8 U sur 78,6 ;
-2. **un emoji est CARRÉ**, et il rentre entier (`illustrationEntiere`), donc il
-   est borné par la hauteur et **la remplit exactement** ;
-3. **`couvrir` cale EN HAUT dès qu'il y a un plafond** — une règle écrite pour
-   les peintures — donc le dessin touchait le bord supérieur de sa boîte **par
-   construction** ;
-4. **le bloom est peint dans cette même boîte**, sur une toile de 44 px de
-   large, et `adoucir` y étale la lumière de deux pixels : *le flou était coupé
-   net par le bord de la toile.*
-
-**« Parfois » était la mesure du problème** : un glyphe qui laisse un peu de
-marge dans son carré a de quoi s'éteindre, un glyphe qui le remplit n'en a pas —
-et 🙂 est un disque plein qui va d'un bord à l'autre de son em-box.
-
-#### C'EST LA RÈGLE DU CONTOUR DES CARTES, PAYÉE UNE QUATRIÈME FOIS
-
-« Le débord de la texture doit être exactement celui du plan », et *une lueur
-qui se termine par une arête n'est pas une lueur* — déjà payé sur le contour des
-cartes, sur le halo des créatures et sur le slot allumé du chargement. **Ici le
-plan était la fenêtre d'art et la texture n'avait aucun débord du tout.**
-
-**LE SUJET EST DONC POSÉ EN RETRAIT DANS SA FENÊTRE.** Le bloom prend la fenêtre
-entière (`fY`, `fH`), le dessin s'y inscrit avec `AIR_SUJET` de chaque côté — et
-la lumière a enfin de quoi mourir : elle s'éteint sur le cadre en haut, et sous
-la plaque opaque en bas.
-
-***Et ça règle la troisième demande par la même porte*** — « diminuer un peu la
-taille des emoji encore un peu » : **l'air qu'on donne à la lueur, le sujet le
-rend.** L'air passe de 2 à 7 U, donc le sujet perd 13,5 % de hauteur.
-
-Mesuré sur la colonne centrale de la carte peinte, dans la bande qui va du cadre
-au haut du dessin : la luminance monte de **58 à 73 par pas de 7 au plus** —
-une rampe, plus une marche. Et la toile garde **3,3 px** au-delà du dessin pour
-un flou qui en demande 2.
-
-**Les quatre autres modes ne bougent pas d'un pixel**, et c'est algébrique :
-sans plaque `air` vaut zéro, donc les trois boîtes se confondent et la toile du
-bloom est celle d'avant. *C'est l'absence du thème qui dit « ne rien changer
-ici », comme `caseDeCarte` sans assiette.* Vérifié à l'écran sur un paquet
-d'animaux.
-
-### LES COINS S'ARRONDISSENT, ET TROIS SURFACES DOIVENT SUIVRE
-
-Keko : « on peut arrondir encore un peu les coins ». De 3 % à **5,5 %** de la
-largeur (`RAYON_SIMPLE`), mode emoji seulement — *un emoji est un carré très
-arrondi*, et 3 % est le `border-radius` du gabarit d'extraction, réglé et validé.
-
-**UNE CARTE EST FAITE DE TROIS SURFACES, et arrondir la face seule les
-désaccorde** :
-
-- la **face** peinte, dont `alphaTest` coupe les coins ;
-- le **corps extrudé**, qu'on voit dépasser d'un cheveu — *un corps plus carré
-  que sa face montre son laiton en angle*, exactement ce que Keko avait signalé
-  une fois : « derrière une autre forme dorée reste et est un angle droit » ;
-- le **dos**, qu'un paquet montre avant la révélation — *un dos plus carré que
-  son corps dépasserait de sa silhouette.*
-
-Les trois lisent donc `rayonDe(carte)`.
-
-**ET LE RAYON ÉTAIT ÉCRIT DEUX FOIS.** `RAYON_CARTE` dans la texture, `RAYON_COIN`
-dans `Carte3D`, deux `0.03` indépendants : ***le défaut que le projet se répète —
-deux endroits qui décrivent la même valeur se désaccordent au premier
-réglage*** — et **il a fallu qu'un mode demande des coins plus ronds pour qu'il
-morde.** `RAYON_COIN` vaut désormais `RAYON_CARTE`.
-
-**Le corps et le dos sont MÉMORISÉS par rayon**, donc il n'y en a que deux de
-chaque dans tout le jeu. Et le corps reste un **profil extrudé** : un
-`RoundedBoxGeometry` borne son rayon à la moitié de l'épaisseur, soit 0,006 sur
-une plaque de 0,012 — *il resterait carré*, le piège silencieux déjà payé.
-
-### LA PLAQUE PREND LA TEINTE DE SON CRAN — dérivée, pas choisie
-
-Keko : **« je voudrais que l'encadré soit coloré en fonction de la rareté
-également (blanc, vert, bleu etc) au lieu d'être blanc partout »**.
-
-*Et c'est la règle du projet prise au mot* — **une échelle se dit en couleur** —
-appliquée à la seule grande surface de la carte qui ne disait encore rien : le
-cadre portait déjà le cran, la plaque restait blanche sur les cinq.
-
-#### LA MÉTHODE EST CELLE DU LUSTRE, À L'AUTRE BOUT DE L'ÉCHELLE
-
-« On prend le ton MOYEN du métal, le plus saturé des cinq, et on le pousse à une
-énergie commune » : ici on garde sa TEINTE, on dose son pigment, et **on recale
-sur une luminance commune**. Le calcul est celui de `virerLeCiel` à un pixel
-près — *de l'arithmétique et rien d'autre*, puisque les modes de fusion non
-séparables du canvas sont silencieusement ignorés sur certains appareils.
-
-***LA NORMALISATION EST CE QUI PROTÈGE LE TEXTE.*** Il est SOMBRE sur cette
-plaque, donc son contraste ne dépend que de la clarté du fond : sans elle, un
-jaune clair et un violet sombre à pigment égal donneraient deux lisibilités très
-différentes.
-
-**ET LE PIGMENT SUIT LA SATURATION DU MÉTAL, il ne la force pas.** Le cran du
-bas est un gris à peine bleuté — 0,047 d'écart au gris — donc *le forcer à une
-saturation commune en ferait un bleu pâle*, qui entrerait en collision avec le
-cran `bleu`. À pigment relatif il reste un gris, ce qui est exactement ce que
-« blanc » doit dire.
-
-#### LE PIGMENT A TRIPLÉ EN DEUX PASSES À L'ÉCRAN
-
-Le premier réglage (0,45) donnait des chiffres impeccables et **on ne voyait
-rien** : le haut du dégradé restait quasi blanc, donc l'oeil moyennait et lisait
-« blanc » sur les cinq crans. Au deuxième (0,85), Keko les trouvait **« toujours
-un peu pâles »**. ***Un pastel qui ne se voit pas ne dit pas son cran*** — il
-faut que le HAUT porte déjà sa couleur, pas seulement le bas.
-
-***ET C'EST LE MOT DU TYPE QUI BORNE, PAS LE CARTOUCHE.*** J'avais écrit
-l'inverse — « le vrai plancher était le sous-texte » — et la mesure dit autre
-chose : **à 0,85 le type n'était qu'à 4,08 de contraste**, donc déjà sous le
-plancher de 4,5, pendant que le cartouche tenait 5,59. Et *il tombe deux fois
-plus vite* : 0,2 par cran de pigment contre 0,1.
-
-**Donc renforcer la teinte demande de foncer les DEUX textes**, et c'est ce qui
-rend le réglage gratuit — les deux finissent mieux lotis qu'avant :
-
-| | pigment | cartouche | type | saturation du bas |
-|---|---|---|---|---|
-| première passe | 0,45 | — | — | *invisible* |
-| deuxième | 0,85 / 1,00 | 5,59 | **4,08** | 0,242 |
-| **troisième** | **1,40 / 1,70** | **6,41** | **4,77** | **0,355** |
-
-*La couleur gagne 47 % et le texte gagne 0,8 de contraste* — c'est l'argument
-qui a porté les deux passes précédentes, et il tient une troisième fois.
-
-**LE PIGMENT PEUT DÉPASSER 1, LA SATURATION NON.** Au-delà, la teinte sortirait
-de [0,1] AVANT le ClipColor, qui la ramènerait **en la déformant** : un orange
-sursaturé virerait de teinte au lieu de saturer. La borne ne mord que sur les
-deux crans les plus francs — l'orange et l'épique — et *elle les protège sans
-toucher aux sept autres.*
-
-Mesuré sur la texture peinte, les cinq crans du mode emoji :
-
-| cran | haut | bas | pastille | nom | cartouche | type |
-|---|---|---|---|---|---|---|
-| blanc | `#dde6ee` | `#c2cdd7` | `#b7c2cc` | 9,7 | 6,70 | 5,01 |
-| vert | `#b8ffcd` | `#75ff9d` | `#62f98e` | 12,4 | 8,53 | 6,68 |
-| bleu | `#d1e9ff` | `#a6d4ff` | `#93cbff` | 10,1 | 6,94 | 5,27 |
-| violet | `#eadcff` | `#d7bbff` | `#ceadff` | 9,3 | 6,41 | 4,77 |
-| orange | `#ffdfb9` | `#ffc077` | `#ffb35a` | 9,8 | 6,72 | 5,11 |
-| *(sans rang)* | `#fdfefe` | `#eaeef4` | `#dde4ec` | 13,5 | 9,30 | 7,08 |
-
-#### CHAQUE TEINTE DESCEND JUSQU'À CE QUE LE CLIP CESSE DE LA RONGER
-
-Keko, après les 47 % de pigment : **« je trouve les encadrés verts sont bien
-mais les autres couleurs sont toujours fades »**.
-
-***ET IL AVAIT RAISON POUR UNE RAISON QUI CONDAMNE TOUTE NOUVELLE PASSE DE
-PIGMENT : ces 47 % n'avaient pas touché le bleu, le violet ni l'orange d'un
-centième.*** Le chroma qui sort vaut `(1 − L) × plein / hi`, et **le rapport
-`plein / hi` ne dépend que de la TEINTE** : tout ce qu'on ajoute au-delà du
-clip est repris par le ClipColor. Ce qui avait bougé, c'était la luminance
-(0,855 → 0,795), et elle profite à tous dans le même rapport — **donc l'écart
-entre le vert et les autres n'avait pas été réduit, il avait été creusé**, le
-vert gagnant EN PLUS sur le pigment parce qu'il ne saturait pas encore.
-
-#### ET LE CHROMA LINÉAIRE N'EST PAS CE QUE L'OEIL LIT
-
-C'est la mesure qui a renversé mon diagnostic. En CIELAB, sur le bas du
-dégradé :
-
-| cran | écart au gris | **C\*ab** |
-|---|---|---|
-| vert | 0,541 | **68,4** |
-| orange | 0,533 | **47,6** |
-| violet | 0,267 | **37,6** |
-| bleu | 0,349 | **26,3** |
-| blanc | 0,082 | 6,5 |
-
-**Le vert et l'orange ont le MÊME écart au gris pour 30 % de couleur d'écart**,
-et le bleu en a plus que le violet tout en paraissant moins coloré. *Le vert est
-la teinte la plus lumineuse du spectre* — il pèse 0,59 dans la luminance quand
-le bleu pèse 0,11 — **donc c'est le seul qui garde sa couleur posé haut en
-clarté.** Le critère est le C\*ab, pas l'écart au gris.
-
-*C'est la troisième fois que ce poids se paie* : les ciels des cartes ont déjà
-eu leur table par famille parce que « le bleu en demande plus », et c'est le même
-0,11 contre 0,59.
-
-#### D'OÙ LA DESCENTE, ET ELLE A UNE FORMULE FERMÉE
-
-Le clip mord tant que `L + hi > 1`, donc la clarté juste suffisante est
-**`1 − hi`** — *aucune dichotomie, aucun CIELAB à l'exécution.* Chaque cran
-descend jusque-là, et **jamais sous `DESCENTE_PLAQUE`** (0,065), qui est ce que
-le texte supporte.
-
-Mesuré sur la texture peinte :
-
-| cran | descente | bas | C\*ab | avant | gain |
-|---|---|---|---|---|---|
-| blanc | 0,000 | `#c2cdd7` | 6,4 | 6,4 | **inchangé** |
-| vert | 0,019 | `#68ff94` | 74,0 | 68,4 | +8 % |
-| bleu | 0,065 | `#8ac6ff` | 34,3 | 26,4 | **+30 %** |
-| violet | 0,065 | `#caa5ff` | 50,2 | 37,6 | **+33 %** |
-| orange | 0,065 | `#ffac4c` | 63,9 | 47,6 | **+34 %** |
-
-**ET LE BLANC NE DESCEND PAS, sans qu'on ait eu à l'excepter** : il ne sature
-pas, donc le clip ne le ronge pas, donc `1 − hi` est au-dessus de sa luminance
-nominale. *Le bas d'une échelle ne doit pas parler*, et c'est la formule qui le
-dit.
-
-**Vérifié sur les PIXELS de l'écran**, à graine égale (`?paquet=1314`), en
-comparant les deux captures : orange **+69 %** de chroma, violet **+44 %**, bleu
-**+39 %**, vert +9 %, **blanc 0 % — pas un pixel.**
-
-Trois choses à ne pas défaire :
-
-- **UN SEUL DÉCALAGE POUR LES TROIS NIVEAUX, et il se calcule sur celui du
-  BAS.** Appliqué niveau par niveau, chacun descendrait jusqu'à son propre
-  plancher et *le dégradé s'écraserait en un aplat* : ce qui doit se conserver,
-  c'est l'ÉCART entre les trois ;
-- **le plancher est fixé par le MOT DU TYPE**, et le chiffre est mesuré : à
-  0,065 il garde **4,77** de contraste sur le pire cran — *exactement ce qu'il
-  avait avant la descente* — et le cartouche 6,09. Les deux textes foncent d'un
-  cran pour le payer (`#283644` et `#303e4c`) ;
-- **la teinte et la descente lisent le même `hi`** (`teinteDuMetal`), parce que
-  *deux endroits qui décriraient la même teinte se désaccorderaient au premier
-  réglage.*
-
-**CE QUI RESTE UN MUR, ET IL EST PHYSIQUE** : même au plancher, le bleu reste à
-34 de C\*ab contre 68 au vert. Pour l'égaler il faudrait descendre à 0,48 de
-luminance — *une plaque bleu franc, qui n'est plus « une zone de texte à fond
-clair »* et sur laquelle aucun texte sombre ne passe. **Une teinte sombre ne
-peut pas être aussi colorée qu'un vert à clarté élevée.**
-
-#### LA PASTILLE EST DE LA PLAQUE, PAS UNE PIÈCE POSÉE DESSUS
-
-Elle était d'un gris fixe un cran sous le blanc, donc sur une plaque teintée elle
-ressortait **plus claire que son fond** — c'est-à-dire en relief là où elle doit
-être un creux, et grise au milieu d'un vert. *Un badge qui ne parle pas la langue
-de ce qui le porte se lit comme un calque mal posé*, la règle déjà tenue par
-l'opacité de cette même plaque.
-
-**Elle garde son écart de luminance** (0,042 sous le bas du dégradé), qui est
-exactement celui du gris d'avant : *ce qui la distingue est sa profondeur, pas sa
-couleur.*
-
-#### LE DÉFAUT RESTE LA PLAQUE D'AVANT
-
-Comme le crème pour le lustre : **une carte sans rang ne bouge pas d'un pixel** —
-vérifié, `#fdfefe` et `#dde4ec` au pixel près. *Les quatre autres modes n'ont pas
-de plaque aujourd'hui*, mais le jour où elle y arrive, c'est le bas de l'échelle
-qui ne doit pas se mettre à parler.
-
-Et **la table se CALCULE depuis `METAUX`, elle ne se recopie pas** : *un métal et
-la plaque qu'il teinte sont le même fait*, donc une retouche de l'échelle doit
-suivre jusqu'ici. C'est ce qui sépare ce cas de `TON_LUSTRE`, qui est une table à
-part parce qu'une couleur peinte et la lumière qu'elle renvoie sont deux faits.
-
-#### CE QUI RESTE À TRANCHER PAR KEKO — la plaque
-
-- **la police** : Baloo 2 est mon choix, et une autre se pose en une ligne —
-  Nunito (plus sobre), Quicksand (plus iOS), Fredoka (plus cartoon, trop pour un
-  corps de texte) ;
-- **le départ de la plaque** (60,5 % de la hauteur, donc 38 % de la carte) : c'est
-  la proportion d'une carte de collection moderne, et elle se règle d'un chiffre ;
-- **le rayon des coins** (5,5 %), **l'épaisseur du cadre** (2,7 U) et **l'air
-  autour de l'emoji** (7 U), qui décide aussi de sa taille ;
-- **la force de la teinte** (`PIGMENT_PLAQUE`, 1,4 / 1,7), sa clarté
-  (`LUM_PLAQUE`, 0,895 / 0,795 / 0,752) et surtout **la descente**
-  (`DESCENTE_PLAQUE`, 0,065) : *le pigment ne fait plus rien aux teintes qui
-  saturent*, donc **c'est la descente, et elle seule, qui donne de la couleur
-  au bleu, au violet et à l'orange.** Elle se paie sur le mot du type, qui est
-  à 4,77 pour un plancher de 4,5 — un cran de plus demanderait de foncer les
-  textes une quatrième fois ;
-- `?texte=sombre` rend le dégradé noir — *ce qui a servi à choisir doit rester
-  ouvrable.*
-
-#### CE QUI RESTE À TRANCHER PAR KEKO — la rareté
-
-- **les parts de la pyramide** (50 / 25 / 15 / 7,5 / 2,5) et **les chances du
-  paquet** (70 / 16 / 10 / 3,2 / 0,8), qui sont de moi ;
-- **les deux chances de bonus** (10 % et 3 %) : *une fréquence d'apparition ne
-  se juge qu'en ouvrant des paquets* ;
-- **la force et la vitesse de la feuille** (0,28 et un passage toutes les six
-  secondes) : *une bande qui traverse ne se juge qu'en la regardant passer* ;
-- **les quatre autres modes n'ont pas de bonus**, parce que la portée était « le
-  mode emoji seulement ». *Rien n'empêche de les leur donner* : le drapeau vit
-  sur `CarteAPeindre`, qui est commun aux cinq modes.
-
-### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
-
-- **les 270 drapeaux** sont un groupe à part — ce sont des pays, pas des objets.
-  Les garder, ou en faire un mode à eux. *Ils tombent désormais à 94 % dans les
-  deux crans du bas*, donc ils ne faussent plus l'échelle, mais ils occupent un
-  septième des cartes ;
-- **les 24 % non classés** : ils sortent tous dans le bas, et l'ancienneté est
-  tout ce qu'on sait d'eux. *Si un emoji de 2021 devient très employé, rien ne
-  le dira* — le classement d'Unicode est arrêté à la version 12.0 ;
-- **l'animation est FAITE**, mais son poids est à juger : **411 Ko par emoji
-  animé**, soit de l'ordre d'un mégaoctet pour un paquet qui en contient deux.
-  *Le Lottie ferait onze kilo-octets*, au prix d'une dépendance ;
-- **le nom long se tronque** : « Volume des enceintes élevé » ne tient pas sur
-  une carte. *C'est le comportement de tous les modes* — la taille cède, puis le
-  nom se coupe — mais les noms CLDR sont plus longs que des noms propres.
-
-## LE PLATEAU — un prototype pour une seule question
-
-Idee de Keko, cadree par lui en regles precises : une grille 4x4, une carte
-posee produit +1 par tick, et **deux cartes cote a cote se paient selon la
-DISTANCE entre leurs articles Wikipedia**. Tick a 5 s. Rien d'autre — « pas de
-marche, pas de guildes, pas de quetes, pas d'effets visuels. Du jouable, moche,
-rapide. »
-
-### LE BONUS DECROIT AVEC LA DISTANCE — `portee - sauts`
-
-Tranche par Keko, en une formule : **« bonus = 5 - nombre de sauts (0 si pas
-joignable) »**. A portee 5 : lien direct +4, un intermediaire +3, deux +2, trois
-+1, rien au-dela. *Les deux cartes du couple le gagnent*, comme avant.
-
-*Elle remplace la premiere regle*, qui ne payait que le lien direct — et c'est
-mesure, sur le critere du projet : **ce que coute de jouer au hasard**, le score
-du meilleur arrangement trouve contre un placement aleatoire, sur 300 mains.
-
-| bareme | cout du hasard |
-|---|---|
-| **l'ancien** (lien direct, +1) | **19 %** |
-| `3 - sauts` | 46 % |
-| `4 - sauts` | 44 % |
-| **`5 - sauts`** | **42 %** |
-| `6 - sauts` | 39 % |
-| table `[4, 2]` | 55 % |
-
-**LA FORMULE DOUBLE LA DECISION** — 42 % contre 19 %. *Avant, trois mains sur
-quatre ne pouvaient presque rien faire de leur arrangement.*
-
-**Et ce qui coute, c'est la longueur de la QUEUE** : a portee 5 on paie jusqu'a
-quatre sauts, donc **92 % des couples rapportent quelque chose** et le bonus
-devient un plancher. C'est pour ca qu'une table courte fait mieux (`[4, 2]` :
-55 %) — et **la formule a quand meme ete preferee**, sur le seul argument qui
-comptait : ***une regle qu'un joueur peut refaire dans sa tete est jouable, une
-table qu'il doit apprendre ne l'est pas.*** Treize points contre une phrase.
-
-**Un seul chiffre la regle** (`portee`), donc raccourcir la queue ne demande pas
-de toucher au code.
-
-#### ET ELLE A RENDU LE SOUS-POOL INUTILE — le gain n'etait pas vise
-
-`sousPool` existait pour une raison mesuree : sur les trois mille cartes, deux
-prises au hasard n'etaient liees que dans 0,25 % des cas, donc **77 % des mains
-etaient steriles** et l'arrangement ne changeait jamais le score. Refait avec la
-distance :
-
-| `sousPool` | cout du hasard | mains steriles | couples payants |
-|---|---|---|---|
-| 300 (defaut) | 42 % | **0 %** | 92 % |
-| 1 000 | 43 % | **0 %** | 80 % |
-| **3 000 (tout)** | **45 %** | **0 %** | **65 %** |
-
-**Plus une seule main sterile, a aucune taille** — *la connexite du graphe etait
-la depuis le debut (89,8 % des cartes dans une seule composante, 3,13 sauts en
-moyenne), c'est la regle qui ne s'en servait pas.* Et le pool ENTIER est le
-meilleur sur le critere, pour une raison lisible : **moins de liens directs, donc
-moins de plancher.**
-
-**Il reste un argument, et il est de DESIGN** : a 300 on joue des visages qu'on
-connait, a 3 000 la moitie du pool est obscure. *Le plaisir de reconnaitre
-quelqu'un ne se mesure pas* — le defaut reste a 300, et c'est a Keko de trancher.
-
-#### UN PARCOURS NE PEUT PAS LIRE UN GRAPHE A MOITIE ORIENTE
-
-`lies()` regarde les deux sens a la demande ; **un parcours ne peut pas.** Il
-avance de voisin en voisin, donc une arete ecrite dans un seul sens est un
-cul-de-sac : avec `{ B: ['C'] }`, partir de C ne mene nulle part et la distance
-C-B sortirait infinie alors qu'elles sont liees.
-
-*Le fichier du script est deja symetrise, donc ca ne changeait rien en jeu* —
-mais **une fonction qui rend un resultat faux sur une entree legale est une
-fonction fausse.** D'ou `symetrique()`, appele **une fois** au chargement
-(13 ms), et le graphe de test ecrit a moitie oriente expres.
-
-#### LE PARCOURS EST BORNE, BIDIRECTIONNEL ET MEMOISE
-
-Les trois, et chacun divise le travail d'un facteur qui compte :
-
-- **borne** a `portee - 1` sauts : *ce qui est au-dela ne rapporte rien de toute
-  facon*, donc la borne ne perd aucune information ;
-- **par les deux bouts** : a dix-huit voisins par carte, quatre sauts d'un seul
-  cote visitent cent mille noeuds, deux fois deux sauts en visitent six cents ;
-- **memoise**, parce que la grille ne bouge pas entre deux gestes et que le rendu
-  recommence a chaque image.
-
-Mesure : **0,03 ms par paire a froid, 1 ms pour une grille pleine.**
-
-#### LE BADGE DE LA MAIN EST DEVENU UN MAXIMUM, PLUS UN COMPTE
-
-Il disait « combien de cartes liees sont deja posees ». *Tant que seul le lien
-direct payait, ca disait quelque chose ; depuis que tout ce qui est joignable
-rapporte, presque chaque carte en main est joignable depuis presque toute la
-grille* — un compte afficherait « 10 » partout, donc rien.
-
-Il dit donc **le mieux que la carte puisse prendre**, et le survol dit a cote de
-qui. **Un changement de regle peut vider un affichage de son sens sans qu'une
-seule ligne ne devienne fausse.**
-
-Et le chiffre d'une case se decompose desormais **voisin par voisin, avec la
-distance** — « +4 avec Josephine (lien direct) +3 avec Talleyrand (1
-intermediaire) » : *un total ne dit pas d'ou il vient, et maintenant qu'un couple
-peut valoir 4, 3, 2 ou 1, le dire globalement ne suffit plus.* Une ligne de plus
-donne la composition de l'arrangement (« 2 x lien direct · 7 x 1 intermediaire »),
-parce que *le total ne dit pas si l'arrangement tient a deux liens directs ou a
-dix voisinages lointains.*
-
-#### LA BASE ET LE BONUS SONT DEUX CHIFFRES, DANS DEUX COINS
-
-Tranché par Keko : « on devrait afficher le score de base en haut à gauche, puis
-le bonus sous la forme +X en haut à droite ».
-
-*Un total ne dit pas d'où il vient*, et depuis que la distance fait varier le
-bonus — 4, 3, 2 ou 1 — lire « 9 » oblige à soustraire la base de tête pour savoir
-ce que l'arrangement a rapporté. **Deux coins, deux faits** : ce que la carte
-vaut seule, ce que ses voisins lui ajoutent. La base reste discrète (crème), le
-bonus porte l'ambre — *c'est lui qui bouge quand on déplace une carte.*
-
-**Et le bonus ne s'écrit que s'il existe** : un « +0 » se lirait comme une case
-qui a échoué, là où l'absence dit simplement qu'elle n'a pas de voisin joignable.
-
-#### CLIQUER UNE CARTE MONTRE CE QU'ELLE VAUDRAIT SUR CHAQUE CASE
-
-Demandé par Keko : « quand on clique sur une carte de la collection il faudrait
-afficher sur le grid les +X pour que le joueur sache où est la case la plus
-intéressante ».
-
-**C'est ce qui rend l'arrangement DÉCIDABLE**, et c'est le prolongement exact du
-badge vert de la main : celui-ci dit *combien* on peut gagner au mieux, l'aperçu
-dit *où*. Sans lui le joueur ne connaît pas le graphe de Wikipédia et pose au
-hasard — *il n'y aurait aucune décision à éprouver*, qui est la seule question
-que ce proto pose.
-
-Quatre choses qui le portent :
-
-- **le chiffre vit AU CENTRE de la case**, parce que les deux coins du haut sont
-  pris. *Trois chiffres au même endroit ne se lisent pas, ils se confondent* —
-  la leçon que Keko avait déjà signalée sur les deux premiers badges ;
-- **les MEILLEURES cases s'entourent de vert**, et toutes celles qui valent le
-  maximum, pas une seule. *Seize chiffres se comparent, un liseré se voit* — et
-  *désigner une case parmi deux équivalentes mentirait* ;
-- **un DÉPLACEMENT compte comme un dépôt.** Sélectionner une carte déjà posée
-  montre aussi les aperçus : c'est la même décision. La carte est **retirée de
-  sa case** avant le calcul, sinon *elle se verrait elle-même comme voisine*
-  depuis les cases adjacentes à celle qu'elle occupe ;
-- **le calcul DEMANDE la règle, il ne la recopie pas** (`apercuSurCase`, dans
-  `logic/board/plateau.ts`). *Deux endroits qui calculeraient le même bonus se
-  désaccorderaient au premier réglage* — et c'est précisément ce chiffre que le
-  joueur va croire. Neuf vérifications le tiennent.
-
-**On ne compte QUE ce que la carte gagne, pas ce que le couple rapporte.** Un
-couple paie ses deux cartes, donc le total du plateau monte du double de ce que
-l'aperçu annonce ; *mais ce que le joueur compare, c'est ce que SA carte vaut
-selon où il la pose*, et doubler chaque chiffre ne changerait pas le classement.
-
-
-#### LE BADGE ET L'APERÇU PASSAIENT PAR DEUX CALCULS — c'était le même chiffre
-
-Keko : « parfois le bonus affiché dans la collection ne match pas le bonus réel
-max du grid ».
-
-**Et il avait exactement raison, pour une raison nette** : le badge comptait
-**le meilleur bonus avec UNE carte posée**, l'aperçu additionne **tous les
-voisins d'une case**. Une case entre deux cartes liées vaut donc 8 pendant que
-le badge annonçait 4 — *et le décalage grandissait avec la grille*, puisqu'une
-case centrale a quatre voisins.
-
-***Deux affichages qui prétendent dire la même chose doivent passer par le même
-calcul.*** Le badge n'est plus qu'un `max` du tableau d'aperçus
-(`sommetDe(gains(...))`), donc il ne peut plus en diverger — *c'est la règle du
-projet, « deux endroits qui décrivent la même valeur se désaccordent au premier
-réglage », et ici ils s'étaient désaccordés d'emblée.*
-
-**ET LES DEUX PARTAGENT AUSSI LEUR SOCLE.** Quand on tient une carte de la
-grille, les aperçus se calculent sur le plateau *sans elle* ; les badges de la
-main se calculaient sur le plateau courant. *Deux référentiels différents sur un
-même écran, c'est le même défaut un cran plus loin* — ils lisent désormais le
-même `socle`.
-
-#### L'APERÇU NE S'AFFICHE QUE SUR LES CASES LIBRES
-
-Tranché par Keko : « il ne faut pas afficher les bonus sur les cases du grid
-déjà occupées ».
-
-*Poser sur une case occupée ÉCHANGE, donc c'est un placement légal* — mais ce
-n'est pas le geste qu'on cherche, et **seize chiffres dont la moitié annonce un
-échange ne se lisent plus.** Une case occupée porte déjà ses deux badges de
-production ; lui en ajouter un troisième, c'est exactement la confusion que les
-deux coins venaient de résoudre.
-
-**Et le badge de la main suit**, puisqu'il est le `max` du même tableau : il
-annonce le meilleur placement **parmi les cases qu'on montre**. *Sinon il
-promettrait un chiffre qu'aucune case affichée ne porte* — le premier défaut,
-repris par l'autre bout.
-
-**Le coût reste négligeable** : le badge se recalcule pour toute la main à
-chaque rendu, soit dix cartes × seize cases — mesuré **5,7 ms au premier rendu
-et 0,25 ms ensuite**, parce que le cache des distances ne retient que quatre-
-vingts paires.
-
-**Il vit derriere `?board`**, a cote du jeu comme les paquets : *tant qu'il
-n'est pas un jeu, il ne prend pas la page.* Tout est dans `BOARD.md` — les
-regles, les gestes, les constantes, comment regenerer le graphe.
-
-### LE GRAPHE SE COLLECTE UNE FOIS ET SE COMMITE
-
-`scripts/generate-links.ts` (`npm run liens`) interroge `prop=links` sur
-fr.wikipedia, ne garde que les liens qui tombent sur une autre carte du pool, et
-symetrise. Sortie : `public/data/links.json`, **570 Ko**. *Le jeu n'appelle
-jamais l'API* — c'est la regle du catalogue, reprise ici.
-
-Mesure : **910 585 liens parcourus, 15 minutes, aucune troncature.**
-
-**DEUX DEFAUTS PAYES EN L'ECRIVANT, et le second etait grave :**
-
-- **LA BORNE DE PAGINATION TRONQUAIT LE GRAPHE EN SILENCE.** `pllimit=max` rend
-  cinq cents liens par appel **tous titres confondus**, et un lot de cinquante
-  articles en porte ~32 000 : mon premier essai s'est arrete **pile sur ma borne
-  de quarante pages** (20 000 liens, le compte exact). Le graphe sortait deux
-  fois trop pauvre — 65 aretes contre 110 sur les memes cinquante cartes — et
-  ***rien ne le disait***. La borne est a 150, et une troncature se journalise
-  desormais. *J'avais meme publie un chiffre faux entre-temps* (3,95 % de
-  densite sur le top 300, mesure tronquee) ;
-- **LES REDIRECTIONS DES CIBLES DOIVENT ETRE RESOLUES.** `redirects=1` ne resout
-  que les titres qu'on DEMANDE, pas les cibles des liens : un article qui pointe
-  vers « Napoleon Bonaparte » — une redirection — ne serait jamais relie a la
-  carte « Napoleon Ier ». Mesure : **4 712 alias**, soit 61 % de titres
-  reconnaissables en plus, pour soixante requetes.
-
-### CE QUE LE POOL VAUT — et c'est ce qui decide si le jeu existe
-
-Keko voulait les chiffres pour juger. **Le graphe complet** : 27 452 aretes,
-degre moyen **18,3**, mediane **9**, 274 cartes sans aucun lien (9 %), densite
-**0,61 %**.
-
-**Mais la densite seule condamnait la regle 1**, et c'est le sous-pool qui la
-sauve — mesure sur 3 000 mains simulees par ligne :
-
-| `sousPool` | densite | paires liees par main | mains steriles | mains a 3 paires ou + |
-|---|---|---|---|---|
-| 100 | 6,55 % | 2,93 | **9 %** | **51 %** |
-| 200 | 5,03 % | 2,30 | 15 % | 39 % |
-| **300 (defaut)** | **3,96 %** | **1,77** | **23 %** | **26 %** |
-| 1 000 | 1,65 % | 0,73 | 52 % | 5 % |
-| 3 000 | 0,61 % | 0,27 | **77 %** | 1 % |
-
-***Sur le pool entier, trois mains sur quatre n'ont aucune synergie possible***
-— donc l'arrangement ne changerait jamais le score, et **le proto ne pourrait
-pas repondre a la question qu'il pose.** Le graphe est porte par les notoires :
-Donald Trump a 321 voisins, Obama 212, Meryl Streep 169 ; un obscur en a zero a
-quatre. Le catalogue etant trie par notoriete, prendre les N premiers suffit.
-
-**Keko n'avait pas de preference sur N**, donc : 300 par defaut et
-`?board&pool=N` pour en essayer un autre, avec les stats affichees a l'ecran.
-*Ce qui a servi a choisir doit rester ouvrable.*
-
-### « LIEES » ET « RELIEES » NE SONT PAS LA MEME CHOSE
-
-Keko : « donc y'a aucun chemin possible entre la majorite des cartes ? » —
-**non, et la distinction porte tout le reste.**
-
-*La densite dit si deux cartes se pointent DIRECTEMENT*, et c'est elle qui
-decide du jeu, puisque la synergie demande l'adjacence sur la grille. **La
-connexite dit s'il existe un CHEMIN**, et un degre moyen de dix-huit relie
-presque tout le monde. Mesure sur **1,2 million de paires** (400 departs x 2 999
-cibles) :
-
-| distance | noeuds entre les deux | part des paires |
-|---|---|---|
-| 1 saut | 0 (lien direct) | 0,9 % |
-| 2 sauts | 1 | 11,3 % |
-| **3 sauts** | **2** | **36,0 %** |
-| **4 sauts** | **3** | **34,5 %** |
-| 5 sauts | 4 | 13,0 % |
-| 6 sauts et + | 5 a 11 | 4,2 % |
-
-**2,62 noeuds intermediaires en moyenne**, et sept paires sur dix a deux ou
-trois. C'est l'effet petit monde : *un graphe de 3 000 noeuds a dix-huit voisins
-chacun tient dans un diametre de trois ou quatre.* Le plus long chemin trouve
-fait douze sauts, entre deux acteurs japonais.
-
-**ET LE CHIFFRE QUE LA MOYENNE CACHAIT : 20,8 % des paires ne sont PAS
-joignables du tout.** Pas « loin » — *sans aucun chemin.* Il y a **289
-composantes** : une geante de 2 694 cartes (89,8 %) et 288 miettes, dont 274
-cartes completement isolees. Un depart tire au hasard tombe hors de la geante
-une fois sur dix, et alors presque rien ne lui est accessible.
-
-### LE JOUEUR NE CONNAIT PAS LE GRAPHE DE WIKIPEDIA
-
-**C'est le point de regle que j'ai signale a Keko**, et il ne se voit pas en
-lisant les regles : poser a l'aveugle, le joueur **decouvre** les synergies
-apres coup. Ce serait du hasard, pas une decision — et c'est la decision qu'on
-veut eprouver.
-
-Chaque carte de la main porte donc **un « +N » qui compte ses voisins deja
-poses**. *C'est de l'AFFICHAGE, pas une regle* — aucun calcul n'a bouge — et
-`BOARD.md` dit ou le retirer pour juger a l'aveugle.
-
-### LE GESTE EST SELECTION PUIS DEPOT, pas un glisser
-
-On clique la carte, on clique la case. *Le glisser du jeu a coute trois
-allers-retours a regler au doigt* ; sur un proto qu'on va jeter, il n'y a rien a
-gagner a le refaire. **La zone de la main est une destination comme une autre** :
-une carte de la grille qu'on y envoie revient en main — c'est le modele `Lieu`,
-ou « tout deplacement est prendre ici, poser la ».
-
-Et **poser sur une case occupee ECHANGE** : ce que la destination deloge repart
-d'ou vient la carte. *Sans ca, chaque nouveau contenant multiplierait les cas* —
-la regle du sac, du chargement et du coffre, reprise telle quelle.
-
-### CE QUE LES VERIFICATIONS TIENNENT
-
-`src/logic/board/plateau.verif.ts`, **42 verifications** : la carte seule, deux
-liees adjacentes, deux liees NON adjacentes, trois en ligne dont deux paires
-(celle du milieu touche les deux, donc elle prend deux fois le bonus), et quatre
-proprietes qui ne se devinent pas :
-
-- **vingt-quatre couples sur une grille 4x4, pas quarante-huit.** On ne regarde
-  que le voisin de DROITE et celui du BAS : *parcourir les quatre voisins
-  compterait chaque couple deux fois*, et la synergie serait doublee sans qu'une
-  ligne ne le dise ;
-- **les bords ne se rejoignent pas** : la case 3 finit sa ligne, la 4 ouvre la
-  suivante. *Un index qui ne regarde que « i + 1 » les croirait voisines* ;
-- **aucune diagonale** : 0 et 5 se touchent par le coin et ne comptent pas ;
-- **poser, deplacer et retirer ne perdent ni ne dupliquent jamais une carte**,
-  quel que soit le chemin — y compris en posant sur une case occupee.
-
-### LE DUEL — `?duel`
-
-Demandé par Keko : « chaque joueur pose un perso à tour de rôle, et plutôt qu'un
-score au tick, chaque perso marque des points et le total quand la grid est
-pleine donne le vainqueur ».
-
-- grille **4×4**, donc **huit cartes chacun** — *ce n'est pas un réglage, c'est
-  la moitié des cases* : sinon la grille ne se remplit pas exactement, et « le
-  total quand elle est pleine » cesse d'avoir un sens ;
-- on pose **à tour de rôle**, et **il n'y a ni déplacement ni reprise** : *un
-  coup qu'on peut défaire n'est pas un coup*, et le dernier à jouer pourrait
-  refaire toute la grille ;
-- **plus de tick** : le score se lit sur la grille, en permanence, et il est
-  définitif quand elle est pleine ;
-- **le barème est celui du solo** (`portee - sauts`), et il vient de
-  `plateau.ts` — *deux modes qui paieraient différemment le même couple
-  divergeraient au premier réglage.*
-
-#### LE COUPLE PAIE SES DEUX CARTES, ET C'EST TOUT LE DILEMME
-
-Poser contre une carte adverse **la fait marquer autant que soi**. La meilleure
-case pour toi peut donc être un cadeau, et c'est la seule décision que ce mode
-ajoute au solo.
-
-**L'autre règle imaginable — « celui qui pose encaisse tout le couple » — est
-INCOMPATIBLE avec ce que Keko demande** : elle a besoin de savoir qui a posé en
-dernier, donc le score ne se lit plus sur la grille, il s'accumule. *Et mesurée,
-elle supprimait le dilemme* : l'adversaire ne gagnant jamais rien, un bot qui
-maximise son score et un bot qui cherche à le priver rendaient **exactement les
-mêmes chiffres**, à la décimale.
-
-#### CE QUE LA MESURE DIT — 400 parties, bots gloutons
-
-| | J1 gagne | nuls | matchs serrés | écart moyen |
-|---|---|---|---|---|
-| **alterné** (1-1-1…) | **15 %** | 7 % | 41 % | 9,8 |
-| **serpent** (1-2-2…) | **30 %** | 6 % | 48 % | 8,5 |
-
-**LE SECOND JOUEUR EST FAVORISÉ, ET C'EST STRUCTUREL.** *L'ordre de pose ne
-change pourtant rien au total* — chaque couple est compté une fois, où qu'il
-arrive — donc **l'avantage est d'INFORMATION** : il voit toujours un coup de
-plus, et sur huit coups ça s'accumule.
-
-Le **serpent** le réduit de moitié sans rien changer d'autre : chacun pose
-toujours huit cartes, mais les coups se répondent par paires. *À trancher par
-Keko* — il a demandé « à tour de rôle », donc l'alterné est le défaut, et
-`?duel&ordre=serpent` essaie l'autre.
-
-**Et jouer bien compte** : le bot glouton bat le hasard **84 à 86 %** du temps,
-pour douze points d'écart.
-
-#### CHERCHER À PRIVER L'ADVERSAIRE FAIT PERDRE
-
-**Mesuré, et contre-intuitif** : un bot qui maximise `son gain − le gain qu'il
-concède` se fait battre **76 %** du temps par un bot qui maximise simplement son
-propre gain.
-
-*En évitant les cartes adverses, on se prive des positions où ses PROPRES cartes
-se groupent* — et une carte posée entre deux des siennes encaisse le couple deux
-fois, donc le double. **Le jeu n'est pas à somme nulle, et le réflexe défensif le
-traite comme s'il l'était.**
-
-C'est le bot du jeu, pour cette raison exactement.
-
-#### L'ADVERSAIRE EST UN BOT
-
-Keko teste seul, depuis son téléphone : *un hot-seat ne se juge pas quand on joue
-les deux camps.* Il pose après un temps mort de 420 ms — **assez pour qu'on le
-VOIE poser**, trop court pour qu'on attende.
-
-#### L'APERÇU PORTE LES DEUX CHIFFRES
-
-Clique une carte : chaque case libre dit **en vert ce qu'elle te rapporte** et
-**en rouge ce qu'elle donne au bot**. *N'afficher que son propre gain cacherait
-précisément ce qu'il y a à décider.*
-
-Et le liseré d'une case posée dit à qui elle est — **bleu pour toi, rouge pour le
-bot** : *c'est la seule chose qu'on cherche d'un coup d'oeil sur une grille
-pleine*, et un chiffre par case ne le dirait pas.
-
-#### LA PAGE DU PLATEAU DÉFILE — et c'est la seule du projet qui en ait le droit
-
-Keko, sur le duel : « y'a un souci car quand je pose, mes cartes sont au mauvais
-endroit et pas sur la grille ».
-
-**Je n'ai pas pu reproduire le symptôme** — l'extension du navigateur n'était pas
-connectée — **mais la mesure a trouvé un défaut certain au même endroit** : la
-page demandait **419 px de haut** pour une grille 4x4, et `body` interdit le
-défilement. *Tout ce qui dépassait était simplement coupé, sans rien dire.*
-
-| format | la page demandait | l'écran offrait | |
-|---|---|---|---|
-| téléphone courant (844 x 390) | 419 px | 390 | **déborde de 29** |
-| avec la barre du navigateur (340) | 419 px | 340 | **déborde de 79** |
-| iPhone SE couché (667 x 320) | 419 px | 320 | **déborde de 99** |
-| avec la barre (270) | 419 px | 270 | **déborde de 149** |
-
-**Deux coupables, et le second annulait le premier :**
-
-- **le budget de 260 px était faux.** L'en-tête, les boutons, l'aide et les
-  remplissages prennent **160 px**, pas 260 ;
-- **le plancher de 64 px par case ignorait la place qu'il y a.** La formule
-  calculait 32 px à 390 de haut, le plancher la remontait à 64 — *un plancher
-  qui dépasse la place qu'il y a n'est pas un plancher, c'est un débordement*,
-  la règle déjà payée sur la bande des onglets du coffre. Il descend au
-  **plancher tactile du projet, 48 px** : *48 est une limite, pas un réglage.*
-
-**Et surtout, `.bd` DÉFILE** (`height: 100vh`, `overflow-y: auto`,
-`touch-action: pan-y`). *L'interdiction du défilement vaut pour le JEU*, et pour
-une raison précise — « les cartes de l'éventail dépassent de quelques pixels,
-assez pour rendre la page défilable et faire sauter la main sous le doigt ».
-**Cette raison ne vaut pas ici** : pas d'éventail, pas de glisser, et une grille
-qui demande 419 px n'a aucune chance de tenir dans un téléphone couché.
-
-Mesuré après : **1 px de débordement** au format courant (844 x 390), 15 à 85 px
-sur les écrans les plus courts — et ce qui dépasse se défile au lieu de
-disparaître. Les deux écrans partagent la formule (`tailleDeCase`) : *deux
-écrans qui dessinent la même grille ne peuvent pas la dimensionner chacun de
-leur côté.*
-
-**Si ce n'était pas ça**, les trois symptômes possibles ne pointent pas la même
-cause : la carte arrive dans une **autre case** que celle qu'on a cliquée (un
-index faux), elle apparaît **hors de la grille** (une mise en page), ou elle
-**n'apparaît pas** (un refus silencieux de la règle).
-
-#### UN APERÇU SE TAIT SUR UNE CASE QUI NE RAPPORTE QUE LA BASE
-
-`gainsDuel` compte la base dans `moi`, là où l'aperçu du solo ne compte que le
-bonus. **Résultat : sur une grille vide, les seize cases affichaient `+1` et
-s'entouraient TOUTES de vert**, puisqu'elles étaient à égalité.
-
-*Un chiffre sur les seize cases ne désigne aucune case* — c'est la règle du
-solo, où l'aperçu se tait à zéro, et elle vaut dès qu'un affichage prétend
-montrer où aller.
-
-#### UN COUPLE MIXTE RETIRE AU LIEU D'AJOUTER — et il ne change pas qui gagne
-
-Proposé par Keko : « et si les liens avec les cartes ennemies diminuaient le
-score au lieu de s'ajouter ? par ex si je pose une carte à côté d'une carte
-ennemie, au lieu de lui donner +2 la carte perd 2 ».
-
-**C'est le défaut depuis** (`mixte: 'moins'`), et `?duel&mixte=plus` rend le
-barème d'origine.
-
-##### LA MESURE DIT D'ABORD UNE CHOSE QU'IL FAUT SAVOIR : l'écart ne bouge pas
-
-*Un couple symétrique déplace les deux scores de la même quantité*, donc il est
-**neutre sur l'écart** — et c'est l'écart qui désigne le vainqueur. Mesuré sur
-300 grilles tirées au hasard : **l'écart est identique au point près, 300 fois
-sur 300.**
-
-| la même grille | `plus` | `moins` |
-|---|---|---|
-| | 48 / 60 → **−12** | 8 / 20 → **−12** |
-| | 49 / 33 → **+16** | 7 / −9 → **+16** |
-| | 60 / 68 → **−8** | −16 / −8 → **−8** |
-
-**Donc ce n'était pas un dilemme avant, et ça n'en devient pas un.** La note
-disait « c'est tout le dilemme du mode » à propos du barème `plus` — *c'était
-faux*, et la proposition de Keko est ce qui a obligé à le mesurer. Une
-vérification le verrouille désormais.
-
-##### ET C'EST KEKO QUI A TROUVÉ LE RESTE : « pourquoi +7 est meilleur que +3 et −4 ? »
-
-**Il ne l'est pas.** Gagner 3 en amputant l'autre de 4 déplace l'écart de 7,
-exactement comme gagner 7 sans rien lui faire. *Le liseré, le badge de la main
-et le bot jugeaient sur MON score*, donc sur un critère qui n'est pas celui du
-jeu. Les trois jugent désormais sur `moi − lui`.
-
-**ET ÇA FAIT TOMBER DEUX CONCLUSIONS QUE J'AVAIS ÉCRITES.** Je les avais
-mesurées avec un bot qui maximise son propre score — *donc avec un bot qui joue
-faux sous le malus*, puisqu'il fuyait un contact neutre.
-
-Refait avec le bon critère, 300 parties :
-
-| | `plus` | `moins` | `plancher` |
-|---|---|---|---|
-| suites de coups identiques à `plus` | — | **200/200** | **18/200** |
-| J1 gagne | 66 % | 66 % | **51 %** |
-| écart moyen | 9,0 | 9,0 | **7,2** |
-| contacts mixtes payants | 6,6 | 6,6 | 6,9 |
-
-***`plus` ET `moins` SONT LE MÊME JEU.*** Pas « équivalents » : **les mêmes
-coups, dans le même ordre, 200 fois sur 200.** Seuls les totaux affichés
-diffèrent — 66/66 d'un côté, 50/50 de l'autre. *Le classement des coups par
-écart est identique sous les deux barèmes*, donc un joueur qui joue pour gagner
-ne voit aucune différence.
-
-Les deux conclusions fausses, et pourquoi :
-
-- **« les camps se séparent en territoires »** (9,4 → 3,7 contacts mixtes) :
-  c'était le bot qui fuyait, pas la règle. Avec le bon critère, les contacts
-  mixtes sont **identiques** sous les deux barèmes (6,6) ;
-- **« l'avantage du second joueur s'efface »** (15 % → 42 %) : même cause.
-  *C'est le bot qui jouait mal sous `moins`, pas le second joueur qui perdait son
-  avantage* — et avec le bon critère J1 gagne 66 % sous les deux.
-
-**CE QUE `moins` APPORTE RÉELLEMENT, c'est donc l'AFFICHAGE, et seulement lui.**
-L'écran annonçait « +4 pour toi, +4 pour le bot » comme si c'était un
-arbitrage ; il dit « −4 / −4 », ce qui se lit comme ce que c'est — un terrain
-sans intérêt. *Ce n'est pas rien* : une règle qui ment sur ce qu'elle fait est
-pire qu'une règle neutre qui le dit. **Mais ce n'est pas un changement de jeu.**
-
-**Prix connu et assumé : les scores deviennent négatifs** (mesuré jusqu'à −22).
-C'est lisible — un total négatif dit qu'on s'est fait coincer — mais c'est à
-Keko de dire s'il le garde.
-
-***ET LA LEÇON GÉNÉRALE, qui vaut au-delà d'ici : un bot de mesure juge sur un
-critère, et si ce critère n'est pas le but du jeu, il ne mesure pas le jeu.*** Le
-projet l'avait déjà payé trois fois — « un bot qui ne bloque pas avant de frapper
-ne mesure rien », la liste de cas qui ignorait `energie`, celle qui ignorait la
-résistance. **C'est la même faute par le quatrième bout** : ici le bot
-connaissait tous les effets, et c'est son OBJECTIF qui était faux.
-
-##### LE PLANCHER À ZÉRO EST LA SEULE DES TROIS QUI CRÉE UNE ATTAQUE
-
-`?duel&mixte=plancher` : le malus s'applique, **mais une carte ne descend jamais
-sous zéro.**
-
-*C'est la borne qui casse la symétrie* : une carte isolée n'a qu'un point à
-perdre, une carte bien placée en a neuf. **Sacrifier une carte faible pour
-amputer une carte forte devient donc un coup**, et l'écart bouge enfin — mesuré,
-**65 grilles sur 300 changent de vainqueur** entre `plus` et `plancher`, contre
-zéro entre `plus` et `moins`.
-
-Et le bot qui cherche à priver l'adversaire **devient le meilleur** : il gagne
-69 % contre le bot qui maximise son seul score, là où il perdait sous les deux
-autres barèmes. *C'est le signe qu'un vrai dilemme existe* — le critère du
-projet, pris par l'autre bout.
-
-**C'est une décision de design, elle revient à Keko.** La règle coûte une ligne
-et se lit en une phrase (« une carte ne rapporte jamais moins de zéro »), mais
-elle change la nature du mode : on peut jouer pour détruire.
-
-##### TROIS CHOSES QUI PORTENT L'IMPLÉMENTATION
-
-- **l'aperçu se calcule par DIFFÉRENCE DE SCORES**, il ne refait plus la somme
-  des couples. *Le plancher est une borne par CARTE*, donc poser peut remonter
-  une carte voisine déjà tombée à zéro — une somme ne peut pas le voir. Et ça
-  garantit ce qui compte : **l'aperçu dit exactement ce que le score fera** ;
-- **la couleur dit À QUI, le signe dit QUOI.** Vert pour toi, rouge pour le bot,
-  et un `−3` en vert se lit « ta carte perd 3 ». *Deux conventions pour deux
-  faits, donc aucune n'a besoin de l'autre* ;
-- **le liseré du meilleur coup peut désigner un MOINDRE MAL.** Sous le malus
-  toutes les cases peuvent coûter, et le meilleur est alors celui qui coûte le
-  moins. *Mais on ne désigne rien quand tout est à égalité* — sur une grille
-  vide les seize cases valent la base, et seize liserés ne désignent aucune
-  case.
-
-#### CE QUE LE JEU EST VRAIMENT : un jeu de GÉOMÉTRIE, pas de liens
-
-Keko : « actuellement, le principe consiste à placer la carte au meilleur
-endroit finalement… après il y a une dimension stratégique spatialement
-(prendre le centre etc). Tu en penses quoi ? »
-
-**Son diagnostic est exact, et il est pire que ce qu'il dit.** Mesuré : un bot
-qui prend **le centre d'abord, avec une carte tirée AU HASARD**, sans jamais
-regarder un seul lien, **bat le bot qui optimise tout — 72 %.**
-
-***Donc le graphe Wikipédia, qui est l'idée du jeu, ne décide presque rien.***
-
-##### LA CAUSE EST LA PORTÉE, et elle se mesure
-
-À portée 5, **91 % des couples paient quelque chose** : un voisin vaut donc
-presque toujours, et **le NOMBRE de voisins devient le seul facteur** — quatre
-au centre, deux dans un coin. *C'est la portée longue, choisie dans le solo
-pour que l'arrangement compte, qui a eu l'effet inverse en duel.*
-
-| portée | couples qui paient | le géomètre bat le glouton | anticiper paie (`plancher`) | bien jouer paie |
-|---|---|---|---|---|
-| **5** (défaut) | 91 % | **72 %** | 81 % | 85 % |
-| **4** | 77 % | **45 %** | 69 % | 85 % |
-| **3** | 35 % | **21 %** | 56 % | 82 % |
-| 2 | 5 % | 18 % | 35 % | **49 %** |
-
-*Le pivot est net* : à 4 l'avantage de la géométrie disparaît, à 3 elle devient
-nettement insuffisante — **et bien jouer paie toujours autant** (82 %). À 2 le
-jeu meurt : il n'y a plus assez de liens pour qu'un choix existe.
-
-`?duel&portee=4` et `?duel&portee=3` sont ouvrables.
-
-##### ET LE PLANCHER EST CE QUI CRÉE LA PROFONDEUR
-
-Un bot qui regarde **un coup de plus** (minimax à deux demi-coups) contre le
-bot glouton :
-
-| | `moins` | `plancher` |
-|---|---|---|
-| portée 5 | **51 %** | **81 %** |
-| portée 4 | 54 % | **69 %** |
-| portée 3 | 55 % | 56 % |
-
-***Sans le plancher, le jeu est glouton par construction*** : regarder plus loin
-ne rapporte rien, parce qu'un couple est encaissé une fois pour toutes et que
-rien ne peut le défaire. **Le plancher rend un couple MENAÇABLE**, donc un coup
-a enfin un avenir.
-
-*Et la profondeur retombe quand les liens se raréfient* (56 % à portée 3) : s'il
-n'y a qu'une occasion, il n'y a rien à préparer. **Les deux réglages tirent donc
-en sens contraire**, et le compromis mesuré est **portée 4 + plancher** — la
-géométrie ne domine plus (45 %), le graphe compte, et anticiper paie 69 %.
-
-##### CE QUI NE DÉCIDE RIEN AUJOURD'HUI, et qui pourrait
-
-- **la CARTE qu'on choisit pèse autant que la CASE, et pas plus** : un bot qui
-  tire sa carte au hasard mais choisit bien sa case, et un bot qui fait
-  l'inverse, sont à égalité (48 % / 52 %). *La main n'est donc qu'un sac de
-  nœuds du graphe* ;
-- **rien de ce qu'une carte PORTE ne joue** — ni rareté, ni attaque, ni défense,
-  ni domaine. Elles sont interchangeables à leurs liens près. *C'est le premier
-  endroit où chercher si la portée et le plancher ne suffisent pas* ;
-- **on pose toute sa main** : huit cartes, huit coups. Donc *il n'y a jamais à
-  choisir ce qu'on garde*. Une main plus grande que le nombre de coups
-  ouvrirait cette décision sans toucher au barème.
-
-#### UNE VALEUR DE PAGE EN GUISE DE BASE : ce qu'on peut extraire, et la forme qui marche
-
-Keko : « et si maintenant, au lieu de 1 en score de base, une valeur liée à la
-page wiki ? comme longueur, qualité etc. Déjà quelles sont les différentes
-options ? on peut "extraire" quoi comme valeur d'une page autre que sa taille ou
-qualité ? »
-
-##### L'INVENTAIRE, mesuré sur huit articles réels
-
-**Ce qui répond PAR LOT** (50 titres par appel, 200 à 550 ms — donc ~1 min pour
-3 000 cartes) :
-
-| | exemple (Napoléon / Platon / Marie Curie / Qu Yuan) |
-|---|---|
-| taille en octets | *déjà dans le catalogue* |
-| **catégories** | 108 / 66 / 171 / — |
-| **noms (redirections vers l'article)** | 3 / 9 / 27 / 8 |
-| images | 37 / 16 / 147 / 82 |
-| liens externes (les sources) | 49 / 32 / 76 / 119 |
-| liens sortants | 500+ |
-
-**MAIS TOUS CES COMPTEURS SE PAGINENT**, et c'est le piège déjà payé sur
-`links.json` : `cllimit=max` rend **500 éléments pour tout le lot**, donc la
-première page prend le quota et *les dernières sortent à zéro sans que rien ne le
-dise.* Mesuré : les liens sortants rendent `500 / 0 / 0 / 0…`
-
-**Ce qui ne répond qu'une page à la fois** (~200 à 430 ms, donc ~15 min) :
-
-- **les liens ENTRANTS** — la vraie centralité, et tronqués à 500 pour Napoléon ;
-- les **contributeurs** (500 inscrits + 498 anonymes pour Napoléon) ;
-- la **date de création** de l'article (Napoléon : 2003-01-17) — *l'ancienneté*.
-
-**Wikidata, par lot mais LENT** (7,6 s pour cinq entités, donc ~75 min pour
-3 000) : le nombre de **déclarations** (430 à 638) et surtout le nombre
-d'**identifiants externes** — 195 à 434 — *la reconnaissance institutionnelle.*
-
-**ET LA « QUALITÉ » DÉCLARÉE EST INUTILISABLE** : `pageassessments` ne répond que
-pour **deux articles sur huit** (Napoléon A/maximum, Jésus-Christ BD/faible).
-*Une valeur qui manque trois fois sur quatre n'est pas une valeur.*
-
-##### LE PIÈGE, ET IL EST MESURÉ : une base additive fait TIRER la partie
-
-*On pose toute sa main — huit cartes, huit coups* — donc **la somme des bases est
-fixée au tirage.** Cette part du score ne se joue pas.
-
-400 parties, portée 4, plancher, la valeur étant les vues en échelle log :
-
-| forme | part du score qui vient des bases | la plus grosse main gagne | écart moyen |
-|---|---|---|---|
-| base 1 (référence) | 34 % | **34 %** | 6,0 |
-| **A — base = valeur** | **75 %** | **65 %** | 8,2 |
-| **B — la valeur MULTIPLIE le bonus** | 32 % | **36 %** | 7,1 |
-| C — les deux | 74 % | 69 % | 9,7 |
-
-***Sous la forme A, deux parties sur trois sont gagnées par celui qui a tiré la
-plus grosse main.*** Les trois quarts du score cessent de se jouer.
-
-**LA FORME B N'A PAS CE DÉFAUT** — 36 %, soit le niveau de la référence, donc
-*aucune corrélation entre le tirage et la victoire* — et elle fait quand même
-compter la page : **une grosse carte mal placée devient un gâchis.** C'est
-exactement la décision spatiale qui manque au mode.
-
-##### ET LE CHOIX DE LA VALEUR SE MESURE AUSSI
-
-Sur le sous-pool de 300, en dix crans :
-
-| | distribution |
-|---|---|
-| **vues** (le champ `attaque`) | 5 et 6 portent **75 % du pool** — *ça ne discrimine presque pas* |
-| **taille de l'article** (`defense`) | étalée de 1 à 10, mode à 7-8 — **la meilleure des deux** |
-| **degré dans le pool** | 0 / médiane 9 / max 80 — énorme, mais *redondant avec le bonus* |
-
-*Les vues ne séparent pas, et c'est logique* : les trois cents plus notoires sont
-tous très lus. **La taille, elle, est bien étalée** — et c'est celle que Keko
-nommait en premier.
-
-**Ce qui vaudrait d'être essayé au-delà de la taille**, parce que ça dit autre
-chose qu'un volume de texte : **les noms** (combien de façons les gens appellent
-la personne : Marie Curie 27, Platon 9), **l'âge de l'article**, et les
-**identifiants externes**. *Trois mesures de notoriété VÉCUE plutôt que de
-quantité écrite.*
-
-##### LE BON CRITERE N'EST PAS L'ETALEMENT, C'EST LA CORRELATION A LA TAILLE
-
-Keko : « donc niveau stats génériques, on a que la longueur de l'article et sa
-qualité si on veut faire du quantitatif ? et le nombre d'images va être trop
-discret comme chiffre et pas utilisable correctement. Je me trompe ? »
-
-**Oui, sur deux points — et il a raison sur le troisième par une autre raison
-que celle qu'il donne.** Collecté sur 50 cartes du pool, en échantillon
-régulier (19 appels, 24 s — donc ~25 min pour les 3 000) :
-
-| mesure | min / médiane / max | valeurs distinctes | crans sur 10 | **corrélé à la taille** |
-|---|---|---|---|---|
-| taille de l'article | 10 566 / 73 083 / 294 586 | 50 | 10 | — |
-| **vues** | 3,4 M / 5,2 M / 53,9 M | 50 | 8 | **0,26** |
-| noms (redirections) | 0 / 2 / 22 | **13** | 9 | 0,61 |
-| degré dans le pool | 0 / 13 / 61 | 25 | 9 | 0,69 |
-| catégories | 4 / 19 / 59 | 30 | 10 | 0,72 |
-| langues | 19 / 111 / 340 | 44 | 9 | 0,78 |
-| **images** | 7 / 24 / 100 | 31 | **10** | **0,86** |
-| **liens externes** | 4 / 119 / 583 | 45 | 8 | **0,96** |
-
-***Tout est étalé. Presque tout redit la taille.*** Un article long a plus
-d'images, plus de sources, plus de catégories et plus de langues — donc **le
-critère utile n'est pas « est-ce que ça varie », c'est « est-ce que ça dit autre
-chose ».**
-
-**LES VUES SONT LE SEUL AXE INDÉPENDANT** (0,26). Tout le reste est une
-re-mesure de la longueur, à des degrés divers. Donc *si l'on veut deux
-statistiques qui disent deux choses*, ce sont **la taille et les vues** — et
-elles sont déjà dans le catalogue, sous les noms `defense` et `attaque`.
-
-Les trois corrections à sa phrase :
-
-- **LA « QUALITÉ » N'EXISTE PAS.** `pageassessments` ne répond que pour deux
-  articles sur huit. *Sa liste de deux se réduit donc à une* — et c'est pour ça
-  que les vues comptent ;
-- **LE NOMBRE D'IMAGES N'EST PAS DISCRET** : 7 à 100, trente-et-une valeurs,
-  **dix crans sur dix** — c'est l'une des mieux étalées. **Mais elle corrèle à
-  0,86 avec la taille**, donc elle n'apporte aucun axe neuf. *La conclusion est
-  la même, la raison n'est pas celle-là* ;
-- **CE QUI EST VRAIMENT TROP DISCRET, CE SONT LES NOMS** : treize valeurs
-  distinctes et **onze cartes à zéro sur cinquante.** C'était ma suggestion, et
-  la mesure la retire.
-
-**ET LES VUES DISCRIMINENT MAL AUJOURD'HUI POUR UNE RAISON RÉGLABLE** : les
-bornes de `attaque` sont calées sur le catalogue ENTIER (340 000 à 54 M), donc
-le pool des 300 plus notoires se tasse dans le haut de l'échelle — 5 et 6
-portent 75 % du pool. *Recalculer les bornes sur le pool rendrait les dix crans.*
-C'est un réglage, pas une limite de la donnée.
-
-##### POUR LES BONUS THÉMATIQUES, le catalogue suffit déjà
-
-Keko : « les catégories pourront être exploitées autrement je pense, style :
-bonus pour les personnages du XVe siècle ».
-
-*L'idée est bonne et elle ne demande aucune collecte* : le siècle sort de
-`naissance`, le métier de `metiers`, le pays d'`origine` — tous déjà dans le
-catalogue. **Les catégories n'apporteraient que des traits que le catalogue n'a
-pas** (« Lauréat du prix Nobel », « mort assassiné »), au prix d'un tri dans
-dix-neuf catégories médianes dont une bonne part est du bruit.
-
-##### LES CATÉGORIES SONT TROP FINES — et ce qu'elles désignent est déjà dans le catalogue
-
-Keko : « catégories c'est quoi ? » — *les étiquettes en bas d'un article.*
-Napoléon en porte **51 visibles** : « Artilleur », « Empereur des Français »,
-« Décès en mai 1821 », « Décès à 51 ans », « Coprince d'Andorre du XIXe siècle ».
-Entre 15 et 60 par personnage.
-
-**Plus 120 CACHÉES, qui sont de la maintenance** — « Article avec une section
-vide », « Article contenant un appel à traduction en allemand ». *Elles ne disent
-rien du sujet* : `clshow=!hidden` les écarte.
-
-**L'intérêt théorique est réel** : une catégorie partagée est un lien que le
-joueur COMPREND, là où un lien d'article est opaque. Marie Curie et Einstein
-partagent quatre catégories — « Lauréat du prix Nobel de physique », « Histoire
-du nucléaire », « Docteur honoris causa de l'Université de Genève ».
-
-**MAIS MESURÉES, ELLES NE REGROUPENT PAS.** Sur douze paires de notoires :
-
-- **sept ne partagent que « Éponyme d'un objet céleste »** — un astéroïde porte
-  leur nom. *Vrai, et ça ne dit rien d'eux* ;
-- **Napoléon ne partage RIEN** avec les sept autres : ses catégories sont trop
-  spécifiques pour rencontrer qui que ce soit ;
-- « Décès à 51 ans » et « Décès à 39 ans » sont deux catégories distinctes alors
-  qu'elles disent la même chose.
-
-***Une catégorie Wikipédia est faite pour naviguer, pas pour regrouper.***
-
-##### CE QU'ELLES DÉSIGNENT, ET QUI NE COÛTE AUCUNE COLLECTE
-
-Ce qu'on veut, ce sont des **traits larges** — et le catalogue les porte déjà.
-Sur les 44 850 paires du pool de 300 :
-
-| trait partagé | part des paires |
-|---|---|
-| un **MÉTIER** commun | **27,9 %** |
-| le domaine (dix valeurs) | 28,8 % |
-| l'origine (le pays) | 29,6 % |
-| métier **et** siècle | 24,5 % |
-| métier **et** origine | 12,3 % |
-| le siècle de naissance seul | 72,8 % — *trop fréquent* |
-| *un lien d'article direct (référence)* | *4,0 %* |
-
-**Le métier commun est SEPT FOIS plus fréquent qu'un lien direct** — assez pour
-qu'un couple existe souvent, pas assez pour que tout paie. *Le siècle seul, lui,
-refait le piège de la portée 5* : à 73 %, presque tout paierait et plus rien ne
-déciderait.
-
-Et les exemples disent pourquoi c'est la bonne piste : *« Heath Ledger + Meryl
-Streep → acteur »*, *« Zidane + Mohamed Salah → footballeur »*. **Un joueur voit
-ça sans aperçu.** C'est la réponse au défaut noté depuis le début — « le joueur ne
-connaît pas le graphe de Wikipédia », donc l'écran doit tout lui dire. **Un métier
-partagé contourne entièrement le problème.**
-
-##### LA QUALITE EXISTE, J'AVAIS MESURE LA MAUVAISE PORTE — et elle redit la taille
-
-Keko : « dans wikimasters, la qualité est utilisée pour une stat non ? y'a deux
-stats : longueur et qualité apparemment ».
-
-**Il a raison sur WikiMasters, et j'avais tort sur la disponibilite.** J'avais
-ecrit « la qualite n'existe pas » sur la seule mesure de `pageassessments` —
-**2 articles sur 8.** Les quatre portes, mesurees :
-
-| porte | repond | cout |
-|---|---|---|
-| `prop=pageassessments` sur l'article | **2 / 8** | par lot |
-| les categories VISIBLES de l'article | 0 / 8 | par lot |
-| les categories de la page de **DISCUSSION** | **8 / 8** | **par lot — 2 appels, 2 s pour 50** |
-| le **modele automatique** (Lift Wing `articlequality`) | **8 / 8** | un appel par carte — **28 min pour 3 000** |
-
-***`pageassessments` n'est pas indexe sur fr.wikipedia*** : l'information vit sur
-la page de discussion, sous forme de categorie (« Article d'avancement A »), et
-le modele de Wikimedia la predit pour TOUT article — en classe (adq / ba / a / b
-/ bd / e) ou en **score continu 0–1**.
-
-**MAIS LE CRITERE DU PROJET LA RECALE : elle redit la taille.** Mesure sur
-50 cartes du pool :
-
-| | correle a la taille | correle aux vues | etalement |
-|---|---|---|---|
-| **score continu** (automatique) | **0,83** | 0,27 | 0,176 a 1,000, **50 valeurs** |
-| **avancement humain** (discussion) | **0,70** | 0,08 | *la moitie du pool en « B »* |
-| *taille (reference)* | — | 0,26 | — |
-
-***Et c'est mecanique*** : un article d'ebauche est court par definition, donc
-« longueur » et « qualite » — les deux stats de WikiMasters — sont **deux mesures
-de la meme chose a 70-83 %.** L'avancement a en plus un etalement mediocre :
-24 cartes sur 47 dans le seul cran « B ».
-
-**Donc le plan de Keko — taille en base, vues en rarete — prend DEJA les deux
-seuls axes independants**, et il est meilleur que celui de WikiMasters sur ce
-critere. *Ajouter la qualite ne donnerait pas un troisieme axe, elle doublerait
-le premier.*
-
-*Ce qu'elle aurait pour elle, si le sujet revient* : c'est un **jugement**, pas
-une quantite — et le score continu est le mieux etale de tout ce qu'on a mesure
-(50 valeurs distinctes sur 50 cartes). **A rouvrir seulement si une troisieme
-stat devient necessaire**, et alors pour ce qu'elle dit, pas pour son
-independance.
-
-##### TAILLE ET VUES : 0,27 SUR LES TROIS MILLE — le chiffre ferme
-
-Keko : « et la correlation entre vues et longueur ? » — *la bonne question,
-puisque c'est elle qui justifie tout le plan.* Elle se mesure **sans un seul
-appel**, les deux champs etant dans le catalogue :
-
-| | |
-|---|---|
-| le catalogue entier (3 000) | **0,268** |
-| le pool du plateau (300) | 0,289 |
-| **telles que le JEU les lit** (`defense` contre `attaque`, en crans) | **0,262** |
-| les 100 plus notoires | 0,169 |
-| la queue (2000-3000) | 0,061 |
-
-**ET ÇA CORRIGE UN CHIFFRE QUE J'AI DONNE : 0,379.** Il venait d'un echantillon
-de 99 cartes, et le vrai est 0,27. ***Une correlation mesuree sur cent cartes a
-du bruit ; quand la donnee est deja sur le disque, il n'y a aucune raison de ne
-pas prendre les trois mille.***
-
-**C'est de loin le couple le plus independant qu'on ait trouve** — contre 0,86
-pour la qualite, 0,86 pour les images, 0,96 pour les liens externes, et 0,69
-entre la taille et le nombre de langues.
-
-Et ca se voit sur des cartes : **Marine Le Pen** a 418 Ko d'article (10/10 en
-taille) pour 0,70 M de vues (2/10) ; **Valentino Rossi** 406 Ko et 0,37 M ;
-**Jaafar Jackson** l'inverse, 11 Ko (4/10) pour 10,1 M de vues (7/10).
-*Trente-six cartes du catalogue sont a 10/10 d'un cote et 2/10 de l'autre.*
-
-##### CE QUE LA QUALITE DONNE VRAIMENT : elle efface les ARTISTES
-
-*Et ça renverse ce que j'avais recommande au tour d'avant, sur un top 8 non
-representatif* (« Elisabeth II / Staline / Gengis Khan »). Sur un **top 25**, les
-memes 99 cartes :
-
-| | artistes | politiques | sportifs |
-|---|---|---|---|
-| **taille** | **11** | 8 | 6 |
-| **qualite** | **2** | 11 | 10 |
-| *le pool* | *49* | *19* | *18* |
-
-**La taille respecte a peu pres la composition du pool ; la qualite jette les
-artistes.** Ils sont la MOITIE du catalogue et il n'en reste que deux sur
-vingt-cinq — donc ***la moitie des cartes ne pourrait jamais etre forte.***
-
-Ce que chaque mesure recompense, et c'est lisible sur les cartes :
-
-- **la taille = un article BAVARD**, et ce qui gonfle un article est une LISTE —
-  filmographie, discographie, palmares. Brigitte Bardot 313 Ko, Clint Eastwood
-  287, Madonna 251 ;
-- **la qualite = un article SOURCE et structure** : des politiciens et des
-  footballeurs, dont chaque phrase porte une reference de presse. Clinton,
-  Kennedy, Khamenei, Maradona, Beckham — tous entre 78 et 121 Ko, donc **deux a
-  trois fois plus courts que Bardot et bien mieux notes.**
-
-**ET MON « MIEUX ETALEE » ETAIT FAUX AUSSI.** J'avais lu « 50 notes differentes
-sur 50 cartes » comme un bon etalement : ***des valeurs distinctes ne sont pas
-une repartition.*** Ramenees a dix crans, la qualite met **31 % des cartes dans
-le seul cran 8**, contre 21 % pour le plus gros tas de la taille.
-
-*Deux fois dans le meme episode, un echantillon trop petit m'a fait conclure a
-l'envers* — huit cartes pour le classement, cinquante pour l'etalement. **Quand
-une mesure est gratuite, la prendre sur tout est moins cher que de se tromper.**
-
-##### UN INDICE QUI MELANGE LES DEUX NE FAIT PAS UN COMPROMIS, IL DEPLACE UN CURSEUR
-
-Propose par Keko : « et si on faisait un indice qui prend en compte les deux
-valeurs ? » **Balaye sur sept dosages**, en melangeant des RANGS et non des
-valeurs — *des octets et une note de 0 a 1 ne sont pas sur la meme echelle, donc
-une moyenne brute donnerait tout le poids aux octets.*
-
-| part de taille | artistes dans le top 25 | ce qui change vs la taille seule |
-|---|---|---|
-| **100 %** | **11** | — |
-| 75 % | 10 | **1 / 25** |
-| 60 % | 9 | 2 / 25 |
-| 50 % | **5** | 6 / 25 |
-| 25 % | 3 | 8 / 25 |
-| 0 % | **2** | 11 / 25 |
-
-***Il n'existe aucun dosage utile.*** A dose douce, le resultat est celui de la
-taille seule — **vingt-huit minutes de collecte pour une carte sur vingt-cinq.**
-Des que ca se voit, les artistes ont deja perdu la moitie de leur place, donc on
-a repris le defaut de la qualite sans l'avoir choisi.
-
-**La cause est le 0,86** : *deux mesures qui disent presque la meme chose ne se
-completent pas* — leur moyenne reste sur le meme axe et ne fait que glisser d'un
-bout a l'autre. La correlation aux vues, elle, ne bouge pas sur tout le balayage
-(0,363 a 0,397), donc ce n'etait pas la le probleme.
-
-**CONCLUSION : ON GARDE LA TAILLE.** Zero collecte, aucune dependance de plus,
-et elle respecte la composition du pool. *La qualite reste mesuree et documentee
-ici* — elle resservira le jour ou une stat de PLUS sera necessaire, pas pour
-remplacer celle-la.
-
-*Et si le haut de tableau devait vraiment etre plus varie, l'outil n'est aucun
-des trois* : il faudrait **noter chaque carte DANS son domaine**, pour que le
-meilleur acteur vaille 10 comme le meilleur politique. **Ça change ce que le
-chiffre veut dire** — « bon dans sa categorie » et non « bon » — donc c'est une
-decision de design, et elle revient a Keko.
-
-#### LA TAILLE DE L'ARTICLE DEVIENT LA VALEUR DE LA CARTE — et la FORME est a trancher
-
-Tranche par Keko : « taille = on prend comme valeur / vues = on va l'utiliser
-pour la rarete ». *La seconde moitie etait deja faite* — le catalogue calcule la
-rarete sur les vues seules (`POIDS = { langues: 0, vues: 1 }`) — donc ce qui est
-neuf est la premiere.
-
-**ELLE PASSE PAR LE JETON, PAS PAR LE REGLAGE** (`Jeton.valeur`, dans
-`plateau.ts`), et le champ est **facultatif a dessein** : le solo n'en pose pas,
-donc `valeurDe` rend la base du reglage et *rien ne change pour lui.* **Un champ
-optionnel dit « ce mode ne s'en sert pas » mieux qu'un 1 ecrit partout.**
-
-**ET C'EST `defense`, le champ qui existe deja** : la taille en 1 a 10, calculee
-par le pipeline. *On ne recalcule pas une echelle qui existe* — et mesuree sur le
-sous-pool elle est bien etalee (min 1, mediane 7, max 10, moyenne 7,11), la ou
-les vues s'y tassent en haut.
-
-##### LA BASE ADDITIVE FAIT TIRER LA PARTIE — mesure avec le vrai code
-
-400 parties, portee 5, `mixte=moins`, le bot du jeu :
-
-| `?duel&valeur=` | part des bases dans le score | **la plus grosse main gagne** | ce que coute de jouer au hasard |
-|---|---|---|---|
-| `un` (base fixe, le mode d'avant) | 23 % | **23 %** | 14,3 |
-| **`taille`** (le defaut, la demande) | **70 %** | **73 %** | 13,4 |
-| **`bonus`** | 21 % | **29 %** | **17,2** |
-
-***Sous `taille`, presque trois parties sur quatre sont gagnees par celui qui a
-tire la plus grosse main.*** On pose toute sa main — huit cartes, huit coups —
-donc **la somme des bases est fixee au tirage**, et cette part du score ne se
-joue pas.
-
-**ET C'EST PIRE QU'AVEC LES VUES** (73 % contre 65 % mesures la veille), pour une
-raison nette : *la taille est mieux etalee, donc l'ecart entre deux mains pese
-plus.* **Une mesure faite sur une valeur ne vaut pas pour une autre valeur** — la
-regle du projet, repayee ici.
-
-**`bonus` MET LA TAILLE DANS LE COUPLE**, base a 1 : une grosse carte bien placee
-rapporte plus, une grosse carte isolee ne rapporte rien. *Le tirage cesse de
-decider* (29 %) **et la decision AUGMENTE** — 17,2 contre 14,3 a la reference,
-donc jouer bien paie davantage qu'avant. Le multiplicateur pivote sur
-`VALEUR_PIVOT = 7`, **la mediane mesuree du pool**, pour qu'un couple moyen garde
-son bonus nominal.
-
-**Les deux sont ouvrables** : `?duel&valeur=bonus` et `?duel&valeur=un`. *Le
-defaut est `taille`, la demande litterale de Keko* — **mais le chiffre est la, et
-c'est a lui de dire s'il le garde.**
-
-Trois choses qui portent l'implementation :
-
-- **`baseDeLaCarte` est une REGLE, pas un calcul du rendu** : l'ecran l'affiche
-  sur la carte et s'en sert pour decider si une case « ne rapporte que la
-  base ». *Deux endroits qui calculeraient le meme chiffre se desaccorderaient au
-  premier reglage* ;
-- **`gainsDuel` prend le JETON, plus son seul identifiant.** Le commentaire
-  disait « seul l'identifiant compte » — ***ca a cesse d'etre vrai le jour ou la
-  carte porte une valeur*** : un aperçu qui l'ignorerait annoncerait un chiffre
-  que le score ne rendrait pas, et c'est tout ce qu'on demande a un aperçu. Une
-  verification le tient, sur les trois modes ;
-- **le solo est intact**, et c'est verifie plutot que suppose : il ne pose aucune
-  valeur, donc `valeurDe` rend 1 partout et son affichage ne bouge pas.
-
-Dix-sept verifications tiennent la valeur (59 au total pour le duel).
-##### LA MATRICE DE REFERENCE : quinze criteres, UN seul echantillon
-
-Demande par Keko : « fais moi un tableau croise avec les correlations de tout ce
-qu'on peut utiliser comme criteres (cherche sur le net la liste la plus
-complete) ».
-
-***Mes chiffres precedents n'etaient pas comparables entre eux*** — ils venaient
-d'echantillons de 50, 60, 99 et 3 000 cartes. **Une matrice se lit sur un seul
-echantillon, sinon chaque case a son propre bruit.** Celle-ci porte sur les 99
-memes cartes du pool, et le cache des sondes est dans le scratchpad.
-
-**LA LISTE COMPLETE VIENT DE WIKIMEDIA**, pas de mon imagination : la
-documentation du modele de qualite « language-agnostic » (V2) donne ses six
-mesures et leurs poids — **longueur de page 0,395**, references 0,181, sections
-0,123, wikiliens 0,115, media 0,114, categories 0,070 — et *les cinq dernieres
-sont divisees par la longueur normalisee.*
-
-***Ça explique mecaniquement le 0,86 entre qualite et taille*** : la qualite
-n'est pas correlee a la taille par accident, **elle est de la taille
-recalculee.** Quatre mesures me manquaient (references, sections, wikiliens,
-mots) et un seul passage sur le wikitexte les donne toutes.
-
-| critere | vs vues | vs taille | plus gros tas | a zero | cout |
-|---|---|---|---|---|---|
-| noms | **0,14** | 0,57 | **53 %** | **29** | gratuit — *inutilisable* |
-| **identifiants** | **0,19** | **0,66** | 29 % | 1 | ~15 min |
-| **langues** | **0,27** | 0,81 | **23 %** | 0 | **gratuit** |
-| categories | 0,27 | 0,74 | 29 % | 0 | ~2 min |
-| wikiliens | 0,32 | 0,91 | 31 % | 0 | ~2 min |
-| sections | 0,35 | 0,93 | 28 % | 0 | ~2 min |
-| mots | 0,35 | **0,97** | 23 % | 0 | ~2 min |
-| *degre* | *0,35* | *0,72* | *20 %* | *2* | *exclu, voir plus bas* |
-| qualite | 0,36 | 0,86 | **45 %** | 0 | ~28 min |
-| images | 0,37 | 0,88 | 20 % | 0 | ~2 min |
-| sources | 0,37 | **0,95** | 24 % | 0 | ~2 min |
-| taille | 0,38 | — | 27 % | 0 | gratuit |
-| modifications | 0,38 | 0,88 | 20 % | 0 | ~20 min |
-| references | 0,42 | 0,90 | 23 % | 2 | ~2 min |
-
-**UNE COLONNE DECROCHE ET QUATORZE FORMENT UN BLOC** : les vues sont entre 0,14
-et 0,42 avec tout le reste, et tout le reste est entre **0,45 et 0,97** les uns
-des autres. ***Il n'y a donc pas quatorze criteres, il y en a deux*** — « ce qui
-est lu » et « l'ampleur de l'article », vue de quatorze cotes.
-
-*Et c'est structurel* : tout ce qu'on peut compter sur une page mesure **combien
-de travail a ete investi dessus.** Plus de texte, plus de notes, plus de
-sections, plus de traductions, plus de modifications : un seul phenomene.
-
-**TROIS CRITERES SONT DISQUALIFIES POUR UNE RAISON QUI N'EST PAS UNE
-CORRELATION :**
-
-- **le DEGRE est deja dans la mecanique.** Tranche par Keko : « le degre ne peut
-  pas etre utilise, deja actif via l'activation dans le grid ». *Une carte tres
-  connectee trouve un voisin partout, donc elle est deja avantagee* — lui donner
-  en plus une grosse valeur doublerait le meme avantage. **28 cartes du pool ont
-  zero voisin**, elles seraient collees au plancher deux fois ;
-- **les NOMS sont trop grossiers** : 29 cartes sur 99 a zero, 16 valeurs
-  distinctes, 53 % dans un seul cran. *Le critere le plus independant des vues
-  est aussi le seul qu'on ne puisse pas employer* ;
-- **l'EPOQUE a un ordre mais pas de SENS.** Elle etait l'independance parfaite
-  (0,04 avec les vues, le meilleur chiffre de toute la campagne), et Keko l'a
-  ecartee d'une phrase juste : « c'est qualitatif pas quantitatif, on veut
-  quelque chose qui marque un axe du petit au grand ». ***1400 n'est pas « plus »
-  que 1990*** — une valeur de carte doit porter une force, donc il lui faut un
-  ordre ORIENTE.
-
-##### CE QUE SONT LES IDENTIFIANTS, ET POURQUOI ILS PERDENT QUAND MEME
-
-Wikidata stocke, pour chaque personne, **les numeros de fiche que lui donnent
-les institutions** : Bibliotheque nationale de France, Bibliotheque du Congres,
-GND allemande, IdRef, VIAF, ISNI, bibliotheques nationales d'Israel, du
-Portugal, du Japon, Bibliotheque apostolique vaticane — plus les bases
-specialisees, IMDb, AlloCine, MusicBrainz, AllMusic. **Le compte dit donc
-combien d'institutions au monde ont une fiche sur cette personne.**
-
-*C'etait le meilleur candidat de la matrice* — le plus independant des vues
-(0,19) **et** le moins lie a la taille (0,66), et pour une raison lisible :
-**il ne decrit pas l'article, il decrit ce que les institutions ont fiche.**
-C'est le seul du bloc a ne pas etre un sous-produit de l'ecriture.
-
-**Et il perd sur deux defauts que seule la distribution montre :**
-
-| | |
-|---|---|
-| min 0, p10 26, **mediane 164**, p90 334, max 539 | |
-| en dix crans log | `1:1 2:0 3:0 4:2 5:6 6:15 7:16 8:23 `**`9:33`**` 10:4` |
-
-- **c'est tasse en haut et les crans 2-3 sont VIDES** : la moitie du pool a plus
-  de 164 identifiants, et 33 % tombent dans le seul cran 9 ;
-- **le biais est « a-t-elle produit des oeuvres cataloguees ».** Ce sont surtout
-  des BIBLIOTHEQUES, donc un auteur, un musicien ou un acteur est fiche partout
-  quand un sportif ne l'est presque pas. Le haut est **Madonna 539, Shakespeare
-  481, Michael Jackson 434, Jennifer Lopez 413, Mozart 379, Hitler 372** — *une
-  echelle ou Jennifer Lopez passe devant Mozart mesure les disques, pas la
-  stature.*
-
-**CONCLUSION : LES LANGUES.** Troisieme sur l'independance aux vues (0,27),
-**premiere sur la repartition** (23 %, aucune carte a zero, dix crans habites),
-**gratuite** puisque le champ est deja dans le catalogue — et le haut de tableau
-le plus defendable de tous les candidats : *Jesus-Christ 346, Obama 340,
-Shakespeare 336, Trump 334, Hitler 328.*
-
-##### UN SEUL SCORE PAR CARTE, ET IL MULTIPLIE LE BONUS
-
-Tranché par Keko : **« on garde uniquement un seul score par carte et on a pas
-besoin de deux ? on a deja les noeuds + le score »**.
-
-*Et c'est exactement ça* : le jeu lit déjà **la position dans le graphe**, qui
-fait le bonus, et **un score par carte**. Un troisième chiffre n'ajouterait pas
-un axe — la matrice le dit, il n'y a que deux axes et le second est pris.
-
-Trois décisions, et chacune vient d'une mesure déjà faite :
-
-- **la RARETÉ, c'est les VUES** (le cadre, déjà en place) ;
-- **le SCORE, c'est le NOMBRE DE LANGUES**, découpé en dix groupes égaux ;
-- **le score MULTIPLIE le bonus**, il n'est pas la base (`valeur: 'bonus'`,
-  désormais le défaut).
-
-##### LA FORME COMPTE PLUS QUE LE CRITÈRE — remesuré avec les langues
-
-400 parties par ligne, vrai code, bot glouton des deux côtés :
-
-| | part des bases | la plus grosse main gagne | ce que coûte le hasard |
-|---|---|---|---|
-| **rien** (base 1, la référence) | 23 % | **23 %** | 14,3 |
-| le score EST la base | 65 % | **82 %** | 13,4 |
-| **le score multiplie le bonus** | 25 % | **33 %** | 14,3 |
-| *rien, portée 4 + plancher* | *33 %* | *33 %* | *9,4* |
-| *base, portée 4 + plancher* | *76 %* | *85 %* | *10,7* |
-| ***bonus, portée 4 + plancher*** | *34 %* | ***38 %*** | *9,9* |
-
-***Une base additive fait gagner la partie à celui qui a tiré la plus grosse
-main, quatre fois sur cinq.*** On pose toute sa main — huit cartes, huit coups —
-donc **la somme des bases est fixée au tirage** et les trois quarts du score
-cessent de se jouer. En multiplicateur, le tirage retombe au niveau de la
-référence : *une grosse carte mal placée devient un gâchis*, et c'est
-exactement la décision spatiale qu'on cherchait.
-
-**ET LE CHOIX DU CRITÈRE NE CHANGE PAS LE JEU** — mesuré, langues contre
-taille, même banc : 33 % / 38 % contre 35 % / 43 %. *Il change ce que le haut de
-l'échelle DÉSIGNE*, pas la mécanique. C'est pour ça que la décision s'est prise
-sur la distribution et sur le haut de tableau, et non sur une simulation.
-
-##### LE DÉCOUPAGE EST PAR QUANTILES, ET IL SE CALCULE SUR LE POOL
-
-`cransDuPool`, dans `render/board.ts` — partagé par les deux écrans.
-
-- **dix groupes ÉGAUX, pas dix tranches de valeur.** Les identifiants externes
-  mettaient 33 % du pool dans un seul cran et laissaient les crans 2 et 3 à
-  zéro ; *dix groupes de même taille donnent dix crans habités quelle que soit
-  la forme de la mesure* ;
-- **et ça ne change aucun classement** : un découpage par quantiles préserve
-  l'ordre, donc toutes les corrélations de rang mesurées restent vraies — **ce
-  qui a été vérifié plutôt que supposé** (0,361 contre 0,355 avant et après) ;
-- **sur le POOL, pas sur le catalogue.** *Une échelle calée sur les 3 000 se
-  tasse en haut dès qu'on n'en tire que les 300 plus notoires* — c'est le défaut
-  mesuré sur `attaque`, où 5 et 6 portent 75 % du pool ;
-- **les ex aequo partagent leur cran** : *deux cartes de même valeur ne peuvent
-  pas valoir deux chiffres différents.*
-
-`?duel&score=taille` rend la taille de l'article, qui était le défaut d'avant ;
-`?duel&valeur=un|taille` rend les deux autres formes.
-
-##### DEUX DÉFAUTS QUE LE CHANGEMENT DE DÉFAUT A RÉVÉLÉS
-
-**1. UNE CARTE SANS VALEUR VAUT LE PIVOT, PAS LA BASE.** Le multiplicateur
-vaut `(valeur A + valeur B) / 2 / pivot`, le pivot étant la médiane du pool
-(7) : posé à la base, une carte sans valeur valait 1, donc le facteur tombait à
-1/7 et **le mode effaçait le bonus de toute carte qui n'en portait pas.** *Un
-mode qui ne devait que pondérer supprimait la mécanique* — et ça s'est vu d'un
-coup, huit vérifications du barème du couple tombant à zéro. **Sans valeur, le
-multiplicateur doit être NEUTRE.**
-
-**2. LE SCORE N'ÉTAIT AFFICHÉ NULLE PART.** Sous `bonus` la base ne varie plus
-— toutes les cartes valent 1 — donc le coin haut-gauche disait « 1 » seize fois
-et le chiffre qui porte désormais toute la décision était invisible.
-*Un chiffre identique sur les seize cases ne désigne aucune case*, la règle de
-l'aperçu. `scoreDeLaCarte` décide quoi montrer selon la forme, et **la carte de
-la main porte le même badge au même coin** : c'est ce qu'on compare d'une carte
-à l'autre.
-
-##### UN SEUL CHIFFRE SUR LA CASE, ET LA COULEUR DIT LE SENS
-
-Tranché par Keko : **« on devrait afficher un seul chiffre : celui de base en
-jaune, et s'il est réduit il passe en rouge, s'il est augmenté en vert »**.
-
-*Ils étaient DEUX, et c'est lui qui les avait demandés* — la base à gauche, le
-bonus en « +X » à droite — **sur un argument qui tenait** : « un total ne dit pas
-d'où il vient ». **Ce qui a changé, c'est que la provenance a trouvé une
-meilleure place** : le survol décompose le calcul voisin par voisin, avec la
-distance de chacun, là où un « +4 » ne disait de toute façon pas *lequel* des
-voisins payait.
-
-**Ce qu'on compare d'une case à l'autre est ce qu'elle PRODUIT**, et *une couleur
-dit un sens sans prendre de place* — là où un second chiffre en prenait autant
-que le premier, dans un coin de quarante pixels.
-
-Trois choses qui le portent :
-
-- **la base de comparaison est celle de la RÈGLE** (`baseDeLaCarte`), pas le
-  score peint sur la carte : *sous `bonus` toute carte a une base de 1*, et c'est
-  bien par rapport à 1 qu'elle est augmentée ou réduite. Les confondre ferait
-  passer en rouge une carte de score 7 qui produit 5 alors qu'elle a GAGNÉ 4 ;
-- **le jaune est celui de l'énergie** (`#ffc65c`), le vert celui de l'aperçu, le
-  rouge celui du camp adverse — *on reprend les trois teintes du projet, on n'en
-  invente pas* ;
-- **le score d'une carte de la MAIN reste crème** : *ce n'est pas une production,
-  c'est un poids*, et rien ne l'a ni augmenté ni réduit. Deux faits, deux
-  apparences.
-
-**Le solo le prend aussi, bien que rien n'y retire jamais** — donc le rouge ne
-sort pas de cet écran. *Deux écrans qui dessinent la même grille ne peuvent pas
-l'afficher chacun de leur côté* : la règle du `tailleDeCase` partagé, reprise
-ici.
-
-##### POURQUOI UNE CARTE SEULE VAUT 1 — et les deux portes mesurées
-
-Keko : **« pourquoi quand je pose un perso avec un score X son score passe à 1
-affiché dans le grid ? même seul sans interaction avec les autres »**
-
-*C'est le mode que j'ai posé par défaut, et il contredit ce qu'il attendait à
-l'écran.* Sous `bonus`, **le score ne compte que dans les COUPLES** : une carte
-posée seule produit la base, soit 1, quel que soit son score — son score ne fait
-que multiplier ce que ses voisins lui rapportent.
-
-**ET SA DEMANDE D'AVANT SUPPOSAIT L'INVERSE.** « Le chiffre de base, réduit ou
-augmenté » n'a de sens que si **le score EST la base** — et j'ai lu ce chiffre
-comme la production, donc j'ai câblé la moitié qui ne répondait pas à la
-question. *Deux lectures existaient, j'ai pris la mauvaise sans le dire.*
-
-##### NI LA MAIN PLUS GRANDE NI UN DOSAGE NE SAUVENT LE SCORE EN BASE
-
-*J'avais noté le levier moi-même* — « on pose toute sa main, donc il n'y a jamais
-à choisir ce qu'on garde ; une main plus grande ouvrirait cette décision ».
-**Mesuré, ça ne marche pas** (400 parties par ligne, portée 4 + plancher) :
-
-| main | la plus grosse main gagne (`taille`) | ce que coûte le hasard |
-|---|---|---|
-| 8 cartes pour 8 coups | **85 %** | 10,7 |
-| 10 | **83 %** | 22,2 |
-| 12 | **85 %** | 29,8 |
-
-*Les deux joueurs gardent leurs huit meilleures*, donc une main plus large **ne
-dilue pas l'écart de tirage, elle le concentre.** Elle ajoute en revanche une
-vraie décision — le coût du hasard TRIPLE — mais c'est un autre sujet.
-
-**ET LE DOSAGE NON PLUS.** Le score replié sur une plage plus courte, pour que la
-base en porte un peu sans que le tirage domine :
-
-| base | part du score qui vient des bases | la plus grosse main gagne |
-|---|---|---|
-| **1..1** (toutes égales) | 33 % | **33 %** |
-| 1..2 | 44 % | **68 %** |
-| 1..3 | 53 % | 71 % |
-| 1..4 | 58 % | 75 % |
-| 1..6 | 66 % | 77 % |
-| 1..10 (le score brut) | 76 % | **85 %** |
-
-***Dès que la base porte DEUX valeurs distinctes, le tirage reprend la main***
-(68 %). Il n'y a pas de cran intermédiaire utile — *la même forme de résultat que
-le mélange taille / qualité, et pour une raison structurelle* : **on pose toute
-sa main, donc toute différence de base est un écart acquis au tirage et non au
-jeu.** Le seul chiffre qui ne décide pas est « toutes les bases égales ».
-
-##### LA QUESTION EST DONC BINAIRE, ET ELLE EST À KEKO
-
-| | ce qu'on lit sur la case | ce que ça coûte |
-|---|---|---|
-| **le score EST la base** (`?duel&valeur=taille`) | le score, réduit ou augmenté par les voisins — *exactement ce qu'il décrivait* | **85 %** des parties au plus gros tirage |
-| **le score multiplie les couples** (`bonus`, le défaut) | la production, donc 1 pour une carte isolée | le score disparaît de la grille |
-
-*Il n'y a pas de troisième voie de RÈGLE* — les deux balayages ci-dessus la
-ferment. **Il reste une troisième voie d'AFFICHAGE** : garder `bonus` et peindre
-le SCORE coloré plutôt que la production. Elle dit littéralement ce que Keko
-demandait, et elle a un prix à connaître — *la case afficherait 7 là où elle
-marque 5*, donc le total ne se lirait plus que dans le score global.
-
-*Piège de mesure payé au passage* : trois remplacements d'une sonde ont échoué en
-SILENCE, faute d'assertion — le journal annonçait encore l'ancien titre et j'ai
-lu les mauvaises lignes du tableau. **Une sonde jetable se vérifie comme un
-patch : chaque remplacement s'assure d'avoir trouvé sa cible.**
-
-##### LE SCORE D'UNE CARTE, EN CLAIR : c'est sa PLACE, pas son chiffre
-
-Keko : **« comment le score d'une carte est calculé je comprends rien »** — et la
-réponse tient en trois phrases.
-
-1. on prend **le nombre de versions linguistiques de sa page Wikipédia** (Trump
-   334, Mbappé 141, Ed Gein 40) ;
-2. on **classe les 300 cartes du pool** de la moins à la plus multilingue et on
-   coupe en **dix paquets de trente** ;
-3. **le score est le numéro du paquet.** Les trente moins multilingues valent 1,
-   les trente plus multilingues valent 10.
-
-***Ce n'est donc pas un nombre de langues, c'est un RANG*** : un 10 veut dire
-« dans les 10 % les plus multilingues du pool », pas « 340 langues ».
-
-| score | langues | exemples (les plus lus de leur cran) |
-|---|---|---|
-| 1 | 8–35 | Lizzie Borden, Carolyn Bessette-Kennedy |
-| 2 | 36–48 | **Ed Gein**, Ghislaine Maxwell |
-| 3 | 49–57 | Eric Dane, Pete Hegseth |
-| 4 | 58–72 | Hayden Panettiere, Ansel Adams |
-| 5 | 73–86 | **Sydney Sweeney**, Timothée Chalamet |
-| 6 | 87–107 | **Jeffrey Epstein**, Haaland, Lamine Yamal |
-| 7 | 109–124 | **Jeff Bezos**, Göring, LeBron James |
-| 8 | 125–151 | **Mbappé**, Maduro, DiCaprio |
-| 9 | 152–201 | Khamenei, Bruce Lee, **Elon Musk** |
-| 10 | 208–346 | **Trump, Michael Jackson, Ronaldo** |
-
-**POURQUOI PAR RANGS ET PAS DIRECTEMENT** : les langues sont tassées — il y a
-trente cartes entre 125 et 151, et une seule à 346. *Sur une échelle directe,
-presque tout le pool aurait la même note et deux ou trois cartes auraient 10.*
-Les paquets égaux garantissent **dix crans habités**, quelle que soit la forme de
-la mesure.
-
-**ET IL NE FAUT PAS LE CONFONDRE AVEC LA RARETÉ**, qui est l'autre chiffre du
-jeu : *le score vient des LANGUES, le métal du cadre vient des VUES.* C'est
-précisément pour ça qu'ils ont été choisis là — **ce sont les deux seules mesures
-de Wikipédia qui ne se répètent pas** (0,27 de corrélation, contre 0,86 à 0,97
-pour tout le reste).
-
-##### LE SCORE DONNE DES POINTS, ET LES DEUX MAINS SONT APPARIÉES
-
-Keko : **« oui mais ce score ne sert à rien si quand on pose la carte elle vaut
-1 ? »** — *et il a raison sur l'essentiel, mais la cause n'était pas celle qu'on
-croyait.*
-
-**CE QUI ÉTAIT VRAI DANS LE MODE PRÉCÉDENT** : le score servait, mais seulement dans
-les couples. Un lien direct entre deux cartes de score 10 payait **4**, entre
-deux cartes de score 1 il payait **0** — *donc une carte faible ne rapportait
-jamais rien, même parfaitement placée*, et le score ne se voyait nulle part sur
-la grille. **Un chiffre qu'on peint sur une carte doit valoir quelque chose quand
-on la pose.**
-
-**ET LE COUPABLE ÉTAIT LE TIRAGE LIBRE, pas le score en base.** Mesuré avec le
-vrai code, 400 parties par ligne, portée 4 + plancher :
-
-| | la plus grosse main gagne | ce que coûte le hasard |
-|---|---|---|
-| le score est la base, **mains libres** | **85 %** | 10,7 |
-| le score est la base, **mains appariées** | **52 %** | **11,1** |
-| le score multiplie les couples, appariées | 44 % | 7,8 |
-
-***52 %, c'est le hasard pur*** — donc plus aucun avantage de tirage, **et le
-coût du hasard est le meilleur des trois.** Le défaut n'était donc jamais « le
-score donne des points », c'était **« les deux joueurs ne reçoivent pas la même
-chose »**.
-
-*Et ça ferme proprement les deux portes mesurées juste avant* : la main plus
-grande concentrait l'écart au lieu de le diluer, le dosage le ramenait dès deux
-valeurs distinctes — **les deux cherchaient à effacer un écart qu'il suffisait de
-ne pas créer.**
-
-##### LE PARTAGE SE FAIT PAR PAIRES, DANS `logic/`
-
-`distribuer` : on tire 2N cartes, on les classe par score et **le plus fort de
-chaque paire va alternativement à l'un puis à l'autre.**
-
-- **par PAIRES et non en serpent sur toute la liste** : le serpent équilibre
-  aussi les sommes, mais *il ne garantit pas N cartes chacun quand 2N n'est pas
-  multiple de quatre* ;
-- **c'est une RÈGLE, pas un détail de rendu** : elle décide ce que chaque joueur
-  reçoit, donc elle vit dans `logic/` et se vérifie sans navigateur. Sept
-  vérifications, dont **la borne de l'écart mesurée contre un tirage libre** —
-  6 points au pire contre 32 sur 200 tirages ;
-- **le RNG reste celui du duel** : `?duel&seed=N` rejoue donc la même
-  distribution, exactement comme il rejouait le même tirage.
-
-**Ce que la case affiche redevient donc ce que Keko décrivait** : une carte de
-score 8 posée seule affiche **8 en jaune**, et ses voisins la font monter en vert
-ou descendre en rouge. *Le chiffre unique coloré et le score en base sont la même
-décision, prise en deux fois.*
-
-##### LE BONUS DE LIEN, EN CLAIR : quatre moins le nombre de sauts
-
-Keko : **« concernant le score de lien, ça marche comment ? »**
-
-**Trois règles, et c'est tout.**
-
-1. deux cartes **côte à côte** forment un couple — haut, bas, gauche, droite,
-   *jamais en diagonale* ;
-2. le couple vaut **la portée moins le nombre de SAUTS** entre leurs deux pages
-   Wikipédia. À portée 4 : lien direct **+3**, un intermédiaire **+2**, deux
-   **+1**, au-delà **rien** ;
-3. **les DEUX cartes le gagnent** — et si elles sont de camps différents, elles
-   le **perdent** toutes les deux, sans descendre sous zéro.
-
-**« Un saut » veut dire « la page de l'une cite l'autre ».** Mesuré sur le vrai
-graphe du jeu :
-
-| couple | sauts | vaut |
-|---|---|---|
-| Trump + Elon Musk | 1 | **+3** |
-| Mbappé + Ronaldo | 1 | **+3** |
-| Michael Jackson + Elvis | 1 | **+3** |
-| Ed Gein + Lizzie Borden | 1 | **+3** |
-| Mbappé + Trump | 2 | **+2** |
-| Ed Gein + Epstein | 2 | **+2** |
-| Jeff Bezos + Khamenei | 2 | **+2** |
-| Mbappé + Bruce Lee | 3 | **+1** |
-
-**UN EXEMPLE DE CASE COMPLÈTE.** Mbappé (score **8**) posé entre Ronaldo (1 saut)
-et Bruce Lee (3 sauts), tous les trois à moi :
-
-```
-8  (son score)  +3 (Ronaldo)  +1 (Bruce Lee)  =  12, en VERT
-```
-
-*Et Ronaldo encaisse le même +3 de son côté* — il affiche donc 13 (10 + 3).
-**Si Ronaldo était au bot, les deux perdraient 3** : Mbappé tomberait à 6.
-
-**POURQUOI « 4 MOINS LES SAUTS » ET PAS « LIÉ OU PAS »** : la première règle ne
-payait que le lien direct, et *trois mains sur quatre ne pouvaient alors presque
-rien faire de leur arrangement* — mesuré, le hasard ne coûtait que 19 %, contre
-42 % avec la distance. **La formule double la décision**, et elle se refait de
-tête, ce qu'une table de valeurs ne permet pas.
-
-**ET LA PORTÉE EST À 4, PAS À 5**, parce qu'à 5 **91 % des couples payaient quelque
-chose** : un voisin valait alors presque toujours, donc seul leur NOMBRE comptait
-et *un bot qui prend le centre avec des cartes au hasard battait le bot qui
-optimise tout, 72 % du temps.* À 4, la géométrie ne domine plus (45 %).
-
-*Le joueur n'a rien à calculer* : cliquer une carte écrit le gain sur chaque case
-libre, et survoler une case posée décompose son total voisin par voisin, avec la
-distance de chacun.
-
-##### L'APERÇU DIT L'APPORT, PAS LE SCORE DE LA CARTE
-
-Keko : **« quand on a le +X marqué en vert sur les cartes de la collection, il
-faudrait que le score de base de la carte ne soit pas inclus dans le X »**.
-
-*`gainsDuel` dit la vérité sur le SCORE* — ce que poser la carte rapporte, base
-comprise — **mais ce qu'on compare d'une case à l'autre est ce que l'ARRANGEMENT
-apporte**, et le score, lui, est le même partout. Sur une grille vide, une carte
-de score 8 annonçait « +8 » sur les seize cases : ***un chiffre identique partout
-ne désigne aucune case*** — exactement le défaut que les deux badges avaient déjà
-coûté.
-
-**ET LE SOLO LE FAISAIT DÉJÀ BIEN** : `apercuSurCase` ne somme que les couples,
-jamais la base. *C'est le duel qui avait pris une autre route* — il calcule par
-différence de scores, ce qui est nécessaire depuis le plancher (une borne par
-carte ne se lit pas sur une somme) **et qui ramenait la base avec**. La
-correction aligne donc le duel sur le solo, elle n'invente rien.
-
-Trois choses qui le portent :
-
-- **UNE SEULE PORTE pour les deux affichages** (`gains`, dans `render/duel.ts`) :
-  l'aperçu des cases ET le badge de la main la traversent. *Ils avaient déjà
-  divergé une fois* — « deux affichages qui prétendent dire la même chose doivent
-  passer par le même calcul » — et retirer la base à un seul des deux aurait
-  refait la faute ;
-- **le camp adverse n'a rien à retrancher** : *le bot ne pose pas*, donc son gain
-  est déjà un pur apport ;
-- **ils se taisent à ZERO**, et c'est devenu la condition naturelle : *« ne
-  rapporter que la base » et « ne rien apporter » sont désormais le même fait*,
-  là où il fallait comparer le gain à `baseDeLaCarte` à deux endroits.
-
-**Conséquence à connaître** : sur une grille vide, cliquer une carte n'écrit plus
-rien et aucune case ne se ceint de vert. *C'est juste* — aucune case n'y est
-meilleure qu'une autre, et le liseré se taisait déjà quand tout était à égalité.
-
-Et l'infobulle d'une case le dit en mots : « ici **le voisinage** lui ferait +3 »,
-plus « ta carte ferait +11 ». *Le chiffre a changé de sujet, la phrase devait
-suivre.*
-
-##### VERDICT DE KEKO : « pas assez intuitif et fun » — et la mesure dit pourquoi
-
-**« Je trouve pas le jeu super… le système est pas assez intuitif et fun. »**
-
-*C'est un résultat, pas un échec* — ce proto existait pour une question, et il y
-a répondu. **Mais la mesure qui suit dit que je me suis trompé de chantier**, et
-elle le dit avec le critère du projet.
-
-##### LE JEU ACTUEL EST TOUJOURS UN JEU DE GÉOMÉTRIE
-
-Mesuré à la portée 4, qui était censée régler ça :
-
-| barème | couples payants | ce que coûte le hasard | le géomètre bat l'optimisé |
-|---|---|---|---|
-| **chemin Wikipédia (aujourd'hui)** | **88,3 %** | 10,4 | **57 %** |
-| **métier partagé** | 26,3 % | **14,2** | **25 %** |
-| domaine partagé | 26,9 % | 11,9 | 21 % |
-| origine partagée | 27,6 % | 9,7 | 41 % |
-| *métier OU siècle* | *72,5 %* | *16,0* | *66 %* |
-
-***Un bot qui prend le centre avec des cartes tirées au hasard gagne encore
-57 %*** contre un bot qui optimise tout. Le passage de la portée 5 à 4 avait fait
-tomber ce chiffre de 72 à 45 % sur mon banc d'alors ; sur celui-ci, avec les
-scores et l'appariement, **il est remonté à 57 %.** La cause est dans la première
-colonne : à 88 % de couples payants, *un voisin vaut presque toujours, donc seul
-leur NOMBRE compte* — quatre au centre, deux dans un coin.
-
-**LE MÉTIER GAGNE SUR LES DEUX CRITÈRES À LA FOIS** : la décision monte (14,2
-contre 10,4) **et** la géométrie cesse de dominer (25 % contre 57 %).
-
-*Et « métier OU siècle » confirme la règle par l'absurde* : à 72,5 % de couples
-payants, le géomètre remonte à 66 %. **Ce qui tue ce jeu n'est pas le barème,
-c'est qu'un voisin paie trop souvent.**
-
-##### MAIS LE VRAI DÉFAUT N'EST PAS CHIFFRABLE, ET IL ÉTAIT ÉCRIT DEPUIS LE DÉBUT
-
-*« Le joueur ne connaît pas le graphe de Wikipédia »* — je l'ai signé dès le
-premier jour du proto, et **j'ai répondu par un badge.** Chaque carte annonce ce
-qu'elle rapporterait, chaque case écrit son gain, le survol décompose.
-
-***Un jeu où l'écran te dit le bon coup n'est pas un jeu de décision, c'est un jeu
-de lecture.*** C'est exactement « pas intuitif » : l'information n'est jamais dans
-la tête du joueur, elle est dans un chiffre qu'il obéit.
-
-**Et le lien ne RACONTE rien.** « Trump et Musk sont liés » parce qu'une page cite
-l'autre : ça ne se devine pas, ça ne se ressent pas, et ça ne se retient pas.
-*« Zidane et Salah sont tous deux footballeurs » se voit sans aperçu* — et c'est
-mesuré : un métier commun relie **26 %** des paires, contre **4 %** pour un lien
-direct.
-
-##### MON ERREUR DE PRIORITÉ, et elle a coûté une dizaine de passes
-
-J'ai réglé **la portée, le plancher, le couple mixte, la forme de la valeur, le
-critère du score, l'appariement des mains, les badges, les couleurs** — et
-*aucun de ces réglages ne pouvait corriger le défaut central*, qui était écrit
-dans mes propres notes avant le premier d'entre eux.
-
-***Quand un prototype ne prend pas, le premier endroit à regarder est ce qu'on a
-signé comme défaut structurel et jamais traité*** — pas le réglage suivant.
-
-##### LES TROIS SORTIES, ET LE CHOIX EST À KEKO
-
-1. **LE TRAIT PARTAGÉ À LA PLACE DU CHEMIN.** Deux cartes vont ensemble si elles
-   partagent un métier. *Le joueur lit « footballeur » sur la carte*, donc les
-   badges, l'aperçu et le survol deviennent inutiles — **et la mesure dit que le
-   jeu y gagne sur ses deux critères.** Coût : rien à collecter, le champ est
-   dans le catalogue ;
-2. **CE QU'UNE CARTE PORTE DOIT JOUER.** Aujourd'hui *rien* n'intervient sauf les
-   liens et le score — ni domaine, ni époque, ni pays. **Les cartes sont donc
-   interchangeables**, et aucune n'a de personnalité. C'est le premier endroit où
-   chercher du « fun » : des cartes qui font des choses différentes ;
-3. **ON ARRÊTE CE PROTO.** Il a répondu à sa question — *l'arrangement compte
-   (42 % de coût du hasard), mais il n'est ni lisible ni plaisant* — et le jeu
-   d'extraction, lui, a reçu « je meurs par le greed quand je pousse exprès, la
-   lisibilité du loot est cool ». **Un prototype qui dit non est un prototype qui
-   a servi.**
-
-##### KEKO GARDE LE PROTO : « c'est le gameplay qui est mauvais »
-
-**« Je veux pas arrêter ce proto. On a tout ce qu'il faut : le score par carte, la
-rareté, les noeuds pour la mécanique. C'est le gameplay qui est mauvais, il faut
-un autre système qui exploite bien ces caractéristiques. »**
-
-*Et le diagnostic dit la même chose par l'autre bout* : les trois ingrédients
-existent, mais **deux des trois ne travaillent presque pas.**
-
-| ingrédient | ce qu'il fait aujourd'hui |
-|---|---|
-| les **noeuds** | un bonus de 0 à 3 à lire dans un badge — *et 88 % des couples en donnent un* |
-| le **score** | une base qu'on additionne, donc un chiffre abstrait |
-| la **rareté** | **rien du tout** : un cadre, aucun effet de jeu |
-
-##### FAISABILITÉ MESURÉE AVANT DE PROPOSER
-
-*Un système dont le geste central n'arrive jamais est mort avant le réglage* —
-donc on mesure l'OCCASION, pas encore la profondeur. 300 parties par ligne :
-
-| définition du lien | paires liées | une main de 8 porte un lien | la CHAÎNE peut continuer | occasions de CAPTURE par partie |
-|---|---|---|---|---|
-| **lien direct (1 saut)** | 5,7 % | 62 % | **28 %** | 4,8 |
-| jusqu'à 2 sauts | 41,9 % | 100 % | 85 % | 29,9 |
-| **métier partagé** | 26,5 % | **100 %** | **80 %** | **24,3** |
-| métier ou domaine | 35,6 % | 100 % | 87 % | 29,6 |
-
-***Le lien direct est trop rare pour porter un système*** : une chaîne ne pourrait
-continuer que 28 % du temps, donc on serait bloqué trois tours sur quatre. **Le
-métier partagé, lui, marche pour les deux** — toute main porte un lien, la chaîne
-casse une fois sur cinq (*ce qui est exactement la tension qu'on veut*), et il y a
-vingt-quatre occasions de capture par partie.
-
-*Piège de sonde payé ici* : mon cache de distance oubliait la BORNE, donc
-« jusqu'à 2 sauts » rendait la réponse de « 1 saut » et les deux lignes étaient
-identiques. **Un cache qui oublie un paramètre rend la réponse d'un autre
-appel** — et ça se voit à deux lignes trop semblables, jamais à une erreur.
-
-##### DEUX SYSTÈMES PROPOSÉS, et chacun donne un rôle aux TROIS
-
-**1. LA CAPTURE** *(ma recommandation)*. Poser une carte **liée** à une carte
-adverse voisine la **retourne**, si mon score est le plus grand. Le total, c'est
-la somme des scores de ses cartes sur la grille.
-
-- les **noeuds** deviennent la CONDITION d'attaque — *lié ou pas, donc plus aucun
-  chiffre à lire* ;
-- le **score** devient une FORCE qu'on compare : *deux chiffres côte à côte, c'est
-  le travail le plus immédiat qu'on puisse donner à une note de 1 à 10* ;
-- la **rareté** devient une ARMURE : un diamant ne se capture pas, ou demande deux
-  attaques. *Elle cesse d'être un cadre.*
-
-Et ça apporte ce qui manque le plus : **des retournements.** On reprend ce qu'on a
-perdu, donc le dernier coup compte — *là où le score monte aujourd'hui en ligne
-droite.*
-
-**2. LA CHAÎNE.** Chaque carte posée doit toucher une des tiennes **et lui être
-liée**. Ta chaîne grandit, et sa valeur monte plus vite que sa longueur ; si tu ne
-peux pas continuer, tu en commences une seconde, plus courte donc moins payante.
-
-- les **noeuds** deviennent la RÈGLE et non un bonus — *on ne lit plus un chiffre,
-  on cherche si ça colle* ;
-- le **score** fait les points ;
-- la **rareté** fait le JOKER : une carte d'or se relie à n'importe quoi.
-
-*Son défaut connu* : **une chaîne est solitaire.** En duel, deux chaînes qui ne se
-touchent pas sont deux solos côte à côte — il faudrait leur donner une façon de se
-gêner, et c'est ce qui reste à trouver.
-
-**Dans les deux cas le lien doit devenir un TRAIT PARTAGÉ** : la mesure ci-dessus
-le dit, et *c'est aussi ce qui le rend devinable* — « Zidane et Salah sont
-footballeurs » se voit sans aperçu, là où « leurs pages se citent » ne se devine
-jamais.
-
-##### MESURÉ EN PASSANT : « le bonus seulement à la carte qu'on pose » coûte cher
-
-*Keko l'a proposé puis retiré dans la même minute* — la mesure était lancée, on
-la garde pour ne pas refaire le tour. 300 parties, portée 4 :
-
-| | J1 gagne | ce que coûte le hasard | le géomètre bat l'optimisé | l'ORDRE compte |
-|---|---|---|---|---|
-| **le couple paie ses deux cartes** (aujourd'hui) | 64 % | **10,4** | 57 % | −0,4 |
-| **seul le poseur encaisse, une fois** | 58 % | **4,9** | **63 %** | +0,1 |
-
-**Ça divise la décision par deux** (4,9 contre 10,4) *et* la géométrie domine
-davantage. La raison est lisible : **une carte ne capte que les voisins DÉJÀ là**,
-donc les premiers coups ne rapportent rien et les derniers ramassent tout — *le
-jeu se décide à la fin, et avant ça on pose dans le vide.*
-
-*Et le gain espéré n'est pas venu* : je pensais que l'ordre de pose deviendrait
-une décision — **il ne l'est pas** (+0,1, soit rien), parce qu'avec huit coups
-chacun tout le monde finit par poser dans le même remplissage moyen.
-
-*Ce qui restait vrai de l'objection d'origine* : le score ne se lit plus sur la
-grille, il s'accumule. **Ce qui n'est PLUS vrai** : « incompatible avec ce que
-Keko demande » — il a levé cette contrainte lui-même en rouvrant le gameplay.
-*Une objection conditionnelle tombe avec sa condition.*
-
-##### « ON VA FORCÉMENT TROUVER UN LIEN SI C'EST BINAIRE » — mesuré, et non
-
-Keko, sur la capture : **« dans ce système on va forcément trouver un lien si
-c'est binaire »**. *L'inquiétude est la bonne* — c'est exactement le défaut qu'on
-vient de diagnostiquer, un voisin qui paie presque toujours — **mais le chiffre
-dit l'inverse.** 400 parties, grille pleine à chaque fois :
-
-| règle de capture | tours où une capture est POSSIBLE | cibles par tour | captures par partie |
-|---|---|---|---|
-| **métier, score supérieur** | **31 %** | 1,1 | **4,6** |
-| métier, supérieur **de 3** | 19 % | 0,6 | 2,8 |
-| métier, supérieur **de 5** | 10 % | 0,3 | 1,5 |
-| lien direct, score supérieur | 6 % | 0,1 | 0,9 |
-
-***Deux tours sur trois, il n'y a rien à prendre.*** Le lien seul est fréquent
-(26 % des paires), mais **la capture demande TROIS conditions à la fois** :
-
-1. une carte adverse **adjacente à une case libre** — pas toutes les cases en
-   offrent ;
-2. **liée** à une carte de ma main ;
-3. et **plus faible** — or *les mains sont appariées par score*, donc « plus
-   fort » est à peu près une chance sur deux.
-
-**Les trois ensemble font 31 %**, et 4,6 captures sur seize coups : *assez pour
-exister, pas assez pour être banal.* C'est le niveau qu'on cherchait.
-
-**Et l'appariement des mains, posé pour une tout autre raison, est ce qui rend le
-score contraignant ici** — sans lui, un joueur chanceux aurait des cartes
-systématiquement plus fortes et capturerait sans arbitrage. *Les deux mécaniques
-se renforcent sans avoir été conçues ensemble.*
-
-**LE LEVIER N'EST DONC PAS LE LIEN, C'EST LA MARGE DE SCORE** : si la capture
-devait être plus rare, on exige « nettement plus fort » (19 % à +3, 10 % à +5)
-plutôt que de rendre le lien obscur. *Un réglage lisible — « il faut être bien
-plus fort » — vaut mieux qu'un lien que le joueur ne peut pas deviner.*
-
-*Piège de sonde, et c'est la quatrième fois que ce projet le paie* : ma première
-mesure annonçait **4 %**, parce que mon bot partait d'un meilleur score à `-1` —
-donc *faute de capture possible il jouait toujours le premier coup testé*, sa
-plus grosse carte sur la case 0. Les deux camps alignaient alors leurs scores
-dans le même ordre et **aucune capture ne pouvait plus arriver.** ***Un bot qui
-n'a aucune raison de préférer un coup joue toujours le même, et un placement
-dégénéré ne mesure pas un jeu.***
-
-##### LE RÉSEAU : le graphe ne donne plus un bonus, il PORTE le score
-
-Keko : **« le système est pas bon, on exploite pas les noeuds… ça devait être le
-truc central »** — *et c'est exact des deux systèmes précédents.* Dans l'actuel le
-lien donne un bonus à lire ; dans la capture il n'est qu'un **verrou**, et c'est
-le score qui tranche. **Dans les deux cas on pourrait retirer le graphe et
-remplacer le lien par un dé : le jeu tiendrait encore.**
-
-**LA RÈGLE, EN UNE PHRASE** : *tes cartes qui se touchent ET se relient forment
-une GRAPPE ; chaque carte vaut son score × le nombre de cartes de sa grappe.*
-
-Donc une carte seule vaut son score, et **une carte dans une grappe de quatre
-vaut quatre fois son score.** Le total, c'est la somme.
-
-***Et c'est le coup de PONT qui devient l'enjeu permanent*** : fusionner une
-grappe de trois et une de deux ne les additionne pas, **ça multiplie les cinq
-cartes par cinq.** *C'est une question de graphe et de rien d'autre* — « où
-est-ce que je relie mes deux groupes ? »
-
-##### CE QUE LA MESURE DIT, et c'est le meilleur résultat du proto
-
-200 parties par ligne, mêmes mains appariées, même bot. **Le coût du hasard est
-normalisé par le score moyen** — *un coût en points absolus n'est pas comparable
-entre deux barèmes qui ne comptent pas à la même échelle, et le nôtre vient de
-changer d'un facteur huit.*
-
-| système | J1 gagne | ce que coûte le hasard | le géomètre bat l'optimisé | ponts/partie |
-|---|---|---|---|---|
-| **l'actuel (distance 4 − sauts)** | 64 % | **18 % du score** | **57 %** | — |
-| réseau, lien direct | 38 % | 23 % | 23 % | 1,9 |
-| **réseau, métier partagé** | **52 %** | **53 %** | **20 %** | **8,1** |
-| réseau, métier + domaine | 56 % | 54 % | 22 % | 9,8 |
-
-***La décision triple*** (53 % contre 18) **et la géométrie cesse de dominer**
-(20 % contre 57). *C'est la première fois dans ce proto que les deux critères
-bougent dans le bon sens en même temps.*
-
-Et **J1 à 52 %** : l'équité est parfaite, sans rien régler — *l'appariement des
-mains y suffit.*
-
-**L'INQUIÉTUDE « TOUT VA SE CONNECTER » NE SE RÉALISE PAS** : la plus grande grappe
-fait **5,3 cartes sur 8**, et il reste **4 grappes par camp.** Donc il y a
-toujours quelque chose à relier, et jamais tout.
-
-*Le lien direct, lui, est trop rare* (1,9 pont par partie, grappes de 2,2) : on
-joue des paires isolées, donc la mécanique n'a pas la place d'exister. **La
-mesure redit ce qu'elle disait pour la chaîne** — *le chemin Wikipédia est trop
-clairsemé pour porter une structure.*
-
-##### ET ÇA RÈGLE L'AFFICHAGE PAR LA MÊME PORTE
-
-Chaque case porte **un seul chiffre** : `score × taille de sa grappe`. *C'est
-exactement le chiffre unique coloré que Keko avait demandé*, mais il dit
-maintenant quelque chose de vivant — **quand tu poses le pont, tous les chiffres
-des deux grappes montent d'un coup.**
-
-*Plus d'aperçu à lire, plus de badge de main à calculer* : la question se voit sur
-le plateau.
-
-##### LE RÉSEAU EST CÂBLÉ, ET LA MESURE SE REFAIT AVEC LE VRAI CODE
-
-Keko : **« On va tester »**. Il est le défaut (`systeme: 'reseau'`), et
-`?duel&systeme=distance` rend le barème d'avant — *ce qui a servi à choisir doit
-rester ouvrable, même une fois le choix fait.*
-
-**Les chiffres annoncés venaient d'une sonde autonome ; ils ont été refaits avec
-le code qui tourne** — *une mesure se refait avec ce qui joue, sinon on valide un
-jumeau.* 200 parties, mains appariées, graine fixe :
-
-| système | J1 gagne | ce que coûte le hasard | le géomètre bat l'optimisé | score moyen | plus grosse grappe |
-|---|---|---|---|---|---|
-| **distance** (le barème d'avant) | 64 % | **18 %** | **61 %** | 60 | 2,1 |
-| réseau, lien d'article | 45 % | 23 % | 30 % | 64 | 2,2 |
-| **réseau, métier partagé** | **51 %** | **49 %** | **24 %** | 156 | **5,2** |
-| réseau, métier + **joker** | 38 % | 26 % | **100 %** | 358 | 8,0 |
-
-*La sonde annonçait 52 / 53 / 20 ; le vrai code donne 51 / 49 / 24.* **Les trois
-conclusions tiennent** : la décision triple, la géométrie cesse de dominer, et
-l'équité est parfaite sans rien régler.
-
-##### LE JOKER EST MESURÉ, ET IL TUE LA MÉCANIQUE — ne pas le mettre par défaut
-
-C'était l'emploi évident de la rareté — *« une carte rare se relie à TOUT »* —
-et il est **catastrophique** : le géomètre, qui prend le centre avec des cartes
-au hasard, bat le bot qui optimise **100 %** du temps.
-
-***La cause se lit sur une seule colonne*** : la plus grosse grappe passe de 5,2
-à **8,0 sur 8 cartes.** Une carte épique ou légendaire sort dans une main sur
-deux, elle recolle tout ce qu'elle touche, donc **il n'y a plus qu'une grappe et
-le lien ne décide plus rien** — il ne reste que la place.
-
-*C'est exactement le défaut qu'on venait de retirer*, retrouvé par l'autre bout :
-**la portée 5 payait 91 % des couples, le joker relie 100 % des voisins.** Dans
-les deux cas, *un lien qui vaut presque toujours cesse d'être un lien.*
-
-Il reste joignable par `?duel&joker` — *ce qui a servi à écarter une idée doit
-rester ouvrable* — et **la rareté est donc toujours sans emploi dans la
-mécanique.** Si elle doit en avoir un, ce ne sera pas « se relier à tout ».
-
-##### CE QUI RELIE EST UN MÉTIER PARTAGÉ, et le rendu le construit
-
-**`logic/` ne sait pas ce qu'est un métier** : il reçoit un `Graphe` — `id → ids`
-— et c'est tout. *C'est ce qui permet d'essayer un autre critère sans toucher à
-une ligne de règle*, et c'est la porte qui portait déjà le graphe des articles.
-`?duel&lien=article` rend celui-ci.
-
-Le graphe des métiers se construit **une fois au chargement** : 12 529 arêtes sur
-300 cartes, quelques millisecondes. Les libellés se comparent **sans accent ni
-casse** — Wikidata écrit des doublets (« écrivain ou écrivaine ») et des
-composés, et *deux libellés qui désignent le même métier ne peuvent pas faire
-deux groupes.*
-
-##### TROIS CHOSES QUE LES VÉRIFICATIONS TIENNENT
-
-- **il faut l'adjacence ET le lien.** *Le lien seul se passerait de grille —
-  autant jouer sans plateau — et l'adjacence seule est le défaut qu'on vient de
-  mesurer*, où seule la place compte. Deux cartes liées mais éloignées restent
-  deux solitaires, deux cartes collées mais sans lien aussi ;
-- **une grappe est d'un seul camp**, donc **il n'y a plus de couple mixte** :
-  `portee`, `mixte` et `valeur` ne font plus rien sous ce système. *Ils restent
-  parce que `distance` les lit encore* ;
-- **l'aperçu dit exactement ce que le score fera, pont compris** : il se calcule
-  par différence de scores et ne refait pas la règle. Vérifié sur un pont —
-  annoncé `+14`, rendu `18 − 4`.
-
-**Et la taille de grappe passe par la MÊME fonction que le score**
-(`taillesDeGrappe`) : la bulle d'une case ne peut pas dire autre chose que ce que
-la case produit. *Deux endroits qui compteraient la même grappe se
-désaccorderaient au premier réglage* — c'est le défaut que le badge et l'aperçu
-avaient déjà coûté.
-
-##### UN BLOC DE VÉRIFICATIONS NE DOIT PAS HÉRITER DU DÉFAUT
-
-Passer `systeme: 'reseau'` en défaut a fait tomber **vingt vérifications d'un
-coup** : le fixture `REG` partait de `REGLAGE_DUEL`, donc tous les blocs qui
-testaient le barème de distance s'étaient mis à tester le réseau.
-
-***Un bloc qui hérite du défaut cesse de tester ce qu'il nomme le jour où le
-défaut change.*** Il demande donc `systeme: 'distance'` explicitement, et le
-réseau a son propre bloc. *Vingt échecs d'un coup est le bon symptôme* — c'est un
-échec par cas qu'il aurait fallu craindre.
-
-#### UNE CLASSE NUE SUR UN ÉCRAN DU PLATEAU EST UNE CLASSE DU JEU
-
-Keko : « les cartes ennemis sont bien placées, mais mes cartes semblent avoir un
-offset x et y qui décale leur position visuellement (mais leur place est
-considérée comme valable et fonctionne au niveau points) ».
-
-**`styles.css` définit `.moi`** — le compteur de PV du joueur en combat — et il
-vaut `position: absolute` avec ses propres `left`, `bottom` et `z-index`. Mes
-cases portaient la classe `moi` nue : elles étaient donc **arrachées de la
-grille et empilées en bas à gauche de l'écran**, pendant que la règle, elle, les
-comptait à la bonne place.
-
-***C'est l'asymétrie qui désignait la cause*** : `.lui` n'existe nulle part
-ailleurs, donc les cases du bot ne bougeaient pas. *Un défaut qui ne touche
-qu'un camp sur deux ne peut pas venir du code qui les dessine tous les deux* —
-et les deux boucles étaient identiques au caractère près.
-
-**Tout ce que le plateau pose se préfixe `bd-`**, et c'est précisément pourquoi
-le préfixe existe : la feuille du jeu fait cinq mille cinq cents lignes et vit
-sur la même page. *La règle était déjà écrite pour les cartes 2D* — « les
-classes de la carte ont des noms à elles parce que les évidents étaient pris
-ailleurs », payée sur `.titre`, `.entete` et `.effet` — **et je l'ai enfreinte
-sur les deux seuls mots que j'ai écrits nus.**
-
-Les autres classes nues du plateau ont été vérifiées : `vide`, `choisie`,
-`synergie`, `direct`, `vise` et `cible` n'apparaissent dans `styles.css` que
-collées à une classe que le plateau ne porte pas (`.creature`, `.rang`,
-`.emplacement`, `.pile-cartes`, `.case-pile`). *Une classe descendante ne peut
-pas atteindre ce qui n'a pas l'ancêtre* — il n'y avait qu'une collision, et
-c'était celle-là.
-
-#### UN BACKTICK DANS UN COMMENTAIRE DU CSS TERMINE LA CHAÎNE
-
-Le CSS de ces écrans vit dans un template literal, donc **un commentaire qui
-cite du code entre backticks coupe la chaîne en plein milieu** — et l'erreur qui
-suit parle de virgules attendues trente lignes plus bas, jamais du backtick.
-
-*Payé deux fois dans la même heure*, sur les deux commentaires de ce fichier. Les
-commentaires du CSS citent donc le code **sans backticks**.
-
-#### Le catalogue est celui des PERSONNAGES, et il n'y a pas le choix
-
-`links.json` est le graphe de LEURS articles. *Un duel d'animaux n'aurait aucun
-lien*, donc aucun bonus, donc aucune décision.
-
-#### Où changer les constantes
-
-`REGLAGE_DUEL`, en haut de `src/logic/board/duel.ts` : `cote`, `base`, `systeme`,
-`joker`, `portee`, `ordre`, `mixte`, `valeur`, `sousPool`. **`parJoueur` s'en
-déduit** et ne se règle pas ; `VALEUR_PIVOT` est la médiane mesurée du pool.
-
-**Sous `systeme: 'reseau'` — le défaut — `portee`, `mixte` et `valeur` ne font
-plus rien** : il n'y a pas de couple mixte, et le score ne multiplie plus un
-bonus, il EST ce qu'on multiplie.
-
-`?duel&systeme=distance` rend le barème d'avant, `?duel&lien=article` le graphe
-des articles à la place des métiers, `?duel&joker` la rareté qui relie tout
-(**mesurée, elle tue la mécanique**). Puis `?duel&portee=N`,
-`?duel&mixte=plus|plancher`, `?duel&valeur=un|bonus`, `?duel&score=taille`,
-`?duel&ordre=serpent`, `?duel&seed=N` et `?duel&pool=N`.
-
-**Le SCORE d'une carte se choisit dans `render/duel.ts`** (`scoreDe`), pas dans
-le reglage : c'est un champ du CATALOGUE, donc `logic/` ne le connait pas — il
-ne voit qu'un nombre de 1 a 10 porte par le jeton.
-
 ## LE JEU 2D EST SUPPRIMÉ — le moteur 3D est le jeu
 
 Tranché par Keko : **« supprime complètement tout ce qui se rapporte au jeu 2D,
@@ -16809,701 +13361,3 @@ de ce fichier y renvoient (« la règle déjà payée sur… », « reste dans
 ***Supprimer l'histoire d'une décision ne supprime pas la décision, ça supprime
 la raison de s'y tenir.*** Ce qui est parti, c'est le code ; ce qui reste, c'est
 pourquoi le jeu est ce qu'il est.
-
-## Architecture — la règle à ne pas casser
-
-```
-src/
-  logic/   # PUR : aucun accès au DOM, à Date.now() ou au hasard non seedé
-    rng.ts       # mulberry32 seedé — tout aléatoire du jeu passe par là
-    combat.ts    # le tour par tour, les cartes, les effets
-    descente.ts  # la boucle de run : combat, palier, butin, extraction
-    hub.ts       # l'armurerie : la réserve, le chargement, ce que la mort coûte
-    armes.ts     # le catalogue des pièces et de leurs sets
-    cartes.ts    # les groupes d'ennemis, la table de butin
-    paquet.ts    # le tirage d'un paquet — générique, les deux catalogues l'emploient
-    characters/  # L'ANCIEN TROISIÈME MODE — remplacé par les animaux, à retirer
-      types.ts      # CharacterCard + la validation du JSON engendré
-      formules.ts   # rareté, attaque, défense, domaine — UN SEUL endroit
-    animals/     # LE TROISIÈME MODE : une carte = une ESPÈCE
-      types.ts      # CarteAnimal + la validation du JSON engendré
-    paintings/   # LE QUATRIÈME MODE : une carte = une PEINTURE
-      types.ts      # CartePeinture, la validation, le siècle, les rayons
-    emoji/       # LE CINQUIÈME MODE : une carte = un EMOJI
-      types.ts      # CarteEmoji, la validation, les neuf groupes
-    quantiles.ts # le découpage en crans PAR GROUPE — lu par deux modes
-    board/       # LE PROTOTYPE DE PLATEAU — voir BOARD.md
-      plateau.ts    # la grille, la production, REGLAGE : un seul endroit à régler
-      duel.ts       # le mode a deux : tour par tour, le total sur la grille pleine
-  render/  # LE MOTEUR DU JEU (React + R3F) — c'est la page par défaut
-    texture-carte.ts # la carte peinte au canvas, pour servir de texture
-    Carte3D.tsx      # le pavé, ses matériaux, sa place amortie
-    Main3D.tsx       # l'éventail et le geste : sortir pour jouer, taper pour voir
-    Scene.tsx        # la descente entière : combat, paliers, butin, hub
-    Armurerie3D.tsx  # le coffre et le chargement
-    Paquet3D.tsx     # les paquets : animaux, `&art`, `&perso`, `&fiction`, `&emoji`
-    Sachet3D.tsx     # la pochette qui se déchire en brûlant, avant la rangée
-    board.ts         # le plateau, derrière `?board` — DOM nu, pas de Three.js
-    duel.ts          # le duel, derrière `?duel` — il réutilise le dessin du plateau
-  ui/      # CE QUE LES DEUX MONDES PARTAGENT — plus le jeu 2D, il n'existe plus
-    texte-carte.ts  # le texte d'une carte, sans DOM
-    art.ts + art/   # les illustrations et leur table
-    illustrations.ts # les silhouettes SVG, repli des créatures
-    sons.ts         # les sons synthétisés — `render/sons.ts` y ajoute les fichiers
-    animaux.ts      # chargerAnimaux() : le fetch du catalogue (logic/ est pur)
-    peintures.ts    # chargerPeintures() : le catalogue des peintures
-    personnages.ts  # loadCharacters() : l'ancien catalogue
-    version.ts      # le garde-fou anti-cache
-    styles.css      # tout le chrome HTML du moteur
-  entree.ts  # l'aiguillage : la descente par défaut, `?paquet`, `?ecusson`
-scripts/   # HORS du build Vite : lancé par `node`, pas couvert par tsconfig
-  outils.ts               # cache par requête, lots, journal — partagé
-  sparql.ts               # le Query Service en CSV, par tranches, troncature détectée
-  commons.ts              # la fabrique d'URL de vignette, et l'année d'une date
-  generate-animals.ts     # GBIF + Wikidata -> public/data/animals.json
-  generate-paintings.ts   # Wikidata + Wikipedia -> public/data/paintings.json
-  generate-emoji.ts       # Unicode + CLDR -> public/data/emoji.json
-  generate-links.ts       # fr.wikipedia -> public/data/links.json (le graphe du plateau)
-  generate-characters.ts  # l'ancien pipeline, à retirer après validation
-  .cache/                 # le cache des requêtes, gitignoré
-```
-
-`logic/` doit rester testable sans navigateur. Ce dont il a besoin du monde
-extérieur (horloge, seed, catalogue) lui est **injecté** depuis `ui/` ou le
-rendu. **Ne pas importer `ui/` ni `render/` depuis `logic/`.**
-
-Toute la logique de jeu (combat, deck, trésors, encombrement) va dans
-`src/logic/` et doit être jouable sans DOM. Tout tirage aléatoire passe par le
-RNG seedé.
-
-**IL N'Y A PLUS DE SAUVEGARDE.** `STATE_VERSION`, `GameState` et le
-`StoragePort` sont partis avec le jeu 2D — le moteur repart de zéro à chaque
-chargement. *Le jour où la persistance revient, c'est par la même porte* : un
-port injecté depuis `ui/`, jamais un `localStorage` lu depuis `logic/`.
-
-## Contraintes mobile — et l'échelle
-
-- Cibles tactiles **≥ 48 px** de haut (le bouton actuel fait 64).
-- Tester au doigt, pas seulement à la souris.
-- **Paysage uniquement.** En portrait, un écran demande de tourner l'appareil.
-
-**On ne peut pas forcer l'orientation depuis une page web** : le verrouillage
-exige le plein écran et n'existe pas sur iPhone. D'où l'écran de rotation — et
-il doit **dire de désactiver le verrouillage de rotation**, sinon les gens qui
-le laissent actif en permanence restent bloqués sans comprendre. L'application
-installée, elle, impose le paysage par son manifeste.
-
-**C'est la hauteur qui manque, jamais la largeur.** La scène et les cartes se
-calent donc en `vh`, pas en `rem` : `min(7rem, 22vh)` pour un corps, et pour
-une carte le jeu de variables porté par `.app` — **un seul endroit, lu par la
-main ET par les tas** :
-
-```css
---large: min(11rem, 29vh, calc(0.17 * (min(100vw, 90rem) - 8.5rem)));
---part-enfouie: 0.14;          /* 0,24 sous 430 px de haut */
---haut:   calc(var(--large) * 1.4);
---enfoui: calc(var(--haut) * var(--part-enfouie));
---emerge: calc(var(--haut) - var(--enfoui));   /* la bande qu'on lit */
---corps:  min(15rem, 27vh);    /* min(7rem, 22vh) sous 430 px, 19vh sous 360 */
---degagement: 2.25rem;         /* 2,75rem sous 430 px, 2rem sous 360 */
-```
-
-Ils vivent sur **`:root`, pas sur `.app`** : ils ne dépendent que de la
-fenêtre, donc la racine est leur place naturelle — et surtout le calque du gros
-plan doit les lire alors qu'il vit **hors de `.app`**, puisqu'un transform sur
-`.app` (la secousse) en ferait le bloc conteneur de ses enfants en position
-fixe.
-
-**Deux pièges de positionnement, rencontrés sur la tête de mort**, et ils se
-ressemblent :
-
-- les `%` d'une **marge** se rapportent toujours à la **largeur** du bloc
-  conteneur, jamais à sa hauteur — un `top/left: 50%` + marges négatives posait
-  le crâne 6 px trop bas sur un corps plus large que haut ;
-- un `<svg>` à viewBox est un élément **remplacé**, donc porteur d'un rapport
-  intrinsèque. Les quatre décalages posés (`inset`), **son rapport l'emporte et
-  le `bottom` est ignoré** : il prenait sa hauteur de sa largeur et redescendait
-  de 5 px.
-
-La forme juste : la dimension qu'on veut contrôler est explicite, l'autre suit
-le rapport, et des marges automatiques centrent.
-
-**Aucun pourcentage là-dedans, et c'est délibéré** (voir la section sur ce
-piège) : la borne de colonne s'écrivait `26%` et changeait de sens selon la
-propriété qui la lisait. En `vw` elle veut dire la même chose pour tout le
-monde — c'est ce qui permet aux tas des coins de partager la mesure de la main
-et de plonger exactement comme elle. Deux paliers de resserrement
-supplémentaires, à 430 px et 360 px de haut, qui portent sur `.app`.
-
-**Toute l'interface est dimensionnée en `rem`, jamais en pixels figés** (sauf
-bordures, rayons et ombres). La racine grandit avec l'écran :
-
-```css
-html { font-size: clamp(16px, min(0.6vw + 13.4px, 2.4vh), 24px); }
-```
-
-16 px au doigt sur un téléphone, jusqu'à 24 px sur un grand écran — la carte
-passe de 144x202 à 216x302. Sans ça, le jeu restait une colonne minuscule
-perdue au milieu d'un écran de PC, et Keko teste aussi depuis un PC distant.
-
-**L'échelle suit la plus contraignante des deux dimensions.** La largeur seule
-ne suffit pas : sur un portable large mais peu haut, des cartes calibrées sur
-la largeur passeraient sous le bord de l'écran. Vérifié à 390x844, 1366x768,
-1920x1080 et 2560x1440 — le bouton de fin de tour reste visible sans scroller
-dans les quatre cas. **Revérifier ces quatre formats après toute modification
-de taille**, et se souvenir qu'une seule dimension ne suffit jamais à conclure.
-
-### Un `%` rangé dans une variable change de sens selon qui le lit
-
-**Piège coûteux, rencontré sur la main.** Une variable personnalisée se
-substitue en **jetons bruts** : le `26%` de `--large` est relu par chaque
-propriété avec SA propre référence. Dans `width` il vaut 26 % du conteneur ;
-dans `translateY` il vaut 26 % de la **hauteur de l'élément** ; dans `margin-*`
-et `padding-*` il vaut un pourcentage de la **largeur** du bloc conteneur. La
-carte visée ne remontait que de 45 px sur les 80 qu'elle avait d'enfouis — et
-ça passait inaperçu parce que ça restait dans le bon sens.
-
-Règle : **ne jamais faire transiter un pourcentage par une variable que
-plusieurs familles de propriétés vont lire.** Le `26%` a fini par être
-supprimé à la source, réécrit en `vw` — `0,26 x (conteneur - 14rem)` devenait
-`0,26 x (min(100vw, 90rem) - 14rem)`, exactement la même valeur, mais
-indépendante de qui la lit. `--enfoui` est depuis une longueur pure, et veut
-dire la même chose dans une marge, dans un `bottom` et dans un `translateY` —
-c'est ce qui a permis aux tas de plonger comme la main.
-
-**Corollaire, même famille de bug :** une largeur sur un `span` inline ne fait
-rien, en silence. `.pile-cartes` ne tenait sa taille que parce que son parent
-était un conteneur flex qui le blocifiait ; le parent a changé, le tas est
-passé à 0x0 sans une erreur.
-
-**Le format serré, c'est le 1366x768**, et c'est lui qui a fixé le coefficient
-`2vh`. L'arrivée de la scène des créatures a coûté ~120 px de hauteur et l'a
-fait déborder à `2.4vh`. Si la page grandit encore, c'est ce coefficient qu'il
-faut baisser en premier — pas la taille des cartes.
-
-### Le jeu ne doit jamais scroller
-
-**Un combat qui oblige à scroller est un combat qu'on ne peut pas juger.**
-
-Formats vérifiés, tous à zéro débordement : **667x320** (SE couché), **780x340**,
-**844x390**, **932x430**, **1366x700**, **1920x1080**. La carte va de 50 px sur
-le plus petit à 194 px sur grand écran. **Refaire ce balayage après toute
-modification de taille** — et se méfier des tailles d'écran annoncées : ce sont
-les *viewports* qui comptent, un téléphone mange souvent 190 px de chrome.
-
-**Pour mesurer un format sans redimensionner la fenêtre**, charger la page dans
-une `iframe` de la taille visée : les `vh` et les media queries s'y appliquent
-pour de vrai. Quatre pièges, tous rencontrés :
-
-- **dans un onglet en arrière-plan le navigateur gèle les transitions et bride
-  les minuteurs**, donc une valeur calculée peut rester bloquée à mi-course et
-  faire croire à un bug. Neutraliser la transition avant de mesurer, ou piloter
-  l'animation à la main via l'API Web Animations ;
-- **ajouter un `?cb=<aléa>` à l'URL de la sonde** : sans ça la CSS d'une sonde
-  précédente est resservie et les mesures se contredisent d'un format à
-  l'autre ;
-- **`offsetWidth` et `getBoundingClientRect()` ne mesurent pas la même chose**
-  sur une carte de l'éventail : la seconde inclut la rotation, donc elle est
-  plus large. 66 contre 74 px pour la même carte — de quoi croire à un bug qui
-  n'existe pas ;
-- **pas plus de trois sondes par appel** : le moteur de rendu se fige et
-  l'exécution part en dépassement de délai.
-
-### Récupérer la barre du navigateur
-
-**Une page web dans un onglet ne peut pas masquer la chrome du navigateur.**
-Deux sorties, complémentaires, toutes deux en place :
-
-1. **Installer sur l'écran d'accueil.** `public/manifest.webmanifest` déclare
-   `display: fullscreen` ; lancée depuis l'icône, la page s'ouvre sans aucune
-   barre. C'est la vraie réponse — dire à Keko « Ajouter à l'écran d'accueil »
-   avant de conclure qu'il manque de la place.
-2. **Le bouton « Plein écran »** du panneau de réglages, pour rester dans le
-   navigateur. Il se cache tout seul là où l'API n'existe pas : **l'iPhone ne
-   supporte pas `requestFullscreen`** (l'iPad si).
-
-L'icône est du SVG écrit à la main (`public/icone.svg`), conformément à la
-borne « pas de fichiers image ». Limite connue : **iOS ignore le SVG pour
-`apple-touch-icon`** et posera une capture de la page comme icône. Sans
-valeur pour un prototype ; il faudra un PNG le jour où ça compte.
-
-Le `theme-color` ne gagne pas de place mais teinte la barre aux couleurs du
-jeu tant qu'on reste dans un onglet — elle cesse au moins d'être un bandeau
-noir.
-
-### Le son
-
-Synthétisé au Web Audio, **aucun fichier** : même borne que les dessins. Deux
-règles tenues dans `ui/sons.ts` :
-
-1. **Le contexte audio ne naît que sur un geste** — les navigateurs refusent
-   de démarrer le son autrement. Tous les sons partent d'une tape, donc le
-   premier appel suffit à l'ouvrir.
-2. **Aucun son ne peut casser le jeu** : sans Web Audio, ça joue en silence.
-
-**Pour vérifier un son sans l'entendre** : compter les nœuds créés en
-instrumentant `AudioContext.prototype`, puis rejouer la même recette dans un
-`OfflineAudioContext` et mesurer l'amplitude — ça prouve que ce n'est pas du
-silence. Relevé au moment de l'écriture : Dague 0,14 de crête contre Moulinet
-0,21, la visée à 0,03. Aucune saturation.
-
-Piège à ne pas réapprendre : `exponentialRampToValueAtTime` **n'accepte pas
-zéro**. Les enveloppes partent et reviennent à 0,0001, jamais au silence exact.
-
-Sur iPhone, l'interrupteur silence coupe aussi le Web Audio — si Keko n'entend
-rien, vérifier ça avant de chercher un bug.
-
-### LES SONS DE KEKO : des FICHIERS, dans `public/`
-
-`render/sons.ts`. La borne « pas de son en fichier » tombe comme était tombée
-celle des images : *ce que Keko fabrique lui-même, le jeu le sert.* Le premier
-est `public/Take card.aac`.
-
-**Le format à lui donner** : `.m4a` (AAC) ou `.mp3` — les seuls lus partout,
-Safari/iOS compris ; `.wav` pour un effet très court, parce que MP3 et AAC
-ajoutent quelques millisecondes de silence à l'encodage, inaudibles sur une
-musique mais sensibles sur un son de 100 ms. Mono, 44,1 kHz. **La casse du nom
-compte**, et l'URL porte la date du build comme toutes les ressources de
-`public/` — sinon le remplacer ne changerait rien.
-
-**Le décodage a un REPLI**, et il le fallait : le fichier de Keko est de l'AAC
-BRUT (ADTS, sorti de ffmpeg), que Chrome et Safari décodent mais que Firefox
-peut refuser. Si `decodeAudioData` échoue, on garde un `<audio>` qu'on clone à
-chaque lecture — *un son qui ne se décode pas doit se jouer quand même, pas se
-taire en silence.* (Vérifié sur Chrome : c'est bien le chemin Web Audio qui
-sert, le repli n'est pas sollicité.)
-
-**DEUX GESTES, DEUX SONS** : `Take card.aac` quand on prend, `Card drop.aac`
-quand on pose. Le second a d'abord été le premier, faute d'avoir l'autre
-fichier — *prendre et poser ne peuvent pas sonner pareil.*
-
-**ET DEUX DE PLUS POUR LA CULBUTE**, tous deux fournis par Keko :
-`Card spin.aac` « dès que la carte commence à tourner avant de se fixer », et
-`Equip.aac` « au moment où la carte se fixe et déclenche l'onde ».
-
-Le premier part au LÂCHER, en même temps que la culbute — *elle tourne dès la
-première image, elle n'attend pas d'être montée* — et le second à la fin,
-exactement quand l'onde s'échappe. **Aucun des deux ne sonne pour un dépôt au
-coffre**, comme la culbute elle-même : reposer au coffre est un rangement, pas
-un équipement.
-
-*Quatre sons pour un seul geste, et aucun n'en double un autre* : on prend, on
-lâche, ça tourne, ça s'encastre.
-
-**LA CARTE DIT QU'ELLE S'EST FIXÉE ; CE QUE ÇA VEUT DIRE APPARTIENT À
-L'ÉCRAN.** `Carte3D` ne connaît pas les sons — elle appelle `onFixee` et
-l'armurerie décide. C'est le même partage que `geste-carte.ts`, où le hook
-annonce « tapée », « lâchée ici », et rien de plus : *c'est ce qui permet à la
-même carte de servir en combat, au butin et au hub sans rien savoir d'eux.*
-
-**LE SON DU CONTACT VIT DANS LE GESTE, pas dans les écrans** — `geste-carte.ts`
-est le seul endroit où l'on touche une carte, qu'elle vienne de la main, du
-butin ou du coffre. *Un geste unique n'a qu'un son, posé une fois.*
-
-**UN ALLER-RETOUR EST UN GESTE, pas une absence de geste.** Le hook décidait
-« tape ou lâcher » sur la distance entre le départ et le LÂCHER : reposer un
-objet sur la case d'où on venait de le prendre ramène le doigt à son point de
-départ, donc le geste ne faisait plus rien du tout — ni dépôt, ni son. Keko :
-« quand je drop dans son slot où il était au début du drag, ça ne produit pas
-de son ». Le geste retient désormais qu'il a été PROMENÉ (`promene`, posé à
-chaque mouvement qui dépasse le seuil), et c'est ça qu'on lui demande à la fin.
-
-*La règle du maintien survit* : appuyer sans bouger ne promène rien, donc ça ne
-fait toujours rien — vérifié, un seul son (le contact) et aucun dépôt.
-
-**ET IL PART AU CONTACT, PAS À LA PRISE.** Au doigt, une carte n'est prise
-qu'après un MAINTIEN de 160 ms : le son en héritait, et Keko l'entendait comme
-une latence. *Ce n'était pas le son qui était en retard, c'était la prise* —
-mesuré à la sonde, 0 ms au lâcher contre ~160 ms au contact, alors que
-l'appareil n'avouait que 40 ms de tampon.
-
-Il dit donc « j'ai touché cette carte » et non « je l'ai prise », et c'est aussi
-ce que Keko a voulu étendre : **on le joue TOUJOURS quand on zoome une carte.**
-Ça ne demande rien de plus — *tous les zooms du jeu commencent là*, puisque
-c'est le même geste qui regarde et qui prend. Vérifié : une tape sonne et ouvre
-le zoom, un glisser complet donne exactement deux sons, le contact puis la
-pose.
-
-**Et celui de la POSE ne se joue qu'où l'on RANGE** : l'armurerie et le butin,
-jamais en combat. Tranché par Keko, et c'est la même raison qui prive la carte
-jouée de sa comète : *une carte jouée a déjà toute une scène à son nom.* Il ne
-part que si le dépôt ABOUTIT — on demande la règle (`accepteDepuis`) plutôt que
-de la recopier, la même qui allume le slot : *un slot qui refuse ne doit pas
-sonner comme un slot qui prend.*
-
-**LE SON SE RÉVEILLE AU PREMIER CONTACT, pas au premier son.** Keko : « pourquoi
-sur téléphone y a une latence entre le moment où je drag/drop et le son ? » Un
-contexte audio créé hors d'un geste — ici par le préchargement — naît
-**suspendu**, et le reprendre coûte du temps : assez, sur un téléphone, pour
-que le premier son arrive après le geste qui l'a demandé. Un `pointerdown` posé
-`once` sur la fenêtre l'ouvre et y joue un tampon d'une image à volume nul :
-certains navigateurs ne le considèrent démarré qu'après une première lecture.
-Le contexte demande aussi `latencyHint: 'interactive'` — c'est le défaut de la
-spécification, mais *le tampon d'un contexte « balanced » s'entend sur un
-téléphone.*
-
-**ET L'APPAREIL DIT SA PROPRE LATENCE, derrière `?son`** : par quel chemin le
-son sort (Web Audio ou le repli `<audio>`), l'état du contexte, et ce que le
-navigateur avoue de son tampon. *Une impression de retard ne se discute pas,
-elle se mesure* — et je ne peux pas mesurer sur l'appareil de Keko. Même motif
-que la ligne des gros plans en 2D. Relevé sur la machine de dev : Web Audio,
-`base 10 ms`, `sortie 40 ms`.
-
-**Trois causes possibles, et la troisième n'est pas le son :** le repli
-`<audio>` (100 à 300 ms sur mobile) si le décodeur refuse l'AAC brut ; la
-latence de sortie de l'appareil, que la ligne affiche ; et surtout — **au
-doigt, la PRISE elle-même attend le maintien de 160 ms.** Le son part quand la
-carte est prise, donc il hérite de ce délai. *Ce n'est pas le son qui est en
-retard, c'est la prise* — et la pose, elle, part au lâcher.
-
-Deux règles tenues de `ui/sons.ts` : le contexte audio ne naît que sur un geste,
-et aucun son ne peut casser le jeu. Le cache ne retient que les succès — une
-promesse rejetée gardée condamnerait le son pour toute la session, la leçon des
-textures de cartes.
-
-### Les arches de visée
-
-Posées en **coordonnées d'écran** dans un SVG fixe sans `viewBox` (une unité
-= un pixel), donc à retracer après chaque rendu **et** à chaque changement de
-mise en page — `resize`, `orientationchange`. Ancrées sur `.chair` et non sur
-`.silhouette` : la silhouette respire, l'arche tremblerait avec elle.
-
-Piège : une courbe quadratique reste toujours **entre ses trois points de
-contrôle**, donc borner celui du haut suffit à garantir qu'elle ne sort pas
-par le plafond. Sans cette borne, en paysage, les longs trajets envoyaient le
-sommet à −125 px.
-
-**Le socle navigateur.** `vite.config.ts` fixe `cssTarget` : sans lui, le
-minifieur réécrit `max-height: 620px` en syntaxe d'intervalle (`height <=
-620px`), qui demande Chrome 104+ — sur un téléphone plus ancien la règle serait
-ignorée **sans erreur**, et le combat redéborderait sans que rien ne le dise.
-Il reste un plancher qu'on ne peut pas abaisser : `color-mix()` avec des
-`var()` ne se compile pas, donc la page demande **Chrome 111 / Safari 16.2**
-(2023). En dessous, les accents de couleur tombent et le rendu s'aplatit — ça
-reste jouable, mais silencieusement plus laid.
-
-**Pour mesurer un format sans redimensionner la fenêtre**, charger la page dans
-une `iframe` de la taille visée : les `vh` et les media queries s'y appliquent
-pour de vrai. Attention — **dans un onglet en arrière-plan le navigateur gèle
-les transitions CSS**, donc une valeur calculée peut rester bloquée à mi-course
-et faire croire à un bug. Neutraliser la transition avant de mesurer.
-
-## Commandes
-
-```bash
-npm run dev          # dev local -- la racine ouvre le jeu
-npm run dev:mobile   # vite --host -> tester sur le téléphone via l'adresse Network
-npm run build        # tsc (types) puis vite build ; doit passer sans erreur
-npm run verif        # vérifications des règles, sans navigateur
-npm run personnages  # (re)engendre public/data/characters.json depuis Wikidata
-npm run gen:animals  # (re)engendre public/data/animals.json depuis GBIF + Wikidata
-npm run peintures    # (re)engendre public/data/paintings.json depuis Wikidata + Wikipedia
-npm run liens        # (re)engendre public/data/links.json — le graphe du plateau
-npm run emoji        # (re)engendre public/data/emoji.json depuis Unicode + CLDR
-npm run emoji -- --peau   # le banc avec les variantes de peau -> emoji-peau.json
-```
-
-`npm run gen:animals` accepte `--seuil=<0..1>` (la coupe), `--restes=absorbe|carte`
-(le sort des ordres qui ne passent pas), `--sortie=<nom>` (pour comparer plusieurs
-coupes côte à côte) et `--frais` (ignorer le cache). Il écrit toujours DEUX
-fichiers : le catalogue et `*_review.md`, la liste à relire par ordre.
-
-`npm run personnages` tourne **hors du build** et peut durer de longues minutes
-— il profite du cache de `scripts/.cache/`, donc une relance ne redemande que
-ce qui avait échoué. `--frais` l'ignore, `--cible=<n>` change le nombre de
-cartes.
-
-## Déploiement — workflow attendu par Keko
-
-**Pousser sur `main` après chaque modification**, sans attendre qu'il le
-demande. Keko teste depuis son téléphone et un PC distant, jamais sur la machine
-de dev : tant que ce n'est pas poussé, il voit une version périmée.
-
-Le push déclenche `.github/workflows/deploy.yml` (~1 min) qui publie sur
-<https://mastagooz.github.io/keko-test/> (base Vite `/keko-test/` au build,
-`/` en dev). GitHub Pages est déjà configuré sur "GitHub Actions" — ne plus y
-toucher.
-
-Cycle : `npm run build` -> commit -> push -> attendre la fin du workflow ->
-dire à Keko d'aller tester. Lui rappeler de vérifier la **date de build affichée
-sur la page** pour être sûr qu'il ne voit pas une version en cache.
-
-**TERMINER CHAQUE RÉPONSE PAR LE LIEN DE CE QU'ON VIENT DE FAIRE.** Keko teste
-depuis son téléphone et un PC distant : le lien doit être sous son pouce, pas à
-retrouver dans l'historique. Il l'a demandé — « tu peux me remettre le lien à
-chaque fois ? de la version nouvelle ».
-
-**LE `?r3f` EST TOMBÉ AVEC LE JEU 2D** : la racine nue ouvre le jeu, donc c'est
-elle qu'on donne. Le paramètre reste accepté et ne fait plus rien, parce que
-*tous les liens déjà envoyés le portent.*
-
-| | |
-|---|---|
-| le jeu | `https://mastagooz.github.io/keko-test/?v=<sha>` |
-| les paquets d'animaux | `…/?paquet&v=<sha>` |
-| **les paquets de peintures** | `…/?paquet&art&v=<sha>` |
-| les paquets de personnages | `…/?paquet&perso&v=<sha>` |
-
-**Y ACCROCHER LE HASH DU COMMIT** (`?v=<sha court>`) : l'URL change donc à chaque
-déploiement, et le navigateur ne peut pas resservir un vieux bundle. Le
-garde-fou `verifierVersion` et la date de build affichée restent les filets —
-mais *un garde-fou ajouté ne corrige pas rétroactivement un cache déjà posé*,
-alors qu'une URL neuve, si. Le paramètre est ignoré par `entree.ts`, qui ne lit
-que `paquet` et `ecusson`.
-
-**Attendre le bon run, pas le dernier.** Comparer le `headSha` du run au `HEAD`
-local avant de conclure : juste après un push, `gh run list --limit 1` renvoie
-encore le run **précédent**, déjà terminé, et on annonce un déploiement qui n'a
-pas eu lieu. C'est arrivé.
-
-## Méthode de travail
-
-On avance **étape par étape**. À chaque étape : dire à Keko ce qui a été fait, et
-**commiter quand ça marche**. Ne pas écrire de code tant qu'une décision de
-design en attente n'est pas tranchée par Keko.
-
-**Ce que Keko doit juger doit être présentable.** Sa règle, et elle est vérifiée
-dans ce dépôt : *« tester avec un truc un minimum visuellement agréable aide
-beaucoup »*. Le mécanisme des trésors a reçu deux « chiant » sur une interface
-en lignes de texte, puis « ça va » une fois la main dessinée en cartes — pour un
-mécanisme identique. Une sensation ne se teste pas sur un tableur.
-
-La borne n'est pas « pas de dessins » — Keko l'a levée lui-même pour la main.
-Elle est : **pas d'assets, pas de fichiers image, pas de dépendance, pas de
-son.**
-
-**Une exception, ouverte par Keko : ses propres images.** Elle a d'abord servi
-aux portraits du joueur (`ui/portrait.ts`, parti avec le gros plan d'attaque —
-il reste dans `git log`), et elle sert maintenant aux **illustrations de
-cartes** : `IMAGES` dans `ui/art.ts` associe un modèle à un fichier de
-`public/`. La première est `Glaive.png`.
-
-**Le repli est porté par le CSS, pas par une vérification** : la carte empile
-l'image de Keko AU-DESSUS du dessin SVG (`--art-keko` puis `--art`, dans
-`.carte > .art`), et une couche de fond qui échoue est simplement ignorée par
-le navigateur. *Un essai abandonné redonne donc le dessin d'origine*, sans
-image cassée et sans une ligne de JavaScript. Pour ajouter une image : un
-fichier 680 x 1000 dans `public/`, une ligne dans `IMAGES`.
-
-**La casse du nom compte** — et l'ACCENT aussi. `public/` est copié tel quel et
-GitHub Pages sert depuis Linux : un `glaive.png` demandé pour un `Glaive.png`
-posé marcherait sur la machine de dev et ferait un 404 en ligne.
-
-*Et ça s'est produit*, sur un accent plutôt que sur une casse : le fichier
-s'appelle `Epée à deux mains.webp` (E sans accent), j'avais écrit `Épée`. **Le
-serveur de dev de Windows servait quand même l'image** — un `fetch` renvoyait
-200 — mais `new Image()` la refusait, et la carte sortait avec son sceau de
-repli. En ligne, ç'aurait été un 404 franc. *On recopie le nom du fichier, on ne
-le réécrit pas* : une entrée de la table se vérifie contre `ls public/`, pas
-contre l'orthographe qu'on croit juste.
-
-**ET UN MODÈLE PEUT AVOIR UN DESSIN PAR RARETÉ : les trois tiers de la
-potion.** Keko a livré trois fioles de richesse croissante — `Potion de vie
-T1/T2/T3.webp` — « les trois tiers des potions sont pour bronze / argent / or /
-diamant ».
-
-*Et ça change ce que la rareté dit d'un objet* : jusqu'ici elle ne tenait qu'au
-MÉTAL DU CADRE, un habit posé autour d'un dessin unique. Ici **c'est l'objet
-lui-même qui monte** — du flacon nu au flacon serti d'or — et le cadre ne fait
-plus que le confirmer.
-
-Trois choses qui le portent :
-
-- **IL Y A TROIS DESSINS POUR QUATRE CRANS**, donc le plus riche couvre le haut
-  de l'échelle : bronze, argent, or, et le diamant reprend celui de l'or en
-  attendant un T4. *Une échelle qui manque de barreaux plafonne, elle ne retombe
-  pas en bas* — la règle du repli de la loupe, prise par le même bout. **Il
-  manque donc un T4**, et c'est à Keko ;
-- **les deux potions du catalogue PARTAGENT la table** (`POTIONS_DE_VIE`), parce
-  que ce qui décide du dessin est la RARETÉ et non le modèle : une Potion
-  commune sort en T1, une Super potion rare en T2. *Une table par modèle aurait
-  recopié les mêmes trois fichiers à chaque fiole nouvelle* ;
-- **sans rareté, c'est le premier cran.** Le jeu 2D ne la connaît pas et ne la
-  passe pas : *une carte sans rang vaut le bas de l'échelle*, exactement ce que
-  `rarete?` tient déjà sur le métal du cadre.
-
-La rareté entre déjà dans `signature()`, donc **deux crans du même modèle ont
-deux textures** sans rien ajouter — c'est ce qui fait que le coffre les empile
-séparément, et c'est précisément ce qu'on veut ici.
-
-**ET ELLES SONT EN WEBP DEPUIS QUE LE FORMAT EST FIXÉ.** Une illustration de
-carte se dessine en **1024 x 1463 (rapport 7:10)** : c'est la surface d'art de
-la carte, bordure déduite — 96,3 x 136,3 unités, soit **0,707**, et le 7:10 n'en
-coûte que 7 px rognés en haut et en bas. *La toile de texture plafonne à 768 de
-large*, donc l'illustration n'est jamais peinte au-delà de 740 px : au-delà de
-1024 de large, c'est du poids pour rien.
-
-**Le sujet tient dans les 61 % du haut** — c'est là que commence le nom (897 px
-sur 1463), et le voile sombre mord dès la moitié. Tout ce qui est plus bas passe
-sous le texte.
-
-**Et le poids tombe d'un facteur 50 à 170** : `Background.png` faisait 1 577 Ko
-et `Glaive.png` 1 694 ; en WebP à 70 %, **9 Ko et 33 Ko**, sans un artefact
-visible au zoom. *À douze modèles, c'était vingt mégaoctets à charger sur un
-téléphone* — c'est désormais moins d'un demi-mégaoctet pour tout le catalogue.
-
-**ET IL FAUT QUE CE SOIT DU WEBP AVEC PERTE, pas du WebP sans perte.** Keko, en
-déposant une Riposte de 533 Ko : « je l'ai mis en webp qualité 100 % pour
-tester, c'est un souci si je fais ça avec toutes les cartes ? » *Ce n'était pas
-de la qualité 100 — c'était du SANS PERTE* (`VP8L`), ce que les exports
-proposent souvent sous le même bouton, et c'est une autre famille de codage :
-le même dessin réencodé avec perte à 100 ne fait que 65 Ko, à 90 que 45.
-
-**Ce que ça coûte, mesuré sur le catalogue complet** (37 dessins) :
-
-| | poids du catalogue |
-|---|---|
-| sans perte, comme la Riposte livrée | **19,3 Mo** |
-| avec perte, qualité 100 | 2,3 Mo |
-| qualité 90 | 1,6 Mo |
-| qualité 70, le reste du jeu | 1,1 Mo |
-
-**Et ce que ça achète : rien qu'on puisse voir.** *La toile d'une carte plafonne
-à 768 px de large*, donc l'illustration n'est jamais peinte au-delà de ~740 — et
-en jeu la carte en fait trois cents au zoom, cent vingt en main. Écart moyen à
-la qualité 70, sur 255 niveaux et hors transparent : **2,4 à 740 px, 1,8 à 300,
-1,1 à 120.** *Un niveau et demi sur deux cent cinquante-cinq ne se voit pas* ;
-dix-huit fois le poids, si, sur un téléphone.
-
-**La marge, s'il en faut, se prend entre 80 et 90** (+6 à +14 Ko par dessin,
-soit un demi-mégaoctet sur tout le catalogue) — pas dans le sans-perte.
-
-**Deux poses**, parce que le joueur est montré dans deux situations qui n'ont
-rien à voir : `public/joueur.png` au repos sur la scène et quand il encaisse,
-`public/attaque.png` lame tendue quand c'est lui qui frappe. *Le gros plan est
-le seul endroit du jeu où la différence se voit.*
-
-**Chaque pose est optionnelle, séparément** : sans `joueur.png` le jeu rend la
-silhouette SVG comme avant, et sans `attaque.png` il frappe avec la pose de
-repos. *Le repli n'est pas une précaution de style* — sans lui, un essai
-abandonné laisserait une image cassée sur la scène ET dans le gros plan, et un
-joueur qui disparaît au moment où il frappe serait pire que de frapper l'épée
-basse.
-
-**LEUR URL PORTE LA DATE DU BUILD** (`?v=...`), et ce n'est pas une précaution :
-sans elle, remplacer un PNG ne change rien à l'écran. Les fichiers de `public/`
-sont copiés tels quels, **sans empreinte de contenu dans leur nom** —
-contrairement à tout le reste du build, qui sort en `index-A1b2C3.js`. Leur URL
-ne bouge donc jamais et le navigateur ressert celle qu'il a en cache. Keko :
-« j'ai changé l'image d'attaque mais elle n'a pas changé quand je lance » —
-alors que le serveur envoyait bien la nouvelle, vérifié à l'octet près.
-
-*Le piège se retend à chaque image modifiée, et il est invisible depuis la
-machine de dev*, où le serveur de développement invalide tout seul. Toute
-ressource ajoutée dans `public/` et destinée à changer doit passer par la même
-version.
-
-**Les deux images sont préchargées au démarrage, et ça compte** : la pose
-d'attaque ne s'affiche qu'au premier coup porté et pèse près d'un mégaoctet —
-chargée à ce moment-là, elle arriverait *après* le gros plan qu'elle devait
-remplir.
-
-**PAS DE SOCLE SOUS UN PORTRAIT dans le cadre.** Le socle est l'ombre au sol,
-dessinée pour une silhouette SVG qui touche le bas de sa boîte ; une image a ses
-propres marges transparentes, donc l'ombre s'en détache et se lit comme un trait
-noir posé dessous — d'autant qu'à cette échelle elle fait 409 px de large. Keko :
-« je vois comme un trait noir sous le joueur durant l'anim ». **Même défaut que
-sur le corps en agonie, même cause** : deux fois de suite, ce qui reste visible
-quand le dessin change, c'est l'ombre qu'on avait faite pour l'ancien.
-
-Ce qu'il faut savoir pour la suite : l'image porte la **même classe
-`silhouette`** que le SVG, donc elle hérite de la respiration, du liseré de
-lumière, de l'extinction en noir à la mort et de la taille calée sur `--corps`.
-Lui donner une classe à elle aurait voulu dire porter chacune de ces règles en
-double. Il ne reste qu'`object-fit: contain` à ajouter : un SVG à viewBox se
-contente d'une hauteur et déduit sa largeur, une image non — sans ça elle serait
-étirée, et c'est le genre de défaut qu'on met sur le compte du dessin plutôt que
-sur celui du CSS. Le chemin passe par `BASE_URL`, sans quoi un `/joueur.png`
-absolu pointerait à la racine du domaine au lieu de `/keko-test/`. Tout est du CSS et du SVG écrits à la main (`ui/illustrations.ts`), et
-seulement sur ce qui est soumis au jugement. C'est peu risqué tant que `logic/`
-reste pur : tout l'habillage vit dans `ui/` et se jette sans rien casser.
-
-**L'ANATOMIE DE LA CARTE, en un seul endroit** (`corpsCarte`, dans
-`render.ts`). Quatre fonctions la dessinaient chacune à leur façon — combat,
-trésor, pièce, vitrine — et c'est ainsi que les proportions ont dérivé. Keko :
-« les cartes c'est une catastrophe, le nom en bas, l'échelle des différents
-éléments, ça ne va pas du tout ». Elle se lit désormais de haut en bas, comme
-une carte à jouer :
-
-- le **fronton** : le nom en Cinzel, calé à GAUCHE juste après la **gemme**
-  de coût — un petit disque sombre serti dans le coin, le chiffre en ivoire.
-  Elle a été un gros joyau jaune ; Keko : « trop grossier et trop gros ». Pas
-  centré : centré, la gemme mangeait les premières lettres d'un nom long, et
-  dans l'éventail c'est la bande gauche qu'on voit — un nom calé à gauche se
-  lit au repos, un nom centré se fait couper par la voisine ;
-- la **fenêtre d'art**, en arche cerclée d'or, presque la moitié de la carte ;
-- le **cartouche** : ce que fait la carte, en EB Garamond, centré — et c'est
-  LUI qui porte le chiffre, en accent et plus gros que le texte. Il y a eu un
-  écusson à part pour le chiffre, à cheval sur la fenêtre ; Keko : « déjà
-  indiqué dans la description, donc inutile — en plus on ne sait pas si c'est
-  attaque ou défense ». Le verbe et le chiffre ensemble disent les deux. Une
-  condition (« ce tour seulement », « et son or est perdu ») va sur une seconde
-  ligne en italique. Un trésor dit d'abord ce qu'il vaut, puis ce que rapporte
-  de le brûler ; une pièce y met sa composition, une ligne par modèle ;
-- le **pied** : sa nature gravée entre deux filets (« Attaque », « Défense »,
-  « Trésor », « Arme »). Ni la richesse d'un trésor ni la rareté d'une pièce
-  ne s'y écrivent : elles se lisent au cadre. Enfoui au repos, et c'est voulu ;
-- des **volutes** aux quatre coins : un seul SVG écrit à la main, dont le
-  viewBox a le rapport exact de la carte (100 × 140), donc `preserveAspectRatio:
-  none` ne déforme rien et une unité vaut 1cqw.
-
-**La matière** : du cuir, pas du carton — vignettage, deux grains croisés en
-`repeating-linear-gradient`, le corps teinté par l'accent, et un **filet doré**
-à 3cqw du bord (`--filet`, plus franc sur un trésor). Keko : « texture de la
-carte trop basique ».
-
-**Tout est en `cqw`** — la carte fait 100cqw de large et 140 de haut — donc les
-proportions sont identiques à 77 px et à 262. Ce qui doit rester au-dessus de
-la ligne de flottaison ET sur la bande gauche que l'éventail laisse voir : la
-gemme, le nom et la première ligne du cartouche.
-
-**Cinzel porte ses capitales HAUT dans sa boîte de ligne.** Centré par le
-flex, le nom paraissait collé en haut du fronton — Keko : « c'est collé en
-haut du rectangle ». Mesuré au canvas (`measureText`, boîtes réelles contre
-boîtes de police) : les glyphes étaient 0,13em au-dessus du centre. Correction
-de 0,12em, **en em pour suivre la taille de la carte**, aux trois endroits en
-Cinzel : `translate` sur le nom, `padding-top` sur la gemme (le chiffre est
-son contenu direct), et les filets du pied remontés vers les glyphes. Georgia
-en repli est presque centrée d'elle-même ; elle descend alors de 0,08em de
-trop, prix accepté.
-
-**Deux polices Google Fonts, Cinzel et EB Garamond — la seule ressource
-chargée depuis l'extérieur.** La borne était « aucune police téléchargée » ;
-Keko l'a levée lui-même (« police trop simple »), et un serif système n'existe
-pas sur Android — Georgia n'y est pas, on tombait sur un sans. Une ligne dans
-`index.html`, Georgia en repli sans réseau.
-
-**Les classes de la carte ont des noms à elles** (`fronton`, `cartouche`,
-`ecusson`, `pied`) parce que les évidents étaient pris ailleurs : `.titre` est
-le titre des feuilles, `.entete` l'en-tête de page, et `.effet` existait déjà
-pour les offres — la règle de la carte l'écrasait en `position: absolute`
-sans que rien ne le dise.
-
-**Pour juger une famille de cartes, une planche.** Une page servie par Vite
-qui importe `vitrine` et aligne toutes les variantes côte à côte à taille de
-zoom — c'est ce qui a permis de voir les huit cartes d'un coup, là où le jeu
-n'en montre qu'une à la fois et jamais un trésor sans gagner un combat. À
-refaire dans le scratchpad, pas à commiter.
-
-**Le vocabulaire visuel de la carte**, pour que les prochaines s'y conforment :
-lumière venue du haut (filet clair en haut du jonc intérieur, sombre en bas),
-fenêtre d'art **en arche** et non en rectangle, trait des dessins **lumineux**
-plutôt que filaire (`drop-shadow` de sa propre couleur), gemme **sertie**
-dans le coin, nom en **Cinzel** et texte en **EB Garamond** (Google Fonts, repli
-Georgia), et un lustre
-oblique qui balaie la carte au moment où on la lève. L'accent de la carte
-teinte le corps, le liseré de la fenêtre et la plaque : une Dague est froide
-jusque dans son carton, un Moulinet est chaud.
-
-**Les créatures** suivent le même vocabulaire : silhouettes **pleines**, jamais
-filaires — une masse sombre avec un œil qui brille se lit comme un corps, un
-contour se lit comme un schéma. Lumière du haut (liseré clair en filtre CSS),
-dégradé de volume du dos vers le ventre, ombre portée au sol. **Chaque
-silhouette a besoin d'un identifiant de dégradé unique** : deux SVG qui
-partagent un `id` font que le second emprunte la couleur du premier, et toute
-la meute vire à la même teinte.
-
-## Langue
-
-Keko écrit en français ; lui répondre en français. Commentaires de code et
-messages de commit en français également.

@@ -24,14 +24,10 @@ import {
   RAPPORT_SACHET,
   type CarteAPeindre,
 } from './texture-carte.ts'
-import { carteDeLAnimal } from './carte-animal.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { carteDeLaPeinture } from './carte-peinture.ts'
-import { carteDuPersonnage } from './carte-personnage.ts'
-import { chargerAnimaux } from '../ui/animaux.ts'
 import { chargerEmojis } from '../ui/emoji.ts'
 import { chargerPeintures } from '../ui/peintures.ts'
-import { loadCharacters } from '../ui/personnages.ts'
 import { createRng } from '../logic/rng.ts'
 import {
   CARTES_PAR_PAQUET,
@@ -42,49 +38,36 @@ import {
   type Echelle,
 } from '../logic/paquet.ts'
 import { tirerBonus, type Bonus } from '../logic/emoji/tirage.ts'
-import type { CarteAnimal } from '../logic/animals/types.ts'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
-import type { CharacterCard } from '../logic/characters/types.ts'
 import type { CartePeinture } from '../logic/paintings/types.ts'
 
 /**
- * LES DEUX CATALOGUES COHABITENT, LE TEMPS QUE KEKO TRANCHE.
+ * L'EMOJI EST LE MODE PRINCIPAL ; LES PEINTURES RESTENT À CÔTÉ.
  *
- * Les animaux REMPLACENT les personnages — c'est sa décision — mais *le
- * pipeline des personnages ne se supprime pas avant validation*, et le reste
- * est intact : le catalogue, le type, les formules et le convertisseur de
- * carte. **Il ne manquait donc qu'une porte pour les revoir**, et elle coûte
- * quatre lignes.
+ * Tranché par Keko : « on laisse définitivement tomber les animaux et les
+ * personnages, on garde le projet emoji qui devient le principal ». Les deux
+ * catalogues abandonnés sont partis — *du code mort ment sur ce que le jeu
+ * fait* — et avec eux le plateau, qui lisait le graphe de leurs articles.
  *
- * `?paquet&perso` rouvre l'ancien mode. Même motif que `?sillage=`, `?cadre=`
- * et `?fond=image` : *ce qui a servi à choisir doit rester ouvrable, même une
- * fois le choix fait.* Le jour où les personnages partent pour de bon, c'est
- * ce drapeau qui tombe en premier.
+ * **Les peintures ne sont nommées dans aucun des deux camps**, donc elles
+ * restent ouvrables par `?paquet&art` : *ce qui a servi à choisir doit rester
+ * ouvrable, même une fois le choix fait*, et elles ne coûtent rien à qui
+ * n'ouvre pas le lien.
  *
  * **Les deux passent par le MÊME tirage** (`logic/paquet.ts`), qui ne demande
- * à une carte que son identité et son cran : c'est précisément pour ça qu'il a
- * quitté le dossier des personnages.
+ * à une carte que son identité et son cran : c'est précisément pour ça qu'il
+ * ne vit dans le dossier d'aucun mode.
  */
-type CarteDuMode = CarteAnimal | CharacterCard | CartePeinture | CarteEmoji
+type CarteDuMode = CartePeinture | CarteEmoji
 
 /**
- * LES TROIS CATALOGUES PASSENT PAR LE MEME TIRAGE, et c'est tout l'interet de
- * `logic/paquet.ts` : il ne demande a une carte que son IDENTITE et son CRAN.
- * *C'est precisement pour ca qu'il a quitte le dossier des personnages.*
- *
- * Le discriminant est STRUCTUREL — `siecle` n'existe que sur une peinture,
- * `groupe` que sur un animal : *un drapeau de mode pose a cote se
- * desaccorderait de la carte qu'il decrit.*
+ * LES DEUX CATALOGUES PASSENT PAR LE MEME PEINTRE, et le discriminant est
+ * STRUCTUREL — `emoji` n'existe que sur une carte d'emoji : *un drapeau de
+ * mode pose a cote se desaccorderait de la carte qu'il decrit.*
  */
 function carteAPeindreDuMode(c: CarteDuMode, bonus?: Bonus): CarteAPeindre {
-  // **L'EMOJI SE TESTE EN PREMIER, et ce n'est pas un detail d'ordre** : une
-  // carte-emoji porte `groupe` comme un animal. *Deux modes qui partagent un
-  // champ ne peuvent pas se discriminer dessus*, donc on cherche le champ qui
-  // n'existe que la -- et `emoji` est le seul.
   if ('emoji' in c) return carteDeLEmoji(c, bonus)
-  if ('siecle' in c) return carteDeLaPeinture(c)
-  if ('groupe' in c) return carteDeLAnimal(c)
-  return carteDuPersonnage(c)
+  return carteDeLaPeinture(c)
 }
 
 /**
@@ -92,9 +75,9 @@ function carteAPeindreDuMode(c: CarteDuMode, bonus?: Bonus): CarteAPeindre {
  *
  * **Il doit etre celui dont la rarete DERIVE** : *un chiffre qui grimpe et une
  * teinte qui grimpe avec lui ne disent la meme chose que s'ils mesurent la
- * meme chose.* Pour un animal et un personnage c'est la frequentation ; **pour
- * une peinture c'est le nombre de VERSIONS LINGUISTIQUES**, qui pese trois
- * cinquiemes de sa formule et s'accorde a 0,971 avec elle.
+ * meme chose.* **Pour une peinture c'est le nombre de VERSIONS
+ * LINGUISTIQUES**, qui pese trois cinquiemes de sa formule et s'accorde a
+ * 0,971 avec elle.
  */
 function compteurDuMode(c: CarteDuMode, total = 0): { valeur: number; unite: string } {
   // POUR UN EMOJI C'EST LE NOMBRE D'EMOJI QU'IL DEPASSE au classement d'usage
@@ -102,8 +85,7 @@ function compteurDuMode(c: CarteDuMode, total = 0): { valeur: number; unite: str
   // lui, descend -- un compteur qui s'arreterait a « 3 » pour la carte la plus
   // rare monterait vers le commun, et *la teinte monte avec le compteur.*
   if ('emoji' in c) return { valeur: Math.max(0, total - c.rang), unite: 'emoji dépassés' }
-  if ('siecle' in c) return { valeur: c.langues, unite: 'langues sur Wikipédia' }
-  return { valeur: c.vues, unite: 'vues par mois' }
+  return { valeur: c.langues, unite: 'langues sur Wikipédia' }
 }
 
 /**
@@ -193,41 +175,20 @@ function lueurDans(rang: number, echelle: readonly string[]): string {
 }
 
 export function Paquet3D(): React.ReactElement {
-  /**
-   * QUEL CATALOGUE — les animaux par defaut, `&art` les peintures, `&perso`
-   * l'ancien jeu de personnages.
-   *
-   * **Les peintures vivent derriere un parametre, a cote des animaux plutot
-   * qu'a leur place** : *ce qui se teste doit pouvoir s'ouvrir d'un lien*, et
-   * Keko tranchera en voyant les deux. Meme motif que `?sillage=`, `?cadre=`
-   * et `?fond=image`.
-   */
   const params = new URLSearchParams(location.search)
   /**
-   * `?paquet&fiction` OUVRE LE BANC DU POOL ENTIER DE LA FICTION.
+   * QUEL CATALOGUE — L'EMOJI PAR DÉFAUT, `&art` les peintures.
    *
-   * Demande par Keko : « on peut faire un test avec un booster uniquement
-   * fiction ou on a la totalite du pool dispo ? » *Le rayon du jeu en garde 273
-   * sur 1 472*, donc on ne peut rien dire du pool en ouvrant des paquets du
-   * catalogue ordinaire -- **un banc montre le catalogue, pas l'etat de la
-   * partie.** Il lit `fiction.json`, qu'engendre `npm run personnages --
-   * --fiction`.
+   * Tranché par Keko : « on garde le projet emoji qui devient le principal ».
+   * *Un mode principal s'ouvre sans paramètre* — c'est la règle qui a fait
+   * tomber `?r3f` le jour où le moteur 3D a rattrapé le jeu.
    *
-   * Il IMPLIQUE le mode personnages : *une carte de fiction est une
-   * carte-personnage*, elle se dessine avec le meme gabarit.
+   * **`?paquet&emoji` continue de marcher**, et il le faut : *tous les liens
+   * déjà donnés à Keko le portent*, et une adresse qu'on a distribuée ne doit
+   * pas cesser de marcher le jour où elle devient inutile.
    */
-  const fiction = params.has('fiction')
-  const personnages = params.has('perso') || fiction
   const peintures = params.has('art')
-  /**
-   * `?paquet&emoji` OUVRE LA COLLECTION D'EMOJI — le cinquieme mode.
-   *
-   * Demande par Keko : « on utilise des emoji : noto color emoji et noto
-   * animated emoji ». *Il reste a cote des quatre autres plutot qu'a leur
-   * place* : ce qui se teste doit pouvoir s'ouvrir d'un lien, et Keko tranchera
-   * en voyant les cinq.
-   */
-  const emojis = params.has('emoji')
+  const emojis = !peintures
   /**
    * `?paquet&emoji&peau` AJOUTE LES VARIANTES DE COULEUR DE PEAU.
    *
@@ -318,11 +279,7 @@ export function Paquet3D(): React.ReactElement {
     let vivant = true
     const charger = emojis
       ? chargerEmojis(peau ? 'emoji-peau' : 'emoji')
-      : peintures
-        ? chargerPeintures()
-        : personnages
-          ? loadCharacters(fiction ? 'fiction' : 'characters')
-          : chargerAnimaux()
+      : chargerPeintures()
     void charger.then((cartes: CarteDuMode[]) => {
       if (!vivant) return
       if (cartes.length === 0) setErreur('Catalogue vide ou introuvable.')
@@ -331,7 +288,7 @@ export function Paquet3D(): React.ReactElement {
     return () => {
       vivant = false
     }
-  }, [personnages, peintures, fiction, emojis, peau])
+  }, [emojis, peau])
 
   useEffect(() => {
     const suivre = () => setFenetre({ l: window.innerWidth, h: window.innerHeight })
