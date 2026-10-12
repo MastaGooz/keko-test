@@ -27,10 +27,12 @@
     <title>Keko test</title>
   </head>
   <body>
-    <!-- Le jeu est en paysage uniquement. On ne peut pas forcer l'orientation
-         depuis une page web — le verrouillage exige le plein écran et n'existe
-         pas sur iPhone — donc on demande, en disant quoi faire si rien ne
-         tourne. -->
+    <!-- L'ARCHIVE est en paysage uniquement, et elle seule : `entree.ts` pose
+         `paysage-requis` sur la racine dans cette branche-là. On ne peut pas
+         forcer l'orientation depuis une page web — le verrouillage exige le
+         plein écran et n'existe pas sur iPhone — donc on demande, en disant
+         quoi faire si rien ne tourne. La collection, elle, se tient en
+         portrait et n'exige rien. -->
     <div class="tourne" aria-hidden="true">
       <svg viewBox="0 0 64 64" class="tourne-icone" fill="none" stroke="currentColor"
         stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">

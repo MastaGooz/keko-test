@@ -40,6 +40,13 @@ if (archive) {
   // LE JEU D'EXTRACTION — gardé en archive, on ne travaille plus dessus. Il
   // garde toutes ses adresses : *une adresse qu'on a distribuée ne doit pas
   // cesser de marcher le jour où elle change de rang.*
+  //
+  // ET IL GARDE SON EXIGENCE DE PAYSAGE, que la collection vient d'abandonner.
+  // *Son réglage est un rasoir et personne ne le rejoue* : une archive qu'on
+  // bascule en portrait sans la rejouer est une archive qu'on casse. Le
+  // drapeau vit sur la racine du document, donc le CSS le lit sans qu'aucun
+  // module n'ait à savoir dans quel mode il tourne.
+  document.documentElement.classList.add('paysage-requis')
   void import('./render/monter.tsx').then(({ monter3d }) => {
     const racine = document.getElementById('app')
     if (racine !== null) monter3d(racine)

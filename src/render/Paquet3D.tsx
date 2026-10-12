@@ -97,10 +97,46 @@ function compteurDuMode(c: CarteDuMode, total = 0): { valeur: number; unite: str
  * largeur pour que cinq cartes tiennent, la hauteur pour qu'une carte tienne —
  * et la plus dure gagne.
  */
-function tailleDeLaRangee(largeurVisible: number, hauteurVisible: number): number {
-  const parLargeur = (largeurVisible * 0.9) / (CARTES_PAR_PAQUET + (CARTES_PAR_PAQUET - 1) * 0.12)
-  const parHauteur = (hauteurVisible * 0.62) / 1.4
+function tailleDeLaRangee(
+  largeurVisible: number,
+  hauteurVisible: number,
+  colonnes: number,
+  lignes: number,
+): number {
+  const parLargeur = (largeurVisible * 0.9) / (colonnes + (colonnes - 1) * 0.12)
+  const parHauteur = (hauteurVisible * 0.64) / (lignes * 1.4 + (lignes - 1) * 0.17)
   return Math.min(parLargeur, parHauteur)
+}
+
+/**
+ * COMBIEN DE COLONNES AU BILAN — **cinq en paysage, trois en portrait.**
+ *
+ * *Cinq cartes alignées sur la largeur d'un téléphone debout font 55 px de
+ * large chacune* : on y voit cinq couleurs et plus un seul nom. **Un bilan est
+ * fait pour relire ce qu'on vient d'avoir**, donc il cède la ligne plutôt que
+ * la taille — et trois colonnes sur deux lignes rendent 70 % de largeur à
+ * chaque carte.
+ *
+ * Le seuil est le RAPPORT de la fenêtre et non une largeur en pixels : *ce qui
+ * décide n'est pas la taille de l'écran, c'est sa forme.*
+ */
+function colonnesDuBilan(largeurVisible: number, hauteurVisible: number): number {
+  return largeurVisible / hauteurVisible >= 1.15 ? CARTES_PAR_PAQUET : 3
+}
+
+/**
+ * LA CARTE DU DÉFILÉ : seule au centre, aussi grande que la place le permet.
+ *
+ * *C'est tout l'intérêt de n'en montrer qu'une* — elle passe de 20 % à 55 % de
+ * la largeur d'un téléphone en portrait, donc son illustration et son cartouche
+ * se lisent sans qu'on ait à zoomer.
+ *
+ * **Les deux contraintes se valent ici**, à la différence de la rangée : en
+ * portrait c'est la largeur qui borne, en paysage la hauteur. *La plus dure
+ * gagne*, et c'est la même règle depuis le début.
+ */
+function tailleDuDefile(largeurVisible: number, hauteurVisible: number): number {
+  return Math.min(largeurVisible * 0.78, (hauteurVisible * 0.58) / 1.4)
 }
 
 /**
@@ -112,7 +148,11 @@ function tailleDeLaRangee(largeurVisible: number, hauteurVisible: number): numbe
  * téléphone, la largeur sur un écran de PC.
  */
 function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number {
-  return Math.min(largeurVisible * 0.42, (hauteurVisible * 0.68) / RAPPORT_SACHET)
+  // EN PORTRAIT C'EST LA LARGEUR QUI BORNE, et 0,42 y laissait le sachet perdu
+  // au milieu d'un écran vide : *un objet qu'on doit déchirer au doigt a besoin
+  // d'être sous le doigt.* En paysage la hauteur commande de toute façon, donc
+  // rien n'y bouge.
+  return Math.min(largeurVisible * 0.6, (hauteurVisible * 0.68) / RAPPORT_SACHET)
 }
 
 /**
@@ -269,6 +309,22 @@ export function Paquet3D(): React.ReactElement {
    * premier cran la pose au fond, le second lui donne sa cible.
    */
   const [sortie, setSortie] = useState(nu ? 2 : 0)
+  /**
+   * QUELLE CARTE EST SOUS LES YEUX, et si le défilé est terminé.
+   *
+   * Keko : « je voudrais qu'on ait une ouverture de booster plus proche de
+   * celle de lexicodex (une carte à la fois) ».
+   *
+   * ***CE QUE ÇA CHANGE N'EST PAS LA MISE EN PAGE, C'EST LE TEMPS.*** Cinq
+   * cartes posées côte à côte se révèlent dans l'ordre qu'on veut, et aucune
+   * n'a de moment à elle : on les retourne en les tapant, et la cinquième
+   * arrive pendant qu'on regarde encore la troisième. **Une à la fois, chacune
+   * a son instant** — et c'est tout ce qu'un paquet a à vendre.
+   *
+   * `montree` est l'index dans `paquet`, `fini` dit qu'on est passé au bilan.
+   */
+  const [montree, setMontree] = useState(0)
+  const [fini, setFini] = useState(false)
   /** La clé du flash de l'arrachement — *une animation se remonte à neuf.* */
   const [flash, setFlash] = useState(0)
   const racine = useRef<HTMLDivElement>(null)
@@ -369,7 +425,6 @@ export function Paquet3D(): React.ReactElement {
     [paquet, tirage],
   )
 
-  const toutRevele = paquet.length > 0 && paquet.every((c) => revelees.has(c.id))
 
   /** Le chiffre de la carte brute : celui dont la rarete DERIVE. */
   function compteurDe(id: string): { valeur: number; unite: string } {
@@ -428,23 +483,27 @@ export function Paquet3D(): React.ReactElement {
     else setSommet((h) => Math.max(h, rangDe(id)))
   }
 
-  function toutReveler(): void {
-    // ON SAUTE LA MONTEE : *un joueur qui demande tout ne demande pas de
-    // suspense*, et le compteur en est un.
-    cancelAnimationFrame(image.current)
-    setMonte(false)
-    const nonVues = paquet.filter((c) => !revelees.has(c.id))
-    if (nonVues.length > 0) {
-      const haut = Math.max(...nonVues.map((c) => rangDe(c.id)))
-      setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDans(haut, teintes) }))
-      setSommet((h) => Math.max(h, haut))
+  /**
+   * UN SEUL GESTE FAIT TOUT AVANCER : retourner, puis passer à la suivante.
+   *
+   * **C'est le geste de lexicodex, et c'est ce qui le rend lisible** : on ne
+   * demande jamais au joueur de choisir entre deux actions, on lui demande de
+   * continuer. *Une carte qu'on vient de retourner n'a qu'une suite possible.*
+   *
+   * **ET IL S'ARRÊTE AU BILAN**, où le bouton reprend la main : *un geste qui
+   * continue de répondre quand il n'y a plus rien à avancer ne dit plus où
+   * l'on en est.*
+   */
+  function avancer(): void {
+    if (!ouvert || fini || paquet.length === 0) return
+    const carte = paquet[montree]
+    if (carte === undefined) return
+    if (!revelees.has(carte.id)) {
+      reveler(carte.id)
+      return
     }
-    setRevelees(new Set(paquet.map((c) => c.id)))
-    setJetons((j) => {
-      const suite = { ...j }
-      for (const c of paquet) if (!revelees.has(c.id)) suite[c.id] = (suite[c.id] ?? 0) + 1
-      return suite
-    })
+    if (montree + 1 < paquet.length) setMontree(montree + 1)
+    else setFini(true)
   }
 
   function ouvrirUnAutre(): void {
@@ -453,6 +512,8 @@ export function Paquet3D(): React.ReactElement {
     setBrule(false)
     setSortie(nu ? 2 : 0)
     setRevelees(new Set())
+    setMontree(0)
+    setFini(false)
     setSommet(-1)
     setEclat(null)
     setMonte(false)
@@ -461,11 +522,100 @@ export function Paquet3D(): React.ReactElement {
     setNumero((n) => n + 1)
   }
 
+  /**
+   * LE GESTE DU DÉFILÉ — **une tape OU un balayage horizontal.**
+   *
+   * *Lexicodex ne connaît que le balayage* : vérifié à la main, une tape et un
+   * double-tap n'y font rien. **On garde les deux**, et c'est une règle du
+   * projet, pas un confort : « sur téléphone le glisser seul est fragile, la
+   * tape doit toujours marcher — c'est elle qui porte la fonctionnalité. »
+   *
+   * **IL EST POSÉ UNE SEULE FOIS ET LIT L'ÉTAT PAR UNE RÉF.** `avancer` est
+   * recréée à chaque rendu, donc un écouteur qui la capturerait travaillerait
+   * sur un paquet périmé — *c'est le piège des écouteurs retirés par
+   * référence*, déjà payé sur la main de combat, et la réf est la réponse que
+   * le projet lui a donnée.
+   *
+   * **ET IL IGNORE CE QUI SUIT UN GESTE DE TROP PRÈS** : le retournement dure
+   * deux tiers de seconde, donc deux balayages enchaînés sauteraient la carte
+   * qu'on vient de retourner — *on ne révèle pas pour cacher aussitôt.*
+   */
+  const refAvancer = useRef<() => void>(() => undefined)
+  refAvancer.current = avancer
+  useEffect(() => {
+    const arret = new AbortController()
+    const { signal } = arret
+    const depart = { x: 0, y: 0 }
+    let dernier = 0
+    addEventListener(
+      'pointerdown',
+      (e) => {
+        depart.x = e.clientX
+        depart.y = e.clientY
+      },
+      { signal },
+    )
+    addEventListener(
+      'pointerup',
+      (e) => {
+        const dx = e.clientX - depart.x
+        const dy = e.clientY - depart.y
+        const tape = Math.hypot(dx, dy) < 12
+        const balaye = Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)
+        if (!tape && !balaye) return
+        const t = performance.now()
+        if (t - dernier < 400) return
+        dernier = t
+        refAvancer.current()
+      },
+      { signal },
+    )
+    return () => arret.abort()
+  }, [])
+
   const hVisible = hauteurVisibleA(Z_MAIN, fenetre.h)
   const lVisible = hVisible * (fenetre.l / fenetre.h)
-  const taille = tailleDeLaRangee(lVisible, hVisible)
+  const colonnes = colonnesDuBilan(lVisible, hVisible)
+  const lignes = Math.ceil(CARTES_PAR_PAQUET / colonnes)
+  const taille = tailleDeLaRangee(lVisible, hVisible, colonnes, lignes)
   const pas = taille * 1.12
   const y = hVisible * 0.06
+  /**
+   * LA PLACE D'UNE CARTE AU BILAN — **et chaque ligne se centre sur SON
+   * compte.** La dernière en porte deux quand les autres en portent trois :
+   * calées sur la grille, elles se seraient collées à gauche, et *un trou au
+   * bout d'une rangée se lit comme une case qu'on a oublié de remplir.*
+   */
+  function placeAuBilan(i: number): [number, number, number] {
+    const colonne = i % colonnes
+    const ligne = Math.floor(i / colonnes)
+    const surCetteLigne = Math.min(colonnes, CARTES_PAR_PAQUET - ligne * colonnes)
+    const hauteurTotale = lignes * 1.4 + (lignes - 1) * 0.17
+    return [
+      (colonne - (surCetteLigne - 1) / 2) * pas,
+      y + (hauteurTotale / 2 - 0.7 - ligne * 1.57) * taille,
+      Z_MAIN,
+    ]
+  }
+  /** La carte du défilé : seule au centre, et tant pis pour ses voisines. */
+  const grande = tailleDuDefile(lVisible, hVisible)
+  /**
+   * OÙ VA UNE CARTE, selon qu'elle est passée, à l'écran, ou encore dessous.
+   *
+   * **Les suivantes restent EXACTEMENT derrière celle qu'on regarde**, à la
+   * même taille : elles sont donc invisibles, et c'est voulu — *une pile qu'on
+   * voit dépasser annonce ce qui vient*, alors que le défilé ne doit rien
+   * annoncer du tout. Quand la carte de devant part à gauche, la suivante est
+   * déjà là.
+   *
+   * **Et celles qu'on a vues sortent par la gauche**, assez loin pour quitter
+   * le champ : *ce qui est passé n'a plus à être lu*, et le bilan les reprendra
+   * toutes à la fin.
+   */
+  function placeAuDefile(i: number): [number, number, number] {
+    if (i < montree) return [-lVisible * 1.1, y, Z_MAIN]
+    return [0, y, Z_MAIN - (i - montree) * 0.02]
+  }
   /** La largeur du sachet : c'est elle qui place la fente et borne ce qui en sort. */
   const lSachet = tailleDuSachet(lVisible, hVisible)
   const hSachet = lSachet * RAPPORT_SACHET
@@ -490,8 +640,8 @@ export function Paquet3D(): React.ReactElement {
    * que s'il y en a eu d'autres avant* : sur un paquet d'une seule carte, « la
    * derniere » ne dirait rien.
    */
-  const restantes = paquet.filter((c) => !revelees.has(c.id))
-  const derniere = restantes.length === 1 && paquet.length > 1 ? restantes[0]! : null
+  const derniere =
+    !fini && paquet.length > 1 && montree === paquet.length - 1 ? (paquet[montree] ?? null) : null
 
   /**
    * L'UNITE DU COMPTEUR est une propriete du MODE, pas d'une carte : on la lit
@@ -589,47 +739,59 @@ export function Paquet3D(): React.ReactElement {
               // même évènement*, seule la mise en scène change. Passer
               // `undefined` rend la prop absente, donc `Carte3D` ne charge pas
               // le pavé du nom quand il ne servirait pas.
-              culbute={culbuter ? (jetons[carte.id] ?? 0) : undefined}
-              developpe={culbuter ? undefined : (jetons[carte.id] ?? 0)}
+              // LA CULBUTE AU DÉFILÉ, LE DÉVELOPPEMENT AU BILAN. *Une culbute
+              // montre un dos puis une face* — c'est exactement ce que le
+              // balayage promet, et c'est ce que fait lexicodex. Le
+              // développement, lui, est une lecture : il n'a de sens que là où
+              // la carte est déjà sous les yeux.
+              culbute={culbuter || !fini ? (jetons[carte.id] ?? 0) : undefined}
+              developpe={culbuter || !fini ? undefined : (jetons[carte.id] ?? 0)}
               // ELLE SORT DU SACHET AVANT DE REJOINDRE SA PLACE. *Derrière le
               // corps en z*, donc on la voit émerger par la fente plutôt
               // qu'apparaître devant la pochette — et les cinq sont
               // superposées, ce qui est exactement ce qu'elles sont : une
               // pile qu'on tire.
               position={
-                ouvert
-                  ? [(i - (aPeindre.length - 1) / 2) * pas, y, Z_MAIN]
-                  : [0, hSachet * (sortie > 1 ? 0.3 : -0.12), Z_MAIN - 0.06]
+                !ouvert
+                  ? [0, hSachet * (sortie > 1 ? 0.3 : -0.12), Z_MAIN - 0.06]
+                  : fini
+                    ? placeAuBilan(i)
+                    : placeAuDefile(i)
               }
-              taille={ouvert ? taille : tailleDedans}
+              taille={!ouvert ? tailleDedans : fini ? taille : grande}
               // ELLE RÉPOND AU CURSEUR une fois révélée, et pas avant : *un dos
               // n'a rien à montrer*, donc rien à faire briller.
               reflet={vue}
               ombre
-              onPointerDown={(e) => {
-                e.stopPropagation()
-                // ON NE RETOURNE RIEN QUI SOIT ENCORE DANS LE SACHET : les
-                // cinq y sont superposées, donc une tape en retournerait une
-                // au hasard — *et on ne révèle pas ce qu'on n'a pas encore
-                // sorti.*
-                if (ouvert) reveler(carte.id)
-              }}
+              // ELLE NE PORTE PLUS DE GESTE À ELLE. *Tout passe par le geste
+              // de l'écran* — une tape sur la carte et une tape à côté font la
+              // même chose, parce qu'il n'y a qu'une suite possible. Ça retire
+              // au passage le cas que l'ancienne version devait écarter : les
+              // cinq superposées dans le sachet, dont une tape en retournait
+              // une au hasard.
+              inerte
             />
           )
         })}
 
-        {ouvert && paquet.length > 0 && (
+        {/*
+          LE BOUTON N'EXISTE QU'AU BILAN. Pendant le défilé il n'y a rien à
+          décider — *on continue, c'est tout* — et un bouton posé là
+          disputerait le geste à la carte. « Tout révéler » est parti avec :
+          il répondait à cinq dos posés côte à côte, et il n'y en a plus.
+        */}
+        {ouvert && fini && paquet.length > 0 && (
           <Bouton3D
-            texte={toutRevele ? 'Ouvrir un autre paquet' : 'Tout révéler'}
-            ton={toutRevele ? 'or' : 'pierre'}
+            texte="Ouvrir un autre paquet"
+            ton="or"
             cran="ecran"
-            position={[0, -hVisible * 0.36, Z_MAIN]}
-            onCliquer={toutRevele ? ouvrirUnAutre : toutReveler}
+            position={[0, -hVisible * 0.38, Z_MAIN]}
+            onCliquer={ouvrirUnAutre}
           />
         )}
       </Canvas>
 
-      {ouvert && (derniere !== null || monte) && (
+      {ouvert && !fini && (derniere !== null || monte) && (
         <div className="paquet-dernier">
           <p className="paquet-dernier__mot">Dernière carte</p>
           {monte && (

@@ -34,8 +34,10 @@ mesure écrite une fois ne reste pas vraie quand ce qui la produit a bougé ».
 la raison de s'y tenir.***
 
 Les deux collections sont des jeux web (Vite + TypeScript, React + React Three
-Fiber pour le rendu des cartes), joués **au doigt sur téléphone, en paysage
-uniquement**.
+Fiber pour le rendu des cartes), joués **au doigt sur téléphone**. ***LA
+COLLECTION EST EN PORTRAIT, L'ARCHIVE EN PAYSAGE*** — tranché par Keko en
+demandant l'ouverture de lexicodex : « le but est en partie de basculer le jeu
+en format vertical sur le téléphone (fini le mode paysage) ».
 
 
 ## LE PROJET : UNE COLLECTION D'EMOJI — la racine, et `?paquet`
@@ -1339,6 +1341,109 @@ premier mode chargé imposerait son dos à l'autre.*
 
 `?dos=gabarit` rend l'ancien — *ce qui a servi à choisir doit rester ouvrable.*
 
+### L'OUVERTURE SE FAIT UNE CARTE À LA FOIS — le modèle est lexicodex
+
+Keko : **« je voudrais qu'on ait une ouverture de booster plus proche de celle
+de lexicodex (une carte à la fois), tu peux explorer le site et voir son code
+pour t'en rapprocher au max ? Le but est en partie de basculer le jeu en format
+vertical sur le téléphone (fini le mode paysage). »**
+
+*Son code n'était pas lisible et ça n'a rien coûté* : lexicodex est rendu dans
+un canvas, donc son DOM ne porte ni texte ni bouton. **C'est son comportement
+qui a été relevé**, en ouvrant un booster à la main — et c'est de toute façon ce
+qu'on peut reprendre d'un site tiers.
+
+#### CE QUE LE MODÈLE FAIT, mesuré en l'ouvrant
+
+| | |
+|---|---|
+| le format | **portrait**, tout en colonne : le sachet au centre, le bouton dessous |
+| la déchirure | on glisse le long d'un pointillé « OUVRIR ICI », la bande s'envole dans un flash |
+| les cartes | elles sortent **une par une** du sachet, face cachée, presque plein écran |
+| le geste | **un balayage horizontal** retourne la carte, le suivant passe à la suivante |
+| la progression | un mot sous la carte — « DERNIÈRE CARTE » |
+| la fin | une barre d'actions : « TOUT RECYCLER », « BOOSTER SUIVANT » |
+
+***ET NOUS AVIONS DÉJÀ LA MOITIÉ DU CHEMIN*** : le sachet qui se déchire au
+doigt le long de son pointillé, le flash de l'arrachement, la bande qui s'envole
+et les cartes qui émergent par la fente existaient déjà. **Ce qui manquait est
+le TEMPS** — cinq cartes posées côte à côte se révèlent dans l'ordre qu'on veut,
+et *aucune n'a de moment à elle.*
+
+#### UNE À LA FOIS, C'EST UN CHANGEMENT DE TEMPS, PAS DE MISE EN PAGE
+
+**Chaque carte a son instant**, et c'est tout ce qu'un paquet a à vendre. Ce que
+ça achète, mesuré : la carte passe de 20 % à **55 % de la largeur** d'un
+téléphone en portrait — *son illustration et son cartouche se lisent sans qu'on
+ait à zoomer.*
+
+**UN SEUL GESTE FAIT TOUT AVANCER** : retourner, puis passer à la suivante. *On
+ne demande jamais au joueur de choisir entre deux actions, on lui demande de
+continuer* — une carte qu'on vient de retourner n'a qu'une suite possible.
+
+**ET ON GARDE LA TAPE EN PLUS DU BALAYAGE.** *Lexicodex ne connaît que le
+balayage* — vérifié à la main, une tape et un double-tap n'y font rien — et
+c'est une règle du projet qui l'emporte : **« sur téléphone le glisser seul est
+fragile, la tape doit toujours marcher, c'est elle qui porte la
+fonctionnalité. »**
+
+Quatre choses à ne pas défaire :
+
+- **LES SUIVANTES RESTENT EXACTEMENT DERRIÈRE CELLE QU'ON REGARDE**, à la même
+  taille, donc invisibles. *Une pile qu'on voit dépasser annonce ce qui vient*,
+  et le défilé ne doit rien annoncer ; quand la carte de devant part à gauche,
+  la suivante est déjà là ;
+- **LA CARTE NE PORTE PLUS DE GESTE À ELLE** (`inerte`) : une tape sur elle et
+  une tape à côté font la même chose. *Ça retire au passage le cas que
+  l'ancienne version devait écarter* — les cinq superposées dans le sachet, dont
+  une tape en retournait une au hasard ;
+- **LE GESTE EST POSÉ UNE FOIS ET LIT L'ÉTAT PAR UNE RÉF.** `avancer` est
+  recréée à chaque rendu : un écouteur qui la capturerait travaillerait sur un
+  paquet périmé — *le piège des écouteurs retirés par référence*, déjà payé sur
+  la main de combat ;
+- **IL IGNORE CE QUI SUIT UN GESTE DE TROP PRÈS** (400 ms) : le retournement
+  dure deux tiers de seconde, donc deux balayages enchaînés sauteraient la carte
+  qu'on vient de retourner. *On ne révèle pas pour cacher aussitôt.*
+
+#### LE BOUTON DISPARAÎT, ET « TOUT RÉVÉLER » AVEC LUI
+
+Pendant le défilé il n'y a **rien à décider** — on continue, c'est tout — et un
+bouton posé là disputerait le geste à la carte. *« Tout révéler » répondait à
+cinq dos posés côte à côte, et il n'y en a plus.*
+
+#### LE BILAN RESTE, ET C'EST NOTRE ÉCART AVEC LEXICODEX
+
+Chez lui, la dernière carte reste à l'écran et la barre d'actions apparaît. Chez
+nous **les cinq se rangent en grille** avant « Ouvrir un autre paquet » :
+*notre paquet a un SOMMET* — la plus rare décide de la lueur de l'écran — et il
+ne se lit que sur l'ensemble.
+
+**LA GRILLE CÈDE LA LIGNE, PAS LA TAILLE** : cinq cartes alignées sur la largeur
+d'un téléphone debout font 55 px chacune, *on y voit cinq couleurs et plus un
+seul nom.* Trois colonnes sur deux lignes leur rendent 70 % de largeur. **Le
+seuil est le RAPPORT de la fenêtre**, pas une largeur en pixels : *ce qui décide
+n'est pas la taille de l'écran, c'est sa forme.* Et **chaque ligne se centre sur
+SON compte** — la dernière en porte deux quand les autres en portent trois, et
+*un trou au bout d'une rangée se lit comme une case qu'on a oublié de remplir.*
+
+#### LE PIÈGE : LA CULBUTE ENFLE DE MOITIÉ
+
+Elle s'approche de la caméra de 1,15 fois sa largeur et grossit de 50 % — un
+réglage validé sur une carte de coffre, *qui explose sur une carte qui occupe
+déjà les trois quarts de l'écran.* En paysage elle sortait du cadre par le haut
+et par le bas.
+
+**La taille du défilé est donc bornée à 58 % de la hauteur**, et ça ne coûte
+rien en portrait : **c'est la LARGEUR qui y commande** (78 %), donc le format
+visé ne bouge pas d'un pixel. *Un plafond posé pour une orientation se mesure
+dans l'autre.*
+
+#### LE SACHET GROSSIT EN PORTRAIT
+
+De 42 % à **60 % de la largeur** : *un objet qu'on doit déchirer au doigt a
+besoin d'être sous le doigt*, et à 42 % il était perdu au milieu d'un écran
+vide. En paysage c'est la hauteur qui borne, donc rien n'y change.
+
 ### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
 
 - **les 270 drapeaux** sont un groupe à part — ce sont des pays, pas des objets.
@@ -2004,7 +2109,17 @@ port injecté depuis `ui/`, jamais un `localStorage` lu depuis `logic/`.
 
 - Cibles tactiles **≥ 48 px** de haut (le bouton actuel fait 64).
 - Tester au doigt, pas seulement à la souris.
-- **Paysage uniquement.** En portrait, un écran demande de tourner l'appareil.
+- **LA COLLECTION EST EN PORTRAIT, ET N'EXIGE RIEN** : ni portrait ni paysage.
+  Elle se cale sur le portrait — *c'est le format d'un téléphone qu'on tient à
+  une main, et celui d'une carte* — mais **Keko teste aussi depuis un PC
+  distant**, et un écran bloquant l'y arrêterait net. *Une mise en page qui
+  tient dans les deux vaut mieux qu'une exigence.*
+- **L'ARCHIVE, elle, reste en paysage uniquement** et garde son écran de
+  rotation : `entree.ts` pose `paysage-requis` sur la racine dans cette branche
+  seule. *Son réglage est un rasoir et personne ne le rejoue* — une archive
+  qu'on bascule sans la rejouer est une archive qu'on casse.
+- **Le manifeste dit `portrait`**, puisque l'application installée ouvre la
+  racine, c'est-à-dire la collection.
 
 **On ne peut pas forcer l'orientation depuis une page web** : le verrouillage
 exige le plein écran et n'existe pas sur iPhone. D'où l'écran de rotation — et

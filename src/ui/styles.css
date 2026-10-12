@@ -1946,22 +1946,34 @@ body {
   }
 }
 
-/* --- le jeu n'existe qu'en paysage ---------------------------------------- */
+/* --- L'ARCHIVE n'existe qu'en paysage, LA COLLECTION se tient en portrait -- */
 
 /* On ne peut pas forcer l'orientation depuis une page web : le verrouillage
    exige le plein ecran et n'existe pas sur iPhone. On demande donc, en disant
    quoi faire si rien ne tourne -- beaucoup de gens gardent le verrouillage de
-   rotation active en permanence, et sans cette phrase ils restent bloques. */
+   rotation active en permanence, et sans cette phrase ils restent bloques.
+
+   MAIS CA NE VAUT PLUS QUE POUR L'ARCHIVE. Keko : « le but est en partie de
+   basculer le jeu en format vertical sur le telephone (fini le mode paysage) ».
+   C'est `entree.ts` qui pose `paysage-requis` sur la racine, et seulement dans
+   la branche de l'extraction : *le jeu d'extraction a ete regle en paysage et
+   on ne le rejoue plus*, donc il garde sa demande.
+
+   LA COLLECTION, ELLE, N'EXIGE RIEN DU TOUT -- ni portrait ni paysage. Elle se
+   cale sur le portrait, parce que c'est le format d'un telephone qu'on tient a
+   une main et celui d'une carte ; mais *Keko teste aussi depuis un PC
+   distant*, et un ecran bloquant l'y arreterait net. Une mise en page qui
+   tient dans les deux vaut mieux qu'une exigence. */
 .tourne {
   display: none;
 }
 
 @media (orientation: portrait) {
-  #app {
+  .paysage-requis #app {
     display: none;
   }
 
-  .tourne {
+  .paysage-requis .tourne {
     position: fixed;
     inset: 0;
     display: flex;
