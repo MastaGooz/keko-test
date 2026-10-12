@@ -1949,13 +1949,20 @@ const INTERLIGNE_EFFET = 1.25
  * | personnages | 89,5 % | 10,4 % | 0,1 % |
  * | le jeu | **100 %** | — | — |
  *
- * **ET LE CRAN UNIQUE S'OUVRE D'UN LIEN** : `?titre=unique` met TOUT à 7,3 U,
- * donc zéro écart, au prix de 23 % sur les noms courts. *C'est l'arbitrage que
- * Keko doit voir des deux côtés* — et il ne se juge pas sur une capture, il se
- * juge en ouvrant des paquets.
+ * **ET KEKO A TRANCHÉ LA TAILLE FIXE** — « je préfère taille fixe » — **mais
+ * sur la PLAQUE CLAIRE seulement**, voir `CRAN_PLAQUE` : c'est là que l'écart
+ * se voyait, et c'est là qu'il y a une zone de texte dont le bord se compare.
+ * En gabarit le titre est calé sur l'encoche du cadre, un réglage qu'il a
+ * validé — *une taille fixe l'en décrocherait pour supprimer un écart qui n'y
+ * existe pas*, puisque 100 % des noms du jeu tiennent sur une ligne.
+ *
+ * `?titre=crans` rend les deux crans à la plaque : *ce qui a servi à choisir
+ * doit rester ouvrable.*
  */
-const CRANS_NOM: readonly number[] =
-  new URLSearchParams(location.search).get('titre') === 'unique' ? [7.3] : [9.5, 7.3]
+const CRANS_NOM: readonly number[] = [9.5, 7.3]
+
+/** La plaque prend sa taille fixe, sauf si l'on redemande les deux crans. */
+const PLAQUE_FIXE = new URLSearchParams(location.search).get('titre') !== 'crans'
 
 /** L'interligne du titre, en part du corps — serré, ce n'est pas un paragraphe. */
 const INTERLIGNE_NOM = 0.9
@@ -2003,6 +2010,29 @@ const basDuNom = (): number => HAUT_CARTOUCHE * HAUT - 0.82 * CRANS_EFFET[0] * U
 const AIR_NOM = 0.5
 
 /**
+ * L'AIR AU-DESSUS DU TITRE, SUR UNE PLAQUE CLAIRE — et il est CONSTANT.
+ *
+ * Keko : **« quand il y a deux lignes la distance par rapport au haut de la
+ * zone de texte à fond blanc est réduite : je voudrais qu'il soit le même peu
+ * importe le nombre de lignes. »**
+ *
+ * *Le bloc se CENTRAIT dans la bande*, donc un titre de deux lignes montait de
+ * deux unités et venait affleurer la plaque pendant qu'un titre d'une ligne
+ * gardait son dégagement. **Un bloc dont la hauteur change doit s'accrocher
+ * par le bord qui ne bouge pas** — la règle déjà payée sur la colonne de
+ * boutons du butin — et ici ce bord est le haut de la plaque.
+ *
+ * ***ET C'EST CE QUI IMPOSE LA TAILLE, au lieu de la choisir.*** Avec un air
+ * fixe en haut, le pire cas — deux lignes — doit tenir dans ce qui reste :
+ * `t = (bande − air) / (ascendante + interligne + descendante)`. Écrire 7,3
+ * et poser l'air par-dessus ne laisserait que 0,8 U de dégagement, soit un
+ * titre collé au bord ; *une taille fixe qui ne tient pas son pire cas n'est
+ * pas une taille fixe*, la boucle de cession la rendrait variable au premier
+ * nom long.
+ */
+const AIR_HAUT_NOM = 1.8
+
+/**
  * LA BOÎTE D'UN TITRE, et elle est COMMUNE à tous les titres.
  *
  * *On ne mesure pas l'encre du nom qu'on écrit* : un « É » monte plus haut
@@ -2040,6 +2070,29 @@ function boiteDuNom(ctx: CanvasRenderingContext2D, taille: number): { haut: numb
  * qu'un nom coupé en deux.* La règle de `replier`, en plus simple : un titre
  * n'a ni jeton ni mot lié.
  */
+/**
+ * LA TAILLE FIXE DE LA PLAQUE : la plus grande à laquelle DEUX lignes tiennent.
+ *
+ * *Elle se calcule, elle ne s'écrit pas* — **une taille de référence doit se
+ * dériver de ce à quoi elle fait référence** : l'air au-dessus, la bande
+ * disponible, et les métriques réelles de la police. Mesurée à ~6,5 U.
+ *
+ * Les ratios de `boiteDuNom` ne dépendent pas de la taille d'essai, donc un
+ * seul appel suffit.
+ */
+function cranDeLaPlaque(
+  ctx: CanvasRenderingContext2D,
+  police: (t: number) => string,
+  sous: number,
+  hautBande: number,
+): number {
+  const essai = 10 * U
+  ctx.font = police(essai)
+  const b = boiteDuNom(ctx, essai)
+  const place = basDuNom() - hautBande - (AIR_HAUT_NOM + AIR_NOM) * U
+  return place / (b.haut + INTERLIGNE_NOM + Math.max(b.bas, sous))
+}
+
 function replierNom(ctx: CanvasRenderingContext2D, nom: string, max: number): string[] {
   const lignes: string[] = []
   let courante = ''
@@ -2074,6 +2127,7 @@ function corpsDuNom(
   police: (t: number) => string,
   sous: number,
   hautBande: number,
+  fixe: boolean,
 ): { taille: number; lignes: string[]; haut: number } {
   const place = basDuNom() - hautBande - AIR_NOM * U
   const essai = (t: number): { lignes: string[]; haut: number } => {
@@ -2084,11 +2138,15 @@ function corpsDuNom(
       b.haut * t + (lignes.length - 1) * INTERLIGNE_NOM * t + Math.max(b.bas * t, sous * t)
     return { lignes, haut }
   }
-  for (const cran of CRANS_NOM) {
+  // LA TAILLE FIXE NE S'ESSAIE PAS, ELLE EST DÉJÀ LA BONNE : elle a été
+  // calculée pour que deux lignes tiennent. *Il ne reste que le cas où le nom
+  // en demande trois*, et là c'est la taille qui cède, comme ailleurs.
+  const crans = fixe ? [cranDeLaPlaque(ctx, police, sous, hautBande) / U] : CRANS_NOM
+  for (const cran of crans) {
     const r = essai(cran * U)
     if (r.lignes.length <= 2 && r.haut <= place) return { taille: cran * U, ...r }
   }
-  let t = (CRANS_NOM[CRANS_NOM.length - 1] as number) * U
+  let t = (crans[crans.length - 1] as number) * U
   let r = essai(t)
   while ((r.lignes.length > 2 || r.haut > place) && t > 5 * U) {
     t *= 0.95
@@ -3784,7 +3842,15 @@ function peindreTextes(
    */
   const sousLeNom = bulle ? 0 : 0.68
   const hautDuNom = HAUT * (bulle ? HAUT_BULLE : HAUT_NOM_GABARIT)
-  const nom = corpsDuNom(ctx, carte.nom, tientDans, policeNom, sousLeNom, hautDuNom)
+  const nom = corpsDuNom(
+    ctx,
+    carte.nom,
+    tientDans,
+    policeNom,
+    sousLeNom,
+    hautDuNom,
+    bulle && PLAQUE_FIXE,
+  )
   const tailleNom = nom.taille
   ctx.font = policeNom(tailleNom)
   /**
@@ -3826,24 +3892,28 @@ function peindreTextes(
   ctx.shadowOffsetY = bulle ? 0 : 0.5 * U
   ctx.shadowBlur = bulle ? 0 : 3 * U
   /**
-   * UNE LIGNE RESTE À SA PLACE, DEUX LIGNES SE CENTRENT DANS LA BANDE.
+   * SUR UNE PLAQUE, LE BLOC PEND PAR LE HAUT — EN GABARIT IL SE CENTRE.
    *
-   * *Le nom d'une ligne est calé sur `Y_ENCOCHE`* — c'est le réglage que Keko
-   * avait demandé, « je les voudrais au niveau du titre » — donc il ne bouge
-   * pas d'un pixel. **Un bloc de deux lignes, lui, n'a pas d'encoche unique à
-   * viser** : il prend la place, et il n'y a d'ailleurs pas le choix, puisque
-   * centré sur ce point sa première ligne sortirait par le haut de la plaque.
+   * Keko : « la distance par rapport au haut de la zone de texte à fond blanc
+   * est réduite quand il y a deux lignes, je voudrais qu'elle soit la même ».
+   * **Un bloc dont la hauteur change doit s'accrocher par le bord qui ne bouge
+   * pas** : l'encre de la première ligne tombe donc toujours à `AIR_HAUT_NOM`
+   * sous la plaque, qu'il y ait une ligne ou deux.
    *
-   * *Joli hasard de la plaque claire* : le bloc centré y pose sa première
-   * ligne à 93,2 U, soit exactement là où un titre d'une ligne se trouve.
+   * **EN GABARIT, RIEN NE CHANGE, et c'est voulu.** *Le nom d'une ligne y est
+   * calé sur `Y_ENCOCHE`* — « je les voudrais au niveau du titre », Keko —
+   * donc le pendre par un air constant le décrocherait de son encoche de
+   * quatre unités. Et il n'y a pas de « zone de texte à fond blanc » là-bas :
+   * la demande ne le concerne pas. Un bloc de deux lignes s'y centre, faute
+   * d'encoche unique à viser.
    */
   const yNom = HAUT * 0.665
-  const yPremiere =
-    lignesNom.length === 1
+  const hautEncre = boiteDuNom(ctx, tailleNom).haut * tailleNom
+  const yPremiere = bulle
+    ? hautDuNom + AIR_HAUT_NOM * U + hautEncre
+    : lignesNom.length === 1
       ? yNom
-      : hautDuNom +
-        (basDuNom() - hautDuNom - nom.haut) / 2 +
-        boiteDuNom(ctx, tailleNom).haut * tailleNom
+      : hautDuNom + (basDuNom() - hautDuNom - nom.haut) / 2 + hautEncre
   const pasNom = INTERLIGNE_NOM * tailleNom
   lignesNom.forEach((ligne, i) => {
     ctx.fillText(ligne, LARGE / 2, yPremiere + i * pasNom)

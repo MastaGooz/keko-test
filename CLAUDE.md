@@ -13570,11 +13570,10 @@ cesse d'être net* : on s'arrête à 58 %, où il vaut encore 0,42.
 
 Quatre choses à ne pas défaire :
 
-- **une ligne reste EXACTEMENT à sa place** (66,5 %), parce qu'elle est calée
-  sur l'encoche du cadre — « je les voudrais au niveau du titre », Keko. **Un
-  bloc de deux lignes, lui, se centre dans la bande** : il n'a pas d'encoche
-  unique à viser, et centré sur ce point sa première ligne sortirait par le haut
-  de la plaque ;
+- **en gabarit, une ligne reste EXACTEMENT à sa place** (66,5 %), parce qu'elle
+  est calée sur l'encoche du cadre — « je les voudrais au niveau du titre »,
+  Keko — et un bloc de deux lignes s'y centre, faute d'encoche unique à viser.
+  *Sur la plaque claire, le bloc pend par le haut* : voir la section qui suit ;
 - **la boîte qui sert à mesurer la hauteur est COMMUNE à tous les titres**,
   mesurée sur une chaîne de référence qui porte tous les extrêmes du français
   (`ÉÀÇgjqyp`). *Mesurer l'encre du nom qu'on écrit donnerait deux tailles à
@@ -13589,17 +13588,95 @@ Quatre choses à ne pas défaire :
 - **le trait suit la DERNIÈRE ligne**, et il compte dans la place qu'il faut :
   c'est lui qui coûte le plus cher en gabarit (0,68 du corps).
 
-#### CE QUI RESTE À TRANCHER PAR KEKO
-
-**Le cran unique s'ouvre d'un lien** : `?titre=unique` met TOUT à 7,3 U, donc
-**zéro écart**, au prix de 23 % sur les noms courts. *C'est l'arbitrage qu'il
-doit voir des deux côtés* — et il ne se juge pas sur une capture, il se juge en
-ouvrant des paquets.
-
 **Et les noms courts ont perdu 10 % au passage** (10,5 → 9,5 U), le jeu
 d'extraction compris, où aucun nom ne fait deux lignes. *C'est dans le sens de
 sa demande* — « trop grosse pour les mots courts » — mais c'est un chiffre, et
 il se change.
+
+### SUR LA PLAQUE, LE TITRE PEND PAR LE HAUT — et c'est ÇA qui fixe sa taille
+
+Keko, en répondant à l'arbitrage : **« je préfère taille fixe, par contre quand
+il y a deux lignes la distance par rapport au haut de la zone de texte à fond
+blanc est réduite : je voudrais qu'elle soit la même peu importe le nombre de
+lignes. »**
+
+*Deux décisions dans une phrase*, et la seconde a imposé la première.
+
+#### LE BLOC SE CENTRAIT, DONC IL MONTAIT EN GRANDISSANT
+
+**Un bloc dont la hauteur change doit s'accrocher par le bord qui ne bouge
+pas** — la règle déjà payée sur la colonne de boutons du butin — et ici ce bord
+est le haut de la plaque. Centré, un titre de deux lignes montait de la moitié
+de ce qu'il gagnait en hauteur.
+
+Mesuré sur la texture peinte, en taille fixe, l'air entre le haut de la plaque
+et le haut de l'encre :
+
+| | une ligne | deux lignes | écart |
+|---|---|---|---|
+| **avant** (bloc centré) | 4,72 U | **1,44 U** | **3,3 U** |
+| **après** (bloc pendu) | 2,84 U | 2,59 U | **0,25 U** |
+
+***L'écart est divisé par treize***, et les 0,25 U qui restent ne viennent pas
+du placement : ils viennent des GLYPHES — un titre qui commence par une
+capitale accentuée monte plus haut qu'un titre qui commence par un « P ». *La
+dispersion À L'INTÉRIEUR de chaque colonne (0,9 U) est d'ailleurs plus grande
+que l'écart entre elles*, ce qui le prouve. **La corriger demanderait de caler
+sur l'encre du nom qu'on écrit, et le projet le refuse déjà** : deux titres de
+même rang auraient alors deux tailles.
+
+#### ET C'EST L'AIR QUI DICTE LA TAILLE, au lieu qu'on la choisisse
+
+***Une taille fixe qui ne tient pas son pire cas n'est pas une taille fixe*** :
+la boucle de cession la rendrait variable au premier nom long, et l'écart qu'on
+vient de retirer reviendrait par cette porte.
+
+Avec un air constant en haut, le pire cas — deux lignes — doit donc tenir dans
+ce qui reste :
+
+```
+t = (bande − air haut − air bas) / (ascendante + interligne + descendante)
+```
+
+La bande fait **15,26 U**, l'air 1,8 en haut et 0,5 en bas, et Baloo 2 mesure
+0,846 d'ascendante pour 0,208 de descendante : **t = 6,63 U**. *Écrire 7,3 et
+poser l'air par-dessus ne laisserait que 0,8 U de dégagement* — un titre collé
+au bord.
+
+**Le prix est donc de 9 % sur la taille fixe** (7,3 → 6,63), et de 30 % sur les
+noms courts par rapport aux deux crans. *C'est ce que « taille fixe » coûte, et
+Keko l'a choisi en connaissant le premier chiffre.*
+
+Mesuré sur les 1 923 cartes : **90,1 % tiennent sur une ligne**, 9,8 % sur deux,
+**deux cartes en demandent trois** et cèdent alors à 6,30 et 5,98 U — « Drapeau :
+Saint-Vincent-et-les Grenadines » et « Drapeau : Géorgie du Sud-et-les Îles
+Sandwich du Sud », dont un seul mot fait vingt caractères. **Aucune n'est
+tronquée**, et il reste 3 U entre le bas du titre et l'encre du cartouche.
+
+#### LE GABARIT NE BOUGE PAS D'UN PIXEL, et c'est voulu
+
+*La « zone de texte à fond blanc » n'existe qu'en plaque*, donc la demande ne
+concerne qu'elle. Et en gabarit le titre est calé sur l'encoche du cadre, un
+réglage que Keko a validé : **le pendre par un air constant le décrocherait de
+quatre unités.** Il n'y a d'ailleurs aucun écart à y supprimer — 100 % des noms
+du jeu tiennent sur une ligne.
+
+Vérifié par EMPREINTE de pixels, six cartes animaux dont les deux plus longs
+noms, avant et après : **identiques.** *Un raisonnement sur une branche de code
+ne vaut pas une comparaison de pixels* — et c'est ce test qui a montré que la
+seule carte qui changeait (le Lion) ne changeait qu'à cause de son illustration
+chargée ou non.
+
+`?titre=crans` rend les deux crans à la plaque : *ce qui a servi à choisir doit
+rester ouvrable.*
+
+#### CE QUI RESTE À TRANCHER PAR KEKO
+
+- **l'air au-dessus du titre** (1,8 U, mesuré à 2,8 U d'encre sur un nom
+  ordinaire) : c'est lui qui décide de la taille, donc le rendre à 1,2 rendrait
+  2,5 % de corps. *Un seul chiffre les porte tous les deux* ;
+- **les deux cartes qui cèdent encore** (0,1 % du catalogue) : les faire tenir
+  demanderait de couper un mot, ce que le projet ne fait pas.
 
 ### CE QUI RESTE À TRANCHER PAR KEKO — les peintures
 
