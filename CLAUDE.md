@@ -14087,6 +14087,91 @@ vue* : la note d'alors disait « le câblage compile, mais la boucle de repeintu
 n'a pas été observée », faute d'avoir jamais tiré une carte animée. **Il
 suffisait d'une graine choisie** au lieu d'ouvrir des paquets au hasard.
 
+### LE CONTOUR SIMPLE : la forme se tait là où il n'y a qu'une famille
+
+Demandé par Keko : **« je voudrais rework l'organisation des cartes : un contour
+plus simple, plus dans le ton des emojis »**.
+
+*Le gabarit « Serment de cendre » parle la FERRONNERIE* — une plaque de laiton,
+une coque DÉCHIRÉE posée dessus, deux encoches à la hauteur du titre, un dégradé
+oblique qui court du clair au presque noir d'un coin à l'autre. **Il est juste
+là où il est né** : une carte de combat EST une plaque de métal. Un emoji, non —
+c'est un aplat net aux formes franches, et un cadre arraché à côté de lui se lit
+comme la pièce d'un autre jeu.
+
+#### ET C'EST LA FORME QUI CÈDE, PAS LA COULEUR
+
+*Deux axes portent la carte* : **une échelle se dit en couleur, une famille se
+dit en forme.** La couleur est prise par la rareté — les cinq crans que Keko
+vient de trancher, et le reflet qui en reprend la teinte — donc **elle ne bouge
+pas d'un ton.**
+
+**La forme, elle, ne dit plus rien ici** : dans ce mode il n'y a qu'une famille.
+Pas de trésor à distinguer d'une carte de deck, pas de pièce d'équipement à
+distinguer de son set. *Une silhouette qui ne sépare rien n'est plus un signal,
+c'est un ornement* — et c'est ce qui rend la bascule sûre : **le seul axe que la
+carte porte reste intact.**
+
+Trois choses tombent, et chacune pour sa raison :
+
+- **les deux ENCOCHES.** C'est le signe « carte de deck » du jeu d'extraction,
+  recalé par Keko à la hauteur du titre pour qu'il se lise dans l'éventail. *Il
+  n'a aucun vis-à-vis dans un paquet d'emoji* ;
+- **la coque DÉCHIRÉE.** Elle dit qu'une carte est arrachée de la pièce qui la
+  produit — *il n'y a pas de pièce dans ce mode* ;
+- **le dégradé OBLIQUE à cinq paliers.** C'est lui qui fait « métal » : il
+  traverse le clair, le sombre, le plateau et la nuit, donc le cadre change
+  franchement de luminosité le long de son tour. **Un emoji n'accroche pas la
+  lumière**, il a un aplat et, au mieux, un peu de volume.
+
+Il reste un **liseré régulier**, qui épouse la carte au rayon près, rempli de
+trois tons voisins pris dans le MÊME métal — `bord`, `moyen`, `sombre`, sur la
+VERTICALE. *On n'invente aucune couleur* : c'est la teinte du cran, posée à plat
+avec la lumière du haut que tout le jeu respecte, et le ton `moyen` est déjà
+celui que `TON_LUSTRE` prend pour dire la couleur d'un cran.
+
+**LE RAYON SE COMPTE SUR LE BORD EXTÉRIEUR**, donc il décroît d'autant qu'on
+rentre : à rayon constant, les coins du cadre seraient plus épais que ses côtés.
+*Règle déjà payée sur les cases vides du chargement.*
+
+#### TROIS ÉPAISSEURS, ET C'EST TOUT CE QUI RESTE À DÉCIDER
+
+`?contour=fin|plaque|large` — **le défaut est `plaque`**, un cheveu plus fin que
+la coque encochée qu'il remplace (1,6 contre 1,85 centièmes de largeur).
+
+| | ce que ça donne |
+|---|---|
+| **fin** (0,85) | la carte est presque toute illustration — *mais le cran du bas disparaît*, un liseré gris clair sur fond sombre ne se voit plus |
+| **plaque** (1,6) | le défaut : la couleur se lit, l'image ne perd rien |
+| **large** (3,1) | une vraie bordure colorée, le vocabulaire des cartes de collection — *et elle mange un peu d'image* |
+
+*Effet de bord mesuré sur `large`* : la boîte du nom rétrécit avec la surface,
+donc le titre CÈDE d'un cran et **« Visage avec un léger sourire » cesse d'être
+tronqué.** Ce n'est pas un argument pour elle — c'est un signe que la troncature
+du nom se règle ailleurs, si elle gêne.
+
+#### LE MODE EMOJI SEULEMENT, comme les cinq crans
+
+C'est `carte-emoji.ts` qui pose le drapeau, et **le reste du jeu ne le voit
+jamais** : vérifié à l'écran, un paquet d'animaux garde sa coque encochée au
+pixel. *Les quatre autres modes peuvent le prendre en une ligne le jour où Keko
+le voudra*, et c'est exactement la portée qu'il avait donnée aux cinq crans — « le
+mode emoji seulement ».
+
+**Il entre dans `signature()`**, sans quoi deux cartes de même nom et de contour
+différent partageraient leur texture.
+
+#### CE QUI N'A PAS BOUGÉ, ET QU'IL FAUT SAVOIR
+
+- **le RAYON de la carte** (3 % de la largeur). Un emoji est un carré très
+  arrondi, donc la tentation est forte — *mais ce rayon est la forme du PAVÉ 3D
+  autant que celle de la texture* : les arrondir demanderait d'extruder un autre
+  profil, sinon le laiton du corps dépasserait aux coins. **À rouvrir si Keko le
+  demande**, en sachant que ça touche la géométrie et pas seulement le dessin ;
+- **la typographie** — le nom en gothique, le cartouche en Garamond, le pied en
+  petites capitales espacées. *Keko a réglé ces trois-là lui-même*, et il n'a
+  nommé que le contour.
+
 #### CE QUI RESTE À TRANCHER PAR KEKO — la rareté
 
 - **les parts de la pyramide** (50 / 25 / 15 / 7,5 / 2,5) et **les chances du

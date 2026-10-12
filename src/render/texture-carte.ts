@@ -85,6 +85,28 @@ export type CarteAPeindre = {
    */
   tresor?: boolean
   /**
+   * SON CONTOUR EST SIMPLE — un liseré régulier plutôt qu'une coque arrachée.
+   *
+   * Demandé par Keko pour le mode emoji : « je voudrais rework l'organisation
+   * des cartes : un contour plus simple, plus dans le ton des emojis ».
+   *
+   * *Le gabarit « Serment de cendre » parle la FERRONNERIE* — une plaque de
+   * laiton, une coque déchirée posée dessus, deux encoches à la hauteur du
+   * titre, un dégradé oblique qui court du clair au presque noir. **Il est
+   * juste là où il est né** : une carte de combat EST une plaque de métal. Un
+   * emoji, non — c'est un aplat net aux formes franches, et un cadre arraché à
+   * côté de lui se lit comme la pièce d'un autre jeu.
+   *
+   * **ET C'EST LA FORME QUI CÈDE, PAS LA COULEUR.** La rareté vit dans la
+   * teinte du cadre et elle ne bouge pas d'un ton : *une échelle se dit en
+   * couleur, une famille se dit en forme* — et dans ce mode **il n'y a qu'une
+   * famille**, donc la forme n'a rien à dire et peut se taire. C'est aussi ce
+   * qui rend la bascule sûre : le seul axe que la carte porte est intact.
+   *
+   * `?contour=fin|plaque|large` essaie son épaisseur, voir `PISTE_CONTOUR`.
+   */
+  contour?: 'simple'
+  /**
    * SA FAMILLE — et c'est son DÉCOR qui la dit, pas son cadre : rouge pour une
    * arme, vert pour un objet, or pour un trésor, le bleu d'origine pour une
    * armure. Une pièce la porte, et les cartes de son set en héritent.
@@ -447,6 +469,24 @@ const PISTE_CADRE: PisteCadre | null = (() => {
   }
   if (demande === null) return 'encoche'
   return pistes[demande] ?? null
+})()
+
+/**
+ * TROIS ÉPAISSEURS POUR LE CONTOUR SIMPLE — `?contour=fin|plaque|large`.
+ *
+ * *Une fois la forme réglée, c'est tout ce qui reste à décider*, et ça ne se
+ * juge qu'à l'oeil : un trait fin laisse la carte à son illustration, un trait
+ * large la cercle comme une vignette d'application. **Le défaut est le cran du
+ * milieu**, un cheveu plus fin que la coque encochée qu'il remplace (1,85).
+ *
+ * En centièmes de largeur, comme tout le gabarit. Lue UNE fois : c'est un
+ * réglage de session, donc elle n'a pas à entrer dans `signature()`.
+ */
+export type PisteContour = 'fin' | 'plaque' | 'large'
+const CONTOURS: Record<PisteContour, number> = { fin: 0.85, plaque: 1.6, large: 3.1 }
+const PISTE_CONTOUR: PisteContour = (() => {
+  const demande = new URLSearchParams(location.search).get('contour')
+  return demande === 'fin' || demande === 'large' ? demande : 'plaque'
 })()
 
 const SILHOUETTES: Partial<Record<PisteCadre, readonly [number, number][]>> = {
@@ -871,6 +911,30 @@ const IRISATION: readonly (readonly [number, string])[] = [
   [0.9, '#7ad8ff'],
   [1, '#d2ecff'],
 ]
+
+/**
+ * LE CONTOUR SIMPLE : trois tons voisins, sur la VERTICALE.
+ *
+ * **Ce qui fait « métal », c'est l'OBLIQUE et l'ÉCART.** Le laiton court sur la
+ * diagonale et traverse cinq paliers, du clair au presque noir — donc son cadre
+ * change franchement de luminosité d'un coin à l'autre, et c'est précisément ce
+ * qui le fait lire comme une surface qui accroche la lumière. *Un emoji
+ * n'accroche rien* : il a un aplat et, au mieux, un peu de volume.
+ *
+ * Trois arrêts voisins pris dans le MÊME métal — `bord`, `moyen`, `sombre` —
+ * donc **on n'invente aucune couleur** : c'est la teinte du cran, posée à plat,
+ * avec la lumière du haut que tout le jeu respecte. Le ton `moyen` est le
+ * plateau, le plus saturé des cinq : *c'est déjà lui que `TON_LUSTRE` prend
+ * pour dire la couleur d'un cran.*
+ */
+function aplat(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient {
+  const g = ctx.createLinearGradient(0, 0, 0, HAUT)
+  const [, sombre, moyen, , bord] = METAUX[rarete ?? 'commune'] ?? METAUX.commune!
+  g.addColorStop(0, bord)
+  g.addColorStop(0.45, moyen)
+  g.addColorStop(1, sombre)
+  return g
+}
 
 /** Le laiton du cadre, en dégradé oblique comme dans le CSS. */
 function laiton(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient {
@@ -2411,14 +2475,34 @@ export async function peindreCarte(
   // si c'est une carte de DECK (les autres pistes restent sous `?cadre=`). Une
   // pièce d'équipement se reconnaît à son compteur : elle garde la déchirure,
   // parce que *c'est d'elle que les cartes sont arrachées.*
-  const deDeck = carte.tresor !== true && carte.compteur === undefined
+  const simple = carte.contour === 'simple'
+  const deDeck = !simple && carte.tresor !== true && carte.compteur === undefined
   const piste = deDeck ? PISTE_CADRE : null
   const coque =
     carte.tresor === true ? CADRE_TRESOR : (piste !== null && SILHOUETTES[piste]) || DECOUPE
+  /**
+   * LE TRACÉ DU CADRE À UNE MARGE DONNÉE — et le contour simple est le seul qui
+   * ne soit pas un polygone.
+   *
+   * **Il épouse exactement la carte** : même rectangle, même rayon de coin, donc
+   * le liseré fait le tour sans jamais changer d'épaisseur. *C'est tout ce qu'on
+   * lui demande* — une coque déchirée raconte un arrachement, un liseré régulier
+   * ne raconte rien, et c'est ce qu'il faut quand il n'y a qu'une famille.
+   *
+   * **Le rayon se compte sur le bord EXTÉRIEUR**, donc il décroît d'autant qu'on
+   * rentre : à rayon constant, les coins du cadre seraient plus épais que ses
+   * côtés. Règle déjà payée sur les cases vides du chargement.
+   */
+  const tracer = (m: number): void => {
+    if (simple) {
+      ctx.beginPath()
+      ctx.roundRect(m, m, LARGE - m * 2, HAUT - m * 2, Math.max(0, LARGE * RAYON_CARTE - m))
+    } else chemin(ctx, coque, m, m, LARGE - m * 2, HAUT - m * 2)
+  }
   ctx.save()
-  chemin(ctx, coque, 0, 0, LARGE, HAUT)
+  tracer(0)
   ctx.clip()
-  ctx.fillStyle = laiton(ctx, carte.rarete)
+  ctx.fillStyle = simple ? aplat(ctx, carte.rarete) : laiton(ctx, carte.rarete)
   ctx.fillRect(0, 0, LARGE, HAUT)
   ctx.restore()
 
@@ -2433,7 +2517,7 @@ export async function peindreCarte(
    * qu'une pièce, donc les deux se distinguent même là où l'encoche est cachée
    * par la voisine.
    */
-  const marge = (piste === 'encoche' ? 1.85 : 1.163) * U
+  const marge = (simple ? CONTOURS[PISTE_CONTOUR] : piste === 'encoche' ? 1.85 : 1.163) * U
   /**
    * LE ROGNAGE DE CETTE CARTE-CI : zéro quand l'œuvre doit rentrer entière.
    *
@@ -2443,7 +2527,7 @@ export async function peindreCarte(
    */
   const rognage = carte.illustrationEntiere === true ? 0 : PLAFOND_ROGNAGE
   ctx.save()
-  chemin(ctx, coque, marge, marge, LARGE - marge * 2, HAUT - marge * 2)
+  tracer(marge)
   ctx.clip()
   if (FOND_PEINT) peindreDecor(ctx, carte.ciel, largeur)
   else {
@@ -3887,7 +3971,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}`
 }
 
 /**

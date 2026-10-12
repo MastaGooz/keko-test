@@ -137,5 +137,9 @@ export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus): CarteAPeindre {
     // n'en serait pas un -- un tiers du catalogue l'aurait eu d'office.
     animation: bonus?.anime === true ? c.id : undefined,
     illustrationEntiere: true,
+    // ET SON CONTOUR EST SIMPLE. Keko : « un contour plus simple, plus dans le
+    // ton des emojis ». *La coque déchirée du gabarit parle la ferronnerie*, et
+    // un emoji est un aplat net : voir `CarteAPeindre.contour`.
+    contour: 'simple',
   }
 }
