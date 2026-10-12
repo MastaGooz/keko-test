@@ -14293,10 +14293,93 @@ rogner moins y laisserait un trou. *Sans plaque, la boîte du sujet vaut la surf
 entière au pixel* — c'est l'absence du thème qui dit « ne rien changer ici »,
 comme `caseDeCarte` sans assiette.
 
-#### LA BORDURE PASSE DE 1,6 À 2,1
+#### LA BORDURE PASSE DE 1,6 À 2,1, PUIS À 2,7
 
 Un seul nombre, `CONTOURS.plaque`. Les deux autres épaisseurs ne bougent pas :
 `?contour=fin|large` les rend.
+
+### L'AURA S'ARRÊTAIT SUR UN MUR, ET LE MUR ÉTAIT LE BORD DE SA TOILE
+
+Keko, en même temps que trois réglages : **« j'ai remarqué un genre d'aura
+autour des emoji, c'est bien mais parfois (ex : visage avec un léger sourire)
+l'aura s'arrête net en haut comme si un mur invisible la bloquait et c'est
+moche »**.
+
+***Il n'y avait pas de mur invisible : il y avait le bord d'un canvas de
+quarante-quatre pixels.***
+
+#### LA CHAÎNE, et aucun de ses maillons n'était faux tout seul
+
+1. **la plaque a pris le bas de la carte**, donc la fenêtre du sujet est devenue
+   plus LARGE que haute — 95,8 U sur 78,6 ;
+2. **un emoji est CARRÉ**, et il rentre entier (`illustrationEntiere`), donc il
+   est borné par la hauteur et **la remplit exactement** ;
+3. **`couvrir` cale EN HAUT dès qu'il y a un plafond** — une règle écrite pour
+   les peintures — donc le dessin touchait le bord supérieur de sa boîte **par
+   construction** ;
+4. **le bloom est peint dans cette même boîte**, sur une toile de 44 px de
+   large, et `adoucir` y étale la lumière de deux pixels : *le flou était coupé
+   net par le bord de la toile.*
+
+**« Parfois » était la mesure du problème** : un glyphe qui laisse un peu de
+marge dans son carré a de quoi s'éteindre, un glyphe qui le remplit n'en a pas —
+et 🙂 est un disque plein qui va d'un bord à l'autre de son em-box.
+
+#### C'EST LA RÈGLE DU CONTOUR DES CARTES, PAYÉE UNE QUATRIÈME FOIS
+
+« Le débord de la texture doit être exactement celui du plan », et *une lueur
+qui se termine par une arête n'est pas une lueur* — déjà payé sur le contour des
+cartes, sur le halo des créatures et sur le slot allumé du chargement. **Ici le
+plan était la fenêtre d'art et la texture n'avait aucun débord du tout.**
+
+**LE SUJET EST DONC POSÉ EN RETRAIT DANS SA FENÊTRE.** Le bloom prend la fenêtre
+entière (`fY`, `fH`), le dessin s'y inscrit avec `AIR_SUJET` de chaque côté — et
+la lumière a enfin de quoi mourir : elle s'éteint sur le cadre en haut, et sous
+la plaque opaque en bas.
+
+***Et ça règle la troisième demande par la même porte*** — « diminuer un peu la
+taille des emoji encore un peu » : **l'air qu'on donne à la lueur, le sujet le
+rend.** L'air passe de 2 à 7 U, donc le sujet perd 13,5 % de hauteur.
+
+Mesuré sur la colonne centrale de la carte peinte, dans la bande qui va du cadre
+au haut du dessin : la luminance monte de **58 à 73 par pas de 7 au plus** —
+une rampe, plus une marche. Et la toile garde **3,3 px** au-delà du dessin pour
+un flou qui en demande 2.
+
+**Les quatre autres modes ne bougent pas d'un pixel**, et c'est algébrique :
+sans plaque `air` vaut zéro, donc les trois boîtes se confondent et la toile du
+bloom est celle d'avant. *C'est l'absence du thème qui dit « ne rien changer
+ici », comme `caseDeCarte` sans assiette.* Vérifié à l'écran sur un paquet
+d'animaux.
+
+### LES COINS S'ARRONDISSENT, ET TROIS SURFACES DOIVENT SUIVRE
+
+Keko : « on peut arrondir encore un peu les coins ». De 3 % à **5,5 %** de la
+largeur (`RAYON_SIMPLE`), mode emoji seulement — *un emoji est un carré très
+arrondi*, et 3 % est le `border-radius` du gabarit d'extraction, réglé et validé.
+
+**UNE CARTE EST FAITE DE TROIS SURFACES, et arrondir la face seule les
+désaccorde** :
+
+- la **face** peinte, dont `alphaTest` coupe les coins ;
+- le **corps extrudé**, qu'on voit dépasser d'un cheveu — *un corps plus carré
+  que sa face montre son laiton en angle*, exactement ce que Keko avait signalé
+  une fois : « derrière une autre forme dorée reste et est un angle droit » ;
+- le **dos**, qu'un paquet montre avant la révélation — *un dos plus carré que
+  son corps dépasserait de sa silhouette.*
+
+Les trois lisent donc `rayonDe(carte)`.
+
+**ET LE RAYON ÉTAIT ÉCRIT DEUX FOIS.** `RAYON_CARTE` dans la texture, `RAYON_COIN`
+dans `Carte3D`, deux `0.03` indépendants : ***le défaut que le projet se répète —
+deux endroits qui décrivent la même valeur se désaccordent au premier
+réglage*** — et **il a fallu qu'un mode demande des coins plus ronds pour qu'il
+morde.** `RAYON_COIN` vaut désormais `RAYON_CARTE`.
+
+**Le corps et le dos sont MÉMORISÉS par rayon**, donc il n'y en a que deux de
+chaque dans tout le jeu. Et le corps reste un **profil extrudé** : un
+`RoundedBoxGeometry` borne son rayon à la moitié de l'épaisseur, soit 0,006 sur
+une plaque de 0,012 — *il resterait carré*, le piège silencieux déjà payé.
 
 #### CE QUI RESTE À TRANCHER PAR KEKO — la plaque
 
@@ -14305,7 +14388,9 @@ Un seul nombre, `CONTOURS.plaque`. Les deux autres épaisseurs ne bougent pas :
   corps de texte) ;
 - **le départ de la plaque** (60,5 % de la hauteur, donc 38 % de la carte) : c'est
   la proportion d'une carte de collection moderne, et elle se règle d'un chiffre ;
-- **le dégradé** (`#fdfefe` → `#eaeef4`) et l'air autour de l'emoji (2 U) ;
+- **le rayon des coins** (5,5 %), **l'épaisseur du cadre** (2,7 U) et **l'air
+  autour de l'emoji** (7 U), qui décide aussi de sa taille ;
+- **le dégradé** (`#fdfefe` → `#eaeef4`) ;
 - `?texte=sombre` rend le dégradé noir — *ce qui a servi à choisir doit rester
   ouvrable.*
 

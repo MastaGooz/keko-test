@@ -320,6 +320,29 @@ const HAUT = Math.round(LARGE * 1.4)
 export const RAYON_CARTE = 0.03
 
 /**
+ * LE RAYON DU CONTOUR SIMPLE — plus rond, et c'est le mode emoji seulement.
+ *
+ * Demandé par Keko : « on peut arrondir encore un peu les coins ». *Un emoji
+ * est un carré très arrondi*, donc la carte qui le porte peut l'être un peu
+ * plus que la plaque de métal du jeu d'extraction — où 3 % est le
+ * `border-radius` du gabarit, réglé et validé.
+ *
+ * **ET LES TROIS SURFACES LE SUIVENT** : la face, le corps extrudé et le dos.
+ * *La face seule laisserait voir aux coins le laiton d'un corps plus carré* —
+ * le défaut que Keko avait déjà signalé une fois, « derrière une autre forme
+ * dorée reste et est un angle droit » — et un dos plus carré que son corps
+ * dépasserait de sa silhouette. D'où `rayonDe`, que les trois lisent :
+ * ***trois endroits qui décriraient le même rayon se désaccorderaient au
+ * premier réglage.***
+ */
+export const RAYON_SIMPLE = 0.055
+
+/** Le rayon des coins de CETTE carte-ci. */
+export function rayonDe(carte: CarteAPeindre): number {
+  return carte.contour === 'simple' ? RAYON_SIMPLE : RAYON_CARTE
+}
+
+/**
  * CE QUE LA TOILE DU SLOT ALLUMÉ AJOUTE DE CHAQUE CÔTÉ, en fraction de la
  * largeur d'une carte — la place de sa lueur. Le plan en grandit d'autant, et
  * *le débord de la texture doit être EXACTEMENT celui du plan* : plus large
@@ -507,7 +530,7 @@ const PISTE_CADRE: PisteCadre | null = (() => {
  * réglage de session, donc elle n'a pas à entrer dans `signature()`.
  */
 export type PisteContour = 'fin' | 'plaque' | 'large'
-const CONTOURS: Record<PisteContour, number> = { fin: 0.85, plaque: 2.1, large: 3.1 }
+const CONTOURS: Record<PisteContour, number> = { fin: 0.85, plaque: 2.7, large: 3.1 }
 const PISTE_CONTOUR: PisteContour = (() => {
   const demande = new URLSearchParams(location.search).get('contour')
   return demande === 'fin' || demande === 'large' ? demande : 'plaque'
@@ -534,7 +557,7 @@ const PISTE_CONTOUR: PisteContour = (() => {
  * autrement, il éclairerait sous la plaque.
  */
 const HAUT_BULLE = 0.605
-const AIR_SUJET = 2
+const AIR_SUJET = 7
 
 /**
  * `?texte=sombre` rend le dégradé noir du gabarit.
@@ -2570,8 +2593,9 @@ export async function peindreCarte(
   // en dehors. Rayon : 3 % de la largeur, comme le `border-radius` du gabarit
   // 2D. Le matériau coupe ces coins (`alphaTest`) et laisse voir le laiton
   // arrondi du corps de la carte.
+  const rayon = rayonDe(carte)
   ctx.beginPath()
-  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * RAYON_CARTE)
+  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * rayon)
   ctx.clip()
 
   // LA PLAQUE : le laiton, assombri d'un voile uniforme. C'est ce voile seul
@@ -2608,7 +2632,7 @@ export async function peindreCarte(
   const tracer = (m: number): void => {
     if (simple) {
       ctx.beginPath()
-      ctx.roundRect(m, m, LARGE - m * 2, HAUT - m * 2, Math.max(0, LARGE * RAYON_CARTE - m))
+      ctx.roundRect(m, m, LARGE - m * 2, HAUT - m * 2, Math.max(0, LARGE * rayon - m))
     } else chemin(ctx, coque, m, m, LARGE - m * 2, HAUT - m * 2)
   }
   ctx.save()
@@ -2648,9 +2672,42 @@ export async function peindreCarte(
    * *Sans plaque, elle vaut la surface entière au pixel* — c'est l'absence du
    * thème qui dit « ne rien changer ici », comme `caseDeCarte` sans assiette.
    */
+  /**
+   * ET LE BLOOM A SA PROPRE BOÎTE, PLUS GRANDE QUE CELLE DU SUJET.
+   *
+   * Keko : « l'aura s'arrête net en haut comme si un mur invisible la
+   * bloquait ». ***C'était un mur, et c'était le bord de la toile du bloom.***
+   *
+   * La chaîne, mesurée : la plaque a pris le bas de la carte, donc la fenêtre
+   * du sujet est devenue plus LARGE que haute ; un emoji carré en `contain` y
+   * est donc borné par la hauteur et la remplit entièrement ; et `couvrir`
+   * cale en haut dès qu'il y a un plafond, donc le dessin touchait le bord
+   * supérieur de sa boîte **par construction.** Le bloom étant peint dans
+   * cette même boîte, sur une toile de 44 px, le flou de `adoucir` était coupé
+   * net par le bord de la toile — *une ligne horizontale franche là où il
+   * devrait s'éteindre.*
+   *
+   * C'est la règle déjà payée trois fois — le contour des cartes, le halo des
+   * créatures, le slot allumé du chargement : ***une lueur qui se termine par
+   * une arête n'est pas une lueur***, et **le débord de la texture doit être
+   * exactement celui du plan.**
+   *
+   * Le sujet est donc posé EN RETRAIT dans sa fenêtre : la lumière a
+   * `AIR_SUJET` de chaque côté pour mourir, elle s'éteint sur le cadre en haut
+   * et sous la plaque opaque en bas. *Et ça règle la troisième demande par la
+   * même porte* — « diminuer un peu la taille des emoji » : l'air qu'on donne
+   * à la lueur, le sujet le rend.
+   *
+   * *Sans plaque, `air` vaut zéro et les trois boîtes se confondent au pixel*
+   * — c'est l'absence du thème qui dit « ne rien changer ici », comme
+   * `caseDeCarte` sans assiette.
+   */
   const bulle = enBulle(carte)
-  const aY = bulle ? marge + AIR_SUJET * U : marge
-  const aH = (bulle ? HAUT * HAUT_BULLE - AIR_SUJET * U : HAUT - marge) - aY
+  const air = bulle ? AIR_SUJET * U : 0
+  const fY = marge
+  const fH = (bulle ? HAUT * HAUT_BULLE : HAUT - marge) - fY
+  const aY = fY + air
+  const aH = fH - air * 2
   ctx.save()
   tracer(marge)
   ctx.clip()
@@ -2719,15 +2776,29 @@ export async function peindreCarte(
    */
   if (image !== null) {
     const lArt = LARGE - marge * 2
+    /**
+     * LA TOILE DU BLOOM COUVRE LA FENÊTRE, LE SUJET EST EN RETRAIT DEDANS.
+     *
+     * *C'est la seule façon qu'une lueur s'éteigne au lieu d'être coupée* : son
+     * flou est une moyenne glissante de deux pixels, donc il lui faut deux
+     * pixels de toile au-delà du dessin — et `air * ech` en vaut trois.
+     *
+     * **Ce qui sort de la toile compte pour du noir** (voir `adoucir`) : une
+     * lumière se dilue au bord, elle n'y rebondit pas. Donc le bord de la toile
+     * n'est plus un mur, il est le point où il n'y a plus rien.
+     *
+     * *Sans plaque, `air` vaut zéro et cette toile est celle d'avant au pixel.*
+     */
+    const ech = 44 / lArt
     const petit = document.createElement('canvas')
     petit.width = 44
-    petit.height = Math.max(1, Math.round((44 * aH) / lArt))
+    petit.height = Math.max(1, Math.round(fH * ech))
     // ON LA RELIT À CHAQUE PEINTURE depuis qu'on la floute — d'où le drapeau,
     // qui évite au navigateur de la garder sur le GPU pour rien.
     const pctx = petit.getContext('2d', { willReadFrequently: true })
     if (pctx !== null) {
       pctx.imageSmoothingQuality = 'high'
-      couvrir(pctx, image, 0, 0, petit.width, petit.height, rognage)
+      couvrir(pctx, image, 0, air * ech, petit.width, petit.height - air * ech * 2, rognage)
       /**
        * ET LA LUMIÈRE PREND LA COULEUR DU CIEL. Keko : « quand je zoom sur une
        * arme, l'image affichée est bleue, et certaines des cartes générées
@@ -2770,7 +2841,7 @@ export async function peindreCarte(
        */
       ctx.globalAlpha = 0.34 * Math.pow(LARGE / largeur, 0.34)
       ctx.imageSmoothingQuality = 'high'
-      ctx.drawImage(petit, marge, aY, lArt, aH)
+      ctx.drawImage(petit, marge, fY, lArt, fH)
       ctx.restore()
     }
   }
@@ -2783,7 +2854,7 @@ export async function peindreCarte(
   // CE QUI PORTE LE TEXTE : un voile qui éteint l'image, ou une plaque posée
   // dessus. *Les deux font le même travail* — rendre le nom et le cartouche
   // lisibles — et ils ne le font pas dans la même langue : voir `CarteAPeindre.texte`.
-  if (bulle) peindreBulle(ctx, marge)
+  if (bulle) peindreBulle(ctx, marge, rayon)
   else peindreVoile(ctx)
   ctx.restore()
 
@@ -3422,12 +3493,12 @@ function peindreVoile(ctx: CanvasRenderingContext2D): void {
  *   dessous, et *ça se lit comme un calque mal posé* — la règle déjà tenue par
  *   la pierre des encadrés du glossaire.
  */
-function peindreBulle(ctx: CanvasRenderingContext2D, marge: number): void {
+function peindreBulle(ctx: CanvasRenderingContext2D, marge: number, rayon: number): void {
   const y = HAUT * HAUT_BULLE
   const l = LARGE - marge * 2
   const h = HAUT - marge - y
   const hautR = 5 * U
-  const basR = Math.max(0, LARGE * RAYON_CARTE - marge)
+  const basR = Math.max(0, LARGE * rayon - marge)
   const fond = ctx.createLinearGradient(0, y, 0, HAUT)
   fond.addColorStop(0, '#fdfefe')
   fond.addColorStop(1, '#eaeef4')
@@ -3794,7 +3865,7 @@ function dessinDuDos(): Promise<HTMLImageElement | null> {
  * ligne n'a bougé ici.* Un calage mesuré n'est pas une rustine pour un fichier,
  * c'est ce qui permet d'en changer.
  */
-async function peindreDos(): Promise<HTMLCanvasElement> {
+async function peindreDos(rayon: number): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
   canvas.width = LARGE
   canvas.height = HAUT
@@ -3804,7 +3875,7 @@ async function peindreDos(): Promise<HTMLCanvasElement> {
   const dessin = await dessinDuDos()
 
   ctx.beginPath()
-  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * RAYON_CARTE)
+  ctx.roundRect(0, 0, LARGE, HAUT, LARGE * rayon)
   ctx.clip()
 
   peindreDecor(ctx, undefined, LARGE, BASE_DOS)
@@ -3832,16 +3903,28 @@ async function peindreDos(): Promise<HTMLCanvasElement> {
  * repeint du même canvas en 256.
  */
 
-let DOS: Promise<THREE.CanvasTexture> | null = null
+/**
+ * UN DOS PAR RAYON DE COIN, et il n'y en a que deux.
+ *
+ * *Le dos ne dit rien de ce qu'est la carte* — il ne porte ni rareté ni nom —
+ * **mais il doit porter sa FORME** : un dos plus carré que son corps extrudé
+ * dépasserait de sa silhouette aux coins. D'où la clé, qui est le rayon
+ * lui-même.
+ */
+const DOS = new Map<number, Promise<THREE.CanvasTexture>>()
 
-export function textureDuDos(): Promise<THREE.CanvasTexture> {
-  DOS ??= peindreDos().then((canvas) => {
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.anisotropy = 8
-    texture.colorSpace = THREE.SRGBColorSpace
-    return texture
-  })
-  return DOS
+export function textureDuDos(rayon = RAYON_CARTE): Promise<THREE.CanvasTexture> {
+  let dos = DOS.get(rayon)
+  if (dos === undefined) {
+    dos = peindreDos(rayon).then((canvas) => {
+      const texture = new THREE.CanvasTexture(canvas)
+      texture.anisotropy = 8
+      texture.colorSpace = THREE.SRGBColorSpace
+      return texture
+    })
+    DOS.set(rayon, dos)
+  }
+  return dos
 }
 
 /**

@@ -40,6 +40,8 @@ import {
   peindreCarte,
   textureDeCarte,
   textureDuDos,
+  RAYON_CARTE,
+  rayonDe,
   tailleQuIlFaut,
   tonDuLustre,
   TON_CREME,
@@ -115,8 +117,16 @@ export function tailleDuCompte(carteEnPx: number, rems = 0.9, plancher = 0.2): n
   return THREE.MathUtils.clamp(Math.max(plancher, (rems * rem) / carteEnPx), 0.12, 0.34)
 }
 
-/** Le rayon des coins : 3 % de la largeur, comme le `border-radius` du gabarit. */
-export const RAYON_COIN = 0.03
+/**
+ * LE RAYON DES COINS — et il vient de la TEXTURE, il n'est plus écrit deux fois.
+ *
+ * Il valait `0.03` ici et `RAYON_CARTE` là-bas : **deux constantes
+ * indépendantes pour une seule forme**, c'est-à-dire exactement le défaut que
+ * le projet se répète — *deux endroits qui décrivent la même valeur se
+ * désaccordent au premier réglage.* Il a fallu qu'un mode demande des coins
+ * plus ronds pour qu'il morde.
+ */
+export const RAYON_COIN = RAYON_CARTE
 
 /**
  * LA CULBUTE : ce que fait une pièce qu'on vient de poser dans un slot.
@@ -219,10 +229,9 @@ const VITESSE_HOLO = 0.17
  * Les géométries sont partagées par toutes les cartes : elles ne changent
  * jamais.
  */
-function formeDeCarte(): THREE.Shape {
+function formeDeCarte(r: number): THREE.Shape {
   const l = LARGE / 2
   const h = HAUT / 2
-  const r = RAYON_COIN
   const forme = new THREE.Shape()
   forme.moveTo(-l + r, -h)
   forme.lineTo(l - r, -h)
@@ -236,14 +245,36 @@ function formeDeCarte(): THREE.Shape {
   return forme
 }
 
-const GEOMETRIE_CORPS = new THREE.ExtrudeGeometry(formeDeCarte(), {
-  depth: EPAISSEUR,
-  bevelEnabled: false,
-  curveSegments: 8,
-})
-// L'extrusion part de z = 0 vers l'avant : on la recentre sur l'épaisseur,
-// pour que la face posée à +EPAISSEUR/2 affleure bien le corps.
-GEOMETRIE_CORPS.translate(0, 0, -EPAISSEUR / 2)
+/**
+ * UN CORPS PAR RAYON DE COIN, et il n'y en a que deux.
+ *
+ * **Ce n'est pas un pavé arrondi** : `RoundedBoxGeometry` borne son rayon à la
+ * moitié de la plus petite dimension, donc sur une plaque de 0,012
+ * d'épaisseur il tombe à 0,006 et le corps reste carré. *Pour une plaque mince,
+ * on extrude un profil* — le piège silencieux déjà payé une fois.
+ *
+ * **Et il doit suivre la face**, sinon on voit aux coins le laiton d'un corps
+ * plus carré : c'est le défaut que Keko avait signalé, « derrière une autre
+ * forme dorée reste et est un angle droit ». Elles sont mémorisées, donc deux
+ * objets pour tout le jeu.
+ */
+const CORPS = new Map<number, THREE.ExtrudeGeometry>()
+
+function geometrieDuCorps(r: number): THREE.ExtrudeGeometry {
+  let corps = CORPS.get(r)
+  if (corps === undefined) {
+    corps = new THREE.ExtrudeGeometry(formeDeCarte(r), {
+      depth: EPAISSEUR,
+      bevelEnabled: false,
+      curveSegments: 8,
+    })
+    // L'extrusion part de z = 0 vers l'avant : on la recentre sur l'épaisseur,
+    // pour que la face posée à +EPAISSEUR/2 affleure bien le corps.
+    corps.translate(0, 0, -EPAISSEUR / 2)
+    CORPS.set(r, corps)
+  }
+  return corps
+}
 const GEOMETRIE_FACE = new THREE.PlaneGeometry(LARGE, HAUT)
 /** Le contour de l'onde : la forme de la carte, creusée. Partagée par toutes. */
 const GEOMETRIE_ONDE = geometrieDOnde(LARGE, HAUT, RAYON_COIN)
@@ -517,6 +548,8 @@ export function Carte3D({
   onPointerOut,
 }: Props): React.JSX.Element {
   const groupe = useRef<THREE.Group>(null)
+  // LA FACE, LE CORPS ET LE DOS LISENT LE MÊME RAYON : voir `rayonDe`.
+  const rayon = rayonDe(carte)
   const { size, viewport } = useThree()
   const dpr = viewport.dpr
 
@@ -1001,7 +1034,7 @@ ${nuanceur.fragmentShader}`
     // prêtent, et une carte remontée la retrouve déjà prête — donc elle ne
     // repasse jamais par son état sombre. Rien n'est libéré ici pour la même
     // raison : elle ne nous appartient pas.
-    void (dos ? textureDuDos() : textureDeCarte(carte, largeurPx))
+    void (dos ? textureDuDos(rayon) : textureDeCarte(carte, largeurPx))
       .then((texture) => {
         if (!vivant) return
         face.map = texture
@@ -1255,7 +1288,7 @@ ${nuanceur.fragmentShader}`
   useEffect(() => {
     if (culbute === null || culbute === undefined || verso.map !== null) return
     let vivant = true
-    void textureDuDos()
+    void textureDuDos(rayon)
       .then((texture) => {
         if (!vivant) return
         verso.map = texture
@@ -1696,7 +1729,7 @@ ${nuanceur.fragmentShader}`
           de la caméra. Le sol reçoit les ombres, c'est tout ce qu'il faut. */}
       <mesh
         castShadow={ombre}
-        geometry={GEOMETRIE_CORPS}
+        geometry={geometrieDuCorps(rayon)}
         material={laiton}
         raycast={raycastDuCorps}
         onPointerDown={onPointerDown}
