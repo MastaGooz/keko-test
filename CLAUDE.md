@@ -1196,7 +1196,7 @@ part parce qu'une couleur peinte et la lumière qu'elle renvoie sont deux faits.
   mode emoji seulement ». *Rien n'empêche de les leur donner* : le drapeau vit
   sur `CarteAPeindre`, qui est commun aux cinq modes.
 
-### LE DOS DE CARTE : UN STICKER SUR UN CLAVIER
+### LE DOS DE CARTE : UN BOUQUET DE STICKERS SUR UN CLAVIER
 
 Keko : **« je voudrais que tu me fasses un dos de carte thématique (celui-là est
 obsolète et hors thème) »**.
@@ -1211,12 +1211,12 @@ Il est **peint au canvas**, comme tout ce que Keko n'a pas dessiné.
 
 #### QUATRE CHOSES LE PORTENT, ET AUCUNE NE DOUBLE UNE AUTRE
 
-- **LE STICKER**, au centre : un disque jaune cerné de crème épais, avec son
-  ombre portée. ***C'est le DÉCOUPAGE qui fait le sticker***, pas le dessin
-  dedans — sans le cerne et l'ombre, le même disque se lit comme un trou dans le
-  fond. C'est la règle de la plaque claire, prise par le même bout : *elle porte
-  son ombre pour dire qu'elle est POSÉE sur l'image et non découpée dedans.* Et
-  un sticker est ce qu'un emoji EST sur un téléphone ;
+- **LE BOUQUET**, au centre : trois stickers découpés et collés de travers,
+  avec leur ombre. ***C'est le DÉCOUPAGE qui fait le sticker***, pas le dessin
+  dedans — sans le cerne et l'ombre, les mêmes formes se lisent comme des trous
+  dans le fond. C'est la règle de la plaque claire, prise par le même bout :
+  *elle porte son ombre pour dire qu'elle est POSÉE sur l'image et non découpée
+  dedans.* Et un sticker est ce qu'un emoji EST sur un téléphone ;
 - **LE MOTIF DE TOUCHES** : des carrés très arrondis en quinconce, à peine plus
   clairs que le fond. **Un emoji vient d'un CLAVIER** — c'est l'argument qui a
   donné sa plaque claire à la carte et sa pastille au type — et le dos le dit
@@ -1257,9 +1257,61 @@ cartes droites. *Un dos qui ne dirait pas l'emoji ne serait pas thématique*, et
 c'est ce que Keko a demandé ; la symétrie gauche-droite, qui est celle qu'on
 lit, est tenue.
 
-***Un smiley dit le GENRE et non le contenu*** — un drapeau et un visage sont
+***LE LOGO DIT LE GENRE ET NON LE CONTENU*** — un drapeau et un visage sont
 tous deux des emoji — exactement comme une pokéball ne dit pas quel Pokémon est
 sous la carte.
+
+#### UN SMILEY SEUL ÉTAIT « SIMPLETTE » : IL EN FAUT TROIS
+
+Keko, en le voyant : **« je trouve l'icône de smiley un peu simplette... tu
+crois qu'on pourrait faire un bouquet d'emoji (coeur, visage, un genre de mixte)
+en logo ? »**
+
+*Un smiley seul dit « un emoji », un groupe dit « une COLLECTION »* — et c'est
+ce que la carte est. **Le motif et les confettis le disaient déjà autour**, sans
+que le centre le reprenne.
+
+***LES DEUX PREMIERS NE SONT PAS CHOISIS, ILS SONT PRIS EN TÊTE DU
+CLASSEMENT.*** Le visage et le coeur sont **les deux premiers emoji du monde** —
+😂 puis ❤️ au classement d'usage d'Unicode, *celui-là même qui décide des
+raretés du catalogue.* Le logo d'une collection se compose de ce qu'elle a de
+plus employé, pas de ce qui tombe bien dans le dessin.
+
+**L'ÉTOILE EST LE SEUL ÉLÉMENT DE GOÛT, et elle répond à un besoin de FORME** :
+*deux silhouettes rondes se confondent à vingt pixels*, et il fallait une
+troisième qui ne soit ni un disque ni un coeur. **Elle a CINQ branches et non
+quatre** : l'éclat à quatre branches est le vocabulaire de la ferronnerie du
+jeu — le sachet, les tas, l'ancien dos — et c'est précisément la langue dont ce
+dos sort.
+
+Trois choses à ne pas défaire :
+
+- **LE COEUR EST CELUI DE LA BANDE DE STATS, rejoué tel quel** (`CHEMIN_COEUR`).
+  Il était écrit en dur dans `peindreJeton` ; il vit maintenant en constante,
+  parce que *deux dessins qui décrivent la même chose divergent au premier
+  réglage* — **la règle que ce coeur-là a DÉJÀ coûtée une fois**, le jour où
+  j'en avais redessiné un en Bézier plutôt que de reprendre celui de Keko.
+  ***Le tracé se partage, l'habit non*** : rouge vif et cerne crème sur un dos,
+  rouge sombre et cerne brun dans un cartouche — un sticker et une lettre ne se
+  peignent pas pareil ;
+- **LA DÉCOUPE EST À MARGE CONSTANTE** (`DOS_CERNE`), pas proportionnelle à
+  chaque forme : *une découpeuse ne change pas de réglage entre deux
+  autocollants*, donc le petit en porte proportionnellement plus — et c'est
+  exactement ce qui le fait lire comme un autocollant plutôt que comme un
+  dessin. **Elle voyage dans une variable de module** parce que le coeur se
+  peint dans son propre repère de 40 x 37, où une épaisseur en unités de carte
+  ne veut plus rien dire ;
+- **L'OMBRE SE POSE SUR LE REMPLISSAGE SEUL, pas sur le cerne.** Les deux la
+  porteraient chacun la leur, et *deux ombres superposées font une tache deux
+  fois plus dense qu'un seul objet n'en projette.* Ce que le remplissage perd en
+  largeur se noie dans le flou.
+
+**ET C'EST L'ÉCART QUI A DEMANDÉ DEUX PASSES, pas le dessin.** Au premier essai
+l'étoile passait presque entièrement sous le visage et se lisait comme une
+flèche : *la part visible d'une forme placée derrière une autre n'est pas ce que
+la distance entre leurs centres laisse croire* — une étoile a peu de matière
+près de son bord. Il a fallu l'éloigner d'un quart de sa taille, et la mesurer à
+l'écran plutôt qu'au calcul.
 
 #### LE MODE EMOJI SEULEMENT, et c'est le CONTOUR qui le dit
 
@@ -1289,8 +1341,9 @@ premier mode chargé imposerait son dos à l'autre.*
   petites capitales — *c'est le même reproche que le dos venait de recevoir*,
   sur le seul objet du mode qui n'a pas changé de langue. Il n'est pas touché
   parce que Keko n'en a pas parlé, et c'est l'écran qu'on voit en PREMIER ;
-- **le dos** : le bleu, la taille du sticker (50 % de la largeur), la finesse du
-  motif et la force des confettis. *Un dos ne se juge qu'en ouvrant un paquet* ;
+- **le dos** : le bleu, la composition du bouquet (quels emoji, dans quel
+  ordre), la finesse du motif et la force des confettis. *Un dos ne se juge
+  qu'en ouvrant un paquet* ;
 - **le nom long se tronque** : « Volume des enceintes élevé » ne tient pas sur
   une carte. *C'est le comportement de tous les modes* — la taille cède, puis le
   nom se coupe — mais les noms CLDR sont plus longs que des noms propres.
