@@ -704,12 +704,12 @@ export function Paquet3D(): React.ReactElement {
    * tourne.
    */
   function placeAuDefile(i: number): [number, number, number] {
-    if (i < montree) return [lVisible * 1.1, 0, Z_DEDANS]
+    if (i < montree) return [lVisible * 1.1, 0, zDefile]
     // LES SUIVANTES SE RANGENT D'UN CHEVEU DERRIÈRE, et c'est tout ce qu'il
     // faut : *elles ne tournent plus*, donc un écart qui tranche l'ordre de
     // deux plans à plat suffit. À taille nulle la question ne se posait pas ;
     // à taille pleine, deux plans au même z se battent pixel par pixel.
-    return [0, 0, Z_DEDANS - (i - montree) * ECART_PILE]
+    return [0, 0, zDefile - (i - montree) * ECART_PILE]
   }
 
   /**
@@ -719,9 +719,13 @@ export function Paquet3D(): React.ReactElement {
    * sous celle qu'on regarde — **et c'est ce qui fait que la suivante est déjà
    * là, de face, quand la première part à droite.** Le temps du flip, elles
    * restent à zéro : une carte de taille nulle ne se fait pas traverser.
+   *
+   * **ELLE N'EST APPELÉE QU'UNE FOIS LE SACHET PARTI** — tant qu'il est là, la
+   * carte vaut la poche — donc c'est bien la taille d'APRÈS qu'elle rend, et le
+   * rapprochement n'est rien d'autre que le passage de l'une à l'autre.
    */
   function tailleAuDefile(i: number): number {
-    return i <= montree || pileOuverte ? grande : 0
+    return i <= montree || pileOuverte ? tailleDuDefile : 0
   }
   /** La largeur du sachet : c'est elle qui place la fente et borne ce qui en sort. */
   const lSachet = tailleDuSachet(lVisible, hVisible)
@@ -734,11 +738,13 @@ export function Paquet3D(): React.ReactElement {
    * coin bas s'enfonce de `RECUL_DU_BAS` — *une rotation est une translation
    * déguisée en profondeur*, la règle déjà payée sur le flip.
    *
-   * ***ET LA CARTE Y RESTE JUSQU'AU BILAN, elle ne revient pas à `Z_MAIN`.***
-   * C'est ce qui lui permet de ne pas bouger d'un pixel pendant que le film
-   * descend : *un pas en z de 0,25 vaut 5 % de taille apparente*, donc le
-   * revenir devant serait exactement le « elle se fait grossir » qu'on retire.
-   * **Le sachet, lui, ne bouge pas** — on ne déplace pas ce que Keko a validé.
+   * ***ET LA CARTE Y RESTE TANT QUE LE FILM EST LÀ.*** C'est ce qui lui permet
+   * de ne pas bouger d'un pixel pendant qu'il descend : *un pas en z vaut de la
+   * taille apparente*, donc la ramener devant pendant la descente serait
+   * exactement le « elle se fait grossir » qu'on retire. **Une fois le film
+   * parti, elle reprend le plan de la main** (`zDefile`) — il n'y a plus rien à
+   * couvrir. **Le sachet, lui, ne bouge pas** — on ne déplace pas ce que Keko a
+   * validé.
    */
   const Z_DEDANS = Z_MAIN - lSachet * RECUL_DU_BAS
   /**
@@ -768,6 +774,43 @@ export function Paquet3D(): React.ReactElement {
     lSachet *
     (POCHE.demiX * 2) *
     (hauteurVisibleA(Z_DEDANS, fenetre.h) / hVisible)
+  /**
+   * ET UNE FOIS LE FILM PARTI, ELLE SE RAPPROCHE.
+   *
+   * Keko : **« une fois le paquet descendu et le dos de carte visible, je pense
+   * qu'on peut le zoomer à la taille d'avant, un peu comme si on se
+   * rapprochait »**.
+   *
+   * ***LA POCHE EST UNE TAILLE D'ATTENTE, PLUS UNE TAILLE DE DÉFILÉ.*** Elle
+   * reste ce qu'elle doit être tant que le sachet est là — *le relief qu'on
+   * voit bomber à travers le film EST le bord de cette carte*, donc le film
+   * glisse et découvre exactement ce qu'il laissait deviner. **Ce que la
+   * correction d'avant interdisait n'était pas de grossir, c'était de grossir
+   * PENDANT que le film descend** : on retirait alors la pochette et ce qu'il y
+   * avait dedans enflait, ce qui raconte le contraire du geste.
+   *
+   * **Ici le film n'est plus là** (`ouvert` ne tombe qu'à la fin de sa
+   * descente), donc plus rien ne contredit le mouvement : *une carte qui
+   * grossit seule à l'écran se lit comme une carte dont on s'approche.*
+   *
+   * **ET C'EST LA TAILLE D'AVANT, au chiffre près** : la largeur plafonnée à
+   * 78 %, et la hauteur à 58 % **pour que la culbute tienne dans le cadre** —
+   * elle s'approche de la caméra et enfle de moitié, donc sans ce plafond elle
+   * sortait par le haut et par le bas en paysage. *Un plafond posé pour une
+   * orientation se mesure dans l'autre* : en portrait c'est la largeur qui
+   * commande, donc il n'y coûte rien.
+   */
+  const tailleDuDefile = Math.min(lVisible * 0.78, (hVisible * 0.58) / 1.4)
+  /**
+   * ET ELLE AVANCE AVEC, puisqu'il n'y a plus rien à couvrir.
+   *
+   * `Z_DEDANS` protège d'un sachet qui se balance ; **le sachet parti, la carte
+   * reprend le plan de la main.** Le pas est minuscule — 1,4 % de taille
+   * apparente — donc *ce n'est pas lui qui fait le rapprochement*, c'est la
+   * taille ; il retire seulement une correction de profondeur qui n'a plus
+   * d'objet.
+   */
+  const zDefile = ouvert ? Z_MAIN : Z_DEDANS
   /**
    * LA DERNIERE CARTE, des qu'elle arrive au premier plan. *Elle ne s'annonce
    * que s'il y en a eu d'autres avant* : sur un paquet d'une seule carte, « la
@@ -927,19 +970,22 @@ export function Paquet3D(): React.ReactElement {
               // place avant et la place après sont le MÊME point**, et il n'y a
               // donc rien à animer : le film descend, la carte était déjà là.
               //
-              // ELLE EST DERRIÈRE LE PIRE RECUL DU SACHET (`Z_DEDANS`), et elle
-              // y reste jusqu'au bilan : *le film descend DEVANT elle*, donc le
-              // recul la couvre aussi longtemps qu'il passe — et la ramener à
-              // `Z_MAIN` la ferait grossir de 5 %, c'est-à-dire exactement ce
-              // qu'on retire.
+              // ELLE EST DERRIÈRE LE PIRE RECUL DU SACHET (`Z_DEDANS`) TANT
+              // QU'IL EST LÀ : *le film descend DEVANT elle*, donc le recul la
+              // couvre aussi longtemps qu'il passe. **Elle reprend le plan de la
+              // main une fois qu'il a quitté le cadre**, en même temps qu'elle
+              // grossit — c'est le rapprochement que Keko a demandé, et il ne
+              // peut avoir lieu qu'une fois le film parti.
               position={fini ? placeAuBilan(i) : placeAuDefile(i)}
-              // LES CINQ SONT À LA TAILLE DE LA POCHE, superposées — *ce qui
-              // est exactement ce qu'elles sont : une pile qu'on tire* — et
-              // c'est ce qui fait compiler leurs cinq nuanceurs pendant que le
-              // sachet se balance. **Elles n'y retombent qu'un demi-tour**, le
-              // temps que la première tourne sans les traverser, puis la pile
-              // se rouvre : la suivante est alors DÉJÀ là, de face, derrière
-              // celle qu'on regarde.
+              // LES CINQ SONT À LA TAILLE DE LA POCHE TANT QUE LE SACHET EST
+              // LÀ, superposées — *ce qui est exactement ce qu'elles sont : une
+              // pile qu'on tire* — et c'est ce qui fait compiler leurs cinq
+              // nuanceurs pendant qu'il se balance. **Le film parti, elles
+              // passent à la taille du défilé** : c'est le rapprochement.
+              // **Elles retombent à zéro le temps d'un demi-tour**, pour que la
+              // première tourne sans les traverser, puis la pile se rouvre : la
+              // suivante est alors DÉJÀ là, de face, derrière celle qu'on
+              // regarde.
               taille={!ouvert ? grande : fini ? taille : tailleAuDefile(i)}
               // ON PEINT UNE FOIS, À LA PLUS GRANDE TAILLE QU'ELLE ATTEINDRA.
               // Sans ça, les quatre suivantes — qui attendent à taille ZÉRO —
@@ -949,7 +995,7 @@ export function Paquet3D(): React.ReactElement {
               // image font un gel** : mesuré, 84 ms à l'instant où le sachet
               // s'efface. *Le défilé est le plus grand des deux, sauf sur un
               // écran très haut où le bilan tient sur une ligne.*
-              tailleTexture={Math.max(grande, taille)}
+              tailleTexture={Math.max(grande, tailleDuDefile, taille)}
               // ELLE RÉPOND AU CURSEUR une fois révélée, et pas avant : *un dos
               // n'a rien à montrer*, donc rien à faire briller.
               reflet={vue}
