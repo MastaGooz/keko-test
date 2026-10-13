@@ -352,6 +352,12 @@ export function Paquet3D(): React.ReactElement {
   const [monte, setMonte] = useState(false)
   /** Le sachet est parti : c'est ce qui met les cartes en rangée. */
   const [ouvert, setOuvert] = useState(nu)
+  /**
+   * ET SA BANDE AUSSI : elle tombe en plume après que le film est descendu,
+   * donc le sachet reste monté — hors cadre, inerte — le temps qu'elle sorte.
+   * *Le démonter sur `ouvert` la couperait en plein vol.*
+   */
+  const [parti, setParti] = useState(nu)
   /** Il brûle : la tape est passée, et il n'y a plus à y revenir. */
   const [brule, setBrule] = useState(false)
   /**
@@ -591,6 +597,7 @@ export function Paquet3D(): React.ReactElement {
   function ouvrirUnAutre(): void {
     cancelAnimationFrame(image.current)
     setOuvert(nu)
+    setParti(nu)
     setBrule(false)
     setRetourne(false)
     setPileOuverte(false)
@@ -885,7 +892,7 @@ export function Paquet3D(): React.ReactElement {
           fini » vivent dans des refs — et une ref ne se remet pas à zéro parce
           qu'une prop a changé.
         */}
-        {!ouvert && paquet.length > 0 && (
+        {!parti && paquet.length > 0 && (
           <Sachet3D
             key={numero}
             taille={lSachet}
@@ -902,6 +909,7 @@ export function Paquet3D(): React.ReactElement {
             // plus ni émergence à déclencher ni image à attendre.
             onDechire={() => setFlash((f) => f + 1)}
             onOuvert={() => setOuvert(true)}
+            onParti={() => setParti(true)}
           />
         )}
 

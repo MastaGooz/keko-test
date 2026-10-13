@@ -2281,6 +2281,66 @@ radians sur dix segments montre ses facettes.*
 zéro et la rotation est l'identité — vérifié, le relief et le reflet du corps
 sont ceux d'avant.
 
+#### LA BANDE TOMBE EN PLUME — et ce n'est pas ce que fait lexicodex
+
+Keko : **« ce serait génial que la petite bande déchirée soit éjectée (comme
+actuellement) mais au lieu de se tournoyer et disparaître, elle tombait en
+"flottant" comme une plume avec la friction avec l'air (comme dans
+lexicodex) »**.
+
+***RELEVÉ CHEZ EUX, ET CE N'EST PAS UNE PLUME.*** Leur bande est poussée dans
+`flying` avec une vitesse `(2,4 ; 6,5 ; 3,2)`, une pesanteur de **16** et une
+CULBUTE sur trois axes (`w = (2..4 ; ±1,5 ; 4..7)` rad/s) ; `updateFlying`
+n'applique **aucun frein**, et la bande est retirée à 2,2 s — *elle est hors
+cadre bien avant.* **Ce que Keko a lu comme une plume est une feuille mince
+qui culbute en venant vers la caméra.**
+
+**ON FAIT DONC CE QU'IL DÉCRIT, PAS CE QU'ILS FONT** : un lancer, puis l'air
+qui freine, et une feuille qui se balance en descendant. *Une plume ne tombe
+pas, elle glisse* — et c'est le seul modèle dans lequel « friction avec
+l'air » veut dire quelque chose.
+
+| | avant | **après** |
+|---|---|---|
+| le mouvement | une parabole sur une part (`pv`) | **une intégration** : une vitesse, un frein, une terminale |
+| la rotation | `−7,2 · pv` rad, un tour et plus | un **roulis** vers où elle glisse, un **tangage** qui montre l'envers |
+| la fin | elle rétrécit et s'efface en 0,87 s | **le bord du cadre** l'emporte, mesuré sur `descente` |
+| la durée | `DUREE_BANDE`, dans `DUREE_BRULURE` | *aucune* : `DUREE_BRULURE` ne dépend plus d'elle |
+
+Quatre choses qui la portent, et chacune a coûté un raisonnement :
+
+- **LE FREIN S'APPLIQUE À UNE VITESSE, PAS À UNE POSITION**, et de façon
+  exponentielle (`exp(−k·dt)`) : *stable quel que soit le pas d'image.* La
+  chute est tirée par la pesanteur ET freinée, donc elle tend vers sa vitesse
+  terminale (`PLUME.terminale`, 0,75 largeur de sachet par seconde) sans
+  jamais la dépasser — **c'est ça, la friction avec l'air** ;
+- **LE BALANCEMENT S'INSTALLE, il ne démarre pas d'un coup** : au lancer la
+  bande file, et c'est quand l'air l'a ralentie qu'elle se met à glisser de
+  gauche à droite (`balance`, `periode`). Une rampe `1 − exp(−2t)` fait les
+  deux régimes sans couture ;
+- **ELLE PENCHE VERS OÙ ELLE GLISSE** — le bord qui mène descend, en phase
+  avec le va-et-vient — **et elle TANGUE vers la caméra**, plus lentement, ce
+  qui montre tour à tour son envers crème et son imprimé. *C'est le tangage
+  qui fait lire une feuille* : une bande qui ne montrerait qu'une face se
+  lirait comme un trait qui descend ;
+- **LE SACHET RESTE MONTÉ LE TEMPS QU'ELLE SORTE** (`onParti`). Il se
+  démontait sur `onOuvert`, à la fin de la chute du film — 1,55 s après
+  l'arrachement — **et une plume n'a pas fini de tomber en une seconde et
+  demie** : elle était coupée en plein vol. `onOuvert` garde exactement son
+  instant (la carte se rapproche au même moment qu'avant), et c'est un second
+  signal qui démonte, quand la bande passe sous `descente` — *le bord du cadre
+  se mesure, il ne se chronomètre pas*, puisqu'il dépend de l'écran. Un garde-
+  fou de huit secondes couvre le cas où elle n'y arriverait pas.
+
+**Et elle part un peu vers la caméra** (`lancer.z`), comme chez eux : *c'est ce
+qui la garde DEVANT la carte* quand celle-ci se rapproche à `Z_MAIN` — sans
+ce pas, les deux plans se seraient disputés le même z.
+
+**Vu à l'écran** sur `?paquet=1314` : la bande s'envole roulée, monte d'un
+dixième de sachet, part à droite, puis descend en zigzag devant la carte et
+sort par le bas en trois secondes environ. *Le film est parti et la carte
+s'est rapprochée pendant ce temps*, exactement comme avant.
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une
@@ -3954,6 +4014,14 @@ la même place se désaccorderaient au premier réglage.*
   soulèvements `PLI_LEVEE`) : *ce sont les chiffres de lexicodex, convertis,
   pas les nôtres* — et **l'envers crème** est de moi, le leur est argenté. *Un
   pli ne se juge qu'en déchirant* ;
+- **la plume** (`PLUME`) : le lancer (1,6 ; 0,9 ; 0,6 largeur de sachet par
+  seconde), les freins (2,4 de côté, 3,2 en chute), la vitesse terminale
+  (0,75), le balancement (0,22 d'ampleur, 1,25 s de période), le roulis (0,5
+  rad) et le tangage (0,45 autour de 0,35). *Les chiffres sont de moi* :
+  lexicodex n'a pas de plume — sa bande culbute en balistique, sans frein — et
+  Keko a demandé une plume. **La terminale décide du temps qu'elle met à sortir
+  du cadre**, environ trois secondes, pendant lesquelles elle passe devant la
+  carte ; *une plume ne se juge qu'en ouvrant des paquets* ;
 - **la pesanteur** (`PESANTEUR`, 1,5, en multiples de la vitesse de départ du
   régime) : ***c'est elle, et elle seule, qui borne la portée LATÉRALE*** —
   0,300 largeur au plus contre 0,755 sans elle. **Elle change de nature en

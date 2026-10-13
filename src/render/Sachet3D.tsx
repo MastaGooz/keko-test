@@ -56,13 +56,58 @@ import {
  * où il a fallu les séparer, une part ne pouvait plus le dire : *deux objets
  * qui durent chacun leur temps ne se décrivent pas par une fraction commune.*
  *
- * **LE FRONT puis la BANDE ne se chevauchent pas** — on n'arrache pas ce qui
- * tient encore par un bout — et **la CHUTE attend la gerbe** : voir
- * `DUREE_GERBE`.
+ * **LE FRONT puis la CHUTE** : on n'arrache pas ce qui tient encore par un
+ * bout, et **la chute attend la gerbe** — voir `DUREE_GERBE`. *La bande, elle,
+ * n'a plus de durée* : elle tombe en plume, et c'est le bord du cadre qui dit
+ * quand elle a fini — voir `PLUME`.
  */
 const DUREE_FRONT = 0.63
-const DUREE_BANDE = 0.87
 const DUREE_CHUTE = 0.87
+
+/**
+ * LA BANDE TOMBE EN PLUME, une fois arrachée.
+ *
+ * Keko : **« ce serait génial que la petite bande déchirée soit éjectée (comme
+ * actuellement) mais au lieu de se tournoyer et disparaître, elle tombait en
+ * "flottant" comme une plume avec la friction avec l'air (comme dans
+ * lexicodex) »**.
+ *
+ * ***RELEVÉ CHEZ EUX, ET CE N'EST PAS UNE PLUME*** : leur bande part à
+ * `(2,4 ; 6,5 ; 3,2)` sous une pesanteur de 16, sans aucun frein, et CULBUTE
+ * sur trois axes (`w = (2..4 ; ±1,5 ; 4..7)` rad/s) pendant 2,2 s — une chute
+ * balistique franche, qui sort du cadre en une seconde. *Ce que Keko a lu
+ * comme une plume est la culbute d'une feuille mince qui vient vers la
+ * caméra.* On fait donc ce qu'il DÉCRIT, pas ce qu'ils font : un lancer, puis
+ * l'air qui freine, et une feuille qui se balance en descendant.
+ *
+ * **UNE PLUME NE TOMBE PAS, ELLE GLISSE** : sa vitesse de chute plafonne
+ * (`terminale`), elle part de côté et revient (`balance`, `periode`), et elle
+ * s'incline dans le sens où elle glisse (`roulis`) tout en tanguant vers la
+ * caméra (`tangage`) — c'est le tangage qui montre tour à tour son envers crème
+ * et son imprimé. *Rien ne rétrécit et rien ne s'efface* : ce qui part, part
+ * pour de bon, et c'est le bord du cadre qui l'emporte.
+ *
+ * Tout est en LARGEURS DE SACHET et en secondes.
+ */
+const PLUME = {
+  /** Le lancer : à droite, un peu en l'air, et vers la caméra — comme avant. */
+  lancer: { x: 1.6, y: 0.9, z: 0.6 },
+  /** Le frein de l'air, par seconde : de côté et en profondeur, puis en chute. */
+  frein: 2.4,
+  freinY: 3.2,
+  /** La vitesse de chute que l'air ne laisse plus dépasser. */
+  terminale: 0.75,
+  /** Le va-et-vient latéral : son ampleur et sa période. */
+  balance: 0.22,
+  periode: 1.25,
+  /** De combien elle penche dans le sens où elle glisse, et de combien elle tangue. */
+  roulis: 0.5,
+  tangage: 0.45,
+  /** Le tangage moyen : elle montre un peu son envers en permanence. */
+  tangageMoyen: 0.35,
+  /** La vie au-delà de laquelle on cesse d'attendre qu'elle sorte du cadre. */
+  vieMax: 8,
+} as const
 /**
  * OÙ LE FRONT COMMENCE, en parts de largeur. *Il sort des deux bords* : une
  * déchirure qui commencerait pile sur le bord se lirait comme un bord qui
@@ -1060,8 +1105,7 @@ const DUREE_GERBE = ECLAT_ETALE + VIE_ETINCELLE * 1.18
  * l'arrachement vaut la gerbe plus la chute — ou l'envol de la bande, s'il
  * durait plus longtemps.
  */
-export const DUREE_BRULURE =
-  DUREE_FRONT + Math.max(DUREE_BANDE, DUREE_GERBE + DUREE_CHUTE)
+export const DUREE_BRULURE = DUREE_FRONT + DUREE_GERBE + DUREE_CHUTE
 const PART_FRONT = DUREE_FRONT / DUREE_BRULURE
 /**
  * LA SOURCE EST LE FRONT LUI-MÊME, dispersée AUTOUR de lui.
@@ -1493,6 +1537,7 @@ export function Sachet3D({
   descente,
   ouvre = false,
   onOuvert,
+  onParti,
   onDechire,
   onOuvrir,
 }: {
@@ -1512,6 +1557,9 @@ export function Sachet3D({
    * hauteur du champ plus la demi-hauteur du sachet, donc **il est hors cadre
    * à l'instant où le composant se démonte** : rien ne disparaît d'un coup, et
    * il n'y a plus de fondu du tout.
+   *
+   * **ET LA BANDE LA LIT AUSSI** : c'est à elle qu'on compare sa chute pour
+   * savoir qu'elle a quitté le cadre — voir `onParti`.
    */
   readonly descente: number
   /** Vrai dès qu'il doit s'ouvrir sans geste. Il ne se referme pas. */
@@ -1520,6 +1568,15 @@ export function Sachet3D({
   readonly onDechire?: () => void
   /** Tout est fini : *c'est l'écran qui décide de la suite.* */
   readonly onOuvert?: () => void
+  /**
+   * LA BANDE EST SORTIE DU CADRE, et il n'y a plus rien à montrer.
+   *
+   * *C'est un second instant, après `onOuvert`* : le film est parti et la
+   * carte s'est rapprochée, mais la bande tombe encore en plume devant elle.
+   * **Le démonter sur `onOuvert` la couperait en plein vol** — c'est donc sur
+   * celui-ci que le parent le démonte.
+   */
+  readonly onParti?: () => void
   /** Le geste est acquis : la déchirure part toute seule. */
   readonly onOuvrir?: () => void
 }): React.ReactElement {
@@ -1565,6 +1622,15 @@ export function Sachet3D({
   const avant = useRef<number | null>(null)
   const dit = useRef(false)
   const ditDechire = useRef(false)
+  const ditParti = useRef(false)
+  /**
+   * LA PLUME : où la bande en est de sa chute, en largeurs de sachet.
+   *
+   * *C'est une vraie intégration, plus une courbe sur une part* : l'air freine
+   * une vitesse, pas une position, et on ne sait pas d'avance quand elle sort
+   * du cadre — ça dépend de l'écran.
+   */
+  const plume = useRef({ t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0 })
   /** Où en est l'anneau des étincelles, et le front de l'image d'avant. */
   const anneau = useRef(0)
   const frontAvant = useRef(FRONT_DEPART)
@@ -1809,7 +1875,6 @@ export function Sachet3D({
     // la sienne : la bande s'envole tout de suite, le film attend que la gerbe
     // soit retombee. *Une part commune ne pouvait pas porter deux durees.*
     const tApres = Math.max(0, (pp - PART_FRONT) * DUREE_BRULURE)
-    const pv = Math.min(1, tApres / DUREE_BANDE)
     const pc = Math.min(1, Math.max(0, (tApres - DUREE_GERBE) / DUREE_CHUTE))
 
     if (pf >= 1 && !ditDechire.current) {
@@ -1823,18 +1888,57 @@ export function Sachet3D({
       onDechire?.()
     }
 
-    // LA BANDE S'ENVOLE une fois le front arrivé au bout. Elle monte, part à
-    // droite et RETOMBE — *ce qu'on arrache est emporté puis lâché* — en
-    // tournoyant sur elle-même, parce qu'un morceau de film n'a aucune raison
-    // de rester à plat.
-    if (bande.current !== null) {
+    /*
+     * LA BANDE TOMBE EN PLUME une fois le front arrivé au bout.
+     *
+     * Elle est LANCÉE — à droite, un peu en l'air, vers la caméra — puis l'air
+     * la freine : sa chute plafonne, elle se balance de gauche à droite et
+     * penche dans le sens où elle glisse. *Ce qu'on arrache est emporté, puis
+     * l'air le prend.* Rien ne tournoie, rien ne rétrécit, rien ne s'efface :
+     * c'est le bord du cadre qui l'emporte, et c'est `descente` qui le dit.
+     * Voir `PLUME`.
+     */
+    if (bande.current !== null && pf >= 1 && !ditParti.current) {
       const b = bande.current
-      b.position.x = taille * 1.15 * pv * pv
-      b.position.y = hCorps / 2 + H * (0.52 * pv - 1.15 * pv * pv)
-      b.rotation.z = -pv * 7.2
-      b.scale.setScalar(Math.max(0.2, 1 - pv * 0.55))
+      const q = plume.current
+      if (q.t === 0) {
+        q.vx = PLUME.lancer.x
+        q.vy = PLUME.lancer.y
+        q.vz = PLUME.lancer.z
+      }
+      q.t += dt
+      // L'AIR FREINE UNE VITESSE : exponentiellement, donc stable quel que
+      // soit le pas d'image. La chute, elle, est tirée par la pesanteur ET
+      // freinée, donc elle tend vers sa vitesse terminale sans la dépasser.
+      const fx = Math.exp(-PLUME.frein * dt)
+      const fy = Math.exp(-PLUME.freinY * dt)
+      q.vx *= fx
+      q.vz *= fx
+      q.vy = -PLUME.terminale + (q.vy + PLUME.terminale) * fy
+      q.x += q.vx * dt
+      q.y += q.vy * dt
+      q.z += q.vz * dt
+      // LE BALANCEMENT S'INSTALLE, il ne démarre pas d'un coup : au lancer
+      // elle file, et c'est quand l'air la ralentit qu'elle se met à glisser.
+      const prise = 1 - Math.exp(-q.t * 2)
+      const w = (2 * Math.PI) / PLUME.periode
+      const phase = q.t * w
+      b.position.x = taille * (q.x + PLUME.balance * Math.sin(phase) * prise)
+      b.position.y = hCorps / 2 + taille * q.y
+      b.position.z = taille * q.z
+      // ELLE PENCHE VERS OÙ ELLE GLISSE : le bord qui mène descend. Et elle
+      // TANGUE vers la caméra, plus lentement, ce qui montre tour à tour son
+      // envers crème et son imprimé — c'est ça qui fait lire une feuille.
+      b.rotation.z = -PLUME.roulis * Math.cos(phase) * prise
+      b.rotation.x =
+        PLUME.tangageMoyen * prise + PLUME.tangage * Math.sin(phase * 0.5 + 0.6) * prise
+      // SORTIE DU CADRE : `descente` est la demi-hauteur du champ plus celle
+      // du sachet, donc en dessous il reste au moins un demi-sachet de marge.
+      if (b.position.y < -descente || q.t > PLUME.vieMax) {
+        ditParti.current = true
+        onParti?.()
+      }
     }
-    bandeMat.uniforms.uFondu!.value = Math.max(0, 1 - Math.pow(pv, 2.2))
 
     /*
      * LE FILM DESCEND ET DECOUVRE LA CARTE, il ne s'efface plus.
