@@ -1673,6 +1673,8 @@ précisément le défaut qu'il est là pour dissoudre.
 | le fond | ambre + soleil de rayons | **le bleu du dos**, son dégradé, son vignettage, son dither |
 | le motif | — | **les touches de clavier** et les cinq confettis |
 | les angles | biseautés | **arrondis**, au rayon de la carte |
+| le contour | un liseré crème tout autour | **plus de contour** — le film va jusqu'au bord |
+| les dents des soudures | vers l'intérieur | **vers l'extérieur** : c'est la silhouette qui est découpée |
 | la marque | le losange du gabarit | **le bouquet d'emoji** |
 | l'éventail | trois dos de gabarit | **trois FACES** : un cran, un emoji, une plaque claire |
 | le contenu | cartouche à coins coupés + Cinzel | **une pastille claire**, « 5 CARTES » en Baloo 2 |
@@ -1686,6 +1688,37 @@ thermosoudées**, dentelées et striées ; **la ligne pointillée**, qui dit où
 déchire avant qu'on y touche ; et **le format haut et étroit** (1 : 1,9), parce
 qu'*une pochette au format d'une carte se lit comme une carte géante*, donc
 comme un dos de plus.
+
+#### LA DENTELURE EST LA SILHOUETTE, PAS UN DESSIN POSÉ DESSUS
+
+Keko : **« on peut enlever le contour du paquet, et surtout les bandes
+supérieure et inférieure doivent avoir les petits pics vers l'extérieur, comme
+sur lexicodex »**.
+
+*Les deux demandes n'en font qu'une*, et c'est ce qui les rend simples à tenir
+ensemble : **tant qu'il y avait un liseré, le bord du sachet devait rester
+franc** — un contour dentelé n'est plus un contour. La dent mordait donc vers
+l'INTÉRIEUR, et on lisait **une bande dentelée POSÉE sur un rectangle, pas un
+film DÉCOUPÉ en zigzag.**
+
+***Une molette crantée coupe le film de part en part, elle ne décore pas sa
+marge.*** C'est donc `cheminDuSachet` qui porte les dents — le tracé qui clippe
+TOUT — et les pointes touchent le bord pendant que les creux rentrent : *une
+découpe ne peut qu'enlever de la matière*, donc elle ne dépasse jamais.
+
+**ET LA SOUDURE NE DESSINE PLUS RIEN** : c'est une bande pleine qui va jusqu'au
+bord, et le clip du sachet lui taille ses pics. **Un seul endroit décrit la
+découpe**, donc les dents de la bande et celles de la silhouette ne peuvent pas
+se désaccorder — *deux tracés qui décriraient le même zigzag divergeraient au
+premier réglage*, et ils l'auraient fait dès le premier changement de cadence.
+
+**LE CRÈME NE VIT PLUS QUE DANS LES SOUDURES**, et c'est juste : *un sachet n'a
+pas de cadre* — il a un film imprimé et deux endroits où ce film se replie sur
+lui-même. Le liseré était un emprunt au dos de carte ; il disait « bord de
+carte » sur un objet qui n'en est pas une.
+
+*Vérifié à l'écran, déchirure comprise* : la bande s'arrache toujours et
+s'envole avec ses pics, et la soudure du bas garde les siens.
 
 #### L'ÉVENTAIL MONTRE DES FACES, ET C'EST CE QUI LE FAIT PARLER
 

@@ -5046,6 +5046,13 @@ const SACHET_HAUT = Math.round(
 const SACHET_RAYON = RAYON_SIMPLE
 
 /**
+ * DE COMBIEN LE CREUX D'UNE DENT RENTRE, en parts de la hauteur du sachet.
+ * *Les POINTES, elles, touchent le bord* : c'est une decoupe, donc elle ne peut
+ * qu'enlever de la matiere.
+ */
+const PROF_DENT = 0.011
+
+/**
  * L'UNITÉ DU SACHET — son centième de largeur, comme `U` l'est pour la carte.
  *
  * *Les peintres partagés parlent tous en centièmes de largeur* : sans ça le
@@ -5066,50 +5073,86 @@ let SACHET: Promise<THREE.CanvasTexture> | null = null
  * cases vides du chargement, puis sur le contour simple des cartes.*
  */
 function cheminDuSachet(ctx: CanvasRenderingContext2D, l: number, h: number, r: number): void {
+  const p = h * PROF_DENT
   ctx.beginPath()
-  ctx.roundRect(0, 0, l, h, Math.max(0, r))
+  ctx.moveTo(0, h - r)
+  ctx.lineTo(0, r)
+  ctx.quadraticCurveTo(0, 0, r, 0)
+  dentsDuBord(ctx, l, r, l - r, 0, p)
+  ctx.quadraticCurveTo(l, 0, l, r)
+  ctx.lineTo(l, h - r)
+  ctx.quadraticCurveTo(l, h, l - r, h)
+  dentsDuBord(ctx, l, l - r, r, h, h - p)
+  ctx.quadraticCurveTo(0, h, 0, h - r)
+  ctx.closePath()
 }
 
 /**
- * UNE BANDE THERMOSOUDÉE : du film, strié et DENTELÉ.
+ * LA DENTELURE D'UN BORD, **pointes vers le DEHORS.**
  *
- * *La dent est du côté de l'INTÉRIEUR* — c'est la découpe de l'emballeuse, et
- * elle ne mord jamais le bord extérieur du sachet, qui reste franc.
+ * Keko : « les bandes superieure et inferieure doivent avoir les petits pics
+ * vers l'exterieur, comme sur lexicodex ». *Elle mordait vers l'INTERIEUR*,
+ * donc le sachet gardait un bord franc : **on lisait une bande dentelee POSEE
+ * sur un rectangle, pas un film DECOUPE en zigzag.**
  *
- * **ELLE EST CRÈME, PLUS ALUMINIUM.** Le gris d'alu était juste pour un sachet
- * de ferronnerie ; ici *le crème est déjà la couleur du liseré des cartes*, et
- * une soudure est précisément l'endroit où le film se replie sur lui-même —
- * donc où il montre son envers. **On ne change pas la pièce, on change sa
- * matière.**
+ * ***C'est la SILHOUETTE qui doit porter la decoupe***, pas un dessin pose
+ * dessus — une molette crantee coupe le film de part en part, elle ne decore
+ * pas sa marge.
+ *
+ * **Le compte de dents est ARRONDI a l'entier sur la portee**, sinon la
+ * derniere serait tronquee au coin : *une dentelure qui ne retombe pas juste se
+ * lit comme une decoupe ratee.*
+ */
+function dentsDuBord(
+  ctx: CanvasRenderingContext2D,
+  l: number,
+  x0: number,
+  x1: number,
+  pointe: number,
+  creux: number,
+): void {
+  const n = Math.max(2, Math.round(Math.abs(x1 - x0) / (l / 26)))
+  const pas = (x1 - x0) / n
+  for (let i = 0; i < n; i += 1) {
+    ctx.lineTo(x0 + pas * (i + 0.5), creux)
+    ctx.lineTo(x0 + pas * (i + 1), pointe)
+  }
+}
+
+/**
+ * UNE BANDE THERMOSOUDEE : du film, strie, qui va jusqu'au BORD.
+ *
+ * ***ELLE NE DESSINE PLUS SA DENTELURE : c'est la silhouette du sachet qui la
+ * porte*** (`cheminDuSachet`), et le clip du sachet la lui taille. **Un seul
+ * endroit decrit la decoupe**, donc les pics de la bande et ceux du sachet ne
+ * peuvent pas se desaccorder — *deux traces qui decriraient le meme zigzag
+ * divergeraient au premier reglage.*
+ *
+ * **ELLE EST CREME, PLUS ALUMINIUM.** Le gris d'alu etait juste pour un sachet
+ * de ferronnerie ; ici *le creme etait deja la couleur du lisere des cartes*, et
+ * une soudure est precisement l'endroit ou le film se replie sur lui-meme —
+ * donc ou il montre son envers. **On ne change pas la piece, on change sa
+ * matiere.** Et depuis que le lisere est parti, **c'est elle seule qui porte le
+ * creme** : le sachet n'a plus de bord clair, il a deux soudures.
  */
 function peindreSoudure(
   ctx: CanvasRenderingContext2D,
   l: number,
-  y0: number,
+  h: number,
   ep: number,
   versLeBas: boolean,
 ): void {
   const dent = l / 26
-  const pointe = versLeBas ? y0 + ep : y0 - ep
-  const dehors = versLeBas ? y0 - ep * 2.6 : y0 + ep * 2.6
+  const dehors = versLeBas ? 0 : h
+  const dedans = versLeBas ? ep : h - ep
   ctx.save()
-  ctx.beginPath()
-  ctx.moveTo(0, dehors)
-  ctx.lineTo(l, dehors)
-  // LA DENTELURE : un zigzag régulier, refermé sur le bord opposé.
-  for (let x = l; x > 0; x -= dent) {
-    ctx.lineTo(x - dent / 2, pointe)
-    ctx.lineTo(x - dent, y0)
-  }
-  ctx.closePath()
-  ctx.clip()
 
-  const film = ctx.createLinearGradient(0, dehors, 0, pointe)
+  const film = ctx.createLinearGradient(0, dehors, 0, dedans)
   film.addColorStop(0, DOS_CREME)
   film.addColorStop(0.45, '#f0dfc0')
   film.addColorStop(1, '#d9c5a3')
   ctx.fillStyle = film
-  ctx.fillRect(0, Math.min(dehors, pointe) - 2, l, Math.abs(pointe - dehors) + 4)
+  ctx.fillRect(0, Math.min(dehors, dedans), l, ep)
 
   // LE GAUFRAGE : des stries VERTICALES, parce que c'est ainsi qu'une soudure
   // se presse. *Un aplat clair ne dit pas une soudure, il dit une marge.*
@@ -5118,8 +5161,8 @@ function peindreSoudure(
   ctx.lineWidth = Math.max(1, l * 0.004)
   for (let x = dent / 4; x < l; x += dent / 2) {
     ctx.beginPath()
-    ctx.moveTo(x, Math.min(dehors, pointe) - 2)
-    ctx.lineTo(x, Math.max(dehors, pointe) + 2)
+    ctx.moveTo(x, Math.min(dehors, dedans))
+    ctx.lineTo(x, Math.max(dehors, dedans))
     ctx.stroke()
   }
   ctx.restore()
@@ -5248,23 +5291,12 @@ async function peindreLeSachet(): Promise<HTMLCanvasElement> {
   const ctx = canvas.getContext('2d')
   if (ctx === null) return canvas
 
-  // LE LISERÉ D'ABORD, LE FOND DEDANS — la découpe du dos de carte à
-  // l'identique. *Un `stroke` serait centré sur son tracé*, donc la moitié
-  // sortirait de la toile : on peint le crème plein, puis on rentre.
+  // LE FILM VA JUSQU'AU BORD — **il n'y a plus de lisere.** Keko : « on peut
+  // enlever le contour du paquet ». *Un sachet n'a pas de cadre* : il a un film
+  // imprime et deux soudures, et c'est tout. Le creme ne vit donc plus que la
+  // ou le film se replie sur lui-meme.
   ctx.save()
   cheminDuSachet(ctx, l, h, r)
-  ctx.clip()
-  const bord = ctx.createLinearGradient(0, 0, l * 0.5, h)
-  bord.addColorStop(0, DOS_CREME)
-  bord.addColorStop(0.55, '#f0dfc0')
-  bord.addColorStop(1, '#dcc8a6')
-  ctx.fillStyle = bord
-  ctx.fillRect(0, 0, l, h)
-
-  const marge = 2.7 * US
-  ctx.save()
-  ctx.beginPath()
-  ctx.roundRect(marge, marge, l - marge * 2, h - marge * 2, Math.max(0, r - marge))
   ctx.clip()
 
   // LA MATIÈRE EST CELLE DU DOS, par le même peintre : dégradé vertical,
@@ -5357,9 +5389,8 @@ async function peindreLeSachet(): Promise<HTMLCanvasElement> {
 
   // LES DEUX SOUDURES, en dernier : elles se posent SUR l'imprimé, parce que
   // c'est ainsi qu'un sachet se ferme — on imprime le film, puis on le soude.
-  peindreSoudure(ctx, l, h * 0.036, h * 0.011, true)
-  peindreSoudure(ctx, l, h * 0.964, h * 0.011, false)
-  ctx.restore()
+  peindreSoudure(ctx, l, h, h * 0.047, true)
+  peindreSoudure(ctx, l, h, h * 0.047, false)
   ctx.restore()
   return canvas
 }
