@@ -2241,6 +2241,36 @@ largeur de source.*
 **ET LE JAILLISSEMENT GARDE SON ÉTALEMENT SUR TOUTE L'OUVERTURE** : là, le
 recul d'un côté est juste — *la fente entière est la source*, pas un point.
 
+#### AU-DELÀ DE 1, LA PESANTEUR NE CHANGE PLUS LA FORME : elle RÉTRÉCIT
+
+Keko : **« augmente encore la pesanteur. »** Elle passe de 1 à **1,5**.
+
+***ET ELLE CHANGE DE NATURE EN FRANCHISSANT 1, ce qui n'allait pas de soi.***
+Sous 1, le bornage `min(1, …)` protège le zénith — *l'étincelle verticale
+retombe pile à la fin de sa vie, donc seules les rasantes se raccourcissent* :
+c'est un réglage de FORME. Au-delà, le bornage ne mord plus nulle part, et
+**la portée comme la cloche valent toutes deux `v² / pesanteur`** : toute la
+gerbe se contracte du même facteur.
+
+| pesanteur | portée au plus | portée moyenne | **le zénith** | cloche moyenne |
+|---|---|---|---|---|
+| 1,00 | 0,450 | 0,244 | **0,170** | 0,119 |
+| 1,25 | 0,360 | 0,196 | 0,136 | 0,097 |
+| **1,50** | **0,300** | **0,163** | **0,113** | **0,081** |
+| 2,00 | 0,225 | 0,122 | 0,085 | 0,061 |
+
+*(La découpe. Le jaillissement suit le même rapport, au facteur 2,12 près.)*
+
+**LA CLOCHE DU ZÉNITH N'EST DONC PLUS PROTÉGÉE** — 0,170 à 0,113 — et c'est le
+prix annoncé : *une pesanteur plus forte ne peut pas raccourcir la portée sans
+raccourcir le vol.* La gerbe garde les deux tiers de son ampleur.
+
+***ET PASSÉ CE POINT, LA MONTER OU BAISSER LA VITESSE FONT EXACTEMENT LA MÊME
+CHOSE*** : diviser par `k` revient à diviser `JET` par `√k`. **Ce n'est plus
+qu'un facteur d'échelle**, donc le jour où Keko voudra une gerbe plus petite
+SANS la rendre plus molle, c'est ailleurs qu'il faudra chercher — la taille du
+grain, ou le nombre d'étincelles.
+
 #### LA PLAGE SE RESSERRE À 120°, ET ÇA NE TOUCHE PAS À LA PORTÉE
 
 Keko : **« on peut réduire un peu l'angle des particules ? 30-150 degrés ? »**
@@ -3439,11 +3469,13 @@ la même place se désaccorderaient au premier réglage.*
   paquets.** *`?gerbe` tire puis s'arrête*, ce qui est le seul moyen d'en juger
   sans ouvrir vingt paquets. *La vitesse de départ est redevenue libre* depuis
   que le grain ne s'allonge plus avec elle ;
-- **la pesanteur** (`PESANTEUR`, 1, en multiples de la vitesse de départ du
+- **la pesanteur** (`PESANTEUR`, 1,5, en multiples de la vitesse de départ du
   régime) : ***c'est elle, et elle seule, qui borne la portée LATÉRALE*** —
-  0,450 largeur au plus contre 0,755 sans elle. **À 1 elle ne touche pas au
-  zénith** : l'étincelle verticale retombe pile à la fin de sa vie, donc la
-  cloche garde ses 0,170 et ses 0,360. À 0, le vol d'avant ;
+  0,300 largeur au plus contre 0,755 sans elle. **Elle change de nature en
+  franchissant 1** : en dessous elle ne raccourcit que les rasantes et le
+  zénith garde ses 0,170 ; au-dessus elle contracte tout du même facteur, donc
+  *elle ne fait plus que rétrécir la gerbe* — et à ce régime, la monter ou
+  baisser `JET` reviennent au même. À 0, le vol d'avant ;
 - **la courbe du front** (exposant 1, donc le front suit le doigt largeur pour
   largeur) et **la place du « Ouvrir ici »**, au départ du pointillé : *c'est le
   couple qui met la déchirure sous le doigt*, et il ne reste d'écart que si Keko

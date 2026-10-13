@@ -951,8 +951,20 @@ const ANGLE_MAX = (150 * Math.PI) / 180
  * *le jaillissement n'est pas un réglage de la découpe*, et une pesanteur
  * absolue y laisserait la gerbe filer quatre fois plus loin, sa vitesse étant
  * double. À 0, on retrouve le vol d'avant.
+ *
+ * ***ET AU-DELÀ DE 1 ELLE CESSE DE CHANGER LA FORME : elle ne fait plus que
+ * RÉTRÉCIR.*** Keko : « augmente encore la pesanteur ». Sous 1, le bornage
+ * `min(1, …)` protège le zénith et seules les rasantes se raccourcissent —
+ * *c'est un réglage de forme.* Au-delà, le bornage ne mord plus nulle part :
+ * la portée et la cloche valent toutes deux `v² / pesanteur`, donc **toute la
+ * gerbe se contracte du même facteur.** À 1,5, tout vaut les deux tiers.
+ *
+ * **CONSÉQUENCE À CONNAÎTRE** : passé ce point, *la monter ou baisser la
+ * vitesse de départ font exactement la même chose* — diviser par `k` revient à
+ * diviser `JET` par `√k`. Ce n'est plus qu'un facteur d'échelle, et la cloche
+ * du zénith n'est plus protégée : elle tombe de 0,170 à 0,113.
  */
-const PESANTEUR = 1
+const PESANTEUR = 1.5
 /**
  * LA LUMIÈRE DU DÉCHIREMENT : crème en bordure, blanche au coeur.
  *
