@@ -2095,6 +2095,84 @@ somme des deux**, et la gerbe se pose au-delà. Un `0,1` écrit à la main aurai
 été repris par le ventre au premier réglage, et ce réglage a déjà eu lieu trois
 fois.
 
+#### LE FILM ATTEND QUE LA GERBE SOIT RETOMBÉE
+
+Keko, en trois demandes qui n'en font qu'une : **« je parlais de la gerbe
+finale, quand le paquet se sépare de la partie déchirée. Il faudrait que le
+paquet reste en place durant la gerbe finale, qu'il descende une fois la gerbe
+terminée, et que les particules volent un peu plus haut, avec un angle plus
+restreint, et spawn sur toute la longueur. »**
+
+***LA GERBE SORT DE LA FENTE, ET LA FENTE S'EN ALLAIT PENDANT QU'ELLE VOLAIT.***
+Les deux se jouaient en même temps — le film descendait dès l'arrachement — donc
+on ne voyait plus d'où les étincelles sortaient. *Ce n'était pas un défaut de
+réglage, c'était un défaut d'ORDRE* : un jaillissement se lit par rapport à ce
+qui le produit.
+
+#### LES TROIS TEMPS SE COMPTENT EN SECONDES, PLUS EN PARTS D'UN TOUT
+
+`PART_FRONT` coupait l'ouverture en deux : la course du front, puis **le
+reste** — et ce reste portait DEUX choses, la bande qui s'envole et le film qui
+descend. **Le jour où il a fallu les séparer, une part commune ne pouvait plus
+le dire** : *deux objets qui durent chacun leur temps ne se décrivent pas par
+une fraction commune.*
+
+Il y a donc trois durées (`DUREE_FRONT`, `DUREE_BANDE`, `DUREE_CHUTE`), et la
+part du front s'en DÉDUIT. **Aucune ne change de valeur** : le front dure ses
+0,63 s et la chute ses 0,87 s, exactement comme avant.
+
+#### ET LA PAUSE SE CALCULE, ELLE NE S'ÉCRIT PAS
+
+`DUREE_GERBE` vaut l'étalement des naissances plus la vie d'une étincelle **au
+pire cas de sa variance** : la dernière née doit avoir fini son vol. *Un chiffre
+écrit à la main se désaccorderait au premier réglage de la vie* — la règle que
+le recul des cartes derrière le sachet a déjà coûtée.
+
+| | |
+|---|---|
+| la gerbe | **0,676 s**, calculée |
+| l'ouverture entière | 1,50 → **2,18 s** |
+| la part du front | 0,42 → **0,29**, déduite |
+
+**LA BANDE, ELLE, NE BOUGE PAS D'UN CRAN** : elle s'envole sur sa propre durée
+dès l'arrachement — *ce qu'on arrache part avec la gerbe, ce qu'on retire
+attend qu'elle soit finie.*
+
+#### LE JAILLISSEMENT EST UN RIDEAU, ET LES TROIS DEMANDES N'EN FONT QU'UNE
+
+| | avant | **après** |
+|---|---|---|
+| la plage d'angles | 60–120° | **72–108°** |
+| la vitesse (`ECLAT_CLOCHE`) | 2,12 | **2,45** |
+| la source | un retrait **borné** derrière le front | **toute la longueur**, uniforme |
+| cloche moyenne | 0,221 | **0,270** (+22 %) |
+| portée moyenne | 0,231 | **0,171** (−26 %) |
+| **rapport hauteur / largeur** | **0,96** | **1,58** |
+
+***UNE SOURCE PONCTUELLE ET UN CÔNE ÉTROIT FONT UNE FONTAINE ; UNE SOURCE
+ÉTALÉE ET UN CÔNE ÉTROIT FONT L'INVERSE*** — une nappe qui monte sur toute la
+largeur de la fente. **C'est le diagnostic de Keko lui-même**, pris par son bon
+bout : les deux causes se cumulaient, aucune ne suffisait seule. Le
+jaillissement est donc **le seul régime qui puisse se resserrer autant**, parce
+qu'il est le seul à naître partout à la fois.
+
+**ET LA SOURCE ÉTAIT UN TAS CONTRE SA BORNE.** Elle se tirait en retrait du
+front (`−hasard × 1,15`) puis se bornait à zéro : le front arrivant à 0,948,
+**un sixième des étincelles naissait exactement au bord gauche** et aucune
+au-delà du front. *Un tirage qu'on borne n'est plus uniforme* — l'abscisse de
+l'éclat se tire désormais directement sur toute la largeur.
+
+#### CE QUI A ÉTÉ VU À L'ÉCRAN
+
+Trois captures d'une ouverture au ralenti (toutes les durées × 5, une sonde
+retirée depuis) : **la bande s'envole, les étincelles montent sur toute la
+largeur de l'ouverture, et le bas du sachet n'a pas bougé d'un pixel.** Le film
+descend ensuite, et la carte se rapproche quand il a quitté le cadre.
+
+*Le ralenti était obligatoire* : la gerbe dure sept dixièmes de seconde et deux
+appels de l'outil en coûtent davantage. **Multiplier les durées est une sonde,
+pas un réglage** — et elle se retire en rééditant, jamais par un `checkout`.
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une
@@ -3752,9 +3830,11 @@ la même place se désaccorderaient au premier réglage.*
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la gerbe d'étincelles** : le DÉBIT (108 par largeur d'avancée), la réserve
   (256), le nombre de la rafale du jaillissement (115, étalée sur 0,11 s), leur
-  vie (0,48 s) et leur vitesse de départ (0,68 largeur par vie) — *donc la
-  hauteur de la cloche*, qui vaut **0,17 largeur** pendant la découpe et
-  **0,36** au jaillissement. **Une gerbe ne se juge qu'en ouvrant des
+  vie (0,48 s) et leur vitesse de départ (0,68 largeur par vie, **×2,45 au
+  jaillissement**) — *donc la hauteur de la cloche*, qui vaut **0,15 largeur**
+  au zénith pendant la découpe et **0,37** au jaillissement. ***La vie décide
+  AUSSI de la pause du film*** : `DUREE_GERBE` s'en déduit, donc la rallonger
+  retarde la descente d'autant. **Une gerbe ne se juge qu'en ouvrant des
   paquets.** *`?gerbe` tire puis s'arrête*, ce qui est le seul moyen d'en juger
   sans ouvrir vingt paquets. *La vitesse de départ est redevenue libre* depuis
   que le grain ne s'allonge plus avec elle ;
@@ -3769,9 +3849,12 @@ la même place se désaccorderaient au premier réglage.*
   largeur) et **la place du « Ouvrir ici »**, au départ du pointillé : *c'est le
   couple qui met la déchirure sous le doigt*, et il ne reste d'écart que si Keko
   pose son doigt ailleurs que là où le mot l'invite ;
-- **la plage d'angles** (60° à 120°) et **la dispersion de la source**
-  (±0,060 largeur autour du front) : *c'est le couple qui tue l'effet
-  fontaine*, et les deux resserrements sont de Keko. ***Elle ne règle plus la
+- **la plage d'angles** — **60° à 120° à la découpe, 72° à 108° au
+  jaillissement** — et **la dispersion de la source** (±0,060 largeur autour du
+  front à la découpe, **toute la longueur** au jaillissement) : *c'est le couple
+  qui tue l'effet fontaine*, et les deux resserrements sont de Keko. ***Le
+  jaillissement peut se resserrer plus parce qu'il naît partout à la fois*** —
+  une source étalée et un cône étroit font un rideau, pas une fontaine. ***Elle ne règle plus la
   portée*** — depuis la pesanteur, celle-ci est maximale à 45° et nulle au ras,
   donc resserrer ne retire que les angles qui portaient le moins. **Ce qu'elle
   règle est le RAPPORT hauteur / largeur de la gerbe** : 0,49 à 150°, 0,95 à
@@ -3836,10 +3919,11 @@ la même place se désaccorderaient au premier réglage.*
 - **la part de largeur que prend la carte** (78 %) : *c'est la seule valeur
   libre du sachet* — elle décide de son bord, de sa hauteur, de son plateau et
   de ses flancs ;
-- **la descente du film à l'ouverture** (`pv^1,7`, sur toute la phase qui suit
-  l'arrachement) : *c'est elle qui découvre la carte*, et sa course n'est pas un
-  réglage — elle vaut ce qu'il faut pour quitter le cadre. **Ne restent que sa
-  COURBE et le moment où elle commence** ;
+- **la descente du film à l'ouverture** (`pc^1,7`, sur `DUREE_CHUTE`) : *c'est
+  elle qui découvre la carte*, et sa course n'est pas un réglage — elle vaut ce
+  qu'il faut pour quitter le cadre. **Le moment où elle commence, lui, se
+  calcule** : elle attend que la gerbe soit retombée, tranché par Keko. *Ne
+  reste que sa COURBE* ;
 - **la taille du sachet décide de celle de la carte EN ATTENTE** : elle vaut la
   poche (78 % de sa largeur), donc *grossir la pochette grossit le relief dans
   le même rapport.* **Au défilé, elle reprend sa taille d'avant** une fois le

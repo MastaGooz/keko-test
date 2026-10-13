@@ -44,21 +44,25 @@ import {
 } from './texture-carte.ts'
 
 /**
- * CE QUE DURE L'OUVERTURE, en secondes.
+ * LES TROIS TEMPS DE L'OUVERTURE, en secondes.
  *
  * *Le feu doit avoir le temps de prendre* — un front qui traverse en trois
  * dixièmes se lit comme un essuie-glace — et pas celui de lasser : on ouvre
  * un paquet après l'autre.
- */
-export const DUREE_BRULURE = 1.5
-
-/**
- * QUAND LE FRONT A FINI SA COURSE, en part de la durée.
  *
- * Avant : il court sur la ligne. Après : la bande part. *Les deux ne se
- * chevauchent pas* — on n'arrache pas ce qui tient encore par un bout.
+ * ***ILS SONT EN SECONDES ET PLUS EN PARTS D'UN TOUT.*** Ils tenaient dans
+ * `PART_FRONT`, une seule coupure entre la course et le reste — **et le reste
+ * portait DEUX choses** : la bande qui s'envole et le film qui descend. Le jour
+ * où il a fallu les séparer, une part ne pouvait plus le dire : *deux objets
+ * qui durent chacun leur temps ne se décrivent pas par une fraction commune.*
+ *
+ * **LE FRONT puis la BANDE ne se chevauchent pas** — on n'arrache pas ce qui
+ * tient encore par un bout — et **la CHUTE attend la gerbe** : voir
+ * `DUREE_GERBE`.
  */
-const PART_FRONT = 0.42
+const DUREE_FRONT = 0.63
+const DUREE_BANDE = 0.87
+const DUREE_CHUTE = 0.87
 /**
  * OÙ LE FRONT COMMENCE, en parts de largeur. *Il sort des deux bords* : une
  * déchirure qui commencerait pile sur le bord se lirait comme un bord qui
@@ -912,8 +916,45 @@ const ECLAT_ETALE = 0.11
  * quelle que soit la vitesse.
  */
 const JET = 0.68
-/** De combien le jaillissement pousse la cloche : il monte 2,12 fois plus haut. */
-const ECLAT_CLOCHE = 2.12
+/**
+ * De combien le jaillissement pousse la cloche.
+ *
+ * **Keko l'a voulu plus haut** — « les particules de la gerbe finale volent un
+ * peu plus haut » — et c'est le seul levier qui le fasse sans toucher à la
+ * découpe : *la pesanteur est relative au régime*, donc une vitesse de départ
+ * plus grande monte ET porte plus loin dans le même rapport. L'angle, lui, se
+ * resserre pour reprendre la portée — voir `ANGLE_ECLAT_MIN`.
+ */
+const ECLAT_CLOCHE = 2.45
+
+/**
+ * CE QUE DURE LA GERBE FINALE, en secondes — ***calculée, jamais écrite.***
+ *
+ * Keko : **« il faudrait que le paquet reste en place durant la gerbe finale,
+ * et qu'il descende une fois la gerbe terminée »**.
+ *
+ * *Deux choses se jouaient donc en même temps* — le film qui se retire et les
+ * étincelles qui jaillissent — **et l'une mangeait l'autre** : la gerbe sort
+ * de la fente, et la fente partait vers le bas pendant qu'elle volait.
+ *
+ * ***ELLE SE DÉDUIT DE LA VIE DES ÉTINCELLES***, étalement des naissances
+ * compris et au pire cas de leur variance : la dernière née doit avoir fini
+ * son vol. **Un chiffre écrit à la main se désaccorderait au premier réglage
+ * de `VIE_ETINCELLE`** — la règle que le recul des cartes a déjà coûtée.
+ */
+const DUREE_GERBE = ECLAT_ETALE + VIE_ETINCELLE * 1.18
+
+/**
+ * CE QUE DURE L'OUVERTURE ENTIÈRE, et **la part que le front en occupe.**
+ *
+ * *Elles vivent ici, après la gerbe, parce qu'elles en DÉPENDENT* : la chute du
+ * film attend que la dernière étincelle soit retombée, donc la phase qui suit
+ * l'arrachement vaut la gerbe plus la chute — ou l'envol de la bande, s'il
+ * durait plus longtemps.
+ */
+export const DUREE_BRULURE =
+  DUREE_FRONT + Math.max(DUREE_BANDE, DUREE_GERBE + DUREE_CHUTE)
+const PART_FRONT = DUREE_FRONT / DUREE_BRULURE
 /**
  * LA SOURCE EST LE FRONT LUI-MÊME, dispersée AUTOUR de lui.
  *
@@ -976,6 +1017,25 @@ const DISPERSION_SOURCE = 0.06
  */
 const ANGLE_MIN = (60 * Math.PI) / 180
 const ANGLE_MAX = (120 * Math.PI) / 180
+
+/**
+ * LA PLAGE DU JAILLISSEMENT, plus serrée que celle de la découpe.
+ *
+ * Keko : **« les particules de la gerbe finale volent un peu plus haut, avec un
+ * angle plus restreint, et spawn sur toute la longueur »**.
+ *
+ * ***LES TROIS DEMANDES N'EN FONT QU'UNE, ET C'EST UN RIDEAU.*** Une source
+ * ponctuelle et un cône étroit font une fontaine — *c'est le diagnostic de Keko
+ * lui-même, et il tient* — **mais une source ÉTALÉE et un cône étroit font
+ * exactement l'inverse** : une nappe qui monte sur toute la largeur de la
+ * fente. Les deux causes se cumulaient, aucune ne suffit seule.
+ *
+ * **C'est donc le seul régime qui puisse se resserrer autant**, et c'est aussi
+ * le seul qui ait toute l'ouverture pour naître : la découpe, elle, n'a qu'un
+ * front.
+ */
+const ANGLE_ECLAT_MIN = (72 * Math.PI) / 180
+const ANGLE_ECLAT_MAX = (108 * Math.PI) / 180
 /**
  * LA PESANTEUR, en multiples de la vitesse de départ du régime.
  *
@@ -1144,13 +1204,26 @@ function emettre(
     // LA SOURCE EST LE FRONT, disperse SYMETRIQUEMENT autour de lui pendant la
     // decoupe -- *le front est la moyenne des naissances, pas leur borne* --
     // et etalee sur toute l'ouverture au jaillissement.
-    const ecart = eclat
-      ? -Math.random() * 1.15
-      : (Math.random() * 2 - 1) * DISPERSION_SOURCE
+    // LE JAILLISSEMENT NAIT SUR TOUTE LA LONGUEUR, la decoupe AUTOUR DU FRONT.
+    // *Le front est la moyenne des naissances, pas leur borne.* Et l'abscisse
+    // de l'eclat se tire DIRECTEMENT uniforme : elle se tirait en retrait du
+    // front puis se bornait, donc un sixieme des etincelles s'empilait
+    // exactement au bord gauche -- **un tirage qu'on borne n'est plus
+    // uniforme, c'est un tas pose contre sa borne.**
+    const x = eclat
+      ? Math.random()
+      : Math.min(
+          1,
+          Math.max(0, front + (Math.random() * 2 - 1) * DISPERSION_SOURCE),
+        )
     // ON TIRE L'ANGLE, PUIS ON LE DECOMPOSE. *Une derive ajoutee a un jet
     // constant ne fait varier l'angle que d'un cone*, et un cone etroit se lit
-    // comme une fontaine : la plage passe de 26 a 150 degres.
-    const ang = ANGLE_MIN + Math.random() * (ANGLE_MAX - ANGLE_MIN)
+    // comme une fontaine : la plage passe de 26 a 150 degres. Le
+    // jaillissement, lui, se resserre encore -- il a toute la fente pour
+    // naitre, donc son cone ne peut pas faire une fontaine.
+    const aMin = eclat ? ANGLE_ECLAT_MIN : ANGLE_MIN
+    const aMax = eclat ? ANGLE_ECLAT_MAX : ANGLE_MAX
+    const ang = aMin + Math.random() * (aMax - aMin)
     const nominale = JET * (eclat ? ECLAT_CLOCHE : 1)
     const v = nominale * (0.85 + 0.3 * Math.random())
     const vx = v * Math.cos(ang)
@@ -1160,7 +1233,7 @@ function emettre(
     // deux vitesses a l'echelle, et le nuanceur ne change pas d'une ligne.
     const tf = PESANTEUR <= 0 ? 1 : Math.min(1, vy / (nominale * PESANTEUR))
     a[o] = t + (eclat ? Math.random() * ECLAT_ETALE : 0)
-    a[o + 1] = Math.min(1, Math.max(0, front + ecart)) - 0.5
+    a[o + 1] = x - 0.5
     a[o + 2] = vx * tf
     a[o + 3] = vy * tf
   }
@@ -1567,7 +1640,12 @@ export function Sachet3D({
     // fondu*, donc il se calcule UNE fois : deux endroits qui décriraient le
     // même instant se désaccorderaient au premier réglage. (La gerbe l'a lu
     // tant qu'elle était un champ ; elle naît désormais d'une rafale.)
-    const pv = Math.max(0, (pp - PART_FRONT) / (1 - PART_FRONT))
+    // CE QUI SUIT L'ARRACHEMENT SE COMPTE EN SECONDES, et chaque objet y prend
+    // la sienne : la bande s'envole tout de suite, le film attend que la gerbe
+    // soit retombee. *Une part commune ne pouvait pas porter deux durees.*
+    const tApres = Math.max(0, (pp - PART_FRONT) * DUREE_BRULURE)
+    const pv = Math.min(1, tApres / DUREE_BANDE)
+    const pc = Math.min(1, Math.max(0, (tApres - DUREE_GERBE) / DUREE_CHUTE))
 
     if (pf >= 1 && !ditDechire.current) {
       ditDechire.current = true
@@ -1610,8 +1688,14 @@ export function Sachet3D({
      * train de s'envoler à droite et les étincelles finissent leur vol à
      * l'endroit d'où elles ont été lancées. *Ce qu'on retire est la pochette,
      * pas ce qui vient d'en sortir.*
+     *
+     * **ET IL ATTEND QUE LA GERBE SOIT RETOMBÉE.** Keko : « il faudrait que le
+     * paquet reste en place durant la gerbe finale, et qu'il descende une fois
+     * la gerbe terminée ». *La gerbe sort de la FENTE* — si la fente s'en va
+     * pendant qu'elle vole, on ne voit plus d'où elle sort. La pause est la
+     * durée de la gerbe, qui se calcule : voir `DUREE_GERBE`.
      */
-    if (chute.current !== null) chute.current.position.y = -descente * chuteDuFilm(pv)
+    if (chute.current !== null) chute.current.position.y = -descente * chuteDuFilm(pc)
 
     if (pp >= 1 && !dit.current) {
       dit.current = true
