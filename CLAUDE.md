@@ -2336,7 +2336,7 @@ l'angle de la carte**, donc il garde un rayon — un pli vif suppose qu'on l'ait
 marqué à l'ongle. Entre le dôme, qui n'a aucune arête, et la chute droite, qui
 en a une parfaite, il y a toute la place pour un congé.
 
-**ON MÉLANGE LA RAMPE DROITE AVEC SA SMOOTHSTEP** (`ARRONDI_VENTRE`, 0,7) :
+**ON MÉLANGE LA RAMPE DROITE AVEC SA SMOOTHSTEP** (`ARRONDI_VENTRE`, 0,85) :
 à 0 l'arête est vive, à 1 il n'y a plus d'arête du tout, et ***entre les deux
 la pente du MILIEU du flanc ne bouge presque pas pendant que les deux jonctions
 s'arrondissent.*** C'est exactement ce qu'un congé fait, et c'est pour ça qu'un
@@ -2366,6 +2366,63 @@ terme qu'il retranche vaut `k / 4` **partout où les deux axes sont à égalité
 c'est-à-dire sur tout le plateau — donc uniformément, donc ça se rend par une
 division. *Un creux constant n'est pas un creux, c'est un décalage.*
 
+#### LE CONGÉ NE POUVAIT PAS ADOUCIR : à largeur fixe, la pente est fixe
+
+Keko : **« on peut rendre le relief un peu moins angulaire ? Le paquet fait
+encore un peu trop des arêtes agressives »**.
+
+***ET LA PREMIÈRE RÉPONSE — MONTER LE CONGÉ — EST ARITHMÉTIQUEMENT INCAPABLE DE
+RÉPONDRE.*** Un flanc descend d'une hauteur donnée sur une largeur donnée, donc
+**sa pente MOYENNE ne dépend d'aucun réglage de forme** : `ARRONDI_VENTRE` ne
+fait que la DÉPLACER — il l'enlève aux deux jonctions pour la mettre au milieu.
+*Le pli devient un creux, il ne devient pas plus doux.*
+
+**Mesuré, et c'est sans appel** : à congé seul, le milieu du flanc tombe de 75 à
+45 de luminance et la montée vers l'arête passe de 4,8 à **7,6 par pixel.** On
+corrigeait dans le mauvais sens.
+
+#### LA SEULE CHOSE QUI BAISSE UNE PENTE EST DE L'ÉTALER — et ça ne peut aller que vers le DEDANS
+
+`MARGE_VENTRE` (3,5 % de la largeur) : **le congé commence un peu AVANT l'arête
+de la carte.** Vers le dehors il n'y a plus de sachet, donc c'est le seul côté
+libre — *et c'est aussi ce qu'un film fait* : il se tend sur l'angle du carton,
+il ne casse pas pile dessus. **Un pli qui tomberait exactement sur l'arête
+supposerait qu'on l'ait marqué à l'ongle.**
+
+**Le sommet ne descend pas d'un pixel et la hauteur ne bouge pas** : seul le
+début de la descente avance. Mesuré sur la colonne du flanc gauche, à
+balancement figé :
+
+| | creux | pic | **écart** | **montée max** |
+|---|---|---|---|---|
+| avant | 69,3 | 107,6 | 38,3 | **10,35 / px** |
+| congé seul, borne levée | 45,4 | 107,9 | **62,4** | 10,99 / px |
+| **congé + marge** | 64,4 | 106,1 | **41,7** | **5,54 / px** |
+
+***LE VOLUME NE SE PERD PAS, C'EST LE TRANCHANT QUI PART*** : l'écart
+creux-sommet reste celui d'avant à trois unités près, et la transition s'étale
+sur deux fois plus de distance.
+
+#### ET LA BORNE DU GRADIENT POSAIT UNE FACETTE PLATE
+
+***C'était la cicatrice, et elle rendait le congé inopérant.*** Elle écrêtait la
+normale **au MILIEU du flanc** : mesuré, **24,2° constants sur 56 % de sa
+largeur** — c'est-à-dire un chanfrein à facette, donc *deux* arêtes au lieu
+d'une courbe. Montée une fois de 3 à 9, elle mordait encore.
+
+**Elle se CALCULE désormais** (`BORNE_PENTE`, 17,4) : *le profil est borné par
+construction*, donc sa pente maximale se déduit — la rampe mêlée à sa smoothstep
+monte au plus de 1 + ARRONDI/2, la division du minimum arrondi la multiplie, et
+le flanc le plus étroit la convertit en pente d'UV. **Il ne reste qu'un
+garde-fou**, et il ne mord plus nulle part.
+
+#### ET UN BACKTICK DANS UN COMMENTAIRE GLSL, POUR LA CINQUIÈME FOIS
+
+Écrit dans ce fichier depuis quatre épisodes — « dans un commentaire GLSL, on
+écrit les noms de code SANS backtick » — et je l'ai repayé en citant une formule
+entre backticks. *L'erreur sort toujours en `TS1005` à une ligne qui n'a rien à
+voir.*
+
 #### CE QUI ÉCRÊTAIT L'ARÊTE ÉTAIT LE GARDE-FOU DU DÔME
 
 **Le clamp du gradient était réglé pour `sin^0,55`**, dont la tangente devient
@@ -2381,9 +2438,9 @@ Trois réglages, et chacun va dans le même sens :
 
 | | dôme | coussin |
 |---|---|---|
-| le profil | `sin^0,55`, dérivable partout | **plateau + flanc droit**, minimum ARRONDI des deux axes, **congé à 0,7** |
+| le profil | `sin^0,55`, dérivable partout | **plateau + flanc droit**, minimum ARRONDI des deux axes, **congé à 0,85** |
 | la hauteur | 5,5 % de la largeur | **9,5 %** |
-| la borne du gradient | 3 | **9** |
+| la borne du gradient | 3 | **calculée** (17,4), elle ne mord plus |
 | le lobe du reflet | 16 | **26** — *il s'arrête net sur l'arête* |
 
 #### ET LE GRAND REFLET SE MULTIPLIE, IL NE S'AJOUTE PAS
@@ -2569,9 +2626,14 @@ la même place se désaccorderaient au premier réglage.*
   elle ne se juge qu'en inclinant l'objet. **Les deux se rejugent ENSEMBLE**
   avec la vivacité du reflet, puisque le lobe s'étale dès que le relief
   s'aplatit ;
-- **l'arrondi des arêtes** (`ARRONDI_VENTRE`, 0,7) et **celui des coins**
+- **l'arrondi des arêtes** (`ARRONDI_VENTRE`, 0,85) et **celui des coins**
   (`RAYON_COIN_VENTRE`, 0,35) : *c'est le rayon du pli*, et il ne se juge qu'en
   inclinant le sachet sous la lumière ;
+- **de combien le congé mord sur le dessus** (`MARGE_VENTRE`, 3,5 % de la
+  largeur) : ***c'est le SEUL réglage qui rende le relief moins angulaire*** —
+  à hauteur et à largeur de flanc fixes, la pente moyenne est fixe, donc le
+  congé ne fait que la déplacer. **Le prix est le plateau**, qui passe de 78 à
+  71 % de la largeur ;
 - **la hauteur du ventre** (5 % de la largeur du sachet — *elle a déjà baissé
   DEUX fois*, « on dirait qu'il est très épais » puis « il semble encore trop
   épais » ; **c'est à peu près l'épaisseur réelle de cinq cartes**, six

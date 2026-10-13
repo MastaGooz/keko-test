@@ -92,10 +92,16 @@ const REL_BOMBE = 0.05
 
 /**
  * DE COMBIEN LES DEUX ARÊTES DU VENTRE SONT ARRONDIES — 0 vif, 1 sans arête.
- * *Une arête se voit à sa RUPTURE de pente* : ce congé en rend un peu plus de
- * la moitié, donc le pli se lit encore, sans le tranchant d'un pliage.
+ * *Une arête se voit à sa RUPTURE de pente* : ce congé en rend l'essentiel,
+ * donc le pli se lit encore, sans le tranchant d'un pliage.
+ *
+ * **ET IL ÉTAIT INOPÉRANT AVANT QUE LA BORNE DU GRADIENT NE SOIT LEVÉE** :
+ * celle-ci écrêtait la normale au milieu du flanc, donc elle y posait une
+ * FACETTE PLATE — mesuré, 24,2° constants sur 56 % de la largeur du flanc.
+ * *Un chanfrein à facette se lit comme une coupe au couteau*, et le congé ne
+ * pouvait rien y faire : il adoucissait une pente que la borne reprenait.
  */
-const ARRONDI_VENTRE = 0.7
+const ARRONDI_VENTRE = 0.85
 
 /**
  * DE COMBIEN LA COUTURE DIAGONALE DES COINS EST ARRONDIE, en parts de la
@@ -109,6 +115,40 @@ const RAYON_COIN_VENTRE = 0.35
  * l'imprimé. *Un seul chiffre chacun* : la carte sait déjà où les plis sont
  * nombreux et où ils ne le sont pas.
  */
+/**
+ * DE COMBIEN LE CONGÉ MORD SUR LE DESSUS, en parts de largeur de sachet.
+ *
+ * ***C'EST LE SEUL RÉGLAGE QUI RENDE LE RELIEF MOINS ANGULAIRE.*** À hauteur
+ * et à largeur de flanc fixes, **la pente moyenne du flanc est fixe** — le
+ * congé ne fait que la déplacer du bord vers le milieu, et c'est pour ça que
+ * le monter n'adoucissait rien. *La seule façon de la BAISSER est d'étaler la
+ * transition sur plus de longueur.*
+ *
+ * **Et elle ne peut s'étaler que vers le DEDANS** : vers le dehors il n'y a
+ * plus de sachet. **C'est aussi ce qu'un film fait** — il se tend sur l'angle
+ * de la carte, donc il commence à descendre un peu AVANT l'arête : *un pli
+ * qui casserait pile sur le bord du carton supposerait qu'on l'ait marqué à
+ * l'ongle.*
+ *
+ * Le sommet ne descend pas d'un pixel et la hauteur ne bouge pas : seul le
+ * début de la descente avance.
+ */
+const MARGE_VENTRE = 0.035
+
+/**
+ * LA BORNE DE LA PENTE DU VENTRE, en pente d'UV — et elle se DÉDUIT du profil
+ * au lieu de s'écrire. *Le profil est borné par construction*, donc sa pente
+ * maximale est connue : la rampe mêlée à sa smoothstep monte au plus de
+ * `1 + ARRONDI/2`, la division du minimum arrondi la multiplie, et c'est le
+ * flanc le plus ÉTROIT qui la convertit en pente d'UV. On garde cinq pour cent
+ * de marge pour les différences finies, et il ne reste qu'un garde-fou.
+ */
+const BORNE_PENTE = (
+  ((1 + ARRONDI_VENTRE / 2) / (1 - 0.25 * RAYON_COIN_VENTRE)) /
+  Math.min(POCHE.flancX + MARGE_VENTRE, POCHE.flancY + MARGE_VENTRE / RAPPORT_SACHET) *
+  1.05
+).toFixed(1)
+
 const PLI = 0.5
 const OMBRE = 0.05
 
@@ -279,8 +319,15 @@ float ventre(vec2 p) {
   // plateau vaut 1 partout ou il y a une carte dessous.
   vec2 d = abs(p - vec2(0.5, ${POCHE.centreY.toFixed(4)}))
          - vec2(${POCHE.demiX.toFixed(4)}, ${POCHE.demiY.toFixed(4)});
-  float fx = 1.0 - clamp(d.x / ${POCHE.flancX.toFixed(4)}, 0.0, 1.0);
-  float fy = 1.0 - clamp(d.y / ${POCHE.flancY.toFixed(4)}, 0.0, 1.0);
+  // LA TRANSITION DEBORDE SUR LE DESSUS de MARGE_VENTRE, et c'est le seul
+  // reglage qui rende le relief moins angulaire : *a hauteur et a largeur de
+  // flanc fixes, la pente moyenne est fixe* -- le conge ne fait que la
+  // deplacer. Elle ne peut s'etaler que vers le dedans, et c'est aussi ce
+  // qu'un film fait : il se tend sur l'angle de la carte, donc il commence a
+  // descendre avant l'arete. **La marge se compte en parts de LARGEUR**, donc
+  // elle se divise par le rapport sur l'axe des y.
+  float fx = 1.0 - clamp((d.x + ${MARGE_VENTRE.toFixed(4)}) / ${(POCHE.flancX + MARGE_VENTRE).toFixed(4)}, 0.0, 1.0);
+  float fy = 1.0 - clamp((d.y + ${(MARGE_VENTRE / RAPPORT_SACHET).toFixed(4)}) / ${(POCHE.flancY + MARGE_VENTRE / RAPPORT_SACHET).toFixed(4)}, 0.0, 1.0);
   // LA COUTURE DES DEUX AXES EST UN MINIMUM ARRONDI, pas un minimum.
   //
   // Keko : « les aretes sont encore un peu trop marquees, surtout les
@@ -429,16 +476,24 @@ void main() {
    * différence de hauteur y vaut une pente d'autant plus faible. *Sans ça le
    * ventre serait deux fois trop raide dans sa hauteur.*
    *
-   * **ET LA PENTE SE BORNE** : la puissance 0,55 donne une tangente VERTICALE
-   * tout au bord, donc une normale qui part à l'infini sur la dernière rangée
-   * de pixels. C'est voulu pour la forme — *le film retombe d'un coup* — mais
-   * un reflet n'a rien à y faire.
+   * ***ET LA BORNE DE LA PENTE SE CALCULE, elle n'est plus un chiffre.*** Elle
+   * avait été posée contre la tangente VERTICALE de la puissance 0,55, qui
+   * n'existe plus depuis que le profil est un plateau et un flanc : *une borne
+   * posée contre une singularité ne vaut plus quand la singularité
+   * disparaît.* Montée une fois de 3 à 9, elle mordait encore — et ce qu'elle
+   * écrêtait était le MILIEU du flanc, où elle posait une **facette plate**
+   * que le congé ne pouvait pas ouvrir.
+   *
+   * Le profil est borné par construction, donc sa pente maximale se déduit :
+   * la rampe mêlée à sa smoothstep monte au plus de 1 + ARRONDI/2, la
+   * division du minimum arrondi la multiplie, et le flanc le plus étroit la
+   * convertit en pente d'UV. La borne ne reste là que comme garde-fou.
    */
   float eb = 0.012;
   float gx = (ventre(sach + vec2(eb, 0.0)) - ventre(sach - vec2(eb, 0.0))) / (2.0 * eb);
   float gy = (ventre(sach + vec2(0.0, eb)) - ventre(sach - vec2(0.0, eb))) / (2.0 * eb);
-  gx = clamp(gx, -9.0, 9.0);
-  gy = clamp(gy, -9.0, 9.0);
+  gx = clamp(gx, -${BORNE_PENTE}, ${BORNE_PENTE});
+  gy = clamp(gy, -${BORNE_PENTE}, ${BORNE_PENTE});
   vec3 Nv = normalize(vec3(
     -gx * ${REL_BOMBE.toFixed(4)},
     -gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)},
