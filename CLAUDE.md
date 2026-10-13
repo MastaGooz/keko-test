@@ -682,6 +682,27 @@ décide à l'exécution, sur un paramètre d'URL, donc le type du cran ne peut p
 être connu à la compilation. *Les deux tables, elles, restent typées chacune sur
 ses propres crans* — c'est là qu'une faute se verrait.
 
+#### POUR JUGER LES DEUX BONUS : `?bonus`
+
+Demandé par Keko — « tu peux faire en sorte que la dernière carte du booster
+soit animée + holo ? pour test ». *Une fréquence d'apparition ne se juge qu'en
+ouvrant des paquets*, et à 10 % et 3 % il en faut beaucoup : **le banc force la
+dernière carte** du paquet aux deux bonus.
+
+***ET L'ANIMÉ NE SE FORCE PAS SEUL : il demande un emoji ANIMABLE.*** On ne peut
+pas animer ce que Google n'a pas animé — 614 sur 1 923 — donc poser le drapeau
+sur une carte quelconque ne donnerait **qu'un cartouche qui ment**. Le banc
+échange donc la dernière carte contre une animable **du MÊME CRAN**, prise dans
+le même tas : *la pyramide des raretés ne bouge pas d'un cran*, et c'est ce qui
+permet de juger le bonus sans fausser le reste.
+
+**Et il passe APRÈS le tirage, jamais à sa place** : la suite du hasard ne bouge
+pas, donc `?paquet=42&bonus` rend exactement le paquet de `?paquet=42` **à sa
+dernière carte près.**
+
+*C'est la dernière carte et pas une autre* parce que c'est elle qui porte le
+compteur, donc le moment du paquet.
+
 #### CE QUI A ÉTÉ VU À L'ÉCRAN
 
 `?paquet=1314&emoji` montre **les cinq couleurs d'un coup**, `?paquet=20781&emoji`
@@ -2633,6 +2654,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&art` | les peintures |
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
+| `&bonus` | la dernière carte sort **holo + animée** |
 | `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans`, `?dos=gabarit` | les bancs du gabarit |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |

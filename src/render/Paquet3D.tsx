@@ -261,6 +261,22 @@ export function Paquet3D(): React.ReactElement {
    * DESSIN qu'on regarde, le sachet est un péage.
    */
   const nu = new URLSearchParams(location.search).has('nu')
+  /**
+   * `?bonus` FORCE LA DERNIERE CARTE EN HOLO + ANIME. Demande par Keko, « pour
+   * test ».
+   *
+   * ***L'ANIME NE SE FORCE PAS SEUL : il demande un emoji ANIMABLE.*** On ne
+   * peut pas animer ce que Google n'a pas anime — 614 emoji sur 1 923 — donc
+   * poser le drapeau sur une carte quelconque ne donnerait qu'un cartouche qui
+   * ment. **Le banc echange donc la derniere carte** contre une animable *du
+   * MEME CRAN*, prise dans le meme tas : la pyramide des raretes ne bouge pas
+   * d'un cran, et c'est ce qui permet de juger le bonus sans fausser le reste.
+   *
+   * *Ce qui se teste doit pouvoir s'ouvrir d'un lien* — et c'est la derniere
+   * carte parce que c'est celle qui porte le compteur, donc le moment du
+   * paquet.
+   */
+  const bonusForce = new URLSearchParams(location.search).has('bonus')
   const [catalogue, setCatalogue] = useState<CarteDuMode[] | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   /** Le numéro du paquet : il change à chaque ouverture, et il seede le tirage. */
@@ -407,8 +423,20 @@ export function Paquet3D(): React.ReactElement {
         bonus[c.id] = tirerBonus('animable' in c && c.animable, () => rng.next())
       }
     }
+    // LE BANC PASSE APRES LE TIRAGE, jamais a sa place : *la suite du hasard ne
+    // bouge pas*, donc `?paquet=42&bonus` rend le meme paquet que `?paquet=42`
+    // a sa derniere carte pres.
+    if (emojis && bonusForce && cartes.length > 0) {
+      const i = cartes.length - 1
+      const fin = cartes[i]!
+      if (!('animable' in fin && fin.animable)) {
+        const echange = (tas.get(fin.rarete) ?? []).find((c) => 'animable' in c && c.animable)
+        if (echange !== undefined) cartes[i] = echange
+      }
+      bonus[cartes[i]!.id] = { holo: true, anime: true }
+    }
     return { cartes, bonus }
-  }, [tas, numero, echelle, emojis])
+  }, [tas, numero, echelle, emojis, bonusForce])
   const paquet = tirage.cartes
 
   /**
