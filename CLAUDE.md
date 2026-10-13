@@ -1909,6 +1909,45 @@ réflexe d'écrire un nom de code entre backticks. **Dans un commentaire GLSL,
 on écrit les noms de code SANS backtick** — le reste du projet peut en mettre,
 pas ce fichier.
 
+#### TROIS LOBES ET UN GALBE : le glow sans post-traitement
+
+Keko : **« niveau lumière on peut avoir un truc plus juicy, glow, comme si le
+paquet était brillant là où il reflète la lumière ? »**
+
+***UN POINT CHAUD NE S'ARRÊTE PAS À SON BORD.*** Dans l'oeil comme dans un
+objectif, une source vive DÉBORDE — et c'est tout ce qu'on appelle un bloom.
+*On ne peut pas flouter en une passe de nuanceur*, mais **on n'en a pas
+besoin** : un lobe plus large posé au même endroit fait exactement la
+décroissance qu'un flou produirait, et il ne coûte qu'une puissance.
+
+Trois lobes, et chacun fait un travail que les deux autres ne font pas :
+
+| | exposant | | ce qu'il dit |
+|---|---|---|---|
+| le **lustre** | 26 | **multiplié** | la FORME du ventre |
+| le **halo** | 34 | ajouté | que ça RAYONNE |
+| les **éclats** | 150 | ajoutés | l'ARÊTE d'un pli |
+
+**ET LE HALO EST PLUS CHAUD QUE L'ÉCLAT** : *un point qui sature tire vers le
+blanc, sa frange garde la couleur de la lumière.*
+
+**LE QUATRIÈME TERME N'EST PAS UN REFLET, C'EST UN GALBE : du FRESNEL.** *Un
+film plastique renvoie d'autant plus de lumière qu'on le regarde de biais* — au
+sommet du coussin on voit à travers, sur ses flancs il devient un miroir. **Ça
+ne se dessine pas** : c'est l'inclinaison de la surface qui le produit, donc il
+suit le ventre sans qu'on ait à poser un liseré.
+
+*Et il se calcule sur la normale du VENTRE, jamais sur celle des plis* : un pli
+est une rainure de quelques pixels, et il allumerait une poussière de points là
+où on veut une bande douce le long du galbe.
+
+**ET LE SURVOL N'EN AJOUTE PLUS QUE LA MOITIÉ** (0,7 → 0,3). Le lobe large
+couvre presque toute la face quand la lumière s'aligne, donc à 0,7 il délavait
+le « Ouvrir ici » dès qu'on penchait le sachet — ***un lustre qui efface
+l'illustration cesse d'être une matière et devient un voile***, la règle déjà
+payée sur la carte regardée de près. **Le repos, lui, brille plus qu'avant** :
+ce qu'on a retiré au geste, le lustre de base le rend.
+
 #### LE RÉGLAGE S'EST FAIT EN DEUX PASSES, ET LA PREMIÈRE DISAIT DU MÉTAL BROSSÉ
 
 *Mesuré à l'écran* : à six fois l'échelle et ±20 % d'ombre, le froissé donnait
@@ -2270,6 +2309,9 @@ la même place se désaccorderaient au premier réglage.*
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la force des confettis et leur nombre** : *une gerbe ne se juge qu'en
   ouvrant des paquets* ;
+- **les trois lobes du reflet** (lustre 1,35 multiplié, halo 0,30 ajouté,
+  éclats 0,75) et **le galbe de Fresnel** (0,26) : *c'est le « juicy »*, et il
+  ne se juge qu'en inclinant l'objet ;
 - **le poids de la carte des plis** (0,5 dans la normale, ±5 % d'ombre) et
   **le semis lui-même** — soixante-dix traits, dont quarante au bord, leurs
   longueurs et leurs largeurs : *c'est la texture du papier de booster*, et

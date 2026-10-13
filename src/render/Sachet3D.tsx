@@ -112,6 +112,18 @@ const RAYON_COIN_VENTRE = 0.35
 const PLI = 0.5
 const OMBRE = 0.05
 
+/**
+ * LES TROIS LOBES DU REFLET, et le galbe.
+ *
+ * *Le lustre MULTIPLIE* — il éclaircit sans effacer la teinte, donc il peut
+ * monter haut ; **les deux autres AJOUTENT**, parce qu'un point chaud et sa
+ * frange sont de la lumière en plus et non la même lumière en plus fort.
+ */
+const LUSTRE = 1.35
+const ECLATS = 0.75
+const HALO = 0.3
+const FRESNEL = 0.26
+
 
 
 const AMPLI = 0.02
@@ -466,13 +478,57 @@ void main() {
   // *C'est ce que dit le film de lexicodex, dont le reflet est violet sur le
   // violet et or sur l'or* — vérifié à la capture.
   float lustre = pow(max(dot(Nv, H), 0.0), 26.0);
-  corps *= 1.0 + lustre * (1.15 + uSurvol * 0.7);
+  // **ET LE SURVOL N'EN AJOUTE PLUS QUE LA MOITIÉ.** Le lobe large couvre
+  // presque toute la face quand la lumière s'aligne, donc à 0,7 il délavait le
+  // « Ouvrir ici » dès qu'on penchait le sachet — *un lustre qui efface
+  // l'illustration cesse d'être une matière et devient un voile*, la règle déjà
+  // payée sur la carte regardée de près. Le repos, lui, brille PLUS qu'avant.
+  corps *= 1.0 + lustre * (${LUSTRE.toFixed(2)} + uSurvol * 0.3);
 
   // **LES ÉCLATS DES PLIS RESTENT ADDITIFS, et eux seuls** : ce sont de vrais
   // points chauds, trop petits pour effacer quoi que ce soit. *Un point qui
   // sature est une étincelle, une nappe qui sature est un voile.*
-  float eclats = pow(max(dot(N, H), 0.0), 150.0);
-  corps += vec3(1.0, 0.97, 0.90) * eclats * 0.35;
+  float nh = max(dot(N, H), 0.0);
+  float eclats = pow(nh, 150.0);
+
+  /**
+   * LE GLOW : **un troisième lobe, large et faible, AUTOUR des points chauds.**
+   *
+   * Keko : « niveau lumière on peut avoir un truc plus juicy, glow, comme si le
+   * paquet était brillant là où il reflète la lumière ? »
+   *
+   * ***UN POINT CHAUD NE S'ARRÊTE PAS À SON BORD.*** Dans l'oeil comme dans un
+   * objectif, une source vive DÉBORDE — et c'est tout ce qu'on appelle un
+   * bloom. *On ne peut pas flouter en une passe*, mais on n'en a pas besoin :
+   * **un lobe plus large posé au même endroit fait exactement la décroissance
+   * qu'un flou produirait**, et il ne coûte qu'une puissance.
+   *
+   * Les trois lobes se répondent, et chacun fait un travail que les deux autres
+   * ne font pas : le **lustre** (26, multiplié) dit la FORME, le **halo** (34,
+   * ajouté) dit que ça RAYONNE, les **éclats** (150, ajoutés) disent l'ARÊTE.
+   *
+   * **ET LE HALO EST PLUS CHAUD QUE L'ÉCLAT**, parce que c'est la règle du
+   * projet : *un point qui sature tire vers le blanc, sa frange garde la
+   * couleur de la lumière.*
+   */
+  float halo = pow(nh, 34.0);
+  corps += vec3(1.0, 0.97, 0.90) * eclats * ${ECLATS.toFixed(2)}
+         + vec3(1.0, 0.93, 0.76) * halo * ${HALO.toFixed(2)};
+
+  /**
+   * ET LE BORD DU VENTRE S'ALLUME — **c'est du FRESNEL, pas un liseré.**
+   *
+   * *Un film plastique renvoie d'autant plus de lumière qu'on le regarde de
+   * biais* : au sommet du coussin on voit à travers, sur ses flancs il devient
+   * un miroir. **C'est ce qui donne son galbe à un sachet de booster**, et ça
+   * ne se dessine pas — c'est l'inclinaison de la surface qui le produit.
+   *
+   * *Et il se calcule sur la normale du VENTRE*, jamais sur celle des plis :
+   * un pli est une rainure de quelques pixels, et il allumerait une poussière
+   * de points là où on veut une bande douce le long du galbe.
+   */
+  float fresnel = pow(1.0 - clamp(Nv.z, 0.0, 1.0), 3.0);
+  corps += vec3(0.82, 0.90, 1.0) * fresnel * ${FRESNEL.toFixed(2)};
 
   // L'ÉCLAT : une bande étroite au front, qui FRÉMIT. *Ce n'est plus une
   // braise* — elle allait de l'or chaud au blanc, c'est-à-dire un dégradé de
