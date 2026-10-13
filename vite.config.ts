@@ -26,6 +26,31 @@ function datePubliee() {
   }
 }
 
+/**
+ * LE MANIFESTE PORTE LA DATE DU BUILD, comme toute ressource de `public/`.
+ *
+ * *Les fichiers de `public/` sont copiés tels quels, sans empreinte de contenu
+ * dans leur nom* : leur URL ne bouge jamais, donc le navigateur ressert celle
+ * qu'il a en cache. **La règle est écrite depuis les portraits du joueur** — et
+ * le manifeste y échappait, alors que c'est lui qui décide de l'orientation
+ * d'une application installée.
+ *
+ * ***ET ÇA NE SUFFIT PAS POUR UNE APP DÉJÀ INSTALLÉE***, qui garde
+ * l'orientation de son installation : celle-là se corrige en la réinstallant.
+ * Ce qui est corrigé ici, c'est la prochaine.
+ */
+function manifesteVersionne() {
+  return {
+    name: 'manifeste-versionne',
+    transformIndexHtml(html: string) {
+      return html.replace(
+        'href="./manifest.webmanifest"',
+        `href="./manifest.webmanifest?v=${encodeURIComponent(buildTime)}"`,
+      )
+    },
+  }
+}
+
 export default defineConfig(({ command }) => ({
   // GitHub Pages sert le site sous /keko-test/ ; en dev on reste à la racine
   // pour que l'URL Network soit directement ouvrable sur le téléphone.
@@ -40,5 +65,5 @@ export default defineConfig(({ command }) => ({
     // SANS ERREUR : le combat redéborderait de l'écran et rien ne le dirait.
     cssTarget: ['chrome90', 'safari14', 'firefox90'],
   },
-  plugins: [react(), datePubliee()],
+  plugins: [react(), datePubliee(), manifesteVersionne()],
 }))
