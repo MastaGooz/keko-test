@@ -177,6 +177,18 @@ function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number 
  * retirerait a un rendu changerait le paquet sous les yeux*, et React double
  * les initialiseurs en mode strict.
  */
+/**
+ * LA CARTE DU BANC `?bonus` : les deux coupes de champagne (U+1F942).
+ *
+ * *Choisie par Keko*, et c'est un identifiant et non un nom : **le nom est du
+ * texte affiche**, qui peut etre retouche — l'identifiant, lui, vient d'Unicode
+ * et ne bougera jamais. La regle du tresor, prise ici.
+ *
+ * Elle est `animable`, ce qui est la seule condition que le banc ne peut pas
+ * fabriquer lui-meme.
+ */
+const BANC_BONUS = '1f942'
+
 const GRAINE = (() => {
   const demandee = new URLSearchParams(location.search).get('paquet')
   if (demandee !== null && demandee !== '' && !Number.isNaN(Number(demandee))) return Number(demandee)
@@ -262,15 +274,14 @@ export function Paquet3D(): React.ReactElement {
    */
   const nu = new URLSearchParams(location.search).has('nu')
   /**
-   * `?bonus` FORCE LA DERNIERE CARTE EN HOLO + ANIME. Demande par Keko, « pour
-   * test ».
+   * `?bonus` FORCE LA DERNIERE CARTE : les deux coupes de champagne, ANIMEE et
+   * sans holo. Demande par Keko, « pour test ».
    *
    * ***L'ANIME NE SE FORCE PAS SEUL : il demande un emoji ANIMABLE.*** On ne
    * peut pas animer ce que Google n'a pas anime — 614 emoji sur 1 923 — donc
    * poser le drapeau sur une carte quelconque ne donnerait qu'un cartouche qui
-   * ment. **Le banc echange donc la derniere carte** contre une animable *du
-   * MEME CRAN*, prise dans le meme tas : la pyramide des raretes ne bouge pas
-   * d'un cran, et c'est ce qui permet de juger le bonus sans fausser le reste.
+   * ment. **Le banc ECHANGE donc la derniere carte**, il ne se contente pas de
+   * la marquer.
    *
    * *Ce qui se teste doit pouvoir s'ouvrir d'un lien* — et c'est la derniere
    * carte parce que c'est celle qui porte le compteur, donc le moment du
@@ -426,14 +437,16 @@ export function Paquet3D(): React.ReactElement {
     // LE BANC PASSE APRES LE TIRAGE, jamais a sa place : *la suite du hasard ne
     // bouge pas*, donc `?paquet=42&bonus` rend le meme paquet que `?paquet=42`
     // a sa derniere carte pres.
+    //
+    // ON CHERCHE DANS TOUT LE CATALOGUE, pas dans le tas du cran qui sortait :
+    // la carte est NOMMEE, donc c'est elle qui apporte sa rarete. *Un banc qui
+    // montre une autre carte que celle qu'on vient y chercher n'est pas un
+    // banc* — le prix est qu'un paquet ouvert avec `?bonus` compte un `rare` de
+    // plus ou de moins, et il est connu.
     if (emojis && bonusForce && cartes.length > 0) {
-      const i = cartes.length - 1
-      const fin = cartes[i]!
-      if (!('animable' in fin && fin.animable)) {
-        const echange = (tas.get(fin.rarete) ?? []).find((c) => 'animable' in c && c.animable)
-        if (echange !== undefined) cartes[i] = echange
-      }
-      bonus[cartes[i]!.id] = { holo: true, anime: true }
+      const voulue = [...tas.values()].flat().find((c) => c.id === BANC_BONUS)
+      if (voulue !== undefined) cartes[cartes.length - 1] = voulue
+      bonus[cartes[cartes.length - 1]!.id] = { holo: false, anime: true }
     }
     return { cartes, bonus }
   }, [tas, numero, echelle, emojis, bonusForce])

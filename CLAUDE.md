@@ -682,19 +682,25 @@ décide à l'exécution, sur un paramètre d'URL, donc le type du cran ne peut p
 être connu à la compilation. *Les deux tables, elles, restent typées chacune sur
 ses propres crans* — c'est là qu'une faute se verrait.
 
-#### POUR JUGER LES DEUX BONUS : `?bonus`
+#### POUR JUGER LES BONUS : `?bonus`
 
-Demandé par Keko — « tu peux faire en sorte que la dernière carte du booster
-soit animée + holo ? pour test ». *Une fréquence d'apparition ne se juge qu'en
-ouvrant des paquets*, et à 10 % et 3 % il en faut beaucoup : **le banc force la
-dernière carte** du paquet aux deux bonus.
+Demandé par Keko, « pour test » — d'abord « la dernière carte du booster animée
++ holo », puis **« les deux coupes de champagne animées, mais pas holo »**.
+*Une fréquence d'apparition ne se juge qu'en ouvrant des paquets*, et à 10 % et
+3 % il en faut beaucoup.
 
 ***ET L'ANIMÉ NE SE FORCE PAS SEUL : il demande un emoji ANIMABLE.*** On ne peut
 pas animer ce que Google n'a pas animé — 614 sur 1 923 — donc poser le drapeau
 sur une carte quelconque ne donnerait **qu'un cartouche qui ment**. Le banc
-échange donc la dernière carte contre une animable **du MÊME CRAN**, prise dans
-le même tas : *la pyramide des raretés ne bouge pas d'un cran*, et c'est ce qui
-permet de juger le bonus sans fausser le reste.
+ÉCHANGE donc la dernière carte, il ne se contente pas de la marquer.
+
+**LA CARTE EST NOMMÉE PAR SON IDENTIFIANT, pas par son nom** (`1f942`) : *le nom
+est du texte affiché*, qui peut être retouché — l'identifiant vient d'Unicode et
+ne bougera jamais. La règle du trésor, prise ici. Et on la cherche dans **tout
+le catalogue** plutôt que dans le tas du cran qui sortait : *un banc qui montre
+une autre carte que celle qu'on vient y chercher n'est pas un banc.* **Prix
+connu** : un paquet ouvert avec `?bonus` compte un `rare` de plus ou de moins,
+puisque c'est la carte qui apporte sa rareté.
 
 **Et il passe APRÈS le tirage, jamais à sa place** : la suite du hasard ne bouge
 pas, donc `?paquet=42&bonus` rend exactement le paquet de `?paquet=42` **à sa
@@ -2654,7 +2660,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&art` | les peintures |
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
-| `&bonus` | la dernière carte sort **holo + animée** |
+| `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
 | `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans`, `?dos=gabarit` | les bancs du gabarit |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
