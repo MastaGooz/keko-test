@@ -541,17 +541,20 @@ void main() {
   // balaient toutes ensemble. Une seule qui bougerait se lirait comme une lampe
   // qu'on promène.
   //
-  // ***ET ELLES TOURNENT DANS LE SENS INVERSE DE L'OBJET.*** On calcule tout
-  // dans le repere du SACHET, donc une lampe fixe de la piece y subit la
-  // rotation INVERSE : au premier ordre, une rotation de b autour de Y donne
-  // L.x - L.z * b, et une rotation de a autour de X donne L.y + L.z * a.
+  // ***L'AXE HORIZONTAL EST VOLONTAIREMENT A CONTRE-PHYSIQUE.*** Une lampe
+  // fixe de la piece subit, dans le repere du SACHET, la rotation INVERSE de
+  // l'objet : au premier ordre, une rotation de b autour de Y donne
+  // L.x - L.z * b (elle part a GAUCHE) et une rotation de a autour de X donne
+  // L.y + L.z * a (elle MONTE). Les deux axes n'ont donc pas le meme signe.
   //
-  // **Les deux axes n'ont donc PAS le meme signe**, et c'est tout le defaut :
-  // le x etait ajoute comme le y. Keko : « quand il s'oriente vers la droite
-  // il devient tres lumineux comme si la lumiere venait de la droite ». Elle
-  // en venait : la normale partait a droite et la lampe la suivait, donc elles
-  // s'alignaient au lieu de s'ecarter.
-  vec2 pen = vec2(-uPenche.y, uPenche.x) * 2.4;
+  // **Le y suit cette regle, le x la prend a l'envers, et c'est un choix de
+  // Keko** : « je preferais la lumiere a droite comme c'etait avant, le paquet
+  // s'eclairait plus sur la fin de l'ouverture du coup c'etait mieux ».
+  // *On tire la dechirure vers la DROITE*, donc le sachet s'allume a mesure
+  // qu'on l'ouvre -- et au REPOS la lampe reste en haut-gauche, ce qu'il avait
+  // valide. **Ne pas le "corriger" en croyant a un bug** : le signe juste a ete
+  // essaye, mesure et ecarte.
+  vec2 pen = vec2(uPenche.y, uPenche.x) * 2.4;
 
   // ***LA CLÉ N'EST PLUS ÉCRITE DEUX FOIS.*** Elle avait sa direction ici et une
   // autre dans la table des sources : **deux endroits qui décrivent la même

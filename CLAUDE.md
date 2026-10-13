@@ -2096,7 +2096,30 @@ sur 28 pixels contre 4.
 film ne perd que 4 %. La métallicité tient sa promesse : **un éclat de la
 couleur du sachet ne peut pas pousser le sachet vers le blanc.**
 
-#### LES LAMPES TOURNENT DANS LE SENS INVERSE DE L'OBJET — et un axe avait le mauvais signe
+#### L'AXE HORIZONTAL EST À CONTRE-PHYSIQUE, ET C'EST KEKO QUI L'A VOULU
+
+**Le signe juste a été posé, mesuré, puis RETIRÉ.** Keko, en le voyant : **« en
+fait je préférais la lumière à droite comme c'était avant — le paquet
+s'éclairait plus sur la fin de l'ouverture, du coup c'était mieux »**.
+
+***ET SA RAISON N'EST PAS UN ÉCLAIRAGE, C'EST UN GESTE.*** On tire la déchirure
+**vers la droite** : avec le signe à contre-physique, le sachet s'allume *à
+mesure qu'on l'ouvre*, donc la lumière monte avec le geste au lieu de s'éteindre
+avec lui. **Une matière qui s'allume pendant qu'on agit dessus raconte le
+geste** ; la même matière qui s'éteint le contrarie.
+
+**ET LE REPOS, LUI, NE CHANGE PAS** : à penchant nul les deux versions sont
+identiques au pixel, donc la lampe reste en **haut-gauche** — exactement ce que
+Keko avait tranché en disant « le sombre devrait être côté droit / bas, et la
+lumière frapper le haut / gauche ». *Les deux demandes ne portent pas sur la
+même chose* : l'une sur l'état neutre, l'autre sur ce que le mouvement produit,
+et c'est ce qui permet de les tenir toutes les deux.
+
+***NE PAS LE « CORRIGER » EN CROYANT À UN BUG.*** Le raisonnement qui suit reste
+écrit parce qu'il est juste — et c'est précisément pour ça qu'il faut savoir
+qu'on s'en écarte exprès.
+
+#### LE RAISONNEMENT, ET CE QUE LA MESURE AVAIT DONNÉ
 
 Keko : **« pourquoi quand je bouge le paquet et qu'il s'oriente vers la droite
 il devient très lumineux, comme si la lumière venait de la droite ? »**
@@ -2110,10 +2133,10 @@ premier ordre :
 | **b autour de Y** (il se tourne à droite) | `L.x − L.z × b` — elle part à **GAUCHE** |
 | **a autour de X** (il se penche en arrière) | `L.y + L.z × a` — elle **MONTE** |
 
-***LES DEUX AXES N'ONT DONC PAS LE MÊME SIGNE***, et c'est tout le défaut : le
-x était ajouté comme le y. **La normale partait à droite et la lampe la
-suivait** — elles s'alignaient au lieu de s'écarter, donc le lobe en puissance
-26 explosait.
+***LES DEUX AXES N'ONT DONC PAS LE MÊME SIGNE.*** Le y suit la règle ; **le x
+la prend à l'envers**, donc la normale part à droite et la lampe la suit —
+elles s'alignent au lieu de s'écarter, et le lobe en puissance 26 explose.
+*C'est ce que Keko a gardé.*
 
 **MESURÉ, LES DEUX PENCHANTS SE SONT EXACTEMENT ÉCHANGÉS** — c'est la preuve
 que ce n'était ni un réglage ni un cumul, mais un miroir :
@@ -2125,13 +2148,13 @@ que ce n'était ni un réglage ni un cumul, mais un miroir :
 | **après**, penché à gauche | 135,8 | 0,639 | 1,29 |
 | **après**, penché à droite | 103,9 | 0,720 | **3,29** |
 
-*Le sachet s'allume désormais du côté de sa lampe* — le haut-gauche que tout le
-projet respecte — et s'éteint de l'autre.
+**C'est la colonne du HAUT qui est en service**, celle où le sachet s'allume
+vers la droite : Keko a repris le signe juste après l'avoir vu.
 
-**CE QUE LA SYMÉTRIE DU TABLEAU DIT AUSSI** : le pic reste très fort du côté
-où il s'allume, le texte y tombant à 1,29 de contraste. *C'est le même
-délavage qu'avant, simplement du bon côté* — à rejuger par Keko maintenant
-qu'il tombe là où l'oeil l'attend.
+**CE QUE LA SYMÉTRIE DU TABLEAU DIT AUSSI** : le pic est très fort du côté où
+il s'allume, le texte y tombant à 1,27 de contraste. *Le délavage ne dépend
+donc pas du signe* — il tient au gain des lampes, et c'est là qu'il se règle si
+Keko le trouve trop fort.
 
 ***UN DÉFAUT DE SIGNE NE SE VOIT PAS EN POSITION NEUTRE*** : à penchant nul les
 deux versions sont identiques au pixel. Il fallait incliner, et le comparer aux
