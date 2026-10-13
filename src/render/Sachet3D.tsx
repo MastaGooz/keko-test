@@ -925,7 +925,29 @@ const JET = 0.68
  * plus grande monte ET porte plus loin dans le même rapport. L'angle, lui, se
  * resserre pour reprendre la portée — voir `ANGLE_ECLAT_MIN`.
  */
-const ECLAT_CLOCHE = 2.45
+const ECLAT_CLOCHE = 3.5
+
+/**
+ * COMBIEN DE SA VIE UNE ÉTINCELLE MET À S'ALLUMER, en part de sa vie.
+ *
+ * Keko : **« la gerbe finale spawn un peu trop haut et ne monte pas assez, sa
+ * vélocité doit être supérieure — genre feu d'artifice »**.
+ *
+ * ***ELLE NAISSAIT PILE À LA FENTE, ET ON NE LA VOYAIT QU'UNE FOIS PARTIE.***
+ * Le fondu d'entrée prenait 7 % de la vie à toutes les étincelles — et sur un
+ * jaillissement qui monte vite, 7 % de la vie c'est déjà 7 % de largeur de
+ * sachet au-dessus de la fente (mesuré, 0,071 en moyenne, 0,096 au pire). *Ce
+ * qu'on lit comme le point de naissance est le point où le grain devient
+ * visible*, et plus la vitesse monte, plus il s'éloigne de la fente — monter
+ * la vélocité sans toucher au fondu aurait AGGRAVÉ le « spawn trop haut ».
+ *
+ * **Une rafale naît donc ALLUMÉE** : elle sort du flash de la rupture, qui est
+ * déjà blanc, donc rien ne pope. La découpe garde son fondu — ses étincelles
+ * naissent une par une le long d'un front, et là un grain qui apparaît d'un
+ * coup se verrait.
+ */
+const MONTEE_DECOUPE = 0.07
+const MONTEE_ECLAT = 0.012
 
 /**
  * CE QUE DURE LA GERBE FINALE, en secondes — ***calculée, jamais écrite.***
@@ -1175,6 +1197,11 @@ function semisDesEtincelles(): THREE.InstancedBufferGeometry {
   const vols = new THREE.InstancedBufferAttribute(new Float32Array(ETINCELLES * 4), 4)
   vols.setUsage(THREE.DynamicDrawUsage)
   g.setAttribute('aVol', vols)
+  // LA MONTÉE EST ÉCRITE À LA NAISSANCE AUSSI : *le nuanceur ne sait pas de
+  // quel régime une étincelle est née*, et les deux ne s'allument pas pareil.
+  const montees = new THREE.InstancedBufferAttribute(new Float32Array(ETINCELLES), 1)
+  montees.setUsage(THREE.DynamicDrawUsage)
+  g.setAttribute('aMontee', montees)
   g.instanceCount = ETINCELLES
   return g
 }
@@ -1190,6 +1217,7 @@ function semisDesEtincelles(): THREE.InstancedBufferGeometry {
  */
 function emettre(
   vols: THREE.InstancedBufferAttribute,
+  montees: THREE.InstancedBufferAttribute,
   curseur: { current: number },
   nb: number,
   front: number,
@@ -1197,6 +1225,7 @@ function emettre(
   eclat: boolean,
 ): void {
   const a = vols.array as Float32Array
+  const m = montees.array as Float32Array
   for (let i = 0; i < nb; i += 1) {
     const s = curseur.current
     curseur.current = (s + 1) % ETINCELLES
@@ -1236,8 +1265,11 @@ function emettre(
     a[o + 1] = x - 0.5
     a[o + 2] = vx * tf
     a[o + 3] = vy * tf
+    // UNE RAFALE NAÎT ALLUMÉE, la découpe s'allume : voir MONTEE_ECLAT.
+    m[s] = eclat ? MONTEE_ECLAT : MONTEE_DECOUPE
   }
   vols.needsUpdate = true
+  montees.needsUpdate = true
 }
 
 function matiereDeLaGerbe(): THREE.ShaderMaterial {
@@ -1269,6 +1301,7 @@ function matiereDeLaGerbe(): THREE.ShaderMaterial {
     vertexShader: `uniform float uTemps;
 attribute vec4 aGraine;
 attribute vec4 aVol;
+attribute float aMontee;
 varying vec2 vQ;
 varying float vVie;
 
@@ -1297,7 +1330,9 @@ void main() {
   // son extinction qui l'empêche de se lire comme une bille lancée. **Chaque
   // grain a sa PROPRE cadence** -- un battement commun se lirait comme un
   // clignotement d'alerte, la regle deja payee sur l'aureole du diamant.
-  float fondu = smoothstep(0.0, 0.07, t) * smoothstep(1.0, 0.70, t);
+  // ET LA MONTEE EST CELLE DE SON REGIME : une rafale nait allumee, la
+  // decoupe s'allume (voir MONTEE_ECLAT).
+  float fondu = smoothstep(0.0, aMontee, t) * smoothstep(1.0, 0.70, t);
   float scintille = 0.62 + 0.38 * sin(uTemps * (38.0 + aGraine.x * 34.0) + aGraine.y * 37.0);
 
   // L'ÉCLAT EST UN CARRÉ, ET IL NE S'ALLONGE DE RIEN. *Quatre branches en
@@ -1414,6 +1449,10 @@ export function Sachet3D({
   /** Les naissances : c'est le CPU qui les écrit, une par étincelle émise. */
   const vols = useMemo(
     () => semis.getAttribute('aVol') as THREE.InstancedBufferAttribute,
+    [semis],
+  )
+  const montees = useMemo(
+    () => semis.getAttribute('aMontee') as THREE.InstancedBufferAttribute,
     [semis],
   )
   const { size } = useThree()
@@ -1632,7 +1671,7 @@ export function Sachet3D({
       const nb = Math.floor(resteEmis.current)
       if (nb > 0) {
         resteEmis.current -= nb
-        emettre(vols, anneau, Math.min(nb, RAFALE_MAX), front, t, false)
+        emettre(vols, montees, anneau, Math.min(nb, RAFALE_MAX), front, t, false)
       }
     }
 
@@ -1654,7 +1693,7 @@ export function Sachet3D({
       // premier réglage*, donc c'est le drapeau du flash qui le porte — et
       // c'est aussi ce que fait lexicodex, dont la rupture appelle son
       // `emitTearSparks(14)` à côté du son et de la secousse.
-      emettre(vols, anneau, ECLAT_NOMBRE, front, t, true)
+      emettre(vols, montees, anneau, ECLAT_NOMBRE, front, t, true)
       onDechire?.()
     }
 

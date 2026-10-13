@@ -2173,6 +2173,49 @@ descend ensuite, et la carte se rapproche quand il a quitté le cadre.
 appels de l'outil en coûtent davantage. **Multiplier les durées est une sonde,
 pas un réglage** — et elle se retire en rééditant, jamais par un `checkout`.
 
+#### LE JAILLISSEMENT NAÎT ALLUMÉ, ET IL MONTE COMME UN FEU D'ARTIFICE
+
+Keko : **« j'ai l'impression que la gerbe finale spawn un peu trop haut et ne
+monte pas assez, sa vélocité doit être supérieure — genre feu d'artifice »**.
+
+***ELLE NAISSAIT PILE À LA FENTE, ET ON NE LA VOYAIT QU'UNE FOIS PARTIE.*** Le
+fondu d'entrée prenait 7 % de la vie à toutes les étincelles, découpe et
+jaillissement confondus — et sur un jaillissement qui monte vite, **7 % de la
+vie c'est déjà 7 % de largeur de sachet au-dessus de la fente** : mesuré, 0,071
+en moyenne et 0,096 au pire. *Ce qu'on lit comme le point de naissance est le
+point où le grain devient VISIBLE*, pas celui où il est né.
+
+**Et c'est ce qui rendait les deux demandes contradictoires en apparence** :
+monter la vélocité sans toucher au fondu aurait AGGRAVÉ le « spawn trop haut »,
+puisque la part cachée est proportionnelle à la vitesse — à 3,5 de cloche elle
+serait montée à 10 %.
+
+**Une rafale naît donc ALLUMÉE** (`MONTEE_ECLAT`, 1,2 % de la vie — une image)
+: elle sort du flash de la rupture, qui est déjà blanc, donc rien ne pope. *La
+découpe garde son fondu* (`MONTEE_DECOUPE`, 7 %) : ses étincelles naissent une
+par une le long d'un front, et là un grain qui apparaîtrait d'un coup se
+verrait. **Le nuanceur ne sait pas de quel régime une étincelle est née**, donc
+la montée s'écrit à la naissance comme le reste (`aMontee`).
+
+**ET LA VÉLOCITÉ MONTE DE 2,45 À 3,5** — *c'est le seul levier qui fasse un feu
+d'artifice* : la vie ne bouge pas (0,48 s), donc une cloche plus haute dans le
+même temps est une étincelle plus vive, et la pause du film n'en est pas
+changée d'un millième.
+
+| | avant | **après** |
+|---|---|---|
+| cloche au zénith | 0,367 | **0,524** (+43 %) |
+| cloche moyenne | 0,271 | **0,387** |
+| portée moyenne | 0,170 | **0,243** |
+| **ce qu'on ne voyait pas de la montée** | **0,071** | **~0,01** |
+| rapport hauteur / largeur | 1,58 | 1,58 — *inchangé* |
+
+**Vu à l'écran au ralenti** (×5, sonde retirée) : les étincelles sont sur la
+fente dès la première capture, et elles montent au-delà du bord haut de l'écran
+en paysage. *C'est le prix d'une cloche d'une demi-largeur de sachet sur un
+format qui borne le sachet par sa hauteur* — en portrait, le format visé, il
+reste 1,25 largeur au-dessus de la fente.
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une
@@ -3830,9 +3873,12 @@ la même place se désaccorderaient au premier réglage.*
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la gerbe d'étincelles** : le DÉBIT (108 par largeur d'avancée), la réserve
   (256), le nombre de la rafale du jaillissement (115, étalée sur 0,11 s), leur
-  vie (0,48 s) et leur vitesse de départ (0,68 largeur par vie, **×2,45 au
+  vie (0,48 s) et leur vitesse de départ (0,68 largeur par vie, **×3,5 au
   jaillissement**) — *donc la hauteur de la cloche*, qui vaut **0,15 largeur**
-  au zénith pendant la découpe et **0,37** au jaillissement. ***La vie décide
+  au zénith pendant la découpe et **0,52** au jaillissement. **Le jaillissement
+  naît allumé** (`MONTEE_ECLAT`), la découpe s'allume en 7 % de sa vie : *le
+  fondu d'entrée cache le départ, et ce qu'il cache est proportionnel à la
+  vitesse*. ***La vie décide
   AUSSI de la pause du film*** : `DUREE_GERBE` s'en déduit, donc la rallonger
   retarde la descente d'autant. **Une gerbe ne se juge qu'en ouvrant des
   paquets.** *`?gerbe` tire puis s'arrête*, ce qui est le seul moyen d'en juger
