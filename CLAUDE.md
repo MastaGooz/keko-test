@@ -1567,6 +1567,55 @@ depuis rien. **Il n'y a aucune animation à écrire.**
 l'ordre de deux plans à plat ne suffit plus dès que l'un des deux tourne.
 *Une rotation est une translation déguisée en profondeur.*
 
+#### ET LA MÊME LEÇON SE REPAIE SUR LE SACHET QUI SE BALANCE
+
+Keko : **« sur PC, quand je laisse le paquet bouger seul, on voit parfois la
+carte le traverser en bas — on voit un coin de dos de carte traverser le
+booster. »**
+
+***C'EST EXACTEMENT LE DÉFAUT DU FLIP, UN CRAN PLUS LOIN***, et il était écrit
+dans ce fichier : *une rotation est une translation déguisée en profondeur.* Les
+cinq cartes attendent **derrière le sachet** — elles s'y montent dès le départ
+pour que leurs nuanceurs compilent pendant qu'il se balance — et l'écart qui les
+cachait était un **`0,06` écrit à la main.** Il suffit tant que les deux plans
+sont à plat ; **le sachet, lui, ne l'est jamais.**
+
+**DEUX TERMES CUMULENT LE RECUL D'UN COIN BAS**, et aucun ne suffisait seul :
+
+| | ce qui recule | de combien, mesuré |
+|---|---|---|
+| la berce en **X** (±0,055) | le bas s'enfonce de `(H/2)·sin a` | 0,055 largeur |
+| la berce en **Y** (±0,085) | un côté s'enfonce de `(L/2)·sin a` | 0,043 |
+| **le repos, les deux ensemble** | | **0,085 largeur**, soit **0,141** à l'écran |
+| le survol, avancée déduite | `PENCHE` borné à ±0,7 | **0,238 largeur** |
+
+*L'écart valait 0,060.* Il était donc dépassé **au repos seul**, et de deux fois
+et demie au survol — d'où le « parfois » : il faut que les deux sinus tombent
+du même côté, et leurs périodes ne retombent jamais en phase.
+
+#### ET UNE CARTE CACHÉE PEUT ÊTRE AUSSI LOIN QU'ON VEUT
+
+*C'est ce qui rend la correction gratuite.* Une carte qui attend dans le sachet
+n'est là que pour **compiler son nuanceur**, et sa toile se choisit sur
+`tailleTexture` et non sur sa distance — donc la reculer ne coûte ni un pixel de
+netteté ni une repeinture. Elle se range au-delà du pire recul, et **elle
+reprend sa place dès qu'elle ÉMERGE** : à ce moment c'est le HAUT du sachet qui
+s'avance, donc il n'y a plus rien à couvrir.
+
+***ET LE Z SE CALCULE, IL NE S'ÉCRIT PAS*** — la règle que la gerbe avait déjà
+coûtée, repayée ici : `RECUL_DU_BAS` se déduit du balancement, de la borne du
+penchant et de l'avancée, donc **un réglage de `PENCHE` l'emmène avec lui.** Les
+trois valeurs vivaient en dur dans la boucle et dans `penche` ; elles sont
+nommées, parce que *deux endroits qui décriraient le même balancement se
+désaccorderaient au premier réglage.*
+
+**VÉRIFIÉ PAR UNE SONDE À VALEUR ABSURDE**, et il en fallait une : à l'amplitude
+réelle le dépassement ne fait que huit pixels, et **le survol SATURE le film** —
+le lustre y est blanc, donc un coin de carte bleu ne s'y lit pas. *C'est le piège
+déjà écrit pour la gerbe.* En portant la berce à 0,3 rad — cinq fois et demie le
+vrai — le bas de la carte traverse franchement avant correction, et **quatre
+instants d'un cycle complet le montrent caché après.**
+
 #### ET LA PASSÉE SORT PAR LA DROITE
 
 Tranché par Keko : « quand on passe à la suivante je voudrais qu'on slide
@@ -3549,7 +3598,9 @@ la même place se désaccorderaient au premier réglage.*
   de ses flancs ;
 - **le balancement de repos** (5,5 et 8,5 centièmes de radian, sur deux
   périodes) : c'est lui qui fait vivre le reflet là où rien ne touche le
-  sachet ;
+  sachet. ***Il décide AUSSI de combien les cartes cachées se rangent
+  derrière*** — `RECUL_DU_BAS` s'en déduit, donc le monter les emmène avec
+  lui ;
 - **la force du penchant** (0,26 radian, 1,3 fois plus sur l'axe vertical) et
   **sa borne** (±0,7 largeur) : *une matière ne se juge qu'en inclinant
   l'objet.*

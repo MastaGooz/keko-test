@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { Carte3D } from './Carte3D.tsx'
 import { Bouton3D } from './Bouton3D.tsx'
-import { Sachet3D } from './Sachet3D.tsx'
+import { RECUL_DU_BAS, Sachet3D } from './Sachet3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import {
@@ -839,9 +839,26 @@ export function Paquet3D(): React.ReactElement {
               // qu'apparaître devant la pochette — et les cinq sont
               // superposées, ce qui est exactement ce qu'elles sont : une
               // pile qu'on tire.
+              //
+              // TANT QU'ELLE EST CACHÉE, ELLE SE RANGE DERRIÈRE LE PIRE RECUL
+              // DU SACHET. Keko : « sur PC, quand je laisse le paquet bouger
+              // seul, on voit parfois un coin de dos de carte traverser le
+              // booster. » Le sachet se balance, donc son coin bas s'enfonce
+              // de `RECUL_DU_BAS` — mesuré, 0,085 largeur au repos seul, quand
+              // l'écart n'était que de 0,06 en absolu. *Une rotation est une
+              // translation déguisée en profondeur*, la règle déjà payée sur
+              // le flip du défilé.
+              //
+              // ET UNE CARTE CACHÉE PEUT ÊTRE AUSSI LOIN QU'ON VEUT : elle
+              // n'est là que pour compiler son nuanceur, et sa toile se choisit
+              // sur `tailleTexture`, pas sur sa distance. **Elle reprend sa
+              // place dès qu'elle ÉMERGE** — à ce moment c'est le HAUT du
+              // sachet qui s'avance, donc il n'y a plus rien à couvrir.
               position={
                 !ouvert
-                  ? [0, hSachet * (sortie > 1 ? 0.3 : -0.12), Z_MAIN - 0.06]
+                  ? sortie > 1
+                    ? [0, hSachet * 0.3, Z_MAIN - 0.06]
+                    : [0, hSachet * -0.12, Z_MAIN - lSachet * RECUL_DU_BAS]
                   : fini
                     ? placeAuBilan(i)
                     : placeAuDefile(i)

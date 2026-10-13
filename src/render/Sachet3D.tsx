@@ -314,6 +314,43 @@ const RETOUR = 0.28
 const PENCHE = 0.26
 const AVANCEE = 0.1
 
+/**
+ * LE BALANCEMENT DE REPOS, en radians, et la BORNE du penchant au survol.
+ *
+ * Ils vivaient en dur dans la boucle et dans `penche`. *Ils décident aussi de
+ * combien le bas du sachet RECULE*, donc le paquet a besoin de les lire — et
+ * **deux endroits qui décriraient le même balancement se désaccorderaient au
+ * premier réglage.**
+ */
+const BERCE_X = 0.055
+const BERCE_Y = 0.085
+const BORNE_PENCHE = 0.7
+
+/**
+ * DE COMBIEN LE COIN BAS DU SACHET RECULE AU PIRE, en largeurs de sachet.
+ *
+ * Keko : **« sur PC, quand je laisse le paquet bouger seul, on voit parfois la
+ * carte le traverser en bas — on voit un coin de dos de carte traverser le
+ * booster. »**
+ *
+ * ***C'EST LA RÈGLE DU PROJET, PAYÉE UNE SECONDE FOIS : une rotation est une
+ * translation déguisée en profondeur.*** Un écart en z qui suffit à trancher
+ * l'ordre de deux plans À PLAT ne suffit plus dès que l'un des deux tourne —
+ * déjà payé sur le flip du défilé, où la carte traversait sa voisine.
+ *
+ * **LE COIN BAS RECULE DE DEUX TERMES QUI SE CUMULENT** : la rotation X
+ * l'enfonce de `(H/2)·sin(ax)`, la rotation Y de `(L/2)·sin(ay)`. *L'avancée du
+ * survol se retranche*, puisqu'elle accompagne le penchant.
+ *
+ * ***ET LE Z SE CALCULE, IL NE S'ÉCRIT PAS*** — la règle que la gerbe a déjà
+ * coûtée : les cartes attendaient à un `0,06` posé à la main, que le
+ * balancement a repris, et qu'un réglage de `PENCHE` aurait repris de nouveau.
+ */
+export const RECUL_DU_BAS =
+  (RAPPORT_SACHET / 2) * Math.sin(BERCE_X + BORNE_PENCHE * PENCHE) +
+  0.5 * Math.sin(BERCE_Y + BORNE_PENCHE * PENCHE * 1.3) -
+  AVANCEE
+
 /** Une texture d'un pixel transparent, le temps que le sachet soit peint. */
 const VIDE = (() => {
   const t = new THREE.DataTexture(new Uint8Array([0, 0, 0, 0]), 1, 1)
@@ -1391,8 +1428,10 @@ export function Sachet3D({
        * mécanique.*
        */
       const berce = file.current ? 0 : 1 - feu.current
-      const cibleX = (vu ? -curseur.current.y * PENCHE : 0) + Math.sin(t * 0.62) * 0.055 * berce
-      const cibleY = (vu ? curseur.current.x * PENCHE * 1.3 : 0) + Math.sin(t * 0.9) * 0.085 * berce
+      const cibleX =
+        (vu ? -curseur.current.y * PENCHE : 0) + Math.sin(t * 0.62) * BERCE_X * berce
+      const cibleY =
+        (vu ? curseur.current.x * PENCHE * 1.3 : 0) + Math.sin(t * 0.9) * BERCE_Y * berce
       r.rotation.x += (cibleX - r.rotation.x) * k
       r.rotation.y += (cibleY - r.rotation.y) * k
       r.position.z += (taille * AVANCEE * feu.current - r.position.z) * k
@@ -1559,8 +1598,8 @@ export function Sachet3D({
    */
   const penche = (x: number, y: number): void => {
     curseur.current = {
-      x: Math.min(0.7, Math.max(-0.7, x)),
-      y: Math.min(0.7, Math.max(-0.7, y)),
+      x: Math.min(BORNE_PENCHE, Math.max(-BORNE_PENCHE, x)),
+      y: Math.min(BORNE_PENCHE, Math.max(-BORNE_PENCHE, y)),
     }
   }
 
