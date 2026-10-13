@@ -1073,6 +1073,14 @@ ${nuanceur.fragmentShader}`
     void (dos ? textureDuDos(rayon, dosDe(carte)) : textureDeCarte(carte, largeurPx))
       .then((texture) => {
         if (!vivant) return
+        // ON N'ÉCRASE PAS UNE ANIMATION VIVANTE. *Deux écrivains se disputent
+        // `face.map`* : le cache partagé et la texture privée de l'emoji animé.
+        // Cet effet se relance à chaque changement de PALIER de toile — donc
+        // quand la carte change de taille, par exemple en passant du défilé au
+        // bilan — et il reposait alors la carte STATIQUE par-dessus
+        // l'animation, qui ne la reprenait jamais. Keko : « à la fin du paquet
+        // quand on voit les cartes, les cartes animées ne bougent plus ».
+        if (texAnim.current !== null && !dos) return
         face.map = texture
         face.needsUpdate = true
         onPeinte?.()
@@ -1121,6 +1129,22 @@ ${nuanceur.fragmentShader}`
   const texAnim = useRef<THREE.CanvasTexture | null>(null)
   const derniere = useRef(-1)
   const peintureEnCours = useRef(false)
+  /**
+   * LE PALIER DE TOILE DE LA DERNIÈRE PEINTURE — **et il faut le suivre.**
+   *
+   * ***Changer `canvas.width` ne réalloue pas la texture côté GPU.*** Three
+   * met à jour une `CanvasTexture` en réuploadant le canvas dans la texture
+   * DÉJÀ allouée : si celle-ci fait 768 et le canvas 256, la nouvelle image se
+   * retrouve **dans le coin** et le reste garde ce qu'il avait. Keko : « elle
+   * clignotait en full gris en mode gros bug », et au bilan on voyait *une
+   * petite carte dessinée dans une grande.*
+   *
+   * La carte change de palier chaque fois qu'elle change de taille — en sortant
+   * du sachet, en passant au bilan — donc ça arrive à tous les coups. **On jette
+   * la texture et on en refait une**, ce qui est le seul moyen d'en changer les
+   * dimensions.
+   */
+  const palierToile = useRef(-1)
 
   useEffect(() => {
     const id = carte.animation
@@ -1133,6 +1157,7 @@ ${nuanceur.fragmentShader}`
       vivant = false
       anim.current = null
       derniere.current = -1
+      palierToile.current = -1
       // *Ce qui est à nous se libère* — à la différence de la texture du cache
       // partagé, qui sert encore à d'autres cartes.
       texAnim.current?.dispose()
@@ -1152,20 +1177,40 @@ ${nuanceur.fragmentShader}`
     )
     // ON NE REPEINT QUE SI L'IMAGE A CHANGÉ : l'animation tourne à quinze
     // images par seconde, l'écran à soixante.
-    if (i === derniere.current) return
+    // LE PALIER A CHANGÉ : on repart d'une toile neuve, et il faut repeindre
+    // même si l'image de l'animation, elle, n'a pas bougé.
+    const palier = tailleQuIlFaut(largeurPx)
+    const change = palier !== palierToile.current
+    if (change) {
+      palierToile.current = palier
+      toile.current = null
+    }
+    if (i === derniere.current && !change) return
     derniere.current = i
     peintureEnCours.current = true
-    void peindreCarte({ ...carte, image: a.images[i] }, tailleQuIlFaut(largeurPx), toile.current ?? undefined)
+    void peindreCarte({ ...carte, image: a.images[i] }, palier, toile.current ?? undefined)
       .then((canvas) => {
         peintureEnCours.current = false
         if (anim.current === null) return
-        toile.current = canvas
-        if (texAnim.current === null) {
+        // UNE TOILE NEUVE DEMANDE UNE TEXTURE NEUVE : *on ne change pas les
+        // dimensions d'une texture déjà allouée*, on la jette.
+        if (texAnim.current === null || toile.current !== canvas) {
+          texAnim.current?.dispose()
           const t = new THREE.CanvasTexture(canvas)
           t.anisotropy = 8
           t.colorSpace = THREE.SRGBColorSpace
           texAnim.current = t
-          face.map = t
+        }
+        toile.current = canvas
+        // ELLE REPREND LA MAIN À CHAQUE IMAGE, et pas seulement à la première.
+        // *Une texture posée une fois pour toutes est une texture qu'on peut
+        // lui prendre* — et c'est ce que faisait l'effet du cache partagé à
+        // chaque changement de palier. **Un seul propriétaire ne suffit pas
+        // quand deux écrivains visent le même champ : il faut que celui qui
+        // doit gagner le redise.**
+        if (face.map !== texAnim.current) {
+          face.map = texAnim.current
+          face.needsUpdate = true
         }
         texAnim.current.needsUpdate = true
         face.needsUpdate = true

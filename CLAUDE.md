@@ -365,6 +365,41 @@ de police de chacun puis en comptant l'encre d'un rendu de 48 px :
 *Et aucun ne retombe sur la police système*, ce qui était l'autre façon
 d'échouer : les 614 sont tous rendus par Noto.
 
+#### CHANGER LA TAILLE D'UN CANVAS NE RÉALLOUE PAS SA TEXTURE
+
+Keko : « je suis tombé sur la rose en version holo + animé mais elle clignotait
+en full gris en mode gros bug. De plus à la fin du paquet quand on voit les
+cartes, les cartes animées ne bougent plus. »
+
+***LES DEUX DÉFAUTS N'EN FONT QU'UN, ET IL EST DANS WEBGL.*** Three met à jour
+une `CanvasTexture` en réuploadant le canvas **dans la texture déjà allouée** :
+si celle-ci fait 768 et le canvas 256, la nouvelle image se retrouve *dans le
+coin* et le reste garde ce qu'il avait. **Mesuré au bilan** : on y voyait une
+petite carte dessinée dans une grande, et le vide autour est le « full gris ».
+
+*La carte change de palier de toile chaque fois qu'elle change de TAILLE* — en
+sortant du sachet, en passant du défilé au bilan — donc ça arrive à tous les
+coups, et seulement sur les cartes animées : **elles sont les seules à réutiliser
+leur toile.** On jette donc la texture et on en refait une, ce qui est le seul
+moyen d'en changer les dimensions.
+
+**ET IL FALLAIT REPEINDRE MÊME SANS CHANGEMENT D'IMAGE** : l'animation ne
+repeint que quand son image a changé, donc un changement de palier seul ne
+déclenchait rien — *la toile neuve serait restée vide jusqu'à l'image suivante.*
+
+#### DEUX ÉCRIVAINS SE DISPUTAIENT `face.map`
+
+Le même épisode en a trouvé un second, qui tenait debout tout seul : *le cache
+partagé et la texture privée de l'animation écrivent dans le même champ*, et
+**l'animation ne le posait qu'une fois** (`if (texAnim === null)`). L'effet du
+cache se relance à chaque changement de palier — ou de `dos` — donc il reposait
+la carte STATIQUE par-dessus l'animation, **qui ne la reprenait jamais.**
+
+Deux garde-fous, et ils se répondent : l'effet du cache *n'écrase pas une
+animation vivante*, et l'animation *redit* sa texture à chaque image. **Un seul
+propriétaire ne suffit pas quand deux écrivains visent le même champ : il faut
+que celui qui doit gagner le redise.**
+
 #### LE REPLI EST LA CARTE STATIQUE, ET IL EST SILENCIEUX
 
 `ImageDecoder` est dans Chrome, Edge et Safari 17 ; **ailleurs la carte reste
