@@ -1888,7 +1888,7 @@ la raconte, la règle déjà payée sur la tête de la comète.
 | | pendant la découpe | à l'arrachement |
 |---|---|---|
 | ce qui émet | **l'avancée du front**, à chaque image | **une rafale unique** |
-| la source | **juste derrière le front**, tirée au carré donc tassée contre lui | **toute la largeur** de l'ouverture |
+| la source | **le front lui-même**, dispersée symétriquement autour de lui | **toute la largeur** de l'ouverture |
 | le nombre | 24 à 120 vivantes, *selon la vitesse du doigt* | **115 d'un coup** |
 | la vitesse | 0,68 largeur par vie | **×2,12** |
 | la hauteur de la cloche | 0,17 largeur | **0,36** |
@@ -2187,6 +2187,58 @@ Trois choses à ne pas défaire :
 cloche en freinant le départ, la longueur du trait suit la vitesse ». **Elle ne
 la suit plus** : un éclat a la même taille à l'apogée qu'au lancer, donc la
 vitesse de départ est redevenue un réglage libre.
+
+#### LA SOURCE EST LE FRONT, ET L'ANGLE OUVRE À CENT CINQUANTE DEGRÉS
+
+Keko, en trois demandes qui n'en font qu'une : **« les étincelles devraient
+spawn là où le booster se déchire, donc à l'extrémité droite de la déchirure en
+cours — là on dirait qu'elles spawn un peu en retard »**, **« on peut donner une
+variance à l'angle des particules entre 15 et 165 degrés pour éviter l'effet
+fontaine »**, et **« on peut les disperser aléatoirement le long de l'endroit où
+on déchire »**.
+
+***ET IL NOMME LE DÉFAUT MIEUX QUE JE NE L'AURAIS FAIT*** : « effet fontaine =
+angle trop réduit ET spawn au même point ». **Les deux causes se cumulaient, et
+aucune ne se voyait seule** — un cône étroit depuis un point unique ne peut
+donner qu'un jet.
+
+| | avant | après |
+|---|---|---|
+| plage d'angle | **30°** (75 à 105) | **150°** (15 à 165) |
+| écart de la source au front | **−0,087**, *jamais en avance* | **0**, dispersé sur ±0,060 |
+| hauteur de la cloche | 0,170 | 0,170 au zénith, **0,125 en moyenne** |
+| portée latérale | 0,156 au plus | **0,657** au ras, 0,385 en moyenne |
+
+#### UNE DÉRIVE AJOUTÉE À UN JET CONSTANT NE FAIT PAS VARIER L'ANGLE
+
+***C'EST LA RACINE, ET ELLE SE MESURE À L'ARC TANGENTE.*** La naissance tirait
+deux grandeurs INDÉPENDANTES — une dérive latérale (±0,156) et un jet vertical
+(0,58 à 0,78) — donc l'angle n'était qu'un sous-produit, et il tenait dans
+**vingt-six degrés autour de la verticale.** *On ne peut pas élargir une plage
+d'angles en élargissant la dérive* : il faudrait la porter à la vitesse entière
+pour atteindre 45°, et le vol n'aurait alors plus de hauteur du tout.
+
+**On tire donc l'ANGLE, puis on le décompose** — `v·cos` et `v·sin`. La
+vitesse garde sa variance, et c'est la direction qui devient le tirage.
+
+**ET LES DEUX RAS SONT COUPÉS**, ce qui n'est pas une prudence : à zéro une
+étincelle ne décollerait pas du film et ramperait dessus. *Ce qui jaillit d'une
+fente doit en sortir* — et c'est exactement la borne que Keko avait donnée.
+
+#### UN TIRAGE QUI NE VA QUE D'UN CÔTÉ EST UN DÉCALAGE, PAS UNE DISPERSION
+
+La source se tirait **au carré derrière le front** : la moyenne tombait à
+0,087 largeur en arrière, et **aucune étincelle ne naissait jamais en avance.**
+*C'est exactement le « un peu en retard » que Keko lisait*, et le carré — posé
+pour les tasser contre le front — ne faisait que creuser le biais.
+
+Elle est désormais **symétrique autour du front**, donc le front est la MOYENNE
+des naissances au lieu d'en être la borne. Et la dispersion répond à la
+troisième demande par la même porte : *ce qui était un retard devient une
+largeur de source.*
+
+**ET LE JAILLISSEMENT GARDE SON ÉTALEMENT SUR TOUTE L'OUVERTURE** : là, le
+recul d'un côté est juste — *la fente entière est la source*, pas un point.
 
 #### `?gerbe` TIRE, PUIS S'ARRÊTE
 
@@ -3224,6 +3276,11 @@ la même place se désaccorderaient au premier réglage.*
   sans ouvrir vingt paquets. **La pesanteur VAUT la vitesse**, donc on ne la
   règle plus séparément — et *la vitesse de départ est redevenue libre* depuis
   que le grain ne s'allonge plus avec elle ;
+- **la plage d'angles** (15° à 165°) et **la dispersion de la source**
+  (±0,060 largeur autour du front) : *c'est le couple qui tue l'effet
+  fontaine*, et les deux bornes d'angle sont de Keko. **La portée latérale en
+  découle** — 0,657 largeur pour une étincelle au ras, contre 0,156 avant —
+  donc resserrer la plage est aussi la façon de la réduire ;
 - **la taille de l'éclat** (0,11 de côté, son coeur à 42 % et ses branches à
   16 % de finesse) et **ses trois termes** (halo 0,45, croix 0,9, coeur 1,0) :
   *c'est ce qui sépare une lumière d'un confetti*, et Keko a tranché le

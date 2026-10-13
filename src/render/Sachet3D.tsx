@@ -868,10 +868,39 @@ const ECLAT_ETALE = 0.11
 const JET = 0.68
 /** De combien le jaillissement pousse la cloche : il monte 2,12 fois plus haut. */
 const ECLAT_CLOCHE = 2.12
-/** De combien la source remonte derrière le front, en largeurs de sachet. */
-const SOURCE_ETINCELLE = 0.26
-/** Ce que la dérive latérale écarte, en largeurs de sachet par vie. */
-const DERIVE_ETINCELLE = 0.26
+/**
+ * LA SOURCE EST LE FRONT LUI-MÊME, dispersée AUTOUR de lui.
+ *
+ * Keko : **« les étincelles devraient spawn là où le booster se déchire (donc
+ * à l'extrémité droite de la déchirure en cours) ; là on dirait qu'elles
+ * spawn un peu en retard »**.
+ *
+ * ***ET ELLES L'ÉTAIENT, PAR CONSTRUCTION*** : la source se tirait au CARRÉ
+ * derrière le front, donc elle était en retard de 0,087 largeur en moyenne et
+ * jamais en avance. *Un tirage qui ne va que d'un côté n'est pas une
+ * dispersion, c'est un décalage.* Il est désormais SYMÉTRIQUE — « range de
+ * variance autour du x du point de déchirure », dit Keko — donc le front est
+ * la MOYENNE des naissances au lieu d'en être la borne.
+ */
+const DISPERSION_SOURCE = 0.06
+/**
+ * LA PLAGE D'ANGLES, et c'est elle qui tue l'effet FONTAINE.
+ *
+ * Keko : **« on peut donner une variance à l'angle des particules entre 15 et
+ * 165 degrés par ex pour éviter l'effet fontaine ; effet fontaine = angle trop
+ * réduit et spawn au même point »**.
+ *
+ * ***SON DIAGNOSTIC EST EXACT ET IL SE MESURE*** : la dérive s'ajoutait à un
+ * jet constant, donc l'angle de départ tenait dans **77° à 103°** — un cône de
+ * vingt-six degrés autour de la verticale, c'est-à-dire une fontaine. On tire
+ * désormais l'ANGLE puis on le décompose, ce qui ouvre la plage à **150°**.
+ *
+ * **ET LES DEUX RAS SONT COUPÉS**, pas par prudence : à zéro une étincelle ne
+ * décolle pas du film et rampe dessus — *ce qui jaillit d'une fente doit en
+ * sortir.*
+ */
+const ANGLE_MIN = (15 * Math.PI) / 180
+const ANGLE_MAX = (165 * Math.PI) / 180
 /**
  * LA LUMIÈRE DU DÉCHIREMENT : crème en bordure, blanche au coeur.
  *
@@ -996,14 +1025,21 @@ function emettre(
     const s = curseur.current
     curseur.current = (s + 1) % ETINCELLES
     const o = s * 4
-    // LA SOURCE : tassée derrière le front pendant la découpe — le carré est
-    // ce qui la tasse — étalée sur toute l'ouverture au jaillissement.
-    const r = Math.random()
-    const recul = eclat ? r * 1.15 : r * r * SOURCE_ETINCELLE
+    // LA SOURCE EST LE FRONT, disperse SYMETRIQUEMENT autour de lui pendant la
+    // decoupe -- *le front est la moyenne des naissances, pas leur borne* --
+    // et etalee sur toute l'ouverture au jaillissement.
+    const ecart = eclat
+      ? -Math.random() * 1.15
+      : (Math.random() * 2 - 1) * DISPERSION_SOURCE
+    // ON TIRE L'ANGLE, PUIS ON LE DECOMPOSE. *Une derive ajoutee a un jet
+    // constant ne fait varier l'angle que d'un cone*, et un cone etroit se lit
+    // comme une fontaine : la plage passe de 26 a 150 degres.
+    const ang = ANGLE_MIN + Math.random() * (ANGLE_MAX - ANGLE_MIN)
+    const v = JET * (0.85 + 0.3 * Math.random()) * (eclat ? ECLAT_CLOCHE : 1)
     a[o] = t + (eclat ? Math.random() * ECLAT_ETALE : 0)
-    a[o + 1] = Math.min(1, Math.max(0, front - recul)) - 0.5
-    a[o + 2] = (Math.random() * 2 - 1) * DERIVE_ETINCELLE * (eclat ? 1 : 0.6)
-    a[o + 3] = JET * (0.85 + 0.3 * Math.random()) * (eclat ? ECLAT_CLOCHE : 1)
+    a[o + 1] = Math.min(1, Math.max(0, front + ecart)) - 0.5
+    a[o + 2] = v * Math.cos(ang)
+    a[o + 3] = v * Math.sin(ang)
   }
   vols.needsUpdate = true
 }
