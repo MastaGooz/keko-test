@@ -84,6 +84,13 @@ const COURBE_FRONT = 1.45
  */
 const REL_BOMBE = 0.05
 
+/**
+ * DE COMBIEN LES DEUX ARÊTES DU VENTRE SONT ARRONDIES — 0 vif, 1 sans arête.
+ * *Une arête se voit à sa RUPTURE de pente* : ce congé en rend un peu plus de
+ * la moitié, donc le pli se lit encore, sans le tranchant d'un pliage.
+ */
+const ARRONDI_VENTRE = 0.55
+
 
 const AMPLI = 0.02
 const CHARBON = 0.035
@@ -151,10 +158,10 @@ const VIDE = (() => {
  * c'est précisément ce que Keko lisait comme « pas d'effet de 3D » sur la
  * version d'avant, où seuls les 13 % extérieurs tournaient.
  *
- * **LE SOMMET EST APLATI** (`pow(…, 0.55)`) : un demi-sinus nu donne une
- * goutte, alors qu'un paquet de cartes est une BRIQUE — son dessus est plat et
- * c'est au bord que le film retombe d'un coup. *La puissance inférieure à un
- * est exactement ce qui fait un coussin plutôt qu'un dôme.*
+ * **LE PROFIL EST UN PLATEAU PUIS UNE CHUTE**, et non un dôme : un paquet de
+ * cartes est une BRIQUE — son dessus est plat et c'est au bord que le film
+ * retombe. *C'est la RUPTURE de pente qui dessine une arête, pas la courbure* :
+ * un demi-sinus, même aplati, est dérivable partout et n'en a aucune.
  *
  * **ET IL S'ÉTEINT AUX SOUDURES**, parce que le film y est PINCÉ à plat : le
  * ventre est la place des cartes, pas celle du sachet.
@@ -167,7 +174,21 @@ float ventre(vec2 p) {
          - vec2(${POCHE.demiX.toFixed(4)}, ${POCHE.demiY.toFixed(4)});
   float fx = 1.0 - clamp(d.x / ${POCHE.flancX.toFixed(4)}, 0.0, 1.0);
   float fy = 1.0 - clamp(d.y / ${POCHE.flancY.toFixed(4)}, 0.0, 1.0);
-  return min(fx, fy);
+  float f = min(fx, fy);
+  // LE CONGE DES DEUX ARETES, et il se dose. Keko : « je trouve les aretes un
+  // peu trop marquees, dans lexicodex elles sont un peu moins angulaires,
+  // c'est plus realiste ». *Un film n'a pas de pli vif : il se tend sur
+  // l'angle de la carte, donc il garde un rayon.* On melange la rampe droite
+  // avec sa smoothstep -- a 0 l'arete est vive, a 1 il n'y a plus d'arete du
+  // tout (le dome qu'on avait ecarte), et entre les deux la pente du MILIEU du
+  // flanc ne bouge presque pas pendant que les deux jonctions s'arrondissent.
+  //
+  // **ET LE LISSAGE SE POSE APRES LE MINIMUM**, ce qui est exactement
+  // equivalent a le poser sur chaque axe -- une fonction croissante commute
+  // avec un minimum -- en une ligne au lieu de deux. *La couture diagonale des
+  // coins s'arrondit donc avec le reste, et c'est voulu : c'est une arete
+  // comme les autres.*
+  return mix(f, f * f * (3.0 - 2.0 * f), ${ARRONDI_VENTRE.toFixed(2)});
 }
 `
 

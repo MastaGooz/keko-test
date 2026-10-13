@@ -1916,6 +1916,28 @@ RECTANGULAIRE, quatre flancs et une arête DIAGONALE à chaque coin** — soit
 exactement un drap tendu sur une brique. *Les diagonales se voient à l'écran,
 et c'est elles qui disent qu'il y a un objet dedans.*
 
+#### MAIS UN FILM NE SE PLIE PAS À VIF : LE CONGÉ SE DOSE
+
+Keko, en le voyant : **« je trouve les arêtes un peu trop marquées, dans
+lexicodex elles sont un peu moins angulaires, c'est plus réaliste »**.
+
+*Et c'est la correction du coussin, pas son abandon* : **un film se TEND sur
+l'angle de la carte**, donc il garde un rayon — un pli vif suppose qu'on l'ait
+marqué à l'ongle. Entre le dôme, qui n'a aucune arête, et la chute droite, qui
+en a une parfaite, il y a toute la place pour un congé.
+
+**ON MÉLANGE LA RAMPE DROITE AVEC SA SMOOTHSTEP** (`ARRONDI_VENTRE`, 0,55) :
+à 0 l'arête est vive, à 1 il n'y a plus d'arête du tout, et ***entre les deux
+la pente du MILIEU du flanc ne bouge presque pas pendant que les deux jonctions
+s'arrondissent.*** C'est exactement ce qu'un congé fait, et c'est pour ça qu'un
+seul chiffre suffit : la rupture de pente tombe de 1 à 0,45 — **le pli se lit
+encore, il n'a plus le tranchant d'un pliage.**
+
+**ET LE LISSAGE SE POSE APRÈS LE MINIMUM**, ce qui est *exactement* équivalent
+à le poser sur chaque axe : **une fonction croissante commute avec un
+minimum.** Une ligne au lieu de deux — et la couture diagonale des coins
+s'arrondit avec le reste, ce qui est voulu : c'est une arête comme les autres.
+
 #### CE QUI ÉCRÊTAIT L'ARÊTE ÉTAIT LE GARDE-FOU DU DÔME
 
 **Le clamp du gradient était réglé pour `sin^0,55`**, dont la tangente devient
@@ -1931,7 +1953,7 @@ Trois réglages, et chacun va dans le même sens :
 
 | | dôme | coussin |
 |---|---|---|
-| le profil | `sin^0,55`, dérivable partout | **plateau + flanc droit**, `min` des deux axes |
+| le profil | `sin^0,55`, dérivable partout | **plateau + flanc droit**, `min` des deux axes, **congé à 0,55** |
 | la hauteur | 5,5 % de la largeur | **9,5 %** |
 | la borne du gradient | 3 | **9** |
 | le lobe du reflet | 16 | **26** — *il s'arrête net sur l'arête* |
@@ -2098,6 +2120,8 @@ la même place se désaccorderaient au premier réglage.*
   1,15 de relief) et **la vivacité du reflet** (deux lobes, 150 et 7) : *une
   matière ne se juge qu'en inclinant l'objet* — et **les deux se rejugent
   ENSEMBLE**, puisque le lobe s'étale dès que le relief s'aplatit ;
+- **l'arrondi des arêtes** (`ARRONDI_VENTRE`, 0,55) : *c'est le rayon du pli*,
+  et il ne se juge qu'en inclinant le sachet sous la lumière ;
 - **la hauteur du ventre** (5 % de la largeur du sachet — *elle a déjà baissé
   DEUX fois*, « on dirait qu'il est très épais » puis « il semble encore trop
   épais » ; **c'est à peu près l'épaisseur réelle de cinq cartes**, six
