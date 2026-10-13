@@ -1784,6 +1784,69 @@ cent : l'échelle tombe à 2,1, l'ombre à ±10 %, le relief de la normale de 2,
 1,5. **Ce qui doit rester visible, c'est l'imprimé** ; la matière se sent, elle
 ne se regarde pas.
 
+#### LES BORDS PLONGENT : un sachet est un TUBE APLATI
+
+Keko : **« dans lexicodex y'a un effet d'épaisseur sur le paquet, comme si les
+bords plongeaient un peu »**.
+
+***ET ÇA NE SE PEINT PAS NON PLUS.*** Une bande sombre le long de chaque côté
+serait éclairée de la même façon quel que soit l'angle — donc une ombre peinte,
+exactement le défaut que le froissé avait déjà écarté. **C'est la NORMALE qui
+tourne vers l'arrière**, et l'ombre en découle : incliner le sachet allume alors
+un bord et éteint l'autre, ce qui est précisément ce que fait un cylindre.
+
+**SEULEMENT LES CÔTÉS, et c'est physique** : le haut et le bas sont
+THERMOSOUDÉS — c'est là que le film est PINCÉ à plat — donc ils ne plongent pas,
+ils s'écrasent. *Le dessin dit déjà leur dentelure.*
+
+Deux termes, et le second n'est pas un doublon :
+
+- **la courbure est au CARRÉ** : *un tube ne s'arrondit pas d'un coup, il
+  accélère vers l'arête* ;
+- **le bord s'éteint un peu quoi qu'il arrive**, parce qu'il se dérobe à la
+  lumière. Sans ce terme, un bord tourné VERS la lumière serait plus clair que
+  le centre — *un tube n'a pas ses deux flancs plus lumineux que son ventre.*
+
+**Les deux morceaux le portent**, puisque le champ se lit dans le repère du
+sachet entier : la bande qui s'envole garde son épaisseur, et c'est juste —
+elle est faite du même film.
+
+#### MOINS DE TEXTURE, PLUS DE LUMIÈRE — et les deux se règlent ENSEMBLE
+
+Keko : **« il faudrait moins d'effet de texture, c'est trop chargé, et une
+lumière plus vive qui brille à fond »**.
+
+***LES DEUX NE PORTENT PAS SUR LA MÊME COUCHE, et c'est ce qui les rend
+compatibles*** : **ce qui CHARGE est l'ombre des plis, qui TEINTE l'imprimé** —
+on la lit donc comme une salissure du dessin ; **ce qui BRILLE est le
+spéculaire, qui s'AJOUTE par-dessus.** On baisse ce qui salit, on monte ce qui
+brille.
+
+| | avant | après |
+|---|---|---|
+| l'ombre des plis | ±10 % | **±5 %** |
+| le relief de la normale | 1,5 | 1,15 |
+| les deux harmoniques FINES du froissé | 0,20 / 0,12 | **0,14 / 0,07** |
+| le lobe serré | 34, à 0,34 | **150, à 1,9** |
+| le satiné large | 5, à 0,06 | 7, à 0,05 |
+
+**L'ÉNERGIE DU FROISSÉ VA AUX GRANDES ONDES, la somme reste à 1.** *Ce qui
+charge, ce sont les harmoniques fines* — elles multiplient les crêtes sans rien
+ajouter au relief, et le dessin se lit alors à travers une trame. **Moins de
+plis, pas des plis plus plats.**
+
+**ET UN ÉCLAT QUI BRILLE À FOND DOIT ÊTRE ÉTROIT.** *Première passe ratée, et
+elle a coûté une capture* : j'avais monté l'intensité en ÉLARGISSANT le lobe
+(34 → 26), et le sachet est sorti couvert de nappes blanches qui noyaient le
+bouquet et « 5 CARTES ». **Un spéculaire large est un voile** — le reproche déjà
+fait au souffle du foil.
+
+***ET LE RÉGLAGE DU LOBE DÉPEND DE CELUI DU FROISSÉ.*** Alléger le relief rend
+la normale plus plate, donc `N·H` varie moins : **à exposant égal la tache
+s'étale.** Il faut resserrer d'autant qu'on allège — c'est le PRODUIT des deux
+qui décide de ce qu'on voit, et c'est pour ça qu'on ne peut pas régler « moins
+de texture » et « plus de lumière » l'un après l'autre.
+
 #### LE DOIGT POSÉ PENCHE LE SACHET, comme le survol le penche à la souris
 
 Keko : **« il faudrait pouvoir bouger le booster quand on hover mouse /
@@ -1830,9 +1893,13 @@ la même place se désaccorderaient au premier réglage.*
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la force des confettis et leur nombre** : *une gerbe ne se juge qu'en
   ouvrant des paquets* ;
-- **la finesse des plis** (échelle 2,1), **leur profondeur** (±10 % d'ombre,
-  1,5 de relief) et **la vivacité du reflet** (deux lobes, 34 et 5) : *une
-  matière ne se juge qu'en inclinant l'objet* ;
+- **la finesse des plis** (échelle 2,1), **leur profondeur** (±5 % d'ombre,
+  1,15 de relief) et **la vivacité du reflet** (deux lobes, 150 et 7) : *une
+  matière ne se juge qu'en inclinant l'objet* — et **les deux se rejugent
+  ENSEMBLE**, puisque le lobe s'étale dès que le relief s'aplatit ;
+- **la plongée des bords** (les 13 % extérieurs de chaque côté, 0,95 de
+  courbure, 22 % d'ombre) : *c'est l'épaisseur du sachet, et elle ne se lit
+  qu'en l'inclinant* ;
 - **le balancement de repos** (5,5 et 8,5 centièmes de radian, sur deux
   périodes) : c'est lui qui fait vivre le reflet là où rien ne touche le
   sachet ;

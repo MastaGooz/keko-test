@@ -154,7 +154,13 @@ float froisse(vec2 q) {
   float b = abs(sin(g.x * -5.1 + g.y * 4.3 + 1.3));
   float c = abs(sin(g.x * 14.7 + g.y * -7.9 + 2.7));
   float d = abs(sin(g.x * 26.1 + g.y * 13.3 + 4.1));
-  return a * 0.40 + b * 0.28 + c * 0.20 + d * 0.12;
+  // **L'ÉNERGIE VA AUX GRANDES ONDES**, et la somme reste à 1. Keko : « il
+  // faudrait moins d'effet de texture, c'est trop chargé ». *Ce qui charge,
+  // ce sont les harmoniques FINES* — elles multiplient les crêtes sans rien
+  // ajouter au relief, et le dessin se lit alors à travers une trame. Les
+  // deux dernières rendent les deux tiers de leur poids aux deux premières :
+  // **moins de plis, pas des plis plus plats.**
+  return a * 0.46 + b * 0.33 + c * 0.14 + d * 0.07;
 }
 
 float ondule(float x) {
@@ -234,7 +240,7 @@ void main() {
   float e = 0.035;
   float hx = froisse(q + vec2(e, 0.0)) - froisse(q - vec2(e, 0.0));
   float hy = froisse(q + vec2(0.0, e)) - froisse(q - vec2(0.0, e));
-  vec3 N = normalize(vec3(-hx * 1.5, -hy * 1.5, 1.0));
+  vec3 N = normalize(vec3(-hx * 1.15, -hy * 1.15, 1.0));
 
   // LA LUMIÈRE VIENT DU HAUT-GAUCHE, comme partout dans ce jeu — et c'est
   // L'OBJET QUI TOURNE SOUS ELLE : le penchant du sachet se retranche de la
@@ -246,7 +252,41 @@ void main() {
   // le dessin est posé sur quelque chose de froissé* — sans elle, le reflet
   // flotterait au-dessus d'une image plate.
   float diff = dot(N, L) * 0.5 + 0.5;
-  tex.rgb *= 0.90 + 0.20 * diff;
+  // **ELLE S'ALLÈGE DE MOITIÉ** (±5 % au lieu de ±10). *C'est elle, et non le
+  // reflet, qui faisait « chargé »* : elle TEINTE l'imprimé, donc on la lit
+  // comme une salissure du dessin, là où le spéculaire se lit comme de la
+  // lumière posée dessus. **On baisse ce qui salit, on monte ce qui brille.**
+  tex.rgb *= 0.95 + 0.10 * diff;
+
+  /**
+   * L'ÉPAISSEUR : **un sachet est un TUBE APLATI, donc ses deux bords
+   * plongent vers l'arrière.**
+   *
+   * Keko : « dans lexicodex y'a un effet d'épaisseur sur le paquet, comme si
+   * les bords plongeaient un peu ».
+   *
+   * ***ET ÇA NE SE PEINT PAS NON PLUS.*** Une bande sombre le long de chaque
+   * côté serait éclairée pareil de partout — donc une ombre peinte, le défaut
+   * déjà payé sur le froissé. **C'est la NORMALE qui tourne**, et l'ombre en
+   * découle : incliner le sachet allume alors un bord et éteint l'autre,
+   * exactement ce que fait un cylindre.
+   *
+   * **SEULEMENT LES CÔTÉS, et c'est physique** : le haut et le bas sont
+   * THERMOSOUDÉS — c'est là que le film est pincé à plat — donc ils ne
+   * plongent pas, ils s'écrasent. *Le dessin dit déjà leur dentelure.*
+   *
+   * La courbure est au CARRÉ : un tube ne s'arrondit pas d'un coup, il
+   * accélère vers l'arête.
+   */
+  float versBord = abs(sach.x - 0.5) * 2.0;
+  float joue = smoothstep(0.74, 1.0, versBord);
+  joue *= joue;
+  N = normalize(N + vec3(sign(sach.x - 0.5) * joue * 0.95, 0.0, 0.0));
+  // ET LA LUMIÈRE QUI ARRIVE SUR L'ARÊTE EST RASANTE : le bord s'éteint un
+  // peu quoi qu'il arrive, parce qu'il se dérobe. *Sans ce terme, un bord
+  // tourné vers la lumière serait plus clair que le centre* — un tube n'a pas
+  // ses deux flancs plus lumineux que son ventre.
+  tex.rgb *= 1.0 - joue * 0.22;
 
   // CE QUI SE MESURE LE LONG DU BORD SE COMPTE EN PARTS DU SACHET, PAS DU
   // MORCEAU. Les deux n'ont pas la même hauteur — la bande n'en fait que
@@ -290,9 +330,18 @@ void main() {
   // **DEUX LOBES, et ils ne font pas le même travail** : un SERRÉ qui donne les
   // éclats sur les arêtes, un LARGE qui donne le satiné du reste. *Le serré
   // seul se lit comme des paillettes, le large seul comme du plastique mat.*
-  float sp = pow(max(dot(N, H), 0.0), 34.0);
-  float satin = pow(max(dot(N, H), 0.0), 5.0);
-  corps += vec3(1.0, 0.97, 0.90) * (sp * (0.34 + uSurvol * 0.30) + satin * 0.06);
+  //
+  // **ET IL BRILLE À FOND SANS DÉLAVER, ce qui tient à son ÉTROITESSE.** Keko
+  // voulait « une lumière plus vive qui brille à fond » ; monter l'intensité
+  // en ÉLARGISSANT le lobe donne l'inverse — de grandes nappes blanches, donc
+  // un voile, le défaut déjà payé sur le souffle du foil. *Le relief a baissé
+  // en même temps, donc la normale varie moins : à exposant égal la tache
+  // s'étale.* **On resserre d'autant qu'on allège le froissé**, et c'est le
+  // produit des deux qui décide de ce qu'on voit.
+  float nh = max(dot(N, H), 0.0);
+  float sp = pow(nh, 150.0);
+  float satin = pow(nh, 7.0);
+  corps += vec3(1.0, 0.97, 0.90) * (sp * (1.9 + uSurvol * 0.9) + satin * 0.05);
 
   // L'ÉCLAT : une bande étroite au front, qui FRÉMIT. *Ce n'est plus une
   // braise* — elle allait de l'or chaud au blanc, c'est-à-dire un dégradé de
