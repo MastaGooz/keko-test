@@ -35,7 +35,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
-import { LIGNE_DECHIRURE, RAPPORT_SACHET, textureDuSachet } from './texture-carte.ts'
+import { LIGNE_DECHIRURE, POCHE, RAPPORT_SACHET, textureDuSachet } from './texture-carte.ts'
 
 /**
  * CE QUE DURE L'OUVERTURE, en secondes.
@@ -79,13 +79,6 @@ const COURBE_FRONT = 1.45
  */
 const REL_BOMBE = 0.095
 
-/**
- * OÙ LE FILM QUITTE LA BRIQUE, en parts de la demi-largeur et de la
- * demi-hauteur. *Le paquet est plus haut que large dans sa poche*, donc son
- * plateau monte plus haut qu'il ne va loin.
- */
-const PLAT_X = 0.6
-const PLAT_Y = 0.75
 
 const AMPLI = 0.02
 const CHARBON = 0.035
@@ -162,15 +155,14 @@ const VIDE = (() => {
  * ventre est la place des cartes, pas celle du sachet.
  */
 const VENTRE = `
-/** Un plateau plat jusqu'a \`plat\`, puis le film descend tout droit. */
-float flanc(float t, float plat) {
-  return 1.0 - clamp((t - plat) / (1.0 - plat), 0.0, 1.0);
-}
-
 float ventre(vec2 p) {
-  float tx = abs(p.x - 0.5) * 2.0;
-  float ty = abs(p.y - 0.5) * 2.0;
-  return min(flanc(tx, ${PLAT_X.toFixed(3)}), flanc(ty, ${PLAT_Y.toFixed(3)}));
+  // DEHORS DE LA BOITE DE LA CARTE, sur chaque axe : negatif dessus, donc le
+  // plateau vaut 1 partout ou il y a une carte dessous.
+  vec2 d = abs(p - vec2(0.5, ${POCHE.centreY.toFixed(4)}))
+         - vec2(${POCHE.demiX.toFixed(4)}, ${POCHE.demiY.toFixed(4)});
+  float fx = 1.0 - clamp(d.x / ${POCHE.flancX.toFixed(4)}, 0.0, 1.0);
+  float fy = 1.0 - clamp(d.y / ${POCHE.flancY.toFixed(4)}, 0.0, 1.0);
+  return min(fx, fy);
 }
 `
 

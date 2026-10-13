@@ -4993,7 +4993,50 @@ export function textureDuDos(
  * parce qu'ici le jeu ne parle pas ferronnerie : il parle d'un clavier.
  */
 const SACHET_LARGE = 520
-const SACHET_HAUT = 988
+
+/**
+ * OÙ LE SACHET SE DÉCHIRE, en part de sa hauteur depuis le haut.
+ *
+ * **C'EST UN CONTRAT PARTAGÉ**, pas un réglage du dessin : la texture pose la
+ * ligne pointillée à cette hauteur, et `Sachet3D` y coupe ses deux plans —
+ * celui qui reste, et la bande qui s'envole. *Deux valeurs qui décrivent la
+ * même ligne se désaccordent au premier réglage*, et le raccord est
+ * précisément ce qui ne doit jamais se voir.
+ */
+export const LIGNE_DECHIRURE = 0.145
+
+/**
+ * LA CARTE DANS SA POCHE : sa largeur, en parts de celle du sachet.
+ *
+ * Keko : « il faut que la zone bombée corresponde à la taille d'une carte et
+ * que la zone enfoncée des bords corresponde à juste le bord du paquet ».
+ * **C'est donc elle qui décide de tout le reste** — le bord, la hauteur du
+ * sachet, la place du plateau et la largeur de ses flancs.
+ */
+const PART_CARTE = 0.78
+
+/**
+ * LE BORD DU SACHET AUTOUR DE SA CARTE, en parts de la largeur.
+ *
+ * *Le même tout autour* : c'est la distance sur laquelle le film retombe, et
+ * un emballage n'a pas de raison d'être plus large d'un côté.
+ */
+const BORD_SACHET = (1 - PART_CARTE) / 2
+
+/**
+ * ***SA HAUTEUR SE DÉDUIT, ELLE NE SE CHOISIT PAS.***
+ *
+ * Keko : « le ratio du paquet ne match pas le ratio des cartes, il est trop
+ * haut et pas assez large je crois, à vérifier ». **Mesuré : la carte vaut
+ * 1,40 et le sachet valait 1,90** — donc une carte posée dedans n'en occupait
+ * que 59 % de la hauteur, et tout le reste était du vide.
+ *
+ * Le sachet contient exactement : **la carte, son bord en haut et en bas, et
+ * la bande qu'on déchire.** C'est cette somme, et rien d'autre.
+ */
+const SACHET_HAUT = Math.round(
+  (SACHET_LARGE * (PART_CARTE * (HAUT / LARGE) + 2 * BORD_SACHET)) / (1 - LIGNE_DECHIRURE),
+)
 /**
  * LE RAYON DES ANGLES, en parts de la LARGEUR.
  *
@@ -5010,17 +5053,6 @@ const SACHET_RAYON = RAYON_SIMPLE
  * proportions, et il ne se lirait plus comme le même motif.
  */
 const US = SACHET_LARGE / 100
-
-/**
- * OÙ LE SACHET SE DÉCHIRE, en part de sa hauteur depuis le haut.
- *
- * **C'EST UN CONTRAT PARTAGÉ**, pas un réglage du dessin : la texture pose la
- * ligne pointillée à cette hauteur, et `Sachet3D` y coupe ses deux plans —
- * celui qui reste, et la bande qui s'envole. *Deux valeurs qui décrivent la
- * même ligne se désaccordent au premier réglage*, et le raccord est
- * précisément ce qui ne doit jamais se voir.
- */
-export const LIGNE_DECHIRURE = 0.145
 
 let SACHET: Promise<THREE.CanvasTexture> | null = null
 
@@ -5245,7 +5277,17 @@ async function peindreLeSachet(): Promise<HTMLCanvasElement> {
 
   // LE HALO DE LA MARQUE : de la lumière tombée sur le fond, qui détache le
   // bouquet du motif sans lui donner de bord. *Le flou est dans la matière.*
-  const cyM = h * 0.365
+  /**
+   * **LE BOUQUET SE MESURE À LA BANDE QU'ON LUI LAISSE**, et c'est ce que le
+   * raccourcissement du sachet a rendu visible : *il était dimensionné en
+   * LARGEUR et placé en HAUTEUR*, donc il n'a pas bougé quand la place, elle,
+   * a fondu de 19 % — et sa fusée est venue mordre l'éventail.
+   *
+   * ***Un contenu qui ne suit qu'une dimension déborde dès que l'autre se
+   * resserre*** : la règle déjà payée sur la bande de stats et les onglets du
+   * coffre.
+   */
+  const cyM = h * 0.335
   const halo = ctx.createRadialGradient(l / 2, cyM, l * 0.16, l / 2, cyM, l * 0.46)
   halo.addColorStop(0, '#ffffff2e')
   halo.addColorStop(1, '#ffffff00')
@@ -5255,14 +5297,17 @@ async function peindreLeSachet(): Promise<HTMLCanvasElement> {
   // LA MARQUE : LE BOUQUET DU DOS, en grand. *Le logo d'une collection se
   // compose de ce qu'elle contient* — et c'est déjà lui qui dit à quel jeu ces
   // cartes appartiennent, donc le sachet n'a pas de second signe à porter.
-  await peindreBouquet(ctx, l / 2, cyM, US * 0.92)
+  await peindreBouquet(ctx, l / 2, cyM, US * 0.75)
 
   // LES GLYPHES DE L'ÉVENTAIL S'ATTENDENT AUSSI, et séparément : *le bouquet
   // n'attend que les siens*, donc un emoji de l'éventail qui n'en serait pas
   // partirait en police système — ou en rien du tout.
   await Promise.all(EVENTAIL.map((e) => policeDeLEmoji(e.emoji)))
 
-  peindreEventail(ctx, l / 2, h * 0.655, l)
+  // ET L'ÉVENTAIL REMONTE D'AUTANT : sa pastille vient juste dessous, et
+  // *deux objets mesurés en largeur dans une colonne raccourcie se touchent
+  // par le milieu.*
+  peindreEventail(ctx, l / 2, h * 0.632, l)
   peindrePastilleDuSachet(ctx, l / 2, h * 0.8, '5 CARTES', l * 0.052)
 
   // LES CINQ CRANS, en pastilles : *ce qu'on peut y trouver*, dit par l'échelle
@@ -5321,6 +5366,27 @@ async function peindreLeSachet(): Promise<HTMLCanvasElement> {
 
 /** Le rapport du sachet, pour que le plan qui le porte l'ait aussi. */
 export const RAPPORT_SACHET = SACHET_HAUT / SACHET_LARGE
+
+/**
+ * LA POCHE : **où la carte est dans son sachet**, en UV du sachet, et sur
+ * quelle distance le film retombe autour d'elle.
+ *
+ * *C'est la texture qui le sait* — elle seule connaît la taille d'une carte,
+ * le bord qu'on lui laisse et la bande qu'on déchire. `Sachet3D` ne fait que
+ * la bomber. **Deux endroits qui décriraient la même boîte se
+ * désaccorderaient au premier réglage.**
+ *
+ * **ELLE N'EST PAS CENTRÉE EN HAUTEUR** : la carte vit sous la ligne de
+ * déchirure, donc son milieu est celui de ce qui reste — *un plateau centré
+ * sur le sachet déborderait dans la bande qui s'envole.*
+ */
+export const POCHE = {
+  demiX: PART_CARTE / 2,
+  demiY: (PART_CARTE * (HAUT / LARGE)) / RAPPORT_SACHET / 2,
+  centreY: (1 - LIGNE_DECHIRURE) / 2,
+  flancX: BORD_SACHET,
+  flancY: BORD_SACHET / RAPPORT_SACHET,
+}
 
 /**
  * IL ATTEND LA POLICE, comme tout ce qui peint du texte dans ce projet.

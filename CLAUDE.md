@@ -1830,6 +1830,58 @@ qu'il y a un ventre.
 **IL LUI FAUT DONC DES SEGMENTS** : *un plan à quatre sommets ne peut pas se
 bomber*, il n'a rien entre ses coins à déplacer.
 
+#### LE SACHET SE DÉDUIT DE SA CARTE — son rapport, son plateau, son bord
+
+Keko : **« le ratio du paquet ne match pas le ratio des cartes (il est trop
+haut et pas assez large je crois, à vérifier) ; il faut que la zone bombée
+corresponde à la taille d'une carte et que la zone enfoncée des bords
+corresponde à juste le bord du paquet (un peu trop gros là) »**.
+
+***MESURÉ, ET IL AVAIT RAISON : la carte vaut 1,40 et le sachet valait 1,90.***
+Une carte posée dedans n'en occupait que **59 % de la hauteur** — tout le reste
+était du vide, et c'est ça qui se lisait comme « trop haut ».
+
+**ET LES TROIS CHIFFRES N'EN FONT QU'UN.** Un sachet contient exactement : la
+carte, son bord tout autour, et la bande qu'on déchire. *Donc rien là-dedans ne
+se choisit* — une seule valeur est libre, **la part de largeur que prend la
+carte** (78 %), et tout le reste en découle :
+
+| | d'où ça vient |
+|---|---|
+| le **bord** | ce qui reste de la largeur, partagé en deux : 11 % |
+| la **hauteur** du sachet | `(carte + deux bords) / (1 − bande de déchirure)` → **rapport 1,535** |
+| le **plateau** du coussin | **la boîte de la carte**, exactement |
+| la **largeur des flancs** | **le bord**, et le même tout autour |
+
+*Le flanc est donc deux fois plus étroit qu'avant* (11 % contre 20), ce qui
+était l'autre moitié de la demande.
+
+**LE PLATEAU N'EST PAS CENTRÉ EN HAUTEUR**, et il ne doit pas l'être : la carte
+vit SOUS la ligne de déchirure, donc son milieu est celui de ce qui reste.
+*Centré sur le sachet, le plateau déborderait dans la bande qui s'envole.*
+
+**ET LA POCHE VIT DANS LA TEXTURE, PAS DANS LE NUANCEUR** (`POCHE`) : *elle
+seule connaît la taille d'une carte, le bord qu'on lui laisse et la bande qu'on
+déchire*, et `Sachet3D` ne fait que la bomber. **Deux endroits qui décriraient
+la même boîte se désaccorderaient au premier réglage** — c'est déjà le contrat
+de `LIGNE_DECHIRURE`.
+
+#### ET LE DESSIN A DÛ SE REFAIRE UNE PLACE — la leçon était déjà écrite
+
+Le sachet ayant perdu **19 % de hauteur**, le bouquet est venu mordre
+l'éventail et la pastille a touché les cartes.
+
+***PARCE QUE CES OBJETS SONT DIMENSIONNÉS EN LARGEUR ET PLACÉS EN HAUTEUR*** :
+rien dans leur taille ne savait que la colonne s'était raccourcie. **Un contenu
+qui ne suit qu'une dimension déborde dès que l'autre se resserre** — la règle
+déjà payée sur la bande de stats et sur les onglets du coffre, et qui se repaie
+ici à la première fois qu'un format bouge.
+
+Le bouquet tombe de `US × 0,92` à `US × 0,75` et remonte à 0,335 ; l'éventail
+remonte à 0,632 pour rendre son air à la pastille. *Le vrai correctif serait de
+les mesurer à la bande qu'on leur laisse* — c'est à faire le jour où le format
+rebouge.
+
 #### UNE ARÊTE EST UNE RUPTURE DE PENTE, PAS UNE COURBURE FORTE
 
 Keko, en voyant le coussin : **« les arêtes du coussin qui ressortent ne sont
@@ -2033,10 +2085,12 @@ la même place se désaccorderaient au premier réglage.*
   1,15 de relief) et **la vivacité du reflet** (deux lobes, 150 et 7) : *une
   matière ne se juge qu'en inclinant l'objet* — et **les deux se rejugent
   ENSEMBLE**, puisque le lobe s'étale dès que le relief s'aplatit ;
-- **la hauteur du ventre** (9,5 % de la largeur du sachet), **où le film quitte
-  la brique** (60 % de la demi-largeur, 75 % de la demi-hauteur) et **la force
-  de son reflet** (×2,15 au repos) : *c'est le volume du paquet, et il ne se lit
-  qu'en inclinant* ;
+- **la hauteur du ventre** (9,5 % de la largeur du sachet) et **la force de son
+  reflet** (×2,15 au repos) : *c'est le volume du paquet, et il ne se lit qu'en
+  inclinant* ;
+- **la part de largeur que prend la carte** (78 %) : *c'est la seule valeur
+  libre du sachet* — elle décide de son bord, de sa hauteur, de son plateau et
+  de ses flancs ;
 - **le balancement de repos** (5,5 et 8,5 centièmes de radian, sur deux
   périodes) : c'est lui qui fait vivre le reflet là où rien ne touche le
   sachet ;
