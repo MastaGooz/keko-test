@@ -2047,6 +2047,53 @@ c'est une règle : un exposant élevé transforme un écart de quelques pour cen
 un écart du simple au double. *Chercher un défaut de lumière dans le terme le
 plus doux est une fausse piste.*
 
+#### L'INCIDENCE EST UNE SECONDE GRANDEUR, ET C'EST ELLE QUI DONNE LE REFLET DE REPOS
+
+Keko : **« on peut passer une lumière un poil plus "de face" ? Je trouve que le
+paquet manque de reflet et de lumière en position neutre »**.
+
+***ET ÇA NE TOUCHE PAS À LA DIAGONALE DU JEU*** — c'est tout l'intérêt : une
+direction de lumière porte DEUX grandeurs indépendantes, **sa diagonale dans le
+plan de l'écran** (x = −y, le haut-gauche que tout le projet respecte) et **son
+INCIDENCE**, c'est-à-dire sa part de z. On ne bouge que la seconde : 0,719 →
+0,80, donc **44° de la normale → 36,9°.**
+
+**ET LE CALCUL DIT POURQUOI LE REPOS ÉTAIT MORT.** Le demi-vecteur vaut la
+moitié de l'angle d'incidence, donc sur le plateau `dot(N, H) = cos(θ/2)` — et
+un lobe en puissance 26 écrase tout ce qui n'est pas quasi frontal :
+
+| incidence | `dot(N,H)` | **lustre** | éclats (lobe 46) |
+|---|---|---|---|
+| **44,0°** (avant) | 0,927 | **0,140** | 0,031 |
+| **36,9°** (après) | 0,949 | **0,254** | 0,089 |
+
+*Le plateau ne renvoyait que quatorze pour cent de son lustre au repos* — et
+c'est exactement ce que Keko lisait. **Sept degrés d'incidence le font monter
+de 81 %, et les éclats teintés de 187 %** : un exposant élevé ne rend pas
+l'écart proportionnel, il l'amplifie — la règle déjà payée quand la clé est
+passée de 36° à 45° dans le plan.
+
+#### ET LE GALBE SE LIT DEUX FOIS MIEUX SANS REDEVENIR ANGULEUX
+
+*C'était le risque*, puisqu'on venait de passer deux commits à adoucir le
+relief. **Mesuré à balancement figé, sur la colonne du flanc gauche** :
+
+| | luminance | saturation | **relief du flanc** | montée max | étalée sur |
+|---|---|---|---|---|---|
+| avant | 99,2 | 0,730 | 27,4 | 5,76 / px | 23 px |
+| **après** | **113,5** | 0,699 | **53,6** | 6,60 / px | 28 px |
+
+***LE RELIEF DOUBLE ET LA TRANSITION NE SE RAIDIT PAS***, parce que les deux
+grandeurs ne sont pas la même : **ce qui a monté est le CONTRASTE de lumière
+sur le galbe, pas la pente de la surface.** La montée reste à 6,6 par pixel
+contre 10,35 avant les deux passes d'adoucissement, et elle s'étale toujours
+sur 28 pixels contre 4.
+
+**ET L'IMPRIMÉ NE SE DÉLAVE PAS** : le « Ouvrir ici » garde son encre à 250 sur
+255 — *c'est le fond qui monte, pas le texte qui s'efface* — et la saturation du
+film ne perd que 4 %. La métallicité tient sa promesse : **un éclat de la
+couleur du sachet ne peut pas pousser le sachet vers le blanc.**
+
 #### ET LE CÔTÉ DROIT GAGNAIT QUAND MÊME : les FORCES n'étaient pas relevées
 
 Keko, après la correction d'angle : **« c'est bizarre, le côté droit semble
@@ -2629,9 +2676,14 @@ la même place se désaccorderaient au premier réglage.*
   *leurs directions, leurs couleurs ET leur rapport d'intensité sont relevés chez
   eux*), **le serré de leur lobe** (46) et **le gain du survol** (1,3) :
   *c'est le « flashy quand ça bouge »*, et il ne se juge qu'en inclinant.
-  **La clé est à 45° de la verticale**, la diagonale du jeu ; les trois autres
-  gardent leurs directions relevées chez eux, et *elles tirent un peu à droite* —
-  le cyan et le violet y sont, le rose seul tient la gauche ;
+  **La clé garde la diagonale du jeu dans le plan de l'écran** (x = −y) et son
+  **INCIDENCE vaut 36,9°** (part de z à 0,80) : *c'est elle, et elle seule, qui
+  décide du reflet en position NEUTRE* — un lobe en puissance 26 ne rend que
+  14 % à 44° contre 25 % à 36,9°. **C'est le seul des quatre chiffres relevés
+  qu'on ait écarté**, et c'est assumé : Keko a demandé plus de lumière de face.
+  Les trois autres gardent leurs directions relevées chez eux, et *elles tirent
+  un peu à droite* — le cyan et le violet y sont, le rose seul tient la
+  gauche ;
 - **le gain d'ensemble des lampes** (2,1) et **la métallicité** (0,85) : *c'est
   le couple qui décide du « flashy »* — le gain donne l'intensité, la
   métallicité décide de ce qu'elle garde de la couleur du film ;

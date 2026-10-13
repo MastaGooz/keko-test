@@ -231,10 +231,17 @@ const SOURCES: ReadonlyArray<{
   // la clé ne l'accompagne plus, il la contredit.*
   // la clé, blanche : c'est elle qui modèle le ventre et porte le lustre
   // LA CLÉ, blanche : elle modèle le ventre, porte le lustre et allume les
-  // éclats des plis. **SA DIRECTION EST À 45° DANS LE PLAN DE L'ÉCRAN** — c'est
-  // la diagonale haut-gauche que tout le jeu respecte, et chez eux elle penchait
-  // de 36°, donc le flanc du HAUT prenait tout et celui de GAUCHE rien.
-  { dir: [-0.492, 0.492, 0.719], couleur: [1, 1, 1], force: 0.52 },
+  // éclats des plis. **SA DIAGONALE EST À 45° DANS LE PLAN DE L'ÉCRAN** (x =
+  // -y) — celle que tout le jeu respecte, et chez eux elle penchait de 36°,
+  // donc le flanc du HAUT prenait tout et celui de GAUCHE rien.
+  //
+  // ***ET SON INCIDENCE EST UNE SECONDE GRANDEUR, INDEPENDANTE DE CETTE
+  // DIAGONALE*** : c'est sa part de z, donc de combien elle arrive DE FACE.
+  // Keko : « le paquet manque de reflet et de lumiere en position neutre ».
+  // Elle etait a 44 degres de la normale, donc le demi-vecteur a 22, et un
+  // lobe en puissance 26 n'y rend que 14 pour cent -- le plateau ne pouvait
+  // pas briller au repos. A 36,9 degres il en rend 25.
+  { dir: [-0.424, 0.424, 0.8], couleur: [1, 1, 1], force: 0.52 },
   // le cyan, à droite — la plus haute de leurs dalles
   { dir: [0.949, 0, 0.316], couleur: [0.29, 0.86, 1], force: 0.226 },
   // le rose, en bas à gauche
