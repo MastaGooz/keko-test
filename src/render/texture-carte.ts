@@ -5376,14 +5376,24 @@ export const RAPPORT_SACHET = SACHET_HAUT / SACHET_LARGE
  * la bomber. **Deux endroits qui décriraient la même boîte se
  * désaccorderaient au premier réglage.**
  *
- * **ELLE N'EST PAS CENTRÉE EN HAUTEUR** : la carte vit sous la ligne de
- * déchirure, donc son milieu est celui de ce qui reste — *un plateau centré
- * sur le sachet déborderait dans la bande qui s'envole.*
+ * **ELLE EST CENTRÉE SUR LE SACHET ENTIER.** Keko : « il faut que la hauteur
+ * entre l'arête supérieure et le haut du paquet soit la même qu'entre l'arête
+ * d'en bas et le bas du paquet ».
+ *
+ * *Elle était centrée sur la zone SOUS la déchirure*, ce qui paraît juste —
+ * c'est là que la carte tient — **et donnait 0,217 d'air en haut contre 0,072
+ * en bas**, soit trois fois plus. ***Un coussin décentré se lit comme un
+ * coussin de travers***, et l'oeil compare au bord de l'objet, pas au bord de
+ * sa partie utile.
+ *
+ * **Et l'arête haute tombe alors sur le pointillé** (0,8558 contre 0,8550) :
+ * *le film se plie là où on l'ouvre*, ce qui n'était pas cherché mais qui
+ * tombe bien.
  */
 export const POCHE = {
   demiX: PART_CARTE / 2,
   demiY: (PART_CARTE * (HAUT / LARGE)) / RAPPORT_SACHET / 2,
-  centreY: (1 - LIGNE_DECHIRURE) / 2,
+  centreY: 0.5,
   flancX: BORD_SACHET,
   flancY: BORD_SACHET / RAPPORT_SACHET,
 }

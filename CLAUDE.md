@@ -1856,9 +1856,22 @@ carte** (78 %), et tout le reste en découle :
 *Le flanc est donc deux fois plus étroit qu'avant* (11 % contre 20), ce qui
 était l'autre moitié de la demande.
 
-**LE PLATEAU N'EST PAS CENTRÉ EN HAUTEUR**, et il ne doit pas l'être : la carte
-vit SOUS la ligne de déchirure, donc son milieu est celui de ce qui reste.
-*Centré sur le sachet, le plateau déborderait dans la bande qui s'envole.*
+#### ET LE PLATEAU SE CENTRE SUR LE SACHET ENTIER, pas sur sa partie utile
+
+Keko : **« il faut que la hauteur entre l'arête supérieure et le haut du paquet
+soit la même qu'entre l'arête d'en bas et le bas du paquet — actuellement la
+partie haute est plus longue »**.
+
+*Je l'avais centré sur la zone SOUS la déchirure*, ce qui paraît juste puisque
+c'est là que la carte tient — **et donnait 0,217 d'air en haut contre 0,072 en
+bas**, soit trois fois plus. ***Un coussin décentré se lit comme un coussin de
+travers*** : **l'oeil compare au bord de l'OBJET, pas au bord de sa partie
+utile**, et il n'a aucune raison de savoir où la carte s'arrête.
+
+**Et l'arête haute tombe alors sur le pointillé** — 0,8558 contre 0,8550, à
+huit dix-millièmes près. *Le film se plie là où on l'ouvre* : ce n'était pas
+cherché, et c'est la conséquence arithmétique d'avoir bâti la hauteur du sachet
+sur `bord + carte + bord + bande`.
 
 **ET LA POCHE VIT DANS LA TEXTURE, PAS DANS LE NUANCEUR** (`POCHE`) : *elle
 seule connaît la taille d'une carte, le bord qu'on lui laisse et la bande qu'on
@@ -2085,8 +2098,9 @@ la même place se désaccorderaient au premier réglage.*
   1,15 de relief) et **la vivacité du reflet** (deux lobes, 150 et 7) : *une
   matière ne se juge qu'en inclinant l'objet* — et **les deux se rejugent
   ENSEMBLE**, puisque le lobe s'étale dès que le relief s'aplatit ;
-- **la hauteur du ventre** (9,5 % de la largeur du sachet) et **la force de son
-  reflet** (×2,15 au repos) : *c'est le volume du paquet, et il ne se lit qu'en
+- **la hauteur du ventre** (7 % de la largeur du sachet — *elle a déjà baissé
+  d'un quart*, « on dirait qu'il est très épais ») et **la force de son reflet**
+  (×2,15 au repos) : *c'est le volume du paquet, et il ne se lit qu'en
   inclinant* ;
 - **la part de largeur que prend la carte** (78 %) : *c'est la seule valeur
   libre du sachet* — elle décide de son bord, de sa hauteur, de son plateau et

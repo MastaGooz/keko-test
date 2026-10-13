@@ -77,7 +77,7 @@ const COURBE_FRONT = 1.45
  * *Un paquet de cinq cartes est une brique mince* — au-delà, la poche se lit
  * comme un ballon.
  */
-const REL_BOMBE = 0.095
+const REL_BOMBE = 0.07
 
 
 const AMPLI = 0.02
