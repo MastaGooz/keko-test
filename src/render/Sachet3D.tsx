@@ -287,6 +287,40 @@ const BRAISE = 0.013
 const L = LIGNE_DECHIRURE
 
 /**
+ * LA BANDE SE RECOURBE VERS L'AVANT PENDANT QU'ON LA DÉCHIRE.
+ *
+ * Keko : **« quand on déchire le paquet, la petite bande en haut, on peut faire
+ * en sorte qu'elle se plie comme dans lexicodex ? Durant le déchirement elle se
+ * recourbe vers l'avant »**.
+ *
+ * ***RELEVÉ DANS LEUR CODE*** (`setTear`, qui déplace les sommets de la bande au
+ * CPU) : derrière le front, chaque sommet TOURNE autour de l'axe de la fente,
+ * vers la caméra, d'un angle qui croît avec sa hauteur au-dessus d'elle —
+ * `d = l · (1,1 + u · 1,4)` dans leurs unités (sachet de 3 sur 5) — et la
+ * bande entière se soulève d'un rien. `l` est une rampe lissée sur 0,35 de
+ * largeur derrière le front : *le film ne se plie pas d'un bloc, il se
+ * recourbe à mesure qu'il se décolle.*
+ *
+ * **ICI C'EST LE NUANCEUR DE SOMMETS QUI LE FAIT**, pas le CPU : la bande a
+ * déjà sa matière à elle, et le front y arrive déjà (`uFront`). Les chiffres
+ * sont les leurs, convertis en LARGEURS DE SACHET — leur unité de hauteur vaut
+ * un tiers de largeur, donc 1,4 par unité fait 4,2 par largeur. Au sommet de
+ * notre bande (0,22 largeur) l'angle atteint **2,0 rad** : *le haut passe la
+ * verticale et retombe devant*, comme un bord de papier qui s'enroule.
+ *
+ * **ET ELLE MONTRE SON ENVERS**, puisqu'elle se retourne : la face arrière est
+ * le crème du support, celui que l'arrache met déjà à nu.
+ */
+/** La rampe du pli derrière le front, en part de la largeur (la leur). */
+const PLI_RAMPE = 0.35
+/** L'angle à la fente même, en radians (le leur). */
+const PLI_BASE = 1.1
+/** Ce que l'angle gagne par largeur de sachet au-dessus de la fente. */
+const PLI_PENTE = 4.2
+/** De combien la bande pliée se soulève, en largeurs : x, y, z (les leurs ÷ 3). */
+const PLI_LEVEE = [0.02, 0.033, 0.053] as const
+
+/**
  * JUSQU'OÙ LE DOIGT PEUT TIRER, en part de la course du front.
  *
  * *Un geste prépare, le relâchement conclut* : sans cette borne, tirer très
@@ -507,11 +541,22 @@ function matiereDuMorceau(estLeCorps: boolean): THREE.ShaderMaterial {
       uSurvol: { value: 0 },
       // DE COMBIEN LES CARTES BOMBENT LE FILM, en unités de scène.
       uBombe: { value: 0 },
+      // LE PLI : 1 sur la bande, 0 sur le corps — *seul ce qu'on arrache se
+      // recourbe.* La fente est à `uFente` sous l'origine du plan, et la
+      // largeur du sachet convertit les chiffres de lexicodex en scène.
+      uPli: { value: 0 },
+      uFente: { value: 0 },
+      uTaille: { value: 1 },
     },
     vertexShader: `uniform float uV0;
 uniform float uV1;
 uniform float uBombe;
+uniform float uFront;
+uniform float uPli;
+uniform float uFente;
+uniform float uTaille;
 varying vec2 vUv;
+varying float vPli;
 ${VENTRE}
 void main() {
   vUv = uv;
@@ -520,6 +565,24 @@ void main() {
   vec2 sach = vec2(uv.x, mix(uV0, uV1, uv.y));
   vec3 pos = position;
   pos.z += ventre(sach) * uBombe;
+
+  // LE PLI DE LA BANDE : derriere le front, elle TOURNE autour de l'axe de la
+  // fente vers la camera, d'autant plus que le sommet est haut au-dessus
+  // d'elle -- c'est le setTear de lexicodex, porte au nuanceur. La rampe l
+  // se lisse sur PLI_RAMPE de largeur : *le film se recourbe a mesure qu'il
+  // se decolle, il ne se plie pas d'un bloc.* Sur le corps uPli vaut zero,
+  // donc rien ne bouge.
+  float l = uPli * smoothstep(0.0, ${PLI_RAMPE.toFixed(2)}, uFront - uv.x);
+  float u = pos.y + uFente;
+  float d = l * (${PLI_BASE.toFixed(2)} + ${PLI_PENTE.toFixed(2)} * u / uTaille);
+  float c = cos(d);
+  float sn = sin(d);
+  pos.y = -uFente + u * c - pos.z * sn;
+  pos.z = u * sn + pos.z * c;
+  // ET ELLE SE SOULEVE D'UN RIEN, comme la leur : ce qu'on decolle ne reste
+  // pas colle a ce dont on le decolle.
+  pos += l * uTaille * vec3(${PLI_LEVEE[0].toFixed(3)}, ${PLI_LEVEE[1].toFixed(3)}, ${PLI_LEVEE[2].toFixed(3)});
+  vPli = d;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }`,
     fragmentShader: `uniform sampler2D uSachet;
@@ -532,6 +595,7 @@ uniform float uFondu;
 uniform vec2 uPenche;
 uniform float uSurvol;
 varying vec2 vUv;
+varying float vPli;
 ${VENTRE}
 ${DECHIRURE}
 
@@ -594,6 +658,17 @@ void main() {
     -(gx * ${REL_BOMBE.toFixed(4)} + hx * pli),
     -(gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)} + hy * pli),
     1.0));
+
+  // LA BANDE PLIEE TOURNE SES NORMALES AVEC ELLE : *une surface qui se
+  // recourbe vers la camera doit s'eclairer comme telle*, sinon le pli ne
+  // serait qu'une silhouette. Meme rotation que les sommets, autour de l'axe
+  // de la fente. Sur le corps vPli vaut zero.
+  {
+    float cp = cos(vPli);
+    float sp = sin(vPli);
+    Nv = vec3(Nv.x, Nv.y * cp - Nv.z * sp, Nv.y * sp + Nv.z * cp);
+    N = vec3(N.x, N.y * cp - N.z * sp, N.y * sp + N.z * cp);
+  }
 
   // LE PENCHANT S'APPLIQUE AUX QUATRE SOURCES, et pas à la clé seule : *elles
   // sont fixes dans la pièce et c'est le sachet qui tourne*, donc elles
@@ -805,6 +880,17 @@ void main() {
   float fremit = 0.86 + 0.14 * sin(vUv.x * 41.0 + uTemps * 11.0);
   float eclat = exp(-pow(dedans / (${BRAISE} * ech), 2.0)) * fremit * max(vif, passe * 0.22);
   vec3 lueur = mix(${ton(FENTE_BORD)}, ${ton(FENTE_COEUR)}, smoothstep(0.4, 1.0, eclat));
+
+  // L'ENVERS : quand la bande passe la verticale, on voit son DOS -- et le dos
+  // d'un film imprime est son support, le creme que l'arrache met deja a nu.
+  // *Un dos qui garderait l'imprime ferait une bande imprimee des deux cotes.*
+  // Il garde le modele du ventre, normale retournee, et un lustre discret.
+  if (!gl_FrontFacing) {
+    vec3 Nd = -Nv;
+    float amb = 0.62 + 0.52 * (dot(Nd, L) * 0.5 + 0.5);
+    corps = vec3(1.0, 0.98, 0.94) * amb * 0.92
+          + vec3(1.0) * pow(max(dot(Nd, H), 0.0), 26.0) * 0.25;
+  }
 
   float a = max(tex.a, eclat * 0.9) * uFondu;
   gl_FragColor = vec4(corps + lueur * eclat, a);
@@ -1443,7 +1529,13 @@ export function Sachet3D({
   /** Ce qui emporte le film vers le bas : *le corps seul, pas la bande.* */
   const chute = useRef<THREE.Group>(null)
   const corps = useMemo(() => matiereDuMorceau(true), [])
-  const bandeMat = useMemo(() => matiereDuMorceau(false), [])
+  const bandeMat = useMemo(() => {
+    const m = matiereDuMorceau(false)
+    // ELLE SE RETOURNE EN SE PLIANT, donc elle a un dos à montrer : voir
+    // l'envers dans le nuanceur. Le corps, lui, ne se retourne jamais.
+    m.side = THREE.DoubleSide
+    return m
+  }, [])
   const gerbe = useMemo(() => matiereDeLaGerbe(), [])
   const semis = useMemo(() => semisDesEtincelles(), [])
   /** Les naissances : c'est le CPU qui les écrit, une par étincelle émise. */
@@ -1525,7 +1617,41 @@ export function Sachet3D({
     // *c'est une seule poche*, et le raccord ne doit pas se voir.
     corps.uniforms.uBombe!.value = taille * REL_BOMBE
     bandeMat.uniforms.uBombe!.value = taille * REL_BOMBE
-  }, [corps, bandeMat])
+    // LE PLI, sur la bande seule : sa fente est à une demi-bande sous l'origine
+    // de son plan, et c'est la largeur du sachet qui convertit les chiffres
+    // relevés chez lexicodex.
+    bandeMat.uniforms.uPli!.value = 1
+    bandeMat.uniforms.uFente!.value = hBande / 2
+    bandeMat.uniforms.uTaille!.value = taille
+    corps.uniforms.uTaille!.value = taille
+  }, [corps, bandeMat, taille, hBande])
+
+  /**
+   * LE PLAN DE LA BANDE, et son ordre de dessin est RENVERSÉ.
+   *
+   * Un plan se dessine du HAUT vers le bas, et la matière n'écrit pas la
+   * profondeur : *le dernier triangle dessiné gagne.* Une fois la bande pliée,
+   * son sommet passe la verticale et retombe DEVANT sa base — dessiné en
+   * premier, il se faisait recouvrir par elle sur une bande de quelques pixels
+   * au-dessus de la fente. **On renverse donc les triangles** : la base
+   * d'abord, le sommet replié en dernier. *Deux fois plus de rangées* qu'avant,
+   * parce qu'un pli de deux radians sur dix segments montre ses facettes.
+   */
+  const planBande = useMemo(() => {
+    const g = new THREE.PlaneGeometry(taille, hBande, 36, 24)
+    const idx = g.getIndex()!
+    const a = idx.array
+    const r = new Uint16Array(a.length)
+    for (let i = 0; i < a.length; i += 3) {
+      const j = a.length - 3 - i
+      r[i] = a[j]!
+      r[i + 1] = a[j + 1]!
+      r[i + 2] = a[j + 2]!
+    }
+    g.setIndex(new THREE.BufferAttribute(r, 1))
+    return g
+  }, [taille, hBande])
+  useEffect(() => () => planBande.dispose(), [planBande])
 
   // LES MATIÈRES SE JETTENT AVEC LE COMPOSANT : un `ShaderMaterial` garde son
   // programme compilé, et l'écran en monte trois par paquet ouvert. Le curseur
@@ -1897,6 +2023,7 @@ export function Sachet3D({
         scale={taille}
         frustumCulled={false}
         raycast={() => null}
+        renderOrder={2}
       />
 
       {/* LE RELIEF porte l'inclinaison et l'avancée. Il lui faut son propre
@@ -1927,9 +2054,20 @@ export function Sachet3D({
             plan est à l'origine du groupe, sinon la rotation la ferait tourner
             autour du centre du SACHET et l'enverrait décrire un cercle. *Un
             objet tournoie sur lui-même, donc son pivot est son centre.* */}
+        {/* ELLE SE DESSINE APRÈS LE CORPS, quoi qu'en dise la profondeur :
+            pliée, son sommet retombe DEVANT lui, et le tri des transparents se
+            fait sur la place de l'objet, pas sur ses sommets — selon le
+            penchant, il la mettait derrière. La gerbe passe encore après,
+            *une étincelle ne se cache pas sous un film qui n'écrit pas sa
+            profondeur.* */}
         <group ref={bande} position={[0, hCorps / 2, 0]}>
-          <mesh onPointerDown={prendre} onPointerMove={viser} onPointerOut={quitter}>
-            <planeGeometry args={[taille, hBande, 36, 10]} />
+          <mesh
+            geometry={planBande}
+            renderOrder={1}
+            onPointerDown={prendre}
+            onPointerMove={viser}
+            onPointerOut={quitter}
+          >
             <primitive object={bandeMat} attach="material" />
           </mesh>
         </group>

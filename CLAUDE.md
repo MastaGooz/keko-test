@@ -2216,6 +2216,71 @@ en paysage. *C'est le prix d'une cloche d'une demi-largeur de sachet sur un
 format qui borne le sachet par sa hauteur* — en portrait, le format visé, il
 reste 1,25 largeur au-dessus de la fente.
 
+#### LA BANDE SE RECOURBE VERS L'AVANT — c'est le `setTear` de lexicodex, au nuanceur
+
+Keko : **« quand on déchire le paquet, la petite bande en haut, on peut faire en
+sorte qu'elle se plie comme dans lexicodex ? Durant le déchirement elle se
+recourbe vers l'avant »**.
+
+***RELEVÉ DANS LEUR CODE, ET CETTE FOIS IL N'Y AVAIT PAS DE SHADER À
+CHERCHER*** : leur bande est déplacée **au CPU**, sommet par sommet, dans
+`setTear`. Derrière le front, chaque sommet TOURNE autour de l'axe de la fente
+vers la caméra, d'un angle qui croît avec sa hauteur au-dessus d'elle —
+`d = l · (1,1 + u · 1,4)` dans leurs unités (sachet de 3 sur 5) — et la bande
+entière se soulève d'un rien (`x += 0,06·l`, `y += 0,1·l`, `z += 0,16·l`). `l`
+est une rampe lissée sur **0,35 de largeur** derrière le front : *le film se
+recourbe à mesure qu'il se décolle, il ne se plie pas d'un bloc.*
+
+**ICI C'EST LE NUANCEUR DE SOMMETS QUI LE FAIT.** La bande a déjà sa matière à
+elle et le front y arrive déjà (`uFront`) ; il suffit de trois uniformes — le
+drapeau du pli, la place de la fente sous l'origine du plan, la largeur du
+sachet. *Les chiffres sont les leurs, convertis en LARGEURS DE SACHET* : leur
+unité de hauteur vaut un tiers de largeur, donc 1,4 par unité fait **4,2 par
+largeur**, et les trois soulèvements se divisent par trois.
+
+| | chez eux | chez nous |
+|---|---|---|
+| angle à la fente | 1,1 rad | **1,1 rad** |
+| pente de l'angle | 1,4 / unité | **4,2 / largeur** |
+| hauteur de la bande | 0,575 unité | 0,22 largeur |
+| **angle au sommet** | **1,9 rad** (109°) | **2,0 rad** (117°) |
+
+**Le sommet PASSE la verticale et retombe devant** — c'est ce qui fait lire un
+bord de papier qui s'enroule plutôt qu'un volet qui s'ouvre. Vu à l'écran sur
+`?gerbe` : la bande se roule vers l'avant, dents comprises, et s'envole roulée.
+
+Quatre choses qui le portent, et trois ont coûté un raisonnement :
+
+- **ELLE MONTRE SON ENVERS**, puisqu'elle se retourne : `DoubleSide` sur la
+  bande seule, et la face arrière est le **crème du support** — celui que
+  l'arrache met déjà à nu, donc pas une couleur de plus. *Sans ça le haut de
+  la bande disparaissait* : une face arrière en `FrontSide` est écartée, et on
+  lisait un trou ;
+- **LES NORMALES TOURNENT AVEC LES SOMMETS.** Le fragment calcule l'éclairage
+  sur la normale du ventre et celle des plis, toutes deux face à la caméra :
+  *une surface qui se recourbe vers la caméra doit s'éclairer comme telle*,
+  sinon le pli ne serait qu'une silhouette. L'angle voyage en `varying`, et la
+  même rotation s'applique aux deux normales ;
+- **L'ORDRE DES TRIANGLES DE LA BANDE EST RENVERSÉ.** Un plan se dessine du
+  haut vers le bas, et la matière n'écrit pas la profondeur — *le dernier
+  triangle dessiné gagne*. Le sommet replié retombe DEVANT la base de la
+  bande : dessiné en premier, il se faisait recouvrir par elle sur quelques
+  pixels au-dessus de la fente. Les indices sont retournés par triplets, la
+  base d'abord, le sommet en dernier — **et sans écrire la profondeur**, ce qui
+  aurait caché les étincelles derrière une bande en train de s'effacer ;
+- **LA BANDE SE DESSINE APRÈS LE CORPS, QUOI QU'EN DISE LA PROFONDEUR**
+  (`renderOrder`). Le tri des transparents se fait sur la PLACE de l'objet,
+  pas sur ses sommets : selon le penchant, la bande tombait derrière le corps
+  et son sommet replié passait dessous. **La gerbe passe encore après** — *une
+  étincelle ne se cache pas sous un film qui n'écrit pas sa profondeur.*
+
+**Et la bande a deux fois plus de rangées** (24 contre 10) : *un pli de deux
+radians sur dix segments montre ses facettes.*
+
+**Rien ne change pour le corps** : son drapeau vaut zéro, donc l'angle vaut
+zéro et la rotation est l'identité — vérifié, le relief et le reflet du corps
+sont ceux d'avant.
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une
@@ -3884,6 +3949,11 @@ la même place se désaccorderaient au premier réglage.*
   paquets.** *`?gerbe` tire puis s'arrête*, ce qui est le seul moyen d'en juger
   sans ouvrir vingt paquets. *La vitesse de départ est redevenue libre* depuis
   que le grain ne s'allonge plus avec elle ;
+- **le pli de la bande** (`PLI_BASE` 1,1 rad à la fente, `PLI_PENTE` 4,2 rad
+  par largeur au-dessus, `PLI_RAMPE` 0,35 derrière le front, et les trois
+  soulèvements `PLI_LEVEE`) : *ce sont les chiffres de lexicodex, convertis,
+  pas les nôtres* — et **l'envers crème** est de moi, le leur est argenté. *Un
+  pli ne se juge qu'en déchirant* ;
 - **la pesanteur** (`PESANTEUR`, 1,5, en multiples de la vitesse de départ du
   régime) : ***c'est elle, et elle seule, qui borne la portée LATÉRALE*** —
   0,300 largeur au plus contre 0,755 sans elle. **Elle change de nature en
