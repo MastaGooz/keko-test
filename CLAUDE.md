@@ -2241,6 +2241,36 @@ largeur de source.*
 **ET LE JAILLISSEMENT GARDE SON ÉTALEMENT SUR TOUTE L'OUVERTURE** : là, le
 recul d'un côté est juste — *la fente entière est la source*, pas un point.
 
+#### LA PLAGE SE RESSERRE À 120°, ET ÇA NE TOUCHE PAS À LA PORTÉE
+
+Keko : **« on peut réduire un peu l'angle des particules ? 30-150 degrés ? »**
+
+***ET CE N'EST PLUS LE LEVIER DE LA PORTÉE, depuis que la pesanteur est une
+constante.*** Elle l'était la veille — « resserrer la plage est aussi la façon
+de la réduire », disait la note — parce qu'une rasante filait alors tout droit
+pendant toute sa vie. **La portée est maintenant BALISTIQUE** : maximale à 45°,
+nulle au ras comme au zénith. *Les angles qu'on retire sont donc ceux qui
+portaient le MOINS.*
+
+| | portée au plus | portée moyenne | portée p90 | **cloche moyenne** |
+|---|---|---|---|---|
+| la découpe, 15–165° | 0,450 | 0,243 | 0,376 | 0,100 |
+| **30–150°** | **0,450** | **0,244** | 0,385 | **0,119** |
+| le jaillissement, 15–165° | 0,953 | 0,516 | 0,796 | 0,213 |
+| **30–150°** | **0,953** | **0,517** | 0,817 | **0,253** |
+
+**CE QUE ÇA CHANGE EST LA RÉPARTITION, PAS LA LARGEUR** : la part d'étincelles
+qui partent bas tombe de **40 % à 25 %**, et la cloche moyenne monte de **19 %**
+dans les deux régimes. *La gerbe devient plus montante* — ce qui est bien ce
+qu'un angle resserré doit produire, et c'est la seule chose qu'il produise.
+
+***LE LEVIER DE LA PORTÉE EST AILLEURS, et il faut le savoir*** : c'est la
+PESANTEUR (au-delà de 1, la portée tombe partout) ou la vitesse de départ, qui
+la gouverne au carré. **Une note juste la veille a cessé de l'être le lendemain
+parce que la mécanique sous elle avait changé** — c'est la règle du projet,
+payée une fois de plus : *une mesure écrite une fois ne reste pas vraie quand ce
+qui la produit a bougé.*
+
 #### LA PESANTEUR N'EXISTAIT PAS — elle s'ajustait à chaque étincelle
 
 Keko : **« on peut augmenter la gravité des particules pour éviter qu'elles
@@ -3418,11 +3448,13 @@ la même place se désaccorderaient au premier réglage.*
   largeur) et **la place du « Ouvrir ici »**, au départ du pointillé : *c'est le
   couple qui met la déchirure sous le doigt*, et il ne reste d'écart que si Keko
   pose son doigt ailleurs que là où le mot l'invite ;
-- **la plage d'angles** (15° à 165°) et **la dispersion de la source**
+- **la plage d'angles** (30° à 150°) et **la dispersion de la source**
   (±0,060 largeur autour du front) : *c'est le couple qui tue l'effet
-  fontaine*, et les deux bornes d'angle sont de Keko. **La portée latérale en
-  découle** — 0,657 largeur pour une étincelle au ras, contre 0,156 avant —
-  donc resserrer la plage est aussi la façon de la réduire ;
+  fontaine*, et les deux bornes d'angle sont de Keko. ***Elle ne règle plus la
+  portée*** — depuis la pesanteur, celle-ci est maximale à 45° et nulle au ras,
+  donc resserrer ne retire que les angles qui portaient le moins. **Ce qu'elle
+  règle est la MONTÉE** : la cloche moyenne gagne 19 % en passant de 150° à
+  120° ;
 - **la taille de l'éclat** (0,11 de côté, son coeur à 42 % et ses branches à
   16 % de finesse) et **ses trois termes** (halo 0,45, croix 0,9, coeur 1,0) :
   *c'est ce qui sépare une lumière d'un confetti*, et Keko a tranché le

@@ -908,14 +908,22 @@ const DISPERSION_SOURCE = 0.06
  * ***SON DIAGNOSTIC EST EXACT ET IL SE MESURE*** : la dérive s'ajoutait à un
  * jet constant, donc l'angle de départ tenait dans **77° à 103°** — un cône de
  * vingt-six degrés autour de la verticale, c'est-à-dire une fontaine. On tire
- * désormais l'ANGLE puis on le décompose, ce qui ouvre la plage à **150°**.
+ * désormais l'ANGLE puis on le décompose, ce qui a ouvert la plage à 150°.
+ *
+ * **PUIS KEKO L'A RESSERRÉE À 120°** — « on peut réduire un peu l'angle des
+ * particules ? 30-150 degrés ? » — et ***ça ne retire pas un centième à la
+ * portée***, contre toute attente : depuis que la pesanteur est une constante,
+ * celle-ci est BALISTIQUE, donc maximale à 45° et nulle au ras. Les angles
+ * qu'on retire sont ceux qui portaient le MOINS. Ce qui change est la
+ * répartition — **la cloche moyenne monte de 19 %**, et la part d'étincelles
+ * qui partent bas tombe de 40 % à 25 %.
  *
  * **ET LES DEUX RAS SONT COUPÉS**, pas par prudence : à zéro une étincelle ne
  * décolle pas du film et rampe dessus — *ce qui jaillit d'une fente doit en
  * sortir.*
  */
-const ANGLE_MIN = (15 * Math.PI) / 180
-const ANGLE_MAX = (165 * Math.PI) / 180
+const ANGLE_MIN = (30 * Math.PI) / 180
+const ANGLE_MAX = (150 * Math.PI) / 180
 /**
  * LA PESANTEUR, en multiples de la vitesse de départ du régime.
  *
