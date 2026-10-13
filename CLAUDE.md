@@ -2013,6 +2013,52 @@ clair ils ne brillent pas.
 **LE FRESNEL RESTE À MOITIÉ BLANC, et c'est le seul** : *au ras, un métal
 renvoie tout* — c'est la seule part du reflet qu'une teinte ne filtre pas.
 
+#### LA LUMIÈRE VENAIT DU HAUT, PAS DU HAUT-GAUCHE — et elle était écrite DEUX fois
+
+Keko : **« la lumière semble venir trop d'en haut, et éclairer la partie haute
+alors que le côté gauche ne reçoit pas beaucoup de lumière — normalement
+lumière angle haut-gauche non ? »**
+
+***OUI, ET C'EST MESURABLE AU DIXIÈME.*** La clé était à **35,9° de la
+verticale** là où la diagonale du jeu en demande 45 — tout ce que le projet
+peint, du jonc des cartes à la gorge des barres, est éclairé « clair en haut à
+gauche, sombre en bas à droite », donc à parité des deux axes.
+
+**ET CE N'EST PAS LE DIFFUS QUI LE DISAIT, C'EST LE LUSTRE.** Le modelé du
+ventre ne séparait les deux flancs que de 1,5 % — *invisible*. Le reflet, lui,
+est une puissance 26 : **il amplifie l'écart au lieu de le moyenner.** Mesuré
+sur chaque flanc du coussin, en facteur de lustre :
+
+| | avant (36°) | **après (45°)** |
+|---|---|---|
+| flanc du **haut** | **×1,61** | ×1,39 |
+| flanc de **gauche** | ×1,24 | **×1,39** |
+| le plateau | ×1,22 | ×1,19 |
+| **le coin haut-gauche** | ×2,24 | **×2,32** |
+| les flancs bas et droit | ×1,00 | ×1,00 |
+
+*Le haut recevait deux fois et demie ce que recevait la gauche* — 0,61 de gain
+contre 0,24 — et c'est exactement ce que Keko lisait. **Les deux arêtes du coin
+sont maintenant à égalité, et c'est leur RENCONTRE qui est le point le plus
+chaud** : une lumière d'angle s'affirme sur un coin, pas sur un côté.
+
+***UN ÉCART QUI NE SE VOIT PAS DANS LE DIFFUS SE VOIT DANS LE SPÉCULAIRE***, et
+c'est une règle : un exposant élevé transforme un écart de quelques pour cent en
+un écart du simple au double. *Chercher un défaut de lumière dans le terme le
+plus doux est une fausse piste.*
+
+#### ET LA CLÉ N'EST PLUS ÉCRITE DEUX FOIS
+
+Elle avait sa direction en dur dans le nuanceur **et** une autre dans la table
+des sources — `(-0,42 / 0,58 / 0,78)` contre `(-0,458 / 0,523 / 0,719)`, soit
+36° d'un côté et 41° de l'autre. ***Deux endroits qui décrivent la même lampe se
+désaccordent au premier réglage***, et ils l'avaient déjà fait sans que personne
+ne le voie : le modelé du ventre obéissait à l'une, son éclat teinté à l'autre.
+
+Elle vit donc dans la table, et le nuanceur la lit : *le diffus, le lustre, les
+éclats des plis et le lobe blanc sont la même lampe, donc ils ne peuvent plus
+pencher différemment.*
+
 #### CE QU'ON N'A PAS REPRIS : LA CARTE DE RUGOSITÉ
 
 Chez eux, **l'imprimé ne brille pas** : le texte est posé à rugosité 0,65 et
@@ -2387,7 +2433,10 @@ la même place se désaccorderaient au premier réglage.*
   il n'a plus une once de lumière crue* ;
 - **les quatre sources et leurs forces** (clé 0,52, cyan 0,40, rose et violet
   0,30), **le serré de leur lobe** (46) et **le gain du survol** (1,3) :
-  *c'est le « flashy quand ça bouge »*, et il ne se juge qu'en inclinant ;
+  *c'est le « flashy quand ça bouge »*, et il ne se juge qu'en inclinant.
+  **La clé est à 45° de la verticale**, la diagonale du jeu ; les trois autres
+  gardent leurs directions relevées chez eux, et *elles tirent un peu à droite* —
+  le cyan et le violet y sont, le rose seul tient la gauche ;
 - **le lustre** (1,35, multiplié), **les éclats des plis** (0,75) et **le galbe
   de Fresnel** (0,30) ;
 - **le plancher d'ambiant** (0,62 pour 0,52 de modelé) : *c'est lui qui décide

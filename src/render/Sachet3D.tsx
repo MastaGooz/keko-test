@@ -163,7 +163,11 @@ const SOURCES: ReadonlyArray<{
   readonly force: number
 }> = [
   // la clé, blanche : c'est elle qui modèle le ventre et porte le lustre
-  { dir: [-0.458, 0.523, 0.719], couleur: [1, 1, 1], force: 0.52 },
+  // LA CLÉ, blanche : elle modèle le ventre, porte le lustre et allume les
+  // éclats des plis. **SA DIRECTION EST À 45° DANS LE PLAN DE L'ÉCRAN** — c'est
+  // la diagonale haut-gauche que tout le jeu respecte, et chez eux elle penchait
+  // de 36°, donc le flanc du HAUT prenait tout et celui de GAUCHE rien.
+  { dir: [-0.492, 0.492, 0.719], couleur: [1, 1, 1], force: 0.52 },
   // le cyan, à droite — la plus haute de leurs dalles
   { dir: [0.949, 0, 0.316], couleur: [0.29, 0.86, 1], force: 0.4 },
   // le rose, en bas à gauche
@@ -443,16 +447,22 @@ void main() {
     -(gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)} + hy * pli),
     1.0));
 
-  // LA LUMIÈRE VIENT DU HAUT-GAUCHE, comme partout dans ce jeu — et c'est
-  // L'OBJET QUI TOURNE SOUS ELLE : le penchant du sachet se retranche de la
-  // direction, donc le reflet court sur les plis dès qu'on l'incline.
-  vec3 L = normalize(vec3(-0.42 + uPenche.y * 2.4, 0.58 + uPenche.x * 2.4, 0.78));
-  vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
   // LE PENCHANT S'APPLIQUE AUX QUATRE SOURCES, et pas à la clé seule : *elles
   // sont fixes dans la pièce et c'est le sachet qui tourne*, donc elles
   // balaient toutes ensemble. Une seule qui bougerait se lirait comme une lampe
   // qu'on promène.
   vec2 pen = vec2(uPenche.y, uPenche.x) * 2.4;
+
+  // ***LA CLÉ N'EST PLUS ÉCRITE DEUX FOIS.*** Elle avait sa direction ici et une
+  // autre dans la table des sources : **deux endroits qui décrivent la même
+  // lampe se désaccordent au premier réglage**, et ils l'avaient déjà fait —
+  // 36° d'un côté, 41° de l'autre. Elle vit dans la table, et c'est elle qui
+  // modèle le ventre, porte le lustre et allume les éclats des plis.
+  vec3 L = normalize(vec3(
+    ${SOURCES[0]!.dir[0]!.toFixed(3)} + pen.x,
+    ${SOURCES[0]!.dir[1]!.toFixed(3)} + pen.y,
+    ${SOURCES[0]!.dir[2]!.toFixed(3)}));
+  vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
 
   // L'OMBRE DES PLIS : elle module l'IMPRIMÉ lui-même. *C'est elle qui dit que
   // le dessin est posé sur quelque chose de froissé* — sans elle, le reflet
@@ -562,12 +572,11 @@ void main() {
   // n'a plus rien à délaver* — l'intensité revient là où elle ne coûte rien.
   float feu = 1.0 + uSurvol * 1.3;
 
-  // SOURCE 1 : la clé, blanche
+  // SOURCE 1 : la clé, blanche — *elle réutilise le H qu'on vient de calculer*,
+  // puisque c'est la même lampe que celle qui modèle le ventre.
   {
-    vec3 Ls = normalize(vec3(${SOURCES[0]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[0]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[0]!.dir[2]!.toFixed(3)}));
-    vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
     corps += teinte * vec3(${SOURCES[0]!.couleur[0]!.toFixed(2)}, ${SOURCES[0]!.couleur[1]!.toFixed(2)}, ${SOURCES[0]!.couleur[2]!.toFixed(2)})
-           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${SOURCES[0]!.force.toFixed(2)} * feu;
+           * pow(max(dot(Nv, H), 0.0), ${SERRE}.0) * ${SOURCES[0]!.force.toFixed(2)} * feu;
   }
 
   // SOURCE 2 : le cyan
