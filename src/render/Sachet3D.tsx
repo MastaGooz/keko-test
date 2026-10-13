@@ -437,7 +437,14 @@ export function Sachet3D({
   /** Où en est l'ouverture, de 0 à 1 — tirée à la main, puis filée seule. */
   const p = useRef(0)
   /** Le geste en cours : d'où le doigt est parti, et d'où l'ouverture l'était. */
-  const tire = useRef<{ x0: number; p0: number } | null>(null)
+  const tire = useRef<{
+    x0: number
+    y0: number
+    p0: number
+    /** Où le doigt s'est posé SUR le sachet, en parts de sa largeur. */
+    x: number
+    y: number
+  } | null>(null)
   /** Vrai une fois le geste acquis : plus rien ne le retient. */
   const file = useRef(false)
   const avant = useRef<number | null>(null)
@@ -446,6 +453,8 @@ export function Sachet3D({
   /** Où le curseur touche le sachet, en parts de sa largeur et de sa hauteur. */
   const curseur = useRef({ x: 0, y: 0 })
   const survol = useRef(false)
+  /** Le curseur a-t-il quitté le sachet depuis le début du geste. */
+  const sorti = useRef(false)
   const feu = useRef(0)
 
   const H = taille * RAPPORT_SACHET
@@ -628,21 +637,81 @@ export function Sachet3D({
    * forcément du sachet — sortir *est* le geste — et *un écouteur retiré par
    * référence retire celui d'un autre rendu.*
    */
+  /**
+   * OÙ LE POINTEUR TOMBE SUR LE SACHET, en parts de sa largeur et de sa
+   * hauteur. *Un seul endroit le calcule* : le survol et le geste s'en servent
+   * tous les deux, et **deux conversions qui décriraient la même place se
+   * désaccorderaient au premier réglage.**
+   */
+  const viseDepuis = (e: ThreeEvent<PointerEvent>): { x: number; y: number } => ({
+    x: (e.point.x - position[0]) / taille,
+    y: (e.point.y - position[1]) / H,
+  })
+
+  /**
+   * LE PENCHANT EST BORNÉ. Le doigt va bien au-delà du sachet en tirant — et
+   * *une inclinaison qui suit un doigt sans borne finit par coucher l'objet*,
+   * donc par montrer sa tranche plutôt que sa lumière.
+   */
+  const penche = (x: number, y: number): void => {
+    curseur.current = {
+      x: Math.min(0.7, Math.max(-0.7, x)),
+      y: Math.min(0.7, Math.max(-0.7, y)),
+    }
+  }
+
   const prendre = (e: ThreeEvent<PointerEvent>): void => {
     if (file.current || tire.current !== null) return
     e.stopPropagation()
-    tire.current = { x0: e.clientX, p0: p.current }
+    tire.current = { x0: e.clientX, y0: e.clientY, p0: p.current, ...viseDepuis(e) }
+    /**
+     * **LE DOIGT POSÉ PENCHE LE SACHET**, comme le survol penche à la souris.
+     *
+     * Keko : « il faudrait pouvoir bouger le booster quand on hover / maintient
+     * le tap dessus, comme pour les cartes, afin de voir comment la lumière joue
+     * dessus ».
+     *
+     * *Ce n'est pas une exception à la règle du survol, c'en est
+     * l'application.* Si le relief est réservé à la souris, c'est parce qu'au
+     * doigt le `pointerout` n'arrive jamais et que le sachet resterait penché —
+     * **ici on sait exactement quand le doigt se lève**, puisque c'est ce geste
+     * qui l'a armé. Le défaut n'existe pas. C'est mot pour mot ce que la carte
+     * zoomée a déjà réglé.
+     *
+     * **ET ÇA NE COÛTE PAS UN GESTE DE PLUS** : tirer vers la droite déchire,
+     * bouger le doigt ailleurs ne fait qu'incliner — *donc on voit la lumière
+     * courir PENDANT qu'on ouvre*, ce qui est exactement ce qu'on cherche à
+     * montrer.
+     */
+    survol.current = true
+    sorti.current = false
     const ctrl = new AbortController()
     const bouger = (ev: PointerEvent): void => {
       const g = tire.current
       if (g === null) return
       const part = g.p0 / PART_FRONT + (ev.clientX - g.x0) / largePx
       p.current = Math.min(TIRE_MAX, Math.max(0, part)) * PART_FRONT
+      // LE CURSEUR SE SUIT EN PIXELS, pas par un second lancer de rayon : le
+      // doigt sort du sachet dès qu'on tire — *sortir EST le geste* — donc il
+      // n'y a plus rien à toucher. `largePx` dit déjà ce que vaut une largeur
+      // de sachet à l'écran, et l'écran descend quand la scène monte.
+      penche(g.x + (ev.clientX - g.x0) / largePx, g.y - (ev.clientY - g.y0) / (largePx * RAPPORT_SACHET))
+    }
+    const finir = (): void => {
+      // AU DOIGT, LE RELIEF TOMBE AVEC LE GESTE — *c'est ce qui permet de
+      // l'allumer au doigt sans refaire le défaut du `pointerout` qui
+      // n'arrive jamais.* À la souris il ne tombe que si le curseur a quitté
+      // le sachet en route, auquel cas `quitter` s'est tu pour ne pas
+      // redresser la pochette en plein tirage.
+      if (e.pointerType === 'mouse' && !sorti.current) return
+      survol.current = false
+      document.body.style.cursor = ''
     }
     const lacher = (): void => {
       ctrl.abort()
       const acquis = tire.current !== null && p.current / PART_FRONT >= SEUIL_TIRE
       tire.current = null
+      finir()
       if (!acquis) return
       file.current = true
       onOuvrir?.()
@@ -652,23 +721,18 @@ export function Sachet3D({
     const annuler = (): void => {
       ctrl.abort()
       tire.current = null
+      finir()
     }
     window.addEventListener('pointermove', bouger, { signal: ctrl.signal })
     window.addEventListener('pointerup', lacher, { signal: ctrl.signal })
     window.addEventListener('pointercancel', annuler, { signal: ctrl.signal })
   }
 
-  /**
-   * LE RELIEF EST RÉSERVÉ À LA SOURIS, comme tout survol du projet : au doigt
-   * le `pointerout` n'arrive jamais, et le sachet resterait penché.
-   */
   const viser = (e: ThreeEvent<PointerEvent>): void => {
     if (e.pointerType !== 'mouse') return
     e.stopPropagation()
-    curseur.current = {
-      x: (e.point.x - position[0]) / taille,
-      y: (e.point.y - position[1]) / H,
-    }
+    const { x, y } = viseDepuis(e)
+    penche(x, y)
     if (!survol.current && !file.current) {
       survol.current = true
       document.body.style.cursor = 'grab'
@@ -676,6 +740,12 @@ export function Sachet3D({
   }
 
   const quitter = (): void => {
+    // ON NE REDRESSE PAS UN SACHET QU'ON EST EN TRAIN DE TIRER : le curseur
+    // sort forcément de la pochette en la déchirant — *sortir EST le geste* —
+    // et c'est précisément là qu'on veut voir la lumière courir. On retient
+    // seulement qu'il est sorti, pour que le lâcher en tire les conséquences.
+    sorti.current = true
+    if (tire.current !== null) return
     survol.current = false
     document.body.style.cursor = ''
   }

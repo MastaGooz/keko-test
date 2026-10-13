@@ -1784,6 +1784,44 @@ cent : l'échelle tombe à 2,1, l'ombre à ±10 %, le relief de la normale de 2,
 1,5. **Ce qui doit rester visible, c'est l'imprimé** ; la matière se sent, elle
 ne se regarde pas.
 
+#### LE DOIGT POSÉ PENCHE LE SACHET, comme le survol le penche à la souris
+
+Keko : **« il faudrait pouvoir bouger le booster quand on hover mouse /
+maintien le tap dessus comme pour les cartes, afin de voir comment la lumière
+joue dessus »**.
+
+*Le survol existait déjà ; ce qui manquait, c'est le DOIGT* — et c'est le cas
+que les cartes ont déjà résolu. **Ce n'est pas une exception à la règle du
+survol, c'en est l'application** : si le relief est réservé à la souris, c'est
+parce qu'au doigt le `pointerout` n'arrive jamais et que l'objet resterait
+penché. ***Ici on sait exactement quand le doigt se lève, puisque c'est ce
+geste qui l'a armé*** — le défaut n'existe pas.
+
+**ET ÇA NE COÛTE PAS UN GESTE DE PLUS**, ce qui est tout l'intérêt : seul
+`clientX` fait avancer la déchirure, donc **un mouvement vertical ne fait
+qu'incliner** — et un mouvement horizontal fait les deux. *On voit donc la
+lumière courir PENDANT qu'on ouvre*, ce qui est exactement ce que Keko voulait
+regarder.
+
+Trois choses à ne pas défaire :
+
+- **LE CURSEUR SE SUIT EN PIXELS, pas par un second lancer de rayon.** Le doigt
+  sort du sachet dès qu'on tire — *sortir EST le geste* — donc il n'y a bientôt
+  plus rien à toucher sous lui. `largePx` dit déjà ce que vaut une largeur de
+  sachet à l'écran, et le geste part de la place qu'il a touchée ;
+- **LE PENCHANT EST BORNÉ** (±0,7 largeur). *Une inclinaison qui suit un doigt
+  sans borne finit par coucher l'objet*, donc par montrer sa tranche au lieu de
+  sa lumière ;
+- **ON NE REDRESSE PAS UN SACHET QU'ON EST EN TRAIN DE TIRER.** À la souris, le
+  curseur quitte forcément la pochette en la déchirant : `pointerout` la
+  remettait d'aplomb en plein geste. Il retient seulement qu'il est SORTI, et
+  c'est le lâcher qui en tire les conséquences — *au doigt le relief tombe
+  toujours avec le geste.*
+
+**Et la place du pointeur se calcule EN UN SEUL ENDROIT** (`viseDepuis`), que
+le survol et le geste lisent tous les deux : *deux conversions qui décriraient
+la même place se désaccorderaient au premier réglage.*
+
 #### CE QUI RESTE À TRANCHER PAR KEKO — le sachet
 
 - **l'éventail** : trois faces, leurs trois crans et leurs trois emoji
@@ -1796,7 +1834,11 @@ ne se regarde pas.
   1,5 de relief) et **la vivacité du reflet** (deux lobes, 34 et 5) : *une
   matière ne se juge qu'en inclinant l'objet* ;
 - **le balancement de repos** (5,5 et 8,5 centièmes de radian, sur deux
-  périodes) : c'est lui qui fait vivre le reflet là où il n'y a pas de survol.
+  périodes) : c'est lui qui fait vivre le reflet là où rien ne touche le
+  sachet ;
+- **la force du penchant** (0,26 radian, 1,3 fois plus sur l'axe vertical) et
+  **sa borne** (±0,7 largeur) : *une matière ne se juge qu'en inclinant
+  l'objet.*
 
 ### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
 
