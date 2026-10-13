@@ -2121,6 +2121,26 @@ port injecté depuis `ui/`, jamais un `localStorage` lu depuis `logic/`.
 - **Le manifeste dit `portrait`**, puisque l'application installée ouvre la
   racine, c'est-à-dire la collection.
 
+***UNE APP INSTALLÉE FIGE L'ORIENTATION DE SON MANIFESTE, ET AUCUN DÉPLOIEMENT
+NE LA CHANGE.*** Keko, après la bascule : « sur téléphone ça s'affiche toujours
+en mode paysage » — *et le code ne forçait rien* (aucun `orientation.lock` dans
+tout le projet), le manifeste en ligne disait bien `portrait`. **C'est la
+fenêtre de l'app qui était verrouillée depuis son installation**, et il a suffi
+de désinstaller l'icône pour que ça rentre dans l'ordre.
+
+**Deux choses à en retenir, et la seconde est une règle** :
+
+- *quand une orientation ne change pas, c'est l'INSTALLATION qu'il faut
+  refaire*, pas le déploiement — et le diagnostic tient en une question : par
+  quelle porte Keko ouvre-t-il, l'icône ou le navigateur ? **Dans un onglet,
+  aucune page ne peut forcer le paysage** ;
+- **LE MANIFESTE PORTE LA DATE DU BUILD** (`manifesteVersionne`, dans
+  `vite.config.ts`), comme toute ressource de `public/`. *Les fichiers de
+  `public/` sont copiés sans empreinte de contenu*, donc leur URL ne bouge
+  jamais et le navigateur ressert celle qu'il a — la règle était écrite depuis
+  les portraits du joueur, et **le manifeste y échappait**, alors que c'est lui
+  qui décide de l'orientation.
+
 **On ne peut pas forcer l'orientation depuis une page web** : le verrouillage
 exige le plein écran et n'existe pas sur iPhone. D'où l'écran de rotation — et
 il doit **dire de désactiver le verrouillage de rotation**, sinon les gens qui
