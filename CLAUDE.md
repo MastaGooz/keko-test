@@ -1806,10 +1806,14 @@ technique.
 à une puissance **inférieure à un** — donc à sommet APLATI — multiplié par deux
 rampes qui l'éteignent aux soudures.
 
-***LA PUISSANCE INFÉRIEURE À UN EST TOUT LE SUJET.*** Un demi-sinus nu donne
-une goutte ; **un paquet de cartes est une BRIQUE**, son dessus est plat et
-c'est au bord que le film retombe d'un coup. *C'est exactement ce que Keko
-décrit* — « les bords sont plus en arrière que la zone des cartes ».
+***LE SOMMET APLATI EST TOUT LE SUJET.*** Un demi-sinus nu donne une goutte ;
+**un paquet de cartes est une BRIQUE**, son dessus est plat et c'est au bord
+que le film retombe d'un coup. *C'est exactement ce que Keko décrit* — « les
+bords sont plus en arrière que la zone des cartes ».
+
+**Leur puissance n'a pas été gardée**, et la section qui suit dit pourquoi :
+elle aplatit le sommet sans jamais créer d'ARÊTE. *On a repris leur idée de
+forme, pas leur formule.*
 
 **ET C'EST UNE ÉPAISSEUR, PAS UNE NORMALE** : leur commentaire la nomme
 « l'épaisseur d'une feuille du coussin », et leur fragment teste la face
@@ -1825,6 +1829,47 @@ qu'il y a un ventre.
 
 **IL LUI FAUT DONC DES SEGMENTS** : *un plan à quatre sommets ne peut pas se
 bomber*, il n'a rien entre ses coins à déplacer.
+
+#### UNE ARÊTE EST UNE RUPTURE DE PENTE, PAS UNE COURBURE FORTE
+
+Keko, en voyant le coussin : **« les arêtes du coussin qui ressortent ne sont
+pas assez marquées, on dirait qu'il est bombé de manière trop lisse »**.
+
+***ET LE SOMMET APLATI DE LEXICODEX N'A AUCUNE ARÊTE :*** `sin^0,55` est
+dérivable partout, donc sa normale tourne CONTINÛMENT — il n'y a nulle part où
+l'oeil puisse poser une ligne. **Ce qui se voit comme une arête, c'est une
+normale qui SAUTE**, pas une normale qui penche beaucoup.
+
+Le profil est donc **un plateau PLAT puis une chute DROITE** : la normale vaut
+`+z` sur le plateau, elle est constante sur le flanc, et elle saute à la
+jonction. *C'est la seule chose qui fasse une ligne* — et c'est aussi plus
+juste, puisqu'un paquet de cartes a de vraies arêtes.
+
+**ET C'EST UN `min`, PAS UN PRODUIT.** Deux profils multipliés creusent les
+coins deux fois et les arrondissent ; **leur minimum donne un plateau
+RECTANGULAIRE, quatre flancs et une arête DIAGONALE à chaque coin** — soit
+exactement un drap tendu sur une brique. *Les diagonales se voient à l'écran,
+et c'est elles qui disent qu'il y a un objet dedans.*
+
+#### CE QUI ÉCRÊTAIT L'ARÊTE ÉTAIT LE GARDE-FOU DU DÔME
+
+**Le clamp du gradient était réglé pour `sin^0,55`**, dont la tangente devient
+verticale tout au bord : il bornait à 3. *Un flanc droit a une pente de 5 à 7*,
+donc **le garde-fou rabotait précisément ce qu'on venait de construire** — il
+transformait l'arête en pente douce.
+
+***Une borne posée contre une singularité ne vaut plus quand la singularité
+disparaît*** : c'est la cicatrice habituelle, et elle s'est glissée dans le même
+commit que son objet.
+
+Trois réglages, et chacun va dans le même sens :
+
+| | dôme | coussin |
+|---|---|---|
+| le profil | `sin^0,55`, dérivable partout | **plateau + flanc droit**, `min` des deux axes |
+| la hauteur | 5,5 % de la largeur | **9,5 %** |
+| la borne du gradient | 3 | **9** |
+| le lobe du reflet | 16 | **26** — *il s'arrête net sur l'arête* |
 
 #### ET LE GRAND REFLET SE MULTIPLIE, IL NE S'AJOUTE PAS
 
@@ -1988,9 +2033,10 @@ la même place se désaccorderaient au premier réglage.*
   1,15 de relief) et **la vivacité du reflet** (deux lobes, 150 et 7) : *une
   matière ne se juge qu'en inclinant l'objet* — et **les deux se rejugent
   ENSEMBLE**, puisque le lobe s'étale dès que le relief s'aplatit ;
-- **la hauteur du ventre** (5,5 % de la largeur du sachet) et **la force de son
-  reflet** (×2,15 au repos) : *c'est le volume du paquet, et il ne se lit qu'en
-  inclinant* ;
+- **la hauteur du ventre** (9,5 % de la largeur du sachet), **où le film quitte
+  la brique** (60 % de la demi-largeur, 75 % de la demi-hauteur) et **la force
+  de son reflet** (×2,15 au repos) : *c'est le volume du paquet, et il ne se lit
+  qu'en inclinant* ;
 - **le balancement de repos** (5,5 et 8,5 centièmes de radian, sur deux
   périodes) : c'est lui qui fait vivre le reflet là où rien ne touche le
   sachet ;

@@ -77,7 +77,15 @@ const COURBE_FRONT = 1.45
  * *Un paquet de cinq cartes est une brique mince* — au-delà, la poche se lit
  * comme un ballon.
  */
-const REL_BOMBE = 0.055
+const REL_BOMBE = 0.095
+
+/**
+ * OÙ LE FILM QUITTE LA BRIQUE, en parts de la demi-largeur et de la
+ * demi-hauteur. *Le paquet est plus haut que large dans sa poche*, donc son
+ * plateau monte plus haut qu'il ne va loin.
+ */
+const PLAT_X = 0.6
+const PLAT_Y = 0.75
 
 const AMPLI = 0.02
 const CHARBON = 0.035
@@ -154,10 +162,15 @@ const VIDE = (() => {
  * ventre est la place des cartes, pas celle du sachet.
  */
 const VENTRE = `
+/** Un plateau plat jusqu'a \`plat\`, puis le film descend tout droit. */
+float flanc(float t, float plat) {
+  return 1.0 - clamp((t - plat) / (1.0 - plat), 0.0, 1.0);
+}
+
 float ventre(vec2 p) {
-  float large = pow(max(sin(3.14159265 * p.x), 0.0), 0.55);
-  float haut = smoothstep(0.0, 0.15, p.y) * (1.0 - smoothstep(0.85, 1.0, p.y));
-  return large * haut;
+  float tx = abs(p.x - 0.5) * 2.0;
+  float ty = abs(p.y - 0.5) * 2.0;
+  return min(flanc(tx, ${PLAT_X.toFixed(3)}), flanc(ty, ${PLAT_Y.toFixed(3)}));
 }
 `
 
@@ -299,8 +312,8 @@ void main() {
   float eb = 0.012;
   float gx = (ventre(sach + vec2(eb, 0.0)) - ventre(sach - vec2(eb, 0.0))) / (2.0 * eb);
   float gy = (ventre(sach + vec2(0.0, eb)) - ventre(sach - vec2(0.0, eb))) / (2.0 * eb);
-  gx = clamp(gx, -3.0, 3.0);
-  gy = clamp(gy, -3.0, 3.0);
+  gx = clamp(gx, -9.0, 9.0);
+  gy = clamp(gy, -9.0, 9.0);
   vec3 Nv = normalize(vec3(
     -gx * ${REL_BOMBE.toFixed(4)},
     -gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)},
@@ -407,7 +420,7 @@ void main() {
   // dessin reste lisible SOUS le reflet, et on peut donc le monter très haut.
   // *C'est ce que dit le film de lexicodex, dont le reflet est violet sur le
   // violet et or sur l'or* — vérifié à la capture.
-  float lustre = pow(max(dot(Nv, H), 0.0), 16.0);
+  float lustre = pow(max(dot(Nv, H), 0.0), 26.0);
   corps *= 1.0 + lustre * (1.15 + uSurvol * 0.7);
 
   // **LES ÉCLATS DES PLIS RESTENT ADDITIFS, et eux seuls** : ce sont de vrais
