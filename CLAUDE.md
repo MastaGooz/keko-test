@@ -1784,7 +1784,98 @@ cent : l'échelle tombe à 2,1, l'ombre à ±10 %, le relief de la normale de 2,
 1,5. **Ce qui doit rester visible, c'est l'imprimé** ; la matière se sent, elle
 ne se regarde pas.
 
-#### LES BORDS PLONGENT : un sachet est un TUBE APLATI
+#### LE VENTRE : LES CARTES DEDANS BOMBENT LE FILM — et c'est de la GÉOMÉTRIE
+
+Keko : **« y'a pas d'effet de 3D : il faudrait que les reflets de lumière se
+reflètent sur les bords bombés en avant, comme si le paquet de cartes dedans
+bombait le paquet et que les bords étaient plus en arrière que la zone des
+cartes — tu peux pas regarder le code de lexicodex pour comprendre ? »**
+
+***OUI, ET CETTE FOIS LE CODE ÉTAIT LISIBLE.*** La note d'avant disait « son
+code n'est pas lisible, lexicodex est rendu dans un canvas » — *c'est vrai de
+son DOM, et faux de son bundle* : le jeu est en three.js, donc ses shaders sont
+du GLSL dans le JavaScript, et **le minifieur garde les commentaires qui vivent
+dans une chaîne de gabarit.** Ils sont en français, et ils expliquent la
+technique.
+
+***UNE SOURCE ILLISIBLE PAR UNE PORTE NE L'EST PAS PAR TOUTES.***
+
+#### CE QUE LEUR CODE A APPRIS, ET C'EST LA RÉPONSE À LA DEMANDE
+
+**Leur fonction de bombé** est un COUSSIN : un demi-sinus sur la largeur, élevé
+à une puissance **inférieure à un** — donc à sommet APLATI — multiplié par deux
+rampes qui l'éteignent aux soudures.
+
+***LA PUISSANCE INFÉRIEURE À UN EST TOUT LE SUJET.*** Un demi-sinus nu donne
+une goutte ; **un paquet de cartes est une BRIQUE**, son dessus est plat et
+c'est au bord que le film retombe d'un coup. *C'est exactement ce que Keko
+décrit* — « les bords sont plus en arrière que la zone des cartes ».
+
+**ET C'EST UNE ÉPAISSEUR, PAS UNE NORMALE** : leur commentaire la nomme
+« l'épaisseur d'une feuille du coussin », et leur fragment teste la face
+ARRIÈRE (« l'intérieur du sachet est argenté ») — donc **leur sachet est un
+vrai volume dont les sommets sont poussés.**
+
+*C'est ce qui condamnait la version d'avant*, où seuls les 13 % extérieurs
+tournaient leur normale : **une normale truquée donne un objet plat qui
+s'éclaire comme un objet rond**, et c'est précisément ce que Keko lisait comme
+« pas d'effet de 3D ». Les sommets se déplacent donc pour de vrai — la
+silhouette se bombe, la perspective joue, le reflet court sur le ventre parce
+qu'il y a un ventre.
+
+**IL LUI FAUT DONC DES SEGMENTS** : *un plan à quatre sommets ne peut pas se
+bomber*, il n'a rien entre ses coins à déplacer.
+
+#### ET LE GRAND REFLET SE MULTIPLIE, IL NE S'AJOUTE PAS
+
+C'est la seconde chose que leur code dit, et elle règle l'autre moitié de la
+demande — **« les reflets dedans empêchent de voir bien les motifs »**. Leur
+commentaire : *« multiplié plutôt qu'ajouté : un reflet ajouté délavait les
+parts (le bleu tournait au ciel pâle) »*.
+
+***UNE LUMIÈRE AJOUTÉE POUSSE LES TROIS CANAUX VERS LE BLANC, donc elle efface
+la teinte de ce qu'elle éclaire ; une lumière MULTIPLIÉE éclaircit en gardant
+la couleur.*** Le dessin reste lisible SOUS le reflet — donc **on peut le
+monter très haut sans rien effacer**, ce qui est exactement ce que Keko
+demandait deux messages plus tôt (« une lumière plus vive qui brille à fond »)
+et que le reflet additif rendait impossible.
+
+*Vérifié sur leur capture* : leur reflet est violet sur un sachet violet et or
+sur un sachet or. **Il teinte, il ne blanchit pas.**
+
+**SEULS LES ÉCLATS DES PLIS RESTENT ADDITIFS**, et eux seuls : ce sont de vrais
+points chauds, trop petits pour effacer quoi que ce soit. *Un point qui sature
+est une étincelle, une nappe qui sature est un voile.*
+
+#### LES DEUX LOBES NE REGARDENT PAS LA MÊME NORMALE
+
+C'est ce qui porte tout le partage : **le grand reflet appartient à la FORME**,
+donc il se calcule sur la normale du VENTRE seul et court dessus quand on
+incline — ce que Keko appelle « les reflets sur les bords bombés ». **Les plis
+n'ont droit qu'à des scintillements serrés.**
+
+*Mêlés sur une seule normale, le lobe large accroche les plis* et rend les
+nappes blanches qu'on venait justement de retirer.
+
+**ET LE FROISSÉ RECULE ENCORE** — Keko : « la texture est trop présente ». Son
+gradient ne pèse plus que 0,22 contre 1 au ventre, et son ombre ±1,5 %.
+***Un relief de MATIÈRE qui pèse autant qu'un relief de FORME efface la
+forme*** — et sur la capture de lexicodex le film n'a, lui, aucun pli du tout.
+
+| | avant | après |
+|---|---|---|
+| le relief des plis | 1,15 | **0,22** (contre 1 au ventre) |
+| leur ombre | ±5 % | **±1,5 %** |
+| le grand reflet | additif, lobe 150 | **multiplié, lobe 16** |
+| les éclats | — | additifs, lobe 150, à 0,35 |
+| l'ombrage de forme | — | **0,70 + 0,44 sur le ventre** |
+
+#### LES BORDS PLONGENT : un sachet est un TUBE APLATI — *l'étape d'avant*
+
+*Le ventre a remplacé ces joues*, et il les contient : son demi-sinus tombe à
+zéro aux deux bords, donc le film y retombe de lui-même. **Le raisonnement
+reste écrit parce qu'il était à moitié juste** — il avait trouvé que l'épaisseur
+ne se peint pas, et manqué qu'elle ne se truque pas non plus.
 
 Keko : **« dans lexicodex y'a un effet d'épaisseur sur le paquet, comme si les
 bords plongeaient un peu »**.
@@ -1897,9 +1988,9 @@ la même place se désaccorderaient au premier réglage.*
   1,15 de relief) et **la vivacité du reflet** (deux lobes, 150 et 7) : *une
   matière ne se juge qu'en inclinant l'objet* — et **les deux se rejugent
   ENSEMBLE**, puisque le lobe s'étale dès que le relief s'aplatit ;
-- **la plongée des bords** (les 13 % extérieurs de chaque côté, 0,95 de
-  courbure, 22 % d'ombre) : *c'est l'épaisseur du sachet, et elle ne se lit
-  qu'en l'inclinant* ;
+- **la hauteur du ventre** (5,5 % de la largeur du sachet) et **la force de son
+  reflet** (×2,15 au repos) : *c'est le volume du paquet, et il ne se lit qu'en
+  inclinant* ;
 - **le balancement de repos** (5,5 et 8,5 centièmes de radian, sur deux
   périodes) : c'est lui qui fait vivre le reflet là où rien ne touche le
   sachet ;

@@ -72,6 +72,13 @@ const COURBE_FRONT = 1.45
  * morceau, le charbon de la bande serait six fois plus fin que celui du
  * corps* — et personne ne le verrait en lisant le code.
  */
+/**
+ * DE COMBIEN LES CARTES BOMBENT LE FILM, en parts de la LARGEUR du sachet.
+ * *Un paquet de cinq cartes est une brique mince* — au-delà, la poche se lit
+ * comme un ballon.
+ */
+const REL_BOMBE = 0.055
+
 const AMPLI = 0.02
 const CHARBON = 0.035
 const BRAISE = 0.013
@@ -123,6 +130,37 @@ const VIDE = (() => {
  * au premier réglage*, et le raccord est précisément ce qui ne doit pas se
  * voir : les deux bords sont le même trait.
  */
+/**
+ * LE VENTRE DU SACHET — **le paquet de cartes qui est DEDANS le bombe.**
+ *
+ * Keko : « y'a pas d'effet de 3D : il faudrait que les reflets de lumière se
+ * reflètent sur les bords bombés en avant, comme si le paquet de cartes dedans
+ * bombait le paquet et que les bords étaient plus en arrière que la zone des
+ * cartes ».
+ *
+ * ***ET C'EST DE LA GÉOMÉTRIE, PAS UNE NORMALE TRUQUÉE.*** Les sommets sont
+ * vraiment poussés vers l'avant : la silhouette se bombe, la perspective joue,
+ * et le reflet court sur le ventre parce qu'il y a un ventre. *Une normale
+ * seule aurait donné un objet plat qui s'éclaire comme un objet rond* — et
+ * c'est précisément ce que Keko lisait comme « pas d'effet de 3D » sur la
+ * version d'avant, où seuls les 13 % extérieurs tournaient.
+ *
+ * **LE SOMMET EST APLATI** (`pow(…, 0.55)`) : un demi-sinus nu donne une
+ * goutte, alors qu'un paquet de cartes est une BRIQUE — son dessus est plat et
+ * c'est au bord que le film retombe d'un coup. *La puissance inférieure à un
+ * est exactement ce qui fait un coussin plutôt qu'un dôme.*
+ *
+ * **ET IL S'ÉTEINT AUX SOUDURES**, parce que le film y est PINCÉ à plat : le
+ * ventre est la place des cartes, pas celle du sachet.
+ */
+const VENTRE = `
+float ventre(vec2 p) {
+  float large = pow(max(sin(3.14159265 * p.x), 0.0), 0.55);
+  float haut = smoothstep(0.0, 0.15, p.y) * (1.0 - smoothstep(0.85, 1.0, p.y));
+  return large * haut;
+}
+`
+
 const DECHIRURE = `
 /**
  * LE FROISSÉ DU FILM — et c'est ce qui fait un SACHET plutôt qu'une image de
@@ -208,11 +246,22 @@ function matiereDuMorceau(estLeCorps: boolean): THREE.ShaderMaterial {
       // piloté par la position du curseur reste un dessin qu'on promène.
       uPenche: { value: new THREE.Vector2() },
       uSurvol: { value: 0 },
+      // DE COMBIEN LES CARTES BOMBENT LE FILM, en unités de scène.
+      uBombe: { value: 0 },
     },
-    vertexShader: `varying vec2 vUv;
+    vertexShader: `uniform float uV0;
+uniform float uV1;
+uniform float uBombe;
+varying vec2 vUv;
+${VENTRE}
 void main() {
   vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  // LE REPÈRE DU SACHET ENTIER, ici aussi : *le ventre ne doit pas s'arrêter à
+  // la déchirure*, sinon les deux morceaux ne seraient plus la même poche.
+  vec2 sach = vec2(uv.x, mix(uV0, uV1, uv.y));
+  vec3 pos = position;
+  pos.z += ventre(sach) * uBombe;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }`,
     fragmentShader: `uniform sampler2D uSachet;
 uniform float uV0;
@@ -223,6 +272,7 @@ uniform float uFondu;
 uniform vec2 uPenche;
 uniform float uSurvol;
 varying vec2 vUv;
+${VENTRE}
 ${DECHIRURE}
 
 void main() {
@@ -233,6 +283,29 @@ void main() {
   vec2 sach = vec2(vUv.x, mix(uV0, uV1, vUv.y));
   vec4 tex = texture2D(uSachet, sach);
 
+  /**
+   * LA NORMALE DU VENTRE, et c'est elle qui raconte la FORME.
+   *
+   * Les deux pentes se comptent dans le MONDE : un pas en y couvre
+   * le rapport du sachet fois plus de longueur qu'un pas en x, donc la même
+   * différence de hauteur y vaut une pente d'autant plus faible. *Sans ça le
+   * ventre serait deux fois trop raide dans sa hauteur.*
+   *
+   * **ET LA PENTE SE BORNE** : la puissance 0,55 donne une tangente VERTICALE
+   * tout au bord, donc une normale qui part à l'infini sur la dernière rangée
+   * de pixels. C'est voulu pour la forme — *le film retombe d'un coup* — mais
+   * un reflet n'a rien à y faire.
+   */
+  float eb = 0.012;
+  float gx = (ventre(sach + vec2(eb, 0.0)) - ventre(sach - vec2(eb, 0.0))) / (2.0 * eb);
+  float gy = (ventre(sach + vec2(0.0, eb)) - ventre(sach - vec2(0.0, eb))) / (2.0 * eb);
+  gx = clamp(gx, -3.0, 3.0);
+  gy = clamp(gy, -3.0, 3.0);
+  vec3 Nv = normalize(vec3(
+    -gx * ${REL_BOMBE.toFixed(4)},
+    -gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)},
+    1.0));
+
   vec2 q = vec2(sach.x, sach.y * ${RAPPORT_SACHET.toFixed(3)}) * 2.1;
   // LA NORMALE SORT DU CHAMP PAR DIFFÉRENCES FINIES : on n'a pas de carte de
   // normales, et on n'en veut pas — *une texture de plis serait figée, celle-ci
@@ -240,7 +313,14 @@ void main() {
   float e = 0.035;
   float hx = froisse(q + vec2(e, 0.0)) - froisse(q - vec2(e, 0.0));
   float hy = froisse(q + vec2(0.0, e)) - froisse(q - vec2(0.0, e));
-  vec3 N = normalize(vec3(-hx * 1.15, -hy * 1.15, 1.0));
+  // **LES DEUX GRADIENTS S'AJOUTENT AVANT DE SE NORMALISER.** Le froissé n'est
+  // plus qu'un DÉTAIL posé sur la forme : Keko — « la texture est trop présente,
+  // et les reflets dedans empêchent de voir les motifs ». *Un relief de matière
+  // qui pèse autant qu'un relief de forme efface la forme.*
+  vec3 N = normalize(vec3(
+    -(gx * ${REL_BOMBE.toFixed(4)} + hx * 0.22),
+    -(gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)} + hy * 0.22),
+    1.0));
 
   // LA LUMIÈRE VIENT DU HAUT-GAUCHE, comme partout dans ce jeu — et c'est
   // L'OBJET QUI TOURNE SOUS ELLE : le penchant du sachet se retranche de la
@@ -251,42 +331,14 @@ void main() {
   // L'OMBRE DES PLIS : elle module l'IMPRIMÉ lui-même. *C'est elle qui dit que
   // le dessin est posé sur quelque chose de froissé* — sans elle, le reflet
   // flotterait au-dessus d'une image plate.
-  float diff = dot(N, L) * 0.5 + 0.5;
-  // **ELLE S'ALLÈGE DE MOITIÉ** (±5 % au lieu de ±10). *C'est elle, et non le
-  // reflet, qui faisait « chargé »* : elle TEINTE l'imprimé, donc on la lit
-  // comme une salissure du dessin, là où le spéculaire se lit comme de la
-  // lumière posée dessus. **On baisse ce qui salit, on monte ce qui brille.**
-  tex.rgb *= 0.95 + 0.10 * diff;
+  // **LE VOLUME S'ÉCRIT DANS L'IMPRIMÉ, LES PLIS PRESQUE PAS.** C'est le
+  // partage que Keko demande : le ventre est clair, les bords retombent dans
+  // l'ombre, et le froissé ne fait plus que frémir par-dessus (±2,5 %).
+  // *Ce qui empêchait de lire les motifs, c'était que la matière pesait autant
+  // que la forme.*
+  tex.rgb *= 0.70 + 0.44 * (dot(Nv, L) * 0.5 + 0.5);
+  tex.rgb *= 0.985 + 0.03 * (dot(N, L) * 0.5 + 0.5);
 
-  /**
-   * L'ÉPAISSEUR : **un sachet est un TUBE APLATI, donc ses deux bords
-   * plongent vers l'arrière.**
-   *
-   * Keko : « dans lexicodex y'a un effet d'épaisseur sur le paquet, comme si
-   * les bords plongeaient un peu ».
-   *
-   * ***ET ÇA NE SE PEINT PAS NON PLUS.*** Une bande sombre le long de chaque
-   * côté serait éclairée pareil de partout — donc une ombre peinte, le défaut
-   * déjà payé sur le froissé. **C'est la NORMALE qui tourne**, et l'ombre en
-   * découle : incliner le sachet allume alors un bord et éteint l'autre,
-   * exactement ce que fait un cylindre.
-   *
-   * **SEULEMENT LES CÔTÉS, et c'est physique** : le haut et le bas sont
-   * THERMOSOUDÉS — c'est là que le film est pincé à plat — donc ils ne
-   * plongent pas, ils s'écrasent. *Le dessin dit déjà leur dentelure.*
-   *
-   * La courbure est au CARRÉ : un tube ne s'arrondit pas d'un coup, il
-   * accélère vers l'arête.
-   */
-  float versBord = abs(sach.x - 0.5) * 2.0;
-  float joue = smoothstep(0.74, 1.0, versBord);
-  joue *= joue;
-  N = normalize(N + vec3(sign(sach.x - 0.5) * joue * 0.95, 0.0, 0.0));
-  // ET LA LUMIÈRE QUI ARRIVE SUR L'ARÊTE EST RASANTE : le bord s'éteint un
-  // peu quoi qu'il arrive, parce qu'il se dérobe. *Sans ce terme, un bord
-  // tourné vers la lumière serait plus clair que le centre* — un tube n'a pas
-  // ses deux flancs plus lumineux que son ventre.
-  tex.rgb *= 1.0 - joue * 0.22;
 
   // CE QUI SE MESURE LE LONG DU BORD SE COMPTE EN PARTS DU SACHET, PAS DU
   // MORCEAU. Les deux n'ont pas la même hauteur — la bande n'en fait que
@@ -338,10 +390,31 @@ void main() {
   // en même temps, donc la normale varie moins : à exposant égal la tache
   // s'étale.* **On resserre d'autant qu'on allège le froissé**, et c'est le
   // produit des deux qui décide de ce qu'on voit.
-  float nh = max(dot(N, H), 0.0);
-  float sp = pow(nh, 150.0);
-  float satin = pow(nh, 7.0);
-  corps += vec3(1.0, 0.97, 0.90) * (sp * (1.9 + uSurvol * 0.9) + satin * 0.05);
+  // **ET LES DEUX LOBES NE REGARDENT PAS LA MÊME NORMALE.** C'est tout le
+  // partage : *le grand reflet appartient à la FORME*, donc il se calcule sur
+  // le ventre seul et court dessus quand on incline — c'est ce que Keko
+  // appelle « les reflets sur les bords bombés ». Les plis, eux, n'ont droit
+  // qu'à des scintillements serrés.
+  //
+  // *Mêlés sur une seule normale, le lobe large accrochait les plis et rendait
+  // les nappes blanches qu'on venait de retirer.*
+  // **ET LE GRAND REFLET SE MULTIPLIE, IL NE S'AJOUTE PAS.** Keko : « les
+  // reflets dedans empêchent de voir bien les motifs ».
+  //
+  // ***C'est exactement ça qui les effaçait*** : une lumière AJOUTÉE pousse
+  // tous les canaux vers le blanc, donc elle efface la teinte de ce qu'elle
+  // éclaire ; **une lumière MULTIPLIÉE éclaircit en gardant la couleur** — le
+  // dessin reste lisible SOUS le reflet, et on peut donc le monter très haut.
+  // *C'est ce que dit le film de lexicodex, dont le reflet est violet sur le
+  // violet et or sur l'or* — vérifié à la capture.
+  float lustre = pow(max(dot(Nv, H), 0.0), 16.0);
+  corps *= 1.0 + lustre * (1.15 + uSurvol * 0.7);
+
+  // **LES ÉCLATS DES PLIS RESTENT ADDITIFS, et eux seuls** : ce sont de vrais
+  // points chauds, trop petits pour effacer quoi que ce soit. *Un point qui
+  // sature est une étincelle, une nappe qui sature est un voile.*
+  float eclats = pow(max(dot(N, H), 0.0), 150.0);
+  corps += vec3(1.0, 0.97, 0.90) * eclats * 0.35;
 
   // L'ÉCLAT : une bande étroite au front, qui FRÉMIT. *Ce n'est plus une
   // braise* — elle allait de l'or chaud au blanc, c'est-à-dire un dégradé de
@@ -538,6 +611,10 @@ export function Sachet3D({
     corps.uniforms.uV1!.value = 1 - LIGNE_DECHIRURE
     bandeMat.uniforms.uV0!.value = 1 - LIGNE_DECHIRURE
     bandeMat.uniforms.uV1!.value = 1
+    // LES DEUX MORCEAUX SE BOMBENT DE LA MÊME HAUTEUR, en unités de scène :
+    // *c'est une seule poche*, et le raccord ne doit pas se voir.
+    corps.uniforms.uBombe!.value = taille * REL_BOMBE
+    bandeMat.uniforms.uBombe!.value = taille * REL_BOMBE
   }, [corps, bandeMat])
 
   // LES MATIÈRES SE JETTENT AVEC LE COMPOSANT : un `ShaderMaterial` garde son
@@ -822,7 +899,9 @@ export function Sachet3D({
           onPointerMove={viser}
           onPointerOut={quitter}
         >
-          <planeGeometry args={[taille, hCorps]} />
+          {/* IL LUI FAUT DES SEGMENTS : *un plan à quatre sommets ne peut pas
+              se bomber*, il n'a rien entre ses coins à déplacer. */}
+          <planeGeometry args={[taille, hCorps, 36, 56]} />
           <primitive object={corps} attach="material" />
         </mesh>
 
@@ -832,7 +911,7 @@ export function Sachet3D({
             objet tournoie sur lui-même, donc son pivot est son centre.* */}
         <group ref={bande} position={[0, hCorps / 2, 0]}>
           <mesh onPointerDown={prendre} onPointerMove={viser} onPointerOut={quitter}>
-            <planeGeometry args={[taille, hBande]} />
+            <planeGeometry args={[taille, hBande, 36, 10]} />
             <primitive object={bandeMat} attach="material" />
           </mesh>
         </group>
