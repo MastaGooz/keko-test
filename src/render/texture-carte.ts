@@ -5380,12 +5380,24 @@ async function peindreLeSachet(): Promise<HTMLCanvasElement> {
   // ET LE MOT EST EN BALOO 2, EN CASSE ORDINAIRE. *Les petites capitales d'un
   // serif gravé sont la voix d'une plaque de métal* ; une application écrit
   // « Ouvrir ici ».
-  ctx.textAlign = 'center'
+  //
+  // **IL SE POSE AU DÉPART DE LA DÉCOUPE, PAS AU MILIEU DU SACHET.** Keko :
+  // « les étincelles sont toujours un peu en retard à gauche de mon doigt ».
+  // ***Centré, le mot invitait à poser le doigt au milieu*** — alors que le
+  // front part toujours du bord gauche : un demi-sachet d'écart dès le premier
+  // pixel, qu'aucun réglage de vitesse ne peut rattraper.
+  //
+  // *Un repère qui dit de poser le doigt ailleurs qu'au départ de la découpe
+  // garantit le décalage qu'on cherche à corriger ailleurs* — et les chevrons
+  // n'ont jamais dit autre chose : ils montrent la droite, donc le mot est à
+  // gauche.
+  ctx.textAlign = 'left'
   ctx.fillStyle = '#fffaf0ee'
   ctx.font = `800 ${l * 0.058}px ${FAMILLE_RONDE}`
   ctx.letterSpacing = `${l * 0.004}px`
-  ctx.fillText('Ouvrir ici  ▸▸▸', l / 2, yL - l * 0.028)
+  ctx.fillText('Ouvrir ici  ▸▸▸', l * 0.06, yL - l * 0.028)
   ctx.letterSpacing = '0px'
+  ctx.textAlign = 'center'
 
   // LES DEUX SOUDURES, en dernier : elles se posent SUR l'imprimé, parce que
   // c'est ainsi qu'un sachet se ferme — on imprime le film, puis on le soude.

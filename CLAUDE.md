@@ -2240,6 +2240,81 @@ largeur de source.*
 **ET LE JAILLISSEMENT GARDE SON ÉTALEMENT SUR TOUTE L'OUVERTURE** : là, le
 recul d'un côté est juste — *la fente entière est la source*, pas un point.
 
+#### LE FRONT SUIT LE DOIGT, ET CE N'ÉTAIT PAS LA GERBE
+
+Keko : **« les étincelles sont toujours un peu en retard à gauche de mon doigt
+quand je slide sur le téléphone pour déchirer le booster »**.
+
+***ET ELLES NAISSENT PILE AU FRONT — C'EST LE FRONT QUI ÉTAIT EN RETARD.*** La
+gerbe avait été reprise deux fois de suite (la source, puis sa dispersion), et
+elle était juste : *un seul chiffre alimente le liseré de la déchirure et la
+naissance des étincelles*, donc elles ne peuvent pas se décoller de la fente.
+**Le défaut était d'un cran en amont**, dans ce que la fente elle-même fait du
+geste.
+
+**DEUX TERMES, ET ILS SE CUMULAIENT** — chacun invisible derrière l'autre :
+
+| | ce qui retardait | de combien |
+|---|---|---|
+| **la courbe du front** | il partait lentement et accélérait | jusqu'à **0,185 largeur** |
+| **l'invite « Ouvrir ici »** | centrée, donc le doigt se pose au MILIEU | **0,50 largeur**, dès le premier pixel |
+
+#### UNE MAIN BAT UNE COURBE
+
+`COURBE_FRONT` valait 1,45 : *« une déchirure amorce, puis elle file »*, et
+l'argument tenait — **pour un front qui court SEUL.** Mesuré, il ne va alors
+qu'à **42 % de la vitesse du doigt** au départ, et ne le rattrape qu'au bout :
+
+| avancée du doigt | vitesse du front, exposant 1,45 | **exposant 1** |
+|---|---|---|
+| 0,05 largeur | **0,42** | 1,12 |
+| 0,20 | 0,79 | 1,12 |
+| 0,50 | 1,19 | 1,12 |
+| 0,90 | **1,55** | 1,12 |
+
+***Une courbe raconte quelque chose quand elle est la seule à mener ; sous un
+doigt, elle ne fait que décaler ce qu'il montre.*** À l'exposant 1 le front
+avance de 1,12 largeur quand le doigt en fait 1 — donc **il est sous lui du
+premier au dernier pixel**, et le retard tombe de 0,185 à **0,02 largeur au
+pire**.
+
+**ET LES 1,12 NE SONT PAS UN RÉGLAGE DE PLUS** : c'est la course du front, qui
+sort des deux bords. *Elle tombait déjà juste* — un doigt qui tire sur
+`TIRE_MAX` (0,9 largeur) mène le front de −0,06 à 0,948, soit exactement sa
+place s'il s'est posé au départ de la découpe.
+
+**LA PHASE AUTOMATIQUE N'Y PERD RIEN**, ce qui n'allait pas de soi : elle
+reprend là où le doigt a lâché — donc sur le dernier tiers — et *sa durée est
+fixée par l'horloge, pas par la courbe.* Elle y file à vitesse constante au lieu
+d'accélérer, et c'est de toute façon ce qu'un film déjà amorcé fait.
+
+#### UN REPÈRE QUI INVITE À POSER LE DOIGT AILLEURS QU'AU DÉPART DE LA DÉCOUPE
+
+***C'EST LE PLUS GROS DES DEUX, ET AUCUN RÉGLAGE DE VITESSE NE POUVAIT LE
+RATTRAPER.*** « Ouvrir ici ▸▸▸ » était **centré** ; le front, lui, part toujours
+du bord gauche. Un doigt posé là où le mot l'invite naît donc **une
+demi-largeur devant la déchirure**, et il garde cet écart tout du long :
+
+| doigt posé | écart au contact | au tiers de la course |
+|---|---|---|
+| **au départ du pointillé** | −0,08 | **−0,04** |
+| au quart | −0,26 | −0,22 |
+| **au milieu** (ce que le mot disait) | **−0,56** | **−0,52** |
+
+*Le geste est RELATIF — il compte ce que le doigt a parcouru, pas où il est* —
+et c'est ce qui le rend sûr : **un geste absolu ouvrirait le sachet à moitié à
+l'instant où l'on y pose le doigt.** Donc ce n'est pas le geste qui devait
+céder, c'est l'invite.
+
+**ET LES CHEVRONS N'ONT JAMAIS DIT AUTRE CHOSE** : ils montrent la droite, donc
+le mot est à gauche. *Il se cale au départ du pointillé*, et la contradiction
+entre ce que le dessin promet et ce que la règle fait disparaît.
+
+***POURQUOI LE FRONT NE PART PAS DU DOIGT*** : une déchirure amorcée au milieu
+laisserait la moitié gauche de la bande attachée, et le sachet s'ouvrirait
+d'autant plus vite qu'on poserait le doigt à droite. **Un bord de départ fixe
+est ce qui donne au geste une course qui vaut toujours la même chose.**
+
 #### `?gerbe` TIRE, PUIS S'ARRÊTE
 
 *C'est le banc qui manquait*, et la note le disait depuis deux épisodes : **on
@@ -3276,6 +3351,10 @@ la même place se désaccorderaient au premier réglage.*
   sans ouvrir vingt paquets. **La pesanteur VAUT la vitesse**, donc on ne la
   règle plus séparément — et *la vitesse de départ est redevenue libre* depuis
   que le grain ne s'allonge plus avec elle ;
+- **la courbe du front** (exposant 1, donc le front suit le doigt largeur pour
+  largeur) et **la place du « Ouvrir ici »**, au départ du pointillé : *c'est le
+  couple qui met la déchirure sous le doigt*, et il ne reste d'écart que si Keko
+  pose son doigt ailleurs que là où le mot l'invite ;
 - **la plage d'angles** (15° à 165°) et **la dispersion de la source**
   (±0,060 largeur autour du front) : *c'est le couple qui tue l'effet
   fontaine*, et les deux bornes d'angle sont de Keko. **La portée latérale en

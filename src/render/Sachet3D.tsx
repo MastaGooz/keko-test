@@ -67,14 +67,29 @@ const PART_FRONT = 0.42
 const FRONT_DEPART = -0.06
 
 /**
- * LA COURBE DU FRONT : il part lentement et ACCÉLÈRE.
+ * LA COURBE DU FRONT : il suit le DOIGT, largeur pour largeur.
  *
- * C'est ce que fait une déchirure — elle amorce, puis elle file — et c'est
- * l'inverse de tout le reste du jeu, où le mouvement part vite et s'achève
- * lentement. *Un front qui ralentirait en arrivant se lirait comme un store
- * qu'on baisse.*
+ * Keko : **« les étincelles sont toujours un peu en retard à gauche de mon
+ * doigt quand je slide sur le téléphone pour déchirer le booster »**.
+ *
+ * ***ET CE N'ÉTAIT PAS LA GERBE, C'ÉTAIT LE FRONT.*** Il partait lentement et
+ * accélérait (1,45), ce qui est bien ce qu'une déchirure fait quand elle court
+ * SEULE — mais **ici c'est le doigt qui la mène** : mesuré, le front n'allait
+ * qu'à **42 % de la vitesse du doigt** au départ et ne le rattrapait qu'au
+ * bout. Il prenait jusqu'à 0,185 largeur de retard, soit une cinquantaine de
+ * pixels.
+ *
+ * ***UNE MAIN BAT UNE COURBE.*** À l'exposant 1 le front avance de 1,12 largeur
+ * quand le doigt en fait 1 — donc il est sous lui du premier au dernier pixel,
+ * et le retard tombe à 0,02 largeur au pire.
+ *
+ * **ET LA PHASE AUTOMATIQUE N'Y PERD RIEN**, ce qui n'allait pas de soi : elle
+ * reprend là où le doigt a lâché, c'est-à-dire sur le dernier tiers de la
+ * course, et sa durée est fixée par l'horloge et non par la courbe. *Elle y
+ * file à vitesse constante au lieu d'accélérer* — et c'est de toute façon ce
+ * qu'un film déjà amorcé fait.
  */
-const COURBE_FRONT = 1.45
+const COURBE_FRONT = 1
 
 /**
  * LES TROIS GRANDEURS DU BORD DÉCHIRÉ, en parts de la HAUTEUR DU SACHET.
