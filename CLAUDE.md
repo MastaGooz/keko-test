@@ -1926,17 +1926,35 @@ l'angle de la carte**, donc il garde un rayon — un pli vif suppose qu'on l'ait
 marqué à l'ongle. Entre le dôme, qui n'a aucune arête, et la chute droite, qui
 en a une parfaite, il y a toute la place pour un congé.
 
-**ON MÉLANGE LA RAMPE DROITE AVEC SA SMOOTHSTEP** (`ARRONDI_VENTRE`, 0,55) :
+**ON MÉLANGE LA RAMPE DROITE AVEC SA SMOOTHSTEP** (`ARRONDI_VENTRE`, 0,7) :
 à 0 l'arête est vive, à 1 il n'y a plus d'arête du tout, et ***entre les deux
 la pente du MILIEU du flanc ne bouge presque pas pendant que les deux jonctions
 s'arrondissent.*** C'est exactement ce qu'un congé fait, et c'est pour ça qu'un
-seul chiffre suffit : la rupture de pente tombe de 1 à 0,45 — **le pli se lit
-encore, il n'a plus le tranchant d'un pliage.**
+seul chiffre suffit — **le pli se lit encore, il n'a plus le tranchant d'un
+pliage.**
 
-**ET LE LISSAGE SE POSE APRÈS LE MINIMUM**, ce qui est *exactement* équivalent
-à le poser sur chaque axe : **une fonction croissante commute avec un
-minimum.** Une ligne au lieu de deux — et la couture diagonale des coins
-s'arrondit avec le reste, ce qui est voulu : c'est une arête comme les autres.
+#### ET LE CONGÉ NE POUVAIT PAS TOUCHER LES COINS — j'avais écrit l'inverse
+
+Keko, la passe suivante : **« les arêtes sont encore un peu trop marquées,
+surtout les diagonales en haut droite et haut gauche »**.
+
+***ET C'EST UNE NOTE FAUSSE QUI L'AVAIT LAISSÉ PASSER.*** J'avais écrit que le
+lissage se posait après le minimum « ce qui est exactement équivalent à le
+poser sur chaque axe », donc que « la couture diagonale s'arrondit avec le
+reste ». **La première moitié est vraie et la seconde n'en découle pas** : une
+fonction croissante commute avec un minimum — c'est précisément pour ça que le
+congé ne pouvait RIEN faire à la couture. Il changeait la pente de chaque côté
+du V ; **le V, lui, restait un V exact.**
+
+***UN LISSAGE POSÉ SUR LE RÉSULTAT N'OUVRE JAMAIS UN ANGLE QUE L'OPÉRATION A
+CRÉÉ*** — il faut arrondir **l'opération elle-même.** C'est donc un MINIMUM
+POLYNOMIAL (`RAYON_COIN_VENTRE`, 0,35) : hors de sa bande de mélange il vaut le
+minimum au bit près, dedans il raccorde les deux pentes par une parabole.
+
+**Et le plateau ne descend pas d'un pixel**, ce qui n'allait pas de soi : le
+terme qu'il retranche vaut `k / 4` **partout où les deux axes sont à égalité**,
+c'est-à-dire sur tout le plateau — donc uniformément, donc ça se rend par une
+division. *Un creux constant n'est pas un creux, c'est un décalage.*
 
 #### CE QUI ÉCRÊTAIT L'ARÊTE ÉTAIT LE GARDE-FOU DU DÔME
 
@@ -1953,7 +1971,7 @@ Trois réglages, et chacun va dans le même sens :
 
 | | dôme | coussin |
 |---|---|---|
-| le profil | `sin^0,55`, dérivable partout | **plateau + flanc droit**, `min` des deux axes, **congé à 0,55** |
+| le profil | `sin^0,55`, dérivable partout | **plateau + flanc droit**, minimum ARRONDI des deux axes, **congé à 0,7** |
 | la hauteur | 5,5 % de la largeur | **9,5 %** |
 | la borne du gradient | 3 | **9** |
 | le lobe du reflet | 16 | **26** — *il s'arrête net sur l'arête* |
@@ -2120,8 +2138,9 @@ la même place se désaccorderaient au premier réglage.*
   1,15 de relief) et **la vivacité du reflet** (deux lobes, 150 et 7) : *une
   matière ne se juge qu'en inclinant l'objet* — et **les deux se rejugent
   ENSEMBLE**, puisque le lobe s'étale dès que le relief s'aplatit ;
-- **l'arrondi des arêtes** (`ARRONDI_VENTRE`, 0,55) : *c'est le rayon du pli*,
-  et il ne se juge qu'en inclinant le sachet sous la lumière ;
+- **l'arrondi des arêtes** (`ARRONDI_VENTRE`, 0,7) et **celui des coins**
+  (`RAYON_COIN_VENTRE`, 0,35) : *c'est le rayon du pli*, et il ne se juge qu'en
+  inclinant le sachet sous la lumière ;
 - **la hauteur du ventre** (5 % de la largeur du sachet — *elle a déjà baissé
   DEUX fois*, « on dirait qu'il est très épais » puis « il semble encore trop
   épais » ; **c'est à peu près l'épaisseur réelle de cinq cartes**, six

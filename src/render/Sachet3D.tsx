@@ -89,7 +89,14 @@ const REL_BOMBE = 0.05
  * *Une arête se voit à sa RUPTURE de pente* : ce congé en rend un peu plus de
  * la moitié, donc le pli se lit encore, sans le tranchant d'un pliage.
  */
-const ARRONDI_VENTRE = 0.55
+const ARRONDI_VENTRE = 0.7
+
+/**
+ * DE COMBIEN LA COUTURE DIAGONALE DES COINS EST ARRONDIE, en parts de la
+ * hauteur du ventre. *Un minimum fait un pli en V, et aucun lissage posé
+ * dessus ne peut l'ouvrir* — il faut un minimum qui soit lui-même arrondi.
+ */
+const RAYON_COIN_VENTRE = 0.35
 
 
 const AMPLI = 0.02
@@ -174,20 +181,29 @@ float ventre(vec2 p) {
          - vec2(${POCHE.demiX.toFixed(4)}, ${POCHE.demiY.toFixed(4)});
   float fx = 1.0 - clamp(d.x / ${POCHE.flancX.toFixed(4)}, 0.0, 1.0);
   float fy = 1.0 - clamp(d.y / ${POCHE.flancY.toFixed(4)}, 0.0, 1.0);
-  float f = min(fx, fy);
-  // LE CONGE DES DEUX ARETES, et il se dose. Keko : « je trouve les aretes un
-  // peu trop marquees, dans lexicodex elles sont un peu moins angulaires,
-  // c'est plus realiste ». *Un film n'a pas de pli vif : il se tend sur
-  // l'angle de la carte, donc il garde un rayon.* On melange la rampe droite
-  // avec sa smoothstep -- a 0 l'arete est vive, a 1 il n'y a plus d'arete du
-  // tout (le dome qu'on avait ecarte), et entre les deux la pente du MILIEU du
-  // flanc ne bouge presque pas pendant que les deux jonctions s'arrondissent.
+  // LA COUTURE DES DEUX AXES EST UN MINIMUM ARRONDI, pas un minimum.
   //
-  // **ET LE LISSAGE SE POSE APRES LE MINIMUM**, ce qui est exactement
-  // equivalent a le poser sur chaque axe -- une fonction croissante commute
-  // avec un minimum -- en une ligne au lieu de deux. *La couture diagonale des
-  // coins s'arrondit donc avec le reste, et c'est voulu : c'est une arete
-  // comme les autres.*
+  // Keko : « les aretes sont encore un peu trop marquees, surtout les
+  // diagonales en haut droite et haut gauche ». ***Et aucun lissage pose sur
+  // le resultat ne pouvait les ouvrir*** : une fonction croissante commute
+  // avec un minimum, donc adoucir f revenait a adoucir chaque axe -- le V de
+  // la couture restait un V exact. *Il faut arrondir le MINIMUM lui-meme.*
+  //
+  // La forme est le minimum polynomial classique : hors de la bande de
+  // melange il vaut le minimum au bit pres, dedans il raccorde les deux pentes
+  // par une parabole. Le terme qu'il retranche vaut k/4 la ou les deux axes
+  // sont a egalite -- donc partout sur le plateau, uniformement : on le rend
+  // par la division, et le plateau reste plat et a sa hauteur.
+  float ec = clamp(0.5 + (fy - fx) / (2.0 * ${RAYON_COIN_VENTRE.toFixed(2)}), 0.0, 1.0);
+  float f = mix(fy, fx, ec) - ${RAYON_COIN_VENTRE.toFixed(2)} * ec * (1.0 - ec);
+  f = clamp(f / ${(1 - 0.25 * RAYON_COIN_VENTRE).toFixed(4)}, 0.0, 1.0);
+
+  // LE CONGE DES DEUX ARETES DU PROFIL, et il se dose. *Un film n'a pas de pli
+  // vif : il se tend sur l'angle de la carte, donc il garde un rayon.* On
+  // melange la rampe droite avec sa smoothstep -- a 0 l'arete est vive, a 1 il
+  // n'y a plus d'arete du tout (le dome qu'on avait ecarte), et entre les deux
+  // la pente du MILIEU du flanc ne bouge presque pas pendant que les deux
+  // jonctions s'arrondissent.
   return mix(f, f * f * (3.0 - 2.0 * f), ${ARRONDI_VENTRE.toFixed(2)});
 }
 `
