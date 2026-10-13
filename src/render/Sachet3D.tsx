@@ -98,6 +98,34 @@ const ARRONDI_VENTRE = 0.7
  */
 const RAYON_COIN_VENTRE = 0.35
 
+/**
+ * LE FROISSÉ N'EST PAS LE MÊME PARTOUT : **le film est TENDU sur les cartes et
+ * il a du MOU tout autour.**
+ *
+ * Keko : « sur lexicodex le paquet a des genres de plis sur les bords, qui
+ * donnent cette texture si particulière des papiers de booster ». *Et c'est
+ * exactement là qu'un vrai sachet se plisse* — sur le plateau il n'a nulle part
+ * où aller, dans la marge il en a trop.
+ *
+ * **CE QUI DÉBLOQUE LE RÉGLAGE, C'EST QUE LES DEUX NE SE DISPUTENT PLUS RIEN.**
+ * Le froissé avait dû être écrasé (0,22 de relief, ±1,5 % d'ombre) parce qu'il
+ * SALISSAIT l'imprimé — « la texture est trop présente, les reflets empêchent de
+ * voir les motifs ». *Or l'imprimé vit au centre et le mou vit au bord* : là où
+ * on peut enfin appuyer, il n'y a rien à salir.
+ *
+ * | | au plateau | au bord |
+ * |---|---|---|
+ * | relief | **0,10** | **0,95** |
+ * | ombre | ±1,2 % | **±8 %** |
+ * | échelle | 2,1 | **4,6** — *un pli de mou est serré* |
+ */
+const PLI_PLATEAU = 0.1
+const PLI_BORD = 0.95
+const OMBRE_PLATEAU = 0.012
+const OMBRE_BORD = 0.08
+const ECHELLE_PLATEAU = 2.1
+const ECHELLE_BORD = 4.6
+
 
 const AMPLI = 0.02
 const CHARBON = 0.035
@@ -353,7 +381,21 @@ void main() {
     -gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)},
     1.0));
 
-  vec2 q = vec2(sach.x, sach.y * ${RAPPORT_SACHET.toFixed(3)}) * 2.1;
+  /**
+   * LE MOU DU FILM : 0 là où il est tendu sur une carte, 1 dans la marge.
+   *
+   * *C'est le ventre pris par l'autre bout*, donc il n'y a pas une forme de
+   * plus à décrire — **la seule chose qui sait où sont les cartes est déjà
+   * là**, et les plis s'en déduisent au lieu d'être semés à la main.
+   */
+  float mou = 1.0 - ventre(sach);
+
+  // ***LE DOMAINE SE RESSERRE AVEC LE MOU***, et ce n'est pas un réglage de
+  // plus : *un film tendu ÉTIRE ses plis, un film qui a du mou les tasse.* Une
+  // seule échelle variable dit donc les deux à la fois — et elle ne coûte pas
+  // un appel de champ de plus, là où un second froissé en aurait doublé six.
+  vec2 q = vec2(sach.x, sach.y * ${RAPPORT_SACHET.toFixed(3)})
+         * mix(${ECHELLE_PLATEAU.toFixed(2)}, ${ECHELLE_BORD.toFixed(2)}, mou);
   // LA NORMALE SORT DU CHAMP PAR DIFFÉRENCES FINIES : on n'a pas de carte de
   // normales, et on n'en veut pas — *une texture de plis serait figée, celle-ci
   // se calcule et ne coûte pas un octet.*
@@ -364,9 +406,10 @@ void main() {
   // plus qu'un DÉTAIL posé sur la forme : Keko — « la texture est trop présente,
   // et les reflets dedans empêchent de voir les motifs ». *Un relief de matière
   // qui pèse autant qu'un relief de forme efface la forme.*
+  float pli = mix(${PLI_PLATEAU.toFixed(2)}, ${PLI_BORD.toFixed(2)}, mou);
   vec3 N = normalize(vec3(
-    -(gx * ${REL_BOMBE.toFixed(4)} + hx * 0.22),
-    -(gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)} + hy * 0.22),
+    -(gx * ${REL_BOMBE.toFixed(4)} + hx * pli),
+    -(gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)} + hy * pli),
     1.0));
 
   // LA LUMIÈRE VIENT DU HAUT-GAUCHE, comme partout dans ce jeu — et c'est
@@ -384,7 +427,8 @@ void main() {
   // *Ce qui empêchait de lire les motifs, c'était que la matière pesait autant
   // que la forme.*
   tex.rgb *= 0.70 + 0.44 * (dot(Nv, L) * 0.5 + 0.5);
-  tex.rgb *= 0.985 + 0.03 * (dot(N, L) * 0.5 + 0.5);
+  float ombre = mix(${OMBRE_PLATEAU.toFixed(3)}, ${OMBRE_BORD.toFixed(3)}, mou);
+  tex.rgb *= 1.0 - ombre + 2.0 * ombre * (dot(N, L) * 0.5 + 0.5);
 
 
   // CE QUI SE MESURE LE LONG DU BORD SE COMPTE EN PARTS DU SACHET, PAS DU

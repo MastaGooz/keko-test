@@ -1806,6 +1806,41 @@ périodes qui ne retombent jamais en phase, comme la respiration des créatures 
 arriverait avant l'objet qu'elle éclaire se lirait comme un décalage, et
 l'amortissement est précisément ce qui donne son poids au geste.
 
+#### LES PLIS VIVENT AU BORD, PARCE QUE C'EST LÀ QUE LE FILM A DU MOU
+
+Keko : **« sur lexicodex le paquet a des genres de plis sur les bords, qui
+donnent cette texture si particulière des papiers de booster »**.
+
+***ET C'EST EXACTEMENT LÀ QU'UN VRAI SACHET SE PLISSE*** : sur le plateau le
+film est TENDU sur les cartes, il n'a nulle part où aller ; dans la marge il a
+du mou, donc il se tasse. **Le froissé était uniforme** — donc faux partout, et
+il fallait l'écraser pour qu'il cesse de salir le dessin.
+
+**CE QUI DÉBLOQUE LE RÉGLAGE, C'EST QUE LES DEUX NE SE DISPUTENT PLUS RIEN.**
+Le froissé avait été ramené à 0,22 de relief et ±1,5 % d'ombre parce qu'il
+*salissait l'imprimé* — « la texture est trop présente, les reflets empêchent de
+voir les motifs ». ***Or l'imprimé vit au centre et le mou vit au bord*** : là
+où on peut enfin appuyer, il n'y a rien à salir. On monte donc d'un facteur
+quatre là où ça se voit, et on baisse encore là où ça gênait.
+
+| | au plateau | au bord |
+|---|---|---|
+| relief | **0,10** | **0,95** |
+| ombre | ±1,2 % | **±8 %** |
+| échelle | 2,1 | **4,6** |
+
+**LE MASQUE EST LE VENTRE PRIS PAR L'AUTRE BOUT** (`1 − ventre`), donc il n'y a
+pas une forme de plus à décrire : *la seule chose qui sait où sont les cartes
+est déjà là*, et les plis s'en déduisent au lieu d'être semés à la main. **Tout
+réglage de la poche les emmène avec lui**, et ils ne peuvent pas s'en
+désaccorder.
+
+***ET LE DOMAINE SE RESSERRE AVEC LE MOU***, ce qui n'est pas un réglage de
+plus mais le même fait dit en géométrie : **un film tendu ÉTIRE ses plis, un
+film qui a du mou les tasse.** Une seule échelle variable porte les deux — et
+elle ne coûte pas un appel de champ de plus, là où un second froissé en aurait
+doublé six.
+
 #### LE RÉGLAGE S'EST FAIT EN DEUX PASSES, ET LA PREMIÈRE DISAIT DU MÉTAL BROSSÉ
 
 *Mesuré à l'écran* : à six fois l'échelle et ±20 % d'ombre, le froissé donnait
@@ -2167,10 +2202,11 @@ la même place se désaccorderaient au premier réglage.*
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la force des confettis et leur nombre** : *une gerbe ne se juge qu'en
   ouvrant des paquets* ;
-- **la finesse des plis** (échelle 2,1), **leur profondeur** (±5 % d'ombre,
-  1,15 de relief) et **la vivacité du reflet** (deux lobes, 150 et 7) : *une
-  matière ne se juge qu'en inclinant l'objet* — et **les deux se rejugent
-  ENSEMBLE**, puisque le lobe s'étale dès que le relief s'aplatit ;
+- **les plis du BORD** (0,95 de relief, ±8 % d'ombre, échelle 4,6) et **ceux du
+  plateau** (0,10, ±1,2 %, 2,1) : *c'est la texture du papier de booster*, et
+  elle ne se juge qu'en inclinant l'objet. **Les deux se rejugent ENSEMBLE**
+  avec la vivacité du reflet, puisque le lobe s'étale dès que le relief
+  s'aplatit ;
 - **l'arrondi des arêtes** (`ARRONDI_VENTRE`, 0,7) et **celui des coins**
   (`RAYON_COIN_VENTRE`, 0,35) : *c'est le rayon du pli*, et il ne se juge qu'en
   inclinant le sachet sous la lumière ;
