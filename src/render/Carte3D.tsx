@@ -1080,7 +1080,7 @@ ${nuanceur.fragmentShader}`
         // bilan — et il reposait alors la carte STATIQUE par-dessus
         // l'animation, qui ne la reprenait jamais. Keko : « à la fin du paquet
         // quand on voit les cartes, les cartes animées ne bougent plus ».
-        if (texAnim.current !== null && !dos) return
+        if (texToiles.current[tampon.current] !== null && !dos) return
         face.map = texture
         face.needsUpdate = true
         onPeinte?.()
@@ -1125,8 +1125,31 @@ ${nuanceur.fragmentShader}`
    * trois cents kilo-octets par seconde. Il ne reste qu'un `needsUpdate`.
    */
   const anim = useRef<Animation | null>(null)
-  const toile = useRef<HTMLCanvasElement | null>(null)
-  const texAnim = useRef<THREE.CanvasTexture | null>(null)
+  /**
+   * DEUX TOILES, ET C'EST CE QUI SUPPRIME LE CLIGNOTEMENT.
+   *
+   * ***`peindreCarte` EFFACE SA TOILE AVANT DE PEINDRE*** - elle commence par
+   * `canvas.width = ...`, ce qui vide le canvas - **et elle peint ensuite de
+   * facon asynchrone.** Avec une toile unique, la toile que la texture montre
+   * est donc VIDE pendant tout le temps de la peinture : si un envoi au GPU
+   * tombe dans cette fenetre, la carte apparait en laiton nu. Keko : « la
+   * derniere carte du booster continue de flash en gris (elle est animee) ».
+   *
+   * *Ca ne se voyait pas sur la machine de dev* : une peinture y coute 2 a
+   * 3 ms, donc elle se termine bien avant l'image suivante et l'envoi trouve
+   * toujours une toile pleine. **Sur un telephone a trois pixels par point, la
+   * toile fait 768 px et la peinture depasse l'image** - l'envoi en retard
+   * tombe alors en plein milieu de la peinture SUIVANTE, et prend le vide.
+   *
+   * ***On ne peint donc jamais dans la toile qu'on montre*** : on alterne, et
+   * on ne bascule la texture qu'une fois la peinture finie. Le prix est une
+   * seconde toile et une seconde texture - *deux, pas trente*, ce qui etait
+   * toute la raison de reutiliser la premiere.
+   */
+  const toiles = useRef<(HTMLCanvasElement | null)[]>([null, null])
+  const texToiles = useRef<(THREE.CanvasTexture | null)[]>([null, null])
+  /** Le tampon que la texture montre ; on peint dans l'autre. */
+  const tampon = useRef(0)
   const derniere = useRef(-1)
   const peintureEnCours = useRef(false)
   /**
@@ -1160,9 +1183,9 @@ ${nuanceur.fragmentShader}`
       palierToile.current = -1
       // *Ce qui est à nous se libère* — à la différence de la texture du cache
       // partagé, qui sert encore à d'autres cartes.
-      texAnim.current?.dispose()
-      texAnim.current = null
-      toile.current = null
+      texToiles.current.forEach((t) => t?.dispose())
+      texToiles.current = [null, null]
+      toiles.current = [null, null]
     }
   }, [carte.animation])
 
@@ -1183,37 +1206,43 @@ ${nuanceur.fragmentShader}`
     const change = palier !== palierToile.current
     if (change) {
       palierToile.current = palier
-      toile.current = null
+      texToiles.current.forEach((t) => t?.dispose())
+      texToiles.current = [null, null]
+      toiles.current = [null, null]
     }
     if (i === derniere.current && !change) return
     derniere.current = i
     peintureEnCours.current = true
-    void peindreCarte({ ...carte, image: a.images[i] }, palier, toile.current ?? undefined)
+    // ON PEINT DANS L'AUTRE TAMPON : celui que la texture montre ne doit jamais
+    // etre efface sous les yeux du joueur.
+    const libre = 1 - tampon.current
+    void peindreCarte({ ...carte, image: a.images[i] }, palier, toiles.current[libre] ?? undefined)
       .then((canvas) => {
         peintureEnCours.current = false
         if (anim.current === null) return
         // UNE TOILE NEUVE DEMANDE UNE TEXTURE NEUVE : *on ne change pas les
         // dimensions d'une texture déjà allouée*, on la jette.
-        if (texAnim.current === null || toile.current !== canvas) {
-          texAnim.current?.dispose()
+        if (texToiles.current[libre] == null || toiles.current[libre] !== canvas) {
+          texToiles.current[libre]?.dispose()
           const t = new THREE.CanvasTexture(canvas)
           t.anisotropy = 8
           t.colorSpace = THREE.SRGBColorSpace
-          texAnim.current = t
+          texToiles.current[libre] = t
         }
-        toile.current = canvas
+        toiles.current[libre] = canvas
+        tampon.current = libre
+        const tex = texToiles.current[libre]!
         // ELLE REPREND LA MAIN À CHAQUE IMAGE, et pas seulement à la première.
         // *Une texture posée une fois pour toutes est une texture qu'on peut
         // lui prendre* — et c'est ce que faisait l'effet du cache partagé à
         // chaque changement de palier. **Un seul propriétaire ne suffit pas
         // quand deux écrivains visent le même champ : il faut que celui qui
         // doit gagner le redise.**
-        if (face.map !== texAnim.current) {
-          face.map = texAnim.current
+        if (face.map !== tex) {
+          face.map = tex
           face.needsUpdate = true
         }
-        texAnim.current.needsUpdate = true
-        face.needsUpdate = true
+        tex.needsUpdate = true
       })
       .catch(() => {
         peintureEnCours.current = false

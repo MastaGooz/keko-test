@@ -336,7 +336,58 @@ Trois réglages, et chacun est un arbitrage de mémoire :
   rapide ni détail fin — et **la durée totale ne change pas**, donc le rythme
   est le même ;
 - **la toile est RÉUTILISÉE** : sans ça on allouerait trente toiles de trois
-  cents kilo-octets par seconde. Il ne reste qu'un `needsUpdate`.
+  cents kilo-octets par seconde. Il ne reste qu'un `needsUpdate`. **Il y en a
+  DEUX, et pas une** — voir juste en dessous.
+
+#### DEUX TOILES, PARCE QU'UNE PEINTURE COMMENCE PAR EFFACER
+
+Keko : **« c'est bizarre, quand j'ouvre le booster aucun souci avec les cartes
+animées, mais la dernière carte du booster continue de flash en gris (elle est
+animée) ».**
+
+***`peindreCarte` EFFACE SA TOILE AVANT DE PEINDRE*** — elle commence par
+`canvas.width = …`, ce qui vide le canvas — **et elle peint ensuite de façon
+asynchrone.** Avec une toile unique, *la toile que la texture montre est donc
+VIDE pendant tout le temps de la peinture* : si un envoi au GPU tombe dans cette
+fenêtre, la carte apparaît en **laiton nu**, c'est-à-dire le corps qu'on voit à
+travers une face devenue transparente.
+
+**ÇA NE SE VOIT PAS SUR LA MACHINE DE DEV, ET C'EST ARITHMÉTIQUE.** Mesuré : une
+peinture y coûte **2 à 3 ms** à un pixel par point, donc elle se termine bien
+avant l'image suivante et l'envoi trouve toujours une toile pleine. **Sur un
+téléphone à trois pixels par point, la toile fait 768 px** et la peinture dépasse
+la durée d'une image — l'envoi, en retard d'une image, tombe alors en plein
+milieu de la peinture SUIVANTE, et prend le vide.
+
+*C'est aussi ce qui explique « la dernière carte » et pas les autres* : c'est la
+seule animée de ce paquet-là. **Le défaut n'est pas dans la place de la carte,
+il est dans le temps que met sa peinture.**
+
+***On ne peint donc jamais dans la toile qu'on montre*** : deux toiles, deux
+textures, on alterne, et on ne bascule `face.map` qu'une fois la peinture finie.
+**Deux, pas trente** — ce qui était toute la raison de réutiliser la première.
+
+#### ET CHANGER `canvas.width` NE RÉALLOUE PAS LA TEXTURE
+
+Keko, l'étape d'avant : « je suis tombé sur la rose en version holo + animé mais
+elle clignotait en full gris en mode gros bug ; et à la fin du paquet quand on
+voit les cartes, les cartes animées ne bougent plus ».
+
+Deux défauts d'une même racine, et aucun ne se devinait :
+
+- ***three met à jour une `CanvasTexture` en réuploadant le canvas dans la
+  texture DÉJÀ allouée.*** Si celle-ci fait 768 et le canvas 256, la nouvelle
+  image se retrouve **dans le coin** et le reste garde ce qu'il avait. Or la
+  carte change de palier chaque fois qu'elle change de taille — en sortant du
+  sachet, en passant au bilan — donc ça arrive à tous les coups. **On jette la
+  texture et on en refait une**, le seul moyen d'en changer les dimensions ;
+- ***DEUX ÉCRIVAINS SE DISPUTENT `face.map`*** : le cache partagé des faces
+  statiques et la texture privée de l'animation. L'effet du cache se relance à
+  chaque changement de palier, donc il reposait la carte STATIQUE par-dessus
+  l'animation, qui ne la reprenait jamais. **Un seul propriétaire ne suffit pas
+  quand deux écrivains visent le même champ : il faut que celui qui doit gagner
+  le REDISE** — l'animation réaffirme donc `face.map` à chaque image, et l'effet
+  statique s'abstient tant qu'une animation est vivante.
 
 **La texture est PRIVÉE**, à la différence de toutes les autres : le cache
 partagé sert la même texture à toutes les cartes d'un modèle, et *deux cartes
