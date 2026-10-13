@@ -12,7 +12,7 @@
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
-import { Carte3D } from './Carte3D.tsx'
+import { Carte3D, DUREE_FLIP } from './Carte3D.tsx'
 import { Bouton3D } from './Bouton3D.tsx'
 import { RECUL_DU_BAS, Sachet3D } from './Sachet3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
@@ -195,6 +195,21 @@ const GRAINE = (() => {
 const MONTEE = 1300
 
 /**
+ * DE COMBIEN UNE CARTE DE LA PILE SE RANGE DERRIERE SA VOISINE.
+ *
+ * Elles attendent a taille pleine derriere celle qu'on regarde, donc **deux
+ * plans au meme z se battraient pixel par pixel.** Il n'en faut pas plus : *plus
+ * aucune ne tourne apres le premier flip*, et un ecart qui tranche l'ordre de
+ * deux plans A PLAT suffit — la regle que le flip et le balancement du sachet
+ * ont deja coutee, prise ici par son bon bout.
+ *
+ * **Il se compte depuis celle qu'on regarde**, pas depuis le debut du paquet :
+ * la courante est donc toujours a sa place, et les suivantes avancent d'un
+ * cheveu quand leur tour approche.
+ */
+const ECART_PILE = 0.004
+
+/**
  * Le rang d'une teinte dans son echelle. `-1` pour ce qui n'en porte pas.
  *
  * **L'ECHELLE EST CELLE DU MODE**, et il le faut depuis que le mode emoji
@@ -278,8 +293,40 @@ export function Paquet3D(): React.ReactElement {
   const [erreur, setErreur] = useState<string | null>(null)
   /** Le numéro du paquet : il change à chaque ouverture, et il seede le tirage. */
   const [numero, setNumero] = useState(0)
-  /** Les identifiants déjà retournés. */
-  const [revelees, setRevelees] = useState<ReadonlySet<string>>(new Set())
+  /**
+   * LE PAQUET EST RETOURNÉ, OU IL NE L'EST PAS — un seul drapeau pour cinq
+   * cartes.
+   *
+   * Keko : **« ce serait cool que quand on slide des cartes vers la droite, la
+   * carte d'en dessous soit déjà révélée directement de face ; en gros quand on
+   * flip la première carte on flippe le paquet, puis on révèle les cartes une
+   * par une en slidant »**.
+   *
+   * ***LE FLIP NE SE JOUE DONC QU'UNE FOIS, ET IL PORTE TOUT LE PAQUET.***
+   * Chaque carte avait le sien, donc le geste alternait sans fin entre
+   * retourner et passer — *deux gestes pour une carte quand elle n'a qu'une
+   * suite possible.* Il n'en reste qu'un : on retourne la pile, puis on défile.
+   *
+   * **ET CE QU'UNE CARTE DÉCLENCHE NE BOUGE PAS** : l'éclat, la teinte de
+   * l'écran et le compteur de la dernière se jouent quand elle ARRIVE au
+   * premier plan. *Chaque carte garde son instant* — c'est tout ce qu'un paquet
+   * a à vendre, et ce n'est pas le retournement qui le portait.
+   */
+  const [retourne, setRetourne] = useState(false)
+  /**
+   * LA PILE EST OUVERTE : les suivantes attendent À TAILLE PLEINE derrière.
+   *
+   * *Elles ne peuvent pas y être pendant le flip* — **un demi-tour balaie une
+   * demi-largeur de profondeur**, donc la carte qui tourne traverserait sa
+   * voisine, le défaut que Keko avait lui-même nommé. Elles montent donc à leur
+   * taille une fois le demi-tour fini, **exactement derrière celle qu'on
+   * regarde** : on ne les voit pas grandir, et quand la première part à droite
+   * la suivante est déjà là, de face.
+   *
+   * *Après ce flip, plus aucune carte ne tourne du défilé* : l'écart en z n'a
+   * donc plus qu'à trancher l'ordre de deux plans à plat.
+   */
+  const [pileOuverte, setPileOuverte] = useState(false)
   /**
    * LE JETON DE CULBUTE, PAR CARTE. `Carte3D` le compare à ce qu'il avait :
    * *c'est un jeton, pas un instant* — l'horloge qui compte est celle de la
@@ -483,16 +530,21 @@ export function Paquet3D(): React.ReactElement {
     image.current = requestAnimationFrame(pas)
   }
 
-  function reveler(id: string): void {
-    if (revelees.has(id)) return
-    const restantes = paquet.filter((c) => !revelees.has(c.id))
-    setRevelees((d) => new Set(d).add(id))
-    setJetons((j) => ({ ...j, [id]: (j[id] ?? 0) + 1 }))
-    setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDans(rangDe(id), teintes) }))
-    // LA DERNIERE SE REVELE AU COMPTEUR, les autres d'un coup : *ce qui
-    // distingue un moment est qu'il ne se produit qu'une fois.*
-    if (restantes.length === 1) monterLeCompteur(id)
-    else setSommet((h) => Math.max(h, rangDe(id)))
+  /**
+   * CE QU'UNE CARTE DÉCLENCHE EN ARRIVANT AU PREMIER PLAN.
+   *
+   * *Ce n'est plus sa révélation qui le porte* — le paquet est retourné d'un
+   * coup — **mais son INSTANT, qui n'a pas bougé** : l'éclat, la teinte de
+   * l'écran, et le compteur quand c'est la dernière.
+   */
+  function decouvrir(i: number): void {
+    const carte = paquet[i]
+    if (carte === undefined) return
+    setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDans(rangDe(carte.id), teintes) }))
+    // LA DERNIERE SE DIT AU COMPTEUR, les autres d'un coup : *ce qui distingue
+    // un moment est qu'il ne se produit qu'une fois.*
+    if (i === paquet.length - 1) monterLeCompteur(carte.id)
+    else setSommet((h) => Math.max(h, rangDe(carte.id)))
   }
 
   /**
@@ -508,21 +560,40 @@ export function Paquet3D(): React.ReactElement {
    */
   function avancer(): void {
     if (!ouvert || fini || paquet.length === 0) return
-    const carte = paquet[montree]
-    if (carte === undefined) return
-    if (!revelees.has(carte.id)) {
-      reveler(carte.id)
+    // LE PREMIER GESTE RETOURNE LE PAQUET, les suivants le défilent. *Le flip
+    // ne porte donc que la première carte* — les autres sont déjà de face
+    // quand leur tour vient, et il n'y a plus rien à retourner.
+    if (!retourne) {
+      const premiere = paquet[0]
+      if (premiere === undefined) return
+      setRetourne(true)
+      setJetons((j) => ({ ...j, [premiere.id]: (j[premiere.id] ?? 0) + 1 }))
+      decouvrir(0)
       return
     }
-    if (montree + 1 < paquet.length) setMontree(montree + 1)
-    else setFini(true)
+    if (montree + 1 < paquet.length) {
+      setMontree(montree + 1)
+      decouvrir(montree + 1)
+    } else setFini(true)
   }
+
+  /**
+   * LA PILE S'OUVRE QUAND LE DEMI-TOUR EST FINI, pas avant. *Une carte qui
+   * tourne traverse ce qui est posé derrière elle*, donc les suivantes
+   * attendent à taille nulle le temps du flip.
+   */
+  useEffect(() => {
+    if (!retourne) return
+    const t = setTimeout(() => setPileOuverte(true), DUREE_FLIP * 1000)
+    return () => clearTimeout(t)
+  }, [retourne])
 
   function ouvrirUnAutre(): void {
     cancelAnimationFrame(image.current)
     setOuvert(nu)
     setBrule(false)
-    setRevelees(new Set())
+    setRetourne(false)
+    setPileOuverte(false)
     setMontree(0)
     setFini(false)
     setSommet(-1)
@@ -634,12 +705,23 @@ export function Paquet3D(): React.ReactElement {
    */
   function placeAuDefile(i: number): [number, number, number] {
     if (i < montree) return [lVisible * 1.1, 0, Z_DEDANS]
-    return [0, 0, Z_DEDANS]
+    // LES SUIVANTES SE RANGENT D'UN CHEVEU DERRIÈRE, et c'est tout ce qu'il
+    // faut : *elles ne tournent plus*, donc un écart qui tranche l'ordre de
+    // deux plans à plat suffit. À taille nulle la question ne se posait pas ;
+    // à taille pleine, deux plans au même z se battent pixel par pixel.
+    return [0, 0, Z_DEDANS - (i - montree) * ECART_PILE]
   }
 
-  /** Ce qu'une carte mesure au défilé : rien tant que son tour n'est pas venu. */
+  /**
+   * CE QU'UNE CARTE MESURE AU DÉFILÉ : sa taille dès que la pile est ouverte.
+   *
+   * *Elles sont toutes à la même place et à la même taille*, donc invisibles
+   * sous celle qu'on regarde — **et c'est ce qui fait que la suivante est déjà
+   * là, de face, quand la première part à droite.** Le temps du flip, elles
+   * restent à zéro : une carte de taille nulle ne se fait pas traverser.
+   */
   function tailleAuDefile(i: number): number {
-    return i < montree ? grande : i === montree ? grande : 0
+    return i <= montree || pileOuverte ? grande : 0
   }
   /** La largeur du sachet : c'est elle qui place la fente et borne ce qui en sort. */
   const lSachet = tailleDuSachet(lVisible, hVisible)
@@ -687,18 +769,22 @@ export function Paquet3D(): React.ReactElement {
     (POCHE.demiX * 2) *
     (hauteurVisibleA(Z_DEDANS, fenetre.h) / hVisible)
   /**
-   * LA DERNIERE CARTE, tant qu'elle n'est pas retournee. *Elle ne s'annonce
+   * LA DERNIERE CARTE, des qu'elle arrive au premier plan. *Elle ne s'annonce
    * que s'il y en a eu d'autres avant* : sur un paquet d'une seule carte, « la
    * derniere » ne dirait rien.
+   *
+   * **ELLE ARRIVE DEJA DE FACE depuis que le paquet se retourne d'un coup**,
+   * donc le mot et le compteur se disent au meme instant plutot qu'en deux
+   * temps. *C'est le prix du geste unique*, et il est connu.
    */
   const derniere =
     !fini && paquet.length > 1 && montree === paquet.length - 1 ? (paquet[montree] ?? null) : null
 
   /**
    * L'UNITE DU COMPTEUR est une propriete du MODE, pas d'une carte : on la lit
-   * sur la premiere du paquet, qui existe toujours. *`derniere` retombe a
-   * `null` des qu'elle est revelee* — c'est `monte` qui tient l'affichage
-   * ensuite — donc la lire sur elle la ferait disparaitre en pleine montee.
+   * sur la premiere du paquet, qui existe toujours. *La lire sur `derniere`
+   * la ferait disparaitre au bilan*, ou elle retombe a `null` pendant que le
+   * compteur est encore a l'ecran.
    */
   const unite = paquet.length > 0 ? compteurDuMode(paquet[0]!, catalogue?.length ?? 0).unite : ''
 
@@ -806,7 +892,7 @@ export function Paquet3D(): React.ReactElement {
           le défilé fait déjà des suivantes, à taille zéro.
         */}
         {aPeindre.map((carte, i) => {
-          const vue = revelees.has(carte.id)
+          const vue = retourne
           return (
             <Carte3D
               key={carte.id}
@@ -814,10 +900,12 @@ export function Paquet3D(): React.ReactElement {
               // LE DOS TANT QU'ELLE N'EST PAS RETOURNÉE : c'est la même carte
               // vue de l'autre côté, pas un second objet.
               dos={!vue}
-              // LES DEUX RÉVÉLATIONS PASSENT PAR LE MÊME JETON : *c'est le
-              // même évènement*, seule la mise en scène change. Passer
-              // `undefined` rend la prop absente, donc `Carte3D` ne charge pas
-              // le pavé du nom quand il ne servirait pas.
+              // LE JETON NE SE POSE QUE SUR LA PREMIÈRE CARTE : *le flip
+              // retourne le PAQUET*, donc une seule tourne et les quatre
+              // autres attendent déjà de face. Les leurs restent à zéro, donc
+              // `Carte3D` ne joue rien — et il passe à `undefined` quand la
+              // mise en scène ne vaut pas, ce qui rend la prop absente et lui
+              // évite de charger le pavé du nom pour rien.
               // LE FLIP AU DÉFILÉ, LE DÉVELOPPEMENT AU BILAN. Keko : « j'aime
               // pas trop l'animation de révélation de carte, un simple flip
               // serait mieux ». *La culbute est une mise en scène
@@ -845,12 +933,13 @@ export function Paquet3D(): React.ReactElement {
               // `Z_MAIN` la ferait grossir de 5 %, c'est-à-dire exactement ce
               // qu'on retire.
               position={fini ? placeAuBilan(i) : placeAuDefile(i)}
-              // LES CINQ SONT À LA TAILLE DE LA POCHE TANT QUE LE SACHET EST
-              // LÀ, superposées — *ce qui est exactement ce qu'elles sont : une
-              // pile qu'on tire* — et c'est ce qui fait compiler leurs cinq
-              // nuanceurs pendant qu'il se balance. Les quatre suivantes
-              // retombent à zéro une fois le défilé lancé, **derrière celle
-              // qu'on regarde et à sa taille**, donc ça ne se voit pas.
+              // LES CINQ SONT À LA TAILLE DE LA POCHE, superposées — *ce qui
+              // est exactement ce qu'elles sont : une pile qu'on tire* — et
+              // c'est ce qui fait compiler leurs cinq nuanceurs pendant que le
+              // sachet se balance. **Elles n'y retombent qu'un demi-tour**, le
+              // temps que la première tourne sans les traverser, puis la pile
+              // se rouvre : la suivante est alors DÉJÀ là, de face, derrière
+              // celle qu'on regarde.
               taille={!ouvert ? grande : fini ? taille : tailleAuDefile(i)}
               // ON PEINT UNE FOIS, À LA PLUS GRANDE TAILLE QU'ELLE ATTEINDRA.
               // Sans ça, les quatre suivantes — qui attendent à taille ZÉRO —

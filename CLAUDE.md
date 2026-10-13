@@ -1505,8 +1505,9 @@ Quatre choses à ne pas défaire :
 
 - **LES SUIVANTES RESTENT EXACTEMENT DERRIÈRE CELLE QU'ON REGARDE**, à la même
   taille, donc invisibles. *Une pile qu'on voit dépasser annonce ce qui vient*,
-  et le défilé ne doit rien annoncer ; quand la carte de devant part à gauche,
-  la suivante est déjà là ;
+  et le défilé ne doit rien annoncer ; quand la carte de devant part à droite,
+  la suivante est déjà là — **et elle est déjà de face**, depuis que le flip
+  retourne le paquet entier ;
 - **LA CARTE NE PORTE PLUS DE GESTE À ELLE** (`inerte`) : une tape sur elle et
   une tape à côté font la même chose. *Ça retire au passage le cas que
   l'ancienne version devait écarter* — les cinq superposées dans le sachet, dont
@@ -1518,6 +1519,67 @@ Quatre choses à ne pas défaire :
 - **IL IGNORE CE QUI SUIT UN GESTE DE TROP PRÈS** (400 ms) : le retournement
   dure deux tiers de seconde, donc deux balayages enchaînés sauteraient la carte
   qu'on vient de retourner. *On ne révèle pas pour cacher aussitôt.*
+
+#### UN SEUL FLIP RETOURNE TOUT LE PAQUET
+
+Keko : **« ce serait cool que quand on slide des cartes vers la droite, la carte
+d'en dessous soit déjà révélée directement de face ; en gros quand on flip la
+première carte on flippe le paquet, puis on révèle ensuite les cartes une par
+une en slidant »**.
+
+***LE GESTE UNIQUE N'EN ÉTAIT PAS UN.*** La règle disait « un seul geste fait
+tout avancer : retourner, puis passer à la suivante » — et c'est précisément ce
+qui faisait **deux** gestes par carte : on tapait pour retourner, on retapait
+pour passer. *Une carte qu'on vient de retourner n'a qu'une suite possible*,
+donc le second geste ne décidait de rien ; **cinq cartes coûtaient dix tapes
+pour cinq décisions, c'est-à-dire zéro.**
+
+Il en reste **un par carte** : la première tape retourne la PILE, chacune des
+suivantes passe à la carte d'après — qui est déjà de face, et déjà là.
+
+#### LE DRAPEAU EST SUR LE PAQUET, PLUS SUR CHAQUE CARTE
+
+`revelees`, un ensemble d'identifiants, devient `retourne`, un booléen. *Ce
+n'est pas une simplification, c'est le changement de sujet* : **ce qui se
+retourne n'est plus une carte, c'est le paquet.** Le jeton de flip ne se pose
+donc que sur `paquet[0]` — les quatre autres gardent le leur à zéro, donc
+`Carte3D` ne joue rien pour elles.
+
+**ET CE QU'UNE CARTE DÉCLENCHE NE BOUGE PAS D'UN CRAN** : l'éclat, la teinte de
+l'écran et le compteur de la dernière se jouent **quand elle ARRIVE au premier
+plan** (`decouvrir`), plus quand on la retourne. *Chaque carte garde son
+instant* — c'est tout ce qu'un paquet a à vendre — et **ce n'était pas le
+retournement qui le portait**, c'était l'arrivée.
+
+**PRIX CONNU** : « Dernière carte » et le compteur se disent désormais au même
+instant, là où ils se disaient en deux temps. *La carte arrive déjà de face, il
+n'y a plus de second temps à occuper.*
+
+#### LA PILE S'OUVRE UN DEMI-TOUR PLUS TARD, ET C'EST OBLIGATOIRE
+
+Les suivantes ne peuvent pas attendre à taille pleine **pendant** le flip :
+***un demi-tour balaie une demi-largeur de profondeur***, donc la carte qui
+tourne les traverserait — c'est le défaut que Keko avait lui-même nommé, et il
+est écrit plus haut. Elles restent donc à taille nulle le temps du demi-tour
+(`pileOuverte`, armé à `DUREE_FLIP`), puis montent à leur taille **exactement
+derrière celle qu'on regarde**, donc invisibles.
+
+*C'est ce qui rend la demande littéralement vraie* : quand la première part à
+droite, **la suivante est déjà là, de face, à sa place et à sa taille.** Il n'y
+a aucune animation d'arrivée, parce qu'il n'y a aucune arrivée.
+
+***ET LA NOTE « LES SUIVANTES SONT À TAILLE ZÉRO » CESSE D'ÊTRE VRAIE EN
+PERMANENCE*** : elle ne vaut plus que pendant le flip, c'est-à-dire exactement
+le moment pour lequel elle avait été écrite. *Une mesure écrite une fois ne
+reste pas vraie quand ce qui la produit a bougé.*
+
+**ET IL FAUT UN ÉCART EN Z** (`ECART_PILE`, 0,004 largeur de carte), qui ne
+servait à rien tant qu'elles étaient à taille nulle : deux plans au même z se
+battent pixel par pixel. **Un écart minuscule suffit, et c'est la même règle
+prise par son bon bout** — *plus aucune carte ne tourne après ce flip*, donc il
+n'y a plus qu'à trancher l'ordre de deux plans à plat. Il se compte **depuis
+celle qu'on regarde**, donc la courante est toujours à sa place et les suivantes
+avancent d'un cheveu quand leur tour approche.
 
 #### LA RÉVÉLATION EST UN FLIP, PAS UNE CULBUTE
 
@@ -1558,11 +1620,15 @@ plan de sa voisine et s'y faisait découper, pendant que l'autre moitié restait
 devant. *Ce qu'on lisait comme une carte coupée en deux était deux cartes qui
 s'interpénètrent.*
 
-**LES SUIVANTES SONT DONC À TAILLE ZÉRO**, et plus seulement cachées : *une
-carte de taille nulle ne cache rien, ne se découvre pas et ne traverse rien.* Sa
-texture reste chargée — **elle est là, elle n'est simplement pas encore
-sortie** — et quand son tour vient, `Carte3D` amortit sa taille et elle grandit
-depuis rien. **Il n'y a aucune animation à écrire.**
+**LES SUIVANTES SONT DONC À TAILLE ZÉRO PENDANT LE FLIP**, et plus seulement
+cachées : *une carte de taille nulle ne cache rien, ne se découvre pas et ne
+traverse rien.* Sa texture reste chargée — **elle est là, elle n'est simplement
+pas encore sortie.**
+
+***MAIS SEULEMENT PENDANT LE FLIP***, depuis qu'un seul demi-tour retourne tout
+le paquet : une fois celui-ci fini, elles reprennent leur taille derrière celle
+qu'on regarde, et c'est ce qui les rend déjà présentes quand leur tour vient.
+Voir « la pile s'ouvre un demi-tour plus tard », plus bas.
 
 ***LA LEÇON VAUT AU-DELÀ DU PAQUET*** : un écart en z qui suffit à trancher
 l'ordre de deux plans à plat ne suffit plus dès que l'un des deux tourne.
