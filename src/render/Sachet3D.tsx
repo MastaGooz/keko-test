@@ -755,91 +755,199 @@ void main() {
 }
 
 /**
- * LA GERBE : les CONFETTIS qui montent de l'ouverture.
+ * LA GERBE : des ÉTINCELLES qui jaillissent de la fente, EN CLOCHE.
  *
- * **Ils ont été des étincelles d'or**, et c'était la ferronnerie une dernière
- * fois : *une étincelle sort d'un feu ou d'une forge*, et on n'ouvre ni l'un ni
- * l'autre. **Un paquet qu'on déchire lâche des confettis** — c'est ce que le
- * geste raconte, et les cinq couleurs du jeu étaient déjà là pour le dire.
+ * Keko : « je trouve les confettis pas terribles, ce serait mieux d'avoir des
+ * petites étincelles qui se produisent quand on avance dans l'ouverture, avec
+ * une trajectoire en cloche comme dans lexicodex ; puis à l'ouverture finale
+ * les étincelles jaillissent en plus grand nombre de toute l'ouverture, en
+ * volant plus haut ».
  *
- * Trois choses les séparent d'un semis d'étincelles, et aucune n'est de la
- * décoration :
+ * ***ET CE QUI MANQUAIT N'ÉTAIT PAS LA FORME DU GRAIN, C'ÉTAIT LA
+ * TRAJECTOIRE.*** Les confettis étaient un SEMIS QUI DÉFILE — une grille de
+ * cellules qui remonte — donc chaque grain montait tout droit, à la même
+ * vitesse, pour toujours. *Un champ qui défile ne peut pas faire une cloche* :
+ * il n'a ni départ, ni vitesse propre, ni pesanteur. C'est exactement la leçon
+ * des plis, reprise ici : **un champ procédural continu ne sait faire que des
+ * ondes ; ce qui a un début et une fin, il faut l'instancier.**
  *
- * - **ILS ONT UNE FORME** : un petit rectangle, pas un point. *Un grain rond
- *   additif est une lueur ; une arête est un objet* ;
- * - **ILS TOURNENT, chacun à son rythme.** Un confetti est une feuille, donc il
- *   culbute en montant — et *vingt rectangles qui tournent du même angle se
- *   lisent comme une grille qui glisse* ;
- * - **ILS PRENNENT LES CINQ COULEURS DES CRANS**, par une fonction de la
- *   CELLULE et non par un tirage par image : c'est la règle du motif de touches
- *   du dos, et *un semis qui se réarrange n'est plus une matière.*
+ * Chaque étincelle est donc une PARTICULE — un quad instancié — avec sa place
+ * de départ, sa vitesse et sa pesanteur. La cloche sort du calcul, elle n'est
+ * pas dessinée : y vaut vy fois t moins g fois t au carré.
  *
- * **Elle a son propre plan**, bien plus haut que le sachet, parce qu'*un effet
- * ne peut pas déborder de la géométrie qui le porte* : posées dans le corps,
- * les étincelles s'arrêteraient net au bord déchiré, c'est-à-dire exactement
- * là où elles doivent commencer.
+ * **ET LE TRAIT SUIT LA TANGENTE.** Un point rond monte et descend sans qu'on
+ * lise sa courbe ; *une étincelle est une traînée*, donc le quad s'allonge dans
+ * le sens de la vitesse et se couche à mesure qu'elle retombe. **C'est ce qui
+ * REND la cloche visible** — la forme ne dit rien, c'est l'orientation qui la
+ * raconte, la règle déjà payée sur la tête de la comète.
+ *
+ * **DEUX RÉGIMES, ET LE SECOND N'EST PAS UN RÉGLAGE DU PREMIER** :
+ *
+ * - **pendant la déchirure** (uForce), elles naissent JUSTE DERRIÈRE le
+ *   front — leur place de départ est tirée au carré, donc tassée contre lui :
+ *   *ce qui produit l'étincelle est la découpe qui avance*, pas la fente déjà
+ *   ouverte. Peu nombreuses, basses, serrées ;
+ * - **à l'arrachement** (uEclat), elles partent de TOUTE la largeur, **deux
+ *   fois plus nombreuses** et deux fois plus vite. *Un jaillissement n'est pas
+ *   une gerbe plus forte, c'est une autre gerbe* : sa source, son nombre et sa
+ *   hauteur changent ensemble.
+ *
+ * **LE NOMBRE SE FAIT PAR UNE PORTE, pas par un second objet** : chaque
+ * particule porte son RANG, et seules celles au-dessus du seuil volent pendant
+ * la déchirure. *Un second maillage pour le jaillissement aurait dédoublé le
+ * nuanceur*, et les deux auraient divergé au premier réglage.
+ *
+ * **LES CINQ COULEURS RESTENT**, et c'est ce qui sépare ces étincelles de
+ * celles qu'on avait retirées : *une étincelle d'or sort d'une forge*, cinq
+ * couleurs sortent d'un paquet de cartes. Le coeur du trait tire vers le blanc
+ * et sa frange garde la teinte — **un point qui sature blanchit, sa frange
+ * garde la couleur**, la règle déjà écrite pour le halo du foil.
  */
+const ETINCELLES = 140
+/** La durée d'un vol, en secondes. */
+const VIE_ETINCELLE = 0.62
+/** La part des étincelles qui dorment tant qu'on n'a pas arraché la bande. */
+const SEUIL_ETINCELLE = 0.62
+/** La vitesse de départ, en largeurs de sachet par vie. */
+const JET = 1.3
+/** La pesanteur, en largeurs de sachet par vie au carré. */
+const PESANT = 1.6
+/** De combien la source remonte derrière le front, en largeurs de sachet. */
+const SOURCE_ETINCELLE = 0.26
+
+/**
+ * LE SEMIS EST TIRÉ UNE FOIS, SEEDÉ EN DUR, et ce n'est pas le RNG du jeu :
+ * *une matière n'est pas un tirage de partie.* Le quatrième canal n'est pas un
+ * hasard — c'est le RANG de la particule, et c'est lui qui décide laquelle
+ * vole avant l'arrachement.
+ */
+function semisDesEtincelles(): THREE.InstancedBufferGeometry {
+  let graine = 20260413 >>> 0
+  const hasard = (): number => {
+    graine = (graine + 0x6d2b79f5) >>> 0
+    let t = Math.imul(graine ^ (graine >>> 15), 1 | graine)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+  const g = new THREE.InstancedBufferGeometry()
+  const quad = new THREE.PlaneGeometry(1, 1)
+  g.index = quad.index
+  g.setAttribute('position', quad.getAttribute('position'))
+  const graines = new Float32Array(ETINCELLES * 4)
+  for (let i = 0; i < ETINCELLES; i += 1) {
+    graines[i * 4] = hasard()
+    graines[i * 4 + 1] = hasard()
+    graines[i * 4 + 2] = hasard()
+    graines[i * 4 + 3] = (i + 0.5) / ETINCELLES
+  }
+  g.setAttribute('aGraine', new THREE.InstancedBufferAttribute(graines, 4))
+  g.instanceCount = ETINCELLES
+  return g
+}
+
 function matiereDeLaGerbe(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
+    // UNE ÉTINCELLE N'A PAS DE DOS : son quad est orienté sur sa VITESSE, donc
+    // le repère (perpendiculaire, tangente) est INDIRECT — le quad est
+    // retourné, et `FrontSide` les écartait tous les cent dix. *Rien ne le
+    // signalait* : le nuanceur compile, le dessin part avec ses instances, et
+    // zéro pixel sort.
+    side: THREE.DoubleSide,
     blending: THREE.AdditiveBlending,
-    uniforms: { uFront: { value: 0 }, uTemps: { value: 0 }, uForce: { value: 0 } },
-    vertexShader: `varying vec2 vUv;
-void main() {
-  vUv = uv;
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-}`,
-    fragmentShader: `uniform float uFront;
-uniform float uTemps;
+    uniforms: {
+      uFront: { value: 0 },
+      uTemps: { value: 0 },
+      uForce: { value: 0 },
+      uEclat: { value: 0 },
+    },
+    vertexShader: `uniform float uTemps;
+uniform float uFront;
 uniform float uForce;
-varying vec2 vUv;
-${DECHIRURE}
+uniform float uEclat;
+attribute vec4 aGraine;
+varying vec2 vQ;
+varying vec3 vTeinte;
+varying float vVie;
+
+float des(vec2 m) {
+  return fract(sin(dot(m, vec2(12.9898, 78.233))) * 43758.5453);
+}
 
 void main() {
-  // LE SEMIS MONTE : une grille de cellules qui défile vers le haut. *Un grain
-  // tiré à chaque image n'est plus une matière, c'est du bruit.*
-  vec2 cellule = vec2(vUv.x * 26.0, vUv.y * 22.0 - uTemps * 2.3);
-  vec2 m = floor(cellule);
-  float tiree = des(m);
-  vec2 dans = fract(cellule) - 0.5;
-  dans.x += (des(m + 7.3) - 0.5) * 0.5;
+  // CHAQUE ÉTINCELLE REJOUE SON VOL, décalée de sa phase : un seul compteur
+  // porte l'âge, et son entier change les tirages — donc chaque vol repart
+  // d'une autre place, à une autre vitesse.
+  float cycle = uTemps / ${VIE_ETINCELLE.toFixed(2)} + aGraine.x;
+  float n = floor(cycle);
+  float t = fract(cycle);
 
-  // LE CONFETTI : un rectangle qui CULBUTE. Sa rotation part de sa cellule et
-  // avance avec le temps, donc chacun tourne a son rythme — *et il s'aplatit en
-  // passant de profil*, ce que le cosinus donne sans qu'on ait rien a ecrire.
-  float ang = des(m + 3.1) * 6.283 + uTemps * (2.0 + des(m + 5.7) * 4.0);
-  vec2 q = vec2(dans.x * cos(ang) - dans.y * sin(ang), dans.x * sin(ang) + dans.y * cos(ang));
-  q.y *= 1.0 / max(0.25, abs(cos(ang * 1.7)));
-  vec2 b = abs(q) - vec2(0.17, 0.11);
-  float d = length(max(b, 0.0)) + min(max(b.x, b.y), 0.0);
-  float grain = smoothstep(0.05, 0.0, d) * step(0.58, tiree);
+  float rx = des(vec2(aGraine.y + n * 1.7, aGraine.z));
+  float rv = des(vec2(aGraine.z + n * 3.1, aGraine.w));
+  float rc = des(vec2(aGraine.w + n * 5.3, aGraine.y));
+  float rk = des(vec2(aGraine.y + n * 9.7, aGraine.w + 2.4));
 
-  // ELLES SORTENT DE LA FENTE, donc elles s'éteignent en montant — *une
-  // étincelle a une durée* — et elles se resserrent vers le milieu, comme une
-  // gerbe qui s'évase puis retombe.
-  float monte = exp(-vUv.y * 2.6);
-  float evase = exp(-pow((vUv.x - 0.5) / (0.16 + vUv.y * 0.3), 2.0));
+  // LA PORTE DU NOMBRE : pendant la déchirure, seules les mieux classées
+  // volent. Une particule qui ne joue pas sort du champ -- un grain qu'on
+  // renvoie au loin est le seul qui ne puisse rien tacher.
+  if (aGraine.w < mix(${SEUIL_ETINCELLE.toFixed(2)}, 0.0, uEclat)) {
+    vQ = vec2(0.0);
+    vTeinte = vec3(0.0);
+    vVie = 0.0;
+    gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+    return;
+  }
 
-  // PENDANT QUE LE FRONT COURT, elles ne jaillissent que de LÀ OÙ il passe :
-  // *une gerbe pleine largeur avant que la fente soit ouverte annoncerait une
-  // ouverture qui n'a pas eu lieu.*
-  float ouvert = max(smoothstep(uFront + 0.06, uFront - 0.02, vUv.x) * 0.55,
-                     exp(-pow((vUv.x - uFront) / 0.07, 2.0)));
+  // LA SOURCE : tassée derrière le front pendant la découpe, étalée sur toute
+  // l'ouverture au jaillissement. Le carré est ce qui la tasse.
+  float etale = mix(rx * rx * ${SOURCE_ETINCELLE.toFixed(2)}, rx * 1.15, uEclat);
+  float x0 = clamp(uFront - etale, 0.0, 1.0) - 0.5;
 
-  // LES CINQ CRANS, pris sur la cellule : blanc, vert, bleu, violet, orange.
-  // *Elles y sont TOUTES, donc elles ne disent rien d'une carte en
-  // particulier* — et ensemble elles disent la collection, exactement comme les
-  // confettis du motif du dos.
-  float k = floor(des(m + 11.9) * 5.0);
-  vec3 teinte = k < 1.0 ? vec3(2.3, 2.3, 2.3)
-              : k < 2.0 ? vec3(0.5, 2.6, 1.1)
-              : k < 3.0 ? vec3(0.6, 1.7, 2.8)
-              : k < 4.0 ? vec3(1.7, 1.0, 2.7)
-                        : vec3(2.7, 1.5, 0.5);
+  // LA CLOCHE. La pesanteur monte avec le jaillissement : sans elle, des
+  // étincelles deux fois plus rapides ne retomberaient jamais dans leur vie.
+  float vy = ${JET.toFixed(2)} * (0.95 + 0.30 * rv) * mix(1.0, 1.75, uEclat);
+  float pes = ${PESANT.toFixed(2)} * mix(1.0, 1.45, uEclat);
+  float vx = (rc * 2.0 - 1.0) * 0.26 * mix(0.60, 1.0, uEclat);
+  vec2 vol = vec2(x0 + vx * t, vy * t - pes * t * t);
 
-  float a = grain * monte * evase * ouvert * uForce;
-  gl_FragColor = vec4(teinte * a, a);
+  // LE TRAIT SUIT LA TANGENTE, et il s'allonge avec la vitesse : c'est elle
+  // qui dessine la courbe, pas le grain.
+  vec2 vit = vec2(vx, vy - 2.0 * pes * t);
+  float v = length(vit);
+  vec2 dir = vit / max(v, 0.0001);
+  vec2 q = position.xy;
+  vec2 ecart = dir * (q.y * (0.030 + v * 0.040)) + vec2(-dir.y, dir.x) * (q.x * 0.019);
+
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(vol + ecart, 0.0, 1.0);
+
+  vQ = q * 2.0;
+  float k = floor(rk * 5.0);
+  vTeinte = k < 1.0 ? vec3(2.3, 2.3, 2.3)
+          : k < 2.0 ? vec3(0.5, 2.6, 1.1)
+          : k < 3.0 ? vec3(0.6, 1.7, 2.8)
+          : k < 4.0 ? vec3(1.7, 1.0, 2.7)
+                    : vec3(2.7, 1.5, 0.5);
+
+  // ELLE S'ALLUME, SCINTILLE ET MEURT : une étincelle a une durée, et c'est
+  // son extinction qui l'empêche de se lire comme une bille lancée.
+  float fondu = smoothstep(0.0, 0.07, t) * smoothstep(1.0, 0.70, t);
+  float scintille = 0.72 + 0.28 * sin(uTemps * 46.0 + aGraine.y * 37.0);
+  vVie = fondu * scintille * max(uForce * 0.9, uEclat);
+}`,
+    fragmentShader: `varying vec2 vQ;
+varying vec3 vTeinte;
+varying float vVie;
+
+void main() {
+  float f = smoothstep(1.0, 0.0, length(vQ));
+  f *= f;
+  // LA TÊTE EST PLUS VIVE QUE LA QUEUE : sans ce biais, le trait se lit comme
+  // un bâtonnet et non comme quelque chose qui file.
+  f *= 0.55 + 0.45 * smoothstep(-1.0, 1.0, vQ.y);
+  float a = f * vVie;
+  vec3 c = mix(vTeinte, vec3(1.0), smoothstep(0.35, 1.0, f));
+  gl_FragColor = vec4(c * a, a);
   if (a < 0.004) discard;
 }`,
   })
@@ -871,6 +979,7 @@ export function Sachet3D({
   const corps = useMemo(() => matiereDuMorceau(true), [])
   const bandeMat = useMemo(() => matiereDuMorceau(false), [])
   const gerbe = useMemo(() => matiereDeLaGerbe(), [])
+  const semis = useMemo(() => semisDesEtincelles(), [])
   const { size } = useThree()
 
   /** Où en est l'ouverture, de 0 à 1 — tirée à la main, puis filée seule. */
@@ -946,9 +1055,10 @@ export function Sachet3D({
       corps.dispose()
       bandeMat.dispose()
       gerbe.dispose()
+      semis.dispose()
       document.body.style.cursor = ''
     },
-    [corps, bandeMat, gerbe],
+    [corps, bandeMat, gerbe, semis],
   )
 
   useFrame(({ clock }) => {
@@ -1014,6 +1124,7 @@ export function Sachet3D({
       corps.uniforms.uFront!.value = -1
       bandeMat.uniforms.uFront!.value = -1
       gerbe.uniforms.uForce!.value = 0
+      gerbe.uniforms.uEclat!.value = 0
       return
     }
     groupe.current?.scale.setScalar(1)
@@ -1028,11 +1139,20 @@ export function Sachet3D({
     bandeMat.uniforms.uFront!.value = front
     gerbe.uniforms.uFront!.value = front
 
+    // OÙ EN EST L'ENVOL DE LA BANDE. *Il sert à trois choses* — la gerbe, le
+    // vol de la bande et son fondu — donc il se calcule UNE fois : deux
+    // endroits qui décriraient le même instant se désaccorderaient au premier
+    // réglage.
+    const pv = Math.max(0, (pp - PART_FRONT) / (1 - PART_FRONT))
+
     // LA GERBE monte dès que la fente s'ouvre, culmine à l'arrachement, puis
     // retombe lentement : *une gerbe qui s'arrêterait net se lirait comme une
     // coupure de courant.*
-    gerbe.uniforms.uForce!.value =
-      pf * (pp < PART_FRONT ? 1 : Math.max(0, 1 - (pp - PART_FRONT) / 0.5))
+    gerbe.uniforms.uForce!.value = pf * (pp < PART_FRONT ? 1 : Math.max(0, 1 - pv / 0.5))
+    // ET LE JAILLISSEMENT EST UN SECOND RÉGIME : il part d'un coup à
+    // l'arrachement — *un jaillissement n'a pas de montée, c'est ce qui en
+    // fait un* — et il retombe sur la première moitié du vol de la bande.
+    gerbe.uniforms.uEclat!.value = pp < PART_FRONT ? 0 : Math.max(0, 1 - pv / 0.55)
 
     if (pf >= 1 && !ditDechire.current) {
       ditDechire.current = true
@@ -1043,7 +1163,6 @@ export function Sachet3D({
     // droite et RETOMBE — *ce qu'on arrache est emporté puis lâché* — en
     // tournoyant sur elle-même, parce qu'un morceau de film n'a aucune raison
     // de rester à plat.
-    const pv = Math.max(0, (pp - PART_FRONT) / (1 - PART_FRONT))
     if (bande.current !== null) {
       const b = bande.current
       b.position.x = taille * 1.15 * pv * pv
@@ -1213,18 +1332,15 @@ export function Sachet3D({
           au survol et son ventre pousse encore de REL_BOMBE, donc son point le
           plus proche est la somme des deux — la gerbe se pose au-delà. Et ça
           ne masque rien : elle est ADDITIVE et n'écrit pas la profondeur, donc
-          elle n'ajoute que de la lumière là où un confetti passe. */}
+          elle n'ajoute que de la lumière là où une étincelle passe. */}
       <mesh
-        position={[
-          0,
-          hCorps / 2 - hBande / 2 + taille * 0.62,
-          taille * (AVANCEE + REL_BOMBE + 0.02),
-        ]}
+        geometry={semis}
+        material={gerbe}
+        position={[0, hCorps / 2 - hBande / 2, taille * (AVANCEE + REL_BOMBE + 0.02)]}
+        scale={taille}
+        frustumCulled={false}
         raycast={() => null}
-      >
-        <planeGeometry args={[taille * 1.5, taille * 1.3]} />
-        <primitive object={gerbe} attach="material" />
-      </mesh>
+      />
 
       {/* LE RELIEF porte l'inclinaison et l'avancée. Il lui faut son propre
           groupe : le groupe du dessus tient la place et la respiration, et

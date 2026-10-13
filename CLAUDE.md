@@ -1748,14 +1748,12 @@ MATIÈRE de l'ouverture qui change**, et elle disait un incendie :
   C'est la lumière du déchirement, blanche au coeur et à peine crème en bordure.
   Et elle **frémit** au lieu de vaciller : *un vacillement est le mouvement d'une
   flamme* ;
-- **les ÉTINCELLES deviennent des CONFETTIS.** *Une étincelle sort d'un feu ou
-  d'une forge*, et on n'ouvre ni l'un ni l'autre. Trois choses les en séparent,
-  et aucune n'est de la décoration : **ils ont une FORME** (un rectangle, pas un
-  point — *un grain rond additif est une lueur, une arête est un objet*) ; **ils
-  CULBUTENT**, chacun à son rythme, et s'aplatissent en passant de profil ;
-  **ils prennent les cinq couleurs des crans**, par une fonction de la CELLULE
-  et non par un tirage par image — *un semis qui se réarrange n'est plus une
-  matière*, la règle du motif de touches.
+- **les ÉTINCELLES DEVIENNENT DES CONFETTIS, puis redeviennent des
+  étincelles.** *L'étape des confettis reste écrite parce que son argument
+  tenait* — « une étincelle sort d'un feu ou d'une forge, et on n'ouvre ni l'un
+  ni l'autre » — et parce que **les cinq couleurs lui survivent** : elles sont
+  ce qui sépare ces étincelles-ci d'une gerbe de forge. Voir la section qui
+  suit.
 
 #### ET LA GERBE SORTAIT DE DERRIÈRE LE SACHET
 
@@ -1807,6 +1805,95 @@ choses s'y opposent, et elles se cumulent :
 
 *Ce qui a été vu* : les confettis montent bien de l'ouverture et se voient
 au-dessus du sachet, avant comme après.
+
+#### LA GERBE EST UNE VOLÉE D'ÉTINCELLES EN CLOCHE — et ça ne peut pas être un champ
+
+Keko : **« je trouve les confettis pas terribles, ce serait mieux d'avoir de
+petites étincelles qui se produisent quand on avance dans l'ouverture, avec une
+trajectoire en cloche comme dans lexicodex ? Puis à l'ouverture finale les
+étincelles jaillissent en plus grand nombre de toute l'ouverture, en volant plus
+haut. »**
+
+***ET UN CHAMP PROCÉDURAL NE PEUT PAS FAIRE UNE CLOCHE.*** Les confettis
+étaient un semis QUI DÉFILE — une grille qu'on fait monter — donc **aucun grain
+n'a de point de départ, de vitesse à lui ni de pesanteur** : il n'a qu'une
+place dans une trame qui glisse. *C'est exactement ce qui avait condamné les
+plis procéduraux* — « un champ continu est partout à la fois, il ne sait faire
+que des ondes ; ce qui COMMENCE et qui FINIT, il faut l'instancier ». **La
+même leçon, payée une seconde fois, sur un autre objet du même sachet.**
+
+Cent quarante quads instanciés, donc, et chacun porte quatre nombres : sa
+phase, sa place, sa dérive et **son rang**. La parabole se calcule dans le
+nuanceur — `y = vy·t − pes·t²` — et *le quad s'oriente sur la TANGENTE* : il
+part dans le sens de la vitesse et se couche à mesure qu'elle retombe. **C'est
+ce qui rend la cloche visible** — la forme ne dit rien, c'est l'orientation qui
+la raconte, la règle déjà payée sur la tête de la comète.
+
+#### DEUX RÉGIMES, ET LE SECOND N'EST PAS UN RÉGLAGE DU PREMIER
+
+| | pendant la découpe (`uForce`) | à l'arrachement (`uEclat`) |
+|---|---|---|
+| la source | **juste derrière le front**, tirée au carré donc tassée contre lui | **toute la largeur** de l'ouverture |
+| le nombre | 53 sur 140 | **les 140** |
+| la vitesse | 1,3 largeur par vie | **×1,75** |
+| la hauteur de la cloche | 0,24 largeur | **0,50** |
+
+*Ce qui produit l'étincelle est la découpe qui AVANCE*, pas la fente déjà
+ouverte : c'est pour ça que la source suit le front au lieu de s'étaler.
+**Un jaillissement n'est pas une gerbe plus forte, c'est une autre gerbe** —
+sa source, son nombre et sa hauteur changent ensemble.
+
+**LE NOMBRE SE FAIT PAR UNE PORTE, pas par un second objet** : chaque
+particule porte son RANG dans son quatrième canal, et seules celles au-dessus
+du seuil volent pendant la découpe. *Un second maillage pour le jaillissement
+aurait dédoublé le nuanceur*, et les deux auraient divergé au premier réglage.
+
+**ET LA PESANTEUR MONTE AVEC LA VITESSE** : sans elle, des étincelles deux fois
+plus rapides ne retomberaient jamais dans leur vie — *une cloche dont on ne
+voit que la montée est un jet, pas une cloche.*
+
+#### LES CINQ COULEURS SURVIVENT AUX CONFETTIS, ET C'EST ELLES QUI SÉPARENT
+
+*Une étincelle d'or sort d'une forge* — c'est l'argument qui avait fait tomber
+les étincelles la première fois. **Cinq couleurs sortent d'un paquet de
+cartes** : ce sont les cinq crans, tirés par une fonction du VOL et non par
+image, et c'est ce qui empêche la gerbe de redire le feu qu'on venait de lui
+retirer. Le coeur du trait tire vers le blanc et sa frange garde sa teinte —
+**un point qui sature blanchit, sa frange garde la couleur**, la règle déjà
+écrite pour le halo du foil.
+
+#### UN QUAD ORIENTÉ SUR SA VITESSE EST RETOURNÉ, ET RIEN NE LE DIT
+
+***LE DÉFAUT QUI A COÛTÉ TOUTE LA SÉANCE.*** Le repère du trait se construit à
+la main : la TANGENTE pour sa longueur, la PERPENDICULAIRE pour sa largeur. Pris
+dans cet ordre, **son déterminant vaut −1** — le quad est donc MIROITÉ, ses
+triangles tournent à l'envers, et `FrontSide` les écartait **tous les cent
+quarante**.
+
+**Et il n'y a aucun symptôme à lire** : le nuanceur compile sans une erreur, le
+`drawElementsInstanced` part à chaque image avec ses 140 instances, et zéro
+pixel sort. *Ça ressemble exactement à un calcul de position qui envoie tout
+hors du champ.*
+
+***UNE ÉTINCELLE N'A PAS DE DOS*** : `side: DoubleSide`, et la question ne se
+pose plus. Un sprite n'a pas de face arrière à cacher.
+
+**LA MÉTHODE QUI A TRANCHÉ, et elle vaut pour tout nuanceur muet** — on
+remplace, un par un, ce qu'on soupçonne, en gardant tout le reste :
+
+| ce qu'on force | ce que ça dit |
+|---|---|
+| la géométrie seule, avec un matériau de base | le maillage, sa place et le chemin instancié |
+| le fragment à une couleur pleine | que l'ombre ne vient pas de l'alpha |
+| le sommet à `position * k` | que les attributs arrivent et varient |
+| le sommet jusqu'à la vitesse, position simple | que la parabole et le hasard calculent juste |
+| le vrai `ecart` | **le coupable** |
+
+*Et le mouchard se pose sur le PROTOTYPE du contexte* (`compileShader`,
+`linkProgram`, `drawElementsInstanced`) : il dit en trois lignes qu'il n'y a ni
+erreur de compilation, ni erreur de lien, et que le dessin part bien — **donc
+que le défaut est géométrique et non logiciel.** Trois sondes ont remplacé une
+heure de lecture.
 
 #### LE FILM EST UNE MATIÈRE, PAS UN DESSIN — des plis, et la lumière dessus
 
@@ -2784,9 +2871,12 @@ la même place se désaccorderaient au premier réglage.*
   (🚀 bleu, 🎉 violet, ❤️ orange) sont de moi ;
 - **« 5 CARTES »** est la seule phrase du sachet. *Le projet n'a pas de nom
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
-- **la force des confettis et leur nombre** : *une gerbe ne se juge qu'en
-  ouvrant des paquets* — **et leur passage DEVANT la bande du haut n'a pas pu
-  être capturé**, le lustre y saturant le film pendant le geste ;
+- **la gerbe d'étincelles** : leur nombre (140), la part qui dort pendant la
+  découpe (62 %), leur vitesse de départ (1,3 largeur par vie) et la pesanteur
+  (1,6) — *donc la hauteur de la cloche*, qui vaut 0,24 largeur pendant la
+  découpe et 0,50 au jaillissement. **Une gerbe ne se juge qu'en ouvrant des
+  paquets**, et **la moitié basse du vol ne se voit pas** : elle passe sur le
+  film, que le lustre y sature en blanc ;
 - **la métallicité du film** (0,70, relevée chez eux) : c'est elle qui décide
   de combien le reflet prend la couleur du sachet. *À 0 il redevient blanc, à 1
   il n'a plus une once de lumière crue* ;
