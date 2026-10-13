@@ -2403,6 +2403,27 @@ balancement figé :
 creux-sommet reste celui d'avant à trois unités près, et la transition s'étale
 sur deux fois plus de distance.
 
+#### ET L'ÉPAISSEUR EST LE SECOND LEVIER — Keko l'a demandée juste après
+
+« On peut diminuer encore un peu l'épaisseur du paquet ? » `REL_BOMBE` passe de
+5 à **4,2 %** de la largeur, sa **troisième** baisse.
+
+***ET ELLE ADOUCIT LE RELIEF PAR LA MÊME PORTE QUE LA MARGE*** : la pente du
+flanc est le gradient du profil FOIS cette hauteur, donc **baisser l'épaisseur
+retire de l'angle partout à la fois** — là où la marge ne touchait qu'à son
+étalement. Mesuré sur la même colonne :
+
+| | creux | sommet | **écart** | montée max |
+|---|---|---|---|---|
+| avant les deux passes | 69,3 | 107,6 | 38,3 | 10,35 / px |
+| congé + marge | 64,4 | 106,1 | 41,7 | 5,54 / px |
+| **+ épaisseur à 4,2 %** | 77,6 | 105,0 | **27,4** | 5,76 / px |
+
+**ON EST DÉSORMAIS SOUS L'ÉPAISSEUR RÉELLE** — cinq cartes de douze millièmes
+font six centièmes de largeur de CARTE, soit 4,7 de largeur de SACHET — *et
+c'est assumé* : une poche vue de face se lit toujours plus bombée qu'elle n'est,
+parce que son galbe prend toute la lumière.
+
 #### ET LA BORNE DU GRADIENT POSAIT UNE FACETTE PLATE
 
 ***C'était la cicatrice, et elle rendait le congé inopérant.*** Elle écrêtait la
@@ -2439,7 +2460,7 @@ Trois réglages, et chacun va dans le même sens :
 | | dôme | coussin |
 |---|---|---|
 | le profil | `sin^0,55`, dérivable partout | **plateau + flanc droit**, minimum ARRONDI des deux axes, **congé à 0,85** |
-| la hauteur | 5,5 % de la largeur | **9,5 %** |
+| la hauteur | 5,5 % de la largeur | **9,5 %**, puis 4,2 % une fois le sachet bâti sur sa carte |
 | la borne du gradient | 3 | **calculée** (17,4), elle ne mord plus |
 | le lobe du reflet | 16 | **26** — *il s'arrête net sur l'arête* |
 
@@ -2634,11 +2655,14 @@ la même place se désaccorderaient au premier réglage.*
   à hauteur et à largeur de flanc fixes, la pente moyenne est fixe, donc le
   congé ne fait que la déplacer. **Le prix est le plateau**, qui passe de 78 à
   71 % de la largeur ;
-- **la hauteur du ventre** (5 % de la largeur du sachet — *elle a déjà baissé
-  DEUX fois*, « on dirait qu'il est très épais » puis « il semble encore trop
-  épais » ; **c'est à peu près l'épaisseur réelle de cinq cartes**, six
-  centièmes de leur largeur) et **la force de son reflet** (×2,15 au repos) :
-  *c'est le volume du paquet, et il ne se lit qu'en inclinant* ;
+- **la hauteur du ventre** (4,2 % de la largeur du sachet — *elle a déjà baissé
+  TROIS fois*, « on dirait qu'il est très épais », « il semble encore trop
+  épais », puis « on peut diminuer encore un peu l'épaisseur ? ») et **la force
+  de son reflet** (×2,15 au repos) : *c'est le volume du paquet, et il ne se lit
+  qu'en inclinant*. **On est désormais SOUS l'épaisseur réelle** — cinq cartes
+  font 4,7 centièmes de largeur de sachet — et c'est voulu : *une poche vue de
+  face se lit plus bombée qu'elle n'est*, parce que son galbe prend toute la
+  lumière ;
 - **la part de largeur que prend la carte** (78 %) : *c'est la seule valeur
   libre du sachet* — elle décide de son bord, de sa hauteur, de son plateau et
   de ses flancs ;

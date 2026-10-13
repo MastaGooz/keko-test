@@ -83,12 +83,21 @@ const COURBE_FRONT = 1.45
  * *Un paquet de cinq cartes est une brique mince* — au-delà, la poche se lit
  * comme un ballon.
  *
- * **BAISSÉ DEUX FOIS** (0,095 → 0,07 → 0,05), Keko : « on dirait qu'il est très
- * épais », puis « le paquet semble encore trop épais ». *Cinq cartes de douze
- * millièmes font six centièmes de largeur de carte*, donc la poche réelle est
- * de cet ordre : on est enfin dans le vrai.
+ * **BAISSÉ TROIS FOIS** (0,095 → 0,07 → 0,05 → 0,042), Keko : « on dirait
+ * qu'il est très épais », « le paquet semble encore trop épais », puis « on
+ * peut diminuer encore un peu l'épaisseur du paquet ? »
+ *
+ * *Cinq cartes de douze millièmes font six centièmes de largeur de CARTE*,
+ * soit 4,7 centièmes de largeur de SACHET — **on est donc désormais sous
+ * l'épaisseur réelle**, et c'est voulu : une poche vue de face se lit toujours
+ * plus bombée qu'elle n'est, parce que son galbe prend toute la lumière.
+ *
+ * **ET ÇA ADOUCIT LE RELIEF D'AUTANT** : la pente du flanc est le gradient du
+ * profil FOIS cette hauteur, donc baisser l'épaisseur retire de l'angle
+ * partout — c'est le second levier de « moins angulaire », après la marge du
+ * congé.
  */
-const REL_BOMBE = 0.05
+const REL_BOMBE = 0.042
 
 /**
  * DE COMBIEN LES DEUX ARÊTES DU VENTRE SONT ARRONDIES — 0 vif, 1 sans arête.
