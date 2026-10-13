@@ -1757,6 +1757,57 @@ MATIÈRE de l'ouverture qui change**, et elle disait un incendie :
   et non par un tirage par image — *un semis qui se réarrange n'est plus une
   matière*, la règle du motif de touches.
 
+#### ET LA GERBE SORTAIT DE DERRIÈRE LE SACHET
+
+Keko : **« les petits confettis qui montent vers le haut quand on coupe le
+paquet à plus de la moitié semblent sortir de DERRIÈRE le paquet plutôt que
+devant — ils sortent de l'ouverture, donc ils devraient être devant la partie
+du haut »**.
+
+***ET C'ÉTAIT ÉCRIT DANS LE CODE, EN TOUTES LETTRES*** : le plan de la gerbe
+était posé à `z = −0,02`, et son commentaire disait « LA GERBE, DERRIÈRE le
+sachet ». *Ce qui jaillit d'une fente passe devant ce qui l'entoure* — sinon ce
+n'est plus une gerbe, c'est une lueur posée au fond du décor. La bande du haut
+est encore attachée à ce moment-là, donc elle découpait les confettis pile là
+où ils doivent se voir.
+
+**ET ÇA NE MASQUE RIEN, ce qui est la seule chose à vérifier avant de passer un
+plan devant un autre** : la gerbe est ADDITIVE et **n'écrit pas la
+profondeur** — elle ajoute de la lumière là où un confetti passe, et rien du
+tout ailleurs. *Le seul effet du déplacement est le TEST de profondeur contre
+le sachet opaque*, c'est-à-dire exactement le défaut qu'on retire.
+
+***LE Z SE CALCULE, IL NE S'ÉCRIT PAS.*** Le sachet avance de `AVANCEE` au
+survol — et on survole forcément, puisqu'on est en train de le déchirer — puis
+son ventre pousse encore de `REL_BOMBE` : **son point le plus proche est la
+somme des deux**, et la gerbe se pose au-delà. Un `0,1` écrit à la main aurait
+été repris par le ventre au premier réglage, et ce réglage a déjà eu lieu trois
+fois.
+
+#### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
+
+**La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une
+seule image où un confetti traverse la bande du haut encore attachée.* Deux
+choses s'y opposent, et elles se cumulent :
+
+- **on ne peut pas tenir une déchirure à mi-course depuis l'outil** : le
+  glisser du navigateur relâche toujours, et un lâcher sous `SEUIL_TIRE`
+  referme le sachet. *Il a fallu fabriquer les `pointer*` à la main pour
+  garder le doigt posé* — et **les coordonnées de l'outil ne sont pas celles de
+  la page** (1568 contre 2560 ici), la règle déjà écrite pour le ciblage ;
+- **un évènement `pointer*` fabriqué n'a pas d'`offsetX`**, qui vaut zéro en
+  lecture seule — or c'est lui que R3F lit pour son rayon. Sans le redéfinir,
+  le rayon part du coin du canvas et ne touche rien : *le sachet s'incline,
+  parce que le survol suit `clientX`, mais la déchirure ne démarre jamais.*
+  Ça ressemble exactement à un geste ignoré ;
+- **et la bande du haut est SATURÉE pendant le geste** : le survol pousse le
+  lustre, donc le film y est blanc. Un confetti additif n'y ajoute rien de
+  mesurable. *L'A/B sur ces pixels-là ne pouvait pas trancher*, et il ne l'a
+  pas fait.
+
+*Ce qui a été vu* : les confettis montent bien de l'ouverture et se voient
+au-dessus du sachet, avant comme après.
+
 #### LE FILM EST UNE MATIÈRE, PAS UN DESSIN — des plis, et la lumière dessus
 
 Keko : **« dans lexicodex le paquet a une texture vraiment paquet, je sais pas
@@ -2734,7 +2785,8 @@ la même place se désaccorderaient au premier réglage.*
 - **« 5 CARTES »** est la seule phrase du sachet. *Le projet n'a pas de nom
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la force des confettis et leur nombre** : *une gerbe ne se juge qu'en
-  ouvrant des paquets* ;
+  ouvrant des paquets* — **et leur passage DEVANT la bande du haut n'a pas pu
+  être capturé**, le lustre y saturant le film pendant le geste ;
 - **la métallicité du film** (0,70, relevée chez eux) : c'est elle qui décide
   de combien le reflet prend la couleur du sachet. *À 0 il redevient blanc, à 1
   il n'a plus une once de lumière crue* ;

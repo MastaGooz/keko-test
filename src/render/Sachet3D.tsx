@@ -1198,11 +1198,30 @@ export function Sachet3D({
 
   return (
     <group ref={groupe} position={position as unknown as THREE.Vector3Tuple}>
-      {/* LA GERBE, DERRIÈRE le sachet et bien plus haute que lui : elle part
-          de la fente et monte au-delà du bord. Elle vit HORS du groupe du
+      {/* LA GERBE, DEVANT le sachet et bien plus haute que lui : elle part de
+          la fente et monte au-delà du bord. Elle vit HORS du groupe du
           relief — *une gerbe d'étincelles ne s'incline pas avec la pochette*,
-          elle monte dans l'axe de l'écran. */}
-      <mesh position={[0, hCorps / 2 - hBande / 2 + taille * 0.62, -0.02]} raycast={() => null}>
+          elle monte dans l'axe de l'écran.
+
+          **ELLE ÉTAIT DERRIÈRE, et Keko l'a vu** : « les confettis semblent
+          sortir de derrière le paquet plutôt que devant — ils sortent de
+          l'ouverture, donc ils devraient être devant la partie du haut ».
+          *Ce qui jaillit d'une fente passe devant ce qui l'entoure*, sinon on
+          lit une lueur posée au fond du décor.
+
+          **LE Z SE CALCULE, il ne s'écrit pas** : le sachet avance de AVANCEE
+          au survol et son ventre pousse encore de REL_BOMBE, donc son point le
+          plus proche est la somme des deux — la gerbe se pose au-delà. Et ça
+          ne masque rien : elle est ADDITIVE et n'écrit pas la profondeur, donc
+          elle n'ajoute que de la lumière là où un confetti passe. */}
+      <mesh
+        position={[
+          0,
+          hCorps / 2 - hBande / 2 + taille * 0.62,
+          taille * (AVANCEE + REL_BOMBE + 0.02),
+        ]}
+        raycast={() => null}
+      >
         <planeGeometry args={[taille * 1.5, taille * 1.3]} />
         <primitive object={gerbe} attach="material" />
       </mesh>
