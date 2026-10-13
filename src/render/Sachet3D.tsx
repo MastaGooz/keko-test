@@ -282,6 +282,9 @@ const TIRE_MAX = 0.9
  * et c'est ce qui permet de le prendre en main sans l'engager.
  */
 const SEUIL_TIRE = 0.5
+/** Le banc des étincelles : il tient la découpe à mi-course. Voir `useFrame`. */
+const BANC_GERBE =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).has('gerbe')
 
 /** Ce que met un geste abandonné à se refermer, en secondes. */
 const RETOUR = 0.28
@@ -814,6 +817,20 @@ const JET = 1.3
 const PESANT = 1.6
 /** De combien la source remonte derrière le front, en largeurs de sachet. */
 const SOURCE_ETINCELLE = 0.26
+/**
+ * LE TRAIT D'UNE ÉTINCELLE : sa largeur, sa longueur au repos et ce que la
+ * vitesse lui ajoute — en largeurs de sachet.
+ *
+ * Keko : **« les particules sont trop petites et ce sont des confettis, pas
+ * des étincelles de lumière »**. *Les deux griefs n'en font qu'un*, et il
+ * était dans le MÉLANGE : le fragment sortait un RVB déjà multiplié par son
+ * alpha alors que le mélange additif le remultiplie — **la décroissance était
+ * donc au CARRÉ**, ce qui rabote un grain à son coeur et ne laisse rien
+ * autour. *Un grain sans frange est un confetti*, et il paraît minuscule.
+ */
+const LARGE_TRAIT = 0.050
+const LONG_TRAIT = 0.078
+const TRAINE_TRAIT = 0.095
 
 /**
  * LE SEMIS EST TIRÉ UNE FOIS, SEEDÉ EN DUR, et ce n'est pas le RNG du jeu :
@@ -855,7 +872,16 @@ function matiereDeLaGerbe(): THREE.ShaderMaterial {
     // signalait* : le nuanceur compile, le dessin part avec ses instances, et
     // zéro pixel sort.
     side: THREE.DoubleSide,
-    blending: THREE.AdditiveBlending,
+    // UN AJOUT FRANC, PAS UN AJOUT PONDÉRÉ PAR L'ALPHA. `AdditiveBlending`
+    // multiplie la couleur par l'alpha avant de l'ajouter : un fragment déjà
+    // prémultiplié se retrouvait donc **au carré**, et une décroissance au
+    // carré rabote le grain à son coeur — *c'est ce qui faisait des confettis
+    // minuscules à bord net plutôt que des lueurs.* Ici le RVB EST la lumière
+    // ajoutée.
+    blending: THREE.CustomBlending,
+    blendEquation: THREE.AddEquation,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.OneFactor,
     uniforms: {
       uFront: { value: 0 },
       uTemps: { value: 0 },
@@ -917,7 +943,8 @@ void main() {
   float v = length(vit);
   vec2 dir = vit / max(v, 0.0001);
   vec2 q = position.xy;
-  vec2 ecart = dir * (q.y * (0.030 + v * 0.040)) + vec2(-dir.y, dir.x) * (q.x * 0.019);
+  vec2 ecart = dir * (q.y * (${LONG_TRAIT.toFixed(3)} + v * ${TRAINE_TRAIT.toFixed(3)}))
+             + vec2(-dir.y, dir.x) * (q.x * ${LARGE_TRAIT.toFixed(3)});
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(vol + ecart, 0.0, 1.0);
 
@@ -940,15 +967,29 @@ varying vec3 vTeinte;
 varying float vVie;
 
 void main() {
-  float f = smoothstep(1.0, 0.0, length(vQ));
-  f *= f;
+  float d = length(vQ);
+  // DEUX LOBES, ET C'EST EUX QUI SÉPARENT UNE LUMIÈRE D'UN CONFETTI. *Un point
+  // chaud ne s'arrête pas à son bord* : un lobe serré fait le coeur, un lobe
+  // large posé au même endroit fait exactement la décroissance qu'un flou
+  // produirait — la règle déjà payée sur le glow du sachet.
+  float serre = smoothstep(1.0, 0.0, d);
+  serre = serre * serre * serre;
+  float large = smoothstep(1.0, 0.0, d);
+  large = large * large;
   // LA TÊTE EST PLUS VIVE QUE LA QUEUE : sans ce biais, le trait se lit comme
   // un bâtonnet et non comme quelque chose qui file.
-  f *= 0.55 + 0.45 * smoothstep(-1.0, 1.0, vQ.y);
-  float a = f * vVie;
-  vec3 c = mix(vTeinte, vec3(1.0), smoothstep(0.35, 1.0, f));
-  gl_FragColor = vec4(c * a, a);
-  if (a < 0.004) discard;
+  float tete = 0.55 + 0.45 * smoothstep(-1.0, 1.0, vQ.y);
+  // ET LE COEUR EST BLANC, LA FRANGE COLORÉE. *Un point qui sature tire vers
+  // le blanc, sa frange garde la couleur* — mais une teinte dont un canal est
+  // bas ne sature jamais tout à fait : un vert reste vert jusqu'au centre, et
+  // **une tache de couleur unie se lit comme un confetti, pas comme une
+  // lumière.** Le blanc se pose donc à part, sur le lobe le plus serré.
+  vec3 lum = (vTeinte * (serre * 1.1 + large * 0.35) + vec3(serre * serre * 2.2)) * tete * vVie;
+  if (max(lum.r, max(lum.g, lum.b)) < 0.003) discard;
+  // ET L'ALPHA SUIT LA LUMIÈRE, il ne vaut jamais un. *La toile du jeu est
+  // TRANSPARENTE* : un fragment sombre mais d'alpha plein écrit un pixel NOIR
+  // OPAQUE par-dessus la page — le défaut déjà payé sur les grains de l'onde.
+  gl_FragColor = vec4(lum, min(1.0, max(lum.r, max(lum.g, lum.b))));
 }`,
   })
 }
@@ -1115,6 +1156,22 @@ export function Sachet3D({
     }
     corps.uniforms.uSurvol!.value = feu.current
     bandeMat.uniforms.uSurvol!.value = feu.current
+
+    /**
+     * `?gerbe` TIENT LA DÉCHIRURE À MI-COURSE, et c'est le seul moyen de juger
+     * les étincelles.
+     *
+     * *On ne peut pas tenir un glisser depuis l'outil* — il relâche toujours,
+     * et un lâcher sous `SEUIL_TIRE` referme le sachet : c'est écrit depuis le
+     * jour où la gerbe est passée devant le film, et ça avait coûté des
+     * évènements `pointer*` fabriqués à la main. **Le banc s'arrête donc là où
+     * la découpe émet**, et le jaillissement, lui, se voit en ouvrant pour de
+     * bon.
+     *
+     * Il ne force rien pendant qu'on tire : *un banc qui prendrait la main sur
+     * le geste ne montrerait plus le geste.*
+     */
+    if (BANC_GERBE && tire.current === null && !file.current) p.current = PART_FRONT * 0.55
 
     if (p.current <= 0 && !file.current) {
       // IL RESPIRE TANT QU'ON NE L'A PAS TOUCHÉ. *Un objet qui attend un geste

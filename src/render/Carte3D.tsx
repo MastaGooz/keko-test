@@ -305,6 +305,21 @@ type Props = {
   /** Inclinaison voulue, en radians. */
   rotation?: [number, number, number]
   taille?: number
+  /**
+   * LA TAILLE SUR LAQUELLE SE CHOISIT LA TOILE, quand ce n'est pas la
+   * courante.
+   *
+   * *Une carte qui n'est pas encore sortie est déjà là* : au paquet, les
+   * quatre suivantes attendent à taille ZÉRO derrière celle qu'on regarde,
+   * donc elles peindraient leur face sur la plus petite toile du jeu pour la
+   * repeindre en grand dès que leur tour vient. **Cinq repeintures dans la
+   * même image font un gel**, et c'est ce que Keko lisait à l'ouverture.
+   *
+   * On peint donc UNE FOIS, à la plus grande taille qu'elle atteindra. *Le
+   * travail ne se supprime pas, il se DÉPLACE* — et il se déplace là où rien
+   * ne presse, pendant que le sachet se balance.
+   */
+  tailleTexture?: number
   /** Vitesse de rattrapage. Plus haut = plus sec. */
   ressort?: number
   /**
@@ -556,6 +571,7 @@ export function Carte3D({
   position,
   rotation = [0, 0, 0],
   taille = 1,
+  tailleTexture,
   ressort = 9,
   ressortZ,
   engagee = false,
@@ -1043,7 +1059,8 @@ ${nuanceur.fragmentShader}`
    * construction.* On compte donc les pixels physiques qu'elle occupe, et on
    * prend la toile qui les couvre.
    */
-  const largeurPx = taille * (size.height / hauteurVisibleA(position[2], size.height)) * dpr
+  const largeurPx =
+    (tailleTexture ?? taille) * (size.height / hauteurVisibleA(position[2], size.height)) * dpr
 
   useEffect(() => {
     let vivant = true

@@ -782,8 +782,37 @@ export function Paquet3D(): React.ReactElement {
           />
         )}
 
-        {sortie > 0 &&
-          aPeindre.map((carte, i) => {
+        {/*
+          ELLES SONT LÀ DÈS LE DÉBUT, CACHÉES DANS LE SACHET.
+
+          Keko : **« lors de l'explosion finale à l'ouverture y'a comme un
+          freeze de l'écran »** — mesuré, **224 ms** d'image gelée au moment
+          exact de l'arrachement, et *la gerbe n'y était pour rien* : la même
+          mesure sur la version d'avant en donnait 169.
+
+          ***LA MOITIÉ EST UN `getProgramInfoLog`*** — 106 ms, relevés en
+          chronométrant les 226 méthodes du contexte WebGL. C'est l'appel par
+          lequel three vérifie qu'un programme a bien été lié, et **il BLOQUE
+          jusqu'à la fin de la compilation**, que le pilote mènerait autrement
+          en parallèle. Le reste est la peinture des cinq faces. *Les cinq
+          cartes ne se montaient qu'à l'arrachement*, donc tout ce travail
+          tombait dans la même image — pile sur le flash, c'est-à-dire au seul
+          instant de l'écran où quelque chose bouge vite.
+
+          **Le travail ne se supprime pas, il se DÉPLACE** : elles se montent
+          dès le départ, derrière un sachet qui les couvre entièrement, et
+          leurs nuanceurs se compilent pendant qu'il se balance — *là où rien
+          ne presse.* C'est la règle des deux poses du joueur, préchargées au
+          démarrage parce qu'une image qui arrive au moment où on la montre
+          arrive trop tard.
+
+          **ET ELLES NE BOUGENT PAS D'UN PIXEL EN SORTANT** : leur place ne
+          lit `sortie` que pour passer de `-0,12` à `0,3`, ce qui EST
+          l'émergence. *Une carte qui n'est pas encore sortie est déjà là,
+          elle est simplement cachée* — exactement ce que le défilé fait déjà
+          des suivantes, à taille zéro.
+        */}
+        {aPeindre.map((carte, i) => {
           const vue = revelees.has(carte.id)
           return (
             <Carte3D
@@ -818,6 +847,15 @@ export function Paquet3D(): React.ReactElement {
                     : placeAuDefile(i)
               }
               taille={!ouvert ? tailleDedans : fini ? taille : tailleAuDefile(i)}
+              // ON PEINT UNE FOIS, À LA PLUS GRANDE TAILLE QU'ELLE ATTEINDRA.
+              // Sans ça, les quatre suivantes — qui attendent à taille ZÉRO —
+              // peignent sur la plus petite toile du jeu puis repeignent en
+              // grand dès que leur tour vient, et la cinquième change de
+              // palier en sortant du sachet. **Cinq repeintures dans la même
+              // image font un gel** : mesuré, 84 ms à l'instant où le sachet
+              // s'efface. *Le défilé est le plus grand des deux, sauf sur un
+              // écran très haut où le bilan tient sur une ligne.*
+              tailleTexture={Math.max(grande, taille)}
               // ELLE RÉPOND AU CURSEUR une fois révélée, et pas avant : *un dos
               // n'a rien à montrer*, donc rien à faire briller.
               reflet={vue}

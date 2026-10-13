@@ -1598,6 +1598,60 @@ action `javascript_tool` ne ramène pas l'onglet au premier plan, une capture
 d'écran si » — *et je l'ai réapprise en cherchant un bug qui n'existait pas.*
 Une capture AVANT la sonde, et tout s'est mis à répondre.
 
+#### LE GEL DE L'ARRACHEMENT ÉTAIT UN `getProgramInfoLog`
+
+Keko : **« lors de l'explosion finale à l'ouverture y'a comme un freeze de
+l'écran »**.
+
+***MESURÉ : 224 ms d'image gelée***, et *la gerbe n'y était pour rien* — la même
+mesure sur la version d'avant en donnait 169. **La moitié est un seul appel
+WebGL** : `getProgramInfoLog`, 106 ms, relevés en chronométrant **les 226
+méthodes du contexte**. C'est par lui que three vérifie qu'un programme a bien
+été lié, et **il bloque jusqu'à la fin de la compilation**, que le pilote
+mènerait autrement en parallèle. Le reste est la peinture des cinq faces.
+
+***LA CAUSE N'EST PAS LE COÛT, C'EST LE MOMENT.*** Les cinq `Carte3D` ne se
+montaient qu'à l'arrachement, donc **tout ce travail tombait dans la même
+image** — pile sur le flash, c'est-à-dire au seul instant de l'écran où quelque
+chose bouge vite. *Un travail qui coûte deux cents millisecondes ne se voit pas
+quand rien ne bouge ; il se voit quand tout bouge.*
+
+**LE TRAVAIL NE SE SUPPRIME PAS, IL SE DÉPLACE.** Les cartes se montent donc
+dès le départ, **derrière un sachet qui les couvre entièrement**, et leurs
+nuanceurs se compilent pendant qu'il se balance. *C'est la règle des deux poses
+du joueur, préchargées au démarrage parce qu'une image qui arrive au moment où
+on la montre arrive trop tard* — et c'est aussi ce que le défilé fait déjà des
+quatre suivantes, posées à taille zéro.
+
+**ET ELLES NE BOUGENT PAS D'UN PIXEL EN SORTANT** : leur place ne lisait déjà
+`sortie` que pour passer de `-0,12` à `0,3`, ce qui EST l'émergence.
+
+#### ET UNE CARTE SE PEINT UNE FOIS, À LA PLUS GRANDE TAILLE QU'ELLE ATTEINDRA
+
+*Il restait 84 ms*, et ils ne tombaient pas à l'arrachement mais une seconde
+plus tard, à l'instant où le sachet s'efface. **La toile se choisit sur la
+taille RÉELLE** — c'est ce qui rend une petite carte nette — donc les quatre
+suivantes, qui attendent à taille ZÉRO, peignaient sur la plus petite toile du
+jeu pour tout repeindre en grand dès leur tour, et la cinquième changeait de
+palier en sortant. ***Cinq repeintures dans la même image font un gel.***
+
+`Carte3D` prend donc une `tailleTexture` facultative : *la taille sur laquelle
+se choisit la toile, quand ce n'est pas la courante.* Le paquet lui passe le
+plus grand des deux formats qu'une carte y atteint, **et plus une seule toile ne
+se repeint de tout le défilé.**
+
+**Mesuré, à graine égale, sur la pire image après le lâcher** :
+
+| | pire image |
+|---|---|
+| avant | **224 ms** |
+| les cartes montées dès le départ | 84 ms |
+| **+ une seule toile par carte** | **rien au-dessus de 35 ms** |
+
+*Et il n'y a pas de gel ailleurs non plus* : le chargement, qui hérite pourtant
+de la compilation, ne passe aucune image au-dessus de 35 ms — **les cinq
+programmes s'y étalent au lieu de tomber ensemble.**
+
 #### LE BOUTON DISPARAÎT, ET « TOUT RÉVÉLER » AVEC LUI
 
 Pendant le défilé il n'y a **rien à décider** — on continue, c'est tout — et un
@@ -1861,6 +1915,61 @@ image, et c'est ce qui empêche la gerbe de redire le feu qu'on venait de lui
 retirer. Le coeur du trait tire vers le blanc et sa frange garde sa teinte —
 **un point qui sature blanchit, sa frange garde la couleur**, la règle déjà
 écrite pour le halo du foil.
+
+#### UNE ÉTINCELLE DE LUMIÈRE N'EST PAS UN CONFETTI, ET C'ÉTAIT LE MÉLANGE
+
+Keko : **« les particules sont trop petites et ce sont des confettis, pas des
+étincelles de lumière »**.
+
+***LES DEUX GRIEFS N'EN FONT QU'UN, ET ILS ÉTAIENT DANS UNE LIGNE.*** Le
+fragment sortait `vec4(c * a, a)` — un RVB déjà multiplié par son alpha — alors
+que `AdditiveBlending` est `SRC_ALPHA, ONE`, **donc il le remultiplie** : ce qui
+arrivait à l'écran valait `c × a²`. *Une décroissance au carré rabote le grain à
+son coeur et ne laisse rien autour*, et **un grain sans frange est un
+confetti** : il paraît minuscule et il a un bord.
+
+Le mélange est donc un ajout FRANC (`One, One`) et **le RVB EST la lumière
+ajoutée**. Rien d'autre n'a changé que la largeur du trait, et les étincelles
+ont doublé de taille sans qu'on touche à leur géométrie.
+
+#### ET L'ALPHA NE VAUT JAMAIS UN — la toile du jeu est transparente
+
+*Premier essai, visible tout de suite* : des **grains NOIRS OPAQUES** posés sur
+la page autour de la gerbe. Un fragment sombre mais d'alpha plein écrit quand
+même son alpha, et le canvas du jeu n'a pas de fond. **C'est le défaut déjà payé
+sur les grains de l'onde**, repris par l'autre bout : là on avait mis l'alpha en
+RGBA pour qu'il s'éteigne, ici il se déduit de la lumière elle-même.
+
+#### LE COEUR EST BLANC À PART, ET LA FRANGE GARDE SA TEINTE
+
+*Trois lobes, et aucun ne fait le travail des deux autres* :
+
+| | ce qu'il dit |
+|---|---|
+| un lobe **serré** teinté | le corps de l'étincelle |
+| un lobe **large** teinté | qu'elle RAYONNE — *un point chaud ne s'arrête pas à son bord* |
+| un coeur **blanc**, encore plus serré | qu'elle est une LUMIÈRE et non une couleur |
+
+***LE BLANC NE PEUT PAS VENIR DE LA SATURATION SEULE***, et c'est ce qui a
+demandé le troisième terme : une teinte dont un canal est bas n'écrête jamais
+sur ce canal-là — le vert du jeu vaut `(0,5 / 2,6 / 1,1)`, donc il reste vert
+jusqu'au centre quelle que soit l'intensité. **Une tache de couleur unie se lit
+comme un confetti.** Le blanc se pose donc à côté, sur le lobe le plus serré, et
+la frange garde sa couleur : *la règle du halo du foil, enfin tenue des deux
+bouts.*
+
+#### `?gerbe` TIENT LA DÉCHIRURE À MI-COURSE
+
+*C'est le banc qui manquait*, et la note le disait depuis deux épisodes : **on
+ne peut pas tenir un glisser depuis l'outil** — il relâche toujours, et un
+lâcher sous le seuil referme le sachet. Il avait fallu fabriquer des `pointer*`
+à la main, redéfinir leur `offsetX`, et le résultat restait un coup sur trois.
+
+Le banc force la découpe à mi-course tant qu'on ne tire pas — *un banc qui
+prendrait la main sur le geste ne montrerait plus le geste* — et c'est tout :
+les étincelles de la découpe se regardent alors tranquillement. **Le
+jaillissement, lui, se voit en ouvrant pour de bon** : il ne dure qu'une
+demi-seconde, mais il est au-dessus du sachet, donc il se capture.
 
 #### UN QUAD ORIENTÉ SUR SA VITESSE EST RETOURNÉ, ET RIEN NE LE DIT
 
@@ -2876,7 +2985,12 @@ la même place se désaccorderaient au premier réglage.*
   (1,6) — *donc la hauteur de la cloche*, qui vaut 0,24 largeur pendant la
   découpe et 0,50 au jaillissement. **Une gerbe ne se juge qu'en ouvrant des
   paquets**, et **la moitié basse du vol ne se voit pas** : elle passe sur le
-  film, que le lustre y sature en blanc ;
+  film, que le lustre y sature en blanc. *`?gerbe` tient la découpe à
+  mi-course*, ce qui est le seul moyen d'en juger sans ouvrir vingt paquets ;
+- **la taille du trait** (0,050 de large, 0,078 de long plus 0,095 par unité de
+  vitesse) et **ses trois lobes** (teinté serré 1,1, teinté large 0,35, coeur
+  blanc 2,2) : *c'est ce qui sépare une lumière d'un confetti*, et Keko a
+  tranché le registre — « des étincelles de lumière » — pas les chiffres ;
 - **la métallicité du film** (0,70, relevée chez eux) : c'est elle qui décide
   de combien le reflet prend la couleur du sachet. *À 0 il redevient blanc, à 1
   il n'a plus une once de lumière crue* ;
@@ -3953,6 +4067,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
+| `&gerbe` | tient la déchirure à mi-course, pour juger les étincelles |
 | `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans`, `?dos=gabarit` | les bancs du gabarit |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
