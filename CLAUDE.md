@@ -2560,6 +2560,36 @@ parce que la mécanique sous elle avait changé** — c'est la règle du projet,
 payée une fois de plus : *une mesure écrite une fois ne reste pas vraie quand ce
 qui la produit a bougé.*
 
+#### PUIS À 60°, PARCE QUE LA GERBE SE LISAIT COMME UN TRAIT
+
+Keko : **« les étincelles d'ouverture du paquet devraient jaillir plus vers le
+haut, en mode ça sort du paquet ; là ça fait un trait trop horizontal »**.
+
+***ET CE QUI SE LIT N'EST PAS LA HAUTEUR, C'EST LE RAPPORT HAUTEUR / LARGEUR.***
+La cloche vaut `vy·tf/4` et la portée `vx·tf`, donc leur rapport est
+**`tan(angle)/4`** : à 30° il ne vaut que **0,14**, soit une étincelle sept fois
+plus longue que haute. *Un quart d'entre elles partaient sous 45°*, et ce sont
+elles qu'on lit — les rasantes dessinent la silhouette de la gerbe, les
+verticales se superposent.
+
+| | 30–150° | **60–120°** | |
+|---|---|---|---|
+| portée moyenne | 0,164 | **0,109** | **−33 %** |
+| cloche moyenne | 0,081 | **0,104** | **+28 %** |
+| **rapport cloche / portée** | **0,49** | **0,95** | |
+| le zénith | 0,150 | **0,150** | *inchangé* |
+
+**LA GERBE DEVIENT AUSSI HAUTE QUE LARGE**, et c'est tout ce que « ça sort du
+paquet » demande. ***Et le ZÉNITH ne bouge pas d'un millième*** : c'est la
+RÉPARTITION qui change, pas le vol le plus haut — donc le réglage que Keko avait
+validé n'est pas rouvert, et le jaillissement suit dans le même rapport.
+
+**ÇA NE RAMÈNE PAS LA FONTAINE, et c'est le diagnostic de Keko lui-même qui le
+dit** : « effet fontaine = angle trop réduit ET spawn au même point ».
+*Les deux causes se cumulaient, et aucune ne suffisait seule* — il reste
+**soixante degrés**, plus du double du cône de vingt-six qui l'avait produite,
+et la source est toujours dispersée sur ±0,060 autour du front.
+
 #### LA PESANTEUR N'EXISTAIT PAS — elle s'ajustait à chaque étincelle
 
 Keko : **« on peut augmenter la gravité des particules pour éviter qu'elles
@@ -3739,13 +3769,13 @@ la même place se désaccorderaient au premier réglage.*
   largeur) et **la place du « Ouvrir ici »**, au départ du pointillé : *c'est le
   couple qui met la déchirure sous le doigt*, et il ne reste d'écart que si Keko
   pose son doigt ailleurs que là où le mot l'invite ;
-- **la plage d'angles** (30° à 150°) et **la dispersion de la source**
+- **la plage d'angles** (60° à 120°) et **la dispersion de la source**
   (±0,060 largeur autour du front) : *c'est le couple qui tue l'effet
-  fontaine*, et les deux bornes d'angle sont de Keko. ***Elle ne règle plus la
+  fontaine*, et les deux resserrements sont de Keko. ***Elle ne règle plus la
   portée*** — depuis la pesanteur, celle-ci est maximale à 45° et nulle au ras,
   donc resserrer ne retire que les angles qui portaient le moins. **Ce qu'elle
-  règle est la MONTÉE** : la cloche moyenne gagne 19 % en passant de 150° à
-  120° ;
+  règle est le RAPPORT hauteur / largeur de la gerbe** : 0,49 à 150°, 0,95 à
+  60° — *aussi haute que large*. **Le zénith, lui, ne bouge jamais** ;
 - **la taille de l'éclat** (0,11 de côté, son coeur à 42 % et ses branches à
   16 % de finesse) et **ses trois termes** (halo 0,45, croix 0,9, coeur 1,0) :
   *c'est ce qui sépare une lumière d'un confetti*, et Keko a tranché le

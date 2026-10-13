@@ -952,9 +952,30 @@ const DISPERSION_SOURCE = 0.06
  * **ET LES DEUX RAS SONT COUPÉS**, pas par prudence : à zéro une étincelle ne
  * décolle pas du film et rampe dessus — *ce qui jaillit d'une fente doit en
  * sortir.*
+ *
+ * **PUIS À 60°, PARCE QUE LA GERBE SE LISAIT COMME UN TRAIT.** Keko : « les
+ * étincelles devraient jaillir plus vers le haut, en mode ça sort du paquet ;
+ * là ça fait un trait trop horizontal ».
+ *
+ * ***ET C'EST LE RAPPORT HAUTEUR / LARGEUR QUI LE DIT, pas la hauteur.*** La
+ * cloche vaut `vy·tf/4` et la portée `vx·tf`, donc leur rapport est
+ * `tan(angle)/4` : à 30° il ne vaut que **0,14**, soit une étincelle sept fois
+ * plus longue que haute. Mesuré sur la gerbe entière, la cloche moyenne valait
+ * 0,081 pour 0,164 de portée — **une gerbe deux fois plus large que haute,
+ * c'est-à-dire un trait.**
+ *
+ * **À 60-120° elle devient aussi haute que large** (0,104 contre 0,109, soit
+ * un rapport de 0,95) : la portée moyenne tombe d'un tiers et la cloche gagne
+ * 28 %. ***Et le ZÉNITH ne bouge pas d'un millième*** — c'est la répartition
+ * qui change, pas le vol le plus haut, donc le réglage validé n'est pas touché.
+ *
+ * **ÇA NE RAMÈNE PAS LA FONTAINE**, et le diagnostic de Keko dit pourquoi :
+ * elle demandait *un cône étroit ET une source ponctuelle*. Il reste soixante
+ * degrés — plus du double du cône d'alors — et la source est dispersée sur
+ * `DISPERSION_SOURCE`. *Les deux causes se cumulaient, aucune ne suffit seule.*
  */
-const ANGLE_MIN = (30 * Math.PI) / 180
-const ANGLE_MAX = (150 * Math.PI) / 180
+const ANGLE_MIN = (60 * Math.PI) / 180
+const ANGLE_MAX = (120 * Math.PI) / 180
 /**
  * LA PESANTEUR, en multiples de la vitesse de départ du régime.
  *
