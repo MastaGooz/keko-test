@@ -35,7 +35,13 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
-import { LIGNE_DECHIRURE, POCHE, RAPPORT_SACHET, textureDuSachet } from './texture-carte.ts'
+import {
+  LIGNE_DECHIRURE,
+  POCHE,
+  RAPPORT_SACHET,
+  textureDesPlis,
+  textureDuSachet,
+} from './texture-carte.ts'
 
 /**
  * CE QUE DURE L'OUVERTURE, en secondes.
@@ -99,45 +105,13 @@ const ARRONDI_VENTRE = 0.7
 const RAYON_COIN_VENTRE = 0.35
 
 /**
- * LE FROISSÉ N'EST PAS LE MÊME PARTOUT : **le film est TENDU sur les cartes et
- * il a du MOU tout autour.**
- *
- * Keko : « sur lexicodex le paquet a des genres de plis sur les bords, qui
- * donnent cette texture si particulière des papiers de booster ». *Et c'est
- * exactement là qu'un vrai sachet se plisse* — sur le plateau il n'a nulle part
- * où aller, dans la marge il en a trop.
- *
- * **CE QUI DÉBLOQUE LE RÉGLAGE, C'EST QUE LES DEUX NE SE DISPUTENT PLUS RIEN.**
- * Le froissé avait dû être écrasé (0,22 de relief, ±1,5 % d'ombre) parce qu'il
- * SALISSAIT l'imprimé — « la texture est trop présente, les reflets empêchent de
- * voir les motifs ». *Or l'imprimé vit au centre et le mou vit au bord* : là où
- * on peut enfin appuyer, il n'y a rien à salir.
- *
- * | | au plateau | au bord |
- * |---|---|---|
- * | relief | **0,05** | **0,40** |
- * | ombre | ±0,8 % | **±5 %** |
- * | échelle | 2,1 | **4,6** — *un pli de mou est serré* |
- *
- * **ET LES CHIFFRES ONT ÉTÉ DIVISÉS PAR DEUX quand les ondes sont devenues des
- * TRAITS.** Keko : « on dirait des vagues, et elles bougent en plus ». *Une
- * houle a besoin d'amplitude pour se voir, une arête n'a besoin que de sa
- * rupture de pente* — et c'est l'amplitude qui faisait onduler les zones
- * entières dès que le sachet se balançait sous la lumière.
+ * COMBIEN LA CARTE DES PLIS PÈSE DANS LA NORMALE, et de combien elle ombre
+ * l'imprimé. *Un seul chiffre chacun* : la carte sait déjà où les plis sont
+ * nombreux et où ils ne le sont pas.
  */
-const PLI_PLATEAU = 0.22
-const PLI_BORD = 1.8
-const OMBRE_PLATEAU = 0.012
-const OMBRE_BORD = 0.09
-const ECHELLE_PLATEAU = 2.1
-const ECHELLE_BORD = 4.6
+const PLI = 0.5
+const OMBRE = 0.05
 
-/**
- * COMBIEN DE PLIS PAR TOUR DU CHAMP PORTEUR. *C'est lui qui decide de l'ECART
- * entre deux traits*, donc de la finesse du papier -- et non l'amplitude, qui
- * ne decide que de leur profondeur.
- */
-const DENSITE_PLIS = 2.8
 
 
 const AMPLI = 0.02
@@ -274,26 +248,6 @@ const DECHIRURE = `
  * dans le sens de sa longueur : il est pincé par ses deux soudures, donc ce qui
  * travaille est sa largeur.
  */
-float pliure(vec2 q) {
-  // LE CHAMP PORTEUR : trois ondes LONGUES, dont on ne garde que les LIGNES DE
-  // NIVEAU. *On ne s'en sert pas comme d'un relief* -- il ne sert qu'a dessiner
-  // le trajet des plis, et c'est pour ca qu'il peut rester doux.
-  float w = sin(q.x * 1.7 + q.y * 0.9)
-          + 0.70 * sin(q.x * -1.1 + q.y * 2.3 + 1.7)
-          + 0.45 * sin(q.x * 2.9 + q.y * -1.9 + 4.1);
-
-  // ***ET C'EST LE REPLIEMENT PERIODIQUE QUI FAIT LA MARQUE.*** Une ligne de niveau
-  // tous les 1/DENSITE, et entre deux lignes le profil est un V : la pente est
-  // CONSTANTE de chaque cote et elle SAUTE au passage -- donc deux facettes
-  // planes qui se rejoignent sur une arete. *C'est exactement ce qu'un pli de
-  // papier est, et c'est ce qu'une somme de sinus ne peut pas etre.*
-  //
-  // **L'ESPACEMENT N'EST PAS REGULIER POUR AUTANT** : les lignes de niveau se
-  // serrent la ou le champ monte vite et s'ecartent ailleurs, donc le semis est
-  // irregulier sans qu'on ait rien a tirer au sort.
-  float t = fract(w * ${DENSITE_PLIS.toFixed(2)});
-  return abs(t - 0.5);
-}
 
 
 float ondule(float x) {
@@ -323,6 +277,9 @@ function matiereDuMorceau(estLeCorps: boolean): THREE.ShaderMaterial {
     depthWrite: false,
     uniforms: {
       uSachet: { value: VIDE },
+      // LA CARTE DES PLIS : une normal map peinte une fois. *Les deux morceaux
+      // lisent la MÊME*, sinon le pli s'arrêterait à la déchirure.
+      uPlis: { value: VIDE },
       uV0: { value: 0 },
       uV1: { value: 1 },
       // LE FRONT PART HORS DU SACHET, et il le faut : à zéro, la gaussienne
@@ -359,6 +316,7 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }`,
     fragmentShader: `uniform sampler2D uSachet;
+uniform sampler2D uPlis;
 uniform float uV0;
 uniform float uV1;
 uniform float uFront;
@@ -401,34 +359,22 @@ void main() {
     -gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)},
     1.0));
 
-  /**
-   * LE MOU DU FILM : 0 là où il est tendu sur une carte, 1 dans la marge.
-   *
-   * *C'est le ventre pris par l'autre bout*, donc il n'y a pas une forme de
-   * plus à décrire — **la seule chose qui sait où sont les cartes est déjà
-   * là**, et les plis s'en déduisent au lieu d'être semés à la main.
-   */
-  float mou = 1.0 - ventre(sach);
-
-  // ***LE DOMAINE SE RESSERRE AVEC LE MOU***, et ce n'est pas un réglage de
-  // plus : *un film tendu ÉTIRE ses plis, un film qui a du mou les tasse.* Une
-  // seule échelle variable dit donc les deux à la fois — et elle ne coûte pas
-  // un appel de champ de plus, là où un second froissé en aurait doublé six.
-  vec2 q = vec2(sach.x, sach.y * ${RAPPORT_SACHET.toFixed(3)})
-         * mix(${ECHELLE_PLATEAU.toFixed(2)}, ${ECHELLE_BORD.toFixed(2)}, mou);
-  // LA NORMALE SORT DU CHAMP PAR DIFFÉRENCES FINIES : on n'a pas de carte de
-  // normales, et on n'en veut pas — *une texture de plis serait figée, celle-ci
-  // se calcule et ne coûte pas un octet.*
-  // LE PAS EST FIN, parce qu'un trait l'est : a 0,035 il couvrait un septieme
-  // de l'ecart entre deux plis et arrondissait l'arete qu'on vient de creer.
-  float e = 0.012;
-  float hx = pliure(q + vec2(e, 0.0)) - pliure(q - vec2(e, 0.0));
-  float hy = pliure(q + vec2(0.0, e)) - pliure(q - vec2(0.0, e));
+  // ***LA PENTE DES PLIS SE LIT, ELLE NE SE CALCULE PLUS.*** C'est une carte
+  // de SEGMENTS peinte au canvas (voir peindreLesPlis) et c'est la seule
+  // façon d'avoir un trait qui commence et qui finit : *un champ procédural
+  // est partout à la fois, donc il ne sait faire que des ondes.*
+  vec3 np = texture2D(uPlis, sach).xyz * 2.0 - 1.0;
+  float hx = np.x;
+  float hy = np.y;
   // **LES DEUX GRADIENTS S'AJOUTENT AVANT DE SE NORMALISER.** Le froissé n'est
   // plus qu'un DÉTAIL posé sur la forme : Keko — « la texture est trop présente,
   // et les reflets dedans empêchent de voir les motifs ». *Un relief de matière
   // qui pèse autant qu'un relief de forme efface la forme.*
-  float pli = mix(${PLI_PLATEAU.toFixed(2)}, ${PLI_BORD.toFixed(2)}, mou);
+  // **PLUS DE MODULATION PAR LE MOU** : *c'est la CARTE qui sait où sont les
+  // plis*, et elle en pose quarante sur soixante-dix dans la marge. Une seconde
+  // règle par-dessus dirait deux fois la même chose — et se désaccorderait de
+  // la première au premier réglage.
+  float pli = ${PLI.toFixed(2)};
   vec3 N = normalize(vec3(
     -(gx * ${REL_BOMBE.toFixed(4)} + hx * pli),
     -(gy * ${(REL_BOMBE / RAPPORT_SACHET).toFixed(4)} + hy * pli),
@@ -449,8 +395,7 @@ void main() {
   // *Ce qui empêchait de lire les motifs, c'était que la matière pesait autant
   // que la forme.*
   tex.rgb *= 0.70 + 0.44 * (dot(Nv, L) * 0.5 + 0.5);
-  float ombre = mix(${OMBRE_PLATEAU.toFixed(3)}, ${OMBRE_BORD.toFixed(3)}, mou);
-  tex.rgb *= 1.0 - ombre + 2.0 * ombre * (dot(N, L) * 0.5 + 0.5);
+  tex.rgb *= 1.0 - ${OMBRE.toFixed(3)} + ${(2 * OMBRE).toFixed(3)} * (dot(N, L) * 0.5 + 0.5);
 
 
   // CE QUI SE MESURE LE LONG DU BORD SE COMPTE EN PARTS DU SACHET, PAS DU
@@ -707,6 +652,9 @@ export function Sachet3D({
 
   useEffect(() => {
     let vivant = true
+    const plis = textureDesPlis()
+    corps.uniforms.uPlis!.value = plis
+    bandeMat.uniforms.uPlis!.value = plis
     void textureDuSachet().then((t) => {
       if (!vivant) return
       corps.uniforms.uSachet!.value = t

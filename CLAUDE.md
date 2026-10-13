@@ -1823,11 +1823,6 @@ voir les motifs ». ***Or l'imprimé vit au centre et le mou vit au bord*** : l�
 où on peut enfin appuyer, il n'y a rien à salir. On monte donc d'un facteur
 quatre là où ça se voit, et on baisse encore là où ça gênait.
 
-| | au plateau | au bord |
-|---|---|---|
-| relief | 0,22 | **1,8** |
-| ombre | ±1,2 % | **±9 %** |
-| échelle | 2,1 | **4,6** |
 
 **LE MASQUE EST LE VENTRE PRIS PAR L'AUTRE BOUT** (`1 − ventre`), donc il n'y a
 pas une forme de plus à décrire : *la seule chose qui sait où sont les cartes
@@ -1841,42 +1836,78 @@ film qui a du mou les tasse.** Une seule échelle variable porte les deux — et
 elle ne coûte pas un appel de champ de plus, là où un second froissé en aurait
 doublé six.
 
-#### UN PLI EST UN TRAIT, ET UNE SOMME DE SINUS N'EN FERA JAMAIS UN
+#### LES PLIS NE SONT PAS UN CHAMP : CE SONT SOIXANTE-DIX SEGMENTS
 
-Keko : **« non là ça ne va pas du tout, on dirait des vagues et elles bougent en
-plus. Je voulais des petits traits, genre plis qui ont marqué le papier »**.
+Keko, **trois fois de suite** : « on dirait des vagues et elles bougent en
+plus », puis « ça fait toujours des vagues même si elles ne bougent plus, je
+voyais vraiment des traits droits de plis… **tu peux pas fouiller lexicodex et
+voir comment ils font ?** »
 
-***ET LES DEUX GRIEFS SONT LE MÊME DÉFAUT.*** Le champ était une somme de
-sinus, donc **une houle par construction** : il n'a pas d'arête, seulement des
-crêtes et des creux qui montent et descendent. Et c'est aussi ce qui le faisait
-« bouger » — *rien n'est animé dans ce champ* : **le sachet se balance**, donc
-la lumière balaie ses pentes, et une pente DOUCE change d'ombre sur toute sa
-largeur. Une houle ondule ; une arête, elle, s'allume ou pas.
+***ET LA RÉPONSE EST QU'ILS NE LE FONT PAS DANS UN SHADER.*** Leur `stage.js`
+ne contient que huit fonctions GLSL — `packBulge`, `tearLine`, `sdRoundRect`… —
+et **pas une seule ne parle de pli**. Les plis sont une **normal map peinte au
+canvas**, passée à un `MeshStandardMaterial` en `normalScale` 0,45, avec
+`metalness: 1` et une `envMap` : *c'est de là que vient l'argenté.*
 
-**LA MARQUE, CE SONT LES LIGNES DE NIVEAU DU CHAMP, PAS LE CHAMP.** On garde les
-trois ondes longues — elles ne servent plus qu'à dessiner le TRAJET des plis,
-donc elles peuvent rester douces — et on en prend `abs(fract(w × d) − 0,5)` :
-une ligne tous les `1/d`, et entre deux lignes **un profil en V**, c'est-à-dire
-une pente constante de chaque côté qui SAUTE au passage. *Deux facettes planes
-qui se rejoignent sur une arête : c'est exactement ce qu'un pli de papier est,
-et ce qu'une somme de sinus ne peut pas être.*
+**J'AI CHERCHÉ TROIS FOIS UNE FORMULE LÀ OÙ IL Y AVAIT UN DESSIN**, et c'est
+structurel, pas une question de goût : ***un champ procédural continu est
+partout à la fois, donc il ne sait faire que des ondes ou des lignes de
+niveau — il n'a aucun moyen de produire un trait qui COMMENCE et qui FINIT.***
+Un pli de papier, lui, a deux bouts. **Les trois passes de réglage ne pouvaient
+pas aboutir** : je changeais la forme d'une chose dont la nature était fausse.
 
-**ET L'ESPACEMENT N'EST PAS RÉGULIER POUR AUTANT** : les lignes de niveau se
-serrent là où le champ monte vite et s'écartent ailleurs, donc le semis est
-irrégulier **sans qu'on ait rien à tirer au sort** — la règle du motif de
-touches, où un semis qui se réarrange n'est plus une matière.
+Soixante-dix traits, et chacun porte quatre décisions :
 
-**LE PIÈGE DU PORTAGE : une arête a un gradient CINQ FOIS plus petit qu'une
-onde**, à relief égal. La première passe, réglée aux chiffres de la houle, ne
-montrait presque rien — *on voyait que le défaut était parti, pas ce qui le
-remplaçait.* Il a fallu remonter le relief de 0,4 à **1,8** au bord pour que le
-trait existe. ***Changer la NATURE d'un champ invalide tous les réglages qui en
-dépendaient***, et ça ne se voit pas en lisant le code.
+- **une DIRECTION et une LONGUEUR** — c'est un segment droit, et c'est ce que
+  Keko demandait depuis le début ;
+- **un profil GAUSSIEN en travers**, large de deux à sept pixels : *un pli
+  marqué est une rainure, pas une marche* ;
+- **une amplitude SIGNÉE** : un pli se voit par-dessus ou par-dessous selon le
+  sens où le papier s'est replié ;
+- **une extinction aux DEUX BOUTS**, sinon le trait s'arrête net et se lit
+  comme un trait tracé plutôt que comme une marque.
 
-**Et le pas des différences finies descend de 0,035 à 0,012** : à 0,035 il
-couvrait un septième de l'écart entre deux plis et **arrondissait l'arête qu'on
-venait de créer.** *Un pas de mesure plus large que le détail qu'on mesure le
-détruit.*
+**QUARANTE SUR SOIXANTE-DIX SONT DES PLIS DE BORD**, posés dans la marge et
+***perpendiculaires au bord qu'ils longent*** — c'est là que le film a du mou,
+et c'est dans cette direction qu'il se tasse. *La localisation qu'on avait
+cherchée par un masque est donc DANS la carte* : une seconde règle par-dessus
+dirait deux fois la même chose, et se désaccorderait de la première au premier
+réglage.
+
+**ET LE CHAMP SE FLOUTE DEUX FOIS AVANT DE DEVENIR UNE NORMALE** : sans ça
+chaque trait garderait l'escalier de sa propre rastérisation, et *une arête
+crénelée scintille dès que l'objet bouge.*
+
+**LE TIRAGE EST SEEDÉ EN DUR, et ce n'est pas le RNG du jeu** : *une matière
+n'est pas un tirage de partie* — le sachet doit avoir exactement les mêmes plis
+à chaque chargement, sinon ce n'est plus un objet, c'est un effet.
+
+**ET LA CARTE N'EST PAS EN sRGB** : une normale est une DONNÉE, pas une
+couleur, et la convertir la ferait pencher d'un côté *sans qu'aucune erreur ne
+le dise.*
+
+#### CE QUE LES TROIS PASSES RATÉES ONT QUAND MÊME APPRIS
+
+- ***un lissage posé sur le résultat n'ouvre jamais un angle que l'opération a
+  créé*** — c'est ce qui a donné le minimum arrondi des coins, et ça reste ;
+- **une arête a un gradient CINQ FOIS plus petit qu'une onde**, à relief égal :
+  la passe des lignes de niveau, réglée aux chiffres de la houle, ne montrait
+  presque rien. ***Changer la NATURE d'un champ invalide tous les réglages qui
+  en dépendaient***, et ça ne se voit pas en lisant le code ;
+- **un pas de mesure plus large que le détail qu'on mesure le détruit** : les
+  différences finies à 0,035 arrondissaient l'arête qu'on venait de créer.
+
+#### UN BACKTICK DANS UN COMMENTAIRE GLSL FERME LA CHAÎNE — quatre fois
+
+Le nuanceur vit dans un gabarit de chaîne, donc **un `` ` `` posé dans un
+commentaire du GLSL termine la chaîne au milieu du shader.** L'erreur qui sort
+est un `TS1005: ',' expected` à une ligne qui n'a rien à voir, et *rien ne dit
+que le coupable est une marque de style.*
+
+**C'est arrivé quatre fois dans ce seul fichier**, et c'est à chaque fois le
+réflexe d'écrire un nom de code entre backticks. **Dans un commentaire GLSL,
+on écrit les noms de code SANS backtick** — le reste du projet peut en mettre,
+pas ce fichier.
 
 #### LE RÉGLAGE S'EST FAIT EN DEUX PASSES, ET LA PREMIÈRE DISAIT DU MÉTAL BROSSÉ
 
@@ -2239,10 +2270,9 @@ la même place se désaccorderaient au premier réglage.*
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la force des confettis et leur nombre** : *une gerbe ne se juge qu'en
   ouvrant des paquets* ;
-- **les plis du BORD** (1,8 de relief, ±9 % d'ombre, échelle 4,6), **ceux du
-  plateau** (0,22, ±1,2 %, 2,1) et **leur densité** (2,8 lignes par tour du
-  champ, donc l'écart entre deux traits) : *c'est la texture du papier de
-  booster*, et
+- **le poids de la carte des plis** (0,5 dans la normale, ±5 % d'ombre) et
+  **le semis lui-même** — soixante-dix traits, dont quarante au bord, leurs
+  longueurs et leurs largeurs : *c'est la texture du papier de booster*, et
   elle ne se juge qu'en inclinant l'objet. **Les deux se rejugent ENSEMBLE**
   avec la vivacité du reflet, puisque le lobe s'étale dès que le relief
   s'aplatit ;

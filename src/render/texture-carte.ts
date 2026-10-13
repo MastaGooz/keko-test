@@ -5430,6 +5430,194 @@ export const POCHE = {
 }
 
 /**
+ * LA CARTE DES PLIS DU FILM : **des SEGMENTS, pas un champ.**
+ *
+ * Keko, trois fois de suite : « on dirait des vagues », « ça fait toujours des
+ * vagues », « je voyais vraiment des traits droits de plis… tu peux pas fouiller
+ * lexicodex et voir comment ils font ? »
+ *
+ * ***ET LA RÉPONSE EST QU'ILS NE LE FONT PAS DANS UN SHADER.*** Leur `stage.js`
+ * n'a que huit fonctions GLSL — `packBulge`, `tearLine`, `sdRoundRect`… — et pas
+ * une seule ne parle de pli. **Les plis sont une normal map peinte au canvas**,
+ * passée à un `MeshStandardMaterial` en `normalScale` 0,45. *J'ai cherché trois
+ * fois une formule là où il y avait un DESSIN.*
+ *
+ * **ET C'EST STRUCTUREL, PAS UN GOÛT** : un champ procédural continu est
+ * partout à la fois, donc il ne peut produire que des ondes ou des lignes de
+ * niveau — ***il n'a aucun moyen de faire un trait qui COMMENCE et qui
+ * FINIT.*** Un pli de papier, lui, a deux bouts.
+ *
+ * Soixante-dix traits, et chacun porte quatre décisions :
+ *
+ * - **une DIRECTION et une LONGUEUR** : c'est un segment droit, et c'est tout
+ *   ce que Keko demandait depuis le début ;
+ * - **un profil GAUSSIEN en travers**, large de deux à sept pixels — *un pli
+ *   marqué est une rainure, pas une marche* ;
+ * - **une amplitude SIGNÉE** : un pli se voit par-dessus ou par-dessous selon
+ *   le sens où le papier s'est replié ;
+ * - **une extinction aux DEUX BOUTS** (`sin`), sinon le trait s'arrête net et
+ *   se lit comme un trait tracé plutôt que comme une marque.
+ *
+ * **QUARANTE SUR SOIXANTE-DIX SONT DES PLIS DE BORD**, posés dans la marge et
+ * ***perpendiculaires au bord qu'ils longent*** : c'est là que le film a du mou,
+ * et c'est dans cette direction qu'il se tasse. Les trente autres courent où ils
+ * veulent, plus longs et plus doux — *un sachet n'est pas plissé qu'à ses
+ * bords, il l'est surtout là.*
+ *
+ * **ET LE CHAMP SE FLOUTE DEUX FOIS AVANT DE DEVENIR UNE NORMALE.** Sans ça
+ * chaque trait garderait l'escalier de sa propre rastérisation, et *une arête
+ * crénelée scintille dès que l'objet bouge.*
+ *
+ * **LE TIRAGE EST SEEDÉ EN DUR**, et ce n'est pas le RNG du jeu : *une matière
+ * n'est pas un tirage de partie* — le sachet doit avoir exactement les mêmes
+ * plis à chaque chargement, sinon ce n'est plus un objet, c'est un effet.
+ */
+const PLIS_LARGE = 512
+const NB_PLIS = 70
+const PLIS_DE_BORD = 40
+
+function peindreLesPlis(): HTMLCanvasElement {
+  const L = PLIS_LARGE
+  const H = Math.round(L * RAPPORT_SACHET)
+  const champ = new Float32Array(L * H)
+
+  // UN RNG SEEDÉ ET LOCAL : mulberry32, le même que celui du jeu, mais il ne
+  // décide de rien — il ne fait que figer un dessin.
+  let graine = 1234 >>> 0
+  const rnd = (): number => {
+    graine = (graine + 0x6d2b79f5) >>> 0
+    let t = Math.imul(graine ^ (graine >>> 15), 1 | graine)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+
+  const margeX = POCHE.flancX * L
+  const margeY = POCHE.flancY * H
+
+  for (let i = 0; i < NB_PLIS; i += 1) {
+    const auBord = i < PLIS_DE_BORD
+    let x0 = 0
+    let y0 = 0
+    let angle = 0
+    if (auBord) {
+      // LE CÔTÉ, puis la profondeur dans la marge — et l'angle est celui du
+      // bord PLUS un quart de tour : *un film se tasse en travers de son bord.*
+      const cote = Math.floor(rnd() * 4)
+      const prof = rnd() * 2
+      if (cote === 0) {
+        x0 = rnd() * L
+        y0 = margeY * prof
+        angle = Math.PI / 2 + (rnd() - 0.5) * 0.9
+      } else if (cote === 1) {
+        x0 = rnd() * L
+        y0 = H - margeY * prof
+        angle = Math.PI / 2 + (rnd() - 0.5) * 0.9
+      } else if (cote === 2) {
+        x0 = margeX * prof
+        y0 = rnd() * H
+        angle = (rnd() - 0.5) * 0.9
+      } else {
+        x0 = L - margeX * prof
+        y0 = rnd() * H
+        angle = (rnd() - 0.5) * 0.9
+      }
+    } else {
+      x0 = rnd() * L
+      y0 = rnd() * H
+      angle = rnd() * Math.PI
+    }
+
+    const lon = (auBord ? 20 : 60) + rnd() * (auBord ? 60 : 200)
+    const amp = (rnd() - 0.5) * (auBord ? 1.6 : 0.9)
+    const larg = 2 + rnd() * 5
+    const dx = Math.cos(angle)
+    const dy = Math.sin(angle)
+    const fen = Math.ceil(larg * 2)
+
+    for (let t = 0; t < lon; t += 1) {
+      const cx = x0 + dx * t
+      const cy = y0 + dy * t
+      const bout = Math.sin((t / lon) * Math.PI)
+      for (let a = -fen; a <= fen; a += 1) {
+        for (let b = -fen; b <= fen; b += 1) {
+          const px = Math.round(cx + a)
+          const py = Math.round(cy + b)
+          if (px < 0 || py < 0 || px >= L || py >= H) continue
+          // LA DISTANCE PERPENDICULAIRE au trait, pas la distance au centre :
+          // *c'est elle qui fait une rainure et non une tache.*
+          const d = Math.abs(a * -dy + b * dx)
+          champ[py * L + px] += amp * bout * Math.exp(-(d * d) / (larg * larg)) * 0.08
+        }
+      }
+    }
+  }
+
+  // LE GRAIN FIN PARTOUT, et le GAUFRAGE des deux soudures — vertical, comme
+  // les stries qu'on y peint déjà : *la soudure est pressée, donc elle a un
+  // relief, et deux dessins de la même chose ne peuvent pas se contredire.*
+  for (let y = 0; y < H; y += 1) {
+    const part = y / H
+    const soudure = part < 0.047 || part > 0.953
+    for (let x = 0; x < L; x += 1) {
+      champ[y * L + x] += (rnd() - 0.5) * 0.05
+      if (soudure) champ[y * L + x] += Math.sin(x * 1.35) * 0.9
+    }
+  }
+
+  const tampon = new Float32Array(L * H)
+  for (let passe = 0; passe < 2; passe += 1) {
+    for (let y = 1; y < H - 1; y += 1) {
+      for (let x = 1; x < L - 1; x += 1) {
+        let somme = 0
+        for (let a = -1; a <= 1; a += 1) for (let b = -1; b <= 1; b += 1) somme += champ[(y + a) * L + x + b]!
+        tampon[y * L + x] = somme / 9
+      }
+    }
+    champ.set(tampon)
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = L
+  canvas.height = H
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) return canvas
+  const image = ctx.createImageData(L, H)
+  const lire = (x: number, y: number): number =>
+    champ[Math.min(H - 1, Math.max(0, y)) * L + Math.min(L - 1, Math.max(0, x))]!
+  const relief = 2.2
+  for (let y = 0; y < H; y += 1) {
+    for (let x = 0; x < L; x += 1) {
+      const gx = (lire(x + 1, y) - lire(x - 1, y)) * relief
+      // EN Y, LA DÉRIVÉE EST INVERSÉE : la texture se lit de bas en haut.
+      const gy = (lire(x, y - 1) - lire(x, y + 1)) * relief
+      const norme = Math.hypot(gx, gy, 1)
+      const o = (y * L + x) * 4
+      image.data[o] = (-gx / norme / 2 + 0.5) * 255
+      image.data[o + 1] = (-gy / norme / 2 + 0.5) * 255
+      image.data[o + 2] = (1 / norme / 2 + 0.5) * 255
+      image.data[o + 3] = 255
+    }
+  }
+  ctx.putImageData(image, 0, 0)
+  return canvas
+}
+
+let PLIS: THREE.CanvasTexture | null = null
+
+/** La normal map des plis — peinte une fois, partagée par les deux morceaux. */
+export function textureDesPlis(): THREE.CanvasTexture {
+  PLIS ??= (() => {
+    const t = new THREE.CanvasTexture(peindreLesPlis())
+    // ***PAS DE sRGB*** : une normale est une DONNÉE, pas une couleur, et la
+    // convertir la ferait pencher d'un côté sans qu'aucune erreur ne le dise.
+    t.colorSpace = THREE.NoColorSpace
+    t.anisotropy = 8
+    return t
+  })()
+  return PLIS
+}
+
+/**
  * IL ATTEND LA POLICE, comme tout ce qui peint du texte dans ce projet.
  *
  * *Un canvas qui dessine avant `document.fonts.ready` retombe SILENCIEUSEMENT
