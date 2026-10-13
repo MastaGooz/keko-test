@@ -1953,19 +1953,29 @@ function grain(): HTMLCanvasElement {
 function peindreDecor(
   ctx: CanvasRenderingContext2D,
   ciel: Ciel | undefined,
-  largeur: number,
   impose?: readonly [number, number, number],
+  /**
+   * LA BOITE A COUVRIR, quand ce n'est pas une carte.
+   *
+   * *Le sachet est fait de la meme matiere que le dos* — meme degrade, meme
+   * vignettage, meme dither — **mais il n'a pas ses proportions**. Une seconde
+   * fonction aurait diverge au premier reglage : c'est la regle du coeur des
+   * armures, payee des qu'un dessin existe en double.
+   */
+  boite?: { readonly l: number; readonly h: number },
 ): void {
+  const L_ = boite?.l ?? LARGE
+  const H_ = boite?.h ?? HAUT
   const base = impose ?? teinteDuCiel(ciel)
   const ton = (k: number): string =>
     `rgb(${Math.round(Math.min(255, base[0] * k))}, ${Math.round(Math.min(255, base[1] * k))}, ${Math.round(Math.min(255, base[2] * k))})`
 
-  const vertical = ctx.createLinearGradient(0, 0, 0, HAUT)
+  const vertical = ctx.createLinearGradient(0, 0, 0, H_)
   vertical.addColorStop(0, ton(1.32))
   vertical.addColorStop(0.45, ton(1))
   vertical.addColorStop(1, ton(0.6))
   ctx.fillStyle = vertical
-  ctx.fillRect(0, 0, LARGE, HAUT)
+  ctx.fillRect(0, 0, L_, H_)
 
   /**
    * LE VIGNETTAGE EST UNE ELLIPSE, pas un disque : la carte est une fois et
@@ -1974,13 +1984,13 @@ function peindreDecor(
    * étiré — *une forme suit les proportions de ce qu'elle borde.*
    */
   ctx.save()
-  ctx.translate(LARGE / 2, HAUT / 2)
-  ctx.scale(1, HAUT / LARGE)
-  const vignette = ctx.createRadialGradient(0, 0, LARGE * 0.3, 0, 0, LARGE * 0.75)
+  ctx.translate(L_ / 2, H_ / 2)
+  ctx.scale(1, H_ / L_)
+  const vignette = ctx.createRadialGradient(0, 0, L_ * 0.3, 0, 0, L_ * 0.75)
   vignette.addColorStop(0, '#00000000')
   vignette.addColorStop(1, '#00000066')
   ctx.fillStyle = vignette
-  ctx.fillRect(-LARGE, -LARGE, LARGE * 2, LARGE * 2)
+  ctx.fillRect(-L_, -L_, L_ * 2, L_ * 2)
   ctx.restore()
 
   /**
@@ -2015,7 +2025,11 @@ function peindreDecor(
     ctx.globalCompositeOperation = 'overlay'
     ctx.globalAlpha = ALPHA_GRAIN
     ctx.fillStyle = motif
-    ctx.fillRect(0, 0, largeur, Math.round(largeur * 1.4))
+    // ON COUVRE LA TOILE, pas une carte supposee : le sachet n'a pas le rapport
+    // d'une carte, et *un grain qui s'arrete avant le bord laisse une bande qui
+    // bande.* La transformation vient d'etre remise a l'identite, donc ces deux
+    // nombres sont bien des pixels.
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height)
   }
   ctx.restore()
 }
@@ -3310,7 +3324,7 @@ export async function peindreCarte(
   ctx.save()
   tracer(marge)
   ctx.clip()
-  if (FOND_PEINT) peindreDecor(ctx, carte.ciel, largeur)
+  if (FOND_PEINT) peindreDecor(ctx, carte.ciel)
   else {
     ctx.fillStyle = '#171b1d'
     ctx.fillRect(0, 0, LARGE, HAUT)
@@ -4646,7 +4660,7 @@ async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement> {
     Math.max(0, LARGE * rayon - marge),
   )
   ctx.clip()
-  peindreDecor(ctx, undefined, LARGE, DOS_BLEU)
+  peindreDecor(ctx, undefined, DOS_BLEU)
   peindreTouches(ctx)
 
   // LE HALO DU STICKER : de la lumière tombée sur le fond, qui le détache du
@@ -4677,18 +4691,18 @@ async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement> {
  * tirage : *un semis qui se réarrangerait d'une peinture à l'autre ne serait
  * plus une matière.* Aucun hasard n'est consommé — il n'y a rien à rejouer.
  */
-function peindreTouches(ctx: CanvasRenderingContext2D): void {
-  const pas = DOS_PAS * U
-  const cote = DOS_TOUCHE * U
+function peindreTouches(ctx: CanvasRenderingContext2D, l = LARGE, h = HAUT, u = U): void {
+  const pas = DOS_PAS * u
+  const cote = DOS_TOUCHE * u
   const teintes = ['blanc', 'vert', 'bleu', 'violet', 'orange'].map((c) => METAUX[c]![2]!)
-  const colonnes = Math.ceil(LARGE / pas) + 2
-  const lignes = Math.ceil(HAUT / pas) + 2
+  const colonnes = Math.ceil(l / pas) + 2
+  const lignes = Math.ceil(h / pas) + 2
   for (let j = -1; j < lignes; j++) {
     for (let i = -1; i < colonnes; i++) {
       // LE QUINCONCE : une demi-case de décalage une ligne sur deux. *Une
       // grille droite se lit comme un tableau, un quinconce comme un semis.*
-      const x = LARGE / 2 + (i - colonnes / 2 + (j % 2 === 0 ? 0 : 0.5)) * pas
-      const y = HAUT / 2 + (j - lignes / 2) * pas
+      const x = l / 2 + (i - colonnes / 2 + (j % 2 === 0 ? 0 : 0.5)) * pas
+      const y = h / 2 + (j - lignes / 2) * pas
       const k = (i * 7 + j * 11 + 34) % 17
       const teinte = k < 5 ? teintes[k] : undefined
       // LES COULEURS S'AJOUTENT, ELLES NE SE POSENT PAS. En peinture normale,
@@ -4770,6 +4784,7 @@ async function peindreBouquet(
   ctx: CanvasRenderingContext2D,
   cx: number,
   cy: number,
+  u = U,
 ): Promise<void> {
   // ON ATTEND LA POLICE POUR CHAQUE CARACTÈRE, et les douze ENSEMBLE : *une
   // toile peinte avant que le glyphe soit là part en cache telle quelle*, donc
@@ -4780,7 +4795,7 @@ async function peindreBouquet(
     // UN GLYPHE QUI MANQUE SE SAUTE, il ne laisse pas de trou carré : *le dos
     // doit sortir même si une police n'arrive pas.*
     if (image === null) continue
-    collerSticker(ctx, image, cx + p.x * U, cy + p.y * U, p.t * U, p.a)
+    collerSticker(ctx, image, cx + p.x * u, cy + p.y * u, p.t * u, p.a, u)
   }
 }
 
@@ -4838,6 +4853,7 @@ function collerSticker(
   y: number,
   taille: number,
   angle: number,
+  u = U,
 ): void {
   const decoupe = silhouetteDe(image)
   const d = taille
@@ -4846,16 +4862,16 @@ function collerSticker(
   ctx.rotate(angle)
   ctx.save()
   ctx.shadowColor = '#00000055'
-  ctx.shadowOffsetY = 1.1 * U
-  ctx.shadowBlur = 2.6 * U
+  ctx.shadowOffsetY = 1.1 * u
+  ctx.shadowBlur = 2.6 * u
   ctx.drawImage(decoupe, -d / 2, -d / 2, d, d)
   ctx.restore()
   for (let i = 0; i < PASSES_CERNE; i++) {
     const a = (i / PASSES_CERNE) * Math.PI * 2
     ctx.drawImage(
       decoupe,
-      -d / 2 + Math.cos(a) * DOS_CERNE * U,
-      -d / 2 + Math.sin(a) * DOS_CERNE * U,
+      -d / 2 + Math.cos(a) * DOS_CERNE * u,
+      -d / 2 + Math.sin(a) * DOS_CERNE * u,
       d,
       d,
     )
@@ -4877,7 +4893,7 @@ async function peindreDos(rayon: number): Promise<HTMLCanvasElement> {
   ctx.roundRect(0, 0, LARGE, HAUT, LARGE * rayon)
   ctx.clip()
 
-  peindreDecor(ctx, undefined, LARGE, BASE_DOS)
+  peindreDecor(ctx, undefined, BASE_DOS)
 
   if (dessin !== null) {
     mesurerBoite('dos-de-carte', dessin)
@@ -4940,29 +4956,60 @@ export function textureDuDos(
 /**
  * LE SACHET — ce qu'on déchire pour ouvrir un paquet.
  *
- * **C'EST UN OBJET DU COMMERCE, PAS UNE DALLE**, et c'est tout ce que la
- * première version avait manqué : elle parlait la pierre sombre du lieu, donc
- * elle se lisait comme un panneau de l'armurerie posé debout. *Un sachet de
- * booster est imprimé pour ATTIRER* — il a une marque, une illustration, une
- * mention de contenu, et il le dit en couleur.
+ * *Un paquet qui montre ses cinq dos d'emblée n'est pas un paquet, c'est une
+ * main face cachée* : rien n'est fermé, donc il n'y a rien à ouvrir.
  *
- * Quatre traits le font lire comme un sachet, et aucun n'est décoratif :
+ * **IL PARLE LA LANGUE DU DOS DE CARTE, et c'est tout le rework.** Keko : « je
+ * voudrais que tu rework le paquet de cartes pour coller à la DA et au thème du
+ * jeu ». *Il parlait encore la FERRONNERIE* — fond d'ambre, soleil de rayons,
+ * filets de laiton, losanges de métal, petites capitales en Cinzel — c'est-à
+ * -dire exactement ce que le contour simple, la plaque claire et le dos de
+ * carte avaient retiré, un par un, à tout le reste du mode. **Et c'était le
+ * dernier objet à le parler, alors que c'est l'écran qu'on voit en PREMIER.**
  *
- * - **LES DEUX BANDES THERMOSOUDÉES**, en haut et en bas, striées et dentelées.
- *   *C'est la seule chose qu'aucun autre objet du jeu ne porte* — une carte, un
- *   cadre et un panneau ont des bords francs ; un emballage a des soudures ;
- * - **LA LIGNE POINTILLÉE « OUVRIR ICI »**, juste sous la bande du haut. Elle
+ * ***UN EMBALLAGE DOIT ÊTRE FAIT DE LA MÊME CHOSE QUE CE QU'IL CONTIENT.***
+ * Il ne reprend donc pas « un style voisin » : il appelle les MÊMES peintres
+ * que le dos — `peindreDecor` pour la matière, `peindreTouches` pour le motif,
+ * `peindreBouquet` pour la marque. *Deux dessins qui décrivent la même chose
+ * divergent au premier réglage*, et c'est la règle que le coeur des armures a
+ * déjà coûtée.
+ *
+ * **CE QUI RESTE DE L'ANCIEN, parce que ça ne disait pas la ferronnerie mais
+ * l'EMBALLAGE** — et c'est la seule chose qu'aucun autre objet du jeu ne porte :
+ *
+ * - **LES DEUX BANDES THERMOSOUDÉES**, en haut et en bas, striées et
+ *   dentelées. *Une carte, un cadre et un panneau ont des bords francs ; un
+ *   emballage a des soudures.* Elles passent de l'aluminium au CRÈME, qui est
+ *   la couleur du liseré des cartes ;
+ * - **LA LIGNE POINTILLÉE « Ouvrir ici »**, juste sous la bande du haut : elle
  *   dit où ça se déchire AVANT qu'on y touche, donc elle annonce le geste ;
- * - **LE FORMAT EST HAUT ET ÉTROIT** (1 : 1,9). *Une pochette au format d'une
- *   carte se lit comme une carte géante*, donc comme un dos de plus, et on ne
- *   comprend pas qu'il y a quelque chose dedans ;
- * - **LE SOLEIL DE RAYONS** derrière l'illustration : c'est lui qui fait
- *   l'imprimé. *Un aplat, même chaud, reste un fond.*
+ * - **LE FORMAT HAUT ET ÉTROIT** (1 : 1,9). *Une pochette au format d'une carte
+ *   se lit comme une carte géante*, donc comme un dos de plus, et on ne
+ *   comprend plus qu'il y a quelque chose dedans.
+ *
+ * **ET LES ANGLES PASSENT DU BISEAU À L'ARRONDI.** *Un arrondi est une forme de
+ * gabarit, une arête franche est de la ferronnerie* — la règle qui a ramené la
+ * barre de vie de la capsule au biseau, et qui se joue ici **à l'envers**,
+ * parce qu'ici le jeu ne parle pas ferronnerie : il parle d'un clavier.
  */
 const SACHET_LARGE = 520
 const SACHET_HAUT = 988
-/** Le biseau des angles, en parts de la LARGEUR — la ferronnerie du lieu. */
-const SACHET_BISEAU = 0.055
+/**
+ * LE RAYON DES ANGLES, en parts de la LARGEUR.
+ *
+ * *C'est celui de la carte* (`RAYON_SIMPLE`), et ce n'est pas une coïncidence
+ * qu'on entretient : **le sachet et ce qu'il contient sont du même objet.**
+ */
+const SACHET_RAYON = RAYON_SIMPLE
+
+/**
+ * L'UNITÉ DU SACHET — son centième de largeur, comme `U` l'est pour la carte.
+ *
+ * *Les peintres partagés parlent tous en centièmes de largeur* : sans ça le
+ * motif de touches aurait un pas d'une carte sur un objet qui n'en a pas les
+ * proportions, et il ne se lirait plus comme le même motif.
+ */
+const US = SACHET_LARGE / 100
 
 /**
  * OÙ LE SACHET SE DÉCHIRE, en part de sa hauteur depuis le haut.
@@ -4977,25 +5024,31 @@ export const LIGNE_DECHIRURE = 0.145
 
 let SACHET: Promise<THREE.CanvasTexture> | null = null
 
-/** Le contour du sachet : un rectangle à quatre angles abattus. */
-function cheminDuSachet(ctx: CanvasRenderingContext2D, l: number, h: number, c: number): void {
+/**
+ * Le contour du sachet : un rectangle à quatre angles ARRONDIS.
+ *
+ * *Il a eu quatre angles abattus*, la ferronnerie du lieu — et c'est
+ * exactement ce que le rework retire. **Le rayon se compte sur le bord
+ * EXTÉRIEUR**, donc il décroît d'autant qu'on rentre : à rayon constant, les
+ * coins du liseré seraient plus épais que ses côtés. *Règle déjà payée sur les
+ * cases vides du chargement, puis sur le contour simple des cartes.*
+ */
+function cheminDuSachet(ctx: CanvasRenderingContext2D, l: number, h: number, r: number): void {
   ctx.beginPath()
-  ctx.moveTo(c, 0)
-  ctx.lineTo(l - c, 0)
-  ctx.lineTo(l, c)
-  ctx.lineTo(l, h - c)
-  ctx.lineTo(l - c, h)
-  ctx.lineTo(c, h)
-  ctx.lineTo(0, h - c)
-  ctx.lineTo(0, c)
-  ctx.closePath()
+  ctx.roundRect(0, 0, l, h, Math.max(0, r))
 }
 
 /**
- * UNE BANDE THERMOSOUDÉE : du film aluminisé, strié et DENTELÉ.
+ * UNE BANDE THERMOSOUDÉE : du film, strié et DENTELÉ.
  *
  * *La dent est du côté de l'INTÉRIEUR* — c'est la découpe de l'emballeuse, et
  * elle ne mord jamais le bord extérieur du sachet, qui reste franc.
+ *
+ * **ELLE EST CRÈME, PLUS ALUMINIUM.** Le gris d'alu était juste pour un sachet
+ * de ferronnerie ; ici *le crème est déjà la couleur du liseré des cartes*, et
+ * une soudure est précisément l'endroit où le film se replie sur lui-même —
+ * donc où il montre son envers. **On ne change pas la pièce, on change sa
+ * matière.**
  */
 function peindreSoudure(
   ctx: CanvasRenderingContext2D,
@@ -5019,17 +5072,17 @@ function peindreSoudure(
   ctx.closePath()
   ctx.clip()
 
-  const alu = ctx.createLinearGradient(0, dehors, 0, pointe)
-  alu.addColorStop(0, '#d7dee5')
-  alu.addColorStop(0.45, '#9aa4ae')
-  alu.addColorStop(1, '#707a84')
-  ctx.fillStyle = alu
+  const film = ctx.createLinearGradient(0, dehors, 0, pointe)
+  film.addColorStop(0, DOS_CREME)
+  film.addColorStop(0.45, '#f0dfc0')
+  film.addColorStop(1, '#d9c5a3')
+  ctx.fillStyle = film
   ctx.fillRect(0, Math.min(dehors, pointe) - 2, l, Math.abs(pointe - dehors) + 4)
 
   // LE GAUFRAGE : des stries VERTICALES, parce que c'est ainsi qu'une soudure
   // se presse. *Un aplat clair ne dit pas une soudure, il dit une marge.*
-  ctx.globalAlpha = 0.45
-  ctx.strokeStyle = '#59636c'
+  ctx.globalAlpha = 0.3
+  ctx.strokeStyle = '#a89470'
   ctx.lineWidth = Math.max(1, l * 0.004)
   for (let x = dent / 4; x < l; x += dent / 2) {
     ctx.beginPath()
@@ -5041,186 +5094,205 @@ function peindreSoudure(
 }
 
 /**
- * L'EMBLÈME DU SACHET : le losange à quatre pointes du dos de carte.
- *
- * *Un sachet qui porte un autre signe que les cartes qu'il contient ne dit pas
- * qu'il les contient.* Les bords sont CREUSÉS — le point de contrôle de chaque
- * quadratique tombe près du centre — et il est percé d'un vide : posé à la
- * corde, les bords seraient droits et on lirait une étoile générique.
- */
-function peindreEmblemeDuSachet(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  r: number,
-): void {
-  const CREUX = 0.22
-  const pointe = (i: number): [number, number] => {
-    const a = (i * Math.PI) / 2 - Math.PI / 2
-    return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]
-  }
-  ctx.beginPath()
-  ctx.moveTo(...pointe(0))
-  for (let i = 0; i < 4; i++) {
-    const a = (i * Math.PI) / 2 - Math.PI / 2 + Math.PI / 4
-    ctx.quadraticCurveTo(
-      cx + Math.cos(a) * r * CREUX,
-      cy + Math.sin(a) * r * CREUX,
-      ...pointe(i + 1),
-    )
-  }
-  ctx.closePath()
-  // LE VIDE CENTRAL est un SECOND contour dans le MÊME chemin, creusé par la
-  // règle paire-impaire : ni masque, ni découpe.
-  const v = r * 0.3
-  ctx.moveTo(cx, cy - v)
-  ctx.lineTo(cx + v, cy)
-  ctx.lineTo(cx, cy + v)
-  ctx.lineTo(cx - v, cy)
-  ctx.closePath()
-}
-
-/** Un petit losange de rareté, du métal qu'on lui donne. */
-function peindreLosange(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  cy: number,
-  r: number,
-  haut: string,
-  bas: string,
-): void {
-  const g = ctx.createLinearGradient(cx - r, cy - r, cx + r, cy + r)
-  g.addColorStop(0, haut)
-  g.addColorStop(1, bas)
-  ctx.beginPath()
-  ctx.moveTo(cx, cy - r)
-  ctx.lineTo(cx + r * 0.72, cy)
-  ctx.lineTo(cx, cy + r)
-  ctx.lineTo(cx - r * 0.72, cy)
-  ctx.closePath()
-  ctx.fillStyle = g
-  ctx.fill()
-  ctx.strokeStyle = '#00000055'
-  ctx.lineWidth = Math.max(1, r * 0.1)
-  ctx.stroke()
-}
-
-/**
  * LES TROIS CARTES EN ÉVENTAIL : ce qu'il y a DEDANS, montré sur l'emballage.
  *
  * *Un emballage dit toujours ce qu'il contient* — et c'est ce qui manquait le
- * plus à la dalle : elle ne promettait rien.
+ * plus à la toute première dalle : elle ne promettait rien.
+ *
+ * ***CE SONT DES FACES, PAS DES DOS, et c'est ce qui les fait parler.*** Trois
+ * dos bleus se lisent comme trois rectangles vides : ils disent « des cartes »,
+ * pas « des cartes d'EMOJI ». **Une face dit les deux d'un coup** — un cadre de
+ * couleur, un emoji dans sa fenêtre, une plaque claire dessous — et c'est
+ * exactement la carte qu'on trouvera dedans.
+ *
+ * **ELLE EST RÉDUITE À SES TROIS SIGNAUX**, et pas peinte en petit : à trente
+ * pixels de large, le cartouche, le nom et la pastille tournent en bouillie.
+ * *Ce qui survit à la réduction est ce qu'on garde* — la règle de l'étoile du
+ * paquet de pioche.
+ *
+ * **ET LES TROIS CRANS SONT ÉCARTÉS SUR L'ÉCHELLE** (bleu, orange, violet) :
+ * trois cartes du même cran diraient qu'un paquet n'en contient qu'un.
  */
+const EVENTAIL: readonly { emoji: string; cran: string }[] = [
+  { emoji: '🚀', cran: 'bleu' },
+  { emoji: '🎉', cran: 'violet' },
+  { emoji: '❤️', cran: 'orange' },
+]
+
 function peindreEventail(ctx: CanvasRenderingContext2D, cx: number, cy: number, l: number): void {
-  const w = l * 0.3
+  const w = l * 0.235
   const h = w * 1.4
-  for (const [dx, a, teinte] of [
-    [-w * 0.5, -0.2, 0.78],
-    [w * 0.5, 0.2, 0.78],
-    [0, 0, 1],
+  for (const [i, dx, a] of [
+    [0, -w * 0.8, -0.22],
+    [1, w * 0.8, 0.22],
+    // LA DERNIÈRE EST AU MILIEU, posée une fois ses voisines en place : *elle
+    // est le sujet, elle doit rester entière.*
+    [2, 0, 0],
   ] as const) {
+    const { emoji, cran } = EVENTAIL[i]!
+    const devant = i === 2
     ctx.save()
-    ctx.translate(cx + dx, cy + (teinte === 1 ? 0 : h * 0.06))
+    ctx.translate(cx + dx, cy + (devant ? 0 : h * 0.06))
     ctx.rotate(a)
+    ctx.globalAlpha = devant ? 1 : 0.84
+
+    // LE CADRE, de la couleur de son cran : *une échelle se dit en couleur.*
     ctx.beginPath()
-    ctx.roundRect(-w / 2, -h / 2, w, h, w * 0.08)
-    // ELLES SONT CLAIRES SUR LE CHAUD, et il le faut : *une illustration qui
-    // se fond dans son fond ne promet rien* — et c'est ce que promet un
-    // emballage. Le bleu d'ardoise est déjà celui du dos des cartes.
-    const dos = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2)
-    dos.addColorStop(0, `rgba(118,139,158,${teinte})`)
-    dos.addColorStop(1, `rgba(52,66,82,${teinte})`)
-    ctx.fillStyle = dos
+    ctx.roundRect(-w / 2, -h / 2, w, h, w * SACHET_RAYON)
+    ctx.fillStyle = METAUX[cran]![2]!
     ctx.fill()
-    ctx.strokeStyle = `rgba(243,228,194,${teinte * 0.9})`
-    ctx.lineWidth = Math.max(1.5, w * 0.035)
-    ctx.stroke()
-    if (teinte === 1) {
-      peindreEmblemeDuSachet(ctx, 0, 0, w * 0.27)
-      const or = ctx.createLinearGradient(-w * 0.27, -w * 0.27, w * 0.27, w * 0.27)
-      or.addColorStop(0, '#f6e1b0')
-      or.addColorStop(0.55, '#c99a4c')
-      or.addColorStop(1, '#8a6224')
-      ctx.fillStyle = or
-      ctx.fill('evenodd')
+
+    // LA FENÊTRE D'ART, dans le bleu du décor des cartes.
+    const m = w * 0.085
+    ctx.beginPath()
+    ctx.roundRect(-w / 2 + m, -h / 2 + m, w - m * 2, h * 0.58, w * 0.06)
+    ctx.fillStyle = `rgb(${DOS_BLEU[0] * 0.55}, ${DOS_BLEU[1] * 0.55}, ${DOS_BLEU[2] * 0.55})`
+    ctx.fill()
+
+    const image = imageDeLEmoji(emoji)
+    // UN GLYPHE QUI MANQUE SE SAUTE : *le sachet doit sortir même si une police
+    // n'arrive pas* — la règle du bouquet, et c'est le même chemin.
+    if (image !== null) {
+      const d = w * 0.46
+      ctx.drawImage(image, -d / 2, -h / 2 + m + h * 0.29 - d / 2, d, d)
     }
+
+    // LA PLAQUE CLAIRE, celle qui porte le texte d'une carte. *Elle ne porte
+    // rien ici* : à cette taille, un trait de texte est une salissure.
+    ctx.beginPath()
+    ctx.roundRect(-w / 2 + m, h * 0.1, w - m * 2, h * 0.3, w * 0.06)
+    ctx.fillStyle = DOS_CREME
+    ctx.fill()
     ctx.restore()
   }
+  ctx.globalAlpha = 1
 }
 
-function peindreLeSachet(): HTMLCanvasElement {
+/**
+ * LA PASTILLE DU CONTENU : « 5 CARTES », en clair sur le bleu.
+ *
+ * *C'est le vocabulaire d'une app*, exactement comme la pastille du type au bas
+ * d'une carte — et c'est un `border-radius: 999px` assumé pour la même raison :
+ * **la règle « un arrondi est une forme de gabarit » ne vaut que là où le jeu
+ * parle ferronnerie.** Ici il parle d'un clavier.
+ *
+ * *Elle remplace un cartouche à coins coupés, un mot gravé entre deux filets et
+ * deux lignes de petites capitales* — trois pièces de ferronnerie pour dire un
+ * nombre.
+ */
+function peindrePastilleDuSachet(
+  ctx: CanvasRenderingContext2D,
+  cx: number,
+  cy: number,
+  mot: string,
+  corps: number,
+): void {
+  ctx.font = `700 ${corps}px ${FAMILLE_RONDE}`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.letterSpacing = `${corps * 0.08}px`
+  const w = ctx.measureText(mot).width + corps * 1.5
+  const h = corps * 1.9
+  ctx.beginPath()
+  ctx.roundRect(cx - w / 2, cy - h / 2, w, h, h / 2)
+  const plaque = ctx.createLinearGradient(0, cy - h / 2, 0, cy + h / 2)
+  plaque.addColorStop(0, DOS_CREME)
+  plaque.addColorStop(1, '#e4d6bd')
+  ctx.fillStyle = plaque
+  ctx.fill()
+  ctx.fillStyle = '#16202a'
+  ctx.fillText(mot, cx, cy + corps * 0.04)
+  ctx.letterSpacing = '0px'
+  ctx.textBaseline = 'alphabetic'
+}
+
+async function peindreLeSachet(): Promise<HTMLCanvasElement> {
   const l = SACHET_LARGE
   const h = SACHET_HAUT
-  const c = l * SACHET_BISEAU
+  const r = l * SACHET_RAYON
   const canvas = document.createElement('canvas')
   canvas.width = l
   canvas.height = h
   const ctx = canvas.getContext('2d')
   if (ctx === null) return canvas
 
-  const or = (y0: number, y1: number): CanvasGradient => {
-    const g = ctx.createLinearGradient(0, y0, l, y1)
-    g.addColorStop(0, '#fbeec4')
-    g.addColorStop(0.42, '#d9ae5c')
-    g.addColorStop(1, '#8a6224')
-    return g
-  }
-
+  // LE LISERÉ D'ABORD, LE FOND DEDANS — la découpe du dos de carte à
+  // l'identique. *Un `stroke` serait centré sur son tracé*, donc la moitié
+  // sortirait de la toile : on peint le crème plein, puis on rentre.
   ctx.save()
-  cheminDuSachet(ctx, l, h, c)
+  cheminDuSachet(ctx, l, h, r)
   ctx.clip()
-
-  // LE FOND EST CHAUD, et c'est le coeur de la correction : *un emballage qui
-  // parle la pierre du lieu se lit comme un morceau du lieu.* L'ambre est déjà
-  // la couleur de tout ce qui a de la valeur ici — il n'y a rien à inventer,
-  // il faut seulement cesser d'être sobre.
-  const fond = ctx.createLinearGradient(0, 0, l * 0.4, h)
-  fond.addColorStop(0, '#8d4b15')
-  fond.addColorStop(0.45, '#b56810')
-  fond.addColorStop(1, '#6b330f')
-  ctx.fillStyle = fond
+  const bord = ctx.createLinearGradient(0, 0, l * 0.5, h)
+  bord.addColorStop(0, DOS_CREME)
+  bord.addColorStop(0.55, '#f0dfc0')
+  bord.addColorStop(1, '#dcc8a6')
+  ctx.fillStyle = bord
   ctx.fillRect(0, 0, l, h)
 
-  // LE SOLEIL DE RAYONS : c'est LUI qui fait l'imprimé. *Un aplat, même chaud,
-  // reste un fond* — un éventail de rayons est une impression.
-  const cyR = h * 0.44
-  const R = Math.hypot(l, h)
+  const marge = 2.7 * US
   ctx.save()
-  ctx.globalAlpha = 0.2
-  ctx.fillStyle = '#ffd089'
-  for (let i = 0; i < 18; i++) {
-    const a0 = (i / 9) * Math.PI
+  ctx.beginPath()
+  ctx.roundRect(marge, marge, l - marge * 2, h - marge * 2, Math.max(0, r - marge))
+  ctx.clip()
+
+  // LA MATIÈRE EST CELLE DU DOS, par le même peintre : dégradé vertical,
+  // vignettage elliptique, dither. *Le sachet et ce qu'il contient sont du même
+  // objet*, donc ils ne peuvent pas être faits de deux matières.
+  peindreDecor(ctx, undefined, DOS_BLEU, { l, h })
+  peindreTouches(ctx, l, h, US)
+
+  const yL = h * LIGNE_DECHIRURE
+
+  // LE HALO DE LA MARQUE : de la lumière tombée sur le fond, qui détache le
+  // bouquet du motif sans lui donner de bord. *Le flou est dans la matière.*
+  const cyM = h * 0.365
+  const halo = ctx.createRadialGradient(l / 2, cyM, l * 0.16, l / 2, cyM, l * 0.46)
+  halo.addColorStop(0, '#ffffff2e')
+  halo.addColorStop(1, '#ffffff00')
+  ctx.fillStyle = halo
+  ctx.fillRect(0, 0, l, h)
+
+  // LA MARQUE : LE BOUQUET DU DOS, en grand. *Le logo d'une collection se
+  // compose de ce qu'elle contient* — et c'est déjà lui qui dit à quel jeu ces
+  // cartes appartiennent, donc le sachet n'a pas de second signe à porter.
+  await peindreBouquet(ctx, l / 2, cyM, US * 0.92)
+
+  // LES GLYPHES DE L'ÉVENTAIL S'ATTENDENT AUSSI, et séparément : *le bouquet
+  // n'attend que les siens*, donc un emoji de l'éventail qui n'en serait pas
+  // partirait en police système — ou en rien du tout.
+  await Promise.all(EVENTAIL.map((e) => policeDeLEmoji(e.emoji)))
+
+  peindreEventail(ctx, l / 2, h * 0.655, l)
+  peindrePastilleDuSachet(ctx, l / 2, h * 0.8, '5 CARTES', l * 0.052)
+
+  // LES CINQ CRANS, en pastilles : *ce qu'on peut y trouver*, dit par l'échelle
+  // du mode plutôt que par une phrase. **Cinq et non quatre** : les losanges de
+  // métal disaient l'échelle de l'archive, pas celle de cette collection.
+  const rc = l * 0.028
+  const pas = l * 0.095
+  for (const [i, cran] of ['blanc', 'vert', 'bleu', 'violet', 'orange'].entries()) {
+    const cx = l / 2 + (i - 2) * pas
+    const cy = h * 0.873
     ctx.beginPath()
-    ctx.moveTo(l / 2, cyR)
-    ctx.arc(l / 2, cyR, R, a0, a0 + Math.PI / 18)
-    ctx.closePath()
+    ctx.arc(cx, cy, rc, 0, Math.PI * 2)
+    ctx.fillStyle = METAUX[cran]![2]!
     ctx.fill()
+    // LE MÊME CERNE CRÈME QUE LES STICKERS : *c'est une planche d'autocollants,
+    // et une découpeuse ne change pas de réglage entre deux pièces.*
+    ctx.strokeStyle = DOS_CREME
+    ctx.lineWidth = DOS_CERNE * US * 0.9
+    ctx.stroke()
   }
-  ctx.restore()
 
-  // UN VIGNETTAGE ELLIPTIQUE, aux proportions du sachet : *une forme suit les
-  // proportions de ce qu'elle borde* — un disque mordrait les côtés avant
-  // d'atteindre le haut.
-  ctx.save()
-  ctx.translate(l / 2, h / 2)
-  ctx.scale(1, h / l)
-  const voile = ctx.createRadialGradient(0, 0, l * 0.2, 0, 0, l * 0.8)
-  voile.addColorStop(0, '#0000')
-  voile.addColorStop(1, '#2a0f0098')
-  ctx.fillStyle = voile
-  ctx.fillRect(-l, -l, l * 2, l * 2)
-  ctx.restore()
-
-  // LA LIGNE POINTILLÉE « OUVRIR ICI » : elle dit où ça se déchire AVANT qu'on
+  // LA LIGNE POINTILLÉE « Ouvrir ici » : elle dit où ça se déchire AVANT qu'on
   // y touche. *Un objet qui attend un geste doit dire lequel.*
   //
-  // **SES FLÈCHES NE VONT QUE VERS LA DROITE**, depuis qu'on ouvre en tirant.
-  // Elles ont pointé des deux côtés le temps d'une tape : *deux flèches
-  // opposées disent « ça s'ouvre », une seule direction dit « tire par ici ».*
-  const yL = h * LIGNE_DECHIRURE
+  // **SES FLÈCHES NE VONT QUE VERS LA DROITE**, depuis qu'on ouvre en tirant :
+  // *deux flèches opposées disent « ça s'ouvre », une seule direction dit
+  // « tire par ici ».*
   ctx.save()
-  ctx.strokeStyle = '#ffeccaaa'
-  ctx.lineWidth = Math.max(1.5, l * 0.006)
+  ctx.strokeStyle = '#fffaf0bb'
+  ctx.lineWidth = Math.max(1.5, l * 0.007)
   ctx.setLineDash([l * 0.03, l * 0.024])
   ctx.beginPath()
   ctx.moveTo(l * 0.06, yL)
@@ -5228,94 +5300,21 @@ function peindreLeSachet(): HTMLCanvasElement {
   ctx.stroke()
   ctx.restore()
 
+  // ET LE MOT EST EN BALOO 2, EN CASSE ORDINAIRE. *Les petites capitales d'un
+  // serif gravé sont la voix d'une plaque de métal* ; une application écrit
+  // « Ouvrir ici ».
   ctx.textAlign = 'center'
-  ctx.fillStyle = '#ffeccadd'
-  ctx.font = `600 ${l * 0.04}px Cinzel, Georgia, serif`
-  ctx.letterSpacing = `${l * 0.014}px`
-  ctx.fillText('OUVRIR ICI  ▸▸▸', l / 2, yL - l * 0.03)
-
-  // L'EMBLÈME, en grand : c'est la MARQUE du paquet. *Le projet n'a pas de nom
-  // affiché, donc on n'en invente pas un* — l'emblème du dos dit déjà à quel
-  // jeu ces cartes appartiennent.
-  peindreEmblemeDuSachet(ctx, l / 2, h * 0.255, l * 0.13)
-  ctx.fillStyle = or(h * 0.14, h * 0.36)
-  ctx.fill('evenodd')
-
-  peindreEventail(ctx, l / 2, h * 0.49, l)
-
-  // LE CARTOUCHE DE CONTENU : la ferronnerie du lieu, en petit.
-  const cw = l * 0.72
-  const chh = h * 0.058
-  const cx0 = (l - cw) / 2
-  const cy0 = h * 0.672
-  const bis = chh * 0.42
-  ctx.beginPath()
-  ctx.moveTo(cx0 + bis, cy0)
-  ctx.lineTo(cx0 + cw - bis, cy0)
-  ctx.lineTo(cx0 + cw, cy0 + bis)
-  ctx.lineTo(cx0 + cw, cy0 + chh - bis)
-  ctx.lineTo(cx0 + cw - bis, cy0 + chh)
-  ctx.lineTo(cx0 + bis, cy0 + chh)
-  ctx.lineTo(cx0, cy0 + chh - bis)
-  ctx.lineTo(cx0, cy0 + bis)
-  ctx.closePath()
-  ctx.fillStyle = '#1e212880'
-  ctx.fill()
-  ctx.strokeStyle = or(cy0, cy0 + chh)
-  ctx.lineWidth = Math.max(2, l * 0.009)
-  ctx.stroke()
-
-  ctx.textBaseline = 'middle'
-  ctx.fillStyle = '#f6e9cd'
-  ctx.font = `600 ${chh * 0.5}px Cinzel, Georgia, serif`
-  ctx.letterSpacing = `${l * 0.018}px`
-  ctx.fillText('PAQUET', l / 2, cy0 + chh * 0.54)
-
-  ctx.font = `600 ${l * 0.044}px Cinzel, Georgia, serif`
-  ctx.fillStyle = '#ffe9bedd'
-  ctx.fillText('5 CARTES', l / 2, h * 0.762)
+  ctx.fillStyle = '#fffaf0ee'
+  ctx.font = `800 ${l * 0.058}px ${FAMILLE_RONDE}`
+  ctx.letterSpacing = `${l * 0.004}px`
+  ctx.fillText('Ouvrir ici  ▸▸▸', l / 2, yL - l * 0.028)
   ctx.letterSpacing = '0px'
-  ctx.textBaseline = 'alphabetic'
-
-  // LES QUATRE MÉTAUX, en petits losanges : *ce qu'on peut y trouver*, dit par
-  // l'échelle du jeu plutôt que par une phrase.
-  const rl = l * 0.03
-  const pas = l * 0.105
-  for (const [i, [haut, bas]] of (
-    [
-      ['#d08a4e', '#7a4418'],
-      ['#e8eef4', '#8d99a6'],
-      ['#ffdf86', '#b07f1f'],
-      ['#dff3ff', '#7fb6d8'],
-    ] as const
-  ).entries()) {
-    peindreLosange(ctx, l / 2 + (i - 1.5) * pas, h * 0.822, rl, haut, bas)
-  }
 
   // LES DEUX SOUDURES, en dernier : elles se posent SUR l'imprimé, parce que
   // c'est ainsi qu'un sachet se ferme — on imprime le film, puis on le soude.
-  peindreSoudure(ctx, l, h * 0.042, h * 0.014, true)
-  peindreSoudure(ctx, l, h * 0.958, h * 0.014, false)
-
-  // LA MOULURE : un filet de laiton qui porte la lumière du haut-gauche.
-  // *Un filet d'une seule couleur n'a pas d'épaisseur : c'est la variation qui
-  // fait le volume, pas la largeur.*
-  ctx.strokeStyle = or(0, h)
-  // UN `stroke` EST CENTRÉ SUR SON TRACÉ, donc la moitié sortirait de la
-  // toile : on clippe sur la MÊME forme et on double la largeur.
-  ctx.lineWidth = l * 0.026
-  cheminDuSachet(ctx, l, h, c)
-  ctx.stroke()
-
-  // LE GRAIN, en pixels de la toile : il dissout le dégradé, qui banderait
-  // sans lui sur huit bits.
-  ctx.globalAlpha = ALPHA_GRAIN
-  ctx.globalCompositeOperation = 'overlay'
-  const tuile = ctx.createPattern(grain(), 'repeat')
-  if (tuile !== null) {
-    ctx.fillStyle = tuile
-    ctx.fillRect(0, 0, l, h)
-  }
+  peindreSoudure(ctx, l, h * 0.036, h * 0.011, true)
+  peindreSoudure(ctx, l, h * 0.964, h * 0.011, false)
+  ctx.restore()
   ctx.restore()
   return canvas
 }
@@ -5331,8 +5330,8 @@ export const RAPPORT_SACHET = SACHET_HAUT / SACHET_LARGE
  * règle déjà payée par les cartes, puis par les cases du chargement.
  */
 export function textureDuSachet(): Promise<THREE.CanvasTexture> {
-  SACHET ??= document.fonts.ready.then(() => {
-    const texture = new THREE.CanvasTexture(peindreLeSachet())
+  SACHET ??= Promise.all([document.fonts.ready, policeRonde()]).then(async () => {
+    const texture = new THREE.CanvasTexture(await peindreLeSachet())
     texture.anisotropy = 8
     texture.colorSpace = THREE.SRGBColorSpace
     return texture

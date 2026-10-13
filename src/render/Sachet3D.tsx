@@ -208,10 +208,15 @@ void main() {
   // le complément plutôt que de compter sur un pilote clément.
   float passe = 1.0 - smoothstep(uFront - 0.03, uFront + 0.03, vUv.x);
 
-  // LE CHARBON : juste au bord, la matière NOIRCIT. *Sans lui le sachet se
-  // coupe net, et une coupe nette n'est pas une déchirure.*
-  float charbon = (1.0 - smoothstep(0.0, ${CHARBON} * ech, dedans)) * passe;
-  vec3 corps = mix(tex.rgb, tex.rgb * 0.12, charbon);
+  // L'ARRACHE : juste au bord, la matière montre son ENVERS. *Sans elle le
+  // sachet se coupe net, et une coupe nette n'est pas une déchirure.*
+  //
+  // **ELLE VA VERS LE CRÈME, PLUS VERS LE CHARBON.** Un film imprimé qui se
+  // déchire ne noircit pas : *il laisse voir son support*, et le support de ce
+  // sachet est le crème de son liseré. Le charbon disait un feu — et un paquet
+  // d'emoji ne brûle pas, il s'ouvre.
+  float arrache = (1.0 - smoothstep(0.0, ${CHARBON} * ech, dedans)) * passe;
+  vec3 corps = mix(tex.rgb, vec3(1.0, 0.98, 0.94), arrache * 0.72);
 
   // LE LUSTRE : une bande claire posée SOUS le curseur, le long de la
   // diagonale — c'est ce qui fait lire du FILM plutôt qu'une image plate dès
@@ -221,24 +226,46 @@ void main() {
   float diag = (vUv.x + mix(uV0, uV1, vUv.y)) * 0.5;
   corps += vec3(1.0, 0.94, 0.80) * exp(-pow((diag - uCurseur) / 0.11, 2.0)) * uSurvol * 0.2;
 
-  // LA BRAISE : une bande étroite au front, qui CLIGNOTE. Elle est en or
-  // chaud puis blanche en son coeur — *un feu n'a pas une couleur, il a un
-  // dégradé de température.* Elle ne vit qu'AUTOUR du point qui court : une
-  // braise qui resterait allumée derrière lui ferait une ligne de néon.
+  // L'ÉCLAT : une bande étroite au front, qui FRÉMIT. *Ce n'est plus une
+  // braise* — elle allait de l'or chaud au blanc, c'est-à-dire un dégradé de
+  // TEMPÉRATURE, et il n'y a rien qui chauffe ici. **C'est la lumière du
+  // déchirement**, blanche au coeur et à peine crème en bordure : la même que
+  // le liseré, donc la même que l'envers du film qu'on vient de mettre à nu.
+  //
+  // Elle ne vit qu'AUTOUR du point qui court : un éclat qui resterait allumé
+  // derrière lui ferait une ligne de néon. Et il FRÉMIT sans vaciller — *un
+  // vacillement est le mouvement d'une flamme.*
   float vif = exp(-pow((vUv.x - uFront) / 0.09, 2.0));
-  float vacille = 0.75 + 0.25 * sin(vUv.x * 41.0 + uTemps * 11.0);
-  float braise = exp(-pow(dedans / (${BRAISE} * ech), 2.0)) * vacille * max(vif, passe * 0.22);
-  vec3 feu = mix(vec3(1.7, 0.55, 0.11), vec3(2.3, 1.8, 1.2), smoothstep(0.4, 1.0, braise));
+  float fremit = 0.86 + 0.14 * sin(vUv.x * 41.0 + uTemps * 11.0);
+  float eclat = exp(-pow(dedans / (${BRAISE} * ech), 2.0)) * fremit * max(vif, passe * 0.22);
+  vec3 lueur = mix(vec3(1.5, 1.35, 1.05), vec3(2.2, 2.1, 1.9), smoothstep(0.4, 1.0, eclat));
 
-  float a = max(tex.a, braise * 0.9) * uFondu;
-  gl_FragColor = vec4(corps + feu * braise, a);
+  float a = max(tex.a, eclat * 0.9) * uFondu;
+  gl_FragColor = vec4(corps + lueur * eclat, a);
   if (gl_FragColor.a < 0.004) discard;
 }`,
   })
 }
 
 /**
- * LA GERBE : les étincelles qui montent de l'ouverture.
+ * LA GERBE : les CONFETTIS qui montent de l'ouverture.
+ *
+ * **Ils ont été des étincelles d'or**, et c'était la ferronnerie une dernière
+ * fois : *une étincelle sort d'un feu ou d'une forge*, et on n'ouvre ni l'un ni
+ * l'autre. **Un paquet qu'on déchire lâche des confettis** — c'est ce que le
+ * geste raconte, et les cinq couleurs du jeu étaient déjà là pour le dire.
+ *
+ * Trois choses les séparent d'un semis d'étincelles, et aucune n'est de la
+ * décoration :
+ *
+ * - **ILS ONT UNE FORME** : un petit rectangle, pas un point. *Un grain rond
+ *   additif est une lueur ; une arête est un objet* ;
+ * - **ILS TOURNENT, chacun à son rythme.** Un confetti est une feuille, donc il
+ *   culbute en montant — et *vingt rectangles qui tournent du même angle se
+ *   lisent comme une grille qui glisse* ;
+ * - **ILS PRENNENT LES CINQ COULEURS DES CRANS**, par une fonction de la
+ *   CELLULE et non par un tirage par image : c'est la règle du motif de touches
+ *   du dos, et *un semis qui se réarrange n'est plus une matière.*
  *
  * **Elle a son propre plan**, bien plus haut que le sachet, parce qu'*un effet
  * ne peut pas déborder de la géométrie qui le porte* : posées dans le corps,
@@ -270,8 +297,16 @@ void main() {
   float tiree = des(m);
   vec2 dans = fract(cellule) - 0.5;
   dans.x += (des(m + 7.3) - 0.5) * 0.5;
-  float d = length(dans);
-  float grain = smoothstep(0.34, 0.03, d) * step(0.58, tiree);
+
+  // LE CONFETTI : un rectangle qui CULBUTE. Sa rotation part de sa cellule et
+  // avance avec le temps, donc chacun tourne a son rythme — *et il s'aplatit en
+  // passant de profil*, ce que le cosinus donne sans qu'on ait rien a ecrire.
+  float ang = des(m + 3.1) * 6.283 + uTemps * (2.0 + des(m + 5.7) * 4.0);
+  vec2 q = vec2(dans.x * cos(ang) - dans.y * sin(ang), dans.x * sin(ang) + dans.y * cos(ang));
+  q.y *= 1.0 / max(0.25, abs(cos(ang * 1.7)));
+  vec2 b = abs(q) - vec2(0.17, 0.11);
+  float d = length(max(b, 0.0)) + min(max(b.x, b.y), 0.0);
+  float grain = smoothstep(0.05, 0.0, d) * step(0.58, tiree);
 
   // ELLES SORTENT DE LA FENTE, donc elles s'éteignent en montant — *une
   // étincelle a une durée* — et elles se resserrent vers le milieu, comme une
@@ -285,8 +320,19 @@ void main() {
   float ouvert = max(smoothstep(uFront + 0.06, uFront - 0.02, vUv.x) * 0.55,
                      exp(-pow((vUv.x - uFront) / 0.07, 2.0)));
 
+  // LES CINQ CRANS, pris sur la cellule : blanc, vert, bleu, violet, orange.
+  // *Elles y sont TOUTES, donc elles ne disent rien d'une carte en
+  // particulier* — et ensemble elles disent la collection, exactement comme les
+  // confettis du motif du dos.
+  float k = floor(des(m + 11.9) * 5.0);
+  vec3 teinte = k < 1.0 ? vec3(2.3, 2.3, 2.3)
+              : k < 2.0 ? vec3(0.5, 2.6, 1.1)
+              : k < 3.0 ? vec3(0.6, 1.7, 2.8)
+              : k < 4.0 ? vec3(1.7, 1.0, 2.7)
+                        : vec3(2.7, 1.5, 0.5);
+
   float a = grain * monte * evase * ouvert * uForce;
-  gl_FragColor = vec4(vec3(2.4, 1.7, 0.95) * a, a);
+  gl_FragColor = vec4(teinte * a, a);
   if (a < 0.004) discard;
 }`,
   })

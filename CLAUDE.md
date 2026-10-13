@@ -1637,6 +1637,102 @@ De 42 % à **60 % de la largeur** : *un objet qu'on doit déchirer au doigt a
 besoin d'être sous le doigt*, et à 42 % il était perdu au milieu d'un écran
 vide. En paysage c'est la hauteur qui borne, donc rien n'y change.
 
+### LE SACHET CHANGE DE LANGUE — il est fait de ce qu'il contient
+
+Keko : **« je voudrais que tu rework le paquet de cartes pour coller à la DA et
+au thème du jeu — je parle du paquet du booster, avec ouverture etc. »**
+
+*C'était le dernier objet du mode à parler la FERRONNERIE*, et c'est l'écran
+qu'on voit en PREMIER : fond d'ambre, soleil de rayons, filets de laiton,
+losanges de métal, petites capitales en Cinzel — **exactement ce que le contour
+simple, la plaque claire et le dos de carte avaient retiré, un par un, à tout le
+reste.** La note « à trancher » le disait depuis le dos ; elle est payée ici.
+
+#### IL N'IMITE PAS LE DOS, IL APPELLE SES PEINTRES
+
+***Un emballage doit être fait de la même chose que ce qu'il contient.*** Il ne
+reprend donc pas « un style voisin » : il appelle les **MÊMES** fonctions que le
+dos de carte — `peindreDecor` pour la matière, `peindreTouches` pour le motif,
+`peindreBouquet` pour la marque. *Deux dessins qui décrivent la même chose
+divergent au premier réglage*, la règle que le coeur des armures a déjà coûtée.
+
+**Les trois ont donc été GÉNÉRALISÉS, pas recopiés** : elles parlaient toutes en
+unités de CARTE (`U`, `LARGE`, `HAUT`), et le sachet n'a pas ses proportions.
+Elles prennent désormais leur boîte et leur unité, avec la carte pour défaut —
+*donc aucun appel existant ne bouge*, vérifié au pixel sur un dos.
+
+**Et le grain couvre LA TOILE**, plus un rectangle au rapport d'une carte : il
+s'arrêtait à `largeur × 1,4`, soit 728 px sur un sachet qui en fait 988. *Un
+dither qui s'arrête avant le bord laisse une bande qui bande* — et c'est
+précisément le défaut qu'il est là pour dissoudre.
+
+#### CE QUI CHANGE, ET CE QUI RESTE
+
+| | avant | après |
+|---|---|---|
+| le fond | ambre + soleil de rayons | **le bleu du dos**, son dégradé, son vignettage, son dither |
+| le motif | — | **les touches de clavier** et les cinq confettis |
+| les angles | biseautés | **arrondis**, au rayon de la carte |
+| la marque | le losange du gabarit | **le bouquet d'emoji** |
+| l'éventail | trois dos de gabarit | **trois FACES** : un cran, un emoji, une plaque claire |
+| le contenu | cartouche à coins coupés + Cinzel | **une pastille claire**, « 5 CARTES » en Baloo 2 |
+| l'échelle | quatre losanges de métal | **les cinq crans**, en pastilles cernées de crème |
+| les soudures | aluminium gris | **crème**, la couleur du liseré |
+| « OUVRIR ICI » | petites capitales en Cinzel | **« Ouvrir ici »**, Baloo 2, casse ordinaire |
+
+**CE QUI RESTE, parce que ça ne disait pas la ferronnerie mais l'EMBALLAGE** —
+et c'est la seule chose qu'aucun autre objet du jeu ne porte : **les deux bandes
+thermosoudées**, dentelées et striées ; **la ligne pointillée**, qui dit où ça se
+déchire avant qu'on y touche ; et **le format haut et étroit** (1 : 1,9), parce
+qu'*une pochette au format d'une carte se lit comme une carte géante*, donc
+comme un dos de plus.
+
+#### L'ÉVENTAIL MONTRE DES FACES, ET C'EST CE QUI LE FAIT PARLER
+
+*Trois dos bleus se lisent comme trois rectangles vides* — vérifié à l'écran :
+ils disent « des cartes », pas « des cartes d'EMOJI ». **Une face dit les deux
+d'un coup** : un cadre de couleur, un emoji dans sa fenêtre, une plaque claire
+dessous.
+
+**Elle est RÉDUITE À SES TROIS SIGNAUX, pas peinte en petit** : à trente pixels
+de large, le cartouche, le nom et la pastille tournent en bouillie. *Ce qui
+survit à la réduction est ce qu'on garde* — la règle de l'étoile du paquet de
+pioche. Et **les trois crans sont écartés sur l'échelle** (bleu, violet,
+orange) : trois cartes du même cran diraient qu'un paquet n'en contient qu'un.
+
+#### L'OUVERTURE AUSSI : ça ne brûle plus, ça se déchire
+
+*Le reste du geste ne bouge pas* — on tire le long du pointillé, la bande
+s'arrache et s'envole en tournoyant, les cartes montent par la fente. **C'est la
+MATIÈRE de l'ouverture qui change**, et elle disait un incendie :
+
+- **le CHARBON devient l'ARRACHE.** Le bord noircissait ; *un film imprimé qui
+  se déchire ne noircit pas, il laisse voir son support* — et le support de ce
+  sachet est le crème de son liseré. Le charbon disait un feu, et **un paquet
+  d'emoji ne brûle pas, il s'ouvre** ;
+- **la BRAISE devient un ÉCLAT.** Elle allait de l'or chaud au blanc,
+  c'est-à-dire un dégradé de TEMPÉRATURE, et il n'y a rien qui chauffe ici.
+  C'est la lumière du déchirement, blanche au coeur et à peine crème en bordure.
+  Et elle **frémit** au lieu de vaciller : *un vacillement est le mouvement d'une
+  flamme* ;
+- **les ÉTINCELLES deviennent des CONFETTIS.** *Une étincelle sort d'un feu ou
+  d'une forge*, et on n'ouvre ni l'un ni l'autre. Trois choses les en séparent,
+  et aucune n'est de la décoration : **ils ont une FORME** (un rectangle, pas un
+  point — *un grain rond additif est une lueur, une arête est un objet*) ; **ils
+  CULBUTENT**, chacun à son rythme, et s'aplatissent en passant de profil ;
+  **ils prennent les cinq couleurs des crans**, par une fonction de la CELLULE
+  et non par un tirage par image — *un semis qui se réarrange n'est plus une
+  matière*, la règle du motif de touches.
+
+#### CE QUI RESTE À TRANCHER PAR KEKO — le sachet
+
+- **l'éventail** : trois faces, leurs trois crans et leurs trois emoji
+  (🚀 bleu, 🎉 violet, ❤️ orange) sont de moi ;
+- **« 5 CARTES »** est la seule phrase du sachet. *Le projet n'a pas de nom
+  affiché, donc on n'en invente pas un* — la marque est le bouquet ;
+- **la force des confettis et leur nombre** : *une gerbe ne se juge qu'en
+  ouvrant des paquets.*
+
 ### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
 
 - **les 270 drapeaux** sont un groupe à part — ce sont des pays, pas des objets.
@@ -1649,10 +1745,6 @@ vide. En paysage c'est la hauteur qui borne, donc rien n'y change.
 - **l'animation est FAITE**, mais son poids est à juger : **411 Ko par emoji
   animé**, soit de l'ordre d'un mégaoctet pour un paquet qui en contient deux.
   *Le Lottie ferait onze kilo-octets*, au prix d'une dépendance ;
-- **LE SACHET PARLE ENCORE LA FERRONNERIE** : rayons orange, filets d'or,
-  petites capitales — *c'est le même reproche que le dos venait de recevoir*,
-  sur le seul objet du mode qui n'a pas changé de langue. Il n'est pas touché
-  parce que Keko n'en a pas parlé, et c'est l'écran qu'on voit en PREMIER ;
 - **le dos** : le bleu, les quatorze emoji du bouquet et leurs places, la finesse du motif et la force des confettis. *Un dos ne se juge
   qu'en ouvrant un paquet* ;
 - **le nom long se tronque** : « Volume des enceintes élevé » ne tient pas sur
