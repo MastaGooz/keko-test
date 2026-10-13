@@ -76,8 +76,13 @@ const COURBE_FRONT = 1.45
  * DE COMBIEN LES CARTES BOMBENT LE FILM, en parts de la LARGEUR du sachet.
  * *Un paquet de cinq cartes est une brique mince* — au-delà, la poche se lit
  * comme un ballon.
+ *
+ * **BAISSÉ DEUX FOIS** (0,095 → 0,07 → 0,05), Keko : « on dirait qu'il est très
+ * épais », puis « le paquet semble encore trop épais ». *Cinq cartes de douze
+ * millièmes font six centièmes de largeur de carte*, donc la poche réelle est
+ * de cet ordre : on est enfin dans le vrai.
  */
-const REL_BOMBE = 0.07
+const REL_BOMBE = 0.05
 
 
 const AMPLI = 0.02

@@ -2098,10 +2098,11 @@ la même place se désaccorderaient au premier réglage.*
   1,15 de relief) et **la vivacité du reflet** (deux lobes, 150 et 7) : *une
   matière ne se juge qu'en inclinant l'objet* — et **les deux se rejugent
   ENSEMBLE**, puisque le lobe s'étale dès que le relief s'aplatit ;
-- **la hauteur du ventre** (7 % de la largeur du sachet — *elle a déjà baissé
-  d'un quart*, « on dirait qu'il est très épais ») et **la force de son reflet**
-  (×2,15 au repos) : *c'est le volume du paquet, et il ne se lit qu'en
-  inclinant* ;
+- **la hauteur du ventre** (5 % de la largeur du sachet — *elle a déjà baissé
+  DEUX fois*, « on dirait qu'il est très épais » puis « il semble encore trop
+  épais » ; **c'est à peu près l'épaisseur réelle de cinq cartes**, six
+  centièmes de leur largeur) et **la force de son reflet** (×2,15 au repos) :
+  *c'est le volume du paquet, et il ne se lit qu'en inclinant* ;
 - **la part de largeur que prend la carte** (78 %) : *c'est la seule valeur
   libre du sachet* — elle décide de son bord, de sa hauteur, de son plateau et
   de ses flancs ;
