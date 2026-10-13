@@ -1891,7 +1891,8 @@ la raconte, la règle déjà payée sur la tête de la comète.
 | la source | **le front lui-même**, dispersée symétriquement autour de lui | **toute la largeur** de l'ouverture |
 | le nombre | 24 à 120 vivantes, *selon la vitesse du doigt* | **115 d'un coup** |
 | la vitesse | 0,68 largeur par vie | **×2,12** |
-| la hauteur de la cloche | 0,17 largeur | **0,36** |
+| la hauteur de la cloche | 0,17 largeur au zénith | **0,36** |
+| la pesanteur | **la vitesse de départ du régime** — donc la portée est balistique | *idem* |
 
 *Ce qui produit l'étincelle est la découpe qui AVANCE*, pas la fente déjà
 ouverte : c'est pour ça que la source suit le front au lieu de s'étaler.
@@ -2239,6 +2240,64 @@ largeur de source.*
 
 **ET LE JAILLISSEMENT GARDE SON ÉTALEMENT SUR TOUTE L'OUVERTURE** : là, le
 recul d'un côté est juste — *la fente entière est la source*, pas un point.
+
+#### LA PESANTEUR N'EXISTAIT PAS — elle s'ajustait à chaque étincelle
+
+Keko : **« on peut augmenter la gravité des particules pour éviter qu'elles
+aillent trop loin sur les côtés ? »**
+
+***ET IL N'Y EN AVAIT AUCUNE, AU SENS OÙ UNE PESANTEUR EST UNE CONSTANTE.*** Le
+vol vaut `vy·t·(1−t)`, ce qui revient à une pesanteur **ÉGALE À `vy`** — donc
+réglée par étincelle pour que chaque vol tienne exactement dans sa vie. *La note
+disait « la pesanteur VAUT la vitesse » et s'en félicitait* : l'apogée au milieu
+de la vie, le retour à sa fin, plus rien à accorder. **C'était vrai, et ça ne
+valait que sur la VERTICALE.**
+
+***UNE RASANTE AVAIT DONC UNE PESANTEUR QUASI NULLE*** : à 15°, `vy` ne vaut
+qu'un quart de la vitesse, donc elle filait tout droit du premier au dernier
+instant — mesuré, **0,755 largeur de sachet**, soit deux fois et demie la
+hauteur de sa propre cloche. *Ce n'était pas un vol, c'était une translation.*
+
+**À PESANTEUR CONSTANTE, LE VOL SE TERMINE QUAND L'ÉTINCELLE RETOMBE**
+(`tf = vy / pesanteur`, jamais plus tard que sa vie), et la portée redevient
+**balistique** : `sin(2θ)` — nulle au ras comme au zénith, maximale à 45°.
+*C'est la trajectoire qui borne la portée, plus la durée de vie.*
+
+| | portée au plus | portée moyenne | **cloche au plus** | cloche moyenne |
+|---|---|---|---|---|
+| la découpe, avant | **0,755** | 0,385 | 0,195 | 0,125 |
+| **après** | **0,450** | 0,243 | **0,195** | 0,100 |
+| le jaillissement, avant | **1,601** | 0,817 | 0,414 | 0,266 |
+| **après** | **0,953** | 0,516 | **0,414** | 0,213 |
+
+#### SA VALEUR NATURELLE EST LA VITESSE DE DÉPART, ET C'EST CE QUI REND LE RÉGLAGE SÛR
+
+À `PESANTEUR = 1`, l'étincelle **verticale retombe toujours pile à la fin de sa
+vie** — donc ***la cloche du zénith ne bouge pas d'un millième***, 0,170 largeur
+à la découpe et 0,360 au jaillissement, exactement ce que Keko avait validé.
+**Seules les rasantes se raccourcissent**, et ce sont précisément celles qui
+filaient. *Un réglage qui ne touche que ce qu'on lui reproche n'a rien à
+rouvrir.*
+
+**ELLE EST RELATIVE AU RÉGIME**, comme la vitesse et la hauteur de cloche. *Le
+jaillissement n'est pas un réglage de la découpe* — il part deux fois plus vite,
+et **une portée balistique va comme le CARRÉ de la vitesse** : une pesanteur
+absolue l'aurait donc laissé filer quatre fois plus loin. À 0, on retrouve le
+vol d'avant.
+
+#### ET LE NUANCEUR NE CHANGE PAS D'UNE LIGNE
+
+*C'est ce qui rend la correction petite*, et ça se lit dans l'algèbre : en
+`u = t / tf`, la trajectoire garde **exactement** sa forme — `vx' = vx·tf` et
+`vy' = vy·tf` — donc il suffit de mettre les deux vitesses à l'échelle **à la
+naissance.** Le vol reste `(x₀ + vx'·u, vy'·u·(1−u))`, et le fondu, qui lit `u`,
+se termine toujours avec lui.
+
+***CE QUI PÉRIME LA NOTE « LA PESANTEUR VAUT LA VITESSE »*** : elle disait
+qu'une égalité écrite deux fois se désaccorde, et elle avait raison — mais elle
+faisait de la pesanteur une CONSÉQUENCE au lieu d'un fait. **Une pesanteur qui
+se recalcule pour chaque objet n'est pas une pesanteur, c'est une
+normalisation.**
 
 #### LE FRONT SUIT LE DOIGT, ET CE N'ÉTAIT PAS LA GERBE
 
@@ -3348,9 +3407,13 @@ la même place se désaccorderaient au premier réglage.*
   hauteur de la cloche*, qui vaut **0,17 largeur** pendant la découpe et
   **0,36** au jaillissement. **Une gerbe ne se juge qu'en ouvrant des
   paquets.** *`?gerbe` tire puis s'arrête*, ce qui est le seul moyen d'en juger
-  sans ouvrir vingt paquets. **La pesanteur VAUT la vitesse**, donc on ne la
-  règle plus séparément — et *la vitesse de départ est redevenue libre* depuis
+  sans ouvrir vingt paquets. *La vitesse de départ est redevenue libre* depuis
   que le grain ne s'allonge plus avec elle ;
+- **la pesanteur** (`PESANTEUR`, 1, en multiples de la vitesse de départ du
+  régime) : ***c'est elle, et elle seule, qui borne la portée LATÉRALE*** —
+  0,450 largeur au plus contre 0,755 sans elle. **À 1 elle ne touche pas au
+  zénith** : l'étincelle verticale retombe pile à la fin de sa vie, donc la
+  cloche garde ses 0,170 et ses 0,360. À 0, le vol d'avant ;
 - **la courbe du front** (exposant 1, donc le front suit le doigt largeur pour
   largeur) et **la place du « Ouvrir ici »**, au départ du pointillé : *c'est le
   couple qui met la déchirure sous le doigt*, et il ne reste d'écart que si Keko

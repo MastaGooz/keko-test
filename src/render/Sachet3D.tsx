@@ -917,6 +917,35 @@ const DISPERSION_SOURCE = 0.06
 const ANGLE_MIN = (15 * Math.PI) / 180
 const ANGLE_MAX = (165 * Math.PI) / 180
 /**
+ * LA PESANTEUR, en multiples de la vitesse de départ du régime.
+ *
+ * Keko : **« on peut augmenter la gravité des particules pour éviter qu'elles
+ * aillent trop loin sur les côtés ? »**
+ *
+ * ***ET IL N'Y EN AVAIT PAS, AU SENS OÙ UNE PESANTEUR EST UNE CONSTANTE.*** Le
+ * vol vaut `vy·t·(1−t)`, ce qui revient à une pesanteur ÉGALE À `vy` — donc
+ * réglée par étincelle pour que chaque vol dure exactement une vie. *Une
+ * rasante avait ainsi une pesanteur quasi nulle* et filait tout droit du
+ * premier au dernier instant : mesuré, **0,755 largeur de sachet**, deux fois
+ * et demie la hauteur de sa propre cloche.
+ *
+ * **À pesanteur CONSTANTE, le vol se termine quand l'étincelle retombe** —
+ * `tf = vy / pesanteur`, jamais plus tard que sa vie — et la portée redevient
+ * balistique : `sin(2θ)`, nulle au ras comme au zénith, maximale à 45°.
+ *
+ * ***SA VALEUR NATURELLE EST LA VITESSE DE DÉPART***, et c'est ce qui rend le
+ * réglage sûr : à 1, l'étincelle VERTICALE retombe toujours pile à la fin de
+ * sa vie, donc **la cloche du zénith ne bouge pas d'un millième** — 0,170
+ * largeur à la découpe, 0,360 au jaillissement, exactement ce que Keko avait
+ * validé. Seules les rasantes se raccourcissent.
+ *
+ * **ELLE EST RELATIVE AU RÉGIME**, comme la vitesse et la hauteur de cloche :
+ * *le jaillissement n'est pas un réglage de la découpe*, et une pesanteur
+ * absolue y laisserait la gerbe filer quatre fois plus loin, sa vitesse étant
+ * double. À 0, on retrouve le vol d'avant.
+ */
+const PESANTEUR = 1
+/**
  * LA LUMIÈRE DU DÉCHIREMENT : crème en bordure, blanche au coeur.
  *
  * Keko : **« il faut que les étincelles aient la même couleur que la lumière
@@ -1050,11 +1079,18 @@ function emettre(
     // constant ne fait varier l'angle que d'un cone*, et un cone etroit se lit
     // comme une fontaine : la plage passe de 26 a 150 degres.
     const ang = ANGLE_MIN + Math.random() * (ANGLE_MAX - ANGLE_MIN)
-    const v = JET * (0.85 + 0.3 * Math.random()) * (eclat ? ECLAT_CLOCHE : 1)
+    const nominale = JET * (eclat ? ECLAT_CLOCHE : 1)
+    const v = nominale * (0.85 + 0.3 * Math.random())
+    const vx = v * Math.cos(ang)
+    const vy = v * Math.sin(ang)
+    // LA PESANTEUR COUPE LE VOL QUAND L'ETINCELLE RETOMBE. En t / tf la
+    // trajectoire garde exactement sa forme -- il suffit donc de mettre les
+    // deux vitesses a l'echelle, et le nuanceur ne change pas d'une ligne.
+    const tf = PESANTEUR <= 0 ? 1 : Math.min(1, vy / (nominale * PESANTEUR))
     a[o] = t + (eclat ? Math.random() * ECLAT_ETALE : 0)
     a[o + 1] = Math.min(1, Math.max(0, front + ecart)) - 0.5
-    a[o + 2] = v * Math.cos(ang)
-    a[o + 3] = v * Math.sin(ang)
+    a[o + 2] = vx * tf
+    a[o + 3] = vy * tf
   }
   vols.needsUpdate = true
 }
