@@ -144,6 +144,25 @@ export const RAYON_COIN = RAYON_CARTE
 export const DUREE_CULBUTE = 0.66
 
 /**
+ * LE FLIP : un demi-tour sur place, et rien d'autre.
+ *
+ * Keko : « j'aime pas trop l'animation de révélation de carte, un simple flip
+ * serait mieux je pense ».
+ *
+ * *La culbute faisait bien le travail et c'était le mauvais geste* : elle monte
+ * vers la caméra, grossit de moitié et fait DEUX tours entiers — **une mise en
+ * scène d'équipement**, écrite pour une pièce qu'on claque dans un slot. Sur
+ * une carte qu'on retourne, elle raconte un évènement là où il n'y a qu'un
+ * geste. *Un flip ne déplace rien : on tourne la carte, on voit ce qu'il y a
+ * derrière.*
+ *
+ * **ELLE N'EST PAS REMPLACÉE, elle est DOUBLÉE** : la culbute reste le geste de
+ * l'armurerie, qui est une archive et que personne ne rejoue. *Une archive
+ * qu'on retouche sans la rejouer est une archive qu'on casse.*
+ */
+export const DUREE_FLIP = 0.5
+
+/**
  * LE DEVELOPPEMENT : ce que fait une carte qu'on vient de retourner.
  *
  * **C'EST UN TIRAGE PHOTOGRAPHIQUE** : elle arrive SUREXPOSEE, et l'image
@@ -443,6 +462,21 @@ type Props = {
    */
   culbute?: unknown
   /**
+   * SON FLIP : le même jeton, pour un simple demi-tour sur place.
+   *
+   * ***LE DEMI-TOUR PART DE DOS, ET C'EST CE QUI LE REND INVISIBLE AU
+   * RACCORD.*** Au moment où il commence, la carte montre déjà son dos sur sa
+   * face AVANT ; on la bascule donc d'un coup à `π` — on voit alors son VERSO,
+   * qui porte la même texture de dos — puis on tourne de `π` à `2π`. *Le saut
+   * ne se voit pas parce que les deux surfaces montrent la même chose*, et à
+   * l'arrivée la face avant, qui porte la carte depuis le premier instant,
+   * revient devant.
+   *
+   * **Un demi-tour franc est donc possible sans jamais échanger de texture** —
+   * l'astuce classique du flip, et elle tombe ici d'elle-même.
+   */
+  flip?: unknown
+  /**
    * SON DEVELOPPEMENT : le meme jeton, pour l'autre facon de se reveler.
    *
    * **La prop ABSENTE veut dire « pas de developpement »**, et c'est elle qui
@@ -536,6 +570,7 @@ export function Carte3D({
   reflet = false,
   refletAuDoigt = false,
   culbute = null,
+  flip = null,
   developpe,
   onFixee,
   onArrivee,
@@ -1165,6 +1200,8 @@ ${nuanceur.fragmentShader}`
     departT: 1,
     /** Quand elle a commencé, en secondes d'horloge de scène ; `null` sinon. */
     debutCulbute: null as number | null,
+    /** Quand son flip a commencé ; `null` sinon. */
+    debutFlip: null as number | null,
     /** Quand son developpement a commence ; `null` sinon. */
     debutDevelop: null as number | null,
     /** Quand l'onde s'échappe du slot — à la fin de la culbute. */
@@ -1202,6 +1239,7 @@ ${nuanceur.fragmentShader}`
 
   /** Le jeton vu au dernier tour, pour savoir qu'il vient de changer. */
   const jetonCulbute = useRef(culbute)
+  const jetonFlip = useRef(flip)
   const jetonDevelop = useRef(developpe)
 
   /**
@@ -1286,8 +1324,15 @@ ${nuanceur.fragmentShader}`
   // LA TEXTURE DU DOS N'ARRIVE QUE QUAND LA CULBUTE COMMENCE : elle sort du
   // même cache partagé que les faces, donc la première la paie et les
   // suivantes la retrouvent prête.
+  //
+  // **MAIS LE FLIP, LUI, LA DEMANDE DÈS LE MONTAGE.** Il bascule la carte à
+  // `π` au premier instant pour montrer son verso : *si la texture arrivait à
+  // l'image d'après, on verrait un plan nu pendant une image*, juste là où le
+  // raccord doit être invisible. La promesse est mémorisée, donc le coût est
+  // nul — c'est le même cache que le dos qu'elle montre déjà.
   useEffect(() => {
-    if (culbute === null || culbute === undefined || verso.map !== null) return
+    const demande = culbute ?? flip
+    if (demande === null || demande === undefined || verso.map !== null) return
     let vivant = true
     void textureDuDos(rayon, dosDe(carte))
       .then((texture) => {
@@ -1300,7 +1345,7 @@ ${nuanceur.fragmentShader}`
     return () => {
       vivant = false
     }
-  }, [culbute, verso])
+  }, [culbute, flip, verso])
 
   const jeton = useRef(saut)
 
@@ -1397,6 +1442,10 @@ ${nuanceur.fragmentShader}`
       jetonDevelop.current = developpe
       if (developpe !== null && developpe !== undefined) l.debutDevelop = t
     }
+    if (jetonFlip.current !== flip) {
+      jetonFlip.current = flip
+      if (flip !== null && flip !== undefined) l.debutFlip = t
+    }
     if (jetonCulbute.current !== culbute) {
       jetonCulbute.current = culbute
       if (culbute !== null && culbute !== undefined) {
@@ -1485,6 +1534,32 @@ ${nuanceur.fragmentShader}`
       l.r.z + (engagee ? Math.sin(t * 23) * l.feu * 0.018 : 0),
     )
     g.scale.setScalar(l.t)
+
+    /**
+     * LE DEMI-TOUR SE POSE PAR-DESSUS LE PLACEMENT, il ne le remplace pas.
+     *
+     * *C'est tout ce qui le sépare de la culbute* : celle-ci court-circuite la
+     * place, la taille et l'amortissement parce qu'elle EST un voyage ; le flip
+     * ne touche qu'à un angle, donc la carte continue de rejoindre sa place
+     * pendant qu'elle tourne. **Il écrase quand même l'inclinaison du reflet** :
+     * une carte qui tourne n'a pas de face à offrir au curseur.
+     *
+     * La course va de `π` à `2π`, et elle ne retombe pas par hasard : *la carte
+     * montre son verso au premier instant et sa face avant au dernier*, donc
+     * les deux bouts sont exactement ce qu'on voyait avant et ce qu'on veut
+     * voir après.
+     */
+    if (l.debutFlip !== null) {
+      const dt = t - l.debutFlip
+      if (dt >= DUREE_FLIP) l.debutFlip = null
+      else {
+        const p = dt / DUREE_FLIP
+        // Vive au départ, posée à l'arrivée — *on lance la carte, on ne la
+        // pousse pas jusqu'au bout.*
+        const e = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2
+        g.rotation.y = Math.PI * (1 + e)
+      }
+    }
 
     // ET LE CONTOUR S'ALLUME. **Rien ne touche plus à la carte elle-même** :
     // une émission, même faible, lave l'illustration au moment précis où l'on

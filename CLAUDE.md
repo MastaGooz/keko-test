@@ -1405,6 +1405,51 @@ Quatre choses à ne pas défaire :
   dure deux tiers de seconde, donc deux balayages enchaînés sauteraient la carte
   qu'on vient de retourner. *On ne révèle pas pour cacher aussitôt.*
 
+#### LA RÉVÉLATION EST UN FLIP, PAS UNE CULBUTE
+
+Keko : **« j'aime pas trop l'animation de révélation de carte, un simple flip
+serait mieux je pense »**.
+
+*La culbute faisait bien le travail et c'était le mauvais geste* : elle monte
+vers la caméra, grossit de moitié et fait DEUX tours entiers — **une mise en
+scène d'ÉQUIPEMENT**, écrite pour une pièce qu'on claque dans un slot de
+l'armurerie. Sur une carte qu'on retourne, elle raconte un évènement là où il
+n'y a qu'un geste. *Un flip ne déplace rien : on tourne la carte, on voit ce
+qu'il y a derrière.*
+
+**ELLE N'EST PAS REMPLACÉE, ELLE EST DOUBLÉE.** La culbute reste le geste de
+l'armurerie — *une archive qu'on retouche sans la rejouer est une archive qu'on
+casse* — et `?culbute`, qui était déjà son banc, la rend au paquet.
+
+***LE DEMI-TOUR PART DE DOS, ET C'EST CE QUI REND LE RACCORD INVISIBLE.*** Au
+moment où il commence, la carte montre déjà son dos sur sa face AVANT ; on la
+bascule donc d'un coup à `π` — **on voit alors son VERSO, qui porte la même
+texture de dos** — puis on tourne de `π` à `2π`. *Le saut ne se voit pas parce
+que les deux surfaces montrent la même chose*, et à l'arrivée la face avant, qui
+porte la carte depuis le premier instant, revient devant. **Un demi-tour franc
+est donc possible sans jamais échanger de texture.**
+
+Deux choses à ne pas défaire :
+
+- **le verso se charge dès le MONTAGE** et non au premier flip, à la différence
+  de la culbute : *si la texture arrivait à l'image d'après, on verrait un plan
+  nu pendant une image* — juste là où le raccord doit être invisible. La
+  promesse est mémorisée, donc ça ne coûte rien ;
+- **le flip se pose PAR-DESSUS le placement, il ne le remplace pas.** C'est tout
+  ce qui le sépare de la culbute, qui court-circuite la place, la taille et
+  l'amortissement parce qu'elle EST un voyage. Il écrase quand même
+  l'inclinaison du reflet : *une carte qui tourne n'a pas de face à offrir au
+  curseur.*
+
+**ET LE DÉFAUT QUI A COÛTÉ CE DIAGNOSTIC N'ÉTAIT PAS DANS LE CODE.** Trois
+sondes successives sont revenues vides — pas même le premier `useFrame` —
+avant de comprendre que ***l'onglet était en arrière-plan*** : les
+`requestAnimationFrame` y sont gelés, donc rien ne tourne et aucune sonde
+n'écrit. **La règle est écrite dans ce fichier depuis les scènes 3D** — « une
+action `javascript_tool` ne ramène pas l'onglet au premier plan, une capture
+d'écran si » — *et je l'ai réapprise en cherchant un bug qui n'existait pas.*
+Une capture AVANT la sonde, et tout s'est mis à répondre.
+
 #### LE BOUTON DISPARAÎT, ET « TOUT RÉVÉLER » AVEC LUI
 
 Pendant le défilé il n'y a **rien à décider** — on continue, c'est tout — et un

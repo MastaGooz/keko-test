@@ -739,12 +739,14 @@ export function Paquet3D(): React.ReactElement {
               // même évènement*, seule la mise en scène change. Passer
               // `undefined` rend la prop absente, donc `Carte3D` ne charge pas
               // le pavé du nom quand il ne servirait pas.
-              // LA CULBUTE AU DÉFILÉ, LE DÉVELOPPEMENT AU BILAN. *Une culbute
-              // montre un dos puis une face* — c'est exactement ce que le
-              // balayage promet, et c'est ce que fait lexicodex. Le
-              // développement, lui, est une lecture : il n'a de sens que là où
-              // la carte est déjà sous les yeux.
-              culbute={culbuter || !fini ? (jetons[carte.id] ?? 0) : undefined}
+              // LE FLIP AU DÉFILÉ, LE DÉVELOPPEMENT AU BILAN. Keko : « j'aime
+              // pas trop l'animation de révélation de carte, un simple flip
+              // serait mieux ». *La culbute est une mise en scène
+              // d'équipement* — elle monte, grossit et fait deux tours — là où
+              // retourner une carte est un geste et rien de plus. Elle reste
+              // joignable par `?culbute`, qui était déjà son banc.
+              culbute={culbuter ? (jetons[carte.id] ?? 0) : undefined}
+              flip={!culbuter && !fini ? (jetons[carte.id] ?? 0) : undefined}
               developpe={culbuter || !fini ? undefined : (jetons[carte.id] ?? 0)}
               // ELLE SORT DU SACHET AVANT DE REJOINDRE SA PLACE. *Derrière le
               // corps en z*, donc on la voit émerger par la fente plutôt
