@@ -784,11 +784,12 @@ void main() {
  * de départ, sa vitesse et sa pesanteur. La cloche sort du calcul, elle n'est
  * pas dessinée : y vaut vy fois t moins g fois t au carré.
  *
- * **ET LE TRAIT SUIT LA TANGENTE.** Un point rond monte et descend sans qu'on
- * lise sa courbe ; *une étincelle est une traînée*, donc le quad s'allonge dans
- * le sens de la vitesse et se couche à mesure qu'elle retombe. **C'est ce qui
- * REND la cloche visible** — la forme ne dit rien, c'est l'orientation qui la
- * raconte, la règle déjà payée sur la tête de la comète.
+ * **LE TRAIT A SUIVI LA TANGENTE, PUIS IL EST TOMBÉ AVEC LE TRAIT.** Il
+ * s'allongeait dans le sens de la vitesse et se couchait à mesure qu'elle
+ * retombait, pour que l'orientation RACONTE la cloche là où la forme ne dit
+ * rien. *L'argument valait sur une image figée* ; à l'écran c'est le
+ * DÉPLACEMENT qui raconte la trajectoire, et un éclat qui monte puis retombe
+ * la dit aussi bien — **sans se lire comme un tracé**, ce que Keko a renvoyé.
  *
  * **ET C'EST UN ÉMETTEUR, PLUS UN CHAMP** — Keko : « elles ne doivent jaillir
  * que lors de l'ouverture (mouvement), pas à l'arrêt quand on arrête d'avancer
@@ -900,40 +901,41 @@ function ton(c: readonly [number, number, number], k = 1): string {
   return `vec3(${(c[0] * k).toFixed(2)}, ${(c[1] * k).toFixed(2)}, ${(c[2] * k).toFixed(2)})`
 }
 /**
- * LE TRAIT D'UNE ÉTINCELLE : sa largeur, sa longueur au repos et ce que la
- * vitesse lui ajoute — en largeurs de sachet.
+ * L'ÉCLAT D'UNE ÉTINCELLE : le côté de son quad, en largeurs de sachet.
  *
- * Keko : **« les particules sont trop petites et ce sont des confettis, pas
- * des étincelles de lumière »**. *Les deux griefs n'en font qu'un*, et il
- * était dans le MÉLANGE : le fragment sortait un RVB déjà multiplié par son
- * alpha alors que le mélange additif le remultiplie — **la décroissance était
- * donc au CARRÉ**, ce qui rabote un grain à son coeur et ne laisse rien
- * autour. *Un grain sans frange est un confetti*, et il paraît minuscule.
+ * Keko : **« ça fait des traînées blanches, on dirait des traits, je voyais
+ * plus des étincelles en mode flair »**.
  *
- * **ET CE QUI FAIT CONFETTI ENSUITE EST LE RAPPORT.** Un trait deux fois plus
- * long que large est une pastille ; une étincelle est un TRAIT. Il s'affine
- * donc, s'allonge, et ***il s'effile vers la queue*** — la leçon de la tête
- * de comète : *un dessin se termine en pointe, il ne s'évapore pas.* C'est ce
- * qui le tient même à l'apogée, où la vitesse ne lui prête plus rien.
+ * ***ET LE TRAIT ÉTAIT LA FAUTE, PAS SON RÉGLAGE.*** Il avait été allongé
+ * pour fuir le confetti — « un trait deux fois plus long que large est une
+ * pastille » — puis grossi d'une moitié : au lancer il mesurait **0,283
+ * largeur de sachet**, c'est-à-dire près de quatre-vingts pixels. *Un dessin
+ * qui tient l'écran sur sa longueur n'est plus un grain, c'est un tracé.*
  *
- * **PUIS LES TROIS ONT MONTÉ D'UNE MOITIÉ, ENSEMBLE** — Keko : « les
- * particules sont trop petites, il faudrait des trucs plus gros ». *Le rapport
- * est donc exactement conservé* : c'est lui qui fait l'étincelle, et c'est
- * tout ce qu'un facteur commun ne touche pas. **Chez lexicodex le grain est
- * minuscule et c'est un BLOOM qui le grossit** — une passe de
- * post-traitement que ce projet n'a pas, donc la taille doit venir du trait.
+ * **UN FLAIR N'A PAS DE LONGUEUR, IL A DES BRANCHES.** Ce qui sépare un éclat
+ * d'un confetti n'était donc pas son rapport mais sa FORME : un coeur saturé,
+ * une frange qui rayonne, et quatre branches fines qui partent en croix.
+ * *Quatre branches ne disent aucune direction* — c'est ce qui les distingue
+ * d'un trait — et le projet avait déjà tranché ce dessin pour la gemme des
+ * trésors : **six branches égales font une étoile de David, quatre branches
+ * fines ne disent que la lumière.**
+ *
+ * **LE GRAIN NE RAPETISSE PAS POUR AUTANT** : son coeur plein vaut
+ * `TAILLE_ECLAT × COEUR_ECLAT`, soit à un millième près la largeur qu'avait le
+ * trait. *On lui retire sa longueur, pas sa grosseur* — ce que Keko avait
+ * demandé deux messages plus tôt.
  */
-const LARGE_TRAIT = 0.045
-const LONG_TRAIT = 0.135
-const TRAINE_TRAIT = 0.218
-/** Ce qu'il reste de largeur à la QUEUE du trait. */
-const EFFILE_TRAIT = 0.22
+const TAILLE_ECLAT = 0.11
+/** CE QUE LE COEUR PLEIN OCCUPE du quad ; le reste est frange et branches. */
+const COEUR_ECLAT = 0.42
+/** LA DEMI-ÉPAISSEUR D'UNE BRANCHE, en part du quad : sa finesse. */
+const FINESSE_BRANCHE = 0.16
 
 /**
  * LE SEMIS EST TIRÉ UNE FOIS, SEEDÉ EN DUR, et ce n'est pas le RNG du jeu :
  * *une matière n'est pas un tirage de partie.* Il ne porte que ce qui ne change
- * jamais d'un vol à l'autre — le grain du scintillement, la part de blanc du
- * trait et sa durée de vie.
+ * jamais d'un vol à l'autre — la cadence du scintillement et sa phase, la
+ * durée de vie, et l'angle de la croix.
  *
  * **LE VOL, LUI, EST ÉCRIT PAR LE CPU À CHAQUE NAISSANCE** (`aVol`), et c'est
  * tout le changement : ***un champ procédural est partout à la fois, donc il
@@ -1059,29 +1061,29 @@ void main() {
   float vy = aVol.w;
   vec2 vol = vec2(aVol.y + aVol.z * t, vy * t * (1.0 - t));
 
-  // LE TRAIT SUIT LA TANGENTE, et il s'allonge avec la vitesse : c'est elle
-  // qui dessine la courbe, pas le grain.
-  vec2 vit = vec2(aVol.z, vy * (1.0 - 2.0 * t));
-  float v = length(vit);
-  vec2 dir = vit / max(v, 0.0001);
+  // ELLE S'ALLUME, SCINTILLE ET MEURT : une étincelle a une durée, et c'est
+  // son extinction qui l'empêche de se lire comme une bille lancée. **Chaque
+  // grain a sa PROPRE cadence** -- un battement commun se lirait comme un
+  // clignotement d'alerte, la regle deja payee sur l'aureole du diamant.
+  float fondu = smoothstep(0.0, 0.07, t) * smoothstep(1.0, 0.70, t);
+  float scintille = 0.62 + 0.38 * sin(uTemps * (38.0 + aGraine.x * 34.0) + aGraine.y * 37.0);
+
+  // L'ÉCLAT EST UN CARRÉ, ET IL NE S'ALLONGE DE RIEN. *Quatre branches en
+  // croix ne disent aucune direction*, donc le quad n'a pas a suivre la
+  // tangente -- et c'est tout ce qui separe un flair d'une trainee. Son angle
+  // est FIXE et propre a chaque grain : alignes, les croix feraient une
+  // grille.
+  float ang = aGraine.w * 6.2832;
+  vec2 u = vec2(cos(ang), sin(ang));
   vec2 q = position.xy;
-  // ET IL S'EFFILE VERS LA QUEUE : la largeur se resserre a mesure qu'on
-  // recule dans le trait, donc le quad est une goutte et non un rectangle.
-  float effile = mix(${EFFILE_TRAIT.toFixed(2)}, 1.0, q.y + 0.5);
-  vec2 ecart = dir * (q.y * (${LONG_TRAIT.toFixed(3)} + v * ${TRAINE_TRAIT.toFixed(3)}))
-             + vec2(-dir.y, dir.x) * (q.x * ${LARGE_TRAIT.toFixed(3)} * effile);
+  // ET SA TAILLE BAT AVEC SA LUMIÈRE : un flair pulse, il ne se contente pas
+  // de s'eteindre. Le quad garde de quoi contenir sa frange au plus fort.
+  float ech = ${TAILLE_ECLAT.toFixed(3)} * (0.82 + 0.18 * scintille);
+  vec2 ecart = (u * q.x + vec2(-u.y, u.x) * q.y) * ech;
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(vol + ecart, 0.0, 1.0);
 
   vQ = q * 2.0;
-
-  // ELLE S'ALLUME, SCINTILLE ET MEURT : une étincelle a une durée, et c'est
-  // son extinction qui l'empêche de se lire comme une bille lancée. **Rien ne
-  // la module plus par ailleurs** : elle existe parce qu'on l'a emise, donc
-  // elle brille a plein -- *une particule a moitie allumee etait le symptome
-  // d'un champ qu'on dosait.*
-  float fondu = smoothstep(0.0, 0.07, t) * smoothstep(1.0, 0.70, t);
-  float scintille = 0.72 + 0.28 * sin(uTemps * 46.0 + aGraine.y * 37.0);
   vVie = fondu * scintille;
 }`,
     fragmentShader: `varying vec2 vQ;
@@ -1089,25 +1091,30 @@ varying float vVie;
 
 void main() {
   float d = length(vQ);
-  // DEUX LOBES, ET C'EST EUX QUI SÉPARENT UNE LUMIÈRE D'UN CONFETTI. *Un point
-  // chaud ne s'arrête pas à son bord* : un lobe serré fait le coeur, un lobe
-  // large posé au même endroit fait exactement la décroissance qu'un flou
-  // produirait — la règle déjà payée sur le glow du sachet.
-  float serre = smoothstep(1.0, 0.0, d);
-  serre = serre * serre * serre;
-  float large = smoothstep(1.0, 0.0, d);
-  large = large * large;
-  // LA TÊTE EST PLUS VIVE QUE LA QUEUE : sans ce biais, le trait se lit comme
-  // un bâtonnet et non comme quelque chose qui file.
-  float tete = 0.55 + 0.45 * smoothstep(-1.0, 1.0, vQ.y);
+  vec2 a = abs(vQ);
+  // TROIS TERMES, ET AUCUN NE FAIT LE TRAVAIL DES DEUX AUTRES.
+  // Le COEUR saturé dit que c'est une lumière ; le HALO dit qu'elle RAYONNE --
+  // *un point chaud ne s'arrête pas à son bord*, la règle du glow du sachet ;
+  // et les QUATRE BRANCHES disent que c'est un éclat et non une pastille.
+  float coeur = smoothstep(${COEUR_ECLAT.toFixed(2)}, 0.0, d);
+  coeur = coeur * coeur;
+  float halo = smoothstep(1.0, 0.0, d);
+  halo = halo * halo * halo;
+  // UNE BRANCHE DÉCROÎT LENTEMENT LE LONG DE SON AXE ET D'UN COUP EN TRAVERS :
+  // c'est ce rapport-la qui en fait une branche et non un lobe. *On prend leur
+  // MAXIMUM* -- un produit creuserait le centre, qui appartient aux deux.
+  float bx = smoothstep(1.0, 0.0, a.x) * smoothstep(${FINESSE_BRANCHE.toFixed(2)}, 0.0, a.y);
+  float by = smoothstep(1.0, 0.0, a.y) * smoothstep(${FINESSE_BRANCHE.toFixed(2)}, 0.0, a.x);
+  float croix = max(bx, by);
+  croix = croix * croix;
   // ET LE COEUR EST BLANC, LA FRANGE CRÈME. *Un point qui sature tire vers le
   // blanc, sa frange garde la couleur* — c'est la règle du halo du foil, et
   // c'est AUSSI ce que fait la lumière de la fente, qui passe du crème au
   // presque-blanc à mesure qu'elle chauffe. **Les deux lisent donc les deux
   // mêmes tons**, et l'étincelle ne peut plus se détacher de ce qui la lâche.
   vec3 creme = ${ton(FENTE_BORD, GAIN_ETINCELLE)};
-  vec3 coeur = ${ton(FENTE_COEUR, GAIN_ETINCELLE)};
-  vec3 lum = (creme * (serre * 1.1 + large * 0.35) + coeur * (serre * serre * 0.95)) * tete * vVie;
+  vec3 blanc = ${ton(FENTE_COEUR, GAIN_ETINCELLE)};
+  vec3 lum = (creme * (halo * 0.45 + croix * 0.9) + blanc * coeur) * vVie;
   if (max(lum.r, max(lum.g, lum.b)) < 0.003) discard;
   // ET L'ALPHA SUIT LA LUMIÈRE, il ne vaut jamais un. *La toile du jeu est
   // TRANSPARENTE* : un fragment sombre mais d'alpha plein écrit un pixel NOIR

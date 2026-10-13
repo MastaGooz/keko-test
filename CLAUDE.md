@@ -2120,6 +2120,74 @@ passe de flou ; *nous n'avons aucun post-traitement*, donc la taille doit venir
 du trait lui-même. **C'est la règle du halo du foil, prise par le même bout : le
 flou est dans la matière, pas dans une passe.**
 
+#### UN TRAIT N'EST PAS UNE ÉTINCELLE : C'EST UN ÉCLAT À QUATRE BRANCHES
+
+Keko : **« ça fait des traînées blanches, on dirait des traits, je voyais plus
+des étincelles en mode flair »**.
+
+***ET IL AVAIT RAISON CONTRE DEUX RÉGLAGES DE SUITE, PARCE QUE C'ÉTAIT LA FORME
+QUI ÉTAIT FAUSSE.*** Le trait avait été allongé pour fuir le confetti — « un
+trait deux fois plus long que large est une pastille » — puis grossi d'une
+moitié : mesuré, il sortait du canon à **6,3 pour 1**, soit 0,283 largeur de
+sachet, près de quatre-vingts pixels. *Un dessin qui tient l'écran sur sa
+longueur n'est plus un grain, c'est un tracé.*
+
+**UN FLAIR N'A PAS DE LONGUEUR, IL A DES BRANCHES.** Ce qui sépare un éclat
+d'un confetti n'est donc pas son rapport mais sa FORME : un coeur saturé, une
+frange qui rayonne, et quatre branches fines qui partent en croix. ***Quatre
+branches ne disent aucune direction*** — c'est exactement ce qui les distingue
+d'un trait — et le projet avait déjà tranché ce dessin pour la gemme des
+trésors : **six branches égales font une étoile de David, quatre branches fines
+ne disent que la lumière.**
+
+#### LE GRAIN GARDE SA GROSSEUR, IL PERD SA LONGUEUR
+
+*C'est la condition pour que ce ne soit pas un retour en arrière* : Keko avait
+demandé « des trucs plus gros » deux messages plus tôt, et **le coeur plein de
+l'éclat vaut la largeur qu'avait le trait**, au millième près.
+
+| | le trait | **l'éclat** |
+|---|---|---|
+| le grain plein | 0,045 | **0,046** |
+| son envergure | **0,283** au lancer | **0,087** |
+| rapport long / large | **6,3 : 1** | **1,65 : 1** |
+
+**ET LA TAILLE S'EST RÉGLÉE À L'ÉCRAN, PAS AU CALCUL.** Premier essai à 0,15 :
+*un éclat faisait alors presque la hauteur de sa propre cloche* (0,17), donc les
+grains se recouvraient et la gerbe redevenait une nappe blanche. **Un grain qui
+approche la taille de sa trajectoire ne se lit plus comme un grain**, et c'est
+la seule borne que le calcul ne donnait pas.
+
+#### TROIS TERMES, ET AUCUN NE FAIT LE TRAVAIL DES DEUX AUTRES
+
+| | ce qu'il dit |
+|---|---|
+| un **coeur** saturé | que c'est une LUMIÈRE |
+| un **halo** large | qu'elle RAYONNE — *un point chaud ne s'arrête pas à son bord* |
+| quatre **branches** fines | que c'est un ÉCLAT et non une pastille |
+
+**UNE BRANCHE DÉCROÎT LENTEMENT LE LONG DE SON AXE ET D'UN COUP EN TRAVERS**, et
+c'est ce rapport-là qui en fait une branche plutôt qu'un lobe. *On prend le
+MAXIMUM des deux* — un produit creuserait le centre, qui appartient aux deux.
+
+Trois choses à ne pas défaire :
+
+- **l'angle de la croix est FIXE et propre à chaque grain.** Alignées, cent
+  croix identiques font une grille — *la règle du semis des plis, prise par le
+  même bout* ;
+- **la taille BAT avec la lumière.** Un flair pulse, il ne se contente pas de
+  s'éteindre ; et **chaque grain a sa propre cadence**, sans quoi le battement
+  commun se lirait comme un clignotement d'alerte ;
+- **plus rien ne suit la tangente.** Le trait s'orientait sur la vitesse pour
+  que *l'orientation RACONTE la cloche* — ***l'argument ne valait que sur une
+  image figée*** : à l'écran c'est le DÉPLACEMENT qui raconte la trajectoire, et
+  un éclat qui monte puis retombe la dit aussi bien.
+
+***ET ÇA PÉRIME L'AVERTISSEMENT QUI ÉTAIT ÉCRIT ICI*** — « ne pas baisser la
+cloche en freinant le départ, la longueur du trait suit la vitesse ». **Elle ne
+la suit plus** : un éclat a la même taille à l'apogée qu'au lancer, donc la
+vitesse de départ est redevenue un réglage libre.
+
 #### `?gerbe` TIRE, PUIS S'ARRÊTE
 
 *C'est le banc qui manquait*, et la note le disait depuis deux épisodes : **on
@@ -3153,17 +3221,16 @@ la même place se désaccorderaient au premier réglage.*
   hauteur de la cloche*, qui vaut **0,17 largeur** pendant la découpe et
   **0,36** au jaillissement. **Une gerbe ne se juge qu'en ouvrant des
   paquets.** *`?gerbe` tire puis s'arrête*, ce qui est le seul moyen d'en juger
-  sans ouvrir vingt paquets. ***Ne pas baisser la cloche en freinant le
-  départ*** : la longueur du trait suit la vitesse, donc une étincelle ralentie
-  redevient une pastille — c'est la pesanteur qui se monte, et **elle vaut
-  désormais la vitesse**, donc on ne la règle plus séparément ;
-- **la taille du trait** (0,045 de large, 0,135 de long plus 0,218 par unité de
-  vitesse, la queue à 22 % de la tête) et **ses trois lobes** (crème serré 1,1,
-  crème large 0,35, coeur blanc 0,95) : *c'est ce qui sépare une lumière d'un
-  confetti*, et Keko a tranché le registre — « des étincelles de lumière », « un
-  modèle plus étincelles que confettis », « il faudrait des trucs plus gros » —
-  pas les chiffres. ***Les trois dimensions se règlent ENSEMBLE*** : c'est leur
-  rapport qui fait l'étincelle ;
+  sans ouvrir vingt paquets. **La pesanteur VAUT la vitesse**, donc on ne la
+  règle plus séparément — et *la vitesse de départ est redevenue libre* depuis
+  que le grain ne s'allonge plus avec elle ;
+- **la taille de l'éclat** (0,11 de côté, son coeur à 42 % et ses branches à
+  16 % de finesse) et **ses trois termes** (halo 0,45, croix 0,9, coeur 1,0) :
+  *c'est ce qui sépare une lumière d'un confetti*, et Keko a tranché le
+  registre — « des étincelles de lumière », « il faudrait des trucs plus gros »,
+  « on dirait des traits, je voyais plus des étincelles en mode flair » — pas
+  les chiffres. ***SA BORNE HAUTE EST LA CLOCHE*** : à 0,15 un grain faisait
+  presque la hauteur de son propre vol et la gerbe redevenait une nappe ;
 - **la couleur** (`FENTE_BORD`, `FENTE_COEUR`, et le gain de 1,78 qui les
   sépare du liseré) : *c'est la même constante que la lumière de l'ouverture*,
   tranché par Keko — « inutile de les faire multicolores ». **La toucher touche
