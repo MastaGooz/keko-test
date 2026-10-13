@@ -131,7 +131,7 @@ const OMBRE = 0.05
  * sans effacer le « Ouvrir ici ». **La teinte n'est pas un ornement, c'est le
  * garde-fou.**
  */
-const METAL = 0.7
+const METAL = 0.85
 
 /**
  * LES QUATRE LOBES DU REFLET, et le galbe.
@@ -140,6 +140,18 @@ const METAL = 0.7
  * monter haut ; **les éclats des sources AJOUTENT**, parce qu'un point chaud
  * est de la lumière en plus et non la même lumière en plus fort.
  */
+/**
+ * LE GAIN D'ENSEMBLE DES QUATRE LAMPES — et c'est le SEUL chiffre qui soit de
+ * moi dans ce groupe. *Leurs directions, leurs couleurs et leur rapport
+ * d'intensité sont relevés* ; le niveau général, lui, se règle à l'oeil.
+ *
+ * Keko : « on peut renforcer encore le flashy des reflets qui épousent la
+ * couleur du paquet ? » — **mesuré sur les pixels, le point chaud ne valait que
+ * 1,09 fois le fond.** Un reflet qui ne dépasse son décor que de neuf pour cent
+ * n'est pas un reflet, c'est une nuance.
+ */
+const GAIN_SOURCES = 2.1
+
 const LUSTRE = 1.35
 const ECLATS = 0.75
 const FRESNEL = 0.3
@@ -582,7 +594,7 @@ void main() {
   // puisque c'est la même lampe que celle qui modèle le ventre.
   {
     corps += teinte * vec3(${SOURCES[0]!.couleur[0]!.toFixed(2)}, ${SOURCES[0]!.couleur[1]!.toFixed(2)}, ${SOURCES[0]!.couleur[2]!.toFixed(2)})
-           * pow(max(dot(Nv, H), 0.0), ${SERRE}.0) * ${SOURCES[0]!.force.toFixed(2)} * feu;
+           * pow(max(dot(Nv, H), 0.0), ${SERRE}.0) * ${(SOURCES[0]!.force * GAIN_SOURCES).toFixed(3)} * feu;
   }
 
   // SOURCE 2 : le cyan
@@ -590,7 +602,7 @@ void main() {
     vec3 Ls = normalize(vec3(${SOURCES[1]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[1]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[1]!.dir[2]!.toFixed(3)}));
     vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
     corps += teinte * vec3(${SOURCES[1]!.couleur[0]!.toFixed(2)}, ${SOURCES[1]!.couleur[1]!.toFixed(2)}, ${SOURCES[1]!.couleur[2]!.toFixed(2)})
-           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${SOURCES[1]!.force.toFixed(2)} * feu;
+           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${(SOURCES[1]!.force * GAIN_SOURCES).toFixed(3)} * feu;
   }
 
   // SOURCE 3 : le rose
@@ -598,7 +610,7 @@ void main() {
     vec3 Ls = normalize(vec3(${SOURCES[2]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[2]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[2]!.dir[2]!.toFixed(3)}));
     vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
     corps += teinte * vec3(${SOURCES[2]!.couleur[0]!.toFixed(2)}, ${SOURCES[2]!.couleur[1]!.toFixed(2)}, ${SOURCES[2]!.couleur[2]!.toFixed(2)})
-           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${SOURCES[2]!.force.toFixed(2)} * feu;
+           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${(SOURCES[2]!.force * GAIN_SOURCES).toFixed(3)} * feu;
   }
 
   // SOURCE 4 : le violet
@@ -606,7 +618,7 @@ void main() {
     vec3 Ls = normalize(vec3(${SOURCES[3]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[3]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[3]!.dir[2]!.toFixed(3)}));
     vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
     corps += teinte * vec3(${SOURCES[3]!.couleur[0]!.toFixed(2)}, ${SOURCES[3]!.couleur[1]!.toFixed(2)}, ${SOURCES[3]!.couleur[2]!.toFixed(2)})
-           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${SOURCES[3]!.force.toFixed(2)} * feu;
+           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${(SOURCES[3]!.force * GAIN_SOURCES).toFixed(3)} * feu;
   }
 
   // **LES ÉCLATS DES PLIS RESTENT À PART, et eux seuls lisent la normale des

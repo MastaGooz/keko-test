@@ -2093,6 +2093,67 @@ luminance de leurs dalles :
 contredit.*** Et la couleur ne s'y perd pas : *un accent se voit parce qu'il est
 le seul de sa teinte, pas parce qu'il est fort.*
 
+#### LE GAIN D'ENSEMBLE MONTE, ET IL MONTE PAR LES ÉCLATS TEINTÉS
+
+Keko : **« on peut renforcer encore le flashy des reflets qui épousent la
+couleur du paquet ? »**
+
+***MESURÉ SUR LES PIXELS, LE POINT CHAUD NE VALAIT QUE 1,09 FOIS LE FOND.*** Un
+reflet qui ne dépasse son décor que de neuf pour cent n'est pas un reflet, c'est
+une nuance — et c'est ce qui manquait.
+
+**LE RAPPORT DES QUATRE LAMPES NE BOUGE PAS, c'est leur NIVEAU qui monte**
+(`GAIN_SOURCES`, 2,1). *Leurs directions, leurs couleurs et leur rapport
+d'intensité sont relevés chez eux* ; le niveau général est la seule chose de moi
+dans ce groupe, donc la seule qui se règle.
+
+#### ET C'EST LE LUSTRE QU'IL NE FALLAIT PAS MONTER — à rebours de la note
+
+Deux chemins mènent au même contraste, et ils ne coûtent pas la même couleur.
+Mesuré à balancement FIGÉ, sur la bande haute du sachet :
+
+| | pic / fond | **saturation du pic** |
+|---|---|---|
+| avant | ×1,39 | **0,38** |
+| lustre à 1,7 | ×1,65 | **0,23** |
+| **gain des éclats à 2,1** | ×1,60 | **0,27** |
+
+***ET ÇA CONTREDIT EN APPARENCE LA RÈGLE DU PROJET***, qui dit qu'une lumière
+multipliée garde la couleur quand une lumière ajoutée blanchit. **La règle est
+juste, mais elle a une condition tacite : une multiplication ne garde la teinte
+que tant qu'elle n'ÉCRÊTE pas.** Le bleu du film est déjà à 0,84 du maximum —
+mesuré sur les pixels — donc le lustre le pousse à 1 immédiatement, et tout ce
+qu'il multiplie ensuite ne fait plus monter que le rouge et le vert : *il
+blanchit par le haut.* L'éclat teinté, lui, ajoute surtout du bleu, donc il
+sature le même canal sans tirer les deux autres aussi vite.
+
+***UNE LUMIÈRE MULTIPLIÉE NE GARDE LA TEINTE QUE TANT QU'ELLE RESTE SOUS LE
+BLANC.*** Sur un fond sombre elle est le bon outil ; sur un fond déjà clair dans
+un canal, c'est l'éclat teinté qui coûte le moins de couleur.
+
+**ET LA MÉTALLICITÉ MONTE AVEC** (0,70 → 0,85) : *plus elle est haute, moins
+l'éclat contient de blanc*, donc plus il peut monter avant de délaver. C'est
+exactement ce que Keko demande — « qui épousent la couleur du paquet ».
+
+**LE COEUR BLANCHIT UN PEU, ET C'EST CE QU'UN REFLET FAIT** : la saturation du
+pic tombe de 0,38 à 0,27, pendant que **la frange garde la sienne** (0,88 au
+bord gauche, inchangée, et son contraste monte de ×0,75 à ×0,80). *Un point qui
+sature tire vers le blanc, sa frange garde la couleur* — la règle était déjà
+écrite pour le halo du foil.
+
+#### LE PROTOCOLE : ON FIGE LE BALANCEMENT AU SURVOL
+
+*Deux captures d'un sachet qui se balance ne se comparent pas* — mesuré, le même
+bord passe de 64 à 53 de luminance sans qu'on ait touché à rien. **Le survol
+arrête la berce** (`berce = 1 − feu`) et cale l'inclinaison sur le curseur :
+poser le pointeur au même pixel avant et après fige tout, et les deux images
+deviennent comparables. *Le gain du survol s'applique aux deux, donc il ne fausse
+pas la comparaison.*
+
+C'est ce protocole qui a renversé la conclusion : **à instants libres, le réglage
+« renforcé » paraissait avoir EMPIRÉ le contraste** (×1,09 → ×1,03), parce que
+les deux captures tombaient à deux moments du cycle.
+
 #### ET UNE CAPTURE D'UN OBJET QUI SE BALANCE NE SE COMPARE PAS À UNE AUTRE
 
 *Deux captures prises à deux instants du balancement donnent deux éclairages* —
@@ -2493,8 +2554,12 @@ la même place se désaccorderaient au premier réglage.*
   **La clé est à 45° de la verticale**, la diagonale du jeu ; les trois autres
   gardent leurs directions relevées chez eux, et *elles tirent un peu à droite* —
   le cyan et le violet y sont, le rose seul tient la gauche ;
+- **le gain d'ensemble des lampes** (2,1) et **la métallicité** (0,85) : *c'est
+  le couple qui décide du « flashy »* — le gain donne l'intensité, la
+  métallicité décide de ce qu'elle garde de la couleur du film ;
 - **le lustre** (1,35, multiplié), **les éclats des plis** (0,75) et **le galbe
-  de Fresnel** (0,30) ;
+  de Fresnel** (0,30). ***Ne pas monter le lustre pour gagner du reflet*** : le
+  bleu du film est à 0,84 du maximum, donc il écrête aussitôt et blanchit ;
 - **le plancher d'ambiant** (0,62 pour 0,52 de modelé) : *c'est lui qui décide
   du « mate »*, et il se paie en lisibilité de l'imprimé dans les parts
   sombres ;
