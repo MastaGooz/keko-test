@@ -1876,8 +1876,8 @@ plis procéduraux* — « un champ continu est partout à la fois, il ne sait fa
 que des ondes ; ce qui COMMENCE et qui FINIT, il faut l'instancier ». **La
 même leçon, payée une seconde fois, sur un autre objet du même sachet.**
 
-Cent quarante quads instanciés, donc, et chacun porte quatre nombres : sa
-phase, sa place, sa dérive et **son rang**. La parabole se calcule dans le
+Des quads instanciés, donc, et chacun porte sa naissance : l'instant, la
+place, la dérive et le jet. La parabole se calcule dans le
 nuanceur — `y = vy·t − pes·t²` — et *le quad s'oriente sur la TANGENTE* : il
 part dans le sens de la vitesse et se couche à mesure qu'elle retombe. **C'est
 ce qui rend la cloche visible** — la forme ne dit rien, c'est l'orientation qui
@@ -1885,10 +1885,11 @@ la raconte, la règle déjà payée sur la tête de la comète.
 
 #### DEUX RÉGIMES, ET LE SECOND N'EST PAS UN RÉGLAGE DU PREMIER
 
-| | pendant la découpe (`uForce`) | à l'arrachement (`uEclat`) |
+| | pendant la découpe | à l'arrachement |
 |---|---|---|
+| ce qui émet | **l'avancée du front**, à chaque image | **une rafale unique** |
 | la source | **juste derrière le front**, tirée au carré donc tassée contre lui | **toute la largeur** de l'ouverture |
-| le nombre | 53 sur 140 | **les 140** |
+| le nombre | 24 à 120 vivantes, *selon la vitesse du doigt* | **115 d'un coup** |
 | la vitesse | 0,68 largeur par vie | **×2,12** |
 | la hauteur de la cloche | 0,17 largeur | **0,36** |
 
@@ -1897,24 +1898,14 @@ ouverte : c'est pour ça que la source suit le front au lieu de s'étaler.
 **Un jaillissement n'est pas une gerbe plus forte, c'est une autre gerbe** —
 sa source, son nombre et sa hauteur changent ensemble.
 
-**LE NOMBRE SE FAIT PAR UNE PORTE, pas par un second objet** : chaque
-particule porte son RANG dans son quatrième canal, et seules celles au-dessus
-du seuil volent pendant la découpe. *Un second maillage pour le jaillissement
-aurait dédoublé le nuanceur*, et les deux auraient divergé au premier réglage.
+**UN SEUL MAILLAGE PORTE LES DEUX**, parce que tout ce qui les sépare est écrit
+dans la NAISSANCE : *un second objet pour le jaillissement aurait dédoublé le
+nuanceur*, et les deux auraient divergé au premier réglage.
 
-**ET LA PESANTEUR MONTE AVEC LA VITESSE** : sans elle, des étincelles deux fois
-plus rapides ne retomberaient jamais dans leur vie — *une cloche dont on ne
-voit que la montée est un jet, pas une cloche.*
-
-#### LES CINQ COULEURS SURVIVENT AUX CONFETTIS, ET C'EST ELLES QUI SÉPARENT
-
-*Une étincelle d'or sort d'une forge* — c'est l'argument qui avait fait tomber
-les étincelles la première fois. **Cinq couleurs sortent d'un paquet de
-cartes** : ce sont les cinq crans, tirés par une fonction du VOL et non par
-image, et c'est ce qui empêche la gerbe de redire le feu qu'on venait de lui
-retirer. Le coeur du trait tire vers le blanc et sa frange garde sa teinte —
-**un point qui sature blanchit, sa frange garde la couleur**, la règle déjà
-écrite pour le halo du foil.
+*Le nombre s'est d'abord fait par une PORTE* — chaque particule portait son
+rang, et seules les mieux classées volaient pendant la découpe. **Elle est
+tombée avec le champ** : une rafale n'a pas besoin qu'on retienne des
+particules, elle en émet le compte qu'on lui demande.
 
 #### LA CLOCHE BAISSE D'UN TIERS, ET LE TRAIT S'EFFILE
 
@@ -2011,18 +2002,141 @@ comme un confetti.** Le blanc se pose donc à côté, sur le lobe le plus serré
 la frange garde sa couleur : *la règle du halo du foil, enfin tenue des deux
 bouts.*
 
-#### `?gerbe` TIENT LA DÉCHIRURE À MI-COURSE
+#### ET ELLES NE NAISSENT QUE SI LA DÉCOUPE AVANCE — c'est un ÉMETTEUR
+
+Keko : **« elles ne doivent jaillir que lors de l'ouverture (mouvement), pas à
+l'arrêt quand on arrête d'avancer l'ouverture. Regarde lexicodex comment ils
+font »**.
+
+***ET ILS FONT EXACTEMENT ÇA, EN UNE LIGNE*** : leur appel est
+`s > 0 && emitTearSparks(min(12, 1 + round(s * 90)))`, où `s` est l'avancée de
+la déchirure **depuis l'image précédente**. Le `s > 0` est toute la réponse —
+*ce qui produit l'étincelle est la découpe qui AVANCE, pas la fente déjà
+ouverte* — et leur rupture ajoute une rafale unique, `emitTearSparks(14)`, à
+côté du son et de la secousse.
+
+#### LA TRAJECTOIRE ÉTAIT INSTANCIÉE, LE MOMENT NE L'ÉTAIT PAS
+
+***ET C'EST LA MÊME LEÇON QUE LES PLIS, PAYÉE UNE TROISIÈME FOIS.*** Les
+confettis avaient été remplacés par des particules parce qu'un champ continu ne
+sait pas faire une cloche — mais **leur NAISSANCE était restée un champ** :
+chaque étincelle rejouait son vol en boucle (`t = fract(uTemps / vie + phase)`)
+et un uniforme ne faisait que doser sa lumière. *Un robinet qu'on tourne n'est
+pas un robinet qu'on ferme* : à mi-course tenue, la gerbe coulait indéfiniment.
+
+Pire, **l'uniforme lisait la POSITION du front** (`uForce = pf`), pas sa
+vitesse : plus la déchirure était avancée, plus il y avait d'étincelles, même
+immobile. *Ce qui ressemblait à un débit était un niveau.*
+
+Le CPU écrit donc une NAISSANCE par étincelle émise — **l'instant, l'abscisse,
+la dérive et le jet**, dans un attribut dynamique — et le nuanceur n'en déduit
+que l'âge. **Ce qui change tient en une ligne de pilotage** :
+
+| | avant | après |
+|---|---|---|
+| ce qui émet | un cycle qui boucle, dosé par `uForce` | **`avance > 0`** |
+| ce que `uForce` lisait | **la place du front** | — |
+| uniformes de la gerbe | `uFront`, `uTemps`, `uForce`, `uEclat` | **`uTemps` seul** |
+| le jaillissement | un second régime continu (`uEclat`) | **une rafale de 115** |
+| la porte du nombre | le RANG de chaque particule | — |
+
+**ET LE NOMBRE SUIT LA VITESSE DU DOIGT, ce qui n'était pas visé.** Le débit
+est proportionnel à l'avancée, donc *le total ne dépend que de la distance* —
+mesuré, 120 étincelles pour une déchirure complète, quelle que soit sa durée —
+**mais le nombre à l'écran, lui, dépend du temps qu'on met** :
+
+| le geste | vivantes au plus |
+|---|---|
+| 0,4 s | **120** |
+| 1,0 s | 77 |
+| 2,0 s | 42 |
+| 3,5 s | **24** |
+
+*Un doigt qui tire vite fait une gerbe dense, un doigt qui traîne fait des
+étincelles éparses.* C'est la conséquence directe de « seul le mouvement
+produit », et c'est ce qu'un niveau ne pouvait pas donner.
+
+**TROIS CHOSES À NE PAS DÉFAIRE** :
+
+- **un ACCUMULATEUR, pas un arrondi.** Une avancée d'un dixième d'étincelle
+  n'en émet aucune, mais dix de suite en émettent une : *sans lui, un doigt
+  lent n'émettrait jamais rien du tout* ;
+- **une rafale est BORNÉE** (22). Un front peut sauter — à la reprise d'un
+  geste, ou après une image longue — et *un saut n'est pas un geste* ;
+- **le pool est un ANNEAU de 256**, et une naissance écrase la plus vieille
+  place, vivante ou non. Il fallait le monter de 140 : *au pire cas, 120
+  vivantes de la découpe plus les 115 du jaillissement.*
+
+#### ET LA PESANTEUR N'EST PLUS UN CHIFFRE : ELLE VAUT LA VITESSE
+
+Les deux étaient déjà égales à dessein — l'apogée tombe alors au milieu de la
+vie et le retour à sa fin — **et une égalité qui s'écrit deux fois se désaccorde
+au premier réglage.** Le vol vaut `vy·t·(1−t)` : la cloche monte à `vy/4` et
+retombe à `t = 1` quelle que soit la vitesse de départ, donc *il n'y a plus rien
+à accorder.* Mesuré, les hauteurs ne bougent pas d'un millième — **0,170 largeur
+à la découpe, 0,360 au jaillissement.**
+
+#### UNE SEULE COULEUR, ET C'EST CELLE DE LA FENTE
+
+Keko : **« il faut que les étincelles aient la même couleur que la lumière
+générée par l'ouverture pour qu'on ait l'impression qu'elles ne font qu'un,
+inutile de les faire multicolores »**.
+
+*Les cinq couleurs étaient ce qui les séparait d'une gerbe de forge* — « une
+étincelle d'or sort d'une forge, cinq couleurs sortent d'un paquet de cartes ».
+**Sa réponse est meilleure que l'argument** : une étincelle de la couleur de la
+fente ne dit plus « du feu » du tout, elle dit « cette lumière-là ».
+
+***ET C'EST LA MÊME CONSTANTE, PAS UNE COULEUR VOISINE*** : le liseré du
+déchirement et l'étincelle qui en sort lisent les deux mêmes tons — crème en
+bordure, presque-blanc au coeur — *deux endroits qui décriraient la même couleur
+se désaccorderaient au premier réglage.* **Chez lexicodex c'est exactement le
+même choix** : leurs étincelles de déchirure ne tirent que deux teintes, un
+crème `(1 ; 0,82 ; 0,55)` et du blanc, moitié-moitié.
+
+**Les trois lobes ne bougent pas** — un serré, un large, un coeur blanc — et
+l'argument qui les avait imposés tient toujours : *un point qui sature tire vers
+le blanc, sa frange garde la couleur.* Ce qui tombe, c'est le choix de la
+teinte, pas sa structure.
+
+#### ET LE GRAIN GROSSIT D'UNE MOITIÉ, SANS CHANGER DE RAPPORT
+
+Keko : **« les particules sont trop petites, il faudrait des trucs plus gros »**.
+
+| | avant | après |
+|---|---|---|
+| largeur | 0,030 | **0,045** |
+| longueur au repos | 0,090 | **0,135** |
+| ce que la vitesse ajoute | 0,145 | **0,218** |
+| **rapport à l'apogée** | 3,6 : 1 | **3,6 : 1** |
+
+***LES TROIS MONTENT ENSEMBLE, ET C'EST TOUT L'INTÉRÊT*** : le rapport est ce
+qui fait l'étincelle — « un trait deux fois plus long que large est une
+pastille » — et c'est la seule chose qu'un facteur commun ne touche pas.
+
+**CHEZ EUX LE GRAIN EST MINUSCULE, ET C'EST UN BLOOM QUI LE GROSSIT.** Leur
+`size` vaut `0,05 + 0,1 × hasard` et leur scène passe par un composeur avec une
+passe de flou ; *nous n'avons aucun post-traitement*, donc la taille doit venir
+du trait lui-même. **C'est la règle du halo du foil, prise par le même bout : le
+flou est dans la matière, pas dans une passe.**
+
+#### `?gerbe` TIRE, PUIS S'ARRÊTE
 
 *C'est le banc qui manquait*, et la note le disait depuis deux épisodes : **on
 ne peut pas tenir un glisser depuis l'outil** — il relâche toujours, et un
 lâcher sous le seuil referme le sachet. Il avait fallu fabriquer des `pointer*`
 à la main, redéfinir leur `offsetX`, et le résultat restait un coup sur trois.
 
-Le banc force la découpe à mi-course tant qu'on ne tire pas — *un banc qui
-prendrait la main sur le geste ne montrerait plus le geste* — et c'est tout :
-les étincelles de la découpe se regardent alors tranquillement. **Le
-jaillissement, lui, se voit en ouvrant pour de bon** : il ne dure qu'une
-demi-seconde, mais il est au-dessus du sachet, donc il se capture.
+Il tenait la découpe à mi-course ; **il tire désormais sur les six dixièmes du
+cycle et TIENT les quatre autres**, plus longtemps qu'une étincelle ne vit. *On
+voit donc la gerbe naître, puis s'éteindre faute d'avancée* — et c'est la seule
+chose qui se vérifie à l'écran depuis que l'émission dépend du mouvement. **Un
+banc qui ne montre que la moitié d'une règle ne la montre pas.**
+
+Il ne force rien pendant qu'on tire — *un banc qui prendrait la main sur le
+geste ne montrerait plus le geste* — et **le jaillissement, lui, se voit en
+ouvrant pour de bon** : il ne dure qu'une demi-seconde, mais il est au-dessus du
+sachet, donc il se capture.
 
 #### UN QUAD ORIENTÉ SUR SA VITESSE EST RETOURNÉ, ET RIEN NE LE DIT
 
@@ -3033,21 +3147,27 @@ la même place se désaccorderaient au premier réglage.*
   (🚀 bleu, 🎉 violet, ❤️ orange) sont de moi ;
 - **« 5 CARTES »** est la seule phrase du sachet. *Le projet n'a pas de nom
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
-- **la gerbe d'étincelles** : leur nombre (140), la part qui dort pendant la
-  découpe (62 %), leur vie (0,48 s), leur vitesse de départ (0,68 largeur par
-  vie) et la pesanteur (0,68) — *donc la hauteur de la cloche*, qui vaut
-  **0,17 largeur** pendant la découpe et **0,36** au jaillissement. **Une gerbe
-  ne se juge qu'en ouvrant des paquets.** *`?gerbe` tient la découpe à
-  mi-course*, ce qui est le seul moyen d'en juger sans ouvrir vingt paquets.
-  ***Ne pas baisser la cloche en freinant le départ*** : la longueur du trait
-  suit la vitesse, donc une étincelle ralentie redevient une pastille — c'est la
-  pesanteur qui se monte. **Et les deux sont égales à dessein** : l'apogée tombe
-  alors au milieu de la vie et le vol tient dedans ;
-- **la taille du trait** (0,030 de large, 0,090 de long plus 0,145 par unité de
-  vitesse, la queue à 22 % de la tête) et **ses trois lobes** (teinté serré 1,1,
-  teinté large 0,35, coeur blanc 2,2) : *c'est ce qui sépare une lumière d'un
+- **la gerbe d'étincelles** : le DÉBIT (108 par largeur d'avancée), la réserve
+  (256), le nombre de la rafale du jaillissement (115, étalée sur 0,11 s), leur
+  vie (0,48 s) et leur vitesse de départ (0,68 largeur par vie) — *donc la
+  hauteur de la cloche*, qui vaut **0,17 largeur** pendant la découpe et
+  **0,36** au jaillissement. **Une gerbe ne se juge qu'en ouvrant des
+  paquets.** *`?gerbe` tire puis s'arrête*, ce qui est le seul moyen d'en juger
+  sans ouvrir vingt paquets. ***Ne pas baisser la cloche en freinant le
+  départ*** : la longueur du trait suit la vitesse, donc une étincelle ralentie
+  redevient une pastille — c'est la pesanteur qui se monte, et **elle vaut
+  désormais la vitesse**, donc on ne la règle plus séparément ;
+- **la taille du trait** (0,045 de large, 0,135 de long plus 0,218 par unité de
+  vitesse, la queue à 22 % de la tête) et **ses trois lobes** (crème serré 1,1,
+  crème large 0,35, coeur blanc 0,95) : *c'est ce qui sépare une lumière d'un
   confetti*, et Keko a tranché le registre — « des étincelles de lumière », « un
-  modèle plus étincelles que confettis » — pas les chiffres ;
+  modèle plus étincelles que confettis », « il faudrait des trucs plus gros » —
+  pas les chiffres. ***Les trois dimensions se règlent ENSEMBLE*** : c'est leur
+  rapport qui fait l'étincelle ;
+- **la couleur** (`FENTE_BORD`, `FENTE_COEUR`, et le gain de 1,78 qui les
+  sépare du liseré) : *c'est la même constante que la lumière de l'ouverture*,
+  tranché par Keko — « inutile de les faire multicolores ». **La toucher touche
+  les deux** ;
 - **la métallicité du film** (0,70, relevée chez eux) : c'est elle qui décide
   de combien le reflet prend la couleur du sachet. *À 0 il redevient blanc, à 1
   il n'a plus une once de lumière crue* ;
@@ -4124,7 +4244,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
-| `&gerbe` | tient la déchirure à mi-course, pour juger les étincelles |
+| `&gerbe` | tire la déchirure puis s'arrête, pour juger les étincelles |
 | `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans`, `?dos=gabarit` | les bancs du gabarit |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |

@@ -59,6 +59,12 @@ export const DUREE_BRULURE = 1.5
  * chevauchent pas* — on n'arrache pas ce qui tient encore par un bout.
  */
 const PART_FRONT = 0.42
+/**
+ * OÙ LE FRONT COMMENCE, en parts de largeur. *Il sort des deux bords* : une
+ * déchirure qui commencerait pile sur le bord se lirait comme un bord qui
+ * s'efface.
+ */
+const FRONT_DEPART = -0.06
 
 /**
  * LA COURBE DU FRONT : il part lentement et ACCÉLÈRE.
@@ -748,7 +754,7 @@ void main() {
   float vif = exp(-pow((vUv.x - uFront) / 0.09, 2.0));
   float fremit = 0.86 + 0.14 * sin(vUv.x * 41.0 + uTemps * 11.0);
   float eclat = exp(-pow(dedans / (${BRAISE} * ech), 2.0)) * fremit * max(vif, passe * 0.22);
-  vec3 lueur = mix(vec3(1.5, 1.35, 1.05), vec3(2.2, 2.1, 1.9), smoothstep(0.4, 1.0, eclat));
+  vec3 lueur = mix(${ton(FENTE_BORD)}, ${ton(FENTE_COEUR)}, smoothstep(0.4, 1.0, eclat));
 
   float a = max(tex.a, eclat * 0.9) * uFondu;
   gl_FragColor = vec4(corps + lueur * eclat, a);
@@ -784,53 +790,115 @@ void main() {
  * REND la cloche visible** — la forme ne dit rien, c'est l'orientation qui la
  * raconte, la règle déjà payée sur la tête de la comète.
  *
+ * **ET C'EST UN ÉMETTEUR, PLUS UN CHAMP** — Keko : « elles ne doivent jaillir
+ * que lors de l'ouverture (mouvement), pas à l'arrêt quand on arrête d'avancer
+ * l'ouverture ». *La trajectoire était instanciée, le MOMENT ne l'était pas* :
+ * chaque particule rejouait son vol en boucle et un uniforme ne faisait que
+ * doser sa lumière — donc une déchirure tenue à mi-course coulait sans fin.
+ * **La même leçon, payée une troisième fois, sur le temps au lieu de la
+ * forme.**
+ *
+ * Le CPU écrit donc une NAISSANCE par étincelle émise (`aVol` : l'instant,
+ * l'abscisse, la dérive, le jet), et il n'émet **que si le front a avancé
+ * depuis l'image d'avant** — c'est exactement ce que fait lexicodex, dont
+ * l'appel est `s > 0 && emitTearSparks(min(12, 1 + round(s * 90)))`.
+ *
  * **DEUX RÉGIMES, ET LE SECOND N'EST PAS UN RÉGLAGE DU PREMIER** :
  *
- * - **pendant la déchirure** (uForce), elles naissent JUSTE DERRIÈRE le
- *   front — leur place de départ est tirée au carré, donc tassée contre lui :
- *   *ce qui produit l'étincelle est la découpe qui avance*, pas la fente déjà
- *   ouverte. Peu nombreuses, basses, serrées ;
- * - **à l'arrachement** (uEclat), elles partent de TOUTE la largeur, **deux
- *   fois plus nombreuses** et deux fois plus vite. *Un jaillissement n'est pas
- *   une gerbe plus forte, c'est une autre gerbe* : sa source, son nombre et sa
- *   hauteur changent ensemble.
+ * - **pendant la déchirure**, elles naissent JUSTE DERRIÈRE le front — leur
+ *   abscisse est tirée au carré, donc tassée contre lui : *ce qui produit
+ *   l'étincelle est la découpe qui avance*, pas la fente déjà ouverte. Leur
+ *   nombre suit l'avancée, donc la vitesse du doigt ;
+ * - **à l'arrachement**, une RAFALE part de toute la largeur, deux fois plus
+ *   haut. *Un jaillissement n'est pas une gerbe plus forte, c'est une autre
+ *   gerbe* : sa source, son nombre et sa hauteur changent ensemble.
  *
- * **LE NOMBRE SE FAIT PAR UNE PORTE, pas par un second objet** : chaque
- * particule porte son RANG, et seules celles au-dessus du seuil volent pendant
- * la déchirure. *Un second maillage pour le jaillissement aurait dédoublé le
- * nuanceur*, et les deux auraient divergé au premier réglage.
+ * **UN SEUL MAILLAGE PORTE LES DEUX**, parce que tout ce qui les sépare est
+ * écrit dans la naissance : *un second objet pour le jaillissement aurait
+ * dédoublé le nuanceur*, et les deux auraient divergé au premier réglage.
  *
- * **LES CINQ COULEURS RESTENT**, et c'est ce qui sépare ces étincelles de
- * celles qu'on avait retirées : *une étincelle d'or sort d'une forge*, cinq
- * couleurs sortent d'un paquet de cartes. Le coeur du trait tire vers le blanc
- * et sa frange garde la teinte — **un point qui sature blanchit, sa frange
- * garde la couleur**, la règle déjà écrite pour le halo du foil.
+ * **ET ELLES N'ONT QU'UNE COULEUR : CELLE DE LA FENTE.** Les cinq couleurs du
+ * jeu étaient ce qui les séparait d'une gerbe de forge ; Keko a tranché mieux
+ * — « la même couleur que la lumière générée par l'ouverture pour qu'on ait
+ * l'impression qu'elles ne font qu'un ». *Elles lisent donc les deux tons du
+ * liseré*, crème en bordure et presque-blanc au coeur — **un point qui sature
+ * blanchit, sa frange garde la couleur**, la règle du halo du foil.
  */
-const ETINCELLES = 140
+const ETINCELLES = 256
 /** La durée d'un vol, en secondes. */
 const VIE_ETINCELLE = 0.48
-/** La part des étincelles qui dorment tant qu'on n'a pas arraché la bande. */
-const SEUIL_ETINCELLE = 0.62
 /**
- * LA CLOCHE : la vitesse de départ et la pesanteur, en largeurs de sachet par
- * vie et par vie au carré.
+ * LE DÉBIT : combien d'étincelles une largeur de sachet d'AVANCÉE fait naître.
+ *
+ * Keko : **« elles ne doivent jaillir que lors de l'ouverture (mouvement),
+ * pas à l'arrêt quand on arrête d'avancer l'ouverture »**. C'est donc ce
+ * nombre, et lui seul, qui décide du nombre d'étincelles à l'écran : *à front
+ * immobile il ne naît rien*, et un doigt qui tire deux fois plus vite en fait
+ * naître deux fois plus par seconde.
+ *
+ * `RAFALE_MAX` borne une seule image, parce qu'un front peut sauter — à la
+ * reprise d'un geste, ou quand une image a été longue.
+ */
+const DEBIT_ETINCELLE = 108
+const RAFALE_MAX = 22
+/**
+ * LE JAILLISSEMENT est UNE RAFALE, plus un régime. Il part d'un coup à
+ * l'arrachement — *un jaillissement n'a pas de montée, c'est ce qui en fait
+ * un* — et ses naissances s'étalent sur un dixième de seconde, sans quoi les
+ * cent quinze partiraient et retomberaient à l'unisson.
+ */
+const ECLAT_NOMBRE = 115
+const ECLAT_ETALE = 0.11
+/**
+ * LA CLOCHE : la vitesse de départ, en largeurs de sachet par vie.
  *
  * Keko : **« c'est possible que les particules volent moins haut avant de
  * retomber ? je voudrais un modèle plus étincelles que confettis »**. La
  * cloche fait donc un tiers de moins — 0,17 largeur pendant la découpe,
  * 0,36 au jaillissement.
  *
- * ***LES DEUX SONT ÉGALES, ET CE N'EST PAS UN HASARD*** : à pesanteur égale à
- * la vitesse, l'apogée tombe au MILIEU de la vie et le retour à sa fin — donc
- * le vol tient exactement dans la vie qu'on lui donne. *Avant, l'apogée
- * tombait au tiers et un quart du vol se jouait sous la fente.*
+ * ***ET LA PESANTEUR N'EST PLUS UN CHIFFRE : ELLE VAUT LA VITESSE.*** Les deux
+ * étaient égales à dessein — l'apogée tombe alors au MILIEU de la vie et le
+ * retour à sa fin, donc le vol tient exactement dans la vie qu'on lui donne —
+ * **et une égalité qui s'écrit deux fois se désaccorde au premier réglage.**
+ * Le vol vaut `vy·t·(1−t)`, donc la cloche monte à `vy/4` et retombe à `t=1`
+ * quelle que soit la vitesse.
  */
 const JET = 0.68
-const PESANT = 0.68
 /** De combien le jaillissement pousse la cloche : il monte 2,12 fois plus haut. */
 const ECLAT_CLOCHE = 2.12
 /** De combien la source remonte derrière le front, en largeurs de sachet. */
 const SOURCE_ETINCELLE = 0.26
+/** Ce que la dérive latérale écarte, en largeurs de sachet par vie. */
+const DERIVE_ETINCELLE = 0.26
+/**
+ * LA LUMIÈRE DU DÉCHIREMENT : crème en bordure, blanche au coeur.
+ *
+ * Keko : **« il faut que les étincelles aient la même couleur que la lumière
+ * générée par l'ouverture pour qu'on ait l'impression qu'elles ne font qu'un,
+ * inutile de les faire multicolores »**.
+ *
+ * ***DONC C'EST LA MÊME CONSTANTE, PAS UNE COULEUR VOISINE*** : le liseré de
+ * la fente et l'étincelle qui en sort la lisent tous les deux — *deux endroits
+ * qui décriraient la même couleur se désaccorderaient au premier réglage.*
+ * **Chez lexicodex c'est exactement le même choix** : leurs étincelles de
+ * déchirure ne tirent que deux teintes, un crème `(1 ; 0,82 ; 0,55)` et du
+ * blanc, moitié-moitié.
+ *
+ * *Les cinq couleurs du jeu tombent avec* : elles étaient ce qui séparait ces
+ * étincelles d'une gerbe de forge — **et une seule couleur qui est celle de la
+ * fente le fait mieux**, puisqu'elle ne dit plus « du feu » du tout, elle dit
+ * « cette lumière-là ».
+ */
+const FENTE_BORD: readonly [number, number, number] = [1.5, 1.35, 1.05]
+const FENTE_COEUR: readonly [number, number, number] = [2.2, 2.1, 1.9]
+/** De combien une étincelle brûle plus fort que le liseré qui la lâche. */
+const GAIN_ETINCELLE = 1.78
+
+/** Un ton en GLSL, mis à l'échelle : *une couleur se décrit en un seul endroit.* */
+function ton(c: readonly [number, number, number], k = 1): string {
+  return `vec3(${(c[0] * k).toFixed(2)}, ${(c[1] * k).toFixed(2)}, ${(c[2] * k).toFixed(2)})`
+}
 /**
  * LE TRAIT D'UNE ÉTINCELLE : sa largeur, sa longueur au repos et ce que la
  * vitesse lui ajoute — en largeurs de sachet.
@@ -847,18 +915,33 @@ const SOURCE_ETINCELLE = 0.26
  * donc, s'allonge, et ***il s'effile vers la queue*** — la leçon de la tête
  * de comète : *un dessin se termine en pointe, il ne s'évapore pas.* C'est ce
  * qui le tient même à l'apogée, où la vitesse ne lui prête plus rien.
+ *
+ * **PUIS LES TROIS ONT MONTÉ D'UNE MOITIÉ, ENSEMBLE** — Keko : « les
+ * particules sont trop petites, il faudrait des trucs plus gros ». *Le rapport
+ * est donc exactement conservé* : c'est lui qui fait l'étincelle, et c'est
+ * tout ce qu'un facteur commun ne touche pas. **Chez lexicodex le grain est
+ * minuscule et c'est un BLOOM qui le grossit** — une passe de
+ * post-traitement que ce projet n'a pas, donc la taille doit venir du trait.
  */
-const LARGE_TRAIT = 0.030
-const LONG_TRAIT = 0.090
-const TRAINE_TRAIT = 0.145
+const LARGE_TRAIT = 0.045
+const LONG_TRAIT = 0.135
+const TRAINE_TRAIT = 0.218
 /** Ce qu'il reste de largeur à la QUEUE du trait. */
 const EFFILE_TRAIT = 0.22
 
 /**
  * LE SEMIS EST TIRÉ UNE FOIS, SEEDÉ EN DUR, et ce n'est pas le RNG du jeu :
- * *une matière n'est pas un tirage de partie.* Le quatrième canal n'est pas un
- * hasard — c'est le RANG de la particule, et c'est lui qui décide laquelle
- * vole avant l'arrachement.
+ * *une matière n'est pas un tirage de partie.* Il ne porte que ce qui ne change
+ * jamais d'un vol à l'autre — le grain du scintillement, la part de blanc du
+ * trait et sa durée de vie.
+ *
+ * **LE VOL, LUI, EST ÉCRIT PAR LE CPU À CHAQUE NAISSANCE** (`aVol`), et c'est
+ * tout le changement : ***un champ procédural est partout à la fois, donc il
+ * coule tant qu'on le laisse branché*** — c'est ce qui faisait jaillir des
+ * étincelles d'une déchirure immobile. Un émetteur, lui, ne produit que
+ * lorsqu'on émet. *La leçon était écrite depuis les plis du sachet : ce qui
+ * COMMENCE et qui FINIT, il faut l'instancier* — elle se repaie ici sur le
+ * MOMENT au lieu de la forme.
  */
 function semisDesEtincelles(): THREE.InstancedBufferGeometry {
   let graine = 20260413 >>> 0
@@ -877,11 +960,50 @@ function semisDesEtincelles(): THREE.InstancedBufferGeometry {
     graines[i * 4] = hasard()
     graines[i * 4 + 1] = hasard()
     graines[i * 4 + 2] = hasard()
-    graines[i * 4 + 3] = (i + 0.5) / ETINCELLES
+    graines[i * 4 + 3] = hasard()
   }
   g.setAttribute('aGraine', new THREE.InstancedBufferAttribute(graines, 4))
+  // TOUT À ZÉRO, DONC AUCUNE NE VOLE : une naissance de jet nul sort du champ,
+  // et c'est l'état d'un sachet qu'on n'a pas touché.
+  const vols = new THREE.InstancedBufferAttribute(new Float32Array(ETINCELLES * 4), 4)
+  vols.setUsage(THREE.DynamicDrawUsage)
+  g.setAttribute('aVol', vols)
   g.instanceCount = ETINCELLES
   return g
+}
+
+/**
+ * ON ÉMET, ON NE FAIT PLUS COULER — et c'est ainsi que lexicodex procède :
+ * leur `emitTearSparks` est appelé avec `min(12, 1 + round(Δprogress × 90))`
+ * **et seulement si `Δ > 0`**, plus une rafale unique à la rupture.
+ *
+ * Chaque étincelle reçoit son départ : l'instant, l'abscisse, la dérive et le
+ * jet. *Le curseur tourne en anneau* — une naissance écrase la plus vieille
+ * place, vivante ou non, exactement comme leur pool de mille.
+ */
+function emettre(
+  vols: THREE.InstancedBufferAttribute,
+  curseur: { current: number },
+  nb: number,
+  front: number,
+  t: number,
+  eclat: boolean,
+): void {
+  const a = vols.array as Float32Array
+  for (let i = 0; i < nb; i += 1) {
+    const s = curseur.current
+    curseur.current = (s + 1) % ETINCELLES
+    const o = s * 4
+    // LA SOURCE : tassée derrière le front pendant la découpe — le carré est
+    // ce qui la tasse — étalée sur toute l'ouverture au jaillissement.
+    const r = Math.random()
+    const recul = eclat ? r * 1.15 : r * r * SOURCE_ETINCELLE
+    a[o] = t + (eclat ? Math.random() * ECLAT_ETALE : 0)
+    a[o + 1] = Math.min(1, Math.max(0, front - recul)) - 0.5
+    a[o + 2] = (Math.random() * 2 - 1) * DERIVE_ETINCELLE * (eclat ? 1 : 0.6)
+    a[o + 3] = JET * (0.85 + 0.3 * Math.random()) * (eclat ? ECLAT_CLOCHE : 1)
+  }
+  vols.needsUpdate = true
 }
 
 function matiereDeLaGerbe(): THREE.ShaderMaterial {
@@ -904,66 +1026,42 @@ function matiereDeLaGerbe(): THREE.ShaderMaterial {
     blendEquation: THREE.AddEquation,
     blendSrc: THREE.OneFactor,
     blendDst: THREE.OneFactor,
+    // UN SEUL UNIFORME, ET C'EST L'HORLOGE. *Le front, la force et l'eclat ont
+    // disparu avec le champ continu* : plus rien dans la gerbe ne depend de la
+    // PLACE de la decoupe -- tout est ecrit a la naissance.
     uniforms: {
-      uFront: { value: 0 },
       uTemps: { value: 0 },
-      uForce: { value: 0 },
-      uEclat: { value: 0 },
     },
     vertexShader: `uniform float uTemps;
-uniform float uFront;
-uniform float uForce;
-uniform float uEclat;
 attribute vec4 aGraine;
+attribute vec4 aVol;
 varying vec2 vQ;
-varying vec3 vTeinte;
 varying float vVie;
 
-float des(vec2 m) {
-  return fract(sin(dot(m, vec2(12.9898, 78.233))) * 43758.5453);
-}
-
 void main() {
-  // CHAQUE ÉTINCELLE REJOUE SON VOL, décalée de sa phase : un seul compteur
-  // porte l'âge, et son entier change les tirages — donc chaque vol repart
-  // d'une autre place, à une autre vitesse.
-  float cycle = uTemps / ${VIE_ETINCELLE.toFixed(2)} + aGraine.x;
-  float n = floor(cycle);
-  float t = fract(cycle);
-
-  float rx = des(vec2(aGraine.y + n * 1.7, aGraine.z));
-  float rv = des(vec2(aGraine.z + n * 3.1, aGraine.w));
-  float rc = des(vec2(aGraine.w + n * 5.3, aGraine.y));
-  float rk = des(vec2(aGraine.y + n * 9.7, aGraine.w + 2.4));
-
-  // LA PORTE DU NOMBRE : pendant la déchirure, seules les mieux classées
-  // volent. Une particule qui ne joue pas sort du champ -- un grain qu'on
-  // renvoie au loin est le seul qui ne puisse rien tacher.
-  if (aGraine.w < mix(${SEUIL_ETINCELLE.toFixed(2)}, 0.0, uEclat)) {
+  // CHAQUE ÉTINCELLE PORTE SA NAISSANCE, et son âge en découle. Une place
+  // jamais servie a un jet NUL, et une étincelle qui a passé sa vie est
+  // finie : les deux sortent du champ -- un grain qu'on renvoie au loin est le
+  // seul qui ne puisse rien tacher.
+  float vie = ${VIE_ETINCELLE.toFixed(2)} * (0.82 + 0.36 * aGraine.z);
+  float t = (uTemps - aVol.x) / vie;
+  if (aVol.w <= 0.0 || t < 0.0 || t >= 1.0) {
     vQ = vec2(0.0);
-    vTeinte = vec3(0.0);
     vVie = 0.0;
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
     return;
   }
 
-  // LA SOURCE : tassée derrière le front pendant la découpe, étalée sur toute
-  // l'ouverture au jaillissement. Le carré est ce qui la tasse.
-  float etale = mix(rx * rx * ${SOURCE_ETINCELLE.toFixed(2)}, rx * 1.15, uEclat);
-  float x0 = clamp(uFront - etale, 0.0, 1.0) - 0.5;
-
-  // LA CLOCHE. Le jaillissement pousse la vitesse ET la pesanteur du MEME
-  // facteur : la cloche monte deux fois plus haut et l'apogee reste au milieu
-  // de la vie -- sans ca, une etincelle plus rapide ne retomberait jamais
-  // dedans.
-  float vy = ${JET.toFixed(2)} * (0.95 + 0.30 * rv) * mix(1.0, ${ECLAT_CLOCHE.toFixed(2)}, uEclat);
-  float pes = ${PESANT.toFixed(2)} * mix(1.0, ${ECLAT_CLOCHE.toFixed(2)}, uEclat);
-  float vx = (rc * 2.0 - 1.0) * 0.26 * mix(0.60, 1.0, uEclat);
-  vec2 vol = vec2(x0 + vx * t, vy * t - pes * t * t);
+  // LA CLOCHE, ET LA PESANTEUR VAUT LA VITESSE : le vol monte a vy/4 au milieu
+  // de la vie et retombe pile a sa fin, quelle que soit la vitesse de depart.
+  // *Son abscisse, sa derive et son jet ont ete tires a la naissance*, donc
+  // rien ici ne sait ou en est la decoupe.
+  float vy = aVol.w;
+  vec2 vol = vec2(aVol.y + aVol.z * t, vy * t * (1.0 - t));
 
   // LE TRAIT SUIT LA TANGENTE, et il s'allonge avec la vitesse : c'est elle
   // qui dessine la courbe, pas le grain.
-  vec2 vit = vec2(vx, vy - 2.0 * pes * t);
+  vec2 vit = vec2(aVol.z, vy * (1.0 - 2.0 * t));
   float v = length(vit);
   vec2 dir = vit / max(v, 0.0001);
   vec2 q = position.xy;
@@ -976,21 +1074,17 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * vec4(vol + ecart, 0.0, 1.0);
 
   vQ = q * 2.0;
-  float k = floor(rk * 5.0);
-  vTeinte = k < 1.0 ? vec3(2.3, 2.3, 2.3)
-          : k < 2.0 ? vec3(0.5, 2.6, 1.1)
-          : k < 3.0 ? vec3(0.6, 1.7, 2.8)
-          : k < 4.0 ? vec3(1.7, 1.0, 2.7)
-                    : vec3(2.7, 1.5, 0.5);
 
   // ELLE S'ALLUME, SCINTILLE ET MEURT : une étincelle a une durée, et c'est
-  // son extinction qui l'empêche de se lire comme une bille lancée.
+  // son extinction qui l'empêche de se lire comme une bille lancée. **Rien ne
+  // la module plus par ailleurs** : elle existe parce qu'on l'a emise, donc
+  // elle brille a plein -- *une particule a moitie allumee etait le symptome
+  // d'un champ qu'on dosait.*
   float fondu = smoothstep(0.0, 0.07, t) * smoothstep(1.0, 0.70, t);
   float scintille = 0.72 + 0.28 * sin(uTemps * 46.0 + aGraine.y * 37.0);
-  vVie = fondu * scintille * max(uForce * 0.9, uEclat);
+  vVie = fondu * scintille;
 }`,
     fragmentShader: `varying vec2 vQ;
-varying vec3 vTeinte;
 varying float vVie;
 
 void main() {
@@ -1006,12 +1100,14 @@ void main() {
   // LA TÊTE EST PLUS VIVE QUE LA QUEUE : sans ce biais, le trait se lit comme
   // un bâtonnet et non comme quelque chose qui file.
   float tete = 0.55 + 0.45 * smoothstep(-1.0, 1.0, vQ.y);
-  // ET LE COEUR EST BLANC, LA FRANGE COLORÉE. *Un point qui sature tire vers
-  // le blanc, sa frange garde la couleur* — mais une teinte dont un canal est
-  // bas ne sature jamais tout à fait : un vert reste vert jusqu'au centre, et
-  // **une tache de couleur unie se lit comme un confetti, pas comme une
-  // lumière.** Le blanc se pose donc à part, sur le lobe le plus serré.
-  vec3 lum = (vTeinte * (serre * 1.1 + large * 0.35) + vec3(serre * serre * 2.2)) * tete * vVie;
+  // ET LE COEUR EST BLANC, LA FRANGE CRÈME. *Un point qui sature tire vers le
+  // blanc, sa frange garde la couleur* — c'est la règle du halo du foil, et
+  // c'est AUSSI ce que fait la lumière de la fente, qui passe du crème au
+  // presque-blanc à mesure qu'elle chauffe. **Les deux lisent donc les deux
+  // mêmes tons**, et l'étincelle ne peut plus se détacher de ce qui la lâche.
+  vec3 creme = ${ton(FENTE_BORD, GAIN_ETINCELLE)};
+  vec3 coeur = ${ton(FENTE_COEUR, GAIN_ETINCELLE)};
+  vec3 lum = (creme * (serre * 1.1 + large * 0.35) + coeur * (serre * serre * 0.95)) * tete * vVie;
   if (max(lum.r, max(lum.g, lum.b)) < 0.003) discard;
   // ET L'ALPHA SUIT LA LUMIÈRE, il ne vaut jamais un. *La toile du jeu est
   // TRANSPARENTE* : un fragment sombre mais d'alpha plein écrit un pixel NOIR
@@ -1048,6 +1144,11 @@ export function Sachet3D({
   const bandeMat = useMemo(() => matiereDuMorceau(false), [])
   const gerbe = useMemo(() => matiereDeLaGerbe(), [])
   const semis = useMemo(() => semisDesEtincelles(), [])
+  /** Les naissances : c'est le CPU qui les écrit, une par étincelle émise. */
+  const vols = useMemo(
+    () => semis.getAttribute('aVol') as THREE.InstancedBufferAttribute,
+    [semis],
+  )
   const { size } = useThree()
 
   /** Où en est l'ouverture, de 0 à 1 — tirée à la main, puis filée seule. */
@@ -1066,6 +1167,12 @@ export function Sachet3D({
   const avant = useRef<number | null>(null)
   const dit = useRef(false)
   const ditDechire = useRef(false)
+  /** Où en est l'anneau des étincelles, et le front de l'image d'avant. */
+  const anneau = useRef(0)
+  const frontAvant = useRef(FRONT_DEPART)
+  /** Ce qu'il reste de débit à émettre : *une avancée d'un dixième d'étincelle
+   * n'en émet aucune, mais dix de suite en émettent une.* */
+  const resteEmis = useRef(0)
   /** Où le curseur touche le sachet, en parts de sa largeur et de sa hauteur. */
   const curseur = useRef({ x: 0, y: 0 })
   const survol = useRef(false)
@@ -1198,7 +1305,15 @@ export function Sachet3D({
      * Il ne force rien pendant qu'on tire : *un banc qui prendrait la main sur
      * le geste ne montrerait plus le geste.*
      */
-    if (BANC_GERBE && tire.current === null && !file.current) p.current = PART_FRONT * 0.55
+    if (BANC_GERBE && tire.current === null && !file.current) {
+      // IL TIRE, PUIS IL S'ARRÊTE — et c'est ce qu'il doit montrer depuis que
+      // les étincelles naissent du MOUVEMENT. Il avance sur les six dixièmes
+      // du cycle et TIENT les quatre autres, plus longtemps qu'une étincelle
+      // ne vit : *on voit donc la gerbe naître, puis s'éteindre faute
+      // d'avancée.* Une rampe continue ne dirait que la moitié.
+      const c = (t * 0.5) % 1
+      p.current = PART_FRONT * (0.22 + 0.56 * Math.min(1, c / 0.62))
+    }
 
     if (p.current <= 0 && !file.current) {
       // IL RESPIRE TANT QU'ON NE L'A PAS TOUCHÉ. *Un objet qui attend un geste
@@ -1207,8 +1322,11 @@ export function Sachet3D({
       groupe.current?.scale.setScalar(1 + Math.sin(t * 1.7) * 0.013)
       corps.uniforms.uFront!.value = -1
       bandeMat.uniforms.uFront!.value = -1
-      gerbe.uniforms.uForce!.value = 0
-      gerbe.uniforms.uEclat!.value = 0
+      // RIEN À ÉTEINDRE : les étincelles déjà nées finissent leur vol, et il
+      // n'en naîtra pas d'autre tant que le front n'avance pas. *C'est tout ce
+      // qu'un émetteur demande.*
+      frontAvant.current = FRONT_DEPART
+      resteEmis.current = 0
       return
     }
     groupe.current?.scale.setScalar(1)
@@ -1218,28 +1336,51 @@ export function Sachet3D({
     // IL SORT DES DEUX BORDS : *une déchirure qui commence pile sur le bord se
     // lit comme un bord qui s'efface*, et une qui s'arrête pile à droite y
     // laisse un point de braise posé là pour toujours.
-    const front = -0.06 + Math.pow(pf, COURBE_FRONT) * 1.12
+    const front = FRONT_DEPART + Math.pow(pf, COURBE_FRONT) * 1.12
     corps.uniforms.uFront!.value = front
     bandeMat.uniforms.uFront!.value = front
-    gerbe.uniforms.uFront!.value = front
 
-    // OÙ EN EST L'ENVOL DE LA BANDE. *Il sert à trois choses* — la gerbe, le
-    // vol de la bande et son fondu — donc il se calcule UNE fois : deux
-    // endroits qui décriraient le même instant se désaccorderaient au premier
-    // réglage.
+    /*
+     * L'ÉMISSION SUIT L'AVANCÉE, PAS LA PLACE DU FRONT.
+     *
+     * Keko : **« elles ne doivent jaillir que lors de l'ouverture (mouvement),
+     * pas à l'arrêt quand on arrête d'avancer l'ouverture. Regarde lexicodex
+     * comment ils font »**.
+     *
+     * ***ET ILS FONT EXACTEMENT ÇA*** : leur appel est
+     * `s > 0 && emitTearSparks(min(12, 1 + round(s * 90)))`, où `s` est
+     * l'avancée depuis l'image précédente. **Le `s > 0` est toute la
+     * réponse** — *ce qui produit l'étincelle est la découpe qui AVANCE, pas
+     * la fente déjà ouverte.*
+     *
+     * Notre champ, lui, était piloté par `pf`, c'est-à-dire la POSITION du
+     * front : à mi-course tenue, il coulait indéfiniment.
+     */
+    const avance = front - frontAvant.current
+    frontAvant.current = front
+    if (avance > 0) {
+      resteEmis.current += avance * DEBIT_ETINCELLE
+      const nb = Math.floor(resteEmis.current)
+      if (nb > 0) {
+        resteEmis.current -= nb
+        emettre(vols, anneau, Math.min(nb, RAFALE_MAX), front, t, false)
+      }
+    }
+
+    // OÙ EN EST L'ENVOL DE LA BANDE. *Il sert au vol de la bande et à son
+    // fondu*, donc il se calcule UNE fois : deux endroits qui décriraient le
+    // même instant se désaccorderaient au premier réglage. (La gerbe l'a lu
+    // tant qu'elle était un champ ; elle naît désormais d'une rafale.)
     const pv = Math.max(0, (pp - PART_FRONT) / (1 - PART_FRONT))
-
-    // LA GERBE monte dès que la fente s'ouvre, culmine à l'arrachement, puis
-    // retombe lentement : *une gerbe qui s'arrêterait net se lirait comme une
-    // coupure de courant.*
-    gerbe.uniforms.uForce!.value = pf * (pp < PART_FRONT ? 1 : Math.max(0, 1 - pv / 0.5))
-    // ET LE JAILLISSEMENT EST UN SECOND RÉGIME : il part d'un coup à
-    // l'arrachement — *un jaillissement n'a pas de montée, c'est ce qui en
-    // fait un* — et il retombe sur la première moitié du vol de la bande.
-    gerbe.uniforms.uEclat!.value = pp < PART_FRONT ? 0 : Math.max(0, 1 - pv / 0.55)
 
     if (pf >= 1 && !ditDechire.current) {
       ditDechire.current = true
+      // LE JAILLISSEMENT EST UNE RAFALE, AU MÊME INSTANT QUE LE FLASH. *Deux
+      // endroits qui décriraient le même instant se désaccorderaient au
+      // premier réglage*, donc c'est le drapeau du flash qui le porte — et
+      // c'est aussi ce que fait lexicodex, dont la rupture appelle son
+      // `emitTearSparks(14)` à côté du son et de la secousse.
+      emettre(vols, anneau, ECLAT_NOMBRE, front, t, true)
       onDechire?.()
     }
 
