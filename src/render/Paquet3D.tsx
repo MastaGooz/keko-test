@@ -602,19 +602,35 @@ export function Paquet3D(): React.ReactElement {
   /**
    * OÙ VA UNE CARTE, selon qu'elle est passée, à l'écran, ou encore dessous.
    *
-   * **Les suivantes restent EXACTEMENT derrière celle qu'on regarde**, à la
-   * même taille : elles sont donc invisibles, et c'est voulu — *une pile qu'on
-   * voit dépasser annonce ce qui vient*, alors que le défilé ne doit rien
-   * annoncer du tout. Quand la carte de devant part à gauche, la suivante est
-   * déjà là.
+   * ***LES SUIVANTES SONT À TAILLE ZÉRO, ET C'EST CE QUI A RATÉ LE FLIP.***
+   * Elles étaient posées exactement derrière la carte qu'on regarde, à la même
+   * taille — invisibles tant que celle de devant est à plat. **Mais un flip
+   * n'est à plat qu'à ses deux bouts** : dès que la carte se met de biais, elle
+   * découvre sa voisine, qui ne tourne pas. Keko : « on dirait que seule la
+   * partie droite de la carte flip, c'est super bizarre » — *ce qu'il voyait
+   * n'était pas une carte coupée en deux, c'était DEUX cartes*, l'une qui
+   * tourne et l'autre immobile derrière.
    *
-   * **Et celles qu'on a vues sortent par la gauche**, assez loin pour quitter
+   * *Une carte de taille nulle ne cache rien et ne se découvre pas*, et sa
+   * texture reste chargée : **elle est là, elle n'est simplement pas encore
+   * sortie.** Quand elle devient la courante, `Carte3D` amortit sa taille et
+   * elle grandit depuis rien — il n'y a aucune animation à écrire.
+   *
+   * **Et celles qu'on a vues sortent par la DROITE**, assez loin pour quitter
    * le champ : *ce qui est passé n'a plus à être lu*, et le bilan les reprendra
-   * toutes à la fin.
+   * toutes à la fin. Le côté est de Keko — « quand on passe à la suivante je
+   * voudrais qu'on slide l'ancienne carte vers la droite » — et *c'est le sens
+   * d'une pile qu'on défausse de la main droite*, pas celui d'une page qu'on
+   * tourne.
    */
   function placeAuDefile(i: number): [number, number, number] {
-    if (i < montree) return [-lVisible * 1.1, y, Z_MAIN]
-    return [0, y, Z_MAIN - (i - montree) * 0.02]
+    if (i < montree) return [lVisible * 1.1, y, Z_MAIN]
+    return [0, y, Z_MAIN]
+  }
+
+  /** Ce qu'une carte mesure au défilé : rien tant que son tour n'est pas venu. */
+  function tailleAuDefile(i: number): number {
+    return i < montree ? grande : i === montree ? grande : 0
   }
   /** La largeur du sachet : c'est elle qui place la fente et borne ce qui en sort. */
   const lSachet = tailleDuSachet(lVisible, hVisible)
@@ -760,7 +776,7 @@ export function Paquet3D(): React.ReactElement {
                     ? placeAuBilan(i)
                     : placeAuDefile(i)
               }
-              taille={!ouvert ? tailleDedans : fini ? taille : grande}
+              taille={!ouvert ? tailleDedans : fini ? taille : tailleAuDefile(i)}
               // ELLE RÉPOND AU CURSEUR une fois révélée, et pas avant : *un dos
               // n'a rien à montrer*, donc rien à faire briller.
               reflet={vue}

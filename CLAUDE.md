@@ -1429,8 +1429,43 @@ que les deux surfaces montrent la même chose*, et à l'arrivée la face avant, 
 porte la carte depuis le premier instant, revient devant. **Un demi-tour franc
 est donc possible sans jamais échanger de texture.**
 
+#### CE QUI A RATÉ LE PREMIER FLIP : LA CARTE TRAVERSAIT SA VOISINE
+
+Keko : « le flip de carte est raté, on dirait que seule la partie droite de la
+carte flip c'est super bizarre », puis — **et c'est lui qui a nommé le
+mécanisme** — « je pense que la carte doit traverser la carte derrière elle lors
+du flip, la laissant à moitié visible seulement ».
+
+***ET C'EST EXACTEMENT ÇA.*** Les cartes suivantes étaient posées à deux
+centièmes derrière celle qu'on regarde, ce qui suffit tant que tout le monde est
+à plat — **mais un demi-tour balaie une DEMI-LARGEUR de profondeur**, soit vingt
+-cinq fois cet écart. La moitié de la carte qui tourne passait donc derrière le
+plan de sa voisine et s'y faisait découper, pendant que l'autre moitié restait
+devant. *Ce qu'on lisait comme une carte coupée en deux était deux cartes qui
+s'interpénètrent.*
+
+**LES SUIVANTES SONT DONC À TAILLE ZÉRO**, et plus seulement cachées : *une
+carte de taille nulle ne cache rien, ne se découvre pas et ne traverse rien.* Sa
+texture reste chargée — **elle est là, elle n'est simplement pas encore
+sortie** — et quand son tour vient, `Carte3D` amortit sa taille et elle grandit
+depuis rien. **Il n'y a aucune animation à écrire.**
+
+***LA LEÇON VAUT AU-DELÀ DU PAQUET*** : un écart en z qui suffit à trancher
+l'ordre de deux plans à plat ne suffit plus dès que l'un des deux tourne.
+*Une rotation est une translation déguisée en profondeur.*
+
+#### ET LA PASSÉE SORT PAR LA DROITE
+
+Tranché par Keko : « quand on passe à la suivante je voudrais qu'on slide
+l'ancienne carte vers la droite ». *C'est le sens d'une pile qu'on défausse de
+la main droite*, pas celui d'une page qu'on tourne.
+
 Deux choses à ne pas défaire :
 
+- **le verso se monte pour le flip AUSSI**, et pas pour la culbute seule.
+  *Mesuré à l'écran* : le plan manquait, donc la première moitié du demi-tour
+  montrait le laiton nu du corps — **la carte tournait bien, elle n'avait
+  simplement pas de dos** ;
 - **le verso se charge dès le MONTAGE** et non au premier flip, à la différence
   de la culbute : *si la texture arrivait à l'image d'après, on verrait un plan
   nu pendant une image* — juste là où le raccord doit être invisible. La

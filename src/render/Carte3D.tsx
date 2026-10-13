@@ -1822,9 +1822,12 @@ ${nuanceur.fragmentShader}`
         {/* LA FACE : la carte peinte, un cheveu devant le corps. Ses coins
             transparents laissent voir le laiton arrondi derrière. */}
         <mesh geometry={GEOMETRIE_FACE} material={face} position={[0, 0, EPAISSEUR / 2 + 0.001]} raycast={() => null} />
-        {/* LE VERSO, le temps de la culbute : sans lui, la carte disparaît un
-            demi-tour sur deux et le geste ne se lit plus. */}
-        {culbute !== null && culbute !== undefined && (
+        {/* LE VERSO, le temps d'une culbute OU d'un flip : sans lui, la carte
+            disparaît un demi-tour sur deux et le geste ne se lit plus.
+            *Mesuré à l'écran sur le flip* : le plan manquait, donc la première
+            moitié du demi-tour montrait le laiton nu du corps — **la carte
+            tournait bien, elle n'avait simplement pas de dos.** */}
+        {(culbute ?? flip) !== null && (culbute ?? flip) !== undefined && (
           <mesh
             geometry={GEOMETRIE_FACE}
             material={verso}
