@@ -113,16 +113,67 @@ const PLI = 0.5
 const OMBRE = 0.05
 
 /**
- * LES TROIS LOBES DU REFLET, et le galbe.
+ * LE FILM EST UN MÉTAL À 70 %, et c'est ce qui teinte ses reflets.
+ *
+ * Keko : « leur paquet a des lumières plus intenses qui prennent mieux la
+ * couleur du paquet (pas blanc totalement) et surtout la texture rend plus
+ * brillante, le nôtre fait trop mate ».
+ *
+ * ***LA RÉPONSE EST DANS LEUR MATÉRIAU, ET ELLE EST CHIFFRÉE.*** Leur sachet
+ * est un `MeshStandardMaterial` dont la rugosité et la métallicité viennent
+ * d'une carte : son aplat de fond vaut `rgb(255, 0.38 x 255, 0.70 x 255)`,
+ * c'est-à-dire **rugosité 0,38 et métallicité 0,70** — et *un métal TEINTE son
+ * reflet avec sa propre couleur*, là où un plastique le renvoie blanc. **Leur
+ * reflet n'est pas blanc parce que leur film est un métal.**
+ *
+ * *C'est aussi ce qui règle le délavage par l'autre bout* : un éclat teinté par
+ * l'imprimé ne peut pas le pousser vers le blanc, donc on peut le monter haut
+ * sans effacer le « Ouvrir ici ». **La teinte n'est pas un ornement, c'est le
+ * garde-fou.**
+ */
+const METAL = 0.7
+
+/**
+ * LES QUATRE LOBES DU REFLET, et le galbe.
  *
  * *Le lustre MULTIPLIE* — il éclaircit sans effacer la teinte, donc il peut
- * monter haut ; **les deux autres AJOUTENT**, parce qu'un point chaud et sa
- * frange sont de la lumière en plus et non la même lumière en plus fort.
+ * monter haut ; **les éclats des sources AJOUTENT**, parce qu'un point chaud
+ * est de la lumière en plus et non la même lumière en plus fort.
  */
 const LUSTRE = 1.35
 const ECLATS = 0.75
-const HALO = 0.3
-const FRESNEL = 0.26
+const FRESNEL = 0.3
+
+/**
+ * LES QUATRE SOURCES, et chacune a SA COULEUR.
+ *
+ * ***C'EST ÇA, LE « FLASHY QUAND LE PAQUET BOUGE ».*** Leur scène n'a pas une
+ * lumière, elle en a cinq, et seule la première est blanche : une grande dalle
+ * claire en haut à gauche, **une haute dalle CYAN à droite**, une dalle ROSE en
+ * bas à gauche, une VIOLETTE en bas à droite, et un bandeau neutre derrière.
+ * *Un sachet qui tourne sous une seule lampe ne fait que passer du sombre au
+ * clair ; sous quatre teintes, il déroule un spectre.*
+ *
+ * Les directions et les couleurs sont les leurs, normalisées — **on ne choisit
+ * rien, on relève.**
+ */
+const SOURCES: ReadonlyArray<{
+  readonly dir: readonly [number, number, number]
+  readonly couleur: readonly [number, number, number]
+  readonly force: number
+}> = [
+  // la clé, blanche : c'est elle qui modèle le ventre et porte le lustre
+  { dir: [-0.458, 0.523, 0.719], couleur: [1, 1, 1], force: 0.52 },
+  // le cyan, à droite — la plus haute de leurs dalles
+  { dir: [0.949, 0, 0.316], couleur: [0.29, 0.86, 1], force: 0.4 },
+  // le rose, en bas à gauche
+  { dir: [-0.491, -0.655, 0.573], couleur: [1, 0.37, 0.53], force: 0.3 },
+  // le violet, en bas à droite
+  { dir: [0.594, -0.446, 0.669], couleur: [0.5, 0.44, 1], force: 0.3 },
+]
+
+/** Le serré du lobe de chaque source. *Leur rugosité de 0,38 est un lobe net.* */
+const SERRE = 46
 
 
 
@@ -397,6 +448,11 @@ void main() {
   // direction, donc le reflet court sur les plis dès qu'on l'incline.
   vec3 L = normalize(vec3(-0.42 + uPenche.y * 2.4, 0.58 + uPenche.x * 2.4, 0.78));
   vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+  // LE PENCHANT S'APPLIQUE AUX QUATRE SOURCES, et pas à la clé seule : *elles
+  // sont fixes dans la pièce et c'est le sachet qui tourne*, donc elles
+  // balaient toutes ensemble. Une seule qui bougerait se lirait comme une lampe
+  // qu'on promène.
+  vec2 pen = vec2(uPenche.y, uPenche.x) * 2.4;
 
   // L'OMBRE DES PLIS : elle module l'IMPRIMÉ lui-même. *C'est elle qui dit que
   // le dessin est posé sur quelque chose de froissé* — sans elle, le reflet
@@ -406,7 +462,11 @@ void main() {
   // l'ombre, et le froissé ne fait plus que frémir par-dessus (±2,5 %).
   // *Ce qui empêchait de lire les motifs, c'était que la matière pesait autant
   // que la forme.*
-  tex.rgb *= 0.70 + 0.44 * (dot(Nv, L) * 0.5 + 0.5);
+  // **ET LE PLANCHER DESCEND : 0,70 -> 0,62.** *Ce qui fait « mate », ce n'est
+  // pas l'absence de reflet, c'est l'excès d'AMBIANT* — une surface éclairée de
+  // partout n'a plus de part sombre à laquelle son reflet se compare. Le
+  // plafond ne bouge pas (1,14), c'est l'écart qui se creuse.
+  tex.rgb *= 0.62 + 0.52 * (dot(Nv, L) * 0.5 + 0.5);
   tex.rgb *= 1.0 - ${OMBRE.toFixed(3)} + ${(2 * OMBRE).toFixed(3)} * (dot(N, L) * 0.5 + 0.5);
 
 
@@ -478,42 +538,69 @@ void main() {
   // *C'est ce que dit le film de lexicodex, dont le reflet est violet sur le
   // violet et or sur l'or* — vérifié à la capture.
   float lustre = pow(max(dot(Nv, H), 0.0), 26.0);
-  // **ET LE SURVOL N'EN AJOUTE PLUS QUE LA MOITIÉ.** Le lobe large couvre
-  // presque toute la face quand la lumière s'aligne, donc à 0,7 il délavait le
-  // « Ouvrir ici » dès qu'on penchait le sachet — *un lustre qui efface
-  // l'illustration cesse d'être une matière et devient un voile*, la règle déjà
-  // payée sur la carte regardée de près. Le repos, lui, brille PLUS qu'avant.
-  corps *= 1.0 + lustre * (${LUSTRE.toFixed(2)} + uSurvol * 0.3);
-
-  // **LES ÉCLATS DES PLIS RESTENT ADDITIFS, et eux seuls** : ce sont de vrais
-  // points chauds, trop petits pour effacer quoi que ce soit. *Un point qui
-  // sature est une étincelle, une nappe qui sature est un voile.*
-  float nh = max(dot(N, H), 0.0);
-  float eclats = pow(nh, 150.0);
+  corps *= 1.0 + lustre * ${LUSTRE.toFixed(2)};
 
   /**
-   * LE GLOW : **un troisième lobe, large et faible, AUTOUR des points chauds.**
+   * ET LE MÉTAL TEINTE CE QU'IL RENVOIE — **c'est toute la demande de Keko.**
    *
-   * Keko : « niveau lumière on peut avoir un truc plus juicy, glow, comme si le
-   * paquet était brillant là où il reflète la lumière ? »
+   * *Un diélectrique renvoie la lumière telle qu'elle est* : son reflet est
+   * blanc quelle que soit sa couleur, et c'est ce que faisaient nos éclats.
+   * ***UN MÉTAL, LUI, FILTRE : son reflet prend sa propre teinte*** — c'est
+   * pour ça qu'un cuivre a des reflets cuivrés et un or des reflets dorés.
    *
-   * ***UN POINT CHAUD NE S'ARRÊTE PAS À SON BORD.*** Dans l'oeil comme dans un
-   * objectif, une source vive DÉBORDE — et c'est tout ce qu'on appelle un
-   * bloom. *On ne peut pas flouter en une passe*, mais on n'en a pas besoin :
-   * **un lobe plus large posé au même endroit fait exactement la décroissance
-   * qu'un flou produirait**, et il ne coûte qu'une puissance.
-   *
-   * Les trois lobes se répondent, et chacun fait un travail que les deux autres
-   * ne font pas : le **lustre** (26, multiplié) dit la FORME, le **halo** (34,
-   * ajouté) dit que ça RAYONNE, les **éclats** (150, ajoutés) disent l'ARÊTE.
-   *
-   * **ET LE HALO EST PLUS CHAUD QUE L'ÉCLAT**, parce que c'est la règle du
-   * projet : *un point qui sature tire vers le blanc, sa frange garde la
-   * couleur de la lumière.*
+   * Le leur est métallique à 0,70 (relevé sur leur carte), donc on mélange :
+   * **la teinte du film poussée à pleine clarté, ramenée vers le blanc du
+   * reste.** Et c'est ce qui autorise enfin l'intensité — *un éclat de la
+   * couleur de l'imprimé ne peut pas pousser l'imprimé vers le blanc.*
    */
-  float halo = pow(nh, 34.0);
-  corps += vec3(1.0, 0.97, 0.90) * eclats * ${ECLATS.toFixed(2)}
-         + vec3(1.0, 0.93, 0.76) * halo * ${HALO.toFixed(2)};
+  vec3 pur = corps / max(max(corps.r, corps.g), max(corps.b, 0.02));
+  vec3 teinte = mix(vec3(1.0), pur, ${METAL.toFixed(2)});
+
+  // **LE SURVOL PORTE SUR LES ÉCLATS TEINTÉS, plus sur le lustre.** C'est ce
+  // qui avait dû être bridé de moitié : le lobe large couvre presque toute la
+  // face, donc à pleine force il délavait le « Ouvrir ici ». *Teinté, un éclat
+  // n'a plus rien à délaver* — l'intensité revient là où elle ne coûte rien.
+  float feu = 1.0 + uSurvol * 1.3;
+
+  // SOURCE 1 : la clé, blanche
+  {
+    vec3 Ls = normalize(vec3(${SOURCES[0]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[0]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[0]!.dir[2]!.toFixed(3)}));
+    vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
+    corps += teinte * vec3(${SOURCES[0]!.couleur[0]!.toFixed(2)}, ${SOURCES[0]!.couleur[1]!.toFixed(2)}, ${SOURCES[0]!.couleur[2]!.toFixed(2)})
+           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${SOURCES[0]!.force.toFixed(2)} * feu;
+  }
+
+  // SOURCE 2 : le cyan
+  {
+    vec3 Ls = normalize(vec3(${SOURCES[1]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[1]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[1]!.dir[2]!.toFixed(3)}));
+    vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
+    corps += teinte * vec3(${SOURCES[1]!.couleur[0]!.toFixed(2)}, ${SOURCES[1]!.couleur[1]!.toFixed(2)}, ${SOURCES[1]!.couleur[2]!.toFixed(2)})
+           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${SOURCES[1]!.force.toFixed(2)} * feu;
+  }
+
+  // SOURCE 3 : le rose
+  {
+    vec3 Ls = normalize(vec3(${SOURCES[2]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[2]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[2]!.dir[2]!.toFixed(3)}));
+    vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
+    corps += teinte * vec3(${SOURCES[2]!.couleur[0]!.toFixed(2)}, ${SOURCES[2]!.couleur[1]!.toFixed(2)}, ${SOURCES[2]!.couleur[2]!.toFixed(2)})
+           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${SOURCES[2]!.force.toFixed(2)} * feu;
+  }
+
+  // SOURCE 4 : le violet
+  {
+    vec3 Ls = normalize(vec3(${SOURCES[3]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[3]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[3]!.dir[2]!.toFixed(3)}));
+    vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
+    corps += teinte * vec3(${SOURCES[3]!.couleur[0]!.toFixed(2)}, ${SOURCES[3]!.couleur[1]!.toFixed(2)}, ${SOURCES[3]!.couleur[2]!.toFixed(2)})
+           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${SOURCES[3]!.force.toFixed(2)} * feu;
+  }
+
+  // **LES ÉCLATS DES PLIS RESTENT À PART, et eux seuls lisent la normale des
+  // plis** : ce sont de vrais points chauds, trop petits pour effacer quoi que
+  // ce soit. *Un point qui sature est une étincelle, une nappe qui sature est
+  // un voile.* Ils sont teintés comme les autres — un pli de film argenté
+  // n'étincelle pas en blanc, il étincelle de la couleur du film.
+  float eclats = pow(max(dot(N, H), 0.0), 150.0);
+  corps += teinte * vec3(1.0, 0.97, 0.90) * eclats * ${ECLATS.toFixed(2)} * feu;
 
   /**
    * ET LE BORD DU VENTRE S'ALLUME — **c'est du FRESNEL, pas un liseré.**
@@ -526,9 +613,13 @@ void main() {
    * *Et il se calcule sur la normale du VENTRE*, jamais sur celle des plis :
    * un pli est une rainure de quelques pixels, et il allumerait une poussière
    * de points là où on veut une bande douce le long du galbe.
+   *
+   * **IL EST LE SEUL TERME QUI RESTE À MOITIÉ BLANC** : *au ras, un métal
+   * renvoie tout* — c'est la seule part du reflet qu'une teinte ne filtre pas.
    */
   float fresnel = pow(1.0 - clamp(Nv.z, 0.0, 1.0), 3.0);
-  corps += vec3(0.82, 0.90, 1.0) * fresnel * ${FRESNEL.toFixed(2)};
+  corps += mix(vec3(0.82, 0.90, 1.0), teinte, ${(METAL / 2).toFixed(2)})
+         * fresnel * ${FRESNEL.toFixed(2)};
 
   // L'ÉCLAT : une bande étroite au front, qui FRÉMIT. *Ce n'est plus une
   // braise* — elle allait de l'or chaud au blanc, c'est-à-dire un dégradé de

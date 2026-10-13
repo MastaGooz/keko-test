@@ -1948,6 +1948,79 @@ l'illustration cesse d'être une matière et devient un voile***, la règle déj
 payée sur la carte regardée de près. **Le repos, lui, brille plus qu'avant** :
 ce qu'on a retiré au geste, le lustre de base le rend.
 
+#### LE FILM EST UN MÉTAL, ET C'EST POUR ÇA QUE SON REFLET EST BLEU
+
+Keko : **« sur lexicodex la lumière est plus flashy sur les reflets quand le
+paquet bouge, leur paquet a des lumières plus intenses qui prennent mieux la
+couleur du paquet (pas blanc totalement) et surtout la texture rend plus
+brillante — le nôtre fait trop "mate" »**.
+
+***LES TROIS GRIEFS N'EN FONT QU'UN, ET LEUR CODE LE DIT EN CHIFFRES.*** Leur
+matériau est un `MeshStandardMaterial` dont la rugosité et la métallicité ne
+sont pas des constantes mais une CARTE — et l'aplat de fond de cette carte vaut
+`rgb(255, 0,38 x 255, 0,70 x 255)`, trois canaux qui se lisent **rugosité 0,38,
+métallicité 0,70.**
+
+**UN DIÉLECTRIQUE RENVOIE LA LUMIÈRE TELLE QU'ELLE EST ; UN MÉTAL LA FILTRE.**
+C'est pour ça qu'un cuivre a des reflets cuivrés : *son reflet prend sa propre
+couleur.* Nos éclats étaient des blancs et des crèmes ajoutés — **ils ne
+POUVAIENT pas prendre la couleur du sachet**, et c'est exactement ce que Keko
+lisait.
+
+#### ET LA TEINTE EST CE QUI AUTORISE L'INTENSITÉ
+
+*C'est le vrai gain, et il n'était pas visé* : il avait fallu brider le survol
+de moitié parce que le lobe large délavait le « Ouvrir ici ». ***Un éclat de la
+couleur de l'imprimé ne peut pas pousser l'imprimé vers le blanc*** — donc le
+gain du geste revient, et il porte désormais sur les éclats teintés plutôt que
+sur le lustre.
+
+**C'est le même raisonnement que « multiplié plutôt qu'ajouté », un cran plus
+loin** : là on gardait la teinte en multipliant, ici on la garde en TEIGNANT ce
+qu'on ajoute. *Les deux disent qu'une lumière ne doit pas effacer ce qu'elle
+éclaire.*
+
+#### QUATRE SOURCES, ET UNE SEULE EST BLANCHE
+
+***C'EST ÇA, LE « FLASHY QUAND LE PAQUET BOUGE ».*** Leur scène d'environnement
+n'a pas une lampe, elle en a CINQ, et quatre sont teintées :
+
+| | où | couleur |
+|---|---|---|
+| la **clé** | haut-gauche, devant | blanche, et c'est la plus forte |
+| une haute dalle | à droite | **cyan** |
+| une dalle | bas-gauche | **rose** |
+| une dalle | bas-droite | **violette** |
+| un bandeau | derrière, en haut | neutre |
+
+*Un sachet qui tourne sous une seule lampe ne fait que passer du sombre au
+clair* ; **sous quatre teintes, il déroule un spectre** — et c'est précisément
+ce qu'on voit bouger sur leur capture.
+
+**LES DIRECTIONS ET LES COULEURS SONT LES LEURS, normalisées** : on ne choisit
+rien, on relève. Et **le penchant s'applique aux quatre ensemble**, parce
+qu'*elles sont fixes dans la pièce et que c'est le sachet qui tourne* — une
+seule qui bougerait se lirait comme une lampe qu'on promène.
+
+#### ET CE QUI FAIT « MATE » EST L'AMBIANT, PAS LE REFLET
+
+Le plancher descend de 0,70 à **0,62**, le modelé monte de 0,44 à 0,52 : *le
+plafond ne bouge pas d'un centième*, c'est l'ÉCART qui se creuse.
+***Une surface éclairée de partout n'a plus de part sombre à laquelle son
+reflet se compare*** — on peut empiler les éclats, tant que le fond est gris
+clair ils ne brillent pas.
+
+**LE FRESNEL RESTE À MOITIÉ BLANC, et c'est le seul** : *au ras, un métal
+renvoie tout* — c'est la seule part du reflet qu'une teinte ne filtre pas.
+
+#### CE QU'ON N'A PAS REPRIS : LA CARTE DE RUGOSITÉ
+
+Chez eux, **l'imprimé ne brille pas** : le texte est posé à rugosité 0,65 et
+métallicité 0,02, c'est-à-dire en diélectrique mat, pendant que les rayons du
+fond sont à 0,26 et 0,80. *C'est une seconde carte à peindre*, et la teinte
+métallique règle déjà le délavage qu'elle aurait évité. **À rouvrir le jour où
+il faudra que le bouquet cesse de briller comme le film qui le porte.**
+
 #### LE RÉGLAGE S'EST FAIT EN DEUX PASSES, ET LA PREMIÈRE DISAIT DU MÉTAL BROSSÉ
 
 *Mesuré à l'écran* : à six fois l'échelle et ±20 % d'ombre, le froissé donnait
@@ -2309,9 +2382,17 @@ la même place se désaccorderaient au premier réglage.*
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la force des confettis et leur nombre** : *une gerbe ne se juge qu'en
   ouvrant des paquets* ;
-- **les trois lobes du reflet** (lustre 1,35 multiplié, halo 0,30 ajouté,
-  éclats 0,75) et **le galbe de Fresnel** (0,26) : *c'est le « juicy »*, et il
-  ne se juge qu'en inclinant l'objet ;
+- **la métallicité du film** (0,70, relevée chez eux) : c'est elle qui décide
+  de combien le reflet prend la couleur du sachet. *À 0 il redevient blanc, à 1
+  il n'a plus une once de lumière crue* ;
+- **les quatre sources et leurs forces** (clé 0,52, cyan 0,40, rose et violet
+  0,30), **le serré de leur lobe** (46) et **le gain du survol** (1,3) :
+  *c'est le « flashy quand ça bouge »*, et il ne se juge qu'en inclinant ;
+- **le lustre** (1,35, multiplié), **les éclats des plis** (0,75) et **le galbe
+  de Fresnel** (0,30) ;
+- **le plancher d'ambiant** (0,62 pour 0,52 de modelé) : *c'est lui qui décide
+  du « mate »*, et il se paie en lisibilité de l'imprimé dans les parts
+  sombres ;
 - **le poids de la carte des plis** (0,5 dans la normale, ±5 % d'ombre) et
   **le semis lui-même** — soixante-dix traits, dont quarante au bord, leurs
   longueurs et leurs largeurs : *c'est la texture du papier de booster*, et
