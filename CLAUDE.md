@@ -1889,8 +1889,8 @@ la raconte, la règle déjà payée sur la tête de la comète.
 |---|---|---|
 | la source | **juste derrière le front**, tirée au carré donc tassée contre lui | **toute la largeur** de l'ouverture |
 | le nombre | 53 sur 140 | **les 140** |
-| la vitesse | 1,3 largeur par vie | **×1,75** |
-| la hauteur de la cloche | 0,24 largeur | **0,50** |
+| la vitesse | 0,68 largeur par vie | **×2,12** |
+| la hauteur de la cloche | 0,17 largeur | **0,36** |
 
 *Ce qui produit l'étincelle est la découpe qui AVANCE*, pas la fente déjà
 ouverte : c'est pour ça que la source suit le front au lieu de s'étaler.
@@ -1915,6 +1915,59 @@ image, et c'est ce qui empêche la gerbe de redire le feu qu'on venait de lui
 retirer. Le coeur du trait tire vers le blanc et sa frange garde sa teinte —
 **un point qui sature blanchit, sa frange garde la couleur**, la règle déjà
 écrite pour le halo du foil.
+
+#### LA CLOCHE BAISSE D'UN TIERS, ET LE TRAIT S'EFFILE
+
+Keko : **« c'est possible que les particules durant l'ouverture volent moins
+haut avant de retomber ? je voudrais un modèle plus étincelles que confettis en
+fait »**.
+
+***LES DEUX DEMANDES NE PORTENT PAS SUR LA MÊME CHOSE, et c'est ce qui les rend
+tenables ensemble*** : la première est la HAUTEUR du vol, la seconde est la
+FORME du grain. On baisse l'une, on allonge l'autre.
+
+**LA CLOCHE PERD UN TIERS** — 0,17 largeur pendant la découpe, 0,36 au
+jaillissement, contre 0,26 et 0,56. *Elle ne se règle pas en freinant le
+départ* : la longueur du trait est proportionnelle à la VITESSE, donc une
+étincelle qu'on ralentit redevient une pastille. **C'est la pesanteur qui monte
+avec elle** (0,68 contre 1,6), ce qui raccourcit la cloche sans rien retirer à
+l'élan.
+
+***ET LES DEUX SONT MAINTENANT ÉGALES, ce qui n'est pas un hasard*** : à
+pesanteur égale à la vitesse, l'apogée tombe au MILIEU de la vie et le retour à
+sa fin — **le vol tient exactement dans la vie qu'on lui donne.** Avant,
+l'apogée tombait au tiers et le dernier quart se jouait sous la fente, donc sur
+le film, donc invisible.
+
+| | avant | après |
+|---|---|---|
+| hauteur, découpe | 0,264 | **0,170** |
+| hauteur, jaillissement | 0,558 | **0,360** |
+| apogée | à 41 % et 49 % de la vie | **à 50 %, les deux** |
+| retour à la fente | à 81 % et 98 % | **à 100 %, les deux** |
+
+**LA VIE RACCOURCIT AVEC** (0,62 s → 0,48) : *la trajectoire garde sa forme et
+se joue plus vite* — une étincelle est vive, et c'est ce qu'on rend à la vitesse
+de départ qu'on vient de baisser.
+
+#### ET CE QUI FAIT « CONFETTI » EST LE RAPPORT, PAS LA TAILLE
+
+*Le trait était deux fois plus long que large à l'apogée*, où la vitesse ne lui
+prête plus rien : **une pastille.** Il s'affine de 40 %, s'allonge de moitié, et
+***il s'effile vers la queue*** — la leçon de la tête de comète, payée une
+seconde fois : **un dessin se termine en pointe, il ne s'évapore pas.**
+
+| | avant | après |
+|---|---|---|
+| largeur | 0,050 | **0,030** |
+| longueur au repos | 0,078 | **0,090** |
+| ce que la vitesse ajoute | 0,095 | **0,145** |
+| la queue | aussi large que la tête | **22 % de la tête** |
+| **rapport à l'apogée** | **1,5 : 1** | **4 : 1** |
+
+*L'effilement est GÉOMÉTRIQUE et non fait d'opacité* — le quad est une goutte,
+pas un rectangle — et c'est ce qui tient le trait au sommet de la cloche, là où
+il n'a plus de vitesse pour l'allonger.
 
 #### UNE ÉTINCELLE DE LUMIÈRE N'EST PAS UN CONFETTI, ET C'ÉTAIT LE MÉLANGE
 
@@ -2981,16 +3034,20 @@ la même place se désaccorderaient au premier réglage.*
 - **« 5 CARTES »** est la seule phrase du sachet. *Le projet n'a pas de nom
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la gerbe d'étincelles** : leur nombre (140), la part qui dort pendant la
-  découpe (62 %), leur vitesse de départ (1,3 largeur par vie) et la pesanteur
-  (1,6) — *donc la hauteur de la cloche*, qui vaut 0,24 largeur pendant la
-  découpe et 0,50 au jaillissement. **Une gerbe ne se juge qu'en ouvrant des
-  paquets**, et **la moitié basse du vol ne se voit pas** : elle passe sur le
-  film, que le lustre y sature en blanc. *`?gerbe` tient la découpe à
-  mi-course*, ce qui est le seul moyen d'en juger sans ouvrir vingt paquets ;
-- **la taille du trait** (0,050 de large, 0,078 de long plus 0,095 par unité de
-  vitesse) et **ses trois lobes** (teinté serré 1,1, teinté large 0,35, coeur
-  blanc 2,2) : *c'est ce qui sépare une lumière d'un confetti*, et Keko a
-  tranché le registre — « des étincelles de lumière » — pas les chiffres ;
+  découpe (62 %), leur vie (0,48 s), leur vitesse de départ (0,68 largeur par
+  vie) et la pesanteur (0,68) — *donc la hauteur de la cloche*, qui vaut
+  **0,17 largeur** pendant la découpe et **0,36** au jaillissement. **Une gerbe
+  ne se juge qu'en ouvrant des paquets.** *`?gerbe` tient la découpe à
+  mi-course*, ce qui est le seul moyen d'en juger sans ouvrir vingt paquets.
+  ***Ne pas baisser la cloche en freinant le départ*** : la longueur du trait
+  suit la vitesse, donc une étincelle ralentie redevient une pastille — c'est la
+  pesanteur qui se monte. **Et les deux sont égales à dessein** : l'apogée tombe
+  alors au milieu de la vie et le vol tient dedans ;
+- **la taille du trait** (0,030 de large, 0,090 de long plus 0,145 par unité de
+  vitesse, la queue à 22 % de la tête) et **ses trois lobes** (teinté serré 1,1,
+  teinté large 0,35, coeur blanc 2,2) : *c'est ce qui sépare une lumière d'un
+  confetti*, et Keko a tranché le registre — « des étincelles de lumière », « un
+  modèle plus étincelles que confettis » — pas les chiffres ;
 - **la métallicité du film** (0,70, relevée chez eux) : c'est elle qui décide
   de combien le reflet prend la couleur du sachet. *À 0 il redevient blanc, à 1
   il n'a plus une once de lumière crue* ;

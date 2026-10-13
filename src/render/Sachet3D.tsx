@@ -808,13 +808,27 @@ void main() {
  */
 const ETINCELLES = 140
 /** La durée d'un vol, en secondes. */
-const VIE_ETINCELLE = 0.62
+const VIE_ETINCELLE = 0.48
 /** La part des étincelles qui dorment tant qu'on n'a pas arraché la bande. */
 const SEUIL_ETINCELLE = 0.62
-/** La vitesse de départ, en largeurs de sachet par vie. */
-const JET = 1.3
-/** La pesanteur, en largeurs de sachet par vie au carré. */
-const PESANT = 1.6
+/**
+ * LA CLOCHE : la vitesse de départ et la pesanteur, en largeurs de sachet par
+ * vie et par vie au carré.
+ *
+ * Keko : **« c'est possible que les particules volent moins haut avant de
+ * retomber ? je voudrais un modèle plus étincelles que confettis »**. La
+ * cloche fait donc un tiers de moins — 0,17 largeur pendant la découpe,
+ * 0,36 au jaillissement.
+ *
+ * ***LES DEUX SONT ÉGALES, ET CE N'EST PAS UN HASARD*** : à pesanteur égale à
+ * la vitesse, l'apogée tombe au MILIEU de la vie et le retour à sa fin — donc
+ * le vol tient exactement dans la vie qu'on lui donne. *Avant, l'apogée
+ * tombait au tiers et un quart du vol se jouait sous la fente.*
+ */
+const JET = 0.68
+const PESANT = 0.68
+/** De combien le jaillissement pousse la cloche : il monte 2,12 fois plus haut. */
+const ECLAT_CLOCHE = 2.12
 /** De combien la source remonte derrière le front, en largeurs de sachet. */
 const SOURCE_ETINCELLE = 0.26
 /**
@@ -827,10 +841,18 @@ const SOURCE_ETINCELLE = 0.26
  * alpha alors que le mélange additif le remultiplie — **la décroissance était
  * donc au CARRÉ**, ce qui rabote un grain à son coeur et ne laisse rien
  * autour. *Un grain sans frange est un confetti*, et il paraît minuscule.
+ *
+ * **ET CE QUI FAIT CONFETTI ENSUITE EST LE RAPPORT.** Un trait deux fois plus
+ * long que large est une pastille ; une étincelle est un TRAIT. Il s'affine
+ * donc, s'allonge, et ***il s'effile vers la queue*** — la leçon de la tête
+ * de comète : *un dessin se termine en pointe, il ne s'évapore pas.* C'est ce
+ * qui le tient même à l'apogée, où la vitesse ne lui prête plus rien.
  */
-const LARGE_TRAIT = 0.050
-const LONG_TRAIT = 0.078
-const TRAINE_TRAIT = 0.095
+const LARGE_TRAIT = 0.030
+const LONG_TRAIT = 0.090
+const TRAINE_TRAIT = 0.145
+/** Ce qu'il reste de largeur à la QUEUE du trait. */
+const EFFILE_TRAIT = 0.22
 
 /**
  * LE SEMIS EST TIRÉ UNE FOIS, SEEDÉ EN DUR, et ce n'est pas le RNG du jeu :
@@ -930,10 +952,12 @@ void main() {
   float etale = mix(rx * rx * ${SOURCE_ETINCELLE.toFixed(2)}, rx * 1.15, uEclat);
   float x0 = clamp(uFront - etale, 0.0, 1.0) - 0.5;
 
-  // LA CLOCHE. La pesanteur monte avec le jaillissement : sans elle, des
-  // étincelles deux fois plus rapides ne retomberaient jamais dans leur vie.
-  float vy = ${JET.toFixed(2)} * (0.95 + 0.30 * rv) * mix(1.0, 1.75, uEclat);
-  float pes = ${PESANT.toFixed(2)} * mix(1.0, 1.45, uEclat);
+  // LA CLOCHE. Le jaillissement pousse la vitesse ET la pesanteur du MEME
+  // facteur : la cloche monte deux fois plus haut et l'apogee reste au milieu
+  // de la vie -- sans ca, une etincelle plus rapide ne retomberait jamais
+  // dedans.
+  float vy = ${JET.toFixed(2)} * (0.95 + 0.30 * rv) * mix(1.0, ${ECLAT_CLOCHE.toFixed(2)}, uEclat);
+  float pes = ${PESANT.toFixed(2)} * mix(1.0, ${ECLAT_CLOCHE.toFixed(2)}, uEclat);
   float vx = (rc * 2.0 - 1.0) * 0.26 * mix(0.60, 1.0, uEclat);
   vec2 vol = vec2(x0 + vx * t, vy * t - pes * t * t);
 
@@ -943,8 +967,11 @@ void main() {
   float v = length(vit);
   vec2 dir = vit / max(v, 0.0001);
   vec2 q = position.xy;
+  // ET IL S'EFFILE VERS LA QUEUE : la largeur se resserre a mesure qu'on
+  // recule dans le trait, donc le quad est une goutte et non un rectangle.
+  float effile = mix(${EFFILE_TRAIT.toFixed(2)}, 1.0, q.y + 0.5);
   vec2 ecart = dir * (q.y * (${LONG_TRAIT.toFixed(3)} + v * ${TRAINE_TRAIT.toFixed(3)}))
-             + vec2(-dir.y, dir.x) * (q.x * ${LARGE_TRAIT.toFixed(3)});
+             + vec2(-dir.y, dir.x) * (q.x * ${LARGE_TRAIT.toFixed(3)} * effile);
 
   gl_Position = projectionMatrix * modelViewMatrix * vec4(vol + ecart, 0.0, 1.0);
 
