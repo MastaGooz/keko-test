@@ -1724,6 +1724,66 @@ MATIÈRE de l'ouverture qui change**, et elle disait un incendie :
   et non par un tirage par image — *un semis qui se réarrange n'est plus une
   matière*, la règle du motif de touches.
 
+#### LE FILM EST UNE MATIÈRE, PAS UN DESSIN — des plis, et la lumière dessus
+
+Keko : **« dans lexicodex le paquet a une texture vraiment paquet, je sais pas
+comment ils font, y'a des petits plis et une vraie lumière, comme si le paquet
+avait la vraie matière brillante »**.
+
+***ET LA RÉPONSE EST QU'UN PLI NE SE PEINT PAS.*** Un froissé imprimé dans la
+texture serait éclairé du même côté pour toujours : **il se lirait comme une
+tache**, pas comme un relief. *Un pli n'existe que parce que la lumière le
+trouve* — donc il vit dans le NUANCEUR, et c'est l'objet qui tourne sous elle.
+
+Quatre pièces, et chacune fait un travail que les autres ne font pas :
+
+- **LE FROISSÉ** (`froisse`) : une somme de sinus **repliés par une valeur
+  absolue**. *Une somme de sinus nus donne une tôle ondulée* — il faut un
+  minimum anguleux pour qu'une crête se lise comme un pli. Et **le domaine est
+  tordu avant d'être lu**, sinon les crêtes restent parallèles et on lit une
+  trame : c'est le moteur du grain, pris par l'autre bout ;
+- **LA NORMALE**, par différences finies sur ce champ. *Aucune carte de
+  normales* : elle serait figée, et celle-ci ne coûte pas un octet ;
+- **L'OMBRE DES PLIS**, qui module l'IMPRIMÉ lui-même (±10 %). **C'est elle qui
+  dit que le dessin est posé sur quelque chose de froissé** — sans elle, le
+  reflet flotterait au-dessus d'une image plate ;
+- **LE SPÉCULAIRE, en DEUX LOBES.** Un serré qui donne les éclats sur les
+  arêtes, un large qui donne le satiné du reste : *le serré seul se lit comme
+  des paillettes, le large seul comme du plastique mat.*
+
+**LE LUSTRE EN BANDE A DISPARU AVEC.** Il courait sur la diagonale sous le
+curseur — *une bande posée sur une diagonale est un dessin qu'on promène*, alors
+que le spéculaire s'accroche aux crêtes et saute les creux. C'est exactement ce
+que fait du mylar, et c'est ce qui sépare « une image brillante » de « un objet
+brillant ».
+
+**LE CHAMP SE LIT DANS LE REPÈRE DU SACHET ENTIER, pas du morceau** : les deux
+plans portent ainsi LE MÊME froissé, donc *le pli ne s'arrête pas net à la
+déchirure* et la bande qui s'envole est faite du même film. Il est mis au carré
+par le rapport, sans quoi les plis seraient étirés deux fois en hauteur.
+
+**ET LE SACHET SE BALANCE TANT QU'ON NE L'A PAS DÉCHIRÉ.** *Au doigt il n'y a
+pas de survol* — donc sans ce balancement, sur téléphone, le sachet serait un
+sachet brillant qui ne brille jamais. **Il respirait déjà ; on lui ajoute une
+inclinaison, qui est le même geste**, et c'est elle que la lumière lit. Deux
+périodes qui ne retombent jamais en phase, comme la respiration des créatures :
+*un balancement régulier se lit comme une mécanique.*
+
+**ET LE NUANCEUR LIT LE PENCHANT RÉEL, pas sa cible** : une lumière qui
+arriverait avant l'objet qu'elle éclaire se lirait comme un décalage, et
+l'amortissement est précisément ce qui donne son poids au geste.
+
+#### LE RÉGLAGE S'EST FAIT EN DEUX PASSES, ET LA PREMIÈRE DISAIT DU MÉTAL BROSSÉ
+
+*Mesuré à l'écran* : à six fois l'échelle et ±20 % d'ombre, le froissé donnait
+cent cinquante crêtes en travers du sachet — **ça ne se lisait plus comme du
+film, mais comme une hachure**, et le pointillé de la déchirure s'y noyait.
+
+***UN PLI DE SACHET EST GRAND.*** Il en tient quelques-uns dans une largeur, pas
+cent : l'échelle tombe à 2,1, l'ombre à ±10 %, le relief de la normale de 2,6 à
+1,5. **Ce qui doit rester visible, c'est l'imprimé** ; la matière se sent, elle
+ne se regarde pas.
+
 #### CE QUI RESTE À TRANCHER PAR KEKO — le sachet
 
 - **l'éventail** : trois faces, leurs trois crans et leurs trois emoji
@@ -1731,7 +1791,12 @@ MATIÈRE de l'ouverture qui change**, et elle disait un incendie :
 - **« 5 CARTES »** est la seule phrase du sachet. *Le projet n'a pas de nom
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la force des confettis et leur nombre** : *une gerbe ne se juge qu'en
-  ouvrant des paquets.*
+  ouvrant des paquets* ;
+- **la finesse des plis** (échelle 2,1), **leur profondeur** (±10 % d'ombre,
+  1,5 de relief) et **la vivacité du reflet** (deux lobes, 34 et 5) : *une
+  matière ne se juge qu'en inclinant l'objet* ;
+- **le balancement de repos** (5,5 et 8,5 centièmes de radian, sur deux
+  périodes) : c'est lui qui fait vivre le reflet là où il n'y a pas de survol.
 
 ### CE QUI RESTE À TRANCHER PAR KEKO — les emoji
 

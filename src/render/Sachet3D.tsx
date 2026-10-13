@@ -124,6 +124,39 @@ const VIDE = (() => {
  * voir : les deux bords sont le même trait.
  */
 const DECHIRURE = `
+/**
+ * LE FROISSÉ DU FILM — et c'est ce qui fait un SACHET plutôt qu'une image de
+ * sachet.
+ *
+ * Keko : « dans lexicodex le paquet a une texture vraiment paquet, y'a des
+ * petits plis et une vraie lumière, comme si le paquet avait la vraie matière
+ * brillante ». ***Et c'est une MATIÈRE, pas un dessin*** : un pli imprimé dans
+ * la texture serait toujours éclairé du même côté, donc il se lirait comme une
+ * tache. **Un pli n'existe que parce que la lumière le trouve.**
+ *
+ * **DES ARÊTES, PAS DES VAGUES.** La valeur absolue replie chaque sinus sur
+ * lui-même, donc
+ * il a un minimum ANGULEUX — *une somme de sinus nus donne une tôle ondulée,
+ * une somme de sinus repliés donne du papier froissé.*
+ *
+ * **ET LE DOMAINE EST TORDU AVANT D'ÊTRE LU** : sans ça les crêtes
+ * restent parallèles et on lit une trame. *Deux sinus qui déplacent les
+ * coordonnées des autres suffisent à casser la régularité* — c'est le moteur du
+ * grain, pris par l'autre bout.
+ *
+ * **LES PLIS SONT PLUS SERRÉS EN X QU'EN Y**, parce qu'un sachet se froisse
+ * dans le sens de sa longueur : il est pincé par ses deux soudures, donc ce qui
+ * travaille est sa largeur.
+ */
+float froisse(vec2 q) {
+  vec2 g = q + vec2(sin(q.y * 3.1 + 0.7), sin(q.x * 2.7 + 2.1)) * 0.32;
+  float a = abs(sin(g.x * 8.3 + g.y * 2.1));
+  float b = abs(sin(g.x * -5.1 + g.y * 4.3 + 1.3));
+  float c = abs(sin(g.x * 14.7 + g.y * -7.9 + 2.7));
+  float d = abs(sin(g.x * 26.1 + g.y * 13.3 + 4.1));
+  return a * 0.40 + b * 0.28 + c * 0.20 + d * 0.12;
+}
+
 float ondule(float x) {
   // ELLE N'EST PAS DROITE, et c'est une somme de sinus plutôt qu'un hachage :
   // *un bruit par pixel donne une dentelure, une somme de sinus donne une
@@ -163,7 +196,11 @@ function matiereDuMorceau(estLeCorps: boolean): THREE.ShaderMaterial {
       // LE LUSTRE DU SURVOL : où le curseur se pose sur la DIAGONALE du
       // sachet, et combien il éclaire. *Deux morceaux qui calculeraient
       // chacun la leur montreraient deux reflets décalés au raccord.*
-      uCurseur: { value: 0 },
+      // **CE QUE LE SACHET PENCHE**, en radians (x, y). *La lumière ne bouge
+      // pas, c'est l'objet qui tourne sous elle* — et c'est la seule façon
+      // d'avoir un reflet qui se comporte comme une matière : un lustre
+      // piloté par la position du curseur reste un dessin qu'on promène.
+      uPenche: { value: new THREE.Vector2() },
       uSurvol: { value: 0 },
     },
     vertexShader: `varying vec2 vUv;
@@ -177,13 +214,39 @@ uniform float uV1;
 uniform float uFront;
 uniform float uTemps;
 uniform float uFondu;
-uniform float uCurseur;
+uniform vec2 uPenche;
 uniform float uSurvol;
 varying vec2 vUv;
 ${DECHIRURE}
 
 void main() {
-  vec4 tex = texture2D(uSachet, vec2(vUv.x, mix(uV0, uV1, vUv.y)));
+  // LE REPÈRE DU SACHET ENTIER, pas celui du morceau : *les deux doivent
+  // porter LE MÊME froissé*, sinon le pli s'arrête net à la déchirure et la
+  // bande qui s'envole n'est plus faite du même film. Et il est mis au carré
+  // par le rapport, sans quoi les plis seraient étirés deux fois en hauteur.
+  vec2 sach = vec2(vUv.x, mix(uV0, uV1, vUv.y));
+  vec4 tex = texture2D(uSachet, sach);
+
+  vec2 q = vec2(sach.x, sach.y * ${RAPPORT_SACHET.toFixed(3)}) * 2.1;
+  // LA NORMALE SORT DU CHAMP PAR DIFFÉRENCES FINIES : on n'a pas de carte de
+  // normales, et on n'en veut pas — *une texture de plis serait figée, celle-ci
+  // se calcule et ne coûte pas un octet.*
+  float e = 0.035;
+  float hx = froisse(q + vec2(e, 0.0)) - froisse(q - vec2(e, 0.0));
+  float hy = froisse(q + vec2(0.0, e)) - froisse(q - vec2(0.0, e));
+  vec3 N = normalize(vec3(-hx * 1.5, -hy * 1.5, 1.0));
+
+  // LA LUMIÈRE VIENT DU HAUT-GAUCHE, comme partout dans ce jeu — et c'est
+  // L'OBJET QUI TOURNE SOUS ELLE : le penchant du sachet se retranche de la
+  // direction, donc le reflet court sur les plis dès qu'on l'incline.
+  vec3 L = normalize(vec3(-0.42 + uPenche.y * 2.4, 0.58 + uPenche.x * 2.4, 0.78));
+  vec3 H = normalize(L + vec3(0.0, 0.0, 1.0));
+
+  // L'OMBRE DES PLIS : elle module l'IMPRIMÉ lui-même. *C'est elle qui dit que
+  // le dessin est posé sur quelque chose de froissé* — sans elle, le reflet
+  // flotterait au-dessus d'une image plate.
+  float diff = dot(N, L) * 0.5 + 0.5;
+  tex.rgb *= 0.90 + 0.20 * diff;
 
   // CE QUI SE MESURE LE LONG DU BORD SE COMPTE EN PARTS DU SACHET, PAS DU
   // MORCEAU. Les deux n'ont pas la même hauteur — la bande n'en fait que
@@ -218,13 +281,18 @@ void main() {
   float arrache = (1.0 - smoothstep(0.0, ${CHARBON} * ech, dedans)) * passe;
   vec3 corps = mix(tex.rgb, vec3(1.0, 0.98, 0.94), arrache * 0.72);
 
-  // LE LUSTRE : une bande claire posée SOUS le curseur, le long de la
-  // diagonale — c'est ce qui fait lire du FILM plutôt qu'une image plate dès
-  // que le sachet s'incline. Il se mesure dans le repère du SACHET, que
-  // \`mix(uV0, uV1, vUv.y)\` donne déjà. *Discret* : un lustre qui délave son
-  // dessin cesse d'être une matière et devient un voile.
-  float diag = (vUv.x + mix(uV0, uV1, vUv.y)) * 0.5;
-  corps += vec3(1.0, 0.94, 0.80) * exp(-pow((diag - uCurseur) / 0.11, 2.0)) * uSurvol * 0.2;
+  // LE SPÉCULAIRE : **c'est lui le « brillant » d'un sachet**, et il remplace
+  // la bande de lustre qui courait sous le curseur. *Une bande posée sur une
+  // diagonale est un dessin qu'on promène* ; celui-ci est calculé sur la
+  // normale des plis, donc il s'accroche aux crêtes et saute les creux —
+  // exactement ce que fait du mylar.
+  //
+  // **DEUX LOBES, et ils ne font pas le même travail** : un SERRÉ qui donne les
+  // éclats sur les arêtes, un LARGE qui donne le satiné du reste. *Le serré
+  // seul se lit comme des paillettes, le large seul comme du plastique mat.*
+  float sp = pow(max(dot(N, H), 0.0), 34.0);
+  float satin = pow(max(dot(N, H), 0.0), 5.0);
+  corps += vec3(1.0, 0.97, 0.90) * (sp * (0.34 + uSurvol * 0.30) + satin * 0.06);
 
   // L'ÉCLAT : une bande étroite au front, qui FRÉMIT. *Ce n'est plus une
   // braise* — elle allait de l'or chaud au blanc, c'est-à-dire un dégradé de
@@ -455,17 +523,31 @@ export function Sachet3D({
     feu.current += ((vu ? 1 : 0) - feu.current) * k
     const r = relief.current
     if (r !== null) {
-      const cibleX = vu ? -curseur.current.y * PENCHE : 0
-      const cibleY = vu ? curseur.current.x * PENCHE * 1.3 : 0
+      /**
+       * IL SE BALANCE TANT QU'ON NE L'A PAS DÉCHIRÉ, et ce n'est pas une
+       * coquetterie : **le reflet du film ne vit que si l'objet bouge.**
+       *
+       * *Au doigt il n'y a pas de survol* — donc sans ce balancement le sachet
+       * serait, sur téléphone, un sachet brillant qui ne brille jamais. Il
+       * respirait déjà ; **on lui ajoute une inclinaison, qui est le même
+       * geste**, et c'est elle que la lumière lit.
+       *
+       * **Deux périodes qui ne retombent jamais en phase**, comme la
+       * respiration des créatures : *un balancement régulier se lit comme une
+       * mécanique.*
+       */
+      const berce = file.current ? 0 : 1 - feu.current
+      const cibleX = (vu ? -curseur.current.y * PENCHE : 0) + Math.sin(t * 0.62) * 0.055 * berce
+      const cibleY = (vu ? curseur.current.x * PENCHE * 1.3 : 0) + Math.sin(t * 0.9) * 0.085 * berce
       r.rotation.x += (cibleX - r.rotation.x) * k
       r.rotation.y += (cibleY - r.rotation.y) * k
       r.position.z += (taille * AVANCEE * feu.current - r.position.z) * k
+      // LE NUANCEUR LIT LE PENCHANT RÉEL, pas sa cible : *une lumière qui
+      // arriverait avant l'objet qu'elle éclaire se lirait comme un décalage*,
+      // et l'amortissement est précisément ce qui donne son poids au geste.
+      corps.uniforms.uPenche!.value.set(r.rotation.x, r.rotation.y)
+      bandeMat.uniforms.uPenche!.value.set(r.rotation.x, r.rotation.y)
     }
-    // LE LUSTRE SE POSE SOUS LE CURSEUR, dans le repère du SACHET — la
-    // diagonale `(x + y) / 2`, exactement comme sur une carte.
-    const diag = 0.5 * (curseur.current.x + 0.5) + 0.5 * (curseur.current.y + 0.5)
-    corps.uniforms.uCurseur!.value = diag
-    bandeMat.uniforms.uCurseur!.value = diag
     corps.uniforms.uSurvol!.value = feu.current
     bandeMat.uniforms.uSurvol!.value = feu.current
 
