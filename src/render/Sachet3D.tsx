@@ -162,6 +162,12 @@ const SOURCES: ReadonlyArray<{
   readonly couleur: readonly [number, number, number]
   readonly force: number
 }> = [
+  // ***LES FORCES AUSSI SONT RELEVÉES, et elles ne l'étaient pas.*** J'avais pris
+  // leurs directions et leurs couleurs puis CHOISI les intensités — 0,52 contre
+  // 0,40 au cyan, donc une clé à peine plus forte que son accent. **Chez eux le
+  // rapport est de 2,4 à 1** (dalle blanche 2,4 contre 1,04 de luminance au
+  // cyan), et c'est ce qui tient la hiérarchie : *un accent qui pèse autant que
+  // la clé ne l'accompagne plus, il la contredit.*
   // la clé, blanche : c'est elle qui modèle le ventre et porte le lustre
   // LA CLÉ, blanche : elle modèle le ventre, porte le lustre et allume les
   // éclats des plis. **SA DIRECTION EST À 45° DANS LE PLAN DE L'ÉCRAN** — c'est
@@ -169,11 +175,11 @@ const SOURCES: ReadonlyArray<{
   // de 36°, donc le flanc du HAUT prenait tout et celui de GAUCHE rien.
   { dir: [-0.492, 0.492, 0.719], couleur: [1, 1, 1], force: 0.52 },
   // le cyan, à droite — la plus haute de leurs dalles
-  { dir: [0.949, 0, 0.316], couleur: [0.29, 0.86, 1], force: 0.4 },
+  { dir: [0.949, 0, 0.316], couleur: [0.29, 0.86, 1], force: 0.226 },
   // le rose, en bas à gauche
-  { dir: [-0.491, -0.655, 0.573], couleur: [1, 0.37, 0.53], force: 0.3 },
+  { dir: [-0.491, -0.655, 0.573], couleur: [1, 0.37, 0.53], force: 0.167 },
   // le violet, en bas à droite
-  { dir: [0.594, -0.446, 0.669], couleur: [0.5, 0.44, 1], force: 0.3 },
+  { dir: [0.594, -0.446, 0.669], couleur: [0.5, 0.44, 1], force: 0.17 },
 ]
 
 /** Le serré du lobe de chaque source. *Leur rugosité de 0,38 est un lobe net.* */

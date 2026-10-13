@@ -2047,6 +2047,61 @@ c'est une règle : un exposant élevé transforme un écart de quelques pour cen
 un écart du simple au double. *Chercher un défaut de lumière dans le terme le
 plus doux est une fausse piste.*
 
+#### ET LE CÔTÉ DROIT GAGNAIT QUAND MÊME : les FORCES n'étaient pas relevées
+
+Keko, après la correction d'angle : **« c'est bizarre, le côté droit semble
+recevoir plus de lumière que le gauche — normalement le sombre devrait être côté
+droit / bas, et la lumière frapper le haut / gauche ? »**
+
+***ET IL AVAIT RAISON, MAIS PAS SUR UNE IMAGE FIXE.*** Mesuré sur les pixels
+d'une capture, la gauche l'emporte largement (76 contre 53 de luminance). **Le
+défaut est dans le BALANCEMENT** : le penchant de repos s'ajoute à la direction
+des lampes avec un facteur 2,4, donc l'angle de la clé oscille entre **26° et
+58°** — un balayage de trente-deux degrés, c'est-à-dire plus que l'écart entre
+« du haut » et « du haut-gauche ».
+
+Mesuré sur le cycle complet, au pire instant :
+
+| | rapport gauche / droite |
+|---|---|
+| **avant** | **1,05** — *à égalité* |
+| après | **1,83** |
+
+*Un rapport de 1,05 se lit comme un renversement*, d'autant que les deux bords ne
+se présentent pas pareil : **la clé allume le COIN haut-gauche** — son éclat est
+concentré — pendant que **le cyan, dont la direction a zéro en y, allume le bord
+droit sur TOUTE sa hauteur.** À intensité comparable, une bande uniforme pèse
+plus qu'un point chaud : *l'oeil compare des surfaces, pas des pics.*
+
+#### CE QUI L'A CAUSÉ EST UNE DEMI-MESURE DE MA PART
+
+J'avais écrit « les directions et les couleurs sont les leurs, normalisées — on
+ne choisit rien, on relève ». ***Les FORCES, elles, étaient de moi*** : 0,52 pour
+la clé contre 0,40 au cyan, soit une clé à peine plus forte que son accent.
+
+**Chez eux le rapport est de 2,4 à 1**, et il se relève comme le reste — c'est la
+luminance de leurs dalles :
+
+| dalle | luminance | rapport | **force** |
+|---|---|---|---|
+| la clé, blanche | 2,40 | 1,000 | **0,52** |
+| le cyan | 1,04 | 0,435 | **0,226** |
+| le rose | 0,77 | 0,321 | **0,167** |
+| le violet | 0,79 | 0,328 | **0,170** |
+
+***Un accent qui pèse autant que la clé ne l'accompagne plus, il la
+contredit.*** Et la couleur ne s'y perd pas : *un accent se voit parce qu'il est
+le seul de sa teinte, pas parce qu'il est fort.*
+
+#### ET UNE CAPTURE D'UN OBJET QUI SE BALANCE NE SE COMPARE PAS À UNE AUTRE
+
+*Deux captures prises à deux instants du balancement donnent deux éclairages* —
+mesuré, le même bord passe de 64 à 53 de luminance sans qu'on ait touché à rien.
+**La mesure qui tranche est le balayage du CYCLE, rejoué hors navigateur**, et
+c'est elle qui a montré que l'écart tombait à 1,05 pendant une partie du
+balancement. *Une capture dit ce qui se voit à un instant, elle ne dit rien d'un
+objet qui bouge.*
+
 #### ET LA CLÉ N'EST PLUS ÉCRITE DEUX FOIS
 
 Elle avait sa direction en dur dans le nuanceur **et** une autre dans la table
@@ -2431,8 +2486,9 @@ la même place se désaccorderaient au premier réglage.*
 - **la métallicité du film** (0,70, relevée chez eux) : c'est elle qui décide
   de combien le reflet prend la couleur du sachet. *À 0 il redevient blanc, à 1
   il n'a plus une once de lumière crue* ;
-- **les quatre sources et leurs forces** (clé 0,52, cyan 0,40, rose et violet
-  0,30), **le serré de leur lobe** (46) et **le gain du survol** (1,3) :
+- **les quatre sources** (clé 0,52, cyan 0,226, rose 0,167, violet 0,170 —
+  *leurs directions, leurs couleurs ET leur rapport d'intensité sont relevés chez
+  eux*), **le serré de leur lobe** (46) et **le gain du survol** (1,3) :
   *c'est le « flashy quand ça bouge »*, et il ne se juge qu'en inclinant.
   **La clé est à 45° de la verticale**, la diagonale du jeu ; les trois autres
   gardent leurs directions relevées chez eux, et *elles tirent un peu à droite* —
