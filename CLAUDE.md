@@ -2000,7 +2000,9 @@ ce qu'on voit bouger sur leur capture.
 **LES DIRECTIONS ET LES COULEURS SONT LES LEURS, normalisées** : on ne choisit
 rien, on relève. Et **le penchant s'applique aux quatre ensemble**, parce
 qu'*elles sont fixes dans la pièce et que c'est le sachet qui tourne* — une
-seule qui bougerait se lirait comme une lampe qu'on promène.
+seule qui bougerait se lirait comme une lampe qu'on promène. **Il les tourne
+dans le sens INVERSE de l'objet, et les deux axes n'ont pas le même signe** :
+voir plus bas, ça a coûté un bug qui ne se voyait qu'en inclinant.
 
 #### ET CE QUI FAIT « MATE » EST L'AMBIANT, PAS LE REFLET
 
@@ -2093,6 +2095,47 @@ sur 28 pixels contre 4.
 255 — *c'est le fond qui monte, pas le texte qui s'efface* — et la saturation du
 film ne perd que 4 %. La métallicité tient sa promesse : **un éclat de la
 couleur du sachet ne peut pas pousser le sachet vers le blanc.**
+
+#### LES LAMPES TOURNENT DANS LE SENS INVERSE DE L'OBJET — et un axe avait le mauvais signe
+
+Keko : **« pourquoi quand je bouge le paquet et qu'il s'oriente vers la droite
+il devient très lumineux, comme si la lumière venait de la droite ? »**
+
+***PARCE QU'ELLE EN VENAIT.*** Tout se calcule dans le repère du SACHET, donc
+une lampe fixe de la pièce y subit la rotation **INVERSE** de l'objet. Au
+premier ordre :
+
+| rotation de l'objet | ce que la lampe devient, dans son repère |
+|---|---|
+| **b autour de Y** (il se tourne à droite) | `L.x − L.z × b` — elle part à **GAUCHE** |
+| **a autour de X** (il se penche en arrière) | `L.y + L.z × a` — elle **MONTE** |
+
+***LES DEUX AXES N'ONT DONC PAS LE MÊME SIGNE***, et c'est tout le défaut : le
+x était ajouté comme le y. **La normale partait à droite et la lampe la
+suivait** — elles s'alignaient au lieu de s'écarter, donc le lobe en puissance
+26 explosait.
+
+**MESURÉ, LES DEUX PENCHANTS SE SONT EXACTEMENT ÉCHANGÉS** — c'est la preuve
+que ce n'était ni un réglage ni un cumul, mais un miroir :
+
+| | luminance | saturation | contraste du « Ouvrir ici » |
+|---|---|---|---|
+| **avant**, penché à gauche | 104,0 | 0,718 | 3,30 |
+| **avant**, penché à droite | 133,6 | 0,646 | **1,27** |
+| **après**, penché à gauche | 135,8 | 0,639 | 1,29 |
+| **après**, penché à droite | 103,9 | 0,720 | **3,29** |
+
+*Le sachet s'allume désormais du côté de sa lampe* — le haut-gauche que tout le
+projet respecte — et s'éteint de l'autre.
+
+**CE QUE LA SYMÉTRIE DU TABLEAU DIT AUSSI** : le pic reste très fort du côté
+où il s'allume, le texte y tombant à 1,29 de contraste. *C'est le même
+délavage qu'avant, simplement du bon côté* — à rejuger par Keko maintenant
+qu'il tombe là où l'oeil l'attend.
+
+***UN DÉFAUT DE SIGNE NE SE VOIT PAS EN POSITION NEUTRE*** : à penchant nul les
+deux versions sont identiques au pixel. Il fallait incliner, et le comparer aux
+DEUX bords.
 
 #### ET LE CÔTÉ DROIT GAGNAIT QUAND MÊME : les FORCES n'étaient pas relevées
 
