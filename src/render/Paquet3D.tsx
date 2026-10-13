@@ -21,6 +21,7 @@ import {
   AMBIANCE,
   ECHELLE_COULEUR,
   ECHELLE_METAL,
+  POCHE,
   RAPPORT_SACHET,
   type CarteAPeindre,
 } from './texture-carte.ts'
@@ -122,21 +123,6 @@ function tailleDeLaRangee(
  */
 function colonnesDuBilan(largeurVisible: number, hauteurVisible: number): number {
   return largeurVisible / hauteurVisible >= 1.15 ? CARTES_PAR_PAQUET : 3
-}
-
-/**
- * LA CARTE DU DÉFILÉ : seule au centre, aussi grande que la place le permet.
- *
- * *C'est tout l'intérêt de n'en montrer qu'une* — elle passe de 20 % à 55 % de
- * la largeur d'un téléphone en portrait, donc son illustration et son cartouche
- * se lisent sans qu'on ait à zoomer.
- *
- * **Les deux contraintes se valent ici**, à la différence de la rangée : en
- * portrait c'est la largeur qui borne, en paysage la hauteur. *La plus dure
- * gagne*, et c'est la même règle depuis le début.
- */
-function tailleDuDefile(largeurVisible: number, hauteurVisible: number): number {
-  return Math.min(largeurVisible * 0.78, (hauteurVisible * 0.58) / 1.4)
 }
 
 /**
@@ -622,8 +608,6 @@ export function Paquet3D(): React.ReactElement {
       Z_MAIN,
     ]
   }
-  /** La carte du défilé : seule au centre, et tant pis pour ses voisines. */
-  const grande = tailleDuDefile(lVisible, hVisible)
   /**
    * OÙ VA UNE CARTE, selon qu'elle est passée, à l'écran, ou encore dessous.
    *
@@ -649,8 +633,8 @@ export function Paquet3D(): React.ReactElement {
    * tourne.
    */
   function placeAuDefile(i: number): [number, number, number] {
-    if (i < montree) return [lVisible * 1.1, y, Z_MAIN]
-    return [0, y, Z_MAIN]
+    if (i < montree) return [lVisible * 1.1, 0, Z_DEDANS]
+    return [0, 0, Z_DEDANS]
   }
 
   /** Ce qu'une carte mesure au défilé : rien tant que son tour n'est pas venu. */
@@ -661,21 +645,47 @@ export function Paquet3D(): React.ReactElement {
   const lSachet = tailleDuSachet(lVisible, hVisible)
   const hSachet = lSachet * RAPPORT_SACHET
   /**
-   * UNE CARTE QUI SORT D'UNE POCHETTE NE PEUT PAS ETRE PLUS GRANDE QU'ELLE.
+   * LA PROFONDEUR DU DÉFILÉ : derrière le pire recul du sachet.
    *
-   * Les deux tailles se calculent sur la place et *la plus dure gagne* : sur
-   * un ecran court c'est la HAUTEUR qui borne les deux, et la carte de rangee
-   * y devient plus large que le sachet (0,44 de la hauteur visible contre
-   * 0,36). Elle ne se lisait donc pas comme ce qu'on tire du paquet, mais
-   * comme une carte posee derriere lui.
+   * Keko : « sur PC, quand je laisse le paquet bouger seul, on voit parfois un
+   * coin de dos de carte traverser le booster. » Le sachet se balance, donc son
+   * coin bas s'enfonce de `RECUL_DU_BAS` — *une rotation est une translation
+   * déguisée en profondeur*, la règle déjà payée sur le flip.
    *
-   * Elle est bornee a une part du sachet le temps d'y etre, et elle enfle en
-   * rejoignant la rangee : **`Carte3D` amortit sa taille**, donc il n'y a
-   * aucune animation a ecrire -- le chemin deja pris par la piece qu'on
-   * equipe a l'armurerie.
+   * ***ET LA CARTE Y RESTE JUSQU'AU BILAN, elle ne revient pas à `Z_MAIN`.***
+   * C'est ce qui lui permet de ne pas bouger d'un pixel pendant que le film
+   * descend : *un pas en z de 0,25 vaut 5 % de taille apparente*, donc le
+   * revenir devant serait exactement le « elle se fait grossir » qu'on retire.
+   * **Le sachet, lui, ne bouge pas** — on ne déplace pas ce que Keko a validé.
    */
-  const tailleDedans = Math.min(taille, lSachet * 0.6)
-
+  const Z_DEDANS = Z_MAIN - lSachet * RECUL_DU_BAS
+  /**
+   * LA CARTE DU DÉFILÉ EST LA CARTE DE LA POCHE, au pixel.
+   *
+   * Keko : **« il faut que la carte soit à la même taille et position que le
+   * relief à l'intérieur du booster, là elle apparaît petite et se fait
+   * grossir ; il faudrait que le booster glisse et révèle la carte »**.
+   *
+   * ***UNE CARTE QUI NE BOUGE PAS NE PEUT PAS GROSSIR, ET C'EST TOUT CE QU'IL
+   * Y AVAIT À FAIRE.*** Elle attendait à une taille à elle (`min(taille,
+   * 0,6 sachet)`) et c'est `Carte3D` qui l'amenait à sa taille de défilé —
+   * *l'amortissement était la bonne porte quand la carte MONTAIT par la fente,
+   * et il raconte le contraire depuis que c'est le film qui s'en va.*
+   *
+   * **LA POCHE EST LA SEULE TAILLE QU'UNE CARTE PUISSE AVOIR ICI** : c'est la
+   * boîte sur laquelle le ventre du sachet se bombe, donc le relief qu'on voit
+   * à travers le film EST le bord de cette carte. *Elle ne se choisit pas, elle
+   * se lit* (`POCHE`), et une retouche de la poche l'emmène avec elle.
+   *
+   * **ET ELLE SE CORRIGE DE LA PROFONDEUR**, parce que la carte attend DERRIÈRE
+   * le sachet : à taille de monde égale, un objet plus loin paraît plus petit —
+   * donc elle est plus large d'autant que le champ est plus large là où elle
+   * est. *Sans ce terme, la carte rentrerait de 5 % dans le relief.*
+   */
+  const grande =
+    lSachet *
+    (POCHE.demiX * 2) *
+    (hauteurVisibleA(Z_DEDANS, fenetre.h) / hVisible)
   /**
    * LA DERNIERE CARTE, tant qu'elle n'est pas retournee. *Elle ne s'annonce
    * que s'il y en a eu d'autres avant* : sur un paquet d'une seule carte, « la
@@ -817,36 +827,31 @@ export function Paquet3D(): React.ReactElement {
               culbute={culbuter ? (jetons[carte.id] ?? 0) : undefined}
               flip={!culbuter && !fini ? (jetons[carte.id] ?? 0) : undefined}
               developpe={culbuter || !fini ? undefined : (jetons[carte.id] ?? 0)}
-              // ELLE ATTEND DANS LE SACHET ET NE BOUGE PAS. Keko : « ce
-              // serait bien qu'à l'ouverture du booster, le paquet descende,
-              // laissant la carte derrière lui apparaître comme si on enlevait
-              // le paquet vers le bas ». *C'est donc le film qui révèle* : elle
-              // montait par la fente, elle se tient désormais immobile et le
-              // sachet s'en va. Les cinq sont superposées, ce qui est
-              // exactement ce qu'elles sont : une pile qu'on tire.
+              // ELLE EST DÉJÀ À SA PLACE DE DÉFILÉ, ET ELLE N'EN BOUGERA
+              // PLUS. Keko : « il faut que la carte soit à la même taille et
+              // position que le relief à l'intérieur du booster, là elle
+              // apparaît petite et se fait grossir ; il faudrait que le booster
+              // glisse et révèle la carte ».
               //
-              // TANT QU'ELLE EST CACHÉE, ELLE SE RANGE DERRIÈRE LE PIRE RECUL
-              // DU SACHET. Keko : « sur PC, quand je laisse le paquet bouger
-              // seul, on voit parfois un coin de dos de carte traverser le
-              // booster. » Le sachet se balance, donc son coin bas s'enfonce
-              // de `RECUL_DU_BAS` — mesuré, 0,085 largeur au repos seul, quand
-              // l'écart n'était que de 0,06 en absolu. *Une rotation est une
-              // translation déguisée en profondeur*, la règle déjà payée sur
-              // le flip du défilé.
+              // ***C'EST LA POCHE DU SACHET, ET LA POCHE EST CENTRÉE SUR LUI***
+              // (`POCHE.centreY` vaut 0,5) — donc la carte attend au centre du
+              // film, à la taille du relief qu'on voit bomber à travers. **La
+              // place avant et la place après sont le MÊME point**, et il n'y a
+              // donc rien à animer : le film descend, la carte était déjà là.
               //
-              // ET UNE CARTE CACHÉE PEUT ÊTRE AUSSI LOIN QU'ON VEUT : elle
-              // n'est là que pour compiler son nuanceur, et sa toile se choisit
-              // sur `tailleTexture`, pas sur sa distance. **Elle y reste jusqu'au
-              // bout** — le film descend DEVANT elle, donc le recul la couvre
-              // aussi longtemps qu'il passe.
-              position={
-                !ouvert
-                  ? [0, hSachet * -0.12, Z_MAIN - lSachet * RECUL_DU_BAS]
-                  : fini
-                    ? placeAuBilan(i)
-                    : placeAuDefile(i)
-              }
-              taille={!ouvert ? tailleDedans : fini ? taille : tailleAuDefile(i)}
+              // ELLE EST DERRIÈRE LE PIRE RECUL DU SACHET (`Z_DEDANS`), et elle
+              // y reste jusqu'au bilan : *le film descend DEVANT elle*, donc le
+              // recul la couvre aussi longtemps qu'il passe — et la ramener à
+              // `Z_MAIN` la ferait grossir de 5 %, c'est-à-dire exactement ce
+              // qu'on retire.
+              position={fini ? placeAuBilan(i) : placeAuDefile(i)}
+              // LES CINQ SONT À LA TAILLE DE LA POCHE TANT QUE LE SACHET EST
+              // LÀ, superposées — *ce qui est exactement ce qu'elles sont : une
+              // pile qu'on tire* — et c'est ce qui fait compiler leurs cinq
+              // nuanceurs pendant qu'il se balance. Les quatre suivantes
+              // retombent à zéro une fois le défilé lancé, **derrière celle
+              // qu'on regarde et à sa taille**, donc ça ne se voit pas.
+              taille={!ouvert ? grande : fini ? taille : tailleAuDefile(i)}
               // ON PEINT UNE FOIS, À LA PLUS GRANDE TAILLE QU'ELLE ATTEINDRA.
               // Sans ça, les quatre suivantes — qui attendent à taille ZÉRO —
               // peignent sur la plus petite toile du jeu puis repeignent en

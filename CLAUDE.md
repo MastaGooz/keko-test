@@ -1486,9 +1486,10 @@ et *aucune n'a de moment à elle.*
 #### UNE À LA FOIS, C'EST UN CHANGEMENT DE TEMPS, PAS DE MISE EN PAGE
 
 **Chaque carte a son instant**, et c'est tout ce qu'un paquet a à vendre. Ce que
-ça achète, mesuré : la carte passe de 20 % à **55 % de la largeur** d'un
+ça achète, mesuré : la carte passe de 20 % à **47 % de la largeur** d'un
 téléphone en portrait — *son illustration et son cartouche se lisent sans qu'on
-ait à zoomer.*
+ait à zoomer.* (**55 % jusqu'à ce qu'elle se cale sur la poche du sachet** :
+voir plus bas.)
 
 **UN SEUL GESTE FAIT TOUT AVANCER** : retourner, puis passer à la suivante. *On
 ne demande jamais au joueur de choisir entre deux actions, on lui demande de
@@ -1738,19 +1739,57 @@ Quatre choses à ne pas défaire :
 - **ELLE ACCÉLÈRE** (`pv^1,7`). *Une pochette qu'on retire amorce, puis file* ;
   une rampe droite se lirait comme un panneau qui glisse.
 
-#### ET C'EST LE PORTRAIT QUI DISAIT QUELLE CARTE MONTRER
+#### ET LA CARTE DU DÉFILÉ EST LA CARTE DE LA POCHE
 
-*Au défilé, la carte est PLUS GRANDE que le sachet* — mesuré à 390 x 844,
-1,36 x 1,90 contre 1,04 x 1,60 — donc **elle ne peut pas se cacher derrière lui
-à sa taille finale.** La lecture littérale — une carte déjà prête qu'on
-déshabille — était impossible là où le jeu se joue.
+Keko, en voyant la descente : **« il faut que la carte soit à la même taille et
+position que le relief à l'intérieur du booster, là elle apparaît petite et se
+fait grossir ; il faudrait que le booster glisse et révèle la carte — il va
+falloir réduire un peu la taille de la carte d'ailleurs pour qu'elle match le
+booster »**.
 
-**ELLE RESTE DONC À SA TAILLE DE DEDANS** (bornée à 0,6 largeur de sachet) tant
-que le film est là, et c'est l'amortissement de `Carte3D` qui la porte à sa
-taille de défilé une fois le sachet démonté — *au même instant, puisque le film
-quitte le cadre pile à `pv = 1`.* **Il n'y a aucune animation à écrire**, et la
-grossir pendant la descente aurait fait sortir ses flancs de derrière le sachet
-avant que le bas ne soit découvert.
+***UNE CARTE QUI NE BOUGE PAS NE PEUT PAS GROSSIR, ET C'EST TOUT CE QU'IL Y
+AVAIT À FAIRE.*** Elle attendait à une taille à elle — `min(taille, 0,6 largeur
+de sachet)` — et c'est l'amortissement de `Carte3D` qui l'amenait à sa taille de
+défilé une fois le film démonté. *C'était la bonne porte tant que la carte
+MONTAIT par la fente* ; **depuis que c'est le film qui s'en va, l'amortissement
+raconte le contraire de ce qu'on montre** — on retire une pochette et ce qu'il y
+avait dedans enfle.
+
+#### LA POCHE EST LA SEULE TAILLE QU'UNE CARTE PUISSE AVOIR ICI
+
+*Elle ne se choisit pas, elle se lit* (`POCHE`) : c'est la boîte sur laquelle le
+ventre du sachet se bombe, donc **le relief qu'on voit à travers le film EST le
+bord de cette carte** — et elle est centrée sur le sachet entier
+(`POCHE.centreY = 0,5`), donc la place avant et la place après sont le MÊME
+point. ***Il n'y a plus rien à animer du tout.***
+
+**ET ELLE SE CORRIGE DE LA PROFONDEUR.** La carte attend DERRIÈRE le sachet
+(`Z_DEDANS`, le pire recul de son balancement) et **elle y reste jusqu'au
+bilan** : *un pas en z de 0,25 vaut 5 % de taille apparente*, donc la ramener
+devant serait exactement le « elle se fait grossir » qu'on retire. À taille de
+monde égale un objet plus loin paraît plus petit, donc elle est plus large
+d'autant que le champ est plus large là où elle est — **sans ce terme elle
+rentrerait de 5 % dans le relief.** *Le sachet, lui, ne bouge pas d'un pixel :
+on ne déplace pas ce que Keko a validé.*
+
+**LE PRIX EST CONNU, ET IL EST GROS EN PORTRAIT** :
+
+| | avant | après | |
+|---|---|---|---|
+| **390 x 844** | 1,356 | **0,814** | **−40 %** |
+| 844 x 390 | 1,558 | **1,300** | −17 % |
+
+*La carte passe de 78 % à 47 % de la largeur d'un téléphone debout* — vérifié à
+l'écran, le nom et le cartouche restent lisibles. **Le levier, si elle paraît
+trop petite, est la taille du SACHET** (`tailleDuSachet`, 0,6 de la largeur) :
+la carte en est désormais une fraction fixe, donc *grossir la pochette grossit
+la carte dans le même rapport* — et il n'y a plus deux tailles à accorder.
+
+**ET LE PLAFOND DE LA CULBUTE TOMBE AVEC `tailleDuDefile`** : la carte vaut
+maintenant 0,48 de la hauteur visible au plus, donc son enflure de moitié tient
+dans le cadre sans qu'on ait à la borner. *Le raisonnement reste écrit juste en
+dessous* — c'est lui qui dit pourquoi il faudrait la reposer le jour où la carte
+cesserait d'être bornée par le sachet.
 
 #### LE BOUTON DISPARAÎT, ET « TOUT RÉVÉLER » AVEC LUI
 
@@ -1780,10 +1819,16 @@ réglage validé sur une carte de coffre, *qui explose sur une carte qui occupe
 déjà les trois quarts de l'écran.* En paysage elle sortait du cadre par le haut
 et par le bas.
 
-**La taille du défilé est donc bornée à 58 % de la hauteur**, et ça ne coûte
-rien en portrait : **c'est la LARGEUR qui y commande** (78 %), donc le format
-visé ne bouge pas d'un pixel. *Un plafond posé pour une orientation se mesure
-dans l'autre.*
+**La taille du défilé était donc bornée à 58 % de la hauteur**, et ça ne
+coûtait rien en portrait : **c'est la LARGEUR qui y commandait** (78 %), donc le
+format visé ne bougeait pas d'un pixel. *Un plafond posé pour une orientation se
+mesure dans l'autre.*
+
+***LES DEUX BORNES SONT TOMBÉES AVEC `tailleDuDefile`***, le jour où la carte
+s'est calée sur la poche du sachet : elle ne vaut plus que 0,48 de la hauteur
+visible, donc la culbute tient d'elle-même. **Le raisonnement reste écrit parce
+que c'est lui qui dit ce qu'il faudrait reposer** le jour où la carte du défilé
+cesserait d'être une fraction du sachet.
 
 #### LE SACHET GROSSIT EN PORTRAIT
 
@@ -3651,6 +3696,10 @@ la même place se désaccorderaient au premier réglage.*
   l'arrachement) : *c'est elle qui découvre la carte*, et sa course n'est pas un
   réglage — elle vaut ce qu'il faut pour quitter le cadre. **Ne restent que sa
   COURBE et le moment où elle commence** ;
+- **la taille du sachet décide désormais de celle de la CARTE** : elle vaut la
+  poche (78 % de sa largeur), donc *grossir la pochette grossit la carte dans le
+  même rapport.* **En portrait la carte a perdu 40 %** en se calant dessus — à
+  rejuger en ouvrant un paquet au doigt ;
 - **le balancement de repos** (5,5 et 8,5 centièmes de radian, sur deux
   périodes) : c'est lui qui fait vivre le reflet là où rien ne touche le
   sachet. ***Il décide AUSSI de combien les cartes cachées se rangent
