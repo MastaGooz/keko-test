@@ -322,21 +322,6 @@ export function Paquet3D(): React.ReactElement {
   /** Il brûle : la tape est passée, et il n'y a plus à y revenir. */
   const [brule, setBrule] = useState(false)
   /**
-   * OÙ EN SONT LES CARTES DANS LEUR SORTIE : 0 dedans, 1 nées au fond du
-   * sachet, 2 montées hors de la fente.
-   *
-   * **C'est ce qui leur donne une PROVENANCE.** Elles apparaissaient en rangée
-   * d'un seul coup, donc le sachet ne servait à rien : *on l'ouvrait, et les
-   * cartes venaient d'ailleurs.* Elles naissent maintenant DERRIÈRE le corps
-   * du sachet et montent par la fente — c'est l'amortissement de `Carte3D`
-   * qui fait le trajet, il n'y a aucune animation à écrire.
-   *
-   * **Il lui faut trois crans et pas deux** : une carte naît à la position
-   * qu'on lui donne, donc tant qu'on ne la change pas elle ne bouge pas. Le
-   * premier cran la pose au fond, le second lui donne sa cible.
-   */
-  const [sortie, setSortie] = useState(nu ? 2 : 0)
-  /**
    * QUELLE CARTE EST SOUS LES YEUX, et si le défilé est terminé.
    *
    * Keko : « je voudrais qu'on ait une ouverture de booster plus proche de
@@ -551,7 +536,6 @@ export function Paquet3D(): React.ReactElement {
     cancelAnimationFrame(image.current)
     setOuvert(nu)
     setBrule(false)
-    setSortie(nu ? 2 : 0)
     setRevelees(new Set())
     setMontree(0)
     setFini(false)
@@ -767,17 +751,17 @@ export function Paquet3D(): React.ReactElement {
             key={numero}
             taille={lSachet}
             position={[0, 0, Z_MAIN]}
+            // CE QU'IL FAUT POUR QU'IL QUITTE LE CADRE : la demi-hauteur du
+            // champ plus la sienne. *Le sachet ne connait pas le champ
+            // visible*, donc c'est l'ecran qui la lui donne -- la regle du Z
+            // qui se calcule.
+            descente={hVisible / 2 + hSachet / 2}
             ouvre={brule}
             onOuvrir={() => setBrule(true)}
-            onDechire={() => {
-              // L'ARRACHEMENT : le flash, puis les cartes naissent au fond du
-              // sachet. *Ce qui sort doit être là avant de sortir* — une image
-              // les pose, la suivante leur donne leur cible, et
-              // l'amortissement fait le trajet.
-              setFlash((f) => f + 1)
-              setSortie(1)
-              setTimeout(() => setSortie(2), 40)
-            }}
+            // L'ARRACHEMENT : le flash, et rien d'autre. *La carte ne bouge
+            // plus* — c'est le film qui descend et la découvre, donc il n'y a
+            // plus ni émergence à déclencher ni image à attendre.
+            onDechire={() => setFlash((f) => f + 1)}
             onOuvert={() => setOuvert(true)}
           />
         )}
@@ -806,11 +790,10 @@ export function Paquet3D(): React.ReactElement {
           démarrage parce qu'une image qui arrive au moment où on la montre
           arrive trop tard.
 
-          **ET ELLES NE BOUGENT PAS D'UN PIXEL EN SORTANT** : leur place ne
-          lit `sortie` que pour passer de `-0,12` à `0,3`, ce qui EST
-          l'émergence. *Une carte qui n'est pas encore sortie est déjà là,
-          elle est simplement cachée* — exactement ce que le défilé fait déjà
-          des suivantes, à taille zéro.
+          **ET ELLES NE BOUGENT PAS D'UN PIXEL, MÊME EN SORTANT** : c'est le
+          film qui descend et les découvre. *Une carte qui n'est pas encore
+          sortie est déjà là, elle est simplement cachée* — exactement ce que
+          le défilé fait déjà des suivantes, à taille zéro.
         */}
         {aPeindre.map((carte, i) => {
           const vue = revelees.has(carte.id)
@@ -834,11 +817,13 @@ export function Paquet3D(): React.ReactElement {
               culbute={culbuter ? (jetons[carte.id] ?? 0) : undefined}
               flip={!culbuter && !fini ? (jetons[carte.id] ?? 0) : undefined}
               developpe={culbuter || !fini ? undefined : (jetons[carte.id] ?? 0)}
-              // ELLE SORT DU SACHET AVANT DE REJOINDRE SA PLACE. *Derrière le
-              // corps en z*, donc on la voit émerger par la fente plutôt
-              // qu'apparaître devant la pochette — et les cinq sont
-              // superposées, ce qui est exactement ce qu'elles sont : une
-              // pile qu'on tire.
+              // ELLE ATTEND DANS LE SACHET ET NE BOUGE PAS. Keko : « ce
+              // serait bien qu'à l'ouverture du booster, le paquet descende,
+              // laissant la carte derrière lui apparaître comme si on enlevait
+              // le paquet vers le bas ». *C'est donc le film qui révèle* : elle
+              // montait par la fente, elle se tient désormais immobile et le
+              // sachet s'en va. Les cinq sont superposées, ce qui est
+              // exactement ce qu'elles sont : une pile qu'on tire.
               //
               // TANT QU'ELLE EST CACHÉE, ELLE SE RANGE DERRIÈRE LE PIRE RECUL
               // DU SACHET. Keko : « sur PC, quand je laisse le paquet bouger
@@ -851,14 +836,12 @@ export function Paquet3D(): React.ReactElement {
               //
               // ET UNE CARTE CACHÉE PEUT ÊTRE AUSSI LOIN QU'ON VEUT : elle
               // n'est là que pour compiler son nuanceur, et sa toile se choisit
-              // sur `tailleTexture`, pas sur sa distance. **Elle reprend sa
-              // place dès qu'elle ÉMERGE** — à ce moment c'est le HAUT du
-              // sachet qui s'avance, donc il n'y a plus rien à couvrir.
+              // sur `tailleTexture`, pas sur sa distance. **Elle y reste jusqu'au
+              // bout** — le film descend DEVANT elle, donc le recul la couvre
+              // aussi longtemps qu'il passe.
               position={
                 !ouvert
-                  ? sortie > 1
-                    ? [0, hSachet * 0.3, Z_MAIN - 0.06]
-                    : [0, hSachet * -0.12, Z_MAIN - lSachet * RECUL_DU_BAS]
+                  ? [0, hSachet * -0.12, Z_MAIN - lSachet * RECUL_DU_BAS]
                   : fini
                     ? placeAuBilan(i)
                     : placeAuDefile(i)

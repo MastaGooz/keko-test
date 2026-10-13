@@ -1701,6 +1701,57 @@ se repeint de tout le défilé.**
 de la compilation, ne passe aucune image au-dessus de 35 ms — **les cinq
 programmes s'y étalent au lieu de tomber ensemble.**
 
+#### ET LE SACHET S'EN VA PAR LE BAS — c'est lui qui révèle, plus la carte qui monte
+
+Keko : **« ce serait bien qu'à l'ouverture du booster, le paquet descende,
+laissant la carte derrière lui apparaître comme si on enlevait le paquet vers
+le bas »**.
+
+*Il S'EFFAÇAIT* — `uFondu` sur le dernier quart — pendant que la carte montait
+par la fente. **Les deux moitiés disaient la même chose deux fois**, et aucune
+ne disait la bonne : ***un fondu dit « ce sachet n'existait pas », un retrait
+dit « on l'a enlevé ».***
+
+**LA CARTE NE BOUGE DONC PLUS D'UN PIXEL.** Elle attend à sa place, derrière le
+film, et c'est le départ du film qui la découvre — du haut vers le bas, à la
+vitesse où il s'en va. *L'émergence ne se joue plus à deux objets qui bougent
+l'un contre l'autre*, et `sortie` disparaît avec ses trois crans, ses deux
+`setState` et son délai de 40 ms : **du code mort ment sur ce que le jeu fait.**
+
+Quatre choses à ne pas défaire :
+
+- **SEUL LE CORPS DESCEND.** La bande est en train de s'envoler à droite et les
+  étincelles finissent leur vol à l'endroit d'où elles ont été lancées : *ce
+  qu'on retire est la pochette, pas ce qui vient d'en sortir.* Il a donc son
+  propre groupe, frère de la bande ;
+- **ET CE GROUPE N'A PAS DE `position` EN JSX** : React la réécrirait au premier
+  rendu venu — et il y en a un, c'est le flash — donc le film remonterait
+  d'une image. *Une transformation écrite à chaque image ne peut pas cohabiter
+  avec la même transformation écrite au rendu*, la règle déjà tenue par le
+  groupe du relief ;
+- ***LA COURSE SE CALCULE, ELLE NE S'ÉCRIT PAS*** : la demi-hauteur du champ
+  plus la demi-hauteur du sachet, **passée par le paquet** puisque le sachet ne
+  connaît pas le champ visible. Il est donc hors cadre à l'instant exact où le
+  composant se démonte — *rien ne disparaît d'un coup, et il n'y a plus de
+  fondu du tout.* Mesuré : 1,24 hauteur de sachet en paysage, **1,67 en
+  portrait**, où le champ est plus haut ;
+- **ELLE ACCÉLÈRE** (`pv^1,7`). *Une pochette qu'on retire amorce, puis file* ;
+  une rampe droite se lirait comme un panneau qui glisse.
+
+#### ET C'EST LE PORTRAIT QUI DISAIT QUELLE CARTE MONTRER
+
+*Au défilé, la carte est PLUS GRANDE que le sachet* — mesuré à 390 x 844,
+1,36 x 1,90 contre 1,04 x 1,60 — donc **elle ne peut pas se cacher derrière lui
+à sa taille finale.** La lecture littérale — une carte déjà prête qu'on
+déshabille — était impossible là où le jeu se joue.
+
+**ELLE RESTE DONC À SA TAILLE DE DEDANS** (bornée à 0,6 largeur de sachet) tant
+que le film est là, et c'est l'amortissement de `Carte3D` qui la porte à sa
+taille de défilé une fois le sachet démonté — *au même instant, puisque le film
+quitte le cadre pile à `pv = 1`.* **Il n'y a aucune animation à écrire**, et la
+grossir pendant la descente aurait fait sortir ses flancs de derrière le sachet
+avant que le bas ne soit découvert.
+
 #### LE BOUTON DISPARAÎT, ET « TOUT RÉVÉLER » AVEC LUI
 
 Pendant le défilé il n'y a **rien à décider** — on continue, c'est tout — et un
@@ -3596,6 +3647,10 @@ la même place se désaccorderaient au premier réglage.*
 - **la part de largeur que prend la carte** (78 %) : *c'est la seule valeur
   libre du sachet* — elle décide de son bord, de sa hauteur, de son plateau et
   de ses flancs ;
+- **la descente du film à l'ouverture** (`pv^1,7`, sur toute la phase qui suit
+  l'arrachement) : *c'est elle qui découvre la carte*, et sa course n'est pas un
+  réglage — elle vaut ce qu'il faut pour quitter le cadre. **Ne restent que sa
+  COURBE et le moment où elle commence** ;
 - **le balancement de repos** (5,5 et 8,5 centièmes de radian, sur deux
   périodes) : c'est lui qui fait vivre le reflet là où rien ne touche le
   sachet. ***Il décide AUSSI de combien les cartes cachées se rangent

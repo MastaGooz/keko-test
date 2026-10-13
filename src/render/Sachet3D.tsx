@@ -282,12 +282,6 @@ const BRAISE = 0.013
 /** Raccourci de lecture : la part du sachet que prend la bande. */
 const L = LIGNE_DECHIRURE
 
-/** Le `smoothstep` du GLSL, cote JavaScript. */
-function lissage(e0: number, e1: number, x: number): number {
-  const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)))
-  return t * t * (3 - 2 * t)
-}
-
 /**
  * JUSQU'OÙ LE DOIGT PEUT TIRER, en part de la course du front.
  *
@@ -1268,9 +1262,20 @@ void main() {
   })
 }
 
+/**
+ * DE COMBIEN LE FILM DESCEND APRES L'ARRACHEMENT, en part de sa course.
+ *
+ * *Une pochette qu'on retire ACCELERE* : la main amorce, puis le film file et
+ * quitte le cadre. Une rampe droite se lirait comme un panneau qui glisse.
+ */
+function chuteDuFilm(pv: number): number {
+  return Math.pow(pv, 1.7)
+}
+
 export function Sachet3D({
   taille,
   position,
+  descente,
   ouvre = false,
   onOuvert,
   onDechire,
@@ -1279,6 +1284,21 @@ export function Sachet3D({
   /** Sa largeur en unités de scène ; sa hauteur suit son rapport. */
   readonly taille: number
   readonly position: readonly [number, number, number]
+  /**
+   * DE COMBIEN LE FILM DOIT DESCENDRE POUR QUITTER LE CADRE.
+   *
+   * Keko : **« ce serait bien qu'à l'ouverture du booster, le paquet descende,
+   * laissant la carte derrière lui apparaître comme si on enlevait le paquet
+   * vers le bas »**.
+   *
+   * ***C'EST LE PARENT QUI LA DONNE, parce que le sachet ne connaît pas le
+   * champ visible*** — la règle du projet : *le Z se calcule, il ne s'écrit
+   * pas*, et une distance d'écran se déduit de l'écran. Elle vaut la demi-
+   * hauteur du champ plus la demi-hauteur du sachet, donc **il est hors cadre
+   * à l'instant où le composant se démonte** : rien ne disparaît d'un coup, et
+   * il n'y a plus de fondu du tout.
+   */
+  readonly descente: number
   /** Vrai dès qu'il doit s'ouvrir sans geste. Il ne se referme pas. */
   readonly ouvre?: boolean
   /** La bande vient d'être arrachée — *c'est l'instant du flash.* */
@@ -1291,6 +1311,8 @@ export function Sachet3D({
   const groupe = useRef<THREE.Group>(null)
   const relief = useRef<THREE.Group>(null)
   const bande = useRef<THREE.Group>(null)
+  /** Ce qui emporte le film vers le bas : *le corps seul, pas la bande.* */
+  const chute = useRef<THREE.Group>(null)
   const corps = useMemo(() => matiereDuMorceau(true), [])
   const bandeMat = useMemo(() => matiereDuMorceau(false), [])
   const gerbe = useMemo(() => matiereDeLaGerbe(), [])
@@ -1550,12 +1572,25 @@ export function Sachet3D({
     }
     bandeMat.uniforms.uFondu!.value = Math.max(0, 1 - Math.pow(pv, 2.2))
 
-    // LE CORPS S'EFFACE PENDANT QUE LES CARTES MONTENT. Il restait entier
-    // jusqu'au dernier instant, puis le composant se demontait : *un sachet
-    // qui disparait d'un coup se lit comme un bug de rendu.* Il part sur le
-    // dernier quart, donc apres l'arrachement et pendant la sortie -- ce
-    // qu'on a vide n'a plus a rester.
-    corps.uniforms.uFondu!.value = 1 - lissage(0.74, 1, pp)
+    /*
+     * LE FILM DESCEND ET DECOUVRE LA CARTE, il ne s'efface plus.
+     *
+     * Keko : **« ce serait bien qu'à l'ouverture du booster, le paquet
+     * descende, laissant la carte derrière lui apparaître comme si on enlevait
+     * le paquet vers le bas »**.
+     *
+     * ***ET C'EST LE FILM QUI RÉVÈLE, PLUS LA CARTE QUI MONTE.*** Il
+     * s'effaçait sur le dernier quart pendant que la carte sortait par la
+     * fente ; *un fondu dit « ce sachet n'existait pas », un retrait dit
+     * « on l'a enlevé ».* La carte n'a donc plus à bouger d'un pixel : c'est le
+     * départ du film qui la découvre, du haut vers le bas.
+     *
+     * **SEUL LE CORPS DESCEND, jamais la bande ni la gerbe** : la bande est en
+     * train de s'envoler à droite et les étincelles finissent leur vol à
+     * l'endroit d'où elles ont été lancées. *Ce qu'on retire est la pochette,
+     * pas ce qui vient d'en sortir.*
+     */
+    if (chute.current !== null) chute.current.position.y = -descente * chuteDuFilm(pv)
 
     if (pp >= 1 && !dit.current) {
       dit.current = true
@@ -1725,18 +1760,24 @@ export function Sachet3D({
           *deux sources qui écriraient la même transformation se battraient à
           chaque image.* */}
       <group ref={relief}>
-        {/* LE CORPS : il reste, et c'est de lui que les cartes sortiront. */}
-        <mesh
-          position={[0, -hBande / 2, 0]}
-          onPointerDown={prendre}
-          onPointerMove={viser}
-          onPointerOut={quitter}
-        >
-          {/* IL LUI FAUT DES SEGMENTS : *un plan à quatre sommets ne peut pas
-              se bomber*, il n'a rien entre ses coins à déplacer. */}
-          <planeGeometry args={[taille, hCorps, 36, 56]} />
-          <primitive object={corps} attach="material" />
-        </mesh>
+        {/* LE CORPS : il reste, et c'est de lui que les cartes sortiront.
+
+            IL A SON PROPRE GROUPE, qui porte sa descente — *et le groupe n'a
+            pas de `position` en JSX*, sinon React la réécrirait au premier
+            rendu venu et le film remonterait d'une image. */}
+        <group ref={chute}>
+          <mesh
+            position={[0, -hBande / 2, 0]}
+            onPointerDown={prendre}
+            onPointerMove={viser}
+            onPointerOut={quitter}
+          >
+            {/* IL LUI FAUT DES SEGMENTS : *un plan à quatre sommets ne peut
+                pas se bomber*, il n'a rien entre ses coins à déplacer. */}
+            <planeGeometry args={[taille, hCorps, 36, 56]} />
+            <primitive object={corps} attach="material" />
+          </mesh>
+        </group>
 
         {/* LA BANDE : son GROUPE porte le vol, son plan porte le dessin — et le
             plan est à l'origine du groupe, sinon la rotation la ferait tourner
