@@ -1825,8 +1825,8 @@ quatre là où ça se voit, et on baisse encore là où ça gênait.
 
 | | au plateau | au bord |
 |---|---|---|
-| relief | **0,10** | **0,95** |
-| ombre | ±1,2 % | **±8 %** |
+| relief | 0,22 | **1,8** |
+| ombre | ±1,2 % | **±9 %** |
 | échelle | 2,1 | **4,6** |
 
 **LE MASQUE EST LE VENTRE PRIS PAR L'AUTRE BOUT** (`1 − ventre`), donc il n'y a
@@ -1840,6 +1840,43 @@ plus mais le même fait dit en géométrie : **un film tendu ÉTIRE ses plis, un
 film qui a du mou les tasse.** Une seule échelle variable porte les deux — et
 elle ne coûte pas un appel de champ de plus, là où un second froissé en aurait
 doublé six.
+
+#### UN PLI EST UN TRAIT, ET UNE SOMME DE SINUS N'EN FERA JAMAIS UN
+
+Keko : **« non là ça ne va pas du tout, on dirait des vagues et elles bougent en
+plus. Je voulais des petits traits, genre plis qui ont marqué le papier »**.
+
+***ET LES DEUX GRIEFS SONT LE MÊME DÉFAUT.*** Le champ était une somme de
+sinus, donc **une houle par construction** : il n'a pas d'arête, seulement des
+crêtes et des creux qui montent et descendent. Et c'est aussi ce qui le faisait
+« bouger » — *rien n'est animé dans ce champ* : **le sachet se balance**, donc
+la lumière balaie ses pentes, et une pente DOUCE change d'ombre sur toute sa
+largeur. Une houle ondule ; une arête, elle, s'allume ou pas.
+
+**LA MARQUE, CE SONT LES LIGNES DE NIVEAU DU CHAMP, PAS LE CHAMP.** On garde les
+trois ondes longues — elles ne servent plus qu'à dessiner le TRAJET des plis,
+donc elles peuvent rester douces — et on en prend `abs(fract(w × d) − 0,5)` :
+une ligne tous les `1/d`, et entre deux lignes **un profil en V**, c'est-à-dire
+une pente constante de chaque côté qui SAUTE au passage. *Deux facettes planes
+qui se rejoignent sur une arête : c'est exactement ce qu'un pli de papier est,
+et ce qu'une somme de sinus ne peut pas être.*
+
+**ET L'ESPACEMENT N'EST PAS RÉGULIER POUR AUTANT** : les lignes de niveau se
+serrent là où le champ monte vite et s'écartent ailleurs, donc le semis est
+irrégulier **sans qu'on ait rien à tirer au sort** — la règle du motif de
+touches, où un semis qui se réarrange n'est plus une matière.
+
+**LE PIÈGE DU PORTAGE : une arête a un gradient CINQ FOIS plus petit qu'une
+onde**, à relief égal. La première passe, réglée aux chiffres de la houle, ne
+montrait presque rien — *on voyait que le défaut était parti, pas ce qui le
+remplaçait.* Il a fallu remonter le relief de 0,4 à **1,8** au bord pour que le
+trait existe. ***Changer la NATURE d'un champ invalide tous les réglages qui en
+dépendaient***, et ça ne se voit pas en lisant le code.
+
+**Et le pas des différences finies descend de 0,035 à 0,012** : à 0,035 il
+couvrait un septième de l'écart entre deux plis et **arrondissait l'arête qu'on
+venait de créer.** *Un pas de mesure plus large que le détail qu'on mesure le
+détruit.*
 
 #### LE RÉGLAGE S'EST FAIT EN DEUX PASSES, ET LA PREMIÈRE DISAIT DU MÉTAL BROSSÉ
 
@@ -2202,8 +2239,10 @@ la même place se désaccorderaient au premier réglage.*
   affiché, donc on n'en invente pas un* — la marque est le bouquet ;
 - **la force des confettis et leur nombre** : *une gerbe ne se juge qu'en
   ouvrant des paquets* ;
-- **les plis du BORD** (0,95 de relief, ±8 % d'ombre, échelle 4,6) et **ceux du
-  plateau** (0,10, ±1,2 %, 2,1) : *c'est la texture du papier de booster*, et
+- **les plis du BORD** (1,8 de relief, ±9 % d'ombre, échelle 4,6), **ceux du
+  plateau** (0,22, ±1,2 %, 2,1) et **leur densité** (2,8 lignes par tour du
+  champ, donc l'écart entre deux traits) : *c'est la texture du papier de
+  booster*, et
   elle ne se juge qu'en inclinant l'objet. **Les deux se rejugent ENSEMBLE**
   avec la vivacité du reflet, puisque le lobe s'étale dès que le relief
   s'aplatit ;

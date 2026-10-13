@@ -115,16 +115,29 @@ const RAYON_COIN_VENTRE = 0.35
  *
  * | | au plateau | au bord |
  * |---|---|---|
- * | relief | **0,10** | **0,95** |
- * | ombre | ±1,2 % | **±8 %** |
+ * | relief | **0,05** | **0,40** |
+ * | ombre | ±0,8 % | **±5 %** |
  * | échelle | 2,1 | **4,6** — *un pli de mou est serré* |
+ *
+ * **ET LES CHIFFRES ONT ÉTÉ DIVISÉS PAR DEUX quand les ondes sont devenues des
+ * TRAITS.** Keko : « on dirait des vagues, et elles bougent en plus ». *Une
+ * houle a besoin d'amplitude pour se voir, une arête n'a besoin que de sa
+ * rupture de pente* — et c'est l'amplitude qui faisait onduler les zones
+ * entières dès que le sachet se balançait sous la lumière.
  */
-const PLI_PLATEAU = 0.1
-const PLI_BORD = 0.95
+const PLI_PLATEAU = 0.22
+const PLI_BORD = 1.8
 const OMBRE_PLATEAU = 0.012
-const OMBRE_BORD = 0.08
+const OMBRE_BORD = 0.09
 const ECHELLE_PLATEAU = 2.1
 const ECHELLE_BORD = 4.6
+
+/**
+ * COMBIEN DE PLIS PAR TOUR DU CHAMP PORTEUR. *C'est lui qui decide de l'ECART
+ * entre deux traits*, donc de la finesse du papier -- et non l'amplitude, qui
+ * ne decide que de leur profondeur.
+ */
+const DENSITE_PLIS = 2.8
 
 
 const AMPLI = 0.02
@@ -261,20 +274,27 @@ const DECHIRURE = `
  * dans le sens de sa longueur : il est pincé par ses deux soudures, donc ce qui
  * travaille est sa largeur.
  */
-float froisse(vec2 q) {
-  vec2 g = q + vec2(sin(q.y * 3.1 + 0.7), sin(q.x * 2.7 + 2.1)) * 0.32;
-  float a = abs(sin(g.x * 8.3 + g.y * 2.1));
-  float b = abs(sin(g.x * -5.1 + g.y * 4.3 + 1.3));
-  float c = abs(sin(g.x * 14.7 + g.y * -7.9 + 2.7));
-  float d = abs(sin(g.x * 26.1 + g.y * 13.3 + 4.1));
-  // **L'ÉNERGIE VA AUX GRANDES ONDES**, et la somme reste à 1. Keko : « il
-  // faudrait moins d'effet de texture, c'est trop chargé ». *Ce qui charge,
-  // ce sont les harmoniques FINES* — elles multiplient les crêtes sans rien
-  // ajouter au relief, et le dessin se lit alors à travers une trame. Les
-  // deux dernières rendent les deux tiers de leur poids aux deux premières :
-  // **moins de plis, pas des plis plus plats.**
-  return a * 0.46 + b * 0.33 + c * 0.14 + d * 0.07;
+float pliure(vec2 q) {
+  // LE CHAMP PORTEUR : trois ondes LONGUES, dont on ne garde que les LIGNES DE
+  // NIVEAU. *On ne s'en sert pas comme d'un relief* -- il ne sert qu'a dessiner
+  // le trajet des plis, et c'est pour ca qu'il peut rester doux.
+  float w = sin(q.x * 1.7 + q.y * 0.9)
+          + 0.70 * sin(q.x * -1.1 + q.y * 2.3 + 1.7)
+          + 0.45 * sin(q.x * 2.9 + q.y * -1.9 + 4.1);
+
+  // ***ET C'EST LE REPLIEMENT PERIODIQUE QUI FAIT LA MARQUE.*** Une ligne de niveau
+  // tous les 1/DENSITE, et entre deux lignes le profil est un V : la pente est
+  // CONSTANTE de chaque cote et elle SAUTE au passage -- donc deux facettes
+  // planes qui se rejoignent sur une arete. *C'est exactement ce qu'un pli de
+  // papier est, et c'est ce qu'une somme de sinus ne peut pas etre.*
+  //
+  // **L'ESPACEMENT N'EST PAS REGULIER POUR AUTANT** : les lignes de niveau se
+  // serrent la ou le champ monte vite et s'ecartent ailleurs, donc le semis est
+  // irregulier sans qu'on ait rien a tirer au sort.
+  float t = fract(w * ${DENSITE_PLIS.toFixed(2)});
+  return abs(t - 0.5);
 }
+
 
 float ondule(float x) {
   // ELLE N'EST PAS DROITE, et c'est une somme de sinus plutôt qu'un hachage :
@@ -399,9 +419,11 @@ void main() {
   // LA NORMALE SORT DU CHAMP PAR DIFFÉRENCES FINIES : on n'a pas de carte de
   // normales, et on n'en veut pas — *une texture de plis serait figée, celle-ci
   // se calcule et ne coûte pas un octet.*
-  float e = 0.035;
-  float hx = froisse(q + vec2(e, 0.0)) - froisse(q - vec2(e, 0.0));
-  float hy = froisse(q + vec2(0.0, e)) - froisse(q - vec2(0.0, e));
+  // LE PAS EST FIN, parce qu'un trait l'est : a 0,035 il couvrait un septieme
+  // de l'ecart entre deux plis et arrondissait l'arete qu'on vient de creer.
+  float e = 0.012;
+  float hx = pliure(q + vec2(e, 0.0)) - pliure(q - vec2(e, 0.0));
+  float hy = pliure(q + vec2(0.0, e)) - pliure(q - vec2(0.0, e));
   // **LES DEUX GRADIENTS S'AJOUTENT AVANT DE SE NORMALISER.** Le froissé n'est
   // plus qu'un DÉTAIL posé sur la forme : Keko — « la texture est trop présente,
   // et les reflets dedans empêchent de voir les motifs ». *Un relief de matière
