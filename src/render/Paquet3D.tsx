@@ -167,8 +167,16 @@ const DUREE_SURSAUT = 0.3
 /** La distance de sortie en portrait, en largeurs de carte : la référence du ressort. */
 const DISTANCE_SORTIE_REF = 1.4
 const ANGLE_SORTIE = 0.14
-/** De combien la passée sort DEVANT la pile, en largeurs de carte — voir `placeAuDefile`. */
-const SAILLIE_SORTIE = 0.1
+/**
+ * DE COMBIEN LA PASSÉE SORT DEVANT LA PILE, en largeurs de carte. *Ça se
+ * calcule* : la pile penche au plus de 0,22 rad (la borne du gyroscope, et le
+ * curseur plein ne fait que 0,17), donc son bord avance au plus de
+ * 0,5 × sin 0,22 ≈ 0,11 largeur ; la passée, qui se redresse, garde encore un
+ * peu de son penchant au départ. Un quart de largeur couvre les deux — et
+ * elle grossit de sept pour cent en passant : *une carte qu'on jette vient un
+ * peu vers soi.*
+ */
+const SAILLIE_SORTIE = 0.25
 const GYRO_GAIN_CARTE = 0.6
 const GYRO_BORNE_CARTE = 0.22
 /**
@@ -1264,10 +1272,17 @@ export function Paquet3D(): React.ReactElement {
               // toutes, c'est la règle des piles du coffre — rotations
               // identiques autour de centres alignés, les plans restent
               // parallèles. Voir `curseurDefile`.
-              // ET LA PASSÉE LE GARDE AUSSI en sortant : des plans parallèles ne
-              // se coupent pas — voir `placeAuDefile`.
-              curseurPartage={!fini ? curseurDefile.current : undefined}
-              refletAuDoigt={!fini}
+              // LA PASSÉE, ELLE, SE REDRESSE EN SORTANT. Elle a partagé le
+              // curseur de la pile le temps d'un commit — *des plans parallèles
+              // ne se coupent pas* — et Keko l'a vue passer DESSOUS : deux
+              // plans parallèles décalés en x se séparent de Δx·sin θ en
+              // profondeur, donc dès que la pile penche vers elle, la saillie ne
+              // suffit plus et elle passe derrière. Redressée, son étendue en
+              // profondeur est nulle, et celle d'une pile penchée vaut au plus
+              // une demi-largeur fois sin θ : une saillie plus grande que ça la
+              // garde devant quel que soit l'angle — voir SAILLIE_SORTIE.
+              curseurPartage={!fini && i >= montree ? curseurDefile.current : undefined}
+              refletAuDoigt={!fini && i >= montree}
               ombre
               // ELLE NE PORTE PLUS DE GESTE À ELLE. *Tout passe par le geste
               // de l'écran* — une tape sur la carte et une tape à côté font la
