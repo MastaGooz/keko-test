@@ -755,7 +755,10 @@ export function Paquet3D(): React.ReactElement {
       // un son de flip, puis a préféré « le même son que celui du slide des
       // cartes sur la droite ». *Un seul geste de l'écran, un seul son* — le
       // fichier `card flip.aac` reste au dépôt (SON_RETOURNER).
-      jouerSon(SON_PRENDRE)
+      // ET LE SON SUIT LA VITESSE DU FLIP : 0,5 s -> 0,38 s, donc 1,3 fois
+      // plus vite (Keko : « accélérer un peu la vitesse du flip, et accélérer
+      // le son avec »).
+      jouerSon(SON_PRENDRE, 1, 0, 0.5 / DUREE_FLIP)
       setRetourne(true)
       setJetons((j) => ({ ...j, [premiere.id]: (j[premiere.id] ?? 0) + 1 }))
       decouvrir(0)

@@ -178,7 +178,7 @@ export const DUREE_CULBUTE = 0.66
  * l'armurerie, qui est une archive et que personne ne rejoue. *Une archive
  * qu'on retouche sans la rejouer est une archive qu'on casse.*
  */
-export const DUREE_FLIP = 0.5
+export const DUREE_FLIP = 0.38
 
 /**
  * LE DEVELOPPEMENT : ce que fait une carte qu'on vient de retourner.
