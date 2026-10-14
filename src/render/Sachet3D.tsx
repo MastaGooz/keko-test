@@ -1419,7 +1419,7 @@ const COEUR_ECLAT = 0.23
  * la seule façon d'en faire est de le peindre dans le grain.
  */
 const PORTEE_BRANCHE = 0.55
-const POIDS_HALO = 1.4
+const POIDS_HALO = 1.1
 /** LA DEMI-ÉPAISSEUR D'UNE BRANCHE, en part du quad : sa finesse. */
 const FINESSE_BRANCHE = 0.16
 

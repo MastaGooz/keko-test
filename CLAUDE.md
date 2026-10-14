@@ -2263,8 +2263,9 @@ branches. **Le quad double** (`TAILLE_ECLAT`, 0,11 → 0,2) **et le coeur comme
 les branches gardent leur taille ABSOLUE** (`COEUR_ECLAT` 0,42 → 0,23,
 `PORTEE_BRANCHE` 0,55) — l'éclat ne grossit pas, il rayonne plus loin. Le halo
 passe en carré, une décroissance plus lente, et triple de poids
-(`POIDS_HALO`, 0,45 → 1,4). *C'est la règle du glow du sachet, un cran plus
-loin* : sans passe de flou, la seule façon de faire rayonner un point chaud
+(`POIDS_HALO`, 0,45 → 1,4, **puis 1,1** — Keko : « on peut réduire un poil la
+luminosité des particules ? », un cinquième de moins sur le seul halo). *C'est
+la règle du glow du sachet, un cran plus loin* : sans passe de flou, la seule façon de faire rayonner un point chaud
 est de peindre son rayonnement dans le grain. **La découpe en profite aussi**,
 puisque les deux régimes partagent le fragment.
 
