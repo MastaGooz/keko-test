@@ -1437,7 +1437,12 @@ const IRISATION: readonly (readonly [number, string])[] = [
  */
 const NB_RAYONS = 16
 const FORCE_RAYONS: Record<string, number> = {
-  blanc: 0.05,
+  // LE BLANC EST REMONTÉ au niveau du vert. Keko : « on peut augmenter le
+  // contraste des fonds des cartes common ? les rayons clairs ne le sont pas
+  // assez ». *À 0,05 ils se devinaient sur un gris moyen*, là où les quatre
+  // autres se lisent sur une nuit franche ; le bas de l'échelle parle peu,
+  // mais il doit encore se lire.
+  blanc: 0.14,
   vert: 0.13,
   bleu: 0.17,
   violet: 0.22,

@@ -5169,3 +5169,11 @@ autres partent d'une nuit franche : la même part de 22 % vers le ton moyen le
 menait deux fois plus haut que ses voisins. Il garde donc sa nuit telle quelle
 (`ECLAIRCIE_PAR_CRAN.blanc = 0`), les quatre autres leurs 22 %. Vu au bilan de
 `?paquet=1314`.
+
+#### LES RAYONS DU COMMUN REMONTENT AU NIVEAU DU VERT
+
+Keko : **« on peut augmenter le contraste des fonds des cartes common ? les
+rayons clairs ne le sont pas assez »**. `FORCE_RAYONS.blanc` passe de 0,05 à
+**0,14** — *à 0,05 ils se devinaient sur un gris moyen*, là où les quatre
+autres se lisent sur une nuit franche. **Le bas de l'échelle parle peu, mais il
+doit encore se lire.** Vu au bilan de `?paquet=1314`.
