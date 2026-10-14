@@ -967,6 +967,24 @@ const TYPE_BULLE = '#0d141b'
 const PIGMENT_PLAQUE = [0.45, 0.55, 0.6] as const
 const LUM_PLAQUE = [0.94, 0.88, 0.85] as const
 const PLAQUE_CLAIRE = ['#fdfefe', '#eaeef4', '#dde4ec'] as const
+/** La part de couleur du cran dans la pastille du type, le reste est blanc. */
+const TEINT_PASTILLE = 0.42
+/**
+ * DE COMBIEN LE DÉCOR D'UNE CARTE REMONTE DE LA NUIT VERS LE TON MOYEN DU
+ * CRAN. Keko : « on peut éclaircir un peu les fonds des cartes (derrière les
+ * illustrations) ? » *On ne pose pas de voile clair* — on part d'une base un
+ * peu moins nocturne, et le dégradé, le vignettage et le grain restent ceux
+ * de `peindreDecor`.
+ */
+const ECLAIRCIE_DECOR = 0.22
+
+/** Le mélange sRGB de deux couleurs, `part` de la première. */
+function melange(a: string, b: string, part: number): string {
+  const ca = couleurDe(a)
+  const cb = couleurDe(b)
+  const c = ca.map((v, i) => Math.round(v * part + cb[i]! * (1 - part)))
+  return `#${c.map((v) => v.toString(16).padStart(2, '0')).join('')}`
+}
 /**
  * JUSQU'OÙ UNE PLAQUE PEUT S'ASSOMBRIR — **et c'est le TEXTE qui le dit, en
  * contraste et pas en clarté.**
@@ -3425,8 +3443,9 @@ export async function peindreCarte(
   // qu'il voyait, c'est le bleu nuit de base. La carte parle alors son cran
   // sur toute sa surface : le cadre, la plaque, les rayons, et le décor.
   // `?decor=bleu` rend le bleu nuit commun.
-  const nuitHex =
-    bulle && !DECOR_BLEU && carte.rarete !== undefined ? METAUX[carte.rarete]?.[3] : undefined
+  const metalDecor = bulle && !DECOR_BLEU && carte.rarete !== undefined ? METAUX[carte.rarete] : undefined
+  // ET ELLE REMONTE UN PEU VERS LE TON MOYEN : voir ECLAIRCIE_DECOR.
+  const nuitHex = metalDecor === undefined ? undefined : melange(metalDecor[2], metalDecor[3], ECLAIRCIE_DECOR)
   if (FOND_PEINT) peindreDecor(ctx, carte.ciel, nuitHex === undefined ? undefined : couleurDe(nuitHex))
   else {
     ctx.fillStyle = '#171b1d'
@@ -4533,8 +4552,13 @@ function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre, bulle 
     // cadre, des rayons et du reflet — donc on n'invente aucune couleur. Le mot
     // reste sombre : mesuré, 4,9 de contraste sur le violet, 6,5 sur le bleu,
     // 8,3 à 11,7 ailleurs. Sans rang, elle garde le gris de la plaque claire.
+    // **ET C'EST UN TEINT, PAS LA COULEUR PLEINE.** Keko, en le voyant : « là
+    // c'est carrément coloré, je voyais un truc plus "teint" entre le blanc et
+    // la couleur de rareté ». La pastille est donc le ton moyen MÊLÉ de blanc
+    // (`TEINT_PASTILLE`, la part de couleur qui reste).
     const metal = carte.rarete === undefined ? undefined : METAUX[carte.rarete]
-    ctx.fillStyle = metal?.[2] ?? tonsDeLaPlaque(carte.rarete)[2]
+    ctx.fillStyle =
+      metal === undefined ? tonsDeLaPlaque(carte.rarete)[2] : melange(metal[2], '#ffffff', TEINT_PASTILLE)
     ctx.beginPath()
     ctx.roundRect(LARGE / 2 - l / 2, y - h / 2, l, h, h / 2)
     ctx.fill()

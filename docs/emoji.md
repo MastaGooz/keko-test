@@ -5123,3 +5123,19 @@ trois autres. *Le violet est un cheveu sous le plancher de 5* — à surveiller 
 le mot paraît gris. Sans rang, la pastille garde le gris de la plaque claire.
 Vu au bilan de `?paquet=1314` : cinq pastilles aux cinq couleurs, sur cinq
 plaques blanches.
+
+#### LA PASTILLE EST UN TEINT, ET LE DÉCOR REMONTE D'UN CRAN
+
+Keko, devant la pastille pleine : **« là c'est carrément coloré, je voyais un
+truc plus "teint" entre le blanc et la couleur de rareté. De plus on peut
+éclaircir un peu les fonds des cartes (derrière les illustrations) ? »**
+
+- **la pastille est le ton moyen mêlé de blanc** (`TEINT_PASTILLE`, 0,42 de
+  couleur) : le mot sombre y gagne en contraste, le violet passe au-dessus du
+  plancher ;
+- **le décor part d'une nuit remontée de 22 % vers le ton moyen**
+  (`ECLAIRCIE_DECOR`), par le mélange de la base et non par un voile — le
+  dégradé, le vignettage et le grain de `peindreDecor` ne bougent pas.
+
+Les deux passent par `melange(a, b, part)`, un mélange sRGB à trois lignes. Vu
+au bilan de `?paquet=1314` ; les deux chiffres sont de moi, à rejuger.
