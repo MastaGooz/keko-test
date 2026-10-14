@@ -892,7 +892,13 @@ export function Paquet3D(): React.ReactElement {
         const balaye = Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)
         if (!tape && !balaye) return
         const t = performance.now()
-        if (t - dernier < 400) return
+        // L'ANTI-REBOND TOMBE À 120 ms. Keko : « permettre de cliquer plus
+        // rapidement pour faire défiler plus vite ». Les 400 ms protégeaient la
+        // carte qu'on vient de retourner ; *c'est la pile ouverte qui la
+        // protège maintenant* (voir `avancer`), et deux cartes qui sortent
+        // coup sur coup sortent chacune — il ne reste qu'à écarter un double
+        // évènement.
+        if (t - dernier < 120) return
         dernier = t
         refAvancer.current()
       },
