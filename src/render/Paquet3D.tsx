@@ -155,6 +155,13 @@ function colonnesDuBilan(largeurVisible: number, hauteurVisible: number): number
  * sachet : le haut du téléphone qui s'éloigne penche le haut de la carte vers
  * l'arrière, le côté droit qui descend penche la carte à droite.
  */
+/**
+ * LA SORTIE D'UNE CARTE PASSÉE : son ressort (celui de `Carte3D` vaut 9) et
+ * l'angle qu'elle prend en partant à droite, en radians. *Chiffres à l'oeil*,
+ * à rejuger par Keko : un départ se juge en le regardant.
+ */
+const RESSORT_SORTIE = 5
+const ANGLE_SORTIE = 0.14
 const GYRO_GAIN_CARTE = 0.6
 const GYRO_BORNE_CARTE = 0.22
 /**
@@ -1169,6 +1176,16 @@ export function Paquet3D(): React.ReactElement {
               // ce que Keko a demandé : « il faudrait que ça marche pour le
               // dos de carte au début aussi ».
               reflet
+              // LA PASSÉE S'EN VA MOINS VITE, ET UN PEU DE TRAVERS. Keko :
+              // « baisser un peu la vitesse à laquelle la carte est déplacée
+              // vers la droite quand on dévoile les cartes, et donner un léger
+              // angle de rotation ». *C'est le geste d'une pile qu'on défausse
+              // de la main droite* : une carte lâchée tourne un peu en partant.
+              // Le ressort ne vaut que pour la sortie — l'approche et le bilan
+              // gardent le leur — et l'angle est une cible comme la place,
+              // amortie par le même ressort.
+              ressort={!fini && i < montree ? RESSORT_SORTIE : undefined}
+              rotation={!fini && i < montree ? [0, 0, -ANGLE_SORTIE] : undefined}
               // ET C'EST L'ÉCRAN QUI TIENT SON CURSEUR — pour TOUTE LA PILE,
               // pas pour la seule carte qu'on regarde. Keko : « quand on bouge
               // une carte, elle traverse celle derrière, il faut bouger toute
