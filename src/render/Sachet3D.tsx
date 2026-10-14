@@ -477,6 +477,13 @@ const AVANCEE = 0.1
  * luit.
  */
 const BRILLANCE_FILM = 0.45
+/**
+ * ET LES SOUDURES, ENCORE MOINS. Keko : « diminuer la brillance des parties
+ * jaunes en haut et en bas (avec les dents) ». *Du film pressé à plat ne luit
+ * pas comme du film tendu.* La carte de brillance porte trois niveaux : 0 la
+ * soudure, 0,5 le film, 1 l'imprimé.
+ */
+const BRILLANCE_SOUDURE = 0.15
 /** Le point de la fente tel que le relief le pose, recalculé à chaque image. */
 const fenteReelle = new THREE.Vector3()
 /**
@@ -795,7 +802,10 @@ void main() {
   // l'autre bout -- une matiere pour le film, une autre pour ce qu'on y a
   // imprime. Le galbe de Fresnel, lui, est la forme du sachet : il ne la lit
   // pas.
-  float bril = mix(${BRILLANCE_FILM.toFixed(2)}, 1.0, texture2D(uBrillance, sach).r);
+  float vb = texture2D(uBrillance, sach).r;
+  float bril = vb < 0.5
+    ? mix(${BRILLANCE_SOUDURE.toFixed(2)}, ${BRILLANCE_FILM.toFixed(2)}, vb * 2.0)
+    : mix(${BRILLANCE_FILM.toFixed(2)}, 1.0, (vb - 0.5) * 2.0);
 
   /**
    * LA NORMALE DU VENTRE, et c'est elle qui raconte la FORME.

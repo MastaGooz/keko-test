@@ -5352,7 +5352,12 @@ async function peindreLaBrillanceDuSachet(): Promise<HTMLCanvasElement> {
   canvas.height = h
   const ctx = canvas.getContext('2d')
   if (ctx === null) return canvas
-  ctx.fillStyle = '#000000'
+  // TROIS NIVEAUX : le film à mi-gris, l'imprimé en blanc, et les SOUDURES en
+  // noir — Keko : « diminuer la brillance des parties jaunes en haut et en bas
+  // (avec les dents) ». *Une soudure est du film pressé à plat*, ce n'est ni
+  // un imprimé ni un film tendu : elle a sa propre matière. Le nuanceur lit
+  // les trois (voir BRILLANCE_SOUDURE et BRILLANCE_FILM).
+  ctx.fillStyle = '#808080'
   ctx.fillRect(0, 0, l, h)
   peindreTouches(ctx, l, h, US, true)
   const cyT = h * 0.27
@@ -5371,6 +5376,10 @@ async function peindreLaBrillanceDuSachet(): Promise<HTMLCanvasElement> {
   ctx.fillText(TITRE_DU_SACHET, l / 2, cyT)
   ctx.restore()
   await peindreBouquet(ctx, l / 2, cyM, US * 0.75, true)
+  // LES SOUDURES, aux mêmes mesures que sur le film (voir peindreLeSachet).
+  ctx.fillStyle = '#000000'
+  ctx.fillRect(0, 0, l, h * 0.047)
+  ctx.fillRect(0, h - h * 0.047, l, h * 0.047)
   return canvas
 }
 
