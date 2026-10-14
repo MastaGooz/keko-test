@@ -1721,8 +1721,21 @@ export function Sachet3D({
     // préchargement crée le contexte HORS d'un geste, donc suspendu, et le
     // reprendre coûte du temps — *le réveil doit avoir lieu avant qu'on en ait
     // besoin.* La page du paquet ne le faisait jamais.
+    //
+    // **ET SUR TACTILE, C'EST LE RELÂCHEMENT QUI ACTIVE LA PAGE, pas le
+    // contact.** Keko : « c'est en mode suspended quand je glisse, mais si je
+    // lâche et que je reprends ça devient running ; il faut toucher l'écran
+    // une fois avant de déchirer ». *C'est la politique des navigateurs* —
+    // les évènements qui activent une page sont `pointerup`, `touchend`, et
+    // `pointerdown` À LA SOURIS seulement — et un contexte suspendu ne se
+    // reprend qu'après une activation. **Le tout premier contact d'une
+    // session ne peut donc pas avoir de son**, quoi qu'on fasse ; on reprend
+    // au relâchement, quel qu'il soit, pour que le geste suivant en ait.
     const amorcer = (): void => amorcerLeSon()
     window.addEventListener('pointerdown', amorcer, { once: true })
+    const reveiller = (): void => reveillerLeSon()
+    window.addEventListener('pointerup', reveiller)
+    window.addEventListener('touchend', reveiller, { passive: true })
     // LA LIGNE DE DIAGNOSTIC, derrière `?son` : le même motif que l'archive.
     if (BANC_SON) {
       const el = document.createElement('div')
@@ -1733,6 +1746,8 @@ export function Sachet3D({
     }
     return () => {
       window.removeEventListener('pointerdown', amorcer)
+      window.removeEventListener('pointerup', reveiller)
+      window.removeEventListener('touchend', reveiller)
       craque.current?.arreter()
       diag.current?.remove()
       diag.current = null

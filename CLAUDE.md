@@ -2663,6 +2663,39 @@ préchargement qui avait créé le contexte suspendu.
 que sur un geste » — **et elle vaut aussi pour chaque source qu'on y démarre
 tant qu'il est suspendu.**
 
+#### SUR TACTILE, C'EST LE RELÂCHEMENT QUI ACTIVE LA PAGE — et le premier glisser est muet
+
+Keko, ligne `?son` sous les yeux : **« c'est en mode suspended quand je glisse
+le doigt, mais si je slide, que je lâche et que je reprends le slide alors ça
+devient running et ça marche ; il faut que je touche l'écran une fois avant de
+déchirer pour que ça marche, même juste un tap n'importe où »**.
+
+***CE N'EST PAS LE JEU, C'EST LA POLITIQUE DES NAVIGATEURS.*** Les évènements
+qui ACTIVENT une page — ceux après lesquels un contexte audio accepte de se
+reprendre — sont `pointerup`, `touchend`, `click`, `keydown`, et `pointerdown`
+**à la souris seulement**. *Poser un doigt n'active rien, le lever, si.* Un
+contexte créé hors geste naît suspendu, et `resume()` n'a d'effet qu'après une
+activation : **pendant le tout premier contact d'une session, il n'y a aucun
+moyen de le faire tourner**, sur iOS comme sur Chrome Android. Sur PC le
+`mousedown` active, donc rien ne se voyait.
+
+*C'est ce qui explique les trois observations d'un coup* : `suspended` pendant
+le premier glisser ; `running` dès qu'on reprend après avoir lâché ; et une
+tape n'importe où avant suffit — elle se termine par un relâchement.
+
+**Ce qu'on fait** : le contexte se reprend à CHAQUE relâchement (`pointerup`,
+`touchend`), y compris un lâcher sous la moitié ou une tape à côté — pour que
+le geste suivant soit toujours sonore. *Ce qu'on ne peut pas faire* : donner
+du son au premier glisser d'une session si rien n'a été touché avant. **La
+seule issue serait un geste AVANT le sachet** — un bouton, une tape pour
+commencer — et c'est une décision de Keko, pas un réglage. Le second paquet,
+lui, est sonore : on y arrive par un bouton.
+
+*Et la ligne `?son` est ce qui l'a dit* : trois allers-retours de corrections
+aveugles avant, une mesure lue sur l'appareil, et la cause était hors du code.
+**Quand un écart ne se reproduit pas ici, on fait dire le chiffre à l'appareil
+qui le voit.**
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une
