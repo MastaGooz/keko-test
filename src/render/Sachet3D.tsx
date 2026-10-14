@@ -676,6 +676,8 @@ function matiereDuMorceau(estLeCorps: boolean): THREE.ShaderMaterial {
     // n'est que de la lumière.
     depthWrite: false,
     uniforms: {
+      // VOIR versLineaire() : 1 quand la scène se rend dans une cible.
+      uLineaire: { value: 0 },
       uSachet: { value: VIDE },
       // LA CARTE DE BRILLANCE : ce qui luit en plein (l'imprimé) et ce qui luit
       // moins (le film nu) — voir BRILLANCE_FILM.
@@ -748,8 +750,21 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }`,
     fragmentShader: `uniform sampler2D uSachet;
+uniform float uLineaire;
 uniform sampler2D uBrillance;
 uniform sampler2D uPlis;
+
+// LA SORTIE REDESCEND EN LINEAIRE QUAND LA SCENE SE REND DANS UNE CIBLE (le
+// bloom), et seulement alors. Ce nuanceur ecrit des couleurs PRETES A
+// L'AFFICHAGE -- c'est le sachet que Keko a valide, a l'ecran, sans
+// encodage de sortie. Rendu dans la cible lineaire du bloom puis encode en
+// sRGB a la fin, il se faisait encoder DEUX FOIS : plus clair, moins
+// sature. Keko : « le paquet semble un peu trop clair et moins sature ».
+// On defait donc l'encodage ici (l'EOTF sRGB), pour que celui de la fin
+// rende exactement ce que l'ecran montrait.
+vec3 versLineaire(vec3 c) {
+  return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
+}
 uniform float uV0;
 uniform float uV1;
 uniform float uFront;
@@ -1077,7 +1092,9 @@ void main() {
   // qu'une teinte, ses reflets sont ceux des lampes sans filtre : c'est le
   // film tel qu'il serait sans son imprime.
   float a = max(tex.a, eclat * 0.9) * uFondu;
-  gl_FragColor = vec4(corps + lueur * eclat, a);
+  vec3 sortie = corps + lueur * eclat;
+  if (uLineaire > 0.5) sortie = versLineaire(clamp(sortie, 0.0, 1.0));
+  gl_FragColor = vec4(sortie, a);
   if (gl_FragColor.a < 0.004) discard;
 }`,
   })
@@ -1680,6 +1697,9 @@ function matiereDeLaGerbe(): THREE.ShaderMaterial {
     // PLACE de la decoupe -- tout est ecrit a la naissance.
     uniforms: {
       uTemps: { value: 0 },
+      // VOIR versLineaire() dans le corps : la gerbe aussi écrit des couleurs
+      // prêtes à l'affichage.
+      uLineaire: { value: 0 },
       // LA COULEUR DU SOMMET DU PAQUET, pour la moitié teintée du feu : crème
       // par défaut, donc indiscernable des autres tant qu'on ne la pose pas.
       uRare: { value: new THREE.Vector3(FENTE_BORD[0], FENTE_BORD[1], FENTE_BORD[2]) },
@@ -1770,6 +1790,10 @@ void main() {
   vVie = fondu * scintille;
 }`,
     fragmentShader: `uniform vec3 uRare;
+uniform float uLineaire;
+vec3 versLineaire(vec3 c) {
+  return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
+}
 varying vec2 vQ;
 varying float vVie;
 varying float vTeinte;
@@ -1813,6 +1837,9 @@ void main() {
   // ET L'ALPHA SUIT LA LUMIÈRE, il ne vaut jamais un. *La toile du jeu est
   // TRANSPARENTE* : un fragment sombre mais d'alpha plein écrit un pixel NOIR
   // OPAQUE par-dessus la page — le défaut déjà payé sur les grains de l'onde.
+  // Une étincelle dépasse 1 : seule sa part affichable redescend en linéaire,
+  // le reste garde son éclat pour le bloom.
+  if (uLineaire > 0.5) lum = versLineaire(clamp(lum, 0.0, 1.0)) + max(lum - 1.0, 0.0);
   gl_FragColor = vec4(lum, min(1.0, max(lum.r, max(lum.g, lum.b))));
 }`,
   })
@@ -1828,7 +1855,7 @@ function chuteDuFilm(pv: number): number {
   return Math.pow(pv, 1.7)
 }
 /** La part de la chute du film à laquelle le paquet se dit ouvert — voir `onOuvert`. */
-const PART_OUVERT = 0.58
+const PART_OUVERT = 0.66
 
 /**
  * UNE RAMPE SANS ARÊTE, bornée à [0, 1] : la `smoothstep` du nuanceur, côté
@@ -1851,6 +1878,7 @@ export function Sachet3D({
   onDechire,
   onOuvrir,
   gyro: gyroPrete,
+  lineaire = false,
 }: {
   /** Sa largeur en unités de scène ; sa hauteur suit son rapport. */
   readonly taille: number
@@ -1903,6 +1931,8 @@ export function Sachet3D({
    * seul zéro : la tenue du moment où le paquet apparaît.
    */
   readonly gyro?: { readonly current: Inclinaison | null }
+  /** La scène se rend dans une cible linéaire (le bloom) : voir versLineaire() dans le nuanceur. */
+  readonly lineaire?: boolean
 }): React.ReactElement {
   const groupe = useRef<THREE.Group>(null)
   const relief = useRef<THREE.Group>(null)
@@ -1920,6 +1950,11 @@ export function Sachet3D({
     return m
   }, [])
   const gerbe = useMemo(() => matiereDeLaGerbe(), [])
+  useEffect(() => {
+    corps.uniforms.uLineaire!.value = lineaire ? 1 : 0
+    bandeMat.uniforms.uLineaire!.value = lineaire ? 1 : 0
+    gerbe.uniforms.uLineaire!.value = lineaire ? 1 : 0
+  }, [corps, bandeMat, gerbe, lineaire])
   const semis = useMemo(() => semisDesEtincelles(), [])
   /** Les naissances : c'est le CPU qui les écrit, une par étincelle émise. */
   const vols = useMemo(

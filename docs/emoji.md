@@ -1571,6 +1571,19 @@ les touches claires, plus sur les soudures.
 prix sur téléphone n'a pas été mesuré* : un rendu de scène dans une cible plus
 cinq passes de quad, dont quatre au quart.
 
+**ET LE SACHET S'EST FAIT ENCODER DEUX FOIS.** Keko : « le paquet semble un
+peu trop clair et moins saturé, c'est l'éclairage ? » *Ce n'était pas
+l'éclairage* : les nuanceurs du sachet (le corps, la bande, la gerbe) écrivent
+des couleurs PRÊTES À L'AFFICHAGE — c'est le sachet validé à l'écran, sans
+encodage de sortie. Rendus dans la cible linéaire du bloom puis encodés en sRGB
+par la passe finale, ils l'étaient deux fois. Les matériaux de three, eux, ne
+le sont qu'une fois : les cartes n'avaient pas bougé. Les trois nuanceurs
+portent donc `uLineaire` (`Sachet3D.lineaire`, posé par le paquet quand le
+bloom est actif) et défont l'encodage en sortie (l'EOTF sRGB) ; une étincelle
+garde ce qui dépasse 1 pour le bloom. *Mesuré* : saturation du film 0,90 avec
+bloom, 0,91 sans. **Tout nuanceur maison qui entrera dans le paquet devra
+faire pareil.**
+
 ### L'OUVERTURE SE FAIT UNE CARTE À LA FOIS — le modèle est lexicodex
 
 Keko : **« je voudrais qu'on ait une ouverture de booster plus proche de celle

@@ -1175,6 +1175,7 @@ export function Paquet3D(): React.ReactElement {
           <Sachet3D
             key={numero}
             gyro={gyro}
+            lineaire={!SANS_BLOOM}
             taille={lSachet}
             position={[0, 0, Z_MAIN]}
             // CE QU'IL FAUT POUR QU'IL QUITTE LE CADRE : la demi-hauteur du
