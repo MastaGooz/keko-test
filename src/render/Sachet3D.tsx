@@ -1516,9 +1516,15 @@ function semisDesEtincelles(): THREE.InstancedBufferGeometry {
     graines[i * 4 + 3] = hasard()
   }
   g.setAttribute('aGraine', new THREE.InstancedBufferAttribute(graines, 4))
-  // TOUT À ZÉRO, DONC AUCUNE NE VOLE : une naissance de jet nul sort du champ,
-  // et c'est l'état d'un sachet qu'on n'a pas touché.
-  const vols = new THREE.InstancedBufferAttribute(new Float32Array(ETINCELLES * 4), 4)
+  // AUCUNE NE VOLE AU DÉPART : une place jamais servie porte une naissance
+  // NÉGATIVE, et le nuanceur la renvoie hors du champ. *Ce n'est plus le jet
+  // nul qui le dit* — depuis que la moitié du feu d'artifice part vers le bas,
+  // un jet négatif est une étincelle comme une autre, et la marquer sur le jet
+  // la jetait avec les places vides : Keko ne voyait aucune particule
+  // descendre, et il n'y en avait aucune.
+  const naissances = new Float32Array(ETINCELLES * 4)
+  for (let i = 0; i < ETINCELLES; i += 1) naissances[i * 4] = -1
+  const vols = new THREE.InstancedBufferAttribute(naissances, 4)
   vols.setUsage(THREE.DynamicDrawUsage)
   g.setAttribute('aVol', vols)
   // LA MONTÉE EST ÉCRITE À LA NAISSANCE AUSSI : *le nuanceur ne sait pas de
@@ -1659,7 +1665,8 @@ varying float vTeinte;
 
 void main() {
   // CHAQUE ÉTINCELLE PORTE SA NAISSANCE, et son âge en découle. Une place
-  // jamais servie a un jet NUL, et une étincelle qui a passé sa vie est
+  // jamais servie a une naissance NÉGATIVE (pas un jet nul : un jet négatif
+  // est une étincelle qui tombe), et une étincelle qui a passé sa vie est
   // finie : les deux sortent du champ -- un grain qu'on renvoie au loin est le
   // seul qui ne puisse rien tacher.
   // ET LA VIE EST CELLE DE SON REGIME : courte pour la decoupe, longue pour le
@@ -1671,7 +1678,7 @@ void main() {
     ? ${FEU.vie.toFixed(2)} * (0.75 + 0.5 * aGraine.z)
     : ${VIE_ETINCELLE.toFixed(2)} * (0.82 + 0.36 * aGraine.z);
   float t = (uTemps - aVol.x) / vie;
-  if (aVol.w <= 0.0 || t < 0.0 || t >= 1.0) {
+  if (aVol.x < 0.0 || t < 0.0 || t >= 1.0) {
     vQ = vec2(0.0);
     vVie = 0.0;
     gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
