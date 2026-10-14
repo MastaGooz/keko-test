@@ -98,7 +98,7 @@ interface Props {
   readonly passes?: number
 }
 
-export function Bloom({ force = 0.32, seuil = 1.2, passes = 2 }: Props): null {
+export function Bloom({ force = 0.18, seuil = 1.35, passes = 2 }: Props): null {
   const { gl, scene, camera, size } = useThree()
   // LES FLOTTANTS, SI L'APPAREIL SAIT Y RENDRE : voir en tête.
   const flottants = useMemo(
