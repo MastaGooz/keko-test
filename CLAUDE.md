@@ -2173,6 +2173,64 @@ descend ensuite, et la carte se rapproche quand il a quitté le cadre.
 appels de l'outil en coûtent davantage. **Multiplier les durées est une sonde,
 pas un réglage** — et elle se retire en rééditant, jamais par un `checkout`.
 
+#### LE JAILLISSEMENT EST UN FEU D'ARTIFICE : L'AIR FREINE, LA PESANTEUR N'EST QU'UN RIEN
+
+Keko : **« je trouve l'explosion de particules à l'ouverture finale du paquet
+pas terrible, je voudrais vraiment un effet feu d'artifice avec les particules
+qui montent et fadent sans redescendre trop via gravité, comme dans
+lexicodex »**.
+
+***RELEVÉ DANS LEUR `completeTear`*** (chunk `stage-*.js`, et la physique dans
+`tween-*.js`) : 110 étincelles, un angle tiré dans `±0,45·π` autour de la
+verticale, une vitesse de `2 + 7·hasard` pour un sachet de 3 de large, **une
+pesanteur de 3 et un FREIN de 2,2 par seconde** (`v *= exp(−drag·dt)`), une
+vie de 0,6 à 1,5 s, et un fondu LINÉAIRE qui commence à 45 % de la vie.
+
+***CE N'EST PAS LA PESANTEUR QUI ARRÊTE L'ÉTINCELLE, C'EST L'AIR.*** Chez nous
+le jaillissement était une parabole sans frein — la cloche de la découpe,
+poussée par `ECLAT_CLOCHE` — donc **une étincelle retombait toujours**, et
+c'est ce que Keko lisait comme une explosion. Avec un frein fort et une
+pesanteur faible, elle file, ralentit, et s'éteint à peu près là où l'air l'a
+arrêtée : la vitesse terminale ne vaut que 0,45 largeur par seconde vers le
+bas, et le fondu l'a éteinte avant qu'elle redescende.
+
+**C'est donc un RÉGIME de plus, pas un réglage de la découpe** (`FEU`, et un
+attribut `aRegime` par étincelle) : la découpe garde sa cloche en parts de vie,
+validée par Keko ; le feu intègre en SECONDES —
+`p(s) = p0 + vt·s + (v0 − vt)·(1 − e^{−k·s}) / k` — avec leurs chiffres
+convertis en largeurs de sachet :
+
+| | chez eux | chez nous |
+|---|---|---|
+| vitesse de départ | 2 à 9 | **0,67 à 3** largeurs/s |
+| frein | 2,2 /s | **2,2** |
+| pesanteur | 3 | **1** largeur/s² |
+| cône | ±81° autour de la verticale | **±81°** |
+| vie | 0,6 à 1,5 s | **0,6 à 1,0 s** |
+| fondu | linéaire dès 45 % | **linéaire dès 45 %** |
+
+**Le cône s'est rouvert**, après avoir été resserré deux fois (150° → 120° →
+60°) : *ce qui faisait le trait horizontal n'était pas l'angle, c'était la
+parabole* — une rasante sans frein file tout droit, une rasante freinée
+s'arrête à une largeur et s'éteint. Les deux resserrements de la découpe
+restent.
+
+**ET LA PAUSE DU FILM SUIT** : `DUREE_GERBE` lit désormais la vie du feu
+(0,8 s × 1,25 au pire cas), donc elle passe de 0,68 à **1,11 s**. *Elle se
+calcule, elle ne s'écrit pas* — c'est ce qui fait qu'un changement de régime ne
+l'a pas désaccordée. **La vie est plus courte que la leur** (0,8 contre 1,05
+en moyenne) pour cette raison exactement : chaque dixième de vie est un
+dixième de pause avant que la carte se découvre.
+
+*Vu à l'écran* sur `?paquet=1314` : à trois dixièmes de seconde un éventail
+d'éclats monte sur toute la largeur du sachet, jusqu'en haut de l'écran en
+paysage ; une seconde plus tard ils se sont éteints sur place, sans être
+redescendus, pendant que la bande file encore.
+
+*Ce qui suit est l'étape d'avant* — le jaillissement comme cloche poussée —
+et ses deux raisonnements tiennent toujours : *une rafale naît allumée*, et
+*le fondu d'entrée cache le départ en proportion de la vitesse.*
+
 #### LE JAILLISSEMENT NAÎT ALLUMÉ, ET IL MONTE COMME UN FEU D'ARTIFICE
 
 Keko : **« j'ai l'impression que la gerbe finale spawn un peu trop haut et ne

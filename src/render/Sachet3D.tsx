@@ -1117,15 +1117,40 @@ const ECLAT_ETALE = 0.11
  */
 const JET = 0.68
 /**
- * De combien le jaillissement pousse la cloche.
+ * LE JAILLISSEMENT EST UN FEU D'ARTIFICE — et c'est un autre régime que la
+ * découpe, pas un réglage de celle-ci.
  *
- * **Keko l'a voulu plus haut** — « les particules de la gerbe finale volent un
- * peu plus haut » — et c'est le seul levier qui le fasse sans toucher à la
- * découpe : *la pesanteur est relative au régime*, donc une vitesse de départ
- * plus grande monte ET porte plus loin dans le même rapport. L'angle, lui, se
- * resserre pour reprendre la portée — voir `ANGLE_ECLAT_MIN`.
+ * Keko : **« je trouve l'explosion de particules à l'ouverture finale pas
+ * terrible, je voudrais vraiment un effet feu d'artifice avec les particules
+ * qui montent et fadent sans redescendre trop via gravité, comme dans
+ * lexicodex »**.
+ *
+ * ***RELEVÉ DANS LEUR `completeTear`*** : 110 étincelles, un angle tiré dans
+ * `±0,45·π` autour de la verticale, une vitesse de `2 + 7·hasard` dans leurs
+ * unités (un sachet de 3 de large), **une pesanteur de 3 et un FREIN de 2,2
+ * par seconde**, une vie de 0,6 à 1,5 s, un fondu linéaire qui commence à
+ * 45 % de la vie. *Ce n'est pas la pesanteur qui arrête l'étincelle, c'est
+ * l'air* : elle file, ralentit, et s'éteint à peu près là où l'air l'a
+ * arrêtée — une pesanteur d'une largeur par seconde carrée ne la fait
+ * redescendre que d'un rien. **Une parabole, elle, retombe toujours** : c'est
+ * ce que Keko lisait comme une explosion.
+ *
+ * Tout est en LARGEURS DE SACHET et en secondes — convertis des leurs, la
+ * vitesse divisée par trois comme la pesanteur, le frein tel quel.
  */
-const ECLAT_CLOCHE = 3.5
+const FEU = {
+  /** La vitesse de départ, tirée uniformément entre les deux. */
+  vMin: 0.67,
+  vMax: 3,
+  /** Le frein de l'air, par seconde : `v *= exp(−frein·dt)`. */
+  frein: 2.2,
+  /** La pesanteur, en largeurs par seconde carrée — faible exprès. */
+  pesanteur: 1,
+  /** La vie nominale, en secondes ; chaque étincelle tire la sienne entre 0,75 et 1,25 fois. */
+  vie: 0.8,
+  /** À partir de quelle part de sa vie l'étincelle s'efface, linéairement jusqu'à la fin. */
+  fondu: 0.45,
+} as const
 
 /**
  * COMBIEN DE SA VIE UNE ÉTINCELLE MET À S'ALLUMER, en part de sa vie.
@@ -1164,7 +1189,7 @@ const MONTEE_ECLAT = 0.012
  * son vol. **Un chiffre écrit à la main se désaccorderait au premier réglage
  * de `VIE_ETINCELLE`** — la règle que le recul des cartes a déjà coûtée.
  */
-const DUREE_GERBE = ECLAT_ETALE + VIE_ETINCELLE * 1.18
+const DUREE_GERBE = ECLAT_ETALE + FEU.vie * 1.25
 
 /**
  * CE QUE DURE L'OUVERTURE ENTIÈRE, et **la part que le front en occupe.**
@@ -1254,9 +1279,15 @@ const ANGLE_MAX = (120 * Math.PI) / 180
  * **C'est donc le seul régime qui puisse se resserrer autant**, et c'est aussi
  * le seul qui ait toute l'ouverture pour naître : la découpe, elle, n'a qu'un
  * front.
+ *
+ * **PUIS ELLE S'EST ROUVERTE AVEC LE FEU D'ARTIFICE** : c'est le cône de
+ * lexicodex, `±0,45·π` autour de la verticale — presque un demi-disque. *Ce
+ * qui faisait le trait horizontal n'était pas l'angle, c'était la parabole* :
+ * une rasante sans frein file tout droit, une rasante freinée s'arrête à une
+ * largeur et s'éteint. Voir `FEU`.
  */
-const ANGLE_ECLAT_MIN = (72 * Math.PI) / 180
-const ANGLE_ECLAT_MAX = (108 * Math.PI) / 180
+const ANGLE_ECLAT_MIN = Math.PI / 2 - 0.45 * Math.PI
+const ANGLE_ECLAT_MAX = Math.PI / 2 + 0.45 * Math.PI
 /**
  * LA PESANTEUR, en multiples de la vitesse de départ du régime.
  *
@@ -1401,6 +1432,13 @@ function semisDesEtincelles(): THREE.InstancedBufferGeometry {
   const montees = new THREE.InstancedBufferAttribute(new Float32Array(ETINCELLES), 1)
   montees.setUsage(THREE.DynamicDrawUsage)
   g.setAttribute('aMontee', montees)
+  // LE RÉGIME AUSSI : 0 pour la découpe (une cloche sans frein, en parts de
+  // vie), 1 pour le feu d'artifice (un frein et une pesanteur, en secondes).
+  // *Les deux vols n'ont pas la même physique*, et le nuanceur doit savoir
+  // laquelle jouer.
+  const regimes = new THREE.InstancedBufferAttribute(new Float32Array(ETINCELLES), 1)
+  regimes.setUsage(THREE.DynamicDrawUsage)
+  g.setAttribute('aRegime', regimes)
   g.instanceCount = ETINCELLES
   return g
 }
@@ -1417,6 +1455,7 @@ function semisDesEtincelles(): THREE.InstancedBufferGeometry {
 function emettre(
   vols: THREE.InstancedBufferAttribute,
   montees: THREE.InstancedBufferAttribute,
+  regimes: THREE.InstancedBufferAttribute,
   curseur: { current: number },
   nb: number,
   front: number,
@@ -1425,6 +1464,7 @@ function emettre(
 ): void {
   const a = vols.array as Float32Array
   const m = montees.array as Float32Array
+  const r = regimes.array as Float32Array
   for (let i = 0; i < nb; i += 1) {
     const s = curseur.current
     curseur.current = (s + 1) % ETINCELLES
@@ -1452,23 +1492,33 @@ function emettre(
     const aMin = eclat ? ANGLE_ECLAT_MIN : ANGLE_MIN
     const aMax = eclat ? ANGLE_ECLAT_MAX : ANGLE_MAX
     const ang = aMin + Math.random() * (aMax - aMin)
-    const nominale = JET * (eclat ? ECLAT_CLOCHE : 1)
-    const v = nominale * (0.85 + 0.3 * Math.random())
-    const vx = v * Math.cos(ang)
-    const vy = v * Math.sin(ang)
-    // LA PESANTEUR COUPE LE VOL QUAND L'ETINCELLE RETOMBE. En t / tf la
-    // trajectoire garde exactement sa forme -- il suffit donc de mettre les
-    // deux vitesses a l'echelle, et le nuanceur ne change pas d'une ligne.
-    const tf = PESANTEUR <= 0 ? 1 : Math.min(1, vy / (nominale * PESANTEUR))
     a[o] = t + (eclat ? Math.random() * ECLAT_ETALE : 0)
     a[o + 1] = x - 0.5
-    a[o + 2] = vx * tf
-    a[o + 3] = vy * tf
+    if (eclat) {
+      // LE FEU D'ARTIFICE : une vitesse en largeurs PAR SECONDE, tirée entre
+      // les deux bornes de lexicodex, et c'est le nuanceur qui la freine. Pas
+      // de `tf` ici -- *le frein borne la portee, pas la vie.* Voir FEU.
+      const v = FEU.vMin + Math.random() * (FEU.vMax - FEU.vMin)
+      a[o + 2] = v * Math.cos(ang)
+      a[o + 3] = v * Math.sin(ang)
+    } else {
+      const v = JET * (0.85 + 0.3 * Math.random())
+      const vx = v * Math.cos(ang)
+      const vy = v * Math.sin(ang)
+      // LA PESANTEUR COUPE LE VOL QUAND L'ETINCELLE RETOMBE. En t / tf la
+      // trajectoire garde exactement sa forme -- il suffit donc de mettre les
+      // deux vitesses a l'echelle, et le nuanceur ne change pas d'une ligne.
+      const tf = PESANTEUR <= 0 ? 1 : Math.min(1, vy / (JET * PESANTEUR))
+      a[o + 2] = vx * tf
+      a[o + 3] = vy * tf
+    }
     // UNE RAFALE NAÎT ALLUMÉE, la découpe s'allume : voir MONTEE_ECLAT.
     m[s] = eclat ? MONTEE_ECLAT : MONTEE_DECOUPE
+    r[s] = eclat ? 1 : 0
   }
   vols.needsUpdate = true
   montees.needsUpdate = true
+  regimes.needsUpdate = true
 }
 
 function matiereDeLaGerbe(): THREE.ShaderMaterial {
@@ -1501,6 +1551,7 @@ function matiereDeLaGerbe(): THREE.ShaderMaterial {
 attribute vec4 aGraine;
 attribute vec4 aVol;
 attribute float aMontee;
+attribute float aRegime;
 varying vec2 vQ;
 varying float vVie;
 
@@ -1509,7 +1560,12 @@ void main() {
   // jamais servie a un jet NUL, et une étincelle qui a passé sa vie est
   // finie : les deux sortent du champ -- un grain qu'on renvoie au loin est le
   // seul qui ne puisse rien tacher.
-  float vie = ${VIE_ETINCELLE.toFixed(2)} * (0.82 + 0.36 * aGraine.z);
+  // ET LA VIE EST CELLE DE SON REGIME : courte pour la decoupe, longue pour le
+  // feu d'artifice, qui doit avoir le temps de monter et de s'eteindre.
+  bool feu = aRegime > 0.5;
+  float vie = feu
+    ? ${FEU.vie.toFixed(2)} * (0.75 + 0.5 * aGraine.z)
+    : ${VIE_ETINCELLE.toFixed(2)} * (0.82 + 0.36 * aGraine.z);
   float t = (uTemps - aVol.x) / vie;
   if (aVol.w <= 0.0 || t < 0.0 || t >= 1.0) {
     vQ = vec2(0.0);
@@ -1523,15 +1579,35 @@ void main() {
   // *Son abscisse, sa derive et son jet ont ete tires a la naissance*, donc
   // rien ici ne sait ou en est la decoupe.
   float vy = aVol.w;
-  vec2 vol = vec2(aVol.y + aVol.z * t, vy * t * (1.0 - t));
+  vec2 vol;
+  if (feu) {
+    // LE FEU D'ARTIFICE : L'AIR FREINE, LA PESANTEUR N'EST QU'UN RIEN. En
+    // secondes, avec v0 la vitesse de depart et vt la vitesse terminale
+    // (pesanteur / frein, vers le bas) : v(s) = vt + (v0 - vt) exp(-k s), donc
+    // p(s) = p0 + vt s + (v0 - vt) (1 - exp(-k s)) / k. *L'etincelle file,
+    // ralentit et s'arrete a peu pres la ou elle s'eteint* -- c'est ce qui
+    // separe un feu d'artifice d'une explosion qui retombe. Voir FEU.
+    float s = t * vie;
+    float k = ${FEU.frein.toFixed(2)};
+    vec2 v0 = vec2(aVol.z, vy);
+    vec2 vt = vec2(0.0, -${FEU.pesanteur.toFixed(2)} / k);
+    vol = vec2(aVol.y, 0.0) + vt * s + (v0 - vt) * (1.0 - exp(-k * s)) / k;
+  } else {
+    vol = vec2(aVol.y + aVol.z * t, vy * t * (1.0 - t));
+  }
 
   // ELLE S'ALLUME, SCINTILLE ET MEURT : une étincelle a une durée, et c'est
   // son extinction qui l'empêche de se lire comme une bille lancée. **Chaque
   // grain a sa PROPRE cadence** -- un battement commun se lirait comme un
   // clignotement d'alerte, la regle deja payee sur l'aureole du diamant.
   // ET LA MONTEE EST CELLE DE SON REGIME : une rafale nait allumee, la
-  // decoupe s'allume (voir MONTEE_ECLAT).
-  float fondu = smoothstep(0.0, aMontee, t) * smoothstep(1.0, 0.70, t);
+  // decoupe s'allume (voir MONTEE_ECLAT). Le feu d'artifice s'efface
+  // LINEAIREMENT des 45 % de sa vie -- un fondu qui dure, la ou la decoupe
+  // s'eteint sur son dernier tiers.
+  float extinction = feu
+    ? 1.0 - max(0.0, (t - ${FEU.fondu.toFixed(2)}) / (1.0 - ${FEU.fondu.toFixed(2)}))
+    : smoothstep(1.0, 0.70, t);
+  float fondu = smoothstep(0.0, aMontee, t) * extinction;
   float scintille = 0.62 + 0.38 * sin(uTemps * (38.0 + aGraine.x * 34.0) + aGraine.y * 37.0);
 
   // L'ÉCLAT EST UN CARRÉ, ET IL NE S'ALLONGE DE RIEN. *Quatre branches en
@@ -1681,6 +1757,10 @@ export function Sachet3D({
   )
   const montees = useMemo(
     () => semis.getAttribute('aMontee') as THREE.InstancedBufferAttribute,
+    [semis],
+  )
+  const regimes = useMemo(
+    () => semis.getAttribute('aRegime') as THREE.InstancedBufferAttribute,
     [semis],
   )
   const { size } = useThree()
@@ -2029,7 +2109,7 @@ export function Sachet3D({
       const nb = Math.floor(resteEmis.current)
       if (nb > 0) {
         resteEmis.current -= nb
-        emettre(vols, montees, anneau, Math.min(nb, RAFALE_MAX), front, t, false)
+        emettre(vols, montees, regimes, anneau, Math.min(nb, RAFALE_MAX), front, t, false)
       }
     }
 
@@ -2058,7 +2138,7 @@ export function Sachet3D({
       // premier réglage*, donc c'est le drapeau du flash qui le porte — et
       // c'est aussi ce que fait lexicodex, dont la rupture appelle son
       // `emitTearSparks(14)` à côté du son et de la secousse.
-      emettre(vols, montees, anneau, ECLAT_NOMBRE, front, t, true)
+      emettre(vols, montees, regimes, anneau, ECLAT_NOMBRE, front, t, true)
       onDechire?.()
     }
 
