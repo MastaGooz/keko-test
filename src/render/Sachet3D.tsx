@@ -1828,7 +1828,7 @@ function chuteDuFilm(pv: number): number {
   return Math.pow(pv, 1.7)
 }
 /** La part de la chute du film à laquelle le paquet se dit ouvert — voir `onOuvert`. */
-const PART_OUVERT = 0.45
+const PART_OUVERT = 0.54
 
 /**
  * UNE RAMPE SANS ARÊTE, bornée à [0, 1] : la `smoothstep` du nuanceur, côté
