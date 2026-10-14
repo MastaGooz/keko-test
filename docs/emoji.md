@@ -5100,3 +5100,13 @@ le mot du type est tenu d'autant plus largement que la plaque est plus claire.
 
 Vu à l'écran sur le bilan de `?paquet=1314` : cinq plaques blanches, chacune
 teintée d'un souffle de son cran, le texte sombre lisible sur les cinq.
+
+#### PUIS CARRÉMENT BLANCHE
+
+Keko, en voyant le blanc teinté : **« on peut essayer carrément en blanc ? »**
+*C'est la plaque de la carte sans rang* (`PLAQUE_CLAIRE`), posée sur les cinq
+crans par un drapeau (`PLAQUE_BLANCHE`) : le cran se lit au cadre, aux rayons
+et au décor nuit, la plaque ne fait plus que porter le texte. **Toute la
+descente vers le chroma du cran reste écrite** et s'ouvre par `?plaque=cran` —
+*ce qui a servi à choisir doit rester ouvrable.* Vu au bilan de
+`?paquet=1314` : cinq plaques blanches, cinq cadres de couleur.

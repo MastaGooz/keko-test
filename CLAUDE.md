@@ -76,11 +76,11 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 - **Le reflet prend la couleur du cran** (`TON_LUSTRE`, dérivé de `METAUX`).
 - **Contour simple** (`contour === 'simple'`), plaque claire, Baloo 2 (800 /
   400 / 700), pastille de type, coins à 5,5 % (`RAYON_SIMPLE`, lu par la face,
-  le corps extrudé ET le dos), bordure 2,7 U, air du sujet 7 U. La plaque
-  prend la teinte de son cran, **chaque teinte descend jusqu'au chroma du
-  vert** (`CHROMA_PLAQUE` = 74 C*ab, le seul cran validé par Keko), bornée par
-  le contraste du mot du type (`PLANCHER_PLAQUE`, 5) et le rendement
-  (`GAIN_PLAQUE`). Le blanc ne bouge pas, par l'arithmétique.
+  le corps extrudé ET le dos), bordure 2,7 U, air du sujet 7 U. **La plaque
+  est blanche sur les cinq crans** (`PLAQUE_BLANCHE`, celle de la carte sans
+  rang) : le cran se lit au cadre, aux rayons et au décor nuit. La teinte
+  dérivée du métal reste derrière `?plaque=cran` (`CHROMA_PLAQUE`,
+  `PLANCHER_PLAQUE`, `GAIN_PLAQUE`).
 - **Le titre est à taille fixe, pendu par le haut de la plaque** (air 1,8 U),
   deux lignes au plus, 6,63 U calculé. Bancs : `?contour=`, `?texte=sombre`,
   `?titre=crans`, `?dos=gabarit`.
@@ -313,6 +313,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans`, `?dos=gabarit` | les bancs du gabarit |
 | `?fond=sombre` | le fond du paquet sans lumières ni emoji flottants |
 | `?bloom=0` | le paquet sans le halo des points brillants |
+| `?plaque=cran` | la plaque teintée du cran, au lieu du blanc |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |

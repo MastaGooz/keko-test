@@ -1190,10 +1190,18 @@ function tonDeLaPlaque(metal: string, pigment: number, cible: number): string {
  */
 const PLAQUES = new Map<string, readonly [string, string, string]>()
 
+// LA PLAQUE EST BLANCHE, QUEL QUE SOIT LE CRAN. Keko, après le blanc teinté :
+// « on peut essayer carrément en blanc ? » *C'est la plaque de la carte sans
+// rang* (PLAQUE_CLAIRE), posée sur les cinq crans : le cran se lit au cadre,
+// aux rayons et au décor. `?plaque=cran` rend la teinte dérivée du métal —
+// *ce qui a servi à choisir doit rester ouvrable.*
+const PLAQUE_BLANCHE =
+  typeof location === 'undefined' || new URLSearchParams(location.search).get('plaque') !== 'cran'
+
 function tonsDeLaPlaque(rarete: string | undefined): readonly [string, string, string] {
   const cran = rarete ?? ''
   const metal = METAUX[cran]
-  if (metal === undefined) return PLAQUE_CLAIRE
+  if (metal === undefined || PLAQUE_BLANCHE) return PLAQUE_CLAIRE
   const garde = PLAQUES.get(cran)
   if (garde !== undefined) return garde
   // UN SEUL DÉCALAGE POUR LES TROIS NIVEAUX, et il se calcule sur celui du BAS.
