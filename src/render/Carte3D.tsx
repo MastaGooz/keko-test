@@ -1017,8 +1017,13 @@ ${nuanceur.vertexShader}`.replace(
            voile *= 0.86 + 0.14 * hDev(floor(vLustreUv.x * 90.0) + floor(vLustreUv.y * 126.0) * 97.0);
 
            // AU-DELA DE BLANC, la lumiere DEBORDE : une surexposition n'est
-           // pas un voile a 100 %, elle brule.
-           diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.12), clamp(voile, 0.0, 1.0));
+           // pas un voile a 100 %, elle brule. ET ELLE A LA COULEUR DU CRAN --
+           // Keko : « l'effet de lumiere qui devoile les cartes devrait etre
+           // de la couleur de la rarete ». C'est le ton du lustre, derive de
+           // METAUX et deja pousse a une energie commune : *un reflet prend la
+           // couleur de ce qu'il touche*, et ce bain-ci aussi. Le bas de
+           // l'echelle garde la creme, comme partout.
+           diffuseColor.rgb = mix(diffuseColor.rgb, uTonLustre * 1.12, clamp(voile, 0.0, 1.0));
          }`,
       )
       // LA SATURATION DE L'APLAT SE POSE EN SORTIE, après la conversion sRGB :
