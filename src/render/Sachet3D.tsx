@@ -943,7 +943,7 @@ void main() {
   // LE PLANCHER D'AMBIANT EST REVENU A SA VALEUR D'ORIGINE apres un aller-retour (0,5, 0,56, 0,59 : « trop sombre » a chaque fois) : le « trop clair » du depart etait le double encodage sous le bloom, corrige depuis. Keko : « c'est
   // toujours trop clair le sachet ». *Multiplie, ne pose pas* : le film fonce
   // en gardant sa couleur, et son maximum retombe a 1.
-  tex.rgb *= 0.62 + 0.52 * (dot(Nv, L) * 0.5 + 0.5);
+  tex.rgb *= 0.74 + 0.52 * (dot(Nv, L) * 0.5 + 0.5);
   tex.rgb *= 1.0 - ${OMBRE.toFixed(3)} + ${(2 * OMBRE).toFixed(3)} * (dot(N, L) * 0.5 + 0.5);
 
 
