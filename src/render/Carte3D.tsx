@@ -222,7 +222,7 @@ export const INCLINAISON_REFLET = 0.34
  * durée au bout de laquelle on cesse de calculer. *Chiffres à l'oeil*, à
  * rejuger.
  */
-const ELASTIQUE = { amplitude: 0.26, pulsation: 2 * Math.PI * 2.4, amorti: 4, duree: 1.4 } as const
+const ELASTIQUE = { amplitude: 0.26, pulsation: 2 * Math.PI * 3.4, amorti: 5.5, duree: 1.1 } as const
 /** L'ordre de rendu d'une carte au premier plan : après tout le reste — voir `devant`. */
 const ORDRE_DEVANT = 10
 
