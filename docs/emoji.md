@@ -1528,6 +1528,42 @@ Quatre choses à ne pas défaire :
   dure deux tiers de seconde, donc deux balayages enchaînés sauteraient la carte
   qu'on vient de retourner. *On ne révèle pas pour cacher aussitôt.*
 
+#### LA CARTE DU DÉFILÉ PENCHE SOUS LE POINTEUR ET AVEC LE TÉLÉPHONE
+
+Keko : **« les cartes ne bougent plus quand je hover / maintiens le tap,
+normalement elles s'inclinent — et elles doivent le faire aussi quand je
+bouge le tel : exactement comme le paquet booster »**.
+
+***ELLES NE POUVAIENT PAS : ELLES SONT INERTES.*** Depuis que le flip retourne
+le paquet, *tout passe par le geste de l'écran* et la carte ne porte plus de
+geste à elle (`inerte`, donc plus de lancer de rayon) — **et `reflet={vue}`
+était branché sur une carte qui ne pouvait plus rien entendre.** Un survol qui
+n'arrive jamais ne penche rien.
+
+C'est donc l'ÉCRAN qui tient le curseur de la carte regardée
+(`curseurDefile`, passé en `curseurPartage` — la porte que les piles du coffre
+avaient ouverte), et il le nourrit comme le sachet nourrit le sien
+(`viseDepuis`) : **en pixels**. La carte du défilé est au centre, à `Z_MAIN`,
+à une taille connue, donc sa boîte se calcule (`refBoite`) et le point se
+ramène en demi-largeurs de carte.
+
+- **à la souris, le survol** : dedans elle s'incline et brille, dehors elle se
+  redresse — c'est le `pointerout` qu'une carte inerte ne reçoit pas ;
+- **au doigt, le maintien** : elle suit le doigt tant qu'il est posé, même
+  sorti de la carte, comme le sachet suit celui qui le déchire. *Un doigt qui
+  se lève est une tape ou un balayage*, donc rien ne change au geste ;
+- **le téléphone, quand rien ne la tient** (`PencheAuGyro`) : le même capteur
+  que le sachet (`inclinaison.ts`, zéro à la première lecture, remonté à
+  chaque paquet), le même gain et la même borne (0,6 ; 0,22 rad), convertis
+  dans les unités du curseur par `INCLINAISON_REFLET`. **Et sans lustre** :
+  `CurseurDeCarte.penche` incline sans allumer — *un lustre qui s'allumerait
+  parce qu'on tient son téléphone de travers se lirait comme un défaut.*
+
+*Vu à la souris* : la carte s'incline et montre sa bande sous le curseur, et
+se redresse quand il sort. **Le doigt et le gyroscope n'ont pas été vus** — il
+n'y a ni l'un ni l'autre ici. *Le bilan ne penche pas* : ses cinq cartes ont
+chacune leur boîte, et c'est un chantier à part si Keko le veut.
+
 #### UN SEUL FLIP RETOURNE TOUT LE PAQUET
 
 Keko : **« ce serait cool que quand on slide des cartes vers la droite, la carte

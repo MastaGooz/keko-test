@@ -214,7 +214,22 @@ const TOURS_CULBUTE = 2
 const SEUIL_ARRIVEE = 0.005
 
 /** Ce que la carte regardée bascule quand le curseur va d'un bord à l'autre. */
-const INCLINAISON_REFLET = 0.34
+export const INCLINAISON_REFLET = 0.34
+
+/**
+ * CE QU'UN ÉCRAN PEUT DIRE À UNE CARTE DE SON CURSEUR, quand c'est lui qui le
+ * tient (`curseurPartage`). `x` et `y` en demi-largeurs et demi-hauteurs de
+ * carte, de −0,5 à 0,5. `dessus` dit qu'on la regarde : elle s'incline, brille
+ * et s'avance. `penche` dit qu'on l'INCLINE SEULEMENT — c'est le téléphone qui
+ * bouge, pas un doigt qui la regarde : *un lustre qui s'allumerait parce
+ * qu'on tient son téléphone de travers se lirait comme un défaut.*
+ */
+export interface CurseurDeCarte {
+  dessus: boolean
+  x: number
+  y: number
+  penche?: boolean
+}
 /**
  * Et de combien elle s'avance vers le regard, EN PART DE SA LARGEUR.
  *
@@ -577,7 +592,7 @@ type Props = {
    * épaisseur — mais elle se regarde comme un seul objet : les deux lisent
    * donc le même curseur et s'inclinent ensemble.
    */
-  curseurPartage?: { dessus: boolean; x: number; y: number }
+  curseurPartage?: CurseurDeCarte
   onPeinte?: () => void
   onPointerDown?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOver?: (e: ThreeEvent<PointerEvent>) => void
@@ -1424,7 +1439,7 @@ ${nuanceur.fragmentShader}`
    * résultat pour bien plus cher — la règle déjà tenue par le geste et par la
    * projection des étiquettes.
    */
-  const propre = useRef({ dessus: false, x: 0, y: 0 })
+  const propre = useRef<CurseurDeCarte>({ dessus: false, x: 0, y: 0 })
   /**
    * ET IL PEUT ÊTRE PARTAGÉ — c'est ce qui fait bouger UNE PILE D'UN BLOC.
    *
@@ -1582,9 +1597,11 @@ ${nuanceur.fragmentShader}`
      */
     const kReflet = 1 - Math.exp(-9 * delta)
     const dessus = reflet && curseur.dessus
+    // LE TÉLÉPHONE PENCHE SANS ALLUMER : voir `CurseurDeCarte.penche`.
+    const penche = dessus || (reflet && curseur.penche === true)
     l.brille += ((dessus ? 1 : 0) - l.brille) * kReflet
-    l.vx += ((dessus ? curseur.x : 0) - l.vx) * kReflet
-    l.vy += ((dessus ? curseur.y : 0) - l.vy) * kReflet
+    l.vx += ((penche ? curseur.x : 0) - l.vx) * kReflet
+    l.vy += ((penche ? curseur.y : 0) - l.vy) * kReflet
 
     /**
      * LA CULBUTE PREND LA MAIN SUR TOUT LE RESTE, et c'est voulu : pendant

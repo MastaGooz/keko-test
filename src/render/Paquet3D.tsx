@@ -12,8 +12,9 @@ import { NoToneMapping } from 'three'
  * choses VEULENT DIRE, les objets savent comment elles se dessinent.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { Carte3D, DUREE_FLIP } from './Carte3D.tsx'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { Carte3D, DUREE_FLIP, INCLINAISON_REFLET, type CurseurDeCarte } from './Carte3D.tsx'
+import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import { Bouton3D } from './Bouton3D.tsx'
 import { RECUL_DU_BAS, Sachet3D } from './Sachet3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
@@ -134,6 +135,53 @@ function colonnesDuBilan(largeurVisible: number, hauteurVisible: number): number
  * Il se dimensionne sur la place, comme tout ici — la hauteur borne sur un
  * téléphone, la largeur sur un écran de PC.
  */
+/**
+ * LA CARTE PENCHE AVEC LE TÉLÉPHONE, comme le sachet — et c'est le même
+ * capteur, lu de la même façon (`inclinaison.ts`, zéro à la première lecture).
+ *
+ * Keko : « les cartes ne bougent plus quand je hover / maintiens le tap,
+ * normalement elles s'inclinent — et elles doivent le faire aussi quand je
+ * bouge le tel : exactement comme le paquet booster ».
+ *
+ * *Le sachet convertit l'inclinaison en rotation* (`GYRO_GAIN`, borné à
+ * `GYRO_BORNE`) ; la carte, elle, ne connaît qu'un CURSEUR en demi-largeurs,
+ * que `Carte3D` multiplie par `INCLINAISON_REFLET`. On lui donne donc la même
+ * rotation, exprimée dans ses unités — **et sans lustre** : `penche` seul,
+ * parce qu'un téléphone qu'on tient de travers ne regarde pas la carte.
+ *
+ * **Le doigt et la souris passent devant** : tant que `curseur.dessus` est
+ * tenu par l'écran, le gyroscope ne touche à rien. Même signes que le
+ * sachet : le haut du téléphone qui s'éloigne penche le haut de la carte vers
+ * l'arrière, le côté droit qui descend penche la carte à droite.
+ */
+const GYRO_GAIN_CARTE = 0.6
+const GYRO_BORNE_CARTE = 0.22
+function PencheAuGyro({
+  curseur,
+  gyro,
+}: {
+  curseur: CurseurDeCarte
+  gyro: { current: Inclinaison | null }
+}): null {
+  useFrame(() => {
+    if (curseur.dessus) return
+    const incl = gyro.current?.lire() ?? null
+    if (incl === null) {
+      curseur.penche = false
+      return
+    }
+    const borne = (v: number): number =>
+      Math.min(GYRO_BORNE_CARTE, Math.max(-GYRO_BORNE_CARTE, v))
+    // rotation.x de la carte = -vy * INCLINAISON ; rotation.y = vx * INCLINAISON.
+    const rx = borne(incl.x * GYRO_GAIN_CARTE)
+    const ry = borne(-incl.y * GYRO_GAIN_CARTE)
+    curseur.penche = true
+    curseur.x = ry / INCLINAISON_REFLET
+    curseur.y = -rx / INCLINAISON_REFLET
+  })
+  return null
+}
+
 function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number {
   // EN PORTRAIT C'EST LA LARGEUR QUI BORNE, et 0,42 y laissait le sachet perdu
   // au milieu d'un écran vide : *un objet qu'on doit déchirer au doigt a besoin
@@ -376,6 +424,34 @@ export function Paquet3D(): React.ReactElement {
    * `montree` est l'index dans `paquet`, `fini` dit qu'on est passé au bilan.
    */
   const [montree, setMontree] = useState(0)
+
+  /**
+   * LE CURSEUR DE LA CARTE REGARDÉE, tenu par l'ÉCRAN.
+   *
+   * *Les cartes du défilé sont inertes* — tout passe par le geste de
+   * l'écran — donc aucun évènement de pointeur ne les atteint, et
+   * `reflet={vue}` était branché sur une carte qui ne pouvait rien entendre.
+   * Keko : « les cartes ne bougent plus quand je hover / maintiens le tap ».
+   *
+   * C'est donc l'écran qui suit le pointeur, EN PIXELS, comme le sachet le
+   * fait pour son survol (`viseDepuis`) : la carte du défilé est au centre de
+   * l'écran, à une taille connue, donc sa boîte se calcule et le point se
+   * ramène en demi-largeurs de carte. À la souris elle s'incline au SURVOL ;
+   * au doigt, TANT QU'IL EST POSÉ — et un doigt posé qui se lève est une tape
+   * ou un balayage, ce qui ne change rien au geste. Le gyroscope prend le
+   * relais quand rien ne la tient : voir `PencheAuGyro`.
+   */
+  const curseurDefile = useRef<CurseurDeCarte>({ dessus: false, x: 0, y: 0, penche: false })
+  const refBoite = useRef<{ cx: number; cy: number; l: number; h: number } | null>(null)
+  const gyro = useRef<Inclinaison | null>(null)
+  useEffect(() => {
+    // LE ZÉRO EST LA TENUE DU MOMENT OÙ LE PAQUET APPARAÎT, comme le sachet.
+    gyro.current = suivreLInclinaison()
+    return () => {
+      gyro.current?.arreter()
+      gyro.current = null
+    }
+  }, [])
   const [fini, setFini] = useState(false)
   /** La clé du flash de l'arrachement — *une animation se remonte à neuf.* */
   const [flash, setFlash] = useState(0)
@@ -637,17 +713,54 @@ export function Paquet3D(): React.ReactElement {
     const { signal } = arret
     const depart = { x: 0, y: 0 }
     let dernier = 0
+    // LA CARTE SOUS LE POINTEUR, en demi-largeurs : voir `curseurDefile`.
+    const c = curseurDefile.current
+    let doigtPose = false
+    const viser = (e: PointerEvent): boolean => {
+      const b = refBoite.current
+      if (b === null) return false
+      c.x = Math.max(-0.5, Math.min(0.5, (e.clientX - b.cx) / b.l))
+      c.y = Math.max(-0.5, Math.min(0.5, -(e.clientY - b.cy) / b.h))
+      return Math.abs(e.clientX - b.cx) <= b.l / 2 && Math.abs(e.clientY - b.cy) <= b.h / 2
+    }
     addEventListener(
       'pointerdown',
       (e) => {
         depart.x = e.clientX
         depart.y = e.clientY
+        if (e.pointerType !== 'mouse') {
+          // AU DOIGT, C'EST LE MAINTIEN QUI PENCHE : il suit le doigt même
+          // sorti de la carte, comme le sachet suit celui qui le déchire.
+          doigtPose = true
+          viser(e)
+          c.dessus = true
+        }
       },
       { signal },
     )
     addEventListener(
+      'pointermove',
+      (e) => {
+        if (e.pointerType === 'mouse') {
+          // À LA SOURIS, LE SURVOL : dedans elle s'incline, dehors elle se
+          // redresse — le `pointerout` que la carte inerte ne reçoit pas.
+          c.dessus = viser(e)
+        } else if (doigtPose) {
+          viser(e)
+        }
+      },
+      { signal },
+    )
+    const lacher = (e: PointerEvent): void => {
+      if (e.pointerType === 'mouse') return
+      doigtPose = false
+      c.dessus = false
+    }
+    addEventListener('pointercancel', lacher, { signal })
+    addEventListener(
       'pointerup',
       (e) => {
+        lacher(e)
         const dx = e.clientX - depart.x
         const dy = e.clientY - depart.y
         const tape = Math.hypot(dx, dy) < 12
@@ -809,6 +922,17 @@ export function Paquet3D(): React.ReactElement {
    * commande, donc il n'y coûte rien.
    */
   const tailleDuDefile = Math.min(lVisible * 0.78, (hVisible * 0.58) / 1.4)
+  // LA BOÎTE DE LA CARTE DU DÉFILÉ À L'ÉCRAN, en pixels, pour `curseurDefile` :
+  // elle est au centre, à `Z_MAIN`, et `hVisible` dit ce que vaut une unité de
+  // monde en pixels à cette profondeur. *Une ref, parce que l'écouteur est
+  // posé une fois et doit lire la boîte du moment.*
+  const pxParUnite = fenetre.h / hVisible
+  refBoite.current = {
+    cx: fenetre.l / 2,
+    cy: fenetre.h / 2,
+    l: tailleDuDefile * pxParUnite,
+    h: tailleDuDefile * 1.4 * pxParUnite,
+  }
   /**
    * ET ELLE AVANCE AVEC, puisqu'il n'y a plus rien à couvrir.
    *
@@ -876,6 +1000,7 @@ export function Paquet3D(): React.ReactElement {
       >
         <Cadrage />
         <Horloge />
+        <PencheAuGyro curseur={curseurDefile.current} gyro={gyro} />
         <ambientLight intensity={0.55} />
         <directionalLight
           position={[2.5, 3.5, 4]}
@@ -1018,6 +1143,10 @@ export function Paquet3D(): React.ReactElement {
               // ELLE RÉPOND AU CURSEUR une fois révélée, et pas avant : *un dos
               // n'a rien à montrer*, donc rien à faire briller.
               reflet={vue}
+              // ET C'EST L'ÉCRAN QUI TIENT SON CURSEUR, pour la carte qu'on
+              // regarde seulement : voir `curseurDefile`.
+              curseurPartage={!fini && i === montree ? curseurDefile.current : undefined}
+              refletAuDoigt={!fini && i === montree}
               ombre
               // ELLE NE PORTE PLUS DE GESTE À ELLE. *Tout passe par le geste
               // de l'écran* — une tape sur la carte et une tape à côté font la
