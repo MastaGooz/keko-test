@@ -16,8 +16,11 @@
  *   du dos ;
  * - des EMOJI FANTÔMES, pris dans le catalogue, petits et translucides, qui
  *   montent comme des bulles en tournant à peine. *Le fond est fait de ce que
- *   le paquet contient*, la règle du sachet et du dos. Ils sont ajoutés en
- *   lumière (`lighter`), donc ils luisent au lieu d'être posés.
+ *   le paquet contient*, la règle du sachet et du dos. **Ils se posent, ils
+ *   ne s'ajoutent pas** : en lumière additive, deux fantômes qui se croisent
+ *   s'éclairaient l'un l'autre sur leur recouvrement — Keko : « quand les
+ *   emojis se superposent ça les éclaire, c'est un peu bizarre ». Seuls les
+ *   bokehs s'additionnent, *une lumière s'ajoute, un objet se pose.*
  *
  * **C'est une toile 2D DERRIÈRE le canvas WebGL**, pas un plan dans la scène :
  * le fond est du HTML (`.paquet-fond`, `.paquet-lueur`), et la lueur
@@ -115,7 +118,7 @@ export function FondAnime(): React.ReactElement {
       vy: (hasard() - 0.5) * 0.012,
       phase: hasard() * Math.PI * 2,
       cadence: 0.25 + hasard() * 0.35,
-      alpha: 0.09 + hasard() * 0.1,
+      alpha: 0.13 + hasard() * 0.13,
     }))
     let fantomes: Fantome[] = []
 
@@ -150,7 +153,7 @@ export function FondAnime(): React.ReactElement {
         phase: hasard() * Math.PI * 2,
         rot: (hasard() - 0.5) * 0.6,
         vrot: (hasard() - 0.5) * 0.16,
-        alpha: 0.14 + hasard() * 0.16,
+        alpha: 0.2 + hasard() * 0.18,
       }))
       // FIGÉ, on repeint une fois les glyphes là : sinon le fond resterait sans eux.
       if (fige) peindre(0)
@@ -177,6 +180,8 @@ export function FondAnime(): React.ReactElement {
         ctx.arc(x, y, r, 0, Math.PI * 2)
         ctx.fill()
       }
+      // LES FANTÔMES SE POSENT : voir en tête.
+      ctx.globalCompositeOperation = 'source-over'
       for (const f of fantomes) {
         const taille = f.t * petit
         const x = (f.x + Math.sin(temps * 0.7 + f.phase) * f.balance) * largeur

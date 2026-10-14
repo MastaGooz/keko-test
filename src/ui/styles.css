@@ -5542,12 +5542,15 @@ body {
   position: fixed;
   inset: 0;
   z-index: 0;
-  background-color: #0d0c11;
+  /* UN CRAN PLUS CLAIR depuis le fond anime -- Keko : « je trouve le fond un
+     peu sombre ». *Des lumieres sur du noir restent des lumieres dans le
+     noir* : c'est la base qui monte, pas les bokehs seuls. */
+  background-color: #131119;
   background-image: radial-gradient(
     ellipse 70% 55% at 50% 46%,
-    #241d2e 0%,
-    #15121c 55%,
-    #0b0a0e 100%
+    #352a46 0%,
+    #1f1a2a 55%,
+    #110f17 100%
   );
 }
 
