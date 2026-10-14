@@ -5060,6 +5060,12 @@ const PROF_DENT = 0.011
  * proportions, et il ne se lirait plus comme le même motif.
  */
 const US = SACHET_LARGE / 100
+/**
+ * LE TITRE DU SACHET. Keko : « essayons "Emojis" ». *Le projet n'avait pas de
+ * nom affiché, donc on n'en inventait pas* — c'est Keko qui le pose, et c'est
+ * un essai : un mot, une ligne à changer.
+ */
+const TITRE_DU_SACHET = 'Emojis'
 
 let SACHET: Promise<THREE.CanvasTexture> | null = null
 
@@ -5167,82 +5173,6 @@ function peindreSoudure(
   }
   ctx.restore()
 }
-
-/**
- * LES TROIS CARTES EN ÉVENTAIL : ce qu'il y a DEDANS, montré sur l'emballage.
- *
- * *Un emballage dit toujours ce qu'il contient* — et c'est ce qui manquait le
- * plus à la toute première dalle : elle ne promettait rien.
- *
- * ***CE SONT DES FACES, PAS DES DOS, et c'est ce qui les fait parler.*** Trois
- * dos bleus se lisent comme trois rectangles vides : ils disent « des cartes »,
- * pas « des cartes d'EMOJI ». **Une face dit les deux d'un coup** — un cadre de
- * couleur, un emoji dans sa fenêtre, une plaque claire dessous — et c'est
- * exactement la carte qu'on trouvera dedans.
- *
- * **ELLE EST RÉDUITE À SES TROIS SIGNAUX**, et pas peinte en petit : à trente
- * pixels de large, le cartouche, le nom et la pastille tournent en bouillie.
- * *Ce qui survit à la réduction est ce qu'on garde* — la règle de l'étoile du
- * paquet de pioche.
- *
- * **ET LES TROIS CRANS SONT ÉCARTÉS SUR L'ÉCHELLE** (bleu, orange, violet) :
- * trois cartes du même cran diraient qu'un paquet n'en contient qu'un.
- */
-const EVENTAIL: readonly { emoji: string; cran: string }[] = [
-  { emoji: '🚀', cran: 'bleu' },
-  { emoji: '🎉', cran: 'violet' },
-  { emoji: '❤️', cran: 'orange' },
-]
-
-function peindreEventail(ctx: CanvasRenderingContext2D, cx: number, cy: number, l: number): void {
-  const w = l * 0.235
-  const h = w * 1.4
-  for (const [i, dx, a] of [
-    [0, -w * 0.8, -0.22],
-    [1, w * 0.8, 0.22],
-    // LA DERNIÈRE EST AU MILIEU, posée une fois ses voisines en place : *elle
-    // est le sujet, elle doit rester entière.*
-    [2, 0, 0],
-  ] as const) {
-    const { emoji, cran } = EVENTAIL[i]!
-    const devant = i === 2
-    ctx.save()
-    ctx.translate(cx + dx, cy + (devant ? 0 : h * 0.06))
-    ctx.rotate(a)
-    ctx.globalAlpha = devant ? 1 : 0.84
-
-    // LE CADRE, de la couleur de son cran : *une échelle se dit en couleur.*
-    ctx.beginPath()
-    ctx.roundRect(-w / 2, -h / 2, w, h, w * SACHET_RAYON)
-    ctx.fillStyle = METAUX[cran]![2]!
-    ctx.fill()
-
-    // LA FENÊTRE D'ART, dans le bleu du décor des cartes.
-    const m = w * 0.085
-    ctx.beginPath()
-    ctx.roundRect(-w / 2 + m, -h / 2 + m, w - m * 2, h * 0.58, w * 0.06)
-    ctx.fillStyle = `rgb(${DOS_BLEU[0] * 0.55}, ${DOS_BLEU[1] * 0.55}, ${DOS_BLEU[2] * 0.55})`
-    ctx.fill()
-
-    const image = imageDeLEmoji(emoji)
-    // UN GLYPHE QUI MANQUE SE SAUTE : *le sachet doit sortir même si une police
-    // n'arrive pas* — la règle du bouquet, et c'est le même chemin.
-    if (image !== null) {
-      const d = w * 0.46
-      ctx.drawImage(image, -d / 2, -h / 2 + m + h * 0.29 - d / 2, d, d)
-    }
-
-    // LA PLAQUE CLAIRE, celle qui porte le texte d'une carte. *Elle ne porte
-    // rien ici* : à cette taille, un trait de texte est une salissure.
-    ctx.beginPath()
-    ctx.roundRect(-w / 2 + m, h * 0.1, w - m * 2, h * 0.3, w * 0.06)
-    ctx.fillStyle = DOS_CREME
-    ctx.fill()
-    ctx.restore()
-  }
-  ctx.globalAlpha = 1
-}
-
 /**
  * LA PASTILLE DU CONTENU : « 5 CARTES », en clair sur le bleu.
  *
@@ -5319,27 +5249,49 @@ async function peindreLeSachet(): Promise<HTMLCanvasElement> {
    * resserre*** : la règle déjà payée sur la bande de stats et les onglets du
    * coffre.
    */
-  const cyM = h * 0.335
+  /**
+   * **L'ÉVENTAIL EST PARTI, ET LE SACHET PORTE UN TITRE.** Keko : « on peut
+   * supprimer les 3 cartes dessinées sur le paquet et descendre vers le bas
+   * les emoji pour écrire un titre au-dessus ? Essayons "Emojis" ». *Le
+   * sachet disait deux fois ce qu'il contient* — le bouquet ET trois faces de
+   * cartes — et il ne nommait rien. Le mot prend la place du haut, le bouquet
+   * descend dans celle que l'éventail a rendue. Trois étages, et chacun dit
+   * une chose : le NOM, la MARQUE, le CONTENU (la pastille et l'échelle).
+   */
+  const cyT = h * 0.27
+  const cyM = h * 0.56
   const halo = ctx.createRadialGradient(l / 2, cyM, l * 0.16, l / 2, cyM, l * 0.46)
   halo.addColorStop(0, '#ffffff2e')
   halo.addColorStop(1, '#ffffff00')
   ctx.fillStyle = halo
   ctx.fillRect(0, 0, l, h)
 
+  // LE TITRE : en Baloo 2, la voix de la collection, cerné comme un sticker —
+  // *sur cette planche, tout ce qui est posé sur le film porte le même
+  // cerne*, donc le mot aussi. Le cerne se trace AVANT le remplissage, sinon
+  // il mord sur les lettres.
+  await policeRonde()
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `800 ${l * 0.19}px ${FAMILLE_RONDE}`
+  ctx.letterSpacing = `${l * 0.006}px`
+  ctx.lineJoin = 'round'
+  ctx.strokeStyle = '#16202a'
+  ctx.lineWidth = l * 0.028
+  ctx.strokeText(TITRE_DU_SACHET, l / 2, cyT)
+  ctx.strokeStyle = DOS_CREME
+  ctx.lineWidth = l * 0.014
+  ctx.strokeText(TITRE_DU_SACHET, l / 2, cyT)
+  ctx.fillStyle = DOS_CREME
+  ctx.fillText(TITRE_DU_SACHET, l / 2, cyT)
+  ctx.restore()
+
   // LA MARQUE : LE BOUQUET DU DOS, en grand. *Le logo d'une collection se
   // compose de ce qu'elle contient* — et c'est déjà lui qui dit à quel jeu ces
   // cartes appartiennent, donc le sachet n'a pas de second signe à porter.
   await peindreBouquet(ctx, l / 2, cyM, US * 0.75)
 
-  // LES GLYPHES DE L'ÉVENTAIL S'ATTENDENT AUSSI, et séparément : *le bouquet
-  // n'attend que les siens*, donc un emoji de l'éventail qui n'en serait pas
-  // partirait en police système — ou en rien du tout.
-  await Promise.all(EVENTAIL.map((e) => policeDeLEmoji(e.emoji)))
-
-  // ET L'ÉVENTAIL REMONTE D'AUTANT : sa pastille vient juste dessous, et
-  // *deux objets mesurés en largeur dans une colonne raccourcie se touchent
-  // par le milieu.*
-  peindreEventail(ctx, l / 2, h * 0.632, l)
   peindrePastilleDuSachet(ctx, l / 2, h * 0.8, '5 CARTES', l * 0.052)
 
   // LES CINQ CRANS, en pastilles : *ce qu'on peut y trouver*, dit par l'échelle

@@ -2033,6 +2033,46 @@ carte » sur un objet qui n'en est pas une.
 *Vérifié à l'écran, déchirure comprise* : la bande s'arrache toujours et
 s'envole avec ses pics, et la soudure du bas garde les siens.
 
+#### L'ÉVENTAIL EST PARTI, ET LE SACHET PORTE UN TITRE : « Emojis »
+
+Keko : **« maintenant on peut supprimer les 3 cartes dessinées sur le paquet
+et descendre vers le bas les emoji pour écrire un titre au-dessus ? Essayons
+"Emojis" »**.
+
+*Le sachet disait deux fois ce qu'il contient* — le bouquet ET trois faces de
+cartes — **et il ne nommait rien.** Le mot prend l'étage du haut, le bouquet
+descend dans celui que l'éventail a rendu, et le sachet a désormais trois
+étages qui disent chacun une chose : le NOM (le titre), la MARQUE (le
+bouquet), le CONTENU (la pastille « 5 CARTES » et l'échelle des cinq crans).
+
+Trois choses qui le portent :
+
+- **le titre est en Baloo 2, cerné comme un sticker** : *sur cette planche,
+  tout ce qui est posé sur le film porte le même cerne* — un trait sombre
+  épais, un trait crème dessus, puis le remplissage crème. Le cerne se trace
+  AVANT le remplissage, sinon il mord sur les lettres. La police se demande
+  explicitement (`policeRonde`), le piège déjà payé sur la plaque claire ;
+- **c'est le mot de Keko, en une constante** (`TITRE_DU_SACHET`) : *le projet
+  n'avait pas de nom affiché, donc on n'en inventait pas* — c'est lui qui le
+  pose, et c'est un essai ;
+- **les hauteurs se sont réglées à la capture, en deux passes** : titre à
+  0,285 et bouquet à 0,535, le « j » touchait presque l'étoile ; **titre à
+  0,27, bouquet à 0,56**, et chacun a son air. *Un contenu placé en hauteur se
+  juge à l'écran, pas au calcul* — la règle du bouquet et de l'éventail,
+  repayée.
+
+**ET LA CAPTURE EST VENUE DE CHROME HEADLESS, pas de l'extension.** Celle-ci
+perdait l'onglet à chaque navigation depuis des heures ; `chrome.exe
+--headless=new --screenshot` avec un profil à part (`--user-data-dir`) et
+SwiftShader (`--use-angle=swiftshader --enable-unsafe-swiftshader`) rend la
+scène WebGL en portrait 390 × 844 sans rien demander à personne. *Sans le
+profil à part, le processus GPU plantait ; sans SwiftShader, pas de WebGL.*
+**C'est le chemin à prendre pour juger une mise en page quand l'extension ne
+répond plus.**
+
+`peindreEventail` et `EVENTAIL` sont partis avec : *du code mort ment sur ce
+que le jeu fait.* Ce qui suit est leur histoire.
+
 #### L'ÉVENTAIL MONTRE DES FACES, ET C'EST CE QUI LE FAIT PARLER
 
 *Trois dos bleus se lisent comme trois rectangles vides* — vérifié à l'écran :
