@@ -716,6 +716,15 @@ export function Paquet3D(): React.ReactElement {
       decouvrir(0)
       return
     }
+    // ON NE PASSE À LA SUIVANTE QUE SI LA PILE EST OUVERTE. Keko : « quand je
+    // spam clic, lorsque la première carte est déplacée sur la droite, celle
+    // de derrière apparaît plus petite et se fait zoomer ». *Les suivantes
+    // attendent à taille nulle le temps du demi-tour*, et l'anti-rebond du
+    // geste (400 ms) est plus court que le flip (DUREE_FLIP) : un second geste
+    // pressé révélait une carte qui n'avait pas encore pris sa taille, et on
+    // la voyait grandir. **La suivante n'est « déjà là » qu'une fois la pile
+    // ouverte** — avant, le geste attend.
+    if (!pileOuverte) return
     if (montree + 1 < paquet.length) {
       setMontree(montree + 1)
       decouvrir(montree + 1)
