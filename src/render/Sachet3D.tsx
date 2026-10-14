@@ -940,10 +940,10 @@ void main() {
   // pas l'absence de reflet, c'est l'excès d'AMBIANT* — une surface éclairée de
   // partout n'a plus de part sombre à laquelle son reflet se compare. Le
   // plafond ne bouge pas (1,14), c'est l'écart qui se creuse.
-  // LE PLANCHER D'AMBIANT BAISSE D'UN CRAN (0,62 -> 0,5). Keko : « c'est
+  // LE PLANCHER D'AMBIANT BAISSE D'UN CRAN (0,62 -> 0,56, apres un 0,5 « un peu trop sombre »). Keko : « c'est
   // toujours trop clair le sachet ». *Multiplie, ne pose pas* : le film fonce
   // en gardant sa couleur, et son maximum retombe a 1.
-  tex.rgb *= 0.5 + 0.5 * (dot(Nv, L) * 0.5 + 0.5);
+  tex.rgb *= 0.56 + 0.5 * (dot(Nv, L) * 0.5 + 0.5);
   tex.rgb *= 1.0 - ${OMBRE.toFixed(3)} + ${(2 * OMBRE).toFixed(3)} * (dot(N, L) * 0.5 + 0.5);
 
 
