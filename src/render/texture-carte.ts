@@ -4691,7 +4691,13 @@ async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement> {
  * tirage : *un semis qui se réarrangerait d'une peinture à l'autre ne serait
  * plus une matière.* Aucun hasard n'est consommé — il n'y a rien à rejouer.
  */
-function peindreTouches(ctx: CanvasRenderingContext2D, l = LARGE, h = HAUT, u = U): void {
+function peindreTouches(
+  ctx: CanvasRenderingContext2D,
+  l = LARGE,
+  h = HAUT,
+  u = U,
+  masque = false,
+): void {
   const pas = DOS_PAS * u
   const cote = DOS_TOUCHE * u
   const teintes = ['blanc', 'vert', 'bleu', 'violet', 'orange'].map((c) => METAUX[c]![2]!)
@@ -4710,9 +4716,11 @@ function peindreTouches(ctx: CanvasRenderingContext2D, l = LARGE, h = HAUT, u = 
       // bleu sale — *une couleur peu opaque posée sur une autre se moyenne avec
       // elle.* En `lighter` elle s'ajoute, donc elle ÉCLAIRE : c'est la
       // différence entre une tache et un confetti.
-      ctx.globalCompositeOperation = teinte === undefined ? 'source-over' : 'lighter'
-      ctx.fillStyle = teinte ?? '#ffffff'
-      ctx.globalAlpha = teinte === undefined ? 0.055 : 0.3
+      // EN MASQUE, chaque touche est blanche et pleine : c'est la carte de
+      // brillance du sachet, voir brillanceDuSachet.
+      ctx.globalCompositeOperation = teinte === undefined || masque ? 'source-over' : 'lighter'
+      ctx.fillStyle = masque ? '#ffffff' : (teinte ?? '#ffffff')
+      ctx.globalAlpha = masque ? 1 : teinte === undefined ? 0.055 : 0.3
       ctx.beginPath()
       ctx.roundRect(x - cote / 2, y - cote / 2, cote, cote, cote * 0.32)
       ctx.fill()
@@ -4789,6 +4797,7 @@ async function peindreBouquet(
   cx: number,
   cy: number,
   u = U,
+  masque = false,
 ): Promise<void> {
   // ON ATTEND LA POLICE POUR CHAQUE CARACTÈRE, et les douze ENSEMBLE : *une
   // toile peinte avant que le glyphe soit là part en cache telle quelle*, donc
@@ -4799,7 +4808,7 @@ async function peindreBouquet(
     // UN GLYPHE QUI MANQUE SE SAUTE, il ne laisse pas de trou carré : *le dos
     // doit sortir même si une police n'arrive pas.*
     if (image === null) continue
-    collerSticker(ctx, image, cx + p.x * u, cy + p.y * u, p.t * u, p.a, u)
+    collerSticker(ctx, image, cx + p.x * u, cy + p.y * u, p.t * u, p.a, u, masque)
   }
 }
 
@@ -4957,6 +4966,7 @@ function collerSticker(
   taille: number,
   angle: number,
   u = U,
+  masque = false,
 ): void {
   const d = taille
   // LE RAYON DU CERNE EN PIXELS DE SA TOILE : l'épaisseur voulue à l'écran,
@@ -4967,6 +4977,13 @@ function collerSticker(
   ctx.save()
   ctx.translate(x, y)
   ctx.rotate(angle)
+  if (masque) {
+    // EN MASQUE, LE STICKER EST SA DÉCOUPE, pleine : le cerne couvre le glyphe
+    // et son contour, et c'est toute la surface qui brille.
+    ctx.drawImage(cerne.toile, -dc / 2, -dc / 2, dc, dc)
+    ctx.restore()
+    return
+  }
   ctx.save()
   ctx.shadowColor = '#00000055'
   ctx.shadowOffsetY = 1.1 * u
@@ -5165,7 +5182,7 @@ const US = SACHET_LARGE / 100
  */
 const TITRE_DU_SACHET = 'Emojis'
 
-let SACHET: Promise<THREE.CanvasTexture> | null = null
+let SACHET: Promise<{ film: THREE.CanvasTexture; brillance: THREE.CanvasTexture }> | null = null
 
 /**
  * Le contour du sachet : un rectangle à quatre angles ARRONDIS.
@@ -5309,15 +5326,67 @@ function peindrePastilleDuSachet(
   ctx.textBaseline = 'alphabetic'
 }
 
-async function peindreLeSachet(): Promise<HTMLCanvasElement> {
+/**
+ * LA CARTE DE BRILLANCE DU SACHET : ce qui luit, en blanc sur noir.
+ *
+ * Keko : « c'est possible que certaines parties du booster soient plus
+ * brillantes que d'autres ? par ex les petits carrés bleus, les emoji et le
+ * titre pourraient briller comme actuellement, et le fond du booster un peu
+ * moins ». *C'est la carte de rugosité de lexicodex*, celle que la note
+ * disait « à rouvrir le jour où il faudra que le bouquet cesse de briller
+ * comme le film qui le porte » — ici c'est l'inverse qui est demandé, et
+ * c'est la même carte : **le film porte une matière, l'imprimé en porte une
+ * autre.**
+ *
+ * Elle se peint AVEC LES MÊMES PEINTRES que le film, en mode masque : les
+ * touches pleines, les stickers par leur découpe, le titre par son tracé —
+ * *deux dessins qui décrivent la même chose divergent au premier réglage*, et
+ * c'est ce qui garantit qu'un carré brille exactement là où il est imprimé.
+ * Le nuanceur la lit comme une DONNÉE (pas de sRGB) : 0 le film, 1 l'imprimé.
+ */
+async function peindreLaBrillanceDuSachet(): Promise<HTMLCanvasElement> {
+  const l = SACHET_LARGE
+  const h = SACHET_HAUT
+  const canvas = document.createElement('canvas')
+  canvas.width = l
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  if (ctx === null) return canvas
+  ctx.fillStyle = '#000000'
+  ctx.fillRect(0, 0, l, h)
+  peindreTouches(ctx, l, h, US, true)
+  const cyT = h * 0.27
+  const cyM = h * 0.56
+  await policeRonde()
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `800 ${l * 0.19}px ${FAMILLE_RONDE}`
+  ctx.letterSpacing = `${l * 0.006}px`
+  ctx.lineJoin = 'round'
+  ctx.strokeStyle = '#ffffff'
+  ctx.lineWidth = l * 0.03
+  ctx.strokeText(TITRE_DU_SACHET, l / 2, cyT)
+  ctx.fillStyle = '#ffffff'
+  ctx.fillText(TITRE_DU_SACHET, l / 2, cyT)
+  ctx.restore()
+  await peindreBouquet(ctx, l / 2, cyM, US * 0.75, true)
+  return canvas
+}
+
+async function peindreLeSachet(): Promise<{
+  film: HTMLCanvasElement
+  brillance: HTMLCanvasElement
+}> {
   const l = SACHET_LARGE
   const h = SACHET_HAUT
   const r = l * SACHET_RAYON
   const canvas = document.createElement('canvas')
   canvas.width = l
   canvas.height = h
+  const brillance = await peindreLaBrillanceDuSachet()
   const ctx = canvas.getContext('2d')
-  if (ctx === null) return canvas
+  if (ctx === null) return { film: canvas, brillance }
 
   // LE FILM VA JUSQU'AU BORD — **il n'y a plus de lisere.** Keko : « on peut
   // enlever le contour du paquet ». *Un sachet n'a pas de cadre* : il a un film
@@ -5471,7 +5540,7 @@ async function peindreLeSachet(): Promise<HTMLCanvasElement> {
   peindreSoudure(ctx, l, h, h * 0.047, true)
   peindreSoudure(ctx, l, h, h * 0.047, false)
   ctx.restore()
-  return canvas
+  return { film: canvas, brillance }
 }
 
 /** Le rapport du sachet, pour que le plan qui le porte l'ait aussi. */
@@ -5704,11 +5773,25 @@ export function textureDesPlis(): THREE.CanvasTexture {
  * règle déjà payée par les cartes, puis par les cases du chargement.
  */
 export function textureDuSachet(): Promise<THREE.CanvasTexture> {
+  return toilesDuSachet().then((t) => t.film)
+}
+
+/** La carte de brillance du sachet, peinte avec le film : voir peindreLaBrillanceDuSachet. */
+export function brillanceDuSachet(): Promise<THREE.CanvasTexture> {
+  return toilesDuSachet().then((t) => t.brillance)
+}
+
+function toilesDuSachet(): Promise<{ film: THREE.CanvasTexture; brillance: THREE.CanvasTexture }> {
   SACHET ??= Promise.all([document.fonts.ready, policeRonde()]).then(async () => {
-    const texture = new THREE.CanvasTexture(await peindreLeSachet())
-    texture.anisotropy = 8
-    texture.colorSpace = THREE.SRGBColorSpace
-    return texture
+    const toiles = await peindreLeSachet()
+    const film = new THREE.CanvasTexture(toiles.film)
+    film.anisotropy = 8
+    film.colorSpace = THREE.SRGBColorSpace
+    // UNE DONNÉE, PAS UNE COULEUR : la brillance ne passe pas par le sRGB,
+    // comme la carte des plis.
+    const brillance = new THREE.CanvasTexture(toiles.brillance)
+    brillance.anisotropy = 8
+    return { film, brillance }
   })
   return SACHET
 }

@@ -54,6 +54,7 @@ import {
   RAPPORT_SACHET,
   textureDesPlis,
   textureDuSachet,
+  brillanceDuSachet,
 } from './texture-carte.ts'
 
 /**
@@ -469,6 +470,13 @@ const BANC_SON =
 /** Ce que le survol penche et avance : *un objet qu'on tourne vers soi.* */
 const PENCHE = 0.26
 const AVANCEE = 0.1
+/**
+ * CE QUE LE FILM NU GARDE DE SON REFLET, l'imprimé gardant tout : lustre,
+ * lampes et éclats des plis y sont multipliés. *Chiffre à l'oeil*, à rejuger
+ * par Keko — à 1 le sachet brille partout comme avant, à 0 seul l'imprimé
+ * luit.
+ */
+const BRILLANCE_FILM = 0.45
 /** Le point de la fente tel que le relief le pose, recalculé à chaque image. */
 const fenteReelle = new THREE.Vector3()
 /**
@@ -662,6 +670,9 @@ function matiereDuMorceau(estLeCorps: boolean): THREE.ShaderMaterial {
     depthWrite: false,
     uniforms: {
       uSachet: { value: VIDE },
+      // LA CARTE DE BRILLANCE : ce qui luit en plein (l'imprimé) et ce qui luit
+      // moins (le film nu) — voir BRILLANCE_FILM.
+      uBrillance: { value: VIDE },
       // LA CARTE DES PLIS : une normal map peinte une fois. *Les deux morceaux
       // lisent la MÊME*, sinon le pli s'arrêterait à la déchirure.
       uPlis: { value: VIDE },
@@ -730,6 +741,7 @@ void main() {
   gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
 }`,
     fragmentShader: `uniform sampler2D uSachet;
+uniform sampler2D uBrillance;
 uniform sampler2D uPlis;
 uniform float uV0;
 uniform float uV1;
@@ -776,6 +788,14 @@ void main() {
   // par le rapport, sans quoi les plis seraient étirés deux fois en hauteur.
   vec2 sach = vec2(vUv.x, mix(uV0, uV1, vUv.y));
   vec4 tex = texture2D(uSachet, sach);
+  // CE QUI LUIT, ET DE COMBIEN. Keko : « les petits carres bleus, les emoji et
+  // le titre pourraient briller comme actuellement, et le fond du booster un
+  // peu moins ». L'imprime garde tout son reflet, le film nu n'en garde que
+  // BRILLANCE_FILM : c'est la carte de rugosite de lexicodex, prise par
+  // l'autre bout -- une matiere pour le film, une autre pour ce qu'on y a
+  // imprime. Le galbe de Fresnel, lui, est la forme du sachet : il ne la lit
+  // pas.
+  float bril = mix(${BRILLANCE_FILM.toFixed(2)}, 1.0, texture2D(uBrillance, sach).r);
 
   /**
    * LA NORMALE DU VENTRE, et c'est elle qui raconte la FORME.
@@ -967,7 +987,7 @@ void main() {
   // *C'est ce que dit le film de lexicodex, dont le reflet est violet sur le
   // violet et or sur l'or* — vérifié à la capture.
   float lustre = pow(max(dot(Nv, H), 0.0), 26.0);
-  corps *= 1.0 + lustre * ${LUSTRE.toFixed(2)};
+  corps *= 1.0 + lustre * ${LUSTRE.toFixed(2)} * bril;
 
   /**
    * ET LE MÉTAL TEINTE CE QU'IL RENVOIE — **c'est toute la demande de Keko.**
@@ -994,7 +1014,7 @@ void main() {
   // LES QUATRE SOURCES — la clé blanche, le cyan, le rose, le violet — par la
   // fonction qui les porte toutes : voir lampes(). *La clé y recalcule le H
   // du ventre à l'identique*, puisque c'est la même lampe.
-  corps += teinte * lampes(Nv, pen) * feu;
+  corps += teinte * lampes(Nv, pen) * feu * bril;
 
   // **LES ÉCLATS DES PLIS RESTENT À PART, et eux seuls lisent la normale des
   // plis** : ce sont de vrais points chauds, trop petits pour effacer quoi que
@@ -1002,7 +1022,7 @@ void main() {
   // un voile.* Ils sont teintés comme les autres — un pli de film argenté
   // n'étincelle pas en blanc, il étincelle de la couleur du film.
   float eclats = pow(max(dot(N, H), 0.0), 150.0);
-  corps += teinte * vec3(1.0, 0.97, 0.90) * eclats * ${ECLATS.toFixed(2)} * feu;
+  corps += teinte * vec3(1.0, 0.97, 0.90) * eclats * ${ECLATS.toFixed(2)} * feu * bril;
 
   /**
    * ET LE BORD DU VENTRE S'ALLUME — **c'est du FRESNEL, pas un liseré.**
@@ -2042,6 +2062,11 @@ export function Sachet3D({
       if (!vivant) return
       corps.uniforms.uSachet!.value = t
       bandeMat.uniforms.uSachet!.value = t
+    })
+    void brillanceDuSachet().then((t) => {
+      if (!vivant) return
+      corps.uniforms.uBrillance!.value = t
+      bandeMat.uniforms.uBrillance!.value = t
     })
     return () => {
       vivant = false

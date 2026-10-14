@@ -4318,6 +4318,31 @@ Elle vit donc dans la table, et le nuanceur la lit : *le diffus, le lustre, les
 éclats des plis et le lobe blanc sont la même lampe, donc ils ne peuvent plus
 pencher différemment.*
 
+#### LA CARTE DE BRILLANCE EST VENUE, PAR L'AUTRE BOUT
+
+Keko : **« c'est possible que certaines parties du booster soient plus
+brillantes que d'autres ? par ex les petits carrés bleus, les emoji et le
+titre pourraient briller comme actuellement, et le fond du booster un peu
+moins »**.
+
+*C'est la carte de rugosité de lexicodex*, celle que la note d'en dessous
+disait « à rouvrir le jour où il faudra que le bouquet cesse de briller comme
+le film » — ici c'est l'inverse qui est demandé, et c'est la même carte :
+**le film porte une matière, l'imprimé en porte une autre.**
+
+Elle se peint AVEC LES MÊMES PEINTRES que le film, en mode masque
+(`peindreLaBrillanceDuSachet`) : les touches pleines, les stickers par leur
+découpe (le cerne couvre le glyphe), le titre par son tracé. *Deux dessins qui
+décrivent la même chose divergent au premier réglage*, et c'est ce qui
+garantit qu'un carré brille exactement là où il est imprimé. Le nuanceur la
+lit comme une DONNÉE (pas de sRGB, comme les plis) et en dose le lustre, les
+quatre lampes et les éclats des plis : l'imprimé garde tout, le film nu n'en
+garde que `BRILLANCE_FILM` (0,45, à l'oeil). **Le Fresnel ne la lit pas** :
+c'est la forme du sachet, pas sa matière.
+
+*Vu à l'écran, penché au survol* : les touches et le bouquet s'allument, le
+film entre elles reste posé.
+
 #### CE QU'ON N'A PAS REPRIS : LA CARTE DE RUGOSITÉ
 
 Chez eux, **l'imprimé ne brille pas** : le texte est posé à rugosité 0,65 et
