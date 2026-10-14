@@ -152,7 +152,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   suivantes sont à taille nulle PENDANT le flip (`pileOuverte`), puis derrière
   à `ECART_PILE`. Carte `inerte`, geste posé une fois lisant une ref, 400 ms
   d'anti-rebond. Culbute archivée derrière `?culbute`. Bilan en grille, trois
-  colonnes en portrait, chaque ligne centrée sur son compte.
+  colonnes en portrait, chaque ligne centrée sur son compte — **et les cinq
+  cartes y répondent** : survol, doigt posé, gyroscope (un curseur par carte,
+  `curseursBilan`), une tape zoome la carte au centre, une autre la repose.
 
 ### Ce qui reste à trancher par Keko
 

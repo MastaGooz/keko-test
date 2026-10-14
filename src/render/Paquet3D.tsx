@@ -200,20 +200,23 @@ const GYRO_BORNE_CARTE = 0.22
  */
 const GYRO_SEUIL_ECLAT = 0.05
 const GYRO_PLEIN_ECLAT = 0.16
+/**
+ * ET IL PENCHE TOUTES LES CARTES QU'ON LUI DONNE : celle du défilé, et les
+ * cinq du bilan. *Un curseur tenu n'est pas touché* — c'est le doigt qui
+ * commande alors. **Sans lecture, il ne fait rien** : sur un PC sans capteur,
+ * c'est le survol de la souris qui tient `dessus`, et le gyroscope n'a pas à
+ * le défaire à chaque image.
+ */
 function PencheAuGyro({
-  curseur,
+  curseurs,
   gyro,
 }: {
-  curseur: CurseurDeCarte
+  curseurs: readonly CurseurDeCarte[]
   gyro: { current: Inclinaison | null }
 }): null {
   useFrame(() => {
-    if (curseur.tenu) return
     const incl = gyro.current?.lire() ?? null
-    if (incl === null) {
-      curseur.dessus = false
-      return
-    }
+    if (incl === null) return
     const borne = (v: number): number =>
       Math.min(GYRO_BORNE_CARTE, Math.max(-GYRO_BORNE_CARTE, v))
     // rotation.x de la carte = -vy * INCLINAISON ; rotation.y = vx * INCLINAISON.
@@ -222,10 +225,14 @@ function PencheAuGyro({
     const angle = Math.hypot(rx, ry)
     const part = (angle - GYRO_SEUIL_ECLAT) / (GYRO_PLEIN_ECLAT - GYRO_SEUIL_ECLAT)
     const t = Math.min(1, Math.max(0, part))
-    curseur.eclat = t * t * (3 - 2 * t)
-    curseur.dessus = true
-    curseur.x = ry / INCLINAISON_REFLET
-    curseur.y = -rx / INCLINAISON_REFLET
+    const eclat = t * t * (3 - 2 * t)
+    for (const curseur of curseurs) {
+      if (curseur.tenu) continue
+      curseur.eclat = eclat
+      curseur.dessus = true
+      curseur.x = ry / INCLINAISON_REFLET
+      curseur.y = -rx / INCLINAISON_REFLET
+    }
   })
   return null
 }
@@ -543,6 +550,33 @@ export function Paquet3D(): React.ReactElement {
    * relais quand rien ne la tient : voir `PencheAuGyro`.
    */
   const curseurDefile = useRef<CurseurDeCarte>({ dessus: false, x: 0, y: 0, tenu: false })
+  /**
+   * AU BILAN, CHAQUE CARTE A SON CURSEUR, ET ELLE N'EST PLUS INERTE. Keko :
+   * « on peut permettre de bouger les cartes dans l'écran qui met les 5 cartes
+   * à la fin (comme on le fait quand elles sont seules ?) et permettre aussi le
+   * clic/tap pour zoomer sur une des cartes de cet écran ? »
+   *
+   * *Cinq cartes côte à côte ne sont plus une pile* : chacune répond pour elle
+   * — au survol à la souris, au doigt posé, et au gyroscope quand rien ne la
+   * tient. Les curseurs vivent ICI et non dans `Carte3D` parce que c'est
+   * l'écran qui sait quand le doigt se lève : *le `pointerout` n'arrive jamais
+   * au doigt*, la règle du défilé, et c'est le même `lacher` qui redresse.
+   *
+   * **UNE TAPE SUR UNE CARTE LA ZOOME AU CENTRE, à la taille du défilé** ; une
+   * tape n'importe où la repose. La carte touchée se note au `pointerdown`
+   * (`candidat`, par `Carte3D.onPointerDown`) et c'est le `pointerup` de
+   * l'écran qui décide — *le même geste que le défilé, lu par le même
+   * écouteur.* Le bouton s'efface tant qu'une carte est zoomée : *R3F prévient
+   * tous les objets que le rayon traverse*, et une carte posée devant lui ne
+   * l'empêcherait pas de répondre.
+   */
+  const curseursBilan = useRef<CurseurDeCarte[]>(
+    Array.from({ length: CARTES_PAR_PAQUET }, () => ({ dessus: false, x: 0, y: 0, tenu: false })),
+  )
+  const [zoomee, setZoomee] = useState<string | null>(null)
+  const refZoomee = useRef<string | null>(null)
+  refZoomee.current = zoomee
+  const candidat = useRef<string | null>(null)
   const refBoite = useRef<{ cx: number; cy: number; l: number; h: number } | null>(null)
   const gyro = useRef<Inclinaison | null>(null)
   useEffect(() => {
@@ -557,6 +591,8 @@ export function Paquet3D(): React.ReactElement {
     }
   }, [])
   const [fini, setFini] = useState(false)
+  const refFini = useRef(false)
+  refFini.current = fini
   /** La clé du flash de l'arrachement — *une animation se remonte à neuf.* */
   const [flash, setFlash] = useState(0)
   const racine = useRef<HTMLDivElement>(null)
@@ -812,6 +848,7 @@ export function Paquet3D(): React.ReactElement {
     setPileOuverte(false)
     setMontree(0)
     setFini(false)
+    setZoomee(null)
     setSommet(-1)
     setEclat(null)
     setMonte(false)
@@ -868,6 +905,13 @@ export function Paquet3D(): React.ReactElement {
           c.dessus = true
           c.tenu = true
           c.eclat = 1
+          // AU BILAN, LE DOIGT POSÉ PREND LA MAIN SUR LE GYROSCOPE pour les
+          // cinq : celle qu'il touche suit le doigt (voir `Carte3D`), les
+          // autres gardent leur dernier penchant.
+          for (const k of curseursBilan.current) {
+            k.tenu = true
+            k.eclat = 1
+          }
         }
       },
       { signal },
@@ -892,6 +936,10 @@ export function Paquet3D(): React.ReactElement {
       doigtPose = false
       c.dessus = false
       c.tenu = false
+      for (const k of curseursBilan.current) {
+        k.dessus = false
+        k.tenu = false
+      }
     }
     addEventListener('pointercancel', lacher, { signal })
     addEventListener(
@@ -902,6 +950,18 @@ export function Paquet3D(): React.ReactElement {
         const dy = e.clientY - depart.y
         const tape = Math.hypot(dx, dy) < 12
         const balaye = Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)
+        // AU BILAN, UNE TAPE ZOOME OU REPOSE : voir `curseursBilan`.
+        const id = candidat.current
+        candidat.current = null
+        if (refFini.current) {
+          if (!tape) return
+          if (refZoomee.current !== null) setZoomee(null)
+          else if (id !== null) {
+            setZoomee(id)
+            jouerSon(SON_POSER)
+          }
+          return
+        }
         if (!tape && !balaye) return
         const t = performance.now()
         // L'ANTI-REBOND TOMBE À 120 ms. Keko : « permettre de cliquer plus
@@ -1168,7 +1228,7 @@ export function Paquet3D(): React.ReactElement {
       >
         <Cadrage />
         <Horloge />
-        <PencheAuGyro curseur={curseurDefile.current} gyro={gyro} />
+        <PencheAuGyro curseurs={[curseurDefile.current, ...curseursBilan.current]} gyro={gyro} />
         {/* LES POINTS BRILLANTS RAYONNENT, comme chez lexicodex : voir `Bloom`. */}
         {!SANS_BLOOM && <Bloom />}
         <ambientLight intensity={0.55} />
@@ -1292,7 +1352,15 @@ export function Paquet3D(): React.ReactElement {
               // main une fois qu'il a quitté le cadre**, en même temps qu'elle
               // grossit — c'est le rapprochement que Keko a demandé, et il ne
               // peut avoir lieu qu'une fois le film parti.
-              position={fini ? placeAuBilan(i) : placeAuDefile(i)}
+              // ET AU BILAN, LA CARTE ZOOMÉE VIENT AU CENTRE, à la taille du
+              // défilé, un peu devant les autres : voir `curseursBilan`.
+              position={
+                fini
+                  ? zoomee === carte.id
+                    ? [0, 0, zDefile + tailleDuDefile * SAILLIE_SORTIE]
+                    : placeAuBilan(i)
+                  : placeAuDefile(i)
+              }
               // LES CINQ SONT À LA TAILLE DE LA POCHE TANT QUE LE SACHET EST
               // LÀ, superposées — *ce qui est exactement ce qu'elles sont : une
               // pile qu'on tire* — et c'est ce qui fait compiler leurs cinq
@@ -1303,7 +1371,13 @@ export function Paquet3D(): React.ReactElement {
               // suivante est alors DÉJÀ là, de face, derrière celle qu'on
               // regarde.
               taille={
-                !ouvert ? grande : fini ? taille : tailleAuDefile(i)
+                !ouvert
+                  ? grande
+                  : fini
+                    ? zoomee === carte.id
+                      ? tailleDuDefile
+                      : taille
+                    : tailleAuDefile(i)
               }
               // ON PEINT UNE FOIS, À LA PLUS GRANDE TAILLE QU'ELLE ATTEINDRA.
               // Sans ça, les quatre suivantes — qui attendent à taille ZÉRO —
@@ -1332,7 +1406,9 @@ export function Paquet3D(): React.ReactElement {
               }
               // ET ELLE PASSE AU PREMIER PLAN, quelle que soit l'inclinaison :
               // voir `Carte3D.devant`. La saillie reste pour le volume.
-              devant={!fini && (i < montree || (retourne && !pileOuverte && i === montree))}
+              devant={
+                fini ? zoomee === carte.id : i < montree || (retourne && !pileOuverte && i === montree)
+              }
               rotation={!fini && i < montree ? [0, 0, -ANGLE_SORTIE] : undefined}
               // ET C'EST L'ÉCRAN QUI TIENT SON CURSEUR — pour TOUTE LA PILE,
               // pas pour la seule carte qu'on regarde. Keko : « quand on bouge
@@ -1352,8 +1428,10 @@ export function Paquet3D(): React.ReactElement {
               // profondeur est nulle, et celle d'une pile penchée vaut au plus
               // une demi-largeur fois sin θ : une saillie plus grande que ça la
               // garde devant quel que soit l'angle — voir SAILLIE_SORTIE.
-              curseurPartage={!fini && i >= montree ? curseurDefile.current : undefined}
-              refletAuDoigt={!fini && i >= montree}
+              curseurPartage={
+                fini ? curseursBilan.current[i] : i >= montree ? curseurDefile.current : undefined
+              }
+              refletAuDoigt={fini || i >= montree}
               ombre
               // ET ELLE REBONDIT EN ÉLASTIQUE quand le film l'a découverte :
               // le jeton change une fois par ouverture, toute la pile le lit.
@@ -1364,7 +1442,15 @@ export function Paquet3D(): React.ReactElement {
               // au passage le cas que l'ancienne version devait écarter : les
               // cinq superposées dans le sachet, dont une tape en retournait
               // une au hasard.
-              inerte
+              // ELLE REDEVIENT TOUCHABLE AU BILAN : voir `curseursBilan`.
+              inerte={!fini}
+              onPointerDown={
+                fini
+                  ? () => {
+                      candidat.current = carte.id
+                    }
+                  : undefined
+              }
             />
           )
         })}
@@ -1375,7 +1461,7 @@ export function Paquet3D(): React.ReactElement {
           disputerait le geste à la carte. « Tout révéler » est parti avec :
           il répondait à cinq dos posés côte à côte, et il n'y en a plus.
         */}
-        {ouvert && fini && paquet.length > 0 && (
+        {ouvert && fini && zoomee === null && paquet.length > 0 && (
           <Bouton3D
             texte="Ouvrir un autre paquet"
             ton="or"

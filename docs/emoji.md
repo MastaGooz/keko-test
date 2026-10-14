@@ -5177,3 +5177,37 @@ rayons clairs ne le sont pas assez »**. `FORCE_RAYONS.blanc` passe de 0,05 à
 **0,14** — *à 0,05 ils se devinaient sur un gris moyen*, là où les quatre
 autres se lisent sur une nuit franche. **Le bas de l'échelle parle peu, mais il
 doit encore se lire.** Vu au bilan de `?paquet=1314`.
+
+### LE BILAN RÉPOND : les cinq cartes penchent, et une tape les zoome
+
+Keko : **« on peut permettre de bouger les cartes dans l'écran qui met les 5
+cartes à la fin (comme on le fait quand elles sont seules ?) et permettre aussi
+le clic/tap pour zoomer sur une des cartes de cet écran ? »**
+
+*Cinq cartes côte à côte ne sont plus une pile* : chacune répond pour elle.
+Elles cessent d'être `inerte` au bilan, et chacune reçoit SON curseur
+(`curseursBilan`, dans `Paquet3D`) — au survol à la souris, au doigt posé
+(`refletAuDoigt`), et au gyroscope quand rien ne la tient.
+
+- **les curseurs vivent dans l'écran, pas dans `Carte3D`** : *le `pointerout`
+  n'arrive jamais au doigt*, et c'est le `lacher` du geste de l'écran qui
+  redresse les cinq. Au `pointerdown` tactile, les cinq passent `tenu` — le
+  gyroscope leur lâche la main, celle qu'on touche suit le doigt, les autres
+  gardent leur dernier penchant ;
+- **`PencheAuGyro` prend une liste** — celle du défilé et les cinq du bilan —
+  et *ne fait plus rien sans lecture* : sur un PC sans capteur, c'est le survol
+  qui tient `dessus`, et le gyroscope n'a pas à le défaire à chaque image ;
+- **une tape sur une carte la zoome au centre, à la taille du défilé**
+  (`tailleDuDefile`), un peu devant les autres (`devant`) ; une tape n'importe
+  où la repose. La carte touchée se note au `pointerdown` (`candidat`, par
+  `Carte3D.onPointerDown`), et c'est le `pointerup` de l'écran qui décide —
+  *le même écouteur que le défilé* ;
+- **le bouton s'efface tant qu'une carte est zoomée** : R3F prévient tous les
+  objets que le rayon traverse, et une carte posée devant lui ne l'empêcherait
+  pas de répondre. Un autre paquet repose le zoom.
+
+Vérifié au navigateur sur `?paquet=1314&nu` : le survol penche « Plus », une
+tape zoome le visage au centre, une tape à côté le repose ; un doigt posé
+(évènements fabriqués DANS la page, `offsetX` compris, sur le canvas de la
+scène — *pas le premier `<canvas>` du DOM, qui est le fond animé*) penche la
+carte, et elle se redresse au relâchement. Le gyroscope n'a pas été vu.
