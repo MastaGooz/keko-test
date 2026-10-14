@@ -21,7 +21,7 @@ import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import { FondAnime } from './FondAnime.tsx'
 import { Bloom } from './Bloom.tsx'
-import { SON_POSER, SON_PRENDRE, SON_RETOURNER, jouerSon, precharger } from './sons.ts'
+import { SON_POSER, SON_PRENDRE, jouerSon, precharger } from './sons.ts'
 import {
   AMBIANCE,
   ECHELLE_COULEUR,
@@ -269,8 +269,6 @@ function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number 
  * fabriquer lui-meme.
  */
 const BANC_BONUS = '1f942'
-/** La vitesse de lecture du son du flip — Keko l'a voulu accéléré. *Chiffre à l'oeil, ou plutôt à l'oreille, et je n'en ai pas.* */
-const VITESSE_FLIP = 1.6
 /** `?bloom=0` : sans le halo des points brillants — voir `Bloom`. */
 const SANS_BLOOM =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('bloom') === '0'
@@ -480,7 +478,6 @@ export function Paquet3D(): React.ReactElement {
   useEffect(() => {
     void precharger(SON_POSER)
     void precharger(SON_PRENDRE)
-    void precharger(SON_RETOURNER)
   }, [])
   useEffect(() => {
     if (!ouvert) return
@@ -754,9 +751,11 @@ export function Paquet3D(): React.ReactElement {
     if (!retourne) {
       const premiere = paquet[0]
       if (premiere === undefined) return
-      // LE FLIP SONNE : *la carte tourne dès la première image*, donc le son
-      // part avec le geste, comme la culbute.
-      jouerSon(SON_RETOURNER, 1, 0, VITESSE_FLIP)
+      // LE FLIP SONNE COMME LE PASSAGE À LA SUIVANTE : Keko a d'abord fourni
+      // un son de flip, puis a préféré « le même son que celui du slide des
+      // cartes sur la droite ». *Un seul geste de l'écran, un seul son* — le
+      // fichier `card flip.aac` reste au dépôt (SON_RETOURNER).
+      jouerSon(SON_PRENDRE)
       setRetourne(true)
       setJetons((j) => ({ ...j, [premiere.id]: (j[premiere.id] ?? 0) + 1 }))
       decouvrir(0)
