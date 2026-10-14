@@ -172,6 +172,8 @@ const RESSORT_SORTIE = 5
  * suivrait pas : il les moyennerait en une bosse molle.
  */
 const RESSORT_REBOND = 22
+/** La part du flip au bout de laquelle la pile s'ouvre et le geste reprend — voir `pileOuverte`. */
+const PART_PILE_OUVERTE = 0.5
 /** La distance de sortie en portrait, en largeurs de carte : la référence du ressort. */
 const DISTANCE_SORTIE_REF = 1.4
 const ANGLE_SORTIE = 0.14
@@ -790,7 +792,14 @@ export function Paquet3D(): React.ReactElement {
    */
   useEffect(() => {
     if (!retourne) return
-    const t = setTimeout(() => setPileOuverte(true), DUREE_FLIP * 1000)
+    // ELLE S'OUVRE À MI-FLIP, PLUS À LA FIN. Keko : « permettre de cliquer /
+    // défiler plus tôt après le flip, l'attente est un poil longue ». *Une
+    // carte qui tourne traverse ce qui est posé derrière elle* — c'était la
+    // raison d'attendre — mais la carte qui tourne passe désormais AU PREMIER
+    // PLAN le temps du demi-tour (voir `devant`), donc ce qu'elle traverse ne
+    // se voit plus, et les suivantes, qui grandissent au ressort depuis zéro,
+    // n'ont pris qu'une part de leur taille quand il finit.
+    const t = setTimeout(() => setPileOuverte(true), DUREE_FLIP * PART_PILE_OUVERTE * 1000)
     return () => clearTimeout(t)
   }, [retourne])
 
@@ -1323,7 +1332,7 @@ export function Paquet3D(): React.ReactElement {
               }
               // ET ELLE PASSE AU PREMIER PLAN, quelle que soit l'inclinaison :
               // voir `Carte3D.devant`. La saillie reste pour le volume.
-              devant={!fini && i < montree}
+              devant={!fini && (i < montree || (retourne && !pileOuverte && i === montree))}
               rotation={!fini && i < montree ? [0, 0, -ANGLE_SORTIE] : undefined}
               // ET C'EST L'ÉCRAN QUI TIENT SON CURSEUR — pour TOUTE LA PILE,
               // pas pour la seule carte qu'on regarde. Keko : « quand on bouge
