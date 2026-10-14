@@ -483,7 +483,7 @@ const BRILLANCE_FILM = 0.45
  * pas comme du film tendu.* La carte de brillance porte trois niveaux : 0 la
  * soudure, 0,5 le film, 1 l'imprimé.
  */
-const BRILLANCE_SOUDURE = 0.15
+const BRILLANCE_SOUDURE = 0.03
 /** Le point de la fente tel que le relief le pose, recalculé à chaque image. */
 const fenteReelle = new THREE.Vector3()
 /**

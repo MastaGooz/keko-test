@@ -4716,9 +4716,14 @@ function peindreTouches(
       // bleu sale — *une couleur peu opaque posée sur une autre se moyenne avec
       // elle.* En `lighter` elle s'ajoute, donc elle ÉCLAIRE : c'est la
       // différence entre une tache et un confetti.
-      // EN MASQUE, chaque touche est blanche et pleine : c'est la carte de
-      // brillance du sachet, voir brillanceDuSachet.
-      ctx.globalCompositeOperation = teinte === undefined || masque ? 'source-over' : 'lighter'
+      // EN MASQUE, SEULES LES TOUCHES CLAIRES BRILLENT. Keko : « je veux que
+      // les touches brillent en fonction de leur niveau de clarté : certaines
+      // sont plus claires et devraient briller fort, les autres autant que le
+      // fond ». Les teintées sont les claires ; les autres ne se distinguent
+      // du film que d'un rien, donc elles le laissent tel quel sur la carte de
+      // brillance (voir brillanceDuSachet).
+      if (masque && teinte === undefined) continue
+      ctx.globalCompositeOperation = masque ? 'source-over' : teinte === undefined ? 'source-over' : 'lighter'
       ctx.fillStyle = masque ? '#ffffff' : (teinte ?? '#ffffff')
       ctx.globalAlpha = masque ? 1 : teinte === undefined ? 0.055 : 0.3
       ctx.beginPath()
