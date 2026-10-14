@@ -118,7 +118,7 @@ export function FondAnime(): React.ReactElement {
       vy: (hasard() - 0.5) * 0.012,
       phase: hasard() * Math.PI * 2,
       cadence: 0.25 + hasard() * 0.35,
-      alpha: 0.13 + hasard() * 0.13,
+      alpha: 0.17 + hasard() * 0.15,
     }))
     let fantomes: Fantome[] = []
 
