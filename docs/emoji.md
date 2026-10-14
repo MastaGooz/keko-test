@@ -5110,3 +5110,16 @@ et au décor nuit, la plaque ne fait plus que porter le texte. **Toute la
 descente vers le chroma du cran reste écrite** et s'ouvre par `?plaque=cran` —
 *ce qui a servi à choisir doit rester ouvrable.* Vu au bilan de
 `?paquet=1314` : cinq plaques blanches, cinq cadres de couleur.
+
+#### LA PASTILLE DU TYPE PREND LA COULEUR DU CRAN
+
+Keko, la plaque devenue blanche : **« on peut teinter la bulle qui contient le
+texte du type de la carte en bas de la couleur de la rareté ? »**
+
+*C'est le ton MOYEN du métal* (`METAUX[cran][2]`) — celui du cadre, des rayons
+et du reflet — donc aucune couleur neuve. Le mot reste sombre (`TYPE_BULLE`),
+mesuré : **4,9 de contraste sur le violet**, 6,5 sur le bleu, 8,3 à 11,7 sur les
+trois autres. *Le violet est un cheveu sous le plancher de 5* — à surveiller si
+le mot paraît gris. Sans rang, la pastille garde le gris de la plaque claire.
+Vu au bilan de `?paquet=1314` : cinq pastilles aux cinq couleurs, sur cinq
+plaques blanches.

@@ -4527,7 +4527,14 @@ function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre, bulle 
     const encre = ctx.measureText(mot).width - esp
     const l = encre + 6.4 * U
     const h = 7.4 * U
-    ctx.fillStyle = tonsDeLaPlaque(carte.rarete)[2]
+    // LA PASTILLE PORTE LA COULEUR DU CRAN, maintenant que la plaque est
+    // blanche. Keko : « on peut teinter la bulle qui contient le texte du type
+    // de la couleur de la rareté ? » *C'est le ton MOYEN du métal* — celui du
+    // cadre, des rayons et du reflet — donc on n'invente aucune couleur. Le mot
+    // reste sombre : mesuré, 4,9 de contraste sur le violet, 6,5 sur le bleu,
+    // 8,3 à 11,7 ailleurs. Sans rang, elle garde le gris de la plaque claire.
+    const metal = carte.rarete === undefined ? undefined : METAUX[carte.rarete]
+    ctx.fillStyle = metal?.[2] ?? tonsDeLaPlaque(carte.rarete)[2]
     ctx.beginPath()
     ctx.roundRect(LARGE / 2 - l / 2, y - h / 2, l, h, h / 2)
     ctx.fill()
