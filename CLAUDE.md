@@ -2603,6 +2603,40 @@ du craquement tient son dernier échantillon, donc une composante continue de
 0,007 sort tant que le doigt ne bouge pas. **Une tension continue ne s'entend
 pas.**
 
+#### LA POURSUITE ÉTAIT MUETTE SUR SON TÉLÉPHONE — le craquement est une boucle dosée
+
+Keko, après le gain : **« j'entends toujours rien sur le cracks, tu peux le
+jouer en continu sans condition pour tester si le son n'a pas un souci ? »**,
+puis, sur le banc `?craque` : **« ok je l'entends donc il existe mdr.
+Maintenant mets-le durant la déchirure uniquement »**.
+
+***LE BANC A TRANCHÉ ENTRE LE FICHIER ET LA LECTURE*** : le même fichier, en
+boucle, tel quel, s'entend ; piloté par sa vitesse de lecture depuis zéro, il
+ne s'entend pas — alors que l'analyseur posé dans la page sur la machine de
+dev y mesurait bien une sortie. **Une vitesse de lecture qu'on pilote image par
+image depuis zéro n'est pas tenue partout ; un gain, si.** *Ce qui marche sur
+la machine de dev et pas chez Keko est une fonctionnalité de rendu que son
+appareil n'a pas* — la règle déjà écrite pour les modes de fusion du canvas,
+retrouvée ici sur l'audio.
+
+**La poursuite est partie** (`suivreLeSon`, `HORIZON`, `VITESSE_MAX`, le
+compresseur — dans `git log`). À sa place, **la boucle du banc, dosée par un
+GAIN** (`jouerEnBoucle(nom, volume)` rend `doser` et `arreter`) : le fichier
+tourne à sa vitesse naturelle depuis le premier pas du front, le gain est
+ouvert tant que le front avance et fermé dès qu'il s'arrête — avec un dixième
+de seconde de tenue (`TENUE_CRAQUE`), *parce qu'un doigt avance par à-coups
+et qu'un gain qui se fermerait à la première image sans évènement de pointeur
+hacherait le son en pointillé.* Le niveau est lissé sur 30 ms (`LISSAGE`) :
+*un gain qui saute de 0 à 1 clique.*
+
+**ET LE VOLUME EST CELUI DU BANC** (`VOLUME_CRAQUE`, 1) : c'est ce que Keko a
+entendu, donc on ne le change pas. Le fichier reste dix fois sous le pop, et
+s'il faut plus fort c'est l'export qu'il faut remonter.
+
+*Ce qui est perdu, et c'est assumé* : le craquement ne « progresse » plus avec
+le front — il ne dit que « ça avance » ou « ça n'avance pas ». **C'est ce que
+Keko a demandé en voyant les deux** : « durant la déchirure uniquement ».
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une

@@ -41,8 +41,7 @@ import {
   jouerEnBoucle,
   jouerSon,
   precharger,
-  suivreLeSon,
-  type SonSuivi,
+  type SonEnBoucle,
 } from './sons.ts'
 import {
   LIGNE_DECHIRURE,
@@ -413,15 +412,20 @@ const TIRE_MAX = 0.9
  */
 const SEUIL_TIRE = 0.5
 /**
- * DE COMBIEN ON MONTE LE CRAQUEMENT. Mesuré sur le fichier : 0,024 de RMS,
- * **dix fois sous le pop** (0,227) et deux fois sous la prise de carte — Keko :
- * « j'entends pas du tout le son crack ». *Ce n'était pas un bug, c'était un
- * niveau* : sur un haut-parleur de téléphone, un crépitement à −32 dB ne passe
- * pas. Le gain passe par un compresseur, qui retient les crêtes (0,57 au pic)
- * pendant que le reste monte. **Le vrai réglage est dans le fichier**, et
- * c'est à Keko : un export plus fort rendrait ce chiffre inutile.
+ * LE NIVEAU DU CRAQUEMENT PENDANT LA DÉCHIRURE. *C'est celui du banc
+ * `?craque`, que Keko a entendu* — « ok je l'entends donc il existe » — donc
+ * on ne le change pas : le fichier est à 0,024 de RMS, dix fois sous le pop,
+ * et s'il faut plus fort c'est l'export qu'il faut remonter, pas un gain.
  */
-const VOLUME_CRAQUE = 3
+const VOLUME_CRAQUE = 1
+/**
+ * COMBIEN DE TEMPS LE CRAQUEMENT SURVIT AU DERNIER PAS DU FRONT, en secondes.
+ * *Un doigt avance par à-coups* — les évènements de pointeur n'arrivent pas à
+ * chaque image — donc un gain qui se fermerait à la première image sans
+ * avancée hacherait le son en pointillé. Un dixième de seconde couvre le trou
+ * entre deux évènements, pas une pause.
+ */
+const TENUE_CRAQUE = 0.1
 /** Le banc des étincelles : il tient la découpe à mi-course. Voir `useFrame`. */
 const BANC_GERBE =
   typeof location !== 'undefined' && new URLSearchParams(location.search).has('gerbe')
@@ -1691,8 +1695,11 @@ export function Sachet3D({
   const dit = useRef(false)
   const ditDechire = useRef(false)
   const ditParti = useRef(false)
-  /** Le craquement du film, tant qu'on le déchire. Voir `suivreLeSon`. */
-  const craque = useRef<SonSuivi | null>(null)
+  /** Le craquement du film, tant qu'on le déchire. Voir `jouerEnBoucle`. */
+  const craque = useRef<SonEnBoucle | null>(null)
+  /** Où en était le front à l'image d'avant, et quand il a bougé pour la dernière fois. */
+  const pfAvant = useRef(0)
+  const dernierPas = useRef(-Infinity)
   /** Le pop a été programmé au lâcher : l'arrachement n'a plus à le jouer. */
   const popProgramme = useRef(false)
   // LES DEUX SONS SE CHARGENT AVEC LE SACHET, pas au premier craquement : *un
@@ -1709,7 +1716,7 @@ export function Sachet3D({
     if (!BANC_CRAQUE) return
     let arreter: (() => void) | null = null
     const demarrer = (): void => {
-      arreter = jouerEnBoucle(SON_CRAQUE)
+      arreter = jouerEnBoucle(SON_CRAQUE).arreter
     }
     window.addEventListener('pointerdown', demarrer, { once: true })
     return () => {
@@ -1935,9 +1942,15 @@ export function Sachet3D({
     // qu'il suive le doigt ou l'horloge — voir `suivreLeSon`. Il naît à la
     // première avancée, donc toujours dans un geste.
     if (pf > 0 && pf < 1) {
-      if (craque.current === null) craque.current = suivreLeSon(SON_CRAQUE, VOLUME_CRAQUE)
-      craque.current.avancer(pf)
+      if (craque.current === null) craque.current = jouerEnBoucle(SON_CRAQUE, VOLUME_CRAQUE)
+      // LA BOUCLE JOUE, LE GAIN DIT QUAND ON L'ENTEND : ouvert tant que le
+      // front avance — avec un dixième de seconde de tenue, le temps d'un trou
+      // entre deux évènements de pointeur — fermé dès qu'il s'arrête. *Ce qui
+      // craque est le film qu'on déchire, pas le film qu'on tient.*
+      if (pf > pfAvant.current) dernierPas.current = t
+      craque.current.doser(t - dernierPas.current < TENUE_CRAQUE ? 1 : 0)
     }
+    pfAvant.current = pf
     // IL SORT DES DEUX BORDS : *une déchirure qui commence pile sur le bord se
     // lit comme un bord qui s'efface*, et une qui s'arrête pile à droite y
     // laisse un point de braise posé là pour toujours.
