@@ -2215,6 +2215,18 @@ parabole* — une rasante sans frein file tout droit, une rasante freinée
 s'arrête à une largeur et s'éteint. Les deux resserrements de la découpe
 restent.
 
+**ET LE FREIN A DOUBLÉ, LE FONDU A RECULÉ.** Keko : « ce serait bien que les
+particules soient rapides au début puis ralentissent avant de fader en l'air,
+comme un vrai feu d'artifice ». *Le contraste est tout* : à 2,2 de frein
+l'étincelle gardait un tiers de sa vitesse quand le fondu commençait, donc
+elle s'effaçait en marchant. À **4,5** elle a perdu 90 % de sa vitesse en une
+demi-seconde — elle file, s'arrête, puis s'éteint sur place — et le fondu
+attend **60 %** de la vie. La vitesse de départ monte d'autant (1,2 à 5,5)
+pour que la portée, `v / frein`, ne change pas : *un frein plus fort sans un
+lancer plus fort fait un pétard, pas un feu d'artifice.* La vitesse terminale
+tombe à 0,22 largeur par seconde, donc pendant le fondu l'étincelle ne
+redescend que de sept centièmes.
+
 **Puis il s'est resserré à ±60°** — Keko : « les particules du feu d'artifice
 vont un peu trop loin sur les côtés ». *La portée latérale d'une étincelle
 freinée vaut `v·sin(angle) / frein`*, donc le cône est le seul levier qui la

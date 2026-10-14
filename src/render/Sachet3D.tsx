@@ -1135,21 +1135,32 @@ const JET = 0.68
  * redescendre que d'un rien. **Une parabole, elle, retombe toujours** : c'est
  * ce que Keko lisait comme une explosion.
  *
- * Tout est en LARGEURS DE SACHET et en secondes — convertis des leurs, la
- * vitesse divisée par trois comme la pesanteur, le frein tel quel.
+ * Tout est en LARGEURS DE SACHET et en secondes — convertis des leurs au
+ * départ, la vitesse divisée par trois comme la pesanteur, le frein tel quel.
+ *
+ * **PUIS LE FREIN A DOUBLÉ, ET LE FONDU A RECULÉ.** Keko : « ce serait bien
+ * que les particules soient rapides au début puis ralentissent avant de fader
+ * en l'air, comme un vrai feu d'artifice ». *Le contraste est tout* : à 2,2
+ * de frein l'étincelle gardait encore un tiers de sa vitesse quand le fondu
+ * commençait, donc elle s'effaçait en marchant. À 4,5 elle a perdu 90 % de sa
+ * vitesse en une demi-seconde — **elle file, s'arrête, puis s'éteint sur
+ * place** — et le fondu attend 60 % de la vie pour qu'on la voie suspendue.
+ * La vitesse de départ monte d'autant, pour que la portée (`v / frein`) ne
+ * change pas : *un frein plus fort sans un lancer plus fort fait un pétard,
+ * pas un feu d'artifice.*
  */
 const FEU = {
   /** La vitesse de départ, tirée uniformément entre les deux. */
-  vMin: 0.67,
-  vMax: 3,
+  vMin: 1.2,
+  vMax: 5.5,
   /** Le frein de l'air, par seconde : `v *= exp(−frein·dt)`. */
-  frein: 2.2,
+  frein: 4.5,
   /** La pesanteur, en largeurs par seconde carrée — faible exprès. */
   pesanteur: 1,
   /** La vie nominale, en secondes ; chaque étincelle tire la sienne entre 0,75 et 1,25 fois. */
   vie: 0.8,
   /** À partir de quelle part de sa vie l'étincelle s'efface, linéairement jusqu'à la fin. */
-  fondu: 0.45,
+  fondu: 0.6,
 } as const
 
 /**
