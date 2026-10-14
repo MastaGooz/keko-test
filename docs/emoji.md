@@ -1342,8 +1342,15 @@ sujet, qui les éclaire comme le reste. Mode emoji seulement, par la bulle.
 
 *Vu au bilan de `?paquet=1314`* : francs sur l'orange, nets sur le vert et le
 violet, discrets sur le bleu, à peine là sur le blanc. `?rayons=0` les
-retire. **Les forces sont à l'oeil**, à rejuger par Keko — et les pistes 1 et
-6 restent à essayer par-dessus s'il le veut.
+retire. **Les forces sont à l'oeil**, à rejuger par Keko.
+
+**PUIS LES TOUCHES SONT VENUES DESSOUS — « et 1 + 2 on essaie ? ».** Le motif
+du dos et du sachet (`peindreTouches`), rogné à la fenêtre d'art, à 80 % de
+son échelle, **toutes dans le ton du cran** et à 9 % d'opacité
+(`TOUCHES_CARTE`) : *dans la fenêtre d'art seule la couleur du cran a le
+droit de parler*, donc pas les cinq confettis du dos. L'emoji est un sticker
+posé sur son clavier, et la carte parle la même langue des deux côtés.
+`?touches=0` les retire ; les deux bancs se cumulent.
 
 ### LE DOS DE CARTE : UN BOUQUET DE STICKERS SUR UN CLAVIER
 

@@ -1395,6 +1395,11 @@ const FORCE_RAYONS: Record<string, number> = {
   violet: 0.22,
   orange: 0.28,
 }
+/** L'opacité des touches dans la fenêtre d'art, et leur échelle par rapport à celles du dos. */
+const TOUCHES_CARTE = 0.09
+const TOUCHES_ECHELLE = 0.8
+const SANS_TOUCHES =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('touches') === '0'
 const SANS_RAYONS =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('rayons') === '0'
 
@@ -3433,9 +3438,24 @@ export async function peindreCarte(
     ctx.restore()
   }
 
-  // LES RAYONS DU CRAN, derrière le sujet — mode emoji seulement : voir
-  // peindreRayons. *Ils sont du décor, pas de la lumière du sujet* : ils
-  // viennent avant le bloom, qui les éclaire comme il éclaire le reste.
+  // LES TOUCHES DU CLAVIER, PUIS LES RAYONS DU CRAN, derrière le sujet — mode
+  // emoji seulement. Keko : « et 1 + 2 on essaie ? ». *Les touches sont la
+  // langue du dos et du sachet* — l'emoji est un sticker posé sur son
+  // clavier — et elles prennent ici le ton du cran, à peine, parce que dans
+  // la fenêtre d'art seule la couleur du cran a le droit de parler. *Ils sont
+  // du décor, pas de la lumière du sujet* : ils viennent avant le bloom, qui
+  // les éclaire comme il éclaire le reste. `?touches=0` et `?rayons=0`.
+  if (bulle && !SANS_TOUCHES) {
+    const ton = carte.rarete === undefined ? undefined : METAUX[carte.rarete]?.[2]
+    if (ton !== undefined) {
+      ctx.save()
+      ctx.beginPath()
+      ctx.rect(marge, fY, LARGE - marge * 2, fH)
+      ctx.clip()
+      peindreTouches(ctx, LARGE, HAUT, U * TOUCHES_ECHELLE, false, ton)
+      ctx.restore()
+    }
+  }
   if (bulle && !SANS_RAYONS) peindreRayons(ctx, carte.rarete, marge, fY, LARGE - marge * 2, fH)
 
   /**
@@ -4772,6 +4792,7 @@ function peindreTouches(
   h = HAUT,
   u = U,
   masque = false,
+  teinteImposee?: string,
 ): void {
   const pas = DOS_PAS * u
   const cote = DOS_TOUCHE * u
@@ -4785,7 +4806,10 @@ function peindreTouches(
       const x = l / 2 + (i - colonnes / 2 + (j % 2 === 0 ? 0 : 0.5)) * pas
       const y = h / 2 + (j - lignes / 2) * pas
       const k = (i * 7 + j * 11 + 34) % 17
-      const teinte = k < 5 ? teintes[k] : undefined
+      // UNE TEINTE IMPOSÉE : toutes les touches la prennent, à peine — c'est
+      // la fenêtre d'art d'une carte, où seule la couleur du cran a le droit
+      // de parler (voir TOUCHES_CARTE).
+      const teinte = teinteImposee !== undefined ? teinteImposee : k < 5 ? teintes[k] : undefined
       // LES COULEURS S'AJOUTENT, ELLES NE SE POSENT PAS. En peinture normale,
       // un vert à 16 % sur un bleu franc ne donne pas un vert : il donne un
       // bleu sale — *une couleur peu opaque posée sur une autre se moyenne avec
@@ -4800,7 +4824,7 @@ function peindreTouches(
       if (masque && teinte === undefined) continue
       ctx.globalCompositeOperation = masque ? 'source-over' : teinte === undefined ? 'source-over' : 'lighter'
       ctx.fillStyle = masque ? '#ffffff' : (teinte ?? '#ffffff')
-      ctx.globalAlpha = masque ? 1 : teinte === undefined ? 0.055 : 0.3
+      ctx.globalAlpha = masque ? 1 : teinteImposee !== undefined ? TOUCHES_CARTE : teinte === undefined ? 0.055 : 0.3
       ctx.beginPath()
       ctx.roundRect(x - cote / 2, y - cote / 2, cote, cote, cote * 0.32)
       ctx.fill()
