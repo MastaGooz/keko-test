@@ -771,9 +771,10 @@ export function Paquet3D(): React.ReactElement {
     // ouverte** — avant, le geste attend.
     if (!pileOuverte) return
     if (montree + 1 < paquet.length) {
-      // ON PREND LA CARTE POUR LA PASSER : le son de la prise à chaque
-      // suivante, demandé par Keko — « le son take card à chaque swap ».
-      jouerSon(SON_PRENDRE)
+      // LE PASSAGE À LA SUIVANTE SONNE COMME LE ZOOM (la pose) : Keko,
+      // « utiliser le son du zoom du paquet pour les slides, sans toucher au
+      // son du flip ». *Le flip garde la prise, la suivante prend la pose.*
+      jouerSon(SON_POSER)
       setMontree(montree + 1)
       decouvrir(montree + 1)
     } else setFini(true)
