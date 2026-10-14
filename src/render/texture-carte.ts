@@ -956,8 +956,16 @@ const NOM_BULLE = '#111920'
 const CARTOUCHE_BULLE = '#16202a'
 const TYPE_BULLE = '#0d141b'
 
-const PIGMENT_PLAQUE = [1.4, 1.7, 1.7] as const
-const LUM_PLAQUE = [0.895, 0.795, 0.752] as const
+// LA PLAQUE REDEVIENT UN BLANC LÉGÈREMENT TEINTÉ. Keko, une fois le décor
+// passé à la nuit du cran : « on peut éclaircir les encadrés là où il y a le
+// texte, pour qu'il soit blanc légèrement teinté ? » *Le cran se lit désormais
+// sur toute la carte* — cadre, rayons, décor — donc la plaque n'a plus à le
+// crier : elle redevient la surface claire qui porte le texte. Pigment divisé
+// par trois, clarté remontée, et la descente vers le chroma du vert ne mord
+// presque plus (voir CHROMA_PLAQUE). Les trois passes de pigment d'avant sont
+// dans git log, avec leurs mesures.
+const PIGMENT_PLAQUE = [0.45, 0.55, 0.6] as const
+const LUM_PLAQUE = [0.94, 0.88, 0.85] as const
 const PLAQUE_CLAIRE = ['#fdfefe', '#eaeef4', '#dde4ec'] as const
 /**
  * JUSQU'OÙ UNE PLAQUE PEUT S'ASSOMBRIR — **et c'est le TEXTE qui le dit, en
@@ -990,7 +998,7 @@ const PLANCHER_PLAQUE = 5
  * « zone de texte à fond clair » sans qu'il l'ait demandé. **À remesurer si le
  * vert change** : c'est lui qui la porte.
  */
-const CHROMA_PLAQUE = 74
+const CHROMA_PLAQUE = 18
 
 /**
  * CE QU'UN PAS DE CLARTÉ DOIT RENDRE DE COULEUR POUR VALOIR LA PEINE.

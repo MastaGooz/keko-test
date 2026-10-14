@@ -5076,3 +5076,27 @@ n'ai ni capteur ni moyen d'en simuler un.
   une carte. *C'est le comportement de tous les modes* — la taille cède, puis le
   nom se coupe — mais les noms CLDR sont plus longs que des noms propres.
 
+
+#### LA PLAQUE REDEVIENT UN BLANC LÉGÈREMENT TEINTÉ
+
+Keko, une fois le décor passé à la nuit du cran : **« on peut éclaircir les
+encadrés là où il y a le texte, pour qu'il soit blanc légèrement teinté ? »**
+
+*Le cran se lit désormais sur toute la carte* — le cadre, les rayons, le décor
+nuit — donc **la plaque n'a plus à le crier** : elle redevient la surface
+claire qui porte le texte. Trois chiffres, et aucun autre :
+
+| | avant | après |
+|---|---|---|
+| `PIGMENT_PLAQUE` | 1,4 / 1,7 / 1,7 | **0,45 / 0,55 / 0,6** |
+| `LUM_PLAQUE` | 0,895 / 0,795 / 0,752 | **0,94 / 0,88 / 0,85** |
+| `CHROMA_PLAQUE` | 74 | **18** |
+
+*Les trois passes de pigment d'avant restent dans `git log` avec leurs
+mesures* — elles étaient justes pour une plaque qui devait dire le cran seule.
+**La descente vers le chroma cible ne mord presque plus**, et les trois encres
+(`#111920`, `#16202a`, `#0d141b`) gardent leur contraste : le plancher de 5 sur
+le mot du type est tenu d'autant plus largement que la plaque est plus claire.
+
+Vu à l'écran sur le bilan de `?paquet=1314` : cinq plaques blanches, chacune
+teintée d'un souffle de son cran, le texte sombre lisible sur les cinq.
