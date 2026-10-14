@@ -161,6 +161,8 @@ function colonnesDuBilan(largeurVisible: number, hauteurVisible: number): number
  * à rejuger par Keko : un départ se juge en le regardant.
  */
 const RESSORT_SORTIE = 5
+/** La distance de sortie en portrait, en largeurs de carte : la référence du ressort. */
+const DISTANCE_SORTIE_REF = 1.4
 const ANGLE_SORTIE = 0.14
 /** De combien la passée sort DEVANT la pile, en largeurs de carte — voir `placeAuDefile`. */
 const SAILLIE_SORTIE = 0.1
@@ -972,6 +974,20 @@ export function Paquet3D(): React.ReactElement {
    * commande, donc il n'y coûte rien.
    */
   const tailleDuDefile = Math.min(lVisible * 0.78, (hVisible * 0.58) / 1.4)
+  /**
+   * LE RESSORT DE SORTIE SE NORMALISE SUR LA DISTANCE. Keko : « la petite
+   * rotation et le ralentissement sont bien sur tel, mais j'ai pas ça sur
+   * PC ». *Un ressort rend une FRACTION de la distance par seconde*, et la
+   * distance de sortie est une largeur d'écran : 1,4 largeur de carte en
+   * portrait, près de 5 en paysage sur un PC — donc la carte y filait quatre
+   * fois plus vite en pixels et quittait l'écran en 0,16 s, sans laisser le
+   * temps de lire sa rotation. Le ressort se divise par la distance comptée
+   * en largeurs de carte, rapportée à celle du portrait : la carte parcourt
+   * sa propre largeur dans le même temps partout, et `RESSORT_SORTIE` reste
+   * le chiffre validé en portrait.
+   */
+  const ressortDeSortie =
+    RESSORT_SORTIE * Math.min(1, (DISTANCE_SORTIE_REF * tailleDuDefile) / (lVisible * 1.1))
   // LA BOÎTE DE LA CARTE DU DÉFILÉ À L'ÉCRAN, en pixels, pour `curseurDefile` :
   // elle est au centre, à `Z_MAIN`, et `hVisible` dit ce que vaut une unité de
   // monde en pixels à cette profondeur. *Une ref, parce que l'écouteur est
@@ -1204,7 +1220,7 @@ export function Paquet3D(): React.ReactElement {
               // Le ressort ne vaut que pour la sortie — l'approche et le bilan
               // gardent le leur — et l'angle est une cible comme la place,
               // amortie par le même ressort.
-              ressort={!fini && i < montree ? RESSORT_SORTIE : undefined}
+              ressort={!fini && i < montree ? ressortDeSortie : undefined}
               rotation={!fini && i < montree ? [0, 0, -ANGLE_SORTIE] : undefined}
               // ET C'EST L'ÉCRAN QUI TIENT SON CURSEUR — pour TOUTE LA PILE,
               // pas pour la seule carte qu'on regarde. Keko : « quand on bouge
