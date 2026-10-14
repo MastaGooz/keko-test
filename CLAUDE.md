@@ -2637,6 +2637,32 @@ s'il faut plus fort c'est l'export qu'il faut remonter.
 le front — il ne dit que « ça avance » ou « ça n'avance pas ». **C'est ce que
 Keko a demandé en voyant les deux** : « durant la déchirure uniquement ».
 
+#### ET LA BOUCLE DOIT NAÎTRE DANS LE GESTE — PC et téléphone ne s'ouvrent pas pareil
+
+Keko : **« le son fonctionne sur PC mais pas sur tél (cracks) »** — le banc
+`?craque`, lui, s'entend sur les deux.
+
+***LA SEULE DIFFÉRENCE ENTRE LE BANC ET LE JEU ÉTAIT L'ENDROIT OÙ LA BOUCLE
+NAÎT.*** Le banc la lance depuis un `pointerdown` ; le jeu la lançait dans la
+boucle d'image, au premier pas du front. **Sur iPhone, un contexte audio
+suspendu ne se reprend que depuis un geste** — et celui de la page du paquet
+naît suspendu, créé par le préchargement hors de tout geste. La source partait
+donc dans un contexte qui ne tournait pas, et ne jouait qu'au moment où le pop,
+programmé depuis le lâcher, le reprenait — c'est-à-dire à l'instant où on
+l'arrêtait. *Sur PC le `resume()` passe de n'importe où, donc rien ne se
+voyait.*
+
+**Un son qui doit tourner part d'un geste, même s'il n'a rien à dire encore.**
+La boucle naît donc dans `prendre`, au `pointerdown` sur le sachet, à gain
+zéro ; la boucle d'image ne fait plus que la doser. **Et la page du paquet
+réveille le son au premier contact** (`amorcerLeSon`), comme l'archive le fait
+depuis toujours — *la page du paquet ne le faisait jamais*, et c'est le
+préchargement qui avait créé le contexte suspendu.
+
+*C'est la règle de `ui/sons.ts` prise au mot* — « le contexte audio ne naît
+que sur un geste » — **et elle vaut aussi pour chaque source qu'on y démarre
+tant qu'il est suspendu.**
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une

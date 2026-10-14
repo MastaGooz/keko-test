@@ -38,6 +38,7 @@ import { hauteurVisibleA } from './Cadrage.tsx'
 import {
   SON_CRAQUE,
   SON_POP,
+  amorcerLeSon,
   jouerEnBoucle,
   jouerSon,
   precharger,
@@ -1708,7 +1709,16 @@ export function Sachet3D({
   useEffect(() => {
     void precharger(SON_CRAQUE)
     void precharger(SON_POP)
-    return () => craque.current?.arreter()
+    // ET LE SON SE RÉVEILLE AU PREMIER CONTACT, comme sur l'archive : le
+    // préchargement crée le contexte HORS d'un geste, donc suspendu, et le
+    // reprendre coûte du temps — *le réveil doit avoir lieu avant qu'on en ait
+    // besoin.* La page du paquet ne le faisait jamais.
+    const amorcer = (): void => amorcerLeSon()
+    window.addEventListener('pointerdown', amorcer, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', amorcer)
+      craque.current?.arreter()
+    }
   }, [])
   // LE BANC `?craque` : le craquement en boucle, tel quel, dès le premier
   // contact avec la page — *le contexte audio ne naît que sur un geste.*
@@ -1941,12 +1951,12 @@ export function Sachet3D({
     // se joue pas, il s'avance* : c'est le front qui lui dit où il en est,
     // qu'il suive le doigt ou l'horloge — voir `suivreLeSon`. Il naît à la
     // première avancée, donc toujours dans un geste.
-    if (pf > 0 && pf < 1) {
-      if (craque.current === null) craque.current = jouerEnBoucle(SON_CRAQUE, VOLUME_CRAQUE)
+    if (pf > 0 && pf < 1 && craque.current !== null) {
       // LA BOUCLE JOUE, LE GAIN DIT QUAND ON L'ENTEND : ouvert tant que le
       // front avance — avec un dixième de seconde de tenue, le temps d'un trou
       // entre deux évènements de pointeur — fermé dès qu'il s'arrête. *Ce qui
-      // craque est le film qu'on déchire, pas le film qu'on tient.*
+      // craque est le film qu'on déchire, pas le film qu'on tient.* Elle est
+      // née dans `prendre`, au geste : ici on ne fait que la doser.
       if (pf > pfAvant.current) dernierPas.current = t
       craque.current.doser(t - dernierPas.current < TENUE_CRAQUE ? 1 : 0)
     }
@@ -2147,6 +2157,18 @@ export function Sachet3D({
     if (file.current || tire.current !== null) return
     e.stopPropagation()
     tire.current = { x0: e.clientX, y0: e.clientY, p0: p.current, ...viseDepuis(e) }
+    // LA BOUCLE DU CRAQUEMENT NAÎT ICI, DANS LE GESTE, à gain zéro. Keko :
+    // « le son fonctionne sur PC mais pas sur tél ». *Elle naissait dans la
+    // boucle d'image, au premier pas du front* — et sur iPhone un contexte
+    // audio suspendu ne se reprend que depuis un geste : la source partait
+    // dans un contexte qui ne tournait pas, et ne jouait qu'au pop, trop tard.
+    // Le banc `?craque`, lui, la lançait au `pointerdown` — et il s'entendait.
+    // **Un son qui doit tourner part d'un geste, même s'il n'a rien à dire
+    // encore** ; c'est la boucle d'image qui le dose ensuite.
+    if (craque.current === null) {
+      craque.current = jouerEnBoucle(SON_CRAQUE, VOLUME_CRAQUE)
+      craque.current.doser(0)
+    }
     /**
      * **LE DOIGT POSÉ PENCHE LE SACHET**, comme le survol penche à la souris.
      *
