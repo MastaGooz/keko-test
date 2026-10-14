@@ -1398,8 +1398,12 @@ const FORCE_RAYONS: Record<string, number> = {
 /** L'opacité des touches dans la fenêtre d'art, et leur échelle par rapport à celles du dos. */
 const TOUCHES_CARTE = 0.09
 const TOUCHES_ECHELLE = 0.8
+/** Les touches ne s'affichent plus par défaut — Keko : « pas terrible finalement » ; `?touches=1` les rend. */
 const SANS_TOUCHES =
-  typeof location !== 'undefined' && new URLSearchParams(location.search).get('touches') === '0'
+  typeof location === 'undefined' || new URLSearchParams(location.search).get('touches') !== '1'
+/** `?decor=bleu` : le bleu nuit commun derrière l'emoji, au lieu de la nuit du cran. */
+const DECOR_BLEU =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('decor') === 'bleu'
 const SANS_RAYONS =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('rayons') === '0'
 
@@ -3399,7 +3403,15 @@ export async function peindreCarte(
   ctx.save()
   tracer(marge)
   ctx.clip()
-  if (FOND_PEINT) peindreDecor(ctx, carte.ciel)
+  // LE DÉCOR D'UNE CARTE D'EMOJI PREND LA NUIT DE SON CRAN, plus le bleu nuit
+  // commun. Keko : « on peut ne plus utiliser Background.webp pour voir ? » —
+  // *il n'était déjà plus utilisé*, le fond est peint depuis l'aplat ; ce
+  // qu'il voyait, c'est le bleu nuit de base. La carte parle alors son cran
+  // sur toute sa surface : le cadre, la plaque, les rayons, et le décor.
+  // `?decor=bleu` rend le bleu nuit commun.
+  const nuitHex =
+    bulle && !DECOR_BLEU && carte.rarete !== undefined ? METAUX[carte.rarete]?.[3] : undefined
+  if (FOND_PEINT) peindreDecor(ctx, carte.ciel, nuitHex === undefined ? undefined : couleurDe(nuitHex))
   else {
     ctx.fillStyle = '#171b1d'
     ctx.fillRect(0, 0, LARGE, HAUT)

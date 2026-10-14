@@ -1352,6 +1352,16 @@ droit de parler*, donc pas les cinq confettis du dos. L'emoji est un sticker
 posé sur son clavier, et la carte parle la même langue des deux côtés.
 `?touches=0` les retire ; les deux bancs se cumulent.
 
+**PUIS LES TOUCHES SONT TOMBÉES, ET LE DÉCOR A PRIS LA NUIT DU CRAN.** Keko :
+« les touches c'est pas terrible finalement... on peut ne plus utiliser
+Background.webp pour voir ? » *Il n'était déjà plus utilisé* — le fond est
+peint depuis l'aplat — et ce qu'il voyait était le bleu nuit commun de ce
+décor peint. Les touches ne s'affichent plus (`?touches=1` les rend), et
+`peindreDecor` reçoit pour base la NUIT du cran (`METAUX[cran][3]`) : la
+carte parle son cran sur toute sa surface, cadre, plaque, rayons et décor.
+`?decor=bleu` rend le bleu nuit commun. *Vu au bilan* : cinq cartes
+monochromes, chacune dans son cran, l'emoji dessus.
+
 ### LE DOS DE CARTE : UN BOUQUET DE STICKERS SUR UN CLAVIER
 
 Keko : **« je voudrais que tu me fasses un dos de carte thématique (celui-là est

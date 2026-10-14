@@ -313,7 +313,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans`, `?dos=gabarit` | les bancs du gabarit |
 | `?fond=sombre` | le fond du paquet sans lumières ni emoji flottants |
 | `?bloom=0` | le paquet sans le halo des points brillants |
-| `?rayons=0`, `?touches=0` | les cartes sans les rayons du cran, sans les touches de clavier, derrière l'emoji |
+| `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 
