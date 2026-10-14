@@ -1476,8 +1476,17 @@ ne le paient qu'une fois chacun). **Et l'ombre se pose sur le cerne**, qui est
 la vraie découpe du sticker. `silhouetteDe` est partie avec les passes : *du
 code mort ment sur ce que le jeu fait.*
 
-*Vu à l'écran* sur le dos : le chat a trois moustaches, la flamme un contour
-lisse. Le sachet appelle le même `collerSticker`, donc il suit.
+**ET LA TOILE DU CERNE DÉBORDE LE GLYPHE D'UNE MARGE ÉGALE AU RAYON.** Keko,
+sur la première version : « c'est pire, l'outline est coupé droit par
+endroits ». *Un glyphe occupe 80 % de son carré*, et un cerne d'un dixième de
+largeur en sort dès que le dessin touche son bord — la dilatation se faisait
+couper net par la toile. Le glyphe est peint en retrait, et le cerne se colle
+plus grand d'autant (`echelle`). *C'est la règle du contour des cartes, payée
+une fois de plus : le débord de la texture doit être exactement celui de ce
+qu'elle porte.*
+
+*Vu à l'écran* sur le dos et sur le sachet : le chat a trois moustaches, la
+flamme un contour lisse, et le coeur garde son cerne jusqu'en haut.
 
 #### LE MODE EMOJI SEULEMENT, et c'est le CONTOUR qui le dit
 

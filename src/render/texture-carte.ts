@@ -4830,9 +4830,15 @@ async function peindreBouquet(
  * laquelle le sticker sera collé : mémorisé par glyphe ET par rayon, il n'y en
  * a qu'un par couple, et le dos comme le sachet ne le paient qu'une fois.
  */
-const CERNES_EMOJI = new WeakMap<HTMLCanvasElement, Map<number, HTMLCanvasElement>>()
+/** Un cerne calculé : sa toile, et de combien elle déborde le carré du glyphe. */
+interface Cerne {
+  toile: HTMLCanvasElement
+  /** La taille de la toile rapportée à celle du glyphe : le cerne se colle plus grand d'autant. */
+  echelle: number
+}
+const CERNES_EMOJI = new WeakMap<HTMLCanvasElement, Map<number, Cerne>>()
 
-function cerneDe(image: HTMLCanvasElement, rayon: number): HTMLCanvasElement {
+function cerneDe(image: HTMLCanvasElement, rayon: number): Cerne {
   const r = Math.max(1, Math.round(rayon * 2) / 2)
   let parRayon = CERNES_EMOJI.get(image)
   if (parRayon === undefined) {
@@ -4842,13 +4848,22 @@ function cerneDe(image: HTMLCanvasElement, rayon: number): HTMLCanvasElement {
   const garde = parRayon.get(r)
   if (garde !== undefined) return garde
 
-  const n = TOILE_CERNE
+  // LA TOILE DÉBORDE LE GLYPHE D'UNE MARGE AU MOINS ÉGALE AU RAYON. Keko, sur
+  // la première version : « c'est pire, l'outline est coupé droit par
+  // endroits ». *Un glyphe occupe 80 % de son carré*, et un cerne d'un
+  // dixième en sort dès qu'il touche son bord — la dilatation se faisait
+  // couper net par la toile. Le glyphe est donc peint en retrait, et le cerne
+  // se colle plus grand d'autant (`echelle`).
+  const marge = Math.ceil(r) + 2
+  const n = TOILE_CERNE + 2 * marge
   const toile = document.createElement('canvas')
   toile.width = n
   toile.height = n
+  const echelle = n / TOILE_CERNE
+  const cerne: Cerne = { toile, echelle }
   const ctx = toile.getContext('2d', { willReadFrequently: true })
-  if (ctx === null) return toile
-  ctx.drawImage(image, 0, 0, n, n)
+  if (ctx === null) return cerne
+  ctx.drawImage(image, marge, marge, TOILE_CERNE, TOILE_CERNE)
   const alpha = ctx.getImageData(0, 0, n, n).data
 
   // LA DISTANCE AU GLYPHE, au carré, par deux passes séparables.
@@ -4910,8 +4925,8 @@ function cerneDe(image: HTMLCanvasElement, rayon: number): HTMLCanvasElement {
     px[i * 4 + 3] = Math.round(a * 255)
   }
   ctx.putImageData(sortie, 0, 0)
-  parRayon.set(r, toile)
-  return toile
+  parRayon.set(r, cerne)
+  return cerne
 }
 
 /** Les trois canaux d'une couleur CSS `#rrggbb`. */
@@ -4947,6 +4962,8 @@ function collerSticker(
   // LE RAYON DU CERNE EN PIXELS DE SA TOILE : l'épaisseur voulue à l'écran,
   // ramenée à l'échelle à laquelle le sticker sera collé.
   const cerne = cerneDe(image, (DOS_CERNE * u * TOILE_CERNE) / d)
+  // La toile du cerne déborde le glyphe : elle se colle plus grande d'autant.
+  const dc = d * cerne.echelle
   ctx.save()
   ctx.translate(x, y)
   ctx.rotate(angle)
@@ -4954,9 +4971,9 @@ function collerSticker(
   ctx.shadowColor = '#00000055'
   ctx.shadowOffsetY = 1.1 * u
   ctx.shadowBlur = 2.6 * u
-  ctx.drawImage(cerne, -d / 2, -d / 2, d, d)
+  ctx.drawImage(cerne.toile, -dc / 2, -dc / 2, dc, dc)
   ctx.restore()
-  ctx.drawImage(cerne, -d / 2, -d / 2, d, d)
+  ctx.drawImage(cerne.toile, -dc / 2, -dc / 2, dc, dc)
   ctx.drawImage(image, -d / 2, -d / 2, d, d)
   ctx.restore()
 }
