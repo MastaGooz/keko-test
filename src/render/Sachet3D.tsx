@@ -457,7 +457,7 @@ const BANC_GERBE =
  */
 const GYRO_GAIN = 0.6
 const GYRO_BORNE = 0.22
-const SANS_GYRO =
+export const SANS_GYRO =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('gyro') === '0'
 /** Le banc du craquement : le fichier en boucle, sans condition. Voir `jouerEnBoucle`. */
 const BANC_CRAQUE =
@@ -1818,6 +1818,7 @@ export function Sachet3D({
   onParti,
   onDechire,
   onOuvrir,
+  gyro: gyroPrete,
 }: {
   /** Sa largeur en unités de scène ; sa hauteur suit son rapport. */
   readonly taille: number
@@ -1862,6 +1863,14 @@ export function Sachet3D({
   readonly onParti?: () => void
   /** Le geste est acquis : la déchirure part toute seule. */
   readonly onOuvrir?: () => void
+  /**
+   * LE GYROSCOPE DU PAQUET, s'il en tient un : le sachet le lit au lieu d'en
+   * créer un. *Sur iPhone, le capteur se demande depuis un geste, et deux
+   * demandes dans le même relâchement n'en font pas deux qui passent* — un
+   * seul capteur, pris par le paquet, sert le sachet ET les cartes, avec un
+   * seul zéro : la tenue du moment où le paquet apparaît.
+   */
+  readonly gyro?: { readonly current: Inclinaison | null }
 }): React.ReactElement {
   const groupe = useRef<THREE.Group>(null)
   const relief = useRef<THREE.Group>(null)
@@ -1917,17 +1926,18 @@ export function Sachet3D({
   /** La ligne de diagnostic de `?son`, ou rien. */
   const diag = useRef<HTMLDivElement | null>(null)
   /** L'inclinaison du téléphone, rapportée à celle du moment où le sachet est apparu. */
-  const gyro = useRef<Inclinaison | null>(null)
+  const gyroPropre = useRef<Inclinaison | null>(null)
+  const gyro = gyroPrete ?? gyroPropre
   useEffect(() => {
-    if (SANS_GYRO) return
+    if (SANS_GYRO || gyroPrete !== undefined) return
     // LE ZÉRO EST LA TENUE DU TÉLÉPHONE QUAND LE SACHET APPARAÎT : l'écoute
     // se monte avec lui, et il se remonte à chaque paquet — voir `inclinaison`.
-    gyro.current = suivreLInclinaison()
+    gyroPropre.current = suivreLInclinaison()
     return () => {
-      gyro.current?.arreter()
-      gyro.current = null
+      gyroPropre.current?.arreter()
+      gyroPropre.current = null
     }
-  }, [])
+  }, [gyroPrete])
   /** Où en était le front à l'image d'avant, et quand il a bougé pour la dernière fois. */
   const pfAvant = useRef(0)
   const dernierPas = useRef(-Infinity)

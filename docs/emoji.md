@@ -1564,6 +1564,30 @@ se redresse quand il sort. **Le doigt et le gyroscope n'ont pas été vus** — 
 n'y a ni l'un ni l'autre ici. *Le bilan ne penche pas* : ses cinq cartes ont
 chacune leur boîte, et c'est un chantier à part si Keko le veut.
 
+#### ET C'EST TOUTE LA PILE QUI PENCHE, AVEC UN SEUL GYROSCOPE
+
+Keko : **« c'est bien sur PC mais j'ai rien sur téléphone (alors que pour le
+paquet le tap maintenu / bouger le téléphone ça fonctionne). Attention : quand
+on bouge une carte, elle traverse celle derrière, il faut bouger toute la pile
+ensemble »**.
+
+**La traversée** est la règle déjà payée deux fois : *une rotation est une
+translation déguisée en profondeur.* Les suivantes sont à `ECART_PILE`
+derrière la carte regardée, un écart qui ne tranche que l'ordre de deux plans
+À PLAT — dès que celle de devant penche, elle les traverse, et on voit le bord
+du cran suivant dépasser dans un coin (vu à l'écran, en vert). **Le même
+curseur sur toute la pile**, `i >= montree`, comme les piles du coffre :
+rotations identiques autour de centres alignés, les plans restent parallèles.
+
+**Le téléphone**, lui, n'a pas été vu — le chemin tactile, rejoué dans Chrome
+avec des évènements `touch` fabriqués, incline bien la carte. Ce qui a été
+corrigé sans l'avoir vu : *le sachet et le paquet créaient chacun leur
+gyroscope*, et sur iPhone le capteur se demande depuis un geste — **deux
+demandes dans le même relâchement n'en font pas deux qui passent.** Il n'y a
+plus qu'un capteur, pris par le paquet et PRÊTÉ au sachet (`Sachet3D.gyro`),
+donc un seul zéro : la tenue du moment où le paquet apparaît. Si le téléphone
+ne répond toujours pas, c'est la date du build qu'il faut lire en premier.
+
 #### UN SEUL FLIP RETOURNE TOUT LE PAQUET
 
 Keko : **« ce serait cool que quand on slide des cartes vers la droite, la carte

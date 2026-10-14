@@ -16,7 +16,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Carte3D, DUREE_FLIP, INCLINAISON_REFLET, type CurseurDeCarte } from './Carte3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import { Bouton3D } from './Bouton3D.tsx'
-import { RECUL_DU_BAS, Sachet3D } from './Sachet3D.tsx'
+import { RECUL_DU_BAS, SANS_GYRO, Sachet3D } from './Sachet3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import {
@@ -445,7 +445,9 @@ export function Paquet3D(): React.ReactElement {
   const refBoite = useRef<{ cx: number; cy: number; l: number; h: number } | null>(null)
   const gyro = useRef<Inclinaison | null>(null)
   useEffect(() => {
-    // LE ZÉRO EST LA TENUE DU MOMENT OÙ LE PAQUET APPARAÎT, comme le sachet.
+    if (SANS_GYRO) return
+    // LE ZÉRO EST LA TENUE DU MOMENT OÙ LE PAQUET APPARAÎT — et c'est LE
+    // capteur du paquet, prêté au sachet : voir `Sachet3D.gyro`.
     gyro.current = suivreLInclinaison()
     return () => {
       gyro.current?.arreter()
@@ -1022,6 +1024,7 @@ export function Paquet3D(): React.ReactElement {
         {!parti && paquet.length > 0 && (
           <Sachet3D
             key={numero}
+            gyro={gyro}
             taille={lSachet}
             position={[0, 0, Z_MAIN]}
             // CE QU'IL FAUT POUR QU'IL QUITTE LE CADRE : la demi-hauteur du
@@ -1143,10 +1146,17 @@ export function Paquet3D(): React.ReactElement {
               // ELLE RÉPOND AU CURSEUR une fois révélée, et pas avant : *un dos
               // n'a rien à montrer*, donc rien à faire briller.
               reflet={vue}
-              // ET C'EST L'ÉCRAN QUI TIENT SON CURSEUR, pour la carte qu'on
-              // regarde seulement : voir `curseurDefile`.
-              curseurPartage={!fini && i === montree ? curseurDefile.current : undefined}
-              refletAuDoigt={!fini && i === montree}
+              // ET C'EST L'ÉCRAN QUI TIENT SON CURSEUR — pour TOUTE LA PILE,
+              // pas pour la seule carte qu'on regarde. Keko : « quand on bouge
+              // une carte, elle traverse celle derrière, il faut bouger toute
+              // la pile ensemble ». *Une rotation est une translation déguisée
+              // en profondeur* : les suivantes sont à ECART_PILE derrière, et
+              // une carte seule qui penche les traverse. Le même curseur sur
+              // toutes, c'est la règle des piles du coffre — rotations
+              // identiques autour de centres alignés, les plans restent
+              // parallèles. Voir `curseurDefile`.
+              curseurPartage={!fini && i >= montree ? curseurDefile.current : undefined}
+              refletAuDoigt={!fini && i >= montree}
               ombre
               // ELLE NE PORTE PLUS DE GESTE À ELLE. *Tout passe par le geste
               // de l'écran* — une tape sur la carte et une tape à côté font la
