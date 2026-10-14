@@ -87,7 +87,10 @@ function ouvrir(): AudioContext | null {
   }
   // Ouvert hors d'un geste, il naît SUSPENDU : on le relance au premier son,
   // qui part toujours d'une tape ou d'un clic.
-  if (contexte.state === 'suspended') void contexte.resume()
+  // `suspended`, ou `interrupted` sur iOS (un appel, un autre onglet) : tout
+  // ce qui n'est pas `running` se reprend. *Et la reprise ne passe que depuis
+  // un geste sur iPhone* — c'est aux appelants d'être dans un geste.
+  if (contexte.state !== 'running') void contexte.resume()
   return contexte
 }
 
@@ -130,7 +133,23 @@ export function diagnosticSon(): string {
   const ms = (v: number | undefined): string =>
     v === undefined || Number.isNaN(v) ? '?' : `${Math.round(v * 1000)} ms`
   const sortie = (contexte as AudioContext & { outputLatency?: number }).outputLatency
-  return `son : ${chemin} · ${contexte.state} · base ${ms(contexte.baseLatency)} · sortie ${ms(sortie)}`
+  return `son : ${chemin} · ${contexte.state} · t ${contexte.currentTime.toFixed(2)} · base ${ms(contexte.baseLatency)} · sortie ${ms(sortie)}`
+}
+
+/**
+ * REPREND LE CONTEXTE S'IL NE TOURNE PAS — à appeler DEPUIS UN GESTE. Keko :
+ * « ça fonctionne uniquement sur la partie déchirure auto, pas durant le slide
+ * tactile ». *Sur iPhone la reprise ne passe que depuis un geste*, et un
+ * glisser en est un à chaque `pointermove` : on la redemande à chaque pas, ça
+ * ne coûte rien quand le contexte tourne déjà.
+ */
+export function reveillerLeSon(): void {
+  ouvrir()
+}
+
+/** Par où un son sortira : son tampon décodé, le repli `<audio>`, ou rien encore. */
+export function cheminDe(nom: string): 'tampon' | 'repli' | 'aucun' {
+  return TAMPONS.has(nom) ? 'tampon' : REPLIS.has(nom) ? 'repli' : 'aucun'
 }
 
 const TAMPONS = new Map<string, AudioBuffer>()
@@ -240,6 +259,8 @@ export interface SonEnBoucle {
   doser(niveau: number): void
   /** On n'en a plus besoin : il se tait, et ne repartira pas. */
   arreter(): void
+  /** La dernière consigne — pour le diagnostic. */
+  niveau(): number
 }
 
 /** Ce que met le niveau à rejoindre sa consigne, en secondes : assez court pour suivre un doigt, assez long pour ne pas cliquer. */
@@ -306,9 +327,12 @@ export function jouerEnBoucle(nom: string, volume = 1): SonEnBoucle {
   return {
     doser(niveau) {
       consigne = Math.min(1, Math.max(0, niveau))
-      if (gain !== null && ctxDuGain !== null)
+      if (gain !== null && ctxDuGain !== null) {
+        if (ctxDuGain.state !== 'running') void ctxDuGain.resume()
         gain.gain.setTargetAtTime(consigne * volume, ctxDuGain.currentTime, LISSAGE)
+      }
     },
+    niveau: () => consigne,
     arreter() {
       arrete = true
       arreter()

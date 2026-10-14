@@ -5496,6 +5496,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
 | `&gerbe` | tire la déchirure puis s'arrête, pour juger les étincelles |
 | `&craque` | le fichier `cracks.aac` en boucle, tel quel, dès le premier contact — *pour savoir si c'est le fichier ou le jeu qu'on n'entend pas* |
+| `&son` | la ligne de diagnostic du son pendant la déchirure : chemin, état et horloge du contexte, `pf`, la dose du craquement, le doigt — *l'appareil dit ce qu'il voit* |
 | `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans`, `?dos=gabarit` | les bancs du gabarit |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |

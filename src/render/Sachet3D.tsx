@@ -39,7 +39,10 @@ import {
   SON_CRAQUE,
   SON_POP,
   amorcerLeSon,
+  cheminDe,
+  diagnosticSon,
   jouerEnBoucle,
+  reveillerLeSon,
   jouerSon,
   precharger,
   type SonEnBoucle,
@@ -433,6 +436,9 @@ const BANC_GERBE =
 /** Le banc du craquement : le fichier en boucle, sans condition. Voir `jouerEnBoucle`. */
 const BANC_CRAQUE =
   typeof location !== 'undefined' && new URLSearchParams(location.search).has('craque')
+/** `?son` : la ligne de diagnostic du son pendant la déchirure. */
+const BANC_SON =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).has('son')
 
 /** Ce que le survol penche et avance : *un objet qu'on tourne vers soi.* */
 const PENCHE = 0.26
@@ -1698,6 +1704,8 @@ export function Sachet3D({
   const ditParti = useRef(false)
   /** Le craquement du film, tant qu'on le déchire. Voir `jouerEnBoucle`. */
   const craque = useRef<SonEnBoucle | null>(null)
+  /** La ligne de diagnostic de `?son`, ou rien. */
+  const diag = useRef<HTMLDivElement | null>(null)
   /** Où en était le front à l'image d'avant, et quand il a bougé pour la dernière fois. */
   const pfAvant = useRef(0)
   const dernierPas = useRef(-Infinity)
@@ -1715,9 +1723,19 @@ export function Sachet3D({
     // besoin.* La page du paquet ne le faisait jamais.
     const amorcer = (): void => amorcerLeSon()
     window.addEventListener('pointerdown', amorcer, { once: true })
+    // LA LIGNE DE DIAGNOSTIC, derrière `?son` : le même motif que l'archive.
+    if (BANC_SON) {
+      const el = document.createElement('div')
+      el.style.cssText =
+        'position:fixed;left:0;top:0;z-index:99;padding:4px 8px;font:12px monospace;color:#fff;background:rgba(0,0,0,.6);pointer-events:none;white-space:pre-wrap'
+      document.body.appendChild(el)
+      diag.current = el
+    }
     return () => {
       window.removeEventListener('pointerdown', amorcer)
       craque.current?.arreter()
+      diag.current?.remove()
+      diag.current = null
     }
   }, [])
   // LE BANC `?craque` : le craquement en boucle, tel quel, dès le premier
@@ -1961,6 +1979,11 @@ export function Sachet3D({
       craque.current.doser(t - dernierPas.current < TENUE_CRAQUE ? 1 : 0)
     }
     pfAvant.current = pf
+    // `?son` : l'appareil dit ce qu'il voit pendant la déchirure — *une
+    // impression ne se discute pas, elle se mesure*, et je ne mesure pas sur
+    // le téléphone de Keko.
+    if (diag.current !== null)
+      diag.current.textContent = `${diagnosticSon()} · craque ${cheminDe(SON_CRAQUE)} · pf ${pf.toFixed(2)} · dose ${craque.current?.niveau() ?? '—'} · doigt ${tire.current !== null ? 'oui' : 'non'}`
     // IL SORT DES DEUX BORDS : *une déchirure qui commence pile sur le bord se
     // lit comme un bord qui s'efface*, et une qui s'arrête pile à droite y
     // laisse un point de braise posé là pour toujours.
@@ -2194,6 +2217,10 @@ export function Sachet3D({
     const bouger = (ev: PointerEvent): void => {
       const g = tire.current
       if (g === null) return
+      // LE CONTEXTE AUDIO SE REPREND DEPUIS LE GESTE, à chaque pas : sur
+      // iPhone il ne se reprend que là, et le craquement se dose pendant ce
+      // glisser — voir `reveillerLeSon`.
+      reveillerLeSon()
       const part = g.p0 / PART_FRONT + (ev.clientX - g.x0) / largePx
       // UN CLIQUET : le front ne recule jamais. *Un film déchiré ne se
       // recolle pas* — un doigt qui revient en arrière ne fait qu'incliner le
