@@ -21,6 +21,7 @@ import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import { FondAnime } from './FondAnime.tsx'
 import { Bloom } from './Bloom.tsx'
+import { SON_POSER, SON_PRENDRE, jouerSon, precharger } from './sons.ts'
 import {
   AMBIANCE,
   ECHELLE_COULEUR,
@@ -472,10 +473,20 @@ export function Paquet3D(): React.ReactElement {
   // laquelle elle rebondit.
   const [rebond, setRebond] = useState(0)
   const [rebondit, setRebondit] = useState(false)
+  // LES DEUX SONS DU DÉFILÉ SE CHARGENT AVEC LE PAQUET : *un son qui arrive
+  // après le geste arrive trop tard.*
+  useEffect(() => {
+    void precharger(SON_POSER)
+    void precharger(SON_PRENDRE)
+  }, [])
   useEffect(() => {
     if (!ouvert) return
     setRebond((r) => r + 1)
     setRebondit(true)
+    // LA CARTE SE POSE EN ZOOMANT : le son de la pose, demandé par Keko — « le
+    // son card drop au moment où la carte zoome ». Pas au premier sachet sauté
+    // (`nu`) : là rien ne tombe, on arrive déjà posé.
+    if (!nu) jouerSon(SON_POSER)
     const fin = window.setTimeout(() => setRebondit(false), 600)
     return () => clearTimeout(fin)
   }, [ouvert])
@@ -755,6 +766,9 @@ export function Paquet3D(): React.ReactElement {
     // ouverte** — avant, le geste attend.
     if (!pileOuverte) return
     if (montree + 1 < paquet.length) {
+      // ON PREND LA CARTE POUR LA PASSER : le son de la prise à chaque
+      // suivante, demandé par Keko — « le son take card à chaque swap ».
+      jouerSon(SON_PRENDRE)
       setMontree(montree + 1)
       decouvrir(montree + 1)
     } else setFini(true)
