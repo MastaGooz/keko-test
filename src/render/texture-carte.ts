@@ -1453,7 +1453,7 @@ const POLICES_EMOJI = new Map<string, Promise<unknown>>()
  * fin : **il ne suffit pas que la police soit la, il faut que le GLYPHE y
  * soit.**
  */
-function policeDeLEmoji(emoji: string): Promise<unknown> {
+export function policeDeLEmoji(emoji: string): Promise<unknown> {
   const deja = POLICES_EMOJI.get(emoji)
   if (deja !== undefined) return deja
   const p = document.fonts.load(`64px "Noto Color Emoji"`, emoji).catch(() => null)
@@ -1461,7 +1461,7 @@ function policeDeLEmoji(emoji: string): Promise<unknown> {
   return p
 }
 
-function imageDeLEmoji(emoji: string): HTMLCanvasElement | null {
+export function imageDeLEmoji(emoji: string): HTMLCanvasElement | null {
   const deja = EMOJIS.get(emoji)
   if (deja !== undefined) return deja
   const toile = document.createElement('canvas')

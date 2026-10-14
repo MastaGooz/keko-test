@@ -1500,6 +1500,37 @@ premier mode chargé imposerait son dos à l'autre.*
 
 `?dos=gabarit` rend l'ancien — *ce qui a servi à choisir doit rester ouvrable.*
 
+### LE FOND DU PAQUET : DES LUMIÈRES ET DES EMOJI QUI FLOTTENT
+
+Keko : **« on peut avoir un fond d'écran plus cool pour le booster /
+ouverture ? je sais pas, un truc avec des lumières, des particules, qui colle
+au thème emoji »**.
+
+*C'est une proposition de ma part*, construite derrière un interrupteur
+(`?fond=sombre` rend le fond d'avant) : `render/FondAnime.tsx`. Deux couches,
+et chacune fait un travail que l'autre ne fait pas :
+
+- **des BOKEHS**, quatorze grands disques de lumière douce aux cinq couleurs
+  des crans (leur lueur d'`AMBIANCE`), qui dérivent et respirent lentement.
+  *Ce sont les couleurs du jeu, pas une palette de plus* — la règle des
+  confettis du dos ;
+- **des EMOJI FANTÔMES**, vingt-deux, pris dans le catalogue (le bouquet et
+  quelques-uns qui luisent bien), petits et translucides, ajoutés en lumière
+  (`lighter`), qui montent comme des bulles en tournant à peine. *Le fond est
+  fait de ce que le paquet contient*, la règle du sachet et du dos.
+
+**C'est une toile 2D DERRIÈRE le canvas WebGL**, entre `.paquet-fond` et
+`.paquet-lueur` : la lueur d'ambiance qui monte avec la rareté se pose
+par-dessus sans qu'on y touche. Un pixel par point au plus, trente images par
+seconde, rien de net — *un fond ne se regarde pas, il se sent.* Elle s'arrête
+onglet caché, se fige sous `prefers-reduced-motion`, et son hasard est à
+graine fixe : *un fond n'est pas un tirage de partie.* Les glyphes
+s'attendent avant de peindre, comme partout.
+
+*Vu à l'écran* : le sachet et la carte révélée, la lueur orange du légendaire
+par-dessus les bokehs. **Tout est à rejuger par Keko** — le nombre, la taille,
+l'opacité des fantômes, et si c'est bien ce registre-là qu'il voulait.
+
 ### L'OUVERTURE SE FAIT UNE CARTE À LA FOIS — le modèle est lexicodex
 
 Keko : **« je voudrais qu'on ait une ouverture de booster plus proche de celle

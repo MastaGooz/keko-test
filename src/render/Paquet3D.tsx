@@ -19,6 +19,7 @@ import { Bouton3D } from './Bouton3D.tsx'
 import { RECUL_DU_BAS, SANS_GYRO, Sachet3D } from './Sachet3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
+import { FondAnime } from './FondAnime.tsx'
 import {
   AMBIANCE,
   ECHELLE_COULEUR,
@@ -261,6 +262,9 @@ function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number 
  * fabriquer lui-meme.
  */
 const BANC_BONUS = '1f942'
+/** `?fond=sombre` : le fond d'avant, sans lumières ni emoji — voir `FondAnime`. */
+const FOND_SOMBRE =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('fond') === 'sombre'
 
 const GRAINE = (() => {
   const demandee = new URLSearchParams(location.search).get('paquet')
@@ -1080,6 +1084,10 @@ export function Paquet3D(): React.ReactElement {
       }
     >
       <div className="paquet-fond" />
+      {/* DES LUMIÈRES ET DES EMOJI QUI FLOTTENT, derrière la scène : voir
+          `FondAnime`. `?fond=sombre` rend le fond nu — *ce qui a servi à
+          choisir doit rester ouvrable.* */}
+      {!FOND_SOMBRE && <FondAnime />}
       <div className="paquet-lueur" />
       {eclat !== null && (
         <div

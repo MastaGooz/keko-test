@@ -5561,6 +5561,17 @@ body {
    Elle vit sur son propre calque et non sur `.paquet-fond` : un fond porte
    deja son degrade, et *deux degrades sur une meme boite ne se melangent pas,
    le second remplace le premier*. */
+/* LE FOND ANIME : des lumieres et des emoji qui flottent, peints sur une
+   toile 2D entre le fond nu et la lueur d'ambiance -- voir FondAnime.tsx. */
+.paquet-fond-anime {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .paquet-lueur {
   position: fixed;
   inset: 0;
