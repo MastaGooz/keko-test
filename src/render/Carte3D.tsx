@@ -54,6 +54,24 @@ export const DUREE_APPARITION = 0.4
 
 export const LARGE = 1
 export const HAUT = 1.4
+/**
+ * CE QUE LA PEINTURE D'UN APLAT AJOUTE EN ÉMISSIF, en part de l'albédo — voir
+ * `aplat` dans `Carte3D`. *Le chiffre comble ce que l'éclairage du paquet
+ * retire* : ses trois lampes ne rendent qu'environ 0,7 de l'albédo en Lambert
+ * pur, donc 0,3 ramène la peinture à sa valeur. Mesuré sur le dos de carte
+ * contre le sachet, qui montre la même peinture telle quelle.
+ */
+const COMPLEMENT_APLAT = 0.3
+/**
+ * LE GAIN DE SATURATION DE L'APLAT, en sortie du nuanceur — voir `aplat`.
+ * *Le sachet ne montre pas sa peinture telle quelle* : son nuanceur multiplie
+ * ses lampes par la couleur du film (un métal filtre son reflet), donc il
+ * SATURE ce qu'il éclaire. Mesuré sur le bouquet : saturation moyenne 0,79 sur
+ * le sachet contre 0,62 sur la carte, à clarté égale. C'est ce gain qui les
+ * rapproche, et c'est lui qu'on règle si Keko les veut plus ou moins francs.
+ */
+const SATURATION_APLAT = 0.4
+
 const EPAISSEUR = 0.012
 
 /**
@@ -602,6 +620,36 @@ export function Carte3D({
   const groupe = useRef<THREE.Group>(null)
   // LA FACE, LE CORPS ET LE DOS LISENT LE MÊME RAYON : voir `rayonDe`.
   const rayon = rayonDe(carte)
+  /**
+   * UN EMOJI EST UN APLAT, ET SA CARTE NE DOIT PAS ÊTRE DÉLAVÉE PAR LA LUMIÈRE.
+   *
+   * Keko : « j'ai l'impression que les couleurs des cartes sont beaucoup plus
+   * fades que celles du booster ». *Et c'était mesuré* : le visage qui rit du
+   * bouquet sort à 153 / 133 / 70 sur le dos de carte et à 202 / 192 / 45 sur
+   * le sachet — la MÊME peinture, saturation 0,56 contre 0,83.
+   *
+   * **Deux choses le délavaient, et plus de lumière n'en corrigeait aucune**
+   * (essayé, mesuré : l'ambiant triplé rend la carte plus claire, pas plus
+   * saturée) :
+   * - le REFLET BLANC du matériau standard — metalness 0,15 et roughness 0,55
+   *   font un lobe large qui pose un cinquième de blanc sur toute la face.
+   *   *Un reflet blanc désature tout ce qu'il touche*, et un emoji n'accroche
+   *   pas la lumière : il n'a pas de reflet à avoir ;
+   * - l'éclairage lui-même, qui ne rend que les deux tiers de l'albédo, avec
+   *   la teinte de la lampe d'appoint bleue par-dessus.
+   *
+   * Le sachet, lui, montre sa peinture telle quelle dans son nuanceur — c'est
+   * la référence que Keko a validée. La face et le verso passent donc en
+   * LAMBERT PUR (plus de reflet), et la peinture S'AJOUTE EN ÉMISSIF de
+   * `COMPLEMENT_APLAT` pour rendre ce que l'éclairage retire : la lumière
+   * garde son modelé quand la carte s'incline, la couleur garde sa pureté.
+   * Le lustre du survol, le foil et la feuille holo vivent dans le nuanceur
+   * injecté et ne bougent pas.
+   *
+   * *Mode emoji seulement*, comme le contour, le rayon et le dos : l'archive
+   * garde sa plaque de métal, qui elle accroche la lumière.
+   */
+  const aplat = carte.contour === 'simple'
   const { size, viewport } = useThree()
   const dpr = viewport.dpr
 
@@ -623,6 +671,8 @@ export function Carte3D({
     [],
   )
   const { face, laiton, halo, verso, aureole } = useMemo(() => {
+    // LA FACE D'UN APLAT N'A PAS DE REFLET : voir `aplat`, plus haut.
+    const reflet = aplat ? { roughness: 1, metalness: 0 } : { roughness: 0.55, metalness: 0.15 }
     const laiton = new THREE.MeshStandardMaterial({
       // LA TRANCHE SUIT LE CADRE. La coque peinte prend la teinte de la
       // rareté ; si le corps restait laiton, l'épaisseur trahirait le métal
@@ -643,9 +693,10 @@ export function Carte3D({
       // la règle déjà écrite pour les créatures. Le `useFrame` rend sa couleur
       // à la carte dès que sa texture arrive.
       color: '#1b1a22',
-      roughness: 0.55,
-      metalness: 0.15,
-      emissive: '#ffcf7a',
+      ...reflet,
+      // L'émissif est l'OR de l'apparition — ou le BLANC de l'aplat, qui y
+      // ajoute sa propre peinture (voir `aplat`).
+      emissive: aplat ? '#ffffff' : '#ffcf7a',
       emissiveIntensity: 0,
       // Les coins de la texture sont transparents : on les coupe franchement
       // plutôt que de les fondre, sinon la face se mélangerait au laiton.
@@ -682,6 +733,7 @@ export function Carte3D({
      */
     face.onBeforeCompile = (nuanceur) => {
       nuanceur.uniforms.uGris = { value: 0 }
+      nuanceur.uniforms.uSature = { value: 0 }
       nuanceur.uniforms.uLustre = { value: 0.5 }
       nuanceur.uniforms.uLustreForce = { value: 0 }
       nuanceur.uniforms.uIris = { value: 0 }
@@ -882,7 +934,17 @@ ${nuanceur.vertexShader}`.replace(
            diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.12), clamp(voile, 0.0, 1.0));
          }`,
       )
+      // LA SATURATION DE L'APLAT SE POSE EN SORTIE, après la conversion sRGB :
+      // *la part émissive de la peinture ne passe pas par diffuseColor*, donc
+      // un gain posé là où uGris travaille la manquerait. Voir `aplat`.
+      nuanceur.fragmentShader = nuanceur.fragmentShader.replace(
+        '#include <dithering_fragment>',
+        `#include <dithering_fragment>
+         float lumSortie = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+         gl_FragColor.rgb = mix(vec3(lumSortie), gl_FragColor.rgb, 1.0 + uSature);`,
+      )
       nuanceur.fragmentShader = `uniform float uGris;
+uniform float uSature;
 uniform float uLustre;
 uniform float uLustreForce;
 uniform float uIris;
@@ -944,8 +1006,9 @@ ${nuanceur.fragmentShader}`
      */
     const verso = new THREE.MeshStandardMaterial({
       color: '#1b1a22',
-      roughness: 0.55,
-      metalness: 0.15,
+      ...reflet,
+      emissive: '#ffffff',
+      emissiveIntensity: aplat ? COMPLEMENT_APLAT : 0,
       alphaTest: 0.5,
     })
     /**
@@ -1683,6 +1746,9 @@ ${nuanceur.fragmentShader}`
       | undefined
     if (nuanceur !== undefined) {
       nuanceur.uniforms.uGris!.value = gris
+      // L'APLAT SE SATURE D'AUTANT QU'IL EST VIF : une carte éteinte ne se
+      // sature pas. Voir `aplat` et SATURATION_APLAT.
+      nuanceur.uniforms.uSature!.value = aplat ? SATURATION_APLAT * l.vif : 0
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
       // rareté compilerait son nuanceur.
@@ -1811,8 +1877,21 @@ ${nuanceur.fragmentShader}`
         g.scale.setScalar(l.t * (1 + 0.1 * eclat))
       }
     }
-    face.emissiveIntensity = eclat * 1.5
+    // L'APLAT : la peinture s'ajoute en émissif, par-dessus l'éclat de
+    // l'apparition — voir `aplat`. La carte d'emoji ne connaît pas
+    // l'apparition, donc l'éclat y vaut toujours zéro.
+    face.emissiveIntensity = (aplat ? COMPLEMENT_APLAT : 0) + eclat * 1.5
     laiton.emissiveIntensity = eclat * 1.1
+    if (aplat) {
+      if (face.emissiveMap !== face.map) {
+        face.emissiveMap = face.map
+        face.needsUpdate = true
+      }
+      if (verso.emissiveMap !== verso.map) {
+        verso.emissiveMap = verso.map
+        verso.needsUpdate = true
+      }
+    }
     // L'ONDE, une fois la carte fixée dans son slot.
     if (l.debutOnde !== null) {
       if (poserLOnde(t - l.debutOnde, vague.current, matiereOnde, poussiere)) l.debutOnde = null

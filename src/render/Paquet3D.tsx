@@ -1,3 +1,4 @@
+import { NoToneMapping } from 'three'
 /**
  * L'OUVERTURE D'UN PAQUET — le premier écran du troisième mode.
  *
@@ -870,6 +871,7 @@ export function Paquet3D(): React.ReactElement {
         shadows
         dpr={[1, 2]}
         camera={{ position: [0, 0, zCamera(fenetre.h)], fov: FOV }}
+        gl={{ toneMapping: NoToneMapping }}
         style={{ position: 'fixed', inset: 0 }}
       >
         <Cadrage />

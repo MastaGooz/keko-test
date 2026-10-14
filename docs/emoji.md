@@ -1271,6 +1271,54 @@ part parce qu'une couleur peinte et la lumière qu'elle renvoie sont deux faits.
   mode emoji seulement ». *Rien n'empêche de les leur donner* : le drapeau vit
   sur `CarteAPeindre`, qui est commun aux cinq modes.
 
+### LA CARTE EST UN APLAT : ELLE NE SE LAISSE PAS DÉLAVER PAR LA LUMIÈRE
+
+Keko : **« j'ai l'impression que les couleurs des cartes sont beaucoup plus
+fades que celles du booster »**.
+
+***ET C'ÉTAIT MESURÉ, SUR LA MÊME PEINTURE.*** Le dos de carte et le sachet
+sortent des mêmes peintres (`peindreDecor`, `peindreBouquet`) ; sur le bouquet,
+la saturation moyenne valait **0,79 sur le sachet et 0,62 sur la carte**, à
+clarté voisine. Le visage qui rit : 202 / 192 / 45 contre 153 / 133 / 70.
+
+**Trois causes, et deux fausses pistes avant de les trouver** :
+
+| | ce que ça faisait | ce qui a été essayé |
+|---|---|---|
+| le ton (ACES) | rien de mesurable — ±4 sur 255 | `NoToneMapping` sur le Canvas du paquet, **gardé** : c'est la chaîne du sachet |
+| l'éclairage | la carte à deux tiers de son albédo, teintée de bleu par la lampe d'appoint | l'ambiant triplé, la lampe blanchie : *plus clair, pas plus saturé* (0,56 → 0,59) |
+| **le reflet blanc** du `MeshStandardMaterial` (metalness 0,15, roughness 0,55) | **un cinquième de blanc posé sur toute la face** | — |
+| **le sachet lui-même** | son nuanceur multiplie ses lampes par la couleur du film : *un métal filtre son reflet*, donc **il SATURE ce qu'il éclaire** | — |
+
+*La carte rendait sa peinture telle quelle ; c'est le sachet qui l'exagère, et
+c'est lui que Keko a validé.* Donc la carte le rejoint, **en mode emoji
+seulement** (`aplat`, lu sur `contour === 'simple'` comme le rayon et le dos —
+l'archive garde sa plaque de métal, qui elle accroche la lumière) :
+
+- **plus de reflet** : la face et le verso passent en Lambert pur (metalness
+  0, roughness 1). Le lustre du survol, le foil et la feuille holo vivent dans
+  le nuanceur injecté et ne bougent pas ;
+- **la peinture s'ajoute en émissif** (`COMPLEMENT_APLAT`, 0,3) pour rendre ce
+  que l'éclairage retire — la lumière garde son modelé quand la carte
+  s'incline, la couleur garde sa valeur ;
+- **un gain de saturation EN SORTIE du nuanceur** (`SATURATION_APLAT`, 0,4,
+  `uSature`), posé après la conversion sRGB. ***Il devait être en sortie*** :
+  posé sur `diffuseColor` où `uGris` travaille, il aurait manqué la part
+  émissive. Et il mélange autour de la luminance Rec. 709, donc **il ne change
+  pas le contraste des textes** : le mot du type et le cartouche gardent leur
+  rapport sur la plaque.
+
+Mesuré sur le bouquet du dos : **0,62 → 0,73** de saturation (sachet 0,79), et
+le film bleu de la carte rejoint celui du sachet (0,85 contre 0,87).
+
+**CE QUE ÇA TOUCHE, ET KEKO DOIT LE SAVOIR** : le gain porte sur TOUTE la
+face, donc sur la plaque claire et le cadre, dont la teinte avait été réglée
+au chroma du vert (`CHROMA_PLAQUE`). Les cinq plaques sortent plus franches
+d'environ 40 % de chroma — vu au bilan de `?paquet=1314`, les cinq crans
+tiennent ensemble et le gris du blanc reste gris, puisqu'un gris n'a pas de
+chroma à gagner. *Si la plaque est jugée trop franche, le gain se masque à la
+fenêtre d'art par ses UV*, sans toucher au reste.
+
 ### LE DOS DE CARTE : UN BOUQUET DE STICKERS SUR UN CLAVIER
 
 Keko : **« je voudrais que tu me fasses un dos de carte thématique (celui-là est
