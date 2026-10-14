@@ -687,9 +687,21 @@ export function Carte3D({
     if (c === null) return
     c.renderOrder = devant ? ORDRE_DEVANT : 0
     if (f !== null) f.renderOrder = devant ? ORDRE_DEVANT + 1 : 0
+    // ON EFFACE LA PROFONDEUR PARTOUT SAUF DANS UNE PASSE D'OMBRE — et c'est
+    // le MATÉRIAU qui le dit, pas la cible. Keko, après le bloom : « on a
+    // toujours le problème de carte qui se traverse ». *Le garde-fou testait
+    // « la cible est l'écran »* ; depuis le bloom la scène se rend dans une
+    // cible, donc la correction ne jouait plus jamais. Une passe d'ombre se
+    // reconnaît à son matériau de profondeur.
     c.onBeforeRender = devant
-      ? (renderer) => {
-          if (renderer.getRenderTarget() === null) renderer.clearDepth()
+      ? (renderer, _scene, _camera, _geometrie, materiau) => {
+          const m = materiau as THREE.Material & {
+            isMeshDepthMaterial?: boolean
+            isMeshDistanceMaterial?: boolean
+          }
+          if (m.isMeshDepthMaterial !== true && m.isMeshDistanceMaterial !== true) {
+            renderer.clearDepth()
+          }
         }
       : () => undefined
   }, [devant])
