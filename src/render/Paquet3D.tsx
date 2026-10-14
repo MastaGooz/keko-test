@@ -170,9 +170,19 @@ const RESSORT_SORTIE = 5
  * à rejuger par Keko.
  */
 const SURSAUTS: readonly (readonly [number, number])[] = [
-  [1.2, 0.26],
-  [0.94, 0.2],
+  [1.24, 0.17],
+  [0.9, 0.15],
+  [1.07, 0.13],
+  [0.97, 0.11],
 ]
+/**
+ * LE RESSORT DU REBOND, bien plus vif que celui de `Carte3D` (9) : Keko,
+ * « plus juicy : le zoom plus rapide et un effet un peu caoutchouc qui
+ * bounce, avec des petits allers-retours ». *Un caoutchouc est raide* — les
+ * allers-retours se jouent en dixièmes de seconde, et un ressort à 9 ne les
+ * suivrait pas : il les moyennerait en une bosse molle.
+ */
+const RESSORT_REBOND = 22
 /** La distance de sortie en portrait, en largeurs de carte : la référence du ressort. */
 const DISTANCE_SORTIE_REF = 1.4
 const ANGLE_SORTIE = 0.14
@@ -467,8 +477,10 @@ export function Paquet3D(): React.ReactElement {
    * animation à écrire** — la mécanique du rapprochement lui-même.
    */
   const [sursaut, setSursaut] = useState(1)
+  const [rebondit, setRebondit] = useState(false)
   useEffect(() => {
     if (!ouvert) return
+    setRebondit(true)
     // PLUS JUICY : UN REBOND, PUIS UN CONTRE-REBOND. Keko : « on peut avoir un
     // effet plus juicy / bumpy ? » *Un seul dépassement se lit comme une
     // arrivée un peu large* ; c'est le contre-coup — passer SOUS la taille
@@ -481,6 +493,8 @@ export function Paquet3D(): React.ReactElement {
       t += duree
     }
     minuteurs.push(window.setTimeout(() => setSursaut(1), t * 1000))
+    // LE RESSORT VIF TIENT UN PEU AU-DELÀ, le temps de se poser.
+    minuteurs.push(window.setTimeout(() => setRebondit(false), (t + 0.25) * 1000))
     return () => minuteurs.forEach((m) => clearTimeout(m))
   }, [ouvert])
   /**
@@ -1292,7 +1306,9 @@ export function Paquet3D(): React.ReactElement {
               // Le ressort ne vaut que pour la sortie — l'approche et le bilan
               // gardent le leur — et l'angle est une cible comme la place,
               // amortie par le même ressort.
-              ressort={!fini && i < montree ? ressortDeSortie : undefined}
+              ressort={
+                !fini && i < montree ? ressortDeSortie : rebondit && !fini ? RESSORT_REBOND : undefined
+              }
               // ET ELLE PASSE AU PREMIER PLAN, quelle que soit l'inclinaison :
               // voir `Carte3D.devant`. La saillie reste pour le volume.
               devant={!fini && i < montree}
