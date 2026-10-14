@@ -664,6 +664,32 @@ varying float vPli;
 ${VENTRE}
 ${DECHIRURE}
 
+// LES QUATRE LAMPES, EN UN SEUL ENDROIT. *Deux faces qui décriraient les mêmes
+// lampes se désaccorderaient au premier réglage* : l'endroit du film et son
+// envers argenté lisent la même fonction, sur la normale qu'on leur donne. La
+// première est la clé, et c'est aussi elle qui modèle le ventre.
+vec3 lampes(vec3 Nn, vec2 pen) {
+  vec3 somme = vec3(0.0);
+  vec3 Ls; vec3 Hs;
+  Ls = normalize(vec3(${SOURCES[0]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[0]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[0]!.dir[2]!.toFixed(3)}));
+  Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
+  somme += vec3(${SOURCES[0]!.couleur[0]!.toFixed(2)}, ${SOURCES[0]!.couleur[1]!.toFixed(2)}, ${SOURCES[0]!.couleur[2]!.toFixed(2)})
+         * pow(max(dot(Nn, Hs), 0.0), ${SERRE}.0) * ${(SOURCES[0]!.force * GAIN_SOURCES).toFixed(3)};
+  Ls = normalize(vec3(${SOURCES[1]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[1]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[1]!.dir[2]!.toFixed(3)}));
+  Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
+  somme += vec3(${SOURCES[1]!.couleur[0]!.toFixed(2)}, ${SOURCES[1]!.couleur[1]!.toFixed(2)}, ${SOURCES[1]!.couleur[2]!.toFixed(2)})
+         * pow(max(dot(Nn, Hs), 0.0), ${SERRE}.0) * ${(SOURCES[1]!.force * GAIN_SOURCES).toFixed(3)};
+  Ls = normalize(vec3(${SOURCES[2]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[2]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[2]!.dir[2]!.toFixed(3)}));
+  Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
+  somme += vec3(${SOURCES[2]!.couleur[0]!.toFixed(2)}, ${SOURCES[2]!.couleur[1]!.toFixed(2)}, ${SOURCES[2]!.couleur[2]!.toFixed(2)})
+         * pow(max(dot(Nn, Hs), 0.0), ${SERRE}.0) * ${(SOURCES[2]!.force * GAIN_SOURCES).toFixed(3)};
+  Ls = normalize(vec3(${SOURCES[3]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[3]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[3]!.dir[2]!.toFixed(3)}));
+  Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
+  somme += vec3(${SOURCES[3]!.couleur[0]!.toFixed(2)}, ${SOURCES[3]!.couleur[1]!.toFixed(2)}, ${SOURCES[3]!.couleur[2]!.toFixed(2)})
+         * pow(max(dot(Nn, Hs), 0.0), ${SERRE}.0) * ${(SOURCES[3]!.force * GAIN_SOURCES).toFixed(3)};
+  return somme;
+}
+
 void main() {
   // LE REPÈRE DU SACHET ENTIER, pas celui du morceau : *les deux doivent
   // porter LE MÊME froissé*, sinon le pli s'arrête net à la déchirure et la
@@ -874,36 +900,10 @@ void main() {
   // n'a plus rien à délaver* — l'intensité revient là où elle ne coûte rien.
   float feu = 1.0 + uSurvol * 1.3;
 
-  // SOURCE 1 : la clé, blanche — *elle réutilise le H qu'on vient de calculer*,
-  // puisque c'est la même lampe que celle qui modèle le ventre.
-  {
-    corps += teinte * vec3(${SOURCES[0]!.couleur[0]!.toFixed(2)}, ${SOURCES[0]!.couleur[1]!.toFixed(2)}, ${SOURCES[0]!.couleur[2]!.toFixed(2)})
-           * pow(max(dot(Nv, H), 0.0), ${SERRE}.0) * ${(SOURCES[0]!.force * GAIN_SOURCES).toFixed(3)} * feu;
-  }
-
-  // SOURCE 2 : le cyan
-  {
-    vec3 Ls = normalize(vec3(${SOURCES[1]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[1]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[1]!.dir[2]!.toFixed(3)}));
-    vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
-    corps += teinte * vec3(${SOURCES[1]!.couleur[0]!.toFixed(2)}, ${SOURCES[1]!.couleur[1]!.toFixed(2)}, ${SOURCES[1]!.couleur[2]!.toFixed(2)})
-           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${(SOURCES[1]!.force * GAIN_SOURCES).toFixed(3)} * feu;
-  }
-
-  // SOURCE 3 : le rose
-  {
-    vec3 Ls = normalize(vec3(${SOURCES[2]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[2]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[2]!.dir[2]!.toFixed(3)}));
-    vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
-    corps += teinte * vec3(${SOURCES[2]!.couleur[0]!.toFixed(2)}, ${SOURCES[2]!.couleur[1]!.toFixed(2)}, ${SOURCES[2]!.couleur[2]!.toFixed(2)})
-           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${(SOURCES[2]!.force * GAIN_SOURCES).toFixed(3)} * feu;
-  }
-
-  // SOURCE 4 : le violet
-  {
-    vec3 Ls = normalize(vec3(${SOURCES[3]!.dir[0]!.toFixed(3)} + pen.x, ${SOURCES[3]!.dir[1]!.toFixed(3)} + pen.y, ${SOURCES[3]!.dir[2]!.toFixed(3)}));
-    vec3 Hs = normalize(Ls + vec3(0.0, 0.0, 1.0));
-    corps += teinte * vec3(${SOURCES[3]!.couleur[0]!.toFixed(2)}, ${SOURCES[3]!.couleur[1]!.toFixed(2)}, ${SOURCES[3]!.couleur[2]!.toFixed(2)})
-           * pow(max(dot(Nv, Hs), 0.0), ${SERRE}.0) * ${(SOURCES[3]!.force * GAIN_SOURCES).toFixed(3)} * feu;
-  }
+  // LES QUATRE SOURCES — la clé blanche, le cyan, le rose, le violet — par la
+  // fonction qui les porte toutes : voir lampes(). *La clé y recalcule le H
+  // du ventre à l'identique*, puisque c'est la même lampe.
+  corps += teinte * lampes(Nv, pen) * feu;
 
   // **LES ÉCLATS DES PLIS RESTENT À PART, et eux seuls lisent la normale des
   // plis** : ce sont de vrais points chauds, trop petits pour effacer quoi que
@@ -946,15 +946,31 @@ void main() {
   float eclat = exp(-pow(dedans / (${BRAISE} * ech), 2.0)) * fremit * max(vif, passe * 0.22);
   vec3 lueur = mix(${ton(FENTE_BORD)}, ${ton(FENTE_COEUR)}, smoothstep(0.4, 1.0, eclat));
 
-  // L'ENVERS : quand la bande passe la verticale, on voit son DOS -- et le dos
-  // d'un film imprime est son support, le creme que l'arrache met deja a nu.
-  // *Un dos qui garderait l'imprime ferait une bande imprimee des deux cotes.*
-  // Il garde le modele du ventre, normale retournee, et un lustre discret.
+  // L'ENVERS EST ARGENTE : quand la bande passe la verticale, on voit son DOS,
+  // et le dos d'un film de booster est son metal -- *l'interieur du sachet
+  // est argente*, c'est aussi ce que dit le fragment de lexicodex. Il a ete
+  // creme le temps d'un essai ; Keko : « c'est bizarre qu'elle soit blanche
+  // de l'autre cote ». *Un dos qui garderait l'imprime ferait une bande
+  // imprimee des deux cotes* : il garde donc la MATIERE et perd le dessin.
+  // Meme froisse, meme ventre, normales retournees -- et comme un argent n'a
+  // qu'une teinte, ses reflets sont ceux des lampes sans filtre : c'est le
+  // film tel qu'il serait sans son imprime.
   if (!gl_FrontFacing) {
     vec3 Nd = -Nv;
-    float amb = 0.62 + 0.52 * (dot(Nd, L) * 0.5 + 0.5);
-    corps = vec3(1.0, 0.98, 0.94) * amb * 0.92
-          + vec3(1.0) * pow(max(dot(Nd, H), 0.0), 26.0) * 0.25;
+    vec3 Np = -N;
+    vec3 argent = vec3(0.72, 0.74, 0.78);
+    float amb = 0.55 + 0.45 * (dot(Nd, L) * 0.5 + 0.5);
+    float plisse = 0.80 + 0.40 * (dot(Np, L) * 0.5 + 0.5);
+    corps = argent * amb * plisse;
+    // Le grand reflet, multiplie comme a l'endroit, mais un miroir : plus
+    // large et plus fort, c'est lui qui dit le metal.
+    corps *= 1.0 + pow(max(dot(Nd, H), 0.0), 18.0) * 1.6;
+    // Les quatre lampes sur le ventre, et les eclats des plis, blancs : un
+    // argent renvoie la lumiere telle qu'elle est.
+    corps += lampes(Nd, pen) * 0.9 * feu;
+    corps += vec3(1.0) * pow(max(dot(Np, H), 0.0), 90.0) * 0.9 * feu;
+    float fresnelD = pow(1.0 - clamp(Nd.z, 0.0, 1.0), 3.0);
+    corps += vec3(0.85, 0.90, 1.0) * fresnelD * 0.4;
   }
 
   float a = max(tex.a, eclat * 0.9) * uFondu;
@@ -1961,7 +1977,16 @@ export function Sachet3D({
       // PARTIE : éteinte avec le film, ou sortie du cadre avant lui.
       // `descente` est la demi-hauteur du champ plus celle du sachet, donc en
       // dessous il reste au moins un demi-sachet de marge.
-      if (fondu <= 0 || b.position.y < -descente || q.t > LANCER.vieMax) {
+      //
+      // **MAIS JAMAIS AVANT `onOuvert`.** Keko : « une fois le paquet ouvert
+      // le jeu bloque, la carte ne bouge plus, ne zoome pas ». *Le parent
+      // DÉMONTE le sachet sur ce signal* — et avec le lancer balistique la
+      // bande sort du cadre par le bas AVANT que le film ait fini sa descente,
+      // donc avant que `onOuvert` ait dit au défilé qu'il peut répondre. Le
+      // sachet partait sans jamais dire « ouvert », et le paquet restait mort.
+      // *La plume ne pouvait pas le faire : elle mettait trois secondes.* Un
+      // signal qui en conclut un autre ne peut pas le précéder.
+      if (dit.current && (fondu <= 0 || b.position.y < -descente || q.t > LANCER.vieMax)) {
         ditParti.current = true
         onParti?.()
       }

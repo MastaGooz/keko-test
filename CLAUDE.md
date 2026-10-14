@@ -2438,6 +2438,70 @@ Keko avait lu chez eux comme une plume. **À rejuger s'il la trouve trop près.*
 du sachet à droite, roulée, en pleine culbute et nettement plus grosse ; le
 film part ensuite et la carte est seule.
 
+#### ET LE LANCER A BLOQUÉ LE JEU — un signal qui en conclut un autre ne peut pas le précéder
+
+Keko : **« une fois le paquet ouvert le jeu bloque et je ne peux plus rien
+faire : la carte ne bouge plus, ne zoome pas et n'est plus interactible »**.
+
+***C'EST LE LANCER QUI L'A CAUSÉ, ET LA PLUME NE POUVAIT PAS.*** Le sachet
+porte deux signaux : `onOuvert` quand le film a quitté le cadre — c'est lui
+qui dit au défilé qu'il peut répondre (`avancer` refuse tant qu'`ouvert` est
+faux) — et `onParti` quand la bande n'a plus rien à montrer, **sur lequel le
+parent DÉMONTE le sachet.** La bande en plume mettait trois secondes à sortir
+du cadre, donc `onParti` arrivait toujours après `onOuvert`. **Projetée, elle
+sort du cadre par le bas en une seconde**, avant que le film ait fini sa
+descente : le sachet se démontait sans avoir jamais dit « ouvert », et le
+paquet restait mort — *la carte attendait un signal que plus personne ne
+pouvait envoyer.*
+
+**`onParti` est donc verrouillé derrière `onOuvert`** : tant que le film n'a
+pas dit qu'il est parti, la bande peut être éteinte, hors cadre ou périmée,
+le sachet reste. *Ça ne coûte rien* — à l'instant où `onOuvert` part, la bande
+est de toute façon éteinte par le fondu, donc `onParti` suit dans la même
+image.
+
+**La règle vaut au-delà** : quand un signal en conclut un autre, c'est l'ordre
+qu'il faut garantir, pas le délai qui le produisait par accident. *Un délai
+qui garantit un ordre cesse de le garantir le jour où ce qui le produit
+change de vitesse.* Vérifié à l'écran : sachet ouvert, une tape retourne la
+carte.
+
+#### L'ENVERS DE LA BANDE EST ARGENTÉ, plus crème
+
+Keko : **« on peut peindre l'autre face de la bande qui se détache ? c'est
+bizarre qu'elle soit blanche de l'autre côté »**.
+
+*Le crème était un emprunt* : la couleur du support que l'arrache met à nu,
+posée sur toute la face arrière. **Mais le dos d'un film de booster n'est pas
+du papier, c'est du métal** — l'intérieur d'un sachet est argenté, et c'est ce
+que dit aussi le fragment de lexicodex (« l'intérieur du sachet est argenté »).
+*Un dos qui garderait l'imprimé ferait une bande imprimée des deux côtés* ; il
+garde donc la MATIÈRE et perd le dessin.
+
+Ce qu'il porte, et chaque terme est celui de l'endroit retourné :
+
+- **le même froissé et le même ventre**, normales retournées — c'est le même
+  film ;
+- **un gris d'argent** (0,72 ; 0,74 ; 0,78), modelé par la clé et ombré par
+  les plis ;
+- **le grand reflet multiplié, plus large et plus fort** (lobe 18, ×1,6 contre
+  26 et ×1,35) : *c'est lui qui dit le métal* ;
+- **les quatre lampes et les éclats des plis, SANS filtre** : un argent n'a
+  qu'une teinte, il renvoie la lumière telle qu'elle est — là où l'endroit
+  teinte ses éclats de la couleur de l'imprimé ;
+- **le Fresnel**, un peu plus fort qu'à l'endroit.
+
+**ET LES QUATRE LAMPES SONT PASSÉES DANS UNE FONCTION** (`lampes()`, dans le
+fragment) : l'endroit les écrivait en quatre blocs, et l'envers aurait dû les
+recopier. *Deux faces qui décriraient les mêmes lampes se désaccorderaient au
+premier réglage* — la règle qui avait déjà sorti la clé du nuanceur pour la
+mettre dans la table. **L'endroit ne change pas d'un pixel** : la clé y
+recalcule le même demi-vecteur que celui du ventre.
+
+*Les chiffres de l'argent sont de moi.* Vu sur `?gerbe`, où la bande
+recourbée montre son dos : un rouleau de métal gris avec ses reflets, plus une
+feuille de papier.
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une
