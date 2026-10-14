@@ -161,6 +161,9 @@ function colonnesDuBilan(largeurVisible: number, hauteurVisible: number): number
  * à rejuger par Keko : un départ se juge en le regardant.
  */
 const RESSORT_SORTIE = 5
+/** De combien le rapprochement dépasse sa taille avant d'y revenir, et pendant combien de secondes il la vise. */
+const SURSAUT = 0.1
+const DUREE_SURSAUT = 0.3
 /** La distance de sortie en portrait, en largeurs de carte : la référence du ressort. */
 const DISTANCE_SORTIE_REF = 1.4
 const ANGLE_SORTIE = 0.14
@@ -428,6 +431,25 @@ export function Paquet3D(): React.ReactElement {
   const [monte, setMonte] = useState(false)
   /** Le sachet est parti : c'est ce qui met les cartes en rangée. */
   const [ouvert, setOuvert] = useState(nu)
+  /**
+   * LE RAPPROCHEMENT REBONDIT. Keko : « quand on zoome le dos de carte après
+   * révélation, on peut le zoomer plus et le dézoomer ensuite pour revenir à
+   * la taille actuelle, pour donner un effet bounce un peu juicy ? »
+   *
+   * *L'amortissement de `Carte3D` est exponentiel, donc il ne dépasse jamais
+   * sa cible* : pour qu'il rebondisse, c'est la CIBLE qui dépasse, puis
+   * redescend. Le temps de `DUREE_SURSAUT` après le départ du film, la carte
+   * vise `1 + SURSAUT` fois sa taille de défilé ; ensuite elle vise la bonne,
+   * et le même ressort la ramène. **Deux cibles qui se suivent, aucune
+   * animation à écrire** — la mécanique du rapprochement lui-même.
+   */
+  const [sursaut, setSursaut] = useState(false)
+  useEffect(() => {
+    if (!ouvert) return
+    setSursaut(true)
+    const fin = setTimeout(() => setSursaut(false), DUREE_SURSAUT * 1000)
+    return () => clearTimeout(fin)
+  }, [ouvert])
   /**
    * ET SA BANDE AUSSI : elle tombe en plume après que le film est descendu,
    * donc le sachet reste monté — hors cadre, inerte — le temps qu'elle sorte.
@@ -1197,7 +1219,9 @@ export function Paquet3D(): React.ReactElement {
               // première tourne sans les traverser, puis la pile se rouvre : la
               // suivante est alors DÉJÀ là, de face, derrière celle qu'on
               // regarde.
-              taille={!ouvert ? grande : fini ? taille : tailleAuDefile(i)}
+              taille={
+                !ouvert ? grande : fini ? taille : tailleAuDefile(i) * (sursaut ? 1 + SURSAUT : 1)
+              }
               // ON PEINT UNE FOIS, À LA PLUS GRANDE TAILLE QU'ELLE ATTEINDRA.
               // Sans ça, les quatre suivantes — qui attendent à taille ZÉRO —
               // peignent sur la plus petite toile du jeu puis repeignent en
