@@ -2578,6 +2578,17 @@ recalcule le même demi-vecteur que celui du ventre.
 recourbée montre son dos : un rouleau de métal gris avec ses reflets, plus une
 feuille de papier.
 
+**PUIS L'ARGENT EST DEVENU LE BLEU DU FILM.** Keko : « la face arrière du
+petit bandeau est trop blanche ; les traits c'est bien, ça donne de la
+texture, mais on peut pas lui donner la même couleur que la face ? » *C'est
+le même film vu de l'autre côté* — sa couleur de base, `DOS_BLEU`, celle que
+`peindreDecor` pose sous le motif, désormais exportée — sans l'imprimé. **Et
+ses reflets sont teintés comme à l'endroit** : sous quatre lampes, un reflet
+blanc aurait repoussé l'envers vers le blanc qu'on venait de lui retirer, et
+*un métal filtre son reflet*. Les plis, leur ombre, le grand reflet et le
+Fresnel ne bougent pas : ce sont eux que Keko a validés (« les traits c'est
+bien »).
+
 #### LE FILM CRAQUE AVEC LE FRONT, ET POP À L'ARRACHEMENT — deux sons de Keko
 
 Keko : **« j'ai ajouté les sons cracks et pop dans le dossier public. Je

@@ -48,6 +48,7 @@ import {
   type SonEnBoucle,
 } from './sons.ts'
 import {
+  DOS_BLEU,
   LIGNE_DECHIRURE,
   POCHE,
   RAPPORT_SACHET,
@@ -988,22 +989,32 @@ void main() {
   // Meme froisse, meme ventre, normales retournees -- et comme un argent n'a
   // qu'une teinte, ses reflets sont ceux des lampes sans filtre : c'est le
   // film tel qu'il serait sans son imprime.
+  // ET IL EST DU BLEU DU FILM, PLUS ARGENTE. Keko : « la face arriere est trop
+  // blanche ; les traits c'est bien, ca donne de la texture, mais on peut pas
+  // lui donner la meme couleur que la face ? » *C'est le meme film vu de
+  // l'autre cote* : la couleur de base du sachet (DOS_BLEU, celle que
+  // peindreDecor pose sous le motif), sans l'imprime -- et ses reflets sont
+  // teintes comme a l'endroit, sinon les lampes le repousseraient vers le
+  // blanc qu'on vient de lui retirer. Les plis, eux, ne bougent pas.
   if (!gl_FrontFacing) {
     vec3 Nd = -Nv;
     vec3 Np = -N;
-    vec3 argent = vec3(0.72, 0.74, 0.78);
+    vec3 film = vec3(${(DOS_BLEU[0] / 255).toFixed(3)}, ${(DOS_BLEU[1] / 255).toFixed(3)}, ${(DOS_BLEU[2] / 255).toFixed(3)});
     float amb = 0.55 + 0.45 * (dot(Nd, L) * 0.5 + 0.5);
     float plisse = 0.80 + 0.40 * (dot(Np, L) * 0.5 + 0.5);
-    corps = argent * amb * plisse;
-    // Le grand reflet, multiplie comme a l'endroit, mais un miroir : plus
-    // large et plus fort, c'est lui qui dit le metal.
+    corps = film * amb * plisse;
+    // Le grand reflet, multiplie comme a l'endroit : il eclaircit en gardant
+    // la couleur, donc il peut etre plus large et plus fort.
     corps *= 1.0 + pow(max(dot(Nd, H), 0.0), 18.0) * 1.6;
-    // Les quatre lampes sur le ventre, et les eclats des plis, blancs : un
-    // argent renvoie la lumiere telle qu'elle est.
-    corps += lampes(Nd, pen) * 0.9 * feu;
-    corps += vec3(1.0) * pow(max(dot(Np, H), 0.0), 90.0) * 0.9 * feu;
+    // Les quatre lampes et les eclats des plis, TEINTES du bleu du film : un
+    // metal filtre son reflet, et c'est la seule facon de rester bleu sous
+    // quatre lampes.
+    vec3 purD = film / max(max(film.r, film.g), max(film.b, 0.02));
+    vec3 teinteD = mix(vec3(1.0), purD, ${METAL.toFixed(2)});
+    corps += teinteD * lampes(Nd, pen) * 0.9 * feu;
+    corps += teinteD * pow(max(dot(Np, H), 0.0), 90.0) * 0.9 * feu;
     float fresnelD = pow(1.0 - clamp(Nd.z, 0.0, 1.0), 3.0);
-    corps += vec3(0.85, 0.90, 1.0) * fresnelD * 0.4;
+    corps += mix(vec3(0.82, 0.90, 1.0), teinteD, ${(METAL / 2).toFixed(2)}) * fresnelD * 0.4;
   }
 
   float a = max(tex.a, eclat * 0.9) * uFondu;
