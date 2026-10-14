@@ -2046,7 +2046,7 @@ function teinteDuCiel(ciel: Ciel | undefined): [number, number, number] {
  */
 let tuileGrain: HTMLCanvasElement | null = null
 
-function grain(): HTMLCanvasElement {
+function grainDuDecor(): HTMLCanvasElement {
   if (tuileGrain !== null) return tuileGrain
   const t = document.createElement('canvas')
   t.width = 128
@@ -2105,6 +2105,14 @@ function peindreDecor(
    * armures, payee des qu'un dessin existe en double.
    */
   boite?: { readonly l: number; readonly h: number },
+  /**
+   * SANS GRAIN POUR LA FACE D'UN EMOJI. Keko : « les fonds semblent avoir une
+   * texture un peu granuleuse, c'est le cas ? » — oui, le dither — « coupe-le
+   * pour les emojis ». *Un dither réglé sur le bleu nuit cesse d'être
+   * invisible sur un décor remonté vers le ton moyen*, et un aplat net n'a pas
+   * de bande à dissoudre. Le dos et le sachet le gardent.
+   */
+  grain: boolean = true,
 ): void {
   const L_ = boite?.l ?? LARGE
   const H_ = boite?.h ?? HAUT
@@ -2160,9 +2168,10 @@ function peindreDecor(
    * La matière, elle, viendra du caractère — étoiles ou métal brossé — et elle
    * aura une forme, ce qu'un bruit par pixel n'a pas.
    */
+  if (!grain) return
   ctx.save()
   ctx.setTransform(1, 0, 0, 1, 0, 0)
-  const motif = ctx.createPattern(grain(), 'repeat')
+  const motif = ctx.createPattern(grainDuDecor(), 'repeat')
   if (motif !== null) {
     ctx.globalCompositeOperation = 'overlay'
     ctx.globalAlpha = ALPHA_GRAIN
@@ -3478,7 +3487,8 @@ export async function peindreCarte(
     metalDecor === undefined
       ? undefined
       : melange(metalDecor[2], metalDecor[3], ECLAIRCIE_PAR_CRAN[carte.rarete!] ?? ECLAIRCIE_DECOR)
-  if (FOND_PEINT) peindreDecor(ctx, carte.ciel, nuitHex === undefined ? undefined : couleurDe(nuitHex))
+  if (FOND_PEINT)
+    peindreDecor(ctx, carte.ciel, nuitHex === undefined ? undefined : couleurDe(nuitHex), undefined, !bulle)
   else {
     ctx.fillStyle = '#171b1d'
     ctx.fillRect(0, 0, LARGE, HAUT)

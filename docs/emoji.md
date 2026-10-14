@@ -5211,3 +5211,13 @@ tape zoome le visage au centre, une tape à côté le repose ; un doigt posé
 (évènements fabriqués DANS la page, `offsetX` compris, sur le canvas de la
 scène — *pas le premier `<canvas>` du DOM, qui est le fond animé*) penche la
 carte, et elle se redresse au relâchement. Le gyroscope n'a pas été vu.
+
+#### LA FACE D'UN EMOJI N'A PLUS DE GRAIN
+
+Keko : **« les fonds semblent avoir une texture un peu granuleuse, c'est le
+cas ? »** — oui, le dither de `peindreDecor` (`ALPHA_GRAIN`, 0,06), réglé sur
+le bleu nuit pour y rester invisible ; *remonté vers le ton moyen du cran, le
+décor est plus clair et le même grain se voit.* — **« coupe-le pour les
+emojis »**. `peindreDecor` prend un drapeau `grain`, et la face d'une carte en
+mode emoji le passe à faux ; **le dos et le sachet le gardent**, leur bleu nuit
+n'a pas bougé.
