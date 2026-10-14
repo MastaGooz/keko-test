@@ -49,6 +49,16 @@ export const SON_TOURNER = 'Card spin.aac'
 export const SON_EQUIPER = 'Equip.aac'
 
 /**
+ * LE FILM QUI CRAQUE, pendant qu'on déchire le sachet. Fourni par Keko : « le
+ * son cracks se joue progressivement en fonction de l'avancée de
+ * l'ouverture ». *Il ne se joue pas, il s'AVANCE* : voir `suivreLeSon`.
+ */
+export const SON_CRAQUE = 'cracks.aac'
+
+/** Le POP de l'arrachement — « au moment final de l'ouverture ». Fourni par Keko. */
+export const SON_POP = 'pop.aac'
+
+/**
  * L'URL d'un fichier de `public/`. **Elle porte la date du build** : les
  * fichiers y sont copiés tels quels, sans empreinte de contenu dans leur nom,
  * donc sans ça le navigateur resservirait celui qu'il a en cache — le piège
@@ -192,4 +202,100 @@ export function jouerSon(nom: string, volume = 1): void {
   void precharger(nom).then(() => {
     if (TAMPONS.has(nom) || REPLIS.has(nom)) jouerSon(nom, volume)
   })
+}
+
+/** Un son qu'on fait AVANCER à la main. Voir `suivreLeSon`. */
+export interface SonSuivi {
+  /** Où en est ce qu'il accompagne, de 0 à 1 : le son le rattrape. */
+  avancer(part: number): void
+  /** On n'en a plus besoin : il se tait, et ne repartira pas. */
+  arreter(): void
+}
+
+/**
+ * LA VITESSE AVEC LAQUELLE LE SON RATTRAPE SA CIBLE : en secondes, le temps
+ * qu'il met à combler l'écart entre là où il en est et là où le geste en est.
+ * Court, il colle au doigt et saute au moindre à-coup ; long, il traîne
+ * derrière. Et il ne lit jamais plus vite que `VITESSE_MAX` fois sa vitesse
+ * naturelle — *un craquement lu quatre fois trop vite devient un sifflement.*
+ */
+const HORIZON = 0.08
+const VITESSE_MAX = 3
+
+/**
+ * UN SON QUI SUIT UN GESTE, au lieu de se jouer.
+ *
+ * Keko : « le son cracks se joue progressivement en fonction de l'avancée de
+ * l'ouverture ». *Un son qui part d'un coup ne dit rien du geste* — et le
+ * geste n'a pas de durée : on tire lentement, on s'arrête, on repart.
+ *
+ * **C'EST LA VITESSE DE LECTURE QUI SUIT, pas une suite de tranches.** Une
+ * seule source part à vitesse ZÉRO — Web Audio le permet, et un tampon qui ne
+ * s'avance pas est muet — et à chaque image on règle sa vitesse pour qu'elle
+ * rattrape la place que le geste lui désigne : la part du geste, lue sur la
+ * durée du son. Le doigt avance, le son joue ; le doigt s'arrête, le son
+ * rejoint sa cible et se tait ; le doigt repart, il repart. *Jouer une tranche
+ * par image aurait collé des dizaines de coupures par seconde* — un craquement
+ * de plus, mais pas le bon.
+ *
+ * **On tient nous-mêmes le compte de la position** : la source ne la dit pas,
+ * mais on connaît la vitesse qu'on lui a donnée et le temps écoulé. C'est une
+ * poursuite, donc l'erreur ne s'accumule pas — elle se rattrape à l'image
+ * suivante.
+ *
+ * **LE REPLI NE SAIT PAS SUIVRE** : un `<audio>` ne se pilote pas à la vitesse
+ * image par image. Il joue alors le son une fois, à la première avancée — *un
+ * son entier vaut mieux qu'un silence*, et c'est le seul cas où il sort.
+ */
+export function suivreLeSon(nom: string): SonSuivi {
+  const tampon = TAMPONS.get(nom)
+  const ctx = tampon !== undefined ? ouvrir() : null
+  if (tampon === undefined || ctx === null) {
+    let joue = false
+    return {
+      avancer(part) {
+        if (joue || part <= 0) return
+        joue = true
+        jouerSon(nom)
+      },
+      arreter() {
+        joue = true
+      },
+    }
+  }
+  const source = ctx.createBufferSource()
+  source.buffer = tampon
+  source.playbackRate.value = 0
+  source.connect(ctx.destination)
+  source.start()
+  chemin = 'Web Audio'
+  let position = 0
+  let vitesse = 0
+  let dernier = ctx.currentTime
+  let fini = false
+  source.onended = () => {
+    fini = true
+  }
+  const arreter = (): void => {
+    if (fini) return
+    fini = true
+    try {
+      source.stop()
+    } catch {
+      // déjà finie : rien à arrêter
+    }
+  }
+  return {
+    avancer(part) {
+      if (fini) return
+      const t = ctx.currentTime
+      position += vitesse * (t - dernier)
+      dernier = t
+      const cible = Math.min(1, Math.max(0, part)) * tampon.duration
+      vitesse = Math.min(VITESSE_MAX, Math.max(0, (cible - position) / HORIZON))
+      source.playbackRate.value = vitesse
+      if (position >= tampon.duration) arreter()
+    },
+    arreter,
+  }
 }

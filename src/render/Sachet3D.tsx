@@ -35,6 +35,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
+import { SON_CRAQUE, SON_POP, jouerSon, precharger, suivreLeSon, type SonSuivi } from './sons.ts'
 import {
   LIGNE_DECHIRURE,
   POCHE,
@@ -1669,6 +1670,16 @@ export function Sachet3D({
   const dit = useRef(false)
   const ditDechire = useRef(false)
   const ditParti = useRef(false)
+  /** Le craquement du film, tant qu'on le déchire. Voir `suivreLeSon`. */
+  const craque = useRef<SonSuivi | null>(null)
+  // LES DEUX SONS SE CHARGENT AVEC LE SACHET, pas au premier craquement : *un
+  // son qui arrive après le geste qui l'a demandé arrive trop tard* — et le
+  // craquement ne peut pas se SUIVRE tant que son tampon n'est pas décodé.
+  useEffect(() => {
+    void precharger(SON_CRAQUE)
+    void precharger(SON_POP)
+    return () => craque.current?.arreter()
+  }, [])
   /**
    * LE VOL : où la bande en est de sa projection, en largeurs de sachet.
    *
@@ -1880,6 +1891,16 @@ export function Sachet3D({
 
     const pp = p.current
     const pf = Math.min(1, pp / PART_FRONT)
+
+    // LE FILM CRAQUE AVEC LE FRONT. Keko : « le son cracks se joue
+    // progressivement en fonction de l'avancée de l'ouverture ». *Le son ne
+    // se joue pas, il s'avance* : c'est le front qui lui dit où il en est,
+    // qu'il suive le doigt ou l'horloge — voir `suivreLeSon`. Il naît à la
+    // première avancée, donc toujours dans un geste.
+    if (pf > 0 && pf < 1) {
+      if (craque.current === null) craque.current = suivreLeSon(SON_CRAQUE)
+      craque.current.avancer(pf)
+    }
     // IL SORT DES DEUX BORDS : *une déchirure qui commence pile sur le bord se
     // lit comme un bord qui s'efface*, et une qui s'arrête pile à droite y
     // laisse un point de braise posé là pour toujours.
@@ -1926,6 +1947,12 @@ export function Sachet3D({
 
     if (pf >= 1 && !ditDechire.current) {
       ditDechire.current = true
+      // LE POP, « au moment final de l'ouverture » : l'arrachement, le même
+      // instant que le flash et la rafale. Le craquement se tait avec — *ce
+      // qui craquait vient de céder.*
+      craque.current?.arreter()
+      craque.current = null
+      jouerSon(SON_POP)
       // LE JAILLISSEMENT EST UNE RAFALE, AU MÊME INSTANT QUE LE FLASH. *Deux
       // endroits qui décriraient le même instant se désaccorderaient au
       // premier réglage*, donc c'est le drapeau du flash qui le porte — et

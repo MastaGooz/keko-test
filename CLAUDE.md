@@ -2502,6 +2502,61 @@ recalcule le même demi-vecteur que celui du ventre.
 recourbée montre son dos : un rouleau de métal gris avec ses reflets, plus une
 feuille de papier.
 
+#### LE FILM CRAQUE AVEC LE FRONT, ET POP À L'ARRACHEMENT — deux sons de Keko
+
+Keko : **« j'ai ajouté les sons cracks et pop dans le dossier public. Je
+voudrais que le son pop se joue au moment final de l'ouverture, et le son
+cracks se joue progressivement en fonction de l'avancée de l'ouverture »**.
+
+**Le pop est un son ordinaire** (`SON_POP`, `jouerSon`) : il part à
+l'arrachement, dans le même bloc que le flash et la rafale — *un seul endroit
+dit cet instant.*
+
+**LE CRAQUEMENT NE SE JOUE PAS, IL S'AVANCE** (`suivreLeSon`, dans
+`render/sons.ts`). *Un son qui part d'un coup ne dit rien du geste*, et le
+geste n'a pas de durée : on tire lentement, on s'arrête, on repart — et depuis
+le cliquet, on peut même lâcher et reprendre. **Une seule source Web Audio
+part à vitesse de lecture ZÉRO** — c'est permis, et un tampon qui ne s'avance
+pas est muet — et à chaque image sa vitesse se règle pour rattraper la place
+que le front lui désigne : la part du front, lue sur la durée du son
+(`HORIZON`, 0,08 s de rattrapage, jamais plus de `VITESSE_MAX` fois la vitesse
+naturelle). Le doigt avance, le son joue ; le doigt s'arrête, le son rejoint
+sa cible et se tait ; le doigt repart, il repart. *Qu'il suive le doigt ou
+l'horloge*, c'est `pf` qui le pilote, donc la phase automatique craque aussi.
+
+*Jouer une tranche par image a été écarté avant d'être essayé* : des dizaines
+de coupures par seconde font un craquement de plus, mais pas le bon.
+
+Deux choses à ne pas défaire :
+
+- **la position se tient à la main.** La source ne la dit pas, mais on connaît
+  la vitesse qu'on lui a donnée et le temps écoulé ; et c'est une POURSUITE,
+  donc l'erreur ne s'accumule pas — elle se rattrape à l'image suivante ;
+- **les deux sons se chargent avec le sachet**, pas au premier craquement :
+  *un son qui arrive après le geste arrive trop tard*, et le craquement ne
+  peut pas se suivre tant que son tampon n'est pas décodé. **Le repli
+  `<audio>` ne sait pas suivre** : il joue le son une fois, à la première
+  avancée.
+
+**Mesuré par une sonde posée DANS LA PAGE** — `createBufferSource` patché
+pour compter les sources et échantillonner leur vitesse — sur un glisser
+court lâché sous la moitié, puis un glisser complet : une seule source pour
+les craquements (0,91 s), vitesse 3 pendant le geste, retombée à zéro en une
+demi-seconde une fois le doigt lâché, repartie à 3 au second geste ; puis le
+pop (0,19 s) à vitesse 1 à l'arrachement.
+
+***ET LA SONDE DOIT VIVRE DANS LA PAGE, PAS DANS L'OUTIL.*** Le JavaScript de
+l'outil de navigateur tourne dans un monde ISOLÉ : il partage le DOM mais pas
+les prototypes — un `AudioContext.prototype` patché de là ne touche pas celui
+du jeu, et la sonde comptait zéro source. *Une sonde qui ne voit rien ne dit
+pas qu'il n'y a rien.* On injecte donc un `<script>` dans la page, et il
+dépose ce qu'il mesure dans un `dataset` du DOM, que l'outil sait lire.
+
+*Les deux réglages (`HORIZON`, `VITESSE_MAX`) sont de moi* : un rattrapage
+plus court colle plus au doigt et saute davantage ; une vitesse plafond plus
+haute suit un geste plus brusque et siffle davantage. **Un son ne se juge
+qu'en l'entendant, et je ne l'entends pas.**
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une
