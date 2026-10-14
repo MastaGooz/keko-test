@@ -5277,13 +5277,30 @@ async function peindreLeSachet(): Promise<HTMLCanvasElement> {
   ctx.font = `800 ${l * 0.19}px ${FAMILLE_RONDE}`
   ctx.letterSpacing = `${l * 0.006}px`
   ctx.lineJoin = 'round'
+  // L'OMBRE PORTÉE, vers le bas-droit : *c'est ce qui dit qu'il est POSÉ sur le
+  // film et non imprimé dedans* — la règle de la plaque claire et des stickers.
+  ctx.shadowColor = '#00000066'
+  ctx.shadowBlur = l * 0.02
+  ctx.shadowOffsetX = l * 0.01
+  ctx.shadowOffsetY = l * 0.016
   ctx.strokeStyle = '#16202a'
-  ctx.lineWidth = l * 0.028
+  ctx.lineWidth = l * 0.03
   ctx.strokeText(TITRE_DU_SACHET, l / 2, cyT)
+  ctx.shadowColor = 'transparent'
   ctx.strokeStyle = DOS_CREME
   ctx.lineWidth = l * 0.014
   ctx.strokeText(TITRE_DU_SACHET, l / 2, cyT)
-  ctx.fillStyle = DOS_CREME
+  // ET LA COULEUR D'UN EMOJI : du jaune pâle à l'orange, de haut en bas. Keko :
+  // « on peut styliser / colorer un peu le titre ? il est fade ». *Un crème
+  // sur du bleu est un aplat* ; le jaune-orange est la couleur du visage qui
+  // rit au centre du bouquet, donc le titre et la marque parlent la même
+  // langue. Le haut est presque blanc : la lumière vient du haut, ici comme
+  // partout.
+  const encre = ctx.createLinearGradient(0, cyT - l * 0.09, 0, cyT + l * 0.09)
+  encre.addColorStop(0, '#fff6b0')
+  encre.addColorStop(0.45, '#ffcf2a')
+  encre.addColorStop(1, '#ff7a1a')
+  ctx.fillStyle = encre
   ctx.fillText(TITRE_DU_SACHET, l / 2, cyT)
   ctx.restore()
 

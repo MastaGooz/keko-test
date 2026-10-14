@@ -2055,6 +2055,13 @@ Trois choses qui le portent :
 - **c'est le mot de Keko, en une constante** (`TITRE_DU_SACHET`) : *le projet
   n'avait pas de nom affiché, donc on n'en inventait pas* — c'est lui qui le
   pose, et c'est un essai ;
+- **et il est de la couleur d'un emoji.** Keko : « on peut styliser / colorer
+  un peu le titre ? il est fade ». *Un crème sur du bleu est un aplat* : l'encre
+  est un dégradé vertical du jaune pâle à l'orange — la couleur du visage qui
+  rit au centre du bouquet, donc le titre et la marque parlent la même langue —
+  le haut presque blanc parce que la lumière vient du haut, et une ombre portée
+  vers le bas-droit qui dit qu'il est POSÉ sur le film. Le cerne sombre et le
+  trait crème restent, c'est ce qui en fait un sticker ;
 - **les hauteurs se sont réglées à la capture, en deux passes** : titre à
   0,285 et bouquet à 0,535, le « j » touchait presque l'étoile ; **titre à
   0,27, bouquet à 0,56**, et chacun a son air. *Un contenu placé en hauteur se
