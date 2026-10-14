@@ -404,6 +404,16 @@ const TIRE_MAX = 0.9
  * `git log`.
  */
 const SEUIL_TIRE = 0.5
+/**
+ * DE COMBIEN ON MONTE LE CRAQUEMENT. Mesuré sur le fichier : 0,024 de RMS,
+ * **dix fois sous le pop** (0,227) et deux fois sous la prise de carte — Keko :
+ * « j'entends pas du tout le son crack ». *Ce n'était pas un bug, c'était un
+ * niveau* : sur un haut-parleur de téléphone, un crépitement à −32 dB ne passe
+ * pas. Le gain passe par un compresseur, qui retient les crêtes (0,57 au pic)
+ * pendant que le reste monte. **Le vrai réglage est dans le fichier**, et
+ * c'est à Keko : un export plus fort rendrait ce chiffre inutile.
+ */
+const VOLUME_CRAQUE = 3
 /** Le banc des étincelles : il tient la découpe à mi-course. Voir `useFrame`. */
 const BANC_GERBE =
   typeof location !== 'undefined' && new URLSearchParams(location.search).has('gerbe')
@@ -1672,6 +1682,8 @@ export function Sachet3D({
   const ditParti = useRef(false)
   /** Le craquement du film, tant qu'on le déchire. Voir `suivreLeSon`. */
   const craque = useRef<SonSuivi | null>(null)
+  /** Le pop a été programmé au lâcher : l'arrachement n'a plus à le jouer. */
+  const popProgramme = useRef(false)
   // LES DEUX SONS SE CHARGENT AVEC LE SACHET, pas au premier craquement : *un
   // son qui arrive après le geste qui l'a demandé arrive trop tard* — et le
   // craquement ne peut pas se SUIVRE tant que son tampon n'est pas décodé.
@@ -1898,7 +1910,7 @@ export function Sachet3D({
     // qu'il suive le doigt ou l'horloge — voir `suivreLeSon`. Il naît à la
     // première avancée, donc toujours dans un geste.
     if (pf > 0 && pf < 1) {
-      if (craque.current === null) craque.current = suivreLeSon(SON_CRAQUE)
+      if (craque.current === null) craque.current = suivreLeSon(SON_CRAQUE, VOLUME_CRAQUE)
       craque.current.avancer(pf)
     }
     // IL SORT DES DEUX BORDS : *une déchirure qui commence pile sur le bord se
@@ -1952,7 +1964,9 @@ export function Sachet3D({
       // qui craquait vient de céder.*
       craque.current?.arreter()
       craque.current = null
-      jouerSon(SON_POP)
+      // S'il n'a pas été programmé au lâcher — le banc `?gerbe`, ou un sachet
+      // ouvert sans geste — il part maintenant, tard d'une image.
+      if (!popProgramme.current) jouerSon(SON_POP)
       // LE JAILLISSEMENT EST UNE RAFALE, AU MÊME INSTANT QUE LE FLASH. *Deux
       // endroits qui décriraient le même instant se désaccorderaient au
       // premier réglage*, donc c'est le drapeau du flash qui le porte — et
@@ -2152,6 +2166,15 @@ export function Sachet3D({
       finir()
       if (!acquis) return
       file.current = true
+      // LE POP SE PROGRAMME ICI, PAS À L'ARRACHEMENT. Keko : « le pop se
+      // produit trop tard ». *Dès le lâcher, l'instant de l'arrachement est
+      // connu* — le front finit sa course à l'horloge, donc il reste
+      // exactement ce qu'il manque de course, en secondes — et un son qu'on
+      // sait venir se programme sur l'horloge audio, en avance de la latence
+      // de sortie, au lieu d'attendre l'image qui le constate : *une image de
+      // retard plus la latence du téléphone, c'est ce qu'on entendait.*
+      popProgramme.current = true
+      jouerSon(SON_POP, 1, Math.max(0, PART_FRONT - p.current) * DUREE_BRULURE)
       onOuvrir?.()
     }
     // UNE ANNULATION N'EST PAS UN LÂCHER : c'est le système qui reprend le

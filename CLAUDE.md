@@ -2557,6 +2557,52 @@ plus court colle plus au doigt et saute davantage ; une vitesse plafond plus
 haute suit un geste plus brusque et siffle davantage. **Un son ne se juge
 qu'en l'entendant, et je ne l'entends pas.**
 
+#### LE CRAQUEMENT ÉTAIT TROP FAIBLE, ET LE POP PORTAIT SON SILENCE
+
+Keko : **« j'entends pas du tout le son crack durant le déchirement, et le pop
+se produit trop tard je trouve »**.
+
+***NI L'UN NI L'AUTRE N'ÉTAIT UN BUG DE CÂBLAGE***, et c'est la mesure qui l'a
+dit — un analyseur posé dans la page sur ce qui SORT, et les trois fichiers
+décodés :
+
+| | durée | RMS | pic | silence en tête |
+|---|---|---|---|---|
+| `cracks.aac` | 0,906 s | **0,024** | 0,57 | 49 ms |
+| `pop.aac` | 0,186 s | **0,227** | 1,17 | 46 ms |
+| `Take card.aac` | 0,405 s | 0,048 | 0,94 | 38 ms |
+
+**Le craquement est dix fois sous le pop.** Il jouait — mesuré en sortie,
+0,023 de RMS pendant le geste — mais *un crépitement à −32 dB ne passe pas un
+haut-parleur de téléphone.* Il passe donc par un gain (`VOLUME_CRAQUE`, 3) et
+un COMPRESSEUR : *un son qu'on monte au-delà de 1 écrête sur ses crêtes, et un
+craquement n'est que des crêtes.* Mesuré après : 0,056 en crête, deux fois et
+demie plus. **Le vrai réglage est dans le fichier**, et c'est à Keko — un
+export plus fort rend ce gain inutile.
+
+**ET TOUS LES SONS PARTENT À LEUR PREMIER ÉCHANTILLON AUDIBLE** (`TETES`,
+mesurées au décodage par `teteDe`). *Un fichier porte du silence en tête* —
+l'amorce de l'encodeur AAC, plus ce que l'enregistrement a laissé — donc chaque
+son partait en retard de son propre silence, et la prise de carte comme le pop
+en avaient quarante millisecondes. Ça vaut pour les quatre sons d'avant aussi.
+
+**ET LE POP SE PROGRAMME AU LÂCHER, pas à l'arrachement.** *Dès que le geste
+est acquis, l'instant de l'arrachement est connu* : le front finit sa course à
+l'horloge, donc il reste exactement `(PART_FRONT − p) × DUREE_BRULURE`
+secondes. `jouerSon` prend donc un délai, le pose sur l'horloge AUDIO, et le
+retranche de ce que l'appareil avoue de latence de sortie (`outputLatency`,
+40 ms ici) — ***un son qu'on sait venir se programme, on ne l'attend pas.***
+Ce qu'on entendait avant : une image de retard pour le constater, 46 ms de
+silence, et la latence du téléphone par-dessus. Mesuré : programmé 23 ms avant
+l'arrachement, décalé de 46 ms dans son tampon. L'arrachement garde un repli —
+*un pop qui n'a pas été programmé part là, tard d'une image* — pour `?gerbe`
+et un sachet ouvert sans geste.
+
+*Reste visible dans la mesure, et c'est inoffensif* : à vitesse zéro, la source
+du craquement tient son dernier échantillon, donc une composante continue de
+0,007 sort tant que le doigt ne bouge pas. **Une tension continue ne s'entend
+pas.**
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une

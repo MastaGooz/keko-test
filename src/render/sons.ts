@@ -156,6 +156,7 @@ export function precharger(nom: string): Promise<void> {
       void ctx.decodeAudioData(octets, ok, non)
     })
     TAMPONS.set(nom, tampon)
+    TETES.set(nom, teteDe(tampon))
   })().catch(() => {
     // LE REPLI : un élément audio ordinaire, qui lit ce que le décodeur a
     // refusé. On le clone à chaque lecture, sinon deux sons rapprochés se
@@ -172,7 +173,7 @@ export function precharger(nom: string): Promise<void> {
  * Joue un son. Il est chargé s'il ne l'est pas encore — *le premier geste ne
  * doit pas être muet*, même si le préchargement n'a pas eu le temps d'aboutir.
  */
-export function jouerSon(nom: string, volume = 1): void {
+export function jouerSon(nom: string, volume = 1, dans = 0): void {
   const tampon = TAMPONS.get(nom)
   if (tampon !== undefined) {
     const ctx = ouvrir()
@@ -182,7 +183,10 @@ export function jouerSon(nom: string, volume = 1): void {
     const gain = ctx.createGain()
     gain.gain.value = volume
     source.connect(gain).connect(ctx.destination)
-    source.start()
+    // IL PART À SON PREMIER ÉCHANTILLON AUDIBLE, pas au début du fichier — et
+    // s'il est programmé, en avance de ce que la sortie mettra à le rendre :
+    // *un son qu'on sait venir se programme, on ne l'attend pas.*
+    source.start(ctx.currentTime + Math.max(0, dans - latenceDe(ctx)), TETES.get(nom) ?? 0)
     chemin = 'Web Audio'
     return
   }
@@ -192,7 +196,9 @@ export function jouerSon(nom: string, volume = 1): void {
     chemin = 'repli <audio>'
     const copie = repli.cloneNode() as HTMLAudioElement
     copie.volume = Math.min(1, volume)
-    void copie.play().catch(() => undefined)
+    const lire = (): void => void copie.play().catch(() => undefined)
+    if (dans > 0) setTimeout(lire, dans * 1000)
+    else lire()
     return
   }
 
@@ -200,8 +206,32 @@ export function jouerSon(nom: string, volume = 1): void {
   // retard vaut mieux qu'un son perdu, et ça n'arrive qu'à la toute première
   // fois si le préchargement n'a pas abouti.
   void precharger(nom).then(() => {
-    if (TAMPONS.has(nom) || REPLIS.has(nom)) jouerSon(nom, volume)
+    if (TAMPONS.has(nom) || REPLIS.has(nom)) jouerSon(nom, volume, dans)
   })
+}
+
+/**
+ * OÙ UN SON COMMENCE VRAIMENT, en secondes depuis le début de son tampon.
+ *
+ * *Un fichier porte du silence en tête* — l'amorce que l'encodeur AAC ajoute,
+ * plus ce que l'enregistrement a laissé avant le premier bruit : mesuré, 46 ms
+ * sur le pop, 49 sur le craquement, 38 sur la prise de carte. **Chaque son
+ * partait donc en retard de son propre silence**, et sur un téléphone la
+ * latence de sortie s'y ajoute — Keko : « le pop se produit trop tard ». On
+ * cherche le premier échantillon qui dépasse `SEUIL_TETE`, et c'est là que la
+ * lecture commence.
+ */
+const SEUIL_TETE = 0.02
+const TETES = new Map<string, number>()
+function teteDe(tampon: AudioBuffer): number {
+  const d = tampon.getChannelData(0)
+  for (let i = 0; i < d.length; i++) if (Math.abs(d[i]!) > SEUIL_TETE) return i / tampon.sampleRate
+  return 0
+}
+
+/** Ce que la sortie met à rendre un son, en secondes — ce que l'appareil en avoue. */
+function latenceDe(ctx: AudioContext): number {
+  return (ctx as { outputLatency?: number }).outputLatency ?? ctx.baseLatency ?? 0
 }
 
 /** Un son qu'on fait AVANCER à la main. Voir `suivreLeSon`. */
@@ -247,7 +277,7 @@ const VITESSE_MAX = 3
  * image par image. Il joue alors le son une fois, à la première avancée — *un
  * son entier vaut mieux qu'un silence*, et c'est le seul cas où il sort.
  */
-export function suivreLeSon(nom: string): SonSuivi {
+export function suivreLeSon(nom: string, volume = 1): SonSuivi {
   const tampon = TAMPONS.get(nom)
   const ctx = tampon !== undefined ? ouvrir() : null
   if (tampon === undefined || ctx === null) {
@@ -256,7 +286,7 @@ export function suivreLeSon(nom: string): SonSuivi {
       avancer(part) {
         if (joue || part <= 0) return
         joue = true
-        jouerSon(nom)
+        jouerSon(nom, volume)
       },
       arreter() {
         joue = true
@@ -266,8 +296,23 @@ export function suivreLeSon(nom: string): SonSuivi {
   const source = ctx.createBufferSource()
   source.buffer = tampon
   source.playbackRate.value = 0
-  source.connect(ctx.destination)
-  source.start()
+  // LE GAIN PASSE PAR UN COMPRESSEUR : *un son qu'on monte au-delà de 1 écrête
+  // sur ses crêtes*, et un craquement n'est que des crêtes. Le compresseur
+  // les retient, le reste monte.
+  const gain = ctx.createGain()
+  gain.gain.value = volume
+  const compresseur = ctx.createDynamicsCompressor()
+  compresseur.threshold.value = -12
+  compresseur.knee.value = 12
+  compresseur.ratio.value = 12
+  compresseur.attack.value = 0.002
+  compresseur.release.value = 0.08
+  source.connect(gain).connect(compresseur).connect(ctx.destination)
+  // IL PART À SON PREMIER ÉCHANTILLON AUDIBLE, et c'est ce qui reste du son
+  // qu'on fait avancer : la part du geste se lit sur cette durée-là.
+  const tete = TETES.get(nom) ?? 0
+  const duree = tampon.duration - tete
+  source.start(0, tete)
   chemin = 'Web Audio'
   let position = 0
   let vitesse = 0
@@ -291,10 +336,10 @@ export function suivreLeSon(nom: string): SonSuivi {
       const t = ctx.currentTime
       position += vitesse * (t - dernier)
       dernier = t
-      const cible = Math.min(1, Math.max(0, part)) * tampon.duration
+      const cible = Math.min(1, Math.max(0, part)) * duree
       vitesse = Math.min(VITESSE_MAX, Math.max(0, (cible - position) / HORIZON))
       source.playbackRate.value = vitesse
-      if (position >= tampon.duration) arreter()
+      if (position >= duree) arreter()
     },
     arreter,
   }
