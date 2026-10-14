@@ -1531,6 +1531,46 @@ s'attendent avant de peindre, comme partout.
 par-dessus les bokehs. **Tout est à rejuger par Keko** — le nombre, la taille,
 l'opacité des fantômes, et si c'est bien ce registre-là qu'il voulait.
 
+### LE BLOOM : LES POINTS BRILLANTS RAYONNENT, et le canvas reste transparent
+
+Keko : **« on peut rajouter du halo / glow sur les points brillants comme sur
+lexicodex ? »** — et, dans la même phrase, « maintenir les petites variations
+d'orientation même quand le joueur bouge le tel / maintient le tap / hover,
+autour de l'orientation actuelle ».
+
+**Le balancement** ne s'éteint plus sous la main (`berce = file ? 0 : 1`) :
+il s'ajoutait déjà au penchant tenu, c'est le survol qui le coupait. Il ne
+s'arrête que quand la déchirure file toute seule.
+
+**Le bloom** (`render/Bloom.tsx`) est le premier post-traitement du projet,
+pour le paquet seulement. *Lexicodex passe par un composeur avec une passe de
+flou*, et la note du sachet le disait : « chez eux le grain est minuscule, et
+c'est un bloom qui le grossit ».
+
+***IL EST ÉCRIT À LA MAIN, et ce n'est pas par goût*** : three embarque un
+`UnrealBloomPass`, mais sa composition écrit un alpha plein — **le canvas du
+paquet est transparent, et le fond HTML (les lumières, les emoji qui flottent)
+disparaîtrait sous du noir.** Quatre passes, et chacune garde l'alpha : la
+scène dans une cible à sa taille ; ce qui dépasse le seuil au quart ; deux
+allers-retours de flou gaussien ; puis à l'écran la scène, le flou qui
+s'AJOUTE, et l'alpha qui monte de la luminance ajoutée — *une lumière qui
+déborde sur le vide s'y voit.* La cible est en linéaire et c'est le dernier
+pas qui encode en sRGB (la chaîne du paquet n'a pas de ton).
+
+**ET LA CIBLE EST EN DEMI-FLOTTANTS.** *Vu à l'écran* en 8 bits avec un seuil
+à 0,72 : les soudures crème et la pastille rayonnaient comme des lampes, parce
+que tout ce qui brille vraiment s'écrêtait à 1 et que le crème est à 0,92 — le
+seuil ne pouvait plus les séparer. En flottants, le coeur d'une étincelle et
+le lustre sur une touche dépassent 1, le crème non : le seuil est à **1,0**
+(doux jusqu'à 1,5), la force à 0,8. Sans `EXT_color_buffer_float`, on
+retombe en 8 bits avec un seuil à 0,8 — *un halo un peu large vaut mieux qu'un
+canvas noir.* Vérifié à l'écran : le halo est sur les stickers, le titre et
+les touches claires, plus sur les soudures.
+
+`?bloom=0` le coupe — pour comparer, et pour un téléphone qui souffre. *Le
+prix sur téléphone n'a pas été mesuré* : un rendu de scène dans une cible plus
+cinq passes de quad, dont quatre au quart.
+
 ### L'OUVERTURE SE FAIT UNE CARTE À LA FOIS — le modèle est lexicodex
 
 Keko : **« je voudrais qu'on ait une ouverture de booster plus proche de celle

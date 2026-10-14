@@ -312,6 +312,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&son` | la ligne de diagnostic du son pendant la déchirure : chemin, état et horloge du contexte, `pf`, la dose du craquement, le doigt — *l'appareil dit ce qu'il voit* |
 | `?contour=fin\|plaque\|large`, `?texte=sombre`, `?titre=crans`, `?dos=gabarit` | les bancs du gabarit |
 | `?fond=sombre` | le fond du paquet sans lumières ni emoji flottants |
+| `?bloom=0` | le paquet sans le halo des points brillants |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
 

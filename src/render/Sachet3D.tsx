@@ -2195,7 +2195,12 @@ export function Sachet3D({
        * respiration des créatures : *un balancement régulier se lit comme une
        * mécanique.*
        */
-      const berce = file.current ? 0 : 1 - feu.current
+      // ET IL CONTINUE DE SE BALANCER SOUS LA MAIN. Keko : « on peut maintenir
+      // les petites variations d'orientation même quand le joueur bouge le tel
+      // / maintient le tap / hover, autour de l'orientation actuelle ». *Le
+      // balancement s'ajoutait au penchant tenu, et le survol l'éteignait* ;
+      // il ne s'éteint plus que quand la déchirure file toute seule.
+      const berce = file.current ? 0 : 1
       // ET LE TÉLÉPHONE PENCHE LE SACHET, derrière le doigt et le survol : il
       // ne s'ajoute que quand rien ne le tient — voir GYRO_GAIN.
       const incl = gyro.current?.lire() ?? null

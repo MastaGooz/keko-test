@@ -20,6 +20,7 @@ import { RECUL_DU_BAS, SANS_GYRO, Sachet3D } from './Sachet3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import { FondAnime } from './FondAnime.tsx'
+import { Bloom } from './Bloom.tsx'
 import {
   AMBIANCE,
   ECHELLE_COULEUR,
@@ -262,6 +263,9 @@ function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number 
  * fabriquer lui-meme.
  */
 const BANC_BONUS = '1f942'
+/** `?bloom=0` : sans le halo des points brillants — voir `Bloom`. */
+const SANS_BLOOM =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('bloom') === '0'
 /** `?fond=sombre` : le fond d'avant, sans lumières ni emoji — voir `FondAnime`. */
 const FOND_SOMBRE =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('fond') === 'sombre'
@@ -1114,6 +1118,8 @@ export function Paquet3D(): React.ReactElement {
         <Cadrage />
         <Horloge />
         <PencheAuGyro curseur={curseurDefile.current} gyro={gyro} />
+        {/* LES POINTS BRILLANTS RAYONNENT, comme chez lexicodex : voir `Bloom`. */}
+        {!SANS_BLOOM && <Bloom />}
         <ambientLight intensity={0.55} />
         <directionalLight
           position={[2.5, 3.5, 4]}
