@@ -390,16 +390,22 @@ const TIRE_MAX = 0.9
 /**
  * À PARTIR D'OÙ LE GESTE EST ACQUIS.
  *
- * En dessous, le sachet se referme. *Un sachet qu'on effleure ne s'ouvre pas*,
- * et c'est ce qui permet de le prendre en main sans l'engager.
+ * En dessous, un lâcher ne conclut rien : **la déchirure reste où elle est**,
+ * et le geste suivant la reprend de là. *Un sachet qu'on effleure ne s'ouvre
+ * pas*, mais un sachet qu'on a commencé à déchirer ne se recolle pas non plus.
+ *
+ * **CE QUI EST DÉCHIRÉ LE RESTE.** Keko : « si le joueur slide back ou arrête
+ * de slider, la déchirure ne s'annule pas : tout ce qui est déchiré le reste,
+ * et si on lâche à plus de la moitié ça continue comme actuellement ». *Un film
+ * qu'on a déchiré ne se recolle pas* — le front est donc un CLIQUET : le doigt
+ * ne peut que le faire avancer (voir `bouger`), et un lâcher le laisse là. Le
+ * `RETOUR` de 0,28 s qui refermait le sachet est parti avec ; il reste dans
+ * `git log`.
  */
 const SEUIL_TIRE = 0.5
 /** Le banc des étincelles : il tient la découpe à mi-course. Voir `useFrame`. */
 const BANC_GERBE =
   typeof location !== 'undefined' && new URLSearchParams(location.search).has('gerbe')
-
-/** Ce que met un geste abandonné à se refermer, en secondes. */
-const RETOUR = 0.28
 
 /** Ce que le survol penche et avance : *un objet qu'on tourne vers soi.* */
 const PENCHE = 0.26
@@ -1768,12 +1774,11 @@ export function Sachet3D({
 
     if (ouvre) file.current = true
 
-    // TROIS ÉTATS, ET UN SEUL CHIFFRE LES PORTE. Le doigt pose `p` lui-même ;
+    // DEUX ÉTATS, ET UN SEUL CHIFFRE LES PORTE. Le doigt pose `p` lui-même ;
     // une fois le geste acquis l'horloge prend le relais DEPUIS LÀ — *on ne
-    // rejoue pas le chemin déjà fait* — et un geste abandonné le rend.
+    // rejoue pas le chemin déjà fait.* Un geste abandonné ne rend RIEN : ce
+    // qui est déchiré le reste, et `p` attend le doigt suivant.
     if (file.current) p.current = Math.min(1, p.current + dt / DUREE_BRULURE)
-    else if (tire.current === null && p.current > 0)
-      p.current = Math.max(0, p.current - dt / RETOUR)
 
     // LE RELIEF DU SURVOL : il s'incline vers le curseur et s'avance d'un
     // cheveu. *Sans l'avancée, une inclinaison se lit comme une image qui
@@ -1820,11 +1825,13 @@ export function Sachet3D({
      * les étincelles.
      *
      * *On ne peut pas tenir un glisser depuis l'outil* — il relâche toujours,
-     * et un lâcher sous `SEUIL_TIRE` referme le sachet : c'est écrit depuis le
-     * jour où la gerbe est passée devant le film, et ça avait coûté des
-     * évènements `pointer*` fabriqués à la main. **Le banc s'arrête donc là où
-     * la découpe émet**, et le jaillissement, lui, se voit en ouvrant pour de
-     * bon.
+     * et un lâcher sous `SEUIL_TIRE` refermait alors le sachet : c'est écrit
+     * depuis le jour où la gerbe est passée devant le film, et ça avait coûté
+     * des évènements `pointer*` fabriqués à la main. **Le banc s'arrête donc
+     * là où la découpe émet**, et le jaillissement, lui, se voit en ouvrant
+     * pour de bon. (Depuis que la déchirure ne se recolle plus, un lâcher la
+     * laisserait en place — mais le banc montre aussi le FRONT qui avance, et
+     * c'est lui qui émet.)
      *
      * Il ne force rien pendant qu'on tire : *un banc qui prendrait la main sur
      * le geste ne montrerait plus le geste.*
@@ -2062,7 +2069,11 @@ export function Sachet3D({
       const g = tire.current
       if (g === null) return
       const part = g.p0 / PART_FRONT + (ev.clientX - g.x0) / largePx
-      p.current = Math.min(TIRE_MAX, Math.max(0, part)) * PART_FRONT
+      // UN CLIQUET : le front ne recule jamais. *Un film déchiré ne se
+      // recolle pas* — un doigt qui revient en arrière ne fait qu'incliner le
+      // sachet, et la déchirure reprend quand il repasse son point le plus
+      // loin. Tranché par Keko : « tout ce qui est déchiré le reste ».
+      p.current = Math.max(p.current, Math.min(TIRE_MAX, Math.max(0, part)) * PART_FRONT)
       // LE CURSEUR SE SUIT EN PIXELS, pas par un second lancer de rayon : le
       // doigt sort du sachet dès qu'on tire — *sortir EST le geste* — donc il
       // n'y a plus rien à toucher. `largePx` dit déjà ce que vaut une largeur
@@ -2079,6 +2090,9 @@ export function Sachet3D({
       survol.current = false
       document.body.style.cursor = ''
     }
+    // AU LÂCHER, DEUX ISSUES ET AUCUNE NE RECULE : passé `SEUIL_TIRE` la
+    // déchirure file toute seule ; en dessous elle RESTE où elle est, et le
+    // geste suivant repart de là (`p0`).
     const lacher = (): void => {
       ctrl.abort()
       const acquis = tire.current !== null && p.current / PART_FRONT >= SEUIL_TIRE
@@ -2089,7 +2103,7 @@ export function Sachet3D({
       onOuvrir?.()
     }
     // UNE ANNULATION N'EST PAS UN LÂCHER : c'est le système qui reprend le
-    // geste, donc le sachet se referme au lieu de s'ouvrir.
+    // geste, donc le sachet ne s'ouvre pas — et ce qui est déchiré le reste.
     const annuler = (): void => {
       ctrl.abort()
       tire.current = null

@@ -3084,6 +3084,35 @@ geste ne montrerait plus le geste* — et **le jaillissement, lui, se voit en
 ouvrant pour de bon** : il ne dure qu'une demi-seconde, mais il est au-dessus du
 sachet, donc il se capture.
 
+#### CE QUI EST DÉCHIRÉ LE RESTE — le front est un cliquet
+
+Keko : **« je voudrais que si le joueur slide back ou arrête de slider (PC et
+tél) la déchirure ne s'annule pas : tout ce qui est déchiré le reste, et si on
+lâche à plus de la moitié ça continue comme actuellement »**.
+
+*Un film déchiré ne se recolle pas.* Deux choses le faisaient pourtant :
+**le doigt qui revient en arrière ramenait le front** — `p` suivait le doigt
+dans les deux sens — et **un lâcher sous la moitié refermait le sachet** en
+0,28 s (`RETOUR`). *Les deux disaient qu'une déchirure est un curseur qu'on
+promène*, alors que c'est une découpe qu'on fait.
+
+Deux corrections, et la seconde ne coûte qu'une suppression :
+
+- **le front ne recule jamais** : `p` prend le maximum de lui-même et de ce que
+  le doigt demande. *Un doigt qui revient en arrière ne fait qu'incliner le
+  sachet*, et la déchirure reprend quand il repasse son point le plus loin ;
+- **un lâcher sous la moitié ne fait rien.** `RETOUR` est parti ; `p` attend le
+  doigt suivant, qui repart de là puisque le geste compte depuis `p0`. *Au-delà
+  de la moitié, rien ne change* : la déchirure file toute seule.
+
+**Ce que ça achète, et c'est pour le téléphone** : un pouce qui tremble ou qui
+ralentit ne défait plus ce qu'il a fait, et on peut ouvrir un sachet en deux
+gestes. *Un cliquet est ce qui rend un geste fragile tolérant.*
+
+**Ce qui reste écrit** : `SEUIL_TIRE` dit toujours où le geste s'engage, et
+`TIRE_MAX` borne toujours le doigt avant l'arrachement — *un geste prépare, le
+relâchement conclut*, et ça ne bouge pas.
+
 #### UN QUAD ORIENTÉ SUR SA VITESSE EST RETOURNÉ, ET RIEN NE LE DIT
 
 ***LE DÉFAUT QUI A COÛTÉ TOUTE LA SÉANCE.*** Le repère du trait se construit à
