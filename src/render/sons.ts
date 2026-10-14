@@ -31,6 +31,14 @@ export const SON_PRENDRE = 'Take card.aac'
 export const SON_POSER = 'Card drop.aac'
 
 /**
+ * Celui d'une carte qu'on RETOURNE : le flip du paquet, quand le dos cède la
+ * place à la face. Fourni par Keko. *Le nom est recopié depuis le disque* —
+ * minuscule en tête, comme le fichier — parce que GitHub Pages sert depuis
+ * Linux et qu'une casse devinée fait un 404 en ligne.
+ */
+export const SON_RETOURNER = 'card flip.aac'
+
+/**
  * Celui d'une pièce qui CULBUTE avant de se fixer dans son slot. Fourni par
  * Keko : « à jouer dès que la carte commence à tourner avant de se fixer ».
  *

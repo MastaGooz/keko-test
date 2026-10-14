@@ -21,7 +21,7 @@ import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import { FondAnime } from './FondAnime.tsx'
 import { Bloom } from './Bloom.tsx'
-import { SON_POSER, SON_PRENDRE, jouerSon, precharger } from './sons.ts'
+import { SON_POSER, SON_PRENDRE, SON_RETOURNER, jouerSon, precharger } from './sons.ts'
 import {
   AMBIANCE,
   ECHELLE_COULEUR,
@@ -478,6 +478,7 @@ export function Paquet3D(): React.ReactElement {
   useEffect(() => {
     void precharger(SON_POSER)
     void precharger(SON_PRENDRE)
+    void precharger(SON_RETOURNER)
   }, [])
   useEffect(() => {
     if (!ouvert) return
@@ -751,6 +752,9 @@ export function Paquet3D(): React.ReactElement {
     if (!retourne) {
       const premiere = paquet[0]
       if (premiere === undefined) return
+      // LE FLIP SONNE : *la carte tourne dès la première image*, donc le son
+      // part avec le geste, comme la culbute.
+      jouerSon(SON_RETOURNER)
       setRetourne(true)
       setJetons((j) => ({ ...j, [premiere.id]: (j[premiere.id] ?? 0) + 1 }))
       decouvrir(0)
