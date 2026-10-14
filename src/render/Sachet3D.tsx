@@ -1201,6 +1201,19 @@ const FEU = {
   vie: 0.8,
   /** À partir de quelle part de sa vie l'étincelle s'efface, linéairement jusqu'à la fin. */
   fondu: 0.6,
+  /**
+   * UNE PART DU FEU PART VERS LE BAS, ET MOINS VITE.
+   *
+   * Keko : « pour la gerbe finale on peut faire partir une partie des
+   * particules également vers le bas (mais moins vite) pour éviter cet
+   * effet de ligne ? » *Un jaillissement qui naît sur toute la largeur et ne
+   * monte que vers le haut a un BORD : la fente* — on lit une règle tracée
+   * sous le feu d'artifice. Des étincelles qui en tombent aussi effacent ce
+   * bord. Elles partent dans le cône miroir, au même frein, et c'est le
+   * ralenti qui dit qu'elles retombent au lieu d'être lancées.
+   */
+  partBas: 0.3,
+  vitesseBas: 0.4,
 } as const
 
 /**
@@ -1572,14 +1585,16 @@ function emettre(
     // naitre, donc son cone ne peut pas faire une fontaine.
     const aMin = eclat ? ANGLE_ECLAT_MIN : ANGLE_MIN
     const aMax = eclat ? ANGLE_ECLAT_MAX : ANGLE_MAX
-    const ang = aMin + Math.random() * (aMax - aMin)
+    // ET UNE PART DU FEU TOMBE : le cone miroir, sous la fente -- voir FEU.partBas.
+    const bas = eclat && Math.random() < FEU.partBas
+    const ang = (aMin + Math.random() * (aMax - aMin)) * (bas ? -1 : 1)
     a[o] = t + (eclat ? Math.random() * ECLAT_ETALE : 0)
     a[o + 1] = x - 0.5
     if (eclat) {
       // LE FEU D'ARTIFICE : une vitesse en largeurs PAR SECONDE, tirée entre
       // les deux bornes de lexicodex, et c'est le nuanceur qui la freine. Pas
       // de `tf` ici -- *le frein borne la portee, pas la vie.* Voir FEU.
-      const v = FEU.vMin + Math.random() * (FEU.vMax - FEU.vMin)
+      const v = (FEU.vMin + Math.random() * (FEU.vMax - FEU.vMin)) * (bas ? FEU.vitesseBas : 1)
       a[o + 2] = v * Math.cos(ang)
       a[o + 3] = v * Math.sin(ang)
     } else {
