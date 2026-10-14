@@ -2255,6 +2255,19 @@ rapprocher ; `onParti`, qui démonte le sachet, attend que TOUT soit fini
 (`pp ≥ 1`, à 1,11 s), sinon les étincelles seraient coupées en plein vol —
 *le sachet les porte*, même si elles ne descendent pas avec lui.
 
+**ET LES ÉTINCELLES ONT BEAUCOUP PLUS DE GLOW.** Keko : « c'est possible
+d'avoir des particules avec beaucoup plus de glow / lumière ? » *Un halo
+n'existe que s'il a de la place pour mourir* : à 0,11 de quad, le lobe large
+tombait en cube et s'éteignait au bord, donc on ne lisait que le coeur et les
+branches. **Le quad double** (`TAILLE_ECLAT`, 0,11 → 0,2) **et le coeur comme
+les branches gardent leur taille ABSOLUE** (`COEUR_ECLAT` 0,42 → 0,23,
+`PORTEE_BRANCHE` 0,55) — l'éclat ne grossit pas, il rayonne plus loin. Le halo
+passe en carré, une décroissance plus lente, et triple de poids
+(`POIDS_HALO`, 0,45 → 1,4). *C'est la règle du glow du sachet, un cran plus
+loin* : sans passe de flou, la seule façon de faire rayonner un point chaud
+est de peindre son rayonnement dans le grain. **La découpe en profite aussi**,
+puisque les deux régimes partagent le fragment.
+
 *Vu à l'écran* sur `?paquet=1314` : à trois dixièmes de seconde un éventail
 d'éclats monte sur toute la largeur du sachet, jusqu'en haut de l'écran en
 paysage ; une seconde plus tard ils se sont éteints sur place, sans être

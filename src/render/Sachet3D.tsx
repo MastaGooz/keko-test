@@ -1401,9 +1401,25 @@ function ton(c: readonly [number, number, number], k = 1): string {
  * trait. *On lui retire sa longueur, pas sa grosseur* — ce que Keko avait
  * demandé deux messages plus tôt.
  */
-const TAILLE_ECLAT = 0.11
+const TAILLE_ECLAT = 0.2
 /** CE QUE LE COEUR PLEIN OCCUPE du quad ; le reste est frange et branches. */
-const COEUR_ECLAT = 0.42
+const COEUR_ECLAT = 0.23
+/**
+ * BEAUCOUP PLUS DE GLOW. Keko : « c'est possible d'avoir des particules avec
+ * beaucoup plus de glow / lumière ? »
+ *
+ * *Un halo n'existe que s'il a de la place pour mourir* : à 0,11 de quad son
+ * lobe large tombait en cube et s'éteignait au bord, donc on ne voyait que le
+ * coeur et les branches. **Le quad double** (0,11 → 0,2), *et le coeur comme
+ * les branches gardent leur taille ABSOLUE* — 0,046 de coeur plein, 0,11 de
+ * branches (`PORTEE_BRANCHE`) — donc l'éclat ne grossit pas, il rayonne plus
+ * loin. Le halo passe en carré (une décroissance plus lente) et triple de
+ * poids (`POIDS_HALO`). *C'est la règle du glow du sachet, un cran plus
+ * loin : un point chaud ne s'arrête pas à son bord* — et sans passe de flou,
+ * la seule façon d'en faire est de le peindre dans le grain.
+ */
+const PORTEE_BRANCHE = 0.55
+const POIDS_HALO = 1.4
 /** LA DEMI-ÉPAISSEUR D'UNE BRANCHE, en part du quad : sa finesse. */
 const FINESSE_BRANCHE = 0.16
 
@@ -1659,13 +1675,18 @@ void main() {
   // et les QUATRE BRANCHES disent que c'est un éclat et non une pastille.
   float coeur = smoothstep(${COEUR_ECLAT.toFixed(2)}, 0.0, d);
   coeur = coeur * coeur;
+  // LE HALO A DE LA PLACE ET DU POIDS : en carré, il meurt lentement jusqu'au
+  // bord du quad, qui a double pour lui (voir POIDS_HALO).
   float halo = smoothstep(1.0, 0.0, d);
-  halo = halo * halo * halo;
+  halo = halo * halo;
   // UNE BRANCHE DÉCROÎT LENTEMENT LE LONG DE SON AXE ET D'UN COUP EN TRAVERS :
   // c'est ce rapport-la qui en fait une branche et non un lobe. *On prend leur
-  // MAXIMUM* -- un produit creuserait le centre, qui appartient aux deux.
-  float bx = smoothstep(1.0, 0.0, a.x) * smoothstep(${FINESSE_BRANCHE.toFixed(2)}, 0.0, a.y);
-  float by = smoothstep(1.0, 0.0, a.y) * smoothstep(${FINESSE_BRANCHE.toFixed(2)}, 0.0, a.x);
+  // MAXIMUM* -- un produit creuserait le centre, qui appartient aux deux. Les
+  // branches gardent leur portee d'avant dans un quad qui a double : on les
+  // lit dans un repere ramene a PORTEE_BRANCHE.
+  vec2 b = a / ${PORTEE_BRANCHE.toFixed(2)};
+  float bx = smoothstep(1.0, 0.0, b.x) * smoothstep(${FINESSE_BRANCHE.toFixed(2)}, 0.0, b.y);
+  float by = smoothstep(1.0, 0.0, b.y) * smoothstep(${FINESSE_BRANCHE.toFixed(2)}, 0.0, b.x);
   float croix = max(bx, by);
   croix = croix * croix;
   // ET LE COEUR EST BLANC, LA FRANGE CRÈME. *Un point qui sature tire vers le
@@ -1675,7 +1696,7 @@ void main() {
   // mêmes tons**, et l'étincelle ne peut plus se détacher de ce qui la lâche.
   vec3 creme = ${ton(FENTE_BORD, GAIN_ETINCELLE)};
   vec3 blanc = ${ton(FENTE_COEUR, GAIN_ETINCELLE)};
-  vec3 lum = (creme * (halo * 0.45 + croix * 0.9) + blanc * coeur) * vVie;
+  vec3 lum = (creme * (halo * ${POIDS_HALO.toFixed(2)} + croix * 0.9) + blanc * coeur) * vVie;
   if (max(lum.r, max(lum.g, lum.b)) < 0.003) discard;
   // ET L'ALPHA SUIT LA LUMIÈRE, il ne vaut jamais un. *La toile du jeu est
   // TRANSPARENTE* : un fragment sombre mais d'alpha plein écrit un pixel NOIR
