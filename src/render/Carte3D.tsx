@@ -230,6 +230,13 @@ export interface CurseurDeCarte {
   x: number
   y: number
   tenu?: boolean
+  /**
+   * DOSE la lumière, de 0 à 1 (1 si absent) : *un pointeur allume en plein,
+   * le téléphone allume d'autant qu'il penche* — Keko : « afficher le reflet
+   * uniquement quand la carte est penchée, pas sur sa position neutre ou
+   * proche ».
+   */
+  eclat?: number
 }
 /**
  * Et de combien elle s'avance vers le regard, EN PART DE SA LARGEUR.
@@ -1598,7 +1605,7 @@ ${nuanceur.fragmentShader}`
      */
     const kReflet = 1 - Math.exp(-9 * delta)
     const dessus = reflet && curseur.dessus
-    l.brille += ((dessus ? 1 : 0) - l.brille) * kReflet
+    l.brille += ((dessus ? (curseur.eclat ?? 1) : 0) - l.brille) * kReflet
     l.vx += ((dessus ? curseur.x : 0) - l.vx) * kReflet
     l.vy += ((dessus ? curseur.y : 0) - l.vy) * kReflet
 

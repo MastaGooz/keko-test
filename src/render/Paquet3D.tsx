@@ -157,6 +157,17 @@ function colonnesDuBilan(largeurVisible: number, hauteurVisible: number): number
  */
 const GYRO_GAIN_CARTE = 0.6
 const GYRO_BORNE_CARTE = 0.22
+/**
+ * LA LUMIÈRE SE DOSE SUR L'ANGLE, au gyroscope seulement. Keko : « afficher le
+ * reflet uniquement quand la carte est penchée, pas sur sa position neutre ou
+ * proche ». *Un téléphone tenu en main n'est jamais exactement dans sa tenue
+ * de départ*, et une bande de lumière qui ne s'éteint jamais cesse d'être un
+ * reflet. Rien sous `GYRO_SEUIL_ECLAT`, plein à partir de `GYRO_PLEIN_ECLAT`,
+ * en radians de rotation de la carte — l'inclinaison, elle, suit dès le
+ * premier degré.
+ */
+const GYRO_SEUIL_ECLAT = 0.05
+const GYRO_PLEIN_ECLAT = 0.16
 function PencheAuGyro({
   curseur,
   gyro,
@@ -176,6 +187,10 @@ function PencheAuGyro({
     // rotation.x de la carte = -vy * INCLINAISON ; rotation.y = vx * INCLINAISON.
     const rx = borne(incl.x * GYRO_GAIN_CARTE)
     const ry = borne(-incl.y * GYRO_GAIN_CARTE)
+    const angle = Math.hypot(rx, ry)
+    const part = (angle - GYRO_SEUIL_ECLAT) / (GYRO_PLEIN_ECLAT - GYRO_SEUIL_ECLAT)
+    const t = Math.min(1, Math.max(0, part))
+    curseur.eclat = t * t * (3 - 2 * t)
     curseur.dessus = true
     curseur.x = ry / INCLINAISON_REFLET
     curseur.y = -rx / INCLINAISON_REFLET
@@ -738,6 +753,7 @@ export function Paquet3D(): React.ReactElement {
           viser(e)
           c.dessus = true
           c.tenu = true
+          c.eclat = 1
         }
       },
       { signal },
@@ -750,6 +766,7 @@ export function Paquet3D(): React.ReactElement {
           // redresse — le `pointerout` que la carte inerte ne reçoit pas.
           c.dessus = viser(e)
           c.tenu = c.dessus
+          c.eclat = 1
         } else if (doigtPose) {
           viser(e)
         }
