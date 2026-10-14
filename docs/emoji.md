@@ -3406,6 +3406,34 @@ faisait de la pesanteur une CONSÉQUENCE au lieu d'un fait. **Une pesanteur qui
 se recalcule pour chaque objet n'est pas une pesanteur, c'est une
 normalisation.**
 
+#### LA GERBE NAÎT DE LA FENTE RÉELLE, pas de la fente au repos
+
+Keko : **« on peut descendre un peu la position des particules quand on
+déchire le paquet et à l'explosion finale ? On dirait qu'elles spawn au-dessus
+de l'endroit voulu »**.
+
+***ET ELLES Y ÉTAIENT, PAR CONSTRUCTION.*** La gerbe vit hors du relief — *une
+gerbe ne s'incline pas avec la pochette* — donc son origine était posée à la
+hauteur de la fente **d'un sachet droit**. Or on déchire le doigt posé sur le
+pointillé, c'est-à-dire en haut : `cibleX = -curseur.y × PENCHE` penche alors
+le haut du sachet vers l'arrière, et la fente DESCEND à l'écran — de
+`(1 − cos a)` par la rotation, et encore par la perspective puisqu'elle
+s'éloigne. Au penchant plein, **cinq centièmes de hauteur de monde, une
+quinzaine de pixels sur un téléphone**, toujours vers le haut.
+
+*Une rotation est une translation déguisée en profondeur*, payée une quatrième
+fois — et le remède est le même que pour les cartes cachées : **l'origine se
+calcule, elle ne s'écrit pas** (`fenteReelle`). Elle suit le point de la fente
+tel que le relief le pose, rotation et avancée comprises ; les trajectoires,
+elles, restent dans l'axe de l'écran, puisque le maillage ne fait que se
+déplacer. Le film qui descend n'est pas suivi, sinon le feu d'artifice
+partirait avec lui. Et la position quitte le JSX : *React la réécrirait au
+premier rendu venu.*
+
+**Pas vu à l'écran** : le banc `?gerbe` éteint ses étincelles avant que la
+capture virtuelle tombe, et je n'ai pas de doigt. C'est la géométrie qui dit
+l'écart, et c'est Keko qui jugera s'il en reste.
+
 #### LE FRONT SUIT LE DOIGT, ET CE N'ÉTAIT PAS LA GERBE
 
 Keko : **« les étincelles sont toujours un peu en retard à gauche de mon doigt

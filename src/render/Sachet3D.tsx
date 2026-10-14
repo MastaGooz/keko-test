@@ -469,6 +469,8 @@ const BANC_SON =
 /** Ce que le survol penche et avance : *un objet qu'on tourne vers soi.* */
 const PENCHE = 0.26
 const AVANCEE = 0.1
+/** Le point de la fente tel que le relief le pose, recalculé à chaque image. */
+const fenteReelle = new THREE.Vector3()
 
 /**
  * LE BALANCEMENT DE REPOS, en radians, et la BORNE du penchant au survol.
@@ -1832,6 +1834,8 @@ export function Sachet3D({
   const bande = useRef<THREE.Group>(null)
   /** Ce qui emporte le film vers le bas : *le corps seul, pas la bande.* */
   const chute = useRef<THREE.Group>(null)
+  /** La gerbe, dont l'origine SUIT la fente réelle : voir `fenteReelle`. */
+  const gerbeMesh = useRef<THREE.Mesh>(null)
   const corps = useMemo(() => matiereDuMorceau(true), [])
   const bandeMat = useMemo(() => {
     const m = matiereDuMorceau(false)
@@ -2131,6 +2135,39 @@ export function Sachet3D({
       // et l'amortissement est précisément ce qui donne son poids au geste.
       corps.uniforms.uPenche!.value.set(r.rotation.x, r.rotation.y)
       bandeMat.uniforms.uPenche!.value.set(r.rotation.x, r.rotation.y)
+
+      /**
+       * LA GERBE NAÎT DE LA FENTE RÉELLE, pas de la fente au repos.
+       *
+       * Keko : « on peut descendre un peu la position des particules quand on
+       * déchire le paquet et à l'explosion finale ? On dirait qu'elles spawn
+       * au-dessus de l'endroit voulu ».
+       *
+       * *Et elles y étaient, par construction* : la gerbe vit hors du relief
+       * — une gerbe ne s'incline pas avec la pochette — donc son origine était
+       * posée à la hauteur de la fente D'UN SACHET DROIT. Or on déchire le
+       * doigt posé sur le pointillé, c'est-à-dire en haut : `cibleX` penche
+       * alors le haut du sachet vers l'arrière, et la fente DESCEND à l'écran
+       * — de `(1 − cos a)` par la rotation, et encore par la perspective
+       * puisqu'elle s'éloigne. Au penchant plein, cinq centièmes de hauteur
+       * de monde, une quinzaine de pixels sur un téléphone, toujours vers le
+       * haut. *Une rotation est une translation déguisée en profondeur*,
+       * payée une quatrième fois.
+       *
+       * L'origine suit donc le point de la fente tel que le relief le pose —
+       * sa rotation ET son avancée — et les trajectoires, elles, restent dans
+       * l'axe de l'écran : le maillage ne fait que se déplacer. **Le film qui
+       * descend n'est pas suivi** (`chute`), sinon le feu d'artifice partirait
+       * avec lui.
+       */
+      const g = gerbeMesh.current
+      if (g !== null) {
+        fenteReelle
+          .set(0, hCorps / 2 - hBande / 2, taille * (REL_BOMBE + 0.02))
+          .applyEuler(r.rotation)
+          .add(r.position)
+        g.position.copy(fenteReelle)
+      }
     }
     corps.uniforms.uSurvol!.value = feu.current
     bandeMat.uniforms.uSurvol!.value = feu.current
@@ -2543,11 +2580,16 @@ export function Sachet3D({
           au survol et son ventre pousse encore de REL_BOMBE, donc son point le
           plus proche est la somme des deux — la gerbe se pose au-delà. Et ça
           ne masque rien : elle est ADDITIVE et n'écrit pas la profondeur, donc
-          elle n'ajoute que de la lumière là où une étincelle passe. */}
+          elle n'ajoute que de la lumière là où une étincelle passe.
+
+          **ET SA POSITION N'EST PAS EN JSX** : c'est la boucle d'image qui
+          la pose, sur la fente réelle du relief — voir `fenteReelle`. Écrite
+          ici, React la réécrirait au premier rendu venu, et la gerbe sauterait
+          d'une image à la hauteur du sachet droit. */}
       <mesh
+        ref={gerbeMesh}
         geometry={semis}
         material={gerbe}
-        position={[0, hCorps / 2 - hBande / 2, taille * (AVANCEE + REL_BOMBE + 0.02)]}
         scale={taille}
         frustumCulled={false}
         raycast={() => null}
