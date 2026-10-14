@@ -44,8 +44,8 @@ const EMOJI_DU_FOND = [
 /** Les couleurs des bokehs : les cinq crans, par leur lueur d'ambiance. */
 const COULEURS = ['blanc', 'vert', 'bleu', 'violet', 'orange'].map((c) => AMBIANCE[c]!)
 
-const NB_BOKEHS = 14
-const NB_EMOJI = 22
+const NB_BOKEHS = 16
+const NB_EMOJI = 26
 /** La densité de pixels du fond, plafonnée : *rien n'y est net.* */
 const DPR_MAX = 1
 /** Trente images par seconde suffisent à un fond qui dérive. */
@@ -112,13 +112,13 @@ export function FondAnime(): React.ReactElement {
     const bokehs: Bokeh[] = Array.from({ length: NB_BOKEHS }, (_, i) => ({
       x: hasard(),
       y: hasard(),
-      r: 0.1 + hasard() * 0.16,
+      r: 0.14 + hasard() * 0.22,
       couleur: COULEURS[i % COULEURS.length]!,
       vx: (hasard() - 0.5) * 0.012,
       vy: (hasard() - 0.5) * 0.012,
       phase: hasard() * Math.PI * 2,
       cadence: 0.25 + hasard() * 0.35,
-      alpha: 0.17 + hasard() * 0.15,
+      alpha: 0.3 + hasard() * 0.25,
     }))
     let fantomes: Fantome[] = []
 
@@ -147,13 +147,13 @@ export function FondAnime(): React.ReactElement {
         image: images[i % images.length]!,
         x: hasard(),
         y: hasard(),
-        t: 0.028 + hasard() * 0.035,
+        t: 0.035 + hasard() * 0.05,
         vy: 0.012 + hasard() * 0.02,
         balance: 0.004 + hasard() * 0.01,
         phase: hasard() * Math.PI * 2,
         rot: (hasard() - 0.5) * 0.6,
         vrot: (hasard() - 0.5) * 0.16,
-        alpha: 0.2 + hasard() * 0.18,
+        alpha: 0.5 + hasard() * 0.35,
       }))
       // FIGÉ, on repeint une fois les glyphes là : sinon le fond resterait sans eux.
       if (fige) peindre(0)
