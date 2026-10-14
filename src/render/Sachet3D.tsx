@@ -58,72 +58,70 @@ import {
  *
  * **LE FRONT puis la CHUTE** : on n'arrache pas ce qui tient encore par un
  * bout, et **la chute attend la gerbe** — voir `DUREE_GERBE`. *La bande, elle,
- * n'a plus de durée* : elle tombe en plume, et c'est le bord du cadre qui dit
- * quand elle a fini — voir `PLUME`.
+ * n'a plus de durée* : elle est projetée, et c'est le film qui dit quand
+ * elle a fini — voir `LANCER`.
  */
 const DUREE_FRONT = 0.63
 const DUREE_CHUTE = 0.87
 
 /**
- * LA BANDE TOMBE EN PLUME, une fois arrachée.
+ * LA BANDE EST PROJETÉE, une fois arrachée — c'est le lancer de lexicodex.
  *
- * Keko : **« ce serait génial que la petite bande déchirée soit éjectée (comme
- * actuellement) mais au lieu de se tournoyer et disparaître, elle tombait en
- * "flottant" comme une plume avec la friction avec l'air (comme dans
- * lexicodex) »**.
+ * Keko : **« je voudrais que la bande soit projetée avec plus de puissance,
+ * l'ouverture est un petit feu d'artifice. Regarde sur lexicodex comment la
+ * partie bande déchirée se comporte »**.
  *
- * ***RELEVÉ CHEZ EUX, ET CE N'EST PAS UNE PLUME*** : leur bande part à
- * `(2,4 ; 6,5 ; 3,2)` sous une pesanteur de 16, sans aucun frein, et CULBUTE
- * sur trois axes (`w = (2..4 ; ±1,5 ; 4..7)` rad/s) pendant 2,2 s — une chute
- * balistique franche, qui sort du cadre en une seconde. *Ce que Keko a lu
- * comme une plume est la culbute d'une feuille mince qui vient vers la
- * caméra.* On fait donc ce qu'il DÉCRIT, pas ce qu'ils font : un lancer, puis
- * l'air qui freine, et une feuille qui se balance en descendant.
+ * ***RELEVÉ DANS LEUR CODE*** (`completeTear` et `updateFlying`) : la bande est
+ * poussée à `v = (dir × 2,4 ; 6,5 ; 3,2)` dans leurs unités — un sachet de 3
+ * de large — sous une pesanteur de **16**, **sans aucun frein**, et elle
+ * CULBUTE sur trois axes à `w = (2..4 ; ±1,5 ; −dir × 4..7)` rad/s ; elle est
+ * retirée à 2,2 s, hors cadre depuis longtemps. *Convertis en largeurs de
+ * sachet* (leur unité vaut un tiers de largeur) : un lancer à
+ * `(0,8 ; 2,17 ; 1,07)` largeurs par seconde, une pesanteur de 5,33. **La
+ * bande monte à 0,44 largeur au-dessus de la fente en quatre dixièmes de
+ * seconde, retombe à sa hauteur de départ à 0,8 s, et file ensuite** — c'est
+ * ce qui fait le feu d'artifice : *une montée franche, puis une chute qui ne
+ * ralentit jamais.*
  *
- * **UNE PLUME NE TOMBE PAS, ELLE GLISSE** : sa vitesse de chute plafonne
- * (`terminale`), elle part de côté et revient (`balance`, `periode`), et elle
- * s'incline dans le sens où elle glisse (`roulis`) tout en tanguant vers la
- * caméra (`tangage`) — c'est le tangage qui montre tour à tour son envers crème
- * et son imprimé. *Rien ne rétrécit* : ce qui part, part pour de bon.
+ * **LA PLUME EST PARTIE AVEC SES FREINS.** Elle avait été faite sur la
+ * demande d'avant — « flottant comme une plume avec la friction de l'air » —
+ * et c'est l'inverse d'une projection : *un frein est ce qui retire de la
+ * puissance à un lancer.* Ses chiffres restent dans `git log`.
  *
- * **ET ELLE S'EFFACE AVEC LE FILM.** Keko : « je voudrais qu'elle tombe plus
- * vite ou fade, en gros quand le paquet n'est plus visible, elle ne doit plus
- * l'être non plus ». *Une plume met trois secondes à sortir du cadre, le film
- * en met une et demie* — donc elle restait seule à l'écran, devant une carte
- * qui s'était déjà rapprochée. Son fondu n'est donc pas une durée à elle :
- * **il lit la descente du film** (`FONDU_PLUME`), et elle est partie à
- * l'instant exact où lui quitte le cadre. *Deux objets qui doivent disparaître
- * ensemble lisent le même chiffre.*
+ * **ET LA CULBUTE EST FIXE, au milieu de leurs plages** : *une matière n'est
+ * pas un tirage de partie* — la règle des plis, seedés en dur — et un paquet
+ * rejoué à la même graine doit montrer la même bande. Elle roule dans le sens
+ * du lancer (`z`, négatif vers la droite), tangue vers la caméra (`x`) et
+ * vrille à peine (`y`) : *c'est la culbute qui montre tour à tour l'envers
+ * crème et l'imprimé*, et c'est ce que Keko avait lu comme une plume.
+ *
+ * **ELLE S'EFFACE AVEC LE FILM, toujours.** Keko : « quand le paquet n'est
+ * plus visible, elle ne doit plus l'être non plus ». Son fondu lit la
+ * descente du film (`FONDU_BANDE`), donc elle est partie à l'instant exact
+ * où lui quitte le cadre — *deux objets qui doivent disparaître ensemble
+ * lisent le même chiffre.* À ce lancer, elle a de toute façon presque quitté
+ * le cadre par le bas à cet instant-là ; le fondu couvre les écrans hauts, où
+ * le bas est loin.
  *
  * Tout est en LARGEURS DE SACHET et en secondes.
  */
-const PLUME = {
-  /** Le lancer : à droite, un peu en l'air, et vers la caméra — comme avant. */
-  lancer: { x: 1.6, y: 0.9, z: 0.6 },
-  /** Le frein de l'air, par seconde : de côté et en profondeur, puis en chute. */
-  frein: 2.4,
-  freinY: 3.2,
-  /** La vitesse de chute que l'air ne laisse plus dépasser. */
-  terminale: 0.75,
-  /** Le va-et-vient latéral : son ampleur et sa période. */
-  balance: 0.22,
-  periode: 1.25,
-  /** De combien elle penche dans le sens où elle glisse, et de combien elle tangue. */
-  roulis: 0.5,
-  tangage: 0.45,
-  /** Le tangage moyen : elle montre un peu son envers en permanence. */
-  tangageMoyen: 0.35,
+const LANCER = {
+  /** La vitesse de départ : à droite, franchement en l'air, et vers la caméra. */
+  v: { x: 0.8, y: 2.17, z: 1.07 },
+  /** La pesanteur, en largeurs par seconde carrée — la leur, convertie. */
+  pesanteur: 5.33,
+  /** La culbute, en radians par seconde sur chaque axe. */
+  culbute: { x: 3, y: 0.75, z: -5.5 },
   /** La vie au-delà de laquelle on cesse d'attendre qu'elle sorte du cadre. */
   vieMax: 8,
 } as const
 /**
- * À PARTIR D'OÙ LA PLUME S'EFFACE, en part de la DESCENTE DU FILM. À 0,5 le
- * film n'est descendu que d'un tiers (sa course accélère), donc la plume
- * glisse encore en pleine lumière ; elle s'éteint sur la seconde moitié et
- * vaut zéro quand le film est hors cadre. *À 0 elle s'effacerait dès que le
- * film bouge, à 1 elle disparaîtrait d'un coup.*
+ * À PARTIR D'OÙ LA BANDE S'EFFACE, en part de la DESCENTE DU FILM. À 0,5 le
+ * film n'est descendu que d'un tiers (sa course accélère) ; elle s'éteint sur
+ * la seconde moitié et vaut zéro quand le film est hors cadre. *À 0 elle
+ * s'effacerait dès que le film bouge, à 1 elle disparaîtrait d'un coup.*
  */
-const FONDU_PLUME = 0.5
+const FONDU_BANDE = 0.5
 /**
  * OÙ LE FRONT COMMENCE, en parts de largeur. *Il sort des deux bords* : une
  * déchirure qui commencerait pile sur le bord se lirait comme un bord qui
@@ -1597,10 +1595,10 @@ export function Sachet3D({
   /**
    * LA BANDE EST SORTIE DU CADRE, et il n'y a plus rien à montrer.
    *
-   * *C'est un second instant, après `onOuvert`* : le film est parti et la
-   * carte s'est rapprochée, mais la bande tombe encore en plume devant elle.
-   * **Le démonter sur `onOuvert` la couperait en plein vol** — c'est donc sur
-   * celui-ci que le parent le démonte.
+   * *C'est un second instant, après `onOuvert` au plus tôt* : la bande
+   * s'efface avec le film, ou sort du cadre avant lui. **Le démonter sur
+   * `onOuvert` pourrait la couper en plein vol** — c'est donc sur celui-ci
+   * que le parent le démonte.
    */
   readonly onParti?: () => void
   /** Le geste est acquis : la déchirure part toute seule. */
@@ -1650,13 +1648,13 @@ export function Sachet3D({
   const ditDechire = useRef(false)
   const ditParti = useRef(false)
   /**
-   * LA PLUME : où la bande en est de sa chute, en largeurs de sachet.
+   * LE VOL : où la bande en est de sa projection, en largeurs de sachet.
    *
    * *C'est une vraie intégration, plus une courbe sur une part* : l'air freine
    * une vitesse, pas une position, et on ne sait pas d'avance quand elle sort
    * du cadre — ça dépend de l'écran.
    */
-  const plume = useRef({ t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0 })
+  const vol = useRef({ t: 0, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0 })
   /** Où en est l'anneau des étincelles, et le front de l'image d'avant. */
   const anneau = useRef(0)
   const frontAvant = useRef(FRONT_DEPART)
@@ -1915,60 +1913,48 @@ export function Sachet3D({
     }
 
     /*
-     * LA BANDE TOMBE EN PLUME une fois le front arrivé au bout.
+     * LA BANDE EST PROJETÉE une fois le front arrivé au bout.
      *
-     * Elle est LANCÉE — à droite, un peu en l'air, vers la caméra — puis l'air
-     * la freine : sa chute plafonne, elle se balance de gauche à droite et
-     * penche dans le sens où elle glisse. *Ce qu'on arrache est emporté, puis
-     * l'air le prend.* Rien ne tournoie, rien ne rétrécit — mais elle
-     * S'EFFACE AVEC LE FILM : son fondu lit `pc`, la descente du film, donc
-     * elle est partie quand lui a quitté le cadre. Le bord du cadre reste un
-     * second terme, pour le cas où elle sortirait avant. Voir `PLUME` et
-     * `FONDU_PLUME`.
+     * Une balistique franche, sans frein — le lancer de lexicodex — et une
+     * culbute sur trois axes : *ce qu'on arrache est éjecté, et rien ne le
+     * retient.* Elle S'EFFACE AVEC LE FILM : son fondu lit `pc`, la descente
+     * du film, donc elle est partie quand lui a quitté le cadre. Le bord du
+     * cadre reste un second terme, pour le cas où elle sortirait avant. Voir
+     * `LANCER` et `FONDU_BANDE`.
      */
     if (bande.current !== null && pf >= 1 && !ditParti.current) {
       const b = bande.current
-      const q = plume.current
+      const q = vol.current
       if (q.t === 0) {
-        q.vx = PLUME.lancer.x
-        q.vy = PLUME.lancer.y
-        q.vz = PLUME.lancer.z
+        q.vx = LANCER.v.x
+        q.vy = LANCER.v.y
+        q.vz = LANCER.v.z
       }
       q.t += dt
-      // L'AIR FREINE UNE VITESSE : exponentiellement, donc stable quel que
-      // soit le pas d'image. La chute, elle, est tirée par la pesanteur ET
-      // freinée, donc elle tend vers sa vitesse terminale sans la dépasser.
-      const fx = Math.exp(-PLUME.frein * dt)
-      const fy = Math.exp(-PLUME.freinY * dt)
-      q.vx *= fx
-      q.vz *= fx
-      q.vy = -PLUME.terminale + (q.vy + PLUME.terminale) * fy
+      // SEULE LA PESANTEUR AGIT : la chute accélère du premier au dernier
+      // instant, et c'est ce qui fait lire une projection plutôt qu'un glissé.
+      q.vy -= LANCER.pesanteur * dt
       q.x += q.vx * dt
       q.y += q.vy * dt
       q.z += q.vz * dt
-      // LE BALANCEMENT S'INSTALLE, il ne démarre pas d'un coup : au lancer
-      // elle file, et c'est quand l'air la ralentit qu'elle se met à glisser.
-      const prise = 1 - Math.exp(-q.t * 2)
-      const w = (2 * Math.PI) / PLUME.periode
-      const phase = q.t * w
-      b.position.x = taille * (q.x + PLUME.balance * Math.sin(phase) * prise)
+      b.position.x = taille * q.x
       b.position.y = hCorps / 2 + taille * q.y
       b.position.z = taille * q.z
-      // ELLE PENCHE VERS OÙ ELLE GLISSE : le bord qui mène descend. Et elle
-      // TANGUE vers la caméra, plus lentement, ce qui montre tour à tour son
-      // envers crème et son imprimé — c'est ça qui fait lire une feuille.
-      b.rotation.z = -PLUME.roulis * Math.cos(phase) * prise
-      b.rotation.x =
-        PLUME.tangageMoyen * prise + PLUME.tangage * Math.sin(phase * 0.5 + 0.6) * prise
+      // LA CULBUTE S'INTÈGRE, elle ne se pose pas : une rotation qui court
+      // sans fin, à vitesse constante sur chaque axe — un objet lancé ne
+      // cesse pas de tourner.
+      b.rotation.x += LANCER.culbute.x * dt
+      b.rotation.y += LANCER.culbute.y * dt
+      b.rotation.z += LANCER.culbute.z * dt
       // LE FONDU LIT LA DESCENTE DU FILM : plein tant que le film tient,
       // éteint quand il a quitté le cadre. *L'uniforme attendait depuis que
       // le film a cessé de s'effacer* — il n'a plus que la bande à servir.
-      const fondu = 1 - smooth((pc - FONDU_PLUME) / (1 - FONDU_PLUME))
+      const fondu = 1 - smooth((pc - FONDU_BANDE) / (1 - FONDU_BANDE))
       bandeMat.uniforms.uFondu!.value = fondu
       // PARTIE : éteinte avec le film, ou sortie du cadre avant lui.
       // `descente` est la demi-hauteur du champ plus celle du sachet, donc en
       // dessous il reste au moins un demi-sachet de marge.
-      if (fondu <= 0 || b.position.y < -descente || q.t > PLUME.vieMax) {
+      if (fondu <= 0 || b.position.y < -descente || q.t > LANCER.vieMax) {
         ditParti.current = true
         onParti?.()
       }

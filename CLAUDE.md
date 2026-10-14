@@ -2370,6 +2370,74 @@ le sachet se démonte donc au même instant qu'`onOuvert`, et le bord du cadre
 comme le garde-fou de huit secondes ne restent que pour le cas où elle
 sortirait avant. *Vérifié à l'écran* : film parti, la carte est seule.
 
+#### PUIS LA PLUME EST DEVENUE UNE PROJECTION — le lancer de lexicodex, relevé
+
+Keko, dans la foulée : **« en fait je voudrais que la bande soit projetée avec
+plus de puissance, l'ouverture est un petit feu d'artifice. Regarde sur
+lexicodex comment la partie bande déchirée se comporte pour t'inspirer
+(analyse leur code si c'est possible) »**.
+
+***LA PLUME ÉTAIT L'INVERSE DE CE QU'IL DEMANDE MAINTENANT*** : un frein est
+ce qui retire de la puissance à un lancer. Elle avait été faite sur sa demande
+d'avant (« flottant comme une plume avec la friction de l'air »), et la note
+disait déjà que lexicodex ne fait pas ça. **Il choisit désormais ce qu'ils
+font**, donc on le prend tel quel.
+
+**RELEVÉ DANS LEUR CODE, chunk `stage-*.js`, `completeTear` et
+`updateFlying`** — le bundle se rapatrie en suivant les `import("./x.js")`
+des chunks, pas les balises de la page, qui n'en listent que dix sur
+cent-quatre-vingt-quatorze :
+
+```
+this.flying.push({ obj: strip, v: (dir·2,4 ; 6,5 ; 3,2) × scale,
+                   w: (2..4 ; ±1,5 ; −dir·(4..7)) })
+updateFlying : v.y += −16·dt ; position += v·dt ; rotation += w·dt ;
+               retirée à age > 2,2 s
+```
+
+*Aucun frein, une pesanteur de 16, une culbute sur trois axes.* Leur sachet
+fait 3 de large, donc **en largeurs de sachet** :
+
+| | chez eux | chez nous (`LANCER`) |
+|---|---|---|
+| vitesse de départ | (2,4 ; 6,5 ; 3,2) | **(0,8 ; 2,17 ; 1,07)** largeurs/s |
+| pesanteur | 16 | **5,33** largeurs/s² |
+| culbute | (2..4 ; ±1,5 ; 4..7) tirée | **(3 ; 0,75 ; −5,5)**, fixe |
+| apogée | | **0,44 largeur** au-dessus de la fente, à 0,41 s |
+| retour à la hauteur du lancer | | 0,81 s |
+
+**C'est la montée qui fait le feu d'artifice** : la plume partait à 0,9
+largeur par seconde vers le haut et freinait aussitôt ; la projection part
+à 2,17 et ne ralentit que par la pesanteur, donc elle MONTE d'un demi-sachet
+avant de retomber — et la chute accélère jusqu'au bout. *Une montée franche
+puis une chute qui ne ralentit jamais*, là où la plume glissait.
+
+Trois choses à ne pas défaire :
+
+- **la culbute est FIXE, au milieu de leurs plages**, là où ils la tirent au
+  hasard : *une matière n'est pas un tirage de partie* — la règle des plis,
+  seedés en dur — et `?paquet=42` doit montrer la même bande à chaque fois.
+  Elle roule dans le sens du lancer (`z` négatif vers la droite), tangue vers
+  la caméra (`x`) et vrille à peine (`y`) ; **c'est la culbute qui montre
+  tour à tour l'envers crème et l'imprimé**, ce que le tangage de la plume
+  faisait à grand-peine ;
+- **la rotation s'INTÈGRE** (`+= w·dt`), elle ne se pose pas : un objet lancé
+  ne cesse pas de tourner, et une rotation posée à chaque image aurait
+  demandé une phase à inventer ;
+- **le fondu avec le film RESTE** (`FONDU_BANDE`, l'ancien `FONDU_PLUME`) :
+  à ce lancer la bande a presque quitté le cadre par le bas quand le film
+  s'en va, mais sur un écran haut le bas est loin, et *la règle de la section
+  précédente ne dépend pas de la vitesse de ce qu'elle efface.*
+
+**Le terme vers la caméra est le leur** (1,07 largeur/s, sans frein) : à une
+seconde la bande a avancé d'une largeur de sachet, donc elle GROSSIT en
+passant — *c'est ce qui la fait lire comme projetée vers soi*, et c'est ce que
+Keko avait lu chez eux comme une plume. **À rejuger s'il la trouve trop près.**
+
+*Vu à l'écran* sur `?paquet=1314` : à moins d'une seconde elle est déjà hors
+du sachet à droite, roulée, en pleine culbute et nettement plus grosse ; le
+film part ensuite et la carte est seule.
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une
@@ -4043,15 +4111,15 @@ la même place se désaccorderaient au premier réglage.*
   soulèvements `PLI_LEVEE`) : *ce sont les chiffres de lexicodex, convertis,
   pas les nôtres* — et **l'envers crème** est de moi, le leur est argenté. *Un
   pli ne se juge qu'en déchirant* ;
-- **la plume** (`PLUME`) : le lancer (1,6 ; 0,9 ; 0,6 largeur de sachet par
-  seconde), les freins (2,4 de côté, 3,2 en chute), la vitesse terminale
-  (0,75), le balancement (0,22 d'ampleur, 1,25 s de période), le roulis (0,5
-  rad) et le tangage (0,45 autour de 0,35). *Les chiffres sont de moi* :
-  lexicodex n'a pas de plume — sa bande culbute en balistique, sans frein — et
-  Keko a demandé une plume. **Elle ne sort plus du cadre : elle s'efface avec
-  le film** (`FONDU_PLUME`, 0,5 — à partir de la mi-chute du film), donc ce
-  qu'on en voit est le lancer et le début du glissé, une seconde et demie ;
-  *une plume ne se juge qu'en ouvrant des paquets* ;
+- **la projection de la bande** (`LANCER`) : la vitesse de départ (0,8 ;
+  2,17 ; 1,07 largeur de sachet par seconde), la pesanteur (5,33) et la
+  culbute (3 ; 0,75 ; −5,5 rad/s). *Les chiffres sont ceux de lexicodex,
+  convertis* — seule la culbute est fixée au milieu de leurs plages au lieu
+  d'être tirée. **Elle s'efface avec le film** (`FONDU_BANDE`, 0,5 — à partir
+  de la mi-chute du film), donc on la voit monter, retomber et grossir vers la
+  caméra pendant une seconde et demie ; *un lancer ne se juge qu'en ouvrant
+  des paquets* — et c'est le terme vers la caméra qu'il faudrait baisser en
+  premier s'il la trouve trop près ;
 - **la pesanteur** (`PESANTEUR`, 1,5, en multiples de la vitesse de départ du
   régime) : ***c'est elle, et elle seule, qui borne la portée LATÉRALE*** —
   0,300 largeur au plus contre 0,755 sans elle. **Elle change de nature en
