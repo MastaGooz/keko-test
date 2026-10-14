@@ -344,3 +344,44 @@ export function suivreLeSon(nom: string, volume = 1): SonSuivi {
     arreter,
   }
 }
+
+/**
+ * UN SON EN BOUCLE, TEL QUEL — le banc d'un fichier qu'on n'entend pas.
+ *
+ * Keko : « j'entends toujours rien sur le cracks, tu peux le jouer en continu
+ * sans condition pour tester si le son n'a pas un souci ? » *Un son qui ne
+ * s'entend pas dans le jeu peut être muet pour deux raisons* — le fichier, ou
+ * la façon dont le jeu le joue — et ce banc ne garde que le fichier : pas de
+ * poursuite, pas de gain, pas de compresseur, volume 1, en boucle. Rend ce qui
+ * l'arrête.
+ */
+export function jouerEnBoucle(nom: string): () => void {
+  let arrete = false
+  let arreter: () => void = () => undefined
+  void precharger(nom).then(() => {
+    if (arrete) return
+    const tampon = TAMPONS.get(nom)
+    const ctx = tampon !== undefined ? ouvrir() : null
+    if (tampon !== undefined && ctx !== null) {
+      const source = ctx.createBufferSource()
+      source.buffer = tampon
+      source.loop = true
+      source.connect(ctx.destination)
+      source.start()
+      chemin = 'Web Audio'
+      arreter = () => source.stop()
+      return
+    }
+    const repli = REPLIS.get(nom)
+    if (repli === undefined) return
+    chemin = 'repli <audio>'
+    const copie = repli.cloneNode() as HTMLAudioElement
+    copie.loop = true
+    void copie.play().catch(() => undefined)
+    arreter = () => copie.pause()
+  })
+  return () => {
+    arrete = true
+    arreter()
+  }
+}

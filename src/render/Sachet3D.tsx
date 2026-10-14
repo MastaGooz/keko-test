@@ -35,7 +35,15 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
-import { SON_CRAQUE, SON_POP, jouerSon, precharger, suivreLeSon, type SonSuivi } from './sons.ts'
+import {
+  SON_CRAQUE,
+  SON_POP,
+  jouerEnBoucle,
+  jouerSon,
+  precharger,
+  suivreLeSon,
+  type SonSuivi,
+} from './sons.ts'
 import {
   LIGNE_DECHIRURE,
   POCHE,
@@ -417,6 +425,9 @@ const VOLUME_CRAQUE = 3
 /** Le banc des étincelles : il tient la découpe à mi-course. Voir `useFrame`. */
 const BANC_GERBE =
   typeof location !== 'undefined' && new URLSearchParams(location.search).has('gerbe')
+/** Le banc du craquement : le fichier en boucle, sans condition. Voir `jouerEnBoucle`. */
+const BANC_CRAQUE =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).has('craque')
 
 /** Ce que le survol penche et avance : *un objet qu'on tourne vers soi.* */
 const PENCHE = 0.26
@@ -1691,6 +1702,20 @@ export function Sachet3D({
     void precharger(SON_CRAQUE)
     void precharger(SON_POP)
     return () => craque.current?.arreter()
+  }, [])
+  // LE BANC `?craque` : le craquement en boucle, tel quel, dès le premier
+  // contact avec la page — *le contexte audio ne naît que sur un geste.*
+  useEffect(() => {
+    if (!BANC_CRAQUE) return
+    let arreter: (() => void) | null = null
+    const demarrer = (): void => {
+      arreter = jouerEnBoucle(SON_CRAQUE)
+    }
+    window.addEventListener('pointerdown', demarrer, { once: true })
+    return () => {
+      window.removeEventListener('pointerdown', demarrer)
+      arreter?.()
+    }
   }, [])
   /**
    * LE VOL : où la bande en est de sa projection, en largeurs de sachet.
