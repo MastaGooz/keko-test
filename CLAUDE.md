@@ -2215,6 +2215,12 @@ parabole* — une rasante sans frein file tout droit, une rasante freinée
 s'arrête à une largeur et s'éteint. Les deux resserrements de la découpe
 restent.
 
+**Puis il s'est resserré à ±60°** — Keko : « les particules du feu d'artifice
+vont un peu trop loin sur les côtés ». *La portée latérale d'une étincelle
+freinée vaut `v·sin(angle) / frein`*, donc le cône est le seul levier qui la
+règle sans toucher à la montée : de ±81° à ±60°, la portée latérale moyenne
+perd un cinquième (0,60 → 0,48 de `v/k`) et la plus longue 13 %.
+
 **ET LA PAUSE DU FILM SUIT** : `DUREE_GERBE` lit désormais la vie du feu
 (0,8 s × 1,25 au pire cas), donc elle passe de 0,68 à **1,11 s**. *Elle se
 calcule, elle ne s'écrit pas* — c'est ce qui fait qu'un changement de régime ne

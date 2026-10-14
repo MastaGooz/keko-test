@@ -1280,14 +1280,20 @@ const ANGLE_MAX = (120 * Math.PI) / 180
  * le seul qui ait toute l'ouverture pour naître : la découpe, elle, n'a qu'un
  * front.
  *
- * **PUIS ELLE S'EST ROUVERTE AVEC LE FEU D'ARTIFICE** : c'est le cône de
- * lexicodex, `±0,45·π` autour de la verticale — presque un demi-disque. *Ce
- * qui faisait le trait horizontal n'était pas l'angle, c'était la parabole* :
- * une rasante sans frein file tout droit, une rasante freinée s'arrête à une
- * largeur et s'éteint. Voir `FEU`.
+ * **PUIS ELLE S'EST ROUVERTE AVEC LE FEU D'ARTIFICE**, au cône de lexicodex
+ * (`±0,45·π`, presque un demi-disque) : *ce qui faisait le trait horizontal
+ * n'était pas l'angle, c'était la parabole* — une rasante sans frein file tout
+ * droit, une rasante freinée s'arrête à une largeur et s'éteint. Voir `FEU`.
+ *
+ * **ET ELLE S'EST RESSERRÉE À ±60°.** Keko : « les particules du feu
+ * d'artifice vont un peu trop loin sur les côtés ». *La portée latérale d'une
+ * étincelle freinée vaut `v·sin(angle) / frein`*, donc c'est le cône, et lui
+ * seul, qui la règle sans toucher à la montée : de ±81° à ±60°, la portée
+ * latérale moyenne perd un cinquième et la plus longue 13 %, et la part des
+ * rasantes tombe avec.
  */
-const ANGLE_ECLAT_MIN = Math.PI / 2 - 0.45 * Math.PI
-const ANGLE_ECLAT_MAX = Math.PI / 2 + 0.45 * Math.PI
+const ANGLE_ECLAT_MIN = Math.PI / 2 - Math.PI / 3
+const ANGLE_ECLAT_MAX = Math.PI / 2 + Math.PI / 3
 /**
  * LA PESANTEUR, en multiples de la vitesse de départ du régime.
  *
