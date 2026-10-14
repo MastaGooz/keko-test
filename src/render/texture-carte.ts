@@ -1447,6 +1447,16 @@ const DECOR_BLEU =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('decor') === 'bleu'
 const SANS_RAYONS =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('rayons') === '0'
+/**
+ * LA LUEUR DU SUJET NE SE PEINT PLUS EN MODE EMOJI. Keko : « j'ai l'impression
+ * qu'il y a un halo lumineux autour des emojis non ? on peut essayer sans ? »
+ * *Le bloom avait été réglé pour des illustrations détourées aux bords doux* ;
+ * un emoji est un aplat net, et sa lueur se lit comme un halo posé autour.
+ * `?lueur=1` la rend — *ce qui a servi à choisir doit rester ouvrable.* Les
+ * autres modes ne changent pas d'un pixel.
+ */
+const AVEC_LUEUR_EMOJI =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('lueur') === '1'
 
 function peindreRayons(
   ctx: CanvasRenderingContext2D,
@@ -3536,7 +3546,7 @@ export async function peindreCarte(
    * redessinerait le sujet NET en double exposition). L'alpha du sujet
    * traverse la réduction, donc le halo épouse sa silhouette.
    */
-  if (image !== null) {
+  if (image !== null && (!bulle || AVEC_LUEUR_EMOJI)) {
     const lArt = LARGE - marge * 2
     /**
      * LA TOILE DU BLOOM COUVRE LA FENÊTRE, LE SUJET EST EN RETRAIT DEDANS.

@@ -5148,3 +5148,15 @@ sur une plaque qui finit à `#dde4ec` — *un gris mêlé de blanc n'est plus un
 gris*, là où une couleur mêlée de blanc reste un teint. Le blanc prend donc son
 ton moyen entier (`#c8ced4`, `TEINT_PASTILLE.blanc = 1`), les quatre autres
 gardent leurs 42 %. Vu au bilan de `?paquet=1314`.
+
+#### LA LUEUR DU SUJET NE SE PEINT PLUS DERRIÈRE L'EMOJI
+
+Keko : **« pour le fond des cartes, j'ai l'impression qu'il y a un halo
+lumineux autour des emojis non ? on peut essayer sans ? »** Oui — c'est le
+bloom de la fenêtre d'art, floutée depuis le sujet et ajoutée au décor. *Il
+avait été réglé pour des illustrations détourées aux bords doux*, où il se lit
+comme de l'ambiance ; **un emoji est un aplat net**, et sa lueur se lit comme un
+halo posé autour. Il saute en mode emoji (`AVEC_LUEUR_EMOJI`), `?lueur=1` le
+rend ; les autres modes ne bougent pas d'un pixel. Vu au bilan de
+`?paquet=1314` : les rayons et le décor nuit restent, plus rien ne flotte
+autour du glyphe.

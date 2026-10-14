@@ -89,8 +89,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   demande la police POUR CE CARACTÈRE (`document.fonts.load(police, emoji)`) :
   Google découpe Noto Color Emoji en onze sous-ensembles et `check` ment.
   Baloo 2 aussi se demande explicitement.
-- **Le bloom se floute vraiment** (`adoucir`, rayon 2, sur le prémultiplié) ;
-  le sujet est en retrait dans sa fenêtre pour que la lueur ait où mourir.
+- **La lueur du sujet ne se peint plus en mode emoji** (`AVEC_LUEUR_EMOJI`,
+  `?lueur=1` la rend) : un emoji est un aplat net, son halo se lisait comme
+  posé autour. Le bloom reste pour les autres modes (`adoucir`, rayon 2, sur
+  le prémultiplié), le sujet en retrait dans sa fenêtre.
 - **Les animés se décodent image par image** (`ImageDecoder`, WebP 512, en
   192, une image sur deux, repli statique silencieux). La carte se repeint
   entière à chaque image sur **deux toiles alternées** (une peinture commence
@@ -314,6 +316,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?fond=sombre` | le fond du paquet sans lumières ni emoji flottants |
 | `?bloom=0` | le paquet sans le halo des points brillants |
 | `?plaque=cran` | la plaque teintée du cran, au lieu du blanc |
+| `?lueur=1` | la lueur floutée du sujet derrière l'emoji (retirée par défaut) |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
