@@ -270,7 +270,7 @@ function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number 
  */
 const BANC_BONUS = '1f942'
 /** La vitesse de lecture du son du flip — Keko l'a voulu accéléré. *Chiffre à l'oeil, ou plutôt à l'oreille, et je n'en ai pas.* */
-const VITESSE_FLIP = 1.35
+const VITESSE_FLIP = 1.6
 /** `?bloom=0` : sans le halo des points brillants — voir `Bloom`. */
 const SANS_BLOOM =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('bloom') === '0'
