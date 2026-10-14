@@ -39,6 +39,7 @@ import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import {
   SON_CRAQUE,
   SON_POP,
+  SON_EQUIPER,
   amorcerLeSon,
   cheminDe,
   diagnosticSon,
@@ -2019,6 +2020,7 @@ export function Sachet3D({
   useEffect(() => {
     void precharger(SON_CRAQUE)
     void precharger(SON_POP)
+    void precharger(SON_EQUIPER)
     // ET LE SON SE RÉVEILLE AU PREMIER CONTACT, comme sur l'archive : le
     // préchargement crée le contexte HORS d'un geste, donc suspendu, et le
     // reprendre coûte du temps — *le réveil doit avoir lieu avant qu'on en ait
@@ -2415,7 +2417,10 @@ export function Sachet3D({
       craque.current = null
       // S'il n'a pas été programmé au lâcher — le banc `?gerbe`, ou un sachet
       // ouvert sans geste — il part maintenant, tard d'une image.
-      if (!popProgramme.current) jouerSon(SON_POP)
+      if (!popProgramme.current) {
+        jouerSon(SON_POP)
+        jouerSon(SON_EQUIPER)
+      }
       // LE JAILLISSEMENT EST UNE RAFALE, AU MÊME INSTANT QUE LE FLASH. *Deux
       // endroits qui décriraient le même instant se désaccorderaient au
       // premier réglage*, donc c'est le drapeau du flash qui le porte — et
@@ -2656,6 +2661,10 @@ export function Sachet3D({
       // retard plus la latence du téléphone, c'est ce qu'on entendait.*
       popProgramme.current = true
       jouerSon(SON_POP, 1, Math.max(0, PART_FRONT - p.current) * DUREE_BRULURE)
+      // ET « EQUIP » PART AVEC LE POP, au même instant programmé — Keko : « on
+      // peut jouer Equip.aac en même temps que le pop ? » *Deux sons qui disent
+      // le même instant se programment sur la même horloge.*
+      jouerSon(SON_EQUIPER, 1, Math.max(0, PART_FRONT - p.current) * DUREE_BRULURE)
       onOuvrir?.()
     }
     // UNE ANNULATION N'EST PAS UN LÂCHER : c'est le système qui reprend le
