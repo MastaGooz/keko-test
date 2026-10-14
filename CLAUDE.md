@@ -2240,6 +2240,21 @@ l'a pas désaccordée. **La vie est plus courte que la leur** (0,8 contre 1,05
 en moyenne) pour cette raison exactement : chaque dixième de vie est un
 dixième de pause avant que la carte se découvre.
 
+**PUIS LA PAUSE EST TOMBÉE : LE FILM PART AVEC LE POP.** Keko : « il faudrait
+que le paquet descende dès le son pop finalement je pense ». *Et c'est
+cohérent avec ce qu'il venait de faire du jaillissement* : le film attendait
+la gerbe parce qu'elle était une cloche qui RETOMBAIT sur la fente — la fente
+partie, on ne voyait plus d'où elle sortait. **Un feu d'artifice s'éteint en
+l'air**, il n'a plus besoin de la fente sous lui. Le film descend donc dès
+l'arrachement (`pc = tApres / DUREE_CHUTE`), et la phase qui suit dure **le
+plus long des deux** — `DUREE_FRONT + max(DUREE_GERBE, DUREE_CHUTE)`.
+
+*Deux signaux, et ils se sont séparés* : `onOuvert` part quand le FILM est
+hors cadre (`pc ≥ 1`, à 0,87 s), c'est lui qui découvre la carte et la fait se
+rapprocher ; `onParti`, qui démonte le sachet, attend que TOUT soit fini
+(`pp ≥ 1`, à 1,11 s), sinon les étincelles seraient coupées en plein vol —
+*le sachet les porte*, même si elles ne descendent pas avec lui.
+
 *Vu à l'écran* sur `?paquet=1314` : à trois dixièmes de seconde un éventail
 d'éclats monte sur toute la largeur du sachet, jusqu'en haut de l'écran en
 paysage ; une seconde plus tard ils se sont éteints sur place, sans être

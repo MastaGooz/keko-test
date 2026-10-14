@@ -1199,12 +1199,20 @@ const DUREE_GERBE = ECLAT_ETALE + FEU.vie * 1.25
 /**
  * CE QUE DURE L'OUVERTURE ENTIÈRE, et **la part que le front en occupe.**
  *
- * *Elles vivent ici, après la gerbe, parce qu'elles en DÉPENDENT* : la chute du
- * film attend que la dernière étincelle soit retombée, donc la phase qui suit
- * l'arrachement vaut la gerbe plus la chute — ou l'envol de la bande, s'il
- * durait plus longtemps.
+ * *Elles vivent ici, après la gerbe, parce qu'elles en DÉPENDENT* : après
+ * l'arrachement, le film descend ET la gerbe vole, EN MÊME TEMPS — Keko : « il
+ * faudrait que le paquet descende dès le son pop ». La phase qui suit
+ * l'arrachement dure donc le plus long des deux : le sachet ne se démonte pas
+ * avant que la dernière étincelle se soit éteinte, même quand le film est
+ * déjà hors cadre.
+ *
+ * *Le film a attendu la gerbe le temps d'un épisode* — « le paquet reste en
+ * place durant la gerbe finale » — parce qu'alors la gerbe était une cloche
+ * qui retombait sur la fente, et la fente partait pendant qu'elle volait.
+ * **Depuis que la gerbe est un feu d'artifice qui s'éteint en l'air, elle n'a
+ * plus besoin de la fente** : Keko a rouvert l'ordre, et c'est cohérent.
  */
-export const DUREE_BRULURE = DUREE_FRONT + DUREE_GERBE + DUREE_CHUTE
+export const DUREE_BRULURE = DUREE_FRONT + Math.max(DUREE_GERBE, DUREE_CHUTE)
 const PART_FRONT = DUREE_FRONT / DUREE_BRULURE
 /**
  * LA SOURCE EST LE FRONT LUI-MÊME, dispersée AUTOUR de lui.
@@ -2132,7 +2140,8 @@ export function Sachet3D({
     // la sienne : la bande s'envole tout de suite, le film attend que la gerbe
     // soit retombee. *Une part commune ne pouvait pas porter deux durees.*
     const tApres = Math.max(0, (pp - PART_FRONT) * DUREE_BRULURE)
-    const pc = Math.min(1, Math.max(0, (tApres - DUREE_GERBE) / DUREE_CHUTE))
+    // LE FILM PART DÈS L'ARRACHEMENT, avec le pop — il n'attend plus la gerbe.
+    const pc = Math.min(1, Math.max(0, tApres / DUREE_CHUTE))
 
     if (pf >= 1 && !ditDechire.current) {
       ditDechire.current = true
@@ -2204,7 +2213,14 @@ export function Sachet3D({
       // sachet partait sans jamais dire « ouvert », et le paquet restait mort.
       // *La plume ne pouvait pas le faire : elle mettait trois secondes.* Un
       // signal qui en conclut un autre ne peut pas le précéder.
-      if (dit.current && (fondu <= 0 || b.position.y < -descente || q.t > LANCER.vieMax)) {
+      // ET PAS AVANT QUE LA GERBE SOIT ÉTEINTE (`pp >= 1`) : le sachet porte
+      // les étincelles, et le démonter sur le seul départ du film les
+      // couperait en plein vol — depuis que le film ne les attend plus.
+      if (
+        dit.current &&
+        pp >= 1 &&
+        (fondu <= 0 || b.position.y < -descente || q.t > LANCER.vieMax)
+      ) {
         ditParti.current = true
         onParti?.()
       }
@@ -2228,15 +2244,19 @@ export function Sachet3D({
      * l'endroit d'où elles ont été lancées. *Ce qu'on retire est la pochette,
      * pas ce qui vient d'en sortir.*
      *
-     * **ET IL ATTEND QUE LA GERBE SOIT RETOMBÉE.** Keko : « il faudrait que le
-     * paquet reste en place durant la gerbe finale, et qu'il descende une fois
-     * la gerbe terminée ». *La gerbe sort de la FENTE* — si la fente s'en va
-     * pendant qu'elle vole, on ne voit plus d'où elle sort. La pause est la
-     * durée de la gerbe, qui se calcule : voir `DUREE_GERBE`.
+     * **ET IL PART DÈS L'ARRACHEMENT, avec le pop.** Il a attendu la gerbe le
+     * temps d'un épisode — « le paquet reste en place durant la gerbe
+     * finale » — parce qu'elle était une cloche qui retombait sur la fente.
+     * Keko l'a rouvert quand elle est devenue un feu d'artifice qui s'éteint
+     * en l'air : « il faudrait que le paquet descende dès le son pop ». Voir
+     * `DUREE_BRULURE`.
      */
     if (chute.current !== null) chute.current.position.y = -descente * chuteDuFilm(pc)
 
-    if (pp >= 1 && !dit.current) {
+    // « OUVERT » QUAND LE FILM EST HORS CADRE, pas quand tout est fini : c'est
+    // lui qui découvre la carte, et c'est sur lui qu'elle se rapproche. La
+    // gerbe peut finir de s'éteindre pendant ce temps.
+    if (pc >= 1 && !dit.current) {
       dit.current = true
       onOuvert?.()
     }
