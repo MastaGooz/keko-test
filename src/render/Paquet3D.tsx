@@ -162,6 +162,8 @@ function colonnesDuBilan(largeurVisible: number, hauteurVisible: number): number
  */
 const RESSORT_SORTIE = 5
 const ANGLE_SORTIE = 0.14
+/** De combien la passée sort DEVANT la pile, en largeurs de carte — voir `placeAuDefile`. */
+const SAILLIE_SORTIE = 0.1
 const GYRO_GAIN_CARTE = 0.6
 const GYRO_BORNE_CARTE = 0.22
 /**
@@ -447,6 +449,16 @@ export function Paquet3D(): React.ReactElement {
    * `montree` est l'index dans `paquet`, `fini` dit qu'on est passé au bilan.
    */
   const [montree, setMontree] = useState(0)
+  /**
+   * CHAQUE CARTE QUI APPARAÎT PREND LA TENUE DU MOMENT POUR ZÉRO. Keko :
+   * « l'inclinaison d'une carte doit prendre pour position de base
+   * l'orientation du téléphone au moment où elle apparaît, pas au moment où le
+   * booster ou les cartes précédentes sont apparues ». La première apparaît
+   * quand le film est parti (`ouvert`), les suivantes à chaque `montree`.
+   */
+  useEffect(() => {
+    if (ouvert) gyro.current?.recaler()
+  }, [ouvert, montree])
 
   /**
    * LE CURSEUR DE LA CARTE REGARDÉE, tenu par l'ÉCRAN.
@@ -469,8 +481,9 @@ export function Paquet3D(): React.ReactElement {
   const gyro = useRef<Inclinaison | null>(null)
   useEffect(() => {
     if (SANS_GYRO) return
-    // LE ZÉRO EST LA TENUE DU MOMENT OÙ LE PAQUET APPARAÎT — et c'est LE
-    // capteur du paquet, prêté au sachet : voir `Sachet3D.gyro`.
+    // LE ZÉRO EST LA TENUE DU MOMENT OÙ LE PAQUET APPARAÎT — c'est LE capteur
+    // du paquet, prêté au sachet (voir `Sachet3D.gyro`) — PUIS IL SE REPREND À
+    // CHAQUE CARTE QUI APPARAÎT, juste en dessous.
     gyro.current = suivreLInclinaison()
     return () => {
       gyro.current?.arreter()
@@ -855,7 +868,14 @@ export function Paquet3D(): React.ReactElement {
    * tourne.
    */
   function placeAuDefile(i: number): [number, number, number] {
-    if (i < montree) return [lVisible * 1.1, 0, zDefile]
+    // LA PASSÉE SORT DEVANT LA PILE, d'une saillie qui se compte en largeurs
+    // de carte. Keko : « quand la carte est déplacée pour révéler la
+    // suivante, elle la traverse ». *Elle partait à la MÊME profondeur que
+    // celle qu'elle découvre* : deux plans coplanaires qui glissent l'un sur
+    // l'autre se disputent chaque pixel, et dès que la pile penche, l'un
+    // coupe l'autre. Elle garde l'inclinaison de la pile (le même curseur,
+    // donc des plans parallèles) et passe devant.
+    if (i < montree) return [lVisible * 1.1, 0, zDefile + tailleDuDefile * SAILLIE_SORTIE]
     // LES SUIVANTES SE RANGENT D'UN CHEVEU DERRIÈRE, et c'est tout ce qu'il
     // faut : *elles ne tournent plus*, donc un écart qui tranche l'ordre de
     // deux plans à plat suffit. À taille nulle la question ne se posait pas ;
@@ -1195,8 +1215,10 @@ export function Paquet3D(): React.ReactElement {
               // toutes, c'est la règle des piles du coffre — rotations
               // identiques autour de centres alignés, les plans restent
               // parallèles. Voir `curseurDefile`.
-              curseurPartage={!fini && i >= montree ? curseurDefile.current : undefined}
-              refletAuDoigt={!fini && i >= montree}
+              // ET LA PASSÉE LE GARDE AUSSI en sortant : des plans parallèles ne
+              // se coupent pas — voir `placeAuDefile`.
+              curseurPartage={!fini ? curseurDefile.current : undefined}
+              refletAuDoigt={!fini}
               ombre
               // ELLE NE PORTE PLUS DE GESTE À ELLE. *Tout passe par le geste
               // de l'écran* — une tape sur la carte et une tape à côté font la

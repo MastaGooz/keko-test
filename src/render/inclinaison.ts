@@ -29,6 +29,15 @@
 export interface Inclinaison {
   /** `x` : le haut du téléphone qui s'éloigne (négatif) ou se rapproche ; `y` : le côté droit qui descend (positif). */
   lire(): { x: number; y: number } | null
+  /**
+   * REPREND LE ZÉRO SUR LA TENUE DU MOMENT. Keko : « l'inclinaison d'une carte
+   * doit prendre pour position de base l'orientation du téléphone au moment
+   * où elle apparaît, pas au moment où le booster ou les cartes précédentes
+   * sont apparues ». *Chaque objet qui apparaît se cale sur la main qui le
+   * tient à cet instant.* Sans lecture encore reçue, il n'y a rien à
+   * reprendre : la première lecture fera le zéro.
+   */
+  recaler(): void
   arreter(): void
 }
 
@@ -43,14 +52,17 @@ type AvecPermission = typeof DeviceOrientationEvent & {
 
 export function suivreLInclinaison(): Inclinaison {
   if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) {
-    return { lire: () => null, arreter: () => undefined }
+    return { lire: () => null, recaler: () => undefined, arreter: () => undefined }
   }
   let ref: { beta: number; gamma: number } | null = null
   let lisse: { x: number; y: number } | null = null
+  /** La dernière lecture BRUTE, pour pouvoir y reprendre le zéro. */
+  let brut: { beta: number; gamma: number } | null = null
   const ctrl = new AbortController()
 
   const surLecture = (e: DeviceOrientationEvent): void => {
     if (e.beta === null || e.gamma === null) return
+    brut = { beta: e.beta, gamma: e.gamma }
     if (ref === null) {
       ref = { beta: e.beta, gamma: e.gamma }
       lisse = { x: 0, y: 0 }
@@ -93,6 +105,11 @@ export function suivreLInclinaison(): Inclinaison {
 
   return {
     lire: () => lisse,
+    recaler: () => {
+      if (brut === null) return
+      ref = { beta: brut.beta, gamma: brut.gamma }
+      lisse = { x: 0, y: 0 }
+    },
     arreter: () => ctrl.abort(),
   }
 }
