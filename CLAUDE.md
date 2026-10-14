@@ -2341,6 +2341,35 @@ dixième de sachet, part à droite, puis descend en zigzag devant la carte et
 sort par le bas en trois secondes environ. *Le film est parti et la carte
 s'est rapprochée pendant ce temps*, exactement comme avant.
 
+#### ET ELLE S'EFFACE AVEC LE FILM — elle ne lui survit plus
+
+Keko : **« je voudrais qu'elle tombe plus vite ou fade, en gros quand le paquet
+n'est plus visible, elle ne doit plus l'être non plus »**.
+
+*La plume mettait trois secondes à sortir du cadre, le film une et demie* :
+pendant la seconde et demie d'écart elle planait seule devant une carte qui
+s'était déjà rapprochée — **le dernier morceau de l'emballage encore à l'écran
+quand l'emballage n'existait plus.**
+
+**ELLE S'EFFACE, ET SON FONDU N'EST PAS UNE DURÉE À ELLE : IL LIT LA DESCENTE
+DU FILM.** `uFondu` existait dans le nuanceur depuis que le film s'effaçait
+sur son dernier quart, et plus personne ne l'écrivait depuis qu'il descend ;
+la bande le reprend, à `1 − smoothstep(0,5 → 1)` de la part de chute du film
+(`FONDU_PLUME`). Elle vaut donc zéro à l'instant exact où le film quitte le
+cadre — *deux objets qui doivent disparaître ensemble lisent le même chiffre*,
+et aucune durée écrite à la main ne pourrait se désaccorder de `DUREE_CHUTE`.
+
+**Elle glisse en pleine lumière sur la première moitié** : la course du film
+accélère, donc à mi-chute il n'est descendu que d'un tiers, et la plume est
+encore à son lancer. *Le fondu ne mord que sur ce qu'on ne verrait de toute
+façon plus.* Sa mécanique ne change pas d'un chiffre — même lancer, mêmes
+freins, même balancement.
+
+**`onParti` part dès qu'elle est éteinte**, plus seulement au bord du cadre :
+le sachet se démonte donc au même instant qu'`onOuvert`, et le bord du cadre
+comme le garde-fou de huit secondes ne restent que pour le cas où elle
+sortirait avant. *Vérifié à l'écran* : film parti, la carte est seule.
+
 #### CE QUE JE N'AI PAS PU VOIR À L'ÉCRAN, ET IL FAUT LE SAVOIR
 
 **La correction est mécanique, pas esthétique** — mais *je n'ai pas obtenu une
@@ -4019,9 +4048,10 @@ la même place se désaccorderaient au premier réglage.*
   (0,75), le balancement (0,22 d'ampleur, 1,25 s de période), le roulis (0,5
   rad) et le tangage (0,45 autour de 0,35). *Les chiffres sont de moi* :
   lexicodex n'a pas de plume — sa bande culbute en balistique, sans frein — et
-  Keko a demandé une plume. **La terminale décide du temps qu'elle met à sortir
-  du cadre**, environ trois secondes, pendant lesquelles elle passe devant la
-  carte ; *une plume ne se juge qu'en ouvrant des paquets* ;
+  Keko a demandé une plume. **Elle ne sort plus du cadre : elle s'efface avec
+  le film** (`FONDU_PLUME`, 0,5 — à partir de la mi-chute du film), donc ce
+  qu'on en voit est le lancer et le début du glissé, une seconde et demie ;
+  *une plume ne se juge qu'en ouvrant des paquets* ;
 - **la pesanteur** (`PESANTEUR`, 1,5, en multiples de la vitesse de départ du
   régime) : ***c'est elle, et elle seule, qui borne la portée LATÉRALE*** —
   0,300 largeur au plus contre 0,755 sans elle. **Elle change de nature en

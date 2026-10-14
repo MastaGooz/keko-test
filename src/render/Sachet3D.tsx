@@ -84,8 +84,16 @@ const DUREE_CHUTE = 0.87
  * (`terminale`), elle part de côté et revient (`balance`, `periode`), et elle
  * s'incline dans le sens où elle glisse (`roulis`) tout en tanguant vers la
  * caméra (`tangage`) — c'est le tangage qui montre tour à tour son envers crème
- * et son imprimé. *Rien ne rétrécit et rien ne s'efface* : ce qui part, part
- * pour de bon, et c'est le bord du cadre qui l'emporte.
+ * et son imprimé. *Rien ne rétrécit* : ce qui part, part pour de bon.
+ *
+ * **ET ELLE S'EFFACE AVEC LE FILM.** Keko : « je voudrais qu'elle tombe plus
+ * vite ou fade, en gros quand le paquet n'est plus visible, elle ne doit plus
+ * l'être non plus ». *Une plume met trois secondes à sortir du cadre, le film
+ * en met une et demie* — donc elle restait seule à l'écran, devant une carte
+ * qui s'était déjà rapprochée. Son fondu n'est donc pas une durée à elle :
+ * **il lit la descente du film** (`FONDU_PLUME`), et elle est partie à
+ * l'instant exact où lui quitte le cadre. *Deux objets qui doivent disparaître
+ * ensemble lisent le même chiffre.*
  *
  * Tout est en LARGEURS DE SACHET et en secondes.
  */
@@ -108,6 +116,14 @@ const PLUME = {
   /** La vie au-delà de laquelle on cesse d'attendre qu'elle sorte du cadre. */
   vieMax: 8,
 } as const
+/**
+ * À PARTIR D'OÙ LA PLUME S'EFFACE, en part de la DESCENTE DU FILM. À 0,5 le
+ * film n'est descendu que d'un tiers (sa course accélère), donc la plume
+ * glisse encore en pleine lumière ; elle s'éteint sur la seconde moitié et
+ * vaut zéro quand le film est hors cadre. *À 0 elle s'effacerait dès que le
+ * film bouge, à 1 elle disparaîtrait d'un coup.*
+ */
+const FONDU_PLUME = 0.5
 /**
  * OÙ LE FRONT COMMENCE, en parts de largeur. *Il sort des deux bords* : une
  * déchirure qui commencerait pile sur le bord se lirait comme un bord qui
@@ -1531,6 +1547,16 @@ function chuteDuFilm(pv: number): number {
   return Math.pow(pv, 1.7)
 }
 
+/**
+ * UNE RAMPE SANS ARÊTE, bornée à [0, 1] : la `smoothstep` du nuanceur, côté
+ * TypeScript. *Une rampe droite s'allume et s'éteint d'un coup* — la règle
+ * déjà payée sur le voile sous le texte des cartes.
+ */
+function smooth(x: number): number {
+  const u = Math.min(1, Math.max(0, x))
+  return u * u * (3 - 2 * u)
+}
+
 export function Sachet3D({
   taille,
   position,
@@ -1894,9 +1920,11 @@ export function Sachet3D({
      * Elle est LANCÉE — à droite, un peu en l'air, vers la caméra — puis l'air
      * la freine : sa chute plafonne, elle se balance de gauche à droite et
      * penche dans le sens où elle glisse. *Ce qu'on arrache est emporté, puis
-     * l'air le prend.* Rien ne tournoie, rien ne rétrécit, rien ne s'efface :
-     * c'est le bord du cadre qui l'emporte, et c'est `descente` qui le dit.
-     * Voir `PLUME`.
+     * l'air le prend.* Rien ne tournoie, rien ne rétrécit — mais elle
+     * S'EFFACE AVEC LE FILM : son fondu lit `pc`, la descente du film, donc
+     * elle est partie quand lui a quitté le cadre. Le bord du cadre reste un
+     * second terme, pour le cas où elle sortirait avant. Voir `PLUME` et
+     * `FONDU_PLUME`.
      */
     if (bande.current !== null && pf >= 1 && !ditParti.current) {
       const b = bande.current
@@ -1932,9 +1960,15 @@ export function Sachet3D({
       b.rotation.z = -PLUME.roulis * Math.cos(phase) * prise
       b.rotation.x =
         PLUME.tangageMoyen * prise + PLUME.tangage * Math.sin(phase * 0.5 + 0.6) * prise
-      // SORTIE DU CADRE : `descente` est la demi-hauteur du champ plus celle
-      // du sachet, donc en dessous il reste au moins un demi-sachet de marge.
-      if (b.position.y < -descente || q.t > PLUME.vieMax) {
+      // LE FONDU LIT LA DESCENTE DU FILM : plein tant que le film tient,
+      // éteint quand il a quitté le cadre. *L'uniforme attendait depuis que
+      // le film a cessé de s'effacer* — il n'a plus que la bande à servir.
+      const fondu = 1 - smooth((pc - FONDU_PLUME) / (1 - FONDU_PLUME))
+      bandeMat.uniforms.uFondu!.value = fondu
+      // PARTIE : éteinte avec le film, ou sortie du cadre avant lui.
+      // `descente` est la demi-hauteur du champ plus celle du sachet, donc en
+      // dessous il reste au moins un demi-sachet de marge.
+      if (fondu <= 0 || b.position.y < -descente || q.t > PLUME.vieMax) {
         ditParti.current = true
         onParti?.()
       }
