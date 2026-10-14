@@ -2269,6 +2269,27 @@ la règle du glow du sachet, un cran plus loin* : sans passe de flou, la seule f
 est de peindre son rayonnement dans le grain. **La découpe en profite aussi**,
 puisque les deux régimes partagent le fragment.
 
+**ET LA MOITIÉ DU FEU PREND LA COULEUR DE LA CARTE LA PLUS RARE DU PAQUET.**
+Keko : « il faudrait colorer les particules du feu d'artifice (disons la
+moitié) de la couleur de la carte la plus rare du paquet ». *C'est l'« omen »
+de lexicodex* : leurs étincelles de rupture prennent la couleur de la
+meilleure rareté quand il y en a une.
+
+- **la couleur est la lueur d'AMBIANCE du cran** (`AMBIANCE`, celle qui teinte
+  l'écran au reveal), pas le ton du cadre : *un pigment ne survit pas à la
+  diffusion*, et une étincelle est de la lumière ajoutée. `Paquet3D` prend le
+  sommet du paquet (`rangDe` sur toutes les cartes) et passe `lueurRare` au
+  sachet ;
+- **elle se lit TELLE QUELLE, en sRGB comme la crème**, et au même gain :
+  `THREE.Color` l'aurait convertie en linéaire et assombrie d'un tiers sans
+  rien dire ;
+- **le coeur reste blanc, seule la frange se teinte** — *un point qui sature
+  tire vers le blanc, sa frange garde la couleur*, la règle du halo du foil ;
+- **le régime porte le tirage** : 0 la découpe, 1 le feu crème, 2 le feu
+  teinté, une étincelle sur deux à la naissance. *Le nuanceur ne tire rien.*
+- **un paquet sans rang reste crème** : l'uniforme part de la crème, donc tant
+  que personne ne le pose, les deux moitiés sont identiques.
+
 *Vu à l'écran* sur `?paquet=1314` : à trois dixièmes de seconde un éventail
 d'éclats monte sur toute la largeur du sachet, jusqu'en haut de l'écran en
 paysage ; une seconde plus tard ils se sont éteints sur place, sans être

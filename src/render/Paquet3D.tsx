@@ -910,6 +910,15 @@ export function Paquet3D(): React.ReactElement {
             onDechire={() => setFlash((f) => f + 1)}
             onOuvert={() => setOuvert(true)}
             onParti={() => setParti(true)}
+            // LA MOITIÉ DU FEU D'ARTIFICE PREND LA COULEUR DE LA CARTE LA PLUS
+            // RARE DU PAQUET — Keko. *C'est l'« omen » de lexicodex* : leurs
+            // étincelles de rupture prennent la couleur de la meilleure rareté.
+            // La lueur d'AMBIANCE et non le ton du cadre : *un pigment ne
+            // survit pas à la diffusion*, et une étincelle est de la lumière.
+            lueurRare={lueurDans(
+              paquet.reduce((h, c) => Math.max(h, rangDe(c.id)), -1),
+              teintes,
+            )}
           />
         )}
 

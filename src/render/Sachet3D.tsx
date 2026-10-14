@@ -1549,7 +1549,9 @@ function emettre(
     }
     // UNE RAFALE NAÎT ALLUMÉE, la découpe s'allume : voir MONTEE_ECLAT.
     m[s] = eclat ? MONTEE_ECLAT : MONTEE_DECOUPE
-    r[s] = eclat ? 1 : 0
+    // LE REGIME : 0 la decoupe, 1 le feu creme, 2 le feu TEINTE de la couleur
+    // de la carte la plus rare -- une etincelle sur deux, tiree a la naissance.
+    r[s] = eclat ? (Math.random() < 0.5 ? 2 : 1) : 0
   }
   vols.needsUpdate = true
   montees.needsUpdate = true
@@ -1581,6 +1583,9 @@ function matiereDeLaGerbe(): THREE.ShaderMaterial {
     // PLACE de la decoupe -- tout est ecrit a la naissance.
     uniforms: {
       uTemps: { value: 0 },
+      // LA COULEUR DU SOMMET DU PAQUET, pour la moitié teintée du feu : crème
+      // par défaut, donc indiscernable des autres tant qu'on ne la pose pas.
+      uRare: { value: new THREE.Vector3(FENTE_BORD[0], FENTE_BORD[1], FENTE_BORD[2]) },
     },
     vertexShader: `uniform float uTemps;
 attribute vec4 aGraine;
@@ -1589,6 +1594,7 @@ attribute float aMontee;
 attribute float aRegime;
 varying vec2 vQ;
 varying float vVie;
+varying float vTeinte;
 
 void main() {
   // CHAQUE ÉTINCELLE PORTE SA NAISSANCE, et son âge en découle. Une place
@@ -1598,6 +1604,8 @@ void main() {
   // ET LA VIE EST CELLE DE SON REGIME : courte pour la decoupe, longue pour le
   // feu d'artifice, qui doit avoir le temps de monter et de s'eteindre.
   bool feu = aRegime > 0.5;
+  // ET LA MOITIÉ DU FEU EST TEINTÉE (regime 2) : c'est le fragment qui mélange.
+  vTeinte = aRegime > 1.5 ? 1.0 : 0.0;
   float vie = feu
     ? ${FEU.vie.toFixed(2)} * (0.75 + 0.5 * aGraine.z)
     : ${VIE_ETINCELLE.toFixed(2)} * (0.82 + 0.36 * aGraine.z);
@@ -1663,8 +1671,10 @@ void main() {
   vQ = q * 2.0;
   vVie = fondu * scintille;
 }`,
-    fragmentShader: `varying vec2 vQ;
+    fragmentShader: `uniform vec3 uRare;
+varying vec2 vQ;
 varying float vVie;
+varying float vTeinte;
 
 void main() {
   float d = length(vQ);
@@ -1694,7 +1704,11 @@ void main() {
   // c'est AUSSI ce que fait la lumière de la fente, qui passe du crème au
   // presque-blanc à mesure qu'elle chauffe. **Les deux lisent donc les deux
   // mêmes tons**, et l'étincelle ne peut plus se détacher de ce qui la lâche.
-  vec3 creme = ${ton(FENTE_BORD, GAIN_ETINCELLE)};
+  // LA FRANGE PREND LA COULEUR DU SOMMET DU PAQUET sur la moitié teintée du
+  // feu d'artifice ; LE COEUR RESTE BLANC -- *un point qui sature tire vers le
+  // blanc, sa frange garde la couleur.* La couleur est poussee au meme gain
+  // que la creme : une etincelle est de la lumiere ajoutee.
+  vec3 creme = mix(${ton(FENTE_BORD, GAIN_ETINCELLE)}, uRare * ${GAIN_ETINCELLE.toFixed(2)}, vTeinte);
   vec3 blanc = ${ton(FENTE_COEUR, GAIN_ETINCELLE)};
   vec3 lum = (creme * (halo * ${POIDS_HALO.toFixed(2)} + croix * 0.9) + blanc * coeur) * vVie;
   if (max(lum.r, max(lum.g, lum.b)) < 0.003) discard;
@@ -1731,6 +1745,7 @@ export function Sachet3D({
   position,
   descente,
   ouvre = false,
+  lueurRare,
   onOuvert,
   onParti,
   onDechire,
@@ -1759,6 +1774,11 @@ export function Sachet3D({
   readonly descente: number
   /** Vrai dès qu'il doit s'ouvrir sans geste. Il ne se referme pas. */
   readonly ouvre?: boolean
+  /**
+   * LA COULEUR DE LA CARTE LA PLUS RARE DU PAQUET, en CSS : la moitié des
+   * étincelles du feu d'artifice la prennent. Sans elle, toutes sont crème.
+   */
+  readonly lueurRare?: string
   /** La bande vient d'être arrachée — *c'est l'instant du flash.* */
   readonly onDechire?: () => void
   /** Tout est fini : *c'est l'écran qui décide de la suite.* */
@@ -2005,6 +2025,17 @@ export function Sachet3D({
     corps.uniforms.uTemps!.value = t
     bandeMat.uniforms.uTemps!.value = t
     gerbe.uniforms.uTemps!.value = t
+    // LA COULEUR DU SOMMET DU PAQUET, lue TELLE QUELLE (en sRGB, comme la
+    // creme) : *une etincelle est de la lumiere ajoutee*, et la convertir en
+    // lineaire l'assombrirait d'un bon tiers sans que rien ne le dise.
+    if (lueurRare !== undefined && /^#[0-9a-f]{6}$/i.test(lueurRare)) {
+      const v = gerbe.uniforms.uRare!.value as THREE.Vector3
+      v.set(
+        parseInt(lueurRare.slice(1, 3), 16) / 255,
+        parseInt(lueurRare.slice(3, 5), 16) / 255,
+        parseInt(lueurRare.slice(5, 7), 16) / 255,
+      )
+    }
 
     if (ouvre) file.current = true
 
