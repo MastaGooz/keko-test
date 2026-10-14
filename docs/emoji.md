@@ -5139,3 +5139,12 @@ truc plus "teint" entre le blanc et la couleur de rareté. De plus on peut
 
 Les deux passent par `melange(a, b, part)`, un mélange sRGB à trois lignes. Vu
 au bilan de `?paquet=1314` ; les deux chiffres sont de moi, à rejuger.
+
+#### LA PASTILLE DU COMMUN PREND SON GRIS ENTIER
+
+Keko : **« pour le common, on peut griser un peu la bulle, elle est trop claire,
+on la distingue mal du fond »**. À 42 % de couleur, le blanc sortait à `#e8ebed`
+sur une plaque qui finit à `#dde4ec` — *un gris mêlé de blanc n'est plus un
+gris*, là où une couleur mêlée de blanc reste un teint. Le blanc prend donc son
+ton moyen entier (`#c8ced4`, `TEINT_PASTILLE.blanc = 1`), les quatre autres
+gardent leurs 42 %. Vu au bilan de `?paquet=1314`.

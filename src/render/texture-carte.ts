@@ -967,8 +967,15 @@ const TYPE_BULLE = '#0d141b'
 const PIGMENT_PLAQUE = [0.45, 0.55, 0.6] as const
 const LUM_PLAQUE = [0.94, 0.88, 0.85] as const
 const PLAQUE_CLAIRE = ['#fdfefe', '#eaeef4', '#dde4ec'] as const
-/** La part de couleur du cran dans la pastille du type, le reste est blanc. */
-const TEINT_PASTILLE = 0.42
+/**
+ * La part de couleur du cran dans la pastille du type, le reste est blanc.
+ * **Le blanc prend son ton moyen entier** : à 0,42 il sortait à `#e8ebed` sur
+ * une plaque à `#dde4ec` — Keko : « pour le common, on peut griser un peu la
+ * bulle, elle est trop claire, on la distingue mal du fond ». *Un gris mêlé de
+ * blanc n'est plus un gris*, là où une couleur mêlée de blanc reste un teint.
+ */
+const TEINT_PASTILLE: Record<string, number> = { blanc: 1 }
+const TEINT_PASTILLE_DEFAUT = 0.42
 /**
  * DE COMBIEN LE DÉCOR D'UNE CARTE REMONTE DE LA NUIT VERS LE TON MOYEN DU
  * CRAN. Keko : « on peut éclaircir un peu les fonds des cartes (derrière les
@@ -4558,7 +4565,9 @@ function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre, bulle 
     // (`TEINT_PASTILLE`, la part de couleur qui reste).
     const metal = carte.rarete === undefined ? undefined : METAUX[carte.rarete]
     ctx.fillStyle =
-      metal === undefined ? tonsDeLaPlaque(carte.rarete)[2] : melange(metal[2], '#ffffff', TEINT_PASTILLE)
+      metal === undefined
+        ? tonsDeLaPlaque(carte.rarete)[2]
+        : melange(metal[2], '#ffffff', TEINT_PASTILLE[carte.rarete!] ?? TEINT_PASTILLE_DEFAUT)
     ctx.beginPath()
     ctx.roundRect(LARGE / 2 - l / 2, y - h / 2, l, h, h / 2)
     ctx.fill()
