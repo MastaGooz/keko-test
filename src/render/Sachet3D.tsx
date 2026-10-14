@@ -35,6 +35,7 @@ import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
+import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import {
   SON_CRAQUE,
   SON_POP,
@@ -433,6 +434,31 @@ const TENUE_CRAQUE = 0.1
 /** Le banc des étincelles : il tient la découpe à mi-course. Voir `useFrame`. */
 const BANC_GERBE =
   typeof location !== 'undefined' && new URLSearchParams(location.search).has('gerbe')
+/**
+ * LE SACHET PENCHE AVEC LE TÉLÉPHONE. Keko : « tu crois que le paquet et les
+ * cartes pourraient bouger quand on bouge le téléphone ? Sachet d'abord. »
+ *
+ * *Le reflet du film ne vit que si l'objet bouge* — et sur téléphone il n'y a
+ * ni survol ni, hors du geste, de doigt posé : le balancement était tout ce
+ * qui le faisait vivre. **L'inclinaison du téléphone est le même geste**, et
+ * elle alimente la même cible de rotation que le curseur.
+ *
+ * **LE SACHET RESTE DROIT DANS LE MONDE QUAND LE TÉLÉPHONE PENCHE** : on
+ * incline le haut du téléphone vers l'arrière, le haut du sachet vient vers
+ * soi — comme un objet qui flotterait DANS le téléphone plutôt que collé à
+ * l'écran. *C'est un choix de signe*, et il s'inverse en une ligne.
+ *
+ * `GYRO_GAIN` dit combien de la rotation du téléphone le sachet reprend, et
+ * `GYRO_BORNE` jusqu'où : *une inclinaison qui suit le téléphone sans borne
+ * finit par coucher l'objet*, la règle du penchant au doigt. Un quart de tour
+ * de téléphone ne vaut donc que la borne. Le doigt posé et le survol passent
+ * devant — pendant qu'on déchire, c'est le doigt qui penche. `?gyro=0` le
+ * coupe, pour comparer.
+ */
+const GYRO_GAIN = 0.6
+const GYRO_BORNE = 0.22
+const SANS_GYRO =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('gyro') === '0'
 /** Le banc du craquement : le fichier en boucle, sans condition. Voir `jouerEnBoucle`. */
 const BANC_CRAQUE =
   typeof location !== 'undefined' && new URLSearchParams(location.search).has('craque')
@@ -476,10 +502,16 @@ const BORNE_PENCHE = 0.7
  * coûtée : les cartes attendaient à un `0,06` posé à la main, que le
  * balancement a repris, et qu'un réglage de `PENCHE` aurait repris de nouveau.
  */
-export const RECUL_DU_BAS =
+const RECUL_AU_SURVOL =
   (RAPPORT_SACHET / 2) * Math.sin(BERCE_X + BORNE_PENCHE * PENCHE) +
   0.5 * Math.sin(BERCE_Y + BORNE_PENCHE * PENCHE * 1.3) -
   AVANCEE
+// ET LE TÉLÉPHONE PENCHE SANS AVANCER : au gyroscope le sachet prend jusqu'à
+// `GYRO_BORNE` sur chaque axe PAR-DESSUS le balancement, et rien ne se
+// retranche — c'est donc lui le pire cas, et le recul le lit aussi.
+const RECUL_AU_GYRO =
+  (RAPPORT_SACHET / 2) * Math.sin(BERCE_X + GYRO_BORNE) + 0.5 * Math.sin(BERCE_Y + GYRO_BORNE)
+export const RECUL_DU_BAS = Math.max(RECUL_AU_SURVOL, RECUL_AU_GYRO)
 
 /** Une texture d'un pixel transparent, le temps que le sachet soit peint. */
 const VIDE = (() => {
@@ -1846,6 +1878,18 @@ export function Sachet3D({
   const craque = useRef<SonEnBoucle | null>(null)
   /** La ligne de diagnostic de `?son`, ou rien. */
   const diag = useRef<HTMLDivElement | null>(null)
+  /** L'inclinaison du téléphone, rapportée à celle du moment où le sachet est apparu. */
+  const gyro = useRef<Inclinaison | null>(null)
+  useEffect(() => {
+    if (SANS_GYRO) return
+    // LE ZÉRO EST LA TENUE DU TÉLÉPHONE QUAND LE SACHET APPARAÎT : l'écoute
+    // se monte avec lui, et il se remonte à chaque paquet — voir `inclinaison`.
+    gyro.current = suivreLInclinaison()
+    return () => {
+      gyro.current?.arreter()
+      gyro.current = null
+    }
+  }, [])
   /** Où en était le front à l'image d'avant, et quand il a bougé pour la dernière fois. */
   const pfAvant = useRef(0)
   const dernierPas = useRef(-Infinity)
@@ -2069,10 +2113,16 @@ export function Sachet3D({
        * mécanique.*
        */
       const berce = file.current ? 0 : 1 - feu.current
+      // ET LE TÉLÉPHONE PENCHE LE SACHET, derrière le doigt et le survol : il
+      // ne s'ajoute que quand rien ne le tient — voir GYRO_GAIN.
+      const incl = gyro.current?.lire() ?? null
+      const borne = (v: number): number => Math.min(GYRO_BORNE, Math.max(-GYRO_BORNE, v))
+      const gyroX = incl === null || vu ? 0 : borne(incl.x * GYRO_GAIN)
+      const gyroY = incl === null || vu ? 0 : borne(-incl.y * GYRO_GAIN)
       const cibleX =
-        (vu ? -curseur.current.y * PENCHE : 0) + Math.sin(t * 0.62) * BERCE_X * berce
+        (vu ? -curseur.current.y * PENCHE : 0) + Math.sin(t * 0.62) * BERCE_X * berce + gyroX
       const cibleY =
-        (vu ? curseur.current.x * PENCHE * 1.3 : 0) + Math.sin(t * 0.9) * BERCE_Y * berce
+        (vu ? curseur.current.x * PENCHE * 1.3 : 0) + Math.sin(t * 0.9) * BERCE_Y * berce + gyroY
       r.rotation.x += (cibleX - r.rotation.x) * k
       r.rotation.y += (cibleY - r.rotation.y) * k
       r.position.z += (taille * AVANCEE * feu.current - r.position.z) * k

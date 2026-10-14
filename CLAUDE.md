@@ -4571,6 +4571,53 @@ Trois choses à ne pas défaire :
 le survol et le geste lisent tous les deux : *deux conversions qui décriraient
 la même place se désaccorderaient au premier réglage.*
 
+#### LE SACHET PENCHE AVEC LE TÉLÉPHONE — le zéro est la tenue du moment où il apparaît
+
+Keko : **« tu crois que le paquet et les cartes pourraient bouger quand on
+bouge le téléphone ? »**, puis **« sachet d'abord, prends les décisions et fais
+au mieux, l'idée c'est que l'orientation de base doit correspondre à
+l'orientation de base du tel au moment où le paquet apparaît »**.
+
+*Le reflet du film ne vit que si l'objet bouge*, et sur téléphone, hors du
+geste, seul le balancement le faisait vivre. **L'inclinaison du téléphone est
+le même geste** : elle alimente la même cible de rotation que le curseur
+(`render/inclinaison.ts`, lu par `Sachet3D`), donc le galbe, les quatre
+lampes et les plis la suivent sans une ligne de nuanceur de plus.
+
+Les décisions, et chacune s'inverse en une ligne :
+
+- **LE ZÉRO EST LA PREMIÈRE LECTURE**, pas l'horizontale — personne ne tient
+  un téléphone à plat. L'écoute se monte avec le sachet, qui se remonte à
+  chaque paquet, donc chaque paquet se recalibre sur la main qui le tient ;
+- **sur iPhone, le capteur se demande, et depuis un geste** (iOS 13+,
+  `requestPermission`) : on attend le premier relâchement — *c'est le
+  relâchement qui active une page sur tactile*, la règle payée par le son — et
+  le zéro se prend à la première lecture qui suit. Un refus est silencieux,
+  le sachet garde son balancement. Android écoute d'emblée, un PC sans capteur
+  ne lit jamais rien ;
+- **le sachet reste droit DANS LE MONDE quand le téléphone penche** : on
+  incline le haut du téléphone vers l'arrière, le haut du sachet vient vers
+  soi, comme un objet qui flotterait dans le téléphone. *C'est un choix de
+  signe* ;
+- **il reprend 60 % de la rotation du téléphone, borné à 0,22 rad** par axe
+  (`GYRO_GAIN`, `GYRO_BORNE`) — *une inclinaison qui suit sans borne finit par
+  coucher l'objet* ; **le doigt posé et le survol passent devant**, pendant
+  qu'on déchire c'est le doigt qui penche ;
+- **une zone morte d'un degré et un lissage** : un téléphone tenu immobile
+  tremble d'un degré, et un sachet qui tremblerait avec dirait un défaut ;
+- **`gamma` est borné loin de ±90°**, où le capteur bascule d'un coup quand
+  le téléphone est presque debout.
+
+**ET LE RECUL DES CARTES CACHÉES LE LIT.** Au survol le sachet AVANCE en
+penchant, et `RECUL_DU_BAS` retranchait cette avancée ; au gyroscope il penche
+sans avancer, jusqu'à la borne par-dessus le balancement — **c'est donc lui le
+pire cas**, et le recul est le plus grand des deux. *Une rotation est une
+translation déguisée en profondeur*, payée une troisième fois.
+
+`?gyro=0` le coupe, pour comparer. **Rien de tout ça n'a été vu sur un
+téléphone** : la force, le signe et la zone morte sont à juger en main, et je
+n'ai ni capteur ni moyen d'en simuler un.
+
 #### CE QUI RESTE À TRANCHER PAR KEKO — le sachet
 
 - **l'éventail** : trois faces, leurs trois crans et leurs trois emoji
