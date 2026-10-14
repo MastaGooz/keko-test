@@ -660,6 +660,7 @@ export function Carte3D({
   devant = false,
   culbute = null,
   flip = null,
+  rebond = null,
   developpe,
   onFixee,
   onArrivee,
