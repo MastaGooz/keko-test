@@ -476,7 +476,7 @@ const AVANCEE = 0.1
  * par Keko — à 1 le sachet brille partout comme avant, à 0 seul l'imprimé
  * luit.
  */
-const BRILLANCE_FILM = 0.45
+const BRILLANCE_FILM = 0.75
 /**
  * ET LES SOUDURES, ENCORE MOINS. Keko : « diminuer la brillance des parties
  * jaunes en haut et en bas (avec les dents) ». *Du film pressé à plat ne luit
