@@ -269,6 +269,8 @@ function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number 
  * fabriquer lui-meme.
  */
 const BANC_BONUS = '1f942'
+/** La vitesse de lecture du son du flip — Keko l'a voulu accéléré. *Chiffre à l'oeil, ou plutôt à l'oreille, et je n'en ai pas.* */
+const VITESSE_FLIP = 1.35
 /** `?bloom=0` : sans le halo des points brillants — voir `Bloom`. */
 const SANS_BLOOM =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('bloom') === '0'
@@ -754,7 +756,7 @@ export function Paquet3D(): React.ReactElement {
       if (premiere === undefined) return
       // LE FLIP SONNE : *la carte tourne dès la première image*, donc le son
       // part avec le geste, comme la culbute.
-      jouerSon(SON_RETOURNER)
+      jouerSon(SON_RETOURNER, 1, 0, VITESSE_FLIP)
       setRetourne(true)
       setJetons((j) => ({ ...j, [premiere.id]: (j[premiere.id] ?? 0) + 1 }))
       decouvrir(0)

@@ -199,14 +199,20 @@ export function precharger(nom: string): Promise<void> {
 /**
  * Joue un son. Il est chargé s'il ne l'est pas encore — *le premier geste ne
  * doit pas être muet*, même si le préchargement n'a pas eu le temps d'aboutir.
+ *
+ * `vitesse` accélère la lecture (1 = telle quelle) : un son plus court ET plus
+ * aigu, comme une bande qu'on fait tourner plus vite. Keko, sur le flip : « tu
+ * peux accélérer le son flip quand tu le joues ? » *Le fichier ne change pas,
+ * c'est sa lecture qui change* — le repli `<audio>` le sait aussi.
  */
-export function jouerSon(nom: string, volume = 1, dans = 0): void {
+export function jouerSon(nom: string, volume = 1, dans = 0, vitesse = 1): void {
   const tampon = TAMPONS.get(nom)
   if (tampon !== undefined) {
     const ctx = ouvrir()
     if (ctx === null) return
     const source = ctx.createBufferSource()
     source.buffer = tampon
+    source.playbackRate.value = vitesse
     const gain = ctx.createGain()
     gain.gain.value = volume
     source.connect(gain).connect(ctx.destination)
@@ -223,6 +229,7 @@ export function jouerSon(nom: string, volume = 1, dans = 0): void {
     chemin = 'repli <audio>'
     const copie = repli.cloneNode() as HTMLAudioElement
     copie.volume = Math.min(1, volume)
+    copie.playbackRate = vitesse
     const lire = (): void => void copie.play().catch(() => undefined)
     if (dans > 0) setTimeout(lire, dans * 1000)
     else lire()
@@ -233,7 +240,7 @@ export function jouerSon(nom: string, volume = 1, dans = 0): void {
   // retard vaut mieux qu'un son perdu, et ça n'arrive qu'à la toute première
   // fois si le préchargement n'a pas abouti.
   void precharger(nom).then(() => {
-    if (TAMPONS.has(nom) || REPLIS.has(nom)) jouerSon(nom, volume, dans)
+    if (TAMPONS.has(nom) || REPLIS.has(nom)) jouerSon(nom, volume, dans, vitesse)
   })
 }
 
