@@ -1827,6 +1827,8 @@ void main() {
 function chuteDuFilm(pv: number): number {
   return Math.pow(pv, 1.7)
 }
+/** La part de la chute du film à laquelle le paquet se dit ouvert — voir `onOuvert`. */
+const PART_OUVERT = 0.62
 
 /**
  * UNE RAMPE SANS ARÊTE, bornée à [0, 1] : la `smoothstep` du nuanceur, côté
@@ -2476,10 +2478,15 @@ export function Sachet3D({
      */
     if (chute.current !== null) chute.current.position.y = -descente * chuteDuFilm(pc)
 
-    // « OUVERT » QUAND LE FILM EST HORS CADRE, pas quand tout est fini : c'est
-    // lui qui découvre la carte, et c'est sur lui qu'elle se rapproche. La
-    // gerbe peut finir de s'éteindre pendant ce temps.
-    if (pc >= 1 && !dit.current) {
+    // « OUVERT » QUAND LE FILM A DÉCOUVERT LA CARTE, pas quand il est hors
+    // cadre : c'est lui qui la découvre, et c'est sur lui qu'elle se
+    // rapproche. Keko : « il faudrait que le zoom commence plus tôt, la carte
+    // reste trop longtemps avant le zoom ». À PART_OUVERT de la chute, le film
+    // a parcouru près de la moitié de sa course et dégagé les quatre
+    // cinquièmes de la carte : elle rebondit pendant qu'il finit de partir,
+    // ce qui se lit comme une carte qui jaillit de sa pochette. La gerbe peut
+    // finir de s'éteindre pendant ce temps.
+    if (pc >= PART_OUVERT && !dit.current) {
       dit.current = true
       onOuvert?.()
     }
