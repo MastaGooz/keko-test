@@ -173,7 +173,7 @@ const RESSORT_SORTIE = 5
  */
 const RESSORT_REBOND = 22
 /** La part du flip au bout de laquelle la pile s'ouvre et le geste reprend — voir `pileOuverte`. */
-const PART_PILE_OUVERTE = 0.5
+const PART_PILE_OUVERTE = 1
 /** La distance de sortie en portrait, en largeurs de carte : la référence du ressort. */
 const DISTANCE_SORTIE_REF = 1.4
 const ANGLE_SORTIE = 0.14
