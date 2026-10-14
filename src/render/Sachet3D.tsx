@@ -471,6 +471,18 @@ const PENCHE = 0.26
 const AVANCEE = 0.1
 /** Le point de la fente tel que le relief le pose, recalculé à chaque image. */
 const fenteReelle = new THREE.Vector3()
+/**
+ * LA SOURCE EST POSÉE UN PEU SOUS LA FENTE, en largeurs de sachet.
+ *
+ * Keko, une fois l'origine calée sur la fente réelle : « il faudrait encore
+ * descendre un peu, car visuellement on voit les choses au-dessus de la fente
+ * avec leur mouvement ». *Une étincelle naît allumée et part vers le haut* :
+ * ce qu'on lit comme son point de naissance est déjà au-dessus de la ligne,
+ * et son halo rayonne encore un dixième de largeur autour. Le retrait
+ * compense ce qu'on voit, pas ce qu'on calcule — c'est un chiffre à l'oeil,
+ * et il est à Keko.
+ */
+const RETRAIT_SOURCE = 0.04
 
 /**
  * LE BALANCEMENT DE REPOS, en radians, et la BORNE du penchant au survol.
@@ -2163,7 +2175,7 @@ export function Sachet3D({
       const g = gerbeMesh.current
       if (g !== null) {
         fenteReelle
-          .set(0, hCorps / 2 - hBande / 2, taille * (REL_BOMBE + 0.02))
+          .set(0, hCorps / 2 - hBande / 2 - taille * RETRAIT_SOURCE, taille * (REL_BOMBE + 0.02))
           .applyEuler(r.rotation)
           .add(r.position)
         g.position.copy(fenteReelle)
