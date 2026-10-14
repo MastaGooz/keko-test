@@ -1367,6 +1367,76 @@ const IRISATION: readonly (readonly [number, string])[] = [
  * plateau, le plus saturé des cinq : *c'est déjà lui que `TON_LUSTRE` prend
  * pour dire la couleur d'un cran.*
  */
+/**
+ * LES RAYONS EN ÉVENTAIL DERRIÈRE L'EMOJI — le vocabulaire des cartes à
+ * collectionner, dans la teinte du cran et dosés par la rareté.
+ *
+ * Keko, sur le fond de la fenêtre d'art : « tu aurais des idées ? », puis
+ * « essayons le 2 » — des rayons, parmi six pistes. *La règle qui tient la
+ * carte ne bouge pas* : **une échelle se dit en couleur**, donc les rayons
+ * prennent le ton du cran (le plateau moyen de `METAUX`, celui que le lustre
+ * et la plaque lisent déjà) — et ils parlent d'autant plus fort que le cran
+ * est haut (`FORCE_RAYONS`). *Le bas de l'échelle ne doit pas parler* : le
+ * blanc n'en a presque pas.
+ *
+ * Ils partent du CENTRE DU SUJET et s'éteignent vers les bords de la fenêtre :
+ * *un rayon qui va jusqu'au cadre est un motif, un rayon qui meurt est une
+ * lumière.* Seize rayons alternés, un peu tournés pour qu'aucun ne tombe sur
+ * un axe, ajoutés en `lighter` comme les confettis du dos — *une couleur peu
+ * opaque posée sur un fond sombre se salit, ajoutée elle éclaire.*
+ *
+ * `?rayons=0` les retire : *ce qui a servi à choisir doit rester ouvrable.*
+ */
+const NB_RAYONS = 16
+const FORCE_RAYONS: Record<string, number> = {
+  blanc: 0.05,
+  vert: 0.13,
+  bleu: 0.17,
+  violet: 0.22,
+  orange: 0.28,
+}
+const SANS_RAYONS =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('rayons') === '0'
+
+function peindreRayons(
+  ctx: CanvasRenderingContext2D,
+  rarete: string | undefined,
+  x: number,
+  y: number,
+  l: number,
+  h: number,
+): void {
+  const force = rarete === undefined ? 0 : (FORCE_RAYONS[rarete] ?? 0)
+  const ton = rarete === undefined ? undefined : METAUX[rarete]?.[2]
+  if (force <= 0 || ton === undefined) return
+  const cx = x + l / 2
+  const cy = y + h / 2
+  const rayon = Math.hypot(l, h) / 2
+  ctx.save()
+  ctx.beginPath()
+  ctx.rect(x, y, l, h)
+  ctx.clip()
+  ctx.globalCompositeOperation = 'lighter'
+  // L'EXTINCTION VERS LES BORDS : pleine au centre, nulle au coin le plus loin.
+  const fondu = ctx.createRadialGradient(cx, cy, rayon * 0.08, cx, cy, rayon)
+  fondu.addColorStop(0, ton)
+  fondu.addColorStop(1, ton + '00')
+  ctx.fillStyle = fondu
+  ctx.globalAlpha = force
+  const depart = 0.21
+  const pas = (Math.PI * 2) / NB_RAYONS
+  for (let i = 0; i < NB_RAYONS; i += 2) {
+    const a0 = depart + i * pas
+    const a1 = a0 + pas
+    ctx.beginPath()
+    ctx.moveTo(cx, cy)
+    ctx.arc(cx, cy, rayon * 1.05, a0, a1)
+    ctx.closePath()
+    ctx.fill()
+  }
+  ctx.restore()
+}
+
 function aplat(ctx: CanvasRenderingContext2D, rarete?: string): CanvasGradient {
   const g = ctx.createLinearGradient(0, 0, 0, HAUT)
   const [, sombre, moyen, , bord] = METAUX[rarete ?? 'commune'] ?? METAUX.commune!
@@ -3362,6 +3432,11 @@ export async function peindreCarte(
     }
     ctx.restore()
   }
+
+  // LES RAYONS DU CRAN, derrière le sujet — mode emoji seulement : voir
+  // peindreRayons. *Ils sont du décor, pas de la lumière du sujet* : ils
+  // viennent avant le bloom, qui les éclaire comme il éclaire le reste.
+  if (bulle && !SANS_RAYONS) peindreRayons(ctx, carte.rarete, marge, fY, LARGE - marge * 2, fH)
 
   /**
    * FOND, PUIS LUMIÈRE, PUIS SUJET — et c'est Keko qui a trouvé l'ordre : « on

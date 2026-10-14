@@ -1319,6 +1319,32 @@ tiennent ensemble et le gris du blanc reste gris, puisqu'un gris n'a pas de
 chroma à gagner. *Si la plaque est jugée trop franche, le gain se masque à la
 fenêtre d'art par ses UV*, sans toucher au reste.
 
+### LES RAYONS DU CRAN DERRIÈRE L'EMOJI — la piste 2 sur six
+
+Keko, sur le fond de la fenêtre d'art : **« je pense qu'on devrait rework le
+fond des cartes (celui derrière les illustrations), tu aurais des idées ? »**,
+puis **« essayons le 2 »**.
+
+Six pistes proposées : (1) le clavier du dos en touches discrètes, (2) des
+rayons en éventail dosés par la rareté, (3) un bokeh flou comme le fond de la
+scène, (4) un semis d'emoji du même rayon en filigrane, (5) un fond par
+rayon — *déconseillé, il remet une couleur sur l'axe que la rareté occupe* —
+et (6) une matière pour les bonus seulement.
+
+**Les rayons** (`peindreRayons`) : seize rayons alternés, un peu tournés pour
+qu'aucun ne tombe sur un axe, partant du centre du sujet et s'éteignant vers
+les bords de la fenêtre — *un rayon qui va jusqu'au cadre est un motif, un
+rayon qui meurt est une lumière.* Ils prennent **le ton du cran** (le plateau
+moyen de `METAUX`, celui du lustre et de la plaque) et parlent d'autant plus
+fort que le cran est haut (`FORCE_RAYONS` : 0,05 → 0,28) ; *le bas de
+l'échelle ne parle presque pas.* Ajoutés en `lighter`, avant le bloom du
+sujet, qui les éclaire comme le reste. Mode emoji seulement, par la bulle.
+
+*Vu au bilan de `?paquet=1314`* : francs sur l'orange, nets sur le vert et le
+violet, discrets sur le bleu, à peine là sur le blanc. `?rayons=0` les
+retire. **Les forces sont à l'oeil**, à rejuger par Keko — et les pistes 1 et
+6 restent à essayer par-dessus s'il le veut.
+
 ### LE DOS DE CARTE : UN BOUQUET DE STICKERS SUR UN CLAVIER
 
 Keko : **« je voudrais que tu me fasses un dos de carte thématique (celui-là est
