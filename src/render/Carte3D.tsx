@@ -215,6 +215,8 @@ const SEUIL_ARRIVEE = 0.005
 
 /** Ce que la carte regardée bascule quand le curseur va d'un bord à l'autre. */
 export const INCLINAISON_REFLET = 0.34
+/** L'ordre de rendu d'une carte au premier plan : après tout le reste — voir `devant`. */
+const ORDRE_DEVANT = 10
 
 /**
  * CE QU'UN ÉCRAN PEUT DIRE À UNE CARTE DE SON CURSEUR, quand c'est lui qui le
@@ -503,6 +505,18 @@ type Props = {
    */
   refletAuDoigt?: boolean
   /**
+   * ELLE PASSE DEVANT TOUT, QUELLE QUE SOIT SA PROFONDEUR. Keko, sur la carte
+   * qui sort du défilé : « en fonction de l'inclinaison elle traverse celle de
+   * derrière : on devrait la faire passer complètement au premier plan lors
+   * du slide ». *Une saillie en z ne peut pas gagner contre tous les angles* —
+   * la pile penche, la passée se redresse, et il reste toujours un penchant où
+   * les deux plans se croisent. Dessinée EN DERNIER, après avoir effacé la
+   * profondeur, elle recouvre tout ce qui a été dessiné avant : la face garde
+   * son test de profondeur contre son propre corps, et rien d'autre ne peut
+   * la couper.
+   */
+  devant?: boolean
+  /**
    * UN JETON QUI DIT « TU VIENS D'ÊTRE POSÉE DANS UN SLOT » : la carte joue
    * alors sa culbute et se moque de l'amortissement.
    *
@@ -626,6 +640,7 @@ export function Carte3D({
   apparue = null,
   reflet = false,
   refletAuDoigt = false,
+  devant = false,
   culbute = null,
   flip = null,
   developpe,
@@ -641,6 +656,25 @@ export function Carte3D({
   onPointerOut,
 }: Props): React.JSX.Element {
   const groupe = useRef<THREE.Group>(null)
+  const corpsMesh = useRef<THREE.Mesh>(null)
+  const faceMesh = useRef<THREE.Mesh>(null)
+  /**
+   * AU PREMIER PLAN : le corps se dessine après tout le reste, en effaçant la
+   * profondeur juste avant, et la face juste après lui — voir `devant`. Le
+   * rendu des ombres passe par une cible à part, et on n'y efface rien.
+   */
+  useEffect(() => {
+    const c = corpsMesh.current
+    const f = faceMesh.current
+    if (c === null) return
+    c.renderOrder = devant ? ORDRE_DEVANT : 0
+    if (f !== null) f.renderOrder = devant ? ORDRE_DEVANT + 1 : 0
+    c.onBeforeRender = devant
+      ? (renderer) => {
+          if (renderer.getRenderTarget() === null) renderer.clearDepth()
+        }
+      : () => undefined
+  }, [devant])
   // LA FACE, LE CORPS ET LE DOS LISENT LE MÊME RAYON : voir `rayonDe`.
   const rayon = rayonDe(carte)
   /**
@@ -1997,6 +2031,7 @@ ${nuanceur.fragmentShader}`
           taches sombres sur sa propre face, d'autant plus qu'elle est proche
           de la caméra. Le sol reçoit les ombres, c'est tout ce qu'il faut. */}
       <mesh
+        ref={corpsMesh}
         castShadow={ombre}
         geometry={geometrieDuCorps(rayon)}
         material={laiton}
@@ -2014,7 +2049,13 @@ ${nuanceur.fragmentShader}`
       >
         {/* LA FACE : la carte peinte, un cheveu devant le corps. Ses coins
             transparents laissent voir le laiton arrondi derrière. */}
-        <mesh geometry={GEOMETRIE_FACE} material={face} position={[0, 0, EPAISSEUR / 2 + 0.001]} raycast={() => null} />
+        <mesh
+          ref={faceMesh}
+          geometry={GEOMETRIE_FACE}
+          material={face}
+          position={[0, 0, EPAISSEUR / 2 + 0.001]}
+          raycast={() => null}
+        />
         {/* LE VERSO, le temps d'une culbute OU d'un flip : sans lui, la carte
             disparaît un demi-tour sur deux et le geste ne se lit plus.
             *Mesuré à l'écran sur le flip* : le plan manquait, donc la première

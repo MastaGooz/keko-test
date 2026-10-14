@@ -1626,6 +1626,27 @@ plus qu'un capteur, pris par le paquet et PRÊTÉ au sachet (`Sachet3D.gyro`),
 donc un seul zéro : la tenue du moment où le paquet apparaît. Si le téléphone
 ne répond toujours pas, c'est la date du build qu'il faut lire en premier.
 
+#### LA PASSÉE EST AU PREMIER PLAN, ET ÇA NE SE RÈGLE PAS EN PROFONDEUR
+
+Keko, après deux passes de saillie : **« elle passe bien dessus, mais en
+fonction de l'inclinaison elle traverse celle de derrière : on devrait la faire
+passer complètement au premier plan lors du slide »**.
+
+***UNE SAILLIE EN Z NE PEUT PAS GAGNER CONTRE TOUS LES ANGLES.*** Trois
+versions l'ont montré : la passée à la même profondeur (elle traverse dès que
+la pile penche), la passée qui partage l'inclinaison et sort d'un dixième
+(deux plans parallèles décalés en x se séparent de Δx·sin θ, elle passe
+derrière), la passée redressée à un quart de largeur (il reste des angles où
+les plans se croisent). *Chaque réglage repousse la borne, aucun ne la
+supprime.*
+
+**Elle est donc dessinée EN DERNIER** (`Carte3D.devant`) : son corps prend un
+`renderOrder` au-dessus de tout, efface la profondeur juste avant de se
+dessiner (`onBeforeRender`, jamais dans une cible d'ombre), et sa face suit
+d'un cran — elle garde son test de profondeur contre son propre corps, et
+rien d'autre ne peut la couper. *Ce qui doit être devant par règle se dessine
+par règle, pas par distance.* La saillie reste, pour le volume du geste.
+
 #### UN SEUL FLIP RETOURNE TOUT LE PAQUET
 
 Keko : **« ce serait cool que quand on slide des cartes vers la droite, la carte

@@ -1262,6 +1262,9 @@ export function Paquet3D(): React.ReactElement {
               // gardent le leur — et l'angle est une cible comme la place,
               // amortie par le même ressort.
               ressort={!fini && i < montree ? ressortDeSortie : undefined}
+              // ET ELLE PASSE AU PREMIER PLAN, quelle que soit l'inclinaison :
+              // voir `Carte3D.devant`. La saillie reste pour le volume.
+              devant={!fini && i < montree}
               rotation={!fini && i < montree ? [0, 0, -ANGLE_SORTIE] : undefined}
               // ET C'EST L'ÉCRAN QUI TIENT SON CURSEUR — pour TOUTE LA PILE,
               // pas pour la seule carte qu'on regarde. Keko : « quand on bouge
