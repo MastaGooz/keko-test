@@ -256,8 +256,8 @@ const BORNE_PENTE = (
   1.05
 ).toFixed(1)
 
-const PLI = 0.5
-const OMBRE = 0.05
+const PLI = 0.8
+const OMBRE = 0.09
 
 /**
  * LE FILM EST UN MÉTAL À 70 %, et c'est ce qui teinte ses reflets.
