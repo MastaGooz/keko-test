@@ -1212,7 +1212,7 @@ const FEU = {
    * bord. Elles partent dans le cône miroir, au même frein, et c'est le
    * ralenti qui dit qu'elles retombent au lieu d'être lancées.
    */
-  partBas: 0.3,
+  partBas: 0.5,
   vitesseBas: 0.4,
 } as const
 
