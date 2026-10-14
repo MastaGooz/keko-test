@@ -220,15 +220,16 @@ export const INCLINAISON_REFLET = 0.34
  * CE QU'UN ÉCRAN PEUT DIRE À UNE CARTE DE SON CURSEUR, quand c'est lui qui le
  * tient (`curseurPartage`). `x` et `y` en demi-largeurs et demi-hauteurs de
  * carte, de −0,5 à 0,5. `dessus` dit qu'on la regarde : elle s'incline, brille
- * et s'avance. `penche` dit qu'on l'INCLINE SEULEMENT — c'est le téléphone qui
- * bouge, pas un doigt qui la regarde : *un lustre qui s'allumerait parce
- * qu'on tient son téléphone de travers se lirait comme un défaut.*
+ * et s'avance — *que ce soit un doigt, une souris ou le téléphone qu'on
+ * bouge* (Keko : « quand on bouge la carte en bougeant le tel, il y ait la
+ * lumière aussi comme avec le tap »). `tenu` dit qu'un POINTEUR la tient :
+ * c'est ce que le gyroscope lit pour s'effacer derrière le doigt.
  */
 export interface CurseurDeCarte {
   dessus: boolean
   x: number
   y: number
-  penche?: boolean
+  tenu?: boolean
 }
 /**
  * Et de combien elle s'avance vers le regard, EN PART DE SA LARGEUR.
@@ -1597,11 +1598,9 @@ ${nuanceur.fragmentShader}`
      */
     const kReflet = 1 - Math.exp(-9 * delta)
     const dessus = reflet && curseur.dessus
-    // LE TÉLÉPHONE PENCHE SANS ALLUMER : voir `CurseurDeCarte.penche`.
-    const penche = dessus || (reflet && curseur.penche === true)
     l.brille += ((dessus ? 1 : 0) - l.brille) * kReflet
-    l.vx += ((penche ? curseur.x : 0) - l.vx) * kReflet
-    l.vy += ((penche ? curseur.y : 0) - l.vy) * kReflet
+    l.vx += ((dessus ? curseur.x : 0) - l.vx) * kReflet
+    l.vy += ((dessus ? curseur.y : 0) - l.vy) * kReflet
 
     /**
      * LA CULBUTE PREND LA MAIN SUR TOUT LE RESTE, et c'est voulu : pendant

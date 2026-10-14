@@ -146,11 +146,12 @@ function colonnesDuBilan(largeurVisible: number, hauteurVisible: number): number
  * *Le sachet convertit l'inclinaison en rotation* (`GYRO_GAIN`, borné à
  * `GYRO_BORNE`) ; la carte, elle, ne connaît qu'un CURSEUR en demi-largeurs,
  * que `Carte3D` multiplie par `INCLINAISON_REFLET`. On lui donne donc la même
- * rotation, exprimée dans ses unités — **et sans lustre** : `penche` seul,
- * parce qu'un téléphone qu'on tient de travers ne regarde pas la carte.
+ * rotation, exprimée dans ses unités — **et avec la lumière**, comme sous le
+ * doigt : Keko l'a demandé en le voyant pencher sans briller (« qu'il y ait
+ * la lumière aussi comme avec le tap »).
  *
- * **Le doigt et la souris passent devant** : tant que `curseur.dessus` est
- * tenu par l'écran, le gyroscope ne touche à rien. Même signes que le
+ * **Le doigt et la souris passent devant** : tant que `curseur.tenu` dit
+ * qu'un pointeur la tient, le gyroscope ne touche à rien. Même signes que le
  * sachet : le haut du téléphone qui s'éloigne penche le haut de la carte vers
  * l'arrière, le côté droit qui descend penche la carte à droite.
  */
@@ -164,10 +165,10 @@ function PencheAuGyro({
   gyro: { current: Inclinaison | null }
 }): null {
   useFrame(() => {
-    if (curseur.dessus) return
+    if (curseur.tenu) return
     const incl = gyro.current?.lire() ?? null
     if (incl === null) {
-      curseur.penche = false
+      curseur.dessus = false
       return
     }
     const borne = (v: number): number =>
@@ -175,7 +176,7 @@ function PencheAuGyro({
     // rotation.x de la carte = -vy * INCLINAISON ; rotation.y = vx * INCLINAISON.
     const rx = borne(incl.x * GYRO_GAIN_CARTE)
     const ry = borne(-incl.y * GYRO_GAIN_CARTE)
-    curseur.penche = true
+    curseur.dessus = true
     curseur.x = ry / INCLINAISON_REFLET
     curseur.y = -rx / INCLINAISON_REFLET
   })
@@ -441,7 +442,7 @@ export function Paquet3D(): React.ReactElement {
    * ou un balayage, ce qui ne change rien au geste. Le gyroscope prend le
    * relais quand rien ne la tient : voir `PencheAuGyro`.
    */
-  const curseurDefile = useRef<CurseurDeCarte>({ dessus: false, x: 0, y: 0, penche: false })
+  const curseurDefile = useRef<CurseurDeCarte>({ dessus: false, x: 0, y: 0, tenu: false })
   const refBoite = useRef<{ cx: number; cy: number; l: number; h: number } | null>(null)
   const gyro = useRef<Inclinaison | null>(null)
   useEffect(() => {
@@ -736,6 +737,7 @@ export function Paquet3D(): React.ReactElement {
           doigtPose = true
           viser(e)
           c.dessus = true
+          c.tenu = true
         }
       },
       { signal },
@@ -747,6 +749,7 @@ export function Paquet3D(): React.ReactElement {
           // À LA SOURIS, LE SURVOL : dedans elle s'incline, dehors elle se
           // redresse — le `pointerout` que la carte inerte ne reçoit pas.
           c.dessus = viser(e)
+          c.tenu = c.dessus
         } else if (doigtPose) {
           viser(e)
         }
@@ -757,6 +760,7 @@ export function Paquet3D(): React.ReactElement {
       if (e.pointerType === 'mouse') return
       doigtPose = false
       c.dessus = false
+      c.tenu = false
     }
     addEventListener('pointercancel', lacher, { signal })
     addEventListener(
@@ -1143,9 +1147,11 @@ export function Paquet3D(): React.ReactElement {
               // s'efface. *Le défilé est le plus grand des deux, sauf sur un
               // écran très haut où le bilan tient sur une ligne.*
               tailleTexture={Math.max(grande, tailleDuDefile, taille)}
-              // ELLE RÉPOND AU CURSEUR une fois révélée, et pas avant : *un dos
-              // n'a rien à montrer*, donc rien à faire briller.
-              reflet={vue}
+              // ELLE RÉPOND AU CURSEUR DÈS LE DOS. *Un dos n'a rien à montrer*,
+              // disait la note — mais il a une matière à faire jouer, et c'est
+              // ce que Keko a demandé : « il faudrait que ça marche pour le
+              // dos de carte au début aussi ».
+              reflet
               // ET C'EST L'ÉCRAN QUI TIENT SON CURSEUR — pour TOUTE LA PILE,
               // pas pour la seule carte qu'on regarde. Keko : « quand on bouge
               // une carte, elle traverse celle derrière, il faut bouger toute
