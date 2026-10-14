@@ -4564,7 +4564,7 @@ export function dosDe(carte: CarteAPeindre): 'emoji' | 'gabarit' {
  * et du dither de la face** : *le dos est la même carte vue de l'autre côté, il
  * n'a pas à être fait d'une autre matière.*
  */
-export const DOS_BLEU: readonly [number, number, number] = [44, 96, 214]
+const DOS_BLEU: readonly [number, number, number] = [44, 96, 214]
 
 /** Le crème du liseré et du découpage — celui des textes du gabarit. */
 const DOS_CREME = '#fffaf0'

@@ -2589,6 +2589,19 @@ blanc aurait repoussé l'envers vers le blanc qu'on venait de lui retirer, et
 Fresnel ne bougent pas : ce sont eux que Keko a validés (« les traits c'est
 bien »).
 
+**PUIS L'ENVERS EST DEVENU LA FACE ELLE-MÊME, RETOURNÉE.** Keko : « je
+voulais dire la même couleur un peu dorée que le côté face, avec la même
+texture ». *J'avais lu « la face » comme le film bleu du sachet ; c'était la
+face de la BANDE* — la soudure crème striée. Donc plus de matière à part :
+**la même texture, le même froissé, les mêmes lampes**, et seules les
+normales se retournent (`Nv = -Nv ; N = -N` dès qu'on est sur une face
+arrière) pour qu'une face vue de dos s'éclaire comme une face. *Trois
+matières d'envers ont été essayées avant* — crème, argent, bleu du film — et
+la bonne réponse était de n'en avoir aucune. **La règle « un dos qui
+garderait l'imprimé ferait une bande imprimée des deux côtés » tombe ici**,
+parce que ce qu'on voit de la bande est sa soudure, pas l'imprimé : elle n'a
+rien à cacher derrière.
+
 #### LE FILM CRAQUE AVEC LE FRONT, ET POP À L'ARRACHEMENT — deux sons de Keko
 
 Keko : **« j'ai ajouté les sons cracks et pop dans le dossier public. Je
