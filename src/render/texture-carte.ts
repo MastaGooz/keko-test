@@ -984,6 +984,13 @@ const TEINT_PASTILLE_DEFAUT = 0.42
  * de `peindreDecor`.
  */
 const ECLAIRCIE_DECOR = 0.22
+/**
+ * **ET LE COMMUN NE REMONTE PAS.** Keko : « je trouve les fonds des cartes
+ * common trop éclaircis comparés aux autres ». *Sa nuit est déjà un gris
+ * moyen* (`#42464b`), là où les quatre autres partent d'une nuit franche : la
+ * même part le menait deux fois plus haut. Il garde donc sa nuit telle quelle.
+ */
+const ECLAIRCIE_PAR_CRAN: Record<string, number> = { blanc: 0 }
 
 /** Le mélange sRGB de deux couleurs, `part` de la première. */
 function melange(a: string, b: string, part: number): string {
@@ -3462,7 +3469,10 @@ export async function peindreCarte(
   // `?decor=bleu` rend le bleu nuit commun.
   const metalDecor = bulle && !DECOR_BLEU && carte.rarete !== undefined ? METAUX[carte.rarete] : undefined
   // ET ELLE REMONTE UN PEU VERS LE TON MOYEN : voir ECLAIRCIE_DECOR.
-  const nuitHex = metalDecor === undefined ? undefined : melange(metalDecor[2], metalDecor[3], ECLAIRCIE_DECOR)
+  const nuitHex =
+    metalDecor === undefined
+      ? undefined
+      : melange(metalDecor[2], metalDecor[3], ECLAIRCIE_PAR_CRAN[carte.rarete!] ?? ECLAIRCIE_DECOR)
   if (FOND_PEINT) peindreDecor(ctx, carte.ciel, nuitHex === undefined ? undefined : couleurDe(nuitHex))
   else {
     ctx.fillStyle = '#171b1d'

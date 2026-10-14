@@ -5160,3 +5160,12 @@ halo posé autour. Il saute en mode emoji (`AVEC_LUEUR_EMOJI`), `?lueur=1` le
 rend ; les autres modes ne bougent pas d'un pixel. Vu au bilan de
 `?paquet=1314` : les rayons et le décor nuit restent, plus rien ne flotte
 autour du glyphe.
+
+#### LE COMMUN NE REMONTE PAS
+
+Keko : **« je trouve les fonds des cartes common trop éclaircis comparés aux
+autres »**. *Sa nuit est déjà un gris moyen* (`#42464b`), là où les quatre
+autres partent d'une nuit franche : la même part de 22 % vers le ton moyen le
+menait deux fois plus haut que ses voisins. Il garde donc sa nuit telle quelle
+(`ECLAIRCIE_PAR_CRAN.blanc = 0`), les quatre autres leurs 22 %. Vu au bilan de
+`?paquet=1314`.
