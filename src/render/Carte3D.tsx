@@ -215,6 +215,14 @@ const SEUIL_ARRIVEE = 0.005
 
 /** Ce que la carte regardée bascule quand le curseur va d'un bord à l'autre. */
 export const INCLINAISON_REFLET = 0.34
+/**
+ * LE REBOND ÉLASTIQUE — voir `rebond`. L'amplitude du premier dépassement, la
+ * pulsation (2π fois la fréquence : 2,4 oscillations par seconde), l'amorti
+ * (à 4 par seconde, le troisième aller-retour n'est plus qu'un frisson), et la
+ * durée au bout de laquelle on cesse de calculer. *Chiffres à l'oeil*, à
+ * rejuger.
+ */
+const ELASTIQUE = { amplitude: 0.26, pulsation: 2 * Math.PI * 2.4, amorti: 4, duree: 1.4 } as const
 /** L'ordre de rendu d'une carte au premier plan : après tout le reste — voir `devant`. */
 const ORDRE_DEVANT = 10
 
@@ -531,6 +539,15 @@ type Props = {
    * image qui disparaît un temps sur deux.*
    */
   culbute?: unknown
+  /**
+   * LE REBOND ÉLASTIQUE : un jeton, comme la culbute. Quand il change, la
+   * carte oscille autour de sa taille — une sinusoïde amortie, continue, qui
+   * se pose d'elle-même (`ELASTIQUE`). Keko : « l'effet bounce va et vient et
+   * est un peu abrupt, on peut lui donner un aspect plus élastique ? » *Des
+   * cibles qui se suivent changent de direction d'un coup* ; un élastique ne
+   * change jamais de direction d'un coup, il ralentit avant de repartir.
+   */
+  rebond?: unknown
   /**
    * SON FLIP : le même jeton, pour un simple demi-tour sur place.
    *
@@ -1413,6 +1430,8 @@ ${nuanceur.fragmentShader}`
     debutCulbute: null as number | null,
     /** Quand son flip a commencé ; `null` sinon. */
     debutFlip: null as number | null,
+    /** Quand son rebond élastique a commencé ; `null` sinon. */
+    debutRebond: null as number | null,
     /** Quand son developpement a commence ; `null` sinon. */
     debutDevelop: null as number | null,
     /** Quand l'onde s'échappe du slot — à la fin de la culbute. */
@@ -1451,6 +1470,7 @@ ${nuanceur.fragmentShader}`
   /** Le jeton vu au dernier tour, pour savoir qu'il vient de changer. */
   const jetonCulbute = useRef(culbute)
   const jetonFlip = useRef(flip)
+  const jetonRebond = useRef(rebond)
   const jetonDevelop = useRef(developpe)
 
   /**
@@ -1657,6 +1677,10 @@ ${nuanceur.fragmentShader}`
       jetonFlip.current = flip
       if (flip !== null && flip !== undefined) l.debutFlip = t
     }
+    if (jetonRebond.current !== rebond) {
+      jetonRebond.current = rebond
+      if (rebond !== null && rebond !== undefined) l.debutRebond = t
+    }
     if (jetonCulbute.current !== culbute) {
       jetonCulbute.current = culbute
       if (culbute !== null && culbute !== undefined) {
@@ -1744,7 +1768,16 @@ ${nuanceur.fragmentShader}`
       l.r.y + l.vx * INCLINAISON_REFLET,
       l.r.z + (engagee ? Math.sin(t * 23) * l.feu * 0.018 : 0),
     )
-    g.scale.setScalar(l.t)
+    // LE REBOND ÉLASTIQUE SE POSE PAR-DESSUS LA TAILLE LISSÉE, comme le
+    // frémissement par-dessus la place : une sinusoïde amortie qui part de 1,
+    // monte, repasse en dessous, et s'éteint — voir ELASTIQUE.
+    let elastique = 1
+    if (l.debutRebond !== null) {
+      const s = t - l.debutRebond
+      if (s >= ELASTIQUE.duree) l.debutRebond = null
+      else elastique = 1 + ELASTIQUE.amplitude * Math.exp(-ELASTIQUE.amorti * s) * Math.sin(ELASTIQUE.pulsation * s)
+    }
+    g.scale.setScalar(l.t * elastique)
 
     /**
      * LE DEMI-TOUR SE POSE PAR-DESSUS LE PLACEMENT, il ne le remplace pas.

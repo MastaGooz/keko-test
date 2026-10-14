@@ -164,18 +164,6 @@ function colonnesDuBilan(largeurVisible: number, hauteurVisible: number): number
  */
 const RESSORT_SORTIE = 5
 /**
- * LES CIBLES DU REBOND, dans l'ordre : un facteur de la taille de défilé, et
- * combien de secondes la carte le vise avant la suivante. Un dépassement
- * franc, un contre-coup sous la taille, puis la taille — *chiffres à l'oeil*,
- * à rejuger par Keko.
- */
-const SURSAUTS: readonly (readonly [number, number])[] = [
-  [1.24, 0.17],
-  [0.9, 0.15],
-  [1.07, 0.13],
-  [0.97, 0.11],
-]
-/**
  * LE RESSORT DU REBOND, bien plus vif que celui de `Carte3D` (9) : Keko,
  * « plus juicy : le zoom plus rapide et un effet un peu caoutchouc qui
  * bounce, avec des petits allers-retours ». *Un caoutchouc est raide* — les
@@ -476,26 +464,20 @@ export function Paquet3D(): React.ReactElement {
    * et le même ressort la ramène. **Deux cibles qui se suivent, aucune
    * animation à écrire** — la mécanique du rapprochement lui-même.
    */
-  const [sursaut, setSursaut] = useState(1)
+  // LE REBOND EST ÉLASTIQUE, ET C'EST LA CARTE QUI LE JOUE : un jeton change,
+  // `Carte3D` oscille autour de sa taille (voir `rebond` et ELASTIQUE). Les
+  // cibles par paliers ont vécu un commit — Keko : « l'effet bounce va et
+  // vient et est un peu abrupt ». Ici on ne garde que le ressort vif le temps
+  // du rapprochement, pour que la carte arrive vite à la taille autour de
+  // laquelle elle rebondit.
+  const [rebond, setRebond] = useState(0)
   const [rebondit, setRebondit] = useState(false)
   useEffect(() => {
     if (!ouvert) return
+    setRebond((r) => r + 1)
     setRebondit(true)
-    // PLUS JUICY : UN REBOND, PUIS UN CONTRE-REBOND. Keko : « on peut avoir un
-    // effet plus juicy / bumpy ? » *Un seul dépassement se lit comme une
-    // arrivée un peu large* ; c'est le contre-coup — passer SOUS la taille
-    // avant de s'y poser — qui fait lire un rebond. Les cibles se suivent
-    // (voir SURSAUTS), et le même ressort fait tout.
-    const minuteurs: number[] = []
-    let t = 0
-    for (const [facteur, duree] of SURSAUTS) {
-      minuteurs.push(window.setTimeout(() => setSursaut(facteur), t * 1000))
-      t += duree
-    }
-    minuteurs.push(window.setTimeout(() => setSursaut(1), t * 1000))
-    // LE RESSORT VIF TIENT UN PEU AU-DELÀ, le temps de se poser.
-    minuteurs.push(window.setTimeout(() => setRebondit(false), (t + 0.25) * 1000))
-    return () => minuteurs.forEach((m) => clearTimeout(m))
+    const fin = window.setTimeout(() => setRebondit(false), 600)
+    return () => clearTimeout(fin)
   }, [ouvert])
   /**
    * ET SA BANDE AUSSI : elle tombe en plume après que le film est descendu,
@@ -1282,7 +1264,7 @@ export function Paquet3D(): React.ReactElement {
               // suivante est alors DÉJÀ là, de face, derrière celle qu'on
               // regarde.
               taille={
-                !ouvert ? grande : fini ? taille : tailleAuDefile(i) * sursaut
+                !ouvert ? grande : fini ? taille : tailleAuDefile(i)
               }
               // ON PEINT UNE FOIS, À LA PLUS GRANDE TAILLE QU'ELLE ATTEINDRA.
               // Sans ça, les quatre suivantes — qui attendent à taille ZÉRO —
@@ -1334,6 +1316,9 @@ export function Paquet3D(): React.ReactElement {
               curseurPartage={!fini && i >= montree ? curseurDefile.current : undefined}
               refletAuDoigt={!fini && i >= montree}
               ombre
+              // ET ELLE REBONDIT EN ÉLASTIQUE quand le film l'a découverte :
+              // le jeton change une fois par ouverture, toute la pile le lit.
+              rebond={!fini ? rebond : undefined}
               // ELLE NE PORTE PLUS DE GESTE À ELLE. *Tout passe par le geste
               // de l'écran* — une tape sur la carte et une tape à côté font la
               // même chose, parce qu'il n'y a qu'une suite possible. Ça retire
