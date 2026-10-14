@@ -4777,8 +4777,12 @@ const BOUQUET: readonly { emoji: string; x: number; y: number; t: number; a: num
   { emoji: '🎁', x: 25, y: 24, t: 15, a: -0.25 },
 ]
 
-/** Combien de passes font le tour d'un cerne — assez pour qu'il soit continu. */
-const PASSES_CERNE = 16
+/**
+ * LA TOILE SUR LAQUELLE SE CALCULE LE CERNE, en pixels de côté. *Un cerne est
+ * une forme douce* : à 256 il est net sur une carte de 768 et sur le sachet, et
+ * sa transformée de distance tient en quelques millisecondes par glyphe.
+ */
+const TOILE_CERNE = 256
 
 async function peindreBouquet(
   ctx: CanvasRenderingContext2D,
@@ -4800,32 +4804,120 @@ async function peindreBouquet(
 }
 
 /**
- * LA SILHOUETTE D'UN EMOJI, en crème — ce qui lui fait son cerne.
+ * LE CERNE D'UN EMOJI : sa silhouette DILATÉE d'un disque, en crème.
  *
- * **Un glyphe n'a pas de chemin qu'on puisse `stroke`** : on n'a que ses
- * pixels. `source-in` remplace donc sa couleur par la nôtre en gardant son
- * alpha, ce qui donne exactement sa découpe.
+ * Keko : « les contours blancs autour des emojis du paquet / dos de carte sont
+ * un peu bizarres et font des artefacts moches — autour des moustaches du chat
+ * ça fait plein de petits piques alors qu'il a juste trois moustaches ».
  *
- * Elle est mémorisée par toile, comme l'emoji lui-même : *douze silhouettes
- * pour tout le jeu*, et le dos n'est peint qu'une fois par rayon.
+ * ***ET C'ÉTAIT STRUCTUREL, PAS UN RÉGLAGE.*** Le cerne était l'UNION de seize
+ * copies de la silhouette décalées sur un cercle. Pour un disque, l'union de
+ * seize disques décalés fait un disque plus gros ; pour une MOUSTACHE — un
+ * trait fin — elle fait seize traits en étoile, et aucun nombre de passes ne
+ * remplit l'intérieur entre eux. *Le festonnage qu'on avait vu « entre les
+ * passes » était le même défaut, vu sur une forme ronde.*
+ *
+ * Un cerne est une DILATATION : chaque point du contour s'épaissit d'un
+ * disque, et c'est l'enveloppe de tous ces disques — pas leur échantillonnage.
+ * On la calcule exactement : la silhouette est lue en alpha sur une toile
+ * réduite, une transformée de distance euclidienne (Felzenszwalb, deux passes
+ * séparables) donne à chaque pixel sa distance au glyphe, et le cerne est
+ * l'ensemble des pixels à moins de `rayon` — avec un pixel de rampe pour que le
+ * bord soit lisse. *Une moustache y devient une moustache plus épaisse, à bout
+ * rond.*
+ *
+ * **Le rayon est en pixels de cette toile**, donc il dépend de la taille à
+ * laquelle le sticker sera collé : mémorisé par glyphe ET par rayon, il n'y en
+ * a qu'un par couple, et le dos comme le sachet ne le paient qu'une fois.
  */
-const SILHOUETTES_EMOJI = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
+const CERNES_EMOJI = new WeakMap<HTMLCanvasElement, Map<number, HTMLCanvasElement>>()
 
-function silhouetteDe(image: HTMLCanvasElement): HTMLCanvasElement {
-  const garde = SILHOUETTES_EMOJI.get(image)
-  if (garde !== undefined) return garde
-  const toile = document.createElement('canvas')
-  toile.width = image.width
-  toile.height = image.height
-  const ctx = toile.getContext('2d')
-  if (ctx !== null) {
-    ctx.drawImage(image, 0, 0)
-    ctx.globalCompositeOperation = 'source-in'
-    ctx.fillStyle = DOS_CREME
-    ctx.fillRect(0, 0, toile.width, toile.height)
+function cerneDe(image: HTMLCanvasElement, rayon: number): HTMLCanvasElement {
+  const r = Math.max(1, Math.round(rayon * 2) / 2)
+  let parRayon = CERNES_EMOJI.get(image)
+  if (parRayon === undefined) {
+    parRayon = new Map()
+    CERNES_EMOJI.set(image, parRayon)
   }
-  SILHOUETTES_EMOJI.set(image, toile)
+  const garde = parRayon.get(r)
+  if (garde !== undefined) return garde
+
+  const n = TOILE_CERNE
+  const toile = document.createElement('canvas')
+  toile.width = n
+  toile.height = n
+  const ctx = toile.getContext('2d', { willReadFrequently: true })
+  if (ctx === null) return toile
+  ctx.drawImage(image, 0, 0, n, n)
+  const alpha = ctx.getImageData(0, 0, n, n).data
+
+  // LA DISTANCE AU GLYPHE, au carré, par deux passes séparables.
+  const INF = 1e12
+  const f = new Float64Array(n * n)
+  for (let i = 0; i < n * n; i++) f[i] = alpha[i * 4 + 3]! > 96 ? 0 : INF
+  const d = new Float64Array(n)
+  const v = new Int32Array(n)
+  const z = new Float64Array(n + 1)
+  const ligne = new Float64Array(n)
+  const dt1 = (): void => {
+    let k = 0
+    v[0] = 0
+    z[0] = -INF
+    z[1] = INF
+    const croise = (q: number, p: number): number =>
+      (ligne[q]! + q * q - (ligne[p]! + p * p)) / (2 * q - 2 * p)
+    for (let q = 1; q < n; q++) {
+      let sx = croise(q, v[k]!)
+      while (sx <= z[k]!) {
+        k--
+        sx = croise(q, v[k]!)
+      }
+      k++
+      v[k] = q
+      z[k] = sx
+      z[k + 1] = INF
+    }
+    k = 0
+    for (let q = 0; q < n; q++) {
+      while (z[k + 1]! < q) k++
+      const vk = v[k]!
+      d[q] = (q - vk) * (q - vk) + ligne[vk]!
+    }
+  }
+  // Colonnes, puis lignes.
+  for (let x = 0; x < n; x++) {
+    for (let y = 0; y < n; y++) ligne[y] = f[y * n + x]!
+    dt1()
+    for (let y = 0; y < n; y++) f[y * n + x] = d[y]!
+  }
+  for (let y = 0; y < n; y++) {
+    for (let x = 0; x < n; x++) ligne[x] = f[y * n + x]!
+    dt1()
+    for (let x = 0; x < n; x++) f[y * n + x] = d[x]!
+  }
+
+  // LE CERNE : tout ce qui est à moins de `r` du glyphe, bord adouci sur un
+  // pixel, en crème.
+  const sortie = ctx.createImageData(n, n)
+  const px = sortie.data
+  const creme = couleurDe(DOS_CREME)
+  for (let i = 0; i < n * n; i++) {
+    const dist = Math.sqrt(f[i]!)
+    const a = Math.max(0, Math.min(1, r + 0.5 - dist))
+    px[i * 4] = creme[0]
+    px[i * 4 + 1] = creme[1]
+    px[i * 4 + 2] = creme[2]
+    px[i * 4 + 3] = Math.round(a * 255)
+  }
+  ctx.putImageData(sortie, 0, 0)
+  parRayon.set(r, toile)
   return toile
+}
+
+/** Les trois canaux d'une couleur CSS `#rrggbb`. */
+function couleurDe(hex: string): [number, number, number] {
+  const h = hex.replace('#', '')
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]
 }
 
 /**
@@ -4837,14 +4929,10 @@ function silhouetteDe(image: HTMLCanvasElement): HTMLCanvasElement {
  * par le même bout : elle porte son ombre pour dire qu'elle est POSÉE sur
  * l'image et non découpée dedans.
  *
- * **LE CERNE EST LA SILHOUETTE RÉPÉTÉE SUR UN CERCLE**, et il n'y a pas d'autre
- * moyen : un `stroke` demande un chemin, et un glyphe n'en a pas. Seize passes
- * suffisent à le rendre continu à cette épaisseur — *en dessous, il se
- * festonne entre les passes.*
- *
- * **ET L'OMBRE SE POSE SUR LA SILHOUETTE, pas sur chaque passe** : seize ombres
- * superposées feraient une tache seize fois plus dense qu'un seul objet n'en
- * projette.
+ * **LE CERNE EST UNE DILATATION** (`cerneDe`), plus la silhouette répétée sur
+ * un cercle : voir là-bas pourquoi les copies faisaient des piques. **Et
+ * l'ombre se pose sur le cerne**, qui est la vraie découpe du sticker — c'est
+ * lui qui touche le fond.
  */
 function collerSticker(
   ctx: CanvasRenderingContext2D,
@@ -4855,8 +4943,10 @@ function collerSticker(
   angle: number,
   u = U,
 ): void {
-  const decoupe = silhouetteDe(image)
   const d = taille
+  // LE RAYON DU CERNE EN PIXELS DE SA TOILE : l'épaisseur voulue à l'écran,
+  // ramenée à l'échelle à laquelle le sticker sera collé.
+  const cerne = cerneDe(image, (DOS_CERNE * u * TOILE_CERNE) / d)
   ctx.save()
   ctx.translate(x, y)
   ctx.rotate(angle)
@@ -4864,18 +4954,9 @@ function collerSticker(
   ctx.shadowColor = '#00000055'
   ctx.shadowOffsetY = 1.1 * u
   ctx.shadowBlur = 2.6 * u
-  ctx.drawImage(decoupe, -d / 2, -d / 2, d, d)
+  ctx.drawImage(cerne, -d / 2, -d / 2, d, d)
   ctx.restore()
-  for (let i = 0; i < PASSES_CERNE; i++) {
-    const a = (i / PASSES_CERNE) * Math.PI * 2
-    ctx.drawImage(
-      decoupe,
-      -d / 2 + Math.cos(a) * DOS_CERNE * u,
-      -d / 2 + Math.sin(a) * DOS_CERNE * u,
-      d,
-      d,
-    )
-  }
+  ctx.drawImage(cerne, -d / 2, -d / 2, d, d)
   ctx.drawImage(image, -d / 2, -d / 2, d, d)
   ctx.restore()
 }

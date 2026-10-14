@@ -1450,6 +1450,35 @@ le disait serré. Les tailles ont monté de 15 % et le cadeau est passé en
 dernier, parce qu'il disparaissait sous ses deux voisins. **Ça se mesure à
 l'écran, pas au calcul.**
 
+#### LE CERNE EST UNE DILATATION, PLUS SEIZE COPIES SUR UN CERCLE
+
+Keko : **« les contours blancs autour des emojis du paquet / dos de carte sont
+un peu bizarres et font des artefacts moches — autour des moustaches du chat ça
+fait plein de petits piques alors qu'il a juste trois moustaches »**.
+
+***ET C'ÉTAIT STRUCTUREL, PAS UN RÉGLAGE.*** Le cerne était l'UNION de seize
+copies de la silhouette décalées sur un cercle. Pour un disque, seize disques
+décalés font un disque plus gros ; pour une MOUSTACHE — un trait fin — ils
+font seize traits en étoile, et aucun nombre de passes ne remplit l'intérieur
+entre eux. *Le « festonnage entre les passes » qu'on avait noté était le même
+défaut, vu sur une forme ronde.*
+
+Un cerne est une **dilatation** : chaque point du contour s'épaissit d'un
+disque, et c'est l'enveloppe de tous ces disques, pas leur échantillonnage.
+`cerneDe` la calcule exactement — la silhouette lue en alpha sur une toile de
+256, une transformée de distance euclidienne (Felzenszwalb, deux passes
+séparables), et le cerne est tout ce qui est à moins du rayon, avec un pixel
+de rampe. *Une moustache y devient une moustache plus épaisse, à bout rond.*
+
+**Le rayon est en pixels de cette toile**, donc il dépend de la taille à
+laquelle le sticker se colle : mémorisé par glyphe ET par rayon (dos et sachet
+ne le paient qu'une fois chacun). **Et l'ombre se pose sur le cerne**, qui est
+la vraie découpe du sticker. `silhouetteDe` est partie avec les passes : *du
+code mort ment sur ce que le jeu fait.*
+
+*Vu à l'écran* sur le dos : le chat a trois moustaches, la flamme un contour
+lisse. Le sachet appelle le même `collerSticker`, donc il suit.
+
 #### LE MODE EMOJI SEULEMENT, et c'est le CONTOUR qui le dit
 
 `dosDe(carte)` lit `contour === 'simple'`, **le même critère que `rayonDe`** :
