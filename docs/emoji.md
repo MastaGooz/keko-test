@@ -5318,3 +5318,14 @@ manière plus originale »**.
 `TITRE_DU_SACHET` vaut `'Em😊jis'` : *tout pictogramme dans la chaîne devient
 un sticker*, le reste des lettres. Vu sur le sachet de `?paquet=1314`. Les
 trois tables sont de moi, à rejuger.
+
+#### L'EMOJI DU TITRE PORTE LE CERNE DES LETTRES
+
+Keko : **« il faudrait appliquer le même style (outline blanc fin + contour
+noir + ombre en bas) à l'emoji du titre pour matcher les lettres »**. *Un mot
+dont une lettre est habillée autrement n'est plus un mot* : il portait le cerne
+crème des stickers. Les trois couches des lettres, aux mêmes épaisseurs — le
+trait sombre déborde de l'encre de 1,5 % de la largeur et porte l'ombre, le
+crème de 0,7 % par-dessus, puis le glyphe — chaque cerne étant une dilatation
+(`cerneDe`), le sombre teinté depuis le crème par `source-in` (`teinter`). Vu
+sur le sachet de `?paquet=1314`.

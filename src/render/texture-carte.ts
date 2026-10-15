@@ -5499,6 +5499,20 @@ const TITRE_PENCHES = [-0.12, 0.09, -0.06, 0.11, -0.09, 0.07]
 /** Et sa taille, en part de la taille commune. */
 const TITRE_ECHELLES = [1.04, 0.98, 1.1, 0.97, 1.04, 1.0]
 
+/** La même silhouette, dans une autre couleur : l'alpha reste, le pigment change. */
+function teinter(toile: HTMLCanvasElement, couleur: string): HTMLCanvasElement {
+  const copie = document.createElement('canvas')
+  copie.width = toile.width
+  copie.height = toile.height
+  const ctx = copie.getContext('2d')
+  if (ctx === null) return toile
+  ctx.drawImage(toile, 0, 0)
+  ctx.globalCompositeOperation = 'source-in'
+  ctx.fillStyle = couleur
+  ctx.fillRect(0, 0, copie.width, copie.height)
+  return copie
+}
+
 async function peindreTitreDuSachet(
   ctx: CanvasRenderingContext2D,
   l: number,
@@ -5532,10 +5546,35 @@ async function peindreTitreDuSachet(
     ctx.rotate(TITRE_PENCHES[i % n]!)
     ctx.scale(echelle(i), echelle(i))
     if (PICTO.test(g)) {
+      // L'EMOJI PORTE LE CERNE DES LETTRES, pas celui des stickers. Keko : « il
+      // faudrait appliquer le même style (outline blanc fin + contour noir +
+      // ombre en bas) à l'emoji du titre pour matcher les lettres ». *Un mot
+      // dont une lettre est habillée autrement n'est plus un mot.* Les trois
+      // couches, aux mêmes épaisseurs : le trait sombre déborde de l'encre de
+      // l * 0,015 et porte l'ombre, le crème de l * 0,007 par-dessus, puis le
+      // glyphe. Chaque cerne est une dilatation (`cerneDe`), le sombre teinté
+      // depuis le crème par `source-in`.
       const image = imageDeLEmoji(g)
-      // LE CERNE DU STICKER FAIT L'ÉPAISSEUR DU CERNE DES LETTRES : une unité
-      // telle que DOS_CERNE unités valent la demi-largeur du trait sombre.
-      if (image !== null) collerSticker(ctx, image, 0, 0, taille * 1.0, 0, (l * 0.015) / DOS_CERNE, masque)
+      if (image !== null) {
+        const d = taille
+        const sombre = cerneDe(image, (l * 0.015 * TOILE_CERNE) / d)
+        const clair = cerneDe(image, (l * 0.007 * TOILE_CERNE) / d)
+        const ds = d * sombre.echelle
+        const dc = d * clair.echelle
+        if (masque) {
+          ctx.drawImage(sombre.toile, -ds / 2, -ds / 2, ds, ds)
+        } else {
+          ctx.save()
+          ctx.shadowColor = '#00000066'
+          ctx.shadowBlur = l * 0.02
+          ctx.shadowOffsetX = l * 0.01
+          ctx.shadowOffsetY = l * 0.016
+          ctx.drawImage(teinter(sombre.toile, '#16202a'), -ds / 2, -ds / 2, ds, ds)
+          ctx.restore()
+          ctx.drawImage(clair.toile, -dc / 2, -dc / 2, dc, dc)
+          ctx.drawImage(image, -d / 2, -d / 2, d, d)
+        }
+      }
     } else if (masque) {
       ctx.strokeStyle = '#ffffff'
       ctx.lineWidth = l * 0.03
