@@ -468,6 +468,13 @@ const BANC_CRAQUE =
 const BANC_SON =
   typeof location !== 'undefined' && new URLSearchParams(location.search).has('son')
 
+/**
+ * LE FRÉMISSEMENT DE LA DÉCHIRURE : combien une avancée l'excite (par largeur
+ * de front), de combien il déplace le sachet (en part de sa taille) et de
+ * combien il le fait tourner (radians). Voir `frisson`.
+ */
+const FRISSON = { gain: 14, deplacement: 0.012, angle: 0.025 }
+
 /** Ce que le survol penche et avance : *un objet qu'on tourne vers soi.* */
 const PENCHE = 0.26
 const AVANCEE = 0.1
@@ -2082,6 +2089,7 @@ export function Sachet3D({
   /** Où en est l'anneau des étincelles, et le front de l'image d'avant. */
   const anneau = useRef(0)
   const frontAvant = useRef(FRONT_DEPART)
+  const frisson = useRef(0)
   /** Ce qu'il reste de débit à émettre : *une avancée d'un dixième d'étincelle
    * n'en émet aucune, mais dix de suite en émettent une.* */
   const resteEmis = useRef(0)
@@ -2256,6 +2264,24 @@ export function Sachet3D({
       r.rotation.x += (cibleX - r.rotation.x) * k
       r.rotation.y += (cibleY - r.rotation.y) * k
       r.position.z += (taille * AVANCEE * feu.current - r.position.z) * k
+      /**
+       * IL FRÉMIT QUAND LA DÉCHIRURE AVANCE. Keko : « on peut faire un effet
+       * de frémissement juicy du paquet quand la déchirure progresse ? »
+       *
+       * *C'est la règle des étincelles : ce qui produit l'effet est la découpe
+       * qui AVANCE, pas la fente déjà ouverte.* L'avancée nourrit une énergie
+       * (`frisson`) qui s'éteint en un dixième de seconde : un doigt qui tire
+       * vite secoue fort, un doigt qui s'arrête laisse le sachet se calmer.
+       * Elle se pose PAR-DESSUS le placement, jamais dans l'amortissement —
+       * *mêlée à lui, il la mangerait en croyant corriger un écart* (la règle
+       * du frémissement des cartes). Deux fréquences qui ne retombent jamais
+       * en phase par axe : un tremblement régulier se lit comme un moteur.
+       */
+      frisson.current *= Math.exp(-14 * dt)
+      const f = Math.min(1, frisson.current)
+      r.position.x = taille * FRISSON.deplacement * f * (Math.sin(t * 71) * 0.6 + Math.sin(t * 113) * 0.4)
+      r.position.y = taille * FRISSON.deplacement * f * (Math.sin(t * 83) * 0.6 + Math.sin(t * 131) * 0.4)
+      r.rotation.z = FRISSON.angle * f * Math.sin(t * 97)
       // LE NUANCEUR LIT LE PENCHANT RÉEL, pas sa cible : *une lumière qui
       // arriverait avant l'objet qu'elle éclaire se lirait comme un décalage*,
       // et l'amortissement est précisément ce qui donne son poids au geste.
@@ -2389,6 +2415,7 @@ export function Sachet3D({
     const avance = front - frontAvant.current
     frontAvant.current = front
     if (avance > 0) {
+      frisson.current = Math.min(1.2, frisson.current + avance * FRISSON.gain)
       resteEmis.current += avance * DEBIT_ETINCELLE
       const nb = Math.floor(resteEmis.current)
       if (nb > 0) {

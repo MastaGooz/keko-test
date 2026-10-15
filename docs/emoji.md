@@ -5420,3 +5420,15 @@ comme une goutte qui saute*), **son écho une quinte au-dessus**, un cheveu
 plus tard et plus doux (la couleur « bonbon »), et **un toc** de 25 ms de bruit
 passe-bande à 2,5 kHz pour l'attaque — *un clic sans transitoire se lit comme
 un ton.* Les chiffres sont de moi, et je ne l'entends pas : à juger.
+
+#### LE SACHET FRÉMIT QUAND LA DÉCHIRURE AVANCE
+
+Keko : **« on peut faire un effet de frémissement juicy du paquet quand la
+déchirure progresse ? »** *C'est la règle des étincelles : ce qui produit
+l'effet est la découpe qui AVANCE.* L'avancée du front nourrit une énergie
+(`frisson`, `FRISSON.gain`) qui s'éteint en un dixième de seconde ; elle
+déplace le relief en x/y (`FRISSON.deplacement`, 1,2 % de la taille) et le fait
+tourner dans le plan (`FRISSON.angle`, 0,025 rad), sur deux fréquences par axe
+qui ne retombent jamais en phase. **Elle se pose par-dessus le placement,
+jamais dans l'amortissement.** La gerbe naît de la fente réelle, donc elle suit.
+Les trois chiffres sont de moi : *un frémissement ne se juge qu'en déchirant.*
