@@ -388,16 +388,14 @@ export function jouerClicDoux(volume = 1): void {
   // 0,9–1,2 de crête* ; le clic n'en faisait que 0,5. Il passe à ×1,6, et le
   // compresseur tient les trois voix sous le plafond quand elles se cumulent —
   // *un son qu'on monte au-delà de 1 écrête sur ses crêtes.*
+  // PROPRE, SANS RIEN QUI ÉCRÊTE. Keko, après l'écrêtage doux : « le son a
+  // changé… on peut pas avoir un petit clic juicy / petite bulle douce ».
+  // *Une tangente hyperbolique ne retarde rien, mais elle DÉFORME* : elle
+  // ajoutait des harmoniques à des sinus purs. Les niveaux des voix sont donc
+  // choisis pour que leur somme reste sous 1, et la sortie ne touche à rien.
   const sortie = ctx.createGain()
-  sortie.gain.value = volume * 1.6
-  // UN ÉCRÊTAGE DOUX À LA PLACE DU COMPRESSEUR : une tangente hyperbolique
-  // tient les crêtes sous 1 sans aucun retard — *le compresseur regardait
-  // devant lui, donc il retardait le son.*
-  const doux = ctx.createWaveShaper()
-  const courbe = new Float32Array(1024)
-  for (let i = 0; i < courbe.length; i++) courbe[i] = Math.tanh(((i / (courbe.length - 1)) * 2 - 1) * 1.6)
-  doux.curve = courbe
-  sortie.connect(doux).connect(ctx.destination)
+  sortie.gain.value = volume
+  sortie.connect(ctx.destination)
 
   // MOINS DE BULLE. Keko : « on peut changer le son pour un truc un peu moins
   // "bulle" ». *Ce qui faisait la bulle était la hauteur qui MONTE* d'une
@@ -430,8 +428,11 @@ export function jouerClicDoux(volume = 1): void {
   // *Le grain venait du triangle et du toc de bruit* : deux sinus purs, le
   // ton qui tombe vite d'un cran (le « k » du clic), le coup sourd dessous,
   // courts, et plus aucun bruit.
-  voix('sine', 0, 620, 400, 0.075, 0.9)
-  voix('sine', 0, 200, 120, 0.06, 0.6)
+  // UNE PETITE BULLE DOUCE : le ton MONTE, mais d'une quinte et non d'une
+  // octave — *assez pour sauter, pas assez pour siffler* — et il s'éteint
+  // vite ; le coup sourd dessous donne le « clic ».
+  voix('sine', 0, 480, 720, 0.1, 0.62)
+  voix('sine', 0, 190, 120, 0.06, 0.36)
 
   chemin = 'Web Audio'
 }

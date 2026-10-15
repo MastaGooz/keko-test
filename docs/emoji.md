@@ -5459,3 +5459,13 @@ tout ce qui le traverse pour voir venir les crêtes. Il est remplacé par un
 écrêtage doux (`WaveShaper`, tangente hyperbolique) qui tient les crêtes sous 1
 **sans aucun retard**, et l'attaque passe de 4 à 2 ms. *Reste la latence de
 sortie du téléphone*, qu'aucun code ne retire — `?son` l'affiche.
+
+#### LE CLIC REDEVIENT UNE BULLE DOUCE, ET PROPRE
+
+Keko : **« le son a changé… on peut pas avoir un petit clic juicy / petite
+bulle douce ? »** *L'écrêtage doux ne retardait rien, mais il déformait* : il
+ajoutait des harmoniques à des sinus purs. Il est retiré ; les niveaux des
+deux voix sont choisis pour que leur somme reste sous 1 (0,62 + 0,36), donc la
+sortie ne touche à rien et le départ reste immédiat. Le ton **monte d'une
+quinte** (480 → 720 Hz) au lieu d'une octave — *assez pour sauter, pas assez
+pour siffler* — sur le coup sourd de 190 → 120 Hz.
