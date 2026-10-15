@@ -5367,3 +5367,19 @@ Keko : **« on peut ne pas afficher "ouverture d'un paquet" en bas tout au
 début ? »** *Le fond animé est déjà là, et un sachet qui arrive se suffit* —
 la ligne disait un chargement que rien n'a besoin d'annoncer. L'erreur, elle,
 reste dite : *un refus muet se lit comme une panne.*
+
+#### « OUVRIR UN AUTRE PAQUET » EST UNE PASTILLE STICKER
+
+Keko : **« le bouton "ouvrir un autre paquet" n'est pas du tout dans la DA du
+jeu »**. *La plaque de laiton en Cinzel est la ferronnerie de l'archive*, et
+le mode emoji l'a retirée de tout le reste, un objet après l'autre — le
+bouton était le dernier à la parler.
+
+Un ton de plus dans `Bouton3D` (`emoji`), qui change la FORME avec la
+couleur : **une pastille** (rayon d'une demi-hauteur, celui de « 5 CARTES »),
+**l'encre du titre du sachet** (jaune pâle → orange, de haut en bas), **le
+cerne des stickers** (trait sombre qui porte l'ombre, filet crème, puis
+l'encre), et **Baloo 2 en 800, casse ordinaire** — *une pastille est le
+vocabulaire d'une app.* Le masque du balayage et la lueur du survol suivent
+le rayon. Les autres tons, ceux de l'archive, ne bougent pas. Vu au bilan de
+`?paquet=1314`.

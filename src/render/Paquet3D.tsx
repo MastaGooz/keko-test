@@ -1488,7 +1488,8 @@ export function Paquet3D(): React.ReactElement {
         {ouvert && fini && zoomee === null && paquet.length > 0 && (
           <Bouton3D
             texte="Ouvrir un autre paquet"
-            ton="or"
+            // EN STICKER, PAS EN LAITON : voir `TONS.emoji` dans Bouton3D.
+            ton="emoji"
             cran="ecran"
             position={[0, -hVisible * 0.38, Z_MAIN]}
             onCliquer={ouvrirUnAutre}

@@ -22,6 +22,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
+import { FAMILLE_RONDE, policeRonde } from './texture-carte.ts'
 
 /**
  * LA HAUTEUR D'UN BOUTON SE COMPTE EN PIXELS, pas en unités de scène.
@@ -119,9 +120,30 @@ const TONS = {
    * matière du lieu, sans son accent.
    */
   pierre: { fond: ['#2b2a2c', '#171718'], trait: '#7d786a', encre: '#ddd5c2' },
+  /**
+   * LE STICKER : le ton de la collection d'emoji, et il change la FORME avec la
+   * couleur. Keko : « le bouton "ouvrir un autre paquet" n'est pas du tout
+   * dans la DA du jeu ». *La plaque de laiton en Cinzel est la ferronnerie de
+   * l'archive* — et le mode emoji a retiré la ferronnerie de tout le reste, un
+   * objet après l'autre : le contour, la plaque, le dos, le sachet. Le bouton
+   * était le dernier à la parler.
+   *
+   * Il prend donc la langue du sachet : **une pastille** (le rayon de la
+   * pastille « 5 CARTES »), **l'encre du titre** — du jaune pâle à l'orange,
+   * le haut plus clair parce que la lumière vient du haut — **et le cerne des
+   * stickers**, trait sombre, filet crème, ombre vers le bas. Baloo 2 en 800,
+   * casse ordinaire : *une pastille est le vocabulaire d'une app*, et une app
+   * n'écrit pas ses boutons en capitales espacées.
+   */
+  emoji: { fond: ['#fff0a8', '#ffc42a', '#ff8a1f'], trait: '#16202a', encre: '#16202a' },
 } as const
 
 export type TonBouton = keyof typeof TONS
+
+/** Un ton qui se dessine en pastille de sticker plutôt qu'en plaque. */
+const enSticker = (ton: TonBouton): boolean => ton === 'emoji'
+/** Le rayon des coins, en part de la hauteur : nul pour la ferronnerie, une demi-hauteur pour la pastille. */
+const rayonDe = (ton: TonBouton): number => (enSticker(ton) ? 0.5 : RAYON)
 
 const TEXTURES = new Map<string, { texture: THREE.CanvasTexture; rapport: number }>()
 
@@ -152,7 +174,8 @@ function plaque(
    * réduite d'autant, et son texte avec. *Deux lignes se serrent dans la
    * hauteur, elles ne la repoussent pas.*
    */
-  const lignes = texte.split('\n').map((l) => l.toUpperCase())
+  const sticker = enSticker(ton)
+  const lignes = texte.split('\n').map((l) => (sticker ? l : l.toUpperCase()))
   const h = 128
   /**
    * **LA LANGUE DES BOUTONS EST CELLE DU JEU : Cinzel, capitales, espacées.**
@@ -170,9 +193,10 @@ function plaque(
    * pour 8,8 px d'onglet et 13,6 px d'entrée de rail. *Il reste au-dessus de
    * l'onglet parce qu'il agit* ; il n'a plus à crier pour le dire.
    */
-  const APPROCHE = '0.08em'
-  const REMPLISSAGE = 0.62
-  const police = (corps: number): string => `600 ${corps}px Cinzel, Georgia, serif`
+  const APPROCHE = sticker ? '0.01em' : '0.08em'
+  const REMPLISSAGE = sticker ? 0.9 : 0.62
+  const police = (corps: number): string =>
+    sticker ? `800 ${corps}px ${FAMILLE_RONDE}` : `600 ${corps}px Cinzel, Georgia, serif`
   const mesure = document.createElement('canvas').getContext('2d')
   const largeurTexte = (corps: number): number => {
     if (mesure === null) return h * 2
@@ -189,7 +213,7 @@ function plaque(
    * vide. *Un bouton reste tapable en étant moins large* ; il ne reste pas
    * lisible en étant moins haut.
    */
-  const corpsVise = Math.round(h * 0.26)
+  const corpsVise = Math.round(h * (sticker ? 0.3 : 0.26))
   let large = Math.round(largeurTexte(corpsVise) + h * REMPLISSAGE)
   // **UN RAPPORT PLANCHER**, pour que deux boutons d'un même groupe aient la
   // même largeur : *deux actions de même rang ne peuvent pas avoir deux
@@ -209,21 +233,46 @@ function plaque(
 
   const { fond, trait, encre } = TONS[ton]
   const marge = h * 0.06
-  const rayon = h * RAYON
+  const rayon = h * rayonDe(ton)
 
   const peindre = (): void => {
     ctx.clearRect(0, 0, large, h)
     const degrade = ctx.createLinearGradient(0, 0, 0, h)
-    degrade.addColorStop(0, fond[0])
-    degrade.addColorStop(1, fond[1])
+    fond.forEach((c, i) => degrade.addColorStop(i / (fond.length - 1), c))
 
-    ctx.beginPath()
-    ctx.roundRect(marge, marge, large - marge * 2, h - marge * 2, rayon)
-    ctx.fillStyle = degrade
-    ctx.fill()
-    ctx.strokeStyle = trait
-    ctx.lineWidth = Math.max(1, h * 0.018)
-    ctx.stroke()
+    if (sticker) {
+      // LE STICKER : le trait sombre porte l'ombre, le filet crème se pose
+      // dessus, l'encre remplit — l'ordre du titre du sachet, et ses
+      // épaisseurs en part de la hauteur. Chaque couche est la pastille
+      // rentrée d'autant : *un cerne est une dilatation*, et sur une pastille
+      // la dilatation d'un arrondi est un arrondi.
+      const pastille = (retrait: number): void => {
+        ctx.beginPath()
+        ctx.roundRect(marge + retrait, marge + retrait, large - (marge + retrait) * 2, h - (marge + retrait) * 2, rayon)
+      }
+      ctx.save()
+      ctx.shadowColor = '#00000066'
+      ctx.shadowBlur = h * 0.06
+      ctx.shadowOffsetY = h * 0.04
+      pastille(0)
+      ctx.fillStyle = trait
+      ctx.fill()
+      ctx.restore()
+      pastille(h * 0.045)
+      ctx.fillStyle = '#fffaf0'
+      ctx.fill()
+      pastille(h * 0.075)
+      ctx.fillStyle = degrade
+      ctx.fill()
+    } else {
+      ctx.beginPath()
+      ctx.roundRect(marge, marge, large - marge * 2, h - marge * 2, rayon)
+      ctx.fillStyle = degrade
+      ctx.fill()
+      ctx.strokeStyle = trait
+      ctx.lineWidth = Math.max(1, h * 0.018)
+      ctx.stroke()
+    }
 
     /**
      * **LE TEXTE ENTRE DANS LA PLAQUE, ce n'est plus la plaque qui suit le
@@ -244,8 +293,8 @@ function plaque(
     // LE BLOC SE CENTRE, pas chaque ligne : deux lignes posées l'une sous
     // l'autre depuis le milieu pencheraient vers le bas. Et l'approche décale
     // le dernier caractère, donc on recentre d'une demi-approche.
-    const haut = h * 0.53 - ((lignes.length - 1) * interligne) / 2
-    const centre = large / 2 - corps * 0.04
+    const haut = h * (sticker ? 0.52 : 0.53) - ((lignes.length - 1) * interligne) / 2
+    const centre = large / 2 - (sticker ? 0 : corps * 0.04)
     lignes.forEach((ligne, i) => ctx.fillText(ligne, centre, haut + i * interligne))
     texture.needsUpdate = true
   }
@@ -254,6 +303,10 @@ function plaque(
   // ET ON REPEINT QUAND LA POLICE ARRIVE : la règle est écrite pour les cartes
   // et pour les slots, elle vaut pour tout ce qui peint.
   if (document.fonts.status !== 'loaded') void document.fonts.ready.then(peindre)
+  // ET LA RONDE SE DEMANDE EXPLICITEMENT : une police que seul un canvas
+  // emploie n'est jamais téléchargée par le DOM — le piège de Noto Color
+  // Emoji, payé sur la plaque claire.
+  if (sticker) void policeRonde().then(peindre)
   return fait
 }
 
@@ -271,8 +324,8 @@ function plaque(
  */
 const MASQUES = new Map<string, THREE.CanvasTexture>()
 
-function masqueBouton(rapport: number): THREE.CanvasTexture {
-  const cle = rapport.toFixed(3)
+function masqueBouton(rapport: number, rayonPart: number): THREE.CanvasTexture {
+  const cle = `${rapport.toFixed(3)}|${rayonPart}`
   const connu = MASQUES.get(cle)
   if (connu !== undefined) return connu
 
@@ -290,7 +343,7 @@ function masqueBouton(rapport: number): THREE.CanvasTexture {
   ctx.fillRect(0, 0, large, h)
   const marge = h * 0.06
   ctx.beginPath()
-  ctx.roundRect(marge, marge, large - marge * 2, h - marge * 2, h * RAYON)
+  ctx.roundRect(marge, marge, large - marge * 2, h - marge * 2, h * rayonPart)
   ctx.fillStyle = '#ffffff'
   ctx.fill()
   texture.needsUpdate = true
@@ -339,8 +392,8 @@ function balayage(): THREE.CanvasTexture {
 
 const LUEURS = new Map<string, THREE.CanvasTexture>()
 
-function lueurBouton(rapport: number): THREE.CanvasTexture {
-  const cle = rapport.toFixed(3)
+function lueurBouton(rapport: number, rayonPart: number): THREE.CanvasTexture {
+  const cle = `${rapport.toFixed(3)}|${rayonPart}`
   const connue = LUEURS.get(cle)
   if (connue !== undefined) return connue
 
@@ -364,7 +417,7 @@ function lueurBouton(rapport: number): THREE.CanvasTexture {
   for (const rayon of [debord * 0.8, debord * 0.4]) {
     ctx.shadowBlur = rayon
     ctx.beginPath()
-    ctx.roundRect(debord, debord, large, h, h * RAYON)
+    ctx.roundRect(debord, debord, large, h, h * rayonPart)
     ctx.fill()
   }
   texture.needsUpdate = true
@@ -432,7 +485,7 @@ export function Bouton3D({
   const halo = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
-        map: lueurBouton(rapport),
+        map: lueurBouton(rapport, rayonDe(ton)),
         color: '#ffd89a',
         transparent: true,
         opacity: 0,
@@ -440,20 +493,20 @@ export function Bouton3D({
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       }),
-    [rapport],
+    [rapport, ton],
   )
   const lustre = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
         map: balayage().clone(),
-        alphaMap: masqueBouton(rapport),
+        alphaMap: masqueBouton(rapport, rayonDe(ton)),
         transparent: true,
         opacity: 0,
         toneMapped: false,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       }),
-    [rapport],
+    [rapport, ton],
   )
 
   // ON REND LE CURSEUR EN PARTANT, toujours : un composant qui disparaît

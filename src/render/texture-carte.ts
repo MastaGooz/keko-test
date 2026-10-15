@@ -3261,10 +3261,10 @@ function enMots(entree: string): Mot[] {
  */
 const SERIF_EFFET = '"Crimson Pro", Georgia, serif'
 const RONDE = 'Baloo 2'
-const FAMILLE_RONDE = `"${RONDE}", "Trebuchet MS", sans-serif`
+export const FAMILLE_RONDE = `"${RONDE}", "Trebuchet MS", sans-serif`
 
 let RONDE_PRETE: Promise<unknown> | null = null
-function policeRonde(): Promise<unknown> {
+export function policeRonde(): Promise<unknown> {
   RONDE_PRETE ??= Promise.all([
     document.fonts.load(`400 64px "${RONDE}"`),
     document.fonts.load(`700 64px "${RONDE}"`),
