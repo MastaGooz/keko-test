@@ -182,6 +182,12 @@ const RESSORT_REBOND = 22
 const RESSORT_BILAN = 18
 /** Quand la gerbe de chaque carte du bilan part : une fois les cartes presque posées. */
 const DELAI_ECLATS_BILAN = 0.2
+/**
+ * ON NE ZOOME QU'UNE FOIS LES CARTES POSÉES. Keko : « bloquer le zoom tant que
+ * les 5 cartes ne sont pas bien positionnées ». À `RESSORT_BILAN`, il reste
+ * moins d'un centième du chemin au bout de ce temps.
+ */
+const DELAI_ZOOM_BILAN = 0.35
 /** La part du flip au bout de laquelle la pile s'ouvre et le geste reprend — voir `pileOuverte`. */
 const PART_PILE_OUVERTE = 1
 /** La distance de sortie en portrait, en largeurs de carte : la référence du ressort. */
@@ -981,8 +987,13 @@ export function Paquet3D(): React.ReactElement {
     ouvrirUnAutre()
   }
 
+  const refBilanPret = useRef(false)
   useEffect(() => {
+    refBilanPret.current = false
     if (!fini) return
+    const pret = setTimeout(() => {
+      refBilanPret.current = true
+    }, DELAI_ZOOM_BILAN * 1000)
     const t = setTimeout(
       () => {
         setEclatsBilan((e) => ({ cle: (e?.cle ?? 0) + 1, gerbes: refGerbesBilan.current() }))
@@ -993,7 +1004,10 @@ export function Paquet3D(): React.ReactElement {
       },
       DELAI_ECLATS_BILAN * 1000,
     )
-    return () => clearTimeout(t)
+    return () => {
+      clearTimeout(t)
+      clearTimeout(pret)
+    }
   }, [fini])
 
   function ouvrirUnAutre(): void {
@@ -1115,7 +1129,7 @@ export function Paquet3D(): React.ReactElement {
         const id = candidat.current
         candidat.current = null
         if (refFini.current) {
-          if (!tape) return
+          if (!tape || !refBilanPret.current) return
           if (refZoomee.current !== null) setZoomee(null)
           else if (id !== null) {
             setZoomee(id)

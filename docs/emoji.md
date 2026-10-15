@@ -5646,3 +5646,7 @@ positionnent ». Et **le sachet pompe beaucoup plus fort à l'arrachement**
 de la gerbe finale du sachet, sans le pop) part avec les gerbes et le
 pompage des cinq cartes. Keko : « jouer le son qu'on joue à l'ouverture
 finale du paquet au moment où on met les 5 cartes (pas le pop, l'autre son) ».
+
+**Le zoom du bilan attend que les cartes soient posées.** Keko : « bloquer le
+zoom tant que les 5 cartes ne sont pas bien positionnées ». Une tape au bilan
+est ignorée pendant `DELAI_ZOOM_BILAN` (0,35 s), via la ref `refBilanPret`.
