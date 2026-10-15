@@ -5641,3 +5641,8 @@ chaque carte ».
 révélation. Keko : « donner un effet de pump aux 5 cartes quand elles se
 positionnent ». Et **le sachet pompe beaucoup plus fort à l'arrachement**
 (« augmenter fortement ») : `POMPE.amplitude` passe de 0,32 à 0,55.
+
+**Le bilan sonne comme l'arrachement** : `SON_EQUIPER` (`Equip.aac`, le son
+de la gerbe finale du sachet, sans le pop) part avec les gerbes et le
+pompage des cinq cartes. Keko : « jouer le son qu'on joue à l'ouverture
+finale du paquet au moment où on met les 5 cartes (pas le pop, l'autre son) ».

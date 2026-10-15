@@ -22,7 +22,7 @@ import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import { FondAnime } from './FondAnime.tsx'
 import { Bloom } from './Bloom.tsx'
-import { SON_POSER, SON_PRENDRE, jouerSon, precharger } from './sons.ts'
+import { SON_EQUIPER, SON_POSER, SON_PRENDRE, jouerSon, precharger } from './sons.ts'
 import {
   AMBIANCE,
   ECHELLE_COULEUR,
@@ -611,6 +611,7 @@ export function Paquet3D(): React.ReactElement {
   useEffect(() => {
     void precharger(SON_POSER)
     void precharger(SON_PRENDRE)
+    void precharger(SON_EQUIPER)
   }, [])
   useEffect(() => {
     if (!ouvert) return
@@ -983,7 +984,13 @@ export function Paquet3D(): React.ReactElement {
   useEffect(() => {
     if (!fini) return
     const t = setTimeout(
-      () => setEclatsBilan((e) => ({ cle: (e?.cle ?? 0) + 1, gerbes: refGerbesBilan.current() })),
+      () => {
+        setEclatsBilan((e) => ({ cle: (e?.cle ?? 0) + 1, gerbes: refGerbesBilan.current() }))
+        // LE SON DE LA GERBE FINALE DU SACHET, sans le pop — Keko : « jouer le
+        // son qu'on joue à l'ouverture finale du paquet au moment où on met
+        // les 5 cartes ». *Le même éclat se dit avec le même son.*
+        jouerSon(SON_EQUIPER)
+      },
       DELAI_ECLATS_BILAN * 1000,
     )
     return () => clearTimeout(t)
