@@ -5608,3 +5608,7 @@ qui aurait aussi fait tomber les partantes.
 Au passage, le « zoom parasite sur Plus » vu au bilan pendant les tests est
 élucidé : c'est la sixième tape du banc (`&nu`), qui tombe sur le bilan déjà
 affiché.
+
+Keko : « trop proche ». Le retard passe de 0,12 à **0,35 s**, à peu près à mi-chemin entre
+ce réglage et l'enchaînement sans chevauchement (0,62 s) : le sachet
+commence sa chute quand la moitié des cartes a quitté l'écran.

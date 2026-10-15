@@ -372,7 +372,7 @@ function lueurDans(rang: number, echelle: readonly string[]): string {
  * sa chute pendant que le sachet tombe déjà, `retard` après elles.
  */
 const SORTIE = { duree: 0.42, cascade: 0.05, recul: 1.2, tour: 0.5 } as const
-const ARRIVEE = { duree: 0.6, depassement: 1.5, penche: 0.16, retard: 0.12 } as const
+const ARRIVEE = { duree: 0.6, depassement: 1.5, penche: 0.16, retard: 0.35 } as const
 /** Le temps que la dernière carte a quitté l'écran. */
 const DUREE_SORTIE = SORTIE.duree + SORTIE.cascade * 4
 
