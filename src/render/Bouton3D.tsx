@@ -23,7 +23,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
 import { FAMILLE_RONDE, policeRonde } from './texture-carte.ts'
-import { SON_RETOURNER, jouerSon, precharger } from './sons.ts'
+import { jouerClicDoux } from './sons.ts'
 
 /**
  * LA HAUTEUR D'UN BOUTON SE COMPTE EN PIXELS, pas en unités de scène.
@@ -561,9 +561,6 @@ export function Bouton3D({
   })
   const presse = useRef(-1)
   const parti = useRef(false)
-  useEffect(() => {
-    if (juice) void precharger(SON_RETOURNER)
-  }, [juice])
   const DELAI_ACTION = 0.26
 
   const feu = useRef(0)
@@ -635,9 +632,9 @@ export function Bouton3D({
           if (presse.current >= 0 && !parti.current) return
           presse.current = horloge.current
           parti.current = false
-          // `card flip.aac`, essayé à la place du pop — Keko : « essaie card
-          // flip ». C'était le seul son du dépôt que la collection ne jouait plus.
-          jouerSon(SON_RETOURNER)
+          // UN CLIC SYNTHÉTISÉ, doux et juicy : voir `jouerClicDoux`. Le pop
+          // puis `card flip` ont été essayés avant — Keko : « pas terrible ».
+          jouerClicDoux()
         }}
         onPointerOver={(e) => {
           if (e.pointerType === 'mouse') setSurvole(true)

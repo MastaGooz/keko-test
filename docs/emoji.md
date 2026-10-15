@@ -5409,3 +5409,14 @@ du bond des créatures :
 l'instant où on le touche n'a jamais été pressé. **Seul le ton `emoji` le
 fait**, les boutons de l'archive ne bougent pas. Vu au bilan de
 `?paquet=1314` : le clic ouvre bien un paquet neuf.
+
+#### LE CLIC DU BOUTON EST SYNTHÉTISÉ
+
+Le pop, puis `card flip.aac` — Keko : **« non c'est pas terrible… tu peux
+créer un son de clic doux et juicy toi ? »** `jouerClicDoux` (dans
+`render/sons.ts`) le fabrique au Web Audio, sans fichier : **une bulle**
+(sinusoïde qui monte de 420 à 880 Hz en 70 ms — *une hauteur qui monte se lit
+comme une goutte qui saute*), **son écho une quinte au-dessus**, un cheveu
+plus tard et plus doux (la couleur « bonbon »), et **un toc** de 25 ms de bruit
+passe-bande à 2,5 kHz pour l'attaque — *un clic sans transitoire se lit comme
+un ton.* Les chiffres sont de moi, et je ne l'entends pas : à juger.

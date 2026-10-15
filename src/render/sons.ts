@@ -354,3 +354,64 @@ export function jouerEnBoucle(nom: string, volume = 1): SonEnBoucle {
     },
   }
 }
+
+/**
+ * LE CLIC DOUX ET JUICY — synthétisé, aucun fichier. Keko, après `card flip` :
+ * « non c'est pas terrible… tu peux créer un son de clic doux et juicy
+ * toi ? »
+ *
+ * Trois voix, et chacune fait un travail que les autres ne font pas :
+ *
+ * - **la BULLE** : une sinusoïde qui MONTE (420 → 880 Hz en 70 ms) puis
+ *   s'éteint — *une hauteur qui monte se lit comme une goutte qui saute*, là
+ *   où une hauteur qui descend se lit comme un coup ;
+ * - **l'ÉCHO** une quinte au-dessus, un cheveu plus tard et plus doux : c'est
+ *   ce qui donne la couleur « bonbon » plutôt qu'un bip de menu ;
+ * - **le TOC** : un souffle de bruit très court passé dans un passe-bande,
+ *   pour l'attaque — *un clic sans transitoire se lit comme un ton.*
+ *
+ * Enveloppes exponentielles, jamais à zéro exact (la règle de `ui/sons.ts` :
+ * `exponentialRampToValueAtTime` refuse zéro). Aucun son ne casse le jeu :
+ * sans Web Audio, ça ne joue rien.
+ */
+export function jouerClicDoux(volume = 1): void {
+  const ctx = ouvrir()
+  if (ctx === null) return
+  const t0 = ctx.currentTime + 0.005
+  const sortie = ctx.createGain()
+  sortie.gain.value = volume * 0.5
+  sortie.connect(ctx.destination)
+
+  const voix = (depart: number, f0: number, f1: number, duree: number, niveau: number): void => {
+    const o = ctx.createOscillator()
+    o.type = 'sine'
+    o.frequency.setValueAtTime(f0, t0 + depart)
+    o.frequency.exponentialRampToValueAtTime(f1, t0 + depart + 0.07)
+    const g = ctx.createGain()
+    g.gain.setValueAtTime(0.0001, t0 + depart)
+    g.gain.exponentialRampToValueAtTime(niveau, t0 + depart + 0.006)
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + depart + duree)
+    o.connect(g).connect(sortie)
+    o.start(t0 + depart)
+    o.stop(t0 + depart + duree + 0.02)
+  }
+  voix(0, 420, 880, 0.16, 0.9)
+  voix(0.018, 630, 1320, 0.12, 0.35)
+
+  // LE TOC : 25 ms de bruit, passe-bande vers 2,5 kHz.
+  const n = Math.round(ctx.sampleRate * 0.025)
+  const tampon = ctx.createBuffer(1, n, ctx.sampleRate)
+  const d = tampon.getChannelData(0)
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n) ** 3
+  const bruit = ctx.createBufferSource()
+  bruit.buffer = tampon
+  const filtre = ctx.createBiquadFilter()
+  filtre.type = 'bandpass'
+  filtre.frequency.value = 2500
+  filtre.Q.value = 1.2
+  const gb = ctx.createGain()
+  gb.gain.value = 0.35
+  bruit.connect(filtre).connect(gb).connect(sortie)
+  bruit.start(t0)
+  chemin = 'Web Audio'
+}
