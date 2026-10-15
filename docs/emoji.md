@@ -5282,3 +5282,16 @@ sticker prend `MARGE_STICKER` (10 %) de chaque côté, **et le glyphe ne
 rétrécit pas pour autant** : la fenêtre d'art lui rend exactement cet air
 (`air` se déduit du facteur de la toile, jamais écrit à part). Vu au bilan de
 `?paquet=1314` : tailles identiques au pixel à la passe d'avant.
+
+#### LE CERNE DE LA FACE SE CALCULE À LA FINESSE DU GLYPHE
+
+Keko : **« je trouve l'outline blanc pas très lisse, il fait parfois bizarre,
+comme des aspérités »**. *Le cerne se calculait sur 256 pixels* — assez pour un
+sticker de quelques dizaines de pixels sur le dos, pas pour un glyphe qui en
+fait six cents sur une carte zoomée : agrandi deux fois et demie, son bord d'un
+pixel devenait une marche, et la silhouette binaire d'où il part montrait ses
+crans. `cerneDe` prend donc une `finesse` : la face le calcule à la taille du
+glyphe (512, **mémorisé par rayon ET par finesse**), le dos et le sachet
+gardent leurs 256 — *une résolution se choisit sur la taille où l'on regarde,
+pas sur celle où l'on dessine.* Vu au pixel de la page sur le bilan de
+`?paquet=1314` : le contour du visage et celui des poupées sont lisses.
