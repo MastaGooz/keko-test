@@ -5745,3 +5745,20 @@ La bande suit le rectangle arrondi (`RAYON_SIMPLE`) à l'épaisseur de la
 bordure peinte (`CONTOUR_PLAQUE`, 2,7 %). Mode emoji seulement, `?brillant=0`
 la retire. Vu à l'écran : le cadre prend un relief doré, plus clair en haut
 à gauche. Chiffres à juger par Keko.
+
+**Le cadre redevient plat.** Keko : « on dirait que le brillant est en 3D
+(bombé), je voulais pas toucher au relief, juste lui donner le même effet
+glowy dans la lumière ». Le biseau est retiré. La lumière est maintenant une
+**nappe en diagonale dont la place suit l'angle de vue** (`BRILLANT.course`,
+3) : elle glisse le long du cadre quand la carte penche, sans qu'aucune
+normale bouge. Elle se compose comme avant : une nappe large qui se
+multiplie, un éclair serré teinté, et le Fresnel de la face, qui grandit
+quand elle penche.
+
+**Piège payé au passage.** Les dérivées d'écran (`dFdx`) calculées dans une
+branche `if` que les pixels voisins ne prennent pas sont indéfinies. Le
+pilote rendait des NaN, et le bloom les étalait en **blocs entiers de carte
+manquants** (vu à l'écran). Les dérivées se calculent donc hors de toute
+branche, et les `normalize` sont protégés contre le vecteur nul. Les
+backticks dans un commentaire GLSL ont aussi recassé le build une sixième
+fois.

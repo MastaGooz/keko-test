@@ -271,12 +271,12 @@ const FILS_LIN = 150
  * lisible dessous), un éclat serré TEINTÉ (un métal filtre son reflet), et le
  * Fresnel au ras.
  *
- * **Mais une face plate renvoie la lumière d'un bloc** : le cadre entier
- * s'allumerait et s'éteindrait d'un coup. Il reçoit donc un BISEAU calculé —
- * la normale penche vers l'extérieur au bord, vers l'intérieur au liseré —, et
- * c'est ce qui fait courir la lumière le long du cadre quand la carte penche :
- * le haut-gauche s'allume quand on la tourne vers la lampe, le bas-droit
- * quand on la tourne de l'autre côté.
+ * **ET LE CADRE RESTE PLAT.** Une première version lui donnait un biseau
+ * calculé, et Keko : « on dirait que le brillant est en 3D (bombé), je voulais
+ * pas toucher au relief, juste lui donner le même effet glowy dans la
+ * lumière ». La lumière n'est donc plus une affaire de normale : c'est une
+ * NAPPE en diagonale dont la place suit l'angle de vue (`course`) — elle
+ * glisse le long du cadre quand la carte penche, sans rien bomber.
  *
  * La bande suit le rectangle arrondi de la carte (`RAYON_SIMPLE`), à
  * l'épaisseur de la bordure peinte (`CONTOUR_PLAQUE`). Mode emoji seulement ;
@@ -285,7 +285,7 @@ const FILS_LIN = 150
 const AVEC_BRILLANT = new URLSearchParams(location.search).get('brillant') !== '0'
 /** L'épaisseur du cadre, en largeurs de carte : la bordure peinte de 2,7 U. */
 const CONTOUR_PLAQUE = 0.027
-const BRILLANT = { biseau: 0.85, reflet: 0.9, eclat: 1.3, fresnel: 0.35, metal: 0.7 } as const
+const BRILLANT = { course: 3.0, reflet: 0.7, eclat: 0.9, fresnel: 1.2, metal: 0.7 } as const
 
 const POMPE_CARTE = { amplitude: 0.09, pulsation: Math.PI * 3, amorti: 7, duree: 0.8 } as const
 /** L'ordre de rendu d'une carte au premier plan : après tout le reste — voir `devant`. */
@@ -1113,46 +1113,55 @@ ${nuanceur.vertexShader}`.replace(
          gl_FragColor.rgb = mix(vec3(lumSortie), gl_FragColor.rgb, 1.0 + uSature);
 
          // LA BORDURE BRILLANTE, en sortie : voir BRILLANT.
+         // ***LES DÉRIVÉES D'ÉCRAN SE CALCULENT HORS DE TOUT if*** : dans une
+         // branche que les pixels voisins ne prennent pas, dFdx est indéfini,
+         // et le pilote rendait des NaN que le bloom étalait en blocs entiers
+         // de carte manquants. Vu à l'écran. Le repère se calcule donc pour
+         // tous, et la bande décide seulement de son poids.
+         vec3 dpx = dFdx(-vViewPosition);
+         vec3 dpy = dFdy(-vViewPosition);
+         vec2 dux = dFdx(vLustreUv);
+         vec2 duy = dFdy(vLustreUv);
          if (uBrillant > 0.0) {
            // LE RECTANGLE ARRONDI DE LA CARTE, en largeurs de carte.
            vec2 pc = (vLustreUv - 0.5) * vec2(1.0, 1.4);
            vec2 qc = abs(pc) - (vec2(0.5, 0.7) - ${RAYON_SIMPLE.toFixed(4)});
            float dc = length(max(qc, 0.0)) + min(max(qc.x, qc.y), 0.0) - ${RAYON_SIMPLE.toFixed(4)};
            float bande = smoothstep(-${(CONTOUR_PLAQUE + 0.003).toFixed(4)}, -${(CONTOUR_PLAQUE - 0.002).toFixed(4)}, dc);
-           if (bande > 0.0) {
-             // VERS OÙ EST L'EXTÉRIEUR, dans le plan de la carte.
-             vec2 sc = sign(pc);
-             vec2 gc = (qc.x > 0.0 && qc.y > 0.0) ? normalize(qc) * sc : (qc.x > qc.y ? vec2(sc.x, 0.0) : vec2(0.0, sc.y));
-             // LE REPÈRE DE LA FACE, tiré des dérivées d'écran : x et y de la
-             // carte, en espace vue.
-             vec3 dpx = dFdx(-vViewPosition);
-             vec3 dpy = dFdy(-vViewPosition);
-             vec2 dux = dFdx(vLustreUv);
-             vec2 duy = dFdy(vLustreUv);
-             float det = dux.x * duy.y - dux.y * duy.x;
-             vec3 Tc = normalize((dpx * duy.y - dpy * dux.y) * sign(det));
-             vec3 Bc = normalize((dpy * dux.x - dpx * duy.x) * sign(det));
-             vec3 Nc = normalize(cross(Tc, Bc));
-             // LE BISEAU : de -biseau au liseré à +biseau au bord.
-             float travers = clamp(1.0 + dc / ${CONTOUR_PLAQUE.toFixed(4)}, 0.0, 1.0);
-             float angle = ${BRILLANT.biseau.toFixed(2)} * (travers * 2.0 - 1.0);
-             vec3 Nb = normalize(Nc * cos(angle) + normalize(Tc * gc.x + Bc * gc.y) * sin(angle));
-             vec3 Vc = normalize(vViewPosition);
-             vec3 Lc = normalize(vec3(-0.45, 0.6, 1.0));
-             vec3 Hc = normalize(Lc + Vc);
-             float nh = max(dot(Nb, Hc), 0.0);
-             // LE MÉTAL TEINTE CE QU'IL RENVOIE : la couleur du cran, poussée
-             // à pleine clarté, ramenée vers le blanc.
-             vec3 cc = gl_FragColor.rgb;
-             vec3 purc = cc / max(max(cc.r, cc.g), max(cc.b, 0.02));
-             vec3 teintec = mix(vec3(1.0), purc, ${BRILLANT.metal.toFixed(2)});
-             float feuc = 1.0 + uLustreForce * 2.0;
-             cc *= 1.0 + pow(nh, 10.0) * ${BRILLANT.reflet.toFixed(2)} * bande * feuc;
-             cc += teintec * pow(nh, 70.0) * ${BRILLANT.eclat.toFixed(2)} * bande * feuc;
-             float fresc = pow(1.0 - clamp(dot(Nb, Vc), 0.0, 1.0), 3.0);
-             cc += mix(vec3(0.85, 0.92, 1.0), teintec, 0.35) * fresc * ${BRILLANT.fresnel.toFixed(2)} * bande;
-             gl_FragColor.rgb = cc;
-           }
+           // LE REPÈRE DE LA FACE, en espace vue — protégé contre le vecteur
+           // nul, qu'un normalize change en NaN.
+           float det = dux.x * duy.y - dux.y * duy.x;
+           float sg = det < 0.0 ? -1.0 : 1.0;
+           vec3 Tb = (dpx * duy.y - dpy * dux.y) * sg;
+           vec3 Bb = (dpy * dux.x - dpx * duy.x) * sg;
+           vec3 Tc = Tb / max(length(Tb), 1e-6);
+           vec3 Bc = Bb / max(length(Bb), 1e-6);
+           vec3 Nc = cross(Tc, Bc);
+           Nc /= max(length(Nc), 1e-6);
+           vec3 Vc = normalize(vViewPosition);
+           // LE REFLET QUI GLISSE, À PLAT : une nappe de lumière en
+           // diagonale, dont la place suit l'ANGLE DE VUE. *Aucune normale ne
+           // bouge* : c'est le regard qui la déplace, comme sur un film
+           // brillant tendu.
+           float regard = dot(Vc, Tc) * 0.6 + dot(Vc, Bc) * 0.4;
+           float diag = vLustreUv.x * 0.6 + vLustreUv.y * 0.4;
+           float ecartc = diag - 0.5 + regard * ${BRILLANT.course.toFixed(2)};
+           float nappe = exp(-ecartc * ecartc * 14.0);
+           float eclair = exp(-ecartc * ecartc * 160.0);
+           // LE MÉTAL TEINTE CE QU'IL RENVOIE : la couleur du cran, poussée
+           // à pleine clarté, ramenée vers le blanc.
+           vec3 cc = gl_FragColor.rgb;
+           vec3 purc = cc / max(max(cc.r, cc.g), max(cc.b, 0.02));
+           vec3 teintec = mix(vec3(1.0), purc, ${BRILLANT.metal.toFixed(2)});
+           float feuc = 1.0 + uLustreForce * 2.0;
+           // LE GRAND REFLET SE MULTIPLIE, L'ÉCLAT S'AJOUTE, TEINTÉ.
+           cc *= 1.0 + nappe * ${BRILLANT.reflet.toFixed(2)} * bande * feuc;
+           cc += teintec * eclair * ${BRILLANT.eclat.toFixed(2)} * bande * feuc;
+           // ET LE FRESNEL DE LA FACE ELLE-MÊME : plus elle penche, plus son
+           // cadre renvoie.
+           float fresc = pow(1.0 - clamp(abs(dot(Nc, Vc)), 0.0, 1.0), 2.0);
+           cc += teintec * fresc * ${BRILLANT.fresnel.toFixed(2)} * bande;
+           gl_FragColor.rgb = cc;
          }
 
          // LE LIN TRESSÉ, en sortie : il presse TOUTE la carte, peinture

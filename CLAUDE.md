@@ -91,9 +91,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   demande la police POUR CE CARACTÈRE (`document.fonts.load(police, emoji)`) :
   Google découpe Noto Color Emoji en onze sous-ensembles et `check` ment.
   Baloo 2 aussi se demande explicitement.
-- **La bordure brille comme le film du sachet** (`BRILLANT`) : un biseau
-  calculé au nuanceur, avec un reflet multiplié, un éclat teinté et du
-  Fresnel ; la lumière court le long du cadre quand la carte penche. Le lin
+- **La bordure brille comme le film du sachet** (`BRILLANT`), **et reste
+  plate** (Keko a refusé le biseau) : une nappe en diagonale qui suit
+  l'angle de vue, multipliée, avec un éclair teinté et du Fresnel. **Jamais
+  de `dFdx` dans un `if`** : NaN, et le bloom efface des blocs de carte. Le lin
   tressé a été essayé et retiré (`?lin=0.09` le rend).
 - **La lueur du sujet ne se peint plus en mode emoji** (`AVEC_LUEUR_EMOJI`,
   `?lueur=1` la rend) : un emoji est un aplat net, son halo se lisait comme
@@ -122,7 +123,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (`GAIN_SOURCES` 2,1, métallicité 0,85, clé à 45° dans le plan et 36,9°
   d'incidence), Fresnel, lustre multiplié. **L'axe horizontal du penchant est
   à contre-physique exprès** (le sachet s'allume en s'ouvrant) : ne pas le
-  « corriger ». **Jamais de backtick dans un commentaire GLSL** (cinq fois).
+  « corriger ». **Jamais de backtick dans un commentaire GLSL** (six fois).
 - **La prise** : le sachet attend en retrait (recul en z, ses cartes
   avec lui, `Prise`) et **une tape le prend** avant qu'on puisse le déchirer
   — c'est ce relâchement qui rend le son à la page sur tactile. Seulement
