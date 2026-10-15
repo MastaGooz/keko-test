@@ -5443,3 +5443,9 @@ travers* — puis retombe en se tassant d'un rien (`POMPE` : 9 %, amorti 11,
 2,6 Hz). **La descente attend `DUREE_POMPE` (0,2 s)** ; elle entre encore sous
 la vie de la gerbe, donc `DUREE_BRULURE` ne s'allonge pas. Chiffres de moi, à
 juger en ouvrant.
+
+Puis **plus fort** — Keko : « peu visible, tu peux l'augmenter ? » —
+amplitude 9 → **20 %**, amorti 11 → 7, pulsation 2,6 → 1,9 Hz, et la descente
+attend 0,3 s. *Un gonflement de 9 % éteint en un dixième de seconde passe sous
+l'oeil.* L'ouverture s'allonge de 0,06 s : pompe et chute (1,17 s) dépassent
+désormais la vie de la gerbe (1,11 s).

@@ -87,8 +87,12 @@ const DUREE_CHUTE = 0.87
  * sous la vie de la gerbe*, donc l'ouverture entière ne s'allonge pas.
  * `POMPE` : de combien il gonfle (en part de sa taille), et sa pulsation.
  */
-const DUREE_POMPE = 0.2
-const POMPE = { amplitude: 0.09, amorti: 11, pulsation: 2 * Math.PI * 2.6 }
+// PLUS FORT ET PLUS LENT — Keko : « peu visible, tu peux l'augmenter ? ».
+// *Un gonflement de 9 % qui s'éteint en un dixième de seconde passe sous
+// l'oeil* : 20 %, un amorti qui le laisse respirer, et la descente qui
+// l'attend d'autant.
+const DUREE_POMPE = 0.3
+const POMPE = { amplitude: 0.2, amorti: 7, pulsation: 2 * Math.PI * 1.9 }
 
 /**
  * LA BANDE EST PROJETÉE, une fois arrachée — c'est le lancer de lexicodex.
