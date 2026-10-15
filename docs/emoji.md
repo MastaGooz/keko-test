@@ -5851,3 +5851,15 @@ un : la plaque blanche poussée à 1,75 au clic (1,3 au survol) dépassait son
 seuil (1,15) et rayonnait autour. Le sticker est désormais plafonné à 1,1 —
 *ce qui dépasse le seuil devient un halo, qu'on l'ait peint ou non.* Le lustre
 du survol, additif, peut encore le frôler.
+
+### Le dos ne vire plus au laiton pendant le flip (15/10/2026)
+
+Keko : « quand je flip le dos de carte après ouverture du paquet, le dos
+devient gris durant le flip au lieu de garder son image ». Mesuré au flip
+ralenti : le verso avait bien sa texture, tournée vers la caméra, et pourtant
+on voyait le laiton du corps. **C'était l'ordre de dessin** : une carte
+`devant` efface la profondeur juste avant son corps (`ORDRE_DEVANT`), et la
+face est rangée juste après lui (`ORDRE_DEVANT + 1`) — mais le verso était
+resté à l'ordre 0, donc dessiné AVANT, puis recouvert. Il prend désormais le
+rang de la face. *Ce qui efface la profondeur range tout ce qui doit passer
+après lui, pas seulement ce qu'on avait en tête ce jour-là.*

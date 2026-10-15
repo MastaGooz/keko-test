@@ -2393,6 +2393,12 @@ ${nuanceur.fragmentShader}`
             position={[0, 0, -EPAISSEUR / 2 - 0.001]}
             rotation={[0, Math.PI, 0]}
             raycast={() => null}
+            // LE VERSO SE RANGE AVEC LA FACE, APRÈS LE CORPS. Une carte
+            // `devant` efface la profondeur avant son corps : le verso, resté
+            // à l'ordre 0, se dessinait AVANT et le corps le recouvrait — le
+            // dos virait au laiton pendant tout le flip. Keko : « le dos devient
+            // gris durant le flip au lieu de garder son image ».
+            renderOrder={devant ? ORDRE_DEVANT + 1 : 0}
           />
         )}
       </mesh>
