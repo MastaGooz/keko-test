@@ -84,7 +84,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 - **Le titre est à taille fixe, pendu par le haut de la plaque** (air 1,8 U),
   deux lignes au plus, 6,63 U calculé. Bancs : `?contour=`, `?texte=sombre`,
   `?titre=crans`, `?dos=gabarit`.
-- **L'emoji est peint au canvas** (`imageDeLEmoji`, 512), entre entier
+- **L'emoji est un STICKER sur la face** (`stickerDeLEmoji`, le cerne crème et
+  l'ombre de `collerSticker`, `CERNE_CARTE` 2,8 % ; l'animé n'en porte pas,
+  `?sticker=0`). Il est peint au canvas (`imageDeLEmoji`, 512), entre entier
   (`illustrationEntiere`) et passe par `illustration()` comme une image. On
   demande la police POUR CE CARACTÈRE (`document.fonts.load(police, emoji)`) :
   Google découpe Noto Color Emoji en onze sous-ensembles et `check` ment.
@@ -319,6 +321,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?bloom=0` | le paquet sans le halo des points brillants |
 | `?plaque=cran` | la plaque teintée du cran, au lieu du blanc |
 | `?lueur=1` | la lueur floutée du sujet derrière l'emoji (retirée par défaut) |
+| `?sticker=0` | l'emoji nu, sans son cerne de sticker |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |

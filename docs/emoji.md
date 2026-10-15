@@ -5243,3 +5243,31 @@ grille qui tangue* ; une seule, qu'on regarde, est un objet qu'on tient.
 redresse** (`tenus`), sinon un curseur que le gyroscope tenait garderait son
 dernier penchant. Le survol et le doigt posé ne changent pas. Pas vu sur
 téléphone.
+
+### L'EMOJI EST UN STICKER SUR LA FACE
+
+Keko : **« quand l'emoji est foncé comme le "Plus" il ne se distingue pas assez
+du fond, c'est dommage »**. *Un glyphe gris sur une nuit verte n'a presque pas
+d'écart de luminance*, et c'est le halo flouté qu'on venait de retirer qui le
+détachait un peu.
+
+Trois réponses proposées — un liseré de sticker partout, un cerne seulement
+quand l'écart manque, une lueur claire derrière — et **Keko a pris la
+première** : *c'est la langue du mode*, un emoji est un sticker sur un
+téléphone, et le dos comme le sachet le disent déjà.
+
+- **c'est `collerSticker` qui le fait**, le même cerne que le dos par la même
+  dilatation (`cerneDe`), posé une fois sur une toile de la taille du glyphe
+  (`stickerDeLEmoji`, mémorisé par emoji) — et c'est cette toile qui sert
+  d'illustration, là où le glyphe nu servait. *Deux cernes écrits chacun de
+  leur côté se désaccorderaient au premier réglage* ;
+- **l'épaisseur vaut `CERNE_CARTE`** (2,8 % de la toile du glyphe, soit
+  cinq pixels sur une carte de 250), l'ombre suit dans le même rapport ;
+- **l'emoji ANIMÉ n'en porte pas** : ses images arrivent déjà prêtes, une par
+  image, et dilater chacune serait un calcul par image. *À rouvrir si l'écart
+  se voit* — le cerne de son image fixe, posé sous l'animation, serait un
+  premier pas ;
+- `?sticker=0` rend le glyphe nu.
+
+Vu au bilan de `?paquet=1314` : le « Plus » se détache de sa nuit verte, et les
+quatre autres portent le même liseré.

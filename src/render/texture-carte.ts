@@ -1621,6 +1621,49 @@ export function imageDeLEmoji(emoji: string): HTMLCanvasElement | null {
   return toile
 }
 
+/**
+ * L'EMOJI EN STICKER : le glyphe cerné de crème, avec son ombre, sur sa toile.
+ *
+ * Keko : « quand l'emoji est foncé comme le "Plus" il ne se distingue pas
+ * assez du fond, c'est dommage ». *Un glyphe gris sur une nuit verte n'a
+ * presque pas d'écart de luminance*, et c'est le halo flouté qu'on venait de
+ * retirer qui le détachait un peu. Trois réponses étaient possibles — un cerne
+ * partout, un cerne seulement quand l'écart manque, une lueur claire derrière
+ * — et Keko a pris la première : **c'est la langue du mode**, un emoji est un
+ * sticker sur un téléphone, et le dos comme le sachet le disent déjà.
+ *
+ * C'est `collerSticker` qui le fait — *le même cerne que le dos, par la même
+ * dilatation* — posé une fois sur une toile de la taille du glyphe, qui sert
+ * ensuite d'illustration comme le glyphe nu servait. L'unité est choisie pour
+ * que le cerne fasse `CERNE_CARTE` de la toile. `?sticker=0` rend le glyphe nu.
+ *
+ * **L'emoji ANIMÉ n'en porte pas** : ses images arrivent déjà prêtes
+ * (`prete`), une par image, et dilater chacune serait un calcul par image.
+ */
+const CERNE_CARTE = 0.028
+const SANS_STICKER =
+  typeof location !== 'undefined' && new URLSearchParams(location.search).get('sticker') === '0'
+const STICKERS = new Map<string, HTMLCanvasElement>()
+
+function stickerDeLEmoji(emoji: string): HTMLCanvasElement | null {
+  const deja = STICKERS.get(emoji)
+  if (deja !== undefined) return deja
+  const glyphe = imageDeLEmoji(emoji)
+  if (glyphe === null) return null
+  const toile = document.createElement('canvas')
+  toile.width = TOILE_EMOJI
+  toile.height = TOILE_EMOJI
+  const ctx = toile.getContext('2d')
+  if (ctx === null) return null
+  // L'UNITÉ : `collerSticker` épaissit de DOS_CERNE unités, donc une unité
+  // vaut l'épaisseur voulue divisée par DOS_CERNE — l'ombre suit dans le même
+  // rapport.
+  const u = (CERNE_CARTE * TOILE_EMOJI) / DOS_CERNE
+  collerSticker(ctx, glyphe, TOILE_EMOJI / 2, TOILE_EMOJI / 2, TOILE_EMOJI, 0, u)
+  STICKERS.set(emoji, toile)
+  return toile
+}
+
 async function illustration(
   nom: string,
   rarete?: string,
@@ -1628,6 +1671,7 @@ async function illustration(
   directe?: string,
   emoji?: string,
   prete?: CanvasImageSource & { width: number; height: number },
+  sticker = false,
 ): Promise<HTMLImageElement | HTMLCanvasElement | null> {
   // UNE IMAGE DEJA PRETE PASSE DEVANT TOUT : c'est le chemin de l'emoji anime,
   // et *elle n'a rien a charger*, donc rien a attendre.
@@ -1637,7 +1681,7 @@ async function illustration(
     // avec la police systeme, et *sa toile part en cache telle quelle* -- donc
     // le defaut survivrait au chargement.
     await policeDeLEmoji(emoji)
-    const peint = imageDeLEmoji(emoji)
+    const peint = sticker ? stickerDeLEmoji(emoji) : imageDeLEmoji(emoji)
     if (peint !== null) return peint
   }
   const dessin = art(nom)
@@ -3339,7 +3383,15 @@ export async function peindreCarte(
   if (largeur !== LARGE) ctx.scale(largeur / LARGE, largeur / LARGE)
 
   const [image, decor, symbole] = await Promise.all([
-    illustration(carte.nom, carte.rarete, carte.matiere, carte.illustration, carte.emoji, carte.image),
+    illustration(
+      carte.nom,
+      carte.rarete,
+      carte.matiere,
+      carte.illustration,
+      carte.emoji,
+      carte.image,
+      enBulle(carte) && !SANS_STICKER,
+    ),
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
     // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
     // de la famille. Une armure garde le bleu d'origine. Voir `fondTeinte`.
