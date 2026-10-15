@@ -5329,3 +5329,12 @@ trait sombre déborde de l'encre de 1,5 % de la largeur et porte l'ombre, le
 crème de 0,7 % par-dessus, puis le glyphe — chaque cerne étant une dilatation
 (`cerneDe`), le sombre teinté depuis le crème par `source-in` (`teinter`). Vu
 sur le sachet de `?paquet=1314`.
+
+#### L'EMOJI DU TITRE FAIT LA TAILLE D'UN « o »
+
+Keko : **« on peut réduire un peu la taille de l'emoji pour la rapprocher de
+la taille d'un "O" ? »** *Le glyphe occupe 80 % de sa toile*, et un « o » de
+Baloo 2 fait un peu plus de la moitié du corps : la toile vaut
+`TAILLE_EMOJI_TITRE` (0,78) du corps, et le sticker descend de 7 % du corps,
+au centre des bas-de-casse plutôt qu'au milieu de l'em-box. Vu sur le sachet
+de `?paquet=1314` : il tient entre le « m » et le « j » sans les mordre.

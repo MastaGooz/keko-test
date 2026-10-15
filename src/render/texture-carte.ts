@@ -5498,6 +5498,8 @@ const TITRE_HAUTEURS = [0.03, -0.07, 0.05, -0.05, 0.04, -0.06]
 const TITRE_PENCHES = [-0.12, 0.09, -0.06, 0.11, -0.09, 0.07]
 /** Et sa taille, en part de la taille commune. */
 const TITRE_ECHELLES = [1.04, 0.98, 1.1, 0.97, 1.04, 1.0]
+/** La toile de l'emoji du titre, en part du corps : voir `peindreTitreDuSachet`. */
+const TAILLE_EMOJI_TITRE = 0.78
 
 /** La même silhouette, dans une autre couleur : l'alpha reste, le pigment change. */
 function teinter(toile: HTMLCanvasElement, couleur: string): HTMLCanvasElement {
@@ -5533,7 +5535,7 @@ async function peindreTitreDuSachet(
   // LA LARGEUR DE CHAQUE GLYPHE, à son échelle : un emoji vaut à peu près un
   // carré de la taille de police, moins ses marges.
   const largeurs = glyphes.map((g, i) =>
-    PICTO.test(g) ? taille * 0.88 : ctx.measureText(g).width * echelle(i),
+    PICTO.test(g) ? taille * TAILLE_EMOJI_TITRE * 0.9 : ctx.measureText(g).width * echelle(i),
   )
   const ecart = l * 0.006
   const total = largeurs.reduce((a, b) => a + b, 0) + ecart * (glyphes.length - 1)
@@ -5556,7 +5558,14 @@ async function peindreTitreDuSachet(
       // depuis le crème par `source-in`.
       const image = imageDeLEmoji(g)
       if (image !== null) {
-        const d = taille
+        // À LA TAILLE D'UN « o », ET À SA HAUTEUR. Keko : « on peut réduire un
+        // peu la taille de l'emoji pour la rapprocher de la taille d'un
+        // "O" ? » *Le glyphe occupe 80 % de sa toile*, et un « o » de Baloo 2
+        // fait un peu plus de la moitié du corps : la toile vaut donc
+        // TAILLE_EMOJI_TITRE du corps, et le sticker descend au centre des
+        // bas-de-casse, sous le milieu de l'em-box.
+        const d = taille * TAILLE_EMOJI_TITRE
+        ctx.translate(0, taille * 0.07)
         const sombre = cerneDe(image, (l * 0.015 * TOILE_CERNE) / d)
         const clair = cerneDe(image, (l * 0.007 * TOILE_CERNE) / d)
         const ds = d * sombre.echelle
