@@ -5271,3 +5271,14 @@ téléphone, et le dos comme le sachet le disent déjà.
 
 Vu au bilan de `?paquet=1314` : le « Plus » se détache de sa nuit verte, et les
 quatre autres portent le même liseré.
+
+#### LA TOILE DU STICKER DÉBORDE CELLE DU GLYPHE
+
+Keko : **« sur certaines cartes comme le trèfle, l'outline blanc est "coupé" en
+haut de l'emoji comme s'il atteignait un bord »**. *Il l'atteignait* : un
+glyphe haut sort de son em-box et touche le bord de ses 512, et le cerne —
+plus l'ombre, qui descend de 35 px — n'avait nulle part où aller. La toile du
+sticker prend `MARGE_STICKER` (10 %) de chaque côté, **et le glyphe ne
+rétrécit pas pour autant** : la fenêtre d'art lui rend exactement cet air
+(`air` se déduit du facteur de la toile, jamais écrit à part). Vu au bilan de
+`?paquet=1314` : tailles identiques au pixel à la passe d'avant.

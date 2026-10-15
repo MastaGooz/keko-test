@@ -1641,6 +1641,16 @@ export function imageDeLEmoji(emoji: string): HTMLCanvasElement | null {
  * (`prete`), une par image, et dilater chacune serait un calcul par image.
  */
 const CERNE_CARTE = 0.028
+/**
+ * LA TOILE DU STICKER DÉBORDE CELLE DU GLYPHE. Keko : « sur certaines cartes
+ * comme le trèfle, l'outline blanc est "coupé" en haut de l'emoji comme s'il
+ * atteignait un bord ». *Il l'atteignait* : un glyphe haut sort de son em-box
+ * et touche le bord de ses 512, et le cerne — plus l'ombre, qui descend de
+ * 35 px — n'avait nulle part où aller. La toile prend donc `MARGE_STICKER` de
+ * chaque côté, et **le sujet ne rétrécit pas pour autant** : la fenêtre d'art
+ * rend exactement cet air (voir `air`, dans `peindreCarte`).
+ */
+const MARGE_STICKER = 0.1
 const SANS_STICKER =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('sticker') === '0'
 const STICKERS = new Map<string, HTMLCanvasElement>()
@@ -1650,16 +1660,17 @@ function stickerDeLEmoji(emoji: string): HTMLCanvasElement | null {
   if (deja !== undefined) return deja
   const glyphe = imageDeLEmoji(emoji)
   if (glyphe === null) return null
+  const cote = Math.round(TOILE_EMOJI * (1 + MARGE_STICKER * 2))
   const toile = document.createElement('canvas')
-  toile.width = TOILE_EMOJI
-  toile.height = TOILE_EMOJI
+  toile.width = cote
+  toile.height = cote
   const ctx = toile.getContext('2d')
   if (ctx === null) return null
   // L'UNITÉ : `collerSticker` épaissit de DOS_CERNE unités, donc une unité
   // vaut l'épaisseur voulue divisée par DOS_CERNE — l'ombre suit dans le même
   // rapport.
   const u = (CERNE_CARTE * TOILE_EMOJI) / DOS_CERNE
-  collerSticker(ctx, glyphe, TOILE_EMOJI / 2, TOILE_EMOJI / 2, TOILE_EMOJI, 0, u)
+  collerSticker(ctx, glyphe, cote / 2, cote / 2, TOILE_EMOJI, 0, u)
   STICKERS.set(emoji, toile)
   return toile
 }
@@ -3519,9 +3530,13 @@ export async function peindreCarte(
    * `caseDeCarte` sans assiette.
    */
   const bulle = enBulle(carte)
-  const air = bulle ? AIR_SUJET * U : 0
   const fY = marge
   const fH = (bulle ? HAUT * HAUT_BULLE : HAUT - marge) - fY
+  // LE STICKER PORTE SA MARGE DANS SA TOILE, donc la fenêtre lui rend l'air
+  // d'autant : *le glyphe garde la taille qu'il avait nu.* La toile est plus
+  // haute d'un facteur f, la boîte qui la contient doit l'être aussi.
+  const f = bulle && !SANS_STICKER ? 1 + MARGE_STICKER * 2 : 1
+  const air = bulle ? Math.max(0, AIR_SUJET * U * f - ((f - 1) * fH) / 2) : 0
   const aY = fY + air
   const aH = fH - air * 2
   ctx.save()
