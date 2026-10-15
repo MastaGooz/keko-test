@@ -5759,3 +5759,14 @@ body {
   text-align: center;
   text-transform: uppercase;
 }
+/* LES PARTICULES DE LA RÉVÉLATION : un canvas 2D par-dessus la scène, qui ne
+   capte jamais le pointeur. Voir `EclatDeRevelation`. Il est déclaré APRÈS le
+   canvas de la scène dans le DOM, donc il passe devant à z-index égal. */
+.paquet-etincelles {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}

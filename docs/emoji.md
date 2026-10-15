@@ -5530,3 +5530,29 @@ rayons s'étirent jusqu'à **3,2 fois** leur longueur de découpe (contre 1,9), 
 Puis **plus brève** — Keko : « plus bref, la lumière finale ». Elle s'éteint à
 0,5 s (`DUREE_LUEUR_FINALE`), à mi-gerbe, au lieu de tenir jusqu'à la fin :
 *un éclair dit l'explosion, une lumière qui tient dit un projecteur.*
+
+### LES PARTICULES DE LA RÉVÉLATION, AUX COULEURS DU CRAN
+
+Keko : **« on peut faire un effet de particule coloré en fonction de la rareté
+à la révélation de chaque carte, comme dans lexicodex ? »**
+
+`EclatDeRevelation` : à chaque carte qui arrive au premier plan (`decouvrir`),
+une gerbe d'étincelles part **du contour de la carte** vers l'extérieur, un
+peu vers le haut — *ce qui jaillit d'un objet part de son contour.*
+
+- **la couleur dit le cran** : la lueur d'ambiance (`AMBIANCE`), la même que
+  l'éclat de l'écran ; un quart des étincelles reste blanc ;
+- **le nombre dit sa hauteur** : 10, 20, 30, 44, 64 du commun au légendaire,
+  et elles partent un peu plus vite à chaque cran — *le bas de l'échelle parle
+  peu* ;
+- **le régime du feu d'artifice du sachet** : frein d'air fort, pesanteur
+  faible, elles filent, ralentissent et s'éteignent en l'air ; éclat à quatre
+  branches et coeur blanc.
+
+**C'est un canvas 2D posé par-dessus la scène**, pas une matière de plus : la
+boîte de la carte à l'écran est déjà connue (`refBoite`), copiée à l'instant de
+la révélation. Monté à neuf par sa clé, il se tait quand la dernière étincelle
+s'éteint et ne capte jamais le pointeur. *Je n'ai pas relu le code de
+lexicodex pour celui-ci* : c'est leur idée, pas leurs chiffres. Vu sur
+`?paquet=1314&nu` : blanches autour des poupées, violettes et plus denses
+autour du bouton coché.

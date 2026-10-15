@@ -16,6 +16,7 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { Carte3D, DUREE_FLIP, INCLINAISON_REFLET, type CurseurDeCarte } from './Carte3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import { Bouton3D } from './Bouton3D.tsx'
+import { EclatDeRevelation } from './EclatDeRevelation.tsx'
 import { RECUL_DU_BAS, SANS_GYRO, Sachet3D } from './Sachet3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
@@ -462,7 +463,12 @@ export function Paquet3D(): React.ReactElement {
    * remonte a neuf : *une classe qu'on retire et qu'on repose ne redemarre pas
    * une animation sans un reflow force* — la regle du gonflement des tas.
    */
-  const [eclat, setEclat] = useState<{ readonly cle: number; readonly ton: string } | null>(null)
+  const [eclat, setEclat] = useState<{
+    readonly cle: number
+    readonly ton: string
+    readonly rang: number
+    readonly boite: { cx: number; cy: number; l: number; h: number } | null
+  } | null>(null)
   /** Vrai pendant que le compteur de la derniere carte defile. */
   const [monte, setMonte] = useState(false)
   /** Le sachet est parti : c'est ce qui met les cartes en rangée. */
@@ -769,7 +775,11 @@ export function Paquet3D(): React.ReactElement {
   function decouvrir(i: number): void {
     const carte = paquet[i]
     if (carte === undefined) return
-    setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDans(rangDe(carte.id), teintes) }))
+    // LA GERBE DE LA RÉVÉLATION part de la boîte de la carte à cet instant :
+    // une copie, pour que l'effet ne se relance pas à chaque rendu.
+    const boite = refBoite.current === null ? null : { ...refBoite.current }
+    const rang = rangDe(carte.id)
+    setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDans(rang, teintes), rang: Math.max(0, rang), boite }))
     // LA DERNIERE SE DIT AU COMPTEUR, les autres d'un coup : *ce qui distingue
     // un moment est qu'il ne se produit qu'une fois.*
     if (i === paquet.length - 1) monterLeCompteur(carte.id)
@@ -1229,6 +1239,11 @@ export function Paquet3D(): React.ReactElement {
         qu'on repose ne redémarre pas sans un reflow forcé.
       */}
       {flash > 0 && <div key={`fl${flash}`} className="paquet-flash" />}
+      {/* LES PARTICULES DE LA RÉVÉLATION, par-dessus la scène : voir
+          `EclatDeRevelation`. Montées à neuf par la clé de l'éclat. */}
+      {eclat !== null && eclat.boite !== null && (
+        <EclatDeRevelation key={`et${eclat.cle}`} couleur={eclat.ton} rang={eclat.rang} boite={eclat.boite} />
+      )}
       <Canvas
         shadows
         dpr={[1, 2]}
