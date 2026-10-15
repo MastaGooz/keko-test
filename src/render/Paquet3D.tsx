@@ -1073,7 +1073,11 @@ export function Paquet3D(): React.ReactElement {
     setOuvert(nu)
     setParti(nu)
     setBrule(false)
-    setPris(nu)
+    // LE PAQUET SUIVANT ARRIVE DÉJÀ PRIS — Keko : « quand on clique sur nouveau
+    // paquet on peut aller direct au paquet sans passer par touchez le
+    // paquet ? » *Le clic sur le bouton a déjà rendu le son à la page* : la
+    // prise n'a plus rien à débloquer, elle ne ferait que retarder.
+    setPris(true)
     setRetourne(false)
     setPileOuverte(false)
     setMontree(0)

@@ -5673,3 +5673,9 @@ deuxième : « essayons la 2 ».
   commune les garde cachées. Vérifié à l'écran.
 - Il s'applique à **chaque** sachet, pas seulement au premier de la session.
   À rejuger : on peut le réserver au premier.
+
+**La prise n'est demandée que pour le premier sachet.** Keko : « quand on
+clique sur nouveau paquet on peut aller direct au paquet sans passer par
+touchez le paquet ? » Le clic sur le bouton a déjà rendu le son à la page,
+donc `ouvrirUnAutre` pose `pris` à vrai, et le sachet suivant arrive
+directement à la main.
