@@ -5572,3 +5572,22 @@ découvrait la pile. **Il est redressé** (`Math.abs`, pulsation divisée par de
 pour garder trois battements par seconde) : la carte ne fait que gonfler et
 retomber à sa taille. *Un objet posé devant d'autres ne peut rétrécir sans les
 montrer.*
+
+#### La transition entre deux paquets
+
+Keko : « je trouve la transition quand on clique sur ouvrir un nouveau booster
+manquante, il faudrait quelque chose ». Le clic remettait tout à zéro d'un
+coup. **Deux temps maintenant** (`SORTIE`, `ARRIVEE`, `Envol`, `Arrivee` dans
+Paquet3D) :
+
+- les cinq cartes du bilan plongent sous l'écran en cascade (50 ms d'écart,
+  0,42 s chacune), après un léger recul vers le haut, en tournant chacune de
+  son côté ; le paquet suivant n'est tiré qu'une fois la dernière sortie
+  (`DUREE_SORTIE`) ;
+- le nouveau sachet tombe d'en haut en 0,6 s et dépasse un peu sa place, en
+  se redressant ; **les cartes qui attendent derrière lui tombent avec lui**
+  (même groupe), sinon on les verrait au centre pendant sa chute.
+
+Les deux mouvements vivent dans des groupes parents, par-dessus le ressort de
+chaque carte. Pendant la sortie, le bouton est masqué et les tapes du bilan
+sont ignorées. Tous les chiffres viennent de moi et restent à juger.

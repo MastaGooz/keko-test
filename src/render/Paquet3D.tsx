@@ -1,4 +1,4 @@
-import { NoToneMapping } from 'three'
+import { NoToneMapping, type Group } from 'three'
 /**
  * L'OUVERTURE D'UN PAQUET — le premier écran du troisième mode.
  *
@@ -11,7 +11,7 @@ import { NoToneMapping } from 'three'
  * *C'est la règle du projet depuis le début* : un écran décide de ce que les
  * choses VEULENT DIRE, les objets savent comment elles se dessinent.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Carte3D, DUREE_FLIP, INCLINAISON_REFLET, type CurseurDeCarte } from './Carte3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
@@ -341,6 +341,81 @@ function rangDansLEchelle(rarete: string | undefined, echelle: readonly string[]
 function lueurDans(rang: number, echelle: readonly string[]): string {
   const cran = echelle[Math.max(0, rang)] ?? echelle[0]!
   return AMBIANCE[cran] ?? AMBIANCE[echelle[0]!]!
+}
+
+/**
+ * LA TRANSITION ENTRE DEUX PAQUETS. Keko : « je trouve la transition quand on
+ * clique sur ouvrir un nouveau booster manquante, il faudrait quelque chose ».
+ * Le clic remettait tout à zéro d'un coup : les cinq cartes disparaissaient et
+ * le sachet était déjà là, *sans que rien ne dise d'où il venait.*
+ *
+ * Deux temps, et chacun dit un geste :
+ *
+ * - **LA SORTIE** : les cartes du bilan plongent sous l'écran l'une après
+ *   l'autre (`cascade`), en se ramassant d'abord d'un cheveu vers le haut
+ *   (un « back » à l'entrée) et en tournant chacune de son côté — *on range
+ *   la main avant d'en prendre une autre* ;
+ * - **L'ARRIVÉE** : le nouveau sachet tombe d'en haut et se pose en
+ *   dépassant un peu sa place (un « back » à la sortie), légèrement penché.
+ *   **Les cartes qui attendent derrière lui tombent AVEC lui** — elles sont
+ *   dans le même groupe —, sinon on les verrait au centre pendant sa chute.
+ *
+ * Les deux se posent PAR-DESSUS le placement des cartes, dans un groupe
+ * parent : *le ressort de chaque carte n'en sait rien*, et ne peut donc pas
+ * le manger en croyant corriger un écart.
+ */
+const SORTIE = { duree: 0.42, cascade: 0.05, recul: 1.2, tour: 0.5 } as const
+const ARRIVEE = { duree: 0.6, depassement: 1.5, penche: 0.16 } as const
+/** Le temps que la dernière carte a quitté l'écran. */
+const DUREE_SORTIE = SORTIE.duree + SORTIE.cascade * 4
+
+function Envol({
+  sortie,
+  rang,
+  distance,
+  children,
+}: {
+  readonly sortie: boolean
+  readonly rang: number
+  readonly distance: number
+  readonly children: ReactNode
+}): React.JSX.Element {
+  const g = useRef<Group>(null)
+  const debut = useRef<number | null>(null)
+  useFrame(({ clock }) => {
+    const o = g.current
+    if (o === null) return
+    if (!sortie) {
+      debut.current = null
+      o.position.y = 0
+      o.rotation.z = 0
+      return
+    }
+    if (debut.current === null) debut.current = clock.elapsedTime
+    const u = Math.min(1, Math.max(0, clock.elapsedTime - debut.current - rang * SORTIE.cascade) / SORTIE.duree)
+    // ELLE SE RAMASSE PUIS PLONGE : un « back » à l'entrée.
+    const e = (SORTIE.recul + 1) * u * u * u - SORTIE.recul * u * u
+    o.position.y = -distance * e
+    o.rotation.z = (rang % 2 === 0 ? -1 : 1) * SORTIE.tour * u * u
+  })
+  return <group ref={g}>{children}</group>
+}
+
+function Arrivee({ distance, children }: { readonly distance: number; readonly children: ReactNode }): React.JSX.Element {
+  const g = useRef<Group>(null)
+  const debut = useRef<number | null>(null)
+  useFrame(({ clock }) => {
+    const o = g.current
+    if (o === null) return
+    if (debut.current === null) debut.current = clock.elapsedTime
+    const u = Math.min(1, (clock.elapsedTime - debut.current) / ARRIVEE.duree)
+    // IL SE POSE EN DÉPASSANT SA PLACE : un « back » à la sortie.
+    const c = ARRIVEE.depassement
+    const e = 1 + (c + 1) * (u - 1) ** 3 + c * (u - 1) ** 2
+    o.position.y = distance * (1 - e)
+    o.rotation.z = ARRIVEE.penche * (1 - e)
+  })
+  return <group ref={g}>{children}</group>
 }
 
 export function Paquet3D(): React.ReactElement {
@@ -856,6 +931,22 @@ export function Paquet3D(): React.ReactElement {
     return () => clearTimeout(t)
   }, [retourne])
 
+  // LA SORTIE DES CARTES, puis le paquet suivant : voir `SORTIE`.
+  const [sortie, setSortie] = useState(false)
+  const refSortie = useRef(false)
+  refSortie.current = sortie
+  const minuteSortie = useRef(0)
+  useEffect(() => () => clearTimeout(minuteSortie.current), [])
+  function partir(): void {
+    if (refSortie.current) return
+    setZoomee(null)
+    setSortie(true)
+    minuteSortie.current = window.setTimeout(() => {
+      setSortie(false)
+      ouvrirUnAutre()
+    }, DUREE_SORTIE * 1000)
+  }
+
   function ouvrirUnAutre(): void {
     cancelAnimationFrame(image.current)
     setOuvert(nu)
@@ -975,7 +1066,7 @@ export function Paquet3D(): React.ReactElement {
         const id = candidat.current
         candidat.current = null
         if (refFini.current) {
-          if (!tape) return
+          if (!tape || refSortie.current) return
           if (refZoomee.current !== null) setZoomee(null)
           else if (id !== null) {
             setZoomee(id)
@@ -1289,6 +1380,8 @@ export function Paquet3D(): React.ReactElement {
           fini » vivent dans des refs — et une ref ne se remet pas à zéro parce
           qu'une prop a changé.
         */}
+        {/* LE PAQUET ARRIVE D'EN HAUT, ses cartes avec lui : voir `ARRIVEE`. */}
+        <Arrivee key={numero} distance={hVisible / 2 + hSachet * 0.7}>
         {!parti && paquet.length > 0 && (
           <Sachet3D
             key={numero}
@@ -1353,8 +1446,8 @@ export function Paquet3D(): React.ReactElement {
         {aPeindre.map((carte, i) => {
           const vue = retourne
           return (
+            <Envol key={carte.id} sortie={sortie} rang={i} distance={hVisible * 1.25}>
             <Carte3D
-              key={carte.id}
               carte={carte}
               // LE DOS TANT QU'ELLE N'EST PAS RETOURNÉE : c'est la même carte
               // vue de l'autre côté, pas un second objet.
@@ -1495,8 +1588,10 @@ export function Paquet3D(): React.ReactElement {
                   : undefined
               }
             />
+            </Envol>
           )
         })}
+        </Arrivee>
 
         {/*
           LE BOUTON N'EXISTE QU'AU BILAN. Pendant le défilé il n'y a rien à
@@ -1504,14 +1599,14 @@ export function Paquet3D(): React.ReactElement {
           disputerait le geste à la carte. « Tout révéler » est parti avec :
           il répondait à cinq dos posés côte à côte, et il n'y en a plus.
         */}
-        {ouvert && fini && zoomee === null && paquet.length > 0 && (
+        {ouvert && fini && zoomee === null && !sortie && paquet.length > 0 && (
           <Bouton3D
             texte="Ouvrir un autre paquet"
             // EN STICKER, PAS EN LAITON : voir `TONS.emoji` dans Bouton3D.
             ton="emoji"
             cran="ecran"
             position={[0, -hVisible * 0.38, Z_MAIN]}
-            onCliquer={ouvrirUnAutre}
+            onCliquer={partir}
           />
         )}
       </Canvas>
