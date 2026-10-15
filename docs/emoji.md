@@ -5980,3 +5980,10 @@ booster" ». `public/Clic-pop.aac` (`SON_CLIC_POP`) remplace le clic synthétis�
 (`jouerClicDoux`, gardé écrit) dans le `pointerdown` du bouton sticker, et il
 est préchargé au montage du bouton : *un son qui se charge au clic part en
 retard*.
+
+### Plus de lustre qui glisse sur le bouton sticker (15/10/2026)
+
+Keko : « il y a un effet de lumière glissant sur le bouton (qui se déplace), on
+peut le supprimer ? » Le lustre du survol est à zéro sur le bouton sticker
+(`lustre.opacity = enSticker(ton) ? 0 : …`), comme le halo avant lui. Au survol
+le bouton grossit et s'éclaircit, rien d'autre ; l'archive garde son lustre.

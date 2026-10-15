@@ -580,7 +580,11 @@ export function Bouton3D({
     // ne rayonne pas* : elle grossit et s'éclaircit, et le lustre la traverse.
     // La ferronnerie de l'archive garde le sien.
     halo.opacity = enSticker(ton) ? 0 : v * 0.5
-    lustre.opacity = v * 0.55
+    // PAS DE LUSTRE QUI GLISSE SUR LE STICKER NON PLUS — Keko : « il y a un
+    // effet de lumière glissant sur le bouton (qui se déplace), on peut le
+    // supprimer ? » Au survol, il ne reste qu'à grossir et s'éclaircir. La
+    // ferronnerie de l'archive garde le sien.
+    lustre.opacity = enSticker(ton) ? 0 : v * 0.55
     // LE LUSTRE TRAVERSE, IL NE CLIGNOTE PAS : il repart d'un bord à intervalle
     // régulier, et le masque l'empêche de déborder des coins arrondis.
     const carte = lustre.map
