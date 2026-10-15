@@ -393,21 +393,33 @@ export function jouerClicDoux(volume = 1): void {
   compresseur.release.value = 0.08
   sortie.connect(compresseur).connect(ctx.destination)
 
-  const voix = (depart: number, f0: number, f1: number, duree: number, niveau: number): void => {
+  // MOINS DE BULLE. Keko : « on peut changer le son pour un truc un peu moins
+  // "bulle" ». *Ce qui faisait la bulle était la hauteur qui MONTE* d'une
+  // octave. Le clic devient une touche qu'on enfonce : un ton qui DESCEND à
+  // peine (un tiers de ton), en triangle plutôt qu'en sinus — un peu de
+  // grain, pas de sifflet — posé sur un petit coup sourd qui donne le poids.
+  const voix = (
+    forme: OscillatorType,
+    depart: number,
+    f0: number,
+    f1: number,
+    duree: number,
+    niveau: number,
+  ): void => {
     const o = ctx.createOscillator()
-    o.type = 'sine'
+    o.type = forme
     o.frequency.setValueAtTime(f0, t0 + depart)
-    o.frequency.exponentialRampToValueAtTime(f1, t0 + depart + 0.07)
+    o.frequency.exponentialRampToValueAtTime(f1, t0 + depart + duree * 0.6)
     const g = ctx.createGain()
     g.gain.setValueAtTime(0.0001, t0 + depart)
-    g.gain.exponentialRampToValueAtTime(niveau, t0 + depart + 0.006)
+    g.gain.exponentialRampToValueAtTime(niveau, t0 + depart + 0.004)
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + depart + duree)
     o.connect(g).connect(sortie)
     o.start(t0 + depart)
     o.stop(t0 + depart + duree + 0.02)
   }
-  voix(0, 420, 880, 0.16, 0.9)
-  voix(0.018, 630, 1320, 0.12, 0.35)
+  voix('triangle', 0, 760, 640, 0.09, 0.8)
+  voix('sine', 0, 190, 110, 0.07, 0.7)
 
   // LE TOC : 25 ms de bruit, passe-bande vers 2,5 kHz.
   const n = Math.round(ctx.sampleRate * 0.025)
@@ -418,8 +430,8 @@ export function jouerClicDoux(volume = 1): void {
   bruit.buffer = tampon
   const filtre = ctx.createBiquadFilter()
   filtre.type = 'bandpass'
-  filtre.frequency.value = 2500
-  filtre.Q.value = 1.2
+  filtre.frequency.value = 3200
+  filtre.Q.value = 0.9
   const gb = ctx.createGain()
   gb.gain.value = 0.35
   bruit.connect(filtre).connect(gb).connect(sortie)
