@@ -5498,3 +5498,13 @@ s'affiche pas* — l'erreur n'est que dans le journal de Vite, pas dans la
 console de l'outil. Une sonde à force absurde (×12) a montré que ce n'était pas
 une question de dose. Vu sur `?gerbe` : les rayons montent de la partie
 ouverte ; l'embrasement final n'a pas été capturé.
+
+Puis **de la lumière, plus des lasers** — Keko : « ça fait laser, je voyais
+plutôt comme de la vraie lumière s'échapper un peu ». *Ce qui faisait le
+laser : un coeur blanc fin, des bords nets et une grande longueur.* Le coeur
+part, le profil devient une gaussienne qui s'éteint avant le bord du quad, les
+rayons s'élargissent (0,26–0,42 au lieu de 0,10–0,17), raccourcissent
+(0,32–0,60 au lieu de 0,55–1,0), penchent davantage et se recouvrent — *c'est
+le recouvrement qui fait une nappe plutôt que des traits.* Force 0,4 à la
+découpe, 1 à l'embrasement. Vu sur `?gerbe` : une lueur douce au-dessus de la
+partie ouverte.

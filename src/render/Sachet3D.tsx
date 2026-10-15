@@ -1730,16 +1730,22 @@ const FAISCEAUX = Array.from({ length: 9 }, (_, i) => {
   }
   return {
     u: 0.06 + ((i + 0.5) / 9) * 0.88 + (h(1) - 0.5) * 0.06,
-    angle: (h(2) - 0.5) * 0.7,
-    longueur: 0.55 + h(3) * 0.45,
-    largeur: 0.1 + h(4) * 0.07,
+    angle: (h(2) - 0.5) * 0.9,
+    longueur: 0.32 + h(3) * 0.28,
+    largeur: 0.26 + h(4) * 0.16,
     rythme: 5 + h(5) * 7,
     phase: h(6) * 6.28,
     teinte: i % 2 === 1,
   }
 })
 /** La force d'un faisceau pendant la découpe, et à l'embrasement. */
-const FORCE_FAISCEAU = { decoupe: 0.6, eclat: 1.6 }
+// PLUS DOUX, PLUS LARGE, PLUS COURT. Keko : « ça fait laser, je voyais plutôt
+// comme de la vraie lumière s'échapper un peu ». *Ce qui faisait le laser :
+// un coeur blanc fin, des bords nets et une grande longueur.* Le coeur part,
+// le profil devient une gaussienne sans bord, les rayons s'élargissent et
+// raccourcissent, et ils se recouvrent — c'est le recouvrement qui fait une
+// nappe de lumière plutôt que des traits.
+const FORCE_FAISCEAU = { decoupe: 0.4, eclat: 1 }
 
 function matiereDuFaisceau(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
@@ -1771,13 +1777,14 @@ vec3 versLineaire(vec3 c) {
 void main() {
   float le = vUv.y;
   // ETROIT A LA SOURCE, LARGE AU LOIN : la largeur utile croit avec la hauteur.
-  float c = abs(vUv.x - 0.5) * 2.0 / (0.3 + 0.7 * le);
-  float profil = exp(-c * c * 3.2) * (1.0 - smoothstep(0.85, 1.0, c));
+  float c = abs(vUv.x - 0.5) * 2.0 / (0.45 + 0.55 * le);
+  // UNE GAUSSIENNE SANS BORD : *de la lumière n'a pas d'arête.* Elle est
+  // nulle au bord du quad, donc le rectangle ne se voit jamais.
+  float profil = exp(-c * c * 2.2) * (1.0 - smoothstep(0.6, 1.0, c));
   // IL NAIT DOUX ET S'EFFILE : une rampe courte au pied, une queue longue.
   // (PAS long : c'est un mot reserve du GLSL, et le nuanceur ne compilait pas.)
-  float etire = smoothstep(0.0, 0.06, le) * pow(1.0 - le, 1.7);
-  float coeur = exp(-c * c * 18.0);
-  vec3 lum = (uCouleur * profil + vec3(${ton(FENTE_COEUR)}) * coeur * 0.35) * etire * uForce;
+  float etire = smoothstep(0.0, 0.12, le) * pow(1.0 - le, 2.4);
+  vec3 lum = uCouleur * profil * etire * uForce;
   if (max(lum.r, max(lum.g, lum.b)) < 0.003) discard;
   if (uLineaire > 0.5) lum = versLineaire(clamp(lum, 0.0, 1.0)) + max(lum - 1.0, 0.0);
   gl_FragColor = vec4(lum, min(1.0, max(lum.r, max(lum.g, lum.b))));
