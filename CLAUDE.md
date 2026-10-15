@@ -119,6 +119,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   d'incidence), Fresnel, lustre multiplié. **L'axe horizontal du penchant est
   à contre-physique exprès** (le sachet s'allume en s'ouvrant) : ne pas le
   « corriger ». **Jamais de backtick dans un commentaire GLSL** (cinq fois).
+- **La prise** : le sachet attend en retrait (recul en z, ses cartes
+  avec lui, `Prise`) et **une tape le prend** avant qu'on puisse le déchirer
+  — c'est ce relâchement qui rend le son à la page sur tactile.
 - **Le geste** : le front suit le doigt (exposant 1), « Ouvrir ici » au départ
   du pointillé, **cliquet** (`p` ne recule jamais, pas de retour sous la
   moitié), le doigt posé penche le sachet (`viseDepuis`, borné ±0,7), le

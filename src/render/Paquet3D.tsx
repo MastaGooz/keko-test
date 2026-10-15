@@ -449,6 +449,60 @@ function Arrivee({
   return <group ref={g}>{children}</group>
 }
 
+/**
+ * LE SACHET SE PREND D'UNE TAPE AVANT DE SE DÉCHIRER.
+ *
+ * Keko : « y'a vraiment rien à faire sur tel pour que le son soit actif avant
+ * que le joueur tape ? » — non : *un navigateur ne rend le son qu'après un
+ * geste*, et au doigt c'est le RELÂCHEMENT qui compte. La déchirure se joue
+ * doigt posé, donc le premier sachet d'une session craquait dans le vide.
+ * Plutôt qu'un écran « toucher pour commencer », **la tape devient un temps
+ * du rituel** (tranché par Keko, « essayons la 2 ») : le sachet attend en
+ * retrait, une tape le saisit et l'approche avec un son, et c'est seulement
+ * alors qu'on le déchire.
+ *
+ * Le retrait est un RECUL EN PROFONDEUR (`recul`, en part de la distance à
+ * la caméra), pas une échelle : **les cartes qui attendent derrière reculent
+ * avec lui** — chacune porte son `Prise` —, et une perspective commune les
+ * garde cachées là où une échelle autour de l'origine les aurait déplacées.
+ */
+const PRISE = { recul: 0.45, duree: 0.42, depassement: 1.6 } as const
+
+function Prise({
+  pris,
+  distance,
+  children,
+}: {
+  readonly pris: boolean
+  /** La distance de la caméra au plan de la main. */
+  readonly distance: number
+  readonly children: ReactNode
+}): React.JSX.Element {
+  const g = useRef<Group>(null)
+  const debut = useRef<number | null>(null)
+  const dejaPris = useRef(pris)
+  useFrame(({ clock }) => {
+    const o = g.current
+    if (o === null) return
+    if (!pris) {
+      debut.current = null
+      o.position.z = -distance * PRISE.recul
+      return
+    }
+    if (dejaPris.current) {
+      o.position.z = 0
+      return
+    }
+    if (debut.current === null) debut.current = clock.elapsedTime
+    const u = Math.min(1, (clock.elapsedTime - debut.current) / PRISE.duree)
+    // IL VIENT À LA MAIN EN DÉPASSANT SA PLACE : un « back » à la sortie.
+    const c = PRISE.depassement
+    const e = 1 + (c + 1) * (u - 1) ** 3 + c * (u - 1) ** 2
+    o.position.z = -distance * PRISE.recul * (1 - e)
+  })
+  return <group ref={g}>{children}</group>
+}
+
 export function Paquet3D(): React.ReactElement {
   const params = new URLSearchParams(location.search)
   /**
@@ -638,6 +692,10 @@ export function Paquet3D(): React.ReactElement {
   const [parti, setParti] = useState(nu)
   /** Il brûle : la tape est passée, et il n'y a plus à y revenir. */
   const [brule, setBrule] = useState(false)
+  // LE SACHET EST-IL PRIS ? Voir `Prise`. Sans sachet (`&nu`), il l'est d'office.
+  const [pris, setPris] = useState(nu)
+  const refPris = useRef(nu)
+  refPris.current = pris
   /**
    * QUELLE CARTE EST SOUS LES YEUX, et si le défilé est terminé.
    *
@@ -1015,6 +1073,7 @@ export function Paquet3D(): React.ReactElement {
     setOuvert(nu)
     setParti(nu)
     setBrule(false)
+    setPris(nu)
     setRetourne(false)
     setPileOuverte(false)
     setMontree(0)
@@ -1125,6 +1184,15 @@ export function Paquet3D(): React.ReactElement {
         const dy = e.clientY - depart.y
         const tape = Math.hypot(dx, dy) < 12
         const balaye = Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)
+        // UNE TAPE PREND LE SACHET QUI ATTEND : voir `Prise`. *C'est un
+        // relâchement* — le geste qui rend le son à la page.
+        if (!refPris.current) {
+          if (tape) {
+            setPris(true)
+            jouerSon(SON_PRENDRE)
+          }
+          return
+        }
         // AU BILAN, UNE TAPE ZOOME OU REPOSE : voir `curseursBilan`.
         const id = candidat.current
         candidat.current = null
@@ -1240,6 +1308,7 @@ export function Paquet3D(): React.ReactElement {
   // premier paquet n'attend personne.
   const distanceArrivee = hVisible / 2 + hSachet * 0.7
   const retardArrivee = numero > 0 ? ARRIVEE.retard : 0
+  const distancePrise = zCamera(fenetre.h) - Z_MAIN
   /**
    * LA PROFONDEUR DU DÉFILÉ : derrière le pire recul du sachet.
    *
@@ -1386,6 +1455,7 @@ export function Paquet3D(): React.ReactElement {
           return (
             <Envol key={`${numero}:${carte.id}`} sortie={false} rang={i} distance={hVisible * 1.25}>
             <Arrivee distance={distanceArrivee} retard={retardArrivee}>
+            <Prise pris={pris} distance={distancePrise}>
             <Carte3D
               carte={carte}
               // LE DOS TANT QU'ELLE N'EST PAS RETOURNÉE : c'est la même carte
@@ -1542,6 +1612,7 @@ export function Paquet3D(): React.ReactElement {
                   : undefined
               }
             />
+            </Prise>
             </Arrivee>
             </Envol>
           )
@@ -1637,7 +1708,9 @@ export function Paquet3D(): React.ReactElement {
         {/* LE PAQUET ARRIVE D'EN HAUT, ses cartes avec lui : voir `ARRIVEE`. */}
         {!parti && paquet.length > 0 && (
           <Arrivee key={numero} distance={distanceArrivee} retard={retardArrivee}>
+          <Prise pris={pris} distance={distancePrise}>
           <Sachet3D
+            attend={!pris}
             key={numero}
             gyro={gyro}
             lineaire={!SANS_BLOOM}
@@ -1666,6 +1739,7 @@ export function Paquet3D(): React.ReactElement {
               teintes,
             )}
           />
+          </Prise>
           </Arrivee>
         )}
 
@@ -1720,6 +1794,8 @@ export function Paquet3D(): React.ReactElement {
         )}
       </Canvas>
 
+      {/* L'INVITE À PRENDRE LE SACHET : voir `Prise`. */}
+      {!pris && paquet.length > 0 && <p className="paquet-invite">Touche le paquet</p>}
       {ouvert && !fini && (derniere !== null || monte) && (
         <div className="paquet-dernier">
           <p className="paquet-dernier__mot">Dernière carte</p>

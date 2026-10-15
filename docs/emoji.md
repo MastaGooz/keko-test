@@ -5650,3 +5650,26 @@ finale du paquet au moment où on met les 5 cartes (pas le pop, l'autre son) ».
 **Le zoom du bilan attend que les cartes soient posées.** Keko : « bloquer le
 zoom tant que les 5 cartes ne sont pas bien positionnées ». Une tape au bilan
 est ignorée pendant `DELAI_ZOOM_BILAN` (0,35 s), via la ref `refBilanPret`.
+
+#### Le sachet se prend d'une tape avant de se déchirer
+
+Keko : « y'a vraiment rien à faire sur tel pour que le son soit actif avant
+que le joueur tape ? » Non : un navigateur ne rend le son qu'après un geste,
+et au doigt **c'est le relâchement qui compte** (`pointerup`/`touchend`, le
+`pointerdown` seulement à la souris). La déchirure se joue doigt posé, donc
+le premier sachet d'une session craquait dans le vide. Trois options ont été
+proposées (écran titre, prise d'une tape, tape libre). Keko a retenu la
+deuxième : « essayons la 2 ».
+
+- Le sachet arrive **en retrait** : un recul en profondeur de 45 % de la
+  distance à la caméra (`PRISE.recul`). Une invite « Touche le paquet »
+  respire sous lui (`.paquet-invite`).
+- **Une tape le prend**. Il vient à la main en dépassant sa place
+  (`PRISE.depassement`, 0,42 s) avec `SON_PRENDRE`, joué au relâchement :
+  c'est ce geste qui rend le son à la page.
+- Tant qu'il attend, `Sachet3D.attend` empêche la déchirure.
+- Le retrait est un **recul en z, pas une échelle** : chaque carte cachée
+  derrière porte son `Prise` et recule avec lui, si bien que la perspective
+  commune les garde cachées. Vérifié à l'écran.
+- Il s'applique à **chaque** sachet, pas seulement au premier de la session.
+  À rejuger : on peut le réserver au premier.

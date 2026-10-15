@@ -5770,3 +5770,36 @@ body {
   pointer-events: none;
   z-index: 2;
 }
+
+/* L'INVITE À PRENDRE LE SACHET (voir `Prise` dans Paquet3D) : la voix ronde de
+   la collection, blanche cernée d'orange comme le bouton, et elle respire —
+   *un objet qui attend un geste doit dire qu'il attend*. */
+.paquet-invite {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 12vh;
+  z-index: 3;
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
+  color: #fff;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: clamp(1.1rem, 3.2vh, 1.6rem);
+  text-shadow:
+    0 0 0.12em #e2560c,
+    0 0.08em 0.2em #b8400a99;
+  animation: paquet-invite 1.6s ease-in-out infinite;
+}
+@keyframes paquet-invite {
+  0%,
+  100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+}
