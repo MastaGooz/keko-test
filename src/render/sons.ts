@@ -420,23 +420,12 @@ export function jouerClicDoux(volume = 1): void {
   }
   // UNE QUARTE PLUS BAS — Keko : « un peu trop aigu ». Le ton et le toc
   // descendent ensemble, le coup sourd ne bouge pas : c'est lui le poids.
-  voix('triangle', 0, 520, 440, 0.1, 0.85)
-  voix('sine', 0, 190, 110, 0.07, 0.7)
+  // CLEAN ET ROND — Keko : « je voyais plus un clic clean, un peu "rond" ».
+  // *Le grain venait du triangle et du toc de bruit* : deux sinus purs, le
+  // ton qui tombe vite d'un cran (le « k » du clic), le coup sourd dessous,
+  // courts, et plus aucun bruit.
+  voix('sine', 0, 620, 400, 0.075, 0.9)
+  voix('sine', 0, 200, 120, 0.06, 0.6)
 
-  // LE TOC : 25 ms de bruit, passe-bande vers 2,5 kHz.
-  const n = Math.round(ctx.sampleRate * 0.025)
-  const tampon = ctx.createBuffer(1, n, ctx.sampleRate)
-  const d = tampon.getChannelData(0)
-  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / n) ** 3
-  const bruit = ctx.createBufferSource()
-  bruit.buffer = tampon
-  const filtre = ctx.createBiquadFilter()
-  filtre.type = 'bandpass'
-  filtre.frequency.value = 2000
-  filtre.Q.value = 0.9
-  const gb = ctx.createGain()
-  gb.gain.value = 0.35
-  bruit.connect(filtre).connect(gb).connect(sortie)
-  bruit.start(t0)
   chemin = 'Web Audio'
 }
