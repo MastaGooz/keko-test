@@ -5904,3 +5904,12 @@ l'emoji.**
 - La bande arc-en-ciel qui passe reste par-dessus. Sur la plaque blanche, des
   paillettes ajoutées se voient peu : *on n'ajoute rien de visible à du blanc*.
 - Bancs : `&holo` (toutes les cartes du paquet holo), `?cosmos=0`.
+
+### L'écriture de la holo passe par-dessus les paillettes (15/10/2026)
+
+Keko : « pas mal mais il faudrait que l'écriture soit par-dessus car les
+paillettes gênent la lecture ». Sous le haut de la plaque, une paillette ne se
+pose plus que sur ce qui est CLAIR (luminance 0,72 → 0,9) : les lettres,
+sombres, n'en reçoivent aucune, et le titre se lit comme imprimé sur la
+feuille. La fenêtre de l'emoji et le cadre ne changent pas. La bande
+arc-en-ciel qui passe teinte encore les lettres au passage.

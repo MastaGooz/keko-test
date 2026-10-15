@@ -1327,7 +1327,15 @@ ${nuanceur.vertexShader}`.replace(
              vec3 spectre = 0.5 + 0.5 * cos(6.28318 * (fract(h4 * 3.0 + incidence * 1.9) + vec3(0.0, 0.33, 0.67)));
              cosmos += mix(vec3(1.0), spectre, 0.8) * forme * present * allume * scintille;
            }
-           gl_FragColor.rgb += cosmos * libreH * uHolo * ${COSMOS.force.toFixed(2)};
+           // ET L'ÉCRITURE RESTE PAR-DESSUS — Keko : « il faudrait que
+           // l'écriture soit par-dessus car les paillettes gênent la lecture ».
+           // Sous le haut de la plaque, une paillette ne se pose que sur ce qui
+           // est CLAIR : les lettres, sombres, n'en reçoivent aucune, et le
+           // titre se lit comme imprimé sur la feuille.
+           float sousPlaque = step(${(RAYONS_DANS_LA_CARTE.y + RAYONS_DANS_LA_CARTE.h).toFixed(4)}, 1.0 - vLustreUv.y);
+           float lumH = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+           float lisible = mix(1.0, smoothstep(0.72, 0.9, lumH), sousPlaque);
+           gl_FragColor.rgb += cosmos * libreH * lisible * uHolo * ${COSMOS.force.toFixed(2)};
          }
 
          // LE LIN TRESSÉ, en sortie : il presse TOUTE la carte, peinture
