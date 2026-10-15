@@ -5345,3 +5345,18 @@ Keko : **« on peut essayer un autre emoji (face) que celui-ci ? »** Le défaut
 passe de 😊 à **😄**, et *ce qui se teste doit pouvoir s'ouvrir d'un lien* :
 `?visage=🤩` pose n'importe quel emoji à la place du « o » (`VISAGE_DU_TITRE`),
 donc Keko en essaie autant qu'il veut sans un commit. Vus : 😄 et 🤩.
+
+#### LA SILHOUETTE EST ADOUCIE AVANT D'ÊTRE DILATÉE
+
+Keko, après la finesse à 512 : **« l'outline blanc autour des emoji des
+cartes a toujours des reliefs bizarres et n'est pas lisse »**. *Une dilatation
+est exacte : elle reproduit chaque accident du contour* — un poil, une dent,
+une marche du glyphe — à la distance près, et c'est précisément ce qu'on
+lisait comme des reliefs. Le masque passe donc par un flou en boîte, deux fois
+(ce qui approche une gaussienne, `adoucirLeMasque`), puis se coupe à
+mi-hauteur : **le contour moyen ne bouge pas, ses accidents plus petits que le
+rayon s'y fondent.** Le rayon suit la finesse (4 px à 512, 2 à 256), donc le
+dos et le sachet y gagnent aussi. Vu au pixel de la page sur la carte zoomée du
+bilan de `?paquet=1314` : le liseré des poupées est lisse. *Le téléphone est à
+trois pixels par point*, où la texture de 768 est agrandie d'un cinquième — à
+rejuger chez Keko.
