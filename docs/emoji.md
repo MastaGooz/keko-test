@@ -5951,3 +5951,24 @@ blancs des emoji Noto sont neutres. `blancTexture` exige donc un écart
 rouge − bleu entre 0,07 et 0,22. Vu à l'écran sur ✅ : la coche reste blanche,
 le contour seul est arc-en-ciel. *Une couleur choisie pour une matière finit
 par la signer.*
+
+### Le premier emoji dessiné par Keko : 🫠 (15/10/2026)
+
+Keko : « si je veux utiliser mes propres emojis, tu me conseilles quel format ?
+quelle taille ? il faut un padding ? », puis « j'ai créé un emoji perso :
+Test.png, tu peux faire un test ? ». Conseillé : PNG ou WebP (qualité ≥ 90),
+512 × 512, fond transparent, ~5 % de marge, centré à poids visuel égal, sans
+contour ni ombre. Son fichier : 512 × 512 RGBA, fond transparent, dessin de
+(34, 32) à (491, 488) — 6 % de marge. Un visage qui fond, donc **🫠 `1fae0`**.
+
+- **Une table** `EMOJI_DE_KEKO` (`ui/art.ts`) : identifiant → fichier de
+  `public/`, URL datée du build. `carteDeLEmoji` pose `emojiPerso`, que
+  `illustration()` charge et passe par `stickerDUneImage` — *le même sticker
+  que le glyphe* : cerne, ombre, masque des rayons, cerne arc-en-ciel de la holo.
+- **Un emoji absent de la table, ou dont l'image échoue, garde son glyphe
+  Noto** : on peut les remplacer un par un.
+- `emojiPerso` entre dans `signature()` : la texture en cache est celle de
+  l'image.
+- Banc : `&perso`, la première carte du paquet est 🫠. Vu à l'écran.
+- Pas encore : l'emoji perso ne remplace pas le glyphe dans le bouquet du dos
+  ni du sachet, ni l'animé Noto si la carte tire le bonus animé.

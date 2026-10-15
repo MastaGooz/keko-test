@@ -94,6 +94,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   demande la police POUR CE CARACTÈRE (`document.fonts.load(police, emoji)`) :
   Google découpe Noto Color Emoji en onze sous-ensembles et `check` ment.
   Baloo 2 aussi se demande explicitement.
+- **Les emoji dessinés par Keko** remplacent le glyphe Noto, un par un
+  (`EMOJI_DE_KEKO` dans `ui/art.ts`, identifiant → fichier de `public/`) :
+  PNG ou WebP 512 carré, fond transparent, ~5 % de marge, sans contour ni
+  ombre — le jeu en fait le même sticker. Absent ou en échec : le glyphe.
 - **La bordure brille comme le film du sachet** (`BRILLANT`), **et reste
   plate** (Keko a refusé le biseau) : la réflexion de la clé du sachet (haut
   droit) sur la face plate, multipliée, avec un éclair teinté et du Fresnel,
@@ -329,6 +333,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
+| `&perso` | la première carte est 🫠, peinte depuis l'emoji dessiné par Keko (`Test.png`) |
 | `&holo` | toutes les cartes du paquet sont holographiques (`?cosmos=0` : sans les paillettes) |
 | `&gerbe` | tire la déchirure puis s'arrête, pour juger les étincelles |
 | `&craque` | le fichier `cracks.aac` en boucle, tel quel, dès le premier contact — *pour savoir si c'est le fichier ou le jeu qu'on n'entend pas* |

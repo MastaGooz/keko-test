@@ -306,6 +306,8 @@ function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number 
  * fabriquer lui-meme.
  */
 const BANC_BONUS = '1f942'
+/** La carte du banc `&perso` : 🫠, que Keko a redessiné (`Test.png`). */
+const BANC_PERSO = '1fae0'
 /** `?bloom=0` : sans le halo des points brillants — voir `Bloom`. */
 const SANS_BLOOM =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('bloom') === '0'
@@ -574,6 +576,8 @@ export function Paquet3D(): React.ReactElement {
   const bonusForce = new URLSearchParams(location.search).has('bonus')
   /** `&holo` : toutes les cartes du paquet sont holographiques, pour juger la feuille. */
   const holoForce = new URLSearchParams(location.search).has('holo')
+  /** `&perso` : la première carte est 🫠, peinte depuis l'emoji dessiné par Keko. */
+  const persoForce = new URLSearchParams(location.search).has('perso')
   const [catalogue, setCatalogue] = useState<CarteDuMode[] | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   /** Le numéro du paquet : il change à chaque ouverture, et il seede le tirage. */
@@ -893,11 +897,15 @@ export function Paquet3D(): React.ReactElement {
     }
     // LE BANC DE LA FEUILLE HOLO, posé de la même façon : après le tirage, en
     // gardant l'animé que le tirage ou `&bonus` aurait donné.
+    if (emojis && persoForce && cartes.length > 0) {
+      const voulue = [...tas.values()].flat().find((c) => c.id === BANC_PERSO)
+      if (voulue !== undefined) cartes[0] = voulue
+    }
     if (emojis && holoForce) {
       for (const c of cartes) bonus[c.id] = { holo: true, anime: bonus[c.id]?.anime ?? false }
     }
     return { cartes, bonus }
-  }, [tas, numero, echelle, emojis, bonusForce, holoForce])
+  }, [tas, numero, echelle, emojis, bonusForce, holoForce, persoForce])
   const paquet = tirage.cartes
 
   /**

@@ -242,6 +242,11 @@ export type CarteAPeindre = {
    */
   image?: CanvasImageSource & { width: number; height: number }
   /**
+   * L'URL D'UN EMOJI DESSINÉ PAR KEKO, qui remplace le glyphe Noto de `emoji`
+   * — et devient un sticker de la même façon. Voir `urlEmojiDeKeko`.
+   */
+  emojiPerso?: string
+  /**
    * L'IDENTIFIANT DE L'EMOJI ANIME, s'il en a un -- les points de code separes
    * par des tirets.
    *
@@ -1779,10 +1784,26 @@ async function illustration(
   emoji?: string,
   prete?: CanvasImageSource & { width: number; height: number },
   sticker = false,
+  perso?: string,
 ): Promise<HTMLImageElement | HTMLCanvasElement | null> {
   // UNE IMAGE DEJA PRETE PASSE DEVANT TOUT : c'est le chemin de l'emoji anime,
   // et *elle n'a rien a charger*, donc rien a attendre.
   if (prete !== undefined) return prete as HTMLCanvasElement
+  // L'EMOJI DESSINÉ PAR KEKO, en sticker comme le glyphe. *S'il manque, le
+  // glyphe Noto reprend* : une image absente ne doit pas vider une carte.
+  if (perso !== undefined) {
+    const deja = STICKERS.get(perso)
+    if (deja !== undefined) return deja
+    const image = await charger(perso)
+    if (image !== null) {
+      if (!sticker) return image
+      const toile = stickerDUneImage(image, TOILE_EMOJI)
+      if (toile !== null) {
+        STICKERS.set(perso, toile)
+        return toile
+      }
+    }
+  }
   if (emoji !== undefined && emoji !== '') {
     // ON ATTEND LA POLICE AVANT DE PEINDRE : sans ca la premiere carte sort
     // avec la police systeme, et *sa toile part en cache telle quelle* -- donc
@@ -3498,6 +3519,7 @@ export async function peindreCarte(
       carte.emoji,
       carte.image,
       enBulle(carte) && !SANS_STICKER,
+      carte.emojiPerso,
     ),
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
     // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
@@ -6364,7 +6386,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}`
 }
 
 /**

@@ -410,3 +410,25 @@ export function urlDuTas(nom: 'pioche' | 'defausse'): string {
 export function dosDeCarte(): string {
   return ART['dos'] ?? ''
 }
+
+/**
+ * LES EMOJI DESSINÉS PAR KEKO, à la place du glyphe Noto — l'identifiant de
+ * l'emoji (ses points de code séparés par des tirets) vers son fichier dans
+ * `public/`. Keko : « j'ai créé un emoji perso : Test.png, tu peux faire un
+ * test ? »
+ *
+ * L'image attendue : un carré de 512 px, fond TRANSPARENT, une marge de 5 %
+ * environ, sans contour ni ombre — le jeu en fait un sticker comme du glyphe
+ * (`stickerDUneImage`). *Un emoji absent de la table garde son glyphe Noto*,
+ * donc on peut les remplacer un par un.
+ */
+const EMOJI_DE_KEKO: Record<string, string> = {
+  '1fae0': 'Test.png',
+}
+
+/** L'image de Keko pour cet emoji, s'il y en a une. */
+export function urlEmojiDeKeko(id: string): string | null {
+  const fichier = EMOJI_DE_KEKO[id]
+  if (fichier === undefined) return null
+  return `${import.meta.env.BASE_URL}${encodeURIComponent(fichier)}?v=${encodeURIComponent(__BUILD_TIME__)}`
+}
