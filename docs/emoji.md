@@ -5913,3 +5913,13 @@ pose plus que sur ce qui est CLAIR (luminance 0,72 → 0,9) : les lettres,
 sombres, n'en reçoivent aucune, et le titre se lit comme imprimé sur la
 feuille. La fenêtre de l'emoji et le cadre ne changent pas. La bande
 arc-en-ciel qui passe teinte encore les lettres au passage.
+
+### L'emoji de la holo prend un film irisé et un tiers des paillettes (15/10/2026)
+
+Keko : « super, mais il manque un effet sur l'emoji je trouve ». L'emoji était
+entièrement épargné par la feuille. *Le sticker est collé SUR la feuille* : il
+n'en prend donc pas la poussière entière, mais un vernis arc-en-ciel dont la
+teinte court avec l'angle du regard et qui s'allume quand on le penche vers la
+lampe (`COSMOS.filmEmoji` 0,7, `lobeEmoji` 6), posé en écran pour ne pas
+délaver les traits sombres, plus un tiers des paillettes (`pailletteEmoji`
+0,35). Vu à l'écran à 0,9 : le jaune tirait au laiteux, descendu à 0,7.
