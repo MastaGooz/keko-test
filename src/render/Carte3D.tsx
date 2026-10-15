@@ -414,15 +414,21 @@ const COSMOS = {
   rayonGros: 0.14,
   force: 8,
   /**
-   * SUR L'EMOJI, un film irisé et des paillettes à part réduite. Keko : « il
-   * manque un effet sur l'emoji je trouve ». *Le sticker est collé sur la
-   * feuille, pas sous elle* : il n'en prend donc pas la poussière entière,
-   * seulement un vernis arc-en-ciel qui s'allume quand on le penche vers la
-   * lampe, et un tiers des paillettes.
+   * SUR L'EMOJI, UN AUTRE EFFET QUE LA FEUILLE : son CERNE devient
+   * arc-en-ciel. Keko : « sur l'emoji je voyais plutôt un effet différent du
+   * reste de la carte pour la distinguer (autre que les paillettes) » — il a
+   * choisi le cerne arc-en-ciel. *Le sticker reste un sticker* : le dessin
+   * garde ses couleurs, c'est son contour qui est holographique.
+   *
+   * Le masque du sujet (96 px) est trop grossier pour isoler un contour de
+   * 2,8 %, donc le cerne se reconnaît à SA COULEUR : le crème presque blanc
+   * (`DOS_CREME`), dans la zone de l'emoji. Le blanc d'un dessin (un oeil,
+   * un ballon) le prend aussi, et c'est accepté.
+   *
+   * `tour` dit combien de fois le spectre fait le tour de l'emoji, `lobe` la
+   * finesse de l'éclat quand on le penche vers la lampe.
    */
-  filmEmoji: 0.7,
-  lobeEmoji: 6,
-  pailletteEmoji: 0.35,
+  cerne: { couleur: 1, sature: 1.8, tour: 1, lobe: 5 },
 }
 const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
 
@@ -1014,6 +1020,9 @@ ${nuanceur.vertexShader}`.replace(
         '#include <map_fragment>',
         `#include <map_fragment>
          float luminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+         // LE CRÈME PRESQUE BLANC DU CERNE des stickers : voir COSMOS.cerne.
+         float blancTexture = smoothstep(0.78, 0.9, min(diffuseColor.r, min(diffuseColor.g, diffuseColor.b)))
+           * smoothstep(0.9, 0.97, max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b)));
          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(luminance), uGris);
          float bande = (vLustreUv.x + vLustreUv.y) * 0.5;
 
@@ -1345,18 +1354,24 @@ ${nuanceur.vertexShader}`.replace(
            float sousPlaque = step(${(RAYONS_DANS_LA_CARTE.y + RAYONS_DANS_LA_CARTE.h).toFixed(4)}, 1.0 - vLustreUv.y);
            float lumH = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
            float lisible = mix(1.0, smoothstep(0.72, 0.9, lumH), sousPlaque);
-           float surEmoji = 1.0 - libreH;
-           float partP = libreH + ${COSMOS.pailletteEmoji.toFixed(2)} * surEmoji;
-           gl_FragColor.rgb += cosmos * partP * lisible * uHolo * ${COSMOS.force.toFixed(2)};
-           // LE FILM IRISÉ DE L'EMOJI : voir COSMOS.filmEmoji. Sa teinte court
-           // avec l'angle du regard, il s'allume vers la lampe, et il se pose
-           // en écran pour ne pas délaver les traits sombres du dessin.
+           gl_FragColor.rgb += cosmos * libreH * lisible * uHolo * ${COSMOS.force.toFixed(2)};
+           // LE CERNE ARC-EN-CIEL DE L'EMOJI : voir COSMOS.cerne. Le spectre
+           // fait le tour de l'emoji, tourne avec l'angle du regard, et
+           // s'allume quand on le penche vers la lampe.
+           float surEmoji = smoothstep(0.05, 0.3, 1.0 - libreH);
+           float cerneE = surEmoji * blancTexture;
+           vec2 tpE = vec2(vLustreUv.x, 1.0 - vLustreUv.y);
+           vec2 crE = vec2(${(RAYONS_DANS_LA_CARTE.x + RAYONS_DANS_LA_CARTE.l * 0.5).toFixed(4)}, ${(RAYONS_DANS_LA_CARTE.y + RAYONS_DANS_LA_CARTE.h * 0.5).toFixed(4)});
+           vec2 drE = vec2(tpE.x - crE.x, (tpE.y - crE.y) * 1.4);
            vec3 Rf = reflect(-Vc, Nc);
-           float lobeE = pow(max(dot(Rf, Lc), 0.0), ${COSMOS.lobeEmoji.toFixed(1)});
-           float teinteE = fract(vLustreUv.x * 1.3 + vLustreUv.y * 0.9 + incidence * 2.5 + (Rf.x + Rf.y) * 1.5);
-           vec3 arcE = 0.5 + 0.5 * cos(6.28318 * (teinteE + vec3(0.0, 0.33, 0.67)));
-           float kE = surEmoji * uHolo * ${COSMOS.filmEmoji.toFixed(2)} * (0.3 + 0.7 * lobeE);
-           gl_FragColor.rgb += arcE * kE * (1.0 - gl_FragColor.rgb * 0.6);
+           float teinteE = fract(atan(drE.y, drE.x) / 6.28318 * ${COSMOS.cerne.tour.toFixed(1)} + incidence * 2.0 + (Rf.x + Rf.y) * 1.2);
+           // LE SPECTRE SATURÉ : la palette en cosinus est pastel, une puissance
+           // la creuse vers les couleurs franches, et le gain rend la clarté.
+           vec3 arcE = pow(0.5 + 0.5 * cos(6.28318 * (teinteE + vec3(0.0, 0.33, 0.67))), vec3(${COSMOS.cerne.sature.toFixed(2)})) * 1.5;
+           float lobeE = pow(max(dot(Rf, Lc), 0.0), ${COSMOS.cerne.lobe.toFixed(1)});
+           vec3 holoE = mix(vec3(1.0), arcE, ${COSMOS.cerne.couleur.toFixed(2)}) * (0.9 + 0.35 * lobeE);
+           float vivant = clamp(uHolo / ${FORCE_HOLO.toFixed(3)}, 0.0, 1.0);
+           gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * holoE, cerneE * vivant);
          }
 
          // LE LIN TRESSÉ, en sortie : il presse TOUTE la carte, peinture

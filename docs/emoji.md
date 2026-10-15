@@ -5923,3 +5923,20 @@ teinte court avec l'angle du regard et qui s'allume quand on le penche vers la
 lampe (`COSMOS.filmEmoji` 0,7, `lobeEmoji` 6), posé en écran pour ne pas
 délaver les traits sombres, plus un tiers des paillettes (`pailletteEmoji`
 0,35). Vu à l'écran à 0,9 : le jaune tirait au laiteux, descendu à 0,7.
+
+### Sur l'emoji de la holo, un cerne arc-en-ciel au lieu du film et des paillettes (15/10/2026)
+
+Keko : « sur l'emoji je voyais plutôt un effet différent du reste de la carte
+pour la distinguer (autre que les paillettes) ». Proposé : cerne arc-en-ciel,
+reflet chromé, film irisé seul, ou cerne + reflet — **il a choisi le cerne
+arc-en-ciel.** Le film et le tiers de paillettes sur l'emoji sont retirés.
+
+- **Le contour blanc du sticker devient holographique** : un spectre qui fait
+  le tour de l'emoji, tourne avec l'angle du regard et s'allume vers la lampe
+  (`COSMOS.cerne`). Le dessin garde ses couleurs.
+- **Le cerne se reconnaît à sa couleur** (`blancTexture`, le crème presque
+  blanc de `DOS_CREME`, dans la zone de l'emoji) : le masque du sujet, à 96 px,
+  est trop grossier pour isoler un contour de 2,8 %. Le blanc d'un dessin (un
+  oeil, un ballon) le prend aussi — accepté.
+- Premier réglage trop pastel (la palette en cosinus) : creusé par une
+  puissance 1,8 et un gain de 1,5.
