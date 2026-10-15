@@ -1751,6 +1751,13 @@ function matiereDuFaisceau(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     transparent: true,
     depthWrite: false,
+    // PAR-DESSUS TOUT LE SACHET, bande comprise. Keko : « il faudrait que la
+    // lumière passe devant la bande qui se déchire au-dessus, on peut la
+    // dessiner par-dessus le paquet ? » *La bande se recourbe VERS la caméra*,
+    // donc elle passait devant la lumière qui sort de dessous elle. Sans test
+    // de profondeur et dessinée en dernier (renderOrder 3), la lumière se pose
+    // sur tout — et comme elle est additive, elle ne masque rien.
+    depthTest: false,
     side: THREE.DoubleSide,
     // LE MÊME AJOUT FRANC QUE LA GERBE : le RVB EST la lumière ajoutée.
     blending: THREE.CustomBlending,
@@ -2937,7 +2944,7 @@ export function Sachet3D({
             visible={false}
             frustumCulled={false}
             raycast={() => null}
-            renderOrder={2}
+            renderOrder={3}
           />
         ))}
       </mesh>

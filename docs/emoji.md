@@ -5508,3 +5508,9 @@ rayons s'élargissent (0,26–0,42 au lieu de 0,10–0,17), raccourcissent
 le recouvrement qui fait une nappe plutôt que des traits.* Force 0,4 à la
 découpe, 1 à l'embrasement. Vu sur `?gerbe` : une lueur douce au-dessus de la
 partie ouverte.
+
+Et **par-dessus la bande** — Keko : « il faudrait que la lumière passe devant
+la bande qui se déchire au-dessus ». *La bande se recourbe vers la caméra*,
+donc elle masquait la lumière qui sort de dessous elle. Les faisceaux n'ont
+plus de test de profondeur et se dessinent en dernier (`renderOrder` 3) : ils
+se posent sur tout le sachet, et comme ils sont additifs ils ne cachent rien.
