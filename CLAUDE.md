@@ -92,8 +92,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   Google découpe Noto Color Emoji en onze sous-ensembles et `check` ment.
   Baloo 2 aussi se demande explicitement.
 - **La bordure brille comme le film du sachet** (`BRILLANT`), **et reste
-  plate** (Keko a refusé le biseau) : une nappe en diagonale qui suit
-  l'angle de vue, multipliée, avec un éclair teinté et du Fresnel. **Jamais
+  plate** (Keko a refusé le biseau) : la réflexion de la clé du sachet (haut
+  droit) sur la face plate, multipliée, avec un éclair teinté et du Fresnel,
+  **plafonnée sous le seuil du bloom** (sinon elle rayonne hors de la carte). **Jamais
   de `dFdx` dans un `if`** : NaN, et le bloom efface des blocs de carte. Le lin
   tressé a été essayé et retiré (`?lin=0.09` le rend).
 - **La lueur du sujet ne se peint plus en mode emoji** (`AVEC_LUEUR_EMOJI`,

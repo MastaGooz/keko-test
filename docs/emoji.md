@@ -5762,3 +5762,20 @@ manquants** (vu à l'écran). Les dérivées se calculent donc hors de toute
 branche, et les `normalize` sont protégés contre le vecteur nul. Les
 backticks dans un commentaire GLSL ont aussi recassé le build une sixième
 fois.
+
+**Le brillant suit la lampe clé, et reste dans la carte.** Keko : « la
+lumière déborde de la carte et ne suit pas vraiment la source de lumière
+comme le booster (haut droit) ».
+
+- **Réflexion de la lampe clé.** C'est maintenant une vraie réflexion : le
+  regard est renvoyé sur la face plate (`reflect`), et chaque pixel brille
+  d'autant que ce rayon pointe vers la clé du sachet (`BRILLANT.lampe`, 45°
+  dans le plan, en haut à droite, 36,9° d'incidence ; lobes en puissance 10
+  et 80). Au repos, le haut-droit du cadre est le plus clair. La tache court
+  quand la carte penche.
+- **Débordement : c'était le bloom.** Tout ce qui passe son seuil de
+  luminance (0,8 en cible 8 bits) rayonne hors du cadre. Le brillant est donc
+  plafonné : la luminance du cadre ne dépasse pas `max(peinture, 0,78)`.
+
+Vu à l'écran : plus de halo autour de la carte, et le haut-droit du cadre est
+plus clair que le bas-gauche.

@@ -274,9 +274,11 @@ const FILS_LIN = 150
  * **ET LE CADRE RESTE PLAT.** Une première version lui donnait un biseau
  * calculé, et Keko : « on dirait que le brillant est en 3D (bombé), je voulais
  * pas toucher au relief, juste lui donner le même effet glowy dans la
- * lumière ». La lumière n'est donc plus une affaire de normale : c'est une
- * NAPPE en diagonale dont la place suit l'angle de vue (`course`) — elle
- * glisse le long du cadre quand la carte penche, sans rien bomber.
+ * lumière ». La lumière n'est donc plus une affaire de normale bombée : c'est
+ * la RÉFLEXION de la lampe clé du sachet (`lampe`, en haut à droite) sur la
+ * face plate — le haut-droit du cadre brille, et la tache court quand la
+ * carte penche. Plafonnée sous le seuil du bloom (`plafond`) : sinon elle
+ * rayonne hors de la carte.
  *
  * La bande suit le rectangle arrondi de la carte (`RAYON_SIMPLE`), à
  * l'épaisseur de la bordure peinte (`CONTOUR_PLAQUE`). Mode emoji seulement ;
@@ -285,7 +287,18 @@ const FILS_LIN = 150
 const AVEC_BRILLANT = new URLSearchParams(location.search).get('brillant') !== '0'
 /** L'épaisseur du cadre, en largeurs de carte : la bordure peinte de 2,7 U. */
 const CONTOUR_PLAQUE = 0.027
-const BRILLANT = { course: 3.0, reflet: 0.7, eclat: 0.9, fresnel: 1.2, metal: 0.7 } as const
+const BRILLANT = {
+  /** La clé du sachet, en espace vue : 45° dans le plan, en haut à droite, à 36,9° d'incidence. */
+  lampe: [0.424, 0.424, 0.8],
+  large: 10,
+  serre: 80,
+  reflet: 0.9,
+  eclat: 0.8,
+  fresnel: 1.0,
+  metal: 0.7,
+  /** La luminance au-delà de laquelle le bloom ferait rayonner le cadre hors de la carte. */
+  plafond: 0.78,
+} as const
 
 const POMPE_CARTE = { amplitude: 0.09, pulsation: Math.PI * 3, amorti: 7, duree: 0.8 } as const
 /** L'ordre de rendu d'une carte au premier plan : après tout le reste — voir `devant`. */
@@ -1139,21 +1152,26 @@ ${nuanceur.vertexShader}`.replace(
            vec3 Nc = cross(Tc, Bc);
            Nc /= max(length(Nc), 1e-6);
            vec3 Vc = normalize(vViewPosition);
-           // LE REFLET QUI GLISSE, À PLAT : une nappe de lumière en
-           // diagonale, dont la place suit l'ANGLE DE VUE. *Aucune normale ne
-           // bouge* : c'est le regard qui la déplace, comme sur un film
-           // brillant tendu.
-           float regard = dot(Vc, Tc) * 0.6 + dot(Vc, Bc) * 0.4;
-           float diag = vLustreUv.x * 0.6 + vLustreUv.y * 0.4;
-           float ecartc = diag - 0.5 + regard * ${BRILLANT.course.toFixed(2)};
-           float nappe = exp(-ecartc * ecartc * 14.0);
-           float eclair = exp(-ecartc * ecartc * 160.0);
+           // LE REFLET DE LA LAMPE CLÉ, comme sur le sachet — Keko : « la
+           // lumière ne suit pas vraiment la source de lumière comme le
+           // booster (haut droit) ». C'est maintenant une vraie RÉFLEXION :
+           // chaque pixel renvoie le regard sur la face plate, et brille
+           // d'autant que ce rayon pointe vers la lampe. Le haut-droit du cadre
+           // s'allume au repos, et la tache court quand on penche la carte
+           // vers la lampe ou à l'opposé. *Aucune normale ne bouge* : c'est la
+           // géométrie du regard qui place le reflet.
+           vec3 Rc = reflect(-Vc, Nc);
+           vec3 Lc = normalize(vec3(${BRILLANT.lampe.map((v) => v.toFixed(3)).join(', ')}));
+           float sc = max(dot(Rc, Lc), 0.0);
+           float nappe = pow(sc, ${BRILLANT.large.toFixed(1)});
+           float eclair = pow(sc, ${BRILLANT.serre.toFixed(1)});
            // LE MÉTAL TEINTE CE QU'IL RENVOIE : la couleur du cran, poussée
            // à pleine clarté, ramenée vers le blanc.
            vec3 cc = gl_FragColor.rgb;
+           float lumAvant = dot(cc, vec3(0.2126, 0.7152, 0.0722));
            vec3 purc = cc / max(max(cc.r, cc.g), max(cc.b, 0.02));
            vec3 teintec = mix(vec3(1.0), purc, ${BRILLANT.metal.toFixed(2)});
-           float feuc = 1.0 + uLustreForce * 2.0;
+           float feuc = 1.0 + uLustreForce * 1.5;
            // LE GRAND REFLET SE MULTIPLIE, L'ÉCLAT S'AJOUTE, TEINTÉ.
            cc *= 1.0 + nappe * ${BRILLANT.reflet.toFixed(2)} * bande * feuc;
            cc += teintec * eclair * ${BRILLANT.eclat.toFixed(2)} * bande * feuc;
@@ -1161,6 +1179,14 @@ ${nuanceur.vertexShader}`.replace(
            // cadre renvoie.
            float fresc = pow(1.0 - clamp(abs(dot(Nc, Vc)), 0.0, 1.0), 2.0);
            cc += teintec * fresc * ${BRILLANT.fresnel.toFixed(2)} * bande;
+           // ***ET LA LUMIÈRE RESTE DANS LA CARTE.*** Keko : « la lumière
+           // déborde de la carte ». *C'est le bloom* : tout ce qui passe son
+           // seuil de luminance (0,8 en cible 8 bits) rayonne hors du cadre.
+           // Le brillant est donc plafonné sous ce seuil — il ne monte jamais
+           // plus haut que ce que la peinture montait déjà.
+           float lumApres = dot(cc, vec3(0.2126, 0.7152, 0.0722));
+           float plafond = max(lumAvant, ${BRILLANT.plafond.toFixed(2)});
+           cc *= min(1.0, plafond / max(lumApres, 0.0001));
            gl_FragColor.rgb = cc;
          }
 
