@@ -418,7 +418,9 @@ export function jouerClicDoux(volume = 1): void {
     o.start(t0 + depart)
     o.stop(t0 + depart + duree + 0.02)
   }
-  voix('triangle', 0, 760, 640, 0.09, 0.8)
+  // UNE QUARTE PLUS BAS — Keko : « un peu trop aigu ». Le ton et le toc
+  // descendent ensemble, le coup sourd ne bouge pas : c'est lui le poids.
+  voix('triangle', 0, 520, 440, 0.1, 0.85)
   voix('sine', 0, 190, 110, 0.07, 0.7)
 
   // LE TOC : 25 ms de bruit, passe-bande vers 2,5 kHz.
@@ -430,7 +432,7 @@ export function jouerClicDoux(volume = 1): void {
   bruit.buffer = tampon
   const filtre = ctx.createBiquadFilter()
   filtre.type = 'bandpass'
-  filtre.frequency.value = 3200
+  filtre.frequency.value = 2000
   filtre.Q.value = 0.9
   const gb = ctx.createGain()
   gb.gain.value = 0.35
