@@ -1020,9 +1020,17 @@ ${nuanceur.vertexShader}`.replace(
         '#include <map_fragment>',
         `#include <map_fragment>
          float luminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-         // LE CRÈME PRESQUE BLANC DU CERNE des stickers : voir COSMOS.cerne.
-         float blancTexture = smoothstep(0.78, 0.9, min(diffuseColor.r, min(diffuseColor.g, diffuseColor.b)))
-           * smoothstep(0.9, 0.97, max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b)));
+         // LE CRÈME DU CERNE des stickers : voir COSMOS.cerne. *Pas le blanc,
+         // le CRÈME* — Keko : « tout le blanc de l'emoji est remplacé par
+         // l'arc-en-ciel, il faudrait le limiter au blanc de l'outline ». Le
+         // cerne est #fffaf0, soit en linéaire 1 / 0,955 / 0,871 : il lui
+         // manque environ 0,13 de bleu, là où les blancs d'un emoji sont
+         // NEUTRES (écart presque nul). C'est cet écart qui le signe.
+         float ecartCreme = diffuseColor.r - diffuseColor.b;
+         float blancTexture = smoothstep(0.88, 0.95, diffuseColor.r)
+           * smoothstep(0.80, 0.84, diffuseColor.b)
+           * smoothstep(0.07, 0.10, ecartCreme)
+           * (1.0 - smoothstep(0.17, 0.22, ecartCreme));
          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(luminance), uGris);
          float bande = (vLustreUv.x + vLustreUv.y) * 0.5;
 

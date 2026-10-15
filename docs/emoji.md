@@ -5940,3 +5940,14 @@ arc-en-ciel.** Le film et le tiers de paillettes sur l'emoji sont retirés.
   oeil, un ballon) le prend aussi — accepté.
 - Premier réglage trop pastel (la palette en cosinus) : creusé par une
   puissance 1,8 et un gain de 1,5.
+
+### Le cerne arc-en-ciel ne prend plus les blancs de l'emoji (15/10/2026)
+
+Keko : « tout le blanc de l'emoji est remplacé par l'arc-en-ciel, je pense
+qu'il faudrait le limiter au blanc de l'outline ». La détection lisait « presque
+blanc » ; elle lit maintenant **le crème** : le cerne est #fffaf0, soit en
+linéaire 1 / 0,955 / 0,871 — il lui manque environ 0,13 de bleu, là où les
+blancs des emoji Noto sont neutres. `blancTexture` exige donc un écart
+rouge − bleu entre 0,07 et 0,22. Vu à l'écran sur ✅ : la coche reste blanche,
+le contour seul est arc-en-ciel. *Une couleur choisie pour une matière finit
+par la signer.*
