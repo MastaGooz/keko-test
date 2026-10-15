@@ -5521,3 +5521,8 @@ exponentielle ne s'éteint jamais* : sa queue restait visible après les
 étincelles. L'embrasement monte en 80 ms, tient, puis descend à zéro
 exactement à `DUREE_GERBE` (déclin de 25 % à 100 % de la gerbe), et sa force
 passe de 1 à **2,2**.
+
+Et **plus longs, pas plus forts** — Keko : « il faudrait augmenter la longueur,
+pas forcément l'intensité, au moment de la gerbe finale ». À l'arrachement les
+rayons s'étirent jusqu'à **3,2 fois** leur longueur de découpe (contre 1,9), en
+0,15 s ; l'intensité ne bouge pas.

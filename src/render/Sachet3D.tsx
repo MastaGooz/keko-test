@@ -2604,7 +2604,10 @@ export function Sachet3D({
           FENTE_BORD[2] + (rare.z * 1.5 - FENTE_BORD[2]) * k,
         )
         // IL S'ALLONGE EN S'OUVRANT, ET PLUS ENCORE À L'ARRACHEMENT.
-        const longueur = f.longueur * (0.55 + 0.45 * ouvert) * (1 + 0.9 * (tp < 0 ? 0 : 1 - Math.exp(-7 * tp)))
+        // À LA GERBE, LES RAYONS S'ÉTIRENT — Keko : « il faudrait augmenter la
+        // longueur, pas forcément l'intensité, au moment de la gerbe finale ».
+        // Ils montent jusqu'à 3,2 fois leur longueur de découpe, en 0,15 s.
+        const longueur = f.longueur * (0.55 + 0.45 * ouvert) * (1 + 2.2 * (tp < 0 ? 0 : 1 - Math.exp(-14 * tp)))
         m.position.set(f.u - 0.5, 0, 0)
         m.rotation.set(0, 0, f.angle)
         m.scale.set(f.largeur * (1 + 0.6 * embrase), longueur, 1)
