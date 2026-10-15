@@ -1715,7 +1715,12 @@ ${nuanceur.fragmentShader}`
     }
     if (jetonPompe.current !== pompe) {
       jetonPompe.current = pompe
-      if (pompe !== null && pompe !== undefined) l.debutPompe = t
+      // UNE CARTE QUI TOURNE POMPE QUAND ELLE A FINI DE TOURNER. Keko : « la
+      // première carte révélée n'a pas d'effet pump ». *Elle en avait un*, mais
+      // il se jouait pendant le flip, de dos puis de profil — et un pompage
+      // vu par la tranche ne se voit pas. Il attend donc la fin du demi-tour.
+      if (pompe !== null && pompe !== undefined)
+        l.debutPompe = t + (l.debutFlip !== null ? Math.max(0, DUREE_FLIP - (t - l.debutFlip)) : 0)
     }
     if (jetonRebond.current !== rebond) {
       jetonRebond.current = rebond
@@ -1824,7 +1829,7 @@ ${nuanceur.fragmentShader}`
       // pump elle laisse apparaître les cartes de derrière durant la
       // contraction ». Un sinus redressé — des rebonds au-dessus de 1, jamais
       // en dessous —, à la même cadence de trois battements par seconde.
-      else
+      else if (s >= 0)
         elastique *=
           1 + POMPE_CARTE.amplitude * Math.exp(-POMPE_CARTE.amorti * s) * Math.abs(Math.sin(POMPE_CARTE.pulsation * s))
     }

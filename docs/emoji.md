@@ -5684,3 +5684,9 @@ directement à la main.
 paquet mais ça marche même si je touche ailleurs ». Le sachet signale le doigt
 posé sur lui (`onToucher`, depuis son `pointerdown` pendant qu'il attend), et
 la tape de l'écran ne le prend que si elle a commencé là (`sachetTouche`).
+
+**La première carte pompe après son flip.** Keko : « la première carte
+révélée n'a pas d'effet pump ». Elle en avait un, mais il se jouait pendant
+le demi-tour (de dos, puis vue par la tranche), donc on ne le voyait pas.
+Quand le jeton `pompe` arrive pendant un flip, `debutPompe` est maintenant
+reporté à la fin du demi-tour.
