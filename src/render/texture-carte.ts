@@ -5467,7 +5467,15 @@ const US = SACHET_LARGE / 100
  * nom affiché, donc on n'en inventait pas* — c'est Keko qui le pose, et c'est
  * un essai : un mot, une ligne à changer.
  */
-const TITRE_DU_SACHET = 'Em😊jis'
+/**
+ * LE VISAGE DU TITRE SE CHANGE D'UN LIEN. Keko : « on peut essayer un autre
+ * emoji (face) que celui-ci ? » — *ce qui se teste doit pouvoir s'ouvrir d'un
+ * lien* : `?visage=🤩` pose n'importe quel emoji à la place du « o », et le
+ * défaut est celui qu'il a retenu en dernier.
+ */
+const VISAGE_DU_TITRE =
+  (typeof location !== 'undefined' && new URLSearchParams(location.search).get('visage')) || '😄'
+const TITRE_DU_SACHET = `Em${VISAGE_DU_TITRE}jis`
 
 /**
  * LE TITRE EST UNE RANGÉE DE STICKERS, PAS UN MOT. Keko : « je suis pas hyper

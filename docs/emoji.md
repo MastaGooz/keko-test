@@ -5338,3 +5338,10 @@ Baloo 2 fait un peu plus de la moitié du corps : la toile vaut
 `TAILLE_EMOJI_TITRE` (0,78) du corps, et le sticker descend de 7 % du corps,
 au centre des bas-de-casse plutôt qu'au milieu de l'em-box. Vu sur le sachet
 de `?paquet=1314` : il tient entre le « m » et le « j » sans les mordre.
+
+#### LE VISAGE DU TITRE SE CHANGE D'UN LIEN
+
+Keko : **« on peut essayer un autre emoji (face) que celui-ci ? »** Le défaut
+passe de 😊 à **😄**, et *ce qui se teste doit pouvoir s'ouvrir d'un lien* :
+`?visage=🤩` pose n'importe quel emoji à la place du « o » (`VISAGE_DU_TITRE`),
+donc Keko en essaie autant qu'il veut sans un commit. Vus : 😄 et 🤩.

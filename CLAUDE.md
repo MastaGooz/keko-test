@@ -108,7 +108,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 ### L'ouverture — portrait, une carte à la fois
 
 - **Le sachet** : `Sachet3D`, fait des mêmes peintres que le dos
-  (`peindreDecor`, `peindreTouches`, `peindreBouquet`), titre « Em😊jis » en
+  (`peindreDecor`, `peindreTouches`, `peindreBouquet`), titre « Em😄jis » en
   stickers posés un par un (`TITRE_DU_SACHET`, `peindreTitreDuSachet`), rapport 1,535 déduit de la carte (`POCHE`, 78 % de
   largeur), dents dans `cheminDuSachet`, soudures crème, plus de contour.
 - **Matière au nuanceur** : ventre plateau + flanc droit (`min` arrondi,
@@ -322,6 +322,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?plaque=cran` | la plaque teintée du cran, au lieu du blanc |
 | `?lueur=1` | la lueur floutée du sujet derrière l'emoji (retirée par défaut) |
 | `?sticker=0` | l'emoji nu, sans son cerne de sticker |
+| `?visage=🤩` | un autre emoji à la place du « o » du titre du sachet |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
