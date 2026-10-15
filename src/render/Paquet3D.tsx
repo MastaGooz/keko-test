@@ -11,7 +11,7 @@ import { NoToneMapping, type Group } from 'three'
  * *C'est la règle du projet depuis le début* : un écran décide de ce que les
  * choses VEULENT DIRE, les objets savent comment elles se dessinent.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { cloneElement, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Carte3D, DUREE_FLIP, INCLINAISON_REFLET, type CurseurDeCarte } from './Carte3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
@@ -363,9 +363,16 @@ function lueurDans(rang: number, echelle: readonly string[]): string {
  * Les deux se posent PAR-DESSUS le placement des cartes, dans un groupe
  * parent : *le ressort de chaque carte n'en sait rien*, et ne peut donc pas
  * le manger en croyant corriger un écart.
+ *
+ * **ET ILS SE CHEVAUCHENT.** Keko : « on peut lancer la descente du booster
+ * plus tôt pour que la descente des cartes et l'arrivée du booster soient plus
+ * proches ? » Le paquet suivant est tiré DÈS LE CLIC : les cartes qui partent
+ * sont une COPIE figée de celles du bilan (`partantes`, les mêmes éléments,
+ * donc les mêmes objets montés : leur clé porte le numéro du paquet) qui finit
+ * sa chute pendant que le sachet tombe déjà, `retard` après elles.
  */
 const SORTIE = { duree: 0.42, cascade: 0.05, recul: 1.2, tour: 0.5 } as const
-const ARRIVEE = { duree: 0.6, depassement: 1.5, penche: 0.16 } as const
+const ARRIVEE = { duree: 0.6, depassement: 1.5, penche: 0.16, retard: 0.12 } as const
 /** Le temps que la dernière carte a quitté l'écran. */
 const DUREE_SORTIE = SORTIE.duree + SORTIE.cascade * 4
 
@@ -401,14 +408,23 @@ function Envol({
   return <group ref={g}>{children}</group>
 }
 
-function Arrivee({ distance, children }: { readonly distance: number; readonly children: ReactNode }): React.JSX.Element {
+function Arrivee({
+  distance,
+  retard = 0,
+  children,
+}: {
+  readonly distance: number
+  /** Combien il attend en haut avant de tomber, en secondes. */
+  readonly retard?: number
+  readonly children: ReactNode
+}): React.JSX.Element {
   const g = useRef<Group>(null)
   const debut = useRef<number | null>(null)
   useFrame(({ clock }) => {
     const o = g.current
     if (o === null) return
     if (debut.current === null) debut.current = clock.elapsedTime
-    const u = Math.min(1, (clock.elapsedTime - debut.current) / ARRIVEE.duree)
+    const u = Math.min(1, Math.max(0, clock.elapsedTime - debut.current - retard) / ARRIVEE.duree)
     // IL SE POSE EN DÉPASSANT SA PLACE : un « back » à la sortie.
     const c = ARRIVEE.depassement
     const e = 1 + (c + 1) * (u - 1) ** 3 + c * (u - 1) ** 2
@@ -931,20 +947,16 @@ export function Paquet3D(): React.ReactElement {
     return () => clearTimeout(t)
   }, [retourne])
 
-  // LA SORTIE DES CARTES, puis le paquet suivant : voir `SORTIE`.
-  const [sortie, setSortie] = useState(false)
-  const refSortie = useRef(false)
-  refSortie.current = sortie
+  // LA SORTIE DES CARTES, PENDANT QUE LE PAQUET SUIVANT ARRIVE : voir `SORTIE`.
+  const refCartes = useRef<ReactElement[]>([])
+  const [partantes, setPartantes] = useState<ReactElement[]>([])
   const minuteSortie = useRef(0)
   useEffect(() => () => clearTimeout(minuteSortie.current), [])
   function partir(): void {
-    if (refSortie.current) return
-    setZoomee(null)
-    setSortie(true)
-    minuteSortie.current = window.setTimeout(() => {
-      setSortie(false)
-      ouvrirUnAutre()
-    }, DUREE_SORTIE * 1000)
+    setPartantes(refCartes.current.map((e) => cloneElement(e as ReactElement<{ sortie: boolean }>, { sortie: true })))
+    clearTimeout(minuteSortie.current)
+    minuteSortie.current = window.setTimeout(() => setPartantes([]), DUREE_SORTIE * 1000 + 100)
+    ouvrirUnAutre()
   }
 
   function ouvrirUnAutre(): void {
@@ -1066,7 +1078,7 @@ export function Paquet3D(): React.ReactElement {
         const id = candidat.current
         candidat.current = null
         if (refFini.current) {
-          if (!tape || refSortie.current) return
+          if (!tape) return
           if (refZoomee.current !== null) setZoomee(null)
           else if (id !== null) {
             setZoomee(id)
@@ -1173,6 +1185,10 @@ export function Paquet3D(): React.ReactElement {
   /** La largeur du sachet : c'est elle qui place la fente et borne ce qui en sort. */
   const lSachet = tailleDuSachet(lVisible, hVisible)
   const hSachet = lSachet * RAPPORT_SACHET
+  // LE SACHET ET SES CARTES TOMBENT DE LA MÊME HAUTEUR, au même instant ; le
+  // premier paquet n'attend personne.
+  const distanceArrivee = hVisible / 2 + hSachet * 0.7
+  const retardArrivee = numero > 0 ? ARRIVEE.retard : 0
   /**
    * LA PROFONDEUR DU DÉFILÉ : derrière le pire recul du sachet.
    *
@@ -1299,154 +1315,11 @@ export function Paquet3D(): React.ReactElement {
    */
   const unite = paquet.length > 0 ? compteurDuMode(paquet[0]!, catalogue?.length ?? 0).unite : ''
 
-  return (
-    <div
-      className="paquet-3d"
-      ref={racine}
-      style={
-        {
-          '--lueur': lueurDans(sommet, teintes),
-          '--lueur-force': sommet < 0 ? 0 : 0.18 + sommet * 0.1,
-        } as React.CSSProperties
-      }
-    >
-      <div className="paquet-fond" />
-      {/* DES LUMIÈRES ET DES EMOJI QUI FLOTTENT, derrière la scène : voir
-          `FondAnime`. `?fond=sombre` rend le fond nu — *ce qui a servi à
-          choisir doit rester ouvrable.* */}
-      {!FOND_SOMBRE && <FondAnime />}
-      <div className="paquet-lueur" />
-      {eclat !== null && (
-        <div
-          key={eclat.cle}
-          className="paquet-eclat"
-          style={{ '--lueur': eclat.ton } as React.CSSProperties}
-        />
-      )}
-      {/*
-        LE FLASH DE L'ARRACHEMENT : un blanc plein écran, très court. *C'est
-        ce qui fait que la bande ne se « détache » pas, elle s'ARRACHE* — un
-        geste qui coûte quelque chose aveugle une image. Il est monté à neuf
-        par sa clé, pour la raison habituelle : une classe qu'on retire et
-        qu'on repose ne redémarre pas sans un reflow forcé.
-      */}
-      {flash > 0 && <div key={`fl${flash}`} className="paquet-flash" />}
-      {/* LES PARTICULES DE LA RÉVÉLATION, par-dessus la scène : voir
-          `EclatDeRevelation`. Montées à neuf par la clé de l'éclat. */}
-      {eclat !== null && eclat.boite !== null && (
-        <EclatDeRevelation key={`et${eclat.cle}`} couleur={eclat.ton} rang={eclat.rang} boite={eclat.boite} />
-      )}
-      <Canvas
-        shadows
-        dpr={[1, 2]}
-        camera={{ position: [0, 0, zCamera(fenetre.h)], fov: FOV }}
-        gl={{ toneMapping: NoToneMapping }}
-        style={{ position: 'fixed', inset: 0 }}
-      >
-        <Cadrage />
-        <Horloge />
-        {/* AU BILAN, LE TÉLÉPHONE NE PENCHE QUE LA CARTE ZOOMÉE. Keko : « je
-            voudrais que les mouvements de téléphone ne déplacent pas les
-            cartes, sauf si je zoome une d'entre elles ». *Cinq cartes qui
-            penchent ensemble font une grille qui tangue* ; une seule, qu'on
-            regarde, est un objet qu'on tient. */}
-        <PencheAuGyro
-          curseurs={
-            fini
-              ? indexZoome >= 0
-                ? [curseursBilan.current[indexZoome]!]
-                : []
-              : [curseurDefile.current]
-          }
-          gyro={gyro}
-        />
-        {/* LES POINTS BRILLANTS RAYONNENT, comme chez lexicodex : voir `Bloom`. */}
-        {!SANS_BLOOM && <Bloom />}
-        <ambientLight intensity={0.55} />
-        <directionalLight
-          position={[2.5, 3.5, 4]}
-          intensity={2.2}
-          castShadow
-          shadow-mapSize={[1024, 1024]}
-          shadow-bias={-0.0008}
-          shadow-normalBias={0.02}
-        />
-        <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
-
-        {/*
-          LE SACHET TIENT LA SCÈNE SEUL, et il n'y a rien d'autre à l'écran :
-          *un paquet fermé ne montre pas ce qu'il contient.* Il est MONTÉ À
-          NEUF à chaque ouverture (clé), parce que son horloge et son « c'est
-          fini » vivent dans des refs — et une ref ne se remet pas à zéro parce
-          qu'une prop a changé.
-        */}
-        {/* LE PAQUET ARRIVE D'EN HAUT, ses cartes avec lui : voir `ARRIVEE`. */}
-        <Arrivee key={numero} distance={hVisible / 2 + hSachet * 0.7}>
-        {!parti && paquet.length > 0 && (
-          <Sachet3D
-            key={numero}
-            gyro={gyro}
-            lineaire={!SANS_BLOOM}
-            taille={lSachet}
-            position={[0, 0, Z_MAIN]}
-            // CE QU'IL FAUT POUR QU'IL QUITTE LE CADRE : la demi-hauteur du
-            // champ plus la sienne. *Le sachet ne connait pas le champ
-            // visible*, donc c'est l'ecran qui la lui donne -- la regle du Z
-            // qui se calcule.
-            descente={hVisible / 2 + hSachet / 2}
-            ouvre={brule}
-            onOuvrir={() => setBrule(true)}
-            // L'ARRACHEMENT : le flash, et rien d'autre. *La carte ne bouge
-            // plus* — c'est le film qui descend et la découvre, donc il n'y a
-            // plus ni émergence à déclencher ni image à attendre.
-            onDechire={() => setFlash((f) => f + 1)}
-            onOuvert={() => setOuvert(true)}
-            onParti={() => setParti(true)}
-            // LA MOITIÉ DU FEU D'ARTIFICE PREND LA COULEUR DE LA CARTE LA PLUS
-            // RARE DU PAQUET — Keko. *C'est l'« omen » de lexicodex* : leurs
-            // étincelles de rupture prennent la couleur de la meilleure rareté.
-            // La lueur d'AMBIANCE et non le ton du cadre : *un pigment ne
-            // survit pas à la diffusion*, et une étincelle est de la lumière.
-            lueurRare={lueurDans(
-              paquet.reduce((h, c) => Math.max(h, rangDe(c.id)), -1),
-              teintes,
-            )}
-          />
-        )}
-
-        {/*
-          ELLES SONT LÀ DÈS LE DÉBUT, CACHÉES DANS LE SACHET.
-
-          Keko : **« lors de l'explosion finale à l'ouverture y'a comme un
-          freeze de l'écran »** — mesuré, **224 ms** d'image gelée au moment
-          exact de l'arrachement, et *la gerbe n'y était pour rien* : la même
-          mesure sur la version d'avant en donnait 169.
-
-          ***LA MOITIÉ EST UN `getProgramInfoLog`*** — 106 ms, relevés en
-          chronométrant les 226 méthodes du contexte WebGL. C'est l'appel par
-          lequel three vérifie qu'un programme a bien été lié, et **il BLOQUE
-          jusqu'à la fin de la compilation**, que le pilote mènerait autrement
-          en parallèle. Le reste est la peinture des cinq faces. *Les cinq
-          cartes ne se montaient qu'à l'arrachement*, donc tout ce travail
-          tombait dans la même image — pile sur le flash, c'est-à-dire au seul
-          instant de l'écran où quelque chose bouge vite.
-
-          **Le travail ne se supprime pas, il se DÉPLACE** : elles se montent
-          dès le départ, derrière un sachet qui les couvre entièrement, et
-          leurs nuanceurs se compilent pendant qu'il se balance — *là où rien
-          ne presse.* C'est la règle des deux poses du joueur, préchargées au
-          démarrage parce qu'une image qui arrive au moment où on la montre
-          arrive trop tard.
-
-          **ET ELLES NE BOUGENT PAS D'UN PIXEL, MÊME EN SORTANT** : c'est le
-          film qui descend et les découvre. *Une carte qui n'est pas encore
-          sortie est déjà là, elle est simplement cachée* — exactement ce que
-          le défilé fait déjà des suivantes, à taille zéro.
-        */}
-        {aPeindre.map((carte, i) => {
+  const cartes = aPeindre.map((carte, i) => {
           const vue = retourne
           return (
-            <Envol key={carte.id} sortie={sortie} rang={i} distance={hVisible * 1.25}>
+            <Envol key={`${numero}:${carte.id}`} sortie={false} rang={i} distance={hVisible * 1.25}>
+            <Arrivee distance={distanceArrivee} retard={retardArrivee}>
             <Carte3D
               carte={carte}
               // LE DOS TANT QU'ELLE N'EST PAS RETOURNÉE : c'est la même carte
@@ -1588,10 +1461,159 @@ export function Paquet3D(): React.ReactElement {
                   : undefined
               }
             />
+            </Arrivee>
             </Envol>
           )
-        })}
-        </Arrivee>
+        })
+  refCartes.current = cartes
+  return (
+    <div
+      className="paquet-3d"
+      ref={racine}
+      style={
+        {
+          '--lueur': lueurDans(sommet, teintes),
+          '--lueur-force': sommet < 0 ? 0 : 0.18 + sommet * 0.1,
+        } as React.CSSProperties
+      }
+    >
+      <div className="paquet-fond" />
+      {/* DES LUMIÈRES ET DES EMOJI QUI FLOTTENT, derrière la scène : voir
+          `FondAnime`. `?fond=sombre` rend le fond nu — *ce qui a servi à
+          choisir doit rester ouvrable.* */}
+      {!FOND_SOMBRE && <FondAnime />}
+      <div className="paquet-lueur" />
+      {eclat !== null && (
+        <div
+          key={eclat.cle}
+          className="paquet-eclat"
+          style={{ '--lueur': eclat.ton } as React.CSSProperties}
+        />
+      )}
+      {/*
+        LE FLASH DE L'ARRACHEMENT : un blanc plein écran, très court. *C'est
+        ce qui fait que la bande ne se « détache » pas, elle s'ARRACHE* — un
+        geste qui coûte quelque chose aveugle une image. Il est monté à neuf
+        par sa clé, pour la raison habituelle : une classe qu'on retire et
+        qu'on repose ne redémarre pas sans un reflow forcé.
+      */}
+      {flash > 0 && <div key={`fl${flash}`} className="paquet-flash" />}
+      {/* LES PARTICULES DE LA RÉVÉLATION, par-dessus la scène : voir
+          `EclatDeRevelation`. Montées à neuf par la clé de l'éclat. */}
+      {eclat !== null && eclat.boite !== null && (
+        <EclatDeRevelation key={`et${eclat.cle}`} couleur={eclat.ton} rang={eclat.rang} boite={eclat.boite} />
+      )}
+      <Canvas
+        shadows
+        dpr={[1, 2]}
+        camera={{ position: [0, 0, zCamera(fenetre.h)], fov: FOV }}
+        gl={{ toneMapping: NoToneMapping }}
+        style={{ position: 'fixed', inset: 0 }}
+      >
+        <Cadrage />
+        <Horloge />
+        {/* AU BILAN, LE TÉLÉPHONE NE PENCHE QUE LA CARTE ZOOMÉE. Keko : « je
+            voudrais que les mouvements de téléphone ne déplacent pas les
+            cartes, sauf si je zoome une d'entre elles ». *Cinq cartes qui
+            penchent ensemble font une grille qui tangue* ; une seule, qu'on
+            regarde, est un objet qu'on tient. */}
+        <PencheAuGyro
+          curseurs={
+            fini
+              ? indexZoome >= 0
+                ? [curseursBilan.current[indexZoome]!]
+                : []
+              : [curseurDefile.current]
+          }
+          gyro={gyro}
+        />
+        {/* LES POINTS BRILLANTS RAYONNENT, comme chez lexicodex : voir `Bloom`. */}
+        {!SANS_BLOOM && <Bloom />}
+        <ambientLight intensity={0.55} />
+        <directionalLight
+          position={[2.5, 3.5, 4]}
+          intensity={2.2}
+          castShadow
+          shadow-mapSize={[1024, 1024]}
+          shadow-bias={-0.0008}
+          shadow-normalBias={0.02}
+        />
+        <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
+
+        {/*
+          LE SACHET TIENT LA SCÈNE SEUL, et il n'y a rien d'autre à l'écran :
+          *un paquet fermé ne montre pas ce qu'il contient.* Il est MONTÉ À
+          NEUF à chaque ouverture (clé), parce que son horloge et son « c'est
+          fini » vivent dans des refs — et une ref ne se remet pas à zéro parce
+          qu'une prop a changé.
+        */}
+        {/* LE PAQUET ARRIVE D'EN HAUT, ses cartes avec lui : voir `ARRIVEE`. */}
+        {!parti && paquet.length > 0 && (
+          <Arrivee key={numero} distance={distanceArrivee} retard={retardArrivee}>
+          <Sachet3D
+            key={numero}
+            gyro={gyro}
+            lineaire={!SANS_BLOOM}
+            taille={lSachet}
+            position={[0, 0, Z_MAIN]}
+            // CE QU'IL FAUT POUR QU'IL QUITTE LE CADRE : la demi-hauteur du
+            // champ plus la sienne. *Le sachet ne connait pas le champ
+            // visible*, donc c'est l'ecran qui la lui donne -- la regle du Z
+            // qui se calcule.
+            descente={hVisible / 2 + hSachet / 2}
+            ouvre={brule}
+            onOuvrir={() => setBrule(true)}
+            // L'ARRACHEMENT : le flash, et rien d'autre. *La carte ne bouge
+            // plus* — c'est le film qui descend et la découvre, donc il n'y a
+            // plus ni émergence à déclencher ni image à attendre.
+            onDechire={() => setFlash((f) => f + 1)}
+            onOuvert={() => setOuvert(true)}
+            onParti={() => setParti(true)}
+            // LA MOITIÉ DU FEU D'ARTIFICE PREND LA COULEUR DE LA CARTE LA PLUS
+            // RARE DU PAQUET — Keko. *C'est l'« omen » de lexicodex* : leurs
+            // étincelles de rupture prennent la couleur de la meilleure rareté.
+            // La lueur d'AMBIANCE et non le ton du cadre : *un pigment ne
+            // survit pas à la diffusion*, et une étincelle est de la lumière.
+            lueurRare={lueurDans(
+              paquet.reduce((h, c) => Math.max(h, rangDe(c.id)), -1),
+              teintes,
+            )}
+          />
+          </Arrivee>
+        )}
+
+        {/*
+          ELLES SONT LÀ DÈS LE DÉBUT, CACHÉES DANS LE SACHET.
+
+          Keko : **« lors de l'explosion finale à l'ouverture y'a comme un
+          freeze de l'écran »** — mesuré, **224 ms** d'image gelée au moment
+          exact de l'arrachement, et *la gerbe n'y était pour rien* : la même
+          mesure sur la version d'avant en donnait 169.
+
+          ***LA MOITIÉ EST UN `getProgramInfoLog`*** — 106 ms, relevés en
+          chronométrant les 226 méthodes du contexte WebGL. C'est l'appel par
+          lequel three vérifie qu'un programme a bien été lié, et **il BLOQUE
+          jusqu'à la fin de la compilation**, que le pilote mènerait autrement
+          en parallèle. Le reste est la peinture des cinq faces. *Les cinq
+          cartes ne se montaient qu'à l'arrachement*, donc tout ce travail
+          tombait dans la même image — pile sur le flash, c'est-à-dire au seul
+          instant de l'écran où quelque chose bouge vite.
+
+          **Le travail ne se supprime pas, il se DÉPLACE** : elles se montent
+          dès le départ, derrière un sachet qui les couvre entièrement, et
+          leurs nuanceurs se compilent pendant qu'il se balance — *là où rien
+          ne presse.* C'est la règle des deux poses du joueur, préchargées au
+          démarrage parce qu'une image qui arrive au moment où on la montre
+          arrive trop tard.
+
+          **ET ELLES NE BOUGENT PAS D'UN PIXEL, MÊME EN SORTANT** : c'est le
+          film qui descend et les découvre. *Une carte qui n'est pas encore
+          sortie est déjà là, elle est simplement cachée* — exactement ce que
+          le défilé fait déjà des suivantes, à taille zéro.
+        */}
+        {/* UNE SEULE LISTE : React n'apparie les clés qu'à l'intérieur d'un
+            même tableau, et c'est ce qui garde les partantes MONTÉES. */}
+        {[...partantes, ...cartes]}
 
         {/*
           LE BOUTON N'EXISTE QU'AU BILAN. Pendant le défilé il n'y a rien à
@@ -1599,7 +1621,7 @@ export function Paquet3D(): React.ReactElement {
           disputerait le geste à la carte. « Tout révéler » est parti avec :
           il répondait à cinq dos posés côte à côte, et il n'y en a plus.
         */}
-        {ouvert && fini && zoomee === null && !sortie && paquet.length > 0 && (
+        {ouvert && fini && zoomee === null && paquet.length > 0 && (
           <Bouton3D
             texte="Ouvrir un autre paquet"
             // EN STICKER, PAS EN LAITON : voir `TONS.emoji` dans Bouton3D.

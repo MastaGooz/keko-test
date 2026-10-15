@@ -5591,3 +5591,20 @@ Paquet3D) :
 Les deux mouvements vivent dans des groupes parents, par-dessus le ressort de
 chaque carte. Pendant la sortie, le bouton est masqué et les tapes du bilan
 sont ignorées. Tous les chiffres viennent de moi et restent à juger.
+
+**Les deux temps se chevauchent maintenant.** Keko : « on peut lancer la
+descente du booster plus tôt pour que la descente des cartes et l'arrivée du
+booster soient plus proches ? » Le paquet suivant est tiré dès le clic, et le
+sachet commence à tomber 0,12 s plus tard (`ARRIVEE.retard`). Les cartes qui
+partent sont une **copie figée** des éléments du bilan (`partantes`, rendues
+par `cloneElement` avec `sortie`). Leur clé porte le numéro du paquet
+(`${numero}:${id}`), donc ce sont **les mêmes objets montés** qui finissent
+leur chute. *React n'apparie les clés qu'à l'intérieur d'un même tableau* :
+c'est pour ça que les partantes et les nouvelles cartes sont rendues dans une
+seule liste. L'arrivée se fait maintenant par élément, un `Arrivee` autour du
+sachet et un autour de chaque nouvelle carte, et plus par un groupe commun,
+qui aurait aussi fait tomber les partantes.
+
+Au passage, le « zoom parasite sur Plus » vu au bilan pendant les tests est
+élucidé : c'est la sixième tape du banc (`&nu`), qui tombe sur le bilan déjà
+affiché.
