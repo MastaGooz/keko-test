@@ -5383,3 +5383,13 @@ l'encre), et **Baloo 2 en 800, casse ordinaire** — *une pastille est le
 vocabulaire d'une app.* Le masque du balayage et la lueur du survol suivent
 le rayon. Les autres tons, ceux de l'archive, ne bougent pas. Vu au bilan de
 `?paquet=1314`.
+
+#### PUIS SANS NOIR : filet crème, texte blanc cerné d'orange
+
+Keko : **« l'outline noir assombrit le bouton et le design du texte noir ne
+colle pas à l'ambiance colorée fun du jeu »**. *Le noir est le cerne d'un
+sticker posé sur un film bleu sombre* ; sur un bouton qui doit appeler, il
+éteint. Le contour devient un **filet crème** avec une ombre portée **orange
+brûlé** (`#b8400a`) — *une ombre colorée garde la couleur là où une ombre
+noire la salit* — et le mot est **blanc, cerné du même orange** (`#e2560c`),
+la grammaire des boutons de jeu mobile. Vu au bilan de `?paquet=1314`.

@@ -135,7 +135,13 @@ const TONS = {
    * casse ordinaire : *une pastille est le vocabulaire d'une app*, et une app
    * n'écrit pas ses boutons en capitales espacées.
    */
-  emoji: { fond: ['#fff0a8', '#ffc42a', '#ff8a1f'], trait: '#16202a', encre: '#16202a' },
+  // PUIS SANS NOIR. Keko : « l'outline noir assombrit le bouton et le texte
+  // noir ne colle pas à l'ambiance colorée fun du jeu ». *Le noir est le cerne
+  // d'un sticker posé sur un film bleu sombre* ; sur un bouton qui doit
+  // appeler, il éteint. Le trait devient un orange brûlé (celui du bas du
+  // dégradé, plus profond), le texte est BLANC cerné de cet orange — la
+  // grammaire des boutons de jeu mobile, et l'encre qui rit.
+  emoji: { fond: ['#fff0a8', '#ffc42a', '#ff8a1f'], trait: '#e2560c', encre: '#ffffff' },
 } as const
 
 export type TonBouton = keyof typeof TONS
@@ -250,18 +256,18 @@ function plaque(
         ctx.beginPath()
         ctx.roundRect(marge + retrait, marge + retrait, large - (marge + retrait) * 2, h - (marge + retrait) * 2, rayon)
       }
+      // Le filet CRÈME dehors, l'encre dedans, et l'ombre portée sous la
+      // pastille dans le ton brûlé — *une ombre colorée garde la couleur là
+      // où une ombre noire la salit.*
       ctx.save()
-      ctx.shadowColor = '#00000066'
-      ctx.shadowBlur = h * 0.06
-      ctx.shadowOffsetY = h * 0.04
+      ctx.shadowColor = '#b8400a99'
+      ctx.shadowBlur = h * 0.05
+      ctx.shadowOffsetY = h * 0.05
       pastille(0)
-      ctx.fillStyle = trait
-      ctx.fill()
-      ctx.restore()
-      pastille(h * 0.045)
       ctx.fillStyle = '#fffaf0'
       ctx.fill()
-      pastille(h * 0.075)
+      ctx.restore()
+      pastille(h * 0.05)
       ctx.fillStyle = degrade
       ctx.fill()
     } else {
@@ -295,6 +301,18 @@ function plaque(
     // le dernier caractère, donc on recentre d'une demi-approche.
     const haut = h * (sticker ? 0.52 : 0.53) - ((lignes.length - 1) * interligne) / 2
     const centre = large / 2 - (sticker ? 0 : corps * 0.04)
+    if (sticker) {
+      // LE MOT BLANC, CERNÉ D'ORANGE BRÛLÉ : le cerne se trace avant, sinon il
+      // mord sur les lettres, et une petite ombre du même ton le pose.
+      ctx.lineJoin = 'round'
+      ctx.strokeStyle = trait
+      ctx.lineWidth = corps * 0.22
+      ctx.save()
+      ctx.shadowColor = '#b8400a'
+      ctx.shadowOffsetY = corps * 0.08
+      lignes.forEach((ligne, i) => ctx.strokeText(ligne, centre, haut + i * interligne))
+      ctx.restore()
+    }
     lignes.forEach((ligne, i) => ctx.fillText(ligne, centre, haut + i * interligne))
     texture.needsUpdate = true
   }
