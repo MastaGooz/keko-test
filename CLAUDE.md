@@ -91,6 +91,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   demande la police POUR CE CARACTÈRE (`document.fonts.load(police, emoji)`) :
   Google découpe Noto Color Emoji en onze sous-ensembles et `check` ment.
   Baloo 2 aussi se demande explicitement.
+- **La face est gaufrée de lin tressé** (`FORCE_LIN`, `bruitLin`), au
+  nuanceur et sans image, qui se creuse sous le reflet et s'efface sous le
+  pixel.
 - **La lueur du sujet ne se peint plus en mode emoji** (`AVEC_LUEUR_EMOJI`,
   `?lueur=1` la rend) : un emoji est un aplat net, son halo se lisait comme
   posé autour. Le bloom reste pour les autres modes (`adoucir`, rayon 2, sur
@@ -326,6 +329,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?plaque=cran` | la plaque teintée du cran, au lieu du blanc |
 | `?lueur=1` | la lueur floutée du sujet derrière l'emoji (retirée par défaut) |
 | `?sticker=0` | l'emoji nu, sans son cerne de sticker |
+| `?lin=0`, `?lin=0.2` | la carte sans son lin tressé, ou avec un lin plus marqué |
 | `?visage=🤩` | un autre emoji à la place du « o » du titre du sachet |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |

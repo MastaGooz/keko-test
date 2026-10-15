@@ -231,6 +231,34 @@ const ELASTIQUE = { amplitude: 0.26, pulsation: 2 * Math.PI * 3.4, amorti: 5.5, 
  * LE POMPAGE DE LA RÉVÉLATION — voir `pompe`. Un cran sous le rebond de
  * l'approche : *la carte encaisse la gerbe qu'elle crache*, elle ne bondit pas.
  */
+/**
+ * LE LIN TRESSÉ — Keko : « on peut travailler un peu les cartes pour leur
+ * donner une texture plus intéressante ? Tu penses qu'on peut simuler le lin
+ * tressé ? »
+ *
+ * *C'est le fini des vraies cartes à collectionner* : un gaufrage de fils
+ * croisés pressé dans le carton, qui casse l'aplat de l'impression et accroche
+ * la lumière quand on penche la carte. Il est fait AU NUANCEUR, sans image :
+ * deux bruits étirés, l'un en fils horizontaux, l'autre en fils verticaux,
+ * chacun irrégulier le long de son fil — *un tissage régulier se lit comme une
+ * grille, le lin a des fils épais et des fils minces.*
+ *
+ * - au repos il module la peinture de quelques pour cent (`FORCE_LIN`) ;
+ * - sous le reflet il se creuse : *le gaufrage ne se voit vraiment que quand
+ *   la lumière rase* ;
+ * - il s'efface quand un fil devient plus fin que le pixel, la règle du réseau
+ *   du foil : *un détail trop fin pour l'écran doit disparaître, pas moirer.*
+ *
+ * Mode emoji seulement (`aplat`). `?lin=0` le retire, `?lin=0.2` le force.
+ */
+const FORCE_LIN = (() => {
+  const v = new URLSearchParams(location.search).get('lin')
+  const n = v === null ? NaN : Number(v)
+  return Number.isFinite(n) ? n : 0.09
+})()
+/** Combien de fils sur la largeur de la carte. */
+const FILS_LIN = 150
+
 const POMPE_CARTE = { amplitude: 0.09, pulsation: Math.PI * 3, amorti: 7, duree: 0.8 } as const
 /** L'ordre de rendu d'une carte au premier plan : après tout le reste — voir `devant`. */
 const ORDRE_DEVANT = 10
@@ -850,6 +878,7 @@ export function Carte3D({
       nuanceur.uniforms.uBordure = { value: 0 }
       nuanceur.uniforms.uTemps = { value: 0 }
       nuanceur.uniforms.uDevelop = { value: 0 }
+      nuanceur.uniforms.uLin = { value: aplat ? FORCE_LIN : 0 }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -1052,7 +1081,27 @@ ${nuanceur.vertexShader}`.replace(
         '#include <dithering_fragment>',
         `#include <dithering_fragment>
          float lumSortie = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-         gl_FragColor.rgb = mix(vec3(lumSortie), gl_FragColor.rgb, 1.0 + uSature);`,
+         gl_FragColor.rgb = mix(vec3(lumSortie), gl_FragColor.rgb, 1.0 + uSature);
+
+         // LE LIN TRESSÉ, en sortie : il presse TOUTE la carte, peinture
+         // émissive comprise — voir FORCE_LIN.
+         if (uLin > 0.0) {
+           vec2 pl = vLustreUv * vec2(1.0, 1.4) * ${FILS_LIN.toFixed(1)};
+           // LES FILS DE TRAME, horizontaux : vite en y, lentement en x — un
+           // fil change d'épaisseur sur sa longueur, pas d'un pixel à l'autre.
+           float trameH = bruitLin(vec2(pl.x * 0.07, pl.y));
+           // LES FILS DE CHAÎNE, verticaux, décalés pour ne pas répéter la trame.
+           float chaineV = bruitLin(vec2(pl.x, pl.y * 0.07) + 37.0);
+           // LE CROISEMENT : un fil passe dessus, puis dessous — le damier
+           // des cellules alterne celui qui ressort.
+           float dessus = mod(floor(pl.x) + floor(pl.y), 2.0);
+           float relief = mix(trameH, chaineV, 0.35 + 0.3 * dessus) - 0.5;
+           // IL S'EFFACE SOUS LE PIXEL : voir le réseau du foil.
+           float net = 1.0 - smoothstep(0.35, 0.9, fwidth(pl.x));
+           // ET IL SE CREUSE SOUS LE REFLET : la lumière rasante le révèle.
+           float force = uLin * (1.0 + 2.5 * uLustreForce) * net;
+           gl_FragColor.rgb *= 1.0 + relief * 2.0 * force;
+         }`,
       )
       nuanceur.fragmentShader = `uniform float uGris;
 uniform float uSature;
@@ -1069,6 +1118,15 @@ varying vec2 vLustreUv;
 // retire a chaque image n'est plus une matiere, c'est du bruit* — et ici il
 // ferait grouiller la surexposition au lieu de la faire se resorber.
 float hDev(float n) { return fract(sin(n * 43.317) * 43758.5453); }
+uniform float uLin;
+// LE BRUIT DU LIN : une valeur par noeud d'une grille, lissée entre eux.
+float bruitLin(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  float n = i.x + i.y * 57.0;
+  return mix(mix(hDev(n), hDev(n + 1.0), f.x), mix(hDev(n + 57.0), hDev(n + 58.0), f.x), f.y);
+}
 ${nuanceur.fragmentShader}`
     }
     /**
@@ -1085,7 +1143,7 @@ ${nuanceur.fragmentShader}`
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
     face.customProgramCacheKey = () =>
-      'carte-face-desaturable-lustree-irisee-tintee-bordee-developpee2-holo'
+      'carte-face-desaturable-lustree-irisee-tintee-bordee-developpee2-holo-lin'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur

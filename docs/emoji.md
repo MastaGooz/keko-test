@@ -5694,3 +5694,26 @@ reporté à la fin du demi-tour.
 **Le pompage du bilan est bien plus fort** (`POMPE_BILAN` 0,24, contre 0,09
 à la révélation ; prop `amplitudePompe` de Carte3D). Keko : « augmenter
 fortement le pump des 5 cartes à la fin quand elles se placent ».
+
+#### Le lin tressé
+
+Keko : « on peut travailler un peu les cartes pour leur donner une texture
+plus intéressante ? Tu penses qu'on peut simuler le lin tressé ? » C'est le
+fini des vraies cartes à collectionner : un gaufrage de fils croisés pressé
+dans le carton.
+
+Il est fait **au nuanceur de la face**, sans image. Deux bruits étirés
+(`bruitLin`) font l'un des fils horizontaux, l'autre des fils verticaux, et
+le damier des cellules alterne celui qui ressort. Le motif s'applique en
+sortie, donc sur la peinture émissive comprise :
+
+- au repos, il module la couleur de ±9 % (`FORCE_LIN`) ;
+- il se creuse jusqu'à 3,5 fois sous le reflet (`uLustreForce`), puisque le
+  gaufrage se révèle à la lumière rasante ;
+- il s'efface quand un fil passe sous le pixel (`fwidth`), comme le réseau
+  du foil.
+
+Il y a 150 fils sur la largeur (`FILS_LIN`). Mode emoji seulement. `?lin=0`
+le retire, `?lin=0.2` le force. Vu à l'écran sur une carte du défilé :
+lisible sur la plaque, le décor et l'emoji, sans moiré. Chiffres à juger par
+Keko, en particulier sur téléphone, où la carte est plus petite.
