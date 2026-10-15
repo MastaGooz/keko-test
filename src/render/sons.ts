@@ -378,9 +378,20 @@ export function jouerClicDoux(volume = 1): void {
   const ctx = ouvrir()
   if (ctx === null) return
   const t0 = ctx.currentTime + 0.005
+  // PLUS FORT, ET UN COMPRESSEUR POUR NE PAS ÉCRÊTER. Keko : « le son n'est
+  // pas assez fort par rapport aux autres ». *Les fichiers de Keko montent à
+  // 0,9–1,2 de crête* ; le clic n'en faisait que 0,5. Il passe à ×1,6, et le
+  // compresseur tient les trois voix sous le plafond quand elles se cumulent —
+  // *un son qu'on monte au-delà de 1 écrête sur ses crêtes.*
   const sortie = ctx.createGain()
-  sortie.gain.value = volume * 0.5
-  sortie.connect(ctx.destination)
+  sortie.gain.value = volume * 1.6
+  const compresseur = ctx.createDynamicsCompressor()
+  compresseur.threshold.value = -10
+  compresseur.knee.value = 6
+  compresseur.ratio.value = 8
+  compresseur.attack.value = 0.002
+  compresseur.release.value = 0.08
+  sortie.connect(compresseur).connect(ctx.destination)
 
   const voix = (depart: number, f0: number, f1: number, duree: number, niveau: number): void => {
     const o = ctx.createOscillator()
