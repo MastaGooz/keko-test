@@ -4808,7 +4808,17 @@ function peindrePied(ctx: CanvasRenderingContext2D, carte: CarteAPeindre, bulle 
     // pire** et 13,0 sur le vert.
     ctx.fillStyle = TYPE_BULLE
     ctx.textAlign = 'left'
-    ctx.fillText(mot, LARGE / 2 - encre / 2, y)
+    // CENTRÉ SUR SON ENCRE, PAS SUR LA BOÎTE DE LA POLICE. Keko : « le texte
+    // du type est un peu haut dans sa petite bulle, on peut le descendre un
+    // poil pour bien le centrer verticalement ? » Le `middle` d'un canvas
+    // centre la boîte de la police, qui garde la place des accents et des
+    // jambages — *des capitales n'en ont pas*, donc leur encre tombait au-dessus
+    // du milieu. On pose la ligne de base pour que l'encre MESURÉE soit au milieu.
+    ctx.textBaseline = 'alphabetic'
+    const m = ctx.measureText(mot)
+    const base = y + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2
+    ctx.fillText(mot, LARGE / 2 - encre / 2, base)
+    ctx.textBaseline = 'middle'
     ctx.textAlign = 'center'
     ctx.letterSpacing = '0px'
   } else {

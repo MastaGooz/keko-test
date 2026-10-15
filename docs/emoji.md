@@ -5999,3 +5999,14 @@ celles du cran — le cran garde sa couleur, la holo s'y ajoute. Posé au
 défilé (`decouvrir`) comme au bilan (`refGerbesBilan`), lu dans
 `tirage.bonus`. Mesuré dans la page sur `&holo` : les douze secteurs de
 teinte sont présents dans la gerbe. Pas vu à l'oeil, trop bref pour une capture.
+
+### Le mot du type, centré sur son encre dans sa pastille (15/10/2026)
+
+Keko : « le texte du "type" de carte en bas de la carte est un peu haut dans
+sa petite bulle, on peut le descendre un poil pour bien le centrer
+verticalement ? » *Le `middle` d'un canvas centre la boîte de la police*, qui
+garde la place des accents et des jambages : des capitales n'en ont pas, donc
+leur encre tombait au-dessus du milieu. Le mot est maintenant posé sur sa
+ligne de base, calculée pour que son encre MESURÉE (`actualBoundingBox`) soit
+au milieu de la pastille — pas un décalage écrit à la main, qui ne tiendrait
+plus le jour où la police ou la taille bougent.
