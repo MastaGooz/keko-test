@@ -5863,3 +5863,20 @@ face est rangée juste après lui (`ORDRE_DEVANT + 1`) — mais le verso était
 resté à l'ordre 0, donc dessiné AVANT, puis recouvert. Il prend désormais le
 rang de la face. *Ce qui efface la profondeur range tout ce qui doit passer
 après lui, pas seulement ce qu'on avait en tête ce jour-là.*
+
+### L'emoji animé prend son cerne blanc, et ses rayons brillent (15/10/2026)
+
+Keko : « j'ai pas de brillance sur les rayons sur le fond des cartes animées
+et les emojis animés n'ont pas de contours blancs ». Les deux venaient du même
+endroit : **l'animé passe par `prete`**, une image déjà décodée, donc il
+sautait le sticker, et `peindreCarte` ne lui faisait pas de masque du sujet.
+
+- **Le cerne** : chaque image devient un sticker UNE FOIS, au décodage
+  (`stickerAnime`, le même `stickerDUneImage` que le glyphe statique, à 192 px).
+  *Le cerne est un calcul de distance* : le refaire à chaque image affichée
+  coûterait sur un téléphone. La fenêtre d'art avait déjà la marge du sticker.
+- **Le masque** : repeint À CHAQUE IMAGE dans sa petite toile de 96 px, que la
+  texture privée de l'animé porte en `userData.masqueSujet`. Essayé d'abord : un
+  masque unique, la réunion de toutes les images — *il laissait un fantôme
+  sombre partout où l'emoji passe*, puisque le rayon y perdait son brillant
+  même quand l'emoji était ailleurs.

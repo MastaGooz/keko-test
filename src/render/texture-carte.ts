@@ -1494,8 +1494,11 @@ function masqueDuSujet(
   aY: number,
   aH: number,
   rognage: number,
+  /** La toile à repeindre, pour l'animé : elle garde sa texture. */
+  dans?: HTMLCanvasElement,
 ): HTMLCanvasElement {
-  const m = document.createElement('canvas')
+  const m = dans ?? document.createElement('canvas')
+  // Redonner sa largeur remet aussi le contexte à zéro (échelle, fusion).
   m.width = 96
   m.height = Math.round(96 * 1.4)
   const c = m.getContext('2d')
@@ -1724,20 +1727,48 @@ function stickerDeLEmoji(emoji: string): HTMLCanvasElement | null {
   if (deja !== undefined) return deja
   const glyphe = imageDeLEmoji(emoji)
   if (glyphe === null) return null
-  const cote = Math.round(TOILE_EMOJI * (1 + MARGE_STICKER * 2))
+  const toile = stickerDUneImage(glyphe, TOILE_EMOJI)
+  if (toile !== null) STICKERS.set(emoji, toile)
+  return toile
+}
+
+/**
+ * LE MÊME STICKER, POUR N'IMPORTE QUELLE IMAGE CARRÉE de `cote` pixels — le
+ * glyphe peint, ou une image de l'emoji ANIMÉ. Keko : « les emojis animés
+ * n'ont pas de contours blancs ». *L'animé passe par le même peintre que le
+ * glyphe* : un seul endroit dit l'épaisseur du cerne, sa marge et son ombre.
+ */
+function stickerDUneImage(image: CanvasImageSource, cote: number): HTMLCanvasElement | null {
+  // LE CERNE SE CALCULE SUR UNE TOILE : `cerneDe` lit ses pixels.
+  let glyphe: HTMLCanvasElement
+  if (image instanceof HTMLCanvasElement && image.width === cote) glyphe = image
+  else {
+    glyphe = document.createElement('canvas')
+    glyphe.width = cote
+    glyphe.height = cote
+    glyphe.getContext('2d')?.drawImage(image, 0, 0, cote, cote)
+  }
+  const n = Math.round(cote * (1 + MARGE_STICKER * 2))
   const toile = document.createElement('canvas')
-  toile.width = cote
-  toile.height = cote
+  toile.width = n
+  toile.height = n
   const ctx = toile.getContext('2d')
   if (ctx === null) return null
   // L'UNITÉ : `collerSticker` épaissit de DOS_CERNE unités, donc une unité
   // vaut l'épaisseur voulue divisée par DOS_CERNE — l'ombre suit dans le même
   // rapport.
-  const u = (CERNE_CARTE * TOILE_EMOJI) / DOS_CERNE
+  const u = (CERNE_CARTE * cote) / DOS_CERNE
   // À LA FINESSE DU GLYPHE : voir `cerneDe`.
-  collerSticker(ctx, glyphe, cote / 2, cote / 2, TOILE_EMOJI, 0, u, false, TOILE_EMOJI)
-  STICKERS.set(emoji, toile)
+  collerSticker(ctx, glyphe, n / 2, n / 2, cote, 0, u, false, cote)
   return toile
+}
+
+/**
+ * Une image de l'emoji animé, en sticker — `null` sous `?sticker=0`, où
+ * l'image reste nue comme le glyphe statique.
+ */
+export function stickerAnime(image: CanvasImageSource, cote: number): HTMLCanvasElement | null {
+  return SANS_STICKER ? null : stickerDUneImage(image, cote)
 }
 
 async function illustration(
@@ -3780,10 +3811,14 @@ export async function peindreCarte(
     couvrir(ctx, image, marge, aY, LARGE - marge * 2, aH, rognage)
   }
   // LE MASQUE DU SUJET, pour que les rayons clairs brillent SANS l'emoji
-  // posé dessus — voir `masqueDuSujet`. Pas pour l'animé (`toile`) : il se
-  // repeint à chaque image, et il n'a pas de rayons brillants.
-  if (bulle && toile === undefined && !SANS_RAYONS && (FORCE_RAYONS[carte.rarete ?? ''] ?? 0) > 0) {
-    MASQUES_DU_SUJET.set(canvas, masqueDuSujet(image, marge, aY, aH, rognage))
+  // posé dessus — voir `masqueDuSujet`. L'ANIMÉ (`toile`) le prend aussi, et
+  // le repeint À CHAQUE IMAGE dans la même petite toile : un masque réuni sur
+  // toute l'animation laissait un fantôme sombre partout où l'emoji passe.
+  if (bulle && !SANS_RAYONS && (FORCE_RAYONS[carte.rarete ?? ''] ?? 0) > 0) {
+    MASQUES_DU_SUJET.set(
+      canvas,
+      masqueDuSujet(image as HTMLCanvasElement | null, marge, aY, aH, rognage, MASQUES_DU_SUJET.get(canvas)),
+    )
   }
 
   // CE QUI PORTE LE TEXTE : un voile qui éteint l'image, ou une plaque posée

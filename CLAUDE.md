@@ -85,8 +85,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   deux lignes au plus, 6,63 U calculé. Bancs : `?contour=`, `?texte=sombre`,
   `?titre=crans`, `?dos=gabarit`.
 - **L'emoji est un STICKER sur la face** (`stickerDeLEmoji`, le cerne crème et
-  l'ombre de `collerSticker`, `CERNE_CARTE` 2,8 % ; l'animé n'en porte pas,
-  `?sticker=0`). Il est peint au canvas (`imageDeLEmoji`, 512), entre entier
+  l'ombre de `collerSticker`, `CERNE_CARTE` 2,8 % ; l'animé aussi, chaque image
+  collée au décodage par `stickerAnime`, `?sticker=0`). Il est peint au canvas (`imageDeLEmoji`, 512), entre entier
   (`illustrationEntiere`) et passe par `illustration()` comme une image. On
   demande la police POUR CE CARACTÈRE (`document.fonts.load(police, emoji)`) :
   Google découpe Noto Color Emoji en onze sous-ensembles et `check` ment.
@@ -96,7 +96,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   droit) sur la face plate, multipliée, avec un éclair teinté et du Fresnel,
   **plafonnée sous le seuil du bloom** (sinon elle rayonne hors de la carte).
   **Les rayons clairs brillent pareil** (`RAYONS_BRILLANTS`) : retrouvés au
-  nuanceur (`RAYONS_DANS_LA_CARTE`), l'emoji épargné par `masqueDuSujet`. **Jamais
+  nuanceur (`RAYONS_DANS_LA_CARTE`), l'emoji épargné par `masqueDuSujet` (repeint à
+  chaque image pour l'animé). **Jamais
   de `dFdx` dans un `if`** : NaN, et le bloom efface des blocs de carte. Le lin
   tressé a été essayé et retiré (`?lin=0.09` le rend).
 - **La lueur du sujet ne se peint plus en mode emoji** (`AVEC_LUEUR_EMOJI`,

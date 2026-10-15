@@ -48,6 +48,7 @@ import {
   TON_CREME,
   RAYON_SIMPLE,
   RAYONS_DANS_LA_CARTE,
+  masqueDuSujetDe,
 } from './texture-carte.ts'
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
@@ -455,6 +456,12 @@ function geometrieDuCorps(r: number): THREE.ExtrudeGeometry {
   return corps
 }
 const GEOMETRIE_FACE = new THREE.PlaneGeometry(LARGE, HAUT)
+/** Libère une toile de l'animé, et le masque du sujet qu'elle porte. */
+function libererToile(t: THREE.Texture | null): void {
+  const masque = t?.userData.masqueSujet as THREE.Texture | undefined
+  masque?.dispose()
+  t?.dispose()
+}
 /** Le contour de l'onde : la forme de la carte, creusée. Partagée par toutes. */
 const GEOMETRIE_ONDE = geometrieDOnde(LARGE, HAUT, RAYON_COIN)
 
@@ -1602,7 +1609,7 @@ ${nuanceur.fragmentShader}`
       palierToile.current = -1
       // *Ce qui est à nous se libère* — à la différence de la texture du cache
       // partagé, qui sert encore à d'autres cartes.
-      texToiles.current.forEach((t) => t?.dispose())
+      texToiles.current.forEach(libererToile)
       texToiles.current = [null, null]
       toiles.current = [null, null]
     }
@@ -1625,7 +1632,7 @@ ${nuanceur.fragmentShader}`
     const change = palier !== palierToile.current
     if (change) {
       palierToile.current = palier
-      texToiles.current.forEach((t) => t?.dispose())
+      texToiles.current.forEach(libererToile)
       texToiles.current = [null, null]
       toiles.current = [null, null]
     }
@@ -1642,10 +1649,14 @@ ${nuanceur.fragmentShader}`
         // UNE TOILE NEUVE DEMANDE UNE TEXTURE NEUVE : *on ne change pas les
         // dimensions d'une texture déjà allouée*, on la jette.
         if (texToiles.current[libre] == null || toiles.current[libre] !== canvas) {
-          texToiles.current[libre]?.dispose()
+          libererToile(texToiles.current[libre])
           const t = new THREE.CanvasTexture(canvas)
           t.anisotropy = 8
           t.colorSpace = THREE.SRGBColorSpace
+          // LE MASQUE DU SUJET VOYAGE AVEC ELLE, comme avec la texture du
+          // cache : sans lui, les rayons clairs de l'animé ne brillaient pas.
+          const masque = masqueDuSujetDe(canvas)
+          if (masque !== undefined) t.userData.masqueSujet = new THREE.CanvasTexture(masque)
           texToiles.current[libre] = t
         }
         toiles.current[libre] = canvas
@@ -1662,6 +1673,9 @@ ${nuanceur.fragmentShader}`
           face.needsUpdate = true
         }
         tex.needsUpdate = true
+        // SON MASQUE A ÉTÉ REPEINT AVEC ELLE : voir `masqueDuSujet`.
+        const masque = tex.userData.masqueSujet as THREE.Texture | undefined
+        if (masque !== undefined) masque.needsUpdate = true
       })
       .catch(() => {
         peintureEnCours.current = false

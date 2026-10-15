@@ -20,6 +20,7 @@
  * Mesuré sur 😂 : 609 Ko, **59 images**, 512 x 512, 30 ms par image — et
  * **1,9 ms pour en décoder une.**
  */
+import { stickerAnime } from './texture-carte.ts'
 
 /** Ce qu'il faut pour jouer une animation : ses images et leur durée. */
 export interface Animation {
@@ -92,7 +93,21 @@ async function decoder(url: string): Promise<Animation | null> {
       // LA DURÉE SE COMPTE SUR TOUTES LES IMAGES, même celles qu'on saute :
       // *l'animation garde son rythme*, on la montre seulement moins finement.
       duree += (image.duration ?? 30_000) / 1000
-      if (i % PAS === 0) images.push(await createImageBitmap(image, { resizeWidth: COTE, resizeHeight: COTE }))
+      if (i % PAS === 0) {
+        const brute = await createImageBitmap(image, { resizeWidth: COTE, resizeHeight: COTE })
+        // CHAQUE IMAGE DEVIENT UN STICKER, UNE FOIS, AU DÉCODAGE — le cerne
+        // blanc et l'ombre du glyphe statique. Keko : « les emojis animés
+        // n'ont pas de contours blancs ». *Le cerne est un calcul de
+        // distance* : le refaire à chaque image affichée coûterait sur un
+        // téléphone, le faire ici ne coûte qu'une fois par animation.
+        const sticker = stickerAnime(brute, COTE)
+        let finale = brute
+        if (sticker !== null) {
+          finale = await createImageBitmap(sticker)
+          brute.close()
+        }
+        images.push(finale)
+      }
       // **ON FERME CHAQUE IMAGE**, sinon le décodeur garde tout en mémoire :
       // une `VideoFrame` n'est pas ramassée par le ramasse-miettes.
       image.close()
