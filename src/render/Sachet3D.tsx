@@ -1747,6 +1747,9 @@ const FAISCEAUX = Array.from({ length: 9 }, (_, i) => {
 // nappe de lumière plutôt que des traits.
 const FORCE_FAISCEAU = { decoupe: 0.4, eclat: 2.2 }
 
+/** Ce que dure la lumière de l'arrachement, en secondes. */
+const DUREE_LUEUR_FINALE = 0.5
+
 /** Le smoothstep du GLSL, côté CPU. */
 function smoothstepJs(a: number, b: number, x: number): number {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
@@ -2580,7 +2583,10 @@ export function Sachet3D({
       // visible après les étincelles. La lumière monte en 80 ms, tient, puis
       // descend à ZÉRO exactement quand la gerbe finit (DUREE_GERBE).
       const montee = tp < 0 ? 0 : Math.min(1, tp / 0.08)
-      const declin = tp < 0 ? 1 : 1 - smoothstepJs(DUREE_GERBE * 0.25, DUREE_GERBE, tp)
+      // PUIS PLUS BRÈVE — Keko : « plus bref, la lumière finale ». Elle
+      // s'éteint désormais à mi-gerbe (DUREE_LUEUR_FINALE) : *un éclair dit
+      // l'explosion, une lumière qui tient dit un projecteur.*
+      const declin = tp < 0 ? 1 : 1 - smoothstepJs(DUREE_LUEUR_FINALE * 0.2, DUREE_LUEUR_FINALE, tp)
       const embrase = montee * declin
       const eteintDecoupe = tp < 0 ? 1 : Math.exp(-6 * tp)
       for (const [i, f] of FAISCEAUX.entries()) {

@@ -5526,3 +5526,7 @@ Et **plus longs, pas plus forts** — Keko : « il faudrait augmenter la longueu
 pas forcément l'intensité, au moment de la gerbe finale ». À l'arrachement les
 rayons s'étirent jusqu'à **3,2 fois** leur longueur de découpe (contre 1,9), en
 0,15 s ; l'intensité ne bouge pas.
+
+Puis **plus brève** — Keko : « plus bref, la lumière finale ». Elle s'éteint à
+0,5 s (`DUREE_LUEUR_FINALE`), à mi-gerbe, au lieu de tenir jusqu'à la fin :
+*un éclair dit l'explosion, une lumière qui tient dit un projecteur.*
