@@ -570,7 +570,7 @@ export function Bouton3D({
     materiau.opacity = eteint ? 0.35 : 1
     // La couleur MULTIPLIE la texture : au-delà de 1 elle éclaircit la plaque
     // au lieu de la recouvrir. *L'image reste lisible pendant qu'elle chauffe.*
-    materiau.color.setScalar(1 + v * 0.3)
+    materiau.color.setScalar(enSticker(ton) ? Math.min(1.1, 1 + v * 0.3) : 1 + v * 0.3)
     // PAS DE HALO AU SURVOL POUR LE STICKER — Keko : « je trouve le halo du
     // bouton ouvrir un autre paquet au hover moche ». *Une pastille de sticker
     // ne rayonne pas* : elle grossit et s'éclaircit, et le lustre la traverse.
@@ -604,6 +604,12 @@ export function Bouton3D({
       }
       const flamme = Math.exp(-5 * t)
       materiau.color.setScalar(1 + v * 0.3 + flamme * 0.45)
+      // ET PAS DE HALO PAR LE BLOOM NON PLUS — Keko : « y'a quand même un halo
+      // au clic, je veux pas de halo sur le bouton ». La plaque blanche
+      // poussée à 1,75 passait le seuil du bloom (1,15) et rayonnait autour :
+      // *ce qui dépasse le seuil devient un halo, qu'on l'ait peint ou non.*
+      // Le sticker reste donc sous le seuil, au survol comme au clic.
+      if (enSticker(ton)) materiau.color.setScalar(Math.min(1.1, 1 + v * 0.3 + flamme * 0.45))
       // PLUS DE HALO AU CLIC — Keko : « tu peux enlever le halo de lumière
       // dans l'animation du bouton ? » La plaque blanchit encore, rien ne déborde.
       if (!parti.current && t >= DELAI_ACTION) {

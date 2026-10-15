@@ -5842,3 +5842,12 @@ borne. Les anciennes valeurs sont notées dans le code.
 ouvrir un autre paquet au hover moche ». Le ton `emoji` met l'opacité du halo
 à zéro, au survol comme au clic. Le grossissement, l'éclaircissement et le
 lustre restent. La ferronnerie de l'archive garde son halo.
+
+### Plus de halo au clic du bouton sticker, même par le bloom (15/10/2026)
+
+Keko : « y'a quand même un halo au clic je crois, je veux pas de halo sur le
+bouton ». Le halo peint était déjà éteint ; c'est **le bloom** qui en refaisait
+un : la plaque blanche poussée à 1,75 au clic (1,3 au survol) dépassait son
+seuil (1,15) et rayonnait autour. Le sticker est désormais plafonné à 1,1 —
+*ce qui dépasse le seuil devient un halo, qu'on l'ait peint ou non.* Le lustre
+du survol, additif, peut encore le frôler.
