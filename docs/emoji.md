@@ -5393,3 +5393,19 @@ sticker posé sur un film bleu sombre* ; sur un bouton qui doit appeler, il
 brûlé** (`#b8400a`) — *une ombre colorée garde la couleur là où une ombre
 noire la salit* — et le mot est **blanc, cerné du même orange** (`#e2560c`),
 la grammaire des boutons de jeu mobile. Vu au bilan de `?paquet=1314`.
+
+#### LE CLIC DU BOUTON STICKER A DU JUICE
+
+Keko : **« on peut rajouter du juice au clic du bouton ? une animation par
+ex »**. Trois temps, et tout le poids vient du contraste de vitesse, la règle
+du bond des créatures :
+
+1. **il s'écrase** sous le doigt — plus large, plus bas — en 70 ms ;
+2. **il rebondit** en élastique, un peu plus grand que nature, puis revient ;
+3. **il flambe** : la plaque blanchit et le halo s'allume d'un coup, puis
+   s'éteint pendant le rebond. Un `pop.aac` part avec, à 70 %.
+
+*L'action attend 260 ms* (`DELAI_ACTION`) : un bouton qui disparaît à
+l'instant où on le touche n'a jamais été pressé. **Seul le ton `emoji` le
+fait**, les boutons de l'archive ne bougent pas. Vu au bilan de
+`?paquet=1314` : le clic ouvre bien un paquet neuf.

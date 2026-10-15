@@ -23,6 +23,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 import { hauteurVisibleA } from './Cadrage.tsx'
 import { FAMILLE_RONDE, policeRonde } from './texture-carte.ts'
+import { SON_POP, jouerSon, precharger } from './sons.ts'
 
 /**
  * LA HAUTEUR D'UN BOUTON SE COMPTE EN PIXELS, pas en unités de scène.
@@ -538,6 +539,33 @@ export function Bouton3D({
     document.body.style.cursor = vivant ? 'pointer' : ''
   }, [vivant])
 
+  /**
+   * LE CLIC A DU JUICE — pour le bouton sticker. Keko : « on peut rajouter du
+   * juice au clic du bouton ? une animation par ex ». Trois temps, et tout le
+   * poids vient du contraste de vitesse, la règle du bond des créatures :
+   *
+   * 1. **il s'ÉCRASE** sous le doigt (plus large, plus bas) en 70 ms ;
+   * 2. **il REBONDIT** en élastique, plus grand que nature puis de retour ;
+   * 3. **il FLAMBE** : la plaque blanchit et le halo s'allume d'un coup, puis
+   *    s'éteint pendant le rebond.
+   *
+   * *L'action attend la fin de l'écrasement* (`DELAI_ACTION`) : un bouton qui
+   * disparaît à l'instant où on le touche n'a jamais été pressé. Un pop part
+   * avec. Les tons de l'archive ne bougent pas.
+   */
+  const juice = enSticker(ton)
+  // L'HORLOGE DE LA SCÈNE, lue au clic : c'est elle qui anime la suite.
+  const horloge = useRef(0)
+  useFrame((etat) => {
+    horloge.current = etat.clock.elapsedTime
+  })
+  const presse = useRef(-1)
+  const parti = useRef(false)
+  useEffect(() => {
+    if (juice) void precharger(SON_POP)
+  }, [juice])
+  const DELAI_ACTION = 0.26
+
   const feu = useRef(0)
   useFrame((etat, delta) => {
     feu.current += ((vivant ? 1 : 0) - feu.current) * (1 - Math.exp(-11 * delta))
@@ -552,7 +580,37 @@ export function Bouton3D({
     // régulier, et le masque l'empêche de déborder des coins arrondis.
     const carte = lustre.map
     if (carte !== null) carte.offset.x = 0.5 - ((etat.clock.elapsedTime * 0.55) % 1.6)
-    if (groupe.current !== null) groupe.current.scale.setScalar(1 + v * 0.035)
+    const g = groupe.current
+    if (g === null) return
+    let sx = 1 + v * 0.035
+    let sy = sx
+    if (presse.current >= 0) {
+      const t = etat.clock.elapsedTime - presse.current
+      if (t < 0.07) {
+        // L'ÉCRASEMENT : vite, et un peu plus large que haut.
+        const k = t / 0.07
+        sx *= 1 + 0.1 * k
+        sy *= 1 - 0.16 * k
+      } else {
+        // LE REBOND ÉLASTIQUE, puis le repos.
+        const s = t - 0.07
+        const e = Math.exp(-6 * s) * Math.cos(2 * Math.PI * 3.2 * s)
+        sx *= 1 + 0.1 * e
+        sy *= 1 - 0.16 * e
+        const gonfle = 0.14 * Math.exp(-7 * s) * Math.sin(Math.PI * Math.min(1, s / 0.25))
+        sx *= 1 + gonfle
+        sy *= 1 + gonfle
+      }
+      const flamme = Math.exp(-5 * t)
+      materiau.color.setScalar(1 + v * 0.3 + flamme * 0.45)
+      halo.opacity = Math.max(halo.opacity, flamme)
+      if (!parti.current && t >= DELAI_ACTION) {
+        parti.current = true
+        onCliquer?.()
+      }
+      if (t > 1.2) presse.current = -1
+    }
+    g.scale.set(sx, sy, 1)
   })
 
   const haut = hauteurMonde(hauteurBoutonPx(size.height, cran), position[2], size.height)
@@ -569,7 +627,15 @@ export function Bouton3D({
         material={materiau}
         onPointerDown={(e) => {
           e.stopPropagation()
-          if (!eteint) onCliquer?.()
+          if (eteint) return
+          if (!juice) {
+            onCliquer?.()
+            return
+          }
+          if (presse.current >= 0 && !parti.current) return
+          presse.current = horloge.current
+          parti.current = false
+          jouerSon(SON_POP, 0.7)
         }}
         onPointerOver={(e) => {
           if (e.pointerType === 'mouse') setSurvole(true)
