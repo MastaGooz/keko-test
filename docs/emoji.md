@@ -6024,3 +6024,14 @@ remontée de 90–270 à 230–490 unités : *mesuré dans la page*, à la vites
 d'avant la plupart restaient sur la carte après une seconde. Vu au ralenti
 (temps × 0,12, retiré) : elles jaillissent de la face et s'éparpillent tout
 autour. Même gerbe au défilé et au bilan.
+
+### Les étincelles naissent juste en deçà du bord, et plus petites (15/10/2026)
+
+Keko : « on peut les faire apparaître sur la carte, mais plus près des bords
+(juste sur la limite) plutôt qu'en plein milieu ? et réduire un peu leur
+taille ». Elles naissent sur le périmètre, tiré au prorata de chaque côté,
+**rentrées de 0 à 5 % de la largeur dans la carte**, et partent vers
+l'extérieur (dispersion ±0,55 rad, un peu vers le haut). Vitesse redescendue à
+110–310 unités : elles n'ont plus la carte à traverser. Taille 1,7–3,5 unités
+au lieu de 2,4–5, et elles ne grossissent plus que jusqu'à 1,3 fois. Vu au
+ralenti.

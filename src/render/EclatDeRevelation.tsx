@@ -10,11 +10,11 @@
  * commun à soixante-quatre pour un légendaire. **Le bas de l'échelle parle
  * peu** — la règle de la plaque et des rayons.
  *
- * ELLES NAISSENT DEVANT LA CARTE, sur sa face, et s'éparpillent depuis son
- * centre. Keko : « quand on dévoile une carte, on peut faire partir les
- * particules de devant la carte plutôt que directement sur les côtés ? » Elles
- * partaient du BORD, vers l'extérieur ; elles jaillissent maintenant de la
- * face, vers l'oeil — *elles grossissent en vieillissant*, ce qui se lit comme
+ * ELLES NAISSENT DEVANT LA CARTE, JUSTE EN DEÇÀ DE SON BORD, et partent vers
+ * l'extérieur. Keko a d'abord demandé qu'elles partent « de devant la carte
+ * plutôt que directement sur les côtés » — elles sont nées un temps sur toute
+ * la face — puis « plus près des bords (juste sur la limite) plutôt qu'en
+ * plein milieu ». *Elles grossissent en vieillissant*, ce qui se lit comme
  * venir vers soi. Un frein d'air fort et une pesanteur faible —
  * le régime du feu d'artifice du sachet : elles filent, ralentissent et
  * s'éteignent en l'air. Éclat à quatre branches et coeur blanc, comme les
@@ -88,26 +88,43 @@ export function EclatDeRevelation({ couleur, rang, boite, holo = false }: Props)
     const n = nCran + (holo ? NOMBRE_HOLO : 0)
     const parts: Etincelle[] = []
     for (let i = 0; i < n; i++) {
-      // UN POINT DE LA FACE, plus dense vers le centre (la moyenne de deux
-      // tirages), et sa direction est celle qui l'éloigne du centre.
-      const ax = (Math.random() + Math.random() - 1) * 0.5
-      const ay = (Math.random() + Math.random() - 1) * 0.5
-      const x = boite.cx + ax * boite.l * 0.9
-      const y = boite.cy + ay * boite.h * 0.9
-      const quelle = Math.random() * Math.PI * 2
-      // UN ÉCLAT AU CENTRE N'A PAS DE DIRECTION À LUI : on mêle la sienne à
-      // une direction au hasard, d'autant plus qu'il est près du centre.
-      const loin = Math.min(1, Math.hypot(ax, ay) * 2.5)
-      const nx0 = ax * loin + Math.cos(quelle) * (1 - loin)
-      const ny0 = ay * loin + Math.sin(quelle) * (1 - loin)
-      const nn = Math.hypot(nx0, ny0) || 1
-      const nx = nx0 / nn
-      const ny = ny0 / nn
+      // UN POINT JUSTE EN DEÇÀ DU BORD, sur la face — Keko : « les faire
+      // apparaître sur la carte, mais plus près des bords (juste sur la
+      // limite) plutôt qu'en plein milieu ». Le côté est tiré au prorata de sa
+      // longueur, et le point rentre d'un rien dans la carte.
+      const per = 2 * (boite.l + boite.h)
+      const d = Math.random() * per
+      const dedans = Math.random() * boite.l * 0.05
+      let x: number
+      let y: number
+      let nx: number
+      let ny: number
+      if (d < boite.l) {
+        x = boite.cx - boite.l / 2 + d
+        y = boite.cy - boite.h / 2 + dedans
+        nx = 0
+        ny = -1
+      } else if (d < boite.l + boite.h) {
+        x = boite.cx + boite.l / 2 - dedans
+        y = boite.cy - boite.h / 2 + (d - boite.l)
+        nx = 1
+        ny = 0
+      } else if (d < 2 * boite.l + boite.h) {
+        x = boite.cx + boite.l / 2 - (d - boite.l - boite.h)
+        y = boite.cy + boite.h / 2 - dedans
+        nx = 0
+        ny = 1
+      } else {
+        x = boite.cx - boite.l / 2 + dedans
+        y = boite.cy + boite.h / 2 - (d - 2 * boite.l - boite.h)
+        nx = -1
+        ny = 0
+      }
       // VERS L'EXTÉRIEUR, un peu dispersé, et un peu vers le haut.
-      const dev = (Math.random() - 0.5) * 0.6
+      const dev = (Math.random() - 0.5) * 1.1
       const dx = nx * Math.cos(dev) - ny * Math.sin(dev)
       const dy = nx * Math.sin(dev) + ny * Math.cos(dev) - 0.3
-      const v = (230 + Math.random() * 260) * u * (1 + rang * 0.12)
+      const v = (110 + Math.random() * 200) * u * (1 + rang * 0.12)
       parts.push({
         x,
         y,
@@ -115,7 +132,8 @@ export function EclatDeRevelation({ couleur, rang, boite, holo = false }: Props)
         vy: dy * v,
         vie: 0.6 + Math.random() * 0.6,
         age: 0,
-        taille: (2.4 + Math.random() * 2.6) * u,
+        // PLUS PETITES — Keko : « réduire un peu leur taille ».
+        taille: (1.7 + Math.random() * 1.8) * u,
         angle: Math.random() * Math.PI,
         couleur:
           i >= nCran
@@ -151,7 +169,7 @@ export function EclatDeRevelation({ couleur, rang, boite, holo = false }: Props)
         // ELLE NAÎT ALLUMÉE ET S'ÉTEINT SUR SA SECONDE MOITIÉ.
         const a = t < 0.5 ? 1 : 1 - (t - 0.5) / 0.5
         // ELLE GROSSIT EN VIEILLISSANT : elle vient vers l'oeil.
-        const r = p.taille * (0.7 + t * 0.8)
+        const r = p.taille * (0.7 + t * 0.6)
         // LE HALO, à la couleur du cran.
         const halo = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3)
         halo.addColorStop(0, p.couleur)
