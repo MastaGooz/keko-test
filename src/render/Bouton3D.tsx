@@ -600,7 +600,8 @@ export function Bouton3D({
       }
       const flamme = Math.exp(-5 * t)
       materiau.color.setScalar(1 + v * 0.3 + flamme * 0.45)
-      halo.opacity = Math.max(halo.opacity, flamme)
+      // PLUS DE HALO AU CLIC — Keko : « tu peux enlever le halo de lumière
+      // dans l'animation du bouton ? » La plaque blanchit encore, rien ne déborde.
       if (!parti.current && t >= DELAI_ACTION) {
         parti.current = true
         onCliquer?.()
