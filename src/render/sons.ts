@@ -377,7 +377,12 @@ export function jouerEnBoucle(nom: string, volume = 1): SonEnBoucle {
 export function jouerClicDoux(volume = 1): void {
   const ctx = ouvrir()
   if (ctx === null) return
-  const t0 = ctx.currentTime + 0.005
+  // IL PART TOUT DE SUITE — Keko : « le son de clic du bouton est un peu en
+  // retard (sur tél en tout cas) ». Deux retards qu'on se donnait nous-mêmes
+  // tombent : les 5 ms de marge ici, et la LOOKAHEAD du compresseur (un
+  // DynamicsCompressor retarde tout ce qui le traverse pour voir venir les
+  // crêtes). Reste la latence de sortie de l'appareil, qu'aucun code ne retire.
+  const t0 = ctx.currentTime
   // PLUS FORT, ET UN COMPRESSEUR POUR NE PAS ÉCRÊTER. Keko : « le son n'est
   // pas assez fort par rapport aux autres ». *Les fichiers de Keko montent à
   // 0,9–1,2 de crête* ; le clic n'en faisait que 0,5. Il passe à ×1,6, et le
@@ -385,13 +390,14 @@ export function jouerClicDoux(volume = 1): void {
   // *un son qu'on monte au-delà de 1 écrête sur ses crêtes.*
   const sortie = ctx.createGain()
   sortie.gain.value = volume * 1.6
-  const compresseur = ctx.createDynamicsCompressor()
-  compresseur.threshold.value = -10
-  compresseur.knee.value = 6
-  compresseur.ratio.value = 8
-  compresseur.attack.value = 0.002
-  compresseur.release.value = 0.08
-  sortie.connect(compresseur).connect(ctx.destination)
+  // UN ÉCRÊTAGE DOUX À LA PLACE DU COMPRESSEUR : une tangente hyperbolique
+  // tient les crêtes sous 1 sans aucun retard — *le compresseur regardait
+  // devant lui, donc il retardait le son.*
+  const doux = ctx.createWaveShaper()
+  const courbe = new Float32Array(1024)
+  for (let i = 0; i < courbe.length; i++) courbe[i] = Math.tanh(((i / (courbe.length - 1)) * 2 - 1) * 1.6)
+  doux.curve = courbe
+  sortie.connect(doux).connect(ctx.destination)
 
   // MOINS DE BULLE. Keko : « on peut changer le son pour un truc un peu moins
   // "bulle" ». *Ce qui faisait la bulle était la hauteur qui MONTE* d'une
@@ -412,7 +418,7 @@ export function jouerClicDoux(volume = 1): void {
     o.frequency.exponentialRampToValueAtTime(f1, t0 + depart + duree * 0.6)
     const g = ctx.createGain()
     g.gain.setValueAtTime(0.0001, t0 + depart)
-    g.gain.exponentialRampToValueAtTime(niveau, t0 + depart + 0.004)
+    g.gain.exponentialRampToValueAtTime(niveau, t0 + depart + 0.002)
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + depart + duree)
     o.connect(g).connect(sortie)
     o.start(t0 + depart)

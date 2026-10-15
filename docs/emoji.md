@@ -5449,3 +5449,13 @@ amplitude 9 → **20 %**, amorti 11 → 7, pulsation 2,6 → 1,9 Hz, et la desce
 attend 0,3 s. *Un gonflement de 9 % éteint en un dixième de seconde passe sous
 l'oeil.* L'ouverture s'allonge de 0,06 s : pompe et chute (1,17 s) dépassent
 désormais la vie de la gerbe (1,11 s).
+
+#### LE CLIC PART SANS RETARD QU'ON SE DONNE
+
+Keko : **« le son de clic du bouton pour ouvrir un autre paquet est un peu en
+retard (sur tél en tout cas) »**. Deux retards venaient de nous : 5 ms de marge
+au départ, et surtout **la lookahead du `DynamicsCompressor`**, qui retarde
+tout ce qui le traverse pour voir venir les crêtes. Il est remplacé par un
+écrêtage doux (`WaveShaper`, tangente hyperbolique) qui tient les crêtes sous 1
+**sans aucun retard**, et l'attaque passe de 4 à 2 ms. *Reste la latence de
+sortie du téléphone*, qu'aucun code ne retire — `?son` l'affiche.
