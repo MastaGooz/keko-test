@@ -297,10 +297,11 @@ const BRILLANT = {
   serre: 40,
   reflet: 1.8,
   eclat: 1.2,
-  lueur: 0.55,
-  portee: 0.035,
+  /** De combien la partie éclairée pousse sa saturation au-delà de la peinture. */
+  sature: 1.4,
   fresnel: 1.0,
-  metal: 0.7,
+  // L'ÉCLAT EST DE LA COULEUR DU CRAN, ET PLUS DU BLANC : voir `sature`.
+  metal: 0.95,
   /** La luminance au-delà de laquelle le bloom ferait rayonner le cadre hors de la carte. */
   plafond: 0.9,
 } as const
@@ -1189,18 +1190,14 @@ ${nuanceur.vertexShader}`.replace(
            // seuil de luminance (0,8 en cible 8 bits) rayonne hors du cadre.
            // Le brillant est donc plafonné sous ce seuil — il ne monte jamais
            // plus haut que ce que la peinture montait déjà.
-           // ET LE CADRE ÉCLAIRÉ RAYONNE VERS L'INTÉRIEUR — Keko : « un effet
-           // plus glowy sur la bordure exposée à la lumière ». *Un glow qui
-           // sort de la carte passe par le bloom, et on vient de le retirer* :
-           // celui-ci reste DEDANS, une lueur à la couleur du cran qui mord sur
-           // le décor le long du côté éclairé, et s'éteint en quelques
-           // centièmes de largeur.
-           float dedansc = max(0.0, -dc - ${CONTOUR_PLAQUE.toFixed(4)});
-           float lueurc = exp(-dedansc / ${BRILLANT.portee.toFixed(3)}) * (1.0 - bande) * step(dc, 0.0);
-           cc += teintec * nappe * lueurc * ${BRILLANT.lueur.toFixed(2)} * feuc;
-           // ET AU COEUR DU REFLET, LE CADRE TIRE VERS LE BLANC : *un point qui
-           // sature tire vers le blanc, sa frange garde la couleur.*
-           cc = mix(cc, vec3(1.0, 0.98, 0.94) * max(cc.r, max(cc.g, cc.b)), eclair * bande * 0.6);
+           // ET LA PARTIE ÉCLAIRÉE SE SATURE — Keko : « le halo déborde vers
+           // l'intérieur de la carte, c'est pas souhaitable ; en fait je
+           // voudrais que la partie éclairée du cadre soit plus saturée et
+           // vive ». *Une lumière qui tire vers le blanc délave* ; celle-ci
+           // pousse la couleur du cran AU-DELÀ d'elle-même, comme un métal
+           // coloré sous la lampe. Ni lueur intérieure ni blanc au coeur.
+           float lumc = dot(cc, vec3(0.2126, 0.7152, 0.0722));
+           cc = max(mix(vec3(lumc), cc, 1.0 + ${BRILLANT.sature.toFixed(2)} * nappe * bande * feuc), 0.0);
            float lumApres = dot(cc, vec3(0.2126, 0.7152, 0.0722));
            float plafond = max(lumAvant, ${BRILLANT.plafond.toFixed(2)});
            cc *= min(1.0, plafond / max(lumApres, 0.0001));

@@ -5794,3 +5794,16 @@ lumière ».
 
 Vu à l'écran : le côté exposé est nettement plus lumineux, la lueur se voit
 le long du décor, et rien ne sort de la carte.
+
+**Saturé plutôt que glowy.** Keko : « le halo déborde vers l'intérieur de la
+carte, c'est pas souhaitable ; en fait je voudrais que la partie éclairée du
+cadre soit plus saturée et vive ».
+
+- La lueur intérieure et le blanc au cœur de l'éclair sont retirés.
+- La partie éclairée **pousse sa saturation au-delà de la peinture**
+  (`BRILLANT.sature` 1,4, pondérée par la nappe du reflet).
+- L'éclat prend la couleur pure du cran (`metal` 0,95 au lieu de 0,7).
+
+*Une lumière qui tire vers le blanc délave* ; celle-ci fait briller le cran
+comme un métal coloré sous la lampe. Vu à l'écran, sur une orange et une
+verte : le côté éclairé est vif, et rien ne déborde.
