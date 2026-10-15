@@ -6035,3 +6035,13 @@ l'extérieur (dispersion ±0,55 rad, un peu vers le haut). Vitesse redescendue �
 110–310 unités : elles n'ont plus la carte à traverser. Taille 1,7–3,5 unités
 au lieu de 2,4–5, et elles ne grossissent plus que jusqu'à 1,3 fois. Vu au
 ralenti.
+
+### Plus de « Dernière carte » ni de compteur en haut (15/10/2026)
+
+Keko : « enlève le commentaire en haut sur la rareté de la dernière carte ».
+Le bandeau `.paquet-dernier` (« Dernière carte », le chiffre qui monte, « emoji
+dépassés ») n'est plus rendu, et ce qui ne servait qu'à lui est parti
+(`compteurDuMode`, `compteurDe`, `monte`, `derniere`, `unite`, `refChiffre`).
+**La montée de l'écran vers la couleur du cran reste** (`monterLeCompteur`, qui
+garde son nom) : seul le texte disparaît. Les styles `.paquet-dernier` et
+`.paquet-compteur` restent dans `styles.css`, sans usage.

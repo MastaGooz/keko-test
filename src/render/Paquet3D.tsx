@@ -78,24 +78,6 @@ function carteAPeindreDuMode(c: CarteDuMode, bonus?: Bonus): CarteAPeindre {
 }
 
 /**
- * LE CHIFFRE QUE LA DERNIERE CARTE FAIT DEFILER, et son unite.
- *
- * **Il doit etre celui dont la rarete DERIVE** : *un chiffre qui grimpe et une
- * teinte qui grimpe avec lui ne disent la meme chose que s'ils mesurent la
- * meme chose.* **Pour une peinture c'est le nombre de VERSIONS
- * LINGUISTIQUES**, qui pese trois cinquiemes de sa formule et s'accorde a
- * 0,971 avec elle.
- */
-function compteurDuMode(c: CarteDuMode, total = 0): { valeur: number; unite: string } {
-  // POUR UN EMOJI C'EST LE NOMBRE D'EMOJI QU'IL DEPASSE au classement d'usage
-  // d'Unicode. **Il fallait un chiffre qui MONTE avec la rarete** : le rang,
-  // lui, descend -- un compteur qui s'arreterait a « 3 » pour la carte la plus
-  // rare monterait vers le commun, et *la teinte monte avec le compteur.*
-  if ('emoji' in c) return { valeur: Math.max(0, total - c.rang), unite: 'emoji dépassés' }
-  return { valeur: c.langues, unite: 'langues sur Wikipédia' }
-}
-
-/**
  * LA RANGÉE SE DIMENSIONNE SUR LA PLACE, jamais à une taille écrite à la main.
  *
  * C'est la règle que la grille du zoom et le chargement de l'armurerie ont
@@ -661,8 +643,6 @@ export function Paquet3D(): React.ReactElement {
     readonly id: string
     readonly holo: boolean
   } | null>(null)
-  /** Vrai pendant que le compteur de la derniere carte defile. */
-  const [monte, setMonte] = useState(false)
   /** Le sachet est parti : c'est ce qui met les cartes en rangée. */
   const [ouvert, setOuvert] = useState(nu)
   /**
@@ -808,7 +788,6 @@ export function Paquet3D(): React.ReactElement {
   /** La clé du flash de l'arrachement — *une animation se remonte à neuf.* */
   const [flash, setFlash] = useState(0)
   const racine = useRef<HTMLDivElement>(null)
-  const refChiffre = useRef<HTMLParagraphElement>(null)
   const image = useRef(0)
 
   useEffect(() => {
@@ -930,12 +909,6 @@ export function Paquet3D(): React.ReactElement {
   const indexZoome = zoomee === null ? -1 : aPeindre.findIndex((c) => c.id === zoomee)
 
 
-  /** Le chiffre de la carte brute : celui dont la rarete DERIVE. */
-  function compteurDe(id: string): { valeur: number; unite: string } {
-    const brute = paquet.find((c) => c.id === id)
-    return brute === undefined ? { valeur: 0, unite: '' } : compteurDuMode(brute, catalogue?.length ?? 0)
-  }
-
   function rangDe(id: string): number {
     return rangDansLEchelle(aPeindre.find((c) => c.id === id)?.rarete, teintes)
   }
@@ -954,16 +927,12 @@ export function Paquet3D(): React.ReactElement {
    * cinq cartes a nuanceur. C'est le chemin de `Projeter`, pour la meme raison.
    */
   function monterLeCompteur(id: string): void {
-    const cible = compteurDe(id).valeur
     const rangFinal = Math.max(0, rangDe(id))
     const depart = performance.now()
-    setMonte(true)
     const pas = (): void => {
       const p = Math.min(1, (performance.now() - depart) / MONTEE)
       // Une deceleration cubique : vive au depart, posee a l'arrivee.
       const avance = 1 - Math.pow(1 - p, 3)
-      if (refChiffre.current !== null)
-        refChiffre.current.textContent = Math.round(cible * avance).toLocaleString('fr-FR')
       // L'ECHELLE SE REMONTE EN PROPORTION, et elle s'arrete au bon cran :
       // *les couleurs PASSENT dans l'ordre*, elles ne sautent pas a la bonne.
       const rang = Math.min(rangFinal, Math.floor(avance * (rangFinal + 1)))
@@ -1124,7 +1093,6 @@ export function Paquet3D(): React.ReactElement {
     setZoomee(null)
     setSommet(-1)
     setEclat(null)
-    setMonte(false)
     racine.current?.style.removeProperty('--lueur')
     racine.current?.style.removeProperty('--lueur-force')
     setNumero((n) => n + 1)
@@ -1476,25 +1444,6 @@ export function Paquet3D(): React.ReactElement {
    * d'objet.
    */
   const zDefile = ouvert ? Z_MAIN : Z_DEDANS
-  /**
-   * LA DERNIERE CARTE, des qu'elle arrive au premier plan. *Elle ne s'annonce
-   * que s'il y en a eu d'autres avant* : sur un paquet d'une seule carte, « la
-   * derniere » ne dirait rien.
-   *
-   * **ELLE ARRIVE DEJA DE FACE depuis que le paquet se retourne d'un coup**,
-   * donc le mot et le compteur se disent au meme instant plutot qu'en deux
-   * temps. *C'est le prix du geste unique*, et il est connu.
-   */
-  const derniere =
-    !fini && paquet.length > 1 && montree === paquet.length - 1 ? (paquet[montree] ?? null) : null
-
-  /**
-   * L'UNITE DU COMPTEUR est une propriete du MODE, pas d'une carte : on la lit
-   * sur la premiere du paquet, qui existe toujours. *La lire sur `derniere`
-   * la ferait disparaitre au bilan*, ou elle retombe a `null` pendant que le
-   * compteur est encore a l'ecran.
-   */
-  const unite = paquet.length > 0 ? compteurDuMode(paquet[0]!, catalogue?.length ?? 0).unite : ''
 
   const cartes = aPeindre.map((carte, i) => {
           const vue = retourne
@@ -1858,19 +1807,10 @@ export function Paquet3D(): React.ReactElement {
 
       {/* L'INVITE À PRENDRE LE SACHET : voir `Prise`. */}
       {!pris && paquet.length > 0 && <p className="paquet-invite">Touche le paquet</p>}
-      {ouvert && !fini && (derniere !== null || monte) && (
-        <div className="paquet-dernier">
-          <p className="paquet-dernier__mot">Dernière carte</p>
-          {monte && (
-            <>
-              <p className="paquet-compteur" ref={refChiffre}>
-                0
-              </p>
-              <p className="paquet-compteur__unite">{unite}</p>
-            </>
-          )}
-        </div>
-      )}
+      {/* PLUS DE « DERNIÈRE CARTE » NI DE COMPTEUR EN HAUT. Keko : « enlève le
+          commentaire en haut sur la rareté de la dernière carte ». La montée de
+          l'écran vers la couleur du cran reste : voir `monterLeCompteur`, qui
+          écrit le chiffre seulement si son paragraphe existe. */}
 
       {/* PLUS DE « OUVERTURE DU PAQUET… » PENDANT LE CHARGEMENT. Keko : « on
           peut ne pas afficher "ouverture d'un paquet" en bas tout au début ? »
