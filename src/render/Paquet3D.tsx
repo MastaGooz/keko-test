@@ -1510,7 +1510,12 @@ export function Paquet3D(): React.ReactElement {
         </div>
       )}
 
-      {catalogue === null && erreur === null && <p className="paquet-mot">Ouverture du paquet…</p>}
+      {/* PLUS DE « OUVERTURE DU PAQUET… » PENDANT LE CHARGEMENT. Keko : « on
+          peut ne pas afficher "ouverture d'un paquet" en bas tout au début ? »
+          *Le fond animé est déjà là, et un sachet qui arrive se suffit* — une
+          ligne de texte en bas disait un chargement que rien n'a besoin
+          d'annoncer. L'erreur, elle, reste dite : *un refus muet se lit comme
+          une panne.* */}
       {erreur !== null && <p className="paquet-mot">{erreur}</p>}
     </div>
   )

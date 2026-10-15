@@ -5360,3 +5360,10 @@ dos et le sachet y gagnent aussi. Vu au pixel de la page sur la carte zoomée du
 bilan de `?paquet=1314` : le liseré des poupées est lisse. *Le téléphone est à
 trois pixels par point*, où la texture de 768 est agrandie d'un cinquième — à
 rejuger chez Keko.
+
+#### PLUS DE « OUVERTURE DU PAQUET… » AU CHARGEMENT
+
+Keko : **« on peut ne pas afficher "ouverture d'un paquet" en bas tout au
+début ? »** *Le fond animé est déjà là, et un sachet qui arrive se suffit* —
+la ligne disait un chargement que rien n'a besoin d'annoncer. L'erreur, elle,
+reste dite : *un refus muet se lit comme une panne.*
