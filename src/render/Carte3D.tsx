@@ -223,6 +223,11 @@ export const INCLINAISON_REFLET = 0.34
  * rejuger.
  */
 const ELASTIQUE = { amplitude: 0.26, pulsation: 2 * Math.PI * 3.4, amorti: 5.5, duree: 1.1 } as const
+/**
+ * LE POMPAGE DE LA RÉVÉLATION — voir `pompe`. Un cran sous le rebond de
+ * l'approche : *la carte encaisse la gerbe qu'elle crache*, elle ne bondit pas.
+ */
+const POMPE_CARTE = { amplitude: 0.09, pulsation: 2 * Math.PI * 3, amorti: 7, duree: 0.8 } as const
 /** L'ordre de rendu d'une carte au premier plan : après tout le reste — voir `devant`. */
 const ORDRE_DEVANT = 10
 
@@ -549,6 +554,12 @@ type Props = {
    */
   rebond?: unknown
   /**
+   * UN JETON DE POMPAGE : quand il change, la carte gonfle d'un coup et
+   * retombe — Keko : « un petit effet de pump sur la carte au moment où les
+   * particules sont générées à sa révélation ». Il se cumule au rebond.
+   */
+  pompe?: unknown
+  /**
    * SON FLIP : le même jeton, pour un simple demi-tour sur place.
    *
    * ***LE DEMI-TOUR PART DE DOS, ET C'EST CE QUI LE REND INVISIBLE AU
@@ -661,6 +672,7 @@ export function Carte3D({
   culbute = null,
   flip = null,
   rebond = null,
+  pompe = null,
   developpe,
   onFixee,
   onArrivee,
@@ -1450,6 +1462,7 @@ ${nuanceur.fragmentShader}`
     debutFlip: null as number | null,
     /** Quand son rebond élastique a commencé ; `null` sinon. */
     debutRebond: null as number | null,
+    debutPompe: null as number | null,
     /** Quand son developpement a commence ; `null` sinon. */
     debutDevelop: null as number | null,
     /** Quand l'onde s'échappe du slot — à la fin de la culbute. */
@@ -1489,6 +1502,7 @@ ${nuanceur.fragmentShader}`
   const jetonCulbute = useRef(culbute)
   const jetonFlip = useRef(flip)
   const jetonRebond = useRef(rebond)
+  const jetonPompe = useRef(pompe)
   const jetonDevelop = useRef(developpe)
 
   /**
@@ -1695,6 +1709,10 @@ ${nuanceur.fragmentShader}`
       jetonFlip.current = flip
       if (flip !== null && flip !== undefined) l.debutFlip = t
     }
+    if (jetonPompe.current !== pompe) {
+      jetonPompe.current = pompe
+      if (pompe !== null && pompe !== undefined) l.debutPompe = t
+    }
     if (jetonRebond.current !== rebond) {
       jetonRebond.current = rebond
       if (rebond !== null && rebond !== undefined) l.debutRebond = t
@@ -1794,6 +1812,11 @@ ${nuanceur.fragmentShader}`
       const s = t - l.debutRebond
       if (s >= ELASTIQUE.duree) l.debutRebond = null
       else elastique = 1 + ELASTIQUE.amplitude * Math.exp(-ELASTIQUE.amorti * s) * Math.sin(ELASTIQUE.pulsation * s)
+    }
+    if (l.debutPompe !== null) {
+      const s = t - l.debutPompe
+      if (s >= POMPE_CARTE.duree) l.debutPompe = null
+      else elastique *= 1 + POMPE_CARTE.amplitude * Math.exp(-POMPE_CARTE.amorti * s) * Math.sin(POMPE_CARTE.pulsation * s)
     }
     g.scale.setScalar(l.t * elastique)
 

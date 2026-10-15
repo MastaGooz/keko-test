@@ -468,6 +468,7 @@ export function Paquet3D(): React.ReactElement {
     readonly ton: string
     readonly rang: number
     readonly boite: { cx: number; cy: number; l: number; h: number } | null
+    readonly id: string
   } | null>(null)
   /** Vrai pendant que le compteur de la derniere carte defile. */
   const [monte, setMonte] = useState(false)
@@ -779,7 +780,7 @@ export function Paquet3D(): React.ReactElement {
     // une copie, pour que l'effet ne se relance pas à chaque rendu.
     const boite = refBoite.current === null ? null : { ...refBoite.current }
     const rang = rangDe(carte.id)
-    setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDans(rang, teintes), rang: Math.max(0, rang), boite }))
+    setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDans(rang, teintes), rang: Math.max(0, rang), boite, id: carte.id }))
     // LA DERNIERE SE DIT AU COMPTEUR, les autres d'un coup : *ce qui distingue
     // un moment est qu'il ne se produit qu'une fois.*
     if (i === paquet.length - 1) monterLeCompteur(carte.id)
@@ -1475,6 +1476,9 @@ export function Paquet3D(): React.ReactElement {
               // ET ELLE REBONDIT EN ÉLASTIQUE quand le film l'a découverte :
               // le jeton change une fois par ouverture, toute la pile le lit.
               rebond={!fini ? rebond : undefined}
+              // ET ELLE POMPE QUAND SA GERBE PART : le même instant que les
+              // particules de la révélation (`eclat`), voir Carte3D.pompe.
+              pompe={!fini && eclat?.id === carte.id ? eclat.cle : undefined}
               // ELLE NE PORTE PLUS DE GESTE À ELLE. *Tout passe par le geste
               // de l'écran* — une tape sur la carte et une tape à côté font la
               // même chose, parce qu'il n'y a qu'une suite possible. Ça retire

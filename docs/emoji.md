@@ -5556,3 +5556,10 @@ s'éteint et ne capte jamais le pointeur. *Je n'ai pas relu le code de
 lexicodex pour celui-ci* : c'est leur idée, pas leurs chiffres. Vu sur
 `?paquet=1314&nu` : blanches autour des poupées, violettes et plus denses
 autour du bouton coché.
+
+Et **la carte pompe avec** — Keko : « un petit effet de pump sur la carte au
+moment où les particules sont générées à sa révélation ». `Carte3D` prend un
+jeton `pompe` (`POMPE_CARTE` : 9 %, 3 Hz, amorti 7, 0,8 s), *un cran sous le
+rebond de l'approche* — la carte encaisse la gerbe qu'elle crache, elle ne
+bondit pas. Il se cumule au rebond, et le paquet le pose sur la carte de
+l'éclat, au même instant que ses particules.
