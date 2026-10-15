@@ -5563,3 +5563,12 @@ jeton `pompe` (`POMPE_CARTE` : 9 %, 3 Hz, amorti 7, 0,8 s), *un cran sous le
 rebond de l'approche* — la carte encaisse la gerbe qu'elle crache, elle ne
 bondit pas. Il se cumule au rebond, et le paquet le pose sur la carte de
 l'éclat, au même instant que ses particules.
+
+#### Le pompage ne se contracte plus
+
+Keko : « quand la carte pump elle laisse apparaître les cartes de derrière
+durant la contraction ». Le sinus amorti passait sous 1 et la carte, rétrécie,
+découvrait la pile. **Il est redressé** (`Math.abs`, pulsation divisée par deux
+pour garder trois battements par seconde) : la carte ne fait que gonfler et
+retomber à sa taille. *Un objet posé devant d'autres ne peut rétrécir sans les
+montrer.*

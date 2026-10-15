@@ -227,7 +227,7 @@ const ELASTIQUE = { amplitude: 0.26, pulsation: 2 * Math.PI * 3.4, amorti: 5.5, 
  * LE POMPAGE DE LA RÉVÉLATION — voir `pompe`. Un cran sous le rebond de
  * l'approche : *la carte encaisse la gerbe qu'elle crache*, elle ne bondit pas.
  */
-const POMPE_CARTE = { amplitude: 0.09, pulsation: 2 * Math.PI * 3, amorti: 7, duree: 0.8 } as const
+const POMPE_CARTE = { amplitude: 0.09, pulsation: Math.PI * 3, amorti: 7, duree: 0.8 } as const
 /** L'ordre de rendu d'une carte au premier plan : après tout le reste — voir `devant`. */
 const ORDRE_DEVANT = 10
 
@@ -1816,7 +1816,13 @@ ${nuanceur.fragmentShader}`
     if (l.debutPompe !== null) {
       const s = t - l.debutPompe
       if (s >= POMPE_CARTE.duree) l.debutPompe = null
-      else elastique *= 1 + POMPE_CARTE.amplitude * Math.exp(-POMPE_CARTE.amorti * s) * Math.sin(POMPE_CARTE.pulsation * s)
+      // ELLE NE FAIT QUE GONFLER, JAMAIS SE CONTRACTER : Keko, « quand la carte
+      // pump elle laisse apparaître les cartes de derrière durant la
+      // contraction ». Un sinus redressé — des rebonds au-dessus de 1, jamais
+      // en dessous —, à la même cadence de trois battements par seconde.
+      else
+        elastique *=
+          1 + POMPE_CARTE.amplitude * Math.exp(-POMPE_CARTE.amorti * s) * Math.abs(Math.sin(POMPE_CARTE.pulsation * s))
     }
     g.scale.setScalar(l.t * elastique)
 
