@@ -5467,7 +5467,114 @@ const US = SACHET_LARGE / 100
  * nom affiché, donc on n'en inventait pas* — c'est Keko qui le pose, et c'est
  * un essai : un mot, une ligne à changer.
  */
-const TITRE_DU_SACHET = 'Emojis'
+const TITRE_DU_SACHET = 'Em😊jis'
+
+/**
+ * LE TITRE EST UNE RANGÉE DE STICKERS, PAS UN MOT. Keko : « je suis pas hyper
+ * fan du titre "Emojis" sur le paquet… on peut avoir un truc plus juicy et
+ * fun ? Peut-être en utilisant un emoji dans le texte… aussi c'est très droit
+ * comme titre, peut-être placer les lettres d'une manière plus originale ».
+ *
+ * Deux choses, et elles tiennent ensemble :
+ *
+ * - **un emoji REMPLACE une lettre** — le « o », qui est un visage à un
+ *   cheveu près. *Le logo d'une collection se compose de ce qu'elle contient*,
+ *   la règle du bouquet ; il est collé par `collerSticker`, donc avec le cerne
+ *   et l'ombre des autres stickers de la planche ;
+ * - **chaque lettre est posée À PART** : sa hauteur, son penchant et sa taille
+ *   viennent de trois tables, fixes — *une matière n'est pas un tirage de
+ *   partie*, le titre doit être le même à chaque chargement. Six lettres
+ *   droites sur une ligne font une enseigne ; six stickers collés un peu de
+ *   travers font un paquet qu'on a envie d'ouvrir.
+ *
+ * Le masque de brillance passe par le MÊME peintre (`masque`) : *deux dessins
+ * qui décrivent la même chose divergent au premier réglage*, et c'est ce qui
+ * garantit qu'une lettre brille exactement là où elle est imprimée.
+ */
+const PICTO = /\p{Extended_Pictographic}/u
+/** Le décalage vertical de chaque glyphe, en part de la taille de police. */
+const TITRE_HAUTEURS = [0.03, -0.07, 0.05, -0.05, 0.04, -0.06]
+/** Son penchant, en radians. */
+const TITRE_PENCHES = [-0.12, 0.09, -0.06, 0.11, -0.09, 0.07]
+/** Et sa taille, en part de la taille commune. */
+const TITRE_ECHELLES = [1.04, 0.98, 1.1, 0.97, 1.04, 1.0]
+
+async function peindreTitreDuSachet(
+  ctx: CanvasRenderingContext2D,
+  l: number,
+  cy: number,
+  masque: boolean,
+): Promise<void> {
+  const glyphes = Array.from(TITRE_DU_SACHET)
+  await policeRonde()
+  await Promise.all(glyphes.filter((g) => PICTO.test(g)).map((g) => policeDeLEmoji(g)))
+  const taille = l * 0.19
+  ctx.save()
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.font = `800 ${taille}px ${FAMILLE_RONDE}`
+  ctx.lineJoin = 'round'
+  const n = TITRE_HAUTEURS.length
+  const echelle = (i: number): number => TITRE_ECHELLES[i % n]!
+  // LA LARGEUR DE CHAQUE GLYPHE, à son échelle : un emoji vaut à peu près un
+  // carré de la taille de police, moins ses marges.
+  const largeurs = glyphes.map((g, i) =>
+    PICTO.test(g) ? taille * 0.88 : ctx.measureText(g).width * echelle(i),
+  )
+  const ecart = l * 0.006
+  const total = largeurs.reduce((a, b) => a + b, 0) + ecart * (glyphes.length - 1)
+  let x = l / 2 - total / 2
+  for (const [i, g] of glyphes.entries()) {
+    const cx = x + largeurs[i]! / 2
+    const y = cy + TITRE_HAUTEURS[i % n]! * taille
+    ctx.save()
+    ctx.translate(cx, y)
+    ctx.rotate(TITRE_PENCHES[i % n]!)
+    ctx.scale(echelle(i), echelle(i))
+    if (PICTO.test(g)) {
+      const image = imageDeLEmoji(g)
+      // LE CERNE DU STICKER FAIT L'ÉPAISSEUR DU CERNE DES LETTRES : une unité
+      // telle que DOS_CERNE unités valent la demi-largeur du trait sombre.
+      if (image !== null) collerSticker(ctx, image, 0, 0, taille * 1.0, 0, (l * 0.015) / DOS_CERNE, masque)
+    } else if (masque) {
+      ctx.strokeStyle = '#ffffff'
+      ctx.lineWidth = l * 0.03
+      ctx.strokeText(g, 0, 0)
+      ctx.fillStyle = '#ffffff'
+      ctx.fillText(g, 0, 0)
+    } else {
+      // L'OMBRE PORTÉE, vers le bas-droit : *c'est ce qui dit qu'il est POSÉ
+      // sur le film et non imprimé dedans* — la règle de la plaque claire et
+      // des stickers. Le cerne se trace AVANT le remplissage, sinon il mord sur
+      // les lettres.
+      ctx.shadowColor = '#00000066'
+      ctx.shadowBlur = l * 0.02
+      ctx.shadowOffsetX = l * 0.01
+      ctx.shadowOffsetY = l * 0.016
+      ctx.strokeStyle = '#16202a'
+      ctx.lineWidth = l * 0.03
+      ctx.strokeText(g, 0, 0)
+      ctx.shadowColor = 'transparent'
+      ctx.strokeStyle = DOS_CREME
+      ctx.lineWidth = l * 0.014
+      ctx.strokeText(g, 0, 0)
+      // ET LA COULEUR D'UN EMOJI : du jaune pâle à l'orange, de haut en bas.
+      // Keko : « on peut styliser / colorer un peu le titre ? il est fade ».
+      // *Un crème sur du bleu est un aplat* ; le jaune-orange est la couleur du
+      // visage qui rit au centre du bouquet, donc le titre et la marque parlent
+      // la même langue. Le haut est presque blanc : la lumière vient du haut.
+      const encre = ctx.createLinearGradient(0, -taille * 0.47, 0, taille * 0.47)
+      encre.addColorStop(0, '#fff6b0')
+      encre.addColorStop(0.45, '#ffcf2a')
+      encre.addColorStop(1, '#ff7a1a')
+      ctx.fillStyle = encre
+      ctx.fillText(g, 0, 0)
+    }
+    ctx.restore()
+    x += largeurs[i]! + ecart
+  }
+  ctx.restore()
+}
 
 let SACHET: Promise<{ film: THREE.CanvasTexture; brillance: THREE.CanvasTexture }> | null = null
 
@@ -5649,19 +5756,7 @@ async function peindreLaBrillanceDuSachet(): Promise<HTMLCanvasElement> {
   peindreTouches(ctx, l, h, US, true)
   const cyT = h * 0.27
   const cyM = h * 0.56
-  await policeRonde()
-  ctx.save()
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.font = `800 ${l * 0.19}px ${FAMILLE_RONDE}`
-  ctx.letterSpacing = `${l * 0.006}px`
-  ctx.lineJoin = 'round'
-  ctx.strokeStyle = '#ffffff'
-  ctx.lineWidth = l * 0.03
-  ctx.strokeText(TITRE_DU_SACHET, l / 2, cyT)
-  ctx.fillStyle = '#ffffff'
-  ctx.fillText(TITRE_DU_SACHET, l / 2, cyT)
-  ctx.restore()
+  await peindreTitreDuSachet(ctx, l, cyT, true)
   await peindreBouquet(ctx, l / 2, cyM, US * 0.75, true)
   // LES SOUDURES, aux mêmes mesures que sur le film (voir peindreLeSachet).
   ctx.fillStyle = '#000000'
@@ -5729,43 +5824,8 @@ async function peindreLeSachet(): Promise<{
   ctx.fillStyle = halo
   ctx.fillRect(0, 0, l, h)
 
-  // LE TITRE : en Baloo 2, la voix de la collection, cerné comme un sticker —
-  // *sur cette planche, tout ce qui est posé sur le film porte le même
-  // cerne*, donc le mot aussi. Le cerne se trace AVANT le remplissage, sinon
-  // il mord sur les lettres.
-  await policeRonde()
-  ctx.save()
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.font = `800 ${l * 0.19}px ${FAMILLE_RONDE}`
-  ctx.letterSpacing = `${l * 0.006}px`
-  ctx.lineJoin = 'round'
-  // L'OMBRE PORTÉE, vers le bas-droit : *c'est ce qui dit qu'il est POSÉ sur le
-  // film et non imprimé dedans* — la règle de la plaque claire et des stickers.
-  ctx.shadowColor = '#00000066'
-  ctx.shadowBlur = l * 0.02
-  ctx.shadowOffsetX = l * 0.01
-  ctx.shadowOffsetY = l * 0.016
-  ctx.strokeStyle = '#16202a'
-  ctx.lineWidth = l * 0.03
-  ctx.strokeText(TITRE_DU_SACHET, l / 2, cyT)
-  ctx.shadowColor = 'transparent'
-  ctx.strokeStyle = DOS_CREME
-  ctx.lineWidth = l * 0.014
-  ctx.strokeText(TITRE_DU_SACHET, l / 2, cyT)
-  // ET LA COULEUR D'UN EMOJI : du jaune pâle à l'orange, de haut en bas. Keko :
-  // « on peut styliser / colorer un peu le titre ? il est fade ». *Un crème
-  // sur du bleu est un aplat* ; le jaune-orange est la couleur du visage qui
-  // rit au centre du bouquet, donc le titre et la marque parlent la même
-  // langue. Le haut est presque blanc : la lumière vient du haut, ici comme
-  // partout.
-  const encre = ctx.createLinearGradient(0, cyT - l * 0.09, 0, cyT + l * 0.09)
-  encre.addColorStop(0, '#fff6b0')
-  encre.addColorStop(0.45, '#ffcf2a')
-  encre.addColorStop(1, '#ff7a1a')
-  ctx.fillStyle = encre
-  ctx.fillText(TITRE_DU_SACHET, l / 2, cyT)
-  ctx.restore()
+  // LE TITRE : une rangée de stickers, en Baloo 2 — voir `peindreTitreDuSachet`.
+  await peindreTitreDuSachet(ctx, l, cyT, false)
 
   // LA MARQUE : LE BOUQUET DU DOS, en grand. *Le logo d'une collection se
   // compose de ce qu'elle contient* — et c'est déjà lui qui dit à quel jeu ces

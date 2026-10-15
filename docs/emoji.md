@@ -5295,3 +5295,26 @@ glyphe (512, **mémorisé par rayon ET par finesse**), le dos et le sachet
 gardent leurs 256 — *une résolution se choisit sur la taille où l'on regarde,
 pas sur celle où l'on dessine.* Vu au pixel de la page sur le bilan de
 `?paquet=1314` : le contour du visage et celui des poupées sont lisses.
+
+#### LE TITRE DU SACHET EST UNE RANGÉE DE STICKERS
+
+Keko : **« je suis pas hyper fan du titre "Emojis" sur le paquet… on peut
+avoir un truc plus juicy et fun ? Peut-être en utilisant un emoji dans le
+texte… aussi c'est très droit comme titre, peut-être placer les lettres d'une
+manière plus originale »**.
+
+- **un emoji remplace le « o »** — 😊, un visage qui est un « o » à un cheveu
+  près. *Le logo d'une collection se compose de ce qu'elle contient*, la règle
+  du bouquet ; il est collé par `collerSticker`, avec le cerne et l'ombre des
+  autres stickers de la planche, à la taille de la police ;
+- **chaque lettre est posée à part** (`peindreTitreDuSachet`) : sa hauteur,
+  son penchant et sa taille viennent de trois tables fixes (`TITRE_HAUTEURS`,
+  `TITRE_PENCHES`, `TITRE_ECHELLES`) — *une matière n'est pas un tirage de
+  partie*. Six lettres droites font une enseigne, six stickers un peu de
+  travers font un paquet ;
+- **le masque de brillance passe par le même peintre** : une lettre brille
+  exactement là où elle est imprimée.
+
+`TITRE_DU_SACHET` vaut `'Em😊jis'` : *tout pictogramme dans la chaîne devient
+un sticker*, le reste des lettres. Vu sur le sachet de `?paquet=1314`. Les
+trois tables sont de moi, à rejuger.

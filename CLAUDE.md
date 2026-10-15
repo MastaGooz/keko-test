@@ -108,8 +108,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 ### L'ouverture — portrait, une carte à la fois
 
 - **Le sachet** : `Sachet3D`, fait des mêmes peintres que le dos
-  (`peindreDecor`, `peindreTouches`, `peindreBouquet`), titre « Emojis »
-  (`TITRE_DU_SACHET`), rapport 1,535 déduit de la carte (`POCHE`, 78 % de
+  (`peindreDecor`, `peindreTouches`, `peindreBouquet`), titre « Em😊jis » en
+  stickers posés un par un (`TITRE_DU_SACHET`, `peindreTitreDuSachet`), rapport 1,535 déduit de la carte (`POCHE`, 78 % de
   largeur), dents dans `cheminDuSachet`, soudures crème, plus de contour.
 - **Matière au nuanceur** : ventre plateau + flanc droit (`min` arrondi,
   `ARRONDI_VENTRE` 0,85, `RAYON_COIN_VENTRE`, `MARGE_VENTRE` 3,5 %,
