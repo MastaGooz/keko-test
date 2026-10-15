@@ -5221,3 +5221,13 @@ décor est plus clair et le même grain se voit.* — **« coupe-le pour les
 emojis »**. `peindreDecor` prend un drapeau `grain`, et la face d'une carte en
 mode emoji le passe à faux ; **le dos et le sachet le gardent**, leur bleu nuit
 n'a pas bougé.
+
+#### AU BILAN, LE DOIGT N'ALLUME QUE LA CARTE QU'IL TIENT
+
+Keko : **« quand je bouge une carte, l'effet de lumière de la carte est aussi
+appliqué à toutes les autres (alors qu'elles ne bougent pas) »**. *Le
+gyroscope les avait allumées toutes* (`dessus` à vrai sur les cinq curseurs),
+et le `pointerdown` tactile ne faisait que les figer (`tenu`) en poussant
+`eclat` à 1 — donc les quatre autres restaient allumées, à plein. Le doigt
+posé les ÉTEINT (`dessus` à faux) ; `Carte3D` ne rallume que celle qu'il
+touche. Pas vu sur téléphone — c'est le cas où le gyroscope les tient.

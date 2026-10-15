@@ -906,10 +906,14 @@ export function Paquet3D(): React.ReactElement {
           c.tenu = true
           c.eclat = 1
           // AU BILAN, LE DOIGT POSÉ PREND LA MAIN SUR LE GYROSCOPE pour les
-          // cinq : celle qu'il touche suit le doigt (voir `Carte3D`), les
-          // autres gardent leur dernier penchant.
+          // cinq : celle qu'il touche suit le doigt (voir `Carte3D`, qui pose
+          // `dessus` sur elle seule), **les autres s'éteignent**. Keko : « quand
+          // je bouge une carte, l'effet de lumière est aussi appliqué à toutes
+          // les autres ». *Le gyroscope les avait allumées toutes* (`dessus`),
+          // et un doigt qui n'en tient qu'une ne doit laisser briller qu'elle.
           for (const k of curseursBilan.current) {
             k.tenu = true
+            k.dessus = false
             k.eclat = 1
           }
         }
