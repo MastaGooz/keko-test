@@ -696,6 +696,10 @@ export function Paquet3D(): React.ReactElement {
   const [pris, setPris] = useState(nu)
   const refPris = useRef(nu)
   refPris.current = pris
+  // LE DOIGT S'EST POSÉ SUR LE SACHET : seule une tape QUI A COMMENCÉ SUR LUI
+  // le prend. Keko : « y'a marqué touche le paquet mais ça marche même si je
+  // touche ailleurs ». *Une invite dit où toucher ; ailleurs, rien.*
+  const sachetTouche = useRef(false)
   /**
    * QUELLE CARTE EST SOUS LES YEUX, et si le défilé est terminé.
    *
@@ -1191,7 +1195,9 @@ export function Paquet3D(): React.ReactElement {
         // UNE TAPE PREND LE SACHET QUI ATTEND : voir `Prise`. *C'est un
         // relâchement* — le geste qui rend le son à la page.
         if (!refPris.current) {
-          if (tape) {
+          const surLeSachet = sachetTouche.current
+          sachetTouche.current = false
+          if (tape && surLeSachet) {
             setPris(true)
             jouerSon(SON_PRENDRE)
           }
@@ -1715,6 +1721,9 @@ export function Paquet3D(): React.ReactElement {
           <Prise pris={pris} distance={distancePrise}>
           <Sachet3D
             attend={!pris}
+            onToucher={() => {
+              sachetTouche.current = true
+            }}
             key={numero}
             gyro={gyro}
             lineaire={!SANS_BLOOM}

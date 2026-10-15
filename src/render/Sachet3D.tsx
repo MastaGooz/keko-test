@@ -2021,7 +2021,10 @@ export function Sachet3D({
   gyro: gyroPrete,
   lineaire = false,
   attend = false,
+  onToucher,
 }: {
+  /** Le doigt s'est posé SUR lui pendant qu'il attend : voir `attend`. */
+  readonly onToucher?: () => void
   /**
    * IL ATTEND D'ÊTRE PRIS : tant que c'est vrai, le doigt ne le déchire pas.
    * C'est l'écran qui le prend, d'une tape — voir `Prise` dans Paquet3D.
@@ -2807,7 +2810,11 @@ export function Sachet3D({
   }
 
   const prendre = (e: ThreeEvent<PointerEvent>): void => {
-    if (attend || file.current || tire.current !== null) return
+    if (attend) {
+      onToucher?.()
+      return
+    }
+    if (file.current || tire.current !== null) return
     e.stopPropagation()
     tire.current = { x0: e.clientX, y0: e.clientY, p0: p.current, ...viseDepuis(e) }
     // LA BOUCLE DU CRAQUEMENT NAÎT ICI, DANS LE GESTE, à gain zéro. Keko :

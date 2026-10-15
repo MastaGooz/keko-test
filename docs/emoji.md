@@ -5679,3 +5679,8 @@ clique sur nouveau paquet on peut aller direct au paquet sans passer par
 touchez le paquet ? » Le clic sur le bouton a déjà rendu le son à la page,
 donc `ouvrirUnAutre` pose `pris` à vrai, et le sachet suivant arrive
 directement à la main.
+
+**Seule une tape sur le sachet le prend.** Keko : « y'a marqué touche le
+paquet mais ça marche même si je touche ailleurs ». Le sachet signale le doigt
+posé sur lui (`onToucher`, depuis son `pointerdown` pendant qu'il attend), et
+la tape de l'écran ne le prend que si elle a commencé là (`sachetTouche`).
