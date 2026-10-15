@@ -5635,3 +5635,9 @@ chaque carte ».
   carte relance son `EclatDeRevelation` à sa place, à la couleur et au nombre
   de son cran. Les boîtes sont figées au départ (`refGerbesBilan`), sinon
   chaque survol relancerait la gerbe. La gerbe du défilé se tait au bilan.
+
+**Les cinq cartes pompent au bilan**, au moment où leurs gerbes partent :
+`pompe` reçoit `eclatsBilan.cle`, avec le même `POMPE_CARTE` que la
+révélation. Keko : « donner un effet de pump aux 5 cartes quand elles se
+positionnent ». Et **le sachet pompe beaucoup plus fort à l'arrachement**
+(« augmenter fortement ») : `POMPE.amplitude` passe de 0,32 à 0,55.

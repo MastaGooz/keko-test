@@ -1495,7 +1495,16 @@ export function Paquet3D(): React.ReactElement {
               rebond={!fini ? rebond : undefined}
               // ET ELLE POMPE QUAND SA GERBE PART : le même instant que les
               // particules de la révélation (`eclat`), voir Carte3D.pompe.
-              pompe={!fini && eclat?.id === carte.id ? eclat.cle : undefined}
+              // ET LES CINQ POMPENT ENSEMBLE AU BILAN, avec leurs gerbes —
+              // Keko : « donner un effet de pump aux 5 cartes quand elles se
+              // positionnent ». Voir `eclatsBilan`.
+              pompe={
+                fini
+                  ? eclatsBilan?.cle
+                  : eclat?.id === carte.id
+                    ? eclat.cle
+                    : undefined
+              }
               // ELLE NE PORTE PLUS DE GESTE À ELLE. *Tout passe par le geste
               // de l'écran* — une tape sur la carte et une tape à côté font la
               // même chose, parce qu'il n'y a qu'une suite possible. Ça retire

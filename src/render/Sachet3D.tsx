@@ -95,8 +95,9 @@ const DUREE_CHUTE = 0.5
 // l'oeil* : 20 %, un amorti qui le laisse respirer, et la descente qui
 // l'attend d'autant.
 const DUREE_POMPE = 0.3
-// ET PLUS FORT ENCORE — Keko : « augmenter le pump du booster à l'ouverture ».
-const POMPE = { amplitude: 0.32, amorti: 7, pulsation: 2 * Math.PI * 1.9 }
+// ET PLUS FORT ENCORE — Keko : « augmenter le pump du booster à l'ouverture »,
+// puis « augmenter fortement le pump du paquet pour la gerbe finale ».
+const POMPE = { amplitude: 0.55, amorti: 7, pulsation: 2 * Math.PI * 1.9 }
 
 /**
  * LA BANDE EST PROJETÉE, une fois arrachée — c'est le lancer de lexicodex.
