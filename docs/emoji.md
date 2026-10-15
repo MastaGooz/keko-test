@@ -5620,3 +5620,18 @@ vitesse de chute pour le côté feu d'artifice ». `POMPE.amplitude` passe de
 0,2 à **0,32**, et `DUREE_CHUTE` de 0,87 à **0,5 s** : le film part avec la
 gerbe au lieu de la laisser finir seule. `DUREE_BRULURE` suit (elle est
 calculée).
+
+#### Le bilan plus rapide, et une gerbe par carte
+
+Keko : « accélérer l'apparition des 5 cartes à la fin (positionnement et
+révélation plus rapide) + ajouter les effets de particules à nouveau sur
+chaque carte ».
+
+- **Placement** : `RESSORT_BILAN` vaut 18 au bilan, au lieu du ressort par
+  défaut de 9. Les cartes sont posées en un quart de seconde.
+- **Révélation** : `DUREE_DEVELOP` passe de 1,5 à 0,75 s. Le développement
+  ne se joue qu'au bilan.
+- **Gerbes** : 0,2 s après l'arrivée au bilan (`DELAI_ECLATS_BILAN`), chaque
+  carte relance son `EclatDeRevelation` à sa place, à la couleur et au nombre
+  de son cran. Les boîtes sont figées au départ (`refGerbesBilan`), sinon
+  chaque survol relancerait la gerbe. La gerbe du défilé se tait au bilan.

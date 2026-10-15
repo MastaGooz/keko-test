@@ -173,6 +173,15 @@ const RESSORT_SORTIE = 5
  * suivrait pas : il les moyennerait en une bosse molle.
  */
 const RESSORT_REBOND = 22
+/**
+ * LE BILAN SE RANGE VITE. Keko : « accélérer l'apparition des 5 cartes à la
+ * fin (positionnement et révélation plus rapide) ». Le ressort par défaut
+ * d'une carte (9) mettait une demi-seconde à les poser ; à 18, elles sont en
+ * place en un quart.
+ */
+const RESSORT_BILAN = 18
+/** Quand la gerbe de chaque carte du bilan part : une fois les cartes presque posées. */
+const DELAI_ECLATS_BILAN = 0.2
 /** La part du flip au bout de laquelle la pile s'ouvre et le geste reprend — voir `pileOuverte`. */
 const PART_PILE_OUVERTE = 1
 /** La distance de sortie en portrait, en largeurs de carte : la référence du ressort. */
@@ -554,6 +563,18 @@ export function Paquet3D(): React.ReactElement {
    * remonte a neuf : *une classe qu'on retire et qu'on repose ne redemarre pas
    * une animation sans un reflow force* — la regle du gonflement des tas.
    */
+  /**
+   * LES GERBES DU BILAN : chaque carte rejaillit à sa place quand elles se
+   * rangent — Keko : « ajouter les effets de particules à nouveau sur chaque
+   * carte ». Les boîtes sont FIGÉES à l'instant du départ : une boîte
+   * recalculée à chaque rendu relancerait la gerbe à chaque survol.
+   */
+  type Boite = { cx: number; cy: number; l: number; h: number }
+  const [eclatsBilan, setEclatsBilan] = useState<{
+    readonly cle: number
+    readonly gerbes: readonly { readonly ton: string; readonly rang: number; readonly boite: Boite }[]
+  } | null>(null)
+  const refGerbesBilan = useRef<() => { ton: string; rang: number; boite: Boite }[]>(() => [])
   const [eclat, setEclat] = useState<{
     readonly cle: number
     readonly ton: string
@@ -959,6 +980,15 @@ export function Paquet3D(): React.ReactElement {
     ouvrirUnAutre()
   }
 
+  useEffect(() => {
+    if (!fini) return
+    const t = setTimeout(
+      () => setEclatsBilan((e) => ({ cle: (e?.cle ?? 0) + 1, gerbes: refGerbesBilan.current() })),
+      DELAI_ECLATS_BILAN * 1000,
+    )
+    return () => clearTimeout(t)
+  }, [fini])
+
   function ouvrirUnAutre(): void {
     cancelAnimationFrame(image.current)
     setOuvert(nu)
@@ -1279,6 +1309,21 @@ export function Paquet3D(): React.ReactElement {
   // monde en pixels à cette profondeur. *Une ref, parce que l'écouteur est
   // posé une fois et doit lire la boîte du moment.*
   const pxParUnite = fenetre.h / hVisible
+  refGerbesBilan.current = () =>
+    paquet.map((carte, i) => {
+      const [x, yb] = placeAuBilan(i)
+      const rang = Math.max(0, rangDe(carte.id))
+      return {
+        ton: lueurDans(rang, teintes),
+        rang,
+        boite: {
+          cx: fenetre.l / 2 + x * pxParUnite,
+          cy: fenetre.h / 2 - yb * pxParUnite,
+          l: taille * pxParUnite,
+          h: taille * 1.4 * pxParUnite,
+        },
+      }
+    })
   refBoite.current = {
     cx: fenetre.l / 2,
     cy: fenetre.h / 2,
@@ -1408,7 +1453,13 @@ export function Paquet3D(): React.ReactElement {
               // gardent le leur — et l'angle est une cible comme la place,
               // amortie par le même ressort.
               ressort={
-                !fini && i < montree ? ressortDeSortie : rebondit && !fini ? RESSORT_REBOND : undefined
+                !fini && i < montree
+                  ? ressortDeSortie
+                  : rebondit && !fini
+                    ? RESSORT_REBOND
+                    : fini
+                      ? RESSORT_BILAN
+                      : undefined
               }
               // ET ELLE PASSE AU PREMIER PLAN, quelle que soit l'inclinaison :
               // voir `Carte3D.devant`. La saillie reste pour le volume.
@@ -1500,9 +1551,15 @@ export function Paquet3D(): React.ReactElement {
       {flash > 0 && <div key={`fl${flash}`} className="paquet-flash" />}
       {/* LES PARTICULES DE LA RÉVÉLATION, par-dessus la scène : voir
           `EclatDeRevelation`. Montées à neuf par la clé de l'éclat. */}
-      {eclat !== null && eclat.boite !== null && (
+      {eclat !== null && eclat.boite !== null && !fini && (
         <EclatDeRevelation key={`et${eclat.cle}`} couleur={eclat.ton} rang={eclat.rang} boite={eclat.boite} />
       )}
+      {/* ET UNE GERBE PAR CARTE AU BILAN, à sa place : voir `eclatsBilan`. */}
+      {fini &&
+        eclatsBilan !== null &&
+        eclatsBilan.gerbes.map((g, i) => (
+          <EclatDeRevelation key={`eb${eclatsBilan.cle}:${i}`} couleur={g.ton} rang={g.rang} boite={g.boite} />
+        ))}
       <Canvas
         shadows
         dpr={[1, 2]}

@@ -193,7 +193,11 @@ export const DUREE_FLIP = 0.38
  * est un geste, un developpement est une lecture* — il faut le temps de voir
  * l'image monter.
  */
-export const DUREE_DEVELOP = 1.5
+// DEUX FOIS PLUS VITE — Keko : « accélérer l'apparition des 5 cartes à la
+// fin (positionnement et révélation plus rapide) ». Le développement ne se
+// joue plus qu'au bilan, où les cinq cartes sont déjà connues : *on les
+// relit, on ne les découvre pas*.
+export const DUREE_DEVELOP = 0.75
 
 /** La part du temps passée à monter et à tourner ; le reste est la chute. */
 const PART_MONTEE = 0.64
