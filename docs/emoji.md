@@ -5837,3 +5837,8 @@ clairs deviennent vifs, les foncés et l'emoji ne bougent pas.
 pour test ». Les réglages passent de { large 3, reflet 1,6, sature 1,2 } à
 **{ large 1,2, reflet 5, sature 3 }**. Le plafond du bloom reste la seule
 borne. Les anciennes valeurs sont notées dans le code.
+
+**Plus de halo au survol du bouton.** Keko : « je trouve le halo du bouton
+ouvrir un autre paquet au hover moche ». Le ton `emoji` met l'opacité du halo
+à zéro, au survol comme au clic. Le grossissement, l'éclaircissement et le
+lustre restent. La ferronnerie de l'archive garde son halo.

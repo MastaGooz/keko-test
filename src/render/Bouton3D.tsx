@@ -571,7 +571,11 @@ export function Bouton3D({
     // La couleur MULTIPLIE la texture : au-delà de 1 elle éclaircit la plaque
     // au lieu de la recouvrir. *L'image reste lisible pendant qu'elle chauffe.*
     materiau.color.setScalar(1 + v * 0.3)
-    halo.opacity = v * 0.5
+    // PAS DE HALO AU SURVOL POUR LE STICKER — Keko : « je trouve le halo du
+    // bouton ouvrir un autre paquet au hover moche ». *Une pastille de sticker
+    // ne rayonne pas* : elle grossit et s'éclaircit, et le lustre la traverse.
+    // La ferronnerie de l'archive garde le sien.
+    halo.opacity = enSticker(ton) ? 0 : v * 0.5
     lustre.opacity = v * 0.55
     // LE LUSTRE TRAVERSE, IL NE CLIGNOTE PAS : il repart d'un bord à intervalle
     // régulier, et le masque l'empêche de déborder des coins arrondis.
