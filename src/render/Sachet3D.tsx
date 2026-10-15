@@ -1698,6 +1698,93 @@ function emettre(
   regimes.needsUpdate = true
 }
 
+/**
+ * LES FAISCEAUX DE LUMIÈRE QUI S'ÉCHAPPENT DE LA FENTE.
+ *
+ * Keko : « tu crois que sur la partie déchirée du paquet on peut laisser
+ * échapper des faisceaux de lumière, et au moment final plusieurs faisceaux
+ * qui accompagnent les particules ? »
+ *
+ * **Le sachet contient quelque chose de lumineux, et la déchirure le laisse
+ * voir.** Chaque faisceau est un quad additif posé à la fente, qui monte en
+ * s'élargissant et s'éteint vers sa pointe — *un rayon étroit à sa source et
+ * large au loin se lit comme de la lumière qui sort, un rectangle comme une
+ * planche.* Deux régimes, qui sont ceux des étincelles :
+ *
+ * - **pendant la découpe**, seuls les faisceaux dont la place est déjà OUVERTE
+ *   s'allument (`u < front`), doucement, et ils vacillent chacun à son rythme
+ *   — le frémissement de la déchirure les ravive ;
+ * - **à l'arrachement**, tous s'embrasent d'un coup, s'allongent et
+ *   s'éteignent en accompagnant la gerbe ; *la moitié prend la couleur du
+ *   cran le plus rare*, comme la moitié des étincelles.
+ *
+ * Ils sont ENFANTS DE LA GERBE : ils héritent de sa place sur la fente réelle
+ * et de son échelle (`taille`), donc ils suivent le penchant et le
+ * frémissement sans une ligne de plus. Tirage FIXE — *une matière n'est pas un
+ * tirage de partie.*
+ */
+const FAISCEAUX = Array.from({ length: 9 }, (_, i) => {
+  const h = (k: number): number => {
+    const x = Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453
+    return x - Math.floor(x)
+  }
+  return {
+    u: 0.06 + ((i + 0.5) / 9) * 0.88 + (h(1) - 0.5) * 0.06,
+    angle: (h(2) - 0.5) * 0.7,
+    longueur: 0.55 + h(3) * 0.45,
+    largeur: 0.1 + h(4) * 0.07,
+    rythme: 5 + h(5) * 7,
+    phase: h(6) * 6.28,
+    teinte: i % 2 === 1,
+  }
+})
+/** La force d'un faisceau pendant la découpe, et à l'embrasement. */
+const FORCE_FAISCEAU = { decoupe: 0.6, eclat: 1.6 }
+
+function matiereDuFaisceau(): THREE.ShaderMaterial {
+  return new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    // LE MÊME AJOUT FRANC QUE LA GERBE : le RVB EST la lumière ajoutée.
+    blending: THREE.CustomBlending,
+    blendEquation: THREE.AddEquation,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.OneFactor,
+    uniforms: {
+      uForce: { value: 0 },
+      uCouleur: { value: new THREE.Vector3(FENTE_BORD[0], FENTE_BORD[1], FENTE_BORD[2]) },
+      uLineaire: { value: 0 },
+    },
+    vertexShader: `varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`,
+    fragmentShader: `uniform float uForce;
+uniform vec3 uCouleur;
+uniform float uLineaire;
+varying vec2 vUv;
+vec3 versLineaire(vec3 c) {
+  return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(0.04045, c));
+}
+void main() {
+  float le = vUv.y;
+  // ETROIT A LA SOURCE, LARGE AU LOIN : la largeur utile croit avec la hauteur.
+  float c = abs(vUv.x - 0.5) * 2.0 / (0.3 + 0.7 * le);
+  float profil = exp(-c * c * 3.2) * (1.0 - smoothstep(0.85, 1.0, c));
+  // IL NAIT DOUX ET S'EFFILE : une rampe courte au pied, une queue longue.
+  // (PAS long : c'est un mot reserve du GLSL, et le nuanceur ne compilait pas.)
+  float etire = smoothstep(0.0, 0.06, le) * pow(1.0 - le, 1.7);
+  float coeur = exp(-c * c * 18.0);
+  vec3 lum = (uCouleur * profil + vec3(${ton(FENTE_COEUR)}) * coeur * 0.35) * etire * uForce;
+  if (max(lum.r, max(lum.g, lum.b)) < 0.003) discard;
+  if (uLineaire > 0.5) lum = versLineaire(clamp(lum, 0.0, 1.0)) + max(lum - 1.0, 0.0);
+  gl_FragColor = vec4(lum, min(1.0, max(lum.r, max(lum.g, lum.b))));
+}`,
+  })
+}
+
 function matiereDeLaGerbe(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
     transparent: true,
@@ -1976,11 +2063,23 @@ export function Sachet3D({
     return m
   }, [])
   const gerbe = useMemo(() => matiereDeLaGerbe(), [])
+  // LES FAISCEAUX : un matériau par faisceau, puisque chacun a sa force.
+  const faisceauxMat = useMemo(() => FAISCEAUX.map(() => matiereDuFaisceau()), [])
+  const faisceaux = useRef<(THREE.Mesh | null)[]>([])
+  const planFaisceau = useMemo(() => new THREE.PlaneGeometry(1, 1).translate(0, 0.5, 0), [])
   useEffect(() => {
     corps.uniforms.uLineaire!.value = lineaire ? 1 : 0
     bandeMat.uniforms.uLineaire!.value = lineaire ? 1 : 0
     gerbe.uniforms.uLineaire!.value = lineaire ? 1 : 0
-  }, [corps, bandeMat, gerbe, lineaire])
+    for (const m of faisceauxMat) m.uniforms.uLineaire!.value = lineaire ? 1 : 0
+  }, [corps, bandeMat, gerbe, faisceauxMat, lineaire])
+  useEffect(
+    () => () => {
+      for (const m of faisceauxMat) m.dispose()
+      planFaisceau.dispose()
+    },
+    [faisceauxMat, planFaisceau],
+  )
   const semis = useMemo(() => semisDesEtincelles(), [])
   /** Les naissances : c'est le CPU qui les écrit, une par étincelle émise. */
   const vols = useMemo(
@@ -2450,6 +2549,41 @@ export function Sachet3D({
     // LE FILM PART DÈS L'ARRACHEMENT, avec le pop — il n'attend plus la gerbe.
     const pc = Math.min(1, Math.max(0, (tApres - DUREE_POMPE) / DUREE_CHUTE))
 
+    // LES FAISCEAUX : voir FAISCEAUX. La découpe allume ce qui est ouvert, le
+    // frémissement les ravive ; l'arrachement les embrase puis les éteint.
+    {
+      const rare = gerbe.uniforms.uRare!.value as THREE.Vector3
+      const tp = pf >= 1 ? tApres : -1
+      const embrase = tp < 0 ? 0 : Math.exp(-2.6 * tp) * Math.min(1, tp / 0.05)
+      const eteintDecoupe = tp < 0 ? 1 : Math.exp(-6 * tp)
+      for (const [i, f] of FAISCEAUX.entries()) {
+        const m = faisceaux.current[i]
+        if (m === undefined || m === null) continue
+        const ouvert = Math.min(1, Math.max(0, (front - f.u) / 0.08))
+        const vacille = 0.72 + 0.28 * Math.sin(t * f.rythme + f.phase)
+        const decoupe =
+          FORCE_FAISCEAU.decoupe * ouvert * vacille * (1 + Math.min(1, frisson.current) * 0.8) * eteintDecoupe
+        const eclat = FORCE_FAISCEAU.eclat * embrase * (0.85 + 0.15 * Math.sin(t * f.rythme * 1.7 + f.phase))
+        const force = Math.max(decoupe, eclat)
+        m.visible = force > 0.004
+        if (!m.visible) continue
+        const mat = faisceauxMat[i]!
+        mat.uniforms.uForce!.value = force
+        const c = mat.uniforms.uCouleur!.value as THREE.Vector3
+        const k = f.teinte ? Math.min(1, embrase * 1.5) : 0
+        c.set(
+          FENTE_BORD[0] + (rare.x * 1.5 - FENTE_BORD[0]) * k,
+          FENTE_BORD[1] + (rare.y * 1.5 - FENTE_BORD[1]) * k,
+          FENTE_BORD[2] + (rare.z * 1.5 - FENTE_BORD[2]) * k,
+        )
+        // IL S'ALLONGE EN S'OUVRANT, ET PLUS ENCORE À L'ARRACHEMENT.
+        const longueur = f.longueur * (0.55 + 0.45 * ouvert) * (1 + 0.9 * (tp < 0 ? 0 : 1 - Math.exp(-7 * tp)))
+        m.position.set(f.u - 0.5, 0, 0)
+        m.rotation.set(0, 0, f.angle)
+        m.scale.set(f.largeur * (1 + 0.6 * embrase), longueur, 1)
+      }
+    }
+
     if (pf >= 1 && !ditDechire.current) {
       ditDechire.current = true
       // LE POP, « au moment final de l'ouverture » : l'arrachement, le même
@@ -2782,7 +2916,24 @@ export function Sachet3D({
         frustumCulled={false}
         raycast={() => null}
         renderOrder={2}
-      />
+      >
+        {/* LES FAISCEAUX, enfants de la gerbe : sa place sur la fente réelle,
+            son échelle, et rien à recalculer. Voir FAISCEAUX. */}
+        {FAISCEAUX.map((_, i) => (
+          <mesh
+            key={i}
+            ref={(m) => {
+              faisceaux.current[i] = m
+            }}
+            geometry={planFaisceau}
+            material={faisceauxMat[i]}
+            visible={false}
+            frustumCulled={false}
+            raycast={() => null}
+            renderOrder={2}
+          />
+        ))}
+      </mesh>
 
       {/* LE RELIEF porte l'inclinaison et l'avancée. Il lui faut son propre
           groupe : le groupe du dessus tient la place et la respiration, et

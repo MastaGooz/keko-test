@@ -5469,3 +5469,32 @@ deux voix sont choisis pour que leur somme reste sous 1 (0,62 + 0,36), donc la
 sortie ne touche à rien et le départ reste immédiat. Le ton **monte d'une
 quinte** (480 → 720 Hz) au lieu d'une octave — *assez pour sauter, pas assez
 pour siffler* — sur le coup sourd de 190 → 120 Hz.
+
+#### DES FAISCEAUX DE LUMIÈRE S'ÉCHAPPENT DE LA FENTE
+
+Keko : **« tu crois que sur la partie déchirée du paquet on peut laisser
+échapper des faisceaux de lumière, et au moment final plusieurs faisceaux qui
+accompagnent les particules ? »** *Le sachet contient quelque chose de
+lumineux, et la déchirure le laisse voir.*
+
+Neuf quads additifs (`FAISCEAUX`, tirage fixe), enfants de la gerbe — donc posés
+sur la fente réelle, à son échelle, et ils suivent penchant et frémissement
+sans une ligne de plus. Chacun est étroit à sa source et large au loin, et
+s'éteint vers sa pointe : *un rayon qui s'ouvre se lit comme de la lumière qui
+sort, un rectangle comme une planche.* Deux régimes, ceux des étincelles :
+
+- **pendant la découpe**, seuls ceux dont la place est déjà ouverte
+  (`u < front`) s'allument, doucement, en vacillant chacun à son rythme ; le
+  frémissement les ravive ;
+- **à l'arrachement**, tous s'embrasent, s'allongent et s'éteignent avec la
+  gerbe ; *la moitié prend la couleur du cran le plus rare*, comme la moitié des
+  étincelles.
+
+`FORCE_FAISCEAU` (0,6 à la découpe, 1,6 à l'embrasement) est de moi, à juger.
+
+**PIÈGE PAYÉ : `long` est un MOT RÉSERVÉ du GLSL.** Une variable de ce nom fait
+échouer la compilation du nuanceur, et *le seul symptôme est un objet qui ne
+s'affiche pas* — l'erreur n'est que dans le journal de Vite, pas dans la
+console de l'outil. Une sonde à force absurde (×12) a montré que ce n'était pas
+une question de dose. Vu sur `?gerbe` : les rayons montent de la partie
+ouverte ; l'embrasement final n'a pas été capturé.
