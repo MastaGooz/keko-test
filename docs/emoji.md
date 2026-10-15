@@ -5832,3 +5832,8 @@ puisque les rayons couvrent toute la fenêtre.
 
 `?rayonsbrillants=0` les éteint. Vu à l'écran sur l'orange : les rayons
 clairs deviennent vifs, les foncés et l'emoji ne bougent pas.
+
+**À fond, pour essai.** Keko : « tu peux booster le brillant des rayons à fond
+pour test ». Les réglages passent de { large 3, reflet 1,6, sature 1,2 } à
+**{ large 1,2, reflet 5, sature 3 }**. Le plafond du bloom reste la seule
+borne. Les anciennes valeurs sont notées dans le code.

@@ -297,7 +297,10 @@ const FILS_LIN = 150
  * est épargné par son masque (`masqueSujet`). `?rayonsbrillants=0` les éteint.
  */
 const AVEC_RAYONS_BRILLANTS = new URLSearchParams(location.search).get('rayonsbrillants') !== '0'
-const RAYONS_BRILLANTS = { large: 3, reflet: 1.6, sature: 1.2 } as const
+// À FOND, POUR ESSAI — Keko : « tu peux booster le brillant des rayons à fond
+// pour test ». Avant : { large: 3, reflet: 1.6, sature: 1.2 }. Le plafond du
+// bloom (BRILLANT.plafond) reste la seule borne.
+const RAYONS_BRILLANTS = { large: 1.2, reflet: 5, sature: 3 } as const
 /** Un masque blanc d'un pixel : la place du masque du sujet tant qu'il n'est pas là. */
 const MASQUE_VIDE = (() => {
   const t = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1)
