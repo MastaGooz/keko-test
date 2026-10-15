@@ -1745,7 +1745,13 @@ const FAISCEAUX = Array.from({ length: 9 }, (_, i) => {
 // le profil devient une gaussienne sans bord, les rayons s'élargissent et
 // raccourcissent, et ils se recouvrent — c'est le recouvrement qui fait une
 // nappe de lumière plutôt que des traits.
-const FORCE_FAISCEAU = { decoupe: 0.4, eclat: 1 }
+const FORCE_FAISCEAU = { decoupe: 0.4, eclat: 2.2 }
+
+/** Le smoothstep du GLSL, côté CPU. */
+function smoothstepJs(a: number, b: number, x: number): number {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
+  return t * t * (3 - 2 * t)
+}
 
 function matiereDuFaisceau(): THREE.ShaderMaterial {
   return new THREE.ShaderMaterial({
@@ -2568,7 +2574,14 @@ export function Sachet3D({
     {
       const rare = gerbe.uniforms.uRare!.value as THREE.Vector3
       const tp = pf >= 1 ? tApres : -1
-      const embrase = tp < 0 ? 0 : Math.exp(-2.6 * tp) * Math.min(1, tp / 0.05)
+      // L'EMBRASEMENT MONTE FORT ET S'ÉTEINT AVEC LA GERBE. Keko : « il faudrait
+      // que la lumière augmente à l'explosion mais disparaisse après la
+      // gerbe ». *Une exponentielle ne s'éteint jamais* : sa queue restait
+      // visible après les étincelles. La lumière monte en 80 ms, tient, puis
+      // descend à ZÉRO exactement quand la gerbe finit (DUREE_GERBE).
+      const montee = tp < 0 ? 0 : Math.min(1, tp / 0.08)
+      const declin = tp < 0 ? 1 : 1 - smoothstepJs(DUREE_GERBE * 0.25, DUREE_GERBE, tp)
+      const embrase = montee * declin
       const eteintDecoupe = tp < 0 ? 1 : Math.exp(-6 * tp)
       for (const [i, f] of FAISCEAUX.entries()) {
         const m = faisceaux.current[i]

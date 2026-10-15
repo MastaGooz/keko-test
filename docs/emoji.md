@@ -5514,3 +5514,10 @@ la bande qui se déchire au-dessus ». *La bande se recourbe vers la caméra*,
 donc elle masquait la lumière qui sort de dessous elle. Les faisceaux n'ont
 plus de test de profondeur et se dessinent en dernier (`renderOrder` 3) : ils
 se posent sur tout le sachet, et comme ils sont additifs ils ne cachent rien.
+
+Puis **fort à l'explosion, éteint avec la gerbe** — Keko : « il faudrait que
+la lumière augmente à l'explosion mais disparaisse après la gerbe ». *Une
+exponentielle ne s'éteint jamais* : sa queue restait visible après les
+étincelles. L'embrasement monte en 80 ms, tient, puis descend à zéro
+exactement à `DUREE_GERBE` (déclin de 25 % à 100 % de la gerbe), et sa force
+passe de 1 à **2,2**.
