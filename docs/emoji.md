@@ -5717,3 +5717,31 @@ Il y a 150 fils sur la largeur (`FILS_LIN`). Mode emoji seulement. `?lin=0`
 le retire, `?lin=0.2` le force. Vu à l'écran sur une carte du défilé :
 lisible sur la plaque, le décor et l'emoji, sans moiré. Chiffres à juger par
 Keko, en particulier sur téléphone, où la carte est plus petite.
+
+**Le lin est retiré par défaut.** Keko : « ça rend pas super finalement ».
+`FORCE_LIN` vaut 0, et `?lin=0.09` le rend tel qu'il a été jugé.
+
+#### La bordure brillante
+
+Keko : « on peut essayer de rendre la bordure brillante à la place ? Comme
+les zones brillantes du booster ? » C'est la recette du film du sachet, posée
+sur le cadre seul, en sortie du nuanceur de la face (`BRILLANT`) :
+
+- un grand reflet qui **se multiplie** (exposant 10), donc qui éclaircit sans
+  délaver la couleur du cran ;
+- un éclat serré **teinté** (exposant 70) : la couleur du cran poussée à
+  pleine clarté, ramenée à 30 % vers le blanc, puisqu'un métal filtre son
+  reflet ;
+- le Fresnel au ras.
+
+Une face plate renverrait la lumière d'un bloc. Le cadre reçoit donc un
+**biseau calculé** : la normale penche de ±0,85 rad, vers l'extérieur au bord
+et vers l'intérieur au liseré. Le repère de la face est tiré des dérivées
+d'écran, et la lampe est fixe en haut à gauche. La lumière court ainsi le
+long du cadre quand la carte penche (souris, doigt, gyroscope), et le survol
+la renforce (`uLustreForce`).
+
+La bande suit le rectangle arrondi (`RAYON_SIMPLE`) à l'épaisseur de la
+bordure peinte (`CONTOUR_PLAQUE`, 2,7 %). Mode emoji seulement, `?brillant=0`
+la retire. Vu à l'écran : le cadre prend un relief doré, plus clair en haut
+à gauche. Chiffres à juger par Keko.
