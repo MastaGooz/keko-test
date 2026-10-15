@@ -645,15 +645,21 @@ export function Paquet3D(): React.ReactElement {
   type Boite = { cx: number; cy: number; l: number; h: number }
   const [eclatsBilan, setEclatsBilan] = useState<{
     readonly cle: number
-    readonly gerbes: readonly { readonly ton: string; readonly rang: number; readonly boite: Boite }[]
+    readonly gerbes: readonly {
+      readonly ton: string
+      readonly rang: number
+      readonly boite: Boite
+      readonly holo: boolean
+    }[]
   } | null>(null)
-  const refGerbesBilan = useRef<() => { ton: string; rang: number; boite: Boite }[]>(() => [])
+  const refGerbesBilan = useRef<() => { ton: string; rang: number; boite: Boite; holo: boolean }[]>(() => [])
   const [eclat, setEclat] = useState<{
     readonly cle: number
     readonly ton: string
     readonly rang: number
     readonly boite: { cx: number; cy: number; l: number; h: number } | null
     readonly id: string
+    readonly holo: boolean
   } | null>(null)
   /** Vrai pendant que le compteur de la derniere carte defile. */
   const [monte, setMonte] = useState(false)
@@ -983,7 +989,14 @@ export function Paquet3D(): React.ReactElement {
     // une copie, pour que l'effet ne se relance pas à chaque rendu.
     const boite = refBoite.current === null ? null : { ...refBoite.current }
     const rang = rangDe(carte.id)
-    setEclat((e) => ({ cle: (e?.cle ?? 0) + 1, ton: lueurDans(rang, teintes), rang: Math.max(0, rang), boite, id: carte.id }))
+    setEclat((e) => ({
+      cle: (e?.cle ?? 0) + 1,
+      ton: lueurDans(rang, teintes),
+      rang: Math.max(0, rang),
+      boite,
+      id: carte.id,
+      holo: tirage.bonus[carte.id]?.holo === true,
+    }))
     // LA DERNIERE SE DIT AU COMPTEUR, les autres d'un coup : *ce qui distingue
     // un moment est qu'il ne se produit qu'une fois.*
     if (i === paquet.length - 1) monterLeCompteur(carte.id)
@@ -1438,6 +1451,7 @@ export function Paquet3D(): React.ReactElement {
       return {
         ton: lueurDans(rang, teintes),
         rang,
+        holo: tirage.bonus[carte.id]?.holo === true,
         boite: {
           cx: fenetre.l / 2 + x * pxParUnite,
           cy: fenetre.h / 2 - yb * pxParUnite,
@@ -1686,13 +1700,25 @@ export function Paquet3D(): React.ReactElement {
       {/* LES PARTICULES DE LA RÉVÉLATION, par-dessus la scène : voir
           `EclatDeRevelation`. Montées à neuf par la clé de l'éclat. */}
       {eclat !== null && eclat.boite !== null && !fini && (
-        <EclatDeRevelation key={`et${eclat.cle}`} couleur={eclat.ton} rang={eclat.rang} boite={eclat.boite} />
+        <EclatDeRevelation
+          key={`et${eclat.cle}`}
+          couleur={eclat.ton}
+          rang={eclat.rang}
+          boite={eclat.boite}
+          holo={eclat.holo}
+        />
       )}
       {/* ET UNE GERBE PAR CARTE AU BILAN, à sa place : voir `eclatsBilan`. */}
       {fini &&
         eclatsBilan !== null &&
         eclatsBilan.gerbes.map((g, i) => (
-          <EclatDeRevelation key={`eb${eclatsBilan.cle}:${i}`} couleur={g.ton} rang={g.rang} boite={g.boite} />
+          <EclatDeRevelation
+            key={`eb${eclatsBilan.cle}:${i}`}
+            couleur={g.ton}
+            rang={g.rang}
+            boite={g.boite}
+            holo={g.holo}
+          />
         ))}
       <Canvas
         shadows

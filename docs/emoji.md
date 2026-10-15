@@ -5987,3 +5987,15 @@ Keko : « il y a un effet de lumière glissant sur le bouton (qui se déplace), 
 peut le supprimer ? » Le lustre du survol est à zéro sur le bouton sticker
 (`lustre.opacity = enSticker(ton) ? 0 : …`), comme le halo avant lui. Au survol
 le bouton grossit et s'éclaircit, rien d'autre ; l'archive garde son lustre.
+
+### Une holo ajoute des étincelles multicolores à sa gerbe (15/10/2026)
+
+Keko : « on peut ajouter des étincelles multicolores (particules) en plus des
+particules de la couleur de rareté à la découverte d'une carte si elle est
+holo ? (et pareil sur l'écran des 5 cartes) ». `EclatDeRevelation` prend un
+drapeau `holo` : **36 étincelles de plus** (`NOMBRE_HOLO`), chacune d'une
+teinte au hasard sur tout le cercle (`hsl(…, 100 %, 66 %)`), *en plus* de
+celles du cran — le cran garde sa couleur, la holo s'y ajoute. Posé au
+défilé (`decouvrir`) comme au bilan (`refGerbesBilan`), lu dans
+`tirage.bonus`. Mesuré dans la page sur `&holo` : les douze secteurs de
+teinte sont présents dans la gerbe. Pas vu à l'oeil, trop bref pour une capture.

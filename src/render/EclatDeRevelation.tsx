@@ -29,6 +29,15 @@ import { useEffect, useRef } from 'react'
 
 const NOMBRE_PAR_RANG = [10, 20, 30, 44, 64]
 const DUREE_MAX = 1.3
+/**
+ * LES ÉTINCELLES MULTICOLORES D'UNE HOLO, EN PLUS de celles du cran. Keko :
+ * « on peut ajouter des étincelles multicolores en plus des particules de la
+ * couleur de rareté à la découverte d'une carte si elle est holo ? (et pareil
+ * sur l'écran des 5 cartes) ». *Le cran garde sa couleur, la holo s'y ajoute*
+ * — la règle du bonus posé sur le cran, qui ne le repeint pas. Chacune prend
+ * une teinte au hasard sur tout le cercle, vive et claire.
+ */
+const NOMBRE_HOLO = 36
 
 interface Props {
   /** La lueur du cran, en `#rrggbb`. */
@@ -37,6 +46,8 @@ interface Props {
   readonly rang: number
   /** La boîte de la carte à l'écran, en pixels CSS. */
   readonly boite: { cx: number; cy: number; l: number; h: number }
+  /** La carte est holographique : une volée multicolore s'ajoute. */
+  readonly holo?: boolean
 }
 
 interface Etincelle {
@@ -48,10 +59,11 @@ interface Etincelle {
   age: number
   taille: number
   angle: number
-  blanche: boolean
+  /** Sa couleur : le cran, le blanc, ou une teinte de l'arc-en-ciel. */
+  couleur: string
 }
 
-export function EclatDeRevelation({ couleur, rang, boite }: Props): React.JSX.Element {
+export function EclatDeRevelation({ couleur, rang, boite, holo = false }: Props): React.JSX.Element {
   const toile = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -69,7 +81,8 @@ export function EclatDeRevelation({ couleur, rang, boite }: Props): React.JSX.El
     // L'ÉCHELLE DE LA GERBE SUIT LA CARTE : sur un téléphone comme sur un écran
     // de PC, elle s'étend à la même part de la carte.
     const u = boite.l / 100
-    const n = NOMBRE_PAR_RANG[Math.max(0, Math.min(4, rang))]!
+    const nCran = NOMBRE_PAR_RANG[Math.max(0, Math.min(4, rang))]!
+    const n = nCran + (holo ? NOMBRE_HOLO : 0)
     const parts: Etincelle[] = []
     for (let i = 0; i < n; i++) {
       // UN POINT DU PÉRIMÈTRE, tiré au prorata de la longueur de chaque côté.
@@ -114,7 +127,12 @@ export function EclatDeRevelation({ couleur, rang, boite }: Props): React.JSX.El
         age: 0,
         taille: (2.4 + Math.random() * 2.6) * u,
         angle: Math.random() * Math.PI,
-        blanche: Math.random() < 0.25,
+        couleur:
+          i >= nCran
+            ? `hsl(${Math.round(Math.random() * 360)}, 100%, 66%)`
+            : Math.random() < 0.25
+              ? '#ffffff'
+              : couleur,
       })
     }
 
@@ -145,7 +163,7 @@ export function EclatDeRevelation({ couleur, rang, boite }: Props): React.JSX.El
         const r = p.taille * (1 - t * 0.4)
         // LE HALO, à la couleur du cran.
         const halo = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3)
-        halo.addColorStop(0, p.blanche ? '#ffffff' : couleur)
+        halo.addColorStop(0, p.couleur)
         halo.addColorStop(1, 'rgba(0,0,0,0)')
         ctx.globalAlpha = a * 0.55
         ctx.fillStyle = halo
@@ -154,7 +172,7 @@ export function EclatDeRevelation({ couleur, rang, boite }: Props): React.JSX.El
         ctx.fill()
         // LES QUATRE BRANCHES, fines.
         ctx.globalAlpha = a * 0.9
-        ctx.strokeStyle = p.blanche ? '#ffffff' : couleur
+        ctx.strokeStyle = p.couleur
         ctx.lineWidth = Math.max(1, r * 0.28)
         ctx.lineCap = 'round'
         ctx.beginPath()
@@ -179,7 +197,7 @@ export function EclatDeRevelation({ couleur, rang, boite }: Props): React.JSX.El
     }
     image = requestAnimationFrame(peindre)
     return () => cancelAnimationFrame(image)
-  }, [couleur, rang, boite])
+  }, [couleur, rang, boite, holo])
 
   return <canvas ref={toile} className="paquet-etincelles" aria-hidden="true" />
 }
