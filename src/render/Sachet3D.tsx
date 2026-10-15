@@ -77,7 +77,10 @@ import {
  * elle a fini — voir `LANCER`.
  */
 const DUREE_FRONT = 0.63
-const DUREE_CHUTE = 0.87
+// PLUS VITE — Keko : « augmenter la vitesse de chute pour le côté feu
+// d'artifice ». *Un film qui descend sans se presser laisse la gerbe finir
+// seule* ; tombé en une demi-seconde, il part AVEC elle.
+const DUREE_CHUTE = 0.5
 /**
  * LE POMPAGE DE L'ARRACHEMENT : le sachet gonfle d'un coup en crachant la
  * gerbe, puis se tasse — et c'est seulement ensuite qu'il descend. Keko : « on
@@ -92,7 +95,8 @@ const DUREE_CHUTE = 0.87
 // l'oeil* : 20 %, un amorti qui le laisse respirer, et la descente qui
 // l'attend d'autant.
 const DUREE_POMPE = 0.3
-const POMPE = { amplitude: 0.2, amorti: 7, pulsation: 2 * Math.PI * 1.9 }
+// ET PLUS FORT ENCORE — Keko : « augmenter le pump du booster à l'ouverture ».
+const POMPE = { amplitude: 0.32, amorti: 7, pulsation: 2 * Math.PI * 1.9 }
 
 /**
  * LA BANDE EST PROJETÉE, une fois arrachée — c'est le lancer de lexicodex.

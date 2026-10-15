@@ -5612,3 +5612,11 @@ affiché.
 Keko : « trop proche ». Le retard passe de 0,12 à **0,35 s**, à peu près à mi-chemin entre
 ce réglage et l'enchaînement sans chevauchement (0,62 s) : le sachet
 commence sa chute quand la moitié des cartes a quitté l'écran.
+
+#### Le pompage du sachet plus fort, sa chute plus rapide
+
+Keko : « on peut augmenter le pump du booster à l'ouverture et augmenter la
+vitesse de chute pour le côté feu d'artifice ». `POMPE.amplitude` passe de
+0,2 à **0,32**, et `DUREE_CHUTE` de 0,87 à **0,5 s** : le film part avec la
+gerbe au lieu de la laisser finir seule. `DUREE_BRULURE` suit (elle est
+calculée).
