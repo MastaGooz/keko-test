@@ -67,6 +67,13 @@ export const SON_CRAQUE = 'cracks.aac'
 export const SON_POP = 'pop.aac'
 
 /**
+ * LE CLIC DU BOUTON « Ouvrir un autre paquet ». Fourni par Keko : « j'ai
+ * rajouté le son clic pop pour le bouton ». Il remplace le clic synthétisé
+ * (`jouerClicDoux`), qui reste écrit pour qui voudrait y revenir.
+ */
+export const SON_CLIC_POP = 'Clic-pop.aac'
+
+/**
  * L'URL d'un fichier de `public/`. **Elle porte la date du build** : les
  * fichiers y sont copiés tels quels, sans empreinte de contenu dans leur nom,
  * donc sans ça le navigateur resservirait celui qu'il a en cache — le piège

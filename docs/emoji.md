@@ -5972,3 +5972,11 @@ contour ni ombre. Son fichier : 512 × 512 RGBA, fond transparent, dessin de
 - Banc : `&perso`, la première carte du paquet est 🫠. Vu à l'écran.
 - Pas encore : l'emoji perso ne remplace pas le glyphe dans le bouquet du dos
   ni du sachet, ni l'animé Noto si la carte tire le bonus animé.
+
+### Le bouton « Ouvrir un autre paquet » prend le clic de Keko (15/10/2026)
+
+Keko : « j'ai rajouté le son clic pop pour le bouton "ouvrir un autre
+booster" ». `public/Clic-pop.aac` (`SON_CLIC_POP`) remplace le clic synthétisé
+(`jouerClicDoux`, gardé écrit) dans le `pointerdown` du bouton sticker, et il
+est préchargé au montage du bouton : *un son qui se charge au clic part en
+retard*.
