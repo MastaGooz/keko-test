@@ -5690,3 +5690,7 @@ révélée n'a pas d'effet pump ». Elle en avait un, mais il se jouait pendant
 le demi-tour (de dos, puis vue par la tranche), donc on ne le voyait pas.
 Quand le jeton `pompe` arrive pendant un flip, `debutPompe` est maintenant
 reporté à la fin du demi-tour.
+
+**Le pompage du bilan est bien plus fort** (`POMPE_BILAN` 0,24, contre 0,09
+à la révélation ; prop `amplitudePompe` de Carte3D). Keko : « augmenter
+fortement le pump des 5 cartes à la fin quand elles se placent ».

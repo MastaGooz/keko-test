@@ -563,6 +563,8 @@ type Props = {
    * particules sont générées à sa révélation ». Il se cumule au rebond.
    */
   pompe?: unknown
+  /** De combien elle gonfle, en part de sa taille : `POMPE_CARTE.amplitude` par défaut. */
+  amplitudePompe?: number
   /**
    * SON FLIP : le même jeton, pour un simple demi-tour sur place.
    *
@@ -677,6 +679,7 @@ export function Carte3D({
   flip = null,
   rebond = null,
   pompe = null,
+  amplitudePompe = POMPE_CARTE.amplitude,
   developpe,
   onFixee,
   onArrivee,
@@ -1831,7 +1834,7 @@ ${nuanceur.fragmentShader}`
       // en dessous —, à la même cadence de trois battements par seconde.
       else if (s >= 0)
         elastique *=
-          1 + POMPE_CARTE.amplitude * Math.exp(-POMPE_CARTE.amorti * s) * Math.abs(Math.sin(POMPE_CARTE.pulsation * s))
+          1 + amplitudePompe * Math.exp(-POMPE_CARTE.amorti * s) * Math.abs(Math.sin(POMPE_CARTE.pulsation * s))
     }
     g.scale.setScalar(l.t * elastique)
 

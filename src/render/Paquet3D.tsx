@@ -183,6 +183,13 @@ const RESSORT_BILAN = 18
 /** Quand la gerbe de chaque carte du bilan part : une fois les cartes presque posées. */
 const DELAI_ECLATS_BILAN = 0.2
 /**
+ * LE POMPAGE DU BILAN, bien plus fort que celui de la révélation (0,09).
+ * Keko : « augmenter fortement le pump des 5 cartes à la fin quand elles se
+ * placent ». Il déborde un instant sur l'écart entre deux cartes (12 %) :
+ * *elles se bousculent en arrivant*, puis chacune retombe à sa place.
+ */
+const POMPE_BILAN = 0.24
+/**
  * ON NE ZOOME QU'UNE FOIS LES CARTES POSÉES. Keko : « bloquer le zoom tant que
  * les 5 cartes ne sont pas bien positionnées ». À `RESSORT_BILAN`, il reste
  * moins d'un centième du chemin au bout de ce temps.
@@ -1599,6 +1606,7 @@ export function Paquet3D(): React.ReactElement {
               // ET LES CINQ POMPENT ENSEMBLE AU BILAN, avec leurs gerbes —
               // Keko : « donner un effet de pump aux 5 cartes quand elles se
               // positionnent ». Voir `eclatsBilan`.
+              amplitudePompe={fini ? POMPE_BILAN : undefined}
               pompe={
                 fini
                   ? eclatsBilan?.cle
