@@ -5880,3 +5880,27 @@ sautait le sticker, et `peindreCarte` ne lui faisait pas de masque du sujet.
   masque unique, la réunion de toutes les images — *il laissait un fantôme
   sombre partout où l'emoji passe*, puisque le rayon y perdait son brillant
   même quand l'emoji était ailleurs.
+
+### La feuille holo devient une feuille de paillettes cosmos (15/10/2026)
+
+Keko : « on peut produire une texture plus travaillée pour les cartes
+holographiques ». Jusqu'ici une holo n'était qu'une bande arc-en-ciel qui
+passe. Proposé : paillettes cosmos, motif gravé, feuille brisée, ou les deux
+premiers — **il a choisi les paillettes cosmos, sur toute la carte sauf
+l'emoji.**
+
+- **Chaque paillette est un petit miroir penché au hasard** (`COSMOS`, au
+  nuanceur de la face) : elle ne s'allume que si elle renvoie la lampe clé du
+  sachet (`BRILLANT.lampe`) vers l'oeil. Au moindre penchant — doigt, souris,
+  gyroscope — ce ne sont plus les mêmes. Deux couches : une poussière fine
+  (40 cellules de large, 70 % habitées) et de grosses paillettes en étoile à
+  quatre branches (14, 45 %). Teinte du spectre ramenée vers le blanc, et un
+  scintillement lent sur l'horloge pour qu'une carte posée vive.
+- **L'emoji est épargné** par le masque du sujet des rayons brillants.
+- Le repère de la face (`Nc`, `Vc`, `Lc`) est sorti du `if` de la bordure :
+  les deux s'en servent, et ***jamais de dérivée dans un if***.
+- Premier réglage trop discret à l'écran (points de 0,16 cellule, exposants
+  80/40, force 4) ; remonté à 0,22, 30/18, force 8. Chiffres de moi, à juger.
+- La bande arc-en-ciel qui passe reste par-dessus. Sur la plaque blanche, des
+  paillettes ajoutées se voient peu : *on n'ajoute rien de visible à du blanc*.
+- Bancs : `&holo` (toutes les cartes du paquet holo), `?cosmos=0`.

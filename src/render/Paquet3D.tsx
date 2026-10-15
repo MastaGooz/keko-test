@@ -572,6 +572,8 @@ export function Paquet3D(): React.ReactElement {
    * paquet.
    */
   const bonusForce = new URLSearchParams(location.search).has('bonus')
+  /** `&holo` : toutes les cartes du paquet sont holographiques, pour juger la feuille. */
+  const holoForce = new URLSearchParams(location.search).has('holo')
   const [catalogue, setCatalogue] = useState<CarteDuMode[] | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   /** Le numéro du paquet : il change à chaque ouverture, et il seede le tirage. */
@@ -889,8 +891,13 @@ export function Paquet3D(): React.ReactElement {
       if (voulue !== undefined) cartes[cartes.length - 1] = voulue
       bonus[cartes[cartes.length - 1]!.id] = { holo: false, anime: true }
     }
+    // LE BANC DE LA FEUILLE HOLO, posé de la même façon : après le tirage, en
+    // gardant l'animé que le tirage ou `&bonus` aurait donné.
+    if (emojis && holoForce) {
+      for (const c of cartes) bonus[c.id] = { holo: true, anime: bonus[c.id]?.anime ?? false }
+    }
     return { cartes, bonus }
-  }, [tas, numero, echelle, emojis, bonusForce])
+  }, [tas, numero, echelle, emojis, bonusForce, holoForce])
   const paquet = tirage.cartes
 
   /**

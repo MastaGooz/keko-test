@@ -384,6 +384,39 @@ const FORCE_HOLO = 0.28
 const VITESSE_HOLO = 0.17
 
 /**
+ * LES PAILLETTES COSMOS DE LA FEUILLE HOLO. Keko : « on peut produire une
+ * texture plus travaillée pour les cartes holographiques » — il a choisi les
+ * paillettes « cosmos », sur toute la carte sauf l'emoji.
+ *
+ * ***Chaque paillette est un petit miroir penché au hasard***, et elle ne
+ * s'allume que quand elle renvoie la lampe clé du sachet (celle de
+ * `BRILLANT`) vers l'oeil. *C'est ce qui en fait une feuille et non un semis
+ * peint* : au moindre penchant — doigt, souris, gyroscope — ce ne sont plus
+ * les mêmes qui brillent. Deux couches : une poussière FINE de points, et de
+ * rares GROSSES paillettes en étoile à quatre branches. Chacune prend sa
+ * teinte du spectre, ramenée vers le blanc, et scintille un peu sur l'horloge
+ * pour qu'une carte posée ne soit pas morte. L'emoji est épargné par le
+ * masque du sujet (`masqueDuSujet`), comme pour les rayons brillants.
+ *
+ * `serre` est l'exposant du reflet : plus il est haut, plus une paillette doit
+ * être exactement dans l'axe pour s'allumer, et moins il y en a d'allumées.
+ */
+const COSMOS = {
+  fin: 40,
+  gros: 14,
+  partFin: 0.7,
+  partGros: 0.45,
+  dispersion: 0.35,
+  serreFin: 30,
+  serreGros: 18,
+  /** Le rayon d'un point, en part de sa cellule. */
+  rayonFin: 0.22,
+  rayonGros: 0.14,
+  force: 8,
+}
+const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
+
+/**
  * LA CARTE EST FAITE DE DEUX PIÈCES, et c'est ce qui donne les coins ronds.
  *
  * Une forme 2D aux coins arrondis, EXTRUDÉE de l'épaisseur, porte le laiton —
@@ -1174,23 +1207,27 @@ ${nuanceur.vertexShader}`.replace(
          vec3 dpy = dFdy(-vViewPosition);
          vec2 dux = dFdx(vLustreUv);
          vec2 duy = dFdy(vLustreUv);
+         // LE REPÈRE DE LA FACE, en espace vue — protégé contre le vecteur
+         // nul, qu'un normalize change en NaN. Il sert à la bordure ET aux
+         // paillettes de l'holo, donc il se calcule hors de leurs if.
+         float det = dux.x * duy.y - dux.y * duy.x;
+         float sg = det < 0.0 ? -1.0 : 1.0;
+         vec3 Tb = (dpx * duy.y - dpy * dux.y) * sg;
+         vec3 Bb = (dpy * dux.x - dpx * duy.x) * sg;
+         vec3 Tc = Tb / max(length(Tb), 1e-6);
+         vec3 Bc = Bb / max(length(Bb), 1e-6);
+         vec3 Nc = cross(Tc, Bc);
+         Nc /= max(length(Nc), 1e-6);
+         vec3 Vc = normalize(vViewPosition);
+         vec3 Lc = normalize(vec3(${BRILLANT.lampe.map((v) => v.toFixed(3)).join(', ')}));
+         // LA LARGEUR D'UN PIXEL EN U, pour adoucir les paillettes au pixel.
+         float pixU = abs(dux.x) + abs(duy.x);
          if (uBrillant > 0.0) {
            // LE RECTANGLE ARRONDI DE LA CARTE, en largeurs de carte.
            vec2 pc = (vLustreUv - 0.5) * vec2(1.0, 1.4);
            vec2 qc = abs(pc) - (vec2(0.5, 0.7) - ${RAYON_SIMPLE.toFixed(4)});
            float dc = length(max(qc, 0.0)) + min(max(qc.x, qc.y), 0.0) - ${RAYON_SIMPLE.toFixed(4)};
            float bande = smoothstep(-${(CONTOUR_PLAQUE + 0.003).toFixed(4)}, -${(CONTOUR_PLAQUE - 0.002).toFixed(4)}, dc);
-           // LE REPÈRE DE LA FACE, en espace vue — protégé contre le vecteur
-           // nul, qu'un normalize change en NaN.
-           float det = dux.x * duy.y - dux.y * duy.x;
-           float sg = det < 0.0 ? -1.0 : 1.0;
-           vec3 Tb = (dpx * duy.y - dpy * dux.y) * sg;
-           vec3 Bb = (dpy * dux.x - dpx * duy.x) * sg;
-           vec3 Tc = Tb / max(length(Tb), 1e-6);
-           vec3 Bc = Bb / max(length(Bb), 1e-6);
-           vec3 Nc = cross(Tc, Bc);
-           Nc /= max(length(Nc), 1e-6);
-           vec3 Vc = normalize(vViewPosition);
            // LE REFLET DE LA LAMPE CLÉ, comme sur le sachet — Keko : « la
            // lumière ne suit pas vraiment la source de lumière comme le
            // booster (haut droit) ». C'est maintenant une vraie RÉFLEXION :
@@ -1200,7 +1237,6 @@ ${nuanceur.vertexShader}`.replace(
            // vers la lampe ou à l'opposé. *Aucune normale ne bouge* : c'est la
            // géométrie du regard qui place le reflet.
            vec3 Rc = reflect(-Vc, Nc);
-           vec3 Lc = normalize(vec3(${BRILLANT.lampe.map((v) => v.toFixed(3)).join(', ')}));
            float sc = max(dot(Rc, Lc), 0.0);
            float nappe = pow(sc, ${BRILLANT.large.toFixed(1)});
            float eclair = pow(sc, ${BRILLANT.serre.toFixed(1)});
@@ -1255,6 +1291,43 @@ ${nuanceur.vertexShader}`.replace(
            float plafond = max(lumAvant, ${BRILLANT.plafond.toFixed(2)});
            cc *= min(1.0, plafond / max(lumApres, 0.0001));
            gl_FragColor.rgb = cc;
+         }
+
+         // LES PAILLETTES COSMOS DE LA FEUILLE HOLO : voir COSMOS.
+         if (uHolo > 0.0 && ${AVEC_COSMOS ? 'true' : 'false'}) {
+           float libreH = texture2D(uMasqueSujet, vLustreUv).r;
+           vec3 cosmos = vec3(0.0);
+           for (int k = 0; k < 2; k++) {
+             bool fin = k == 0;
+             float n = fin ? ${COSMOS.fin.toFixed(1)} : ${COSMOS.gros.toFixed(1)};
+             vec2 pg = vLustreUv * vec2(1.0, 1.4) * n;
+             vec2 cel = floor(pg);
+             vec2 dans = fract(pg) - 0.5;
+             float fk = float(k);
+             float h1 = hDev(cel.x * 17.0 + cel.y * 131.0 + fk * 7.0);
+             float h2 = hDev(cel.x * 59.0 + cel.y * 23.0 + fk * 13.0 + 3.0);
+             float h3 = hDev(cel.x * 7.0 + cel.y * 97.0 + fk * 29.0 + 11.0);
+             float h4 = hDev(cel.x * 41.0 + cel.y * 67.0 + fk * 5.0 + 19.0);
+             float present = step(h1, fin ? ${COSMOS.partFin.toFixed(2)} : ${COSMOS.partGros.toFixed(2)});
+             // SA PLACE DANS SA CELLULE, et son miroir penché au hasard.
+             vec2 d = dans - (vec2(h2, h3) - 0.5) * 0.5;
+             vec3 nf = Nc + (Tc * (h3 - 0.5) + Bc * (h4 - 0.5)) * ${(COSMOS.dispersion * 2).toFixed(2)};
+             nf /= max(length(nf), 1e-6);
+             float sf = max(dot(reflect(-Vc, nf), Lc), 0.0);
+             float allume = pow(sf, fin ? ${COSMOS.serreFin.toFixed(1)} : ${COSMOS.serreGros.toFixed(1)});
+             float scintille = 0.65 + 0.35 * sin(uTemps * (2.0 + 3.0 * h4) + h2 * 6.28318);
+             // LA FORME : un point, et des branches pour les grosses.
+             float aa = pixU * n;
+             float rP = fin ? ${COSMOS.rayonFin.toFixed(2)} : ${COSMOS.rayonGros.toFixed(2)};
+             float point = 1.0 - smoothstep(rP - aa, rP + aa, length(d));
+             float branches = fin ? 0.0
+               : exp(-abs(d.x) * 40.0 / max(1.0, aa * 8.0)) * exp(-abs(d.y) * 9.0)
+               + exp(-abs(d.y) * 40.0 / max(1.0, aa * 8.0)) * exp(-abs(d.x) * 9.0);
+             float forme = max(point, branches * 0.9);
+             vec3 spectre = 0.5 + 0.5 * cos(6.28318 * (fract(h4 * 3.0 + incidence * 1.9) + vec3(0.0, 0.33, 0.67)));
+             cosmos += mix(vec3(1.0), spectre, 0.8) * forme * present * allume * scintille;
+           }
+           gl_FragColor.rgb += cosmos * libreH * uHolo * ${COSMOS.force.toFixed(2)};
          }
 
          // LE LIN TRESSÉ, en sortie : il presse TOUTE la carte, peinture
@@ -1320,7 +1393,7 @@ ${nuanceur.fragmentShader}`
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
     face.customProgramCacheKey = () =>
-      'carte-face-desaturable-lustree-irisee-tintee-bordee-developpee2-holo-lin-brillant-rayons'
+      'carte-face-desaturable-lustree-irisee-tintee-bordee-developpee2-holo-lin-brillant-rayons-cosmos'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur

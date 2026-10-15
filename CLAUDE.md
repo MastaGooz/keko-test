@@ -70,7 +70,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   chances du paquet 70/16/10/3,2/0,8, garantie « rare » — chiffres de moi, à
   rejuger par Keko. `logic/paquet.ts` est générique sur `Echelle<R>`.
 - **Deux bonus tirés à l'ouverture** (`logic/emoji/tirage.ts`) : holo 10 %,
-  animé 3 % (placeholders). L'animé exige `animable`. **Le bonus se pose sur
+  animé 3 % (placeholders). L'animé exige `animable`. **La holo est
+  une feuille de paillettes cosmos** (`COSMOS`) : de petits miroirs penchés au
+  hasard qui renvoient la lampe clé, l'emoji épargné, plus la bande qui passe. **Le bonus se pose sur
   le cran, il ne le repeint pas** : seul le foil se cumule, le liseré et
   l'auréole restent au cran. `animable` dit une possibilité, jamais un état.
 - **Le reflet prend la couleur du cran** (`TON_LUSTRE`, dérivé de `METAUX`).
@@ -326,6 +328,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
+| `&holo` | toutes les cartes du paquet sont holographiques (`?cosmos=0` : sans les paillettes) |
 | `&gerbe` | tire la déchirure puis s'arrête, pour juger les étincelles |
 | `&craque` | le fichier `cracks.aac` en boucle, tel quel, dès le premier contact — *pour savoir si c'est le fichier ou le jeu qu'on n'entend pas* |
 | `&son` | la ligne de diagnostic du son pendant la déchirure : chemin, état et horloge du contexte, `pf`, la dose du craquement, le doigt — *l'appareil dit ce qu'il voit* |
