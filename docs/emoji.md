@@ -5231,3 +5231,15 @@ et le `pointerdown` tactile ne faisait que les figer (`tenu`) en poussant
 `eclat` à 1 — donc les quatre autres restaient allumées, à plein. Le doigt
 posé les ÉTEINT (`dessus` à faux) ; `Carte3D` ne rallume que celle qu'il
 touche. Pas vu sur téléphone — c'est le cas où le gyroscope les tient.
+
+#### AU BILAN, LE TÉLÉPHONE NE PENCHE QUE LA CARTE ZOOMÉE
+
+Keko : **« dans l'écran des 5 cartes, je voudrais que les mouvements de
+téléphone ne déplacent pas les cartes, sauf si je zoome une d'entre elles,
+alors là oui elle se déplace »**. *Cinq cartes qui penchent ensemble font une
+grille qui tangue* ; une seule, qu'on regarde, est un objet qu'on tient.
+`PencheAuGyro` ne reçoit donc au bilan que le curseur de la carte zoomée
+(`indexZoome`), et rien quand aucune ne l'est — **et ce qui sort de sa liste se
+redresse** (`tenus`), sinon un curseur que le gyroscope tenait garderait son
+dernier penchant. Le survol et le doigt posé ne changent pas. Pas vu sur
+téléphone.

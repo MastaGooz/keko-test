@@ -214,7 +214,12 @@ function PencheAuGyro({
   curseurs: readonly CurseurDeCarte[]
   gyro: { current: Inclinaison | null }
 }): null {
+  // CE QUI SORT DE LA LISTE SE REDRESSE : un curseur que le gyroscope tenait
+  // garderait sinon son dernier penchant pour toujours.
+  const tenus = useRef<readonly CurseurDeCarte[]>([])
   useFrame(() => {
+    for (const k of tenus.current) if (!curseurs.includes(k) && !k.tenu) k.dessus = false
+    tenus.current = curseurs
     const incl = gyro.current?.lire() ?? null
     if (incl === null) return
     const borne = (v: number): number =>
@@ -706,6 +711,7 @@ export function Paquet3D(): React.ReactElement {
     () => paquet.map((c) => carteAPeindreDuMode(c, tirage.bonus[c.id])),
     [paquet, tirage],
   )
+  const indexZoome = zoomee === null ? -1 : aPeindre.findIndex((c) => c.id === zoomee)
 
 
   /** Le chiffre de la carte brute : celui dont la rarete DERIVE. */
@@ -1232,7 +1238,21 @@ export function Paquet3D(): React.ReactElement {
       >
         <Cadrage />
         <Horloge />
-        <PencheAuGyro curseurs={[curseurDefile.current, ...curseursBilan.current]} gyro={gyro} />
+        {/* AU BILAN, LE TÉLÉPHONE NE PENCHE QUE LA CARTE ZOOMÉE. Keko : « je
+            voudrais que les mouvements de téléphone ne déplacent pas les
+            cartes, sauf si je zoome une d'entre elles ». *Cinq cartes qui
+            penchent ensemble font une grille qui tangue* ; une seule, qu'on
+            regarde, est un objet qu'on tient. */}
+        <PencheAuGyro
+          curseurs={
+            fini
+              ? indexZoome >= 0
+                ? [curseursBilan.current[indexZoome]!]
+                : []
+              : [curseurDefile.current]
+          }
+          gyro={gyro}
+        />
         {/* LES POINTS BRILLANTS RAYONNENT, comme chez lexicodex : voir `Bloom`. */}
         {!SANS_BLOOM && <Bloom />}
         <ambientLight intensity={0.55} />
