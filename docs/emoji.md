@@ -5779,3 +5779,18 @@ comme le booster (haut droit) ».
 
 Vu à l'écran : plus de halo autour de la carte, et le haut-droit du cadre est
 plus clair que le bas-gauche.
+
+**Plus glowy.** Keko : « un effet plus glowy sur la bordure exposée à la
+lumière ».
+
+- **Lobe** plus large et plus fort : puissance 6, reflet ×1,8, éclair en
+  puissance 40, ×1,2. Au cœur de l'éclair, le cadre tire vers le blanc.
+- **Lueur intérieure.** Le cadre éclairé rayonne vers l'intérieur
+  (`BRILLANT.lueur` 0,55, sur `portee` 0,035 largeur), à la couleur du cran,
+  en mordant sur le décor le long du côté éclairé. *Un glow qui sort de la
+  carte passe par le bloom*, et c'est ce qu'on venait de retirer : celui-ci
+  reste dedans.
+- **Plafond** remonté de 0,78 à 0,9.
+
+Vu à l'écran : le côté exposé est nettement plus lumineux, la lueur se voit
+le long du décor, et rien ne sort de la carte.

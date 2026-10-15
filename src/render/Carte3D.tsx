@@ -290,14 +290,19 @@ const CONTOUR_PLAQUE = 0.027
 const BRILLANT = {
   /** La clé du sachet, en espace vue : 45° dans le plan, en haut à droite, à 36,9° d'incidence. */
   lampe: [0.424, 0.424, 0.8],
-  large: 10,
-  serre: 80,
-  reflet: 0.9,
-  eclat: 0.8,
+  // PLUS GLOWY — Keko : « un effet plus glowy sur la bordure exposée à la
+  // lumière ». Un lobe plus large et plus fort, une lueur qui rayonne vers
+  // l'intérieur (`lueur`, sur `portee` largeurs), un plafond relevé.
+  large: 6,
+  serre: 40,
+  reflet: 1.8,
+  eclat: 1.2,
+  lueur: 0.55,
+  portee: 0.035,
   fresnel: 1.0,
   metal: 0.7,
   /** La luminance au-delà de laquelle le bloom ferait rayonner le cadre hors de la carte. */
-  plafond: 0.78,
+  plafond: 0.9,
 } as const
 
 const POMPE_CARTE = { amplitude: 0.09, pulsation: Math.PI * 3, amorti: 7, duree: 0.8 } as const
@@ -1184,6 +1189,18 @@ ${nuanceur.vertexShader}`.replace(
            // seuil de luminance (0,8 en cible 8 bits) rayonne hors du cadre.
            // Le brillant est donc plafonné sous ce seuil — il ne monte jamais
            // plus haut que ce que la peinture montait déjà.
+           // ET LE CADRE ÉCLAIRÉ RAYONNE VERS L'INTÉRIEUR — Keko : « un effet
+           // plus glowy sur la bordure exposée à la lumière ». *Un glow qui
+           // sort de la carte passe par le bloom, et on vient de le retirer* :
+           // celui-ci reste DEDANS, une lueur à la couleur du cran qui mord sur
+           // le décor le long du côté éclairé, et s'éteint en quelques
+           // centièmes de largeur.
+           float dedansc = max(0.0, -dc - ${CONTOUR_PLAQUE.toFixed(4)});
+           float lueurc = exp(-dedansc / ${BRILLANT.portee.toFixed(3)}) * (1.0 - bande) * step(dc, 0.0);
+           cc += teintec * nappe * lueurc * ${BRILLANT.lueur.toFixed(2)} * feuc;
+           // ET AU COEUR DU REFLET, LE CADRE TIRE VERS LE BLANC : *un point qui
+           // sature tire vers le blanc, sa frange garde la couleur.*
+           cc = mix(cc, vec3(1.0, 0.98, 0.94) * max(cc.r, max(cc.g, cc.b)), eclair * bande * 0.6);
            float lumApres = dot(cc, vec3(0.2126, 0.7152, 0.0722));
            float plafond = max(lumAvant, ${BRILLANT.plafond.toFixed(2)});
            cc *= min(1.0, plafond / max(lumApres, 0.0001));
