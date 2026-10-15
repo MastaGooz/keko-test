@@ -1470,6 +1470,70 @@ const SANS_RAYONS =
 const AVEC_LUEUR_EMOJI =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('lueur') === '1'
 
+/**
+ * LE MASQUE DU SUJET : la carte entière en blanc, la silhouette de
+ * l'illustration découpée dedans, à sa place. Keko : « pour les faisceaux
+ * derrière l'emoji, on pourrait rendre brillants les faisceaux clairs (et
+ * laisser tels quels les foncés) ? »
+ *
+ * *Les rayons, le nuanceur sait les retrouver* — seize secteurs alternés, même
+ * centre, même départ, même fondu (`RAYONS_DANS_LA_CARTE`). **Ce qu'il ne sait
+ * pas, c'est où est l'emoji** : sans ce masque, la brillance passerait sur le
+ * sticker posé devant les rayons. Il est petit (96 de large) — *un masque
+ * filtré à la lecture n'a pas besoin de la finesse de ce qu'il découpe* — et il
+ * est peint par le MÊME `couvrir`, aux mêmes coordonnées : *deux dessins qui
+ * décrivent la même chose divergent au premier réglage.*
+ */
+const MASQUES_DU_SUJET = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
+export function masqueDuSujetDe(canvas: HTMLCanvasElement): HTMLCanvasElement | undefined {
+  return MASQUES_DU_SUJET.get(canvas)
+}
+function masqueDuSujet(
+  image: HTMLImageElement | HTMLCanvasElement | null,
+  marge: number,
+  aY: number,
+  aH: number,
+  rognage: number,
+): HTMLCanvasElement {
+  const m = document.createElement('canvas')
+  m.width = 96
+  m.height = Math.round(96 * 1.4)
+  const c = m.getContext('2d')
+  if (c === null) return m
+  c.fillStyle = '#ffffff'
+  c.fillRect(0, 0, m.width, m.height)
+  if (image !== null) {
+    c.scale(m.width / LARGE, m.width / LARGE)
+    c.globalCompositeOperation = 'destination-out'
+    couvrir(c, image, marge, aY, LARGE - marge * 2, aH, rognage)
+  }
+  return m
+}
+
+/**
+ * OÙ SONT LES RAYONS DANS LA CARTE, pour le nuanceur — en parts de la largeur
+ * et de la hauteur, l'origine en haut à gauche comme sur la toile. Écrit à
+ * partir des mêmes nombres que `peindreRayons` et que son appel : la fenêtre
+ * d'art en mode emoji (`marge` = la bordure, jusqu'à `HAUT_BULLE`).
+ */
+export const RAYONS_DANS_LA_CARTE = (() => {
+  const marge = CONTOURS[PISTE_CONTOUR] * U
+  const x = marge / LARGE
+  const y = marge / HAUT
+  const l = (LARGE - marge * 2) / LARGE
+  const h = (HAUT * HAUT_BULLE - marge) / HAUT
+  return {
+    x,
+    y,
+    l,
+    h,
+    nombre: NB_RAYONS,
+    depart: 0.21,
+    /** Le rayon du fondu, en largeurs : la demi-diagonale de la fenêtre. */
+    rayon: Math.hypot(l, h * 1.4) / 2,
+  }
+})()
+
 function peindreRayons(
   ctx: CanvasRenderingContext2D,
   rarete: string | undefined,
@@ -3714,6 +3778,12 @@ export async function peindreCarte(
 
   if (image !== null) {
     couvrir(ctx, image, marge, aY, LARGE - marge * 2, aH, rognage)
+  }
+  // LE MASQUE DU SUJET, pour que les rayons clairs brillent SANS l'emoji
+  // posé dessus — voir `masqueDuSujet`. Pas pour l'animé (`toile`) : il se
+  // repeint à chaque image, et il n'a pas de rayons brillants.
+  if (bulle && toile === undefined && !SANS_RAYONS && (FORCE_RAYONS[carte.rarete ?? ''] ?? 0) > 0) {
+    MASQUES_DU_SUJET.set(canvas, masqueDuSujet(image, marge, aY, aH, rognage))
   }
 
   // CE QUI PORTE LE TEXTE : un voile qui éteint l'image, ou une plaque posée
@@ -6314,6 +6384,9 @@ export function textureDeCarte(
   const promesse = peindreCarte(carte, voulue)
     .then((canvas) => {
       const texture = new THREE.CanvasTexture(canvas)
+      // LE MASQUE DU SUJET VOYAGE AVEC ELLE : voir `masqueDuSujet`.
+      const masque = MASQUES_DU_SUJET.get(canvas)
+      if (masque !== undefined) texture.userData.masqueSujet = new THREE.CanvasTexture(masque)
       // La carte se regarde de près et en biais : sans filtrage anisotrope le
       // texte se brouille dès qu'elle s'incline.
       texture.anisotropy = 8

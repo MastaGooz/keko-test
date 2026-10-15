@@ -5807,3 +5807,28 @@ cadre soit plus saturée et vive ».
 *Une lumière qui tire vers le blanc délave* ; celle-ci fait briller le cran
 comme un métal coloré sous la lampe. Vu à l'écran, sur une orange et une
 verte : le côté éclairé est vif, et rien ne déborde.
+
+#### Les rayons clairs brillent
+
+Keko : « pour les faisceaux derrière l'emoji, dans le fond, tu crois qu'on
+pourrait rendre brillants les faisceaux clairs (et laisser tels quels les
+foncés) ? »
+
+C'est la même lumière que le cadre (réflexion de la clé du sachet, qui se
+multiplie et sature), sur un lobe plus large (`RAYONS_BRILLANTS.large` 3),
+puisque les rayons couvrent toute la fenêtre.
+
+- **Les rayons sont retrouvés au nuanceur** à partir des nombres de
+  `peindreRayons`, exportés en `RAYONS_DANS_LA_CARTE` : le centre de la
+  fenêtre, seize secteurs dont un sur deux est clair, le départ à 0,21 rad
+  et le fondu radial. Vu à l'écran : les secteurs tombent sur les rayons
+  peints.
+- **Le sticker est épargné** grâce à un masque du sujet (`masqueDuSujet`,
+  96 px de large), peint par le même `couvrir` aux mêmes coordonnées. Il
+  voyage dans `texture.userData.masqueSujet`. L'animé n'en a pas, donc rien
+  n'y brille.
+- Le tout passe sous le même plafond que le cadre, donc rien ne bave dans le
+  bloom.
+
+`?rayonsbrillants=0` les éteint. Vu à l'écran sur l'orange : les rayons
+clairs deviennent vifs, les foncés et l'emoji ne bougent pas.

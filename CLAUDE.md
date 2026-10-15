@@ -94,7 +94,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 - **La bordure brille comme le film du sachet** (`BRILLANT`), **et reste
   plate** (Keko a refusé le biseau) : la réflexion de la clé du sachet (haut
   droit) sur la face plate, multipliée, avec un éclair teinté et du Fresnel,
-  **plafonnée sous le seuil du bloom** (sinon elle rayonne hors de la carte). **Jamais
+  **plafonnée sous le seuil du bloom** (sinon elle rayonne hors de la carte).
+  **Les rayons clairs brillent pareil** (`RAYONS_BRILLANTS`) : retrouvés au
+  nuanceur (`RAYONS_DANS_LA_CARTE`), l'emoji épargné par `masqueDuSujet`. **Jamais
   de `dFdx` dans un `if`** : NaN, et le bloom efface des blocs de carte. Le lin
   tressé a été essayé et retiré (`?lin=0.09` le rend).
 - **La lueur du sujet ne se peint plus en mode emoji** (`AVEC_LUEUR_EMOJI`,
@@ -332,7 +334,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?plaque=cran` | la plaque teintée du cran, au lieu du blanc |
 | `?lueur=1` | la lueur floutée du sujet derrière l'emoji (retirée par défaut) |
 | `?sticker=0` | l'emoji nu, sans son cerne de sticker |
-| `?brillant=0`, `?lin=0.09` | la bordure sans son brillant ; le lin tressé essayé puis retiré |
+| `?brillant=0`, `?rayonsbrillants=0`, `?lin=0.09` | la bordure, les rayons clairs sans leur brillant ; le lin tressé essayé puis retiré |
 | `?visage=🤩` | un autre emoji à la place du « o » du titre du sachet |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |

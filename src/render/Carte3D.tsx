@@ -47,6 +47,7 @@ import {
   tonDuLustre,
   TON_CREME,
   RAYON_SIMPLE,
+  RAYONS_DANS_LA_CARTE,
 } from './texture-carte.ts'
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
@@ -284,6 +285,26 @@ const FILS_LIN = 150
  * l'épaisseur de la bordure peinte (`CONTOUR_PLAQUE`). Mode emoji seulement ;
  * `?brillant=0` le retire.
  */
+/**
+ * LES RAYONS CLAIRS BRILLENT — Keko : « pour les faisceaux derrière l'emoji,
+ * dans le fond, on pourrait rendre brillants les faisceaux clairs (et laisser
+ * tels quels les foncés) ? »
+ *
+ * La même lumière que le cadre — la réflexion de la clé du sachet, qui se
+ * multiplie et sature — mais sur un lobe plus large (`large`) : les rayons
+ * couvrent toute la fenêtre, et *une tache serrée n'en allumerait qu'un.*
+ * Les rayons sont retrouvés au nuanceur (`RAYONS_DANS_LA_CARTE`), le sticker
+ * est épargné par son masque (`masqueSujet`). `?rayonsbrillants=0` les éteint.
+ */
+const AVEC_RAYONS_BRILLANTS = new URLSearchParams(location.search).get('rayonsbrillants') !== '0'
+const RAYONS_BRILLANTS = { large: 3, reflet: 1.6, sature: 1.2 } as const
+/** Un masque blanc d'un pixel : la place du masque du sujet tant qu'il n'est pas là. */
+const MASQUE_VIDE = (() => {
+  const t = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1)
+  t.needsUpdate = true
+  return t
+})()
+
 const AVEC_BRILLANT = new URLSearchParams(location.search).get('brillant') !== '0'
 /** L'épaisseur du cadre, en largeurs de carte : la bordure peinte de 2,7 U. */
 const CONTOUR_PLAQUE = 0.027
@@ -927,6 +948,8 @@ export function Carte3D({
       nuanceur.uniforms.uDevelop = { value: 0 }
       nuanceur.uniforms.uLin = { value: aplat ? FORCE_LIN : 0 }
       nuanceur.uniforms.uBrillant = { value: aplat && AVEC_BRILLANT ? 1 : 0 }
+      nuanceur.uniforms.uRayons = { value: 0 }
+      nuanceur.uniforms.uMasqueSujet = { value: MASQUE_VIDE }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -1198,6 +1221,26 @@ ${nuanceur.vertexShader}`.replace(
            // coloré sous la lampe. Ni lueur intérieure ni blanc au coeur.
            float lumc = dot(cc, vec3(0.2126, 0.7152, 0.0722));
            cc = max(mix(vec3(lumc), cc, 1.0 + ${BRILLANT.sature.toFixed(2)} * nappe * bande * feuc), 0.0);
+           // LES RAYONS CLAIRS DE LA FENÊTRE BRILLENT AUSSI : voir
+           // RAYONS_BRILLANTS. On retrouve le secteur et le fondu de
+           // peindreRayons, à partir du haut de la carte comme sur la toile.
+           if (uRayons > 0.0) {
+             vec2 tp = vec2(vLustreUv.x, 1.0 - vLustreUv.y);
+             vec2 cr = vec2(${RAYONS_DANS_LA_CARTE.x.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.l.toFixed(4)} * 0.5, ${RAYONS_DANS_LA_CARTE.y.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.h.toFixed(4)} * 0.5);
+             vec2 dr = vec2(tp.x - cr.x, (tp.y - cr.y) * 1.4);
+             float fenetre = step(${RAYONS_DANS_LA_CARTE.x.toFixed(4)}, tp.x) * step(tp.x, ${RAYONS_DANS_LA_CARTE.x.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.l.toFixed(4)})
+               * step(${RAYONS_DANS_LA_CARTE.y.toFixed(4)}, tp.y) * step(tp.y, ${RAYONS_DANS_LA_CARTE.y.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.h.toFixed(4)});
+             float fr = fract((atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)}) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
+             float clair = smoothstep(0.0, 0.025, fr) * (1.0 - smoothstep(0.475, 0.5, fr));
+             float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
+             float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);
+             float libre = texture2D(uMasqueSujet, vLustreUv).r;
+             float kr = clair * fonduR * libre * fenetre;
+             float nappeR = pow(sc, ${RAYONS_BRILLANTS.large.toFixed(1)});
+             cc *= 1.0 + nappeR * ${RAYONS_BRILLANTS.reflet.toFixed(2)} * kr * feuc;
+             float lumR = dot(cc, vec3(0.2126, 0.7152, 0.0722));
+             cc = max(mix(vec3(lumR), cc, 1.0 + ${RAYONS_BRILLANTS.sature.toFixed(2)} * nappeR * kr * feuc), 0.0);
+           }
            float lumApres = dot(cc, vec3(0.2126, 0.7152, 0.0722));
            float plafond = max(lumAvant, ${BRILLANT.plafond.toFixed(2)});
            cc *= min(1.0, plafond / max(lumApres, 0.0001));
@@ -1241,6 +1284,8 @@ varying vec2 vLustreUv;
 float hDev(float n) { return fract(sin(n * 43.317) * 43758.5453); }
 uniform float uLin;
 uniform float uBrillant;
+uniform float uRayons;
+uniform sampler2D uMasqueSujet;
 // LE BRUIT DU LIN : une valeur par noeud d'une grille, lissée entre eux.
 float bruitLin(vec2 p) {
   vec2 i = floor(p);
@@ -1265,7 +1310,7 @@ ${nuanceur.fragmentShader}`
      * C'est le correctif que three prescrit dès qu'on touche au nuanceur.
      */
     face.customProgramCacheKey = () =>
-      'carte-face-desaturable-lustree-irisee-tintee-bordee-developpee2-holo-lin-brillant'
+      'carte-face-desaturable-lustree-irisee-tintee-bordee-developpee2-holo-lin-brillant-rayons'
     // L'ordre des faces d'un pavé dans three : droite, gauche, haut, bas,
     // AVANT, arrière. Seule l'avant porte la carte.
     // LE CONTOUR : un plan derrière la carte, qui porte une TEXTURE de lueur
@@ -2078,6 +2123,11 @@ ${nuanceur.fragmentShader}`
       // L'APLAT SE SATURE D'AUTANT QU'IL EST VIF : une carte éteinte ne se
       // sature pas. Voir `aplat` et SATURATION_APLAT.
       nuanceur.uniforms.uSature!.value = aplat ? SATURATION_APLAT * l.vif : 0
+      // LE MASQUE DU SUJET VIENT AVEC LA TEXTURE DE LA FACE : voir
+      // RAYONS_BRILLANTS. Sans lui (animé, dos, autre mode), rien ne brille.
+      const masque = (face.map?.userData.masqueSujet ?? null) as THREE.Texture | null
+      nuanceur.uniforms.uMasqueSujet!.value = masque ?? MASQUE_VIDE
+      nuanceur.uniforms.uRayons!.value = masque !== null && AVEC_RAYONS_BRILLANTS && dos !== true ? 1 : 0
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
       // rareté compilerait son nuanceur.
