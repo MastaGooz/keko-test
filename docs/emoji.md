@@ -5432,3 +5432,14 @@ tourner dans le plan (`FRISSON.angle`, 0,025 rad), sur deux fréquences par axe
 qui ne retombent jamais en phase. **Elle se pose par-dessus le placement,
 jamais dans l'amortissement.** La gerbe naît de la fente réelle, donc elle suit.
 Les trois chiffres sont de moi : *un frémissement ne se juge qu'en déchirant.*
+
+#### LE SACHET POMPE EN CRACHANT LA GERBE, PUIS DESCEND
+
+Keko : **« on peut faire un petit effet de gonflement sur le paquet au moment
+de la gerbe finale avant qu'il descende ? Un petit pump juicy comme s'il
+crachait les particules »**. À l'arrachement, le film (le groupe `chute`)
+gonfle d'un coup — un peu plus large que haut, *un sac qui crache s'ouvre en
+travers* — puis retombe en se tassant d'un rien (`POMPE` : 9 %, amorti 11,
+2,6 Hz). **La descente attend `DUREE_POMPE` (0,2 s)** ; elle entre encore sous
+la vie de la gerbe, donc `DUREE_BRULURE` ne s'allonge pas. Chiffres de moi, à
+juger en ouvrant.

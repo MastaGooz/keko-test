@@ -78,6 +78,17 @@ import {
  */
 const DUREE_FRONT = 0.63
 const DUREE_CHUTE = 0.87
+/**
+ * LE POMPAGE DE L'ARRACHEMENT : le sachet gonfle d'un coup en crachant la
+ * gerbe, puis se tasse — et c'est seulement ensuite qu'il descend. Keko : « on
+ * peut faire un petit effet de gonflement sur le paquet au moment de la gerbe
+ * finale avant qu'il descende ? Un petit pump juicy comme s'il crachait les
+ * particules ». La descente attend donc `DUREE_POMPE` ; *elle entre encore
+ * sous la vie de la gerbe*, donc l'ouverture entière ne s'allonge pas.
+ * `POMPE` : de combien il gonfle (en part de sa taille), et sa pulsation.
+ */
+const DUREE_POMPE = 0.2
+const POMPE = { amplitude: 0.09, amorti: 11, pulsation: 2 * Math.PI * 2.6 }
 
 /**
  * LA BANDE EST PROJETÉE, une fois arrachée — c'est le lancer de lexicodex.
@@ -1329,7 +1340,7 @@ const DUREE_GERBE = ECLAT_ETALE + FEU.vie * 1.25
  * **Depuis que la gerbe est un feu d'artifice qui s'éteint en l'air, elle n'a
  * plus besoin de la fente** : Keko a rouvert l'ordre, et c'est cohérent.
  */
-export const DUREE_BRULURE = DUREE_FRONT + Math.max(DUREE_GERBE, DUREE_CHUTE)
+export const DUREE_BRULURE = DUREE_FRONT + Math.max(DUREE_GERBE, DUREE_POMPE + DUREE_CHUTE)
 const PART_FRONT = DUREE_FRONT / DUREE_BRULURE
 /**
  * LA SOURCE EST LE FRONT LUI-MÊME, dispersée AUTOUR de lui.
@@ -2433,7 +2444,7 @@ export function Sachet3D({
     // soit retombee. *Une part commune ne pouvait pas porter deux durees.*
     const tApres = Math.max(0, (pp - PART_FRONT) * DUREE_BRULURE)
     // LE FILM PART DÈS L'ARRACHEMENT, avec le pop — il n'attend plus la gerbe.
-    const pc = Math.min(1, Math.max(0, tApres / DUREE_CHUTE))
+    const pc = Math.min(1, Math.max(0, (tApres - DUREE_POMPE) / DUREE_CHUTE))
 
     if (pf >= 1 && !ditDechire.current) {
       ditDechire.current = true
@@ -2546,7 +2557,15 @@ export function Sachet3D({
      * en l'air : « il faudrait que le paquet descende dès le son pop ». Voir
      * `DUREE_BRULURE`.
      */
-    if (chute.current !== null) chute.current.position.y = -descente * chuteDuFilm(pc)
+    if (chute.current !== null) {
+      chute.current.position.y = -descente * chuteDuFilm(pc)
+      // LE POMPAGE : un gonflement qui monte d'un coup et retombe en se
+      // tassant d'un rien, *le contraste de vitesse du bond des créatures*.
+      // Plus large que haut d'un cheveu : un sac qui crache s'ouvre en travers.
+      const tp = pf >= 1 ? tApres : -1
+      const g = tp < 0 ? 0 : POMPE.amplitude * Math.exp(-POMPE.amorti * tp) * Math.sin(POMPE.pulsation * tp + 0.35) / Math.sin(0.35 + Math.PI / 2)
+      chute.current.scale.set(1 + g * 1.15, 1 + g * 0.85, 1 + g)
+    }
 
     // « OUVERT » QUAND LE FILM A DÉCOUVERT LA CARTE, pas quand il est hors
     // cadre : c'est lui qui la découvre, et c'est sur lui qu'elle se
