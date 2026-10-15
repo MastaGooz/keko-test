@@ -6010,3 +6010,17 @@ leur encre tombait au-dessus du milieu. Le mot est maintenant posé sur sa
 ligne de base, calculée pour que son encre MESURÉE (`actualBoundingBox`) soit
 au milieu de la pastille — pas un décalage écrit à la main, qui ne tiendrait
 plus le jour où la police ou la taille bougent.
+
+### Les étincelles de la révélation jaillissent de devant la carte (15/10/2026)
+
+Keko : « quand on dévoile une carte, on peut faire partir les particules de
+devant la carte plutôt que directement sur les côtés ? » Elles naissaient sur
+le BORD et partaient vers l'extérieur ; elles naissent maintenant **sur la
+face** (90 % de la boîte, plus denses au centre), filent dans la direction qui
+les éloigne du centre — mêlée d'une direction au hasard pour celles qui
+naissent au milieu, qui n'en ont pas — et **grossissent en vieillissant**
+(0,7 → 1,5 de leur taille), ce qui se lit comme venir vers l'oeil. Vitesse
+remontée de 90–270 à 230–490 unités : *mesuré dans la page*, à la vitesse
+d'avant la plupart restaient sur la carte après une seconde. Vu au ralenti
+(temps × 0,12, retiré) : elles jaillissent de la face et s'éparpillent tout
+autour. Même gerbe au défilé et au bilan.

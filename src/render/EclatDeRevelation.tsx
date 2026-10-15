@@ -10,9 +10,12 @@
  * commun à soixante-quatre pour un légendaire. **Le bas de l'échelle parle
  * peu** — la règle de la plaque et des rayons.
  *
- * Elles naissent SUR LE BORD de la carte et partent vers l'extérieur, un peu
- * vers le haut : *ce qui jaillit d'un objet part de son contour*, sinon on lit
- * une explosion derrière lui. Un frein d'air fort et une pesanteur faible —
+ * ELLES NAISSENT DEVANT LA CARTE, sur sa face, et s'éparpillent depuis son
+ * centre. Keko : « quand on dévoile une carte, on peut faire partir les
+ * particules de devant la carte plutôt que directement sur les côtés ? » Elles
+ * partaient du BORD, vers l'extérieur ; elles jaillissent maintenant de la
+ * face, vers l'oeil — *elles grossissent en vieillissant*, ce qui se lit comme
+ * venir vers soi. Un frein d'air fort et une pesanteur faible —
  * le régime du feu d'artifice du sachet : elles filent, ralentissent et
  * s'éteignent en l'air. Éclat à quatre branches et coeur blanc, comme les
  * étincelles de la déchirure : *un point qui sature tire vers le blanc, sa
@@ -85,39 +88,26 @@ export function EclatDeRevelation({ couleur, rang, boite, holo = false }: Props)
     const n = nCran + (holo ? NOMBRE_HOLO : 0)
     const parts: Etincelle[] = []
     for (let i = 0; i < n; i++) {
-      // UN POINT DU PÉRIMÈTRE, tiré au prorata de la longueur de chaque côté.
-      const per = 2 * (boite.l + boite.h)
-      const d = Math.random() * per
-      let x: number
-      let y: number
-      let nx: number
-      let ny: number
-      if (d < boite.l) {
-        x = boite.cx - boite.l / 2 + d
-        y = boite.cy - boite.h / 2
-        nx = 0
-        ny = -1
-      } else if (d < boite.l + boite.h) {
-        x = boite.cx + boite.l / 2
-        y = boite.cy - boite.h / 2 + (d - boite.l)
-        nx = 1
-        ny = 0
-      } else if (d < 2 * boite.l + boite.h) {
-        x = boite.cx + boite.l / 2 - (d - boite.l - boite.h)
-        y = boite.cy + boite.h / 2
-        nx = 0
-        ny = 1
-      } else {
-        x = boite.cx - boite.l / 2
-        y = boite.cy + boite.h / 2 - (d - 2 * boite.l - boite.h)
-        nx = -1
-        ny = 0
-      }
+      // UN POINT DE LA FACE, plus dense vers le centre (la moyenne de deux
+      // tirages), et sa direction est celle qui l'éloigne du centre.
+      const ax = (Math.random() + Math.random() - 1) * 0.5
+      const ay = (Math.random() + Math.random() - 1) * 0.5
+      const x = boite.cx + ax * boite.l * 0.9
+      const y = boite.cy + ay * boite.h * 0.9
+      const quelle = Math.random() * Math.PI * 2
+      // UN ÉCLAT AU CENTRE N'A PAS DE DIRECTION À LUI : on mêle la sienne à
+      // une direction au hasard, d'autant plus qu'il est près du centre.
+      const loin = Math.min(1, Math.hypot(ax, ay) * 2.5)
+      const nx0 = ax * loin + Math.cos(quelle) * (1 - loin)
+      const ny0 = ay * loin + Math.sin(quelle) * (1 - loin)
+      const nn = Math.hypot(nx0, ny0) || 1
+      const nx = nx0 / nn
+      const ny = ny0 / nn
       // VERS L'EXTÉRIEUR, un peu dispersé, et un peu vers le haut.
-      const dev = (Math.random() - 0.5) * 1.1
+      const dev = (Math.random() - 0.5) * 0.6
       const dx = nx * Math.cos(dev) - ny * Math.sin(dev)
-      const dy = nx * Math.sin(dev) + ny * Math.cos(dev) - 0.35
-      const v = (90 + Math.random() * 180) * u * (1 + rang * 0.12)
+      const dy = nx * Math.sin(dev) + ny * Math.cos(dev) - 0.3
+      const v = (230 + Math.random() * 260) * u * (1 + rang * 0.12)
       parts.push({
         x,
         y,
@@ -160,7 +150,8 @@ export function EclatDeRevelation({ couleur, rang, boite, holo = false }: Props)
         const t = p.age / p.vie
         // ELLE NAÎT ALLUMÉE ET S'ÉTEINT SUR SA SECONDE MOITIÉ.
         const a = t < 0.5 ? 1 : 1 - (t - 0.5) / 0.5
-        const r = p.taille * (1 - t * 0.4)
+        // ELLE GROSSIT EN VIEILLISSANT : elle vient vers l'oeil.
+        const r = p.taille * (0.7 + t * 0.8)
         // LE HALO, à la couleur du cran.
         const halo = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3)
         halo.addColorStop(0, p.couleur)
