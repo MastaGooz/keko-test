@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { SON_POSER, jouerSon } from './sons.ts'
-import { teinteDuCran } from './Collection.tsx'
+import { PucesBonus, passeLeBonus, teinteDuCran, type BonusFiltre } from './Collection.tsx'
 import { suivreLInclinaison } from './inclinaison.ts'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers } from '../logic/emoji/collection.ts'
@@ -583,18 +583,19 @@ export function PageStickers({
   onCollection: () => void
 }): React.ReactElement {
   const [tri, setTri] = useState<Tri>('recents')
+  const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
   const [ouvert, setOuvert] = useState<string | null>(null)
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
   const liste = useMemo(() => {
     const l = Object.entries(collection.stickers)
       .map(([id, s]) => ({ carte: parId.get(id), s }))
-      .filter((x): x is { carte: CarteEmoji; s: Stickers } => x.carte !== undefined)
+      .filter((x): x is { carte: CarteEmoji; s: Stickers } => x.carte !== undefined && passeLeBonus(bonus, x.s))
     const az = new Intl.Collator('fr')
     if (tri === 'recents') l.sort((a, b) => b.s.dernier - a.s.dernier)
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [collection.stickers, parId, tri])
+  }, [collection.stickers, parId, tri, bonus])
   const total = nombreDeStickers(collection)
   const leOuvert = ouvert === null ? undefined : liste.find((x) => x.carte.id === ouvert)
   return (
@@ -603,10 +604,10 @@ export function PageStickers({
         <header className="collection-tete">
           <h1 className="collection-titre">Mes stickers</h1>
           <p className="collection-compte">
-            <b>{total}</b> sticker{total > 1 ? 's' : ''} · {liste.length} emoji
+            <b>{total}</b> sticker{total > 1 ? 's' : ''} · {Object.keys(collection.stickers).length} emoji
           </p>
         </header>
-        {catalogue === null ? null : liste.length === 0 ? (
+        {catalogue === null ? null : total === 0 ? (
           <div className="collection-vide">
             <p>Ton album est vide.</p>
             <p className="collection-discret">
@@ -634,7 +635,13 @@ export function PageStickers({
                   </button>
                 ))}
               </div>
+              <PucesBonus valeur={bonus} onChange={setBonus} />
             </div>
+            {liste.length === 0 && (
+              <div className="collection-vide">
+                <p className="collection-discret">Aucun sticker ne correspond.</p>
+              </div>
+            )}
             <div className="album-grille">
               {liste.map(({ carte, s }) => (
                 <CaseSticker key={carte.id} carte={carte} stickers={s} onOuvrir={() => setOuvert(carte.id)} />

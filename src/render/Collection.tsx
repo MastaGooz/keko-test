@@ -94,6 +94,44 @@ function basculer<T>(s: ReadonlySet<T>, v: T): ReadonlySet<T> {
   return n
 }
 
+/**
+ * LE FILTRE PAR BONUS. Keko : « ajouter un filtre holo et animé dans la
+ * collection et les stickers ». Comme les raretés, plusieurs à la fois et rien
+ * de coché laisse tout passer ; cochés ensemble, une carte passe si elle a
+ * l'un OU l'autre.
+ */
+export type BonusFiltre = 'holo' | 'anime'
+const BONUS_FILTRES: readonly { id: BonusFiltre; nom: string }[] = [
+  { id: 'holo', nom: 'Holo' },
+  { id: 'anime', nom: 'Animé' },
+]
+export function passeLeBonus(filtre: ReadonlySet<BonusFiltre>, x: { holo: number; anime: number }): boolean {
+  return filtre.size === 0 || (filtre.has('holo') && x.holo > 0) || (filtre.has('anime') && x.anime > 0)
+}
+export function PucesBonus({
+  valeur,
+  onChange,
+}: {
+  valeur: ReadonlySet<BonusFiltre>
+  onChange: (v: ReadonlySet<BonusFiltre>) => void
+}): React.ReactElement {
+  return (
+    <div className="collection-puces">
+      {BONUS_FILTRES.map((b) => (
+        <button
+          key={b.id}
+          type="button"
+          className={`puce puce-${b.id}${valeur.has(b.id) ? ' actif' : ''}`}
+          onClick={() => onChange(basculer(valeur, b.id))}
+        >
+          <i />
+          {b.nom}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 /** Sans accents ni casse : « eclair » trouve « Éclair ». */
 function plier(texte: string): string {
   return texte.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
@@ -512,6 +550,7 @@ export function PageCollection({
   // PLUSIEURS TYPES À LA FOIS, comme les raretés. Keko : « ce serait bien de
   // pouvoir sélectionner plusieurs catégories à la fois comme les raretés ».
   const [groupes, setGroupes] = useState<ReadonlySet<GroupeEmoji>>(new Set())
+  const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
   const [ouverte, setOuverte] = useState<string | null>(null)
 
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
@@ -526,7 +565,8 @@ export function PageCollection({
   const visibles = useMemo(() => {
     const q = plier(recherche.trim())
     const l = possedees.filter(
-      ({ carte }) =>
+      ({ carte, p }) =>
+        passeLeBonus(bonus, p) &&
         (raretes.size === 0 || raretes.has(carte.rarete)) &&
         (groupes.size === 0 || groupes.has(carte.groupe)) &&
         (q === '' || plier(carte.nom).includes(q) || carte.mots.some((m) => plier(m).includes(q))),
@@ -536,7 +576,7 @@ export function PageCollection({
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [possedees, recherche, tri, raretes, groupes])
+  }, [possedees, recherche, tri, raretes, groupes, bonus])
 
   const total = catalogue?.length ?? 0
   const part = total === 0 ? 0 : possedees.length / total
@@ -606,6 +646,7 @@ export function PageCollection({
                 </button>
               ))}
             </div>
+            <PucesBonus valeur={bonus} onChange={setBonus} />
           </div>
         )}
 

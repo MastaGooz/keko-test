@@ -1188,3 +1188,22 @@
     transform: translate(-50%, -50%) rotate(360deg);
   }
 }
+
+/* LES PUCES DE BONUS : la pastille prend la couleur de sa vignette. */
+.puce-holo i {
+  background: linear-gradient(90deg, #ff7ac8, #7ad8ff, #ffe27a);
+  box-shadow: 0 0 0.4rem #7ad8ff;
+}
+
+.puce-anime i {
+  background: #ffc61f;
+  box-shadow: 0 0 0.4rem #ffc61f;
+}
+
+.puce-holo.actif {
+  border-color: #7ad8ff;
+}
+
+.puce-anime.actif {
+  border-color: #ffc61f;
+}
