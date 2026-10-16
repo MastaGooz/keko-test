@@ -6432,3 +6432,5 @@ une carte qui casse.
 - **Annuler ne fait plus traverser la pile (16/10/2026)** : Keko, « quand j'annule le décollement, la carte de derrière traverse brièvement la carte ». Seule la carte du geste était mise à plat ; la pile derrière gardait le curseur penché, et à l'annulation la carte reprenait son angle au ressort pendant que la suivante, déjà penchée, regrandissait : deux plans non parallèles se coupent. Toute la pile se met à plat pendant le geste et se redresse ensemble.
 
 - **La suivante jaillit (16/10/2026)** : Keko, « accélérer un peu l'apparition de la carte suivante après le décollement, plus punchy / juicy ». Elle regrandit sur un ressort raide (`RESSORT_ARRIVEE` 25, à 95 % en 0,12 s au lieu de 0,33 s), et son pump et ses particules partent à 0,1 s (`ARRIVEE_APRES_DECOLLAGE`, au lieu de 0,34) : la fin de la croissance et le pump s'enchaînent. Le ressort raide est rendu 0,25 s après, sinon la carte serait sèche au doigt. Chiffres de moi.
+
+- **Et son son (16/10/2026)** : la suivante qui jaillit après un décollage joue `SON_POSER`, le son du passage à la suivante (Keko).

@@ -1790,6 +1790,9 @@ export function Paquet3D({
         const n = montree + 1
         setMontree(n)
         setArriveeVive(n)
+        // ET LE SON DU PASSAGE À LA SUIVANTE : Keko, « rajouter le son de carte
+        // à cette animation comme quand on passe à la suivante ».
+        jouerSon(SON_POSER)
         // SON INSTANT ARRIVE QUAND ELLE A FINI DE GRANDIR. Keko : « je voulais
         // juste rajouter le pump à son arrivée finale avec les particules ».
         // *Elle regrandit depuis zéro au ressort* (voir `tailleAuDefile`) ; un
