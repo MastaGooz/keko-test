@@ -19,6 +19,7 @@ import {
   PucesBonus,
   SectionFiltre,
   passeLeBonus,
+  plier,
   teinteDuCran,
   type BonusFiltre,
 } from './Collection.tsx'
@@ -533,18 +534,27 @@ export function PageStickers({
   const [tri, setTri] = useState<Tri>('recents')
   const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
   const [panneau, setPanneau] = useState(false)
+  const [recherche, setRecherche] = useState('')
   const [ouvert, setOuvert] = useState<string | null>(null)
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
   const liste = useMemo(() => {
     const l = Object.entries(collection.stickers)
       .map(([id, s]) => ({ carte: parId.get(id), s }))
       .filter((x): x is { carte: CarteEmoji; s: Stickers } => x.carte !== undefined && passeLeBonus(bonus, x.s))
+    // LA RECHERCHE DE LA COLLECTION, sur le nom et les mots-clés.
+    const q = plier(recherche.trim())
+    if (q !== '') {
+      for (let i = l.length - 1; i >= 0; i--) {
+        const c = l[i]!.carte
+        if (!plier(c.nom).includes(q) && !c.mots.some((m) => plier(m).includes(q))) l.splice(i, 1)
+      }
+    }
     const az = new Intl.Collator('fr')
     if (tri === 'recents') l.sort((a, b) => b.s.dernier - a.s.dernier)
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [collection.stickers, parId, tri, bonus])
+  }, [collection.stickers, parId, tri, bonus, recherche])
   const total = nombreDeStickers(collection)
   const leOuvert = ouvert === null ? undefined : liste.find((x) => x.carte.id === ouvert)
   return (
@@ -571,6 +581,13 @@ export function PageStickers({
           <>
             <div className="collection-outils">
               <div className="collection-ligne">
+                <input
+                  className="collection-recherche"
+                  type="search"
+                  placeholder="Chercher un sticker"
+                  value={recherche}
+                  onChange={(e) => setRecherche(e.target.value)}
+                />
                 <BoutonFiltres actifs={bonus.size} onOuvrir={() => setPanneau(true)} />
               </div>
             </div>

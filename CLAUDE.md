@@ -218,8 +218,11 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   rayons clairs et la bordure sous la lampe, calculés par les chiffres du
   nuanceur ; sans lui les vignettes étaient ternes). *La 3D est gardée pour la carte ouverte* (`CarteOuverte`, la même
   `Carte3D`, avec le holo ou l'animé si on possède l'exemplaire). Une ligne :
-  la recherche et un bouton « Filtres » qui ouvre un panneau (trier, rareté,
+  la recherche et un bouton-icône (réglettes) qui ouvre un panneau (trier, rareté,
   type, bonus) — classes `filtres-panneau…`, *`.panneau` est pris par l'archive*.
+  L'album a la même ligne. Le panneau se ferme en tirant sa tête vers le bas
+  (`touch-action: none`, et `overscroll-behavior-y: none` sur `html` tant qu'il
+  est ouvert : sinon le navigateur recharge la page).
 - **Détruire une carte pour son sticker** (`render/Decollage.tsx`) : un bouton
   « Décoller le sticker » sous la carte du défilé, la carte zoomée au bilan, ou
   la carte ouverte de la collection — **c'est le geste qui confirme** : on tire

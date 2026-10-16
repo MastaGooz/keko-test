@@ -148,13 +148,30 @@ export function PucesBonus({
  * « Tout effacer » et le nombre de cartes qu'on va voir.
  */
 export function BoutonFiltres({ actifs, onOuvrir }: { actifs: number; onOuvrir: () => void }): React.ReactElement {
+  // SANS LE MOT, LE SYMBOLE : Keko, « juste un bouton sans le mot filtre »,
+  // « les 3 barres mais avec des ronds dessus » : trois réglettes et leurs curseurs.
   return (
-    <button type="button" className={`bouton-filtres${actifs > 0 ? ' actif' : ''}`} onClick={onOuvrir}>
-      <span aria-hidden>☰</span> Filtres
+    <button
+      type="button"
+      className={`bouton-filtres${actifs > 0 ? ' actif' : ''}`}
+      aria-label="Filtres"
+      onClick={onOuvrir}
+    >
+      <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+        <path d="M3 6h18M3 12h18M3 18h18" />
+        <circle cx="8" cy="6" r="2.8" fill="currentColor" stroke="none" />
+        <circle cx="16" cy="12" r="2.8" fill="currentColor" stroke="none" />
+        <circle cx="10" cy="18" r="2.8" fill="currentColor" stroke="none" />
+      </svg>
       {actifs > 0 && <span className="bouton-filtres-compte">{actifs}</span>}
     </button>
   )
 }
+
+/** La part de la hauteur du panneau qu'il faut tirer vers le bas pour le fermer. */
+const TIRER_POUR_FERMER = 0.25
+/** Ou la vitesse (px/ms) d'un coup de doigt qui le ferme, même court. */
+const VITESSE_POUR_FERMER = 0.5
 
 export function PanneauFiltres({
   titre,
@@ -170,15 +187,78 @@ export function PanneauFiltres({
   onFermer: () => void
   children: React.ReactNode
 }): React.ReactElement {
+  /**
+   * LA POIGNÉE SE TIRE VERS LE BAS. Keko : « une petite barre en haut qui laisse
+   * penser qu'on peut fermer le panneau en slidant vers le bas, mais si je le
+   * fais ça refresh la page ». *Le geste allait au navigateur* (tirer pour
+   * recharger) : la tête du panneau le garde (`touch-action: none`) et le
+   * panneau suit le doigt ; lâché assez bas ou assez vite, il descend et se ferme.
+   */
+  const panneau = useRef<HTMLDivElement>(null)
+  // ET TANT QU'IL EST OUVERT, la page entière refuse « tirer pour recharger ».
+  useEffect(() => {
+    const html = document.documentElement
+    const avant = html.style.overscrollBehaviorY
+    html.style.overscrollBehaviorY = 'none'
+    return () => {
+      html.style.overscrollBehaviorY = avant
+    }
+  }, [])
+  const tire = useRef<{ id: number; y0: number; dy: number; t: number; v: number } | null>(null)
+  const descendre = (dy: number, transition: boolean): void => {
+    const el = panneau.current
+    if (el === null) return
+    el.style.transition = transition ? 'transform 0.22s ease-out' : 'none'
+    el.style.transform = dy > 0 ? `translateY(${dy}px)` : ''
+  }
+  const poser = (e: React.PointerEvent<HTMLDivElement>): void => {
+    if ((e.target as HTMLElement).closest('button') !== null) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    tire.current = { id: e.pointerId, y0: e.clientY, dy: 0, t: e.timeStamp, v: 0 }
+  }
+  const glisser = (e: React.PointerEvent<HTMLDivElement>): void => {
+    const g = tire.current
+    if (g === null || g.id !== e.pointerId) return
+    const dy = Math.max(0, e.clientY - g.y0)
+    const dt = e.timeStamp - g.t
+    if (dt > 0) g.v = (dy - g.dy) / dt
+    g.dy = dy
+    g.t = e.timeStamp
+    descendre(dy, false)
+  }
+  const lacher = (e: React.PointerEvent<HTMLDivElement>): void => {
+    const g = tire.current
+    if (g === null || g.id !== e.pointerId) return
+    tire.current = null
+    const haut = panneau.current?.offsetHeight ?? 1
+    if (g.dy > haut * TIRER_POUR_FERMER || (g.dy > 10 && g.v > VITESSE_POUR_FERMER)) {
+      descendre(haut, true)
+      window.setTimeout(onFermer, 220)
+    } else descendre(0, true)
+  }
   return createPortal(
     <div className="filtres-panneau-fond" onClick={onFermer}>
-      <div className="filtres-panneau" role="dialog" aria-label={titre} onClick={(e) => e.stopPropagation()}>
-        <div className="filtres-panneau-poignee" aria-hidden />
-        <div className="filtres-panneau-tete">
+      <div
+        ref={panneau}
+        className="filtres-panneau"
+        role="dialog"
+        aria-label={titre}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div
+          className="filtres-panneau-prise"
+          onPointerDown={poser}
+          onPointerMove={glisser}
+          onPointerUp={lacher}
+          onPointerCancel={lacher}
+        >
+          <div className="filtres-panneau-poignee" aria-hidden />
+          <div className="filtres-panneau-tete">
           <h2>{titre}</h2>
           <button type="button" className="filtres-panneau-effacer" onClick={onEffacer}>
-            Tout effacer
-          </button>
+              Tout effacer
+            </button>
+          </div>
         </div>
         <div className="filtres-panneau-corps">{children}</div>
         <button type="button" className="collection-bouton filtres-panneau-voir" onClick={onFermer}>
@@ -201,7 +281,7 @@ export function SectionFiltre({ titre, children }: { titre: string; children: Re
 }
 
 /** Sans accents ni casse : « eclair » trouve « Éclair ». */
-function plier(texte: string): string {
+export function plier(texte: string): string {
   return texte.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 }
 
