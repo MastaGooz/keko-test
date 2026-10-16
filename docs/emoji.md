@@ -6465,3 +6465,5 @@ Keko : « dans la collection les cartes holo ne sont pas animées au niveau des 
 - Vérifié dans la page : les opacités des couches alternent, la position de la bande va de 100 % 0 % vers 0 % 100 %.
 
 - **Paillettes plus discrètes (16/10/2026)** : Keko, « je trouve les étincelles un peu grosses sur les holo depuis la collection, juste quelques paillettes comme sur la carte c'est suffisant ». Plus de croix sur les grosses, plus de grossissement des vives (×1,5), halo resserré (1,8 rayon au lieu de 2,2), et deux fois moins de vives (3 % des fines, 6 % des grosses).
+
+- **Nacre et caméléon retirés (16/10/2026)** : Keko, « je le trouve pas terrible, ça change la couleur de l'emoji au final… je voudrais autre chose à la place ». *Les deux touchaient la teinte de l'emoji*, et c'est ce qui ne va pas : l'effet de l'emoji holo ne doit pas le recolorer. Retirés de la carte (le bloc du nuanceur, `NACRE`, `?nacre=0`) et du sticker en grand (`coucheDeNacre`, la rotation de teinte de sa toile) ; le cerne arc-en-ciel qui tourne au regard reste. Ce qui le remplace reste à choisir.

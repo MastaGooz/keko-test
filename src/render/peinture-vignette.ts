@@ -8,7 +8,7 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { createRng } from '../logic/rng.ts'
 import { RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
-import { BRILLANT, CONTOUR_PLAQUE, COSMOS, NACRE, RAYONS_BRILLANTS } from './Carte3D.tsx'
+import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS } from './Carte3D.tsx'
 import { RAYON_SIMPLE } from './texture-carte.ts'
 
 /**
@@ -108,52 +108,6 @@ export function cerneArcEnCiel(
  * **Tiré par le RNG seedé sur l'identifiant** : une vignette garde ses
  * paillettes d'une visite à l'autre.
  */
-/**
- * LA NACRE D'UN STICKER HOLO, EN COUCHE : la même règle que le nuanceur
- * (`NACRE`) — les clairs de l'emoji, hors du cerne crème, prennent une teinte
- * qui suit leur clarté et leur hauteur. Rend une toile de la même taille, la
- * couleur seule et son poids en alpha ; c'est sa teinte qu'on fait tourner
- * avec le regard (`hue-rotate`).
- */
-export function coucheDeNacre(source: HTMLCanvasElement): HTMLCanvasElement {
-  const { width: l, height: h } = source
-  const toile = document.createElement('canvas')
-  toile.width = l
-  toile.height = h
-  const ctx = toile.getContext('2d')
-  const sctx = source.getContext('2d', { willReadFrequently: true })
-  if (ctx === null || sctx === null) return toile
-  const src = sctx.getImageData(0, 0, l, h).data
-  const out = ctx.createImageData(l, h)
-  const d = out.data
-  for (let j = 0; j < h; j++) {
-    for (let i = 0; i < l; i++) {
-      const k = (j * l + i) * 4
-      const a = src[k + 3]!
-      if (a < 200) continue
-      const r = lineaire(src[k]! / 255)
-      const g = lineaire(src[k + 1]! / 255)
-      const b = lineaire(src[k + 2]! / 255)
-      const ecart = r - b
-      const creme =
-        fondu(0.88, 0.95, r) * fondu(0.8, 0.84, b) * fondu(0.07, 0.1, ecart) * (1 - fondu(0.17, 0.22, ecart))
-      const clair = 0.2126 * r + 0.7152 * g + 0.0722 * b
-      const haut = Math.max(r, g, b)
-      const sat = (haut - Math.min(r, g, b)) / Math.max(haut, 0.0001)
-      const poids =
-        (1 - creme) * fondu(NACRE.seuil, 0.95, clair) * (1 - fondu(NACRE.saturation * 0.4, NACRE.saturation, sat)) * NACRE.couleur
-      if (poids <= 0) continue
-      const t = (((clair * NACRE.etalement + (j / h) * 1.5) % 1) + 1) % 1
-      d[k] = Math.round((0.5 + 0.5 * Math.cos(Math.PI * 2 * t)) * 255)
-      d[k + 1] = Math.round((0.5 + 0.5 * Math.cos(Math.PI * 2 * (t + 0.33))) * 255)
-      d[k + 2] = Math.round((0.5 + 0.5 * Math.cos(Math.PI * 2 * (t + 0.67))) * 255)
-      d[k + 3] = Math.round(poids * 255)
-    }
-  }
-  ctx.putImageData(out, 0, 0)
-  return toile
-}
-
 /**
  * LE BRILLANT DE LA CARTE 3D, AU REPOS, PEINT SUR LA VIGNETTE. Keko : « dans la
  * collection, les cartes sont plus ternes que dans le zoom, surtout le fond

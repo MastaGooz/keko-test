@@ -19,7 +19,7 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers } from '../logic/emoji/collection.ts'
 import { nombreDeStickers } from '../logic/emoji/collection.ts'
 import { stickerDe } from './texture-carte.ts'
-import { cerneArcEnCiel, coucheDeNacre } from './peinture-vignette.ts'
+import { cerneArcEnCiel } from './peinture-vignette.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
@@ -181,8 +181,6 @@ function StickerOuvert({
   const toile = useRef<HTMLCanvasElement>(null)
   /** LE CERNE ARC-EN-CIEL D'UNE HOLO, seul, par-dessus : c'est lui qui tourne au regard. */
   const arc = useRef<HTMLCanvasElement>(null)
-  /** LA NACRE DE L'EMOJI, une couche aussi, qui tourne avec le regard (voir `NACRE`). */
-  const nacre = useRef<HTMLCanvasElement>(null)
   const penche = useRef<HTMLDivElement>(null)
   const zone = useRef<HTMLDivElement>(null)
   const [pret, setPret] = useState(false)
@@ -205,14 +203,6 @@ function StickerOuvert({
       t.height = cote
       ctx.imageSmoothingQuality = 'high'
       ctx.drawImage(image, 0, 0, cote, cote)
-      const n = nacre.current
-      const nctx = n?.getContext('2d')
-      if (holo && !anime && n != null && nctx != null) {
-        const couche = coucheDeNacre(t)
-        n.width = cote
-        n.height = cote
-        nctx.drawImage(couche, 0, 0)
-      }
       // LA HOLO : le sticker garde son cerne crème dessous, et le spectre est
       // une couche à part — *repeindre les pixels à chaque mouvement du
       // téléphone coûterait une boucle sur toute la toile ; tourner la teinte
@@ -288,17 +278,6 @@ function StickerOuvert({
       // couleur d'un coin à l'autre.
       const a = arc.current
       if (a != null) a.style.filter = `saturate(${1 + SATURATION_APLAT}) hue-rotate(${((o.x - o.y) * 90).toFixed(1)}deg)`
-      // LA NACRE TOURNE DANS L'AUTRE SENS, et plus vite : comme au nuanceur,
-      // elle suit l'autre diagonale du regard.
-      const nc = nacre.current
-      if (nc != null) nc.style.filter = `hue-rotate(${((o.x + o.y) * 140).toFixed(1)}deg)`
-      // ET LE CAMÉLÉON : le sticker entier glisse sur le cercle des teintes
-      // (voir `NACRE.cameleon`) ; le crème du cerne, presque gris, n'en bouge
-      // presque pas.
-      const t = toile.current
-      if (t != null && holo) {
-        t.style.filter = `saturate(${1 + SATURATION_APLAT}) hue-rotate(${((o.x - o.y) * 32).toFixed(1)}deg) drop-shadow(0 0.3rem 0.35rem rgba(10, 4, 30, 0.5))`
-      }
       image = requestAnimationFrame(appliquer)
     }
     image = requestAnimationFrame(appliquer)
@@ -372,7 +351,6 @@ function StickerOuvert({
           <div ref={penche} className="sticker-penche">
             {!pret && <span className="album-attente sticker-attente">{carte.emoji}</span>}
             <canvas ref={toile} className="sticker-toile" style={FILTRE} />
-            <canvas ref={nacre} className="sticker-toile sticker-nacre" />
             <canvas ref={arc} className="sticker-toile sticker-arc" />
           </div>
         </div>

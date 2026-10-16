@@ -1150,9 +1150,3 @@
 .sticker-ouvert {
   touch-action: none;
 }
-
-/* LA NACRE PREND LA TEINTE, PAS LA CLARTÉ : l'emoji garde ses lumières, elles
-   irisent (voir `NACRE`). */
-.sticker-nacre {
-  mix-blend-mode: color;
-}

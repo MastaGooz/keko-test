@@ -432,36 +432,6 @@ export const COSMOS = {
 }
 const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
 
-/**
- * LA NACRE DE L'EMOJI HOLO. Keko : « ajouter un effet sur les emoji holo (carte
- * et sticker) différent du fond carte ». *La bande irisée passe déjà sur toute
- * la carte, emoji compris* : un second reflet sur l'emoji ne s'en
- * distinguerait pas. **La nacre, si** : les CLAIRS de l'emoji (pas le cerne,
- * pas ses ombres) prennent une teinte qui change avec le regard, comme un film
- * d'huile — l'emoji garde ses couleurs, ses lumières irisent.
- *
- * - `seuil` : à partir de quelle clarté (linéaire) un pixel nacre ;
- * - `couleur` : combien la teinte remplace le blanc des clairs ;
- * - `etalement` : combien de tours de spectre sur l'échelle des clartés — un
- *   même emoji montre plusieurs couleurs à la fois, pas une nappe ;
- * - `regard` : combien le spectre avance quand on penche ;
- * - `eclat` : le petit surcroît quand on le penche vers la lampe ;
- * - `saturation` : au-delà, une couleur ne nacre plus. *Premier essai vu :
- *   l'orange de l'huître virait au rose*, l'emoji perdait ses couleurs ; seuls
- *   les blancs, les gris et les pastels nacrent — la perle, la coquille ;
- * - `cameleon` : ET LES COULEURS FRANCHES GLISSENT SUR LE CERCLE DES TEINTES.
- *   Keko : « ça n'a aucun effet sur les emoji qui n'ont pas de zones
- *   claires ». *C'est la peinture caméléon* : penché, l'orange tire vers le
- *   rouge ou le jaune, le bleu vers le violet ou le cyan — en radians par unité
- *   de reflet, modulé un peu par la clarté et la hauteur pour qu'un aplat ne
- *   tourne pas d'un bloc. Au repos l'emoji garde ses couleurs : le glissement
- *   suit l'écart du regard, pas sa valeur. Premier réglage (1,3) vu trop
- *   fort : un jaune passait au rose d'un côté à l'autre.
- *
- * Chiffres de moi. `?nacre=0` la retire.
- */
-export const NACRE = { seuil: 0.3, couleur: 0.6, etalement: 2.5, regard: 1.6, eclat: 0.22, saturation: 0.35, cameleon: 0.6 }
-const AVEC_NACRE = new URLSearchParams(location.search).get('nacre') !== '0'
 
 /**
  * LA CARTE EST FAITE DE DEUX PIÈCES, et c'est ce qui donne les coins ronds.
@@ -1062,11 +1032,6 @@ ${nuanceur.vertexShader}`.replace(
            * smoothstep(0.80, 0.84, diffuseColor.b)
            * smoothstep(0.07, 0.10, ecartCreme)
            * (1.0 - smoothstep(0.17, 0.22, ecartCreme));
-         // LA CLARTÉ DE LA PEINTURE, avant tout le reste : c'est elle qui dit
-         // où l'emoji nacre (voir NACRE).
-         float clairTexture = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
-         float hautTexture = max(diffuseColor.r, max(diffuseColor.g, diffuseColor.b));
-         float satTexture = (hautTexture - min(diffuseColor.r, min(diffuseColor.g, diffuseColor.b))) / max(hautTexture, 0.0001);
          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(luminance), uGris);
          float bande = (vLustreUv.x + vLustreUv.y) * 0.5;
 
@@ -1416,31 +1381,6 @@ ${nuanceur.vertexShader}`.replace(
            vec3 holoE = mix(vec3(1.0), arcE, ${COSMOS.cerne.couleur.toFixed(2)}) * (0.9 + 0.35 * lobeE);
            float vivant = clamp(uHolo / ${FORCE_HOLO.toFixed(3)}, 0.0, 1.0);
            gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * holoE, cerneE * vivant);
-           // LA NACRE DE L'EMOJI : voir NACRE. Sur l'emoji, hors du cerne, et
-           // d'autant plus que la peinture y est claire. Le spectre suit la
-           // clarté (plusieurs couleurs dans un même emoji), le regard, et un
-           // peu la hauteur, pour qu'un aplat clair ne vire pas d'un bloc.
-           if (${AVEC_NACRE ? 'true' : 'false'}) {
-             float nacreK = surEmoji * (1.0 - blancTexture)
-               * smoothstep(${NACRE.seuil.toFixed(2)}, 0.95, clairTexture)
-               * (1.0 - smoothstep(${(NACRE.saturation * 0.4).toFixed(3)}, ${NACRE.saturation.toFixed(3)}, satTexture)) * vivant;
-             float teinteN = fract(clairTexture * ${NACRE.etalement.toFixed(2)} + incidence * 2.5
-               + (Rf.x - Rf.y) * ${NACRE.regard.toFixed(2)} + tpE.y * 1.5);
-             vec3 arcN = 0.5 + 0.5 * cos(6.28318 * (teinteN + vec3(0.0, 0.33, 0.67)));
-             vec3 nacre = mix(vec3(1.0), arcN * 1.25, ${NACRE.couleur.toFixed(2)});
-             gl_FragColor.rgb = mix(gl_FragColor.rgb,
-               gl_FragColor.rgb * nacre + arcN * lobeE * ${NACRE.eclat.toFixed(2)}, nacreK);
-             // LE CAMÉLÉON : les couleurs franches tournent autour de l'axe des
-             // gris, d'un angle qui suit le regard (Rodrigues : la clarté ne
-             // bouge pas, seule la teinte glisse).
-             float camK = surEmoji * (1.0 - blancTexture) * smoothstep(0.12, 0.4, satTexture) * vivant;
-             float theta = (Rf.x - Rf.y) * ${NACRE.cameleon.toFixed(2)}
-               * (1.0 + 0.45 * sin(clairTexture * 9.0 + tpE.y * 10.0));
-             vec3 axe = vec3(0.57735);
-             vec3 c0 = gl_FragColor.rgb;
-             vec3 tourne = c0 * cos(theta) + cross(axe, c0) * sin(theta) + axe * dot(axe, c0) * (1.0 - cos(theta));
-             gl_FragColor.rgb = mix(c0, max(tourne, 0.0), camK);
-           }
          }
 
          // LE LIN TRESSÉ, en sortie : il presse TOUTE la carte, peinture
