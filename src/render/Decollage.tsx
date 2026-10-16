@@ -53,9 +53,14 @@ export const DECOLLAGE = {
   tient: 0.7,
   envol: 0.55,
   miettes: 1.15,
-  /** La carte se casse en tant de morceaux. */
-  colonnes: 6,
-  lignes: 8,
+  /**
+   * LA CARTE SE FÊLE AVANT DE CASSER : des fissures partent du trou pendant
+   * `fissure` secondes, puis les éclats partent. Les éclats sont les cases de
+   * cette toile d'araignée — `rayons` droites depuis le trou, `anneaux` cercles.
+   */
+  fissure: 0.22,
+  rayons: 11,
+  anneaux: 4,
   /** Le sticker gagné grandit de tant au-dessus de la carte. */
   grossi: 1.3,
   /** Le coin qui se soulève tout seul pour dire où tirer, en part du sticker. */
@@ -209,76 +214,217 @@ function dessinerPli(ctx: CanvasRenderingContext2D, pret: Pret, u: P, m: number,
 }
 
 interface Miette {
-  sx: number
-  sy: number
-  sw: number
-  sh: number
-  x: number
-  y: number
-  w: number
-  h: number
+  /** Le polygone de l'éclat, à l'écran, à plat. */
+  poly: P[]
+  /** Son centre : c'est autour de lui qu'il tourne. */
+  c: P
   vx: number
   vy: number
+  /** La rotation dans le plan, et la culbute (une rotation en profondeur, simulée par l'écrasement). */
   vr: number
+  vf: number
   retard: number
 }
 
-/** LA CARTE EN MORCEAUX, qui partent du trou laissé par le sticker. */
-function casser(base: HTMLCanvasElement, boite: BoiteALEcran, trou: P): Miette[] {
-  const { colonnes: nc, lignes: nl } = DECOLLAGE
-  const k = base.width / boite.l
-  const w = boite.l / nc
-  const h = boite.h / nl
-  const x0 = boite.cx - boite.l / 2
-  const y0 = boite.cy - boite.h / 2
-  const loin = Math.hypot(boite.l, boite.h)
-  const miettes: Miette[] = []
-  for (let j = 0; j < nl; j++) {
-    for (let i = 0; i < nc; i++) {
-      const x = x0 + (i + 0.5) * w
-      const y = y0 + (j + 0.5) * h
-      const dx = x - trou.x
-      const dy = y - trou.y
-      const d = Math.max(1, Math.hypot(dx, dy))
-      const force = 140 + Math.random() * 260
-      miettes.push({
-        sx: i * w * k,
-        sy: j * h * k,
-        sw: w * k,
-        sh: h * k,
-        x,
-        y,
-        w,
-        h,
-        vx: (dx / d) * force + (Math.random() - 0.5) * 80,
-        vy: (dy / d) * force * 0.6 - 260 - Math.random() * 220,
-        vr: (Math.random() - 0.5) * 9,
-        // LA CASSURE SE PROPAGE DEPUIS LE TROU : les morceaux proches partent d'abord.
-        retard: (d / loin) * 0.22,
-      })
-    }
-  }
-  return miettes
+interface Casse {
+  miettes: Miette[]
+  /** Les fissures : des segments, et quand chacun apparaît (en part de la fissure). */
+  fissures: { a: P; b: P; quand: number }[]
+  boite: BoiteALEcran
+  trou: P
 }
 
-function dessinerMiettes(ctx: CanvasRenderingContext2D, base: HTMLCanvasElement, miettes: Miette[], t: number): void {
-  const g = 1700
-  for (const m of miettes) {
-    const tt = t - m.retard
+/**
+ * LA CARTE EN ÉCLATS, PAS EN CARREAUX. Keko : « on peut améliorer un peu
+ * l'effet de destruction de la carte ? » *Une grille de rectangles se lisait
+ * comme un puzzle qu'on défait*, pas comme une carte qui casse : **une vitre
+ * frappée se fend en toile d'araignée autour du point d'impact**, et le trou
+ * du sticker en est un. Des droites partent du trou, des anneaux les relient,
+ * les deux un peu de travers — et les cases sont les éclats. **Les fissures
+ * qu'on voit d'abord sont exactement leurs bords** : ce qui se fend est ce qui
+ * va partir.
+ */
+function casser(boite: BoiteALEcran, trou: P): Casse {
+  const { rayons: nr, anneaux: na } = DECOLLAGE
+  const x0 = boite.cx - boite.l / 2
+  const y0 = boite.cy - boite.h / 2
+  // JUSQU'AU COIN LE PLUS LOIN : le dernier anneau sort de la carte.
+  const loin = Math.max(
+    ...[
+      [x0, y0],
+      [x0 + boite.l, y0],
+      [x0, y0 + boite.h],
+      [x0 + boite.l, y0 + boite.h],
+    ].map(([x, y]) => Math.hypot(x! - trou.x, y! - trou.y)),
+  )
+  const depart = Math.random() * Math.PI * 2
+  const angles = Array.from({ length: nr }, (_, i) => depart + ((i + 0.5 + (Math.random() - 0.5) * 0.6) / nr) * Math.PI * 2)
+  // LES ANNEAUX SE SERRENT PRÈS DU TROU : petits éclats au centre, grands au bord.
+  const rayonsAnneaux = Array.from({ length: na + 1 }, (_, k) =>
+    k === 0 ? 0 : k === na ? loin * 1.05 : loin * Math.pow(k / na, 1.25) * (0.9 + Math.random() * 0.2),
+  )
+  const sommet: P[][] = rayonsAnneaux.map((r, k) =>
+    angles.map((a) => {
+      const j = k === 0 || k === na ? 0 : (Math.random() - 0.5) * 0.18
+      return { x: trou.x + Math.cos(a + j) * r, y: trou.y + Math.sin(a + j) * r }
+    }),
+  )
+  const miettes: Miette[] = []
+  const fissures: Casse['fissures'] = []
+  for (let k = 0; k < na; k++) {
+    for (let i = 0; i < nr; i++) {
+      const i2 = (i + 1) % nr
+      const poly = k === 0
+        ? [trou, sommet[1]![i]!, sommet[1]![i2]!]
+        : [sommet[k]![i]!, sommet[k + 1]![i]!, sommet[k + 1]![i2]!, sommet[k]![i2]!]
+      const c = {
+        x: poly.reduce((t, p) => t + p.x, 0) / poly.length,
+        y: poly.reduce((t, p) => t + p.y, 0) / poly.length,
+      }
+      // UN ÉCLAT ENTIÈREMENT HORS DE LA CARTE N'EXISTE PAS.
+      if (poly.every((p) => p.x < x0 || p.x > x0 + boite.l) || poly.every((p) => p.y < y0 || p.y > y0 + boite.h)) {
+        continue
+      }
+      const dx = c.x - trou.x
+      const dy = c.y - trou.y
+      const d = Math.max(1, Math.hypot(dx, dy))
+      // PRÈS DU TROU ÇA PART FORT, AU BORD ÇA TOMBE.
+      const force = (520 - 300 * (k / na)) * (0.7 + Math.random() * 0.6)
+      miettes.push({
+        poly,
+        c,
+        vx: (dx / d) * force + (Math.random() - 0.5) * 60,
+        vy: (dy / d) * force * 0.7 - 220 - Math.random() * 180,
+        vr: (Math.random() - 0.5) * 7,
+        vf: (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 2.5),
+        retard: (k / na) * 0.12 + Math.random() * 0.04,
+      })
+    }
+    // LES FISSURES DE CET ANNEAU : les rayons qui le traversent, puis l'anneau lui-même.
+    for (let i = 0; i < nr; i++) {
+      fissures.push({ a: sommet[k]![i]!, b: sommet[k + 1]![i]!, quand: k / na })
+      if (k + 1 < na) fissures.push({ a: sommet[k + 1]![i]!, b: sommet[k + 1]![(i + 1) % nr]!, quand: (k + 0.8) / na })
+    }
+  }
+  return { miettes, fissures, boite, trou }
+}
+
+function cheminPoly(ctx: CanvasRenderingContext2D, poly: P[]): void {
+  ctx.beginPath()
+  ctx.moveTo(poly[0]!.x, poly[0]!.y)
+  for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i]!.x, poly[i]!.y)
+  ctx.closePath()
+}
+
+/** La découpe de la carte, coins arrondis compris (`RAYON_SIMPLE` de la largeur). */
+function cheminCarte(ctx: CanvasRenderingContext2D, b: BoiteALEcran): void {
+  const x = b.cx - b.l / 2
+  const y = b.cy - b.h / 2
+  const r = b.l * 0.055
+  ctx.beginPath()
+  ctx.moveTo(x + r, y)
+  ctx.arcTo(x + b.l, y, x + b.l, y + b.h, r)
+  ctx.arcTo(x + b.l, y + b.h, x, y + b.h, r)
+  ctx.arcTo(x, y + b.h, x, y, r)
+  ctx.arcTo(x, y, x + b.l, y, r)
+  ctx.closePath()
+}
+
+function dessinerMiettes(
+  ctx: CanvasRenderingContext2D,
+  base: HTMLCanvasElement,
+  casse: Casse,
+  t: number,
+  ton: string,
+): void {
+  const { boite: b, trou } = casse
+  const x0 = b.cx - b.l / 2
+  const y0 = b.cy - b.h / 2
+  const F = DECOLLAGE.fissure
+  if (t < F) {
+    // LA FÊLURE : la carte tremble, entière, et les fissures courent depuis le trou.
+    const p = t / F
+    const secousse = 3 * (1 - p * 0.5)
     ctx.save()
-    if (tt <= 0) {
-      // ELLE TREMBLE AVANT DE PARTIR.
-      ctx.translate(m.x + (Math.random() - 0.5) * 2, m.y + (Math.random() - 0.5) * 2)
+    ctx.translate((Math.random() - 0.5) * secousse, (Math.random() - 0.5) * secousse)
+    ctx.drawImage(base, x0, y0, b.l, b.h)
+    cheminCarte(ctx, b)
+    ctx.clip()
+    ctx.lineCap = 'round'
+    for (const f of casse.fissures) {
+      const q = Math.min(1, Math.max(0, (p * 1.3 - f.quand) * 3))
+      if (q <= 0) continue
+      const bx = f.a.x + (f.b.x - f.a.x) * q
+      const by = f.a.y + (f.b.y - f.a.y) * q
+      // UN TRAIT SOMBRE, PUIS SA LUMIÈRE : une fente laisse passer le jour.
+      ctx.strokeStyle = 'rgba(20, 8, 50, 0.55)'
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.moveTo(f.a.x, f.a.y)
+      ctx.lineTo(bx, by)
+      ctx.stroke()
+      ctx.strokeStyle = '#fff6dc'
+      ctx.lineWidth = 1.2
+      ctx.shadowColor = ton
+      ctx.shadowBlur = 8
+      ctx.stroke()
+      ctx.shadowBlur = 0
+    }
+    ctx.restore()
+    return
+  }
+  const g = 1800
+  for (const m of casse.miettes) {
+    const tt = Math.max(0, t - F - m.retard)
+    const alpha = 1 - lisse((tt - DECOLLAGE.miettes * 0.4) / (DECOLLAGE.miettes * 0.45))
+    if (alpha <= 0.01) continue
+    const x = m.c.x + m.vx * tt
+    const y = m.c.y + m.vy * tt + 0.5 * g * tt * tt
+    const culbute = Math.cos(m.vf * tt)
+    ctx.save()
+    ctx.globalAlpha = alpha
+    ctx.translate(x, y)
+    ctx.rotate(m.vr * tt)
+    ctx.scale(culbute, 1)
+    ctx.translate(-m.c.x, -m.c.y)
+    cheminCarte(ctx, b)
+    ctx.clip()
+    cheminPoly(ctx, m.poly)
+    ctx.clip()
+    if (culbute >= 0) {
+      ctx.drawImage(base, x0, y0, b.l, b.h)
+      // ELLE S'ASSOMBRIT EN SE METTANT DE CHANT : la lumière la prend de biais.
+      ctx.fillStyle = `rgba(10, 4, 30, ${0.45 * (1 - culbute)})`
+      ctx.fill()
     } else {
-      ctx.globalAlpha = 1 - lisse((tt - DECOLLAGE.miettes * 0.35) / (DECOLLAGE.miettes * 0.5))
-      ctx.translate(m.x + m.vx * tt, m.y + m.vy * tt + 0.5 * g * tt * tt)
-      ctx.rotate(m.vr * tt)
-      const r = 1 - 0.25 * lisse(tt / DECOLLAGE.miettes)
-      ctx.scale(r, r)
+      // LE DOS DE LA CARTE, le bleu du dos, quand l'éclat se retourne.
+      ctx.fillStyle = `rgb(${Math.round(44 * (0.55 - 0.45 * culbute))}, ${Math.round(96 * (0.55 - 0.45 * culbute))}, ${Math.round(214 * (0.55 - 0.45 * culbute))})`
+      ctx.fill()
     }
-    if (ctx.globalAlpha > 0.01) {
-      ctx.drawImage(base, m.sx, m.sy, m.sw, m.sh, -m.w / 2 - 0.5, -m.h / 2 - 0.5, m.w + 1, m.h + 1)
+    // LE FLASH DE LA CASSE, puis un liseré clair : *un éclat se lit à son bord.*
+    // UNE FOIS POUR TOUTE LA CARTE, à l'instant où elle cède.
+    const flash = 1 - lisse((t - F) / 0.14)
+    if (flash > 0) {
+      ctx.fillStyle = `rgba(255, 250, 235, ${0.75 * flash})`
+      ctx.fill()
     }
+    ctx.strokeStyle = 'rgba(255, 248, 225, 0.85)'
+    ctx.lineWidth = 2.2
+    ctx.stroke()
+    ctx.restore()
+  }
+  // L'ONDE DE CHOC, un anneau qui part du trou.
+  const to = t - F
+  if (to < 0.4) {
+    const k = to / 0.4
+    ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
+    ctx.globalAlpha = 0.8 * (1 - k)
+    ctx.strokeStyle = ton
+    ctx.lineWidth = 10 * (1 - k) + 1
+    ctx.beginPath()
+    ctx.arc(trou.x, trou.y, 30 + Math.max(b.l, b.h) * 0.9 * sortie(k), 0, Math.PI * 2)
+    ctx.stroke()
     ctx.restore()
   }
 }
@@ -290,13 +436,25 @@ interface Etincelle {
   vy: number
   vie: number
   creme: boolean
+  /** Un petit éclat triangulaire qui tourne, plutôt qu'un point de lumière. */
+  debris: boolean
+  a: number
 }
 
 function gerbe(trou: P, n: number): Etincelle[] {
   return Array.from({ length: n }, () => {
     const a = Math.random() * Math.PI * 2
     const v = 160 + Math.random() * 520
-    return { x: trou.x, y: trou.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, vie: 0.45 + Math.random() * 0.5, creme: Math.random() < 0.5 }
+    return {
+      x: trou.x,
+      y: trou.y,
+      vx: Math.cos(a) * v,
+      vy: Math.sin(a) * v - 120,
+      vie: 0.45 + Math.random() * 0.5,
+      creme: Math.random() < 0.5,
+      debris: Math.random() < 0.4,
+      a: Math.random() * Math.PI * 2,
+    }
   })
 }
 
@@ -313,7 +471,14 @@ function dessinerEtincelles(ctx: CanvasRenderingContext2D, e: Etincelle[], t: nu
     ctx.globalAlpha = a
     ctx.fillStyle = p.creme ? '#fff6dc' : ton
     ctx.beginPath()
-    ctx.arc(x, y, r, 0, Math.PI * 2)
+    if (p.debris) {
+      const q = p.a + t * 14
+      const R = r * 1.8
+      ctx.moveTo(x + Math.cos(q) * R, y + Math.sin(q) * R)
+      ctx.lineTo(x + Math.cos(q + 2.3) * R * 0.7, y + Math.sin(q + 2.3) * R * 0.7)
+      ctx.lineTo(x + Math.cos(q + 4.1) * R, y + Math.sin(q + 4.1) * R)
+      ctx.closePath()
+    } else ctx.arc(x, y, r, 0, Math.PI * 2)
     ctx.fill()
   }
   ctx.restore()
@@ -426,7 +591,7 @@ export function Decollage({
     // LE STICKER GAGNÉ SE MONTRE AU-DESSUS DE LA CARTE, un peu plus haut que son trou.
     const haut: P = { x: b.cx, y: b.cy - b.h * 0.1 }
     const ton = AMBIANCE[COULEUR[carte.rarete]] ?? '#ffffff'
-    let miettes: Miette[] | null = null
+    let miettes: Casse | null = null
     let etincelles: Etincelle[] = []
     let tCasse = 0
     // LA POSE DU STICKER QUAND IL EST ENTIÈREMENT LEVÉ : son reflet, en centre et angle.
@@ -458,8 +623,9 @@ export function Decollage({
       if (miettes === null) ctx.drawImage(pret.base, x0, y0, b.l, b.h)
       else {
         const tc = (maintenant - tCasse) / 1000
-        dessinerMiettes(ctx, pret.base, miettes, tc)
-        dessinerEtincelles(ctx, etincelles, tc, ton)
+        dessinerMiettes(ctx, pret.base, miettes, tc, ton)
+        // LES ÉTINCELLES PARTENT QUAND ELLE CASSE, pas quand elle se fêle.
+        if (tc > DECOLLAGE.fissure) dessinerEtincelles(ctx, etincelles, tc - DECOLLAGE.fissure, ton)
       }
       if (ph === 'tirer' || ph === 'recolle' || ph === 'arrache') {
         let len: number
@@ -500,8 +666,8 @@ export function Decollage({
           a = Math.atan2(Math.sin(a), Math.cos(a))
           pose = { c: { x: centre.x + k * e.u.x, y: centre.y + k * e.u.y }, a }
           // LA CARTE SE CASSE AU MOMENT OÙ LE STICKER LA QUITTE.
-          miettes = casser(pret.base, b, centre)
-          etincelles = gerbe(centre, 46)
+          miettes = casser(b, centre)
+          etincelles = gerbe(centre, 70)
           tCasse = maintenant
           jouerSon(SON_POSER, 0.9, 0, 0.7)
           passer('retourne')

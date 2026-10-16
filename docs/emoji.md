@@ -6393,3 +6393,28 @@ bonus**, et **on décolle au doigt** — le geste vaut confirmation.
   décider.
 
 - **Correctif (16/10/2026)** : une tape sur un sticker de l'album le vidait. Keko : « il disparaît du grid ». Le saut était relancé en remontant l'élément par une clé, donc sa toile repartait neuve et vide ; il se joue maintenant par `animate` sur l'élément, sans le remonter.
+
+### La casse de la carte, refaite (16/10/2026)
+
+Keko : « on peut améliorer un peu l'effet de destruction de la carte ? » *La
+grille de 6 × 8 rectangles se lisait comme un puzzle qu'on défait*, pas comme
+une carte qui casse.
+
+- **Une toile d'araignée autour du trou** : 11 droites partent du centre du
+  sticker, 4 anneaux les relient (serrés près du trou, larges au bord), un peu
+  de travers ; **les éclats sont les cases**, polygones découpés dans la carte
+  (coins arrondis compris).
+- **La fêlure d'abord** (`fissure`, 0,22 s) : la carte entière tremble et les
+  fissures courent depuis le trou (un trait sombre et sa lumière, teintée du
+  cran). *Ce sont exactement les bords des éclats* : ce qui se fend est ce qui
+  va partir.
+- **Puis elle cède** : un flash crème de toute la carte, une onde de choc de la
+  couleur du cran, les éclats proches partent fort et les lointains tombent ;
+  chacun tourne et **culbute** (un écrasement en largeur), s'assombrit de
+  chant et montre le bleu du dos quand il se retourne ; un liseré clair les
+  détache. Les étincelles partent à la casse, plus nombreuses (70), avec des
+  petits éclats qui tournent.
+- Premier rendu vu : les éclats en attente restaient blancs (le flash comptait
+  par éclat) et ils se retournaient trop vite, si bien qu'on voyait surtout du
+  bleu ; corrigé (flash commun, culbute de 1,5 à 4 rad/s). Chiffres de moi, à
+  rejuger ; pas vu sur téléphone.
