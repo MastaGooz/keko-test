@@ -839,3 +839,224 @@
   font-weight: 800;
   color: #ffd45e;
 }
+
+/* ------------------------------------------------------------ le décollage */
+
+/* DÉCOLLER LE STICKER : le bouton ouvre le geste, c'est le geste qui décide. */
+.decoller {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 3rem;
+  margin-top: 0.8rem;
+  padding: 0 1.3rem;
+  border: 0;
+  border-radius: 999px;
+  background: #fffaf0;
+  color: #2a1b63;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  box-shadow: 0 0.3rem 0 #c9b9f2;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.decoller:active {
+  transform: translateY(0.15rem);
+  box-shadow: 0 0.15rem 0 #c9b9f2;
+}
+
+.decoller:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* AU PAQUET, sous la carte qu'on regarde. */
+.decoller-paquet {
+  position: fixed;
+  left: 50%;
+  bottom: calc(4vh + env(safe-area-inset-bottom));
+  z-index: 3;
+  margin: 0;
+  transform: translateX(-50%);
+  animation: carte-ouverte-entre 0.3s ease-out;
+}
+
+.decoller-paquet:active {
+  transform: translate(-50%, 0.15rem);
+}
+
+.carte-ouverte-cachee {
+  visibility: hidden;
+}
+
+/* PENDANT LE DÉCOLLAGE, LA BARRE ET LA JAUGE S'EFFACENT : la barre revient
+   quand le sticker s'envole vers elle. */
+.en-decollage .nav,
+.en-decollage .reserve-place {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* PAR-DESSUS TOUT, et le doigt est à lui. */
+.decollage {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.decollage-prepa {
+  pointer-events: none;
+}
+
+.decollage-toile {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.decollage-invite,
+.decollage-gagne {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  color: #fffaf0;
+  text-shadow: 0 0.12rem 0.5rem rgba(14, 6, 40, 0.85);
+}
+
+.decollage-invite {
+  top: calc(max(0.8rem, env(safe-area-inset-top)) + 0.8rem);
+  font-weight: 700;
+  font-size: clamp(1rem, 2.6vh, 1.3rem);
+  animation: decollage-respire 1.6s ease-in-out infinite;
+}
+
+@keyframes decollage-respire {
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.decollage-gagne {
+  font-weight: 800;
+  font-size: clamp(1.4rem, 4vh, 2rem);
+  color: #ffd45e;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  animation: decollage-gagne 0.35s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+@keyframes decollage-gagne {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+.decollage-annuler {
+  position: fixed;
+  left: 50%;
+  bottom: calc(1.6rem + env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  min-height: 3rem;
+  padding: 0 1.6rem;
+  border: 0.15rem solid rgba(255, 250, 240, 0.5);
+  border-radius: 999px;
+  background: rgba(14, 6, 40, 0.45);
+  color: #fffaf0;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.decollage-annuler:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ------------------------------------------------------------ l'album */
+
+.album-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr));
+  gap: 0.9rem 0.6rem;
+  max-width: 60rem;
+  margin: 0 auto;
+}
+
+.album-case {
+  position: relative;
+  aspect-ratio: 1;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 1rem;
+  background: rgba(255, 250, 240, 0.06);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.album-sticker {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* UNE TAPE LE FAIT SAUTER, rien de plus : un sticker se regarde. */
+.album-saute {
+  animation: album-saute 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+@keyframes album-saute {
+  30% {
+    transform: scale(1.18) rotate(-6deg);
+  }
+  60% {
+    transform: scale(0.96) rotate(3deg);
+  }
+}
+
+.album-toile {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.album-pret .album-toile {
+  opacity: 1;
+}
+
+.album-attente {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Noto Color Emoji', sans-serif;
+  font-size: 2.2rem;
+  opacity: 0.5;
+}
+
+#app .album canvas.album-toile {
+  touch-action: pan-y;
+}

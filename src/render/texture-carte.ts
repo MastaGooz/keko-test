@@ -247,6 +247,12 @@ export type CarteAPeindre = {
    */
   emojiPerso?: string
   /**
+   * LA CARTE SANS SON STICKER : le décor, les rayons, la plaque, et un trou
+   * nulle part — ce qui reste sous l'emoji qu'on décolle (voir `Decollage`).
+   * *Jamais mis en cache partagé* : seul le décollage la peint.
+   */
+  sansSujet?: boolean
+  /**
    * L'IDENTIFIANT DE L'EMOJI ANIME, s'il en a un -- les points de code separes
    * par des tirets.
    *
@@ -2539,6 +2545,19 @@ function couvrir(
   h: number,
   plafond?: number,
 ): void {
+  const r = placeDansCouvrir(image, x, y, l, h, plafond)
+  ctx.drawImage(image, r.x, r.y, r.l, r.h)
+}
+
+/** Où `couvrir` pose l'image : *un seul calcul pour le dessin et pour qui veut le retrouver.* */
+function placeDansCouvrir(
+  image: { width: number; height: number },
+  x: number,
+  y: number,
+  l: number,
+  h: number,
+  plafond?: number,
+): { x: number; y: number; l: number; h: number } {
   const pleine = Math.max(l / image.width, h / image.height)
   const rentre = Math.min(l / image.width, h / image.height)
   const echelle = plafond === undefined ? pleine : Math.min(pleine, rentre / (1 - plafond))
@@ -2548,7 +2567,32 @@ function couvrir(
   // déborde : *ce qui sort de la carte sort par le bas, là où le texte est*.
   // Sans plafond, le `cover` remplit exactement et il n'y a rien à décider —
   // c'est le décor, et l'absence du paramètre dit « ne rien changer ici ».
-  ctx.drawImage(image, x + (l - il) / 2, plafond === undefined ? y + (h - ih) / 2 : y, il, ih)
+  return { x: x + (l - il) / 2, y: plafond === undefined ? y + (h - ih) / 2 : y, l: il, h: ih }
+}
+
+/**
+ * LE STICKER D'UNE CARTE PEINTE, et sa place sur elle — en pixels de la toile.
+ * C'est le décollage qui le lit : *il reprend l'emoji exactement là où la
+ * peinture l'a posé*, au lieu de le recalculer.
+ */
+export interface SujetPeint {
+  image: HTMLImageElement | HTMLCanvasElement
+  x: number
+  y: number
+  l: number
+  h: number
+}
+const SUJETS = new WeakMap<HTMLCanvasElement, SujetPeint>()
+export function sujetDe(canvas: HTMLCanvasElement): SujetPeint | undefined {
+  return SUJETS.get(canvas)
+}
+
+/**
+ * LE STICKER D'UN EMOJI, seul — celui de la carte, cerne et ombre compris. Pour
+ * l'album : *un sticker gagné est le même que celui qu'on a décollé.*
+ */
+export function stickerDe(emoji: string, perso?: string): Promise<HTMLImageElement | HTMLCanvasElement | null> {
+  return illustration('', undefined, undefined, undefined, emoji, undefined, !SANS_STICKER, perso)
 }
 
 /**
@@ -3511,7 +3555,7 @@ export async function peindreCarte(
   if (largeur !== LARGE) ctx.scale(largeur / LARGE, largeur / LARGE)
 
   const [image, decor, symbole] = await Promise.all([
-    illustration(
+    carte.sansSujet === true ? Promise.resolve(null) : illustration(
       carte.nom,
       carte.rarete,
       carte.matiere,
@@ -3831,6 +3875,10 @@ export async function peindreCarte(
 
   if (image !== null) {
     couvrir(ctx, image, marge, aY, LARGE - marge * 2, aH, rognage)
+    // OÙ L'EMOJI EST POSÉ, en pixels de la toile : le décollage le reprend là.
+    const r = placeDansCouvrir(image, marge, aY, LARGE - marge * 2, aH, rognage)
+    const k = largeur / LARGE
+    SUJETS.set(canvas, { image, x: r.x * k, y: r.y * k, l: r.l * k, h: r.h * k })
   }
   // LE MASQUE DU SUJET, pour que les rayons clairs brillent SANS l'emoji
   // posé dessus — voir `masqueDuSujet`. L'ANIMÉ (`toile`) le prend aussi, et

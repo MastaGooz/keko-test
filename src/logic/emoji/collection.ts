@@ -29,16 +29,38 @@ export interface Possession {
   nouvelle: boolean
 }
 
+/**
+ * LES STICKERS D'UN EMOJI — ce qu'on a gagné en détruisant ses cartes. Keko :
+ * « l'option de la détruire pour gagner son sticker ». *Un sticker garde le
+ * bonus de la carte d'où il vient* : une holo donne un sticker holo, une animée
+ * un sticker animé.
+ */
+export interface Stickers {
+  n: number
+  holo: number
+  anime: number
+  /** Quand le dernier est arrivé : l'album se trie par là. */
+  dernier: number
+}
+
+/** UN EXEMPLAIRE PRÉCIS : celui qu'on détruit porte ses bonus avec lui. */
+export interface Exemplaire {
+  holo: boolean
+  anime: boolean
+}
+
 export interface Collection {
   readonly version: 1
   /** Le compteur d'arrivées : chaque carte nouvelle prend le suivant. */
   readonly arrivees: number
   readonly paquets: number
   readonly cartes: Readonly<Record<string, Possession>>
+  /** L'album : ajouté après coup, donc absent d'une collection d'avant (voir `lireCollection`). */
+  readonly stickers: Readonly<Record<string, Stickers>>
 }
 
 export function collectionVide(): Collection {
-  return { version: 1, arrivees: 0, paquets: 0, cartes: {} }
+  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {} }
 }
 
 /** Ajoute un paquet ouvert. Rend une collection NEUVE : l'ancienne ne bouge pas. */
@@ -75,7 +97,56 @@ export function ajouterPaquet(
       }
     }
   }
-  return { version: 1, arrivees, paquets: col.paquets + 1, cartes }
+  return { ...col, arrivees, paquets: col.paquets + 1, cartes }
+}
+
+/**
+ * L'EXEMPLAIRE QU'ON DÉTRUIT DEPUIS LA COLLECTION : **le simple d'abord**, puis
+ * un holo, puis un animé. *On ne brûle pas le plus beau quand un ordinaire
+ * fait l'affaire.* Les comptes ne disent pas si un même exemplaire est holo ET
+ * animé ; on les suppose séparés, ce qui est le cas de presque tous.
+ */
+export function exemplaireADetruire(p: Possession): Exemplaire {
+  if (p.n > p.holo + p.anime) return { holo: false, anime: false }
+  if (p.holo > 0) return { holo: true, anime: false }
+  return { holo: false, anime: p.anime > 0 }
+}
+
+/**
+ * DÉTRUIT UN EXEMPLAIRE ET GAGNE SON STICKER. *Même le dernier* (Keko : « toutes,
+ * même la dernière ») : la carte quitte alors la collection, et le sticker,
+ * lui, reste dans l'album.
+ */
+export function detruire(col: Collection, id: string, ex: Exemplaire, quand: number): Collection {
+  const p = col.cartes[id]
+  if (p === undefined) return col
+  const cartes: Record<string, Possession> = { ...col.cartes }
+  const n = p.n - 1
+  if (n <= 0) delete cartes[id]
+  else {
+    cartes[id] = {
+      ...p,
+      n,
+      holo: Math.min(n, Math.max(0, p.holo - (ex.holo ? 1 : 0))),
+      anime: Math.min(n, Math.max(0, p.anime - (ex.anime ? 1 : 0))),
+    }
+  }
+  const s = col.stickers[id] ?? { n: 0, holo: 0, anime: 0, dernier: quand }
+  // LE BONUS NE PASSE AU STICKER QUE SI LA CARTE L'AVAIT : un compte abîmé ne
+  // fabrique pas un holo.
+  const holo = ex.holo && p.holo > 0
+  const anime = ex.anime && p.anime > 0
+  const stickers = {
+    ...col.stickers,
+    [id]: { n: s.n + 1, holo: s.holo + (holo ? 1 : 0), anime: s.anime + (anime ? 1 : 0), dernier: quand },
+  }
+  return { ...col, cartes, stickers }
+}
+
+export function nombreDeStickers(col: Collection): number {
+  let n = 0
+  for (const s of Object.values(col.stickers)) n += s.n
+  return n
 }
 
 /**
@@ -150,10 +221,24 @@ export function lireCollection(brut: unknown): Collection {
     }
     plusGrandOrdre = Math.max(plusGrandOrdre, ordre)
   }
+  // L'ALBUM, MÊME RÈGLE : un sticker mal formé est écarté, pas l'album.
+  const stickers: Record<string, Stickers> = {}
+  const brutStickers = typeof o.stickers === 'object' && o.stickers !== null ? o.stickers : {}
+  for (const [id, v] of Object.entries(brutStickers as Record<string, unknown>)) {
+    if (!/^[0-9a-f]+(-[0-9a-f]+)*$/.test(id) || typeof v !== 'object' || v === null) continue
+    const s = v as Record<string, unknown>
+    const n = entier(s.n, 1)
+    const holo = entier(s.holo)
+    const anime = entier(s.anime)
+    const dernier = entier(s.dernier)
+    if (n === null || holo === null || anime === null || dernier === null) continue
+    stickers[id] = { n, holo: Math.min(holo, n), anime: Math.min(anime, n), dernier }
+  }
   return {
     version: 1,
     arrivees: Math.max(entier(o.arrivees) ?? 0, plusGrandOrdre),
     paquets: entier(o.paquets) ?? 0,
     cartes,
+    stickers,
   }
 }

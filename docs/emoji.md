@@ -6340,3 +6340,54 @@ et le paramètre est retiré de l'adresse. Vérifié : 958, puis 958.
 
 `&debloquer=tout` : toute la collection — Keko : « ok maintenant toute la
 collection ». Même règle, la cible est le catalogue entier.
+
+### Détruire une carte pour gagner son sticker (16/10/2026)
+
+Keko : « on peut avoir l'option quand on dévoile une carte à l'ouverture de
+booster OU quand on la zoome dans la collection de la détruire pour gagner son
+sticker ? Une animation où l'emoji et son outline se décollent comme un sticker
+et la carte se détruit, tandis que le sticker est gagné. » Tranché avec lui :
+**une page « Stickers »** (l'album, à droite de la barre, à la place du compte),
+**toutes les cartes se détruisent, même la dernière**, **le sticker garde le
+bonus**, et **on décolle au doigt** — le geste vaut confirmation.
+
+- **Où** : un bouton « Décoller le sticker » sous la carte qu'on regarde au
+  défilé (après le flip), sous la carte zoomée au bilan, et dans la carte
+  ouverte de la collection. Il ouvre le geste ; c'est le geste qui décide.
+- **La scène est en 2D, posée exactement sur la carte 3D** (`Decollage.tsx`),
+  qui disparaît dessous dès que la peinture est prête. La carte est peinte
+  deux fois : entière, pour savoir où est le sticker (`sujetDe`, la place que
+  `couvrir` lui a donnée), et **sans lui** (`sansSujet`) — c'est ce qui reste
+  quand il est parti. La holo garde ses paillettes ; le sticker holo garde son
+  cerne arc-en-ciel (`cerneArcEnCiel` généralisé à une zone).
+- **Le pli** : on tire dans un sens, le sticker se lève par le bord opposé,
+  replié le long d'une droite : la partie levée est son reflet (une seule
+  transformation de toile) et montre son DOS, la silhouette couleur papier,
+  sans l'ombre portée. La ligne avance à 0,9 du doigt ; au lâcher, levé à 40 %
+  le long du geste il part, sinon il se recolle ; à 85 % il part sans attendre.
+  *Le seuil se compte le long du geste, pas en surface* : tiré par un coin, un
+  carré à moitié parcouru n'a levé qu'un quart de sa surface, et le premier
+  essai (en surface, à 50 %) ne partait jamais. Avant qu'on touche, le coin
+  haut-droit se soulève tout seul, puis se recolle : c'est l'invite.
+- **Le son** : la boucle `cracks.aac` du sachet, dosée par la vitesse du doigt,
+  née dans le `pointerdown` ; `Equip` quand il part.
+- **La suite** : il finit de se lever, se retourne (le dos, puis la face) en
+  montant au-dessus de la carte, grossit (×1,3) avec la lueur du cran et
+  « Sticker gagné ! », puis s'envole vers le bouton « Stickers » — la barre et
+  la jauge s'effacent pendant le geste et reviennent pour l'envol. **La carte
+  casse au moment où le sticker la quitte** : 6 × 8 morceaux qui partent du
+  trou, la cassure se propageant depuis lui, plus une gerbe crème et couleur
+  du cran.
+- **Au paquet**, la carte détruite ne revient plus : au défilé on découvre la
+  suivante (déjà derrière), au bilan les restantes se rangent sur leur nombre.
+  L'exemplaire détruit est celui du tirage, avec ses bonus. **Depuis la
+  collection, le simple part d'abord**, puis un holo, puis un animé
+  (`exemplaireADetruire`) ; la carte ouverte se referme ensuite.
+- **L'album** (`Stickers.tsx`) : `collection.stickers` (n, holo, animé, date du
+  dernier), relu sans confiance comme le reste ; une collection d'avant se
+  relit avec un album vide. Tri récents / A → Z / plus rares, ×n, pastilles,
+  les animés jouent à l'écran, une tape fait sauter le sticker.
+- Vu au navigateur (390 × 844, gestes simulés) : le pli, la casse, l'album, le
+  bilan à quatre. **Pas vu au doigt sur téléphone.** Tous les chiffres
+  (`DECOLLAGE`) sont de moi, à rejuger — et ce qu'on FAIT des stickers reste à
+  décider.

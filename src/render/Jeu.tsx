@@ -23,19 +23,28 @@ import '../ui/collection.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
-import { ajouterPaquet, debloquer, nombreDeNouvelles, toutVu, type Collection } from '../logic/emoji/collection.ts'
+import {
+  ajouterPaquet,
+  debloquer,
+  detruire,
+  nombreDeNouvelles,
+  toutVu,
+  type Collection,
+  type Exemplaire,
+} from '../logic/emoji/collection.ts'
 import { createRng } from '../logic/rng.ts'
 import { chargerCollection, chargerReserve, sauverCollection, sauverReserve } from '../ui/collection.ts'
 import { RESERVE, prendreUnPaquet, prochainDans, reserveAJour, type Reserve } from '../logic/emoji/reserve.ts'
 import { chargerEmojis } from '../ui/emoji.ts'
 import { Paquet3D } from './Paquet3D.tsx'
 import { PageCollection } from './Collection.tsx'
+import { PageStickers } from './Stickers.tsx'
 import { SON_CLIC_POP, amorcerLeSon, jouerSon, precharger, reveillerLeSon } from './sons.ts'
 import { FondAnime } from './FondAnime.tsx'
 import { demanderLInclinaison } from './inclinaison.ts'
 import { toileDuTitre } from './texture-carte.ts'
 
-type Page = 'booster' | 'collection'
+type Page = 'booster' | 'collection' | 'stickers'
 
 /** `&illimite` : la réserve ne se vide jamais — pour tester sans attendre. */
 const ILLIMITE = new URLSearchParams(location.search).has('illimite')
@@ -241,6 +250,12 @@ export function Jeu(): React.ReactElement {
     [changer],
   )
 
+  /** UNE CARTE DÉTRUITE POUR SON STICKER : voir `Decollage`. */
+  const detruireCarte = useCallback(
+    (id: string, ex: Exemplaire) => changer((c) => detruire(c, id, ex, Date.now())),
+    [changer],
+  )
+
   function aller(vers: Page): void {
     if (vers === page) return
     // EN QUITTANT LA COLLECTION, TOUT A ÉTÉ VU : la pastille s'éteint, et les
@@ -253,8 +268,7 @@ export function Jeu(): React.ReactElement {
   }
 
   const nouvelles = nombreDeNouvelles(collection)
-  const reunies = catalogue === null ? 0 : catalogue.filter((c) => collection.cartes[c.id] !== undefined).length
-  const visible = !accueil && (page === 'collection' || calme)
+  const visible = !accueil && (page !== 'booster' || calme)
 
   return (
     <>
@@ -273,6 +287,7 @@ export function Jeu(): React.ReactElement {
             onPaquetOuvert={ajouter}
             onCalme={setCalme}
             onSachetEnAttente={setSachetAttend}
+            onDetruire={detruireCarte}
             sansPrise
             peutContinuer={dispo > 0}
           />
@@ -291,11 +306,14 @@ export function Jeu(): React.ReactElement {
             <p className="reserve-bilan">Prochain paquet dans {dans === null ? '…' : minuteur(dans)}</p>
           )}
         </>
+      ) : page === 'stickers' ? (
+        <PageStickers catalogue={catalogue} collection={collection} onCollection={() => aller('collection')} />
       ) : (
         <PageCollection
           catalogue={catalogue}
           collection={collection}
           onOuvrirUnPaquet={() => aller('booster')}
+          onDetruire={detruireCarte}
         />
       )}
       {!accueil && page === 'booster' && !attente && (
@@ -317,9 +335,18 @@ export function Jeu(): React.ReactElement {
             {nouvelles > 0 && <span className="nav-pastille">{nouvelles}</span>}
           </button>
           <span className="nav-place" aria-hidden />
-          <button type="button" className="nav-moitie nav-droite" onClick={() => aller('collection')}>
-            <b>{reunies}</b>
-            <span className="nav-sur">/ {catalogue?.length ?? '…'}</span>
+          {/* LES STICKERS À DROITE, à la place du compte « réunis / 1 915 » —
+              qui reste en tête de la collection. *Le sticker qu'on décolle
+              s'envole vers ce bouton* (voir `Decollage`). */}
+          <button
+            type="button"
+            className={`nav-moitie nav-droite nav-stickers${page === 'stickers' ? ' nav-active' : ''}`}
+            onClick={() => aller('stickers')}
+          >
+            Stickers
+            <span className="nav-icone" aria-hidden>
+              🏷️
+            </span>
           </button>
         </div>
         <button

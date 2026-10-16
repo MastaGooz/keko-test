@@ -1,0 +1,629 @@
+/**
+ * LE DÉCOLLAGE — on tire le sticker hors de la carte, la carte se désagrège, et
+ * le sticker part dans l'album.
+ *
+ * Keko : « je voudrais une animation où l'emoji et son outline se décollent
+ * comme un sticker et la carte se détruit, tandis que le sticker est gagné ».
+ * Tranché avec lui : **le geste vaut confirmation** (on tire le sticker au
+ * doigt, comme on déchire le sachet), **toutes les cartes se détruisent, même
+ * la dernière**, et **le sticker garde le bonus** de l'exemplaire.
+ *
+ * ***C'EST UNE SCÈNE 2D POSÉE EXACTEMENT SUR LA CARTE 3D***, qui disparaît
+ * dessous dès que la peinture est prête : *un sticker qui se plie est une
+ * affaire de découpe et de reflet*, et la toile le fait en trois `drawImage`
+ * là où le nuanceur demanderait une géométrie qui se replie. La carte peinte
+ * est la même que la vignette (`peinte`) : la même holo, les mêmes paillettes.
+ *
+ * **LE PLI** : on tire dans un sens, et le sticker se lève par le bord
+ * opposé, replié sur lui-même le long d'une ligne droite — la partie levée est
+ * son reflet par rapport à cette ligne, et c'est son DOS qu'on voit (crème,
+ * sans dessin). *La ligne avance presque aussi vite que le doigt* : le bord levé
+ * passe devant lui, comme un coin qu'on retourne en le tirant.
+ */
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import type { CarteEmoji } from '../logic/emoji/types.ts'
+import type { Exemplaire } from '../logic/emoji/collection.ts'
+import { AMBIANCE, sujetDe, tailleQuIlFaut } from './texture-carte.ts'
+import { cerneArcEnCiel, peinte } from './peinture-vignette.ts'
+import { COULEUR } from './carte-emoji.ts'
+import { SATURATION_APLAT } from './Carte3D.tsx'
+import { SON_CRAQUE, SON_EQUIPER, SON_POSER, SON_PRENDRE, jouerEnBoucle, jouerSon, type SonEnBoucle } from './sons.ts'
+
+/** La boîte de la carte à l'écran, en pixels CSS : son centre et sa taille. */
+export interface BoiteALEcran {
+  cx: number
+  cy: number
+  l: number
+  h: number
+}
+
+/** LES CHIFFRES DU GESTE ET DE LA MISE EN SCÈNE — de moi, à rejuger par Keko. */
+export const DECOLLAGE = {
+  /** La ligne du pli avance de cette part du doigt. */
+  avance: 0.9,
+  /** Levé à cette part au lâcher, le sticker part ; en dessous, il se recolle. */
+  seuil: 0.4,
+  /** Levé à cette part pendant le geste, il part sans attendre le lâcher. */
+  seuilDirect: 0.85,
+  /** Les durées, en secondes. */
+  recolle: 0.22,
+  arrache: 0.16,
+  retourne: 0.42,
+  tient: 0.7,
+  envol: 0.55,
+  miettes: 1.15,
+  /** La carte se casse en tant de morceaux. */
+  colonnes: 6,
+  lignes: 8,
+  /** Le sticker gagné grandit de tant au-dessus de la carte. */
+  grossi: 1.3,
+  /** Le coin qui se soulève tout seul pour dire où tirer, en part du sticker. */
+  invite: 0.16,
+} as const
+
+type P = { x: number; y: number }
+type Phase = 'prepa' | 'tirer' | 'recolle' | 'arrache' | 'retourne' | 'tient' | 'envol' | 'fin'
+
+interface Pret {
+  /** La carte sans son sticker. */
+  base: HTMLCanvasElement
+  face: HTMLCanvasElement
+  dos: HTMLCanvasElement
+  /** La place du sticker à l'écran (sa toile entière, marge comprise). */
+  s: { x: number; y: number; l: number; h: number }
+  /** Des points pris dans le sticker opaque, à l'écran : ce qui est levé se compte dessus. */
+  points: Float32Array
+}
+
+const lisse = (t: number): number => {
+  const x = Math.min(1, Math.max(0, t))
+  return x * x * (3 - 2 * x)
+}
+const sortie = (t: number): number => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3)
+const entree = (t: number): number => Math.pow(Math.min(1, Math.max(0, t)), 2.2)
+
+/** L'opacité d'un pixel du sticker, sans son ombre portée (plus pâle que le cerne). */
+const sansOmbre = (a: number): number => Math.min(255, Math.max(0, ((a - 120) / 60) * 255))
+
+async function preparer(carte: CarteEmoji, ex: Exemplaire, boite: BoiteALEcran): Promise<Pret | null> {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2)
+  const largeur = tailleQuIlFaut(boite.l * dpr)
+  const [pleine, base] = await Promise.all([
+    peinte(carte, largeur, ex.holo),
+    peinte(carte, largeur, ex.holo, true, ex.anime),
+  ])
+  const sujet = sujetDe(pleine)
+  if (sujet === undefined) return null
+  const k = boite.l / pleine.width
+  const s = {
+    x: boite.cx - boite.l / 2 + sujet.x * k,
+    y: boite.cy - boite.h / 2 + sujet.y * k,
+    l: sujet.l * k,
+    h: sujet.h * k,
+  }
+  // LA FACE : une copie — le sticker peint est partagé par toutes les cartes du
+  // même emoji, et la holo le repeint en arc-en-ciel.
+  const lf = sujet.image.width
+  const hf = sujet.image.height
+  const face = document.createElement('canvas')
+  face.width = lf
+  face.height = hf
+  const fc = face.getContext('2d', { willReadFrequently: true })
+  if (fc === null) return null
+  fc.drawImage(sujet.image, 0, 0)
+  if (ex.holo) cerneArcEnCiel(face, { x: 0, y: 0, l: 1, h: 1 })
+  // LE DOS : la silhouette du sticker, sans son ombre, couleur papier.
+  const dos = document.createElement('canvas')
+  dos.width = lf
+  dos.height = hf
+  const dc = dos.getContext('2d')
+  if (dc === null) return null
+  const pixels = fc.getImageData(0, 0, lf, hf)
+  const silhouette = dc.createImageData(lf, hf)
+  for (let i = 3; i < pixels.data.length; i += 4) silhouette.data[i] = sansOmbre(pixels.data[i]!)
+  dc.putImageData(silhouette, 0, 0)
+  dc.globalCompositeOperation = 'source-in'
+  const papier = dc.createLinearGradient(0, 0, lf, hf)
+  papier.addColorStop(0, '#fbf7ee')
+  papier.addColorStop(0.55, '#ece4d4')
+  papier.addColorStop(1, '#d6ccb9')
+  dc.fillStyle = papier
+  dc.fillRect(0, 0, lf, hf)
+  // LES POINTS : une grille de 40, gardée où le sticker est opaque.
+  const N = 40
+  const pts: number[] = []
+  for (let j = 0; j < N; j++) {
+    for (let i = 0; i < N; i++) {
+      const px = Math.floor(((i + 0.5) / N) * lf)
+      const py = Math.floor(((j + 0.5) / N) * hf)
+      if (sansOmbre(pixels.data[(py * lf + px) * 4 + 3]!) < 128) continue
+      pts.push(s.x + ((i + 0.5) / N) * s.l, s.y + ((j + 0.5) / N) * s.h)
+    }
+  }
+  if (pts.length === 0) return null
+  return { base, face, dos, s, points: new Float32Array(pts) }
+}
+
+/** Les bornes du sticker le long de `u`, et la part levée quand la ligne est à `m`. */
+function bornes(points: Float32Array, u: P): { min: number; max: number } {
+  let min = Infinity
+  let max = -Infinity
+  for (let i = 0; i < points.length; i += 2) {
+    const p = points[i]! * u.x + points[i + 1]! * u.y
+    if (p < min) min = p
+    if (p > max) max = p
+  }
+  return { min, max }
+}
+/**
+ * OÙ EN EST LE PLI, de 0 (rien de levé) à 1 (tout) — *le long du geste*, pas en
+ * surface : tiré par un coin, un carré à moitié parcouru n'a levé qu'un quart
+ * de sa surface, et le seuil semblait ne jamais venir.
+ */
+function partLevee(points: Float32Array, u: P, m: number): number {
+  const b = bornes(points, u)
+  return Math.min(1, Math.max(0, (m - b.min) / Math.max(1, b.max - b.min)))
+}
+
+/** Le demi-plan où `côté·(p·u − m) > 0`, en chemin. */
+function demiPlan(ctx: CanvasRenderingContext2D, u: P, m: number, cote: 1 | -1): void {
+  const W = 1e4
+  const lx = u.x * m
+  const ly = u.y * m
+  const vx = -u.y
+  const vy = u.x
+  ctx.beginPath()
+  ctx.moveTo(lx + vx * W, ly + vy * W)
+  ctx.lineTo(lx - vx * W, ly - vy * W)
+  ctx.lineTo(lx - vx * W + u.x * W * cote, ly - vy * W + u.y * W * cote)
+  ctx.lineTo(lx + vx * W + u.x * W * cote, ly + vy * W + u.y * W * cote)
+  ctx.closePath()
+}
+
+/**
+ * LE STICKER À MOITIÉ LEVÉ : ce qui tient encore est la face, découpée au pli ;
+ * ce qui est levé est le DOS, reflété par-dessus la ligne, avec son ombre.
+ */
+function dessinerPli(ctx: CanvasRenderingContext2D, pret: Pret, u: P, m: number, dpr: number): void {
+  const { s } = pret
+  ctx.save()
+  demiPlan(ctx, u, m, 1)
+  ctx.clip()
+  ctx.drawImage(pret.face, s.x, s.y, s.l, s.h)
+  ctx.restore()
+  ctx.save()
+  // LE REFLET PAR RAPPORT À LA LIGNE p·u = m : p' = p + 2(m − p·u)u.
+  ctx.transform(1 - 2 * u.x * u.x, -2 * u.x * u.y, -2 * u.x * u.y, 1 - 2 * u.y * u.y, 2 * m * u.x, 2 * m * u.y)
+  // La découpe se pose APRÈS le reflet, dans le repère du sticker à plat : ce
+  // qui est levé, c'est ce qui était du côté du bord tiré.
+  demiPlan(ctx, u, m, -1)
+  ctx.clip()
+  // L'OMBRE N'OBÉIT PAS À LA TRANSFORMATION : elle se compte en pixels de la toile.
+  ctx.shadowColor = 'rgba(10, 4, 30, 0.45)'
+  ctx.shadowBlur = 12 * dpr
+  ctx.shadowOffsetX = u.x * 7 * dpr
+  ctx.shadowOffsetY = u.y * 7 * dpr
+  ctx.drawImage(pret.dos, s.x, s.y, s.l, s.h)
+  ctx.restore()
+}
+
+interface Miette {
+  sx: number
+  sy: number
+  sw: number
+  sh: number
+  x: number
+  y: number
+  w: number
+  h: number
+  vx: number
+  vy: number
+  vr: number
+  retard: number
+}
+
+/** LA CARTE EN MORCEAUX, qui partent du trou laissé par le sticker. */
+function casser(base: HTMLCanvasElement, boite: BoiteALEcran, trou: P): Miette[] {
+  const { colonnes: nc, lignes: nl } = DECOLLAGE
+  const k = base.width / boite.l
+  const w = boite.l / nc
+  const h = boite.h / nl
+  const x0 = boite.cx - boite.l / 2
+  const y0 = boite.cy - boite.h / 2
+  const loin = Math.hypot(boite.l, boite.h)
+  const miettes: Miette[] = []
+  for (let j = 0; j < nl; j++) {
+    for (let i = 0; i < nc; i++) {
+      const x = x0 + (i + 0.5) * w
+      const y = y0 + (j + 0.5) * h
+      const dx = x - trou.x
+      const dy = y - trou.y
+      const d = Math.max(1, Math.hypot(dx, dy))
+      const force = 140 + Math.random() * 260
+      miettes.push({
+        sx: i * w * k,
+        sy: j * h * k,
+        sw: w * k,
+        sh: h * k,
+        x,
+        y,
+        w,
+        h,
+        vx: (dx / d) * force + (Math.random() - 0.5) * 80,
+        vy: (dy / d) * force * 0.6 - 260 - Math.random() * 220,
+        vr: (Math.random() - 0.5) * 9,
+        // LA CASSURE SE PROPAGE DEPUIS LE TROU : les morceaux proches partent d'abord.
+        retard: (d / loin) * 0.22,
+      })
+    }
+  }
+  return miettes
+}
+
+function dessinerMiettes(ctx: CanvasRenderingContext2D, base: HTMLCanvasElement, miettes: Miette[], t: number): void {
+  const g = 1700
+  for (const m of miettes) {
+    const tt = t - m.retard
+    ctx.save()
+    if (tt <= 0) {
+      // ELLE TREMBLE AVANT DE PARTIR.
+      ctx.translate(m.x + (Math.random() - 0.5) * 2, m.y + (Math.random() - 0.5) * 2)
+    } else {
+      ctx.globalAlpha = 1 - lisse((tt - DECOLLAGE.miettes * 0.35) / (DECOLLAGE.miettes * 0.5))
+      ctx.translate(m.x + m.vx * tt, m.y + m.vy * tt + 0.5 * g * tt * tt)
+      ctx.rotate(m.vr * tt)
+      const r = 1 - 0.25 * lisse(tt / DECOLLAGE.miettes)
+      ctx.scale(r, r)
+    }
+    if (ctx.globalAlpha > 0.01) {
+      ctx.drawImage(base, m.sx, m.sy, m.sw, m.sh, -m.w / 2 - 0.5, -m.h / 2 - 0.5, m.w + 1, m.h + 1)
+    }
+    ctx.restore()
+  }
+}
+
+interface Etincelle {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  vie: number
+  creme: boolean
+}
+
+function gerbe(trou: P, n: number): Etincelle[] {
+  return Array.from({ length: n }, () => {
+    const a = Math.random() * Math.PI * 2
+    const v = 160 + Math.random() * 520
+    return { x: trou.x, y: trou.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120, vie: 0.45 + Math.random() * 0.5, creme: Math.random() < 0.5 }
+  })
+}
+
+function dessinerEtincelles(ctx: CanvasRenderingContext2D, e: Etincelle[], t: number, ton: string): void {
+  ctx.save()
+  ctx.globalCompositeOperation = 'lighter'
+  for (const p of e) {
+    if (t > p.vie) continue
+    const frein = Math.exp(-3.5 * t)
+    const x = p.x + (p.vx * (1 - frein)) / 3.5
+    const y = p.y + (p.vy * (1 - frein)) / 3.5 + 300 * t * t
+    const a = 1 - t / p.vie
+    const r = 2 + 3 * a
+    ctx.globalAlpha = a
+    ctx.fillStyle = p.creme ? '#fff6dc' : ton
+    ctx.beginPath()
+    ctx.arc(x, y, r, 0, Math.PI * 2)
+    ctx.fill()
+  }
+  ctx.restore()
+}
+
+/** Où le sticker s'envole : le bouton « Stickers » de la barre, sinon le haut de l'écran. */
+function cibleDeLEnvol(): P {
+  const el = document.querySelector('.nav-stickers')
+  const r = el?.getBoundingClientRect()
+  if (r !== undefined && r.width > 0 && r.bottom > 0) return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
+  return { x: window.innerWidth * 0.75, y: -60 }
+}
+
+export function Decollage({
+  carte,
+  exemplaire,
+  boite,
+  onPret,
+  onFini,
+  onAnnuler,
+}: {
+  carte: CarteEmoji
+  exemplaire: Exemplaire
+  boite: BoiteALEcran
+  /** La scène 2D couvre la carte : la 3D peut disparaître dessous. */
+  onPret: () => void
+  /** Le sticker est gagné et la carte détruite : c'est là qu'on l'écrit. */
+  onFini: () => void
+  onAnnuler: () => void
+}): React.ReactElement {
+  const toile = useRef<HTMLCanvasElement>(null)
+  const [pret, setPret] = useState<Pret | null>(null)
+  const [phase, setPhase] = useState<Phase>('prepa')
+  const refPhase = useRef<Phase>('prepa')
+  const laBoite = useRef(boite).current
+  const appels = useRef({ onPret, onFini, onAnnuler })
+  appels.current = { onPret, onFini, onAnnuler }
+  const etat = useRef({
+    t0: 0,
+    depart: null as P | null,
+    doigt: null as P | null,
+    u: { x: -Math.SQRT1_2, y: Math.SQRT1_2 } as P,
+    len: 0,
+    len0: 0,
+    len1: 0,
+    craque: null as SonEnBoucle | null,
+    vu: 0,
+    dernier: { x: 0, y: 0, t: 0 },
+  })
+
+  function passer(p: Phase): void {
+    refPhase.current = p
+    etat.current.t0 = performance.now()
+    setPhase(p)
+  }
+
+  // LA BARRE S'EFFACE LE TEMPS DU GESTE, et revient pour l'envol.
+  useEffect(() => {
+    if (phase === 'envol' || phase === 'fin') document.body.classList.remove('en-decollage')
+    else document.body.classList.add('en-decollage')
+  }, [phase])
+  useEffect(() => () => document.body.classList.remove('en-decollage'), [])
+
+  useEffect(() => {
+    let vivant = true
+    void preparer(carte, exemplaire, laBoite).then(
+      (p) => {
+        if (!vivant) return
+        if (p === null) {
+          appels.current.onAnnuler()
+          return
+        }
+        setPret(p)
+        passer('tirer')
+        appels.current.onPret()
+      },
+      () => vivant && appels.current.onAnnuler(),
+    )
+    return () => {
+      vivant = false
+      etat.current.craque?.arreter()
+    }
+    // UNE FOIS : la carte, l'exemplaire et la boîte sont ceux du moment où on a demandé.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function arracher(): void {
+    const e = etat.current
+    const b = bornes(pret!.points, e.u)
+    e.len0 = e.len
+    // JUSQU'À CE QUE TOUT SOIT LEVÉ, et un peu plus.
+    e.len1 = ((b.max - b.min) / DECOLLAGE.avance) * 1.04
+    e.craque?.doser(0)
+    passer('arrache')
+    jouerSon(SON_EQUIPER)
+  }
+
+  useEffect(() => {
+    if (pret === null) return
+    const t = toile.current
+    const ctx = t?.getContext('2d')
+    if (t == null || ctx == null) return
+    const dpr = Math.min(window.devicePixelRatio || 1, 2)
+    t.width = Math.round(window.innerWidth * dpr)
+    t.height = Math.round(window.innerHeight * dpr)
+    const b = laBoite
+    const x0 = b.cx - b.l / 2
+    const y0 = b.cy - b.h / 2
+    const centre: P = { x: pret.s.x + pret.s.l / 2, y: pret.s.y + pret.s.h / 2 }
+    // LE STICKER GAGNÉ SE MONTRE AU-DESSUS DE LA CARTE, un peu plus haut que son trou.
+    const haut: P = { x: b.cx, y: b.cy - b.h * 0.1 }
+    const ton = AMBIANCE[COULEUR[carte.rarete]] ?? '#ffffff'
+    let miettes: Miette[] | null = null
+    let etincelles: Etincelle[] = []
+    let tCasse = 0
+    // LA POSE DU STICKER QUAND IL EST ENTIÈREMENT LEVÉ : son reflet, en centre et angle.
+    let pose = { c: centre, a: 0 }
+    let cible: P = { x: 0, y: 0 }
+    let image = 0
+
+    const dessinerSticker = (c: P, a: number, sx: number, sc: number, alpha = 1): void => {
+      ctx.save()
+      ctx.globalAlpha = alpha
+      ctx.translate(c.x, c.y)
+      ctx.rotate(a)
+      ctx.scale(sx * sc, sc)
+      // LE DOS TANT QU'IL EST RETOURNÉ : un sticker qu'on retourne montre son papier.
+      ctx.shadowColor = 'rgba(10, 4, 30, 0.5)'
+      ctx.shadowBlur = 18 * dpr
+      ctx.shadowOffsetY = 10 * dpr * sc
+      ctx.drawImage(sx < 0 ? pret.dos : pret.face, -pret.s.l / 2, -pret.s.h / 2, pret.s.l, pret.s.h)
+      ctx.restore()
+    }
+
+    const pas = (maintenant: number): void => {
+      const e = etat.current
+      const ph = refPhase.current
+      const dt = (maintenant - e.t0) / 1000
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
+      // LA CARTE, entière ou en morceaux.
+      if (miettes === null) ctx.drawImage(pret.base, x0, y0, b.l, b.h)
+      else {
+        const tc = (maintenant - tCasse) / 1000
+        dessinerMiettes(ctx, pret.base, miettes, tc)
+        dessinerEtincelles(ctx, etincelles, tc, ton)
+      }
+      if (ph === 'tirer' || ph === 'recolle' || ph === 'arrache') {
+        let len: number
+        if (ph === 'tirer') {
+          if (e.depart !== null && e.doigt !== null) {
+            const dx = e.doigt.x - e.depart.x
+            const dy = e.doigt.y - e.depart.y
+            len = Math.hypot(dx, dy)
+            if (len > 3) e.u = { x: dx / len, y: dy / len }
+          } else {
+            // L'INVITE : le coin haut-droit se soulève tout seul, puis se recolle.
+            e.u = { x: -Math.SQRT1_2, y: Math.SQRT1_2 }
+            const cycle = (maintenant / 1000) % 2.2
+            const bb = bornes(pret.points, e.u)
+            len = Math.sin(Math.PI * lisse(cycle / 1.1)) * (bb.max - bb.min) * DECOLLAGE.invite
+          }
+        } else if (ph === 'recolle') {
+          len = e.len0 * (1 - sortie(dt / DECOLLAGE.recolle))
+          if (dt >= DECOLLAGE.recolle) {
+            e.depart = null
+            e.doigt = null
+            passer('tirer')
+          }
+        } else len = e.len0 + (e.len1 - e.len0) * sortie(dt / DECOLLAGE.arrache)
+        e.len = len
+        const bb = bornes(pret.points, e.u)
+        const m = bb.min + len * DECOLLAGE.avance
+        if (len > 0.5) dessinerPli(ctx, pret, e.u, m, dpr)
+        else ctx.drawImage(pret.face, pret.s.x, pret.s.y, pret.s.l, pret.s.h)
+        if (ph === 'tirer' && e.depart !== null && partLevee(pret.points, e.u, m) >= DECOLLAGE.seuilDirect) arracher()
+        if (ph === 'arrache' && dt >= DECOLLAGE.arrache) {
+          // LA POSE DU REFLET ENTIER : la ligne de pli fait un angle β, le reflet
+          // est une rotation de 2β + π et un miroir.
+          const m1 = bornes(pret.points, e.u).min + e.len1 * DECOLLAGE.avance
+          const k = 2 * (m1 - (centre.x * e.u.x + centre.y * e.u.y))
+          const beta = Math.atan2(e.u.x, -e.u.y)
+          let a = 2 * beta + Math.PI
+          a = Math.atan2(Math.sin(a), Math.cos(a))
+          pose = { c: { x: centre.x + k * e.u.x, y: centre.y + k * e.u.y }, a }
+          // LA CARTE SE CASSE AU MOMENT OÙ LE STICKER LA QUITTE.
+          miettes = casser(pret.base, b, centre)
+          etincelles = gerbe(centre, 46)
+          tCasse = maintenant
+          jouerSon(SON_POSER, 0.9, 0, 0.7)
+          passer('retourne')
+        }
+      } else if (ph === 'retourne') {
+        const k = lisse(dt / DECOLLAGE.retourne)
+        const c = { x: pose.c.x + (haut.x - pose.c.x) * k, y: pose.c.y + (haut.y - pose.c.y) * k }
+        dessinerSticker(c, pose.a + (-0.08 - pose.a) * k, -Math.cos(Math.PI * k), 1 + (DECOLLAGE.grossi - 1) * k)
+        if (dt >= DECOLLAGE.retourne) passer('tient')
+      } else if (ph === 'tient') {
+        // UNE LUEUR DU CRAN DERRIÈRE LUI, et un rebond.
+        const lueur = ctx.createRadialGradient(haut.x, haut.y, 0, haut.x, haut.y, pret.s.l * 0.95)
+        lueur.addColorStop(0, ton)
+        lueur.addColorStop(1, 'rgba(0,0,0,0)')
+        ctx.save()
+        ctx.globalCompositeOperation = 'lighter'
+        ctx.globalAlpha = 0.55 * (1 - lisse((dt - DECOLLAGE.tient * 0.6) / (DECOLLAGE.tient * 0.4)))
+        ctx.fillStyle = lueur
+        ctx.fillRect(haut.x - pret.s.l, haut.y - pret.s.l, pret.s.l * 2, pret.s.l * 2)
+        ctx.restore()
+        const rebond = 1 + 0.09 * Math.exp(-5 * dt) * Math.sin(dt * 16)
+        dessinerSticker(haut, -0.08 + 0.05 * Math.sin(dt * 5) * Math.exp(-2 * dt), 1, DECOLLAGE.grossi * rebond)
+        if (dt >= DECOLLAGE.tient) {
+          cible = cibleDeLEnvol()
+          passer('envol')
+        }
+      } else if (ph === 'envol') {
+        const k = entree(dt / DECOLLAGE.envol)
+        const c = { x: haut.x + (cible.x - haut.x) * k, y: haut.y + (cible.y - haut.y) * k - Math.sin(Math.PI * k) * 60 }
+        dessinerSticker(c, -0.08 + k * 0.7, 1, DECOLLAGE.grossi + (0.2 - DECOLLAGE.grossi) * k, 1 - lisse((k - 0.75) / 0.25))
+        if (dt >= DECOLLAGE.envol) {
+          passer('fin')
+          appels.current.onFini()
+          return
+        }
+      }
+      image = requestAnimationFrame(pas)
+    }
+    image = requestAnimationFrame(pas)
+    return () => cancelAnimationFrame(image)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pret])
+
+  /** Le doigt est-il sur le sticker (sa place, élargie d'un quart) ? */
+  function surLeSticker(x: number, y: number): boolean {
+    if (pret === null) return false
+    const { s } = pret
+    const mx = s.l * 0.12
+    const my = s.h * 0.12
+    return x >= s.x - mx && x <= s.x + s.l + mx && y >= s.y - my && y <= s.y + s.h + my
+  }
+
+  return createPortal(
+    <div
+      className={`decollage${pret === null ? ' decollage-prepa' : ''}`}
+      onPointerDown={(ev) => {
+        if (refPhase.current !== 'tirer' || !surLeSticker(ev.clientX, ev.clientY)) return
+        if (ev.target instanceof Element && ev.target.closest('button') !== null) return
+        try {
+          ev.currentTarget.setPointerCapture(ev.pointerId)
+        } catch {
+          // Un pointeur déjà levé ne se capture pas : le geste continue sans.
+        }
+        const e = etat.current
+        e.depart = { x: ev.clientX, y: ev.clientY }
+        e.doigt = { ...e.depart }
+        e.dernier = { x: ev.clientX, y: ev.clientY, t: performance.now() }
+        jouerSon(SON_PRENDRE, 0.6)
+        // LE DÉCOLLAGE CRAQUE COMME LE FILM DU SACHET : la même boucle, dosée par
+        // la vitesse du doigt, née dans le geste (sinon elle reste muette).
+        e.craque?.arreter()
+        e.craque = jouerEnBoucle(SON_CRAQUE, 0.8)
+        e.craque.doser(0)
+      }}
+      onPointerMove={(ev) => {
+        const e = etat.current
+        if (refPhase.current !== 'tirer' || e.depart === null) return
+        e.doigt = { x: ev.clientX, y: ev.clientY }
+        const t = performance.now()
+        const dt = Math.max(1, t - e.dernier.t)
+        const v = Math.hypot(ev.clientX - e.dernier.x, ev.clientY - e.dernier.y) / dt
+        e.dernier = { x: ev.clientX, y: ev.clientY, t }
+        e.craque?.doser(Math.min(1, v * 1.6))
+      }}
+      onPointerUp={() => {
+        const e = etat.current
+        e.craque?.doser(0)
+        if (refPhase.current !== 'tirer' || e.depart === null || pret === null) return
+        const m = bornes(pret.points, e.u).min + e.len * DECOLLAGE.avance
+        if (partLevee(pret.points, e.u, m) >= DECOLLAGE.seuil) arracher()
+        else {
+          e.len0 = e.len
+          passer('recolle')
+        }
+      }}
+      onPointerCancel={() => {
+        const e = etat.current
+        e.craque?.doser(0)
+        if (refPhase.current !== 'tirer' || e.depart === null) return
+        e.len0 = e.len
+        passer('recolle')
+      }}
+    >
+      <canvas
+        ref={toile}
+        className="decollage-toile"
+        style={{ filter: `saturate(${1 + SATURATION_APLAT})` }}
+      />
+      {(phase === 'tirer' || phase === 'recolle') && (
+        <>
+          <p className="decollage-invite">Tire le sticker pour le décoller</p>
+          <button type="button" className="decollage-annuler" onClick={() => appels.current.onAnnuler()}>
+            Annuler
+          </button>
+        </>
+      )}
+      {(phase === 'tient' || phase === 'envol') && (
+        <p className="decollage-gagne" style={{ top: `${laBoite.cy + laBoite.h * 0.22}px` }}>
+          Sticker gagné !
+        </p>
+      )}
+    </div>,
+    document.body,
+  )
+}

@@ -186,7 +186,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 
 - **La barre est celle de lexicodex** (`Jeu.tsx`, `ui/collection.css`) : une
   pilule crème en haut, « Collection » à gauche (pastille rouge = cartes
-  nouvelles), le booster rond au centre, « réunis / 1 915 » à droite. **Elle
+  nouvelles), le booster rond au centre, « Stickers » à droite (l'album ; le
+  compte « réunis / 1 915 » est resté en tête de la collection). **Elle
   ne se montre que quand rien ne se joue** (`onCalme` : sachet qui attend, ou
   bilan) — jamais pendant la déchirure ni le défilé.
 - **Le paquet entre dans la collection quand il est ouvert** (`onPaquetOuvert`,
@@ -198,6 +199,17 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   fois. *La 3D est gardée pour la carte ouverte* (`CarteOuverte`, la même
   `Carte3D`, avec le holo ou l'animé si on possède l'exemplaire). Tri récentes /
   A → Z / plus rares, recherche sans accents, puces de rareté et de type.
+- **Détruire une carte pour son sticker** (`render/Decollage.tsx`) : un bouton
+  « Décoller le sticker » sous la carte du défilé, la carte zoomée au bilan, ou
+  la carte ouverte de la collection — **c'est le geste qui confirme** : on tire
+  le sticker, il se replie le long d'une ligne (son DOS crème reflété), puis la
+  carte se casse et le sticker s'envole vers « Stickers ». Scène 2D posée sur la
+  carte 3D, qui disparaît dessous (`sansSujet` peint la carte sans l'emoji,
+  `sujetDe` dit où il était). **Toutes se détruisent, même la dernière** ; le
+  sticker garde le bonus ; depuis la collection, le simple part d'abord
+  (`exemplaireADetruire`). Au défilé on passe à la suivante, le bilan se range
+  sur les restantes. L'album (`render/Stickers.tsx`) est `collection.stickers`.
+  Chiffres (`DECOLLAGE`) de moi, à rejuger.
 - `&art` et `&peau` gardent le paquet seul, sans barre.
 - **La réserve de paquets** (`logic/emoji/reserve.ts`, `RESERVE`) : 10 au plus,
   **un toutes les 10 minutes** (Keko), pleine au départ, décomptée à
@@ -265,6 +277,9 @@ src/
     Jeu.tsx          # les deux pages (booster, collection) et la barre de navigation
     Paquet3D.tsx     # l'ouverture d'un paquet : l'emoji par défaut, `&art` les peintures
     Collection.tsx   # la grille des cartes obtenues, et la carte ouverte en 3D
+    Decollage.tsx    # détruire une carte : le sticker qu'on tire, la carte qui casse
+    Stickers.tsx     # l'album des stickers gagnés
+    peinture-vignette.ts # la carte peinte en petit (vignette, décollage), et sa holo
     Sachet3D.tsx     # la pochette qui se déchire en brûlant, avant la rangée
     carte-emoji.ts   # CarteEmoji -> CarteAPeindre
     carte-peinture.ts # CartePeinture -> CarteAPeindre

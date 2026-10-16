@@ -12,6 +12,8 @@ import { NoToneMapping, type Group } from 'three'
  * choses VEULENT DIRE, les objets savent comment elles se dessinent.
  */
 import { cloneElement, useEffect, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react'
+import { Decollage, type BoiteALEcran } from './Decollage.tsx'
+import type { Exemplaire } from '../logic/emoji/collection.ts'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { Carte3D, DUREE_FLIP, INCLINAISON_REFLET, type CurseurDeCarte } from './Carte3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
@@ -529,6 +531,12 @@ type PropsPaquet = {
   peutContinuer?: boolean
   /** Le sachet est là et pas encore déchiré : c'est sous lui que `Jeu` dit combien il en reste. */
   onSachetEnAttente?: (attend: boolean) => void
+  /**
+   * UNE CARTE DU PAQUET EST DÉTRUITE POUR SON STICKER. Keko : « l'option quand
+   * on dévoile une carte à l'ouverture de booster de la détruire pour gagner
+   * son sticker ». *Sans elle, pas de bouton* : `&art` et `&peau` n'en ont pas.
+   */
+  onDetruire?: (id: string, ex: Exemplaire) => void
 }
 
 export function Paquet3D({
@@ -537,6 +545,7 @@ export function Paquet3D({
   sansPrise = false,
   peutContinuer = true,
   onSachetEnAttente,
+  onDetruire,
 }: PropsPaquet = {}): React.ReactElement {
   const params = new URLSearchParams(location.search)
   /**
@@ -828,6 +837,16 @@ export function Paquet3D({
   const [fini, setFini] = useState(false)
   const refFini = useRef(false)
   refFini.current = fini
+  /**
+   * LE DÉCOLLAGE : la carte qu'on détruit (son index dans le paquet) et où elle
+   * est à l'écran ; `cachee` dit que la scène 2D la couvre. Les détruites ne
+   * reviennent plus — ni au défilé, ni au bilan.
+   */
+  const [decollage, setDecollage] = useState<{ i: number; boite: BoiteALEcran } | null>(null)
+  const [cachee, setCachee] = useState(false)
+  const [detruites, setDetruites] = useState<ReadonlySet<number>>(new Set())
+  const refDecollage = useRef(false)
+  refDecollage.current = decollage !== null
   /** La clé du flash de l'arrachement — *une animation se remonte à neuf.* */
   const [flash, setFlash] = useState(0)
   const racine = useRef<HTMLDivElement>(null)
@@ -1134,6 +1153,9 @@ export function Paquet3D({
     setMontree(0)
     setFini(false)
     setZoomee(null)
+    setDecollage(null)
+    setCachee(false)
+    setDetruites(new Set())
     setSommet(-1)
     setEclat(null)
     racine.current?.style.removeProperty('--lueur')
@@ -1234,6 +1256,9 @@ export function Paquet3D({
       'pointerup',
       (e) => {
         lacher(e)
+        // LE DÉCOLLAGE ET SON BOUTON ONT LE DOIGT : la tape n'avance rien.
+        if (refDecollage.current) return
+        if (e.target instanceof Element && e.target.closest('.decoller') !== null) return
         const dx = e.clientX - depart.x
         const dy = e.clientY - depart.y
         const tape = Math.hypot(dx, dy) < 12
@@ -1291,11 +1316,16 @@ export function Paquet3D({
    * calées sur la grille, elles se seraient collées à gauche, et *un trou au
    * bout d'une rangée se lit comme une case qu'on a oublié de remplir.*
    */
+  // LES DÉTRUITES LAISSENT LEUR PLACE : le bilan se range sur celles qui restent.
+  const restantes = aPeindre.map((_, i) => i).filter((i) => !detruites.has(i))
   function placeAuBilan(i: number): [number, number, number] {
-    const colonne = i % colonnes
-    const ligne = Math.floor(i / colonnes)
-    const surCetteLigne = Math.min(colonnes, CARTES_PAR_PAQUET - ligne * colonnes)
-    const hauteurTotale = lignes * 1.4 + (lignes - 1) * 0.17
+    const r = Math.max(0, restantes.indexOf(i))
+    const n = restantes.length
+    const lignesN = Math.max(1, Math.ceil(n / colonnes))
+    const colonne = r % colonnes
+    const ligne = Math.floor(r / colonnes)
+    const surCetteLigne = Math.min(colonnes, n - ligne * colonnes)
+    const hauteurTotale = lignesN * 1.4 + (lignesN - 1) * 0.17
     return [
       (colonne - (surCetteLigne - 1) / 2) * pas,
       y + (hauteurTotale / 2 - 0.7 - ligne * 1.57) * taille,
@@ -1456,7 +1486,7 @@ export function Paquet3D({
   // posé une fois et doit lire la boîte du moment.*
   const pxParUnite = fenetre.h / hVisible
   refGerbesBilan.current = () =>
-    paquet.map((carte, i) => {
+    paquet.flatMap((carte, i) => (detruites.has(i) ? [] : [{ carte, i }])).map(({ carte, i }) => {
       const [x, yb] = placeAuBilan(i)
       const rang = Math.max(0, rangDe(carte.id))
       return {
@@ -1488,9 +1518,11 @@ export function Paquet3D({
    */
   const zDefile = ouvert ? Z_MAIN : Z_DEDANS
 
-  const cartes = aPeindre.map((carte, i) => {
+  const cartes = aPeindre.flatMap((carte, i) => {
+          // DÉTRUITE, OU COUVERTE PAR SON DÉCOLLAGE : elle n'est plus là.
+          if (detruites.has(i) || (cachee && decollage?.i === i)) return []
           const vue = retourne
-          return (
+          return [
             <Envol key={`${numero}:${carte.id}`} sortie={false} rang={i} distance={hVisible * 1.25}>
             <Arrivee distance={distanceArrivee} retard={retardArrivee}>
             <Prise pris={pris} distance={distancePrise}>
@@ -1654,9 +1686,52 @@ export function Paquet3D({
             </Prise>
             </Arrivee>
             </Envol>
-          )
+          ]
         })
   refCartes.current = cartes
+  /**
+   * QUELLE CARTE ON PEUT DÉCOLLER : celle qu'on regarde au défilé une fois le
+   * paquet retourné, ou celle qu'on a zoomée au bilan. *Jamais pendant le
+   * flip* : la pile n'est ouverte qu'à mi-demi-tour.
+   */
+  const aDecoller = !emojis || onDetruire === undefined || decollage !== null
+    ? -1
+    : fini
+      ? indexZoome
+      : retourne && pileOuverte
+        ? montree
+        : -1
+  /** La boîte à l'écran d'une carte au centre, à la profondeur `z`, de largeur `t`. */
+  function boiteAuCentre(z: number, t: number): BoiteALEcran {
+    const px = fenetre.h / hauteurVisibleA(z, fenetre.h)
+    return { cx: fenetre.l / 2, cy: fenetre.h / 2, l: t * px, h: t * 1.4 * px }
+  }
+  function decoller(): void {
+    if (aDecoller < 0) return
+    setDecollage({
+      i: aDecoller,
+      boite: fini
+        ? boiteAuCentre(zDefile + tailleDuDefile * SAILLIE_SORTIE, tailleDuDefile)
+        : boiteAuCentre(zDefile, tailleDuDefile),
+    })
+  }
+  function decolle(): void {
+    if (decollage === null) return
+    const i = decollage.i
+    const carte = paquet[i]
+    setDecollage(null)
+    setCachee(false)
+    setDetruites((s) => new Set(s).add(i))
+    if (carte === undefined) return
+    onDetruire?.(carte.id, tirage.bonus[carte.id] ?? { holo: false, anime: false })
+    // AU DÉFILÉ, LA SUIVANTE ÉTAIT DÉJÀ DERRIÈRE : c'est elle qu'on découvre.
+    if (!fini) {
+      if (montree + 1 < paquet.length) {
+        setMontree(montree + 1)
+        decouvrir(montree + 1)
+      } else setFini(true)
+    } else if (zoomee === carte.id) setZoomee(null)
+  }
   // LE PAQUET OUVERT ENTRE DANS LA COLLECTION, une fois : voir `numeroCourant`.
   const signale = useRef(-1)
   useEffect(() => {
@@ -1863,6 +1938,25 @@ export function Paquet3D({
         )}
       </Canvas>
 
+      {/* DÉCOLLER LE STICKER DE LA CARTE QU'ON REGARDE : voir `Decollage`. */}
+      {aDecoller >= 0 && (
+        <button type="button" className="decoller decoller-paquet" onClick={decoller}>
+          <span aria-hidden>🏷️</span> Décoller le sticker
+        </button>
+      )}
+      {decollage !== null && paquet[decollage.i] !== undefined && (
+        <Decollage
+          carte={paquet[decollage.i] as CarteEmoji}
+          exemplaire={tirage.bonus[paquet[decollage.i]!.id] ?? { holo: false, anime: false }}
+          boite={decollage.boite}
+          onPret={() => setCachee(true)}
+          onAnnuler={() => {
+            setDecollage(null)
+            setCachee(false)
+          }}
+          onFini={decolle}
+        />
+      )}
       {/* L'INVITE À PRENDRE LE SACHET : voir `Prise`. */}
       {!pris && paquet.length > 0 && <p className="paquet-invite">Touche le paquet</p>}
       {/* PLUS DE « DERNIÈRE CARTE » NI DE COMPTEUR EN HAUT. Keko : « enlève le
