@@ -276,6 +276,16 @@ function CarteOuverte({
       c.tenu = false
     }
     addEventListener('pointercancel', lacher, { signal })
+    /**
+     * ON REPOSE AU CLIC, PAS AU RELÂCHEMENT. Keko : « quand je clique ailleurs
+     * pour dézoomer mais que cet ailleurs tombe sur une autre carte, ça la
+     * zoome direct ». *Le navigateur envoie le clic APRÈS le relâchement, à ce
+     * qui est sous le doigt à ce moment-là* : fermée au relâchement, la carte
+     * ouverte n'était plus là, et le clic tombait sur la vignette d'en dessous.
+     * Fermée au clic, c'est elle qui le reçoit, et il s'arrête là. Le
+     * relâchement ne fait que dire si c'était une tape, et où.
+     */
+    let reposer = false
     addEventListener(
       'pointerup',
       (e) => {
@@ -285,9 +295,20 @@ function CarteOuverte({
         const dedans = Math.abs(e.clientX - b.cx) <= b.l / 2 && Math.abs(e.clientY - b.cy) <= b.h / 2
         // La croix ferme d'elle-même : on ne repose pas deux fois.
         const surUnBouton = e.target instanceof Element && e.target.closest('button') !== null
-        if (tape && !dedans && !surUnBouton) refFermer.current()
+        reposer = tape && !dedans && !surUnBouton
       },
       { signal },
+    )
+    addEventListener(
+      'click',
+      (e) => {
+        if (!reposer) return
+        reposer = false
+        e.stopPropagation()
+        e.preventDefault()
+        refFermer.current()
+      },
+      { signal, capture: true },
     )
     return () => arret.abort()
   }, [])

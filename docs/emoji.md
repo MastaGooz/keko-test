@@ -6256,3 +6256,14 @@ il demande une vraie déchirure.
 
 `&illimite` : la réserve ne se vide jamais, pour tester sans attendre. **Les
 autres bancs consomment** (`?paquet=<n>`, `&holo`…).
+
+#### LA TAPE QUI REPOSE NE ROUVRE PAS LA CARTE DU DESSOUS
+
+Keko : « quand je clique ailleurs pour dézoomer mais que cet ailleurs tombe sur une
+autre carte, ça la zoome direct ». ***Le navigateur envoie le clic APRÈS le
+relâchement***, à ce qui est sous le doigt à ce moment-là : la carte ouverte
+se fermait au relâchement, donc le clic tombait sur la vignette d'en dessous.
+**Elle se ferme maintenant au clic** (écouteur en capture) : c'est elle qui le
+reçoit, et il s'arrête là. Le relâchement ne dit plus que si c'était une tape,
+et où. Vérifié dans la page : la tape au-dessus d'une vignette ferme, sans
+rien rouvrir.
