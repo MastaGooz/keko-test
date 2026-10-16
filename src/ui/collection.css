@@ -1244,6 +1244,7 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   cursor: pointer;
+  touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -1276,6 +1277,7 @@
 .filtres-panneau-fond {
   position: fixed;
   inset: 0;
+  touch-action: manipulation;
   overscroll-behavior: none;
   z-index: 35;
   display: flex;

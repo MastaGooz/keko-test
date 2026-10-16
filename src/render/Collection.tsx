@@ -155,6 +155,15 @@ export function BoutonFiltres({ actifs, onOuvrir }: { actifs: number; onOuvrir: 
       type="button"
       className={`bouton-filtres${actifs > 0 ? ' actif' : ''}`}
       aria-label="Filtres"
+      // OUVERT AU RELÂCHEMENT, pas seulement au clic. Keko : « quand je ferme le
+      // panneau et que je reclique juste après, y'a le son mais rien ne s'ouvre ».
+      // Deux tapes rapprochées au même endroit (le fond qui ferme, puis le
+      // bouton dessous) : le téléphone garde la seconde pour un double-tap et
+      // ne rend pas son clic. Le relâchement, lui, arrive toujours ; le clic
+      // qui suit éventuellement rouvre ce qui est déjà ouvert, sans effet.
+      onPointerUp={(e) => {
+        if (e.isPrimary && e.button === 0) onOuvrir()
+      }}
       onClick={onOuvrir}
     >
       <svg viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
