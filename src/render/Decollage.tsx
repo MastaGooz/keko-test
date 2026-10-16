@@ -30,7 +30,7 @@ import { createPortal } from 'react-dom'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Exemplaire } from '../logic/emoji/collection.ts'
 import { AMBIANCE, sujetDe, tailleQuIlFaut } from './texture-carte.ts'
-import { cerneArcEnCiel, peinte } from './peinture-vignette.ts'
+import { cerneArcEnCiel, etoilesAuRepos, peinte } from './peinture-vignette.ts'
 import { COULEUR } from './carte-emoji.ts'
 import { SATURATION_APLAT } from './Carte3D.tsx'
 import { SON_CRAQUE, SON_EQUIPER, SON_POSER, SON_PRENDRE, jouerEnBoucle, jouerSon, type SonEnBoucle } from './sons.ts'
@@ -122,7 +122,11 @@ async function preparer(carte: CarteEmoji, ex: Exemplaire, boite: BoiteALEcran):
   const fc = face.getContext('2d', { willReadFrequently: true })
   if (fc === null) return null
   fc.drawImage(sujet.image, 0, 0)
-  if (ex.holo) cerneArcEnCiel(face, { x: 0, y: 0, l: 1, h: 1 })
+  if (ex.holo) {
+    cerneArcEnCiel(face, { x: 0, y: 0, l: 1, h: 1 })
+    // ET SES ÉTOILES, celles de la carte à plat : voir `etoilesAuRepos`.
+    etoilesAuRepos(face)
+  }
   // LE DOS : la silhouette du sticker, sans son ombre, couleur papier.
   const dos = document.createElement('canvas')
   dos.width = lf

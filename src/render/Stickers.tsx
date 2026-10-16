@@ -19,7 +19,7 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers } from '../logic/emoji/collection.ts'
 import { nombreDeStickers } from '../logic/emoji/collection.ts'
 import { stickerDe, stickerHautDe } from './texture-carte.ts'
-import { cerneArcEnCiel } from './peinture-vignette.ts'
+import { STICKER_DANS_LA_CARTE, cerneArcEnCiel, peindreEtoile } from './peinture-vignette.ts'
 import { COTE_GRAND, COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
@@ -35,66 +35,6 @@ interface Paillette {
   my: number
   phase: number
   vitesse: number
-}
-
-/**
- * LA TOILE DU STICKER EN PART DE LA LARGEUR DE CARTE : sur la carte, le sticker
- * (marges comprises) tient dans la fenêtre d'art et en fait environ 0,8. C'est
- * ce qui donne au sticker en grand des cellules de paillettes de la même
- * finesse que sur la carte.
- */
-const STICKER_DANS_LA_CARTE = 0.8
-
-/**
- * UNE ÉTOILE DE L'EMOJI, PEINTE PAR LA FORMULE DU NUANCEUR. Keko : « les étoiles
- * de l'emoji sur les cartes ne sont pas les mêmes sur les stickers, je veux les
- * mêmes ». *Le dessin d'avant était le mien* — des branches épaisses, presque
- * blanches. Ici, pixel par pixel, c'est celui des paillettes COSMOS : deux
- * branches d'un pixel d'épaisseur (`COSMOS.etoile`) qui s'éteignent en
- * exponentielle (`COSMOS.bras`), un petit cœur rond (`rayonGros`, à 0,6), le
- * tout coupé à sa cellule, à la couleur du spectre de la feuille ramenée vers
- * le blanc (mix 0,8).
- */
-function peindreEtoile(cellule: number, teinte: number): HTMLCanvasElement {
-  const n = Math.max(3, Math.ceil(cellule))
-  const c = document.createElement('canvas')
-  c.width = n
-  c.height = n
-  const ctx = c.getContext('2d')
-  if (ctx === null) return c
-  const image = ctx.createImageData(n, n)
-  const d = image.data
-  const aa = 1 / cellule
-  const ep = Math.max(aa, 0.002) * COSMOS.etoile
-  const rP = COSMOS.rayonGros
-  // UN SPECTRE SATURÉ, pas ramené vers le blanc. Keko : « booster un peu la
-  // couleur des petites étoiles multicolores du sticker holo ». La palette en
-  // cosinus est pastel ; une puissance la creuse vers les couleurs franches
-  // (la règle du cerne arc-en-ciel, COSMOS.cerne.sature), et le gain rend la
-  // clarté. La carte, elle, les ramène à 0,8 vers le blanc — le bloom les y
-  // colore autour ; sur le sticker, la couleur doit tenir seule.
-  const spectre = [0, 0.33, 0.67].map((o) => 0.5 + 0.5 * Math.cos(Math.PI * 2 * (teinte + o)))
-  const ton = spectre.map((v) => Math.min(1, Math.pow(v, COSMOS.cerne.sature) * 1.35))
-  for (let j = 0; j < n; j++) {
-    for (let i = 0; i < n; i++) {
-      const dx = (i + 0.5) / n - 0.5
-      const dy = (j + 0.5) / n - 0.5
-      const lg = Math.hypot(dx, dy)
-      const t = Math.min(1, Math.max(0, (lg - (rP - aa)) / (2 * aa)))
-      const point = 1 - t * t * (3 - 2 * t)
-      const etoile =
-        Math.exp(-Math.abs(dx) / ep) * Math.exp(-Math.abs(dy) * COSMOS.bras) +
-        Math.exp(-Math.abs(dy) / ep) * Math.exp(-Math.abs(dx) * COSMOS.bras)
-      const forme = Math.min(1, Math.max(point * 0.6, etoile))
-      const k = (j * n + i) * 4
-      d[k] = Math.round(ton[0]! * 255)
-      d[k + 1] = Math.round(ton[1]! * 255)
-      d[k + 2] = Math.round(ton[2]! * 255)
-      d[k + 3] = Math.round(forme * 255)
-    }
-  }
-  ctx.putImageData(image, 0, 0)
-  return c
 }
 
 type Tri = 'recents' | 'az' | 'rares'

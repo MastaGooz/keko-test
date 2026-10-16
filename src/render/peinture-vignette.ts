@@ -307,6 +307,134 @@ export function toileDesRayons(rarete: string, cote: number, rayon: number, ecla
   return c
 }
 
+/**
+ * LA TOILE DU STICKER EN PART DE LA LARGEUR DE CARTE : sur la carte, le sticker
+ * (marges comprises) tient dans la fenêtre d'art et en fait environ 0,8. C'est
+ * ce qui donne au sticker en grand des cellules de paillettes de la même
+ * finesse que sur la carte.
+ */
+export const STICKER_DANS_LA_CARTE = 0.8
+
+/**
+ * UNE ÉTOILE DE L'EMOJI, PEINTE PAR LA FORMULE DU NUANCEUR. Keko : « les étoiles
+ * de l'emoji sur les cartes ne sont pas les mêmes sur les stickers, je veux les
+ * mêmes ». *Le dessin d'avant était le mien* — des branches épaisses, presque
+ * blanches. Ici, pixel par pixel, c'est celui des paillettes COSMOS : deux
+ * branches d'un pixel d'épaisseur (`COSMOS.etoile`) qui s'éteignent en
+ * exponentielle (`COSMOS.bras`), un petit cœur rond (`rayonGros`, à 0,6), le
+ * tout coupé à sa cellule, à la couleur du spectre de la feuille ramenée vers
+ * le blanc (mix 0,8).
+ */
+export function peindreEtoile(cellule: number, teinte: number): HTMLCanvasElement {
+  const n = Math.max(3, Math.ceil(cellule))
+  const c = document.createElement('canvas')
+  c.width = n
+  c.height = n
+  const ctx = c.getContext('2d')
+  if (ctx === null) return c
+  const image = ctx.createImageData(n, n)
+  const d = image.data
+  const aa = 1 / cellule
+  const ep = Math.max(aa, 0.002) * COSMOS.etoile
+  const rP = COSMOS.rayonGros
+  // UN SPECTRE SATURÉ, pas ramené vers le blanc. Keko : « booster un peu la
+  // couleur des petites étoiles multicolores du sticker holo ». La palette en
+  // cosinus est pastel ; une puissance la creuse vers les couleurs franches
+  // (la règle du cerne arc-en-ciel, COSMOS.cerne.sature), et le gain rend la
+  // clarté. La carte, elle, les ramène à 0,8 vers le blanc — le bloom les y
+  // colore autour ; sur le sticker, la couleur doit tenir seule.
+  const spectre = [0, 0.33, 0.67].map((o) => 0.5 + 0.5 * Math.cos(Math.PI * 2 * (teinte + o)))
+  const ton = spectre.map((v) => Math.min(1, Math.pow(v, COSMOS.cerne.sature) * 1.35))
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const dx = (i + 0.5) / n - 0.5
+      const dy = (j + 0.5) / n - 0.5
+      const lg = Math.hypot(dx, dy)
+      const t = Math.min(1, Math.max(0, (lg - (rP - aa)) / (2 * aa)))
+      const point = 1 - t * t * (3 - 2 * t)
+      const etoile =
+        Math.exp(-Math.abs(dx) / ep) * Math.exp(-Math.abs(dy) * COSMOS.bras) +
+        Math.exp(-Math.abs(dy) / ep) * Math.exp(-Math.abs(dx) * COSMOS.bras)
+      const forme = Math.min(1, Math.max(point * 0.6, etoile))
+      const k = (j * n + i) * 4
+      d[k] = Math.round(ton[0]! * 255)
+      d[k + 1] = Math.round(ton[1]! * 255)
+      d[k + 2] = Math.round(ton[2]! * 255)
+      d[k + 3] = Math.round(forme * 255)
+    }
+  }
+  ctx.putImageData(image, 0, 0)
+  return c
+}
+
+/**
+ * LES ÉTOILES DE L'EMOJI HOLO, AU REPOS, PEINTES SUR UN STICKER. Keko : « quand
+ * je lance le décollement d'un sticker, l'outline coloré disparaît et les
+ * étoiles aussi (quand le sticker est holo) ». *Le sticker qu'on tire est une
+ * peinture 2D*, et elle n'avait pas d'étoiles. Ce sont celles du sticker en
+ * grand (même grille, même dessin, même calcul du miroir et de la lampe), pour
+ * une carte À PLAT — elle l'est pendant le geste — posées une fois, découpées
+ * à la silhouette, en lumière ajoutée.
+ */
+export function etoilesAuRepos(face: HTMLCanvasElement): void {
+  const cote = face.width
+  const fctx = face.getContext('2d', { willReadFrequently: true })
+  if (fctx === null || cote === 0) return
+  const px = fctx.getImageData(0, 0, cote, face.height).data
+  const tmp = document.createElement('canvas')
+  tmp.width = cote
+  tmp.height = face.height
+  const ctx = tmp.getContext('2d')
+  if (ctx === null) return
+  ctx.globalCompositeOperation = 'lighter'
+  const L = BRILLANT.lampe
+  const LL = Math.hypot(L[0], L[1], L[2])
+  const [Lx, Ly, Lz] = [L[0] / LL, -L[1] / LL, L[2] / LL]
+  const cx = cote / 2
+  const cy = face.height / 2
+  const oeil = cote * 2.5
+  const pas = cote / (COSMOS.gros * STICKER_DANS_LA_CARTE)
+  const k = COSMOS.dispersion * 2
+  for (let y = pas / 2; y < face.height; y += pas) {
+    for (let x = pas / 2; x < cote; x += pas) {
+      if (Math.random() > COSMOS.partGros) continue
+      const gx = Math.min(cote - 1, Math.round(x + (Math.random() - 0.5) * pas * 0.5))
+      const gy = Math.min(face.height - 1, Math.round(y + (Math.random() - 0.5) * pas * 0.5))
+      if (px[(gy * cote + gx) * 4 + 3]! < 230) continue
+      let nx = (Math.random() - 0.5) * k
+      let ny = (Math.random() - 0.5) * k
+      let nz = 1
+      const ln = Math.hypot(nx, ny, nz)
+      nx /= ln
+      ny /= ln
+      nz /= ln
+      let vx = cx - gx
+      let vy = cy - gy
+      let vz = oeil
+      const lv = Math.hypot(vx, vy, vz)
+      vx /= lv
+      vy /= lv
+      vz /= lv
+      const vn = vx * nx + vy * ny + vz * nz
+      const sf = Math.max(0, (2 * vn * nx - vx) * Lx + (2 * vn * ny - vy) * Ly + (2 * vn * nz - vz) * Lz)
+      // LA FORCE DU STICKER EN GRAND, au scintillement moyen.
+      const a = Math.min(1, Math.pow(sf, COSMOS.serreGros) * 0.8 * COSMOS.force * 0.28 * 2)
+      if (a < 0.02) continue
+      const etoile = peindreEtoile(pas, Math.random())
+      ctx.globalAlpha = a
+      ctx.drawImage(etoile, gx - etoile.width / 2, gy - etoile.height / 2)
+    }
+  }
+  // DÉCOUPÉES À LA SILHOUETTE, puis ajoutées à la lumière.
+  ctx.globalAlpha = 1
+  ctx.globalCompositeOperation = 'destination-in'
+  ctx.drawImage(face, 0, 0)
+  fctx.save()
+  fctx.globalCompositeOperation = 'lighter'
+  fctx.drawImage(tmp, 0, 0)
+  fctx.restore()
+}
+
 export function paillettesHolo(
   toile: HTMLCanvasElement,
   id: string,
