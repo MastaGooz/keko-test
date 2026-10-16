@@ -419,7 +419,7 @@ function CarteOuverte({
           className="decoller"
           onClick={() => setDecolle(exemplaireADetruire(possession))}
         >
-          <span aria-hidden>🏷️</span> Décoller le sticker
+          Décoller le sticker
         </button>
       </div>
       {decolle === null && (

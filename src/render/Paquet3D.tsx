@@ -2021,7 +2021,7 @@ export function Paquet3D({
       {/* DÉCOLLER LE STICKER DE LA CARTE QU'ON REGARDE : voir `Decollage`. */}
       {aDecoller >= 0 && (
         <button type="button" className="decoller decoller-paquet" onClick={decoller}>
-          <span aria-hidden>🏷️</span> Décoller le sticker
+          Décoller le sticker
         </button>
       )}
       {decollage !== null && paquet[decollage.i] !== undefined && (
