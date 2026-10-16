@@ -40,6 +40,12 @@ export function cerneArcEnCiel(
   toile: HTMLCanvasElement,
   /** Où chercher le crème, en parts de la toile : la fenêtre d'art, ou tout le sticker. */
   R: { x: number; y: number; l: number; h: number } = RAYONS_DANS_LA_CARTE,
+  /**
+   * NE GARDER QUE LE CERNE : le reste devient transparent, et le crème garde
+   * son poids en alpha. C'est la couche qu'on fait tourner au regard sur le
+   * sticker en grand (voir `StickerOuvert`).
+   */
+  seulCerne = false,
 ): void {
   const ctx = toile.getContext('2d')
   if (ctx === null) return
@@ -63,7 +69,11 @@ export function cerneArcEnCiel(
       const ecart = r - b
       const creme =
         fondu(0.88, 0.95, r) * fondu(0.8, 0.84, b) * fondu(0.07, 0.1, ecart) * (1 - fondu(0.17, 0.22, ecart))
-      if (creme <= 0) continue
+      if (creme <= 0) {
+        if (seulCerne) d[k + 3] = 0
+        continue
+      }
+      if (seulCerne) d[k + 3] = Math.round(d[k + 3]! * creme)
       // L'ANGLE AUTOUR DU CENTRE DE LA FENÊTRE, les deux axes en largeurs : le
       // spectre tourne rond autour de l'emoji.
       const dx = (x0 + i - cx) / l

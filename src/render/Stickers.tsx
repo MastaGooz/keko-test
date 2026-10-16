@@ -14,6 +14,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { SON_POSER, jouerSon } from './sons.ts'
 import { teinteDuCran } from './Collection.tsx'
+import { suivreLInclinaison } from './inclinaison.ts'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers } from '../logic/emoji/collection.ts'
 import { nombreDeStickers } from '../logic/emoji/collection.ts'
@@ -178,6 +179,8 @@ function StickerOuvert({
   onFermer: () => void
 }): React.ReactElement {
   const toile = useRef<HTMLCanvasElement>(null)
+  /** LE CERNE ARC-EN-CIEL D'UNE HOLO, seul, par-dessus : c'est lui qui tourne au regard. */
+  const arc = useRef<HTMLCanvasElement>(null)
   const penche = useRef<HTMLDivElement>(null)
   const zone = useRef<HTMLDivElement>(null)
   const [pret, setPret] = useState(false)
@@ -200,13 +203,24 @@ function StickerOuvert({
       t.height = cote
       ctx.imageSmoothingQuality = 'high'
       ctx.drawImage(image, 0, 0, cote, cote)
-      if (holo) cerneArcEnCiel(t, { x: 0, y: 0, l: 1, h: 1 })
+      // LA HOLO : le sticker garde son cerne crème dessous, et le spectre est
+      // une couche à part — *repeindre les pixels à chaque mouvement du
+      // téléphone coûterait une boucle sur toute la toile ; tourner la teinte
+      // d'une couche ne coûte rien.*
+      const a = arc.current
+      const actx = a?.getContext('2d', { willReadFrequently: true })
+      if (holo && !anime && a != null && actx != null) {
+        a.width = cote
+        a.height = cote
+        actx.drawImage(image, 0, 0, cote, cote)
+        cerneArcEnCiel(a, { x: 0, y: 0, l: 1, h: 1 }, true)
+      } else if (holo) cerneArcEnCiel(t, { x: 0, y: 0, l: 1, h: 1 })
       setPret(true)
     })
     return () => {
       vivant = false
     }
-  }, [carte, holo])
+  }, [carte, holo, anime])
   useEffect(() => {
     if (!anime) return
     let vivant = true
@@ -241,18 +255,46 @@ function StickerOuvert({
     const { signal } = arret
     const depart = { x: 0, y: 0 }
     let reposer = false
-    const viser = (x: number, y: number): void => {
+    /**
+     * L'ORIENTATION : le doigt quand il tient le sticker, sinon le téléphone
+     * (son zéro est la tenue à l'ouverture). *La même règle que la carte.*
+     */
+    let doigt: { x: number; y: number } | null = null
+    const gyro = suivreLInclinaison()
+    const borne = (v: number): number => Math.max(-1, Math.min(1, v))
+    let image = 0
+    const appliquer = (): void => {
       const el = penche.current
+      const g = gyro.lire()
+      // 0,35 rad (20°) de téléphone penchent le sticker autant qu'un doigt au bord.
+      const o = doigt ?? (g === null ? { x: 0, y: 0 } : { x: borne(g.y / 0.35), y: borne(-g.x / 0.35) })
+      if (el != null) {
+        el.style.transform =
+          doigt === null && g === null ? '' : `rotateY(${o.x * 18}deg) rotateX(${-o.y * 18}deg) scale(1.03)`
+      }
+      // LE SPECTRE TOURNE AVEC L'ORIENTATION, comme le cerne de la carte holo :
+      // au nuanceur, sa phase avance du reflet (`Rf.x + Rf.y`, ×1,2) ; ici
+      // d'un demi-tour de chaque côté : un tour entier reviendrait à la même
+      // couleur d'un coin à l'autre.
+      const a = arc.current
+      if (a != null) a.style.filter = `saturate(${1 + SATURATION_APLAT}) hue-rotate(${((o.x - o.y) * 90).toFixed(1)}deg)`
+      image = requestAnimationFrame(appliquer)
+    }
+    image = requestAnimationFrame(appliquer)
+    signal.addEventListener('abort', () => {
+      cancelAnimationFrame(image)
+      gyro.arreter()
+    })
+    const viser = (x: number, y: number): void => {
       const b = zone.current?.getBoundingClientRect()
-      if (el == null || b === undefined) return
-      const nx = Math.max(-1, Math.min(1, (x - (b.left + b.width / 2)) / (b.width / 2)))
-      const ny = Math.max(-1, Math.min(1, (y - (b.top + b.height / 2)) / (b.height / 2)))
-      el.style.transform = `rotateY(${nx * 18}deg) rotateX(${-ny * 18}deg) scale(1.03)`
+      if (b === undefined) return
+      doigt = {
+        x: borne((x - (b.left + b.width / 2)) / (b.width / 2)),
+        y: borne((y - (b.top + b.height / 2)) / (b.height / 2)),
+      }
     }
     const redresser = (): void => {
-      const el = penche.current
-      if (el == null) return
-      el.style.transform = ''
+      doigt = null
     }
     addEventListener(
       'pointerdown',
@@ -266,7 +308,7 @@ function StickerOuvert({
     addEventListener(
       'pointermove',
       (e) => {
-        if (e.pointerType === 'mouse' || e.buttons > 0 || e.pressure > 0) viser(e.clientX, e.clientY)
+        if (e.pointerType === 'mouse' || doigt !== null) viser(e.clientX, e.clientY)
       },
       { signal },
     )
@@ -309,6 +351,7 @@ function StickerOuvert({
           <div ref={penche} className="sticker-penche">
             {!pret && <span className="album-attente sticker-attente">{carte.emoji}</span>}
             <canvas ref={toile} className="sticker-toile" style={FILTRE} />
+            <canvas ref={arc} className="sticker-toile sticker-arc" />
           </div>
         </div>
       </div>
