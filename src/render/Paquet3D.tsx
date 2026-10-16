@@ -505,8 +505,16 @@ function Prise({
  */
 let numeroCourant = 0
 
-/** Après un décollage, le temps que la suivante regrandisse avant son pump (le ressort à 9 : 95 % en 0,33 s). */
-const ARRIVEE_APRES_DECOLLAGE = 0.34
+/**
+ * APRÈS UN DÉCOLLAGE, LA SUIVANTE JAILLIT. Keko : « accélérer un peu
+ * l'animation d'apparition de la carte suivante pour qu'elle soit plus punchy
+ * / juicy ». Elle regrandit sur un ressort raide (`RESSORT_ARRIVEE`, à 95 % en
+ * 0,12 s au lieu de 0,33 s au ressort ordinaire de 9), et son pump part juste
+ * avant qu'elle ait fini (`ARRIVEE_APRES_DECOLLAGE`) : les deux s'enchaînent
+ * en un seul coup.
+ */
+const RESSORT_ARRIVEE = 25
+const ARRIVEE_APRES_DECOLLAGE = 0.1
 
 type PropsPaquet = {
   /** Le paquet est ouvert : ses cartes entrent dans la collection. Une fois par paquet. */
@@ -851,6 +859,8 @@ export function Paquet3D({
   const [cassee, setCassee] = useState(false)
   const [detruites, setDetruites] = useState<ReadonlySet<number>>(new Set())
   const minuteArrivee = useRef(0)
+  /** La suivante d'un décollage : elle regrandit sur `RESSORT_ARRIVEE`. */
+  const [arriveeVive, setArriveeVive] = useState(-1)
   useEffect(() => () => clearTimeout(minuteArrivee.current), [])
   const refNumero = useRef(numero)
   refNumero.current = numero
@@ -1173,6 +1183,7 @@ export function Paquet3D({
     setDecollage(null)
     setCachee(false)
     setDetruites(new Set())
+    setArriveeVive(-1)
     setSommet(-1)
     setEclat(null)
     racine.current?.style.removeProperty('--lueur')
@@ -1646,7 +1657,9 @@ export function Paquet3D({
               // gardent le leur — et l'angle est une cible comme la place,
               // amortie par le même ressort.
               ressort={
-                !fini && i < montree
+                arriveeVive === i && !fini
+                  ? RESSORT_ARRIVEE
+                  : !fini && i < montree
                   ? ressortDeSortie
                   : rebondit && !fini
                     ? RESSORT_REBOND
@@ -1776,15 +1789,20 @@ export function Paquet3D({
       if (montree + 1 < paquet.length) {
         const n = montree + 1
         setMontree(n)
+        setArriveeVive(n)
         // SON INSTANT ARRIVE QUAND ELLE A FINI DE GRANDIR. Keko : « je voulais
         // juste rajouter le pump à son arrivée finale avec les particules ».
         // *Elle regrandit depuis zéro au ressort* (voir `tailleAuDefile`) ; un
         // pompage pendant qu'elle grandit ne se voit pas, donc on attend
-        // qu'elle soit à sa taille — à 95 % au bout d'un tiers de seconde.
+        // qu'elle soit presque à sa taille (voir `RESSORT_ARRIVEE`).
         const ce = numero
         clearTimeout(minuteArrivee.current)
         minuteArrivee.current = window.setTimeout(() => {
-          if (refNumero.current === ce) refDecouvrir.current(n)
+          if (refNumero.current !== ce) return
+          refDecouvrir.current(n)
+          // LE RESSORT RAIDE NE VAUT QUE POUR L'ARRIVÉE : il rendrait ensuite
+          // la carte sèche au doigt et au gyroscope.
+          minuteArrivee.current = window.setTimeout(() => setArriveeVive(-1), 250)
         }, ARRIVEE_APRES_DECOLLAGE * 1000)
       } else setFini(true)
     } else if (zoomee === carte.id) setZoomee(null)
