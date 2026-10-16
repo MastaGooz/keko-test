@@ -9,7 +9,8 @@ import { createRng } from '../logic/rng.ts'
 import { RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS } from './Carte3D.tsx'
-import { RAYON_SIMPLE } from './texture-carte.ts'
+import { PORTEE_RAYONS, RAYON_SIMPLE } from './texture-carte.ts'
+import { COULEUR } from './carte-emoji.ts'
 
 /**
  * LA FILE DES PEINTURES : une à la fois. *Cent vignettes qui entrent dans la
@@ -123,7 +124,11 @@ export function cerneArcEnCiel(
  * chiffres lus et non recopiés. *Ce qui ne passe pas, c'est le mouvement* :
  * la vignette ne penche pas, son brillant est celui du repos.
  */
-export function brillantDuRepos(toile: HTMLCanvasElement): void {
+export function brillantDuRepos(
+  toile: HTMLCanvasElement,
+  /** La portée des rayons du cran (voir `PORTEE_RAYONS`). */
+  portee = 1,
+): void {
   const ctx = toile.getContext('2d', { willReadFrequently: true })
   if (ctx === null) return
   const { width: l, height: h } = toile
@@ -172,7 +177,8 @@ export function brillantDuRepos(toile: HTMLCanvasElement): void {
         const a = Math.atan2(dy, dx) - R.depart
         const fr = ((a / secteur) % 1 + 1) % 1
         const clair = fondu(0, 0.025, fr) * (1 - fondu(0.475, 0.5, fr))
-        const fonduR = 1 - Math.min(1, Math.max(0, (Math.hypot(dx, dy) - rr * 0.08) / (rr * 0.92)))
+        const rp = rr * portee
+        const fonduR = 1 - Math.min(1, Math.max(0, (Math.hypot(dx, dy) - rp * 0.08) / (rp * 0.92)))
         const lib = libre === null ? 1 : libre[k]! / 255
         kr = clair * fonduR * lib
       }
@@ -383,7 +389,7 @@ export function peinte(
       largeur,
     )
     // LE BRILLANT DU REPOS, comme la carte 3D de face : voir `brillantDuRepos`.
-    brillantDuRepos(toile)
+    brillantDuRepos(toile, PORTEE_RAYONS[COULEUR[c.rarete]] ?? 1)
     if (holo) {
       if (!sansSujet) cerneArcEnCiel(toile)
       if (paillettes) paillettesHolo(toile, c.id)
