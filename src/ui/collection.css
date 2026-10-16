@@ -571,6 +571,21 @@
   cursor: pointer;
 }
 
+/* LA GRILLE DÉFILE AU DOIGT. Keko : « sur téléphone je n'arrive pas à faire
+   défiler la collection ». *Les vignettes sont des canvas*, et `#app canvas`
+   porte `touch-action: none` pour le moteur 3D : un doigt posé sur une carte
+   ne pouvait plus défiler. Elles rendent le défilement vertical. */
+#app .collection canvas.vignette-toile {
+  touch-action: pan-y;
+}
+
+/* ET LA CARTE OUVERTE GARDE LE DOIGT : elle sort de `#app` par un portail, donc
+   la règle du moteur 3D ne la couvrait plus — le navigateur prenait le glisser
+   pour lui et annulait le geste. */
+.carte-ouverte canvas {
+  touch-action: none;
+}
+
 /* PAS DE SURLIGNAGE BLEU A LA TAPE. Keko : « quand je clique sur les boutons
    des filtres ils se surlignent en bleu sur tel, comme si je sélectionnais le
    texte ». C'est la tape par défaut du navigateur mobile, plus la sélection du

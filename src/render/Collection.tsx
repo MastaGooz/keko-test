@@ -55,6 +55,14 @@ const TRIS: readonly { id: Tri; nom: string }[] = [
   { id: 'rares', nom: 'Plus rares' },
 ]
 
+/** Ajoute ou retire une valeur d'un filtre : rien de coché, tout passe. */
+function basculer<T>(s: ReadonlySet<T>, v: T): ReadonlySet<T> {
+  const n = new Set(s)
+  if (n.has(v)) n.delete(v)
+  else n.add(v)
+  return n
+}
+
 /** Sans accents ni casse : « eclair » trouve « Éclair ». */
 function plier(texte: string): string {
   return texte.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
@@ -197,6 +205,8 @@ function CarteOuverte({
     }
   }, [])
   const curseur = useRef<CurseurDeCarte>({ dessus: false, x: 0, y: 0 })
+  const refFermer = useRef(onFermer)
+  refFermer.current = onFermer
   const aPeindre = useMemo(
     () => carteDeLEmoji(carte, { holo: possession.holo > 0, anime: possession.anime > 0 && carte.animable }),
     [carte, possession.holo, possession.anime],
@@ -207,6 +217,80 @@ function CarteOuverte({
   const lVisible = (hVisible * fenetre.l) / fenetre.h
   const taille = Math.min((lVisible * 0.82) / LARGE, (hVisible * 0.6) / HAUT)
   const px = (taille * LARGE * fenetre.l * Math.min(window.devicePixelRatio || 1, 2)) / lVisible
+  /**
+   * LE DOIGT PENCHE LA CARTE, COMME AU PAQUET. Keko : « il faut pouvoir bouger
+   * la carte de la collection qu'on zoome comme quand on ouvre les boosters ».
+   * *C'est le geste de l'écran du paquet, recopié* : au doigt, le maintien
+   * penche et suit le doigt même sorti de la carte ; à la souris, le survol.
+   * **Une tape à côté la repose** — une tape, pas un glisser qui finit dehors.
+   */
+  const boite = {
+    cx: fenetre.l / 2,
+    cy: fenetre.h * (0.5 - 0.06),
+    l: ((taille * LARGE) / lVisible) * fenetre.l,
+    h: ((taille * HAUT) / hVisible) * fenetre.h,
+  }
+  const refBoite = useRef(boite)
+  refBoite.current = boite
+  useEffect(() => {
+    const c = curseur.current
+    const arret = new AbortController()
+    const signal = arret.signal
+    const depart = { x: 0, y: 0 }
+    let doigtPose = false
+    const viser = (e: PointerEvent): boolean => {
+      const b = refBoite.current
+      c.x = Math.max(-0.5, Math.min(0.5, (e.clientX - b.cx) / b.l))
+      c.y = Math.max(-0.5, Math.min(0.5, -(e.clientY - b.cy) / b.h))
+      return Math.abs(e.clientX - b.cx) <= b.l / 2 && Math.abs(e.clientY - b.cy) <= b.h / 2
+    }
+    addEventListener(
+      'pointerdown',
+      (e) => {
+        depart.x = e.clientX
+        depart.y = e.clientY
+        if (e.pointerType === 'mouse') return
+        doigtPose = true
+        viser(e)
+        c.dessus = true
+        c.tenu = true
+        c.eclat = 1
+      },
+      { signal },
+    )
+    addEventListener(
+      'pointermove',
+      (e) => {
+        if (e.pointerType === 'mouse') {
+          c.dessus = viser(e)
+          c.tenu = c.dessus
+          c.eclat = 1
+        } else if (doigtPose) viser(e)
+      },
+      { signal },
+    )
+    const lacher = (e: PointerEvent): void => {
+      if (e.pointerType === 'mouse') return
+      doigtPose = false
+      c.dessus = false
+      c.tenu = false
+    }
+    addEventListener('pointercancel', lacher, { signal })
+    addEventListener(
+      'pointerup',
+      (e) => {
+        lacher(e)
+        const tape = Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < 12
+        const b = refBoite.current
+        const dedans = Math.abs(e.clientX - b.cx) <= b.l / 2 && Math.abs(e.clientY - b.cy) <= b.h / 2
+        // La croix ferme d'elle-même : on ne repose pas deux fois.
+        const surUnBouton = e.target instanceof Element && e.target.closest('button') !== null
+        if (tape && !dedans && !surUnBouton) refFermer.current()
+      },
+      { signal },
+    )
+    return () => arret.abort()
+  }, [])
   const exemplaires = [
     possession.n > 1 ? `${possession.n} exemplaires` : '1 exemplaire',
     possession.holo > 0 ? `${possession.holo} holo` : null,
@@ -215,8 +299,6 @@ function CarteOuverte({
   return (
     <div className="carte-ouverte">
       <Canvas
-        // UNE TAPE À CÔTÉ DE LA CARTE LA REPOSE, comme au bilan du paquet.
-        onPointerMissed={onFermer}
         dpr={[1, 2]}
         camera={{ position: [0, 0, zCamera(fenetre.h)], fov: FOV }}
         gl={{ toneMapping: NoToneMapping }}
@@ -272,7 +354,9 @@ export function PageCollection({
   const [recherche, setRecherche] = useState('')
   const [tri, setTri] = useState<Tri>('recentes')
   const [raretes, setRaretes] = useState<ReadonlySet<RareteEmoji>>(new Set())
-  const [groupe, setGroupe] = useState<GroupeEmoji | null>(null)
+  // PLUSIEURS TYPES À LA FOIS, comme les raretés. Keko : « ce serait bien de
+  // pouvoir sélectionner plusieurs catégories à la fois comme les raretés ».
+  const [groupes, setGroupes] = useState<ReadonlySet<GroupeEmoji>>(new Set())
   const [ouverte, setOuverte] = useState<string | null>(null)
 
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
@@ -289,7 +373,7 @@ export function PageCollection({
     const l = possedees.filter(
       ({ carte }) =>
         (raretes.size === 0 || raretes.has(carte.rarete)) &&
-        (groupe === null || carte.groupe === groupe) &&
+        (groupes.size === 0 || groupes.has(carte.groupe)) &&
         (q === '' || plier(carte.nom).includes(q) || carte.mots.some((m) => plier(m).includes(q))),
     )
     const az = new Intl.Collator('fr')
@@ -297,7 +381,7 @@ export function PageCollection({
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [possedees, recherche, tri, raretes, groupe])
+  }, [possedees, recherche, tri, raretes, groupes])
 
   const total = catalogue?.length ?? 0
   const part = total === 0 ? 0 : possedees.length / total
@@ -348,14 +432,7 @@ export function PageCollection({
                   type="button"
                   className={`puce${raretes.has(r) ? ' actif' : ''}`}
                   style={{ '--cran': teinteDuCran(r) } as React.CSSProperties}
-                  onClick={() =>
-                    setRaretes((s) => {
-                      const n = new Set(s)
-                      if (n.has(r)) n.delete(r)
-                      else n.add(r)
-                      return n
-                    })
-                  }
+                  onClick={() => setRaretes((s) => basculer(s, r))}
                 >
                   <i />
                   {NOM_DE_LA_RARETE[r]}
@@ -367,8 +444,8 @@ export function PageCollection({
                 <button
                   key={g}
                   type="button"
-                  className={`puce${groupe === g ? ' actif' : ''}`}
-                  onClick={() => setGroupe((x) => (x === g ? null : g))}
+                  className={`puce${groupes.has(g) ? ' actif' : ''}`}
+                  onClick={() => setGroupes((s) => basculer(s, g))}
                 >
                   {NOM_DU_GROUPE[g]}
                 </button>

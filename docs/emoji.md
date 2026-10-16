@@ -6162,3 +6162,23 @@ sachet), la vignette montrait la peinture brute. La vignette prend donc un
 `saturate(1 + SATURATION_APLAT)` en CSS — **le chiffre est lu dans `Carte3D`,
 pas recopié.** Vu côte à côte, le vert du Hot dog rejoint celui de la carte
 ouverte. (Le nuanceur sature en linéaire, CSS en sRGB : proche, pas identique.)
+
+#### LA GRILLE DÉFILE, LA CARTE OUVERTE SUIT LE DOIGT, LES TYPES SE CUMULENT
+
+Keko : « sur téléphone je n'arrive pas à faire défiler la collection ».
+***Les vignettes sont des canvas***, et `#app canvas` porte `touch-action:
+none` pour le moteur 3D (la règle payée par le glisser des cartes) : un doigt
+posé sur une carte — c'est-à-dire presque partout dans la grille — ne pouvait
+plus défiler. Elles rendent `pan-y`.
+
+« Il faut pouvoir bouger la carte de la collection qu'on zoome comme quand on
+ouvre les boosters. » *Deux raisons, et l'une cachait l'autre* : la carte
+ouverte sort de `#app` par un portail, donc la règle du moteur ne la couvrait
+plus et le navigateur annulait le geste ; et **rien ne lui faisait suivre le
+doigt** — au paquet, c'est l'écran qui tient le curseur, pas la carte. Le geste
+du bilan est donc recopié : au doigt le maintien penche et suit le doigt même
+sorti de la carte, à la souris le survol. **Une tape à côté la repose** — une
+tape, plus un clic manqué : un glisser qui finit dehors ne la ferme pas.
+
+« Ce serait bien de pouvoir sélectionner plusieurs catégories à la fois comme
+les raretés » : les types sont un ensemble, comme les raretés (`basculer`).
