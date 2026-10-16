@@ -2008,7 +2008,10 @@ export function Paquet3D({
         */}
         {ouvert && fini && zoomee === null && paquet.length > 0 && peutContinuer && (
           <Bouton3D
-            texte="Ouvrir un autre paquet"
+            // « TERMINÉ » : Keko, « à la place de "ouvrir un autre paquet" sur le
+            // bouton on peut dire "terminé" ». Le geste ne change pas : il passe
+            // au paquet suivant.
+            texte="Terminé"
             // EN STICKER, PAS EN LAITON : voir `TONS.emoji` dans Bouton3D.
             ton="emoji"
             cran="ecran"
