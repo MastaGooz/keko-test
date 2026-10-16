@@ -522,9 +522,19 @@ type PropsPaquet = {
    * déjà pour le sachet suivant.
    */
   sansPrise?: boolean
+  /**
+   * IL RESTE UN PAQUET À OUVRIR : sinon le bilan n'offre pas « Ouvrir un autre
+   * paquet », et c'est `Jeu` qui dit quand le prochain arrive. Voir `reserve.ts`.
+   */
+  peutContinuer?: boolean
 }
 
-export function Paquet3D({ onPaquetOuvert, onCalme, sansPrise = false }: PropsPaquet = {}): React.ReactElement {
+export function Paquet3D({
+  onPaquetOuvert,
+  onCalme,
+  sansPrise = false,
+  peutContinuer = true,
+}: PropsPaquet = {}): React.ReactElement {
   const params = new URLSearchParams(location.search)
   /**
    * QUEL CATALOGUE — L'EMOJI PAR DÉFAUT, `&art` les peintures.
@@ -1836,7 +1846,7 @@ export function Paquet3D({ onPaquetOuvert, onCalme, sansPrise = false }: PropsPa
           disputerait le geste à la carte. « Tout révéler » est parti avec :
           il répondait à cinq dos posés côte à côte, et il n'y en a plus.
         */}
-        {ouvert && fini && zoomee === null && paquet.length > 0 && (
+        {ouvert && fini && zoomee === null && paquet.length > 0 && peutContinuer && (
           <Bouton3D
             texte="Ouvrir un autre paquet"
             // EN STICKER, PAS EN LAITON : voir `TONS.emoji` dans Bouton3D.

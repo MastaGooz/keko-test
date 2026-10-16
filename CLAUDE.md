@@ -199,6 +199,14 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   `Carte3D`, avec le holo ou l'animé si on possède l'exemplaire). Tri récentes /
   A → Z / plus rares, recherche sans accents, puces de rareté et de type.
 - `&art` et `&peau` gardent le paquet seul, sans barre.
+- **La réserve de paquets** (`logic/emoji/reserve.ts`, `RESERVE`) : 10 au plus,
+  **un toutes les 10 minutes** (Keko), pleine au départ, décomptée à
+  l'ouverture. *Le temps est injecté et rien ne compte des secondes* : on garde
+  l'instant de départ de la recharge, l'écoulé se calcule à la lecture — un
+  téléphone en veille recharge pareil. La jauge est sous la barre, le compte
+  sur le booster rond ; vide, l'écran d'attente montre le minuteur et le
+  sachet descend tout seul à zéro ; au bilan, « Ouvrir un autre paquet » cède
+  la place à « Prochain paquet dans … ». `&illimite` ne la vide jamais.
 
 ### Ce qui reste à trancher par Keko
 
@@ -360,6 +368,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&art` | les peintures |
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
+| `&illimite` | la réserve de paquets ne se vide jamais, pour tester sans attendre |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
 | `&perso` | la première carte est 🫠, peinte depuis l'emoji dessiné par Keko (`Test.png`) |
 | `&holo` | toutes les cartes du paquet sont holographiques (`?cosmos=0` : sans les paillettes) |

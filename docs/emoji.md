@@ -6208,3 +6208,51 @@ faisait déjà pour le sachet suivant*, qui arrivait pris.
   `&peau` n'ont pas d'accueil et gardent la prise**, sinon ils perdraient le son
   sur tactile.
 - La barre de navigation est cachée sur l'accueil.
+
+### LA RÉSERVE DE PAQUETS : UN TOUTES LES DIX MINUTES (16/10/2026)
+
+Keko : **« il faudrait indiquer le nombre de paquets dispo à l'ouverture, avec
+un compteur qui donne 1 paquet toutes les 10 min, comme dans lexicodex. »**
+
+**Chez lexicodex**, relevé à l'ouverture : sous la barre, une jauge à cases et
+« 3/3 aujourd'hui » ; sur le booster rond, une pastille « 10 ».
+
+#### LA RÈGLE (`logic/emoji/reserve.ts`)
+
+| | |
+|---|---|
+| l'intervalle | **10 minutes** — le chiffre de Keko |
+| le plafond | **10 paquets** — de moi, à rejuger : pleine, la réserve ne se recharge plus |
+| le départ | **pleine** — de moi : *le premier paquet ne se fait pas attendre* |
+| le décompte | à l'ouverture (`onPaquetOuvert`), comme l'entrée dans la collection |
+
+***On ne compte pas des secondes qui passent*** : la réserve garde l'instant où
+la recharge en cours a commencé (`depuis`), et ce qui s'est écoulé se calcule à
+la lecture (`reserveAJour`). **Un téléphone en veille ou un onglet fermé
+rechargent donc pareil**, et la règle se vérifie sans attendre — le temps est
+injecté (`reserve.verif.ts`). Prendre dans une réserve pleine lance la
+recharge ; une horloge qui recule (l'heure changée à la main) ne rend ni ne
+retire rien. Gardée à part de la collection (`keko-emoji-reserve`) : *abîmée,
+une réserve repart pleine, alors qu'une collection abîmée perd des cartes.*
+
+#### CE QUI SE VOIT
+
+- **La jauge sous la barre** (`JaugeDeReserve`) : une case par paquet, les
+  pleines en or, « 3/10 paquets · +1 dans 5:49 ». Elle suit la barre : cachée
+  pendant la déchirure et le défilé.
+- **Le compte sur le booster rond**, en or ; rouge à zéro.
+- **Vide en arrivant au booster : l'écran d'attente** (`Attente`) — « Plus de
+  paquet », le minuteur en grand, « Voir ma collection ». *Il s'efface tout
+  seul* : à zéro, le sachet descend. **C'est décidé en arrivant, pas à chaque
+  seconde** : le paquet qui vient de vider la réserve laisse son bilan à
+  l'écran.
+- **Au bilan, réserve vide** : « Ouvrir un autre paquet » disparaît
+  (`Paquet3D.peutContinuer`) et « Prochain paquet dans … » prend sa place.
+
+Vérifié dans la page : la jauge à 3, puis la réserve vide à 8 s de la
+recharge — l'attente compte « 0:03 », puis le sachet arrive et la jauge passe à
+« 1/10 · +1 dans 9:55 ». *Le bilan à réserve vide n'a pas été vu à l'écran* :
+il demande une vraie déchirure.
+
+`&illimite` : la réserve ne se vide jamais, pour tester sans attendre. **Les
+autres bancs consomment** (`?paquet=<n>`, `&holo`…).

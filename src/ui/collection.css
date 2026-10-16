@@ -666,3 +666,151 @@
   z-index: 1;
   bottom: 22vh;
 }
+
+/* ------------------------------------------------------ la réserve de paquets */
+
+/* SOUS LA BARRE, comme le « 3/3 aujourd'hui » de lexicodex. */
+.reserve-place {
+  position: fixed;
+  top: calc(max(0.6rem, env(safe-area-inset-top)) + 4.1rem);
+  left: 50%;
+  z-index: 19;
+  transform: translateX(-50%);
+  transition:
+    opacity 0.25s ease,
+    transform 0.3s ease;
+  pointer-events: none;
+}
+
+.reserve-cachee {
+  opacity: 0;
+  transform: translate(-50%, -1rem);
+}
+
+.reserve {
+  padding: 0.45rem 0.8rem 0.35rem;
+  border-radius: 0.9rem;
+  background: rgba(14, 6, 40, 0.55);
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  color: #fffaf0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.reserve-cases {
+  display: flex;
+  gap: 0.2rem;
+  justify-content: center;
+}
+
+.reserve-cases i {
+  width: 1.05rem;
+  height: 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.18);
+}
+
+.reserve-cases i.pleine {
+  background: linear-gradient(#ffe27a, #ffb31f);
+  box-shadow: 0 0 0.35rem #ffc61f88;
+}
+
+.reserve-texte {
+  margin: 0.2rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+
+.reserve-texte b {
+  font-weight: 800;
+}
+
+.reserve-dans {
+  opacity: 0.75;
+}
+
+/* LE COMPTE SUR LE BOOSTER ROND : en or, et rouge quand il n'y a plus rien. */
+.nav-pastille-booster {
+  top: -0.3rem;
+  left: auto;
+  right: -0.35rem;
+  background: #ffc61f;
+  color: #2a1b63;
+  box-shadow: 0 0 0 0.15rem #2a1b63;
+}
+
+.nav-pastille-booster.vide {
+  background: #ff4d5e;
+  color: #fff;
+}
+
+/* À LA PLACE DU BOUTON « Ouvrir un autre paquet », quand la réserve est vide. */
+.reserve-bilan {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(9vh + env(safe-area-inset-bottom));
+  z-index: 3;
+  margin: 0;
+  text-align: center;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #fffaf0;
+  text-shadow: 0 0.1rem 0.4rem rgba(14, 6, 40, 0.8);
+  pointer-events: none;
+}
+
+/* L'ATTENTE : plus de paquet, le minuteur au centre. */
+.attente {
+  position: fixed;
+  inset: 0;
+}
+
+.attente-corps {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  color: #fffaf0;
+  text-align: center;
+}
+
+.attente-corps p {
+  margin: 0;
+}
+
+.attente-titre {
+  font-weight: 800;
+  font-size: 1.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.attente-minuteur {
+  font-weight: 800;
+  font-size: 4.5rem;
+  line-height: 1;
+  margin-top: 0.4rem !important;
+  color: #ffd45e;
+  text-shadow:
+    0 0.12rem 0 #b8820a,
+    0 0 1.2rem #ffc61f66;
+  font-variant-numeric: tabular-nums;
+}
+
+.attente-texte {
+  font-size: 1.05rem;
+  opacity: 0.8;
+}
+
+.attente button {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}

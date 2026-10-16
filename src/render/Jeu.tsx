@@ -24,7 +24,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
 import { ajouterPaquet, nombreDeNouvelles, toutVu, type Collection } from '../logic/emoji/collection.ts'
-import { chargerCollection, sauverCollection } from '../ui/collection.ts'
+import { chargerCollection, chargerReserve, sauverCollection, sauverReserve } from '../ui/collection.ts'
+import { RESERVE, prendreUnPaquet, prochainDans, reserveAJour, type Reserve } from '../logic/emoji/reserve.ts'
 import { chargerEmojis } from '../ui/emoji.ts'
 import { Paquet3D } from './Paquet3D.tsx'
 import { PageCollection } from './Collection.tsx'
@@ -33,6 +34,57 @@ import { FondAnime } from './FondAnime.tsx'
 import { toileDuTitre } from './texture-carte.ts'
 
 type Page = 'booster' | 'collection'
+
+/** `&illimite` : la réserve ne se vide jamais — pour tester sans attendre. */
+const ILLIMITE = new URLSearchParams(location.search).has('illimite')
+
+/** 9:58 — les minutes sans zéro devant, les secondes avec. */
+function minuteur(ms: number): string {
+  const s = Math.max(0, Math.ceil(ms / 1000))
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+}
+
+/**
+ * LA RÉSERVE SOUS LA BARRE, comme chez lexicodex (« 3/3 aujourd'hui ») : une
+ * case par paquet, les pleines en or, et le temps avant le suivant.
+ */
+function JaugeDeReserve({ paquets, dans }: { paquets: number; dans: number | null }): React.ReactElement {
+  return (
+    <div className="reserve">
+      <div className="reserve-cases" aria-hidden>
+        {Array.from({ length: RESERVE.max }, (_, i) => (
+          <i key={i} className={i < paquets ? 'pleine' : ''} />
+        ))}
+      </div>
+      <p className="reserve-texte">
+        <b>{paquets}</b>/{RESERVE.max} paquet{paquets > 1 ? 's' : ''}
+        {dans !== null && <span className="reserve-dans"> · +1 dans {minuteur(dans)}</span>}
+      </p>
+    </div>
+  )
+}
+
+/**
+ * PLUS DE PAQUET : l'écran d'attente. *Le fond du paquet reste*, et ce qu'il
+ * dit tient en une ligne — quand vient le suivant. **Il s'efface tout seul** :
+ * à la seconde où le paquet arrive, le sachet descend.
+ */
+function Attente({ dans, onCollection }: { dans: number | null; onCollection: () => void }): React.ReactElement {
+  return (
+    <div className="attente">
+      <div className="paquet-fond" />
+      <FondAnime />
+      <div className="attente-corps">
+        <p className="attente-titre">Plus de paquet</p>
+        <p className="attente-minuteur">{dans === null ? '…' : minuteur(dans)}</p>
+        <p className="attente-texte">avant le prochain</p>
+        <button type="button" className="collection-bouton" onClick={onCollection}>
+          Voir ma collection
+        </button>
+      </div>
+    </div>
+  )
+}
 
 /**
  * L'ÉCRAN D'ACCUEIL : le titre, et « Touchez pour jouer ». Keko : « mettre
@@ -88,6 +140,29 @@ export function Jeu(): React.ReactElement {
   const [collection, setCollection] = useState<Collection>(chargerCollection)
   const [calme, setCalme] = useState(true)
   const [catalogue, setCatalogue] = useState<CarteEmoji[] | null>(null)
+  /**
+   * LA RÉSERVE ET L'HEURE. *On ne compte pas des secondes* : on garde la
+   * réserve telle qu'écrite, et l'heure qui avance la met à jour à la lecture
+   * (`reserveAJour`). L'heure ne bat que pour le minuteur affiché.
+   */
+  const [reserve, setReserve] = useState<Reserve>(() => chargerReserve(Date.now()))
+  const [maintenant, setMaintenant] = useState(Date.now)
+  useEffect(() => {
+    const t = window.setInterval(() => setMaintenant(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  const aJour = reserveAJour(reserve, maintenant)
+  const dispo = ILLIMITE ? RESERVE.max : aJour.paquets
+  const dans = ILLIMITE ? null : prochainDans(reserve, maintenant)
+  /**
+   * EN ATTENTE : on est venu au booster sans paquet. *Décidé en arrivant, pas à
+   * chaque seconde* — un paquet qu'on vient d'ouvrir et qui vide la réserve
+   * laisse son bilan à l'écran, il ne le remplace pas par l'attente.
+   */
+  const [attente, setAttente] = useState(false)
+  useEffect(() => {
+    if (attente && dispo > 0) setAttente(false)
+  }, [attente, dispo])
   useEffect(() => {
     // LE MÊME FETCH QUE LE PAQUET : `chargerEmojis` partage sa promesse.
     void chargerEmojis().then(setCatalogue, () => setCatalogue([]))
@@ -119,8 +194,16 @@ export function Jeu(): React.ReactElement {
     })
   }, [])
   const ajouter = useCallback(
-    (ids: readonly string[], bonus: Readonly<Record<string, Bonus>>) =>
-      changer((c) => ajouterPaquet(c, ids, bonus, Date.now())),
+    (ids: readonly string[], bonus: Readonly<Record<string, Bonus>>) => {
+      changer((c) => ajouterPaquet(c, ids, bonus, Date.now()))
+      // LE PAQUET SE DÉCOMPTE QUAND IL EST OUVERT, comme il entre dans la collection.
+      if (!ILLIMITE)
+        setReserve((r) => {
+          const n = prendreUnPaquet(r, Date.now()) ?? r
+          sauverReserve(n)
+          return n
+        })
+    },
     [changer],
   )
 
@@ -130,6 +213,7 @@ export function Jeu(): React.ReactElement {
     // « Nouveau » de la grille avec elle. *Pas en y entrant* : on doit pouvoir
     // les y voir.
     if (page === 'collection') changer(toutVu)
+    if (vers === 'booster') setAttente(dispo === 0)
     setPage(vers)
     setCalme(true)
   }
@@ -141,15 +225,34 @@ export function Jeu(): React.ReactElement {
   return (
     <>
       {accueil ? (
-        <Accueil onJouer={() => setAccueil(false)} />
+        <Accueil
+          onJouer={() => {
+            setAttente(dispo === 0)
+            setAccueil(false)
+          }}
+        />
+      ) : page === 'booster' && attente ? (
+        <Attente dans={dans} onCollection={() => aller('collection')} />
       ) : page === 'booster' ? (
-        <Paquet3D onPaquetOuvert={ajouter} onCalme={setCalme} sansPrise />
+        <>
+          <Paquet3D onPaquetOuvert={ajouter} onCalme={setCalme} sansPrise peutContinuer={dispo > 0} />
+          {/* LE PAQUET EST VIDE, LA RÉSERVE AUSSI : à la place du bouton, quand
+              vient le suivant. */}
+          {dispo === 0 && calme && (
+            <p className="reserve-bilan">Prochain paquet dans {dans === null ? '…' : minuteur(dans)}</p>
+          )}
+        </>
       ) : (
         <PageCollection
           catalogue={catalogue}
           collection={collection}
           onOuvrirUnPaquet={() => aller('booster')}
         />
+      )}
+      {!accueil && page === 'booster' && !attente && (
+        <div className={`reserve-place${visible ? '' : ' reserve-cachee'}`}>
+          <JaugeDeReserve paquets={dispo} dans={dans} />
+        </div>
       )}
       <nav className={`nav${visible ? '' : ' nav-cachee'}`} aria-label="Navigation">
         <div className="nav-pilule">
@@ -179,6 +282,8 @@ export function Jeu(): React.ReactElement {
           <span className="nav-sachet">
             <span>😄</span>
           </span>
+          {/* LE NOMBRE DE PAQUETS SUR LE BOOSTER, comme le « 10 » de lexicodex. */}
+          <span className={`nav-pastille nav-pastille-booster${dispo === 0 ? ' vide' : ''}`}>{dispo}</span>
         </button>
       </nav>
     </>
