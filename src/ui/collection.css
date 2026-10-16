@@ -1023,8 +1023,6 @@
   display: block;
 }
 
-/* UNE TAPE LE FAIT SAUTER (`animate`, dans `Stickers.tsx`) : un sticker se regarde. */
-
 .album-toile {
   position: absolute;
   inset: 0;
@@ -1051,4 +1049,66 @@
 
 #app .album canvas.album-toile {
   touch-action: pan-y;
+}
+
+/* ------------------------------------------------------- le sticker ouvert */
+
+.sticker-grand {
+  position: fixed;
+  left: 50%;
+  top: 44%;
+  width: min(88vw, 52vh, 30rem);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  perspective: 50rem;
+  animation: sticker-arrive 0.4s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+
+@keyframes sticker-arrive {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4) rotate(-12deg);
+  }
+}
+
+/* IL FLOTTE QUAND ON LE LAISSE. */
+.sticker-flotte {
+  position: absolute;
+  inset: 0;
+  animation: sticker-flotte 3.6s ease-in-out infinite;
+}
+
+@keyframes sticker-flotte {
+  50% {
+    transform: translateY(-0.6rem) rotate(2deg);
+  }
+}
+
+.sticker-penche {
+  position: absolute;
+  inset: 0;
+  transition: transform 0.18s ease-out;
+  transform-style: preserve-3d;
+}
+
+.sticker-toile {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.sticker-attente {
+  font-size: 8rem;
+}
+
+.sticker-nom {
+  margin: 0 0 0.4rem;
+  font-weight: 800;
+  font-size: clamp(1.3rem, 3.4vh, 1.8rem);
+  line-height: 1.1;
+}
+
+.sticker-ouvert {
+  touch-action: none;
 }

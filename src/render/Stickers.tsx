@@ -11,6 +11,9 @@
  * sticker est à l'écran.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { SON_POSER, jouerSon } from './sons.ts'
+import { teinteDuCran } from './Collection.tsx'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers } from '../logic/emoji/collection.ts'
 import { nombreDeStickers } from '../logic/emoji/collection.ts'
@@ -61,12 +64,19 @@ const FILTRE: React.CSSProperties = {
   filter: `saturate(${1 + SATURATION_APLAT}) drop-shadow(0 0.3rem 0.35rem rgba(10, 4, 30, 0.5))`,
 }
 
-function CaseSticker({ carte, stickers }: { carte: CarteEmoji; stickers: Stickers }): React.ReactElement {
+function CaseSticker({
+  carte,
+  stickers,
+  onOuvrir,
+}: {
+  carte: CarteEmoji
+  stickers: Stickers
+  onOuvrir: () => void
+}): React.ReactElement {
   const boite = useRef<HTMLButtonElement>(null)
   const toile = useRef<HTMLCanvasElement>(null)
   const [visible, setVisible] = useState(false)
   const [pret, setPret] = useState(false)
-  const sticker = useRef<HTMLSpanElement>(null)
   const holo = stickers.holo > 0
   const anime = stickers.anime > 0 && carte.animable
   useEffect(() => {
@@ -130,23 +140,9 @@ function CaseSticker({ carte, stickers }: { carte: CarteEmoji; stickers: Sticker
       type="button"
       className={`album-case${pret ? ' album-pret' : ''}`}
       aria-label={`${enTitre(carte.nom)}, ${stickers.n} sticker${stickers.n > 1 ? 's' : ''}`}
-      // LE SAUT SE JOUE SUR L'ÉLÉMENT, IL NE LE REMONTE PAS. Keko : « quand je
-      // clique sur un sticker, il disparaît du grid ». *Il était remonté par
-      // une clé pour relancer l'animation*, et sa toile avec : neuve, donc vide,
-      // et rien ne la repeignait.
-      onClick={() =>
-        sticker.current?.animate(
-          [
-            { transform: 'none' },
-            { transform: 'scale(1.18) rotate(-6deg)', offset: 0.3 },
-            { transform: 'scale(0.96) rotate(3deg)', offset: 0.6 },
-            { transform: 'none' },
-          ],
-          { duration: 450, easing: 'cubic-bezier(0.3, 1.6, 0.5, 1)' },
-        )
-      }
+      onClick={onOuvrir}
     >
-      <span ref={sticker} className="album-sticker">
+      <span className="album-sticker">
         {!pret && <span className="album-attente">{carte.emoji}</span>}
         <canvas ref={toile} className="album-toile" style={FILTRE} />
       </span>
@@ -161,6 +157,176 @@ function CaseSticker({ carte, stickers }: { carte: CarteEmoji; stickers: Sticker
   )
 }
 
+const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+
+/**
+ * LE STICKER EN GRAND. Keko : « pourquoi on peut pas zoomer sur les stickers
+ * dans la collection ? » *Un sticker n'est pas une carte* : pas de pavé 3D,
+ * mais la même toile en grand, qui penche sous le doigt (une perspective CSS,
+ * la carte ouverte en fait autant en 3D), flotte doucement quand on la laisse,
+ * et dont la holo fait passer un reflet. **Le même habillage que la carte
+ * ouverte** — le fond, la croix, les lignes du dessous — et une tape à côté
+ * le repose.
+ */
+function StickerOuvert({
+  carte,
+  stickers,
+  onFermer,
+}: {
+  carte: CarteEmoji
+  stickers: Stickers
+  onFermer: () => void
+}): React.ReactElement {
+  const toile = useRef<HTMLCanvasElement>(null)
+  const penche = useRef<HTMLDivElement>(null)
+  const zone = useRef<HTMLDivElement>(null)
+  const [pret, setPret] = useState(false)
+  const holo = stickers.holo > 0
+  const anime = stickers.anime > 0 && carte.animable
+  const refFermer = useRef(onFermer)
+  refFermer.current = onFermer
+  useEffect(() => {
+    jouerSon(SON_POSER, 0.6)
+  }, [])
+  // L'IMAGE FIXE, À LA TAILLE D'AFFICHAGE : elle reste là si l'animation manque.
+  useEffect(() => {
+    let vivant = true
+    void stickerDe(carte.emoji, urlEmojiDeKeko(carte.id) ?? undefined).then((image) => {
+      const t = toile.current
+      const ctx = t?.getContext('2d', { willReadFrequently: holo })
+      if (!vivant || image === null || t == null || ctx == null) return
+      const cote = Math.round(t.getBoundingClientRect().width * Math.min(window.devicePixelRatio || 1, 2))
+      t.width = cote
+      t.height = cote
+      ctx.imageSmoothingQuality = 'high'
+      ctx.drawImage(image, 0, 0, cote, cote)
+      if (holo) cerneArcEnCiel(t, { x: 0, y: 0, l: 1, h: 1 })
+      setPret(true)
+    })
+    return () => {
+      vivant = false
+    }
+  }, [carte, holo])
+  useEffect(() => {
+    if (!anime) return
+    let vivant = true
+    let image = 0
+    void animationDeLEmoji(urlAnimationEmoji(carte.id)).then((a) => {
+      if (!vivant || a === null) return
+      const depart = performance.now()
+      const pas = (t: number): void => {
+        const c = toile.current
+        const ctx = c?.getContext('2d')
+        if (c == null || ctx == null) return
+        const i = Math.floor((((t - depart) % a.duree) / a.duree) * a.images.length)
+        ctx.clearRect(0, 0, c.width, c.height)
+        ctx.drawImage(a.images[i]!, 0, 0, c.width, c.height)
+        image = requestAnimationFrame(pas)
+      }
+      image = requestAnimationFrame(pas)
+    })
+    return () => {
+      vivant = false
+      cancelAnimationFrame(image)
+    }
+  }, [anime, carte.id])
+  /**
+   * IL PENCHE SOUS LE DOIGT, et se redresse quand on le lâche. Écrit dans le
+   * DOM, pas dans l'état : une valeur par image ne doit pas rendre la page.
+   * Une tape hors du sticker le repose — *au clic*, la règle de la carte
+   * ouverte, pour que la tape ne retombe pas sur la case d'en dessous.
+   */
+  useEffect(() => {
+    const arret = new AbortController()
+    const { signal } = arret
+    const depart = { x: 0, y: 0 }
+    let reposer = false
+    const viser = (x: number, y: number): void => {
+      const el = penche.current
+      const b = zone.current?.getBoundingClientRect()
+      if (el == null || b === undefined) return
+      const nx = Math.max(-1, Math.min(1, (x - (b.left + b.width / 2)) / (b.width / 2)))
+      const ny = Math.max(-1, Math.min(1, (y - (b.top + b.height / 2)) / (b.height / 2)))
+      el.style.transform = `rotateY(${nx * 18}deg) rotateX(${-ny * 18}deg) scale(1.03)`
+    }
+    const redresser = (): void => {
+      const el = penche.current
+      if (el == null) return
+      el.style.transform = ''
+    }
+    addEventListener(
+      'pointerdown',
+      (e) => {
+        depart.x = e.clientX
+        depart.y = e.clientY
+        if (e.pointerType !== 'mouse') viser(e.clientX, e.clientY)
+      },
+      { signal },
+    )
+    addEventListener(
+      'pointermove',
+      (e) => {
+        if (e.pointerType === 'mouse' || e.buttons > 0 || e.pressure > 0) viser(e.clientX, e.clientY)
+      },
+      { signal },
+    )
+    addEventListener('pointercancel', redresser, { signal })
+    addEventListener(
+      'pointerup',
+      (e) => {
+        if (e.pointerType !== 'mouse') redresser()
+        const tape = Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < 12
+        const b = zone.current?.getBoundingClientRect()
+        const dedans =
+          b !== undefined && e.clientX >= b.left && e.clientX <= b.right && e.clientY >= b.top && e.clientY <= b.bottom
+        const surUnBouton = e.target instanceof Element && e.target.closest('button') !== null
+        reposer = tape && !dedans && !surUnBouton
+      },
+      { signal },
+    )
+    addEventListener(
+      'click',
+      (e) => {
+        if (!reposer) return
+        reposer = false
+        e.stopPropagation()
+        e.preventDefault()
+        refFermer.current()
+      },
+      { signal, capture: true },
+    )
+    return () => arret.abort()
+  }, [])
+  const lignes = [
+    stickers.n > 1 ? `${stickers.n} stickers` : '1 sticker',
+    holo ? `${stickers.holo} holo` : null,
+    stickers.anime > 0 ? `${stickers.anime} animé${stickers.anime > 1 ? 's' : ''}` : null,
+  ].filter((m): m is string => m !== null)
+  return (
+    <div className="carte-ouverte sticker-ouvert">
+      <div ref={zone} className="sticker-grand">
+        <div className="sticker-flotte">
+          <div ref={penche} className="sticker-penche">
+            {!pret && <span className="album-attente sticker-attente">{carte.emoji}</span>}
+            <canvas ref={toile} className="sticker-toile" style={FILTRE} />
+          </div>
+        </div>
+      </div>
+      <div className="carte-ouverte-infos">
+        <p className="sticker-nom">{enTitre(carte.nom)}</p>
+        <span className="carte-ouverte-cran" style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}>
+          Sticker
+        </span>
+        <p className="carte-ouverte-ligne">{lignes.join(' · ')}</p>
+        <p className="carte-ouverte-ligne carte-ouverte-discret">Dernier gagné le {DATE.format(new Date(stickers.dernier))}</p>
+      </div>
+      <button type="button" className="carte-ouverte-fermer" aria-label="Fermer" onClick={onFermer}>
+        ×
+      </button>
+    </div>
+  )
+}
+
 export function PageStickers({
   catalogue,
   collection,
@@ -171,6 +337,7 @@ export function PageStickers({
   onCollection: () => void
 }): React.ReactElement {
   const [tri, setTri] = useState<Tri>('recents')
+  const [ouvert, setOuvert] = useState<string | null>(null)
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
   const liste = useMemo(() => {
     const l = Object.entries(collection.stickers)
@@ -183,6 +350,7 @@ export function PageStickers({
     return l
   }, [collection.stickers, parId, tri])
   const total = nombreDeStickers(collection)
+  const leOuvert = ouvert === null ? undefined : liste.find((x) => x.carte.id === ouvert)
   return (
     <div className="collection album">
       <div className="collection-defile">
@@ -223,12 +391,17 @@ export function PageStickers({
             </div>
             <div className="album-grille">
               {liste.map(({ carte, s }) => (
-                <CaseSticker key={carte.id} carte={carte} stickers={s} />
+                <CaseSticker key={carte.id} carte={carte} stickers={s} onOuvrir={() => setOuvert(carte.id)} />
               ))}
             </div>
           </>
         )}
       </div>
+      {leOuvert !== undefined &&
+        createPortal(
+          <StickerOuvert carte={leOuvert.carte} stickers={leOuvert.s} onFermer={() => setOuvert(null)} />,
+          document.body,
+        )}
     </div>
   )
 }

@@ -6434,3 +6434,7 @@ une carte qui casse.
 - **La suivante jaillit (16/10/2026)** : Keko, « accélérer un peu l'apparition de la carte suivante après le décollement, plus punchy / juicy ». Elle regrandit sur un ressort raide (`RESSORT_ARRIVEE` 25, à 95 % en 0,12 s au lieu de 0,33 s), et son pump et ses particules partent à 0,1 s (`ARRIVEE_APRES_DECOLLAGE`, au lieu de 0,34) : la fin de la croissance et le pump s'enchaînent. Le ressort raide est rendu 0,25 s après, sinon la carte serait sèche au doigt. Chiffres de moi.
 
 - **Et son son (16/10/2026)** : la suivante qui jaillit après un décollage joue `SON_POSER`, le son du passage à la suivante (Keko).
+
+### Le sticker en grand (16/10/2026)
+
+Keko : « pourquoi on peut pas zoomer sur les stickers dans la collection ? » Une tape sur une case de l'album ouvre le sticker en grand (`StickerOuvert`, à la place du saut) : le même habillage que la carte ouverte (fond, croix, lignes du dessous : nom, « Sticker » à la couleur du cran, combien, holo, animés, date du dernier), la toile peinte à sa taille d'affichage, l'animation pour un animé, le cerne arc-en-ciel pour une holo. *Pas de 3D* : il penche sous le doigt par une perspective CSS (18° au plus), flotte doucement quand on le laisse, arrive en tournant ; une tape à côté le repose, au clic comme la carte ouverte. Vu au navigateur, pas au doigt.
