@@ -448,11 +448,19 @@ const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
  * - `eclat` : le petit surcroît quand on le penche vers la lampe ;
  * - `saturation` : au-delà, une couleur ne nacre plus. *Premier essai vu :
  *   l'orange de l'huître virait au rose*, l'emoji perdait ses couleurs ; seuls
- *   les blancs, les gris et les pastels nacrent — la perle, la coquille.
+ *   les blancs, les gris et les pastels nacrent — la perle, la coquille ;
+ * - `cameleon` : ET LES COULEURS FRANCHES GLISSENT SUR LE CERCLE DES TEINTES.
+ *   Keko : « ça n'a aucun effet sur les emoji qui n'ont pas de zones
+ *   claires ». *C'est la peinture caméléon* : penché, l'orange tire vers le
+ *   rouge ou le jaune, le bleu vers le violet ou le cyan — en radians par unité
+ *   de reflet, modulé un peu par la clarté et la hauteur pour qu'un aplat ne
+ *   tourne pas d'un bloc. Au repos l'emoji garde ses couleurs : le glissement
+ *   suit l'écart du regard, pas sa valeur. Premier réglage (1,3) vu trop
+ *   fort : un jaune passait au rose d'un côté à l'autre.
  *
  * Chiffres de moi. `?nacre=0` la retire.
  */
-export const NACRE = { seuil: 0.3, couleur: 0.6, etalement: 2.5, regard: 1.6, eclat: 0.22, saturation: 0.35 }
+export const NACRE = { seuil: 0.3, couleur: 0.6, etalement: 2.5, regard: 1.6, eclat: 0.22, saturation: 0.35, cameleon: 0.6 }
 const AVEC_NACRE = new URLSearchParams(location.search).get('nacre') !== '0'
 
 /**
@@ -1422,6 +1430,16 @@ ${nuanceur.vertexShader}`.replace(
              vec3 nacre = mix(vec3(1.0), arcN * 1.25, ${NACRE.couleur.toFixed(2)});
              gl_FragColor.rgb = mix(gl_FragColor.rgb,
                gl_FragColor.rgb * nacre + arcN * lobeE * ${NACRE.eclat.toFixed(2)}, nacreK);
+             // LE CAMÉLÉON : les couleurs franches tournent autour de l'axe des
+             // gris, d'un angle qui suit le regard (Rodrigues : la clarté ne
+             // bouge pas, seule la teinte glisse).
+             float camK = surEmoji * (1.0 - blancTexture) * smoothstep(0.12, 0.4, satTexture) * vivant;
+             float theta = (Rf.x - Rf.y) * ${NACRE.cameleon.toFixed(2)}
+               * (1.0 + 0.45 * sin(clairTexture * 9.0 + tpE.y * 10.0));
+             vec3 axe = vec3(0.57735);
+             vec3 c0 = gl_FragColor.rgb;
+             vec3 tourne = c0 * cos(theta) + cross(axe, c0) * sin(theta) + axe * dot(axe, c0) * (1.0 - cos(theta));
+             gl_FragColor.rgb = mix(c0, max(tourne, 0.0), camK);
            }
          }
 

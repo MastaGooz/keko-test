@@ -292,6 +292,13 @@ function StickerOuvert({
       // elle suit l'autre diagonale du regard.
       const nc = nacre.current
       if (nc != null) nc.style.filter = `hue-rotate(${((o.x + o.y) * 140).toFixed(1)}deg)`
+      // ET LE CAMÉLÉON : le sticker entier glisse sur le cercle des teintes
+      // (voir `NACRE.cameleon`) ; le crème du cerne, presque gris, n'en bouge
+      // presque pas.
+      const t = toile.current
+      if (t != null && holo) {
+        t.style.filter = `saturate(${1 + SATURATION_APLAT}) hue-rotate(${((o.x - o.y) * 32).toFixed(1)}deg) drop-shadow(0 0.3rem 0.35rem rgba(10, 4, 30, 0.5))`
+      }
       image = requestAnimationFrame(appliquer)
     }
     image = requestAnimationFrame(appliquer)
