@@ -332,7 +332,7 @@ export function Jeu(): React.ReactElement {
             onClick={() => aller('collection')}
           >
             <span className="nav-icone" aria-hidden>
-              🗂️
+              <IconeCollection />
             </span>
             Collection
             {nouvelles > 0 && <span className="nav-pastille">{nouvelles}</span>}
@@ -348,7 +348,7 @@ export function Jeu(): React.ReactElement {
           >
             Stickers
             <span className="nav-icone" aria-hidden>
-              🏷️
+              <IconeStickers />
             </span>
           </button>
         </div>
@@ -366,5 +366,44 @@ export function Jeu(): React.ReactElement {
         </button>
       </nav>
     </>
+  )
+}
+
+/**
+ * LES ICÔNES DE LA BARRE, dessinées. Keko : « je trouve que ça matche pas :
+ * pour collection je verrais bien 3 cartes en éventail, et pour stickers autre
+ * chose qu'une étiquette ». *Les emoji 🗂️ et 🏷️ parlaient bureau* ; ici trois
+ * cartes aux couleurs des crans, et un sticker souriant dont le coin se décolle
+ * — le geste de l'album. Le trait est `currentColor` : sombre sur la
+ * pilule crème, crème sur le bouton actif.
+ */
+function IconeCollection(): React.ReactElement {
+  const carte = (angle: number, fond: string, fenetre: string): React.ReactElement => (
+    <g transform={`rotate(${angle} 12 23)`}>
+      <rect x="7.3" y="4" width="9.4" height="13.4" rx="1.7" fill={fond} stroke="currentColor" strokeWidth="1.3" />
+      <rect x="9" y="5.8" width="6" height="5.6" rx="0.8" fill={fenetre} />
+    </g>
+  )
+  return (
+    <svg viewBox="0 0 24 24" strokeLinejoin="round">
+      {carte(-28, '#4cc46a', '#c9f5d3')}
+      {carte(28, '#a35cff', '#e7d6ff')}
+      {carte(0, '#ffb020', '#fff1c7')}
+      <path d="M12 6.6l0.8 1.6 1.7 0.25-1.25 1.2 0.3 1.7-1.55-0.8-1.55 0.8 0.3-1.7-1.25-1.2 1.7-0.25z" fill="#ff7a00" />
+    </svg>
+  )
+}
+
+function IconeStickers(): React.ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round">
+      {/* LE STICKER, coin bas droit replié. */}
+      <path d="M6 3.5h12a2.5 2.5 0 0 1 2.5 2.5v7.5l-7 7H6a2.5 2.5 0 0 1-2.5-2.5V6A2.5 2.5 0 0 1 6 3.5z" fill="#ffd23f" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="8.9" cy="9" r="1.15" fill="#5a3a00" />
+      <circle cx="14.1" cy="9" r="1.15" fill="#5a3a00" />
+      <path d="M7.8 12.2q3.3 3 6.6 0" fill="none" stroke="#5a3a00" strokeWidth="1.3" />
+      {/* LE COIN QUI SE DÉCOLLE : son dos crème. */}
+      <path d="M20.5 13.5l-7 7v-4.5a2.5 2.5 0 0 1 2.5-2.5z" fill="#fffaf0" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
   )
 }

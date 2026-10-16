@@ -204,7 +204,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 - **La barre est celle de lexicodex** (`Jeu.tsx`, `ui/collection.css`) : une
   pilule crème en haut, « Collection » à gauche (pastille rouge = cartes
   nouvelles), le booster rond au centre, « Stickers » à droite (l'album ; le
-  compte « réunis / 1 915 » est resté en tête de la collection). **Elle
+  compte « réunis / 1 915 » est resté en tête de la collection). Icônes
+  dessinées en SVG (`IconeCollection` : trois cartes en éventail aux couleurs
+  des crans ; `IconeStickers` : un sticker souriant au coin décollé), trait en
+  `currentColor`. **Elle
   ne se montre que quand rien ne se joue** (`onCalme` : sachet qui attend, ou
   bilan) — jamais pendant la déchirure ni le défilé.
 - **Le paquet entre dans la collection quand il est ouvert** (`onPaquetOuvert`,
