@@ -1,0 +1,404 @@
+/**
+ * LA COLLECTION — la grille des cartes obtenues, et la carte qu'on y regarde.
+ *
+ * Keko : « une interface de navigation qui va nous permettre de passer de
+ * l'ouverture de booster à la collection des cartes acquises. Inspire-toi de
+ * lexicodex. »
+ *
+ * **CE QUI VIENT DE LEXICODEX**, relevé en ouvrant sa collection : un titre
+ * et le compte, une recherche, un tri (récentes, A → Z, plus rares), un filtre
+ * par rareté, puis une grille de petites cartes ; une tape en ouvre une en
+ * grand, qu'on fait pencher, avec la date où on l'a obtenue.
+ *
+ * ***LES VIGNETTES SONT PEINTES, PAS RENDUES EN 3D*** : une grille de cent
+ * cartes en WebGL, c'est cent nuanceurs pour une image fixe. Chaque vignette
+ * est la même peinture que la carte (`peindreCarte`), à sa taille d'écran,
+ * **seulement quand elle entre dans la vue** et une à la fois. *La 3D est
+ * gardée pour la carte qu'on ouvre* : là, le holo et l'animé ont de quoi jouer.
+ */
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { Canvas } from '@react-three/fiber'
+import { NoToneMapping } from 'three'
+import type { CarteEmoji, GroupeEmoji, RareteEmoji } from '../logic/emoji/types.ts'
+import { GROUPES_EMOJI, NOM_DU_GROUPE, RARETES_EMOJI } from '../logic/emoji/types.ts'
+import type { Collection, Possession } from '../logic/emoji/collection.ts'
+import { nombreDExemplaires } from '../logic/emoji/collection.ts'
+import { AMBIANCE, peindreCarte, tailleQuIlFaut } from './texture-carte.ts'
+import { COULEUR, carteDeLEmoji, enTitre } from './carte-emoji.ts'
+import { Carte3D, HAUT, LARGE, type CurseurDeCarte } from './Carte3D.tsx'
+import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
+import { Horloge } from './horloge.tsx'
+import { Bloom } from './Bloom.tsx'
+import { PencheAuGyro } from './Paquet3D.tsx'
+import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
+import { SON_POSER, jouerSon } from './sons.ts'
+
+const NOM_DE_LA_RARETE: Readonly<Record<RareteEmoji, string>> = {
+  commun: 'Commune',
+  'peu-commun': 'Peu commune',
+  rare: 'Rare',
+  epique: 'Épique',
+  legendaire: 'Légendaire',
+}
+
+/** La couleur d'un cran, celle de son halo : *un pigment ne survit pas à la diffusion.* */
+export function teinteDuCran(r: RareteEmoji): string {
+  return AMBIANCE[COULEUR[r]] ?? '#ffffff'
+}
+
+type Tri = 'recentes' | 'az' | 'rares'
+
+const TRIS: readonly { id: Tri; nom: string }[] = [
+  { id: 'recentes', nom: 'Récentes' },
+  { id: 'az', nom: 'A → Z' },
+  { id: 'rares', nom: 'Plus rares' },
+]
+
+/** Sans accents ni casse : « eclair » trouve « Éclair ». */
+function plier(texte: string): string {
+  return texte.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+}
+
+/* ------------------------------------------------------------------------ */
+/* LES VIGNETTES                                                            */
+/* ------------------------------------------------------------------------ */
+
+/**
+ * LA FILE DES PEINTURES : une à la fois. *Cent vignettes qui entrent dans la
+ * vue d'un coup de pouce feraient cent peintures dans la même image* — la file
+ * les étale, et la première arrive aussitôt.
+ */
+let fileDePeinture: Promise<unknown> = Promise.resolve()
+const PEINTES = new Map<string, Promise<HTMLCanvasElement>>()
+
+function peinte(c: CarteEmoji, largeur: number): Promise<HTMLCanvasElement> {
+  const cle = `${c.id}#${largeur}`
+  const deja = PEINTES.get(cle)
+  if (deja !== undefined) return deja
+  const p = fileDePeinture.then(() => peindreCarte(carteDeLEmoji(c), largeur))
+  fileDePeinture = p.catch(() => null)
+  PEINTES.set(cle, p)
+  // *Un cache retient les succès, pas les échecs.*
+  p.catch(() => PEINTES.delete(cle))
+  return p
+}
+
+function Vignette({
+  carte,
+  possession,
+  onOuvrir,
+}: {
+  carte: CarteEmoji
+  possession: Possession
+  onOuvrir: () => void
+}): React.ReactElement {
+  const boite = useRef<HTMLButtonElement>(null)
+  const toile = useRef<HTMLCanvasElement>(null)
+  const [prete, setPrete] = useState(false)
+  useEffect(() => {
+    const el = boite.current
+    if (el === null) return
+    let fini = false
+    const obs = new IntersectionObserver(
+      (entrees) => {
+        if (!entrees.some((e) => e.isIntersecting) || fini) return
+        fini = true
+        obs.disconnect()
+        const px = el.getBoundingClientRect().width * Math.min(window.devicePixelRatio || 1, 3)
+        void peinte(carte, tailleQuIlFaut(px)).then((source) => {
+          const t = toile.current
+          const ctx = t?.getContext('2d')
+          if (t == null || ctx == null) return
+          t.width = source.width
+          t.height = source.height
+          ctx.drawImage(source, 0, 0)
+          setPrete(true)
+        })
+      },
+      { rootMargin: '300px 0px' },
+    )
+    obs.observe(el)
+    return () => {
+      fini = true
+      obs.disconnect()
+    }
+  }, [carte])
+  return (
+    <button
+      ref={boite}
+      type="button"
+      className={`vignette${prete ? ' vignette-prete' : ''}${possession.holo > 0 ? ' vignette-holo' : ''}`}
+      style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
+      onClick={onOuvrir}
+      aria-label={`${enTitre(carte.nom)}, ${NOM_DE_LA_RARETE[carte.rarete]}`}
+    >
+      {!prete && <span className="vignette-attente">{carte.emoji}</span>}
+      <canvas ref={toile} className="vignette-toile" />
+      {possession.nouvelle && <span className="vignette-nouvelle">Nouveau</span>}
+      {possession.n > 1 && <span className="vignette-nombre">×{possession.n}</span>}
+      {(possession.holo > 0 || possession.anime > 0) && (
+        <span className="vignette-bonus">
+          {possession.holo > 0 && <span className="pastille-holo">Holo</span>}
+          {possession.anime > 0 && <span className="pastille-anime">Animé</span>}
+        </span>
+      )}
+    </button>
+  )
+}
+
+/* ------------------------------------------------------------------------ */
+/* LA CARTE OUVERTE                                                         */
+/* ------------------------------------------------------------------------ */
+
+const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+
+/**
+ * LA CARTE EN GRAND — la même `Carte3D` que le paquet, donc la même matière :
+ * le reflet au doigt, le penchant au téléphone, **et la feuille holo ou
+ * l'animation si on possède l'exemplaire qui les porte.** *On montre le plus
+ * bel exemplaire qu'on a* : un holo et un animé valent mieux que la carte nue.
+ */
+function CarteOuverte({
+  carte,
+  possession,
+  total,
+  onFermer,
+}: {
+  carte: CarteEmoji
+  possession: Possession
+  total: number
+  onFermer: () => void
+}): React.ReactElement {
+  const [fenetre, setFenetre] = useState({ l: window.innerWidth, h: window.innerHeight })
+  useEffect(() => {
+    const suivre = (): void => setFenetre({ l: window.innerWidth, h: window.innerHeight })
+    window.addEventListener('resize', suivre)
+    return () => window.removeEventListener('resize', suivre)
+  }, [])
+  const gyro = useRef<Inclinaison | null>(null)
+  useEffect(() => {
+    gyro.current = suivreLInclinaison()
+    jouerSon(SON_POSER, 0.6)
+    return () => {
+      gyro.current?.arreter()
+      gyro.current = null
+    }
+  }, [])
+  const curseur = useRef<CurseurDeCarte>({ dessus: false, x: 0, y: 0 })
+  const aPeindre = useMemo(
+    () => carteDeLEmoji(carte, { holo: possession.holo > 0, anime: possession.anime > 0 && carte.animable }),
+    [carte, possession.holo, possession.anime],
+  )
+  // LA CARTE TIENT DANS L'ÉCRAN, avec la place des lignes du dessous : la règle
+  // de la rangée du paquet, *la taille se calcule sur la place.*
+  const hVisible = hauteurVisibleA(Z_MAIN, fenetre.h)
+  const lVisible = (hVisible * fenetre.l) / fenetre.h
+  const taille = Math.min((lVisible * 0.82) / LARGE, (hVisible * 0.6) / HAUT)
+  const px = (taille * LARGE * fenetre.l * Math.min(window.devicePixelRatio || 1, 2)) / lVisible
+  const exemplaires = [
+    possession.n > 1 ? `${possession.n} exemplaires` : '1 exemplaire',
+    possession.holo > 0 ? `${possession.holo} holo` : null,
+    possession.anime > 0 ? `${possession.anime} animé${possession.anime > 1 ? 's' : ''}` : null,
+  ].filter((m): m is string => m !== null)
+  return (
+    <div className="carte-ouverte">
+      <Canvas
+        // UNE TAPE À CÔTÉ DE LA CARTE LA REPOSE, comme au bilan du paquet.
+        onPointerMissed={onFermer}
+        dpr={[1, 2]}
+        camera={{ position: [0, 0, zCamera(fenetre.h)], fov: FOV }}
+        gl={{ toneMapping: NoToneMapping }}
+        style={{ position: 'fixed', inset: 0 }}
+      >
+        <Cadrage />
+        <Horloge />
+        <PencheAuGyro curseurs={[curseur.current]} gyro={gyro} />
+        <Bloom />
+        <ambientLight intensity={0.55} />
+        <directionalLight position={[2.5, 3.5, 4]} intensity={2.2} />
+        <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
+        <Carte3D
+          carte={aPeindre}
+          position={[0, hVisible * 0.06, Z_MAIN]}
+          taille={taille}
+          tailleTexture={px}
+          reflet
+          refletAuDoigt
+          curseurPartage={curseur.current}
+          ombre={false}
+        />
+      </Canvas>
+      <div className="carte-ouverte-infos">
+        <span className="carte-ouverte-cran" style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}>
+          {NOM_DE_LA_RARETE[carte.rarete]}
+        </span>
+        <p className="carte-ouverte-ligne">{exemplaires.join(' · ')}</p>
+        <p className="carte-ouverte-ligne carte-ouverte-discret">
+          Obtenue le {DATE.format(new Date(possession.premiere))} · n° {carte.rang} sur {total}
+        </p>
+      </div>
+      <button type="button" className="carte-ouverte-fermer" aria-label="Fermer" onClick={onFermer}>
+        ×
+      </button>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------------ */
+/* LA PAGE                                                                  */
+/* ------------------------------------------------------------------------ */
+
+export function PageCollection({
+  catalogue,
+  collection,
+  onOuvrirUnPaquet,
+}: {
+  catalogue: readonly CarteEmoji[] | null
+  collection: Collection
+  onOuvrirUnPaquet: () => void
+}): React.ReactElement {
+  const [recherche, setRecherche] = useState('')
+  const [tri, setTri] = useState<Tri>('recentes')
+  const [raretes, setRaretes] = useState<ReadonlySet<RareteEmoji>>(new Set())
+  const [groupe, setGroupe] = useState<GroupeEmoji | null>(null)
+  const [ouverte, setOuverte] = useState<string | null>(null)
+
+  const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
+  /** Ce qu'on possède ET que le catalogue connaît encore (un doublon retiré sort d'ici). */
+  const possedees = useMemo(
+    () =>
+      Object.entries(collection.cartes)
+        .map(([id, p]) => ({ carte: parId.get(id), p }))
+        .filter((x): x is { carte: CarteEmoji; p: Possession } => x.carte !== undefined),
+    [collection, parId],
+  )
+  const visibles = useMemo(() => {
+    const q = plier(recherche.trim())
+    const l = possedees.filter(
+      ({ carte }) =>
+        (raretes.size === 0 || raretes.has(carte.rarete)) &&
+        (groupe === null || carte.groupe === groupe) &&
+        (q === '' || plier(carte.nom).includes(q) || carte.mots.some((m) => plier(m).includes(q))),
+    )
+    const az = new Intl.Collator('fr')
+    if (tri === 'recentes') l.sort((a, b) => b.p.ordre - a.p.ordre)
+    else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
+    else l.sort((a, b) => a.carte.rang - b.carte.rang)
+    return l
+  }, [possedees, recherche, tri, raretes, groupe])
+
+  const total = catalogue?.length ?? 0
+  const part = total === 0 ? 0 : possedees.length / total
+  const exemplaires = nombreDExemplaires(collection)
+  const laOuverte = ouverte === null ? undefined : possedees.find((x) => x.carte.id === ouverte)
+
+  return (
+    <div className="collection">
+      <div className="collection-defile">
+        <header className="collection-tete">
+          <h1 className="collection-titre">Ma collection</h1>
+          <p className="collection-compte">
+            <b>{possedees.length}</b> / {total} emoji · {exemplaires} carte{exemplaires > 1 ? 's' : ''} ·{' '}
+            {collection.paquets} paquet{collection.paquets > 1 ? 's' : ''}
+          </p>
+          <div className="collection-barre" aria-hidden>
+            <span style={{ width: `${(part * 100).toFixed(2)}%` }} />
+          </div>
+        </header>
+
+        {possedees.length > 0 && (
+          <div className="collection-outils">
+            <input
+              className="collection-recherche"
+              type="search"
+              placeholder="Chercher un emoji"
+              value={recherche}
+              onChange={(e) => setRecherche(e.target.value)}
+            />
+            <div className="collection-segments" role="radiogroup" aria-label="Trier">
+              {TRIS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={tri === t.id}
+                  className={tri === t.id ? 'actif' : ''}
+                  onClick={() => setTri(t.id)}
+                >
+                  {t.nom}
+                </button>
+              ))}
+            </div>
+            <div className="collection-puces">
+              {RARETES_EMOJI.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  className={`puce${raretes.has(r) ? ' actif' : ''}`}
+                  style={{ '--cran': teinteDuCran(r) } as React.CSSProperties}
+                  onClick={() =>
+                    setRaretes((s) => {
+                      const n = new Set(s)
+                      if (n.has(r)) n.delete(r)
+                      else n.add(r)
+                      return n
+                    })
+                  }
+                >
+                  <i />
+                  {NOM_DE_LA_RARETE[r]}
+                </button>
+              ))}
+            </div>
+            <div className="collection-puces">
+              {GROUPES_EMOJI.map((g) => (
+                <button
+                  key={g}
+                  type="button"
+                  className={`puce${groupe === g ? ' actif' : ''}`}
+                  onClick={() => setGroupe((x) => (x === g ? null : g))}
+                >
+                  {NOM_DU_GROUPE[g]}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {catalogue === null ? null : possedees.length === 0 ? (
+          <div className="collection-vide">
+            <p>Ta collection est vide.</p>
+            <p className="collection-discret">Chaque paquet ouvert y range ses cinq cartes.</p>
+            <button type="button" className="collection-bouton" onClick={onOuvrirUnPaquet}>
+              Ouvrir un paquet
+            </button>
+          </div>
+        ) : visibles.length === 0 ? (
+          <div className="collection-vide">
+            <p className="collection-discret">Aucune carte ne correspond.</p>
+          </div>
+        ) : (
+          <div className="collection-grille">
+            {visibles.map(({ carte, p }) => (
+              <Vignette key={carte.id} carte={carte} possession={p} onOuvrir={() => setOuverte(carte.id)} />
+            ))}
+          </div>
+        )}
+      </div>
+      {/* PAR-DESSUS LA BARRE : la page est fixe, donc elle fait son propre
+          empilement, et la carte ouverte doit en sortir pour couvrir la
+          navigation. *Une carte qu'on regarde n'a rien à côté d'elle.* */}
+      {laOuverte !== undefined &&
+        createPortal(
+          <CarteOuverte
+            carte={laOuverte.carte}
+            possession={laOuverte.p}
+            total={total}
+            onFermer={() => setOuverte(null)}
+          />,
+          document.body,
+        )}
+    </div>
+  )
+}

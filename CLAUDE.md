@@ -180,6 +180,24 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   cartes y répondent** : survol, doigt posé, gyroscope (un curseur par carte,
   `curseursBilan`), une tape zoome la carte au centre, une autre la repose.
 
+### La navigation et la collection
+
+- **La barre est celle de lexicodex** (`Jeu.tsx`, `ui/collection.css`) : une
+  pilule crème en haut, « Collection » à gauche (pastille rouge = cartes
+  nouvelles), le booster rond au centre, « réunis / 1 915 » à droite. **Elle
+  ne se montre que quand rien ne se joue** (`onCalme` : sachet qui attend, ou
+  bilan) — jamais pendant la déchirure ni le défilé.
+- **Le paquet entre dans la collection quand il est ouvert** (`onPaquetOuvert`,
+  une fois par numéro). **Changer de page démonte le paquet**, et
+  `numeroCourant` survit : on ne retombe pas sur le même tirage, et un sachet
+  non déchiré reste le même — *on ne retire pas un paquet en changeant de page.*
+- **La grille est peinte, pas rendue en 3D** : chaque vignette est
+  `peindreCarte` à sa taille d'écran, quand elle entre dans la vue, une à la
+  fois. *La 3D est gardée pour la carte ouverte* (`CarteOuverte`, la même
+  `Carte3D`, avec le holo ou l'animé si on possède l'exemplaire). Tri récentes /
+  A → Z / plus rares, recherche sans accents, puces de rareté et de type.
+- `&art` et `&peau` gardent le paquet seul, sans barre.
+
 ### Ce qui reste à trancher par Keko
 
 Voir les sections « CE QUI RESTE À TRANCHER » de `docs/emoji.md` : la plaque
@@ -223,6 +241,7 @@ src/
     emoji/       # LE PROJET : une carte = un EMOJI
       types.ts      # CarteEmoji, la validation, les neuf groupes, les cinq crans
       tirage.ts     # les deux bonus, holo et animé, tirés à l'ouverture
+      collection.ts # ce qu'on a obtenu : ajouter un paquet, relire le stockage
     paintings/   # la seconde collection : une carte = une PEINTURE
       types.ts      # CartePeinture, la validation, le siècle, les rayons
     combat.ts    # ARCHIVE : le tour par tour, les cartes, les effets
@@ -233,7 +252,9 @@ src/
   render/  # LE RENDU (React + R3F)
     texture-carte.ts # LA CARTE peinte au canvas — le coeur des deux collections
     Carte3D.tsx      # le pavé, ses matériaux, sa place amortie
+    Jeu.tsx          # les deux pages (booster, collection) et la barre de navigation
     Paquet3D.tsx     # l'ouverture d'un paquet : l'emoji par défaut, `&art` les peintures
+    Collection.tsx   # la grille des cartes obtenues, et la carte ouverte en 3D
     Sachet3D.tsx     # la pochette qui se déchire en brûlant, avant la rangée
     carte-emoji.ts   # CarteEmoji -> CarteAPeindre
     carte-peinture.ts # CartePeinture -> CarteAPeindre
@@ -243,6 +264,7 @@ src/
     Main3D.tsx       # ARCHIVE : l'éventail et le geste de la main de combat
   ui/      # CE QUI SORT DU PUR : les entrées-sorties et le chrome
     emoji.ts        # chargerEmojis() : le fetch du catalogue (logic/ est pur)
+    collection.ts   # la collection dans localStorage — le seul à y toucher
     peintures.ts    # chargerPeintures()
     texte-carte.ts  # le texte d'une carte, sans DOM
     art.ts + art/   # les illustrations et leur table
@@ -283,10 +305,12 @@ son cran — donc retirer deux modes sur quatre n'a touché ni le tirage, ni le
 peintre, ni le geste. *C'est la quatrième fois que la pureté rend ce qu'elle
 coûte*, après les deux changements de moteur et la suppression du jeu 2D.
 
-**IL N'Y A PLUS DE SAUVEGARDE.** `STATE_VERSION`, `GameState` et le
-`StoragePort` sont partis avec le jeu 2D — le moteur repart de zéro à chaque
-chargement. *Le jour où la persistance revient, c'est par la même porte* : un
-port injecté depuis `ui/`, jamais un `localStorage` lu depuis `logic/`.
+**LA SEULE SAUVEGARDE EST LA COLLECTION D'EMOJI**, et elle est revenue par la
+porte prévue : `logic/emoji/collection.ts` dit ce qu'est une collection, y
+ajoute un paquet (date injectée) et relit sans confiance ce qu'on a gardé ;
+`ui/collection.ts` est le seul à toucher `localStorage`. *Elle vit sur
+l'appareil*, il n'y a pas de compte. `STATE_VERSION`, `GameState` et le
+`StoragePort` du jeu 2D restent partis.
 
 ## Contraintes mobile — l'essentiel
 

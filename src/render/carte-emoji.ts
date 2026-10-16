@@ -30,7 +30,7 @@ import { urlEmojiDeKeko } from '../ui/art.ts'
  * `commun`. **Deux vocabulaires qui se ressemblent à une lettre près sont
  * précisément ceux qu'il ne faut pas confondre en silence.**
  */
-const COULEUR: Readonly<Record<RareteEmoji, string>> = {
+export const COULEUR: Readonly<Record<RareteEmoji, string>> = {
   commun: 'blanc',
   'peu-commun': 'vert',
   rare: 'bleu',
@@ -39,7 +39,7 @@ const COULEUR: Readonly<Record<RareteEmoji, string>> = {
 }
 
 /** La majuscule du nom se pose au RENDU : CLDR écrit en minuscules. */
-function enTitre(texte: string): string {
+export function enTitre(texte: string): string {
   const [premier, ...reste] = [...texte]
   return premier === undefined ? texte : premier.toUpperCase() + reste.join('')
 }

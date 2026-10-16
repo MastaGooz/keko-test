@@ -1,0 +1,572 @@
+/* ==========================================================================
+   LA NAVIGATION ET LA COLLECTION — voir `render/Jeu.tsx` et `Collection.tsx`.
+   La barre est celle de lexicodex : une pilule en haut, « Collection » à
+   gauche, le booster rond au milieu, ce qu'on a réuni à droite. Crème et
+   violet : *le crème des stickers, le violet du fond du paquet.*
+   ========================================================================== */
+
+.nav {
+  position: fixed;
+  top: max(0.6rem, env(safe-area-inset-top));
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  transition:
+    opacity 0.25s ease,
+    transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.nav-cachee {
+  opacity: 0;
+  transform: translate(-50%, -140%);
+  pointer-events: none;
+}
+
+.nav-pilule {
+  display: flex;
+  align-items: stretch;
+  height: 3rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: #fffaf0;
+  box-shadow:
+    0 0.3rem 0 #c9b9f2,
+    0 0.6rem 1.4rem rgba(20, 8, 60, 0.45);
+}
+
+.nav-moitie {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 7.5rem;
+  padding: 0 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #2a1b63;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.nav-gauche {
+  justify-content: flex-start;
+}
+
+.nav-droite {
+  justify-content: flex-end;
+  text-transform: none;
+}
+
+.nav-moitie.nav-active {
+  background: #2a1b63;
+  color: #fffaf0;
+}
+
+.nav-moitie:active {
+  transform: scale(0.96);
+}
+
+.nav-icone {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.nav-sur {
+  font-weight: 700;
+  opacity: 0.6;
+}
+
+/* La place du rond : la pilule s'écarte autour de lui. */
+.nav-place {
+  width: 4.6rem;
+  flex: none;
+}
+
+.nav-pastille {
+  position: absolute;
+  /* SUR L'ICÔNE, comme chez lexicodex : à droite, le rond la couvrirait. */
+  top: -0.3rem;
+  left: 1.3rem;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.3rem;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: #ff4d5e;
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1.35rem;
+  text-align: center;
+  box-shadow: 0 0 0 0.15rem #fffaf0;
+}
+
+/* LE BOOSTER ROND, posé sur la pilule et qui la déborde — le geste du jeu. */
+.nav-booster {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4rem;
+  height: 4rem;
+  margin: 0;
+  padding: 0;
+  transform: translate(-50%, -46%);
+  border: 0.22rem solid #ffc61f;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #9b74ff, #5a36c9 60%, #3a2190);
+  box-shadow:
+    0 0.25rem 0 #b8820a,
+    0 0.5rem 1.2rem rgba(20, 8, 60, 0.5);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+
+.nav-booster:active {
+  transform: translate(-50%, -46%) scale(0.92);
+}
+
+.nav-booster.nav-active {
+  box-shadow:
+    0 0.25rem 0 #b8820a,
+    0 0 1.2rem #ffc61f99,
+    0 0.5rem 1.2rem rgba(20, 8, 60, 0.5);
+}
+
+/* Un petit sachet : la poche crème, son emoji, et ses deux soudures. */
+.nav-sachet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 2.3rem;
+  margin: auto;
+  box-sizing: border-box;
+  border-radius: 0.25rem;
+  background: linear-gradient(160deg, #fffaf0, #e9defc);
+  border-top: 0.2rem dotted #c9b9f2;
+  border-bottom: 0.2rem dotted #c9b9f2;
+  transform: rotate(-8deg);
+  font-family: 'Noto Color Emoji', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+/* ---------------------------------------------------------------- la page */
+
+.collection {
+  position: fixed;
+  inset: 0;
+  background-color: #241654;
+  background-image:
+    radial-gradient(ellipse 90% 40% at 50% 0%, #5a3cb8 0%, transparent 70%),
+    linear-gradient(#2a1b63, #170c3a);
+  color: #fffaf0;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+}
+
+/* LA PAGE NE SCROLLE PAS, C'EST LA GRILLE : la règle du jeu tient. */
+.collection-defile {
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: calc(max(0.6rem, env(safe-area-inset-top)) + 4.6rem) 16px
+    calc(2rem + env(safe-area-inset-bottom));
+}
+
+.collection-tete,
+.collection-outils,
+.collection-grille,
+.collection-vide {
+  max-width: 60rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.collection-titre {
+  margin: 0;
+  font-weight: 800;
+  font-size: 2rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0.15rem 0 #170c3a;
+}
+
+.collection-compte {
+  margin: 0.2rem 0 0.5rem;
+  font-weight: 400;
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.collection-compte b {
+  font-weight: 800;
+}
+
+.collection-barre {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.15);
+  overflow: hidden;
+}
+
+.collection-barre span {
+  display: block;
+  height: 100%;
+  min-width: 0.5rem;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4fd97a, #4fa3ff, #b36bff, #ff9a2e);
+}
+
+.collection-outils {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.collection-recherche {
+  width: 100%;
+  height: 3rem;
+  box-sizing: border-box;
+  padding: 0 1.1rem;
+  border: 0.15rem solid rgba(255, 250, 240, 0.18);
+  border-radius: 999px;
+  background: rgba(10, 4, 30, 0.35);
+  color: #fffaf0;
+  font: inherit;
+  font-size: 1rem;
+  outline: none;
+}
+
+.collection-recherche:focus {
+  border-color: #ffc61f;
+}
+
+.collection-recherche::placeholder {
+  color: rgba(255, 250, 240, 0.5);
+}
+
+.collection-segments {
+  display: flex;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: rgba(10, 4, 30, 0.35);
+}
+
+.collection-segments button {
+  flex: 1;
+  min-height: 2.6rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 250, 240, 0.75);
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.collection-segments button.actif {
+  background: #fffaf0;
+  color: #2a1b63;
+}
+
+/* LES PUCES DÉFILENT DE CÔTÉ, la page jamais. */
+.collection-puces {
+  display: flex;
+  gap: 0.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+
+.collection-puces::-webkit-scrollbar {
+  display: none;
+}
+
+.puce {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 2.6rem;
+  padding: 0 0.9rem;
+  border: 0.15rem solid rgba(255, 250, 240, 0.2);
+  border-radius: 999px;
+  background: rgba(10, 4, 30, 0.3);
+  color: #fffaf0;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.puce i {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--cran);
+  box-shadow: 0 0 0.4rem var(--cran);
+}
+
+.puce.actif {
+  border-color: var(--cran, #fffaf0);
+  background: rgba(255, 250, 240, 0.16);
+}
+
+.collection-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  gap: 0.7rem;
+}
+
+.vignette {
+  position: relative;
+  aspect-ratio: 1 / 1.4;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease;
+}
+
+.vignette:active {
+  transform: scale(0.95);
+}
+
+.vignette-toile {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  filter: drop-shadow(0 0.25rem 0.4rem rgba(10, 4, 30, 0.55));
+  transition: opacity 0.25s ease;
+}
+
+.vignette-prete .vignette-toile {
+  opacity: 1;
+}
+
+.vignette-attente {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  background: rgba(255, 250, 240, 0.08);
+  font-family: 'Noto Color Emoji', sans-serif;
+  font-size: 2.2rem;
+  opacity: 0.5;
+}
+
+/* LE HOLO SE DIT D'UN REFLET QUI PASSE : la vignette est peinte, sans feuille. */
+.vignette-holo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 6%;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    rgba(255, 120, 200, 0.35) 42%,
+    rgba(120, 220, 255, 0.4) 50%,
+    rgba(255, 240, 120, 0.35) 58%,
+    transparent 70%
+  );
+  background-size: 250% 250%;
+  mix-blend-mode: screen;
+  animation: vignette-holo 3.2s ease-in-out infinite;
+}
+
+@keyframes vignette-holo {
+  0% {
+    background-position: 100% 100%;
+  }
+  60%,
+  100% {
+    background-position: 0% 0%;
+  }
+}
+
+.vignette-nouvelle,
+.vignette-nombre,
+.pastille-holo,
+.pastille-anime {
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.7rem;
+  line-height: 1;
+  padding: 0.25rem 0.45rem;
+  white-space: nowrap;
+}
+
+.vignette-nouvelle {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.25rem;
+  z-index: 1;
+  background: #ff4d5e;
+  color: #fff;
+  text-transform: uppercase;
+  box-shadow: 0 0.15rem 0.3rem rgba(10, 4, 30, 0.5);
+}
+
+.vignette-nombre {
+  position: absolute;
+  right: -0.25rem;
+  bottom: -0.3rem;
+  z-index: 1;
+  background: #2a1b63;
+  color: #fffaf0;
+  box-shadow: 0 0 0 0.12rem #fffaf0;
+  font-size: 0.8rem;
+}
+
+.vignette-bonus {
+  position: absolute;
+  left: -0.25rem;
+  bottom: -0.3rem;
+  z-index: 1;
+  display: flex;
+  gap: 0.2rem;
+}
+
+.pastille-holo {
+  background: linear-gradient(90deg, #ff7ac8, #7ad8ff, #ffe27a);
+  color: #2a1b63;
+}
+
+.pastille-anime {
+  background: #ffc61f;
+  color: #2a1b63;
+}
+
+.collection-vide {
+  margin-top: 3rem;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+
+.collection-vide p {
+  margin: 0.3rem 0;
+}
+
+.collection-discret {
+  font-weight: 400;
+  font-size: 1rem;
+  opacity: 0.75;
+}
+
+.collection-bouton {
+  margin-top: 1.4rem;
+  min-height: 3.2rem;
+  padding: 0 1.8rem;
+  border: 0;
+  border-radius: 999px;
+  background: #fffaf0;
+  color: #2a1b63;
+  font: inherit;
+  font-weight: 800;
+  font-size: 1.05rem;
+  text-transform: uppercase;
+  box-shadow: 0 0.3rem 0 #c9b9f2;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------- la carte ouverte */
+
+.carte-ouverte {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: radial-gradient(ellipse at 50% 42%, rgba(90, 60, 184, 0.75), rgba(14, 6, 36, 0.94) 70%);
+  animation: carte-ouverte-entre 0.2s ease-out;
+}
+
+@keyframes carte-ouverte-entre {
+  from {
+    opacity: 0;
+  }
+}
+
+.carte-ouverte-infos {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(1.6rem + env(safe-area-inset-bottom));
+  text-align: center;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  color: #fffaf0;
+  pointer-events: none;
+}
+
+.carte-ouverte-cran {
+  display: inline-block;
+  padding: 0.15rem 0.8rem;
+  border: 0.15rem solid var(--cran);
+  border-radius: 999px;
+  color: var(--cran);
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.carte-ouverte-ligne {
+  margin: 0.4rem 0 0;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.carte-ouverte-discret {
+  margin-top: 0.1rem;
+  font-weight: 400;
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.carte-ouverte-fermer {
+  position: fixed;
+  top: max(0.8rem, env(safe-area-inset-top));
+  right: 16px;
+  width: 3rem;
+  height: 3rem;
+  border: 0;
+  border-radius: 50%;
+  background: #fffaf0;
+  color: #2a1b63;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0.25rem 0 #c9b9f2;
+  cursor: pointer;
+}

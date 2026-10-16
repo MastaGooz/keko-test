@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:mobile": "vite --host",
     "build": "tsc && vite build",
-    "verif": "node src/logic/emoji/types.verif.ts && node src/logic/paintings/types.verif.ts && node src/logic/combat.verif.ts && node src/logic/descente.verif.ts && node src/logic/hub.verif.ts",
+    "verif": "node src/logic/emoji/types.verif.ts && node src/logic/emoji/collection.verif.ts && node src/logic/paintings/types.verif.ts && node src/logic/combat.verif.ts && node src/logic/descente.verif.ts && node src/logic/hub.verif.ts",
     "emoji": "node scripts/generate-emoji.ts",
     "peintures": "node scripts/generate-paintings.ts",
     "preview": "vite preview"

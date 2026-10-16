@@ -6063,3 +6063,86 @@ Le catalogue passe de 1 923 à **1 915 cartes**. Seuls `rang` et `rarete`
 bougent ailleurs : la pyramide se recalcule sur huit cartes de moins et sept
 emoji descendent d'un cran à une frontière (🙂 légendaire → épique, 🔵, 🌪️,
 😼, 🕳️, 🏯, 🌓).
+
+
+### LA NAVIGATION ET LA COLLECTION (16/10/2026) — le modèle est lexicodex
+
+Keko : **« maintenant on va créer une interface de navigation qui va nous
+permettre de passer de l'ouverture de booster à la collection des cartes
+acquises. Inspire-toi de lexicodex. »**
+
+#### CE QUE LEXICODEX FAIT, relevé en l'ouvrant
+
+| | |
+|---|---|
+| la barre | une pilule blanche en haut, « Collection » à gauche (avec un menu), un bouton rond au centre qui est le booster, « Joueurs » à droite ; pastilles rouges de nouveautés |
+| la collection | un titre, le compte, une recherche, « Sélectionner », « Filtres » ; une grille de petites cartes bordées de la couleur de leur rareté |
+| les filtres | tri récentes / A → Z / plus rares, toutes / favoris / doublons, langue, les cinq raretés |
+| la carte ouverte | en grand, au centre, qui penche ; dessous la rareté, « Obtenue le … », et des actions (photo, favori, vendre, recycler) |
+
+#### CE QU'ON EN A PRIS
+
+- **La barre** (`render/Jeu.tsx`, `ui/collection.css`) : la même pilule, crème
+  (le crème des stickers) et violet (le fond du paquet). « Collection » à
+  gauche avec la pastille des cartes nouvelles **posée sur l'icône** — à
+  droite du mot, le rond la couvrait. Au centre le booster rond, un petit
+  sachet crème à « 😄 » dans un cercle cerclé d'or. **À droite, pas de
+  « Joueurs »** (il n'y en a pas) : ce qu'on a réuni, « 15 / 1 915 ».
+- **Elle ne se montre que quand rien ne se joue** : le sachet qui attend, et le
+  bilan (`onCalme` = pas encore déchiré, ou fini). *Pendant la déchirure et le
+  défilé elle disputerait l'écran à la carte* — c'est ce qui avait fait partir
+  le bandeau « Dernière carte ».
+- **La page Collection** (`render/Collection.tsx`) : « Ma collection », le compte
+  (emoji réunis sur 1 915, cartes, paquets) et une barre de progression aux
+  couleurs des crans ; la recherche (nom et mots-clés, sans accents) ; le tri
+  récentes / A → Z / plus rares ; une rangée de puces de rareté et une de type,
+  qui défilent de côté — *la page ne défile jamais, c'est la grille.* Trois
+  colonnes sur téléphone.
+- **Chaque vignette porte** « Nouveau » (jusqu'à ce qu'on quitte la page), ×N
+  pour un doublon, « Holo » et « Animé » si on en possède un exemplaire ; la
+  vignette d'un holo fait passer un reflet.
+- **La carte ouverte** est la vraie `Carte3D`, dans sa propre scène, avec le
+  reflet au doigt et le penchant au téléphone (`PencheAuGyro`, exporté du
+  paquet) ; **on montre le plus bel exemplaire qu'on a** (holo, animé). Dessous :
+  la rareté, le nombre d'exemplaires, « Obtenue le … · n° … sur 1 915 ». Une
+  tape à côté la repose, la croix aussi. Elle passe par un portail : la page est
+  fixe, donc fait son propre empilement, et la barre restait par-dessus.
+
+**Pas repris pour l'instant** : les albums, les favoris, « Sélectionner »,
+vendre et recycler — *rien dans le jeu ne leur donne encore de sens.*
+
+#### LA SAUVEGARDE EST REVENUE, PAR LA PORTE PRÉVUE
+
+`logic/emoji/collection.ts` est pur : une `Possession` par emoji (`n`, `holo`,
+`anime`, `premiere` — la date, injectée —, `ordre` d'arrivée, `nouvelle`),
+`ajouterPaquet` rend une collection neuve, `toutVu` éteint les nouveautés,
+`lireCollection` relit **sans confiance** : *une possession abîmée est écartée,
+pas la collection entière.* Un holo ou un animé de plus sur une carte connue
+est une nouvelle. `ui/collection.ts` est le seul à toucher `localStorage`, dans
+un try : un stockage refusé ne doit jamais empêcher d'ouvrir un paquet.
+**Elle vit sur l'appareil** : le téléphone et le PC de Keko ont chacun la leur.
+Vérifié par `collection.verif.ts` (dans `npm run verif`).
+
+#### LE PAQUET ENTRE DANS LA COLLECTION QUAND IL EST OUVERT
+
+`Paquet3D.onPaquetOuvert`, une fois par numéro de paquet, au moment où le film
+est parti (`ouvert`). **Changer de page démonte le paquet** — *une scène WebGL
+qui tourne derrière une grille paie son image pour rien* — et c'est ce qui a
+demandé `numeroCourant` : **le numéro du paquet vit hors du composant**, sinon
+on revenait au numéro zéro, donc au même tirage que le premier (la graine ne
+bouge pas de la session). Il n'avance que quand un paquet est ouvert : *revenir
+sur un sachet qu'on n'a pas déchiré rend le même sachet* — on ne retire pas un
+paquet en changeant de page.
+
+**Les bancs comptent aussi** : `&holo`, `&bonus`, `&perso` et `?paquet=<n>`
+entrent dans la collection comme un vrai paquet. `&art` et `&peau` gardent le
+paquet seul, sans barre (l'un n'est pas l'emoji, l'autre est un autre
+catalogue).
+
+#### CE QUI RESTE À TRANCHER
+
+- Ce que montre la droite de la barre (le compte réuni, faute de « Joueurs »).
+- Montrer aussi les cartes **qu'on n'a pas** (en silhouette, façon album à
+  compléter) au lieu des seules cartes obtenues.
+- Les doublons : à quoi servent-ils (recycler, échanger) ?
+- Une sauvegarde par compte, pour que téléphone et PC partagent la collection.

@@ -212,7 +212,7 @@ const GYRO_PLEIN_ECLAT = 0.16
  * c'est le survol de la souris qui tient `dessus`, et le gyroscope n'a pas à
  * le défaire à chaque image.
  */
-function PencheAuGyro({
+export function PencheAuGyro({
   curseurs,
   gyro,
 }: {
@@ -494,7 +494,27 @@ function Prise({
   return <group ref={g}>{children}</group>
 }
 
-export function Paquet3D(): React.ReactElement {
+/**
+ * LE NUMÉRO DU PAQUET SURVIT AU DÉMONTAGE. *Aller voir sa collection démonte
+ * le paquet*, et sans ça on reviendrait au numéro zéro — donc **au même tirage
+ * que le premier**, la graine ne bougeant pas de la session. Il n'avance que
+ * quand un paquet est OUVERT : revenir sur un sachet qu'on n'a pas déchiré
+ * rend le même sachet, *on ne retire pas un paquet en changeant de page.*
+ */
+let numeroCourant = 0
+
+type PropsPaquet = {
+  /** Le paquet est ouvert : ses cartes entrent dans la collection. Une fois par paquet. */
+  onPaquetOuvert?: (ids: readonly string[], bonus: Readonly<Record<string, Bonus>>) => void
+  /**
+   * Rien ne se joue : le sachet attend, ou c'est le bilan. *C'est là, et là
+   * seulement, que la barre de navigation se montre* — pendant la déchirure et
+   * le défilé, elle disputerait l'écran à la carte.
+   */
+  onCalme?: (calme: boolean) => void
+}
+
+export function Paquet3D({ onPaquetOuvert, onCalme }: PropsPaquet = {}): React.ReactElement {
   const params = new URLSearchParams(location.search)
   /**
    * QUEL CATALOGUE — L'EMOJI PAR DÉFAUT, `&art` les peintures.
@@ -563,7 +583,7 @@ export function Paquet3D(): React.ReactElement {
   const [catalogue, setCatalogue] = useState<CarteDuMode[] | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   /** Le numéro du paquet : il change à chaque ouverture, et il seede le tirage. */
-  const [numero, setNumero] = useState(0)
+  const [numero, setNumero] = useState(() => numeroCourant)
   /**
    * LE PAQUET EST RETOURNÉ, OU IL NE L'EST PAS — un seul drapeau pour cinq
    * cartes.
@@ -1614,6 +1634,19 @@ export function Paquet3D(): React.ReactElement {
           )
         })
   refCartes.current = cartes
+  // LE PAQUET OUVERT ENTRE DANS LA COLLECTION, une fois : voir `numeroCourant`.
+  const signale = useRef(-1)
+  useEffect(() => {
+    if (!ouvert || paquet.length === 0 || signale.current === numero) return
+    signale.current = numero
+    numeroCourant = numero + 1
+    onPaquetOuvert?.(
+      paquet.map((c) => c.id),
+      tirage.bonus,
+    )
+  }, [ouvert, paquet, numero, tirage, onPaquetOuvert])
+  const calme = !brule || fini
+  useEffect(() => onCalme?.(calme), [calme, onCalme])
   return (
     <div
       className="paquet-3d"
