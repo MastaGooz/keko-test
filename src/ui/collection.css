@@ -820,7 +820,9 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(19vh + env(safe-area-inset-bottom));
+  /* EN BAS DE L'ÉCRAN, pas collé au sachet — Keko : « je voyais ça plus en
+     bas de l'écran ». */
+  bottom: calc(5vh + env(safe-area-inset-bottom));
   z-index: 3;
   margin: 0;
   text-align: center;
