@@ -52,6 +52,7 @@ import {
   sujetDe,
   rayonsDuCran,
   ECLAIRE_SOMBRES,
+  COIN_DE_LA_PLAQUE,
 } from './texture-carte.ts'
 
 /**
@@ -1179,6 +1180,22 @@ ${nuanceur.vertexShader}`.replace(
            vec2 fenMax = vec2(${(RAYONS_DANS_LA_CARTE.x + RAYONS_DANS_LA_CARTE.l).toFixed(4)}, 1.0 - ${RAYONS_DANS_LA_CARTE.y.toFixed(4)});
            float dansFen = step(fenMin.x, vLustreUv.x) * step(vLustreUv.x, fenMax.x)
              * step(fenMin.y, vLustreUv.y) * step(vLustreUv.y, fenMax.y);
+           // LES COINS ARRONDIS DU HAUT DE LA PLAQUE SONT DE LA FENÊTRE. Keko :
+           // « les angles haut gauche / haut droit de la partie description, sur
+           // les cartes holo, sont sombres opaques au lieu de laisser l'arrondi ».
+           // Sous le bas de la fenêtre, hors de l'arrondi, c'est encore le fond :
+           // lu sans le relief, il montrait le bord sombre du fond non agrandi.
+           {
+             float rC = ${COIN_DE_LA_PLAQUE.r.toFixed(5)};
+             float asp = ${COIN_DE_LA_PLAQUE.aspect.toFixed(4)};
+             float yH = ${COIN_DE_LA_PLAQUE.haut.toFixed(4)};
+             float yq = 1.0 - vLustreUv.y;
+             float bandeC = step(yH, yq) * step(yq, yH + rC / asp);
+             float dxC = max(max(fenMin.x + rC - vLustreUv.x, vLustreUv.x - (fenMax.x - rC)), 0.0);
+             float horsArrondi = step(rC, length(vec2(dxC, (yH + rC / asp - yq) * asp)));
+             float dansX = step(fenMin.x, vLustreUv.x) * step(vLustreUv.x, fenMax.x);
+             dansFen = max(dansFen, bandeC * dansX * step(0.000001, dxC) * horsArrondi);
+           }
            // LE FOND VU PAR LE REGARD, enfoncé : décalé à l'opposé de lui ; v se
            // compte en hauteurs de carte (1,4 largeur).
            vec2 versR = vec2(dot(VR, TR), dot(VR, BR) / 1.4) / max(dot(VR, NR), 0.25);

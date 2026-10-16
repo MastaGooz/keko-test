@@ -1596,6 +1596,13 @@ export const ECLAIRE_SOMBRES = (() => {
   return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.4
 })()
 
+/**
+ * LES COINS DU HAUT DE LA PLAQUE : où elle commence (en hauteurs de carte) et
+ * leur rayon (en largeurs). Le peintre l'arrondit ainsi, et le relief de la
+ * holo lit ce qui se voit dans l'arrondi comme le fond de la fenêtre.
+ */
+export const COIN_DE_LA_PLAQUE = { haut: HAUT_BULLE, r: (5 * U) / LARGE, aspect: HAUT / LARGE } as const
+
 export const RAYONS_DANS_LA_CARTE = (() => {
   const marge = CONTOURS[PISTE_CONTOUR] * U
   const x = marge / LARGE
@@ -4672,7 +4679,7 @@ function peindreBulle(
   const y = HAUT * HAUT_BULLE
   const l = LARGE - marge * 2
   const h = HAUT - marge - y
-  const hautR = 5 * U
+  const hautR = COIN_DE_LA_PLAQUE.r * LARGE
   const basR = Math.max(0, LARGE * rayon - marge)
   const [clair, pigmente] = tonsDeLaPlaque(rarete)
   const fond = ctx.createLinearGradient(0, y, 0, HAUT)
