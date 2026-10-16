@@ -340,8 +340,9 @@ export function paillettesHolo(
         if ((options.seules === 'vives' && !vive) || (options.seules === 'pales' && vive)) continue
         const a = vive ? 0.9 : 0.1
         const r = r0
-        // SUR L'EMOJI, LES VIVES SONT DES ÉTOILES (voir `COSMOS.etoile`).
-        if (vive && libre !== null && libre[k + 3]! < 128) {
+        // SUR L'EMOJI, RIEN QUE DES ÉTOILES : les grosses vives (voir `COSMOS.etoile`).
+        if (libre !== null && libre[k + 3]! < 128) {
+          if (!g.gros || !vive) continue
           etoileDePaillette(ctx, x, y, r * 3.2, teinte, a)
           continue
         }

@@ -235,10 +235,8 @@ function StickerOuvert({
         pc.height = cote
         const px = ctx.getImageData(0, 0, cote, cote).data
         const liste: Paillette[] = []
-        for (const g of [
-          { n: COSMOS.fin, part: COSMOS.partFin, rayon: COSMOS.rayonFin, gros: false },
-          { n: COSMOS.gros, part: COSMOS.partGros, rayon: COSMOS.rayonGros, gros: true },
-        ]) {
+        // RIEN QUE LES ÉTOILES DE L'EMOJI : la grille des grosses (voir `COSMOS.etoile`).
+        for (const g of [{ n: COSMOS.gros, part: COSMOS.partGros, rayon: COSMOS.rayonGros, gros: true }]) {
           const pas = cote / (g.n * 0.6)
           for (let y = pas / 2; y < cote; y += pas) {
             for (let x = pas / 2; x < cote; x += pas) {

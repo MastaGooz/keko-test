@@ -49,7 +49,34 @@ import {
   RAYON_SIMPLE,
   RAYONS_DANS_LA_CARTE,
   masqueDuSujetDe,
+  sujetDe,
 } from './texture-carte.ts'
+
+/**
+ * LA SILHOUETTE DU STICKER, À LA TAILLE DE LA FACE : pour que le relief sache
+ * où est l'emoji sans le deviner. Keko : « la carte fax a un emoji un peu
+ * transparent, on voit le fond à travers ». *Le relief la lisait dans la
+ * DIFFÉRENCE entre la carte entière et la carte sans emoji* — un fax gris sur
+ * des rayons gris n'en diffère presque pas, donc il passait pour transparent.
+ * C'est maintenant l'alpha de l'image que la peinture a posée (`sujetDe`), à
+ * sa place. Une par toile de face, gardée.
+ */
+const SILHOUETTES = new WeakMap<HTMLCanvasElement, THREE.CanvasTexture | null>()
+function silhouetteDe(toile: HTMLCanvasElement): THREE.CanvasTexture | null {
+  if (SILHOUETTES.has(toile)) return SILHOUETTES.get(toile) ?? null
+  const sujet = sujetDe(toile)
+  let tex: THREE.CanvasTexture | null = null
+  if (sujet !== undefined) {
+    const c = document.createElement('canvas')
+    c.width = toile.width
+    c.height = toile.height
+    c.getContext('2d')?.drawImage(sujet.image, sujet.x, sujet.y, sujet.l, sujet.h)
+    tex = new THREE.CanvasTexture(c)
+    tex.flipY = true
+  }
+  SILHOUETTES.set(toile, tex)
+  return tex
+}
 
 /** La carte fait 1 de large ; le reste en découle, comme dans le gabarit. */
 /** Ce que dure l'éclat d'une carte qui vient d'arriver, en secondes. */
@@ -1064,6 +1091,8 @@ export function Carte3D({
       nuanceur.uniforms.uPeinture = { value: MASQUE_VIDE }
       nuanceur.uniforms.uNu = { value: MASQUE_VIDE }
       nuanceur.uniforms.uRelief = { value: 0 }
+      nuanceur.uniforms.uSilhouette = { value: MASQUE_VIDE }
+      nuanceur.uniforms.uSilhouetteOk = { value: 0 }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -1461,7 +1490,9 @@ ${nuanceur.vertexShader}`.replace(
              float epE = max(aa, 0.002) * ${COSMOS.etoile.toFixed(2)};
              float etoileE = exp(-abs(d.x) / epE) * exp(-abs(d.y) * ${COSMOS.bras.toFixed(1)})
                + exp(-abs(d.y) / epE) * exp(-abs(d.x) * ${COSMOS.bras.toFixed(1)});
-             float formeE = fin ? point : max(point * 0.6, etoileE);
+             // ET RIEN QUE LES ÉTOILES : Keko, « il faut enlever les paillettes qui
+             // sont les mêmes que le fond » — les points fins ne passent plus dessus.
+             float formeE = fin ? 0.0 : max(point * 0.6, etoileE);
              forme = mix(forme, formeE, smoothstep(0.3, 0.7, 1.0 - libreH));
              vec3 spectre = 0.5 + 0.5 * cos(6.28318 * (fract(h4 * 3.0 + incidence * 1.9) + vec3(0.0, 0.33, 0.67)));
              cosmos += mix(vec3(1.0), spectre, 0.8) * forme * present * allume * scintille;
@@ -1536,8 +1567,12 @@ uniform sampler2D uMasqueSujet;
 uniform sampler2D uPeinture;
 uniform sampler2D uNu;
 uniform float uRelief;
-// LA SILHOUETTE DU STICKER : là où la carte entière diffère de la carte nue.
+uniform sampler2D uSilhouette;
+uniform float uSilhouetteOk;
+// LA SILHOUETTE DU STICKER : l'alpha de l'image posée par la peinture ; à
+// défaut (l'animé), là où la carte entière diffère de la carte nue.
 float stickerEn(vec2 q) {
+  if (uSilhouetteOk > 0.5) return texture2D(uSilhouette, q).a;
   return clamp(length(texture2D(uPeinture, q).rgb - texture2D(uNu, q).rgb) * ${RELIEF.seuil.toFixed(1)}, 0.0, 1.0);
 }
 // LE BRUIT DU LIN : une valeur par noeud d'une grille, lissée entre eux.
@@ -2405,6 +2440,15 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uRelief!.value = relief ? 1 : 0
       nuanceur.uniforms.uNu!.value = relief ? nue : MASQUE_VIDE
       nuanceur.uniforms.uPeinture!.value = relief ? face.map! : MASQUE_VIDE
+      // LA VRAIE SILHOUETTE, pour une face peinte une fois ; l'animé, repeint à
+      // chaque image, garde la différence des deux peintures.
+      const toileFace = face.map?.image
+      const sil =
+        relief && carte.animation === undefined && toileFace instanceof HTMLCanvasElement
+          ? silhouetteDe(toileFace)
+          : null
+      nuanceur.uniforms.uSilhouette!.value = sil ?? MASQUE_VIDE
+      nuanceur.uniforms.uSilhouetteOk!.value = sil !== null ? 1 : 0
       nuanceur.uniforms.uRayons!.value = masque !== null && AVEC_RAYONS_BRILLANTS && dos !== true ? 1 : 0
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
