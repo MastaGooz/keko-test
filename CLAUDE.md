@@ -78,8 +78,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   l'emoji s'en distingue par son **cerne arc-en-ciel** (`COSMOS.cerne`) et
   son **relief** (`RELIEF`, `?relief=0`) : *une carte à fenêtre* — l'emoji
   reste à la surface, le décor de la fenêtre d'art s'enfonce (lu décalé selon
-  le regard dans la carte sans emoji, `sansSujet`, `uNu`), avec ses parois et
-  l'ombre de l'emoji dessus ; les rayons brillants le suivent, les paillettes
+  le regard dans la carte sans emoji, `sansSujet`, `uNu`), plus grand que la
+  fenêtre pour ne jamais montrer de bord, avec l'ombre de l'emoji dessus ; les rayons brillants le suivent, les paillettes
   restent à la surface. Essayés et
   retirés : nacre, caméléon (recoloraient), vernis, poussière d'or (ne se
   lisaient pas), hologramme (fatiguait les yeux). **Le bonus se pose sur

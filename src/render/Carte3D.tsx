@@ -443,8 +443,11 @@ const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
  * - **La parallaxe du fond** : le regard qui passe la surface à un endroit
  *   touche le fond plus loin dans sa direction — on y lit donc le décor
  *   décalé de profondeur × (regard tangent / regard normal), à l'opposé du
- *   regard. Gardé dans la fenêtre ; là où il en sortirait, on voit la PAROI,
- *   assombrie (`paroi`).
+ *   regard. **Et il est plus grand que la fenêtre** (`agrandi`, autour de son
+ *   centre) : Keko, « on voit les bords du fond qui s'arrêtent sur les côtés,
+ *   il faudrait l'impression qu'il n'y a pas de bords et que le fond est plus
+ *   large que la carte ». Penché au plus, le regard reste dans le décor ; les
+ *   rayons partent du centre, l'agrandir ne change pas leur dessin.
  * - **L'ombre de l'emoji tombe sur le fond** : la silhouette projetée par la
  *   lampe clé sur le plan du fond (`ombre`, adoucie de `flou`) — elle glisse
  *   avec lui, et l'écart entre l'emoji fixe et son ombre qui bouge fait la
@@ -456,7 +459,7 @@ const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
  *
  * Chiffres de moi ; `?relief=0` le retire.
  */
-export const RELIEF = { profondeur: 0.12, ombre: 0.55, flou: 0.008, seuil: 6, paroi: 0.65 }
+export const RELIEF = { profondeur: 0.12, ombre: 0.55, flou: 0.008, seuil: 6, agrandi: 1.18 }
 const AVEC_RELIEF = new URLSearchParams(location.search).get('relief') !== '0'
 
 
@@ -1089,11 +1092,11 @@ ${nuanceur.vertexShader}`.replace(
            // LE FOND VU PAR LE REGARD, enfoncé : décalé à l'opposé de lui ; v se
            // compte en hauteurs de carte (1,4 largeur).
            vec2 versR = vec2(dot(VR, TR), dot(VR, BR) / 1.4) / max(dot(VR, NR), 0.25);
-           vec2 brut = vLustreUv - versR * ${RELIEF.profondeur.toFixed(3)};
-           vec2 bF = clamp(brut, fenMin, fenMax);
-           // LA PAROI : là où le fond sortirait de la fenêtre, on voit son bord.
-           float paroi = clamp(length(brut - bF) / ${(RELIEF.profondeur * 0.25).toFixed(4)}, 0.0, 1.0);
-           bF = mix(vLustreUv, bF, dansFen);
+           // LE FOND PLUS GRAND QUE LA FENÊTRE : lu resserré autour de son
+           // centre, il a de la marge pour glisser sans montrer de bord.
+           vec2 centreFen = (fenMin + fenMax) * 0.5;
+           vec2 brut = centreFen + (vLustreUv - versR * ${RELIEF.profondeur.toFixed(3)} - centreFen) / ${RELIEF.agrandi.toFixed(3)};
+           vec2 bF = mix(vLustreUv, clamp(brut, fenMin, fenMax), dansFen);
            uvFond = bF;
            // L'OMBRE DE L'EMOJI SUR LE FOND : la silhouette au-dessus, vers la lampe.
            vec2 versL = vec2(dot(LR, TR), dot(LR, BR) / 1.4) / max(dot(LR, NR), 0.25);
@@ -1101,8 +1104,7 @@ ${nuanceur.vertexShader}`.replace(
            float fO = ${RELIEF.flou.toFixed(4)};
            float ombreR = 0.25 * (stickerEn(qO + vec2(fO, 0.0)) + stickerEn(qO - vec2(fO, 0.0))
              + stickerEn(qO + vec2(0.0, fO)) + stickerEn(qO - vec2(0.0, fO))) * dansFen;
-           vec3 fondR = texture2D(uNu, bF).rgb
-             * (1.0 - ${RELIEF.ombre.toFixed(2)} * ombreR) * (1.0 - ${RELIEF.paroi.toFixed(2)} * paroi * dansFen);
+           vec3 fondR = texture2D(uNu, bF).rgb * (1.0 - ${RELIEF.ombre.toFixed(2)} * ombreR);
            // L'EMOJI, À LA SURFACE, à sa place.
            float aR = stickerEn(vLustreUv);
            diffuseColor.rgb = mix(fondR, texture2D(uPeinture, vLustreUv).rgb, aR);
