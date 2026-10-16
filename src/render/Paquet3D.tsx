@@ -1519,13 +1519,18 @@ export function Paquet3D({
   const zDefile = ouvert ? Z_MAIN : Z_DEDANS
 
   const cartes = aPeindre.flatMap((carte, i) => {
-          // DÉTRUITE, OU COUVERTE PAR SON DÉCOLLAGE : elle n'est plus là.
-          if (detruites.has(i) || (cachee && decollage?.i === i)) return []
+          // DÉTRUITE : elle n'est plus là. *Couverte par son décollage, elle
+          // reste MONTÉE*, seulement invisible : Keko, « quand j'annule, la carte
+          // retombe du dessus et dévoile la carte derrière » — démontée, elle
+          // rejouait son arrivée en revenant.
+          if (detruites.has(i)) return []
+          const couverte = cachee && decollage?.i === i
           const vue = retourne
           return [
             <Envol key={`${numero}:${carte.id}`} sortie={false} rang={i} distance={hVisible * 1.25}>
             <Arrivee distance={distanceArrivee} retard={retardArrivee}>
             <Prise pris={pris} distance={distancePrise}>
+            <group visible={!couverte}>
             <Carte3D
               carte={carte}
               // LE DOS TANT QU'ELLE N'EST PAS RETOURNÉE : c'est la même carte
@@ -1683,6 +1688,7 @@ export function Paquet3D({
                   : undefined
               }
             />
+            </group>
             </Prise>
             </Arrivee>
             </Envol>

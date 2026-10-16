@@ -331,7 +331,8 @@ function CarteOuverte({
         <ambientLight intensity={0.55} />
         <directionalLight position={[2.5, 3.5, 4]} intensity={2.2} />
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
-        {!cachee && (
+        {/* INVISIBLE, PAS DÉMONTÉE : annuler la rend telle qu'elle était. */}
+        <group visible={!cachee}>
         <Carte3D
           carte={aPeindre}
           position={[0, hVisible * 0.06, Z_MAIN]}
@@ -342,7 +343,7 @@ function CarteOuverte({
           curseurPartage={curseur.current}
           ombre={false}
         />
-        )}
+        </group>
       </Canvas>
       {decolle !== null && (
         <Decollage

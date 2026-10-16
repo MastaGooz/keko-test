@@ -6420,3 +6420,5 @@ une carte qui casse.
   rejuger ; pas vu sur téléphone.
 
 - **Retouches (16/10/2026)** : Keko, « la prévisualisation des éclats n'est pas nécessaire » : la fêlure (les fissures qui couraient 0,22 s avant la casse) est retirée, la carte cède d'un coup, et l'écart entre éclats tombe à 0,07 s au plus pour qu'ils ne dessinent pas la toile en attendant. Et « Décoller le sticker » tenait sur deux lignes au booster (centré par `left: 50%`, il n'avait que la moitié de l'écran) : `white-space: nowrap`.
+
+- **Annuler laisse la carte où elle est (16/10/2026)** : Keko, « quand j'annule, la carte retombe du dessus et dévoile temporairement la carte derrière ». *La carte couverte par le décollage était démontée*, et remontée elle rejouait son arrivée (`Arrivee`) ; elle reste désormais montée, dans un groupe rendu invisible le temps du geste. Pareil pour la carte ouverte de la collection.
