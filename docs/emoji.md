@@ -6337,3 +6337,6 @@ le fait en s'ouvrant : il **complète jusqu'à la moitié** du catalogue (958 su
 « Nouveau » (neuf cents pastilles ne diraient rien) et sans compter de paquet
 (`debloquer` dans `logic/emoji/collection.ts`). Rouvrir le lien ne double rien,
 et le paramètre est retiré de l'adresse. Vérifié : 958, puis 958.
+
+`&debloquer=tout` : toute la collection — Keko : « ok maintenant toute la
+collection ». Même règle, la cible est le catalogue entier.

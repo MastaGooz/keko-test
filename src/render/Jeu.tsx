@@ -209,10 +209,13 @@ export function Jeu(): React.ReactElement {
     if (catalogue === null || catalogue.length === 0) return
     const p = new URLSearchParams(location.search)
     if (!p.has('debloquer')) return
+    // `&debloquer=tout` : TOUTE LA COLLECTION. Keko : « ok maintenant toute la
+    // collection ».
+    const tout = p.get('debloquer') === 'tout'
     p.delete('debloquer')
     history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
     changer((c) => {
-      const cible = Math.ceil(catalogue.length / 2)
+      const cible = tout ? catalogue.length : Math.ceil(catalogue.length / 2)
       const manquent = catalogue.filter((x) => c.cartes[x.id] === undefined).map((x) => x.id)
       const deja = catalogue.length - manquent.length
       if (deja >= cible) return c
