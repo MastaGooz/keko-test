@@ -56,9 +56,11 @@
   text-transform: uppercase;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition:
-    background 0.15s ease,
-    color 0.15s ease;
+  /* PAS DE FONDU ENTRE ACTIF ET INACTIF. Keko : « les boutons collection et
+     sticker ont leur texte qui disparaît brièvement quand je clique ». *Le fond
+     et le texte s'échangeaient leurs couleurs en même temps* (sombre ↔ crème) :
+     à mi-chemin, les deux valaient la même teinte moyenne, et le mot
+     s'effaçait. Ils basculent maintenant d'un coup. */
 }
 
 .nav-gauche {
