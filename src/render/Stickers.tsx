@@ -20,7 +20,7 @@ import type { Collection, Stickers } from '../logic/emoji/collection.ts'
 import { nombreDeStickers } from '../logic/emoji/collection.ts'
 import { stickerDe, stickerHautDe } from './texture-carte.ts'
 import { cerneArcEnCiel } from './peinture-vignette.ts'
-import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
+import { COTE_GRAND, COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
 import { BRILLANT, COSMOS, INCLINAISON_REFLET, SATURATION_APLAT } from './Carte3D.tsx'
@@ -183,7 +183,7 @@ function CaseSticker({
     if (!visible || !anime) return
     let vivant = true
     let image = 0
-    void animationDeLEmoji(urlAnimationEmoji(carte.id)).then((a) => {
+    void animationDeLEmoji(urlAnimationEmoji(carte.id), COTE_PETIT).then((a) => {
       if (!vivant || a === null) return
       const depart = performance.now()
       let montre = false
@@ -360,7 +360,7 @@ function StickerOuvert({
     if (!anime) return
     let vivant = true
     let image = 0
-    void animationDeLEmoji(urlAnimationEmoji(carte.id)).then((a) => {
+    void animationDeLEmoji(urlAnimationEmoji(carte.id), COTE_GRAND).then((a) => {
       if (!vivant || a === null) return
       const depart = performance.now()
       const pas = (t: number): void => {

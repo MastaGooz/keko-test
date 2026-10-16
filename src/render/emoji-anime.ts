@@ -38,8 +38,18 @@ const EN_COURS = new Map<string, Promise<Animation | null>>()
  * encore* ; décoder en 512 coûterait quatre fois la mémoire pour une finesse
  * que personne ne voit. **Chaque image devient un `ImageBitmap`**, donc elle
  * vit sur le GPU : 59 images de 192 pèsent 8,7 Mo, contre 62 Mo en 512.
+ *
+ * **ELLE SE CHOISIT SELON L'USAGE.** Keko : « la résolution des emoji carte /
+ * sticker animés est moins bonne, les contours ne sont pas lisses ». *Décodé en
+ * 192*, l'emoji d'une carte s'affiche sur environ 500 pixels réels d'un
+ * téléphone, celui du sticker en grand sur 1 000 : agrandis, ils floutaient.
+ * La carte prend 320 (`COTE_CARTE`), le sticker en grand 448
+ * (`COTE_GRAND`), la grille de l'album garde 192 (`COTE_PETIT`) — chaque
+ * animation décodée reste en mémoire, et une case en montre peu.
  */
-const COTE = 192
+export const COTE_PETIT = 192
+export const COTE_CARTE = 320
+export const COTE_GRAND = 448
 
 /**
  * UNE IMAGE SUR DEUX, ET C'EST UN ARBITRAGE DE MÉMOIRE.
@@ -58,19 +68,20 @@ const PAS = 2
  * **Le cache ne retient que les succès** — une promesse rejetée gardée
  * condamnerait l'emoji pour toute la session, la leçon des textures de cartes.
  */
-export function animationDeLEmoji(url: string): Promise<Animation | null> {
-  const deja = EN_COURS.get(url)
+export function animationDeLEmoji(url: string, cote = COTE_CARTE): Promise<Animation | null> {
+  const cle = `${url}#${cote}`
+  const deja = EN_COURS.get(cle)
   if (deja !== undefined) return deja
-  const p = decoder(url)
-  EN_COURS.set(url, p)
+  const p = decoder(url, cote)
+  EN_COURS.set(cle, p)
   void p.then((a) => {
-    if (a === null) EN_COURS.delete(url)
+    if (a === null) EN_COURS.delete(cle)
   })
-  p.catch(() => EN_COURS.delete(url))
+  p.catch(() => EN_COURS.delete(cle))
   return p
 }
 
-async function decoder(url: string): Promise<Animation | null> {
+async function decoder(url: string, COTE: number): Promise<Animation | null> {
   // `ImageDecoder` est dans Chrome, Edge et Safari 17 ; **ailleurs la carte
   // reste statique**, et c'est le bon repli : *une animation ne doit jamais
   // pouvoir empêcher une carte de s'afficher.*
