@@ -1499,7 +1499,10 @@ ${nuanceur.vertexShader}`.replace(
                * step(${RAYONS_DANS_LA_CARTE.y.toFixed(4)}, tp.y) * step(tp.y, ${RAYONS_DANS_LA_CARTE.y.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.h.toFixed(4)});
              // LE BRILLANT TOURNE AVEC LES RAYONS (uAngleRayons, 0 hors légendaires).
              float fr = fract((atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
-             float clair = smoothstep(0.0, 0.025, fr) * (1.0 - smoothstep(0.475, 0.5, fr));
+             // LES SOMBRES BRILLENT À LEUR PART : sans elle, la lampe multipliait les
+             // clairs jusqu'à six fois et l'éclaircissement des sombres ne se voyait
+             // pas (« je vois pas trop de différence »). Voir ECLAIRE_SOMBRES.
+             float clair = mix(${ECLAIRE_SOMBRES.toFixed(3)}, 1.0, smoothstep(0.0, 0.025, fr) * (1.0 - smoothstep(0.475, 0.5, fr)));
              float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);
              float libre = texture2D(uMasqueSujet, vLustreUv).r;

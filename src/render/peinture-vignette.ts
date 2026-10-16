@@ -178,7 +178,8 @@ export function brillantDuRepos(
         const dy = (v - cy) * 1.4
         const a = Math.atan2(dy, dx) - R.depart
         const fr = ((a / secteur) % 1 + 1) % 1
-        const clair = fondu(0, 0.025, fr) * (1 - fondu(0.475, 0.5, fr))
+        // Les sombres brillent à leur part, comme au nuanceur : voir ECLAIRE_SOMBRES.
+        const clair = ECLAIRE_SOMBRES + (1 - ECLAIRE_SOMBRES) * fondu(0, 0.025, fr) * (1 - fondu(0.475, 0.5, fr))
         const fonduR = 1 - Math.min(1, Math.max(0, (Math.hypot(dx, dy) - rr * 0.08) / (rr * 0.92)))
         const lib = libre === null ? 1 : libre[k]! / 255
         kr = clair * fonduR * lib
