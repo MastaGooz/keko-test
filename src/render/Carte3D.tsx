@@ -335,7 +335,7 @@ export const RAYONS_BRILLANTS = { large: 1.2, reflet: 5, sature: 3 } as const
  * du fond des cartes rares, pour qu'ils soient plus vivid ». Le bleu seul ;
  * chiffre de moi.
  */
-export const SATURE_RAYONS: Record<string, number> = { bleu: 3.6 }
+export const SATURE_RAYONS: Record<string, number> = { bleu: 3.6, violet: 0.6, orange: 0.25 }
 /** Un masque blanc d'un pixel : la place du masque du sujet tant qu'il n'est pas là. */
 const MASQUE_VIDE = (() => {
   const t = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1)
@@ -1453,6 +1453,13 @@ ${nuanceur.vertexShader}`.replace(
              cc *= 1.0 + nappeR * ${RAYONS_BRILLANTS.reflet.toFixed(2)} * kr * feuc;
              float lumR = dot(cc, vec3(0.2126, 0.7152, 0.0722));
              cc = max(mix(vec3(lumR), cc, 1.0 + ${RAYONS_BRILLANTS.sature.toFixed(2)} * uSatureRayons * nappeR * kr * feuc), 0.0);
+             // À CLARTÉ CONSTANTE. Keko : « les fonds vert et bleu sont plus clairs
+             // au centre, tandis que les violets et orange tirent plus foncé au
+             // centre ». *La saturation se fait en lumière linéaire* : le vert d'un
+             // violet ou d'un orange est sous la clarté moyenne, l'écarter le fait
+             // chuter jusqu'à zéro — la clarté avec ; et le brillant est le plus
+             // fort au centre. On rend donc à la couleur la clarté qu'elle avait.
+             cc *= lumR / max(dot(cc, vec3(0.2126, 0.7152, 0.0722)), 0.0001);
            }
            float lumApres = dot(cc, vec3(0.2126, 0.7152, 0.0722));
            float plafond = max(lumAvant, ${BRILLANT.plafond.toFixed(2)});

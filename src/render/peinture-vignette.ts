@@ -206,6 +206,13 @@ export function brillantDuRepos(
       r = Math.max(0, lum + (r - lum) * sr)
       g = Math.max(0, lum + (g - lum) * sr)
       b = Math.max(0, lum + (b - lum) * sr)
+      // À CLARTÉ CONSTANTE, comme au nuanceur : saturer en linéaire faisait
+      // chuter la clarté des violets et des oranges.
+      const apres = 0.2126 * r + 0.7152 * g + 0.0722 * b
+      const kc = lum / Math.max(apres, 0.0001)
+      r *= kc
+      g *= kc
+      b *= kc
       // LE PLAFOND : jamais plus haut que la peinture, ou que le seuil du bloom.
       const lumApres = 0.2126 * r + 0.7152 * g + 0.0722 * b
       const plafond = Math.max(lumAvant, BRILLANT.plafond)

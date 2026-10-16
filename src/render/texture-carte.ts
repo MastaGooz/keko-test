@@ -1468,6 +1468,19 @@ const FORCE_RAYONS: Record<string, number> = {
  * un bleu électrique, et un peu plus de force (`FORCE_RAYONS.bleu` 0,17 → 0,21).
  */
 const TON_RAYONS: Record<string, string> = { bleu: '#0a8dff', orange: '#ff9a00' }
+/**
+ * UN CŒUR CLAIR AUX RAYONS DU VIOLET ET DE L'ORANGE. Keko : « les fonds vert et
+ * bleu sont plus clairs au centre, tandis que les violets et orange tirent
+ * plus foncé au centre ». *Le vert s'éclaircit au centre parce que son canal
+ * vert porte la clarté* ; l'orange et le violet plafonnent (leur rouge, leur
+ * bleu sont au bout partout), donc leurs rayons gardent le même ton du centre
+ * au bord. On ajoute au centre de leurs rayons leur ton CLAIR (\`METAUX[0]\` :
+ * crème orangé, lilas), qui s'éteint à \`portee\` du rayon, à \`force\`.
+ */
+const COEUR_RAYONS: Record<string, { force: number; portee: number }> = {
+  violet: { force: 0.3, portee: 0.55 },
+  orange: { force: 0.3, portee: 0.55 },
+}
 /** L'opacité des touches dans la fenêtre d'art, et leur échelle par rapport à celles du dos. */
 const TOUCHES_CARTE = 0.09
 const TOUCHES_ECHELLE = 0.8
@@ -1584,14 +1597,28 @@ function peindreRayons(
   ctx.globalAlpha = force
   const depart = 0.21
   const pas = (Math.PI * 2) / NB_RAYONS
-  for (let i = 0; i < NB_RAYONS; i += 2) {
-    const a0 = depart + i * pas
-    const a1 = a0 + pas
-    ctx.beginPath()
-    ctx.moveTo(cx, cy)
-    ctx.arc(cx, cy, rayon * 1.05, a0, a1)
-    ctx.closePath()
-    ctx.fill()
+  const secteurs = (): void => {
+    for (let i = 0; i < NB_RAYONS; i += 2) {
+      const a0 = depart + i * pas
+      const a1 = a0 + pas
+      ctx.beginPath()
+      ctx.moveTo(cx, cy)
+      ctx.arc(cx, cy, rayon * 1.05, a0, a1)
+      ctx.closePath()
+      ctx.fill()
+    }
+  }
+  secteurs()
+  // LE CŒUR CLAIR, pour les crans qui plafonnent : voir COEUR_RAYONS.
+  const coeur = rarete === undefined ? undefined : COEUR_RAYONS[rarete]
+  const clair = rarete === undefined ? undefined : METAUX[rarete]?.[0]
+  if (coeur !== undefined && clair !== undefined) {
+    const lueur = ctx.createRadialGradient(cx, cy, rayon * 0.05, cx, cy, rayon * coeur.portee)
+    lueur.addColorStop(0, clair)
+    lueur.addColorStop(1, clair + '00')
+    ctx.fillStyle = lueur
+    ctx.globalAlpha = coeur.force
+    secteurs()
   }
   ctx.restore()
 }
