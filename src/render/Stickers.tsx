@@ -13,7 +13,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { SON_POSER, jouerSon } from './sons.ts'
-import { PucesBonus, passeLeBonus, teinteDuCran, type BonusFiltre } from './Collection.tsx'
+import {
+  BoutonFiltres,
+  PanneauFiltres,
+  PucesBonus,
+  SectionFiltre,
+  passeLeBonus,
+  teinteDuCran,
+  type BonusFiltre,
+} from './Collection.tsx'
 import { suivreLInclinaison } from './inclinaison.ts'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers } from '../logic/emoji/collection.ts'
@@ -524,6 +532,7 @@ export function PageStickers({
 }): React.ReactElement {
   const [tri, setTri] = useState<Tri>('recents')
   const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
+  const [panneau, setPanneau] = useState(false)
   const [ouvert, setOuvert] = useState<string | null>(null)
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
   const liste = useMemo(() => {
@@ -561,6 +570,21 @@ export function PageStickers({
         ) : (
           <>
             <div className="collection-outils">
+              <div className="collection-ligne">
+                <BoutonFiltres actifs={bonus.size} onOuvrir={() => setPanneau(true)} />
+              </div>
+            </div>
+            {panneau && (
+              <PanneauFiltres
+                titre="Filtres"
+                voir={`Voir ${liste.length} sticker${liste.length > 1 ? 's' : ''}`}
+                onEffacer={() => {
+                  setBonus(new Set())
+                  setTri('recents')
+                }}
+                onFermer={() => setPanneau(false)}
+              >
+                <SectionFiltre titre="Trier">
               <div className="collection-segments" role="radiogroup" aria-label="Trier">
                 {TRIS.map((t) => (
                   <button
@@ -575,8 +599,12 @@ export function PageStickers({
                   </button>
                 ))}
               </div>
-              <PucesBonus valeur={bonus} onChange={setBonus} />
-            </div>
+                </SectionFiltre>
+                <SectionFiltre titre="Bonus">
+                  <PucesBonus valeur={bonus} onChange={setBonus} />
+                </SectionFiltre>
+              </PanneauFiltres>
+            )}
             {liste.length === 0 && (
               <div className="collection-vide">
                 <p className="collection-discret">Aucun sticker ne correspond.</p>

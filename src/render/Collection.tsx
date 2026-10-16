@@ -123,7 +123,7 @@ export function PucesBonus({
   onChange: (v: ReadonlySet<BonusFiltre>) => void
 }): React.ReactElement {
   return (
-    <div className="collection-puces">
+    <div className="filtres-panneau-puces">
       {BONUS_FILTRES.map((b) => (
         <button
           key={b.id}
@@ -136,6 +136,67 @@ export function PucesBonus({
         </button>
       ))}
     </div>
+  )
+}
+
+/**
+ * LE BOUTON « FILTRES » ET SON PANNEAU. Keko : « on peut compacter le système
+ * de filtres de la collection / stickers ? Peut-être avec un bouton filtre qui
+ * ouvre un panneau avec les options, comme dans lexicodex ». *La grille
+ * commence tout de suite* : une ligne (la recherche et le bouton, qui compte
+ * les filtres actifs), et les options dans un panneau qui monte du bas, avec
+ * « Tout effacer » et le nombre de cartes qu'on va voir.
+ */
+export function BoutonFiltres({ actifs, onOuvrir }: { actifs: number; onOuvrir: () => void }): React.ReactElement {
+  return (
+    <button type="button" className={`bouton-filtres${actifs > 0 ? ' actif' : ''}`} onClick={onOuvrir}>
+      <span aria-hidden>☰</span> Filtres
+      {actifs > 0 && <span className="bouton-filtres-compte">{actifs}</span>}
+    </button>
+  )
+}
+
+export function PanneauFiltres({
+  titre,
+  voir,
+  onEffacer,
+  onFermer,
+  children,
+}: {
+  titre: string
+  /** Le libellé du bouton du bas : « Voir 12 cartes ». */
+  voir: string
+  onEffacer: () => void
+  onFermer: () => void
+  children: React.ReactNode
+}): React.ReactElement {
+  return createPortal(
+    <div className="filtres-panneau-fond" onClick={onFermer}>
+      <div className="filtres-panneau" role="dialog" aria-label={titre} onClick={(e) => e.stopPropagation()}>
+        <div className="filtres-panneau-poignee" aria-hidden />
+        <div className="filtres-panneau-tete">
+          <h2>{titre}</h2>
+          <button type="button" className="filtres-panneau-effacer" onClick={onEffacer}>
+            Tout effacer
+          </button>
+        </div>
+        <div className="filtres-panneau-corps">{children}</div>
+        <button type="button" className="collection-bouton filtres-panneau-voir" onClick={onFermer}>
+          {voir}
+        </button>
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
+/** Une section du panneau : son titre, ses options. */
+export function SectionFiltre({ titre, children }: { titre: string; children: React.ReactNode }): React.ReactElement {
+  return (
+    <section className="filtres-panneau-section">
+      <h3>{titre}</h3>
+      {children}
+    </section>
   )
 }
 
@@ -567,6 +628,8 @@ export function PageCollection({
   // pouvoir sélectionner plusieurs catégories à la fois comme les raretés ».
   const [groupes, setGroupes] = useState<ReadonlySet<GroupeEmoji>>(new Set())
   const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
+  const [panneau, setPanneau] = useState(false)
+  const actifs = raretes.size + groupes.size + bonus.size
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
 
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
@@ -630,13 +693,31 @@ export function PageCollection({
 
         {possedees.length > 0 && (
           <div className="collection-outils">
-            <input
-              className="collection-recherche"
-              type="search"
-              placeholder="Chercher un emoji"
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-            />
+            <div className="collection-ligne">
+              <input
+                className="collection-recherche"
+                type="search"
+                placeholder="Chercher un emoji"
+                value={recherche}
+                onChange={(e) => setRecherche(e.target.value)}
+              />
+              <BoutonFiltres actifs={actifs} onOuvrir={() => setPanneau(true)} />
+            </div>
+          </div>
+        )}
+        {panneau && (
+          <PanneauFiltres
+            titre="Filtres"
+            voir={`Voir ${visibles.length} carte${visibles.length > 1 ? 's' : ''}`}
+            onEffacer={() => {
+              setRaretes(new Set())
+              setGroupes(new Set())
+              setBonus(new Set())
+              setTri('recentes')
+            }}
+            onFermer={() => setPanneau(false)}
+          >
+            <SectionFiltre titre="Trier">
             <div className="collection-segments" role="radiogroup" aria-label="Trier">
               {TRIS.map((t) => (
                 <button
@@ -651,7 +732,9 @@ export function PageCollection({
                 </button>
               ))}
             </div>
-            <div className="collection-puces">
+            </SectionFiltre>
+            <SectionFiltre titre="Rareté">
+            <div className="filtres-panneau-puces">
               {RARETES_EMOJI.map((r) => (
                 <button
                   key={r}
@@ -665,7 +748,9 @@ export function PageCollection({
                 </button>
               ))}
             </div>
-            <div className="collection-puces">
+            </SectionFiltre>
+            <SectionFiltre titre="Type">
+            <div className="filtres-panneau-puces">
               {GROUPES_EMOJI.map((g) => (
                 <button
                   key={g}
@@ -677,8 +762,11 @@ export function PageCollection({
                 </button>
               ))}
             </div>
-            <PucesBonus valeur={bonus} onChange={setBonus} />
-          </div>
+            </SectionFiltre>
+            <SectionFiltre titre="Bonus">
+              <PucesBonus valeur={bonus} onChange={setBonus} />
+            </SectionFiltre>
+          </PanneauFiltres>
         )}
 
         {catalogue === null ? null : possedees.length === 0 ? (

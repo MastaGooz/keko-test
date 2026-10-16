@@ -1209,3 +1209,159 @@
 .puce-anime.actif {
   border-color: #ffc61f;
 }
+
+/* ------------------------------------------------------- le panneau filtres */
+
+/* UNE LIGNE : la recherche et le bouton. */
+.collection-ligne {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.collection-ligne .collection-recherche {
+  flex: 1;
+  min-width: 0;
+}
+
+.bouton-filtres {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 3rem;
+  padding: 0 1.1rem;
+  border: 0.15rem solid rgba(255, 250, 240, 0.18);
+  border-radius: 999px;
+  background: rgba(10, 4, 30, 0.35);
+  color: #fffaf0;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bouton-filtres.actif {
+  border-color: #ffc61f;
+}
+
+.bouton-filtres-compte {
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.3rem;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: #ffc61f;
+  color: #2a1b63;
+  font-size: 0.8rem;
+  line-height: 1.35rem;
+  text-align: center;
+}
+
+.filtres-panneau-fond {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(10, 4, 30, 0.55);
+  animation: carte-ouverte-entre 0.2s ease-out;
+}
+
+.filtres-panneau {
+  width: 100%;
+  max-width: 40rem;
+  max-height: 85vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 0.6rem 16px calc(1rem + env(safe-area-inset-bottom));
+  border-radius: 1.4rem 1.4rem 0 0;
+  background: #2a1b63;
+  color: #fffaf0;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  box-shadow: 0 -0.5rem 2rem rgba(10, 4, 30, 0.5);
+  animation: panneau-monte 0.28s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+@keyframes panneau-monte {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+.filtres-panneau-poignee {
+  width: 2.6rem;
+  height: 0.3rem;
+  margin: 0 auto 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.3);
+}
+
+.filtres-panneau-tete {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filtres-panneau-tete h2 {
+  margin: 0;
+  font-weight: 800;
+  font-size: 1.4rem;
+  text-transform: uppercase;
+}
+
+.filtres-panneau-effacer {
+  min-height: 2.6rem;
+  padding: 0 0.6rem;
+  border: 0;
+  background: transparent;
+  color: #ffc61f;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.filtres-panneau-corps {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0.4rem -16px 0;
+  padding: 0 16px;
+}
+
+.filtres-panneau-section h3 {
+  margin: 0.9rem 0 0.45rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+}
+
+/* DANS LE PANNEAU LES PUCES PASSENT À LA LIGNE : on les voit toutes. */
+.filtres-panneau-puces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.filtres-panneau-voir {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.filtres-panneau button {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.filtres-panneau button:focus:not(:focus-visible) {
+  outline: none;
+}
