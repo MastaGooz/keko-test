@@ -6391,3 +6391,5 @@ bonus**, et **on décolle au doigt** — le geste vaut confirmation.
   bilan à quatre. **Pas vu au doigt sur téléphone.** Tous les chiffres
   (`DECOLLAGE`) sont de moi, à rejuger — et ce qu'on FAIT des stickers reste à
   décider.
+
+- **Correctif (16/10/2026)** : une tape sur un sticker de l'album le vidait. Keko : « il disparaît du grid ». Le saut était relancé en remontant l'élément par une clé, donc sa toile repartait neuve et vide ; il se joue maintenant par `animate` sur l'élément, sans le remonter.

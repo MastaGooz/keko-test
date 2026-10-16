@@ -66,7 +66,7 @@ function CaseSticker({ carte, stickers }: { carte: CarteEmoji; stickers: Sticker
   const toile = useRef<HTMLCanvasElement>(null)
   const [visible, setVisible] = useState(false)
   const [pret, setPret] = useState(false)
-  const [saut, setSaut] = useState(0)
+  const sticker = useRef<HTMLSpanElement>(null)
   const holo = stickers.holo > 0
   const anime = stickers.anime > 0 && carte.animable
   useEffect(() => {
@@ -130,9 +130,23 @@ function CaseSticker({ carte, stickers }: { carte: CarteEmoji; stickers: Sticker
       type="button"
       className={`album-case${pret ? ' album-pret' : ''}`}
       aria-label={`${enTitre(carte.nom)}, ${stickers.n} sticker${stickers.n > 1 ? 's' : ''}`}
-      onClick={() => setSaut((s) => s + 1)}
+      // LE SAUT SE JOUE SUR L'ÉLÉMENT, IL NE LE REMONTE PAS. Keko : « quand je
+      // clique sur un sticker, il disparaît du grid ». *Il était remonté par
+      // une clé pour relancer l'animation*, et sa toile avec : neuve, donc vide,
+      // et rien ne la repeignait.
+      onClick={() =>
+        sticker.current?.animate(
+          [
+            { transform: 'none' },
+            { transform: 'scale(1.18) rotate(-6deg)', offset: 0.3 },
+            { transform: 'scale(0.96) rotate(3deg)', offset: 0.6 },
+            { transform: 'none' },
+          ],
+          { duration: 450, easing: 'cubic-bezier(0.3, 1.6, 0.5, 1)' },
+        )
+      }
     >
-      <span key={saut} className={`album-sticker${saut > 0 ? ' album-saute' : ''}`}>
+      <span ref={sticker} className="album-sticker">
         {!pret && <span className="album-attente">{carte.emoji}</span>}
         <canvas ref={toile} className="album-toile" style={FILTRE} />
       </span>

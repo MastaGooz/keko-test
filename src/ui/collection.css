@@ -1019,19 +1019,7 @@
   display: block;
 }
 
-/* UNE TAPE LE FAIT SAUTER, rien de plus : un sticker se regarde. */
-.album-saute {
-  animation: album-saute 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
-}
-
-@keyframes album-saute {
-  30% {
-    transform: scale(1.18) rotate(-6deg);
-  }
-  60% {
-    transform: scale(0.96) rotate(3deg);
-  }
-}
+/* UNE TAPE LE FAIT SAUTER (`animate`, dans `Stickers.tsx`) : un sticker se regarde. */
 
 .album-toile {
   position: absolute;
