@@ -249,7 +249,13 @@ export function PanneauFiltres({
       window.removeEventListener('pointercancel', lacher)
       tire.current = null
       const haut = panneau.current?.offsetHeight ?? 1
-      if (ev.type === 'pointerup' && (g.dy > haut * TIRER_POUR_FERMER || (g.dy > 10 && g.v > VITESSE_POUR_FERMER))) {
+      // À LA SOURIS, UN CLIC SUFFIT. Keko : « sur PC on n'a pas besoin de slider
+      // la petite barre, on peut juste cliquer dessus (on garde le slide sur tel) ».
+      const clic = e.pointerType === 'mouse' && g.dy < 4
+      if (
+        ev.type === 'pointerup' &&
+        (clic || g.dy > haut * TIRER_POUR_FERMER || (g.dy > 10 && g.v > VITESSE_POUR_FERMER))
+      ) {
         descendre(haut, true)
         window.setTimeout(onFermer, 220)
       } else descendre(0, true)

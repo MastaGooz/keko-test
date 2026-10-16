@@ -1312,7 +1312,7 @@
 /* LA TÊTE SE TIRE : le geste est au panneau, pas au navigateur (qui rechargeait). */
 .filtres-panneau-prise {
   touch-action: none;
-  cursor: grab;
+  cursor: pointer;
   margin: -0.6rem -16px 0;
   padding: 0.6rem 16px 0;
 }

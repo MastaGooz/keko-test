@@ -6591,3 +6591,5 @@ Keko : « quand je ferme le panneau filtre et que je reclique sur le bouton just
 ### Le sticker de l'album ne fait plus le clic (16/10/2026)
 
 Keko : « quand je clique sur un sticker de la collection, il y a le son de clic + le son de carte, il faudrait supprimer le son de clic ». L'écouteur de toute la page (`Jeu.tsx`) exceptait déjà les vignettes de la collection ; il excepte aussi les cases de l'album (`album-case`), qui ont leur son de pose en s'ouvrant.
+
+**Même jour** — Keko : « sur PC on n'a pas besoin de slider la petite barre du panneau filtre : on peut juste cliquer dessus (on garde le slide sur tel) ». À la souris (`pointerType === 'mouse'`), un clic sur la tête du panneau (moins de 4 px de glissé) le ferme ; au doigt, seul le glisser ferme.
