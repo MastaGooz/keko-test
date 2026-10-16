@@ -213,6 +213,40 @@ export function brillantDuRepos(toile: HTMLCanvasElement): void {
   ctx.putImageData(image, 0, 0)
 }
 
+/**
+ * UNE PAILLETTE EN ÉTOILE À QUATRE BRANCHES : deux traits fins qui s'effacent
+ * vers leurs bouts, et un petit cœur. Celles de l'emoji holo (`COSMOS.etoile`).
+ */
+export function etoileDePaillette(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  bras: number,
+  teinte: number,
+  a: number,
+): void {
+  const largeur = Math.max(0.7, bras * 0.16)
+  for (const [dx, dy] of [
+    [1, 0],
+    [0, 1],
+  ] as const) {
+    const trait = ctx.createLinearGradient(x - dx * bras, y - dy * bras, x + dx * bras, y + dy * bras)
+    trait.addColorStop(0, `hsla(${teinte}, 100%, 85%, 0)`)
+    trait.addColorStop(0.5, `hsla(${teinte}, 100%, 95%, ${a})`)
+    trait.addColorStop(1, `hsla(${teinte}, 100%, 85%, 0)`)
+    ctx.fillStyle = trait
+    if (dx === 1) ctx.fillRect(x - bras, y - largeur / 2, bras * 2, largeur)
+    else ctx.fillRect(x - largeur / 2, y - bras, largeur, bras * 2)
+  }
+  const coeur = ctx.createRadialGradient(x, y, 0, x, y, largeur * 1.6)
+  coeur.addColorStop(0, `hsla(${teinte}, 100%, 97%, ${a})`)
+  coeur.addColorStop(1, `hsla(${teinte}, 100%, 80%, 0)`)
+  ctx.fillStyle = coeur
+  ctx.beginPath()
+  ctx.arc(x, y, largeur * 1.6, 0, Math.PI * 2)
+  ctx.fill()
+}
+
 export function paillettesHolo(
   toile: HTMLCanvasElement,
   id: string,
@@ -306,6 +340,11 @@ export function paillettesHolo(
         if ((options.seules === 'vives' && !vive) || (options.seules === 'pales' && vive)) continue
         const a = vive ? 0.9 : 0.1
         const r = r0
+        // SUR L'EMOJI, LES VIVES SONT DES ÉTOILES (voir `COSMOS.etoile`).
+        if (vive && libre !== null && libre[k + 3]! < 128) {
+          etoileDePaillette(ctx, x, y, r * 3.2, teinte, a)
+          continue
+        }
         const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 1.8)
         halo.addColorStop(0, `hsla(${teinte}, 100%, 92%, ${a})`)
         halo.addColorStop(0.35, `hsla(${teinte}, 100%, 70%, ${a * 0.6})`)

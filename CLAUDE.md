@@ -74,7 +74,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 - **Deux bonus tirés à l'ouverture** (`logic/emoji/tirage.ts`) : holo 10 %,
   animé 3 % (placeholders). L'animé exige `animable`. **La holo est
   une feuille de paillettes cosmos** (`COSMOS`) : de petits miroirs penchés au
-  hasard qui renvoient la lampe clé, **sur l'emoji aussi** (`COSMOS.surEmoji`), plus la bande qui passe ;
+  hasard qui renvoient la lampe clé, **sur l'emoji aussi** (`COSMOS.surEmoji`) — en étoiles à quatre branches sur l'emoji, en points ronds sur le fond (`COSMOS.etoile`) —, plus la bande qui passe ;
   l'emoji s'en distingue par son **cerne arc-en-ciel** (`COSMOS.cerne`) et
   son **relief** (`RELIEF`, `?relief=0`) : *une carte à fenêtre* — l'emoji
   reste à la surface, le décor de la fenêtre d'art s'enfonce (lu décalé selon

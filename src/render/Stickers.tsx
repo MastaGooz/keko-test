@@ -19,7 +19,7 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers } from '../logic/emoji/collection.ts'
 import { nombreDeStickers } from '../logic/emoji/collection.ts'
 import { stickerDe } from './texture-carte.ts'
-import { cerneArcEnCiel } from './peinture-vignette.ts'
+import { cerneArcEnCiel, etoileDePaillette } from './peinture-vignette.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
@@ -348,15 +348,8 @@ function StickerOuvert({
           const allume = Math.pow(Math.max(0, 1 - ecart / (p.gros ? 0.75 : 0.6)), 2)
           const a2 = Math.min(1, allume * (0.65 + 0.35 * Math.sin(tps * p.vitesse + p.phase)) * 1.4)
           if (a2 < 0.03) continue
-          const rr = p.r * 2
-          const halo = pctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rr)
-          halo.addColorStop(0, `hsla(${p.teinte}, 100%, 94%, ${a2.toFixed(3)})`)
-          halo.addColorStop(0.4, `hsla(${p.teinte}, 100%, 70%, ${(a2 * 0.55).toFixed(3)})`)
-          halo.addColorStop(1, `hsla(${p.teinte}, 100%, 60%, 0)`)
-          pctx.fillStyle = halo
-          pctx.beginPath()
-          pctx.arc(p.x, p.y, rr, 0, Math.PI * 2)
-          pctx.fill()
+          // LE STICKER EST L'EMOJI : ses paillettes sont des étoiles (voir `COSMOS.etoile`).
+          etoileDePaillette(pctx, p.x, p.y, p.r * (p.gros ? 5 : 3.5), p.teinte, a2)
         }
       }
       image = requestAnimationFrame(appliquer)

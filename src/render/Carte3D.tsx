@@ -422,6 +422,19 @@ export const COSMOS = {
    */
   surEmoji: 1,
   /**
+   * ET SUR L'EMOJI, CE SONT DES ÉTOILES. Keko : « des paillettes différentes
+   * pour l'emoji (que le fond), pour les différencier un peu », puis « juste
+   * la forme ». Sur l'emoji, chaque paillette est un éclat à quatre branches
+   * (`etoile` : l'épaisseur d'une branche en pixels, `bras` : la décroissance
+   * de sa longueur, en cellules) autour d'un petit cœur ; le fond garde ses
+   * points ronds. Mêmes places, mêmes couleurs, même allumage au regard.
+   * **Seules les grosses deviennent des étoiles** : une cellule fine fait
+   * quelques pixels, une étoile n'y tiendrait pas — vu, elles restaient des
+   * points, et des branches réglées en cellules faisaient moins d'un pixel.
+   */
+  etoile: 0.9,
+  bras: 4,
+  /**
    * SUR L'EMOJI, UN AUTRE EFFET QUE LA FEUILLE : son CERNE devient
    * arc-en-ciel. Keko : « sur l'emoji je voyais plutôt un effet différent du
    * reste de la carte pour la distinguer (autre que les paillettes) » — il a
@@ -1440,7 +1453,16 @@ ${nuanceur.vertexShader}`.replace(
              float branches = fin ? 0.0
                : exp(-abs(d.x) * 40.0 / max(1.0, aa * 8.0)) * exp(-abs(d.y) * 9.0)
                + exp(-abs(d.y) * 40.0 / max(1.0, aa * 8.0)) * exp(-abs(d.x) * 9.0);
-             float forme = max(point, branches * 0.9);
+             // LE FOND : DES POINTS RONDS SEULEMENT. Ses grosses avaient de petites
+             // branches, et les étoiles de l'emoji ne s'en distinguaient plus.
+             float forme = mix(max(point, branches * 0.9), point, ${COSMOS.etoile > 0 ? '1.0' : '0.0'});
+             // SUR L'EMOJI, UNE ÉTOILE À QUATRE BRANCHES : voir COSMOS.etoile.
+             // L'ÉPAISSEUR D'UNE BRANCHE SE COMPTE EN PIXELS (aa : un pixel en cellule).
+             float epE = max(aa, 0.002) * ${COSMOS.etoile.toFixed(2)};
+             float etoileE = exp(-abs(d.x) / epE) * exp(-abs(d.y) * ${COSMOS.bras.toFixed(1)})
+               + exp(-abs(d.y) / epE) * exp(-abs(d.x) * ${COSMOS.bras.toFixed(1)});
+             float formeE = fin ? point : max(point * 0.6, etoileE);
+             forme = mix(forme, formeE, smoothstep(0.3, 0.7, 1.0 - libreH));
              vec3 spectre = 0.5 + 0.5 * cos(6.28318 * (fract(h4 * 3.0 + incidence * 1.9) + vec3(0.0, 0.33, 0.67)));
              cosmos += mix(vec3(1.0), spectre, 0.8) * forme * present * allume * scintille;
            }
