@@ -570,3 +570,23 @@
   box-shadow: 0 0.25rem 0 #c9b9f2;
   cursor: pointer;
 }
+
+/* PAS DE SURLIGNAGE BLEU A LA TAPE. Keko : « quand je clique sur les boutons
+   des filtres ils se surlignent en bleu sur tel, comme si je sélectionnais le
+   texte ». C'est la tape par défaut du navigateur mobile, plus la sélection du
+   texte du bouton : on retire les deux sur TOUS les boutons des deux pages,
+   plutôt qu'un par un. Le contour reste pour le clavier (focus-visible). */
+.nav button,
+.collection button,
+.carte-ouverte button {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.nav button:focus:not(:focus-visible),
+.collection button:focus:not(:focus-visible),
+.carte-ouverte button:focus:not(:focus-visible) {
+  outline: none;
+}
