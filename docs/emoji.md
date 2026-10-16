@@ -6491,3 +6491,12 @@ Keko a pris la quatrième piste, « l'hologramme de science-fiction » : *un emo
 - `?hologramme=0` le retire de la carte. Chiffres de moi ; vu au navigateur (agrandi), pas sur téléphone.
 
 - **Hologramme retiré** (Keko : « ça fait mal aux yeux lol, rollback »).
+
+### Le relief de l'emoji holo (16/10/2026)
+
+Keko : « essayons ton idée de relief 3D ». *Rien n'est repeint ni ajouté par-dessus* : le sticker flotte à 0,1 largeur de carte au-dessus de la face.
+
+- **La parallaxe, au nuanceur, dès la lecture de la peinture** : la carte charge aussi sa version sans emoji (`sansSujet`, dans `uNu` ; la carte entière dans `uPeinture`). Un pixel de la face montre le sticker lu plus loin dans la direction du regard (hauteur × regard tangent / regard normal) ; la silhouette est là où les deux peintures diffèrent, nette au pixel. **L'ombre portée** est la même silhouette lue vers la lampe (fixe quand on penche), adoucie sur quatre prises : c'est l'écart entre l'emoji qui glisse et son ombre qui reste qui fait la profondeur.
+- **Deux pièges vus à l'écran** : l'émissif de la face (la même peinture, ajoutée à la lumière) gardait l'emoji à sa place d'origine, en fantôme — il prend maintenant la couleur du relief ; et le masque du sujet (cerne arc-en-ciel, paillettes, rayons brillants) était lu à la place d'origine, si bien que le cerne décalé restait blanc — il se lit maintenant là où le sticker est (`uvSujet`).
+- **Sur le sticker en grand** (pas de carte dessous) : son ombre se décale à l'opposé de l'inclinaison, plus loin et plus floue, comme un sticker qui flotte.
+- `?relief=0` le retire. Chiffres de moi ; la parallaxe ne se juge pas sur une capture fixe, à voir au doigt.

@@ -432,6 +432,28 @@ export const COSMOS = {
 }
 const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
 
+/**
+ * LE RELIEF DE L'EMOJI HOLO. Keko, après la nacre, le caméléon, le vernis, la
+ * poussière d'or et l'hologramme : « essayons ton idée de relief 3D ». *Rien
+ * n'est repeint, rien n'est ajouté par-dessus* : le sticker FLOTTE au-dessus de
+ * la carte, à `hauteur` largeurs de carte.
+ *
+ * - **La parallaxe** : le regard qui frappe la face à un endroit a traversé le
+ *   plan du sticker plus loin dans sa direction — on y lit donc le sticker
+ *   décalé de hauteur × (regard tangent / regard normal). La carte de face,
+ *   rien ne bouge ; penchée, l'emoji glisse sur son fond.
+ * - **L'ombre portée** : la lampe clé projette la silhouette sur la face, du
+ *   côté opposé à la lampe (en bas à gauche) ; elle ne dépend pas du regard,
+ *   donc elle reste quand l'emoji glisse — c'est l'écart des deux qui fait la
+ *   profondeur. `ombre` sa force, `flou` son adoucissement (quatre prises).
+ * - **La silhouette se lit dans la différence** entre la carte entière et la
+ *   même carte sans emoji (`sansSujet`) : nette au pixel, cerne compris.
+ *
+ * Chiffres de moi ; `?relief=0` le retire.
+ */
+export const RELIEF = { hauteur: 0.1, ombre: 0.55, flou: 0.008, seuil: 6 }
+const AVEC_RELIEF = new URLSearchParams(location.search).get('relief') !== '0'
+
 
 
 
@@ -1012,6 +1034,10 @@ export function Carte3D({
       nuanceur.uniforms.uBrillant = { value: aplat && AVEC_BRILLANT ? 1 : 0 }
       nuanceur.uniforms.uRayons = { value: 0 }
       nuanceur.uniforms.uMasqueSujet = { value: MASQUE_VIDE }
+      // LE RELIEF : la carte entière, la même sans emoji, et s'il joue (voir RELIEF).
+      nuanceur.uniforms.uPeinture = { value: MASQUE_VIDE }
+      nuanceur.uniforms.uNu = { value: MASQUE_VIDE }
+      nuanceur.uniforms.uRelief = { value: 0 }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -1019,9 +1045,53 @@ ${nuanceur.vertexShader}`.replace(
         `#include <begin_vertex>
          vLustreUv = uv;`,
       )
+      // L'ÉMISSIF SUIT LE RELIEF : voir couleurRelief.
+      nuanceur.fragmentShader = nuanceur.fragmentShader.replace(
+        '#include <emissivemap_fragment>',
+        `#include <emissivemap_fragment>
+         if (uRelief > 0.5) totalEmissiveRadiance = emissive * couleurRelief;`,
+      )
       nuanceur.fragmentShader = nuanceur.fragmentShader.replace(
         '#include <map_fragment>',
         `#include <map_fragment>
+         // LE RELIEF DE L'EMOJI : voir RELIEF. Le repère se calcule hors de
+         // tout if (les dérivées d'écran l'exigent), le reste seulement s'il joue.
+         vec3 dpxR = dFdx(-vViewPosition);
+         vec3 dpyR = dFdy(-vViewPosition);
+         vec2 duxR = dFdx(vLustreUv);
+         vec2 duyR = dFdy(vLustreUv);
+         float sgR = (duxR.x * duyR.y - duxR.y * duyR.x) < 0.0 ? -1.0 : 1.0;
+         vec3 TR = (dpxR * duyR.y - dpyR * duxR.y) * sgR;
+         vec3 BR = (dpyR * duxR.x - dpxR * duyR.x) * sgR;
+         TR /= max(length(TR), 1e-6);
+         BR /= max(length(BR), 1e-6);
+         vec3 NR = cross(TR, BR);
+         NR /= max(length(NR), 1e-6);
+         // LA PEINTURE TELLE QUE LE RELIEF LA REND, avant tout le reste : la
+         // lueur propre de la face (son émissif, la même peinture) la reprend,
+         // sinon elle gardait l'emoji à sa place d'origine, en fantôme.
+         vec3 couleurRelief = diffuseColor.rgb;
+         // OÙ L'EMOJI SE TROUVE, pour le masque du sujet : décalé avec lui.
+         vec2 uvSujet = vLustreUv;
+         if (uRelief > 0.5) {
+           vec3 VR = normalize(vViewPosition);
+           vec3 LR = normalize(vec3(${BRILLANT.lampe.map((v) => v.toFixed(3)).join(', ')}));
+           // LE STICKER VU PAR LE REGARD, décalé vers lui ; v se compte en
+           // hauteurs de carte (1,4 largeur).
+           vec2 versR = vec2(dot(VR, TR), dot(VR, BR) / 1.4) / max(dot(VR, NR), 0.25);
+           vec2 qR = vLustreUv + versR * ${RELIEF.hauteur.toFixed(3)};
+           float aR = stickerEn(qR);
+           uvSujet = qR;
+           // SON OMBRE, vers la lampe : fixe quand on penche.
+           vec2 versL = vec2(dot(LR, TR), dot(LR, BR) / 1.4) / max(dot(LR, NR), 0.25);
+           vec2 qO = vLustreUv + versL * ${RELIEF.hauteur.toFixed(3)};
+           float fO = ${RELIEF.flou.toFixed(4)};
+           float ombreR = 0.25 * (stickerEn(qO + vec2(fO, 0.0)) + stickerEn(qO - vec2(fO, 0.0))
+             + stickerEn(qO + vec2(0.0, fO)) + stickerEn(qO - vec2(0.0, fO)));
+           vec3 fondR = texture2D(uNu, vLustreUv).rgb * (1.0 - ${RELIEF.ombre.toFixed(2)} * ombreR);
+           diffuseColor.rgb = mix(fondR, texture2D(uPeinture, qR).rgb, aR);
+           couleurRelief = diffuseColor.rgb;
+         }
          float luminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
          // LE CRÈME DU CERNE des stickers : voir COSMOS.cerne. *Pas le blanc,
          // le CRÈME* — Keko : « tout le blanc de l'emoji est remplacé par
@@ -1310,7 +1380,7 @@ ${nuanceur.vertexShader}`.replace(
              float clair = smoothstep(0.0, 0.025, fr) * (1.0 - smoothstep(0.475, 0.5, fr));
              float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);
-             float libre = texture2D(uMasqueSujet, vLustreUv).r;
+             float libre = texture2D(uMasqueSujet, uvSujet).r;
              float kr = clair * fonduR * libre * fenetre;
              float nappeR = pow(sc, ${RAYONS_BRILLANTS.large.toFixed(1)});
              cc *= 1.0 + nappeR * ${RAYONS_BRILLANTS.reflet.toFixed(2)} * kr * feuc;
@@ -1325,7 +1395,7 @@ ${nuanceur.vertexShader}`.replace(
 
          // LES PAILLETTES COSMOS DE LA FEUILLE HOLO : voir COSMOS.
          if (uHolo > 0.0 && ${AVEC_COSMOS ? 'true' : 'false'}) {
-           float libreH = texture2D(uMasqueSujet, vLustreUv).r;
+           float libreH = texture2D(uMasqueSujet, uvSujet).r;
            vec3 cosmos = vec3(0.0);
            for (int k = 0; k < 2; k++) {
              bool fin = k == 0;
@@ -1424,6 +1494,13 @@ uniform float uLin;
 uniform float uBrillant;
 uniform float uRayons;
 uniform sampler2D uMasqueSujet;
+uniform sampler2D uPeinture;
+uniform sampler2D uNu;
+uniform float uRelief;
+// LA SILHOUETTE DU STICKER : là où la carte entière diffère de la carte nue.
+float stickerEn(vec2 q) {
+  return clamp(length(texture2D(uPeinture, q).rgb - texture2D(uNu, q).rgb) * ${RELIEF.seuil.toFixed(1)}, 0.0, 1.0);
+}
 // LE BRUIT DU LIN : une valeur par noeud d'une grille, lissée entre eux.
 float bruitLin(vec2 p) {
   vec2 i = floor(p);
@@ -1599,6 +1676,8 @@ ${nuanceur.fragmentShader}`
   const largeurPx =
     (tailleTexture ?? taille) * (size.height / hauteurVisibleA(position[2], size.height)) * dpr
 
+  /** La face sans son emoji, pour le relief d'une holo. */
+  const nuDeLaFace = useRef<THREE.Texture | null>(null)
   useEffect(() => {
     let vivant = true
     /**
@@ -1620,6 +1699,15 @@ ${nuanceur.fragmentShader}`
      * retournement — la retrouve déjà résolue et la pose dans la même image.
      */
     if (dos) void textureDeCarte(carte, largeurPx).catch(() => {})
+    // LA MÊME CARTE SANS EMOJI, pour le relief d'une holo (voir RELIEF).
+    nuDeLaFace.current = null
+    if (AVEC_RELIEF && carte.holo === true && carte.emoji !== undefined && carte.sansSujet !== true) {
+      void textureDeCarte({ ...carte, sansSujet: true, animation: undefined }, largeurPx)
+        .then((t) => {
+          if (vivant) nuDeLaFace.current = t
+        })
+        .catch(() => {})
+    }
     // LA TEXTURE VIENT D'UN CACHE PARTAGÉ : deux cartes du même modèle se la
     // prêtent, et une carte remontée la retrouve déjà prête — donc elle ne
     // repasse jamais par son état sombre. Rien n'est libéré ici pour la même
@@ -2272,6 +2360,12 @@ ${nuanceur.fragmentShader}`
       // RAYONS_BRILLANTS. Sans lui (animé, dos, autre mode), rien ne brille.
       const masque = (face.map?.userData.masqueSujet ?? null) as THREE.Texture | null
       nuanceur.uniforms.uMasqueSujet!.value = masque ?? MASQUE_VIDE
+      // LE RELIEF JOUE QUAND LES DEUX PEINTURES SONT LÀ, sur la face d'une holo.
+      const nue = nuDeLaFace.current
+      const relief = nue !== null && face.map !== null && dos !== true && carte.holo === true
+      nuanceur.uniforms.uRelief!.value = relief ? 1 : 0
+      nuanceur.uniforms.uNu!.value = relief ? nue : MASQUE_VIDE
+      nuanceur.uniforms.uPeinture!.value = relief ? face.map! : MASQUE_VIDE
       nuanceur.uniforms.uRayons!.value = masque !== null && AVEC_RAYONS_BRILLANTS && dos !== true ? 1 : 0
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque

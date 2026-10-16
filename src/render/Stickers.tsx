@@ -281,6 +281,15 @@ function StickerOuvert({
       // couleur d'un coin à l'autre.
       const a = arc.current
       if (a != null) a.style.filter = `saturate(${1 + SATURATION_APLAT}) hue-rotate(${((o.x - o.y) * 90).toFixed(1)}deg)`
+      // LE RELIEF : le sticker holo flotte, son ombre se décale à l'opposé de
+      // l'inclinaison, plus loin et plus floue que celle d'un sticker posé
+      // (voir RELIEF, sur la carte).
+      const t = toile.current
+      if (t != null && holo) {
+        t.style.filter =
+          `saturate(${1 + SATURATION_APLAT}) ` +
+          `drop-shadow(${(-6 - o.x * 14).toFixed(1)}px ${(16 + o.y * 14).toFixed(1)}px 0.6rem rgba(10, 4, 30, 0.6))`
+      }
       image = requestAnimationFrame(appliquer)
     }
     image = requestAnimationFrame(appliquer)

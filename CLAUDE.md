@@ -75,7 +75,12 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   animé 3 % (placeholders). L'animé exige `animable`. **La holo est
   une feuille de paillettes cosmos** (`COSMOS`) : de petits miroirs penchés au
   hasard qui renvoient la lampe clé, l'emoji épargné, plus la bande qui passe ;
-  l'emoji s'en distingue par son **cerne arc-en-ciel** (`COSMOS.cerne`). **Le bonus se pose sur
+  l'emoji s'en distingue par son **cerne arc-en-ciel** (`COSMOS.cerne`) et
+  son **relief** (`RELIEF`, `?relief=0`) : le sticker flotte, lu décalé selon
+  le regard au-dessus de la carte sans emoji (`sansSujet`, `uNu`), avec son
+  ombre portée fixe ; le masque du sujet et l'émissif le suivent. Essayés et
+  retirés : nacre, caméléon (recoloraient), vernis, poussière d'or (ne se
+  lisaient pas), hologramme (fatiguait les yeux). **Le bonus se pose sur
   le cran, il ne le repeint pas** : seul le foil se cumule, le liseré et
   l'auréole restent au cran. `animable` dit une possibilité, jamais un état.
 - **Le reflet prend la couleur du cran** (`TON_LUSTRE`, dérivé de `METAUX`).
