@@ -344,29 +344,22 @@ export function paillettesHolo(
         // une sur cinq allumée faisait une neige qui couvrait la carte.
         // UNE VARIANTE RETIRE QUI BRILLE, à part égale.
         const tire = eclats === null ? allume : eclats.next()
-        const vive = tire < (g.gros ? 0.12 : 0.06)
+        // MOINS, ET PLUS PETITES. Keko : « je trouve les étincelles un peu grosses
+        // sur les holo de la collection, juste quelques paillettes comme sur la
+        // carte c'est suffisant ». Plus de croix, plus de grossissement, et deux
+        // fois moins de vives.
+        const vive = tire < (g.gros ? 0.06 : 0.03)
         if ((options.seules === 'vives' && !vive) || (options.seules === 'pales' && vive)) continue
         const a = vive ? 0.9 : 0.1
-        const r = vive ? r0 * 1.5 : r0
-        const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2)
+        const r = r0
+        const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 1.8)
         halo.addColorStop(0, `hsla(${teinte}, 100%, 92%, ${a})`)
         halo.addColorStop(0.35, `hsla(${teinte}, 100%, 70%, ${a * 0.6})`)
         halo.addColorStop(1, `hsla(${teinte}, 100%, 60%, 0)`)
         ctx.fillStyle = halo
         ctx.beginPath()
-        ctx.arc(x, y, r * 2.2, 0, Math.PI * 2)
+        ctx.arc(x, y, r * 1.8, 0, Math.PI * 2)
         ctx.fill()
-        // LES GROSSES VIVES ONT LEUR ÉCLAT EN CROIX, comme la gerbe.
-        if (vive && g.gros) {
-          ctx.strokeStyle = `hsla(${teinte}, 100%, 95%, 0.8)`
-          ctx.lineWidth = Math.max(0.6, r * 0.35)
-          ctx.beginPath()
-          ctx.moveTo(x - r * 4, y)
-          ctx.lineTo(x + r * 4, y)
-          ctx.moveTo(x, y - r * 4)
-          ctx.lineTo(x, y + r * 4)
-          ctx.stroke()
-        }
       }
     }
   }
