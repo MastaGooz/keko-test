@@ -8,7 +8,8 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { createRng } from '../logic/rng.ts'
 import { RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
-import { COSMOS, NACRE } from './Carte3D.tsx'
+import { BRILLANT, CONTOUR_PLAQUE, COSMOS, NACRE, RAYONS_BRILLANTS } from './Carte3D.tsx'
+import { RAYON_SIMPLE } from './texture-carte.ts'
 
 /**
  * LA FILE DES PEINTURES : une à la fois. *Cent vignettes qui entrent dans la
@@ -153,6 +154,111 @@ export function coucheDeNacre(source: HTMLCanvasElement): HTMLCanvasElement {
   return toile
 }
 
+/**
+ * LE BRILLANT DE LA CARTE 3D, AU REPOS, PEINT SUR LA VIGNETTE. Keko : « dans la
+ * collection, les cartes sont plus ternes que dans le zoom, surtout le fond
+ * avec les rayons ». *Elles l'étaient, et de beaucoup* : en 3D, les rayons
+ * clairs et la bordure renvoient la lampe clé (`RAYONS_BRILLANTS`, `BRILLANT`)
+ * — au repos, la carte de face, la lampe à 36,9° d'incidence, les rayons
+ * clairs sont multipliés jusqu'à ×4,8 puis saturés, plafonnés sous le seuil du
+ * bloom ; la vignette était la peinture nue.
+ *
+ * **On refait le calcul du nuanceur pour la carte de face, une fois**, sur les
+ * pixels, en lumière linéaire : le même repérage des rayons (seize secteurs,
+ * même centre, même départ, même fondu), le même masque de l'emoji, les mêmes
+ * chiffres lus et non recopiés. *Ce qui ne passe pas, c'est le mouvement* :
+ * la vignette ne penche pas, son brillant est celui du repos.
+ */
+export function brillantDuRepos(toile: HTMLCanvasElement): void {
+  const ctx = toile.getContext('2d', { willReadFrequently: true })
+  if (ctx === null) return
+  const { width: l, height: h } = toile
+  const image = ctx.getImageData(0, 0, l, h)
+  const d = image.data
+  const masque = masqueDuSujetDe(toile)
+  let libre: Uint8ClampedArray | null = null
+  if (masque !== undefined) {
+    const m = document.createElement('canvas')
+    m.width = l
+    m.height = h
+    const mc = m.getContext('2d', { willReadFrequently: true })
+    if (mc !== null) {
+      mc.drawImage(masque, 0, 0, l, h)
+      libre = mc.getImageData(0, 0, l, h).data
+    }
+  }
+  // LA LAMPE CLÉ VUE PAR UNE CARTE DE FACE : le regard renvoyé est l'axe de vue.
+  const L = BRILLANT.lampe
+  const sc = L[2] / Math.hypot(L[0], L[1], L[2])
+  const nappeR = Math.pow(sc, RAYONS_BRILLANTS.large)
+  const nappeB = Math.pow(sc, BRILLANT.large)
+  const R = RAYONS_DANS_LA_CARTE
+  const cx = R.x + R.l / 2
+  const cy = R.y + R.h / 2
+  const secteur = (Math.PI * 4) / R.nombre
+  const rr = R.rayon
+  for (let j = 0; j < h; j++) {
+    const v = (j + 0.5) / h
+    for (let i = 0; i < l; i++) {
+      const k = (j * l + i) * 4
+      if (d[k + 3]! < 8) continue
+      const u = (i + 0.5) / l
+      // LA BORDURE : la distance au rectangle arrondi, en largeurs de carte.
+      const px = u - 0.5
+      const py = (v - 0.5) * 1.4
+      const qx = Math.abs(px) - (0.5 - RAYON_SIMPLE)
+      const qy = Math.abs(py) - (0.7 - RAYON_SIMPLE)
+      const dc = Math.hypot(Math.max(qx, 0), Math.max(qy, 0)) + Math.min(Math.max(qx, qy), 0) - RAYON_SIMPLE
+      const bande = fondu(-(CONTOUR_PLAQUE + 0.003), -(CONTOUR_PLAQUE - 0.002), dc)
+      // LES RAYONS CLAIRS, dans la fenêtre d'art, hors de l'emoji.
+      let kr = 0
+      if (u >= R.x && u <= R.x + R.l && v >= R.y && v <= R.y + R.h) {
+        const dx = u - cx
+        const dy = (v - cy) * 1.4
+        const a = Math.atan2(dy, dx) - R.depart
+        const fr = ((a / secteur) % 1 + 1) % 1
+        const clair = fondu(0, 0.025, fr) * (1 - fondu(0.475, 0.5, fr))
+        const fonduR = 1 - Math.min(1, Math.max(0, (Math.hypot(dx, dy) - rr * 0.08) / (rr * 0.92)))
+        const lib = libre === null ? 1 : libre[k]! / 255
+        kr = clair * fonduR * lib
+      }
+      if (bande <= 0 && kr <= 0) continue
+      let r = lineaire(d[k]! / 255)
+      let g = lineaire(d[k + 1]! / 255)
+      let b = lineaire(d[k + 2]! / 255)
+      const lumAvant = 0.2126 * r + 0.7152 * g + 0.0722 * b
+      // LA BORDURE : le grand reflet multiplié (l'éclair serré est nul de face).
+      const fb = 1 + nappeB * BRILLANT.reflet * bande
+      r *= fb
+      g *= fb
+      b *= fb
+      let lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+      const sb = 1 + BRILLANT.sature * nappeB * bande
+      r = Math.max(0, lum + (r - lum) * sb)
+      g = Math.max(0, lum + (g - lum) * sb)
+      b = Math.max(0, lum + (b - lum) * sb)
+      // LES RAYONS.
+      const frr = 1 + nappeR * RAYONS_BRILLANTS.reflet * kr
+      r *= frr
+      g *= frr
+      b *= frr
+      lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
+      const sr = 1 + RAYONS_BRILLANTS.sature * nappeR * kr
+      r = Math.max(0, lum + (r - lum) * sr)
+      g = Math.max(0, lum + (g - lum) * sr)
+      b = Math.max(0, lum + (b - lum) * sr)
+      // LE PLAFOND : jamais plus haut que la peinture, ou que le seuil du bloom.
+      const lumApres = 0.2126 * r + 0.7152 * g + 0.0722 * b
+      const plafond = Math.max(lumAvant, BRILLANT.plafond)
+      const kp = Math.min(1, plafond / Math.max(lumApres, 0.0001))
+      d[k] = Math.round(srgb(Math.min(1, r * kp)) * 255)
+      d[k + 1] = Math.round(srgb(Math.min(1, g * kp)) * 255)
+      d[k + 2] = Math.round(srgb(Math.min(1, b * kp)) * 255)
+    }
+  }
+  ctx.putImageData(image, 0, 0)
+}
+
 export function paillettesHolo(toile: HTMLCanvasElement, id: string): void {
   const ctx = toile.getContext('2d')
   if (ctx === null) return
@@ -270,6 +376,8 @@ export function peinte(
       { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined), animation: undefined, sansSujet },
       largeur,
     )
+    // LE BRILLANT DU REPOS, comme la carte 3D de face : voir `brillantDuRepos`.
+    brillantDuRepos(toile)
     if (holo) {
       if (!sansSujet) cerneArcEnCiel(toile)
       paillettesHolo(toile, c.id)

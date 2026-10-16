@@ -301,7 +301,7 @@ const AVEC_RAYONS_BRILLANTS = new URLSearchParams(location.search).get('rayonsbr
 // À FOND, POUR ESSAI — Keko : « tu peux booster le brillant des rayons à fond
 // pour test ». Avant : { large: 3, reflet: 1.6, sature: 1.2 }. Le plafond du
 // bloom (BRILLANT.plafond) reste la seule borne.
-const RAYONS_BRILLANTS = { large: 1.2, reflet: 5, sature: 3 } as const
+export const RAYONS_BRILLANTS = { large: 1.2, reflet: 5, sature: 3 } as const
 /** Un masque blanc d'un pixel : la place du masque du sujet tant qu'il n'est pas là. */
 const MASQUE_VIDE = (() => {
   const t = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1)
@@ -311,8 +311,8 @@ const MASQUE_VIDE = (() => {
 
 const AVEC_BRILLANT = new URLSearchParams(location.search).get('brillant') !== '0'
 /** L'épaisseur du cadre, en largeurs de carte : la bordure peinte de 2,7 U. */
-const CONTOUR_PLAQUE = 0.027
-const BRILLANT = {
+export const CONTOUR_PLAQUE = 0.027
+export const BRILLANT = {
   /** La clé du sachet, en espace vue : 45° dans le plan, en haut à droite, à 36,9° d'incidence. */
   lampe: [0.424, 0.424, 0.8],
   // PLUS GLOWY — Keko : « un effet plus glowy sur la bordure exposée à la

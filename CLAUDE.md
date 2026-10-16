@@ -200,7 +200,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   non déchiré reste le même — *on ne retire pas un paquet en changeant de page.*
 - **La grille est peinte, pas rendue en 3D** : chaque vignette est
   `peindreCarte` à sa taille d'écran, quand elle entre dans la vue, une à la
-  fois. *La 3D est gardée pour la carte ouverte* (`CarteOuverte`, la même
+  fois — **avec le brillant de la carte 3D au repos** (`brillantDuRepos` : les
+  rayons clairs et la bordure sous la lampe, calculés par les chiffres du
+  nuanceur ; sans lui les vignettes étaient ternes). *La 3D est gardée pour la carte ouverte* (`CarteOuverte`, la même
   `Carte3D`, avec le holo ou l'animé si on possède l'exemplaire). Tri récentes /
   A → Z / plus rares, recherche sans accents, puces de rareté et de type.
 - **Détruire une carte pour son sticker** (`render/Decollage.tsx`) : un bouton
