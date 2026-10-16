@@ -6609,3 +6609,7 @@ Keko : « les angles haut gauche / haut droit de la partie description (là où 
 ### Les icônes de la barre (17/10/2026)
 
 Keko : « je voudrais rework les icônes collection et stickers en haut, je trouve que ça matche pas : pour collection je verrais bien 3 cartes en éventail, et pour stickers autre chose qu'une étiquette ». Les emoji 🗂️ et 🏷️ parlaient bureau. `IconeCollection` (dans `Jeu.tsx`) : trois cartes en éventail (±28° autour du bas), vert et violet derrière, orange devant avec une étoile — les couleurs des crans. `IconeStickers` : un sticker jaune souriant dont le coin bas droit se décolle, son dos crème — le geste de l'album. Le trait est en `currentColor` : sombre sur la pilule, crème sur le bouton actif (vus tous les deux). 1,6 rem. Dessins de moi, à rejuger.
+
+### `&debloquer=tout` remplit aussi l'album (17/10/2026)
+
+Keko, sur PC : « tu peux me redonner la totalité des cartes et des stickers ? (je suis sur PC, du coup j'ai plus la collection) ». *La collection vit sur l'appareil* : celle du téléphone n'est pas sur le PC. `&debloquer=tout` donnait déjà tout le catalogue ; il donne maintenant aussi un sticker simple de chaque emoji (`debloquerStickers`, qui ne touche pas ceux qu'on a), vérifié dans `collection.verif.ts`.

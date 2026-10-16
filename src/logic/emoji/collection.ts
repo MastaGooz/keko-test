@@ -194,6 +194,23 @@ export function debloquer(col: Collection, ids: readonly string[], quand: number
   return { ...col, arrivees, cartes }
 }
 
+/**
+ * ET LES STICKERS — `&debloquer=tout`. Keko : « tu peux me redonner la totalité
+ * des cartes et des stickers ? (je suis sur PC, j'ai plus la collection) ». Un
+ * sticker simple de chaque emoji qu'on n'a pas encore dans l'album ; ceux
+ * qu'on a ne bougent pas.
+ */
+export function debloquerStickers(col: Collection, ids: readonly string[], quand: number): Collection {
+  const stickers: Record<string, Stickers> = { ...col.stickers }
+  let i = 0
+  for (const id of ids) {
+    if (stickers[id] !== undefined) continue
+    i += 1
+    stickers[id] = { n: 1, holo: 0, anime: 0, dernier: quand - i }
+  }
+  return { ...col, stickers }
+}
+
 /** Tout est vu : la pastille s'éteint. */
 export function toutVu(col: Collection): Collection {
   if (!Object.values(col.cartes).some((p) => p.nouvelle)) return col

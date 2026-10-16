@@ -26,6 +26,7 @@ import type { Bonus } from '../logic/emoji/tirage.ts'
 import {
   ajouterPaquet,
   debloquer,
+  debloquerStickers,
   detruire,
   nombreDeNouvelles,
   toutVu,
@@ -226,7 +227,9 @@ export function Jeu(): React.ReactElement {
     const tout = p.get('debloquer') === 'tout'
     p.delete('debloquer')
     history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
-    changer((c) => {
+    changer((c0) => {
+      // `=tout` REMPLIT AUSSI L'ALBUM : un sticker de chaque emoji.
+      const c = tout ? debloquerStickers(c0, catalogue.map((x) => x.id), Date.now()) : c0
       const cible = tout ? catalogue.length : Math.ceil(catalogue.length / 2)
       const manquent = catalogue.filter((x) => c.cartes[x.id] === undefined).map((x) => x.id)
       const deja = catalogue.length - manquent.length

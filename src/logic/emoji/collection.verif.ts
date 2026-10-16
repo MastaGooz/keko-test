@@ -10,6 +10,7 @@ import {
   nombreDExemplaires,
   toutVu,
   debloquer,
+  debloquerStickers,
   detruire,
   exemplaireADetruire,
   nombreDeStickers,
@@ -35,6 +36,8 @@ verifier('un paquet', un.paquets === 1)
 verifier("l'ordre d'arrivée", un.cartes['1f600']?.ordre === 1 && un.cartes['1f601']?.ordre === 2)
 verifier('deux nouvelles', nombreDeNouvelles(un) === 2)
 const debloquee = debloquer(un, ['1f600', '1f603', '1f604'], 5000)
+const albumPlein = debloquerStickers(debloquerStickers(un, ['1f600', '1f603'], 5000), ['1f600', '1f603'], 6000)
+verifier('les stickers débloqués ne doublent pas', nombreDeStickers(albumPlein) === nombreDeStickers(un) + 2 - (un.stickers['1f600'] ? 1 : 0) - (un.stickers['1f603'] ? 1 : 0))
 verifier('débloquer ajoute ce qui manque', Object.keys(debloquee.cartes).length === 4)
 verifier('débloquer ne touche pas ce qu’on a', debloquee.cartes['1f600']?.n === 2)
 verifier('débloquer ne fait pas de nouvelles', debloquee.cartes['1f603']?.nouvelle === false)
