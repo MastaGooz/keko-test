@@ -385,7 +385,14 @@
   opacity: 0.5;
 }
 
-/* LE HOLO SE DIT D'UN REFLET QUI PASSE : la vignette est peinte, sans feuille. */
+/* LA BANDE DE LA FEUILLE HOLO, COMME EN 3D. Keko : « le trait de lumière
+   arc-en-ciel ne se déplace pas dans le même sens que sur les cartes en zoom ».
+   Au nuanceur, la bande est la ligne (u + v) / 2 = uLustre : elle relie le
+   coin haut-gauche au coin bas-droit (d'où « to top right », qui fait passer
+   le milieu du dégradé par ces deux coins quel que soit le rapport), et elle
+   court du bas-gauche au haut-droit, de −0,3 à 1,3 en 1 / 0,17 = 5,9 s, sans
+   pause (`VITESSE_HOLO`). Taille 260 % : la course fait 1,6 boîte, et la bande
+   ±0,105 boîte de demi-largeur (exp(−90 e²)), donc ±4 % de l'image. */
 .vignette-holo::after {
   content: '';
   position: absolute;
@@ -393,25 +400,56 @@
   border-radius: 6%;
   pointer-events: none;
   background: linear-gradient(
-    115deg,
-    transparent 30%,
-    rgba(255, 120, 200, 0.35) 42%,
-    rgba(120, 220, 255, 0.4) 50%,
-    rgba(255, 240, 120, 0.35) 58%,
-    transparent 70%
+    to top right,
+    transparent 46%,
+    rgba(255, 120, 200, 0.4) 47.6%,
+    rgba(255, 240, 120, 0.45) 49.2%,
+    rgba(120, 255, 170, 0.45) 50.4%,
+    rgba(120, 200, 255, 0.45) 51.8%,
+    rgba(190, 130, 255, 0.4) 53%,
+    transparent 54%
   );
-  background-size: 250% 250%;
+  background-size: 260% 260%;
   mix-blend-mode: screen;
-  animation: vignette-holo 3.2s ease-in-out infinite;
+  animation: vignette-holo 5.9s linear infinite;
 }
 
 @keyframes vignette-holo {
-  0% {
-    background-position: 100% 100%;
+  from {
+    background-position: 100% 0%;
   }
-  60%,
+  to {
+    background-position: 0% 100%;
+  }
+}
+
+/* LES PAILLETTES VIVES, trois tirages qui s'allument à tour de rôle (le
+   décalage est posé par le composant). */
+.vignette-scintille {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: vignette-scintille 2.4s ease-in-out infinite;
+}
+
+.vignette:not(.vignette-prete) .vignette-scintille {
+  display: none;
+}
+
+@keyframes vignette-scintille {
+  0%,
   100% {
-    background-position: 0% 0%;
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0;
   }
 }
 

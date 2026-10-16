@@ -26,7 +26,10 @@ import type { Collection, Exemplaire, Possession } from '../logic/emoji/collecti
 import { exemplaireADetruire, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
 import { AMBIANCE, tailleQuIlFaut } from './texture-carte.ts'
-import { peinte } from './peinture-vignette.ts'
+import { paillettesHolo, peinte } from './peinture-vignette.ts'
+
+/** Trois tirages de paillettes vives, qui s'allument à tour de rôle (voir `.vignette-scintille`). */
+const SCINTILLES = [0, 1, 2] as const
 import { COULEUR, carteDeLEmoji, enTitre } from './carte-emoji.ts'
 import { Carte3D, HAUT, LARGE, SATURATION_APLAT, type CurseurDeCarte } from './Carte3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
@@ -82,6 +85,9 @@ function plier(texte: string): string {
  * (`SATURATION_APLAT`, +40 %), la vignette montrait la peinture telle quelle.
  * **Le chiffre est lu, pas recopié** : un seul endroit dit combien.
  */
+/** La période d'une couche de paillettes vives, en secondes (voir `.vignette-scintille`). */
+const DUREE_SCINTILLE = 2.4
+
 const FILTRE_VIGNETTE: React.CSSProperties = {
   filter: `saturate(${1 + SATURATION_APLAT}) drop-shadow(0 0.25rem 0.4rem rgba(10, 4, 30, 0.55))`,
 }
@@ -97,6 +103,7 @@ function Vignette({
 }): React.ReactElement {
   const boite = useRef<HTMLButtonElement>(null)
   const toile = useRef<HTMLCanvasElement>(null)
+  const scintilles = useRef<(HTMLCanvasElement | null)[]>([])
   const [prete, setPrete] = useState(false)
   const holo = possession.holo > 0
   useEffect(() => {
@@ -109,13 +116,26 @@ function Vignette({
         fini = true
         obs.disconnect()
         const px = el.getBoundingClientRect().width * Math.min(window.devicePixelRatio || 1, 3)
-        void peinte(carte, tailleQuIlFaut(px), holo).then((source) => {
+        void peinte(carte, tailleQuIlFaut(px), holo, false, false, false).then((source) => {
           const t = toile.current
           const ctx = t?.getContext('2d')
           if (t == null || ctx == null) return
           t.width = source.width
           t.height = source.height
           ctx.drawImage(source, 0, 0)
+          // LA HOLO SCINTILLE : la neige pâle sur la vignette, et les vives sur
+          // trois couches, un tirage chacune — *les places restent, l'éclat
+          // change*, comme quand la carte 3D bouge.
+          if (holo) {
+            paillettesHolo(source, carte.id, { cible: t, seules: 'pales' })
+            for (const v of SCINTILLES) {
+              const c = scintilles.current[v]
+              if (c == null) continue
+              c.width = source.width
+              c.height = source.height
+              paillettesHolo(source, carte.id, { cible: c, seules: 'vives', variante: v + 1 })
+            }
+          }
           setPrete(true)
         })
       },
@@ -138,6 +158,17 @@ function Vignette({
     >
       {!prete && <span className="vignette-attente">{carte.emoji}</span>}
       <canvas ref={toile} className="vignette-toile" style={FILTRE_VIGNETTE} />
+      {holo &&
+        SCINTILLES.map((v) => (
+          <canvas
+            key={v}
+            ref={(c) => {
+              scintilles.current[v] = c
+            }}
+            className="vignette-scintille"
+            style={{ animationDelay: `${(-v * DUREE_SCINTILLE) / SCINTILLES.length}s` }}
+          />
+        ))}
       {possession.nouvelle && <span className="vignette-nouvelle">Nouveau</span>}
       {possession.n > 1 && <span className="vignette-nombre">×{possession.n}</span>}
       {(possession.holo > 0 || possession.anime > 0) && (

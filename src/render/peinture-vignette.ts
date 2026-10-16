@@ -259,11 +259,24 @@ export function brillantDuRepos(toile: HTMLCanvasElement): void {
   ctx.putImageData(image, 0, 0)
 }
 
-export function paillettesHolo(toile: HTMLCanvasElement, id: string): void {
-  const ctx = toile.getContext('2d')
-  if (ctx === null) return
+export function paillettesHolo(
+  toile: HTMLCanvasElement,
+  id: string,
+  /**
+   * POUR FAIRE SCINTILLER LA VIGNETTE. Keko : « dans la collection, les cartes
+   * holo ne sont pas animées au niveau des paillettes ». `cible` : où peindre
+   * (la carte elle-même par défaut) ; `seules` : les pâles seulement, ou les
+   * vives seulement ; `variante` : un autre tirage de QUELLES paillettes
+   * renvoient la lampe — *les places restent, l'éclat change*, comme en 3D
+   * quand la carte bouge.
+   */
+  options: { cible?: HTMLCanvasElement; seules?: 'pales' | 'vives'; variante?: number } = {},
+): void {
+  const source = toile.getContext('2d', { willReadFrequently: true })
+  const ctx = (options.cible ?? toile).getContext('2d')
+  if (ctx === null || source === null) return
   const { width: l, height: h } = toile
-  const carte = ctx.getImageData(0, 0, l, h).data
+  const carte = source.getImageData(0, 0, l, h).data
   // LE MASQUE DU SUJET, à la taille de la vignette : blanc = libre, l'emoji découpé.
   const masque = masqueDuSujetDe(toile)
   let libre: Uint8ClampedArray | null = null
@@ -281,6 +294,7 @@ export function paillettesHolo(toile: HTMLCanvasElement, id: string): void {
   let graine = 2166136261
   for (const ch of id) graine = Math.imul(graine ^ ch.charCodeAt(0), 16777619)
   const rng = createRng(graine >>> 0)
+  const eclats = options.variante === undefined ? null : createRng((graine ^ (options.variante * 2654435761)) >>> 0)
   ctx.save()
   // LA PEINTURE LAISSE SON ÉCHELLE SUR LA TOILE (elle dessine en unités de
   // 768) : sans remise à zéro, toutes les paillettes se tassaient dans le coin.
@@ -328,7 +342,10 @@ export function paillettesHolo(toile: HTMLCanvasElement, id: string): void {
         }
         // PEU RENVOIENT LA LAMPE, LES AUTRES SONT À PEINE LÀ. Vu sur la grille :
         // une sur cinq allumée faisait une neige qui couvrait la carte.
-        const vive = allume < (g.gros ? 0.12 : 0.06)
+        // UNE VARIANTE RETIRE QUI BRILLE, à part égale.
+        const tire = eclats === null ? allume : eclats.next()
+        const vive = tire < (g.gros ? 0.12 : 0.06)
+        if ((options.seules === 'vives' && !vive) || (options.seules === 'pales' && vive)) continue
         const a = vive ? 0.9 : 0.1
         const r = vive ? r0 * 1.5 : r0
         const halo = ctx.createRadialGradient(x, y, 0, x, y, r * 2.2)
@@ -364,8 +381,10 @@ export function peinte(
   sansSujet = false,
   /** Le cartouche dit l'animé, comme la carte 3D qu'on remplace (le décollage). */
   anime = false,
+  /** Les paillettes peintes dedans ; la vignette les pose elle-même, pour les faire scintiller. */
+  paillettes = true,
 ): Promise<HTMLCanvasElement> {
-  const cle = `${c.id}#${largeur}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}`
+  const cle = `${c.id}#${largeur}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}${paillettes ? '' : '#sp'}`
   const deja = PEINTES.get(cle)
   if (deja !== undefined) return deja
   const p = fileDePeinture.then(async () => {
@@ -380,7 +399,7 @@ export function peinte(
     brillantDuRepos(toile)
     if (holo) {
       if (!sansSujet) cerneArcEnCiel(toile)
-      paillettesHolo(toile, c.id)
+      if (paillettes) paillettesHolo(toile, c.id)
     }
     return toile
   })

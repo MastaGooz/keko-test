@@ -6455,3 +6455,11 @@ Keko : « ajouter un effet sur les emoji holo (carte et sticker) différent du f
 ### Les vignettes prennent le brillant du repos (16/10/2026)
 
 Keko : « dans la collection les cartes sont plus ternes que dans le zoom, surtout le fond avec les rayons ». Mesuré au nuanceur : la carte 3D de face, la lampe clé à 36,9° d'incidence, **multiplie ses rayons clairs jusqu'à ×4,8** (`RAYONS_BRILLANTS`, nappe 0,8^1,2), les sature (×3,3), et sa bordure de ×1,5 (`BRILLANT`), le tout plafonné sous le seuil du bloom ; la vignette était la peinture nue. `brillantDuRepos` refait ce calcul pour la carte de face, une fois, sur les pixels en lumière linéaire : le même repérage des rayons, le même masque de l'emoji, la même bordure, **les chiffres lus dans `Carte3D`, pas recopiés** (exportés pour ça). Le mouvement ne passe pas : une vignette garde le brillant du repos. Les éclats du décollage, peints par le même `peinte`, le prennent aussi. Vu au navigateur : les rayons du château, vert terne, sont devenus le vert vif de la carte ouverte.
+
+### La holo des vignettes bouge comme la 3D (16/10/2026)
+
+Keko : « dans la collection les cartes holo ne sont pas animées au niveau des paillettes, et le trait de lumière arc-en-ciel ne se déplace pas dans le même sens que sur les cartes en zoom ».
+
+- **Les paillettes scintillent** : la vignette porte la neige pâle, et les paillettes VIVES sont peintes sur trois couches, chacune un autre tirage de celles qui renvoient la lampe (`paillettesHolo(…, { cible, seules, variante })` : les places restent, l'éclat change, comme quand la carte 3D bouge). Les trois s'allument à tour de rôle (`.vignette-scintille`, 2,4 s, décalées d'un tiers), en `screen`.
+- **La bande suit le nuanceur** : en 3D c'est la ligne (u + v) / 2 = `uLustre`, qui relie les coins haut-gauche et bas-droit et court du bas-gauche au haut-droit, de −0,3 à 1,3 en 5,9 s (`VITESSE_HOLO` 0,17), sans pause. La vignette allait dans l'autre sens, à 115° et avec une pause : elle prend `to top right` (le milieu du dégradé passe par ces deux coins quel que soit le rapport), 260 % de taille (la course fait 1,6 boîte), la même largeur (±0,105) et le même rythme.
+- Vérifié dans la page : les opacités des couches alternent, la position de la bande va de 100 % 0 % vers 0 % 100 %.
