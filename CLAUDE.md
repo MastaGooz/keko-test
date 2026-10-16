@@ -417,6 +417,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
 | `&illimite` | la réserve de paquets ne se vide jamais, pour tester sans attendre |
+| `&retirer` | retire la moitié des emoji de la collection DE CET APPAREIL, au hasard, avec tous leurs exemplaires ; l'album ne bouge pas — le miroir de `&debloquer` |
 | `&page=collection`, `&page=catalogue`, `&page=stickers` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
 | `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue, et un sticker de chaque emoji dans l'album |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |

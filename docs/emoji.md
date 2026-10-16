@@ -6634,3 +6634,7 @@ Keko : « je propose de renommer "collection" par "cartes" en haut, et quand un 
 **`&page=collection|catalogue|stickers`** ouvre une page d'emblée, sans l'accueil : *ce qui se teste doit pouvoir s'ouvrir d'un lien* — c'est ce qui a permis la capture en portrait avec Chrome sans fenêtre, puisque l'extension ne redimensionne pas une fenêtre maximisée. Mesuré dans la page : la pilule fait 20,7 rem (331 px à 16 px de rem), elle tient sur 390 px ; 1 915 vignettes dont 957 grisées sur `&debloquer`.
 
 Le choix de la silhouette (vraie peinture grisée plutôt qu'une carte anonyme) est de moi, à rejuger : il révèle les cartes qu'on n'a pas.
+
+### `&retirer` : la moitié de la collection s'en va, d'un lien (17/10/2026)
+
+Keko, juste après « Toutes les cartes » : « tu peux supprimer la moitié de ma collection ? » *Sa collection vit sur son appareil*, rien ne peut y toucher d'ici — c'est donc un lien qui le fait sur place, le miroir de `&debloquer` : `retirer(col, ids)` dans `logic/emoji/collection.ts` (pur, vérifié dans `collection.verif.ts` : enlève les emoji nommés avec tous leurs exemplaires, ignore un absent, ne touche ni l'album, ni les paquets, ni le compte d'arrivées), et dans `Jeu.tsx` un effet qui tire la moitié des emoji possédés au hasard (RNG seedé par l'horloge, comme `&debloquer`) puis retire le paramètre de l'adresse. Recharger ne retire pas encore la moitié.

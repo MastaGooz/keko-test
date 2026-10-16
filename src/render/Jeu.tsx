@@ -27,6 +27,7 @@ import {
   ajouterPaquet,
   debloquer,
   debloquerStickers,
+  retirer,
   detruire,
   nombreDeNouvelles,
   toutVu,
@@ -267,6 +268,29 @@ export function Jeu(): React.ReactElement {
       return debloquer(c, manquent.slice(0, cible - deja), Date.now())
     })
   }, [catalogue, changer])
+  /**
+   * `&retirer` : LA MOITIÉ DE LA COLLECTION S'EN VA, D'UN LIEN — le miroir de
+   * `&debloquer`. Keko : « tu peux supprimer la moitié de ma collection ? »
+   * *Sa collection vit sur son appareil* : on ne peut rien y faire d'ici, c'est
+   * le lien qui le fait sur place. La moitié des emoji possédés, au hasard,
+   * avec tous leurs exemplaires ; l'album ne bouge pas. Le paramètre est
+   * retiré de l'adresse ensuite : recharger ne retire pas encore la moitié.
+   */
+  useEffect(() => {
+    const p = new URLSearchParams(location.search)
+    if (!p.has('retirer')) return
+    p.delete('retirer')
+    history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
+    changer((c) => {
+      const ids = Object.keys(c.cartes)
+      const rng = createRng(Date.now() >>> 0)
+      for (let i = ids.length - 1; i > 0; i--) {
+        const j = Math.floor(rng.next() * (i + 1))
+        ;[ids[i], ids[j]] = [ids[j]!, ids[i]!]
+      }
+      return retirer(c, ids.slice(0, Math.floor(ids.length / 2)))
+    })
+  }, [changer])
   const ajouter = useCallback(
     (ids: readonly string[], bonus: Readonly<Record<string, Bonus>>) => {
       changer((c) => ajouterPaquet(c, ids, bonus, Date.now()))

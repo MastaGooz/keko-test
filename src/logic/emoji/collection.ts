@@ -211,6 +211,18 @@ export function debloquerStickers(col: Collection, ids: readonly string[], quand
   return { ...col, stickers }
 }
 
+/**
+ * RETIRE DES CARTES SANS STICKER — le banc `&retirer`, le miroir de
+ * `debloquer`. Keko : « tu peux supprimer la moitié de ma collection ? » Les
+ * emoji nommés quittent la collection avec tous leurs exemplaires ; l'album,
+ * les paquets et le compte d'arrivées ne bougent pas.
+ */
+export function retirer(col: Collection, ids: readonly string[]): Collection {
+  const cartes: Record<string, Possession> = { ...col.cartes }
+  for (const id of ids) delete cartes[id]
+  return { ...col, cartes }
+}
+
 /** Tout est vu : la pastille s'éteint. */
 export function toutVu(col: Collection): Collection {
   if (!Object.values(col.cartes).some((p) => p.nouvelle)) return col
