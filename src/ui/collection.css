@@ -1156,5 +1156,6 @@
   mix-blend-mode: screen;
   pointer-events: none;
   /* LE BLOOM DE LA CARTE : ce qui sature rayonne un peu autour. */
-  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.45));
+  /* LA LUEUR NE BLANCHIT PLUS : une seule, plus discrète, sous la couleur. */
+  filter: saturate(1.6) drop-shadow(0 0 3px rgba(255, 255, 255, 0.35));
 }

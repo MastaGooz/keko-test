@@ -67,8 +67,14 @@ function peindreEtoile(cellule: number, teinte: number): HTMLCanvasElement {
   const aa = 1 / cellule
   const ep = Math.max(aa, 0.002) * COSMOS.etoile
   const rP = COSMOS.rayonGros
+  // UN SPECTRE SATURÉ, pas ramené vers le blanc. Keko : « booster un peu la
+  // couleur des petites étoiles multicolores du sticker holo ». La palette en
+  // cosinus est pastel ; une puissance la creuse vers les couleurs franches
+  // (la règle du cerne arc-en-ciel, COSMOS.cerne.sature), et le gain rend la
+  // clarté. La carte, elle, les ramène à 0,8 vers le blanc — le bloom les y
+  // colore autour ; sur le sticker, la couleur doit tenir seule.
   const spectre = [0, 0.33, 0.67].map((o) => 0.5 + 0.5 * Math.cos(Math.PI * 2 * (teinte + o)))
-  const ton = spectre.map((v) => 1 + (v - 1) * 0.8)
+  const ton = spectre.map((v) => Math.min(1, Math.pow(v, COSMOS.cerne.sature) * 1.35))
   for (let j = 0; j < n; j++) {
     for (let i = 0; i < n; i++) {
       const dx = (i + 0.5) / n - 0.5
