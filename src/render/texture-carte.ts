@@ -1484,7 +1484,7 @@ const COEUR_RAYONS: Record<string, { force: number; portee: number; ton?: string
   // crème orangé (\`METAUX[0]\`) éclaircissait en délavant ; un ambre vif
   // éclaircit en restant franc — plus jaune que les rayons, pour ne pas tirer
   // au rouge.
-  orange: { force: 0.42, portee: 0.55, ton: '#ffbf1f' },
+  orange: { force: 0.55, portee: 0.6, ton: '#ffc800' },
 }
 /** L'opacité des touches dans la fenêtre d'art, et leur échelle par rapport à celles du dos. */
 const TOUCHES_CARTE = 0.09
