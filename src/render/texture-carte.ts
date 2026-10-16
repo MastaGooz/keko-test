@@ -254,6 +254,11 @@ export type CarteAPeindre = {
    */
   sansSujet?: boolean
   /**
+   * SANS LES RAYONS DU CRAN : la légendaire 3D les dessine elle-même au
+   * nuanceur, pour les faire tourner (voir `RAYONS_TOURNANTS` dans Carte3D).
+   */
+  sansRayons?: boolean
+  /**
    * L'IDENTIFIANT DE L'EMOJI ANIME, s'il en a un -- les points de code separes
    * par des tirets.
    *
@@ -1477,6 +1482,22 @@ const TON_RAYONS: Record<string, string> = { bleu: '#0a8dff', orange: '#ff9a00' 
  * au bord. On ajoute au centre de leurs rayons leur ton CLAIR (`METAUX[0]` :
  * crème orangé, lilas), qui s'éteint à `portee` du rayon, à `force`.
  */
+/**
+ * CE QUE PEINDRERAYONS POSE POUR UN CRAN, en clair : pour que le nuanceur des
+ * légendaires redessine exactement les mêmes rayons (voir Carte3D). *Un seul
+ * endroit dit la couleur, la force et le cœur* — le peintre et le nuanceur les
+ * lisent tous deux ici.
+ */
+export function rayonsDuCran(
+  rarete: string,
+): { force: number; ton: string; coeur: { force: number; portee: number; ton: string } | null } | null {
+  const force = FORCE_RAYONS[rarete] ?? 0
+  const ton = TON_RAYONS[rarete] ?? METAUX[rarete]?.[2]
+  if (force <= 0 || ton === undefined) return null
+  const c = COEUR_RAYONS[rarete]
+  const clair = c?.ton ?? METAUX[rarete]?.[0]
+  return { force, ton, coeur: c === undefined || clair === undefined ? null : { force: c.force, portee: c.portee, ton: clair } }
+}
 const COEUR_RAYONS: Record<string, { force: number; portee: number; ton?: string }> = {
   violet: { force: 0.3, portee: 0.55 },
   // UN CŒUR AMBRE, PAS CRÈME, pour les légendaires. Keko : « booster la
@@ -3859,7 +3880,7 @@ export async function peindreCarte(
       ctx.restore()
     }
   }
-  if (bulle && !SANS_RAYONS) peindreRayons(ctx, carte.rarete, marge, fY, LARGE - marge * 2, fH)
+  if (bulle && !SANS_RAYONS && carte.sansRayons !== true) peindreRayons(ctx, carte.rarete, marge, fY, LARGE - marge * 2, fH)
 
   /**
    * FOND, PUIS LUMIÈRE, PUIS SUJET — et c'est Keko qui a trouvé l'ordre : « on
@@ -6543,7 +6564,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}`
 }
 
 /**

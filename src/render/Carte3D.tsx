@@ -50,7 +50,28 @@ import {
   RAYONS_DANS_LA_CARTE,
   masqueDuSujetDe,
   sujetDe,
+  rayonsDuCran,
 } from './texture-carte.ts'
+
+/**
+ * LES RAYONS QUI TOURNENT, SUR LES LÉGENDAIRES. Keko : « j'aimerais bien
+ * distinguer les cartes légendaires des autres raretés encore plus », et sur
+ * les idées proposées : « commence par le fond qui tourne ». *Seuls les rayons
+ * tournent* — le décor garde sa lumière en haut et son ombre en bas : la carte
+ * charge sa peinture sans emoji ni rayons (`sansRayons`), et le nuanceur y
+ * redessine les rayons du cran à l'identique (`rayonsDuCran` : mêmes
+ * secteurs, même fondu, même couleur, même cœur, ajoutés en sRGB comme le
+ * fait la toile), tournés de `vitesse` radians par seconde ; leur brillant
+ * tourne avec eux. L'emoji est posé par-dessus par sa silhouette. Les
+ * vignettes restent fixes. Chiffres de moi ; `?tourne=0` l'arrête.
+ */
+export const RAYONS_TOURNANTS = { crans: ['orange'] as readonly string[], vitesse: 0.12 }
+const AVEC_TOURNE = new URLSearchParams(location.search).get('tourne') !== '0'
+const tourneLaCarte = (carte: CarteAPeindre): boolean =>
+  AVEC_TOURNE && carte.rarete !== undefined && RAYONS_TOURNANTS.crans.includes(carte.rarete)
+/** Une couleur #rrggbb en trois composantes sRGB de 0 à 1. */
+const versVec3 = (hex: string): THREE.Vector3 =>
+  new THREE.Vector3(parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255)
 
 /**
  * LA SILHOUETTE DU STICKER, À LA TAILLE DE LA FACE : pour que le relief sache
@@ -1099,6 +1120,15 @@ export function Carte3D({
       nuanceur.uniforms.uPeinture = { value: MASQUE_VIDE }
       nuanceur.uniforms.uNu = { value: MASQUE_VIDE }
       nuanceur.uniforms.uRelief = { value: 0 }
+      nuanceur.uniforms.uProfondeur = { value: 0 }
+      nuanceur.uniforms.uAgrandi = { value: 1 }
+      nuanceur.uniforms.uTourne = { value: 0 }
+      nuanceur.uniforms.uAngleRayons = { value: 0 }
+      nuanceur.uniforms.uRayonsTon = { value: new THREE.Vector3() }
+      nuanceur.uniforms.uRayonsForce = { value: 0 }
+      nuanceur.uniforms.uCoeurTon = { value: new THREE.Vector3() }
+      nuanceur.uniforms.uCoeurForce = { value: 0 }
+      nuanceur.uniforms.uCoeurPortee = { value: 1 }
       nuanceur.uniforms.uSilhouette = { value: MASQUE_VIDE }
       nuanceur.uniforms.uSilhouetteOk = { value: 0 }
       face.userData.nuanceur = nuanceur
@@ -1149,10 +1179,26 @@ ${nuanceur.vertexShader}`.replace(
            // LE FOND PLUS GRAND QUE LA FENÊTRE : lu resserré autour de son
            // centre, il a de la marge pour glisser sans montrer de bord.
            vec2 centreFen = (fenMin + fenMax) * 0.5;
-           vec2 brut = centreFen + (vLustreUv - versR * ${RELIEF.profondeur.toFixed(3)} - centreFen) / ${RELIEF.agrandi.toFixed(3)};
+           vec2 brut = centreFen + (vLustreUv - versR * uProfondeur - centreFen) / uAgrandi;
            vec2 bF = mix(vLustreUv, clamp(brut, fenMin, fenMax), dansFen);
            uvFond = bF;
            vec3 fondR = texture2D(uNu, bF).rgb;
+           // LES RAYONS REDESSINÉS, TOURNÉS : voir RAYONS_TOURNANTS. Comme la toile
+           // (secteurs pairs, fondu linéaire de 0,08 au rayon, ajout en sRGB).
+           if (uTourne > 0.5 && dansFen > 0.5) {
+             vec2 tpT = vec2(bF.x, 1.0 - bF.y);
+             vec2 crT = vec2(${(RAYONS_DANS_LA_CARTE.x + RAYONS_DANS_LA_CARTE.l * 0.5).toFixed(4)}, ${(RAYONS_DANS_LA_CARTE.y + RAYONS_DANS_LA_CARTE.h * 0.5).toFixed(4)});
+             vec2 drT = vec2(tpT.x - crT.x, (tpT.y - crT.y) * 1.4);
+             float frT = fract((atan(drT.y, drT.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
+             float secteurT = smoothstep(0.0, 0.01, frT) * (1.0 - smoothstep(0.49, 0.5, frT));
+             float rT = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
+             float lT = length(drT);
+             float fonduT = 1.0 - clamp((lT - rT * 0.08) / (rT * 0.92), 0.0, 1.0);
+             float rC = rT * uCoeurPortee;
+             float fonduC = 1.0 - clamp((lT - rT * 0.08) / max(rC - rT * 0.08, 0.0001), 0.0, 1.0);
+             vec3 ajout = (uRayonsTon * uRayonsForce * fonduT + uCoeurTon * uCoeurForce * fonduC) * secteurT;
+             fondR = versLineaire(min(versSrgb(fondR) + ajout, vec3(1.0)));
+           }
            // L'EMOJI, À LA SURFACE, à sa place.
            float aR = stickerEn(vLustreUv);
            diffuseColor.rgb = mix(fondR, texture2D(uPeinture, vLustreUv).rgb, aR);
@@ -1443,7 +1489,8 @@ ${nuanceur.vertexShader}`.replace(
              vec2 dr = vec2(tp.x - cr.x, (tp.y - cr.y) * 1.4);
              float fenetre = step(${RAYONS_DANS_LA_CARTE.x.toFixed(4)}, tp.x) * step(tp.x, ${RAYONS_DANS_LA_CARTE.x.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.l.toFixed(4)})
                * step(${RAYONS_DANS_LA_CARTE.y.toFixed(4)}, tp.y) * step(tp.y, ${RAYONS_DANS_LA_CARTE.y.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.h.toFixed(4)});
-             float fr = fract((atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)}) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
+             // LE BRILLANT TOURNE AVEC LES RAYONS (uAngleRayons, 0 hors légendaires).
+             float fr = fract((atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)} - uAngleRayons) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
              float clair = smoothstep(0.0, 0.025, fr) * (1.0 - smoothstep(0.475, 0.5, fr));
              float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);
@@ -1583,6 +1630,17 @@ uniform sampler2D uMasqueSujet;
 uniform sampler2D uPeinture;
 uniform sampler2D uNu;
 uniform float uRelief;
+uniform float uProfondeur;
+uniform float uAgrandi;
+uniform float uTourne;
+uniform float uAngleRayons;
+uniform vec3 uRayonsTon;
+uniform float uRayonsForce;
+uniform vec3 uCoeurTon;
+uniform float uCoeurForce;
+uniform float uCoeurPortee;
+vec3 versLineaire(vec3 c) { return mix(c / 12.92, pow((c + 0.055) / 1.055, vec3(2.4)), step(vec3(0.04045), c)); }
+vec3 versSrgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(max(c, vec3(0.0)), vec3(1.0 / 2.4)) - 0.055, step(vec3(0.0031308), c)); }
 uniform sampler2D uSilhouette;
 uniform float uSilhouetteOk;
 // LA SILHOUETTE DU STICKER : l'alpha de l'image posée par la peinture ; à
@@ -1791,8 +1849,14 @@ ${nuanceur.fragmentShader}`
     if (dos) void textureDeCarte(carte, largeurPx).catch(() => {})
     // LA MÊME CARTE SANS EMOJI, pour le relief d'une holo (voir RELIEF).
     nuDeLaFace.current = null
-    if (AVEC_RELIEF && carte.holo === true && carte.emoji !== undefined && carte.sansSujet !== true) {
-      void textureDeCarte({ ...carte, sansSujet: true, animation: undefined }, largeurPx)
+    // ET SANS SES RAYONS pour une légendaire : c'est le nuanceur qui les dessine (RAYONS_TOURNANTS).
+    const tourne = tourneLaCarte(carte)
+    if (
+      ((AVEC_RELIEF && carte.holo === true) || tourne) &&
+      carte.emoji !== undefined &&
+      carte.sansSujet !== true
+    ) {
+      void textureDeCarte({ ...carte, sansSujet: true, sansRayons: tourne, animation: undefined }, largeurPx)
         .then((t) => {
           if (vivant) nuDeLaFace.current = t
         })
@@ -2452,7 +2516,23 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uMasqueSujet!.value = masque ?? MASQUE_VIDE
       // LE RELIEF JOUE QUAND LES DEUX PEINTURES SONT LÀ, sur la face d'une holo.
       const nue = nuDeLaFace.current
-      const relief = nue !== null && face.map !== null && dos !== true && carte.holo === true
+      // LA COMPOSITION (fond + emoji par sa silhouette) JOUE POUR LE RELIEF D'UNE
+      // HOLO ET POUR LES RAYONS QUI TOURNENT D'UNE LÉGENDAIRE.
+      const tourne = tourneLaCarte(carte) && carte.sansSujet !== true
+      const holoRelief = AVEC_RELIEF && carte.holo === true
+      const relief = nue !== null && face.map !== null && dos !== true && (holoRelief || tourne)
+      nuanceur.uniforms.uProfondeur!.value = holoRelief ? RELIEF.profondeur : 0
+      nuanceur.uniforms.uAgrandi!.value = holoRelief ? RELIEF.agrandi : 1
+      const rayons = tourne && relief && carte.rarete !== undefined ? rayonsDuCran(carte.rarete) : null
+      nuanceur.uniforms.uTourne!.value = rayons !== null ? 1 : 0
+      nuanceur.uniforms.uAngleRayons!.value = rayons !== null ? t * RAYONS_TOURNANTS.vitesse : 0
+      if (rayons !== null) {
+        ;(nuanceur.uniforms.uRayonsTon!.value as THREE.Vector3).copy(versVec3(rayons.ton))
+        nuanceur.uniforms.uRayonsForce!.value = rayons.force
+        ;(nuanceur.uniforms.uCoeurTon!.value as THREE.Vector3).copy(versVec3(rayons.coeur?.ton ?? '#000000'))
+        nuanceur.uniforms.uCoeurForce!.value = rayons.coeur?.force ?? 0
+        nuanceur.uniforms.uCoeurPortee!.value = rayons.coeur?.portee ?? 1
+      }
       nuanceur.uniforms.uRelief!.value = relief ? 1 : 0
       nuanceur.uniforms.uNu!.value = relief ? nue : MASQUE_VIDE
       nuanceur.uniforms.uPeinture!.value = relief ? face.map! : MASQUE_VIDE

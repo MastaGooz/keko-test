@@ -86,6 +86,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   lisaient pas), hologramme (fatiguait les yeux). **Le bonus se pose sur
   le cran, il ne le repeint pas** : seul le foil se cumule, le liseré et
   l'auréole restent au cran. `animable` dit une possibilité, jamais un état.
+- **Les rayons des légendaires tournent** (`RAYONS_TOURNANTS`, `?tourne=0`) :
+  la carte 3D charge sa peinture sans emoji ni rayons (`sansRayons`) et le
+  nuanceur y redessine les rayons du cran à l'identique (`rayonsDuCran`), tournés
+  lentement, l'emoji posé par sa silhouette ; les vignettes restent fixes.
 - **Le reflet prend la couleur du cran** (`TON_LUSTRE`, dérivé de `METAUX`).
 - **Contour simple** (`contour === 'simple'`), plaque claire, Baloo 2 (800 /
   400 / 700), pastille de type, coins à 5,5 % (`RAYON_SIMPLE`, lu par la face,
