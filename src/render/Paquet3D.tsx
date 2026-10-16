@@ -1385,6 +1385,13 @@ export function Paquet3D({
    * rapprochement n'est rien d'autre que le passage de l'une à l'autre.
    */
   function tailleAuDefile(i: number): number {
+    // PENDANT UN DÉCOLLAGE, LES SUIVANTES RETOMBENT À ZÉRO. Keko : « détruire
+    // la carte en enlevant le sticker révèle la carte de derrière et gâche la
+    // surprise ». *La pile ouverte attend à taille pleine derrière celle qu'on
+    // regarde* — quand celle-ci vole en éclats, la suivante était là. Elle se
+    // retire dès que la scène 2D couvre la carte (invisible sous elle), et
+    // regrandit depuis rien quand son tour vient : une révélation à elle.
+    if (cachee && i > montree) return 0
     return i <= montree || pileOuverte ? tailleDuDefile : 0
   }
   /** La largeur du sachet : c'est elle qui place la fente et borne ce qui en sort. */
