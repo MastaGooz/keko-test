@@ -221,30 +221,42 @@ export function PanneauFiltres({
     el.style.transition = transition ? 'transform 0.22s ease-out' : 'none'
     el.style.transform = dy > 0 ? `translateY(${dy}px)` : ''
   }
+  /**
+   * SANS CAPTURE DU POINTEUR. Keko : « quand je ferme le panneau en slidant vers
+   * le bas, mon prochain clic produit un son mais ne fait rien ». La première
+   * version capturait le doigt sur la tête du panneau (`setPointerCapture`),
+   * puis retirait ce nœud de la page : sur téléphone, la tape suivante perdait
+   * son clic. Le glisser se suit maintenant sur la fenêtre, écouteurs posés au
+   * contact et retirés au lâcher.
+   */
   const poser = (e: React.PointerEvent<HTMLDivElement>): void => {
-    if ((e.target as HTMLElement).closest('button') !== null) return
-    e.currentTarget.setPointerCapture(e.pointerId)
-    tire.current = { id: e.pointerId, y0: e.clientY, dy: 0, t: e.timeStamp, v: 0 }
-  }
-  const glisser = (e: React.PointerEvent<HTMLDivElement>): void => {
-    const g = tire.current
-    if (g === null || g.id !== e.pointerId) return
-    const dy = Math.max(0, e.clientY - g.y0)
-    const dt = e.timeStamp - g.t
-    if (dt > 0) g.v = (dy - g.dy) / dt
-    g.dy = dy
-    g.t = e.timeStamp
-    descendre(dy, false)
-  }
-  const lacher = (e: React.PointerEvent<HTMLDivElement>): void => {
-    const g = tire.current
-    if (g === null || g.id !== e.pointerId) return
-    tire.current = null
-    const haut = panneau.current?.offsetHeight ?? 1
-    if (g.dy > haut * TIRER_POUR_FERMER || (g.dy > 10 && g.v > VITESSE_POUR_FERMER)) {
-      descendre(haut, true)
-      window.setTimeout(onFermer, 220)
-    } else descendre(0, true)
+    if ((e.target as HTMLElement).closest('button') !== null || tire.current !== null) return
+    const g = { id: e.pointerId, y0: e.clientY, dy: 0, t: e.timeStamp, v: 0 }
+    tire.current = g
+    const glisser = (ev: PointerEvent): void => {
+      if (ev.pointerId !== g.id) return
+      const dy = Math.max(0, ev.clientY - g.y0)
+      const dt = ev.timeStamp - g.t
+      if (dt > 0) g.v = (dy - g.dy) / dt
+      g.dy = dy
+      g.t = ev.timeStamp
+      descendre(dy, false)
+    }
+    const lacher = (ev: PointerEvent): void => {
+      if (ev.pointerId !== g.id) return
+      window.removeEventListener('pointermove', glisser)
+      window.removeEventListener('pointerup', lacher)
+      window.removeEventListener('pointercancel', lacher)
+      tire.current = null
+      const haut = panneau.current?.offsetHeight ?? 1
+      if (ev.type === 'pointerup' && (g.dy > haut * TIRER_POUR_FERMER || (g.dy > 10 && g.v > VITESSE_POUR_FERMER))) {
+        descendre(haut, true)
+        window.setTimeout(onFermer, 220)
+      } else descendre(0, true)
+    }
+    window.addEventListener('pointermove', glisser)
+    window.addEventListener('pointerup', lacher)
+    window.addEventListener('pointercancel', lacher)
   }
   return createPortal(
     <div
@@ -271,9 +283,6 @@ export function PanneauFiltres({
         <div
           className="filtres-panneau-prise"
           onPointerDown={poser}
-          onPointerMove={glisser}
-          onPointerUp={lacher}
-          onPointerCancel={lacher}
         >
           <div className="filtres-panneau-poignee" aria-hidden />
           <div className="filtres-panneau-tete">
