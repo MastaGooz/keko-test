@@ -432,6 +432,23 @@ export const COSMOS = {
 }
 const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
 
+/**
+ * LA POUSSIÈRE D'OR DE L'EMOJI HOLO. Keko, après la nacre (« ça change la
+ * couleur de l'emoji ») et le vernis (« juste un point blanc ») : des grains
+ * minuscules DANS l'emoji, comme un sticker pailleté. **Ils s'ajoutent, ils ne
+ * repeignent rien.** *Ce qui les distingue des paillettes du fond* : la
+ * finesse (`grille` cellules sur la largeur, plus de deux fois la grille fine
+ * du cosmos), l'or, et la place — sur l'emoji seulement, pas sur son cerne.
+ *
+ * Chaque grain est un petit miroir penché au hasard (`dispersion`), comme une
+ * paillette : il s'allume quand il renvoie la lampe (`serre`), et scintille un
+ * peu de lui-même. `part` des cellules en portent un, de rayon `rayon` cellule.
+ * Chiffres de moi ; `?or=0` la retire. Premier réglage (grille 95, rayon 0,2)
+ * vu presque invisible : un grain faisait un demi-pixel d'écran.
+ */
+export const POUSSIERE = { grille: 80, part: 0.55, rayon: 0.3, dispersion: 0.9, serre: 10, force: 2.2, ton: [1, 0.82, 0.45] as const }
+const AVEC_POUSSIERE = new URLSearchParams(location.search).get('or') !== '0'
+
 
 /**
  * LA CARTE EST FAITE DE DEUX PIÈCES, et c'est ce qui donne les coins ronds.
@@ -1381,6 +1398,30 @@ ${nuanceur.vertexShader}`.replace(
            vec3 holoE = mix(vec3(1.0), arcE, ${COSMOS.cerne.couleur.toFixed(2)}) * (0.9 + 0.35 * lobeE);
            float vivant = clamp(uHolo / ${FORCE_HOLO.toFixed(3)}, 0.0, 1.0);
            gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * holoE, cerneE * vivant);
+           // LA POUSSIÈRE D'OR, sur l'emoji hors du cerne : voir POUSSIERE.
+           if (${AVEC_POUSSIERE ? 'true' : 'false'}) {
+             float nO = ${POUSSIERE.grille.toFixed(1)};
+             vec2 pgO = vLustreUv * vec2(1.0, 1.4) * nO;
+             vec2 celO = floor(pgO);
+             vec2 dansO = fract(pgO) - 0.5;
+             float o1 = hDev(celO.x * 23.0 + celO.y * 151.0 + 41.0);
+             float o2 = hDev(celO.x * 71.0 + celO.y * 37.0 + 53.0);
+             float o3 = hDev(celO.x * 13.0 + celO.y * 89.0 + 67.0);
+             float o4 = hDev(celO.x * 47.0 + celO.y * 61.0 + 79.0);
+             float presentO = step(o1, ${POUSSIERE.part.toFixed(2)});
+             vec2 dO = dansO - (vec2(o2, o3) - 0.5) * 0.5;
+             vec3 nO3 = Nc + (Tc * (o3 - 0.5) + Bc * (o4 - 0.5)) * ${(POUSSIERE.dispersion * 2).toFixed(2)};
+             nO3 /= max(length(nO3), 1e-6);
+             float sO = max(dot(reflect(-Vc, nO3), Lc), 0.0);
+             float allumeO = pow(sO, ${POUSSIERE.serre.toFixed(1)});
+             float vibreO = 0.6 + 0.4 * sin(uTemps * (3.0 + 4.0 * o4) + o2 * 6.28318);
+             float aaO = pixU * nO;
+             float grainO = 1.0 - smoothstep(${POUSSIERE.rayon.toFixed(2)} - aaO, ${POUSSIERE.rayon.toFixed(2)} + aaO, length(dO));
+             // UN CŒUR CLAIR, UN BORD DORÉ : de l'or seul se perd sur un emoji jaune.
+             vec3 tonO = mix(vec3(${POUSSIERE.ton.map((v) => v.toFixed(2)).join(', ')}), vec3(1.0), 0.5 + 0.4 * allumeO);
+             gl_FragColor.rgb += tonO * grainO * presentO * allumeO * vibreO
+               * surEmoji * (1.0 - blancTexture) * vivant * ${POUSSIERE.force.toFixed(2)};
+           }
          }
 
          // LE LIN TRESSÉ, en sortie : il presse TOUTE la carte, peinture

@@ -6467,3 +6467,15 @@ Keko : « dans la collection les cartes holo ne sont pas animées au niveau des 
 - **Paillettes plus discrètes (16/10/2026)** : Keko, « je trouve les étincelles un peu grosses sur les holo depuis la collection, juste quelques paillettes comme sur la carte c'est suffisant ». Plus de croix sur les grosses, plus de grossissement des vives (×1,5), halo resserré (1,8 rayon au lieu de 2,2), et deux fois moins de vives (3 % des fines, 6 % des grosses).
 
 - **Nacre et caméléon retirés (16/10/2026)** : Keko, « je le trouve pas terrible, ça change la couleur de l'emoji au final… je voudrais autre chose à la place ». *Les deux touchaient la teinte de l'emoji*, et c'est ce qui ne va pas : l'effet de l'emoji holo ne doit pas le recolorer. Retirés de la carte (le bloc du nuanceur, `NACRE`, `?nacre=0`) et du sticker en grand (`coucheDeNacre`, la rotation de teinte de sa toile) ; le cerne arc-en-ciel qui tourne au regard reste. Ce qui le remplace reste à choisir.
+
+- **Vernis retiré** (Keko : « ça fait juste un point blanc sur l'emoji, ça va pas. Rollback »).
+
+### La poussière d'or de l'emoji holo (16/10/2026)
+
+Keko : « on peut faire la poussière d'or que tu avais proposée ». Des grains minuscules DANS l'emoji (pas sur son cerne), ajoutés à la lumière : l'emoji garde ses couleurs.
+
+- **Au nuanceur** (`POUSSIERE`) : une grille de 80 cellules sur la largeur (le double de la grille fine du cosmos), 55 % portent un grain ; chacun est un petit miroir penché au hasard qui s'allume quand il renvoie la lampe (puissance 10), et scintille de lui-même. Cœur clair, bord doré : *de l'or seul se perd sur un emoji jaune*.
+- **Premier réglage** (grille 95, rayon 0,2) vu presque invisible : un grain faisait un demi-pixel d'écran ; passé à 80 et 0,3, force 2,2.
+- **Sur le sticker en grand** : les mêmes grains placés une fois sur l'emoji (opaque, hors du crème), repeints à chaque image ; chacun a l'orientation où il renvoie la lampe, et s'allume quand le doigt ou le téléphone y passe.
+- **Au passage, un vrai défaut** : la toile du sticker en grand était mesurée pendant son arrivée (une mise à l'échelle de 0,4) — peinte en 163 px pour 349 affichés, donc floue. Elle se mesure maintenant à sa taille de mise en page (`clientWidth`).
+- `?or=0` la retire de la carte. Pas sur les vignettes (images fixes). Chiffres de moi ; vu au navigateur, pas sur téléphone.

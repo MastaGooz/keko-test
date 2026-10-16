@@ -1150,3 +1150,9 @@
 .sticker-ouvert {
   touch-action: none;
 }
+
+/* LA POUSSIÈRE D'OR DU STICKER HOLO, ajoutée à la lumière (voir `POUSSIERE`). */
+.sticker-or {
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
