@@ -6587,3 +6587,7 @@ Keko : « quand je ferme le panneau filtre et que je reclique sur le bouton just
 **Rattrapage, même jour** — Keko : « le panneau s'ouvre et se ferme dans le même instant ». Sur téléphone, le clic de la tape qui a ouvert (au relâchement) est envoyé à ce qui est sous le doigt APRÈS le rendu : le fond, tout juste monté, qui fermait. Le fond ne ferme plus que si l'appui a commencé sur lui (`appuiSurLeFond`). *Une tape, c'est trois évènements, et changer l'écran entre le deuxième et le troisième redistribue le troisième.*
 
 **Rattrapage, même jour** — Keko : « quand je ferme le panneau filtre en slidant vers le bas, ensuite mon prochain clic (carte, sticker, boutons du haut) produit un son mais ne fait rien, il faut recliquer ». Le glisser capturait le doigt sur la tête du panneau (`setPointerCapture`), nœud retiré de la page 220 ms plus tard ; sur téléphone la tape suivante perdait son clic. Le glisser se suit maintenant sur la fenêtre (écouteurs posés au contact, retirés au lâcher), sans capture. *Hypothèse : non reproduite sur la machine de dev, qui n'a pas de doigt.*
+
+### Le sticker de l'album ne fait plus le clic (16/10/2026)
+
+Keko : « quand je clique sur un sticker de la collection, il y a le son de clic + le son de carte, il faudrait supprimer le son de clic ». L'écouteur de toute la page (`Jeu.tsx`) exceptait déjà les vignettes de la collection ; il excepte aussi les cases de l'album (`album-case`), qui ont leur son de pose en s'ouvrant.

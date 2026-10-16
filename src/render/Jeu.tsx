@@ -189,12 +189,15 @@ export function Jeu(): React.ReactElement {
    * son qui attend le relâchement arrive après le geste. *Un seul écouteur pour
    * toute la page* plutôt qu'un par bouton — celui qu'on ajoutera demain
    * clique sans qu'on y pense. **Sauf les vignettes** : une carte n'est pas un
-   * bouton, et elle a déjà son son, la pose de carte en s'ouvrant.
+   * bouton, et elle a déjà son son, la pose de carte en s'ouvrant. **Ni les
+   * stickers de l'album** (`album-case`), pour la même raison — Keko : « il y a
+   * le son de clic + le son de carte, il faudrait supprimer le son de clic ».
    */
   useEffect(() => {
     const cliquer = (e: PointerEvent): void => {
       const bouton = e.target instanceof Element ? e.target.closest('button') : null
-      if (bouton !== null && !bouton.classList.contains('vignette')) jouerSon(SON_CLIC_POP)
+      if (bouton !== null && !bouton.classList.contains('vignette') && !bouton.classList.contains('album-case'))
+        jouerSon(SON_CLIC_POP)
     }
     document.addEventListener('pointerdown', cliquer)
     return () => document.removeEventListener('pointerdown', cliquer)
