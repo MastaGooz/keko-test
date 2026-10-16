@@ -505,6 +505,9 @@ function Prise({
  */
 let numeroCourant = 0
 
+/** Après un décollage, le temps que la suivante regrandisse avant son pump (le ressort à 9 : 95 % en 0,33 s). */
+const ARRIVEE_APRES_DECOLLAGE = 0.34
+
 type PropsPaquet = {
   /** Le paquet est ouvert : ses cartes entrent dans la collection. Une fois par paquet. */
   onPaquetOuvert?: (ids: readonly string[], bonus: Readonly<Record<string, Bonus>>) => void
@@ -845,15 +848,10 @@ export function Paquet3D({
   const [decollage, setDecollage] = useState<{ i: number; boite: BoiteALEcran } | null>(null)
   const [cachee, setCachee] = useState(false)
   const [detruites, setDetruites] = useState<ReadonlySet<number>>(new Set())
-  /**
-   * LA SUIVANTE SE POSE D'UN COUP APRÈS UN DÉCOLLAGE (`Carte3D.saut`). Keko :
-   * « il faut lui donner le petit pump + particules comme les autres
-   * révélations ». *Elle les avait*, mais elle regrandissait depuis zéro au
-   * ressort pendant ce temps, et un pompage sur une carte qui grandit ne se
-   * voit pas. Posée à sa taille, elle est « déjà là » comme au défilé normal,
-   * et son instant se lit.
-   */
-  const [sauts, setSauts] = useState<Readonly<Record<number, number>>>({})
+  const minuteArrivee = useRef(0)
+  useEffect(() => () => clearTimeout(minuteArrivee.current), [])
+  const refNumero = useRef(numero)
+  refNumero.current = numero
   const refDecollage = useRef(false)
   refDecollage.current = decollage !== null
   /** La clé du flash de l'arrachement — *une animation se remonte à neuf.* */
@@ -1022,6 +1020,8 @@ export function Paquet3D({
    * coup — **mais son INSTANT, qui n'a pas bougé** : l'éclat, la teinte de
    * l'écran, et le compteur quand c'est la dernière.
    */
+  const refDecouvrir = useRef<(i: number) => void>(() => undefined)
+  refDecouvrir.current = decouvrir
   function decouvrir(i: number): void {
     const carte = paquet[i]
     if (carte === undefined) return
@@ -1165,7 +1165,6 @@ export function Paquet3D({
     setDecollage(null)
     setCachee(false)
     setDetruites(new Set())
-    setSauts({})
     setSommet(-1)
     setEclat(null)
     racine.current?.style.removeProperty('--lueur')
@@ -1550,7 +1549,6 @@ export function Paquet3D({
             <group visible={!couverte}>
             <Carte3D
               carte={carte}
-              saut={sauts[i] ?? 0}
               // LE DOS TANT QU'ELLE N'EST PAS RETOURNÉE : c'est la même carte
               // vue de l'autre côté, pas un second objet.
               dos={!vue}
@@ -1752,9 +1750,17 @@ export function Paquet3D({
     if (!fini) {
       if (montree + 1 < paquet.length) {
         const n = montree + 1
-        setSauts((j) => ({ ...j, [n]: (j[n] ?? 0) + 1 }))
         setMontree(n)
-        decouvrir(n)
+        // SON INSTANT ARRIVE QUAND ELLE A FINI DE GRANDIR. Keko : « je voulais
+        // juste rajouter le pump à son arrivée finale avec les particules ».
+        // *Elle regrandit depuis zéro au ressort* (voir `tailleAuDefile`) ; un
+        // pompage pendant qu'elle grandit ne se voit pas, donc on attend
+        // qu'elle soit à sa taille — à 95 % au bout d'un tiers de seconde.
+        const ce = numero
+        clearTimeout(minuteArrivee.current)
+        minuteArrivee.current = window.setTimeout(() => {
+          if (refNumero.current === ce) refDecouvrir.current(n)
+        }, ARRIVEE_APRES_DECOLLAGE * 1000)
       } else setFini(true)
     } else if (zoomee === carte.id) setZoomee(null)
   }
