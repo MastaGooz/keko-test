@@ -1474,14 +1474,14 @@ const TON_RAYONS: Record<string, string> = { bleu: '#0a8dff', orange: '#ff9a00' 
  * plus foncé au centre ». *Le vert s'éclaircit au centre parce que son canal
  * vert porte la clarté* ; l'orange et le violet plafonnent (leur rouge, leur
  * bleu sont au bout partout), donc leurs rayons gardent le même ton du centre
- * au bord. On ajoute au centre de leurs rayons leur ton CLAIR (\`METAUX[0]\` :
- * crème orangé, lilas), qui s'éteint à \`portee\` du rayon, à \`force\`.
+ * au bord. On ajoute au centre de leurs rayons leur ton CLAIR (`METAUX[0]` :
+ * crème orangé, lilas), qui s'éteint à `portee` du rayon, à `force`.
  */
 const COEUR_RAYONS: Record<string, { force: number; portee: number; ton?: string }> = {
   violet: { force: 0.3, portee: 0.55 },
   // UN CŒUR AMBRE, PAS CRÈME, pour les légendaires. Keko : « booster la
   // saturation / flashy de la zone centrale claire sur les légendaires ». Le
-  // crème orangé (\`METAUX[0]\`) éclaircissait en délavant ; un ambre vif
+  // crème orangé (`METAUX[0]`) éclaircissait en délavant ; un ambre vif
   // éclaircit en restant franc — plus jaune que les rayons, pour ne pas tirer
   // au rouge.
   orange: { force: 0.68, portee: 0.6, ton: '#ffb800' },
@@ -2637,6 +2637,47 @@ export function sujetDe(canvas: HTMLCanvasElement): SujetPeint | undefined {
  */
 export function stickerDe(emoji: string, perso?: string): Promise<HTMLImageElement | HTMLCanvasElement | null> {
   return illustration('', undefined, undefined, undefined, emoji, undefined, !SANS_STICKER, perso)
+}
+
+/**
+ * LE MÊME STICKER, PEINT À UNE TAILLE DONNÉE — pour le sticker en grand. Keko :
+ * « la résolution des stickers quand je zoome n'est pas terrible (bords pas
+ * lisses) ». *Le sticker de carte est peint à 512* (614 avec ses marges) et
+ * le zoom l'affiche à plus de mille pixels réels sur un téléphone : agrandi,
+ * il crénelait. Ici la toile du sticker fait `toile` pixels, marges comprises :
+ * le glyphe (ou l'image de Keko) est peint à sa taille, et le cerne calculé
+ * à cette taille.
+ */
+const STICKERS_HAUTS = new Map<string, Promise<HTMLCanvasElement | null>>()
+export function stickerHautDe(emoji: string, toile: number, perso?: string): Promise<HTMLCanvasElement | null> {
+  const cote = Math.round(toile / (1 + MARGE_STICKER * 2))
+  const cle = `${perso ?? emoji}#${cote}`
+  const deja = STICKERS_HAUTS.get(cle)
+  if (deja !== undefined) return deja
+  const p = (async (): Promise<HTMLCanvasElement | null> => {
+    let source: CanvasImageSource | null = null
+    if (perso !== undefined) source = await charger(perso)
+    if (source === null) {
+      await policeDeLEmoji(emoji)
+      const glyphe = document.createElement('canvas')
+      glyphe.width = cote
+      glyphe.height = cote
+      const ctx = glyphe.getContext('2d')
+      if (ctx === null) return null
+      ctx.font = `${Math.round(cote * 0.8)}px "Noto Color Emoji", "Apple Color Emoji", "Segoe UI Emoji", sans-serif`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(emoji, cote / 2, cote / 2)
+      source = glyphe
+    }
+    return SANS_STICKER ? null : stickerDUneImage(source, cote)
+  })()
+  STICKERS_HAUTS.set(cle, p)
+  p.then(
+    (t) => t === null && STICKERS_HAUTS.delete(cle),
+    () => STICKERS_HAUTS.delete(cle),
+  )
+  return p
 }
 
 /**

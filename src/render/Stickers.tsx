@@ -18,7 +18,7 @@ import { suivreLInclinaison } from './inclinaison.ts'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers } from '../logic/emoji/collection.ts'
 import { nombreDeStickers } from '../logic/emoji/collection.ts'
-import { stickerDe } from './texture-carte.ts'
+import { stickerDe, stickerHautDe } from './texture-carte.ts'
 import { cerneArcEnCiel } from './peinture-vignette.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
@@ -263,14 +263,17 @@ function StickerOuvert({
   // L'IMAGE FIXE, À LA TAILLE D'AFFICHAGE : elle reste là si l'animation manque.
   useEffect(() => {
     let vivant = true
-    void stickerDe(carte.emoji, urlEmojiDeKeko(carte.id) ?? undefined).then((image) => {
+    // LA TAILLE DE MISE EN PAGE, PAS CELLE DE L'ÉCRAN : mesurée pendant son
+    // arrivée (une mise à l'échelle de 0,4), la toile était peinte en 163 px
+    // pour 349 affichés — un sticker flou. ET À LA DENSITÉ DE L'ÉCRAN, jusqu'à
+    // 3 : peint à sa taille réelle (`stickerHautDe`), il ne crénelle plus.
+    const t0 = toile.current
+    if (t0 == null) return
+    const cote = Math.round(t0.clientWidth * Math.min(window.devicePixelRatio || 1, 3))
+    void stickerHautDe(carte.emoji, cote, urlEmojiDeKeko(carte.id) ?? undefined).then((image) => {
       const t = toile.current
       const ctx = t?.getContext('2d', { willReadFrequently: holo })
       if (!vivant || image === null || t == null || ctx == null) return
-      // LA TAILLE DE MISE EN PAGE, PAS CELLE DE L'ÉCRAN : mesurée pendant son
-      // arrivée (une mise à l'échelle de 0,4), la toile était peinte en 163 px
-      // pour 349 affichés — un sticker flou.
-      const cote = Math.round(t.clientWidth * Math.min(window.devicePixelRatio || 1, 2))
       t.width = cote
       t.height = cote
       ctx.imageSmoothingQuality = 'high'
