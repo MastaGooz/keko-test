@@ -45,10 +45,23 @@ import { FondAnime } from './FondAnime.tsx'
 import { demanderLInclinaison } from './inclinaison.ts'
 import { toileDuTitre } from './texture-carte.ts'
 
-type Page = 'booster' | 'collection' | 'stickers'
+/**
+ * LES PAGES. `collection` et `catalogue` sont les deux entrées du menu
+ * « Cartes » (Keko : « renommer "collection" par "cartes" en haut, et quand un
+ * clic sur carte on développe un menu déroulant avec : collection (ce qu'on a
+ * actuellement) / toutes les cartes (liste de toutes les cartes) »). Le
+ * catalogue est la même page que la collection, avec les cartes qu'on n'a pas
+ * encore en grisé.
+ */
+type Page = 'booster' | 'collection' | 'catalogue' | 'stickers'
 
 /** `&illimite` : la réserve ne se vide jamais — pour tester sans attendre. */
 const ILLIMITE = new URLSearchParams(location.search).has('illimite')
+/** `&page=` : la page ouverte d'emblée (voir `accueil`) ; autre chose, ignoré. */
+const PAGE_DEMANDEE = ((): Page | null => {
+  const p = new URLSearchParams(location.search).get('page')
+  return p === 'collection' || p === 'catalogue' || p === 'stickers' ? p : null
+})()
 
 /** 9:58 — les minutes sans zéro devant, les secondes avec. */
 function minuteur(ms: number): string {
@@ -149,8 +162,11 @@ function Accueil({ onJouer }: { onJouer: () => void }): React.ReactElement {
 }
 
 export function Jeu(): React.ReactElement {
-  const [accueil, setAccueil] = useState(true)
-  const [page, setPage] = useState<Page>('booster')
+  // `&page=collection|catalogue|stickers` : OUVRIR UNE PAGE D'UN LIEN, sans
+  // l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien.* Le son n'est
+  // pas amorcé : ces pages n'en ont pas besoin pour se juger.
+  const [accueil, setAccueil] = useState(PAGE_DEMANDEE === null)
+  const [page, setPage] = useState<Page>(PAGE_DEMANDEE ?? 'booster')
   const [collection, setCollection] = useState<Collection>(chargerCollection)
   const [calme, setCalme] = useState(true)
   const [sachetAttend, setSachetAttend] = useState(false)
@@ -271,12 +287,30 @@ export function Jeu(): React.ReactElement {
     [changer],
   )
 
+  /**
+   * LE MENU « CARTES » : déroulé sous la pilule par une tape sur le bouton,
+   * replié par un choix ou par une tape n'importe où ailleurs. *Le bouton
+   * ouvre le menu même quand on est déjà sur une de ses pages* : c'est le menu
+   * qui dit où l'on va, pas le bouton.
+   */
+  const [menuCartes, setMenuCartes] = useState(false)
+  useEffect(() => {
+    if (!menuCartes) return
+    const fermer = (e: PointerEvent): void => {
+      if (e.target instanceof Element && e.target.closest('.nav-cartes') !== null) return
+      setMenuCartes(false)
+    }
+    document.addEventListener('pointerdown', fermer)
+    return () => document.removeEventListener('pointerdown', fermer)
+  }, [menuCartes])
+
   function aller(vers: Page): void {
+    setMenuCartes(false)
     if (vers === page) return
-    // EN QUITTANT LA COLLECTION, TOUT A ÉTÉ VU : la pastille s'éteint, et les
+    // EN QUITTANT LES CARTES, TOUT A ÉTÉ VU : la pastille s'éteint, et les
     // « Nouveau » de la grille avec elle. *Pas en y entrant* : on doit pouvoir
-    // les y voir.
-    if (page === 'collection') changer(toutVu)
+    // les y voir. Le catalogue montre les mêmes vignettes, il compte pareil.
+    if (page === 'collection' || page === 'catalogue') changer(toutVu)
     if (vers === 'booster') setAttente(dispo === 0)
     setPage(vers)
     setCalme(true)
@@ -284,6 +318,7 @@ export function Jeu(): React.ReactElement {
 
   const nouvelles = nombreDeNouvelles(collection)
   const visible = !accueil && (page !== 'booster' || calme)
+  const surLesCartes = page === 'collection' || page === 'catalogue'
 
   return (
     <>
@@ -325,8 +360,10 @@ export function Jeu(): React.ReactElement {
         <PageStickers catalogue={catalogue} collection={collection} onCollection={() => aller('collection')} />
       ) : (
         <PageCollection
+          key={page}
           catalogue={catalogue}
           collection={collection}
+          toutes={page === 'catalogue'}
           onOuvrirUnPaquet={() => aller('booster')}
           onDetruire={detruireCarte}
         />
@@ -340,13 +377,16 @@ export function Jeu(): React.ReactElement {
         <div className="nav-pilule">
           <button
             type="button"
-            className={`nav-moitie nav-gauche${page === 'collection' ? ' nav-active' : ''}`}
-            onClick={() => aller('collection')}
+            className={`nav-moitie nav-gauche nav-cartes${surLesCartes ? ' nav-active' : ''}`}
+            aria-haspopup="menu"
+            aria-expanded={menuCartes}
+            onClick={() => setMenuCartes((m) => !m)}
           >
             <span className="nav-icone" aria-hidden>
               <IconeCollection />
             </span>
-            Collection
+            Cartes
+            <span className={`nav-chevron${menuCartes ? ' nav-chevron-ouvert' : ''}`} aria-hidden />
             {nouvelles > 0 && <span className="nav-pastille">{nouvelles}</span>}
           </button>
           <span className="nav-place" aria-hidden />
@@ -376,6 +416,32 @@ export function Jeu(): React.ReactElement {
           {/* LE NOMBRE DE PAQUETS SUR LE BOOSTER, comme le « 10 » de lexicodex. */}
           <span className={`nav-pastille nav-pastille-booster${dispo === 0 ? ' vide' : ''}`}>{dispo}</span>
         </button>
+        {/* LE MENU DÉROULÉ SOUS LE BOUTON « CARTES » : deux entrées, la page
+            courante cochée. `nav-cartes` : une tape dedans ne le referme pas
+            par le fond (voir `menuCartes`). */}
+        {menuCartes && (
+          <div className="nav-menu nav-cartes" role="menu" aria-label="Cartes">
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={page === 'collection'}
+              className={`nav-menu-entree${page === 'collection' ? ' nav-menu-active' : ''}`}
+              onClick={() => aller('collection')}
+            >
+              Collection
+              {nouvelles > 0 && <span className="nav-menu-pastille">{nouvelles}</span>}
+            </button>
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={page === 'catalogue'}
+              className={`nav-menu-entree${page === 'catalogue' ? ' nav-menu-active' : ''}`}
+              onClick={() => aller('catalogue')}
+            >
+              Toutes les cartes
+            </button>
+          </div>
+        )}
       </nav>
     </>
   )

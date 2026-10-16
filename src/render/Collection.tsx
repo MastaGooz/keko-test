@@ -349,7 +349,8 @@ function Vignette({
   onOuvrir,
 }: {
   carte: CarteEmoji
-  possession: Possession
+  /** `null` : une carte du catalogue qu'on n'a pas encore — grisée. */
+  possession: Possession | null
   /** La version montrée : chacune a sa vignette (voir `Variante`). */
   variante: Variante
   onOuvrir: () => void
@@ -361,7 +362,7 @@ function Vignette({
   const sticker = useRef<HTMLCanvasElement>(null)
   const [prete, setPrete] = useState(false)
   const { holo, anime } = exemplaireDe(variante)
-  const compte = compteDe(possession, variante)
+  const compte = possession === null ? 0 : compteDe(possession, variante)
   const tourne = AVEC_TOURNE && anime && carte.animable
   useEffect(() => {
     const el = boite.current
@@ -431,10 +432,10 @@ function Vignette({
     <button
       ref={boite}
       type="button"
-      className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}`}
+      className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}${possession === null ? ' vignette-manquante' : ''}`}
       style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
       onClick={onOuvrir}
-      aria-label={`${enTitre(carte.nom)}, ${NOM_DE_LA_RARETE[carte.rarete]}`}
+      aria-label={`${enTitre(carte.nom)}, ${NOM_DE_LA_RARETE[carte.rarete]}${possession === null ? ', pas encore obtenue' : ''}`}
     >
       {!prete && <span className="vignette-attente">{carte.emoji}</span>}
       <canvas ref={toile} className="vignette-toile" style={FILTRE_VIGNETTE} />
@@ -457,7 +458,7 @@ function Vignette({
             style={{ animationDelay: `${(-v * DUREE_SCINTILLE) / SCINTILLES.length}s` }}
           />
         ))}
-      {possession.nouvelle && <span className="vignette-nouvelle">Nouveau</span>}
+      {possession?.nouvelle && <span className="vignette-nouvelle">Nouveau</span>}
       {compte > 1 && <span className="vignette-nombre">×{compte}</span>}
       {(holo || anime) && (
         <span className="vignette-bonus">
@@ -490,7 +491,8 @@ function CarteOuverte({
   onDetruire,
 }: {
   carte: CarteEmoji
-  possession: Possession
+  /** `null` : ouverte depuis le catalogue sans la posséder — rien à décoller. */
+  possession: Possession | null
   variante: Variante
   total: number
   onFermer: () => void
@@ -645,10 +647,13 @@ function CarteOuverte({
     )
     return () => arret.abort()
   }, [])
-  const exemplaires = [
-    `${compteDe(possession, variante)} exemplaire${compteDe(possession, variante) > 1 ? 's' : ''} ${NOM_DE_LA_VARIANTE[variante]}`,
-    possession.n > compteDe(possession, variante) ? `${possession.n} en tout` : null,
-  ].filter((m): m is string => m !== null)
+  const exemplaires =
+    possession === null
+      ? ['Pas encore obtenue']
+      : [
+          `${compteDe(possession, variante)} exemplaire${compteDe(possession, variante) > 1 ? 's' : ''} ${NOM_DE_LA_VARIANTE[variante]}`,
+          possession.n > compteDe(possession, variante) ? `${possession.n} en tout` : null,
+        ].filter((m): m is string => m !== null)
   return (
     <div className="carte-ouverte">
       <Canvas
@@ -701,19 +706,23 @@ function CarteOuverte({
         </span>
         <p className="carte-ouverte-ligne">{exemplaires.join(' · ')}</p>
         <p className="carte-ouverte-ligne carte-ouverte-discret">
-          Obtenue le {DATE.format(new Date(possession.premiere))} · n° {carte.rang} sur {total}
+          {possession !== null && <>Obtenue le {DATE.format(new Date(possession.premiere))} · </>}
+          n° {carte.rang} sur {total}
         </p>
         {/* DÉTRUIRE POUR LE STICKER : le bouton ouvre le geste, c'est le geste
             qui décide. Keko : « l'option, quand on la zoome dans la collection,
-            de la détruire pour gagner son sticker ». */}
-        <button
-          type="button"
-          className="decoller"
-          // C'EST LA VERSION QU'ON REGARDE QUI PART : voir `Variante`.
-          onClick={() => setDecolle(exemplaireDe(variante))}
-        >
-          Décoller le sticker
-        </button>
+            de la détruire pour gagner son sticker ». Pas sur une carte qu'on
+            n'a pas. */}
+        {possession !== null && (
+          <button
+            type="button"
+            className="decoller"
+            // C'EST LA VERSION QU'ON REGARDE QUI PART : voir `Variante`.
+            onClick={() => setDecolle(exemplaireDe(variante))}
+          >
+            Décoller le sticker
+          </button>
+        )}
       </div>
       {decolle === null && (
         <button type="button" className="carte-ouverte-fermer" aria-label="Fermer" onClick={onFermer}>
@@ -731,16 +740,26 @@ function CarteOuverte({
 export function PageCollection({
   catalogue,
   collection,
+  toutes = false,
   onOuvrirUnPaquet,
   onDetruire,
 }: {
   catalogue: readonly CarteEmoji[] | null
   collection: Collection
+  /**
+   * « TOUTES LES CARTES » : le catalogue entier, une place par emoji, celles
+   * qu'on n'a pas en grisé (Keko : « toutes les cartes (liste de toutes les
+   * cartes) »). Une carte possédée montre sa plus belle version. Sans
+   * « Récentes » : une carte qu'on n'a pas n'a pas de date.
+   */
+  toutes?: boolean
   onOuvrirUnPaquet: () => void
   onDetruire: (id: string, ex: Exemplaire) => void
 }): React.ReactElement {
+  const triParDefaut: Tri = toutes ? 'rares' : 'recentes'
+  const tris = toutes ? TRIS.filter((t) => t.id !== 'recentes') : TRIS
   const [recherche, setRecherche] = useState('')
-  const [tri, setTri] = useState<Tri>('recentes')
+  const [tri, setTri] = useState<Tri>(triParDefaut)
   const [raretes, setRaretes] = useState<ReadonlySet<RareteEmoji>>(new Set())
   // PLUSIEURS TYPES À LA FOIS, comme les raretés. Keko : « ce serait bien de
   // pouvoir sélectionner plusieurs catégories à la fois comme les raretés ».
@@ -764,24 +783,33 @@ export function PageCollection({
    * différents dans la collection pour holo / normal / animé / holo animé ».
    * Elles se suivent, dans l'ordre normal, holo, animé, holo animé.
    */
-  const places = useMemo(
-    () =>
-      possedees.flatMap(({ carte, p }) =>
-        VARIANTES.filter((v) => compteDe(p, v) > 0).map((v) => ({ carte, p, v })),
-      ),
-    [possedees],
-  )
+  const places = useMemo((): { carte: CarteEmoji; p: Possession | null; v: Variante }[] => {
+    // LE CATALOGUE ENTIER : une place par emoji, la plus belle version qu'on a
+    // (la dernière de `VARIANTES` possédée), ou la simple en grisé.
+    if (toutes)
+      return (catalogue ?? []).map((carte) => {
+        const p = collection.cartes[carte.id] ?? null
+        const v = p === null ? 'simple' : (VARIANTES.filter((v) => compteDe(p, v) > 0).at(-1) ?? 'simple')
+        return { carte, p, v }
+      })
+    return possedees.flatMap(({ carte, p }) =>
+      VARIANTES.filter((v) => compteDe(p, v) > 0).map((v) => ({ carte, p, v })),
+    )
+  }, [toutes, catalogue, collection, possedees])
   const visibles = useMemo(() => {
     const q = plier(recherche.trim())
     const l = places.filter(
-      ({ carte, v }) =>
-        passeLeBonus(bonus, { holo: exemplaireDe(v).holo ? 1 : 0, anime: exemplaireDe(v).anime ? 1 : 0 }) &&
+      ({ carte, p, v }) =>
+        passeLeBonus(bonus, {
+          holo: p !== null && exemplaireDe(v).holo ? 1 : 0,
+          anime: p !== null && exemplaireDe(v).anime ? 1 : 0,
+        }) &&
         (raretes.size === 0 || raretes.has(carte.rarete)) &&
         (groupes.size === 0 || groupes.has(carte.groupe)) &&
         (q === '' || plier(carte.nom).includes(q) || carte.mots.some((m) => plier(m).includes(q))),
     )
     const az = new Intl.Collator('fr')
-    if (tri === 'recentes') l.sort((a, b) => b.p.ordre - a.p.ordre)
+    if (tri === 'recentes') l.sort((a, b) => (b.p?.ordre ?? -1) - (a.p?.ordre ?? -1))
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
@@ -799,17 +827,26 @@ export function PageCollection({
     <div className="collection">
       <div className="collection-defile">
         <header className="collection-tete">
-          <h1 className="collection-titre">Ma collection</h1>
+          <h1 className="collection-titre">{toutes ? 'Toutes les cartes' : 'Ma collection'}</h1>
           <p className="collection-compte">
-            <b>{possedees.length}</b> / {total} emoji · {exemplaires} carte{exemplaires > 1 ? 's' : ''} ·{' '}
-            {collection.paquets} paquet{collection.paquets > 1 ? 's' : ''}
+            {toutes ? (
+              <>
+                <b>{possedees.length}</b> / {total} obtenues · {total - possedees.length} manquante
+                {total - possedees.length > 1 ? 's' : ''}
+              </>
+            ) : (
+              <>
+                <b>{possedees.length}</b> / {total} emoji · {exemplaires} carte{exemplaires > 1 ? 's' : ''} ·{' '}
+                {collection.paquets} paquet{collection.paquets > 1 ? 's' : ''}
+              </>
+            )}
           </p>
           <div className="collection-barre" aria-hidden>
             <span style={{ width: `${(part * 100).toFixed(2)}%` }} />
           </div>
         </header>
 
-        {possedees.length > 0 && (
+        {(toutes || possedees.length > 0) && (
           <div className="collection-outils">
             <div className="collection-ligne">
               <input
@@ -831,13 +868,13 @@ export function PageCollection({
               setRaretes(new Set())
               setGroupes(new Set())
               setBonus(new Set())
-              setTri('recentes')
+              setTri(triParDefaut)
             }}
             onFermer={() => setPanneau(false)}
           >
             <SectionFiltre titre="Trier">
             <div className="collection-segments" role="radiogroup" aria-label="Trier">
-              {TRIS.map((t) => (
+              {tris.map((t) => (
                 <button
                   key={t.id}
                   type="button"
@@ -887,7 +924,7 @@ export function PageCollection({
           </PanneauFiltres>
         )}
 
-        {catalogue === null ? null : possedees.length === 0 ? (
+        {catalogue === null ? null : !toutes && possedees.length === 0 ? (
           <div className="collection-vide">
             <p>Ta collection est vide.</p>
             <p className="collection-discret">Chaque paquet ouvert y range ses cinq cartes.</p>

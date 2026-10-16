@@ -1395,3 +1395,104 @@
 .filtres-panneau button:focus:not(:focus-visible) {
   outline: none;
 }
+
+/* ------------------------------------------------- le menu « Cartes » */
+
+/* LE MENU DÉROULÉ SOUS LA PILULE. Keko : « renommer "collection" par "cartes"
+   en haut, et quand un clic sur carte on développe un menu déroulant avec :
+   collection / toutes les cartes ». Même crème, même ombre que la pilule ;
+   aligné sous le bouton de gauche. */
+.nav-chevron {
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-left: 0.1rem;
+  border-right: 0.16rem solid currentColor;
+  border-bottom: 0.16rem solid currentColor;
+  transform: translateY(-0.12rem) rotate(45deg);
+  transition: transform 0.2s ease;
+  opacity: 0.8;
+}
+
+.nav-chevron-ouvert {
+  transform: translateY(0.1rem) rotate(225deg);
+}
+
+.nav-menu {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+  padding: 0.35rem;
+  border-radius: 1.1rem;
+  background: #fffaf0;
+  box-shadow:
+    0 0.3rem 0 #c9b9f2,
+    0 0.6rem 1.4rem rgba(20, 8, 60, 0.45);
+  animation: nav-menu-tombe 0.18s cubic-bezier(0.3, 1.4, 0.5, 1);
+  transform-origin: top left;
+}
+
+@keyframes nav-menu-tombe {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4rem) scale(0.96);
+  }
+}
+
+.nav-menu-entree {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-height: 3rem;
+  padding: 0 1rem;
+  border: 0;
+  border-radius: 0.8rem;
+  background: transparent;
+  color: #2a1b63;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav-menu-entree:active {
+  transform: scale(0.97);
+}
+
+.nav-menu-active {
+  background: #2a1b63;
+  color: #fffaf0;
+}
+
+.nav-menu-pastille {
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.3rem;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: #ff4d5e;
+  color: #fff;
+  font-size: 0.8rem;
+  line-height: 1.35rem;
+  text-align: center;
+}
+
+/* ----------------------------------------------- les cartes manquantes */
+
+/* UNE CARTE QU'ON N'A PAS ENCORE : la même vignette, en grisé et en retrait,
+   pour que la grille de « Toutes les cartes » dise d'un regard ce qui manque.
+   La peinture reste la vraie : on sait ce qu'on cherche. */
+.vignette-manquante {
+  filter: grayscale(1) brightness(0.55);
+  opacity: 0.55;
+}
+
+.vignette-manquante .vignette-toile {
+  filter: none !important;
+}

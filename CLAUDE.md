@@ -202,8 +202,11 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 ### La navigation et la collection
 
 - **La barre est celle de lexicodex** (`Jeu.tsx`, `ui/collection.css`) : une
-  pilule crème en haut, « Collection » à gauche (pastille rouge = cartes
-  nouvelles), le booster rond au centre, « Stickers » à droite (l'album ; le
+  pilule crème en haut, **« Cartes » à gauche, qui déroule un menu** (Keko) :
+  « Collection » (ce qu'on a, pastille rouge = cartes nouvelles) et « Toutes
+  les cartes » (le catalogue entier, la même `PageCollection` avec `toutes`,
+  les manquantes en grisé, ouvrables en 3D sans « Décoller ») ; le booster
+  rond au centre, « Stickers » à droite (l'album ; le
   compte « réunis / 1 915 » est resté en tête de la collection). Icônes
   dessinées en SVG (`IconeCollection` : trois cartes en éventail aux couleurs
   des crans, sans étoile ; `IconeStickers` : un sticker souriant au coin décollé), trait en
@@ -414,6 +417,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?paquet=<n>` | rejoue un tirage précis |
 | `&nu` | saute le sachet |
 | `&illimite` | la réserve de paquets ne se vide jamais, pour tester sans attendre |
+| `&page=collection`, `&page=catalogue`, `&page=stickers` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
 | `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue, et un sticker de chaque emoji dans l'album |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
 | `&perso` | la première carte est 🫠, peinte depuis l'emoji dessiné par Keko (`Test.png`) |

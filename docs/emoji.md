@@ -6622,3 +6622,15 @@ Keko : « je voudrais rework les icônes collection et stickers en haut, je trou
 Keko, sur PC : « tu peux me redonner la totalité des cartes et des stickers ? (je suis sur PC, du coup j'ai plus la collection) ». *La collection vit sur l'appareil* : celle du téléphone n'est pas sur le PC. `&debloquer=tout` donnait déjà tout le catalogue ; il donne maintenant aussi un sticker simple de chaque emoji (`debloquerStickers`, qui ne touche pas ceux qu'on a), vérifié dans `collection.verif.ts`.
 
 **Même jour** — Keko : « tu peux enlever la petite étoile dans la carte orange centrale de l'icône collection ». Retirée ; la carte garde sa fenêtre claire.
+
+### Le menu « Cartes » et la page « Toutes les cartes » (17/10/2026)
+
+Keko : « je propose de renommer "collection" par "cartes" en haut, et quand un clic sur carte on développe un menu déroulant avec : collection (ce qu'on a actuellement) / toutes les cartes (liste de toutes les cartes) ? »
+
+**Le bouton de gauche dit « Cartes »**, avec un chevron, et **ouvre un menu** (`menuCartes` dans `Jeu.tsx`, `.nav-menu` dans `collection.css`) : deux entrées, « Collection » et « Toutes les cartes », la page courante cochée en sombre, la pastille des nouvelles reportée sur « Collection ». *Le bouton ouvre le menu même quand on est déjà sur une de ses pages* : c'est le menu qui dit où l'on va. Il se replie sur un choix ou sur une tape n'importe où ailleurs (`pointerdown` sur le document, sauf dans `.nav-cartes`). Le bouton est actif sur les deux pages.
+
+**« Toutes les cartes » est la même page que la collection** (`PageCollection` avec `toutes`, remontée par `key={page}` pour repartir avec ses filtres par défaut) : une place par emoji du catalogue, *la plus belle version possédée* (la dernière de `VARIANTES` qu'on a) ou la simple ; **celles qu'on n'a pas en grisé** (`.vignette-manquante` : `grayscale` et `brightness(0.55)`, opacité 0,55 — la vraie peinture, pour savoir ce qu'on cherche). En tête : « 958 / 1915 obtenues · 957 manquantes ». Pas de tri « Récentes » (une carte qu'on n'a pas n'a pas de date), défaut « Plus rares » ; le filtre Bonus ne retient que des cartes possédées. Une carte manquante s'ouvre en 3D comme les autres, avec « Pas encore obtenue » et son numéro, **sans « Décoller le sticker »** ; `CarteOuverte` et `Vignette` acceptent donc `possession: Possession | null`.
+
+**`&page=collection|catalogue|stickers`** ouvre une page d'emblée, sans l'accueil : *ce qui se teste doit pouvoir s'ouvrir d'un lien* — c'est ce qui a permis la capture en portrait avec Chrome sans fenêtre, puisque l'extension ne redimensionne pas une fenêtre maximisée. Mesuré dans la page : la pilule fait 20,7 rem (331 px à 16 px de rem), elle tient sur 390 px ; 1 915 vignettes dont 957 grisées sur `&debloquer`.
+
+Le choix de la silhouette (vraie peinture grisée plutôt qu'une carte anonyme) est de moi, à rejuger : il révèle les cartes qu'on n'a pas.
