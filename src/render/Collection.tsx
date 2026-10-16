@@ -204,6 +204,7 @@ export function PanneauFiltres({
    * panneau suit le doigt ; lâché assez bas ou assez vite, il descend et se ferme.
    */
   const panneau = useRef<HTMLDivElement>(null)
+  const appuiSurLeFond = useRef(false)
   // ET TANT QU'IL EST OUVERT, la page entière refuse « tirer pour recharger ».
   useEffect(() => {
     const html = document.documentElement
@@ -246,7 +247,20 @@ export function PanneauFiltres({
     } else descendre(0, true)
   }
   return createPortal(
-    <div className="filtres-panneau-fond" onClick={onFermer}>
+    <div
+      className="filtres-panneau-fond"
+      // LE FOND NE FERME QUE CE QUI A COMMENCÉ SUR LUI. Le bouton ouvre au
+      // relâchement ; sur téléphone, le clic de cette même tape arrive ensuite
+      // sur ce qui est sous le doigt — le fond, tout juste monté — et refermait
+      // aussitôt : « le panneau s'ouvre et se ferme dans le même instant ».
+      onPointerDown={(e) => {
+        appuiSurLeFond.current = e.target === e.currentTarget
+      }}
+      onClick={(e) => {
+        if (appuiSurLeFond.current && e.target === e.currentTarget) onFermer()
+        appuiSurLeFond.current = false
+      }}
+    >
       <div
         ref={panneau}
         className="filtres-panneau"
