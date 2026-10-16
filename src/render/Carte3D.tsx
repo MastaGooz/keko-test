@@ -432,24 +432,6 @@ export const COSMOS = {
 }
 const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
 
-/**
- * LE VERNIS DE L'EMOJI HOLO. Keko, après la nacre qui « change la couleur de
- * l'emoji au final » : un effet qui ne la touche pas. *Un sticker plastifié et
- * un peu bombé* : la lampe clé y pose une tache blanche, qui glisse sur
- * l'emoji quand on penche la carte. **Elle s'ajoute, elle ne repeint rien** :
- * l'emoji garde ses couleurs, il gagne un reflet.
- *
- * La normale est BOMBÉE sous l'emoji — penchée vers le dehors d'autant qu'on
- * s'éloigne de son centre (`bombe`, sur `rayon` largeurs de carte) — et la
- * tache est le reflet de la lampe sur ce dôme : serrée (`serre`) avec un
- * halo large (`halo`, `doux`). Au repos elle est en haut à droite, du côté de
- * la lampe. Chiffres de moi ; `?vernis=0` le retire. Premier réglage (dôme
- * 0,9, serre 60, halo 0,18) vu trop large : penchée, la tache blanchissait la
- * moitié de l'emoji.
- */
-export const VERNIS = { bombe: 1.3, rayon: 0.36, serre: 140, force: 0.7, halo: 0.05, doux: 12 }
-const AVEC_VERNIS = new URLSearchParams(location.search).get('vernis') !== '0'
-
 
 /**
  * LA CARTE EST FAITE DE DEUX PIÈCES, et c'est ce qui donne les coins ronds.
@@ -1399,17 +1381,6 @@ ${nuanceur.vertexShader}`.replace(
            vec3 holoE = mix(vec3(1.0), arcE, ${COSMOS.cerne.couleur.toFixed(2)}) * (0.9 + 0.35 * lobeE);
            float vivant = clamp(uHolo / ${FORCE_HOLO.toFixed(3)}, 0.0, 1.0);
            gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * holoE, cerneE * vivant);
-           // LE VERNIS DE L'EMOJI : voir VERNIS. Le dôme sous le sticker, et le
-           // reflet de la lampe dessus, ajouté en blanc.
-           if (${AVEC_VERNIS ? 'true' : 'false'}) {
-             vec2 bosse = drE / ${VERNIS.rayon.toFixed(3)};
-             vec3 Nv = Nc + (Tc * bosse.x - Bc * bosse.y) * ${VERNIS.bombe.toFixed(2)};
-             Nv /= max(length(Nv), 1e-6);
-             float sv = max(dot(reflect(-Vc, Nv), Lc), 0.0);
-             float tache = pow(sv, ${VERNIS.serre.toFixed(1)}) * ${VERNIS.force.toFixed(2)}
-               + pow(sv, ${VERNIS.doux.toFixed(1)}) * ${VERNIS.halo.toFixed(2)};
-             gl_FragColor.rgb += vec3(tache) * surEmoji * vivant;
-           }
          }
 
          // LE LIN TRESSÉ, en sortie : il presse TOUTE la carte, peinture

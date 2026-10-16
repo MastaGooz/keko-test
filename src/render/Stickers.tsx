@@ -181,8 +181,6 @@ function StickerOuvert({
   const toile = useRef<HTMLCanvasElement>(null)
   /** LE CERNE ARC-EN-CIEL D'UNE HOLO, seul, par-dessus : c'est lui qui tourne au regard. */
   const arc = useRef<HTMLCanvasElement>(null)
-  /** LE VERNIS : une tache blanche découpée à la silhouette du sticker (voir `VERNIS`). */
-  const vernis = useRef<HTMLDivElement>(null)
   const penche = useRef<HTMLDivElement>(null)
   const zone = useRef<HTMLDivElement>(null)
   const [pret, setPret] = useState(false)
@@ -205,23 +203,6 @@ function StickerOuvert({
       t.height = cote
       ctx.imageSmoothingQuality = 'high'
       ctx.drawImage(image, 0, 0, cote, cote)
-      // LE VERNIS SE DÉCOUPE À LA SILHOUETTE : un masque tiré une fois de l'alpha.
-      const vn = vernis.current
-      if (holo && vn != null) {
-        const sil = document.createElement('canvas')
-        sil.width = cote
-        sil.height = cote
-        const sctx = sil.getContext('2d')
-        if (sctx !== null) {
-          sctx.drawImage(t, 0, 0)
-          sctx.globalCompositeOperation = 'source-in'
-          sctx.fillStyle = '#fff'
-          sctx.fillRect(0, 0, cote, cote)
-          const url = `url(${sil.toDataURL()})`
-          vn.style.maskImage = url
-          vn.style.setProperty('-webkit-mask-image', url)
-        }
-      }
       // LA HOLO : le sticker garde son cerne crème dessous, et le spectre est
       // une couche à part — *repeindre les pixels à chaque mouvement du
       // téléphone coûterait une boucle sur toute la toile ; tourner la teinte
@@ -297,14 +278,6 @@ function StickerOuvert({
       // couleur d'un coin à l'autre.
       const a = arc.current
       if (a != null) a.style.filter = `saturate(${1 + SATURATION_APLAT}) hue-rotate(${((o.x - o.y) * 90).toFixed(1)}deg)`
-      // LE VERNIS GLISSE : au repos en haut à droite, du côté de la lampe, et il
-      // court à l'opposé du côté qu'on abaisse — le reflet d'une lampe fixe sur
-      // un dôme qui tourne.
-      const vn = vernis.current
-      if (vn != null) {
-        vn.style.setProperty('--vx', `${(64 - o.x * 34).toFixed(1)}%`)
-        vn.style.setProperty('--vy', `${(32 - o.y * 34).toFixed(1)}%`)
-      }
       image = requestAnimationFrame(appliquer)
     }
     image = requestAnimationFrame(appliquer)
@@ -379,7 +352,6 @@ function StickerOuvert({
             {!pret && <span className="album-attente sticker-attente">{carte.emoji}</span>}
             <canvas ref={toile} className="sticker-toile" style={FILTRE} />
             <canvas ref={arc} className="sticker-toile sticker-arc" />
-            {holo && <div ref={vernis} className="sticker-vernis" />}
           </div>
         </div>
       </div>
