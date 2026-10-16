@@ -432,24 +432,6 @@ export const COSMOS = {
 }
 const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
 
-/**
- * L'HOLOGRAMME DE L'EMOJI HOLO. Keko, après la nacre, le caméléon, le vernis et
- * la poussière d'or : « l'hologramme de science-fiction ». *Un emoji projeté
- * plutôt que collé* :
- *
- * - **ses couleurs se dédoublent** — le rouge décalé d'un côté, le bleu de
- *   l'autre, d'autant plus qu'on penche (`regard`, en largeurs de carte par
- *   unité de reflet) et un peu au repos (`repos`) : les franges débordent de
- *   la silhouette, l'intérieur de l'emoji garde ses couleurs ;
- * - **des lignes fines défilent dessus** (`lignes` sur la hauteur de la carte,
- *   `vitesse` hauteurs par seconde, ± `force` de clarté) ;
- * - **il grésille parfois** : un sursaut de clarté (`sursaut`), une image de
- *   temps en temps.
- *
- * Chiffres de moi ; `?hologramme=0` le retire.
- */
-export const HOLOGRAMME = { repos: 0.004, regard: 0.022, lignes: 150, vitesse: 0.08, force: 0.12, sursaut: 0.18 }
-const AVEC_HOLOGRAMME = new URLSearchParams(location.search).get('hologramme') !== '0'
 
 
 
@@ -1030,8 +1012,6 @@ export function Carte3D({
       nuanceur.uniforms.uBrillant = { value: aplat && AVEC_BRILLANT ? 1 : 0 }
       nuanceur.uniforms.uRayons = { value: 0 }
       nuanceur.uniforms.uMasqueSujet = { value: MASQUE_VIDE }
-      // LA PEINTURE DE LA FACE, relue à côté par l'hologramme (voir HOLOGRAMME).
-      nuanceur.uniforms.uPeinture = { value: MASQUE_VIDE }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -1403,28 +1383,6 @@ ${nuanceur.vertexShader}`.replace(
            vec3 holoE = mix(vec3(1.0), arcE, ${COSMOS.cerne.couleur.toFixed(2)}) * (0.9 + 0.35 * lobeE);
            float vivant = clamp(uHolo / ${FORCE_HOLO.toFixed(3)}, 0.0, 1.0);
            gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * holoE, cerneE * vivant);
-           // L'HOLOGRAMME DE L'EMOJI : voir HOLOGRAMME. La peinture est relue
-           // à côté (uPeinture, la même texture que la face) : le rouge d'un
-           // côté, le bleu de l'autre ; seule la DIFFÉRENCE s'ajoute, donc la
-           // lumière et le reste de la carte passent tels quels.
-           if (${AVEC_HOLOGRAMME ? 'true' : 'false'}) {
-             vec2 decalH = vec2(${HOLOGRAMME.repos.toFixed(4)}, 0.0) + Rf.xy * ${HOLOGRAMME.regard.toFixed(4)};
-             vec3 iciH = texture2D(uPeinture, vLustreUv).rgb;
-             float rougeH = texture2D(uPeinture, vLustreUv + decalH).r;
-             float bleuH = texture2D(uPeinture, vLustreUv - decalH).b;
-             float bordD = 1.0 - texture2D(uMasqueSujet, vLustreUv + decalH).r;
-             float bordG = 1.0 - texture2D(uMasqueSujet, vLustreUv - decalH).r;
-             float zoneH = smoothstep(0.05, 0.3, max(1.0 - libreH, max(bordD, bordG)));
-             vec3 c0H = gl_FragColor.rgb;
-             vec3 holoH = c0H + vec3(rougeH - iciH.r, 0.0, bleuH - iciH.b);
-             // LES LIGNES, sur l'emoji seulement.
-             float ligneH = sin((tpE.y * ${HOLOGRAMME.lignes.toFixed(1)} - uTemps * ${(HOLOGRAMME.vitesse * HOLOGRAMME.lignes).toFixed(2)}) * 6.28318);
-             // LE GRÉSILLEMENT : une image sur trente environ, un sursaut.
-             float tic = floor(uTemps * 14.0);
-             float sursautH = step(0.965, fract(sin(tic * 91.7) * 43758.5)) * ${HOLOGRAMME.sursaut.toFixed(2)};
-             holoH *= 1.0 + (ligneH * ${HOLOGRAMME.force.toFixed(2)} + sursautH) * surEmoji;
-             gl_FragColor.rgb = mix(c0H, max(holoH, 0.0), zoneH * vivant);
-           }
          }
 
          // LE LIN TRESSÉ, en sortie : il presse TOUTE la carte, peinture
@@ -1466,7 +1424,6 @@ uniform float uLin;
 uniform float uBrillant;
 uniform float uRayons;
 uniform sampler2D uMasqueSujet;
-uniform sampler2D uPeinture;
 // LE BRUIT DU LIN : une valeur par noeud d'une grille, lissée entre eux.
 float bruitLin(vec2 p) {
   vec2 i = floor(p);
@@ -2315,7 +2272,6 @@ ${nuanceur.fragmentShader}`
       // RAYONS_BRILLANTS. Sans lui (animé, dos, autre mode), rien ne brille.
       const masque = (face.map?.userData.masqueSujet ?? null) as THREE.Texture | null
       nuanceur.uniforms.uMasqueSujet!.value = masque ?? MASQUE_VIDE
-      nuanceur.uniforms.uPeinture!.value = face.map ?? MASQUE_VIDE
       nuanceur.uniforms.uRayons!.value = masque !== null && AVEC_RAYONS_BRILLANTS && dos !== true ? 1 : 0
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque

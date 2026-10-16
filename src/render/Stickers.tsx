@@ -181,8 +181,6 @@ function StickerOuvert({
   const toile = useRef<HTMLCanvasElement>(null)
   /** LE CERNE ARC-EN-CIEL D'UNE HOLO, seul, par-dessus : c'est lui qui tourne au regard. */
   const arc = useRef<HTMLCanvasElement>(null)
-  /** LES LIGNES DE L'HOLOGRAMME, découpées à la silhouette du sticker (voir `HOLOGRAMME`). */
-  const trame = useRef<HTMLDivElement>(null)
   const penche = useRef<HTMLDivElement>(null)
   const zone = useRef<HTMLDivElement>(null)
   const [pret, setPret] = useState(false)
@@ -212,23 +210,6 @@ function StickerOuvert({
       // une couche à part — *repeindre les pixels à chaque mouvement du
       // téléphone coûterait une boucle sur toute la toile ; tourner la teinte
       // d'une couche ne coûte rien.*
-      // LES LIGNES SE DÉCOUPENT À LA SILHOUETTE : un masque tiré une fois de l'alpha.
-      const li = trame.current
-      if (holo && li != null) {
-        const sil = document.createElement('canvas')
-        sil.width = cote
-        sil.height = cote
-        const sctx = sil.getContext('2d')
-        if (sctx !== null) {
-          sctx.drawImage(t, 0, 0)
-          sctx.globalCompositeOperation = 'source-in'
-          sctx.fillStyle = '#fff'
-          sctx.fillRect(0, 0, cote, cote)
-          const url = `url(${sil.toDataURL()})`
-          li.style.maskImage = url
-          li.style.setProperty('-webkit-mask-image', url)
-        }
-      }
       const a = arc.current
       const actx = a?.getContext('2d', { willReadFrequently: true })
       if (holo && !anime && a != null && actx != null) {
@@ -300,16 +281,6 @@ function StickerOuvert({
       // couleur d'un coin à l'autre.
       const a = arc.current
       if (a != null) a.style.filter = `saturate(${1 + SATURATION_APLAT}) hue-rotate(${((o.x - o.y) * 90).toFixed(1)}deg)`
-      // L'HOLOGRAMME : les couleurs se dédoublent hors de la silhouette, le
-      // rouge d'un côté, le cyan de l'autre, d'autant plus qu'on penche.
-      const t = toile.current
-      if (t != null && holo) {
-        const dx = 1.5 + o.x * 5
-        const dy = o.y * 3
-        t.style.filter =
-          `saturate(${1 + SATURATION_APLAT}) drop-shadow(${dx.toFixed(1)}px ${dy.toFixed(1)}px 0 rgba(255, 40, 90, 0.55)) ` +
-          `drop-shadow(${(-dx).toFixed(1)}px ${(-dy).toFixed(1)}px 0 rgba(40, 220, 255, 0.55)) drop-shadow(0 0.3rem 0.35rem rgba(10, 4, 30, 0.5))`
-      }
       image = requestAnimationFrame(appliquer)
     }
     image = requestAnimationFrame(appliquer)
@@ -384,7 +355,6 @@ function StickerOuvert({
             {!pret && <span className="album-attente sticker-attente">{carte.emoji}</span>}
             <canvas ref={toile} className="sticker-toile" style={FILTRE} />
             <canvas ref={arc} className="sticker-toile sticker-arc" />
-            {holo && <div ref={trame} className="sticker-lignes" />}
           </div>
         </div>
       </div>

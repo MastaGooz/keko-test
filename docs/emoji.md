@@ -6489,3 +6489,5 @@ Keko a pris la quatrième piste, « l'hologramme de science-fiction » : *un emo
 - **Au nuanceur** (`HOLOGRAMME`) : la peinture de la face est relue à côté (`uPeinture`, la même texture que la face, déclarée par nous puisque la map arrive après la compilation) ; le ROUGE est pris décalé d'un côté, le BLEU de l'autre, d'un écart qui suit le regard (`Rf.xy` × 0,022, plus 0,004 au repos), et **seule la différence s'ajoute** — la lumière et le reste passent tels quels. Les franges débordent de la silhouette (la zone est l'emoji ou ses deux reflets décalés, par le masque du sujet). Des lignes fines défilent sur l'emoji (150 sur la hauteur, ±12 % de clarté), et un sursaut de clarté le fait grésiller une image de temps en temps.
 - **Sur le sticker en grand** : deux `drop-shadow` sans flou de sa silhouette, rouge et cyan, décalés à l'opposé selon l'orientation, et une trame de lignes qui montent, découpée à sa silhouette, avec un grésillement.
 - `?hologramme=0` le retire de la carte. Chiffres de moi ; vu au navigateur (agrandi), pas sur téléphone.
+
+- **Hologramme retiré** (Keko : « ça fait mal aux yeux lol, rollback »).
