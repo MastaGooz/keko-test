@@ -79,7 +79,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   son **relief** (`RELIEF`, `?relief=0`) : *une carte à fenêtre* — l'emoji
   reste à la surface, le décor de la fenêtre d'art s'enfonce (lu décalé selon
   le regard dans la carte sans emoji, `sansSujet`, `uNu`), plus grand que la
-  fenêtre pour ne jamais montrer de bord, avec l'ombre de l'emoji dessus ; les rayons brillants le suivent, les paillettes
+  fenêtre pour ne jamais montrer de bord, sans ombre portée (retirée) ; les rayons brillants le suivent, les paillettes
   restent à la surface. Essayés et
   retirés : nacre, caméléon (recoloraient), vernis, poussière d'or (ne se
   lisaient pas), hologramme (fatiguait les yeux). **Le bonus se pose sur

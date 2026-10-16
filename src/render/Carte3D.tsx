@@ -448,10 +448,7 @@ const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
  *   il faudrait l'impression qu'il n'y a pas de bords et que le fond est plus
  *   large que la carte ». Penché au plus, le regard reste dans le décor ; les
  *   rayons partent du centre, l'agrandir ne change pas leur dessin.
- * - **L'ombre de l'emoji tombe sur le fond** : la silhouette projetée par la
- *   lampe clé sur le plan du fond (`ombre`, adoucie de `flou`) — elle glisse
- *   avec lui, et l'écart entre l'emoji fixe et son ombre qui bouge fait la
- *   profondeur.
+ * - **Sans ombre portée** : Keko l'a essayée et retirée, « c'est pas dingue ».
  * - **Les paillettes de la feuille restent à la surface** : elles glissent sur
  *   les rayons, autre indice de profondeur.
  * - La silhouette se lit dans la différence entre la carte entière et la
@@ -459,7 +456,7 @@ const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
  *
  * Chiffres de moi ; `?relief=0` le retire.
  */
-export const RELIEF = { profondeur: 0.12, ombre: 0.55, flou: 0.008, seuil: 6, agrandi: 1.18 }
+export const RELIEF = { profondeur: 0.12, seuil: 6, agrandi: 1.18 }
 const AVEC_RELIEF = new URLSearchParams(location.search).get('relief') !== '0'
 
 
@@ -1083,7 +1080,6 @@ ${nuanceur.vertexShader}`.replace(
          vec2 uvFond = vLustreUv;
          if (uRelief > 0.5) {
            vec3 VR = normalize(vViewPosition);
-           vec3 LR = normalize(vec3(${BRILLANT.lampe.map((v) => v.toFixed(3)).join(', ')}));
            // LA FENÊTRE D'ART, en coordonnées de texture (v vers le haut).
            vec2 fenMin = vec2(${RAYONS_DANS_LA_CARTE.x.toFixed(4)}, 1.0 - ${(RAYONS_DANS_LA_CARTE.y + RAYONS_DANS_LA_CARTE.h).toFixed(4)});
            vec2 fenMax = vec2(${(RAYONS_DANS_LA_CARTE.x + RAYONS_DANS_LA_CARTE.l).toFixed(4)}, 1.0 - ${RAYONS_DANS_LA_CARTE.y.toFixed(4)});
@@ -1098,13 +1094,7 @@ ${nuanceur.vertexShader}`.replace(
            vec2 brut = centreFen + (vLustreUv - versR * ${RELIEF.profondeur.toFixed(3)} - centreFen) / ${RELIEF.agrandi.toFixed(3)};
            vec2 bF = mix(vLustreUv, clamp(brut, fenMin, fenMax), dansFen);
            uvFond = bF;
-           // L'OMBRE DE L'EMOJI SUR LE FOND : la silhouette au-dessus, vers la lampe.
-           vec2 versL = vec2(dot(LR, TR), dot(LR, BR) / 1.4) / max(dot(LR, NR), 0.25);
-           vec2 qO = bF + versL * ${RELIEF.profondeur.toFixed(3)};
-           float fO = ${RELIEF.flou.toFixed(4)};
-           float ombreR = 0.25 * (stickerEn(qO + vec2(fO, 0.0)) + stickerEn(qO - vec2(fO, 0.0))
-             + stickerEn(qO + vec2(0.0, fO)) + stickerEn(qO - vec2(0.0, fO))) * dansFen;
-           vec3 fondR = texture2D(uNu, bF).rgb * (1.0 - ${RELIEF.ombre.toFixed(2)} * ombreR);
+           vec3 fondR = texture2D(uNu, bF).rgb;
            // L'EMOJI, À LA SURFACE, à sa place.
            float aR = stickerEn(vLustreUv);
            diffuseColor.rgb = mix(fondR, texture2D(uPeinture, vLustreUv).rgb, aR);
