@@ -1477,9 +1477,14 @@ const TON_RAYONS: Record<string, string> = { bleu: '#0a8dff', orange: '#ff9a00' 
  * au bord. On ajoute au centre de leurs rayons leur ton CLAIR (\`METAUX[0]\` :
  * crème orangé, lilas), qui s'éteint à \`portee\` du rayon, à \`force\`.
  */
-const COEUR_RAYONS: Record<string, { force: number; portee: number }> = {
+const COEUR_RAYONS: Record<string, { force: number; portee: number; ton?: string }> = {
   violet: { force: 0.3, portee: 0.55 },
-  orange: { force: 0.3, portee: 0.55 },
+  // UN CŒUR AMBRE, PAS CRÈME, pour les légendaires. Keko : « booster la
+  // saturation / flashy de la zone centrale claire sur les légendaires ». Le
+  // crème orangé (\`METAUX[0]\`) éclaircissait en délavant ; un ambre vif
+  // éclaircit en restant franc — plus jaune que les rayons, pour ne pas tirer
+  // au rouge.
+  orange: { force: 0.42, portee: 0.55, ton: '#ffbf1f' },
 }
 /** L'opacité des touches dans la fenêtre d'art, et leur échelle par rapport à celles du dos. */
 const TOUCHES_CARTE = 0.09
@@ -1611,7 +1616,7 @@ function peindreRayons(
   secteurs()
   // LE CŒUR CLAIR, pour les crans qui plafonnent : voir COEUR_RAYONS.
   const coeur = rarete === undefined ? undefined : COEUR_RAYONS[rarete]
-  const clair = rarete === undefined ? undefined : METAUX[rarete]?.[0]
+  const clair = rarete === undefined ? undefined : (coeur?.ton ?? METAUX[rarete]?.[0])
   if (coeur !== undefined && clair !== undefined) {
     const lueur = ctx.createRadialGradient(cx, cy, rayon * 0.05, cx, cy, rayon * coeur.portee)
     lueur.addColorStop(0, clair)
