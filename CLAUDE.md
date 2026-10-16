@@ -206,7 +206,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   nouvelles), le booster rond au centre, « Stickers » à droite (l'album ; le
   compte « réunis / 1 915 » est resté en tête de la collection). Icônes
   dessinées en SVG (`IconeCollection` : trois cartes en éventail aux couleurs
-  des crans ; `IconeStickers` : un sticker souriant au coin décollé), trait en
+  des crans, sans étoile ; `IconeStickers` : un sticker souriant au coin décollé), trait en
   `currentColor`. **Elle
   ne se montre que quand rien ne se joue** (`onCalme` : sachet qui attend, ou
   bilan) — jamais pendant la déchirure ni le défilé.

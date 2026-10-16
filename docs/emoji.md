@@ -6613,3 +6613,5 @@ Keko : « je voudrais rework les icônes collection et stickers en haut, je trou
 ### `&debloquer=tout` remplit aussi l'album (17/10/2026)
 
 Keko, sur PC : « tu peux me redonner la totalité des cartes et des stickers ? (je suis sur PC, du coup j'ai plus la collection) ». *La collection vit sur l'appareil* : celle du téléphone n'est pas sur le PC. `&debloquer=tout` donnait déjà tout le catalogue ; il donne maintenant aussi un sticker simple de chaque emoji (`debloquerStickers`, qui ne touche pas ceux qu'on a), vérifié dans `collection.verif.ts`.
+
+**Même jour** — Keko : « tu peux enlever la petite étoile dans la carte orange centrale de l'icône collection ». Retirée ; la carte garde sa fenêtre claire.

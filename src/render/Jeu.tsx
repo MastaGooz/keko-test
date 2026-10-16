@@ -376,7 +376,7 @@ export function Jeu(): React.ReactElement {
  * LES ICÔNES DE LA BARRE, dessinées. Keko : « je trouve que ça matche pas :
  * pour collection je verrais bien 3 cartes en éventail, et pour stickers autre
  * chose qu'une étiquette ». *Les emoji 🗂️ et 🏷️ parlaient bureau* ; ici trois
- * cartes aux couleurs des crans, et un sticker souriant dont le coin se décolle
+ * cartes aux couleurs des crans (sans l'étoile de la première version, retirée par Keko), et un sticker souriant dont le coin se décolle
  * — le geste de l'album. Le trait est `currentColor` : sombre sur la
  * pilule crème, crème sur le bouton actif.
  */
@@ -392,7 +392,6 @@ function IconeCollection(): React.ReactElement {
       {carte(-28, '#4cc46a', '#c9f5d3')}
       {carte(28, '#a35cff', '#e7d6ff')}
       {carte(0, '#ffb020', '#fff1c7')}
-      <path d="M12 6.6l0.8 1.6 1.7 0.25-1.25 1.2 0.3 1.7-1.55-0.8-1.55 0.8 0.3-1.7-1.25-1.2 1.7-0.25z" fill="#ff7a00" />
     </svg>
   )
 }
