@@ -329,6 +329,13 @@ const AVEC_RAYONS_BRILLANTS = new URLSearchParams(location.search).get('rayonsbr
 // pour test ». Avant : { large: 3, reflet: 1.6, sature: 1.2 }. Le plafond du
 // bloom (BRILLANT.plafond) reste la seule borne.
 export const RAYONS_BRILLANTS = { large: 1.2, reflet: 5, sature: 3 } as const
+/**
+ * LA SATURATION DES RAYONS CLAIRS, CRAN PAR CRAN, en multiple de
+ * `RAYONS_BRILLANTS.sature`. Keko : « augmenter la saturation des rayons clairs
+ * du fond des cartes rares, pour qu'ils soient plus vivid ». Le bleu seul ;
+ * chiffre de moi.
+ */
+export const SATURE_RAYONS: Record<string, number> = { bleu: 1.8 }
 /** Un masque blanc d'un pixel : la place du masque du sujet tant qu'il n'est pas là. */
 const MASQUE_VIDE = (() => {
   const t = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1)
@@ -1086,6 +1093,7 @@ export function Carte3D({
       nuanceur.uniforms.uLin = { value: aplat ? FORCE_LIN : 0 }
       nuanceur.uniforms.uBrillant = { value: aplat && AVEC_BRILLANT ? 1 : 0 }
       nuanceur.uniforms.uRayons = { value: 0 }
+      nuanceur.uniforms.uSatureRayons = { value: 1 }
       nuanceur.uniforms.uMasqueSujet = { value: MASQUE_VIDE }
       // LE RELIEF : la carte entière, la même sans emoji, et s'il joue (voir RELIEF).
       nuanceur.uniforms.uPeinture = { value: MASQUE_VIDE }
@@ -1444,7 +1452,7 @@ ${nuanceur.vertexShader}`.replace(
              float nappeR = pow(sc, ${RAYONS_BRILLANTS.large.toFixed(1)});
              cc *= 1.0 + nappeR * ${RAYONS_BRILLANTS.reflet.toFixed(2)} * kr * feuc;
              float lumR = dot(cc, vec3(0.2126, 0.7152, 0.0722));
-             cc = max(mix(vec3(lumR), cc, 1.0 + ${RAYONS_BRILLANTS.sature.toFixed(2)} * nappeR * kr * feuc), 0.0);
+             cc = max(mix(vec3(lumR), cc, 1.0 + ${RAYONS_BRILLANTS.sature.toFixed(2)} * uSatureRayons * nappeR * kr * feuc), 0.0);
            }
            float lumApres = dot(cc, vec3(0.2126, 0.7152, 0.0722));
            float plafond = max(lumAvant, ${BRILLANT.plafond.toFixed(2)});
@@ -1563,6 +1571,7 @@ float hDev(float n) { return fract(sin(n * 43.317) * 43758.5453); }
 uniform float uLin;
 uniform float uBrillant;
 uniform float uRayons;
+uniform float uSatureRayons;
 uniform sampler2D uMasqueSujet;
 uniform sampler2D uPeinture;
 uniform sampler2D uNu;
@@ -2450,6 +2459,7 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uSilhouette!.value = sil ?? MASQUE_VIDE
       nuanceur.uniforms.uSilhouetteOk!.value = sil !== null ? 1 : 0
       nuanceur.uniforms.uRayons!.value = masque !== null && AVEC_RAYONS_BRILLANTS && dos !== true ? 1 : 0
+      nuanceur.uniforms.uSatureRayons!.value = SATURE_RAYONS[carte.rarete ?? ''] ?? 1
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
       // rareté compilerait son nuanceur.

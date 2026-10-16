@@ -8,7 +8,8 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { createRng } from '../logic/rng.ts'
 import { RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
-import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS } from './Carte3D.tsx'
+import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
+import { COULEUR } from './carte-emoji.ts'
 import { RAYON_SIMPLE } from './texture-carte.ts'
 
 /**
@@ -123,7 +124,11 @@ export function cerneArcEnCiel(
  * chiffres lus et non recopiés. *Ce qui ne passe pas, c'est le mouvement* :
  * la vignette ne penche pas, son brillant est celui du repos.
  */
-export function brillantDuRepos(toile: HTMLCanvasElement): void {
+export function brillantDuRepos(
+  toile: HTMLCanvasElement,
+  /** La saturation des rayons clairs du cran (voir `SATURE_RAYONS`). */
+  satureCran = 1,
+): void {
   const ctx = toile.getContext('2d', { willReadFrequently: true })
   if (ctx === null) return
   const { width: l, height: h } = toile
@@ -197,7 +202,7 @@ export function brillantDuRepos(toile: HTMLCanvasElement): void {
       g *= frr
       b *= frr
       lum = 0.2126 * r + 0.7152 * g + 0.0722 * b
-      const sr = 1 + RAYONS_BRILLANTS.sature * nappeR * kr
+      const sr = 1 + RAYONS_BRILLANTS.sature * satureCran * nappeR * kr
       r = Math.max(0, lum + (r - lum) * sr)
       g = Math.max(0, lum + (g - lum) * sr)
       b = Math.max(0, lum + (b - lum) * sr)
@@ -383,7 +388,7 @@ export function peinte(
       largeur,
     )
     // LE BRILLANT DU REPOS, comme la carte 3D de face : voir `brillantDuRepos`.
-    brillantDuRepos(toile)
+    brillantDuRepos(toile, SATURE_RAYONS[COULEUR[c.rarete]] ?? 1)
     if (holo) {
       if (!sansSujet) cerneArcEnCiel(toile)
       if (paillettes) paillettesHolo(toile, c.id)
