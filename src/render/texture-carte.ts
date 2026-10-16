@@ -1487,7 +1487,7 @@ const COEUR_RAYONS: Record<string, { force: number; portee: number; ton?: string
   orange: { force: 0.68, portee: 0.6, ton: '#ffb800' },
   // ET UN CŒUR CYAN VIF POUR LES RARES : Keko, « éclaire / sature aussi la zone
   // claire centrale sur les cartes rares ».
-  bleu: { force: 0.6, portee: 0.55, ton: '#4fdcff' },
+  bleu: { force: 0.42, portee: 0.5, ton: '#4fdcff' },
 }
 /** L'opacité des touches dans la fenêtre d'art, et leur échelle par rapport à celles du dos. */
 const TOUCHES_CARTE = 0.09

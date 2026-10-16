@@ -6542,3 +6542,4 @@ Keko : « les fonds de carte vert et bleu sont plus clairs au centre, tandis que
 - Keko : « tirer la zone centrale des rayons clairs des légendaires vers un jaune / orange encore plus flashy » — cœur `#ffc800` (plus jaune), force 0,42 → 0,55, portée 0,55 → 0,6. Essayé aussi de remonter la saturation du brillant de l'orange (0,25 → 0,8) : le centre repassait à l'orange-rouge, gardée à 0,25.
 - Keko : « encore un peu plus saturé pour le légendaire, et éclaire / sature aussi la zone claire centrale sur les cartes rares ». Légendaire : cœur `#ffb800`, force 0,68. **Rare : un cœur cyan** (`COEUR_RAYONS.bleu` `#4fdcff`, 0,85 jusqu'à 0,6 du rayon) — à 0,45 il ne se voyait pas : la saturation du brillant du bleu (3,6, la plus forte au centre) ramenait le cyan au bleu pur. Vus en grand.
 - Keko : « un peu moins sur le rare, c'est un peu trop là » — cœur cyan 0,85 → 0,6, portée 0,6 → 0,55.
+- Keko : « encore un peu moins » — 0,6 → 0,42, portée 0,5.
