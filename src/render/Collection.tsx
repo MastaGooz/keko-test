@@ -26,7 +26,33 @@ import type { Collection, Exemplaire, Possession } from '../logic/emoji/collecti
 import { exemplaireADetruire, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
 import { AMBIANCE, tailleQuIlFaut } from './texture-carte.ts'
-import { paillettesHolo, peinte } from './peinture-vignette.ts'
+import { paillettesHolo, peinte, toileDesRayons } from './peinture-vignette.ts'
+import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
+import { RAYONS_DANS_LA_CARTE, sujetDe } from './texture-carte.ts'
+
+/**
+ * LES RAYONS DES CARTES ANIMÉES TOURNENT AUSSI DANS LA GRILLE. Keko : « l'effet
+ * de rotation uniquement pour les cartes animées, à l'ouverture, au zoom, mais
+ * aussi dans la collection ». Une vignette est une image ; elle se monte donc
+ * en trois couches : la carte sans emoji ni rayons, les rayons seuls qui
+ * tournent (CSS, à la vitesse de la 3D, `RAYONS_TOURNANTS`), et le sticker
+ * par-dessus. `ECLAT_RAYONS` tient lieu du brillant que la lampe leur donne.
+ */
+const ECLAT_RAYONS = 1.8
+const DUREE_TOUR = (Math.PI * 2) / RAYONS_TOURNANTS.vitesse
+const R_FEN = RAYONS_DANS_LA_CARTE
+const STYLE_FENETRE: React.CSSProperties = {
+  left: `${R_FEN.x * 100}%`,
+  top: `${R_FEN.y * 100}%`,
+  width: `${R_FEN.l * 100}%`,
+  height: `${R_FEN.h * 100}%`,
+}
+const STYLE_RAYONS: React.CSSProperties = {
+  width: `${((2 * R_FEN.rayon * 1.05) / R_FEN.l) * 100}%`,
+  height: `${((2 * R_FEN.rayon * 1.05) / (R_FEN.h * 1.4)) * 100}%`,
+  animationDuration: `${DUREE_TOUR.toFixed(1)}s`,
+  filter: `saturate(${1 + SATURATION_APLAT})`,
+}
 
 /** Trois tirages de paillettes vives, qui s'allument à tour de rôle (voir `.vignette-scintille`). */
 const SCINTILLES = [0, 1, 2] as const
@@ -104,8 +130,11 @@ function Vignette({
   const boite = useRef<HTMLButtonElement>(null)
   const toile = useRef<HTMLCanvasElement>(null)
   const scintilles = useRef<(HTMLCanvasElement | null)[]>([])
+  const rayons = useRef<HTMLCanvasElement>(null)
+  const sticker = useRef<HTMLCanvasElement>(null)
   const [prete, setPrete] = useState(false)
   const holo = possession.holo > 0
+  const tourne = AVEC_TOURNE && possession.anime > 0 && carte.animable
   useEffect(() => {
     const el = boite.current
     if (el === null) return
@@ -116,13 +145,36 @@ function Vignette({
         fini = true
         obs.disconnect()
         const px = el.getBoundingClientRect().width * Math.min(window.devicePixelRatio || 1, 3)
-        void peinte(carte, tailleQuIlFaut(px), holo, false, false, false).then((source) => {
+        const largeur = tailleQuIlFaut(px)
+        void peinte(carte, largeur, holo, tourne, false, false, tourne).then(async (source) => {
           const t = toile.current
           const ctx = t?.getContext('2d')
           if (t == null || ctx == null) return
           t.width = source.width
           t.height = source.height
           ctx.drawImage(source, 0, 0)
+          // LA CARTE ANIMÉE : ses rayons à part, qui tournent, et son sticker
+          // par-dessus (pris sur la carte entière, à sa place).
+          if (tourne) {
+            const rc = rayons.current
+            const rayonPx = R_FEN.rayon * source.width
+            const cote = Math.ceil(rayonPx * 2 * 1.05)
+            const couche = toileDesRayons(COULEUR[carte.rarete], cote, rayonPx, ECLAT_RAYONS)
+            if (rc != null && couche !== null) {
+              rc.width = cote
+              rc.height = cote
+              rc.getContext('2d')?.drawImage(couche, 0, 0)
+            }
+            const entiere = await peinte(carte, largeur, holo, false, false, false)
+            const sujet = sujetDe(entiere)
+            const sc = sticker.current
+            const sctx = sc?.getContext('2d')
+            if (sujet !== undefined && sc != null && sctx != null) {
+              sc.width = source.width
+              sc.height = source.height
+              sctx.drawImage(sujet.image, sujet.x, sujet.y, sujet.l, sujet.h)
+            }
+          }
           // LA HOLO SCINTILLE : la neige pâle sur la vignette, et les vives sur
           // trois couches, un tirage chacune — *les places restent, l'éclat
           // change*, comme quand la carte 3D bouge.
@@ -146,7 +198,7 @@ function Vignette({
       fini = true
       obs.disconnect()
     }
-  }, [carte, holo])
+  }, [carte, holo, tourne])
   return (
     <button
       ref={boite}
@@ -158,6 +210,14 @@ function Vignette({
     >
       {!prete && <span className="vignette-attente">{carte.emoji}</span>}
       <canvas ref={toile} className="vignette-toile" style={FILTRE_VIGNETTE} />
+      {tourne && (
+        <>
+          <span className="vignette-fenetre" style={STYLE_FENETRE}>
+            <canvas ref={rayons} className="vignette-rayons" style={STYLE_RAYONS} />
+          </span>
+          <canvas ref={sticker} className="vignette-toile vignette-sticker" style={{ filter: `saturate(${1 + SATURATION_APLAT})` }} />
+        </>
+      )}
       {holo &&
         SCINTILLES.map((v) => (
           <canvas

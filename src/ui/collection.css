@@ -1159,3 +1159,32 @@
   /* LA LUEUR NE BLANCHIT PLUS : une seule, plus discrète, sous la couleur. */
   filter: saturate(1.6) drop-shadow(0 0 3px rgba(255, 255, 255, 0.35));
 }
+
+/* LES RAYONS QUI TOURNENT SUR LA VIGNETTE D'UNE CARTE ANIMÉE : coupés à la
+   fenêtre d'art, ajoutés à la lumière comme la toile les ajoute. */
+.vignette-fenetre {
+  position: absolute;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.vignette-rayons {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  mix-blend-mode: plus-lighter;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  animation: vignette-tour linear infinite;
+}
+
+.vignette-prete .vignette-rayons {
+  opacity: 1;
+}
+
+@keyframes vignette-tour {
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}

@@ -54,21 +54,25 @@ import {
 } from './texture-carte.ts'
 
 /**
- * LES RAYONS QUI TOURNENT, SUR LES LÉGENDAIRES. Keko : « j'aimerais bien
- * distinguer les cartes légendaires des autres raretés encore plus », et sur
- * les idées proposées : « commence par le fond qui tourne ». *Seuls les rayons
+ * LES RAYONS QUI TOURNENT, SUR LES CARTES ANIMÉES. Keko voulait d'abord
+ * « distinguer les cartes légendaires » (« commence par le fond qui tourne »),
+ * puis : « on va mettre l'effet de rotation uniquement pour les cartes animées
+ * (toutes raretés confondues), à l'ouverture, au zoom, mais aussi dans la
+ * collection ». *C'est le bonus animé qui le porte*, plus le cran. *Seuls les rayons
  * tournent* — le décor garde sa lumière en haut et son ombre en bas : la carte
  * charge sa peinture sans emoji ni rayons (`sansRayons`), et le nuanceur y
  * redessine les rayons du cran à l'identique (`rayonsDuCran` : mêmes
  * secteurs, même fondu, même couleur, même cœur, ajoutés en sRGB comme le
  * fait la toile), tournés de `vitesse` radians par seconde ; leur brillant
- * tourne avec eux. L'emoji est posé par-dessus par sa silhouette. Les
- * vignettes restent fixes. Chiffres de moi ; `?tourne=0` l'arrête.
+ * tourne avec eux. L'emoji est posé par-dessus par sa silhouette — refaite à
+ * chaque image peinte de l'animation. Les vignettes de la collection font
+ * tourner une couche de rayons à la même vitesse (voir `Collection.tsx`).
+ * Chiffres de moi ; `?tourne=0` l'arrête.
  */
-export const RAYONS_TOURNANTS = { crans: ['orange'] as readonly string[], vitesse: 0.12 }
-const AVEC_TOURNE = new URLSearchParams(location.search).get('tourne') !== '0'
+export const RAYONS_TOURNANTS = { vitesse: 0.12 }
+export const AVEC_TOURNE = new URLSearchParams(location.search).get('tourne') !== '0'
 const tourneLaCarte = (carte: CarteAPeindre): boolean =>
-  AVEC_TOURNE && carte.rarete !== undefined && RAYONS_TOURNANTS.crans.includes(carte.rarete)
+  AVEC_TOURNE && carte.animation !== undefined && carte.rarete !== undefined
 /** Une couleur #rrggbb en trois composantes sRGB de 0 à 1. */
 const versVec3 = (hex: string): THREE.Vector3 =>
   new THREE.Vector3(parseInt(hex.slice(1, 3), 16) / 255, parseInt(hex.slice(3, 5), 16) / 255, parseInt(hex.slice(5, 7), 16) / 255)
@@ -615,6 +619,7 @@ const GEOMETRIE_FACE = new THREE.PlaneGeometry(LARGE, HAUT)
 function libererToile(t: THREE.Texture | null): void {
   const masque = t?.userData.masqueSujet as THREE.Texture | undefined
   masque?.dispose()
+  ;(t?.userData.silhouette as { t: THREE.Texture } | undefined)?.t.dispose()
   t?.dispose()
 }
 /** Le contour de l'onde : la forme de la carte, creusée. Partagée par toutes. */
@@ -1849,7 +1854,7 @@ ${nuanceur.fragmentShader}`
     if (dos) void textureDeCarte(carte, largeurPx).catch(() => {})
     // LA MÊME CARTE SANS EMOJI, pour le relief d'une holo (voir RELIEF).
     nuDeLaFace.current = null
-    // ET SANS SES RAYONS pour une légendaire : c'est le nuanceur qui les dessine (RAYONS_TOURNANTS).
+    // ET SANS SES RAYONS pour une carte animée : c'est le nuanceur qui les dessine (RAYONS_TOURNANTS).
     const tourne = tourneLaCarte(carte)
     if (
       ((AVEC_RELIEF && carte.holo === true) || tourne) &&
@@ -2046,6 +2051,26 @@ ${nuanceur.fragmentShader}`
         // SON MASQUE A ÉTÉ REPEINT AVEC ELLE : voir `masqueDuSujet`.
         const masque = tex.userData.masqueSujet as THREE.Texture | undefined
         if (masque !== undefined) masque.needsUpdate = true
+        // ET SA SILHOUETTE, pour poser l'emoji sur des rayons qui tournent :
+        // l'image de l'animation à sa place (`sujetDe`), sur une toile à la
+        // taille de la face — créée une fois par toile, repeinte à chaque image.
+        const sujet = sujetDe(canvas)
+        if (sujet !== undefined) {
+          let sil = tex.userData.silhouette as { c: HTMLCanvasElement; t: THREE.CanvasTexture } | undefined
+          if (sil === undefined) {
+            const c = document.createElement('canvas')
+            c.width = canvas.width
+            c.height = canvas.height
+            sil = { c, t: new THREE.CanvasTexture(c) }
+            tex.userData.silhouette = sil
+          }
+          const sctx = sil.c.getContext('2d')
+          if (sctx !== null) {
+            sctx.clearRect(0, 0, sil.c.width, sil.c.height)
+            sctx.drawImage(sujet.image, sujet.x, sujet.y, sujet.l, sujet.h)
+            sil.t.needsUpdate = true
+          }
+        }
       })
       .catch(() => {
         peintureEnCours.current = false
@@ -2517,7 +2542,7 @@ ${nuanceur.fragmentShader}`
       // LE RELIEF JOUE QUAND LES DEUX PEINTURES SONT LÀ, sur la face d'une holo.
       const nue = nuDeLaFace.current
       // LA COMPOSITION (fond + emoji par sa silhouette) JOUE POUR LE RELIEF D'UNE
-      // HOLO ET POUR LES RAYONS QUI TOURNENT D'UNE LÉGENDAIRE.
+      // HOLO ET POUR LES RAYONS QUI TOURNENT D'UNE CARTE ANIMÉE.
       const tourne = tourneLaCarte(carte) && carte.sansSujet !== true
       const holoRelief = AVEC_RELIEF && carte.holo === true
       const relief = nue !== null && face.map !== null && dos !== true && (holoRelief || tourne)
@@ -2538,11 +2563,13 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uPeinture!.value = relief ? face.map! : MASQUE_VIDE
       // LA VRAIE SILHOUETTE, pour une face peinte une fois ; l'animé, repeint à
       // chaque image, garde la différence des deux peintures.
+      // L'ANIMÉ APPORTE LA SIENNE, REPEINTE À CHAQUE IMAGE (voir la boucle de
+      // l'animation) ; sinon celle de la face peinte une fois.
       const toileFace = face.map?.image
-      const sil =
-        relief && carte.animation === undefined && toileFace instanceof HTMLCanvasElement
-          ? silhouetteDe(toileFace)
-          : null
+      const silAnime = (face.map?.userData.silhouette as { t: THREE.CanvasTexture } | undefined)?.t
+      const sil = !relief
+        ? null
+        : (silAnime ?? (toileFace instanceof HTMLCanvasElement ? silhouetteDe(toileFace) : null))
       nuanceur.uniforms.uSilhouette!.value = sil ?? MASQUE_VIDE
       nuanceur.uniforms.uSilhouetteOk!.value = sil !== null ? 1 : 0
       nuanceur.uniforms.uRayons!.value = masque !== null && AVEC_RAYONS_BRILLANTS && dos !== true ? 1 : 0

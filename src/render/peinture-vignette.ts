@@ -6,7 +6,7 @@
  */
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { createRng } from '../logic/rng.ts'
-import { RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte } from './texture-carte.ts'
+import { RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, rayonsDuCran } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
@@ -128,6 +128,8 @@ export function brillantDuRepos(
   toile: HTMLCanvasElement,
   /** La saturation des rayons clairs du cran (voir `SATURE_RAYONS`). */
   satureCran = 1,
+  /** Sans le brillant des rayons : ils sont peints à part, sur une couche qui tourne. */
+  sansRayons = false,
 ): void {
   const ctx = toile.getContext('2d', { willReadFrequently: true })
   if (ctx === null) return
@@ -171,7 +173,7 @@ export function brillantDuRepos(
       const bande = fondu(-(CONTOUR_PLAQUE + 0.003), -(CONTOUR_PLAQUE - 0.002), dc)
       // LES RAYONS CLAIRS, dans la fenêtre d'art, hors de l'emoji.
       let kr = 0
-      if (u >= R.x && u <= R.x + R.l && v >= R.y && v <= R.y + R.h) {
+      if (!sansRayons && u >= R.x && u <= R.x + R.l && v >= R.y && v <= R.y + R.h) {
         const dx = u - cx
         const dy = (v - cy) * 1.4
         const a = Math.atan2(dy, dx) - R.depart
@@ -257,6 +259,52 @@ export function etoileDePaillette(
   ctx.beginPath()
   ctx.arc(x, y, largeur * 1.6, 0, Math.PI * 2)
   ctx.fill()
+}
+
+/**
+ * LES RAYONS D'UN CRAN, SEULS, sur une toile carrée transparente de `cote`
+ * pixels, centrés, de rayon `rayon` pixels : la couche qui tourne sur la
+ * vignette d'une carte animée. Les mêmes que `peindreRayons` (`rayonsDuCran`),
+ * avec un surcroît (`eclat`) qui tient lieu de leur brillant — sur la carte,
+ * la lampe multiplie les rayons clairs ; ici ils sont posés en lumière ajoutée.
+ */
+export function toileDesRayons(rarete: string, cote: number, rayon: number, eclat: number): HTMLCanvasElement | null {
+  const r = rayonsDuCran(rarete)
+  if (r === null) return null
+  const c = document.createElement('canvas')
+  c.width = cote
+  c.height = cote
+  const ctx = c.getContext('2d')
+  if (ctx === null) return null
+  const cx = cote / 2
+  const n = RAYONS_DANS_LA_CARTE.nombre
+  const pas = (Math.PI * 2) / n
+  const secteurs = (): void => {
+    for (let i = 0; i < n; i += 2) {
+      const a0 = RAYONS_DANS_LA_CARTE.depart + i * pas
+      ctx.beginPath()
+      ctx.moveTo(cx, cx)
+      ctx.arc(cx, cx, cote, a0, a0 + pas)
+      ctx.closePath()
+      ctx.fill()
+    }
+  }
+  ctx.globalCompositeOperation = 'lighter'
+  const fondu = ctx.createRadialGradient(cx, cx, rayon * 0.08, cx, cx, rayon)
+  fondu.addColorStop(0, r.ton)
+  fondu.addColorStop(1, r.ton + '00')
+  ctx.fillStyle = fondu
+  ctx.globalAlpha = Math.min(1, r.force * eclat)
+  secteurs()
+  if (r.coeur !== null) {
+    const lueur = ctx.createRadialGradient(cx, cx, rayon * 0.05, cx, cx, rayon * r.coeur.portee)
+    lueur.addColorStop(0, r.coeur.ton)
+    lueur.addColorStop(1, r.coeur.ton + '00')
+    ctx.fillStyle = lueur
+    ctx.globalAlpha = Math.min(1, r.coeur.force * eclat)
+    secteurs()
+  }
+  return c
 }
 
 export function paillettesHolo(
@@ -382,8 +430,10 @@ export function peinte(
   anime = false,
   /** Les paillettes peintes dedans ; la vignette les pose elle-même, pour les faire scintiller. */
   paillettes = true,
+  /** Sans les rayons du cran : la vignette d'une carte animée les fait tourner à part. */
+  sansRayons = false,
 ): Promise<HTMLCanvasElement> {
-  const cle = `${c.id}#${largeur}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}${paillettes ? '' : '#sp'}`
+  const cle = `${c.id}#${largeur}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}${paillettes ? '' : '#sp'}${sansRayons ? '#sr' : ''}`
   const deja = PEINTES.get(cle)
   if (deja !== undefined) return deja
   const p = fileDePeinture.then(async () => {
@@ -391,11 +441,11 @@ export function peinte(
       // LE DÉCOLLAGE NOMME SES BONUS AU CARTOUCHE, comme la carte 3D qu'il
       // remplace ; la vignette, non (elle a ses pastilles). Pas d'animation :
       // une vignette est une image fixe.
-      { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined), animation: undefined, sansSujet },
+      { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined), animation: undefined, sansSujet, sansRayons },
       largeur,
     )
     // LE BRILLANT DU REPOS, comme la carte 3D de face : voir `brillantDuRepos`.
-    brillantDuRepos(toile, SATURE_RAYONS[COULEUR[c.rarete]] ?? 1)
+    brillantDuRepos(toile, SATURE_RAYONS[COULEUR[c.rarete]] ?? 1, sansRayons)
     if (holo) {
       if (!sansSujet) cerneArcEnCiel(toile)
       if (paillettes) paillettesHolo(toile, c.id)
