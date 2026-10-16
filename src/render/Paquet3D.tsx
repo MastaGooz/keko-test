@@ -1680,8 +1680,13 @@ export function Paquet3D({
               // garde devant quel que soit l'angle — voir SAILLIE_SORTIE.
               // ET À PLAT PENDANT LE DÉCOLLAGE : le sticker 2D est posé sur la
               // carte de face, il ne la suit pas quand elle penche.
+              // TOUTE LA PILE, PAS SEULEMENT ELLE : Keko, « quand j'annule, la
+              // carte de derrière traverse brièvement la carte ». *Une rotation
+              // est une translation déguisée en profondeur* : la pile restait
+              // penchée pendant que la carte du dessus, à plat, reprenait son
+              // angle au ressort. À plat ensemble, elles se redressent ensemble.
               curseurPartage={
-                decollage?.i === i
+                decollage !== null && (fini ? decollage.i === i : i >= montree)
                   ? undefined
                   : fini
                     ? curseursBilan.current[i]
@@ -1689,7 +1694,7 @@ export function Paquet3D({
                       ? curseurDefile.current
                       : undefined
               }
-              refletAuDoigt={decollage?.i !== i && (fini || i >= montree)}
+              refletAuDoigt={!(decollage !== null && (fini ? decollage.i === i : i >= montree)) && (fini || i >= montree)}
               ombre
               // ET ELLE REBONDIT EN ÉLASTIQUE quand le film l'a découverte :
               // le jeton change une fois par ouverture, toute la pile le lit.
