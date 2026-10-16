@@ -203,7 +203,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   « Décoller le sticker » sous la carte du défilé, la carte zoomée au bilan, ou
   la carte ouverte de la collection — **c'est le geste qui confirme** : on tire
   le sticker, il se replie le long d'une ligne (son DOS crème reflété), puis la
-  carte se fêle en toile d'araignée depuis le trou puis vole en éclats, et le sticker s'envole vers « Stickers ». Scène 2D posée sur la
+  carte vole en éclats en toile d'araignée autour du trou, et le sticker s'envole vers « Stickers ». Scène 2D posée sur la
   carte 3D, qui disparaît dessous (`sansSujet` peint la carte sans l'emoji,
   `sujetDe` dit où il était). **Toutes se détruisent, même la dernière** ; le
   sticker garde le bonus ; depuis la collection, le simple part d'abord

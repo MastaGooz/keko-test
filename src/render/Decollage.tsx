@@ -54,11 +54,11 @@ export const DECOLLAGE = {
   envol: 0.55,
   miettes: 1.15,
   /**
-   * LA CARTE SE FÊLE AVANT DE CASSER : des fissures partent du trou pendant
-   * `fissure` secondes, puis les éclats partent. Les éclats sont les cases de
-   * cette toile d'araignée — `rayons` droites depuis le trou, `anneaux` cercles.
+   * LES ÉCLATS SONT LES CASES D'UNE TOILE D'ARAIGNÉE autour du trou : `rayons`
+   * droites depuis lui, `anneaux` cercles. *Elle casse d'un coup* — la fêlure
+   * qui la montrait d'abord est partie (Keko : « la prévisualisation des
+   * éclats n'est pas nécessaire »).
    */
-  fissure: 0.22,
   rayons: 11,
   anneaux: 4,
   /** Le sticker gagné grandit de tant au-dessus de la carte. */
@@ -228,8 +228,6 @@ interface Miette {
 
 interface Casse {
   miettes: Miette[]
-  /** Les fissures : des segments, et quand chacun apparaît (en part de la fissure). */
-  fissures: { a: P; b: P; quand: number }[]
   boite: BoiteALEcran
   trou: P
 }
@@ -240,9 +238,7 @@ interface Casse {
  * comme un puzzle qu'on défait*, pas comme une carte qui casse : **une vitre
  * frappée se fend en toile d'araignée autour du point d'impact**, et le trou
  * du sticker en est un. Des droites partent du trou, des anneaux les relient,
- * les deux un peu de travers — et les cases sont les éclats. **Les fissures
- * qu'on voit d'abord sont exactement leurs bords** : ce qui se fend est ce qui
- * va partir.
+ * les deux un peu de travers — et les cases sont les éclats.
  */
 function casser(boite: BoiteALEcran, trou: P): Casse {
   const { rayons: nr, anneaux: na } = DECOLLAGE
@@ -270,7 +266,6 @@ function casser(boite: BoiteALEcran, trou: P): Casse {
     }),
   )
   const miettes: Miette[] = []
-  const fissures: Casse['fissures'] = []
   for (let k = 0; k < na; k++) {
     for (let i = 0; i < nr; i++) {
       const i2 = (i + 1) % nr
@@ -297,16 +292,12 @@ function casser(boite: BoiteALEcran, trou: P): Casse {
         vy: (dy / d) * force * 0.7 - 220 - Math.random() * 180,
         vr: (Math.random() - 0.5) * 7,
         vf: (Math.random() < 0.5 ? -1 : 1) * (1.5 + Math.random() * 2.5),
-        retard: (k / na) * 0.12 + Math.random() * 0.04,
+        // UN ÉCART À PEINE : les éclats en attente montreraient la toile avant la casse.
+        retard: (k / na) * 0.05 + Math.random() * 0.02,
       })
     }
-    // LES FISSURES DE CET ANNEAU : les rayons qui le traversent, puis l'anneau lui-même.
-    for (let i = 0; i < nr; i++) {
-      fissures.push({ a: sommet[k]![i]!, b: sommet[k + 1]![i]!, quand: k / na })
-      if (k + 1 < na) fissures.push({ a: sommet[k + 1]![i]!, b: sommet[k + 1]![(i + 1) % nr]!, quand: (k + 0.8) / na })
-    }
   }
-  return { miettes, fissures, boite, trou }
+  return { miettes, boite, trou }
 }
 
 function cheminPoly(ctx: CanvasRenderingContext2D, poly: P[]): void {
@@ -340,42 +331,9 @@ function dessinerMiettes(
   const { boite: b, trou } = casse
   const x0 = b.cx - b.l / 2
   const y0 = b.cy - b.h / 2
-  const F = DECOLLAGE.fissure
-  if (t < F) {
-    // LA FÊLURE : la carte tremble, entière, et les fissures courent depuis le trou.
-    const p = t / F
-    const secousse = 3 * (1 - p * 0.5)
-    ctx.save()
-    ctx.translate((Math.random() - 0.5) * secousse, (Math.random() - 0.5) * secousse)
-    ctx.drawImage(base, x0, y0, b.l, b.h)
-    cheminCarte(ctx, b)
-    ctx.clip()
-    ctx.lineCap = 'round'
-    for (const f of casse.fissures) {
-      const q = Math.min(1, Math.max(0, (p * 1.3 - f.quand) * 3))
-      if (q <= 0) continue
-      const bx = f.a.x + (f.b.x - f.a.x) * q
-      const by = f.a.y + (f.b.y - f.a.y) * q
-      // UN TRAIT SOMBRE, PUIS SA LUMIÈRE : une fente laisse passer le jour.
-      ctx.strokeStyle = 'rgba(20, 8, 50, 0.55)'
-      ctx.lineWidth = 3
-      ctx.beginPath()
-      ctx.moveTo(f.a.x, f.a.y)
-      ctx.lineTo(bx, by)
-      ctx.stroke()
-      ctx.strokeStyle = '#fff6dc'
-      ctx.lineWidth = 1.2
-      ctx.shadowColor = ton
-      ctx.shadowBlur = 8
-      ctx.stroke()
-      ctx.shadowBlur = 0
-    }
-    ctx.restore()
-    return
-  }
   const g = 1800
   for (const m of casse.miettes) {
-    const tt = Math.max(0, t - F - m.retard)
+    const tt = Math.max(0, t - m.retard)
     const alpha = 1 - lisse((tt - DECOLLAGE.miettes * 0.4) / (DECOLLAGE.miettes * 0.45))
     if (alpha <= 0.01) continue
     const x = m.c.x + m.vx * tt
@@ -403,7 +361,7 @@ function dessinerMiettes(
     }
     // LE FLASH DE LA CASSE, puis un liseré clair : *un éclat se lit à son bord.*
     // UNE FOIS POUR TOUTE LA CARTE, à l'instant où elle cède.
-    const flash = 1 - lisse((t - F) / 0.14)
+    const flash = 1 - lisse(t / 0.14)
     if (flash > 0) {
       ctx.fillStyle = `rgba(255, 250, 235, ${0.75 * flash})`
       ctx.fill()
@@ -414,7 +372,7 @@ function dessinerMiettes(
     ctx.restore()
   }
   // L'ONDE DE CHOC, un anneau qui part du trou.
-  const to = t - F
+  const to = t
   if (to < 0.4) {
     const k = to / 0.4
     ctx.save()
@@ -624,8 +582,7 @@ export function Decollage({
       else {
         const tc = (maintenant - tCasse) / 1000
         dessinerMiettes(ctx, pret.base, miettes, tc, ton)
-        // LES ÉTINCELLES PARTENT QUAND ELLE CASSE, pas quand elle se fêle.
-        if (tc > DECOLLAGE.fissure) dessinerEtincelles(ctx, etincelles, tc - DECOLLAGE.fissure, ton)
+        dessinerEtincelles(ctx, etincelles, tc, ton)
       }
       if (ph === 'tirer' || ph === 'recolle' || ph === 'arrache') {
         let len: number

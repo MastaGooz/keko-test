@@ -6418,3 +6418,5 @@ une carte qui casse.
   par éclat) et ils se retournaient trop vite, si bien qu'on voyait surtout du
   bleu ; corrigé (flash commun, culbute de 1,5 à 4 rad/s). Chiffres de moi, à
   rejuger ; pas vu sur téléphone.
+
+- **Retouches (16/10/2026)** : Keko, « la prévisualisation des éclats n'est pas nécessaire » : la fêlure (les fissures qui couraient 0,22 s avant la casse) est retirée, la carte cède d'un coup, et l'écart entre éclats tombe à 0,07 s au plus pour qu'ils ne dessinent pas la toile en attendant. Et « Décoller le sticker » tenait sur deux lignes au booster (centré par `left: 50%`, il n'avait que la moitié de l'écran) : `white-space: nowrap`.

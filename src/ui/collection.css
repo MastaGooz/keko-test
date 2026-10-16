@@ -862,6 +862,10 @@
   box-shadow: 0 0.3rem 0 #c9b9f2;
   cursor: pointer;
   pointer-events: auto;
+  /* SUR UNE LIGNE. Keko : « via le booster il est écrit sur deux lignes ».
+     *Centré par left: 50%*, le bouton du paquet n'avait que la moitié de
+     l'écran pour sa largeur, et il se repliait. */
+  white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
   -webkit-user-select: none;
   user-select: none;
