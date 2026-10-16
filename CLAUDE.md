@@ -49,7 +49,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 
 ### Le catalogue
 
-- `npm run emoji` écrit `public/data/emoji.json` : **1 923 cartes** depuis
+- `npm run emoji` écrit `public/data/emoji.json` : **1 915 cartes** depuis
   Unicode (`emoji-test.txt`) + les DEUX fichiers CLDR (`annotations` et
   `annotationsDerived`, les drapeaux sont dans le second). `--peau` écrit
   `emoji-peau.json` (3 963, avec les tons de peau), ouvert par `?paquet&emoji&peau`.
@@ -57,9 +57,11 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   `home.unicode.org/emoji/emoji-frequency/` (pas le `.txt`, qui rend 404). Le
   classement est GLOBAL, pas par groupe ; les 24 % non classés (post-2016)
   vont en bas, départagés par ancienneté. Les deux échelles ne se mélangent pas.
+- **Les drapeaux identiques au pixel près sont écartés** (`DOUBLONS`, huit
+  territoires qui portent le drapeau d'un pays) ; les presque-pareils restent.
 - Une variante de peau hérite du rang de sa base (`baseSansPeau`).
 - Le CDN des animés sépare les points de code par `_`, notre identifiant par `-`.
-  **614 animés** sur 1 923 ; le cache porte les URL, pas les identifiants.
+  **614 animés** sur 1 915 ; le cache porte les URL, pas les identifiants.
 - *Une ressource absente à l'adresse où on l'attend n'est pas une ressource
   absente.*
 

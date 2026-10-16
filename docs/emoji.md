@@ -6045,3 +6045,21 @@ dépassés ») n'est plus rendu, et ce qui ne servait qu'à lui est parti
 **La montée de l'écran vers la couleur du cran reste** (`monterLeCompteur`, qui
 garde son nom) : seul le texte disparaît. Les styles `.paquet-dernier` et
 `.paquet-compteur` restent dans `styles.css`, sans usage.
+
+### Les drapeaux en double, écartés (16/10/2026)
+
+Keko : « c'est trois fois le même drapeau » (🇳🇴 🇧🇻 🇸🇯), puis « supprime
+uniquement les strictement identiques ». **Mesure** : les 270 drapeaux peints
+par Noto en 256 px et comparés pixel par pixel. Huit sont identiques à un autre
+(écart nul) et partent du catalogue (`DOUBLONS` dans `generate-emoji.ts`) :
+🇧🇻 🇸🇯 (Norvège), 🇨🇵 🇲🇫 (France), 🇺🇲 (États-Unis), 🇪🇦 (Espagne),
+🇭🇲 (Australie), 🇮🇴 (identique à 🇩🇬 — *on garde Diego Garcia, plus connu
+que le nom administratif du territoire*, choix laissé par Keko).
+
+**Restent, parce qu'ils diffèrent même à peine** : 🇪🇬/🇾🇪 (l'aigle),
+🇹🇩/🇷🇴 (le bleu), 🇲🇨/🇮🇩 (les proportions).
+
+Le catalogue passe de 1 923 à **1 915 cartes**. Seuls `rang` et `rarete`
+bougent ailleurs : la pyramide se recalcule sur huit cartes de moins et sept
+emoji descendent d'un cran à une frontière (🙂 légendaire → épique, 🔵, 🌪️,
+😼, 🕳️, 🏯, 🌓).

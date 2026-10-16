@@ -423,12 +423,34 @@ function resume(cartes: readonly CarteEmoji[]): string {
   return l.join('\n') + '\n'
 }
 
+/**
+ * LES DRAPEAUX EN DOUBLE, ECARTES. Keko : « supprime uniquement les
+ * strictement identiques ».
+ *
+ * *Unicode donne un drapeau a chaque territoire, et plusieurs territoires
+ * portent celui d'un autre* : peints par Noto, ils sont identiques au pixel
+ * pres (mesure : les 270 drapeaux dessines en 256 et compares, ecart nul). On
+ * garde le pays ; pour l'ocean Indien, Diego Garcia, plus connu que le nom
+ * administratif du territoire. **Les presque-pareils restent** (Egypte et
+ * Yemen, Tchad et Roumanie) : ils different, meme a peine.
+ */
+const DOUBLONS = new Set([
+  '1f1e7-1f1fb', // Ile Bouvet = Norvege
+  '1f1f8-1f1ef', // Svalbard et Jan Mayen = Norvege
+  '1f1e8-1f1f5', // Ile Clipperton = France
+  '1f1f2-1f1eb', // Saint-Martin = France
+  '1f1fa-1f1f2', // Iles mineures eloignees = Etats-Unis
+  '1f1ea-1f1e6', // Ceuta et Melilla = Espagne
+  '1f1ed-1f1f2', // Iles Heard-et-MacDonald = Australie
+  '1f1ee-1f1f4', // Territoire britannique de l'ocean Indien = Diego Garcia
+])
+
 async function main(): Promise<void> {
   const debut = Date.now()
   mkdirSync(SORTIE, { recursive: true })
   journal(`Catalogue des emoji${avecPeau ? ' (variantes de peau COMPRISES)' : ''}`)
 
-  const bruts = lireUnicode(await texte('unicode', UNICODE))
+  const bruts = lireUnicode(await texte('unicode', UNICODE)).filter((b) => !DOUBLONS.has(b.id))
   journal(`${bruts.length} emoji${avecPeau ? '' : ' (variantes de peau ecartees)'}`)
 
   const noms = await nomsFrancais()
