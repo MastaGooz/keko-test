@@ -6146,3 +6146,19 @@ catalogue).
   compléter) au lieu des seules cartes obtenues.
 - Les doublons : à quoi servent-ils (recycler, échanger) ?
 - Une sauvegarde par compte, pour que téléphone et PC partagent la collection.
+
+#### LE CLIC SUR TOUS LES BOUTONS, ET DES VIGNETTES MOINS TERNES
+
+Keko : « on peut utiliser le même son de bouton que celui de "ouvrir un
+nouveau booster" pour tous les boutons ? » — **`Clic-pop.aac` au
+`pointerdown`, comme le bouton 3D**, par un seul écouteur posé par `Jeu` sur
+tout le document : *le bouton qu'on ajoutera demain clique sans qu'on y pense.*
+Sauf les vignettes, qui ont déjà la pose de carte en s'ouvrant.
+
+Et : « j'ai l'impression que les cartes sont plus ternes quand je regarde la
+vue d'ensemble ». ***Elles l'étaient*** : la carte en 3D sature sa peinture en
+sortie de nuanceur (`SATURATION_APLAT`, +40 %, le gain qui la rapproche du
+sachet), la vignette montrait la peinture brute. La vignette prend donc un
+`saturate(1 + SATURATION_APLAT)` en CSS — **le chiffre est lu dans `Carte3D`,
+pas recopié.** Vu côte à côte, le vert du Hot dog rejoint celui de la carte
+ouverte. (Le nuanceur sature en linéaire, CSS en sRGB : proche, pas identique.)

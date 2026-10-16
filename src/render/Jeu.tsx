@@ -42,6 +42,23 @@ export function Jeu(): React.ReactElement {
     void chargerEmojis().then(setCatalogue, () => setCatalogue([]))
     void precharger(SON_CLIC_POP)
   }, [])
+  /**
+   * TOUS LES BOUTONS FONT LE CLIC DE « OUVRIR UN AUTRE PAQUET ». Keko : « on
+   * peut utiliser le même son de bouton que celui de "ouvrir un nouveau
+   * booster" pour tous les boutons ? » ***Au `pointerdown`, comme lui*** : un
+   * son qui attend le relâchement arrive après le geste. *Un seul écouteur pour
+   * toute la page* plutôt qu'un par bouton — celui qu'on ajoutera demain
+   * clique sans qu'on y pense. **Sauf les vignettes** : une carte n'est pas un
+   * bouton, et elle a déjà son son, la pose de carte en s'ouvrant.
+   */
+  useEffect(() => {
+    const cliquer = (e: PointerEvent): void => {
+      const bouton = e.target instanceof Element ? e.target.closest('button') : null
+      if (bouton !== null && !bouton.classList.contains('vignette')) jouerSon(SON_CLIC_POP)
+    }
+    document.addEventListener('pointerdown', cliquer)
+    return () => document.removeEventListener('pointerdown', cliquer)
+  }, [])
 
   const changer = useCallback((f: (c: Collection) => Collection) => {
     setCollection((c) => {
@@ -58,7 +75,6 @@ export function Jeu(): React.ReactElement {
 
   function aller(vers: Page): void {
     if (vers === page) return
-    jouerSon(SON_CLIC_POP)
     // EN QUITTANT LA COLLECTION, TOUT A ÉTÉ VU : la pastille s'éteint, et les
     // « Nouveau » de la grille avec elle. *Pas en y entrant* : on doit pouvoir
     // les y voir.

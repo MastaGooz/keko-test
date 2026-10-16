@@ -26,7 +26,7 @@ import type { Collection, Possession } from '../logic/emoji/collection.ts'
 import { nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { AMBIANCE, peindreCarte, tailleQuIlFaut } from './texture-carte.ts'
 import { COULEUR, carteDeLEmoji, enTitre } from './carte-emoji.ts'
-import { Carte3D, HAUT, LARGE, type CurseurDeCarte } from './Carte3D.tsx'
+import { Carte3D, HAUT, LARGE, SATURATION_APLAT, type CurseurDeCarte } from './Carte3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import { Bloom } from './Bloom.tsx'
@@ -84,6 +84,17 @@ function peinte(c: CarteEmoji, largeur: number): Promise<HTMLCanvasElement> {
   return p
 }
 
+/**
+ * LA VIGNETTE PREND LA SATURATION DE LA CARTE 3D. Keko : « j'ai l'impression que
+ * les cartes sont plus ternes quand je regarde la vue d'ensemble ». *Elles
+ * l'étaient* : la carte en 3D sature sa peinture en sortie de nuanceur
+ * (`SATURATION_APLAT`, +40 %), la vignette montrait la peinture telle quelle.
+ * **Le chiffre est lu, pas recopié** : un seul endroit dit combien.
+ */
+const FILTRE_VIGNETTE: React.CSSProperties = {
+  filter: `saturate(${1 + SATURATION_APLAT}) drop-shadow(0 0.25rem 0.4rem rgba(10, 4, 30, 0.55))`,
+}
+
 function Vignette({
   carte,
   possession,
@@ -134,7 +145,7 @@ function Vignette({
       aria-label={`${enTitre(carte.nom)}, ${NOM_DE_LA_RARETE[carte.rarete]}`}
     >
       {!prete && <span className="vignette-attente">{carte.emoji}</span>}
-      <canvas ref={toile} className="vignette-toile" />
+      <canvas ref={toile} className="vignette-toile" style={FILTRE_VIGNETTE} />
       {possession.nouvelle && <span className="vignette-nouvelle">Nouveau</span>}
       {possession.n > 1 && <span className="vignette-nombre">×{possession.n}</span>}
       {(possession.holo > 0 || possession.anime > 0) && (

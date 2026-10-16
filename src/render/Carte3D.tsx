@@ -73,7 +73,7 @@ const COMPLEMENT_APLAT = 0.3
  * le sachet contre 0,62 sur la carte, à clarté égale. C'est ce gain qui les
  * rapproche, et c'est lui qu'on règle si Keko les veut plus ou moins francs.
  */
-const SATURATION_APLAT = 0.4
+export const SATURATION_APLAT = 0.4
 
 const EPAISSEUR = 0.012
 
