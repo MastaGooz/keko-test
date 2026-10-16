@@ -845,6 +845,15 @@ export function Paquet3D({
   const [decollage, setDecollage] = useState<{ i: number; boite: BoiteALEcran } | null>(null)
   const [cachee, setCachee] = useState(false)
   const [detruites, setDetruites] = useState<ReadonlySet<number>>(new Set())
+  /**
+   * LA SUIVANTE SE POSE D'UN COUP APRÈS UN DÉCOLLAGE (`Carte3D.saut`). Keko :
+   * « il faut lui donner le petit pump + particules comme les autres
+   * révélations ». *Elle les avait*, mais elle regrandissait depuis zéro au
+   * ressort pendant ce temps, et un pompage sur une carte qui grandit ne se
+   * voit pas. Posée à sa taille, elle est « déjà là » comme au défilé normal,
+   * et son instant se lit.
+   */
+  const [sauts, setSauts] = useState<Readonly<Record<number, number>>>({})
   const refDecollage = useRef(false)
   refDecollage.current = decollage !== null
   /** La clé du flash de l'arrachement — *une animation se remonte à neuf.* */
@@ -1156,6 +1165,7 @@ export function Paquet3D({
     setDecollage(null)
     setCachee(false)
     setDetruites(new Set())
+    setSauts({})
     setSommet(-1)
     setEclat(null)
     racine.current?.style.removeProperty('--lueur')
@@ -1540,6 +1550,7 @@ export function Paquet3D({
             <group visible={!couverte}>
             <Carte3D
               carte={carte}
+              saut={sauts[i] ?? 0}
               // LE DOS TANT QU'ELLE N'EST PAS RETOURNÉE : c'est la même carte
               // vue de l'autre côté, pas un second objet.
               dos={!vue}
@@ -1740,8 +1751,10 @@ export function Paquet3D({
     // AU DÉFILÉ, LA SUIVANTE ÉTAIT DÉJÀ DERRIÈRE : c'est elle qu'on découvre.
     if (!fini) {
       if (montree + 1 < paquet.length) {
-        setMontree(montree + 1)
-        decouvrir(montree + 1)
+        const n = montree + 1
+        setSauts((j) => ({ ...j, [n]: (j[n] ?? 0) + 1 }))
+        setMontree(n)
+        decouvrir(n)
       } else setFini(true)
     } else if (zoomee === carte.id) setZoomee(null)
   }
