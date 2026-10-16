@@ -6300,3 +6300,22 @@ déjà passé : rien ne bougeait avant le prochain doigt.
 
 *Non vu sur un iPhone* : un PC n'a pas de permission à demander. Android n'en a
 pas non plus, et écoutait déjà tout de suite.
+
+#### LES VIGNETTES HOLO ONT LEURS PAILLETTES
+
+Keko : « on peut pas avoir les paillettes sur les holos de la collection aussi ? »
+`paillettesHolo` peint la feuille sur la vignette, une fois, avec les réglages
+de `COSMOS` (les deux grilles, leurs parts, la dispersion, les rayons) et les
+mêmes exclusions qu'au nuanceur : jamais sur l'emoji (masque du sujet), et
+sous la plaque seulement sur le clair. **Une vignette ne penche pas**, donc on
+fige un instant du scintillement : peu de paillettes allumées, les autres à
+peine visibles. Tirées par le RNG seedé sur l'identifiant : une vignette garde
+ses paillettes.
+
+*Deux choses vues à l'écran et corrigées* : `peindreCarte` laisse son échelle
+sur la toile (elle peint en unités de 768), donc les paillettes se tassaient
+dans le coin haut gauche — remise à zéro avant de peindre ; et une sur cinq
+allumée faisait une neige qui brouillait la carte et ses lettres — 6 % des
+fines et 12 % des grosses allumées, les autres à 0,1, **et sur la plaque on
+sonde autour de la paillette, pas seulement dessous**, pour l'écarter des
+lettres.
