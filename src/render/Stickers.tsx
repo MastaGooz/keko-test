@@ -191,7 +191,10 @@ function CaseSticker({
         const c = toile.current
         const ctx = c?.getContext('2d')
         if (c == null || ctx == null) return
-        const i = Math.floor((((t - depart) % a.duree) / a.duree) * a.images.length)
+        // JAMAIS NÉGATIF : l'horodatage de la première image peut précéder `depart`
+        // de quelques millisecondes quand l'animation est déjà en mémoire (la
+        // seconde ouverture), et un indice négatif vidait la toile.
+        const i = Math.min(a.images.length - 1, Math.floor(((Math.max(0, t - depart) % a.duree) / a.duree) * a.images.length))
         ctx.clearRect(0, 0, c.width, c.height)
         ctx.drawImage(a.images[i]!, 0, 0, c.width, c.height)
         if (!montre) {
@@ -364,7 +367,10 @@ function StickerOuvert({
         const c = toile.current
         const ctx = c?.getContext('2d')
         if (c == null || ctx == null) return
-        const i = Math.floor((((t - depart) % a.duree) / a.duree) * a.images.length)
+        // JAMAIS NÉGATIF : l'horodatage de la première image peut précéder `depart`
+        // de quelques millisecondes quand l'animation est déjà en mémoire (la
+        // seconde ouverture), et un indice négatif vidait la toile.
+        const i = Math.min(a.images.length - 1, Math.floor(((Math.max(0, t - depart) % a.duree) / a.duree) * a.images.length))
         ctx.clearRect(0, 0, c.width, c.height)
         ctx.drawImage(a.images[i]!, 0, 0, c.width, c.height)
         image = requestAnimationFrame(pas)
