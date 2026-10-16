@@ -1004,46 +1004,6 @@ const ECLAIRCIE_DECOR = 0.22
  */
 const ECLAIRCIE_PAR_CRAN: Record<string, number> = { blanc: 0 }
 
-/**
- * ET LE BLEU ET L'ORANGE REMONTENT AU NIVEAU DU VERT ET DU VIOLET. Keko : « je
- * trouve les couleurs des fonds des cartes rare et légendaire un peu
- * foncées / ternes en comparaison au uncommon / épique qui sont plus flashy ».
- * Mesuré en OKLCH sur la base du décor (la nuit remontée de 22 %) : vert 0,40
- * de clarté et 0,075 de chroma, violet 0,34 et 0,109 — **bleu 0,37 et 0,073**,
- * le plus sombre et l'un des moins colorés, **orange 0,41 et 0,083**, qui à
- * cette clarté tire vers le brun. *On vise une clarté et une chroma*, la
- * teinte reste celle du cran : le bleu à 0,40 et 0,11, l'orange à 0,43 et
- * 0,12. Chiffres de moi, relevés à l'œil sur les deux crans que Keko aime.
- */
-const DECOR_CIBLE: Record<string, { clarte: number; chroma: number }> = {
-  bleu: { clarte: 0.4, chroma: 0.11 },
-  orange: { clarte: 0.43, chroma: 0.12 },
-}
-
-/** Une couleur portée à une clarté et une chroma OKLCH, sa teinte gardée. */
-function versOklch(hex: string, clarte: number, chroma: number): string {
-  const lin = (v: number): number => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
-  const srgbDe = (v: number): number => (v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055)
-  const [r, g, b] = couleurDe(hex).map((v) => lin(v / 255)) as [number, number, number]
-  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
-  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
-  const sv = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
-  const A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * sv
-  const B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * sv
-  const h = Math.atan2(B, A)
-  const a2 = Math.cos(h) * chroma
-  const b2 = Math.sin(h) * chroma
-  const l2 = (clarte + 0.3963377774 * a2 + 0.2158037573 * b2) ** 3
-  const m2 = (clarte - 0.1055613458 * a2 - 0.0638541728 * b2) ** 3
-  const s2 = (clarte - 0.0894841775 * a2 - 1.291485548 * b2) ** 3
-  const rgb = [
-    4.0767416621 * l2 - 3.3077115913 * m2 + 0.2309699292 * s2,
-    -1.2684380046 * l2 + 2.6097574011 * m2 - 0.3413193965 * s2,
-    -0.0041960863 * l2 - 0.7034186147 * m2 + 1.707614701 * s2,
-  ].map((v) => Math.round(Math.min(1, Math.max(0, srgbDe(Math.max(0, v)))) * 255))
-  return `#${rgb.map((v) => v.toString(16).padStart(2, '0')).join('')}`
-}
-
 /** Le mélange sRGB de deux couleurs, `part` de la première. */
 function melange(a: string, b: string, part: number): string {
   const ca = couleurDe(a)
@@ -3753,14 +3713,10 @@ export async function peindreCarte(
   // `?decor=bleu` rend le bleu nuit commun.
   const metalDecor = bulle && !DECOR_BLEU && carte.rarete !== undefined ? METAUX[carte.rarete] : undefined
   // ET ELLE REMONTE UN PEU VERS LE TON MOYEN : voir ECLAIRCIE_DECOR.
-  const baseDecor =
+  const nuitHex =
     metalDecor === undefined
       ? undefined
       : melange(metalDecor[2], metalDecor[3], ECLAIRCIE_PAR_CRAN[carte.rarete!] ?? ECLAIRCIE_DECOR)
-  // ET LE BLEU ET L'ORANGE SONT AVIVÉS : voir DECOR_CIBLE.
-  const cible = carte.rarete === undefined ? undefined : DECOR_CIBLE[carte.rarete]
-  const nuitHex =
-    baseDecor === undefined || cible === undefined ? baseDecor : versOklch(baseDecor, cible.clarte, cible.chroma)
   if (FOND_PEINT)
     peindreDecor(ctx, carte.ciel, nuitHex === undefined ? undefined : couleurDe(nuitHex), undefined, !bulle)
   else {
