@@ -208,6 +208,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   une fois par numéro). **Changer de page démonte le paquet**, et
   `numeroCourant` survit : on ne retombe pas sur le même tirage, et un sachet
   non déchiré reste le même — *on ne retire pas un paquet en changeant de page.*
+- **Une place par VERSION possédée** (`Variante` : normale, holo, animée, holo
+  animée ; `compteDe`, la possession compte aussi `ha`, les holo animés) :
+  chaque version a sa vignette et son compte, et c'est elle qu'on ouvre et
+  qu'on décolle.
 - **La grille est peinte, pas rendue en 3D** : chaque vignette est
   `peindreCarte` à sa taille d'écran, quand elle entre dans la vue, une à la
   fois — **avec le brillant de la carte 3D au repos** (`brillantDuRepos` : les

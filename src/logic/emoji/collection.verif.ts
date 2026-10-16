@@ -13,6 +13,7 @@ import {
   detruire,
   exemplaireADetruire,
   nombreDeStickers,
+  compteDe,
 } from './collection.ts'
 
 let echecs = 0
@@ -64,6 +65,18 @@ verifier('un paquet après garde l’album', ajouterPaquet(d3, ['1f601'], {}, 70
 const relueAlbum = lireCollection(JSON.parse(JSON.stringify(d3)))
 verifier('l’album fait l’aller-retour JSON', JSON.stringify(relueAlbum) === JSON.stringify(d3))
 verifier('une collection d’avant l’album se relit', Object.keys(lireCollection({ version: 1, cartes: {} }).stickers).length === 0)
+
+// LES QUATRE VERSIONS : un holo animé se compte à part.
+const quatre = ajouterPaquet(collectionVide(), ['1f60a', '1f60a', '1f60a'], { '1f60a': { holo: true, anime: true } }, 1)
+const p4 = quatre.cartes['1f60a']!
+verifier('trois holo animés', compteDe(p4, 'holoAnime') === 3 && compteDe(p4, 'holo') === 0 && compteDe(p4, 'simple') === 0)
+const melange = ajouterPaquet(ajouterPaquet(collectionVide(), ['1f60b'], { '1f60b': { holo: true, anime: false } }, 1), ['1f60b', '1f60b'], { '1f60b': sans }, 2)
+const pm = melange.cartes['1f60b']!
+verifier('un holo et deux simples', compteDe(pm, 'holo') === 1 && compteDe(pm, 'simple') === 2)
+const moinsHA = detruire(quatre, '1f60a', { holo: true, anime: true }, 3)
+verifier('détruire un holo animé', compteDe(moinsHA.cartes['1f60a']!, 'holoAnime') === 2)
+const ancienne = lireCollection({ version: 1, cartes: { '1f600': { n: 2, holo: 2, anime: 1, premiere: 0, ordre: 1 } } })
+verifier('une collection d’avant déduit le holo animé imposé', ancienne.cartes['1f600']?.ha === 1)
 
 const relue = lireCollection(JSON.parse(JSON.stringify(trois)))
 verifier('aller-retour JSON', JSON.stringify(relue) === JSON.stringify(trois))

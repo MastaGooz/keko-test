@@ -22,8 +22,8 @@ import { Canvas } from '@react-three/fiber'
 import { NoToneMapping } from 'three'
 import type { CarteEmoji, GroupeEmoji, RareteEmoji } from '../logic/emoji/types.ts'
 import { GROUPES_EMOJI, NOM_DU_GROUPE, RARETES_EMOJI } from '../logic/emoji/types.ts'
-import type { Collection, Exemplaire, Possession } from '../logic/emoji/collection.ts'
-import { exemplaireADetruire, nombreDExemplaires } from '../logic/emoji/collection.ts'
+import type { Collection, Exemplaire, Possession, Variante } from '../logic/emoji/collection.ts'
+import { VARIANTES, compteDe, exemplaireDe, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
 import { AMBIANCE, tailleQuIlFaut } from './texture-carte.ts'
 import { paillettesHolo, peinte, toileDesRayons } from './peinture-vignette.ts'
@@ -64,6 +64,13 @@ import { Bloom } from './Bloom.tsx'
 import { PencheAuGyro } from './Paquet3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import { SON_POSER, jouerSon } from './sons.ts'
+
+const NOM_DE_LA_VARIANTE: Readonly<Record<Variante, string>> = {
+  simple: 'normal',
+  holo: 'holo',
+  anime: 'animé',
+  holoAnime: 'holo animé',
+}
 
 const NOM_DE_LA_RARETE: Readonly<Record<RareteEmoji, string>> = {
   commun: 'Commune',
@@ -159,10 +166,13 @@ const FILTRE_VIGNETTE: React.CSSProperties = {
 function Vignette({
   carte,
   possession,
+  variante,
   onOuvrir,
 }: {
   carte: CarteEmoji
   possession: Possession
+  /** La version montrée : chacune a sa vignette (voir `Variante`). */
+  variante: Variante
   onOuvrir: () => void
 }): React.ReactElement {
   const boite = useRef<HTMLButtonElement>(null)
@@ -171,8 +181,9 @@ function Vignette({
   const rayons = useRef<HTMLCanvasElement>(null)
   const sticker = useRef<HTMLCanvasElement>(null)
   const [prete, setPrete] = useState(false)
-  const holo = possession.holo > 0
-  const tourne = AVEC_TOURNE && possession.anime > 0 && carte.animable
+  const { holo, anime } = exemplaireDe(variante)
+  const compte = compteDe(possession, variante)
+  const tourne = AVEC_TOURNE && anime && carte.animable
   useEffect(() => {
     const el = boite.current
     if (el === null) return
@@ -241,7 +252,7 @@ function Vignette({
     <button
       ref={boite}
       type="button"
-      className={`vignette${prete ? ' vignette-prete' : ''}${possession.holo > 0 ? ' vignette-holo' : ''}`}
+      className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}`}
       style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
       onClick={onOuvrir}
       aria-label={`${enTitre(carte.nom)}, ${NOM_DE_LA_RARETE[carte.rarete]}`}
@@ -268,11 +279,11 @@ function Vignette({
           />
         ))}
       {possession.nouvelle && <span className="vignette-nouvelle">Nouveau</span>}
-      {possession.n > 1 && <span className="vignette-nombre">×{possession.n}</span>}
-      {(possession.holo > 0 || possession.anime > 0) && (
+      {compte > 1 && <span className="vignette-nombre">×{compte}</span>}
+      {(holo || anime) && (
         <span className="vignette-bonus">
-          {possession.holo > 0 && <span className="pastille-holo">Holo</span>}
-          {possession.anime > 0 && <span className="pastille-anime">Animé</span>}
+          {holo && <span className="pastille-holo">Holo</span>}
+          {anime && <span className="pastille-anime">Animé</span>}
         </span>
       )}
     </button>
@@ -294,12 +305,14 @@ const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', y
 function CarteOuverte({
   carte,
   possession,
+  variante,
   total,
   onFermer,
   onDetruire,
 }: {
   carte: CarteEmoji
   possession: Possession
+  variante: Variante
   total: number
   onFermer: () => void
   /** Le sticker est décollé : cet exemplaire est détruit. */
@@ -334,8 +347,11 @@ function CarteOuverte({
   const refFermer = useRef(onFermer)
   refFermer.current = onFermer
   const aPeindre = useMemo(
-    () => carteDeLEmoji(carte, { holo: possession.holo > 0, anime: possession.anime > 0 && carte.animable }),
-    [carte, possession.holo, possession.anime],
+    () => {
+      const ex = exemplaireDe(variante)
+      return carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable })
+    },
+    [carte, variante],
   )
   /**
    * LA CARTE PENDANT LE DÉCOLLAGE : l'exemplaire qu'on détruit (le simple
@@ -451,9 +467,8 @@ function CarteOuverte({
     return () => arret.abort()
   }, [])
   const exemplaires = [
-    possession.n > 1 ? `${possession.n} exemplaires` : '1 exemplaire',
-    possession.holo > 0 ? `${possession.holo} holo` : null,
-    possession.anime > 0 ? `${possession.anime} animé${possession.anime > 1 ? 's' : ''}` : null,
+    `${compteDe(possession, variante)} exemplaire${compteDe(possession, variante) > 1 ? 's' : ''} ${NOM_DE_LA_VARIANTE[variante]}`,
+    possession.n > compteDe(possession, variante) ? `${possession.n} en tout` : null,
   ].filter((m): m is string => m !== null)
   return (
     <div className="carte-ouverte">
@@ -515,7 +530,8 @@ function CarteOuverte({
         <button
           type="button"
           className="decoller"
-          onClick={() => setDecolle(exemplaireADetruire(possession))}
+          // C'EST LA VERSION QU'ON REGARDE QUI PART : voir `Variante`.
+          onClick={() => setDecolle(exemplaireDe(variante))}
         >
           Décoller le sticker
         </button>
@@ -551,7 +567,7 @@ export function PageCollection({
   // pouvoir sélectionner plusieurs catégories à la fois comme les raretés ».
   const [groupes, setGroupes] = useState<ReadonlySet<GroupeEmoji>>(new Set())
   const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
-  const [ouverte, setOuverte] = useState<string | null>(null)
+  const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
 
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
   /** Ce qu'on possède ET que le catalogue connaît encore (un doublon retiré sort d'ici). */
@@ -562,11 +578,23 @@ export function PageCollection({
         .filter((x): x is { carte: CarteEmoji; p: Possession } => x.carte !== undefined),
     [collection, parId],
   )
+  /**
+   * UNE PLACE PAR VERSION POSSÉDÉE. Keko : « on fait des emplacements
+   * différents dans la collection pour holo / normal / animé / holo animé ».
+   * Elles se suivent, dans l'ordre normal, holo, animé, holo animé.
+   */
+  const places = useMemo(
+    () =>
+      possedees.flatMap(({ carte, p }) =>
+        VARIANTES.filter((v) => compteDe(p, v) > 0).map((v) => ({ carte, p, v })),
+      ),
+    [possedees],
+  )
   const visibles = useMemo(() => {
     const q = plier(recherche.trim())
-    const l = possedees.filter(
-      ({ carte, p }) =>
-        passeLeBonus(bonus, p) &&
+    const l = places.filter(
+      ({ carte, v }) =>
+        passeLeBonus(bonus, { holo: exemplaireDe(v).holo ? 1 : 0, anime: exemplaireDe(v).anime ? 1 : 0 }) &&
         (raretes.size === 0 || raretes.has(carte.rarete)) &&
         (groupes.size === 0 || groupes.has(carte.groupe)) &&
         (q === '' || plier(carte.nom).includes(q) || carte.mots.some((m) => plier(m).includes(q))),
@@ -576,12 +604,15 @@ export function PageCollection({
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [possedees, recherche, tri, raretes, groupes, bonus])
+  }, [places, recherche, tri, raretes, groupes, bonus])
 
   const total = catalogue?.length ?? 0
   const part = total === 0 ? 0 : possedees.length / total
   const exemplaires = nombreDExemplaires(collection)
-  const laOuverte = ouverte === null ? undefined : possedees.find((x) => x.carte.id === ouverte)
+  const laOuverte =
+    ouverte === null
+      ? undefined
+      : places.find((x) => x.carte.id === ouverte.id && x.v === ouverte.v)
 
   return (
     <div className="collection">
@@ -664,8 +695,14 @@ export function PageCollection({
           </div>
         ) : (
           <div className="collection-grille">
-            {visibles.map(({ carte, p }) => (
-              <Vignette key={carte.id} carte={carte} possession={p} onOuvrir={() => setOuverte(carte.id)} />
+            {visibles.map(({ carte, p, v }) => (
+              <Vignette
+                key={`${carte.id}:${v}`}
+                carte={carte}
+                possession={p}
+                variante={v}
+                onOuvrir={() => setOuverte({ id: carte.id, v })}
+              />
             ))}
           </div>
         )}
@@ -678,6 +715,7 @@ export function PageCollection({
           <CarteOuverte
             carte={laOuverte.carte}
             possession={laOuverte.p}
+            variante={laOuverte.v}
             total={total}
             onFermer={() => setOuverte(null)}
             onDetruire={(ex) => onDetruire(laOuverte.carte.id, ex)}

@@ -21,6 +21,11 @@ export interface Possession {
   holo: number
   /** Combien sont animés. */
   anime: number
+  /**
+   * Combien sont À LA FOIS holo et animés — comptés aussi dans `holo` et dans
+   * `anime`. Absent d'une collection d'avant : 0 (voir `lireCollection`).
+   */
+  ha: number
   /** Quand le premier est arrivé, en millisecondes (horloge injectée). */
   premiere: number
   /** L'ordre d'arrivée du premier : départage deux cartes du même paquet. */
@@ -41,6 +46,30 @@ export interface Stickers {
   anime: number
   /** Quand le dernier est arrivé : l'album se trie par là. */
   dernier: number
+}
+
+/**
+ * LES QUATRE VERSIONS D'UNE CARTE. Keko : « on fait des emplacements différents
+ * dans la collection pour holo / normal / animé / holo animé ». *Chacune a sa
+ * vignette, son compte, et c'est elle qu'on ouvre et qu'on décolle.*
+ */
+export type Variante = 'simple' | 'holo' | 'anime' | 'holoAnime'
+export const VARIANTES: readonly Variante[] = ['simple', 'holo', 'anime', 'holoAnime']
+
+/** Combien d'exemplaires d'une version on possède. */
+export function compteDe(p: Possession, v: Variante): number {
+  if (v === 'holoAnime') return p.ha
+  if (v === 'holo') return p.holo - p.ha
+  if (v === 'anime') return p.anime - p.ha
+  return p.n - p.holo - p.anime + p.ha
+}
+
+/** La version d'un exemplaire, et l'exemplaire d'une version. */
+export function varianteDe(ex: Exemplaire): Variante {
+  return ex.holo && ex.anime ? 'holoAnime' : ex.holo ? 'holo' : ex.anime ? 'anime' : 'simple'
+}
+export function exemplaireDe(v: Variante): Exemplaire {
+  return { holo: v === 'holo' || v === 'holoAnime', anime: v === 'anime' || v === 'holoAnime' }
 }
 
 /** UN EXEMPLAIRE PRÉCIS : celui qu'on détruit porte ses bonus avec lui. */
@@ -81,6 +110,7 @@ export function ajouterPaquet(
         n: 1,
         holo: b?.holo === true ? 1 : 0,
         anime: b?.anime === true ? 1 : 0,
+        ha: b?.holo === true && b?.anime === true ? 1 : 0,
         premiere: quand,
         ordre: arrivees,
         nouvelle: true,
@@ -91,6 +121,7 @@ export function ajouterPaquet(
         n: deja.n + 1,
         holo: deja.holo + (b?.holo === true ? 1 : 0),
         anime: deja.anime + (b?.anime === true ? 1 : 0),
+        ha: deja.ha + (b?.holo === true && b?.anime === true ? 1 : 0),
         // *UN HOLO OU UN ANIMÉ DE PLUS SUR UNE CARTE CONNUE EST UNE NOUVELLE* :
         // c'est un exemplaire qu'on n'avait pas.
         nouvelle: deja.nouvelle || b?.holo === true || b?.anime === true,
@@ -107,9 +138,8 @@ export function ajouterPaquet(
  * animé ; on les suppose séparés, ce qui est le cas de presque tous.
  */
 export function exemplaireADetruire(p: Possession): Exemplaire {
-  if (p.n > p.holo + p.anime) return { holo: false, anime: false }
-  if (p.holo > 0) return { holo: true, anime: false }
-  return { holo: false, anime: p.anime > 0 }
+  for (const v of VARIANTES) if (compteDe(p, v) > 0) return exemplaireDe(v)
+  return { holo: false, anime: false }
 }
 
 /**
@@ -124,12 +154,10 @@ export function detruire(col: Collection, id: string, ex: Exemplaire, quand: num
   const n = p.n - 1
   if (n <= 0) delete cartes[id]
   else {
-    cartes[id] = {
-      ...p,
-      n,
-      holo: Math.min(n, Math.max(0, p.holo - (ex.holo ? 1 : 0))),
-      anime: Math.min(n, Math.max(0, p.anime - (ex.anime ? 1 : 0))),
-    }
+    const holo = Math.min(n, Math.max(0, p.holo - (ex.holo ? 1 : 0)))
+    const anime = Math.min(n, Math.max(0, p.anime - (ex.anime ? 1 : 0)))
+    const ha = Math.min(holo, anime, Math.max(0, p.ha - (ex.holo && ex.anime ? 1 : 0)))
+    cartes[id] = { ...p, n, holo, anime, ha }
   }
   const s = col.stickers[id] ?? { n: 0, holo: 0, anime: 0, dernier: quand }
   // LE BONUS NE PASSE AU STICKER QUE SI LA CARTE L'AVAIT : un compte abîmé ne
@@ -161,7 +189,7 @@ export function debloquer(col: Collection, ids: readonly string[], quand: number
   for (const id of ids) {
     if (cartes[id] !== undefined) continue
     arrivees += 1
-    cartes[id] = { n: 1, holo: 0, anime: 0, premiere: quand, ordre: arrivees, nouvelle: false }
+    cartes[id] = { n: 1, holo: 0, anime: 0, ha: 0, premiere: quand, ordre: arrivees, nouvelle: false }
   }
   return { ...col, arrivees, cartes }
 }
@@ -211,10 +239,16 @@ export function lireCollection(brut: unknown): Collection {
     const premiere = entier(p.premiere)
     const ordre = entier(p.ordre, 1)
     if (n === null || holo === null || anime === null || premiere === null || ordre === null) continue
+    const h = Math.min(holo, n)
+    const a = Math.min(anime, n)
+    // LES DEUX À LA FOIS : absent d'avant (0), jamais plus que l'un ou l'autre,
+    // et au moins ce que les comptes imposent (holo + animés au-delà de n).
+    const ha = Math.min(h, a, Math.max(entier(p.ha) ?? 0, h + a - n))
     cartes[id] = {
       n,
-      holo: Math.min(holo, n),
-      anime: Math.min(anime, n),
+      holo: h,
+      anime: a,
+      ha,
       premiere,
       ordre,
       nouvelle: p.nouvelle === true,
