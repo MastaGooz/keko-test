@@ -433,25 +433,30 @@ export const COSMOS = {
 const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
 
 /**
- * LE RELIEF DE L'EMOJI HOLO. Keko, après la nacre, le caméléon, le vernis, la
- * poussière d'or et l'hologramme : « essayons ton idée de relief 3D ». *Rien
- * n'est repeint, rien n'est ajouté par-dessus* : le sticker FLOTTE au-dessus de
- * la carte, à `hauteur` largeurs de carte.
+ * LE RELIEF DE L'EMOJI HOLO : UNE CARTE À FENÊTRE. Keko, après un premier
+ * relief où l'emoji flottait devant : « plutôt que mettre l'emoji devant, on le
+ * met au même niveau que la carte et on met le fond derrière, ce serait mieux
+ * non ? » — *oui* : **l'emoji reste à la surface**, avec le cadre et le texte,
+ * et **le décor de la fenêtre d'art s'enfonce** de `profondeur` largeurs de
+ * carte.
  *
- * - **La parallaxe** : le regard qui frappe la face à un endroit a traversé le
- *   plan du sticker plus loin dans sa direction — on y lit donc le sticker
- *   décalé de hauteur × (regard tangent / regard normal). La carte de face,
- *   rien ne bouge ; penchée, l'emoji glisse sur son fond.
- * - **L'ombre portée** : la lampe clé projette la silhouette sur la face, du
- *   côté opposé à la lampe (en bas à gauche) ; elle ne dépend pas du regard,
- *   donc elle reste quand l'emoji glisse — c'est l'écart des deux qui fait la
- *   profondeur. `ombre` sa force, `flou` son adoucissement (quatre prises).
- * - **La silhouette se lit dans la différence** entre la carte entière et la
+ * - **La parallaxe du fond** : le regard qui passe la surface à un endroit
+ *   touche le fond plus loin dans sa direction — on y lit donc le décor
+ *   décalé de profondeur × (regard tangent / regard normal), à l'opposé du
+ *   regard. Gardé dans la fenêtre ; là où il en sortirait, on voit la PAROI,
+ *   assombrie (`paroi`).
+ * - **L'ombre de l'emoji tombe sur le fond** : la silhouette projetée par la
+ *   lampe clé sur le plan du fond (`ombre`, adoucie de `flou`) — elle glisse
+ *   avec lui, et l'écart entre l'emoji fixe et son ombre qui bouge fait la
+ *   profondeur.
+ * - **Les paillettes de la feuille restent à la surface** : elles glissent sur
+ *   les rayons, autre indice de profondeur.
+ * - La silhouette se lit dans la différence entre la carte entière et la
  *   même carte sans emoji (`sansSujet`) : nette au pixel, cerne compris.
  *
  * Chiffres de moi ; `?relief=0` le retire.
  */
-export const RELIEF = { hauteur: 0.1, ombre: 0.55, flou: 0.008, seuil: 6 }
+export const RELIEF = { profondeur: 0.12, ombre: 0.55, flou: 0.008, seuil: 6, paroi: 0.65 }
 const AVEC_RELIEF = new URLSearchParams(location.search).get('relief') !== '0'
 
 
@@ -1071,25 +1076,36 @@ ${nuanceur.vertexShader}`.replace(
          // lueur propre de la face (son émissif, la même peinture) la reprend,
          // sinon elle gardait l'emoji à sa place d'origine, en fantôme.
          vec3 couleurRelief = diffuseColor.rgb;
-         // OÙ L'EMOJI SE TROUVE, pour le masque du sujet : décalé avec lui.
-         vec2 uvSujet = vLustreUv;
+         // OÙ LE FOND EST LU : enfoncé dans la fenêtre si le relief joue.
+         vec2 uvFond = vLustreUv;
          if (uRelief > 0.5) {
            vec3 VR = normalize(vViewPosition);
            vec3 LR = normalize(vec3(${BRILLANT.lampe.map((v) => v.toFixed(3)).join(', ')}));
-           // LE STICKER VU PAR LE REGARD, décalé vers lui ; v se compte en
-           // hauteurs de carte (1,4 largeur).
+           // LA FENÊTRE D'ART, en coordonnées de texture (v vers le haut).
+           vec2 fenMin = vec2(${RAYONS_DANS_LA_CARTE.x.toFixed(4)}, 1.0 - ${(RAYONS_DANS_LA_CARTE.y + RAYONS_DANS_LA_CARTE.h).toFixed(4)});
+           vec2 fenMax = vec2(${(RAYONS_DANS_LA_CARTE.x + RAYONS_DANS_LA_CARTE.l).toFixed(4)}, 1.0 - ${RAYONS_DANS_LA_CARTE.y.toFixed(4)});
+           float dansFen = step(fenMin.x, vLustreUv.x) * step(vLustreUv.x, fenMax.x)
+             * step(fenMin.y, vLustreUv.y) * step(vLustreUv.y, fenMax.y);
+           // LE FOND VU PAR LE REGARD, enfoncé : décalé à l'opposé de lui ; v se
+           // compte en hauteurs de carte (1,4 largeur).
            vec2 versR = vec2(dot(VR, TR), dot(VR, BR) / 1.4) / max(dot(VR, NR), 0.25);
-           vec2 qR = vLustreUv + versR * ${RELIEF.hauteur.toFixed(3)};
-           float aR = stickerEn(qR);
-           uvSujet = qR;
-           // SON OMBRE, vers la lampe : fixe quand on penche.
+           vec2 brut = vLustreUv - versR * ${RELIEF.profondeur.toFixed(3)};
+           vec2 bF = clamp(brut, fenMin, fenMax);
+           // LA PAROI : là où le fond sortirait de la fenêtre, on voit son bord.
+           float paroi = clamp(length(brut - bF) / ${(RELIEF.profondeur * 0.25).toFixed(4)}, 0.0, 1.0);
+           bF = mix(vLustreUv, bF, dansFen);
+           uvFond = bF;
+           // L'OMBRE DE L'EMOJI SUR LE FOND : la silhouette au-dessus, vers la lampe.
            vec2 versL = vec2(dot(LR, TR), dot(LR, BR) / 1.4) / max(dot(LR, NR), 0.25);
-           vec2 qO = vLustreUv + versL * ${RELIEF.hauteur.toFixed(3)};
+           vec2 qO = bF + versL * ${RELIEF.profondeur.toFixed(3)};
            float fO = ${RELIEF.flou.toFixed(4)};
            float ombreR = 0.25 * (stickerEn(qO + vec2(fO, 0.0)) + stickerEn(qO - vec2(fO, 0.0))
-             + stickerEn(qO + vec2(0.0, fO)) + stickerEn(qO - vec2(0.0, fO)));
-           vec3 fondR = texture2D(uNu, vLustreUv).rgb * (1.0 - ${RELIEF.ombre.toFixed(2)} * ombreR);
-           diffuseColor.rgb = mix(fondR, texture2D(uPeinture, qR).rgb, aR);
+             + stickerEn(qO + vec2(0.0, fO)) + stickerEn(qO - vec2(0.0, fO))) * dansFen;
+           vec3 fondR = texture2D(uNu, bF).rgb
+             * (1.0 - ${RELIEF.ombre.toFixed(2)} * ombreR) * (1.0 - ${RELIEF.paroi.toFixed(2)} * paroi * dansFen);
+           // L'EMOJI, À LA SURFACE, à sa place.
+           float aR = stickerEn(vLustreUv);
+           diffuseColor.rgb = mix(fondR, texture2D(uPeinture, vLustreUv).rgb, aR);
            couleurRelief = diffuseColor.rgb;
          }
          float luminance = dot(diffuseColor.rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -1371,7 +1387,8 @@ ${nuanceur.vertexShader}`.replace(
            // RAYONS_BRILLANTS. On retrouve le secteur et le fondu de
            // peindreRayons, à partir du haut de la carte comme sur la toile.
            if (uRayons > 0.0) {
-             vec2 tp = vec2(vLustreUv.x, 1.0 - vLustreUv.y);
+             // LES RAYONS SE LISENT LÀ OÙ EST LE FOND : enfoncé avec le relief.
+             vec2 tp = vec2(uvFond.x, 1.0 - uvFond.y);
              vec2 cr = vec2(${RAYONS_DANS_LA_CARTE.x.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.l.toFixed(4)} * 0.5, ${RAYONS_DANS_LA_CARTE.y.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.h.toFixed(4)} * 0.5);
              vec2 dr = vec2(tp.x - cr.x, (tp.y - cr.y) * 1.4);
              float fenetre = step(${RAYONS_DANS_LA_CARTE.x.toFixed(4)}, tp.x) * step(tp.x, ${RAYONS_DANS_LA_CARTE.x.toFixed(4)} + ${RAYONS_DANS_LA_CARTE.l.toFixed(4)})
@@ -1380,7 +1397,7 @@ ${nuanceur.vertexShader}`.replace(
              float clair = smoothstep(0.0, 0.025, fr) * (1.0 - smoothstep(0.475, 0.5, fr));
              float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
              float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);
-             float libre = texture2D(uMasqueSujet, uvSujet).r;
+             float libre = texture2D(uMasqueSujet, vLustreUv).r;
              float kr = clair * fonduR * libre * fenetre;
              float nappeR = pow(sc, ${RAYONS_BRILLANTS.large.toFixed(1)});
              cc *= 1.0 + nappeR * ${RAYONS_BRILLANTS.reflet.toFixed(2)} * kr * feuc;
@@ -1395,7 +1412,7 @@ ${nuanceur.vertexShader}`.replace(
 
          // LES PAILLETTES COSMOS DE LA FEUILLE HOLO : voir COSMOS.
          if (uHolo > 0.0 && ${AVEC_COSMOS ? 'true' : 'false'}) {
-           float libreH = texture2D(uMasqueSujet, uvSujet).r;
+           float libreH = texture2D(uMasqueSujet, vLustreUv).r;
            vec3 cosmos = vec3(0.0);
            for (int k = 0; k < 2; k++) {
              bool fin = k == 0;
