@@ -93,6 +93,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   image de l'animation) ; la vignette se monte en trois couches (fond, rayons
   qui tournent en CSS via `toileDesRayons`, sticker).
 - **Le reflet prend la couleur du cran** (`TON_LUSTRE`, dérivé de `METAUX`).
+- **Les rayons sombres reçoivent 40 % de la lumière des clairs**
+  (`ECLAIRE_SOMBRES`, lu par le peintre, la vignette qui tourne et le
+  nuanceur ; `?sombres=0` rend l'ancien contraste, `?sombres=0.6` essaie).
 - **Contour simple** (`contour === 'simple'`), plaque claire, Baloo 2 (800 /
   400 / 700), pastille de type, coins à 5,5 % (`RAYON_SIMPLE`, lu par la face,
   le corps extrudé ET le dos), bordure 2,7 U, air du sujet 7 U. **La plaque
@@ -423,6 +426,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?sticker=0` | l'emoji nu, sans son cerne de sticker |
 | `?brillant=0`, `?rayonsbrillants=0`, `?lin=0.09` | la bordure, les rayons clairs sans leur brillant ; le lin tressé essayé puis retiré |
 | `?visage=🤩` | un autre emoji à la place du « o » du titre du sachet |
+| `?sombres=0.6` | la part de lumière des rayons clairs posée sur les sombres (0,4 par défaut, 0 = l'ancien contraste) |
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |

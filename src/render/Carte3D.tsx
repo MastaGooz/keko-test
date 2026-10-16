@@ -51,6 +51,7 @@ import {
   masqueDuSujetDe,
   sujetDe,
   rayonsDuCran,
+  ECLAIRE_SOMBRES,
 } from './texture-carte.ts'
 
 /**
@@ -1201,7 +1202,9 @@ ${nuanceur.vertexShader}`.replace(
              float fonduT = 1.0 - clamp((lT - rT * 0.08) / (rT * 0.92), 0.0, 1.0);
              float rC = rT * uCoeurPortee;
              float fonduC = 1.0 - clamp((lT - rT * 0.08) / max(rC - rT * 0.08, 0.0001), 0.0, 1.0);
-             vec3 ajout = (uRayonsTon * uRayonsForce * fonduT + uCoeurTon * uCoeurForce * fonduC) * secteurT;
+             // Les sombres reçoivent leur part : voir ECLAIRE_SOMBRES.
+             float partT = mix(${ECLAIRE_SOMBRES.toFixed(3)}, 1.0, secteurT);
+             vec3 ajout = (uRayonsTon * uRayonsForce * fonduT + uCoeurTon * uCoeurForce * fonduC) * partT;
              fondR = versLineaire(min(versSrgb(fondR) + ajout, vec3(1.0)));
            }
            // L'EMOJI, À LA SURFACE, à sa place.

@@ -1581,6 +1581,21 @@ function masqueDuSujet(
  * partir des mêmes nombres que `peindreRayons` et que son appel : la fenêtre
  * d'art en mode emoji (`marge` = la bordure, jusqu'à `HAUT_BULLE`).
  */
+/**
+ * LES RAYONS SOMBRES S'ÉCLAIRCISSENT. Keko : « j'ai peur que le contraste entre
+ * les rayons clairs et sombres du fond des cartes ne soit trop fort, on peut
+ * essayer d'éclaircir les rayons sombres ? » Les secteurs sombres étaient le
+ * fond nu ; ils reçoivent maintenant cette PART de la lumière des clairs (même
+ * ton, même fondu, même cœur) — *l'écart se resserre par le bas, les clairs ne
+ * perdent rien*. Peintre, vignette qui tourne et nuanceur lisent ce chiffre.
+ * Chiffre de moi ; `?sombres=0` rend l'ancien contraste, `?sombres=0.6` essaie.
+ */
+export const ECLAIRE_SOMBRES = (() => {
+  const v = typeof location === 'undefined' ? null : new URLSearchParams(location.search).get('sombres')
+  const n = v === null ? NaN : Number(v)
+  return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.4
+})()
+
 export const RAYONS_DANS_LA_CARTE = (() => {
   const marge = CONTOURS[PISTE_CONTOUR] * U
   const x = marge / LARGE
@@ -1626,16 +1641,23 @@ function peindreRayons(
   ctx.globalAlpha = force
   const depart = 0.21
   const pas = (Math.PI * 2) / NB_RAYONS
+  // LES CLAIRS (pairs) PLEINS, LES SOMBRES (impairs) à ECLAIRE_SOMBRES.
   const secteurs = (): void => {
-    for (let i = 0; i < NB_RAYONS; i += 2) {
-      const a0 = depart + i * pas
-      const a1 = a0 + pas
-      ctx.beginPath()
-      ctx.moveTo(cx, cy)
-      ctx.arc(cx, cy, rayon * 1.05, a0, a1)
-      ctx.closePath()
-      ctx.fill()
+    const a = ctx.globalAlpha
+    for (const [debut, part] of [[0, 1], [1, ECLAIRE_SOMBRES]] as const) {
+      if (part <= 0) continue
+      ctx.globalAlpha = a * part
+      for (let i = debut; i < NB_RAYONS; i += 2) {
+        const a0 = depart + i * pas
+        const a1 = a0 + pas
+        ctx.beginPath()
+        ctx.moveTo(cx, cy)
+        ctx.arc(cx, cy, rayon * 1.05, a0, a1)
+        ctx.closePath()
+        ctx.fill()
+      }
     }
+    ctx.globalAlpha = a
   }
   secteurs()
   // LE CŒUR CLAIR, pour les crans qui plafonnent : voir COEUR_RAYONS.

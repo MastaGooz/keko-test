@@ -6,7 +6,7 @@
  */
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { createRng } from '../logic/rng.ts'
-import { RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, rayonsDuCran } from './texture-carte.ts'
+import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, rayonsDuCran } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
@@ -279,15 +279,22 @@ export function toileDesRayons(rarete: string, cote: number, rayon: number, ecla
   const cx = cote / 2
   const n = RAYONS_DANS_LA_CARTE.nombre
   const pas = (Math.PI * 2) / n
+  // Les clairs pleins, les sombres à ECLAIRE_SOMBRES, comme peindreRayons.
   const secteurs = (): void => {
-    for (let i = 0; i < n; i += 2) {
-      const a0 = RAYONS_DANS_LA_CARTE.depart + i * pas
-      ctx.beginPath()
-      ctx.moveTo(cx, cx)
-      ctx.arc(cx, cx, cote, a0, a0 + pas)
-      ctx.closePath()
-      ctx.fill()
+    const a = ctx.globalAlpha
+    for (const [debut, part] of [[0, 1], [1, ECLAIRE_SOMBRES]] as const) {
+      if (part <= 0) continue
+      ctx.globalAlpha = a * part
+      for (let i = debut; i < n; i += 2) {
+        const a0 = RAYONS_DANS_LA_CARTE.depart + i * pas
+        ctx.beginPath()
+        ctx.moveTo(cx, cx)
+        ctx.arc(cx, cx, cote, a0, a0 + pas)
+        ctx.closePath()
+        ctx.fill()
+      }
     }
+    ctx.globalAlpha = a
   }
   ctx.globalCompositeOperation = 'lighter'
   const fondu = ctx.createRadialGradient(cx, cx, rayon * 0.08, cx, cx, rayon)
