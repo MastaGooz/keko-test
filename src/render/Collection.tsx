@@ -107,6 +107,13 @@ function basculer<T>(s: ReadonlySet<T>, v: T): ReadonlySet<T> {
  * de coché laisse tout passer ; cochés ensemble, une carte passe si elle a
  * l'un OU l'autre.
  */
+/** Obtenues / manquantes — « Toutes les cartes » seulement (voir `PageCollection`). */
+type PossessionFiltre = 'obtenues' | 'manquantes'
+const POSSESSION_FILTRES: readonly { id: PossessionFiltre; nom: string }[] = [
+  { id: 'obtenues', nom: 'Obtenues' },
+  { id: 'manquantes', nom: 'Manquantes' },
+]
+
 export type BonusFiltre = 'holo' | 'anime'
 const BONUS_FILTRES: readonly { id: BonusFiltre; nom: string }[] = [
   { id: 'holo', nom: 'Holo' },
@@ -765,8 +772,14 @@ export function PageCollection({
   // pouvoir sélectionner plusieurs catégories à la fois comme les raretés ».
   const [groupes, setGroupes] = useState<ReadonlySet<GroupeEmoji>>(new Set())
   const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
+  /**
+   * OBTENUES / MANQUANTES, dans « Toutes les cartes » seulement (Keko : « dans
+   * toutes les cartes, un filtre obtenues / manquantes »). Un ensemble comme
+   * les autres : rien de coché, ou les deux, tout passe.
+   */
+  const [possession, setPossession] = useState<ReadonlySet<PossessionFiltre>>(new Set())
   const [panneau, setPanneau] = useState(false)
-  const actifs = raretes.size + groupes.size + bonus.size
+  const actifs = raretes.size + groupes.size + bonus.size + possession.size
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
 
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
@@ -800,6 +813,7 @@ export function PageCollection({
     const q = plier(recherche.trim())
     const l = places.filter(
       ({ carte, p, v }) =>
+        (possession.size === 0 || possession.has(p === null ? 'manquantes' : 'obtenues')) &&
         passeLeBonus(bonus, {
           holo: p !== null && exemplaireDe(v).holo ? 1 : 0,
           anime: p !== null && exemplaireDe(v).anime ? 1 : 0,
@@ -813,7 +827,7 @@ export function PageCollection({
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [places, recherche, tri, raretes, groupes, bonus])
+  }, [places, recherche, tri, raretes, groupes, bonus, possession])
 
   const total = catalogue?.length ?? 0
   const part = total === 0 ? 0 : possedees.length / total
@@ -868,6 +882,7 @@ export function PageCollection({
               setRaretes(new Set())
               setGroupes(new Set())
               setBonus(new Set())
+              setPossession(new Set())
               setTri(triParDefaut)
             }}
             onFermer={() => setPanneau(false)}
@@ -921,6 +936,22 @@ export function PageCollection({
             <SectionFiltre titre="Bonus">
               <PucesBonus valeur={bonus} onChange={setBonus} />
             </SectionFiltre>
+            {toutes && (
+              <SectionFiltre titre="Possession">
+                <div className="filtres-panneau-puces">
+                  {POSSESSION_FILTRES.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      className={`puce${possession.has(f.id) ? ' actif' : ''}`}
+                      onClick={() => setPossession((s) => basculer(s, f.id))}
+                    >
+                      {f.nom}
+                    </button>
+                  ))}
+                </div>
+              </SectionFiltre>
+            )}
           </PanneauFiltres>
         )}
 
