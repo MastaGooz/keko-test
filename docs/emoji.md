@@ -6327,3 +6327,13 @@ dispo à l'ouverture ». Sous le sachet tant qu'il attend
 (`Paquet3D.onSachetEnAttente` : ni déchiré, ni ouvert), parti dès qu'il se
 déchire. **Celui qu'on voit compte** : il n'est décompté qu'à l'ouverture, donc
 « 3 disponibles » veut dire celui-ci et deux autres.
+
+#### `&debloquer` : LA MOITIÉ DE LA COLLECTION D'UN LIEN
+
+Keko : « tu peux me débloquer la moitié de la collection ? » ***La collection
+vit dans le navigateur de son appareil*** : rien d'ici ne peut l'écrire. Le lien
+le fait en s'ouvrant : il **complète jusqu'à la moitié** du catalogue (958 sur
+1 915), tirée au hasard parmi ce qui manque, un exemplaire simple, sans
+« Nouveau » (neuf cents pastilles ne diraient rien) et sans compter de paquet
+(`debloquer` dans `logic/emoji/collection.ts`). Rouvrir le lien ne double rien,
+et le paramètre est retiré de l'adresse. Vérifié : 958, puis 958.

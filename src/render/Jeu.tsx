@@ -23,7 +23,8 @@ import '../ui/collection.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
-import { ajouterPaquet, nombreDeNouvelles, toutVu, type Collection } from '../logic/emoji/collection.ts'
+import { ajouterPaquet, debloquer, nombreDeNouvelles, toutVu, type Collection } from '../logic/emoji/collection.ts'
+import { createRng } from '../logic/rng.ts'
 import { chargerCollection, chargerReserve, sauverCollection, sauverReserve } from '../ui/collection.ts'
 import { RESERVE, prendreUnPaquet, prochainDans, reserveAJour, type Reserve } from '../logic/emoji/reserve.ts'
 import { chargerEmojis } from '../ui/emoji.ts'
@@ -197,6 +198,32 @@ export function Jeu(): React.ReactElement {
       return n
     })
   }, [])
+  /**
+   * `&debloquer` : LA MOITIÉ DU CATALOGUE, D'UN LIEN. Keko : « tu peux me
+   * débloquer la moitié de la collection ? » *La collection vit sur l'appareil*,
+   * donc c'est l'appareil qui l'écrit en ouvrant le lien. **Il complète jusqu'à
+   * la moitié**, tirée au hasard parmi ce qui manque : rouvrir le lien ne
+   * double rien. Le paramètre est retiré de l'adresse ensuite.
+   */
+  useEffect(() => {
+    if (catalogue === null || catalogue.length === 0) return
+    const p = new URLSearchParams(location.search)
+    if (!p.has('debloquer')) return
+    p.delete('debloquer')
+    history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
+    changer((c) => {
+      const cible = Math.ceil(catalogue.length / 2)
+      const manquent = catalogue.filter((x) => c.cartes[x.id] === undefined).map((x) => x.id)
+      const deja = catalogue.length - manquent.length
+      if (deja >= cible) return c
+      const rng = createRng(Date.now() >>> 0)
+      for (let i = manquent.length - 1; i > 0; i--) {
+        const j = Math.floor(rng.next() * (i + 1))
+        ;[manquent[i], manquent[j]] = [manquent[j]!, manquent[i]!]
+      }
+      return debloquer(c, manquent.slice(0, cible - deja), Date.now())
+    })
+  }, [catalogue, changer])
   const ajouter = useCallback(
     (ids: readonly string[], bonus: Readonly<Record<string, Bonus>>) => {
       changer((c) => ajouterPaquet(c, ids, bonus, Date.now()))

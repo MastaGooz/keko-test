@@ -78,6 +78,23 @@ export function ajouterPaquet(
   return { version: 1, arrivees, paquets: col.paquets + 1, cartes }
 }
 
+/**
+ * DÉBLOQUE DES CARTES SANS PAQUET — le banc `&debloquer`. Keko : « tu peux me
+ * débloquer la moitié de la collection ? » Un exemplaire simple de chacune,
+ * **sans « Nouveau »** (neuf cents pastilles ne diraient rien) et sans compter
+ * de paquet. Celles qu'on a déjà ne bougent pas.
+ */
+export function debloquer(col: Collection, ids: readonly string[], quand: number): Collection {
+  const cartes: Record<string, Possession> = { ...col.cartes }
+  let arrivees = col.arrivees
+  for (const id of ids) {
+    if (cartes[id] !== undefined) continue
+    arrivees += 1
+    cartes[id] = { n: 1, holo: 0, anime: 0, premiere: quand, ordre: arrivees, nouvelle: false }
+  }
+  return { ...col, arrivees, cartes }
+}
+
 /** Tout est vu : la pastille s'éteint. */
 export function toutVu(col: Collection): Collection {
   if (!Object.values(col.cartes).some((p) => p.nouvelle)) return col

@@ -9,6 +9,7 @@ import {
   nombreDeNouvelles,
   nombreDExemplaires,
   toutVu,
+  debloquer,
 } from './collection.ts'
 
 let echecs = 0
@@ -29,6 +30,11 @@ verifier('trois exemplaires', nombreDExemplaires(un) === 3)
 verifier('un paquet', un.paquets === 1)
 verifier("l'ordre d'arrivée", un.cartes['1f600']?.ordre === 1 && un.cartes['1f601']?.ordre === 2)
 verifier('deux nouvelles', nombreDeNouvelles(un) === 2)
+const debloquee = debloquer(un, ['1f600', '1f603', '1f604'], 5000)
+verifier('débloquer ajoute ce qui manque', Object.keys(debloquee.cartes).length === 4)
+verifier('débloquer ne touche pas ce qu’on a', debloquee.cartes['1f600']?.n === 2)
+verifier('débloquer ne fait pas de nouvelles', debloquee.cartes['1f603']?.nouvelle === false)
+verifier('débloquer ne compte pas de paquet', debloquee.paquets === un.paquets)
 const vu = toutVu(un)
 verifier('tout vu', nombreDeNouvelles(vu) === 0)
 const deux = ajouterPaquet(vu, ['1f600'], { '1f600': sans }, 2000)
