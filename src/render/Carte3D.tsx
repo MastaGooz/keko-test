@@ -433,21 +433,24 @@ export const COSMOS = {
 const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
 
 /**
- * LA POUSSIÈRE D'OR DE L'EMOJI HOLO. Keko, après la nacre (« ça change la
- * couleur de l'emoji ») et le vernis (« juste un point blanc ») : des grains
- * minuscules DANS l'emoji, comme un sticker pailleté. **Ils s'ajoutent, ils ne
- * repeignent rien.** *Ce qui les distingue des paillettes du fond* : la
- * finesse (`grille` cellules sur la largeur, plus de deux fois la grille fine
- * du cosmos), l'or, et la place — sur l'emoji seulement, pas sur son cerne.
+ * L'HOLOGRAMME DE L'EMOJI HOLO. Keko, après la nacre, le caméléon, le vernis et
+ * la poussière d'or : « l'hologramme de science-fiction ». *Un emoji projeté
+ * plutôt que collé* :
  *
- * Chaque grain est un petit miroir penché au hasard (`dispersion`), comme une
- * paillette : il s'allume quand il renvoie la lampe (`serre`), et scintille un
- * peu de lui-même. `part` des cellules en portent un, de rayon `rayon` cellule.
- * Chiffres de moi ; `?or=0` la retire. Premier réglage (grille 95, rayon 0,2)
- * vu presque invisible : un grain faisait un demi-pixel d'écran.
+ * - **ses couleurs se dédoublent** — le rouge décalé d'un côté, le bleu de
+ *   l'autre, d'autant plus qu'on penche (`regard`, en largeurs de carte par
+ *   unité de reflet) et un peu au repos (`repos`) : les franges débordent de
+ *   la silhouette, l'intérieur de l'emoji garde ses couleurs ;
+ * - **des lignes fines défilent dessus** (`lignes` sur la hauteur de la carte,
+ *   `vitesse` hauteurs par seconde, ± `force` de clarté) ;
+ * - **il grésille parfois** : un sursaut de clarté (`sursaut`), une image de
+ *   temps en temps.
+ *
+ * Chiffres de moi ; `?hologramme=0` le retire.
  */
-export const POUSSIERE = { grille: 80, part: 0.55, rayon: 0.3, dispersion: 0.9, serre: 10, force: 2.2, ton: [1, 0.82, 0.45] as const }
-const AVEC_POUSSIERE = new URLSearchParams(location.search).get('or') !== '0'
+export const HOLOGRAMME = { repos: 0.004, regard: 0.022, lignes: 150, vitesse: 0.08, force: 0.12, sursaut: 0.18 }
+const AVEC_HOLOGRAMME = new URLSearchParams(location.search).get('hologramme') !== '0'
+
 
 
 /**
@@ -1027,6 +1030,8 @@ export function Carte3D({
       nuanceur.uniforms.uBrillant = { value: aplat && AVEC_BRILLANT ? 1 : 0 }
       nuanceur.uniforms.uRayons = { value: 0 }
       nuanceur.uniforms.uMasqueSujet = { value: MASQUE_VIDE }
+      // LA PEINTURE DE LA FACE, relue à côté par l'hologramme (voir HOLOGRAMME).
+      nuanceur.uniforms.uPeinture = { value: MASQUE_VIDE }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -1398,29 +1403,27 @@ ${nuanceur.vertexShader}`.replace(
            vec3 holoE = mix(vec3(1.0), arcE, ${COSMOS.cerne.couleur.toFixed(2)}) * (0.9 + 0.35 * lobeE);
            float vivant = clamp(uHolo / ${FORCE_HOLO.toFixed(3)}, 0.0, 1.0);
            gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * holoE, cerneE * vivant);
-           // LA POUSSIÈRE D'OR, sur l'emoji hors du cerne : voir POUSSIERE.
-           if (${AVEC_POUSSIERE ? 'true' : 'false'}) {
-             float nO = ${POUSSIERE.grille.toFixed(1)};
-             vec2 pgO = vLustreUv * vec2(1.0, 1.4) * nO;
-             vec2 celO = floor(pgO);
-             vec2 dansO = fract(pgO) - 0.5;
-             float o1 = hDev(celO.x * 23.0 + celO.y * 151.0 + 41.0);
-             float o2 = hDev(celO.x * 71.0 + celO.y * 37.0 + 53.0);
-             float o3 = hDev(celO.x * 13.0 + celO.y * 89.0 + 67.0);
-             float o4 = hDev(celO.x * 47.0 + celO.y * 61.0 + 79.0);
-             float presentO = step(o1, ${POUSSIERE.part.toFixed(2)});
-             vec2 dO = dansO - (vec2(o2, o3) - 0.5) * 0.5;
-             vec3 nO3 = Nc + (Tc * (o3 - 0.5) + Bc * (o4 - 0.5)) * ${(POUSSIERE.dispersion * 2).toFixed(2)};
-             nO3 /= max(length(nO3), 1e-6);
-             float sO = max(dot(reflect(-Vc, nO3), Lc), 0.0);
-             float allumeO = pow(sO, ${POUSSIERE.serre.toFixed(1)});
-             float vibreO = 0.6 + 0.4 * sin(uTemps * (3.0 + 4.0 * o4) + o2 * 6.28318);
-             float aaO = pixU * nO;
-             float grainO = 1.0 - smoothstep(${POUSSIERE.rayon.toFixed(2)} - aaO, ${POUSSIERE.rayon.toFixed(2)} + aaO, length(dO));
-             // UN CŒUR CLAIR, UN BORD DORÉ : de l'or seul se perd sur un emoji jaune.
-             vec3 tonO = mix(vec3(${POUSSIERE.ton.map((v) => v.toFixed(2)).join(', ')}), vec3(1.0), 0.5 + 0.4 * allumeO);
-             gl_FragColor.rgb += tonO * grainO * presentO * allumeO * vibreO
-               * surEmoji * (1.0 - blancTexture) * vivant * ${POUSSIERE.force.toFixed(2)};
+           // L'HOLOGRAMME DE L'EMOJI : voir HOLOGRAMME. La peinture est relue
+           // à côté (uPeinture, la même texture que la face) : le rouge d'un
+           // côté, le bleu de l'autre ; seule la DIFFÉRENCE s'ajoute, donc la
+           // lumière et le reste de la carte passent tels quels.
+           if (${AVEC_HOLOGRAMME ? 'true' : 'false'}) {
+             vec2 decalH = vec2(${HOLOGRAMME.repos.toFixed(4)}, 0.0) + Rf.xy * ${HOLOGRAMME.regard.toFixed(4)};
+             vec3 iciH = texture2D(uPeinture, vLustreUv).rgb;
+             float rougeH = texture2D(uPeinture, vLustreUv + decalH).r;
+             float bleuH = texture2D(uPeinture, vLustreUv - decalH).b;
+             float bordD = 1.0 - texture2D(uMasqueSujet, vLustreUv + decalH).r;
+             float bordG = 1.0 - texture2D(uMasqueSujet, vLustreUv - decalH).r;
+             float zoneH = smoothstep(0.05, 0.3, max(1.0 - libreH, max(bordD, bordG)));
+             vec3 c0H = gl_FragColor.rgb;
+             vec3 holoH = c0H + vec3(rougeH - iciH.r, 0.0, bleuH - iciH.b);
+             // LES LIGNES, sur l'emoji seulement.
+             float ligneH = sin((tpE.y * ${HOLOGRAMME.lignes.toFixed(1)} - uTemps * ${(HOLOGRAMME.vitesse * HOLOGRAMME.lignes).toFixed(2)}) * 6.28318);
+             // LE GRÉSILLEMENT : une image sur trente environ, un sursaut.
+             float tic = floor(uTemps * 14.0);
+             float sursautH = step(0.965, fract(sin(tic * 91.7) * 43758.5)) * ${HOLOGRAMME.sursaut.toFixed(2)};
+             holoH *= 1.0 + (ligneH * ${HOLOGRAMME.force.toFixed(2)} + sursautH) * surEmoji;
+             gl_FragColor.rgb = mix(c0H, max(holoH, 0.0), zoneH * vivant);
            }
          }
 
@@ -1463,6 +1466,7 @@ uniform float uLin;
 uniform float uBrillant;
 uniform float uRayons;
 uniform sampler2D uMasqueSujet;
+uniform sampler2D uPeinture;
 // LE BRUIT DU LIN : une valeur par noeud d'une grille, lissée entre eux.
 float bruitLin(vec2 p) {
   vec2 i = floor(p);
@@ -2311,6 +2315,7 @@ ${nuanceur.fragmentShader}`
       // RAYONS_BRILLANTS. Sans lui (animé, dos, autre mode), rien ne brille.
       const masque = (face.map?.userData.masqueSujet ?? null) as THREE.Texture | null
       nuanceur.uniforms.uMasqueSujet!.value = masque ?? MASQUE_VIDE
+      nuanceur.uniforms.uPeinture!.value = face.map ?? MASQUE_VIDE
       nuanceur.uniforms.uRayons!.value = masque !== null && AVEC_RAYONS_BRILLANTS && dos !== true ? 1 : 0
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque

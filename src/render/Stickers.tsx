@@ -23,17 +23,7 @@ import { cerneArcEnCiel } from './peinture-vignette.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
-import { POUSSIERE, SATURATION_APLAT } from './Carte3D.tsx'
-
-/** Un grain de poussière d'or du sticker en grand : sa place, et l'orientation où il renvoie la lampe. */
-interface Grain {
-  x: number
-  y: number
-  mx: number
-  my: number
-  phase: number
-  vitesse: number
-}
+import { SATURATION_APLAT } from './Carte3D.tsx'
 
 type Tri = 'recents' | 'az' | 'rares'
 
@@ -191,9 +181,8 @@ function StickerOuvert({
   const toile = useRef<HTMLCanvasElement>(null)
   /** LE CERNE ARC-EN-CIEL D'UNE HOLO, seul, par-dessus : c'est lui qui tourne au regard. */
   const arc = useRef<HTMLCanvasElement>(null)
-  /** LA POUSSIÈRE D'OR : ses grains, et la toile où ils se peignent à chaque image. */
-  const or = useRef<HTMLCanvasElement>(null)
-  const grains = useRef<Grain[]>([])
+  /** LES LIGNES DE L'HOLOGRAMME, découpées à la silhouette du sticker (voir `HOLOGRAMME`). */
+  const trame = useRef<HTMLDivElement>(null)
   const penche = useRef<HTMLDivElement>(null)
   const zone = useRef<HTMLDivElement>(null)
   const [pret, setPret] = useState(false)
@@ -213,7 +202,7 @@ function StickerOuvert({
       if (!vivant || image === null || t == null || ctx == null) return
       // LA TAILLE DE MISE EN PAGE, PAS CELLE DE L'ÉCRAN : mesurée pendant son
       // arrivée (une mise à l'échelle de 0,4), la toile était peinte en 163 px
-      // pour 349 affichés — un sticker flou, et sa poussière avec.
+      // pour 349 affichés — un sticker flou.
       const cote = Math.round(t.clientWidth * Math.min(window.devicePixelRatio || 1, 2))
       t.width = cote
       t.height = cote
@@ -223,39 +212,22 @@ function StickerOuvert({
       // une couche à part — *repeindre les pixels à chaque mouvement du
       // téléphone coûterait une boucle sur toute la toile ; tourner la teinte
       // d'une couche ne coûte rien.*
-      // LES GRAINS D'OR : une grille fine sur le sticker, gardée sur l'emoji
-      // (opaque, hors du crème du cerne), comme au nuanceur (`POUSSIERE`).
-      const go = or.current
-      if (holo && go != null) {
-        go.width = cote
-        go.height = cote
-        const px = ctx.getImageData(0, 0, cote, cote).data
-        // La carte en compte `grille` sur sa largeur, et le sticker en grand en
-        // fait environ les trois cinquièmes à l'écran : même finesse apparente.
-        const pas = cote / (POUSSIERE.grille * 0.6)
-        const liste: Grain[] = []
-        for (let y = pas / 2; y < cote; y += pas) {
-          for (let x = pas / 2; x < cote; x += pas) {
-            if (Math.random() > POUSSIERE.part) continue
-            const gx = Math.min(cote - 1, Math.round(x + (Math.random() - 0.5) * pas * 0.5))
-            const gy = Math.min(cote - 1, Math.round(y + (Math.random() - 0.5) * pas * 0.5))
-            const k = (gy * cote + gx) * 4
-            if (px[k + 3]! < 230) continue
-            const r = px[k]!
-            const b = px[k + 2]!
-            // LE CRÈME DU CERNE (#fffaf0) n'en reçoit pas.
-            if (r > 235 && b > 215 && r - b > 8 && r - b < 40) continue
-            liste.push({
-              x: gx,
-              y: gy,
-              mx: (Math.random() - 0.5) * 2 * POUSSIERE.dispersion,
-              my: (Math.random() - 0.5) * 2 * POUSSIERE.dispersion,
-              phase: Math.random() * Math.PI * 2,
-              vitesse: 3 + Math.random() * 4,
-            })
-          }
+      // LES LIGNES SE DÉCOUPENT À LA SILHOUETTE : un masque tiré une fois de l'alpha.
+      const li = trame.current
+      if (holo && li != null) {
+        const sil = document.createElement('canvas')
+        sil.width = cote
+        sil.height = cote
+        const sctx = sil.getContext('2d')
+        if (sctx !== null) {
+          sctx.drawImage(t, 0, 0)
+          sctx.globalCompositeOperation = 'source-in'
+          sctx.fillStyle = '#fff'
+          sctx.fillRect(0, 0, cote, cote)
+          const url = `url(${sil.toDataURL()})`
+          li.style.maskImage = url
+          li.style.setProperty('-webkit-mask-image', url)
         }
-        grains.current = liste
       }
       const a = arc.current
       const actx = a?.getContext('2d', { willReadFrequently: true })
@@ -328,33 +300,15 @@ function StickerOuvert({
       // couleur d'un coin à l'autre.
       const a = arc.current
       if (a != null) a.style.filter = `saturate(${1 + SATURATION_APLAT}) hue-rotate(${((o.x - o.y) * 90).toFixed(1)}deg)`
-      // LA POUSSIÈRE D'OR : chaque grain s'allume quand l'orientation passe par
-      // celle où son petit miroir renvoie la lampe, et scintille un peu.
-      const go = or.current
-      const gctx = go?.getContext('2d')
-      if (go != null && gctx != null && grains.current.length > 0) {
-        gctx.clearRect(0, 0, go.width, go.height)
-        gctx.globalCompositeOperation = 'lighter'
-        const tps = performance.now() / 1000
-        const rayon = (go.width / (POUSSIERE.grille * 0.6)) * POUSSIERE.rayon * 2.6
-        const [tr, tg, tb] = POUSSIERE.ton.map((v) => Math.round(v * 255))
-        for (const g of grains.current) {
-          const ecart = Math.hypot(o.x * 0.6 - g.mx, o.y * 0.6 - g.my)
-          const allume = Math.pow(Math.max(0, 1 - ecart / 0.55), 3)
-          const vibre = 0.6 + 0.4 * Math.sin(tps * g.vitesse + g.phase)
-          const al = Math.min(1, allume * vibre * 1.8)
-          if (al < 0.03) continue
-          // UN CŒUR CLAIR, UN BORD DORÉ : de l'or seul se perd sur un emoji jaune.
-          const rg = rayon * (0.7 + 0.5 * allume)
-          const grain = gctx.createRadialGradient(g.x, g.y, 0, g.x, g.y, rg)
-          grain.addColorStop(0, `rgba(255, 255, 245, ${Math.min(1, al).toFixed(3)})`)
-          grain.addColorStop(0.45, `rgba(${tr}, ${tg}, ${tb}, ${Math.min(1, al * 0.8).toFixed(3)})`)
-          grain.addColorStop(1, `rgba(${tr}, ${tg}, ${tb}, 0)`)
-          gctx.fillStyle = grain
-          gctx.beginPath()
-          gctx.arc(g.x, g.y, rg, 0, Math.PI * 2)
-          gctx.fill()
-        }
+      // L'HOLOGRAMME : les couleurs se dédoublent hors de la silhouette, le
+      // rouge d'un côté, le cyan de l'autre, d'autant plus qu'on penche.
+      const t = toile.current
+      if (t != null && holo) {
+        const dx = 1.5 + o.x * 5
+        const dy = o.y * 3
+        t.style.filter =
+          `saturate(${1 + SATURATION_APLAT}) drop-shadow(${dx.toFixed(1)}px ${dy.toFixed(1)}px 0 rgba(255, 40, 90, 0.55)) ` +
+          `drop-shadow(${(-dx).toFixed(1)}px ${(-dy).toFixed(1)}px 0 rgba(40, 220, 255, 0.55)) drop-shadow(0 0.3rem 0.35rem rgba(10, 4, 30, 0.5))`
       }
       image = requestAnimationFrame(appliquer)
     }
@@ -430,7 +384,7 @@ function StickerOuvert({
             {!pret && <span className="album-attente sticker-attente">{carte.emoji}</span>}
             <canvas ref={toile} className="sticker-toile" style={FILTRE} />
             <canvas ref={arc} className="sticker-toile sticker-arc" />
-            {holo && <canvas ref={or} className="sticker-toile sticker-or" />}
+            {holo && <div ref={trame} className="sticker-lignes" />}
           </div>
         </div>
       </div>

@@ -6479,3 +6479,13 @@ Keko : « on peut faire la poussière d'or que tu avais proposée ». Des grains
 - **Sur le sticker en grand** : les mêmes grains placés une fois sur l'emoji (opaque, hors du crème), repeints à chaque image ; chacun a l'orientation où il renvoie la lampe, et s'allume quand le doigt ou le téléphone y passe.
 - **Au passage, un vrai défaut** : la toile du sticker en grand était mesurée pendant son arrivée (une mise à l'échelle de 0,4) — peinte en 163 px pour 349 affichés, donc floue. Elle se mesure maintenant à sa taille de mise en page (`clientWidth`).
 - `?or=0` la retire de la carte. Pas sur les vignettes (images fixes). Chiffres de moi ; vu au navigateur, pas sur téléphone.
+
+- **Poussière d'or retirée** (Keko : « ça le fait pas non plus »). La correction du flou du sticker en grand reste.
+
+### L'hologramme de l'emoji holo (16/10/2026)
+
+Keko a pris la quatrième piste, « l'hologramme de science-fiction » : *un emoji projeté plutôt que collé*.
+
+- **Au nuanceur** (`HOLOGRAMME`) : la peinture de la face est relue à côté (`uPeinture`, la même texture que la face, déclarée par nous puisque la map arrive après la compilation) ; le ROUGE est pris décalé d'un côté, le BLEU de l'autre, d'un écart qui suit le regard (`Rf.xy` × 0,022, plus 0,004 au repos), et **seule la différence s'ajoute** — la lumière et le reste passent tels quels. Les franges débordent de la silhouette (la zone est l'emoji ou ses deux reflets décalés, par le masque du sujet). Des lignes fines défilent sur l'emoji (150 sur la hauteur, ±12 % de clarté), et un sursaut de clarté le fait grésiller une image de temps en temps.
+- **Sur le sticker en grand** : deux `drop-shadow` sans flou de sa silhouette, rouge et cyan, décalés à l'opposé selon l'orientation, et une trame de lignes qui montent, découpée à sa silhouette, avec un grésillement.
+- `?hologramme=0` le retire de la carte. Chiffres de moi ; vu au navigateur (agrandi), pas sur téléphone.
