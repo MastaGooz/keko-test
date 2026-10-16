@@ -6281,3 +6281,22 @@ Seulement dans la fenêtre d'art : la plaque, crème aussi, n'en reçoit pas.
 son spectre est figé. **Seulement les holo** : sur une carte sans holo, la 3D
 garde le cerne crème, et la grille aussi. Vérifié : Zombie, Jeu vidéo, Pioche,
 Onze heures en arc-en-ciel, Hot dog et Adn en crème.
+
+#### LE GYROSCOPE EST DEMANDÉ À L'ACCUEIL, UNE FOIS POUR LA SESSION
+
+Keko : « quand je zoome une carte sur tel et que je bouge le tel elle ne
+s'oriente pas, je dois d'abord la bouger au doigt pour débloquer le mouvement ».
+***Sur iPhone, lire l'orientation demande une permission, et elle ne se demande
+que depuis un geste.*** Chaque suivi (`suivreLInclinaison`) la redemandait au
+relâchement SUIVANT — et la carte de la collection s'ouvre sur un relâchement
+déjà passé : rien ne bougeait avant le prochain doigt.
+
+- **La permission se retient** (`accorde`) : une fois le oui donné, tout suivi
+  qui naît ensuite écoute tout de suite.
+- **L'accueil la demande à sa tape** (`demanderLInclinaison`), du même geste
+  que le son : *tout ce qui penche ensuite n'a plus rien à attendre.*
+- **Les suivis montés pendant que la demande est en route** — le paquet, monté
+  dans la tape même — démarrent au oui (`enAttente`).
+
+*Non vu sur un iPhone* : un PC n'a pas de permission à demander. Android n'en a
+pas non plus, et écoutait déjà tout de suite.

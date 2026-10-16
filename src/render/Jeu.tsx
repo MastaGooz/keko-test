@@ -31,6 +31,7 @@ import { Paquet3D } from './Paquet3D.tsx'
 import { PageCollection } from './Collection.tsx'
 import { SON_CLIC_POP, amorcerLeSon, jouerSon, precharger, reveillerLeSon } from './sons.ts'
 import { FondAnime } from './FondAnime.tsx'
+import { demanderLInclinaison } from './inclinaison.ts'
 import { toileDuTitre } from './texture-carte.ts'
 
 type Page = 'booster' | 'collection'
@@ -123,6 +124,8 @@ function Accueil({ onJouer }: { onJouer: () => void }): React.ReactElement {
       onPointerUp={() => {
         amorcerLeSon()
         reveillerLeSon()
+        // ET LE GYROSCOPE, du même geste : voir `demanderLInclinaison`.
+        demanderLInclinaison()
         onJouer()
       }}
     >

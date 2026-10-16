@@ -50,6 +50,39 @@ type AvecPermission = typeof DeviceOrientationEvent & {
   requestPermission?: () => Promise<'granted' | 'denied'>
 }
 
+/**
+ * L'IPHONE A DÉJÀ DIT OUI, CETTE SESSION. Keko : « quand je zoome une carte sur
+ * tel et que je bouge le tel elle ne s'oriente pas, je dois d'abord la bouger
+ * au doigt pour débloquer le mouvement ». *Chaque suivi redemandait la
+ * permission au relâchement SUIVANT* — et la carte de la collection s'ouvre
+ * sur un relâchement déjà passé : rien ne bougeait avant le prochain doigt.
+ * **Une fois accordée, la permission vaut pour la page** : le suivi suivant
+ * écoute tout de suite.
+ */
+let accorde = false
+/** Les suivis montés pendant que la demande de l'accueil est en route : ils démarrent au oui. */
+const enAttente = new Set<() => void>()
+
+/**
+ * DEMANDE LA PERMISSION DEPUIS UN GESTE — l'accueil l'appelle à sa tape, pour
+ * que tout ce qui penche ensuite (le sachet, les cartes, la collection) n'ait
+ * plus rien à attendre. Sans `requestPermission` (Android, PC), rien à faire.
+ */
+export function demanderLInclinaison(): void {
+  if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) return
+  const demander = (DeviceOrientationEvent as AvecPermission).requestPermission
+  if (typeof demander !== 'function' || accorde) return
+  demander
+    .call(DeviceOrientationEvent)
+    .then((r) => {
+      if (r !== 'granted') return
+      accorde = true
+      for (const demarrer of enAttente) demarrer()
+      enAttente.clear()
+    })
+    .catch(() => undefined)
+}
+
 export function suivreLInclinaison(): Inclinaison {
   if (typeof window === 'undefined' || !('DeviceOrientationEvent' in window)) {
     return { lire: () => null, recaler: () => undefined, arreter: () => undefined }
@@ -82,11 +115,15 @@ export function suivreLInclinaison(): Inclinaison {
     lisse = { x: l.x + (cible.x - l.x) * LISSAGE, y: l.y + (cible.y - l.y) * LISSAGE }
   }
 
-  const ecouter = (): void =>
+  let ecoute = false
+  const ecouter = (): void => {
+    if (ecoute || ctrl.signal.aborted) return
+    ecoute = true
     window.addEventListener('deviceorientation', surLecture, { signal: ctrl.signal })
+  }
 
   const demander = (DeviceOrientationEvent as AvecPermission).requestPermission
-  if (typeof demander === 'function') {
+  if (typeof demander === 'function' && !accorde) {
     // IPHONE : on demande au premier relâchement, et on écoute si c'est oui.
     // *Un refus est silencieux* — le sachet garde son balancement, et c'est
     // tout ce qu'il perd.
@@ -94,11 +131,16 @@ export function suivreLInclinaison(): Inclinaison {
       demander
         .call(DeviceOrientationEvent)
         .then((r) => {
+          if (r === 'granted') accorde = true
           if (r === 'granted' && !ctrl.signal.aborted) ecouter()
         })
         .catch(() => undefined)
     }
     window.addEventListener('pointerup', auGeste, { once: true, signal: ctrl.signal })
+    // LE PAQUET SE MONTE DANS LA TAPE DE L'ACCUEIL, avant sa réponse : il
+    // démarre au oui, sans attendre un relâchement de plus.
+    enAttente.add(ecouter)
+    ctrl.signal.addEventListener('abort', () => enAttente.delete(ecouter))
   } else {
     ecouter()
   }
