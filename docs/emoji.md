@@ -6319,3 +6319,11 @@ allumée faisait une neige qui brouillait la carte et ses lettres — 6 % des
 fines et 12 % des grosses allumées, les autres à 0,1, **et sur la plaque on
 sonde autour de la paillette, pas seulement dessous**, pour l'écarter des
 lettres.
+
+#### « X DISPONIBLES » SOUS LE SACHET
+
+Keko : « on peut afficher "X disponibles" sous le paquet pour dire combien sont
+dispo à l'ouverture ». Sous le sachet tant qu'il attend
+(`Paquet3D.onSachetEnAttente` : ni déchiré, ni ouvert), parti dès qu'il se
+déchire. **Celui qu'on voit compte** : il n'est décompté qu'à l'ouverture, donc
+« 3 disponibles » veut dire celui-ci et deux autres.

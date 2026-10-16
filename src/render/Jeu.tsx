@@ -142,6 +142,7 @@ export function Jeu(): React.ReactElement {
   const [page, setPage] = useState<Page>('booster')
   const [collection, setCollection] = useState<Collection>(chargerCollection)
   const [calme, setCalme] = useState(true)
+  const [sachetAttend, setSachetAttend] = useState(false)
   const [catalogue, setCatalogue] = useState<CarteEmoji[] | null>(null)
   /**
    * LA RÉSERVE ET L'HEURE. *On ne compte pas des secondes* : on garde la
@@ -238,7 +239,22 @@ export function Jeu(): React.ReactElement {
         <Attente dans={dans} onCollection={() => aller('collection')} />
       ) : page === 'booster' ? (
         <>
-          <Paquet3D onPaquetOuvert={ajouter} onCalme={setCalme} sansPrise peutContinuer={dispo > 0} />
+          <Paquet3D
+            onPaquetOuvert={ajouter}
+            onCalme={setCalme}
+            onSachetEnAttente={setSachetAttend}
+            sansPrise
+            peutContinuer={dispo > 0}
+          />
+          {/* COMBIEN IL EN RESTE, SOUS LE SACHET. Keko : « on peut afficher "X
+              disponibles" sous le paquet pour dire combien sont dispo à
+              l'ouverture ». *Celui qu'on voit compte* : il n'est décompté qu'à
+              l'ouverture. Parti dès que le sachet se déchire. */}
+          {sachetAttend && (
+            <p className="paquet-disponibles">
+              <b>{dispo}</b> disponible{dispo > 1 ? 's' : ''}
+            </p>
+          )}
           {/* LE PAQUET EST VIDE, LA RÉSERVE AUSSI : à la place du bouton, quand
               vient le suivant. */}
           {dispo === 0 && calme && (

@@ -814,3 +814,26 @@
   -webkit-user-select: none;
   user-select: none;
 }
+
+/* « X DISPONIBLES », SOUS LE SACHET qui attend. */
+.paquet-disponibles {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(19vh + env(safe-area-inset-bottom));
+  z-index: 3;
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(1rem, 2.6vh, 1.35rem);
+  color: #fffaf0;
+  text-shadow: 0 0.1rem 0.4rem rgba(14, 6, 40, 0.8);
+  animation: carte-ouverte-entre 0.3s ease-out;
+}
+
+.paquet-disponibles b {
+  font-weight: 800;
+  color: #ffd45e;
+}

@@ -527,6 +527,8 @@ type PropsPaquet = {
    * paquet », et c'est `Jeu` qui dit quand le prochain arrive. Voir `reserve.ts`.
    */
   peutContinuer?: boolean
+  /** Le sachet est là et pas encore déchiré : c'est sous lui que `Jeu` dit combien il en reste. */
+  onSachetEnAttente?: (attend: boolean) => void
 }
 
 export function Paquet3D({
@@ -534,6 +536,7 @@ export function Paquet3D({
   onCalme,
   sansPrise = false,
   peutContinuer = true,
+  onSachetEnAttente,
 }: PropsPaquet = {}): React.ReactElement {
   const params = new URLSearchParams(location.search)
   /**
@@ -1667,6 +1670,8 @@ export function Paquet3D({
   }, [ouvert, paquet, numero, tirage, onPaquetOuvert])
   const calme = !brule || fini
   useEffect(() => onCalme?.(calme), [calme, onCalme])
+  const sachetAttend = !brule && !ouvert && paquet.length > 0
+  useEffect(() => onSachetEnAttente?.(sachetAttend), [sachetAttend, onSachetEnAttente])
   return (
     <div
       className="paquet-3d"
