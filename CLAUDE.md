@@ -78,7 +78,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   l'emoji s'en distingue par son **cerne arc-en-ciel** (`COSMOS.cerne`) et
   par sa **nacre** (`NACRE`, `?nacre=0`) : ses clairs peu saturés irisent au
   regard et ses couleurs franches glissent sur le cercle des teintes (caméléon) ; au
-  regard, ses couleurs restent les siennes ; le sticker holo en grand fait de
+  repos, ses couleurs restent les siennes ; le sticker holo en grand fait de
   même par des couches dont la teinte tourne. **Le bonus se pose sur
   le cran, il ne le repeint pas** : seul le foil se cumule, le liseré et
   l'auréole restent au cran. `animable` dit une possibilité, jamais un état.
