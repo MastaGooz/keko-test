@@ -23,7 +23,7 @@ import { cerneArcEnCiel, etoileDePaillette } from './peinture-vignette.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
-import { COSMOS, SATURATION_APLAT } from './Carte3D.tsx'
+import { BRILLANT, COSMOS, SATURATION_APLAT } from './Carte3D.tsx'
 
 /** Une paillette du sticker holo en grand : sa place, sa taille, sa teinte, et l'orientation où elle renvoie la lampe. */
 interface Paillette {
@@ -249,8 +249,9 @@ function StickerOuvert({
                 y: gy,
                 r: Math.max(0.8, pas * g.rayon),
                 teinte: Math.random() * 360,
-                mx: (Math.random() - 0.5) * 2,
-                my: (Math.random() - 0.5) * 2,
+                // LE PENCHANT DE SON PETIT MIROIR, comme au nuanceur (h3 − 0,5, h4 − 0,5).
+                mx: Math.random() - 0.5,
+                my: Math.random() - 0.5,
                 phase: Math.random() * Math.PI * 2,
                 vitesse: 2 + Math.random() * 3,
                 gros: g.gros,
@@ -259,6 +260,23 @@ function StickerOuvert({
           }
         }
         semis.current = liste
+        // DÉCOUPÉES À LA SILHOUETTE, comme sur la carte où le masque de l'emoji
+        // les arrête : une étoile au bord ne déborde pas du sticker.
+        const sil = document.createElement('canvas')
+        sil.width = cote
+        sil.height = cote
+        const sctx = sil.getContext('2d')
+        if (sctx !== null) {
+          sctx.drawImage(t, 0, 0)
+          sctx.globalCompositeOperation = 'source-in'
+          sctx.fillStyle = '#fff'
+          sctx.fillRect(0, 0, cote, cote)
+          const url = `url(${sil.toDataURL()})`
+          pc.style.maskImage = url
+          pc.style.setProperty('-webkit-mask-image', url)
+          pc.style.maskSize = '100% 100%'
+          pc.style.setProperty('-webkit-mask-size', '100% 100%')
+        }
       }
       const a = arc.current
       const actx = a?.getContext('2d', { willReadFrequently: true })
@@ -339,12 +357,32 @@ function StickerOuvert({
         pctx.clearRect(0, 0, pc.width, pc.height)
         pctx.globalCompositeOperation = 'lighter'
         const tps = performance.now() / 1000
+        const L = BRILLANT.lampe
+        const LL = Math.hypot(L[0], L[1], L[2])
         for (const p of semis.current) {
-          // ASSEZ LARGE POUR QU'IL EN BRILLE AUTANT QUE SUR LA CARTE : vu à 0,35,
-          // deux paillettes allumées sur tout un visage.
-          const ecart = Math.hypot(o.x * 0.6 - p.mx * 0.6, o.y * 0.6 - p.my * 0.6)
-          const allume = Math.pow(Math.max(0, 1 - ecart / (p.gros ? 0.75 : 0.6)), 2)
-          const a2 = Math.min(1, allume * (0.65 + 0.35 * Math.sin(tps * p.vitesse + p.phase)) * 1.4)
+          // LE CALCUL DE LA CARTE, À L'IDENTIQUE (voir les paillettes COSMOS du
+          // nuanceur) : la normale du sticker penché, celle du petit miroir
+          // dispersée autour, le regard renvoyé, et la lampe clé — il ne brille
+          // que si le reflet tombe sur elle. Keko : « le même effet sur les
+          // stickers quand on les zoome » ; la version d'avant allumait large,
+          // trop d'étoiles à la fois.
+          const nx0 = Math.sin(o.x * 0.31)
+          const ny0 = -Math.sin(o.y * 0.31)
+          const k = COSMOS.dispersion * 2
+          let nx = nx0 + p.mx * k
+          let ny = ny0 + p.my * k
+          let nz = Math.sqrt(Math.max(0, 1 - nx0 * nx0 - ny0 * ny0))
+          const ln = Math.hypot(nx, ny, nz)
+          nx /= ln
+          ny /= ln
+          nz /= ln
+          // reflect(−V, n) avec V = (0, 0, 1) : 2 (V·n) n − V.
+          const rx = 2 * nz * nx
+          const ry = 2 * nz * ny
+          const rz = 2 * nz * nz - 1
+          const sf = Math.max(0, (rx * L[0] + ry * L[1] + rz * L[2]) / LL)
+          const allume = Math.pow(sf, COSMOS.serreGros)
+          const a2 = Math.min(1, allume * (0.65 + 0.35 * Math.sin(tps * p.vitesse + p.phase)) * 1.5)
           if (a2 < 0.03) continue
           // LE STICKER EST L'EMOJI : ses paillettes sont des étoiles (voir `COSMOS.etoile`).
           etoileDePaillette(pctx, p.x, p.y, p.r * (p.gros ? 5 : 3.5), p.teinte, a2)
