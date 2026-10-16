@@ -1460,20 +1460,6 @@ const FORCE_RAYONS: Record<string, number> = {
   violet: 0.22,
   orange: 0.28,
 }
-/**
- * LA PORTÉE DES RAYONS, CRAN PAR CRAN : où leur fondu s'éteint, en part de la
- * diagonale de la fenêtre (1 = jusqu'aux coins) — pour la peinture ET pour leur
- * brillant (le nuanceur, `brillantDuRepos`). Keko : « je voulais que le centre
- * de la carte et le bord aient plus de contraste, comme le uncommon / épique ».
- * Mesuré sur la carte au repos, brillant compris (clarté OKLab) : le rayon
- * clair passe de 0,87 au centre à 0,57 au bord pour le vert, de 0,70 à 0,51
- * pour le violet — mais de 0,71 à **0,63** pour l'orange, presque sans chute,
- * et de 0,80 à 0,54 pour le bleu. *C'est le brillant qui tenait les bords
- * clairs* : il multiplie le fond des secteurs clairs avec son propre fondu, et
- * le fond orange est plus clair que les autres ; au centre, l'orange plafonne
- * (ses canaux saturent). Le bleu et l'orange portent donc moins loin.
- */
-export const PORTEE_RAYONS: Record<string, number> = { bleu: 0.85, orange: 0.65 }
 /** L'opacité des touches dans la fenêtre d'art, et leur échelle par rapport à celles du dos. */
 const TOUCHES_CARTE = 0.09
 const TOUCHES_ECHELLE = 0.8
@@ -1582,10 +1568,8 @@ function peindreRayons(
   ctx.rect(x, y, l, h)
   ctx.clip()
   ctx.globalCompositeOperation = 'lighter'
-  // L'EXTINCTION VERS LES BORDS : pleine au centre, nulle à sa portée (voir
-  // PORTEE_RAYONS ; 1 = le coin le plus loin).
-  const portee = rarete === undefined ? 1 : (PORTEE_RAYONS[rarete] ?? 1)
-  const fondu = ctx.createRadialGradient(cx, cy, rayon * 0.08, cx, cy, rayon * portee)
+  // L'EXTINCTION VERS LES BORDS : pleine au centre, nulle au coin le plus loin.
+  const fondu = ctx.createRadialGradient(cx, cy, rayon * 0.08, cx, cy, rayon)
   fondu.addColorStop(0, ton)
   fondu.addColorStop(1, ton + '00')
   ctx.fillStyle = fondu

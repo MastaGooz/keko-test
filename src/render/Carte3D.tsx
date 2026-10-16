@@ -50,7 +50,6 @@ import {
   RAYONS_DANS_LA_CARTE,
   masqueDuSujetDe,
   sujetDe,
-  PORTEE_RAYONS,
 } from './texture-carte.ts'
 
 /**
@@ -1087,7 +1086,6 @@ export function Carte3D({
       nuanceur.uniforms.uLin = { value: aplat ? FORCE_LIN : 0 }
       nuanceur.uniforms.uBrillant = { value: aplat && AVEC_BRILLANT ? 1 : 0 }
       nuanceur.uniforms.uRayons = { value: 0 }
-      nuanceur.uniforms.uPorteeRayons = { value: 1 }
       nuanceur.uniforms.uMasqueSujet = { value: MASQUE_VIDE }
       // LE RELIEF : la carte entière, la même sans emoji, et s'il joue (voir RELIEF).
       nuanceur.uniforms.uPeinture = { value: MASQUE_VIDE }
@@ -1440,9 +1438,7 @@ ${nuanceur.vertexShader}`.replace(
              float fr = fract((atan(dr.y, dr.x) - ${RAYONS_DANS_LA_CARTE.depart.toFixed(3)}) / ${((Math.PI * 4) / RAYONS_DANS_LA_CARTE.nombre).toFixed(5)});
              float clair = smoothstep(0.0, 0.025, fr) * (1.0 - smoothstep(0.475, 0.5, fr));
              float rr = ${RAYONS_DANS_LA_CARTE.rayon.toFixed(4)};
-             // LE FONDU S'ÉTEINT À LA PORTÉE DU CRAN, comme la peinture (PORTEE_RAYONS).
-             float rpR = rr * uPorteeRayons;
-             float fonduR = 1.0 - clamp((length(dr) - rpR * 0.08) / (rpR * 0.92), 0.0, 1.0);
+             float fonduR = 1.0 - clamp((length(dr) - rr * 0.08) / (rr * 0.92), 0.0, 1.0);
              float libre = texture2D(uMasqueSujet, vLustreUv).r;
              float kr = clair * fonduR * libre * fenetre;
              float nappeR = pow(sc, ${RAYONS_BRILLANTS.large.toFixed(1)});
@@ -1567,7 +1563,6 @@ float hDev(float n) { return fract(sin(n * 43.317) * 43758.5453); }
 uniform float uLin;
 uniform float uBrillant;
 uniform float uRayons;
-uniform float uPorteeRayons;
 uniform sampler2D uMasqueSujet;
 uniform sampler2D uPeinture;
 uniform sampler2D uNu;
@@ -2455,7 +2450,6 @@ ${nuanceur.fragmentShader}`
       nuanceur.uniforms.uSilhouette!.value = sil ?? MASQUE_VIDE
       nuanceur.uniforms.uSilhouetteOk!.value = sil !== null ? 1 : 0
       nuanceur.uniforms.uRayons!.value = masque !== null && AVEC_RAYONS_BRILLANTS && dos !== true ? 1 : 0
-      nuanceur.uniforms.uPorteeRayons!.value = PORTEE_RAYONS[carte.rarete ?? ''] ?? 1
       // L'IRISATION N'EST PAS UNE OPTION DE MATÉRIAU, c'est une propriété de
       // la carte : un uniforme plutôt qu'un second programme, sinon chaque
       // rareté compilerait son nuanceur.
