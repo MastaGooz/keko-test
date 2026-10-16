@@ -6153,7 +6153,14 @@ Keko : « on peut utiliser le même son de bouton que celui de "ouvrir un
 nouveau booster" pour tous les boutons ? » — **`Clic-pop.aac` au
 `pointerdown`, comme le bouton 3D**, par un seul écouteur posé par `Jeu` sur
 tout le document : *le bouton qu'on ajoutera demain clique sans qu'on y pense.*
-Sauf les vignettes, qui ont déjà la pose de carte en s'ouvrant.
+Sauf les vignettes, qui ont déjà la pose de carte en s'ouvrant. Ni les stickers
+de l'album, pour la même raison. **Ni les options du panneau filtres**
+(17/10/2026, Keko : « tu peux enlever les sons de clic dans les options du menu
+filtres ») : les puces de tri, de rareté, de type et de bonus sont des réglages
+qu'on enchaîne, pas des actions — un clic par puce faisait une rafale. Exclues
+par leur conteneur (`filtres-panneau-corps`), pas une par une : *l'option
+qu'on ajoutera demain se tait sans qu'on y pense.* « Tout effacer » et le bouton
+qui ferme le panneau gardent leur clic.
 
 Et : « j'ai l'impression que les cartes sont plus ternes quand je regarde la
 vue d'ensemble ». ***Elles l'étaient*** : la carte en 3D sature sa peinture en

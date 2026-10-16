@@ -193,11 +193,20 @@ export function Jeu(): React.ReactElement {
    * bouton, et elle a déjà son son, la pose de carte en s'ouvrant. **Ni les
    * stickers de l'album** (`album-case`), pour la même raison — Keko : « il y a
    * le son de clic + le son de carte, il faudrait supprimer le son de clic ».
+   * **Ni les options du panneau filtres** (`filtres-panneau-corps` : tri,
+   * rareté, type, bonus) — Keko : « tu peux enlever les sons de clic dans les
+   * options du menu filtres » ; « Tout effacer » et le bouton qui ferme
+   * gardent le leur.
    */
   useEffect(() => {
     const cliquer = (e: PointerEvent): void => {
       const bouton = e.target instanceof Element ? e.target.closest('button') : null
-      if (bouton !== null && !bouton.classList.contains('vignette') && !bouton.classList.contains('album-case'))
+      if (
+        bouton !== null &&
+        !bouton.classList.contains('vignette') &&
+        !bouton.classList.contains('album-case') &&
+        bouton.closest('.filtres-panneau-corps') === null
+      )
         jouerSon(SON_CLIC_POP)
     }
     document.addEventListener('pointerdown', cliquer)
