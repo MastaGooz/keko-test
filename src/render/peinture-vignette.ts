@@ -277,8 +277,8 @@ export function paillettesHolo(
         const k = (py * l + px) * 4
         // DANS LA CARTE : ses coins sont transparents.
         if (carte[k + 3]! < 200) continue
-        // JAMAIS SUR L'EMOJI.
-        if (libre !== null && libre[k + 3]! < 128) continue
+        // SUR L'EMOJI AUSSI, comme en 3D (voir `COSMOS.surEmoji`).
+        if (COSMOS.surEmoji === 0 && libre !== null && libre[k + 3]! < 128) continue
         const r0 = Math.max(0.6, cote * g.rayon)
         // SOUS LA PLAQUE, SEULEMENT SUR LE CLAIR — ET LOIN DES LETTRES : sur une
         // vignette, le texte est si petit qu'une paillette posée à côté le

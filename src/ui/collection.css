@@ -1150,3 +1150,9 @@
 .sticker-ouvert {
   touch-action: none;
 }
+
+/* LES PAILLETTES DU STICKER HOLO, ajoutées à la lumière (voir `COSMOS`). */
+.sticker-paillettes {
+  mix-blend-mode: screen;
+  pointer-events: none;
+}

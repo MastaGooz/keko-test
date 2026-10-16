@@ -414,6 +414,14 @@ export const COSMOS = {
   rayonGros: 0.14,
   force: 8,
   /**
+   * LES PAILLETTES PASSENT SUR L'EMOJI AUSSI, à cette part de leur force.
+   * Keko : « on peut mettre un effet paillettes sur l'emoji holo des cartes /
+   * stickers ? un peu comme sur le reste de la carte ». *Il en était épargné*
+   * pour s'en distinguer ; c'est son cerne arc-en-ciel et le fond enfoncé qui
+   * le distinguent maintenant. 0 le rend épargné.
+   */
+  surEmoji: 1,
+  /**
    * SUR L'EMOJI, UN AUTRE EFFET QUE LA FEUILLE : son CERNE devient
    * arc-en-ciel. Keko : « sur l'emoji je voyais plutôt un effet différent du
    * reste de la carte pour la distinguer (autre que les paillettes) » — il a
@@ -1444,7 +1452,7 @@ ${nuanceur.vertexShader}`.replace(
            float sousPlaque = step(${(RAYONS_DANS_LA_CARTE.y + RAYONS_DANS_LA_CARTE.h).toFixed(4)}, 1.0 - vLustreUv.y);
            float lumH = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
            float lisible = mix(1.0, smoothstep(0.72, 0.9, lumH), sousPlaque);
-           gl_FragColor.rgb += cosmos * libreH * lisible * uHolo * ${COSMOS.force.toFixed(2)};
+           gl_FragColor.rgb += cosmos * mix(${COSMOS.surEmoji.toFixed(2)}, 1.0, libreH) * lisible * uHolo * ${COSMOS.force.toFixed(2)};
            // LE CERNE ARC-EN-CIEL DE L'EMOJI : voir COSMOS.cerne. Le spectre
            // fait le tour de l'emoji, tourne avec l'angle du regard, et
            // s'allume quand on le penche vers la lampe.

@@ -23,7 +23,20 @@ import { cerneArcEnCiel } from './peinture-vignette.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
-import { SATURATION_APLAT } from './Carte3D.tsx'
+import { COSMOS, SATURATION_APLAT } from './Carte3D.tsx'
+
+/** Une paillette du sticker holo en grand : sa place, sa taille, sa teinte, et l'orientation où elle renvoie la lampe. */
+interface Paillette {
+  x: number
+  y: number
+  r: number
+  teinte: number
+  mx: number
+  my: number
+  phase: number
+  vitesse: number
+  gros: boolean
+}
 
 type Tri = 'recents' | 'az' | 'rares'
 
@@ -181,6 +194,9 @@ function StickerOuvert({
   const toile = useRef<HTMLCanvasElement>(null)
   /** LE CERNE ARC-EN-CIEL D'UNE HOLO, seul, par-dessus : c'est lui qui tourne au regard. */
   const arc = useRef<HTMLCanvasElement>(null)
+  /** LES PAILLETTES DE LA FEUILLE, sur le sticker holo : repeintes à chaque image. */
+  const paillettes = useRef<HTMLCanvasElement>(null)
+  const semis = useRef<Paillette[]>([])
   const penche = useRef<HTMLDivElement>(null)
   const zone = useRef<HTMLDivElement>(null)
   const [pret, setPret] = useState(false)
@@ -210,6 +226,42 @@ function StickerOuvert({
       // une couche à part — *repeindre les pixels à chaque mouvement du
       // téléphone coûterait une boucle sur toute la toile ; tourner la teinte
       // d'une couche ne coûte rien.*
+      // LES PAILLETTES : les deux grilles de la feuille (`COSMOS`), à la finesse
+      // de la carte — le sticker en grand en fait environ les trois cinquièmes
+      // de largeur — gardées sur le sticker opaque.
+      const pc = paillettes.current
+      if (holo && pc != null) {
+        pc.width = cote
+        pc.height = cote
+        const px = ctx.getImageData(0, 0, cote, cote).data
+        const liste: Paillette[] = []
+        for (const g of [
+          { n: COSMOS.fin, part: COSMOS.partFin, rayon: COSMOS.rayonFin, gros: false },
+          { n: COSMOS.gros, part: COSMOS.partGros, rayon: COSMOS.rayonGros, gros: true },
+        ]) {
+          const pas = cote / (g.n * 0.6)
+          for (let y = pas / 2; y < cote; y += pas) {
+            for (let x = pas / 2; x < cote; x += pas) {
+              if (Math.random() > g.part) continue
+              const gx = Math.min(cote - 1, Math.round(x + (Math.random() - 0.5) * pas * COSMOS.dispersion))
+              const gy = Math.min(cote - 1, Math.round(y + (Math.random() - 0.5) * pas * COSMOS.dispersion))
+              if (px[(gy * cote + gx) * 4 + 3]! < 230) continue
+              liste.push({
+                x: gx,
+                y: gy,
+                r: Math.max(0.8, pas * g.rayon),
+                teinte: Math.random() * 360,
+                mx: (Math.random() - 0.5) * 2,
+                my: (Math.random() - 0.5) * 2,
+                phase: Math.random() * Math.PI * 2,
+                vitesse: 2 + Math.random() * 3,
+                gros: g.gros,
+              })
+            }
+          }
+        }
+        semis.current = liste
+      }
       const a = arc.current
       const actx = a?.getContext('2d', { willReadFrequently: true })
       if (holo && !anime && a != null && actx != null) {
@@ -281,6 +333,32 @@ function StickerOuvert({
       // couleur d'un coin à l'autre.
       const a = arc.current
       if (a != null) a.style.filter = `saturate(${1 + SATURATION_APLAT}) hue-rotate(${((o.x - o.y) * 90).toFixed(1)}deg)`
+      // LES PAILLETTES S'ALLUMENT AU REGARD : chacune quand l'orientation passe
+      // par celle où son petit miroir renvoie la lampe, et elles scintillent.
+      const pc = paillettes.current
+      const pctx = pc?.getContext('2d')
+      if (pc != null && pctx != null && semis.current.length > 0) {
+        pctx.clearRect(0, 0, pc.width, pc.height)
+        pctx.globalCompositeOperation = 'lighter'
+        const tps = performance.now() / 1000
+        for (const p of semis.current) {
+          // ASSEZ LARGE POUR QU'IL EN BRILLE AUTANT QUE SUR LA CARTE : vu à 0,35,
+          // deux paillettes allumées sur tout un visage.
+          const ecart = Math.hypot(o.x * 0.6 - p.mx * 0.6, o.y * 0.6 - p.my * 0.6)
+          const allume = Math.pow(Math.max(0, 1 - ecart / (p.gros ? 0.75 : 0.6)), 2)
+          const a2 = Math.min(1, allume * (0.65 + 0.35 * Math.sin(tps * p.vitesse + p.phase)) * 1.4)
+          if (a2 < 0.03) continue
+          const rr = p.r * 2
+          const halo = pctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rr)
+          halo.addColorStop(0, `hsla(${p.teinte}, 100%, 94%, ${a2.toFixed(3)})`)
+          halo.addColorStop(0.4, `hsla(${p.teinte}, 100%, 70%, ${(a2 * 0.55).toFixed(3)})`)
+          halo.addColorStop(1, `hsla(${p.teinte}, 100%, 60%, 0)`)
+          pctx.fillStyle = halo
+          pctx.beginPath()
+          pctx.arc(p.x, p.y, rr, 0, Math.PI * 2)
+          pctx.fill()
+        }
+      }
       image = requestAnimationFrame(appliquer)
     }
     image = requestAnimationFrame(appliquer)
@@ -355,6 +433,7 @@ function StickerOuvert({
             {!pret && <span className="album-attente sticker-attente">{carte.emoji}</span>}
             <canvas ref={toile} className="sticker-toile" style={FILTRE} />
             <canvas ref={arc} className="sticker-toile sticker-arc" />
+            {holo && <canvas ref={paillettes} className="sticker-toile sticker-paillettes" />}
           </div>
         </div>
       </div>
