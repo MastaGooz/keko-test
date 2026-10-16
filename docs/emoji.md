@@ -6527,3 +6527,4 @@ Keko : « on peut mettre un effet paillettes sur l'emoji holo des cartes / stick
 
 - Keko : « encore un poil plus saturé ? » — bleu 1,8 → 2,3.
 - Keko : « encore un peu » — bleu 2,3 → 2,9.
+- Keko : « encore un peu » — bleu 2,9 → 3,6.
