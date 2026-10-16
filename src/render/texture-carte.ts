@@ -1456,7 +1456,7 @@ const FORCE_RAYONS: Record<string, number> = {
   // mais il doit encore se lire.
   blanc: 0.14,
   vert: 0.13,
-  bleu: 0.21,
+  bleu: 0.3,
   violet: 0.22,
   orange: 0.28,
 }
@@ -1467,7 +1467,7 @@ const FORCE_RAYONS: Record<string, number> = {
  * plafonnait : le bleu moyen `#5a9ede` est doux. Les rayons des rares prennent
  * un bleu électrique, et un peu plus de force (`FORCE_RAYONS.bleu` 0,17 → 0,21).
  */
-const TON_RAYONS: Record<string, string> = { bleu: '#1f8fff' }
+const TON_RAYONS: Record<string, string> = { bleu: '#0a8dff' }
 /** L'opacité des touches dans la fenêtre d'art, et leur échelle par rapport à celles du dos. */
 const TOUCHES_CARTE = 0.09
 const TOUCHES_ECHELLE = 0.8
