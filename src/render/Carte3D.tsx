@@ -335,7 +335,7 @@ export const RAYONS_BRILLANTS = { large: 1.2, reflet: 5, sature: 3 } as const
  * du fond des cartes rares, pour qu'ils soient plus vivid ». Le bleu seul ;
  * chiffre de moi.
  */
-export const SATURE_RAYONS: Record<string, number> = { bleu: 1.8 }
+export const SATURE_RAYONS: Record<string, number> = { bleu: 2.3 }
 /** Un masque blanc d'un pixel : la place du masque du sujet tant qu'il n'est pas là. */
 const MASQUE_VIDE = (() => {
   const t = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1)
