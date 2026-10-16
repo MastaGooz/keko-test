@@ -1155,4 +1155,6 @@
 .sticker-paillettes {
   mix-blend-mode: screen;
   pointer-events: none;
+  /* LE BLOOM DE LA CARTE : ce qui sature rayonne un peu autour. */
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 5px rgba(255, 255, 255, 0.45));
 }

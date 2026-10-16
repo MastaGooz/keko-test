@@ -19,23 +19,76 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers } from '../logic/emoji/collection.ts'
 import { nombreDeStickers } from '../logic/emoji/collection.ts'
 import { stickerDe } from './texture-carte.ts'
-import { cerneArcEnCiel, etoileDePaillette } from './peinture-vignette.ts'
+import { cerneArcEnCiel } from './peinture-vignette.ts'
 import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
-import { BRILLANT, COSMOS, SATURATION_APLAT } from './Carte3D.tsx'
+import { BRILLANT, COSMOS, INCLINAISON_REFLET, SATURATION_APLAT } from './Carte3D.tsx'
 
 /** Une paillette du sticker holo en grand : sa place, sa taille, sa teinte, et l'orientation où elle renvoie la lampe. */
 interface Paillette {
   x: number
   y: number
-  r: number
-  teinte: number
+  /** L'étoile peinte une fois, à sa couleur, par la formule du nuanceur. */
+  dessin: HTMLCanvasElement
   mx: number
   my: number
   phase: number
   vitesse: number
-  gros: boolean
+}
+
+/**
+ * LA TOILE DU STICKER EN PART DE LA LARGEUR DE CARTE : sur la carte, le sticker
+ * (marges comprises) tient dans la fenêtre d'art et en fait environ 0,8. C'est
+ * ce qui donne au sticker en grand des cellules de paillettes de la même
+ * finesse que sur la carte.
+ */
+const STICKER_DANS_LA_CARTE = 0.8
+
+/**
+ * UNE ÉTOILE DE L'EMOJI, PEINTE PAR LA FORMULE DU NUANCEUR. Keko : « les étoiles
+ * de l'emoji sur les cartes ne sont pas les mêmes sur les stickers, je veux les
+ * mêmes ». *Le dessin d'avant était le mien* — des branches épaisses, presque
+ * blanches. Ici, pixel par pixel, c'est celui des paillettes COSMOS : deux
+ * branches d'un pixel d'épaisseur (`COSMOS.etoile`) qui s'éteignent en
+ * exponentielle (`COSMOS.bras`), un petit cœur rond (`rayonGros`, à 0,6), le
+ * tout coupé à sa cellule, à la couleur du spectre de la feuille ramenée vers
+ * le blanc (mix 0,8).
+ */
+function peindreEtoile(cellule: number, teinte: number): HTMLCanvasElement {
+  const n = Math.max(3, Math.ceil(cellule))
+  const c = document.createElement('canvas')
+  c.width = n
+  c.height = n
+  const ctx = c.getContext('2d')
+  if (ctx === null) return c
+  const image = ctx.createImageData(n, n)
+  const d = image.data
+  const aa = 1 / cellule
+  const ep = Math.max(aa, 0.002) * COSMOS.etoile
+  const rP = COSMOS.rayonGros
+  const spectre = [0, 0.33, 0.67].map((o) => 0.5 + 0.5 * Math.cos(Math.PI * 2 * (teinte + o)))
+  const ton = spectre.map((v) => 1 + (v - 1) * 0.8)
+  for (let j = 0; j < n; j++) {
+    for (let i = 0; i < n; i++) {
+      const dx = (i + 0.5) / n - 0.5
+      const dy = (j + 0.5) / n - 0.5
+      const lg = Math.hypot(dx, dy)
+      const t = Math.min(1, Math.max(0, (lg - (rP - aa)) / (2 * aa)))
+      const point = 1 - t * t * (3 - 2 * t)
+      const etoile =
+        Math.exp(-Math.abs(dx) / ep) * Math.exp(-Math.abs(dy) * COSMOS.bras) +
+        Math.exp(-Math.abs(dy) / ep) * Math.exp(-Math.abs(dx) * COSMOS.bras)
+      const forme = Math.min(1, Math.max(point * 0.6, etoile))
+      const k = (j * n + i) * 4
+      d[k] = Math.round(ton[0]! * 255)
+      d[k + 1] = Math.round(ton[1]! * 255)
+      d[k + 2] = Math.round(ton[2]! * 255)
+      d[k + 3] = Math.round(forme * 255)
+    }
+  }
+  ctx.putImageData(image, 0, 0)
+  return c
 }
 
 type Tri = 'recents' | 'az' | 'rares'
@@ -236,25 +289,24 @@ function StickerOuvert({
         const px = ctx.getImageData(0, 0, cote, cote).data
         const liste: Paillette[] = []
         // RIEN QUE LES ÉTOILES DE L'EMOJI : la grille des grosses (voir `COSMOS.etoile`).
-        for (const g of [{ n: COSMOS.gros, part: COSMOS.partGros, rayon: COSMOS.rayonGros, gros: true }]) {
-          const pas = cote / (g.n * 0.6)
+        for (const g of [{ n: COSMOS.gros, part: COSMOS.partGros }]) {
+          const pas = cote / (g.n * STICKER_DANS_LA_CARTE)
           for (let y = pas / 2; y < cote; y += pas) {
             for (let x = pas / 2; x < cote; x += pas) {
               if (Math.random() > g.part) continue
-              const gx = Math.min(cote - 1, Math.round(x + (Math.random() - 0.5) * pas * COSMOS.dispersion))
-              const gy = Math.min(cote - 1, Math.round(y + (Math.random() - 0.5) * pas * COSMOS.dispersion))
+              // SA PLACE DANS SA CELLULE : ± un quart, comme au nuanceur.
+              const gx = Math.min(cote - 1, Math.round(x + (Math.random() - 0.5) * pas * 0.5))
+              const gy = Math.min(cote - 1, Math.round(y + (Math.random() - 0.5) * pas * 0.5))
               if (px[(gy * cote + gx) * 4 + 3]! < 230) continue
               liste.push({
                 x: gx,
                 y: gy,
-                r: Math.max(0.8, pas * g.rayon),
-                teinte: Math.random() * 360,
+                dessin: peindreEtoile(pas, (Math.random() * 3) % 1),
                 // LE PENCHANT DE SON PETIT MIROIR, comme au nuanceur (h3 − 0,5, h4 − 0,5).
                 mx: Math.random() - 0.5,
                 my: Math.random() - 0.5,
                 phase: Math.random() * Math.PI * 2,
                 vitesse: 2 + Math.random() * 3,
-                gros: g.gros,
               })
             }
           }
@@ -356,9 +408,17 @@ function StickerOuvert({
       if (pc != null && pctx != null && semis.current.length > 0) {
         pctx.clearRect(0, 0, pc.width, pc.height)
         pctx.globalCompositeOperation = 'lighter'
+        pctx.globalAlpha = 1
         const tps = performance.now() / 1000
+        // LA LAMPE CLÉ, en haut à droite : en coordonnées d'écran, y descend.
         const L = BRILLANT.lampe
         const LL = Math.hypot(L[0], L[1], L[2])
+        const Lx = L[0] / LL
+        const Ly = -L[1] / LL
+        const Lz = L[2] / LL
+        const cx = pc.width / 2
+        const cy = pc.height / 2
+        const distanceOeil = pc.width * 2.5
         for (const p of semis.current) {
           // LE CALCUL DE LA CARTE, À L'IDENTIQUE (voir les paillettes COSMOS du
           // nuanceur) : la normale du sticker penché, celle du petit miroir
@@ -366,26 +426,43 @@ function StickerOuvert({
           // que si le reflet tombe sur elle. Keko : « le même effet sur les
           // stickers quand on les zoome » ; la version d'avant allumait large,
           // trop d'étoiles à la fois.
-          const nx0 = Math.sin(o.x * 0.31)
-          const ny0 = -Math.sin(o.y * 0.31)
+          // EN COORDONNÉES D'ÉCRAN (x à droite, y vers le bas, z vers l'œil).
+          // La normale du sticker penché par rotateY / rotateX (18° au plus),
+          // celle du petit miroir dispersée autour.
           const k = COSMOS.dispersion * 2
-          let nx = nx0 + p.mx * k
-          let ny = ny0 + p.my * k
-          let nz = Math.sqrt(Math.max(0, 1 - nx0 * nx0 - ny0 * ny0))
+          // L'INCLINAISON DE LA CARTE pour les miroirs (INCLINAISON_REFLET × ½),
+          // pas celle, plus forte, du sticker à l'écran : les mêmes étoiles
+          // s'allument pour le même geste.
+          let nx = Math.sin(o.x * INCLINAISON_REFLET * 0.5) + p.mx * k
+          let ny = Math.sin(o.y * INCLINAISON_REFLET * 0.5) + p.my * k
+          let nz = 1
           const ln = Math.hypot(nx, ny, nz)
           nx /= ln
           ny /= ln
           nz /= ln
-          // reflect(−V, n) avec V = (0, 0, 1) : 2 (V·n) n − V.
-          const rx = 2 * nz * nx
-          const ry = 2 * nz * ny
-          const rz = 2 * nz * nz - 1
-          const sf = Math.max(0, (rx * L[0] + ry * L[1] + rz * L[2]) / LL)
+          // LE REGARD DE SA PLACE : l'œil au-dessus du centre, à 2,5 stickers —
+          // c'est la perspective qui fait courir les reflets sur la carte.
+          let vx = cx - p.x
+          let vy = cy - p.y
+          let vz = distanceOeil
+          const lv = Math.hypot(vx, vy, vz)
+          vx /= lv
+          vy /= lv
+          vz /= lv
+          // reflect(−V, n) = 2 (V·n) n − V.
+          const vn = vx * nx + vy * ny + vz * nz
+          const rx = 2 * vn * nx - vx
+          const ry = 2 * vn * ny - vy
+          const rz = 2 * vn * nz - vz
+          const sf = Math.max(0, rx * Lx + ry * Ly + rz * Lz)
           const allume = Math.pow(sf, COSMOS.serreGros)
-          const a2 = Math.min(1, allume * (0.65 + 0.35 * Math.sin(tps * p.vitesse + p.phase)) * 1.5)
-          if (a2 < 0.03) continue
-          // LE STICKER EST L'EMOJI : ses paillettes sont des étoiles (voir `COSMOS.etoile`).
-          etoileDePaillette(pctx, p.x, p.y, p.r * (p.gros ? 5 : 3.5), p.teinte, a2)
+          // LA FORCE DU NUANCEUR (COSMOS.force × la holo, 0,28), DOUBLÉE : sur la
+          // carte, ce qui sature passe le seuil du bloom et rayonne — une toile
+          // plafonne à 1, il lui faut ce surcroît pour se lire autant.
+          const a2 = Math.min(1, allume * (0.65 + 0.35 * Math.sin(tps * p.vitesse + p.phase)) * COSMOS.force * 0.28 * 2)
+          if (a2 < 0.02) continue
+          pctx.globalAlpha = a2
+          pctx.drawImage(p.dessin, p.x - p.dessin.width / 2, p.y - p.dessin.height / 2)
         }
       }
       image = requestAnimationFrame(appliquer)
