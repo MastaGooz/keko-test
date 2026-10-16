@@ -847,6 +847,8 @@ export function Paquet3D({
    */
   const [decollage, setDecollage] = useState<{ i: number; boite: BoiteALEcran } | null>(null)
   const [cachee, setCachee] = useState(false)
+  /** La carte décollée a cassé : la 3D disparaît, les éclats 2D la remplacent. */
+  const [cassee, setCassee] = useState(false)
   const [detruites, setDetruites] = useState<ReadonlySet<number>>(new Set())
   const minuteArrivee = useRef(0)
   useEffect(() => () => clearTimeout(minuteArrivee.current), [])
@@ -976,6 +978,12 @@ export function Paquet3D({
     [paquet, tirage],
   )
   const indexZoome = zoomee === null ? -1 : aPeindre.findIndex((c) => c.id === zoomee)
+  /** La carte qu'on décolle, sans son emoji ni son animation : mémorisée, voir `aPeindre`. */
+  const iDecollee = decollage?.i ?? -1
+  const carteNue = useMemo(
+    () => (iDecollee < 0 || aPeindre[iDecollee] === undefined ? null : { ...aPeindre[iDecollee]!, sansSujet: true, animation: undefined }),
+    [aPeindre, iDecollee],
+  )
 
 
   function rangDe(id: string): number {
@@ -1540,7 +1548,8 @@ export function Paquet3D({
           // retombe du dessus et dévoile la carte derrière » — démontée, elle
           // rejouait son arrivée en revenant.
           if (detruites.has(i)) return []
-          const couverte = cachee && decollage?.i === i
+          const enDecollage = cachee && decollage?.i === i
+          const couverte = cassee && decollage?.i === i
           const vue = retourne
           return [
             <Envol key={`${numero}:${carte.id}`} sortie={false} rang={i} distance={hVisible * 1.25}>
@@ -1548,7 +1557,9 @@ export function Paquet3D({
             <Prise pris={pris} distance={distancePrise}>
             <group visible={!couverte}>
             <Carte3D
-              carte={carte}
+              // PENDANT LE GESTE, LA MÊME CARTE SANS SON EMOJI : c'est le sticker
+              // 2D qu'on tire par-dessus (voir `Decollage`).
+              carte={enDecollage && carteNue !== null ? carteNue : carte}
               // LE DOS TANT QU'ELLE N'EST PAS RETOURNÉE : c'est la même carte
               // vue de l'autre côté, pas un second objet.
               dos={!vue}
@@ -1667,10 +1678,18 @@ export function Paquet3D({
               // profondeur est nulle, et celle d'une pile penchée vaut au plus
               // une demi-largeur fois sin θ : une saillie plus grande que ça la
               // garde devant quel que soit l'angle — voir SAILLIE_SORTIE.
+              // ET À PLAT PENDANT LE DÉCOLLAGE : le sticker 2D est posé sur la
+              // carte de face, il ne la suit pas quand elle penche.
               curseurPartage={
-                fini ? curseursBilan.current[i] : i >= montree ? curseurDefile.current : undefined
+                decollage?.i === i
+                  ? undefined
+                  : fini
+                    ? curseursBilan.current[i]
+                    : i >= montree
+                      ? curseurDefile.current
+                      : undefined
               }
-              refletAuDoigt={fini || i >= montree}
+              refletAuDoigt={decollage?.i !== i && (fini || i >= montree)}
               ombre
               // ET ELLE REBONDIT EN ÉLASTIQUE quand le film l'a découverte :
               // le jeton change une fois par ouverture, toute la pile le lit.
@@ -1743,6 +1762,7 @@ export function Paquet3D({
     const carte = paquet[i]
     setDecollage(null)
     setCachee(false)
+    setCassee(false)
     setDetruites((s) => new Set(s).add(i))
     if (carte === undefined) return
     onDetruire?.(carte.id, tirage.bonus[carte.id] ?? { holo: false, anime: false })
@@ -1850,7 +1870,9 @@ export function Paquet3D({
             regarde, est un objet qu'on tient. */}
         <PencheAuGyro
           curseurs={
-            fini
+            decollage !== null
+              ? []
+              : fini
               ? indexZoome >= 0
                 ? [curseursBilan.current[indexZoome]!]
                 : []
@@ -1982,6 +2004,7 @@ export function Paquet3D({
           exemplaire={tirage.bonus[paquet[decollage.i]!.id] ?? { holo: false, anime: false }}
           boite={decollage.boite}
           onPret={() => setCachee(true)}
+          onCasse={() => setCassee(true)}
           onAnnuler={() => {
             setDecollage(null)
             setCachee(false)

@@ -183,6 +183,7 @@ function CarteOuverte({
    */
   const [decolle, setDecolle] = useState<Exemplaire | null>(null)
   const [cachee, setCachee] = useState(false)
+  const [cassee, setCassee] = useState(false)
   const refDecolle = useRef(false)
   refDecolle.current = decolle !== null
   const [fenetre, setFenetre] = useState({ l: window.innerWidth, h: window.innerHeight })
@@ -206,6 +207,15 @@ function CarteOuverte({
   const aPeindre = useMemo(
     () => carteDeLEmoji(carte, { holo: possession.holo > 0, anime: possession.anime > 0 && carte.animable }),
     [carte, possession.holo, possession.anime],
+  )
+  /**
+   * LA CARTE PENDANT LE DÉCOLLAGE : l'exemplaire qu'on détruit (le simple
+   * d'abord, pas forcément le plus beau qu'on montrait), sans son emoji.
+   */
+  const carteNue = useMemo(
+    () =>
+      decolle === null ? aPeindre : { ...carteDeLEmoji(carte, decolle), sansSujet: true, animation: undefined },
+    [carte, decolle, aPeindre],
   )
   // LA CARTE TIENT DANS L'ÉCRAN, avec la place des lignes du dessous : la règle
   // de la rangée du paquet, *la taille se calcule sur la place.*
@@ -326,21 +336,21 @@ function CarteOuverte({
       >
         <Cadrage />
         <Horloge />
-        <PencheAuGyro curseurs={[curseur.current]} gyro={gyro} />
+        <PencheAuGyro curseurs={decolle !== null ? [] : [curseur.current]} gyro={gyro} />
         <Bloom />
         <ambientLight intensity={0.55} />
         <directionalLight position={[2.5, 3.5, 4]} intensity={2.2} />
         <directionalLight position={[-4, 1, 2]} intensity={0.9} color="#8fb4ff" />
         {/* INVISIBLE, PAS DÉMONTÉE : annuler la rend telle qu'elle était. */}
-        <group visible={!cachee}>
+        <group visible={!cassee}>
         <Carte3D
-          carte={aPeindre}
+          carte={cachee ? carteNue : aPeindre}
           position={[0, hVisible * 0.06, Z_MAIN]}
           taille={taille}
           tailleTexture={px}
           reflet
-          refletAuDoigt
-          curseurPartage={curseur.current}
+          refletAuDoigt={decolle === null}
+          curseurPartage={decolle === null ? curseur.current : undefined}
           ombre={false}
         />
         </group>
@@ -351,6 +361,7 @@ function CarteOuverte({
           exemplaire={decolle}
           boite={refBoite.current}
           onPret={() => setCachee(true)}
+          onCasse={() => setCassee(true)}
           onAnnuler={() => {
             setDecolle(null)
             setCachee(false)

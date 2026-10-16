@@ -249,7 +249,8 @@ export type CarteAPeindre = {
   /**
    * LA CARTE SANS SON STICKER : le décor, les rayons, la plaque, et un trou
    * nulle part — ce qui reste sous l'emoji qu'on décolle (voir `Decollage`).
-   * *Jamais mis en cache partagé* : seul le décollage la peint.
+   * *Elle entre dans la signature* : la carte 3D la prend pendant le geste, et
+   * elle ne doit pas partager la texture de la carte entière.
    */
   sansSujet?: boolean
   /**
@@ -6458,7 +6459,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}`
 }
 
 /**

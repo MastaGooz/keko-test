@@ -8,11 +8,16 @@
  * doigt, comme on déchire le sachet), **toutes les cartes se détruisent, même
  * la dernière**, et **le sticker garde le bonus** de l'exemplaire.
  *
- * ***C'EST UNE SCÈNE 2D POSÉE EXACTEMENT SUR LA CARTE 3D***, qui disparaît
- * dessous dès que la peinture est prête : *un sticker qui se plie est une
- * affaire de découpe et de reflet*, et la toile le fait en trois `drawImage`
- * là où le nuanceur demanderait une géométrie qui se replie. La carte peinte
- * est la même que la vignette (`peinte`) : la même holo, les mêmes paillettes.
+ * ***LE STICKER EST UNE SCÈNE 2D POSÉE EXACTEMENT SUR LA CARTE 3D*** : *un
+ * sticker qui se plie est une affaire de découpe et de reflet*, et la toile le
+ * fait en trois `drawImage` là où le nuanceur demanderait une géométrie qui se
+ * replie. **La carte, elle, reste en 3D jusqu'à la casse** — remise à plat et
+ * repeinte sans son emoji (`sansSujet`), dès que la scène est prête (`onPret`).
+ * Keko : « pourquoi quand je clique sur décoller le sticker, la carte change de
+ * couleur et devient terne ? » *Elle était remplacée par sa peinture 2D*, la
+ * vignette, sans la lumière de la scène, le brillant de la bordure et des
+ * rayons ni le halo. La peinture ne sert plus qu'aux éclats (`onCasse` : la 3D
+ * disparaît à cet instant).
  *
  * **LE PLI** : on tire dans un sens, et le sticker se lève par le bord
  * opposé, replié sur lui-même le long d'une ligne droite — la partie levée est
@@ -455,14 +460,17 @@ export function Decollage({
   exemplaire,
   boite,
   onPret,
+  onCasse,
   onFini,
   onAnnuler,
 }: {
   carte: CarteEmoji
   exemplaire: Exemplaire
   boite: BoiteALEcran
-  /** La scène 2D couvre la carte : la 3D peut disparaître dessous. */
+  /** Le sticker est prêt à se décoller : la carte 3D se met à plat et perd son emoji. */
   onPret: () => void
+  /** La carte casse : la 3D disparaît, les éclats 2D prennent sa place. */
+  onCasse: () => void
   /** Le sticker est gagné et la carte détruite : c'est là qu'on l'écrit. */
   onFini: () => void
   onAnnuler: () => void
@@ -472,8 +480,8 @@ export function Decollage({
   const [phase, setPhase] = useState<Phase>('prepa')
   const refPhase = useRef<Phase>('prepa')
   const laBoite = useRef(boite).current
-  const appels = useRef({ onPret, onFini, onAnnuler })
-  appels.current = { onPret, onFini, onAnnuler }
+  const appels = useRef({ onPret, onCasse, onFini, onAnnuler })
+  appels.current = { onPret, onCasse, onFini, onAnnuler }
   const etat = useRef({
     t0: 0,
     depart: null as P | null,
@@ -543,8 +551,6 @@ export function Decollage({
     t.width = Math.round(window.innerWidth * dpr)
     t.height = Math.round(window.innerHeight * dpr)
     const b = laBoite
-    const x0 = b.cx - b.l / 2
-    const y0 = b.cy - b.h / 2
     const centre: P = { x: pret.s.x + pret.s.l / 2, y: pret.s.y + pret.s.h / 2 }
     // LE STICKER GAGNÉ SE MONTRE AU-DESSUS DE LA CARTE, un peu plus haut que son trou.
     const haut: P = { x: b.cx, y: b.cy - b.h * 0.1 }
@@ -577,9 +583,8 @@ export function Decollage({
       const dt = (maintenant - e.t0) / 1000
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight)
-      // LA CARTE, entière ou en morceaux.
-      if (miettes === null) ctx.drawImage(pret.base, x0, y0, b.l, b.h)
-      else {
+      // LA CARTE EST EN 3D, DESSOUS, jusqu'à la casse ; puis ses éclats.
+      if (miettes !== null) {
         const tc = (maintenant - tCasse) / 1000
         dessinerMiettes(ctx, pret.base, miettes, tc, ton)
         dessinerEtincelles(ctx, etincelles, tc, ton)
@@ -626,6 +631,7 @@ export function Decollage({
           miettes = casser(b, centre)
           etincelles = gerbe(centre, 70)
           tCasse = maintenant
+          appels.current.onCasse()
           jouerSon(SON_POSER, 0.9, 0, 0.7)
           passer('retourne')
         }
@@ -709,10 +715,19 @@ export function Decollage({
         e.dernier = { x: ev.clientX, y: ev.clientY, t }
         e.craque?.doser(Math.min(1, v * 1.6))
       }}
-      onPointerUp={() => {
+      onPointerUp={(ev) => {
         const e = etat.current
         e.craque?.doser(0)
         if (refPhase.current !== 'tirer' || e.depart === null || pret === null) return
+        // LE GESTE SE MESURE AU LÂCHER, pas à la dernière image : un doigt vif
+        // lâche avant que l'image suivante ait lu son dernier mouvement.
+        const dx = ev.clientX - e.depart.x
+        const dy = ev.clientY - e.depart.y
+        const lg = Math.hypot(dx, dy)
+        if (lg > 3) {
+          e.u = { x: dx / lg, y: dy / lg }
+          e.len = lg
+        }
         const m = bornes(pret.points, e.u).min + e.len * DECOLLAGE.avance
         if (partLevee(pret.points, e.u, m) >= DECOLLAGE.seuil) arracher()
         else {

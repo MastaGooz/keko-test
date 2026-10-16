@@ -204,7 +204,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   la carte ouverte de la collection — **c'est le geste qui confirme** : on tire
   le sticker, il se replie le long d'une ligne (son DOS crème reflété), puis la
   carte vole en éclats en toile d'araignée autour du trou, et le sticker s'envole vers « Stickers ». Scène 2D posée sur la
-  carte 3D, qui disparaît dessous (`sansSujet` peint la carte sans l'emoji,
+  carte 3D ; la carte RESTE EN 3D jusqu'à la casse, à plat et repeinte sans son emoji (`sansSujet`, dans la signature ; la 2D était terne),
   `sujetDe` dit où il était). **Toutes se détruisent, même la dernière** ; le
   sticker garde le bonus ; depuis la collection, le simple part d'abord
   (`exemplaireADetruire`). Au défilé on passe à la suivante, le bilan se range
