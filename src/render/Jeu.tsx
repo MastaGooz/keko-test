@@ -20,7 +20,7 @@
  * même tirage, et un sachet qu'on n'a pas ouvert reste le même.
  */
 import '../ui/collection.css'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
 import { ajouterPaquet, nombreDeNouvelles, toutVu, type Collection } from '../logic/emoji/collection.ts'
@@ -28,11 +28,62 @@ import { chargerCollection, sauverCollection } from '../ui/collection.ts'
 import { chargerEmojis } from '../ui/emoji.ts'
 import { Paquet3D } from './Paquet3D.tsx'
 import { PageCollection } from './Collection.tsx'
-import { SON_CLIC_POP, jouerSon, precharger } from './sons.ts'
+import { SON_CLIC_POP, amorcerLeSon, jouerSon, precharger, reveillerLeSon } from './sons.ts'
+import { FondAnime } from './FondAnime.tsx'
+import { toileDuTitre } from './texture-carte.ts'
 
 type Page = 'booster' | 'collection'
 
+/**
+ * L'ÉCRAN D'ACCUEIL : le titre, et « Touchez pour jouer ». Keko : « mettre
+ * plutôt une étape globale tout au début de l'app : touchez pour jouer, un
+ * genre d'écran d'accueil ».
+ *
+ * ***C'EST LUI QUI REND LE SON À LA PAGE*** — le rôle qu'avait la prise du
+ * sachet : sur tactile, un contexte audio ne démarre que depuis un geste, et
+ * c'est un RELÂCHEMENT qui compte (`pointerup`). On l'amorce là, une fois.
+ * **Le paquet n'est monté qu'après** : son sachet arrive alors d'en haut, au
+ * lieu d'être déjà là quand l'accueil s'efface.
+ */
+function Accueil({ onJouer }: { onJouer: () => void }): React.ReactElement {
+  const toile = useRef<HTMLCanvasElement>(null)
+  const [pret, setPret] = useState(false)
+  useEffect(() => {
+    let vivant = true
+    const l = Math.min(window.innerWidth * 0.86, 520) * Math.min(window.devicePixelRatio || 1, 2)
+    void toileDuTitre(l).then((source) => {
+      const t = toile.current
+      const ctx = t?.getContext('2d')
+      if (!vivant || t == null || ctx == null) return
+      t.width = source.width
+      t.height = source.height
+      ctx.drawImage(source, 0, 0)
+      setPret(true)
+    })
+    return () => {
+      vivant = false
+    }
+  }, [])
+  return (
+    <button
+      type="button"
+      className="accueil"
+      onPointerUp={() => {
+        amorcerLeSon()
+        reveillerLeSon()
+        onJouer()
+      }}
+    >
+      <div className="paquet-fond" />
+      <FondAnime />
+      <canvas ref={toile} className={`accueil-titre${pret ? ' accueil-pret' : ''}`} />
+      <span className="paquet-invite accueil-invite">Touchez pour jouer</span>
+    </button>
+  )
+}
+
 export function Jeu(): React.ReactElement {
+  const [accueil, setAccueil] = useState(true)
   const [page, setPage] = useState<Page>('booster')
   const [collection, setCollection] = useState<Collection>(chargerCollection)
   const [calme, setCalme] = useState(true)
@@ -85,12 +136,14 @@ export function Jeu(): React.ReactElement {
 
   const nouvelles = nombreDeNouvelles(collection)
   const reunies = catalogue === null ? 0 : catalogue.filter((c) => collection.cartes[c.id] !== undefined).length
-  const visible = page === 'collection' || calme
+  const visible = !accueil && (page === 'collection' || calme)
 
   return (
     <>
-      {page === 'booster' ? (
-        <Paquet3D onPaquetOuvert={ajouter} onCalme={setCalme} />
+      {accueil ? (
+        <Accueil onJouer={() => setAccueil(false)} />
+      ) : page === 'booster' ? (
+        <Paquet3D onPaquetOuvert={ajouter} onCalme={setCalme} sansPrise />
       ) : (
         <PageCollection
           catalogue={catalogue}

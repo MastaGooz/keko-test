@@ -605,3 +605,64 @@
 .carte-ouverte button:focus:not(:focus-visible) {
   outline: none;
 }
+
+/* ------------------------------------------------------------ l'accueil */
+
+/* TOUT L'ÉCRAN EST LE BOUTON : « touchez pour jouer » veut dire n'importe où. */
+.accueil {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.accueil-titre {
+  position: relative;
+  z-index: 1;
+  width: min(86vw, 520px);
+  margin-bottom: 18vh;
+  opacity: 0;
+  transform: scale(0.6) rotate(-6deg);
+}
+
+/* LE TITRE ARRIVE EN REBONDISSANT, puis respire. */
+.accueil-pret {
+  animation:
+    accueil-arrive 0.6s cubic-bezier(0.3, 1.6, 0.5, 1) forwards,
+    accueil-respire 3.2s ease-in-out 0.6s infinite;
+}
+
+@keyframes accueil-arrive {
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes accueil-respire {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04) rotate(-1.5deg);
+  }
+}
+
+.accueil-invite {
+  z-index: 1;
+  bottom: 22vh;
+}

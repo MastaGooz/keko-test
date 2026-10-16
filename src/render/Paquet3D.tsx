@@ -512,9 +512,19 @@ type PropsPaquet = {
    * le défilé, elle disputerait l'écran à la carte.
    */
   onCalme?: (calme: boolean) => void
+  /**
+   * LE SACHET ARRIVE DÉJÀ PRIS : pas de « Touche le paquet ». Keko : « on peut
+   * enlever l'étape "touche le paquet" dans l'ouverture ? Et mettre plutôt une
+   * étape globale tout au début de l'app ». ***La prise n'était pas qu'une mise
+   * en scène*** : c'est sa tape qui rendait le son à la page sur tactile. *C'est
+   * l'écran d'accueil qui la porte désormais* (voir `Jeu`), une fois par
+   * session — exactement comme le bouton « Ouvrir un autre paquet » la portait
+   * déjà pour le sachet suivant.
+   */
+  sansPrise?: boolean
 }
 
-export function Paquet3D({ onPaquetOuvert, onCalme }: PropsPaquet = {}): React.ReactElement {
+export function Paquet3D({ onPaquetOuvert, onCalme, sansPrise = false }: PropsPaquet = {}): React.ReactElement {
   const params = new URLSearchParams(location.search)
   /**
    * QUEL CATALOGUE — L'EMOJI PAR DÉFAUT, `&art` les peintures.
@@ -712,8 +722,8 @@ export function Paquet3D({ onPaquetOuvert, onCalme }: PropsPaquet = {}): React.R
   /** Il brûle : la tape est passée, et il n'y a plus à y revenir. */
   const [brule, setBrule] = useState(false)
   // LE SACHET EST-IL PRIS ? Voir `Prise`. Sans sachet (`&nu`), il l'est d'office.
-  const [pris, setPris] = useState(nu)
-  const refPris = useRef(nu)
+  const [pris, setPris] = useState(nu || sansPrise)
+  const refPris = useRef(nu || sansPrise)
   refPris.current = pris
   // LE DOIGT S'EST POSÉ SUR LE SACHET : seule une tape QUI A COMMENCÉ SUR LUI
   // le prend. Keko : « y'a marqué touche le paquet mais ça marche même si je

@@ -137,10 +137,12 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   d'incidence), Fresnel, lustre multiplié. **L'axe horizontal du penchant est
   à contre-physique exprès** (le sachet s'allume en s'ouvrant) : ne pas le
   « corriger ». **Jamais de backtick dans un commentaire GLSL** (six fois).
-- **La prise** : le sachet attend en retrait (recul en z, ses cartes
-  avec lui, `Prise`) et **une tape le prend** avant qu'on puisse le déchirer
-  — c'est ce relâchement qui rend le son à la page sur tactile. Seulement
-  pour le premier sachet : « Ouvrir un autre paquet » l'amène déjà pris.
+- **L'accueil « Touchez pour jouer »** (`Accueil` dans `Jeu.tsx`, le titre
+  du sachet par `toileDuTitre`) **a remplacé la prise** : c'est son
+  relâchement qui rend le son à la page sur tactile, une fois par session. Le
+  paquet n'est monté qu'après, et chaque sachet arrive déjà pris
+  (`sansPrise`). `Prise` et « Touche le paquet » ne restent que pour `&art` et
+  `&peau`, qui n'ont pas d'accueil.
 - **Le geste** : le front suit le doigt (exposant 1), « Ouvrir ici » au départ
   du pointillé, **cliquet** (`p` ne recule jamais, pas de retour sous la
   moitié), le doigt posé penche le sachet (`viseDepuis`, borné ±0,7), le

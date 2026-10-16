@@ -5810,6 +5810,20 @@ async function peindreTitreDuSachet(
   ctx.restore()
 }
 
+/**
+ * LE TITRE DU SACHET SEUL, sur sa toile : c'est le logo de l'écran d'accueil.
+ * *La marque se dit avec le même dessin partout* — le peintre est celui du
+ * sachet, pas une copie.
+ */
+export async function toileDuTitre(l: number): Promise<HTMLCanvasElement> {
+  const toile = document.createElement('canvas')
+  toile.width = Math.round(l)
+  toile.height = Math.round(l * 0.42)
+  const ctx = toile.getContext('2d')
+  if (ctx !== null) await peindreTitreDuSachet(ctx, l, toile.height * 0.46, false)
+  return toile
+}
+
 let SACHET: Promise<{ film: THREE.CanvasTexture; brillance: THREE.CanvasTexture }> | null = null
 
 /**

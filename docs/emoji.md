@@ -6182,3 +6182,29 @@ tape, plus un clic manqué : un glisser qui finit dehors ne la ferme pas.
 
 « Ce serait bien de pouvoir sélectionner plusieurs catégories à la fois comme
 les raretés » : les types sont un ensemble, comme les raretés (`basculer`).
+
+### L'ÉCRAN D'ACCUEIL REMPLACE « TOUCHE LE PAQUET » (16/10/2026)
+
+Keko : **« on peut enlever l'étape "touche le paquet" dans l'ouverture ? Et
+mettre plutôt une étape globale tout au début de l'app : touchez pour jouer, un
+genre d'écran d'accueil. »**
+
+***La prise n'était pas qu'une mise en scène*** : c'est sa tape qui rendait le
+son à la page sur tactile — un contexte audio ne démarre que depuis un geste,
+et c'est un relâchement qui compte. **L'accueil reprend ce rôle, une fois par
+session** : tout l'écran est un bouton, son `pointerup` amorce et réveille le
+son, puis le paquet est monté. *Exactement ce que « Ouvrir un autre paquet »
+faisait déjà pour le sachet suivant*, qui arrivait pris.
+
+- **Ce qu'il montre** : le fond du paquet et ses emoji qui flottent
+  (`FondAnime`), le titre « Em😄jis » **peint par le même peintre que le
+  sachet** (`toileDuTitre`, qui appelle `peindreTitreDuSachet` — *la marque se
+  dit avec le même dessin partout*), qui arrive en rebondissant puis respire, et
+  « Touchez pour jouer » dans le style de l'ancienne invite.
+- **Le paquet n'est monté qu'après la tape** : son sachet arrive alors d'en
+  haut, au lieu d'être déjà posé quand l'accueil s'efface. *Le prix* : les
+  nuanceurs se compilent après la tape, pas pendant l'accueil.
+- `Paquet3D.sansPrise` : le sachet arrive pris, pas d'invite. **`&art` et
+  `&peau` n'ont pas d'accueil et gardent la prise**, sinon ils perdraient le son
+  sur tactile.
+- La barre de navigation est cachée sur l'accueil.
