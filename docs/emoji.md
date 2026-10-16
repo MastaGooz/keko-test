@@ -6528,3 +6528,4 @@ Keko : « on peut mettre un effet paillettes sur l'emoji holo des cartes / stick
 - Keko : « encore un poil plus saturé ? » — bleu 1,8 → 2,3.
 - Keko : « encore un peu » — bleu 2,3 → 2,9.
 - Keko : « encore un peu » — bleu 2,9 → 3,6.
+- Keko : « ça change plus beaucoup j'avoue, je voudrais encore plus flashy ». *La saturation du brillant ne rendait plus rien* — les canaux étaient au bout, c'est la COULEUR peinte qui plafonnait : les rayons prenaient le bleu moyen du cran `#5a9ede`, doux. Ils ont maintenant leur propre bleu électrique (`TON_RAYONS` : `#1f8fff`) et un peu plus de force (`FORCE_RAYONS.bleu` 0,17 → 0,21). La saturation du brillant reste à 3,6. Vu à la collection, à côté du vert et du violet.

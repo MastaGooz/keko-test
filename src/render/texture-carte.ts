@@ -1456,10 +1456,18 @@ const FORCE_RAYONS: Record<string, number> = {
   // mais il doit encore se lire.
   blanc: 0.14,
   vert: 0.13,
-  bleu: 0.17,
+  bleu: 0.21,
   violet: 0.22,
   orange: 0.28,
 }
+/**
+ * LA COULEUR DES RAYONS, quand elle n'est pas le ton moyen du cran. Keko, sur
+ * les rares : « encore plus flashy » — *la saturation du brillant ne rendait
+ * plus rien* (les canaux étaient au bout), c'est la couleur peinte qui
+ * plafonnait : le bleu moyen `#5a9ede` est doux. Les rayons des rares prennent
+ * un bleu électrique, et un peu plus de force (`FORCE_RAYONS.bleu` 0,17 → 0,21).
+ */
+const TON_RAYONS: Record<string, string> = { bleu: '#1f8fff' }
 /** L'opacité des touches dans la fenêtre d'art, et leur échelle par rapport à celles du dos. */
 const TOUCHES_CARTE = 0.09
 const TOUCHES_ECHELLE = 0.8
@@ -1558,7 +1566,7 @@ function peindreRayons(
   h: number,
 ): void {
   const force = rarete === undefined ? 0 : (FORCE_RAYONS[rarete] ?? 0)
-  const ton = rarete === undefined ? undefined : METAUX[rarete]?.[2]
+  const ton = rarete === undefined ? undefined : (TON_RAYONS[rarete] ?? METAUX[rarete]?.[2])
   if (force <= 0 || ton === undefined) return
   const cx = x + l / 2
   const cy = y + h / 2
