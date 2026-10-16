@@ -24,9 +24,9 @@ import type { CarteEmoji, GroupeEmoji, RareteEmoji } from '../logic/emoji/types.
 import { GROUPES_EMOJI, NOM_DU_GROUPE, RARETES_EMOJI } from '../logic/emoji/types.ts'
 import type { Collection, Possession } from '../logic/emoji/collection.ts'
 import { nombreDExemplaires } from '../logic/emoji/collection.ts'
-import { AMBIANCE, peindreCarte, tailleQuIlFaut } from './texture-carte.ts'
+import { AMBIANCE, RAYONS_DANS_LA_CARTE, peindreCarte, tailleQuIlFaut } from './texture-carte.ts'
 import { COULEUR, carteDeLEmoji, enTitre } from './carte-emoji.ts'
-import { Carte3D, HAUT, LARGE, SATURATION_APLAT, type CurseurDeCarte } from './Carte3D.tsx'
+import { COSMOS, Carte3D, HAUT, LARGE, SATURATION_APLAT, type CurseurDeCarte } from './Carte3D.tsx'
 import { Cadrage, FOV, Z_MAIN, hauteurVisibleA, zCamera } from './Cadrage.tsx'
 import { Horloge } from './horloge.tsx'
 import { Bloom } from './Bloom.tsx'
@@ -80,11 +80,74 @@ function plier(texte: string): string {
 let fileDePeinture: Promise<unknown> = Promise.resolve()
 const PEINTES = new Map<string, Promise<HTMLCanvasElement>>()
 
-function peinte(c: CarteEmoji, largeur: number): Promise<HTMLCanvasElement> {
-  const cle = `${c.id}#${largeur}`
+const lineaire = (v: number): number => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)
+const srgb = (v: number): number => (v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055)
+const fondu = (a: number, b: number, x: number): number => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)))
+  return t * t * (3 - 2 * t)
+}
+
+/**
+ * LE CERNE ARC-EN-CIEL D'UNE HOLO, PEINT SUR LA VIGNETTE. Keko : « on peut pas
+ * avoir l'outline arc-en-ciel au lieu de blanc sur les cartes de la
+ * collection ? » *En 3D c'est le nuanceur qui le fait* (`COSMOS.cerne`) ; une
+ * vignette est une peinture, donc on refait son calcul sur ses pixels, une
+ * fois : **le même repérage du crème** (il manque environ 0,13 de bleu au
+ * #fffaf0, là où les blancs d'un emoji sont neutres), **le même spectre** qui
+ * fait le tour de l'emoji, saturé par la même puissance. *Ce qui ne passe pas,
+ * c'est l'angle du regard* : une vignette ne penche pas, son spectre est figé.
+ * Seulement dans la fenêtre d'art : la plaque, crème aussi, n'en reçoit pas.
+ */
+function cerneArcEnCiel(toile: HTMLCanvasElement): void {
+  const ctx = toile.getContext('2d')
+  if (ctx === null) return
+  const { width: l, height: h } = toile
+  const R = RAYONS_DANS_LA_CARTE
+  const x0 = Math.floor(R.x * l)
+  const y0 = Math.floor(R.y * h)
+  const lf = Math.ceil(R.l * l)
+  const hf = Math.ceil(R.h * h)
+  const image = ctx.getImageData(x0, y0, lf, hf)
+  const d = image.data
+  const cx = (R.x + R.l / 2) * l
+  const cy = (R.y + R.h / 2) * h
+  const { tour, sature, couleur } = COSMOS.cerne
+  for (let j = 0; j < hf; j++) {
+    for (let i = 0; i < lf; i++) {
+      const k = (j * lf + i) * 4
+      if (d[k + 3]! === 0) continue
+      const r = lineaire(d[k]! / 255)
+      const g = lineaire(d[k + 1]! / 255)
+      const b = lineaire(d[k + 2]! / 255)
+      const ecart = r - b
+      const creme =
+        fondu(0.88, 0.95, r) * fondu(0.8, 0.84, b) * fondu(0.07, 0.1, ecart) * (1 - fondu(0.17, 0.22, ecart))
+      if (creme <= 0) continue
+      // L'ANGLE AUTOUR DU CENTRE DE LA FENÊTRE, la hauteur à l'échelle de la
+      // carte (1,4) : le spectre tourne rond autour de l'emoji.
+      const dx = (x0 + i - cx) / l
+      const dy = ((y0 + j - cy) / h) * 1.4
+      const t = (((Math.atan2(dy, dx) / (Math.PI * 2)) * tour) % 1 + 1.3) % 1
+      const arc = [0, 0.33, 0.67].map((o) => Math.min(1, (0.5 + 0.5 * Math.cos(Math.PI * 2 * (t + o))) ** sature * 1.5))
+      const teinte = arc.map((a) => 1 + (a - 1) * couleur)
+      const lin = [r, g, b].map((v, n) => v + (v * teinte[n]! - v) * creme)
+      d[k] = Math.round(srgb(lin[0]!) * 255)
+      d[k + 1] = Math.round(srgb(lin[1]!) * 255)
+      d[k + 2] = Math.round(srgb(lin[2]!) * 255)
+    }
+  }
+  ctx.putImageData(image, x0, y0)
+}
+
+function peinte(c: CarteEmoji, largeur: number, holo: boolean): Promise<HTMLCanvasElement> {
+  const cle = `${c.id}#${largeur}${holo ? '#holo' : ''}`
   const deja = PEINTES.get(cle)
   if (deja !== undefined) return deja
-  const p = fileDePeinture.then(() => peindreCarte(carteDeLEmoji(c), largeur))
+  const p = fileDePeinture.then(async () => {
+    const toile = await peindreCarte(carteDeLEmoji(c), largeur)
+    if (holo) cerneArcEnCiel(toile)
+    return toile
+  })
   fileDePeinture = p.catch(() => null)
   PEINTES.set(cle, p)
   // *Un cache retient les succès, pas les échecs.*
@@ -115,6 +178,7 @@ function Vignette({
   const boite = useRef<HTMLButtonElement>(null)
   const toile = useRef<HTMLCanvasElement>(null)
   const [prete, setPrete] = useState(false)
+  const holo = possession.holo > 0
   useEffect(() => {
     const el = boite.current
     if (el === null) return
@@ -125,7 +189,7 @@ function Vignette({
         fini = true
         obs.disconnect()
         const px = el.getBoundingClientRect().width * Math.min(window.devicePixelRatio || 1, 3)
-        void peinte(carte, tailleQuIlFaut(px)).then((source) => {
+        void peinte(carte, tailleQuIlFaut(px), holo).then((source) => {
           const t = toile.current
           const ctx = t?.getContext('2d')
           if (t == null || ctx == null) return
@@ -142,7 +206,7 @@ function Vignette({
       fini = true
       obs.disconnect()
     }
-  }, [carte])
+  }, [carte, holo])
   return (
     <button
       ref={boite}

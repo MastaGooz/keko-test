@@ -6267,3 +6267,17 @@ se fermait au relâchement, donc le clic tombait sur la vignette d'en dessous.
 reçoit, et il s'arrête là. Le relâchement ne dit plus que si c'était une tape,
 et où. Vérifié dans la page : la tape au-dessus d'une vignette ferme, sans
 rien rouvrir.
+
+#### LES VIGNETTES HOLO PORTENT LE CERNE ARC-EN-CIEL
+
+Keko : « on peut pas avoir l'outline arc-en-ciel au lieu de blanc sur les cartes de
+la collection ? » *En 3D, c'est le nuanceur qui le peint* (`COSMOS.cerne`) ; une
+vignette est une peinture, donc `cerneArcEnCiel` refait son calcul sur ses
+pixels, une fois, à la peinture : **le même repérage du crème** (l'écart
+rouge-bleu du #fffaf0, en linéaire), **le même spectre** qui tourne autour de
+l'emoji, la même puissance de saturation — `COSMOS` est lu, pas recopié.
+Seulement dans la fenêtre d'art : la plaque, crème aussi, n'en reçoit pas.
+**Ce qui ne passe pas, c'est l'angle du regard** : une vignette ne penche pas,
+son spectre est figé. **Seulement les holo** : sur une carte sans holo, la 3D
+garde le cerne crème, et la grille aussi. Vérifié : Zombie, Jeu vidéo, Pioche,
+Onze heures en arc-en-ciel, Hot dog et Adn en crème.

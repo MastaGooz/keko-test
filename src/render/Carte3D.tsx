@@ -401,7 +401,7 @@ const VITESSE_HOLO = 0.17
  * `serre` est l'exposant du reflet : plus il est haut, plus une paillette doit
  * être exactement dans l'axe pour s'allumer, et moins il y en a d'allumées.
  */
-const COSMOS = {
+export const COSMOS = {
   fin: 40,
   gros: 14,
   partFin: 0.7,
