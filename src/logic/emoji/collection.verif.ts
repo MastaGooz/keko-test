@@ -9,6 +9,7 @@ import {
   nombreDeNouvelles,
   nombreDExemplaires,
   toutVu,
+  carteVue,
 } from './collection.ts'
 
 let echecs = 0
@@ -29,6 +30,10 @@ verifier('trois exemplaires', nombreDExemplaires(un) === 3)
 verifier('un paquet', un.paquets === 1)
 verifier("l'ordre d'arrivée", un.cartes['1f600']?.ordre === 1 && un.cartes['1f601']?.ordre === 2)
 verifier('deux nouvelles', nombreDeNouvelles(un) === 2)
+const uneVue = carteVue(un, '1f600')
+verifier('une carte ouverte en grand est vue', uneVue.cartes['1f600']?.nouvelle === false)
+verifier('les autres restent nouvelles', uneVue.cartes['1f601']?.nouvelle === true)
+verifier('une carte déjà vue ne change rien', carteVue(uneVue, '1f600') === uneVue)
 const vu = toutVu(un)
 verifier('tout vu', nombreDeNouvelles(vu) === 0)
 const deux = ajouterPaquet(vu, ['1f600'], { '1f600': sans }, 2000)

@@ -549,10 +549,13 @@ export function PageCollection({
   catalogue,
   collection,
   onOuvrirUnPaquet,
+  onVue,
 }: {
   catalogue: readonly CarteEmoji[] | null
   collection: Collection
   onOuvrirUnPaquet: () => void
+  /** La carte vient d'être ouverte en grand : son « Nouveau » tombe. */
+  onVue: (id: string) => void
 }): React.ReactElement {
   const [recherche, setRecherche] = useState('')
   const [tri, setTri] = useState<Tri>('recentes')
@@ -672,7 +675,15 @@ export function PageCollection({
         ) : (
           <div className="collection-grille">
             {visibles.map(({ carte, p }) => (
-              <Vignette key={carte.id} carte={carte} possession={p} onOuvrir={() => setOuverte(carte.id)} />
+              <Vignette
+                key={carte.id}
+                carte={carte}
+                possession={p}
+                onOuvrir={() => {
+                  setOuverte(carte.id)
+                  onVue(carte.id)
+                }}
+              />
             ))}
           </div>
         )}

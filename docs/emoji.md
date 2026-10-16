@@ -6319,3 +6319,10 @@ allumée faisait une neige qui brouillait la carte et ses lettres — 6 % des
 fines et 12 % des grosses allumées, les autres à 0,1, **et sur la plaque on
 sonde autour de la paillette, pas seulement dessous**, pour l'écarter des
 lettres.
+
+#### LE « NOUVEAU » TOMBE DÈS QU'ON OUVRE LA CARTE EN GRAND
+
+Keko : « il faudrait enlever le tag également quand la carte est zoomée
+(direct) ». `carteVue` éteint la nouveauté d'une seule carte, à l'instant où
+elle s'ouvre — *la regarder en grand, c'est l'avoir vue.* La pastille du menu
+baisse d'autant. Quitter la page éteint toujours les autres (`toutVu`).
