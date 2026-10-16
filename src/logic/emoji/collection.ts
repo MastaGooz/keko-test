@@ -86,17 +86,6 @@ export function toutVu(col: Collection): Collection {
   return { ...col, cartes }
 }
 
-/**
- * UNE CARTE OUVERTE EN GRAND EST VUE, tout de suite. Keko : « il faudrait
- * enlever le tag également quand la carte est zoomée (direct) ». *La regarder
- * en grand, c'est l'avoir vue* — pas besoin d'attendre qu'on quitte la page.
- */
-export function carteVue(col: Collection, id: string): Collection {
-  const p = col.cartes[id]
-  if (p === undefined || !p.nouvelle) return col
-  return { ...col, cartes: { ...col.cartes, [id]: { ...p, nouvelle: false } } }
-}
-
 export function nombreDeNouvelles(col: Collection): number {
   let n = 0
   for (const p of Object.values(col.cartes)) if (p.nouvelle) n += 1

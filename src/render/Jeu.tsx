@@ -23,7 +23,7 @@ import '../ui/collection.css'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
-import { ajouterPaquet, carteVue, nombreDeNouvelles, toutVu, type Collection } from '../logic/emoji/collection.ts'
+import { ajouterPaquet, nombreDeNouvelles, toutVu, type Collection } from '../logic/emoji/collection.ts'
 import { chargerCollection, chargerReserve, sauverCollection, sauverReserve } from '../ui/collection.ts'
 import { RESERVE, prendreUnPaquet, prochainDans, reserveAJour, type Reserve } from '../logic/emoji/reserve.ts'
 import { chargerEmojis } from '../ui/emoji.ts'
@@ -250,7 +250,6 @@ export function Jeu(): React.ReactElement {
           catalogue={catalogue}
           collection={collection}
           onOuvrirUnPaquet={() => aller('booster')}
-          onVue={(id) => changer((c) => carteVue(c, id))}
         />
       )}
       {!accueil && page === 'booster' && !attente && (
