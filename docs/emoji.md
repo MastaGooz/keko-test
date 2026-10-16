@@ -6526,3 +6526,4 @@ Keko : « on peut mettre un effet paillettes sur l'emoji holo des cartes / stick
 - **Les rayons clairs des rares, plus saturés (16/10/2026)** : Keko, « on va plutôt essayer d'augmenter la saturation des rayons clairs du fond des cartes rares, pour qu'ils soient plus vivid ». La saturation que le brillant donne aux rayons clairs (`RAYONS_BRILLANTS.sature`) est multipliée par cran (`SATURE_RAYONS` : bleu 1,8, les autres 1) — au nuanceur (`uSatureRayons`) et dans `brillantDuRepos` pour les vignettes. La couleur du fond, la portée et la clarté ne bougent pas. Chiffre de moi.
 
 - Keko : « encore un poil plus saturé ? » — bleu 1,8 → 2,3.
+- Keko : « encore un peu » — bleu 2,3 → 2,9.
