@@ -89,6 +89,22 @@ const GROUPE: Readonly<Record<string, GroupeEmoji>> = {
 }
 
 /**
+ * LES SOUS-GROUPES QUI QUITTENT LEUR GROUPE. Keko : « contrôle la catégorie
+ * visage : enlève les coeurs par ex, et toutes les choses qui ne sont pas des
+ * visages (fais une catégorie spéciale coeur) ». Unicode range dans « Smileys &
+ * Emotion » seize sous-groupes (`# subgroup:`) : les douze `face-*`, les chats
+ * et les singes (des visages aussi), **`heart`** (les 25 coeurs, et la lettre
+ * d'amour) et **`emotion`** (💋 💯 💢 💥 💫 💦 💨 🕳️ 💬 💭 💤…, des signes, pas
+ * des visages). Le coeur a son groupe ; l'émotion rejoint les symboles.
+ * *Le sous-groupe l'emporte sur le groupe* ; tout autre sous-groupe suit son
+ * groupe.
+ */
+const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
+  heart: 'coeurs',
+  emotion: 'symboles',
+}
+
+/**
  * L'ANNEE DE CHAQUE VERSION D'EMOJI.
  *
  * *C'est elle qui porte la notoriete*, faute de mieux : voir `notoriete`. Les
@@ -143,15 +159,21 @@ async function texte(cle: string, url: string): Promise<string> {
 function lireUnicode(txt: string): Brut[] {
   const out: Brut[] = []
   let groupe = ''
+  let sousGroupe = ''
   for (const ligne of txt.split('\n')) {
     if (ligne.startsWith('# group:')) {
       groupe = ligne.slice(9).trim()
+      sousGroupe = ''
+      continue
+    }
+    if (ligne.startsWith('# subgroup:')) {
+      sousGroupe = ligne.slice(12).trim()
       continue
     }
     if (!ligne.includes('; fully-qualified')) continue
     const m = /^([0-9A-F ]+);\s*fully-qualified\s*#\s*(\S+)\s+E(\d+\.\d+)\s+(.+)$/.exec(ligne.trim())
     if (!m) continue
-    const g = GROUPE[groupe]
+    const g = SOUS_GROUPE[sousGroupe] ?? GROUPE[groupe]
     if (g === undefined) continue
     const emoji = m[2]!
     if (!avecPeau && PEAU.test(emoji)) continue

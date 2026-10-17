@@ -1,27 +1,28 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-12 14:33:43 UTC
+engendre le 2026-10-17 07:40:31 UTC
 
-3963 cartes, dont 884 animables
+3955 cartes, dont 884 animables
 
-au classement de frequence : 2326
+au classement de frequence : 2318
 
 OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
 ---------------------------------------------
   groupe           n      commun    peu-co      rare    epique    legend
-  visages        172    33 (19%)    7 (4%)  27 (16%)  66 (38%)  39 (23%)
+  visages        132    25 (19%)    3 (2%)  23 (17%)  55 (42%)  26 (20%)
+  coeurs          25     7 (28%)    0 (0%)    1 (4%)   5 (20%)  12 (48%)
   gens          2430  1504 (62%) 455 (19%) 247 (10%)  170 (7%)   54 (2%)
   animaux        161    47 (29%)  37 (23%)  62 (39%)   13 (8%)    2 (1%)
   nourriture     132    33 (25%)  29 (22%)  64 (48%)    6 (5%)    0 (0%)
   lieux          221    49 (22%) 115 (52%)  44 (20%)   12 (5%)    1 (0%)
   activites       85    22 (26%)  29 (34%)  25 (29%)    6 (7%)    3 (4%)
-  objets         268    88 (33%) 118 (44%)  53 (20%)    9 (3%)    0 (0%)
-  symboles       224    52 (23%) 109 (49%)  51 (23%)   11 (5%)    1 (0%)
-  drapeaux       270   153 (57%)  93 (34%)   23 (9%)    1 (0%)    0 (0%)
+  objets         268    88 (33%) 119 (44%)  52 (19%)    9 (3%)    0 (0%)
+  symboles       239    54 (23%) 112 (47%)  54 (23%)   18 (8%)    1 (0%)
+  drapeaux       262   148 (56%)  90 (34%)   23 (9%)    1 (0%)    0 (0%)
 
 PAR ANNEE
 ---------
   2010    858  #########
-  2015    771  ########
+  2015    763  ########
   2016    755  ########
   2017    239  ##
   2018    157  ##
@@ -36,14 +37,15 @@ PAR ANNEE
 
 LE HAUT DE CHAQUE GROUPE
 ------------------------
-  visages      😂 visage riant aux larmes · ❤️ cœur rouge · 😍 visage souriant avec yeux en forme de cœur · 🤣 se rouler par terre de rire · 😊 visage souriant avec yeux rieurs · 💕 deux cœurs · 😭 visage qui pleure à chaudes larmes · 😘 visage envoyant un bisou
+  visages      😂 visage riant aux larmes · 😍 visage souriant avec yeux en forme de cœur · 🤣 se rouler par terre de rire · 😊 visage souriant avec yeux rieurs · 😭 visage qui pleure à chaudes larmes · 😘 visage envoyant un bisou · 😅 visage souriant avec une goutte de sueur · 😁 visage souriant aux yeux rieurs
+  coeurs       ❤️ cœur rouge · 💕 deux cœurs · 💔 cœur brisé · 💖 cœur étincelant · 💙 cœur bleu · 💜 cœur violet · 💞 cœurs qui tournent · 💗 cœur grandissant
   gens         🙏 mains en prière · 🙏🏻 mains en prière : peau claire · 🙏🏼 mains en prière : peau moyennement claire · 🙏🏽 mains en prière : peau légèrement mate · 🙏🏾 mains en prière : peau mate · 🙏🏿 mains en prière : peau foncée · 👍 pouce vers le haut · 👍🏻 pouce vers le haut : peau claire
   animaux      🌹 rose · 🌸 fleur de cerisier · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 💐 bouquet · 🌺 hibiscus · 🌻 tournesol · 🌼 bourgeon
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
   lieux        🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🚨 gyrophare
   activites    ♥️ cœur cartes · 🎉 cotillons · ✨ étincelles · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable
   objets       🎶 notes de musique · 👑 couronne · 🎵 note de musique · 💰 sac plein d’argent · 💎 pierre précieuse · 💸 billet avec des ailes · 📌 punaise · ☎️ téléphone
-  symboles     ‼️ double point d’exclamation · ❗ point d’exclamation rouge · ✅ bouton coché · ✔️ coche · 🔴 disque rouge · ❌ croix · ▶️ bouton lecture · ➡️ flèche droite
+  symboles     ‼️ double point d’exclamation · 💯 cent points · ❗ point d’exclamation rouge · 💋 trace de rouge à lèvres · 💥 explosion · ✅ bouton coché · 💦 gouttes de sueur · ✔️ coche
   drapeaux     🇺🇸 drapeau : États-Unis · 🇧🇷 drapeau : Brésil · 🚩 drapeau triangulaire · 🇲🇽 drapeau : Mexique · 🏁 drapeau à damier · 🇮🇳 drapeau : Inde · 🇹🇷 drapeau : Turquie · 🇮🇹 drapeau : Italie
 
 LE HAUT DU CLASSEMENT MONDIAL
@@ -57,8 +59,8 @@ LE BAS
 
 UN EXEMPLE PAR RARETE
 ---------------------
-  commun       🤍 cœur blanc (visages, 2973e, non classe, animable)
-  peu-commun   🐗 sanglier (animaux, 1487e, frequence 11)
-  rare         👴🏽 homme âgé : peau légèrement mate (gens, 693e, frequence 9)
-  epique       ✊🏿 poing levé : peau foncée (gens, 248e, frequence 6, animable)
-  legendaire   👌🏿 ok : peau foncée (gens, 51e, frequence 3, animable)
+  commun       🤏🏻 pouce et index rapprochés : peau claire (gens, 2967e, non classe, animable)
+  peu-commun   9️⃣ touches : 9 (symboles, 1484e, frequence 11)
+  rare         👴🏼 homme âgé : peau moyennement claire (gens, 692e, frequence 9)
+  epique       ✊🏾 poing levé : peau mate (gens, 247e, frequence 6, animable)
+  legendaire   👌🏾 ok : peau mate (gens, 50e, frequence 3, animable)

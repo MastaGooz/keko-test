@@ -13,9 +13,14 @@
  * Pur : aucun accès au DOM, aucune entrée-sortie. Le `fetch` vit dans `ui/`.
  */
 
-/** Les neuf groupes Unicode, hors `Component` qui n'a pas de carte. */
+/**
+ * Les neuf groupes Unicode, hors `Component` qui n'a pas de carte — plus le
+ * dixième, `coeurs`, sorti des visages par Keko (le sous-groupe `heart` ;
+ * voir `SOUS_GROUPE` dans le pipeline).
+ */
 export type GroupeEmoji =
   | 'visages'
+  | 'coeurs'
   | 'gens'
   | 'animaux'
   | 'nourriture'
@@ -27,6 +32,7 @@ export type GroupeEmoji =
 
 export const GROUPES_EMOJI: readonly GroupeEmoji[] = [
   'visages',
+  'coeurs',
   'gens',
   'animaux',
   'nourriture',
@@ -47,6 +53,7 @@ export const GROUPES_EMOJI: readonly GroupeEmoji[] = [
  */
 export const NOM_DU_GROUPE: Readonly<Record<GroupeEmoji, string>> = {
   visages: 'Visage',
+  coeurs: 'Cœur',
   gens: 'Gens',
   animaux: 'Animal',
   nourriture: 'Nourriture',
