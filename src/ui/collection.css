@@ -903,14 +903,16 @@
   user-select: none;
 }
 
-/* « X DISPONIBLES », SOUS LE SACHET qui attend. */
+/* « X DISPONIBLES », AU-DESSUS DU SACHET qui attend. */
 .paquet-disponibles {
   position: fixed;
   left: 0;
   right: 0;
-  /* EN BAS DE L'ÉCRAN, pas collé au sachet — Keko : « je voyais ça plus en
-     bas de l'écran ». */
-  bottom: calc(var(--barre-bas) + 3.4rem);
+  /* EN HAUT DE L'ÉCRAN depuis que la barre et la jauge sont en bas — Keko :
+     « passer le message X paquets disponibles en haut plutôt qu'en bas ». Il
+     avait d'abord été mis en bas (« je voyais ça plus en bas de l'écran »),
+     quand la barre était en haut. */
+  top: calc(max(0.6rem, env(safe-area-inset-top)) + 0.8rem);
   z-index: 3;
   margin: 0;
   text-align: center;
@@ -968,11 +970,13 @@
   outline: none;
 }
 
-/* AU PAQUET, sous la carte qu'on regarde. */
+/* AU PAQUET, sous la carte qu'on regarde. EN BAS : la barre est cachée au bilan
+   (elle attend « Terminé »), et remonté il chevauchait la carte zoomée — Keko :
+   « passer le bouton de décollement plus vers le bas ». */
 .decoller-paquet {
   position: fixed;
   left: 50%;
-  bottom: calc(var(--barre-bas) + 4.2rem);
+  bottom: calc(4vh + env(safe-area-inset-bottom));
   z-index: 3;
   margin: 0;
   transform: translateX(-50%);
