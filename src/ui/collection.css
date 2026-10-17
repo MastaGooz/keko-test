@@ -820,20 +820,27 @@
   pointer-events: none;
 }
 
-.likes {
+/* Chaque monnaie : son icône et son solde ; un filet entre deux. */
+.monnaie {
   display: flex;
   align-items: center;
   gap: 0.3rem;
   color: #2a1b63;
 }
 
-.likes svg {
+.monnaie + .monnaie {
+  margin-left: 0.6rem;
+  padding-left: 0.6rem;
+  border-left: 1px solid #c9b9f2;
+}
+
+.monnaie svg {
   width: 1.6rem;
   height: 1.6rem;
   overflow: visible;
 }
 
-.likes b {
+.monnaie b {
   font-size: 1.05rem;
   font-weight: 800;
   line-height: 1;
@@ -1596,12 +1603,12 @@
      le titre est un peu plus petit sur un écran étroit ; la barre de progrès
      garde toute la largeur, elle passe dessous. */
   .collection-titre {
-    padding-right: 5.6rem;
+    padding-right: 9.5rem;
     font-size: 1.6rem;
   }
 
   .collection-compte {
-    padding-right: 5.6rem;
+    padding-right: 9.5rem;
   }
 
   .likes-place {

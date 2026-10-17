@@ -20,6 +20,8 @@ import {
   compteDe,
   avecLikes,
   ajouterLikes,
+  avecAbonnes,
+  ajouterAbonnes,
 } from './collection.ts'
 
 let echecs = 0
@@ -136,4 +138,15 @@ verifier('détruire garde les Likes', detruire(ajouterPaquet(riche, ['1f600'], {
 verifier('une collection d’avant relit zéro Like', lireCollection({ version: 1, cartes: {} }).likes === 0)
 verifier('un solde gardé se relit', lireCollection({ version: 1, cartes: {}, likes: 40 }).likes === 40)
 verifier('un solde abîmé retombe à zéro', lireCollection({ version: 1, cartes: {}, likes: -5 }).likes === 0 && lireCollection({ version: 1, cartes: {}, likes: 'x' }).likes === 0)
+
+console.log('abonnés')
+verifier('une collection neuve a zéro abonné', vide.abonnes === 0)
+const suivie = ajouterAbonnes(riche, 7)
+verifier('ajouter des abonnés', suivie.abonnes === 7 && suivie.likes === 12)
+verifier('retirer ne descend pas sous zéro', ajouterAbonnes(suivie, -9).abonnes === 0)
+verifier('poser un solde d’abonnés', avecAbonnes(suivie, 3.9).abonnes === 3 && avecAbonnes(suivie, 7) === suivie)
+verifier('un paquet garde les abonnés', ajouterPaquet(suivie, ['1f600'], {}, 9000).abonnes === 7)
+verifier('une collection d’avant relit zéro abonné', lireCollection({ version: 1, cartes: {} }).abonnes === 0)
+verifier('un solde d’abonnés gardé se relit', lireCollection({ version: 1, cartes: {}, abonnes: 40 }).abonnes === 40)
+verifier('un solde d’abonnés abîmé retombe à zéro', lireCollection({ version: 1, cartes: {}, abonnes: -1 }).abonnes === 0)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

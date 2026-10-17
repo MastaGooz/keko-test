@@ -107,10 +107,17 @@ export interface Collection {
    * réserve. Entier, jamais négatif ; absent d'une collection d'avant : zéro.
    */
   readonly likes: number
+  /**
+   * LES ABONNÉS : LA SECONDE MONNAIE. Keko : « je voudrais rajouter une autre
+   * monnaie : les abonnés ». Même règle que les Likes : un compteur, entier,
+   * jamais négatif, zéro pour une collection d'avant ; rien ne le fait monter
+   * encore, son usage est à trancher.
+   */
+  readonly abonnes: number
 }
 
 export function collectionVide(): Collection {
-  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {}, likes: 0 }
+  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {}, likes: 0, abonnes: 0 }
 }
 
 /** Pose le solde de Likes — borné à zéro, arrondi à l'entier. Rend la même collection si rien ne change. */
@@ -122,6 +129,17 @@ export function avecLikes(col: Collection, likes: number): Collection {
 /** Ajoute (ou retire, `n` négatif) des Likes ; le solde ne descend pas sous zéro. */
 export function ajouterLikes(col: Collection, n: number): Collection {
   return avecLikes(col, col.likes + n)
+}
+
+/** Pose le solde d'abonnés — même règle que `avecLikes`. */
+export function avecAbonnes(col: Collection, abonnes: number): Collection {
+  const n = Number.isFinite(abonnes) ? Math.max(0, Math.floor(abonnes)) : 0
+  return n === col.abonnes ? col : { ...col, abonnes: n }
+}
+
+/** Ajoute (ou retire, `n` négatif) des abonnés ; jamais sous zéro. */
+export function ajouterAbonnes(col: Collection, n: number): Collection {
+  return avecAbonnes(col, col.abonnes + n)
 }
 
 /** Ajoute un paquet ouvert. Rend une collection NEUVE : l'ancienne ne bouge pas. */
@@ -364,5 +382,6 @@ export function lireCollection(brut: unknown): Collection {
     cartes,
     stickers,
     likes: entier(o.likes) ?? 0,
+    abonnes: entier(o.abonnes) ?? 0,
   }
 }

@@ -268,11 +268,14 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   sur le booster rond ; vide, l'écran d'attente montre le minuteur et le
   sachet descend tout seul à zéro ; au bilan, « Ouvrir un autre paquet » cède
   la place à « Prochain paquet dans … ». `&illimite` ne la vide jamais.
-- **Les Likes sont la monnaie** (`Collection.likes`, `avecLikes`,
-  `ajouterLikes`, icône pouce-dans-une-bulle `IconeLike`, une pilule à part en
-  haut à droite SUR TOUS LES ÉCRANS, cachée avec la barre) : **un compteur seul pour l'instant**, « pas encore de
-  générateur » ; ils achèteront des paquets au-delà des dix de la réserve.
-  Une collection d'avant relit zéro. `&likes=N` pose le solde de l'appareil.
+- **Deux monnaies, les Likes et les Abonnés** (`Collection.likes` /
+  `abonnes`, `avecLikes` / `avecAbonnes`, `ajouterLikes` / `ajouterAbonnes`,
+  icônes `IconeLike` pouce-dans-une-bulle et `IconeAbonne` buste au « + », une
+  pilule à part en haut à droite SUR TOUS LES ÉCRANS, cachée avec la barre) :
+  **des compteurs seuls pour l'instant**, « pas encore de générateur » ; les
+  Likes achèteront des paquets au-delà des dix de la réserve, l'usage des
+  Abonnés est à trancher. Une collection d'avant relit zéro. `&likes=N` et
+  `&abonnes=N` posent les soldes de l'appareil.
 
 ### Ce qui reste à trancher par Keko
 
@@ -440,7 +443,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&illimite` | la réserve de paquets ne se vide jamais, pour tester sans attendre |
 | `&retirer` | retire la moitié des emoji de la collection DE CET APPAREIL, au hasard, avec tous leurs exemplaires ; l'album ne bouge pas — le miroir de `&debloquer` |
 | `&page=collection`, `&page=catalogue`, `&page=stickers` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
-| `&likes=N` | pose le solde de Likes DE CET APPAREIL (le compteur, sans générateur) ; rouvrir ne double rien |
+| `&likes=N`, `&abonnes=N` | posent le solde de Likes / d'Abonnés DE CET APPAREIL (les compteurs, sans générateur) ; rouvrir ne double rien |
 | `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue, et un sticker de chaque emoji dans l'album |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
 | `&perso` | la première carte est 🫠, peinte depuis l'emoji dessiné par Keko (`Test.png`) |

@@ -25,6 +25,7 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
 import {
   ajouterPaquet,
+  avecAbonnes,
   avecLikes,
   debloquer,
   debloquerStickers,
@@ -311,6 +312,17 @@ export function Jeu(): React.ReactElement {
     if (!Number.isFinite(n)) return
     changer((c) => avecLikes(c, n))
   }, [changer])
+  /** `&abonnes=N` : le même banc pour la seconde monnaie. */
+  useEffect(() => {
+    const p = new URLSearchParams(location.search)
+    const v = p.get('abonnes')
+    if (v === null) return
+    p.delete('abonnes')
+    history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
+    const n = Number(v)
+    if (!Number.isFinite(n)) return
+    changer((c) => avecAbonnes(c, n))
+  }, [changer])
   const ajouter = useCallback(
     (ids: readonly string[], bonus: Readonly<Record<string, Bonus>>) => {
       changer((c) => ajouterPaquet(c, ids, bonus, Date.now()))
@@ -420,14 +432,19 @@ export function Jeu(): React.ReactElement {
           <JaugeDeReserve paquets={dispo} dans={dans} />
         </div>
       )}
-      {/* LES LIKES, TOUJOURS LÀ. Keko : « j'aurais voulu que les likes soient
+      {/* LES MONNAIES, TOUJOURS LÀ. Keko : « j'aurais voulu que les likes soient
           toujours visibles quel que soit l'écran actif (booster, collection,
-          stickers) ». Une pilule à part, en haut à droite, qui se cache avec la
+          stickers) », puis « je voudrais rajouter une autre monnaie : les
+          abonnés ». Une pilule à part, en haut à droite, qui se cache avec la
           barre : pendant la déchirure et le défilé, rien ne dispute l'écran. */}
       <div className={`likes-place${visible ? '' : ' likes-cachee'}`}>
-        <span className="likes" aria-label={`${collection.likes} Like${collection.likes > 1 ? 's' : ''}`}>
+        <span className="monnaie" aria-label={`${collection.likes} Like${collection.likes > 1 ? 's' : ''}`}>
           <IconeLike />
           <b>{collection.likes}</b>
+        </span>
+        <span className="monnaie" aria-label={`${collection.abonnes} abonné${collection.abonnes > 1 ? 's' : ''}`}>
+          <IconeAbonne />
+          <b>{collection.abonnes}</b>
         </span>
       </div>
       <nav className={`nav${visible ? '' : ' nav-cachee'}`} aria-label="Navigation">
@@ -542,6 +559,21 @@ function IconeLike(): React.ReactElement {
       {/* LE POUCE : la manchette, puis la main. */}
       <path d="M6.3 9.3h2.2v6.2H6.3z" fill="#ffc61f" stroke="currentColor" strokeWidth="1.2" />
       <path d="M8.5 9.6l2.6-4.3a1.3 1.3 0 0 1 2.4.8l-.6 2.9h3.6a1.6 1.6 0 0 1 1.6 1.9l-.8 3.6a1.6 1.6 0 0 1-1.6 1.3H8.5z" fill="#ffc61f" stroke="currentColor" strokeWidth="1.2" />
+    </svg>
+  )
+}
+
+/**
+ * L'ABONNÉ : un buste, et un petit « + » au coin — celui qui vient de
+ * s'abonner. Le buste en or comme le pouce, la pastille crème.
+ */
+function IconeAbonne(): React.ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round">
+      <circle cx="10" cy="8" r="4" fill="#ffc61f" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M2.8 20.5a7.2 7.2 0 0 1 14.4 0z" fill="#ffc61f" stroke="currentColor" strokeWidth="1.4" />
+      <circle cx="18.5" cy="7" r="3.9" fill="#fffaf0" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M18.5 4.9v4.2M16.4 7h4.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   )
 }

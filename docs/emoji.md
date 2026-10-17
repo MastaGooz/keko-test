@@ -6792,3 +6792,7 @@ Keko : « sur tel, l'endroit où les likes sont affichés se superpose avec le t
 ### Les Likes décollés du bord sur PC (18/10/2026)
 
 Keko : « on peut décaler sur PC un peu vers la gauche (trop collé à droite) les likes (sur PC uniquement) ». La pilule passe de 16 px à 2,5 rem du bord droit ; au doigt elle garde 16 px, la marge de tout le reste (dans la requête `pointer: coarse`).
+
+### Les Abonnés, la seconde monnaie — le compteur seul (18/10/2026)
+
+Keko : « je voudrais rajouter une autre monnaie : les abonnés ». Même forme que les Likes : `Collection.abonnes`, entier jamais négatif, `avecAbonnes` / `ajouterAbonnes` purs, zéro pour une collection d'avant ou un solde abîmé, huit vérifications. **L'icône** (`IconeAbonne`) : un buste en or et une pastille crème au « + », celui qui vient de s'abonner. **Dans la même pilule** que les Likes, en haut à droite, un filet entre les deux (`.monnaie + .monnaie`). La pilule étant plus large, au doigt le titre de la page lui laisse 9,5 rem au lieu de 5,6 : « TOUTES LES CARTES » peut passer sur deux lignes sur un téléphone étroit. **Rien ne fait monter les abonnés** : `&abonnes=N` pose le solde pour les voir. Leur usage est à trancher par Keko — à quoi servent-ils, comment on les gagne.
