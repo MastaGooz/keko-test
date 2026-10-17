@@ -26,9 +26,9 @@ import type { Collection, Exemplaire, Possession, Variante } from '../logic/emoj
 import { VARIANTES, compteDe, exemplaireDe, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
 import { AMBIANCE, tailleQuIlFaut } from './texture-carte.ts'
-import { coucheDesRayons, paillettesHolo, peinte } from './peinture-vignette.ts'
+import { coucheDesRayons, paillettesHolo, peinte, sujetDeLaVignette } from './peinture-vignette.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
-import { RAYONS_DANS_LA_CARTE, sujetDe } from './texture-carte.ts'
+import { RAYONS_DANS_LA_CARTE } from './texture-carte.ts'
 
 /**
  * LES RAYONS DES CARTES ANIMÉES TOURNENT AUSSI DANS LA GRILLE. Keko : « l'effet
@@ -409,7 +409,8 @@ function Vignette({
               rc.getContext('2d')?.drawImage(couche, 0, 0)
             }
             const entiere = await peinte(carte, largeur, holo, false, false, false)
-            const sujet = sujetDe(entiere)
+            // Le sticker d'une holo est celui au cerne arc-en-ciel : voir `sujetDeLaVignette`.
+            const sujet = sujetDeLaVignette(entiere)
             const sc = sticker.current
             const sctx = sc?.getContext('2d')
             if (sujet !== undefined && sc != null && sctx != null) {

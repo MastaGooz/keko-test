@@ -6,7 +6,7 @@
  */
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { createRng } from '../logic/rng.ts'
-import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte } from './texture-carte.ts'
+import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, sujetDe, type SujetPeint } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
@@ -90,6 +90,76 @@ export function cerneArcEnCiel(
     }
   }
   ctx.putImageData(image, x0, y0)
+}
+
+/**
+ * LE CERNE ARC-EN-CIEL, CALCULÉ SUR LE STICKER ET NON SUR LA CARTE. Keko : « les
+ * outlines multicolores des emoji holo sur les cartes sont moches dans la
+ * collection, avec des pixels manquants qui sont blancs au lieu d'être colorés
+ * (mais bien en zoom et bien dans les stickers) ». *Le repérage du crème se
+ * faisait sur la carte aplatie, à la taille de la vignette* : un cerne de
+ * quatre ou cinq pixels y a deux pixels de bord mêlés aux rayons dehors et à
+ * l'emoji dedans, qui ne sont plus crème et restaient blancs. Le zoom lit une
+ * texture de mille pixels, le sticker de l'album est posé sur du transparent :
+ * leurs bords restent crème. **Ici aussi, donc** : on reprend le sticker tel
+ * que la peinture l'a posé (`sujetDe`), à SA taille, sur du transparent ; on y
+ * calcule le cerne — le bord n'y est qu'un alpha, la couleur reste crème — et
+ * on applique à la carte la différence entre ce sticker et l'original, posés
+ * à la même place, en prémultiplié : *exactement ce que la carte aurait montré
+ * si le sticker avait été collé déjà coloré*, ombre comprise puisqu'elle ne
+ * change pas. Le sticker coloré est gardé pour la vignette animée, qui le
+ * repose par-dessus ses rayons (`sujetDeLaVignette`).
+ */
+const SUJETS_HOLO = new WeakMap<HTMLCanvasElement, SujetPeint>()
+export function sujetDeLaVignette(toile: HTMLCanvasElement): SujetPeint | undefined {
+  return SUJETS_HOLO.get(toile) ?? sujetDe(toile)
+}
+function cerneArcEnCielDuSujet(toile: HTMLCanvasElement): void {
+  const s = sujetDe(toile)
+  const ctx = toile.getContext('2d', { willReadFrequently: true })
+  if (s === undefined || ctx === null) {
+    // *Sans sticker repéré, l'ancien calcul sur la carte vaut mieux que rien.*
+    cerneArcEnCiel(toile)
+    return
+  }
+  const li = 'naturalWidth' in s.image ? s.image.naturalWidth : s.image.width
+  const hi = 'naturalWidth' in s.image ? s.image.naturalHeight : s.image.height
+  if (li === 0 || hi === 0) return
+  const colore = document.createElement('canvas')
+  colore.width = li
+  colore.height = hi
+  const cc = colore.getContext('2d', { willReadFrequently: true })
+  if (cc === null) return
+  cc.drawImage(s.image, 0, 0)
+  cerneArcEnCiel(colore, { x: 0, y: 0, l: 1, h: 1 })
+  const { width: l, height: h } = toile
+  const poser = (image: CanvasImageSource): Uint8ClampedArray | null => {
+    const c = document.createElement('canvas')
+    c.width = l
+    c.height = h
+    const x = c.getContext('2d', { willReadFrequently: true })
+    if (x === null) return null
+    x.drawImage(image, s.x, s.y, s.l, s.h)
+    return x.getImageData(0, 0, l, h).data
+  }
+  const avant = poser(s.image)
+  const apres = poser(colore)
+  if (avant === null || apres === null) return
+  const carte = ctx.getImageData(0, 0, l, h)
+  const d = carte.data
+  for (let k = 0; k < d.length; k += 4) {
+    const a0 = avant[k + 3]!
+    const a1 = apres[k + 3]!
+    if (a0 === 0 && a1 === 0) continue
+    for (let n = 0; n < 3; n++) {
+      // En prémultiplié : la carte vaut fond × (1 − a) + sticker × a, donc
+      // remplacer le sticker, c'est ajouter la différence des prémultipliés.
+      const delta = (apres[k + n]! * a1 - avant[k + n]! * a0) / 255
+      d[k + n] = Math.max(0, Math.min(255, Math.round(d[k + n]! + delta)))
+    }
+  }
+  ctx.putImageData(carte, 0, 0)
+  SUJETS_HOLO.set(toile, { ...s, image: colore })
 }
 
 /**
@@ -633,7 +703,7 @@ export function peinte(
     // LE BRILLANT DU REPOS, comme la carte 3D de face : voir `brillantDuRepos`.
     brillantDuRepos(toile, SATURE_RAYONS[COULEUR[c.rarete]] ?? 1, sansRayons)
     if (holo) {
-      if (!sansSujet) cerneArcEnCiel(toile)
+      if (!sansSujet) cerneArcEnCielDuSujet(toile)
       if (paillettes) paillettesHolo(toile, c.id)
     }
     return toile
