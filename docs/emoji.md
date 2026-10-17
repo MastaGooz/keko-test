@@ -6800,3 +6800,5 @@ Keko : « je voudrais rajouter une autre monnaie : les abonnés ». Même forme 
 ### Les icônes des monnaies : cœur rose, silhouettes bleues (18/10/2026)
 
 Keko : « des icônes un peu différentes pour les monnaies : tons rose pour les likes (le pouce est bien, mais dans un cœur c'est mieux à la place de la bulle) / bleu pour les abonnés (et enlève le +, c'est pas très beau, propose un autre concept basé sur la silhouette) ». **Like** : le même pouce, crème, réduit à 60 % au centre d'un cœur rose (#ff6fa5). **Abonnés** : deux silhouettes bleues l'une devant l'autre — un public, pas une personne — bleu clair derrière (#8ec5ff), bleu franc devant (#3b82f6), plus de « + ». Les deux gardent le trait en `currentColor` des icônes de la barre. Vu en ligne, agrandi.
+
+**Même jour** — Keko : « je trouve le pouce un peu petit dans le cœur ». Le pouce passe de 60 % à 75 % de sa taille d'origine au centre du cœur, le trait un peu plus fin (1,5) pour ne pas s'épaissir avec lui.
