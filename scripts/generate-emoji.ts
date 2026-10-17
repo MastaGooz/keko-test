@@ -179,6 +179,24 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f6df': 'lieux', // 🛟
   '1fa82': 'lieux', // 🪂
   '1f4ba': 'lieux', // 💺
+  // LE PAYSAGE NATUREL QUITTE LES LIEUX (Keko : « roche, éboulement, montagne
+  // enneigée, nuit étoilée, soleil levant, volcan, soleil etc > direction
+  // éléments ») : la roche et l'éboulement, les montagnes, le volcan, le
+  // désert et l'île, le ciel du soir et du matin, le brouillard. Restent des
+  // lieux ce qui est aménagé : plage, camping, parc, ville, pont, fontaine.
+  '1faa8': 'elements', // 🪨
+  '1f6d8': 'elements', // 🛘
+  '1f3d4-fe0f': 'elements', // 🏔️
+  '26f0-fe0f': 'elements', // ⛰️
+  '1f5fb': 'elements', // 🗻
+  '1f30b': 'elements', // 🌋
+  '1f3dc-fe0f': 'elements', // 🏜️
+  '1f3dd-fe0f': 'elements', // 🏝️
+  '1f303': 'elements', // 🌃
+  '1f304': 'elements', // 🌄
+  '1f305': 'elements', // 🌅
+  '1f307': 'elements', // 🌇
+  '1f301': 'elements', // 🌁
   // CE QUI N'EST PAS UN ÉLÉMENT dans `sky & weather` (Keko : « bonshommes de
   // neige et parapluies ne devraient pas être dans ciel, plutôt objet pour
   // parapluie et activité pour bonhomme de neige, mets aussi le parasol dans
