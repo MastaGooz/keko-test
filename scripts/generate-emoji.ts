@@ -273,10 +273,11 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f6d7': 'symboles', // 🛗
   '1faac': 'symboles', // 🪬
   '1fae7': 'elements', // 🫧
-  // Keko : « trace de pas, empreinte digitale > symbole » (🐾 les empreintes
-  // d'animaux restent chez les animaux, Keko ne les a pas nommées).
+  // Keko : « trace de pas, empreinte digitale > symbole », puis « bascule
+  // empreintes d'animaux dans symbole ».
   '1f463': 'symboles', // 👣
   '1fac6': 'symboles', // 🫆
+  '1f43e': 'symboles', // 🐾
   // LES SILHOUETTES BLEUES (Keko : « la famille de silhouettes bleues de gens
   // dans symboles ») : 👤 👥 🗣️ 🫂 — des pictogrammes, pas des personnes. La
   // série « famille : … » suit par motif, voir `FAMILLE`. 👪 la famille

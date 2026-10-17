@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 12:31:25 UTC
+engendre le 2026-10-17 12:55:39 UTC
 
 3955 cartes, dont 884 animables
 
@@ -14,7 +14,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   gens          1977  1300 (66%) 425 (21%)  180 (9%)   60 (3%)   12 (1%)
   mains          278    98 (35%)    0 (0%)  42 (15%) 102 (37%)  36 (13%)
   corps           48    25 (52%)   6 (13%)  10 (21%)    1 (2%)   6 (13%)
-  animaux        141    41 (29%)  36 (26%)  56 (40%)    8 (6%)    0 (0%)
+  animaux        140    41 (29%)  36 (26%)  56 (40%)    7 (5%)    0 (0%)
   nature          29     6 (21%)    0 (0%)  12 (41%)   9 (31%)    2 (7%)
   nourriture     132    33 (25%)  29 (22%)  64 (48%)    6 (5%)    0 (0%)
   lieux           47     6 (13%)  31 (66%)  10 (21%)    0 (0%)    0 (0%)
@@ -23,7 +23,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   temps           34    19 (56%)  13 (38%)    2 (6%)    0 (0%)    0 (0%)
   activites      102    22 (22%)  41 (40%)  26 (25%)  12 (12%)    1 (1%)
   objets         249    86 (35%) 107 (43%)  49 (20%)    7 (3%)    0 (0%)
-  symboles       304    87 (29%) 133 (44%)  62 (20%)   21 (7%)    1 (0%)
+  symboles       305    87 (29%) 133 (44%)  62 (20%)   22 (7%)    1 (0%)
   drapeaux       262   148 (56%)  90 (34%)   23 (9%)    1 (0%)    0 (0%)
 
 PAR ANNEE
@@ -50,7 +50,7 @@ LE HAUT DE CHAQUE GROUPE
   gens         🤦 personne avec la paume sur le visage · 🤦🏻 personne avec la paume sur le visage : peau claire · 🤦🏼 personne avec la paume sur le visage : peau moyennement claire · 🤦🏽 personne avec la paume sur le visage : peau légèrement mate · 🤦🏾 personne avec la paume sur le visage : peau mate · 🤦🏿 personne avec la paume sur le visage : peau foncée · 🤷 personne qui hausse les épaules · 🤷🏻 personne qui hausse les épaules : peau claire
   mains        🙏 mains en prière · 🙏🏻 mains en prière : peau claire · 🙏🏼 mains en prière : peau moyennement claire · 🙏🏽 mains en prière : peau légèrement mate · 🙏🏾 mains en prière : peau mate · 🙏🏿 mains en prière : peau foncée · 👍 pouce vers le haut · 👍🏻 pouce vers le haut : peau claire
   corps        💪 biceps contracté · 💪🏻 biceps contracté : peau claire · 💪🏼 biceps contracté : peau moyennement claire · 💪🏽 biceps contracté : peau légèrement mate · 💪🏾 biceps contracté : peau mate · 💪🏿 biceps contracté : peau foncée · 👀 yeux · 👅 langue
-  animaux      🙈 singe ne rien voir · 😻 chat souriant aux yeux en cœurs · 🙊 singe ne rien dire · 😹 chat qui pleure de joie · 🐶 tête de chien · 🦋 papillon · 🐾 empreintes d’animaux · 🐷 tête de cochon
+  animaux      🙈 singe ne rien voir · 😻 chat souriant aux yeux en cœurs · 🙊 singe ne rien dire · 😹 chat qui pleure de joie · 🐶 tête de chien · 🦋 papillon · 🐷 tête de cochon · 🐸 grenouille
   nature       🌹 rose · 🌸 fleur de cerisier · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 💐 bouquet · 🌺 hibiscus · 🌻 tournesol · 🌼 bourgeon
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
   lieux        🌎 globe tourné sur les Amériques · ♨️ sources chaudes · 🌍 globe tourné sur l’Afrique et l’Europe · 🏠 maison · 🌏 globe tourné sur l’Asie et l’Australie · 🏖️ plage avec parasol · 🏡 maison avec jardin · 🕋 kaaba

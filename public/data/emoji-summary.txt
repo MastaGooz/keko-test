@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 12:31:24 UTC
+engendre le 2026-10-17 12:55:38 UTC
 
 1915 cartes, dont 614 animables
 
@@ -14,7 +14,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   gens           272   197 (72%)  44 (16%)   20 (7%)    9 (3%)    2 (1%)
   mains           43    13 (30%)    1 (2%)   7 (16%)  16 (37%)   6 (14%)
   corps           18    10 (56%)   2 (11%)   4 (22%)    1 (6%)    1 (6%)
-  animaux        141    44 (31%)  51 (36%)  40 (28%)    6 (4%)    0 (0%)
+  animaux        140    44 (31%)  51 (36%)  39 (28%)    6 (4%)    0 (0%)
   nature          29     6 (21%)    1 (3%)  11 (38%)   9 (31%)    2 (7%)
   nourriture     132    40 (30%)  40 (30%)  47 (36%)    5 (4%)    0 (0%)
   lieux           47    22 (47%)  19 (40%)   6 (13%)    0 (0%)    0 (0%)
@@ -23,7 +23,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   temps           34    26 (76%)   7 (21%)    1 (3%)    0 (0%)    0 (0%)
   activites       92    31 (34%)  39 (42%)  15 (16%)    6 (7%)    1 (1%)
   objets         249   119 (48%)  87 (35%)  38 (15%)    5 (2%)    0 (0%)
-  symboles       304   160 (53%)  80 (26%)  43 (14%)   20 (7%)    1 (0%)
+  symboles       305   160 (52%)  80 (26%)  44 (14%)   20 (7%)    1 (0%)
   drapeaux       262   197 (75%)  47 (18%)   17 (6%)    1 (0%)    0 (0%)
 
 PAR ANNEE
@@ -50,7 +50,7 @@ LE HAUT DE CHAQUE GROUPE
   gens         🤦 personne avec la paume sur le visage · 🤷 personne qui hausse les épaules · 🙋 personne qui lève la main · 💃 danseuse · 🏃 personne qui court · 🙆 personne faisant un geste d’acceptation · 💁 personne paume vers le haut · 🚶 personne qui marche
   mains        🙏 mains en prière · 👍 pouce vers le haut · 👏 applaudissements · 👌 ok · ✌️ V de la victoire · 🙌 mains levées · 👇 main avec index pointant vers le bas · 👊 poing de face
   corps        💪 biceps contracté · 👀 yeux · 👅 langue · 👁️ œil · 👄 bouche · 👂 oreille · 🧠 cerveau · 👃 nez
-  animaux      🙈 singe ne rien voir · 😻 chat souriant aux yeux en cœurs · 🙊 singe ne rien dire · 😹 chat qui pleure de joie · 🐶 tête de chien · 🦋 papillon · 🐾 empreintes d’animaux · 🐷 tête de cochon
+  animaux      🙈 singe ne rien voir · 😻 chat souriant aux yeux en cœurs · 🙊 singe ne rien dire · 😹 chat qui pleure de joie · 🐶 tête de chien · 🦋 papillon · 🐷 tête de cochon · 🐸 grenouille
   nature       🌹 rose · 🌸 fleur de cerisier · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 💐 bouquet · 🌺 hibiscus · 🌻 tournesol · 🌼 bourgeon
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
   lieux        🌎 globe tourné sur les Amériques · ♨️ sources chaudes · 🌍 globe tourné sur l’Afrique et l’Europe · 🏠 maison · 🌏 globe tourné sur l’Asie et l’Australie · 🏖️ plage avec parasol · 🏡 maison avec jardin · 🕋 kaaba
