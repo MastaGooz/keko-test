@@ -218,6 +218,31 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f507': 'symboles', // 🔇
   '1f4b9': 'symboles', // 💹
   '26d3-fe0f-200d-1f4a5': 'symboles', // ⛓️‍💥
+  // LES PICTOGRAMMES D'INTERFACE RANGÉS PAR UNICODE DANS « Objects » (Keko :
+  // « les notes de musique/partition, volume enceinte, enveloppe avec flèche,
+  // graphe en hausse/baisse, graphique à barres, chaînes, message reçu, boîte
+  // de réception, curseurs, boutons, dossier etc > symbole »). Restent des
+  // objets ce qui existe en vrai : les boîtes aux lettres, l'enveloppe, le
+  // haut-parleur, la cloche, les meubles.
+  '1f3b5': 'symboles', // 🎵
+  '1f3b6': 'symboles', // 🎶
+  '1f3bc': 'symboles', // 🎼
+  '1f508': 'symboles', // 🔈
+  '1f509': 'symboles', // 🔉
+  '1f50a': 'symboles', // 🔊
+  '1f4e9': 'symboles', // 📩
+  '1f4e8': 'symboles', // 📨
+  '1f4e5': 'symboles', // 📥
+  '1f4e4': 'symboles', // 📤 (la boîte d'envoi suit la boîte de réception)
+  '1f4c8': 'symboles', // 📈
+  '1f4c9': 'symboles', // 📉
+  '1f4ca': 'symboles', // 📊
+  '26d3-fe0f': 'symboles', // ⛓️
+  '1f39a-fe0f': 'symboles', // 🎚️
+  '1f39b-fe0f': 'symboles', // 🎛️
+  '1f4c1': 'symboles', // 📁
+  '1f4c2': 'symboles', // 📂
+  '1f5c2-fe0f': 'symboles', // 🗂️ (les intercalaires suivent les dossiers)
   // LE PAYSAGE NATUREL QUITTE LES LIEUX (Keko : « roche, éboulement, montagne
   // enneigée, nuit étoilée, soleil levant, volcan, soleil etc > direction
   // éléments ») : la roche et l'éboulement, les montagnes, le volcan, le

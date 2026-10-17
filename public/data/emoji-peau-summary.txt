@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 09:37:42 UTC
+engendre le 2026-10-17 09:43:10 UTC
 
 3955 cartes, dont 884 animables
 
@@ -22,8 +22,8 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   elements        56      4 (7%)  20 (36%)  21 (38%)   9 (16%)    2 (4%)
   temps           34    19 (56%)  13 (38%)    2 (6%)    0 (0%)    0 (0%)
   activites      102    22 (22%)  41 (40%)  26 (25%)  12 (12%)    1 (1%)
-  objets         275    92 (33%) 121 (44%)  53 (19%)    9 (3%)    0 (0%)
-  symboles       244    55 (23%) 115 (47%)  55 (23%)   18 (7%)    1 (0%)
+  objets         256    89 (35%) 110 (43%)  50 (20%)    7 (3%)    0 (0%)
+  symboles       263    58 (22%) 126 (48%)  58 (22%)   20 (8%)    1 (0%)
   drapeaux       262   148 (56%)  90 (34%)   23 (9%)    1 (0%)    0 (0%)
 
 PAR ANNEE
@@ -58,8 +58,8 @@ LE HAUT DE CHAQUE GROUPE
   elements     🔥 feu · ✨ étincelles · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage
   temps        ⏰ réveil · ⌚ montre · ⏱️ chronomètre · ⏳ sablier avec sable qui coule · 🗓️ calendrier à spirale · 📆 éphéméride · 📅 calendrier · ⌛ sablier
   activites    🎉 cotillons · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable · 🎀 ruban · 💅 vernis à ongles
-  objets       🎶 notes de musique · 👑 couronne · 🎵 note de musique · 💰 sac plein d’argent · 💎 pierre précieuse · 💸 billet avec des ailes · 📌 punaise · ☎️ téléphone
-  symboles     ‼️ double point d’exclamation · 💯 cent points · ❗ point d’exclamation rouge · 💋 trace de rouge à lèvres · 💥 explosion · ✅ bouton coché · 💦 gouttes de sueur · ✔️ coche
+  objets       👑 couronne · 💰 sac plein d’argent · 💎 pierre précieuse · 💸 billet avec des ailes · 📌 punaise · ☎️ téléphone · 🎤 micro · 💣 bombe
+  symboles     ‼️ double point d’exclamation · 💯 cent points · 🎶 notes de musique · ❗ point d’exclamation rouge · 💋 trace de rouge à lèvres · 💥 explosion · ✅ bouton coché · 💦 gouttes de sueur
   drapeaux     🇺🇸 drapeau : États-Unis · 🇧🇷 drapeau : Brésil · 🚩 drapeau triangulaire · 🇲🇽 drapeau : Mexique · 🏁 drapeau à damier · 🇮🇳 drapeau : Inde · 🇹🇷 drapeau : Turquie · 🇮🇹 drapeau : Italie
 
 LE HAUT DU CLASSEMENT MONDIAL
