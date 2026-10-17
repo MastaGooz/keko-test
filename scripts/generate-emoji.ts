@@ -99,8 +99,13 @@ const GROUPE: Readonly<Record<string, GroupeEmoji>> = {
  * chats, monstres, crâne, ogre etc : on va faire une catégorie monstre et une
  * catégorie animaux » — **`cat-face`** et **`monkey-face`** rejoignent les
  * animaux, **`face-costume`** (💀 ☠️ 💩 👻 👽 👾 👹 👺 🤡 🤖) devient le
- * groupe « Monstre ». *Le sous-groupe l'emporte sur le groupe* ; tout autre
- * sous-groupe suit son groupe.
+ * groupe « Monstre ». Puis « People & Body » : « on va enlever les mains de la
+ * catégorie gens pour faire une catégorie main, et on va aussi faire une
+ * catégorie corps où on met jambes, biceps, organes, bouche » — les six
+ * sous-groupes **`hand*`** (doigts ouverts, pliés, un doigt, poings, deux
+ * mains, main avec objet : ✍️ 💅 🤳) font « Main », **`body-parts`** (💪 🦵
+ * 🦶 👂 👃 🧠 🫀 🫁 🦷 🦴 👀 👁️ 👅 👄 🫦…) fait « Corps ». *Le sous-groupe
+ * l'emporte sur le groupe* ; tout autre sous-groupe suit son groupe.
  */
 const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   heart: 'coeurs',
@@ -108,6 +113,13 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   'cat-face': 'animaux',
   'monkey-face': 'animaux',
   'face-costume': 'monstres',
+  'hand-fingers-open': 'mains',
+  'hand-fingers-partial': 'mains',
+  'hand-single-finger': 'mains',
+  'hand-fingers-closed': 'mains',
+  hands: 'mains',
+  'hand-prop': 'mains',
+  'body-parts': 'corps',
 }
 
 /**

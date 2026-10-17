@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 07:54:32 UTC
+engendre le 2026-10-17 08:30:59 UTC
 
 3955 cartes, dont 884 animables
 
@@ -11,7 +11,9 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   visages        110    25 (23%)    1 (1%)    8 (7%)  50 (45%)  26 (24%)
   coeurs          25     7 (28%)    0 (0%)    1 (4%)   5 (20%)  12 (48%)
   monstres        10      0 (0%)   1 (10%)   8 (80%)   1 (10%)    0 (0%)
-  gens          2430  1504 (62%) 455 (19%) 247 (10%)  170 (7%)   54 (2%)
+  gens          2092  1381 (66%) 443 (21%)  195 (9%)   61 (3%)   12 (1%)
+  mains          290    98 (34%)    6 (2%)  42 (14%) 108 (37%)  36 (12%)
+  corps           48    25 (52%)   6 (13%)  10 (21%)    1 (2%)   6 (13%)
   animaux        173    47 (27%)  38 (22%)  69 (40%)  17 (10%)    2 (1%)
   nourriture     132    33 (25%)  29 (22%)  64 (48%)    6 (5%)    0 (0%)
   lieux          221    49 (22%) 115 (52%)  44 (20%)   12 (5%)    1 (0%)
@@ -41,7 +43,9 @@ LE HAUT DE CHAQUE GROUPE
   visages      😂 visage riant aux larmes · 😍 visage souriant avec yeux en forme de cœur · 🤣 se rouler par terre de rire · 😊 visage souriant avec yeux rieurs · 😭 visage qui pleure à chaudes larmes · 😘 visage envoyant un bisou · 😅 visage souriant avec une goutte de sueur · 😁 visage souriant aux yeux rieurs
   coeurs       ❤️ cœur rouge · 💕 deux cœurs · 💔 cœur brisé · 💖 cœur étincelant · 💙 cœur bleu · 💜 cœur violet · 💞 cœurs qui tournent · 💗 cœur grandissant
   monstres     💀 crâne · 💩 tas de crotte · 👻 fantôme · ☠️ tête de mort · 👽 alien · 🤡 visage de clown · 👹 ogre · 👾 monstre de l’espace
-  gens         🙏 mains en prière · 🙏🏻 mains en prière : peau claire · 🙏🏼 mains en prière : peau moyennement claire · 🙏🏽 mains en prière : peau légèrement mate · 🙏🏾 mains en prière : peau mate · 🙏🏿 mains en prière : peau foncée · 👍 pouce vers le haut · 👍🏻 pouce vers le haut : peau claire
+  gens         🤦 personne avec la paume sur le visage · 🤦🏻 personne avec la paume sur le visage : peau claire · 🤦🏼 personne avec la paume sur le visage : peau moyennement claire · 🤦🏽 personne avec la paume sur le visage : peau légèrement mate · 🤦🏾 personne avec la paume sur le visage : peau mate · 🤦🏿 personne avec la paume sur le visage : peau foncée · 🤷 personne qui hausse les épaules · 🤷🏻 personne qui hausse les épaules : peau claire
+  mains        🙏 mains en prière · 🙏🏻 mains en prière : peau claire · 🙏🏼 mains en prière : peau moyennement claire · 🙏🏽 mains en prière : peau légèrement mate · 🙏🏾 mains en prière : peau mate · 🙏🏿 mains en prière : peau foncée · 👍 pouce vers le haut · 👍🏻 pouce vers le haut : peau claire
+  corps        💪 biceps contracté · 💪🏻 biceps contracté : peau claire · 💪🏼 biceps contracté : peau moyennement claire · 💪🏽 biceps contracté : peau légèrement mate · 💪🏾 biceps contracté : peau mate · 💪🏿 biceps contracté : peau foncée · 👀 yeux · 👅 langue
   animaux      🌹 rose · 🌸 fleur de cerisier · 🙈 singe ne rien voir · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 😻 chat souriant aux yeux en cœurs · 💐 bouquet · 🌺 hibiscus
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
   lieux        🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🚨 gyrophare
@@ -61,8 +65,8 @@ LE BAS
 
 UN EXEMPLE PAR RARETE
 ---------------------
-  commun       🤏🏻 pouce et index rapprochés : peau claire (gens, 2967e, non classe, animable)
+  commun       🤏🏻 pouce et index rapprochés : peau claire (mains, 2967e, non classe, animable)
   peu-commun   9️⃣ touches : 9 (symboles, 1484e, frequence 11)
   rare         👴🏼 homme âgé : peau moyennement claire (gens, 692e, frequence 9)
-  epique       ✊🏾 poing levé : peau mate (gens, 247e, frequence 6, animable)
-  legendaire   👌🏾 ok : peau mate (gens, 50e, frequence 3, animable)
+  epique       ✊🏾 poing levé : peau mate (mains, 247e, frequence 6, animable)
+  legendaire   👌🏾 ok : peau mate (mains, 50e, frequence 3, animable)
