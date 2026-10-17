@@ -252,9 +252,10 @@ export function PencheAuGyro({
 function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number {
   // EN PORTRAIT C'EST LA LARGEUR QUI BORNE, et 0,42 y laissait le sachet perdu
   // au milieu d'un écran vide : *un objet qu'on doit déchirer au doigt a besoin
-  // d'être sous le doigt.* En paysage la hauteur commande de toute façon, donc
-  // rien n'y bouge.
-  return Math.min(largeurVisible * 0.6, (hauteurVisible * 0.68) / RAPPORT_SACHET)
+  // d'être sous le doigt.* EN PAYSAGE (le PC) C'EST LA HAUTEUR : 0,68 y faisait
+  // un sachet « un peu trop gros » (Keko), 0,56 depuis. Un téléphone en portrait
+  // (390 × 844) reste borné par sa largeur : rien n'y bouge.
+  return Math.min(largeurVisible * 0.6, (hauteurVisible * 0.56) / RAPPORT_SACHET)
 }
 
 /**
