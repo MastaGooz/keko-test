@@ -122,7 +122,7 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   emotion: 'symboles',
   'cat-face': 'animaux',
   'monkey-face': 'animaux',
-  'face-costume': 'monstres',
+  'face-costume': 'creatures',
   'hand-fingers-open': 'mains',
   'hand-fingers-partial': 'mains',
   'hand-single-finger': 'mains',
@@ -153,8 +153,25 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
  * du texte affiché. L'identifiant l'emporte sur le sous-groupe.
  */
 const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
-  '1f480': 'monstres',
-  '2620-fe0f': 'monstres',
+  '1f480': 'creatures',
+  '2620-fe0f': 'creatures',
+  // « MONSTRE » DEVIENT « CRÉATURE » (Keko : « on remplace monstre par créature
+  // et on y met : créature velue, troll, zombie, génie, fée, sirène, vampire,
+  // triton et toutes les créatures fictives ») : les créatures de
+  // `person-fantasy` — leurs versions homme et femme suivent, la table se lit
+  // sans signe de genre — et la licorne et les dragons des animaux. Le père
+  // Noël, les super-héros et les mages restent des gens : des humains.
+  '1fac8': 'creatures', // 🫈
+  '1f9cc': 'creatures', // 🧌
+  '1f9df': 'creatures', // 🧟
+  '1f9de': 'creatures', // 🧞
+  '1f9da': 'creatures', // 🧚
+  '1f9dc': 'creatures', // 🧜
+  '1f9db': 'creatures', // 🧛
+  '1f9dd': 'creatures', // 🧝
+  '1f984': 'creatures', // 🦄
+  '1f409': 'creatures', // 🐉
+  '1f432': 'creatures', // 🐲
   // 💅 le vernis et 🤳 le selfie (`hand-prop`) : des activités, pas des mains
   // (Keko : « passe le vernis et selfie dans activité plutôt »). ✍️ reste.
   '1f485': 'activites',
@@ -353,8 +370,10 @@ function lireUnicode(txt: string): Brut[] {
     const m = /^([0-9A-F ]+);\s*fully-qualified\s*#\s*(\S+)\s+E(\d+\.\d+)\s+(.+)$/.exec(ligne.trim())
     if (!m) continue
     const id = m[1]!.trim().toLowerCase().replace(/ +/g, '-')
-    // UNE VARIANTE DE PEAU SUIT SA BASE : la table nomme 💅, ses cinq tons la suivent.
-    const g = PAR_ID[id.replace(/-1f3f[b-f]/g, '')] ?? SOUS_GROUPE[sousGroupe] ?? GROUPE[groupe]
+    // UNE VARIANTE SUIT SA BASE : la table nomme 💅, ses cinq tons la suivent ;
+    // elle nomme 🧛, le vampire homme et la vampire femme (♂ ♀ en ZWJ) aussi.
+    const base = id.replace(/-1f3f[b-f]/g, '').replace(/-200d-264[02]-fe0f$/, '')
+    const g = PAR_ID[base] ?? SOUS_GROUPE[sousGroupe] ?? GROUPE[groupe]
     if (g === undefined) continue
     const emoji = m[2]!
     if (!avecPeau && PEAU.test(emoji)) continue

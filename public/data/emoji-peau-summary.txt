@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 10:05:36 UTC
+engendre le 2026-10-17 10:08:53 UTC
 
 3955 cartes, dont 884 animables
 
@@ -10,11 +10,11 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   groupe           n      commun    peu-co      rare    epique    legend
   visages        110    25 (23%)    1 (1%)    8 (7%)  50 (45%)  26 (24%)
   coeurs          26     7 (27%)    0 (0%)    1 (4%)   5 (19%)  13 (50%)
-  monstres        10      0 (0%)   1 (10%)   8 (80%)   1 (10%)    0 (0%)
-  gens          2092  1381 (66%) 443 (21%)  195 (9%)   61 (3%)   12 (1%)
+  creatures       93    54 (58%)  17 (18%)  21 (23%)    1 (1%)    0 (0%)
+  gens          2012  1327 (66%) 429 (21%)  183 (9%)   61 (3%)   12 (1%)
   mains          278    98 (35%)    0 (0%)  42 (15%) 102 (37%)  36 (13%)
   corps           48    25 (52%)   6 (13%)  10 (21%)    1 (2%)   6 (13%)
-  animaux        144    41 (28%)  38 (26%)  57 (40%)    8 (6%)    0 (0%)
+  animaux        141    41 (29%)  36 (26%)  56 (40%)    8 (6%)    0 (0%)
   nature          29     6 (21%)    0 (0%)  12 (41%)   9 (31%)    2 (7%)
   nourriture     132    33 (25%)  29 (22%)  64 (48%)    6 (5%)    0 (0%)
   lieux           47     6 (13%)  31 (66%)  10 (21%)    0 (0%)    0 (0%)
@@ -46,7 +46,7 @@ LE HAUT DE CHAQUE GROUPE
 ------------------------
   visages      😂 visage riant aux larmes · 😍 visage souriant avec yeux en forme de cœur · 🤣 se rouler par terre de rire · 😊 visage souriant avec yeux rieurs · 😭 visage qui pleure à chaudes larmes · 😘 visage envoyant un bisou · 😅 visage souriant avec une goutte de sueur · 😁 visage souriant aux yeux rieurs
   coeurs       ❤️ cœur rouge · 💕 deux cœurs · ♥️ cœur cartes · 💔 cœur brisé · 💖 cœur étincelant · 💙 cœur bleu · 💜 cœur violet · 💞 cœurs qui tournent
-  monstres     💀 crâne · 💩 tas de crotte · 👻 fantôme · ☠️ tête de mort · 👽 alien · 🤡 visage de clown · 👹 ogre · 👾 monstre de l’espace
+  creatures    💀 crâne · 💩 tas de crotte · 👻 fantôme · ☠️ tête de mort · 🧚 personnage féérique · 🧚🏻 personnage féérique : peau claire · 🧚🏼 personnage féérique : peau moyennement claire · 🧚🏽 personnage féérique : peau légèrement mate
   gens         🤦 personne avec la paume sur le visage · 🤦🏻 personne avec la paume sur le visage : peau claire · 🤦🏼 personne avec la paume sur le visage : peau moyennement claire · 🤦🏽 personne avec la paume sur le visage : peau légèrement mate · 🤦🏾 personne avec la paume sur le visage : peau mate · 🤦🏿 personne avec la paume sur le visage : peau foncée · 🤷 personne qui hausse les épaules · 🤷🏻 personne qui hausse les épaules : peau claire
   mains        🙏 mains en prière · 🙏🏻 mains en prière : peau claire · 🙏🏼 mains en prière : peau moyennement claire · 🙏🏽 mains en prière : peau légèrement mate · 🙏🏾 mains en prière : peau mate · 🙏🏿 mains en prière : peau foncée · 👍 pouce vers le haut · 👍🏻 pouce vers le haut : peau claire
   corps        💪 biceps contracté · 💪🏻 biceps contracté : peau claire · 💪🏼 biceps contracté : peau moyennement claire · 💪🏽 biceps contracté : peau légèrement mate · 💪🏾 biceps contracté : peau mate · 💪🏿 biceps contracté : peau foncée · 👀 yeux · 👅 langue

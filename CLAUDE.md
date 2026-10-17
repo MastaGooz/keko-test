@@ -297,7 +297,7 @@ src/
     paquet.ts    # le tirage d'un paquet — générique sur l'échelle de rareté
     quantiles.ts # le découpage en crans PAR GROUPE — les deux collections le lisent
     emoji/       # LE PROJET : une carte = un EMOJI
-      types.ts      # CarteEmoji, la validation, les dix-sept groupes (neuf d'Unicode + cœurs, monstres, mains, corps, nature, éléments, véhicules, temps), les cinq crans
+      types.ts      # CarteEmoji, la validation, les dix-sept groupes (neuf d'Unicode + cœurs, créatures, mains, corps, nature, éléments, véhicules, temps), les cinq crans
       tirage.ts     # les deux bonus, holo et animé, tirés à l'ouverture
       collection.ts # ce qu'on a obtenu : ajouter un paquet, relire le stockage
     paintings/   # la seconde collection : une carte = une PEINTURE
