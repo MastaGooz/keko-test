@@ -278,6 +278,9 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f463': 'symboles', // 👣
   '1fac6': 'symboles', // 🫆
   '1f43e': 'symboles', // 🐾
+  // Keko : « passe aussi source chaude en symbole » — Unicode la range dans
+  // `place-other`, c'est un signe de carte, pas un lieu.
+  '2668-fe0f': 'symboles', // ♨️
   // LES SILHOUETTES BLEUES (Keko : « la famille de silhouettes bleues de gens
   // dans symboles ») : 👤 👥 🗣️ 🫂 — des pictogrammes, pas des personnes. La
   // série « famille : … » suit par motif, voir `FAMILLE`. 👪 la famille

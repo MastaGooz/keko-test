@@ -6702,3 +6702,5 @@ Keko : « Je veux que tu contrôles la catégorie visage : enlève les coeurs pa
 **Même jour** — Keko : « on va renommer visage "smiley" et on va y remettre le clown ». **« Visage » devient « Smiley »** (`NOM_DU_GROUPE` seul, la clé `visages` reste : *le catalogue garde un identifiant*, rien à réengendrer pour un mot). 🤡 revient par identifiant chez les smileys, qu'Unicode range dans `face-costume` avec les monstres. Aucune rareté ne change.
 
 **Même jour** — Keko : « bascule empreintes d'animaux dans symbole ». 🐾 → Symbole, par identifiant, avec 👣 et 🫆. Aucune rareté ne change.
+
+**Même jour** — Keko : « passe aussi source chaude en symbole ». ♨️ → Symbole, par identifiant (Unicode : `place-other`). Aucune rareté ne change.

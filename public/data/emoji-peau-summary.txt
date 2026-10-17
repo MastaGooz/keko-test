@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 12:55:39 UTC
+engendre le 2026-10-17 12:58:13 UTC
 
 3955 cartes, dont 884 animables
 
@@ -17,13 +17,13 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   animaux        140    41 (29%)  36 (26%)  56 (40%)    7 (5%)    0 (0%)
   nature          29     6 (21%)    0 (0%)  12 (41%)   9 (31%)    2 (7%)
   nourriture     132    33 (25%)  29 (22%)  64 (48%)    6 (5%)    0 (0%)
-  lieux           47     6 (13%)  31 (66%)  10 (21%)    0 (0%)    0 (0%)
+  lieux           46     6 (13%)  31 (67%)   9 (20%)    0 (0%)    0 (0%)
   vehicules       66    15 (23%)  40 (61%)   8 (12%)    3 (5%)    0 (0%)
   elements        57      5 (9%)  20 (35%)  21 (37%)   9 (16%)    2 (4%)
   temps           34    19 (56%)  13 (38%)    2 (6%)    0 (0%)    0 (0%)
   activites      102    22 (22%)  41 (40%)  26 (25%)  12 (12%)    1 (1%)
   objets         249    86 (35%) 107 (43%)  49 (20%)    7 (3%)    0 (0%)
-  symboles       305    87 (29%) 133 (44%)  62 (20%)   22 (7%)    1 (0%)
+  symboles       306    87 (28%) 133 (43%)  63 (21%)   22 (7%)    1 (0%)
   drapeaux       262   148 (56%)  90 (34%)   23 (9%)    1 (0%)    0 (0%)
 
 PAR ANNEE
@@ -53,7 +53,7 @@ LE HAUT DE CHAQUE GROUPE
   animaux      🙈 singe ne rien voir · 😻 chat souriant aux yeux en cœurs · 🙊 singe ne rien dire · 😹 chat qui pleure de joie · 🐶 tête de chien · 🦋 papillon · 🐷 tête de cochon · 🐸 grenouille
   nature       🌹 rose · 🌸 fleur de cerisier · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 💐 bouquet · 🌺 hibiscus · 🌻 tournesol · 🌼 bourgeon
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
-  lieux        🌎 globe tourné sur les Amériques · ♨️ sources chaudes · 🌍 globe tourné sur l’Afrique et l’Europe · 🏠 maison · 🌏 globe tourné sur l’Asie et l’Australie · 🏖️ plage avec parasol · 🏡 maison avec jardin · 🕋 kaaba
+  lieux        🌎 globe tourné sur les Amériques · 🌍 globe tourné sur l’Afrique et l’Europe · 🏠 maison · 🌏 globe tourné sur l’Asie et l’Australie · 🏖️ plage avec parasol · 🏡 maison avec jardin · 🕋 kaaba · 🏩 love hotel
   vehicules    🚨 gyrophare · ✈️ avion · 🚀 fusée · 🚗 voiture · 🛑 stop · 🚘 voiture de face · 🚲 vélo · ⚓ ancre
   elements     🔥 feu · ✨ étincelles · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage
   temps        ⏰ réveil · ⌚ montre · ⏱️ chronomètre · ⏳ sablier avec sable qui coule · 🗓️ calendrier à spirale · 📆 éphéméride · 📅 calendrier · ⌛ sablier
