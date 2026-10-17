@@ -131,6 +131,10 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
 const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f480': 'monstres',
   '2620-fe0f': 'monstres',
+  // 💅 le vernis et 🤳 le selfie (`hand-prop`) : des activités, pas des mains
+  // (Keko : « passe le vernis et selfie dans activité plutôt »). ✍️ reste.
+  '1f485': 'activites',
+  '1f933': 'activites',
 }
 
 /**
@@ -203,7 +207,8 @@ function lireUnicode(txt: string): Brut[] {
     const m = /^([0-9A-F ]+);\s*fully-qualified\s*#\s*(\S+)\s+E(\d+\.\d+)\s+(.+)$/.exec(ligne.trim())
     if (!m) continue
     const id = m[1]!.trim().toLowerCase().replace(/ +/g, '-')
-    const g = PAR_ID[id] ?? SOUS_GROUPE[sousGroupe] ?? GROUPE[groupe]
+    // UNE VARIANTE DE PEAU SUIT SA BASE : la table nomme 💅, ses cinq tons la suivent.
+    const g = PAR_ID[id.replace(/-1f3f[b-f]/g, '')] ?? SOUS_GROUPE[sousGroupe] ?? GROUPE[groupe]
     if (g === undefined) continue
     const emoji = m[2]!
     if (!avecPeau && PEAU.test(emoji)) continue
