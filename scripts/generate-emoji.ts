@@ -133,6 +133,13 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   'plant-flower': 'nature',
   'plant-other': 'nature',
   'sky & weather': 'elements',
+  // « Véhicule » (Keko : « satellite, soucoupe volante et fusée devraient
+  // passer d'éléments à la catégorie véhicules, on va y ajouter aussi tous les
+  // véhicules dans lieu ») : les trois transports, 🚀 🛸 🛰️ compris ; ce qui
+  // n'y est pas un véhicule reste un lieu (voir `PAR_ID`).
+  'transport-ground': 'vehicules',
+  'transport-water': 'vehicules',
+  'transport-air': 'vehicules',
 }
 
 /**
@@ -151,10 +158,27 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   // ♥️ le coeur des cartes à jouer (`game`) : un coeur avant d'être un jeu
   // (Keko : « passe le coeur carte dans coeur au lieu de activité »).
   '2665-fe0f': 'coeurs',
-  // L'ESPACE : 🚀 la fusée, 🛸 la soucoupe, 🛰️ le satellite (`transport-air`).
-  '1f680': 'elements',
-  '1f6f8': 'elements',
-  '1f6f0-fe0f': 'elements',
+  // CE QUI N'EST PAS UN VÉHICULE dans les trois `transport-*` reste un lieu :
+  // la gare, l'arrêt, la route et la voie, le bidon et la pompe, la roue, le
+  // gyrophare, la signalisation, le phare, l'ancre et la bouée, le parachute,
+  // le siège. (Les fauteuils roulants, le skate et les rollers roulent.)
+  '1f689': 'lieux', // 🚉
+  '1f68f': 'lieux', // 🚏
+  '1f6e3-fe0f': 'lieux', // 🛣️
+  '1f6e4-fe0f': 'lieux', // 🛤️
+  '1f6e2-fe0f': 'lieux', // 🛢️
+  '26fd': 'lieux', // ⛽
+  '1f6de': 'lieux', // 🛞
+  '1f6a8': 'lieux', // 🚨
+  '1f6a5': 'lieux', // 🚥
+  '1f6a6': 'lieux', // 🚦
+  '1f6d1': 'lieux', // 🛑
+  '1f6a7': 'lieux', // 🚧
+  '1f6d9': 'lieux', // 🛙
+  '2693': 'lieux', // ⚓
+  '1f6df': 'lieux', // 🛟
+  '1fa82': 'lieux', // 🪂
+  '1f4ba': 'lieux', // 💺
   // CE QUI N'EST PAS UN ÉLÉMENT dans `sky & weather` (Keko : « bonshommes de
   // neige et parapluies ne devraient pas être dans ciel, plutôt objet pour
   // parapluie et activité pour bonhomme de neige, mets aussi le parasol dans

@@ -51,7 +51,7 @@ const bonne = {
 }
 
 verifier('une carte complète se lit', parseEmoji(bonne) !== null)
-verifier('un groupe inconnu est rejeté', parseEmoji({ ...bonne, groupe: 'vehicules' }) === null)
+verifier('un groupe inconnu est rejeté', parseEmoji({ ...bonne, groupe: 'licornes' }) === null)
 verifier('une rareté inconnue est rejetée', parseEmoji({ ...bonne, rarete: 'mythique' }) === null)
 verifier('un emoji vide est rejeté', parseEmoji({ ...bonne, emoji: '' }) === null)
 verifier('une année non numérique est rejetée', parseEmoji({ ...bonne, annee: '2015' }) === null)

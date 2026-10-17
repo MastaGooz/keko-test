@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 09:08:31 UTC
+engendre le 2026-10-17 09:13:28 UTC
 
 1915 cartes, dont 614 animables
 
@@ -17,8 +17,9 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   animaux        144    44 (31%)  53 (37%)  41 (28%)    6 (4%)    0 (0%)
   nature          29     6 (21%)    1 (3%)  11 (38%)   9 (31%)    2 (7%)
   nourriture     132    40 (30%)  40 (30%)  47 (36%)    5 (4%)    0 (0%)
-  lieux          170    91 (54%)  67 (39%)   10 (6%)    2 (1%)    0 (0%)
-  elements        45     8 (18%)  16 (36%)  13 (29%)   7 (16%)    1 (2%)
+  lieux          117    64 (55%)  43 (37%)    9 (8%)    1 (1%)    0 (0%)
+  vehicules       56    28 (50%)  25 (45%)    2 (4%)    1 (2%)    0 (0%)
+  elements        42     7 (17%)  15 (36%)  12 (29%)   7 (17%)    1 (2%)
   activites       89    31 (35%)  35 (39%)  15 (17%)    6 (7%)    2 (2%)
   objets         271   129 (48%)  94 (35%)  41 (15%)    7 (3%)    0 (0%)
   symboles       239   112 (47%)  70 (29%)  39 (16%)   17 (7%)    1 (0%)
@@ -51,7 +52,8 @@ LE HAUT DE CHAQUE GROUPE
   animaux      🙈 singe ne rien voir · 😻 chat souriant aux yeux en cœurs · 🙊 singe ne rien dire · 😹 chat qui pleure de joie · 🐶 tête de chien · 🦋 papillon · 🐾 empreintes d’animaux · 🐷 tête de cochon
   nature       🌹 rose · 🌸 fleur de cerisier · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 💐 bouquet · 🌺 hibiscus · 🌻 tournesol · 🌼 bourgeon
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
-  lieux        🚨 gyrophare · ✈️ avion · 🌎 globe tourné sur les Amériques · 🚗 voiture · ♨️ sources chaudes · ⏰ réveil · 🌍 globe tourné sur l’Afrique et l’Europe · 🛑 stop
+  lieux        🚨 gyrophare · 🌎 globe tourné sur les Amériques · ♨️ sources chaudes · ⏰ réveil · 🌍 globe tourné sur l’Afrique et l’Europe · 🛑 stop · 🏠 maison · 🌏 globe tourné sur l’Asie et l’Australie
+  vehicules    ✈️ avion · 🚀 fusée · 🚗 voiture · 🚘 voiture de face · 🚲 vélo · 🚂 locomotive · 🏍️ moto · 🚙 véhicule utilitaire sport
   elements     🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🌚 nouvelle lune avec visage
   activites    🎉 cotillons · ✨ étincelles · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable · 🎀 ruban
   objets       🎶 notes de musique · 👑 couronne · 🎵 note de musique · 💰 sac plein d’argent · 💎 pierre précieuse · 💸 billet avec des ailes · 📌 punaise · ☎️ téléphone
