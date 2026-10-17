@@ -82,6 +82,49 @@ function stickerPeint(c: CarteEmoji, holo: boolean): Promise<HTMLCanvasElement |
   return p
 }
 
+/**
+ * L'ANIMATION D'UN STICKER HOLO ANIMÉ : CHAQUE IMAGE AVEC SON CERNE ARC-EN-CIEL.
+ * Keko : « l'outline des stickers dans la liste est blanc au lieu d'être
+ * multicolor (holo) pour les stickers holo animés (et pareil en mode zoom) ».
+ * *Les images décodées sont déjà des stickers au cerne crème*, et le cerne
+ * arc-en-ciel se posait sur l'image fixe seulement : la première image de
+ * l'animation la recouvrait en blanc. Le cerne est un calcul par pixel, donc
+ * il se fait **une fois par image au chargement**, en cache par emoji, taille
+ * et forme — jamais à l'affichage. `seulCerne` : rien que le cerne, la couche
+ * qu'on fait tourner au regard en grand (voir `StickerOuvert`).
+ */
+interface ImagesAnimees {
+  images: readonly CanvasImageSource[]
+  duree: number
+}
+const ANIMATIONS_HOLO = new Map<string, Promise<ImagesAnimees | null>>()
+function animationHolo(id: string, cote: number, seulCerne: boolean): Promise<ImagesAnimees | null> {
+  const cle = `${id}#${cote}${seulCerne ? '#cerne' : ''}`
+  const deja = ANIMATIONS_HOLO.get(cle)
+  if (deja !== undefined) return deja
+  const p = animationDeLEmoji(urlAnimationEmoji(id), cote).then((a): ImagesAnimees | null => {
+    if (a === null) return null
+    const images: HTMLCanvasElement[] = []
+    for (const img of a.images) {
+      const t = document.createElement('canvas')
+      t.width = cote
+      t.height = cote
+      const ctx = t.getContext('2d', { willReadFrequently: true })
+      if (ctx === null) return null
+      ctx.drawImage(img, 0, 0, cote, cote)
+      cerneArcEnCiel(t, { x: 0, y: 0, l: 1, h: 1 }, seulCerne)
+      images.push(t)
+    }
+    return { images, duree: a.duree }
+  })
+  ANIMATIONS_HOLO.set(cle, p)
+  p.then(
+    (a) => a === null && ANIMATIONS_HOLO.delete(cle),
+    () => ANIMATIONS_HOLO.delete(cle),
+  )
+  return p
+}
+
 const FILTRE: React.CSSProperties = {
   filter: `saturate(${1 + SATURATION_APLAT}) drop-shadow(0 0.3rem 0.35rem rgba(10, 4, 30, 0.5))`,
 }
@@ -127,12 +170,16 @@ function CaseSticker({
       vivant = false
     }
   }, [visible, pret, carte, holo])
-  // L'ANIMATION, SEULEMENT À L'ÉCRAN : ses images sont déjà des stickers.
+  // L'ANIMATION, SEULEMENT À L'ÉCRAN : ses images sont déjà des stickers —
+  // au cerne arc-en-ciel si le sticker est holo (`animationHolo`).
   useEffect(() => {
     if (!visible || !anime) return
     let vivant = true
     let image = 0
-    void animationDeLEmoji(urlAnimationEmoji(carte.id), COTE_PETIT).then((a) => {
+    const chargement: Promise<ImagesAnimees | null> = holo
+      ? animationHolo(carte.id, COTE_PETIT, false)
+      : animationDeLEmoji(urlAnimationEmoji(carte.id), COTE_PETIT)
+    void chargement.then((a) => {
       if (!vivant || a === null) return
       const depart = performance.now()
       let montre = false
@@ -294,12 +341,14 @@ function StickerOuvert({
       }
       const a = arc.current
       const actx = a?.getContext('2d', { willReadFrequently: true })
-      if (holo && !anime && a != null && actx != null) {
+      // LE CERNE SEUL SUR SA COUCHE, animé ou non : pour l'animé c'est celui de
+      // l'image fixe en attendant les siens, image par image (ci-dessous).
+      if (holo && a != null && actx != null) {
         a.width = cote
         a.height = cote
         actx.drawImage(image, 0, 0, cote, cote)
         cerneArcEnCiel(a, { x: 0, y: 0, l: 1, h: 1 }, true)
-      } else if (holo) cerneArcEnCiel(t, { x: 0, y: 0, l: 1, h: 1 })
+      }
       setPret(true)
     })
     return () => {
@@ -310,7 +359,12 @@ function StickerOuvert({
     if (!anime) return
     let vivant = true
     let image = 0
-    void animationDeLEmoji(urlAnimationEmoji(carte.id), COTE_GRAND).then((a) => {
+    // L'ANIMATION, ET POUR UNE HOLO LE CERNE DE CHAQUE IMAGE sur la couche
+    // `arc`, qui tourne au regard comme celui du sticker fixe.
+    void Promise.all([
+      animationDeLEmoji(urlAnimationEmoji(carte.id), COTE_GRAND),
+      holo ? animationHolo(carte.id, COTE_GRAND, true) : null,
+    ]).then(([a, cernes]) => {
       if (!vivant || a === null) return
       const depart = performance.now()
       const pas = (t: number): void => {
@@ -323,6 +377,13 @@ function StickerOuvert({
         const i = Math.min(a.images.length - 1, Math.floor(((Math.max(0, t - depart) % a.duree) / a.duree) * a.images.length))
         ctx.clearRect(0, 0, c.width, c.height)
         ctx.drawImage(a.images[i]!, 0, 0, c.width, c.height)
+        const ac = arc.current
+        const actx = ac?.getContext('2d')
+        const cerne = cernes?.images[i]
+        if (ac != null && actx != null && cerne !== undefined) {
+          actx.clearRect(0, 0, ac.width, ac.height)
+          actx.drawImage(cerne, 0, 0, ac.width, ac.height)
+        }
         image = requestAnimationFrame(pas)
       }
       image = requestAnimationFrame(pas)
@@ -331,7 +392,7 @@ function StickerOuvert({
       vivant = false
       cancelAnimationFrame(image)
     }
-  }, [anime, carte.id])
+  }, [anime, holo, carte.id])
   /**
    * IL PENCHE SOUS LE DOIGT, et se redresse quand on le lâche. Écrit dans le
    * DOM, pas dans l'état : une valeur par image ne doit pas rendre la page.
