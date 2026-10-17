@@ -520,9 +520,10 @@ type PropsPaquet = {
   /** Le paquet est ouvert : ses cartes entrent dans la collection. Une fois par paquet. */
   onPaquetOuvert?: (ids: readonly string[], bonus: Readonly<Record<string, Bonus>>) => void
   /**
-   * Rien ne se joue : le sachet attend, ou c'est le bilan. *C'est là, et là
-   * seulement, que la barre de navigation se montre* — pendant la déchirure et
-   * le défilé, elle disputerait l'écran à la carte.
+   * Rien ne se joue : le sachet attend, ou c'est le bilan d'un paquet qu'aucun
+   * autre ne suit. *C'est là, et là seulement, que la barre de navigation se
+   * montre* — pendant la déchirure, le défilé et le bilan (jusqu'à « Terminé »),
+   * elle disputerait l'écran aux cartes.
    */
   onCalme?: (calme: boolean) => void
   /**
@@ -1845,7 +1846,12 @@ export function Paquet3D({
       tirage.bonus,
     )
   }, [ouvert, paquet, numero, tirage, onPaquetOuvert])
-  const calme = !brule || fini
+  // LA BARRE ATTEND « TERMINÉ ». Keko : « sur l'écran des 5 cartes à la fin
+  // de l'ouverture d'un booster, on peut attendre que le joueur clique sur
+  // Terminé avant de réafficher l'UI de la barre ? » *Le bilan n'est donc
+  // plus calme* — sauf quand aucun paquet ne suit : sans bouton, c'est la
+  // barre et « Prochain paquet dans … » qui permettent de repartir.
+  const calme = !brule || (fini && !peutContinuer)
   useEffect(() => onCalme?.(calme), [calme, onCalme])
   const sachetAttend = !brule && !ouvert && paquet.length > 0
   useEffect(() => onSachetEnAttente?.(sachetAttend), [sachetAttend, onSachetEnAttente])

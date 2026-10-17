@@ -225,7 +225,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   des crans, sans étoile ; `IconeStickers` : un sticker souriant au coin décollé), trait en
   `currentColor`. **Elle
   ne se montre que quand rien ne se joue** (`onCalme` : sachet qui attend, ou
-  bilan) — jamais pendant la déchirure ni le défilé.
+  bilan sans paquet à suivre) — jamais pendant la déchirure ni le défilé, **ni
+  au bilan avant « Terminé »** (Keko).
 - **Le paquet entre dans la collection quand il est ouvert** (`onPaquetOuvert`,
   une fois par numéro). **Changer de page démonte le paquet**, et
   `numeroCourant` survit : on ne retombe pas sur le même tirage, et un sachet
