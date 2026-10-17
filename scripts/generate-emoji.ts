@@ -159,6 +159,14 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   sport: 'objets',
   game: 'objets',
   'arts & crafts': 'objets',
+  // ET CE QUE FONT LES GENS EST UNE ACTIVITÉ : les sportifs, les personnes en
+  // action (danser, marcher, courir, grimper, se faire coiffer) et au repos
+  // (yoga, bain, lit) quittent les gens — proposé, Keko : « faisons le 1 déjà ».
+  // Les gens ne gardent que les personnes elles-mêmes : âges, métiers, gestes,
+  // personnages, couples.
+  'person-sport': 'activites',
+  'person-activity': 'activites',
+  'person-resting': 'activites',
 }
 
 /**

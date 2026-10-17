@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 14:48:34 UTC
+engendre le 2026-10-17 15:20:40 UTC
 
 3932 cartes, dont 884 animables
 
@@ -11,7 +11,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   visages        111    25 (23%)    1 (1%)    9 (8%)  50 (45%)  26 (23%)
   coeurs          25     7 (28%)    0 (0%)    1 (4%)   5 (20%)  12 (48%)
   creatures       92    54 (59%)  17 (18%)  20 (22%)    1 (1%)    0 (0%)
-  gens          1977  1300 (66%) 425 (21%)  180 (9%)   60 (3%)   12 (1%)
+  gens          1231   724 (59%) 345 (28%) 120 (10%)   30 (2%)   12 (1%)
   mains          278    98 (35%)    0 (0%)  42 (15%) 102 (37%)  36 (13%)
   corps           48    25 (52%)   6 (13%)  10 (21%)    1 (2%)   6 (13%)
   animaux        140    41 (29%)  36 (26%)  56 (40%)    7 (5%)    0 (0%)
@@ -20,7 +20,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   lieux           46     6 (13%)  31 (67%)   9 (20%)    0 (0%)    0 (0%)
   vehicules       66    15 (23%)  40 (61%)   8 (12%)    3 (5%)    0 (0%)
   elements        57      5 (9%)  20 (35%)  21 (37%)   9 (16%)    2 (4%)
-  activites       23      0 (0%)  12 (52%)   3 (13%)   7 (30%)    1 (4%)
+  activites      769   576 (75%)  92 (12%)   63 (8%)   37 (5%)    1 (0%)
   objets         336   108 (32%) 145 (43%)  71 (21%)   12 (4%)    0 (0%)
   symboles       310    87 (28%) 133 (43%)  66 (21%)   22 (7%)    2 (1%)
   drapeaux       262   148 (56%)  90 (34%)   23 (9%)    1 (0%)    0 (0%)
@@ -55,7 +55,7 @@ LE HAUT DE CHAQUE GROUPE
   lieux        🌎 globe tourné sur les Amériques · 🌍 globe tourné sur l’Afrique et l’Europe · 🏠 maison · 🌏 globe tourné sur l’Asie et l’Australie · 🏖️ plage avec parasol · 🏡 maison avec jardin · 🕋 kaaba · 🏩 love hotel
   vehicules    🚨 gyrophare · ✈️ avion · 🚀 fusée · 🚗 voiture · 🛑 stop · 🚘 voiture de face · 🚲 vélo · ⚓ ancre
   elements     🔥 feu · ✨ étincelles · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage
-  activites    🎉 cotillons · 🎊 confettis · 💅 vernis à ongles · 💅🏻 vernis à ongles : peau claire · 💅🏼 vernis à ongles : peau moyennement claire · 💅🏽 vernis à ongles : peau légèrement mate · 💅🏾 vernis à ongles : peau mate · 💅🏿 vernis à ongles : peau foncée
+  activites    🎉 cotillons · 💃 danseuse · 💃🏻 danseuse : peau claire · 💃🏼 danseuse : peau moyennement claire · 💃🏽 danseuse : peau légèrement mate · 💃🏾 danseuse : peau mate · 💃🏿 danseuse : peau foncée · 🏃 personne qui court
   objets       👑 couronne · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable · 💰 sac plein d’argent · 🎀 ruban · 💎 pierre précieuse
   symboles     ♥️ cœur cartes · ‼️ double point d’exclamation · 💯 cent points · 🎶 notes de musique · ❗ point d’exclamation rouge · 💋 trace de rouge à lèvres · 💥 explosion · ✅ bouton coché
   drapeaux     🇺🇸 drapeau : États-Unis · 🇧🇷 drapeau : Brésil · 🚩 drapeau triangulaire · 🇲🇽 drapeau : Mexique · 🏁 drapeau à damier · 🇮🇳 drapeau : Inde · 🇹🇷 drapeau : Turquie · 🇮🇹 drapeau : Italie
