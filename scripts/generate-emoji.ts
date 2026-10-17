@@ -419,6 +419,15 @@ async function texte(cle: string, url: string): Promise<string> {
  */
 const FAMILLE = /^(1f46[6-9]|1f9d[12])(-200d-(1f46[6-9]|1f9d[12]))+$/
 
+/**
+ * LES PERSONNES EN FAUTEUIL ROULANT SONT DES GENS, pas une activité (Keko : « on
+ * peut mettre les personnes en fauteuil roulant dans gens plutôt qu'activité »)
+ * : fauteuil manuel 🦽 et motorisé 🦼, les trois genres, tournées vers la
+ * droite ou non — le sous-groupe `person-activity` les range avec la marche.
+ * La canne blanche 🦯 reste une activité, Keko ne l'a pas nommée — à rejuger.
+ */
+const FAUTEUIL = /^(1f9d1|1f468|1f469)-200d-1f9b[cd](-200d-27a1-fe0f)?$/
+
 /** La liste canonique, variantes de peau et composants ecartes. */
 function lireUnicode(txt: string): Brut[] {
   const out: Brut[] = []
@@ -441,7 +450,12 @@ function lireUnicode(txt: string): Brut[] {
     // UNE VARIANTE SUIT SA BASE : la table nomme 💅, ses cinq tons la suivent ;
     // elle nomme 🧛, le vampire homme et la vampire femme (♂ ♀ en ZWJ) aussi.
     const base = id.replace(/-1f3f[b-f]/g, '').replace(/-200d-264[02]-fe0f$/, '')
-    const g = PAR_ID[base] ?? (FAMILLE.test(base) ? 'symboles' : undefined) ?? SOUS_GROUPE[sousGroupe] ?? GROUPE[groupe]
+    const g =
+      PAR_ID[base] ??
+      (FAMILLE.test(base) ? 'symboles' : undefined) ??
+      (FAUTEUIL.test(base) ? 'gens' : undefined) ??
+      SOUS_GROUPE[sousGroupe] ??
+      GROUPE[groupe]
     if (g === undefined) continue
     const emoji = m[2]!
     if (!avecPeau && PEAU.test(emoji)) continue
