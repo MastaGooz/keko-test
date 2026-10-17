@@ -78,7 +78,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   une feuille de paillettes cosmos** (`COSMOS`) : de petits miroirs penchés au
   hasard qui renvoient la lampe clé, **sur l'emoji aussi** (`COSMOS.surEmoji`) — rien que des étoiles à quatre branches sur l'emoji, des points ronds sur le fond (`COSMOS.etoile`) —, plus la bande qui passe ;
   l'emoji s'en distingue par son **cerne arc-en-ciel** (`COSMOS.cerne`) et
-  son **relief** (`RELIEF`, `?relief=0`) : *une carte à fenêtre* — l'emoji
+  son **relief** (`RELIEF`, `?relief=0`, `?relief=0.2` règle la profondeur,
+  l'agrandissement du fond s'en calcule) : *une carte à fenêtre* — l'emoji
   reste à la surface, le décor de la fenêtre d'art s'enfonce (lu décalé selon
   le regard dans la carte sans emoji, `sansSujet`, `uNu` ; la silhouette est
   l'alpha du sticker posé, `silhouetteDe`, pas une différence de couleurs), plus grand que la
