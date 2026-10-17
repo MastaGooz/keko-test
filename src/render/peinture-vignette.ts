@@ -11,6 +11,7 @@ import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
 import { RAYON_SIMPLE } from './texture-carte.ts'
+import { animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 
 /**
  * LA FILE DES PEINTURES : une à la fois. *Cent vignettes qui entrent dans la
@@ -712,5 +713,50 @@ export function peinte(
   PEINTES.set(cle, p)
   // *Un cache retient les succès, pas les échecs.*
   p.catch(() => PEINTES.delete(cle))
+  return p
+}
+
+/**
+ * L'ANIMATION D'UN STICKER HOLO ANIMÉ : CHAQUE IMAGE AVEC SON CERNE ARC-EN-CIEL.
+ * Keko : « l'outline des stickers dans la liste est blanc au lieu d'être
+ * multicolor (holo) pour les stickers holo animés (et pareil en mode zoom) ».
+ * *Les images décodées sont déjà des stickers au cerne crème*, et le cerne
+ * arc-en-ciel se posait sur l'image fixe seulement : la première image de
+ * l'animation la recouvrait en blanc. Le cerne est un calcul par pixel, donc
+ * il se fait **une fois par image au chargement**, en cache par emoji, taille
+ * et forme — jamais à l'affichage. `seulCerne` : rien que le cerne, la couche
+ * qu'on fait tourner au regard en grand (voir `StickerOuvert`). *Vit ici, et
+ * plus dans l'album*, depuis que la vignette animée de la grille joue aussi
+ * ses images (`Collection.tsx`).
+ */
+export interface ImagesAnimees {
+  images: readonly CanvasImageSource[]
+  duree: number
+}
+const ANIMATIONS_HOLO = new Map<string, Promise<ImagesAnimees | null>>()
+export function animationHolo(id: string, cote: number, seulCerne: boolean): Promise<ImagesAnimees | null> {
+  const cle = `${id}#${cote}${seulCerne ? '#cerne' : ''}`
+  const deja = ANIMATIONS_HOLO.get(cle)
+  if (deja !== undefined) return deja
+  const p = animationDeLEmoji(urlAnimationEmoji(id), cote).then((a): ImagesAnimees | null => {
+    if (a === null) return null
+    const images: HTMLCanvasElement[] = []
+    for (const img of a.images) {
+      const t = document.createElement('canvas')
+      t.width = cote
+      t.height = cote
+      const ctx = t.getContext('2d', { willReadFrequently: true })
+      if (ctx === null) return null
+      ctx.drawImage(img, 0, 0, cote, cote)
+      cerneArcEnCiel(t, { x: 0, y: 0, l: 1, h: 1 }, seulCerne)
+      images.push(t)
+    }
+    return { images, duree: a.duree }
+  })
+  ANIMATIONS_HOLO.set(cle, p)
+  p.then(
+    (a) => a === null && ANIMATIONS_HOLO.delete(cle),
+    () => ANIMATIONS_HOLO.delete(cle),
+  )
   return p
 }

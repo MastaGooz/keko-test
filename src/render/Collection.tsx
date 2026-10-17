@@ -25,8 +25,9 @@ import { GROUPES_EMOJI, NOM_DU_GROUPE, RARETES_EMOJI } from '../logic/emoji/type
 import type { Collection, Exemplaire, Possession, Variante } from '../logic/emoji/collection.ts'
 import { VARIANTES, compteDe, exemplaireDe, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
-import { AMBIANCE, tailleQuIlFaut } from './texture-carte.ts'
-import { coucheDesRayons, paillettesHolo, peinte, sujetDeLaVignette } from './peinture-vignette.ts'
+import { AMBIANCE, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
+import { animationHolo, coucheDesRayons, paillettesHolo, peinte, sujetDeLaVignette } from './peinture-vignette.ts'
+import { COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
 import { RAYONS_DANS_LA_CARTE } from './texture-carte.ts'
 
@@ -38,6 +39,12 @@ import { RAYONS_DANS_LA_CARTE } from './texture-carte.ts'
  * tournent (CSS, à la vitesse de la 3D, `RAYONS_TOURNANTS`), et le sticker
  * par-dessus. Les rayons sont pris sur la carte elle-même, brillant compris
  * (`coucheDesRayons`) : Keko trouvait le fond des animées plus sombre.
+ *
+ * **ET L'EMOJI S'Y ANIME.** Keko : « les emoji des cartes animées ne s'animent
+ * pas dans la page de collection (uniquement au zoom) ». Le sticker était l'image
+ * fixe ; la vignette à l'écran joue maintenant les images décodées (`COTE_PETIT`,
+ * celles de l'album), posées à la place du sticker fixe (`sujetDe`), au cerne
+ * arc-en-ciel pour une holo (`animationHolo`). Hors de la vue, rien ne tourne.
  */
 const DUREE_TOUR = (Math.PI * 2) / RAYONS_TOURNANTS.vitesse
 const R_FEN = RAYONS_DANS_LA_CARTE
@@ -367,7 +374,10 @@ function Vignette({
   const scintilles = useRef<(HTMLCanvasElement | null)[]>([])
   const rayons = useRef<HTMLCanvasElement>(null)
   const sticker = useRef<HTMLCanvasElement>(null)
+  /** Où la peinture a posé le sticker : les images de l'animation s'y posent aussi. */
+  const placeDuSujet = useRef<SujetPeint | null>(null)
   const [prete, setPrete] = useState(false)
+  const [visible, setVisible] = useState(false)
   const { holo, anime } = exemplaireDe(variante)
   const compte = possession === null ? 0 : compteDe(possession, variante)
   const tourne = AVEC_TOURNE && anime && carte.animable
@@ -417,6 +427,7 @@ function Vignette({
               sc.width = source.width
               sc.height = source.height
               sctx.drawImage(sujet.image, sujet.x, sujet.y, sujet.l, sujet.h)
+              placeDuSujet.current = sujet
             }
           }
           // LA HOLO SCINTILLE : la neige pâle sur la vignette, et les vives sur
@@ -443,6 +454,48 @@ function Vignette({
       obs.disconnect()
     }
   }, [carte, holo, tourne])
+  // LA VIGNETTE ANIMÉE SUIT SA VISIBILITÉ : l'animation ne joue qu'à l'écran
+  // (l'observateur du dessus se coupe après la première peinture).
+  useEffect(() => {
+    const el = boite.current
+    if (!tourne || el === null) return
+    const obs = new IntersectionObserver((e) => setVisible(e.some((x) => x.isIntersecting)), {
+      rootMargin: '200px 0px',
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [tourne])
+  // L'EMOJI ANIMÉ JOUE SUR LA COUCHE DU STICKER, à la place du sticker fixe,
+  // une fois la vignette peinte : ses images sont déjà des stickers, au cerne
+  // arc-en-ciel pour une holo — comme dans l'album.
+  useEffect(() => {
+    if (!tourne || !visible || !prete) return
+    let vivant = true
+    let image = 0
+    const chargement = holo
+      ? animationHolo(carte.id, COTE_PETIT, false)
+      : animationDeLEmoji(urlAnimationEmoji(carte.id), COTE_PETIT)
+    void chargement.then((a) => {
+      if (!vivant || a === null) return
+      const depart = performance.now()
+      const pas = (t: number): void => {
+        const c = sticker.current
+        const ctx = c?.getContext('2d')
+        const place = placeDuSujet.current
+        if (c == null || ctx == null || place === null) return
+        // Jamais négatif, jamais au-delà de la dernière image : voir l'album.
+        const i = Math.min(a.images.length - 1, Math.floor(((Math.max(0, t - depart) % a.duree) / a.duree) * a.images.length))
+        ctx.clearRect(0, 0, c.width, c.height)
+        ctx.drawImage(a.images[i]!, place.x, place.y, place.l, place.h)
+        image = requestAnimationFrame(pas)
+      }
+      image = requestAnimationFrame(pas)
+    })
+    return () => {
+      vivant = false
+      cancelAnimationFrame(image)
+    }
+  }, [tourne, visible, prete, holo, carte.id])
   return (
     <button
       ref={boite}

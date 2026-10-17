@@ -95,7 +95,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (`sansRayons`) et le nuanceur redessine les rayons du cran à l'identique
   (`rayonsDuCran`), tournés, l'emoji posé par sa silhouette (repeinte à chaque
   image de l'animation) ; la vignette se monte en trois couches (fond, rayons
-  qui tournent en CSS, sticker) — **la couche des rayons est la différence
+  qui tournent en CSS, sticker **qui joue l'animation à l'écran**, les images
+  de l'album, arc-en-ciel pour une holo) — **la couche des rayons est la différence
   entre la carte peinte avec et sans eux** (`coucheDesRayons`, brillant
   compris, prolongée hors fenêtre par le fondu des rayons) : redessinés à la
   main, les animées avaient le fond plus sombre.
