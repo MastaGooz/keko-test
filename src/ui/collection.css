@@ -5,9 +5,18 @@
    violet : *le crème des stickers, le violet du fond du paquet.*
    ========================================================================== */
 
+/* LA BARRE EST EN BAS. Keko : « placer la barre carte / booster / sticker en
+   bas sur téléphone ? plus pratique pour les doigts ». Tout ce qui s'y
+   accrochait suit : la jauge au-dessus d'elle, le menu « Cartes » qui monte,
+   les textes du bas du booster remontés, la grille qui se termine au-dessus.
+   `--barre-bas` : la hauteur qu'elle prend, lue par tous. */
+:root {
+  --barre-bas: calc(max(0.6rem, env(safe-area-inset-bottom)) + 3rem);
+}
+
 .nav {
   position: fixed;
-  top: max(0.6rem, env(safe-area-inset-top));
+  bottom: max(0.6rem, env(safe-area-inset-bottom));
   left: 50%;
   z-index: 20;
   transform: translateX(-50%);
@@ -22,7 +31,7 @@
 
 .nav-cachee {
   opacity: 0;
-  transform: translate(-50%, -140%);
+  transform: translate(-50%, 140%);
   pointer-events: none;
 }
 
@@ -194,8 +203,9 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: calc(max(0.6rem, env(safe-area-inset-top)) + 4.6rem) 16px
-    calc(2rem + env(safe-area-inset-bottom));
+  /* La barre est en bas : la grille commence en haut et finit au-dessus d'elle. */
+  padding: calc(max(0.6rem, env(safe-area-inset-top)) + 0.8rem) 16px
+    calc(var(--barre-bas) + 1.6rem);
 }
 
 .collection-tete,
@@ -719,7 +729,7 @@
 /* SOUS LA BARRE, comme le « 3/3 aujourd'hui » de lexicodex. */
 .reserve-place {
   position: fixed;
-  top: calc(max(0.6rem, env(safe-area-inset-top)) + 4.1rem);
+  bottom: calc(var(--barre-bas) + 0.9rem);
   left: 50%;
   z-index: 19;
   transform: translateX(-50%);
@@ -731,7 +741,7 @@
 
 .reserve-cachee {
   opacity: 0;
-  transform: translate(-50%, -1rem);
+  transform: translate(-50%, 1rem);
 }
 
 .reserve {
@@ -826,7 +836,8 @@
   position: fixed;
   left: 16px;
   right: 16px;
-  bottom: calc(9vh + env(safe-area-inset-bottom));
+  /* Au-dessus de la jauge, elle-même au-dessus de la barre. */
+  bottom: calc(var(--barre-bas) + 4.2rem);
   z-index: 3;
   margin: 0;
   text-align: center;
@@ -899,7 +910,7 @@
   right: 0;
   /* EN BAS DE L'ÉCRAN, pas collé au sachet — Keko : « je voyais ça plus en
      bas de l'écran ». */
-  bottom: calc(5vh + env(safe-area-inset-bottom));
+  bottom: calc(var(--barre-bas) + 3.4rem);
   z-index: 3;
   margin: 0;
   text-align: center;
@@ -961,7 +972,7 @@
 .decoller-paquet {
   position: fixed;
   left: 50%;
-  bottom: calc(4vh + env(safe-area-inset-bottom));
+  bottom: calc(var(--barre-bas) + 4.2rem);
   z-index: 3;
   margin: 0;
   transform: translateX(-50%);
@@ -1438,18 +1449,19 @@
   margin-left: 0.1rem;
   border-right: 0.16rem solid currentColor;
   border-bottom: 0.16rem solid currentColor;
-  transform: translateY(-0.12rem) rotate(45deg);
+  /* Le menu monte : fermé, le chevron pointe en haut ; ouvert, en bas. */
+  transform: translateY(0.1rem) rotate(225deg);
   transition: transform 0.2s ease;
   opacity: 0.8;
 }
 
 .nav-chevron-ouvert {
-  transform: translateY(0.1rem) rotate(225deg);
+  transform: translateY(-0.12rem) rotate(45deg);
 }
 
 .nav-menu {
   position: absolute;
-  top: calc(100% + 0.55rem);
+  bottom: calc(100% + 0.55rem);
   left: 0;
   display: flex;
   flex-direction: column;
@@ -1460,14 +1472,14 @@
   box-shadow:
     0 0.3rem 0 #c9b9f2,
     0 0.6rem 1.4rem rgba(20, 8, 60, 0.45);
-  animation: nav-menu-tombe 0.18s cubic-bezier(0.3, 1.4, 0.5, 1);
-  transform-origin: top left;
+  animation: nav-menu-monte 0.18s cubic-bezier(0.3, 1.4, 0.5, 1);
+  transform-origin: bottom left;
 }
 
-@keyframes nav-menu-tombe {
+@keyframes nav-menu-monte {
   from {
     opacity: 0;
-    transform: translateY(-0.4rem) scale(0.96);
+    transform: translateY(0.4rem) scale(0.96);
   }
 }
 

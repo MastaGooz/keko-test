@@ -210,7 +210,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 ### La navigation et la collection
 
 - **La barre est celle de lexicodex** (`Jeu.tsx`, `ui/collection.css`) : une
-  pilule crème en haut, **« Cartes » à gauche, qui déroule un menu** (Keko) :
+  pilule crème **EN BAS** (Keko, « plus pratique pour les doigts » ; la jauge
+  de réserve juste au-dessus, le menu monte, `--barre-bas` dit sa hauteur,
+  tout ce qui s'ancre en bas du booster s'en écarte), **« Cartes » à gauche, qui déroule un menu** (Keko) :
   « Collection » (ce qu'on a, pastille rouge = cartes nouvelles) et « Toutes
   les cartes » (le catalogue entier, la même `PageCollection` avec `toutes`,
   les manquantes en grisé, ouvrables en 3D sans « Décoller ») ; le booster

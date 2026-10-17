@@ -451,12 +451,12 @@ function dessinerEtincelles(ctx: CanvasRenderingContext2D, e: Etincelle[], t: nu
   ctx.restore()
 }
 
-/** Où le sticker s'envole : le bouton « Stickers » de la barre, sinon le haut de l'écran. */
+/** Où le sticker s'envole : le bouton « Stickers » de la barre (en bas), sinon le bas de l'écran. */
 function cibleDeLEnvol(): P {
   const el = document.querySelector('.nav-stickers')
   const r = el?.getBoundingClientRect()
   if (r !== undefined && r.width > 0 && r.bottom > 0) return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
-  return { x: window.innerWidth * 0.75, y: -60 }
+  return { x: window.innerWidth * 0.75, y: window.innerHeight + 60 }
 }
 
 export function Decollage({
