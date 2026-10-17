@@ -270,6 +270,10 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f6d7': 'symboles', // 🛗
   '1faac': 'symboles', // 🪬
   '1fae7': 'elements', // 🫧
+  // Keko : « trace de pas, empreinte digitale > symbole » (🐾 les empreintes
+  // d'animaux restent chez les animaux, Keko ne les a pas nommées).
+  '1f463': 'symboles', // 👣
+  '1fac6': 'symboles', // 🫆
   // LE PAYSAGE NATUREL QUITTE LES LIEUX (Keko : « roche, éboulement, montagne
   // enneigée, nuit étoilée, soleil levant, volcan, soleil etc > direction
   // éléments ») : la roche et l'éboulement, les montagnes, le volcan, le
