@@ -6,7 +6,7 @@
  */
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { createRng } from '../logic/rng.ts'
-import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, rayonsDuCran } from './texture-carte.ts'
+import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
@@ -263,55 +263,105 @@ export function etoileDePaillette(
 }
 
 /**
- * LES RAYONS D'UN CRAN, SEULS, sur une toile carrée transparente de `cote`
- * pixels, centrés, de rayon `rayon` pixels : la couche qui tourne sur la
- * vignette d'une carte animée. Les mêmes que `peindreRayons` (`rayonsDuCran`),
- * avec un surcroît (`eclat`) qui tient lieu de leur brillant — sur la carte,
- * la lampe multiplie les rayons clairs ; ici ils sont posés en lumière ajoutée.
+ * LES RAYONS D'UNE CARTE, SEULS, PRIS SUR LA CARTE ELLE-MÊME : la différence
+ * entre la carte peinte avec ses rayons — et leur brillant du repos — et la
+ * même carte sans eux, dans la fenêtre d'art, posée sur une toile carrée
+ * centrée sur le centre des rayons. C'est la couche qui tourne sur la
+ * vignette d'une carte animée.
+ *
+ * Keko : « les cartes animées semblent avoir un fond plus sombre que les
+ * autres ». *Elles l'étaient* : la couche redessinait les rayons du cran à
+ * leur force nue, multipliée d'un surcroît écrit à la main (1,8), alors que
+ * la carte de face les fait briller par la lampe (`brillantDuRepos`, jusqu'à
+ * six fois les clairs). Mesuré sur la grille : le fond hors emoji d'une
+ * vignette animée faisait 75 de clarté contre 111 pour la même carte simple.
+ * **Une mesure écrite une fois ne reste pas vraie quand ce qui la produit a
+ * bougé** ; la différence, elle, est exactement ce que la carte montre, à
+ * l'angle zéro. Posée en `plus-lighter` sur le fond sans rayons, la vignette
+ * animée au repos est la carte simple au pixel près — et comme sur la carte
+ * 3D, le brillant tourne avec les rayons.
+ *
+ * Les deux peintures sont celles de la carte SANS SUJET : le brillant n'y
+ * épargne aucun emoji (le masque est vide), donc la couche n'a pas de trou
+ * qui tournerait avec elle ; le sticker, posé par-dessus, cache ce qu'il
+ * cache. Alpha = la plus forte des trois composantes, couleur ramenée en
+ * conséquence : prémultiplié, c'est la différence, et le reste est transparent.
  */
-export function toileDesRayons(rarete: string, cote: number, rayon: number, eclat: number): HTMLCanvasElement | null {
-  const r = rayonsDuCran(rarete)
-  if (r === null) return null
+export function coucheDesRayons(avec: HTMLCanvasElement, sans: HTMLCanvasElement, cote: number): HTMLCanvasElement | null {
+  const l0 = avec.width
+  const h0 = avec.height
+  if (l0 === 0 || h0 === 0 || sans.width !== l0 || sans.height !== h0) return null
+  const R = RAYONS_DANS_LA_CARTE
+  const x0 = Math.round(R.x * l0)
+  const y0 = Math.round(R.y * h0)
+  const l = Math.round(R.l * l0)
+  const h = Math.round(R.h * h0)
+  const ca = avec.getContext('2d', { willReadFrequently: true })
+  const cs = sans.getContext('2d', { willReadFrequently: true })
+  if (ca === null || cs === null) return null
+  const a = ca.getImageData(x0, y0, l, h).data
+  const b = cs.getImageData(x0, y0, l, h).data
   const c = document.createElement('canvas')
   c.width = cote
   c.height = cote
   const ctx = c.getContext('2d')
   if (ctx === null) return null
-  const cx = cote / 2
-  const n = RAYONS_DANS_LA_CARTE.nombre
-  const pas = (Math.PI * 2) / n
-  // Les clairs pleins, les sombres à ECLAIRE_SOMBRES, comme peindreRayons.
-  const secteurs = (): void => {
-    const a = ctx.globalAlpha
-    for (const [debut, part] of [[0, 1], [1, ECLAIRE_SOMBRES]] as const) {
-      if (part <= 0) continue
-      ctx.globalAlpha = a * part
-      for (let i = debut; i < n; i += 2) {
-        const a0 = RAYONS_DANS_LA_CARTE.depart + i * pas
-        ctx.beginPath()
-        ctx.moveTo(cx, cx)
-        ctx.arc(cx, cx, cote, a0, a0 + pas)
-        ctx.closePath()
-        ctx.fill()
-      }
+  const sortie = ctx.createImageData(cote, cote)
+  const d = sortie.data
+  // LE CENTRE DE LA FENÊTRE AU CENTRE DU CARRÉ : la couche tourne autour de lui.
+  const dx = Math.round((cote - l) / 2)
+  const dy = Math.round((cote - h) / 2)
+  for (let j = 0; j < h; j++) {
+    const y = j + dy
+    if (y < 0 || y >= cote) continue
+    for (let i = 0; i < l; i++) {
+      const x = i + dx
+      if (x < 0 || x >= cote) continue
+      const k = (j * l + i) * 4
+      const r = Math.max(0, a[k]! - b[k]!)
+      const g = Math.max(0, a[k + 1]! - b[k + 1]!)
+      const bl = Math.max(0, a[k + 2]! - b[k + 2]!)
+      const m = Math.max(r, g, bl)
+      if (m === 0) continue
+      const o = (y * cote + x) * 4
+      d[o] = Math.round((r * 255) / m)
+      d[o + 1] = Math.round((g * 255) / m)
+      d[o + 2] = Math.round((bl * 255) / m)
+      d[o + 3] = m
     }
-    ctx.globalAlpha = a
   }
-  ctx.globalCompositeOperation = 'lighter'
-  const fondu = ctx.createRadialGradient(cx, cx, rayon * 0.08, cx, cx, rayon)
-  fondu.addColorStop(0, r.ton)
-  fondu.addColorStop(1, r.ton + '00')
-  ctx.fillStyle = fondu
-  ctx.globalAlpha = Math.min(1, r.force * eclat)
-  secteurs()
-  if (r.coeur !== null) {
-    const lueur = ctx.createRadialGradient(cx, cx, rayon * 0.05, cx, cx, rayon * r.coeur.portee)
-    lueur.addColorStop(0, r.coeur.ton)
-    lueur.addColorStop(1, r.coeur.ton + '00')
-    ctx.fillStyle = lueur
-    ctx.globalAlpha = Math.min(1, r.coeur.force * eclat)
-    secteurs()
+  // HORS DE LA FENÊTRE, LA COUCHE SE PROLONGE : la carte n'a de rayons que dans
+  // sa fenêtre, mais la couche tourne, et un coin de fenêtre tourné lit ce qui
+  // est hors d'elle — sans ce prolongement, quatre coins sombres tournaient
+  // avec les rayons. Les rayons s'éteignent linéairement avec la distance au
+  // centre, nuls à la demi-diagonale (`peindreRayons`) : on reprend la couche
+  // là où le rayon qui mène au pixel sort de la fenêtre, et on l'éteint de
+  // même jusqu'à la demi-diagonale. *Le prolongement a la pente des rayons,
+  // pas une pente à lui.*
+  const cx = dx + l / 2
+  const cy = dy + h / 2
+  const portee = Math.hypot(l, h) / 2
+  for (let y = 0; y < cote; y++) {
+    const uy = y + 0.5 - cy
+    for (let x = 0; x < cote; x++) {
+      const ux = x + 0.5 - cx
+      if (Math.abs(ux) < l / 2 && Math.abs(uy) < h / 2) continue
+      const rho = Math.hypot(ux, uy)
+      if (rho >= portee) continue
+      const t = Math.min(l / 2 / Math.max(Math.abs(ux), 1e-6), h / 2 / Math.max(Math.abs(uy), 1e-6)) * 0.995
+      const sx = Math.min(cote - 1, Math.max(0, Math.round(cx + ux * t - 0.5)))
+      const sy = Math.min(cote - 1, Math.max(0, Math.round(cy + uy * t - 0.5)))
+      const q = (sy * cote + sx) * 4
+      if (d[q + 3] === 0) continue
+      const k = (portee - rho) / Math.max(portee - rho * t, 1e-6)
+      const o = (y * cote + x) * 4
+      d[o] = d[q]!
+      d[o + 1] = d[q + 1]!
+      d[o + 2] = d[q + 2]!
+      d[o + 3] = Math.round(d[q + 3]! * Math.min(1, Math.max(0, k)))
+    }
   }
+  ctx.putImageData(sortie, 0, 0)
   return c
 }
 

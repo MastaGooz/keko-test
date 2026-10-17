@@ -26,7 +26,7 @@ import type { Collection, Exemplaire, Possession, Variante } from '../logic/emoj
 import { VARIANTES, compteDe, exemplaireDe, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
 import { AMBIANCE, tailleQuIlFaut } from './texture-carte.ts'
-import { paillettesHolo, peinte, toileDesRayons } from './peinture-vignette.ts'
+import { coucheDesRayons, paillettesHolo, peinte } from './peinture-vignette.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
 import { RAYONS_DANS_LA_CARTE, sujetDe } from './texture-carte.ts'
 
@@ -36,9 +36,9 @@ import { RAYONS_DANS_LA_CARTE, sujetDe } from './texture-carte.ts'
  * aussi dans la collection ». Une vignette est une image ; elle se monte donc
  * en trois couches : la carte sans emoji ni rayons, les rayons seuls qui
  * tournent (CSS, à la vitesse de la 3D, `RAYONS_TOURNANTS`), et le sticker
- * par-dessus. `ECLAT_RAYONS` tient lieu du brillant que la lampe leur donne.
+ * par-dessus. Les rayons sont pris sur la carte elle-même, brillant compris
+ * (`coucheDesRayons`) : Keko trouvait le fond des animées plus sombre.
  */
-const ECLAT_RAYONS = 1.8
 const DUREE_TOUR = (Math.PI * 2) / RAYONS_TOURNANTS.vitesse
 const R_FEN = RAYONS_DANS_LA_CARTE
 const STYLE_FENETRE: React.CSSProperties = {
@@ -395,7 +395,14 @@ function Vignette({
             const rc = rayons.current
             const rayonPx = R_FEN.rayon * source.width
             const cote = Math.ceil(rayonPx * 2 * 1.05)
-            const couche = toileDesRayons(COULEUR[carte.rarete], cote, rayonPx, ECLAT_RAYONS)
+            // LA CARTE SANS SUJET, AVEC ET SANS SES RAYONS : leur différence est la
+            // couche. Sans holo : les rayons n'en dépendent pas, et le fond sans
+            // holo est déjà peint quand la carte ne l'est pas.
+            const [avec, sans] = await Promise.all([
+              peinte(carte, largeur, false, true, false, false, false),
+              peinte(carte, largeur, false, true, false, false, true),
+            ])
+            const couche = coucheDesRayons(avec, sans, cote)
             if (rc != null && couche !== null) {
               rc.width = cote
               rc.height = cote

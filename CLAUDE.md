@@ -91,7 +91,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (`sansRayons`) et le nuanceur redessine les rayons du cran à l'identique
   (`rayonsDuCran`), tournés, l'emoji posé par sa silhouette (repeinte à chaque
   image de l'animation) ; la vignette se monte en trois couches (fond, rayons
-  qui tournent en CSS via `toileDesRayons`, sticker).
+  qui tournent en CSS, sticker) — **la couche des rayons est la différence
+  entre la carte peinte avec et sans eux** (`coucheDesRayons`, brillant
+  compris, prolongée hors fenêtre par le fondu des rayons) : redessinés à la
+  main, les animées avaient le fond plus sombre.
 - **Le reflet prend la couleur du cran** (`TON_LUSTRE`, dérivé de `METAUX`).
 - **Les rayons sombres reçoivent 40 % de la lumière des clairs**
   (`ECLAIRE_SOMBRES`, lu par le peintre, la vignette qui tourne et le
