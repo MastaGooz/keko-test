@@ -621,6 +621,13 @@ export function Paquet3D({
   const bonusForce = new URLSearchParams(location.search).has('bonus')
   /** `&holo` : toutes les cartes du paquet sont holographiques, pour juger la feuille. */
   const holoForce = new URLSearchParams(location.search).has('holo')
+  /**
+   * `&anime` : toutes les cartes du paquet sont animées. Keko : « tu peux mettre
+   * que des holo animé dans le booster ? » (avec `&holo`). *L'animé exige
+   * `animable`*, ce que le banc ne fabrique pas : une carte qui ne l'est pas
+   * cède sa place à une animable DU MÊME CRAN, tirée après le paquet.
+   */
+  const animeForce = new URLSearchParams(location.search).has('anime')
   /** `&perso` : la première carte est 🫠, peinte depuis l'emoji dessiné par Keko. */
   const persoForce = new URLSearchParams(location.search).has('perso')
   const [catalogue, setCatalogue] = useState<CarteDuMode[] | null>(null)
@@ -967,11 +974,28 @@ export function Paquet3D({
       const voulue = [...tas.values()].flat().find((c) => c.id === BANC_PERSO)
       if (voulue !== undefined) cartes[0] = voulue
     }
+    // LE BANC DE L'ANIMÉ, avant celui de la holo pour que `&holo&anime` donne
+    // des holo animés : une carte non animable est remplacée par une animable
+    // du même cran, absente du paquet, tirée APRÈS le paquet (la suite du
+    // hasard des cartes ne bouge pas).
+    if (emojis && animeForce) {
+      for (let i = 0; i < cartes.length; i++) {
+        let c = cartes[i]!
+        if (!('animable' in c && c.animable)) {
+          const candidats = (tas.get(c.rarete) ?? []).filter((x) => 'animable' in x && x.animable && !cartes.includes(x))
+          if (candidats.length > 0) {
+            c = candidats[Math.floor(rng.next() * candidats.length)]!
+            cartes[i] = c
+          }
+        }
+        bonus[c.id] = { holo: bonus[c.id]?.holo ?? false, anime: 'animable' in c && c.animable }
+      }
+    }
     if (emojis && holoForce) {
       for (const c of cartes) bonus[c.id] = { holo: true, anime: bonus[c.id]?.anime ?? false }
     }
     return { cartes, bonus }
-  }, [tas, numero, echelle, emojis, bonusForce, holoForce, persoForce])
+  }, [tas, numero, echelle, emojis, bonusForce, holoForce, animeForce, persoForce])
   const paquet = tirage.cartes
 
   /**

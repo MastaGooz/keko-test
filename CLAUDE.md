@@ -426,6 +426,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
 | `&perso` | la première carte est 🫠, peinte depuis l'emoji dessiné par Keko (`Test.png`) |
 | `&holo` | toutes les cartes du paquet sont holographiques (`?cosmos=0` : sans les paillettes) |
+| `&anime` | toutes les cartes du paquet sont animées (une carte non animable cède sa place à une animable du même cran) ; `&holo&anime` : que des holo animés |
 | `&gerbe` | tire la déchirure puis s'arrête, pour juger les étincelles |
 | `&craque` | le fichier `cracks.aac` en boucle, tel quel, dès le premier contact — *pour savoir si c'est le fichier ou le jeu qu'on n'entend pas* |
 | `&son` | la ligne de diagnostic du son pendant la déchirure : chemin, état et horloge du contexte, `pf`, la dose du craquement, le doigt — *l'appareil dit ce qu'il voit* |
