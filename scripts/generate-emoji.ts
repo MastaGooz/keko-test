@@ -162,27 +162,40 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   // ♥️ le coeur des cartes à jouer (`game`) : un coeur avant d'être un jeu
   // (Keko : « passe le coeur carte dans coeur au lieu de activité »).
   '2665-fe0f': 'coeurs',
-  // CE QUI N'EST PAS UN VÉHICULE dans les trois `transport-*` reste un lieu :
-  // la gare, l'arrêt, la route et la voie, le bidon et la pompe, la roue, le
-  // gyrophare, la signalisation, le phare, l'ancre et la bouée, le parachute,
-  // le siège. (Les fauteuils roulants, le skate et les rollers roulent.)
+  // DANS LES TROIS `transport-*`, CE QUI N'EST PAS UN VÉHICULE : les lieux
+  // restent des lieux (la gare, l'arrêt, la route et la voie, le phare) ; ce
+  // qui sert aux véhicules va avec eux (Keko : « passer roue, parachute, feu
+  // tricolore etc dans véhicule ») ; ce qu'on porte est un objet. Les
+  // fauteuils roulants, le skate et les rollers roulent.
   '1f689': 'lieux', // 🚉
   '1f68f': 'lieux', // 🚏
   '1f6e3-fe0f': 'lieux', // 🛣️
   '1f6e4-fe0f': 'lieux', // 🛤️
-  '1f6e2-fe0f': 'lieux', // 🛢️
-  '26fd': 'lieux', // ⛽
-  '1f6de': 'lieux', // 🛞
-  '1f6a8': 'lieux', // 🚨
-  '1f6a5': 'lieux', // 🚥
-  '1f6a6': 'lieux', // 🚦
-  '1f6d1': 'lieux', // 🛑
-  '1f6a7': 'lieux', // 🚧
   '1f6d9': 'lieux', // 🛙
-  '2693': 'lieux', // ⚓
-  '1f6df': 'lieux', // 🛟
-  '1fa82': 'lieux', // 🪂
-  '1f4ba': 'lieux', // 💺
+  '26fd': 'vehicules', // ⛽
+  '1f6de': 'vehicules', // 🛞
+  '1f6a8': 'vehicules', // 🚨
+  '1f6a5': 'vehicules', // 🚥
+  '1f6a6': 'vehicules', // 🚦
+  '1f6d1': 'vehicules', // 🛑
+  '1f6a7': 'vehicules', // 🚧
+  '2693': 'vehicules', // ⚓
+  '1f6df': 'vehicules', // 🛟
+  '1fa82': 'vehicules', // 🪂
+  // LES OBJETS RANGÉS PAR UNICODE DANS « Travel & Places » (Keko : « passer
+  // les objets qui sont dans lieux dans objet : toboggan, bagage, boussole,
+  // siège, baril... ») : et avec eux la cloche de comptoir, la brique, le
+  // bois, les deux cartes.
+  '1f4ba': 'objets', // 💺
+  '1f6e2-fe0f': 'objets', // 🛢️
+  '1f6dd': 'objets', // 🛝
+  '1f9f3': 'objets', // 🧳
+  '1f9ed': 'objets', // 🧭
+  '1f6ce-fe0f': 'objets', // 🛎️
+  '1f9f1': 'objets', // 🧱
+  '1fab5': 'objets', // 🪵
+  '1f5fa-fe0f': 'objets', // 🗺️
+  '1f5fe': 'objets', // 🗾
   // LE PAYSAGE NATUREL QUITTE LES LIEUX (Keko : « roche, éboulement, montagne
   // enneigée, nuit étoilée, soleil levant, volcan, soleil etc > direction
   // éléments ») : la roche et l'éboulement, les montagnes, le volcan, le
