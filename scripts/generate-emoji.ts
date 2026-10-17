@@ -104,7 +104,10 @@ const GROUPE: Readonly<Record<string, GroupeEmoji>> = {
  * catégorie corps où on met jambes, biceps, organes, bouche » — les six
  * sous-groupes **`hand*`** (doigts ouverts, pliés, un doigt, poings, deux
  * mains, main avec objet : ✍️ 💅 🤳) font « Main », **`body-parts`** (💪 🦵
- * 🦶 👂 👃 🧠 🫀 🫁 🦷 🦴 👀 👁️ 👅 👄 🫦…) fait « Corps ». *Le sous-groupe
+ * 🦶 👂 👃 🧠 🫀 🫁 🦷 🦴 👀 👁️ 👅 👄 🫦…) fait « Corps ». Puis « Animals &
+ * Nature » : « on va enlever les plantes/arbres des animaux et créer une
+ * catégorie nature » — **`plant-flower`** et **`plant-other`** (fleurs,
+ * arbres, feuilles, champignon, nids) font « Nature ». *Le sous-groupe
  * l'emporte sur le groupe* ; tout autre sous-groupe suit son groupe.
  */
 const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
@@ -120,6 +123,8 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   hands: 'mains',
   'hand-prop': 'mains',
   'body-parts': 'corps',
+  'plant-flower': 'nature',
+  'plant-other': 'nature',
 }
 
 /**
