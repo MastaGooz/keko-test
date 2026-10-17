@@ -181,7 +181,8 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f389': 'activites', // 🎉
   '1f38a': 'activites', // 🎊
   '1f391': 'activites', // 🎑
-  // LES ENSEIGNES DE CARTES SONT DES SIGNES, comme ♥️ chez les cœurs.
+  // LES ENSEIGNES DE CARTES SONT DES SIGNES, ♥️ compris (Keko : « le cœur
+  // carte ne devrait pas être en symbole avec pique, trèfle et carreau ? »).
   '2660-fe0f': 'symboles', // ♠️
   '2663-fe0f': 'symboles', // ♣️
   '2666-fe0f': 'symboles', // ♦️
@@ -208,7 +209,7 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f933': 'activites',
   // ♥️ le coeur des cartes à jouer (`game`) : un coeur avant d'être un jeu
   // (Keko : « passe le coeur carte dans coeur au lieu de activité »).
-  '2665-fe0f': 'coeurs',
+  '2665-fe0f': 'symboles',
   // DANS LES TROIS `transport-*`, CE QUI N'EST PAS UN VÉHICULE : les lieux
   // restent des lieux (la gare, l'arrêt, la route et la voie, le phare) ; ce
   // qui sert aux véhicules va avec eux (Keko : « passer roue, parachute, feu
