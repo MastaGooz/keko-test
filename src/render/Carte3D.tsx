@@ -542,14 +542,16 @@ const AVEC_COSMOS = new URLSearchParams(location.search).get('cosmos') !== '0'
  * pas sur une capture). **L'agrandissement se calcule de la profondeur**, il
  * ne s'écrit plus : le fond doit déborder la fenêtre d'autant qu'il glisse au
  * plus penché (tangente ≈ 0,84 pour ±0,7 rad, fenêtre ≈ 0,95 de large), soit
- * 1 + 1,5 × profondeur — 1,18 à 0,12, la valeur qu'on avait. *Le prix d'une
+ * 1 + 1,5 × profondeur — 1,18 à 0,12, la valeur de départ ; **0,5 depuis que
+ * Keko a comparé**, soit 1,75. *Le prix d'une
  * profondeur plus grande est là* : un fond plus agrandi, donc des rayons plus
  * gros et moins nombreux dans la fenêtre.
  */
 export const RELIEF = (() => {
   const v = new URLSearchParams(location.search).get('relief')
   const n = v === null ? NaN : Number(v)
-  const profondeur = Number.isFinite(n) && n >= 0 ? Math.min(n, 0.6) : 0.12
+  // 0,5 : Keko a comparé 0,12 / 0,2 / 0,3 / 0,5 au doigt (`&holo`) — « ok bien ».
+  const profondeur = Number.isFinite(n) && n >= 0 ? Math.min(n, 0.6) : 0.5
   return { profondeur, seuil: 6, agrandi: 1 + 1.5 * profondeur }
 })()
 const AVEC_RELIEF = RELIEF.profondeur > 0
