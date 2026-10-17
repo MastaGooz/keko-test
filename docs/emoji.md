@@ -6788,3 +6788,7 @@ Keko : « j'aurais voulu que les likes soient toujours visibles quel que soit l'
 ### Le titre laisse la place aux Likes au doigt (17/10/2026)
 
 Keko : « sur tel, l'endroit où les likes sont affichés se superpose avec le texte Toutes les cartes quand je suis dans cet onglet ». Au doigt la barre est en bas, donc le titre de la page est en haut à gauche, et la pilule des Likes en haut à droite : « TOUTES LES CARTES » en 2 rem fait plus de 340 px sur un écran de 390. Dans la requête `pointer: coarse` : le titre et le compte gardent 5,6 rem libres à droite (`padding-right`), et le titre passe à 1,6 rem. La barre de progrès garde toute la largeur, elle est sous la pilule. Sur PC rien ne change (la barre est en haut au centre, le titre sous elle). Vu au navigateur en simulant le pointeur grossier n'est pas possible ici : le téléphone de Keko dira.
+
+### Les Likes décollés du bord sur PC (18/10/2026)
+
+Keko : « on peut décaler sur PC un peu vers la gauche (trop collé à droite) les likes (sur PC uniquement) ». La pilule passe de 16 px à 2,5 rem du bord droit ; au doigt elle garde 16 px, la marge de tout le reste (dans la requête `pointer: coarse`).
