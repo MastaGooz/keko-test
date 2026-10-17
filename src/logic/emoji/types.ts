@@ -75,7 +75,7 @@ export const GROUPES_EMOJI: readonly GroupeEmoji[] = [
  * « Affaires ».
  */
 export const NOM_DU_GROUPE: Readonly<Record<GroupeEmoji, string>> = {
-  visages: 'Visage',
+  visages: 'Smiley', // Keko : « on va renommer visage smiley » — la clé reste, pas de migration
   coeurs: 'Cœur',
   creatures: 'Créature',
   gens: 'Gens',

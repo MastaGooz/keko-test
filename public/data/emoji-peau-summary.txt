@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 12:10:48 UTC
+engendre le 2026-10-17 12:31:25 UTC
 
 3955 cartes, dont 884 animables
 
@@ -8,9 +8,9 @@ au classement de frequence : 2318
 OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
 ---------------------------------------------
   groupe           n      commun    peu-co      rare    epique    legend
-  visages        110    25 (23%)    1 (1%)    8 (7%)  50 (45%)  26 (24%)
+  visages        111    25 (23%)    1 (1%)    9 (8%)  50 (45%)  26 (23%)
   coeurs          26     7 (27%)    0 (0%)    1 (4%)   5 (19%)  13 (50%)
-  creatures       93    54 (58%)  17 (18%)  21 (23%)    1 (1%)    0 (0%)
+  creatures       92    54 (59%)  17 (18%)  20 (22%)    1 (1%)    0 (0%)
   gens          1977  1300 (66%) 425 (21%)  180 (9%)   60 (3%)   12 (1%)
   mains          278    98 (35%)    0 (0%)  42 (15%) 102 (37%)  36 (13%)
   corps           48    25 (52%)   6 (13%)  10 (21%)    1 (2%)   6 (13%)

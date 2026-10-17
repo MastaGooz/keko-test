@@ -153,6 +153,9 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
  * du texte affiché. L'identifiant l'emporte sur le sous-groupe.
  */
 const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
+  // LE CLOWN RESTE UN SMILEY (Keko : « on va y remettre le clown ») : Unicode
+  // le range dans `face-costume` avec les monstres, c'est un visage maquillé.
+  '1f921': 'visages', // 🤡
   '1f480': 'creatures',
   '2620-fe0f': 'creatures',
   // « MONSTRE » DEVIENT « CRÉATURE » (Keko : « on remplace monstre par créature
