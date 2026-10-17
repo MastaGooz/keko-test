@@ -140,10 +140,13 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   'transport-ground': 'vehicules',
   'transport-water': 'vehicules',
   'transport-air': 'vehicules',
-  // « Temps » (Keko : « créer une catégorie temps où on va mettre toutes les
-  // horloges, sablier etc ») : le sous-groupe `time` tel quel — sablier,
-  // montre, réveils, pendule et les vingt-quatre cadrans.
-  time: 'temps',
+  // LE TEMPS EST UN OBJET : le sous-groupe `time` (sablier, montre, réveils,
+  // pendule, le cadran 🕓) a eu son groupe « Temps » (Keko : « créer une
+  // catégorie temps où on va mettre toutes les horloges, sablier etc »), fondu
+  // le jour même dans les objets une fois les cadrans clones retirés (Keko :
+  // « on peut supprimer temps et tout passer dans objet ») — Unicode le range
+  // dans « Travel & Places », donc il faut le dire.
+  time: 'objets',
   // « ACTIVITÉ » NE GARDE QUE CE QUI MONTRE UNE ACTIVITÉ SANS OBJET (Keko : « je
   // trouve la distinction objets / activité mauvaise : objet devrait avoir
   // tous les objets et activité uniquement les images qui renvoient à une
@@ -259,9 +262,8 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   // alarme désactivée dans symboles, pareil pour muet, courbe yen en hausse,
   // chaîne brisée ».
   '2728': 'elements', // ✨
-  '1f4c5': 'temps', // 📅
-  '1f4c6': 'temps', // 📆
-  '1f5d3-fe0f': 'temps', // 🗓️ (le calendrier à spirale suit les deux autres)
+  // (les calendriers 📅 📆 🗓️ avaient suivi les horloges chez « Temps » ; le
+  // groupe fondu dans les objets, ils y sont par leur sous-groupe `office`.)
   '1f515': 'symboles', // 🔕
   '1f507': 'symboles', // 🔇
   '1f4b9': 'symboles', // 💹

@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 14:36:52 UTC
+engendre le 2026-10-17 14:48:33 UTC
 
 1892 cartes, dont 614 animables
 
@@ -20,9 +20,8 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   lieux           46    22 (48%)  19 (41%)   5 (11%)    0 (0%)    0 (0%)
   vehicules       66    32 (48%)  29 (44%)    3 (5%)    2 (3%)    0 (0%)
   elements        57    12 (21%)  23 (40%)  13 (23%)   7 (12%)    2 (4%)
-  temps           11     3 (27%)   7 (64%)    1 (9%)    0 (0%)    0 (0%)
   activites       13      1 (8%)   8 (62%)   2 (15%)    1 (8%)    1 (8%)
-  objets         325   149 (46%) 118 (36%)  48 (15%)   10 (3%)    0 (0%)
+  objets         336   152 (45%) 125 (37%)  49 (15%)   10 (3%)    0 (0%)
   symboles       310   160 (52%)  80 (26%)  48 (15%)   20 (6%)    2 (1%)
   drapeaux       262   197 (75%)  47 (18%)   17 (6%)    1 (0%)    0 (0%)
 
@@ -56,7 +55,6 @@ LE HAUT DE CHAQUE GROUPE
   lieux        🌎 globe tourné sur les Amériques · 🌍 globe tourné sur l’Afrique et l’Europe · 🏠 maison · 🌏 globe tourné sur l’Asie et l’Australie · 🏖️ plage avec parasol · 🏡 maison avec jardin · 🕋 kaaba · 🏩 love hotel
   vehicules    🚨 gyrophare · ✈️ avion · 🚀 fusée · 🚗 voiture · 🛑 stop · 🚘 voiture de face · 🚲 vélo · ⚓ ancre
   elements     🔥 feu · ✨ étincelles · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage
-  temps        ⏰ réveil · ⌚ montre · ⏱️ chronomètre · ⏳ sablier avec sable qui coule · 🗓️ calendrier à spirale · 📆 éphéméride · 📅 calendrier · ⌛ sablier
   activites    🎉 cotillons · 🎊 confettis · 💅 vernis à ongles · 🎆 feu d’artifice · 🎇 cierge magique · ☃️ bonhomme de neige · ⛄ bonhomme de neige sans neige · 🤳 selfie
   objets       👑 couronne · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable · 💰 sac plein d’argent · 🎀 ruban · 💎 pierre précieuse
   symboles     ♥️ cœur cartes · ‼️ double point d’exclamation · 💯 cent points · 🎶 notes de musique · ❗ point d’exclamation rouge · 💋 trace de rouge à lèvres · 💥 explosion · ✅ bouton coché
