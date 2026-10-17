@@ -274,6 +274,14 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   // d'animaux restent chez les animaux, Keko ne les a pas nommées).
   '1f463': 'symboles', // 👣
   '1fac6': 'symboles', // 🫆
+  // LES SILHOUETTES BLEUES (Keko : « la famille de silhouettes bleues de gens
+  // dans symboles ») : 👤 👥 🗣️ 🫂 — des pictogrammes, pas des personnes. La
+  // série « famille : … » suit par motif, voir `FAMILLE`. 👪 la famille
+  // dessinée reste chez les gens, Keko ne l'a pas nommée — à rejuger.
+  '1f464': 'symboles', // 👤
+  '1f465': 'symboles', // 👥
+  '1f5e3-fe0f': 'symboles', // 🗣️
+  '1fac2': 'symboles', // 🫂
   // LE PAYSAGE NATUREL QUITTE LES LIEUX (Keko : « roche, éboulement, montagne
   // enneigée, nuit étoilée, soleil levant, volcan, soleil etc > direction
   // éléments ») : la roche et l'éboulement, les montagnes, le volcan, le
@@ -355,6 +363,17 @@ async function texte(cle: string, url: string): Promise<string> {
   })
 }
 
+/**
+ * LA SÉRIE « FAMILLE : … » EST UN SYMBOLE (Keko : « on peut passer la série
+ * famille : en symbole ») : les vingt-cinq 👨‍👩‍👧 et les quatre silhouettes
+ * 🧑‍🧑‍🧒 d'Unicode 15.1 — des suites d'homme, femme, fille, garçon, adulte,
+ * enfant jointes par ZWJ, rien d'autre. *Par motif plutôt que par vingt-neuf
+ * identifiants* : les couples (❤️, 💋) et les gens qui se tiennent la main (🤝)
+ * portent un autre caractère et ne passent pas. Le sous-groupe `family`
+ * d'Unicode les contient aussi, c'est pourquoi on ne le prend pas en bloc.
+ */
+const FAMILLE = /^(1f46[6-9]|1f9d[12])(-200d-(1f46[6-9]|1f9d[12]))+$/
+
 /** La liste canonique, variantes de peau et composants ecartes. */
 function lireUnicode(txt: string): Brut[] {
   const out: Brut[] = []
@@ -377,7 +396,7 @@ function lireUnicode(txt: string): Brut[] {
     // UNE VARIANTE SUIT SA BASE : la table nomme 💅, ses cinq tons la suivent ;
     // elle nomme 🧛, le vampire homme et la vampire femme (♂ ♀ en ZWJ) aussi.
     const base = id.replace(/-1f3f[b-f]/g, '').replace(/-200d-264[02]-fe0f$/, '')
-    const g = PAR_ID[base] ?? SOUS_GROUPE[sousGroupe] ?? GROUPE[groupe]
+    const g = PAR_ID[base] ?? (FAMILLE.test(base) ? 'symboles' : undefined) ?? SOUS_GROUPE[sousGroupe] ?? GROUPE[groupe]
     if (g === undefined) continue
     const emoji = m[2]!
     if (!avecPeau && PEAU.test(emoji)) continue

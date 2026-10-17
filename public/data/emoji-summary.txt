@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 10:11:46 UTC
+engendre le 2026-10-17 12:10:48 UTC
 
 1915 cartes, dont 614 animables
 
@@ -11,7 +11,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   visages        110    25 (23%)    1 (1%)  13 (12%)  49 (45%)  22 (20%)
   coeurs          26     7 (27%)    0 (0%)    1 (4%)   7 (27%)  11 (42%)
   creatures       33    16 (48%)   8 (24%)   8 (24%)    1 (3%)    0 (0%)
-  gens           305   227 (74%)  46 (15%)   20 (7%)   10 (3%)    2 (1%)
+  gens           272   197 (72%)  44 (16%)   20 (7%)    9 (3%)    2 (1%)
   mains           43    13 (30%)    1 (2%)   7 (16%)  16 (37%)   6 (14%)
   corps           18    10 (56%)   2 (11%)   4 (22%)    1 (6%)    1 (6%)
   animaux        141    44 (31%)  51 (36%)  40 (28%)    6 (4%)    0 (0%)
@@ -23,7 +23,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   temps           34    26 (76%)   7 (21%)    1 (3%)    0 (0%)    0 (0%)
   activites       92    31 (34%)  39 (42%)  15 (16%)    6 (7%)    1 (1%)
   objets         249   119 (48%)  87 (35%)  38 (15%)    5 (2%)    0 (0%)
-  symboles       271   130 (48%)  78 (29%)  43 (16%)   19 (7%)    1 (0%)
+  symboles       304   160 (53%)  80 (26%)  43 (14%)   20 (7%)    1 (0%)
   drapeaux       262   197 (75%)  47 (18%)   17 (6%)    1 (0%)    0 (0%)
 
 PAR ANNEE
@@ -47,7 +47,7 @@ LE HAUT DE CHAQUE GROUPE
   visages      😂 visage riant aux larmes · 😍 visage souriant avec yeux en forme de cœur · 🤣 se rouler par terre de rire · 😊 visage souriant avec yeux rieurs · 😭 visage qui pleure à chaudes larmes · 😘 visage envoyant un bisou · 😅 visage souriant avec une goutte de sueur · 😁 visage souriant aux yeux rieurs
   coeurs       ❤️ cœur rouge · 💕 deux cœurs · ♥️ cœur cartes · 💔 cœur brisé · 💖 cœur étincelant · 💙 cœur bleu · 💜 cœur violet · 💞 cœurs qui tournent
   creatures    💀 crâne · 💩 tas de crotte · 👻 fantôme · ☠️ tête de mort · 🧚 personnage féérique · 👽 alien · 🤡 visage de clown · 🦄 licorne
-  gens         🤦 personne avec la paume sur le visage · 🤷 personne qui hausse les épaules · 🙋 personne qui lève la main · 💃 danseuse · 🏃 personne qui court · 🗣️ tête qui parle · 🙆 personne faisant un geste d’acceptation · 💁 personne paume vers le haut
+  gens         🤦 personne avec la paume sur le visage · 🤷 personne qui hausse les épaules · 🙋 personne qui lève la main · 💃 danseuse · 🏃 personne qui court · 🙆 personne faisant un geste d’acceptation · 💁 personne paume vers le haut · 🚶 personne qui marche
   mains        🙏 mains en prière · 👍 pouce vers le haut · 👏 applaudissements · 👌 ok · ✌️ V de la victoire · 🙌 mains levées · 👇 main avec index pointant vers le bas · 👊 poing de face
   corps        💪 biceps contracté · 👀 yeux · 👅 langue · 👁️ œil · 👄 bouche · 👂 oreille · 🧠 cerveau · 👃 nez
   animaux      🙈 singe ne rien voir · 😻 chat souriant aux yeux en cœurs · 🙊 singe ne rien dire · 😹 chat qui pleure de joie · 🐶 tête de chien · 🦋 papillon · 🐾 empreintes d’animaux · 🐷 tête de cochon
