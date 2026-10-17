@@ -96,7 +96,22 @@ function tailleDeLaRangee(
 ): number {
   const parLargeur = (largeurVisible * 0.9) / (colonnes + (colonnes - 1) * 0.12)
   const parHauteur = (hauteurVisible * 0.64) / (lignes * 1.4 + (lignes - 1) * 0.17)
-  return Math.min(parLargeur, parHauteur)
+  return Math.min(parLargeur, parHauteur) * reductionPaysage(largeurVisible, hauteurVisible)
+}
+
+/**
+ * EN PAYSAGE (LE PC), TOUT EST RÉDUIT D'UN MÊME FACTEUR — le sachet, la carte du
+ * défilé, la rangée du bilan. Keko : « sur PC je trouve la taille du booster un
+ * peu trop grosse », puis « il faut réduire la taille d'affichage des cartes
+ * d'autant que tu as réduit la taille du booster pour garder la même harmonie ».
+ * *Le sachet était à 0,68 de la hauteur, il est à 0,56* : c'est ce rapport qui
+ * s'applique à tout, et seulement là où la fenêtre est en paysage — le même
+ * seuil que les cinq colonnes du bilan (`colonnesDuBilan`). Un téléphone debout
+ * ne bouge pas.
+ */
+const REDUCTION_PAYSAGE = 0.56 / 0.68
+function reductionPaysage(largeurVisible: number, hauteurVisible: number): number {
+  return largeurVisible / hauteurVisible >= 1.15 ? REDUCTION_PAYSAGE : 1
 }
 
 /**
@@ -252,10 +267,12 @@ export function PencheAuGyro({
 function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number {
   // EN PORTRAIT C'EST LA LARGEUR QUI BORNE, et 0,42 y laissait le sachet perdu
   // au milieu d'un écran vide : *un objet qu'on doit déchirer au doigt a besoin
-  // d'être sous le doigt.* EN PAYSAGE (le PC) C'EST LA HAUTEUR : 0,68 y faisait
-  // un sachet « un peu trop gros » (Keko), 0,56 depuis. Un téléphone en portrait
-  // (390 × 844) reste borné par sa largeur : rien n'y bouge.
-  return Math.min(largeurVisible * 0.6, (hauteurVisible * 0.56) / RAPPORT_SACHET)
+  // d'être sous le doigt.* EN PAYSAGE (le PC) C'EST LA HAUTEUR, et le sachet y
+  // était « un peu trop gros » (Keko) : voir `reductionPaysage`, 0,68 → 0,56.
+  return (
+    Math.min(largeurVisible * 0.6, (hauteurVisible * 0.68) / RAPPORT_SACHET) *
+    reductionPaysage(largeurVisible, hauteurVisible)
+  )
 }
 
 /**
@@ -1526,7 +1543,8 @@ export function Paquet3D({
    * orientation se mesure dans l'autre* : en portrait c'est la largeur qui
    * commande, donc il n'y coûte rien.
    */
-  const tailleDuDefile = Math.min(lVisible * 0.78, (hVisible * 0.58) / 1.4)
+  // Réduite en paysage comme le sachet : voir `reductionPaysage`.
+  const tailleDuDefile = Math.min(lVisible * 0.78, (hVisible * 0.58) / 1.4) * reductionPaysage(lVisible, hVisible)
   /**
    * LE RESSORT DE SORTIE SE NORMALISE SUR LA DISTANCE. Keko : « la petite
    * rotation et le ralentissement sont bien sur tel, mais j'ai pas ça sur
