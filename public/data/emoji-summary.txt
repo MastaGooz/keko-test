@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 07:36:58 UTC
+engendre le 2026-10-17 07:54:31 UTC
 
 1915 cartes, dont 614 animables
 
@@ -8,10 +8,11 @@ au classement de frequence : 1458
 OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
 ---------------------------------------------
   groupe           n      commun    peu-co      rare    epique    legend
-  visages        132    25 (19%)    7 (5%)  24 (18%)  54 (41%)  22 (17%)
+  visages        110    25 (23%)    1 (1%)  13 (12%)  49 (45%)  22 (20%)
   coeurs          25     7 (28%)    0 (0%)    1 (4%)   7 (28%)  10 (40%)
+  monstres        10      0 (0%)   3 (30%)   6 (60%)   1 (10%)    0 (0%)
   gens           390   267 (68%)  53 (14%)   34 (9%)   27 (7%)    9 (2%)
-  animaux        161    50 (31%)  51 (32%)  47 (29%)   11 (7%)    2 (1%)
+  animaux        173    50 (29%)  54 (31%)  52 (30%)   15 (9%)    2 (1%)
   nourriture     132    40 (30%)  40 (30%)  47 (36%)    5 (4%)    0 (0%)
   lieux          221    99 (45%)  88 (40%)  24 (11%)    9 (4%)    1 (0%)
   activites       85    31 (36%)  31 (36%)  14 (16%)    6 (7%)    3 (4%)
@@ -39,8 +40,9 @@ LE HAUT DE CHAQUE GROUPE
 ------------------------
   visages      😂 visage riant aux larmes · 😍 visage souriant avec yeux en forme de cœur · 🤣 se rouler par terre de rire · 😊 visage souriant avec yeux rieurs · 😭 visage qui pleure à chaudes larmes · 😘 visage envoyant un bisou · 😅 visage souriant avec une goutte de sueur · 😁 visage souriant aux yeux rieurs
   coeurs       ❤️ cœur rouge · 💕 deux cœurs · 💔 cœur brisé · 💖 cœur étincelant · 💙 cœur bleu · 💜 cœur violet · 💞 cœurs qui tournent · 💗 cœur grandissant
+  monstres     💀 crâne · 💩 tas de crotte · 👻 fantôme · ☠️ tête de mort · 👽 alien · 🤡 visage de clown · 👹 ogre · 👾 monstre de l’espace
   gens         🙏 mains en prière · 👍 pouce vers le haut · 👏 applaudissements · 💪 biceps contracté · 👌 ok · 🤦 personne avec la paume sur le visage · ✌️ V de la victoire · 🤷 personne qui hausse les épaules
-  animaux      🌹 rose · 🌸 fleur de cerisier · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 💐 bouquet · 🌺 hibiscus · 🌻 tournesol · 🌼 bourgeon
+  animaux      🌹 rose · 🌸 fleur de cerisier · 🙈 singe ne rien voir · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 😻 chat souriant aux yeux en cœurs · 💐 bouquet · 🌺 hibiscus
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
   lieux        🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🚨 gyrophare
   activites    ♥️ cœur cartes · 🎉 cotillons · ✨ étincelles · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable

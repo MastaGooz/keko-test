@@ -14,13 +14,15 @@
  */
 
 /**
- * Les neuf groupes Unicode, hors `Component` qui n'a pas de carte — plus le
- * dixième, `coeurs`, sorti des visages par Keko (le sous-groupe `heart` ;
- * voir `SOUS_GROUPE` dans le pipeline).
+ * Les neuf groupes Unicode, hors `Component` qui n'a pas de carte — plus deux
+ * sortis des visages par Keko : `coeurs` (le sous-groupe `heart`) et
+ * `monstres` (`face-costume` : crâne, ogre, fantôme, alien, robot…) ; voir
+ * `SOUS_GROUPE` dans le pipeline.
  */
 export type GroupeEmoji =
   | 'visages'
   | 'coeurs'
+  | 'monstres'
   | 'gens'
   | 'animaux'
   | 'nourriture'
@@ -33,6 +35,7 @@ export type GroupeEmoji =
 export const GROUPES_EMOJI: readonly GroupeEmoji[] = [
   'visages',
   'coeurs',
+  'monstres',
   'gens',
   'animaux',
   'nourriture',
@@ -54,6 +57,7 @@ export const GROUPES_EMOJI: readonly GroupeEmoji[] = [
 export const NOM_DU_GROUPE: Readonly<Record<GroupeEmoji, string>> = {
   visages: 'Visage',
   coeurs: 'Cœur',
+  monstres: 'Monstre',
   gens: 'Gens',
   animaux: 'Animal',
   nourriture: 'Nourriture',

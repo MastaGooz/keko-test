@@ -92,16 +92,33 @@ const GROUPE: Readonly<Record<string, GroupeEmoji>> = {
  * LES SOUS-GROUPES QUI QUITTENT LEUR GROUPE. Keko : « contrôle la catégorie
  * visage : enlève les coeurs par ex, et toutes les choses qui ne sont pas des
  * visages (fais une catégorie spéciale coeur) ». Unicode range dans « Smileys &
- * Emotion » seize sous-groupes (`# subgroup:`) : les douze `face-*`, les chats
- * et les singes (des visages aussi), **`heart`** (les 25 coeurs, et la lettre
- * d'amour) et **`emotion`** (💋 💯 💢 💥 💫 💦 💨 🕳️ 💬 💭 💤…, des signes, pas
- * des visages). Le coeur a son groupe ; l'émotion rejoint les symboles.
- * *Le sous-groupe l'emporte sur le groupe* ; tout autre sous-groupe suit son
- * groupe.
+ * Emotion » seize sous-groupes (`# subgroup:`) : les onze `face-*` de
+ * smileys, et cinq qui n'en sont pas. **`heart`** (les 25 coeurs, et la
+ * lettre d'amour) a son groupe ; **`emotion`** (💋 💯 💢 💥 💫 💦 💨 🕳️ 💬 💭
+ * 💤…, des signes) rejoint les symboles. Puis Keko : « on devrait virer les
+ * chats, monstres, crâne, ogre etc : on va faire une catégorie monstre et une
+ * catégorie animaux » — **`cat-face`** et **`monkey-face`** rejoignent les
+ * animaux, **`face-costume`** (💀 ☠️ 💩 👻 👽 👾 👹 👺 🤡 🤖) devient le
+ * groupe « Monstre ». *Le sous-groupe l'emporte sur le groupe* ; tout autre
+ * sous-groupe suit son groupe.
  */
 const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   heart: 'coeurs',
   emotion: 'symboles',
+  'cat-face': 'animaux',
+  'monkey-face': 'animaux',
+  'face-costume': 'monstres',
+}
+
+/**
+ * ET DEUX CARTES NOMMÉES : 💀 le crâne et ☠️ la tête de mort, qu'Unicode range
+ * dans `face-negative` avec les visages en colère — Keko les veut chez les
+ * monstres (« crâne, ogre etc »). *Par identifiant, pas par nom* : le nom est
+ * du texte affiché. L'identifiant l'emporte sur le sous-groupe.
+ */
+const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
+  '1f480': 'monstres',
+  '2620-fe0f': 'monstres',
 }
 
 /**
@@ -173,12 +190,13 @@ function lireUnicode(txt: string): Brut[] {
     if (!ligne.includes('; fully-qualified')) continue
     const m = /^([0-9A-F ]+);\s*fully-qualified\s*#\s*(\S+)\s+E(\d+\.\d+)\s+(.+)$/.exec(ligne.trim())
     if (!m) continue
-    const g = SOUS_GROUPE[sousGroupe] ?? GROUPE[groupe]
+    const id = m[1]!.trim().toLowerCase().replace(/ +/g, '-')
+    const g = PAR_ID[id] ?? SOUS_GROUPE[sousGroupe] ?? GROUPE[groupe]
     if (g === undefined) continue
     const emoji = m[2]!
     if (!avecPeau && PEAU.test(emoji)) continue
     out.push({
-      id: m[1]!.trim().toLowerCase().replace(/ +/g, '-'),
+      id,
       emoji,
       nomEn: m[4]!.trim(),
       groupe: g,
