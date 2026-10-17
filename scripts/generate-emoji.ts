@@ -144,6 +144,18 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   // horloges, sablier etc ») : le sous-groupe `time` tel quel — sablier,
   // montre, réveils, pendule et les vingt-quatre cadrans.
   time: 'temps',
+  // « ACTIVITÉ » NE GARDE QUE CE QUI MONTRE UNE ACTIVITÉ SANS OBJET (Keko : « je
+  // trouve la distinction objets / activité mauvaise : objet devrait avoir
+  // tous les objets et activité uniquement les images qui renvoient à une
+  // activité sans renvoyer à un objet qu'on peut toucher ») : les cinq
+  // sous-groupes d'Unicode sont faits d'objets — ballons, médailles, cadeaux,
+  // dés, pelotes — et vont aux objets ; ce qui montre une activité remonte par
+  // identifiant (voir `PAR_ID` : feux d'artifice, fête, cérémonie de la lune).
+  event: 'objets',
+  'award-medal': 'objets',
+  sport: 'objets',
+  game: 'objets',
+  'arts & crafts': 'objets',
 }
 
 /**
@@ -158,6 +170,21 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f921': 'visages', // 🤡
   '1f480': 'creatures',
   '2620-fe0f': 'creatures',
+  // CE QUI RESTE UNE ACTIVITÉ chez les anciennes « Activities » d'Unicode : des
+  // scènes, pas des choses qu'on tient — le feu d'artifice et le cierge qui
+  // brûle, la fête (cotillons, confettis), la cérémonie de la lune. Le vernis,
+  // le selfie, le camping, les manèges et les bonshommes de neige y sont déjà
+  // par identifiant plus bas. 🎭 les masques et 🎯 la cible sont des objets
+  // malgré leur nom (« spectacle vivant », « dans le mille ») — à rejuger.
+  '1f386': 'activites', // 🎆
+  '1f387': 'activites', // 🎇
+  '1f389': 'activites', // 🎉
+  '1f38a': 'activites', // 🎊
+  '1f391': 'activites', // 🎑
+  // LES ENSEIGNES DE CARTES SONT DES SIGNES, comme ♥️ chez les cœurs.
+  '2660-fe0f': 'symboles', // ♠️
+  '2663-fe0f': 'symboles', // ♣️
+  '2666-fe0f': 'symboles', // ♦️
   // « MONSTRE » DEVIENT « CRÉATURE » (Keko : « on remplace monstre par créature
   // et on y met : créature velue, troll, zombie, génie, fée, sirène, vampire,
   // triton et toutes les créatures fictives ») : les créatures de
@@ -316,7 +343,7 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '2614': 'objets',
   '2603-fe0f': 'activites',
   '26c4': 'activites',
-  '26f1-fe0f': 'activites',
+  '26f1-fe0f': 'objets',
 }
 
 /**

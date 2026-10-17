@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 12:58:13 UTC
+engendre le 2026-10-17 13:59:09 UTC
 
 3955 cartes, dont 884 animables
 
@@ -21,9 +21,9 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   vehicules       66    15 (23%)  40 (61%)   8 (12%)    3 (5%)    0 (0%)
   elements        57      5 (9%)  20 (35%)  21 (37%)   9 (16%)    2 (4%)
   temps           34    19 (56%)  13 (38%)    2 (6%)    0 (0%)    0 (0%)
-  activites      102    22 (22%)  41 (40%)  26 (25%)  12 (12%)    1 (1%)
-  objets         249    86 (35%) 107 (43%)  49 (20%)    7 (3%)    0 (0%)
-  symboles       306    87 (28%) 133 (43%)  63 (21%)   22 (7%)    1 (0%)
+  activites       23      0 (0%)  12 (52%)   3 (13%)   7 (30%)    1 (4%)
+  objets         325   108 (33%) 136 (42%)  69 (21%)   12 (4%)    0 (0%)
+  symboles       309    87 (28%) 133 (43%)  66 (21%)   22 (7%)    1 (0%)
   drapeaux       262   148 (56%)  90 (34%)   23 (9%)    1 (0%)    0 (0%)
 
 PAR ANNEE
@@ -57,8 +57,8 @@ LE HAUT DE CHAQUE GROUPE
   vehicules    🚨 gyrophare · ✈️ avion · 🚀 fusée · 🚗 voiture · 🛑 stop · 🚘 voiture de face · 🚲 vélo · ⚓ ancre
   elements     🔥 feu · ✨ étincelles · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage
   temps        ⏰ réveil · ⌚ montre · ⏱️ chronomètre · ⏳ sablier avec sable qui coule · 🗓️ calendrier à spirale · 📆 éphéméride · 📅 calendrier · ⌛ sablier
-  activites    🎉 cotillons · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable · 🎀 ruban · 💅 vernis à ongles
-  objets       👑 couronne · 💰 sac plein d’argent · 💎 pierre précieuse · 💸 billet avec des ailes · 📌 punaise · ☎️ téléphone · 🎤 micro · 💣 bombe
+  activites    🎉 cotillons · 🎊 confettis · 💅 vernis à ongles · 💅🏻 vernis à ongles : peau claire · 💅🏼 vernis à ongles : peau moyennement claire · 💅🏽 vernis à ongles : peau légèrement mate · 💅🏾 vernis à ongles : peau mate · 💅🏿 vernis à ongles : peau foncée
+  objets       👑 couronne · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable · 💰 sac plein d’argent · 🎀 ruban · 💎 pierre précieuse
   symboles     ‼️ double point d’exclamation · 💯 cent points · 🎶 notes de musique · ❗ point d’exclamation rouge · 💋 trace de rouge à lèvres · 💥 explosion · ✅ bouton coché · 💦 gouttes de sueur
   drapeaux     🇺🇸 drapeau : États-Unis · 🇧🇷 drapeau : Brésil · 🚩 drapeau triangulaire · 🇲🇽 drapeau : Mexique · 🏁 drapeau à damier · 🇮🇳 drapeau : Inde · 🇹🇷 drapeau : Turquie · 🇮🇹 drapeau : Italie
 
