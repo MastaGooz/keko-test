@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 09:29:29 UTC
+engendre le 2026-10-17 09:37:42 UTC
 
 3955 cartes, dont 884 animables
 
@@ -17,13 +17,13 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   animaux        144    41 (28%)  38 (26%)  57 (40%)    8 (6%)    0 (0%)
   nature          29     6 (21%)    0 (0%)  12 (41%)   9 (31%)    2 (7%)
   nourriture     132    33 (25%)  29 (22%)  64 (48%)    6 (5%)    0 (0%)
-  lieux           46     6 (13%)  30 (65%)  10 (22%)    0 (0%)    0 (0%)
+  lieux           47     6 (13%)  31 (66%)  10 (21%)    0 (0%)    0 (0%)
   vehicules       66    15 (23%)  40 (61%)   8 (12%)    3 (5%)    0 (0%)
-  elements        55      4 (7%)  20 (36%)  21 (38%)   9 (16%)    1 (2%)
-  temps           31    19 (61%)  10 (32%)    2 (6%)    0 (0%)    0 (0%)
-  activites      104    22 (21%)  42 (40%)  26 (25%)  12 (12%)    2 (2%)
-  objets         282    93 (33%) 127 (45%)  53 (19%)    9 (3%)    0 (0%)
-  symboles       240    54 (23%) 112 (47%)  55 (23%)   18 (8%)    1 (0%)
+  elements        56      4 (7%)  20 (36%)  21 (38%)   9 (16%)    2 (4%)
+  temps           34    19 (56%)  13 (38%)    2 (6%)    0 (0%)    0 (0%)
+  activites      102    22 (22%)  41 (40%)  26 (25%)  12 (12%)    1 (1%)
+  objets         275    92 (33%) 121 (44%)  53 (19%)    9 (3%)    0 (0%)
+  symboles       244    55 (23%) 115 (47%)  55 (23%)   18 (7%)    1 (0%)
   drapeaux       262   148 (56%)  90 (34%)   23 (9%)    1 (0%)    0 (0%)
 
 PAR ANNEE
@@ -55,9 +55,9 @@ LE HAUT DE CHAQUE GROUPE
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
   lieux        🌎 globe tourné sur les Amériques · ♨️ sources chaudes · 🌍 globe tourné sur l’Afrique et l’Europe · 🏠 maison · 🌏 globe tourné sur l’Asie et l’Australie · 🏖️ plage avec parasol · 🏡 maison avec jardin · 🕋 kaaba
   vehicules    🚨 gyrophare · ✈️ avion · 🚀 fusée · 🚗 voiture · 🛑 stop · 🚘 voiture de face · 🚲 vélo · ⚓ ancre
-  elements     🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🌚 nouvelle lune avec visage
-  temps        ⏰ réveil · ⌚ montre · ⏱️ chronomètre · ⏳ sablier avec sable qui coule · ⌛ sablier · 🕰️ pendule · 🕛 midi/minuit · 🕒 trois heures
-  activites    🎉 cotillons · ✨ étincelles · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable · 🎀 ruban
+  elements     🔥 feu · ✨ étincelles · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage
+  temps        ⏰ réveil · ⌚ montre · ⏱️ chronomètre · ⏳ sablier avec sable qui coule · 🗓️ calendrier à spirale · 📆 éphéméride · 📅 calendrier · ⌛ sablier
+  activites    🎉 cotillons · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable · 🎀 ruban · 💅 vernis à ongles
   objets       🎶 notes de musique · 👑 couronne · 🎵 note de musique · 💰 sac plein d’argent · 💎 pierre précieuse · 💸 billet avec des ailes · 📌 punaise · ☎️ téléphone
   symboles     ‼️ double point d’exclamation · 💯 cent points · ❗ point d’exclamation rouge · 💋 trace de rouge à lèvres · 💥 explosion · ✅ bouton coché · 💦 gouttes de sueur · ✔️ coche
   drapeaux     🇺🇸 drapeau : États-Unis · 🇧🇷 drapeau : Brésil · 🚩 drapeau triangulaire · 🇲🇽 drapeau : Mexique · 🏁 drapeau à damier · 🇮🇳 drapeau : Inde · 🇹🇷 drapeau : Turquie · 🇮🇹 drapeau : Italie

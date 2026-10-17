@@ -203,11 +203,21 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f3a1': 'activites', // 🎡
   '1f3a2': 'activites', // 🎢
   '1f3a0': 'activites', // 🎠
-  '1f3d5-fe0f': 'activites', // 🏕️
-  '1f3aa': 'activites', // 🎪
+  '1f3d5-fe0f': 'activites', // 🏕️ (🎪 le chapiteau, essayé ici, reste un lieu : Keko)
   // 🌐 le globe à méridiens est un signe, pas un endroit (Keko : « globe avec
   // méridien > symbole ») ; les trois globes terrestres restent des lieux.
   '1f310': 'symboles',
+  // Keko : « étincelles dans éléments ; éphéméride et calendrier dans temps ;
+  // alarme désactivée dans symboles, pareil pour muet, courbe yen en hausse,
+  // chaîne brisée ».
+  '2728': 'elements', // ✨
+  '1f4c5': 'temps', // 📅
+  '1f4c6': 'temps', // 📆
+  '1f5d3-fe0f': 'temps', // 🗓️ (le calendrier à spirale suit les deux autres)
+  '1f515': 'symboles', // 🔕
+  '1f507': 'symboles', // 🔇
+  '1f4b9': 'symboles', // 💹
+  '26d3-fe0f-200d-1f4a5': 'symboles', // ⛓️‍💥
   // LE PAYSAGE NATUREL QUITTE LES LIEUX (Keko : « roche, éboulement, montagne
   // enneigée, nuit étoilée, soleil levant, volcan, soleil etc > direction
   // éléments ») : la roche et l'éboulement, les montagnes, le volcan, le
