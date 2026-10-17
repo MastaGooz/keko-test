@@ -270,7 +270,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   la place à « Prochain paquet dans … ». `&illimite` ne la vide jamais.
 - **Deux monnaies, les Likes et les Abonnés** (`Collection.likes` /
   `abonnes`, `avecLikes` / `avecAbonnes`, `ajouterLikes` / `ajouterAbonnes`,
-  icônes `IconeLike` pouce-dans-une-bulle et `IconeAbonne` buste au « + », une
+  icônes `IconeLike` pouce-dans-un-cœur rose et `IconeAbonne` deux silhouettes bleues, une
   pilule à part en haut à droite SUR TOUS LES ÉCRANS, cachée avec la barre) :
   **des compteurs seuls pour l'instant**, « pas encore de générateur » ; les
   Likes achèteront des paquets au-delà des dix de la réserve, l'usage des

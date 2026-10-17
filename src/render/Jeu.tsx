@@ -547,33 +547,40 @@ function IconeCollection(): React.ReactElement {
 }
 
 /**
- * LE LIKE : un pouce levé dans une bulle, comme Keko l'a décrit (« symbole de
- * like avec un pouce dans une bulle »). La bulle crème, le pouce en or des
- * pastilles, trait en `currentColor`.
+ * LE LIKE : un pouce levé dans un CŒUR rose. Keko : « symbole de like avec un
+ * pouce dans une bulle », puis « tons rose pour les likes (le pouce est bien,
+ * mais dans un cœur c'est mieux à la place de la bulle) ». Le cœur rose, le
+ * pouce crème, trait en `currentColor`.
  */
 function IconeLike(): React.ReactElement {
   return (
     <svg viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round">
-      {/* LA BULLE, sa queue en bas à gauche. */}
-      <path d="M6.5 2.5h11A4 4 0 0 1 21.5 6.5v8a4 4 0 0 1-4 4H9.6L5.2 22.3v-3.9A4 4 0 0 1 2.5 14.5v-8a4 4 0 0 1 4-4z" fill="#fffaf0" stroke="currentColor" strokeWidth="1.4" />
-      {/* LE POUCE : la manchette, puis la main. */}
-      <path d="M6.3 9.3h2.2v6.2H6.3z" fill="#ffc61f" stroke="currentColor" strokeWidth="1.2" />
-      <path d="M8.5 9.6l2.6-4.3a1.3 1.3 0 0 1 2.4.8l-.6 2.9h3.6a1.6 1.6 0 0 1 1.6 1.9l-.8 3.6a1.6 1.6 0 0 1-1.6 1.3H8.5z" fill="#ffc61f" stroke="currentColor" strokeWidth="1.2" />
+      {/* LE CŒUR. */}
+      <path d="M12 21.3S4.3 16.6 2.5 11.7C1.1 8.1 3.3 4.4 7.1 4.4c2 0 3.6 1.1 4.9 2.8 1.3-1.7 2.9-2.8 4.9-2.8 3.8 0 6 3.7 4.6 7.3-1.8 4.9-9.5 9.6-9.5 9.6z" fill="#ff6fa5" stroke="currentColor" strokeWidth="1.4" />
+      {/* LE POUCE, réduit au centre du cœur : la manchette, puis la main. */}
+      <g transform="translate(12 11.6) scale(0.6) translate(-12.8 -10)" stroke="currentColor" strokeWidth="1.7">
+        <path d="M6.3 9.3h2.2v6.2H6.3z" fill="#fffaf0" />
+        <path d="M8.5 9.6l2.6-4.3a1.3 1.3 0 0 1 2.4.8l-.6 2.9h3.6a1.6 1.6 0 0 1 1.6 1.9l-.8 3.6a1.6 1.6 0 0 1-1.6 1.3H8.5z" fill="#fffaf0" />
+      </g>
     </svg>
   )
 }
 
 /**
- * L'ABONNÉ : un buste, et un petit « + » au coin — celui qui vient de
- * s'abonner. Le buste en or comme le pouce, la pastille crème.
+ * LES ABONNÉS : DEUX SILHOUETTES BLEUES, l'une devant l'autre — un public, pas
+ * une personne. Keko : « bleu pour les abonnés (et enlève le +, c'est pas très
+ * beau, propose un autre concept basé sur la silhouette) ». Celle de derrière
+ * en bleu clair, celle de devant en bleu franc, trait en `currentColor`.
  */
 function IconeAbonne(): React.ReactElement {
   return (
     <svg viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round">
-      <circle cx="10" cy="8" r="4" fill="#ffc61f" stroke="currentColor" strokeWidth="1.4" />
-      <path d="M2.8 20.5a7.2 7.2 0 0 1 14.4 0z" fill="#ffc61f" stroke="currentColor" strokeWidth="1.4" />
-      <circle cx="18.5" cy="7" r="3.9" fill="#fffaf0" stroke="currentColor" strokeWidth="1.3" />
-      <path d="M18.5 4.9v4.2M16.4 7h4.2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      {/* DERRIÈRE, à droite, plus petite. */}
+      <circle cx="15.8" cy="7.4" r="3.1" fill="#8ec5ff" stroke="currentColor" strokeWidth="1.3" />
+      <path d="M10.2 18.6a5.6 5.6 0 0 1 11.2 0z" fill="#8ec5ff" stroke="currentColor" strokeWidth="1.3" />
+      {/* DEVANT, à gauche. */}
+      <circle cx="9" cy="9" r="3.7" fill="#3b82f6" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M2 21.2a7 7 0 0 1 14 0z" fill="#3b82f6" stroke="currentColor" strokeWidth="1.4" />
     </svg>
   )
 }
