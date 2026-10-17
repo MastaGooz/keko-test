@@ -15,13 +15,14 @@
 
 /**
  * Les neuf groupes Unicode, hors `Component` qui n'a pas de carte — plus
- * sept découpés par Keko : `coeurs` et `monstres` sortis des visages (le
+ * huit découpés par Keko : `coeurs` et `monstres` sortis des visages (le
  * sous-groupe `heart` ; `face-costume`, crâne, ogre, fantôme, alien, robot…),
  * `mains` et `corps` sortis des gens (les six sous-groupes `hand*` ;
  * `body-parts`), `nature` sortie des animaux (`plant-*`), `elements` et
  * `vehicules` sortis des lieux (`sky & weather` moins les parapluies et les
  * bonshommes de neige — d'abord nommé « Ciel », renommé « Éléments » par
- * Keko ; les trois `transport-*` moins ce qui n'est pas un véhicule) ; voir
+ * Keko ; les trois `transport-*` moins ce qui n'est pas un véhicule), `temps`
+ * sorti des lieux aussi (`time` : sablier, montre, réveils, cadrans) ; voir
  * `SOUS_GROUPE` et `PAR_ID` dans le pipeline.
  */
 export type GroupeEmoji =
@@ -37,6 +38,7 @@ export type GroupeEmoji =
   | 'lieux'
   | 'vehicules'
   | 'elements'
+  | 'temps'
   | 'activites'
   | 'objets'
   | 'symboles'
@@ -55,6 +57,7 @@ export const GROUPES_EMOJI: readonly GroupeEmoji[] = [
   'lieux',
   'vehicules',
   'elements',
+  'temps',
   'activites',
   'objets',
   'symboles',
@@ -82,6 +85,7 @@ export const NOM_DU_GROUPE: Readonly<Record<GroupeEmoji, string>> = {
   lieux: 'Lieu',
   vehicules: 'Véhicule',
   elements: 'Éléments',
+  temps: 'Temps',
   activites: 'Activité',
   objets: 'Objet',
   symboles: 'Symbole',

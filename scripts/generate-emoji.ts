@@ -140,6 +140,10 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   'transport-ground': 'vehicules',
   'transport-water': 'vehicules',
   'transport-air': 'vehicules',
+  // « Temps » (Keko : « créer une catégorie temps où on va mettre toutes les
+  // horloges, sablier etc ») : le sous-groupe `time` tel quel — sablier,
+  // montre, réveils, pendule et les vingt-quatre cadrans.
+  time: 'temps',
 }
 
 /**
