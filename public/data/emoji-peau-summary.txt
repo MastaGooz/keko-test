@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 09:25:50 UTC
+engendre le 2026-10-17 09:29:29 UTC
 
 3955 cartes, dont 884 animables
 
@@ -17,13 +17,13 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   animaux        144    41 (28%)  38 (26%)  57 (40%)    8 (6%)    0 (0%)
   nature          29     6 (21%)    0 (0%)  12 (41%)   9 (31%)    2 (7%)
   nourriture     132    33 (25%)  29 (22%)  64 (48%)    6 (5%)    0 (0%)
-  lieux           53     6 (11%)  36 (68%)  11 (21%)    0 (0%)    0 (0%)
+  lieux           46     6 (13%)  30 (65%)  10 (22%)    0 (0%)    0 (0%)
   vehicules       66    15 (23%)  40 (61%)   8 (12%)    3 (5%)    0 (0%)
   elements        55      4 (7%)  20 (36%)  21 (38%)   9 (16%)    1 (2%)
   temps           31    19 (61%)  10 (32%)    2 (6%)    0 (0%)    0 (0%)
-  activites       99    22 (22%)  37 (37%)  26 (26%)  12 (12%)    2 (2%)
-  objets         281    93 (33%) 126 (45%)  53 (19%)    9 (3%)    0 (0%)
-  symboles       239    54 (23%) 112 (47%)  54 (23%)   18 (8%)    1 (0%)
+  activites      104    22 (21%)  42 (40%)  26 (25%)  12 (12%)    2 (2%)
+  objets         282    93 (33%) 127 (45%)  53 (19%)    9 (3%)    0 (0%)
+  symboles       240    54 (23%) 112 (47%)  55 (23%)   18 (8%)    1 (0%)
   drapeaux       262   148 (56%)  90 (34%)   23 (9%)    1 (0%)    0 (0%)
 
 PAR ANNEE
@@ -53,7 +53,7 @@ LE HAUT DE CHAQUE GROUPE
   animaux      🙈 singe ne rien voir · 😻 chat souriant aux yeux en cœurs · 🙊 singe ne rien dire · 😹 chat qui pleure de joie · 🐶 tête de chien · 🦋 papillon · 🐾 empreintes d’animaux · 🐷 tête de cochon
   nature       🌹 rose · 🌸 fleur de cerisier · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 💐 bouquet · 🌺 hibiscus · 🌻 tournesol · 🌼 bourgeon
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
-  lieux        🌎 globe tourné sur les Amériques · ♨️ sources chaudes · 🌍 globe tourné sur l’Afrique et l’Europe · 🏠 maison · 🌏 globe tourné sur l’Asie et l’Australie · 🏖️ plage avec parasol · 🏡 maison avec jardin · 🌐 globe avec méridiens
+  lieux        🌎 globe tourné sur les Amériques · ♨️ sources chaudes · 🌍 globe tourné sur l’Afrique et l’Europe · 🏠 maison · 🌏 globe tourné sur l’Asie et l’Australie · 🏖️ plage avec parasol · 🏡 maison avec jardin · 🕋 kaaba
   vehicules    🚨 gyrophare · ✈️ avion · 🚀 fusée · 🚗 voiture · 🛑 stop · 🚘 voiture de face · 🚲 vélo · ⚓ ancre
   elements     🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🌚 nouvelle lune avec visage
   temps        ⏰ réveil · ⌚ montre · ⏱️ chronomètre · ⏳ sablier avec sable qui coule · ⌛ sablier · 🕰️ pendule · 🕛 midi/minuit · 🕒 trois heures

@@ -196,6 +196,18 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1fab5': 'objets', // 🪵
   '1f5fa-fe0f': 'objets', // 🗺️
   '1f5fe': 'objets', // 🗾
+  '26fa': 'objets', // ⛺ (Keko : « pas tente : on le place dans objet »)
+  // LES ACTIVITÉS RANGÉES DANS LES LIEUX (Keko : « on passe aussi les
+  // activités de lieu dans activité : grande roue, montagnes russes, manège,
+  // camping... ») : la fête foraine, le camping, le cirque.
+  '1f3a1': 'activites', // 🎡
+  '1f3a2': 'activites', // 🎢
+  '1f3a0': 'activites', // 🎠
+  '1f3d5-fe0f': 'activites', // 🏕️
+  '1f3aa': 'activites', // 🎪
+  // 🌐 le globe à méridiens est un signe, pas un endroit (Keko : « globe avec
+  // méridien > symbole ») ; les trois globes terrestres restent des lieux.
+  '1f310': 'symboles',
   // LE PAYSAGE NATUREL QUITTE LES LIEUX (Keko : « roche, éboulement, montagne
   // enneigée, nuit étoilée, soleil levant, volcan, soleil etc > direction
   // éléments ») : la roche et l'éboulement, les montagnes, le volcan, le
