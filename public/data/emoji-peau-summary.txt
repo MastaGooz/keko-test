@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 08:43:14 UTC
+engendre le 2026-10-17 08:59:06 UTC
 
 3955 cartes, dont 884 animables
 
@@ -9,7 +9,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
 ---------------------------------------------
   groupe           n      commun    peu-co      rare    epique    legend
   visages        110    25 (23%)    1 (1%)    8 (7%)  50 (45%)  26 (24%)
-  coeurs          25     7 (28%)    0 (0%)    1 (4%)   5 (20%)  12 (48%)
+  coeurs          26     7 (27%)    0 (0%)    1 (4%)   5 (19%)  13 (50%)
   monstres        10      0 (0%)   1 (10%)   8 (80%)   1 (10%)    0 (0%)
   gens          2092  1381 (66%) 443 (21%)  195 (9%)   61 (3%)   12 (1%)
   mains          278    98 (35%)    0 (0%)  42 (15%) 102 (37%)  36 (13%)
@@ -17,8 +17,9 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   animaux        144    41 (28%)  38 (26%)  57 (40%)    8 (6%)    0 (0%)
   nature          29     6 (21%)    0 (0%)  12 (41%)   9 (31%)    2 (7%)
   nourriture     132    33 (25%)  29 (22%)  64 (48%)    6 (5%)    0 (0%)
-  lieux          221    49 (22%) 115 (52%)  44 (20%)   12 (5%)    1 (0%)
-  activites       97    22 (23%)  35 (36%)  25 (26%)  12 (12%)    3 (3%)
+  lieux          170    47 (28%)  95 (56%)  26 (15%)    2 (1%)    0 (0%)
+  ciel            51      2 (4%)  20 (39%)  18 (35%)  10 (20%)    1 (2%)
+  activites       96    22 (23%)  35 (36%)  25 (26%)  12 (13%)    2 (2%)
   objets         268    88 (33%) 119 (44%)  52 (19%)    9 (3%)    0 (0%)
   symboles       239    54 (23%) 112 (47%)  54 (23%)   18 (8%)    1 (0%)
   drapeaux       262   148 (56%)  90 (34%)   23 (9%)    1 (0%)    0 (0%)
@@ -42,7 +43,7 @@ PAR ANNEE
 LE HAUT DE CHAQUE GROUPE
 ------------------------
   visages      😂 visage riant aux larmes · 😍 visage souriant avec yeux en forme de cœur · 🤣 se rouler par terre de rire · 😊 visage souriant avec yeux rieurs · 😭 visage qui pleure à chaudes larmes · 😘 visage envoyant un bisou · 😅 visage souriant avec une goutte de sueur · 😁 visage souriant aux yeux rieurs
-  coeurs       ❤️ cœur rouge · 💕 deux cœurs · 💔 cœur brisé · 💖 cœur étincelant · 💙 cœur bleu · 💜 cœur violet · 💞 cœurs qui tournent · 💗 cœur grandissant
+  coeurs       ❤️ cœur rouge · 💕 deux cœurs · ♥️ cœur cartes · 💔 cœur brisé · 💖 cœur étincelant · 💙 cœur bleu · 💜 cœur violet · 💞 cœurs qui tournent
   monstres     💀 crâne · 💩 tas de crotte · 👻 fantôme · ☠️ tête de mort · 👽 alien · 🤡 visage de clown · 👹 ogre · 👾 monstre de l’espace
   gens         🤦 personne avec la paume sur le visage · 🤦🏻 personne avec la paume sur le visage : peau claire · 🤦🏼 personne avec la paume sur le visage : peau moyennement claire · 🤦🏽 personne avec la paume sur le visage : peau légèrement mate · 🤦🏾 personne avec la paume sur le visage : peau mate · 🤦🏿 personne avec la paume sur le visage : peau foncée · 🤷 personne qui hausse les épaules · 🤷🏻 personne qui hausse les épaules : peau claire
   mains        🙏 mains en prière · 🙏🏻 mains en prière : peau claire · 🙏🏼 mains en prière : peau moyennement claire · 🙏🏽 mains en prière : peau légèrement mate · 🙏🏾 mains en prière : peau mate · 🙏🏿 mains en prière : peau foncée · 👍 pouce vers le haut · 👍🏻 pouce vers le haut : peau claire
@@ -50,8 +51,9 @@ LE HAUT DE CHAQUE GROUPE
   animaux      🙈 singe ne rien voir · 😻 chat souriant aux yeux en cœurs · 🙊 singe ne rien dire · 😹 chat qui pleure de joie · 🐶 tête de chien · 🦋 papillon · 🐾 empreintes d’animaux · 🐷 tête de cochon
   nature       🌹 rose · 🌸 fleur de cerisier · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 💐 bouquet · 🌺 hibiscus · 🌻 tournesol · 🌼 bourgeon
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
-  lieux        🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🚨 gyrophare
-  activites    ♥️ cœur cartes · 🎉 cotillons · ✨ étincelles · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable
+  lieux        🚨 gyrophare · ✈️ avion · 🌎 globe tourné sur les Amériques · 🚗 voiture · ♨️ sources chaudes · ⏰ réveil · 🌍 globe tourné sur l’Afrique et l’Europe · 🛑 stop
+  ciel         🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🌚 nouvelle lune avec visage
+  activites    🎉 cotillons · ✨ étincelles · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable · 🎀 ruban
   objets       🎶 notes de musique · 👑 couronne · 🎵 note de musique · 💰 sac plein d’argent · 💎 pierre précieuse · 💸 billet avec des ailes · 📌 punaise · ☎️ téléphone
   symboles     ‼️ double point d’exclamation · 💯 cent points · ❗ point d’exclamation rouge · 💋 trace de rouge à lèvres · 💥 explosion · ✅ bouton coché · 💦 gouttes de sueur · ✔️ coche
   drapeaux     🇺🇸 drapeau : États-Unis · 🇧🇷 drapeau : Brésil · 🚩 drapeau triangulaire · 🇲🇽 drapeau : Mexique · 🏁 drapeau à damier · 🇮🇳 drapeau : Inde · 🇹🇷 drapeau : Turquie · 🇮🇹 drapeau : Italie

@@ -107,8 +107,14 @@ const GROUPE: Readonly<Record<string, GroupeEmoji>> = {
  * 🦶 👂 👃 🧠 🫀 🫁 🦷 🦴 👀 👁️ 👅 👄 🫦…) fait « Corps ». Puis « Animals &
  * Nature » : « on va enlever les plantes/arbres des animaux et créer une
  * catégorie nature » — **`plant-flower`** et **`plant-other`** (fleurs,
- * arbres, feuilles, champignon, nids) font « Nature ». *Le sous-groupe
- * l'emporte sur le groupe* ; tout autre sous-groupe suit son groupe.
+ * arbres, feuilles, champignon, nids) font « Nature ». Puis « Travel &
+ * Places » : « on va ajouter une catégorie ciel où on va mettre les éléments
+ * actuellement dans lieu qui relèvent du ciel, espace, météo etc » —
+ * **`sky & weather`** (lunes, soleil, étoiles, planète, nuages, pluie, neige,
+ * arc-en-ciel, parapluies, éclair, comète, feu, goutte, vague) fait « Ciel »,
+ * et l'espace y va par identifiant (🚀 🛸 🛰️, rangés par Unicode dans
+ * `transport-air`). *Le sous-groupe l'emporte sur le groupe* ; tout autre
+ * sous-groupe suit son groupe.
  */
 const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   heart: 'coeurs',
@@ -125,6 +131,7 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   'body-parts': 'corps',
   'plant-flower': 'nature',
   'plant-other': 'nature',
+  'sky & weather': 'ciel',
 }
 
 /**
@@ -140,6 +147,13 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   // (Keko : « passe le vernis et selfie dans activité plutôt »). ✍️ reste.
   '1f485': 'activites',
   '1f933': 'activites',
+  // ♥️ le coeur des cartes à jouer (`game`) : un coeur avant d'être un jeu
+  // (Keko : « passe le coeur carte dans coeur au lieu de activité »).
+  '2665-fe0f': 'coeurs',
+  // L'ESPACE : 🚀 la fusée, 🛸 la soucoupe, 🛰️ le satellite (`transport-air`).
+  '1f680': 'ciel',
+  '1f6f8': 'ciel',
+  '1f6f0-fe0f': 'ciel',
 }
 
 /**
