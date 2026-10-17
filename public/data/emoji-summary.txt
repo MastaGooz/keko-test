@@ -1,9 +1,9 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 14:12:38 UTC
+engendre le 2026-10-17 14:36:52 UTC
 
-1915 cartes, dont 614 animables
+1892 cartes, dont 614 animables
 
-au classement de frequence : 1458
+au classement de frequence : 1435
 
 OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
 ---------------------------------------------
@@ -20,7 +20,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   lieux           46    22 (48%)  19 (41%)   5 (11%)    0 (0%)    0 (0%)
   vehicules       66    32 (48%)  29 (44%)    3 (5%)    2 (3%)    0 (0%)
   elements        57    12 (21%)  23 (40%)  13 (23%)   7 (12%)    2 (4%)
-  temps           34    26 (76%)   7 (21%)    1 (3%)    0 (0%)    0 (0%)
+  temps           11     3 (27%)   7 (64%)    1 (9%)    0 (0%)    0 (0%)
   activites       13      1 (8%)   8 (62%)   2 (15%)    1 (8%)    1 (8%)
   objets         325   149 (46%) 118 (36%)  48 (15%)   10 (3%)    0 (0%)
   symboles       310   160 (52%)  80 (26%)  48 (15%)   20 (6%)    2 (1%)
@@ -28,7 +28,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
 
 PAR ANNEE
 ---------
-  2010    858  ##################
+  2010    835  ##################
   2015    433  #########
   2016    185  ####
   2017     79  ##
@@ -73,7 +73,7 @@ LE BAS
 
 UN EXEMPLE PAR RARETE
 ---------------------
-  commun       🇨🇰 drapeau : Îles Cook (drapeaux, 1437e, frequence 16)
+  commun       🇨🇽 drapeau : Île Christmas (drapeaux, 1449e, frequence 17)
   peu-commun   👷 personnel du bâtiment (gens, 719e, frequence 11)
   rare         🇮🇳 drapeau : Inde (drapeaux, 336e, frequence 8)
   epique       🎵 note de musique (symboles, 121e, frequence 6)

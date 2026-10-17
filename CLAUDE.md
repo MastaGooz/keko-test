@@ -49,7 +49,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 
 ### Le catalogue
 
-- `npm run emoji` écrit `public/data/emoji.json` : **1 915 cartes** depuis
+- `npm run emoji` écrit `public/data/emoji.json` : **1 892 cartes** depuis
   Unicode (`emoji-test.txt`) + les DEUX fichiers CLDR (`annotations` et
   `annotationsDerived`, les drapeaux sont dans le second). `--peau` écrit
   `emoji-peau.json` (3 963, avec les tons de peau), ouvert par `?paquet&emoji&peau`.
@@ -61,7 +61,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   territoires qui portent le drapeau d'un pays) ; les presque-pareils restent.
 - Une variante de peau hérite du rang de sa base (`baseSansPeau`).
 - Le CDN des animés sépare les points de code par `_`, notre identifiant par `-`.
-  **614 animés** sur 1 915 ; le cache porte les URL, pas les identifiants.
+  **614 animés** sur 1 892 ; le cache porte les URL, pas les identifiants.
+  **Les vingt-trois cadrans clones sont écartés** (`CLONES`, 🕓 seul reste,
+  nommé « Horloge ») APRÈS le découpage en crans : aucune rareté ne bouge.
 - *Une ressource absente à l'adresse où on l'attend n'est pas une ressource
   absente.*
 
@@ -212,7 +214,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   rond au centre, « Stickers » à droite (l'album, sa pastille rouge = stickers
   nouveaux, `Stickers.nouveau` posé par `detruire`, effacé par `stickersVus` en
   quittant l'album ; le
-  compte « réunis / 1 915 » est resté en tête de la collection). Les deux
+  compte « réunis / 1 892 » est resté en tête de la collection). Les deux
   panneaux filtres ont une puce « Nouveau ». Icônes
   dessinées en SVG (`IconeCollection` : trois cartes en éventail aux couleurs
   des crans, sans étoile ; `IconeStickers` : un sticker souriant au coin décollé), trait en

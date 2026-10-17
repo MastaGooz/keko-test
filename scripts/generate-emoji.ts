@@ -725,6 +725,39 @@ const DOUBLONS = new Set([
   '1f1ee-1f1f4', // Territoire britannique de l'ocean Indien = Diego Garcia
 ])
 
+/**
+ * LES CLONES, ECARTES. Keko : « on va juste garder "quatre heures" et supprimer
+ * tous les clones (autres heures) qu'on va renommer horloge ».
+ *
+ * *Unicode a un cadran par demi-heure* : vingt-quatre cartes identiques a
+ * l'aiguille pres, toutes communes, rangees entre la 1 069e et la 1 379e place.
+ * On en garde UNE, 🕓, qui devient « Horloge » (voir `RENOMMES`) ; les
+ * vingt-trois autres sortent du catalogue — et de la collection de qui les
+ * avait, une carte sans fiche n'a plus de place.
+ *
+ * **ELLES SORTENT APRES LE DECOUPAGE EN CRANS, PAS AVANT.** Les crans sont des
+ * parts du catalogue (50/25/15/7,5/2,5) : retirer vingt-trois cartes communes
+ * avant de couper deplacait les bornes, et vingt cartes sans rapport
+ * changeaient de rarete (mesure : 🤧 📌 d'epique a rare, 🐠 🍗 de rare a
+ * peu commun…). *Aucune rarete ne change* est la regle de chaque rangement ;
+ * donc les clones tiennent leur place au classement, puis s'effacent — leurs
+ * rangs (1 069 a 1 379, sauf 🕓) restent des trous.
+ */
+const CLONES = new Set(
+  [...Array(24).keys()].map((i) => (0x1f550 + i).toString(16)).filter((id) => id !== '1f553'),
+)
+
+/**
+ * LES NOMS QUE KEKO A CHANGES, par identifiant : CLDR nomme 🕓 par son heure
+ * (« quatre heures »), qui n'a plus de sens quand il est seul ; et ⏲️, un
+ * minuteur de cuisine, s'appelait « horloge » — le nom passe au cadran.
+ * Les mots-cles restent ceux de CLDR.
+ */
+const RENOMMES: Readonly<Record<string, string>> = {
+  '1f553': 'horloge', // 🕓
+  '23f2-fe0f': 'minuteur', // ⏲️
+}
+
 async function main(): Promise<void> {
   const debut = Date.now()
   mkdirSync(SORTIE, { recursive: true })
@@ -764,7 +797,7 @@ async function main(): Promise<void> {
       emoji: b.emoji,
       // *Un nom anglais vaut mieux qu'une carte en moins* : la regle du repli
       // anglais des personnages, reprise ici.
-      nom: fr?.nom ?? b.nomEn,
+      nom: RENOMMES[b.id] ?? fr?.nom ?? b.nomEn,
       groupe: b.groupe,
       mots: fr?.mots ?? [],
       version: b.version,
@@ -800,13 +833,15 @@ async function main(): Promise<void> {
     sans.map((c) => ({ groupe: '', valeur: c.notoriete })),
     PYRAMIDE_CINQ,
   ) as RareteEmoji[]
-  const cartes: CarteEmoji[] = sans.map(({ notoriete: _n, ...c }, i) => ({
+  const toutes: CarteEmoji[] = sans.map(({ notoriete: _n, ...c }, i) => ({
     ...c,
     // LE RANG EST LA PLACE DANS LE CATALOGUE, et la liste est deja triee : *le
     // seul chiffre dont la rarete derive*, donc le seul que la carte affiche.
     rang: i + 1,
     rarete: crans[i]!,
   }))
+  // LES CLONES S'EFFACENT ICI, leur rang et leur cran distribues : voir CLONES.
+  const cartes: CarteEmoji[] = toutes.filter((c) => !CLONES.has(c.id))
 
   const json = JSON.stringify({ genere: new Date().toISOString(), cartes })
   // *Le banc des variantes a son propre fichier* : il ne remplace pas le

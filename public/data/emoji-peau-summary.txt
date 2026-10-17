@@ -1,9 +1,9 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 14:12:39 UTC
+engendre le 2026-10-17 14:36:53 UTC
 
-3955 cartes, dont 884 animables
+3932 cartes, dont 884 animables
 
-au classement de frequence : 2318
+au classement de frequence : 2295
 
 OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
 ---------------------------------------------
@@ -20,7 +20,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   lieux           46     6 (13%)  31 (67%)   9 (20%)    0 (0%)    0 (0%)
   vehicules       66    15 (23%)  40 (61%)   8 (12%)    3 (5%)    0 (0%)
   elements        57      5 (9%)  20 (35%)  21 (37%)   9 (16%)    2 (4%)
-  temps           34    19 (56%)  13 (38%)    2 (6%)    0 (0%)    0 (0%)
+  temps           11      0 (0%)   9 (82%)   2 (18%)    0 (0%)    0 (0%)
   activites       23      0 (0%)  12 (52%)   3 (13%)   7 (30%)    1 (4%)
   objets         325   108 (33%) 136 (42%)  69 (21%)   12 (4%)    0 (0%)
   symboles       310    87 (28%) 133 (43%)  66 (21%)   22 (7%)    2 (1%)
@@ -28,7 +28,7 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
 
 PAR ANNEE
 ---------
-  2010    858  #########
+  2010    835  ########
   2015    763  ########
   2016    755  ########
   2017    239  ##
@@ -73,8 +73,8 @@ LE BAS
 
 UN EXEMPLE PAR RARETE
 ---------------------
-  commun       🤏🏻 pouce et index rapprochés : peau claire (mains, 2967e, non classe, animable)
-  peu-commun   9️⃣ touches : 9 (symboles, 1484e, frequence 11)
+  commun       🦻🏽 oreille appareillée : peau légèrement mate (corps, 2977e, non classe, animable)
+  peu-commun   👡 sandale de femme (objets, 1482e, frequence 11)
   rare         👴🏼 homme âgé : peau moyennement claire (gens, 692e, frequence 9)
   epique       ✊🏾 poing levé : peau mate (mains, 247e, frequence 6, animable)
   legendaire   👌🏾 ok : peau mate (mains, 50e, frequence 3, animable)
