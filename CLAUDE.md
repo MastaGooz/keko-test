@@ -269,8 +269,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   sachet descend tout seul à zéro ; au bilan, « Ouvrir un autre paquet » cède
   la place à « Prochain paquet dans … ». `&illimite` ne la vide jamais.
 - **Les Likes sont la monnaie** (`Collection.likes`, `avecLikes`,
-  `ajouterLikes`, icône pouce-dans-une-bulle `IconeLike`, affichés à gauche
-  de la jauge) : **un compteur seul pour l'instant**, « pas encore de
+  `ajouterLikes`, icône pouce-dans-une-bulle `IconeLike`, une pilule à part en
+  haut à droite SUR TOUS LES ÉCRANS, cachée avec la barre) : **un compteur seul pour l'instant**, « pas encore de
   générateur » ; ils achèteront des paquets au-delà des dix de la réserve.
   Une collection d'avant relit zéro. `&likes=N` pose le solde de l'appareil.
 

@@ -77,16 +77,9 @@ function minuteur(ms: number): string {
  * LA RÉSERVE SOUS LA BARRE, comme chez lexicodex (« 3/3 aujourd'hui ») : une
  * case par paquet, les pleines en or, et le temps avant le suivant.
  */
-function JaugeDeReserve({ paquets, dans, likes }: { paquets: number; dans: number | null; likes: number }): React.ReactElement {
+function JaugeDeReserve({ paquets, dans }: { paquets: number; dans: number | null }): React.ReactElement {
   return (
     <div className="reserve">
-      {/* LES LIKES, à gauche de la jauge : la monnaie qui achètera des
-          paquets quand elle sera vide. Pour l'instant un compteur (Keko).
-          Sa place est à rejuger. */}
-      <span className="likes" aria-label={`${likes} Like${likes > 1 ? 's' : ''}`}>
-        <IconeLike />
-        <b>{likes}</b>
-      </span>
       <span className="reserve-jauge">
       <div className="reserve-cases" aria-hidden>
         {Array.from({ length: RESERVE.max }, (_, i) => (
@@ -424,9 +417,19 @@ export function Jeu(): React.ReactElement {
       )}
       {!accueil && page === 'booster' && !attente && (
         <div className={`reserve-place${visible ? '' : ' reserve-cachee'}`}>
-          <JaugeDeReserve paquets={dispo} dans={dans} likes={collection.likes} />
+          <JaugeDeReserve paquets={dispo} dans={dans} />
         </div>
       )}
+      {/* LES LIKES, TOUJOURS LÀ. Keko : « j'aurais voulu que les likes soient
+          toujours visibles quel que soit l'écran actif (booster, collection,
+          stickers) ». Une pilule à part, en haut à droite, qui se cache avec la
+          barre : pendant la déchirure et le défilé, rien ne dispute l'écran. */}
+      <div className={`likes-place${visible ? '' : ' likes-cachee'}`}>
+        <span className="likes" aria-label={`${collection.likes} Like${collection.likes > 1 ? 's' : ''}`}>
+          <IconeLike />
+          <b>{collection.likes}</b>
+        </span>
+      </div>
       <nav className={`nav${visible ? '' : ' nav-cachee'}`} aria-label="Navigation">
         <div className="nav-pilule">
           <button

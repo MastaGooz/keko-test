@@ -789,24 +789,49 @@
   opacity: 0.75;
 }
 
-/* LES LIKES : l'icône et le solde, séparés de la jauge par un filet. */
+/* LES LIKES : une pilule crème à part, en haut à droite, sur tous les écrans
+   (Keko). Elle se cache avec la barre (`likes-cachee`), vers le haut. */
+.likes-place {
+  position: fixed;
+  top: max(0.6rem, env(safe-area-inset-top));
+  right: 16px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  height: 3rem;
+  padding: 0 0.9rem 0 0.7rem;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: #fffaf0;
+  box-shadow:
+    0 0.3rem 0 #c9b9f2,
+    0 0.6rem 1.4rem rgba(20, 8, 60, 0.45);
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  transition:
+    opacity 0.25s ease,
+    transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.likes-cachee {
+  opacity: 0;
+  transform: translateY(-140%);
+  pointer-events: none;
+}
+
 .likes {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  padding-right: 0.7rem;
-  border-right: 1px solid rgba(255, 250, 240, 0.25);
   color: #2a1b63;
 }
 
 .likes svg {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1.6rem;
+  height: 1.6rem;
   overflow: visible;
 }
 
 .likes b {
-  color: #fffaf0;
   font-size: 1.05rem;
   font-weight: 800;
   line-height: 1;
