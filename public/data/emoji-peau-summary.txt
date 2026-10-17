@@ -1,5 +1,5 @@
 CATALOGUE DES EMOJI
-engendre le 2026-10-17 08:59:06 UTC
+engendre le 2026-10-17 09:08:32 UTC
 
 3955 cartes, dont 884 animables
 
@@ -18,9 +18,9 @@ OU CHAQUE GROUPE TOMBE DANS L ECHELLE GLOBALE
   nature          29     6 (21%)    0 (0%)  12 (41%)   9 (31%)    2 (7%)
   nourriture     132    33 (25%)  29 (22%)  64 (48%)    6 (5%)    0 (0%)
   lieux          170    47 (28%)  95 (56%)  26 (15%)    2 (1%)    0 (0%)
-  ciel            51      2 (4%)  20 (39%)  18 (35%)  10 (20%)    1 (2%)
-  activites       96    22 (23%)  35 (36%)  25 (26%)  12 (13%)    2 (2%)
-  objets         268    88 (33%) 119 (44%)  52 (19%)    9 (3%)    0 (0%)
+  elements        45      2 (4%)  16 (36%)  16 (36%)  10 (22%)    1 (2%)
+  activites       99    22 (22%)  37 (37%)  26 (26%)  12 (12%)    2 (2%)
+  objets         271    88 (32%) 121 (45%)  53 (20%)    9 (3%)    0 (0%)
   symboles       239    54 (23%) 112 (47%)  54 (23%)   18 (8%)    1 (0%)
   drapeaux       262   148 (56%)  90 (34%)   23 (9%)    1 (0%)    0 (0%)
 
@@ -52,7 +52,7 @@ LE HAUT DE CHAQUE GROUPE
   nature       🌹 rose · 🌸 fleur de cerisier · 🍀 trèfle à quatre feuilles · 🌷 tulipe · 💐 bouquet · 🌺 hibiscus · 🌻 tournesol · 🌼 bourgeon
   nourriture   🎂 gâteau d’anniversaire · ☕ boisson chaude · 🍻 chopes de bière · 🍓 fraise · 🍺 chope · 🍒 cerises · 🍑 pêche · 🍎 pomme rouge
   lieux        🚨 gyrophare · ✈️ avion · 🌎 globe tourné sur les Amériques · 🚗 voiture · ♨️ sources chaudes · ⏰ réveil · 🌍 globe tourné sur l’Afrique et l’Europe · 🛑 stop
-  ciel         🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🌚 nouvelle lune avec visage
+  elements     🔥 feu · ☀️ soleil · 🌟 étoile brillante · ⭐ étoile · 🌈 arc-en-ciel · ⚡ haute tension · 🌞 soleil avec visage · 🌚 nouvelle lune avec visage
   activites    🎉 cotillons · ✨ étincelles · 🎊 confettis · ⚽ ballon de football · 🏆 trophée · 🎁 cadeau · 🎈 ballon gonflable · 🎀 ruban
   objets       🎶 notes de musique · 👑 couronne · 🎵 note de musique · 💰 sac plein d’argent · 💎 pierre précieuse · 💸 billet avec des ailes · 📌 punaise · ☎️ téléphone
   symboles     ‼️ double point d’exclamation · 💯 cent points · ❗ point d’exclamation rouge · 💋 trace de rouge à lèvres · 💥 explosion · ✅ bouton coché · 💦 gouttes de sueur · ✔️ coche

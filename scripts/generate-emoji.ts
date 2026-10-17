@@ -111,10 +111,11 @@ const GROUPE: Readonly<Record<string, GroupeEmoji>> = {
  * Places » : « on va ajouter une catégorie ciel où on va mettre les éléments
  * actuellement dans lieu qui relèvent du ciel, espace, météo etc » —
  * **`sky & weather`** (lunes, soleil, étoiles, planète, nuages, pluie, neige,
- * arc-en-ciel, parapluies, éclair, comète, feu, goutte, vague) fait « Ciel »,
- * et l'espace y va par identifiant (🚀 🛸 🛰️, rangés par Unicode dans
- * `transport-air`). *Le sous-groupe l'emporte sur le groupe* ; tout autre
- * sous-groupe suit son groupe.
+ * arc-en-ciel, éclair, comète, feu, goutte, vague) fait ce groupe — « Ciel »
+ * d'abord, **renommé « Éléments »** par Keko —, l'espace y va par identifiant
+ * (🚀 🛸 🛰️, rangés par Unicode dans `transport-air`), et les parapluies et
+ * bonshommes de neige en sortent (voir `PAR_ID`). *Le sous-groupe l'emporte
+ * sur le groupe* ; tout autre sous-groupe suit son groupe.
  */
 const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   heart: 'coeurs',
@@ -131,7 +132,7 @@ const SOUS_GROUPE: Readonly<Record<string, GroupeEmoji>> = {
   'body-parts': 'corps',
   'plant-flower': 'nature',
   'plant-other': 'nature',
-  'sky & weather': 'ciel',
+  'sky & weather': 'elements',
 }
 
 /**
@@ -151,9 +152,19 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   // (Keko : « passe le coeur carte dans coeur au lieu de activité »).
   '2665-fe0f': 'coeurs',
   // L'ESPACE : 🚀 la fusée, 🛸 la soucoupe, 🛰️ le satellite (`transport-air`).
-  '1f680': 'ciel',
-  '1f6f8': 'ciel',
-  '1f6f0-fe0f': 'ciel',
+  '1f680': 'elements',
+  '1f6f8': 'elements',
+  '1f6f0-fe0f': 'elements',
+  // CE QUI N'EST PAS UN ÉLÉMENT dans `sky & weather` (Keko : « bonshommes de
+  // neige et parapluies ne devraient pas être dans ciel, plutôt objet pour
+  // parapluie et activité pour bonhomme de neige, mets aussi le parasol dans
+  // activité ») : 🌂 ☂️ ☔ chez les objets ; ☃️ ⛄ ⛱️ chez les activités.
+  '1f302': 'objets',
+  '2602-fe0f': 'objets',
+  '2614': 'objets',
+  '2603-fe0f': 'activites',
+  '26c4': 'activites',
+  '26f1-fe0f': 'activites',
 }
 
 /**
