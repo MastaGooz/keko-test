@@ -735,6 +735,9 @@
 }
 
 .reserve {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
   padding: 0.45rem 0.8rem 0.35rem;
   border-radius: 0.9rem;
   background: rgba(14, 6, 40, 0.55);
@@ -774,6 +777,29 @@
 
 .reserve-dans {
   opacity: 0.75;
+}
+
+/* LES LIKES : l'icône et le solde, séparés de la jauge par un filet. */
+.likes {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding-right: 0.7rem;
+  border-right: 1px solid rgba(255, 250, 240, 0.25);
+  color: #2a1b63;
+}
+
+.likes svg {
+  width: 1.5rem;
+  height: 1.5rem;
+  overflow: visible;
+}
+
+.likes b {
+  color: #fffaf0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 /* LE COMPTE SUR LE BOOSTER ROND : en or, et rouge quand il n'y a plus rien. */

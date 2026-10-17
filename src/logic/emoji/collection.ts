@@ -92,10 +92,29 @@ export interface Collection {
   readonly cartes: Readonly<Record<string, Possession>>
   /** L'album : ajouté après coup, donc absent d'une collection d'avant (voir `lireCollection`). */
   readonly stickers: Readonly<Record<string, Stickers>>
+  /**
+   * LES LIKES : LA MONNAIE DU JEU. Keko : « on peut ajouter une monnaie au
+   * jeu ? Des Likes (symbole de like avec un pouce dans une bulle) ». *Pour
+   * l'instant c'est un compteur* — « juste le compteur, pas encore de
+   * générateur » — qui servira à acheter des paquets au-delà des dix de la
+   * réserve. Entier, jamais négatif ; absent d'une collection d'avant : zéro.
+   */
+  readonly likes: number
 }
 
 export function collectionVide(): Collection {
-  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {} }
+  return { version: 1, arrivees: 0, paquets: 0, cartes: {}, stickers: {}, likes: 0 }
+}
+
+/** Pose le solde de Likes — borné à zéro, arrondi à l'entier. Rend la même collection si rien ne change. */
+export function avecLikes(col: Collection, likes: number): Collection {
+  const n = Number.isFinite(likes) ? Math.max(0, Math.floor(likes)) : 0
+  return n === col.likes ? col : { ...col, likes: n }
+}
+
+/** Ajoute (ou retire, `n` négatif) des Likes ; le solde ne descend pas sous zéro. */
+export function ajouterLikes(col: Collection, n: number): Collection {
+  return avecLikes(col, col.likes + n)
 }
 
 /** Ajoute un paquet ouvert. Rend une collection NEUVE : l'ancienne ne bouge pas. */
@@ -325,5 +344,6 @@ export function lireCollection(brut: unknown): Collection {
     paquets: entier(o.paquets) ?? 0,
     cartes,
     stickers,
+    likes: entier(o.likes) ?? 0,
   }
 }

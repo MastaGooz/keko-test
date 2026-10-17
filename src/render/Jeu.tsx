@@ -25,6 +25,7 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
 import {
   ajouterPaquet,
+  avecLikes,
   debloquer,
   debloquerStickers,
   retirer,
@@ -76,9 +77,17 @@ function minuteur(ms: number): string {
  * LA RÉSERVE SOUS LA BARRE, comme chez lexicodex (« 3/3 aujourd'hui ») : une
  * case par paquet, les pleines en or, et le temps avant le suivant.
  */
-function JaugeDeReserve({ paquets, dans }: { paquets: number; dans: number | null }): React.ReactElement {
+function JaugeDeReserve({ paquets, dans, likes }: { paquets: number; dans: number | null; likes: number }): React.ReactElement {
   return (
     <div className="reserve">
+      {/* LES LIKES, à gauche de la jauge : la monnaie qui achètera des
+          paquets quand elle sera vide. Pour l'instant un compteur (Keko).
+          Sa place est à rejuger. */}
+      <span className="likes" aria-label={`${likes} Like${likes > 1 ? 's' : ''}`}>
+        <IconeLike />
+        <b>{likes}</b>
+      </span>
+      <span className="reserve-jauge">
       <div className="reserve-cases" aria-hidden>
         {Array.from({ length: RESERVE.max }, (_, i) => (
           <i key={i} className={i < paquets ? 'pleine' : ''} />
@@ -88,6 +97,7 @@ function JaugeDeReserve({ paquets, dans }: { paquets: number; dans: number | nul
         <b>{paquets}</b>/{RESERVE.max} paquet{paquets > 1 ? 's' : ''}
         {dans !== null && <span className="reserve-dans"> · +1 dans {minuteur(dans)}</span>}
       </p>
+      </span>
     </div>
   )
 }
@@ -293,6 +303,21 @@ export function Jeu(): React.ReactElement {
       return retirer(c, ids.slice(0, Math.floor(ids.length / 2)))
     })
   }, [changer])
+  /**
+   * `&likes=N` : POSE LE SOLDE DE LIKES DE CET APPAREIL, d'un lien — le banc
+   * du compteur tant qu'aucun geste n'en donne. *Il remplace, il n'ajoute
+   * pas* : rouvrir le lien ne double rien. Le paramètre est retiré ensuite.
+   */
+  useEffect(() => {
+    const p = new URLSearchParams(location.search)
+    const v = p.get('likes')
+    if (v === null) return
+    p.delete('likes')
+    history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
+    const n = Number(v)
+    if (!Number.isFinite(n)) return
+    changer((c) => avecLikes(c, n))
+  }, [changer])
   const ajouter = useCallback(
     (ids: readonly string[], bonus: Readonly<Record<string, Bonus>>) => {
       changer((c) => ajouterPaquet(c, ids, bonus, Date.now()))
@@ -399,7 +424,7 @@ export function Jeu(): React.ReactElement {
       )}
       {!accueil && page === 'booster' && !attente && (
         <div className={`reserve-place${visible ? '' : ' reserve-cachee'}`}>
-          <JaugeDeReserve paquets={dispo} dans={dans} />
+          <JaugeDeReserve paquets={dispo} dans={dans} likes={collection.likes} />
         </div>
       )}
       <nav className={`nav${visible ? '' : ' nav-cachee'}`} aria-label="Navigation">
@@ -497,6 +522,23 @@ function IconeCollection(): React.ReactElement {
       {carte(-28, '#4cc46a', '#c9f5d3')}
       {carte(28, '#a35cff', '#e7d6ff')}
       {carte(0, '#ffb020', '#fff1c7')}
+    </svg>
+  )
+}
+
+/**
+ * LE LIKE : un pouce levé dans une bulle, comme Keko l'a décrit (« symbole de
+ * like avec un pouce dans une bulle »). La bulle crème, le pouce en or des
+ * pastilles, trait en `currentColor`.
+ */
+function IconeLike(): React.ReactElement {
+  return (
+    <svg viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round">
+      {/* LA BULLE, sa queue en bas à gauche. */}
+      <path d="M6.5 2.5h11A4 4 0 0 1 21.5 6.5v8a4 4 0 0 1-4 4H9.6L5.2 22.3v-3.9A4 4 0 0 1 2.5 14.5v-8a4 4 0 0 1 4-4z" fill="#fffaf0" stroke="currentColor" strokeWidth="1.4" />
+      {/* LE POUCE : la manchette, puis la main. */}
+      <path d="M6.3 9.3h2.2v6.2H6.3z" fill="#ffc61f" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M8.5 9.6l2.6-4.3a1.3 1.3 0 0 1 2.4.8l-.6 2.9h3.6a1.6 1.6 0 0 1 1.6 1.9l-.8 3.6a1.6 1.6 0 0 1-1.6 1.3H8.5z" fill="#ffc61f" stroke="currentColor" strokeWidth="1.2" />
     </svg>
   )
 }

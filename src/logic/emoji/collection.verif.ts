@@ -18,6 +18,8 @@ import {
   nombreDeStickersNouveaux,
   stickersVus,
   compteDe,
+  avecLikes,
+  ajouterLikes,
 } from './collection.ts'
 
 let echecs = 0
@@ -115,4 +117,17 @@ verifier('le holo ne dépasse pas le nombre', abimee.cartes['1f602']?.holo === 2
 verifier("le compteur d'arrivées rattrape le plus grand ordre", abimee.arrivees === 7)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
+
+console.log('likes')
+verifier('une collection neuve a zéro Like', vide.likes === 0)
+const riche = ajouterLikes(vide, 12)
+verifier('ajouter des Likes', riche.likes === 12)
+verifier('ajouter zéro rend la même collection', ajouterLikes(riche, 0) === riche)
+verifier('retirer ne descend pas sous zéro', ajouterLikes(riche, -20).likes === 0)
+verifier('poser un solde', avecLikes(riche, 3).likes === 3 && avecLikes(riche, -1).likes === 0 && avecLikes(riche, 2.7).likes === 2)
+verifier('un paquet garde les Likes', ajouterPaquet(riche, ['1f600'], {}, 9000).likes === 12)
+verifier('détruire garde les Likes', detruire(ajouterPaquet(riche, ['1f600'], {}, 9000), '1f600', exemplaireADetruire(ajouterPaquet(riche, ['1f600'], {}, 9000).cartes['1f600']!), 9100).likes === 12)
+verifier('une collection d’avant relit zéro Like', lireCollection({ version: 1, cartes: {} }).likes === 0)
+verifier('un solde gardé se relit', lireCollection({ version: 1, cartes: {}, likes: 40 }).likes === 40)
+verifier('un solde abîmé retombe à zéro', lireCollection({ version: 1, cartes: {}, likes: -5 }).likes === 0 && lireCollection({ version: 1, cartes: {}, likes: 'x' }).likes === 0)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)
