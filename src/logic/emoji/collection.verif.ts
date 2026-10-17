@@ -94,6 +94,12 @@ const pm = melange.cartes['1f60b']!
 verifier('un holo et deux simples', compteDe(pm, 'holo') === 1 && compteDe(pm, 'simple') === 2)
 const moinsHA = detruire(quatre, '1f60a', { holo: true, anime: true }, 3)
 verifier('détruire un holo animé', compteDe(moinsHA.cartes['1f60a']!, 'holoAnime') === 2)
+// L'ALBUM AUSSI A SES QUATRE VERSIONS.
+verifier('son sticker est holo animé', moinsHA.stickers['1f60a']?.ha === 1 && compteDe(moinsHA.stickers['1f60a']!, 'holoAnime') === 1 && compteDe(moinsHA.stickers['1f60a']!, 'holo') === 0)
+const moinsHolo = detruire(detruire(melange, '1f60b', { holo: true, anime: false }, 4), '1f60b', sans, 5)
+verifier('un sticker holo et un simple', compteDe(moinsHolo.stickers['1f60b']!, 'holo') === 1 && compteDe(moinsHolo.stickers['1f60b']!, 'simple') === 1 && moinsHolo.stickers['1f60b']?.ha === 0)
+verifier('un album d’avant déduit le holo animé imposé', lireCollection({ version: 1, cartes: {}, stickers: { '1f600': { n: 1, holo: 1, anime: 1, dernier: 1 } } }).stickers['1f600']?.ha === 1)
+verifier('un album d’avant sans contrainte lit zéro', lireCollection({ version: 1, cartes: {}, stickers: { '1f600': { n: 2, holo: 1, anime: 1, dernier: 1 } } }).stickers['1f600']?.ha === 0)
 const ancienne = lireCollection({ version: 1, cartes: { '1f600': { n: 2, holo: 2, anime: 1, premiere: 0, ordre: 1 } } })
 verifier('une collection d’avant déduit le holo animé imposé', ancienne.cartes['1f600']?.ha === 1)
 

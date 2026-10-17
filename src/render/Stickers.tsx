@@ -15,6 +15,7 @@ import { createPortal } from 'react-dom'
 import { SON_POSER, jouerSon } from './sons.ts'
 import {
   BoutonFiltres,
+  NOM_DE_LA_VARIANTE,
   PanneauFiltres,
   PucesBonus,
   SectionFiltre,
@@ -25,8 +26,8 @@ import {
 } from './Collection.tsx'
 import { suivreLInclinaison } from './inclinaison.ts'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
-import type { Collection, Stickers } from '../logic/emoji/collection.ts'
-import { nombreDeStickers } from '../logic/emoji/collection.ts'
+import type { Collection, Stickers, Variante } from '../logic/emoji/collection.ts'
+import { VARIANTES, compteDe, exemplaireDe, nombreDeStickers } from '../logic/emoji/collection.ts'
 import { stickerDe, stickerHautDe } from './texture-carte.ts'
 import { STICKER_DANS_LA_CARTE, type ImagesAnimees, animationHolo, cerneArcEnCiel, peindreEtoile } from './peinture-vignette.ts'
 import { COTE_GRAND, COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
@@ -86,21 +87,31 @@ const FILTRE: React.CSSProperties = {
   filter: `saturate(${1 + SATURATION_APLAT}) drop-shadow(0 0.3rem 0.35rem rgba(10, 4, 30, 0.5))`,
 }
 
+/**
+ * UNE CASE PAR VERSION DE STICKER — normale, holo, animée, holo animée — comme
+ * les vignettes de la collection (`Variante`). Keko : « dans les stickers, faut
+ * faire des slots différents pour les versions normale / holo / animé / animé
+ * holo (comme pour les cartes) ».
+ */
 function CaseSticker({
   carte,
   stickers,
+  variante,
   onOuvrir,
 }: {
   carte: CarteEmoji
   stickers: Stickers
+  variante: Variante
   onOuvrir: () => void
 }): React.ReactElement {
   const boite = useRef<HTMLButtonElement>(null)
   const toile = useRef<HTMLCanvasElement>(null)
   const [visible, setVisible] = useState(false)
   const [pret, setPret] = useState(false)
-  const holo = stickers.holo > 0
-  const anime = stickers.anime > 0 && carte.animable
+  const ex = exemplaireDe(variante)
+  const holo = ex.holo
+  const anime = ex.anime && carte.animable
+  const n = compteDe(stickers, variante)
   useEffect(() => {
     const el = boite.current
     if (el === null) return
@@ -168,7 +179,7 @@ function CaseSticker({
       ref={boite}
       type="button"
       className={`album-case${pret ? ' album-pret' : ''}`}
-      aria-label={`${enTitre(carte.nom)}, ${stickers.n} sticker${stickers.n > 1 ? 's' : ''}`}
+      aria-label={`${enTitre(carte.nom)}, ${n} sticker${n > 1 ? 's' : ''} ${NOM_DE_LA_VARIANTE[variante]}`}
       onClick={onOuvrir}
     >
       <span className="album-sticker">
@@ -176,11 +187,11 @@ function CaseSticker({
         <canvas ref={toile} className="album-toile" style={FILTRE} />
       </span>
       {stickers.nouveau && <span className="vignette-nouvelle">Nouveau</span>}
-      {stickers.n > 1 && <span className="vignette-nombre">×{stickers.n}</span>}
-      {(holo || stickers.anime > 0) && (
+      {n > 1 && <span className="vignette-nombre">×{n}</span>}
+      {(holo || ex.anime) && (
         <span className="vignette-bonus">
           {holo && <span className="pastille-holo">Holo</span>}
-          {stickers.anime > 0 && <span className="pastille-anime">Animé</span>}
+          {ex.anime && <span className="pastille-anime">Animé</span>}
         </span>
       )}
     </button>
@@ -201,10 +212,12 @@ const DATE = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', y
 function StickerOuvert({
   carte,
   stickers,
+  variante,
   onFermer,
 }: {
   carte: CarteEmoji
   stickers: Stickers
+  variante: Variante
   onFermer: () => void
 }): React.ReactElement {
   const toile = useRef<HTMLCanvasElement>(null)
@@ -216,8 +229,11 @@ function StickerOuvert({
   const penche = useRef<HTMLDivElement>(null)
   const zone = useRef<HTMLDivElement>(null)
   const [pret, setPret] = useState(false)
-  const holo = stickers.holo > 0
-  const anime = stickers.anime > 0 && carte.animable
+  // LA VERSION OUVERTE, pas la plus belle qu'on ait : c'est la case qu'on a tapée.
+  const ex = exemplaireDe(variante)
+  const holo = ex.holo
+  const anime = ex.anime && carte.animable
+  const n = compteDe(stickers, variante)
   const refFermer = useRef(onFermer)
   refFermer.current = onFermer
   useEffect(() => {
@@ -509,10 +525,10 @@ function StickerOuvert({
     )
     return () => arret.abort()
   }, [])
+  // « 2 stickers holo · 5 en tout », comme la carte ouverte dit sa version.
   const lignes = [
-    stickers.n > 1 ? `${stickers.n} stickers` : '1 sticker',
-    holo ? `${stickers.holo} holo` : null,
-    stickers.anime > 0 ? `${stickers.anime} animé${stickers.anime > 1 ? 's' : ''}` : null,
+    `${n} sticker${n > 1 ? 's' : ''} ${NOM_DE_LA_VARIANTE[variante]}`,
+    stickers.n > n ? `${stickers.n} en tout` : null,
   ].filter((m): m is string => m !== null)
   return (
     <div className="carte-ouverte sticker-ouvert">
@@ -559,12 +575,20 @@ export function PageStickers({
   const [recherche, setRecherche] = useState('')
   const [ouvert, setOuvert] = useState<string | null>(null)
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
+  // UNE CASE PAR VERSION POSSÉDÉE, dans l'ordre normale, holo, animée, holo
+  // animée — la règle des vignettes de la collection. Le filtre Holo / Animé
+  // porte sur la version.
   const liste = useMemo(() => {
     const l = Object.entries(collection.stickers)
-      .map(([id, s]) => ({ carte: parId.get(id), s }))
+      .flatMap(([id, s]) => {
+        const carte = parId.get(id)
+        if (carte === undefined) return []
+        return VARIANTES.filter((v) => compteDe(s, v) > 0).map((v) => ({ carte, s, v }))
+      })
       .filter(
-        (x): x is { carte: CarteEmoji; s: Stickers } =>
-          x.carte !== undefined && passeLeBonus(bonus, x.s) && (!nouveaux || x.s.nouveau),
+        ({ s, v }) =>
+          passeLeBonus(bonus, { holo: exemplaireDe(v).holo ? 1 : 0, anime: exemplaireDe(v).anime ? 1 : 0 }) &&
+          (!nouveaux || s.nouveau),
       )
     // LA RECHERCHE DE LA COLLECTION, sur le nom et les mots-clés.
     const q = plier(recherche.trim())
@@ -581,7 +605,8 @@ export function PageStickers({
     return l
   }, [collection.stickers, parId, tri, bonus, nouveaux, recherche])
   const total = nombreDeStickers(collection)
-  const leOuvert = ouvert === null ? undefined : liste.find((x) => x.carte.id === ouvert)
+  // La case ouverte : un emoji ET une version.
+  const leOuvert = ouvert === null ? undefined : liste.find((x) => `${x.carte.id}#${x.v}` === ouvert)
   return (
     <div className="collection album">
       <div className="collection-defile">
@@ -666,8 +691,14 @@ export function PageStickers({
               </div>
             )}
             <div className="album-grille">
-              {liste.map(({ carte, s }) => (
-                <CaseSticker key={carte.id} carte={carte} stickers={s} onOuvrir={() => setOuvert(carte.id)} />
+              {liste.map(({ carte, s, v }) => (
+                <CaseSticker
+                  key={`${carte.id}#${v}`}
+                  carte={carte}
+                  stickers={s}
+                  variante={v}
+                  onOuvrir={() => setOuvert(`${carte.id}#${v}`)}
+                />
               ))}
             </div>
           </>
@@ -675,7 +706,7 @@ export function PageStickers({
       </div>
       {leOuvert !== undefined &&
         createPortal(
-          <StickerOuvert carte={leOuvert.carte} stickers={leOuvert.s} onFermer={() => setOuvert(null)} />,
+          <StickerOuvert carte={leOuvert.carte} stickers={leOuvert.s} variante={leOuvert.v} onFermer={() => setOuvert(null)} />,
           document.body,
         )}
     </div>

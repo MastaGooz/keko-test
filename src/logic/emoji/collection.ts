@@ -44,6 +44,13 @@ export interface Stickers {
   n: number
   holo: number
   anime: number
+  /**
+   * HOLO ET ANIMÉS À LA FOIS — comme `Possession.ha`. Keko : « dans les
+   * stickers, faut faire des slots différents pour les versions normale /
+   * holo / animé / animé holo (comme pour les cartes) ». Absent d'un album
+   * d'avant : zéro, ou ce que les comptes imposent (voir `lireCollection`).
+   */
+  ha: number
   /** Quand le dernier est arrivé : l'album se trie par là. */
   dernier: number
   /**
@@ -62,8 +69,8 @@ export interface Stickers {
 export type Variante = 'simple' | 'holo' | 'anime' | 'holoAnime'
 export const VARIANTES: readonly Variante[] = ['simple', 'holo', 'anime', 'holoAnime']
 
-/** Combien d'exemplaires d'une version on possède. */
-export function compteDe(p: Possession, v: Variante): number {
+/** Combien d'exemplaires d'une version on possède — d'une carte (`Possession`) ou d'un sticker (`Stickers`). */
+export function compteDe(p: { n: number; holo: number; anime: number; ha: number }, v: Variante): number {
   if (v === 'holoAnime') return p.ha
   if (v === 'holo') return p.holo - p.ha
   if (v === 'anime') return p.anime - p.ha
@@ -184,7 +191,7 @@ export function detruire(col: Collection, id: string, ex: Exemplaire, quand: num
     const ha = Math.min(holo, anime, Math.max(0, p.ha - (ex.holo && ex.anime ? 1 : 0)))
     cartes[id] = { ...p, n, holo, anime, ha }
   }
-  const s = col.stickers[id] ?? { n: 0, holo: 0, anime: 0, dernier: quand, nouveau: false }
+  const s = col.stickers[id] ?? { n: 0, holo: 0, anime: 0, ha: 0, dernier: quand, nouveau: false }
   // LE BONUS NE PASSE AU STICKER QUE SI LA CARTE L'AVAIT : un compte abîmé ne
   // fabrique pas un holo.
   const holo = ex.holo && p.holo > 0
@@ -193,7 +200,14 @@ export function detruire(col: Collection, id: string, ex: Exemplaire, quand: num
   // n'avait pas, comme le holo de plus d'une carte connue.
   const stickers = {
     ...col.stickers,
-    [id]: { n: s.n + 1, holo: s.holo + (holo ? 1 : 0), anime: s.anime + (anime ? 1 : 0), dernier: quand, nouveau: true },
+    [id]: {
+      n: s.n + 1,
+      holo: s.holo + (holo ? 1 : 0),
+      anime: s.anime + (anime ? 1 : 0),
+      ha: s.ha + (holo && anime ? 1 : 0),
+      dernier: quand,
+      nouveau: true,
+    },
   }
   return { ...col, cartes, stickers }
 }
@@ -233,7 +247,7 @@ export function debloquerStickers(col: Collection, ids: readonly string[], quand
   for (const id of ids) {
     if (stickers[id] !== undefined) continue
     i += 1
-    stickers[id] = { n: 1, holo: 0, anime: 0, dernier: quand - i, nouveau: false }
+    stickers[id] = { n: 1, holo: 0, anime: 0, ha: 0, dernier: quand - i, nouveau: false }
   }
   return { ...col, stickers }
 }
@@ -336,7 +350,12 @@ export function lireCollection(brut: unknown): Collection {
     const anime = entier(s.anime)
     const dernier = entier(s.dernier)
     if (n === null || holo === null || anime === null || dernier === null) continue
-    stickers[id] = { n, holo: Math.min(holo, n), anime: Math.min(anime, n), dernier, nouveau: s.nouveau === true }
+    const h = Math.min(holo, n)
+    const a = Math.min(anime, n)
+    // LES DEUX À LA FOIS, comme pour les cartes : absent d'avant, jamais plus
+    // que l'un ou l'autre, au moins ce que les comptes imposent.
+    const ha = Math.min(h, a, Math.max(entier(s.ha) ?? 0, h + a - n))
+    stickers[id] = { n, holo: h, anime: a, ha, dernier, nouveau: s.nouveau === true }
   }
   return {
     version: 1,

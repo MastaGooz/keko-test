@@ -72,7 +72,7 @@ import { PencheAuGyro } from './Paquet3D.tsx'
 import { suivreLInclinaison, type Inclinaison } from './inclinaison.ts'
 import { SON_POSER, jouerSon } from './sons.ts'
 
-const NOM_DE_LA_VARIANTE: Readonly<Record<Variante, string>> = {
+export const NOM_DE_LA_VARIANTE: Readonly<Record<Variante, string>> = {
   simple: 'normal',
   holo: 'holo',
   anime: 'animé',
