@@ -2045,8 +2045,7 @@ export function Paquet3D({
             // EN STICKER, PAS EN LAITON : voir `TONS.emoji` dans Bouton3D.
             ton="emoji"
             cran="ecran"
-            // REMONTÉ (0,38 → 0,31) depuis que la barre et la jauge sont en bas.
-            position={[0, -hVisible * 0.31, Z_MAIN]}
+            position={[0, -hVisible * 0.38, Z_MAIN]}
             onCliquer={partir}
           />
         )}
