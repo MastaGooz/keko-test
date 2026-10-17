@@ -781,6 +781,10 @@
   top: -0.3rem;
   left: auto;
   right: -0.35rem;
+  /* EN GRAS. Keko : « mettre le chiffre dans la bulle en haut indiquant le
+     nombre de booster dispo en gras ». */
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-weight: 800;
   background: #ffc61f;
   color: #2a1b63;
   box-shadow: 0 0 0 0.15rem #2a1b63;
