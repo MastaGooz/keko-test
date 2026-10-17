@@ -6642,3 +6642,11 @@ Keko, juste après « Toutes les cartes » : « tu peux supprimer la moitié de 
 **Même jour** — Keko : « dans toutes les cartes, un filtre obtenues / manquantes ». Une section « Possession » en bas du panneau filtres, *dans « Toutes les cartes » seulement* (dans la collection, tout est obtenu) : deux puces, Obtenues et Manquantes, un ensemble comme les raretés (`basculer`) — rien de coché ou les deux, tout passe. Comptée dans la pastille du bouton filtres, remise à zéro par « Tout effacer ».
 
 **Même jour** — Keko : « tu peux mettre le chiffre dans la bulle en haut indiquant le nombre de booster dispo en gras ? » `.nav-pastille-booster` passe en Baloo 2 à 800 (le poids déjà chargé pour la barre) ; la pastille rouge des nouvelles ne change pas.
+
+### Le filtre « Nouveau », et les stickers nouveaux (17/10/2026)
+
+Keko : « On peut ajouter un filtre nouveau dans la collection et les sticker (et ajouter les bulles nouveau sur les sticker comme les cartes si c'est pas déjà le cas) ». *Ce n'était pas le cas* : un sticker n'avait que `n`, `holo`, `anime`, `dernier`.
+
+**Le sticker a maintenant son `nouveau`** (`Stickers.nouveau`, dans `logic/emoji/collection.ts`), le pendant exact de `Possession.nouvelle` : posé par `detruire` — *même pour un doublon*, c'est un exemplaire qu'on n'avait pas, comme le holo de plus d'une carte connue ; jamais par `debloquerStickers` (un album plein de pastilles ne dirait rien) ; relu sans confiance (`s.nouveau === true`, donc faux pour un album d'avant) ; effacé par `stickersVus` quand on quitte l'album (`aller`, comme `toutVu` en quittant les cartes). Six vérifications dans `collection.verif.ts`. Dans l'album : la bulle « Nouveau » sur la case (`.vignette-nouvelle`, la même que la carte), et la pastille rouge sur le bouton « Stickers » de la barre (`nombreDeStickersNouveaux`, `.nav-pastille-stickers` sur l'icône de droite).
+
+**Le filtre « Nouveau »** : une section « Nouveautés » à une seule puce dans les deux panneaux (collection et catalogue, album), coché = rien que ce qu'on n'a pas encore vu. Comptée dans la pastille du bouton filtres, remise à zéro par « Tout effacer ». *Il faut l'utiliser avant de quitter la page*, puisque quitter marque tout vu — c'est le même contrat que la pastille.

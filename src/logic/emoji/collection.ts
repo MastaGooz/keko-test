@@ -46,6 +46,12 @@ export interface Stickers {
   anime: number
   /** Quand le dernier est arrivé : l'album se trie par là. */
   dernier: number
+  /**
+   * Pas encore vu dans l'album — la bulle « Nouveau » et la pastille du bouton
+   * « Stickers », comme les cartes (Keko : « ajouter les bulles nouveau sur les
+   * stickers comme les cartes »). Absent d'un album d'avant : faux.
+   */
+  nouveau: boolean
 }
 
 /**
@@ -159,14 +165,16 @@ export function detruire(col: Collection, id: string, ex: Exemplaire, quand: num
     const ha = Math.min(holo, anime, Math.max(0, p.ha - (ex.holo && ex.anime ? 1 : 0)))
     cartes[id] = { ...p, n, holo, anime, ha }
   }
-  const s = col.stickers[id] ?? { n: 0, holo: 0, anime: 0, dernier: quand }
+  const s = col.stickers[id] ?? { n: 0, holo: 0, anime: 0, dernier: quand, nouveau: false }
   // LE BONUS NE PASSE AU STICKER QUE SI LA CARTE L'AVAIT : un compte abîmé ne
   // fabrique pas un holo.
   const holo = ex.holo && p.holo > 0
   const anime = ex.anime && p.anime > 0
+  // UN STICKER GAGNÉ EST NOUVEAU, même un doublon : c'est un exemplaire qu'on
+  // n'avait pas, comme le holo de plus d'une carte connue.
   const stickers = {
     ...col.stickers,
-    [id]: { n: s.n + 1, holo: s.holo + (holo ? 1 : 0), anime: s.anime + (anime ? 1 : 0), dernier: quand },
+    [id]: { n: s.n + 1, holo: s.holo + (holo ? 1 : 0), anime: s.anime + (anime ? 1 : 0), dernier: quand, nouveau: true },
   }
   return { ...col, cartes, stickers }
 }
@@ -206,7 +214,7 @@ export function debloquerStickers(col: Collection, ids: readonly string[], quand
   for (const id of ids) {
     if (stickers[id] !== undefined) continue
     i += 1
-    stickers[id] = { n: 1, holo: 0, anime: 0, dernier: quand - i }
+    stickers[id] = { n: 1, holo: 0, anime: 0, dernier: quand - i, nouveau: false }
   }
   return { ...col, stickers }
 }
@@ -234,6 +242,20 @@ export function toutVu(col: Collection): Collection {
 export function nombreDeNouvelles(col: Collection): number {
   let n = 0
   for (const p of Object.values(col.cartes)) if (p.nouvelle) n += 1
+  return n
+}
+
+/** L'album est vu : la pastille de « Stickers » s'éteint (le pendant de `toutVu`). */
+export function stickersVus(col: Collection): Collection {
+  if (!Object.values(col.stickers).some((s) => s.nouveau)) return col
+  const stickers: Record<string, Stickers> = {}
+  for (const [id, s] of Object.entries(col.stickers)) stickers[id] = s.nouveau ? { ...s, nouveau: false } : s
+  return { ...col, stickers }
+}
+
+export function nombreDeStickersNouveaux(col: Collection): number {
+  let n = 0
+  for (const s of Object.values(col.stickers)) if (s.nouveau) n += 1
   return n
 }
 
@@ -295,7 +317,7 @@ export function lireCollection(brut: unknown): Collection {
     const anime = entier(s.anime)
     const dernier = entier(s.dernier)
     if (n === null || holo === null || anime === null || dernier === null) continue
-    stickers[id] = { n, holo: Math.min(holo, n), anime: Math.min(anime, n), dernier }
+    stickers[id] = { n, holo: Math.min(holo, n), anime: Math.min(anime, n), dernier, nouveau: s.nouveau === true }
   }
   return {
     version: 1,

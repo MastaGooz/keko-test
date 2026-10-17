@@ -1500,3 +1500,9 @@
 .vignette-manquante .vignette-toile {
   filter: none !important;
 }
+
+/* LA PASTILLE DU BOUTON « STICKERS » : sur son icone, qui est a droite. */
+.nav-pastille-stickers {
+  left: auto;
+  right: 0.55rem;
+}

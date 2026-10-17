@@ -30,6 +30,8 @@ import {
   retirer,
   detruire,
   nombreDeNouvelles,
+  nombreDeStickersNouveaux,
+  stickersVus,
   toutVu,
   type Collection,
   type Exemplaire,
@@ -335,12 +337,15 @@ export function Jeu(): React.ReactElement {
     // « Nouveau » de la grille avec elle. *Pas en y entrant* : on doit pouvoir
     // les y voir. Le catalogue montre les mêmes vignettes, il compte pareil.
     if (page === 'collection' || page === 'catalogue') changer(toutVu)
+    // ET L'ALBUM PAREIL : les stickers sont vus en le quittant.
+    if (page === 'stickers') changer(stickersVus)
     if (vers === 'booster') setAttente(dispo === 0)
     setPage(vers)
     setCalme(true)
   }
 
   const nouvelles = nombreDeNouvelles(collection)
+  const nouveauxStickers = nombreDeStickersNouveaux(collection)
   const visible = !accueil && (page !== 'booster' || calme)
   const surLesCartes = page === 'collection' || page === 'catalogue'
 
@@ -426,6 +431,7 @@ export function Jeu(): React.ReactElement {
             <span className="nav-icone" aria-hidden>
               <IconeStickers />
             </span>
+            {nouveauxStickers > 0 && <span className="nav-pastille nav-pastille-stickers">{nouveauxStickers}</span>}
           </button>
         </div>
         <button

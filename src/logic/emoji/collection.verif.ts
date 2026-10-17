@@ -15,6 +15,8 @@ import {
   detruire,
   exemplaireADetruire,
   nombreDeStickers,
+  nombreDeStickersNouveaux,
+  stickersVus,
   compteDe,
 } from './collection.ts'
 
@@ -62,6 +64,13 @@ const d1 = detruire(trois, '1f600', simple, 4000)
 verifier('un exemplaire de moins', d1.cartes['1f600']?.n === trois.cartes['1f600']!.n - 1)
 verifier('le holo reste', d1.cartes['1f600']?.holo === 1)
 verifier('un sticker gagné', d1.stickers['1f600']?.n === 1 && d1.stickers['1f600']?.holo === 0)
+verifier('un sticker gagné est nouveau', d1.stickers['1f600']?.nouveau === true && nombreDeStickersNouveaux(d1) === 1)
+const albumVu = stickersVus(d1)
+verifier('l’album vu éteint la pastille', nombreDeStickersNouveaux(albumVu) === 0 && albumVu.stickers['1f600']?.n === 1)
+verifier('l’album déjà vu ne change pas', stickersVus(albumVu) === albumVu)
+verifier('un doublon de sticker redevient nouveau', detruire(albumVu, '1f600', simple, 4500).stickers['1f600']?.nouveau === true)
+verifier('un sticker débloqué n’est pas nouveau', debloquerStickers(albumVu, ['1f603'], 5000).stickers['1f603']?.nouveau === false)
+verifier('un album d’avant relit ses stickers sans nouveau', lireCollection({ version: 1, cartes: {}, stickers: { '1f600': { n: 1, holo: 0, anime: 0, dernier: 1 } } }).stickers['1f600']?.nouveau === false)
 const d2 = detruire(d1, '1f601', { holo: true, anime: false }, 5000)
 verifier('la dernière carte quitte la collection', d2.cartes['1f601'] === undefined)
 verifier('son sticker est holo', d2.stickers['1f601']?.holo === 1)

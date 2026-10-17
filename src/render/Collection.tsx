@@ -778,8 +778,11 @@ export function PageCollection({
    * les autres : rien de coché, ou les deux, tout passe.
    */
   const [possession, setPossession] = useState<ReadonlySet<PossessionFiltre>>(new Set())
+  // LES NOUVELLES SEULES. Keko : « un filtre nouveau dans la collection et les
+  // stickers ». Une seule puce : coché, rien que ce qu'on n'a pas encore vu.
+  const [nouvelles, setNouvelles] = useState(false)
   const [panneau, setPanneau] = useState(false)
-  const actifs = raretes.size + groupes.size + bonus.size + possession.size
+  const actifs = raretes.size + groupes.size + bonus.size + possession.size + (nouvelles ? 1 : 0)
   const [ouverte, setOuverte] = useState<{ id: string; v: Variante } | null>(null)
 
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
@@ -814,6 +817,7 @@ export function PageCollection({
     const l = places.filter(
       ({ carte, p, v }) =>
         (possession.size === 0 || possession.has(p === null ? 'manquantes' : 'obtenues')) &&
+        (!nouvelles || p?.nouvelle === true) &&
         passeLeBonus(bonus, {
           holo: p !== null && exemplaireDe(v).holo ? 1 : 0,
           anime: p !== null && exemplaireDe(v).anime ? 1 : 0,
@@ -827,7 +831,7 @@ export function PageCollection({
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [places, recherche, tri, raretes, groupes, bonus, possession])
+  }, [places, recherche, tri, raretes, groupes, bonus, possession, nouvelles])
 
   const total = catalogue?.length ?? 0
   const part = total === 0 ? 0 : possedees.length / total
@@ -883,6 +887,7 @@ export function PageCollection({
               setGroupes(new Set())
               setBonus(new Set())
               setPossession(new Set())
+              setNouvelles(false)
               setTri(triParDefaut)
             }}
             onFermer={() => setPanneau(false)}
@@ -935,6 +940,18 @@ export function PageCollection({
             </SectionFiltre>
             <SectionFiltre titre="Bonus">
               <PucesBonus valeur={bonus} onChange={setBonus} />
+            </SectionFiltre>
+            <SectionFiltre titre="Nouveautés">
+              <div className="filtres-panneau-puces">
+                <button
+                  type="button"
+                  className={`puce puce-nouveau${nouvelles ? ' actif' : ''}`}
+                  aria-pressed={nouvelles}
+                  onClick={() => setNouvelles((n) => !n)}
+                >
+                  Nouveau
+                </button>
+              </div>
             </SectionFiltre>
             {toutes && (
               <SectionFiltre titre="Possession">

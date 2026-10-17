@@ -171,6 +171,7 @@ function CaseSticker({
         {!pret && <span className="album-attente">{carte.emoji}</span>}
         <canvas ref={toile} className="album-toile" style={FILTRE} />
       </span>
+      {stickers.nouveau && <span className="vignette-nouvelle">Nouveau</span>}
       {stickers.n > 1 && <span className="vignette-nombre">×{stickers.n}</span>}
       {(holo || stickers.anime > 0) && (
         <span className="vignette-bonus">
@@ -533,6 +534,9 @@ export function PageStickers({
 }): React.ReactElement {
   const [tri, setTri] = useState<Tri>('recents')
   const [bonus, setBonus] = useState<ReadonlySet<BonusFiltre>>(new Set())
+  // LES NOUVEAUX SEULS. Keko : « un filtre nouveau dans la collection et les
+  // stickers ». Une seule puce : coché, rien que ce qu'on n'a pas encore vu.
+  const [nouveaux, setNouveaux] = useState(false)
   const [panneau, setPanneau] = useState(false)
   const [recherche, setRecherche] = useState('')
   const [ouvert, setOuvert] = useState<string | null>(null)
@@ -540,7 +544,10 @@ export function PageStickers({
   const liste = useMemo(() => {
     const l = Object.entries(collection.stickers)
       .map(([id, s]) => ({ carte: parId.get(id), s }))
-      .filter((x): x is { carte: CarteEmoji; s: Stickers } => x.carte !== undefined && passeLeBonus(bonus, x.s))
+      .filter(
+        (x): x is { carte: CarteEmoji; s: Stickers } =>
+          x.carte !== undefined && passeLeBonus(bonus, x.s) && (!nouveaux || x.s.nouveau),
+      )
     // LA RECHERCHE DE LA COLLECTION, sur le nom et les mots-clés.
     const q = plier(recherche.trim())
     if (q !== '') {
@@ -554,7 +561,7 @@ export function PageStickers({
     else if (tri === 'az') l.sort((a, b) => az.compare(a.carte.nom, b.carte.nom))
     else l.sort((a, b) => a.carte.rang - b.carte.rang)
     return l
-  }, [collection.stickers, parId, tri, bonus, recherche])
+  }, [collection.stickers, parId, tri, bonus, nouveaux, recherche])
   const total = nombreDeStickers(collection)
   const leOuvert = ouvert === null ? undefined : liste.find((x) => x.carte.id === ouvert)
   return (
@@ -588,7 +595,7 @@ export function PageStickers({
                   value={recherche}
                   onChange={(e) => setRecherche(e.target.value)}
                 />
-                <BoutonFiltres actifs={bonus.size} onOuvrir={() => setPanneau(true)} />
+                <BoutonFiltres actifs={bonus.size + (nouveaux ? 1 : 0)} onOuvrir={() => setPanneau(true)} />
               </div>
             </div>
             {panneau && (
@@ -597,6 +604,7 @@ export function PageStickers({
                 voir={`Voir ${liste.length} sticker${liste.length > 1 ? 's' : ''}`}
                 onEffacer={() => {
                   setBonus(new Set())
+                  setNouveaux(false)
                   setTri('recents')
                 }}
                 onFermer={() => setPanneau(false)}
@@ -619,6 +627,18 @@ export function PageStickers({
                 </SectionFiltre>
                 <SectionFiltre titre="Bonus">
                   <PucesBonus valeur={bonus} onChange={setBonus} />
+                </SectionFiltre>
+                <SectionFiltre titre="Nouveautés">
+                  <div className="filtres-panneau-puces">
+                    <button
+                      type="button"
+                      className={`puce puce-nouveau${nouveaux ? ' actif' : ''}`}
+                      aria-pressed={nouveaux}
+                      onClick={() => setNouveaux((n) => !n)}
+                    >
+                      Nouveau
+                    </button>
+                  </div>
                 </SectionFiltre>
               </PanneauFiltres>
             )}

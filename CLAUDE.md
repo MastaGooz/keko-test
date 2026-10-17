@@ -206,8 +206,11 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   « Collection » (ce qu'on a, pastille rouge = cartes nouvelles) et « Toutes
   les cartes » (le catalogue entier, la même `PageCollection` avec `toutes`,
   les manquantes en grisé, ouvrables en 3D sans « Décoller ») ; le booster
-  rond au centre, « Stickers » à droite (l'album ; le
-  compte « réunis / 1 915 » est resté en tête de la collection). Icônes
+  rond au centre, « Stickers » à droite (l'album, sa pastille rouge = stickers
+  nouveaux, `Stickers.nouveau` posé par `detruire`, effacé par `stickersVus` en
+  quittant l'album ; le
+  compte « réunis / 1 915 » est resté en tête de la collection). Les deux
+  panneaux filtres ont une puce « Nouveau ». Icônes
   dessinées en SVG (`IconeCollection` : trois cartes en éventail aux couleurs
   des crans, sans étoile ; `IconeStickers` : un sticker souriant au coin décollé), trait en
   `currentColor`. **Elle
