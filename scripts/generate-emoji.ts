@@ -243,6 +243,16 @@ const PAR_ID: Readonly<Record<string, GroupeEmoji>> = {
   '1f4c1': 'symboles', // 📁
   '1f4c2': 'symboles', // 📂
   '1f5c2-fe0f': 'symboles', // 🗂️ (les intercalaires suivent les dossiers)
+  // Keko : « email, chaînons, page, page enroulée, ascenseur, main de Fatma >
+  // symbole. Bulle > éléments » (🫧 les bulles de savon ; celles de parole y
+  // étaient déjà).
+  '1f4e7': 'symboles', // 📧
+  '1f517': 'symboles', // 🔗
+  '1f4c4': 'symboles', // 📄
+  '1f4c3': 'symboles', // 📃
+  '1f6d7': 'symboles', // 🛗
+  '1faac': 'symboles', // 🪬
+  '1fae7': 'elements', // 🫧
   // LE PAYSAGE NATUREL QUITTE LES LIEUX (Keko : « roche, éboulement, montagne
   // enneigée, nuit étoilée, soleil levant, volcan, soleil etc > direction
   // éléments ») : la roche et l'éboulement, les montagnes, le volcan, le
