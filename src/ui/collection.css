@@ -789,8 +789,11 @@
   opacity: 0.75;
 }
 
-/* LES LIKES : une pilule crème à part, en haut à droite, sur tous les écrans
-   (Keko). Elle se cache avec la barre (`likes-cachee`), vers le haut. */
+/* LES MONNAIES : un compteur discret en haut à droite, sur tous les écrans
+   (Keko). Il se cache avec la barre (`likes-cachee`), vers le haut. PLUS DE
+   PILULE CRÈME — Keko : « le conteneur blanc est trop gros et fait penser à
+   un bouton » : un voile sombre à peine lisible, les chiffres en crème comme
+   les textes posés sur la scène. Un compteur se lit, il ne s'appuie pas. */
 .likes-place {
   position: fixed;
   top: max(0.6rem, env(safe-area-inset-top));
@@ -800,15 +803,13 @@
   z-index: 20;
   display: flex;
   align-items: center;
-  height: 3rem;
-  padding: 0 0.9rem 0 0.7rem;
+  height: 2.1rem;
+  padding: 0 0.6rem 0 0.5rem;
   box-sizing: border-box;
   border-radius: 999px;
-  background: #fffaf0;
-  box-shadow:
-    0 0.3rem 0 #c9b9f2,
-    0 0.6rem 1.4rem rgba(20, 8, 60, 0.45);
+  background: rgba(14, 6, 40, 0.35);
   font-family: 'Baloo 2', system-ui, sans-serif;
+  pointer-events: none;
   transition:
     opacity 0.25s ease,
     transform 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
@@ -824,24 +825,26 @@
 .monnaie {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  color: #2a1b63;
+  gap: 0.25rem;
+  color: #fffaf0;
+  text-shadow: 0 0.08rem 0.3rem rgba(14, 6, 40, 0.8);
 }
 
 .monnaie + .monnaie {
-  margin-left: 0.6rem;
-  padding-left: 0.6rem;
-  border-left: 1px solid #c9b9f2;
+  margin-left: 0.5rem;
+  padding-left: 0.5rem;
+  border-left: 1px solid rgba(255, 250, 240, 0.35);
 }
 
 .monnaie svg {
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 1.3rem;
+  height: 1.3rem;
   overflow: visible;
+  filter: drop-shadow(0 0.08rem 0.25rem rgba(14, 6, 40, 0.7));
 }
 
 .monnaie b {
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 800;
   line-height: 1;
 }
@@ -1603,12 +1606,12 @@
      le titre est un peu plus petit sur un écran étroit ; la barre de progrès
      garde toute la largeur, elle passe dessous. */
   .collection-titre {
-    padding-right: 9.5rem;
+    padding-right: 8.5rem;
     font-size: 1.6rem;
   }
 
   .collection-compte {
-    padding-right: 9.5rem;
+    padding-right: 8.5rem;
   }
 
   .likes-place {
@@ -1645,10 +1648,12 @@
     bottom: calc(var(--barre-bas) + 4.2rem);
   }
 
-  /* « X disponibles » passe en haut, la jauge dit déjà le compte en bas. */
+  /* « X disponibles » passe en haut, la jauge dit déjà le compte en bas —
+     SOUS le compteur des monnaies, qui est à la même hauteur à droite (Keko :
+     « ça se superpose par-dessus le texte X paquets disponibles »). */
   .paquet-disponibles {
     bottom: auto;
-    top: calc(max(0.6rem, env(safe-area-inset-top)) + 0.8rem);
+    top: calc(max(0.6rem, env(safe-area-inset-top)) + 2.1rem + 0.7rem);
   }
 
   /* Le menu « Cartes » monte ; fermé, son chevron pointe en haut. */
