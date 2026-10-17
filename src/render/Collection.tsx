@@ -1002,8 +1002,23 @@ export function PageCollection({
             <SectionFiltre titre="Bonus">
               <PucesBonus valeur={bonus} onChange={setBonus} />
             </SectionFiltre>
-            <SectionFiltre titre="Nouveautés">
+            {/* « NOUVEAU » VIT DANS « POSSESSION » (Keko : « basculer le filtre
+                nouveauté dans la section Possession ») : dans « Toutes les cartes »
+                derrière Obtenues / Manquantes, seul dans la collection. Il reste
+                un ET avec les deux autres : une nouvelle est forcément obtenue. */}
+            <SectionFiltre titre="Possession">
               <div className="filtres-panneau-puces">
+                {toutes &&
+                  POSSESSION_FILTRES.map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      className={`puce${possession.has(f.id) ? ' actif' : ''}`}
+                      onClick={() => setPossession((s) => basculer(s, f.id))}
+                    >
+                      {f.nom}
+                    </button>
+                  ))}
                 <button
                   type="button"
                   className={`puce puce-nouveau${nouvelles ? ' actif' : ''}`}
@@ -1014,22 +1029,6 @@ export function PageCollection({
                 </button>
               </div>
             </SectionFiltre>
-            {toutes && (
-              <SectionFiltre titre="Possession">
-                <div className="filtres-panneau-puces">
-                  {POSSESSION_FILTRES.map((f) => (
-                    <button
-                      key={f.id}
-                      type="button"
-                      className={`puce${possession.has(f.id) ? ' actif' : ''}`}
-                      onClick={() => setPossession((s) => basculer(s, f.id))}
-                    >
-                      {f.nom}
-                    </button>
-                  ))}
-                </div>
-              </SectionFiltre>
-            )}
           </PanneauFiltres>
         )}
 
