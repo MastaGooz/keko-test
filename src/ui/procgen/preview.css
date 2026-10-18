@@ -1,0 +1,184 @@
+/* La page de preview du générateur — hors du jeu, son propre chrome. */
+:root {
+  color-scheme: dark;
+  --fond: #14161f;
+  --carte: #1e2130;
+  --trait: #2d3247;
+  --texte: #e6e8f0;
+  --sourd: #8d93a8;
+  --accent: #5ee6ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--fond);
+  color: var(--texte);
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-size: 15px;
+}
+
+#preview {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 16px 48px;
+}
+
+.pv-tete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--trait);
+  position: sticky;
+  top: 0;
+  background: var(--fond);
+  z-index: 1;
+}
+
+.pv-tete h1 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.04em;
+}
+
+.pv-outils {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  background: var(--carte);
+  color: var(--texte);
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--sourd);
+}
+
+button.actif {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+#pv-regenerer {
+  font-weight: 600;
+}
+
+.pv-tailles {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.pv-serie {
+  color: var(--sourd);
+}
+
+.pv-serie b {
+  color: var(--texte);
+}
+
+.pv-cherche {
+  color: var(--sourd);
+}
+
+.pv-cherche input {
+  min-height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--trait);
+  border-radius: 10px;
+  background: var(--carte);
+  color: var(--texte);
+  font: inherit;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  width: 9em;
+}
+
+.pv-famille h2 {
+  margin: 28px 0 12px;
+  font-size: 17px;
+  color: var(--sourd);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.pv-grille,
+.pv-un {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(var(--t, 64px) + 48px), 1fr));
+  gap: 10px;
+}
+
+/* `display: grid` l'emporterait sur `hidden` : on le redit. */
+.pv-un[hidden] {
+  display: none;
+}
+
+.pv-un {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px dashed var(--trait);
+  border-radius: 12px;
+  grid-template-columns: repeat(3, auto);
+  justify-content: start;
+}
+
+.pv-cell {
+  margin: 0;
+  padding: 10px 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: var(--carte);
+  border: 1px solid var(--trait);
+  border-radius: 12px;
+  cursor: pointer;
+  /* On règle la colonne sur la taille rendue. */
+  --t: 64px;
+}
+
+.pv-cell:hover {
+  border-color: var(--sourd);
+}
+
+.pv-cell svg {
+  display: block;
+  /* Le damier fait voir le transparent, comme une icône à la place d'un emoji. */
+  background:
+    linear-gradient(45deg, #262a3a 25%, transparent 25%, transparent 75%, #262a3a 75%),
+    linear-gradient(45deg, #262a3a 25%, transparent 25%, transparent 75%, #262a3a 75%) 8px 8px / 16px 16px;
+  background-size: 16px 16px;
+  border-radius: 6px;
+}
+
+.pv-cell figcaption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.25;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.pv-cell figcaption b {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.pv-cell figcaption small {
+  font-size: 10px;
+  color: var(--sourd);
+}

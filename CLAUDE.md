@@ -337,6 +337,14 @@ noms longs).
 - Un `git checkout` ne défait pas une sonde, il défait un fichier.
 - Ce qui se teste doit pouvoir s'ouvrir d'un lien.
 
+## UN TEST À PART : LE GÉNÉRATEUR D'ICÔNES — `preview.html`
+
+Des vaisseaux et des planètes en SVG plat, tirés d'un identifiant (même id,
+même visuel), palettes fixes, symétrie miroir, pièces ancrées. `logic/procgen/`
+(pur, dans `npm run verif`), `ui/procgen/svg.ts` (`renderIcon`), la page
+`preview.html?serie=N` hors du jeu. **Aucun emoji n'est remplacé.** Tout est
+dans `docs/procgen.md`.
+
 ## LA SECONDE COLLECTION : LES PEINTURES — `?paquet&art`
 
 Gardée ouvrable, plus travaillée. Pipeline `npm run peintures` (Wikidata +
@@ -357,6 +365,7 @@ src/
       tirage.ts     # les deux bonus, holo et animé, tirés à l'ouverture
       collection.ts # ce qu'on a obtenu : ajouter un paquet, relire le stockage
       deck.ts       # le deck de trente qui joue tout seul : mains, cycles, Likes, temps injecté
+    procgen/     # LE TEST : un vaisseau ou une planète dessinés depuis un id (chemins SVG, pas de DOM)
     paintings/   # la seconde collection : une carte = une PEINTURE
       types.ts      # CartePeinture, la validation, le siècle, les rayons
     combat.ts    # ARCHIVE : le tour par tour, les cartes, les effets
@@ -383,6 +392,7 @@ src/
     Main3D.tsx       # ARCHIVE : l'éventail et le geste de la main de combat
   ui/      # CE QUI SORT DU PUR : les entrées-sorties et le chrome
     emoji.ts        # chargerEmojis() : le fetch du catalogue (logic/ est pur)
+    procgen/        # renderIcon() : le dessin engendré rendu en <svg> ; la page preview.html
     collection.ts   # la collection dans localStorage — le seul à y toucher
     peintures.ts    # chargerPeintures()
     texte-carte.ts  # le texte d'une carte, sans DOM
@@ -504,6 +514,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `?rayons=0`, `?touches=1`, `?decor=bleu` | derrière l'emoji : sans les rayons du cran, avec les touches de clavier, avec le bleu nuit commun au lieu de la nuit du cran |
 | `?extraction`, `?r3f`, `?jeu` | l'archive |
 | `?ecusson` | la planche des symboles de coût |
+| `preview.html?serie=N` | la page du générateur d'icônes, hors du jeu |
 
 ## Déploiement — workflow attendu par Keko
 
@@ -590,6 +601,7 @@ une note de `docs/emoji.md` y renvoie.
 | `docs/mobile-et-sons.md` | les contraintes mobile en détail, les variables CSS, les sons |
 | `docs/methode.md` | la méthode, les images de Keko, l'anatomie et le vocabulaire de la carte |
 | `docs/archive-extraction.md` | le jeu d'extraction entier, du concept au moteur 3D |
+| `docs/procgen.md` | le générateur d'icônes (vaisseaux, planètes) et sa page de preview |
 
 *Ces documents ne sont pas chargés avec ce fichier : on les ouvre à la
 demande, par la section qui concerne ce qu'on touche* (`grep -n '^###'` pour

@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { fileURLToPath } from 'node:url'
 
 const buildTime = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC'
 
@@ -64,6 +65,14 @@ export default defineConfig(({ command }) => ({
     // Safari 16.4+. Sur un téléphone plus ancien la règle serait ignorée
     // SANS ERREUR : le combat redéborderait de l'écran et rien ne le dirait.
     cssTarget: ['chrome90', 'safari14', 'firefox90'],
+    // LA PAGE DE PREVIEW DU GÉNÉRATEUR est une seconde page, hors du jeu :
+    // `preview.html` à côté de `index.html`, servie telle quelle par Pages.
+    rollupOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        preview: fileURLToPath(new URL('./preview.html', import.meta.url)),
+      },
+    },
   },
   plugins: [react(), datePubliee(), manifesteVersionne()],
 }))
