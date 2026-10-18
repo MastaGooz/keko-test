@@ -1125,6 +1125,29 @@
   opacity: 0.7;
 }
 
+/* LE CONTOUR FANTÔME : le cerne du sticker, blanchi, posé là où il sera
+   collé ; il respire doucement pour se lire comme une prévisualisation. */
+.sticker-fantome {
+  position: fixed;
+  left: -100px;
+  top: -100px;
+  z-index: 29;
+  height: auto;
+  transform: translate(-50%, -50%) rotate(var(--a, 0rad));
+  filter: grayscale(1) brightness(4) drop-shadow(0 0 0.12rem rgba(14, 6, 40, 0.9));
+  pointer-events: none;
+  animation: fantome-respire 1s ease-in-out infinite alternate;
+}
+
+@keyframes fantome-respire {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* LE STICKER QUI SUIT LE DOIGT, à la taille qu'il aura sur la carte, penché
    comme il sera collé ; il ne prend pas les événements, la case les garde. */
 .sticker-flottant {
