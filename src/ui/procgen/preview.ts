@@ -10,12 +10,13 @@
 import './preview.css'
 import { FAMILLES, RACES, ROLES, seedDe, type Famille, type Race } from '../../logic/procgen/index.ts'
 import { createRng } from '../../logic/rng.ts'
-import { renderIcon } from './svg.ts'
+import { renderDessin, renderIcon } from './svg.ts'
+import { dessinerOrigami, dureeTotale, genererOrigami } from '../../logic/procgen/index.ts'
 
 const PAR_FAMILLE = 30
 const TAILLES = [32, 64, 128] as const
-const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', vaisseau: 'v', alien: 'x' }
-const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
+const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', vaisseau: 'v', alien: 'x' }
+const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', origami: 'Origami (toucher pour déplier)', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
 const NOM_RACE: Record<Race, string> = { humain: 'Humain', alien: 'Alien', biologique: 'Biologique' }
 
 const adresse = new URL(location.href)
@@ -77,14 +78,53 @@ function cellule(famille: Famille, id: string, t: number): HTMLElement {
   const legende = document.createElement('figcaption')
   legende.innerHTML = `<b>${id}</b><small>${icone.dataset.seed}</small>`
   cell.appendChild(legende)
-  cell.title = 'Cliquer pour copier l’identifiant'
+  cell.title = famille === 'origami' ? 'Toucher pour déplier' : 'Cliquer pour copier l’identifiant'
   cell.addEventListener('click', () => {
+    if (famille === 'origami') {
+      deplier(cell, id, t)
+      return
+    }
     void navigator.clipboard?.writeText(id)
     const champ = document.getElementById('pv-id') as HTMLInputElement
     champ.value = id
     montrerUn(id)
   })
   return cell
+}
+
+/**
+ * L'ANIMATION DU DÉPLIAGE : on déplie (t de 1 à 0), on laisse voir la feuille
+ * et ses plis, on replie. Chaque image est un dessin recalculé et rendu, la
+ * géométrie est assez petite pour ça.
+ */
+const enCours = new WeakSet<HTMLElement>()
+function deplier(cell: HTMLElement, id: string, t: number): void {
+  if (enCours.has(cell)) return
+  enCours.add(cell)
+  const modele = genererOrigami(id)
+  const parEtape = 520 // ms par unité d'étape
+  const duree = dureeTotale(modele) * parEtape
+  const pause = 700
+  const debut = performance.now()
+  const montrer = (avancement: number) => {
+    const svg = renderDessin(dessinerOrigami(modele, avancement), t)
+    cell.querySelector('svg')!.replaceWith(svg)
+  }
+  const image = (maintenant: number) => {
+    const e = maintenant - debut
+    let avancement: number
+    if (e < duree) avancement = 1 - e / duree
+    else if (e < duree + pause) avancement = 0
+    else if (e < 2 * duree + pause) avancement = (e - duree - pause) / duree
+    else {
+      montrer(1)
+      enCours.delete(cell)
+      return
+    }
+    montrer(avancement)
+    requestAnimationFrame(image)
+  }
+  requestAnimationFrame(image)
 }
 
 function peindre(): void {

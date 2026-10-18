@@ -339,7 +339,7 @@ noms longs).
 
 ## UN TEST À PART : LE GÉNÉRATEUR D'ICÔNES — `preview.html`
 
-Trois races (humain, alien, biologique) × trois rôles (combat, minage, station), plus des planètes et des astéroïdes, en SVG plat, tirés d'un identifiant (même id,
+Trois races (humain, alien, biologique) × trois rôles (combat, minage, station), plus des planètes, des astéroïdes et des ORIGAMIS qui se déplient, en SVG plat, tirés d'un identifiant (même id,
 même visuel), palettes fixes, symétrie miroir, pièces ancrées. `logic/procgen/`
 (pur, dans `npm run verif`), `ui/procgen/svg.ts` (`renderIcon`), la page
 `preview.html?serie=N` hors du jeu. **Aucun emoji n'est remplacé.** Tout est
@@ -601,7 +601,7 @@ une note de `docs/emoji.md` y renvoie.
 | `docs/mobile-et-sons.md` | les contraintes mobile en détail, les variables CSS, les sons |
 | `docs/methode.md` | la méthode, les images de Keko, l'anatomie et le vocabulaire de la carte |
 | `docs/archive-extraction.md` | le jeu d'extraction entier, du concept au moteur 3D |
-| `docs/procgen.md` | le générateur d'icônes (humain / alien / biologique × combat, minage, station ; planètes, astéroïdes) et sa page de preview |
+| `docs/procgen.md` | le générateur d'icônes (humain / alien / biologique × combat, minage, station ; planètes, astéroïdes, origami et son dépliage) et sa page de preview |
 
 *Ces documents ne sont pas chargés avec ce fichier : on les ouvre à la
 demande, par la section qui concerne ce qu'on touche* (`grep -n '^###'` pour

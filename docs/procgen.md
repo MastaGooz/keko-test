@@ -1,4 +1,4 @@
-# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -159,6 +159,46 @@ l'accent est une lueur acide.
   autour, des alvéoles, un œil au centre), le COCON (strié, des épines tout
   autour, une fente qui luit et l'œil dedans), l'ÉTOILE de chair (un cœur, 4 à
   8 bras en épine, des membranes entre).
+
+## L'origami et son dépliage (`origami.ts`)
+
+Keko, pendant la discussion sur un thème papier : « t'es capable de générer
+un origami et son animation de dépliement ? ». Réponse par un MOTEUR DE
+PLIAGE À PLAT :
+
+- la feuille est un jeu de MORCEAUX (polygones) empilés, chacun avec la face
+  qu'il montre (recto / verso) et sa couche ;
+- un PLI est une droite, un côté qui bouge et un sens (par-dessus ou
+  par-dessous) ; plier, c'est couper chaque morceau par la droite
+  (Sutherland-Hodgman), refléter la partie qui bouge, retourner sa face et la
+  poser sur la pile — la pile se renverse en se rabattant ;
+- un pli traverse TOUTES les couches (un « pli simple ») : on ne sait ni
+  plier une seule épaisseur ni rentrer une pointe dans une poche, c'est la
+  limite honnête du moteur ; il sait aussi MARQUER un pli (plié puis déplié,
+  la coupe reste) et RETOURNER le modèle ;
+- les plis sont les ARÊTES des morceaux : la feuille dépliée montre d'elle-
+  même son diagramme, sans rien mémoriser.
+
+**L'animation ne triche pas** : pendant une étape, le rabat tourne autour de
+sa charnière de 0 à 180 degrés, vu de dessus (projection orthogonale : le
+point s'écrase vers la droite de pli puis la dépasse), sa face visible
+bascule à 90 degrés, son ombre portée s'allonge quand il est levé. Déplier,
+c'est jouer la suite à l'envers (`dessinerOrigami(modele, t)`, t de 1 à 0).
+Sur la page, toucher un origami le déplie, montre la feuille et ses plis, le
+replie.
+
+Quatre modèles, chacun avec ses options tirées de l'id : l'AVION (la pointe
+en haut, les bords rabattus sur l'axe deux ou trois fois, la pointe
+rabattue, les ailerons par-dessous), le POISSON (un losange, la base du
+cerf-volant, la queue qui remonte, la tête rabattue), la COCOTTE (les quatre
+coins au centre, retournée, encore une fois), le CHAPEAU (la feuille en
+deux, les coins sur l'axe, le bord relevé). Dix papiers BICOLORES : le verso
+est une teinte pâle du recto, sinon les modèles pliés sortaient blancs.
+
+*Ce que ça prouve* : un thème origami tient, l'animation de dépliage est
+un objet papier réel, pas un effet. *Ce qui manque pour aller plus loin* :
+les plis d'une seule épaisseur et les poches (grue, bateau, grenouille), qui
+demandent un vrai modèle 3D du papier.
 
 ## La planète (`planete.ts`)
 

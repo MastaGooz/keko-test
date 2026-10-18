@@ -13,11 +13,13 @@ import { genererAsteroide } from './asteroide.ts'
 import { genererStation } from './station.ts'
 import { genererAlien } from './alien.ts'
 import { genererBio } from './bio.ts'
+import { dessinerOrigami, genererOrigami } from './origami.ts'
 import { createRng } from '../rng.ts'
 
 export { BOITE, FAMILLES, RACES, ROLES, type Clip, type Dessin, type Famille, type Forme, type Race } from './types.ts'
 import { seedDe } from './seed.ts'
 export { seedDe }
+export { dessinerOrigami, dureeTotale, genererOrigami, type Modele } from './origami.ts'
 
 export function genererDessin(famille: Famille, id: string, race: Race = 'humain'): Dessin {
   if (famille === 'alien') return genererAlien(id, 'combat')
@@ -33,5 +35,6 @@ export function genererDessin(famille: Famille, id: string, race: Race = 'humain
   if (famille === 'combat' || famille === 'minage') return genererVaisseau(id, famille)
   if (famille === 'station') return genererStation(id)
   if (famille === 'planete') return genererPlanete(id)
+  if (famille === 'origami') return dessinerOrigami(genererOrigami(id), 1)
   return genererAsteroide(id)
 }

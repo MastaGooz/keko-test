@@ -17,7 +17,12 @@ function idDeClip(prefixe: string, clip: string): string {
 }
 
 export function renderIcon(famille: Famille, id: string, taille: number, race: Race = 'humain'): SVGSVGElement {
-  const dessin = genererDessin(famille, id, race)
+  return renderDessin(genererDessin(famille, id, race), taille)
+}
+
+/** Le rendu d'un dessin déjà calculé (une image d'animation, par exemple). */
+export function renderDessin(dessin: Dessin, taille: number): SVGSVGElement {
+  const { famille, id } = dessin
   const prefixe = `pg${(compteur++).toString(36)}`
   const svg = document.createElementNS(NS, 'svg')
   svg.setAttribute('viewBox', `0 0 ${dessin.boite} ${dessin.boite}`)
