@@ -6890,3 +6890,7 @@ Keko, après avoir demandé les dimensions pour « une grosse emoji, disons un d
 Dimensions conseillées à Keko : **1024 × 888** (le rapport de la fenêtre) ; un carré perd 7 % en haut et en bas — le gobelin perd la pointe des cheveux et le bas des bottes, c'est le cadrage voulu. **À rejuger** : dans l'album et au décollage en grand (`stickerDe`, `stickerHautDe`), le sticker est l'image carrée entière cernée de crème — un « sticker carré », pas la fenêtre ; et le décollage tire une plaque de la taille de la fenêtre.
 
 Au passage, Keko a supprimé `Gobelin.webp` du dossier : le fichier sort du dépôt.
+
+### « Goblin paper » redevient un sticker à marges (18/10/2026)
+
+Keko : « j'ai mis à jour goblin paper ». Le nouveau fichier est un 512 × 512 avec 8 % de marge de chaque côté, le personnage (cape, dague) ne touche aucun bord : c'est un sticker classique, pas une image de fenêtre. **👺 repasse en mode normal** (il rentre entier dans la fenêtre d'art) — en fenêtre, ses marges auraient laissé une bande vide autour. Lu comme un signal de l'image, pas décidé par Keko : à rejuger s'il voulait le voir en fenêtre. Le mode fenêtre reste dans la table (`fenetre: true`), sans emploi pour l'instant.
