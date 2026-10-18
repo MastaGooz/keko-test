@@ -127,7 +127,10 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (`EMOJI_DE_KEKO` dans `ui/art.ts`, identifiant → fichier de `public/`) :
   PNG ou WebP 512 carré, fond transparent, ~5 % de marge, sans contour ni
   ombre — le jeu en fait le même sticker. Absent ou en échec : le glyphe.
-  **TEST EN COURS** : 👺 (`Goblin paper.png`) sort en première carte de chaque
+  **Ou EN FENÊTRE** (`{ fichier, fenetre: true }`, Keko : « que l'image aille
+  jusqu'à la bordure ») : l'image COUVRE la fenêtre d'art, coupée à ses bords,
+  cerne emporté par la coupe (`stickerEnFenetre`), 1024 × 888 conseillé.
+  **TEST EN COURS** : 👺 (`Goblin paper.png`, en fenêtre) sort en première carte de chaque
   paquet (`TEST_GOBELIN`, `Paquet3D.tsx`) — `null` quand Keko a jugé.
 - **La bordure brille comme le film du sachet** (`BRILLANT`), **et reste
   plate** (Keko a refusé le biseau) : la réflexion de la clé du sachet (haut

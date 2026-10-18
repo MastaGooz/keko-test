@@ -6880,3 +6880,13 @@ Keko : « dans l'image de l'emoji bulle, la zone transparente à l'intérieur a 
 ### Le gobelin devient « Goblin paper » (18/10/2026)
 
 Keko : « tu peux remplacer le gobelin par l'image Goblin paper ? ». `Goblin paper.png` (512 × 512 RGBA, 238 Ko, marges 4 %) remplace `Gobelin.webp` dans `EMOJI_DE_KEKO` pour 👺 ; l'espace du nom passe par `encodeURIComponent`. L'ancien fichier reste dans `public/` sans être référencé — à retirer si Keko ne le veut plus.
+
+### L'image de Keko en fenêtre : jusqu'à la bordure, sous la plaque (18/10/2026)
+
+Keko, après avoir demandé les dimensions pour « une grosse emoji, disons un dragon, qui montre sa tête mais son corps en dehors de la carte » : « en fait je voudrais vraiment que l'image aille jusqu'à la bordure, pour un effet "fenêtre" » — et il a redessiné « Goblin paper » en 1254 × 1254 sans marge, l'encre aux quatre bords. Jusque-là une image perso rentrait ENTIÈRE dans la fenêtre d'art, avec sa marge de sticker, comme un glyphe : impossible de la couper.
+
+**Un second mode par fichier dans `EMOJI_DE_KEKO`** : `{ fichier, fenetre: true }` (`emojiDeKekoEnFenetre`, porté par `CarteAPeindre.persoEnFenetre`, dans la clé du cache). L'image passe par le même peintre de sticker que les autres (`stickerPleinCadre` : mise au carré sans déformation, cerne et ombre, à la finesse de l'image jusqu'à 1024 au lieu de 512 — elle remplit sept cents pixels de carte), puis **`stickerEnFenetre` la fait COUVRIR la fenêtre d'art** (de la bordure à la plaque, 726 × 630 sur 768, rapport 1,15), centrée, agrandie au `cover`, coupée aux bords de la fenêtre. *Le cerne ne suit que les vrais contours* : calculé sur l'image entière, il est emporté par la coupe là où l'encre touche le bord — pas de bande crème le long de la coupe. **C'est la toile coupée qui devient « le sticker posé »** (`sujetDe`, le masque des rayons brillants) : le relief de la holo, son cerne arc-en-ciel et le décollage la reprennent à sa place, exactement la fenêtre, rien ne déborde. Sous `?sticker=0` l'image nue couvre pareil.
+
+Dimensions conseillées à Keko : **1024 × 888** (le rapport de la fenêtre) ; un carré perd 7 % en haut et en bas — le gobelin perd la pointe des cheveux et le bas des bottes, c'est le cadrage voulu. **À rejuger** : dans l'album et au décollage en grand (`stickerDe`, `stickerHautDe`), le sticker est l'image carrée entière cernée de crème — un « sticker carré », pas la fenêtre ; et le décollage tire une plaque de la taille de la fenêtre.
+
+Au passage, Keko a supprimé `Gobelin.webp` du dossier : le fichier sort du dépôt.

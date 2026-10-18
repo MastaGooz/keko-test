@@ -422,15 +422,30 @@ export function dosDeCarte(): string {
  * (`stickerDUneImage`). *Un emoji absent de la table garde son glyphe Noto*,
  * donc on peut les remplacer un par un.
  */
-const EMOJI_DE_KEKO: Record<string, string> = {
+/**
+ * Un fichier seul : l'image RENTRE dans la fenêtre d'art, en sticker. Avec
+ * `fenetre: true`, elle la COUVRE jusqu'à la bordure et passe sous la plaque
+ * (Keko : « je voudrais vraiment que l'image aille jusqu'à la bordure, pour un
+ * effet "fenêtre" ») : voir `stickerEnFenetre`. Conseillé : 1024 × 888, le
+ * rapport de la fenêtre ; un carré perd 7 % en haut et en bas.
+ */
+type EmojiDeKeko = string | { readonly fichier: string; readonly fenetre: true }
+const EMOJI_DE_KEKO: Record<string, EmojiDeKeko> = {
   '1fae0': 'Test.png',
-  /** 👺 « monstre japonais », redessiné en gobelin (18/10/2026) — « Goblin paper », qui a remplacé `Gobelin.webp`. */
-  '1f47a': 'Goblin paper.png',
+  /** 👺 « monstre japonais », redessiné en gobelin (18/10/2026) — « Goblin paper », plein cadre, qui a remplacé `Gobelin.webp`. */
+  '1f47a': { fichier: 'Goblin paper.png', fenetre: true },
 }
 
 /** L'image de Keko pour cet emoji, s'il y en a une. */
 export function urlEmojiDeKeko(id: string): string | null {
-  const fichier = EMOJI_DE_KEKO[id]
-  if (fichier === undefined) return null
+  const e = EMOJI_DE_KEKO[id]
+  if (e === undefined) return null
+  const fichier = typeof e === 'string' ? e : e.fichier
   return `${import.meta.env.BASE_URL}${encodeURIComponent(fichier)}?v=${encodeURIComponent(__BUILD_TIME__)}`
+}
+
+/** L'image de Keko pour cet emoji est-elle en fenêtre (elle couvre la fenêtre d'art) ? */
+export function emojiDeKekoEnFenetre(id: string): boolean {
+  const e = EMOJI_DE_KEKO[id]
+  return typeof e === 'object' && e.fenetre
 }

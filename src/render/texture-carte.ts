@@ -247,6 +247,12 @@ export type CarteAPeindre = {
    */
   emojiPerso?: string
   /**
+   * L'IMAGE DE KEKO EN FENÊTRE : elle COUVRE la fenêtre d'art jusqu'à la
+   * bordure et passe sous la plaque, au lieu d'y rentrer entière avec sa
+   * marge de sticker. Voir `stickerEnFenetre`.
+   */
+  persoEnFenetre?: boolean
+  /**
    * LA CARTE SANS SON STICKER : le décor, les rayons, la plaque, et un trou
    * nulle part — ce qui reste sous l'emoji qu'on décolle (voir `Decollage`).
    * *Elle entre dans la signature* : la carte 3D la prend pendant le geste, et
@@ -1876,6 +1882,80 @@ export function stickerAnime(image: CanvasImageSource, cote: number): HTMLCanvas
   return SANS_STICKER ? null : stickerDUneImage(image, cote)
 }
 
+/**
+ * L'IMAGE DE KEKO EN FENÊTRE. Keko : « je voudrais vraiment que l'image aille
+ * jusqu'à la bordure, pour un effet "fenêtre" ». Un emoji perso ordinaire
+ * rentre entier dans la fenêtre d'art, avec sa marge de sticker ; ici l'image
+ * la COUVRE : posée au centre, agrandie jusqu'à remplir la largeur et la
+ * hauteur, et coupée par la fenêtre — ce qui dépasse passe sous la bordure et
+ * sous la plaque (`stickerEnFenetre`). *Le cerne crème ne suit que les vrais
+ * contours* : il se calcule sur l'image entière (`stickerPleinCadre`, le
+ * même peintre que les autres stickers), et la coupe l'emporte là où l'encre
+ * atteint le bord — une bande crème le long d'une coupe dirait « sticker
+ * découpé droit », pas « fenêtre ».
+ *
+ * Le sticker est peint à la finesse de l'image (jusqu'à `TOILE_FENETRE`), pas
+ * à 512 : il remplit la fenêtre, et 512 pixels étirés sur sept cents auraient
+ * été flous. Dimensions conseillées : 1024 × 888, le rapport de la fenêtre
+ * (1,15) ; un carré perd 7 % en haut et en bas.
+ *
+ * **C'est la toile COUPÉE qui est « le sticker posé »** (`sujetDe`) : le
+ * relief de la holo, son cerne arc-en-ciel et le décollage la reprennent à
+ * sa place, et rien ne déborde de la fenêtre.
+ */
+const TOILE_FENETRE = 1024
+/** Le rapport largeur / hauteur de l'image d'origine, par sticker plein cadre (1 pour un carré). */
+const RAPPORTS_PLEIN_CADRE = new WeakMap<HTMLCanvasElement, number>()
+function stickerPleinCadre(image: HTMLImageElement): HTMLCanvasElement | null {
+  const w = image.naturalWidth
+  const h = image.naturalHeight
+  if (w === 0 || h === 0) return null
+  const cote = Math.min(TOILE_FENETRE, Math.max(w, h))
+  // CARRÉE, L'IMAGE CENTRÉE : le peintre du sticker ne connaît que des carrés,
+  // et une image étirée dedans aurait été déformée.
+  const carre = document.createElement('canvas')
+  carre.width = cote
+  carre.height = cote
+  const e = cote / Math.max(w, h)
+  carre.getContext('2d')?.drawImage(image, (cote - w * e) / 2, (cote - h * e) / 2, w * e, h * e)
+  const toile = stickerDUneImage(carre, cote)
+  if (toile !== null) RAPPORTS_PLEIN_CADRE.set(toile, w / h)
+  return toile
+}
+
+/** Le sticker plein cadre coupé à la fenêtre : une toile de `l` × `h` pixels qu'il couvre. Mémorisée par taille. */
+const FENETRES = new WeakMap<HTMLImageElement | HTMLCanvasElement, Map<string, HTMLCanvasElement>>()
+function stickerEnFenetre(sticker: HTMLImageElement | HTMLCanvasElement, l: number, h: number): HTMLCanvasElement {
+  let parTaille = FENETRES.get(sticker)
+  if (parTaille === undefined) {
+    parTaille = new Map()
+    FENETRES.set(sticker, parTaille)
+  }
+  const cle = `${l}x${h}`
+  const deja = parTaille.get(cle)
+  if (deja !== undefined) return deja
+  const fen = document.createElement('canvas')
+  fen.width = l
+  fen.height = h
+  const ctx = fen.getContext('2d')
+  if (ctx === null) return fen
+  // OÙ EST L'IMAGE DANS LA TOILE DU STICKER : le carré central, sans la marge
+  // du sticker (nulle sous `?sticker=0`, où l'image arrive nue), et dedans
+  // l'image à son rapport. C'est ELLE qui doit couvrir la fenêtre.
+  const nu = sticker instanceof HTMLImageElement
+  const nl = nu ? sticker.naturalWidth : sticker.width
+  const nh = nu ? sticker.naturalHeight : sticker.height
+  const r = nu ? nl / nh : (RAPPORTS_PLEIN_CADRE.get(sticker) ?? 1)
+  const cote = nu ? Math.max(nl, nh) : nl / (1 + MARGE_STICKER * 2)
+  const iw = r >= 1 ? cote : cote * r
+  const ih = r >= 1 ? cote / r : cote
+  const s = Math.max(l / iw, h / ih)
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(sticker, l / 2 - (nl * s) / 2, h / 2 - (nh * s) / 2, nl * s, nh * s)
+  parTaille.set(cle, fen)
+  return fen
+}
+
 async function illustration(
   nom: string,
   rarete?: string,
@@ -1885,6 +1965,8 @@ async function illustration(
   prete?: CanvasImageSource & { width: number; height: number },
   sticker = false,
   perso?: string,
+  /** L'image de Keko en fenêtre : voir `stickerPleinCadre`. */
+  fenetre = false,
 ): Promise<HTMLImageElement | HTMLCanvasElement | null> {
   // UNE IMAGE DEJA PRETE PASSE DEVANT TOUT : c'est le chemin de l'emoji anime,
   // et *elle n'a rien a charger*, donc rien a attendre.
@@ -1897,7 +1979,7 @@ async function illustration(
     const image = await charger(perso)
     if (image !== null) {
       if (!sticker) return image
-      const toile = stickerDUneImage(image, TOILE_EMOJI)
+      const toile = fenetre ? stickerPleinCadre(image) : stickerDUneImage(image, TOILE_EMOJI)
       if (toile !== null) {
         STICKERS.set(perso, toile)
         return toile
@@ -3699,6 +3781,7 @@ export async function peindreCarte(
       carte.image,
       enBulle(carte) && !SANS_STICKER,
       carte.emojiPerso,
+      carte.persoEnFenetre === true,
     ),
     // LE CIEL DIT LA FAMILLE : ce n'est pas un voile posé sur le décor, c'est
     // un AUTRE décor — le même fichier, viré une fois pour toutes à la couleur
@@ -4008,12 +4091,23 @@ export async function peindreCarte(
   }
 
 
-  if (image !== null) {
-    couvrir(ctx, image, marge, aY, LARGE - marge * 2, aH, rognage)
+  // EN FENÊTRE, l'image couvre la fenêtre d'art entière (de la bordure à la
+  // plaque), coupée à ses bords : voir `stickerEnFenetre`. Le sujet posé, son
+  // masque et le rognage deviennent ceux de cette toile coupée, qui rentre
+  // exactement dans la fenêtre.
+  const enFenetre = image !== null && carte.persoEnFenetre === true && bulle
+  const lFen = LARGE - marge * 2
+  const sujet = enFenetre ? stickerEnFenetre(image!, Math.round(lFen * (largeur / LARGE)), Math.round(fH * (largeur / LARGE))) : image
+  const sY = enFenetre ? fY : aY
+  const sH = enFenetre ? fH : aH
+  const sRognage = enFenetre ? 0 : rognage
+  if (sujet !== null) {
+    ctx.imageSmoothingQuality = 'high'
+    couvrir(ctx, sujet, marge, sY, lFen, sH, sRognage)
     // OÙ L'EMOJI EST POSÉ, en pixels de la toile : le décollage le reprend là.
-    const r = placeDansCouvrir(image, marge, aY, LARGE - marge * 2, aH, rognage)
+    const r = placeDansCouvrir(sujet, marge, sY, lFen, sH, sRognage)
     const k = largeur / LARGE
-    SUJETS.set(canvas, { image, x: r.x * k, y: r.y * k, l: r.l * k, h: r.h * k })
+    SUJETS.set(canvas, { image: sujet, x: r.x * k, y: r.y * k, l: r.l * k, h: r.h * k })
   }
   // LE MASQUE DU SUJET, pour que les rayons clairs brillent SANS l'emoji
   // posé dessus — voir `masqueDuSujet`. L'ANIMÉ (`toile`) le prend aussi, et
@@ -4022,7 +4116,7 @@ export async function peindreCarte(
   if (bulle && !SANS_RAYONS && (FORCE_RAYONS[carte.rarete ?? ''] ?? 0) > 0) {
     MASQUES_DU_SUJET.set(
       canvas,
-      masqueDuSujet(image as HTMLCanvasElement | null, marge, aY, aH, rognage, MASQUES_DU_SUJET.get(canvas)),
+      masqueDuSujet(sujet as HTMLCanvasElement | null, marge, sY, sH, sRognage, MASQUES_DU_SUJET.get(canvas)),
     )
   }
 
@@ -6610,7 +6704,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}`
 }
 
 /**

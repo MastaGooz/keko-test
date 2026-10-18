@@ -13,7 +13,7 @@
 import type { CarteAPeindre } from './texture-carte.ts'
 import { NOM_DU_GROUPE, type CarteEmoji, type RareteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
-import { urlEmojiDeKeko } from '../ui/art.ts'
+import { emojiDeKekoEnFenetre, urlEmojiDeKeko } from '../ui/art.ts'
 
 /**
  * UN CRAN, UNE COULEUR — **et c'est la table que Keko a dictée.**
@@ -130,6 +130,8 @@ export function carteDeLEmoji(c: CarteEmoji, bonus?: Bonus): CarteAPeindre {
     emoji: c.emoji,
     // L'EMOJI DESSINÉ PAR KEKO passe devant le glyphe Noto : voir `urlEmojiDeKeko`.
     emojiPerso: urlEmojiDeKeko(c.id) ?? undefined,
+    // ET EN FENÊTRE si la table le dit : l'image couvre la fenêtre d'art.
+    persoEnFenetre: emojiDeKekoEnFenetre(c.id) || undefined,
     // L'ANIMATION EST DEMANDEE PAR LA CARTE, PAS PAR LE PEINTRE : voir
     // `emoji-anime.ts`. *Un emoji sans version animee n'en demande aucune*, et
     // la carte reste statique -- comme sur un navigateur sans `ImageDecoder`.
