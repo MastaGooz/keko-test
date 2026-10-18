@@ -26,7 +26,7 @@ import type { Collection, Exemplaire, Possession, StickerColle, Variante } from 
 import { VARIANTES, compteDe, exemplaireDe, nombreDeColles, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
 import { AMBIANCE, TAILLE_COLLE, placeNonCoupee, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
-import { animationHolo, cerneArcEnCiel, cleDesColles, coucheDesRayons, paillettesHolo, peinte, stickerPeint, stickersColles, sujetDeLaVignette, type StickerPeint } from './peinture-vignette.ts'
+import { animationHolo, cleDesColles, coucheDesRayons, paillettesHolo, peinte, stickerPeint, stickersColles, sujetDeLaVignette, type StickerPeint } from './peinture-vignette.ts'
 import { COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
 import { RAYONS_DANS_LA_CARTE } from './texture-carte.ts'
@@ -1036,45 +1036,107 @@ function ChoixDuSticker({
 }
 
 /**
- * LE CONTOUR FANTÔME D'UN STICKER : son cerne seul (`cerneArcEnCiel`,
- * `seulCerne`), passé en JAUNE et en POINTILLÉ — Keko : « il faudrait que la
- * prévisualisation du sticker soit jaune en pointillé ». Le pointillé est une
- * grille de points posée en `destination-in` sur l'anneau : pas de chemin à
- * suivre, l'anneau n'est qu'un alpha, et des points de la taille de son
- * épaisseur le lisent comme un trait pointillé.
+ * LE CONTOUR FANTÔME D'UN STICKER : UN TRAIT POINTILLÉ JAUNE QUI SUIT SON BORD.
+ * Keko : « la prévisualisation du sticker soit jaune en pointillé » — puis,
+ * devant une trame de points posée sur le cerne, « les pointillés sont très
+ * moches ». *Un pointillé est un trait qui suit un chemin*, pas une texture :
+ * on retrouve donc le chemin. La silhouette du sticker (son alpha, cerne
+ * compris) est suivie pixel à pixel le long de son bord (suivi de contour de
+ * Moore, sur une grille de 256), composant par composant — les trous ne sont
+ * pas suivis (le composant est rempli après son tour) —, puis le chemin est
+ * tracé en tirets ronds, jaunes, avec `setLineDash`.
  */
-const JAUNE_FANTOME: [number, number, number] = [255, 212, 94]
+const JAUNE_FANTOME = '#ffd45e'
 function contourPointille(image: HTMLCanvasElement): HTMLCanvasElement {
+  const n = 256
+  const lu = document.createElement('canvas')
+  lu.width = n
+  lu.height = n
+  const lctx = lu.getContext('2d', { willReadFrequently: true })
   const contour = document.createElement('canvas')
-  contour.width = image.width
-  contour.height = image.height
-  const ctx = contour.getContext('2d', { willReadFrequently: true })
-  if (ctx === null) return contour
-  ctx.drawImage(image, 0, 0)
-  cerneArcEnCiel(contour, { x: 0, y: 0, l: 1, h: 1 }, true)
-  // EN JAUNE : la couleur remplace, l'alpha de l'anneau reste.
-  const donnees = ctx.getImageData(0, 0, contour.width, contour.height)
-  const d = donnees.data
-  for (let i = 0; i < d.length; i += 4) {
-    if (d[i + 3] === 0) continue
-    d[i] = JAUNE_FANTOME[0]
-    d[i + 1] = JAUNE_FANTOME[1]
-    d[i + 2] = JAUNE_FANTOME[2]
-    d[i + 3] = Math.min(255, Math.round(d[i + 3]! * 1.4))
+  contour.width = n
+  contour.height = n
+  const ctx = contour.getContext('2d')
+  if (lctx === null || ctx === null) return contour
+  lctx.drawImage(image, 0, 0, n, n)
+  const a = lctx.getImageData(0, 0, n, n).data
+  // LE MASQUE : dedans si l'alpha dépasse un quart, avec un bord vide tout autour.
+  const dedans = new Uint8Array(n * n)
+  for (let i = 0; i < n * n; i++) dedans[i] = a[i * 4 + 3]! > 64 ? 1 : 0
+  for (let i = 0; i < n; i++) dedans[i] = dedans[(n - 1) * n + i] = dedans[i * n] = dedans[i * n + n - 1] = 0
+  const vu = new Uint8Array(n * n)
+  const est = (x: number, y: number): boolean => x >= 0 && y >= 0 && x < n && y < n && dedans[y * n + x] === 1
+  // Les huit voisins, dans l'ordre horaire, en partant de la gauche.
+  const DX = [-1, -1, 0, 1, 1, 1, 0, -1]
+  const DY = [0, -1, -1, -1, 0, 1, 1, 1]
+  const chemins: number[][] = []
+  for (let y0 = 1; y0 < n - 1; y0++) {
+    for (let x0 = 1; x0 < n - 1; x0++) {
+      // Un pixel dedans, dont le voisin de gauche est dehors, pas encore vu : un
+      // départ sur le bord extérieur d'un composant (on balaie de gauche à droite).
+      if (!est(x0, y0) || vu[y0 * n + x0] === 1 || est(x0 - 1, y0)) continue
+      // LE SUIVI DE MOORE : depuis le voisin par lequel on est arrivé, on tourne
+      // dans le sens horaire jusqu'au prochain pixel dedans.
+      const chemin: number[] = []
+      let x = x0
+      let y = y0
+      let depuis = 0
+      let tours = 0
+      do {
+        chemin.push(x, y)
+        let k = (depuis + 1) % 8
+        let trouve = false
+        for (let essai = 0; essai < 8; essai++) {
+          const nx = x + DX[k]!
+          const ny = y + DY[k]!
+          if (est(nx, ny)) {
+            // On repart en regardant d'où l'on vient : le voisin opposé, moins un cran.
+            depuis = (k + 6) % 8
+            x = nx
+            y = ny
+            trouve = true
+            break
+          }
+          k = (k + 1) % 8
+        }
+        if (!trouve) break
+        tours++
+      } while ((x !== x0 || y !== y0) && tours < n * n)
+      if (chemin.length >= 8) chemins.push(chemin)
+      // LE COMPOSANT EST REMPLI, pour ne pas repartir de ses trous ni de son bord.
+      const pile = [x0, y0]
+      vu[y0 * n + x0] = 1
+      while (pile.length > 0) {
+        const py = pile.pop()!
+        const px = pile.pop()!
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]] as const) {
+          const qx = px + dx
+          const qy = py + dy
+          if (est(qx, qy) && vu[qy * n + qx] === 0) {
+            vu[qy * n + qx] = 1
+            pile.push(qx, qy)
+          }
+        }
+      }
+    }
   }
-  ctx.putImageData(donnees, 0, 0)
-  // EN POINTILLÉ : des points de la taille de l'anneau, un sur deux.
-  const pas = Math.max(6, Math.round(contour.width / 26))
-  const motif = document.createElement('canvas')
-  motif.width = pas
-  motif.height = pas
-  const m = motif.getContext('2d')
-  const trame = m === null ? null : (m.fillStyle = '#fff', m.beginPath(), m.arc(pas / 2, pas / 2, pas * 0.3, 0, Math.PI * 2), m.fill(), ctx.createPattern(motif, 'repeat'))
-  if (trame !== null) {
-    ctx.globalCompositeOperation = 'destination-in'
-    ctx.fillStyle = trame
-    ctx.fillRect(0, 0, contour.width, contour.height)
-    ctx.globalCompositeOperation = 'source-over'
+  // LE TRAIT : tirets ronds, jaunes, un point sur trois pour un bord lisse.
+  const epaisseur = n * 0.03
+  ctx.strokeStyle = JAUNE_FANTOME
+  ctx.lineWidth = epaisseur
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
+  ctx.setLineDash([epaisseur * 1.4, epaisseur * 1.6])
+  for (const chemin of chemins) {
+    ctx.beginPath()
+    for (let i = 0; i < chemin.length; i += 6) {
+      const x = chemin[i]! + 0.5
+      const y = chemin[i + 1]! + 0.5
+      if (i === 0) ctx.moveTo(x, y)
+      else ctx.lineTo(x, y)
+    }
+    ctx.closePath()
+    ctx.stroke()
   }
   return contour
 }
@@ -1097,11 +1159,31 @@ function CaseDuSticker({
   onLacher: (e: React.PointerEvent) => void
 }): React.ReactElement {
   const toile = useRef<HTMLCanvasElement>(null)
+  const bouton = useRef<HTMLButtonElement>(null)
   const image = useRef<HTMLCanvasElement | null>(null)
   /** Le doigt est à nous, de la prise au lâcher — tenu ici plutôt que par `hasPointerCapture`, qu'un navigateur peut refuser. */
   const pris = useRef(false)
   const holo = exemplaireDe(entree.v).holo
+  // PEINTE QUAND ELLE APPROCHE DE L'ÉCRAN, comme une case de l'album : un
+  // ruban de deux mille stickers peints d'un coup figeait la page.
+  const [visible, setVisible] = useState(false)
   useEffect(() => {
+    const el = bouton.current
+    if (el === null) return
+    const obs = new IntersectionObserver(
+      (entrees) => {
+        if (entrees.some((e) => e.isIntersecting)) {
+          setVisible(true)
+          obs.disconnect()
+        }
+      },
+      { rootMargin: '0px 200px' },
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+  useEffect(() => {
+    if (!visible) return
     let vivant = true
     void stickerPeint(entree.carte, holo).then((source) => {
       const t = toile.current
@@ -1115,9 +1197,10 @@ function CaseDuSticker({
     return () => {
       vivant = false
     }
-  }, [entree.carte, holo])
+  }, [entree.carte, holo, visible])
   return (
     <button
+      ref={bouton}
       type="button"
       className="coller-case"
       aria-label={`${enTitre(entree.carte.nom)}, ${NOM_DE_LA_VARIANTE[entree.v]}, ${entree.n} — glisser sur la carte`}
