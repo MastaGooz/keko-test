@@ -25,7 +25,7 @@ import { GROUPES_EMOJI, NOM_DU_GROUPE, RARETES_EMOJI } from '../logic/emoji/type
 import type { Collection, Exemplaire, Possession, StickerColle, Variante } from '../logic/emoji/collection.ts'
 import { VARIANTES, compteDe, exemplaireDe, nombreDeColles, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
-import { AMBIANCE, TAILLE_COLLE, placeDuColle, placeNonCoupee, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
+import { AMBIANCE, TAILLE_COLLE, collesSeChevauchent, placeDuColle, placeNonCoupee, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
 import { animationHolo, cleDesColles, coucheDesRayons, paillettesHolo, peinte, stickerPeint, stickersColles, sujetDeLaVignette, type StickerPeint } from './peinture-vignette.ts'
 import { COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
@@ -749,7 +749,9 @@ function CarteOuverte({
    * Où un point de l'écran tombe dans la fenêtre d'art, en parts (0 à 1) — ou
    * `null` hors de la carte (avec un peu de jeu au bord). **`interdit`** quand le
    * sticker, penché de `a`, y serait coupé par la bordure (`placeNonCoupee` le
-   * déplacerait) : le contour passe au rouge, et le lâcher ne colle pas.
+   * déplacerait) — ou recouvrirait un sticker déjà collé sur cette version
+   * (`collesSeChevauchent`, Keko : « les stickers peuvent se superposer, c'est
+   * moche ») : le contour passe au rouge, et le lâcher ne colle pas.
    */
   const dansLaFenetre = useCallback((x: number, y: number, a: number): { x: number; y: number; interdit: boolean } | null => {
     const b = refBoite.current
@@ -760,8 +762,11 @@ function CarteOuverte({
     const fy = (v - R.y) / R.h
     if (fx < -0.15 || fx > 1.15 || fy < -0.15 || fy > 1.15) return null
     const ok = placeNonCoupee(fx, fy, a)
-    return { x: fx, y: fy, interdit: Math.abs(ok.x - fx) > 1e-6 || Math.abs(ok.y - fy) > 1e-6 }
-  }, [])
+    const coupe = Math.abs(ok.x - fx) > 1e-6 || Math.abs(ok.y - fy) > 1e-6
+    const recouvre = (colles ?? []).some((c, i) => collesSeChevauchent({ x: fx, y: fy }, placeDuColle(c, i)))
+    return { x: fx, y: fy, interdit: coupe || recouvre }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `colles` est lu par sa clé
+  }, [cleColles])
   /**
    * LE STICKER TENU SUIT LE DOIGT, toujours — et, sur la carte, SON CONTOUR le
    * suit aussi, jaune ou rouge selon que la place est permise ou non. Hors de

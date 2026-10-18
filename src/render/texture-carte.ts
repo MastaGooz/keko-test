@@ -1935,6 +1935,22 @@ const ENCRE_DU_STICKER = (0.8 + 2 * CERNE_CARTE) / (1 + 2 * MARGE_STICKER)
  * la hauteur convertie par le rapport de la fenêtre. *La place la plus proche*,
  * c'est la coordonnée bornée : rien d'autre ne bouge.
  */
+/**
+ * DEUX STICKERS COLLÉS SE CHEVAUCHENT-ILS ? Keko : « les stickers peuvent se
+ * superposer, c'est moche ». Chacun est pris pour le disque de son encre
+ * (demi-taille `TAILLE_COLLE` × `ENCRE_DU_STICKER`), la hauteur ramenée en
+ * parts de largeur ; un léger recouvrement des disques est toléré (0,92),
+ * parce qu'un sticker n'est pas un disque plein : deux coins qui se
+ * frôlent ne se recouvrent pas.
+ */
+export function collesSeChevauchent(a: { x: number; y: number }, b: { x: number; y: number }): boolean {
+  const R = RAYONS_DANS_LA_CARTE
+  const r = (TAILLE_COLLE * ENCRE_DU_STICKER) / 2
+  const dx = a.x - b.x
+  const dy = ((a.y - b.y) * (R.h * HAUT)) / (R.l * LARGE)
+  return Math.hypot(dx, dy) < 2 * r * 0.92
+}
+
 export function placeNonCoupee(x: number, y: number, a: number): { x: number; y: number } {
   const R = RAYONS_DANS_LA_CARTE
   const demi = ((TAILLE_COLLE * ENCRE_DU_STICKER) / 2) * (Math.abs(Math.cos(a)) + Math.abs(Math.sin(a)))
