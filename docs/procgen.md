@@ -1,4 +1,4 @@
-# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -292,6 +292,34 @@ marques de joues ; derrière, des plumes en éventail, des rayons de soleil,
 des cornes striées, une crête ; des disques aux tempes, des franges ou des
 perles sous le menton. Huit palettes franches, trait épais. Les plumes et
 les rayons sont bornés à la boîte par calcul.
+
+## Les créatures de type (`creature.ts`) — le « pokémon-like »
+
+Keko : « tu saurais faire des pokémon-like en mode vectoriel ? ». Ce qui
+fait qu'une créature se lit comme telle, ce sont des RÈGLES de dessin, pas
+une forme : une grosse tête sur un petit corps (le rapport tête / corps
+baisse avec le STADE, 1,35–1,6 au stade 1, 0,8–1 au stade 3), des yeux
+larges à iris coloré et DOUBLE reflet (un grand en haut à gauche, un petit
+en bas à droite, l'iris et la pupille découpés par le blanc), des joues, une
+petite bouche (en w, sourire, ouverte, un croc), des membres courts et
+ronds à trois doigts, une silhouette franche, un contour sombre TEINTÉ selon
+la palette (jamais noir), un ombrage à deux tons par découpe (ombre basse,
+reflet haut) — et UN ÉLÉMENT qui marque la bête partout où il peut.
+
+- **Huit types**, deux palettes chacun, et leur motif : feu (flamme à cœur
+  clair), eau (goutte, nageoires ondulées), plante (feuille à nervure),
+  foudre (éclair, joues jaunes), roche et glace (cristal à facette, flocon,
+  stalactites), spectre (volute translucide, pas de pattes), fée (étincelle à
+  huit branches, ailes translucides). Le motif se pose au sommet de la tête
+  ou en paire, au bout de la queue, sur le corps.
+- **Quatre plans** : bipède (pattes, bras, ventre), oiseau (ailes veinées,
+  serres), serpent (un anneau enroulé sous la tête, la queue qui ressort),
+  flottant (la tête est tout, deux nubs ou des volutes dessous).
+- Oreilles pointues, rondes, longues, tombantes ou aucune, avec leur
+  intérieur ; marque du front (losange, V, point) ; rayures, taches ou
+  éléments sur le corps ; queue effilée à anneaux.
+- La hauteur totale est calculée et tout se rétrécit d'un bloc si elle ne
+  tient pas ; de l'air en haut (17) pour les longues oreilles et la flamme.
 
 ## La planète (`planete.ts`)
 

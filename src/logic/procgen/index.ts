@@ -18,6 +18,7 @@ import { genererGribouillis } from './gribouillis.ts'
 import { dessinerPersonnage, genererPersonnage } from './personnage.ts'
 import { genererHeros } from './heros.ts'
 import { genererMasque } from './masque.ts'
+import { genererCreature } from './creature.ts'
 import { createRng } from '../rng.ts'
 
 export { BOITE, FAMILLES, RACES, ROLES, type Clip, type Dessin, type Famille, type Forme, type Race } from './types.ts'
@@ -46,5 +47,6 @@ export function genererDessin(famille: Famille, id: string, race: Race = 'humain
   if (famille === 'perso-encre') return dessinerPersonnage(genererPersonnage(id), 'encre')
   if (famille === 'heros') return genererHeros(id)
   if (famille === 'masque') return genererMasque(id)
+  if (famille === 'creature') return genererCreature(id)
   return genererAsteroide(id)
 }
