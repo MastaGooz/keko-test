@@ -272,8 +272,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   du ruban sur la carte (`x`, `y`, `a` ; `stickersColles`), jamais coupés par la
   bordure ni l'un sur l'autre (`placeNonCoupee`, `collesSeChevauchent` ; le contour
   fantôme suit le doigt, rouge si interdit) ; **ils gardent
-  leur contour et leur animation** (`uColles` épargne le cerne arc-en-ciel de la
-  holo, `anime.charger` fait jouer l'animé en vignette et en 3D) ; **un Like de plus
+  leur contour et leur animation** (peints crème ; un holo collé prend l'arc-en-ciel
+  vivant du nuanceur, `uColles` n'épargne que les normaux, la vignette le fige par
+  `zoneDuColle` ; `anime.charger(cote, arcEnCiel)`) ; **un Like de plus
   par sticker** quand le deck joue cet exemplaire (`valeurParRarete`).
 - `&art` et `&peau` gardent le paquet seul, sans barre.
 - **La réserve de paquets** (`logic/emoji/reserve.ts`, `RESERVE`) : 10 au plus,

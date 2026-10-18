@@ -501,7 +501,7 @@ export function Vignette({
     let vivant = true
     let image = 0
     const peints = collesPeints.current
-    void Promise.all(peints.map((c) => (c.anime === undefined ? Promise.resolve(null) : c.anime.charger(COTE_PETIT)))).then((anims) => {
+    void Promise.all(peints.map((c) => (c.anime === undefined ? Promise.resolve(null) : c.anime.charger(COTE_PETIT, c.holo)))).then((anims) => {
       if (!vivant || !anims.some((a) => a !== null)) return
       const depart = performance.now()
       const pas = (t: number): void => {

@@ -8,7 +8,7 @@ import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { exemplaireDe, type StickerColle } from '../logic/emoji/collection.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
 import { createRng } from '../logic/rng.ts'
-import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, stickerDe, sujetDe, type StickerAPeindre, type SujetPeint } from './texture-carte.ts'
+import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, stickerDe, sujetDe, surfaceDe, zoneDuColle, type StickerAPeindre, type SujetPeint } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
@@ -148,16 +148,23 @@ function cerneArcEnCielDuSujet(toile: HTMLCanvasElement): void {
   const avant = poser(s.image)
   const apres = poser(colore)
   if (avant === null || apres === null) return
+  // LES STICKERS COLLÉS PAR-DESSUS L'EMOJI ne reçoivent pas la différence : la
+  // vignette les montrait repeints par le cerne de l'emoji (Keko : « le
+  // contour de son emoji holo passe par-dessus les stickers sur elle »).
+  const surface = surfaceDe(toile)
+  const dessus = surface === undefined ? null : surface.getContext('2d', { willReadFrequently: true })?.getImageData(0, 0, l, h).data ?? null
   const carte = ctx.getImageData(0, 0, l, h)
   const d = carte.data
   for (let k = 0; k < d.length; k += 4) {
     const a0 = avant[k + 3]!
     const a1 = apres[k + 3]!
     if (a0 === 0 && a1 === 0) continue
+    const libre = dessus === null ? 1 : 1 - dessus[k + 3]! / 255
+    if (libre <= 0) continue
     for (let n = 0; n < 3; n++) {
       // En prémultiplié : la carte vaut fond × (1 − a) + sticker × a, donc
       // remplacer le sticker, c'est ajouter la différence des prémultipliés.
-      const delta = (apres[k + n]! * a1 - avant[k + n]! * a0) / 255
+      const delta = ((apres[k + n]! * a1 - avant[k + n]! * a0) / 255) * libre
       d[k + n] = Math.max(0, Math.min(255, Math.round(d[k + n]! + delta)))
     }
   }
@@ -711,6 +718,11 @@ export function peinte(
       if (!sansSujet) cerneArcEnCielDuSujet(toile)
       if (paillettes) paillettesHolo(toile, c.id)
     }
+    // LES STICKERS HOLO COLLÉS ont leur cerne arc-en-ciel figé, chacun dans sa
+    // zone, autour de son centre — après celui de l'emoji, qui les a épargnés.
+    colles.forEach((col, i) => {
+      if (col.holo) cerneArcEnCiel(toile, zoneDuColle(col, i))
+    })
     return toile
   })
   fileDePeinture = p.catch(() => null)
@@ -782,15 +794,18 @@ export async function stickersColles(colles: readonly StickerColle[] | undefined
       const carte = CATALOGUE_PAR_ID.get(c.id)
       if (carte === undefined) return null
       const ex = exemplaireDe(c.v)
-      const image = await stickerPeint(carte, ex.holo)
+      // AU CERNE CRÈME, même holo : l'arc-en-ciel se pose après, vivant au
+      // nuanceur en 3D, figé par `cerneArcEnCiel` sur une vignette (`holo`).
+      const image = await stickerPeint(carte, false)
       if (image === null) return null
       // UN STICKER ANIMÉ RESTE ANIMÉ sur la carte (Keko : « qu'il garde son
-      // animation s'il en a ») : ses images, au cerne arc-en-ciel s'il est holo.
+      // animation s'il en a ») : ses images, crème pour la 3D, arc-en-ciel
+      // figé pour une vignette s'il est holo.
       const anime =
         ex.anime && carte.animable
-          ? { charger: (cote: number) => (ex.holo ? animationHolo(c.id, cote, false) : animationDeLEmoji(urlAnimationEmoji(c.id), cote)) }
+          ? { charger: (cote: number, arcEnCiel: boolean) => (arcEnCiel && ex.holo ? animationHolo(c.id, cote, false) : animationDeLEmoji(urlAnimationEmoji(c.id), cote)) }
           : undefined
-      return { cle: cleDuColle(c), image, x: c.x, y: c.y, a: c.a, ...(anime === undefined ? {} : { anime }) }
+      return { cle: cleDuColle(c), image, holo: ex.holo, x: c.x, y: c.y, a: c.a, ...(anime === undefined ? {} : { anime }) }
     }),
   )
   return peints.filter((x): x is StickerPeint => x !== null)

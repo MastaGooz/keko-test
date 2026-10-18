@@ -51,6 +51,8 @@ import {
   masqueDuSujetDe,
   sujetDe,
   surfaceDe,
+  surfaceDesNormauxDe,
+  surfaceDesHoloDe,
   rayonsDuCran,
   ECLAIRE_SOMBRES,
   COIN_DE_LA_PLAQUE,
@@ -648,6 +650,7 @@ function libererToile(t: THREE.Texture | null): void {
   const masque = t?.userData.masqueSujet as THREE.Texture | undefined
   masque?.dispose()
   ;(t?.userData.colles as THREE.Texture | undefined)?.dispose()
+  ;(t?.userData.collesHolo as THREE.Texture | undefined)?.dispose()
   ;(t?.userData.silhouette as { t: THREE.Texture } | undefined)?.t.dispose()
   t?.dispose()
 }
@@ -1167,6 +1170,9 @@ export function Carte3D({
       nuanceur.uniforms.uSilhouetteOk = { value: 0 }
       // LES STICKERS COLLÉS (leur alpha) : le cerne arc-en-ciel de la holo les épargne.
       nuanceur.uniforms.uColles = { value: COLLES_VIDE }
+      // LES STICKERS HOLO COLLÉS (leur alpha) : le cerne arc-en-ciel s'y pose même sur une carte qui n'est pas holo.
+      nuanceur.uniforms.uCollesHolo = { value: COLLES_VIDE }
+      nuanceur.uniforms.uCollesHoloOk = { value: 0 }
       face.userData.nuanceur = nuanceur
       nuanceur.vertexShader = `varying vec2 vLustreUv;
 ${nuanceur.vertexShader}`.replace(
@@ -1572,7 +1578,9 @@ ${nuanceur.vertexShader}`.replace(
          }
 
          // LES PAILLETTES COSMOS DE LA FEUILLE HOLO : voir COSMOS.
-         if (uHolo > 0.0 && ${AVEC_COSMOS ? 'true' : 'false'}) {
+         // AUSSI POUR UNE CARTE QUI N'EST PAS HOLO MAIS PORTE UN STICKER HOLO COLLÉ :
+         // les paillettes y sont nulles (× uHolo), seul le cerne du sticker joue.
+         if ((uHolo > 0.0 || uCollesHoloOk > 0.5) && ${AVEC_COSMOS ? 'true' : 'false'}) {
            float libreH = texture2D(uMasqueSujet, vLustreUv).r;
            vec3 cosmos = vec3(0.0);
            for (int k = 0; k < 2; k++) {
@@ -1643,7 +1651,8 @@ ${nuanceur.vertexShader}`.replace(
            vec3 arcE = pow(0.5 + 0.5 * cos(6.28318 * (teinteE + vec3(0.0, 0.33, 0.67))), vec3(${COSMOS.cerne.sature.toFixed(2)})) * 1.5;
            float lobeE = pow(max(dot(Rf, Lc), 0.0), ${COSMOS.cerne.lobe.toFixed(1)});
            vec3 holoE = mix(vec3(1.0), arcE, ${COSMOS.cerne.couleur.toFixed(2)}) * (0.9 + 0.35 * lobeE);
-           float vivant = clamp(uHolo / ${FORCE_HOLO.toFixed(3)}, 0.0, 1.0);
+           // Vivant sur toute une holo ; sur un sticker holo collé, vivant quoi qu'il en soit.
+           float vivant = max(clamp(uHolo / ${FORCE_HOLO.toFixed(3)}, 0.0, 1.0), texture2D(uCollesHolo, vLustreUv).a);
            gl_FragColor.rgb = mix(gl_FragColor.rgb, gl_FragColor.rgb * holoE, cerneE * vivant);
          }
 
@@ -1704,6 +1713,8 @@ vec3 versSrgb(vec3 c) { return mix(c * 12.92, 1.055 * pow(max(c, vec3(0.0)), vec
 uniform sampler2D uSilhouette;
 uniform float uSilhouetteOk;
 uniform sampler2D uColles;
+uniform sampler2D uCollesHolo;
+uniform float uCollesHoloOk;
 // LA SILHOUETTE DU STICKER : l'alpha de l'image posée par la peinture ; à
 // défaut (l'animé), là où la carte entière diffère de la carte nue.
 float stickerEn(vec2 q) {
@@ -2047,7 +2058,7 @@ ${nuanceur.fragmentShader}`
     animsColles.current = colles.map(() => null)
     colles.forEach((c, k) => {
       if (c.anime === undefined) return
-      void c.anime.charger(COTE_CARTE).then((a) => {
+      void c.anime.charger(COTE_CARTE, false).then((a) => {
         if (vivant && animsColles.current.length > k) animsColles.current[k] = a
       })
     })
@@ -2117,8 +2128,10 @@ ${nuanceur.fragmentShader}`
           // cache : sans lui, les rayons clairs de l'animé ne brillaient pas.
           const masque = masqueDuSujetDe(canvas)
           if (masque !== undefined) t.userData.masqueSujet = new THREE.CanvasTexture(masque)
-          const surface = surfaceDe(canvas)
-          if (surface !== undefined) t.userData.colles = new THREE.CanvasTexture(surface)
+          const normaux = surfaceDesNormauxDe(canvas)
+          if (normaux !== undefined) t.userData.colles = new THREE.CanvasTexture(normaux)
+          const holos = surfaceDesHoloDe(canvas)
+          if (holos !== undefined) t.userData.collesHolo = new THREE.CanvasTexture(holos)
           texToiles.current[libre] = t
         }
         toiles.current[libre] = canvas
@@ -2140,6 +2153,8 @@ ${nuanceur.fragmentShader}`
         if (masque !== undefined) masque.needsUpdate = true
         const colTex = tex.userData.colles as THREE.Texture | undefined
         if (colTex !== undefined) colTex.needsUpdate = true
+        const colHoloTex = tex.userData.collesHolo as THREE.Texture | undefined
+        if (colHoloTex !== undefined) colHoloTex.needsUpdate = true
         // ET SA SILHOUETTE, pour poser l'emoji sur des rayons qui tournent :
         // l'image de l'animation à sa place (`sujetDe`), sur une toile à la
         // taille de la face — créée une fois par toile, repeinte à chaque image.
@@ -2631,6 +2646,9 @@ ${nuanceur.fragmentShader}`
       const masque = (face.map?.userData.masqueSujet ?? null) as THREE.Texture | null
       nuanceur.uniforms.uMasqueSujet!.value = masque ?? MASQUE_VIDE
       nuanceur.uniforms.uColles!.value = (face.map?.userData.colles as THREE.Texture | undefined) ?? COLLES_VIDE
+      const collesHolo = face.map?.userData.collesHolo as THREE.Texture | undefined
+      nuanceur.uniforms.uCollesHolo!.value = collesHolo ?? COLLES_VIDE
+      nuanceur.uniforms.uCollesHoloOk!.value = collesHolo !== undefined && dos !== true ? 1 : 0
       // LE RELIEF JOUE QUAND LES DEUX PEINTURES SONT LÀ, sur la face d'une holo.
       const nue = nuDeLaFace.current
       // LA COMPOSITION (fond + emoji par sa silhouette) JOUE POUR LE RELIEF D'UNE

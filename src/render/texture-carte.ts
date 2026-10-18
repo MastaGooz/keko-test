@@ -36,11 +36,21 @@ import { boiteDe, mesurerBoite } from './silhouette.ts'
  */
 export interface StickerAPeindre {
   readonly cle: string
+  /** Le sticker AU CERNE CRÈME, holo ou pas : l'arc-en-ciel d'un holo se pose après, selon l'angle (voir `holo`). */
   readonly image: CanvasImageSource
+  /**
+   * UN STICKER HOLO COLLÉ A LE CERNE ARC-EN-CIEL DE L'EMOJI : vivant au regard
+   * en 3D (le nuanceur le pose sur son crème, comme sur l'emoji), figé par
+   * `cerneArcEnCiel` sur une vignette. Keko : « le contour holo des stickers
+   * holo que je pose ne varie pas comme d'habitude au mouvement de la carte ».
+   * Peint arc-en-ciel d'avance, il était une image, plus une feuille.
+   */
+  readonly holo: boolean
   readonly x?: number
   readonly y?: number
   readonly a?: number
-  readonly anime?: { readonly charger: (cote: number) => Promise<ImagesDAnimation | null> }
+  /** Ses images, cerne crème (`arcEnCiel` faux, pour la 3D qui colore au nuanceur) ou arc-en-ciel figé (pour une vignette). */
+  readonly anime?: { readonly charger: (cote: number, arcEnCiel: boolean) => Promise<ImagesDAnimation | null> }
 }
 /** Des images qui se suivent, et la durée du tour : l'animation d'un emoji, ou d'un sticker. */
 export interface ImagesDAnimation {
@@ -1907,6 +1917,41 @@ function peindreColles(ctx: CanvasRenderingContext2D, colles: readonly StickerAP
 const SURFACES = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
 export function surfaceDe(canvas: HTMLCanvasElement): HTMLCanvasElement | undefined {
   return SURFACES.get(canvas)
+}
+/** La même, sans les stickers holo : ce que le cerne arc-en-ciel du nuanceur doit épargner. */
+const SURFACES_NORMAUX = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
+export function surfaceDesNormauxDe(canvas: HTMLCanvasElement): HTMLCanvasElement | undefined {
+  return SURFACES_NORMAUX.get(canvas)
+}
+/** Les stickers HOLO collés seuls : là où le nuanceur pose son cerne arc-en-ciel, même sur une carte qui n'est pas holo. Absente s'il n'y en a pas. */
+const SURFACES_HOLO = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
+export function surfaceDesHoloDe(canvas: HTMLCanvasElement): HTMLCanvasElement | undefined {
+  return SURFACES_HOLO.get(canvas)
+}
+/** Une toile transparente d'un pixel : la place d'un sticker qu'on ne veut pas dans une toile de surface. */
+const TOILE_VIDE = (() => {
+  const t = document.createElement('canvas')
+  t.width = 1
+  t.height = 1
+  return t
+})()
+
+/**
+ * LA ZONE D'UN STICKER COLLÉ sur la carte, en parts de la toile (x, y, l, h) :
+ * son carré, élargi pour son penchant (un carré tourné tient dans 1,45 fois
+ * son côté), borné à la toile. La vignette y pose le cerne arc-en-ciel d'un
+ * sticker holo (`cerneArcEnCiel`, qui tourne autour du centre de la zone).
+ */
+export function zoneDuColle(c: { readonly x?: number; readonly y?: number; readonly a?: number }, i: number): { x: number; y: number; l: number; h: number } {
+  const R = RAYONS_DANS_LA_CARTE
+  const { x, y } = placeDuColle(c, i)
+  const demiL = (TAILLE_COLLE * R.l * 1.45) / 2
+  const demiH = (demiL * LARGE) / HAUT
+  const cx = R.x + x * R.l
+  const cy = R.y + y * R.h
+  const x0 = Math.max(0, cx - demiL)
+  const y0 = Math.max(0, cy - demiH)
+  return { x: x0, y: y0, l: Math.min(1, cx + demiL) - x0, h: Math.min(1, cy + demiH) - y0 }
 }
 /**
  * LA TOILE DU STICKER DÉBORDE CELLE DU GLYPHE. Keko : « sur certaines cartes
@@ -4272,6 +4317,40 @@ export async function peindreCarte(
       sctx.scale(largeur / LARGE, largeur / LARGE)
       peindreColles(sctx, carte.colles, marge, fY, fH)
       SURFACES.set(canvas, surface)
+      // ET LES NORMAUX SEULS, pour le nuanceur : un sticker holo collé reçoit le
+      // cerne arc-en-ciel vivant comme l'emoji, un normal garde son crème.
+      let normaux = SURFACES_NORMAUX.get(canvas)
+      if (normaux === undefined || normaux.width !== canvas.width || normaux.height !== canvas.height) {
+        normaux = document.createElement('canvas')
+        normaux.width = canvas.width
+        normaux.height = canvas.height
+      }
+      const nctx = normaux.getContext('2d')
+      if (nctx !== null) {
+        nctx.setTransform(1, 0, 0, 1, 0, 0)
+        nctx.clearRect(0, 0, normaux.width, normaux.height)
+        nctx.scale(largeur / LARGE, largeur / LARGE)
+        // Aux mêmes rangs : la place d'un sticker sans place dépend de son rang.
+        peindreColles(nctx, carte.colles.map((c) => (c.holo ? { ...c, image: TOILE_VIDE } : c)), marge, fY, fH)
+        SURFACES_NORMAUX.set(canvas, normaux)
+      }
+      // ET LES HOLO SEULS : là où le nuanceur pose le cerne arc-en-ciel même sur
+      // une carte qui n'est pas holo — un sticker holo collé l'est, lui.
+      let holos = SURFACES_HOLO.get(canvas)
+      if (holos === undefined || holos.width !== canvas.width || holos.height !== canvas.height) {
+        holos = document.createElement('canvas')
+        holos.width = canvas.width
+        holos.height = canvas.height
+      }
+      const hctx = holos.getContext('2d')
+      if (hctx !== null) {
+        hctx.setTransform(1, 0, 0, 1, 0, 0)
+        hctx.clearRect(0, 0, holos.width, holos.height)
+        hctx.scale(largeur / LARGE, largeur / LARGE)
+        peindreColles(hctx, carte.colles.map((c) => (c.holo ? c : { ...c, image: TOILE_VIDE })), marge, fY, fH)
+        if (carte.colles.some((c) => c.holo)) SURFACES_HOLO.set(canvas, holos)
+        else SURFACES_HOLO.delete(canvas)
+      }
       const m = MASQUES_DU_SUJET.get(canvas)
       const mctx = m?.getContext('2d')
       if (m !== undefined && mctx != null) {
@@ -4282,7 +4361,11 @@ export async function peindreCarte(
         mctx.restore()
       }
     }
-  } else SURFACES.delete(canvas)
+  } else {
+    SURFACES.delete(canvas)
+    SURFACES_NORMAUX.delete(canvas)
+    SURFACES_HOLO.delete(canvas)
+  }
 
   // CE QUI PORTE LE TEXTE : un voile qui éteint l'image, ou une plaque posée
   // dessus. *Les deux font le même travail* — rendre le nom et le cartouche
@@ -6927,8 +7010,10 @@ export function textureDeCarte(
       const masque = MASQUES_DU_SUJET.get(canvas)
       if (masque !== undefined) texture.userData.masqueSujet = new THREE.CanvasTexture(masque)
       // ET LES STICKERS COLLÉS : le nuanceur de la holo les épargne de son cerne arc-en-ciel.
-      const surface = SURFACES.get(canvas)
-      if (surface !== undefined) texture.userData.colles = new THREE.CanvasTexture(surface)
+      const normaux = SURFACES_NORMAUX.get(canvas)
+      if (normaux !== undefined) texture.userData.colles = new THREE.CanvasTexture(normaux)
+      const holos = SURFACES_HOLO.get(canvas)
+      if (holos !== undefined) texture.userData.collesHolo = new THREE.CanvasTexture(holos)
       // La carte se regarde de près et en biais : sans filtrage anisotrope le
       // texte se brouille dès qu'elle s'incline.
       texture.anisotropy = 8
