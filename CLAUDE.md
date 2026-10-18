@@ -268,8 +268,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 - **Les stickers se COLLENT sur les cartes** (Keko : « +1 par sticker, sans
   limite par carte ») : sur la PLACE (emoji + version, `Possession.colles[v]`,
   pas sur l'exemplaire — la collection ne les distingue pas), `coller` les prend
-  à l'album, `detruire` les emporte avec la version ; peints à des places fixes
-  sur la fenêtre d'art (`PLACES_COLLES`, `stickersColles`) ; **un Like de plus
+  à l'album, `detruire` les emporte avec la version ; **posés au doigt**, glissés
+  du ruban sur la carte (`x`, `y`, `a` ; `stickersColles`) ; **un Like de plus
   par sticker** quand le deck joue cet exemplaire (`valeurParRarete`).
 - `&art` et `&peau` gardent le paquet seul, sans barre.
 - **La réserve de paquets** (`logic/emoji/reserve.ts`, `RESERVE`) : 10 au plus,

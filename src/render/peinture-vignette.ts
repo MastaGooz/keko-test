@@ -763,14 +763,22 @@ export function stickerPeint(c: CarteEmoji, holo: boolean): Promise<HTMLCanvasEl
 export interface StickerPeint {
   readonly cle: string
   readonly image: HTMLCanvasElement
+  /** Sa place sur la fenêtre d'art, si on l'a posée au doigt : voir `StickerColle`. */
+  readonly x?: number
+  readonly y?: number
+  readonly a?: number
 }
 let CATALOGUE_PAR_ID = new Map<string, CarteEmoji>()
 export function declarerLeCatalogue(catalogue: readonly CarteEmoji[]): void {
   CATALOGUE_PAR_ID = new Map(catalogue.map((c) => [c.id, c]))
 }
 /** La clé d'une liste de stickers collés, pour savoir si une vignette doit se repeindre. */
+/** La clé d'un sticker collé : son emoji, sa version et sa place. */
+function cleDuColle(c: StickerColle): string {
+  return `${c.id}#${c.v}${c.x !== undefined && c.y !== undefined ? `@${c.x.toFixed(3)},${c.y.toFixed(3)},${(c.a ?? 0).toFixed(2)}` : ''}`
+}
 export function cleDesColles(colles: readonly StickerColle[] | undefined): string {
-  return (colles ?? []).map((c) => `${c.id}#${c.v}`).join(',')
+  return (colles ?? []).map(cleDuColle).join(',')
 }
 export async function stickersColles(colles: readonly StickerColle[] | undefined): Promise<StickerPeint[]> {
   if (colles === undefined || colles.length === 0) return []
@@ -779,7 +787,7 @@ export async function stickersColles(colles: readonly StickerColle[] | undefined
       const carte = CATALOGUE_PAR_ID.get(c.id)
       if (carte === undefined) return null
       const image = await stickerPeint(carte, exemplaireDe(c.v).holo)
-      return image === null ? null : { cle: `${c.id}#${c.v}`, image }
+      return image === null ? null : { cle: cleDuColle(c), image, x: c.x, y: c.y, a: c.a }
     }),
   )
   return peints.filter((x): x is StickerPeint => x !== null)

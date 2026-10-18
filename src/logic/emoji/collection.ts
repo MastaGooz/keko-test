@@ -51,10 +51,27 @@ export interface Possession {
   colles?: Readonly<Partial<Record<Variante, readonly StickerColle[]>>>
 }
 
-/** Un sticker collé : l'emoji d'où il vient et sa version — c'est ce qui le dessine. */
+/**
+ * Un sticker collé : l'emoji d'où il vient et sa version — c'est ce qui le
+ * dessine — et SA PLACE, posée au doigt (Keko : « j'aurais bien aimé placer
+ * manuellement le sticker ») : `x`, `y` en parts de la fenêtre d'art (0 à 1),
+ * `a` son penchant en radians. Sans place (un sticker d'avant), le peintre
+ * lui en donne une fixe.
+ */
 export interface StickerColle {
   readonly id: string
   readonly v: Variante
+  readonly x?: number
+  readonly y?: number
+  readonly a?: number
+}
+
+/** La place d'un sticker, relue sans confiance : des nombres finis, bornés ; sinon rien. */
+function placeDuSticker(o: Record<string, unknown>): Pick<StickerColle, 'x' | 'y' | 'a'> {
+  const x = typeof o.x === 'number' && Number.isFinite(o.x) ? Math.min(1, Math.max(0, o.x)) : undefined
+  const y = typeof o.y === 'number' && Number.isFinite(o.y) ? Math.min(1, Math.max(0, o.y)) : undefined
+  const a = typeof o.a === 'number' && Number.isFinite(o.a) ? Math.min(Math.PI, Math.max(-Math.PI, o.a)) : 0
+  return x === undefined || y === undefined ? {} : { x, y, a }
 }
 
 /** Combien de stickers sont collés sur cette version de la carte. */
@@ -84,7 +101,7 @@ export function coller(col: Collection, cible: { id: string; v: Variante }, stic
       anime: s.anime - (ex.anime ? 1 : 0),
       ha: s.ha - (ex.holo && ex.anime ? 1 : 0),
     }
-  const colles = { ...p.colles, [cible.v]: [...(p.colles?.[cible.v] ?? []), { id: sticker.id, v: sticker.v }] }
+  const colles = { ...p.colles, [cible.v]: [...(p.colles?.[cible.v] ?? []), { id: sticker.id, v: sticker.v, ...placeDuSticker(sticker as unknown as Record<string, unknown>) }] }
   return { ...col, cartes: { ...col.cartes, [cible.id]: { ...p, colles } }, stickers }
 }
 
@@ -438,7 +455,7 @@ export function lireCollection(brut: unknown): Collection {
       const propres = liste.flatMap((c: unknown): StickerColle[] => {
         if (typeof c !== 'object' || c === null) return []
         const o = c as Record<string, unknown>
-        return typeof o.id === 'string' && typeof o.v === 'string' && (VARIANTES as readonly string[]).includes(o.v) ? [{ id: o.id, v: o.v as Variante }] : []
+        return typeof o.id === 'string' && typeof o.v === 'string' && (VARIANTES as readonly string[]).includes(o.v) ? [{ id: o.id, v: o.v as Variante, ...placeDuSticker(o) }] : []
       })
       if (propres.length > 0) colles[v] = propres
     }

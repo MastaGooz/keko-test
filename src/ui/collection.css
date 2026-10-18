@@ -1091,6 +1091,8 @@
 .coller-case {
   position: relative;
   flex: 0 0 auto;
+  /* Le doigt glisse le sticker hors de la case : pas de défilement ni de zoom. */
+  touch-action: none;
   width: 4.2rem;
   height: 4.2rem;
   padding: 0.3rem;
@@ -1114,6 +1116,26 @@
 .coller-case .vignette-nombre {
   right: -0.2rem;
   bottom: -0.2rem;
+}
+
+.coller-aide {
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.7;
+}
+
+/* LE STICKER QUI SUIT LE DOIGT, à la taille qu'il aura sur la carte, penché
+   comme il sera collé ; il ne prend pas les événements, la case les garde. */
+.sticker-flottant {
+  position: fixed;
+  left: -100px;
+  top: -100px;
+  z-index: 30;
+  height: auto;
+  transform: translate(-50%, -50%) rotate(var(--a, 0rad)) scale(1.08);
+  filter: drop-shadow(0 0.5rem 0.6rem rgba(10, 4, 30, 0.6));
+  pointer-events: none;
 }
 
 .decoller:focus:not(:focus-visible) {

@@ -70,6 +70,10 @@ verifier('coller n’a pas de limite', nombreDeColles(coller(collee, cible, { id
 verifier('sans sticker dans l’album, rien ne se colle', coller(collee, cible, { id: '1f604', v: 'simple' }) === collee)
 verifier('sans la version de la carte, rien ne se colle', coller(album, { id: '1f600', v: 'holoAnime' }, { id: '1f604', v: 'simple' }) === album)
 verifier('les stickers collés survivent à la relecture', nombreDeColles(lireCollection(JSON.parse(JSON.stringify(collee))).cartes['1f600'], 'simple') === 1)
+const placee = coller(album, cible, { id: '1f604', v: 'simple', x: 0.2, y: 1.7, a: 0.3 })
+const colleRelu = lireCollection(JSON.parse(JSON.stringify(placee))).cartes['1f600']?.colles?.simple?.[0]
+verifier('la place du sticker est gardée et bornée', colleRelu?.x === 0.2 && colleRelu?.y === 1 && colleRelu?.a === 0.3)
+verifier('un sticker sans place n’en invente pas', collee.cartes['1f600']?.colles?.simple?.[0]?.x === undefined)
 const sansSimple = detruire(detruire(collee, '1f600', { holo: false, anime: false }, 8000), '1f600', { holo: false, anime: false }, 8001)
 verifier('la version détruite emporte ses stickers collés', sansSimple.cartes['1f600'] === undefined || nombreDeColles(sansSimple.cartes['1f600'], 'simple') === 0)
 const vu = toutVu(un)

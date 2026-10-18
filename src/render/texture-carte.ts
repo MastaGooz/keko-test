@@ -257,7 +257,7 @@ export type CarteAPeindre = {
    * voir `stickersColles` dans `peinture-vignette.ts`), posés sur la fenêtre
    * d'art après l'emoji, à des places fixes. `cle` les distingue au cache.
    */
-  colles?: readonly { readonly cle: string; readonly image: HTMLCanvasElement }[]
+  colles?: readonly { readonly cle: string; readonly image: HTMLCanvasElement; readonly x?: number; readonly y?: number; readonly a?: number }[]
   /**
    * LA CARTE SANS SON STICKER : le décor, les rayons, la plaque, et un trou
    * nulle part — ce qui reste sous l'emoji qu'on décolle (voir `Decollage`).
@@ -1841,12 +1841,17 @@ const PLACES_COLLES: readonly { x: number; y: number; a: number }[] = [
   { x: 0.88, y: 0.5, a: 0.28 },
   { x: 0.5, y: 0.13, a: -0.1 },
 ]
-const TAILLE_COLLE = 0.3
+export const TAILLE_COLLE = 0.3
 
-/** Pose les stickers collés sur la fenêtre d'art : des places fixes, un peu penchées ; au-delà, on refait le tour décalé. */
+/**
+ * Pose les stickers collés sur la fenêtre d'art, CHACUN À SA PLACE — celle
+ * que le doigt a choisie (`x`, `y` en parts de la fenêtre, `a` le penchant).
+ * Un sticker sans place (collé avant qu'on puisse la choisir) prend une place
+ * fixe (`PLACES_COLLES`), les coins puis les bords, un tour décalé au-delà.
+ */
 function peindreColles(
   ctx: CanvasRenderingContext2D,
-  colles: readonly { readonly image: HTMLCanvasElement }[],
+  colles: readonly { readonly image: HTMLCanvasElement; readonly x?: number; readonly y?: number; readonly a?: number }[],
   marge: number,
   fY: number,
   fH: number,
@@ -1856,15 +1861,23 @@ function peindreColles(
   ctx.save()
   ctx.imageSmoothingQuality = 'high'
   colles.forEach((c, i) => {
-    const place = PLACES_COLLES[i % PLACES_COLLES.length]!
-    const tour = Math.floor(i / PLACES_COLLES.length)
-    // Chaque tour de plus se décale un peu, pour qu'un sticker ne cache pas
-    // exactement le précédent.
-    const dx = tour === 0 ? 0 : (((tour * 37) % 11) - 5) * 0.012 * lFenetre
-    const dy = tour === 0 ? 0 : (((tour * 53) % 7) - 3) * 0.012 * fH
+    let x: number
+    let y: number
+    let a: number
+    if (c.x !== undefined && c.y !== undefined) {
+      x = c.x
+      y = c.y
+      a = c.a ?? 0
+    } else {
+      const place = PLACES_COLLES[i % PLACES_COLLES.length]!
+      const tour = Math.floor(i / PLACES_COLLES.length)
+      x = place.x + (tour === 0 ? 0 : (((tour * 37) % 11) - 5) * 0.012)
+      y = place.y + (tour === 0 ? 0 : (((tour * 53) % 7) - 3) * 0.012)
+      a = place.a + tour * 0.07
+    }
     ctx.save()
-    ctx.translate(marge + place.x * lFenetre + dx, fY + place.y * fH + dy)
-    ctx.rotate(place.a + tour * 0.07)
+    ctx.translate(marge + x * lFenetre, fY + y * fH)
+    ctx.rotate(a)
     ctx.drawImage(c.image, -taille / 2, -taille / 2, taille, taille)
     ctx.restore()
   })

@@ -16,7 +16,7 @@
  * **seulement quand elle entre dans la vue** et une à la fois. *La 3D est
  * gardée pour la carte qu'on ouvre* : là, le holo et l'animé ont de quoi jouer.
  */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Canvas } from '@react-three/fiber'
 import { NoToneMapping } from 'three'
@@ -25,7 +25,7 @@ import { GROUPES_EMOJI, NOM_DU_GROUPE, RARETES_EMOJI } from '../logic/emoji/type
 import type { Collection, Exemplaire, Possession, StickerColle, Variante } from '../logic/emoji/collection.ts'
 import { VARIANTES, compteDe, exemplaireDe, nombreDeColles, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
-import { AMBIANCE, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
+import { AMBIANCE, TAILLE_COLLE, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
 import { animationHolo, cleDesColles, coucheDesRayons, paillettesHolo, peinte, stickerPeint, stickersColles, sujetDeLaVignette, type StickerPeint } from './peinture-vignette.ts'
 import { COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
@@ -652,6 +652,35 @@ function CarteOuverte({
   /** LE CHOIX DU STICKER À COLLER : ouvert par le bouton, fermé par un choix ou une tape ailleurs. */
   const [choixOuvert, setChoixOuvert] = useState(false)
   /**
+   * LE STICKER QU'ON TIENT, pendant qu'on le glisse du ruban vers la carte
+   * (Keko : « j'aurais bien aimé placer manuellement le sticker »). Il suit le
+   * doigt ; lâché sur la fenêtre d'art, il s'y colle à cet endroit, avec le
+   * penchant qu'il montrait ; lâché ailleurs, rien. Pendant ce temps la carte
+   * ne penche pas (`refPlacement`), pour que l'endroit visé soit l'endroit posé.
+   */
+  const [tenu, setTenu] = useState<{ sticker: StickerColle; image: HTMLCanvasElement; a: number } | null>(null)
+  const refPlacement = useRef(false)
+  refPlacement.current = tenu !== null
+  const flottant = useRef<HTMLCanvasElement>(null)
+  const suivre = useCallback((x: number, y: number) => {
+    const el = flottant.current
+    if (el === null) return
+    el.style.left = `${x.toFixed(1)}px`
+    el.style.top = `${y.toFixed(1)}px`
+  }, [])
+  /** Où un point de l'écran tombe dans la fenêtre d'art, en parts (0 à 1) — ou `null` hors de la carte. */
+  const dansLaFenetre = useCallback((x: number, y: number): { x: number; y: number } | null => {
+    const b = refBoite.current
+    const u = (x - (b.cx - b.l / 2)) / b.l
+    const v = (y - (b.cy - b.h / 2)) / b.h
+    const R = RAYONS_DANS_LA_CARTE
+    const fx = (u - R.x) / R.l
+    const fy = (v - R.y) / R.h
+    // Un peu de jeu au bord : un sticker à moitié dehors se colle au bord.
+    if (fx < -0.15 || fx > 1.15 || fy < -0.15 || fy > 1.15) return null
+    return { x: Math.min(1, Math.max(0, fx)), y: Math.min(1, Math.max(0, fy)) }
+  }, [])
+  /**
    * LA CARTE PENDANT LE DÉCOLLAGE : l'exemplaire qu'on détruit (le simple
    * d'abord, pas forcément le plus beau qu'on montrait), sans son emoji.
    */
@@ -696,8 +725,8 @@ function CarteOuverte({
     addEventListener(
       'pointerdown',
       (e) => {
-        // PENDANT LE DÉCOLLAGE, LE DOIGT EST À LUI.
-        if (refDecolle.current) return
+        // PENDANT LE DÉCOLLAGE OU LE PLACEMENT D'UN STICKER, LE DOIGT EST À LUI.
+        if (refDecolle.current || refPlacement.current) return
         depart.x = e.clientX
         depart.y = e.clientY
         if (e.pointerType === 'mouse') return
@@ -712,6 +741,7 @@ function CarteOuverte({
     addEventListener(
       'pointermove',
       (e) => {
+        if (refPlacement.current) return
         if (e.pointerType === 'mouse') {
           c.dessus = viser(e)
           c.tenu = c.dessus
@@ -741,7 +771,7 @@ function CarteOuverte({
       'pointerup',
       (e) => {
         lacher(e)
-        if (refDecolle.current) return
+        if (refDecolle.current || refPlacement.current) return
         const tape = Math.hypot(e.clientX - depart.x, e.clientY - depart.y) < 12
         const b = refBoite.current
         const dedans = Math.abs(e.clientX - b.cx) <= b.l / 2 && Math.abs(e.clientY - b.cy) <= b.h / 2
@@ -856,11 +886,39 @@ function CarteOuverte({
       {choixOuvert && decolle === null && (
         <ChoixDuSticker
           album={album}
-          onChoisir={(st) => {
-            onColler(st)
+          onPrendre={(st, image, e) => {
+            // La carte se remet à plat : le doigt est au sticker.
+            curseur.current.dessus = false
+            curseur.current.tenu = false
+            setTenu({ sticker: st, image, a: (Math.random() - 0.5) * 0.5 })
+            suivre(e.clientX, e.clientY)
+          }}
+          onSuivre={(e) => suivre(e.clientX, e.clientY)}
+          onLacher={(e) => {
+            const t = tenu
+            setTenu(null)
+            if (t === null) return
+            const place = dansLaFenetre(e.clientX, e.clientY)
+            if (place === null) return
+            onColler({ ...t.sticker, x: place.x, y: place.y, a: t.a })
             jouerSon(SON_POSER, 0.5)
           }}
           onFermer={() => setChoixOuvert(false)}
+        />
+      )}
+      {/* LE STICKER QUI SUIT LE DOIGT, à la taille qu'il aura sur la carte. */}
+      {tenu !== null && (
+        <canvas
+          ref={(el) => {
+            flottant.current = el
+            if (el === null) return
+            el.width = tenu.image.width
+            el.height = tenu.image.height
+            el.getContext('2d')?.drawImage(tenu.image, 0, 0)
+          }}
+          className="sticker-flottant"
+          style={{ width: `${(refBoite.current.l * RAYONS_DANS_LA_CARTE.l * TAILLE_COLLE).toFixed(1)}px`, '--a': `${tenu.a}rad` } as React.CSSProperties}
+          aria-hidden
         />
       )}
       {decolle === null && (
@@ -881,38 +939,62 @@ function CarteOuverte({
  */
 function ChoixDuSticker({
   album,
-  onChoisir,
+  onPrendre,
+  onSuivre,
+  onLacher,
   onFermer,
 }: {
   album: readonly { carte: CarteEmoji; v: Variante; n: number }[]
-  onChoisir: (s: StickerColle) => void
+  /** Le doigt se pose sur une case : on prend ce sticker (son image peinte), et on le suit jusqu'au lâcher. */
+  onPrendre: (s: StickerColle, image: HTMLCanvasElement, e: React.PointerEvent) => void
+  onSuivre: (e: React.PointerEvent) => void
+  onLacher: (e: React.PointerEvent) => void
   onFermer: () => void
 }): React.ReactElement {
   return (
     <div className="coller-choix" role="dialog" aria-label="Coller un sticker">
       <p className="coller-titre">
-        Coller un sticker
+        <span>
+          Coller un sticker <span className="coller-aide">· glisse-le sur la carte</span>
+        </span>
         <button type="button" className="coller-fermer" aria-label="Fermer" onClick={onFermer}>
           ×
         </button>
       </p>
       <div className="coller-ruban">
         {album.map((e) => (
-          <CaseDuSticker key={`${e.carte.id}#${e.v}`} entree={e} onChoisir={() => onChoisir({ id: e.carte.id, v: e.v })} />
+          <CaseDuSticker
+            key={`${e.carte.id}#${e.v}`}
+            entree={e}
+            onPrendre={(image, ev) => onPrendre({ id: e.carte.id, v: e.v }, image, ev)}
+            onSuivre={onSuivre}
+            onLacher={onLacher}
+          />
         ))}
       </div>
     </div>
   )
 }
 
+/**
+ * UNE CASE DU RUBAN. *C'est un glisser, pas une tape* : le doigt se pose sur
+ * la case (`setPointerCapture` : la case garde le doigt même sorti d'elle),
+ * le sticker le suit, et c'est le lâcher qui colle — sur la carte — ou
+ * annule — ailleurs, y compris sur la case elle-même pour une simple tape.
+ */
 function CaseDuSticker({
   entree,
-  onChoisir,
+  onPrendre,
+  onSuivre,
+  onLacher,
 }: {
   entree: { carte: CarteEmoji; v: Variante; n: number }
-  onChoisir: () => void
+  onPrendre: (image: HTMLCanvasElement, e: React.PointerEvent) => void
+  onSuivre: (e: React.PointerEvent) => void
+  onLacher: (e: React.PointerEvent) => void
 }): React.ReactElement {
   const toile = useRef<HTMLCanvasElement>(null)
+  const image = useRef<HTMLCanvasElement | null>(null)
   const holo = exemplaireDe(entree.v).holo
   useEffect(() => {
     let vivant = true
@@ -920,6 +1002,7 @@ function CaseDuSticker({
       const t = toile.current
       const ctx = t?.getContext('2d')
       if (!vivant || source === null || t == null || ctx == null) return
+      image.current = source
       t.width = source.width
       t.height = source.height
       ctx.drawImage(source, 0, 0)
@@ -929,7 +1012,25 @@ function CaseDuSticker({
     }
   }, [entree.carte, holo])
   return (
-    <button type="button" className="coller-case" onClick={onChoisir} aria-label={`${enTitre(entree.carte.nom)}, ${NOM_DE_LA_VARIANTE[entree.v]}, ${entree.n}`}>
+    <button
+      type="button"
+      className="coller-case"
+      aria-label={`${enTitre(entree.carte.nom)}, ${NOM_DE_LA_VARIANTE[entree.v]}, ${entree.n} — glisser sur la carte`}
+      onPointerDown={(e) => {
+        if (image.current === null) return
+        e.currentTarget.setPointerCapture(e.pointerId)
+        onPrendre(image.current, e)
+      }}
+      onPointerMove={(e) => {
+        if (e.currentTarget.hasPointerCapture(e.pointerId)) onSuivre(e)
+      }}
+      onPointerUp={(e) => {
+        if (!e.currentTarget.hasPointerCapture(e.pointerId)) return
+        e.currentTarget.releasePointerCapture(e.pointerId)
+        onLacher(e)
+      }}
+      onPointerCancel={(e) => onLacher(e)}
+    >
       <canvas ref={toile} />
       {entree.n > 1 && <span className="vignette-nombre">×{entree.n}</span>}
     </button>
