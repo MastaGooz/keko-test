@@ -12,6 +12,7 @@ import {
   debloquer,
   debloquerStickers,
   retirer,
+  oublier,
   detruire,
   exemplaireADetruire,
   nombreDeStickers,
@@ -53,6 +54,10 @@ const retiree = retirer(debloquee, ['1f603', '1f604', 'absent'])
 verifier('retirer enlève les emoji nommés, et ignore un absent', Object.keys(retiree.cartes).length === 2 && retiree.cartes['1f603'] === undefined)
 verifier('retirer ne touche pas le reste', retiree.cartes['1f600']?.n === 2 && retiree.paquets === debloquee.paquets && retiree.arrivees === debloquee.arrivees)
 verifier('retirer ne touche pas les stickers', Object.keys(retiree.stickers).length === Object.keys(debloquee.stickers).length)
+const oubliee = oublier(debloquee, '1f603')
+verifier('oublier enlève les cartes ET les stickers de l’emoji', oubliee.cartes['1f603'] === undefined && oubliee.stickers['1f603'] === undefined && Object.keys(oubliee.cartes).length === Object.keys(debloquee.cartes).length - 1)
+verifier('oublier ne touche pas le reste', oubliee.cartes['1f600']?.n === 2 && oubliee.paquets === debloquee.paquets && oubliee.likes === debloquee.likes)
+verifier('oublier un absent ne change rien', oublier(debloquee, 'absent') === debloquee)
 const vu = toutVu(un)
 verifier('tout vu', nombreDeNouvelles(vu) === 0)
 const deux = ajouterPaquet(vu, ['1f600'], { '1f600': sans }, 2000)

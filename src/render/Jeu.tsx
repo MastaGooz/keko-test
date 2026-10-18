@@ -32,6 +32,7 @@ import {
   debloquer,
   debloquerStickers,
   retirer,
+  oublier,
   detruire,
   nombreDeNouvelles,
   nombreDeStickersNouveaux,
@@ -400,6 +401,23 @@ export function Jeu(): React.ReactElement {
       }
       return retirer(c, ids.slice(0, Math.floor(ids.length / 2)))
     })
+  }, [changer])
+  /**
+   * `&oublier=<id>[,<id>]` : CES EMOJI QUITTENT LA COLLECTION DE CET APPAREIL,
+   * cartes et stickers, d'un lien. Keko, le test du gobelin fini : « tu peux
+   * supprimer le goblin également des collections cartes / stickers ? » *Sa
+   * collection vit sur son appareil* : c'est le lien qui le fait sur place,
+   * une fois par appareil. Les decks lâchent les exemplaires partis
+   * d'eux-mêmes (`garderPossedeesPartout`). Le paramètre est retiré ensuite.
+   */
+  useEffect(() => {
+    const p = new URLSearchParams(location.search)
+    const v = p.get('oublier')
+    if (v === null) return
+    p.delete('oublier')
+    history.replaceState(null, '', `${location.pathname}${p.toString() !== '' ? `?${p}` : ''}${location.hash}`)
+    const ids = v.split(',').map((x) => x.trim().toLowerCase()).filter((x) => x !== '')
+    changer((c) => ids.reduce((col, id) => oublier(col, id), c))
   }, [changer])
   /**
    * `&likes=N` : POSE LE SOLDE DE LIKES DE CET APPAREIL, d'un lien — le banc

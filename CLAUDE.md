@@ -470,6 +470,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&nu` | saute le sachet |
 | `&illimite` | la réserve de paquets ne se vide jamais, pour tester sans attendre |
 | `&retirer` | retire la moitié des emoji de la collection DE CET APPAREIL, au hasard, avec tous leurs exemplaires ; l'album ne bouge pas — le miroir de `&debloquer` |
+| `&oublier=<id>[,<id>]` | ces emoji quittent la collection DE CET APPAREIL, cartes ET stickers (les decks suivent) — pour effacer ce qu'un test y a laissé |
 | `&page=collection`, `&page=catalogue`, `&page=stickers`, `&page=deck`, `&page=jouer` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
 | `&likes=N`, `&abonnes=N` | posent le solde de Likes / d'Abonnés DE CET APPAREIL (les compteurs, sans générateur) ; rouvrir ne double rien |
 | `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue, et un sticker de chaque emoji dans l'album |

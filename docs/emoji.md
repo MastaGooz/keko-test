@@ -6898,3 +6898,7 @@ Keko : « j'ai mis à jour goblin paper ». Le nouveau fichier est un 512 × 512
 ### Fin du test du gobelin (18/10/2026)
 
 Keko : « tu peux supprimer le goblin paper des cartes ? j'ai fini le test, je ne veux plus cet emoji dans le jeu ». 👺 sort de `EMOJI_DE_KEKO` et reprend son glyphe Noto ; `TEST_GOBELIN` et son bloc dans `Paquet3D.tsx` sont retirés (pas mis à `null` : un test fini ne laisse pas de code mort, `git log` le garde) ; `Goblin paper.png` sort du dépôt. Les exemplaires de 👺 déjà dans la collection de Keko y restent, sous le glyphe Noto. Ce qui reste du test : le mode fenêtre (`fenetre: true`), le seuil d'encre du cerne, et la table des emoji dessinés qui accepte les deux modes.
+
+### `&oublier=<id>` : effacer d'un appareil ce qu'un test y a laissé (18/10/2026)
+
+Keko : « tu peux supprimer le goblin également des collections cartes / stickers ? ». *Sa collection vit sur son appareil*, comme pour `&retirer` : rien à faire d'ici, c'est un lien qui le fait sur place, une fois par appareil (téléphone, PC distant). `oublier(col, id)` (`logic/emoji/collection.ts`) retire les cartes ET les stickers de l'emoji, rien d'autre ; les decks lâchent les exemplaires partis d'eux-mêmes par `garderPossedeesPartout`. `&oublier=1f47a` pour le gobelin ; plusieurs identifiants séparés par des virgules. Le paramètre est retiré de l'adresse ensuite. Écarté : une purge automatique de 👺 au chargement — elle aurait aussi effacé les 👺 tirés honnêtement plus tard, et laissé dans le code une règle pour un test fini.

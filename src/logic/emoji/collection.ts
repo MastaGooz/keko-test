@@ -293,6 +293,23 @@ export function retirer(col: Collection, ids: readonly string[]): Collection {
   return { ...col, cartes }
 }
 
+/**
+ * OUBLIE UN EMOJI : ses cartes ET ses stickers quittent la collection — le
+ * banc `&oublier=<id>`, pour effacer d'un appareil ce qu'un test y a laissé.
+ * Keko, après le gobelin : « tu peux supprimer le goblin également des
+ * collections cartes / stickers ? ». Rien d'autre ne bouge ; un emoji absent
+ * rend la collection telle quelle. Les decks suivent d'eux-mêmes : ils ne
+ * gardent que les exemplaires possédés.
+ */
+export function oublier(col: Collection, id: string): Collection {
+  if (col.cartes[id] === undefined && col.stickers[id] === undefined) return col
+  const cartes: Record<string, Possession> = { ...col.cartes }
+  const stickers: Record<string, Stickers> = { ...col.stickers }
+  delete cartes[id]
+  delete stickers[id]
+  return { ...col, cartes, stickers }
+}
+
 /** Tout est vu : la pastille s'éteint. */
 export function toutVu(col: Collection): Collection {
   if (!Object.values(col.cartes).some((p) => p.nouvelles.length > 0)) return col
