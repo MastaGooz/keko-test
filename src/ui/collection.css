@@ -1667,3 +1667,190 @@
     transform: translateY(-0.12rem) rotate(45deg);
   }
 }
+
+/* ------------------------------------------------------------ le deck qui joue */
+
+/* LE MODE DECK DE LA GRILLE (Keko : « un autre onglet dans le menu carte pour
+   deck (crée le deck) ») : la carte dans le deck porte un liseré or et sa
+   coche ; le deck plein, celles qui n'y sont pas s'estompent. */
+.vignette-choisie {
+  border-radius: 6% / 4.3%;
+  box-shadow: 0 0 0 0.2rem #ffd45e;
+}
+
+.vignette-estompee {
+  opacity: 0.4;
+}
+
+.vignette-coche {
+  position: absolute;
+  top: -0.4rem;
+  left: -0.3rem;
+  z-index: 1;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background: #ffd45e;
+  color: #2a1b63;
+  font-weight: 800;
+  font-size: 0.95rem;
+  line-height: 1.5rem;
+  text-align: center;
+  box-shadow: 0 0.15rem 0.3rem rgba(10, 4, 30, 0.5);
+}
+
+.deck-jouer {
+  margin-top: 0.9rem;
+}
+
+/* LA PAGE « JOUER » : la pile, la barre jusqu'à la main suivante, la dernière
+   main tombée (cinq vignettes qui entrent l'une après l'autre), et les Likes
+   qui s'envolent vers le compteur. */
+.jouer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  max-width: 60rem;
+  margin: 1rem auto 0;
+}
+
+.jouer-pile {
+  position: relative;
+  width: 7rem;
+  aspect-ratio: 1 / 1.4;
+  margin-bottom: 0.4rem;
+}
+
+.jouer-pile-dos {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 6% / 4.3%;
+  box-shadow: 0 0.3rem 0.8rem rgba(10, 4, 30, 0.5);
+}
+
+/* Les dos de dessous : la couleur du dos, sans le peindre trois fois. */
+span.jouer-pile-dos {
+  background: #2c60d6;
+  border: 0.15rem solid #fffaf0;
+  box-sizing: border-box;
+}
+
+.jouer-pile-dos-2 {
+  transform: translate(0.3rem, -0.3rem) rotate(2deg);
+}
+
+.jouer-pile-dos-3 {
+  transform: translate(0.6rem, -0.6rem) rotate(4deg);
+}
+
+.jouer-pile-compte {
+  right: -0.5rem;
+  bottom: -0.5rem;
+}
+
+.jouer-barre {
+  width: min(100%, 34rem);
+  height: 0.6rem;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.18);
+  overflow: hidden;
+}
+
+.jouer-barre span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff6fa5, #ffb3d1);
+}
+
+.jouer-texte {
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+}
+
+.jouer-texte b {
+  font-weight: 800;
+  color: #ffd45e;
+}
+
+.jouer-main {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  width: min(100%, 34rem);
+  margin-top: 0.6rem;
+}
+
+.jouer-premiere {
+  grid-column: 1 / -1;
+  padding: 2rem 0;
+}
+
+.jouer-carte {
+  display: block;
+  animation: main-entre 0.5s cubic-bezier(0.3, 1.4, 0.5, 1) both;
+  animation-delay: calc(var(--i) * 80ms);
+}
+
+.jouer-carte .vignette {
+  display: block;
+  width: 100%;
+  cursor: default;
+}
+
+.jouer-carte .vignette:active {
+  transform: none;
+}
+
+@keyframes main-entre {
+  from {
+    opacity: 0;
+    transform: translateY(-3rem) scale(0.6) rotate(-8deg);
+  }
+}
+
+/* « +5 » qui part de la main et file au compteur des Likes (`--dx`, `--dy`
+   mesurés par la page), en position fixe hors du défilé. */
+.jouer-vol {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  z-index: 25;
+  transform: translate(-50%, -50%);
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: #ff6fa5;
+  text-shadow: 0 0.1rem 0.4rem rgba(14, 6, 40, 0.8);
+  pointer-events: none;
+  animation: likes-vol 1.1s cubic-bezier(0.4, 0, 0.8, 1) 0.5s both;
+}
+
+@keyframes likes-vol {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  15% {
+    transform: translate(-50%, calc(-50% - 0.8rem)) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx, 0px)), calc(-50% + var(--dy, -20rem))) scale(0.5);
+  }
+}
+
+/* Le petit compte à droite d'une entrée du menu « Cartes » (12/30, en cours). */
+.nav-menu-compte {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.7;
+}

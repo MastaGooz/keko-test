@@ -356,11 +356,12 @@ const FILTRE_VIGNETTE: React.CSSProperties = {
   filter: `saturate(${1 + SATURATION_APLAT}) drop-shadow(0 0.25rem 0.4rem rgba(10, 4, 30, 0.55))`,
 }
 
-function Vignette({
+export function Vignette({
   carte,
   possession,
   variante,
   onOuvrir,
+  choix,
 }: {
   carte: CarteEmoji
   /** `null` : une carte du catalogue qu'on n'a pas encore — grisée. */
@@ -368,6 +369,12 @@ function Vignette({
   /** La version montrée : chacune a sa vignette (voir `Variante`). */
   variante: Variante
   onOuvrir: () => void
+  /**
+   * LE MODE DECK (voir `ChoixDuDeck`) : dans le deck (cochée), dehors, ou
+   * dehors d'un deck plein (estompée). `undefined` hors du mode deck, où la
+   * vignette garde sa bulle « Nouveau ».
+   */
+  choix?: 'dedans' | 'dehors' | 'plein'
 }): React.ReactElement {
   const boite = useRef<HTMLButtonElement>(null)
   const toile = useRef<HTMLCanvasElement>(null)
@@ -500,7 +507,7 @@ function Vignette({
     <button
       ref={boite}
       type="button"
-      className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}${possession === null ? ' vignette-manquante' : ''}`}
+      className={`vignette${prete ? ' vignette-prete' : ''}${holo ? ' vignette-holo' : ''}${possession === null ? ' vignette-manquante' : ''}${choix === 'dedans' ? ' vignette-choisie' : ''}${choix === 'plein' ? ' vignette-estompee' : ''}`}
       style={{ '--cran': teinteDuCran(carte.rarete) } as React.CSSProperties}
       onClick={onOuvrir}
       aria-label={`${enTitre(carte.nom)}, ${NOM_DE_LA_RARETE[carte.rarete]}${possession === null ? ', pas encore obtenue' : ''}`}
@@ -526,7 +533,12 @@ function Vignette({
             style={{ animationDelay: `${(-v * DUREE_SCINTILLE) / SCINTILLES.length}s` }}
           />
         ))}
-      {possession?.nouvelles.includes(variante) && <span className="vignette-nouvelle">Nouveau</span>}
+      {choix === 'dedans' && (
+        <span className="vignette-coche" aria-hidden>
+          ✓
+        </span>
+      )}
+      {choix === undefined && possession?.nouvelles.includes(variante) && <span className="vignette-nouvelle">Nouveau</span>}
       {compte > 1 && <span className="vignette-nombre">×{compte}</span>}
       {(holo || anime) && (
         <span className="vignette-bonus">
@@ -805,12 +817,26 @@ function CarteOuverte({
 /* LA PAGE                                                                  */
 /* ------------------------------------------------------------------------ */
 
+/**
+ * LE MODE DECK : la même grille, pour composer le deck qui joue (Keko : « un
+ * autre onglet dans le menu carte pour deck (crée le deck) »). Une place par
+ * emoji possédé, sa plus belle version ; une tape met la carte dans le deck
+ * ou l'en retire, au lieu de l'ouvrir. Voir `logic/emoji/deck.ts`.
+ */
+export interface ChoixDuDeck {
+  readonly ids: ReadonlySet<string>
+  readonly taille: number
+  readonly onBasculer: (id: string) => void
+  readonly onJouer: () => void
+}
+
 export function PageCollection({
   catalogue,
   collection,
   toutes = false,
   onOuvrirUnPaquet,
   onDetruire,
+  deck,
 }: {
   catalogue: readonly CarteEmoji[] | null
   collection: Collection
@@ -823,8 +849,11 @@ export function PageCollection({
   toutes?: boolean
   onOuvrirUnPaquet: () => void
   onDetruire: (id: string, ex: Exemplaire) => void
+  /** Le mode deck : voir `ChoixDuDeck`. */
+  deck?: ChoixDuDeck
 }): React.ReactElement {
-  const triParDefaut: Tri = toutes ? 'rares' : 'recentes'
+  const modeDeck = deck !== undefined
+  const triParDefaut: Tri = toutes || modeDeck ? 'rares' : 'recentes'
   const tris = toutes ? TRIS.filter((t) => t.id !== 'recentes') : TRIS
   const [recherche, setRecherche] = useState('')
   const [tri, setTri] = useState<Tri>(triParDefaut)
@@ -861,6 +890,14 @@ export function PageCollection({
    * Elles se suivent, dans l'ordre normal, holo, animé, holo animé.
    */
   const places = useMemo((): { carte: CarteEmoji; p: Possession | null; v: Variante }[] => {
+    // LE MODE DECK : une place par emoji possédé, sa plus belle version — un
+    // deck compte des emoji, pas des versions.
+    if (modeDeck)
+      return possedees.map(({ carte, p }) => ({
+        carte,
+        p,
+        v: VARIANTES.filter((v) => compteDe(p, v) > 0).at(-1) ?? 'simple',
+      }))
     // LE CATALOGUE ENTIER : une place par emoji, la plus belle version qu'on a
     // (la dernière de `VARIANTES` possédée), ou la simple en grisé.
     if (toutes)
@@ -872,7 +909,7 @@ export function PageCollection({
     return possedees.flatMap(({ carte, p }) =>
       VARIANTES.filter((v) => compteDe(p, v) > 0).map((v) => ({ carte, p, v })),
     )
-  }, [toutes, catalogue, collection, possedees])
+  }, [toutes, modeDeck, catalogue, collection, possedees])
   const visibles = useMemo(() => {
     const q = plier(recherche.trim())
     const l = places.filter(
@@ -895,7 +932,7 @@ export function PageCollection({
   }, [places, recherche, tri, raretes, groupes, bonus, possession, nouvelles])
 
   const total = catalogue?.length ?? 0
-  const part = total === 0 ? 0 : possedees.length / total
+  const part = deck !== undefined ? deck.ids.size / deck.taille : total === 0 ? 0 : possedees.length / total
   const exemplaires = nombreDExemplaires(collection)
   const laOuverte =
     ouverte === null
@@ -906,9 +943,16 @@ export function PageCollection({
     <div className="collection">
       <div className="collection-defile">
         <header className="collection-tete">
-          <h1 className="collection-titre">{toutes ? 'Toutes les cartes' : 'Ma collection'}</h1>
+          <h1 className="collection-titre">{modeDeck ? 'Mon deck' : toutes ? 'Toutes les cartes' : 'Ma collection'}</h1>
           <p className="collection-compte">
-            {toutes ? (
+            {deck !== undefined ? (
+              <>
+                <b>{deck.ids.size}</b> / {deck.taille} cartes ·{' '}
+                {deck.ids.size >= deck.taille
+                  ? 'complet, il joue'
+                  : `encore ${deck.taille - deck.ids.size} à choisir, une tape met la carte dans le deck`}
+              </>
+            ) : toutes ? (
               <>
                 <b>{possedees.length}</b> / {total} obtenues · {total - possedees.length} manquante
                 {total - possedees.length > 1 ? 's' : ''}
@@ -923,6 +967,12 @@ export function PageCollection({
           <div className="collection-barre" aria-hidden>
             <span style={{ width: `${(part * 100).toFixed(2)}%` }} />
           </div>
+          {/* LE DECK EST COMPLET : aller le voir jouer. */}
+          {deck !== undefined && deck.ids.size >= deck.taille && (
+            <button type="button" className="collection-bouton deck-jouer" onClick={deck.onJouer}>
+              Voir le deck jouer
+            </button>
+          )}
         </header>
 
         {(toutes || possedees.length > 0) && (
@@ -1052,7 +1102,10 @@ export function PageCollection({
                 carte={carte}
                 possession={p}
                 variante={v}
-                onOuvrir={() => setOuverte({ id: carte.id, v })}
+                choix={
+                  deck === undefined ? undefined : deck.ids.has(carte.id) ? 'dedans' : deck.ids.size >= deck.taille ? 'plein' : 'dehors'
+                }
+                onOuvrir={() => (deck !== undefined ? deck.onBasculer(carte.id) : setOuverte({ id: carte.id, v }))}
               />
             ))}
           </div>

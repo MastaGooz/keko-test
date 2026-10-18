@@ -10,6 +10,7 @@
 
 import { collectionVide, lireCollection, type Collection } from '../logic/emoji/collection.ts'
 import { lireReserve, reservePleine, type Reserve } from '../logic/emoji/reserve.ts'
+import { deckVide, lireDeck, type Deck } from '../logic/emoji/deck.ts'
 
 const CLE = 'keko-emoji-collection'
 
@@ -49,5 +50,27 @@ export function sauverReserve(r: Reserve): void {
     localStorage.setItem(CLE_RESERVE, JSON.stringify(r))
   } catch {
     // Sans stockage, la réserve vit le temps de la page.
+  }
+}
+
+// LE DECK QUI JOUE, à part lui aussi : voir `logic/emoji/deck.ts`. *Un deck
+// abîmé repart vide*, la collection n'y perd rien ; et c'est la collection qui
+// dit ce qu'on possède encore (`possede`) — une carte partie quitte le deck.
+const CLE_DECK = 'keko-emoji-deck'
+
+export function chargerDeck(possede: (id: string) => boolean, maintenant: number): Deck {
+  try {
+    const brut = localStorage.getItem(CLE_DECK)
+    return brut === null ? deckVide() : lireDeck(JSON.parse(brut), possede, maintenant)
+  } catch {
+    return deckVide()
+  }
+}
+
+export function sauverDeck(d: Deck): void {
+  try {
+    localStorage.setItem(CLE_DECK, JSON.stringify(d))
+  } catch {
+    // Sans stockage, le deck vit le temps de la page.
   }
 }

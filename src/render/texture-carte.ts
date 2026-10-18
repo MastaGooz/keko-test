@@ -5215,7 +5215,7 @@ const DOS_TOUCHE = 7.2
  * tous deux des emoji — exactement comme une pokéball ne dit pas quel Pokémon
  * est sous la carte.
  */
-async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement> {
+export async function peindreDosEmoji(rayon: number): Promise<HTMLCanvasElement> {
   const canvas = document.createElement('canvas')
   canvas.width = LARGE
   canvas.height = HAUT

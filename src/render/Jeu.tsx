@@ -20,10 +20,11 @@
  * même tirage, et un sachet qu'on n'a pas ouvert reste le même.
  */
 import '../ui/collection.css'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Bonus } from '../logic/emoji/tirage.ts'
 import {
+  ajouterLikes,
   ajouterPaquet,
   avecAbonnes,
   avecLikes,
@@ -39,12 +40,14 @@ import {
   type Exemplaire,
 } from '../logic/emoji/collection.ts'
 import { createRng } from '../logic/rng.ts'
-import { chargerCollection, chargerReserve, sauverCollection, sauverReserve } from '../ui/collection.ts'
+import { chargerCollection, chargerDeck, chargerReserve, sauverCollection, sauverDeck, sauverReserve } from '../ui/collection.ts'
 import { RESERVE, prendreUnPaquet, prochainDans, reserveAJour, type Reserve } from '../logic/emoji/reserve.ts'
+import { DECK, basculerCarte, deckAJour, garderPossedees, likesDeLaMain, type Deck } from '../logic/emoji/deck.ts'
 import { chargerEmojis } from '../ui/emoji.ts'
 import { Paquet3D } from './Paquet3D.tsx'
 import { PageCollection } from './Collection.tsx'
 import { PageStickers } from './Stickers.tsx'
+import { PageJouer, type MainTombee } from './Deck.tsx'
 import { SON_CLIC_POP, amorcerLeSon, jouerSon, precharger, reveillerLeSon } from './sons.ts'
 import { FondAnime } from './FondAnime.tsx'
 import { demanderLInclinaison } from './inclinaison.ts'
@@ -56,16 +59,17 @@ import { toileDuTitre } from './texture-carte.ts'
  * clic sur carte on développe un menu déroulant avec : collection (ce qu'on a
  * actuellement) / toutes les cartes (liste de toutes les cartes) »). Le
  * catalogue est la même page que la collection, avec les cartes qu'on n'a pas
- * encore en grisé.
+ * encore en grisé. `deck` (composer le deck, la même grille en mode deck) et
+ * `jouer` (le regarder jouer) sont les deux entrées du deck qui joue (Keko).
  */
-type Page = 'booster' | 'collection' | 'catalogue' | 'stickers'
+type Page = 'booster' | 'collection' | 'catalogue' | 'stickers' | 'deck' | 'jouer'
 
 /** `&illimite` : la réserve ne se vide jamais — pour tester sans attendre. */
 const ILLIMITE = new URLSearchParams(location.search).has('illimite')
 /** `&page=` : la page ouverte d'emblée (voir `accueil`) ; autre chose, ignoré. */
 const PAGE_DEMANDEE = ((): Page | null => {
   const p = new URLSearchParams(location.search).get('page')
-  return p === 'collection' || p === 'catalogue' || p === 'stickers' ? p : null
+  return p === 'collection' || p === 'catalogue' || p === 'stickers' || p === 'deck' || p === 'jouer' ? p : null
 })()
 
 /** 9:58 — les minutes sans zéro devant, les secondes avec. */
@@ -244,6 +248,39 @@ export function Jeu(): React.ReactElement {
     })
   }, [])
   /**
+   * LE DECK QUI JOUE (`logic/emoji/deck.ts`). Keko : « un système idle où tu
+   * construis un deck… chaque main ajoute immédiatement ses likes ». *Il joue
+   * sur toutes les pages* : à chaque seconde, ce que le temps a joué tombe
+   * (`deckAJour`), les Likes entrent dans la collection, et la page « Jouer »
+   * montre la dernière main (`derniereMain`). Le deck ne garde que des cartes
+   * possédées : relu avec la collection, et une carte partie le quitte.
+   */
+  const [deck, setDeck] = useState<Deck>(() => {
+    const c = chargerCollection()
+    return chargerDeck((id) => c.cartes[id] !== undefined, Date.now())
+  })
+  const [derniereMain, setDerniereMain] = useState<MainTombee | null>(null)
+  const poserDeck = useCallback((f: (d: Deck) => Deck) => {
+    setDeck((d) => {
+      const n = f(d)
+      if (n !== d) sauverDeck(n)
+      return n
+    })
+  }, [])
+  useEffect(() => {
+    const r = deckAJour(deck, maintenant)
+    if (r.deck !== deck) poserDeck(() => r.deck)
+    if (r.mains === 0 || r.derniere === null) return
+    const main = r.derniere
+    changer((c) => ajouterLikes(c, r.likes))
+    setDerniereMain((m) => ({ main, likes: likesDeLaMain(main), numero: (m?.numero ?? 0) + 1 }))
+  }, [deck, maintenant, changer, poserDeck])
+  useEffect(() => {
+    poserDeck((d) => garderPossedees(d, (id) => collection.cartes[id] !== undefined, Date.now()))
+  }, [collection, poserDeck])
+  const basculerDansLeDeck = useCallback((id: string) => poserDeck((d) => basculerCarte(d, id, Date.now())), [poserDeck])
+  const deckIds = useMemo(() => new Set(deck.cartes), [deck.cartes])
+  /**
    * `&debloquer` : LA MOITIÉ DU CATALOGUE, D'UN LIEN. Keko : « tu peux me
    * débloquer la moitié de la collection ? » *La collection vit sur l'appareil*,
    * donc c'est l'appareil qui l'écrit en ouvrant le lien. **Il complète jusqu'à
@@ -377,7 +414,7 @@ export function Jeu(): React.ReactElement {
   const nouvelles = nombreDeNouvelles(collection)
   const nouveauxStickers = nombreDeStickersNouveaux(collection)
   const visible = !accueil && (page !== 'booster' || calme)
-  const surLesCartes = page === 'collection' || page === 'catalogue'
+  const surLesCartes = page === 'collection' || page === 'catalogue' || page === 'deck' || page === 'jouer'
 
   return (
     <>
@@ -417,6 +454,8 @@ export function Jeu(): React.ReactElement {
         </>
       ) : page === 'stickers' ? (
         <PageStickers catalogue={catalogue} collection={collection} onCollection={() => aller('collection')} />
+      ) : page === 'jouer' ? (
+        <PageJouer catalogue={catalogue} collection={collection} deck={deck} derniere={derniereMain} onComposer={() => aller('deck')} />
       ) : (
         <PageCollection
           key={page}
@@ -425,6 +464,11 @@ export function Jeu(): React.ReactElement {
           toutes={page === 'catalogue'}
           onOuvrirUnPaquet={() => aller('booster')}
           onDetruire={detruireCarte}
+          deck={
+            page === 'deck'
+              ? { ids: deckIds, taille: DECK.taille, onBasculer: basculerDansLeDeck, onJouer: () => aller('jouer') }
+              : undefined
+          }
         />
       )}
       {!accueil && page === 'booster' && !attente && (
@@ -514,6 +558,29 @@ export function Jeu(): React.ReactElement {
               onClick={() => aller('catalogue')}
             >
               Toutes les cartes
+            </button>
+            {/* LE DECK QUI JOUE : le composer, le regarder jouer (Keko). */}
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={page === 'deck'}
+              className={`nav-menu-entree${page === 'deck' ? ' nav-menu-active' : ''}`}
+              onClick={() => aller('deck')}
+            >
+              Deck
+              <span className="nav-menu-compte">
+                {deck.cartes.length}/{DECK.taille}
+              </span>
+            </button>
+            <button
+              type="button"
+              role="menuitemradio"
+              aria-checked={page === 'jouer'}
+              className={`nav-menu-entree${page === 'jouer' ? ' nav-menu-active' : ''}`}
+              onClick={() => aller('jouer')}
+            >
+              Jouer
+              {deck.partie !== null && <span className="nav-menu-compte">en cours</span>}
             </button>
           </div>
         )}

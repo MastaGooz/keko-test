@@ -276,10 +276,20 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   pilule crème, « ça fait penser à un bouton » —, caché avec la barre ; au
   doigt, « X disponibles » et la tête de la collection passent dessous, le
   titre garde sa taille et sa ligne) :
-  **des compteurs seuls pour l'instant**, « pas encore de générateur » ; les
-  Likes achèteront des paquets au-delà des dix de la réserve, l'usage des
+  **le deck qui joue génère les Likes** (ci-dessous), rien encore les Abonnés ;
+  les Likes achèteront des paquets au-delà des dix de la réserve, l'usage des
   Abonnés est à trancher. Une collection d'avant relit zéro. `&likes=N` et
   `&abonnes=N` posent les soldes de l'appareil.
+- **Le deck qui joue** (`logic/emoji/deck.ts`, `render/Deck.tsx` ; Keko : « un
+  système idle où tu construis un deck ») : trente emoji possédés, un
+  exemplaire chacun, choisis dans la grille en mode deck (menu « Cartes » →
+  « Deck », `ChoixDuDeck`) ; complet, il joue tout seul **une main de cinq
+  toutes les dix secondes, un Like par carte, ajouté aussitôt, sur toutes les
+  pages** ; vidé, il se remélange (`melange` seedé, la graine suit). *Le temps
+  est injecté* comme pour la réserve : `deckAJour` rejoue l'écoulé à la
+  lecture, huit heures au plus hors ligne. « Jouer » montre la pile, la
+  dernière main, les Likes qui s'envolent. Changer le deck relance sa partie ;
+  une carte détruite le quitte. Cadence et limite hors ligne de moi, à rejuger.
 
 ### Ce qui reste à trancher par Keko
 
@@ -325,6 +335,7 @@ src/
       types.ts      # CarteEmoji, la validation, les seize groupes (neuf d'Unicode + cœurs, créatures, mains, corps, nature, éléments, véhicules), les cinq crans
       tirage.ts     # les deux bonus, holo et animé, tirés à l'ouverture
       collection.ts # ce qu'on a obtenu : ajouter un paquet, relire le stockage
+      deck.ts       # le deck de trente qui joue tout seul : mains, cycles, Likes, temps injecté
     paintings/   # la seconde collection : une carte = une PEINTURE
       types.ts      # CartePeinture, la validation, le siècle, les rayons
     combat.ts    # ARCHIVE : le tour par tour, les cartes, les effets
@@ -340,6 +351,7 @@ src/
     Collection.tsx   # la grille des cartes obtenues, et la carte ouverte en 3D
     Decollage.tsx    # détruire une carte : le sticker qu'on tire, la carte qui casse
     Stickers.tsx     # l'album des stickers gagnés
+    Deck.tsx         # la page « Jouer » : la pile, la dernière main, les Likes qui s'envolent
     peinture-vignette.ts # la carte peinte en petit (vignette, décollage), et sa holo
     Sachet3D.tsx     # la pochette qui se déchire en brûlant, avant la rangée
     carte-emoji.ts   # CarteEmoji -> CarteAPeindre
@@ -448,7 +460,7 @@ Les deux pipelines tournent **hors du build** et profitent du cache de
 | `&nu` | saute le sachet |
 | `&illimite` | la réserve de paquets ne se vide jamais, pour tester sans attendre |
 | `&retirer` | retire la moitié des emoji de la collection DE CET APPAREIL, au hasard, avec tous leurs exemplaires ; l'album ne bouge pas — le miroir de `&debloquer` |
-| `&page=collection`, `&page=catalogue`, `&page=stickers` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
+| `&page=collection`, `&page=catalogue`, `&page=stickers`, `&page=deck`, `&page=jouer` | ouvre cette page d'emblée, sans l'accueil — *ce qui se teste doit pouvoir s'ouvrir d'un lien* |
 | `&likes=N`, `&abonnes=N` | posent le solde de Likes / d'Abonnés DE CET APPAREIL (les compteurs, sans générateur) ; rouvrir ne double rien |
 | `&debloquer` | complète la collection DE CET APPAREIL jusqu'à la moitié du catalogue, au hasard, sans « Nouveau » ; rouvrir ne double rien ; `&debloquer=tout` : tout le catalogue, et un sticker de chaque emoji dans l'album |
 | `&bonus` | la dernière carte est 🥂 **animée, sans holo** |
