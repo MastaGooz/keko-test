@@ -339,7 +339,7 @@ noms longs).
 
 ## UN TEST À PART : LE GÉNÉRATEUR D'ICÔNES — `preview.html`
 
-Trois races (humain, alien, biologique) × trois rôles (combat, minage, station), plus des planètes, des astéroïdes des ORIGAMIS qui se déplient, des GRIBOUILLIS, des PERSONNAGES en trois styles, des HÉROS en buste, des MASQUES, des CRÉATURES de type en SVG plat, et, en 3D toon, des FIGURINES, VAISSEAUX, STATIONS, PLANÈTES et ASTÉROÏDES, tirés d'un identifiant (même id,
+Trois races (humain, alien, biologique) × trois rôles (combat, minage, station), plus des planètes, des astéroïdes des ORIGAMIS, des GRIBOUILLIS, des PERSONNAGES en trois styles, des HÉROS en buste, des MASQUES, des CRÉATURES de type en SVG plat, et, en 3D toon, figurines, vaisseaux, stations, planètes, astéroïdes, tirés d'un identifiant (même id,
 même visuel), palettes fixes, symétrie miroir, pièces ancrées. `logic/procgen/`
 (pur, dans `npm run verif`), `ui/procgen/svg.ts` (`renderIcon`), la page
 `preview.html?serie=N` hors du jeu. **Aucun emoji n'est remplacé.** Tout est
