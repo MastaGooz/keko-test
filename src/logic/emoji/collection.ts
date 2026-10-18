@@ -30,8 +30,16 @@ export interface Possession {
   premiere: number
   /** L'ordre d'arrivée du premier : départage deux cartes du même paquet. */
   ordre: number
-  /** Pas encore vue dans la collection — c'est la pastille du menu. */
-  nouvelle: boolean
+  /**
+   * LES VERSIONS PAS ENCORE VUES dans la collection — la bulle « Nouveau » de
+   * leur vignette et la pastille du menu. *Par version, pas par carte* : Keko,
+   * « quand j'obtiens une carte holo et que j'ai déjà la version normale, la
+   * bulle nouveau s'affiche sur toutes les versions de la carte au lieu de
+   * juste la nouvelle ». Une version qu'on n'avait pas est nouvelle ; un
+   * doublon d'une version qu'on a ne l'est pas, holo ou pas. Une collection
+   * d'avant (`nouvelle: true`) relit toutes ses versions nouvelles.
+   */
+  nouvelles: readonly Variante[]
 }
 
 /**
@@ -153,6 +161,7 @@ export function ajouterPaquet(
   let arrivees = col.arrivees
   for (const id of ids) {
     const b = bonus[id]
+    const v = varianteDe({ holo: b?.holo === true, anime: b?.anime === true })
     const deja = cartes[id]
     if (deja === undefined) {
       arrivees += 1
@@ -163,7 +172,7 @@ export function ajouterPaquet(
         ha: b?.holo === true && b?.anime === true ? 1 : 0,
         premiere: quand,
         ordre: arrivees,
-        nouvelle: true,
+        nouvelles: [v],
       }
     } else {
       cartes[id] = {
@@ -172,9 +181,9 @@ export function ajouterPaquet(
         holo: deja.holo + (b?.holo === true ? 1 : 0),
         anime: deja.anime + (b?.anime === true ? 1 : 0),
         ha: deja.ha + (b?.holo === true && b?.anime === true ? 1 : 0),
-        // *UN HOLO OU UN ANIMÉ DE PLUS SUR UNE CARTE CONNUE EST UNE NOUVELLE* :
-        // c'est un exemplaire qu'on n'avait pas.
-        nouvelle: deja.nouvelle || b?.holo === true || b?.anime === true,
+        // *UNE VERSION QU'ON N'AVAIT PAS EST UNE NOUVELLE*, et elle seule : le
+        // premier holo d'une carte connue, pas son second, pas un simple de plus.
+        nouvelles: compteDe(deja, v) === 0 && !deja.nouvelles.includes(v) ? [...deja.nouvelles, v] : deja.nouvelles,
       }
     }
   }
@@ -207,7 +216,9 @@ export function detruire(col: Collection, id: string, ex: Exemplaire, quand: num
     const holo = Math.min(n, Math.max(0, p.holo - (ex.holo ? 1 : 0)))
     const anime = Math.min(n, Math.max(0, p.anime - (ex.anime ? 1 : 0)))
     const ha = Math.min(holo, anime, Math.max(0, p.ha - (ex.holo && ex.anime ? 1 : 0)))
-    cartes[id] = { ...p, n, holo, anime, ha }
+    // Une version partie n'est plus à voir.
+    const reste = { n, holo, anime, ha }
+    cartes[id] = { ...p, ...reste, nouvelles: p.nouvelles.filter((v) => compteDe(reste, v) > 0) }
   }
   const s = col.stickers[id] ?? { n: 0, holo: 0, anime: 0, ha: 0, dernier: quand, nouveau: false }
   // LE BONUS NE PASSE AU STICKER QUE SI LA CARTE L'AVAIT : un compte abîmé ne
@@ -248,7 +259,7 @@ export function debloquer(col: Collection, ids: readonly string[], quand: number
   for (const id of ids) {
     if (cartes[id] !== undefined) continue
     arrivees += 1
-    cartes[id] = { n: 1, holo: 0, anime: 0, ha: 0, premiere: quand, ordre: arrivees, nouvelle: false }
+    cartes[id] = { n: 1, holo: 0, anime: 0, ha: 0, premiere: quand, ordre: arrivees, nouvelles: [] }
   }
   return { ...col, arrivees, cartes }
 }
@@ -284,15 +295,16 @@ export function retirer(col: Collection, ids: readonly string[]): Collection {
 
 /** Tout est vu : la pastille s'éteint. */
 export function toutVu(col: Collection): Collection {
-  if (!Object.values(col.cartes).some((p) => p.nouvelle)) return col
+  if (!Object.values(col.cartes).some((p) => p.nouvelles.length > 0)) return col
   const cartes: Record<string, Possession> = {}
-  for (const [id, p] of Object.entries(col.cartes)) cartes[id] = p.nouvelle ? { ...p, nouvelle: false } : p
+  for (const [id, p] of Object.entries(col.cartes)) cartes[id] = p.nouvelles.length > 0 ? { ...p, nouvelles: [] } : p
   return { ...col, cartes }
 }
 
+/** Combien de VERSIONS nouvelles — autant que de bulles dans la grille. */
 export function nombreDeNouvelles(col: Collection): number {
   let n = 0
-  for (const p of Object.values(col.cartes)) if (p.nouvelle) n += 1
+  for (const p of Object.values(col.cartes)) n += p.nouvelles.length
   return n
 }
 
@@ -346,15 +358,13 @@ export function lireCollection(brut: unknown): Collection {
     // LES DEUX À LA FOIS : absent d'avant (0), jamais plus que l'un ou l'autre,
     // et au moins ce que les comptes imposent (holo + animés au-delà de n).
     const ha = Math.min(h, a, Math.max(entier(p.ha) ?? 0, h + a - n))
-    cartes[id] = {
-      n,
-      holo: h,
-      anime: a,
-      ha,
-      premiere,
-      ordre,
-      nouvelle: p.nouvelle === true,
-    }
+    const comptes = { n, holo: h, anime: a, ha }
+    // LES VERSIONS NOUVELLES : seulement celles qu'on possède ; une collection
+    // d'avant (`nouvelle: true`, un drapeau pour toute la carte) les relit
+    // toutes nouvelles — c'est ce qu'elle montrait.
+    const brutes: unknown[] = Array.isArray(p.nouvelles) ? p.nouvelles : p.nouvelle === true ? [...VARIANTES] : []
+    const nouvelles = VARIANTES.filter((v) => brutes.includes(v) && compteDe(comptes, v) > 0)
+    cartes[id] = { ...comptes, premiere, ordre, nouvelles }
     plusGrandOrdre = Math.max(plusGrandOrdre, ordre)
   }
   // L'ALBUM, MÊME RÈGLE : un sticker mal formé est écarté, pas l'album.

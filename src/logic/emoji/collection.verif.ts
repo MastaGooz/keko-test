@@ -47,7 +47,7 @@ const albumPlein = debloquerStickers(debloquerStickers(un, ['1f600', '1f603'], 5
 verifier('les stickers débloqués ne doublent pas', nombreDeStickers(albumPlein) === nombreDeStickers(un) + 2 - (un.stickers['1f600'] ? 1 : 0) - (un.stickers['1f603'] ? 1 : 0))
 verifier('débloquer ajoute ce qui manque', Object.keys(debloquee.cartes).length === 4)
 verifier('débloquer ne touche pas ce qu’on a', debloquee.cartes['1f600']?.n === 2)
-verifier('débloquer ne fait pas de nouvelles', debloquee.cartes['1f603']?.nouvelle === false)
+verifier('débloquer ne fait pas de nouvelles', debloquee.cartes['1f603']?.nouvelles.length === 0)
 verifier('débloquer ne compte pas de paquet', debloquee.paquets === un.paquets)
 const retiree = retirer(debloquee, ['1f603', '1f604', 'absent'])
 verifier('retirer enlève les emoji nommés, et ignore un absent', Object.keys(retiree.cartes).length === 2 && retiree.cartes['1f603'] === undefined)
@@ -60,6 +60,12 @@ verifier("un doublon simple n'est pas une nouvelle", nombreDeNouvelles(deux) ===
 verifier('la date reste celle du premier', deux.cartes['1f600']?.premiere === 1000)
 const trois = ajouterPaquet(deux, ['1f600'], { '1f600': { holo: true, anime: false } }, 3000)
 verifier('un holo de plus est une nouvelle', nombreDeNouvelles(trois) === 1)
+verifier('et seule la version holo est nouvelle', trois.cartes['1f600']?.nouvelles.length === 1 && trois.cartes['1f600']?.nouvelles[0] === 'holo')
+const secondHolo = ajouterPaquet(trois, ['1f600'], { '1f600': { holo: true, anime: false } }, 3500)
+verifier("un second holo n'est pas une nouvelle", nombreDeNouvelles(secondHolo) === 1)
+verifier('une collection d’avant relit toutes ses versions nouvelles', nombreDeNouvelles(lireCollection({ version: 1, cartes: { '1f600': { n: 2, holo: 1, anime: 0, premiere: 1, ordre: 1, nouvelle: true } } })) === 2)
+verifier('une version nouvelle qu’on n’a pas est écartée à la relecture', lireCollection({ version: 1, cartes: { '1f600': { n: 1, holo: 0, anime: 0, premiere: 1, ordre: 1, nouvelles: ['holo', 'simple'] } } }).cartes['1f600']?.nouvelles.join() === 'simple')
+verifier('détruire la version nouvelle efface sa bulle', nombreDeNouvelles(detruire(trois, '1f600', { holo: true, anime: false }, 3600)) === 0)
 
 // LA DESTRUCTION : un exemplaire part, son sticker arrive.
 const simple = exemplaireADetruire(trois.cartes['1f600']!)

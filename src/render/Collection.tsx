@@ -526,7 +526,7 @@ function Vignette({
             style={{ animationDelay: `${(-v * DUREE_SCINTILLE) / SCINTILLES.length}s` }}
           />
         ))}
-      {possession?.nouvelle && <span className="vignette-nouvelle">Nouveau</span>}
+      {possession?.nouvelles.includes(variante) && <span className="vignette-nouvelle">Nouveau</span>}
       {compte > 1 && <span className="vignette-nombre">×{compte}</span>}
       {(holo || anime) && (
         <span className="vignette-bonus">
@@ -878,7 +878,7 @@ export function PageCollection({
     const l = places.filter(
       ({ carte, p, v }) =>
         (possession.size === 0 || possession.has(p === null ? 'manquantes' : 'obtenues')) &&
-        (!nouvelles || p?.nouvelle === true) &&
+        (!nouvelles || (p !== null && p.nouvelles.includes(v))) &&
         passeLeBonus(bonus, {
           holo: p !== null && exemplaireDe(v).holo ? 1 : 0,
           anime: p !== null && exemplaireDe(v).anime ? 1 : 0,

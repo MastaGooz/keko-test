@@ -214,8 +214,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   Keko : « plus pratique pour les doigts… juste sur téléphone, pas PC » ; la
   jauge suit, le menu monte, « X disponibles » passe en haut, `--barre-bas`
   dit sa hauteur), **« Cartes » à gauche, qui déroule un menu** (Keko) :
-  « Collection » (ce qu'on a, pastille rouge = cartes nouvelles) et « Toutes
-  les cartes » (le catalogue entier, la même `PageCollection` avec `toutes`,
+  « Collection » (ce qu'on a, pastille rouge = VERSIONS nouvelles,
+  `Possession.nouvelles`, la bulle sur la seule version qu'on n'avait pas) et
+  « Toutes les cartes » (le catalogue entier, la même `PageCollection` avec `toutes`,
   les manquantes en grisé, ouvrables en 3D sans « Décoller ») ; le booster
   rond au centre, « Stickers » à droite (l'album, sa pastille rouge = stickers
   nouveaux, `Stickers.nouveau` posé par `detruire`, effacé par `stickersVus` en
