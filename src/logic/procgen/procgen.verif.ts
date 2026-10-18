@@ -4,6 +4,7 @@
  */
 import { BOITE, FAMILLES, RACES, ROLES, genererDessin, seedDe, type Famille, type Race } from './index.ts'
 import { figurineSaine, genererFigurine } from './figurine.ts'
+import { genererVaisseau3D } from './vaisseau3d.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -67,6 +68,18 @@ verifier('autre id = autre figurine', JSON.stringify(genererFigurine('f-2')) !==
 let saines = true
 for (let i = 0; i < 300; i++) if (!figurineSaine(genererFigurine(`figurine-${i}`))) saines = false
 verifier('300 figurines saines, dans le cube unité', saines)
+console.log('vaisseau 3D')
+verifier('même id = même vaisseau', JSON.stringify(genererVaisseau3D('w-1')) === JSON.stringify(genererVaisseau3D('w-1')))
+let sains3d = true
+for (let i = 0; i < 300; i++) {
+  const v = genererVaisseau3D(`v3d-${i}`)
+  for (const s of v.solides) {
+    const ok = (n: number) => Number.isFinite(n) && Math.abs(n) <= 1.2
+    if (!ok(s.x) || !ok(s.y) || !ok(s.z) || !s.s.every(ok)) sains3d = false
+    if (s.pts && !s.pts.every(([a, b]) => ok(a) && ok(b))) sains3d = false
+  }
+}
+verifier('300 vaisseaux 3D sains, dans le cube', sains3d)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

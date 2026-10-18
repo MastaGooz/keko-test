@@ -15,7 +15,10 @@
  */
 import * as THREE from 'three'
 import { MarchingCubes } from 'three/examples/jsm/objects/MarchingCubes.js'
-import { genererFigurine, type Figurine } from '../../logic/procgen/figurine.ts'
+import { genererFigurine, type Figurine, type Solide } from '../../logic/procgen/figurine.ts'
+import { genererVaisseau3D } from '../../logic/procgen/vaisseau3d.ts'
+
+export type Sorte3D = 'figurine' | 'vaisseau3d'
 
 const RESOLUTION = 56
 const ISOLATION = 80
@@ -122,6 +125,46 @@ const GEOS = {
   sphere: new THREE.SphereGeometry(1, 24, 16),
   cone: new THREE.ConeGeometry(1, 1, 18),
   octaedre: new THREE.OctahedronGeometry(1, 0),
+  boite: new THREE.BoxGeometry(1, 1, 1),
+}
+
+/** La géométrie d'un solide : partagée pour les formes unités, construite pour le reste. */
+function geometrieDe(s: Solide): { geo: THREE.BufferGeometry; partagee: boolean } {
+  if (s.forme === 'cylindre') {
+    const [h, b] = s.rayons ?? [1, 1]
+    return { geo: new THREE.CylinderGeometry(h, b, 1, 24), partagee: false }
+  }
+  if (s.forme === 'prisme' && s.pts) {
+    // Le polygone dans le plan de la Shape, extrudé le long de z, puis couché.
+    const shape = new THREE.Shape(s.pts.map(([a, b]) => new THREE.Vector2(a, b)))
+    const ep = s.epaisseur ?? 0.1
+    const biseau = Math.min(s.biseau ?? 0.02, ep * 0.4)
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: ep - 2 * biseau, bevelEnabled: true, bevelThickness: biseau, bevelSize: biseau, bevelSegments: 2, curveSegments: 6 })
+    geo.translate(0, 0, -(ep - 2 * biseau) / 2)
+    if (s.axe === 'x') geo.rotateY(-Math.PI / 2) // (z, y) du vaisseau, épaisseur le long de x
+    else geo.rotateX(Math.PI / 2) // (x, z) du vaisseau, épaisseur le long de y
+    geo.computeVertexNormals()
+    return { geo, partagee: false }
+  }
+  if (s.forme === 'boite') return { geo: GEOS.boite, partagee: true }
+  if (s.forme === 'cone') return { geo: GEOS.cone, partagee: true }
+  if (s.forme === 'octaedre') return { geo: GEOS.octaedre, partagee: true }
+  return { geo: GEOS.sphere, partagee: true }
+}
+
+/** Les solides durs, montés dans un groupe. */
+function monterSolides(solides: readonly Solide[], contour: string, groupe: THREE.Group): void {
+  for (const s of solides) {
+    const { geo } = geometrieDe(s)
+    const mesh = new THREE.Mesh(geo, materiauToon(s.couleur, s.opacite ?? 1))
+    mesh.position.set(s.x, s.y, s.z)
+    mesh.scale.set(s.s[0], s.s[1], s.s[2])
+    mesh.rotation.set(s.rot[0], s.rot[1], s.rot[2])
+    // Un cône est posé par sa base, pas par son centre.
+    if (s.forme === 'cone') mesh.translateY(s.s[1] / 2)
+    if (!s.sansContour) mesh.add(new THREE.Mesh(geo, materiauContour(contour)))
+    groupe.add(mesh)
+  }
 }
 
 /** La figurine montée : un groupe, prêt à poser dans une scène. */
@@ -129,20 +172,24 @@ export function monterFigurine(f: Figurine): THREE.Group {
   const groupe = new THREE.Group()
   const surface = surfaceDesBoules(f)
   if (surface) groupe.add(surface)
-  for (const s of f.solides) {
-    const geo = s.forme === 'cone' ? GEOS.cone : s.forme === 'octaedre' ? GEOS.octaedre : GEOS.sphere
-    const mesh = new THREE.Mesh(geo, materiauToon(s.couleur, s.opacite ?? 1))
-    mesh.position.set(s.x, s.y, s.z)
-    mesh.scale.set(s.s[0], s.s[1], s.s[2])
-    mesh.rotation.set(s.rot[0], s.rot[1], s.rot[2])
-    // Un cône est posé par sa base, pas par son centre.
-    if (s.forme === 'cone') mesh.translateY(s.s[1] / 2)
-    if (!s.sansContour) {
-      mesh.add(new THREE.Mesh(geo, materiauContour(f.palette.contour)))
-    }
-    groupe.add(mesh)
-  }
+  monterSolides(f.solides, f.palette.contour, groupe)
   return groupe
+}
+
+/** L'objet 3D d'une sorte, monté et orienté pour la vue. */
+function monter(sorte: Sorte3D, id: string): THREE.Group {
+  if (sorte === 'figurine') {
+    const g = monterFigurine(genererFigurine(id))
+    g.rotation.y = -0.35
+    return g
+  }
+  const v = genererVaisseau3D(id)
+  const g = new THREE.Group()
+  monterSolides(v.solides, v.palette.ombre, g)
+  // Vu de trois quarts, d'au-dessus, le nez vers le bas gauche.
+  g.rotation.set(0.55, -0.6, 0)
+  g.scale.setScalar(1.15)
+  return g
 }
 
 /** Une scène prête : lumières et caméra. */
@@ -164,7 +211,7 @@ function scene(): { scene: THREE.Scene; camera: THREE.PerspectiveCamera } {
 let rendeurVignettes: THREE.WebGLRenderer | null = null
 
 /** Le rendu d'une figurine en image (data URL), à la taille demandée. */
-export function vignetteFigurine(id: string, taille: number): string {
+export function vignette3D(sorte: Sorte3D, id: string, taille: number): string {
   if (!rendeurVignettes) {
     rendeurVignettes = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true })
     rendeurVignettes.setPixelRatio(1)
@@ -175,9 +222,7 @@ export function vignetteFigurine(id: string, taille: number): string {
   r.setSize(px, px, false)
   r.setClearColor(0x000000, 0)
   const { scene: sc, camera } = scene()
-  const f = genererFigurine(id)
-  const groupe = monterFigurine(f)
-  groupe.rotation.y = -0.35
+  const groupe = monter(sorte, id)
   sc.add(groupe)
   r.render(sc, camera)
   const url = r.domElement.toDataURL('image/png')
@@ -189,6 +234,7 @@ function liberer(groupe: THREE.Group): void {
   groupe.traverse((o) => {
     if (o instanceof THREE.Mesh) {
       if (!(Object.values(GEOS) as THREE.BufferGeometry[]).includes(o.geometry)) o.geometry.dispose()
+      // Le contour partage la géométrie : il est libéré avec elle.
       const m = o.material as THREE.Material
       m.dispose()
     }
@@ -196,20 +242,21 @@ function liberer(groupe: THREE.Group): void {
 }
 
 /** La visionneuse : une figurine qui tourne dans un canvas, jusqu'à `arreter()`. */
-export function visionneuse(canvas: HTMLCanvasElement, id: string, taille: number): { arreter: () => void } {
+export function visionneuse(canvas: HTMLCanvasElement, sorte: Sorte3D, id: string, taille: number): { arreter: () => void } {
   const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
   r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1))
   r.setSize(taille, taille, false)
   r.outputColorSpace = THREE.SRGBColorSpace
   r.setClearColor(0x000000, 0)
   const { scene: sc, camera } = scene()
-  const groupe = monterFigurine(genererFigurine(id))
+  const groupe = monter(sorte, id)
+  const y0 = groupe.rotation.y
   sc.add(groupe)
   let vivant = true
   const t0 = performance.now()
   const image = (t: number) => {
     if (!vivant) return
-    groupe.rotation.y = -0.35 + ((t - t0) / 1000) * 0.9
+    groupe.rotation.y = y0 + ((t - t0) / 1000) * 0.9
     groupe.position.y = Math.sin((t - t0) / 600) * 0.02
     r.render(sc, camera)
     requestAnimationFrame(image)

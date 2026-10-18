@@ -12,11 +12,15 @@ import { FAMILLES, RACES, ROLES, seedDe, type Famille, type Race } from '../../l
 import { createRng } from '../../logic/rng.ts'
 import { renderDessin, renderIcon } from './svg.ts'
 import { dessinerOrigami, dureeTotale, genererOrigami } from '../../logic/procgen/index.ts'
-import { vignetteFigurine, visionneuse } from './toon.ts'
+import { vignette3D, visionneuse, type Sorte3D } from './toon.ts'
 
 const PAR_FAMILLE = 30
-/** La famille 3D : pas un dessin SVG, une figurine rendue en toon par three.js. */
-const FIGURINE = 'figurine'
+/** Les familles 3D : pas des dessins SVG, des objets rendus en toon par three.js. */
+const SORTES_3D: readonly { sorte: Sorte3D; titre: string; prefixe: string }[] = [
+  { sorte: 'vaisseau3d', titre: 'Vaisseaux 3D toon (toucher pour faire tourner)', prefixe: 'w' },
+  { sorte: 'figurine', titre: 'Figurines 3D toon (toucher pour faire tourner)', prefixe: 'f' },
+]
+const est3D = (f: string): f is Sorte3D => SORTES_3D.some((s) => s.sorte === f)
 const TAILLES = [32, 64, 128] as const
 const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', gribouillis: 'g', 'perso-papier': 'h', 'perso-pixel': 'h', 'perso-encre': 'h', heros: 'k', masque: 'q', creature: 'b', vaisseau: 'v', alien: 'x' }
 /** Les familles d'un même groupe tirent les MÊMES identifiants : on compare le même personnage d'un style à l'autre. */
@@ -30,11 +34,11 @@ const raceLue = adresse.searchParams.get('race')
 let race: Race = (RACES as readonly string[]).includes(raceLue ?? '') ? (raceLue as Race) : 'humain'
 
 /** Les identifiants d'une série : tirés d'un RNG seedé par son numéro. */
-function identifiants(famille: Famille | typeof FIGURINE, serie: number): string[] {
-  const rng = createRng(seedDe(`${(famille === FIGURINE ? FIGURINE : GROUPE[famille]) ?? famille}/${serie}`))
+function identifiants(famille: Famille | Sorte3D, serie: number): string[] {
+  const rng = createRng(seedDe(`${(est3D(famille) ? famille : GROUPE[famille]) ?? famille}/${serie}`))
   const ids: string[] = []
   while (ids.length < PAR_FAMILLE) {
-    const id = `${famille === FIGURINE ? 'f' : PREFIXE[famille]}-${Math.floor(rng.next() * 46656).toString(36).padStart(3, '0')}`
+    const id = `${est3D(famille) ? SORTES_3D.find((s) => s.sorte === famille)!.prefixe : PREFIXE[famille]}-${Math.floor(rng.next() * 46656).toString(36).padStart(3, '0')}`
     if (!ids.includes(id)) ids.push(id)
   }
   return ids
@@ -65,10 +69,11 @@ racine.innerHTML = `
     </div>
   </header>
   <section class="pv-un" id="pv-un" hidden></section>
-  <section class="pv-famille pv-3d" data-famille="${FIGURINE}">
-    <h2>Figurines 3D toon (toucher pour faire tourner)</h2>
+  ${SORTES_3D.map((s) => `
+  <section class="pv-famille pv-3d" data-famille="${s.sorte}">
+    <h2>${s.titre}</h2>
     <div class="pv-grille"></div>
-  </section>
+  </section>`).join('')}
   <div class="pv-visionneuse" id="pv-visionneuse" hidden><canvas></canvas><p></p></div>
   ${FAMILLES.map(
     (f) => `
@@ -167,13 +172,13 @@ function pousserRendu(tache: () => void): void {
 }
 
 let visionneuseEnCours: { arreter: () => void } | null = null
-function ouvrirVisionneuse(id: string): void {
+function ouvrirVisionneuse(sorte: Sorte3D, id: string): void {
   const bloc = document.getElementById('pv-visionneuse')!
   const canvas = bloc.querySelector('canvas')!
   visionneuseEnCours?.arreter()
   bloc.hidden = false
   bloc.querySelector('p')!.textContent = `${id} — toucher pour fermer`
-  visionneuseEnCours = visionneuse(canvas, id, Math.min(360, window.innerWidth - 48))
+  visionneuseEnCours = visionneuse(canvas, sorte, id, Math.min(360, window.innerWidth - 48))
 }
 document.getElementById('pv-visionneuse')!.addEventListener('click', () => {
   visionneuseEnCours?.arreter()
@@ -181,10 +186,10 @@ document.getElementById('pv-visionneuse')!.addEventListener('click', () => {
   document.getElementById('pv-visionneuse')!.hidden = true
 })
 
-function celluleFigurine(id: string, t: number): HTMLElement {
+function cellule3D(sorte: Sorte3D, id: string, t: number): HTMLElement {
   const cell = document.createElement('figure')
   cell.className = 'pv-cell'
-  cell.dataset.famille = FIGURINE
+  cell.dataset.famille = sorte
   cell.style.setProperty('--t', `${t}px`)
   const img = document.createElement('img')
   img.width = t
@@ -195,17 +200,19 @@ function celluleFigurine(id: string, t: number): HTMLElement {
   legende.innerHTML = `<b>${id}</b><small>${seedDe(id)}</small>`
   cell.appendChild(legende)
   cell.title = 'Toucher pour faire tourner'
-  cell.addEventListener('click', () => ouvrirVisionneuse(id))
+  cell.addEventListener('click', () => ouvrirVisionneuse(sorte, id))
   pousserRendu(() => {
-    img.src = vignetteFigurine(id, t)
+    img.src = vignette3D(sorte, id, t)
   })
   return cell
 }
 
 function peindre(): void {
   fileDeRendu = []
-  const grille3d = racine.querySelector('.pv-3d .pv-grille')!
-  grille3d.replaceChildren(...identifiants(FIGURINE, serie).map((id) => celluleFigurine(id, taille)))
+  for (const section of racine.querySelectorAll<HTMLElement>('.pv-3d')) {
+    const sorte = section.dataset.famille as Sorte3D
+    section.querySelector('.pv-grille')!.replaceChildren(...identifiants(sorte, serie).map((id) => cellule3D(sorte, id, taille)))
+  }
   for (const section of racine.querySelectorAll<HTMLElement>('.pv-famille:not(.pv-3d)')) {
     const famille = section.dataset.famille as Famille
     const grille = section.querySelector('.pv-grille')!

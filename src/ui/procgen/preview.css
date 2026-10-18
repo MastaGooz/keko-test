@@ -172,7 +172,8 @@ button.actif {
 }
 
 /* Les figurines 3D : l'image rendue, et la visionneuse qui flotte au-dessus. */
-.pv-cell[data-famille='figurine'] img {
+.pv-cell[data-famille='figurine'] img,
+.pv-cell[data-famille='vaisseau3d'] img {
   display: block;
   background: radial-gradient(circle at 50% 40%, #2a2f44, #1b1e2c 70%);
   border-radius: 6px;

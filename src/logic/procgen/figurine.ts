@@ -13,13 +13,21 @@ import { createRng, type Rng } from '../rng.ts'
 import { seedDe } from './seed.ts'
 import { chance, choix, entre, pondere } from './hasard.ts'
 import { PALETTES, TYPES, type Palette, type TypeCreature } from './creature.ts'
+import type { XY } from './trace.ts'
 
 export type Boule = { x: number; y: number; z: number; r: number; couleur: string }
 export type Solide = {
-  forme: 'sphere' | 'cone' | 'ellipsoide' | 'octaedre'
+  forme: 'sphere' | 'cone' | 'ellipsoide' | 'octaedre' | 'boite' | 'cylindre' | 'prisme'
   x: number
   y: number
   z: number
+  /** Un prisme : le polygone (dans le plan x, z si `axe` = y ; z, y si `axe` = x), extrudé de `epaisseur` avec un `biseau`. */
+  pts?: XY[]
+  axe?: 'x' | 'y'
+  epaisseur?: number
+  biseau?: number
+  /** Un cylindre : les rayons du haut et du bas, relatifs à l'échelle. */
+  rayons?: readonly [number, number]
   /** L'échelle par axe (un cône : rayon, hauteur, rayon). */
   s: readonly [number, number, number]
   /** La rotation, en radians, autour de x puis y puis z. */

@@ -1,4 +1,4 @@
-# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type, figurines 3D toon
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type, figurines et vaisseaux 3D toon
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -360,6 +360,32 @@ est en tête de page tant qu'elle est ce qu'on teste.
 la même patate qu'en 2D lit « figurine » en 3D. *Ce qui manque* : une
 occlusion ambiante, une pose, et, pour le jeu, poser la figurine sur la
 carte 3D existante pour qu'elle tourne avec l'inclinaison.
+
+## Les vaisseaux 3D toon (`vaisseau3d.ts`)
+
+Keko : « et si on fait cette méthode pour des vaisseaux ? ». Les metaballs
+seraient un contresens pour de la tôle : le vaisseau 3D est un assemblage
+de SOLIDES DURS, rendus avec le même toon et le même contour. Les solides
+ont gagné trois formes : la BOÎTE, le CYLINDRE (rayons haut et bas) et le
+PRISME, un polygone extrudé avec un BISEAU — **c'est le biseau qui fait les
+arêtes de tôle** sous la lumière. Le prisme s'extrude le long de y (le
+polygone en x, z : la coque, les ailes) ou le long de x (le polygone en z,
+y : les dérives verticales).
+
+Même assembleur que le 2D : la COQUE est un profil droit (flèche, navette,
+aiguille pour le combat ; bloc, citerne, fourgon pour le minage) recollé en
+miroir et extrudé, avec souvent une crête dorsale (le même profil rétréci,
+posé dessus) et une bande peinte ; `largeurA(z)` donne sa largeur, l'AILE
+(plaque mince, delta / flèche / droite / avant, liseré) s'y accroche, le
+bout d'aile reçoit le moteur ou le canon ; les MOTEURS sont des cylindres
+(axial, double, triple, ou au bout des ailes) avec une tuyère sombre et
+une LUEUR en deux cônes (accent, puis clair, sans contour) ; le COCKPIT un
+dôme ou une visière ; des dérives, des canons, une antenne. Le minage
+ajoute les cuves (cylindres sur les flancs, à bande), la foreuse (cône et
+anneaux) ou les pinces, les hachures et les feux de position.
+
+Le nez pointe vers −z ; la vignette le montre de trois quarts, d'au-dessus,
+le nez vers le bas gauche, et la visionneuse tourne autour de y.
 
 ## La planète (`planete.ts`)
 
