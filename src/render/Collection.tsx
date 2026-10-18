@@ -25,7 +25,7 @@ import { GROUPES_EMOJI, NOM_DU_GROUPE, RARETES_EMOJI } from '../logic/emoji/type
 import type { Collection, Exemplaire, Possession, StickerColle, Variante } from '../logic/emoji/collection.ts'
 import { VARIANTES, compteDe, exemplaireDe, nombreDeColles, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
-import { AMBIANCE, TAILLE_COLLE, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
+import { AMBIANCE, TAILLE_COLLE, placeNonCoupee, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
 import { animationHolo, cleDesColles, coucheDesRayons, paillettesHolo, peinte, stickerPeint, stickersColles, sujetDeLaVignette, type StickerPeint } from './peinture-vignette.ts'
 import { COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
@@ -668,18 +668,41 @@ function CarteOuverte({
     el.style.left = `${x.toFixed(1)}px`
     el.style.top = `${y.toFixed(1)}px`
   }, [])
-  /** Où un point de l'écran tombe dans la fenêtre d'art, en parts (0 à 1) — ou `null` hors de la carte. */
-  const dansLaFenetre = useCallback((x: number, y: number): { x: number; y: number } | null => {
+  /**
+   * Où un point de l'écran tombe dans la fenêtre d'art, en parts (0 à 1) — ou
+   * `null` hors de la carte. **Jamais coupé par la bordure** (Keko) : la place
+   * rendue est la plus proche où le sticker, penché de `a`, tient entier
+   * (`placeNonCoupee`). Un peu de jeu au bord : lâché à moitié dehors, il se
+   * colle au bord.
+   */
+  const dansLaFenetre = useCallback((x: number, y: number, a: number): { x: number; y: number } | null => {
     const b = refBoite.current
     const u = (x - (b.cx - b.l / 2)) / b.l
     const v = (y - (b.cy - b.h / 2)) / b.h
     const R = RAYONS_DANS_LA_CARTE
     const fx = (u - R.x) / R.l
     const fy = (v - R.y) / R.h
-    // Un peu de jeu au bord : un sticker à moitié dehors se colle au bord.
     if (fx < -0.15 || fx > 1.15 || fy < -0.15 || fy > 1.15) return null
-    return { x: Math.min(1, Math.max(0, fx)), y: Math.min(1, Math.max(0, fy)) }
+    return placeNonCoupee(fx, fy, a)
   }, [])
+  /** L'inverse : une place de la fenêtre d'art, à l'écran — pour caler le sticker qui suit le doigt sur la place qu'il prendra. */
+  const versLEcran = useCallback((p: { x: number; y: number }): { x: number; y: number } => {
+    const b = refBoite.current
+    const R = RAYONS_DANS_LA_CARTE
+    return { x: b.cx - b.l / 2 + (R.x + p.x * R.l) * b.l, y: b.cy - b.h / 2 + (R.y + p.y * R.h) * b.h }
+  }, [])
+  /** Le sticker tenu suit le doigt — et, sur la carte, se cale sur la place qu'il prendra : ce qu'on voit est ce qui sera collé. */
+  const suivreLeDoigt = useCallback(
+    (x: number, y: number, a: number) => {
+      const place = dansLaFenetre(x, y, a)
+      if (place === null) suivre(x, y)
+      else {
+        const e = versLEcran(place)
+        suivre(e.x, e.y)
+      }
+    },
+    [dansLaFenetre, versLEcran, suivre],
+  )
   /**
    * LA CARTE PENDANT LE DÉCOLLAGE : l'exemplaire qu'on détruit (le simple
    * d'abord, pas forcément le plus beau qu'on montrait), sans son emoji.
@@ -890,15 +913,18 @@ function CarteOuverte({
             // La carte se remet à plat : le doigt est au sticker.
             curseur.current.dessus = false
             curseur.current.tenu = false
-            setTenu({ sticker: st, image, a: (Math.random() - 0.5) * 0.5 })
-            suivre(e.clientX, e.clientY)
+            const a = (Math.random() - 0.5) * 0.5
+            setTenu({ sticker: st, image, a })
+            suivreLeDoigt(e.clientX, e.clientY, a)
           }}
-          onSuivre={(e) => suivre(e.clientX, e.clientY)}
+          onSuivre={(e) => {
+            if (tenu !== null) suivreLeDoigt(e.clientX, e.clientY, tenu.a)
+          }}
           onLacher={(e) => {
             const t = tenu
             setTenu(null)
             if (t === null) return
-            const place = dansLaFenetre(e.clientX, e.clientY)
+            const place = dansLaFenetre(e.clientX, e.clientY, t.a)
             if (place === null) return
             onColler({ ...t.sticker, x: place.x, y: place.y, a: t.a })
             jouerSon(SON_POSER, 0.5)

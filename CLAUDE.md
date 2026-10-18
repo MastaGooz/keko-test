@@ -269,7 +269,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   limite par carte ») : sur la PLACE (emoji + version, `Possession.colles[v]`,
   pas sur l'exemplaire — la collection ne les distingue pas), `coller` les prend
   à l'album, `detruire` les emporte avec la version ; **posés au doigt**, glissés
-  du ruban sur la carte (`x`, `y`, `a` ; `stickersColles`) ; **un Like de plus
+  du ruban sur la carte (`x`, `y`, `a` ; `stickersColles`), jamais coupés par la
+  bordure (`placeNonCoupee`, le doigt s'y cale déjà) ; **un Like de plus
   par sticker** quand le deck joue cet exemplaire (`valeurParRarete`).
 - `&art` et `&peau` gardent le paquet seul, sans barre.
 - **La réserve de paquets** (`logic/emoji/reserve.ts`, `RESERVE`) : 10 au plus,

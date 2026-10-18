@@ -1904,6 +1904,30 @@ export function surfaceDe(canvas: HTMLCanvasElement): HTMLCanvasElement | undefi
  * rend exactement cet air (voir `air`, dans `peindreCarte`).
  */
 const MARGE_STICKER = 0.1
+/**
+ * LA PART DE LA TOILE D'UN STICKER QUE L'ENCRE OCCUPE, cerne compris : le
+ * glyphe fait 80 % de son carré, le cerne déborde de `CERNE_CARTE` de chaque
+ * côté, et la toile du sticker ajoute `MARGE_STICKER` de chaque côté.
+ */
+const ENCRE_DU_STICKER = (0.8 + 2 * CERNE_CARTE) / (1 + 2 * MARGE_STICKER)
+
+/**
+ * LA PLACE LA PLUS PROCHE OÙ UN STICKER COLLÉ N'EST PAS COUPÉ PAR LA BORDURE.
+ * Keko : « il faudrait empêcher de poser un sticker coupé (par la bordure) :
+ * on le place sur la zone la plus proche non coupée ». Le centre ne peut pas
+ * approcher un bord de la fenêtre d'art à moins de la demi-taille de l'encre
+ * du sticker (`TAILLE_COLLE` × `ENCRE_DU_STICKER`), élargie par son penchant
+ * (la boîte d'un carré tourné de `a` vaut cos + sin) ; en parts de la fenêtre,
+ * la hauteur convertie par le rapport de la fenêtre. *La place la plus proche*,
+ * c'est la coordonnée bornée : rien d'autre ne bouge.
+ */
+export function placeNonCoupee(x: number, y: number, a: number): { x: number; y: number } {
+  const R = RAYONS_DANS_LA_CARTE
+  const demi = ((TAILLE_COLLE * ENCRE_DU_STICKER) / 2) * (Math.abs(Math.cos(a)) + Math.abs(Math.sin(a)))
+  const hx = Math.min(0.5, demi)
+  const hy = Math.min(0.5, (demi * (R.l * LARGE)) / (R.h * HAUT))
+  return { x: Math.min(1 - hx, Math.max(hx, x)), y: Math.min(1 - hy, Math.max(hy, y)) }
+}
 const SANS_STICKER =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('sticker') === '0'
 const STICKERS = new Map<string, HTMLCanvasElement>()
