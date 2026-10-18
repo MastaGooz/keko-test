@@ -171,10 +171,19 @@ Deux sorties, complémentaires, toutes deux en place :
    navigateur. Il se cache tout seul là où l'API n'existe pas : **l'iPhone ne
    supporte pas `requestFullscreen`** (l'iPad si).
 
-L'icône est du SVG écrit à la main (`public/icone.svg`), conformément à la
-borne « pas de fichiers image ». Limite connue : **iOS ignore le SVG pour
-`apple-touch-icon`** et posera une capture de la page comme icône. Sans
-valeur pour un prototype ; il faudra un PNG le jour où ça compte.
+L'icône est du SVG écrit à la main (`public/icone-emoji.svg`, et
+`icone-emoji-pleine.svg` pour le découpage « maskable », sujet à 80 %),
+**aux couleurs de la collection d'emoji** depuis le 18/10/2026 (Keko : « tu
+peux la changer pour matcher le thème ? ») : la nuit violette, trois cartes
+en éventail vert / bleu / orange, l'emoji-sticker au cerne crème sur celle de
+devant. Celle d'avant était la carte à l'épée de l'extraction. **iOS ignore le
+SVG pour `apple-touch-icon`**, et un lanceur Android peut préférer un PNG :
+les PNG (`icone-emoji-512/192.png`, `-pleine-512`, `-180` pour iOS) sont le
+SVG rendu par Chrome sans tête (`--screenshot`, fond transparent pour la
+version à coins), pas une image d'ailleurs — on les refait du SVG, jamais à la
+main. Les noms ont changé avec le dessin : *une URL neuve bat un cache*, une
+icône d'app installée ne se redemande presque jamais ; une app déjà posée se
+réinstalle. `theme_color` et `background_color` suivent (#2a1b63 / #170c3a).
 
 Le `theme-color` ne gagne pas de place mais teinte la barre aux couleurs du
 jeu tant qu'on reste dans un onglet — elle cesse au moins d'être un bandeau

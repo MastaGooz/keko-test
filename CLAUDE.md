@@ -407,6 +407,8 @@ plein écran, sons synthétisés, arches) est dans `docs/mobile-et-sons.md`.
   paysage avec son écran de rotation (`paysage-requis`). Le manifeste dit
   `portrait` et **porte la date du build** (`manifesteVersionne`) ; une app
   installée fige l'orientation de son manifeste, il faut la réinstaller.
+  **L'icône est celle de la collection** (`icone-emoji*.svg`, les PNG rendus
+  du SVG par Chrome sans tête, jamais retouchés à la main).
 - Toute ressource de `public/` est servie sans empreinte : **son URL porte la
   date du build**, sinon la remplacer ne change rien. La casse et les accents
   du nom comptent (GitHub Pages est sous Linux) : on recopie depuis `ls`.

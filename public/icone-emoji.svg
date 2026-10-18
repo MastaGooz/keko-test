@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- L'ICÔNE DE L'APPLICATION INSTALLÉE, aux couleurs de la collection d'emoji
+       (Keko : « l'icône, tu peux la changer pour matcher le thème ? ») : la nuit
+       violette du jeu, trois cartes en éventail aux couleurs des crans (vert,
+       bleu, orange) comme l'icône « Cartes » de la barre, et sur celle de devant
+       l'emoji-sticker au cerne crème. Dessinée à la main, sans police : un
+       lanceur n'a pas Noto Color Emoji. `icone-emoji-pleine.svg` est la même
+       sans coins, le sujet réduit dans la zone sûre (maskable). -->
+  <defs>
+    <linearGradient id="nuit" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a1b63"/>
+      <stop offset="1" stop-color="#170c3a"/>
+    </linearGradient>
+    <radialGradient id="lueur" cx="0.5" cy="0" r="0.75">
+      <stop offset="0" stop-color="#5a3cb8"/>
+      <stop offset="1" stop-color="#5a3cb8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fenetre" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f7fe6"/>
+      <stop offset="1" stop-color="#1e3b8f"/>
+    </linearGradient>
+    <radialGradient id="visage" cx="0.4" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#ffe56b"/>
+      <stop offset="1" stop-color="#f2ad12"/>
+    </radialGradient>
+    <clipPath id="coinFenetre">
+      <rect x="-100" y="-146" width="200" height="190" rx="12"/>
+    </clipPath>
+  </defs>
+  <rect width="512" height="512" rx="96" fill="url(#nuit)"/>
+  <rect width="512" height="512" rx="96" fill="url(#lueur)"/>
+  <g id="sujet">
+    <!-- La carte verte, derrière à gauche. -->
+    <g transform="translate(176 282) rotate(-24) scale(0.9)">
+      <rect x="-128" y="-158" width="256" height="344" rx="26" fill="#0e0630" opacity="0.4"/>
+      <rect x="-128" y="-172" width="256" height="344" rx="26" fill="#4fd97a"/>
+      <rect x="-112" y="-156" width="224" height="312" rx="16" fill="#fffaf0"/>
+      <rect x="-100" y="-146" width="200" height="190" rx="12" fill="#2f9a56"/>
+    </g>
+    <!-- La carte orange, derrière à droite. -->
+    <g transform="translate(336 286) rotate(12) scale(0.9)">
+      <rect x="-128" y="-158" width="256" height="344" rx="26" fill="#0e0630" opacity="0.4"/>
+      <rect x="-128" y="-172" width="256" height="344" rx="26" fill="#ff9a2e"/>
+      <rect x="-112" y="-156" width="224" height="312" rx="16" fill="#fffaf0"/>
+      <rect x="-100" y="-146" width="200" height="190" rx="12" fill="#c9661a"/>
+    </g>
+    <!-- La carte bleue, devant, avec l'emoji. -->
+    <g transform="translate(256 270) rotate(-6)">
+      <rect x="-128" y="-156" width="256" height="344" rx="26" fill="#0e0630" opacity="0.45"/>
+      <rect x="-128" y="-172" width="256" height="344" rx="26" fill="#4fa3ff"/>
+      <rect x="-112" y="-156" width="224" height="312" rx="16" fill="#fffaf0"/>
+      <rect x="-100" y="-146" width="200" height="190" rx="12" fill="url(#fenetre)"/>
+      <!-- Les rayons du cran, derrière l'emoji. -->
+      <g clip-path="url(#coinFenetre)" fill="#fffaf0" opacity="0.16">
+        <g transform="translate(0 -51)">
+          <path d="M0 0L-34-240L34-240Z"/>
+          <path d="M0 0L-34-240L34-240Z" transform="rotate(45)"/>
+          <path d="M0 0L-34-240L34-240Z" transform="rotate(90)"/>
+          <path d="M0 0L-34-240L34-240Z" transform="rotate(135)"/>
+          <path d="M0 0L-34-240L34-240Z" transform="rotate(180)"/>
+          <path d="M0 0L-34-240L34-240Z" transform="rotate(225)"/>
+          <path d="M0 0L-34-240L34-240Z" transform="rotate(270)"/>
+          <path d="M0 0L-34-240L34-240Z" transform="rotate(315)"/>
+        </g>
+      </g>
+      <!-- Le titre, en plaque. -->
+      <rect x="-72" y="62" width="144" height="26" rx="13" fill="#2a1b63" opacity="0.28"/>
+      <rect x="-48" y="102" width="96" height="18" rx="9" fill="#2a1b63" opacity="0.14"/>
+      <!-- L'emoji en sticker : l'ombre, le cerne crème, le visage. -->
+      <g transform="translate(0 -51)">
+        <circle cx="5" cy="9" r="80" fill="#0e0630" opacity="0.35"/>
+        <circle r="80" fill="#fffaf0"/>
+        <circle r="68" fill="url(#visage)"/>
+        <ellipse cx="-25" cy="-16" rx="9" ry="14" fill="#3b2a14"/>
+        <ellipse cx="25" cy="-16" rx="9" ry="14" fill="#3b2a14"/>
+        <path d="M-40 12Q0 62 40 12Z" fill="#5b2318"/>
+        <path d="M-34 14Q0 24 34 14Q0 36-34 14Z" fill="#fffaf0"/>
+      </g>
+    </g>
+  </g>
+</svg>

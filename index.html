@@ -6,13 +6,14 @@
     <meta name="color-scheme" content="dark light" />
     <!-- Colore la barre du navigateur aux teintes du jeu : tant qu'on reste
          dans un onglet, elle cesse au moins d'etre un bandeau noir. -->
-    <meta name="theme-color" content="#16161a" />
+    <meta name="theme-color" content="#2a1b63" />
     <!-- Installee sur l'ecran d'accueil, la page s'ouvre SANS barre du tout.
          C'est la seule facon de recuperer cette hauteur : une page web dans
          un onglet ne peut pas masquer la chrome du navigateur. -->
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="icon" type="image/svg+xml" href="./icone.svg" />
-    <link rel="apple-touch-icon" href="./icone.svg" />
+    <link rel="icon" type="image/svg+xml" href="./icone-emoji.svg" />
+    <!-- iOS ignore le SVG ici : un PNG plein (il arrondit lui-même). -->
+    <link rel="apple-touch-icon" href="./icone-emoji-180.png" />
     <!-- LA SEULE RESSOURCE CHARGEE DEPUIS L'EXTERIEUR. La borne du projet etait
          « aucune police telechargee » ; Keko l'a levee lui-meme (« police trop
          simple ») et un serif systeme n'existe pas sur Android. Deux polices,
