@@ -424,6 +424,8 @@ export function dosDeCarte(): string {
  */
 const EMOJI_DE_KEKO: Record<string, string> = {
   '1fae0': 'Test.png',
+  /** 👺 « monstre japonais », redessiné en gobelin (18/10/2026). */
+  '1f47a': 'Gobelin.webp',
 }
 
 /** L'image de Keko pour cet emoji, s'il y en a une. */

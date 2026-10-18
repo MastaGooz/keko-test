@@ -310,6 +310,15 @@ function tailleDuSachet(largeurVisible: number, hauteurVisible: number): number 
 const BANC_BONUS = '1f942'
 /** La carte du banc `&perso` : 🫠, que Keko a redessiné (`Test.png`). */
 const BANC_PERSO = '1fae0'
+/**
+ * TEST EN COURS, À RETIRER QUAND KEKO A JUGÉ : 👺, redessiné en gobelin
+ * (`Gobelin.webp`), sort en PREMIÈRE CARTE DE CHAQUE PAQUET, sans paramètre.
+ * Keko : « j'ai ajouté Gobelin.webp, je voudrais que tu le fasses sortir
+ * (common) dans chaque booster au début (le temps d'un test) ». Posé comme
+ * le banc `&perso`, après le tirage : la suite du hasard ne bouge pas, la
+ * carte garde le cran du catalogue (peu commune). `null` pour arrêter le test.
+ */
+const TEST_GOBELIN: string | null = '1f47a'
 /** `?bloom=0` : sans le halo des points brillants — voir `Bloom`. */
 const SANS_BLOOM =
   typeof location !== 'undefined' && new URLSearchParams(location.search).get('bloom') === '0'
@@ -989,6 +998,11 @@ export function Paquet3D({
     }
     // LE BANC DE LA FEUILLE HOLO, posé de la même façon : après le tirage, en
     // gardant l'animé que le tirage ou `&bonus` aurait donné.
+    // LE TEST DU GOBELIN, pareil, avant `&perso` qui garde le dernier mot.
+    if (emojis && TEST_GOBELIN !== null && cartes.length > 0) {
+      const voulue = [...tas.values()].flat().find((c) => c.id === TEST_GOBELIN)
+      if (voulue !== undefined && !cartes.includes(voulue)) cartes[0] = voulue
+    }
     if (emojis && persoForce && cartes.length > 0) {
       const voulue = [...tas.values()].flat().find((c) => c.id === BANC_PERSO)
       if (voulue !== undefined) cartes[0] = voulue
