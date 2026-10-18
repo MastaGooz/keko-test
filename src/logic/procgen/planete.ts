@@ -21,7 +21,7 @@ const CONTOUR = 2.5
 const TAU = Math.PI * 2
 
 /** Une tache lisse : un rayon modulé par deux harmoniques et un grain. */
-function tache(rng: Rng, cx: number, cy: number, rayon: number): string {
+export function tache(rng: Rng, cx: number, cy: number, rayon: number): string {
   const nb = 9 + Math.floor(rng.next() * 5)
   const a1 = entre(rng, 0.15, 0.4)
   const a2 = entre(rng, 0.1, 0.3)

@@ -1,4 +1,4 @@
-# Le générateur d'icônes — vaisseaux et planètes
+# Le générateur d'icônes — vaisseaux, planètes, astéroïdes
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -65,6 +65,17 @@ Un disque, une surface, un côté dans l'ombre, parfois un anneau.
   moitié avant par-dessus, avec l'ombre de la planète dessus. Une planète à
   anneau est plus petite (R 33–37 au lieu de 44–52) pour que l'anneau tienne.
 
+## L'astéroïde (`asteroide.ts`)
+
+Demandé par Keko après les deux premières familles (« tu pourrais ajouter
+des asteroids ? »). Un rocher : une tache lisse à TROIS harmoniques (la
+planète n'en a que deux, un rocher est plus bosselé), des facettes claires
+tirées du côté de la lumière, des cratères sans chevauchement, du minerai
+qui affleure (`accent`, 45 %), un grain de points sombres, l'ombre en
+`evenodd` comme la planète, le contour en dernier. **Des débris** (45 %, un à
+trois petits rochers autour, bornés dans la boîte) : le corps se fait alors
+plus petit pour leur laisser la place. Huit palettes de roche.
+
 ## La page de preview
 
 `preview.html?serie=N` : trente par famille, l'id et sa seed sous chacun,
@@ -76,7 +87,7 @@ eux-mêmes tirés d'un RNG seedé par le numéro de série.
 ## Ce qui est de moi, à rejuger par Keko
 
 Les banques de pièces et leurs proportions, les palettes, les probabilités
-(ailes 85 %, flamme 78 %, anneau 55 % pour une géante, …), la lumière à
+(ailes 85 %, flamme 78 %, anneau 55 % pour une géante, débris 45 %, …), la lumière à
 droite. **À 32 px, les vaisseaux restent fins** (coques de 20 à 40 de large
 sur 128) : s'ils doivent vivre à cette taille, il faudra les élargir.
 

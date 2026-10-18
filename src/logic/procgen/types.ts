@@ -12,8 +12,8 @@ export const BOITE = 128
 /** L'axe de symétrie des vaisseaux, et le centre des planètes. */
 export const AXE = BOITE / 2
 
-export type Famille = 'vaisseau' | 'planete'
-export const FAMILLES: readonly Famille[] = ['vaisseau', 'planete']
+export type Famille = 'vaisseau' | 'planete' | 'asteroide'
+export const FAMILLES: readonly Famille[] = ['vaisseau', 'planete', 'asteroide']
 
 /** Une forme : un chemin SVG (`d`) et sa peinture. */
 export type Forme = {

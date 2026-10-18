@@ -30,6 +30,18 @@ export const PALETTES_VAISSEAU: readonly Palette[] = [
   { nom: 'creme-vert', principale: '#f1e7c8', secondaire: '#cdb98a', accent: '#52b788', ombre: '#6b5a33', clair: '#ffffff' },
 ]
 
+/** Les roches : `accent` est le minerai qui affleure, `clair` la facette au soleil. */
+export const PALETTES_ASTEROIDE: readonly Palette[] = [
+  { nom: 'roche-grise', principale: '#8d8a86', secondaire: '#6b6763', accent: '#d9b95c', ombre: '#3b3835', clair: '#c9c5bf' },
+  { nom: 'roche-brune', principale: '#9c7a5a', secondaire: '#75583f', accent: '#e0c27a', ombre: '#3f2d1f', clair: '#d6b995' },
+  { nom: 'fer-rouge', principale: '#a0574a', secondaire: '#7a3f36', accent: '#f0b36b', ombre: '#3e1f1a', clair: '#d99585' },
+  { nom: 'glace-sale', principale: '#9fb3c1', secondaire: '#75899a', accent: '#ffffff', ombre: '#3a4a58', clair: '#dbe7ef' },
+  { nom: 'basalte', principale: '#555a66', secondaire: '#3d414b', accent: '#7fd4ff', ombre: '#1f2229', clair: '#8f96a6' },
+  { nom: 'ocre', principale: '#c99a5b', secondaire: '#a0743f', accent: '#fff0b0', ombre: '#5c3f1c', clair: '#eac890' },
+  { nom: 'vert-de-gris', principale: '#7f9480', secondaire: '#5c7060', accent: '#f3d36b', ombre: '#2f3f33', clair: '#b8c9b6' },
+  { nom: 'charbon-or', principale: '#4a4440', secondaire: '#332e2b', accent: '#ffcf4d', ombre: '#1a1715', clair: '#7d746c' },
+]
+
 export type TypePlanete = 'continents' | 'bandes' | 'crateres'
 
 /** Une palette de planète sait pour quels types de surface elle est faite. */

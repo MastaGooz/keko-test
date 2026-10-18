@@ -14,8 +14,8 @@ import { renderIcon } from './svg.ts'
 
 const PAR_FAMILLE = 30
 const TAILLES = [32, 64, 128] as const
-const PREFIXE: Record<Famille, string> = { vaisseau: 'v', planete: 'p' }
-const TITRE: Record<Famille, string> = { vaisseau: 'Vaisseaux', planete: 'Planètes' }
+const PREFIXE: Record<Famille, string> = { vaisseau: 'v', planete: 'p', asteroide: 'a' }
+const TITRE: Record<Famille, string> = { vaisseau: 'Vaisseaux', planete: 'Planètes', asteroide: 'Astéroïdes' }
 
 const adresse = new URL(location.href)
 let serie = Number(adresse.searchParams.get('serie')) || 1
@@ -46,7 +46,7 @@ racine.innerHTML = `
       </span>
       <button type="button" id="pv-regenerer">Regénérer</button>
       <span class="pv-serie">série <b id="pv-numero">${serie}</b></span>
-      <label class="pv-cherche">id <input id="pv-id" type="text" placeholder="v-abc, p-xyz" spellcheck="false" /></label>
+      <label class="pv-cherche">id <input id="pv-id" type="text" placeholder="v-abc, p-xyz, a-123" spellcheck="false" /></label>
     </div>
   </header>
   <section class="pv-un" id="pv-un" hidden></section>
@@ -98,7 +98,7 @@ function montrerUn(id: string): void {
     bloc.replaceChildren()
     return
   }
-  const famille: Famille = propre.startsWith('p') ? 'planete' : 'vaisseau'
+  const famille = FAMILLES.find((f) => propre.startsWith(PREFIXE[f])) ?? 'vaisseau'
   bloc.hidden = false
   bloc.replaceChildren(...TAILLES.map((t) => cellule(famille, propre, t)))
 }
