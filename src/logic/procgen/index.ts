@@ -1,8 +1,8 @@
 /**
  * LE GÉNÉRATEUR D'ICÔNES — pur : un identifiant entre, un dessin sort.
  *
- * Les familles : un vaisseau de combat ou de minage, une station, une
- * planète, un astéroïde. La seed est dérivée de l'id
+ * Les familles : un vaisseau de combat ou de minage, une station, un vaisseau
+ * alien, une planète, un astéroïde. La seed est dérivée de l'id
  * (`seedDe`), donc *même id, même visuel, toujours*, sur n'importe quel
  * appareil. C'est `ui/procgen/svg.ts` qui rend le dessin.
  */
@@ -11,6 +11,7 @@ import { genererVaisseau } from './vaisseau.ts'
 import { genererPlanete } from './planete.ts'
 import { genererAsteroide } from './asteroide.ts'
 import { genererStation } from './station.ts'
+import { genererAlien } from './alien.ts'
 import { createRng } from '../rng.ts'
 
 export { BOITE, FAMILLES, type Clip, type Dessin, type Famille, type Forme } from './types.ts'
@@ -25,6 +26,7 @@ export function genererDessin(famille: Famille, id: string): Dessin {
     return genererVaisseau(id, createRng(seedDe(id) ^ 0x5bd1e995).next() < 0.6 ? 'combat' : 'minage')
   }
   if (famille === 'station') return genererStation(id)
+  if (famille === 'alien') return genererAlien(id)
   if (famille === 'planete') return genererPlanete(id)
   return genererAsteroide(id)
 }

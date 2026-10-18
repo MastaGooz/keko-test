@@ -66,6 +66,26 @@ export function courbe(points: readonly XY[], tension = 0.5): string {
   return parts.join('') + 'Z'
 }
 
+/** Une courbe OUVERTE lisse par les points (les bouts sont pincés). */
+export function courbeOuverte(points: readonly XY[], tension = 0.5): string {
+  const N = points.length
+  if (N < 2) return ''
+  const k = tension / 3
+  const parts = [`M${n(points[0][0])} ${n(points[0][1])}`]
+  for (let i = 0; i + 1 < N; i++) {
+    const p0 = points[Math.max(0, i - 1)]
+    const p1 = points[i]
+    const p2 = points[i + 1]
+    const p3 = points[Math.min(N - 1, i + 2)]
+    const c1x = p1[0] + (p2[0] - p0[0]) * k
+    const c1y = p1[1] + (p2[1] - p0[1]) * k
+    const c2x = p2[0] - (p3[0] - p1[0]) * k
+    const c2y = p2[1] - (p3[1] - p1[1]) * k
+    parts.push(`C${n(c1x)} ${n(c1y)} ${n(c2x)} ${n(c2y)} ${n(p2[0])} ${n(p2[1])}`)
+  }
+  return parts.join('')
+}
+
 export function cercle(cx: number, cy: number, r: number): string {
   return `M${n(cx - r)} ${n(cy)}A${n(r)} ${n(r)} 0 1 0 ${n(cx + r)} ${n(cy)}A${n(r)} ${n(r)} 0 1 0 ${n(cx - r)} ${n(cy)}Z`
 }

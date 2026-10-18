@@ -1,4 +1,4 @@
-# Le générateur d'icônes — vaisseaux (combat, minage), stations, planètes, astéroïdes
+# Le générateur d'icônes — vaisseaux (combat, minage, alien), stations, planètes, astéroïdes
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -84,6 +84,32 @@ Ni nez ni queue : tout est posé en polaire autour du centre et tourné
 leur longueur se calcule depuis le bord, elle ne s'écrit pas. Quadrillage en
 traits sombres à demi-opacité. Les stations prennent les palettes des
 vaisseaux.
+
+## L'alien (`alien.ts`)
+
+Keko : « des vaisseaux de type alien (tech très différente tu vois genre
+protoss) ». Donc **pas de rectangle, pas de moteur ni de flamme** : des
+courbes (feuilles, croissants, lames), des pièces qui FLOTTENT détachées du
+corps, un NOYAU qui luit en halos concentriques, des VEINES de lumière
+(`courbeOuverte`, ajoutée pour ça), huit palettes où l'accent est une lumière
+psionique (or / cyan, nacre / magenta, obsidienne / violet…). Les épaisseurs
+se calculent le long des arcs (`arcEpais` : un arc dont l'épaisseur suit une
+cloche, pointu aux deux bouts). Quatre plans :
+
+- **croissant** : cornes vers le bas, un orbe à chaque corne, une nacelle en
+  feuille dans le creux, une veine qui court sur l'arc, parfois deux lames
+  flottantes sous les cornes ;
+- **raie** : un corps large, un à trois tentacules par côté qui pendent et
+  ondulent, des veines et des taches de lumière sur les ailes, deux yeux ;
+- **lame** : une feuille longue et fine, un ou deux ailerons flottants par
+  côté (arcs convexes à distance du corps, un orbe à chaque pointe), un anneau
+  de poussée à la queue, des veines de la pointe à la queue ;
+- **orbe** : une sphère, un halo en anneau (l'arrière derrière, l'avant
+  par-dessus), deux bras en croissant qui l'encadrent, parfois une pointe.
+
+L'ombre du côté gauche est plus douce (12 %) que sur les tôles. Le banc de
+variété compare désormais le dessin entier : les aliens n'ont que quelques
+choix discrets, leur variété est dans les courbes.
 
 ## La planète (`planete.ts`)
 

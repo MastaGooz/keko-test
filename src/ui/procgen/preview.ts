@@ -14,8 +14,8 @@ import { renderIcon } from './svg.ts'
 
 const PAR_FAMILLE = 30
 const TAILLES = [32, 64, 128] as const
-const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', vaisseau: 'v' }
-const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', vaisseau: 'Vaisseaux' }
+const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', alien: 'x', planete: 'p', asteroide: 'a', vaisseau: 'v' }
+const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', alien: 'Vaisseaux aliens', planete: 'Planètes', asteroide: 'Astéroïdes', vaisseau: 'Vaisseaux' }
 
 const adresse = new URL(location.href)
 let serie = Number(adresse.searchParams.get('serie')) || 1
@@ -46,7 +46,7 @@ racine.innerHTML = `
       </span>
       <button type="button" id="pv-regenerer">Regénérer</button>
       <span class="pv-serie">série <b id="pv-numero">${serie}</b></span>
-      <label class="pv-cherche">id <input id="pv-id" type="text" placeholder="c-abc, m-…, s-…, p-…, a-…" spellcheck="false" /></label>
+      <label class="pv-cherche">id <input id="pv-id" type="text" placeholder="c-abc, m-…, s-…, x-…, p-…, a-…" spellcheck="false" /></label>
     </div>
   </header>
   <section class="pv-un" id="pv-un" hidden></section>

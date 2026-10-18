@@ -16,8 +16,8 @@ export const AXE = BOITE / 2
  * Les familles. `vaisseau` tire une classe (combat ou minage) depuis l'id ;
  * les autres sont celles qu'on montre et qu'on demande.
  */
-export type Famille = 'combat' | 'minage' | 'station' | 'planete' | 'asteroide' | 'vaisseau'
-export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'planete', 'asteroide']
+export type Famille = 'combat' | 'minage' | 'station' | 'alien' | 'planete' | 'asteroide' | 'vaisseau'
+export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'alien', 'planete', 'asteroide']
 
 /** Une forme : un chemin SVG (`d`) et sa peinture. */
 export type Forme = {

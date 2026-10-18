@@ -42,6 +42,18 @@ export const PALETTES_ASTEROIDE: readonly Palette[] = [
   { nom: 'charbon-or', principale: '#4a4440', secondaire: '#332e2b', accent: '#ffcf4d', ombre: '#1a1715', clair: '#7d746c' },
 ]
 
+/** Les aliens : `accent` est la lumière psionique, elle doit trancher sur la masse. */
+export const PALETTES_ALIEN: readonly Palette[] = [
+  { nom: 'or-psi', principale: '#d6a843', secondaire: '#9c6f24', accent: '#5ef2ff', ombre: '#4a3410', clair: '#ffe9a8' },
+  { nom: 'nacre-magenta', principale: '#e9e4f2', secondaire: '#b9afcf', accent: '#ff4fd8', ombre: '#4e4466', clair: '#ffffff' },
+  { nom: 'obsidienne-violet', principale: '#3b3550', secondaire: '#262238', accent: '#b26bff', ombre: '#15121f', clair: '#8e86aa' },
+  { nom: 'jade-orange', principale: '#2f8f7a', secondaire: '#1f5f52', accent: '#ffb13b', ombre: '#0f332c', clair: '#9fe3d4' },
+  { nom: 'chair-vert', principale: '#b98da6', secondaire: '#8c6680', accent: '#9dff5e', ombre: '#4a2f40', clair: '#e9cbdc' },
+  { nom: 'os-rouge', principale: '#e6dccb', secondaire: '#b8a98f', accent: '#ff3d5a', ombre: '#5a4e3c', clair: '#ffffff' },
+  { nom: 'abysse-cyan', principale: '#214a6a', secondaire: '#163249', accent: '#49ffd0', ombre: '#0b1a28', clair: '#6fa9d6' },
+  { nom: 'bronze-bleu', principale: '#b57a3c', secondaire: '#7d4f22', accent: '#3a8dff', ombre: '#3d2410', clair: '#f0c58a' },
+]
+
 export type TypePlanete = 'continents' | 'bandes' | 'crateres'
 
 /** Une palette de planète sait pour quels types de surface elle est faite. */

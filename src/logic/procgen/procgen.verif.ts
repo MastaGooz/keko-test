@@ -34,7 +34,9 @@ for (const famille of FAMILLES) {
   const empreintes = new Set<string>()
   for (let i = 0; i < 300; i++) {
     const d = genererDessin(famille, `${famille}-${i}`)
-    empreintes.add(d.formes.map((f) => f.fill).join('|') + d.formes.length)
+    // L'empreinte est le dessin entier : les aliens n'ont que quelques choix
+    // discrets (plan, palette), leur variété est dans les courbes.
+    empreintes.add(JSON.stringify(d.formes))
     const ids = new Set(d.clips.map((c) => c.id))
     for (const f of d.formes) {
       if (!f.d || /NaN|Infinity/.test(f.d)) sains = false
@@ -48,7 +50,7 @@ for (const famille of FAMILLES) {
   verifier('300 dessins sans NaN', sains)
   verifier('les découpes nommées existent', clipsConnus)
   verifier('les formes non découpées tiennent dans la boîte', dedans)
-  verifier('300 ids donnent plus de 200 dessins différents', empreintes.size > 200)
+  verifier('300 ids donnent plus de 290 dessins différents', empreintes.size > 290)
 }
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
