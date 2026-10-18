@@ -6860,3 +6860,9 @@ Keko : « ce serait bien que le total de la main ne s'affiche pas dès le début
 L'état porte le numéro de la main (`avancee = {numero, resolues}`) : une main neuve se lit à zéro dès son premier rendu, sans montrer un instant les badges de l'ancienne — un `setEtape(0)` dans l'effet l'aurait fait. Arrivé en cours de route sans main tombée dans la session, tout est posé d'emblée, sans séquence.
 
 **À rejuger** : le compteur en haut à droite, lui, reçoit les Likes dès que la main tombe (la logique est honnête : rien à attendre côté sauvegarde), donc il saute avant la fin de la séquence. Le retarder à l'arrivée de l'envol serait un affichage différé du solde, pas demandé.
+
+### Le total de la main, une seule fois, sous elle (18/10/2026)
+
+Keko : « on marque deux fois le total : chiffre flottant (à supprimer) et en dessous de la main : on va garder le chiffre sous la main, le mettre en rose aussi, lui mettre l'icône des Likes et l'animer à chaque fois qu'il augmente ». **L'envol est retiré** (le portail `.jouer-vol`, ses `--dx`/`--dy` mesurés, l'effet de mise en place) ; `TEMPO` ne garde que l'entrée et le pas par carte, la séquence fait ~3 s. **Le total sous la main** (`.jouer-total`) : l'icône des Likes (`IconeLike`, exportée de `Jeu.tsx` — le cœur rose du compteur) et « +n » en rose, 1,25 rem ; l'élément est remonté à chaque hausse (`key={resolues}`), ce qui rejoue le saut (`total-saut`, 1,45 → 1) sur l'icône et le chiffre. Le mot « Likes » est parti, l'icône le dit. Sans main tombée dans la session, la ligne reste « La dernière main jouée », discrète.
+
+Le compteur en haut à droite, lui, reçoit toujours les Likes dès que la main tombe (voir la section précédente) : à rejuger.

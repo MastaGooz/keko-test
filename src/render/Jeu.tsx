@@ -717,7 +717,7 @@ function IconeCollection(): React.ReactElement {
  * mais dans un cœur c'est mieux à la place de la bulle) ». Le cœur rose, le
  * pouce crème, trait en `currentColor`.
  */
-function IconeLike(): React.ReactElement {
+export function IconeLike(): React.ReactElement {
   return (
     <svg viewBox="0 0 24 24" strokeLinejoin="round" strokeLinecap="round">
       {/* LE CŒUR. */}

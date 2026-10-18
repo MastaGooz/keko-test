@@ -293,7 +293,7 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   toutes les pages** ; vidé, il se remélange (`melange` seedé, la graine suit). *Le temps
   est injecté* comme pour la réserve : `deckAJour` rejoue l'écoulé à la
   lecture, huit heures au plus hors ligne. « Jouer » montre la pile, la
-  dernière main, les Likes qui s'envolent. Changer le deck relance sa partie ;
+  dernière main résolue carte par carte, son total qui monte. Changer le deck relance sa partie ;
   une carte détruite le quitte. Cadence et limite hors ligne de moi, à rejuger.
 
 ### Ce qui reste à trancher par Keko
@@ -356,7 +356,7 @@ src/
     Collection.tsx   # la grille des cartes obtenues, et la carte ouverte en 3D
     Decollage.tsx    # détruire une carte : le sticker qu'on tire, la carte qui casse
     Stickers.tsx     # l'album des stickers gagnés
-    Deck.tsx         # la page « Jouer » : la pile, la dernière main, les Likes qui s'envolent
+    Deck.tsx         # la page « Jouer » : la pile, la dernière main et son total qui monte
     peinture-vignette.ts # la carte peinte en petit (vignette, décollage), et sa holo
     Sachet3D.tsx     # la pochette qui se déchire en brûlant, avant la rangée
     carte-emoji.ts   # CarteEmoji -> CarteAPeindre
