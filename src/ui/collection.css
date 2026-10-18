@@ -1605,15 +1605,6 @@
      texte Toutes les cartes ». Le titre et le compte lui laissent la place, et
      le titre est un peu plus petit sur un écran étroit ; la barre de progrès
      garde toute la largeur, elle passe dessous. */
-  .collection-titre {
-    padding-right: 8.5rem;
-    font-size: 1.6rem;
-  }
-
-  .collection-compte {
-    padding-right: 8.5rem;
-  }
-
   .likes-place {
     right: 16px;
   }
@@ -1627,9 +1618,13 @@
     transform: translate(-50%, 140%);
   }
 
-  /* La grille commence en haut et finit au-dessus de la barre. */
+  /* La grille commence SOUS LE COMPTEUR DES MONNAIES (2,1 rem de haut, à la
+     même hauteur à droite) et finit au-dessus de la barre. Le titre garde
+     ainsi toute la largeur et tient sur une ligne — Keko : « remettre le titre
+     de l'onglet Toutes les cartes sur une ligne » ; il avait d'abord été
+     réduit et poussé à gauche du compteur, où il se cassait en deux. */
   .collection-defile {
-    padding-top: calc(max(0.6rem, env(safe-area-inset-top)) + 0.8rem);
+    padding-top: calc(max(0.6rem, env(safe-area-inset-top)) + 3rem);
     padding-bottom: calc(var(--barre-bas) + 1.6rem);
   }
 

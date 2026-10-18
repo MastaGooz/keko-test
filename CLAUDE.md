@@ -273,7 +273,8 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   icônes `IconeLike` pouce-dans-un-cœur rose et `IconeAbonne` deux silhouettes bleues, un
   compteur discret en haut à droite SUR TOUS LES ÉCRANS — voile sombre, pas de
   pilule crème, « ça fait penser à un bouton » —, caché avec la barre ; au
-  doigt, « X disponibles » passe dessous) :
+  doigt, « X disponibles » et la tête de la collection passent dessous, le
+  titre garde sa taille et sa ligne) :
   **des compteurs seuls pour l'instant**, « pas encore de générateur » ; les
   Likes achèteront des paquets au-delà des dix de la réserve, l'usage des
   Abonnés est à trancher. Une collection d'avant relit zéro. `&likes=N` et
