@@ -1699,8 +1699,106 @@
   box-shadow: 0 0.15rem 0.3rem rgba(10, 4, 30, 0.5);
 }
 
+/* LES ONGLETS DES DECKS (Keko : « plusieurs decks, et sélectionner celui avec
+   lequel il veut jouer ») : celui qu'on regarde en crème, celui qui joue
+   marqué « joue », les incomplets grisés là où on choisit qui joue. */
+.decks-onglets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0.5rem;
+}
+
+.deck-onglet {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.4rem;
+  padding: 0 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 250, 240, 0.14);
+  color: #fffaf0;
+  font: inherit;
+  font-weight: 800;
+  font-size: 0.9rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.deck-onglet-edite {
+  background: #fffaf0;
+  color: #2a1b63;
+  box-shadow: 0 0.2rem 0 #c9b9f2;
+}
+
+.deck-onglet:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.deck-onglet-compte {
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.75;
+}
+
+.deck-onglet-joue {
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #ff6fa5;
+  color: #fffaf0;
+  font-size: 0.7rem;
+}
+
+.deck-ajouter {
+  min-width: 2.4rem;
+  justify-content: center;
+  padding: 0;
+  font-size: 1.3rem;
+}
+
+.deck-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 1rem;
+}
+
 .deck-jouer {
   margin-top: 0.9rem;
+}
+
+.collection-bouton:disabled {
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: default;
+}
+
+/* Supprimer un deck : discret, et deux tapes (« Sûr ? »). */
+.deck-supprimer {
+  margin-top: 0.9rem;
+  min-height: 2.4rem;
+  padding: 0 0.6rem;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #ffb3c1;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.deck-supprimer-sur {
+  background: #ff4d5e;
+  color: #fff;
+  text-decoration: none;
 }
 
 /* LA PAGE « JOUER » : la pile, la barre jusqu'à la main suivante, la dernière

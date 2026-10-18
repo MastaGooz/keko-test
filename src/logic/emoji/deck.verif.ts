@@ -1,7 +1,17 @@
 // LA VÉRIF DU DECK QUI JOUE : `node src/logic/emoji/deck.verif.ts` — sans navigateur.
 import {
   DECK,
+  DECKS_MAX,
+  ajouterDeck,
   basculerCarte,
+  choisirDeck,
+  deckActif,
+  decksAJour,
+  decksVides,
+  garderPossedeesPartout,
+  lireDecks,
+  modifierDeck,
+  supprimerDeck,
   deckAJour,
   deckComplet,
   deckVide,
@@ -74,6 +84,42 @@ verifier('une carte qu’on ne possède plus est écartée, la partie tombe', sa
 verifier('un doublon est écarté', lireDeck({ cartes: [...ids.slice(0, 29), ids[0]] }, tous, T0).cartes.length === 29)
 verifier('un deck complet sans partie en reçoit une', lireDeck({ cartes: ids }, tous, T0 + 7).partie?.depuis === T0 + 7)
 verifier('une partie abîmée repart neuve', lireDeck({ cartes: ids, partie: { graine: 1, jouees: 7, depuis: T0 } }, tous, T0 + 9).partie?.depuis === T0 + 9)
+
+
+// PLUSIEURS DECKS, UN SEUL QUI JOUE
+let ds = decksVides()
+verifier('un deck vide au départ, actif', ds.liste.length === 1 && ds.actif === 0 && deckActif(ds).cartes.length === 0)
+ds = ajouterDeck(ds)
+verifier('un deck de plus, l’actif reste le premier', ds.liste.length === 2 && ds.actif === 0)
+for (const id of ids) ds = modifierDeck(ds, 1, (d) => basculerCarte(d, id, T0))
+verifier('le second est complet mais ne joue pas : il n’est pas l’actif', deckComplet(ds.liste[1]!) && ds.liste[1]!.partie === null)
+verifier('rien ne tombe tant que l’actif est vide', decksAJour(ds, T0 + DECK.cadence * 3).mains === 0)
+ds = choisirDeck(ds, 1, T0 + 100)
+verifier('choisir le second le lance', ds.actif === 1 && ds.liste[1]!.partie?.depuis === T0 + 100)
+verifier('le choisir encore ne change rien', choisirDeck(ds, 1, T0 + 999) === ds)
+const tombe = decksAJour(ds, T0 + 100 + DECK.cadence)
+verifier('l’actif joue', tombe.mains === 1 && tombe.likes === DECK.main && tombe.decks.liste[1]!.partie?.jouees === DECK.main && tombe.decks.liste[0] === ds.liste[0])
+for (const id of ids) ds = modifierDeck(ds, 0, (d) => basculerCarte(d, id, T0))
+verifier('compléter un deck non actif ne le lance pas', deckComplet(ds.liste[0]!) && ds.liste[0]!.partie === null)
+const bascule = choisirDeck(ds, 0, T0 + 500)
+verifier('changer de deck arrête l’ancien et lance le nouveau', bascule.actif === 0 && bascule.liste[0]!.partie?.depuis === T0 + 500 && bascule.liste[1]!.partie === null)
+const sansActif = supprimerDeck(bascule, 0, T0 + 600)
+verifier('supprimer l’actif : le premier restant prend sa place et joue', sansActif.liste.length === 1 && sansActif.actif === 0 && sansActif.liste[0]!.partie?.depuis === T0 + 600)
+verifier('on ne supprime pas le dernier deck', supprimerDeck(sansActif, 0, T0) === sansActif)
+const trois = ajouterDeck(ajouterDeck(bascule))
+verifier('supprimer avant l’actif décale l’index', supprimerDeck(choisirDeck(trois, 2, T0), 0, T0).actif === 1)
+let plein = decksVides()
+for (let i = 0; i < DECKS_MAX + 2; i++) plein = ajouterDeck(plein)
+verifier('au plus DECKS_MAX decks', plein.liste.length === DECKS_MAX)
+const perdu = garderPossedeesPartout(bascule, (id) => id !== ids[2], T0)
+verifier('une carte perdue quitte tous les decks', perdu.liste.every((d) => d.cartes.length === DECK.taille - 1 && d.partie === null))
+const relus = lireDecks(JSON.parse(JSON.stringify(bascule)), tous, T0)
+verifier('les decks gardés se relisent', relus.actif === 0 && relus.liste.length === 2 && relus.liste[0]!.partie?.depuis === T0 + 500 && relus.liste[1]!.partie === null)
+const ancien = lireDecks({ cartes: ids, partie: { graine: 3, jouees: DECK.main, depuis: T0 } }, tous, T0)
+verifier('un deck seul d’avant devient le premier et l’actif', ancien.liste.length === 1 && ancien.actif === 0 && ancien.liste[0]!.partie?.graine === 3)
+verifier('n’importe quoi : un deck vide', lireDecks(42, tous, T0).liste.length === 1)
+const relusActifFaux = lireDecks({ liste: [{ cartes: ids, partie: { graine: 1, jouees: 0, depuis: T0 } }, { cartes: [] }], actif: 7 }, tous, T0)
+verifier('un actif hors liste retombe sur le premier', relusActifFaux.actif === 0 && relusActifFaux.liste[0]!.partie !== null)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

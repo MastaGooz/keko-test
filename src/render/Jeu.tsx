@@ -40,9 +40,23 @@ import {
   type Exemplaire,
 } from '../logic/emoji/collection.ts'
 import { createRng } from '../logic/rng.ts'
-import { chargerCollection, chargerDeck, chargerReserve, sauverCollection, sauverDeck, sauverReserve } from '../ui/collection.ts'
+import { chargerCollection, chargerDecks, chargerReserve, sauverCollection, sauverDecks, sauverReserve } from '../ui/collection.ts'
 import { RESERVE, prendreUnPaquet, prochainDans, reserveAJour, type Reserve } from '../logic/emoji/reserve.ts'
-import { DECK, basculerCarte, deckAJour, garderPossedees, likesDeLaMain, type Deck } from '../logic/emoji/deck.ts'
+import {
+  DECK,
+  DECKS_MAX,
+  ajouterDeck,
+  basculerCarte,
+  choisirDeck,
+  deckActif,
+  deckComplet,
+  decksAJour,
+  garderPossedeesPartout,
+  likesDeLaMain,
+  modifierDeck,
+  supprimerDeck,
+  type Decks,
+} from '../logic/emoji/deck.ts'
 import { chargerEmojis } from '../ui/emoji.ts'
 import { Paquet3D } from './Paquet3D.tsx'
 import { PageCollection } from './Collection.tsx'
@@ -255,31 +269,43 @@ export function Jeu(): React.ReactElement {
    * montre la dernière main (`derniereMain`). Le deck ne garde que des cartes
    * possédées : relu avec la collection, et une carte partie le quitte.
    */
-  const [deck, setDeck] = useState<Deck>(() => {
+  const [decks, setDecks] = useState<Decks>(() => {
     const c = chargerCollection()
-    return chargerDeck((id) => c.cartes[id] !== undefined, Date.now())
+    return chargerDecks((id) => c.cartes[id] !== undefined, Date.now())
   })
+  /**
+   * PLUSIEURS DECKS, UN SEUL QUI JOUE (Keko : « que le joueur puisse avoir
+   * plusieurs decks, et sélectionner celui avec lequel il veut jouer »). On
+   * compose `deckEdite` dans « Deck » (l'actif au départ) ; l'actif joue.
+   */
+  const [deckEdite, setDeckEdite] = useState(decks.actif)
   const [derniereMain, setDerniereMain] = useState<MainTombee | null>(null)
-  const poserDeck = useCallback((f: (d: Deck) => Deck) => {
-    setDeck((d) => {
-      const n = f(d)
-      if (n !== d) sauverDeck(n)
+  const poserDecks = useCallback((f: (ds: Decks) => Decks) => {
+    setDecks((ds) => {
+      const n = f(ds)
+      if (n !== ds) sauverDecks(n)
       return n
     })
   }, [])
   useEffect(() => {
-    const r = deckAJour(deck, maintenant)
-    if (r.deck !== deck) poserDeck(() => r.deck)
+    const r = decksAJour(decks, maintenant)
+    if (r.decks !== decks) poserDecks(() => r.decks)
     if (r.mains === 0 || r.derniere === null) return
     const main = r.derniere
     changer((c) => ajouterLikes(c, r.likes))
     setDerniereMain((m) => ({ main, likes: likesDeLaMain(main), numero: (m?.numero ?? 0) + 1 }))
-  }, [deck, maintenant, changer, poserDeck])
+  }, [decks, maintenant, changer, poserDecks])
   useEffect(() => {
-    poserDeck((d) => garderPossedees(d, (id) => collection.cartes[id] !== undefined, Date.now()))
-  }, [collection, poserDeck])
-  const basculerDansLeDeck = useCallback((id: string) => poserDeck((d) => basculerCarte(d, id, Date.now())), [poserDeck])
-  const deckIds = useMemo(() => new Set(deck.cartes), [deck.cartes])
+    poserDecks((ds) => garderPossedeesPartout(ds, (id) => collection.cartes[id] !== undefined, Date.now()))
+  }, [collection, poserDecks])
+  const deck = deckActif(decks)
+  const edite = decks.liste[deckEdite] ?? deck
+  const basculerDansLeDeck = useCallback(
+    (id: string) => poserDecks((ds) => modifierDeck(ds, deckEdite, (d) => basculerCarte(d, id, Date.now()))),
+    [poserDecks, deckEdite],
+  )
+  const choisirLeDeck = useCallback((i: number) => poserDecks((ds) => choisirDeck(ds, i, Date.now())), [poserDecks])
+  const deckIds = useMemo(() => new Set(edite.cartes), [edite.cartes])
   /**
    * `&debloquer` : LA MOITIÉ DU CATALOGUE, D'UN LIEN. Keko : « tu peux me
    * débloquer la moitié de la collection ? » *La collection vit sur l'appareil*,
@@ -455,7 +481,17 @@ export function Jeu(): React.ReactElement {
       ) : page === 'stickers' ? (
         <PageStickers catalogue={catalogue} collection={collection} onCollection={() => aller('collection')} />
       ) : page === 'jouer' ? (
-        <PageJouer catalogue={catalogue} collection={collection} deck={deck} derniere={derniereMain} onComposer={() => aller('deck')} />
+        <PageJouer
+          catalogue={catalogue}
+          collection={collection}
+          decks={decks}
+          derniere={derniereMain}
+          onChoisir={choisirLeDeck}
+          onComposer={() => {
+            setDeckEdite(decks.actif)
+            aller('deck')
+          }}
+        />
       ) : (
         <PageCollection
           key={page}
@@ -466,7 +502,26 @@ export function Jeu(): React.ReactElement {
           onDetruire={detruireCarte}
           deck={
             page === 'deck'
-              ? { ids: deckIds, taille: DECK.taille, onBasculer: basculerDansLeDeck, onJouer: () => aller('jouer') }
+              ? {
+                  ids: deckIds,
+                  taille: DECK.taille,
+                  onBasculer: basculerDansLeDeck,
+                  onJouer: () => aller('jouer'),
+                  decks: decks.liste.map((d) => ({ n: d.cartes.length, complet: deckComplet(d) })),
+                  edite: deckEdite,
+                  actif: decks.actif,
+                  peutAjouter: decks.liste.length < DECKS_MAX,
+                  onEditer: setDeckEdite,
+                  onAjouter: () => {
+                    poserDecks(ajouterDeck)
+                    setDeckEdite(Math.min(decks.liste.length, DECKS_MAX - 1))
+                  },
+                  onSupprimer: () => {
+                    poserDecks((ds) => supprimerDeck(ds, deckEdite, Date.now()))
+                    setDeckEdite((i) => Math.max(0, Math.min(i, decks.liste.length - 2)))
+                  },
+                  onJouerAvec: () => choisirLeDeck(deckEdite),
+                }
               : undefined
           }
         />
@@ -569,7 +624,7 @@ export function Jeu(): React.ReactElement {
             >
               Deck
               <span className="nav-menu-compte">
-                {deck.cartes.length}/{DECK.taille}
+                {decks.liste.length} deck{decks.liste.length > 1 ? 's' : ''}
               </span>
             </button>
             <button

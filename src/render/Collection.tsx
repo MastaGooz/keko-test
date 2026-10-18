@@ -824,10 +824,26 @@ function CarteOuverte({
  * ou l'en retire, au lieu de l'ouvrir. Voir `logic/emoji/deck.ts`.
  */
 export interface ChoixDuDeck {
+  /** Les cartes du deck qu'on compose (`edite`). */
   readonly ids: ReadonlySet<string>
   readonly taille: number
   readonly onBasculer: (id: string) => void
+  /** Voir jouer le deck actif. */
   readonly onJouer: () => void
+  /**
+   * PLUSIEURS DECKS (Keko : « que le joueur puisse avoir plusieurs decks, et
+   * sélectionner celui avec lequel il veut jouer ») : un onglet chacun, celui
+   * qu'on compose (`edite`) et celui qui joue (`actif`).
+   */
+  readonly decks: readonly { n: number; complet: boolean }[]
+  readonly edite: number
+  readonly actif: number
+  readonly peutAjouter: boolean
+  readonly onEditer: (i: number) => void
+  readonly onAjouter: () => void
+  readonly onSupprimer: () => void
+  /** Faire jouer le deck qu'on compose. */
+  readonly onJouerAvec: () => void
 }
 
 export function PageCollection({
@@ -854,6 +870,13 @@ export function PageCollection({
 }): React.ReactElement {
   const modeDeck = deck !== undefined
   const triParDefaut: Tri = toutes || modeDeck ? 'rares' : 'recentes'
+  // SUPPRIMER UN DECK SE CONFIRME D'UNE SECONDE TAPE, dans les trois secondes.
+  const [sur, setSur] = useState(false)
+  useEffect(() => {
+    if (!sur) return
+    const t = window.setTimeout(() => setSur(false), 3000)
+    return () => clearTimeout(t)
+  }, [sur])
   const tris = toutes ? TRIS.filter((t) => t.id !== 'recentes') : TRIS
   const [recherche, setRecherche] = useState('')
   const [tri, setTri] = useState<Tri>(triParDefaut)
@@ -943,13 +966,42 @@ export function PageCollection({
     <div className="collection">
       <div className="collection-defile">
         <header className="collection-tete">
-          <h1 className="collection-titre">{modeDeck ? 'Mon deck' : toutes ? 'Toutes les cartes' : 'Ma collection'}</h1>
+          <h1 className="collection-titre">{modeDeck ? 'Mes decks' : toutes ? 'Toutes les cartes' : 'Ma collection'}</h1>
+          {/* UN ONGLET PAR DECK : celui qu'on compose en crème, celui qui joue
+              marqué « joue », et « + » pour en ouvrir un autre. */}
+          {deck !== undefined && (
+            <div className="decks-onglets" role="tablist" aria-label="Mes decks">
+              {deck.decks.map((d, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === deck.edite}
+                  className={`deck-onglet${i === deck.edite ? ' deck-onglet-edite' : ''}`}
+                  onClick={() => deck.onEditer(i)}
+                >
+                  Deck {i + 1}
+                  <span className="deck-onglet-compte">
+                    {d.n}/{deck.taille}
+                  </span>
+                  {i === deck.actif && <span className="deck-onglet-joue">joue</span>}
+                </button>
+              ))}
+              {deck.peutAjouter && (
+                <button type="button" className="deck-onglet deck-ajouter" aria-label="Nouveau deck" onClick={deck.onAjouter}>
+                  +
+                </button>
+              )}
+            </div>
+          )}
           <p className="collection-compte">
             {deck !== undefined ? (
               <>
-                <b>{deck.ids.size}</b> / {deck.taille} cartes ·{' '}
+                Deck {deck.edite + 1} · <b>{deck.ids.size}</b> / {deck.taille} cartes ·{' '}
                 {deck.ids.size >= deck.taille
-                  ? 'complet, il joue'
+                  ? deck.edite === deck.actif
+                    ? 'complet, il joue'
+                    : 'complet, prêt à jouer'
                   : `encore ${deck.taille - deck.ids.size} à choisir, une tape met la carte dans le deck`}
               </>
             ) : toutes ? (
@@ -967,11 +1019,42 @@ export function PageCollection({
           <div className="collection-barre" aria-hidden>
             <span style={{ width: `${(part * 100).toFixed(2)}%` }} />
           </div>
-          {/* LE DECK EST COMPLET : aller le voir jouer. */}
-          {deck !== undefined && deck.ids.size >= deck.taille && (
-            <button type="button" className="collection-bouton deck-jouer" onClick={deck.onJouer}>
-              Voir le deck jouer
-            </button>
+          {/* LES ACTIONS DU DECK QU'ON COMPOSE : le voir jouer s'il joue, le faire
+              jouer sinon (complet), et le supprimer (deux tapes) s'il n'est pas seul. */}
+          {deck !== undefined && (
+            <div className="deck-actions">
+              {deck.edite === deck.actif
+                ? deck.ids.size >= deck.taille && (
+                    <button type="button" className="collection-bouton deck-jouer" onClick={deck.onJouer}>
+                      Voir le deck jouer
+                    </button>
+                  )
+                : (
+                    <button
+                      type="button"
+                      className="collection-bouton deck-jouer"
+                      disabled={deck.ids.size < deck.taille}
+                      onClick={deck.onJouerAvec}
+                    >
+                      Jouer avec ce deck
+                    </button>
+                  )}
+              {deck.decks.length > 1 && (
+                <button
+                  type="button"
+                  className={`deck-supprimer${sur ? ' deck-supprimer-sur' : ''}`}
+                  onClick={() => {
+                    if (!sur) setSur(true)
+                    else {
+                      setSur(false)
+                      deck.onSupprimer()
+                    }
+                  }}
+                >
+                  {sur ? 'Sûr ? Supprimer' : 'Supprimer ce deck'}
+                </button>
+              )}
+            </div>
           )}
         </header>
 

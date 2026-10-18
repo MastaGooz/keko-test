@@ -283,7 +283,9 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
 - **Le deck qui joue** (`logic/emoji/deck.ts`, `render/Deck.tsx` ; Keko : « un
   système idle où tu construis un deck ») : trente emoji possédés, un
   exemplaire chacun, choisis dans la grille en mode deck (menu « Cartes » →
-  « Deck », `ChoixDuDeck`) ; complet, il joue tout seul **une main de cinq
+  « Deck », `ChoixDuDeck`) ; **plusieurs decks** (`Decks`, six au plus, un
+  onglet chacun, Keko), **un seul joue : l'actif** (`choisirDeck`, qui arrête
+  l'autre) ; complet, il joue tout seul **une main de cinq
   toutes les dix secondes, un Like par carte, ajouté aussitôt, sur toutes les
   pages** ; vidé, il se remélange (`melange` seedé, la graine suit). *Le temps
   est injecté* comme pour la réserve : `deckAJour` rejoue l'écoulé à la

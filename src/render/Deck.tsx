@@ -18,7 +18,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import { VARIANTES, compteDe, type Collection, type Variante } from '../logic/emoji/collection.ts'
-import { DECK, deckComplet, mainPrecedente, type Deck } from '../logic/emoji/deck.ts'
+import { DECK, deckActif, deckComplet, mainPrecedente, type Decks } from '../logic/emoji/deck.ts'
 import { Vignette } from './Collection.tsx'
 import { RAYON_SIMPLE, peindreDosEmoji } from './texture-carte.ts'
 
@@ -40,16 +40,20 @@ function meilleureVariante(col: Collection, id: string): Variante {
 export function PageJouer({
   catalogue,
   collection,
-  deck,
+  decks,
   derniere,
+  onChoisir,
   onComposer,
 }: {
   catalogue: readonly CarteEmoji[] | null
   collection: Collection
-  deck: Deck
+  decks: Decks
   derniere: MainTombee | null
+  /** Choisir le deck qui joue (Keko : « sélectionner celui avec lequel il veut jouer »). */
+  onChoisir: (i: number) => void
   onComposer: () => void
 }): React.ReactElement {
+  const deck = deckActif(decks)
   const parId = useMemo(() => new Map((catalogue ?? []).map((c) => [c.id, c])), [catalogue])
   const complet = deckComplet(deck)
   const main = derniere?.main ?? mainPrecedente(deck)
@@ -120,7 +124,30 @@ export function PageJouer({
     <div className="collection">
       <div className="collection-defile">
         <header className="collection-tete">
-          <h1 className="collection-titre">{complet ? 'Le deck joue' : 'Le deck attend'}</h1>
+          <h1 className="collection-titre">
+            Le deck {decks.actif + 1} {complet ? 'joue' : 'attend'}
+          </h1>
+          {/* QUEL DECK JOUE : un onglet par deck, les incomplets grisés. */}
+          {decks.liste.length > 1 && (
+            <div className="decks-onglets" role="tablist" aria-label="Le deck qui joue">
+              {decks.liste.map((d, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  role="tab"
+                  aria-selected={i === decks.actif}
+                  className={`deck-onglet${i === decks.actif ? ' deck-onglet-edite' : ''}`}
+                  disabled={!deckComplet(d)}
+                  onClick={() => onChoisir(i)}
+                >
+                  Deck {i + 1}
+                  <span className="deck-onglet-compte">
+                    {d.cartes.length}/{DECK.taille}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
           <p className="collection-compte">
             {complet ? (
               <>
