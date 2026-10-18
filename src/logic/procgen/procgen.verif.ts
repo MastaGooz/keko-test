@@ -3,6 +3,7 @@
  * variété, chemins sains, tout dans la boîte.
  */
 import { BOITE, FAMILLES, RACES, ROLES, genererDessin, seedDe, type Famille, type Race } from './index.ts'
+import { figurineSaine, genererFigurine } from './figurine.ts'
 
 let echecs = 0
 function verifier(quoi: string, vrai: boolean): void {
@@ -59,6 +60,13 @@ for (const [famille, race] of cas) {
   const attendu = famille === 'origami' ? 200 : 290
   verifier(`300 ids donnent plus de ${attendu} dessins différents`, empreintes.size > attendu)
 }
+
+console.log('figurine 3D')
+verifier('même id = même figurine', JSON.stringify(genererFigurine('f-1')) === JSON.stringify(genererFigurine('f-1')))
+verifier('autre id = autre figurine', JSON.stringify(genererFigurine('f-2')) !== JSON.stringify(genererFigurine('f-1')))
+let saines = true
+for (let i = 0; i < 300; i++) if (!figurineSaine(genererFigurine(`figurine-${i}`))) saines = false
+verifier('300 figurines saines, dans le cube unité', saines)
 
 console.log(echecs === 0 ? 'Tout passe.' : `${echecs} echec(s).`)
 if (echecs > 0) throw new Error(`${echecs} verification(s) en echec`)

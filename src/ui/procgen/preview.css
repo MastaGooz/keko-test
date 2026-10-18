@@ -171,6 +171,41 @@ button.actif {
   border-radius: 6px;
 }
 
+/* Les figurines 3D : l'image rendue, et la visionneuse qui flotte au-dessus. */
+.pv-cell[data-famille='figurine'] img {
+  display: block;
+  background: radial-gradient(circle at 50% 40%, #2a2f44, #1b1e2c 70%);
+  border-radius: 6px;
+}
+
+.pv-visionneuse {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(10, 12, 20, 0.86);
+  z-index: 10;
+  cursor: pointer;
+}
+
+.pv-visionneuse[hidden] {
+  display: none;
+}
+
+.pv-visionneuse canvas {
+  border-radius: 16px;
+  background: radial-gradient(circle at 50% 40%, #2a2f44, #1b1e2c 70%);
+}
+
+.pv-visionneuse p {
+  margin: 0;
+  color: var(--sourd);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
 /* Le pixel art reste net : pas de lissage à l'agrandissement. */
 .pv-cell[data-famille='perso-pixel'] svg {
   shape-rendering: crispEdges;

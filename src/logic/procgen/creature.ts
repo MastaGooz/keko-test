@@ -26,8 +26,8 @@ const RAD = Math.PI / 180
 export type TypeCreature = 'feu' | 'eau' | 'plante' | 'foudre' | 'roche' | 'glace' | 'spectre' | 'fee'
 export const TYPES: readonly TypeCreature[] = ['feu', 'eau', 'plante', 'foudre', 'roche', 'glace', 'spectre', 'fee']
 
-type Palette = { principale: string; secondaire: string; accent: string; clair: string; contour: string; iris: string }
-const PALETTES: Record<TypeCreature, readonly Palette[]> = {
+export type Palette = { principale: string; secondaire: string; accent: string; clair: string; contour: string; iris: string }
+export const PALETTES: Record<TypeCreature, readonly Palette[]> = {
   feu: [
     { principale: '#f28c3b', secondaire: '#ffd27a', accent: '#e8432a', clair: '#ffe6b0', contour: '#5a2410', iris: '#2e8bd6' },
     { principale: '#d9503a', secondaire: '#f7b26a', accent: '#ffd23f', clair: '#ffe0c0', contour: '#4a1a12', iris: '#3aa36b' },

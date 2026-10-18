@@ -1,4 +1,4 @@
-# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis, personnages en trois styles, héros en buste, masques, créatures de type, figurines 3D toon
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -320,6 +320,46 @@ reflet haut) — et UN ÉLÉMENT qui marque la bête partout où il peut.
   éléments sur le corps ; queue effilée à anneaux.
 - La hauteur totale est calculée et tout se rétrécit d'un bloc si elle ne
   tient pas ; de l'air en haut (17) pour les longues oreilles et la flamme.
+
+## Les figurines 3D toon (`figurine.ts`, `ui/procgen/toon.ts`)
+
+Keko, après l'état des lieux sur la qualité : « j'aimerais bien tester la
+3D procédurale avec rendu toon ». La LOGIQUE reste pure : une figurine est
+une liste de BOULES (position, rayon, couleur) et de SOLIDES durs (sphère,
+cône, ellipsoïde, octaèdre, avec échelle et rotation) dans le cube unité,
+y en haut, z vers la caméra, symétrique en x. Mêmes types, mêmes palettes et
+mêmes règles que la créature 2D : grosse tête, grands yeux, l'élément
+partout (`PALETTES` et `TYPES` exportés de `creature.ts`).
+
+Le RENDU (three.js, hors React) :
+
+- les boules fusionnent par MARCHING CUBES (l'objet d'exemple de three,
+  champ de metaballs, résolution 56) : la surface est à `force / d² −
+  soustrait = isolation`, donc `force = (r / 2)² · (isolation + soustrait)`
+  pour un rayon `r` dans [−1, 1] ; **`soustrait` règle la distance
+  d'influence** : à 12 tout fondait en une patate, à 36 la tête se détache
+  du corps et les joints restent lisses ;
+- la surface est RECOLORÉE sommet par sommet par la boule qui domine, en
+  1 / d⁶ (le mélange natif de MarchingCubes était terne) : le ventre garde
+  un bord net ;
+- `MeshToonMaterial` avec une rampe à trois paliers, une lumière clé, une
+  contre-lumière froide, une ambiante ;
+- le CONTOUR est la coque inversée : la même géométrie gonflée le long des
+  normales, faces arrière, couleur du contour de la palette ; **le
+  gonflement se fait en espace vue**, sinon un solide aplati (une aile)
+  faisait une tache noire ;
+- les VIGNETTES sont des rendus convertis en image, un par image
+  d'animation ; la VISIONNEUSE fait tourner la figurine dans un canvas
+  (toucher une vignette ; toucher pour fermer). Le banc vérifie le
+  déterminisme et que tout tient dans le cube.
+
+`&taille=128` dans l'adresse ouvre la page à cette taille. La section 3D
+est en tête de page tant qu'elle est ce qu'on teste.
+
+*Ce que ça montre* : le volume et la lumière cachent la pauvreté de forme ;
+la même patate qu'en 2D lit « figurine » en 3D. *Ce qui manque* : une
+occlusion ambiante, une pose, et, pour le jeu, poser la figurine sur la
+carte 3D existante pour qu'elle tourne avec l'inclinaison.
 
 ## La planète (`planete.ts`)
 

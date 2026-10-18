@@ -12,8 +12,11 @@ import { FAMILLES, RACES, ROLES, seedDe, type Famille, type Race } from '../../l
 import { createRng } from '../../logic/rng.ts'
 import { renderDessin, renderIcon } from './svg.ts'
 import { dessinerOrigami, dureeTotale, genererOrigami } from '../../logic/procgen/index.ts'
+import { vignetteFigurine, visionneuse } from './toon.ts'
 
 const PAR_FAMILLE = 30
+/** La famille 3D : pas un dessin SVG, une figurine rendue en toon par three.js. */
+const FIGURINE = 'figurine'
 const TAILLES = [32, 64, 128] as const
 const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', gribouillis: 'g', 'perso-papier': 'h', 'perso-pixel': 'h', 'perso-encre': 'h', heros: 'k', masque: 'q', creature: 'b', vaisseau: 'v', alien: 'x' }
 /** Les familles d'un même groupe tirent les MÊMES identifiants : on compare le même personnage d'un style à l'autre. */
@@ -27,11 +30,11 @@ const raceLue = adresse.searchParams.get('race')
 let race: Race = (RACES as readonly string[]).includes(raceLue ?? '') ? (raceLue as Race) : 'humain'
 
 /** Les identifiants d'une série : tirés d'un RNG seedé par son numéro. */
-function identifiants(famille: Famille, serie: number): string[] {
-  const rng = createRng(seedDe(`${GROUPE[famille] ?? famille}/${serie}`))
+function identifiants(famille: Famille | typeof FIGURINE, serie: number): string[] {
+  const rng = createRng(seedDe(`${(famille === FIGURINE ? FIGURINE : GROUPE[famille]) ?? famille}/${serie}`))
   const ids: string[] = []
   while (ids.length < PAR_FAMILLE) {
-    const id = `${PREFIXE[famille]}-${Math.floor(rng.next() * 46656).toString(36).padStart(3, '0')}`
+    const id = `${famille === FIGURINE ? 'f' : PREFIXE[famille]}-${Math.floor(rng.next() * 46656).toString(36).padStart(3, '0')}`
     if (!ids.includes(id)) ids.push(id)
   }
   return ids
@@ -43,6 +46,8 @@ function ecrireSerie(): void {
   history.replaceState(null, '', adresse)
 }
 
+// La taille se lit aussi dans l'adresse : ce qui se teste doit pouvoir s'ouvrir d'un lien.
+let taille: number = TAILLES.find((t) => t === Number(adresse.searchParams.get('taille'))) ?? 64
 const racine = document.getElementById('preview')!
 racine.innerHTML = `
   <header class="pv-tete">
@@ -52,7 +57,7 @@ racine.innerHTML = `
         ${RACES.map((r) => `<button type="button" data-race="${r}" class="${r === race ? 'actif' : ''}">${NOM_RACE[r]}</button>`).join('')}
       </span>
       <span class="pv-tailles" role="group" aria-label="Taille">
-        ${TAILLES.map((t) => `<button type="button" data-taille="${t}" class="${t === 64 ? 'actif' : ''}">${t} px</button>`).join('')}
+        ${TAILLES.map((t) => `<button type="button" data-taille="${t}" class="${t === taille ? 'actif' : ''}">${t} px</button>`).join('')}
       </span>
       <button type="button" id="pv-regenerer">Regénérer</button>
       <span class="pv-serie">série <b id="pv-numero">${serie}</b></span>
@@ -60,6 +65,11 @@ racine.innerHTML = `
     </div>
   </header>
   <section class="pv-un" id="pv-un" hidden></section>
+  <section class="pv-famille pv-3d" data-famille="${FIGURINE}">
+    <h2>Figurines 3D toon (toucher pour faire tourner)</h2>
+    <div class="pv-grille"></div>
+  </section>
+  <div class="pv-visionneuse" id="pv-visionneuse" hidden><canvas></canvas><p></p></div>
   ${FAMILLES.map(
     (f) => `
     <section class="pv-famille" data-famille="${f}">
@@ -69,7 +79,6 @@ racine.innerHTML = `
   ).join('')}
 `
 
-let taille: number = 64
 
 function cellule(famille: Famille, id: string, t: number): HTMLElement {
   const cell = document.createElement('figure')
@@ -130,8 +139,74 @@ function deplier(cell: HTMLElement, id: string, t: number): void {
   requestAnimationFrame(image)
 }
 
+/**
+ * LES FIGURINES 3D : chaque vignette est un rendu three.js converti en image,
+ * fait une par image d'animation pour ne pas figer la page. Toucher une
+ * vignette ouvre la visionneuse, où la figurine tourne.
+ */
+let fileDeRendu: (() => void)[] = []
+let enFile = false
+function pousserRendu(tache: () => void): void {
+  fileDeRendu.push(tache)
+  if (enFile) return
+  enFile = true
+  const suivant = () => {
+    const t = fileDeRendu.shift()
+    if (!t) {
+      enFile = false
+      return
+    }
+    try {
+      t()
+    } catch (e) {
+      console.error('figurine', e)
+    }
+    requestAnimationFrame(suivant)
+  }
+  requestAnimationFrame(suivant)
+}
+
+let visionneuseEnCours: { arreter: () => void } | null = null
+function ouvrirVisionneuse(id: string): void {
+  const bloc = document.getElementById('pv-visionneuse')!
+  const canvas = bloc.querySelector('canvas')!
+  visionneuseEnCours?.arreter()
+  bloc.hidden = false
+  bloc.querySelector('p')!.textContent = `${id} — toucher pour fermer`
+  visionneuseEnCours = visionneuse(canvas, id, Math.min(360, window.innerWidth - 48))
+}
+document.getElementById('pv-visionneuse')!.addEventListener('click', () => {
+  visionneuseEnCours?.arreter()
+  visionneuseEnCours = null
+  document.getElementById('pv-visionneuse')!.hidden = true
+})
+
+function celluleFigurine(id: string, t: number): HTMLElement {
+  const cell = document.createElement('figure')
+  cell.className = 'pv-cell'
+  cell.dataset.famille = FIGURINE
+  cell.style.setProperty('--t', `${t}px`)
+  const img = document.createElement('img')
+  img.width = t
+  img.height = t
+  img.alt = id
+  cell.appendChild(img)
+  const legende = document.createElement('figcaption')
+  legende.innerHTML = `<b>${id}</b><small>${seedDe(id)}</small>`
+  cell.appendChild(legende)
+  cell.title = 'Toucher pour faire tourner'
+  cell.addEventListener('click', () => ouvrirVisionneuse(id))
+  pousserRendu(() => {
+    img.src = vignetteFigurine(id, t)
+  })
+  return cell
+}
+
 function peindre(): void {
-  for (const section of racine.querySelectorAll<HTMLElement>('.pv-famille')) {
+  fileDeRendu = []
+  const grille3d = racine.querySelector('.pv-3d .pv-grille')!
+  grille3d.replaceChildren(...identifiants(FIGURINE, serie).map((id) => celluleFigurine(id, taille)))
+  for (const section of racine.querySelectorAll<HTMLElement>('.pv-famille:not(.pv-3d)')) {
     const famille = section.dataset.famille as Famille
     const grille = section.querySelector('.pv-grille')!
     const titre = section.querySelector('h2')!
