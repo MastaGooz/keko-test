@@ -50,6 +50,7 @@ import {
   RAYONS_DANS_LA_CARTE,
   masqueDuSujetDe,
   sujetDe,
+  surfaceDe,
   rayonsDuCran,
   ECLAIRE_SOMBRES,
   COIN_DE_LA_PLAQUE,
@@ -97,7 +98,11 @@ function silhouetteDe(toile: HTMLCanvasElement): THREE.CanvasTexture | null {
     const c = document.createElement('canvas')
     c.width = toile.width
     c.height = toile.height
-    c.getContext('2d')?.drawImage(sujet.image, sujet.x, sujet.y, sujet.l, sujet.h)
+    const cctx = c.getContext('2d')
+    cctx?.drawImage(sujet.image, sujet.x, sujet.y, sujet.l, sujet.h)
+    // ET LES STICKERS COLLÉS, en surface eux aussi : voir `surfaceDe`.
+    const surface = surfaceDe(toile)
+    if (surface !== undefined) cctx?.drawImage(surface, 0, 0, c.width, c.height)
     tex = new THREE.CanvasTexture(c)
     tex.flipY = true
   }
@@ -2106,6 +2111,8 @@ ${nuanceur.fragmentShader}`
           if (sctx !== null) {
             sctx.clearRect(0, 0, sil.c.width, sil.c.height)
             sctx.drawImage(sujet.image, sujet.x, sujet.y, sujet.l, sujet.h)
+            const surface = surfaceDe(canvas)
+            if (surface !== undefined) sctx.drawImage(surface, 0, 0, sil.c.width, sil.c.height)
             sil.t.needsUpdate = true
           }
         }

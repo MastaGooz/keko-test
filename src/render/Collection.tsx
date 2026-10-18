@@ -22,11 +22,11 @@ import { Canvas } from '@react-three/fiber'
 import { NoToneMapping } from 'three'
 import type { CarteEmoji, GroupeEmoji, RareteEmoji } from '../logic/emoji/types.ts'
 import { GROUPES_EMOJI, NOM_DU_GROUPE, RARETES_EMOJI } from '../logic/emoji/types.ts'
-import type { Collection, Exemplaire, Possession, Variante } from '../logic/emoji/collection.ts'
-import { VARIANTES, compteDe, exemplaireDe, nombreDExemplaires } from '../logic/emoji/collection.ts'
+import type { Collection, Exemplaire, Possession, StickerColle, Variante } from '../logic/emoji/collection.ts'
+import { VARIANTES, compteDe, exemplaireDe, nombreDeColles, nombreDExemplaires } from '../logic/emoji/collection.ts'
 import { Decollage } from './Decollage.tsx'
 import { AMBIANCE, type SujetPeint, tailleQuIlFaut } from './texture-carte.ts'
-import { animationHolo, coucheDesRayons, paillettesHolo, peinte, sujetDeLaVignette } from './peinture-vignette.ts'
+import { animationHolo, cleDesColles, coucheDesRayons, paillettesHolo, peinte, stickerPeint, stickersColles, sujetDeLaVignette, type StickerPeint } from './peinture-vignette.ts'
 import { COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { AVEC_TOURNE, RAYONS_TOURNANTS } from './Carte3D.tsx'
 import { RAYONS_DANS_LA_CARTE } from './texture-carte.ts'
@@ -394,6 +394,10 @@ export function Vignette({
   const { holo, anime } = exemplaireDe(variante)
   const compte = possession === null ? 0 : compteDe(possession, variante)
   const tourne = AVEC_TOURNE && anime && carte.animable
+  // LES STICKERS COLLÉS sur cette version : la vignette les peint, et se
+  // repeint quand ils changent (la clé dit s'ils ont changé).
+  const colles = possession?.colles?.[variante]
+  const cleColles = cleDesColles(colles)
   useEffect(() => {
     const el = boite.current
     if (el === null) return
@@ -405,7 +409,9 @@ export function Vignette({
         obs.disconnect()
         const px = el.getBoundingClientRect().width * Math.min(window.devicePixelRatio || 1, 3)
         const largeur = tailleQuIlFaut(px)
-        void peinte(carte, largeur, holo, tourne, false, false, tourne).then(async (source) => {
+        void stickersColles(colles)
+          .then((peints) => peinte(carte, largeur, holo, tourne, false, false, tourne, peints))
+          .then(async (source) => {
           const t = toile.current
           const ctx = t?.getContext('2d')
           if (t == null || ctx == null) return
@@ -466,7 +472,8 @@ export function Vignette({
       fini = true
       obs.disconnect()
     }
-  }, [carte, holo, tourne])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `colles` est lu par sa clé
+  }, [carte, holo, tourne, cleColles])
   // LA VIGNETTE ANIMÉE SUIT SA VISIBILITÉ : l'animation ne joue qu'à l'écran
   // (l'observateur du dessus se coupe après la première peinture).
   useEffect(() => {
@@ -574,17 +581,23 @@ function CarteOuverte({
   possession,
   variante,
   total,
+  album,
   onFermer,
   onDetruire,
+  onColler,
 }: {
   carte: CarteEmoji
   /** `null` : ouverte depuis le catalogue sans la posséder — rien à décoller. */
   possession: Possession | null
   variante: Variante
   total: number
+  /** L'ALBUM, ce qu'on peut coller : une entrée par version de sticker possédée, avec son compte. */
+  album: readonly { carte: CarteEmoji; v: Variante; n: number }[]
   onFermer: () => void
   /** Le sticker est décollé : cet exemplaire est détruit. */
   onDetruire: (ex: Exemplaire) => void
+  /** Un sticker de l'album se colle sur la version qu'on regarde (Keko : « coller des stickers sur les cartes »). */
+  onColler: (sticker: StickerColle) => void
 }): React.ReactElement {
   /**
    * LE DÉCOLLAGE EN COURS, et l'exemplaire qu'il détruit — **le simple
@@ -614,21 +627,38 @@ function CarteOuverte({
   const curseur = useRef<CurseurDeCarte>({ dessus: false, x: 0, y: 0 })
   const refFermer = useRef(onFermer)
   refFermer.current = onFermer
+  // LES STICKERS COLLÉS SUR CETTE VERSION, peints avant d'entrer dans la carte :
+  // la 3D repeint sa face dès que la liste change (nouvelle carte à peindre).
+  const colles = possession?.colles?.[variante]
+  const cleColles = cleDesColles(colles)
+  const [collesPeints, setCollesPeints] = useState<readonly StickerPeint[]>([])
+  useEffect(() => {
+    let vivant = true
+    void stickersColles(colles).then((p) => {
+      if (vivant) setCollesPeints(p)
+    })
+    return () => {
+      vivant = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `colles` est lu par sa clé
+  }, [cleColles])
   const aPeindre = useMemo(
     () => {
       const ex = exemplaireDe(variante)
-      return carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable })
+      return { ...carteDeLEmoji(carte, { holo: ex.holo, anime: ex.anime && carte.animable }), colles: collesPeints }
     },
-    [carte, variante],
+    [carte, variante, collesPeints],
   )
+  /** LE CHOIX DU STICKER À COLLER : ouvert par le bouton, fermé par un choix ou une tape ailleurs. */
+  const [choixOuvert, setChoixOuvert] = useState(false)
   /**
    * LA CARTE PENDANT LE DÉCOLLAGE : l'exemplaire qu'on détruit (le simple
    * d'abord, pas forcément le plus beau qu'on montrait), sans son emoji.
    */
   const carteNue = useMemo(
     () =>
-      decolle === null ? aPeindre : { ...carteDeLEmoji(carte, decolle), sansSujet: true, animation: undefined },
-    [carte, decolle, aPeindre],
+      decolle === null ? aPeindre : { ...carteDeLEmoji(carte, decolle), sansSujet: true, animation: undefined, colles: collesPeints },
+    [carte, decolle, aPeindre, collesPeints],
   )
   // LA CARTE TIENT DANS L'ÉCRAN, avec la place des lignes du dessous : la règle
   // de la rangée du paquet, *la taille se calcule sur la place.*
@@ -716,7 +746,7 @@ function CarteOuverte({
         const b = refBoite.current
         const dedans = Math.abs(e.clientX - b.cx) <= b.l / 2 && Math.abs(e.clientY - b.cy) <= b.h / 2
         // La croix ferme d'elle-même : on ne repose pas deux fois.
-        const surUnBouton = e.target instanceof Element && e.target.closest('button') !== null
+        const surUnBouton = e.target instanceof Element && e.target.closest('button, .coller-choix') !== null
         reposer = tape && !dedans && !surUnBouton
       },
       { signal },
@@ -774,6 +804,7 @@ function CarteOuverte({
         <Decollage
           carte={carte}
           exemplaire={decolle}
+          colles={collesPeints}
           boite={refBoite.current}
           onPret={() => setCachee(true)}
           onCasse={() => setCassee(true)}
@@ -801,22 +832,107 @@ function CarteOuverte({
             de la détruire pour gagner son sticker ». Pas sur une carte qu'on
             n'a pas. */}
         {possession !== null && (
-          <button
-            type="button"
-            className="decoller"
-            // C'EST LA VERSION QU'ON REGARDE QUI PART : voir `Variante`.
-            onClick={() => setDecolle(exemplaireDe(variante))}
-          >
-            Décoller le sticker
-          </button>
+          <div className="carte-ouverte-boutons">
+            <button
+              type="button"
+              className="decoller"
+              // C'EST LA VERSION QU'ON REGARDE QUI PART : voir `Variante`.
+              onClick={() => setDecolle(exemplaireDe(variante))}
+            >
+              Décoller le sticker
+            </button>
+            {/* COLLER UN STICKER DE L'ALBUM SUR CETTE VERSION. Keko : « coller des
+                stickers sur les cartes… +1 par sticker, sans limite par carte ».
+                Le bouton n'est là que si l'album a de quoi coller. */}
+            {album.length > 0 && (
+              <button type="button" className="decoller decoller-second" onClick={() => setChoixOuvert((o) => !o)}>
+                Coller un sticker
+                {nombreDeColles(possession, variante) > 0 && <span className="coller-compte">{nombreDeColles(possession, variante)}</span>}
+              </button>
+            )}
+          </div>
         )}
       </div>
+      {choixOuvert && decolle === null && (
+        <ChoixDuSticker
+          album={album}
+          onChoisir={(st) => {
+            onColler(st)
+            jouerSon(SON_POSER, 0.5)
+          }}
+          onFermer={() => setChoixOuvert(false)}
+        />
+      )}
       {decolle === null && (
         <button type="button" className="carte-ouverte-fermer" aria-label="Fermer" onClick={onFermer}>
           ×
         </button>
       )}
     </div>
+  )
+}
+
+/**
+ * LE CHOIX DU STICKER À COLLER : l'album en ruban, une case par version de
+ * sticker possédée avec son compte, peinte par le peintre de l'album
+ * (`stickerPeint`). Une tape colle et laisse le ruban ouvert : on peut en
+ * coller plusieurs d'affilée (sans limite, Keko). Une case qui se vide
+ * disparaît avec le dernier sticker.
+ */
+function ChoixDuSticker({
+  album,
+  onChoisir,
+  onFermer,
+}: {
+  album: readonly { carte: CarteEmoji; v: Variante; n: number }[]
+  onChoisir: (s: StickerColle) => void
+  onFermer: () => void
+}): React.ReactElement {
+  return (
+    <div className="coller-choix" role="dialog" aria-label="Coller un sticker">
+      <p className="coller-titre">
+        Coller un sticker
+        <button type="button" className="coller-fermer" aria-label="Fermer" onClick={onFermer}>
+          ×
+        </button>
+      </p>
+      <div className="coller-ruban">
+        {album.map((e) => (
+          <CaseDuSticker key={`${e.carte.id}#${e.v}`} entree={e} onChoisir={() => onChoisir({ id: e.carte.id, v: e.v })} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function CaseDuSticker({
+  entree,
+  onChoisir,
+}: {
+  entree: { carte: CarteEmoji; v: Variante; n: number }
+  onChoisir: () => void
+}): React.ReactElement {
+  const toile = useRef<HTMLCanvasElement>(null)
+  const holo = exemplaireDe(entree.v).holo
+  useEffect(() => {
+    let vivant = true
+    void stickerPeint(entree.carte, holo).then((source) => {
+      const t = toile.current
+      const ctx = t?.getContext('2d')
+      if (!vivant || source === null || t == null || ctx == null) return
+      t.width = source.width
+      t.height = source.height
+      ctx.drawImage(source, 0, 0)
+    })
+    return () => {
+      vivant = false
+    }
+  }, [entree.carte, holo])
+  return (
+    <button type="button" className="coller-case" onClick={onChoisir} aria-label={`${enTitre(entree.carte.nom)}, ${NOM_DE_LA_VARIANTE[entree.v]}, ${entree.n}`}>
+      <canvas ref={toile} />
+      {entree.n > 1 && <span className="vignette-nombre">×{entree.n}</span>}
+    </button>
   )
 }
 
@@ -867,6 +983,7 @@ export function PageCollection({
   toutes = false,
   onOuvrirUnPaquet,
   onDetruire,
+  onColler,
   deck,
 }: {
   catalogue: readonly CarteEmoji[] | null
@@ -880,10 +997,27 @@ export function PageCollection({
   toutes?: boolean
   onOuvrirUnPaquet: () => void
   onDetruire: (id: string, ex: Exemplaire) => void
+  /** Coller un sticker de l'album sur une version d'une carte : voir `coller`. */
+  onColler: (cible: { id: string; v: Variante }, sticker: StickerColle) => void
   /** Le mode deck : voir `ChoixDuDeck`. */
   deck?: ChoixDuDeck
 }): React.ReactElement {
   const modeDeck = deck !== undefined
+  // L'ALBUM, CE QU'ON PEUT COLLER : une entrée par version de sticker possédée.
+  const album = useMemo(() => {
+    if (catalogue === null) return []
+    const parId = new Map(catalogue.map((c) => [c.id, c]))
+    const liste: { carte: CarteEmoji; v: Variante; n: number }[] = []
+    for (const [id, s] of Object.entries(collection.stickers)) {
+      const carte = parId.get(id)
+      if (carte === undefined) continue
+      for (const v of VARIANTES) {
+        const n = compteDe(s, v)
+        if (n > 0) liste.push({ carte, v, n })
+      }
+    }
+    return liste.sort((a, b) => b.n - a.n || a.carte.rang - b.carte.rang)
+  }, [catalogue, collection.stickers])
   const triParDefaut: Tri = toutes || modeDeck ? 'rares' : 'recentes'
   // SUPPRIMER UN DECK SE CONFIRME D'UNE SECONDE TAPE, dans les trois secondes.
   const [sur, setSur] = useState(false)
@@ -1212,8 +1346,10 @@ export function PageCollection({
             possession={laOuverte.p}
             variante={laOuverte.v}
             total={total}
+            album={album}
             onFermer={() => setOuverte(null)}
             onDetruire={(ex) => onDetruire(laOuverte.carte.id, ex)}
+            onColler={(st) => onColler({ id: laOuverte.carte.id, v: laOuverte.v }, st)}
           />,
           document.body,
         )}

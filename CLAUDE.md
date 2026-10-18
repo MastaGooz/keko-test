@@ -265,6 +265,12 @@ suit est ce qu'il faut savoir avant d'ouvrir un fichier.*
   (`exemplaireADetruire`). Au défilé on passe à la suivante, le bilan se range
   sur les restantes. L'album (`render/Stickers.tsx`) est `collection.stickers`.
   Chiffres (`DECOLLAGE`) de moi, à rejuger.
+- **Les stickers se COLLENT sur les cartes** (Keko : « +1 par sticker, sans
+  limite par carte ») : sur la PLACE (emoji + version, `Possession.colles[v]`,
+  pas sur l'exemplaire — la collection ne les distingue pas), `coller` les prend
+  à l'album, `detruire` les emporte avec la version ; peints à des places fixes
+  sur la fenêtre d'art (`PLACES_COLLES`, `stickersColles`) ; **un Like de plus
+  par sticker** quand le deck joue cet exemplaire (`valeurParRarete`).
 - `&art` et `&peau` gardent le paquet seul, sans barre.
 - **La réserve de paquets** (`logic/emoji/reserve.ts`, `RESERVE`) : 10 au plus,
   **un toutes les 10 minutes** (Keko), pleine au départ, décomptée à

@@ -49,6 +49,8 @@ export const DECK = {
   likesCommun: 1,
   /** « +1 like par niveau de rareté » : ce que chaque cran ajoute. */
   likesParCran: 1,
+  /** « +1 par sticker, sans limite par carte » : ce que chaque sticker collé ajoute. */
+  likesParSticker: 1,
   /**
    * CE QU'ON RATTRAPE AU PLUS en revenant : huit heures de mains. *Un idle qui
    * ne joue qu'à l'écran n'est pas un idle*, mais une semaine d'absence qui
@@ -123,12 +125,17 @@ export type ValeurDeCarte = (e: EntreeDeck) => number
 /**
  * UN LIKE, PLUS UN PAR CRAN : commune 1, peu commune 2, rare 3, épique 4,
  * légendaire 5. Une carte dont on ne retrouve pas le cran vaut une commune.
+ * PLUS UN PAR STICKER COLLÉ sur l'exemplaire (Keko : « +1 par sticker, sans
+ * limite par carte ») — le compte est injecté, la collection n'est pas ici.
  */
-export function valeurParRarete(rareteDe: (id: string) => RareteEmoji | undefined): ValeurDeCarte {
+export function valeurParRarete(
+  rareteDe: (id: string) => RareteEmoji | undefined,
+  stickersDe: (e: EntreeDeck) => number = () => 0,
+): ValeurDeCarte {
   return (e) => {
     const r = rareteDe(e.id)
     const cran = r === undefined ? 0 : Math.max(0, RARETES_EMOJI.indexOf(r))
-    return DECK.likesCommun + cran * DECK.likesParCran
+    return DECK.likesCommun + cran * DECK.likesParCran + Math.max(0, stickersDe(e)) * DECK.likesParSticker
   }
 }
 

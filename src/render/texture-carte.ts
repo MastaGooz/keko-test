@@ -253,6 +253,12 @@ export type CarteAPeindre = {
    */
   persoEnFenetre?: boolean
   /**
+   * LES STICKERS COLLÉS SUR LA CARTE, déjà peints (cerne crème ou arc-en-ciel,
+   * voir `stickersColles` dans `peinture-vignette.ts`), posés sur la fenêtre
+   * d'art après l'emoji, à des places fixes. `cle` les distingue au cache.
+   */
+  colles?: readonly { readonly cle: string; readonly image: HTMLCanvasElement }[]
+  /**
    * LA CARTE SANS SON STICKER : le décor, les rayons, la plaque, et un trou
    * nulle part — ce qui reste sous l'emoji qu'on décolle (voir `Decollage`).
    * *Elle entre dans la signature* : la carte 3D la prend pendant le geste, et
@@ -1819,6 +1825,62 @@ export function imageDeLEmoji(emoji: string): HTMLCanvasElement | null {
  * (`prete`), une par image, et dilater chacune serait un calcul par image.
  */
 const CERNE_CARTE = 0.028
+/**
+ * LES PLACES DES STICKERS COLLÉS, en parts de la fenêtre d'art (x, y), et
+ * leur penchant en radians : les quatre coins d'abord, puis les milieux des
+ * bords. La taille d'un sticker collé, en part de la largeur de la fenêtre.
+ * Chiffres de moi, à rejuger.
+ */
+const PLACES_COLLES: readonly { x: number; y: number; a: number }[] = [
+  { x: 0.15, y: 0.83, a: -0.22 },
+  { x: 0.85, y: 0.83, a: 0.18 },
+  { x: 0.85, y: 0.17, a: 0.24 },
+  { x: 0.15, y: 0.17, a: -0.16 },
+  { x: 0.5, y: 0.87, a: 0.08 },
+  { x: 0.12, y: 0.5, a: -0.3 },
+  { x: 0.88, y: 0.5, a: 0.28 },
+  { x: 0.5, y: 0.13, a: -0.1 },
+]
+const TAILLE_COLLE = 0.3
+
+/** Pose les stickers collés sur la fenêtre d'art : des places fixes, un peu penchées ; au-delà, on refait le tour décalé. */
+function peindreColles(
+  ctx: CanvasRenderingContext2D,
+  colles: readonly { readonly image: HTMLCanvasElement }[],
+  marge: number,
+  fY: number,
+  fH: number,
+): void {
+  const lFenetre = LARGE - marge * 2
+  const taille = lFenetre * TAILLE_COLLE
+  ctx.save()
+  ctx.imageSmoothingQuality = 'high'
+  colles.forEach((c, i) => {
+    const place = PLACES_COLLES[i % PLACES_COLLES.length]!
+    const tour = Math.floor(i / PLACES_COLLES.length)
+    // Chaque tour de plus se décale un peu, pour qu'un sticker ne cache pas
+    // exactement le précédent.
+    const dx = tour === 0 ? 0 : (((tour * 37) % 11) - 5) * 0.012 * lFenetre
+    const dy = tour === 0 ? 0 : (((tour * 53) % 7) - 3) * 0.012 * fH
+    ctx.save()
+    ctx.translate(marge + place.x * lFenetre + dx, fY + place.y * fH + dy)
+    ctx.rotate(place.a + tour * 0.07)
+    ctx.drawImage(c.image, -taille / 2, -taille / 2, taille, taille)
+    ctx.restore()
+  })
+  ctx.restore()
+}
+
+/**
+ * LA SURFACE D'UNE CARTE PEINTE, hors l'emoji : l'alpha des stickers collés, à
+ * leur place, à la taille de la toile. Le nuanceur du relief l'ajoute à la
+ * silhouette de l'emoji pour garder ces stickers à la surface (voir
+ * `silhouetteDe` dans `Carte3D.tsx`). Absente quand rien n'est collé.
+ */
+const SURFACES = new WeakMap<HTMLCanvasElement, HTMLCanvasElement>()
+export function surfaceDe(canvas: HTMLCanvasElement): HTMLCanvasElement | undefined {
+  return SURFACES.get(canvas)
+}
 /**
  * LA TOILE DU STICKER DÉBORDE CELLE DU GLYPHE. Keko : « sur certaines cartes
  * comme le trèfle, l'outline blanc est "coupé" en haut de l'emoji comme s'il
@@ -4119,6 +4181,34 @@ export async function peindreCarte(
       masqueDuSujet(sujet as HTMLCanvasElement | null, marge, sY, sH, sRognage, MASQUES_DU_SUJET.get(canvas)),
     )
   }
+
+  // LES STICKERS COLLÉS, par-dessus l'emoji, dans la fenêtre d'art. Keko : « on
+  // pourrait permettre de coller des stickers sur les cartes ? ». *Ils sont EN
+  // SURFACE, comme l'emoji* : pas dans la carte sans sujet (le fond enfoncé du
+  // relief d'une holo), et dans la silhouette de surface (`surfaceDe`) pour que
+  // le nuanceur les garde à la surface — peints dans les deux peintures, ils se
+  // dédoublaient au regard. Le masque des rayons brillants les épargne aussi.
+  if (bulle && carte.sansSujet !== true && carte.colles !== undefined && carte.colles.length > 0) {
+    peindreColles(ctx, carte.colles, marge, fY, fH)
+    const surface = document.createElement('canvas')
+    surface.width = canvas.width
+    surface.height = canvas.height
+    const sctx = surface.getContext('2d')
+    if (sctx !== null) {
+      sctx.scale(largeur / LARGE, largeur / LARGE)
+      peindreColles(sctx, carte.colles, marge, fY, fH)
+      SURFACES.set(canvas, surface)
+      const m = MASQUES_DU_SUJET.get(canvas)
+      const mctx = m?.getContext('2d')
+      if (m !== undefined && mctx != null) {
+        mctx.save()
+        mctx.setTransform(1, 0, 0, 1, 0, 0)
+        mctx.globalCompositeOperation = 'destination-out'
+        mctx.drawImage(surface, 0, 0, m.width, m.height)
+        mctx.restore()
+      }
+    }
+  } else SURFACES.delete(canvas)
 
   // CE QUI PORTE LE TEXTE : un voile qui éteint l'image, ou une plaque posée
   // dessus. *Les deux font le même travail* — rendre le nom et le cartouche
@@ -6704,7 +6794,7 @@ export function signature(carte: CarteAPeindre): string {
   // ET LE CADRAGE AUSSI : *deux cartes qui ne montrent pas la même chose ne
   // peuvent pas partager une texture*, et une image rognée n'est pas la même
   // image que la même rentrée entière.
-  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}`
+  return `${carte.nom}|${carte.cout}|${carte.compteur ?? ''}|${carte.type}|${carte.rarete ?? ''}|${carte.matiere ?? ''}|${carte.valeur ?? ''}|${carte.ciel ?? ''}|${carte.illustration ?? ''}|${carte.emojiPerso ?? ''}${carte.persoEnFenetre === true ? '#fen' : ''}|${carte.colles?.map((c) => c.cle).join(',') ?? ''}|${carte.illustrationEntiere === true ? 'E' : ''}|${carte.contour ?? ''}|${carte.texte ?? ''}|${carte.attaque ?? ''}/${carte.defense ?? ''}|${carte.effet.join('~')}${carte.sansSujet === true ? '|nu' : ''}${carte.sansRayons === true ? '|sr' : ''}`
 }
 
 /**

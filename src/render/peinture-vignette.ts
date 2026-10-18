@@ -5,8 +5,10 @@
  * peindre la même.
  */
 import type { CarteEmoji } from '../logic/emoji/types.ts'
+import { exemplaireDe, type StickerColle } from '../logic/emoji/collection.ts'
+import { urlEmojiDeKeko } from '../ui/art.ts'
 import { createRng } from '../logic/rng.ts'
-import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, sujetDe, type SujetPeint } from './texture-carte.ts'
+import { ECLAIRE_SOMBRES, RAYONS_DANS_LA_CARTE, masqueDuSujetDe, peindreCarte, stickerDe, sujetDe, type SujetPeint } from './texture-carte.ts'
 import { carteDeLEmoji } from './carte-emoji.ts'
 import { BRILLANT, CONTOUR_PLAQUE, COSMOS, RAYONS_BRILLANTS, SATURE_RAYONS } from './Carte3D.tsx'
 import { COULEUR } from './carte-emoji.ts'
@@ -689,8 +691,10 @@ export function peinte(
   paillettes = true,
   /** Sans les rayons du cran : la vignette d'une carte animée les fait tourner à part. */
   sansRayons = false,
+  /** Les stickers collés sur la carte, déjà peints (`stickersColles`). */
+  colles: readonly StickerPeint[] = [],
 ): Promise<HTMLCanvasElement> {
-  const cle = `${c.id}#${largeur}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}${paillettes ? '' : '#sp'}${sansRayons ? '#sr' : ''}`
+  const cle = `${c.id}#${largeur}${holo ? '#holo' : ''}${sansSujet ? '#nu' : ''}${anime ? '#anime' : ''}${paillettes ? '' : '#sp'}${sansRayons ? '#sr' : ''}${colles.length > 0 ? `#c:${colles.map((x) => x.cle).join(',')}` : ''}`
   const deja = PEINTES.get(cle)
   if (deja !== undefined) return deja
   const p = fileDePeinture.then(async () => {
@@ -698,7 +702,7 @@ export function peinte(
       // LE DÉCOLLAGE NOMME SES BONUS AU CARTOUCHE, comme la carte 3D qu'il
       // remplace ; la vignette, non (elle a ses pastilles). Pas d'animation :
       // une vignette est une image fixe.
-      { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined), animation: undefined, sansSujet, sansRayons },
+      { ...carteDeLEmoji(c, sansSujet || anime ? { holo, anime } : undefined), animation: undefined, sansSujet, sansRayons, colles },
       largeur,
     )
     // LE BRILLANT DU REPOS, comme la carte 3D de face : voir `brillantDuRepos`.
@@ -714,6 +718,71 @@ export function peinte(
   // *Un cache retient les succès, pas les échecs.*
   p.catch(() => PEINTES.delete(cle))
   return p
+}
+
+/**
+ * UN STICKER PEINT, à 256 : *une case d'album n'en montre pas plus*, et c'est
+ * aussi la taille d'un sticker collé sur une carte. Le même que celui qu'on a
+ * tiré de la carte (`stickerDe`), au cerne arc-en-ciel s'il est holo. L'album
+ * et les cartes le partagent : un seul cache.
+ */
+export const COTE_STICKER = 256
+const STICKERS_PEINTS = new Map<string, Promise<HTMLCanvasElement | null>>()
+export function stickerPeint(c: CarteEmoji, holo: boolean): Promise<HTMLCanvasElement | null> {
+  const cle = `${c.id}${holo ? '#holo' : ''}`
+  const deja = STICKERS_PEINTS.get(cle)
+  if (deja !== undefined) return deja
+  const p = stickerDe(c.emoji, urlEmojiDeKeko(c.id) ?? undefined).then((image) => {
+    if (image === null) return null
+    const toile = document.createElement('canvas')
+    toile.width = COTE_STICKER
+    toile.height = COTE_STICKER
+    const ctx = toile.getContext('2d', { willReadFrequently: holo })
+    if (ctx === null) return null
+    ctx.imageSmoothingQuality = 'high'
+    ctx.drawImage(image, 0, 0, COTE_STICKER, COTE_STICKER)
+    if (holo) cerneArcEnCiel(toile, { x: 0, y: 0, l: 1, h: 1 })
+    return toile
+  })
+  STICKERS_PEINTS.set(cle, p)
+  p.then(
+    (t) => t === null && STICKERS_PEINTS.delete(cle),
+    () => STICKERS_PEINTS.delete(cle),
+  )
+  return p
+}
+
+/**
+ * LES STICKERS COLLÉS SUR UNE CARTE, PRÊTS À PEINDRE. Keko : « coller des
+ * stickers sur les cartes ». La collection ne garde que l'emoji et la version
+ * de chaque sticker collé (`StickerColle`) ; ici on retrouve la carte au
+ * catalogue (déclaré une fois par `declarerLeCatalogue`), et on peint le
+ * sticker (holo pour une version holo). Un sticker dont l'emoji manque au
+ * catalogue est passé. La clé distingue les peintures au cache des cartes.
+ */
+export interface StickerPeint {
+  readonly cle: string
+  readonly image: HTMLCanvasElement
+}
+let CATALOGUE_PAR_ID = new Map<string, CarteEmoji>()
+export function declarerLeCatalogue(catalogue: readonly CarteEmoji[]): void {
+  CATALOGUE_PAR_ID = new Map(catalogue.map((c) => [c.id, c]))
+}
+/** La clé d'une liste de stickers collés, pour savoir si une vignette doit se repeindre. */
+export function cleDesColles(colles: readonly StickerColle[] | undefined): string {
+  return (colles ?? []).map((c) => `${c.id}#${c.v}`).join(',')
+}
+export async function stickersColles(colles: readonly StickerColle[] | undefined): Promise<StickerPeint[]> {
+  if (colles === undefined || colles.length === 0) return []
+  const peints = await Promise.all(
+    colles.map(async (c): Promise<StickerPeint | null> => {
+      const carte = CATALOGUE_PAR_ID.get(c.id)
+      if (carte === undefined) return null
+      const image = await stickerPeint(carte, exemplaireDe(c.v).holo)
+      return image === null ? null : { cle: `${c.id}#${c.v}`, image }
+    }),
+  )
+  return peints.filter((x): x is StickerPeint => x !== null)
 }
 
 /**

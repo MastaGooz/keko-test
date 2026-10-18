@@ -1002,6 +1002,120 @@
   box-shadow: 0 0.15rem 0 #c9b9f2;
 }
 
+/* LES DEUX BOUTONS SOUS LA CARTE OUVERTE : décoller, coller. */
+.carte-ouverte-boutons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.carte-ouverte-boutons .decoller {
+  margin-top: 0.8rem;
+}
+
+.decoller-second {
+  background: #ff6fa5;
+  color: #fffaf0;
+  box-shadow: 0 0.3rem 0 #b3486f;
+}
+
+.decoller-second:active {
+  box-shadow: 0 0.15rem 0 #b3486f;
+}
+
+/* Le nombre de stickers déjà collés, sur le bouton. */
+.coller-compte {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: #fffaf0;
+  color: #b3486f;
+  font-size: 0.8rem;
+}
+
+/* LE CHOIX DU STICKER À COLLER : un ruban de cases d'album, posé au-dessus
+   des boutons, qui défile au doigt. */
+.coller-choix {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: calc(9.5rem + env(safe-area-inset-bottom));
+  z-index: 4;
+  padding: 0.5rem 0.6rem 0.6rem;
+  border-radius: 1.2rem;
+  background: rgba(14, 6, 40, 0.82);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 0.6rem 1.6rem rgba(0, 0, 0, 0.4);
+  font-family: 'Baloo 2', system-ui, sans-serif;
+  color: #fffaf0;
+  animation: carte-ouverte-entre 0.25s ease-out;
+}
+
+.coller-titre {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 0.3rem 0.4rem;
+  font-weight: 800;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.coller-fermer {
+  width: 2.2rem;
+  height: 2.2rem;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 250, 240, 0.15);
+  color: #fffaf0;
+  font-family: inherit;
+  font-size: 1.3rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.coller-ruban {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.2rem 0.2rem 0.4rem;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.coller-case {
+  position: relative;
+  flex: 0 0 auto;
+  width: 4.2rem;
+  height: 4.2rem;
+  padding: 0.3rem;
+  border: 0;
+  border-radius: 0.9rem;
+  background: rgba(255, 250, 240, 0.1);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.coller-case:active {
+  transform: scale(0.92);
+}
+
+.coller-case canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.coller-case .vignette-nombre {
+  right: -0.2rem;
+  bottom: -0.2rem;
+}
+
 .decoller:focus:not(:focus-visible) {
   outline: none;
 }

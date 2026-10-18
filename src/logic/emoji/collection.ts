@@ -40,6 +40,52 @@ export interface Possession {
    * d'avant (`nouvelle: true`) relit toutes ses versions nouvelles.
    */
   nouvelles: readonly Variante[]
+  /**
+   * LES STICKERS COLLÉS SUR CETTE CARTE, par version. Keko : « on pourrait
+   * permettre de coller des stickers sur les cartes ? … +1 par sticker, sans
+   * limite par carte ». *Collés sur la PLACE, pas sur l'exemplaire* : la
+   * collection compte ses exemplaires, elle ne les distingue pas ; toutes les
+   * 🐉 holo portent les mêmes stickers. Une version qu'on perd perd ses
+   * stickers avec elle (`detruire`). Absent d'une collection d'avant : rien.
+   */
+  colles?: Readonly<Partial<Record<Variante, readonly StickerColle[]>>>
+}
+
+/** Un sticker collé : l'emoji d'où il vient et sa version — c'est ce qui le dessine. */
+export interface StickerColle {
+  readonly id: string
+  readonly v: Variante
+}
+
+/** Combien de stickers sont collés sur cette version de la carte. */
+export function nombreDeColles(p: Possession | null | undefined, v: Variante): number {
+  return p?.colles?.[v]?.length ?? 0
+}
+
+/**
+ * COLLE UN STICKER DE L'ALBUM SUR UNE VERSION D'UNE CARTE. Il faut posséder
+ * la version, et avoir le sticker : il quitte l'album (une version du sticker
+ * à la fois, comme `detruire` l'y a mis). Sinon la collection ne bouge pas.
+ * Sans limite par carte (Keko).
+ */
+export function coller(col: Collection, cible: { id: string; v: Variante }, sticker: StickerColle): Collection {
+  const p = col.cartes[cible.id]
+  const s = col.stickers[sticker.id]
+  if (p === undefined || compteDe(p, cible.v) <= 0 || s === undefined || compteDe(s, sticker.v) <= 0) return col
+  const ex = exemplaireDe(sticker.v)
+  const n = s.n - 1
+  const stickers: Record<string, Stickers> = { ...col.stickers }
+  if (n <= 0) delete stickers[sticker.id]
+  else
+    stickers[sticker.id] = {
+      ...s,
+      n,
+      holo: s.holo - (ex.holo ? 1 : 0),
+      anime: s.anime - (ex.anime ? 1 : 0),
+      ha: s.ha - (ex.holo && ex.anime ? 1 : 0),
+    }
+  const colles = { ...p.colles, [cible.v]: [...(p.colles?.[cible.v] ?? []), { id: sticker.id, v: sticker.v }] }
+  return { ...col, cartes: { ...col.cartes, [cible.id]: { ...p, colles } }, stickers }
 }
 
 /**
@@ -216,9 +262,11 @@ export function detruire(col: Collection, id: string, ex: Exemplaire, quand: num
     const holo = Math.min(n, Math.max(0, p.holo - (ex.holo ? 1 : 0)))
     const anime = Math.min(n, Math.max(0, p.anime - (ex.anime ? 1 : 0)))
     const ha = Math.min(holo, anime, Math.max(0, p.ha - (ex.holo && ex.anime ? 1 : 0)))
-    // Une version partie n'est plus à voir.
+    // Une version partie n'est plus à voir — et ses stickers collés partent avec elle.
     const reste = { n, holo, anime, ha }
-    cartes[id] = { ...p, ...reste, nouvelles: p.nouvelles.filter((v) => compteDe(reste, v) > 0) }
+    const colles = Object.fromEntries(Object.entries(p.colles ?? {}).filter(([v]) => compteDe(reste, v as Variante) > 0))
+    const { colles: _parties, ...sansColles } = p
+    cartes[id] = { ...sansColles, ...reste, nouvelles: p.nouvelles.filter((v) => compteDe(reste, v) > 0), ...(Object.keys(colles).length > 0 ? { colles } : {}) }
   }
   const s = col.stickers[id] ?? { n: 0, holo: 0, anime: 0, ha: 0, dernier: quand, nouveau: false }
   // LE BONUS NE PASSE AU STICKER QUE SI LA CARTE L'AVAIT : un compte abîmé ne
@@ -381,7 +429,20 @@ export function lireCollection(brut: unknown): Collection {
     // toutes nouvelles — c'est ce qu'elle montrait.
     const brutes: unknown[] = Array.isArray(p.nouvelles) ? p.nouvelles : p.nouvelle === true ? [...VARIANTES] : []
     const nouvelles = VARIANTES.filter((v) => brutes.includes(v) && compteDe(comptes, v) > 0)
-    cartes[id] = { ...comptes, premiere, ordre, nouvelles }
+    // LES STICKERS COLLÉS, par version possédée seulement, chacun un emoji et une version valides.
+    const colles: Partial<Record<Variante, StickerColle[]>> = {}
+    const brutsColles = typeof p.colles === 'object' && p.colles !== null ? (p.colles as Record<string, unknown>) : {}
+    for (const v of VARIANTES) {
+      const liste = brutsColles[v]
+      if (!Array.isArray(liste) || compteDe(comptes, v) <= 0) continue
+      const propres = liste.flatMap((c: unknown): StickerColle[] => {
+        if (typeof c !== 'object' || c === null) return []
+        const o = c as Record<string, unknown>
+        return typeof o.id === 'string' && typeof o.v === 'string' && (VARIANTES as readonly string[]).includes(o.v) ? [{ id: o.id, v: o.v as Variante }] : []
+      })
+      if (propres.length > 0) colles[v] = propres
+    }
+    cartes[id] = { ...comptes, premiere, ordre, nouvelles, ...(Object.keys(colles).length > 0 ? { colles } : {}) }
     plusGrandOrdre = Math.max(plusGrandOrdre, ordre)
   }
   // L'ALBUM, MÊME RÈGLE : un sticker mal formé est écarté, pas l'album.

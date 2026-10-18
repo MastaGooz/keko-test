@@ -14,6 +14,8 @@ import {
   retirer,
   oublier,
   detruire,
+  coller,
+  nombreDeColles,
   exemplaireADetruire,
   nombreDeStickers,
   nombreDeStickersNouveaux,
@@ -58,6 +60,18 @@ const oubliee = oublier(debloquee, '1f603')
 verifier('oublier enlève les cartes ET les stickers de l’emoji', oubliee.cartes['1f603'] === undefined && oubliee.stickers['1f603'] === undefined && Object.keys(oubliee.cartes).length === Object.keys(debloquee.cartes).length - 1)
 verifier('oublier ne touche pas le reste', oubliee.cartes['1f600']?.n === 2 && oubliee.paquets === debloquee.paquets && oubliee.likes === debloquee.likes)
 verifier('oublier un absent ne change rien', oublier(debloquee, 'absent') === debloquee)
+
+// COLLER UN STICKER SUR UNE CARTE (Keko : « +1 par sticker, sans limite par carte »)
+const album = detruire(detruire(debloquee, '1f604', { holo: false, anime: false }, 7000), '1f603', { holo: false, anime: false }, 7001)
+const cible = { id: '1f600', v: 'simple' } as const
+const collee = coller(album, cible, { id: '1f604', v: 'simple' })
+verifier('coller pose le sticker sur la version et le retire de l’album', nombreDeColles(collee.cartes['1f600'], 'simple') === 1 && collee.cartes['1f600']?.colles?.simple?.[0]?.id === '1f604' && (collee.stickers['1f604']?.n ?? 0) === (album.stickers['1f604']?.n ?? 0) - 1)
+verifier('coller n’a pas de limite', nombreDeColles(coller(collee, cible, { id: '1f603', v: 'simple' }).cartes['1f600'], 'simple') === 2)
+verifier('sans sticker dans l’album, rien ne se colle', coller(collee, cible, { id: '1f604', v: 'simple' }) === collee)
+verifier('sans la version de la carte, rien ne se colle', coller(album, { id: '1f600', v: 'holoAnime' }, { id: '1f604', v: 'simple' }) === album)
+verifier('les stickers collés survivent à la relecture', nombreDeColles(lireCollection(JSON.parse(JSON.stringify(collee))).cartes['1f600'], 'simple') === 1)
+const sansSimple = detruire(detruire(collee, '1f600', { holo: false, anime: false }, 8000), '1f600', { holo: false, anime: false }, 8001)
+verifier('la version détruite emporte ses stickers collés', sansSimple.cartes['1f600'] === undefined || nombreDeColles(sansSimple.cartes['1f600'], 'simple') === 0)
 const vu = toutVu(un)
 verifier('tout vu', nombreDeNouvelles(vu) === 0)
 const deux = ajouterPaquet(vu, ['1f600'], { '1f600': sans }, 2000)

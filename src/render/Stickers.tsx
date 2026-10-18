@@ -28,8 +28,8 @@ import { suivreLInclinaison } from './inclinaison.ts'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Collection, Stickers, Variante } from '../logic/emoji/collection.ts'
 import { VARIANTES, compteDe, exemplaireDe, nombreDeStickers } from '../logic/emoji/collection.ts'
-import { stickerDe, stickerHautDe } from './texture-carte.ts'
-import { STICKER_DANS_LA_CARTE, type ImagesAnimees, animationHolo, cerneArcEnCiel, peindreEtoile } from './peinture-vignette.ts'
+import { stickerHautDe } from './texture-carte.ts'
+import { COTE_STICKER, STICKER_DANS_LA_CARTE, type ImagesAnimees, animationHolo, cerneArcEnCiel, peindreEtoile, stickerPeint } from './peinture-vignette.ts'
 import { COTE_GRAND, COTE_PETIT, animationDeLEmoji, urlAnimationEmoji } from './emoji-anime.ts'
 import { enTitre } from './carte-emoji.ts'
 import { urlEmojiDeKeko } from '../ui/art.ts'
@@ -55,33 +55,8 @@ const TRIS: readonly { id: Tri; nom: string }[] = [
   { id: 'rares', nom: 'Plus rares' },
 ]
 
-/** La toile d'un sticker, à 256 : *une case d'album n'en montre pas plus.* */
-const COTE = 256
-const PEINTS = new Map<string, Promise<HTMLCanvasElement | null>>()
-
-function stickerPeint(c: CarteEmoji, holo: boolean): Promise<HTMLCanvasElement | null> {
-  const cle = `${c.id}${holo ? '#holo' : ''}`
-  const deja = PEINTS.get(cle)
-  if (deja !== undefined) return deja
-  const p = stickerDe(c.emoji, urlEmojiDeKeko(c.id) ?? undefined).then((image) => {
-    if (image === null) return null
-    const toile = document.createElement('canvas')
-    toile.width = COTE
-    toile.height = COTE
-    const ctx = toile.getContext('2d', { willReadFrequently: holo })
-    if (ctx === null) return null
-    ctx.imageSmoothingQuality = 'high'
-    ctx.drawImage(image, 0, 0, COTE, COTE)
-    if (holo) cerneArcEnCiel(toile, { x: 0, y: 0, l: 1, h: 1 })
-    return toile
-  })
-  PEINTS.set(cle, p)
-  p.then(
-    (t) => t === null && PEINTS.delete(cle),
-    () => PEINTS.delete(cle),
-  )
-  return p
-}
+/** La toile d'un sticker, à 256 : *une case d'album n'en montre pas plus* — le peintre est partagé avec les cartes (`stickerPeint`). */
+const COTE = COTE_STICKER
 
 const FILTRE: React.CSSProperties = {
   filter: `saturate(${1 + SATURATION_APLAT}) drop-shadow(0 0.3rem 0.35rem rgba(10, 4, 30, 0.5))`,

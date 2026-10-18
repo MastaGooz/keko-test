@@ -34,14 +34,18 @@ import {
   retirer,
   oublier,
   detruire,
+  coller,
+  nombreDeColles,
   nombreDeNouvelles,
   nombreDeStickersNouveaux,
   stickersVus,
   toutVu,
   type Collection,
   type Exemplaire,
+  type StickerColle,
   type Variante,
 } from '../logic/emoji/collection.ts'
+import { declarerLeCatalogue } from './peinture-vignette.ts'
 import { createRng } from '../logic/rng.ts'
 import { chargerCollection, chargerDecks, chargerReserve, sauverCollection, sauverDecks, sauverReserve } from '../ui/collection.ts'
 import { RESERVE, prendreUnPaquet, prochainDans, reserveAJour, type Reserve } from '../logic/emoji/reserve.ts'
@@ -304,10 +308,22 @@ export function Jeu(): React.ReactElement {
   }, [])
   // CE QUE VAUT UNE CARTE JOUÉE : un Like, plus un par cran (Keko : « +1 like
   // par niveau de rareté »). Le cran vient du catalogue, injecté au deck.
+  // ET UN LIKE PAR STICKER COLLÉ sur l'exemplaire joué (Keko : « +1 par
+  // sticker, sans limite par carte »). La collection est lue par une
+  // référence : la valeur n'a pas à se refaire à chaque Like qui tombe.
+  const refCollection = useRef(collection)
+  refCollection.current = collection
   const valeur = useMemo(() => {
     if (catalogue === null) return null
     const crans = new Map(catalogue.map((c) => [c.id, c.rarete]))
-    return valeurParRarete((id) => crans.get(id))
+    return valeurParRarete(
+      (id) => crans.get(id),
+      (e) => nombreDeColles(refCollection.current.cartes[e.id], e.v),
+    )
+  }, [catalogue])
+  // LE CATALOGUE EST DÉCLARÉ AUX PEINTRES : les stickers collés se retrouvent par lui.
+  useEffect(() => {
+    if (catalogue !== null) declarerLeCatalogue(catalogue)
   }, [catalogue])
   useEffect(() => {
     // Sans catalogue on ne sait pas ce que vaut une carte : le temps attend,
@@ -464,6 +480,11 @@ export function Jeu(): React.ReactElement {
     (id: string, ex: Exemplaire) => changer((c) => detruire(c, id, ex, Date.now())),
     [changer],
   )
+  // COLLER UN STICKER DE L'ALBUM SUR UNE VERSION D'UNE CARTE : voir `coller`.
+  const collerSticker = useCallback(
+    (cible: { id: string; v: Variante }, sticker: StickerColle) => changer((c) => coller(c, cible, sticker)),
+    [changer],
+  )
 
   /**
    * LE MENU « CARTES » : déroulé sous la pilule par une tape sur le bouton,
@@ -560,6 +581,7 @@ export function Jeu(): React.ReactElement {
           toutes={page === 'catalogue'}
           onOuvrirUnPaquet={() => aller('booster')}
           onDetruire={detruireCarte}
+          onColler={collerSticker}
           deck={
             page === 'deck'
               ? {

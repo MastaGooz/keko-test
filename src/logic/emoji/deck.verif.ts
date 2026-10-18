@@ -91,6 +91,8 @@ const parCran = valeurParRarete((id) => (id === 'c' ? 'commun' : id === 'l' ? 'l
 verifier('une commune vaut un Like, une légendaire cinq', parCran(S('c')) === DECK.likesCommun && parCran(S('l')) === DECK.likesCommun + (RARETES_EMOJI.length - 1) * DECK.likesParCran)
 verifier('la version ne compte pas', parCran(H('r')) === parCran(S('r')) && parCran(S('r')) === DECK.likesCommun + 2 * DECK.likesParCran)
 verifier('un cran inconnu vaut une commune', parCran(S('?')) === DECK.likesCommun)
+const avecStickers = valeurParRarete((id) => (id === 'r' ? 'rare' : undefined), (e) => (e.id === 'r' && e.v === 'holo' ? 2 : 0))
+verifier('chaque sticker collé ajoute un Like, sur l’exemplaire qui le porte', avecStickers(H('r')) === parCran(H('r')) + 2 * DECK.likesParSticker && avecStickers(S('r')) === parCran(S('r')))
 verifier('la main somme ses cartes', likesDeLaMain([S('c'), S('r'), H('l')], parCran) === 1 + 3 + 5)
 verifier('le temps joue avec la valeur injectée', deckAJour(d, T0 + DECK.cadence, () => 4).likes === DECK.main * 4)
 

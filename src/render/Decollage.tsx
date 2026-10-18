@@ -30,7 +30,7 @@ import { createPortal } from 'react-dom'
 import type { CarteEmoji } from '../logic/emoji/types.ts'
 import type { Exemplaire } from '../logic/emoji/collection.ts'
 import { AMBIANCE, sujetDe, tailleQuIlFaut } from './texture-carte.ts'
-import { cerneArcEnCiel, etoilesAuRepos, peinte } from './peinture-vignette.ts'
+import { cerneArcEnCiel, etoilesAuRepos, peinte, type StickerPeint } from './peinture-vignette.ts'
 import { COULEUR } from './carte-emoji.ts'
 import { SATURATION_APLAT } from './Carte3D.tsx'
 import { SON_CRAQUE, SON_EQUIPER, SON_POSER, SON_PRENDRE, jouerEnBoucle, jouerSon, type SonEnBoucle } from './sons.ts'
@@ -96,12 +96,12 @@ const entree = (t: number): number => Math.pow(Math.min(1, Math.max(0, t)), 2.2)
 /** L'opacité d'un pixel du sticker, sans son ombre portée (plus pâle que le cerne). */
 const sansOmbre = (a: number): number => Math.min(255, Math.max(0, ((a - 120) / 60) * 255))
 
-async function preparer(carte: CarteEmoji, ex: Exemplaire, boite: BoiteALEcran): Promise<Pret | null> {
+async function preparer(carte: CarteEmoji, ex: Exemplaire, boite: BoiteALEcran, colles: readonly StickerPeint[]): Promise<Pret | null> {
   const dpr = Math.min(window.devicePixelRatio || 1, 2)
   const largeur = tailleQuIlFaut(boite.l * dpr)
   const [pleine, base] = await Promise.all([
-    peinte(carte, largeur, ex.holo),
-    peinte(carte, largeur, ex.holo, true, ex.anime),
+    peinte(carte, largeur, ex.holo, false, false, true, false, colles),
+    peinte(carte, largeur, ex.holo, true, ex.anime, true, false, colles),
   ])
   const sujet = sujetDe(pleine)
   if (sujet === undefined) return null
@@ -462,6 +462,7 @@ function cibleDeLEnvol(): P {
 export function Decollage({
   carte,
   exemplaire,
+  colles = [],
   boite,
   onPret,
   onCasse,
@@ -470,6 +471,8 @@ export function Decollage({
 }: {
   carte: CarteEmoji
   exemplaire: Exemplaire
+  /** Les stickers collés sur la carte, déjà peints : ils restent sur la carte qui casse. */
+  colles?: readonly StickerPeint[]
   boite: BoiteALEcran
   /** Le sticker est prêt à se décoller : la carte 3D se met à plat et perd son emoji. */
   onPret: () => void
@@ -514,7 +517,7 @@ export function Decollage({
 
   useEffect(() => {
     let vivant = true
-    void preparer(carte, exemplaire, laBoite).then(
+    void preparer(carte, exemplaire, laBoite, colles).then(
       (p) => {
         if (!vivant) return
         if (p === null) {
