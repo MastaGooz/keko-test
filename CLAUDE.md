@@ -339,7 +339,7 @@ noms longs).
 
 ## UN TEST À PART : LE GÉNÉRATEUR D'ICÔNES — `preview.html`
 
-Des vaisseaux, des planètes et des astéroïdes en SVG plat, tirés d'un identifiant (même id,
+Des vaisseaux (combat, minage), des stations, des planètes et des astéroïdes en SVG plat, tirés d'un identifiant (même id,
 même visuel), palettes fixes, symétrie miroir, pièces ancrées. `logic/procgen/`
 (pur, dans `npm run verif`), `ui/procgen/svg.ts` (`renderIcon`), la page
 `preview.html?serie=N` hors du jeu. **Aucun emoji n'est remplacé.** Tout est
@@ -365,7 +365,7 @@ src/
       tirage.ts     # les deux bonus, holo et animé, tirés à l'ouverture
       collection.ts # ce qu'on a obtenu : ajouter un paquet, relire le stockage
       deck.ts       # le deck de trente qui joue tout seul : mains, cycles, Likes, temps injecté
-    procgen/     # LE TEST : un vaisseau, une planète ou un astéroïde dessinés depuis un id (chemins SVG, pas de DOM)
+    procgen/     # LE TEST : un vaisseau (combat, minage), une station, une planète ou un astéroïde dessinés depuis un id (chemins SVG, pas de DOM)
     paintings/   # la seconde collection : une carte = une PEINTURE
       types.ts      # CartePeinture, la validation, le siècle, les rayons
     combat.ts    # ARCHIVE : le tour par tour, les cartes, les effets
@@ -601,7 +601,7 @@ une note de `docs/emoji.md` y renvoie.
 | `docs/mobile-et-sons.md` | les contraintes mobile en détail, les variables CSS, les sons |
 | `docs/methode.md` | la méthode, les images de Keko, l'anatomie et le vocabulaire de la carte |
 | `docs/archive-extraction.md` | le jeu d'extraction entier, du concept au moteur 3D |
-| `docs/procgen.md` | le générateur d'icônes (vaisseaux, planètes, astéroïdes) et sa page de preview |
+| `docs/procgen.md` | le générateur d'icônes (combat, minage, stations, planètes, astéroïdes) et sa page de preview |
 
 *Ces documents ne sont pas chargés avec ce fichier : on les ouvre à la
 demande, par la section qui concerne ce qu'on touche* (`grep -n '^###'` pour

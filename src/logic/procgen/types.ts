@@ -12,8 +12,12 @@ export const BOITE = 128
 /** L'axe de symétrie des vaisseaux, et le centre des planètes. */
 export const AXE = BOITE / 2
 
-export type Famille = 'vaisseau' | 'planete' | 'asteroide'
-export const FAMILLES: readonly Famille[] = ['vaisseau', 'planete', 'asteroide']
+/**
+ * Les familles. `vaisseau` tire une classe (combat ou minage) depuis l'id ;
+ * les autres sont celles qu'on montre et qu'on demande.
+ */
+export type Famille = 'combat' | 'minage' | 'station' | 'planete' | 'asteroide' | 'vaisseau'
+export const FAMILLES: readonly Famille[] = ['combat', 'minage', 'station', 'planete', 'asteroide']
 
 /** Une forme : un chemin SVG (`d`) et sa peinture. */
 export type Forme = {

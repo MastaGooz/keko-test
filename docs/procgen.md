@@ -1,4 +1,4 @@
-# Le générateur d'icônes — vaisseaux, planètes, astéroïdes
+# Le générateur d'icônes — vaisseaux (combat, minage), stations, planètes, astéroïdes
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -28,7 +28,25 @@ existe à côté, et c'est Keko qui jugera s'il a sa place dans le jeu.
 - **Flat vectoriel, contour 2,5 dans une boîte de 128** (0,6 px à 32 px) :
   les formes sont chargées, pas les traits.
 
-## Le vaisseau (`vaisseau.ts`)
+## Le vaisseau (`vaisseau.ts`) — deux classes
+
+Keko, après la première planche : « les vaisseaux sont un peu dans le même
+style, dans le sens taille / rôle, tu penses pouvoir faire des familles
+(combat, minage, station) ? ». **Les familles sont donc `combat`, `minage`,
+`station`** (et `vaisseau` reste dans l'API : une classe combat ou minage
+tirée de l'id, pour « un vaisseau quelconque »). Combat et minage passent par
+le même assembleur avec un PROFIL chacun (`PROFILS` : coques, ailes,
+proportions, chances, moteurs, cockpits) :
+
+- **combat** : fin et long (demi-largeur 9–17, longueur 66–96), coques
+  flèche / aiguille / navette / raie, ailes presque toujours (95 %), canons au
+  bout des ailes (65 %) ou sous le nez sans ailes, bulle ou visière.
+- **minage** : trapu et large (18–27 sur 50–72), coques bloc / citerne /
+  fourgon / capsule, ailes rares et courtes, **cuves sur les flancs** (80 %, une
+  ou deux par côté, bande accent et rivets), **une foreuse ou des pinces à
+  l'avant** (à la place de l'antenne : ce qui dépasse du nez se tire avant de
+  poser le nez), gros moteurs doubles ou triples, hublots en travers, hachures
+  de chantier sur la queue, feux de position.
 
 Vu de dessus, le nez en haut, **symétrique par l'axe** : chaque pièce est
 dessinée à droite et recollée en miroir (`symetrique`, `miroir`).
@@ -48,6 +66,24 @@ dessinée à droite et recollée en miroir (`symetrique`, `miroir`).
 - Détails : dérives, canons, rangée de hublots, antenne.
 - Le nez se pose APRÈS avoir tiré ce qui dépasse en bas (moteurs, flamme) et
   en haut (antenne), pour que tout tienne dans la boîte.
+
+## La station (`station.ts`)
+
+Ni nez ni queue : tout est posé en polaire autour du centre et tourné
+(`rectTourne`, `tourne`). Un MOYEU (cœur accent, hublots), puis un plan :
+
+- **anneau** : un anneau en `evenodd` tenu par 2 à 6 rayons, des hublots
+  tout autour, et souvent (70 %) des panneaux au-delà de l'anneau — qui se
+  resserre alors pour leur laisser la place ;
+- **bras** : 3 à 6 bras, un module au bout (caisson ou sphère), un bras sur
+  deux porte un panneau à la place ;
+- **colonne** : une épine verticale, des modules empilés, deux paires de
+  grands panneaux, la parabole en haut, le feu en bas (l'ISS vue d'en haut).
+
+**Les panneaux vont jusqu'à `PORTEE`** (la moitié de la boîte moins l'air) :
+leur longueur se calcule depuis le bord, elle ne s'écrit pas. Quadrillage en
+traits sombres à demi-opacité. Les stations prennent les palettes des
+vaisseaux.
 
 ## La planète (`planete.ts`)
 
