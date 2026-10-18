@@ -601,7 +601,7 @@ une note de `docs/emoji.md` y renvoie.
 | `docs/mobile-et-sons.md` | les contraintes mobile en détail, les variables CSS, les sons |
 | `docs/methode.md` | la méthode, les images de Keko, l'anatomie et le vocabulaire de la carte |
 | `docs/archive-extraction.md` | le jeu d'extraction entier, du concept au moteur 3D |
-| `docs/procgen.md` | le générateur d'icônes (races × rôles, planètes, astéroïdes, origami, gribouillis, personnages, héros, masques) et sa page de preview |
+| `docs/procgen.md` | le générateur d'icônes (toutes ses familles) et sa page de preview |
 
 *Ces documents ne sont pas chargés avec ce fichier : on les ouvre à la
 demande, par la section qui concerne ce qu'on touche* (`grep -n '^###'` pour
