@@ -14,6 +14,7 @@ import { genererStation } from './station.ts'
 import { genererAlien } from './alien.ts'
 import { genererBio } from './bio.ts'
 import { dessinerOrigami, genererOrigami } from './origami.ts'
+import { genererGribouillis } from './gribouillis.ts'
 import { createRng } from '../rng.ts'
 
 export { BOITE, FAMILLES, RACES, ROLES, type Clip, type Dessin, type Famille, type Forme, type Race } from './types.ts'
@@ -36,5 +37,6 @@ export function genererDessin(famille: Famille, id: string, race: Race = 'humain
   if (famille === 'station') return genererStation(id)
   if (famille === 'planete') return genererPlanete(id)
   if (famille === 'origami') return dessinerOrigami(genererOrigami(id), 1)
+  if (famille === 'gribouillis') return genererGribouillis(id)
   return genererAsteroide(id)
 }

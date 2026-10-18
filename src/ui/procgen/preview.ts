@@ -15,8 +15,8 @@ import { dessinerOrigami, dureeTotale, genererOrigami } from '../../logic/procge
 
 const PAR_FAMILLE = 30
 const TAILLES = [32, 64, 128] as const
-const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', vaisseau: 'v', alien: 'x' }
-const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', origami: 'Origami (toucher pour déplier)', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
+const PREFIXE: Record<Famille, string> = { combat: 'c', minage: 'm', station: 's', planete: 'p', asteroide: 'a', origami: 'o', gribouillis: 'g', vaisseau: 'v', alien: 'x' }
+const TITRE: Record<Famille, string> = { combat: 'Vaisseaux de combat', minage: 'Vaisseaux de minage', station: 'Stations', planete: 'Planètes', asteroide: 'Astéroïdes', origami: 'Origami (toucher pour déplier)', gribouillis: 'Gribouillis du cahier', vaisseau: 'Vaisseaux', alien: 'Vaisseaux aliens' }
 const NOM_RACE: Record<Race, string> = { humain: 'Humain', alien: 'Alien', biologique: 'Biologique' }
 
 const adresse = new URL(location.href)
@@ -72,6 +72,7 @@ let taille: number = 64
 function cellule(famille: Famille, id: string, t: number): HTMLElement {
   const cell = document.createElement('figure')
   cell.className = 'pv-cell'
+  cell.dataset.famille = famille
   cell.style.setProperty('--t', `${t}px`)
   const icone = renderIcon(famille, id, t, race)
   cell.appendChild(icone)

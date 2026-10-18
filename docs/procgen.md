@@ -1,4 +1,4 @@
-# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami
+# Le générateur d'icônes — trois races × trois rôles, planètes, astéroïdes, origami, gribouillis
 
 **Un test demandé par Keko** (18 octobre 2026) : « tu penses être capable de
 générer des vaisseaux spatiaux aléatoires ? ». Deux étapes : le générateur,
@@ -199,6 +199,35 @@ est une teinte pâle du recto, sinon les modèles pliés sortaient blancs.
 un objet papier réel, pas un effet. *Ce qui manque pour aller plus loin* :
 les plis d'une seule épaisseur et les poches (grue, bateau, grenouille), qui
 demandent un vrai modèle 3D du papier.
+
+## Les gribouillis du cahier (`gribouillis.ts`)
+
+Keko, sur la piste « cahier de brouillon » : « tu serais capable de
+dessiner des personnages ? ». **Ce qui fait le style, c'est le trait, pas la
+forme** :
+
+- chaque ligne TREMBLE (`tremble` : la polyligne est rééchantillonnée et
+  chaque point poussé le long de sa normale par un bruit lent, deux sinus à
+  phases tirées, puis lissée) ;
+- elle est REPASSÉE deux fois, la seconde plus fine, plus pâle, tremblée
+  autrement (`trait`) ;
+- le COLORIAGE au surligneur DÉPASSE (`coloriage` : la même forme gonflée
+  depuis son centre, tremblée fort, remplie à 50 % sous le trait) ; un
+  gribouillis sur quatre n'est pas colorié ;
+- l'ombre est faite de HACHURES à 45 degrés découpées par le corps.
+
+Six stylos (bic bleu, feutre noir, crayon, bic rouge, feutre vert, bic
+violet), sept surligneurs. Les formes sont celles d'un enfant : un corps
+(patate, boîte, poire, fantôme, haricot), une tête à part ou non, des yeux
+(points, ronds, gros, croix, fendus ; un, deux ou trois ; sourcils), une
+bouche (sourire, dents en zigzag, o, grande ouverte avec deux dents, langue),
+des bras en nouille ou en bâton avec trois doigts ou un rond, des pattes
+(bâtons, pieds, tentacules, ou rien et trois traits de flottement), parfois
+une queue à touffe ; au-dessus, cornes, antennes, chapeau (pointu, haut,
+bonnet), piques ou touffe ; un accessoire (lunettes, nœud, cape, hélice) ;
+des joues roses. Le dessin est transparent : la page met le PAPIER À
+CARREAUX derrière (`.pv-cell[data-famille='gribouillis']`), comme un emoji se
+pose sur n'importe quel fond.
 
 ## La planète (`planete.ts`)
 

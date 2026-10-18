@@ -171,6 +171,14 @@ button.actif {
   border-radius: 6px;
 }
 
+/* Le gribouillis se pose sur la page du cahier : papier à carreaux. */
+.pv-cell[data-famille='gribouillis'] svg {
+  background:
+    linear-gradient(#b9d3ea 1px, transparent 1px) 0 0 / 8px 8px,
+    linear-gradient(90deg, #b9d3ea 1px, transparent 1px) 0 0 / 8px 8px,
+    #f7f3e8;
+}
+
 .pv-cell figcaption {
   display: flex;
   flex-direction: column;
