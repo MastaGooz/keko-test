@@ -1609,9 +1609,18 @@
     right: 16px;
   }
 
+  /* UN REM PLUS HAUT QUE LE BORD : le booster rond déborde de 0,9 rem sous la
+     pilule (4 rem dans 3, décalé vers le bas, plus son ombre), et la barre de
+     gestes d'Android ne se déclare pas toujours dans `safe-area-inset-bottom`.
+     Keko : « la barre d'UI en bas est un poil trop basse (coupée sur la
+     partie ronde centrale) ». Tout ce qui s'accroche à `--barre-bas` suit. */
+  :root {
+    --barre-bas: calc(max(0.6rem, env(safe-area-inset-bottom)) + 4rem);
+  }
+
   .nav {
     top: auto;
-    bottom: max(0.6rem, env(safe-area-inset-bottom));
+    bottom: calc(max(0.6rem, env(safe-area-inset-bottom)) + 1rem);
   }
 
   .nav-cachee {
