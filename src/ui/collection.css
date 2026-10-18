@@ -1136,7 +1136,8 @@
   z-index: 29;
   height: auto;
   transform: translate(-50%, -50%) rotate(var(--a, 0rad)) scale(1.25);
-  filter: grayscale(1) brightness(4) drop-shadow(0 0 0.12rem rgba(14, 6, 40, 0.9));
+  /* Jaune et pointillé dans la toile elle-même (`contourPointille`) ; ici l'ombre seule. */
+  filter: drop-shadow(0 0 0.12rem rgba(14, 6, 40, 0.9));
   pointer-events: none;
   animation: fantome-respire 1s ease-in-out infinite alternate;
 }

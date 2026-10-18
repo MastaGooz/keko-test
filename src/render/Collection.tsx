@@ -649,8 +649,11 @@ function CarteOuverte({
     },
     [carte, variante, collesPeints],
   )
-  /** LE CHOIX DU STICKER À COLLER : ouvert par le bouton, fermé par un choix ou une tape ailleurs. */
+  /** LE CHOIX DU STICKER À COLLER : ouvert par le bouton, fermé par la croix — et de lui-même quand l'album est vide (Keko). */
   const [choixOuvert, setChoixOuvert] = useState(false)
+  useEffect(() => {
+    if (album.length === 0) setChoixOuvert(false)
+  }, [album.length])
   /**
    * LE STICKER QU'ON TIENT, pendant qu'on le glisse du ruban vers la carte
    * (Keko : « j'aurais bien aimé placer manuellement le sticker »). Il suit le
@@ -929,14 +932,7 @@ function CarteOuverte({
             curseur.current.dessus = false
             curseur.current.tenu = false
             const a = (Math.random() - 0.5) * 0.5
-            // LE CONTOUR : le cerne du sticker seul (voir `cerneArcEnCiel`, `seulCerne`),
-            // que la feuille de style blanchit.
-            const contour = document.createElement('canvas')
-            contour.width = image.width
-            contour.height = image.height
-            contour.getContext('2d', { willReadFrequently: true })?.drawImage(image, 0, 0)
-            cerneArcEnCiel(contour, { x: 0, y: 0, l: 1, h: 1 }, true)
-            setTenu({ sticker: st, image, contour, a })
+            setTenu({ sticker: st, image, contour: contourPointille(image), a })
             suivreLeDoigt(e.clientX, e.clientY, a)
           }}
           onSuivre={(e) => {
@@ -1037,6 +1033,50 @@ function ChoixDuSticker({
       </div>
     </div>
   )
+}
+
+/**
+ * LE CONTOUR FANTÔME D'UN STICKER : son cerne seul (`cerneArcEnCiel`,
+ * `seulCerne`), passé en JAUNE et en POINTILLÉ — Keko : « il faudrait que la
+ * prévisualisation du sticker soit jaune en pointillé ». Le pointillé est une
+ * grille de points posée en `destination-in` sur l'anneau : pas de chemin à
+ * suivre, l'anneau n'est qu'un alpha, et des points de la taille de son
+ * épaisseur le lisent comme un trait pointillé.
+ */
+const JAUNE_FANTOME: [number, number, number] = [255, 212, 94]
+function contourPointille(image: HTMLCanvasElement): HTMLCanvasElement {
+  const contour = document.createElement('canvas')
+  contour.width = image.width
+  contour.height = image.height
+  const ctx = contour.getContext('2d', { willReadFrequently: true })
+  if (ctx === null) return contour
+  ctx.drawImage(image, 0, 0)
+  cerneArcEnCiel(contour, { x: 0, y: 0, l: 1, h: 1 }, true)
+  // EN JAUNE : la couleur remplace, l'alpha de l'anneau reste.
+  const donnees = ctx.getImageData(0, 0, contour.width, contour.height)
+  const d = donnees.data
+  for (let i = 0; i < d.length; i += 4) {
+    if (d[i + 3] === 0) continue
+    d[i] = JAUNE_FANTOME[0]
+    d[i + 1] = JAUNE_FANTOME[1]
+    d[i + 2] = JAUNE_FANTOME[2]
+    d[i + 3] = Math.min(255, Math.round(d[i + 3]! * 1.4))
+  }
+  ctx.putImageData(donnees, 0, 0)
+  // EN POINTILLÉ : des points de la taille de l'anneau, un sur deux.
+  const pas = Math.max(6, Math.round(contour.width / 26))
+  const motif = document.createElement('canvas')
+  motif.width = pas
+  motif.height = pas
+  const m = motif.getContext('2d')
+  const trame = m === null ? null : (m.fillStyle = '#fff', m.beginPath(), m.arc(pas / 2, pas / 2, pas * 0.3, 0, Math.PI * 2), m.fill(), ctx.createPattern(motif, 'repeat'))
+  if (trame !== null) {
+    ctx.globalCompositeOperation = 'destination-in'
+    ctx.fillStyle = trame
+    ctx.fillRect(0, 0, contour.width, contour.height)
+    ctx.globalCompositeOperation = 'source-over'
+  }
+  return contour
 }
 
 /**
